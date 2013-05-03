@@ -234,6 +234,12 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
   Check(Section.isReadOnlyData(IsReadOnly));
   Check(Section.getSize(DataSize));
   Check(Section.getName(Name));
+  if (StubSize > 0) {
+    unsigned StubAlignment = getStubAlignment();
+    unsigned EndAlignment = (DataSize | Alignment) & -(DataSize | Alignment);
+    if (StubAlignment > EndAlignment)
+      StubBufSize += StubAlignment - EndAlignment;
+  }
 
   unsigned Allocate;
   unsigned SectionID = Sections.size();
@@ -370,6 +376,13 @@ uint8_t *RuntimeDyldImpl::createStubFunction(uint8_t *Addr) {
     writeInt32BE(Addr+36, 0xE96C0010); // ld    r11, 16(r2)
     writeInt32BE(Addr+40, 0x4E800420); // bctr
 
+    return Addr;
+  } else if (Arch == Triple::systemz) {
+    writeInt16BE(Addr,    0xC418);     // lgrl %r1,.+8
+    writeInt16BE(Addr+2,  0x0000);
+    writeInt16BE(Addr+4,  0x0004);
+    writeInt16BE(Addr+6,  0x07F1);     // brc 15,%r1
+    // 8-byte address stored at Addr + 8
     return Addr;
   }
   return Addr;

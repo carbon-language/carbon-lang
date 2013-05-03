@@ -560,6 +560,42 @@ void RuntimeDyldELF::resolvePPC64Relocation(const SectionEntry &Section,
   }
 }
 
+void RuntimeDyldELF::resolveSystemZRelocation(const SectionEntry &Section,
+                                              uint64_t Offset,
+                                              uint64_t Value,
+                                              uint32_t Type,
+                                              int64_t Addend) {
+  uint8_t *LocalAddress = Section.Address + Offset;
+  switch (Type) {
+  default:
+    llvm_unreachable("Relocation type not implemented yet!");
+    break;
+  case ELF::R_390_PC16DBL:
+  case ELF::R_390_PLT16DBL: {
+    int64_t Delta = (Value + Addend) - (Section.LoadAddress + Offset);
+    assert(int16_t(Delta / 2) * 2 == Delta && "R_390_PC16DBL overflow");
+    writeInt16BE(LocalAddress, Delta / 2);
+    break;
+  }
+  case ELF::R_390_PC32DBL:
+  case ELF::R_390_PLT32DBL: {
+    int64_t Delta = (Value + Addend) - (Section.LoadAddress + Offset);
+    assert(int32_t(Delta / 2) * 2 == Delta && "R_390_PC32DBL overflow");
+    writeInt32BE(LocalAddress, Delta / 2);
+    break;
+  }
+  case ELF::R_390_PC32: {
+    int64_t Delta = (Value + Addend) - (Section.LoadAddress + Offset);
+    assert(int32_t(Delta) == Delta && "R_390_PC32 overflow");
+    writeInt32BE(LocalAddress, Delta);
+    break;
+  }
+  case ELF::R_390_64:
+    writeInt64BE(LocalAddress, Value + Addend);
+    break;
+  }
+}
+
 void RuntimeDyldELF::resolveRelocation(const RelocationEntry &RE,
 				       uint64_t Value) {
   const SectionEntry &Section = Sections[RE.SectionID];
@@ -594,6 +630,9 @@ void RuntimeDyldELF::resolveRelocation(const SectionEntry &Section,
     break;
   case Triple::ppc64:
     resolvePPC64Relocation(Section, Offset, Value, Type, Addend);
+    break;
+  case Triple::systemz:
+    resolveSystemZRelocation(Section, Offset, Value, Type, Addend);
     break;
   default: llvm_unreachable("Unsupported CPU type!");
   }
@@ -839,6 +878,53 @@ void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
       else
         addRelocationForSection(RE, Value.SectionID);
     }
+  } else if (Arch == Triple::systemz &&
+             (RelType == ELF::R_390_PLT32DBL ||
+              RelType == ELF::R_390_GOTENT)) {
+    // Create function stubs for both PLT and GOT references, regardless of
+    // whether the GOT reference is to data or code.  The stub contains the
+    // full address of the symbol, as needed by GOT references, and the
+    // executable part only adds an overhead of 8 bytes.
+    //
+    // We could try to conserve space by allocating the code and data
+    // parts of the stub separately.  However, as things stand, we allocate
+    // a stub for every relocation, so using a GOT in JIT code should be
+    // no less space efficient than using an explicit constant pool.
+    DEBUG(dbgs() << "\t\tThis is a SystemZ indirect relocation.");
+    SectionEntry &Section = Sections[SectionID];
+
+    // Look for an existing stub.
+    StubMap::const_iterator i = Stubs.find(Value);
+    uintptr_t StubAddress;
+    if (i != Stubs.end()) {
+      StubAddress = uintptr_t(Section.Address) + i->second;
+      DEBUG(dbgs() << " Stub function found\n");
+    } else {
+      // Create a new stub function.
+      DEBUG(dbgs() << " Create a new stub function\n");
+
+      uintptr_t BaseAddress = uintptr_t(Section.Address);
+      uintptr_t StubAlignment = getStubAlignment();
+      StubAddress = (BaseAddress + Section.StubOffset +
+                     StubAlignment - 1) & -StubAlignment;
+      unsigned StubOffset = StubAddress - BaseAddress;
+
+      Stubs[Value] = StubOffset;
+      createStubFunction((uint8_t *)StubAddress);
+      RelocationEntry RE(SectionID, StubOffset + 8,
+                         ELF::R_390_64, Value.Addend - Addend);
+      if (Value.SymbolName)
+        addRelocationForSymbol(RE, Value.SymbolName);
+      else
+        addRelocationForSection(RE, Value.SectionID);
+      Section.StubOffset = StubOffset + getMaxStubSize();
+    }
+
+    if (RelType == ELF::R_390_GOTENT)
+      resolveRelocation(Section, Offset, StubAddress + 8,
+                        ELF::R_390_PC32DBL, Addend);
+    else
+      resolveRelocation(Section, Offset, StubAddress, RelType, Addend);
   } else {
     RelocationEntry RE(SectionID, Offset, RelType, Value.Addend);
     if (Value.SymbolName)

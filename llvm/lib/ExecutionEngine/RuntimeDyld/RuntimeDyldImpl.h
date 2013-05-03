@@ -172,8 +172,17 @@ protected:
       return 16;
     else if (Arch == Triple::ppc64)
       return 44;
+    else if (Arch == Triple::systemz)
+      return 16;
     else
       return 0;
+  }
+
+  inline unsigned getStubAlignment() {
+    if (Arch == Triple::systemz)
+      return 8;
+    else
+      return 1;
   }
 
   bool HasError;

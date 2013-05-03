@@ -67,6 +67,11 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
                               uint32_t Type,
                               int64_t Addend);
 
+  void resolveSystemZRelocation(const SectionEntry &Section,
+                                uint64_t Offset,
+                                uint64_t Value,
+                                uint32_t Type,
+                                int64_t Addend);
 
   uint64_t findPPC64TOC() const;
   void findOPDEntrySection(ObjectImage &Obj,
