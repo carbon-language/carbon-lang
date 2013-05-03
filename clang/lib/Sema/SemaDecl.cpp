@@ -129,7 +129,7 @@ bool Sema::isSimpleTypeSpecifier(tok::TokenKind Kind) const {
 ///
 /// If name lookup results in an ambiguity, this routine will complain
 /// and then return NULL.
-ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
+ParsedType Sema::getTypeName(const IdentifierInfo &II, SourceLocation NameLoc,
                              Scope *S, CXXScopeSpec *SS,
                              bool isClassName, bool HasTrailingDot,
                              ParsedType ObjectTypePtr,
