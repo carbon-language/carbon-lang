@@ -364,9 +364,7 @@ LocateMacOSXFilesUsingDebugSymbols
                     CFDictionaryRef uuid_dict = NULL;
                     if (dict.get())
                     {
-                        char uuid_cstr_buf[64];
-                        const char *uuid_cstr = uuid->GetAsCString (uuid_cstr_buf, sizeof(uuid_cstr_buf));
-                        CFCString uuid_cfstr (uuid_cstr);
+                        CFCString uuid_cfstr (uuid->GetAsString().c_str());
                         uuid_dict = static_cast<CFDictionaryRef>(::CFDictionaryGetValue (dict.get(), uuid_cfstr.get()));
                         if (uuid_dict)
                         {
@@ -719,21 +717,19 @@ Symbols::DownloadObjectAndSymbolFile (ModuleSpec &module_spec, bool force_lookup
         }
         if (g_dsym_for_uuid_exe_exists)
         {
-            char uuid_cstr_buffer[64];
+            std::string uuid_str;
             char file_path[PATH_MAX];
-            uuid_cstr_buffer[0] = '\0';
             file_path[0] = '\0';
-            const char *uuid_cstr = NULL;
 
             if (uuid_ptr)
-                uuid_cstr = uuid_ptr->GetAsCString(uuid_cstr_buffer, sizeof(uuid_cstr_buffer));
+                uuid_str = uuid_ptr->GetAsString();
 
             if (file_spec_ptr)
                 file_spec_ptr->GetPath(file_path, sizeof(file_path));
             
             StreamString command;
-            if (uuid_cstr)
-                command.Printf("%s --ignoreNegativeCache --copyExecutable %s", g_dsym_for_uuid_exe_path, uuid_cstr);
+            if (!uuid_str.empty())
+                command.Printf("%s --ignoreNegativeCache --copyExecutable %s", g_dsym_for_uuid_exe_path, uuid_str.c_str());
             else if (file_path && file_path[0])
                 command.Printf("%s --ignoreNegativeCache --copyExecutable %s", g_dsym_for_uuid_exe_path, file_path);
             
@@ -760,9 +756,9 @@ Symbols::DownloadObjectAndSymbolFile (ModuleSpec &module_spec, bool force_lookup
                     
                     if (plist.get() && CFGetTypeID (plist.get()) == CFDictionaryGetTypeID ())
                     {
-                        if (uuid_cstr)
+                        if (!uuid_str.empty())
                         {
-                            CFCString uuid_cfstr(uuid_cstr);
+                            CFCString uuid_cfstr(uuid_str.c_str());
                             CFDictionaryRef uuid_dict = (CFDictionaryRef)CFDictionaryGetValue (plist.get(), uuid_cfstr.get());
                             success = GetModuleSpecInfoFromUUIDDictionary (uuid_dict, module_spec);
                         }

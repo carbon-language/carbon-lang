@@ -651,17 +651,15 @@ ModuleList::LogUUIDAndPaths (Log *log, const char *prefix_cstr)
     if (log)
     {   
         Mutex::Locker locker(m_modules_mutex);
-        char uuid_cstr[256];
         collection::const_iterator pos, begin = m_modules.begin(), end = m_modules.end();
         for (pos = begin; pos != end; ++pos)
         {
             Module *module = pos->get();
-            module->GetUUID().GetAsCString (uuid_cstr, sizeof(uuid_cstr));
             const FileSpec &module_file_spec = module->GetFileSpec();
             log->Printf ("%s[%u] %s (%s) \"%s\"",
                          prefix_cstr ? prefix_cstr : "",
                          (uint32_t)std::distance (begin, pos),
-                         uuid_cstr,
+                         module->GetUUID().GetAsString().c_str(),
                          module->GetArchitecture().GetArchitectureName(),
                          module_file_spec.GetPath().c_str());
         }
@@ -806,7 +804,6 @@ ModuleList::GetSharedModule
     ModuleList &shared_module_list = GetSharedModuleList ();
     Mutex::Locker locker(shared_module_list.m_modules_mutex);
     char path[PATH_MAX];
-    char uuid_cstr[64];
 
     Error error;
 
@@ -906,16 +903,14 @@ ModuleList::GetSharedModule
                 module_file_spec.GetPath(path, sizeof(path));
             if (file_spec.Exists())
             {
+                std::string uuid_str;
                 if (uuid_ptr && uuid_ptr->IsValid())
-                    uuid_ptr->GetAsCString(uuid_cstr, sizeof (uuid_cstr));
-                else
-                    uuid_cstr[0] = '\0';
-
+                    uuid_str = uuid_ptr->GetAsString();
 
                 if (arch.IsValid())
                 {
-                    if (uuid_cstr[0])
-                        error.SetErrorStringWithFormat("'%s' does not contain the %s architecture and UUID %s", path, arch.GetArchitectureName(), uuid_cstr);
+                    if (!uuid_str.empty())
+                        error.SetErrorStringWithFormat("'%s' does not contain the %s architecture and UUID %s", path, arch.GetArchitectureName(), uuid_str.c_str());
                     else
                         error.SetErrorStringWithFormat("'%s' does not contain the %s architecture.", path, arch.GetArchitectureName());
                 }
@@ -985,13 +980,12 @@ ModuleList::GetSharedModule
                 }
                 else
                 {
+                    std::string uuid_str;
                     if (uuid_ptr && uuid_ptr->IsValid())
-                        uuid_ptr->GetAsCString(uuid_cstr, sizeof (uuid_cstr));
-                    else
-                        uuid_cstr[0] = '\0';
+                        uuid_str = uuid_ptr->GetAsString();
 
-                    if (uuid_cstr[0])
-                        error.SetErrorStringWithFormat("cannot locate a module for UUID '%s'", uuid_cstr);
+                    if (!uuid_str.empty())
+                        error.SetErrorStringWithFormat("cannot locate a module for UUID '%s'", uuid_str.c_str());
                     else
                         error.SetErrorStringWithFormat("cannot locate a module");
                 }

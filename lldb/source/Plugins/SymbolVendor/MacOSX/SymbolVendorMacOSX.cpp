@@ -208,16 +208,15 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp, lldb_privat
                         lldb_private::UUID dsym_uuid;
                         if (dsym_objfile_sp->GetUUID(&dsym_uuid))
                         {
-                            char uuid_cstr_buf[64];
-                            const char *uuid_cstr = dsym_uuid.GetAsCString (uuid_cstr_buf, sizeof(uuid_cstr_buf));
-                            if (uuid_cstr)
+                            std::string uuid_str = dsym_uuid.GetAsString ();
+                            if (!uuid_str.empty())
                             {
                                 char *resources = strstr (dsym_path, "/Contents/Resources/");
                                 if (resources)
                                 {
                                     char dsym_uuid_plist_path[PATH_MAX];
                                     resources[strlen("/Contents/Resources/")] = '\0';
-                                    snprintf(dsym_uuid_plist_path, sizeof(dsym_uuid_plist_path), "%s%s.plist", dsym_path, uuid_cstr);
+                                    snprintf(dsym_uuid_plist_path, sizeof(dsym_uuid_plist_path), "%s%s.plist", dsym_path, uuid_str.c_str());
                                     FileSpec dsym_uuid_plist_spec(dsym_uuid_plist_path, false);
                                     if (dsym_uuid_plist_spec.Exists())
                                     {

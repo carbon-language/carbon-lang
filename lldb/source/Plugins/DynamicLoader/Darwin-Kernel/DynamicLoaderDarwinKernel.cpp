@@ -720,11 +720,9 @@ DynamicLoaderDarwinKernel::KextImageInfo::ReadMemoryModule (Process *process)
                     Stream *s = &process->GetTarget().GetDebugger().GetOutputStream();
                     if (s)
                     {
-                        char memory_module_uuidbuf[64];
-                        char exe_module_uuidbuf[64];
                         s->Printf ("warning: Host-side kernel file has Mach-O UUID of %s but remote kernel has a UUID of %s -- a mismatched kernel file will result in a poor debugger experience.\n", 
-                                   exe_module->GetUUID().GetAsCString(exe_module_uuidbuf, sizeof (exe_module_uuidbuf)),
-                                   m_uuid.GetAsCString(memory_module_uuidbuf, sizeof (memory_module_uuidbuf)));
+                                   exe_module->GetUUID().GetAsString().c_str(),
+                                   m_uuid.GetAsString().c_str());
                         s->Flush ();
                     }
                 }
@@ -770,8 +768,7 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
         Stream *s = &target.GetDebugger().GetOutputStream();
         if (s)
         {
-            char uuidbuf[64];
-            s->Printf ("Kernel UUID: %s\n", m_memory_module_sp->GetUUID().GetAsCString(uuidbuf, sizeof (uuidbuf)));
+            s->Printf ("Kernel UUID: %s\n", m_memory_module_sp->GetUUID().GetAsString().c_str());
             s->Printf ("Load Address: 0x%" PRIx64 "\n", m_load_address);
         }
     }
@@ -872,9 +869,8 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
         Stream *s = &target.GetDebugger().GetOutputStream();
         if (s)
         {
-            char uuidbuf[64];
             s->Printf ("warning: Can't find binary/dSYM for %s (%s)\n", 
-                       m_name.c_str(), m_uuid.GetAsCString(uuidbuf, sizeof (uuidbuf)));
+                       m_name.c_str(), m_uuid.GetAsString().c_str());
         }
     }
 

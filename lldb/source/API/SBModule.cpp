@@ -180,15 +180,22 @@ SBModule::GetUUIDString () const
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    static char uuid_string[80];
-    const char * uuid_c_string = NULL;
+    static char uuid_string_buffer[80];
+    const char *uuid_c_string = NULL;
+    std::string uuid_string;
     ModuleSP module_sp (GetSP ());
     if (module_sp)
-        uuid_c_string = (const char *)module_sp->GetUUID().GetAsCString(uuid_string, sizeof(uuid_string));
+        uuid_string = module_sp->GetUUID().GetAsString();
+
+    if (!uuid_string.empty())
+    {
+        strncpy (uuid_string_buffer, uuid_string.c_str(), sizeof (uuid_string_buffer));
+        uuid_c_string = uuid_string_buffer;
+    }
 
     if (log)
     {
-        if (uuid_c_string)
+        if (!uuid_string.empty())
         {
             StreamString s;
             module_sp->GetUUID().Dump (&s);

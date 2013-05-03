@@ -14,6 +14,8 @@
 #include <ctype.h>
 
 // C++ Includes
+#include <string>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Stream.h"
@@ -62,16 +64,20 @@ UUID::GetBytes() const
     return m_uuid;
 }
 
-char *
-UUID::GetAsCString (char *dst, size_t dst_len) const
+std::string
+UUID::GetAsString () const
 {
+    std::string result;
+    char buf[64];
     const uint8_t *u = (const uint8_t *)GetBytes();
-    if (dst_len > snprintf (dst,
-                            dst_len,
+    if (sizeof (buf) > snprintf (buf,
+                            sizeof (buf),
                             "%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X",
                             u[0],u[1],u[2],u[3],u[4],u[5],u[6],u[7],u[8],u[9],u[10],u[11],u[12],u[13],u[14],u[15]))
-        return dst;
-    return NULL;
+    {
+        result.append (buf);
+    }
+    return result;
 }
 
 void

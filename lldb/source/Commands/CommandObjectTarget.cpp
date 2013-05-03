@@ -2928,7 +2928,7 @@ protected:
                 }
                 else
                 {
-                    char uuid_cstr[64];
+                    std::string uuid_str;
                     
                     if (module_spec.GetFileSpec())
                         module_spec.GetFileSpec().GetPath (path, sizeof(path));
@@ -2936,16 +2936,14 @@ protected:
                         path[0] = '\0';
 
                     if (module_spec.GetUUIDPtr())
-                        module_spec.GetUUID().GetAsCString(uuid_cstr, sizeof(uuid_cstr));
-                    else
-                        uuid_cstr[0] = '\0';
+                        uuid_str = module_spec.GetUUID().GetAsString();
                     if (num_matches > 1)
                     {
                         result.AppendErrorWithFormat ("multiple modules match%s%s%s%s:\n", 
                                                       path[0] ? " file=" : "", 
                                                       path,
-                                                      uuid_cstr[0] ? " uuid=" : "", 
-                                                      uuid_cstr);
+                                                      !uuid_str.empty() ? " uuid=" : "", 
+                                                      uuid_str.c_str());
                         for (size_t i=0; i<num_matches; ++i)
                         {
                             if (matching_modules.GetModulePointerAtIndex(i)->GetFileSpec().GetPath (path, sizeof(path)))
@@ -2957,8 +2955,8 @@ protected:
                         result.AppendErrorWithFormat ("no modules were found  that match%s%s%s%s.\n", 
                                                       path[0] ? " file=" : "", 
                                                       path,
-                                                      uuid_cstr[0] ? " uuid=" : "", 
-                                                      uuid_cstr);
+                                                      !uuid_str.empty() ? " uuid=" : "", 
+                                                      uuid_str.c_str());
                     }
                     result.SetStatus (eReturnStatusFailed);
                 }

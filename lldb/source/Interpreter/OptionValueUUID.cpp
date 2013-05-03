@@ -91,7 +91,6 @@ OptionValueUUID::AutoComplete (CommandInterpreter &interpreter,
         const size_t num_modules = target->GetImages().GetSize();
         if (num_modules > 0)
         {
-            char uuid_cstr[64];
             UUID::ValueType uuid_bytes;
             const size_t num_bytes_decoded = UUID::DecodeUUIDBytesFromCString(s, uuid_bytes, NULL);
             for (size_t i=0; i<num_modules; ++i)
@@ -109,8 +108,10 @@ OptionValueUUID::AutoComplete (CommandInterpreter &interpreter,
                             add_uuid = ::memcmp(module_uuid.GetBytes(), uuid_bytes, num_bytes_decoded) == 0;
                         if (add_uuid)
                         {
-                            if (module_uuid.GetAsCString(uuid_cstr, sizeof(uuid_cstr)))
-                                matches.AppendString(uuid_cstr);
+                            std::string uuid_str;
+                            uuid_str = module_uuid.GetAsString();
+                            if (!uuid_str.empty())
+                                matches.AppendString(uuid_str.c_str());
                         }
                     }
                 }
