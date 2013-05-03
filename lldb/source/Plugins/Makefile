@@ -27,14 +27,12 @@ DIRS += Process/MacOSX-Kernel
 DIRS += DynamicLoader/MacOSX-DYLD DynamicLoader/Darwin-Kernel
 DIRS +=	ObjectContainer/Universal-Mach-O ObjectFile/Mach-O
 DIRS += SymbolVendor/MacOSX
-DIRS += OperatingSystem/Darwin-Kernel
 #DIRS += Process/MacOSX-User
 DIRS += Process/mach-core
 endif
 
 ifeq ($(HOST_OS),Linux)
 DIRS += DynamicLoader/MacOSX-DYLD DynamicLoader/Darwin-Kernel
-DIRS += OperatingSystem/Darwin-Kernel
 DIRS += Process/Linux Process/POSIX
 endif
 
