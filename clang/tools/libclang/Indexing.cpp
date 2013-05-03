@@ -292,7 +292,7 @@ public:
 
   /// MacroExpands - This is called by when a macro invocation is found.
   virtual void MacroExpands(const Token &MacroNameTok, const MacroDirective *MD,
-                            SourceRange Range) {
+                            SourceRange Range, const MacroArgs *Args) {
   }
 
   /// SourceRangeSkipped - This hook is called when a source range is skipped.

@@ -406,7 +406,8 @@ void PreprocessingRecord::Defined(const Token &MacroNameTok,
 }
 
 void PreprocessingRecord::MacroExpands(const Token &Id,const MacroDirective *MD,
-                                       SourceRange Range) {
+                                       SourceRange Range,
+                                       const MacroArgs *Args) {
   addMacroExpansion(Id, MD->getMacroInfo(), Range);
 }
 

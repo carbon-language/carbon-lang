@@ -27,6 +27,7 @@ namespace clang {
   class Token;
   class IdentifierInfo;
   class MacroDirective;
+  class MacroArgs;
 
 /// \brief This interface provides a way to observe the actions of the
 /// preprocessor as it does its thing.
@@ -206,7 +207,7 @@ public:
   /// \brief Called by Preprocessor::HandleMacroExpandedIdentifier when a
   /// macro invocation is found.
   virtual void MacroExpands(const Token &MacroNameTok, const MacroDirective *MD,
-                            SourceRange Range) {
+                            SourceRange Range, const MacroArgs *Args) {
   }
 
   /// \brief Hook called whenever a macro definition is seen.
@@ -376,9 +377,9 @@ public:
   }
 
   virtual void MacroExpands(const Token &MacroNameTok, const MacroDirective *MD,
-                            SourceRange Range) {
-    First->MacroExpands(MacroNameTok, MD, Range);
-    Second->MacroExpands(MacroNameTok, MD, Range);
+                            SourceRange Range, const MacroArgs *Args) {
+    First->MacroExpands(MacroNameTok, MD, Range, Args);
+    Second->MacroExpands(MacroNameTok, MD, Range, Args);
   }
 
   virtual void MacroDefined(const Token &MacroNameTok, const MacroDirective *MD) {

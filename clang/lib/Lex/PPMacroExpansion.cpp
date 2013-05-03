@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/Preprocessor.h"
-#include "MacroArgs.h"
+#include "clang/Lex/MacroArgs.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -223,7 +223,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
   // If this is a builtin macro, like __LINE__ or _Pragma, handle it specially.
   if (MI->isBuiltinMacro()) {
     if (Callbacks) Callbacks->MacroExpands(Identifier, MD,
-                                           Identifier.getLocation());
+                                           Identifier.getLocation(),/*Args=*/0);
     ExpandBuiltinMacro(Identifier);
     return false;
   }
@@ -277,11 +277,12 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
       DelayedMacroExpandsCallbacks.push_back(
                               MacroExpandsInfo(Identifier, MD, ExpansionRange));
     } else {
-      Callbacks->MacroExpands(Identifier, MD, ExpansionRange);
+      Callbacks->MacroExpands(Identifier, MD, ExpansionRange, Args);
       if (!DelayedMacroExpandsCallbacks.empty()) {
         for (unsigned i=0, e = DelayedMacroExpandsCallbacks.size(); i!=e; ++i) {
           MacroExpandsInfo &Info = DelayedMacroExpandsCallbacks[i];
-          Callbacks->MacroExpands(Info.Tok, Info.MD, Info.Range);
+          // FIXME: We lose macro args info with delayed callback.
+          Callbacks->MacroExpands(Info.Tok, Info.MD, Info.Range, /*Args=*/0);
         }
         DelayedMacroExpandsCallbacks.clear();
       }

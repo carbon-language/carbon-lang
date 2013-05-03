@@ -257,7 +257,7 @@ public:
                                  true));
   }
   virtual void MacroExpands(const Token &MacroNameTok, const MacroDirective *MD,
-                            SourceRange Range) {
+                            SourceRange Range, const MacroArgs *Args) {
     Macros.push_back(MacroAction(MacroNameTok.getLocation(),
                                  MacroNameTok.getIdentifierInfo()->getName(),
                                  false));
