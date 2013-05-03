@@ -51,7 +51,6 @@ public:
   virtual void printDynamicTable() LLVM_OVERRIDE;
   virtual void printNeededLibraries() LLVM_OVERRIDE;
   virtual void printProgramHeaders() LLVM_OVERRIDE;
-  virtual void printARMBuildAttributes() LLVM_OVERRIDE;
 
 private:
   typedef ELFObjectFile<ELFT> ELFO;
@@ -857,67 +856,5 @@ void ELFDumper<ELFT>::printProgramHeaders() {
     W.printNumber("MemSize", PI->p_memsz);
     W.printFlags ("Flags", PI->p_flags, makeArrayRef(ElfSegmentFlags));
     W.printNumber("Alignment", PI->p_align);
-  }
-}
-
-#define LLVM_READOBJ_ARMATTR_NUMCASE(X) case ARMBuildAttrs::X: \
-  W.printNumber("  Tag_" #X, BuildAttrs.Tag_##X); \
-  break; \
-
-#define LLVM_READOBJ_ARMATTR_STRCASE(X) case ARMBuildAttrs::X: \
-  W.printString("  Tag_" #X, BuildAttrs.Tag_##X); \
-  break; \
-
-template<class ELFT>
-void ELFDumper<ELFT>::printARMBuildAttributes() {
-  if (Obj->getArch() != Triple::arm || !Obj->hasARMBuildAttributes())
-    return;
-  ARMBuildAttrs::ARMGenericBuildAttrInfo BuildAttrs;
-  SmallVector<unsigned, 16> AttrsRead;
-  error_code EC = Obj->readARMBuildAttributes(BuildAttrs, AttrsRead);
-  if (error(EC))
-    return;
-
-  DictScope D(W, "ARMBuildAttributes");
-
-  for (SmallVector<unsigned, 16>::iterator I = AttrsRead.begin(),
-       E = AttrsRead.end(); I != E; ++I) {
-    switch (*I) {
-    LLVM_READOBJ_ARMATTR_STRCASE(CPU_name)
-    LLVM_READOBJ_ARMATTR_STRCASE(CPU_raw_name)
-    LLVM_READOBJ_ARMATTR_NUMCASE(CPU_arch)
-    LLVM_READOBJ_ARMATTR_NUMCASE(CPU_arch_profile)
-    LLVM_READOBJ_ARMATTR_NUMCASE(ARM_ISA_use)
-    LLVM_READOBJ_ARMATTR_NUMCASE(THUMB_ISA_use)
-    LLVM_READOBJ_ARMATTR_NUMCASE(FP_arch)
-    LLVM_READOBJ_ARMATTR_NUMCASE(WMMX_arch)
-    LLVM_READOBJ_ARMATTR_NUMCASE(Advanced_SIMD_arch)
-    LLVM_READOBJ_ARMATTR_NUMCASE(PCS_config)
-    LLVM_READOBJ_ARMATTR_NUMCASE(ABI_PCS_R9_use)
-    LLVM_READOBJ_ARMATTR_NUMCASE(ABI_PCS_RW_data)
-    LLVM_READOBJ_ARMATTR_NUMCASE(ABI_PCS_RO_data)
-    LLVM_READOBJ_ARMATTR_NUMCASE(ABI_PCS_GOT_use)
-    LLVM_READOBJ_ARMATTR_NUMCASE(ABI_PCS_wchar_t)
-    LLVM_READOBJ_ARMATTR_NUMCASE(ABI_FP_rounding)
-    LLVM_READOBJ_ARMATTR_NUMCASE(ABI_FP_denormal)
-    LLVM_READOBJ_ARMATTR_NUMCASE(ABI_FP_exceptions)
-    LLVM_READOBJ_ARMATTR_NUMCASE(ABI_FP_user_exceptions)
-    LLVM_READOBJ_ARMATTR_NUMCASE(ABI_FP_number_model)
-    LLVM_READOBJ_ARMATTR_NUMCASE(ABI_align8_needed)
-    LLVM_READOBJ_ARMATTR_NUMCASE(ABI_align8_preserved)
-    LLVM_READOBJ_ARMATTR_NUMCASE(ABI_enum_size)
-    LLVM_READOBJ_ARMATTR_NUMCASE(ABI_HardFP_use)
-    LLVM_READOBJ_ARMATTR_NUMCASE(ABI_VFP_args)
-    LLVM_READOBJ_ARMATTR_NUMCASE(CPU_unaligned_access)
-    LLVM_READOBJ_ARMATTR_NUMCASE(FP_HP_extension)
-    LLVM_READOBJ_ARMATTR_NUMCASE(MPextension_use)
-    LLVM_READOBJ_ARMATTR_NUMCASE(DIV_use)
-    LLVM_READOBJ_ARMATTR_NUMCASE(T2EE_use)
-    LLVM_READOBJ_ARMATTR_NUMCASE(Virtualization_use)
-    LLVM_READOBJ_ARMATTR_NUMCASE(ABI_optimization_goals)
-    LLVM_READOBJ_ARMATTR_NUMCASE(ABI_FP_optimization_goals)
-    default:
-      break;
-    }
   }
 }

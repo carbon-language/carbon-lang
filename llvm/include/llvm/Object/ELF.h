@@ -19,13 +19,11 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/Object/ELF_ARM.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/LEB128.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -603,7 +601,6 @@ private:
   const Elf_Shdr *dot_gnu_version_sec;   // .gnu.version
   const Elf_Shdr *dot_gnu_version_r_sec; // .gnu.version_r
   const Elf_Shdr *dot_gnu_version_d_sec; // .gnu.version_d
-  const Elf_Shdr *dot_arm_attributes_sec; // .ARM.attributes
 
   // Pointer to SONAME entry in dynamic string table
   // This is set the first time getLoadName is called.
@@ -646,11 +643,6 @@ private:
   const Elf_Shdr *getRelSection(DataRefImpl Rel) const {
     return getSection(Rel.w.b);
   }
-  // Helper to read a single ARM attribute at the given pointer and return the
-  // read pointer moved forward to the next attribute location.
-  uintptr_t readARMSingleAttribute(uintptr_t ReadPtr,
-                                  ARMBuildAttrs::ARMGenericBuildAttrInfo &Attrs,
-                                  SmallVector<unsigned, 16> &TagSet) const;
 
 public:
   bool            isRelocationHasAddend(DataRefImpl Rel) const;
@@ -845,18 +837,6 @@ public:
   static inline bool classof(const Binary *v) {
     return v->getType() == getELFType(ELFT::TargetEndianness == support::little,
                                       ELFT::Is64Bits);
-  }
-
-  /// \brief Read the ARM build attributes of this object file.
-  /// \param Attrs The attributes container to put the attribute values.
-  /// \param TagsSet A list of attribute tags that were read.
-  error_code readARMBuildAttributes(
-                                  ARMBuildAttrs::ARMGenericBuildAttrInfo &Attrs,
-                                  SmallVector<unsigned, 16> &TagsSet) const;
-
-  /// \brief Checks if an ARM build attributes section exists.
-  bool hasARMBuildAttributes() const {
-    return dot_arm_attributes_sec ? true : false;
   }
 };
 
@@ -2350,7 +2330,6 @@ ELFObjectFile<ELFT>::ELFObjectFile(MemoryBuffer *Object, error_code &ec)
   , dot_gnu_version_sec(0)
   , dot_gnu_version_r_sec(0)
   , dot_gnu_version_d_sec(0)
-  , dot_arm_attributes_sec(0)
   , dt_soname(0)
  {
 
@@ -2440,13 +2419,6 @@ ELFObjectFile<ELFT>::ELFObjectFile(MemoryBuffer *Object, error_code &ec)
         // FIXME: Proper error handling.
         report_fatal_error("More than one .gnu.version_r section!");
       dot_gnu_version_r_sec = sh;
-      break;
-    }
-    case ELF::SHT_ARM_ATTRIBUTES: {
-      if (dot_arm_attributes_sec != NULL)
-        // FIXME: Proper error handling.
-        report_fatal_error("More than one .arm.attributes section!");
-      dot_arm_attributes_sec = sh;
       break;
     }
     }
@@ -2997,164 +2969,6 @@ static inline error_code GetELFSymbolVersion(const ObjectFile *Obj,
 
   llvm_unreachable("Object passed to GetELFSymbolVersion() is not ELF");
 }
-
-template<class ELFT>
-error_code ELFObjectFile<ELFT>::readARMBuildAttributes(
-                                  ARMBuildAttrs::ARMGenericBuildAttrInfo &Attrs,
-                                  SmallVector<unsigned, 16> &TagsSet) const {
-  if (getArch() != Triple::arm)
-    return object_error::invalid_file_type;
-  if (!dot_arm_attributes_sec)
-    return object_error::parse_failed;
-
-  const char *SecStart = (const char*)base() +
-                          dot_arm_attributes_sec->sh_offset;
-  const char *SecEnd = SecStart + dot_arm_attributes_sec->sh_size;
-  char format_version = *SecStart;
-  if (format_version != ARMBuildAttrs::Format_Version)
-    return object_error::parse_failed;
-
-  uintptr_t SSectionPtr = (uintptr_t)SecStart + 1;
-  uintptr_t ReadPtr = SSectionPtr;
-  // Begin reading section after format-version byte
-  while (ReadPtr < (uintptr_t)SecEnd) {
-    // Read a subsection, starting with: <section-length> "vendor-name"
-    // For now, we only care about the "aeabi" pseudo-vendor subsection.
-    uint32_t SSectionLen = *(Elf_Word*)ReadPtr;
-    ReadPtr += sizeof(uint32_t);
-    StringRef Vendor((char*)(ReadPtr));
-    ReadPtr += Vendor.size() + 1; // Vendor string + NUL byte
-
-    if (Vendor != "aeabi") {
-      SSectionPtr += SSectionLen;
-      ReadPtr = SSectionPtr;
-      continue; //skip to the next sub-section
-    }
-
-    bool FoundFileTag = false;
-    uintptr_t SSSectionPtr = ReadPtr;
-    uint32_t SSSectionLen = *(Elf_Word*)ReadPtr;
-    // Found aeabi subsection, now find the File scope tag.
-    while (ReadPtr < SSectionPtr + SSectionLen) {
-      unsigned n = 0;
-      uint64_t Tag = decodeULEB128((uint8_t*)ReadPtr, &n);
-      ReadPtr += n;
-      SSSectionLen = *(Elf_Word*)ReadPtr;
-      if (Tag == ARMBuildAttrs::File) {
-        FoundFileTag = true;
-        break;
-      }
-      // We only handle File scope attributes, skip ahead to the next
-      // sub-subsection.
-      SSSectionPtr += SSSectionLen;
-      ReadPtr = SSSectionPtr;
-    }
-
-    if (!FoundFileTag)
-      return object_error::parse_failed;
-
-    ReadPtr += sizeof(uint32_t);
-    while (ReadPtr < SSSectionPtr + SSSectionLen) {
-      // Read any number of attributes.
-      // Attributes are pairs of <uleb128, uleb128> or <uleb128, NTBS>.
-      ReadPtr = readARMSingleAttribute(ReadPtr, Attrs, TagsSet);
-    }
-    Attrs.setValid(true);
-  }
-  return object_error::success;
-}
-
-#define SWITCH_ARM_ATTR_READ_ULEB(X) case ARMBuildAttrs::X: \
-  UlebValue = decodeULEB128((uint8_t*)ReadPtr, &n); \
-  ReadPtr += n; \
-  Attrs.Tag_##X = UlebValue; \
-  TagsSet.push_back(tag); \
-  break;
-
-template<class ELFT>
-uintptr_t ELFObjectFile<ELFT>::readARMSingleAttribute(uintptr_t ReadPtr,
-                                 ARMBuildAttrs::ARMGenericBuildAttrInfo &Attrs,
-                                 SmallVector<unsigned, 16> &TagsSet) const {
-  // The ABI says that tags in the range 0-63 must be handled by tools.
-  unsigned n = 0;
-  uint64_t tagInt = decodeULEB128((uint8_t*)ReadPtr, &n);
-  ARMBuildAttrs::AttrType tag = (ARMBuildAttrs::AttrType)tagInt;
-  ReadPtr += n;
-  uint64_t UlebValue = 0;
-  StringRef StrValue;
-  switch (tag) {
-  case ARMBuildAttrs::CPU_arch: // uleb128
-    UlebValue = decodeULEB128((uint8_t*)ReadPtr, &n);
-    ReadPtr += n;
-    Attrs.Tag_CPU_arch = (ARMBuildAttrs::CPUArch)UlebValue;
-    TagsSet.push_back(tag);
-    break;
-  case ARMBuildAttrs::CPU_raw_name: // NTBS
-    StrValue = (char*)ReadPtr;
-    Attrs.Tag_CPU_raw_name = StrValue;
-    TagsSet.push_back(ARMBuildAttrs::CPU_raw_name);
-    ReadPtr += StrValue.size() + 1;
-    break;
-  case ARMBuildAttrs::CPU_name: //NTBS
-    StrValue = (char*)ReadPtr;
-    Attrs.Tag_CPU_name = StrValue;
-    TagsSet.push_back(ARMBuildAttrs::CPU_name);
-    ReadPtr += StrValue.size() + 1;
-    break;
-  case ARMBuildAttrs::CPU_arch_profile: // uleb128
-    UlebValue = decodeULEB128((uint8_t*)ReadPtr, &n);
-    ReadPtr += n;
-    Attrs.Tag_CPU_arch_profile =
-      (ARMBuildAttrs::CPUArchProfile)UlebValue;
-    TagsSet.push_back(tag);
-    break;
-  SWITCH_ARM_ATTR_READ_ULEB(ARM_ISA_use)
-  SWITCH_ARM_ATTR_READ_ULEB(THUMB_ISA_use)
-  SWITCH_ARM_ATTR_READ_ULEB(FP_arch)
-  SWITCH_ARM_ATTR_READ_ULEB(WMMX_arch)
-  SWITCH_ARM_ATTR_READ_ULEB(Advanced_SIMD_arch)
-  SWITCH_ARM_ATTR_READ_ULEB(FP_HP_extension)
-  SWITCH_ARM_ATTR_READ_ULEB(CPU_unaligned_access)
-  SWITCH_ARM_ATTR_READ_ULEB(MPextension_use)
-  SWITCH_ARM_ATTR_READ_ULEB(DIV_use)
-  SWITCH_ARM_ATTR_READ_ULEB(T2EE_use)
-  SWITCH_ARM_ATTR_READ_ULEB(Virtualization_use)
-  SWITCH_ARM_ATTR_READ_ULEB(ABI_optimization_goals)
-  SWITCH_ARM_ATTR_READ_ULEB(ABI_FP_optimization_goals)
-  SWITCH_ARM_ATTR_READ_ULEB(PCS_config)
-  SWITCH_ARM_ATTR_READ_ULEB(ABI_PCS_R9_use)
-  SWITCH_ARM_ATTR_READ_ULEB(ABI_PCS_RW_data)
-  SWITCH_ARM_ATTR_READ_ULEB(ABI_PCS_RO_data)
-  SWITCH_ARM_ATTR_READ_ULEB(ABI_PCS_GOT_use)
-  SWITCH_ARM_ATTR_READ_ULEB(ABI_PCS_wchar_t)
-  SWITCH_ARM_ATTR_READ_ULEB(ABI_enum_size)
-  SWITCH_ARM_ATTR_READ_ULEB(ABI_align8_needed)
-  SWITCH_ARM_ATTR_READ_ULEB(ABI_align8_preserved)
-  SWITCH_ARM_ATTR_READ_ULEB(ABI_FP_rounding)
-  SWITCH_ARM_ATTR_READ_ULEB(ABI_FP_denormal)
-  SWITCH_ARM_ATTR_READ_ULEB(ABI_FP_number_model)
-  SWITCH_ARM_ATTR_READ_ULEB(ABI_FP_exceptions)
-  SWITCH_ARM_ATTR_READ_ULEB(ABI_FP_user_exceptions)
-  SWITCH_ARM_ATTR_READ_ULEB(ABI_HardFP_use)
-  SWITCH_ARM_ATTR_READ_ULEB(ABI_VFP_args)
-  default:
-    // Unhandled build attribute tag, according to the spec we should be able
-    // to infer the type of the value from (tag % 2) and skip over it.
-    if (tag & 0x1) {
-      // Value should be a null terminated byte string
-      StrValue = (char*)ReadPtr;
-      ReadPtr += StrValue.size() + 1;
-    } else {
-      // Value should be a uleb128
-      UlebValue = decodeULEB128((uint8_t*)ReadPtr, &n);
-      ReadPtr += n;
-    }
-    break;
-  }
-  return ReadPtr;
-}
-#undef SWITCH_ARM_ATTR_READ_ULEB
-
 
 /// This function returns the hash value for a symbol in the .dynsym section
 /// Name of the API remains consistent as specified in the libelf

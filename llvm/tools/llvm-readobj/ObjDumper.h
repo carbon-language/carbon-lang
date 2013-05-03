@@ -39,7 +39,6 @@ public:
   virtual void printDynamicTable() { }
   virtual void printNeededLibraries() { }
   virtual void printProgramHeaders() { }
-  virtual void printARMBuildAttributes() { }
 
 protected:
   StreamWriter& W;

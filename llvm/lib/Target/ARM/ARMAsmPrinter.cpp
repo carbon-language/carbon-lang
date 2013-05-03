@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "asm-printer"
 #include "ARMAsmPrinter.h"
 #include "ARM.h"
+#include "ARMBuildAttrs.h"
 #include "ARMConstantPoolValue.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMTargetMachine.h"
@@ -43,7 +44,6 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Object/ELF_ARM.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
@@ -90,7 +90,7 @@ namespace {
         break;
       /* GAS requires .fpu to be emitted regardless of EABI attribute */
       case ARMBuildAttrs::Advanced_SIMD_arch:
-      case ARMBuildAttrs::FP_arch:
+      case ARMBuildAttrs::VFP_arch:
         Streamer.EmitRawText(StringRef("\t.fpu ") + String.lower());
         break;
       }
@@ -798,24 +798,24 @@ void ARMAsmPrinter::emitAttributes() {
 
   /* VFPv4 + .fpu */
   if (Subtarget->hasVFP4()) {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::FP_arch,
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch,
                                ARMBuildAttrs::AllowFPv4A);
     if (emitFPU)
-      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::FP_arch, "vfpv4");
+      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::VFP_arch, "vfpv4");
 
   /* VFPv3 + .fpu */
   } else if (Subtarget->hasVFP3()) {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::FP_arch,
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch,
                                ARMBuildAttrs::AllowFPv3A);
     if (emitFPU)
-      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::FP_arch, "vfpv3");
+      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::VFP_arch, "vfpv3");
 
   /* VFPv2 + .fpu */
   } else if (Subtarget->hasVFP2()) {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::FP_arch,
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch,
                                ARMBuildAttrs::AllowFPv2);
     if (emitFPU)
-      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::FP_arch, "vfpv2");
+      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::VFP_arch, "vfpv2");
   }
 
   /* TODO: ARMBuildAttrs::Allowed is not completely accurate,
