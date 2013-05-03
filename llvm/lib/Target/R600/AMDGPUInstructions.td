@@ -276,6 +276,14 @@ multiclass BFIPatterns <Instruction BFI_INT> {
 
 }
 
+// SHA-256 Ma patterns
+
+// ((x & z) | (y & (x | z))) -> BFI_INT (XOR x, y), z, y
+class SHA256MaPattern <Instruction BFI_INT, Instruction XOR> : Pat <
+  (or (and i32:$x, i32:$z), (and i32:$y, (or i32:$x, i32:$z))),
+  (BFI_INT (XOR i32:$x, i32:$y), i32:$z, i32:$y)
+>;
+
 include "R600Instructions.td"
 
 include "SIInstrInfo.td"

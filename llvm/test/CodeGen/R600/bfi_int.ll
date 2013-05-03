@@ -32,3 +32,21 @@ entry:
   store i32 %2, i32 addrspace(1)* %out
   ret void
 }
+
+; SHA-256 Ma function
+; ((x & z) | (y & (x | z)))
+; R600-CHECK: @bfi_sha256_ma
+; R600-CHECK: XOR_INT * [[DST:T[0-9]+\.[XYZW]]], {{T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; R600-CHECK: BFI_INT * {{T[0-9]+\.[XYZW]}}, {{[[DST]]|PV.x}}, {{T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; SI-CHECK: V_XOR_B32_e32 [[DST:VGPR[0-9]+]], {{VGPR[0-9]+, VGPR[0-9]+}}
+; SI-CHECK: V_BFI_B32 {{VGPR[0-9]+}}, [[DST]], {{VGPR[0-9]+, VGPR[0-9]+}}
+
+define void @bfi_sha256_ma(i32 addrspace(1)* %out, i32 %x, i32 %y, i32 %z) {
+entry:
+  %0 = and i32 %x, %z
+  %1 = or i32 %x, %z
+  %2 = and i32 %y, %1
+  %3 = or i32 %0, %2
+  store i32 %3, i32 addrspace(1)* %out
+  ret void
+}
