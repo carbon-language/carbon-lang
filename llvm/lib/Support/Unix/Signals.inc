@@ -186,6 +186,15 @@ static RETSIGTYPE SignalHandler(int Sig) {
   // Otherwise if it is a fault (like SEGV) run any handler.
   for (unsigned i = 0, e = CallBacksToRun.size(); i != e; ++i)
     CallBacksToRun[i].first(CallBacksToRun[i].second);
+
+#ifdef __s390__
+  // On S/390, certain signals are delivered with PSW Address pointing to
+  // *after* the faulting instruction.  Simply returning from the signal
+  // handler would continue execution after that point, instead of
+  // re-raising the signal.  Raise the signal manually in those cases.
+  if (Sig == SIGILL || Sig == SIGFPE || Sig == SIGTRAP)
+    raise(Sig);
+#endif
 }
 
 void llvm::sys::RunInterruptHandlers() {
