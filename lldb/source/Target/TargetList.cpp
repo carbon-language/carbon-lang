@@ -129,14 +129,16 @@ TargetList::CreateTarget (Debugger &debugger,
                         platform_arch = matching_module_spec.GetArchitecture();
                     }
                 }
-                else
-                {
-                    // No arch specified, select the first arch
-                    if (module_specs.GetModuleSpecAtIndex(0, matching_module_spec))
-                    {
-                        platform_arch = matching_module_spec.GetArchitecture();
-                    }
-                }
+                // Don't just select the first architecture, we want to let the platform select
+                // the best architecture first when there are multiple archs.
+//                else
+//                {
+//                    // No arch specified, select the first arch
+//                    if (module_specs.GetModuleSpecAtIndex(0, matching_module_spec))
+//                    {
+//                        platform_arch = matching_module_spec.GetArchitecture();
+//                    }
+//                }
             }
         }
     }
