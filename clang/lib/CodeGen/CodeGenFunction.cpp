@@ -44,7 +44,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext)
     DebugInfo(0), DisableDebugInfo(false), CalleeWithThisReturn(0),
     DidCallStackSave(false),
     IndirectBranch(0), SwitchInsn(0), CaseRangeBlock(0), UnreachableBlock(0),
-    NumReturnExprs(0), NumSimpleReturnExprs(0),
+    NumStopPoints(0), NumSimpleReturnExprs(0),
     CXXABIThisDecl(0), CXXABIThisValue(0), CXXThisValue(0),
     CXXDefaultInitExprThis(0),
     CXXStructorImplicitParamDecl(0), CXXStructorImplicitParamValue(0),
@@ -188,14 +188,14 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   assert(BreakContinueStack.empty() &&
          "mismatched push/pop in break/continue stack!");
 
-  // If the function contains only a simple return statement, the
-  // cleanup code may become the first breakpoint in the function. To
-  // be safe, set the debug location for it to the location of the
-  // return statement.  Otherwise point it to end of the function's
-  // lexical scope.
+  // If the function contains only a single, simple return statement,
+  // the cleanup code may become the first breakpoint in the
+  // function. To be safe set the debug location for it to the
+  // location of the return statement.  Otherwise point it to end of
+  // the function's lexical scope.
   if (CGDebugInfo *DI = getDebugInfo()) {
-    if (NumSimpleReturnExprs == NumReturnExprs)
-       DI->EmitLocation(Builder, LastStopPoint);
+    if (NumSimpleReturnExprs == 1 && NumStopPoints == 1)
+      DI->EmitLocation(Builder, FirstStopPoint);
     else
       DI->EmitLocation(Builder, EndLoc);
   }
@@ -206,14 +206,14 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   // edges will be *really* confused.
   bool EmitRetDbgLoc = true;
   if (EHStack.stable_begin() != PrologueCleanupDepth) {
-    PopCleanupBlocks(PrologueCleanupDepth, EndLoc);
+    PopCleanupBlocks(PrologueCleanupDepth);
 
     // Make sure the line table doesn't jump back into the body for
     // the ret after it's been at EndLoc.
     EmitRetDbgLoc = false;
 
     if (CGDebugInfo *DI = getDebugInfo())
-      if (NumSimpleReturnExprs == NumReturnExprs)
+      if (NumSimpleReturnExprs == 1 && NumStopPoints == 1)
         DI->EmitLocation(Builder, EndLoc);
   }
 

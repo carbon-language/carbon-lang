@@ -784,9 +784,7 @@ public:
 
   /// PopCleanupBlock - Will pop the cleanup entry on the stack and
   /// process all branch fixups.
-  /// \param EHLoc - Optional debug location for EH code.
-  void PopCleanupBlock(bool FallThroughIsBranchThrough = false,
-                       SourceLocation EHLoc=SourceLocation());
+  void PopCleanupBlock(bool FallThroughIsBranchThrough = false);
 
   /// DeactivateCleanupBlock - Deactivates the given cleanup block.
   /// The block cannot be reactivated.  Pops it if it's the top of the
@@ -907,9 +905,7 @@ public:
 
   /// PopCleanupBlocks - Takes the old cleanup stack size and emits
   /// the cleanup blocks that have been added.
-  /// \param EHLoc - Optional debug location for EH code.
-  void PopCleanupBlocks(EHScopeStack::stable_iterator OldCleanupStackSize,
-                        SourceLocation EHLoc=SourceLocation());
+  void PopCleanupBlocks(EHScopeStack::stable_iterator OldCleanupStackSize);
 
   void ResolveBranchFixups(llvm::BasicBlock *Target);
 
@@ -1210,14 +1206,14 @@ private:
   /// lazily by getUnreachableBlock().
   llvm::BasicBlock *UnreachableBlock;
 
-  /// Counts of the number return expressions in the function.
-  unsigned NumReturnExprs;
+  /// Counts of the number of distinct breakpoint locations in this function.
+  unsigned NumStopPoints;
 
   /// Count the number of simple (constant) return expressions in the function.
   unsigned NumSimpleReturnExprs;
 
-  /// The last regular (non-return) debug location (breakpoint) in the function.
-  SourceLocation LastStopPoint;
+  /// The first debug location (breakpoint) in the function.
+  SourceLocation FirstStopPoint;
 
 public:
   /// A scope within which we are constructing the fields of an object which
