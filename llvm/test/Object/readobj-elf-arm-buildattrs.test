@@ -2,6 +2,7 @@ RUN: llvm-readobj -arm-buildattrs %p/Inputs/trivial-object-test.elf-arm \
 RUN:         | FileCheck %s -check-prefix=SMALL
 RUN: llvm-readobj -arm-buildattrs %p/Inputs/arm-attributes.elf-arm \
 RUN:         | FileCheck %s -check-prefix=LARGE
+XFAIL: *
 
 SMALL: ARMBuildAttributes {
 SMALL: Tag_CPU_name: Cortex-A8
