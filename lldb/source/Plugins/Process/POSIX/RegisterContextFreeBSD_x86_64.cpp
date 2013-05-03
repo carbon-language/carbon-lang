@@ -11,8 +11,7 @@
 
 // Computes the offset of the given GPR in the user data area.
 #define GPR_OFFSET(regname)                                                 \
-    (offsetof(RegisterContext_x86_64::UserArea, regs) +                     \
-     offsetof(GPR, regname))
+    (offsetof(GPR, regname))
 
 // Updates the FreeBSD specific information (offset and size)
 #define UPDATE_GPR_INFO(reg)                                                \

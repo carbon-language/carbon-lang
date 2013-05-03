@@ -270,32 +270,6 @@ public:
             FXSAVE   fxsave;    // Generic floating-point registers.
             XSAVE    xsave;     // x86 extended processor state.
         } xstate;
-
-        YMM      ymm_set;       // Copy of ymmh and xmm register halves.
-    };
-
-    struct UserArea
-    {
-        uint64_t regs[k_last_gpr];// General purpose registers.
-        FPRType  fpr_type;      // Determines the type of data stored by union FPR, if any.
-        int32_t  pad0;
-        FPR      i387;          // Floating point registers.
-        uint64_t tsize;         // Text segment size.
-        uint64_t dsize;         // Data segment size.
-        uint64_t ssize;         // Stack segment size.
-        uint64_t start_code;    // VM address of text.
-        uint64_t start_stack;   // VM address of stack bottom (top in rsp).
-        int64_t  signal;        // Signal causing core dump.
-        int32_t  reserved;      // Unused.
-        int32_t  pad1;
-        uint64_t ar0;           // Location of GPR's.
-        FPR*     fpstate;       // Location of FPR's.
-        uint64_t magic;         // Identifier for core dumps.
-        char     u_comm[32];    // Command causing core dump.
-        uint64_t u_debugreg[8]; // Debug registers (DR0 - DR7).
-        uint64_t error_code;    // CPU error code.
-        uint64_t fault_address; // Control register CR3.
-        IOVEC    iovec;         // wrapper for xsave
     };
 
 protected:
@@ -310,11 +284,17 @@ private:
     static lldb_private::RegisterInfo *m_register_infos;
 
 private:
-    UserArea user;
+    uint64_t m_gpr[k_num_gpr_registers]; // general purpose registers.
+    FPRType  m_fpr_type;                 // determines the type of data stored by union FPR, if any.
+    FPR      m_fpr;                      // floating-point registers including extended register sets.
+    IOVEC    m_iovec;                    // wrapper for xsave.
+    YMM      m_ymm_set;                  // copy of ymmh and xmm register halves.
 
     ProcessMonitor &GetMonitor();
     lldb::ByteOrder GetByteOrder();
 
+    bool CopyXSTATEtoYMM(uint32_t reg, lldb::ByteOrder byte_order);
+    bool CopyYMMtoXSTATE(uint32_t reg, lldb::ByteOrder byte_order);
     static bool IsFPR(unsigned reg, FPRType fpr_type);
 
     bool ReadGPR();

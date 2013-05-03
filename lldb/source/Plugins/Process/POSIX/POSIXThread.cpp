@@ -99,6 +99,8 @@ POSIXThread::GetRegisterContext()
             break;
 
         case ArchSpec::eCore_x86_64_x86_64:
+// TODO: Use target OS/architecture detection rather than ifdefs so that
+// lldb built on FreeBSD can debug on Linux and vice-versa.
 #ifdef __linux__
             m_reg_context_sp.reset(new RegisterContextLinux_x86_64(*this, 0));
 #endif

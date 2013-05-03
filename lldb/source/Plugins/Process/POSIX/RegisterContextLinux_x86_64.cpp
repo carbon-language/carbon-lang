@@ -11,8 +11,7 @@
 
 // Computes the offset of the given GPR in the user data area.
 #define GPR_OFFSET(regname)                                                 \
-    (offsetof(RegisterContext_x86_64::UserArea, regs) +                     \
-     offsetof(GPR, regname))
+    (offsetof(GPR, regname))
 
 // Updates the Linux specific information (offset and size)
 #define UPDATE_GPR_INFO(reg)                                                \
@@ -56,6 +55,31 @@ typedef struct _GPR
     uint64_t fs;
     uint64_t gs;
 } GPR;
+
+typedef RegisterContext_x86_64::FXSAVE FXSAVE;
+
+struct UserArea
+{
+    GPR      gpr;           // General purpose registers.
+    int32_t  fpvalid;       // True if FPU is being used.
+    int32_t  pad0;
+    FXSAVE   i387;          // General purpose floating point registers (see FPR for extended register sets).
+    uint64_t tsize;         // Text segment size.
+    uint64_t dsize;         // Data segment size.
+    uint64_t ssize;         // Stack segment size.
+    uint64_t start_code;    // VM address of text.
+    uint64_t start_stack;   // VM address of stack bottom (top in rsp).
+    int64_t  signal;        // Signal causing core dump.
+    int32_t  reserved;      // Unused.
+    int32_t  pad1;
+    uint64_t ar0;           // Location of GPR's.
+    FXSAVE*  fpstate;       // Location of FPR's.
+    uint64_t magic;         // Identifier for core dumps.
+    char     u_comm[32];    // Command causing core dump.
+    uint64_t u_debugreg[8]; // Debug registers (DR0 - DR7).
+    uint64_t error_code;    // CPU error code.
+    uint64_t fault_address; // Control register CR3.
+};
 
 RegisterInfo *RegisterContextLinux_x86_64::m_register_infos = nullptr;
 

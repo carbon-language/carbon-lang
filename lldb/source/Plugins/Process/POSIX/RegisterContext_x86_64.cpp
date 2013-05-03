@@ -285,17 +285,14 @@ g_reg_sets[k_num_register_sets] =
     { "Advanced Vector Extensions", "avx", k_num_avx_registers, g_avx_regnums }
 };
 
-// Computes the offset of the given FPR in the user data area.
+// Computes the offset of the given FPR in the extended data area.
 #define FPR_OFFSET(regname) \
-    (offsetof(RegisterContext_x86_64::UserArea, i387) + \
-     offsetof(RegisterContext_x86_64::FPR, xstate) + \
+    (offsetof(RegisterContext_x86_64::FPR, xstate) + \
      offsetof(RegisterContext_x86_64::FXSAVE, regname))
 
-// Computes the offset of the given YMM register in the user data area.
+// Computes the offset of the YMM register assembled from register halves.
 #define YMM_OFFSET(regname) \
-    (offsetof(RegisterContext_x86_64::UserArea, i387) + \
-     offsetof(RegisterContext_x86_64::FPR, ymm_set) + \
-     offsetof(RegisterContext_x86_64::YMM, regname))
+    (offsetof(RegisterContext_x86_64::YMM, regname))
 
 // Number of bytes needed to represent a i386 GPR
 #define GPR_i386_SIZE(reg) sizeof(((RegisterContext_i386::GPR*)NULL)->reg)
@@ -475,18 +472,18 @@ RegisterContext_x86_64::RegisterContext_x86_64(Thread &thread,
                                                uint32_t concrete_frame_idx)
     : RegisterContextPOSIX(thread, concrete_frame_idx)
 {
-    // Initialize user.iovec to point to the buffer and buffer size
+    // Initialize m_iovec to point to the buffer and buffer size
     // using the conventions of Berkeley style UIO structures, as required
     // by PTRACE extensions.
-    user.iovec.iov_base = &user.i387.xstate.xsave;
-    user.iovec.iov_len = sizeof(user.i387.xstate.xsave);
+    m_iovec.iov_base = &m_fpr.xstate.xsave;
+    m_iovec.iov_len = sizeof(m_fpr.xstate.xsave);
 
-    ::memset(&user.i387, 0, sizeof(RegisterContext_x86_64::FPR));
+    ::memset(&m_fpr, 0, sizeof(RegisterContext_x86_64::FPR));
 
     // TODO: Use assembly to call cpuid on the inferior and query ebx or ecx
-    user.fpr_type = eXSAVE; // extended floating-point registers, if available
+    m_fpr_type = eXSAVE; // extended floating-point registers, if available
     if (false == ReadFPR())
-        user.fpr_type = eFXSAVE; // assume generic floating-point registers
+        m_fpr_type = eFXSAVE; // assume generic floating-point registers
 }
 
 RegisterContext_x86_64::~RegisterContext_x86_64()
@@ -529,7 +526,7 @@ size_t
 RegisterContext_x86_64::GetRegisterCount()
 {
     size_t num_registers = k_num_gpr_registers + k_num_fpr_registers;
-    if (user.fpr_type == eXSAVE)
+    if (m_fpr_type == eXSAVE)
       return num_registers + k_num_avx_registers;
     return num_registers;
 }
@@ -602,27 +599,27 @@ RegisterContext_x86_64::GetByteOrder()
 }
 
 // Parse ymm registers and into xmm.bytes and ymmh.bytes.
-bool CopyYMMtoXSTATE(uint32_t reg, RegisterContext_x86_64::UserArea &user, lldb::ByteOrder byte_order)
+bool RegisterContext_x86_64::CopyYMMtoXSTATE(uint32_t reg, lldb::ByteOrder byte_order)
 {
     if (!IsAVX(reg))
         return false;
 
     if (byte_order == eByteOrderLittle) {
-      ::memcpy(user.i387.xstate.fxsave.xmm[reg - fpu_ymm0].bytes,
-               user.i387.ymm_set.ymm[reg - fpu_ymm0].bytes,
+      ::memcpy(m_fpr.xstate.fxsave.xmm[reg - fpu_ymm0].bytes,
+               m_ymm_set.ymm[reg - fpu_ymm0].bytes,
                sizeof(RegisterContext_x86_64::XMMReg));
-      ::memcpy(user.i387.xstate.xsave.ymmh[reg - fpu_ymm0].bytes,
-               user.i387.ymm_set.ymm[reg - fpu_ymm0].bytes + sizeof(RegisterContext_x86_64::XMMReg),
+      ::memcpy(m_fpr.xstate.xsave.ymmh[reg - fpu_ymm0].bytes,
+               m_ymm_set.ymm[reg - fpu_ymm0].bytes + sizeof(RegisterContext_x86_64::XMMReg),
                sizeof(RegisterContext_x86_64::YMMHReg));
       return true;
     }
 
     if (byte_order == eByteOrderBig) {
-      ::memcpy(user.i387.xstate.fxsave.xmm[reg - fpu_ymm0].bytes,
-               user.i387.ymm_set.ymm[reg - fpu_ymm0].bytes + sizeof(RegisterContext_x86_64::XMMReg),
+      ::memcpy(m_fpr.xstate.fxsave.xmm[reg - fpu_ymm0].bytes,
+               m_ymm_set.ymm[reg - fpu_ymm0].bytes + sizeof(RegisterContext_x86_64::XMMReg),
                sizeof(RegisterContext_x86_64::XMMReg));
-      ::memcpy(user.i387.xstate.xsave.ymmh[reg - fpu_ymm0].bytes,
-               user.i387.ymm_set.ymm[reg - fpu_ymm0].bytes,
+      ::memcpy(m_fpr.xstate.xsave.ymmh[reg - fpu_ymm0].bytes,
+               m_ymm_set.ymm[reg - fpu_ymm0].bytes,
                sizeof(RegisterContext_x86_64::YMMHReg));
       return true;
     }
@@ -630,26 +627,26 @@ bool CopyYMMtoXSTATE(uint32_t reg, RegisterContext_x86_64::UserArea &user, lldb:
 }
 
 // Concatenate xmm.bytes with ymmh.bytes
-bool CopyXSTATEtoYMM(uint32_t reg, RegisterContext_x86_64::UserArea &user, lldb::ByteOrder byte_order)
+bool RegisterContext_x86_64::CopyXSTATEtoYMM(uint32_t reg, lldb::ByteOrder byte_order)
 {
     if (!IsAVX(reg))
         return false;
 
     if (byte_order == eByteOrderLittle) {
-      ::memcpy(user.i387.ymm_set.ymm[reg - fpu_ymm0].bytes,
-               user.i387.xstate.fxsave.xmm[reg - fpu_ymm0].bytes,
+      ::memcpy(m_ymm_set.ymm[reg - fpu_ymm0].bytes,
+               m_fpr.xstate.fxsave.xmm[reg - fpu_ymm0].bytes,
                sizeof(RegisterContext_x86_64::XMMReg));
-      ::memcpy(user.i387.ymm_set.ymm[reg - fpu_ymm0].bytes + sizeof(RegisterContext_x86_64::XMMReg),
-               user.i387.xstate.xsave.ymmh[reg - fpu_ymm0].bytes,
+      ::memcpy(m_ymm_set.ymm[reg - fpu_ymm0].bytes + sizeof(RegisterContext_x86_64::XMMReg),
+               m_fpr.xstate.xsave.ymmh[reg - fpu_ymm0].bytes,
                sizeof(RegisterContext_x86_64::YMMHReg));
       return true;
     }
     if (byte_order == eByteOrderBig) {
-      ::memcpy(user.i387.ymm_set.ymm[reg - fpu_ymm0].bytes + sizeof(RegisterContext_x86_64::XMMReg),
-               user.i387.xstate.fxsave.xmm[reg - fpu_ymm0].bytes,
+      ::memcpy(m_ymm_set.ymm[reg - fpu_ymm0].bytes + sizeof(RegisterContext_x86_64::XMMReg),
+               m_fpr.xstate.fxsave.xmm[reg - fpu_ymm0].bytes,
                sizeof(RegisterContext_x86_64::XMMReg));
-      ::memcpy(user.i387.ymm_set.ymm[reg - fpu_ymm0].bytes,
-               user.i387.xstate.xsave.ymmh[reg - fpu_ymm0].bytes,
+      ::memcpy(m_ymm_set.ymm[reg - fpu_ymm0].bytes,
+               m_fpr.xstate.xsave.ymmh[reg - fpu_ymm0].bytes,
                sizeof(RegisterContext_x86_64::YMMHReg));
       return true;
     }
@@ -661,7 +658,7 @@ RegisterContext_x86_64::IsRegisterSetAvailable(size_t set_index)
 {
     // Note: Extended register sets are assumed to be at the end of g_reg_sets...
     size_t num_sets = k_num_register_sets - k_num_extended_register_sets;
-    if (user.fpr_type == eXSAVE) // ...and to start with AVX registers.
+    if (m_fpr_type == eXSAVE) // ...and to start with AVX registers.
         ++num_sets;
 
     return (set_index < num_sets);
@@ -672,7 +669,7 @@ RegisterContext_x86_64::ReadRegister(const RegisterInfo *reg_info, RegisterValue
 {
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
 
-    if (IsFPR(reg, user.fpr_type)) {
+    if (IsFPR(reg, m_fpr_type)) {
         if (!ReadFPR())
             return false;
     }
@@ -686,15 +683,15 @@ RegisterContext_x86_64::ReadRegister(const RegisterInfo *reg_info, RegisterValue
 
         if (byte_order != ByteOrder::eByteOrderInvalid) {
             if (reg >= fpu_stmm0 && reg <= fpu_stmm7) {
-               value.SetBytes(user.i387.xstate.fxsave.stmm[reg - fpu_stmm0].bytes, reg_info->byte_size, byte_order);
+               value.SetBytes(m_fpr.xstate.fxsave.stmm[reg - fpu_stmm0].bytes, reg_info->byte_size, byte_order);
             }
             if (reg >= fpu_xmm0 && reg <= fpu_xmm15) {
-                value.SetBytes(user.i387.xstate.fxsave.xmm[reg - fpu_xmm0].bytes, reg_info->byte_size, byte_order);
+                value.SetBytes(m_fpr.xstate.fxsave.xmm[reg - fpu_xmm0].bytes, reg_info->byte_size, byte_order);
             }
             if (reg >= fpu_ymm0 && reg <= fpu_ymm15) {
                 // Concatenate ymm using the register halves in xmm.bytes and ymmh.bytes
-                if (user.fpr_type == eXSAVE && CopyXSTATEtoYMM(reg, user, byte_order))
-                    value.SetBytes(user.i387.ymm_set.ymm[reg - fpu_ymm0].bytes, reg_info->byte_size, byte_order);
+                if (m_fpr_type == eXSAVE && CopyXSTATEtoYMM(reg, byte_order))
+                    value.SetBytes(m_ymm_set.ymm[reg - fpu_ymm0].bytes, reg_info->byte_size, byte_order);
                 else
                     return false;
             }
@@ -709,28 +706,28 @@ RegisterContext_x86_64::ReadRegister(const RegisterInfo *reg_info, RegisterValue
     default:
         return false;
     case fpu_dp:
-        value = user.i387.xstate.fxsave.dp;
+        value = m_fpr.xstate.fxsave.dp;
         break;
     case fpu_fcw:
-        value = user.i387.xstate.fxsave.fcw;
+        value = m_fpr.xstate.fxsave.fcw;
         break;
     case fpu_fsw:
-        value = user.i387.xstate.fxsave.fsw;
+        value = m_fpr.xstate.fxsave.fsw;
         break;
     case fpu_ip:
-        value = user.i387.xstate.fxsave.ip;
+        value = m_fpr.xstate.fxsave.ip;
         break;
     case fpu_fop:
-        value = user.i387.xstate.fxsave.fop;
+        value = m_fpr.xstate.fxsave.fop;
         break;
     case fpu_ftw:
-        value = user.i387.xstate.fxsave.ftw;
+        value = m_fpr.xstate.fxsave.ftw;
         break;
     case fpu_mxcsr:
-        value = user.i387.xstate.fxsave.mxcsr;
+        value = m_fpr.xstate.fxsave.mxcsr;
         break;
     case fpu_mxcsrmask:
-        value = user.i387.xstate.fxsave.mxcsrmask;
+        value = m_fpr.xstate.fxsave.mxcsrmask;
         break;
     }
     return true;
@@ -747,22 +744,22 @@ RegisterContext_x86_64::ReadAllRegisterValues(DataBufferSP &data_sp)
         success = dst != 0;
 
         if (success) {
-            ::memcpy (dst, &user.regs, GetGPRSize());
+            ::memcpy (dst, &m_gpr, GetGPRSize());
             dst += GetGPRSize();
         }
-        if (user.fpr_type == eFXSAVE)
-            ::memcpy (dst, &user.i387.xstate.fxsave, sizeof(user.i387.xstate.fxsave));
+        if (m_fpr_type == eFXSAVE)
+            ::memcpy (dst, &m_fpr.xstate.fxsave, sizeof(m_fpr.xstate.fxsave));
         
-        if (user.fpr_type == eXSAVE) {
+        if (m_fpr_type == eXSAVE) {
             ByteOrder byte_order = GetByteOrder();
 
             // Assemble the YMM register content from the register halves.
             for (uint32_t reg = fpu_ymm0; success && reg <= fpu_ymm15; ++reg)
-                success = CopyXSTATEtoYMM(reg, user, byte_order);
+                success = CopyXSTATEtoYMM(reg, byte_order);
 
             if (success) {
                 // Copy the extended register state including the assembled ymm registers.
-                ::memcpy (dst, &user.i387, sizeof(user.i387));
+                ::memcpy (dst, &m_fpr, sizeof(m_fpr));
             }
         }
     }
@@ -779,7 +776,7 @@ RegisterContext_x86_64::WriteRegister(const lldb_private::RegisterInfo *reg_info
         return monitor.WriteRegisterValue(m_thread.GetID(), GetRegisterOffset(reg), value);
     }
 
-    if (IsFPR(reg, user.fpr_type)) {
+    if (IsFPR(reg, m_fpr_type)) {
         switch (reg)
         {
         default:
@@ -787,49 +784,49 @@ RegisterContext_x86_64::WriteRegister(const lldb_private::RegisterInfo *reg_info
                 return false;
 
             if (reg >= fpu_stmm0 && reg <= fpu_stmm7)
-               ::memcpy (user.i387.xstate.fxsave.stmm[reg - fpu_stmm0].bytes, value.GetBytes(), value.GetByteSize());
+               ::memcpy (m_fpr.xstate.fxsave.stmm[reg - fpu_stmm0].bytes, value.GetBytes(), value.GetByteSize());
             
             if (reg >= fpu_xmm0 && reg <= fpu_xmm15)
-               ::memcpy (user.i387.xstate.fxsave.xmm[reg - fpu_xmm0].bytes, value.GetBytes(), value.GetByteSize());
+               ::memcpy (m_fpr.xstate.fxsave.xmm[reg - fpu_xmm0].bytes, value.GetBytes(), value.GetByteSize());
             
             if (reg >= fpu_ymm0 && reg <= fpu_ymm15) {
-               if (user.fpr_type != eXSAVE)
+               if (m_fpr_type != eXSAVE)
                    return false; // the target processor does not support AVX
 
                // Store ymm register content, and split into the register halves in xmm.bytes and ymmh.bytes
-               ::memcpy (user.i387.ymm_set.ymm[reg - fpu_ymm0].bytes, value.GetBytes(), value.GetByteSize());
-               if (false == CopyYMMtoXSTATE(reg, user, GetByteOrder()))
+               ::memcpy (m_ymm_set.ymm[reg - fpu_ymm0].bytes, value.GetBytes(), value.GetByteSize());
+               if (false == CopyYMMtoXSTATE(reg, GetByteOrder()))
                    return false;
             }
             break;
         case fpu_dp:
-            user.i387.xstate.fxsave.dp = value.GetAsUInt64();
+            m_fpr.xstate.fxsave.dp = value.GetAsUInt64();
             break;
         case fpu_fcw:
-            user.i387.xstate.fxsave.fcw = value.GetAsUInt16();
+            m_fpr.xstate.fxsave.fcw = value.GetAsUInt16();
             break;
         case fpu_fsw:
-            user.i387.xstate.fxsave.fsw = value.GetAsUInt16();
+            m_fpr.xstate.fxsave.fsw = value.GetAsUInt16();
             break;
         case fpu_ip:
-            user.i387.xstate.fxsave.ip = value.GetAsUInt64();
+            m_fpr.xstate.fxsave.ip = value.GetAsUInt64();
             break;
         case fpu_fop:
-            user.i387.xstate.fxsave.fop = value.GetAsUInt16();
+            m_fpr.xstate.fxsave.fop = value.GetAsUInt16();
             break;
         case fpu_ftw:
-            user.i387.xstate.fxsave.ftw = value.GetAsUInt16();
+            m_fpr.xstate.fxsave.ftw = value.GetAsUInt16();
             break;
         case fpu_mxcsr:
-            user.i387.xstate.fxsave.mxcsr = value.GetAsUInt32();
+            m_fpr.xstate.fxsave.mxcsr = value.GetAsUInt32();
             break;
         case fpu_mxcsrmask:
-            user.i387.xstate.fxsave.mxcsrmask = value.GetAsUInt32();
+            m_fpr.xstate.fxsave.mxcsrmask = value.GetAsUInt32();
             break;
         }
         if (WriteFPR()) {
             if (IsAVX(reg))
-                return CopyYMMtoXSTATE(reg, user, GetByteOrder());
+                return CopyYMMtoXSTATE(reg, GetByteOrder());
             return true;
         }
     }
@@ -844,25 +841,25 @@ RegisterContext_x86_64::WriteAllRegisterValues(const DataBufferSP &data_sp)
     {
         uint8_t *src = data_sp->GetBytes();
         if (src) {
-            ::memcpy (&user.regs, src, GetGPRSize());
+            ::memcpy (&m_gpr, src, GetGPRSize());
 
             if (WriteGPR()) {
                 src += GetGPRSize();
-                if (user.fpr_type == eFXSAVE)
-                    ::memcpy (&user.i387.xstate.fxsave, src, sizeof(user.i387.xstate.fxsave));
-                if (user.fpr_type == eXSAVE)
-                    ::memcpy (&user.i387.xstate.xsave, src, sizeof(user.i387.xstate.xsave));
+                if (m_fpr_type == eFXSAVE)
+                    ::memcpy (&m_fpr.xstate.fxsave, src, sizeof(m_fpr.xstate.fxsave));
+                if (m_fpr_type == eXSAVE)
+                    ::memcpy (&m_fpr.xstate.xsave, src, sizeof(m_fpr.xstate.xsave));
 
                 success = WriteFPR();
                 if (success) {
                     success = true;
 
-                    if (user.fpr_type == eXSAVE) {
+                    if (m_fpr_type == eXSAVE) {
                         ByteOrder byte_order = GetByteOrder();
 
                         // Parse the YMM register content from the register halves.
                         for (uint32_t reg = fpu_ymm0; success && reg <= fpu_ymm15; ++reg)
-                            success = CopyYMMtoXSTATE(reg, user, byte_order);
+                            success = CopyYMMtoXSTATE(reg, byte_order);
                     }
                 }
             }
@@ -1212,18 +1209,18 @@ bool
 RegisterContext_x86_64::ReadGPR()
 {
      ProcessMonitor &monitor = GetMonitor();
-     return monitor.ReadGPR(m_thread.GetID(), &user.regs, GetGPRSize());
+     return monitor.ReadGPR(m_thread.GetID(), &m_gpr, GetGPRSize());
 }
 
 bool
 RegisterContext_x86_64::ReadFPR()
 {
     ProcessMonitor &monitor = GetMonitor();
-    if (user.fpr_type == eFXSAVE)
-        return monitor.ReadFPR(m_thread.GetID(), &user.i387.xstate.fxsave, sizeof(user.i387.xstate.fxsave));
+    if (m_fpr_type == eFXSAVE)
+        return monitor.ReadFPR(m_thread.GetID(), &m_fpr.xstate.fxsave, sizeof(m_fpr.xstate.fxsave));
 
-    if (user.fpr_type == eXSAVE)
-        return monitor.ReadRegisterSet(m_thread.GetID(), &user.iovec, sizeof(user.i387.xstate.xsave), NT_X86_XSTATE);
+    if (m_fpr_type == eXSAVE)
+        return monitor.ReadRegisterSet(m_thread.GetID(), &m_iovec, sizeof(m_fpr.xstate.xsave), NT_X86_XSTATE);
     return false;
 }
 
@@ -1231,18 +1228,18 @@ bool
 RegisterContext_x86_64::WriteGPR()
 {
     ProcessMonitor &monitor = GetMonitor();
-    return monitor.WriteGPR(m_thread.GetID(), &user.regs, GetGPRSize());
+    return monitor.WriteGPR(m_thread.GetID(), &m_gpr, GetGPRSize());
 }
 
 bool
 RegisterContext_x86_64::WriteFPR()
 {
     ProcessMonitor &monitor = GetMonitor();
-    if (user.fpr_type == eFXSAVE)
-        return monitor.WriteFPR(m_thread.GetID(), &user.i387.xstate.fxsave, sizeof(user.i387.xstate.fxsave));
+    if (m_fpr_type == eFXSAVE)
+        return monitor.WriteFPR(m_thread.GetID(), &m_fpr.xstate.fxsave, sizeof(m_fpr.xstate.fxsave));
 
-    if (user.fpr_type == eXSAVE)
-        return monitor.WriteRegisterSet(m_thread.GetID(), &user.iovec, sizeof(user.i387.xstate.xsave), NT_X86_XSTATE);
+    if (m_fpr_type == eXSAVE)
+        return monitor.WriteRegisterSet(m_thread.GetID(), &m_iovec, sizeof(m_fpr.xstate.xsave), NT_X86_XSTATE);
     return false;
 }
 
