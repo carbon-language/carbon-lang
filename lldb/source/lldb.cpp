@@ -48,7 +48,6 @@
 #if defined (__APPLE__)
 #include "Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderMacOSXDYLD.h"
 #include "Plugins/DynamicLoader/Darwin-Kernel/DynamicLoaderDarwinKernel.h"
-#include "Plugins/OperatingSystem/Darwin-Kernel/OperatingSystemDarwinKernel.h"
 #include "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV1.h"
 #include "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV2.h"
 #include "Plugins/ObjectContainer/Universal-Mach-O/ObjectContainerUniversalMachO.h"
@@ -120,7 +119,6 @@ lldb_private::Initialize ()
         //----------------------------------------------------------------------
         DynamicLoaderMacOSXDYLD::Initialize();
         DynamicLoaderDarwinKernel::Initialize();
-        OperatingSystemDarwinKernel::Initialize();
         AppleObjCRuntimeV2::Initialize();
         AppleObjCRuntimeV1::Initialize();
         ObjectContainerUniversalMachO::Initialize();
@@ -197,7 +195,6 @@ lldb_private::Terminate ()
 #if defined (__APPLE__)
     DynamicLoaderMacOSXDYLD::Terminate();
     DynamicLoaderDarwinKernel::Terminate();
-    OperatingSystemDarwinKernel::Terminate();
     AppleObjCRuntimeV2::Terminate();
     AppleObjCRuntimeV1::Terminate();
     ObjectContainerUniversalMachO::Terminate();
