@@ -881,6 +881,50 @@ public:
   bool isDead() const { return IsDead; }
 };
 
+static PathDiagnosticLocation cleanUpLocation(PathDiagnosticLocation L,
+                                              const LocationContext *LC,
+                                              bool firstCharOnly = false) {
+  if (const Stmt *S = L.asStmt()) {
+    const Stmt *Original = S;
+    while (1) {
+      // Adjust the location for some expressions that are best referenced
+      // by one of their subexpressions.
+      switch (S->getStmtClass()) {
+        default:
+          break;
+        case Stmt::ParenExprClass:
+        case Stmt::GenericSelectionExprClass:
+          S = cast<Expr>(S)->IgnoreParens();
+          firstCharOnly = true;
+          continue;
+        case Stmt::BinaryConditionalOperatorClass:
+        case Stmt::ConditionalOperatorClass:
+          S = cast<AbstractConditionalOperator>(S)->getCond();
+          firstCharOnly = true;
+          continue;
+        case Stmt::ChooseExprClass:
+          S = cast<ChooseExpr>(S)->getCond();
+          firstCharOnly = true;
+          continue;
+        case Stmt::BinaryOperatorClass:
+          S = cast<BinaryOperator>(S)->getLHS();
+          firstCharOnly = true;
+          continue;
+      }
+
+      break;
+    }
+
+    if (S != Original)
+      L = PathDiagnosticLocation(S, L.getManager(), LC);
+  }
+
+  if (firstCharOnly)
+    L  = PathDiagnosticLocation::createSingleLocation(L);
+  
+  return L;
+}
+
 class EdgeBuilder {
   std::vector<ContextLocation> CLocs;
   typedef std::vector<ContextLocation>::iterator iterator;
@@ -895,53 +939,12 @@ class EdgeBuilder {
 
   PathDiagnosticLocation getContextLocation(const PathDiagnosticLocation &L);
 
-  PathDiagnosticLocation cleanUpLocation(PathDiagnosticLocation L,
-                                         bool firstCharOnly = false) {
-    if (const Stmt *S = L.asStmt()) {
-      const Stmt *Original = S;
-      while (1) {
-        // Adjust the location for some expressions that are best referenced
-        // by one of their subexpressions.
-        switch (S->getStmtClass()) {
-          default:
-            break;
-          case Stmt::ParenExprClass:
-          case Stmt::GenericSelectionExprClass:
-            S = cast<Expr>(S)->IgnoreParens();
-            firstCharOnly = true;
-            continue;
-          case Stmt::BinaryConditionalOperatorClass:
-          case Stmt::ConditionalOperatorClass:
-            S = cast<AbstractConditionalOperator>(S)->getCond();
-            firstCharOnly = true;
-            continue;
-          case Stmt::ChooseExprClass:
-            S = cast<ChooseExpr>(S)->getCond();
-            firstCharOnly = true;
-            continue;
-          case Stmt::BinaryOperatorClass:
-            S = cast<BinaryOperator>(S)->getLHS();
-            firstCharOnly = true;
-            continue;
-        }
 
-        break;
-      }
-
-      if (S != Original)
-        L = PathDiagnosticLocation(S, L.getManager(), PDB.LC);
-    }
-
-    if (firstCharOnly)
-      L  = PathDiagnosticLocation::createSingleLocation(L);
-
-    return L;
-  }
 
   void popLocation() {
     if (!CLocs.back().isDead() && CLocs.back().asLocation().isFileID()) {
       // For contexts, we only one the first character as the range.
-      rawAddEdge(cleanUpLocation(CLocs.back(), true));
+      rawAddEdge(cleanUpLocation(CLocs.back(), PDB.LC, true));
     }
     CLocs.pop_back();
   }
@@ -1055,8 +1058,8 @@ void EdgeBuilder::rawAddEdge(PathDiagnosticLocation NewLoc) {
     return;
   }
 
-  const PathDiagnosticLocation &NewLocClean = cleanUpLocation(NewLoc);
-  const PathDiagnosticLocation &PrevLocClean = cleanUpLocation(PrevLoc);
+  const PathDiagnosticLocation &NewLocClean = cleanUpLocation(NewLoc, PDB.LC);
+  const PathDiagnosticLocation &PrevLocClean = cleanUpLocation(PrevLoc, PDB.LC);
 
   if (PrevLocClean.asLocation().isInvalid()) {
     PrevLoc = NewLoc;
