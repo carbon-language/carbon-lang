@@ -1,0 +1,46 @@
+RUN: llvm-readobj -arm-buildattrs %p/Inputs/trivial-object-test.elf-arm \
+RUN:         | FileCheck %s -check-prefix=SMALL
+RUN: llvm-readobj -arm-buildattrs %p/Inputs/arm-attributes.elf-arm \
+RUN:         | FileCheck %s -check-prefix=LARGE
+
+SMALL: ARMBuildAttributes {
+SMALL: Tag_CPU_name: Cortex-A8
+SMALL: Tag_CPU_arch: 10
+SMALL: Tag_ARM_ISA_use: 1
+SMALL: Tag_THUMB_ISA_use: 2
+SMALL: Tag_FP_arch: 3
+SMALL: Tag_Advanced_SIMD_arch: 1
+SMALL: Tag_ABI_FP_denormal: 1
+SMALL: Tag_ABI_FP_exceptions: 1
+SMALL: Tag_ABI_FP_number_model: 3
+SMALL: Tag_ABI_align8_needed: 1
+SMALL: Tag_ABI_align8_preserved: 1
+SMALL: Tag_ABI_HardFP_use: 3
+SMALL: Tag_ABI_VFP_args: 1
+SMALL: Tag_DIV_use: 1
+SMALL: Tag_Virtualization_use: 1
+
+LARGE: ARMBuildAttributes {
+LARGE: Tag_CPU_name: iwmmxt2
+LARGE: Tag_CPU_arch: 4
+LARGE: Tag_ARM_ISA_use: 1
+LARGE: Tag_THUMB_ISA_use: 1
+LARGE: Tag_WMMX_arch: 2
+LARGE: Tag_Advanced_SIMD_arch: 1
+LARGE: Tag_ABI_PCS_RW_data: 3
+LARGE: Tag_ABI_PCS_GOT_use: 2
+LARGE: Tag_ABI_PCS_wchar_t: 4
+LARGE: Tag_ABI_FP_rounding: 1
+LARGE: Tag_ABI_FP_denormal: 1
+LARGE: Tag_ABI_FP_exceptions: 1
+LARGE: Tag_ABI_FP_number_model: 3
+LARGE: Tag_ABI_align8_needed: 1
+LARGE: Tag_ABI_align8_preserved: 1
+LARGE: Tag_ABI_enum_size: 2
+LARGE: Tag_ABI_HardFP_use: 3
+LARGE: Tag_ABI_VFP_args: 1
+LARGE: Tag_ABI_optimization_goals: 1
+LARGE: Tag_CPU_unaligned_access: 1
+LARGE: Tag_FP_HP_extension: 1
+LARGE: Tag_DIV_use: 1
+LARGE: Tag_T2EE_use: 1

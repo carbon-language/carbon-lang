@@ -128,6 +128,10 @@ namespace opts {
   // -expand-relocs
   cl::opt<bool> ExpandRelocs("expand-relocs",
     cl::desc("Expand each shown relocation to multiple lines"));
+
+  // -arm-buildattrs
+  cl::opt<bool> ArmBuildAttrs("arm-buildattrs",
+    cl::desc("Display ARM ELF build attributes"));
 } // namespace opts
 
 namespace llvm {
@@ -221,6 +225,8 @@ static void dumpObject(const ObjectFile *Obj) {
     Dumper->printNeededLibraries();
   if (opts::ProgramHeaders)
     Dumper->printProgramHeaders();
+  if (opts::ArmBuildAttrs)
+    Dumper->printARMBuildAttributes();
 }
 
 
