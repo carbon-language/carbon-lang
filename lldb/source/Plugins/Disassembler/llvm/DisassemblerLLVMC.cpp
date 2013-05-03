@@ -615,9 +615,19 @@ DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch, const char *flavor_s
     if (arch.GetTriple().getArch() == llvm::Triple::arm)
     {
         ArchSpec thumb_arch(arch);
-        thumb_arch.GetTriple().setArchName(llvm::StringRef("thumbv7"));
+        std::string thumb_arch_name (thumb_arch.GetTriple().getArchName().str());
+        // Replace "arm" with "thumb" so we get all thumb variants correct
+        if (thumb_arch_name.size() > 3)
+        {
+            thumb_arch_name.erase(0,3);
+            thumb_arch_name.insert(0, "thumb");
+        }
+        else
+        {
+            thumb_arch_name = "thumbv7";
+        }
+        thumb_arch.GetTriple().setArchName(llvm::StringRef(thumb_arch_name.c_str()));
         std::string thumb_triple(thumb_arch.GetTriple().getTriple());
-
         m_alternate_disasm_ap.reset(new LLVMCDisassembler(thumb_triple.c_str(), flavor, *this));
         if (!m_alternate_disasm_ap->IsValid())
         {
