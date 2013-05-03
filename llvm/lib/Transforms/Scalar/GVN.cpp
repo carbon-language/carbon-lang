@@ -498,6 +498,75 @@ void ValueTable::verifyRemoved(const Value *V) const {
 //===----------------------------------------------------------------------===//
 
 namespace {
+  class GVN;
+  struct AvailableValueInBlock {
+    /// BB - The basic block in question.
+    BasicBlock *BB;
+    enum ValType {
+      SimpleVal,  // A simple offsetted value that is accessed.
+      LoadVal,    // A value produced by a load.
+      MemIntrin   // A memory intrinsic which is loaded from.
+    };
+  
+    /// V - The value that is live out of the block.
+    PointerIntPair<Value *, 2, ValType> Val;
+  
+    /// Offset - The byte offset in Val that is interesting for the load query.
+    unsigned Offset;
+  
+    static AvailableValueInBlock get(BasicBlock *BB, Value *V,
+                                     unsigned Offset = 0) {
+      AvailableValueInBlock Res;
+      Res.BB = BB;
+      Res.Val.setPointer(V);
+      Res.Val.setInt(SimpleVal);
+      Res.Offset = Offset;
+      return Res;
+    }
+  
+    static AvailableValueInBlock getMI(BasicBlock *BB, MemIntrinsic *MI,
+                                       unsigned Offset = 0) {
+      AvailableValueInBlock Res;
+      Res.BB = BB;
+      Res.Val.setPointer(MI);
+      Res.Val.setInt(MemIntrin);
+      Res.Offset = Offset;
+      return Res;
+    }
+  
+    static AvailableValueInBlock getLoad(BasicBlock *BB, LoadInst *LI,
+                                         unsigned Offset = 0) {
+      AvailableValueInBlock Res;
+      Res.BB = BB;
+      Res.Val.setPointer(LI);
+      Res.Val.setInt(LoadVal);
+      Res.Offset = Offset;
+      return Res;
+    }
+  
+    bool isSimpleValue() const { return Val.getInt() == SimpleVal; }
+    bool isCoercedLoadValue() const { return Val.getInt() == LoadVal; }
+    bool isMemIntrinValue() const { return Val.getInt() == MemIntrin; }
+  
+    Value *getSimpleValue() const {
+      assert(isSimpleValue() && "Wrong accessor");
+      return Val.getPointer();
+    }
+  
+    LoadInst *getCoercedLoadValue() const {
+      assert(isCoercedLoadValue() && "Wrong accessor");
+      return cast<LoadInst>(Val.getPointer());
+    }
+  
+    MemIntrinsic *getMemIntrinValue() const {
+      assert(isMemIntrinValue() && "Wrong accessor");
+      return cast<MemIntrinsic>(Val.getPointer());
+    }
+  
+    /// MaterializeAdjustedValue - Emit code into this block to adjust the value
+    /// defined here to the specified type.  This handles various coercion cases.
+    Value *MaterializeAdjustedValue(Type *LoadTy, GVN &gvn) const;
+  };
 
   class GVN : public FunctionPass {
     bool NoLoads;
@@ -519,6 +588,11 @@ namespace {
     BumpPtrAllocator TableAllocator;
 
     SmallVector<Instruction*, 8> InstrsToErase;
+
+    typedef SmallVector<NonLocalDepResult, 64> LoadDepVect;
+    typedef SmallVector<AvailableValueInBlock, 64> AvailValInBlkVect;
+    typedef SmallVector<BasicBlock*, 64> UnavailBlkVect;
+
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit GVN(bool noloads = false)
@@ -599,11 +673,17 @@ namespace {
     }
 
 
-    // Helper fuctions
-    // FIXME: eliminate or document these better
+    // Helper fuctions of redundant load elimination 
     bool processLoad(LoadInst *L);
-    bool processInstruction(Instruction *I);
     bool processNonLocalLoad(LoadInst *L);
+    void AnalyzeLoadAvailability(LoadInst *LI, LoadDepVect &Deps, 
+                                 AvailValInBlkVect &ValuesPerBlock,
+                                 UnavailBlkVect &UnavailableBlocks);
+    bool PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock, 
+                        UnavailBlkVect &UnavailableBlocks);
+
+    // Other helper routines
+    bool processInstruction(Instruction *I);
     bool processBlock(BasicBlock *BB);
     void dump(DenseMap<uint32_t, Value*> &d);
     bool iterateOnFunction(Function &F);
@@ -1159,114 +1239,6 @@ static Value *GetMemInstValueForLoad(MemIntrinsic *SrcInst, unsigned Offset,
   return ConstantFoldLoadFromConstPtr(Src, &TD);
 }
 
-namespace {
-
-struct AvailableValueInBlock {
-  /// BB - The basic block in question.
-  BasicBlock *BB;
-  enum ValType {
-    SimpleVal,  // A simple offsetted value that is accessed.
-    LoadVal,    // A value produced by a load.
-    MemIntrin   // A memory intrinsic which is loaded from.
-  };
-
-  /// V - The value that is live out of the block.
-  PointerIntPair<Value *, 2, ValType> Val;
-
-  /// Offset - The byte offset in Val that is interesting for the load query.
-  unsigned Offset;
-
-  static AvailableValueInBlock get(BasicBlock *BB, Value *V,
-                                   unsigned Offset = 0) {
-    AvailableValueInBlock Res;
-    Res.BB = BB;
-    Res.Val.setPointer(V);
-    Res.Val.setInt(SimpleVal);
-    Res.Offset = Offset;
-    return Res;
-  }
-
-  static AvailableValueInBlock getMI(BasicBlock *BB, MemIntrinsic *MI,
-                                     unsigned Offset = 0) {
-    AvailableValueInBlock Res;
-    Res.BB = BB;
-    Res.Val.setPointer(MI);
-    Res.Val.setInt(MemIntrin);
-    Res.Offset = Offset;
-    return Res;
-  }
-
-  static AvailableValueInBlock getLoad(BasicBlock *BB, LoadInst *LI,
-                                       unsigned Offset = 0) {
-    AvailableValueInBlock Res;
-    Res.BB = BB;
-    Res.Val.setPointer(LI);
-    Res.Val.setInt(LoadVal);
-    Res.Offset = Offset;
-    return Res;
-  }
-
-  bool isSimpleValue() const { return Val.getInt() == SimpleVal; }
-  bool isCoercedLoadValue() const { return Val.getInt() == LoadVal; }
-  bool isMemIntrinValue() const { return Val.getInt() == MemIntrin; }
-
-  Value *getSimpleValue() const {
-    assert(isSimpleValue() && "Wrong accessor");
-    return Val.getPointer();
-  }
-
-  LoadInst *getCoercedLoadValue() const {
-    assert(isCoercedLoadValue() && "Wrong accessor");
-    return cast<LoadInst>(Val.getPointer());
-  }
-
-  MemIntrinsic *getMemIntrinValue() const {
-    assert(isMemIntrinValue() && "Wrong accessor");
-    return cast<MemIntrinsic>(Val.getPointer());
-  }
-
-  /// MaterializeAdjustedValue - Emit code into this block to adjust the value
-  /// defined here to the specified type.  This handles various coercion cases.
-  Value *MaterializeAdjustedValue(Type *LoadTy, GVN &gvn) const {
-    Value *Res;
-    if (isSimpleValue()) {
-      Res = getSimpleValue();
-      if (Res->getType() != LoadTy) {
-        const DataLayout *TD = gvn.getDataLayout();
-        assert(TD && "Need target data to handle type mismatch case");
-        Res = GetStoreValueForLoad(Res, Offset, LoadTy, BB->getTerminator(),
-                                   *TD);
-
-        DEBUG(dbgs() << "GVN COERCED NONLOCAL VAL:\nOffset: " << Offset << "  "
-                     << *getSimpleValue() << '\n'
-                     << *Res << '\n' << "\n\n\n");
-      }
-    } else if (isCoercedLoadValue()) {
-      LoadInst *Load = getCoercedLoadValue();
-      if (Load->getType() == LoadTy && Offset == 0) {
-        Res = Load;
-      } else {
-        Res = GetLoadValueForLoad(Load, Offset, LoadTy, BB->getTerminator(),
-                                  gvn);
-
-        DEBUG(dbgs() << "GVN COERCED NONLOCAL LOAD:\nOffset: " << Offset << "  "
-                     << *getCoercedLoadValue() << '\n'
-                     << *Res << '\n' << "\n\n\n");
-      }
-    } else {
-      const DataLayout *TD = gvn.getDataLayout();
-      assert(TD && "Need target data to handle type mismatch case");
-      Res = GetMemInstValueForLoad(getMemIntrinValue(), Offset,
-                                   LoadTy, BB->getTerminator(), *TD);
-      DEBUG(dbgs() << "GVN COERCED NONLOCAL MEM INTRIN:\nOffset: " << Offset
-                   << "  " << *getMemIntrinValue() << '\n'
-                   << *Res << '\n' << "\n\n\n");
-    }
-    return Res;
-  }
-};
-
-} // end anonymous namespace
 
 /// ConstructSSAForLoadSet - Given a set of loads specified by ValuesPerBlock,
 /// construct SSA form, allowing us to eliminate LI.  This returns the value
@@ -1323,48 +1295,59 @@ static Value *ConstructSSAForLoadSet(LoadInst *LI,
   return V;
 }
 
+Value *AvailableValueInBlock::MaterializeAdjustedValue(Type *LoadTy, GVN &gvn) const {
+  Value *Res;
+  if (isSimpleValue()) {
+    Res = getSimpleValue();
+    if (Res->getType() != LoadTy) {
+      const DataLayout *TD = gvn.getDataLayout();
+      assert(TD && "Need target data to handle type mismatch case");
+      Res = GetStoreValueForLoad(Res, Offset, LoadTy, BB->getTerminator(),
+                                 *TD);
+  
+      DEBUG(dbgs() << "GVN COERCED NONLOCAL VAL:\nOffset: " << Offset << "  "
+                   << *getSimpleValue() << '\n'
+                   << *Res << '\n' << "\n\n\n");
+    }
+  } else if (isCoercedLoadValue()) {
+    LoadInst *Load = getCoercedLoadValue();
+    if (Load->getType() == LoadTy && Offset == 0) {
+      Res = Load;
+    } else {
+      Res = GetLoadValueForLoad(Load, Offset, LoadTy, BB->getTerminator(),
+                                gvn);
+  
+      DEBUG(dbgs() << "GVN COERCED NONLOCAL LOAD:\nOffset: " << Offset << "  "
+                   << *getCoercedLoadValue() << '\n'
+                   << *Res << '\n' << "\n\n\n");
+    }
+  } else {
+    const DataLayout *TD = gvn.getDataLayout();
+    assert(TD && "Need target data to handle type mismatch case");
+    Res = GetMemInstValueForLoad(getMemIntrinValue(), Offset,
+                                 LoadTy, BB->getTerminator(), *TD);
+    DEBUG(dbgs() << "GVN COERCED NONLOCAL MEM INTRIN:\nOffset: " << Offset
+                 << "  " << *getMemIntrinValue() << '\n'
+                 << *Res << '\n' << "\n\n\n");
+  }
+  return Res;
+}
+
 static bool isLifetimeStart(const Instruction *Inst) {
   if (const IntrinsicInst* II = dyn_cast<IntrinsicInst>(Inst))
     return II->getIntrinsicID() == Intrinsic::lifetime_start;
   return false;
 }
 
-/// processNonLocalLoad - Attempt to eliminate a load whose dependencies are
-/// non-local by performing PHI construction.
-bool GVN::processNonLocalLoad(LoadInst *LI) {
-  // Find the non-local dependencies of the load.
-  SmallVector<NonLocalDepResult, 64> Deps;
-  AliasAnalysis::Location Loc = VN.getAliasAnalysis()->getLocation(LI);
-  MD->getNonLocalPointerDependency(Loc, true, LI->getParent(), Deps);
-  //DEBUG(dbgs() << "INVESTIGATING NONLOCAL LOAD: "
-  //             << Deps.size() << *LI << '\n');
-
-  // If we had to process more than one hundred blocks to find the
-  // dependencies, this load isn't worth worrying about.  Optimizing
-  // it will be too expensive.
-  unsigned NumDeps = Deps.size();
-  if (NumDeps > 100)
-    return false;
-
-  // If we had a phi translation failure, we'll have a single entry which is a
-  // clobber in the current block.  Reject this early.
-  if (NumDeps == 1 &&
-      !Deps[0].getResult().isDef() && !Deps[0].getResult().isClobber()) {
-    DEBUG(
-      dbgs() << "GVN: non-local load ";
-      WriteAsOperand(dbgs(), LI);
-      dbgs() << " has unknown dependencies\n";
-    );
-    return false;
-  }
+void GVN::AnalyzeLoadAvailability(LoadInst *LI, LoadDepVect &Deps, 
+                                  AvailValInBlkVect &ValuesPerBlock,
+                                  UnavailBlkVect &UnavailableBlocks) {
 
   // Filter out useless results (non-locals, etc).  Keep track of the blocks
   // where we have a value available in repl, also keep track of whether we see
   // dependencies that produce an unknown value for the load (such as a call
   // that could potentially clobber the load).
-  SmallVector<AvailableValueInBlock, 64> ValuesPerBlock;
-  SmallVector<BasicBlock*, 64> UnavailableBlocks;
-
+  unsigned NumDeps = Deps.size();
   for (unsigned i = 0, e = NumDeps; i != e; ++i) {
     BasicBlock *DepBB = Deps[i].getBB();
     MemDepResult DepInfo = Deps[i].getResult();
@@ -1480,35 +1463,11 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
     }
 
     UnavailableBlocks.push_back(DepBB);
-    continue;
   }
+}
 
-  // If we have no predecessors that produce a known value for this load, exit
-  // early.
-  if (ValuesPerBlock.empty()) return false;
-
-  // If all of the instructions we depend on produce a known value for this
-  // load, then it is fully redundant and we can use PHI insertion to compute
-  // its value.  Insert PHIs and remove the fully redundant value now.
-  if (UnavailableBlocks.empty()) {
-    DEBUG(dbgs() << "GVN REMOVING NONLOCAL LOAD: " << *LI << '\n');
-
-    // Perform PHI construction.
-    Value *V = ConstructSSAForLoadSet(LI, ValuesPerBlock, *this);
-    LI->replaceAllUsesWith(V);
-
-    if (isa<PHINode>(V))
-      V->takeName(LI);
-    if (V->getType()->getScalarType()->isPointerTy())
-      MD->invalidateCachedPointerInfo(V);
-    markInstructionForDeletion(LI);
-    ++NumGVNLoad;
-    return true;
-  }
-
-  if (!EnablePRE || !EnableLoadPRE)
-    return false;
-
+bool GVN::PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock, 
+                         UnavailBlkVect &UnavailableBlocks) {
   // Okay, we have *some* definitions of the value.  This means that the value
   // is available in some of our (transitive) predecessors.  Lets think about
   // doing PRE of this load.  This will involve inserting a new load into the
@@ -1689,6 +1648,72 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
   ++NumPRELoad;
   return true;
 }
+
+/// processNonLocalLoad - Attempt to eliminate a load whose dependencies are
+/// non-local by performing PHI construction.
+bool GVN::processNonLocalLoad(LoadInst *LI) {
+  // Step 1: Find the non-local dependencies of the load.
+  LoadDepVect Deps;
+  AliasAnalysis::Location Loc = VN.getAliasAnalysis()->getLocation(LI);
+  MD->getNonLocalPointerDependency(Loc, true, LI->getParent(), Deps);
+
+  // If we had to process more than one hundred blocks to find the
+  // dependencies, this load isn't worth worrying about.  Optimizing
+  // it will be too expensive.
+  unsigned NumDeps = Deps.size();
+  if (NumDeps > 100)
+    return false;
+
+  // If we had a phi translation failure, we'll have a single entry which is a
+  // clobber in the current block.  Reject this early.
+  if (NumDeps == 1 &&
+      !Deps[0].getResult().isDef() && !Deps[0].getResult().isClobber()) {
+    DEBUG(
+      dbgs() << "GVN: non-local load ";
+      WriteAsOperand(dbgs(), LI);
+      dbgs() << " has unknown dependencies\n";
+    );
+    return false;
+  }
+
+  // Step 2: Analyze the availability of the load
+  AvailValInBlkVect ValuesPerBlock;
+  UnavailBlkVect UnavailableBlocks;
+  AnalyzeLoadAvailability(LI, Deps, ValuesPerBlock, UnavailableBlocks);
+
+  // If we have no predecessors that produce a known value for this load, exit
+  // early.
+  if (ValuesPerBlock.empty())
+    return false;
+
+  // Step 3: Eliminate fully redundancy.
+  //
+  // If all of the instructions we depend on produce a known value for this
+  // load, then it is fully redundant and we can use PHI insertion to compute
+  // its value.  Insert PHIs and remove the fully redundant value now.
+  if (UnavailableBlocks.empty()) {
+    DEBUG(dbgs() << "GVN REMOVING NONLOCAL LOAD: " << *LI << '\n');
+
+    // Perform PHI construction.
+    Value *V = ConstructSSAForLoadSet(LI, ValuesPerBlock, *this);
+    LI->replaceAllUsesWith(V);
+
+    if (isa<PHINode>(V))
+      V->takeName(LI);
+    if (V->getType()->getScalarType()->isPointerTy())
+      MD->invalidateCachedPointerInfo(V);
+    markInstructionForDeletion(LI);
+    ++NumGVNLoad;
+    return true;
+  }
+
+  // Step 4: Eliminate partial redundancy.
+  if (!EnablePRE || !EnableLoadPRE)
+    return false;
+
+  return PerformLoadPRE(LI, ValuesPerBlock, UnavailableBlocks);
+}
+
 
 static void patchReplacementInstruction(Instruction *I, Value *Repl) {
   // Patch the replacement so that it is not more restrictive than the value
