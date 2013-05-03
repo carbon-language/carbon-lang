@@ -1161,8 +1161,10 @@ Process::Finalize()
     // contain events that have ProcessSP values in them which can keep this
     // process around forever. These events need to be cleared out.
     m_private_state_listener.Clear();
+    m_public_run_lock.WriteTryLock(); // This will do nothing if already locked
     m_public_run_lock.WriteUnlock();
 #if defined(__APPLE__)
+    m_private_run_lock.WriteTryLock(); // This will do nothing if already locked
     m_private_run_lock.WriteUnlock();
 #endif
     m_finalize_called = true;
@@ -1704,16 +1706,18 @@ Process::SetPrivateState (StateType new_state)
     // the private process state with another run lock. Right now it doesn't
     // seem like we need to do this, but if we ever do, we can uncomment and
     // use this code.
-//    const bool old_state_is_stopped = StateIsStoppedState(old_state, false);
-//    const bool new_state_is_stopped = StateIsStoppedState(new_state, false);
-//    if (old_state_is_stopped != new_state_is_stopped)
-//    {
-//        if (new_state_is_stopped)
-//            m_private_run_lock.WriteUnlock();
-//        else
-//            m_private_run_lock.WriteLock();
-//    }
-
+#if defined(__APPLE__)
+    const bool old_state_is_stopped = StateIsStoppedState(old_state, false);
+    const bool new_state_is_stopped = StateIsStoppedState(new_state, false);
+    if (old_state_is_stopped != new_state_is_stopped)
+    {
+        if (new_state_is_stopped)
+            m_private_run_lock.WriteUnlock();
+        else
+            m_private_run_lock.WriteLock();
+    }
+#endif
+    
     if (state_changed)
     {
         m_private_state.SetValueNoLock (new_state);
@@ -3282,9 +3286,6 @@ Process::PrivateResume ()
             else
             {
                 m_mod_id.BumpResumeID();
-#if defined(__APPLE__)
-                m_private_run_lock.WriteLock();
-#endif
                 error = DoResume();
                 if (error.Success())
                 {
@@ -3293,12 +3294,6 @@ Process::PrivateResume ()
                     if (log)
                         log->Printf ("Process thinks the process has resumed.");
                 }
-#if defined(__APPLE__)
-                else
-                {
-                    m_private_run_lock.WriteUnlock();
-                }
-#endif
             }
         }
         else
@@ -3670,10 +3665,6 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
             // If we are going to stop, then we always broadcast the event.
             // If we aren't going to stop, let the thread plans decide if we're going to report this event.
             // If no thread has an opinion, we don't report it.
-            
-#if defined(__APPLE__)
-            m_private_run_lock.WriteUnlock();
-#endif
             RefreshStateAfterStop ();
             if (ProcessEventData::GetInterruptedFromEvent (event_ptr))
             {
