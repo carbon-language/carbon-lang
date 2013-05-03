@@ -1045,7 +1045,7 @@ Decl *Sema::ActOnStartClassImplementation(
 
   ObjCImplementationDecl* IMPDecl =
     ObjCImplementationDecl::Create(Context, CurContext, IDecl, SDecl,
-                                   ClassLoc, AtClassImplLoc);
+                                   ClassLoc, AtClassImplLoc, SuperClassLoc);
 
   if (CheckObjCDeclScope(IMPDecl))
     return ActOnObjCContainerStartDefinition(IMPDecl);
