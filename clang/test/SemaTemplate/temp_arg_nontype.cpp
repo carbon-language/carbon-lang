@@ -337,3 +337,12 @@ namespace rdar13000548 {
   }
 
 }
+
+namespace rdar13806270 {
+  template <unsigned N> class X { };
+  const unsigned value = 32;
+  struct Y {
+    X<value + 1> x;
+  };
+  void foo() {}
+}

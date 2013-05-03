@@ -1149,6 +1149,9 @@ bool Parser::IsTemplateArgumentList(unsigned Skip) {
 ///         template-argument-list ',' template-argument
 bool
 Parser::ParseTemplateArgumentList(TemplateArgList &TemplateArgs) {
+  // Template argument lists are constant-evaluation contexts.
+  EnterExpressionEvaluationContext EvalContext(Actions,Sema::ConstantEvaluated);
+
   while (true) {
     ParsedTemplateArgument Arg = ParseTemplateArgument();
     if (Tok.is(tok::ellipsis)) {
