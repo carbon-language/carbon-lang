@@ -195,21 +195,21 @@ def int_mips_dpsq_sa_l_w: GCCBuiltin<"__builtin_mips_dpsq_sa_l_w">,
 def int_mips_cmpu_eq_qb: GCCBuiltin<"__builtin_mips_cmpu_eq_qb">,
   Intrinsic<[], [llvm_v4i8_ty, llvm_v4i8_ty], [Commutative]>;
 def int_mips_cmpu_lt_qb: GCCBuiltin<"__builtin_mips_cmpu_lt_qb">,
-  Intrinsic<[], [llvm_v4i8_ty, llvm_v4i8_ty], [Commutative]>;
+  Intrinsic<[], [llvm_v4i8_ty, llvm_v4i8_ty], []>;
 def int_mips_cmpu_le_qb: GCCBuiltin<"__builtin_mips_cmpu_le_qb">,
-  Intrinsic<[], [llvm_v4i8_ty, llvm_v4i8_ty], [Commutative]>;
+  Intrinsic<[], [llvm_v4i8_ty, llvm_v4i8_ty], []>;
 def int_mips_cmpgu_eq_qb: GCCBuiltin<"__builtin_mips_cmpgu_eq_qb">,
   Intrinsic<[llvm_i32_ty], [llvm_v4i8_ty, llvm_v4i8_ty], [Commutative]>;
 def int_mips_cmpgu_lt_qb: GCCBuiltin<"__builtin_mips_cmpgu_lt_qb">,
-  Intrinsic<[llvm_i32_ty], [llvm_v4i8_ty, llvm_v4i8_ty], [Commutative]>;
+  Intrinsic<[llvm_i32_ty], [llvm_v4i8_ty, llvm_v4i8_ty], []>;
 def int_mips_cmpgu_le_qb: GCCBuiltin<"__builtin_mips_cmpgu_le_qb">,
-  Intrinsic<[llvm_i32_ty], [llvm_v4i8_ty, llvm_v4i8_ty], [Commutative]>;
+  Intrinsic<[llvm_i32_ty], [llvm_v4i8_ty, llvm_v4i8_ty], []>;
 def int_mips_cmp_eq_ph: GCCBuiltin<"__builtin_mips_cmp_eq_ph">,
   Intrinsic<[], [mips_v2q15_ty, mips_v2q15_ty], [Commutative]>;
 def int_mips_cmp_lt_ph: GCCBuiltin<"__builtin_mips_cmp_lt_ph">,
-  Intrinsic<[], [mips_v2q15_ty, mips_v2q15_ty], [Commutative]>;
+  Intrinsic<[], [mips_v2q15_ty, mips_v2q15_ty], []>;
 def int_mips_cmp_le_ph: GCCBuiltin<"__builtin_mips_cmp_le_ph">,
-  Intrinsic<[], [mips_v2q15_ty, mips_v2q15_ty], [Commutative]>;
+  Intrinsic<[], [mips_v2q15_ty, mips_v2q15_ty], []>;
 
 //===----------------------------------------------------------------------===//
 // Extracting
@@ -307,9 +307,9 @@ def int_mips_balign: GCCBuiltin<"__builtin_mips_balign">,
 def int_mips_cmpgdu_eq_qb: GCCBuiltin<"__builtin_mips_cmpgdu_eq_qb">,
   Intrinsic<[llvm_i32_ty], [llvm_v4i8_ty, llvm_v4i8_ty], [Commutative]>;
 def int_mips_cmpgdu_lt_qb: GCCBuiltin<"__builtin_mips_cmpgdu_lt_qb">,
-  Intrinsic<[llvm_i32_ty], [llvm_v4i8_ty, llvm_v4i8_ty], [Commutative]>;
+  Intrinsic<[llvm_i32_ty], [llvm_v4i8_ty, llvm_v4i8_ty], []>;
 def int_mips_cmpgdu_le_qb: GCCBuiltin<"__builtin_mips_cmpgdu_le_qb">,
-  Intrinsic<[llvm_i32_ty], [llvm_v4i8_ty, llvm_v4i8_ty], [Commutative]>;
+  Intrinsic<[llvm_i32_ty], [llvm_v4i8_ty, llvm_v4i8_ty], []>;
 
 def int_mips_dpa_w_ph: GCCBuiltin<"__builtin_mips_dpa_w_ph">,
   Intrinsic<[llvm_i64_ty], [llvm_i64_ty, llvm_v2i16_ty, llvm_v2i16_ty],
