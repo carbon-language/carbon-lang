@@ -355,10 +355,15 @@ std::string sys::getHostCPUName() {
       case 20:
         return "btver1";
       case 21:
-        if (Model <= 15)
-          return "bdver1";
-        else if (Model <= 31)
+        if (!HasAVX) // If the OS doesn't support AVX provide a sane fallback.
+          return "btver1";
+        if (Model > 15 && Model <= 31)
           return "bdver2";
+        return "bdver1";
+      case 22:
+        if (!HasAVX) // If the OS doesn't support AVX provide a sane fallback.
+          return "btver1";
+        return "btver2";
     default:
       return "generic";
     }

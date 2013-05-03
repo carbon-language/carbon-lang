@@ -255,11 +255,16 @@ def : Proc<"amdfam10",        [FeatureSSE4A,
 // Bobcat
 def : Proc<"btver1",          [FeatureSSSE3, FeatureSSE4A, FeatureCMPXCHG16B,
                                FeatureLZCNT, FeaturePOPCNT]>;
+// Jaguar
+def : Proc<"btver2",          [FeatureAVX, FeatureSSE4A, FeatureCMPXCHG16B,
+                               FeatureAES, FeaturePCLMUL, FeatureBMI,
+                               FeatureF16C, FeatureMOVBE, FeatureLZCNT,
+                               FeaturePOPCNT]>;
 // Bulldozer
 def : Proc<"bdver1",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
                                FeatureAES, FeaturePCLMUL,
                                FeatureLZCNT, FeaturePOPCNT]>;
-// Enhanced Bulldozer
+// Piledriver
 def : Proc<"bdver2",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
                                FeatureAES, FeaturePCLMUL,
                                FeatureF16C, FeatureLZCNT,
