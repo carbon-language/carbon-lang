@@ -66,6 +66,8 @@ public:
     bool
     error ()
     {
+        if (!m_entry_sp)
+            return true;
         return m_entry_sp->GetError().Fail();
     }
     
