@@ -1616,7 +1616,7 @@ let Predicates = [isEGorCayman] in {
     VecALU
   >;
 
-  def BFI_INT_eg : R600_3OP <0x06, "BFI_INT", []>;
+  def BFI_INT_eg : R600_3OP <0x06, "BFI_INT", [], VecALU>;
   defm : BFIPatterns <BFI_INT_eg>;
 
   def BIT_ALIGN_INT_eg : R600_3OP <0xC, "BIT_ALIGN_INT",
