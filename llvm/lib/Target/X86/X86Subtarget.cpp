@@ -171,6 +171,7 @@ bool X86Subtarget::IsLegalToCallImmediateAddr(const TargetMachine &TM) const {
 }
 
 static bool OSHasAVXSupport() {
+#if defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
 #if defined(__GNUC__)
   // Check xgetbv; this uses a .byte sequence instead of the instruction
   // directly because older assemblers do not include support for xgetbv and
@@ -183,6 +184,9 @@ static bool OSHasAVXSupport() {
   int rEAX = 0; // Ensures we return false
 #endif
   return (rEAX & 6) == 6;
+#else
+  return false;
+#endif
 }
 
 void X86Subtarget::AutoDetectSubtargetFeatures() {
