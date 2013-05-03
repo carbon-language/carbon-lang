@@ -76,7 +76,7 @@ class ProcessAttachTestCase(TestBase):
 
         self.runCmd("process attach -n a.out")
 
-        proces = target.GetProcess()
+        process = target.GetProcess()
         self.assertTrue(process, PROCESS_IS_VALID)
 
 
