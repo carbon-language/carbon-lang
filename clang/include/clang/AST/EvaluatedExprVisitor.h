@@ -55,7 +55,7 @@ public:
     // Only the selected subexpression matters; the other one is not evaluated.
     return this->Visit(E->getChosenSubExpr(Context));
   }
-                 
+
   void VisitDesignatedInitExpr(DesignatedInitExpr *E) {
     // Only the actual initializer matters; the designators are all constant
     // expressions.
@@ -70,6 +70,15 @@ public:
   void VisitCallExpr(CallExpr *CE) {
     if (!CE->isUnevaluatedBuiltinCall(Context))
       return static_cast<ImplClass*>(this)->VisitExpr(CE);
+  }
+
+  void VisitLambdaExpr(LambdaExpr *LE) {
+    // Only visit the capture initializers, and not the body.
+    for (LambdaExpr::capture_init_iterator I = LE->capture_init_begin(),
+                                           E = LE->capture_init_end();
+         I != E; ++I)
+      if (*I)
+        this->Visit(*I);
   }
 
   /// \brief The basis case walks all of the children of the statement or
