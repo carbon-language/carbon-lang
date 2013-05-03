@@ -48,7 +48,6 @@ DiagnosticsEngine::DiagnosticsEngine(
   AllExtensionsSilenced = 0;
   IgnoreAllWarnings = false;
   WarningsAsErrors = false;
-  WarnOnSpellCheck = false;
   EnableAllWarnings = false;
   ErrorsAsFatal = false;
   SuppressSystemWarnings = false;

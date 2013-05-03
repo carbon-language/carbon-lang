@@ -3792,13 +3792,6 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   if (S && S->isInObjcMethodScope() && Typo == getSuperIdentifier())
     return TypoCorrection();
 
-  // This is for testing.
-  if (Diags.getWarnOnSpellCheck()) {
-    unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Warning,
-                                            "spell-checking initiated for %0");
-    Diag(TypoName.getLoc(), DiagID) << TypoName.getName();
-  }
-
   NamespaceSpecifierSet Namespaces(Context, CurContext, SS);
 
   TypoCorrectionConsumer Consumer(*this, Typo);

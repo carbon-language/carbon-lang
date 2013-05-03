@@ -245,9 +245,6 @@ def fmessage_length : Separate<["-"], "fmessage-length">, MetaVarName<"<N>">,
 def Wno_rewrite_macros : Flag<["-"], "Wno-rewrite-macros">,
   HelpText<"Silence ObjC rewriting warnings">;
 
-def fwarn_on_spellcheck : Flag<["-"], "fwarn-on-spellcheck">,
-  HelpText<"Emit warning if spell-check is initiated, for testing">;
-
 //===----------------------------------------------------------------------===//
 // Frontend Options
 //===----------------------------------------------------------------------===//

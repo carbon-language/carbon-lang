@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -verify -fsyntax-only -fwarn-on-spellcheck
+// RUN: %clang_cc1 %s -verify -fsyntax-only
 
 @interface B
 @property int x;
@@ -8,8 +8,7 @@
 @end
 
 // Spell-checking 'undefined' is ok.
-undefined var; // expected-warning {{spell-checking initiated}} \
-               // expected-error {{unknown type name}}
+undefined var; // expected-error {{unknown type name}}
 
 typedef int super1;
 @implementation S
