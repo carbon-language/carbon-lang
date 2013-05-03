@@ -59,7 +59,6 @@ typedef enum {
 // CHECK:        call void @llvm.dbg.declare(metadata !{i8* [[BLOCK_DESC]]}, metadata ![[BDMD:[0-9]+]])
 // CHECK:        %[[TMP1:.*]] = bitcast
 // CHECK-NEXT:   store
-// CHECK-NEXT:   %[[TMP2:.*]] = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %[[TMP1]]
 // CHECK:        call void @llvm.dbg.declare(metadata !{<{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>** {{.*}}}, metadata ![[SELF:.*]])
 // make sure we are still in the same function
 // CHECK: define {{.*}}__copy_helper_block_

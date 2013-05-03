@@ -2495,6 +2495,17 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   llvm_unreachable("Unhandled member declaration!");
 }
 
+/// Given that we are currently emitting a lambda, emit an l-value for
+/// one of its members.
+LValue CodeGenFunction::EmitLValueForLambdaField(const FieldDecl *Field) {
+  assert(cast<CXXMethodDecl>(CurCodeDecl)->getParent()->isLambda());
+  assert(cast<CXXMethodDecl>(CurCodeDecl)->getParent() == Field->getParent());
+  QualType LambdaTagType =
+    getContext().getTagDeclType(Field->getParent());
+  LValue LambdaLV = MakeNaturalAlignAddrLValue(CXXABIThisValue, LambdaTagType);
+  return EmitLValueForField(LambdaLV, Field);
+}
+
 LValue CodeGenFunction::EmitLValueForField(LValue base,
                                            const FieldDecl *field) {
   if (field->isBitField()) {

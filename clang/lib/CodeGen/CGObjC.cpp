@@ -1401,8 +1401,10 @@ bool CodeGenFunction::IvarTypeWithAggrGCObjects(QualType Ty) {
 }
 
 llvm::Value *CodeGenFunction::LoadObjCSelf() {
-  const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
-  return Builder.CreateLoad(LocalDeclMap[OMD->getSelfDecl()], "self");
+  VarDecl *Self = cast<ObjCMethodDecl>(CurFuncDecl)->getSelfDecl();
+  DeclRefExpr DRE(Self, /*is enclosing local*/ (CurFuncDecl != CurCodeDecl),
+                  Self->getType(), VK_LValue, SourceLocation());
+  return EmitLoadOfScalar(EmitDeclRefLValue(&DRE));
 }
 
 QualType CodeGenFunction::TypeOfSelfObject() {

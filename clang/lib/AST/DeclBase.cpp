@@ -704,21 +704,37 @@ void Decl::CheckAccessDeclContext() const {
 #endif
 }
 
-DeclContext *Decl::getNonClosureContext() {
-  return getDeclContext()->getNonClosureAncestor();
+static Decl::Kind getKind(const Decl *D) { return D->getKind(); }
+static Decl::Kind getKind(const DeclContext *DC) { return DC->getDeclKind(); }
+
+/// Starting at a given context (a Decl or DeclContext), look for a
+/// code context that is not a closure (a lambda, block, etc.).
+template <class T> static Decl *getNonClosureContext(T *D) {
+  if (getKind(D) == Decl::CXXMethod) {
+    CXXMethodDecl *MD = cast<CXXMethodDecl>(D);
+    if (MD->getParent()->isLambda() &&
+        MD->getOverloadedOperator() == OO_Call)
+      return getNonClosureContext(MD->getParent()->getParent());
+    return MD;
+  } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    return FD;
+  } else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
+    return MD;
+  } else if (BlockDecl *BD = dyn_cast<BlockDecl>(D)) {
+    return getNonClosureContext(BD->getParent());
+  } else if (CapturedDecl *CD = dyn_cast<CapturedDecl>(D)) {
+    return getNonClosureContext(CD->getParent());
+  } else {
+    return 0;
+  }
 }
 
-DeclContext *DeclContext::getNonClosureAncestor() {
-  DeclContext *DC = this;
+Decl *Decl::getNonClosureContext() {
+  return ::getNonClosureContext(this);
+}
 
-  // This is basically "while (DC->isClosure()) DC = DC->getParent();"
-  // except that it's significantly more efficient to cast to a known
-  // decl type and call getDeclContext() than to call getParent().
-  while (isa<BlockDecl>(DC))
-    DC = cast<BlockDecl>(DC)->getDeclContext();
-
-  assert(!DC->isClosure());
-  return DC;
+Decl *DeclContext::getNonClosureAncestor() {
+  return ::getNonClosureContext(this);
 }
 
 //===----------------------------------------------------------------------===//

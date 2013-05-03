@@ -290,7 +290,7 @@ llvm::Value *CodeGenFunction::GetVTTParameter(GlobalDecl GD,
     return 0;
   }
   
-  const CXXRecordDecl *RD = cast<CXXMethodDecl>(CurFuncDecl)->getParent();
+  const CXXRecordDecl *RD = cast<CXXMethodDecl>(CurCodeDecl)->getParent();
   const CXXRecordDecl *Base = cast<CXXMethodDecl>(GD.getDecl())->getParent();
 
   llvm::Value *VTT;
@@ -2232,10 +2232,10 @@ void CodeGenFunction::EmitLambdaBlockInvokeBody() {
 }
 
 void CodeGenFunction::EmitLambdaToBlockPointerBody(FunctionArgList &Args) {
-  if (cast<CXXMethodDecl>(CurFuncDecl)->isVariadic()) {
+  if (cast<CXXMethodDecl>(CurCodeDecl)->isVariadic()) {
     // FIXME: Making this work correctly is nasty because it requires either
     // cloning the body of the call operator or making the call operator forward.
-    CGM.ErrorUnsupported(CurFuncDecl, "lambda conversion to variadic function");
+    CGM.ErrorUnsupported(CurCodeDecl, "lambda conversion to variadic function");
     return;
   }
 

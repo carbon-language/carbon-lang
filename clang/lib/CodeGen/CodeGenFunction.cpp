@@ -471,7 +471,8 @@ void CodeGenFunction::EmitOpenCLKernelMetadata(const FunctionDecl *FD,
   OpenCLKernelMetadata->addOperand(kernelMDNode);
 }
 
-void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
+void CodeGenFunction::StartFunction(GlobalDecl GD,
+                                    QualType RetTy,
                                     llvm::Function *Fn,
                                     const CGFunctionInfo &FnInfo,
                                     const FunctionArgList &Args,
@@ -479,7 +480,8 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
   const Decl *D = GD.getDecl();
 
   DidCallStackSave = false;
-  CurCodeDecl = CurFuncDecl = D;
+  CurCodeDecl = D;
+  CurFuncDecl = (D ? D->getNonClosureContext() : 0);
   FnRetTy = RetTy;
   CurFn = Fn;
   CurFnInfo = &FnInfo;
@@ -578,12 +580,7 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
                                         LambdaThisCaptureField);
       if (LambdaThisCaptureField) {
         // If this lambda captures this, load it.
-        QualType LambdaTagType =
-            getContext().getTagDeclType(LambdaThisCaptureField->getParent());
-        LValue LambdaLV = MakeNaturalAlignAddrLValue(CXXABIThisValue,
-                                                     LambdaTagType);
-        LValue ThisLValue = EmitLValueForField(LambdaLV,
-                                               LambdaThisCaptureField);
+        LValue ThisLValue = EmitLValueForLambdaField(LambdaThisCaptureField);
         CXXThisValue = EmitLoadOfLValue(ThisLValue).getScalarVal();
       }
     } else {

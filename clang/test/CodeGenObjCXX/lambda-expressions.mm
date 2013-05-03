@@ -38,6 +38,28 @@ void f2() { global = []{ return 3; }; }
 // ARC: define internal i32 @___Z2f2v_block_invoke
 // ARC: call i32 @"_ZZ2f2vENK3$_1clEv
 
+template <class T> void take_lambda(T &&lambda) { lambda(); }
+void take_block(void (^block)()) { block(); }
+
+// rdar://13800041
+@interface A
+- (void) test;
+@end
+@interface B : A @end
+@implementation B
+- (void) test {
+  take_block(^{
+      take_lambda([=]{
+          take_block(^{
+              take_lambda([=] {
+                  [super test];
+              });
+          });
+      });
+   });
+}
+@end
+
 // ARC: attributes [[NUW]] = { nounwind{{.*}} }
 
 // MRC: attributes [[NUW]] = { nounwind{{.*}} }

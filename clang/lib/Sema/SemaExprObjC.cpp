@@ -1334,7 +1334,7 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
 bool Sema::isSelfExpr(Expr *receiver) {
   // 'self' is objc 'self' in an objc method only.
   ObjCMethodDecl *method =
-    dyn_cast<ObjCMethodDecl>(CurContext->getNonClosureAncestor());
+    dyn_cast_or_null<ObjCMethodDecl>(CurContext->getNonClosureAncestor());
   if (!method) return false;
 
   receiver = receiver->IgnoreParenLValueCasts();
