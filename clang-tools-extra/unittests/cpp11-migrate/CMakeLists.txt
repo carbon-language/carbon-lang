@@ -16,6 +16,3 @@ target_link_libraries(Cpp11MigrateTests
   clangBasic
   clangASTMatchers
   )
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/lit.local.cfg
-  ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
