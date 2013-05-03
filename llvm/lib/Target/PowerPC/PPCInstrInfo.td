@@ -2112,6 +2112,17 @@ def : Pat<(fma f32:$A, (fneg f32:$C), f32:$B),
 include "PPCInstrAltivec.td"
 include "PPCInstr64Bit.td"
 
+
+//===----------------------------------------------------------------------===//
+// PowerPC Instructions used for assembler/disassembler only
+//
+
+def ISYNC : XLForm_2_ext<19, 150, 0, 0, 0, (outs), (ins),
+                         "isync", SprISYNC, []>;
+
+def ICBI : XForm_1a<31, 982, (outs), (ins memrr:$src),
+                    "icbi $src", LdStICBI, []>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC Assembler Instruction Aliases
 //

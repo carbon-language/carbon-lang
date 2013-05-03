@@ -365,6 +365,12 @@ class XForm_1<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
               InstrItinClass itin, list<dag> pattern> 
   : XForm_base_r3xo<opcode, xo, OOL, IOL, asmstr, itin, pattern>;
 
+class XForm_1a<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
+              InstrItinClass itin, list<dag> pattern>
+  : XForm_base_r3xo<opcode, xo, OOL, IOL, asmstr, itin, pattern> {
+  let RST = 0;
+}
+
 class XForm_6<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
               InstrItinClass itin, list<dag> pattern> 
   : XForm_base_r3xo_swapped<opcode, xo, OOL, IOL, asmstr, itin> {
