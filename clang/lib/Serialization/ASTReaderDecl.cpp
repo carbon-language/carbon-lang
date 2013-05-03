@@ -996,8 +996,11 @@ void ASTDeclReader::VisitBlockDecl(BlockDecl *BD) {
                   captures.end(), capturesCXXThis);
 }
 
-void ASTDeclReader::VisitCapturedDecl(CapturedDecl *) {
-  llvm_unreachable("not implemented yet");
+void ASTDeclReader::VisitCapturedDecl(CapturedDecl *CD) {
+  VisitDecl(CD);
+  // Body is set by VisitCapturedStmt.
+  for (unsigned i = 0; i < CD->NumParams; ++i)
+    CD->setParam(i, ReadDeclAs<ImplicitParamDecl>(Record, Idx));
 }
 
 void ASTDeclReader::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
@@ -2153,7 +2156,7 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
     D = MSPropertyDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_CAPTURED:
-    llvm_unreachable("not implemented yet");
+    D = CapturedDecl::CreateDeserialized(Context, ID, Record[Idx++]);
     break;
   case DECL_CXX_BASE_SPECIFIERS:
     Error("attempt to read a C++ base-specifier record as a declaration");

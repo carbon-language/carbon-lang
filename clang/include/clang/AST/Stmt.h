@@ -1975,6 +1975,7 @@ public:
       assert(!capturesThis() && "No variable available for 'this' capture");
       return VarAndKind.getPointer();
     }
+    friend class ASTStmtReader;
   };
 
 private:
@@ -2001,6 +2002,8 @@ private:
 
   Capture *getStoredCaptures() const;
 
+  void setCapturedStmt(Stmt *S) { getStoredStmts()[NumCaptures] = S; }
+
 public:
   static CapturedStmt *Create(ASTContext &Context, Stmt *S,
                               ArrayRef<Capture> Captures,
@@ -2026,10 +2029,12 @@ public:
   bool capturesVariable(const VarDecl *Var) const;
 
   /// \brief An iterator that walks over the captures.
-  typedef const Capture *capture_iterator;
+  typedef Capture *capture_iterator;
+  typedef const Capture *const_capture_iterator;
 
   /// \brief Retrieve an iterator pointing to the first capture.
-  capture_iterator capture_begin() const { return getStoredCaptures(); }
+  capture_iterator capture_begin() { return getStoredCaptures(); }
+  const_capture_iterator capture_begin() const { return getStoredCaptures(); }
 
   /// \brief Retrieve an iterator pointing past the end of the sequence of
   /// captures.
@@ -2069,6 +2074,8 @@ public:
   }
 
   child_range children();
+
+  friend class ASTStmtReader;
 };
 
 }  // end namespace clang

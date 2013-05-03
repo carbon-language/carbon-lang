@@ -3249,8 +3249,15 @@ MSPropertyDecl *MSPropertyDecl::CreateDeserialized(ASTContext &C,
 
 CapturedDecl *CapturedDecl::Create(ASTContext &C, DeclContext *DC,
                                    unsigned NumParams) {
-  unsigned Size = sizeof(CapturedDecl) + NumParams *sizeof(ImplicitParamDecl*);
+  unsigned Size = sizeof(CapturedDecl) + NumParams * sizeof(ImplicitParamDecl*);
   return new (C.Allocate(Size)) CapturedDecl(DC, NumParams);
+}
+
+CapturedDecl *CapturedDecl::CreateDeserialized(ASTContext &C, unsigned ID,
+                                   unsigned NumParams) {
+  unsigned Size = sizeof(CapturedDecl) + NumParams * sizeof(ImplicitParamDecl*);
+  void *Mem = AllocateDeserializedDecl(C, ID, Size);
+  return new (Mem) CapturedDecl(0, NumParams);
 }
 
 EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,

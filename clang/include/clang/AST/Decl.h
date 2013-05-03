@@ -3185,9 +3185,13 @@ private:
 
 public:
   static CapturedDecl *Create(ASTContext &C, DeclContext *DC, unsigned NumParams);
+  static CapturedDecl *CreateDeserialized(ASTContext &C, unsigned ID,
+                                          unsigned NumParams);
 
   Stmt *getBody() const { return Body; }
   void setBody(Stmt *B) { Body = B; }
+
+  unsigned getNumParams() const { return NumParams; }
 
   ImplicitParamDecl *getParam(unsigned i) const {
     assert(i < NumParams);
@@ -3217,6 +3221,9 @@ public:
   static CapturedDecl *castFromDeclContext(const DeclContext *DC) {
     return static_cast<CapturedDecl *>(const_cast<DeclContext *>(DC));
   }
+
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
 };
 
 /// \brief Describes a module import declaration, which makes the contents

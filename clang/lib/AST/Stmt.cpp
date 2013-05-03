@@ -1124,8 +1124,8 @@ Stmt::child_range CapturedStmt::children() {
 }
 
 bool CapturedStmt::capturesVariable(const VarDecl *Var) const {
-  for (capture_iterator I = capture_begin(),
-                        E = capture_end(); I != E; ++I) {
+  for (const_capture_iterator I = capture_begin(),
+                              E = capture_end(); I != E; ++I) {
     if (I->capturesThis())
       continue;
 

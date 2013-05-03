@@ -381,7 +381,29 @@ void ASTStmtReader::VisitMSAsmStmt(MSAsmStmt *S) {
 }
 
 void ASTStmtReader::VisitCapturedStmt(CapturedStmt *S) {
-  llvm_unreachable("not implemented yet");
+  VisitStmt(S);
+  S->TheCapturedDecl = ReadDeclAs<CapturedDecl>(Record, Idx);
+  S->TheRecordDecl = ReadDeclAs<RecordDecl>(Record, Idx);
+
+  // Capture inits
+  for (CapturedStmt::capture_init_iterator I = S->capture_init_begin(),
+                                           E = S->capture_init_end();
+       I != E; ++I)
+    *I = Reader.ReadSubExpr();
+
+  // Body
+  S->setCapturedStmt(Reader.ReadSubStmt());
+  S->TheCapturedDecl->setBody(S->getCapturedStmt());
+
+  // Captures
+  for (CapturedStmt::capture_iterator I = S->capture_begin(),
+                                      E = S->capture_end();
+       I != E; ++I) {
+    I->VarAndKind.setPointer(ReadDeclAs<VarDecl>(Record, Idx));
+    I->VarAndKind
+        .setInt(static_cast<CapturedStmt::VariableCaptureKind>(Record[Idx++]));
+    I->Loc = ReadSourceLocation(Record, Idx);
+  }
 }
 
 void ASTStmtReader::VisitExpr(Expr *E) {
@@ -1791,7 +1813,8 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       break;
 
     case STMT_CAPTURED:
-      llvm_unreachable("not implemented yet");
+      S = CapturedStmt::CreateDeserialized(Context,
+                                           Record[ASTStmtReader::NumExprFields]);
       break;
 
     case EXPR_PREDEFINED:

@@ -826,8 +826,13 @@ void ASTDeclWriter::VisitBlockDecl(BlockDecl *D) {
   Code = serialization::DECL_BLOCK;
 }
 
-void ASTDeclWriter::VisitCapturedDecl(CapturedDecl *) {
-  llvm_unreachable("not implemented yet");
+void ASTDeclWriter::VisitCapturedDecl(CapturedDecl *CD) {
+  Record.push_back(CD->getNumParams());
+  VisitDecl(CD);
+  // Body is stored by VisitCapturedStmt.
+  for (unsigned i = 0; i < CD->getNumParams(); ++i)
+    Writer.AddDeclRef(CD->getParam(i), Record);
+  Code = serialization::DECL_CAPTURED;
 }
 
 void ASTDeclWriter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {

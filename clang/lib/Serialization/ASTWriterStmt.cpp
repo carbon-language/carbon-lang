@@ -287,9 +287,34 @@ void ASTStmtWriter::VisitMSAsmStmt(MSAsmStmt *S) {
 
 void ASTStmtWriter::VisitCapturedStmt(CapturedStmt *S) {
   VisitStmt(S);
-  Code = serialization::STMT_CAPTURED;
+  // NumCaptures
+  Record.push_back(std::distance(S->capture_begin(), S->capture_end()));
 
-  llvm_unreachable("not implemented yet");
+  Writer.AddDeclRef(S->getCapturedDecl(), Record);
+  Writer.AddDeclRef(S->getCapturedRecordDecl(), Record);
+
+  // Capture inits
+  for (CapturedStmt::capture_init_iterator I = S->capture_init_begin(),
+                                           E = S->capture_init_end();
+       I != E; ++I)
+    Writer.AddStmt(*I);
+
+  // Body
+  Writer.AddStmt(S->getCapturedStmt());
+
+  // Captures
+  for (CapturedStmt::capture_iterator I = S->capture_begin(),
+                                      E = S->capture_end();
+       I != E; ++I) {
+    if (I->capturesThis())
+      Writer.AddDeclRef(0, Record);
+    else
+      Writer.AddDeclRef(I->getCapturedVar(), Record);
+    Record.push_back(I->getCaptureKind());
+    Writer.AddSourceLocation(I->getLocation(), Record);
+  }
+
+  Code = serialization::STMT_CAPTURED;
 }
 
 void ASTStmtWriter::VisitExpr(Expr *E) {
