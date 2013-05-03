@@ -75,7 +75,7 @@ StmtResult Sema::ActOnDeclStmt(DeclGroupPtrTy dg, SourceLocation StartLoc,
 
 void Sema::ActOnForEachDeclStmt(DeclGroupPtrTy dg) {
   DeclGroupRef DG = dg.getAsVal<DeclGroupRef>();
-  
+
   // If we don't have a declaration, or we have an invalid declaration,
   // just return.
   if (DG.isNull() || !DG.isSingleDecl())
