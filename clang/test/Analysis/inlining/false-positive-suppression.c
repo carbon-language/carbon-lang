@@ -143,6 +143,27 @@ void testTrackNullVariable() {
 #endif
 }
 
+void inlinedIsDifferent(int inlined) {
+  int i;
+
+  // We were erroneously picking up the inner stack frame's initialization,
+  // even though the error occurs in the outer stack frame!
+  int *p = inlined ? &i : getNull();
+
+  if (!inlined)
+    inlinedIsDifferent(1);
+
+  *p = 1;
+#ifndef SUPPRESSED
+  // expected-warning@-2 {{Dereference of null pointer}}
+#endif
+}
+
+void testInlinedIsDifferent() {
+  // <rdar://problem/13787723>
+  inlinedIsDifferent(0);
+}
+
 
 // ---------------------------------------
 // FALSE NEGATIVES (over-suppression)
