@@ -630,10 +630,18 @@ PlatformDarwinKernel::ExamineKextForMatchingUUID (const FileSpec &kext_bundle_pa
         ModuleSpec exe_spec (exe_file);
         exe_spec.GetUUID() = uuid;
         exe_spec.GetArchitecture() = arch;
-        error = ModuleList::GetSharedModule (exe_spec, exe_module_sp, NULL, NULL, NULL);
-        if (exe_module_sp && exe_module_sp->GetObjectFile())
+
+        // First try to create a ModuleSP with the file / arch and see if the UUID matches.
+        // If that fails (this exec file doesn't have the correct uuid), don't call GetSharedModule
+        // (which may call in to the DebugSymbols framework and therefore can be slow.)
+        ModuleSP module_sp (new Module (exe_file, arch));
+        if (module_sp && module_sp->GetObjectFile() && module_sp->MatchesModuleSpec (exe_spec))
         {
-            return error;
+            error = ModuleList::GetSharedModule (exe_spec, exe_module_sp, NULL, NULL, NULL);
+            if (exe_module_sp && exe_module_sp->GetObjectFile())
+            {
+                return error;
+            }
         }
         exe_module_sp.reset();
     }
