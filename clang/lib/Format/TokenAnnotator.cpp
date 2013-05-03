@@ -596,6 +596,9 @@ private:
       Contexts.back().IsExpression = true;
     } else if (Current.is(tok::kw_new)) {
       Contexts.back().CanBeExpression = false;
+    } else if (Current.is(tok::semi)) {
+      // This should be the condition or increment in a for-loop.
+      Contexts.back().IsExpression = true;
     }
 
     if (Current.Type == TT_Unknown) {
