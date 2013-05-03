@@ -77,6 +77,12 @@ public:
     void
     SetColumn (uint32_t column);
 
+    bool
+    operator == (const lldb::SBLineEntry &rhs) const;
+    
+    bool
+    operator != (const lldb::SBLineEntry &rhs) const;
+    
     %pythoncode %{
         __swig_getmethods__["file"] = GetFileSpec
         if _newclass: file = property(GetFileSpec, None, doc='''A read only property that returns an lldb object that represents the file (lldb.SBFileSpec) for this line entry.''')

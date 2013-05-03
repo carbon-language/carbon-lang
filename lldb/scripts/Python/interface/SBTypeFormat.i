@@ -46,7 +46,13 @@ namespace lldb {
         bool
         GetDescription (lldb::SBStream &description, 
                         lldb::DescriptionLevel description_level);
-                
+        
+        bool
+        operator == (lldb::SBTypeFormat &rhs);
+
+        bool
+        operator != (lldb::SBTypeFormat &rhs);
+        
         %pythoncode %{
             __swig_getmethods__["format"] = GetFormat
             __swig_setmethods__["format"] = SetFormat

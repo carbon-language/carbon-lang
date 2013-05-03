@@ -86,6 +86,12 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
     
+    bool
+    operator == (const lldb::SBFunction &rhs) const;
+    
+    bool
+    operator != (const lldb::SBFunction &rhs) const;
+    
     %pythoncode %{
         def get_instructions_from_current_target (self):
             return self.GetInstructions (target)

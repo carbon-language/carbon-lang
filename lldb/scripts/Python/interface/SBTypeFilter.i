@@ -55,6 +55,12 @@ namespace lldb {
         bool
         GetDescription (lldb::SBStream &description, lldb::DescriptionLevel description_level);
         
+        bool
+        operator == (lldb::SBTypeFilter &rhs);
+        
+        bool
+        operator != (lldb::SBTypeFilter &rhs);
+        
         %pythoncode %{
             __swig_getmethods__["options"] = GetOptions
             __swig_setmethods__["options"] = SetOptions

@@ -89,6 +89,12 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
     
+    bool
+    operator == (const lldb::SBCompileUnit &rhs) const;
+    
+    bool
+    operator != (const lldb::SBCompileUnit &rhs) const;
+    
     %pythoncode %{
         __swig_getmethods__["file"] = GetFileSpec
         if _newclass: file = property(GetFileSpec, None, doc='''A read only property that returns the same result an lldb object that represents the source file (lldb.SBFileSpec) for the compile unit.''')

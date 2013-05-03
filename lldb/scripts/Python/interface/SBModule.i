@@ -279,6 +279,12 @@ public:
     GetVersion (uint32_t *versions, 
                 uint32_t num_versions);
 
+    bool
+    operator == (const lldb::SBModule &rhs) const;
+             
+    bool
+    operator != (const lldb::SBModule &rhs) const;
+             
     %pythoncode %{
         class symbols_access(object):
             re_compile_type = type(re.compile('.'))

@@ -100,6 +100,14 @@ SBBreakpoint::operator == (const lldb::SBBreakpoint& rhs)
     return false;
 }
 
+bool
+SBBreakpoint::operator != (const lldb::SBBreakpoint& rhs)
+{
+    if (m_opaque_sp && rhs.m_opaque_sp)
+        return m_opaque_sp.get() != rhs.m_opaque_sp.get();
+    return (m_opaque_sp && !rhs.m_opaque_sp) || (rhs.m_opaque_sp && !m_opaque_sp);
+}
+
 break_id_t
 SBBreakpoint::GetID () const
 {

@@ -46,6 +46,12 @@ namespace lldb {
         void
         SetColumn (uint32_t column);
         
+        bool
+        operator == (const lldb::SBDeclaration &rhs) const;
+        
+        bool
+        operator != (const lldb::SBDeclaration &rhs) const;
+        
         %pythoncode %{
             __swig_getmethods__["file"] = GetFileSpec
             if _newclass: file = property(GetFileSpec, None, doc='''A read only property that returns an lldb object that represents the file (lldb.SBFileSpec) for this line entry.''')

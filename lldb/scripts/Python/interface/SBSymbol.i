@@ -62,6 +62,12 @@ public:
     bool
     IsSynthetic();
 
+    bool
+    operator == (const lldb::SBSymbol &rhs) const;
+    
+    bool
+    operator != (const lldb::SBSymbol &rhs) const;
+    
     %pythoncode %{
         def get_instructions_from_current_target (self):
             return self.GetInstructions (target)

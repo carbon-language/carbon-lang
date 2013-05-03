@@ -202,6 +202,12 @@ public:
     bool
     GetStatus (lldb::SBStream &status) const;
     
+    bool
+    operator == (const lldb::SBThread &rhs) const;
+
+    bool
+    operator != (const lldb::SBThread &rhs) const;
+             
     %pythoncode %{
         class frames_access(object):
             '''A helper object that will lazily hand out frames for a thread when supplied an index.'''

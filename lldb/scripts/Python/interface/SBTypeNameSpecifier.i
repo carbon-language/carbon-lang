@@ -46,7 +46,13 @@ namespace lldb {
         bool
         GetDescription (lldb::SBStream &description, 
                         lldb::DescriptionLevel description_level);
-                        
+        
+        bool
+        operator == (lldb::SBTypeNameSpecifier &rhs);
+
+        bool
+        operator != (lldb::SBTypeNameSpecifier &rhs);
+        
         %pythoncode %{
             __swig_getmethods__["name"] = GetName
             if _newclass: name = property(GetName, None)
