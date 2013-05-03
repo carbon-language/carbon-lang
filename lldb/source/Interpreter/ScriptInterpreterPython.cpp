@@ -2593,8 +2593,8 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
 
     {
         FileSpec target_file(pathname, true);
+        std::string basename(target_file.GetFilename().GetCString());
         
-        std::string basename;
         StreamString command_stream;
 
         // Before executing Pyton code, lock the GIL.
@@ -2612,7 +2612,6 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         else
         {
             const char* directory = target_file.GetDirectory().GetCString();
-            std::string basename(target_file.GetFilename().GetCString());
             
             // now make sure that Python has "directory" in the search path
             StreamString command_stream;
