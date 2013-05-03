@@ -1,13 +1,21 @@
 // RUN: %clang_cc1 -fno-rtti -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 | FileCheck %s
 
 struct B1 {
+  void foo();
   int b;
 };
-struct B2 { };
-struct Single : B1 { };
-struct Multiple : B1, B2 { };
+struct B2 {
+  void foo();
+};
+struct Single : B1 {
+  void foo();
+};
+struct Multiple : B1, B2 {
+  void foo();
+};
 struct Virtual : virtual B1 {
   int v;
+  void foo();
 };
 
 struct POD {
@@ -30,7 +38,7 @@ struct NonZeroVBPtr : POD, Virtual {
 
 struct Unspecified;
 
-// Check that we can lower the LLVM types and get the initializers right.
+// Check that we can lower the LLVM types and get the null initializers right.
 int Single     ::*s_d_memptr;
 int Polymorphic::*p_d_memptr;
 int Multiple   ::*m_d_memptr;
@@ -53,6 +61,49 @@ void (Virtual ::*v_f_memptr)();
 // CHECK: @"\01?s_f_memptr@@3P8Single@@AEXXZA" = global i8* null, align 4
 // CHECK: @"\01?m_f_memptr@@3P8Multiple@@AEXXZA" = global { i8*, i32 } zeroinitializer, align 4
 // CHECK: @"\01?v_f_memptr@@3P8Virtual@@AEXXZA" = global { i8*, i32, i32 } zeroinitializer, align 4
+
+// We can define Unspecified after locking in the inheritance model.
+struct Unspecified : Virtual {
+  void foo();
+  int u;
+};
+
+struct UnspecWithVBPtr;
+int UnspecWithVBPtr::*forceUnspecWithVBPtr;
+struct UnspecWithVBPtr : B1, virtual B2 {
+  int u;
+  void foo();
+};
+
+// Test emitting non-virtual member pointers in a non-constexpr setting.
+void EmitNonVirtualMemberPointers() {
+  void (Single     ::*s_f_memptr)() = &Single::foo;
+  void (Multiple   ::*m_f_memptr)() = &Multiple::foo;
+  void (Virtual    ::*v_f_memptr)() = &Virtual::foo;
+  void (Unspecified::*u_f_memptr)() = &Unspecified::foo;
+  void (UnspecWithVBPtr::*u2_f_memptr)() = &UnspecWithVBPtr::foo;
+// CHECK: define void @"\01?EmitNonVirtualMemberPointers@@YAXXZ"() #0 {
+// CHECK:   alloca i8*, align 4
+// CHECK:   alloca { i8*, i32 }, align 4
+// CHECK:   alloca { i8*, i32, i32 }, align 4
+// CHECK:   alloca { i8*, i32, i32, i32 }, align 4
+// CHECK:   store i8* bitcast (void (%{{.*}}*)* @"\01?foo@Single@@QAEXXZ" to i8*), i8** %{{.*}}, align 4
+// CHECK:   store { i8*, i32 }
+// CHECK:     { i8* bitcast (void (%{{.*}}*)* @"\01?foo@Multiple@@QAEXXZ" to i8*), i32 0 },
+// CHECK:     { i8*, i32 }* %{{.*}}, align 4
+// CHECK:   store { i8*, i32, i32 }
+// CHECK:     { i8* bitcast (void (%{{.*}}*)* @"\01?foo@Virtual@@QAEXXZ" to i8*), i32 0, i32 0 },
+// CHECK:     { i8*, i32, i32 }* %{{.*}}, align 4
+// CHECK:   store { i8*, i32, i32, i32 }
+// CHECK:     { i8* bitcast (void (%{{.*}}*)* @"\01?foo@Unspecified@@QAEXXZ" to i8*), i32 0, i32 0, i32 0 },
+// CHECK:     { i8*, i32, i32, i32 }* %{{.*}}, align 4
+// CHECK:   store { i8*, i32, i32, i32 }
+// CHECK:     { i8* bitcast (void (%{{.*}}*)* @"\01?foo@UnspecWithVBPtr@@QAEXXZ" to i8*),
+// CHECK:       i32 0, i32 4, i32 0 },
+// CHECK:     { i8*, i32, i32, i32 }* %{{.*}}, align 4
+// CHECK:   ret void
+// CHECK: }
+}
 
 void podMemPtrs() {
   int POD::*memptr;
