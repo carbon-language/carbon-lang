@@ -2111,3 +2111,87 @@ def : Pat<(fma f32:$A, (fneg f32:$C), f32:$B),
 
 include "PPCInstrAltivec.td"
 include "PPCInstr64Bit.td"
+
+//===----------------------------------------------------------------------===//
+// PowerPC Assembler Instruction Aliases
+//
+
+// Pseudo-instructions for alternate assembly syntax (never used by codegen).
+// These are aliases that require C++ handling to convert to the target
+// instruction, while InstAliases can be handled directly by tblgen.
+class PPCAsmPseudo<string asm, dag iops>
+  : Instruction {
+  let Namespace = "PPC";
+  bit PPC64 = 0;  // Default value, override with isPPC64
+
+  let OutOperandList = (outs);
+  let InOperandList = iops;
+  let Pattern = [];
+  let AsmString = asm;
+  let isAsmParserOnly = 1;
+  let isPseudo = 1;
+}
+
+def : InstAlias<"mr $rA, $rB", (OR8 g8rc:$rA, g8rc:$rB, g8rc:$rB)>;
+
+def SLWI : PPCAsmPseudo<"slwi $rA, $rS, $n",
+                        (ins gprc:$rA, gprc:$rS, u5imm:$n)>;
+def SRWI : PPCAsmPseudo<"srwi $rA, $rS, $n",
+                        (ins gprc:$rA, gprc:$rS, u5imm:$n)>;
+def SLDI : PPCAsmPseudo<"sldi $rA, $rS, $n",
+                        (ins g8rc:$rA, g8rc:$rS, u6imm:$n)>;
+def SRDI : PPCAsmPseudo<"srdi $rA, $rS, $n",
+                        (ins g8rc:$rA, g8rc:$rS, u6imm:$n)>;
+
+def : InstAlias<"blt $cc, $dst", (BCC 12, crrc:$cc, condbrtarget:$dst)>;
+def : InstAlias<"bgt $cc, $dst", (BCC 44, crrc:$cc, condbrtarget:$dst)>;
+def : InstAlias<"beq $cc, $dst", (BCC 76, crrc:$cc, condbrtarget:$dst)>;
+def : InstAlias<"bun $cc, $dst", (BCC 108, crrc:$cc, condbrtarget:$dst)>;
+def : InstAlias<"bso $cc, $dst", (BCC 108, crrc:$cc, condbrtarget:$dst)>;
+def : InstAlias<"bge $cc, $dst", (BCC 4, crrc:$cc, condbrtarget:$dst)>;
+def : InstAlias<"bnl $cc, $dst", (BCC 4, crrc:$cc, condbrtarget:$dst)>;
+def : InstAlias<"ble $cc, $dst", (BCC 36, crrc:$cc, condbrtarget:$dst)>;
+def : InstAlias<"bng $cc, $dst", (BCC 36, crrc:$cc, condbrtarget:$dst)>;
+def : InstAlias<"bne $cc, $dst", (BCC 68, crrc:$cc, condbrtarget:$dst)>;
+def : InstAlias<"bnu $cc, $dst", (BCC 100, crrc:$cc, condbrtarget:$dst)>;
+def : InstAlias<"bns $cc, $dst", (BCC 100, crrc:$cc, condbrtarget:$dst)>;
+
+def : InstAlias<"bltlr $cc", (BCLR 12, crrc:$cc)>;
+def : InstAlias<"bgtlr $cc", (BCLR 44, crrc:$cc)>;
+def : InstAlias<"beqlr $cc", (BCLR 76, crrc:$cc)>;
+def : InstAlias<"bunlr $cc", (BCLR 108, crrc:$cc)>;
+def : InstAlias<"bsolr $cc", (BCLR 108, crrc:$cc)>;
+def : InstAlias<"bgelr $cc", (BCLR 4, crrc:$cc)>;
+def : InstAlias<"bnllr $cc", (BCLR 4, crrc:$cc)>;
+def : InstAlias<"blelr $cc", (BCLR 36, crrc:$cc)>;
+def : InstAlias<"bnglr $cc", (BCLR 36, crrc:$cc)>;
+def : InstAlias<"bnelr $cc", (BCLR 68, crrc:$cc)>;
+def : InstAlias<"bnulr $cc", (BCLR 100, crrc:$cc)>;
+def : InstAlias<"bnslr $cc", (BCLR 100, crrc:$cc)>;
+
+def : InstAlias<"bltctr $cc", (BCCTR 12, crrc:$cc)>;
+def : InstAlias<"bgtctr $cc", (BCCTR 44, crrc:$cc)>;
+def : InstAlias<"beqctr $cc", (BCCTR 76, crrc:$cc)>;
+def : InstAlias<"bunctr $cc", (BCCTR 108, crrc:$cc)>;
+def : InstAlias<"bsoctr $cc", (BCCTR 108, crrc:$cc)>;
+def : InstAlias<"bgectr $cc", (BCCTR 4, crrc:$cc)>;
+def : InstAlias<"bnlctr $cc", (BCCTR 4, crrc:$cc)>;
+def : InstAlias<"blectr $cc", (BCCTR 36, crrc:$cc)>;
+def : InstAlias<"bngctr $cc", (BCCTR 36, crrc:$cc)>;
+def : InstAlias<"bnectr $cc", (BCCTR 68, crrc:$cc)>;
+def : InstAlias<"bnuctr $cc", (BCCTR 100, crrc:$cc)>;
+def : InstAlias<"bnsctr $cc", (BCCTR 100, crrc:$cc)>;
+
+def : InstAlias<"bltctrl $cc", (BCCTRL 12, crrc:$cc)>;
+def : InstAlias<"bgtctrl $cc", (BCCTRL 44, crrc:$cc)>;
+def : InstAlias<"beqctrl $cc", (BCCTRL 76, crrc:$cc)>;
+def : InstAlias<"bunctrl $cc", (BCCTRL 108, crrc:$cc)>;
+def : InstAlias<"bsoctrl $cc", (BCCTRL 108, crrc:$cc)>;
+def : InstAlias<"bgectrl $cc", (BCCTRL 4, crrc:$cc)>;
+def : InstAlias<"bnlctrl $cc", (BCCTRL 4, crrc:$cc)>;
+def : InstAlias<"blectrl $cc", (BCCTRL 36, crrc:$cc)>;
+def : InstAlias<"bngctrl $cc", (BCCTRL 36, crrc:$cc)>;
+def : InstAlias<"bnectrl $cc", (BCCTRL 68, crrc:$cc)>;
+def : InstAlias<"bnuctrl $cc", (BCCTRL 100, crrc:$cc)>;
+def : InstAlias<"bnsctrl $cc", (BCCTRL 100, crrc:$cc)>;
+

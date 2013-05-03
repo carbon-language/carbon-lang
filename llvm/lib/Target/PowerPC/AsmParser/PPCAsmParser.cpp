@@ -136,6 +136,9 @@ class PPCAsmParser : public MCTargetAsmParser {
                                MCStreamer &Out, unsigned &ErrorInfo,
                                bool MatchingInlineAsm);
 
+  void ProcessInstruction(MCInst &Inst,
+                          const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
+
   /// @name Auto-generated Match Functions
   /// {
 
@@ -413,6 +416,59 @@ void PPCOperand::print(raw_ostream &OS) const {
 }
 
 
+void PPCAsmParser::
+ProcessInstruction(MCInst &Inst,
+                   const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  switch (Inst.getOpcode()) {
+  case PPC::SLWI: {
+    MCInst TmpInst;
+    int64_t N = Inst.getOperand(2).getImm();
+    TmpInst.setOpcode(PPC::RLWINM);
+    TmpInst.addOperand(Inst.getOperand(0));
+    TmpInst.addOperand(Inst.getOperand(1));
+    TmpInst.addOperand(MCOperand::CreateImm(N));
+    TmpInst.addOperand(MCOperand::CreateImm(0));
+    TmpInst.addOperand(MCOperand::CreateImm(31 - N));
+    Inst = TmpInst;
+    break;
+  }
+  case PPC::SRWI: {
+    MCInst TmpInst;
+    int64_t N = Inst.getOperand(2).getImm();
+    TmpInst.setOpcode(PPC::RLWINM);
+    TmpInst.addOperand(Inst.getOperand(0));
+    TmpInst.addOperand(Inst.getOperand(1));
+    TmpInst.addOperand(MCOperand::CreateImm(32 - N));
+    TmpInst.addOperand(MCOperand::CreateImm(N));
+    TmpInst.addOperand(MCOperand::CreateImm(31));
+    Inst = TmpInst;
+    break;
+  }
+  case PPC::SLDI: {
+    MCInst TmpInst;
+    int64_t N = Inst.getOperand(2).getImm();
+    TmpInst.setOpcode(PPC::RLDICR);
+    TmpInst.addOperand(Inst.getOperand(0));
+    TmpInst.addOperand(Inst.getOperand(1));
+    TmpInst.addOperand(MCOperand::CreateImm(N));
+    TmpInst.addOperand(MCOperand::CreateImm(63 - N));
+    Inst = TmpInst;
+    break;
+  }
+  case PPC::SRDI: {
+    MCInst TmpInst;
+    int64_t N = Inst.getOperand(2).getImm();
+    TmpInst.setOpcode(PPC::RLDICL);
+    TmpInst.addOperand(Inst.getOperand(0));
+    TmpInst.addOperand(Inst.getOperand(1));
+    TmpInst.addOperand(MCOperand::CreateImm(64 - N));
+    TmpInst.addOperand(MCOperand::CreateImm(N));
+    Inst = TmpInst;
+    break;
+  }
+  }
+}
+
 bool PPCAsmParser::
 MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
@@ -423,6 +479,8 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   switch (MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm)) {
   default: break;
   case Match_Success:
+    // Post-process instructions (typically extended mnemonics)
+    ProcessInstruction(Inst, Operands);
     Inst.setLoc(IDLoc);
     Out.EmitInstruction(Inst);
     return false;
