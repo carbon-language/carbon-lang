@@ -284,9 +284,9 @@ public:
     SetArg0 (const char *arg)
     {
         if (arg && arg[0])
-            m_arg0.clear();
-        else
             m_arg0 = arg;
+        else
+            m_arg0.clear();
     }
     
     void
