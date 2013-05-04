@@ -2133,14 +2133,27 @@ SDValue
 AArch64TargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) const {
   JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
   DebugLoc dl = JT->getDebugLoc();
+  EVT PtrVT = getPointerTy();
 
   // When compiling PIC, jump tables get put in the code section so a static
   // relocation-style is acceptable for both cases.
-  return DAG.getNode(AArch64ISD::WrapperSmall, dl, getPointerTy(),
-                     DAG.getTargetJumpTable(JT->getIndex(), getPointerTy()),
-                     DAG.getTargetJumpTable(JT->getIndex(), getPointerTy(),
-                                            AArch64II::MO_LO12),
-                     DAG.getConstant(1, MVT::i32));
+  switch (getTargetMachine().getCodeModel()) {
+  case CodeModel::Small:
+    return DAG.getNode(AArch64ISD::WrapperSmall, dl, PtrVT,
+                       DAG.getTargetJumpTable(JT->getIndex(), PtrVT),
+                       DAG.getTargetJumpTable(JT->getIndex(), PtrVT,
+                                              AArch64II::MO_LO12),
+                       DAG.getConstant(1, MVT::i32));
+  case CodeModel::Large:
+    return DAG.getNode(
+      AArch64ISD::WrapperLarge, dl, PtrVT,
+      DAG.getTargetJumpTable(JT->getIndex(), PtrVT, AArch64II::MO_ABS_G3),
+      DAG.getTargetJumpTable(JT->getIndex(), PtrVT, AArch64II::MO_ABS_G2_NC),
+      DAG.getTargetJumpTable(JT->getIndex(), PtrVT, AArch64II::MO_ABS_G1_NC),
+      DAG.getTargetJumpTable(JT->getIndex(), PtrVT, AArch64II::MO_ABS_G0_NC));
+  default:
+    llvm_unreachable("Only small and large code models supported now");
+  }
 }
 
 // (SELECT_CC lhs, rhs, iftrue, iffalse, condcode)
