@@ -296,6 +296,37 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
     *TargetPtr = static_cast<uint32_t>(Result & 0xffffffffU);
     break;
   }
+  case ELF::R_AARCH64_MOVW_UABS_G3: {
+    uint64_t Result = Value + Addend;
+    // Immediate goes in bits 20:5 of MOVZ/MOVK instruction
+    *TargetPtr |= Result >> (48 - 5);
+    // Shift is "lsl #48", in bits 22:21
+    *TargetPtr |= 3 << 21;
+    break;
+  }
+  case ELF::R_AARCH64_MOVW_UABS_G2_NC: {
+    uint64_t Result = Value + Addend;
+    // Immediate goes in bits 20:5 of MOVZ/MOVK instruction
+    *TargetPtr |= ((Result & 0xffff00000000ULL) >> (32 - 5));
+    // Shift is "lsl #32", in bits 22:21
+    *TargetPtr |= 2 << 21;
+    break;
+  }
+  case ELF::R_AARCH64_MOVW_UABS_G1_NC: {
+    uint64_t Result = Value + Addend;
+    // Immediate goes in bits 20:5 of MOVZ/MOVK instruction
+    *TargetPtr |= ((Result & 0xffff0000U) >> (16 - 5));
+    // Shift is "lsl #16", in bits 22:21
+    *TargetPtr |= 1 << 21;
+    break;
+  }
+  case ELF::R_AARCH64_MOVW_UABS_G0_NC: {
+    uint64_t Result = Value + Addend;
+    // Immediate goes in bits 20:5 of MOVZ/MOVK instruction
+    *TargetPtr |= ((Result & 0xffffU) << 5);
+    // Shift is "lsl #0", in bits 22:21. No action needed.
+    break;
+  }
   }
 }
 
