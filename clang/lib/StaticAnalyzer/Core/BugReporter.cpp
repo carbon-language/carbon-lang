@@ -1595,6 +1595,12 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
           reversePropagateIntererstingSymbols(*PDB.getBugReport(), IE,
                                               N->getState().getPtr(), Ex,
                                               N->getLocationContext());
+
+        PathDiagnosticLocation L =
+         cleanUpLocation(PathDiagnosticLocation::createBegin(PS->getStmt(), SM,
+                                                             LC), LC);
+
+        addEdgeToPath(PD.getActivePath(), PrevLoc, L, LC);
         break;
       }
 
@@ -1686,6 +1692,7 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
           p->setPrunable(true);
 
           addEdgeToPath(PD.getActivePath(), PrevLoc, p->getLocation(), LC);
+          PD.getActivePath().push_front(p);
 
           if (CS) {
             addEdgeToPath(PD.getActivePath(), PrevLoc,
@@ -1706,12 +1713,13 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
                                               N),
                             Term))
           {
-              PathDiagnosticLocation L(Term, SM, PDB.LC);
-              PathDiagnosticEventPiece *PE =
+            PathDiagnosticLocation L(Term, SM, PDB.LC);
+            PathDiagnosticEventPiece *PE =
               new PathDiagnosticEventPiece(L, "Loop body executed 0 times");
-              PE->setPrunable(true);
-              addEdgeToPath(PD.getActivePath(), PrevLoc,
-                            PE->getLocation(), LC);
+            PE->setPrunable(true);
+            addEdgeToPath(PD.getActivePath(), PrevLoc,
+                          PE->getLocation(), LC);
+            PD.getActivePath().push_front(PE);
           }
         }
         break;
@@ -1722,12 +1730,12 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
       continue;
 
     // Add pieces from custom visitors.
-    BugReport *R = PDB.getBugReport();
     for (ArrayRef<BugReporterVisitor *>::iterator I = visitors.begin(),
          E = visitors.end();
          I != E; ++I) {
-      if (PathDiagnosticPiece *p = (*I)->VisitNode(N, NextNode, PDB, *R)) {
+      if (PathDiagnosticPiece *p = (*I)->VisitNode(N, NextNode, PDB, *report)) {
         addEdgeToPath(PD.getActivePath(), PrevLoc, p->getLocation(), LC);
+        PD.getActivePath().push_front(p);
         updateStackPiecesWithMessage(p, CallStack);
       }
     }
