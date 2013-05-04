@@ -135,6 +135,9 @@ namespace llvm {
     SDValue getReturnAddressFrameIndex(SelectionDAG &DAG) const;
     SDValue getGlobalAddressWrapper(SDValue GA, const GlobalValue *GV,
                                     SelectionDAG &DAG) const;
+    SDValue lowerLoadWordFromAlignedBasePlusOffset(DebugLoc DL, SDValue Chain,
+                                                   SDValue Base, int64_t Offset,
+                                                   SelectionDAG &DAG) const;
 
     // Lower Operand specifics
     SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;

@@ -308,55 +308,49 @@ LowerBR_JT(SDValue Op, SelectionDAG &DAG) const
                      ScaledIndex);
 }
 
-static bool
-IsWordAlignedBasePlusConstantOffset(SDValue Addr, SDValue &AlignedBase,
-                                    int64_t &Offset)
+SDValue XCoreTargetLowering::
+lowerLoadWordFromAlignedBasePlusOffset(DebugLoc DL, SDValue Chain, SDValue Base,
+                                       int64_t Offset, SelectionDAG &DAG) const
 {
-  if (Addr.getOpcode() != ISD::ADD) {
-    return false;
+  if ((Offset & 0x3) == 0) {
+    return DAG.getLoad(getPointerTy(), DL, Chain, Base, MachinePointerInfo(),
+                       false, false, false, 0);
   }
-  ConstantSDNode *CN = 0;
-  if (!(CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1)))) {
-    return false;
-  }
-  int64_t off = CN->getSExtValue();
-  const SDValue &Base = Addr.getOperand(0);
-  const SDValue *Root = &Base;
-  if (Base.getOpcode() == ISD::ADD &&
-      Base.getOperand(1).getOpcode() == ISD::SHL) {
-    ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Base.getOperand(1)
-                                                      .getOperand(1));
-    if (CN && (CN->getSExtValue() >= 2)) {
-      Root = &Base.getOperand(0);
-    }
-  }
-  if (isa<FrameIndexSDNode>(*Root)) {
-    // All frame indicies are word aligned
-    AlignedBase = Base;
-    Offset = off;
-    return true;
-  }
-  if (Root->getOpcode() == XCoreISD::DPRelativeWrapper ||
-      Root->getOpcode() == XCoreISD::CPRelativeWrapper) {
-    // All dp / cp relative addresses are word aligned
-    AlignedBase = Base;
-    Offset = off;
-    return true;
-  }
-  // Check for an aligned global variable.
-  if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(*Root)) {
-    const GlobalValue *GV = GA->getGlobal();
-    if (GA->getOffset() == 0 && GV->getAlignment() >= 4) {
-      AlignedBase = Base;
-      Offset = off;
-      return true;
-    }
-  }
-  return false;
+  // Lower to pair of consecutive word aligned loads plus some bit shifting.
+  int32_t HighOffset = RoundUpToAlignment(Offset, 4);
+  int32_t LowOffset = HighOffset - 4;
+  SDValue LowAddr = DAG.getNode(ISD::ADD, DL, MVT::i32, Base,
+                                DAG.getConstant(LowOffset, MVT::i32));
+  SDValue HighAddr = DAG.getNode(ISD::ADD, DL, MVT::i32, Base,
+                                 DAG.getConstant(HighOffset, MVT::i32));
+  SDValue LowShift = DAG.getConstant((Offset - LowOffset) * 8, MVT::i32);
+  SDValue HighShift = DAG.getConstant((HighOffset - Offset) * 8, MVT::i32);
+
+  SDValue Low = DAG.getLoad(getPointerTy(), DL, Chain,
+                            LowAddr, MachinePointerInfo(),
+                            false, false, false, 0);
+  SDValue High = DAG.getLoad(getPointerTy(), DL, Chain,
+                             HighAddr, MachinePointerInfo(),
+                             false, false, false, 0);
+  SDValue LowShifted = DAG.getNode(ISD::SRL, DL, MVT::i32, Low, LowShift);
+  SDValue HighShifted = DAG.getNode(ISD::SHL, DL, MVT::i32, High, HighShift);
+  SDValue Result = DAG.getNode(ISD::OR, DL, MVT::i32, LowShifted, HighShifted);
+  Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, Low.getValue(1),
+                      High.getValue(1));
+  SDValue Ops[] = { Result, Chain };
+  return DAG.getMergeValues(Ops, 2, DL);
+}
+
+static bool isWordAligned(SDValue Value, SelectionDAG &DAG)
+{
+  APInt KnownZero, KnownOne;
+  DAG.ComputeMaskedBits(Value, KnownZero, KnownOne);
+  return KnownZero.countTrailingOnes() >= 2;
 }
 
 SDValue XCoreTargetLowering::
 LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   LoadSDNode *LD = cast<LoadSDNode>(Op);
   assert(LD->getExtensionType() == ISD::NON_EXTLOAD &&
          "Unexpected extension type");
@@ -374,45 +368,23 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   SDValue BasePtr = LD->getBasePtr();
   DebugLoc DL = Op.getDebugLoc();
 
-  SDValue Base;
-  int64_t Offset;
-  if (!LD->isVolatile() &&
-      IsWordAlignedBasePlusConstantOffset(BasePtr, Base, Offset)) {
-    if (Offset % 4 == 0) {
-      // We've managed to infer better alignment information than the load
-      // already has. Use an aligned load.
-      //
-      return DAG.getLoad(getPointerTy(), DL, Chain, BasePtr,
-                         MachinePointerInfo(),
-                         false, false, false, 0);
+  if (!LD->isVolatile()) {
+    const GlobalValue *GV;
+    int64_t Offset = 0;
+    if (DAG.isBaseWithConstantOffset(BasePtr) &&
+        isWordAligned(BasePtr->getOperand(0), DAG)) {
+      SDValue NewBasePtr = BasePtr->getOperand(0);
+      Offset = cast<ConstantSDNode>(BasePtr->getOperand(1))->getSExtValue();
+      return lowerLoadWordFromAlignedBasePlusOffset(DL, Chain, NewBasePtr,
+                                                    Offset, DAG);
     }
-    // Lower to
-    // ldw low, base[offset >> 2]
-    // ldw high, base[(offset >> 2) + 1]
-    // shr low_shifted, low, (offset & 0x3) * 8
-    // shl high_shifted, high, 32 - (offset & 0x3) * 8
-    // or result, low_shifted, high_shifted
-    SDValue LowOffset = DAG.getConstant(Offset & ~0x3, MVT::i32);
-    SDValue HighOffset = DAG.getConstant((Offset & ~0x3) + 4, MVT::i32);
-    SDValue LowShift = DAG.getConstant((Offset & 0x3) * 8, MVT::i32);
-    SDValue HighShift = DAG.getConstant(32 - (Offset & 0x3) * 8, MVT::i32);
-
-    SDValue LowAddr = DAG.getNode(ISD::ADD, DL, MVT::i32, Base, LowOffset);
-    SDValue HighAddr = DAG.getNode(ISD::ADD, DL, MVT::i32, Base, HighOffset);
-
-    SDValue Low = DAG.getLoad(getPointerTy(), DL, Chain,
-                              LowAddr, MachinePointerInfo(),
-                              false, false, false, 0);
-    SDValue High = DAG.getLoad(getPointerTy(), DL, Chain,
-                               HighAddr, MachinePointerInfo(),
-                               false, false, false, 0);
-    SDValue LowShifted = DAG.getNode(ISD::SRL, DL, MVT::i32, Low, LowShift);
-    SDValue HighShifted = DAG.getNode(ISD::SHL, DL, MVT::i32, High, HighShift);
-    SDValue Result = DAG.getNode(ISD::OR, DL, MVT::i32, LowShifted, HighShifted);
-    Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, Low.getValue(1),
-                             High.getValue(1));
-    SDValue Ops[] = { Result, Chain };
-    return DAG.getMergeValues(Ops, 2, DL);
+    if (TLI.isGAPlusOffset(BasePtr.getNode(), GV, Offset) &&
+        MinAlign(GV->getAlignment(), 4) == 4) {
+      SDValue NewBasePtr = DAG.getGlobalAddress(GV, DL,
+                                                BasePtr->getValueType(0));
+      return lowerLoadWordFromAlignedBasePlusOffset(DL, Chain, NewBasePtr,
+                                                    Offset, DAG);
+    }
   }
 
   if (LD->getAlignment() == 2) {
