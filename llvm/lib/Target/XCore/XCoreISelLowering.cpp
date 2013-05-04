@@ -1623,6 +1623,12 @@ XCoreTargetLowering::isLegalAddressingMode(const AddrMode &AM,
   }
 }
 
+bool XCoreTargetLowering::
+isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
+  // The XCore target isn't yet aware of offsets.
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 //                           XCore Inline Assembly Support
 //===----------------------------------------------------------------------===//

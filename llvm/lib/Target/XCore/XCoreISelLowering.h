@@ -106,6 +106,8 @@ namespace llvm {
     virtual bool isLegalAddressingMode(const AddrMode &AM,
                                        Type *Ty) const;
 
+    virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
+
   private:
     const XCoreTargetMachine &TM;
     const XCoreSubtarget &Subtarget;
