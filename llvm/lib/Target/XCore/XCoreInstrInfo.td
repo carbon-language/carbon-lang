@@ -170,7 +170,6 @@ def ldawb : PatFrag<(ops node:$addr, node:$offset),
 // Instruction operand types
 def calltarget  : Operand<i32>;
 def brtarget : Operand<OtherVT>;
-def pclabel : Operand<i32>;
 
 // Addressing modes
 def ADDRspii : ComplexPattern<i32, 2, "SelectADDRspii", [add, frameindex], []>;
