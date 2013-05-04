@@ -13,21 +13,15 @@
 
 #include "llvm/Linker.h"
 #include "llvm-c/Linker.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SetVector.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/IR/Constants.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/TypeFinder.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Transforms/Utils/ValueMapper.h"
-#include <cctype>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -1285,6 +1279,15 @@ bool ModuleLinker::run() {
   TypeMap.linkDefinedTypeBodies();
   
   return false;
+}
+
+Linker::Linker(Module *M) : Composite(M) {}
+
+Linker::~Linker() {
+}
+
+bool Linker::linkInModule(Module *Src, unsigned Mode, std::string *ErrorMsg) {
+  return LinkModules(Composite, Src, Linker::DestroySource, ErrorMsg);
 }
 
 //===----------------------------------------------------------------------===//
