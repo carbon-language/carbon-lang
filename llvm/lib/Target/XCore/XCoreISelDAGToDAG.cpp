@@ -68,8 +68,6 @@ namespace {
 
     // Complex Pattern Selectors.
     bool SelectADDRspii(SDValue Addr, SDValue &Base, SDValue &Offset);
-    bool SelectADDRdpii(SDValue Addr, SDValue &Base, SDValue &Offset);
-    bool SelectADDRcpii(SDValue Addr, SDValue &Base, SDValue &Offset);
     
     virtual const char *getPassName() const {
       return "XCore DAG->DAG Pattern Instruction Selection";
@@ -103,48 +101,6 @@ bool XCoreDAGToDAGISel::SelectADDRspii(SDValue Addr, SDValue &Base,
       && (CN->getSExtValue() % 4 == 0 && CN->getSExtValue() >= 0)) {
       // Constant positive word offset from frame index
       Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
-      Offset = CurDAG->getTargetConstant(CN->getSExtValue(), MVT::i32);
-      return true;
-    }
-  }
-  return false;
-}
-
-bool XCoreDAGToDAGISel::SelectADDRdpii(SDValue Addr, SDValue &Base,
-                                       SDValue &Offset) {
-  if (Addr.getOpcode() == XCoreISD::DPRelativeWrapper) {
-    Base = Addr.getOperand(0);
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
-    return true;
-  }
-  if (Addr.getOpcode() == ISD::ADD) {
-    ConstantSDNode *CN = 0;
-    if ((Addr.getOperand(0).getOpcode() == XCoreISD::DPRelativeWrapper)
-      && (CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1)))
-      && (CN->getSExtValue() % 4 == 0 && CN->getSExtValue() >= 0)) {
-      // Constant word offset from a object in the data region
-      Base = Addr.getOperand(0).getOperand(0);
-      Offset = CurDAG->getTargetConstant(CN->getSExtValue(), MVT::i32);
-      return true;
-    }
-  }
-  return false;
-}
-
-bool XCoreDAGToDAGISel::SelectADDRcpii(SDValue Addr, SDValue &Base,
-                                       SDValue &Offset) {
-  if (Addr.getOpcode() == XCoreISD::CPRelativeWrapper) {
-    Base = Addr.getOperand(0);
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
-    return true;
-  }
-  if (Addr.getOpcode() == ISD::ADD) {
-    ConstantSDNode *CN = 0;
-    if ((Addr.getOperand(0).getOpcode() == XCoreISD::CPRelativeWrapper)
-      && (CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1)))
-      && (CN->getSExtValue() % 4 == 0 && CN->getSExtValue() >= 0)) {
-      // Constant word offset from a object in the data region
-      Base = Addr.getOperand(0).getOperand(0);
       Offset = CurDAG->getTargetConstant(CN->getSExtValue(), MVT::i32);
       return true;
     }

@@ -36,6 +36,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
+
 using namespace llvm;
 
 const char *XCoreTargetLowering::
@@ -241,9 +243,20 @@ getGlobalAddressWrapper(SDValue GA, const GlobalValue *GV,
 SDValue XCoreTargetLowering::
 LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const
 {
-  const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
-  SDValue GA = DAG.getTargetGlobalAddress(GV, Op.getDebugLoc(), MVT::i32);
-  return getGlobalAddressWrapper(GA, GV, DAG);
+  DebugLoc DL = Op.getDebugLoc();
+  const GlobalAddressSDNode *GN = cast<GlobalAddressSDNode>(Op);
+  const GlobalValue *GV = GN->getGlobal();
+  int64_t Offset = GN->getOffset();
+  // We can only fold positive offsets that are a multiple of the word size.
+  int64_t FoldedOffset = std::max(Offset & ~3, 0LL);
+  SDValue GA = DAG.getTargetGlobalAddress(GV, DL, MVT::i32, FoldedOffset);
+  GA = getGlobalAddressWrapper(GA, GV, DAG);
+  // Handle the rest of the offset.
+  if (Offset != FoldedOffset) {
+    SDValue Remaining = DAG.getConstant(Offset - FoldedOffset, MVT::i32);
+    GA = DAG.getNode(ISD::ADD, DL, MVT::i32, GA, Remaining);
+  }
+  return GA;
 }
 
 static inline SDValue BuildGetId(SelectionDAG &DAG, DebugLoc dl) {
@@ -319,10 +332,19 @@ lowerLoadWordFromAlignedBasePlusOffset(DebugLoc DL, SDValue Chain, SDValue Base,
   // Lower to pair of consecutive word aligned loads plus some bit shifting.
   int32_t HighOffset = RoundUpToAlignment(Offset, 4);
   int32_t LowOffset = HighOffset - 4;
-  SDValue LowAddr = DAG.getNode(ISD::ADD, DL, MVT::i32, Base,
-                                DAG.getConstant(LowOffset, MVT::i32));
-  SDValue HighAddr = DAG.getNode(ISD::ADD, DL, MVT::i32, Base,
-                                 DAG.getConstant(HighOffset, MVT::i32));
+  SDValue LowAddr, HighAddr;
+  if (GlobalAddressSDNode *GASD =
+        dyn_cast<GlobalAddressSDNode>(Base.getNode())) {
+    LowAddr = DAG.getGlobalAddress(GASD->getGlobal(), DL, Base.getValueType(),
+                                   LowOffset);
+    HighAddr = DAG.getGlobalAddress(GASD->getGlobal(), DL, Base.getValueType(),
+                                    HighOffset);
+  } else {
+    LowAddr = DAG.getNode(ISD::ADD, DL, MVT::i32, Base,
+                          DAG.getConstant(LowOffset, MVT::i32));
+    HighAddr = DAG.getNode(ISD::ADD, DL, MVT::i32, Base,
+                           DAG.getConstant(HighOffset, MVT::i32));
+  }
   SDValue LowShift = DAG.getConstant((Offset - LowOffset) * 8, MVT::i32);
   SDValue HighShift = DAG.getConstant((HighOffset - Offset) * 8, MVT::i32);
 
@@ -1551,12 +1573,6 @@ XCoreTargetLowering::isLegalAddressingMode(const AddrMode &AM,
     // reg + reg<<2
     return AM.Scale == 4 && AM.BaseOffs == 0;
   }
-}
-
-bool XCoreTargetLowering::
-isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
-  // The XCore target isn't yet aware of offsets.
-  return false;
 }
 
 //===----------------------------------------------------------------------===//

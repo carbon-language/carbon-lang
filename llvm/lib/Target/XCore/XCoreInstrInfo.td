@@ -174,15 +174,9 @@ def pclabel : Operand<i32>;
 
 // Addressing modes
 def ADDRspii : ComplexPattern<i32, 2, "SelectADDRspii", [add, frameindex], []>;
-def ADDRdpii : ComplexPattern<i32, 2, "SelectADDRdpii", [add, dprelwrapper],
-                 []>;
-def ADDRcpii : ComplexPattern<i32, 2, "SelectADDRcpii", [add, cprelwrapper],
-                 []>;
 
 // Address operands
 def MEMii : Operand<i32> {
-  let PrintMethod = "printMemOperand";
-  let DecoderMethod = "DecodeMEMiiOperand";
   let MIOperandInfo = (ops i32imm, i32imm);
 }
 
@@ -515,29 +509,29 @@ def LMUL_l6r : _FL6R<
 
 //let Uses = [DP] in ...
 let neverHasSideEffects = 1, isReMaterializable = 1 in
-def LDAWDP_ru6: _FRU6<0b011000, (outs RRegs:$a), (ins MEMii:$b),
+def LDAWDP_ru6: _FRU6<0b011000, (outs RRegs:$a), (ins i32imm:$b),
                       "ldaw $a, dp[$b]", []>;
 
 let isReMaterializable = 1 in                    
-def LDAWDP_lru6: _FLRU6<0b011000, (outs RRegs:$a), (ins MEMii:$b),
+def LDAWDP_lru6: _FLRU6<0b011000, (outs RRegs:$a), (ins i32imm:$b),
                         "ldaw $a, dp[$b]",
-                        [(set RRegs:$a, ADDRdpii:$b)]>;
+                        [(set RRegs:$a, (dprelwrapper tglobaladdr:$b))]>;
 
 let mayLoad=1 in
-def LDWDP_ru6: _FRU6<0b010110, (outs RRegs:$a), (ins MEMii:$b),
+def LDWDP_ru6: _FRU6<0b010110, (outs RRegs:$a), (ins i32imm:$b),
                      "ldw $a, dp[$b]", []>;
 
-def LDWDP_lru6: _FLRU6<0b010110, (outs RRegs:$a), (ins MEMii:$b),
+def LDWDP_lru6: _FLRU6<0b010110, (outs RRegs:$a), (ins i32imm:$b),
                        "ldw $a, dp[$b]",
-                       [(set RRegs:$a, (load ADDRdpii:$b))]>;
+                       [(set RRegs:$a, (load (dprelwrapper tglobaladdr:$b)))]>;
 
 let mayStore=1 in
-def STWDP_ru6 : _FRU6<0b010100, (outs), (ins RRegs:$a, MEMii:$b),
+def STWDP_ru6 : _FRU6<0b010100, (outs), (ins RRegs:$a, i32imm:$b),
                       "stw $a, dp[$b]", []>;
 
-def STWDP_lru6 : _FLRU6<0b010100, (outs), (ins RRegs:$a, MEMii:$b),
+def STWDP_lru6 : _FLRU6<0b010100, (outs), (ins RRegs:$a, i32imm:$b),
                         "stw $a, dp[$b]",
-                        [(store RRegs:$a, ADDRdpii:$b)]>;
+                        [(store RRegs:$a, (dprelwrapper tglobaladdr:$b))]>;
 
 //let Uses = [CP] in ..
 let mayLoad = 1, isReMaterializable = 1, neverHasSideEffects = 1 in
@@ -626,12 +620,12 @@ def BRFU_lu6 : _FLU6<0b0111001100, (outs), (ins brtarget:$a), "bu $a", []>;
 
 //let Uses = [CP] in ...
 let Defs = [R11], neverHasSideEffects = 1, isReMaterializable = 1 in
-def LDAWCP_u6: _FU6<0b0111111101, (outs), (ins MEMii:$a), "ldaw r11, cp[$a]",
+def LDAWCP_u6: _FU6<0b0111111101, (outs), (ins i32imm:$a), "ldaw r11, cp[$a]",
                     []>;
 
 let Defs = [R11], isReMaterializable = 1 in
-def LDAWCP_lu6: _FLU6<0b0111111101, (outs), (ins MEMii:$a), "ldaw r11, cp[$a]",
-                      [(set R11, ADDRcpii:$a)]>;
+def LDAWCP_lu6: _FLU6<0b0111111101, (outs), (ins i32imm:$a), "ldaw r11, cp[$a]",
+                      [(set R11, (cprelwrapper tglobaladdr:$a))]>;
 
 let Defs = [R11] in
 defm GETSR : FU6_LU6_np<0b0111111100, "getsr r11,">;

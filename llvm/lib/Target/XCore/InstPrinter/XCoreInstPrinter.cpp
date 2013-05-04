@@ -84,14 +84,3 @@ printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
   assert(Op.isExpr() && "unknown operand kind in printOperand");
   printExpr(Op.getExpr(), O);
 }
-
-void XCoreInstPrinter::
-printMemOperand(const MCInst *MI, int opNum, raw_ostream &O) {
-  printOperand(MI, opNum, O);
-
-  if (MI->getOperand(opNum+1).isImm() && MI->getOperand(opNum+1).getImm() == 0)
-    return;
-
-  O << "+";
-  printOperand(MI, opNum+1, O);
-}
