@@ -304,6 +304,8 @@ public:
   const PathDiagnosticLocation &getStart() const { return Start; }
   const PathDiagnosticLocation &getEnd() const { return End; }
 
+  void setEnd(const PathDiagnosticLocation &L) { End = L; }
+
   void flatten() {
     Start.flatten();
     End.flatten();
@@ -614,6 +616,10 @@ public:
     assert(!LPairs.empty() &&
            "PathDiagnosticControlFlowPiece needs at least one location.");
     return LPairs[0].getEnd();
+  }
+
+  void setEndLocation(const PathDiagnosticLocation &L) {
+    LPairs[0].setEnd(L);
   }
 
   void push_back(const PathDiagnosticLocationPair &X) { LPairs.push_back(X); }

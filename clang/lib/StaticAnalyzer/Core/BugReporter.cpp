@@ -145,7 +145,7 @@ static void removeRedundantMsgs(PathPieces &path) {
 
 /// A map from PathDiagnosticPiece to the LocationContext of the inlined
 /// function call it represents.
-typedef llvm::DenseMap<const PathDiagnosticCallPiece*, const LocationContext*>
+typedef llvm::DenseMap<const PathPieces *, const LocationContext *>
         LocationContextMap;
 
 /// Recursively scan through a path and prune out calls and macros pieces
@@ -173,8 +173,8 @@ static bool removeUnneededCalls(PathPieces &pieces, BugReport *R,
       case PathDiagnosticPiece::Call: {
         PathDiagnosticCallPiece *call = cast<PathDiagnosticCallPiece>(piece);
         // Check if the location context is interesting.
-        assert(LCM.count(call));
-        if (R->isInteresting(LCM[call])) {
+        assert(LCM.count(&call->path));
+        if (R->isInteresting(LCM[&call->path])) {
           containsSomethingInteresting = true;
           break;
         }
@@ -539,7 +539,7 @@ static bool GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
         PathDiagnosticCallPiece *C =
             PathDiagnosticCallPiece::construct(N, *CE, SMgr);
         // Record the mapping from call piece to LocationContext.
-        LCM[C] = CE->getCalleeContext();
+        LCM[&C->path] = CE->getCalleeContext();
         PD.getActivePath().push_front(C);
         PD.pushActivePath(&C->path);
         CallStack.push_back(StackDiagPair(C, N));
@@ -563,7 +563,7 @@ static bool GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
           const Decl *Caller = CE->getLocationContext()->getDecl();
           C = PathDiagnosticCallPiece::construct(PD.getActivePath(), Caller);
           // Record the mapping from call piece to LocationContext.
-          LCM[C] = CE->getCalleeContext();
+          LCM[&C->path] = CE->getCalleeContext();
         }
 
         C->setCallee(*CE, SMgr);
@@ -1365,7 +1365,7 @@ static bool GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
         
         PathDiagnosticCallPiece *C =
           PathDiagnosticCallPiece::construct(N, *CE, SM);
-        LCM[C] = CE->getCalleeContext();
+        LCM[&C->path] = CE->getCalleeContext();
 
         EB.addEdge(C->callReturn, /*AlwaysAdd=*/true, /*IsPostJump=*/true);
         EB.flushLocations();
@@ -1402,7 +1402,7 @@ static bool GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
         } else {
           const Decl *Caller = CE->getLocationContext()->getDecl();
           C = PathDiagnosticCallPiece::construct(PD.getActivePath(), Caller);
-          LCM[C] = CE->getCalleeContext();
+          LCM[&C->path] = CE->getCalleeContext();
         }
 
         C->setCallee(*CE, SM);
@@ -1535,7 +1535,11 @@ static void addEdgeToPath(PathPieces &path,
                           PathDiagnosticLocation &PrevLoc,
                           PathDiagnosticLocation NewLoc,
                           const LocationContext *LC) {
-  if (NewLoc.asLocation().isMacroID())
+  if (!NewLoc.isValid())
+    return;
+
+  SourceLocation NewLocL = NewLoc.asLocation();
+  if (NewLocL.isInvalid() || NewLocL.isMacroID())
     return;
 
   if (!PrevLoc.isValid()) {
@@ -1543,23 +1547,13 @@ static void addEdgeToPath(PathPieces &path,
     return;
   }
 
-  const PathDiagnosticLocation &PrevLocClean = cleanUpLocation(PrevLoc, LC);
-  if (PrevLocClean.asLocation().isInvalid()) {
-    PrevLoc = NewLoc;
-    return;
-  }
-
-  const PathDiagnosticLocation &NewLocClean = cleanUpLocation(NewLoc, LC);
-  if (NewLocClean.asLocation() == PrevLocClean.asLocation())
-    return;
-
   // FIXME: ignore intra-macro edges for now.
-  if (NewLocClean.asLocation().getExpansionLoc() ==
-      PrevLocClean.asLocation().getExpansionLoc())
+  if (NewLoc.asLocation().getExpansionLoc() ==
+      PrevLoc.asLocation().getExpansionLoc())
     return;
 
-  path.push_front(new PathDiagnosticControlFlowPiece(NewLocClean,
-                                                     PrevLocClean));
+  path.push_front(new PathDiagnosticControlFlowPiece(NewLoc,
+                                                     PrevLoc));
   PrevLoc = NewLoc;
 }
 
@@ -1585,6 +1579,8 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
     NextNode = N->getFirstPred();
     ProgramPoint P = N->getLocation();
     const LocationContext *LC = N->getLocationContext();
+    assert(!LCM[&PD.getActivePath()] || LCM[&PD.getActivePath()] == LC);
+    LCM[&PD.getActivePath()] = LC;
     PathDiagnosticLocation &PrevLoc = PrevLocMap[LC->getCurrentStackFrame()];
 
     do {
@@ -1597,9 +1593,7 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
                                               N->getLocationContext());
 
         PathDiagnosticLocation L =
-         cleanUpLocation(PathDiagnosticLocation::createBegin(PS->getStmt(), SM,
-                                                             LC), LC);
-
+          PathDiagnosticLocation(PS->getStmt(), SM, LC);
         addEdgeToPath(PD.getActivePath(), PrevLoc, L, LC);
         break;
       }
@@ -1620,7 +1614,7 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
           PathDiagnosticCallPiece::construct(N, *CE, SM);
 
         // Record the location context for this call piece.
-        LCM[C] = CE->getCalleeContext();
+        LCM[&C->path] = CE->getCalleeContext();
 
         // Add the edge to the return site.
         addEdgeToPath(PD.getActivePath(), PrevLoc, C->callReturn, LC);
@@ -1651,7 +1645,7 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
         } else {
           const Decl *Caller = CE->getLocationContext()->getDecl();
           C = PathDiagnosticCallPiece::construct(PD.getActivePath(), Caller);
-          LCM[C] = CE->getCalleeContext();
+          LCM[&C->path] = CE->getCalleeContext();
         }
         C->setCallee(*CE, SM);
 
@@ -1742,6 +1736,76 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
   }
 
   return report->isValid();
+}
+
+const Stmt *getLocParent(PathDiagnosticLocation L, ParentMap &PM) {
+  if (!L.isValid())
+    return 0;
+  const Stmt *S = L.asStmt();
+  if (!S)
+    return 0;
+  return PM.getParent(S);
+}
+
+static bool optimizeEdges(PathPieces &path,
+                          LocationContextMap &LCM) {
+  bool hasChanges = false;
+  const LocationContext *LC = LCM[&path];
+  assert(LC);
+
+  for (PathPieces::iterator I = path.begin(), E = path.end(); I != E; ++I) {
+    PathPieces::iterator NextI = I; ++NextI;
+    if (NextI == E)
+      break;
+
+    // Optimize subpaths.
+    if (PathDiagnosticCallPiece *CallI = dyn_cast<PathDiagnosticCallPiece>(*I)){
+      while (optimizeEdges(CallI->path, LCM)) {}
+      continue;
+    }
+
+    // Pattern match the current piece and its successor.
+    PathDiagnosticControlFlowPiece *PieceI =
+      dyn_cast<PathDiagnosticControlFlowPiece>(*I);
+
+    if (!PieceI)
+      continue;
+
+    PathDiagnosticControlFlowPiece *PieceNextI =
+      dyn_cast<PathDiagnosticControlFlowPiece>(*NextI);
+
+    if (!PieceNextI)
+      continue;
+
+    ParentMap &PM = LC->getParentMap();
+
+    // Rule I.
+    //
+    // If we have two consecutive control edges whose end/begin locations
+    // are at the same level (i.e., parents), merge them.
+    //
+    // For example:
+    //
+    // (1.1 -> 1.2) -> (1.2 -> 1.3) becomes (1.1 -> 1.3) because the common
+    // parent is '1'.  Here '1.1' represents the hierarchy of statements.
+    //
+    // NOTE: this will be limited later in cases where we add barriers
+    // to prevent this optimization.
+    const Stmt *level1 = getLocParent(PieceI->getStartLocation(), PM);
+    const Stmt *level2 = getLocParent(PieceI->getEndLocation(), PM);
+    const Stmt *level3 = getLocParent(PieceNextI->getStartLocation(), PM);
+    const Stmt *level4 = getLocParent(PieceNextI->getEndLocation(), PM);
+
+    if (level1 && level1 == level2 && level1 == level3 && level1 == level4) {
+      PieceI->setEndLocation(PieceNextI->getEndLocation());
+      path.erase(NextI);
+      hasChanges = true;
+      continue;
+    }
+  }
+
+  // No changes.
+  return hasChanges;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2324,7 +2388,7 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
 
   if (ActiveScheme == PathDiagnosticConsumer::Extensive) {
     AnalyzerOptions &options = getEngine().getAnalysisManager().options;
-    if (options.getBooleanOption("path-diagnostics-alternate", false)) {
+    if (options.getBooleanOption("path-diagnostics-alternate", true)) {
       ActiveScheme = PathDiagnosticConsumer::AlternateExtensive;
     }
   }
@@ -2427,6 +2491,10 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
       }
 
       adjustCallLocations(PD.getMutablePieces());
+
+      if (ActiveScheme == PathDiagnosticConsumer::AlternateExtensive) {
+        while (optimizeEdges(PD.getMutablePieces(), LCM)) {}
+      }
     }
 
     // We found a report and didn't suppress it.
