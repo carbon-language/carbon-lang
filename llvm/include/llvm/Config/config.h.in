@@ -594,7 +594,7 @@
 #undef LLVM_HAS_ATOMICS
 
 /* Host triple LLVM will be executed on */
-#undef LLVM_HOSTTRIPLE
+#undef LLVM_HOST_TRIPLE
 
 /* Installation directory for include files */
 #undef LLVM_INCLUDEDIR
