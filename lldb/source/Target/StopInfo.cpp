@@ -661,7 +661,8 @@ protected:
                     // re-enable the watchpoint
                     if (process)
                     {
-                        uint32_t num; bool wp_triggers_after;
+                        uint32_t num;
+                        bool wp_triggers_after;
                         if (process->GetWatchpointSupportInfo(num, wp_triggers_after).Success())
                         {
                             if (!wp_triggers_after)

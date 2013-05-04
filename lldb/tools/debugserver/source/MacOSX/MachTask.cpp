@@ -1023,7 +1023,7 @@ MachTask::EnumerateMallocFrames (MachMallocEventId event_id,
     
     __mach_stack_logging_frames_for_uniqued_stack(m_task, event_id, &function_addresses_buffer[0], buffer_size, count);
     *count -= 1;
-    if (function_addresses_buffer[*count-1] < vm_page_size)
+    if (function_addresses_buffer[*count-1] < PageSize())
         *count -= 1;
     return (*count > 0);
 }

@@ -985,9 +985,13 @@ FileSpec::EnumerateDirectory
                         case eEnumerateDirectoryResultExit:  // Exit from the current directory at the current level.
                             // Exit from this directory level and tell parent to 
                             // keep enumerating.
+                            if (buf)
+                                free (buf);
                             return eEnumerateDirectoryResultNext;
 
                         case eEnumerateDirectoryResultQuit:  // Stop directory enumerations at any level
+                            if (buf)
+                                free (buf);
                             return eEnumerateDirectoryResultQuit;
                         }
                     }

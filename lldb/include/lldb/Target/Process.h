@@ -2980,6 +2980,7 @@ public:
     GetWatchpointSupportInfo (uint32_t &num)
     {
         Error error;
+        num = 0;
         error.SetErrorString ("Process::GetWatchpointSupportInfo() not supported");
         return error;
     }
@@ -2988,6 +2989,8 @@ public:
     GetWatchpointSupportInfo (uint32_t &num, bool& after)
     {
         Error error;
+        num = 0;
+        after = true;
         error.SetErrorString ("Process::GetWatchpointSupportInfo() not supported");
         return error;
     }

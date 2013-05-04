@@ -206,9 +206,7 @@ MachVMMemory::GetStolenPages(task_t task)
 			if(stolen >= mb128)
             {
                 stolen = (stolen & ~((128 * 1024 * 1024ULL) - 1)); // rounding down
-                vm_size_t pagesize = vm_page_size;
-                pagesize = PageSize (task);
-                stolenPages = stolen/pagesize;
+                stolenPages = stolen / PageSize (task);
 			}
 		}
 	}

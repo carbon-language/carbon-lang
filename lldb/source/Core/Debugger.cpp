@@ -1179,7 +1179,7 @@ ScanFormatDescriptor (const char* var_name_begin,
                 log->Printf("ScanFormatDescriptor] will display value for this VO");
             *val_obj_display = ValueObject::eValueObjectRepresentationStyleValue;
         }
-        delete format_name;
+        delete[] format_name;
     }
     if (log)
         log->Printf("ScanFormatDescriptor] final format description outcome: custom_format = %d, val_obj_display = %d",
