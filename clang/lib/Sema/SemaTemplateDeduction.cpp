@@ -4101,7 +4101,7 @@ static bool isSameTemplate(TemplateDecl *T1, TemplateDecl *T2) {
 /// template argument deduction.
 UnresolvedSetIterator
 Sema::getMostSpecialized(UnresolvedSetIterator SpecBegin,
-                        UnresolvedSetIterator SpecEnd,
+                         UnresolvedSetIterator SpecEnd,
                          TemplatePartialOrderingContext TPOC,
                          unsigned NumCallArguments,
                          SourceLocation Loc,
@@ -4158,11 +4158,10 @@ Sema::getMostSpecialized(UnresolvedSetIterator SpecBegin,
   }
 
   // Diagnose the ambiguity.
-  if (Complain)
+  if (Complain) {
     Diag(Loc, AmbigDiag);
 
-  if (Complain)
-  // FIXME: Can we order the candidates in some sane way?
+    // FIXME: Can we order the candidates in some sane way?
     for (UnresolvedSetIterator I = SpecBegin; I != SpecEnd; ++I) {
       PartialDiagnostic PD = CandidateDiag;
       PD << getTemplateArgumentBindingsText(
@@ -4173,6 +4172,7 @@ Sema::getMostSpecialized(UnresolvedSetIterator SpecBegin,
                                    TargetType);
       Diag((*I)->getLocation(), PD);
     }
+  }
 
   return SpecEnd;
 }
