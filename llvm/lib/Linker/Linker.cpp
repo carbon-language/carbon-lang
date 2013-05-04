@@ -19,13 +19,8 @@
 #include "llvm/Support/system_error.h"
 using namespace llvm;
 
-Linker::Linker(StringRef modname,
-               LLVMContext& C):
-  Composite(new Module(modname, C)) { }
-
 Linker::Linker(Module* aModule) :
   Composite(aModule) { }
 
 Linker::~Linker() {
-  delete Composite;
 }

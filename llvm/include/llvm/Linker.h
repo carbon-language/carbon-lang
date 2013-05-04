@@ -44,13 +44,6 @@ class Linker {
   /// @name Constructors
   /// @{
   public:
-    /// Construct the Linker with an empty module which will be given the
-    /// name \p progname. \p progname will also be used for error messages.
-    /// @brief Construct with empty module
-    Linker(StringRef modulename, ///< name of linker's end-result module
-           LLVMContext &C ///< Context for global info
-    );
-
     /// Construct the Linker with a previously defined module, \p aModule. Use
     /// \p progname for the name of the program in error messages.
     /// @brief Construct with existing module
