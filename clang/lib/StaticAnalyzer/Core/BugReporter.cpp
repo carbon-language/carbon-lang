@@ -1747,7 +1747,7 @@ const Stmt *getLocStmt(PathDiagnosticLocation L) {
 const Stmt *getStmtParent(const Stmt *S, ParentMap &PM) {
   if (!S)
     return 0;
-  return PM.getParent(S);
+  return PM.getParentIgnoreParens(S);
 }
 
 static bool optimizeEdges(PathPieces &path,
@@ -1837,7 +1837,7 @@ static bool optimizeEdges(PathPieces &path,
     // (1.1 -> 1.1.1) -> (1.1.1 -> 1.2) becomes (1.1 -> 1.2).
     if (level1 && level2 &&
         level1 == level4 &&
-        level2 == level3 && PM.getParent(level2) == level1) {
+        level2 == level3 && PM.getParentIgnoreParens(level2) == level1) {
       PieceI->setEndLocation(PieceNextI->getEndLocation());
       path.erase(NextI);
       hasChanges = true;
@@ -1856,7 +1856,7 @@ static bool optimizeEdges(PathPieces &path,
     //
     // (1.1 -> 1.1.1) -> (1.1.1 -> X) becomes (1.1 -> X).
     //
-    if (level1 && level2 && level1 == PM.getParent(level2)) {
+    if (level1 && level2 && level1 == PM.getParentIgnoreParens(level2)) {
       PieceI->setEndLocation(PieceNextI->getEndLocation());
       path.erase(NextI);
       hasChanges = true;
