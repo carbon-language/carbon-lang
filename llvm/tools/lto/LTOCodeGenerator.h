@@ -19,6 +19,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Linker.h"
 #include <string>
+#include <vector>
 
 namespace llvm {
   class LLVMContext;
