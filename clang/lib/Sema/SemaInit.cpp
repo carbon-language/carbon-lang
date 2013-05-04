@@ -4867,7 +4867,8 @@ PerformConstructorInitialization(Sema &S,
          Kind.getKind() == InitializationKind::IK_Value)))) {
     // An explicitly-constructed temporary, e.g., X(1, 2).
     S.MarkFunctionReferenced(Loc, Constructor);
-    S.DiagnoseUseOfDecl(Constructor, Loc);
+    if (S.DiagnoseUseOfDecl(Constructor, Loc))
+      return ExprError();
 
     TypeSourceInfo *TSInfo = Entity.getTypeSourceInfo();
     if (!TSInfo)
@@ -4926,7 +4927,8 @@ PerformConstructorInitialization(Sema &S,
   // Only check access if all of that succeeded.
   S.CheckConstructorAccess(Loc, Constructor, Entity,
                            Step.Function.FoundDecl.getAccess());
-  S.DiagnoseUseOfDecl(Step.Function.FoundDecl, Loc);
+  if (S.DiagnoseUseOfDecl(Step.Function.FoundDecl, Loc))
+    return ExprError();
 
   if (shouldBindAsTemporary(Entity))
     CurInit = S.MaybeBindToTemporary(CurInit.takeAs<Expr>());
@@ -5129,7 +5131,8 @@ InitializationSequence::Perform(Sema &S,
       // Overload resolution determined which function invoke; update the
       // initializer to reflect that choice.
       S.CheckAddressOfMemberAccess(CurInit.get(), Step->Function.FoundDecl);
-      S.DiagnoseUseOfDecl(Step->Function.FoundDecl, Kind.getLocation());
+      if (S.DiagnoseUseOfDecl(Step->Function.FoundDecl, Kind.getLocation()))
+        return ExprError();
       CurInit = S.FixOverloadedFunctionReference(CurInit,
                                                  Step->Function.FoundDecl,
                                                  Step->Function.Function);
@@ -5265,7 +5268,8 @@ InitializationSequence::Perform(Sema &S,
 
         S.CheckConstructorAccess(Kind.getLocation(), Constructor, Entity,
                                  FoundFn.getAccess());
-        S.DiagnoseUseOfDecl(FoundFn, Kind.getLocation());
+        if (S.DiagnoseUseOfDecl(FoundFn, Kind.getLocation()))
+          return ExprError();
 
         CastKind = CK_ConstructorConversion;
         QualType Class = S.Context.getTypeDeclType(Constructor->getParent());
@@ -5279,7 +5283,8 @@ InitializationSequence::Perform(Sema &S,
         CXXConversionDecl *Conversion = cast<CXXConversionDecl>(Fn);
         S.CheckMemberOperatorAccess(Kind.getLocation(), CurInit.get(), 0,
                                     FoundFn);
-        S.DiagnoseUseOfDecl(FoundFn, Kind.getLocation());
+        if (S.DiagnoseUseOfDecl(FoundFn, Kind.getLocation()))
+          return ExprError();
 
         // FIXME: Should we move this initialization into a separate
         // derived-to-base conversion? I believe the answer is "no", because
@@ -5313,7 +5318,8 @@ InitializationSequence::Perform(Sema &S,
           S.CheckDestructorAccess(CurInit.get()->getLocStart(), Destructor,
                                   S.PDiag(diag::err_access_dtor_temp) << T);
           S.MarkFunctionReferenced(CurInit.get()->getLocStart(), Destructor);
-          S.DiagnoseUseOfDecl(Destructor, CurInit.get()->getLocStart());
+          if (S.DiagnoseUseOfDecl(Destructor, CurInit.get()->getLocStart()))
+            return ExprError();
         }
       }
 
@@ -5595,7 +5601,8 @@ InitializationSequence::Perform(Sema &S,
             S.MarkFunctionReferenced(Kind.getLocation(), Destructor);
             S.CheckDestructorAccess(Kind.getLocation(), Destructor,
                                     S.PDiag(diag::err_access_dtor_temp) << E);
-            S.DiagnoseUseOfDecl(Destructor, Kind.getLocation());
+            if (S.DiagnoseUseOfDecl(Destructor, Kind.getLocation()))
+              return ExprError();
           }
         }
       }
