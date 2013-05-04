@@ -222,9 +222,9 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
     // If there's a vector PHI feeding a scalar use through this extractelement
     // instruction, try to scalarize the PHI.
     if (PHINode *PN = dyn_cast<PHINode>(EI.getOperand(0))) {
-    	Instruction *scalarPHI = scalarizePHI(EI, PN);
-    	if (scalarPHI)
-    		return (scalarPHI);
+      Instruction *scalarPHI = scalarizePHI(EI, PN);
+      if (scalarPHI)
+        return (scalarPHI);
     }
   }
 
