@@ -4897,9 +4897,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       Diag(D.getDeclSpec().getThreadStorageClassSpecLoc(),
            diag::err_thread_unsupported);
     else
-      NewVD->setTLSKind(TSCS == DeclSpec::TSCS_thread_local
-                          ? VarDecl::TLS_Dynamic
-                          : VarDecl::TLS_Static);
+      NewVD->setTSCSpec(TSCS);
   }
 
   // C99 6.7.4p3

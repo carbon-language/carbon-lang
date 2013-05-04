@@ -667,7 +667,7 @@ private:
     friend class ASTDeclReader;
 
     unsigned SClass : 3;
-    unsigned TLSKind : 2;
+    unsigned TSCSpec : 2;
     unsigned InitStyle : 2;
 
     /// \brief Whether this variable is the exception variable in a C++ catch
@@ -774,9 +774,23 @@ public:
   }
   void setStorageClass(StorageClass SC);
 
-  void setTLSKind(TLSKind TLS) { VarDeclBits.TLSKind = TLS; }
+  void setTSCSpec(ThreadStorageClassSpecifier TSC) {
+    VarDeclBits.TSCSpec = TSC;
+  }
+  ThreadStorageClassSpecifier getTSCSpec() const {
+    return static_cast<ThreadStorageClassSpecifier>(VarDeclBits.TSCSpec);
+  }
   TLSKind getTLSKind() const {
-    return static_cast<TLSKind>(VarDeclBits.TLSKind);
+    switch (VarDeclBits.TSCSpec) {
+    case TSCS_unspecified:
+      return TLS_None;
+    case TSCS___thread: // Fall through.
+    case TSCS__Thread_local:
+      return TLS_Static;
+    case TSCS_thread_local:
+      return TLS_Dynamic;
+    }
+    llvm_unreachable("Unknown thread storage class specifier!");
   }
 
   /// hasLocalStorage - Returns true if a variable with function scope

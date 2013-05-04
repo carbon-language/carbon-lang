@@ -647,13 +647,16 @@ void DeclPrinter::VisitVarDecl(VarDecl *D) {
     if (SC != SC_None)
       Out << VarDecl::getStorageClassSpecifierString(SC) << " ";
 
-    switch (D->getTLSKind()) {
-    case VarDecl::TLS_None:
+    switch (D->getTSCSpec()) {
+    case TSCS_unspecified:
       break;
-    case VarDecl::TLS_Static:
+    case TSCS___thread:
+      Out << "__thread ";
+      break;
+    case TSCS__Thread_local:
       Out << "_Thread_local ";
       break;
-    case VarDecl::TLS_Dynamic:
+    case TSCS_thread_local:
       Out << "thread_local ";
       break;
     }
