@@ -97,7 +97,12 @@ public:
 
   bool SelectTSTBOperand(SDValue N, SDValue &FixedPos, unsigned RegWidth);
 
-  SDNode *SelectAtomic(SDNode *N, unsigned Op8, unsigned Op16, unsigned Op32, unsigned Op64);
+  SDNode *SelectAtomic(SDNode *N, unsigned Op8, unsigned Op16, unsigned Op32,
+                       unsigned Op64);
+
+  /// Put the given constant into a pool and return a DAG which will give its
+  /// address.
+  SDValue getConstantPoolItemAddress(DebugLoc DL, const Constant *CV);
 
   SDNode *TrySelectToMoveImm(SDNode *N);
   SDNode *LowerToFPLitPool(SDNode *Node);
@@ -235,12 +240,51 @@ SDNode *AArch64DAGToDAGISel::TrySelectToMoveImm(SDNode *Node) {
   return ResNode;
 }
 
+SDValue
+AArch64DAGToDAGISel::getConstantPoolItemAddress(DebugLoc DL,
+                                                const Constant *CV) {
+  EVT PtrVT = TLI.getPointerTy();
+
+  switch (TLI.getTargetMachine().getCodeModel()) {
+  case CodeModel::Small: {
+    unsigned Alignment =
+        TLI.getDataLayout()->getABITypeAlignment(CV->getType());
+    return CurDAG->getNode(
+        AArch64ISD::WrapperSmall, DL, PtrVT,
+        CurDAG->getTargetConstantPool(CV, PtrVT, 0, 0, AArch64II::MO_NO_FLAG),
+        CurDAG->getTargetConstantPool(CV, PtrVT, 0, 0, AArch64II::MO_LO12),
+        CurDAG->getConstant(Alignment, MVT::i32));
+  }
+  case CodeModel::Large: {
+    SDNode *LitAddr;
+    LitAddr = CurDAG->getMachineNode(
+        AArch64::MOVZxii, DL, PtrVT,
+        CurDAG->getTargetConstantPool(CV, PtrVT, 0, 0, AArch64II::MO_ABS_G3),
+        CurDAG->getTargetConstant(0, MVT::i32));
+    LitAddr = CurDAG->getMachineNode(
+        AArch64::MOVKxii, DL, PtrVT, SDValue(LitAddr, 0),
+        CurDAG->getTargetConstantPool(CV, PtrVT, 0, 0, AArch64II::MO_ABS_G2_NC),
+        CurDAG->getTargetConstant(0, MVT::i32));
+    LitAddr = CurDAG->getMachineNode(
+        AArch64::MOVKxii, DL, PtrVT, SDValue(LitAddr, 0),
+        CurDAG->getTargetConstantPool(CV, PtrVT, 0, 0, AArch64II::MO_ABS_G1_NC),
+        CurDAG->getTargetConstant(0, MVT::i32));
+    LitAddr = CurDAG->getMachineNode(
+        AArch64::MOVKxii, DL, PtrVT, SDValue(LitAddr, 0),
+        CurDAG->getTargetConstantPool(CV, PtrVT, 0, 0, AArch64II::MO_ABS_G0_NC),
+        CurDAG->getTargetConstant(0, MVT::i32));
+    return SDValue(LitAddr, 0);
+  }
+  default:
+    llvm_unreachable("Only small and large code models supported now");
+  }
+}
+
 SDNode *AArch64DAGToDAGISel::SelectToLitPool(SDNode *Node) {
   DebugLoc DL = Node->getDebugLoc();
   uint64_t UnsignedVal = cast<ConstantSDNode>(Node)->getZExtValue();
   int64_t SignedVal = cast<ConstantSDNode>(Node)->getSExtValue();
   EVT DestType = Node->getValueType(0);
-  EVT PtrVT = TLI.getPointerTy();
 
   // Since we may end up loading a 64-bit constant from a 32-bit entry the
   // constant in the pool may have a different type to the eventual node.
@@ -267,14 +311,8 @@ SDNode *AArch64DAGToDAGISel::SelectToLitPool(SDNode *Node) {
   Constant *CV = ConstantInt::get(Type::getIntNTy(*CurDAG->getContext(),
                                                   MemType.getSizeInBits()),
                                   UnsignedVal);
-  SDValue PoolAddr;
+  SDValue PoolAddr = getConstantPoolItemAddress(DL, CV);
   unsigned Alignment = TLI.getDataLayout()->getABITypeAlignment(CV->getType());
-  PoolAddr = CurDAG->getNode(AArch64ISD::WrapperSmall, DL, PtrVT,
-                             CurDAG->getTargetConstantPool(CV, PtrVT, 0, 0,
-                                                         AArch64II::MO_NO_FLAG),
-                             CurDAG->getTargetConstantPool(CV, PtrVT, 0, 0,
-                                                           AArch64II::MO_LO12),
-                             CurDAG->getConstant(Alignment, MVT::i32));
 
   return CurDAG->getExtLoad(Extension, DL, DestType, CurDAG->getEntryNode(),
                             PoolAddr,
@@ -287,20 +325,10 @@ SDNode *AArch64DAGToDAGISel::SelectToLitPool(SDNode *Node) {
 SDNode *AArch64DAGToDAGISel::LowerToFPLitPool(SDNode *Node) {
   DebugLoc DL = Node->getDebugLoc();
   const ConstantFP *FV = cast<ConstantFPSDNode>(Node)->getConstantFPValue();
-  EVT PtrVT = TLI.getPointerTy();
   EVT DestType = Node->getValueType(0);
 
   unsigned Alignment = TLI.getDataLayout()->getABITypeAlignment(FV->getType());
-  SDValue PoolAddr;
-
-  assert(TM.getCodeModel() == CodeModel::Small &&
-         "Only small code model supported");
-  PoolAddr = CurDAG->getNode(AArch64ISD::WrapperSmall, DL, PtrVT,
-                             CurDAG->getTargetConstantPool(FV, PtrVT, 0, 0,
-                                                         AArch64II::MO_NO_FLAG),
-                             CurDAG->getTargetConstantPool(FV, PtrVT, 0, 0,
-                                                           AArch64II::MO_LO12),
-                             CurDAG->getConstant(Alignment, MVT::i32));
+  SDValue PoolAddr = getConstantPoolItemAddress(DL, FV);
 
   return CurDAG->getLoad(DestType, DL, CurDAG->getEntryNode(), PoolAddr,
                          MachinePointerInfo::getConstantPool(),
