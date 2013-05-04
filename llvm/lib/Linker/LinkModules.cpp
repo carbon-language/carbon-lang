@@ -1287,7 +1287,13 @@ Linker::~Linker() {
 }
 
 bool Linker::linkInModule(Module *Src, unsigned Mode, std::string *ErrorMsg) {
-  return LinkModules(Composite, Src, Linker::DestroySource, ErrorMsg);
+  ModuleLinker TheLinker(Composite, Src, Mode);
+  if (TheLinker.run()) {
+    if (ErrorMsg)
+      *ErrorMsg = TheLinker.ErrorMsg;
+    return true;
+  }
+  return false;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1301,13 +1307,8 @@ bool Linker::linkInModule(Module *Src, unsigned Mode, std::string *ErrorMsg) {
 /// and shouldn't be relied on to be consistent.
 bool Linker::LinkModules(Module *Dest, Module *Src, unsigned Mode, 
                          std::string *ErrorMsg) {
-  ModuleLinker TheLinker(Dest, Src, Mode);
-  if (TheLinker.run()) {
-    if (ErrorMsg) *ErrorMsg = TheLinker.ErrorMsg;
-    return true;
-  }
-
-  return false;
+  Linker L(Dest);
+  return L.linkInModule(Src, Mode, ErrorMsg);
 }
 
 //===----------------------------------------------------------------------===//
