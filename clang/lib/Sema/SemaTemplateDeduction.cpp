@@ -2804,21 +2804,25 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
 
 /// Gets the type of a function for template-argument-deducton
 /// purposes when it's considered as part of an overload set.
-static QualType GetTypeOfFunction(ASTContext &Context,
-                                  const OverloadExpr::FindResult &R,
+static QualType GetTypeOfFunction(Sema &S, const OverloadExpr::FindResult &R,
                                   FunctionDecl *Fn) {
+  // We may need to deduce the return type of the function now.
+  if (S.getLangOpts().CPlusPlus1y && Fn->getResultType()->isUndeducedType() &&
+      S.DeduceReturnType(Fn, R.Expression->getExprLoc(), /*Diagnose*/false))
+    return QualType();
+
   if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Fn))
     if (Method->isInstance()) {
       // An instance method that's referenced in a form that doesn't
       // look like a member pointer is just invalid.
       if (!R.HasFormOfMemberPointer) return QualType();
 
-      return Context.getMemberPointerType(Fn->getType(),
-               Context.getTypeDeclType(Method->getParent()).getTypePtr());
+      return S.Context.getMemberPointerType(Fn->getType(),
+               S.Context.getTypeDeclType(Method->getParent()).getTypePtr());
     }
 
   if (!R.IsAddressOfOperand) return Fn->getType();
-  return Context.getPointerType(Fn->getType());
+  return S.Context.getPointerType(Fn->getType());
 }
 
 /// Apply the deduction rules for overload sets.
@@ -2852,7 +2856,7 @@ ResolveOverloadForDeduction(Sema &S, TemplateParameterList *TemplateParams,
       // But we can still look for an explicit specialization.
       if (FunctionDecl *ExplicitSpec
             = S.ResolveSingleFunctionTemplateSpecialization(Ovl))
-        return GetTypeOfFunction(S.Context, R, ExplicitSpec);
+        return GetTypeOfFunction(S, R, ExplicitSpec);
     }
 
     return QualType();
@@ -2885,7 +2889,7 @@ ResolveOverloadForDeduction(Sema &S, TemplateParameterList *TemplateParams,
     }
 
     FunctionDecl *Fn = cast<FunctionDecl>(D);
-    QualType ArgType = GetTypeOfFunction(S.Context, R, Fn);
+    QualType ArgType = GetTypeOfFunction(S, R, Fn);
     if (ArgType.isNull()) continue;
 
     // Function-to-pointer conversion.
@@ -3391,6 +3395,15 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
 
   Deduced.resize(TemplateParams->size());
 
+  // If the function has a deduced return type, substitute it for a dependent
+  // type so that we treat it as a non-deduced context in what follows.
+  bool HasUndeducedReturnType = false;
+  if (getLangOpts().CPlusPlus1y && InOverloadResolution &&
+      Function->getResultType()->isUndeducedType()) {
+    FunctionType = SubstAutoType(FunctionType, Context.DependentTy);
+    HasUndeducedReturnType = true;
+  }
+
   if (!ArgFunctionType.isNull()) {
     unsigned TDF = TDF_TopLevelParameterTypeList;
     if (InOverloadResolution) TDF |= TDF_InOverloadResolution;
@@ -3407,6 +3420,13 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                                           NumExplicitlySpecified,
                                           Specialization, Info))
     return Result;
+
+  // If the function has a deduced return type, deduce it now, so we can check
+  // that the deduced function type matches the requested type.
+  if (HasUndeducedReturnType &&
+      Specialization->getResultType()->isUndeducedType() &&
+      DeduceReturnType(Specialization, Info.getLocation(), false))
+    return TDK_MiscellaneousDeductionFailure;
 
   // If the requested function type does not match the actual type of the
   // specialization with respect to arguments of compatible pointer to function
@@ -3577,7 +3597,7 @@ namespace {
       //   auto &&lref = lvalue;
       // must transform into "rvalue reference to T" not "rvalue reference to
       // auto type deduced as T" in order for [temp.deduct.call]p3 to apply.
-      if (isa<TemplateTypeParmType>(Replacement)) {
+      if (!Replacement.isNull() && isa<TemplateTypeParmType>(Replacement)) {
         QualType Result = Replacement;
         TemplateTypeParmTypeLoc NewTL =
           TLB.push<TemplateTypeParmTypeLoc>(Result);
@@ -3601,12 +3621,19 @@ namespace {
       return E;
     }
 
-    QualType Apply(TypeSourceInfo *TSI) {
-      if (TypeSourceInfo *Result = TransformType(TSI))
-        return Result->getType();
-      return QualType();
+    QualType Apply(TypeLoc TL) {
+      // Create some scratch storage for the transformed type locations.
+      // FIXME: We're just going to throw this information away. Don't build it.
+      TypeLocBuilder TLB;
+      TLB.reserve(TL.getFullDataSize());
+      return TransformType(TLB, TL);
     }
   };
+}
+
+Sema::DeduceAutoResult
+Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *&Init, QualType &Result) {
+  return DeduceAutoType(Type->getTypeLoc(), Init, Result);
 }
 
 /// \brief Deduce the type for an auto type-specifier (C++11 [dcl.spec.auto]p6)
@@ -3616,7 +3643,7 @@ namespace {
 /// \param Result if type deduction was successful, this will be set to the
 ///        deduced type.
 Sema::DeduceAutoResult
-Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *&Init, QualType &Result) {
+Sema::DeduceAutoType(TypeLoc Type, Expr *&Init, QualType &Result) {
   if (Init->getType()->isNonOverloadPlaceholderType()) {
     ExprResult NonPlaceholder = CheckPlaceholderExpr(Init);
     if (NonPlaceholder.isInvalid())
@@ -3624,15 +3651,16 @@ Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *&Init, QualType &Result) {
     Init = NonPlaceholder.take();
   }
 
-  if (Init->isTypeDependent() || Type->getType()->isDependentType()) {
+  if (Init->isTypeDependent() || Type.getType()->isDependentType()) {
     Result = SubstituteAutoTransform(*this, Context.DependentTy).Apply(Type);
+    assert(!Result.isNull() && "substituting DependentTy can't fail");
     return DAR_Succeeded;
   }
 
   // If this is a 'decltype(auto)' specifier, do the decltype dance.
   // Since 'decltype(auto)' can only occur at the top of the type, we
   // don't need to go digging for it.
-  if (const AutoType *AT = Type->getType()->getAs<AutoType>()) {
+  if (const AutoType *AT = Type.getType()->getAs<AutoType>()) {
     if (AT->isDecltypeAuto()) {
       if (isa<InitListExpr>(Init)) {
         Diag(Init->getLocStart(), diag::err_decltype_auto_initializer_list);
@@ -3643,6 +3671,8 @@ Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *&Init, QualType &Result) {
       // FIXME: Support a non-canonical deduced type for 'auto'.
       Deduced = Context.getCanonicalType(Deduced);
       Result = SubstituteAutoTransform(*this, Deduced).Apply(Type);
+      if (Result.isNull())
+        return DAR_FailedAlreadyDiagnosed;
       return DAR_Succeeded;
     }
   }
@@ -3704,6 +3734,8 @@ Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *&Init, QualType &Result) {
   }
 
   Result = SubstituteAutoTransform(*this, DeducedType).Apply(Type);
+  if (Result.isNull())
+   return DAR_FailedAlreadyDiagnosed;
 
   // Check that the deduced argument type is compatible with the original
   // argument type per C++ [temp.deduct.call]p4.
@@ -3731,6 +3763,22 @@ void Sema::DiagnoseAutoDeductionFailure(VarDecl *VDecl, Expr *Init) {
     Diag(VDecl->getLocation(), diag::err_auto_var_deduction_failure)
       << VDecl->getDeclName() << VDecl->getType() << Init->getType()
       << Init->getSourceRange();
+}
+
+bool Sema::DeduceReturnType(FunctionDecl *FD, SourceLocation Loc,
+                            bool Diagnose) {
+  assert(FD->getResultType()->isUndeducedType());
+
+  if (FD->getTemplateInstantiationPattern())
+    InstantiateFunctionDefinition(Loc, FD);
+
+  bool StillUndeduced = FD->getResultType()->isUndeducedType();
+  if (StillUndeduced && Diagnose && !FD->isInvalidDecl()) {
+    Diag(Loc, diag::err_auto_fn_used_before_defined) << FD;
+    Diag(FD->getLocation(), diag::note_callee_decl) << FD;
+  }
+
+  return StillUndeduced;
 }
 
 static void

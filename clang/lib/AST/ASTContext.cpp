@@ -2036,6 +2036,16 @@ const FunctionType *ASTContext::adjustFunctionType(const FunctionType *T,
   return cast<FunctionType>(Result.getTypePtr());
 }
 
+void ASTContext::adjustDeducedFunctionResultType(FunctionDecl *FD,
+                                                 QualType ResultType) {
+  // FIXME: Need to inform serialization code about this!
+  for (FD = FD->getMostRecentDecl(); FD; FD = FD->getPreviousDecl()) {
+    const FunctionProtoType *FPT = FD->getType()->castAs<FunctionProtoType>();
+    FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
+    FD->setType(getFunctionType(ResultType, FPT->getArgTypes(), EPI));
+  }
+}
+
 /// getComplexType - Return the uniqued reference to the type for a complex
 /// number with the specified element type.
 QualType ASTContext::getComplexType(QualType T) const {
@@ -3564,18 +3574,20 @@ QualType ASTContext::getUnaryTransformType(QualType BaseType,
   return QualType(Ty, 0);
 }
 
-/// getAutoType - We only unique auto types after they've been deduced.
-QualType ASTContext::getAutoType(QualType DeducedType,
-                                 bool IsDecltypeAuto,
+/// getAutoType - Return the uniqued reference to the 'auto' type which has been
+/// deduced to the given type, or to the canonical undeduced 'auto' type, or the
+/// canonical deduced-but-dependent 'auto' type.
+QualType ASTContext::getAutoType(QualType DeducedType, bool IsDecltypeAuto,
                                  bool IsDependent) const {
+  if (DeducedType.isNull() && !IsDecltypeAuto && !IsDependent)
+    return getAutoDeductType();
+
+  // Look in the folding set for an existing type.
   void *InsertPos = 0;
-  if (!DeducedType.isNull()) {
-    // Look in the folding set for an existing type.
-    llvm::FoldingSetNodeID ID;
-    AutoType::Profile(ID, DeducedType, IsDecltypeAuto, IsDependent);
-    if (AutoType *AT = AutoTypes.FindNodeOrInsertPos(ID, InsertPos))
-      return QualType(AT, 0);
-  }
+  llvm::FoldingSetNodeID ID;
+  AutoType::Profile(ID, DeducedType, IsDecltypeAuto, IsDependent);
+  if (AutoType *AT = AutoTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(AT, 0);
 
   AutoType *AT = new (*this, TypeAlignment) AutoType(DeducedType,
                                                      IsDecltypeAuto,
@@ -3617,8 +3629,10 @@ QualType ASTContext::getAtomicType(QualType T) const {
 /// getAutoDeductType - Get type pattern for deducing against 'auto'.
 QualType ASTContext::getAutoDeductType() const {
   if (AutoDeductTy.isNull())
-    AutoDeductTy = getAutoType(QualType(), false);
-  assert(!AutoDeductTy.isNull() && "can't build 'auto' pattern");
+    AutoDeductTy = QualType(
+      new (*this, TypeAlignment) AutoType(QualType(), /*decltype(auto)*/false,
+                                          /*dependent*/false),
+      0);
   return AutoDeductTy;
 }
 

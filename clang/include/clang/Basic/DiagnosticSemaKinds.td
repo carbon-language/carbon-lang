@@ -1477,6 +1477,23 @@ def err_decltype_auto_compound_type : Error<
 def err_decltype_auto_initializer_list : Error<
   "cannot deduce 'decltype(auto)' from initializer list">;
 
+// C++1y deduced return types
+def err_auto_fn_deduction_failure : Error<
+  "cannot deduce return type %0 from returned value of type %1">;
+def err_auto_fn_different_deductions : Error<
+  "'%select{auto|decltype(auto)}0' in return type deduced as %1 here but "
+  "deduced as %2 in earlier return statement">;
+def err_auto_fn_used_before_defined : Error<
+  "function %0 with deduced return type cannot be used before it is defined">;
+def err_auto_fn_no_return_but_not_auto : Error<
+  "cannot deduce return type %0 for function with no return statements">;
+def err_auto_fn_return_void_but_not_auto : Error<
+  "cannot deduce return type %0 from omitted return expression">;
+def err_auto_fn_return_init_list : Error<
+  "cannot deduce return type from initializer list">;
+def err_auto_fn_virtual : Error<
+  "function with deduced return type cannot be virtual">;
+
 // C++11 override control
 def override_keyword_only_allowed_on_virtual_member_functions : Error<
   "only virtual member functions can be marked '%0'">;

@@ -5726,6 +5726,14 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   if (!CandidateSet.isNewCandidate(Conversion))
     return;
 
+  // If the conversion function has an undeduced return type, trigger its
+  // deduction now.
+  if (getLangOpts().CPlusPlus1y && ConvType->isUndeducedType()) {
+    if (DeduceReturnType(Conversion, From->getExprLoc()))
+      return;
+    ConvType = Conversion->getConversionType().getNonReferenceType();
+  }
+
   // Overload resolution is always an unevaluated context.
   EnterExpressionEvaluationContext Unevaluated(*this, Sema::Unevaluated);
 
@@ -9173,6 +9181,13 @@ private:
           if (S.CheckCUDATarget(Caller, FunDecl))
             return false;
 
+      // If any candidate has a placeholder return type, trigger its deduction
+      // now.
+      if (S.getLangOpts().CPlusPlus1y &&
+          FunDecl->getResultType()->isUndeducedType() &&
+          S.DeduceReturnType(FunDecl, SourceExpr->getLocStart(), Complain))
+        return false;
+
       QualType ResultTy;
       if (Context.hasSameUnqualifiedType(TargetFunctionType, 
                                          FunDecl->getType()) ||
@@ -9438,6 +9453,11 @@ Sema::ResolveSingleFunctionTemplateSpecialization(OverloadExpr *ovl,
     Matched = Specialization;
     if (FoundResult) *FoundResult = I.getPair();    
   }
+
+  if (Matched && getLangOpts().CPlusPlus1y &&
+      Matched->getResultType()->isUndeducedType() &&
+      DeduceReturnType(Matched, ovl->getExprLoc(), Complain))
+    return 0;
 
   return Matched;
 }

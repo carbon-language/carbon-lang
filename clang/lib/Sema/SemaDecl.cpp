@@ -2441,12 +2441,22 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S) {
     //   Certain function declarations cannot be overloaded:
     //     -- Function declarations that differ only in the return type
     //        cannot be overloaded.
-    QualType OldReturnType = OldType->getResultType();
-    QualType NewReturnType = cast<FunctionType>(NewQType)->getResultType();
+
+    // Go back to the type source info to compare the declared return types,
+    // per C++1y [dcl.type.auto]p??:
+    //   Redeclarations or specializations of a function or function template
+    //   with a declared return type that uses a placeholder type shall also
+    //   use that placeholder, not a deduced type.
+    QualType OldDeclaredReturnType = (Old->getTypeSourceInfo()
+      ? Old->getTypeSourceInfo()->getType()->castAs<FunctionType>()
+      : OldType)->getResultType();
+    QualType NewDeclaredReturnType = (New->getTypeSourceInfo()
+      ? New->getTypeSourceInfo()->getType()->castAs<FunctionType>()
+      : NewType)->getResultType();
     QualType ResQT;
-    if (OldReturnType != NewReturnType) {
-      if (NewReturnType->isObjCObjectPointerType()
-          && OldReturnType->isObjCObjectPointerType())
+    if (!Context.hasSameType(OldDeclaredReturnType, NewDeclaredReturnType)) {
+      if (NewDeclaredReturnType->isObjCObjectPointerType() &&
+          OldDeclaredReturnType->isObjCObjectPointerType())
         ResQT = Context.mergeObjCGCQualifiers(NewQType, OldQType);
       if (ResQT.isNull()) {
         if (New->isCXXClassMember() && New->isOutOfLine())
@@ -2461,8 +2471,21 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S) {
         NewQType = ResQT;
     }
 
-    const CXXMethodDecl* OldMethod = dyn_cast<CXXMethodDecl>(Old);
-    CXXMethodDecl* NewMethod = dyn_cast<CXXMethodDecl>(New);
+    QualType OldReturnType = OldType->getResultType();
+    QualType NewReturnType = cast<FunctionType>(NewQType)->getResultType();
+    if (OldReturnType != NewReturnType) {
+      // If this function has a deduced return type and has already been
+      // defined, copy the deduced value from the old declaration.
+      AutoType *OldAT = Old->getResultType()->getContainedAutoType();
+      if (OldAT && OldAT->isDeduced()) {
+        New->setType(SubstAutoType(New->getType(), OldAT->getDeducedType()));
+        NewQType = Context.getCanonicalType(
+            SubstAutoType(NewQType, OldAT->getDeducedType()));
+      }
+    }
+
+    const CXXMethodDecl *OldMethod = dyn_cast<CXXMethodDecl>(Old);
+    CXXMethodDecl *NewMethod = dyn_cast<CXXMethodDecl>(New);
     if (OldMethod && NewMethod) {
       // Preserve triviality.
       NewMethod->setTrivial(OldMethod->isTrivial());
@@ -6047,6 +6070,10 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         // Okay: Add virtual to the method.
         NewFD->setVirtualAsWritten(true);
       }
+
+      if (getLangOpts().CPlusPlus1y &&
+          NewFD->getResultType()->isUndeducedType())
+        Diag(D.getDeclSpec().getVirtualSpecLoc(), diag::err_auto_fn_virtual);
     }
 
     // C++ [dcl.fct.spec]p3:
@@ -8859,6 +8886,21 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
 
   if (FD) {
     FD->setBody(Body);
+
+    if (getLangOpts().CPlusPlus1y && !FD->isInvalidDecl() &&
+        !FD->isDependentContext()) {
+      if (FD->getResultType()->isUndeducedType()) {
+        // If the function has a deduced result type but contains no 'return'
+        // statements, the result type as written must be exactly 'auto', and
+        // the deduced result type is 'void'.
+        if (!FD->getResultType()->getAs<AutoType>()) {
+          Diag(dcl->getLocation(), diag::err_auto_fn_no_return_but_not_auto)
+            << FD->getResultType();
+          FD->setInvalidDecl();
+        }
+        Context.adjustDeducedFunctionResultType(FD, Context.VoidTy);
+      }
+    }
 
     // The only way to be included in UndefinedButUsed is if there is an
     // ODR use before the definition. Avoid the expensive map lookup if this

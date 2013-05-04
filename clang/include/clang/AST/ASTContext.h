@@ -867,6 +867,9 @@ public:
   const FunctionType *adjustFunctionType(const FunctionType *Fn,
                                          FunctionType::ExtInfo EInfo);
 
+  /// \brief Change the result type of a function type once it is deduced.
+  void adjustDeducedFunctionResultType(FunctionDecl *FD, QualType ResultType);
+
   /// \brief Return the uniqued reference to the type for a complex
   /// number with the specified element type.
   QualType getComplexType(QualType T) const;

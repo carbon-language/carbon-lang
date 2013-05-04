@@ -2018,6 +2018,8 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
   // The TagDecl owned by the DeclSpec.
   TagDecl *OwnedTagDecl = 0;
 
+  bool ContainsPlaceholderType = false;
+
   switch (D.getName().getKind()) {
   case UnqualifiedId::IK_ImplicitSelfParam:
   case UnqualifiedId::IK_OperatorFunctionId:
@@ -2025,6 +2027,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
   case UnqualifiedId::IK_LiteralOperatorId:
   case UnqualifiedId::IK_TemplateId:
     T = ConvertDeclSpecToType(state);
+    ContainsPlaceholderType = D.getDeclSpec().containsPlaceholderType();
 
     if (!D.isInvalidType() && D.getDeclSpec().isTypeSpecOwned()) {
       OwnedTagDecl = cast<TagDecl>(D.getDeclSpec().getRepAsDecl());
@@ -2048,6 +2051,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
     // converts to.
     T = SemaRef.GetTypeFromParser(D.getName().ConversionFunctionId,
                                   &ReturnTypeInfo);
+    ContainsPlaceholderType = T->getContainedAutoType();
     break;
   }
 
@@ -2058,7 +2062,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
   // In C++11, a function declarator using 'auto' must have a trailing return
   // type (this is checked later) and we can skip this. In other languages
   // using auto, we need to check regardless.
-  if (D.getDeclSpec().containsPlaceholderType() &&
+  if (ContainsPlaceholderType &&
       (!SemaRef.getLangOpts().CPlusPlus11 || !D.isFunctionDeclarator())) {
     int Error = -1;
 
@@ -2101,10 +2105,12 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
       Error = 10; // Type alias
       break;
     case Declarator::TrailingReturnContext:
-      Error = 11; // Function return type
+      if (!SemaRef.getLangOpts().CPlusPlus1y)
+        Error = 11; // Function return type
       break;
     case Declarator::ConversionIdContext:
-      Error = 12; // conversion-type-id
+      if (!SemaRef.getLangOpts().CPlusPlus1y)
+        Error = 12; // conversion-type-id
       break;
     case Declarator::TypeNameContext:
       Error = 13; // Generic
@@ -2599,7 +2605,8 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         // trailing-return-type is only required if we're declaring a function,
         // and not, for instance, a pointer to a function.
         if (D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto &&
-            !FTI.hasTrailingReturnType() && chunkIndex == 0) {
+            !FTI.hasTrailingReturnType() && chunkIndex == 0 &&
+            !S.getLangOpts().CPlusPlus1y) {
           S.Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
                diag::err_auto_missing_trailing_return);
           T = Context.IntTy;

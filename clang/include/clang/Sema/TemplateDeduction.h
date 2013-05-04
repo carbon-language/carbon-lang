@@ -157,8 +157,8 @@ public:
   /// \brief The expression which caused a deduction failure.
   ///
   ///   TDK_FailedOverloadResolution: this argument is the reference to
-  //    an overloaded function which could not be resolved to a specific
-  //    function.
+  ///   an overloaded function which could not be resolved to a specific
+  ///   function.
   Expr *Expression;
 };
 

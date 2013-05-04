@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++1y
+// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++1y -DCXX1Y
 // RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++11 -Wno-c++1y-extensions
 
 // FIXME: This is in p11 (?) in C++1y.
@@ -40,4 +40,35 @@ template<typename T> struct same<T, T> {};
 void i() {
   decltype(auto) x = 5;
   decltype(auto) int r; // expected-error {{cannot combine with previous 'decltype(auto)' declaration specifier}} expected-error {{requires an initializer}}
+}
+
+namespace p3_example {
+  template<typename T, typename U> struct is_same_impl {
+    static const bool value = false;
+  };
+  template<typename T> struct is_same_impl<T, T> {
+    static const bool value = true;
+  };
+  template<typename T, typename U> constexpr bool is_same() {
+    return is_same_impl<T,U>::value;
+  }
+
+  auto x = 5;
+  const auto *v = &x, u = 6;
+  static auto y = 0.0;
+  auto int r;  // expected-warning {{storage class}} expected-error {{file-scope}}
+
+  static_assert(is_same<decltype(x), int>(), "");
+  static_assert(is_same<decltype(v), const int*>(), "");
+  static_assert(is_same<decltype(u), const int>(), "");
+  static_assert(is_same<decltype(y), double>(), "");
+
+#ifdef CXX1Y
+  auto f() -> int;
+  auto g() { return 0.0; }
+  auto h();
+
+  static_assert(is_same<decltype(f), int()>(), "");
+  static_assert(is_same<decltype(g), double()>(), "");
+#endif
 }
