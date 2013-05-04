@@ -304,6 +304,7 @@ public:
   const PathDiagnosticLocation &getStart() const { return Start; }
   const PathDiagnosticLocation &getEnd() const { return End; }
 
+  void setStart(const PathDiagnosticLocation &L) { Start = L; }
   void setEnd(const PathDiagnosticLocation &L) { End = L; }
 
   void flatten() {
@@ -616,6 +617,10 @@ public:
     assert(!LPairs.empty() &&
            "PathDiagnosticControlFlowPiece needs at least one location.");
     return LPairs[0].getEnd();
+  }
+
+  void setStartLocation(const PathDiagnosticLocation &L) {
+    LPairs[0].setStart(L);
   }
 
   void setEndLocation(const PathDiagnosticLocation &L) {

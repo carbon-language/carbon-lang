@@ -1750,7 +1750,48 @@ const Stmt *getStmtParent(const Stmt *S, ParentMap &PM) {
   return PM.getParentIgnoreParens(S);
 }
 
-static bool optimizeEdges(PathPieces &path,
+#if 0
+static bool isConditionForTerminator(const Stmt *S, const Stmt *Cond) {
+  // Note that we intentionally to do not handle || and && here.
+  switch (S->getStmtClass()) {
+    case Stmt::ForStmtClass:
+      return cast<ForStmt>(S)->getCond() == Cond;
+    case Stmt::WhileStmtClass:
+      return cast<WhileStmt>(S)->getCond() == Cond;
+    case Stmt::DoStmtClass:
+      return cast<DoStmt>(S)->getCond() == Cond;
+    case Stmt::ChooseExprClass:
+      return cast<ChooseExpr>(S)->getCond() == Cond;
+    case Stmt::IndirectGotoStmtClass:
+      return cast<IndirectGotoStmt>(S)->getTarget() == Cond;
+    case Stmt::SwitchStmtClass:
+      return cast<SwitchStmt>(S)->getCond() == Cond;
+    case Stmt::BinaryConditionalOperatorClass:
+      return cast<BinaryConditionalOperator>(S)->getCond() == Cond;
+    case Stmt::ConditionalOperatorClass:
+      return cast<ConditionalOperator>(S)->getCond() == Cond;
+    case Stmt::ObjCForCollectionStmtClass:
+      return cast<ObjCForCollectionStmt>(S)->getElement() == Cond;
+    default:
+      return false;
+  }
+}
+#endif
+
+typedef llvm::DenseSet<const PathDiagnosticControlFlowPiece *>
+        ControlFlowBarrierSet;
+
+typedef llvm::DenseSet<const PathDiagnosticCallPiece *>
+        OptimizedCallsSet;
+
+static bool isBarrier(ControlFlowBarrierSet &CFBS,
+                      const PathDiagnosticControlFlowPiece *P) {
+  return CFBS.count(P);
+}
+
+static bool optimizeEdges(PathPieces &path, SourceManager &SM,
+                          ControlFlowBarrierSet &CFBS,
+                          OptimizedCallsSet &OCS,
                           LocationContextMap &LCM) {
   bool hasChanges = false;
   const LocationContext *LC = LCM[&path];
@@ -1758,13 +1799,15 @@ static bool optimizeEdges(PathPieces &path,
   bool isFirst = true;
 
   for (PathPieces::iterator I = path.begin(), E = path.end(); I != E; ++I) {
-    PathPieces::iterator NextI = I; ++NextI;
-    if (NextI == E)
-      break;
+    bool wasFirst = isFirst;
+    isFirst = false;
 
     // Optimize subpaths.
     if (PathDiagnosticCallPiece *CallI = dyn_cast<PathDiagnosticCallPiece>(*I)){
-      while (optimizeEdges(CallI->path, LCM)) {}
+      if (!OCS.count(CallI)) {
+        while (optimizeEdges(CallI->path, SM, CFBS, OCS, LCM)) {}
+        OCS.insert(CallI);
+      }
       continue;
     }
 
@@ -1781,10 +1824,19 @@ static bool optimizeEdges(PathPieces &path,
     const Stmt *level1 = getStmtParent(s1Start, PM);
     const Stmt *level2 = getStmtParent(s1End, PM);
 
-    if (isFirst) {
-      isFirst = false;
+    if (wasFirst) {
+#if 0
+      // Apply the "first edge" case for Rule V. here.
+      if (s1Start && level1 && isConditionForTerminator(level1, s1Start)) {
+        PathDiagnosticLocation NewLoc(level2, SM, LC);
+        PieceI->setStartLocation(NewLoc);
+        CFBS.insert(PieceI);
+        return true;
+      }
+#endif
       // Apply the "first edge" case for Rule III. here.
-      if (level1 && level2 && level2 == PM.getParent(level1)) {
+      if (!isBarrier(CFBS, PieceI) &&
+          level1 && level2 && level2 == PM.getParent(level1)) {
         path.erase(I);
         // Since we are erasing the current edge at the start of the
         // path, just return now so we start analyzing the start of the path
@@ -1792,6 +1844,10 @@ static bool optimizeEdges(PathPieces &path,
         return true;
       }
     }
+
+    PathPieces::iterator NextI = I; ++NextI;
+    if (NextI == E)
+      break;
 
     PathDiagnosticControlFlowPiece *PieceNextI =
       dyn_cast<PathDiagnosticControlFlowPiece>(*NextI);
@@ -1817,7 +1873,8 @@ static bool optimizeEdges(PathPieces &path,
     // NOTE: this will be limited later in cases where we add barriers
     // to prevent this optimization.
     //
-    if (level1 && level1 == level2 && level1 == level3 && level1 == level4) {
+    if (!isBarrier(CFBS, PieceNextI) &&
+        level1 && level1 == level2 && level1 == level3 && level1 == level4) {
       PieceI->setEndLocation(PieceNextI->getEndLocation());
       path.erase(NextI);
       hasChanges = true;
@@ -1835,7 +1892,8 @@ static bool optimizeEdges(PathPieces &path,
     // For example:
     //
     // (1.1 -> 1.1.1) -> (1.1.1 -> 1.2) becomes (1.1 -> 1.2).
-    if (level1 && level2 &&
+    if (!isBarrier(CFBS, PieceNextI) &&
+        level1 && level2 &&
         level1 == level4 &&
         level2 == level3 && PM.getParentIgnoreParens(level2) == level1) {
       PieceI->setEndLocation(PieceNextI->getEndLocation());
@@ -1856,7 +1914,8 @@ static bool optimizeEdges(PathPieces &path,
     //
     // (1.1 -> 1.1.1) -> (1.1.1 -> X) becomes (1.1 -> X).
     //
-    if (level1 && level2 && level1 == PM.getParentIgnoreParens(level2)) {
+    if (!isBarrier(CFBS, PieceNextI) &&
+        level1 && level2 && level1 == PM.getParentIgnoreParens(level2)) {
       PieceI->setEndLocation(PieceNextI->getEndLocation());
       path.erase(NextI);
       hasChanges = true;
@@ -1876,12 +1935,38 @@ static bool optimizeEdges(PathPieces &path,
     // (X -> 1.1.1) -> (1.1.1 -> 1.1) becomes (X -> 1.1).
     // [first edge] (1.1.1 -> 1.1) -> eliminate
     //
-    if (level2 && level4 && level2 == level3 && level4 == PM.getParent(level2)){
+    if (!isBarrier(CFBS, PieceNextI) &&
+        level2 && level4 && level2 == level3 && level4 == PM.getParent(level2)){
       PieceI->setEndLocation(PieceNextI->getEndLocation());
       path.erase(NextI);
       hasChanges = true;
       continue;
     }
+#if 0
+    // Rule V.
+    //
+    // Replace terminator conditions with terminators when the condition
+    // itself has no control-flow.
+    //
+    // For example:
+    //
+    // (X -> condition) -> (condition -> Y) becomes (X -> term) -> (term -> Y)
+    // [first edge] (condition -> Y) becomes (term -> Y)
+    //
+    // This applies to 'if', 'for', 'while', 'do .. while', 'switch'...
+    //
+    if (!isBarrier(CFBS, PieceNextI) &&
+        s1End && s1End == s2Start && level2) {
+      if (isConditionForTerminator(level2, s1End)) {
+        PathDiagnosticLocation NewLoc(level2, SM, LC);
+        PieceI->setEndLocation(NewLoc);
+        PieceNextI->setStartLocation(NewLoc);
+        CFBS.insert(PieceI);
+        hasChanges = true;
+        continue;
+      }
+    }
+#endif
   }
 
   // No changes.
@@ -2468,7 +2553,7 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
 
   if (ActiveScheme == PathDiagnosticConsumer::Extensive) {
     AnalyzerOptions &options = getEngine().getAnalysisManager().options;
-    if (options.getBooleanOption("path-diagnostics-alternate", true)) {
+    if (options.getBooleanOption("path-diagnostics-alternate", false)) {
       ActiveScheme = PathDiagnosticConsumer::AlternateExtensive;
     }
   }
@@ -2573,7 +2658,10 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
       adjustCallLocations(PD.getMutablePieces());
 
       if (ActiveScheme == PathDiagnosticConsumer::AlternateExtensive) {
-        while (optimizeEdges(PD.getMutablePieces(), LCM)) {}
+        ControlFlowBarrierSet CFBS;
+        OptimizedCallsSet OCS;
+        while (optimizeEdges(PD.getMutablePieces(), getSourceManager(), CFBS,
+                             OCS, LCM)) {}
       }
     }
 
