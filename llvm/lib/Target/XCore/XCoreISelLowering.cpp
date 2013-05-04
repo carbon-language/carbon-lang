@@ -248,7 +248,7 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const
   const GlobalValue *GV = GN->getGlobal();
   int64_t Offset = GN->getOffset();
   // We can only fold positive offsets that are a multiple of the word size.
-  int64_t FoldedOffset = std::max(Offset & ~3, 0LL);
+  int64_t FoldedOffset = std::max(Offset & ~3, (int64_t)0);
   SDValue GA = DAG.getTargetGlobalAddress(GV, DL, MVT::i32, FoldedOffset);
   GA = getGlobalAddressWrapper(GA, GV, DAG);
   // Handle the rest of the offset.
