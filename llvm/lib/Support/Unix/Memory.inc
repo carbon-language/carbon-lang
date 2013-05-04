@@ -325,7 +325,7 @@ void Memory::InvalidateInstructionCache(const void *Addr,
   for (intptr_t Line = StartLine; Line < EndLine; Line += LineSize)
     asm volatile("icbi 0, %0" : : "r"(Line));
   asm volatile("isync");
-#  elif defined(__arm__) && defined(__GNUC__)
+#  elif (defined(__arm__) || defined(__aarch64__)) && defined(__GNUC__)
   // FIXME: Can we safely always call this for __GNUC__ everywhere?
   const char *Start = static_cast<const char *>(Addr);
   const char *End = Start + Len;
