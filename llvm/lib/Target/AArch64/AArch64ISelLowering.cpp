@@ -781,6 +781,7 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AArch64ISD::TC_RETURN:      return "AArch64ISD::TC_RETURN";
   case AArch64ISD::THREAD_POINTER: return "AArch64ISD::THREAD_POINTER";
   case AArch64ISD::TLSDESCCALL:    return "AArch64ISD::TLSDESCCALL";
+  case AArch64ISD::WrapperLarge:   return "AArch64ISD::WrapperLarge";
   case AArch64ISD::WrapperSmall:   return "AArch64ISD::WrapperSmall";
 
   default:                       return NULL;
@@ -1845,12 +1846,33 @@ AArch64TargetLowering::LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
 }
 
 SDValue
-AArch64TargetLowering::LowerGlobalAddressELF(SDValue Op,
-                                             SelectionDAG &DAG) const {
-  // TableGen doesn't have easy access to the CodeModel or RelocationModel, so
-  // we make that distinction here.
+AArch64TargetLowering::LowerGlobalAddressELFLarge(SDValue Op,
+                                                  SelectionDAG &DAG) const {
+  assert(getTargetMachine().getCodeModel() == CodeModel::Large);
+  assert(getTargetMachine().getRelocationModel() == Reloc::Static);
 
-  // We support the small memory model for now.
+  EVT PtrVT = getPointerTy();
+  DebugLoc dl = Op.getDebugLoc();
+  const GlobalAddressSDNode *GN = cast<GlobalAddressSDNode>(Op);
+  const GlobalValue *GV = GN->getGlobal();
+
+  SDValue GlobalAddr = DAG.getNode(
+      AArch64ISD::WrapperLarge, dl, PtrVT,
+      DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0, AArch64II::MO_ABS_G3),
+      DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0, AArch64II::MO_ABS_G2_NC),
+      DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0, AArch64II::MO_ABS_G1_NC),
+      DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0, AArch64II::MO_ABS_G0_NC));
+
+  if (GN->getOffset() != 0)
+    return DAG.getNode(ISD::ADD, dl, PtrVT, GlobalAddr,
+                       DAG.getConstant(GN->getOffset(), PtrVT));
+
+  return GlobalAddr;
+}
+
+SDValue
+AArch64TargetLowering::LowerGlobalAddressELFSmall(SDValue Op,
+                                                  SelectionDAG &DAG) const {
   assert(getTargetMachine().getCodeModel() == CodeModel::Small);
 
   EVT PtrVT = getPointerTy();
@@ -1927,6 +1949,22 @@ AArch64TargetLowering::LowerGlobalAddressELF(SDValue Op,
                        DAG.getConstant(GN->getOffset(), PtrVT));
 
   return GlobalRef;
+}
+
+SDValue
+AArch64TargetLowering::LowerGlobalAddressELF(SDValue Op,
+                                             SelectionDAG &DAG) const {
+  // TableGen doesn't have easy access to the CodeModel or RelocationModel, so
+  // we make those distinctions here.
+
+  switch (getTargetMachine().getCodeModel()) {
+  case CodeModel::Small:
+    return LowerGlobalAddressELFSmall(Op, DAG);
+  case CodeModel::Large:
+    return LowerGlobalAddressELFLarge(Op, DAG);
+  default:
+    llvm_unreachable("Only small and large code models supported now");
+  }
 }
 
 SDValue AArch64TargetLowering::LowerTLSDescCall(SDValue SymAddr,

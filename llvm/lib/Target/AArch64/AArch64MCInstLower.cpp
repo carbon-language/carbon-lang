@@ -68,6 +68,18 @@ AArch64AsmPrinter::lowerSymbolOperand(const MachineOperand &MO,
   case AArch64II::MO_TPREL_G0_NC:
     Expr = AArch64MCExpr::CreateTPREL_G0_NC(Expr, OutContext);
     break;
+  case AArch64II::MO_ABS_G3:
+    Expr = AArch64MCExpr::CreateABS_G3(Expr, OutContext);
+    break;
+  case AArch64II::MO_ABS_G2_NC:
+    Expr = AArch64MCExpr::CreateABS_G2_NC(Expr, OutContext);
+    break;
+  case AArch64II::MO_ABS_G1_NC:
+    Expr = AArch64MCExpr::CreateABS_G1_NC(Expr, OutContext);
+    break;
+  case AArch64II::MO_ABS_G0_NC:
+    Expr = AArch64MCExpr::CreateABS_G0_NC(Expr, OutContext);
+    break;
   case AArch64II::MO_NO_FLAG:
     // Expr is already correct
     break;

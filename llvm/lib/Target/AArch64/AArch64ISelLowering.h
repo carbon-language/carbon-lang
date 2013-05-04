@@ -103,7 +103,12 @@ namespace AArch64ISD {
     UBFX,
 
     // Wraps an address which the ISelLowering phase has decided should be
-    // created using the small absolute memory model: i.e. adrp/add or
+    // created using the large memory model style: i.e. a sequence of four
+    // movz/movk instructions.
+    WrapperLarge,
+
+    // Wraps an address which the ISelLowering phase has decided should be
+    // created using the small memory model style: i.e. adrp/add or
     // adrp/mem-op. This exists to prevent bare TargetAddresses which may never
     // get selected.
     WrapperSmall
@@ -206,7 +211,11 @@ public:
   SDValue LowerFP_EXTEND(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFP_ROUND(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG, bool IsSigned) const;
+
+  SDValue LowerGlobalAddressELFSmall(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerGlobalAddressELFLarge(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerGlobalAddressELF(SDValue Op, SelectionDAG &DAG) const;
+
   SDValue LowerTLSDescCall(SDValue SymAddr, SDValue DescAddr, DebugLoc DL,
                            SelectionDAG &DAG) const;
   SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;

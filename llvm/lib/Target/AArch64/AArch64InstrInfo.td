@@ -70,12 +70,20 @@ def A64cmn : PatFrag<(ops node:$lhs, node:$rhs),
 //       made for a variable/address at ISelLowering.
 //     + The output of ISelLowering should be selectable (hence the Wrapper,
 //       rather than a bare target opcode)
-def SDTAArch64Wrapper : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>,
-                                             SDTCisSameAs<1, 2>,
-                                             SDTCisVT<3, i32>,
-                                             SDTCisPtrTy<0>]>;
+def SDTAArch64WrapperLarge : SDTypeProfile<1, 4, [SDTCisSameAs<0, 1>,
+                                                  SDTCisSameAs<0, 2>,
+                                                  SDTCisSameAs<0, 3>,
+                                                  SDTCisSameAs<0, 4>,
+                                                  SDTCisPtrTy<0>]>;
 
-def A64WrapperSmall : SDNode<"AArch64ISD::WrapperSmall", SDTAArch64Wrapper>;
+def A64WrapperLarge :SDNode<"AArch64ISD::WrapperLarge", SDTAArch64WrapperLarge>;
+
+def SDTAArch64WrapperSmall : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>,
+                                                  SDTCisSameAs<1, 2>,
+                                                  SDTCisVT<3, i32>,
+                                                  SDTCisPtrTy<0>]>;
+
+def A64WrapperSmall :SDNode<"AArch64ISD::WrapperSmall", SDTAArch64WrapperSmall>;
 
 
 def SDTAArch64GOTLoad : SDTypeProfile<1, 1, [SDTCisPtrTy<0>, SDTCisPtrTy<1>]>;
@@ -3871,7 +3879,7 @@ multiclass movw_operands<string prefix, string instname, int width> {
     let DiagnosticType = "MOVWUImm16";
   }
 
-  def _imm : Operand<i32> {
+  def _imm : Operand<i64> {
     let ParserMatchClass = !cast<AsmOperandClass>(prefix # "_imm_asmoperand");
     let PrintMethod = "printMoveWideImmOperand";
     let EncoderMethod = "getMoveWideImmOpValue";
@@ -3942,7 +3950,7 @@ multiclass movalias_operand<string prefix, string basename,
                                        # "A64Imms::" # immpredicate # ">";
   }
 
-  def _movimm : Operand<i32> {
+  def _movimm : Operand<i64> {
     let ParserMatchClass = !cast<AsmOperandClass>(prefix # "_asmoperand");
 
     let MIOperandInfo = (ops uimm16:$UImm16, imm:$Shift);
@@ -3965,6 +3973,15 @@ def : movalias<MOVZwii, GPR32, movz32_movimm>;
 def : movalias<MOVZxii, GPR64, movz64_movimm>;
 def : movalias<MOVNwii, GPR32, movn32_movimm>;
 def : movalias<MOVNxii, GPR64, movn64_movimm>;
+
+def movw_addressref : ComplexPattern<i64, 2, "SelectMOVWAddressRef">;
+
+def : Pat<(A64WrapperLarge movw_addressref:$G3, movw_addressref:$G2,
+                           movw_addressref:$G1, movw_addressref:$G0),
+          (MOVKxii (MOVKxii (MOVKxii (MOVZxii movw_addressref:$G3),
+                                     movw_addressref:$G2),
+                            movw_addressref:$G1),
+                   movw_addressref:$G0)>;
 
 //===----------------------------------------------------------------------===//
 // PC-relative addressing instructions

@@ -70,6 +70,15 @@ public:
     return SelectCVTFixedPosOperand(N, FixedPos, RegWidth);
   }
 
+  /// Used for pre-lowered address-reference nodes, so we already know
+  /// the fields match. This operand's job is simply to add an
+  /// appropriate shift operand (i.e. 0) to the MOVZ/MOVK instruction.
+  bool SelectMOVWAddressRef(SDValue N, SDValue &Imm, SDValue &Shift) {
+    Imm = N;
+    Shift = CurDAG->getTargetConstant(0, MVT::i32);
+    return true;
+  }
+
   bool SelectFPZeroOperand(SDValue N, SDValue &Dummy);
 
   bool SelectCVTFixedPosOperand(SDValue N, SDValue &FixedPos,

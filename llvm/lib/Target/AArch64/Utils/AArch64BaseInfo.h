@@ -1037,7 +1037,14 @@ namespace AArch64II {
 
     // MO_LO12 - On a symbol operand, this represents a relocation containing
     // lower 12 bits of the address. Used in add/sub/ldr/str.
-    MO_LO12
+    MO_LO12,
+
+    // MO_ABS_G* - Represent the 16-bit granules of an absolute reference using
+    // movz/movk instructions.
+    MO_ABS_G3,
+    MO_ABS_G2_NC,
+    MO_ABS_G1_NC,
+    MO_ABS_G0_NC
   };
 }
 

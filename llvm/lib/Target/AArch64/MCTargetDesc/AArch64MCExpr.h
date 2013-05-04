@@ -133,6 +133,26 @@ public:
     return Create(VK_AARCH64_TPREL_G0_NC, Expr, Ctx);
   }
 
+  static const AArch64MCExpr *CreateABS_G3(const MCExpr *Expr,
+                                           MCContext &Ctx) {
+    return Create(VK_AARCH64_ABS_G3, Expr, Ctx);
+  }
+
+  static const AArch64MCExpr *CreateABS_G2_NC(const MCExpr *Expr,
+                                           MCContext &Ctx) {
+    return Create(VK_AARCH64_ABS_G2_NC, Expr, Ctx);
+  }
+
+  static const AArch64MCExpr *CreateABS_G1_NC(const MCExpr *Expr,
+                                           MCContext &Ctx) {
+    return Create(VK_AARCH64_ABS_G1_NC, Expr, Ctx);
+  }
+
+  static const AArch64MCExpr *CreateABS_G0_NC(const MCExpr *Expr,
+                                           MCContext &Ctx) {
+    return Create(VK_AARCH64_ABS_G0_NC, Expr, Ctx);
+  }
+
   /// @}
   /// @name Accessors
   /// @{
