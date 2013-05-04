@@ -1,6 +1,6 @@
 #include "clang/AST/CommentLexer.h"
-#include "clang/Lex/LexDiagnostic.h"
 #include "clang/AST/CommentCommandTraits.h"
+#include "clang/AST/CommentDiagnostic.h"
 #include "clang/Basic/CharInfo.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -354,8 +354,7 @@ void Lexer::lexCommentText(Token &T) {
         if (!Info) {
           formTokenWithChars(T, TokenPtr, tok::unknown_command);
           T.setUnknownCommandName(CommandName);
-          Diag(T.getLocation(),
-               diag::warn_unknown_comment_command_name);
+          Diag(T.getLocation(), diag::warn_unknown_comment_command_name);
           return;
         }
         if (Info->IsVerbatimBlockCommand) {
