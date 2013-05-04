@@ -1502,6 +1502,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
 Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
                                               const CallExpr *E) {
   switch (getTarget().getTriple().getArch()) {
+  case llvm::Triple::aarch64:
+    return EmitAArch64BuiltinExpr(BuiltinID, E);
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
     return EmitARMBuiltinExpr(BuiltinID, E);
@@ -1619,6 +1621,25 @@ CodeGenFunction::EmitPointerWithAlignment(const Expr *Addr) {
     Align = getContext().getTypeAlignInChars(PtTy).getQuantity();
 
   return std::make_pair(EmitScalarExpr(Addr), Align);
+}
+
+Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
+                                               const CallExpr *E) {
+  if (BuiltinID == AArch64::BI__clear_cache) {
+    assert(E->getNumArgs() == 2 &&
+           "Variadic __clear_cache slipped through on AArch64");
+
+    const FunctionDecl *FD = E->getDirectCallee();
+    SmallVector<Value *, 2> Ops;
+    for (unsigned i = 0; i < E->getNumArgs(); i++)
+      Ops.push_back(EmitScalarExpr(E->getArg(i)));
+    llvm::Type *Ty = CGM.getTypes().ConvertType(FD->getType());
+    llvm::FunctionType *FTy = cast<llvm::FunctionType>(Ty);
+    StringRef Name = FD->getName();
+    return EmitNounwindRuntimeCall(CGM.CreateRuntimeFunction(FTy, Name), Ops);
+  }
+
+  return 0;
 }
 
 Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,

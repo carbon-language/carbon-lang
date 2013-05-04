@@ -3307,6 +3307,8 @@ namespace {
 class AArch64TargetInfo : public TargetInfo {
   static const char * const GCCRegNames[];
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
+
+  static const Builtin::Info BuiltinInfo[];
 public:
   AArch64TargetInfo(const std::string& triple) : TargetInfo(triple) {
     BigEndian = false;
@@ -3375,8 +3377,8 @@ public:
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
-    Records = 0;
-    NumRecords = 0;
+    Records = BuiltinInfo;
+    NumRecords = clang::AArch64::LastTSBuiltin-Builtin::FirstTSBuiltin;
   }
   virtual bool hasFeature(StringRef Feature) const {
     return Feature == "aarch64";
@@ -3485,6 +3487,14 @@ void AArch64TargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
   NumAliases = llvm::array_lengthof(GCCRegAliases);
 
 }
+
+const Builtin::Info AArch64TargetInfo::BuiltinInfo[] = {
+#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
+#define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER,\
+                                              ALL_LANGUAGES },
+#include "clang/Basic/BuiltinsAArch64.def"
+};
+
 } // end anonymous namespace
 
 namespace {

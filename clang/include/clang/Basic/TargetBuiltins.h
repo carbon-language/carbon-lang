@@ -21,6 +21,15 @@
 
 namespace clang {
 
+  /// \brief AArch64 builtins
+  namespace AArch64 {
+    enum {
+      LastTIBuiltin = clang::Builtin::FirstTSBuiltin-1,
+#define BUILTIN(ID, TYPE, ATTRS) BI##ID,
+#include "clang/Basic/BuiltinsAArch64.def"
+      LastTSBuiltin
+    };
+  }
   /// \brief ARM builtins
   namespace ARM {
     enum {
