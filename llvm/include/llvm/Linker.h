@@ -10,12 +10,14 @@
 #ifndef LLVM_LINKER_H
 #define LLVM_LINKER_H
 
+#include "llvm/ADT/SmallPtrSet.h"
 #include <string>
 
 namespace llvm {
 
 class Module;
 class StringRef;
+class StructType;
 
 /// This class provides the core functionality of linking in LLVM. It keeps a
 /// pointer to the merged module so far. It doesn't take ownership of the
@@ -47,6 +49,7 @@ class Linker {
 
   private:
     Module *Composite;
+    SmallPtrSet<StructType*, 32> IdentifiedStructTypes;
 };
 
 } // End llvm namespace
