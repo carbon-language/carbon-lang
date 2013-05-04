@@ -1412,6 +1412,9 @@ public:
 
   /// @brief Removes a declaration from this context.
   void removeDecl(Decl *D);
+    
+  /// @brief Checks whether a declaration is in this context.
+  bool containsDecl(Decl *D) const;
 
   /// lookup_iterator - An iterator that provides access to the results
   /// of looking up a name within this context.
