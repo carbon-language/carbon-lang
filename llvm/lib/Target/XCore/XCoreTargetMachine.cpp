@@ -46,12 +46,18 @@ public:
     return getTM<XCoreTargetMachine>();
   }
 
+  virtual bool addPreISel();
   virtual bool addInstSelector();
 };
 } // namespace
 
 TargetPassConfig *XCoreTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new XCorePassConfig(this, PM);
+}
+
+bool XCorePassConfig::addPreISel() {
+  addPass(createXCoreLowerThreadLocalPass());
+  return false;
 }
 
 bool XCorePassConfig::addInstSelector() {

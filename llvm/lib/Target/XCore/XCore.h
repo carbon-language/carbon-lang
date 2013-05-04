@@ -20,12 +20,16 @@
 
 namespace llvm {
   class FunctionPass;
+  class ModulePass;
   class TargetMachine;
   class XCoreTargetMachine;
   class formatted_raw_ostream;
 
+  void initializeXCoreLowerThreadLocalPass(PassRegistry &p);
+
   FunctionPass *createXCoreISelDag(XCoreTargetMachine &TM,
                                    CodeGenOpt::Level OptLevel);
+  ModulePass *createXCoreLowerThreadLocalPass();
 
 } // end namespace llvm;
 

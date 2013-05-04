@@ -36,7 +36,6 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
@@ -45,12 +44,6 @@
 #include <algorithm>
 #include <cctype>
 using namespace llvm;
-
-static cl::opt<unsigned> MaxThreads("xcore-max-threads", cl::Optional,
-  cl::desc("Maximum number of threads (for emulation thread-local storage)"),
-  cl::Hidden,
-  cl::value_desc("number"),
-  cl::init(8));
 
 namespace {
   class XCoreAsmPrinter : public AsmPrinter {
@@ -152,10 +145,10 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
 
   EmitAlignment(Align > 2 ? Align : 2, GV);
   
-  unsigned Size = TD->getTypeAllocSize(C->getType());
   if (GV->isThreadLocal()) {
-    Size *= MaxThreads;
+    report_fatal_error("TLS is not supported by this target!");
   }
+  unsigned Size = TD->getTypeAllocSize(C->getType());
   if (MAI->hasDotTypeDotSizeDirective()) {
     OutStreamer.EmitSymbolAttribute(GVSym, MCSA_ELF_TypeObject);
     OutStreamer.EmitRawText("\t.size " + Twine(GVSym->getName()) + "," +
@@ -164,10 +157,6 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   OutStreamer.EmitLabel(GVSym);
   
   EmitGlobalConstant(C);
-  if (GV->isThreadLocal()) {
-    for (unsigned i = 1; i < MaxThreads; ++i)
-      EmitGlobalConstant(C);
-  }
   // The ABI requires that unsigned scalar types smaller than 32 bits
   // are padded to 32 bits.
   if (Size < 4)

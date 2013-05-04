@@ -120,9 +120,6 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   setOperationAction(ISD::GlobalAddress, MVT::i32,   Custom);
   setOperationAction(ISD::BlockAddress, MVT::i32 , Custom);
 
-  // Thread Local Storage
-  setOperationAction(ISD::GlobalTLSAddress, MVT::i32, Custom);
-
   // Conversion of i64 -> double produces constantpool nodes
   setOperationAction(ISD::ConstantPool, MVT::i32,   Custom);
 
@@ -172,7 +169,6 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode())
   {
   case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
-  case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
   case ISD::BlockAddress:       return LowerBlockAddress(Op, DAG);
   case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
   case ISD::BR_JT:              return LowerBR_JT(Op, DAG);
@@ -253,44 +249,6 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const
 static inline SDValue BuildGetId(SelectionDAG &DAG, DebugLoc dl) {
   return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, MVT::i32,
                      DAG.getConstant(Intrinsic::xcore_getid, MVT::i32));
-}
-
-static inline bool isZeroLengthArray(Type *Ty) {
-  ArrayType *AT = dyn_cast_or_null<ArrayType>(Ty);
-  return AT && (AT->getNumElements() == 0);
-}
-
-SDValue XCoreTargetLowering::
-LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
-{
-  // FIXME there isn't really debug info here
-  DebugLoc dl = Op.getDebugLoc();
-  // transform to label + getid() * size
-  const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
-  SDValue GA = DAG.getTargetGlobalAddress(GV, dl, MVT::i32);
-  const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
-  if (!GVar) {
-    // If GV is an alias then use the aliasee to determine size
-    if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-      GVar = dyn_cast_or_null<GlobalVariable>(GA->resolveAliasedGlobal());
-  }
-  if (!GVar) {
-    llvm_unreachable("Thread local object not a GlobalVariable?");
-  }
-  Type *Ty = cast<PointerType>(GV->getType())->getElementType();
-  if (!Ty->isSized() || isZeroLengthArray(Ty)) {
-#ifndef NDEBUG
-    errs() << "Size of thread local object " << GVar->getName()
-           << " is unknown\n";
-#endif
-    llvm_unreachable(0);
-  }
-  SDValue base = getGlobalAddressWrapper(GA, GV, DAG);
-  const DataLayout *TD = TM.getDataLayout();
-  unsigned Size = TD->getTypeAllocSize(Ty);
-  SDValue offset = DAG.getNode(ISD::MUL, dl, MVT::i32, BuildGetId(DAG, dl),
-                       DAG.getConstant(Size, MVT::i32));
-  return DAG.getNode(ISD::ADD, dl, MVT::i32, base, offset);
 }
 
 SDValue XCoreTargetLowering::
