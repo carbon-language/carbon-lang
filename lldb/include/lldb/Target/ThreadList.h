@@ -13,7 +13,6 @@
 #include <vector>
 
 #include "lldb/lldb-private.h"
-#include "lldb/Host/Mutex.h"
 #include "lldb/Core/UserID.h"
 
 
@@ -130,10 +129,7 @@ public:
     SetStopID (uint32_t stop_id);
 
     Mutex &
-    GetMutex ()
-    {
-        return m_threads_mutex;
-    }
+    GetMutex ();
     
     void
     Update (ThreadList &rhs);
@@ -150,7 +146,6 @@ protected:
     Process *m_process; ///< The process that manages this thread list.
     uint32_t m_stop_id; ///< The process stop ID that this thread list is valid for.
     collection m_threads; ///< The threads for this process.
-    mutable Mutex m_threads_mutex;
     lldb::tid_t m_selected_tid;  ///< For targets that need the notion of a current thread.
 
 private:
