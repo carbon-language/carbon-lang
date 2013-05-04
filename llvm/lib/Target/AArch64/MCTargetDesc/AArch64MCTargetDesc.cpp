@@ -81,6 +81,12 @@ static MCCodeGenInfo *createAArch64MCCodeGenInfo(StringRef TT, Reloc::Model RM,
 
   if (CM == CodeModel::Default)
     CM = CodeModel::Small;
+  else if (CM == CodeModel::JITDefault) {
+    // The default MCJIT memory managers make no guarantees about where they can
+    // find an executable page; JITed code needs to be able to refer to globals
+    // no matter how far away they are.
+    CM = CodeModel::Large;
+  }
 
   X->InitMCCodeGenInfo(RM, CM, OL);
   return X;

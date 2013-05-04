@@ -269,6 +269,36 @@ void RuntimeDyldELF::resolveX86Relocation(const SectionEntry &Section,
   }
 }
 
+void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
+                                              uint64_t Offset,
+                                              uint64_t Value,
+                                              uint32_t Type,
+                                              int64_t Addend) {
+  uint32_t *TargetPtr = reinterpret_cast<uint32_t*>(Section.Address + Offset);
+  uint64_t FinalAddress = Section.LoadAddress + Offset;
+
+  DEBUG(dbgs() << "resolveAArch64Relocation, LocalAddress: 0x"
+               << format("%llx", Section.Address + Offset)
+               << " FinalAddress: 0x" << format("%llx",FinalAddress)
+               << " Value: 0x" << format("%llx",Value)
+               << " Type: 0x" << format("%x",Type)
+               << " Addend: 0x" << format("%llx",Addend)
+               << "\n");
+
+  switch (Type) {
+  default:
+    llvm_unreachable("Relocation type not implemented yet!");
+    break;
+  case ELF::R_AARCH64_PREL32: { // test-shift.ll (.eh_frame)
+    uint64_t Result = Value + Addend - FinalAddress;
+    assert(static_cast<int64_t>(Result) >= INT32_MIN && 
+           static_cast<int64_t>(Result) <= UINT32_MAX);
+    *TargetPtr = static_cast<uint32_t>(Result & 0xffffffffU);
+    break;
+  }
+  }
+}
+
 void RuntimeDyldELF::resolveARMRelocation(const SectionEntry &Section,
                                           uint64_t Offset,
                                           uint32_t Value,
@@ -615,6 +645,9 @@ void RuntimeDyldELF::resolveRelocation(const SectionEntry &Section,
     resolveX86Relocation(Section, Offset,
                          (uint32_t)(Value & 0xffffffffL), Type,
                          (uint32_t)(Addend & 0xffffffffL));
+    break;
+  case Triple::aarch64:
+    resolveAArch64Relocation(Section, Offset, Value, Type, Addend);
     break;
   case Triple::arm:    // Fall through.
   case Triple::thumb:
