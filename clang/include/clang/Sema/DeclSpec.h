@@ -1503,8 +1503,9 @@ public:
     CXXNewContext,       // C++ new-expression.
     CXXCatchContext,     // C++ catch exception-declaration
     ObjCCatchContext,    // Objective-C catch exception-declaration
-    BlockLiteralContext,  // Block literal declarator.
+    BlockLiteralContext, // Block literal declarator.
     LambdaExprContext,   // Lambda-expression declarator.
+    ConversionIdContext, // C++ conversion-type-id.
     TrailingReturnContext, // C++11 trailing-type-specifier.
     TemplateTypeArgContext, // Template type argument.
     AliasDeclContext,    // C++11 alias-declaration.
@@ -1680,6 +1681,7 @@ public:
     case ObjCCatchContext:
     case BlockLiteralContext:
     case LambdaExprContext:
+    case ConversionIdContext:
     case TemplateTypeArgContext:
     case TrailingReturnContext:
       return true;
@@ -1712,6 +1714,7 @@ public:
     case ObjCResultContext:
     case BlockLiteralContext:
     case LambdaExprContext:
+    case ConversionIdContext:
     case TemplateTypeArgContext:
     case TrailingReturnContext:
       return false;
@@ -1761,6 +1764,7 @@ public:
     case AliasTemplateContext:
     case BlockLiteralContext:
     case LambdaExprContext:
+    case ConversionIdContext:
     case TemplateTypeArgContext:
     case TrailingReturnContext:
       return false;
@@ -1943,6 +1947,7 @@ public:
     case ObjCCatchContext:
     case BlockLiteralContext:
     case LambdaExprContext:
+    case ConversionIdContext:
     case TemplateTypeArgContext:
     case TrailingReturnContext:
       return false;

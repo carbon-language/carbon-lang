@@ -11,7 +11,7 @@ struct S {
 
   friend auto; // expected-error{{'auto' not allowed in non-static struct member}}
 
-  operator auto(); // expected-error{{'auto' not allowed here}}
+  operator auto(); // expected-error{{'auto' not allowed in conversion function type}}
 };
 
 // PR 9278: auto is not allowed in typedefs, except with a trailing return type.

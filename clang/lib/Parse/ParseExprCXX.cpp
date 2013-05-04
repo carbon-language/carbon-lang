@@ -2035,7 +2035,7 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
   
   // Parse the conversion-declarator, which is merely a sequence of
   // ptr-operators.
-  Declarator D(DS, Declarator::TypeNameContext);
+  Declarator D(DS, Declarator::ConversionIdContext);
   ParseDeclaratorInternal(D, /*DirectDeclParser=*/0);
   
   // Finish up the type.

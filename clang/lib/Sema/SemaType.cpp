@@ -2103,8 +2103,11 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
     case Declarator::TrailingReturnContext:
       Error = 11; // Function return type
       break;
+    case Declarator::ConversionIdContext:
+      Error = 12; // conversion-type-id
+      break;
     case Declarator::TypeNameContext:
-      Error = 12; // Generic
+      Error = 13; // Generic
       break;
     case Declarator::FileContext:
     case Declarator::BlockContext:
@@ -2140,15 +2143,19 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
       }
     }
 
+    SourceRange AutoRange = D.getDeclSpec().getTypeSpecTypeLoc();
+    if (D.getName().getKind() == UnqualifiedId::IK_ConversionFunctionId)
+      AutoRange = D.getName().getSourceRange();
+
     if (Error != -1) {
-      SemaRef.Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
-                   diag::err_auto_not_allowed)
-        << Error;
+      SemaRef.Diag(AutoRange.getBegin(), diag::err_auto_not_allowed)
+        << Error << AutoRange;
       T = SemaRef.Context.IntTy;
       D.setInvalidType(true);
     } else
-      SemaRef.Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
-                   diag::warn_cxx98_compat_auto_type_specifier);
+      SemaRef.Diag(AutoRange.getBegin(),
+                   diag::warn_cxx98_compat_auto_type_specifier)
+        << AutoRange;
   }
 
   if (SemaRef.getLangOpts().CPlusPlus &&
@@ -2180,6 +2187,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
       D.setInvalidType(true);
       break;
     case Declarator::TypeNameContext:
+    case Declarator::ConversionIdContext:
     case Declarator::TemplateParamContext:
     case Declarator::CXXNewContext:
     case Declarator::CXXCatchContext:
@@ -3092,6 +3100,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
     case Declarator::ObjCCatchContext:
     case Declarator::BlockLiteralContext:
     case Declarator::LambdaExprContext:
+    case Declarator::ConversionIdContext:
     case Declarator::TrailingReturnContext:
     case Declarator::TemplateTypeArgContext:
       // FIXME: We may want to allow parameter packs in block-literal contexts
