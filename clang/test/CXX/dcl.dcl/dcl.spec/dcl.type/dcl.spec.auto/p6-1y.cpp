@@ -60,3 +60,7 @@ decltype(auto) ((((((v1)))))) = 0; // ok
 decltype(auto) v2[1] = { 0 }; // expected-error {{cannot form array of 'decltype(auto)'}}
 decltype(auto) &v3 = { 0 }; // expected-error {{cannot form reference to 'decltype(auto)'}}
 decltype(auto) *v4 = { 0 }; // expected-error {{cannot form pointer to 'decltype(auto)'}}
+
+auto multi1a = 0, &multi1b = multi1a;
+auto multi1c = multi1a, multi1d = multi1b;
+decltype(auto) multi1e = multi1a, multi1f = multi1b; // expected-error {{'decltype(auto)' deduced as 'int' in declaration of 'multi1e' and deduced as 'int &' in declaration of 'multi1f'}}

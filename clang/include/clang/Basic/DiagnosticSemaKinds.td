@@ -1454,7 +1454,8 @@ def err_auto_var_deduction_failure_from_init_list : Error<
 def err_auto_new_deduction_failure : Error<
   "new expression for type %0 has incompatible constructor argument of type %1">;
 def err_auto_different_deductions : Error<
-  "'auto' deduced as %0 in declaration of %1 and deduced as %2 in declaration of %3">;
+  "'%select{auto|decltype(auto)}0' deduced as %1 in declaration of %2 and "
+  "deduced as %3 in declaration of %4">;
 def err_implied_std_initializer_list_not_found : Error<
   "cannot deduce type of initializer list because std::initializer_list was "
   "not found; include <initializer_list>">;

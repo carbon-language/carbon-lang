@@ -8212,6 +8212,7 @@ Sema::BuildDeclaratorGroup(Decl **Group, unsigned NumDecls,
           } else if (DeducedCanon != UCanon) {
             Diag(D->getTypeSourceInfo()->getTypeLoc().getBeginLoc(),
                  diag::err_auto_different_deductions)
+              << (AT->isDecltypeAuto() ? 1 : 0)
               << Deduced << DeducedDecl->getDeclName()
               << U << D->getDeclName()
               << DeducedDecl->getInit()->getSourceRange()
