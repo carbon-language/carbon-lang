@@ -1802,6 +1802,26 @@ static bool optimizeEdges(PathPieces &path,
       hasChanges = true;
       continue;
     }
+
+    // Rule II.
+    //
+    // If we have two consecutive control edges where we decend to a
+    // subexpression and then pop out merge them.
+    //
+    // NOTE: this will be limited later in cases where we add barriers
+    // to prevent this optimization.
+    //
+    // For example:
+    //
+    // (1.1 -> 1.1.1) -> (1.1.1 -> 1.2) becomes (1.1 -> 1.2).
+    if (level1 && level2 &&
+        level1 == level4 &&
+        level2 == level3 && PM.getParent(level2) == level1) {
+      PieceI->setEndLocation(PieceNextI->getEndLocation());
+      path.erase(NextI);
+      hasChanges = true;
+      continue;
+    }
   }
 
   // No changes.
