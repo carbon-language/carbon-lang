@@ -382,8 +382,9 @@ void ASTStmtReader::VisitMSAsmStmt(MSAsmStmt *S) {
 
 void ASTStmtReader::VisitCapturedStmt(CapturedStmt *S) {
   VisitStmt(S);
-  S->TheCapturedDecl = ReadDeclAs<CapturedDecl>(Record, Idx);
-  S->TheRecordDecl = ReadDeclAs<RecordDecl>(Record, Idx);
+  S->setCapturedDecl(ReadDeclAs<CapturedDecl>(Record, Idx));
+  S->setCapturedRegionKind(static_cast<CapturedRegionKind>(Record[Idx++]));
+  S->setCapturedRecordDecl(ReadDeclAs<RecordDecl>(Record, Idx));
 
   // Capture inits
   for (CapturedStmt::capture_init_iterator I = S->capture_init_begin(),
@@ -393,7 +394,7 @@ void ASTStmtReader::VisitCapturedStmt(CapturedStmt *S) {
 
   // Body
   S->setCapturedStmt(Reader.ReadSubStmt());
-  S->TheCapturedDecl->setBody(S->getCapturedStmt());
+  S->getCapturedDecl()->setBody(S->getCapturedStmt());
 
   // Captures
   for (CapturedStmt::capture_iterator I = S->capture_begin(),

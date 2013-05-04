@@ -290,7 +290,10 @@ void ASTStmtWriter::VisitCapturedStmt(CapturedStmt *S) {
   // NumCaptures
   Record.push_back(std::distance(S->capture_begin(), S->capture_end()));
 
+  // CapturedDecl and captured region kind
   Writer.AddDeclRef(S->getCapturedDecl(), Record);
+  Record.push_back(S->getCapturedRegionKind());
+
   Writer.AddDeclRef(S->getCapturedRecordDecl(), Record);
 
   // Capture inits

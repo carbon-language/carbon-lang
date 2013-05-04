@@ -2981,7 +2981,8 @@ static void buildCapturedStmtCaptureList(
 }
 
 void Sema::ActOnCapturedRegionStart(SourceLocation Loc, Scope *CurScope,
-                                    CapturedRegionKind Kind, unsigned NumParams) {
+                                    CapturedRegionKind Kind,
+                                    unsigned NumParams) {
   CapturedDecl *CD = 0;
   RecordDecl *RD = CreateCapturedStmtRecordDecl(CD, Loc, NumParams);
 
@@ -2996,12 +2997,9 @@ void Sema::ActOnCapturedRegionStart(SourceLocation Loc, Scope *CurScope,
   PushExpressionEvaluationContext(PotentiallyEvaluated);
 }
 
-void Sema::ActOnCapturedRegionError(bool IsInstantiation) {
+void Sema::ActOnCapturedRegionError() {
   DiscardCleanupsInEvaluationContext();
   PopExpressionEvaluationContext();
-
-  if (!IsInstantiation)
-    PopDeclContext();
 
   CapturedRegionScopeInfo *RSI = getCurCapturedRegion();
   RecordDecl *Record = RSI->TheRecordDecl;
@@ -3014,6 +3012,7 @@ void Sema::ActOnCapturedRegionError(bool IsInstantiation) {
   ActOnFields(/*Scope=*/0, Record->getLocation(), Record, Fields,
               SourceLocation(), SourceLocation(), /*AttributeList=*/0);
 
+  PopDeclContext();
   PopFunctionScopeInfo();
 }
 
@@ -3027,11 +3026,15 @@ StmtResult Sema::ActOnCapturedRegionEnd(Stmt *S) {
   CapturedDecl *CD = RSI->TheCapturedDecl;
   RecordDecl *RD = RSI->TheRecordDecl;
 
-  CapturedStmt *Res = CapturedStmt::Create(getASTContext(), S, Captures,
+  CapturedStmt *Res = CapturedStmt::Create(getASTContext(), S,
+                                           RSI->CapRegionKind, Captures,
                                            CaptureInits, CD, RD);
 
   CD->setBody(Res->getCapturedStmt());
   RD->completeDefinition();
+
+  DiscardCleanupsInEvaluationContext();
+  PopExpressionEvaluationContext();
 
   PopDeclContext();
   PopFunctionScopeInfo();

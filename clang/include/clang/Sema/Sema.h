@@ -2798,7 +2798,7 @@ public:
   void ActOnCapturedRegionStart(SourceLocation Loc, Scope *CurScope,
                                 CapturedRegionKind Kind, unsigned NumParams);
   StmtResult ActOnCapturedRegionEnd(Stmt *S);
-  void ActOnCapturedRegionError(bool IsInstantiation = false);
+  void ActOnCapturedRegionError();
   RecordDecl *CreateCapturedStmtRecordDecl(CapturedDecl *&CD,
                                            SourceLocation Loc,
                                            unsigned NumParams);

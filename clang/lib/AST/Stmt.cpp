@@ -1049,12 +1049,13 @@ CapturedStmt::Capture *CapturedStmt::getStoredCaptures() const {
       + FirstCaptureOffset);
 }
 
-CapturedStmt::CapturedStmt(Stmt *S, ArrayRef<Capture> Captures,
+CapturedStmt::CapturedStmt(Stmt *S, CapturedRegionKind Kind,
+                           ArrayRef<Capture> Captures,
                            ArrayRef<Expr *> CaptureInits,
                            CapturedDecl *CD,
                            RecordDecl *RD)
   : Stmt(CapturedStmtClass), NumCaptures(Captures.size()),
-    TheCapturedDecl(CD), TheRecordDecl(RD) {
+    CapDeclAndKind(CD, Kind), TheRecordDecl(RD) {
   assert( S && "null captured statement");
   assert(CD && "null captured declaration for captured statement");
   assert(RD && "null record declaration for captured statement");
@@ -1074,11 +1075,12 @@ CapturedStmt::CapturedStmt(Stmt *S, ArrayRef<Capture> Captures,
 
 CapturedStmt::CapturedStmt(EmptyShell Empty, unsigned NumCaptures)
   : Stmt(CapturedStmtClass, Empty), NumCaptures(NumCaptures),
-    TheCapturedDecl(0), TheRecordDecl(0) {
+    CapDeclAndKind(0, CR_Default), TheRecordDecl(0) {
   getStoredStmts()[NumCaptures] = 0;
 }
 
 CapturedStmt *CapturedStmt::Create(ASTContext &Context, Stmt *S,
+                                   CapturedRegionKind Kind,
                                    ArrayRef<Capture> Captures,
                                    ArrayRef<Expr *> CaptureInits,
                                    CapturedDecl *CD,
@@ -1102,7 +1104,7 @@ CapturedStmt *CapturedStmt::Create(ASTContext &Context, Stmt *S,
   }
 
   void *Mem = Context.Allocate(Size);
-  return new (Mem) CapturedStmt(S, Captures, CaptureInits, CD, RD);
+  return new (Mem) CapturedStmt(S, Kind, Captures, CaptureInits, CD, RD);
 }
 
 CapturedStmt *CapturedStmt::CreateDeserialized(ASTContext &Context,
