@@ -21,11 +21,9 @@ using namespace llvm;
 
 Linker::Linker(StringRef modname,
                LLVMContext& C):
-  Context(C),
   Composite(new Module(modname, C)) { }
 
 Linker::Linker(Module* aModule) :
-  Context(aModule->getContext()),
   Composite(aModule) { }
 
 Linker::~Linker() {

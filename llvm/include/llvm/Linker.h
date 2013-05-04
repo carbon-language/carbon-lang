@@ -111,7 +111,6 @@ class Linker {
   /// @name Data
   /// @{
   private:
-    LLVMContext& Context; ///< The context for global information
     Module* Composite; ///< The composite module linked together
   /// @}
 
