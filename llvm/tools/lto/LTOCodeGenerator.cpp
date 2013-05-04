@@ -69,7 +69,7 @@ const char* LTOCodeGenerator::getVersionString() {
 
 LTOCodeGenerator::LTOCodeGenerator()
   : _context(getGlobalContext()),
-    _linker("LinkTimeOptimizer", "ld-temp.o", _context), _target(NULL),
+    _linker("ld-temp.o", _context), _target(NULL),
     _emitDwarfDebugInfo(false), _scopeRestrictionsDone(false),
     _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
     _nativeObjectFile(NULL) {

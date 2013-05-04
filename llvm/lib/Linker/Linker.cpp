@@ -19,20 +19,14 @@
 #include "llvm/Support/system_error.h"
 using namespace llvm;
 
-Linker::Linker(StringRef progname, StringRef modname,
-               LLVMContext& C, unsigned flags):
+Linker::Linker(StringRef modname,
+               LLVMContext& C):
   Context(C),
-  Composite(new Module(modname, C)),
-  Flags(flags),
-  Error(),
-  ProgramName(progname) { }
+  Composite(new Module(modname, C)) { }
 
-Linker::Linker(StringRef progname, Module* aModule, unsigned flags) :
+Linker::Linker(Module* aModule) :
   Context(aModule->getContext()),
-  Composite(aModule),
-  Flags(flags),
-  Error(),
-  ProgramName(progname) { }
+  Composite(aModule) { }
 
 Linker::~Linker() {
   delete Composite;

@@ -47,16 +47,14 @@ class Linker {
     /// Construct the Linker with an empty module which will be given the
     /// name \p progname. \p progname will also be used for error messages.
     /// @brief Construct with empty module
-    Linker(StringRef progname, ///< name of tool running linker
-           StringRef modulename, ///< name of linker's end-result module
-           LLVMContext &C, ///< Context for global info
-           unsigned Flags = 0  ///< ControlFlags (one or more |'d together)
+    Linker(StringRef modulename, ///< name of linker's end-result module
+           LLVMContext &C ///< Context for global info
     );
 
     /// Construct the Linker with a previously defined module, \p aModule. Use
     /// \p progname for the name of the program in error messages.
     /// @brief Construct with existing module
-    Linker(StringRef progname, Module* aModule, unsigned Flags = 0);
+    Linker(Module* aModule);
 
     /// Destruct the Linker.
     /// @brief Destructor
@@ -115,9 +113,6 @@ class Linker {
   private:
     LLVMContext& Context; ///< The context for global information
     Module* Composite; ///< The composite module linked together
-    unsigned Flags;    ///< Flags to control optional behavior.
-    std::string Error; ///< Text of error that occurred.
-    std::string ProgramName; ///< Name of the program being linked
   /// @}
 
 };
