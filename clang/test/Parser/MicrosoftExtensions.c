@@ -6,7 +6,7 @@ void (*__fastcall fastpfunc)();
 struct __declspec(uuid("00000000-0000-0000-C000-000000000046")) __declspec(novtable) IUnknown {}; /* expected-warning{{__declspec attribute 'novtable' is not supported}} */
 extern __declspec(dllimport) void __stdcall VarR4FromDec();
 __declspec(deprecated) __declspec(deprecated) char * __cdecl ltoa( long _Val, char * _DstBuf, int _Radix);
-__declspec(noalias) __declspec(restrict) void * __cdecl xxx( void * _Memory ); /* expected-warning{{__declspec attribute 'noalias' is not supported}} expected-warning{{__declspec attribute 'restrict' is not supported}} */
+__declspec(safebuffers) __declspec(noalias) __declspec(restrict) void * __cdecl xxx( void * _Memory ); /* expected-warning{{__declspec attribute 'safebuffers' is not supported}} expected-warning{{__declspec attribute 'noalias' is not supported}} expected-warning{{__declspec attribute 'restrict' is not supported}} */
 typedef __w64 unsigned long ULONG_PTR, *PULONG_PTR;
 
 void * __ptr64 PtrToPtr64(const void *p)

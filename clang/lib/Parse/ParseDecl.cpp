@@ -374,6 +374,7 @@ bool Parser::IsSimpleMicrosoftDeclSpec(IdentifierInfo *Ident) {
     .Case("novtable", true)
     .Case("selectany", true)
     .Case("thread", true)
+    .Case("safebuffers", true )
     .Default(false);
 }
 
