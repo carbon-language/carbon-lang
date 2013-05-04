@@ -37,34 +37,3 @@ Linker::Linker(StringRef progname, Module* aModule, unsigned flags) :
 Linker::~Linker() {
   delete Composite;
 }
-
-bool
-Linker::error(StringRef message) {
-  Error = message;
-  if (!(Flags&QuietErrors))
-    errs() << ProgramName << ": error: " << message << "\n";
-  return true;
-}
-
-bool
-Linker::warning(StringRef message) {
-  Error = message;
-  if (!(Flags&QuietWarnings))
-    errs() << ProgramName << ": warning: " << message << "\n";
-  return false;
-}
-
-void
-Linker::verbose(StringRef message) {
-  if (Flags&Verbose)
-    errs() << "  " << message << "\n";
-}
-
-Module*
-Linker::releaseModule() {
-  Module* result = Composite;
-  Error.clear();
-  Composite = 0;
-  Flags = 0;
-  return result;
-}

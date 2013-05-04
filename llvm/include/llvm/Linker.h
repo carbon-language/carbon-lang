@@ -10,9 +10,7 @@
 #ifndef LLVM_LINKER_H
 #define LLVM_LINKER_H
 
-#include <memory>
 #include <string>
-#include <vector>
 
 namespace llvm {
 
@@ -37,14 +35,6 @@ class Linker {
   /// @name Types
   /// @{
   public:
-    /// This enumeration is used to control various optional features of the
-    /// linker.
-    enum ControlFlags {
-      Verbose       = 1, ///< Print to stderr what steps the linker is taking
-      QuietWarnings = 2, ///< Don't print warnings to stderr.
-      QuietErrors   = 4  ///< Don't print errors to stderr.
-    };
-
     enum LinkerMode {
       DestroySource = 0, // Allow source module to be destroyed.
       PreserveSource = 1 // Preserve the source module.
@@ -85,25 +75,6 @@ class Linker {
     /// @brief Get the linked/composite module.
     Module* getModule() const { return Composite; }
 
-    /// This method releases the composite Module into which linking is being
-    /// done. Ownership of the composite Module is transferred to the caller who
-    /// must arrange for its destruct. After this method is called, the Linker
-    /// terminates the linking session for the returned Module. It will no
-    /// longer utilize the returned Module but instead resets itself for
-    /// subsequent linking as if the constructor had been called.
-    /// @brief Release the linked/composite module.
-    Module* releaseModule();
-
-    /// This method returns an error string suitable for printing to the user.
-    /// The return value will be empty unless an error occurred in one of the
-    /// LinkIn* methods. In those cases, the LinkIn* methods will have returned
-    /// true, indicating an error occurred. At most one error is retained so
-    /// this function always returns the last error that occurred. Note that if
-    /// the Quiet control flag is not set, the error string will have already
-    /// been printed to stderr.
-    /// @brief Get the text of the last error that occurred.
-    const std::string &getLastError() const { return Error; }
-
   /// @}
   /// @name Mutators
   /// @{
@@ -138,10 +109,6 @@ class Linker {
   /// @name Implementation
   /// @{
   private:
-    bool warning(StringRef message);
-    bool error(StringRef message);
-    void verbose(StringRef message);
-
   /// @}
   /// @name Data
   /// @{
