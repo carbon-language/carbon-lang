@@ -289,6 +289,11 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
   default:
     llvm_unreachable("Relocation type not implemented yet!");
     break;
+  case ELF::R_AARCH64_ABS64: {
+    uint64_t *TargetPtr = reinterpret_cast<uint64_t*>(Section.Address + Offset);
+    *TargetPtr = Value + Addend;
+    break;
+  }
   case ELF::R_AARCH64_PREL32: { // test-shift.ll (.eh_frame)
     uint64_t Result = Value + Addend - FinalAddress;
     assert(static_cast<int64_t>(Result) >= INT32_MIN && 
