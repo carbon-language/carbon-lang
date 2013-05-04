@@ -254,14 +254,15 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
            "Invalid string token!");
 
     // Remove escaped quotes and escapes.
-    for (unsigned i = 1, e = StrVal.size(); i < e-2; ++i) {
-      if (StrVal[i] == '\\' &&
-          (StrVal[i+1] == '\\' || StrVal[i+1] == '"')) {
+    unsigned ResultPos = 1;
+    for (unsigned i = 1, e = StrVal.size() - 2; i != e; ++i) {
+      if (StrVal[i] != '\\' ||
+          (StrVal[i + 1] != '\\' && StrVal[i + 1] != '"')) {
         // \\ -> '\' and \" -> '"'.
-        StrVal.erase(StrVal.begin()+i);
-        --e;
+        StrVal[ResultPos++] = StrVal[i];
       }
     }
+    StrVal.erase(StrVal.begin() + ResultPos, StrVal.end() - 2);
   }
 
   // Remove the front quote, replacing it with a space, so that the pragma
