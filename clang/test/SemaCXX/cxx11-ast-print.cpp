@@ -43,10 +43,3 @@ const char *p10 = 3.300e+15_fritz;
 // CHECK-NOT: ;
 
 
-// CHECK: __thread int gnu_tl;
-// CHECK: _Thread_local int c11_tl;
-// CHECK: thread_local int cxx11_tl;
-__thread int gnu_tl;
-_Thread_local int c11_tl;
-thread_local int cxx11_tl;
-
