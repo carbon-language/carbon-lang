@@ -1667,17 +1667,26 @@ AArch64TargetLowering::LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const {
   EVT PtrVT = getPointerTy();
   const BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
 
-  assert(getTargetMachine().getCodeModel() == CodeModel::Small
-         && "Only small code model supported at the moment");
-
-  // The most efficient code is PC-relative anyway for the small memory model,
-  // so we don't need to worry about relocation model.
-  return DAG.getNode(AArch64ISD::WrapperSmall, DL, PtrVT,
-                     DAG.getTargetBlockAddress(BA, PtrVT, 0,
-                                               AArch64II::MO_NO_FLAG),
-                     DAG.getTargetBlockAddress(BA, PtrVT, 0,
-                                               AArch64II::MO_LO12),
-                     DAG.getConstant(/*Alignment=*/ 4, MVT::i32));
+  switch(getTargetMachine().getCodeModel()) {
+  case CodeModel::Small:
+    // The most efficient code is PC-relative anyway for the small memory model,
+    // so we don't need to worry about relocation model.
+    return DAG.getNode(AArch64ISD::WrapperSmall, DL, PtrVT,
+                       DAG.getTargetBlockAddress(BA, PtrVT, 0,
+                                                 AArch64II::MO_NO_FLAG),
+                       DAG.getTargetBlockAddress(BA, PtrVT, 0,
+                                                 AArch64II::MO_LO12),
+                       DAG.getConstant(/*Alignment=*/ 4, MVT::i32));
+  case CodeModel::Large:
+    return DAG.getNode(
+      AArch64ISD::WrapperLarge, DL, PtrVT,
+      DAG.getTargetBlockAddress(BA, PtrVT, 0, AArch64II::MO_ABS_G3),
+      DAG.getTargetBlockAddress(BA, PtrVT, 0, AArch64II::MO_ABS_G2_NC),
+      DAG.getTargetBlockAddress(BA, PtrVT, 0, AArch64II::MO_ABS_G1_NC),
+      DAG.getTargetBlockAddress(BA, PtrVT, 0, AArch64II::MO_ABS_G0_NC));
+  default:
+    llvm_unreachable("Only small and large code models supported now");
+  }
 }
 
 

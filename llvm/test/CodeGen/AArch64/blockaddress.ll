@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -code-model=large -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck --check-prefix=CHECK-LARGE %s
 
 @addr = global i8* null
 
@@ -12,6 +13,14 @@ define void @test_blockaddress() {
 ; CHECK: str [[DEST]],
 ; CHECK: ldr [[NEWDEST:x[0-9]+]]
 ; CHECK: br [[NEWDEST]]
+
+; CHECK-LARGE: movz [[ADDR_REG:x[0-9]+]], #:abs_g3:[[DEST_LBL:.Ltmp[0-9]+]]
+; CHECK-LARGE: movk [[ADDR_REG]], #:abs_g2_nc:[[DEST_LBL]]
+; CHECK-LARGE: movk [[ADDR_REG]], #:abs_g1_nc:[[DEST_LBL]]
+; CHECK-LARGE: movk [[ADDR_REG]], #:abs_g0_nc:[[DEST_LBL]]
+; CHECK-LARGE: str [[ADDR_REG]],
+; CHECK-LARGE: ldr [[NEWDEST:x[0-9]+]]
+; CHECK-LARGE: br [[NEWDEST]]
 
 block:
   ret void
