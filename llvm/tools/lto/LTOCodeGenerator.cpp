@@ -89,7 +89,7 @@ LTOCodeGenerator::~LTOCodeGenerator() {
 }
 
 bool LTOCodeGenerator::addModule(LTOModule* mod, std::string& errMsg) {
-  bool ret = _linker.LinkInModule(mod->getLLVVMModule(), &errMsg);
+  bool ret = _linker.linkInModule(mod->getLLVVMModule(), &errMsg);
 
   const std::vector<const char*> &undefs = mod->getAsmUndefinedRefs();
   for (int i = 0, e = undefs.size(); i != e; ++i)

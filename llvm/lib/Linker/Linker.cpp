@@ -24,3 +24,7 @@ Linker::Linker(Module* aModule) :
 
 Linker::~Linker() {
 }
+
+bool Linker::linkInModule(Module *Src, unsigned Mode, std::string *ErrorMsg) {
+  return LinkModules(Composite, Src, Linker::DestroySource, ErrorMsg);
+}
