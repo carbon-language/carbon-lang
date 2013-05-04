@@ -1738,10 +1738,13 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
   return report->isValid();
 }
 
-const Stmt *getLocParent(PathDiagnosticLocation L, ParentMap &PM) {
+const Stmt *getLocStmt(PathDiagnosticLocation L) {
   if (!L.isValid())
     return 0;
-  const Stmt *S = L.asStmt();
+  return L.asStmt();
+}
+
+const Stmt *getStmtParent(const Stmt *S, ParentMap &PM) {
   if (!S)
     return 0;
   return PM.getParent(S);
@@ -1752,6 +1755,7 @@ static bool optimizeEdges(PathPieces &path,
   bool hasChanges = false;
   const LocationContext *LC = LCM[&path];
   assert(LC);
+  bool isFirst = true;
 
   for (PathPieces::iterator I = path.begin(), E = path.end(); I != E; ++I) {
     PathPieces::iterator NextI = I; ++NextI;
@@ -1771,13 +1775,34 @@ static bool optimizeEdges(PathPieces &path,
     if (!PieceI)
       continue;
 
+    ParentMap &PM = LC->getParentMap();
+    const Stmt *s1Start = getLocStmt(PieceI->getStartLocation());
+    const Stmt *s1End   = getLocStmt(PieceI->getEndLocation());
+    const Stmt *level1 = getStmtParent(s1Start, PM);
+    const Stmt *level2 = getStmtParent(s1End, PM);
+
+    if (isFirst) {
+      isFirst = false;
+      // Apply the "first edge" case for Rule III. here.
+      if (level1 && level2 && level2 == PM.getParent(level1)) {
+        path.erase(I);
+        // Since we are erasing the current edge at the start of the
+        // path, just return now so we start analyzing the start of the path
+        // again.
+        return true;
+      }
+    }
+
     PathDiagnosticControlFlowPiece *PieceNextI =
       dyn_cast<PathDiagnosticControlFlowPiece>(*NextI);
 
     if (!PieceNextI)
       continue;
 
-    ParentMap &PM = LC->getParentMap();
+    const Stmt *s2Start = getLocStmt(PieceNextI->getStartLocation());
+    const Stmt *s2End   = getLocStmt(PieceNextI->getEndLocation());
+    const Stmt *level3 = getStmtParent(s2Start, PM);
+    const Stmt *level4 = getStmtParent(s2End, PM);
 
     // Rule I.
     //
@@ -1791,11 +1816,7 @@ static bool optimizeEdges(PathPieces &path,
     //
     // NOTE: this will be limited later in cases where we add barriers
     // to prevent this optimization.
-    const Stmt *level1 = getLocParent(PieceI->getStartLocation(), PM);
-    const Stmt *level2 = getLocParent(PieceI->getEndLocation(), PM);
-    const Stmt *level3 = getLocParent(PieceNextI->getStartLocation(), PM);
-    const Stmt *level4 = getLocParent(PieceNextI->getEndLocation(), PM);
-
+    //
     if (level1 && level1 == level2 && level1 == level3 && level1 == level4) {
       PieceI->setEndLocation(PieceNextI->getEndLocation());
       path.erase(NextI);
@@ -1817,6 +1838,45 @@ static bool optimizeEdges(PathPieces &path,
     if (level1 && level2 &&
         level1 == level4 &&
         level2 == level3 && PM.getParent(level2) == level1) {
+      PieceI->setEndLocation(PieceNextI->getEndLocation());
+      path.erase(NextI);
+      hasChanges = true;
+      continue;
+    }
+
+    // Rule III.
+    //
+    // Eliminate unnecessary edges where we descend to a subexpression from
+    // a statement at the same level as our parent.
+    //
+    // NOTE: this will be limited later in cases where we add barriers
+    // to prevent this optimization.
+    //
+    // For example:
+    //
+    // (1.1 -> 1.1.1) -> (1.1.1 -> X) becomes (1.1 -> X).
+    //
+    if (level1 && level2 && level1 == PM.getParent(level2)) {
+      PieceI->setEndLocation(PieceNextI->getEndLocation());
+      path.erase(NextI);
+      hasChanges = true;
+      continue;
+    }
+
+    // Rule IV.
+    //
+    // Eliminate unnecessary edges where we ascend from a subexpression to
+    // a statement at the same level as our parent.
+    //
+    // NOTE: this will be limited later in cases where we add barriers
+    // to prevent this optimization.
+    //
+    // For example:
+    //
+    // (X -> 1.1.1) -> (1.1.1 -> 1.1) becomes (X -> 1.1).
+    // [first edge] (1.1.1 -> 1.1) -> eliminate
+    //
+    if (level2 && level4 && level2 == level3 && level4 == PM.getParent(level2)){
       PieceI->setEndLocation(PieceNextI->getEndLocation());
       path.erase(NextI);
       hasChanges = true;
