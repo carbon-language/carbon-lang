@@ -477,7 +477,7 @@ ProcessKDP::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_threa
     
     // Even though there is a CPU mask, it doesn't mean we can see each CPU
     // indivudually, there is really only one. Lets call this thread 1.
-    ThreadSP thread_sp (old_thread_list.FindThreadByProtocolID(g_kernel_tid));
+    ThreadSP thread_sp (old_thread_list.FindThreadByProtocolID(g_kernel_tid, false));
     if (!thread_sp)
         thread_sp = GetKernelThread ();
     new_thread_list.AddThread(thread_sp);
