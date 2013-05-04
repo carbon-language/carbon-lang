@@ -33,7 +33,7 @@ namespace llvm {
                                      CodeGenOpt::Level OptLevel);
   FunctionPass *createHexagonDelaySlotFillerPass(TargetMachine &TM);
   FunctionPass *createHexagonFPMoverPass(TargetMachine &TM);
-  FunctionPass *createHexagonRemoveExtendOps(HexagonTargetMachine &TM);
+  FunctionPass *createHexagonRemoveExtendArgs(HexagonTargetMachine &TM);
   FunctionPass *createHexagonCFGOptimizer(HexagonTargetMachine &TM);
 
   FunctionPass *createHexagonSplitTFRCondSets(HexagonTargetMachine &TM);

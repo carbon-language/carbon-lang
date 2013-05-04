@@ -128,7 +128,7 @@ TargetPassConfig *HexagonTargetMachine::createPassConfig(PassManagerBase &PM) {
 bool HexagonPassConfig::addInstSelector() {
 
   if (getOptLevel() != CodeGenOpt::None)
-    addPass(createHexagonRemoveExtendOps(getHexagonTargetMachine()));
+    addPass(createHexagonRemoveExtendArgs(getHexagonTargetMachine()));
 
   addPass(createHexagonISelDag(getHexagonTargetMachine(), getOptLevel()));
 
