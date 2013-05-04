@@ -16252,8 +16252,7 @@ static SDValue PerformSHLCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
-/// PerformShiftCombine - Transforms vector shift nodes to use vector shifts
-///                       when possible.
+/// PerformShiftCombine - Combine shifts.
 static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
                                    TargetLowering::DAGCombinerInfo &DCI,
                                    const X86Subtarget *Subtarget) {
