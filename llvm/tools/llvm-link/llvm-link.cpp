@@ -93,6 +93,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  Linker L(Composite.get());
   for (unsigned i = BaseArg+1; i < InputFilenames.size(); ++i) {
     OwningPtr<Module> M(LoadFile(argv[0], InputFilenames[i], Context));
     if (M.get() == 0) {
@@ -102,8 +103,7 @@ int main(int argc, char **argv) {
 
     if (Verbose) errs() << "Linking in '" << InputFilenames[i] << "'\n";
 
-    if (Linker::LinkModules(Composite.get(), M.get(), Linker::DestroySource,
-                            &ErrorMessage)) {
+    if (L.linkInModule(M.get(), &ErrorMessage)) {
       errs() << argv[0] << ": link error in '" << InputFilenames[i]
              << "': " << ErrorMessage << "\n";
       return 1;
