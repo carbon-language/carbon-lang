@@ -336,7 +336,25 @@ void RuntimeDyldImpl::addRelocationForSymbol(const RelocationEntry &RE,
 }
 
 uint8_t *RuntimeDyldImpl::createStubFunction(uint8_t *Addr) {
-  if (Arch == Triple::arm) {
+  if (Arch == Triple::aarch64) {
+    // This stub has to be able to access the full address space,
+    // since symbol lookup won't necessarily find a handy, in-range,
+    // PLT stub for functions which could be anywhere.
+    uint32_t *StubAddr = (uint32_t*)Addr;
+
+    // Stub can use ip0 (== x16) to calculate address
+    *StubAddr = 0xd2e00010; // movz ip0, #:abs_g3:<addr>
+    StubAddr++;
+    *StubAddr = 0xf2c00010; // movk ip0, #:abs_g2_nc:<addr>
+    StubAddr++;
+    *StubAddr = 0xf2a00010; // movk ip0, #:abs_g1_nc:<addr>
+    StubAddr++;
+    *StubAddr = 0xf2800010; // movk ip0, #:abs_g0_nc:<addr>
+    StubAddr++;
+    *StubAddr = 0xd61f0200; // br ip0
+
+    return Addr;
+  } else if (Arch == Triple::arm) {
     // TODO: There is only ARM far stub now. We should add the Thumb stub,
     // and stubs for branches Thumb - ARM and ARM - Thumb.
     uint32_t *StubAddr = (uint32_t*)Addr;

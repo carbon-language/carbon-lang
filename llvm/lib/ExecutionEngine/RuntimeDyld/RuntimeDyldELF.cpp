@@ -296,6 +296,19 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
     *TargetPtr = static_cast<uint32_t>(Result & 0xffffffffU);
     break;
   }
+  case ELF::R_AARCH64_CALL26: // fallthrough
+  case ELF::R_AARCH64_JUMP26: {
+    // Operation: S+A-P. Set Call or B immediate value to bits fff_fffc of the
+    // calculation.
+    uint64_t BranchImm = Value + Addend - FinalAddress;
+
+    // "Check that -2^27 <= result < 2^27".
+    assert(-(1LL << 27) <= static_cast<int64_t>(BranchImm) && 
+           static_cast<int64_t>(BranchImm) < (1LL << 27));
+    // Immediate goes in bits 25:0 of B and BL.
+    *TargetPtr |= static_cast<uint32_t>(BranchImm & 0xffffffcU) >> 2;
+    break;
+  }
   case ELF::R_AARCH64_MOVW_UABS_G3: {
     uint64_t Result = Value + Addend;
     // Immediate goes in bits 20:5 of MOVZ/MOVK instruction
@@ -775,7 +788,56 @@ void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
   DEBUG(dbgs() << "\t\tSectionID: " << SectionID
                << " Offset: " << Offset
                << "\n");
-  if (Arch == Triple::arm &&
+  if (Arch == Triple::aarch64 &&
+      (RelType == ELF::R_AARCH64_CALL26 ||
+       RelType == ELF::R_AARCH64_JUMP26)) {
+    // This is an AArch64 branch relocation, need to use a stub function.
+    DEBUG(dbgs() << "\t\tThis is an AArch64 branch relocation.");
+    SectionEntry &Section = Sections[SectionID];
+
+    // Look for an existing stub.
+    StubMap::const_iterator i = Stubs.find(Value);
+    if (i != Stubs.end()) {
+        resolveRelocation(Section, Offset,
+                          (uint64_t)Section.Address + i->second, RelType, 0);
+      DEBUG(dbgs() << " Stub function found\n");
+    } else {
+      // Create a new stub function.
+      DEBUG(dbgs() << " Create a new stub function\n");
+      Stubs[Value] = Section.StubOffset;
+      uint8_t *StubTargetAddr = createStubFunction(Section.Address +
+                                                   Section.StubOffset);
+
+      RelocationEntry REmovz_g3(SectionID,
+                                StubTargetAddr - Section.Address,
+                                ELF::R_AARCH64_MOVW_UABS_G3, Value.Addend);
+      RelocationEntry REmovk_g2(SectionID,
+                                StubTargetAddr - Section.Address + 4,
+                                ELF::R_AARCH64_MOVW_UABS_G2_NC, Value.Addend);
+      RelocationEntry REmovk_g1(SectionID,
+                                StubTargetAddr - Section.Address + 8,
+                                ELF::R_AARCH64_MOVW_UABS_G1_NC, Value.Addend);
+      RelocationEntry REmovk_g0(SectionID,
+                                StubTargetAddr - Section.Address + 12,
+                                ELF::R_AARCH64_MOVW_UABS_G0_NC, Value.Addend);
+
+      if (Value.SymbolName) {
+        addRelocationForSymbol(REmovz_g3, Value.SymbolName);
+        addRelocationForSymbol(REmovk_g2, Value.SymbolName);
+        addRelocationForSymbol(REmovk_g1, Value.SymbolName);
+        addRelocationForSymbol(REmovk_g0, Value.SymbolName);
+      } else {
+        addRelocationForSection(REmovz_g3, Value.SectionID);
+        addRelocationForSection(REmovk_g2, Value.SectionID);
+        addRelocationForSection(REmovk_g1, Value.SectionID);
+        addRelocationForSection(REmovk_g0, Value.SectionID);
+      }
+      resolveRelocation(Section, Offset,
+                        (uint64_t)Section.Address + Section.StubOffset,
+                        RelType, 0);
+      Section.StubOffset += getMaxStubSize();
+    }
+  } else if (Arch == Triple::arm &&
       (RelType == ELF::R_ARM_PC24 ||
        RelType == ELF::R_ARM_CALL ||
        RelType == ELF::R_ARM_JUMP24)) {
