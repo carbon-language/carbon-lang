@@ -239,7 +239,7 @@ static ObjCMethodDecl *getNSNumberFactoryMethod(Sema &S, SourceLocation Loc,
                                              &CX.Idents.get("value"),
                                              NumberType, /*TInfo=*/0, SC_None,
                                              0);
-    Method->setMethodParams(S.Context, value, ArrayRef<SourceLocation>());
+    Method->setMethodParams(S.Context, value, None);
   }
 
   if (!validateBoxingMethod(S, Loc, S.NSNumberDecl, Sel, Method))
@@ -490,7 +490,7 @@ ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
                                 Context.getPointerType(ConstCharType),
                                 /*TInfo=*/0,
                                 SC_None, 0);
-          M->setMethodParams(Context, value, ArrayRef<SourceLocation>());
+          M->setMethodParams(Context, value, None);
           BoxingMethod = M;
         }
 
@@ -665,7 +665,7 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
                                              Context.UnsignedLongTy,
                                              /*TInfo=*/0, SC_None, 0);
       Params.push_back(cnt);
-      Method->setMethodParams(Context, Params, ArrayRef<SourceLocation>());
+      Method->setMethodParams(Context, Params, None);
     }
 
     if (!validateBoxingMethod(*this, SR.getBegin(), NSArrayDecl, Sel, Method))
@@ -788,7 +788,7 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
                                              Context.UnsignedLongTy,
                                              /*TInfo=*/0, SC_None, 0);
       Params.push_back(cnt);
-      Method->setMethodParams(Context, Params, ArrayRef<SourceLocation>());
+      Method->setMethodParams(Context, Params, None);
     }
 
     if (!validateBoxingMethod(*this, SR.getBegin(), NSDictionaryDecl, Sel,

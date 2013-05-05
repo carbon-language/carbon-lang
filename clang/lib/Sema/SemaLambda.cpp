@@ -452,8 +452,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     FunctionProtoType::ExtProtoInfo EPI;
     EPI.HasTrailingReturn = true;
     EPI.TypeQuals |= DeclSpec::TQ_const;
-    QualType MethodTy = Context.getFunctionType(Context.DependentTy,
-                                                ArrayRef<QualType>(),
+    QualType MethodTy = Context.getFunctionType(Context.DependentTy, None,
                                                 EPI);
     MethodTyInfo = Context.getTrivialTypeSourceInfo(MethodTy);
     ExplicitParams = false;
@@ -708,7 +707,7 @@ static void addFunctionPointerConversion(Sema &S,
   FunctionProtoType::ExtProtoInfo ExtInfo;
   ExtInfo.TypeQuals = Qualifiers::Const;
   QualType ConvTy =
-    S.Context.getFunctionType(FunctionPtrTy, ArrayRef<QualType>(), ExtInfo);
+    S.Context.getFunctionType(FunctionPtrTy, None, ExtInfo);
   
   SourceLocation Loc = IntroducerRange.getBegin();
   DeclarationName Name
@@ -779,8 +778,7 @@ static void addBlockPointerConversion(Sema &S,
   
   FunctionProtoType::ExtProtoInfo ExtInfo;
   ExtInfo.TypeQuals = Qualifiers::Const;
-  QualType ConvTy = S.Context.getFunctionType(BlockPtrTy, ArrayRef<QualType>(),
-                                              ExtInfo);
+  QualType ConvTy = S.Context.getFunctionType(BlockPtrTy, None, ExtInfo);
   
   SourceLocation Loc = IntroducerRange.getBegin();
   DeclarationName Name

@@ -77,9 +77,7 @@ CodeGenTypes::arrangeFreeFunctionType(CanQual<FunctionNoProtoType> FTNP) {
   // When translating an unprototyped function type, always use a
   // variadic type.
   return arrangeLLVMFunctionInfo(FTNP->getResultType().getUnqualifiedType(),
-                                 ArrayRef<CanQualType>(),
-                                 FTNP->getExtInfo(),
-                                 RequiredArgs(0));
+                                 None, FTNP->getExtInfo(), RequiredArgs(0));
 }
 
 /// Arrange the LLVM function layout for a value of the given function
@@ -257,10 +255,8 @@ CodeGenTypes::arrangeFunctionDeclaration(const FunctionDecl *FD) {
   // non-variadic type.
   if (isa<FunctionNoProtoType>(FTy)) {
     CanQual<FunctionNoProtoType> noProto = FTy.getAs<FunctionNoProtoType>();
-    return arrangeLLVMFunctionInfo(noProto->getResultType(),
-                                   ArrayRef<CanQualType>(),
-                                   noProto->getExtInfo(),
-                                   RequiredArgs::All);
+    return arrangeLLVMFunctionInfo(noProto->getResultType(), None,
+                                   noProto->getExtInfo(), RequiredArgs::All);
   }
 
   assert(isa<FunctionProtoType>(FTy));
@@ -420,7 +416,7 @@ CodeGenTypes::arrangeFunctionDeclaration(QualType resultType,
 }
 
 const CGFunctionInfo &CodeGenTypes::arrangeNullaryFunction() {
-  return arrangeLLVMFunctionInfo(getContext().VoidTy, ArrayRef<CanQualType>(),
+  return arrangeLLVMFunctionInfo(getContext().VoidTy, None,
                                  FunctionType::ExtInfo(), RequiredArgs::All);
 }
 

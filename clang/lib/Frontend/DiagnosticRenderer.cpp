@@ -462,9 +462,8 @@ void DiagnosticRenderer::emitMacroExpansions(SourceLocation Loc,
     Message << "expanded from here";
   else
     Message << "expanded from macro '" << MacroName << "'";
-  emitDiagnostic(SpellingLoc, DiagnosticsEngine::Note,
-                 Message.str(),
-                 SpellingRanges, ArrayRef<FixItHint>(), &SM);
+  emitDiagnostic(SpellingLoc, DiagnosticsEngine::Note, Message.str(),
+                 SpellingRanges, None, &SM);
 }
 
 DiagnosticNoteRenderer::~DiagnosticNoteRenderer() {}

@@ -101,7 +101,7 @@ public:
                             SourceLocation L, FriendUnion Friend_,
                             SourceLocation FriendL,
                             ArrayRef<TemplateParameterList*> FriendTypeTPLists
-                            = ArrayRef<TemplateParameterList*>());
+                            = None);
   static FriendDecl *CreateDeserialized(ASTContext &C, unsigned ID,
                                         unsigned FriendTypeNumTPLists);
 

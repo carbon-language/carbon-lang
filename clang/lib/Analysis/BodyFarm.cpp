@@ -194,8 +194,8 @@ static Stmt *create_dispatch_once(ASTContext &C, const FunctionDecl *D) {
   // (1) Create the call.
   DeclRefExpr *DR = M.makeDeclRefExpr(Block);
   ImplicitCastExpr *ICE = M.makeLvalueToRvalue(DR, Ty);
-  CallExpr *CE = new (C) CallExpr(C, ICE, ArrayRef<Expr*>(), C.VoidTy,
-                                  VK_RValue, SourceLocation());
+  CallExpr *CE = new (C) CallExpr(C, ICE, None, C.VoidTy, VK_RValue,
+                                  SourceLocation());
 
   // (2) Create the assignment to the predicate.
   IntegerLiteral *IL =
@@ -257,8 +257,8 @@ static Stmt *create_dispatch_sync(ASTContext &C, const FunctionDecl *D) {
   ASTMaker M(C);
   DeclRefExpr *DR = M.makeDeclRefExpr(PV);
   ImplicitCastExpr *ICE = M.makeLvalueToRvalue(DR, Ty);
-  CallExpr *CE = new (C) CallExpr(C, ICE, ArrayRef<Expr*>(), C.VoidTy,
-                                  VK_RValue, SourceLocation());
+  CallExpr *CE = new (C) CallExpr(C, ICE, None, C.VoidTy, VK_RValue,
+                                  SourceLocation());
   return CE;
 }
 

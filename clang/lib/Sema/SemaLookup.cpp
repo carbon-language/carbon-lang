@@ -731,7 +731,7 @@ static bool LookupDirect(Sema &S, LookupResult &R, const DeclContext *DC) {
     EPI.NumExceptions = 0;
     QualType ExpectedType
       = R.getSema().Context.getFunctionType(R.getLookupName().getCXXNameType(),
-                                            ArrayRef<QualType>(), EPI);
+                                            None, EPI);
 
     // Perform template argument deduction against the type that we would
     // expect the function to have.

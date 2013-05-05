@@ -6576,9 +6576,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     EPI.Variadic = true;
     EPI.ExtInfo = FT->getExtInfo();
 
-    QualType R = Context.getFunctionType(FT->getResultType(),
-                                         ArrayRef<QualType>(),
-                                         EPI);
+    QualType R = Context.getFunctionType(FT->getResultType(), None, EPI);
     NewFD->setType(R);
   }
 

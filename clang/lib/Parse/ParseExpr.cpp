@@ -1414,8 +1414,7 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       CommaLocsTy CommaLocs;
       
       if (Tok.is(tok::code_completion)) {
-        Actions.CodeCompleteCall(getCurScope(), LHS.get(),
-                                 ArrayRef<Expr *>());
+        Actions.CodeCompleteCall(getCurScope(), LHS.get(), None);
         cutOffParsing();
         return ExprError();
       }

@@ -330,7 +330,7 @@ void InitListChecker::FillInValueInitForField(unsigned Init, FieldDecl *Field,
                                                               true);
     InitializationSequence InitSeq(SemaRef, MemberEntity, Kind, MultiExprArg());
     if (!InitSeq) {
-      InitSeq.Diagnose(SemaRef, MemberEntity, Kind, ArrayRef<Expr *>());
+      InitSeq.Diagnose(SemaRef, MemberEntity, Kind, None);
       hadError = true;
       return;
     }
@@ -448,7 +448,7 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
                                                                 true);
       InitializationSequence InitSeq(SemaRef, ElementEntity, Kind, MultiExprArg());
       if (!InitSeq) {
-        InitSeq.Diagnose(SemaRef, ElementEntity, Kind, ArrayRef<Expr *>());
+        InitSeq.Diagnose(SemaRef, ElementEntity, Kind, None);
         hadError = true;
         return;
       }

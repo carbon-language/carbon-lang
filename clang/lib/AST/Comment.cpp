@@ -134,7 +134,7 @@ void DeclInfo::fill() {
   IsObjCMethod = false;
   IsInstanceMethod = false;
   IsClassMethod = false;
-  ParamVars = ArrayRef<const ParmVarDecl *>();
+  ParamVars = None;
   TemplateParameters = NULL;
 
   if (!CommentDecl) {
