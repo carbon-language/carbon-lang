@@ -283,14 +283,20 @@ ARMBaseInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
       return false;
     --I;
   }
-  if (!isUnpredicatedTerminator(I))
-    return false;
 
   // Get the last instruction in the block.
   MachineInstr *LastInst = I;
+  unsigned LastOpc = LastInst->getOpcode();
+
+  // Check if it's an indirect branch first, this should return 'unanalyzable'
+  // even if it's predicated.
+  if (isIndirectBranchOpcode(LastOpc))
+    return true;
+
+  if (!isUnpredicatedTerminator(I))
+    return false;
 
   // If there is only one terminator instruction, process it.
-  unsigned LastOpc = LastInst->getOpcode();
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
     if (isUncondBranchOpcode(LastOpc)) {
       TBB = LastInst->getOperand(0).getMBB();
