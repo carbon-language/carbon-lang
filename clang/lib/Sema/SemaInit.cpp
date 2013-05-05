@@ -82,6 +82,17 @@ static Expr *IsStringInit(Expr *init, QualType declType, ASTContext &Context) {
   return IsStringInit(init, arrayType, Context);
 }
 
+/// Update the type of a string literal, including any surrounding parentheses,
+/// to match the type of the object which it is initializing.
+static void updateStringLiteralType(Expr *E, QualType Ty) {
+  while (ParenExpr *PE = dyn_cast<ParenExpr>(E)) {
+    E->setType(Ty);
+    E = PE->getSubExpr();
+  }
+  assert(isa<StringLiteral>(E) || isa<ObjCEncodeExpr>(E));
+  E->setType(Ty);
+}
+
 static void CheckStringInit(Expr *Str, QualType &DeclT, const ArrayType *AT,
                             Sema &S) {
   // Get the length of the string as parsed.
@@ -97,7 +108,7 @@ static void CheckStringInit(Expr *Str, QualType &DeclT, const ArrayType *AT,
     DeclT = S.Context.getConstantArrayType(IAT->getElementType(),
                                            ConstVal,
                                            ArrayType::Normal, 0);
-    Str->setType(DeclT);
+    updateStringLiteralType(Str, DeclT);
     return;
   }
 
@@ -107,7 +118,7 @@ static void CheckStringInit(Expr *Str, QualType &DeclT, const ArrayType *AT,
   // the size may be smaller or larger than the string we are initializing.
   // FIXME: Avoid truncation for 64-bit length strings.
   if (S.getLangOpts().CPlusPlus) {
-    if (StringLiteral *SL = dyn_cast<StringLiteral>(Str)) {
+    if (StringLiteral *SL = dyn_cast<StringLiteral>(Str->IgnoreParens())) {
       // For Pascal strings it's OK to strip off the terminating null character,
       // so the example below is valid:
       //
@@ -133,7 +144,7 @@ static void CheckStringInit(Expr *Str, QualType &DeclT, const ArrayType *AT,
   // something like:
   //   char x[1] = "foo";
   // then this will set the string literal's type to char[1].
-  Str->setType(DeclT);
+  updateStringLiteralType(Str, DeclT);
 }
 
 //===----------------------------------------------------------------------===//

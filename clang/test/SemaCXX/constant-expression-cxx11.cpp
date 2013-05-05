@@ -414,6 +414,19 @@ struct V {
 };
 static_assert(V().c[1] == "i"[0], "");
 
+namespace Parens {
+  constexpr unsigned char a[] = ("foo"), b[] = {"foo"}, c[] = {("foo")},
+                          d[4] = ("foo"), e[5] = {"foo"}, f[6] = {("foo")};
+  static_assert(a[0] == 'f', "");
+  static_assert(b[1] == 'o', "");
+  static_assert(c[2] == 'o', "");
+  static_assert(d[0] == 'f', "");
+  static_assert(e[1] == 'o', "");
+  static_assert(f[2] == 'o', "");
+  static_assert(f[5] == 0, "");
+  static_assert(f[6] == 0, ""); // expected-error {{constant expression}} expected-note {{one-past-the-end}}
+}
+
 }
 
 namespace Array {
