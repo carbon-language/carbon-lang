@@ -955,18 +955,21 @@ void InlineSpiller::reMaterializeAll() {
   Edit->eliminateDeadDefs(DeadDefs, RegsToSpill);
 
   // Get rid of deleted and empty intervals.
-  for (unsigned i = RegsToSpill.size(); i != 0; --i) {
-    unsigned Reg = RegsToSpill[i-1];
-    if (!LIS.hasInterval(Reg)) {
-      RegsToSpill.erase(RegsToSpill.begin() + (i - 1));
+  unsigned ResultPos = 0;
+  for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i) {
+    unsigned Reg = RegsToSpill[i];
+    if (!LIS.hasInterval(Reg))
+      continue;
+
+    LiveInterval &LI = LIS.getInterval(Reg);
+    if (LI.empty()) {
+      Edit->eraseVirtReg(Reg);
       continue;
     }
-    LiveInterval &LI = LIS.getInterval(Reg);
-    if (!LI.empty())
-      continue;
-    Edit->eraseVirtReg(Reg);
-    RegsToSpill.erase(RegsToSpill.begin() + (i - 1));
+
+    RegsToSpill[ResultPos++] = Reg;
   }
+  RegsToSpill.erase(RegsToSpill.begin() + ResultPos, RegsToSpill.end());
   DEBUG(dbgs() << RegsToSpill.size() << " registers to spill after remat.\n");
 }
 
