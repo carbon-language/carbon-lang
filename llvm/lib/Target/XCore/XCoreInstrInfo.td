@@ -169,6 +169,9 @@ def ldawb : PatFrag<(ops node:$addr, node:$offset),
 
 // Instruction operand types
 def calltarget  : Operand<i32>;
+def calltarget_neg  : Operand<i32> {
+  let DecoderMethod = "DecodeNegImmOperand";
+}
 def brtarget : Operand<OtherVT>;
 def brtarget_neg : Operand<OtherVT> {
   let DecoderMethod = "DecodeNegImmOperand";
@@ -677,6 +680,10 @@ def BLRF_u10 : _FU10<0b110100, (outs), (ins calltarget:$a), "bl $a",
 
 def BLRF_lu10 : _FLU10<0b110100, (outs), (ins calltarget:$a), "bl $a",
                        [(XCoreBranchLink immU20:$a)]>;
+
+def BLRB_u10 : _FU10<0b110101, (outs), (ins calltarget_neg:$a), "bl $a", []>;
+
+def BLRB_lu10 : _FLU10<0b110101, (outs), (ins calltarget_neg:$a), "bl $a", []>;
 }
 
 let Defs = [R11], mayLoad = 1, isReMaterializable = 1,
