@@ -335,7 +335,7 @@ public:
                             DominatorTree *DT, TargetTransformInfo* TTI,
                             AliasAnalysis *AA, TargetLibraryInfo *TLI)
       : TheLoop(L), SE(SE), DL(DL), DT(DT), TTI(TTI), AA(AA), TLI(TLI),
-        Induction(0) {}
+        Induction(0), HasFunNoNaNAttr(false) {}
 
   /// This enum represents the kinds of reductions that we support.
   enum ReductionKind {
@@ -347,7 +347,8 @@ public:
     RK_IntegerXor,  ///< Bitwise or logical XOR of numbers.
     RK_IntegerMinMax, ///< Min/max implemented in terms of select(cmp()).
     RK_FloatAdd,    ///< Sum of floats.
-    RK_FloatMult    ///< Product of floats.
+    RK_FloatMult,   ///< Product of floats.
+    RK_FloatMinMax  ///< Min/max implemented in terms of select(cmp()).
   };
 
   /// This enum represents the kinds of inductions that we support.
@@ -365,7 +366,9 @@ public:
     MRK_UIntMin,
     MRK_UIntMax,
     MRK_SIntMin,
-    MRK_SIntMax
+    MRK_SIntMax,
+    MRK_FloatMin,
+    MRK_FloatMax
   };
 
   /// This POD struct holds information about reduction variables.
@@ -586,6 +589,8 @@ private:
   /// We need to check that all of the pointers in this list are disjoint
   /// at runtime.
   RuntimePointerCheck PtrRtCheck;
+  /// Can we assume the absence of NaNs.
+  bool HasFunNoNaNAttr;
 };
 
 /// LoopVectorizationCostModel - estimates the expected speedups due to
@@ -1648,6 +1653,8 @@ getReductionBinOp(LoopVectorizationLegality::ReductionKind Kind) {
       return Instruction::FAdd;
     case LoopVectorizationLegality::RK_IntegerMinMax:
       return Instruction::ICmp;
+    case LoopVectorizationLegality::RK_FloatMinMax:
+      return Instruction::FCmp;
     default:
       llvm_unreachable("Unknown reduction operation");
   }
@@ -1672,8 +1679,21 @@ Value *createMinMaxOp(IRBuilder<> &Builder,
     break;
   case LoopVectorizationLegality::MRK_SIntMax:
     P = CmpInst::ICMP_SGT;
+    break;
+  case LoopVectorizationLegality::MRK_FloatMin:
+    P = CmpInst::FCMP_OLT;
+    break;
+  case LoopVectorizationLegality::MRK_FloatMax:
+    P = CmpInst::FCMP_OGT;
+    break;
   }
-  Value *Cmp = Builder.CreateICmp(P, Left, Right, "rdx.minmax.cmp");
+
+  Value *Cmp;
+  if (RK == LoopVectorizationLegality::MRK_FloatMin || RK == LoopVectorizationLegality::MRK_FloatMax)
+    Cmp = Builder.CreateFCmp(P, Left, Right, "rdx.minmax.cmp");
+  else
+    Cmp = Builder.CreateICmp(P, Left, Right, "rdx.minmax.cmp");
+
   Value *Select = Builder.CreateSelect(Cmp, Left, Right, "rdx.minmax.select");
   return Select;
 }
@@ -1743,11 +1763,12 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     // one for multiplication, -1 for And.
     Value *Identity;
     Value *VectorStart;
-    if (RdxDesc.Kind == LoopVectorizationLegality::RK_IntegerMinMax)
+    if (RdxDesc.Kind == LoopVectorizationLegality::RK_IntegerMinMax ||
+        RdxDesc.Kind == LoopVectorizationLegality::RK_FloatMinMax) {
       // MinMax reduction have the start value as their identify.
       VectorStart = Identity = Builder.CreateVectorSplat(VF, RdxDesc.StartValue,
                                                          "minmax.ident");
-    else {
+    } else {
       Constant *Iden =
         LoopVectorizationLegality::getReductionIdentity(RdxDesc.Kind,
                                                         VecTy->getScalarType());
@@ -1801,7 +1822,7 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     Value *ReducedPartRdx = RdxParts[0];
     unsigned Op = getReductionBinOp(RdxDesc.Kind);
     for (unsigned part = 1; part < UF; ++part) {
-      if (Op != Instruction::ICmp)
+      if (Op != Instruction::ICmp && Op != Instruction::FCmp)
         ReducedPartRdx = Builder.CreateBinOp((Instruction::BinaryOps)Op,
                                              RdxParts[part], ReducedPartRdx,
                                              "bin.rdx");
@@ -1832,7 +1853,7 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
                                     ConstantVector::get(ShuffleMask),
                                     "rdx.shuf");
 
-      if (Op != Instruction::ICmp)
+      if (Op != Instruction::ICmp && Op != Instruction::FCmp)
         TmpVec = Builder.CreateBinOp((Instruction::BinaryOps)Op, TmpVec, Shuf,
                                      "bin.rdx");
       else
@@ -2363,6 +2384,13 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
     return false;
   }
 
+  // Look for the attribute signaling the absence of NaNs.
+  Function &F = *Header->getParent();
+  if (F.hasFnAttribute("no-nans-fp-math"))
+    HasFunNoNaNAttr = F.getAttributes().getAttribute(
+      AttributeSet::FunctionIndex,
+      "no-nans-fp-math").getValueAsString() == "true";
+
   // For each block in the loop.
   for (Loop::block_iterator bb = TheLoop->block_begin(),
        be = TheLoop->block_end(); bb != be; ++bb) {
@@ -2442,6 +2470,10 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
         }
         if (AddReductionVar(Phi, RK_FloatAdd)) {
           DEBUG(dbgs() << "LV: Found an FAdd reduction PHI."<< *Phi <<"\n");
+          continue;
+        }
+        if (AddReductionVar(Phi, RK_FloatMinMax)) {
+          DEBUG(dbgs() << "LV: Found an float MINMAX reduction PHI."<< *Phi <<"\n");
           continue;
         }
 
@@ -2869,7 +2901,7 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
   // such that we don't stop when we see the phi has two uses (one by the select
   // and one by the icmp) and to make sure we only see exactly the two
   // instructions.
-  unsigned NumICmpSelectPatternInst = 0;
+  unsigned NumCmpSelectPatternInst = 0;
   ReductionInstDesc ReduxDesc(false, 0);
 
   // Avoid cycles in the chain.
@@ -2918,7 +2950,7 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
 
       // We can't have multiple inside users except for a combination of
       // icmp/select both using the phi.
-      if (FoundInBlockUser && !NumICmpSelectPatternInst)
+      if (FoundInBlockUser && !NumCmpSelectPatternInst)
         return false;
       FoundInBlockUser = true;
 
@@ -2927,14 +2959,15 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
       if (!ReduxDesc.IsReduction)
         return false;
 
-      if (Kind == RK_IntegerMinMax && (isa<ICmpInst>(U) ||
-                                       isa<SelectInst>(U)))
-          ++NumICmpSelectPatternInst;
+      if (Kind == RK_IntegerMinMax && (isa<ICmpInst>(U) || isa<SelectInst>(U)))
+          ++NumCmpSelectPatternInst;
+      if (Kind == RK_FloatMinMax && (isa<FCmpInst>(U) || isa<SelectInst>(U)))
+          ++NumCmpSelectPatternInst;
 
       // Reductions of instructions such as Div, and Sub is only
       // possible if the LHS is the reduction variable.
       if (!U->isCommutative() && !isa<PHINode>(U) && !isa<SelectInst>(U) &&
-          !isa<ICmpInst>(U) && U->getOperand(0) != Iter)
+          !isa<ICmpInst>(U) && !isa<FCmpInst>(U) && U->getOperand(0) != Iter)
         return false;
 
       Iter = ReduxDesc.PatternLastInst;
@@ -2942,7 +2975,8 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
 
     // This means we have seen one but not the other instruction of the
     // pattern or more than just a select and cmp.
-    if (Kind == RK_IntegerMinMax && NumICmpSelectPatternInst != 2)
+    if ((Kind == RK_IntegerMinMax || Kind == RK_FloatMinMax) &&
+        NumCmpSelectPatternInst != 2)
       return false;
 
     // We found a reduction var if we have reached the original
@@ -2968,16 +3002,17 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
 /// Returns true if the instruction is a Select(ICmp(X, Y), X, Y) instruction
 /// pattern corresponding to a min(X, Y) or max(X, Y).
 LoopVectorizationLegality::ReductionInstDesc
-LoopVectorizationLegality::isMinMaxSelectCmpPattern(Instruction *I, ReductionInstDesc &Prev) {
+LoopVectorizationLegality::isMinMaxSelectCmpPattern(Instruction *I,
+                                                    ReductionInstDesc &Prev) {
 
-  assert((isa<ICmpInst>(I) || isa<SelectInst>(I)) &&
+  assert((isa<ICmpInst>(I) || isa<FCmpInst>(I) || isa<SelectInst>(I)) &&
          "Expect a select instruction");
-  ICmpInst *Cmp = 0;
+  Instruction *Cmp = 0;
   SelectInst *Select = 0;
 
   // We must handle the select(cmp()) as a single instruction. Advance to the
   // select.
-  if ((Cmp = dyn_cast<ICmpInst>(I))) {
+  if ((Cmp = dyn_cast<ICmpInst>(I)) || (Cmp = dyn_cast<FCmpInst>(I))) {
     if (!Cmp->hasOneUse() || !(Select = dyn_cast<SelectInst>(*I->use_begin())))
       return ReductionInstDesc(false, I);
     return ReductionInstDesc(Select, Prev.MinMaxKind);
@@ -2986,7 +3021,8 @@ LoopVectorizationLegality::isMinMaxSelectCmpPattern(Instruction *I, ReductionIns
   // Only handle single use cases for now.
   if (!(Select = dyn_cast<SelectInst>(I)))
     return ReductionInstDesc(false, I);
-  if (!(Cmp = dyn_cast<ICmpInst>(I->getOperand(0))))
+  if (!(Cmp = dyn_cast<ICmpInst>(I->getOperand(0))) &&
+      !(Cmp = dyn_cast<FCmpInst>(I->getOperand(0))))
     return ReductionInstDesc(false, I);
   if (!Cmp->hasOneUse())
     return ReductionInstDesc(false, I);
@@ -3003,6 +3039,14 @@ LoopVectorizationLegality::isMinMaxSelectCmpPattern(Instruction *I, ReductionIns
     return ReductionInstDesc(Select, MRK_SIntMax);
   else if (m_SMin(m_Value(CmpLeft), m_Value(CmpRight)).match(Select))
     return ReductionInstDesc(Select, MRK_SIntMin);
+  else if (m_OrdFMin(m_Value(CmpLeft), m_Value(CmpRight)).match(Select))
+    return ReductionInstDesc(Select, MRK_FloatMin);
+  else if (m_OrdFMax(m_Value(CmpLeft), m_Value(CmpRight)).match(Select))
+    return ReductionInstDesc(Select, MRK_FloatMax);
+  else if (m_UnordFMin(m_Value(CmpLeft), m_Value(CmpRight)).match(Select))
+    return ReductionInstDesc(Select, MRK_FloatMin);
+  else if (m_UnordFMax(m_Value(CmpLeft), m_Value(CmpRight)).match(Select))
+    return ReductionInstDesc(Select, MRK_FloatMax);
 
   return ReductionInstDesc(false, I);
 }
@@ -3017,7 +3061,8 @@ LoopVectorizationLegality::isReductionInstr(Instruction *I,
   default:
     return ReductionInstDesc(false, I);
   case Instruction::PHI:
-      if (FP && (Kind != RK_FloatMult && Kind != RK_FloatAdd))
+      if (FP && (Kind != RK_FloatMult && Kind != RK_FloatAdd &&
+                 Kind != RK_FloatMinMax))
         return ReductionInstDesc(false, I);
     return ReductionInstDesc(I, Prev.MinMaxKind);
   case Instruction::Sub:
@@ -3035,9 +3080,11 @@ LoopVectorizationLegality::isReductionInstr(Instruction *I,
     return ReductionInstDesc(Kind == RK_FloatMult && FastMath, I);
   case Instruction::FAdd:
     return ReductionInstDesc(Kind == RK_FloatAdd && FastMath, I);
+  case Instruction::FCmp:
   case Instruction::ICmp:
   case Instruction::Select:
-    if (Kind != RK_IntegerMinMax)
+    if (Kind != RK_IntegerMinMax &&
+        (!HasFunNoNaNAttr || Kind != RK_FloatMinMax))
       return ReductionInstDesc(false, I);
     return isMinMaxSelectCmpPattern(I, Prev);
   }
