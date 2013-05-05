@@ -49,8 +49,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/ExecutionEngine/JIT.h"
+#include "llvm/ExecutionEngine/MCJIT.h"
+#include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/IRBuilder.h"
@@ -1953,17 +1953,22 @@ int main(int argc, char *argv[]) {
   Opts.JITExceptionHandling = true;
 
   llvm::InitializeNativeTarget();
+  llvm::InitializeNativeTargetAsmPrinter();
   llvm::LLVMContext &context = llvm::getGlobalContext();
   llvm::IRBuilder<> theBuilder(context);
 
   // Make the module, which holds all the code.
   llvm::Module *module = new llvm::Module("my cool jit", context);
 
+  llvm::JITMemoryManager *MemMgr = new llvm::SectionMemoryManager();
+
   // Build engine with JIT
   llvm::EngineBuilder factory(module);
   factory.setEngineKind(llvm::EngineKind::JIT);
   factory.setAllocateGVsWithCode(false);
   factory.setTargetOptions(Opts);
+  factory.setJITMemoryManager(MemMgr);
+  factory.setUseMCJIT(true);
   llvm::ExecutionEngine *executionEngine = factory.create();
 
   {
@@ -2006,6 +2011,8 @@ int main(int argc, char *argv[]) {
                               theBuilder,
                               fpm,
                               "throwCppException");
+
+    executionEngine->finalizeObject();
 
     fprintf(stderr, "\nBegin module dump:\n\n");
 
