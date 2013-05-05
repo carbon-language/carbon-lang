@@ -1039,6 +1039,10 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI, IfcvtKind Kind) {
     return false;
   }
 
+  if (CvtBBI->BB->hasAddressTaken())
+    // Conservatively abort if-conversion if BB's address is taken.
+    return false;
+
   if (Kind == ICSimpleFalse)
     if (TII->ReverseBranchCondition(Cond))
       llvm_unreachable("Unable to reverse branch condition!");
@@ -1116,6 +1120,10 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
     return false;
   }
 
+  if (CvtBBI->BB->hasAddressTaken())
+    // Conservatively abort if-conversion if BB's address is taken.
+    return false;
+
   if (Kind == ICTriangleFalse || Kind == ICTriangleFRev)
     if (TII->ReverseBranchCondition(Cond))
       llvm_unreachable("Unable to reverse branch condition!");
@@ -1184,7 +1192,8 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
     // block. By not merging them, we make it possible to iteratively
     // ifcvt the blocks.
     if (!HasEarlyExit &&
-        NextBBI->BB->pred_size() == 1 && !NextBBI->HasFallThrough) {
+        NextBBI->BB->pred_size() == 1 && !NextBBI->HasFallThrough &&
+        !NextBBI->BB->hasAddressTaken()) {
       MergeBlocks(BBI, *NextBBI);
       FalseBBDead = true;
     } else {
@@ -1233,6 +1242,10 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
     FalseBBI.IsAnalyzed = false;
     return false;
   }
+
+  if (TrueBBI.BB->hasAddressTaken() || FalseBBI.BB->hasAddressTaken())
+    // Conservatively abort if-conversion if either BB has its address taken.
+    return false;
 
   // Put the predicated instructions from the 'true' block before the
   // instructions from the 'false' block, unless the true block would clobber
@@ -1382,7 +1395,8 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   // tail, add a unconditional branch to it.
   if (TailBB) {
     BBInfo &TailBBI = BBAnalysis[TailBB->getNumber()];
-    bool CanMergeTail = !TailBBI.HasFallThrough;
+    bool CanMergeTail = !TailBBI.HasFallThrough &&
+      !TailBBI.BB->hasAddressTaken();
     // There may still be a fall-through edge from BBI1 or BBI2 to TailBB;
     // check if there are any other predecessors besides those.
     unsigned NumPreds = TailBB->pred_size();
@@ -1551,6 +1565,9 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
 /// i.e., when FromBBI's branch is being moved, add those successor edges to
 /// ToBBI.
 void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI, bool AddEdges) {
+  assert(!FromBBI.BB->hasAddressTaken() &&
+         "Removing a BB whose address is taken!");
+
   ToBBI.BB->splice(ToBBI.BB->end(),
                    FromBBI.BB, FromBBI.BB->begin(), FromBBI.BB->end());
 
