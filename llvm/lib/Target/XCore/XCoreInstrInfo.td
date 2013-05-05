@@ -170,6 +170,9 @@ def ldawb : PatFrag<(ops node:$addr, node:$offset),
 // Instruction operand types
 def calltarget  : Operand<i32>;
 def brtarget : Operand<OtherVT>;
+def brtarget_neg : Operand<OtherVT> {
+  let DecoderMethod = "DecodeNegImmOperand";
+}
 
 // Addressing modes
 def ADDRspii : ComplexPattern<i32, 2, "SelectADDRspii", [add, frameindex], []>;
@@ -267,10 +270,10 @@ multiclass FRU6_LRU6_branch<bits<6> opc, string OpcStr> {
 }
 
 multiclass FRU6_LRU6_backwards_branch<bits<6> opc, string OpcStr> {
-  def _ru6: _FRU6<opc, (outs), (ins GRRegs:$a, brtarget:$b),
-                  !strconcat(OpcStr, " $a, -$b"), []>;
-  def _lru6: _FLRU6<opc, (outs), (ins GRRegs:$a, brtarget:$b),
-                    !strconcat(OpcStr, " $a, -$b"), []>;
+  def _ru6: _FRU6<opc, (outs), (ins GRRegs:$a, brtarget_neg:$b),
+                  !strconcat(OpcStr, " $a, $b"), []>;
+  def _lru6: _FLRU6<opc, (outs), (ins GRRegs:$a, brtarget_neg:$b),
+                    !strconcat(OpcStr, " $a, $b"), []>;
 }
 
 multiclass FRU6_LRU6_cp<bits<6> opc, string OpcStr> {
@@ -608,9 +611,9 @@ let Uses = [R11], isCall=1 in
 defm BLAT : FU6_LU6_np<0b0111001101, "blat">;
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
-def BRBU_u6 : _FU6<0b0111011100, (outs), (ins brtarget:$a), "bu -$a", []>;
+def BRBU_u6 : _FU6<0b0111011100, (outs), (ins brtarget_neg:$a), "bu $a", []>;
 
-def BRBU_lu6 : _FLU6<0b0111011100, (outs), (ins brtarget:$a), "bu -$a", []>;
+def BRBU_lu6 : _FLU6<0b0111011100, (outs), (ins brtarget_neg:$a), "bu $a", []>;
 
 def BRFU_u6 : _FU6<0b0111001100, (outs), (ins brtarget:$a), "bu $a", []>;
 
