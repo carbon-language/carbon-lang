@@ -1809,7 +1809,7 @@ Here is the table:
 :raw-html:`<td class="yes"></td> <!-- PowerPC -->`
 :raw-html:`<td class="yes"></td> <!-- Sparc -->`
 :raw-html:`<td class="yes"></td> <!-- X86 -->`
-:raw-html:`<td class="unknown"></td> <!-- XCore -->`
+:raw-html:`<td class="yes"></td> <!-- XCore -->`
 :raw-html:`</tr>`
 
 :raw-html:`<tr>`
@@ -1837,7 +1837,7 @@ Here is the table:
 :raw-html:`<td class="no"></td> <!-- PowerPC -->`
 :raw-html:`<td class="no"></td> <!-- Sparc -->`
 :raw-html:`<td class="yes"></td> <!-- X86 -->`
-:raw-html:`<td class="no"></td> <!-- XCore -->`
+:raw-html:`<td class="yes"></td> <!-- XCore -->`
 :raw-html:`</tr>`
 
 :raw-html:`<tr>`
@@ -1851,7 +1851,7 @@ Here is the table:
 :raw-html:`<td class="yes"></td> <!-- PowerPC -->`
 :raw-html:`<td class="unknown"></td> <!-- Sparc -->`
 :raw-html:`<td class="yes"></td> <!-- X86 -->`
-:raw-html:`<td class="unknown"></td> <!-- XCore -->`
+:raw-html:`<td class="yes"></td> <!-- XCore -->`
 :raw-html:`</tr>`
 
 :raw-html:`<tr>`
@@ -1865,7 +1865,7 @@ Here is the table:
 :raw-html:`<td class="yes"></td> <!-- PowerPC -->`
 :raw-html:`<td class="unknown"></td> <!-- Sparc -->`
 :raw-html:`<td class="yes"></td> <!-- X86 -->`
-:raw-html:`<td class="unknown"></td> <!-- XCore -->`
+:raw-html:`<td class="no"></td> <!-- XCore -->`
 :raw-html:`</tr>`
 
 :raw-html:`<tr>`
@@ -1893,7 +1893,7 @@ Here is the table:
 :raw-html:`<td class="yes"></td> <!-- PowerPC -->`
 :raw-html:`<td class="unknown"></td> <!-- Sparc -->`
 :raw-html:`<td class="yes"></td> <!-- X86 -->`
-:raw-html:`<td class="unknown"></td> <!-- XCore -->`
+:raw-html:`<td class="no"></td> <!-- XCore -->`
 :raw-html:`</tr>`
 
 :raw-html:`<tr>`
