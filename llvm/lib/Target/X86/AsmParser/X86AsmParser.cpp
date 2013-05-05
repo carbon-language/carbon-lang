@@ -477,7 +477,7 @@ private:
   MCAsmLexer &getLexer() const { return Parser.getLexer(); }
 
   bool Error(SMLoc L, const Twine &Msg,
-             ArrayRef<SMRange> Ranges = ArrayRef<SMRange>(),
+             ArrayRef<SMRange> Ranges = None,
              bool MatchingInlineAsm = false) {
     if (MatchingInlineAsm) return true;
     return Parser.Error(L, Msg, Ranges);
@@ -2204,7 +2204,7 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   assert(!Operands.empty() && "Unexpect empty operand list!");
   X86Operand *Op = static_cast<X86Operand*>(Operands[0]);
   assert(Op->isToken() && "Leading operand should always be a mnemonic!");
-  ArrayRef<SMRange> EmptyRanges = ArrayRef<SMRange>();
+  ArrayRef<SMRange> EmptyRanges = None;
 
   // First, handle aliases that expand to multiple instructions.
   // FIXME: This should be replaced with a real .td file alias mechanism.

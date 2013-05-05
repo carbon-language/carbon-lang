@@ -42,14 +42,14 @@ namespace llvm {
 
 // Different debug levels that can be enabled...
 enum PassDebugLevel {
-  None, Arguments, Structure, Executions, Details
+  Disabled, Arguments, Structure, Executions, Details
 };
 
 static cl::opt<enum PassDebugLevel>
 PassDebugging("debug-pass", cl::Hidden,
                   cl::desc("Print PassManager debugging information"),
                   cl::values(
-  clEnumVal(None      , "disable debug output"),
+  clEnumVal(Disabled  , "disable debug output"),
   clEnumVal(Arguments , "print pass arguments to pass to 'opt'"),
   clEnumVal(Structure , "print pass structure before run()"),
   clEnumVal(Executions, "print pass name before it is executed"),

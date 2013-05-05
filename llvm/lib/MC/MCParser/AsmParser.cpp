@@ -201,9 +201,9 @@ public:
   }
 
   virtual bool Warning(SMLoc L, const Twine &Msg,
-                       ArrayRef<SMRange> Ranges = ArrayRef<SMRange>());
+                       ArrayRef<SMRange> Ranges = None);
   virtual bool Error(SMLoc L, const Twine &Msg,
-                     ArrayRef<SMRange> Ranges = ArrayRef<SMRange>());
+                     ArrayRef<SMRange> Ranges = None);
 
   virtual const AsmToken &Lex();
 
@@ -286,7 +286,7 @@ private:
 
   void PrintMacroInstantiations();
   void PrintMessage(SMLoc Loc, SourceMgr::DiagKind Kind, const Twine &Msg,
-                    ArrayRef<SMRange> Ranges = ArrayRef<SMRange>()) const {
+                    ArrayRef<SMRange> Ranges = None) const {
     SrcMgr.PrintMessage(Loc, Kind, Msg, Ranges);
   }
   static void DiagHandler(const SMDiagnostic &Diag, void *Context);

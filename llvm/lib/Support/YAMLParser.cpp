@@ -260,7 +260,7 @@ public:
   Token getNext();
 
   void printError(SMLoc Loc, SourceMgr::DiagKind Kind, const Twine &Message,
-                  ArrayRef<SMRange> Ranges = ArrayRef<SMRange>()) {
+                  ArrayRef<SMRange> Ranges = None) {
     SM.PrintMessage(Loc, Kind, Message, Ranges);
   }
 

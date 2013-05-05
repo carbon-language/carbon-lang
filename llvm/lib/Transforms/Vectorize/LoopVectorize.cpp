@@ -1231,7 +1231,7 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
 
   // Mark the old scalar loop with metadata that tells us not to vectorize this
   // loop again if we run into it.
-  MDNode *MD = MDNode::get(OldBasicBlock->getContext(), ArrayRef<Value*>());
+  MDNode *MD = MDNode::get(OldBasicBlock->getContext(), None);
   OldBasicBlock->getTerminator()->setMetadata(AlreadyVectorizedMDName, MD);
 
   // Some loops have a single integer induction variable, while other loops

@@ -70,14 +70,14 @@ ShrinkWrapFunc("shrink-wrap-func", cl::Hidden,
 
 // Debugging level for shrink wrapping.
 enum ShrinkWrapDebugLevel {
-  None, BasicInfo, Iterations, Details
+  Disabled, BasicInfo, Iterations, Details
 };
 
 static cl::opt<enum ShrinkWrapDebugLevel>
 ShrinkWrapDebugging("shrink-wrap-dbg", cl::Hidden,
   cl::desc("Print shrink wrapping debugging information"),
   cl::values(
-    clEnumVal(None      , "disable debug output"),
+    clEnumVal(Disabled  , "disable debug output"),
     clEnumVal(BasicInfo , "print basic DF sets"),
     clEnumVal(Iterations, "print SR sets for each iteration"),
     clEnumVal(Details   , "print all DF sets"),

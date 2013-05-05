@@ -122,14 +122,14 @@ public:
   ///
   /// \return The return value is true, if warnings are fatal.
   virtual bool Warning(SMLoc L, const Twine &Msg,
-                       ArrayRef<SMRange> Ranges = ArrayRef<SMRange>()) = 0;
+                       ArrayRef<SMRange> Ranges = None) = 0;
 
   /// Error - Emit an error at the location \p L, with the message \p Msg.
   ///
   /// \return The return value is always true, as an idiomatic convenience to
   /// clients.
   virtual bool Error(SMLoc L, const Twine &Msg,
-                     ArrayRef<SMRange> Ranges = ArrayRef<SMRange>()) = 0;
+                     ArrayRef<SMRange> Ranges = None) = 0;
 
   /// Lex - Get the next AsmToken in the stream, possibly handling file
   /// inclusion first.
@@ -139,8 +139,7 @@ public:
   const AsmToken &getTok();
 
   /// \brief Report an error at the current lexer location.
-  bool TokError(const Twine &Msg,
-                ArrayRef<SMRange> Ranges = ArrayRef<SMRange>());
+  bool TokError(const Twine &Msg, ArrayRef<SMRange> Ranges = None);
 
   /// parseIdentifier - Parse an identifier or string (as a quoted identifier)
   /// and set \p Res to the identifier contents.

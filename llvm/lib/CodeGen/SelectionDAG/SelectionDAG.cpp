@@ -5252,7 +5252,7 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
 MachineSDNode *
 SelectionDAG::getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT) {
   SDVTList VTs = getVTList(VT);
-  return getMachineNode(Opcode, dl, VTs, ArrayRef<SDValue>());
+  return getMachineNode(Opcode, dl, VTs, None);
 }
 
 MachineSDNode *
@@ -5288,7 +5288,7 @@ SelectionDAG::getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT,
 MachineSDNode *
 SelectionDAG::getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2) {
   SDVTList VTs = getVTList(VT1, VT2);
-  return getMachineNode(Opcode, dl, VTs, ArrayRef<SDValue>());
+  return getMachineNode(Opcode, dl, VTs, None);
 }
 
 MachineSDNode *

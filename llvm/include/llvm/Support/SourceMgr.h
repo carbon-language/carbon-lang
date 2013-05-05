@@ -145,8 +145,8 @@ public:
   /// @param ShowColors - Display colored messages if output is a terminal and
   /// the default error handler is used.
   void PrintMessage(SMLoc Loc, DiagKind Kind, const Twine &Msg,
-                    ArrayRef<SMRange> Ranges = ArrayRef<SMRange>(),
-                    ArrayRef<SMFixIt> FixIts = ArrayRef<SMFixIt>(),
+                    ArrayRef<SMRange> Ranges = None,
+                    ArrayRef<SMFixIt> FixIts = None,
                     bool ShowColors = true) const;
 
 
@@ -155,9 +155,9 @@ public:
   ///
   /// @param Msg If non-null, the kind of message (e.g., "error") which is
   /// prefixed to the message.
-  SMDiagnostic GetMessage(SMLoc Loc, DiagKind Kind, const Twine &Msg, 
-                          ArrayRef<SMRange> Ranges = ArrayRef<SMRange>(),
-                          ArrayRef<SMFixIt> FixIts = ArrayRef<SMFixIt>()) const;
+  SMDiagnostic GetMessage(SMLoc Loc, DiagKind Kind, const Twine &Msg,
+                          ArrayRef<SMRange> Ranges = None,
+                          ArrayRef<SMFixIt> FixIts = None) const;
 
   /// PrintIncludeStack - Prints the names of included files and the line of the
   /// file they were included from.  A diagnostic handler can use this before
@@ -227,7 +227,7 @@ public:
                int Line, int Col, SourceMgr::DiagKind Kind,
                StringRef Msg, StringRef LineStr,
                ArrayRef<std::pair<unsigned,unsigned> > Ranges,
-               ArrayRef<SMFixIt> FixIts = ArrayRef<SMFixIt>());
+               ArrayRef<SMFixIt> FixIts = None);
 
   const SourceMgr *getSourceMgr() const { return SM; }
   SMLoc getLoc() const { return Loc; }

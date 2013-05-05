@@ -1483,7 +1483,7 @@ Instruction *InstCombiner::visitAllocSite(Instruction &MI) {
       Module *M = II->getParent()->getParent()->getParent();
       Function *F = Intrinsic::getDeclaration(M, Intrinsic::donothing);
       InvokeInst::Create(F, II->getNormalDest(), II->getUnwindDest(),
-                         ArrayRef<Value *>(), "", II->getParent());
+                         None, "", II->getParent());
     }
     return EraseInstFromFunction(MI);
   }

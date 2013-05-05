@@ -380,7 +380,7 @@ FunctionType *FunctionType::get(Type *ReturnType,
 }
 
 FunctionType *FunctionType::get(Type *Result, bool isVarArg) {
-  return get(Result, ArrayRef<Type *>(), isVarArg);
+  return get(Result, None, isVarArg);
 }
 
 /// isValidReturnType - Return true if the specified type is valid as a return
@@ -499,7 +499,7 @@ StructType *StructType::create(LLVMContext &Context, StringRef Name) {
 }
 
 StructType *StructType::get(LLVMContext &Context, bool isPacked) {
-  return get(Context, llvm::ArrayRef<Type*>(), isPacked);
+  return get(Context, None, isPacked);
 }
 
 StructType *StructType::get(Type *type, ...) {

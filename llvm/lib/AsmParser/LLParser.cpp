@@ -528,7 +528,7 @@ bool LLParser::ParseMDNodeID(MDNode *&Result) {
   if (Result) return false;
 
   // Otherwise, create MDNode forward reference.
-  MDNode *FwdNode = MDNode::getTemporary(Context, ArrayRef<Value*>());
+  MDNode *FwdNode = MDNode::getTemporary(Context, None);
   ForwardRefMDNodes[MID] = std::make_pair(FwdNode, Lex.getLoc());
 
   if (NumberedMetadata.size() <= MID)

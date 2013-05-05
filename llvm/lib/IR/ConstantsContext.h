@@ -318,7 +318,7 @@ struct ExprMapKeyType {
       ArrayRef<Constant*> ops,
       unsigned short flags = 0,
       unsigned short optionalflags = 0,
-      ArrayRef<unsigned> inds = ArrayRef<unsigned>())
+      ArrayRef<unsigned> inds = None)
         : opcode(opc), subclassoptionaldata(optionalflags), subclassdata(flags),
         operands(ops.begin(), ops.end()), indices(inds.begin(), inds.end()) {}
   uint8_t opcode;

@@ -1472,8 +1472,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
         CallInst *NewCall =
           CallInst::Create(getReleaseCallee(F.getParent()),
                            Call->getArgOperand(0), "", Call);
-        NewCall->setMetadata(ImpreciseReleaseMDKind,
-                             MDNode::get(C, ArrayRef<Value *>()));
+        NewCall->setMetadata(ImpreciseReleaseMDKind, MDNode::get(C, None));
 
         DEBUG(dbgs() << "Replacing autorelease{,RV}(x) with objc_release(x) "
               "since x is otherwise unused.\nOld: " << *Call << "\nNew: "

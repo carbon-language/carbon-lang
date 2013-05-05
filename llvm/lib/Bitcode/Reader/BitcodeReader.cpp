@@ -405,7 +405,7 @@ Value *BitcodeReaderMDValueList::getValueFwdRef(unsigned Idx) {
   }
 
   // Create and return a placeholder, which will later be RAUW'd.
-  Value *V = MDNode::getTemporary(Context, ArrayRef<Value*>());
+  Value *V = MDNode::getTemporary(Context, None);
   MDValuePtrs[Idx] = V;
   return V;
 }

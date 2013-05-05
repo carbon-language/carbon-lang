@@ -86,11 +86,11 @@ class ARMAsmParser : public MCTargetAsmParser {
   MCAsmLexer &getLexer() const { return Parser.getLexer(); }
 
   bool Warning(SMLoc L, const Twine &Msg,
-               ArrayRef<SMRange> Ranges = ArrayRef<SMRange>()) {
+               ArrayRef<SMRange> Ranges = None) {
     return Parser.Warning(L, Msg, Ranges);
   }
   bool Error(SMLoc L, const Twine &Msg,
-             ArrayRef<SMRange> Ranges = ArrayRef<SMRange>()) {
+             ArrayRef<SMRange> Ranges = None) {
     return Parser.Error(L, Msg, Ranges);
   }
 

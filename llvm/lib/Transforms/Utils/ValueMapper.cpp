@@ -57,7 +57,7 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM, RemapFlags Flags,
       return VM[V] = const_cast<Value*>(V);
     
     // Create a dummy node in case we have a metadata cycle.
-    MDNode *Dummy = MDNode::getTemporary(V->getContext(), ArrayRef<Value*>());
+    MDNode *Dummy = MDNode::getTemporary(V->getContext(), None);
     VM[V] = Dummy;
     
     // Check all operands to see if any need to be remapped.
