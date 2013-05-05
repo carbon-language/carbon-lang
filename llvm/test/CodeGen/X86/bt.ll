@@ -522,11 +522,8 @@ UnifiedReturnBlock:		; preds = %entry
 
 declare void @foo()
 
-; rdar://12755626
 define zeroext i1 @invert(i32 %flags, i32 %flag) nounwind {
-; CHECK: invert
-; CHECK: btl %eax, %ecx
-; CHECK: setae
+; CHECK: btl
 entry:
   %neg = xor i32 %flags, -1
   %shl = shl i32 1, %flag

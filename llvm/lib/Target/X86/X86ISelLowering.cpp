@@ -9180,14 +9180,6 @@ SDValue X86TargetLowering::LowerToBT(SDValue And, ISD::CondCode CC,
   }
 
   if (LHS.getNode()) {
-    // If the LHS is of the form (x ^ -1) then replace the LHS with x and flip
-    // the condition code later.
-    bool Invert = false;
-    if (LHS.getOpcode() == ISD::XOR && isAllOnes(LHS.getOperand(1))) {
-      Invert = true;
-      LHS = LHS.getOperand(0);
-    }
-
     // If LHS is i8, promote it to i32 with any_extend.  There is no i8 BT
     // instruction.  Since the shift amount is in-range-or-undefined, we know
     // that doing a bittest on the i32 value is ok.  We extend to i32 because
@@ -9204,9 +9196,6 @@ SDValue X86TargetLowering::LowerToBT(SDValue And, ISD::CondCode CC,
 
     SDValue BT = DAG.getNode(X86ISD::BT, dl, MVT::i32, LHS, RHS);
     X86::CondCode Cond = CC == ISD::SETEQ ? X86::COND_AE : X86::COND_B;
-    // Flip the condition if the LHS was a not instruction
-    if (Invert)
-      Cond = X86::GetOppositeBranchCondition(Cond);
     return DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
                        DAG.getConstant(Cond, MVT::i8), BT);
   }
