@@ -168,8 +168,8 @@ def ldawb : PatFrag<(ops node:$addr, node:$offset),
                      (sub node:$addr, (shl node:$offset, 2))>;
 
 // Instruction operand types
-def calltarget  : Operand<i32>;
-def calltarget_neg  : Operand<i32> {
+def pcrel_imm  : Operand<i32>;
+def pcrel_imm_neg  : Operand<i32> {
   let DecoderMethod = "DecodeNegImmOperand";
 }
 def brtarget : Operand<OtherVT>;
@@ -675,15 +675,15 @@ def BLACP_u10 : _FU10<0b111000, (outs), (ins i32imm:$a), "bla cp[$a]", []>;
 
 def BLACP_lu10 : _FLU10<0b111000, (outs), (ins i32imm:$a), "bla cp[$a]", []>;
 
-def BLRF_u10 : _FU10<0b110100, (outs), (ins calltarget:$a), "bl $a",
+def BLRF_u10 : _FU10<0b110100, (outs), (ins pcrel_imm:$a), "bl $a",
                      [(XCoreBranchLink immU10:$a)]>;
 
-def BLRF_lu10 : _FLU10<0b110100, (outs), (ins calltarget:$a), "bl $a",
+def BLRF_lu10 : _FLU10<0b110100, (outs), (ins pcrel_imm:$a), "bl $a",
                        [(XCoreBranchLink immU20:$a)]>;
 
-def BLRB_u10 : _FU10<0b110101, (outs), (ins calltarget_neg:$a), "bl $a", []>;
+def BLRB_u10 : _FU10<0b110101, (outs), (ins pcrel_imm_neg:$a), "bl $a", []>;
 
-def BLRB_lu10 : _FLU10<0b110101, (outs), (ins calltarget_neg:$a), "bl $a", []>;
+def BLRB_lu10 : _FLU10<0b110101, (outs), (ins pcrel_imm_neg:$a), "bl $a", []>;
 }
 
 let Defs = [R11], mayLoad = 1, isReMaterializable = 1,
