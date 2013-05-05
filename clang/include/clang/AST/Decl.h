@@ -830,6 +830,14 @@ public:
   /// external, C linkage.
   bool isExternC() const;
 
+  /// \brief Determines whether this variable's context is, or is nested within,
+  /// a C++ extern "C" linkage spec.
+  bool isInExternCContext() const;
+
+  /// \brief Determines whether this variable's context is, or is nested within,
+  /// a C++ extern "C++" linkage spec.
+  bool isInExternCXXContext() const;
+
   /// isLocalVarDecl - Returns true for local variable declarations
   /// other than parameters.  Note that this includes static variables
   /// inside of functions. It also includes variables inside blocks.
@@ -1714,6 +1722,14 @@ public:
   /// \brief Determines whether this function is a function with
   /// external, C linkage.
   bool isExternC() const;
+
+  /// \brief Determines whether this function's context is, or is nested within,
+  /// a C++ extern "C" linkage spec.
+  bool isInExternCContext() const;
+
+  /// \brief Determines whether this function's context is, or is nested within,
+  /// a C++ extern "C++" linkage spec.
+  bool isInExternCXXContext() const;
 
   /// \brief Determines whether this is a global function.
   bool isGlobal() const;

@@ -471,9 +471,9 @@ static bool useInlineVisibilityHidden(const NamedDecl *D) {
     FD->hasBody(Def) && Def->isInlined() && !Def->hasAttr<GNUInlineAttr>();
 }
 
-template <typename T> static bool isInExternCContext(T *D) {
+template <typename T> static bool isFirstInExternCContext(T *D) {
   const T *First = D->getFirstDeclaration();
-  return First->getDeclContext()->isExternCContext();
+  return First->isInExternCContext();
 }
 
 static bool isSingleLineExternC(const Decl &D) {
@@ -548,8 +548,8 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
   if (D->isInAnonymousNamespace()) {
     const VarDecl *Var = dyn_cast<VarDecl>(D);
     const FunctionDecl *Func = dyn_cast<FunctionDecl>(D);
-    if ((!Var || !isInExternCContext(Var)) &&
-        (!Func || !isInExternCContext(Func)))
+    if ((!Var || !isFirstInExternCContext(Var)) &&
+        (!Func || !isFirstInExternCContext(Func)))
       return LinkageInfo::uniqueExternal();
   }
 
@@ -626,7 +626,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
     //
     // Note that we don't want to make the variable non-external
     // because of this, but unique-external linkage suits us.
-    if (Context.getLangOpts().CPlusPlus && !isInExternCContext(Var)) {
+    if (Context.getLangOpts().CPlusPlus && !isFirstInExternCContext(Var)) {
       LinkageInfo TypeLV = Var->getType()->getLinkageAndVisibility();
       if (TypeLV.getLinkage() != ExternalLinkage)
         return LinkageInfo::uniqueExternal();
@@ -660,7 +660,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
     // this translation unit.  However, we should use the C linkage
     // rules instead for extern "C" declarations.
     if (Context.getLangOpts().CPlusPlus &&
-        !Function->getDeclContext()->isExternCContext() &&
+        !Function->isInExternCContext() &&
         Function->getType()->getLinkage() == UniqueExternalLinkage)
       return LinkageInfo::uniqueExternal();
 
@@ -997,7 +997,7 @@ static LinkageInfo getLVForLocalDecl(const NamedDecl *D,
                                      LVComputationKind computation) {
   if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
     if (Function->isInAnonymousNamespace() &&
-        !Function->getDeclContext()->isExternCContext())
+        !Function->isInExternCContext())
       return LinkageInfo::uniqueExternal();
 
     // This is a "void f();" which got merged with a file static.
@@ -1020,8 +1020,7 @@ static LinkageInfo getLVForLocalDecl(const NamedDecl *D,
 
   if (const VarDecl *Var = dyn_cast<VarDecl>(D)) {
     if (Var->hasExternalStorage()) {
-      if (Var->isInAnonymousNamespace() &&
-          !Var->getDeclContext()->isExternCContext())
+      if (Var->isInAnonymousNamespace() && !Var->isInExternCContext())
         return LinkageInfo::uniqueExternal();
 
       LinkageInfo LV;
@@ -1522,8 +1521,7 @@ static LanguageLinkage getLanguageLinkageTemplate(const T &D) {
   // If the first decl is in an extern "C" context, any other redeclaration
   // will have C language linkage. If the first one is not in an extern "C"
   // context, we would have reported an error for any other decl being in one.
-  const T *First = D.getFirstDeclaration();
-  if (First->getDeclContext()->isExternCContext())
+  if (isFirstInExternCContext(&D))
     return CLanguageLinkage;
   return CXXLanguageLinkage;
 }
@@ -1547,6 +1545,29 @@ LanguageLinkage VarDecl::getLanguageLinkage() const {
 
 bool VarDecl::isExternC() const {
   return isExternCTemplate(*this);
+}
+
+static bool isLinkageSpecContext(const DeclContext *DC,
+                                 LinkageSpecDecl::LanguageIDs ID) {
+  while (DC->getDeclKind() != Decl::TranslationUnit) {
+    if (DC->getDeclKind() == Decl::LinkageSpec)
+      return cast<LinkageSpecDecl>(DC)->getLanguage() == ID;
+    DC = DC->getParent();
+  }
+  return false;
+}
+
+template <typename T>
+static bool isInLanguageSpecContext(T *D, LinkageSpecDecl::LanguageIDs ID) {
+  return isLinkageSpecContext(D->getLexicalDeclContext(), ID);
+}
+
+bool VarDecl::isInExternCContext() const {
+  return isInLanguageSpecContext(this, LinkageSpecDecl::lang_c);
+}
+
+bool VarDecl::isInExternCXXContext() const {
+  return isInLanguageSpecContext(this, LinkageSpecDecl::lang_cxx);
 }
 
 VarDecl *VarDecl::getCanonicalDecl() {
@@ -2068,6 +2089,14 @@ LanguageLinkage FunctionDecl::getLanguageLinkage() const {
 
 bool FunctionDecl::isExternC() const {
   return isExternCTemplate(*this);
+}
+
+bool FunctionDecl::isInExternCContext() const {
+  return isInLanguageSpecContext(this, LinkageSpecDecl::lang_c);
+}
+
+bool FunctionDecl::isInExternCXXContext() const {
+  return isInLanguageSpecContext(this, LinkageSpecDecl::lang_cxx);
 }
 
 bool FunctionDecl::isGlobal() const {

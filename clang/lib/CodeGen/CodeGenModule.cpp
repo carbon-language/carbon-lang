@@ -1731,8 +1731,8 @@ void CodeGenModule::MaybeHandleStaticInExternC(const SomeDecl *D,
 
   // Must be in an extern "C" context. Entities declared directly within
   // a record are not extern "C" even if the record is in such a context.
-  const DeclContext *DC = D->getFirstDeclaration()->getDeclContext();
-  if (DC->isRecord() || !DC->isExternCContext())
+  const SomeDecl *First = D->getFirstDeclaration();
+  if (First->getDeclContext()->isRecord() || !First->isInExternCContext())
     return;
 
   // OK, this is an internal linkage entity inside an extern "C" linkage
