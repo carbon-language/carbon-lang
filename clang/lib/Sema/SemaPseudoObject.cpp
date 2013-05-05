@@ -663,12 +663,11 @@ ExprResult ObjCPropertyOpBuilder::buildGet() {
     assert(InstanceReceiver || RefExpr->isSuperReceiver());
     msg = S.BuildInstanceMessageImplicit(InstanceReceiver, receiverType,
                                          GenericLoc, Getter->getSelector(),
-                                         Getter, MultiExprArg());
+                                         Getter, None);
   } else {
     msg = S.BuildClassMessageImplicit(receiverType, RefExpr->isSuperReceiver(),
-                                      GenericLoc,
-                                      Getter->getSelector(), Getter,
-                                      MultiExprArg());
+                                      GenericLoc, Getter->getSelector(),
+                                      Getter, None);
   }
   return msg;
 }

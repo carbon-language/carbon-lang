@@ -291,7 +291,7 @@ void InitListChecker::CheckValueInitializable(const InitializedEntity &Entity) {
   SourceLocation Loc;
   InitializationKind Kind = InitializationKind::CreateValue(Loc, Loc, Loc,
                                                             true);
-  InitializationSequence InitSeq(SemaRef, Entity, Kind, MultiExprArg());
+  InitializationSequence InitSeq(SemaRef, Entity, Kind, None);
   if (InitSeq.Failed())
     hadError = true;
 }
@@ -339,7 +339,7 @@ void InitListChecker::FillInValueInitForField(unsigned Init, FieldDecl *Field,
 
     InitializationKind Kind = InitializationKind::CreateValue(Loc, Loc, Loc,
                                                               true);
-    InitializationSequence InitSeq(SemaRef, MemberEntity, Kind, MultiExprArg());
+    InitializationSequence InitSeq(SemaRef, MemberEntity, Kind, None);
     if (!InitSeq) {
       InitSeq.Diagnose(SemaRef, MemberEntity, Kind, None);
       hadError = true;
@@ -347,7 +347,7 @@ void InitListChecker::FillInValueInitForField(unsigned Init, FieldDecl *Field,
     }
 
     ExprResult MemberInit
-      = InitSeq.Perform(SemaRef, MemberEntity, Kind, MultiExprArg());
+      = InitSeq.Perform(SemaRef, MemberEntity, Kind, None);
     if (MemberInit.isInvalid()) {
       hadError = true;
       return;
@@ -457,7 +457,7 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
     if (!InitExpr && !ILE->hasArrayFiller()) {
       InitializationKind Kind = InitializationKind::CreateValue(Loc, Loc, Loc,
                                                                 true);
-      InitializationSequence InitSeq(SemaRef, ElementEntity, Kind, MultiExprArg());
+      InitializationSequence InitSeq(SemaRef, ElementEntity, Kind, None);
       if (!InitSeq) {
         InitSeq.Diagnose(SemaRef, ElementEntity, Kind, None);
         hadError = true;
@@ -465,7 +465,7 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
       }
 
       ExprResult ElementInit
-        = InitSeq.Perform(SemaRef, ElementEntity, Kind, MultiExprArg());
+        = InitSeq.Perform(SemaRef, ElementEntity, Kind, None);
       if (ElementInit.isInvalid()) {
         hadError = true;
         return;
@@ -2124,7 +2124,7 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
 
   InitListExpr *Result
     = new (SemaRef.Context) InitListExpr(SemaRef.Context,
-                                         InitRange.getBegin(), MultiExprArg(),
+                                         InitRange.getBegin(), None,
                                          InitRange.getEnd());
 
   QualType ResultType = CurrentObjectType;
@@ -3805,7 +3805,7 @@ static void TryDefaultInitialization(Sema &S,
   //       constructor for T is called (and the initialization is ill-formed if
   //       T has no accessible default constructor);
   if (DestType->isRecordType() && S.getLangOpts().CPlusPlus) {
-    TryConstructorInitialization(S, Entity, Kind, MultiExprArg(), DestType, Sequence);
+    TryConstructorInitialization(S, Entity, Kind, None, DestType, Sequence);
     return;
   }
 

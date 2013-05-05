@@ -5813,7 +5813,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   // there are 0 arguments (i.e., nothing is allocated using ASTContext's
   // allocator).
   QualType CallResultType = ConversionType.getNonLValueExprType(Context);
-  CallExpr Call(Context, &ConversionFn, MultiExprArg(), CallResultType, VK,
+  CallExpr Call(Context, &ConversionFn, None, CallResultType, VK,
                 From->getLocStart());
   ImplicitConversionSequence ICS =
     TryCopyInitialization(*this, &Call, ToType,
@@ -11458,7 +11458,7 @@ Sema::BuildForRangeBeginEndCall(Scope *S, SourceLocation Loc,
           << RangeLoc << BEF << Range->getType();
       return FRS_DiagnosticIssued;
     }
-    *CallExpr = ActOnCallExpr(S, MemberRef.get(), Loc, MultiExprArg(), Loc, 0);
+    *CallExpr = ActOnCallExpr(S, MemberRef.get(), Loc, None, Loc, 0);
     if (CallExpr->isInvalid()) {
       *CallExpr = ExprError();
       Diag(Range->getLocStart(), diag::note_in_for_range)

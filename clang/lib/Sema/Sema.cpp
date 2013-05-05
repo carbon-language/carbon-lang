@@ -1296,7 +1296,7 @@ bool Sema::tryToRecoverWithCall(ExprResult &E, const PartialDiagnostic &PD,
     // FIXME: Try this before emitting the fixit, and suppress diagnostics
     // while doing so.
     E = ActOnCallExpr(0, E.take(), ParenInsertionLoc,
-                      MultiExprArg(), ParenInsertionLoc.getLocWithOffset(1));
+                      None, ParenInsertionLoc.getLocWithOffset(1));
     return true;
   }
 

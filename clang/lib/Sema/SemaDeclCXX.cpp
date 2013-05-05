@@ -2856,8 +2856,8 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
   case IIK_Default: {
     InitializationKind InitKind
       = InitializationKind::CreateDefault(Constructor->getLocation());
-    InitializationSequence InitSeq(SemaRef, InitEntity, InitKind, MultiExprArg());
-    BaseInit = InitSeq.Perform(SemaRef, InitEntity, InitKind, MultiExprArg());
+    InitializationSequence InitSeq(SemaRef, InitEntity, InitKind, None);
+    BaseInit = InitSeq.Perform(SemaRef, InitEntity, InitKind, None);
     break;
   }
 
@@ -3084,10 +3084,10 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                 : InitializedEntity::InitializeMember(Field);
     InitializationKind InitKind = 
       InitializationKind::CreateDefault(Loc);
-    
-    InitializationSequence InitSeq(SemaRef, InitEntity, InitKind, MultiExprArg());
-    ExprResult MemberInit = 
-      InitSeq.Perform(SemaRef, InitEntity, InitKind, MultiExprArg());
+
+    InitializationSequence InitSeq(SemaRef, InitEntity, InitKind, None);
+    ExprResult MemberInit =
+      InitSeq.Perform(SemaRef, InitEntity, InitKind, None);
 
     MemberInit = SemaRef.MaybeCreateExprWithCleanups(MemberInit);
     if (MemberInit.isInvalid())
@@ -11879,10 +11879,10 @@ void Sema::SetIvarInitializers(ObjCImplementationDecl *ObjCImplementation) {
       InitializedEntity InitEntity = InitializedEntity::InitializeMember(Field);
       InitializationKind InitKind = 
         InitializationKind::CreateDefault(ObjCImplementation->getLocation());
-      
-      InitializationSequence InitSeq(*this, InitEntity, InitKind, MultiExprArg());
-      ExprResult MemberInit = 
-        InitSeq.Perform(*this, InitEntity, InitKind, MultiExprArg());
+
+      InitializationSequence InitSeq(*this, InitEntity, InitKind, None);
+      ExprResult MemberInit =
+        InitSeq.Perform(*this, InitEntity, InitKind, None);
       MemberInit = MaybeCreateExprWithCleanups(MemberInit);
       // Note, MemberInit could actually come back empty if no initialization 
       // is required (e.g., because it would call a trivial default constructor)
