@@ -2247,10 +2247,10 @@ static bool haveIncompatibleLanguageLinkages(const T *Old, const T *New) {
 
   LanguageLinkage OldLinkage = Old->getLanguageLinkage();
   if (OldLinkage == CXXLanguageLinkage &&
-      New->getDeclContext()->isExternCContext())
+      New->getLexicalDeclContext()->isExternCContext())
     return true;
   if (OldLinkage == CLanguageLinkage &&
-      New->getDeclContext()->isExternCXXContext())
+      New->getLexicalDeclContext()->isExternCXXContext())
     return true;
   return false;
 }

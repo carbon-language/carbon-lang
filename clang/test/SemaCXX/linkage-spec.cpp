@@ -106,3 +106,11 @@ namespace PR9162 {
     return sizeof(ArtsSink);
   }
 }
+
+namespace pr14958 {
+  namespace js { extern int ObjectClass; }
+  extern "C" {
+    namespace js {}
+  }
+  int js::ObjectClass;
+}
