@@ -1326,7 +1326,8 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
   DiagnoseSentinelCalls(Method, SelLoc, Args, NumArgs);
 
   // Do additional checkings on method.
-  IsError |= CheckObjCMethodCall(Method, SelLoc, Args, NumArgs);
+  IsError |= CheckObjCMethodCall(Method, SelLoc,
+                               llvm::makeArrayRef<const Expr *>(Args, NumArgs));
 
   return IsError;
 }
