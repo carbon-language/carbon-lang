@@ -2804,8 +2804,8 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
                                         Inst,
                                         WriteObjects,
                                         MaxByteWidth)) {
-        DEBUG(dbgs() << "LV: Found a possible write-write reorder:"
-              << *UI <<"\n");
+        DEBUG(dbgs() << "LV: Found a possible write-write reorder:" << **UI
+                     << "\n");
         return false;
       }
 
@@ -2848,8 +2848,8 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
                                         Inst,
                                         WriteObjects,
                                         MaxByteWidth)) {
-        DEBUG(dbgs() << "LV: Found a possible read-write reorder:"
-              << *UI <<"\n");
+        DEBUG(dbgs() << "LV: Found a possible read-write reorder:" << **UI
+                     << "\n");
         return false;
       }
     }
