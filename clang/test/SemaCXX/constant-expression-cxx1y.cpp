@@ -161,11 +161,9 @@ namespace string_assign {
       swap(*begin++, *end);
 #else
     if (begin != end) {
-      end = end - 1;
-      if (begin == end)
+      if (begin == --end)
         return;
-      swap(*begin, *end);
-      begin = begin + 1;
+      swap(*begin++, *end);
       reverse(begin, end);
     }
 #endif
@@ -180,10 +178,8 @@ namespace string_assign {
     }
 #else
     if (a != ae && b != be) {
-      if (*a != *b)
+      if (*a++ != *b++)
         return false;
-      a = a + 1;
-      b = b + 1;
       return equal(a, ae, b, be);
     }
 #endif
@@ -285,4 +281,74 @@ namespace null {
     return *p = 123; // expected-note {{assignment to dereferenced null pointer}}
   }
   static_assert(test(0), ""); // expected-error {{constant expression}} expected-note {{in call}}
+}
+
+namespace incdec {
+  template<typename T> constexpr T &ref(T &&r) { return r; }
+  template<typename T> constexpr T postinc(T &&r) { return (r++, r); }
+  template<typename T> constexpr T postdec(T &&r) { return (r--, r); }
+
+  static_assert(++ref(0) == 1, "");
+  static_assert(ref(0)++ == 0, "");
+  static_assert(postinc(0) == 1, "");
+  static_assert(--ref(0) == -1, "");
+  static_assert(ref(0)-- == 0, "");
+  static_assert(postdec(0) == -1, "");
+
+  constexpr int overflow_int_inc_1 = ref(0x7fffffff)++; // expected-error {{constant}} expected-note {{2147483648}}
+  constexpr int overflow_int_inc_1_ok = ref(0x7ffffffe)++;
+  constexpr int overflow_int_inc_2 = ++ref(0x7fffffff); // expected-error {{constant}} expected-note {{2147483648}}
+  constexpr int overflow_int_inc_2_ok = ++ref(0x7ffffffe);
+
+  // inc/dec on short can't overflow because we promote to int first
+  static_assert(++ref<short>(0x7fff) == (int)0xffff8000u, "");
+  static_assert(--ref<short>(0x8000) == 0x7fff, "");
+
+  // inc on bool sets to true
+  static_assert(++ref(false), ""); // expected-warning {{deprecated}}
+  static_assert(++ref(true), ""); // expected-warning {{deprecated}}
+
+  int arr[10];
+  static_assert(++ref(&arr[0]) == &arr[1], "");
+  static_assert(++ref(&arr[9]) == &arr[10], "");
+  static_assert(++ref(&arr[10]) == &arr[11], ""); // expected-error {{constant}} expected-note {{cannot refer to element 11}}
+  static_assert(ref(&arr[0])++ == &arr[0], "");
+  static_assert(ref(&arr[10])++ == &arr[10], ""); // expected-error {{constant}} expected-note {{cannot refer to element 11}}
+  static_assert(postinc(&arr[0]) == &arr[1], "");
+  static_assert(--ref(&arr[10]) == &arr[9], "");
+  static_assert(--ref(&arr[1]) == &arr[0], "");
+  static_assert(--ref(&arr[0]) != &arr[0], ""); // expected-error {{constant}} expected-note {{cannot refer to element -1}}
+  static_assert(ref(&arr[1])-- == &arr[1], "");
+  static_assert(ref(&arr[0])-- == &arr[0], ""); // expected-error {{constant}} expected-note {{cannot refer to element -1}}
+  static_assert(postdec(&arr[1]) == &arr[0], "");
+
+  int x;
+  static_assert(++ref(&x) == &x + 1, "");
+
+  static_assert(++ref(0.0) == 1.0, "");
+  static_assert(ref(0.0)++ == 0.0, "");
+  static_assert(postinc(0.0) == 1.0, "");
+  static_assert(--ref(0.0) == -1.0, "");
+  static_assert(ref(0.0)-- == 0.0, "");
+  static_assert(postdec(0.0) == -1.0, "");
+
+  static_assert(++ref(1e100) == 1e100, "");
+  static_assert(--ref(1e100) == 1e100, "");
+
+  union U {
+    int a, b;
+  };
+  constexpr int f(U u) {
+    return ++u.b; // expected-note {{increment of member 'b' of union with active member 'a'}}
+  }
+  constexpr int wrong_member = f({0}); // expected-error {{constant}} expected-note {{in call to 'f({.a = 0})'}}
+  constexpr int vol = --ref<volatile int>(0); // expected-error {{constant}} expected-note {{decrement of volatile-qualified}}
+
+  constexpr int incr(int k) {
+    int x = k;
+    if (x++ == 100)
+      return x;
+    return incr(x);
+  }
+  static_assert(incr(0) == 101, "");
 }

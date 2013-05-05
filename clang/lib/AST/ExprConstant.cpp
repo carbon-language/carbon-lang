@@ -1614,7 +1614,9 @@ static void expandArray(APValue &Array, unsigned Index) {
 /// Kinds of access we can perform on an object.
 enum AccessKinds {
   AK_Read,
-  AK_Assign
+  AK_Assign,
+  AK_Increment,
+  AK_Decrement
 };
 
 /// A handle to a complete object (an object that is not a subobject of
@@ -2083,9 +2085,9 @@ CompleteObject findCompleteObject(EvalInfo &Info, const Expr *E, AccessKinds AK,
   return CompleteObject(BaseVal, BaseType);
 }
 
-/// HandleLValueToRValueConversion - Perform an lvalue-to-rvalue conversion on
-/// the given glvalue. This can also be used for 'lvalue-to-lvalue' conversions
-/// for looking up the glvalue referred to by an entity of reference type.
+/// \brief Perform an lvalue-to-rvalue conversion on the given glvalue. This
+/// can also be used for 'lvalue-to-lvalue' conversions for looking up the
+/// glvalue referred to by an entity of reference type.
 ///
 /// \param Info - Information about the ongoing evaluation.
 /// \param Conv - The expression for which we are performing the conversion.
@@ -2094,7 +2096,7 @@ CompleteObject findCompleteObject(EvalInfo &Info, const Expr *E, AccessKinds AK,
 ///               case of a non-class type).
 /// \param LVal - The glvalue on which we are attempting to perform this action.
 /// \param RVal - The produced value will be placed here.
-static bool HandleLValueToRValueConversion(EvalInfo &Info, const Expr *Conv,
+static bool handleLValueToRValueConversion(EvalInfo &Info, const Expr *Conv,
                                            QualType Type,
                                            const LValue &LVal, APValue &RVal) {
   if (LVal.Designator.Invalid)
@@ -2133,7 +2135,7 @@ static bool HandleLValueToRValueConversion(EvalInfo &Info, const Expr *Conv,
 }
 
 /// Perform an assignment of Val to LVal. Takes ownership of Val.
-static bool HandleAssignment(EvalInfo &Info, const Expr *E, const LValue &LVal,
+static bool handleAssignment(EvalInfo &Info, const Expr *E, const LValue &LVal,
                              QualType LValType, APValue &Val) {
   if (LVal.Designator.Invalid)
     return false;
@@ -2145,6 +2147,160 @@ static bool HandleAssignment(EvalInfo &Info, const Expr *E, const LValue &LVal,
 
   CompleteObject Obj = findCompleteObject(Info, E, AK_Assign, LVal, LValType);
   return Obj && modifySubobject(Info, E, Obj, LVal.Designator, Val);
+}
+
+static bool isOverflowingIntegerType(ASTContext &Ctx, QualType T) {
+  return T->isSignedIntegerType() &&
+         Ctx.getIntWidth(T) >= Ctx.getIntWidth(Ctx.IntTy);
+}
+
+namespace {
+struct IncDecSubobjectHandler {
+  EvalInfo &Info;
+  const Expr *E;
+  AccessKinds AccessKind;
+  APValue *Old;
+
+  typedef bool result_type;
+
+  bool checkConst(QualType QT) {
+    // Assigning to a const object has undefined behavior.
+    if (QT.isConstQualified()) {
+      Info.Diag(E, diag::note_constexpr_modify_const_type) << QT;
+      return false;
+    }
+    return true;
+  }
+
+  bool failed() { return false; }
+  bool found(APValue &Subobj, QualType SubobjType) {
+    // Stash the old value. Also clear Old, so we don't clobber it later
+    // if we're post-incrementing a complex.
+    if (Old) {
+      *Old = Subobj;
+      Old = 0;
+    }
+
+    switch (Subobj.getKind()) {
+    case APValue::Int:
+      return found(Subobj.getInt(), SubobjType);
+    case APValue::Float:
+      return found(Subobj.getFloat(), SubobjType);
+    case APValue::ComplexInt:
+      return found(Subobj.getComplexIntReal(),
+                   SubobjType->castAs<ComplexType>()->getElementType()
+                     .withCVRQualifiers(SubobjType.getCVRQualifiers()));
+    case APValue::ComplexFloat:
+      return found(Subobj.getComplexFloatReal(),
+                   SubobjType->castAs<ComplexType>()->getElementType()
+                     .withCVRQualifiers(SubobjType.getCVRQualifiers()));
+    case APValue::LValue:
+      return foundPointer(Subobj, SubobjType);
+    default:
+      // FIXME: can this happen?
+      Info.Diag(E);
+      return false;
+    }
+  }
+  bool found(APSInt &Value, QualType SubobjType) {
+    if (!checkConst(SubobjType))
+      return false;
+
+    if (!SubobjType->isIntegerType()) {
+      // We don't support increment / decrement on integer-cast-to-pointer
+      // values.
+      Info.Diag(E);
+      return false;
+    }
+
+    if (Old) *Old = APValue(Value);
+
+    // bool arithmetic promotes to int, and the conversion back to bool
+    // doesn't reduce mod 2^n, so special-case it.
+    if (SubobjType->isBooleanType()) {
+      if (AccessKind == AK_Increment)
+        Value = 1;
+      else
+        Value = !Value;
+      return true;
+    }
+
+    bool WasNegative = Value.isNegative();
+    if (AccessKind == AK_Increment) {
+      ++Value;
+
+      if (!WasNegative && Value.isNegative() &&
+          isOverflowingIntegerType(Info.Ctx, SubobjType)) {
+        APSInt ActualValue(Value, /*IsUnsigned*/true);
+        HandleOverflow(Info, E, ActualValue, SubobjType);
+      }
+    } else {
+      --Value;
+
+      if (WasNegative && !Value.isNegative() &&
+          isOverflowingIntegerType(Info.Ctx, SubobjType)) {
+        unsigned BitWidth = Value.getBitWidth();
+        APSInt ActualValue(Value.sext(BitWidth + 1), /*IsUnsigned*/false);
+        ActualValue.setBit(BitWidth);
+        HandleOverflow(Info, E, ActualValue, SubobjType);
+      }
+    }
+    return true;
+  }
+  bool found(APFloat &Value, QualType SubobjType) {
+    if (!checkConst(SubobjType))
+      return false;
+
+    if (Old) *Old = APValue(Value);
+
+    APFloat One(Value.getSemantics(), 1);
+    if (AccessKind == AK_Increment)
+      Value.add(One, APFloat::rmNearestTiesToEven);
+    else
+      Value.subtract(One, APFloat::rmNearestTiesToEven);
+    return true;
+  }
+  bool foundPointer(APValue &Subobj, QualType SubobjType) {
+    if (!checkConst(SubobjType))
+      return false;
+
+    QualType PointeeType;
+    if (const PointerType *PT = SubobjType->getAs<PointerType>())
+      PointeeType = PT->getPointeeType();
+    else {
+      Info.Diag(E);
+      return false;
+    }
+
+    LValue LVal;
+    LVal.setFrom(Info.Ctx, Subobj);
+    if (!HandleLValueArrayAdjustment(Info, E, LVal, PointeeType,
+                                     AccessKind == AK_Increment ? 1 : -1))
+      return false;
+    LVal.moveInto(Subobj);
+    return true;
+  }
+  bool foundString(APValue &Subobj, QualType SubobjType, uint64_t Character) {
+    llvm_unreachable("shouldn't encounter string elements here");
+  }
+};
+} // end anonymous namespace
+
+/// Perform an increment or decrement on LVal.
+static bool handleIncDec(EvalInfo &Info, const Expr *E, const LValue &LVal,
+                         QualType LValType, bool IsIncrement, APValue *Old) {
+  if (LVal.Designator.Invalid)
+    return false;
+
+  if (!Info.getLangOpts().CPlusPlus1y) {
+    Info.Diag(E);
+    return false;
+  }
+
+  AccessKinds AK = IsIncrement ? AK_Increment : AK_Decrement;
+  CompleteObject Obj = findCompleteObject(Info, E, AK, LVal, LValType);
+  IncDecSubobjectHandler Handler = { Info, E, AK, Old };
+  return Obj && findSubobject(Info, E, Obj, LVal.Designator, Handler);
 }
 
 /// Build an lvalue for the object argument of a member function call.
@@ -2534,7 +2690,7 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
        (Definition->isMoveConstructor() && Definition->isTrivial()))) {
     LValue RHS;
     RHS.setFrom(Info.Ctx, ArgValues[0]);
-    return HandleLValueToRValueConversion(Info, Args[0], Args[0]->getType(),
+    return handleLValueToRValueConversion(Info, Args[0], Args[0]->getType(),
                                           RHS, Result);
   }
 
@@ -2761,7 +2917,7 @@ public:
       if (!HandleMemberPointerAccess(Info, E, Obj))
         return false;
       APValue Result;
-      if (!HandleLValueToRValueConversion(Info, E, E->getType(), Obj, Result))
+      if (!handleLValueToRValueConversion(Info, E, E->getType(), Obj, Result))
         return false;
       return DerivedSuccess(Result, E);
     }
@@ -2967,7 +3123,7 @@ public:
         return false;
       APValue RVal;
       // Note, we use the subexpression's type in order to retain cv-qualifiers.
-      if (!HandleLValueToRValueConversion(Info, E, E->getSubExpr()->getType(),
+      if (!handleLValueToRValueConversion(Info, E, E->getSubExpr()->getType(),
                                           LVal, RVal))
         return false;
       return DerivedSuccess(RVal, E);
@@ -2975,6 +3131,26 @@ public:
     }
 
     return Error(E);
+  }
+
+  RetTy VisitUnaryPostInc(const UnaryOperator *UO) {
+    return VisitUnaryPostIncDec(UO);
+  }
+  RetTy VisitUnaryPostDec(const UnaryOperator *UO) {
+    return VisitUnaryPostIncDec(UO);
+  }
+  RetTy VisitUnaryPostIncDec(const UnaryOperator *UO) {
+    if (!Info.getLangOpts().CPlusPlus1y && !Info.keepEvaluatingAfterFailure())
+      return Error(UO);
+
+    LValue LVal;
+    if (!EvaluateLValue(UO->getSubExpr(), LVal, Info))
+      return false;
+    APValue RVal;
+    if (!handleIncDec(this->Info, UO, LVal, UO->getSubExpr()->getType(),
+                      UO->isIncrementOp(), &RVal))
+      return false;
+    return DerivedSuccess(RVal, UO);
   }
 
   /// Visit a value which is evaluated, but whose value is ignored.
@@ -3044,7 +3220,7 @@ public:
 
     if (MD->getType()->isReferenceType()) {
       APValue RefValue;
-      if (!HandleLValueToRValueConversion(this->Info, E, MD->getType(), Result,
+      if (!handleLValueToRValueConversion(this->Info, E, MD->getType(), Result,
                                           RefValue))
         return false;
       return Success(RefValue, E);
@@ -3127,7 +3303,7 @@ public:
     LValueExprEvaluatorBaseTy(Info, Result) {}
 
   bool VisitVarDecl(const Expr *E, const VarDecl *VD);
-  bool VisitIncDec(const UnaryOperator *UO);
+  bool VisitUnaryPreIncDec(const UnaryOperator *UO);
 
   bool VisitDeclRefExpr(const DeclRefExpr *E);
   bool VisitPredefinedExpr(const PredefinedExpr *E) { return Success(E); }
@@ -3142,8 +3318,12 @@ public:
   bool VisitUnaryDeref(const UnaryOperator *E);
   bool VisitUnaryReal(const UnaryOperator *E);
   bool VisitUnaryImag(const UnaryOperator *E);
-  bool VisitUnaryPreInc(const UnaryOperator *UO) { return VisitIncDec(UO); }
-  bool VisitUnaryPreDec(const UnaryOperator *UO) { return VisitIncDec(UO); }
+  bool VisitUnaryPreInc(const UnaryOperator *UO) {
+    return VisitUnaryPreIncDec(UO);
+  }
+  bool VisitUnaryPreDec(const UnaryOperator *UO) {
+    return VisitUnaryPreIncDec(UO);
+  }
   bool VisitBinAssign(const BinaryOperator *BO);
   bool VisitCompoundAssignOperator(const CompoundAssignOperator *CAO);
 
@@ -3296,31 +3476,32 @@ bool LValueExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
   return true;
 }
 
-bool LValueExprEvaluator::VisitIncDec(const UnaryOperator *UO) {
-  if (!Info.getLangOpts().CPlusPlus1y)
+bool LValueExprEvaluator::VisitUnaryPreIncDec(const UnaryOperator *UO) {
+  if (!Info.getLangOpts().CPlusPlus1y && !Info.keepEvaluatingAfterFailure())
     return Error(UO);
 
   if (!this->Visit(UO->getSubExpr()))
     return false;
 
-  // FIXME:
-  //return handleIncDec(
-  //    this->Info, CAO, Result, UO->getSubExpr()->getType(),
-  //    UO->isIncrementOp());
-  // (Watch out for promotions: ++short can't overflow, ++bool is always true).
-  return Error(UO);
+  return handleIncDec(
+      this->Info, UO, Result, UO->getSubExpr()->getType(),
+      UO->isIncrementOp(), 0);
 }
 
 bool LValueExprEvaluator::VisitCompoundAssignOperator(
     const CompoundAssignOperator *CAO) {
-  if (!Info.getLangOpts().CPlusPlus1y)
+  if (!Info.getLangOpts().CPlusPlus1y && !Info.keepEvaluatingAfterFailure())
     return Error(CAO);
 
-  // The overall lvalue result is the result of evaluating the LHS.
-  if (!this->Visit(CAO->getLHS()))
-    return false;
-
   APValue RHS;
+
+  // The overall lvalue result is the result of evaluating the LHS.
+  if (!this->Visit(CAO->getLHS())) {
+    if (Info.keepEvaluatingAfterFailure())
+      Evaluate(RHS, this->Info, CAO->getRHS());
+    return false;
+  }
+
   if (!Evaluate(RHS, this->Info, CAO->getRHS()))
     return false;
 
@@ -3335,12 +3516,21 @@ bool LValueExprEvaluator::VisitCompoundAssignOperator(
 }
 
 bool LValueExprEvaluator::VisitBinAssign(const BinaryOperator *E) {
-  if (!this->Visit(E->getLHS()))
-    return false;
+  if (!Info.getLangOpts().CPlusPlus1y && !Info.keepEvaluatingAfterFailure())
+    return Error(E);
+
   APValue NewVal;
+
+  if (!this->Visit(E->getLHS())) {
+    if (Info.keepEvaluatingAfterFailure())
+      Evaluate(NewVal, this->Info, E->getRHS());
+    return false;
+  }
+
   if (!Evaluate(NewVal, this->Info, E->getRHS()))
     return false;
-  return HandleAssignment(this->Info, E, Result, E->getLHS()->getType(),
+
+  return handleAssignment(this->Info, E, Result, E->getLHS()->getType(),
                           NewVal);
 }
 
@@ -6682,7 +6872,7 @@ static bool EvaluateAsRValue(EvalInfo &Info, const Expr *E, APValue &Result) {
   if (E->isGLValue()) {
     LValue LV;
     LV.setFrom(Info.Ctx, Result);
-    if (!HandleLValueToRValueConversion(Info, E, E->getType(), LV, Result))
+    if (!handleLValueToRValueConversion(Info, E, E->getType(), LV, Result))
       return false;
   }
 

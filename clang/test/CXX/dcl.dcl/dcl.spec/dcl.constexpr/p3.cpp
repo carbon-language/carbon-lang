@@ -277,7 +277,7 @@ namespace std_example {
   constexpr int prev(int x) {
     return --x;
   }
-#if 1 // FIXME: !defined CXX1Y
+#ifndef CXX1Y
   // expected-error@-4 {{never produces a constant expression}}
   // expected-note@-4 {{subexpression}}
 #endif

@@ -84,19 +84,19 @@ def note_constexpr_depth_limit_exceeded : Note<
 def note_constexpr_call_limit_exceeded : Note<
   "constexpr evaluation hit maximum call limit">;
 def note_constexpr_lifetime_ended : Note<
-  "%select{read of|assignment to}0 %select{temporary|variable}1 "
-  "whose lifetime has ended">;
+  "%select{read of|assignment to|increment of|decrement of}0 "
+  "%select{temporary|variable}1 whose lifetime has ended">;
 def note_constexpr_access_uninit : Note<
-  "%select{read of|assignment to}0 object outside its lifetime "
-  "is not allowed in a constant expression">;
+  "%select{read of|assignment to|increment of|decrement of}0 "
+  "object outside its lifetime is not allowed in a constant expression">;
 def note_constexpr_modify_const_type : Note<
   "modification of object of const-qualified type %0 is not allowed "
   "in a constant expression">;
 def note_constexpr_access_volatile_type : Note<
-  "%select{read of|assignment to}0 volatile-qualified type %1 "
-  "is not allowed in a constant expression">;
+  "%select{read of|assignment to|increment of|decrement of}0 "
+  "volatile-qualified type %1 is not allowed in a constant expression">;
 def note_constexpr_access_volatile_obj : Note<
-  "%select{read of|assignment to}0 volatile "
+  "%select{read of|assignment to|increment of|decrement of}0 volatile "
   "%select{temporary|object %2|member %2}1 is not allowed in "
   "a constant expression">;
 def note_constexpr_ltor_mutable : Note<
@@ -106,14 +106,14 @@ def note_constexpr_ltor_non_const_int : Note<
 def note_constexpr_ltor_non_constexpr : Note<
   "read of non-constexpr variable %0 is not allowed in a constant expression">;
 def note_constexpr_access_null : Note<
-  "%select{read of|assignment to}0 dereferenced null pointer "
-  "is not allowed in a constant expression">;
+  "%select{read of|assignment to|increment of|decrement of}0 "
+  "dereferenced null pointer is not allowed in a constant expression">;
 def note_constexpr_access_past_end : Note<
-  "%select{read of|assignment to}0 dereferenced one-past-the-end pointer "
-  "is not allowed in a constant expression">;
+  "%select{read of|assignment to|increment of|decrement of}0 "
+  "dereferenced one-past-the-end pointer is not allowed in a constant expression">;
 def note_constexpr_access_inactive_union_member : Note<
-  "%select{read of|assignment to}0 member %1 of union with "
-  "%select{active member %3|no active member}2 "
+  "%select{read of|assignment to|increment of|decrement of}0 "
+  "member %1 of union with %select{active member %3|no active member}2 "
   "is not allowed in a constant expression">;
 def note_constexpr_modify_global : Note<
   "a constant expression cannot modify an object that is visible outside "
