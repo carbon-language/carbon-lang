@@ -830,7 +830,7 @@ inline brc_match<Cond_t> m_Br(const Cond_t &C, BasicBlock *&T, BasicBlock *&F) {
 // Matchers for max/min idioms, eg: "select (sgt x, y), x, y" -> smax(x,y).
 //
 
-template<typename LHS_t, typename RHS_t, typename Pred_t>
+template<typename CmpInst_t, typename LHS_t, typename RHS_t, typename Pred_t>
 struct MaxMin_match {
   LHS_t L;
   RHS_t R;
@@ -844,7 +844,7 @@ struct MaxMin_match {
     SelectInst *SI = dyn_cast<SelectInst>(V);
     if (!SI)
       return false;
-    ICmpInst *Cmp = dyn_cast<ICmpInst>(SI->getCondition());
+    CmpInst_t *Cmp = dyn_cast<CmpInst_t>(SI->getCondition());
     if (!Cmp)
       return false;
     // At this point we have a select conditioned on a comparison.  Check that
@@ -856,7 +856,7 @@ struct MaxMin_match {
     if ((TrueVal != LHS || FalseVal != RHS) &&
         (TrueVal != RHS || FalseVal != LHS))
       return false;
-    ICmpInst::Predicate Pred = LHS == TrueVal ?
+    typename CmpInst_t::Predicate Pred = LHS == TrueVal ?
       Cmp->getPredicate() : Cmp->getSwappedPredicate();
     // Does "(x pred y) ? x : y" represent the desired max/min operation?
     if (!Pred_t::match(Pred))
@@ -894,28 +894,116 @@ struct umin_pred_ty {
   }
 };
 
+/// ofmax_pred_ty - Helper class for identifying ordered max predicates.
+struct ofmax_pred_ty {
+  static bool match(FCmpInst::Predicate Pred) {
+    return Pred == CmpInst::FCMP_OGT || Pred == CmpInst::FCMP_OGE;
+  }
+};
+
+/// ofmin_pred_ty - Helper class for identifying ordered min predicates.
+struct ofmin_pred_ty {
+  static bool match(FCmpInst::Predicate Pred) {
+    return Pred == CmpInst::FCMP_OLT || Pred == CmpInst::FCMP_OLE;
+  }
+};
+
+/// ufmax_pred_ty - Helper class for identifying unordered max predicates.
+struct ufmax_pred_ty {
+  static bool match(FCmpInst::Predicate Pred) {
+    return Pred == CmpInst::FCMP_UGT || Pred == CmpInst::FCMP_UGE;
+  }
+};
+
+/// ufmin_pred_ty - Helper class for identifying unordered min predicates.
+struct ufmin_pred_ty {
+  static bool match(FCmpInst::Predicate Pred) {
+    return Pred == CmpInst::FCMP_ULT || Pred == CmpInst::FCMP_ULE;
+  }
+};
+
 template<typename LHS, typename RHS>
-inline MaxMin_match<LHS, RHS, smax_pred_ty>
+inline MaxMin_match<ICmpInst, LHS, RHS, smax_pred_ty>
 m_SMax(const LHS &L, const RHS &R) {
-  return MaxMin_match<LHS, RHS, smax_pred_ty>(L, R);
+  return MaxMin_match<ICmpInst, LHS, RHS, smax_pred_ty>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline MaxMin_match<LHS, RHS, smin_pred_ty>
+inline MaxMin_match<ICmpInst, LHS, RHS, smin_pred_ty>
 m_SMin(const LHS &L, const RHS &R) {
-  return MaxMin_match<LHS, RHS, smin_pred_ty>(L, R);
+  return MaxMin_match<ICmpInst, LHS, RHS, smin_pred_ty>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline MaxMin_match<LHS, RHS, umax_pred_ty>
+inline MaxMin_match<ICmpInst, LHS, RHS, umax_pred_ty>
 m_UMax(const LHS &L, const RHS &R) {
-  return MaxMin_match<LHS, RHS, umax_pred_ty>(L, R);
+  return MaxMin_match<ICmpInst, LHS, RHS, umax_pred_ty>(L, R);
 }
 
 template<typename LHS, typename RHS>
-inline MaxMin_match<LHS, RHS, umin_pred_ty>
+inline MaxMin_match<ICmpInst, LHS, RHS, umin_pred_ty>
 m_UMin(const LHS &L, const RHS &R) {
-  return MaxMin_match<LHS, RHS, umin_pred_ty>(L, R);
+  return MaxMin_match<ICmpInst, LHS, RHS, umin_pred_ty>(L, R);
+}
+
+/// \brief Match an 'ordered' floating point maximum attribute.
+/// Floating point has one special value 'NaN'. Therefore, there is no total
+/// order. However, if we can ignore the 'NaN' value (for example, because of a
+/// 'no-nans-float-math' flag) a combination of a fcmp and select has 'maximum'
+/// semantics. In the presence of 'NaN' we have to preserve the original
+/// select(fcmp(ogt/ge, L, R), L, R) semantics matched by this predicate.
+///
+///                         max(L, R)  iff L and R are not NaN
+///  m_OrdFMax(L, R) =      R          iff L or R are NaN
+template<typename LHS, typename RHS>
+inline MaxMin_match<FCmpInst, LHS, RHS, ofmax_pred_ty>
+m_OrdFMax(const LHS &L, const RHS &R) {
+  return MaxMin_match<FCmpInst, LHS, RHS, ofmax_pred_ty>(L, R);
+}
+
+/// \brief Match an 'ordered' floating point minimum attribute.
+/// Floating point has one special value 'NaN'. Therefore, there is no total
+/// order. However, if we can ignore the 'NaN' value (for example, because of a
+/// 'no-nans-float-math' flag) a combination of a fcmp and select has 'minimum'
+/// semantics. In the presence of 'NaN' we have to preserve the original
+/// select(fcmp(olt/le, L, R), L, R) semantics matched by this predicate.
+///
+///                         max(L, R)  iff L and R are not NaN
+///  m_OrdFMin(L, R) =      R          iff L or R are NaN
+template<typename LHS, typename RHS>
+inline MaxMin_match<FCmpInst, LHS, RHS, ofmin_pred_ty>
+m_OrdFMin(const LHS &L, const RHS &R) {
+  return MaxMin_match<FCmpInst, LHS, RHS, ofmin_pred_ty>(L, R);
+}
+
+/// \brief Match an 'unordered' floating point maximum attribute.
+/// Floating point has one special value 'NaN'. Therefore, there is no total
+/// order. However, if we can ignore the 'NaN' value (for example, because of a
+/// 'no-nans-float-math' flag) a combination of a fcmp and select has 'maximum'
+/// semantics. In the presence of 'NaN' we have to preserve the original
+/// select(fcmp(ugt/ge, L, R), L, R) semantics matched by this predicate.
+///
+///                         max(L, R)  iff L and R are not NaN
+///  m_UnordFMin(L, R) =    L          iff L or R are NaN
+template<typename LHS, typename RHS>
+inline MaxMin_match<FCmpInst, LHS, RHS, ufmax_pred_ty>
+m_UnordFMax(const LHS &L, const RHS &R) {
+  return MaxMin_match<FCmpInst, LHS, RHS, ufmax_pred_ty>(L, R);
+}
+
+/// \brief Match an 'unordered' floating point minimum attribute.
+/// Floating point has one special value 'NaN'. Therefore, there is no total
+/// order. However, if we can ignore the 'NaN' value (for example, because of a
+/// 'no-nans-float-math' flag) a combination of a fcmp and select has 'minimum'
+/// semantics. In the presence of 'NaN' we have to preserve the original
+/// select(fcmp(ult/le, L, R), L, R) semantics matched by this predicate.
+///
+///                          max(L, R)  iff L and R are not NaN
+///  m_UnordFMin(L, R) =     L          iff L or R are NaN
+template<typename LHS, typename RHS>
+inline MaxMin_match<FCmpInst, LHS, RHS, ufmin_pred_ty>
+m_UnordFMin(const LHS &L, const RHS &R) {
+  return MaxMin_match<FCmpInst, LHS, RHS, ufmin_pred_ty>(L, R);
 }
 
 template<typename Opnd_t>
