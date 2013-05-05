@@ -946,7 +946,7 @@ m_UMin(const LHS &L, const RHS &R) {
   return MaxMin_match<ICmpInst, LHS, RHS, umin_pred_ty>(L, R);
 }
 
-/// \brief Match an 'ordered' floating point maximum attribute.
+/// \brief Match an 'ordered' floating point maximum function.
 /// Floating point has one special value 'NaN'. Therefore, there is no total
 /// order. However, if we can ignore the 'NaN' value (for example, because of a
 /// 'no-nans-float-math' flag) a combination of a fcmp and select has 'maximum'
@@ -961,7 +961,7 @@ m_OrdFMax(const LHS &L, const RHS &R) {
   return MaxMin_match<FCmpInst, LHS, RHS, ofmax_pred_ty>(L, R);
 }
 
-/// \brief Match an 'ordered' floating point minimum attribute.
+/// \brief Match an 'ordered' floating point minimum function.
 /// Floating point has one special value 'NaN'. Therefore, there is no total
 /// order. However, if we can ignore the 'NaN' value (for example, because of a
 /// 'no-nans-float-math' flag) a combination of a fcmp and select has 'minimum'
@@ -976,7 +976,7 @@ m_OrdFMin(const LHS &L, const RHS &R) {
   return MaxMin_match<FCmpInst, LHS, RHS, ofmin_pred_ty>(L, R);
 }
 
-/// \brief Match an 'unordered' floating point maximum attribute.
+/// \brief Match an 'unordered' floating point maximum function.
 /// Floating point has one special value 'NaN'. Therefore, there is no total
 /// order. However, if we can ignore the 'NaN' value (for example, because of a
 /// 'no-nans-float-math' flag) a combination of a fcmp and select has 'maximum'
@@ -991,7 +991,7 @@ m_UnordFMax(const LHS &L, const RHS &R) {
   return MaxMin_match<FCmpInst, LHS, RHS, ufmax_pred_ty>(L, R);
 }
 
-/// \brief Match an 'unordered' floating point minimum attribute.
+/// \brief Match an 'unordered' floating point minimum function.
 /// Floating point has one special value 'NaN'. Therefore, there is no total
 /// order. However, if we can ignore the 'NaN' value (for example, because of a
 /// 'no-nans-float-math' flag) a combination of a fcmp and select has 'minimum'
