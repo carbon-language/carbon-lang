@@ -657,16 +657,26 @@ defm KRESTSP : FU6_LU6_np<0b0111101111, "krestsp">;
 
 // U10
 
-let Defs = [R11], isReMaterializable = 1, neverHasSideEffects = 1 in
+let Defs = [R11], isReMaterializable = 1 in {
+let neverHasSideEffects = 1 in
 def LDAPF_u10 : _FU10<0b110110, (outs), (ins pcrel_imm:$a), "ldap r11, $a", []>;
 
-let Defs = [R11], isReMaterializable = 1 in
 def LDAPF_lu10 : _FLU10<0b110110, (outs), (ins pcrel_imm:$a), "ldap r11, $a",
                         [(set R11, (pcrelwrapper tglobaladdr:$a))]>;
 
-let Defs = [R11], isReMaterializable = 1, isCodeGenOnly = 1 in
+let neverHasSideEffects = 1 in
+def LDAPB_u10 : _FU10<0b110111, (outs), (ins pcrel_imm_neg:$a), "ldap r11, $a",
+                      []>;
+
+let neverHasSideEffects = 1 in
+def LDAPB_lu10 : _FLU10<0b110111, (outs), (ins pcrel_imm_neg:$a),
+                        "ldap r11, $a",
+                        [(set R11, (pcrelwrapper tglobaladdr:$a))]>;
+
+let isCodeGenOnly = 1 in
 def LDAPF_lu10_ba : _FLU10<0b110110, (outs), (ins pcrel_imm:$a), "ldap r11, $a",
                            [(set R11, (pcrelwrapper tblockaddress:$a))]>;
+}
 
 let isCall=1,
 // All calls clobber the link register and the non-callee-saved registers:
