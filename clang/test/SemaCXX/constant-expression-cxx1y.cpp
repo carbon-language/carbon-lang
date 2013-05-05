@@ -232,6 +232,11 @@ namespace potential_const_expr {
     int z = 0;
     return 100 / (set(z), 0); // expected-note {{division by zero}}
   }
+  int n; // expected-note {{declared here}}
+  constexpr int ref() { // expected-error {{never produces a constant expression}}
+    int &r = n;
+    return r; // expected-note {{read of non-const variable 'n'}}
+  }
 }
 
 namespace subobject {

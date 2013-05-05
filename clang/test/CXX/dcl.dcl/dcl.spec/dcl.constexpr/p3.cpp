@@ -274,11 +274,13 @@ namespace std_example {
     int a; // expected-error {{must be initialized}}
     return a;
   }
-  // FIXME: Once we support variable mutation, this can produce a
-  // constant expression.
-  constexpr int prev(int x) { // expected-error {{never produces a constant expression}}
-    return --x; // expected-note {{subexpression}}
+  constexpr int prev(int x) {
+    return --x;
   }
+#if 1 // FIXME: !defined CXX1Y
+  // expected-error@-4 {{never produces a constant expression}}
+  // expected-note@-4 {{subexpression}}
+#endif
   constexpr int g(int x, int n) {
     int r = 1;
     while (--n > 0) r *= x;
