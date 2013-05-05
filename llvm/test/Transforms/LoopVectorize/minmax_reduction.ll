@@ -6,8 +6,11 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 ; Signed tests.
 
-; Turn this into a max reduction.
+; Turn this into a max reduction. Make sure we use a splat to initialize the
+; vector for the reduction.
 ; CHECK: @max_red
+; CHECK: %[[VAR:.*]] = insertelement <2 x i32> undef, i32 %max, i32 0
+; CHECK: {{.*}} = shufflevector <2 x i32> %[[VAR]], <2 x i32> undef, <2 x i32> zeroinitializer
 ; CHECK: icmp sgt <2 x i32>
 ; CHECK: select <2 x i1>
 ; CHECK: middle.block

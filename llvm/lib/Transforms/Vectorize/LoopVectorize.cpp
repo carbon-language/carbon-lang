@@ -498,8 +498,7 @@ public:
 
   /// This function returns the identity element (or neutral element) for
   /// the operation K.
-  static Constant *getReductionIdentity(ReductionKind K, Type *Tp,
-                                        MinMaxReductionKind MinMaxK);
+  static Constant *getReductionIdentity(ReductionKind K, Type *Tp);
 private:
   /// Check if a single basic block loop is vectorizable.
   /// At this point we know that this is a loop with a constant trip count
@@ -1501,8 +1500,7 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
 /// This function returns the identity element (or neutral element) for
 /// the operation K.
 Constant*
-LoopVectorizationLegality::getReductionIdentity(ReductionKind K, Type *Tp,
-                                                MinMaxReductionKind MinMaxK) {
+LoopVectorizationLegality::getReductionIdentity(ReductionKind K, Type *Tp) {
   switch (K) {
   case RK_IntegerXor:
   case RK_IntegerAdd:
@@ -1521,24 +1519,6 @@ LoopVectorizationLegality::getReductionIdentity(ReductionKind K, Type *Tp,
   case  RK_FloatAdd:
     // Adding zero to a number does not change it.
     return ConstantFP::get(Tp, 0.0L);
-  case  RK_IntegerMinMax:
-    switch(MinMaxK) {
-    default: llvm_unreachable("Unknown min/max predicate");
-    case MRK_UIntMin:
-      return ConstantInt::getAllOnesValue(Tp);
-    case MRK_UIntMax:
-      return ConstantInt::get(Tp, 0);
-    case MRK_SIntMin: {
-      unsigned BitWidth = Tp->getPrimitiveSizeInBits();
-      return ConstantInt::get(Tp->getContext(),
-                              APInt::getSignedMaxValue(BitWidth));
-    }
-    case LoopVectorizationLegality::MRK_SIntMax: {
-      unsigned BitWidth = Tp->getPrimitiveSizeInBits();
-      return ConstantInt::get(Tp->getContext(),
-                              APInt::getSignedMinValue(BitWidth));
-    }
-    }
   default:
     llvm_unreachable("Unknown reduction kind");
   }
@@ -1761,16 +1741,23 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
 
     // Find the reduction identity variable. Zero for addition, or, xor,
     // one for multiplication, -1 for And.
-    Constant *Iden =
-      LoopVectorizationLegality::getReductionIdentity(RdxDesc.Kind,
-                                                      VecTy->getScalarType(),
-                                                      RdxDesc.MinMaxKind);
-    Constant *Identity = ConstantVector::getSplat(VF, Iden);
+    Value *Identity;
+    Value *VectorStart;
+    if (RdxDesc.Kind == LoopVectorizationLegality::RK_IntegerMinMax)
+      // MinMax reduction have the start value as their identify.
+      VectorStart = Identity = Builder.CreateVectorSplat(VF, RdxDesc.StartValue,
+                                                         "minmax.ident");
+    else {
+      Constant *Iden =
+        LoopVectorizationLegality::getReductionIdentity(RdxDesc.Kind,
+                                                        VecTy->getScalarType());
+      Identity = ConstantVector::getSplat(VF, Iden);
 
-    // This vector is the Identity vector where the first element is the
-    // incoming scalar reduction.
-    Value *VectorStart = Builder.CreateInsertElement(Identity,
-                                                     RdxDesc.StartValue, Zero);
+      // This vector is the Identity vector where the first element is the
+      // incoming scalar reduction.
+      VectorStart = Builder.CreateInsertElement(Identity,
+                                                RdxDesc.StartValue, Zero);
+    }
 
     // Fix the vector-loop phi.
     // We created the induction variable so we know that the
