@@ -72,6 +72,8 @@ public:
   /// \returns true if an error occurred, false otherwise.
   virtual bool applyPermissions(std::string *ErrMsg = 0);
 
+  void registerEHFrames(StringRef SectionData);
+
   /// This method returns the address of the specified function. As such it is
   /// only useful for resolving library symbols, not code generated symbols.
   ///

@@ -96,6 +96,7 @@ public:
                                     StubMap &Stubs);
   virtual bool isCompatibleFormat(const ObjectBuffer *Buffer) const;
   virtual ObjectImage *createObjectImage(ObjectBuffer *InputBuffer);
+  virtual StringRef getEHFrameSection();
   virtual ~RuntimeDyldELF();
 };
 

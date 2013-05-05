@@ -65,6 +65,7 @@ public:
                                     const SymbolTableMap &Symbols,
                                     StubMap &Stubs);
   virtual bool isCompatibleFormat(const ObjectBuffer *Buffer) const;
+  virtual StringRef getEHFrameSection();
 };
 
 } // end namespace llvm

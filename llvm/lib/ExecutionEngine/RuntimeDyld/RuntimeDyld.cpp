@@ -25,9 +25,14 @@ using namespace llvm::object;
 
 // Empty out-of-line virtual destructor as the key function.
 RTDyldMemoryManager::~RTDyldMemoryManager() {}
+void RTDyldMemoryManager::registerEHFrames(StringRef SectionData) {}
 RuntimeDyldImpl::~RuntimeDyldImpl() {}
 
 namespace llvm {
+
+StringRef RuntimeDyldImpl::getEHFrameSection() {
+  return StringRef();
+}
 
 // Resolve the relocations for all symbols we currently know about.
 void RuntimeDyldImpl::resolveRelocations() {
@@ -174,7 +179,7 @@ void RuntimeDyldImpl::emitCommonSymbols(ObjectImage &Obj,
   if (!Addr)
     report_fatal_error("Unable to allocate memory for common symbols!");
   uint64_t Offset = 0;
-  Sections.push_back(SectionEntry(StringRef(), Addr, TotalSize, TotalSize, 0));
+  Sections.push_back(SectionEntry(StringRef(), Addr, TotalSize, 0));
   memset(Addr, 0, TotalSize);
 
   DEBUG(dbgs() << "emitCommonSection SectionID: " << SectionID
@@ -292,8 +297,7 @@ unsigned RuntimeDyldImpl::emitSection(ObjectImage &Obj,
                  << "\n");
   }
 
-  Sections.push_back(SectionEntry(Name, Addr, Allocate, DataSize,
-				  (uintptr_t)pData));
+  Sections.push_back(SectionEntry(Name, Addr, DataSize, (uintptr_t)pData));
   return SectionID;
 }
 
@@ -542,6 +546,10 @@ void RuntimeDyld::mapSectionAddress(const void *LocalAddress,
 
 StringRef RuntimeDyld::getErrorString() {
   return Dyld->getErrorString();
+}
+
+StringRef RuntimeDyld::getEHFrameSection() {
+  return Dyld->getEHFrameSection();
 }
 
 } // end namespace llvm

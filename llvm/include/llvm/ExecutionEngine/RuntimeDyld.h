@@ -66,6 +66,11 @@ public:
   ///
   /// Returns true if an error occurred, false otherwise.
   virtual bool applyPermissions(std::string *ErrMsg = 0) = 0;
+
+  /// Register the EH frames with the runtime so that c++ exceptions work. The
+  /// default implementation does nothing. Look at SectionMemoryManager for one
+  /// that uses __register_frame.
+  virtual void registerEHFrames(StringRef SectionData);
 };
 
 class RuntimeDyld {
@@ -109,6 +114,8 @@ public:
   void mapSectionAddress(const void *LocalAddress, uint64_t TargetAddress);
 
   StringRef getErrorString();
+
+  StringRef getEHFrameSection();
 };
 
 } // end namespace llvm

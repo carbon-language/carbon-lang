@@ -49,7 +49,7 @@ public:
   /// Address - address in the linker's memory where the section resides.
   uint8_t *Address;
 
-  /// Size - section size.
+  /// Size - section size. Doesn't include the stubs.
   size_t Size;
 
   /// LoadAddress - the address of the section in the target process's memory.
@@ -67,9 +67,9 @@ public:
   uintptr_t ObjAddress;
 
   SectionEntry(StringRef name, uint8_t *address, size_t size,
-	       uintptr_t stubOffset, uintptr_t objAddress)
+               uintptr_t objAddress)
     : Name(name), Address(address), Size(size), LoadAddress((uintptr_t)address),
-      StubOffset(stubOffset), ObjAddress(objAddress) {}
+      StubOffset(size), ObjAddress(objAddress) {}
 };
 
 /// RelocationEntry - used to represent relocations internally in the dynamic
@@ -174,6 +174,8 @@ protected:
       return 16;
     else if (Arch == Triple::ppc64)
       return 44;
+    else if (Arch == Triple::x86_64)
+      return 8; // GOT
     else if (Arch == Triple::systemz)
       return 16;
     else
@@ -332,6 +334,8 @@ public:
   StringRef getErrorString() { return ErrorStr; }
 
   virtual bool isCompatibleFormat(const ObjectBuffer *Buffer) const = 0;
+
+  virtual StringRef getEHFrameSection();
 };
 
 } // end namespace llvm

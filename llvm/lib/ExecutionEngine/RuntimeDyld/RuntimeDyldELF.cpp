@@ -151,6 +151,14 @@ void DyldELFObject<ELFT>::updateSymbolAddress(const SymbolRef &SymRef,
 
 namespace llvm {
 
+StringRef RuntimeDyldELF::getEHFrameSection() {
+  for (int i = 0, e = Sections.size(); i != e; ++i) {
+    if (Sections[i].Name == ".eh_frame")
+      return StringRef((const char*)Sections[i].Address, Sections[i].Size);
+  }
+  return StringRef();
+}
+
 ObjectImage *RuntimeDyldELF::createObjectImage(ObjectBuffer *Buffer) {
   if (Buffer->getBufferSize() < ELF::EI_NIDENT)
     llvm_unreachable("Unexpected ELF object size");

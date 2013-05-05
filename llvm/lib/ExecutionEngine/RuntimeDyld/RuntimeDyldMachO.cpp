@@ -21,6 +21,69 @@ using namespace llvm::object;
 
 namespace llvm {
 
+static unsigned char *processFDE(unsigned char *P, intptr_t DeltaForText, intptr_t DeltaForEH) {
+  uint32_t Length = *((uint32_t*)P);
+  P += 4;
+  unsigned char *Ret = P + Length;
+  uint32_t Offset = *((uint32_t*)P);
+  if (Offset == 0) // is a CIE
+    return Ret;
+
+  P += 4;
+  intptr_t FDELocation = *((intptr_t*)P);
+  intptr_t NewLocation = FDELocation - DeltaForText;
+  *((intptr_t*)P) = NewLocation;
+  P += sizeof(intptr_t);
+
+  // Skip the FDE address range
+  P += sizeof(intptr_t);
+
+  uint8_t Augmentationsize = *P;
+  P += 1;
+  if (Augmentationsize != 0) {
+    intptr_t LSDA = *((intptr_t*)P);
+    intptr_t NewLSDA = LSDA - DeltaForEH;
+    *((intptr_t*)P) = NewLSDA;
+  }
+
+  return Ret;
+}
+
+static intptr_t computeDelta(SectionEntry *A, SectionEntry *B) {
+  intptr_t ObjDistance = A->ObjAddress  - B->ObjAddress;
+  intptr_t MemDistance = A->LoadAddress - B->LoadAddress;
+  return ObjDistance - MemDistance;
+}
+
+StringRef RuntimeDyldMachO::getEHFrameSection() {
+  SectionEntry *Text = NULL;
+  SectionEntry *EHFrame = NULL;
+  SectionEntry *ExceptTab = NULL;
+  for (int i = 0, e = Sections.size(); i != e; ++i) {
+    if (Sections[i].Name == "__eh_frame")
+      EHFrame = &Sections[i];
+    else if (Sections[i].Name == "__text")
+      Text = &Sections[i];
+    else if (Sections[i].Name == "__gcc_except_tab")
+      ExceptTab = &Sections[i];
+  }
+  if (Text == NULL || EHFrame == NULL)
+    return StringRef();
+
+  intptr_t DeltaForText = computeDelta(Text, EHFrame);
+  intptr_t DeltaForEH = 0;
+  if (ExceptTab)
+    DeltaForEH = computeDelta(ExceptTab, EHFrame);
+
+  unsigned char *P = EHFrame->Address;
+  unsigned char *End = P + EHFrame->Size;
+  do  {
+    P = processFDE(P, DeltaForText, DeltaForEH);
+  } while(P != End);
+
+  return StringRef((char*)EHFrame->Address, EHFrame->Size);
+}
+
 void RuntimeDyldMachO::resolveRelocation(const RelocationEntry &RE,
                                          uint64_t Value) {
   const SectionEntry &Section = Sections[RE.SectionID];
@@ -267,7 +330,30 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
     Value.Addend = Addend - Addr;
   }
 
-  if (Arch == Triple::arm && (RelType & 0xf) == macho::RIT_ARM_Branch24Bit) {
+  if (Arch == Triple::x86_64 && RelType == macho::RIT_X86_64_GOT) {
+    assert(IsPCRel);
+    assert(Size == 2);
+    StubMap::const_iterator i = Stubs.find(Value);
+    uint8_t *Addr;
+    if (i != Stubs.end()) {
+      Addr = Section.Address + i->second;
+    } else {
+      Stubs[Value] = Section.StubOffset;
+      uint8_t *GOTEntry = Section.Address + Section.StubOffset;
+      RelocationEntry RE(SectionID, Section.StubOffset,
+                         macho::RIT_X86_64_Unsigned, Value.Addend - 4, false,
+                         3);
+      if (Value.SymbolName)
+        addRelocationForSymbol(RE, Value.SymbolName);
+      else
+        addRelocationForSection(RE, Value.SectionID);
+      Section.StubOffset += 8;
+      Addr = GOTEntry;
+    }
+    resolveRelocation(Section, Offset, (uint64_t)Addr,
+                      macho::RIT_X86_64_Unsigned, 4, true, 2);
+  } else if (Arch == Triple::arm &&
+             (RelType & 0xf) == macho::RIT_ARM_Branch24Bit) {
     // This is an ARM branch relocation, need to use a stub function.
 
     //  Look up for existing stub.

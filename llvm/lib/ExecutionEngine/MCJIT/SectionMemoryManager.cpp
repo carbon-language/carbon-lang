@@ -146,6 +146,38 @@ bool SectionMemoryManager::applyPermissions(std::string *ErrMsg)
   return false;
 }
 
+// Determine whether we can register EH tables.
+#if (defined(__GNUC__) && !defined(__ARM_EABI__) && \
+     !defined(__USING_SJLJ_EXCEPTIONS__))
+#define HAVE_EHTABLE_SUPPORT 1
+#else
+#define HAVE_EHTABLE_SUPPORT 0
+#endif
+
+#if HAVE_EHTABLE_SUPPORT
+extern "C" void __register_frame(void*);
+
+static const char *processFDE(const char *Entry) {
+  const char *P = Entry;
+  uint32_t Length = *((uint32_t*)P);
+  P += 4;
+  uint32_t Offset = *((uint32_t*)P);
+  if (Offset != 0)
+    __register_frame((void*)Entry);
+  return P + Length;
+}
+#endif
+
+void SectionMemoryManager::registerEHFrames(StringRef SectionData) {
+#if HAVE_EHTABLE_SUPPORT
+  const char *P = SectionData.data();
+  const char *End = SectionData.data() + SectionData.size();
+  do  {
+    P = processFDE(P);
+  } while(P != End);
+#endif
+}
+
 error_code SectionMemoryManager::applyMemoryGroupPermissions(MemoryGroup &MemGroup,
                                                              unsigned Permissions) {
 
