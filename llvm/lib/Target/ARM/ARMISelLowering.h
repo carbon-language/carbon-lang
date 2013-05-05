@@ -477,6 +477,7 @@ namespace llvm {
     int StoreByValRegs(CCState &CCInfo, SelectionDAG &DAG,
                        DebugLoc dl, SDValue &Chain,
                        const Value *OrigArg,
+                       unsigned InRegsParamRecordIdx,
                        unsigned OffsetFromOrigArg,
                        unsigned ArgOffset,
                        bool ForceMutable) const;
@@ -487,6 +488,7 @@ namespace llvm {
                               bool ForceMutable = false) const;
 
     void computeRegArea(CCState &CCInfo, MachineFunction &MF,
+                        unsigned InRegsParamRecordIdx,
                         unsigned &ArgRegsSize,
                         unsigned &ArgRegsSaveSize) const;
 

@@ -163,8 +163,56 @@ private:
 
   unsigned StackOffset;
   SmallVector<uint32_t, 16> UsedRegs;
-  unsigned FirstByValReg;
-  bool FirstByValRegValid;
+
+  // ByValInfo and SmallVector<ByValInfo, 4> ByValRegs:
+  //
+  // Vector of ByValInfo instances (ByValRegs) is introduced for byval registers
+  // tracking.
+  // Or, in another words it tracks byval parameters that are stored in
+  // general purpose registers.
+  //
+  // For 4 byte stack alignment,
+  // instance index means byval parameter number in formal
+  // arguments set. Assume, we have some "struct_type" with size = 4 bytes,
+  // then, for function "foo":
+  //
+  // i32 foo(i32 %p, %struct_type* %r, i32 %s, %struct_type* %t)
+  //
+  // ByValRegs[0] describes how "%r" is stored (Begin == r1, End == r2)
+  // ByValRegs[1] describes how "%t" is stored (Begin == r3, End == r4).
+  //
+  // In case of 8 bytes stack alignment,
+  // ByValRegs may also contain information about wasted registers.
+  // In function shown above, r3 would be wasted according to AAPCS rules.
+  // And in that case ByValRegs[1].Waste would be "true".
+  // ByValRegs vector size still would be 2,
+  // while "%t" goes to the stack: it wouldn't be described in ByValRegs.
+  //
+  // Supposed use-case for this collection:
+  // 1. Initially ByValRegs is empty, InRegsParamsProceed is 0.
+  // 2. HandleByVal fillups ByValRegs.
+  // 3. Argument analysis (LowerFormatArguments, for example). After
+  // some byval argument was analyzed, InRegsParamsProceed is increased.
+  struct ByValInfo {
+    ByValInfo(unsigned B, unsigned E, bool IsWaste = false) :
+      Begin(B), End(E), Waste(IsWaste) {}
+    // First register allocated for current parameter.
+    unsigned Begin;
+
+    // First after last register allocated for current parameter.
+    unsigned End;
+
+    // Means that current range of registers doesn't belong to any
+    // parameters. It was wasted due to stack alignment rules.
+    // For more information see:
+    // AAPCS, 5.5 Parameter Passing, Stage C, C.3.
+    bool Waste;
+  };
+  SmallVector<ByValInfo, 4 > ByValRegs;
+
+  // InRegsParamsProceed - shows how many instances of ByValRegs was proceed
+  // during argument analysis.
+  unsigned InRegsParamsProceed;
 
 protected:
   ParmContext CallOrPrologue;
@@ -306,12 +354,45 @@ public:
                    MVT LocVT, CCValAssign::LocInfo LocInfo,
                    int MinSize, int MinAlign, ISD::ArgFlagsTy ArgFlags);
 
-  // First GPR that carries part of a byval aggregate that's split
-  // between registers and memory.
-  unsigned getFirstByValReg() const { return FirstByValRegValid ? FirstByValReg : 0; }
-  void setFirstByValReg(unsigned r) { FirstByValReg = r; FirstByValRegValid = true; }
-  void clearFirstByValReg() { FirstByValReg = 0; FirstByValRegValid = false; }
-  bool isFirstByValRegValid() const { return FirstByValRegValid; }
+  // Returns count of byval arguments that are to be stored (even partly)
+  // in registers.
+  unsigned getInRegsParamsCount() const { return ByValRegs.size(); }
+
+  // Returns count of byval in-regs arguments proceed.
+  unsigned getInRegsParamsProceed() const { return InRegsParamsProceed; }
+
+  // Get information about N-th byval parameter that is stored in registers.
+  // Here "ByValParamIndex" is N.
+  void getInRegsParamInfo(unsigned InRegsParamRecordIndex,
+                          unsigned& BeginReg, unsigned& EndReg) const {
+    assert(InRegsParamRecordIndex < ByValRegs.size() &&
+           "Wrong ByVal parameter index");
+
+    const ByValInfo& info = ByValRegs[InRegsParamRecordIndex];
+    BeginReg = info.Begin;
+    EndReg = info.End;
+  }
+
+  // Add information about parameter that is kept in registers.
+  void addInRegsParamInfo(unsigned RegBegin, unsigned RegEnd) {
+    ByValRegs.push_back(ByValInfo(RegBegin, RegEnd));
+  }
+
+  // Goes either to next byval parameter (excluding "waste" record), or
+  // to the end of collection.
+  // Returns false, if end is reached.
+  bool nextInRegsParam() {
+    unsigned e = ByValRegs.size();
+    if (InRegsParamsProceed < e)
+      ++InRegsParamsProceed;
+    return InRegsParamsProceed < e;
+  }
+
+  // Clear byval registers tracking info.
+  void clearByValRegsInfo() {
+    InRegsParamsProceed = 0;
+    ByValRegs.clear();
+  }
 
   ParmContext getCallOrPrologue() const { return CallOrPrologue; }
 

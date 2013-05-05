@@ -32,7 +32,7 @@ CCState::CCState(CallingConv::ID CC, bool isVarArg, MachineFunction &mf,
   // No stack is used.
   StackOffset = 0;
 
-  clearFirstByValReg();
+  clearByValRegsInfo();
   UsedRegs.resize((TRI.getNumRegs()+31)/32);
 }
 

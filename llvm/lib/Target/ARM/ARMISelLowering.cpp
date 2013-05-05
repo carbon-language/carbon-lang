@@ -1481,10 +1481,17 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
       // True if this byval aggregate will be split between registers
       // and memory.
-      if (CCInfo.isFirstByValRegValid()) {
+      unsigned ByValArgsCount = CCInfo.getInRegsParamsCount();
+      unsigned CurByValIdx = CCInfo.getInRegsParamsProceed();
+
+      if (CurByValIdx < ByValArgsCount) {
+
+        unsigned RegBegin, RegEnd;
+        CCInfo.getInRegsParamInfo(CurByValIdx, RegBegin, RegEnd);
+
         EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
         unsigned int i, j;
-        for (i = 0, j = CCInfo.getFirstByValReg(); j < ARM::R4; i++, j++) {
+        for (i = 0, j = RegBegin; j < RegEnd; i++, j++) {
           SDValue Const = DAG.getConstant(4*i, MVT::i32);
           SDValue AddArg = DAG.getNode(ISD::ADD, dl, PtrVT, Arg, Const);
           SDValue Load = DAG.getLoad(PtrVT, dl, Chain, AddArg,
@@ -1493,11 +1500,15 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
           MemOpChains.push_back(Load.getValue(1));
           RegsToPass.push_back(std::make_pair(j, Load));
         }
-        offset = ARM::R4 - CCInfo.getFirstByValReg();
-        CCInfo.clearFirstByValReg();
+
+        // If parameter size outsides register area, "offset" value
+        // helps us to calculate stack slot for remained part properly.
+        offset = RegEnd - RegBegin;
+
+        CCInfo.nextInRegsParam();
       }
 
-      if (Flags.getByValSize() - 4*offset > 0) {
+      if (Flags.getByValSize() > 4*offset) {
         unsigned LocMemOffset = VA.getLocMemOffset();
         SDValue StkPtrOff = DAG.getIntPtrConstant(LocMemOffset);
         SDValue Dst = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr,
@@ -1740,9 +1751,24 @@ ARMTargetLowering::HandleByVal(
   assert((State->getCallOrPrologue() == Prologue ||
           State->getCallOrPrologue() == Call) &&
          "unhandled ParmContext");
-  if ((!State->isFirstByValRegValid()) &&
-      (!Subtarget->isAAPCS_ABI() || State->getNextStackOffset() == 0) &&
-      (ARM::R0 <= reg) && (reg <= ARM::R3)) {
+
+  // For in-prologue parameters handling, we also introduce stack offset
+  // for byval registers: see CallingConvLower.cpp, CCState::HandleByVal.
+  // This behaviour outsides AAPCS rules (5.5 Parameters Passing) of how
+  // NSAA should be evaluted (NSAA means "next stacked argument address").
+  // So: NextStackOffset = NSAAOffset + SizeOfByValParamsStoredInRegs.
+  // Then: NSAAOffset = NextStackOffset - SizeOfByValParamsStoredInRegs.
+  unsigned NSAAOffset = State->getNextStackOffset();
+  if (State->getCallOrPrologue() != Call) {
+    for (unsigned i = 0, e = State->getInRegsParamsCount(); i != e; ++i) {
+      unsigned RB, RE;
+      State->getInRegsParamInfo(i, RB, RE);
+      assert(NSAAOffset >= (RE-RB)*4 &&
+             "Stack offset for byval regs doesn't introduced anymore?");
+      NSAAOffset -= (RE-RB)*4;
+    }
+  }
+  if ((ARM::R0 <= reg) && (reg <= ARM::R3)) {
     if (Subtarget->isAAPCS_ABI() && Align > 4) {
       unsigned AlignInRegs = Align / 4;
       unsigned Waste = (ARM::R4 - reg) % AlignInRegs;
@@ -1750,22 +1776,45 @@ ARMTargetLowering::HandleByVal(
         reg = State->AllocateReg(GPRArgRegs, 4);
     }
     if (reg != 0) {
-      State->setFirstByValReg(reg);
+      unsigned excess = 4 * (ARM::R4 - reg);
+
+      // Special case when NSAA != SP and parameter size greater than size of
+      // all remained GPR regs. In that case we can't split parameter, we must
+      // send it to stack. We also must set NCRN to R4, so waste all
+      // remained registers.
+      if (Subtarget->isAAPCS_ABI() && NSAAOffset != 0 && size > excess) {
+        while (State->AllocateReg(GPRArgRegs, 4))
+          ;
+        return;
+      }
+
+      // First register for byval parameter is the first register that wasn't
+      // allocated before this method call, so it would be "reg".
+      // If parameter is small enough to be saved in range [reg, r4), then
+      // the end (first after last) register would be reg + param-size-in-regs,
+      // else parameter would be splitted between registers and stack,
+      // end register would be r4 in this case.
+      unsigned ByValRegBegin = reg;
+      unsigned ByValRegEnd = (size < excess) ? reg + size/4 : ARM::R4;
+      State->addInRegsParamInfo(ByValRegBegin, ByValRegEnd);
+      // Note, first register is allocated in the beginning of function already,
+      // allocate remained amount of registers we need.
+      for (unsigned i = reg+1; i != ByValRegEnd; ++i)
+        State->AllocateReg(GPRArgRegs, 4);
       // At a call site, a byval parameter that is split between
       // registers and memory needs its size truncated here.  In a
       // function prologue, such byval parameters are reassembled in
       // memory, and are not truncated.
       if (State->getCallOrPrologue() == Call) {
-        unsigned excess = 4 * (ARM::R4 - reg);
-        assert(size >= excess && "expected larger existing stack allocation");
-        size -= excess;
+        // Make remained size equal to 0 in case, when
+        // the whole structure may be stored into registers.
+        if (size < excess)
+          size = 0;
+        else
+          size -= excess;
       }
     }
   }
-  // Confiscate any remaining parameter registers to preclude their
-  // assignment to subsequent parameters.
-  while (State->AllocateReg(GPRArgRegs, 4))
-    ;
 }
 
 /// MatchingStackOffset - Return true if the given stack call argument is
@@ -2580,13 +2629,16 @@ ARMTargetLowering::GetF64FormalArgument(CCValAssign &VA, CCValAssign &NextVA,
 
 void
 ARMTargetLowering::computeRegArea(CCState &CCInfo, MachineFunction &MF,
+                                  unsigned InRegsParamRecordIdx,
                                   unsigned &ArgRegsSize,
                                   unsigned &ArgRegsSaveSize)
   const {
   unsigned NumGPRs;
-  if (CCInfo.isFirstByValRegValid())
-    NumGPRs = ARM::R4 - CCInfo.getFirstByValReg();
-  else {
+  if (InRegsParamRecordIdx < CCInfo.getInRegsParamsCount()) {
+    unsigned RBegin, REnd;
+    CCInfo.getInRegsParamInfo(InRegsParamRecordIdx, RBegin, REnd);
+    NumGPRs = REnd - RBegin;
+  } else {
     unsigned int firstUnalloced;
     firstUnalloced = CCInfo.getFirstUnallocated(GPRArgRegs,
                                                 sizeof(GPRArgRegs) /
@@ -2611,6 +2663,7 @@ int
 ARMTargetLowering::StoreByValRegs(CCState &CCInfo, SelectionDAG &DAG,
                                   DebugLoc dl, SDValue &Chain,
                                   const Value *OrigArg,
+                                  unsigned InRegsParamRecordIdx,
                                   unsigned OffsetFromOrigArg,
                                   unsigned ArgOffset,
                                   bool ForceMutable) const {
@@ -2629,24 +2682,26 @@ ARMTargetLowering::StoreByValRegs(CCState &CCInfo, SelectionDAG &DAG,
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  unsigned firstRegToSaveIndex;
-  if (CCInfo.isFirstByValRegValid())
-    firstRegToSaveIndex = CCInfo.getFirstByValReg() - ARM::R0;
-  else {
+  unsigned firstRegToSaveIndex, lastRegToSaveIndex;
+  unsigned RBegin, REnd;
+  if (InRegsParamRecordIdx < CCInfo.getInRegsParamsCount()) {
+    CCInfo.getInRegsParamInfo(InRegsParamRecordIdx, RBegin, REnd);
+    firstRegToSaveIndex = RBegin - ARM::R0;
+    lastRegToSaveIndex = REnd - ARM::R0;
+  } else {
     firstRegToSaveIndex = CCInfo.getFirstUnallocated
       (GPRArgRegs, sizeof(GPRArgRegs) / sizeof(GPRArgRegs[0]));
+    lastRegToSaveIndex = 4;
   }
 
   unsigned ArgRegsSize, ArgRegsSaveSize;
-  computeRegArea(CCInfo, MF, ArgRegsSize, ArgRegsSaveSize);
+  computeRegArea(CCInfo, MF, InRegsParamRecordIdx, ArgRegsSize, ArgRegsSaveSize);
 
   // Store any by-val regs to their spots on the stack so that they may be
   // loaded by deferencing the result of formal parameter pointer or va_next.
   // Note: once stack area for byval/varargs registers
   // was initialized, it can't be initialized again.
-  if (!AFI->getArgRegsSaveSize() && ArgRegsSaveSize) {
-
-    AFI->setArgRegsSaveSize(ArgRegsSaveSize);
+  if (ArgRegsSaveSize) {
 
     int FrameIndex = MFI->CreateFixedObject(
                       ArgRegsSaveSize,
@@ -2655,7 +2710,8 @@ ARMTargetLowering::StoreByValRegs(CCState &CCInfo, SelectionDAG &DAG,
     SDValue FIN = DAG.getFrameIndex(FrameIndex, getPointerTy());
 
     SmallVector<SDValue, 4> MemOps;
-    for (unsigned i = 0; firstRegToSaveIndex < 4; ++firstRegToSaveIndex, ++i) {
+    for (unsigned i = 0; firstRegToSaveIndex < lastRegToSaveIndex;
+         ++firstRegToSaveIndex, ++i) {
       const TargetRegisterClass *RC;
       if (AFI->isThumb1OnlyFunction())
         RC = &ARM::tGPRRegClass;
@@ -2672,6 +2728,9 @@ ARMTargetLowering::StoreByValRegs(CCState &CCInfo, SelectionDAG &DAG,
       FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), FIN,
                         DAG.getConstant(4, getPointerTy()));
     }
+
+    AFI->setArgRegsSaveSize(ArgRegsSaveSize + AFI->getArgRegsSaveSize());
+
     if (!MemOps.empty())
       Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                           &MemOps[0], MemOps.size());
@@ -2696,7 +2755,8 @@ ARMTargetLowering::VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
   // If there is no regs to be stored, just point address after last
   // argument passed via stack.
   int FrameIndex =
-    StoreByValRegs(CCInfo, DAG, dl, Chain, 0, 0, ArgOffset, ForceMutable);
+    StoreByValRegs(CCInfo, DAG, dl, Chain, 0, CCInfo.getInRegsParamsCount(),
+                   0, ArgOffset, ForceMutable);
 
   AFI->setVarArgsFrameIndex(FrameIndex);
 }
@@ -2727,6 +2787,12 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
   SDValue ArgValue;
   Function::const_arg_iterator CurOrigArg = MF.getFunction()->arg_begin();
   unsigned CurArgIdx = 0;
+
+  // Initially ArgRegsSaveSize is zero.
+  // Then we increase this value each time we meet byval parameter.
+  // We also increase this value in case of varargs function.
+  AFI->setArgRegsSaveSize(0);
+
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
     std::advance(CurOrigArg, Ins[VA.getValNo()].OrigArgIndex - CurArgIdx);
@@ -2824,12 +2890,15 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
           // Since they could be overwritten by lowering of arguments in case of
           // a tail call.
           if (Flags.isByVal()) {
+            unsigned CurByValIndex = CCInfo.getInRegsParamsProceed();
             int FrameIndex = StoreByValRegs(
-                                CCInfo, DAG, dl, Chain, CurOrigArg,
-                                Ins[VA.getValNo()].PartOffset,
-                                VA.getLocMemOffset(),
-                                true /*force mutable frames*/);
+                CCInfo, DAG, dl, Chain, CurOrigArg,
+                CurByValIndex,
+                Ins[VA.getValNo()].PartOffset,
+                VA.getLocMemOffset(),
+                true /*force mutable frames*/);
             InVals.push_back(DAG.getFrameIndex(FrameIndex, getPointerTy()));
+            CCInfo.nextInRegsParam();
           } else {
             int FI = MFI->CreateFixedObject(VA.getLocVT().getSizeInBits()/8,
                                             VA.getLocMemOffset(), true);
