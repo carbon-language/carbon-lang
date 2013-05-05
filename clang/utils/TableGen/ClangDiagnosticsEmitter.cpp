@@ -245,7 +245,7 @@ static void groupDiagnostics(const std::vector<Record*> &Diags,
                             SourceMgr::DK_Error,
                             Twine("group '") + Name +
                               "' is referred to anonymously",
-                            ArrayRef<SMRange>(),
+                            None,
                             InGroupRange.isValid() ? FixIt
                                                    : ArrayRef<SMFixIt>());
         SrcMgr.PrintMessage((*I)->ExplicitDef->getLoc().front(),
