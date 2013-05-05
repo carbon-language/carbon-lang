@@ -2991,8 +2991,8 @@ LoopVectorizationLegality::isMinMaxSelectCmpPattern(Instruction *I, ReductionIns
   if (!Cmp->hasOneUse())
     return ReductionInstDesc(false, I);
 
-  Value *CmpLeft = Cmp->getOperand(0);
-  Value *CmpRight = Cmp->getOperand(1);
+  Value *CmpLeft;
+  Value *CmpRight;
 
   // Look for a min/max pattern.
   if (m_UMin(m_Value(CmpLeft), m_Value(CmpRight)).match(Select))
