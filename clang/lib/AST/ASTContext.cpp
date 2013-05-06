@@ -1283,6 +1283,10 @@ CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) const {
         T = getBaseElementType(arrayType);
       }
       Align = std::max(Align, getPreferredTypeAlign(T.getTypePtr()));
+      if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+        if (VD->hasGlobalStorage())
+          Align = std::max(Align, getTargetInfo().getMinGlobalAlign());
+      }
     }
 
     // Fields can be subject to extra alignment constraints, like if
@@ -1723,6 +1727,18 @@ unsigned ASTContext::getPreferredTypeAlign(const Type *T) const {
     return std::max(ABIAlign, (unsigned)getTypeSize(T));
 
   return ABIAlign;
+}
+
+/// getAlignOfGlobalVar - Return the alignment in bits that should be given
+/// to a global variable of the specified type.
+unsigned ASTContext::getAlignOfGlobalVar(QualType T) const {
+  return std::max(getTypeAlign(T), getTargetInfo().getMinGlobalAlign());
+}
+
+/// getAlignOfGlobalVarInChars - Return the alignment in characters that
+/// should be given to a global variable of the specified type.
+CharUnits ASTContext::getAlignOfGlobalVarInChars(QualType T) const {
+  return toCharUnitsFromBits(getAlignOfGlobalVar(T));
 }
 
 /// DeepCollectObjCIvars -

@@ -1593,6 +1593,14 @@ public:
   /// beneficial for performance to overalign a data type.
   unsigned getPreferredTypeAlign(const Type *T) const;
 
+  /// \brief Return the alignment in bits that should be given to a
+  /// global variable with type \p T.
+  unsigned getAlignOfGlobalVar(QualType T) const;
+
+  /// \brief Return the alignment in characters that should be given to a
+  /// global variable with type \p T.
+  CharUnits getAlignOfGlobalVarInChars(QualType T) const;
+
   /// \brief Return a conservative estimate of the alignment of the specified
   /// decl \p D.
   ///

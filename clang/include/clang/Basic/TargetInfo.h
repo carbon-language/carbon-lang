@@ -66,6 +66,7 @@ protected:
   unsigned char LongWidth, LongAlign;
   unsigned char LongLongWidth, LongLongAlign;
   unsigned char SuitableAlign;
+  unsigned char MinGlobalAlign;
   unsigned char MaxAtomicPromoteWidth, MaxAtomicInlineWidth;
   unsigned short MaxVectorAlign;
   const char *DescriptionString;
@@ -265,6 +266,10 @@ public:
   /// \brief Return the alignment that is suitable for storing any
   /// object with a fundamental alignment requirement.
   unsigned getSuitableAlign() const { return SuitableAlign; }
+
+  /// getMinGlobalAlign - Return the minimum alignment of a global variable,
+  /// unless its alignment is explicitly reduced via attributes.
+  unsigned getMinGlobalAlign() const { return MinGlobalAlign; }
 
   /// getWCharWidth/Align - Return the size of 'wchar_t' for this target, in
   /// bits.

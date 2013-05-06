@@ -37,6 +37,7 @@ TargetInfo::TargetInfo(const std::string &T) : TargetOpts(), Triple(T)
   LongWidth = LongAlign = 32;
   LongLongWidth = LongLongAlign = 64;
   SuitableAlign = 64;
+  MinGlobalAlign = 0;
   HalfWidth = 16;
   HalfAlign = 16;
   FloatWidth = 32;
