@@ -1520,7 +1520,7 @@ TEST_F(FormatTest, MixingPreprocessorDirectivesAndNormalCode) {
 TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
   EXPECT_EQ("int\n"
             "#define A\n"
-            "a;",
+            "    a;",
             format("int\n#define A\na;"));
   verifyFormat("functionCallTo(\n"
                "    someOtherFunction(\n"
@@ -1713,7 +1713,7 @@ TEST_F(FormatTest, MemoizationTests) {
       "CFRunLoopTimerCreate(CFAllocatorRef allocato, CFAbsoluteTime fireDate,\n"
       "                     CFTimeInterval interval, CFOptionFlags flags,\n"
       "                     CFIndex order, CFRunLoopTimerCallBack callout,\n"
-      "                     CFRunLoopTimerContext *context);");
+      "                     CFRunLoopTimerContext *context) {}");
 
   // Deep nesting somewhat works around our memoization.
   verifyFormat(
@@ -1755,8 +1755,9 @@ TEST_F(FormatTest, BreaksFunctionDeclarations) {
                "                              Cccccccccccccc cccccccccccccc);");
 
   // 2) break after return type.
-  verifyFormat("Aaaaaaaaaaaaaaaaaaaaaaaa\n"
-               "bbbbbbbbbbbbbb(Cccccccccccccc cccccccccccccccccccccccccc);");
+  verifyFormat(
+      "Aaaaaaaaaaaaaaaaaaaaaaaa\n"
+      "    bbbbbbbbbbbbbb(Cccccccccccccc cccccccccccccccccccccccccc);");
 
   // 3) break after (.
   verifyFormat(
@@ -1766,8 +1767,8 @@ TEST_F(FormatTest, BreaksFunctionDeclarations) {
   // 4) break before after nested name specifiers.
   verifyFormat(
       "Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
-      "SomeClasssssssssssssssssssssssssssssssssssssss::\n"
-      "    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb(Cccccccccccccc cccccccccc);");
+      "    SomeClasssssssssssssssssssssssssssssssssssssss::\n"
+      "        bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb(Cccccccccccccc cccccccccc);");
 
   // However, there are exceptions, if a sufficient amount of lines can be
   // saved.
@@ -1780,9 +1781,9 @@ TEST_F(FormatTest, BreaksFunctionDeclarations) {
                "                                  Cccccccccccccc cccccccccc);");
   verifyFormat(
       "Aaaaaaaaaaaaaaaaaa\n"
-      "bbbbbbbbbbbbbb(Cccccccccccccc cccccccccc, Cccccccccccccc cccccccccc,\n"
-      "               Cccccccccccccc cccccccccc, Cccccccccccccc cccccccccc,\n"
-      "               Cccccccccccccc cccccccccc, Cccccccccccccc cccccccccc);");
+      "    bbbbbbbbbbb(Cccccccccccccc cccccccccc, Cccccccccccccc cccccccccc,\n"
+      "                Cccccccccccccc cccccccccc, Cccccccccccccc cccccccccc,\n"
+      "                Cccccccccccccc cccccccccc, Cccccccccccccc cccccccccc);");
   verifyFormat(
       "Aaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb(Cccccccccccccc cccccccccc,\n"
       "                                          Cccccccccccccc cccccccccc,\n"
@@ -1954,12 +1955,9 @@ TEST_F(FormatTest, DoesNotBreakTrailingAnnotation) {
       "                   aaaaaaaaaaaaaaaaaaaaaaaaa));");
   verifyFormat("bool aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
                "    __attribute__((unused));");
-
-  // FIXME: This is bad indentation, but generally hard to distinguish from a
-  // function declaration.
   verifyFormat(
       "bool aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
-      "GUARDED_BY(aaaaaaaaaaaa);");
+      "    GUARDED_BY(aaaaaaaaaaaa);");
 }
 
 TEST_F(FormatTest, BreaksAccordingToOperatorPrecedence) {
@@ -2121,8 +2119,8 @@ TEST_F(FormatTest, DeclarationsOfMultipleVariables) {
   // FIXME: If multiple variables are defined, the "*" needs to move to the new
   // line. Also fix indent for breaking after the type, this looks bad.
   verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa *\n"
-               "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa = aaaaaaaaaaaaaaaaaaa,\n"
-               "    *b = bbbbbbbbbbbbbbbbbbb;");
+               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaa = aaaaaaaaaaaaaaaaaaa,\n"
+               "   *b = bbbbbbbbbbbbbbbbbbb;");
 
   // Not ideal, but pointer-with-type does not allow much here.
   verifyGoogleFormat(
@@ -2707,6 +2705,19 @@ TEST_F(FormatTest, FormatsFunctionTypes) {
 }
 
 TEST_F(FormatTest, BreaksLongDeclarations) {
+  verifyFormat("typedef LoooooooooooooooooooooooooooooooooooooooongType\n"
+               "    AnotherNameForTheLongType;");
+  verifyFormat("LoooooooooooooooooooooooooooooooooooooooongType\n"
+               "    LoooooooooooooooooooooooooooooooooooooooongVariable;");
+  verifyFormat("LoooooooooooooooooooooooooooooooooooooooongReturnType\n"
+               "    LoooooooooooooooooooooooooooooooongFunctionDeclaration();");
+  verifyFormat("LoooooooooooooooooooooooooooooooooooooooongReturnType\n"
+               "LooooooooooooooooooooooooooooooooooongFunctionDefinition() {}");
+
+  // FIXME: Without the comment, this breaks after "(".
+  verifyFormat("LoooooooooooooooooooooooooooooooooooooooongType // break\n"
+               "    (*LoooooooooooooooooooooooooooongFunctionTypeVarialbe)();");
+
   verifyFormat("int *someFunction(int LoooooooooooooooooooongParam1,\n"
                "                  int LoooooooooooooooooooongParam2) {}");
   verifyFormat(
@@ -2722,7 +2733,7 @@ TEST_F(FormatTest, BreaksLongDeclarations) {
                "        AnotherLongParameterName) {}");
   verifyFormat(
       "aaaaaaaaaaaaaaaa::aaaaaaaaaaaaaaaa<aaaaaaaaaaaaa, aaaaaaaaaaaa>\n"
-      "aaaaaaaaaaaaaaaaaaaaaaa;");
+      "    aaaaaaaaaaaaaaaaaaaaaaa;");
 
   verifyGoogleFormat(
       "TypeSpecDecl* TypeSpecDecl::Create(ASTContext& C, DeclContext* DC,\n"

@@ -245,24 +245,25 @@ private:
   }
 
   bool parseBrace() {
-    // Lines are fine to end with '{'.
-    if (CurrentToken == NULL)
-      return true;
-    ScopedContextCreator ContextCreator(*this, tok::l_brace, 1);
-    AnnotatedToken *Left = CurrentToken->Parent;
-    while (CurrentToken != NULL) {
-      if (CurrentToken->is(tok::r_brace)) {
-        Left->MatchingParen = CurrentToken;
-        CurrentToken->MatchingParen = Left;
-        next();
-        return true;
+    if (CurrentToken != NULL) {
+      ScopedContextCreator ContextCreator(*this, tok::l_brace, 1);
+      AnnotatedToken *Left = CurrentToken->Parent;
+      while (CurrentToken != NULL) {
+        if (CurrentToken->is(tok::r_brace)) {
+          Left->MatchingParen = CurrentToken;
+          CurrentToken->MatchingParen = Left;
+          next();
+          return true;
+        }
+        if (CurrentToken->isOneOf(tok::r_paren, tok::r_square))
+          return false;
+        updateParameterCount(Left, CurrentToken);
+        if (!consumeToken())
+          return false;
       }
-      if (CurrentToken->isOneOf(tok::r_paren, tok::r_square))
-        return false;
-      updateParameterCount(Left, CurrentToken);
-      if (!consumeToken())
-        return false;
     }
+    // No closing "}" found, this probably starts a definition.
+    Line.StartsDefinition = true;
     return true;
   }
 
