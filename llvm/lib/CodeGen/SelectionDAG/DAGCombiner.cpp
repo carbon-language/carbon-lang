@@ -9145,6 +9145,12 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
         return SDValue();
     } else {
       SingleSource = Op.getOperand(0);
+
+      // Check the source type is the same as the type of the result.
+      // If not, this concat may extend the vector, so we can not
+      // optimize it away.
+      if (SingleSource.getValueType() != N->getValueType(0))
+        return SDValue();
     }
 
     unsigned IdentityIndex = i * PartNumElem;
