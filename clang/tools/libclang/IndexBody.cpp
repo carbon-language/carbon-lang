@@ -68,9 +68,6 @@ public:
   }
 
   bool VisitObjCMessageExpr(ObjCMessageExpr *E) {
-    if (TypeSourceInfo *Cls = E->getClassReceiverTypeInfo())
-      IndexCtx.indexTypeSourceInfo(Cls, Parent, ParentDC);
-
     if (ObjCMethodDecl *MD = E->getMethodDecl())
       IndexCtx.handleReference(MD, E->getSelectorStartLoc(),
                                Parent, ParentDC, E,
