@@ -139,8 +139,7 @@ namespace llvm {
     mutable unsigned IndentCount;
   public:
     explicit DIE(unsigned Tag)
-      : Offset(0), Size(0), Abbrev(Tag, dwarf::DW_CHILDREN_no), Parent(0),
-        IndentCount(0) {}
+      : Offset(0), Size(0), Abbrev(Tag, dwarf::DW_CHILDREN_no), Parent(0) {}
     virtual ~DIE();
 
     // Accessors.
@@ -179,7 +178,7 @@ namespace llvm {
     }
 
 #ifndef NDEBUG
-    void print(raw_ostream &O, unsigned IncIndent = 0);
+    void print(raw_ostream &O, unsigned IndentCount = 0) const;
     void dump();
 #endif
   };

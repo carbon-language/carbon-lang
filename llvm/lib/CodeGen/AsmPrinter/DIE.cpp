@@ -114,7 +114,7 @@ DIE::~DIE() {
 
 /// Climb up the parent chain to get the compile unit DIE to which this DIE
 /// belongs.
-DIE *DIE::getCompileUnit() const{
+DIE *DIE::getCompileUnit() const {
   DIE *p = getParent();
   while (p) {
     if (p->getTag() == dwarf::DW_TAG_compile_unit)
@@ -125,8 +125,7 @@ DIE *DIE::getCompileUnit() const{
 }
 
 #ifndef NDEBUG
-void DIE::print(raw_ostream &O, unsigned IncIndent) {
-  IndentCount += IncIndent;
+void DIE::print(raw_ostream &O, unsigned IndentCount) const {
   const std::string Indent(IndentCount, ' ');
   bool isBlock = Abbrev.getTag() == 0;
 
@@ -165,11 +164,10 @@ void DIE::print(raw_ostream &O, unsigned IncIndent) {
   IndentCount -= 2;
 
   for (unsigned j = 0, M = Children.size(); j < M; ++j) {
-    Children[j]->print(O, 4);
+    Children[j]->print(O, IndentCount+4);
   }
 
   if (!isBlock) O << "\n";
-  IndentCount -= IncIndent;
 }
 
 void DIE::dump() {
