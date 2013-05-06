@@ -528,6 +528,113 @@
 // PPC:INTMAX_C_(0) 0LL
 // PPC:UINTMAX_C_(0) 0ULL
 //
+// RUN: %clang_cc1 -E -ffreestanding -triple=s390x-none-none %s | FileCheck -check-prefix S390X %s
+//
+// S390X:typedef signed long long int int64_t;
+// S390X:typedef unsigned long long int uint64_t;
+// S390X:typedef int64_t int_least64_t;
+// S390X:typedef uint64_t uint_least64_t;
+// S390X:typedef int64_t int_fast64_t;
+// S390X:typedef uint64_t uint_fast64_t;
+//
+// S390X:typedef signed int int32_t;
+// S390X:typedef unsigned int uint32_t;
+// S390X:typedef int32_t int_least32_t;
+// S390X:typedef uint32_t uint_least32_t;
+// S390X:typedef int32_t int_fast32_t;
+// S390X:typedef uint32_t uint_fast32_t;
+//
+// S390X:typedef signed short int16_t;
+// S390X:typedef unsigned short uint16_t;
+// S390X:typedef int16_t int_least16_t;
+// S390X:typedef uint16_t uint_least16_t;
+// S390X:typedef int16_t int_fast16_t;
+// S390X:typedef uint16_t uint_fast16_t;
+//
+// S390X:typedef signed char int8_t;
+// S390X:typedef unsigned char uint8_t;
+// S390X:typedef int8_t int_least8_t;
+// S390X:typedef uint8_t uint_least8_t;
+// S390X:typedef int8_t int_fast8_t;
+// S390X:typedef uint8_t uint_fast8_t;
+//
+// S390X:typedef int64_t intptr_t;
+// S390X:typedef uint64_t uintptr_t;
+//
+// S390X:typedef long long int intmax_t;
+// S390X:typedef long long unsigned int uintmax_t;
+//
+// S390X:INT8_MAX_ 127
+// S390X:INT8_MIN_ (-127 -1)
+// S390X:UINT8_MAX_ 255
+// S390X:INT_LEAST8_MIN_ (-127 -1)
+// S390X:INT_LEAST8_MAX_ 127
+// S390X:UINT_LEAST8_MAX_ 255
+// S390X:INT_FAST8_MIN_ (-127 -1)
+// S390X:INT_FAST8_MAX_ 127
+// S390X:UINT_FAST8_MAX_ 255
+//
+// S390X:INT16_MAX_ 32767
+// S390X:INT16_MIN_ (-32767 -1)
+// S390X:UINT16_MAX_ 65535
+// S390X:INT_LEAST16_MIN_ (-32767 -1)
+// S390X:INT_LEAST16_MAX_ 32767
+// S390X:UINT_LEAST16_MAX_ 65535
+// S390X:INT_FAST16_MIN_ (-32767 -1)
+// S390X:INT_FAST16_MAX_ 32767
+// S390X:UINT_FAST16_MAX_ 65535
+//
+// S390X:INT32_MAX_ 2147483647
+// S390X:INT32_MIN_ (-2147483647 -1)
+// S390X:UINT32_MAX_ 4294967295U
+// S390X:INT_LEAST32_MIN_ (-2147483647 -1)
+// S390X:INT_LEAST32_MAX_ 2147483647
+// S390X:UINT_LEAST32_MAX_ 4294967295U
+// S390X:INT_FAST32_MIN_ (-2147483647 -1)
+// S390X:INT_FAST32_MAX_ 2147483647
+// S390X:UINT_FAST32_MAX_ 4294967295U
+//
+// S390X:INT64_MAX_ 9223372036854775807L
+// S390X:INT64_MIN_ (-9223372036854775807LL -1)
+// S390X:UINT64_MAX_ 18446744073709551615UL
+// S390X:INT_LEAST64_MIN_ (-9223372036854775807LL -1)
+// S390X:INT_LEAST64_MAX_ 9223372036854775807L
+// S390X:UINT_LEAST64_MAX_ 18446744073709551615UL
+// S390X:INT_FAST64_MIN_ (-9223372036854775807LL -1)
+// S390X:INT_FAST64_MAX_ 9223372036854775807L
+// S390X:UINT_FAST64_MAX_ 18446744073709551615UL
+//
+// S390X:INTPTR_MIN_ (-9223372036854775807LL -1)
+// S390X:INTPTR_MAX_ 9223372036854775807L
+// S390X:UINTPTR_MAX_ 18446744073709551615UL
+// S390X:PTRDIFF_MIN_ (-9223372036854775807LL -1)
+// S390X:PTRDIFF_MAX_ 9223372036854775807L
+// S390X:SIZE_MAX_ 18446744073709551615UL
+//
+// S390X:INTMAX_MIN_ (-9223372036854775807LL -1)
+// S390X:INTMAX_MAX_ 9223372036854775807L
+// S390X:UINTMAX_MAX_ 18446744073709551615UL
+//
+// S390X:SIG_ATOMIC_MIN_ (-2147483647 -1)
+// S390X:SIG_ATOMIC_MAX_ 2147483647
+// S390X:WINT_MIN_ (-2147483647 -1)
+// S390X:WINT_MAX_ 2147483647
+//
+// S390X:WCHAR_MAX_ 2147483647
+// S390X:WCHAR_MIN_ (-2147483647 -1)
+//
+// S390X:INT8_C_(0) 0
+// S390X:UINT8_C_(0) 0U
+// S390X:INT16_C_(0) 0
+// S390X:UINT16_C_(0) 0U
+// S390X:INT32_C_(0) 0
+// S390X:UINT32_C_(0) 0U
+// S390X:INT64_C_(0) 0L
+// S390X:UINT64_C_(0) 0UL
+//
+// S390X:INTMAX_C_(0) 0L
+// S390X:UINTMAX_C_(0) 0UL
+//
 // RUN: %clang_cc1 -E -ffreestanding -triple=sparc-none-none %s | FileCheck -check-prefix SPARC %s
 //
 // SPARC:typedef signed long long int int64_t;

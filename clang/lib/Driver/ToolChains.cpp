@@ -1146,6 +1146,15 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
     "ppc64-redhat-linux"
   };
 
+  static const char *const SystemZLibDirs[] = { "/lib64", "/lib" };
+  static const char *const SystemZTriples[] = {
+    "s390x-linux-gnu",
+    "s390x-unknown-linux-gnu",
+    "s390x-ibm-linux-gnu",
+    "s390x-suse-linux",
+    "s390x-redhat-linux"
+  };
+
   switch (TargetTriple.getArch()) {
   case llvm::Triple::aarch64:
     LibDirs.append(AArch64LibDirs, AArch64LibDirs
@@ -1245,6 +1254,12 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
       PPCLibDirs, PPCLibDirs + llvm::array_lengthof(PPCLibDirs));
     MultiarchTripleAliases.append(
       PPCTriples, PPCTriples + llvm::array_lengthof(PPCTriples));
+    break;
+  case llvm::Triple::systemz:
+    LibDirs.append(
+      SystemZLibDirs, SystemZLibDirs + llvm::array_lengthof(SystemZLibDirs));
+    TripleAliases.append(
+      SystemZTriples, SystemZTriples + llvm::array_lengthof(SystemZTriples));
     break;
 
   default:
@@ -1349,7 +1364,8 @@ static bool findTargetMultiarchSuffix(std::string &Suffix,
   }
 
   if (TargetArch == llvm::Triple::x86_64 ||
-      TargetArch == llvm::Triple::ppc64)
+      TargetArch == llvm::Triple::ppc64 ||
+      TargetArch == llvm::Triple::systemz)
     Suffix = "/64";
   else
     Suffix = "/32";

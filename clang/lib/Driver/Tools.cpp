@@ -545,6 +545,9 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
     if (Triple.isOSDarwin())
       return true;
     return false;
+
+  case llvm::Triple::systemz:
+    return false;
   }
 }
 
@@ -5820,6 +5823,9 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
          LastPICArg->getOption().matches(options::OPT_fpie))) {
       CmdArgs.push_back("-KPIC");
     }
+  } else if (getToolChain().getArch() == llvm::Triple::systemz) {
+    // At the moment we always produce z10 code.
+    CmdArgs.push_back("-march=z10");
   }
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
@@ -5951,6 +5957,8 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
     else
       CmdArgs.push_back("elf64ltsmip");
   }
+  else if (ToolChain.getArch() == llvm::Triple::systemz)
+    CmdArgs.push_back("elf64_s390");
   else
     CmdArgs.push_back("elf_x86_64");
 
@@ -5997,7 +6005,8 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
     }
     else if (ToolChain.getArch() == llvm::Triple::ppc)
       CmdArgs.push_back("/lib/ld.so.1");
-    else if (ToolChain.getArch() == llvm::Triple::ppc64)
+    else if (ToolChain.getArch() == llvm::Triple::ppc64 ||
+	     ToolChain.getArch() == llvm::Triple::systemz)
       CmdArgs.push_back("/lib64/ld64.so.1");
     else
       CmdArgs.push_back("/lib64/ld-linux-x86-64.so.2");

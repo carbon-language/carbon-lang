@@ -3,12 +3,19 @@
 // Should be 3 hello strings, two global (of different sizes), the rest are
 // shared.
 
+// CHECK: @align = global i8 [[ALIGN:[0-9]+]]
 // CHECK: @.str = private unnamed_addr constant [6 x i8] c"hello\00"
 // CHECK: @f1.x = internal global i8* getelementptr inbounds ([6 x i8]* @.str, i32 0, i32 0)
-// CHECK: @f2.x = internal global [6 x i8] c"hello\00", align 1
-// CHECK: @f3.x = internal global [8 x i8] c"hello\00\00\00", align 1
+// CHECK: @f2.x = internal global [6 x i8] c"hello\00", align [[ALIGN]]
+// CHECK: @f3.x = internal global [8 x i8] c"hello\00\00\00", align [[ALIGN]]
 // CHECK: @f4.x = internal global %struct.s { i8* getelementptr inbounds ([6 x i8]* @.str, i32 0, i32 0) }
-// CHECK: @x = global [3 x i8] c"ola", align 1
+// CHECK: @x = global [3 x i8] c"ola", align [[ALIGN]]
+
+#if defined(__s390x__)
+unsigned char align = 2;
+#else
+unsigned char align = 1;
+#endif
 
 void bar(const char *);
 

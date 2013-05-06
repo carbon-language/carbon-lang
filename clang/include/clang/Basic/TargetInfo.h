@@ -157,7 +157,16 @@ public:
     /// __builtin_va_list as defined by ARM AAPCS ABI
     /// http://infocenter.arm.com
     //        /help/topic/com.arm.doc.ihi0042d/IHI0042D_aapcs.pdf
-    AAPCSABIBuiltinVaList
+    AAPCSABIBuiltinVaList,
+
+    // typedef struct __va_list_tag
+    //   {
+    //     long __gpr;
+    //     long __fpr;
+    //     void *__overflow_arg_area;
+    //     void *__reg_save_area;
+    //   } va_list[1];
+    SystemZBuiltinVaList
   };
 
 protected:
