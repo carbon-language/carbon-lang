@@ -1,0 +1,22 @@
+; Test initial-exec TLS accesses.
+;
+; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s -check-prefix=CHECK-MAIN
+; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s -check-prefix=CHECK-CP
+
+@x = thread_local global i32 0
+
+; The offset must be loaded from the constant pool.  It doesn't really
+; matter whether we use LARL/AG or LGRL/AGR for the last part.
+define i32 *@foo() {
+; CHECK-CP: .LCP{{.*}}:
+; CHECK-CP: .quad x@NTPOFF
+;
+; CHECK-MAIN: foo:
+; CHECK-MAIN: ear [[HIGH:%r[0-5]]], %a0
+; CHECK-MAIN: sllg %r2, [[HIGH]], 32
+; CHECK-MAIN: ear %r2, %a1
+; CHECK-MAIN: larl %r1, .LCP{{.*}}
+; CHECK-MAIN: ag %r2, 0(%r1)
+; CHECK-MAIN: br %r14
+  ret i32 *@x
+}

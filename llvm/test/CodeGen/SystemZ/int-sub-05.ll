@@ -1,0 +1,118 @@
+; Test 128-bit addition in which the second operand is variable.
+;
+; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+
+; Test register addition.
+define void @f1(i128 *%ptr, i64 %high, i64 %low) {
+; CHECK: f1:
+; CHECK: slgr {{%r[0-5]}}, %r4
+; CHECK: slbgr {{%r[0-5]}}, %r3
+; CHECK: br %r14
+  %a = load i128 *%ptr
+  %highx = zext i64 %high to i128
+  %lowx = zext i64 %low to i128
+  %bhigh = shl i128 %highx, 64
+  %b = or i128 %bhigh, %lowx
+  %sub = sub i128 %a, %b
+  store i128 %sub, i128 *%ptr
+  ret void
+}
+
+; Test memory addition with no offset.
+define void @f2(i64 %addr) {
+; CHECK: f2:
+; CHECK: slg {{%r[0-5]}}, 8(%r2)
+; CHECK: slbg {{%r[0-5]}}, 0(%r2)
+; CHECK: br %r14
+  %bptr = inttoptr i64 %addr to i128 *
+  %aptr = getelementptr i128 *%bptr, i64 -8
+  %a = load i128 *%aptr
+  %b = load i128 *%bptr
+  %sub = sub i128 %a, %b
+  store i128 %sub, i128 *%aptr
+  ret void
+}
+
+; Test the highest aligned offset that is in range of both SLG and SLBG.
+define void @f3(i64 %base) {
+; CHECK: f3:
+; CHECK: slg {{%r[0-5]}}, 524280(%r2)
+; CHECK: slbg {{%r[0-5]}}, 524272(%r2)
+; CHECK: br %r14
+  %addr = add i64 %base, 524272
+  %bptr = inttoptr i64 %addr to i128 *
+  %aptr = getelementptr i128 *%bptr, i64 -8
+  %a = load i128 *%aptr
+  %b = load i128 *%bptr
+  %sub = sub i128 %a, %b
+  store i128 %sub, i128 *%aptr
+  ret void
+}
+
+; Test the next doubleword up, which requires separate address logic for SLG.
+define void @f4(i64 %base) {
+; CHECK: f4:
+; CHECK: lgr [[BASE:%r[1-5]]], %r2
+; CHECK: agfi [[BASE]], 524288
+; CHECK: slg {{%r[0-5]}}, 0([[BASE]])
+; CHECK: slbg {{%r[0-5]}}, 524280(%r2)
+; CHECK: br %r14
+  %addr = add i64 %base, 524280
+  %bptr = inttoptr i64 %addr to i128 *
+  %aptr = getelementptr i128 *%bptr, i64 -8
+  %a = load i128 *%aptr
+  %b = load i128 *%bptr
+  %sub = sub i128 %a, %b
+  store i128 %sub, i128 *%aptr
+  ret void
+}
+
+; Test the next doubleword after that, which requires separate logic for
+; both instructions.  It would be better to create an anchor at 524288
+; that both instructions can use, but that isn't implemented yet.
+define void @f5(i64 %base) {
+; CHECK: f5:
+; CHECK: slg {{%r[0-5]}}, 0({{%r[1-5]}})
+; CHECK: slbg {{%r[0-5]}}, 0({{%r[1-5]}})
+; CHECK: br %r14
+  %addr = add i64 %base, 524288
+  %bptr = inttoptr i64 %addr to i128 *
+  %aptr = getelementptr i128 *%bptr, i64 -8
+  %a = load i128 *%aptr
+  %b = load i128 *%bptr
+  %sub = sub i128 %a, %b
+  store i128 %sub, i128 *%aptr
+  ret void
+}
+
+; Test the lowest displacement that is in range of both SLG and SLBG.
+define void @f6(i64 %base) {
+; CHECK: f6:
+; CHECK: slg {{%r[0-5]}}, -524280(%r2)
+; CHECK: slbg {{%r[0-5]}}, -524288(%r2)
+; CHECK: br %r14
+  %addr = add i64 %base, -524288
+  %bptr = inttoptr i64 %addr to i128 *
+  %aptr = getelementptr i128 *%bptr, i64 -8
+  %a = load i128 *%aptr
+  %b = load i128 *%bptr
+  %sub = sub i128 %a, %b
+  store i128 %sub, i128 *%aptr
+  ret void
+}
+
+; Test the next doubleword down, which is out of range of the SLBG.
+define void @f7(i64 %base) {
+; CHECK: f7:
+; CHECK: slg {{%r[0-5]}}, -524288(%r2)
+; CHECK: slbg {{%r[0-5]}}, 0({{%r[1-5]}})
+; CHECK: br %r14
+  %addr = add i64 %base, -524296
+  %bptr = inttoptr i64 %addr to i128 *
+  %aptr = getelementptr i128 *%bptr, i64 -8
+  %a = load i128 *%aptr
+  %b = load i128 *%bptr
+  %sub = sub i128 %a, %b
+  store i128 %sub, i128 *%aptr
+  ret void
+}
