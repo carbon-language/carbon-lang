@@ -5915,6 +5915,10 @@ CharUnits IntExprEvaluator::GetAlignOfType(QualType T) {
 CharUnits IntExprEvaluator::GetAlignOfExpr(const Expr *E) {
   E = E->IgnoreParens();
 
+  // The kinds of expressions that we have special-case logic here for
+  // should be kept up to date with the special checks for those
+  // expressions in Sema.
+
   // alignof decl is always accepted, even if it doesn't make sense: we default
   // to 1 in those cases.
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
