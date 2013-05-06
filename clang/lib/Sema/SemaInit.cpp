@@ -2394,6 +2394,7 @@ DeclarationName InitializedEntity::getName() const {
   case EK_VectorElement:
   case EK_ComplexElement:
   case EK_BlockElement:
+  case EK_CompoundLiteralInit:
     return DeclarationName();
   }
 
@@ -2420,6 +2421,7 @@ DeclaratorDecl *InitializedEntity::getDecl() const {
   case EK_ComplexElement:
   case EK_BlockElement:
   case EK_LambdaCapture:
+  case EK_CompoundLiteralInit:
     return 0;
   }
 
@@ -2437,6 +2439,7 @@ bool InitializedEntity::allowsNRVO() const {
   case EK_Member:
   case EK_New:
   case EK_Temporary:
+  case EK_CompoundLiteralInit:
   case EK_Base:
   case EK_Delegating:
   case EK_ArrayElement:
@@ -4468,6 +4471,7 @@ getAssignmentAction(const InitializedEntity &Entity) {
   case InitializedEntity::EK_ComplexElement:
   case InitializedEntity::EK_BlockElement:
   case InitializedEntity::EK_LambdaCapture:
+  case InitializedEntity::EK_CompoundLiteralInit:
     return Sema::AA_Initializing;
   }
 
@@ -4490,6 +4494,7 @@ static bool shouldBindAsTemporary(const InitializedEntity &Entity) {
   case InitializedEntity::EK_Exception:
   case InitializedEntity::EK_BlockElement:
   case InitializedEntity::EK_LambdaCapture:
+  case InitializedEntity::EK_CompoundLiteralInit:
     return false;
 
   case InitializedEntity::EK_Parameter:
@@ -4520,6 +4525,7 @@ static bool shouldDestroyTemporary(const InitializedEntity &Entity) {
     case InitializedEntity::EK_Temporary:
     case InitializedEntity::EK_ArrayElement:
     case InitializedEntity::EK_Exception:
+    case InitializedEntity::EK_CompoundLiteralInit:
       return true;
   }
 
@@ -4601,6 +4607,7 @@ static SourceLocation getInitializationLoc(const InitializedEntity &Entity,
   case InitializedEntity::EK_VectorElement:
   case InitializedEntity::EK_ComplexElement:
   case InitializedEntity::EK_BlockElement:
+  case InitializedEntity::EK_CompoundLiteralInit:
     return Initializer->getLocStart();
   }
   llvm_unreachable("missed an InitializedEntity kind?");
@@ -4828,6 +4835,31 @@ static bool isReferenceBinding(const InitializationSequence::Step &s) {
          s.Kind == InitializationSequence::SK_BindReferenceToTemporary;
 }
 
+/// Returns true if the parameters describe a constructor initialization of
+/// an explicit temporary object, e.g. "Point(x, y)".
+static bool isExplicitTemporary(const InitializedEntity &Entity,
+                                const InitializationKind &Kind,
+                                unsigned NumArgs) {
+  switch (Entity.getKind()) {
+  case InitializedEntity::EK_Temporary:
+  case InitializedEntity::EK_CompoundLiteralInit:
+    break;
+  default:
+    return false;
+  }
+
+  switch (Kind.getKind()) {
+  case InitializationKind::IK_DirectList:
+    return true;
+  // FIXME: Hack to work around cast weirdness.
+  case InitializationKind::IK_Direct:
+  case InitializationKind::IK_Value:
+    return NumArgs != 1;
+  default:
+    return false;
+  }
+}
+
 static ExprResult
 PerformConstructorInitialization(Sema &S,
                                  const InitializedEntity &Entity,
@@ -4878,11 +4910,7 @@ PerformConstructorInitialization(Sema &S,
     return ExprError();
 
 
-  if (Entity.getKind() == InitializedEntity::EK_Temporary &&
-      (Kind.getKind() == InitializationKind::IK_DirectList ||
-       (NumArgs != 1 && // FIXME: Hack to work around cast weirdness
-        (Kind.getKind() == InitializationKind::IK_Direct ||
-         Kind.getKind() == InitializationKind::IK_Value)))) {
+  if (isExplicitTemporary(Entity, Kind, NumArgs)) {
     // An explicitly-constructed temporary, e.g., X(1, 2).
     S.MarkFunctionReferenced(Loc, Constructor);
     if (S.DiagnoseUseOfDecl(Constructor, Loc))
@@ -4984,6 +5012,7 @@ InitializedEntityOutlivesFullExpression(const InitializedEntity &Entity) {
   case InitializedEntity::EK_Parameter:
   case InitializedEntity::EK_Temporary:
   case InitializedEntity::EK_LambdaCapture:
+  case InitializedEntity::EK_CompoundLiteralInit:
     // The entity being initialized might not outlive the full-expression.
     return false;
   }
