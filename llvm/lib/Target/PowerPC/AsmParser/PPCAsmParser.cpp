@@ -508,29 +508,29 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 bool PPCAsmParser::
 MatchRegisterName(const AsmToken &Tok, unsigned &RegNo, int64_t &IntVal) {
   if (Tok.is(AsmToken::Identifier)) {
-    StringRef Name = Tok.getString().lower();
+    StringRef Name = Tok.getString();
 
-    if (Name == "lr") {
+    if (Name.equals_lower("lr")) {
       RegNo = isPPC64()? PPC::LR8 : PPC::LR;
       IntVal = 8;
       return false;
-    } else if (Name == "ctr") {
+    } else if (Name.equals_lower("ctr")) {
       RegNo = isPPC64()? PPC::CTR8 : PPC::CTR;
       IntVal = 9;
       return false;
-    } else if (Name.startswith("r") &&
+    } else if (Name.substr(0, 1).equals_lower("r") &&
                !Name.substr(1).getAsInteger(10, IntVal) && IntVal < 32) {
       RegNo = isPPC64()? XRegs[IntVal] : RRegs[IntVal];
       return false;
-    } else if (Name.startswith("f") &&
+    } else if (Name.substr(0, 1).equals_lower("f") &&
                !Name.substr(1).getAsInteger(10, IntVal) && IntVal < 32) {
       RegNo = FRegs[IntVal];
       return false;
-    } else if (Name.startswith("v") &&
+    } else if (Name.substr(0, 1).equals_lower("v") &&
                !Name.substr(1).getAsInteger(10, IntVal) && IntVal < 32) {
       RegNo = VRegs[IntVal];
       return false;
-    } else if (Name.startswith("cr") &&
+    } else if (Name.substr(0, 2).equals_lower("cr") &&
                !Name.substr(2).getAsInteger(10, IntVal) && IntVal < 8) {
       RegNo = CRRegs[IntVal];
       return false;
