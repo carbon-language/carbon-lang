@@ -242,9 +242,12 @@ ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
                     {
                         m_dyld_plugin_name = DynamicLoaderStatic::GetPluginNameStatic();
                     }
-                    else if (kernel_load_addr != LLDB_INVALID_ADDRESS)
+                    else 
                     {
-                        m_kernel_load_addr = kernel_load_addr;
+                        if (kernel_load_addr != LLDB_INVALID_ADDRESS)
+                        {
+                            m_kernel_load_addr = kernel_load_addr;
+                        }
                         m_dyld_plugin_name = DynamicLoaderDarwinKernel::GetPluginNameStatic();
                     }
 
