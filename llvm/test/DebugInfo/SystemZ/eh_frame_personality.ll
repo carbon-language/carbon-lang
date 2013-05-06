@@ -1,6 +1,6 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=s390x-linux-gnu | FileCheck -check-prefix=CHECK-FUNC %s
 ; RUN: llc < %s -verify-machineinstrs -mtriple=s390x-linux-gnu | FileCheck -check-prefix=CHECK-ET %s
-; RUN: llc < %s -verify-machineinstrs -mtriple=s390x-linux-gnu | FileCheck -check-prefix=CHECK-REF %s
+; RUN: llc < %s -verify-machineinstrs -mtriple=s390x-linux-gnu -relocation-model=pic | FileCheck -check-prefix=CHECK-REF %s
 
 declare i32 @__gxx_personality_v0(...)
 
@@ -18,8 +18,8 @@ clean:
 
 ; CHECK-FUNC: foo:
 ; CHECK-FUNC: .cfi_startproc
-; CHECK-FUNC: .cfi_personality 155, DW.ref.__gxx_personality_v0
-; CHECK-FUNC: .cfi_lsda 27, .Lexception0
+; CHECK-FUNC: .cfi_personality 0, __gxx_personality_v0
+; CHECK-FUNC: .cfi_lsda 0, .Lexception0
 ; CHECK-FUNC: stmg	%r14, %r15, 112(%r15)
 ; CHECK-FUNC: .cfi_offset %r14, -48
 ; CHECK-FUNC: .cfi_offset %r15, -40
@@ -33,6 +33,8 @@ clean:
 ; CHECK-ET-NEXT: GCC_except_table0:
 ; CHECK-ET-NEXT: .Lexception0:
 ;
+; CHECK-REF: .cfi_personality 155, DW.ref.__gxx_personality_v0
+; CHECK-REF: .cfi_lsda 27, .Lexception0
 ; CHECK-REF: .hidden	DW.ref.__gxx_personality_v0
 ; CHECK-REF: .weak	DW.ref.__gxx_personality_v0
 ; CHECK-REF: .section	.data.DW.ref.__gxx_personality_v0,"aGw",@progbits,DW.ref.__gxx_personality_v0,comdat
