@@ -35,3 +35,13 @@ define i32 @test3(i32 %x) nounwind {
 ; CHECK-NEXT: sub i32 73, %and
 ; CHECK-NEXT: ret
 }
+
+define i32 @test4(i32 %x) nounwind {
+  %sub = xor i32 %x, 2147483648
+  %add = add i32 %sub, 42
+  ret i32 %add
+
+; CHECK: @test4
+; CHECK-NEXT: add i32 %x, -2147483606
+; CHECK-NEXT: ret
+}

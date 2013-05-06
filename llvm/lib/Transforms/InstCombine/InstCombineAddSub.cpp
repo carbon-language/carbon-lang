@@ -974,6 +974,11 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
           return BinaryOperator::CreateSub(ConstantExpr::getAdd(XorRHS, CI),
                                            XorLHS);
       }
+      // (X + signbit) + C could have gotten canonicalized to (X ^ signbit) + C,
+      // transform them into (X + (signbit ^ C))
+      if (XorRHS->getValue().isSignBit())
+          return BinaryOperator::CreateAdd(XorLHS,
+                                           ConstantExpr::getXor(XorRHS, CI));
     }
   }
 
