@@ -12,6 +12,7 @@
 #include "lldb/DataFormatters/CXXFormatterFunctions.h"
 
 #include "lldb/Core/DataBufferHeap.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/ValueObject.h"
@@ -503,4 +504,17 @@ lldb_private::formatters::LibcxxStdVectorSyntheticFrontEndCreator (CXXSyntheticC
     if (!valobj_sp)
         return NULL;
     return (new LibcxxStdVectorSyntheticFrontEnd(valobj_sp));
+}
+
+bool
+lldb_private::formatters::LibcxxContainerSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    if (valobj.IsPointerType())
+    {
+        uint64_t value = valobj.GetValueAsUnsigned(0);
+        if (!value)
+            return false;
+        stream.Printf("0x%016llx ", value);
+    }
+    return Debugger::FormatPrompt("size=${svar%#}", NULL, NULL, NULL, stream, NULL, &valobj);
 }

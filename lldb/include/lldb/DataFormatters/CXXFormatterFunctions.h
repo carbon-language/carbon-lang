@@ -600,6 +600,9 @@ namespace lldb_private {
         
         SyntheticChildrenFrontEnd* LibcxxVectorBoolSyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
         
+        bool
+        LibcxxContainerSummaryProvider (ValueObject& valobj, Stream& stream);
+        
         class LibstdcppVectorBoolSyntheticFrontEnd : public SyntheticChildrenFrontEnd
         {
         public:

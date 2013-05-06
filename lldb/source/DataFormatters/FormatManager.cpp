@@ -450,7 +450,7 @@ AddStringSummary(TypeCategoryImpl::SharedPointer category_sp,
                                                                string));
     
     if (regex)
-    {}
+        category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression(type_name.AsCString())),summary_sp);
     else
         category_sp->GetSummaryNavigator()->Add(type_name, summary_sp);
 }
@@ -471,7 +471,7 @@ AddScriptSummary(TypeCategoryImpl::SharedPointer category_sp,
                                                                funct_name,
                                                                code.c_str()));
     if (regex)
-    {}
+        category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression(type_name.AsCString())),summary_sp);
     else
         category_sp->GetSummaryNavigator()->Add(type_name, summary_sp);
 }
@@ -488,7 +488,7 @@ AddCXXSummary (TypeCategoryImpl::SharedPointer category_sp,
 {
     lldb::TypeSummaryImplSP summary_sp(new CXXFunctionSummaryFormat(flags,funct,description));
     if (regex)
-    {}
+        category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression(type_name.AsCString())),summary_sp);
     else
         category_sp->GetSummaryNavigator()->Add(type_name, summary_sp);
 }
@@ -626,6 +626,7 @@ FormatManager::LoadLibcxxFormatters()
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxStdVectorSyntheticFrontEndCreator, "libc++ std::vector synthetic children", ConstString("^std::__1::vector<.+>(( )?&)?$"), stl_synth_flags, true);
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxStdListSyntheticFrontEndCreator, "libc++ std::list synthetic children", ConstString("^std::__1::list<.+>(( )?&)?$"), stl_synth_flags, true);
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxStdMapSyntheticFrontEndCreator, "libc++ std::map synthetic children", ConstString("^std::__1::map<.+> >(( )?&)?$"), stl_synth_flags, true);
+    AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEndCreator, "libc++ std::vector<bool> synthetic children", ConstString("std::__1::vector<std::__1::allocator<bool> >"), stl_synth_flags);
 
     libcxx_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::__1::)deque<.+>(( )?&)?$")),
                                                           SyntheticChildrenSP(new ScriptedSyntheticChildren(stl_synth_flags,
@@ -634,30 +635,21 @@ FormatManager::LoadLibcxxFormatters()
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxSharedPtrSyntheticFrontEndCreator, "shared_ptr synthetic children", ConstString("^(std::__1::)shared_ptr<.+>(( )?&)?$"), stl_synth_flags, true);
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxSharedPtrSyntheticFrontEndCreator, "weak_ptr synthetic children", ConstString("^(std::__1::)weak_ptr<.+>(( )?&)?$"), stl_synth_flags, true);
     
-    stl_summary_flags.SetDontShowChildren(false);stl_summary_flags.SetSkipPointers(true);
-    libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::vector<.+>(( )?&)?$")),
-                                                        TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${svar%#}")));
-    libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::list<.+>(( )?&)?$")),
-                                                        TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${svar%#}")));
-    libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::map<.+> >(( )?&)?$")),
-                                                        TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${svar%#}")));
-    libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::deque<.+>(( )?&)?$")),
-                                                        TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${svar%#}")));
-    libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::shared_ptr<.+>(( )?&)?$")),
-                                                        TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "{${var.__ptr_%S}} (strong=${var.count} weak=${var.weak_count})}")));
-    libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::weak_ptr<.+>(( )?&)?$")),
-                                                        TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "{${var.__ptr_%S}} (strong=${var.count} weak=${var.weak_count})}")));
+    stl_summary_flags.SetDontShowChildren(false);stl_summary_flags.SetSkipPointers(false);
+    
+    AddCXXSummary(libcxx_category_sp, lldb_private::formatters::LibcxxContainerSummaryProvider, "libc++ std::vector summary provider", ConstString("^std::__1::vector<.+>(( )?&)?$"), stl_summary_flags, true);
+    AddCXXSummary(libcxx_category_sp, lldb_private::formatters::LibcxxContainerSummaryProvider, "libc++ std::list summary provider", ConstString("^std::__1::list<.+>(( )?&)?$"), stl_summary_flags, true);
+    AddCXXSummary(libcxx_category_sp, lldb_private::formatters::LibcxxContainerSummaryProvider, "libc++ std::map summary provider", ConstString("^std::__1::map<.+>(( )?&)?$"), stl_summary_flags, true);
+    AddCXXSummary(libcxx_category_sp, lldb_private::formatters::LibcxxContainerSummaryProvider, "libc++ std::deque summary provider", ConstString("^std::__1::deque<.+>(( )?&)?$"), stl_summary_flags, true);
+    AddCXXSummary(libcxx_category_sp, lldb_private::formatters::LibcxxContainerSummaryProvider, "libc++ std::vector<bool> summary provider", ConstString("std::__1::vector<std::__1::allocator<bool> >"), stl_summary_flags);
+
+    stl_summary_flags.SetSkipPointers(true);
+    AddStringSummary(libcxx_category_sp, "{${var.__ptr_%S}} (strong=${var.count} weak=${var.weak_count})}", ConstString("^std::__1::shared_ptr<.+>(( )?&)?$"), stl_summary_flags, true);
+    AddStringSummary(libcxx_category_sp, "{${var.__ptr_%S}} (strong=${var.count} weak=${var.weak_count})}", ConstString("^std::__1::weak_ptr<.+>(( )?&)?$"), stl_summary_flags, true);
     
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibCxxVectorIteratorSyntheticFrontEndCreator, "std::vector iterator synthetic children", ConstString("^std::__1::__wrap_iter<.+>$"), stl_synth_flags, true);
     
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibCxxMapIteratorSyntheticFrontEndCreator, "std::map iterator synthetic children", ConstString("^std::__1::__map_iterator<.+>$"), stl_synth_flags, true);
-    
-    // this summary prevails on the regex std::vector<> because we do exact matches before regex ones
-    libcxx_category_sp->GetSummaryNavigator()->Add(ConstString("std::__1::vector<std::__1::allocator<bool> >"),
-                                                   TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${svar%#}")));
-    
-    libcxx_category_sp->GetSyntheticNavigator()->Add(ConstString("std::__1::vector<std::__1::allocator<bool> >"),
-                                                     SyntheticChildrenSP(new CXXSyntheticChildren(stl_synth_flags,"libc++ std::vector<bool> synthetic children",lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEndCreator)));
     
 #endif
 }
