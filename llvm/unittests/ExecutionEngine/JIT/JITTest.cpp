@@ -35,8 +35,8 @@ using namespace llvm;
 
 namespace {
 
-// Tests on ARM and PowerPC disabled as we're running the old jit
-#if !defined(__arm__) && !defined(__powerpc__)
+// Tests on ARM, PowerPC and SystemZ disabled as we're running the old jit
+#if !defined(__arm__) && !defined(__powerpc__) && !defined(__s390__)
 
 Function *makeReturnGlobal(std::string Name, GlobalVariable *G, Module *M) {
   std::vector<Type*> params;
@@ -826,7 +826,7 @@ TEST(LazyLoadedJITTest, EagerCompiledRecursionThroughGhost) {
     (intptr_t)TheJIT->getPointerToFunction(recur1IR));
   EXPECT_EQ(3, recur1(4));
 }
-#endif // !defined(__arm__) && !defined(__powerpc__)
+#endif // !defined(__arm__) && !defined(__powerpc__) && !defined(__s390__)
 
 // This code is copied from JITEventListenerTest, but it only runs once for all
 // the tests in this directory.  Everything seems fine, but that's strange

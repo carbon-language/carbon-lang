@@ -20,8 +20,8 @@ using namespace llvm;
 
 namespace {
 
-// ARM and PowerPC tests disabled pending fix for PR10783.
-#if !defined(__arm__) && !defined(__powerpc__)
+// ARM, PowerPC and SystemZ tests disabled pending fix for PR10783.
+#if !defined(__arm__) && !defined(__powerpc__) && !defined(__s390__)
 
 bool LoadAssemblyInto(Module *M, const char *assembly) {
   SMDiagnostic Error;
@@ -176,6 +176,6 @@ TEST(MultiJitTest, JitPool) {
 #endif
   EXPECT_TRUE(sa == fa);
 }
-#endif  // !defined(__arm__) && !defined(__powerpc__)
+#endif  // !defined(__arm__) && !defined(__powerpc__) && !defined(__s390__)
 
 }  // anonymous namespace
