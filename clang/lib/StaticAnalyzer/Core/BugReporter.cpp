@@ -1798,16 +1798,19 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
   assert(LC);
   bool isFirst = true;
 
-  for (PathPieces::iterator I = path.begin(), E = path.end(); I != E; ++I) {
+  for (PathPieces::iterator I = path.begin(), E = path.end(); I != E; ) {
     bool wasFirst = isFirst;
     isFirst = false;
 
     // Optimize subpaths.
     if (PathDiagnosticCallPiece *CallI = dyn_cast<PathDiagnosticCallPiece>(*I)){
+      // Record the fact that a call has been optimized so we only do the
+      // effort once.
       if (!OCS.count(CallI)) {
         while (optimizeEdges(CallI->path, SM, CFBS, OCS, LCM)) {}
         OCS.insert(CallI);
       }
+      ++I;
       continue;
     }
 
@@ -1815,8 +1818,10 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
     PathDiagnosticControlFlowPiece *PieceI =
       dyn_cast<PathDiagnosticControlFlowPiece>(*I);
 
-    if (!PieceI)
+    if (!PieceI) {
+      ++I;
       continue;
+    }
 
     ParentMap &PM = LC->getParentMap();
     const Stmt *s1Start = getLocStmt(PieceI->getStartLocation());
@@ -1852,8 +1857,10 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
     PathDiagnosticControlFlowPiece *PieceNextI =
       dyn_cast<PathDiagnosticControlFlowPiece>(*NextI);
 
-    if (!PieceNextI)
+    if (!PieceNextI) {
+      ++I;
       continue;
+    }
 
     const Stmt *s2Start = getLocStmt(PieceNextI->getStartLocation());
     const Stmt *s2End   = getLocStmt(PieceNextI->getEndLocation());
@@ -1863,18 +1870,19 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
     // Rule I.
     //
     // If we have two consecutive control edges whose end/begin locations
-    // are at the same level (i.e., parents), merge them.
+    // are at the same level (e.g. statements or top-level expressions within
+    // a compound statement, or siblings share a single ancestor expression),
+    // then merge them if they have no interesting intermediate event.
     //
     // For example:
     //
     // (1.1 -> 1.2) -> (1.2 -> 1.3) becomes (1.1 -> 1.3) because the common
-    // parent is '1'.  Here '1.1' represents the hierarchy of statements.
+    // parent is '1'.  Here 'x.y.z' represents the hierarchy of statements.
     //
     // NOTE: this will be limited later in cases where we add barriers
     // to prevent this optimization.
     //
-    if (!isBarrier(CFBS, PieceNextI) &&
-        level1 && level1 == level2 && level1 == level3 && level1 == level4) {
+    if (level1 && level1 == level2 && level1 == level3 && level1 == level4) {
       PieceI->setEndLocation(PieceNextI->getEndLocation());
       path.erase(NextI);
       hasChanges = true;
@@ -1892,8 +1900,7 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
     // For example:
     //
     // (1.1 -> 1.1.1) -> (1.1.1 -> 1.2) becomes (1.1 -> 1.2).
-    if (!isBarrier(CFBS, PieceNextI) &&
-        level1 && level2 &&
+    if (level1 && level2 &&
         level1 == level4 &&
         level2 == level3 && PM.getParentIgnoreParens(level2) == level1) {
       PieceI->setEndLocation(PieceNextI->getEndLocation());
@@ -1914,8 +1921,7 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
     //
     // (1.1 -> 1.1.1) -> (1.1.1 -> X) becomes (1.1 -> X).
     //
-    if (!isBarrier(CFBS, PieceNextI) &&
-        level1 && level2 && level1 == PM.getParentIgnoreParens(level2)) {
+    if (level1 && level2 && level1 == PM.getParentIgnoreParens(level2)) {
       PieceI->setEndLocation(PieceNextI->getEndLocation());
       path.erase(NextI);
       hasChanges = true;
@@ -1935,8 +1941,7 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
     // (X -> 1.1.1) -> (1.1.1 -> 1.1) becomes (X -> 1.1).
     // [first edge] (1.1.1 -> 1.1) -> eliminate
     //
-    if (!isBarrier(CFBS, PieceNextI) &&
-        level2 && level4 && level2 == level3 && level4 == PM.getParent(level2)){
+    if (level2 && level4 && level2 == level3 && level4 == PM.getParent(level2)){
       PieceI->setEndLocation(PieceNextI->getEndLocation());
       path.erase(NextI);
       hasChanges = true;
@@ -1965,8 +1970,12 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
         hasChanges = true;
         continue;
       }
+
     }
 #endif
+
+    // No changes at this index?  Move to the next one.
+    ++I;
   }
 
   // No changes.
