@@ -16,6 +16,7 @@
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Sema/Scope.h"
+#include "llvm/ADT/StringSwitch.h"
 using namespace clang;
 
 /// \brief Handle the annotation token produced for #pragma unused(...)
@@ -791,4 +792,69 @@ PragmaOpenMPHandler::HandlePragma(Preprocessor &PP,
   std::copy(Pragma.begin(), Pragma.end(), Toks);
   PP.EnterTokenStream(Toks, Pragma.size(),
                       /*DisableMacroExpansion=*/true, /*OwnsTokens=*/true);
+}
+
+/// \brief Handle the microsoft \#pragma comment extension.
+///
+/// The syntax is:
+/// \code
+///   #pragma comment(linker, "foo")
+/// \endcode
+/// 'linker' is one of five identifiers: compiler, exestr, lib, linker, user.
+/// "foo" is a string, which is fully macro expanded, and permits string
+/// concatenation, embedded escape characters etc.  See MSDN for more details.
+void PragmaCommentHandler::HandlePragma(Preprocessor &PP,
+                                        PragmaIntroducerKind Introducer,
+                                        Token &Tok) {
+  SourceLocation CommentLoc = Tok.getLocation();
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::l_paren)) {
+    PP.Diag(CommentLoc, diag::err_pragma_comment_malformed);
+    return;
+  }
+
+  // Read the identifier.
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::identifier)) {
+    PP.Diag(CommentLoc, diag::err_pragma_comment_malformed);
+    return;
+  }
+
+  // Verify that this is one of the 5 whitelisted options.
+  // FIXME: warn that 'exestr' is deprecated.
+  const IdentifierInfo *II = Tok.getIdentifierInfo();
+  if (!II->isStr("compiler") && !II->isStr("exestr") && !II->isStr("lib") &&
+      !II->isStr("linker") && !II->isStr("user")) {
+    PP.Diag(Tok.getLocation(), diag::err_pragma_comment_unknown_kind);
+    return;
+  }
+
+  // Read the optional string if present.
+  PP.Lex(Tok);
+  std::string ArgumentString;
+  if (Tok.is(tok::comma) && !PP.LexStringLiteral(Tok, ArgumentString,
+                                                 "pragma comment",
+                                                 /*MacroExpansion=*/true))
+    return;
+
+  // FIXME: If the kind is "compiler" warn if the string is present (it is
+  // ignored).
+  // FIXME: 'lib' requires a comment string.
+  // FIXME: 'linker' requires a comment string, and has a specific list of
+  // things that are allowable.
+
+  if (Tok.isNot(tok::r_paren)) {
+    PP.Diag(Tok.getLocation(), diag::err_pragma_comment_malformed);
+    return;
+  }
+  PP.Lex(Tok);  // eat the r_paren.
+
+  if (Tok.isNot(tok::eod)) {
+    PP.Diag(Tok.getLocation(), diag::err_pragma_comment_malformed);
+    return;
+  }
+
+  // If the pragma is lexically sound, notify any interested PPCallbacks.
+  if (PP.getPPCallbacks())
+    PP.getPPCallbacks()->PragmaComment(CommentLoc, II, ArgumentString);
 }

@@ -102,6 +102,11 @@ Parser::Parser(Preprocessor &pp, Sema &actions, bool skipFunctionBodies)
     OpenMPHandler.reset(new PragmaNoOpenMPHandler());
   PP.AddPragmaHandler(OpenMPHandler.get());
 
+  if (getLangOpts().MicrosoftExt) {
+    MSCommentHandler.reset(new PragmaCommentHandler());
+    PP.AddPragmaHandler(MSCommentHandler.get());
+  }
+
   CommentSemaHandler.reset(new ActionCommentHandler(actions));
   PP.addCommentHandler(CommentSemaHandler.get());
 
@@ -435,6 +440,11 @@ Parser::~Parser() {
   }
   PP.RemovePragmaHandler(OpenMPHandler.get());
   OpenMPHandler.reset();
+
+  if (getLangOpts().MicrosoftExt) {
+    PP.RemovePragmaHandler(MSCommentHandler.get());
+    MSCommentHandler.reset();
+  }
 
   PP.RemovePragmaHandler("STDC", FPContractHandler.get());
   FPContractHandler.reset();

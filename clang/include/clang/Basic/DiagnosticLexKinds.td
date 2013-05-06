@@ -408,8 +408,6 @@ def warn_pragma_include_alias_expected_filename :
 
 def err__Pragma_malformed : Error<
   "_Pragma takes a parenthesized string literal">;
-def err_pragma_comment_malformed : Error<
-  "pragma comment requires parenthesized identifier and optional string">;
 def err_pragma_message_malformed : Error<
   "pragma %select{message|warning|error}0 requires parenthesized string">;
 def err_pragma_push_pop_macro_malformed : Error<
@@ -452,7 +450,6 @@ def warn_pragma_diagnostic_unknown_warning :
 def warn_pragma_debug_unexpected_command : Warning<
   "unexpected debug command '%0'">;
 
-def err_pragma_comment_unknown_kind : Error<"unknown kind of pragma comment">;
 def err_defined_macro_name : Error<"'defined' cannot be used as a macro name">;
 def err_paste_at_start : Error<
   "'##' cannot appear at start of macro expansion">;

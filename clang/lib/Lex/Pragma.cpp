@@ -493,70 +493,7 @@ void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
   }
 }
 
-/// \brief Handle the microsoft \#pragma comment extension.
-///
-/// The syntax is:
-/// \code
-///   #pragma comment(linker, "foo")
-/// \endcode
-/// 'linker' is one of five identifiers: compiler, exestr, lib, linker, user.
-/// "foo" is a string, which is fully macro expanded, and permits string
-/// concatenation, embedded escape characters etc.  See MSDN for more details.
-void Preprocessor::HandlePragmaComment(Token &Tok) {
-  SourceLocation CommentLoc = Tok.getLocation();
-  Lex(Tok);
-  if (Tok.isNot(tok::l_paren)) {
-    Diag(CommentLoc, diag::err_pragma_comment_malformed);
-    return;
-  }
-
-  // Read the identifier.
-  Lex(Tok);
-  if (Tok.isNot(tok::identifier)) {
-    Diag(CommentLoc, diag::err_pragma_comment_malformed);
-    return;
-  }
-
-  // Verify that this is one of the 5 whitelisted options.
-  // FIXME: warn that 'exestr' is deprecated.
-  const IdentifierInfo *II = Tok.getIdentifierInfo();
-  if (!II->isStr("compiler") && !II->isStr("exestr") && !II->isStr("lib") &&
-      !II->isStr("linker") && !II->isStr("user")) {
-    Diag(Tok.getLocation(), diag::err_pragma_comment_unknown_kind);
-    return;
-  }
-
-  // Read the optional string if present.
-  Lex(Tok);
-  std::string ArgumentString;
-  if (Tok.is(tok::comma) && !LexStringLiteral(Tok, ArgumentString,
-                                              "pragma comment",
-                                              /*MacroExpansion=*/true))
-    return;
-
-  // FIXME: If the kind is "compiler" warn if the string is present (it is
-  // ignored).
-  // FIXME: 'lib' requires a comment string.
-  // FIXME: 'linker' requires a comment string, and has a specific list of
-  // things that are allowable.
-
-  if (Tok.isNot(tok::r_paren)) {
-    Diag(Tok.getLocation(), diag::err_pragma_comment_malformed);
-    return;
-  }
-  Lex(Tok);  // eat the r_paren.
-
-  if (Tok.isNot(tok::eod)) {
-    Diag(Tok.getLocation(), diag::err_pragma_comment_malformed);
-    return;
-  }
-
-  // If the pragma is lexically sound, notify any interested PPCallbacks.
-  if (Callbacks)
-    Callbacks->PragmaComment(CommentLoc, II, ArgumentString);
-}
-
-/// ParsePragmaPushOrPopMacro - Handle parsing of pragma push_macro/pop_macro.  
+/// ParsePragmaPushOrPopMacro - Handle parsing of pragma push_macro/pop_macro.
 /// Return the IdentifierInfo* associated with the macro to push or pop.
 IdentifierInfo *Preprocessor::ParsePragmaPushOrPopMacro(Token &Tok) {
   // Remember the pragma token location.
@@ -1062,15 +999,6 @@ public:
   }
 };
 
-/// PragmaCommentHandler - "\#pragma comment ...".
-struct PragmaCommentHandler : public PragmaHandler {
-  PragmaCommentHandler() : PragmaHandler("comment") {}
-  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
-                            Token &CommentTok) {
-    PP.HandlePragmaComment(CommentTok);
-  }
-};
-
 /// PragmaIncludeAliasHandler - "\#pragma include_alias("...")".
 struct PragmaIncludeAliasHandler : public PragmaHandler {
   PragmaIncludeAliasHandler() : PragmaHandler("include_alias") {}
@@ -1334,7 +1262,6 @@ void Preprocessor::RegisterBuiltinPragmas() {
 
   // MS extensions.
   if (LangOpts.MicrosoftExt) {
-    AddPragmaHandler(new PragmaCommentHandler());
     AddPragmaHandler(new PragmaIncludeAliasHandler());
     AddPragmaHandler(new PragmaRegionHandler("region"));
     AddPragmaHandler(new PragmaRegionHandler("endregion"));
