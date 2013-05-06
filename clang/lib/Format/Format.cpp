@@ -643,7 +643,9 @@ private:
       if (!DryRun)
         BBC->alignLines(Whitespaces);
       Token.reset(BBC);
-    } else if (Current.Type == TT_LineComment) {
+    } else if (Current.Type == TT_LineComment &&
+               (Current.Parent == NULL ||
+                Current.Parent->Type != TT_ImplicitStringLiteral)) {
       Token.reset(new BreakableLineComment(SourceMgr, Current, StartColumn));
     } else {
       return 0;
