@@ -2930,9 +2930,12 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
 }
 
 void CGDebugInfo::EmitUsingDirective(const UsingDirectiveDecl &UD) {
+  llvm::DIScope Scope =
+      LexicalBlockStack.empty()
+          ? getContextDescriptor(cast<Decl>(UD.getDeclContext()))
+          : llvm::DIScope(LexicalBlockStack.back());
   DBuilder.createImportedModule(
-      getContextDescriptor(cast<Decl>(UD.getDeclContext())),
-      getOrCreateNameSpace(UD.getNominatedNamespace()),
+      Scope, getOrCreateNameSpace(UD.getNominatedNamespace()),
       getLineNumber(UD.getLocation()));
 }
 
