@@ -38,6 +38,15 @@ public:
         eBroadcastBitsSTDIN           = (1 << 7),
         eAllEventBits                 = 0xffffffff
     };
+    
+    enum LibeditGetInputResult
+    {
+        eLibeditGetInputEOF = 0,
+        eLibeditGetInputValid = 1,
+        eLibeditGetInputEmpty = 2,
+        eLibeditGetInputResultError = 4,
+        eLibeditGetInputResultUnknown = 0xffffffff
+    };
 
     IOChannel (FILE *editline_in,
                FILE *editline_out,
@@ -66,7 +75,7 @@ public:
     void
     ErrWrite (const char *buffer, size_t len, bool asynchronous);
 
-    bool
+    LibeditGetInputResult
     LibeditGetInput (std::string &);
     
     static void

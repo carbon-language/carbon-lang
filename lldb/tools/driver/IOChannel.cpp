@@ -329,9 +329,10 @@ IOChannel::LibeditOutputBytesReceived (void *baton, const void *src, size_t src_
     }
 }
 
-bool
+IOChannel::LibeditGetInputResult
 IOChannel::LibeditGetInput (std::string &new_line)
 {
+    IOChannel::LibeditGetInputResult retval = IOChannel::eLibeditGetInputResultUnknown;
     if (m_edit_line != NULL)
     {
         int line_len = 0;
@@ -349,6 +350,7 @@ IOChannel::LibeditGetInput (std::string &new_line)
 
         if (line)
         {
+            retval = IOChannel::eLibeditGetInputValid;
             // strip any newlines off the end of the string...
             while (line_len > 0 && (line[line_len - 1] == '\n' || line[line_len - 1] == '\r'))
                 --line_len;
@@ -359,17 +361,22 @@ IOChannel::LibeditGetInput (std::string &new_line)
             }
             else
             {
+                retval = IOChannel::eLibeditGetInputEmpty;
                 // Someone just hit ENTER, return the empty string
                 new_line.clear();
             }
             // Return true to indicate success even if a string is empty
-            return true;
+            return retval;
+        }
+        else
+        {
+            retval = (line_len == 0 ? IOChannel::eLibeditGetInputEOF : IOChannel::eLibeditGetInputResultError);
         }
     }
     // Return false to indicate failure. This can happen when the file handle
     // is closed (EOF).
     new_line.clear();
-    return false;
+    return retval;
 }
 
 void *
@@ -422,9 +429,17 @@ IOChannel::Run ()
 
                     if (CommandQueueIsEmpty())
                     {
-                        if (LibeditGetInput(line) == false)
+                        IOChannel::LibeditGetInputResult getline_result = LibeditGetInput(line);
+                        if (getline_result == IOChannel::eLibeditGetInputEOF)
                         {
-                            // EOF or some other file error occurred
+                            // EOF occurred
+                            // pretend that a quit was typed so the user gets a potential
+                            // chance to confirm
+                            line.assign("quit");
+                        }
+                        else if (getline_result == IOChannel::eLibeditGetInputResultError || getline_result == IOChannel::eLibeditGetInputResultUnknown)
+                        {
+                            // some random error occurred, exit and don't ask because the state might be corrupt
                             done = true;
                             continue;
                         }
