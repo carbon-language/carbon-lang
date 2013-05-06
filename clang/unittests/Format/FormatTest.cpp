@@ -1019,9 +1019,9 @@ TEST_F(FormatTest, FormatsClasses) {
       "class AAAAAAAAAAAAAAAAAAAA : public BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB,\n"
       "                             public CCCCCCCCCCCCCCCCCCCCCCCCCCCCCC {\n"
       "};\n");
-  verifyFormat("class AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA :\n"
-               "    public BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB,\n"
-               "    public CCCCCCCCCCCCCCCCCCCCCCCCCCCCCC {\n"
+  verifyFormat("class AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n"
+               "    : public BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB,\n"
+               "      public CCCCCCCCCCCCCCCCCCCCCCCCCCCCCC {\n"
                "};\n");
   verifyFormat(
       "class A : public B, public C, public D, public E, public F, public G {\n"
