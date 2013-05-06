@@ -150,7 +150,7 @@ bool R600InstrInfo::isTransOnly(const MachineInstr *MI) const {
 }
 
 bool R600InstrInfo::usesVertexCache(unsigned Opcode) const {
-  return ST.hasVertexCache() && get(Opcode).TSFlags & R600_InstFlag::VTX_INST;
+  return ST.hasVertexCache() && IS_VTX(get(Opcode));
 }
 
 bool R600InstrInfo::usesVertexCache(const MachineInstr *MI) const {
@@ -159,8 +159,7 @@ bool R600InstrInfo::usesVertexCache(const MachineInstr *MI) const {
 }
 
 bool R600InstrInfo::usesTextureCache(unsigned Opcode) const {
-  return (!ST.hasVertexCache() && get(Opcode).TSFlags & R600_InstFlag::VTX_INST) ||
-      (get(Opcode).TSFlags & R600_InstFlag::TEX_INST);
+  return (!ST.hasVertexCache() && IS_VTX(get(Opcode))) || IS_TEX(get(Opcode));
 }
 
 bool R600InstrInfo::usesTextureCache(const MachineInstr *MI) const {

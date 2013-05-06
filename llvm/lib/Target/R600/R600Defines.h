@@ -54,6 +54,9 @@ namespace R600_InstFlag {
 #define GET_REG_CHAN(reg) ((reg) >> HW_CHAN_SHIFT)
 #define GET_REG_INDEX(reg) ((reg) & HW_REG_MASK)
 
+#define IS_VTX(desc) ((desc).TSFlags & R600_InstFlag::VTX_INST)
+#define IS_TEX(desc) ((desc).TSFlags & R600_InstFlag::TEX_INST)
+
 namespace R600Operands {
   enum Ops {
     DST,
