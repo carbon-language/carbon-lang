@@ -1055,6 +1055,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return false;
   if (Left.is(tok::l_brace) && Right.is(tok::r_brace))
     return false;
+  if (Right.is(tok::ellipsis))
+    return false;
   return true;
 }
 
