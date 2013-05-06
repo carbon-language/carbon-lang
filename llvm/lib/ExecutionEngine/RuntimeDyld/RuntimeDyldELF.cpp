@@ -628,6 +628,11 @@ void RuntimeDyldELF::resolvePPC64Relocation(const SectionEntry &Section,
       llvm_unreachable("Relocation R_PPC64_REL32 overflow");
     writeInt32BE(LocalAddress, delta);
   } break;
+  case ELF::R_PPC64_REL64: {
+    uint64_t FinalAddress = (Section.LoadAddress + Offset);
+    uint64_t Delta = Value - FinalAddress + Addend;
+    writeInt64BE(LocalAddress, Delta);
+  } break;
   case ELF::R_PPC64_ADDR64 :
     writeInt64BE(LocalAddress, Value + Addend);
     break;
