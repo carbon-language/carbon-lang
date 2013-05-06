@@ -967,179 +967,193 @@ defm POST_STwri: ST_PostInc_nv <"memw", "STriw", IntRegs, s4_2Imm>, AddrModeRel;
 // NV/J +
 //===----------------------------------------------------------------------===//
 
-multiclass NVJ_type_basic_reg<string NotStr, string OpcStr, string TakenStr> {
-  def _ie_nv_V4 : NVInst_V4<(outs),
-            (ins IntRegs:$src1, IntRegs:$src2, brtarget:$offset),
-            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
-            !strconcat("($src1.new, $src2)) jump:",
-            !strconcat(TakenStr, " $offset"))))),
-            []>,
-            Requires<[HasV4T]>;
+//===----------------------------------------------------------------------===//
+// multiclass/template class for the new-value compare jumps with the register
+// operands.
+//===----------------------------------------------------------------------===//
 
-  def _nv_V4 : NVInst_V4<(outs),
-            (ins IntRegs:$src1, IntRegs:$src2, brtarget:$offset),
-            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
-            !strconcat("($src1.new, $src2)) jump:",
-            !strconcat(TakenStr, " $offset"))))),
-            []>,
-            Requires<[HasV4T]>;
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 11 in
+class NVJrr_template<string mnemonic, bits<3> majOp, bit NvOpNum,
+                      bit isNegCond, bit isTaken>
+  : NVInst_V4<(outs),
+    (ins IntRegs:$src1, IntRegs:$src2, brtarget:$offset),
+    "if ("#!if(isNegCond, "!","")#mnemonic#
+    "($src1"#!if(!eq(NvOpNum, 0),".new, ",", ")#
+    "$src2"#!if(!eq(NvOpNum, 1),".new))","))")#" jump:"
+    #!if(isTaken, "t","nt")#" $offset",
+    []>, Requires<[HasV4T]> {
+
+      bits<5> src1;
+      bits<5> src2;
+      bits<3> Ns;    // New-Value Operand
+      bits<5> RegOp; // Non New-Value Operand
+      bits<11> offset;
+
+      let isBrTaken = !if(isTaken, "true", "false");
+      let isPredicatedFalse = isNegCond;
+
+      let Ns = !if(!eq(NvOpNum, 0), src1{2-0}, src2{2-0});
+      let RegOp = !if(!eq(NvOpNum, 0), src2, src1);
+
+      let IClass = 0b0010;
+      let Inst{26} = 0b0;
+      let Inst{25-23} = majOp;
+      let Inst{22} = isNegCond;
+      let Inst{18-16} = Ns;
+      let Inst{13} = isTaken;
+      let Inst{12-8} = RegOp;
+      let Inst{21-20} = offset{10-9};
+      let Inst{7-1} = offset{8-2};
 }
 
-multiclass NVJ_type_basic_2ndDotNew<string NotStr, string OpcStr,
-                                                   string TakenStr> {
-  def _ie_nv_V4 : NVInst_V4<(outs),
-            (ins IntRegs:$src1, IntRegs:$src2, brtarget:$offset),
-            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
-            !strconcat("($src1, $src2.new)) jump:",
-            !strconcat(TakenStr, " $offset"))))),
-            []>,
-            Requires<[HasV4T]>;
 
-  def _nv_V4 : NVInst_V4<(outs),
-            (ins IntRegs:$src1, IntRegs:$src2, brtarget:$offset),
-            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
-            !strconcat("($src1, $src2.new)) jump:",
-            !strconcat(TakenStr, " $offset"))))),
-            []>,
-            Requires<[HasV4T]>;
+multiclass NVJrr_cond<string mnemonic, bits<3> majOp, bit NvOpNum,
+                       bit isNegCond> {
+  // Branch not taken:
+  def _nt_V4: NVJrr_template<mnemonic, majOp, NvOpNum, isNegCond, 0>;
+  // Branch taken:
+  def _t_V4: NVJrr_template<mnemonic, majOp, NvOpNum, isNegCond, 1>;
 }
 
-multiclass NVJ_type_basic_imm<string NotStr, string OpcStr, string TakenStr> {
-  def _ie_nv_V4 : NVInst_V4<(outs),
-            (ins IntRegs:$src1, u5Imm:$src2, brtarget:$offset),
-            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
-            !strconcat("($src1.new, #$src2)) jump:",
-            !strconcat(TakenStr, " $offset"))))),
-            []>,
-            Requires<[HasV4T]>;
+// NvOpNum = 0 -> First Operand is a new-value Register
+// NvOpNum = 1 -> Second Operand is a new-value Register
 
-  def _nv_V4 : NVInst_V4<(outs),
-            (ins IntRegs:$src1, u5Imm:$src2, brtarget:$offset),
-            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
-            !strconcat("($src1.new, #$src2)) jump:",
-            !strconcat(TakenStr, " $offset"))))),
-            []>,
-            Requires<[HasV4T]>;
+multiclass NVJrr_base<string mnemonic, string BaseOp, bits<3> majOp,
+                       bit NvOpNum> {
+  let BaseOpcode = BaseOp#_NVJ in {
+    defm _t_Jumpnv : NVJrr_cond<mnemonic, majOp, NvOpNum, 0>; // True cond
+    defm _f_Jumpnv : NVJrr_cond<mnemonic, majOp, NvOpNum, 1>; // False cond
+  }
 }
 
-multiclass NVJ_type_basic_neg<string NotStr, string OpcStr, string TakenStr> {
-  def _ie_nv_V4 : NVInst_V4<(outs),
-            (ins IntRegs:$src1, nOneImm:$src2, brtarget:$offset),
-            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
-            !strconcat("($src1.new, #$src2)) jump:",
-            !strconcat(TakenStr, " $offset"))))),
-            []>,
-            Requires<[HasV4T]>;
+// if ([!]cmp.eq(Ns.new,Rt)) jump:[n]t #r9:2
+// if ([!]cmp.gt(Ns.new,Rt)) jump:[n]t #r9:2
+// if ([!]cmp.gtu(Ns.new,Rt)) jump:[n]t #r9:2
+// if ([!]cmp.gt(Rt,Ns.new)) jump:[n]t #r9:2
+// if ([!]cmp.gtu(Rt,Ns.new)) jump:[n]t #r9:2
 
-  def _nv_V4 : NVInst_V4<(outs),
-            (ins IntRegs:$src1, nOneImm:$src2, brtarget:$offset),
-            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
-            !strconcat("($src1.new, #$src2)) jump:",
-            !strconcat(TakenStr, " $offset"))))),
-            []>,
-            Requires<[HasV4T]>;
-}
-
-multiclass NVJ_type_basic_tstbit<string NotStr, string OpcStr,
-                                                string TakenStr> {
-  def _ie_nv_V4 : NVInst_V4<(outs),
-            (ins IntRegs:$src1, u1Imm:$src2, brtarget:$offset),
-            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
-            !strconcat("($src1.new, #$src2)) jump:",
-            !strconcat(TakenStr, " $offset"))))),
-            []>,
-            Requires<[HasV4T]>;
-
-  def _nv_V4 : NVInst_V4<(outs),
-            (ins IntRegs:$src1, u1Imm:$src2, brtarget:$offset),
-            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
-            !strconcat("($src1.new, #$src2)) jump:",
-            !strconcat(TakenStr, " $offset"))))),
-            []>,
-            Requires<[HasV4T]>;
-}
-
-// Multiclass for regular dot new of Ist operand register.
-multiclass NVJ_type_br_pred_reg<string NotStr, string OpcStr> {
-  defm Pt  : NVJ_type_basic_reg<NotStr, OpcStr, "t">;
-  defm Pnt : NVJ_type_basic_reg<NotStr, OpcStr, "nt">;
-}
-
-// Multiclass for dot new of 2nd operand register.
-multiclass NVJ_type_br_pred_2ndDotNew<string NotStr, string OpcStr> {
-  defm Pt  : NVJ_type_basic_2ndDotNew<NotStr, OpcStr, "t">;
-  defm Pnt : NVJ_type_basic_2ndDotNew<NotStr, OpcStr, "nt">;
-}
-
-// Multiclass for 2nd operand immediate, including -1.
-multiclass NVJ_type_br_pred_imm<string NotStr, string OpcStr> {
-  defm Pt     : NVJ_type_basic_imm<NotStr, OpcStr, "t">;
-  defm Pnt    : NVJ_type_basic_imm<NotStr, OpcStr, "nt">;
-  defm Ptneg  : NVJ_type_basic_neg<NotStr, OpcStr, "t">;
-  defm Pntneg : NVJ_type_basic_neg<NotStr, OpcStr, "nt">;
-}
-
-// Multiclass for 2nd operand immediate, excluding -1.
-multiclass NVJ_type_br_pred_imm_only<string NotStr, string OpcStr> {
-  defm Pt     : NVJ_type_basic_imm<NotStr, OpcStr, "t">;
-  defm Pnt    : NVJ_type_basic_imm<NotStr, OpcStr, "nt">;
-}
-
-// Multiclass for tstbit, where 2nd operand is always #0.
-multiclass NVJ_type_br_pred_tstbit<string NotStr, string OpcStr> {
-  defm Pt     : NVJ_type_basic_tstbit<NotStr, OpcStr, "t">;
-  defm Pnt    : NVJ_type_basic_tstbit<NotStr, OpcStr, "nt">;
-}
-
-// Multiclass for GT.
-multiclass NVJ_type_rr_ri<string OpcStr> {
-  defm rrNot   : NVJ_type_br_pred_reg<"!", OpcStr>;
-  defm rr      : NVJ_type_br_pred_reg<"",  OpcStr>;
-  defm rrdnNot : NVJ_type_br_pred_2ndDotNew<"!", OpcStr>;
-  defm rrdn    : NVJ_type_br_pred_2ndDotNew<"",  OpcStr>;
-  defm riNot   : NVJ_type_br_pred_imm<"!", OpcStr>;
-  defm ri      : NVJ_type_br_pred_imm<"",  OpcStr>;
-}
-
-// Multiclass for EQ.
-multiclass NVJ_type_rr_ri_no_2ndDotNew<string OpcStr> {
-  defm rrNot   : NVJ_type_br_pred_reg<"!", OpcStr>;
-  defm rr      : NVJ_type_br_pred_reg<"",  OpcStr>;
-  defm riNot   : NVJ_type_br_pred_imm<"!", OpcStr>;
-  defm ri      : NVJ_type_br_pred_imm<"",  OpcStr>;
-}
-
-// Multiclass for GTU.
-multiclass NVJ_type_rr_ri_no_nOne<string OpcStr> {
-  defm rrNot   : NVJ_type_br_pred_reg<"!", OpcStr>;
-  defm rr      : NVJ_type_br_pred_reg<"",  OpcStr>;
-  defm rrdnNot : NVJ_type_br_pred_2ndDotNew<"!", OpcStr>;
-  defm rrdn    : NVJ_type_br_pred_2ndDotNew<"",  OpcStr>;
-  defm riNot   : NVJ_type_br_pred_imm_only<"!", OpcStr>;
-  defm ri      : NVJ_type_br_pred_imm_only<"",  OpcStr>;
-}
-
-// Multiclass for tstbit.
-multiclass NVJ_type_r0<string OpcStr> {
-  defm r0Not : NVJ_type_br_pred_tstbit<"!", OpcStr>;
-  defm r0    : NVJ_type_br_pred_tstbit<"",  OpcStr>;
- }
-
-// Base Multiclass for New Value Jump.
-multiclass NVJ_type {
-  defm GT     : NVJ_type_rr_ri<"cmp.gt">;
-  defm EQ     : NVJ_type_rr_ri_no_2ndDotNew<"cmp.eq">;
-  defm GTU    : NVJ_type_rr_ri_no_nOne<"cmp.gtu">;
-  defm TSTBIT : NVJ_type_r0<"tstbit">;
-}
-
-let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC] in {
-  defm JMP_ : NVJ_type;
+let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator = 1,
+  Defs = [PC], neverHasSideEffects = 1, validSubTargets = HasV4SubT in {
+  defm CMPEQrr  : NVJrr_base<"cmp.eq",  "CMPEQ",  0b000, 0>, PredRel;
+  defm CMPGTrr  : NVJrr_base<"cmp.gt",  "CMPGT",  0b001, 0>, PredRel;
+  defm CMPGTUrr : NVJrr_base<"cmp.gtu", "CMPGTU", 0b010, 0>, PredRel;
+  defm CMPLTrr  : NVJrr_base<"cmp.gt",  "CMPLT",  0b011, 1>, PredRel;
+  defm CMPLTUrr : NVJrr_base<"cmp.gtu", "CMPLTU", 0b100, 1>, PredRel;
 }
 
 //===----------------------------------------------------------------------===//
-// NV/J -
+// multiclass/template class for the new-value compare jumps instruction
+// with a register and an unsigned immediate (U5) operand.
 //===----------------------------------------------------------------------===//
+
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 11 in
+class NVJri_template<string mnemonic, bits<3> majOp, bit isNegCond,
+                         bit isTaken>
+  : NVInst_V4<(outs),
+    (ins IntRegs:$src1, u5Imm:$src2, brtarget:$offset),
+    "if ("#!if(isNegCond, "!","")#mnemonic#"($src1.new, #$src2)) jump:"
+    #!if(isTaken, "t","nt")#" $offset",
+    []>, Requires<[HasV4T]> {
+
+      let isPredicatedFalse = isNegCond;
+      let isBrTaken = !if(isTaken, "true", "false");
+
+      bits<3> src1;
+      bits<5> src2;
+      bits<11> offset;
+
+      let IClass = 0b0010;
+      let Inst{26} = 0b1;
+      let Inst{25-23} = majOp;
+      let Inst{22} = isNegCond;
+      let Inst{18-16} = src1;
+      let Inst{13} = isTaken;
+      let Inst{12-8} = src2;
+      let Inst{21-20} = offset{10-9};
+      let Inst{7-1} = offset{8-2};
+}
+
+multiclass NVJri_cond<string mnemonic, bits<3> majOp, bit isNegCond> {
+  // Branch not taken:
+  def _nt_V4: NVJri_template<mnemonic, majOp, isNegCond, 0>;
+  // Branch taken:
+  def _t_V4: NVJri_template<mnemonic, majOp, isNegCond, 1>;
+}
+
+multiclass NVJri_base<string mnemonic, string BaseOp, bits<3> majOp> {
+  let BaseOpcode = BaseOp#_NVJri in {
+    defm _t_Jumpnv : NVJri_cond<mnemonic, majOp, 0>; // True Cond
+    defm _f_Jumpnv : NVJri_cond<mnemonic, majOp, 1>; // False cond
+  }
+}
+
+// if ([!]cmp.eq(Ns.new,#U5)) jump:[n]t #r9:2
+// if ([!]cmp.gt(Ns.new,#U5)) jump:[n]t #r9:2
+// if ([!]cmp.gtu(Ns.new,#U5)) jump:[n]t #r9:2
+
+let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator = 1,
+  Defs = [PC], neverHasSideEffects = 1, validSubTargets = HasV4SubT in {
+  defm CMPEQri  : NVJri_base<"cmp.eq", "CMPEQ", 0b000>, PredRel;
+  defm CMPGTri  : NVJri_base<"cmp.gt", "CMPGT", 0b001>, PredRel;
+  defm CMPGTUri : NVJri_base<"cmp.gtu", "CMPGTU", 0b010>, PredRel;
+}
+
+//===----------------------------------------------------------------------===//
+// multiclass/template class for the new-value compare jumps instruction
+// with a register and an hardcoded 0/-1 immediate value.
+//===----------------------------------------------------------------------===//
+
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 11 in
+class NVJ_ConstImm_template<string mnemonic, bits<3> majOp, string ImmVal,
+                            bit isNegCond, bit isTaken>
+  : NVInst_V4<(outs),
+    (ins IntRegs:$src1, brtarget:$offset),
+    "if ("#!if(isNegCond, "!","")#mnemonic
+    #"($src1.new, #"#ImmVal#")) jump:"
+    #!if(isTaken, "t","nt")#" $offset",
+    []>, Requires<[HasV4T]> {
+
+      let isPredicatedFalse = isNegCond;
+      let isBrTaken = !if(isTaken, "true", "false");
+
+      bits<3> src1;
+      bits<11> offset;
+      let IClass = 0b0010;
+      let Inst{26} = 0b1;
+      let Inst{25-23} = majOp;
+      let Inst{22} = isNegCond;
+      let Inst{18-16} = src1;
+      let Inst{13} = isTaken;
+      let Inst{21-20} = offset{10-9};
+      let Inst{7-1} = offset{8-2};
+}
+
+multiclass NVJ_ConstImm_cond<string mnemonic, bits<3> majOp, string ImmVal,
+                             bit isNegCond> {
+  // Branch not taken:
+  def _nt_V4: NVJ_ConstImm_template<mnemonic, majOp, ImmVal, isNegCond, 0>;
+  // Branch taken:
+  def _t_V4: NVJ_ConstImm_template<mnemonic, majOp, ImmVal, isNegCond, 1>;
+}
+
+multiclass NVJ_ConstImm_base<string mnemonic, string BaseOp, bits<3> majOp,
+                             string ImmVal> {
+  let BaseOpcode = BaseOp#_NVJ_ConstImm in {
+  defm _t_Jumpnv : NVJ_ConstImm_cond<mnemonic, majOp, ImmVal, 0>; // True cond
+  defm _f_Jumpnv : NVJ_ConstImm_cond<mnemonic, majOp, ImmVal, 1>; // False Cond
+  }
+}
+
+// if ([!]tstbit(Ns.new,#0)) jump:[n]t #r9:2
+// if ([!]cmp.eq(Ns.new,#-1)) jump:[n]t #r9:2
+// if ([!]cmp.gt(Ns.new,#-1)) jump:[n]t #r9:2
+
+let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator=1,
+  Defs = [PC], neverHasSideEffects = 1 in {
+  defm TSTBIT0  : NVJ_ConstImm_base<"tstbit", "TSTBIT", 0b011, "0">, PredRel;
+  defm CMPEQn1  : NVJ_ConstImm_base<"cmp.eq", "CMPEQ",  0b100, "-1">, PredRel;
+  defm CMPGTn1  : NVJ_ConstImm_base<"cmp.gt", "CMPGT",  0b101, "-1">, PredRel;
+}
 
 //===----------------------------------------------------------------------===//
 // XTYPE/ALU +
@@ -3007,9 +3021,10 @@ def : Pat <(i32 (load (HexagonCONST32_GP tglobaladdr:$global))),
 
 
 // Transfer global address into a register
-let AddedComplexity=50, isMoveImm = 1, isReMaterializable = 1 in
-def TFRI_V4 : ALU32_ri<(outs IntRegs:$dst), (ins globaladdress:$src1),
-           "$dst = ##$src1",
+let isExtended = 1, opExtendable = 1, AddedComplexity=50, isMoveImm = 1,
+isAsCheapAsAMove = 1, isReMaterializable = 1, validSubTargets = HasV4SubT in
+def TFRI_V4 : ALU32_ri<(outs IntRegs:$dst), (ins s16Ext:$src1),
+           "$dst = #$src1",
            [(set IntRegs:$dst, (HexagonCONST32 tglobaladdr:$src1))]>,
            Requires<[HasV4T]>;
 

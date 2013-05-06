@@ -2774,9 +2774,8 @@ bool HexagonPacketizerList::isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
     // If an instruction feeds new value jump, glue it.
     MachineBasicBlock::iterator NextMII = I;
     ++NextMII;
-    MachineInstr *NextMI = NextMII;
-
-    if (QII->isNewValueJump(NextMI)) {
+    if (NextMII != I->getParent()->end() && QII->isNewValueJump(NextMII)) {
+      MachineInstr *NextMI = NextMII;
 
       bool secondRegMatch = false;
       bool maintainNewValueJump = false;
