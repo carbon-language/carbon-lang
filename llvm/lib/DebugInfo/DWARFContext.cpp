@@ -141,7 +141,8 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
       OS << "\n.debug_str_offsets.dwo contents:\n";
       DataExtractor strOffsetExt(getStringOffsetDWOSection(), isLittleEndian(), 0);
       offset = 0;
-      while (offset < getStringOffsetDWOSection().size()) {
+      uint64_t size = getStringOffsetDWOSection().size();
+      while (offset < size) {
         OS << format("0x%8.8x: ", offset);
         OS << format("%8.8x\n", strOffsetExt.getU32(&offset));
       }
