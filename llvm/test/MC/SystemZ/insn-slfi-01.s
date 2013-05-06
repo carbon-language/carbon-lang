@@ -1,0 +1,9 @@
+# RUN: llvm-mc -triple s390x-linux-gnu -show-encoding %s | FileCheck %s
+
+#CHECK: slfi	%r0, 0                  # encoding: [0xc2,0x05,0x00,0x00,0x00,0x00]
+#CHECK: slfi	%r0, 4294967295         # encoding: [0xc2,0x05,0xff,0xff,0xff,0xff]
+#CHECK: slfi	%r15, 0                 # encoding: [0xc2,0xf5,0x00,0x00,0x00,0x00]
+
+	slfi	%r0, 0
+	slfi	%r0, (1 << 32) - 1
+	slfi	%r15, 0
