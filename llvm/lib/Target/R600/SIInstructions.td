@@ -602,7 +602,9 @@ defm V_READFIRSTLANE_B32 : VOP1_32 <0x00000002, "V_READFIRSTLANE_B32", []>;
 defm V_CVT_F32_I32 : VOP1_32 <0x00000005, "V_CVT_F32_I32",
   [(set f32:$dst, (sint_to_fp i32:$src0))]
 >;
-defm V_CVT_F32_U32 : VOP1_32 <0x00000006, "V_CVT_F32_U32", []>;
+defm V_CVT_F32_U32 : VOP1_32 <0x00000006, "V_CVT_F32_U32",
+  [(set f32:$dst, (uint_to_fp i32:$src0))]
+>;
 defm V_CVT_U32_F32 : VOP1_32 <0x00000007, "V_CVT_U32_F32", []>;
 defm V_CVT_I32_F32 : VOP1_32 <0x00000008, "V_CVT_I32_F32",
   [(set i32:$dst, (fp_to_sint f32:$src0))]
