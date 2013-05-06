@@ -94,9 +94,6 @@ class CompileUnit {
   /// DWARF version doesn't handle the language, return -1.
   int64_t getDefaultLowerBound() const;
 
-  /// getOrCreateContextDIE - Get context owner's DIE.
-  DIE *getOrCreateContextDIE(DIDescriptor Context);
-
 public:
   CompileUnit(unsigned UID, unsigned L, DIE *D, AsmPrinter *A, DwarfDebug *DW,
               DwarfUnits *);
@@ -371,6 +368,9 @@ public:
 
   /// createStaticMemberDIE - Create new static data member DIE.
   DIE *createStaticMemberDIE(DIDerivedType DT);
+
+  /// getOrCreateContextDIE - Get context owner's DIE.
+  DIE *getOrCreateContextDIE(DIDescriptor Context);
 
 private:
 

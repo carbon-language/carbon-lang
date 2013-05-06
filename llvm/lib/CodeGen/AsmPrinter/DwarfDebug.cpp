@@ -94,6 +94,12 @@ static cl::opt<DefaultOnOff> SplitDwarf("split-dwarf", cl::Hidden,
 namespace {
   const char *DWARFGroupName = "DWARF Emission";
   const char *DbgTimerName = "DWARF Debug Writer";
+
+  struct CompareFirst {
+    template <typename T> bool operator()(const T &lhs, const T &rhs) const {
+      return lhs.first < rhs.first;
+    }
+  };
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
@@ -597,9 +603,15 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
   }
   else {
     // There is no need to emit empty lexical block DIE.
-    if (Children.empty())
+    std::pair<ImportedEntityMap::const_iterator,
+              ImportedEntityMap::const_iterator> Range = std::equal_range(
+        ScopesWithImportedEntities.begin(), ScopesWithImportedEntities.end(),
+        std::pair<const MDNode *, const MDNode *>(DS, 0), CompareFirst());
+    if (Children.empty() && Range.first == Range.second)
       return NULL;
     ScopeDIE = constructLexicalScopeDIE(TheCU, Scope);
+    for (ImportedEntityMap::const_iterator i = Range.first; i != Range.second; ++i)
+      constructImportedModuleDIE(TheCU, i->second, ScopeDIE);
   }
 
   if (!ScopeDIE) return NULL;
@@ -768,6 +780,24 @@ void DwarfDebug::constructImportedModuleDIE(CompileUnit *TheCU,
   DIImportedModule Module(N);
   if (!Module.Verify())
     return;
+  if (DIE *D = TheCU->getOrCreateContextDIE(Module.getContext()))
+    constructImportedModuleDIE(TheCU, Module, D);
+}
+
+void DwarfDebug::constructImportedModuleDIE(CompileUnit *TheCU, const MDNode *N,
+                                            DIE *Context) {
+  DIImportedModule Module(N);
+  if (!Module.Verify())
+    return;
+  return constructImportedModuleDIE(TheCU, Module, Context);
+}
+
+void DwarfDebug::constructImportedModuleDIE(CompileUnit *TheCU,
+                                            const DIImportedModule &Module,
+                                            DIE *Context) {
+  assert(Module.Verify() &&
+         "Use one of the MDNode * overloads to handle invalid metadata");
+  assert(Context && "Should always have a context for an imported_module");
   DIE *IMDie = new DIE(dwarf::DW_TAG_imported_module);
   TheCU->insertDIE(Module, IMDie);
   DIE *NSDie = TheCU->getOrCreateNameSpace(Module.getNameSpace());
@@ -777,7 +807,7 @@ void DwarfDebug::constructImportedModuleDIE(CompileUnit *TheCU,
   TheCU->addUInt(IMDie, dwarf::DW_AT_decl_file, 0, FileID);
   TheCU->addUInt(IMDie, dwarf::DW_AT_decl_line, 0, Module.getLineNumber());
   TheCU->addDIEEntry(IMDie, dwarf::DW_AT_import, dwarf::DW_FORM_ref4, NSDie);
-  TheCU->addToContextOwner(IMDie, Module.getContext());
+  Context->addChild(IMDie);
 }
 
 // Emit all Dwarf sections that should come prior to the content. Create
@@ -801,6 +831,13 @@ void DwarfDebug::beginModule() {
   for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
     DICompileUnit CUNode(CU_Nodes->getOperand(i));
     CompileUnit *CU = constructCompileUnit(CUNode);
+    DIArray ImportedModules = CUNode.getImportedModules();
+    for (unsigned i = 0, e = ImportedModules.getNumElements(); i != e; ++i)
+      ScopesWithImportedEntities.push_back(std::make_pair(
+          DIImportedModule(ImportedModules.getElement(i)).getContext(),
+          ImportedModules.getElement(i)));
+    std::sort(ScopesWithImportedEntities.begin(),
+              ScopesWithImportedEntities.end(), CompareFirst());
     DIArray GVs = CUNode.getGlobalVariables();
     for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i)
       CU->createGlobalVariableDIE(GVs.getElement(i));
@@ -815,7 +852,6 @@ void DwarfDebug::beginModule() {
       CU->getOrCreateTypeDIE(RetainedTypes.getElement(i));
     // Emit imported_modules last so that the relevant context is already
     // available.
-    DIArray ImportedModules = CUNode.getImportedModules();
     for (unsigned i = 0, e = ImportedModules.getNumElements(); i != e; ++i)
       constructImportedModuleDIE(CU, ImportedModules.getElement(i));
     // If we're splitting the dwarf out now that we've got the entire
