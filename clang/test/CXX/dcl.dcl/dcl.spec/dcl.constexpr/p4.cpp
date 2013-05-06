@@ -87,10 +87,6 @@ struct V {
       /**/;
 #ifndef CXX1Y
     // expected-error@-3 {{statement not allowed in constexpr constructor}}
-#else
-    // FIXME: Once we support evaluating a for-statement, this diagnostic should disappear.
-    // expected-error@-7 {{never produces a constant expression}}
-    // expected-note@-7 {{subexpression}}
 #endif
   }
   constexpr V(int(&)[2]) {

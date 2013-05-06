@@ -915,10 +915,14 @@ static bool EvaluateComplex(const Expr *E, ComplexValue &Res, EvalInfo &Info);
 
 /// Evaluate an expression to see if it had side-effects, and discard its
 /// result.
-static void EvaluateIgnoredValue(EvalInfo &Info, const Expr *E) {
+/// \return \c true if the caller should keep evaluating.
+static bool EvaluateIgnoredValue(EvalInfo &Info, const Expr *E) {
   APValue Scratch;
-  if (!Evaluate(Scratch, Info, E))
+  if (!Evaluate(Scratch, Info, E)) {
     Info.EvalStatus.HasSideEffects = true;
+    return Info.keepEvaluatingAfterFailure();
+  }
+  return true;
 }
 
 /// Should this call expression be treated as a string literal?
@@ -2457,7 +2461,11 @@ enum EvalStmtResult {
   /// Hit a 'return' statement.
   ESR_Returned,
   /// Evaluation succeeded.
-  ESR_Succeeded
+  ESR_Succeeded,
+  /// Hit a 'continue' statement.
+  ESR_Continue,
+  /// Hit a 'break' statement.
+  ESR_Break
 };
 }
 
@@ -2482,6 +2490,32 @@ static bool EvaluateDecl(EvalInfo &Info, const Decl *D) {
   return true;
 }
 
+/// Evaluate a condition (either a variable declaration or an expression).
+static bool EvaluateCond(EvalInfo &Info, const VarDecl *CondDecl,
+                         const Expr *Cond, bool &Result) {
+  if (CondDecl && !EvaluateDecl(Info, CondDecl))
+    return false;
+  return EvaluateAsBooleanCondition(Cond, Result, Info);
+}
+
+static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
+                                   const Stmt *S);
+
+/// Evaluate the body of a loop, and translate the result as appropriate.
+static EvalStmtResult EvaluateLoopBody(APValue &Result, EvalInfo &Info,
+                                       const Stmt *Body) {
+  switch (EvalStmtResult ESR = EvaluateStmt(Result, Info, Body)) {
+  case ESR_Break:
+    return ESR_Succeeded;
+  case ESR_Succeeded:
+  case ESR_Continue:
+    return ESR_Continue;
+  case ESR_Failed:
+  case ESR_Returned:
+    return ESR;
+  }
+}
+
 // Evaluate a statement.
 static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
                                    const Stmt *S) {
@@ -2490,10 +2524,9 @@ static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
   switch (S->getStmtClass()) {
   default:
     if (const Expr *E = dyn_cast<Expr>(S)) {
-      EvaluateIgnoredValue(Info, E);
       // Don't bother evaluating beyond an expression-statement which couldn't
       // be evaluated.
-      if (Info.EvalStatus.HasSideEffects && !Info.keepEvaluatingAfterFailure())
+      if (!EvaluateIgnoredValue(Info, E))
         return ESR_Failed;
       return ESR_Succeeded;
     }
@@ -2536,13 +2569,7 @@ static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
 
     // Evaluate the condition, as either a var decl or as an expression.
     bool Cond;
-    if (VarDecl *CondDecl = IS->getConditionVariable()) {
-      if (!EvaluateDecl(Info, CondDecl))
-        return ESR_Failed;
-      if (!HandleConversionToBool(Info.CurrentCall->Temporaries[CondDecl],
-                                  Cond))
-        return ESR_Failed;
-    } else if (!EvaluateAsBooleanCondition(IS->getCond(), Cond, Info))
+    if (!EvaluateCond(Info, IS->getConditionVariable(), IS->getCond(), Cond))
       return ESR_Failed;
 
     if (const Stmt *SubStmt = Cond ? IS->getThen() : IS->getElse()) {
@@ -2552,6 +2579,68 @@ static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
     }
     return ESR_Succeeded;
   }
+
+  case Stmt::WhileStmtClass: {
+    const WhileStmt *WS = cast<WhileStmt>(S);
+    while (true) {
+      bool Continue;
+      if (!EvaluateCond(Info, WS->getConditionVariable(), WS->getCond(),
+                        Continue))
+        return ESR_Failed;
+      if (!Continue)
+        break;
+
+      EvalStmtResult ESR = EvaluateLoopBody(Result, Info, WS->getBody());
+      if (ESR != ESR_Continue)
+        return ESR;
+    }
+    return ESR_Succeeded;
+  }
+
+  case Stmt::DoStmtClass: {
+    const DoStmt *DS = cast<DoStmt>(S);
+    bool Continue;
+    do {
+      EvalStmtResult ESR = EvaluateLoopBody(Result, Info, DS->getBody());
+      if (ESR != ESR_Continue)
+        return ESR;
+
+      if (!EvaluateAsBooleanCondition(DS->getCond(), Continue, Info))
+        return ESR_Failed;
+    } while (Continue);
+    return ESR_Succeeded;
+  }
+
+  case Stmt::ForStmtClass: {
+    const ForStmt *FS = cast<ForStmt>(S);
+    if (FS->getInit()) {
+      EvalStmtResult ESR = EvaluateStmt(Result, Info, FS->getInit());
+      if (ESR != ESR_Succeeded)
+        return ESR;
+    }
+    while (true) {
+      bool Continue = true;
+      if (FS->getCond() && !EvaluateCond(Info, FS->getConditionVariable(),
+                                         FS->getCond(), Continue))
+        return ESR_Failed;
+      if (!Continue)
+        break;
+
+      EvalStmtResult ESR = EvaluateLoopBody(Result, Info, FS->getBody());
+      if (ESR != ESR_Continue)
+        return ESR;
+
+      if (FS->getInc() && !EvaluateIgnoredValue(Info, FS->getInc()))
+        return ESR_Failed;
+    }
+    return ESR_Succeeded;
+  }
+
+  case Stmt::ContinueStmtClass:
+    return ESR_Continue;
+
+  case Stmt::BreakStmtClass:
+    return ESR_Break;
   }
 }
 

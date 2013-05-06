@@ -156,33 +156,14 @@ namespace string_assign {
   }
   template<typename Iterator>
   constexpr void reverse(Iterator begin, Iterator end) {
-#if 0 // FIXME: once implementation is complete...
     while (begin != end && begin != --end)
       swap(*begin++, *end);
-#else
-    if (begin != end) {
-      if (begin == --end)
-        return;
-      swap(*begin++, *end);
-      reverse(begin, end);
-    }
-#endif
   }
   template<typename Iterator1, typename Iterator2>
   constexpr bool equal(Iterator1 a, Iterator1 ae, Iterator2 b, Iterator2 be) {
-#if 0 // FIXME: once implementation is complete...
-    while (a != ae && b != be) {
-      if (*a != *b)
-        return false;
-      ++a, ++b;
-    }
-#else
-    if (a != ae && b != be) {
+    while (a != ae && b != be)
       if (*a++ != *b++)
         return false;
-      return equal(a, ae, b, be);
-    }
-#endif
     return a == ae && b == be;
   }
   constexpr bool test1(int n) {
@@ -351,4 +332,74 @@ namespace incdec {
     return incr(x);
   }
   static_assert(incr(0) == 101, "");
+}
+
+namespace loops {
+  constexpr int fib_loop(int a) {
+    int f_k = 0, f_k_plus_one = 1;
+    for (int k = 1; k != a; ++k) {
+      int f_k_plus_two = f_k + f_k_plus_one;
+      f_k = f_k_plus_one;
+      f_k_plus_one = f_k_plus_two;
+    }
+    return f_k_plus_one;
+  }
+  static_assert(fib_loop(46) == 1836311903, "");
+
+  constexpr bool breaks_work() {
+    int a = 0;
+    for (int n = 0; n != 100; ++n) {
+      ++a;
+      if (a == 5) continue;
+      if ((a % 5) == 0) break;
+    }
+
+    int b = 0;
+    while (b != 17) {
+      ++b;
+      if (b == 6) continue;
+      if ((b % 6) == 0) break;
+    }
+
+    int c = 0;
+    do {
+      ++c;
+      if (c == 7) continue;
+      if ((c % 7) == 0) break;
+    } while (c != 21);
+
+    return a == 10 && b == 12 & c == 14;
+  }
+  static_assert(breaks_work(), "");
+
+  void not_constexpr();
+  constexpr bool no_cont_after_break() {
+    for (;;) {
+      break;
+      not_constexpr();
+    }
+    while (true) {
+      break;
+      not_constexpr();
+    }
+    do {
+      break;
+      not_constexpr();
+    } while (true);
+    return true;
+  }
+  static_assert(no_cont_after_break(), "");
+
+  constexpr bool cond() {
+    for (int a = 1; bool b = a != 3; ++a) {
+      if (!b)
+        return false;
+    }
+    while (bool b = true) {
+      b = false;
+      break;
+    }
+    return true;
+  }
+  static_assert(cond(), "");
 }
