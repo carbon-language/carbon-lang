@@ -262,7 +262,6 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     }
     case AMDGPU::CF_CALL_FS_EG:
     case AMDGPU::CF_CALL_FS_R600:
-      return;
     case AMDGPU::CF_TC_EG:
     case AMDGPU::CF_VC_EG:
     case AMDGPU::CF_TC_R600:
