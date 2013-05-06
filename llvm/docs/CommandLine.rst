@@ -1267,6 +1267,57 @@ only consists of one function `cl::ParseCommandLineOptions`_) and three main
 classes: `cl::opt`_, `cl::list`_, and `cl::alias`_.  This section describes
 these three classes in detail.
 
+.. _cl::getRegisteredOptions:
+
+The ``cl::getRegisteredOptions`` function
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``cl::getRegisteredOptions`` function is designed to give a programmer
+access to declared non positional command line options so that how they appear
+in ``-help`` can be modified prior to calling `cl::ParseCommandLineOptions`_.
+Note this method should not be called during any static initialisation because
+it cannot be guaranteed that all options will have been initialised. Hence it
+should be called from ``main``.
+
+This function can be used to gain access to options declared in libraries that
+the tool writter may not have direct access to.
+
+The function retrieves a :ref:`StringMap <dss_stringmap>` that maps the option
+string (e.g. ``-help``) to an ``Option*``.
+
+Here is an example of how the function could be used:
+
+.. code-block:: c++
+
+  using namespace llvm;
+  int main(int argc, char **argv) {
+    cl::OptionCategory AnotherCategory("Some options");
+
+    StringMap<cl::Option*> Map;
+    cl::getRegisteredOptions(Map);
+
+    //Unhide useful option and put it in a different category
+    assert(Map.count("print-all-options") > 0);
+    Map["print-all-options"]->setHiddenFlag(cl::NotHidden);
+    Map["print-all-options"]->setCategory(AnotherCategory);
+
+    //Hide an option we don't want to see
+    assert(Map.count("enable-no-infs-fp-math") > 0);
+    Map["enable-no-infs-fp-math"]->setHiddenFlag(cl::Hidden);
+
+    //Change --version to --show-version
+    assert(Map.count("version") > 0);
+    Map["version"]->setArgStr("show-version");
+
+    //Change --help description
+    assert(Map.count("help") > 0);
+    Map["help"]->setDescription("Shows help");
+
+    cl::ParseCommandLineOptions(argc, argv, "This is a small program to demo the LLVM CommandLine API");
+    ...
+  }
+
+
 .. _cl::ParseCommandLineOptions:
 
 The ``cl::ParseCommandLineOptions`` function

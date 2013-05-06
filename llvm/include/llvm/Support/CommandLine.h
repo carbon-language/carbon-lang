@@ -22,6 +22,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/type_traits.h"
 #include <cassert>
@@ -1712,6 +1713,39 @@ void PrintVersionMessage();
 /// \param hidden if true will print hidden options
 /// \param categorized if true print options in categories
 void PrintHelpMessage(bool Hidden=false, bool Categorized=false);
+
+
+//===----------------------------------------------------------------------===//
+// Public interface for accessing registered options.
+//
+
+/// \brief Use this to get a StringMap to all registered named options
+/// (e.g. -help). Note \p Map Should be an empty StringMap.
+///
+/// \param [out] map will be filled with mappings where the key is the
+/// Option argument string (e.g. "help") and value is the corresponding
+/// Option*.
+///
+/// Access to unnamed arguments (i.e. positional) are not provided because
+/// it is expected that the client already has access to these.
+///
+/// Typical usage:
+/// \code
+/// main(int argc,char* argv[]) {
+/// StringMap<llvm::cl::Option*> opts;
+/// llvm::cl::getRegisteredOptions(opts);
+/// assert(opts.count("help") == 1)
+/// opts["help"]->setDescription("Show alphabetical help information")
+/// // More code
+/// llvm::cl::ParseCommandLineOptions(argc,argv);
+/// //More code
+/// }
+/// \endcode
+///
+/// This interface is useful for modifying options in libraries that are out of
+/// the control of the client. The options should be modified before calling
+/// llvm::cl::ParseCommandLineOptions().
+void getRegisteredOptions(StringMap<Option*> &Map);
 
 } // End namespace cl
 

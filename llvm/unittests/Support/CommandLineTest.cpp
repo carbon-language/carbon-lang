@@ -41,6 +41,45 @@ class TempEnvVar {
   const char *const name;
 };
 
+cl::OptionCategory TestCategory("Test Options", "Description");
+cl::opt<int> TestOption("test-option", cl::desc("old description"));
+TEST(CommandLineTest, ModifyExisitingOption) {
+  const char Description[] = "New description";
+  const char ArgString[] = "new-test-option";
+  const char ValueString[] = "Integer";
+
+  StringMap<cl::Option*> Map;
+  cl::getRegisteredOptions(Map);
+
+  ASSERT_TRUE(Map.count("test-option") == 1) <<
+    "Could not find option in map.";
+
+  cl::Option *Retrieved = Map["test-option"];
+  ASSERT_EQ(&TestOption, Retrieved) << "Retrieved wrong option.";
+
+  ASSERT_EQ(&cl::GeneralCategory,Retrieved->Category) <<
+    "Incorrect default option category.";
+
+  Retrieved->setCategory(TestCategory);
+  ASSERT_EQ(&TestCategory,Retrieved->Category) <<
+    "Failed to modify option's option category.";
+
+  Retrieved->setDescription(Description);
+  ASSERT_STREQ(Retrieved->HelpStr, Description) <<
+    "Changing option description failed.";
+
+  Retrieved->setArgStr(ArgString);
+  ASSERT_STREQ(ArgString, Retrieved->ArgStr) <<
+    "Failed to modify option's Argument string.";
+
+  Retrieved->setValueStr(ValueString);
+  ASSERT_STREQ(Retrieved->ValueStr, ValueString) <<
+    "Failed to modify option's Value string.";
+
+  Retrieved->setHiddenFlag(cl::Hidden);
+  ASSERT_EQ(cl::Hidden, TestOption.getOptionHiddenFlag()) <<
+    "Failed to modify option's hidden flag.";
+}
 #ifndef SKIP_ENVIRONMENT_TESTS
 
 const char test_env_var[] = "LLVM_TEST_COMMAND_LINE_FLAGS";
@@ -55,6 +94,12 @@ TEST(CommandLineTest, ParseEnvironment) {
 
 // This test used to make valgrind complain
 // ("Conditional jump or move depends on uninitialised value(s)")
+//
+// Warning: Do not run any tests after this one that try to gain access to
+// registered command line options because this will likely result in a
+// SEGFAULT. This can occur because the cl::opt in the test below is declared
+// on the stack which will be destroyed after the test completes but the
+// command line system will still hold a pointer to a deallocated cl::Option.
 TEST(CommandLineTest, ParseEnvironmentToLocalVar) {
   // Put cl::opt on stack to check for proper initialization of fields.
   cl::opt<std::string> EnvironmentTestOptionLocal("env-test-opt-local");
@@ -67,10 +112,9 @@ TEST(CommandLineTest, ParseEnvironmentToLocalVar) {
 #endif  // SKIP_ENVIRONMENT_TESTS
 
 TEST(CommandLineTest, UseOptionCategory) {
-  cl::OptionCategory TestCategory("Test Options", "Description");
-  cl::opt<int> TestOption("test-option", cl::cat(TestCategory));
+  cl::opt<int> TestOption2("test-option", cl::cat(TestCategory));
 
-  ASSERT_EQ(&TestCategory,TestOption.Category) << "Failed to assign Option "
+  ASSERT_EQ(&TestCategory,TestOption2.Category) << "Failed to assign Option "
                                                   "Category.";
 }
 

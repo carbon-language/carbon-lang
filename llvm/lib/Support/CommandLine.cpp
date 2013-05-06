@@ -1596,3 +1596,13 @@ void cl::AddExtraVersionPrinter(void (*func)()) {
 
   ExtraVersionPrinters->push_back(func);
 }
+
+void cl::getRegisteredOptions(StringMap<Option*> &Map)
+{
+  // Get all the options.
+  SmallVector<Option*, 4> PositionalOpts; //NOT USED
+  SmallVector<Option*, 4> SinkOpts;  //NOT USED
+  assert(Map.size() == 0 && "StringMap must be empty");
+  GetOptionInfo(PositionalOpts, SinkOpts, Map);
+  return;
+}
