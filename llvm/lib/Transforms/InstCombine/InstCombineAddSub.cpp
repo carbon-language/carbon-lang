@@ -1232,6 +1232,31 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
     }
   }
 
+  // select C, 0, B + select C, A, 0 -> select C, A, B
+  {
+    Value *A1, *B1, *C1, *A2, *B2, *C2;
+    if (match(LHS, m_Select(m_Value(C1), m_Value(A1), m_Value(B1))) &&
+        match(RHS, m_Select(m_Value(C2), m_Value(A2), m_Value(B2)))) {
+      if (C1 == C2) {
+        Constant *Z1=0, *Z2=0;
+        Value *A, *B, *C=C1;
+        if (match(A1, m_AnyZero()) && match(B2, m_AnyZero())) {
+            Z1 = dyn_cast<Constant>(A1); A = A2;
+            Z2 = dyn_cast<Constant>(B2); B = B1;
+        } else if (match(B1, m_AnyZero()) && match(A2, m_AnyZero())) {
+            Z1 = dyn_cast<Constant>(B1); B = B2;
+            Z2 = dyn_cast<Constant>(A2); A = A1; 
+        }
+        
+        if (Z1 && Z2 && 
+            (I.hasNoSignedZeros() || 
+             (Z1->isNegativeZeroValue() && Z2->isNegativeZeroValue()))) {
+          return SelectInst::Create(C, A, B);
+        }
+      }
+    }
+  }
+
   if (I.hasUnsafeAlgebra()) {
     if (Value *V = FAddCombine(Builder).simplify(&I))
       return ReplaceInstUsesWith(I, V);

@@ -693,6 +693,12 @@ m_ZExt(const OpTy &Op) {
   return CastClass_match<OpTy, Instruction::ZExt>(Op);
 }
 
+/// m_UIToFP
+template<typename OpTy>
+inline CastClass_match<OpTy, Instruction::UIToFP>
+m_UIToFp(const OpTy &Op) { 
+  return CastClass_match<OpTy, Instruction::UIToFP>(Op);
+}
 
 //===----------------------------------------------------------------------===//
 // Matchers for unary operators
