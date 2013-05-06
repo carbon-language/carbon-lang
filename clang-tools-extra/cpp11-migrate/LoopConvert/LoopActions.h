@@ -73,6 +73,8 @@ class LoopFixer : public clang::ast_matchers::MatchFinder::MatchCallback {
                     llvm::StringRef ContainerString,
                     const UsageResult &Usages,
                     const clang::DeclStmt *AliasDecl,
+                    bool AliasUseRequired,
+                    bool AliasFromForInit,
                     const clang::ForStmt *TheLoop,
                     bool ContainerNeedsDereference,
                     bool DerefByValue);

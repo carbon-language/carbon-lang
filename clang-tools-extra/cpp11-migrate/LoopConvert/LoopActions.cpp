@@ -72,7 +72,9 @@ class ForLoopIndexUseVisitor
     Context(Context), IndexVar(IndexVar), EndVar(EndVar),
     ContainerExpr(ContainerExpr), ArrayBoundExpr(ArrayBoundExpr),
     ContainerNeedsDereference(ContainerNeedsDereference),
-    OnlyUsedAsIndex(true),  AliasDecl(NULL), ConfidenceLevel(RL_Safe) {
+    OnlyUsedAsIndex(true),  AliasDecl(NULL), ConfidenceLevel(RL_Safe),
+    NextStmtParent(NULL), CurrStmtParent(NULL), ReplaceWithAliasUse(false),
+    AliasFromForInit(false) {
      if (ContainerExpr) {
        addComponent(ContainerExpr);
        llvm::FoldingSetNodeID ID;
@@ -123,6 +125,17 @@ class ForLoopIndexUseVisitor
     return ConfidenceLevel.getRiskLevel();
   }
 
+  /// \brief Indicates if the alias declaration was in a place where it cannot
+  /// simply be removed but rather replaced with a use of the alias variable.
+  /// For example, variables declared in the condition of an if, switch, or for
+  /// stmt.
+  bool aliasUseRequired() const { return ReplaceWithAliasUse; }
+
+  /// \brief Indicates if the alias declaration came from the init clause of a
+  /// nested for loop. SourceRanges provided by Clang for DeclStmts in this
+  /// case need to be adjusted.
+  bool aliasFromForInit() const { return AliasFromForInit; }
+
  private:
   /// Typedef used in CRTP functions.
   typedef RecursiveASTVisitor<ForLoopIndexUseVisitor> VisitorBase;
@@ -136,6 +149,7 @@ class ForLoopIndexUseVisitor
   bool TraverseUnaryDeref(UnaryOperator *Uop);
   bool VisitDeclRefExpr(DeclRefExpr *E);
   bool VisitDeclStmt(DeclStmt *S);
+  bool TraverseStmt(Stmt *S);
 
   /// \brief Add an expression to the list of expressions on which the container
   /// expression depends.
@@ -172,6 +186,19 @@ class ForLoopIndexUseVisitor
   /// of the loop element, lower our confidence level.
   llvm::SmallVector<
       std::pair<const Expr *, llvm::FoldingSetNodeID>, 16> DependentExprs;
+
+  /// The parent-in-waiting. Will become the real parent once we traverse down
+  /// one level in the AST.
+  const Stmt *NextStmtParent;
+  /// The actual parent of a node when Visit*() calls are made. Only the
+  /// parentage of DeclStmt's to possible iteration/selection statements is of
+  /// importance.
+  const Stmt *CurrStmtParent;
+
+  /// \see aliasUseRequired().
+  bool ReplaceWithAliasUse;
+  /// \see aliasFromForInit().
+  bool AliasFromForInit;
 };
 
 /// \brief Obtain the original source code text from a SourceRange.
@@ -722,9 +749,35 @@ bool ForLoopIndexUseVisitor::VisitDeclRefExpr(DeclRefExpr *E) {
 /// See the comments for isAliasDecl.
 bool ForLoopIndexUseVisitor::VisitDeclStmt(DeclStmt *S) {
   if (!AliasDecl && S->isSingleDecl() &&
-      isAliasDecl(S->getSingleDecl(), IndexVar))
-      AliasDecl = S;
+      isAliasDecl(S->getSingleDecl(), IndexVar)) {
+    AliasDecl = S;
+    if (CurrStmtParent) {
+      if (isa<IfStmt>(CurrStmtParent) ||
+          isa<WhileStmt>(CurrStmtParent) ||
+          isa<SwitchStmt>(CurrStmtParent))
+        ReplaceWithAliasUse = true;
+      else if (isa<ForStmt>(CurrStmtParent)) {
+        if (cast<ForStmt>(CurrStmtParent)->getConditionVariableDeclStmt() == S)
+          ReplaceWithAliasUse = true;
+        else
+          // It's assumed S came the for loop's init clause.
+          AliasFromForInit = true;
+      }
+    }
+  }
+
   return true;
+}
+
+bool ForLoopIndexUseVisitor::TraverseStmt(Stmt *S) {
+  // All this pointer swapping is a mechanism for tracking immediate parentage
+  // of Stmts.
+  const Stmt *OldNextParent = NextStmtParent;
+  CurrStmtParent = NextStmtParent;
+  NextStmtParent = S;
+  bool Result = VisitorBase::TraverseStmt(S);
+  NextStmtParent = OldNextParent;
+  return Result;
 }
 
 //// \brief Apply the source transformations necessary to migrate the loop!
@@ -733,7 +786,10 @@ void LoopFixer::doConversion(ASTContext *Context,
                              const VarDecl *MaybeContainer,
                              StringRef ContainerString,
                              const UsageResult &Usages,
-                             const DeclStmt *AliasDecl, const ForStmt *TheLoop,
+                             const DeclStmt *AliasDecl,
+                             bool AliasUseRequired,
+                             bool AliasFromForInit,
+                             const ForStmt *TheLoop,
                              bool ContainerNeedsDereference,
                              bool DerefByValue) {
   std::string VarName;
@@ -747,9 +803,19 @@ void LoopFixer::doConversion(ASTContext *Context,
 
     // We keep along the entire DeclStmt to keep the correct range here.
     const SourceRange &ReplaceRange = AliasDecl->getSourceRange();
-    Replace->insert(
-        Replacement(Context->getSourceManager(),
-                    CharSourceRange::getTokenRange(ReplaceRange), ""));
+
+    std::string ReplacementText;
+    if (AliasUseRequired)
+      ReplacementText = VarName;
+    else if (AliasFromForInit)
+      // FIXME: Clang includes the location of the ';' but only for DeclStmt's
+      // in a for loop's init clause. Need to put this ';' back while removing
+      // the declaration of the alias variable. This is probably a bug.
+      ReplacementText = ";";
+
+    Replace->insert(Replacement(Context->getSourceManager(),
+                                CharSourceRange::getTokenRange(ReplaceRange),
+                                ReplacementText));
     // No further replacements are made to the loop, since the iterator or index
     // was used exactly once - in the initialization of AliasVar.
   } else {
@@ -945,9 +1011,9 @@ void LoopFixer::findAndVerifyUsages(ASTContext *Context,
     return;
 
   doConversion(Context, LoopVar, getReferencedVariable(ContainerExpr),
-               ContainerString, Finder.getUsages(),
-               Finder.getAliasDecl(), TheLoop, ContainerNeedsDereference,
-               DerefByValue);
+               ContainerString, Finder.getUsages(), Finder.getAliasDecl(),
+               Finder.aliasUseRequired(), Finder.aliasFromForInit(), TheLoop,
+               ContainerNeedsDereference, DerefByValue);
   ++*AcceptedChanges;
 }
 
