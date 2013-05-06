@@ -20,6 +20,9 @@ using namespace llvm;
 
 namespace {
 
+// ARM and PowerPC tests disabled pending fix for PR10783.
+#if !defined(__arm__) && !defined(__powerpc__)
+
 bool LoadAssemblyInto(Module *M, const char *assembly) {
   SMDiagnostic Error;
   bool success =
@@ -64,9 +67,6 @@ void createModule2(LLVMContext &Context2, Module *&M2, Function *&FooF2) {
                    "} ");
   FooF2 = M2->getFunction("foo2");
 }
-
-// ARM and PowerPC tests disabled pending fix for PR10783.
-#if !defined(__arm__) && !defined(__powerpc__)
 
 TEST(MultiJitTest, EagerMode) {
   LLVMContext Context1;
