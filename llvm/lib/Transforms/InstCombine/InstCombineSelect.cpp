@@ -974,7 +974,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
     return &SI;
   }
 
-  if (VectorType *VecTy = dyn_cast<VectorType>(SI.getType())) {
+  if (VectorType* VecTy = dyn_cast<VectorType>(SI.getType())) {
     unsigned VWidth = VecTy->getNumElements();
     APInt UndefElts(VWidth, 0);
     APInt AllOnesEltMask(APInt::getAllOnesValue(VWidth));
@@ -982,24 +982,6 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       if (V != &SI)
         return ReplaceInstUsesWith(SI, V);
       return &SI;
-    }
-
-    if (ConstantVector *CV = dyn_cast<ConstantVector>(CondVal)) {
-      // Form a shufflevector instruction.
-      SmallVector<Constant *, 8> Mask(VWidth);
-      Type *Int32Ty = Type::getInt32Ty(CV->getContext());
-      for (unsigned i = 0; i != VWidth; ++i) {
-        Constant *Elem = cast<Constant>(CV->getOperand(i));
-        if (ConstantInt *E = dyn_cast<ConstantInt>(Elem))
-          Mask[i] = ConstantInt::get(Int32Ty, i + (E->isZero() ? VWidth : 0));
-        else if (isa<UndefValue>(Elem))
-          Mask[i] = UndefValue::get(Int32Ty);
-        else
-          return 0;
-      }
-      Constant *MaskVal = ConstantVector::get(Mask);
-      Value *V = Builder->CreateShuffleVector(TrueVal, FalseVal, MaskVal);
-      return ReplaceInstUsesWith(SI, V);
     }
 
     if (isa<ConstantAggregateZero>(CondVal)) {
