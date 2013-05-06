@@ -56,8 +56,8 @@ namespace {
     }
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
-    void simplifyLoopLatch(Loop *L);
-    bool rotateLoop(Loop *L);
+    bool simplifyLoopLatch(Loop *L);
+    bool rotateLoop(Loop *L, bool SimplifiedLatch);
 
   private:
     LoopInfo *LI;
@@ -84,13 +84,14 @@ bool LoopRotate::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Simplify the loop latch before attempting to rotate the header
   // upward. Rotation may not be needed if the loop tail can be folded into the
   // loop exit.
-  simplifyLoopLatch(L);
+  bool SimplifiedLatch = simplifyLoopLatch(L);
 
   // One loop can be rotated multiple times.
   bool MadeChange = false;
-  while (rotateLoop(L))
+  while (rotateLoop(L, SimplifiedLatch)) {
     MadeChange = true;
-
+    SimplifiedLatch = false;
+  }
   return MadeChange;
 }
 
@@ -212,25 +213,25 @@ static bool shouldSpeculateInstrs(BasicBlock::iterator Begin,
 /// canonical form so downstream passes can handle it.
 ///
 /// I don't believe this invalidates SCEV.
-void LoopRotate::simplifyLoopLatch(Loop *L) {
+bool LoopRotate::simplifyLoopLatch(Loop *L) {
   BasicBlock *Latch = L->getLoopLatch();
   if (!Latch || Latch->hasAddressTaken())
-    return;
+    return false;
 
   BranchInst *Jmp = dyn_cast<BranchInst>(Latch->getTerminator());
   if (!Jmp || !Jmp->isUnconditional())
-    return;
+    return false;
 
   BasicBlock *LastExit = Latch->getSinglePredecessor();
   if (!LastExit || !L->isLoopExiting(LastExit))
-    return;
+    return false;
 
   BranchInst *BI = dyn_cast<BranchInst>(LastExit->getTerminator());
   if (!BI)
-    return;
+    return false;
 
   if (!shouldSpeculateInstrs(Latch->begin(), Jmp))
-    return;
+    return false;
 
   DEBUG(dbgs() << "Folding loop latch " << Latch->getName() << " into "
         << LastExit->getName() << "\n");
@@ -253,10 +254,20 @@ void LoopRotate::simplifyLoopLatch(Loop *L) {
   if (DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>())
     DT->eraseNode(Latch);
   Latch->eraseFromParent();
+  return true;
 }
 
 /// Rotate loop LP. Return true if the loop is rotated.
-bool LoopRotate::rotateLoop(Loop *L) {
+///
+/// \param SimplifiedLatch is true if the latch was just folded into the final
+/// loop exit. In this case we may want to rotate even though the new latch is
+/// now an exiting branch. This rotation would have happened had the latch not
+/// been simplified. However, if SimplifiedLatch is false, then we avoid
+/// rotating loops in which the latch exits to avoid excessive or endless
+/// rotation. LoopRotate should be repeatable and converge to a canonical
+/// form. This property is satisfied because simplifying the loop latch can only
+/// happen once across multiple invocations of the LoopRotate pass.
+bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
   // If the loop has only one block then there is not much to rotate.
   if (L->getBlocks().size() == 1)
     return false;
@@ -276,7 +287,12 @@ bool LoopRotate::rotateLoop(Loop *L) {
 
   // If the loop latch already contains a branch that leaves the loop then the
   // loop is already rotated.
-  if (OrigLatch == 0 || L->isLoopExiting(OrigLatch))
+  if (OrigLatch == 0)
+    return false;
+
+  // Rotate if either the loop latch does *not* exit the loop, or if the loop
+  // latch was just simplified.
+  if (L->isLoopExiting(OrigLatch) && !SimplifiedLatch)
     return false;
 
   // Check size of original header and reject loop if it is very big or we can't
@@ -505,4 +521,3 @@ bool LoopRotate::rotateLoop(Loop *L) {
   ++NumRotated;
   return true;
 }
-
