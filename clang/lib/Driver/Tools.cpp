@@ -1135,11 +1135,11 @@ static std::string getR600TargetGPU(const ArgList &Args) {
   if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
     std::string GPUName = A->getValue();
     return llvm::StringSwitch<const char *>(GPUName)
-      .Cases("rv610", "rv620", "rv630", "r600")
-      .Cases("rv635", "rs780", "rs880", "r600")
+      .Cases("rv630", "rv635", "r600")
+      .Cases("rv610", "rv620", "rs780", "rs880")
       .Case("rv740", "rv770")
       .Case("palm", "cedar")
-      .Cases("sumo", "sumo2", "redwood")
+      .Cases("sumo", "sumo2", "sumo")
       .Case("hemlock", "cypress")
       .Case("aruba", "cayman")
       .Default(GPUName.c_str());
