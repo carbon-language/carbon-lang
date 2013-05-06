@@ -85,12 +85,19 @@ static Expr *IsStringInit(Expr *init, QualType declType, ASTContext &Context) {
 /// Update the type of a string literal, including any surrounding parentheses,
 /// to match the type of the object which it is initializing.
 static void updateStringLiteralType(Expr *E, QualType Ty) {
-  while (ParenExpr *PE = dyn_cast<ParenExpr>(E)) {
+  while (true) {
     E->setType(Ty);
-    E = PE->getSubExpr();
+    if (isa<StringLiteral>(E) || isa<ObjCEncodeExpr>(E))
+      break;
+    else if (ParenExpr *PE = dyn_cast<ParenExpr>(E))
+      E = PE->getSubExpr();
+    else if (UnaryOperator *UO = dyn_cast<UnaryOperator>(E))
+      E = UO->getSubExpr();
+    else if (GenericSelectionExpr *GSE = dyn_cast<GenericSelectionExpr>(E))
+      E = GSE->getResultExpr();
+    else
+      llvm_unreachable("unexpected expr in string literal init");
   }
-  assert(isa<StringLiteral>(E) || isa<ObjCEncodeExpr>(E));
-  E->setType(Ty);
 }
 
 static void CheckStringInit(Expr *Str, QualType &DeclT, const ArrayType *AT,
