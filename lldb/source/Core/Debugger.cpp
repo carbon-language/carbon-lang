@@ -1143,34 +1143,40 @@ ScanFormatDescriptor (const char* var_name_begin,
     else
     {
         *var_name_final = *percent_position;
-        char* format_name = new char[var_name_end-*var_name_final]; format_name[var_name_end-*var_name_final-1] = '\0';
-        memcpy(format_name, *var_name_final+1, var_name_end-*var_name_final-1);
+        std::string format_name(*var_name_final+1, var_name_end-*var_name_final-1);
         if (log)
-            log->Printf("ScanFormatDescriptor] parsing %s as a format descriptor", format_name);
-        if ( !FormatManager::GetFormatFromCString(format_name,
+            log->Printf("ScanFormatDescriptor] parsing %s as a format descriptor", format_name.c_str());
+        if ( !FormatManager::GetFormatFromCString(format_name.c_str(),
                                                   true,
                                                   *custom_format) )
         {
             if (log)
-                log->Printf("ScanFormatDescriptor] %s is an unknown format", format_name);
-            // if this is an @ sign, print ObjC description
-            if (*format_name == '@')
-                *val_obj_display = ValueObject::eValueObjectRepresentationStyleLanguageSpecific;
-            // if this is a V, print the value using the default format
-            else if (*format_name == 'V')
-                *val_obj_display = ValueObject::eValueObjectRepresentationStyleValue;
-            // if this is an L, print the location of the value
-            else if (*format_name == 'L')
-                *val_obj_display = ValueObject::eValueObjectRepresentationStyleLocation;
-            // if this is an S, print the summary after all
-            else if (*format_name == 'S')
-                *val_obj_display = ValueObject::eValueObjectRepresentationStyleSummary;
-            else if (*format_name == '#')
-                *val_obj_display = ValueObject::eValueObjectRepresentationStyleChildrenCount;
-            else if (*format_name == 'T')
-                *val_obj_display = ValueObject::eValueObjectRepresentationStyleType;
-            else if (log)
-                log->Printf("ScanFormatDescriptor] %s is an error, leaving the previous value alone", format_name);
+                log->Printf("ScanFormatDescriptor] %s is an unknown format", format_name.c_str());
+            
+            switch (format_name.front())
+            {
+                case '@':             // if this is an @ sign, print ObjC description
+                    *val_obj_display = ValueObject::eValueObjectRepresentationStyleLanguageSpecific;
+                    break;
+                case 'V': // if this is a V, print the value using the default format
+                    *val_obj_display = ValueObject::eValueObjectRepresentationStyleValue;
+                    break;
+                case 'L': // if this is an L, print the location of the value
+                    *val_obj_display = ValueObject::eValueObjectRepresentationStyleLocation;
+                    break;
+                case 'S': // if this is an S, print the summary after all
+                    *val_obj_display = ValueObject::eValueObjectRepresentationStyleSummary;
+                    break;
+                case '#': // if this is a '#', print the number of children
+                    *val_obj_display = ValueObject::eValueObjectRepresentationStyleChildrenCount;
+                    break;
+                case 'T': // if this is a 'T', print the type
+                    *val_obj_display = ValueObject::eValueObjectRepresentationStyleType;
+                    break;
+                default:
+                    log->Printf("ScanFormatDescriptor] %s is an error, leaving the previous value alone", format_name.c_str());
+                    break;
+            }
         }
         // a good custom format tells us to print the value using it
         else
@@ -1179,7 +1185,6 @@ ScanFormatDescriptor (const char* var_name_begin,
                 log->Printf("ScanFormatDescriptor] will display value for this VO");
             *val_obj_display = ValueObject::eValueObjectRepresentationStyleValue;
         }
-        delete[] format_name;
     }
     if (log)
         log->Printf("ScanFormatDescriptor] final format description outcome: custom_format = %d, val_obj_display = %d",
