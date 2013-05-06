@@ -756,7 +756,7 @@ void SITargetLowering::adjustWritemask(MachineSDNode *&Node,
   if (Writemask == (1U << Lane)) {
     SDValue RC = DAG.getTargetConstant(AMDGPU::VReg_32RegClassID, MVT::i32);
     SDNode *Copy = DAG.getMachineNode(TargetOpcode::COPY_TO_REGCLASS,
-                                      DebugLoc(), MVT::f32,
+                                      DebugLoc(), Users[Lane]->getValueType(0),
                                       SDValue(Node, 0), RC);
     DAG.ReplaceAllUsesWith(Users[Lane], Copy);
     return;
