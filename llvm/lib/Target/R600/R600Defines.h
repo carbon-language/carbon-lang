@@ -97,4 +97,30 @@ namespace R600Operands {
 
 }
 
+//===----------------------------------------------------------------------===//
+// Config register definitions
+//===----------------------------------------------------------------------===//
+
+#define R_02880C_DB_SHADER_CONTROL                    0x02880C
+#define   S_02880C_KILL_ENABLE(x)                      (((x) & 0x1) << 6)
+
+// These fields are the same for all shader types and families.
+#define   S_NUM_GPRS(x)                         (((x) & 0xFF) << 0)
+#define   S_STACK_SIZE(x)                       (((x) & 0xFF) << 8)
+//===----------------------------------------------------------------------===//
+// R600, R700 Registers
+//===----------------------------------------------------------------------===//
+
+#define R_028850_SQ_PGM_RESOURCES_PS                 0x028850
+#define R_028868_SQ_PGM_RESOURCES_VS                 0x028868
+
+//===----------------------------------------------------------------------===//
+// Evergreen, Northern Islands Registers
+//===----------------------------------------------------------------------===//
+
+#define R_028844_SQ_PGM_RESOURCES_PS                 0x028844
+#define R_028860_SQ_PGM_RESOURCES_VS                 0x028860
+#define R_028878_SQ_PGM_RESOURCES_GS                 0x028878
+#define R_0288D4_SQ_PGM_RESOURCES_LS                 0x0288d4
+
 #endif // R600DEFINES_H_
