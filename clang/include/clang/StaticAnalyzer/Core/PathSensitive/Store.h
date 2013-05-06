@@ -76,21 +76,6 @@ public:
   /// \param L the location whose binding should be removed.
   virtual StoreRef killBinding(Store ST, Loc L) = 0;
 
-  /// \brief Create a new store that binds a value to a compound literal.
-  ///
-  /// \param ST The original store whose bindings are the basis for the new
-  ///        store.
-  ///
-  /// \param CL The compound literal to bind (the binding key).
-  ///
-  /// \param LC The LocationContext for the binding.
-  ///
-  /// \param V The value to bind to the compound literal.
-  virtual StoreRef bindCompoundLiteral(Store ST,
-                                       const CompoundLiteralExpr *CL,
-                                       const LocationContext *LC,
-                                       SVal V) = 0;
-
   /// getInitialStore - Returns the initial "empty" store representing the
   ///  value bindings upon entry to an analyzed function.
   virtual StoreRef getInitialStore(const LocationContext *InitLoc) = 0;

@@ -429,20 +429,6 @@ public: // Part of public interface to class.
                      .getRootWithoutRetain(), *this);
   }
 
-  /// \brief Create a new store that binds a value to a compound literal.
-  ///
-  /// \param ST The original store whose bindings are the basis for the new
-  ///        store.
-  ///
-  /// \param CL The compound literal to bind (the binding key).
-  ///
-  /// \param LC The LocationContext for the binding.
-  ///
-  /// \param V The value to bind to the compound literal.
-  StoreRef bindCompoundLiteral(Store ST,
-                               const CompoundLiteralExpr *CL,
-                               const LocationContext *LC, SVal V);
-
   /// Attempt to extract the fields of \p LCV and bind them to the struct region
   /// \p R.
   ///
@@ -1944,14 +1930,6 @@ RegionStoreManager::bind(RegionBindingsConstRef B, Loc L, SVal V) {
   // Clear out bindings that may overlap with this binding.
   RegionBindingsRef NewB = removeSubRegionBindings(B, cast<SubRegion>(R));
   return NewB.addBinding(BindingKey::Make(R, BindingKey::Direct), V);
-}
-
-// FIXME: this method should be merged into Bind().
-StoreRef RegionStoreManager::bindCompoundLiteral(Store ST,
-                                                 const CompoundLiteralExpr *CL,
-                                                 const LocationContext *LC,
-                                                 SVal V) {
-  return Bind(ST, loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL, LC)), V);
 }
 
 RegionBindingsRef

@@ -111,14 +111,6 @@ ProgramStateManager::removeDeadBindings(ProgramStateRef state,
   return ConstraintMgr->removeDeadBindings(Result, SymReaper);
 }
 
-ProgramStateRef ProgramState::bindCompoundLiteral(const CompoundLiteralExpr *CL,
-                                            const LocationContext *LC,
-                                            SVal V) const {
-  const StoreRef &newStore = 
-    getStateManager().StoreMgr->bindCompoundLiteral(getStore(), CL, LC, V);
-  return makeWithStore(newStore);
-}
-
 ProgramStateRef ProgramState::bindLoc(Loc LV, SVal V, bool notifyChanges) const {
   ProgramStateManager &Mgr = getStateManager();
   ProgramStateRef newState = makeWithStore(Mgr.StoreMgr->Bind(getStore(), 
