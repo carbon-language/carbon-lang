@@ -12,7 +12,7 @@ double *double_ptr = &float_val;
 // RUN: c-index-test -read-diagnostics %t.diag > %t.out 2>&1
 // RUN: FileCheck --input-file=%t.out %s
 
-// CHECK: Inputs/ModuleDiags/has_warnings.h:3:8: warning: incompatible pointer types initializing 'float *'
+// CHECK: has_warnings.h:3:8: warning: incompatible pointer types initializing 'float *'
 // CHECK: serialized-diags.m:1:9: note: while building module 'HasWarnings' imported from
 // CHECK: serialized-diags.m:8:9: warning: incompatible pointer types initializing 'double *'
 // CHECK: Number of diagnostics: 2
