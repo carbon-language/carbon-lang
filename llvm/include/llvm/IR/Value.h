@@ -260,12 +260,22 @@ public:
   /// this value.
   bool hasValueHandle() const { return HasValueHandle; }
 
-  /// stripPointerCasts - This method strips off any unneeded pointer casts and
-  /// all-zero GEPs from the specified value, returning the original uncasted
-  /// value. If this is called on a non-pointer value, it returns 'this'.
+  /// \brief This method strips off any unneeded pointer casts,
+  /// all-zero GEPs and aliases from the specified value, returning the original
+  /// uncasted value. If this is called on a non-pointer value, it returns
+  /// 'this'.
   Value *stripPointerCasts();
   const Value *stripPointerCasts() const {
     return const_cast<Value*>(this)->stripPointerCasts();
+  }
+
+  /// \brief This method strips off any unneeded pointer casts and
+  /// all-zero GEPs from the specified value, returning the original
+  /// uncasted value. If this is called on a non-pointer value, it returns
+  /// 'this'.
+  Value *stripPointerCastsNoFollowAliases();
+  const Value *stripPointerCastsNoFollowAliases() const {
+    return const_cast<Value*>(this)->stripPointerCastsNoFollowAliases();
   }
 
   /// stripInBoundsConstantOffsets - This method strips off unneeded pointer casts and

@@ -26,6 +26,9 @@ declare void @helper([16 x i8]*)
 ; CHECK-NEXT: @var6 = private constant [16 x i8] c"foo1bar2foo3bar\00", align 16
 ; CHECK-NEXT: @var8 = private constant [16 x i8] c"foo1bar2foo3bar\00"
 
+@var4a = alias %struct.foobar* @var4
+@llvm.used = appending global [1 x %struct.foobar*] [%struct.foobar* @var4a], section "llvm.metadata"
+
 define i32 @main() {
 entry:
   call void @zed(%struct.foobar* @var1, %struct.foobar* @var2)
