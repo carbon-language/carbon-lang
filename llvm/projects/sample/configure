@@ -5303,7 +5303,7 @@ if test "$enableval" = host-only ; then
   enableval=host
 fi
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 Sparc PowerPC ARM AArch64 Mips XCore MSP430 Hexagon CppBackend MBlaze NVPTX" ;;
+  all) TARGETS_TO_BUILD="X86 Sparc PowerPC ARM AArch64 Mips XCore MSP430 Hexagon CppBackend MBlaze NVPTX SystemZ" ;;
   *)for a_target in `echo $enableval|sed -e 's/,/ /g' ` ; do
       case "$a_target" in
         x86)      TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
