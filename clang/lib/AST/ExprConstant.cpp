@@ -2514,6 +2514,7 @@ static EvalStmtResult EvaluateLoopBody(APValue &Result, EvalInfo &Info,
   case ESR_Returned:
     return ESR;
   }
+  llvm_unreachable("Invalid EvalStmtResult!");
 }
 
 // Evaluate a statement.
