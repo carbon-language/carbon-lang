@@ -42,6 +42,7 @@ static cl::opt<std::string>
 namespace COFFYAML {
   struct Section {
     COFF::section Header;
+    unsigned Alignment;
     StringRef SectionData;
     std::vector<COFF::relocation> Relocations;
     StringRef Name;
@@ -102,6 +103,8 @@ struct COFFParser {
         Sec.Header.Name[0] = '/';
         std::copy(str.begin(), str.end(), Sec.Header.Name + 1);
       }
+
+      Sec.Header.Characteristics |= (Log2_32(Sec.Alignment) + 1) << 20;
     }
     return true;
   }
@@ -358,20 +361,6 @@ struct ScalarBitSetTraits<COFF::SectionCharacteristics> {
     BCase(IMAGE_SCN_MEM_16BIT);
     BCase(IMAGE_SCN_MEM_LOCKED);
     BCase(IMAGE_SCN_MEM_PRELOAD);
-    BCase(IMAGE_SCN_ALIGN_1BYTES);
-    BCase(IMAGE_SCN_ALIGN_2BYTES);
-    BCase(IMAGE_SCN_ALIGN_4BYTES);
-    BCase(IMAGE_SCN_ALIGN_8BYTES);
-    BCase(IMAGE_SCN_ALIGN_16BYTES);
-    BCase(IMAGE_SCN_ALIGN_32BYTES);
-    BCase(IMAGE_SCN_ALIGN_64BYTES);
-    BCase(IMAGE_SCN_ALIGN_128BYTES);
-    BCase(IMAGE_SCN_ALIGN_256BYTES);
-    BCase(IMAGE_SCN_ALIGN_512BYTES);
-    BCase(IMAGE_SCN_ALIGN_1024BYTES);
-    BCase(IMAGE_SCN_ALIGN_2048BYTES);
-    BCase(IMAGE_SCN_ALIGN_4096BYTES);
-    BCase(IMAGE_SCN_ALIGN_8192BYTES);
     BCase(IMAGE_SCN_LNK_NRELOC_OVFL);
     BCase(IMAGE_SCN_MEM_DISCARDABLE);
     BCase(IMAGE_SCN_MEM_NOT_CACHED);
@@ -641,6 +630,7 @@ struct MappingTraits<COFFYAML::Section> {
     IO.mapRequired("SectionData", Sec.SectionData);
     IO.mapRequired("Characteristics", NC->Characteristics);
     IO.mapRequired("Name", Sec.Name);
+    IO.mapOptional("Alignment", Sec.Alignment);
   }
 };
 

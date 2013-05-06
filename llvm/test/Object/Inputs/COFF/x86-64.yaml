@@ -4,7 +4,8 @@ header: !Header
 sections:
   - !Section
     Name: .text
-    Characteristics: [IMAGE_SCN_CNT_CODE, IMAGE_SCN_ALIGN_16BYTES, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ, ] # 0x60500020
+    Alignment: 16
+    Characteristics: [IMAGE_SCN_CNT_CODE, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ, ] # 0x60500020
     SectionData:  !hex "4883EC28C744242400000000488D0D00000000E800000000E8000000008B4424244883C428C3" # |H..(.D$$....H.................D$$H..(.|
 
     Relocations:
@@ -25,7 +26,8 @@ sections:
 
   - !Section
     Name: .data
-    Characteristics: [IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_ALIGN_1BYTES, IMAGE_SCN_MEM_READ, IMAGE_SCN_MEM_WRITE, ] # 0xc0100040
+    Alignment: 1
+    Characteristics: [IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ, IMAGE_SCN_MEM_WRITE, ] # 0xc0100040
     SectionData:  !hex "48656C6C6F20576F726C642100" # |Hello World!.|
 
 symbols:
