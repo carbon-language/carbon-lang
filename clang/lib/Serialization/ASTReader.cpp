@@ -3328,10 +3328,10 @@ void ASTReader::finalizeForWriting() {
   HiddenNamesMap.clear();
 }
 
-/// SkipCursorToControlBlock - Given a cursor at the start of an AST file, scan
-/// ahead and drop the cursor into the start of the CONTROL_BLOCK, returning
-/// false on success and true on failure.
-static bool SkipCursorToControlBlock(BitstreamCursor &Cursor) {
+/// \brief Given a cursor at the start of an AST file, scan ahead and drop the
+/// cursor into the start of the given block ID, returning false on success and
+/// true on failure.
+static bool SkipCursorToBlock(BitstreamCursor &Cursor, unsigned BlockID) {
   while (1) {
     llvm::BitstreamEntry Entry = Cursor.advance();
     switch (Entry.Kind) {
@@ -3345,8 +3345,8 @@ static bool SkipCursorToControlBlock(BitstreamCursor &Cursor) {
       break;
         
     case llvm::BitstreamEntry::SubBlock:
-      if (Entry.ID == CONTROL_BLOCK_ID) {
-        if (Cursor.EnterSubBlock(CONTROL_BLOCK_ID))
+      if (Entry.ID == BlockID) {
+        if (Cursor.EnterSubBlock(BlockID))
           return true;
         // Found it!
         return false;
@@ -3390,7 +3390,7 @@ std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
   }
   
   // Scan for the CONTROL_BLOCK_ID block.
-  if (SkipCursorToControlBlock(Stream)) {
+  if (SkipCursorToBlock(Stream, CONTROL_BLOCK_ID)) {
     Diags.Report(diag::err_fe_pch_malformed_block) << ASTFileName;
     return std::string();
   }
@@ -3477,8 +3477,29 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
   }
 
   // Scan for the CONTROL_BLOCK_ID block.
-  if (SkipCursorToControlBlock(Stream))
+  if (SkipCursorToBlock(Stream, CONTROL_BLOCK_ID))
     return true;
+
+  bool NeedsInputFiles = Listener.needsInputFileVisitation();
+  BitstreamCursor InputFilesCursor;
+  if (NeedsInputFiles) {
+    InputFilesCursor = Stream;
+    if (SkipCursorToBlock(InputFilesCursor, INPUT_FILES_BLOCK_ID))
+      return true;
+
+    // Read the abbreviations
+    while (true) {
+      uint64_t Offset = InputFilesCursor.GetCurrentBitNo();
+      unsigned Code = InputFilesCursor.ReadCode();
+
+      // We expect all abbrevs to be at the start of the block.
+      if (Code != llvm::bitc::DEFINE_ABBREV) {
+        InputFilesCursor.JumpToBit(Offset);
+        break;
+      }
+      InputFilesCursor.ReadAbbrevRecord();
+    }
+  }
   
   // Scan for ORIGINAL_FILE inside the control block.
   RecordData Record;
@@ -3533,6 +3554,35 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
       if (ParsePreprocessorOptions(Record, false, Listener,
                                    IgnoredSuggestedPredefines))
         return true;
+      break;
+    }
+
+    case INPUT_FILE_OFFSETS: {
+      if (!NeedsInputFiles)
+        break;
+
+      unsigned NumInputFiles = Record[0];
+      unsigned NumUserFiles = Record[1];
+      const uint32_t *InputFileOffs = (const uint32_t *)Blob.data();
+      for (unsigned I = 0; I != NumInputFiles; ++I) {
+        // Go find this input file.
+        bool isSystemFile = I >= NumUserFiles;
+        BitstreamCursor &Cursor = InputFilesCursor;
+        SavedStreamPosition SavedPosition(Cursor);
+        Cursor.JumpToBit(InputFileOffs[I]);
+
+        unsigned Code = Cursor.ReadCode();
+        RecordData Record;
+        StringRef Blob;
+        bool shouldContinue = false;
+        switch ((InputFileRecordTypes)Cursor.readRecord(Code, Record, &Blob)) {
+        case INPUT_FILE:
+          shouldContinue = Listener.visitInputFile(Blob, isSystemFile);
+          break;
+        }
+        if (!shouldContinue)
+          break;
+      }
       break;
     }
 

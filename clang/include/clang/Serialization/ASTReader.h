@@ -172,6 +172,16 @@ public:
   /// \brief Receives __COUNTER__ value.
   virtual void ReadCounter(const serialization::ModuleFile &M,
                            unsigned Value) {}
+
+  /// \brief Returns true if this \c ASTReaderListener wants to receive the
+  /// input files of the AST file via \c visitInputFile, false otherwise.
+  virtual bool needsInputFileVisitation() { return false; }
+
+  /// \brief if \c needsInputFileVisitation returns true, this is called for each
+  /// input file of the AST file.
+  ///
+  /// \returns true to continue receiving the next input file, false to stop.
+  virtual bool visitInputFile(StringRef Filename, bool isSystem) { return true;}
 };
 
 /// \brief ASTReaderListener implementation to validate the information of
