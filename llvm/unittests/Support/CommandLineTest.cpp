@@ -66,4 +66,12 @@ TEST(CommandLineTest, ParseEnvironmentToLocalVar) {
 
 #endif  // SKIP_ENVIRONMENT_TESTS
 
+TEST(CommandLineTest, UseOptionCategory) {
+  cl::OptionCategory TestCategory("Test Options", "Description");
+  cl::opt<int> TestOption("test-option", cl::cat(TestCategory));
+
+  ASSERT_EQ(&TestCategory,TestOption.Category) << "Failed to assign Option "
+                                                  "Category.";
+}
+
 }  // anonymous namespace

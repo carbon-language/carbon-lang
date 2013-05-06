@@ -137,7 +137,23 @@ enum MiscFlags {               // Miscellaneous flags to adjust argument
   Sink               = 0x04   // Should this cl::list eat all unknown options?
 };
 
+//===----------------------------------------------------------------------===//
+// Option Category class
+//
+class OptionCategory {
+private:
+  const char *const Name;
+  const char *const Description;
+  void registerCategory();
+public:
+  OptionCategory(const char *const Name, const char *const Description = 0)
+      : Name(Name), Description(Description) { registerCategory(); }
+  const char *getName() { return Name; }
+  const char *getDescription() { return Description; }
+};
 
+// The general Option Category (used as default category).
+extern OptionCategory GeneralCategory;
 
 //===----------------------------------------------------------------------===//
 // Option Base class
@@ -173,10 +189,12 @@ class Option {
   unsigned Position;      // Position of last occurrence of the option
   unsigned AdditionalVals;// Greater than 0 for multi-valued option.
   Option *NextRegistered; // Singly linked list of registered options.
+
 public:
-  const char *ArgStr;     // The argument string itself (ex: "help", "o")
-  const char *HelpStr;    // The descriptive text message for -help
-  const char *ValueStr;   // String describing what the value of this option is
+  const char *ArgStr;   // The argument string itself (ex: "help", "o")
+  const char *HelpStr;  // The descriptive text message for -help
+  const char *ValueStr; // String describing what the value of this option is
+  OptionCategory *Category; // The Category this option belongs to
 
   inline enum NumOccurrencesFlag getNumOccurrencesFlag() const {
     return (enum NumOccurrencesFlag)Occurrences;
@@ -214,13 +232,14 @@ public:
   void setFormattingFlag(enum FormattingFlags V) { Formatting = V; }
   void setMiscFlag(enum MiscFlags M) { Misc |= M; }
   void setPosition(unsigned pos) { Position = pos; }
+  void setCategory(OptionCategory &C) { Category = &C; }
 protected:
   explicit Option(enum NumOccurrencesFlag OccurrencesFlag,
                   enum OptionHidden Hidden)
     : NumOccurrences(0), Occurrences(OccurrencesFlag), Value(0),
       HiddenFlag(Hidden), Formatting(NormalFormatting), Misc(0),
       Position(0), AdditionalVals(0), NextRegistered(0),
-      ArgStr(""), HelpStr(""), ValueStr("") {
+      ArgStr(""), HelpStr(""), ValueStr(""), Category(&GeneralCategory) {
   }
 
   inline void setNumAdditionalVals(unsigned n) { AdditionalVals = n; }
@@ -311,6 +330,16 @@ struct LocationClass {
 
 template<class Ty>
 LocationClass<Ty> location(Ty &L) { return LocationClass<Ty>(L); }
+
+// cat - Specifiy the Option category for the command line argument to belong
+// to.
+struct cat {
+  OptionCategory &Category;
+  cat(OptionCategory &c) : Category(c) {}
+
+  template<class Opt>
+  void apply(Opt &O) const { O.setCategory(Category); }
+};
 
 
 //===----------------------------------------------------------------------===//
@@ -1674,10 +1703,15 @@ struct extrahelp {
 };
 
 void PrintVersionMessage();
-// This function just prints the help message, exactly the same way as if the
-// -help option had been given on the command line.
-// NOTE: THIS FUNCTION TERMINATES THE PROGRAM!
-void PrintHelpMessage();
+
+/// This function just prints the help message, exactly the same way as if the
+/// -help or -help-hidden option had been given on the command line.
+///
+/// NOTE: THIS FUNCTION TERMINATES THE PROGRAM!
+///
+/// \param hidden if true will print hidden options
+/// \param categorized if true print options in categories
+void PrintHelpMessage(bool Hidden=false, bool Categorized=false);
 
 } // End namespace cl
 
