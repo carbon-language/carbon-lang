@@ -403,26 +403,32 @@ void ExprEngine::VisitCompoundLiteralExpr(const CompoundLiteralExpr *CL,
                                           ExplodedNodeSet &Dst) {
   StmtNodeBuilder B(Pred, Dst, *currBldrCtx);
 
-  const InitListExpr *ILE 
-    = cast<InitListExpr>(CL->getInitializer()->IgnoreParens());
-  
-  ProgramStateRef state = Pred->getState();
-  SVal ILV = state->getSVal(ILE, Pred->getLocationContext());
-  const LocationContext *LC = Pred->getLocationContext();
-  state = state->bindCompoundLiteral(CL, LC, ILV);
+  ProgramStateRef State = Pred->getState();
+  const LocationContext *LCtx = Pred->getLocationContext();
 
-  // Compound literal expressions are a GNU extension in C++.
-  // Unlike in C, where CLs are lvalues, in C++ CLs are prvalues,
-  // and like temporary objects created by the functional notation T()
-  // CLs are destroyed at the end of the containing full-expression.
-  // HOWEVER, an rvalue of array type is not something the analyzer can
-  // reason about, since we expect all regions to be wrapped in Locs.
-  // So we treat array CLs as lvalues as well, knowing that they will decay
-  // to pointers as soon as they are used.
-  if (CL->isGLValue() || CL->getType()->isArrayType())
-    B.generateNode(CL, Pred, state->BindExpr(CL, LC, state->getLValue(CL, LC)));
-  else
-    B.generateNode(CL, Pred, state->BindExpr(CL, LC, ILV));
+  const Expr *Init = CL->getInitializer();
+  SVal V = State->getSVal(CL->getInitializer(), LCtx);
+  
+  if (isa<CXXConstructExpr>(Init)) {
+    // No work needed. Just pass the value up to this expression.
+  } else {
+    assert(isa<InitListExpr>(Init));
+    Loc CLLoc = State->getLValue(CL, LCtx);
+    State = State->bindLoc(CLLoc, V);
+
+    // Compound literal expressions are a GNU extension in C++.
+    // Unlike in C, where CLs are lvalues, in C++ CLs are prvalues,
+    // and like temporary objects created by the functional notation T()
+    // CLs are destroyed at the end of the containing full-expression.
+    // HOWEVER, an rvalue of array type is not something the analyzer can
+    // reason about, since we expect all regions to be wrapped in Locs.
+    // So we treat array CLs as lvalues as well, knowing that they will decay
+    // to pointers as soon as they are used.
+    if (CL->isGLValue() || CL->getType()->isArrayType())
+      V = CLLoc;
+  }
+
+  B.generateNode(CL, Pred, State->BindExpr(CL, LCtx, V));
 }
 
 void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,

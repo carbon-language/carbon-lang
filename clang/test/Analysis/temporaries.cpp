@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -verify -w %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -verify -w -std=c++03 %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -verify -w -std=c++11 %s
 
 extern bool clang_analyzer_eval(bool);
 
@@ -73,6 +74,38 @@ namespace rdar13281951 {
     obj.value = 42;
     const Trivial * const &pointerRef = &obj;
     clang_analyzer_eval(pointerRef->value == 42); // expected-warning{{TRUE}}
+  }
+}
+
+namespace compound_literals {
+  struct POD {
+    int x, y;
+  };
+  struct HasCtor {
+    HasCtor(int x, int y) : x(x), y(y) {}
+    int x, y;
+  };
+  struct HasDtor {
+    int x, y;
+    ~HasDtor();
+  };
+  struct HasCtorDtor {
+    HasCtorDtor(int x, int y) : x(x), y(y) {}
+    ~HasCtorDtor();
+    int x, y;
+  };
+
+  void test() {
+    clang_analyzer_eval(((POD){1, 42}).y == 42); // expected-warning{{TRUE}}
+    clang_analyzer_eval(((HasDtor){1, 42}).y == 42); // expected-warning{{TRUE}}
+
+#if __cplusplus >= 201103L
+    clang_analyzer_eval(((HasCtor){1, 42}).y == 42); // expected-warning{{TRUE}}
+
+    // FIXME: should be TRUE, but we don't inline the constructors of
+    // temporaries because we can't model their destructors yet.
+    clang_analyzer_eval(((HasCtorDtor){1, 42}).y == 42); // expected-warning{{UNKNOWN}}
+#endif
   }
 }
 
