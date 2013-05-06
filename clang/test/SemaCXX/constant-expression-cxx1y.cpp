@@ -402,4 +402,58 @@ namespace loops {
     return true;
   }
   static_assert(cond(), "");
+
+  constexpr int range_for() {
+    int arr[] = { 1, 2, 3, 4, 5 };
+    int sum = 0;
+    for (int x : arr)
+      sum = sum + x;
+    return sum;
+  }
+  static_assert(range_for() == 15, "");
+
+  template<int...N> struct ints {};
+  template<typename A, typename B> struct join_ints;
+  template<int...As, int...Bs> struct join_ints<ints<As...>, ints<Bs...>> {
+    using type = ints<As..., sizeof...(As) + Bs...>;
+  };
+  template<unsigned N> struct make_ints {
+    using type = typename join_ints<typename make_ints<N/2>::type, typename make_ints<(N+1)/2>::type>::type;
+  };
+  template<> struct make_ints<0> { using type = ints<>; };
+  template<> struct make_ints<1> { using type = ints<0>; };
+
+  struct ignore { template<typename ...Ts> constexpr ignore(Ts &&...) {} };
+
+  template<typename T, unsigned N> struct array {
+    constexpr array() : arr{} {}
+    template<typename ...X>
+    constexpr array(X ...x) : arr{} {
+      init(typename make_ints<sizeof...(X)>::type{}, x...);
+    }
+    template<int ...I, typename ...X> constexpr void init(ints<I...>, X ...x) {
+      ignore{arr[I] = x ...};
+    }
+    T arr[N];
+    struct iterator {
+      T *p;
+      constexpr explicit iterator(T *p) : p(p) {}
+      constexpr bool operator!=(iterator o) { return p != o.p; }
+      constexpr iterator &operator++() { ++p; return *this; }
+      constexpr T &operator*() { return *p; }
+    };
+    constexpr iterator begin() { return iterator(arr); }
+    constexpr iterator end() { return iterator(arr + N); }
+  };
+
+  constexpr int range_for_2() {
+    array<int, 5> arr { 1, 2, 3, 4, 5 };
+    int sum = 0;
+    for (int k : arr) {
+      sum = sum + k;
+      if (sum > 8) break;
+    }
+    return sum;
+  }
+  static_assert(range_for_2() == 10, "");
 }

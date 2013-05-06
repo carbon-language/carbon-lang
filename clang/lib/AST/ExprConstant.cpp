@@ -2636,6 +2636,45 @@ static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
     return ESR_Succeeded;
   }
 
+  case Stmt::CXXForRangeStmtClass: {
+    const CXXForRangeStmt *FS = cast<CXXForRangeStmt>(S);
+
+    // Initialize the __range variable.
+    EvalStmtResult ESR = EvaluateStmt(Result, Info, FS->getRangeStmt());
+    if (ESR != ESR_Succeeded)
+      return ESR;
+
+    // Create the __begin and __end iterators.
+    ESR = EvaluateStmt(Result, Info, FS->getBeginEndStmt());
+    if (ESR != ESR_Succeeded)
+      return ESR;
+
+    while (true) {
+      // Condition: __begin != __end.
+      bool Continue = true;
+      if (!EvaluateAsBooleanCondition(FS->getCond(), Continue, Info))
+        return ESR_Failed;
+      if (!Continue)
+        break;
+
+      // User's variable declaration, initialized by *__begin.
+      ESR = EvaluateStmt(Result, Info, FS->getLoopVarStmt());
+      if (ESR != ESR_Succeeded)
+        return ESR;
+
+      // Loop body.
+      ESR = EvaluateLoopBody(Result, Info, FS->getBody());
+      if (ESR != ESR_Continue)
+        return ESR;
+
+      // Increment: ++__begin
+      if (!EvaluateIgnoredValue(Info, FS->getInc()))
+        return ESR_Failed;
+    }
+
+    return ESR_Succeeded;
+  }
+
   case Stmt::ContinueStmtClass:
     return ESR_Continue;
 
