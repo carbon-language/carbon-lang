@@ -1117,7 +1117,7 @@ class Base(unittest2.TestCase):
             or LLDB.framework).
         """
         if "gcc" in self.getCompiler() and "4.6" in self.getCompilerVersion():
-          stdflag = "std=c++0x"
+          stdflag = "-std=c++0x"
         else:
           stdflag = "-std=c++11"
 
