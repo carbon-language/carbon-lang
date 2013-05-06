@@ -112,7 +112,8 @@ DIE::~DIE() {
     delete Children[i];
 }
 
-/// Climb up the parent chain to get the compile unit DIE this DIE belongs to.
+/// Climb up the parent chain to get the compile unit DIE to which this DIE
+/// belongs.
 DIE *DIE::getCompileUnit() const{
   DIE *p = getParent();
   while (p) {
