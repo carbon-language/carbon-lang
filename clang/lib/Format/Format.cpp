@@ -36,43 +36,43 @@ namespace format {
 
 FormatStyle getLLVMStyle() {
   FormatStyle LLVMStyle;
-  LLVMStyle.ColumnLimit = 80;
-  LLVMStyle.MaxEmptyLinesToKeep = 1;
-  LLVMStyle.PointerBindsToType = false;
-  LLVMStyle.DerivePointerBinding = false;
   LLVMStyle.AccessModifierOffset = -2;
-  LLVMStyle.Standard = FormatStyle::LS_Cpp03;
-  LLVMStyle.IndentCaseLabels = false;
-  LLVMStyle.SpacesBeforeTrailingComments = 1;
-  LLVMStyle.BinPackParameters = true;
+  LLVMStyle.AlignEscapedNewlinesLeft = false;
   LLVMStyle.AllowAllParametersOfDeclarationOnNextLine = true;
-  LLVMStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = false;
   LLVMStyle.AllowShortIfStatementsOnASingleLine = false;
+  LLVMStyle.BinPackParameters = true;
+  LLVMStyle.ColumnLimit = 80;
+  LLVMStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = false;
+  LLVMStyle.DerivePointerBinding = false;
+  LLVMStyle.IndentCaseLabels = false;
+  LLVMStyle.MaxEmptyLinesToKeep = 1;
   LLVMStyle.ObjCSpaceBeforeProtocolList = true;
   LLVMStyle.PenaltyExcessCharacter = 1000000;
   LLVMStyle.PenaltyReturnTypeOnItsOwnLine = 75;
-  LLVMStyle.AlignEscapedNewlinesLeft = false;
+  LLVMStyle.PointerBindsToType = false;
+  LLVMStyle.SpacesBeforeTrailingComments = 1;
+  LLVMStyle.Standard = FormatStyle::LS_Cpp03;
   return LLVMStyle;
 }
 
 FormatStyle getGoogleStyle() {
   FormatStyle GoogleStyle;
-  GoogleStyle.ColumnLimit = 80;
-  GoogleStyle.MaxEmptyLinesToKeep = 1;
-  GoogleStyle.PointerBindsToType = true;
-  GoogleStyle.DerivePointerBinding = true;
   GoogleStyle.AccessModifierOffset = -1;
-  GoogleStyle.Standard = FormatStyle::LS_Auto;
-  GoogleStyle.IndentCaseLabels = true;
-  GoogleStyle.SpacesBeforeTrailingComments = 2;
-  GoogleStyle.BinPackParameters = true;
+  GoogleStyle.AlignEscapedNewlinesLeft = true;
   GoogleStyle.AllowAllParametersOfDeclarationOnNextLine = true;
-  GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
   GoogleStyle.AllowShortIfStatementsOnASingleLine = true;
+  GoogleStyle.BinPackParameters = true;
+  GoogleStyle.ColumnLimit = 80;
+  GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
+  GoogleStyle.DerivePointerBinding = true;
+  GoogleStyle.IndentCaseLabels = true;
+  GoogleStyle.MaxEmptyLinesToKeep = 1;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
   GoogleStyle.PenaltyExcessCharacter = 1000000;
   GoogleStyle.PenaltyReturnTypeOnItsOwnLine = 200;
-  GoogleStyle.AlignEscapedNewlinesLeft = true;
+  GoogleStyle.PointerBindsToType = true;
+  GoogleStyle.SpacesBeforeTrailingComments = 2;
+  GoogleStyle.Standard = FormatStyle::LS_Auto;
   return GoogleStyle;
 }
 
@@ -84,6 +84,18 @@ FormatStyle getChromiumStyle() {
   ChromiumStyle.Standard = FormatStyle::LS_Cpp03;
   ChromiumStyle.DerivePointerBinding = false;
   return ChromiumStyle;
+}
+
+FormatStyle getMozillaStyle() {
+  FormatStyle MozillaStyle = getLLVMStyle();
+  MozillaStyle.AllowAllParametersOfDeclarationOnNextLine = false;
+  MozillaStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
+  MozillaStyle.DerivePointerBinding = true;
+  MozillaStyle.IndentCaseLabels = true;
+  MozillaStyle.ObjCSpaceBeforeProtocolList = false;
+  MozillaStyle.PenaltyReturnTypeOnItsOwnLine = 200;
+  MozillaStyle.PointerBindsToType = true;
+  return MozillaStyle;
 }
 
 // Returns the length of everything up to the first possible line break after

@@ -57,9 +57,6 @@ struct FormatStyle {
   /// instead of \c A<A<int>> for LS_Cpp03.
   LanguageStandard Standard;
 
-  /// \brief If \c true, analyze the formatted file for C++03 compatibility.
-  bool DeriveBackwardsCompatibility;
-
   /// \brief Indent case labels one level from the switch statement.
   ///
   /// When false, use the same indentation level as for the switch statement.
@@ -108,6 +105,10 @@ FormatStyle getGoogleStyle();
 /// \brief Returns a format style complying with Chromium's style guide:
 /// http://www.chromium.org/developers/coding-style.
 FormatStyle getChromiumStyle();
+
+/// \brief Returns a format style complying with Mozilla's style guide:
+/// https://developer.mozilla.org/en-US/docs/Developer_Guide/Coding_Style.
+FormatStyle getMozillaStyle();
 
 /// \brief Reformats the given \p Ranges in the token stream coming out of
 /// \c Lex.

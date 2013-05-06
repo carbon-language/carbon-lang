@@ -36,7 +36,7 @@ Lengths("length", cl::desc("Format a range of this length. "
                            "Can only be used with one input file."));
 static cl::opt<std::string> Style(
     "style",
-    cl::desc("Coding style, currently supports: LLVM, Google, Chromium."),
+    cl::desc("Coding style, currently supports: LLVM, Google, Chromium, Mozilla."),
     cl::init("LLVM"));
 static cl::opt<bool> Inplace("i",
                              cl::desc("Inplace edit <file>s, if specified."));
@@ -63,8 +63,13 @@ static FormatStyle getStyle() {
   FormatStyle TheStyle = getGoogleStyle();
   if (Style == "LLVM")
     TheStyle = getLLVMStyle();
-  if (Style == "Chromium")
+  else if (Style == "Chromium")
     TheStyle = getChromiumStyle();
+  else if (Style == "Mozilla")
+    TheStyle = getMozillaStyle();
+  else if (Style != "Google")
+    llvm::errs() << "Unknown style " << Style << ", using Google style.\n";
+
   return TheStyle;
 }
 
