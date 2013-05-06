@@ -476,7 +476,8 @@ public:
                   SourceLocation l, SourceLocation oploc,
                   Expr *base,
                   bool arrow = false, bool freeIvar = false) :
-    Expr(ObjCIvarRefExprClass, t, VK_LValue, OK_Ordinary,
+    Expr(ObjCIvarRefExprClass, t, VK_LValue,
+         d->isBitField() ? OK_BitField : OK_Ordinary,
          /*TypeDependent=*/false, base->isValueDependent(), 
          base->isInstantiationDependent(),
          base->containsUnexpandedParameterPack()), 

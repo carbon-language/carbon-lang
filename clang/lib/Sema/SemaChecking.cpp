@@ -4311,7 +4311,7 @@ static IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     IntRange::forValueOfType(C, E->getType());
   }
 
-  if (FieldDecl *BitField = E->getBitField())
+  if (FieldDecl *BitField = E->getSourceBitField())
     return IntRange(BitField->getBitWidthValue(C),
                     BitField->getType()->isUnsignedIntegerOrEnumerationType());
 
@@ -4688,7 +4688,7 @@ static void AnalyzeAssignment(Sema &S, BinaryOperator *E) {
 
   // We want to recurse on the RHS as normal unless we're assigning to
   // a bitfield.
-  if (FieldDecl *Bitfield = E->getLHS()->getBitField()) {
+  if (FieldDecl *Bitfield = E->getLHS()->getSourceBitField()) {
     if (AnalyzeBitFieldAssignment(S, Bitfield, E->getRHS(),
                                   E->getOperatorLoc())) {
       // Recurse, ignoring any implicit conversions on the RHS.

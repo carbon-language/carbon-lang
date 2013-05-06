@@ -4277,7 +4277,7 @@ QualType ASTContext::isPromotableBitField(Expr *E) const {
   if (E->isTypeDependent() || E->isValueDependent())
     return QualType();
   
-  FieldDecl *Field = E->getBitField();
+  FieldDecl *Field = E->getSourceBitField(); // FIXME: conditional bit-fields?
   if (!Field)
     return QualType();
 

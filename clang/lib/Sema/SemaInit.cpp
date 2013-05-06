@@ -3440,7 +3440,7 @@ convertQualifiersAndValueKindIfNecessary(Sema &S,
                                          Qualifiers T1Quals,
                                          Qualifiers T2Quals,
                                          bool IsLValueRef) {
-  bool IsNonAddressableType = Initializer->getBitField() ||
+  bool IsNonAddressableType = Initializer->refersToBitField() ||
                               Initializer->refersToVectorElement();
 
   if (IsNonAddressableType) {
@@ -5225,13 +5225,18 @@ InitializationSequence::Perform(Sema &S,
     }
 
     case SK_BindReference:
-      if (FieldDecl *BitField = CurInit.get()->getBitField()) {
-        // References cannot bind to bit fields (C++ [dcl.init.ref]p5).
+      // References cannot bind to bit-fields (C++ [dcl.init.ref]p5).
+      if (CurInit.get()->refersToBitField()) {
+        // We don't necessarily have an unambiguous source bit-field.
+        FieldDecl *BitField = CurInit.get()->getSourceBitField();
         S.Diag(Kind.getLocation(), diag::err_reference_bind_to_bitfield)
           << Entity.getType().isVolatileQualified()
-          << BitField->getDeclName()
+          << (BitField ? BitField->getDeclName() : DeclarationName())
+          << (BitField != NULL)
           << CurInit.get()->getSourceRange();
-        S.Diag(BitField->getLocation(), diag::note_bitfield_decl);
+        if (BitField)
+          S.Diag(BitField->getLocation(), diag::note_bitfield_decl);
+
         return ExprError();
       }
 

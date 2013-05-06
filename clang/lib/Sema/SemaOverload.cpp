@@ -1837,7 +1837,7 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
   // conversion.
   using llvm::APSInt;
   if (From)
-    if (FieldDecl *MemberDecl = From->getBitField()) {
+    if (FieldDecl *MemberDecl = From->getSourceBitField()) {
       APSInt BitWidth;
       if (FromType->isIntegralType(Context) &&
           MemberDecl->getBitWidth()->isIntegerConstantExpr(BitWidth, Context)) {

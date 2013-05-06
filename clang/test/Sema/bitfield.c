@@ -39,3 +39,18 @@ int y;
 struct PR8025 {
   double : 2; // expected-error{{anonymous bit-field has non-integral type 'double'}}
 };
+
+struct Test4 {
+  unsigned bitX : 4;
+  unsigned bitY : 4;
+  unsigned var;
+};
+void test4(struct Test4 *t) {
+  (void) sizeof(t->bitX); // expected-error {{invalid application of 'sizeof' to bit-field}}
+  (void) sizeof((t->bitY)); // expected-error {{invalid application of 'sizeof' to bit-field}}
+  (void) sizeof(t->bitX = 4); // not a bitfield designator in C
+  (void) sizeof(t->bitX += 4); // not a bitfield designator in C
+  (void) sizeof((void) 0, t->bitX); // not a bitfield designator in C
+  (void) sizeof(t->var ? t->bitX : t->bitY); // not a bitfield designator in C
+  (void) sizeof(t->var ? t->bitX : t->bitX); // not a bitfield designator in C
+}

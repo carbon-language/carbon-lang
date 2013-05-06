@@ -427,12 +427,24 @@ private:
 
 public:
 
+  /// \brief Returns true if this expression is a gl-value that
+  /// potentially refers to a bit-field.
+  ///
+  /// In C++, whether a gl-value refers to a bitfield is essentially
+  /// an aspect of the value-kind type system.
+  bool refersToBitField() const { return getObjectKind() == OK_BitField; }
+
   /// \brief If this expression refers to a bit-field, retrieve the
   /// declaration of that bit-field.
-  FieldDecl *getBitField();
+  ///
+  /// Note that this returns a non-null pointer in subtly different
+  /// places than refersToBitField returns true.  In particular, this can
+  /// return a non-null pointer even for r-values loaded from
+  /// bit-fields, but it will return null for a conditional bit-field.
+  FieldDecl *getSourceBitField();
 
-  const FieldDecl *getBitField() const {
-    return const_cast<Expr*>(this)->getBitField();
+  const FieldDecl *getSourceBitField() const {
+    return const_cast<Expr*>(this)->getSourceBitField();
   }
 
   /// \brief If this expression is an l-value for an Objective C

@@ -1452,11 +1452,21 @@ static TryCastResult TryConstCast(Sema &Self, Expr *SrcExpr, QualType DestType,
   DestType = Self.Context.getCanonicalType(DestType);
   QualType SrcType = SrcExpr->getType();
   if (const ReferenceType *DestTypeTmp =DestType->getAs<ReferenceType>()) {
-    if (DestTypeTmp->isLValueReferenceType() && !SrcExpr->isLValue()) {
+    if (isa<LValueReferenceType>(DestTypeTmp) && !SrcExpr->isLValue()) {
       // Cannot const_cast non-lvalue to lvalue reference type. But if this
       // is C-style, static_cast might find a way, so we simply suggest a
       // message and tell the parent to keep searching.
       msg = diag::err_bad_cxx_cast_rvalue;
+      return TC_NotApplicable;
+    }
+
+    // It's not completely clear under the standard whether we can
+    // const_cast bit-field gl-values.  Doing so would not be
+    // intrinsically complicated, but for now, we say no for
+    // consistency with other compilers and await the word of the
+    // committee.
+    if (SrcExpr->refersToBitField()) {
+      msg = diag::err_bad_cxx_cast_bitfield;
       return TC_NotApplicable;
     }
 

@@ -38,3 +38,26 @@ namespace PR6066 {
     return 0;
   }
 }
+
+namespace test3 {
+  struct A {
+    unsigned bitX : 4; // expected-note 4 {{bit-field is declared here}}
+    unsigned bitY : 4; // expected-note {{bit-field is declared here}}
+    unsigned var;
+
+    void foo();
+  };
+
+  void test(A *a) {
+    unsigned &t0 = a->bitX; // expected-error {{non-const reference cannot bind to bit-field 'bitX'}}
+    unsigned &t1 = (unsigned&) a->bitX; // expected-error {{non-const reference cannot bind to bit-field 'bitX'}}
+    unsigned &t2 = const_cast<unsigned&>(a->bitX); // expected-error {{const_cast from bit-field lvalue to reference type 'unsigned int &'}}
+    unsigned &t3 = (a->foo(), a->bitX); // expected-error {{non-const reference cannot bind to bit-field 'bitX'}}
+    unsigned &t4 = (a->var ? a->bitX : a->bitY); // expected-error {{non-const reference cannot bind to bit-field}}
+    unsigned &t5 = (a->var ? a->bitX : a->bitX); // expected-error {{non-const reference cannot bind to bit-field}}
+    unsigned &t6 = (a->var ? a->bitX : a->var); // expected-error {{non-const reference cannot bind to bit-field}}
+    unsigned &t7 = (a->var ? a->var : a->bitY); // expected-error {{non-const reference cannot bind to bit-field}}
+    unsigned &t8 = (a->bitX = 3); // expected-error {{non-const reference cannot bind to bit-field 'bitX'}}
+    unsigned &t9 = (a->bitY += 3); // expected-error {{non-const reference cannot bind to bit-field 'bitY'}}
+  }
+}

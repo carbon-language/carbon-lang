@@ -1,5 +1,7 @@
-// RUN: %clang_cc1 -verify -emit-llvm -o - %s
-// expected-no-diagnostics
+// RUN: %clang_cc1 -verify -o - %s
+
+__attribute__((objc_root_class))
+@interface Root @end
 
 // Test reference binding.
 
@@ -8,7 +10,7 @@ typedef struct {
   int f1;
 } T;
 
-@interface A
+@interface A : Root
 @property (assign) T p0;
 @property (assign) T& p1; 
 @end
@@ -61,3 +63,14 @@ void f6(baz* x) {
   f5d(ToBar());
   (void)((foo&)ToBar());
 }
+
+// rdar://13794269
+@interface B : Root @end
+@implementation B {
+  unsigned bf : 4; // expected-note {{declared here}}
+}
+
+- (void) foo {
+  unsigned &i = bf; // expected-error {{non-const reference cannot bind to bit-field 'bf'}}
+}
+@end
