@@ -9,12 +9,8 @@
 //
 /// \file
 ///
-/// This code emitter outputs bytecode that is understood by the r600g driver
-/// in the Mesa [1] project.  The bytecode is very similar to the hardware's ISA,
-/// but it still needs to be run through a finalizer in order to be executed
-/// by the GPU.
-///
-/// [1] http://www.mesa3d.org/
+/// \brief The R600 code emitter produces machine code that can be executed
+/// directly on the GPU device.
 //
 //===----------------------------------------------------------------------===//
 
@@ -95,16 +91,6 @@ enum RegElement {
   ELEMENT_W
 };
 
-enum InstrTypes {
-  INSTR_ALU = 0,
-  INSTR_TEX,
-  INSTR_FC,
-  INSTR_NATIVE,
-  INSTR_VTX,
-  INSTR_EXPORT,
-  INSTR_CFALU
-};
-
 enum FCInstr {
   FC_IF_PREDICATE = 0,
   FC_ELSE,
@@ -152,7 +138,6 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     case AMDGPU::RAT_WRITE_CACHELESS_32_eg:
     case AMDGPU::RAT_WRITE_CACHELESS_128_eg: {
       uint64_t inst = getBinaryCodeForInstr(MI, Fixups);
-      EmitByte(INSTR_NATIVE, OS);
       Emit(inst, OS);
       break;
     }
@@ -170,9 +155,7 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       uint32_t InstWord2 = MI.getOperand(2).getImm(); // Offset
       InstWord2 |= 1 << 19;
 
-      EmitByte(INSTR_NATIVE, OS);
       Emit(InstWord01, OS);
-      EmitByte(INSTR_NATIVE, OS);
       Emit(InstWord2, OS);
       Emit((u_int32_t) 0, OS);
       break;
@@ -246,9 +229,7 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
           SrcSelect[ELEMENT_W] << 29 | Offsets[0] << 0 | Offsets[1] << 5 |
           Offsets[2] << 10;
 
-      EmitByte(INSTR_NATIVE, OS);
       Emit(Word01, OS);
-      EmitByte(INSTR_NATIVE, OS);
       Emit(Word2, OS);
       Emit((u_int32_t) 0, OS);
       break;
@@ -256,7 +237,6 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     case AMDGPU::CF_ALU:
     case AMDGPU::CF_ALU_PUSH_BEFORE: {
       uint64_t Inst = getBinaryCodeForInstr(MI, Fixups);
-      EmitByte(INSTR_NATIVE, OS);
       Emit(Inst, OS);
       break;
     }
@@ -289,13 +269,11 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     case AMDGPU::CF_END_EG:
     case AMDGPU::CF_END_CM: {
       uint64_t Inst = getBinaryCodeForInstr(MI, Fixups);
-      EmitByte(INSTR_NATIVE, OS);
       Emit(Inst, OS);
       break;
     }
     default:
       uint64_t Inst = getBinaryCodeForInstr(MI, Fixups);
-      EmitByte(INSTR_NATIVE, OS);
       Emit(Inst, OS);
       break;
     }
@@ -306,9 +284,6 @@ void R600MCCodeEmitter::EmitALUInstr(const MCInst &MI,
                                      SmallVectorImpl<MCFixup> &Fixups,
                                      raw_ostream &OS) const {
   const MCInstrDesc &MCDesc = MCII.get(MI.getOpcode());
-
-  // Emit instruction type
-  EmitByte(INSTR_ALU, OS);
 
   uint64_t InstWord01 = getBinaryCodeForInstr(MI, Fixups);
 
@@ -324,8 +299,6 @@ void R600MCCodeEmitter::EmitALUInstr(const MCInst &MI,
   unsigned SrcNum = MCDesc.TSFlags & R600_InstFlag::OP3 ? 3 :
       MCDesc.TSFlags & R600_InstFlag::OP2 ? 2 : 1;
 
-  EmitByte(SrcNum, OS);
-
   const unsigned SrcOps[3][2] = {
       {R600Operands::SRC0, R600Operands::SRC0_SEL},
       {R600Operands::SRC1, R600Operands::SRC1_SEL},
@@ -335,7 +308,6 @@ void R600MCCodeEmitter::EmitALUInstr(const MCInst &MI,
   for (unsigned SrcIdx = 0; SrcIdx < SrcNum; ++SrcIdx) {
     unsigned RegOpIdx = R600Operands::ALUOpTable[SrcNum-1][SrcOps[SrcIdx][0]];
     unsigned SelOpIdx = R600Operands::ALUOpTable[SrcNum-1][SrcOps[SrcIdx][1]];
-    EmitSrcISA(MI, RegOpIdx, SelOpIdx, OS);
   }
 
   Emit(InstWord01, OS);
@@ -445,9 +417,6 @@ void R600MCCodeEmitter::EmitSrcISA(const MCInst &MI, unsigned RegOpIdx,
 }
 
 void R600MCCodeEmitter::EmitFCInstr(const MCInst &MI, raw_ostream &OS) const {
-
-  // Emit instruction type
-  EmitByte(INSTR_FC, OS);
 
   // Emit SRC
   unsigned NumOperands = MI.getNumOperands();
