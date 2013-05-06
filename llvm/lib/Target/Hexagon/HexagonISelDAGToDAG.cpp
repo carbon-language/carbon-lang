@@ -49,11 +49,11 @@ class HexagonDAGToDAGISel : public SelectionDAGISel {
   const HexagonSubtarget &Subtarget;
 
   // Keep a reference to HexagonTargetMachine.
-  HexagonTargetMachine& TM;
+  const HexagonTargetMachine& TM;
   const HexagonInstrInfo *TII;
   DenseMap<const GlobalValue *, unsigned> GlobalAddressUseCountMap;
 public:
-  explicit HexagonDAGToDAGISel(HexagonTargetMachine &targetmachine,
+  explicit HexagonDAGToDAGISel(const HexagonTargetMachine &targetmachine,
                                CodeGenOpt::Level OptLevel)
     : SelectionDAGISel(targetmachine, OptLevel),
       Subtarget(targetmachine.getSubtarget<HexagonSubtarget>()),
@@ -180,7 +180,7 @@ inline SDValue XformUToUM1Imm(unsigned Imm) {
 /// createHexagonISelDag - This pass converts a legalized DAG into a
 /// Hexagon-specific DAG, ready for instruction scheduling.
 ///
-FunctionPass *llvm::createHexagonISelDag(HexagonTargetMachine &TM,
+FunctionPass *llvm::createHexagonISelDag(const HexagonTargetMachine &TM,
                                          CodeGenOpt::Level OptLevel) {
   return new HexagonDAGToDAGISel(TM, OptLevel);
 }

@@ -44,12 +44,12 @@ using namespace llvm;
 namespace {
 
 class HexagonExpandPredSpillCode : public MachineFunctionPass {
-    HexagonTargetMachine& QTM;
+    const HexagonTargetMachine& QTM;
     const HexagonSubtarget &QST;
 
  public:
     static char ID;
-    HexagonExpandPredSpillCode(HexagonTargetMachine& TM) :
+    HexagonExpandPredSpillCode(const HexagonTargetMachine& TM) :
       MachineFunctionPass(ID), QTM(TM), QST(*TM.getSubtargetImpl()) {}
 
     const char *getPassName() const {
@@ -175,6 +175,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
 //                         Public Constructor Functions
 //===----------------------------------------------------------------------===//
 
-FunctionPass *llvm::createHexagonExpandPredSpillCode(HexagonTargetMachine &TM) {
+FunctionPass*
+llvm::createHexagonExpandPredSpillCode(const HexagonTargetMachine &TM) {
   return new HexagonExpandPredSpillCode(TM);
 }

@@ -52,12 +52,12 @@ using namespace llvm;
 namespace {
 
 class HexagonSplitTFRCondSets : public MachineFunctionPass {
-    HexagonTargetMachine& QTM;
+    const HexagonTargetMachine &QTM;
     const HexagonSubtarget &QST;
 
  public:
     static char ID;
-    HexagonSplitTFRCondSets(HexagonTargetMachine& TM) :
+    HexagonSplitTFRCondSets(const HexagonTargetMachine& TM) :
       MachineFunctionPass(ID), QTM(TM), QST(*TM.getSubtargetImpl()) {}
 
     const char *getPassName() const {
@@ -211,6 +211,7 @@ bool HexagonSplitTFRCondSets::runOnMachineFunction(MachineFunction &Fn) {
 //                         Public Constructor Functions
 //===----------------------------------------------------------------------===//
 
-FunctionPass *llvm::createHexagonSplitTFRCondSets(HexagonTargetMachine &TM) {
+FunctionPass*
+llvm::createHexagonSplitTFRCondSets(const HexagonTargetMachine &TM) {
   return new HexagonSplitTFRCondSets(TM);
 }

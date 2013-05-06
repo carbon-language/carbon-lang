@@ -31,16 +31,15 @@ namespace {
 class HexagonCFGOptimizer : public MachineFunctionPass {
 
 private:
-  HexagonTargetMachine& QTM;
+  const HexagonTargetMachine& QTM;
   const HexagonSubtarget &QST;
 
   void InvertAndChangeJumpTarget(MachineInstr*, MachineBasicBlock*);
 
  public:
   static char ID;
-  HexagonCFGOptimizer(HexagonTargetMachine& TM) : MachineFunctionPass(ID),
-                                                  QTM(TM),
-                                                  QST(*TM.getSubtargetImpl()) {}
+  HexagonCFGOptimizer(const HexagonTargetMachine& TM)
+    : MachineFunctionPass(ID), QTM(TM), QST(*TM.getSubtargetImpl()) {}
 
   const char *getPassName() const {
     return "Hexagon CFG Optimizer";
@@ -231,6 +230,6 @@ bool HexagonCFGOptimizer::runOnMachineFunction(MachineFunction &Fn) {
 //                         Public Constructor Functions
 //===----------------------------------------------------------------------===//
 
-FunctionPass *llvm::createHexagonCFGOptimizer(HexagonTargetMachine &TM) {
+FunctionPass *llvm::createHexagonCFGOptimizer(const HexagonTargetMachine &TM) {
   return new HexagonCFGOptimizer(TM);
 }

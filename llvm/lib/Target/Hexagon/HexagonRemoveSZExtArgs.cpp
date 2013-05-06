@@ -78,6 +78,7 @@ bool HexagonRemoveExtendArgs::runOnFunction(Function &F) {
 
 
 
-FunctionPass *llvm::createHexagonRemoveExtendArgs(HexagonTargetMachine &TM) {
+FunctionPass*
+llvm::createHexagonRemoveExtendArgs(const HexagonTargetMachine &TM) {
   return new HexagonRemoveExtendArgs();
 }
