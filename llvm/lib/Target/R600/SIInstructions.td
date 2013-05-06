@@ -850,10 +850,18 @@ defm V_MAX_LEGACY_F32 : VOP2_32 <0x0000000e, "V_MAX_LEGACY_F32",
 
 defm V_MIN_F32 : VOP2_32 <0x0000000f, "V_MIN_F32", []>;
 defm V_MAX_F32 : VOP2_32 <0x00000010, "V_MAX_F32", []>;
-defm V_MIN_I32 : VOP2_32 <0x00000011, "V_MIN_I32", []>;
-defm V_MAX_I32 : VOP2_32 <0x00000012, "V_MAX_I32", []>;
-defm V_MIN_U32 : VOP2_32 <0x00000013, "V_MIN_U32", []>;
-defm V_MAX_U32 : VOP2_32 <0x00000014, "V_MAX_U32", []>;
+defm V_MIN_I32 : VOP2_32 <0x00000011, "V_MIN_I32",
+  [(set i32:$dst, (AMDGPUsmin i32:$src0, i32:$src1))]
+>;
+defm V_MAX_I32 : VOP2_32 <0x00000012, "V_MAX_I32",
+  [(set i32:$dst, (AMDGPUsmax i32:$src0, i32:$src1))]
+>;
+defm V_MIN_U32 : VOP2_32 <0x00000013, "V_MIN_U32",
+  [(set i32:$dst, (AMDGPUumin i32:$src0, i32:$src1))]
+>;
+defm V_MAX_U32 : VOP2_32 <0x00000014, "V_MAX_U32",
+  [(set i32:$dst, (AMDGPUumax i32:$src0, i32:$src1))]
+>;
 
 defm V_LSHR_B32 : VOP2_32 <0x00000015, "V_LSHR_B32",
   [(set i32:$dst, (srl i32:$src0, i32:$src1))]
