@@ -523,10 +523,11 @@ FileSpec::Equal (const FileSpec& a, const FileSpec& b, bool full)
 void
 FileSpec::Dump(Stream *s) const
 {
+    static ConstString g_slash_only ("/");
     if (s)
     {
         m_directory.Dump(s);
-        if (m_directory)
+        if (m_directory && m_directory != g_slash_only)
             s->PutChar('/');
         m_filename.Dump(s);
     }
@@ -705,13 +706,14 @@ FileSpec::GetPath(char *path, size_t path_max_len) const
 std::string
 FileSpec::GetPath (void) const
 {
+    static ConstString g_slash_only ("/");
     std::string path;
     const char *dirname = m_directory.GetCString();
     const char *filename = m_filename.GetCString();
     if (dirname)
     {
         path.append (dirname);
-        if (filename)
+        if (filename && m_directory != g_slash_only)
             path.append ("/");
     }
     if (filename)

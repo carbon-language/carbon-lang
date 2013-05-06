@@ -1385,12 +1385,9 @@ DumpFullpath (Stream &strm, const FileSpec *file_spec_ptr, uint32_t width)
     {
         if (width > 0)
         {
-            char fullpath[PATH_MAX];
-            if (file_spec_ptr->GetPath(fullpath, sizeof(fullpath)))
-            {
-                strm.Printf("%-*s", width, fullpath);
-                return;
-            }
+            std::string fullpath = file_spec_ptr->GetPath();
+            strm.Printf("%-*s", width, fullpath.c_str());
+            return;
         }
         else
         {
