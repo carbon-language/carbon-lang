@@ -911,7 +911,6 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
                             SmallVectorImpl<NonLocalDepResult> &Result,
                             DenseMap<BasicBlock*, Value*> &Visited,
                             bool SkipFirstBlock) {
-
   // Look up the cached info for Pointer.
   ValueIsLoadPair CacheKey(Pointer.getAddr(), isLoad);
 
@@ -999,8 +998,17 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
     for (NonLocalDepInfo::iterator I = Cache->begin(), E = Cache->end();
          I != E; ++I) {
       Visited.insert(std::make_pair(I->getBB(), Addr));
-      if (!I->getResult().isNonLocal() && DT->isReachableFromEntry(I->getBB()))
+      if (I->getResult().isNonLocal()) {
+        continue;
+      }
+
+      if (!DT) {
+        Result.push_back(NonLocalDepResult(I->getBB(),
+                                           MemDepResult::getUnknown(),
+                                           Addr));
+      } else if (DT->isReachableFromEntry(I->getBB())) {
         Result.push_back(NonLocalDepResult(I->getBB(), I->getResult(), Addr));
+      }
     }
     ++NumCacheCompleteNonLocalPtr;
     return false;
@@ -1045,9 +1053,16 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
                                                  NumSortedEntries);
 
       // If we got a Def or Clobber, add this to the list of results.
-      if (!Dep.isNonLocal() && DT->isReachableFromEntry(BB)) {
-        Result.push_back(NonLocalDepResult(BB, Dep, Pointer.getAddr()));
-        continue;
+      if (!Dep.isNonLocal()) {
+        if (!DT) {
+          Result.push_back(NonLocalDepResult(BB,
+                                             MemDepResult::getUnknown(),
+                                             Pointer.getAddr()));
+          continue;
+        } else if (DT->isReachableFromEntry(BB)) {
+          Result.push_back(NonLocalDepResult(BB, Dep, Pointer.getAddr()));
+          continue;
+        }
       }
     }
 
