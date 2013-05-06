@@ -14,8 +14,9 @@
 #ifndef ASAN_STACK_H
 #define ASAN_STACK_H
 
-#include "sanitizer_common/sanitizer_stacktrace.h"
 #include "asan_flags.h"
+#include "sanitizer_common/sanitizer_flags.h"
+#include "sanitizer_common/sanitizer_stacktrace.h"
 
 namespace __asan {
 
@@ -42,24 +43,24 @@ void PrintStack(StackTrace *stack);
 
 #define GET_STACK_TRACE_FATAL(pc, bp)                                 \
   GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax, pc, bp,              \
-                                 flags()->fast_unwind_on_fatal)
+                                 common_flags()->fast_unwind_on_fatal)
 
-#define GET_STACK_TRACE_FATAL_HERE                           \
-  GET_STACK_TRACE(kStackTraceMax, flags()->fast_unwind_on_fatal)
+#define GET_STACK_TRACE_FATAL_HERE                                \
+  GET_STACK_TRACE(kStackTraceMax, common_flags()->fast_unwind_on_fatal)
 
-#define GET_STACK_TRACE_THREAD                              \
+#define GET_STACK_TRACE_THREAD                                    \
   GET_STACK_TRACE(kStackTraceMax, true)
 
-#define GET_STACK_TRACE_MALLOC                             \
-  GET_STACK_TRACE(flags()->malloc_context_size,            \
-                  flags()->fast_unwind_on_malloc)
+#define GET_STACK_TRACE_MALLOC                                    \
+  GET_STACK_TRACE(common_flags()->malloc_context_size,            \
+                  common_flags()->fast_unwind_on_malloc)
 
 #define GET_STACK_TRACE_FREE GET_STACK_TRACE_MALLOC
 
 #define PRINT_CURRENT_STACK()                    \
   {                                              \
     GET_STACK_TRACE(kStackTraceMax,              \
-      flags()->fast_unwind_on_fatal);            \
+      common_flags()->fast_unwind_on_fatal);     \
     PrintStack(&stack);                          \
   }
 

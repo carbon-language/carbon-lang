@@ -18,6 +18,7 @@
 #include "asan_stack.h"
 #include "asan_thread.h"
 #include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_report_decorator.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 
@@ -502,7 +503,8 @@ static void ReportSummary(const char *error_type, StackTrace *stack) {
     uptr pc = StackTrace::GetPreviousInstructionPc(stack->trace[0]);
     SymbolizeCode(pc, &ai, 1);
     ReportErrorSummary(error_type,
-                       StripPathPrefix(ai.file, flags()->strip_path_prefix),
+                       StripPathPrefix(ai.file,
+                                       common_flags()->strip_path_prefix),
                        ai.line, ai.function);
   }
   // FIXME: do we need to print anything at all if there is no symbolizer?

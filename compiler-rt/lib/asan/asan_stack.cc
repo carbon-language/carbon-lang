@@ -14,6 +14,7 @@
 #include "asan_internal.h"
 #include "asan_flags.h"
 #include "asan_stack.h"
+#include "sanitizer_common/sanitizer_flags.h"
 
 namespace __asan {
 
@@ -24,8 +25,8 @@ static bool MaybeCallAsanSymbolize(const void *pc, char *out_buffer,
 }
 
 void PrintStack(StackTrace *stack) {
-  stack->PrintStack(stack->trace, stack->size, flags()->symbolize,
-                    flags()->strip_path_prefix, MaybeCallAsanSymbolize);
+  stack->PrintStack(stack->trace, stack->size, common_flags()->symbolize,
+                    common_flags()->strip_path_prefix, MaybeCallAsanSymbolize);
 }
 
 }  // namespace __asan

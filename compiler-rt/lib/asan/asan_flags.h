@@ -32,8 +32,6 @@ struct Flags {
   // Lower value may reduce memory usage but increase the chance of
   // false negatives.
   int  quarantine_size;
-  // If set, uses in-process symbolizer from common sanitizer runtime.
-  bool symbolize;
   // Verbosity level (0 - silent, 1 - a bit of output, 2+ - more output).
   int  verbosity;
   // Size (in bytes) of redzones around heap objects.
@@ -47,8 +45,6 @@ struct Flags {
   int  report_globals;
   // If set, attempts to catch initialization order issues.
   bool check_initialization_order;
-  // Max number of stack frames kept for each allocation/deallocation.
-  int  malloc_context_size;
   // If set, uses custom wrappers and replacements for libc string functions
   // to find more errors.
   bool replace_str;
@@ -93,18 +89,12 @@ struct Flags {
   // Allow the tool to re-exec the program. This may interfere badly with the
   // debugger.
   bool allow_reexec;
-  // Strips this prefix from file paths in error reports.
-  const char *strip_path_prefix;
   // If set, prints not only thread creation stacks for threads in error report,
   // but also thread creation stacks for threads that created those threads,
   // etc. up to main thread.
   bool print_full_thread_history;
   // ASan will write logs to "log_path.pid" instead of stderr.
   const char *log_path;
-  // Use fast (frame-pointer-based) unwinder on fatal errors (if available).
-  bool fast_unwind_on_fatal;
-  // Use fast (frame-pointer-based) unwinder on malloc/free (if available).
-  bool fast_unwind_on_malloc;
   // Poison (or not) the heap memory on [de]allocation. Zero value is useful
   // for benchmarking the allocator or instrumentator.
   bool poison_heap;
