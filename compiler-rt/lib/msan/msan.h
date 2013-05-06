@@ -15,6 +15,7 @@
 #ifndef MSAN_H
 #define MSAN_H
 
+#include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "msan_interface_internal.h"
@@ -81,9 +82,9 @@ void UnpoisonMappedDSO(struct link_map *map);
   StackTrace stack;                                                \
   stack.size = 0;                                                  \
   if (__msan_get_track_origins() && msan_inited)                   \
-    GetStackTrace(&stack, flags()->num_callers,                    \
+    GetStackTrace(&stack, common_flags()->malloc_context_size,     \
         StackTrace::GetCurrentPc(), GET_CURRENT_FRAME(),           \
-        flags()->fast_unwind_on_malloc)
+        common_flags()->fast_unwind_on_malloc)
 
 }  // namespace __msan
 

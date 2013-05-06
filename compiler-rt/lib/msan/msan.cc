@@ -114,6 +114,7 @@ static const char *StackOriginDescr[kNumStackOriginDescrs];
 static atomic_uint32_t NumStackOriginDescrs;
 
 static void ParseFlagsFromString(Flags *f, const char *str) {
+  ParseCommonFlagsFromString(str);
   ParseFlag(str, &f->poison_heap_with_zeroes, "poison_heap_with_zeroes");
   ParseFlag(str, &f->poison_stack_with_zeroes, "poison_stack_with_zeroes");
   ParseFlag(str, &f->poison_in_malloc, "poison_in_malloc");
@@ -123,28 +124,26 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
     f->exit_code = 1;
     Die();
   }
-  ParseFlag(str, &f->num_callers, "num_callers");
   ParseFlag(str, &f->report_umrs, "report_umrs");
   ParseFlag(str, &f->verbosity, "verbosity");
-  ParseFlag(str, &f->strip_path_prefix, "strip_path_prefix");
-  ParseFlag(str, &f->fast_unwind_on_fatal, "fast_unwind_on_fatal");
-  ParseFlag(str, &f->fast_unwind_on_malloc, "fast_unwind_on_malloc");
   ParseFlag(str, &f->wrap_signals, "wrap_signals");
 }
 
 static void InitializeFlags(Flags *f, const char *options) {
-  internal_memset(f, 0, sizeof(*f));
+  CommonFlags *cf = common_flags();
+  cf->external_symbolizer_path = GetEnv("MSAN_SYMBOLIZER_PATH");
+  cf->strip_path_prefix = "";
+  cf->fast_unwind_on_fatal = false;
+  cf->fast_unwind_on_malloc = true;
+  cf->malloc_context_size = 20;
 
+  internal_memset(f, 0, sizeof(*f));
   f->poison_heap_with_zeroes = false;
   f->poison_stack_with_zeroes = false;
   f->poison_in_malloc = true;
   f->exit_code = 77;
-  f->num_callers = 20;
   f->report_umrs = true;
   f->verbosity = 0;
-  f->strip_path_prefix = "";
-  f->fast_unwind_on_fatal = false;
-  f->fast_unwind_on_malloc = true;
   f->wrap_signals = true;
 
   // Override from user-specified string.
@@ -201,7 +200,8 @@ void PrintWarningWithOrigin(uptr pc, uptr bp, u32 origin) {
   ++msan_report_count;
 
   StackTrace stack;
-  GetStackTrace(&stack, kStackTraceMax, pc, bp, flags()->fast_unwind_on_fatal);
+  GetStackTrace(&stack, kStackTraceMax, pc, bp,
+                common_flags()->fast_unwind_on_fatal);
 
   u32 report_origin =
     (__msan_track_origins && OriginIsValid(origin)) ? origin : 0;
@@ -276,7 +276,7 @@ void __msan_init() {
     Die();
   }
 
-  const char *external_symbolizer = GetEnv("MSAN_SYMBOLIZER_PATH");
+  const char *external_symbolizer = common_flags()->external_symbolizer_path;
   if (external_symbolizer && external_symbolizer[0]) {
     CHECK(InitializeExternalSymbolizer(external_symbolizer));
   }
@@ -302,7 +302,7 @@ void __msan_set_expect_umr(int expect_umr) {
     (void)sp;
     StackTrace stack;
     GetStackTrace(&stack, kStackTraceMax, pc, bp,
-                  flags()->fast_unwind_on_fatal);
+                  common_flags()->fast_unwind_on_fatal);
     ReportExpectedUMRNotFound(&stack);
     Die();
   }
