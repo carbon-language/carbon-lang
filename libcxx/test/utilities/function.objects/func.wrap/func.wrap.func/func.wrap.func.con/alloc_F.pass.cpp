@@ -49,6 +49,11 @@ int A::count = 0;
 
 int g(int) {return 0;}
 
+class Foo {
+public:
+  void bar(int k) { }
+};
+
 int main()
 {
     {
@@ -76,5 +81,10 @@ int main()
                                         &A::foo);
     assert(f);
     assert(f.target<int (A::*)(int) const>() != 0);
+    }
+    {
+    Foo f;
+    std::function<void(int)> fun = std::bind(&Foo::bar, &f, std::placeholders::_1);
+    fun(10);
     }
 }

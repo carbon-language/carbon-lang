@@ -2036,6 +2036,10 @@ public:
             return *this;
         }
 
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+#endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
     template <class... _Args1, class... _Args2, size_t... _I1, size_t... _I2>
@@ -2050,10 +2054,6 @@ public:
             {}
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
-
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
-#endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first() _NOEXCEPT       {return __first_;}
     _LIBCPP_INLINE_VISIBILITY _T1_const_reference first() const _NOEXCEPT {return __first_;}
@@ -2131,6 +2131,10 @@ public:
             return *this;
         }
 
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+#endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
     template <class... _Args1, class... _Args2, size_t... _I1, size_t... _I2>
@@ -2145,10 +2149,6 @@ public:
             {}
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
-
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
-#endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first() _NOEXCEPT       {return *this;}
     _LIBCPP_INLINE_VISIBILITY _T1_const_reference first() const _NOEXCEPT {return *this;}
@@ -2227,6 +2227,10 @@ public:
             return *this;
         }
 
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+#endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
     template <class... _Args1, class... _Args2, size_t... _I1, size_t... _I2>
@@ -2242,10 +2246,6 @@ public:
             {}
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
-
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
-#endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first() _NOEXCEPT       {return __first_;}
     _LIBCPP_INLINE_VISIBILITY _T1_const_reference first() const _NOEXCEPT {return __first_;}
@@ -2321,6 +2321,10 @@ public:
             return *this;
         }
 
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+#endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
     template <class... _Args1, class... _Args2, size_t... _I1, size_t... _I2>
@@ -2335,10 +2339,6 @@ public:
             {}
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
-
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
-#endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first() _NOEXCEPT       {return *this;}
     _LIBCPP_INLINE_VISIBILITY _T1_const_reference first() const _NOEXCEPT {return *this;}
@@ -2409,6 +2409,10 @@ public:
             return *this;
         }
 
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+#endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
     template <class... _Args1, class... _Args2>
@@ -2421,10 +2425,6 @@ public:
             {}
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
-
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
-#endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first() _NOEXCEPT       {return base::first();}
     _LIBCPP_INLINE_VISIBILITY _T1_const_reference first() const _NOEXCEPT {return base::first();}
