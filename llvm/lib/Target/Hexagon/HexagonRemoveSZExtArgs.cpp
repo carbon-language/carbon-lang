@@ -21,11 +21,18 @@
 #include "llvm/Transforms/Scalar.h"
 
 using namespace llvm;
+
+namespace llvm {
+  void initializeHexagonRemoveExtendArgsPass(PassRegistry&);
+}
+
 namespace {
   struct HexagonRemoveExtendArgs : public FunctionPass {
   public:
     static char ID;
-    HexagonRemoveExtendArgs() : FunctionPass(ID) {}
+    HexagonRemoveExtendArgs() : FunctionPass(ID) {
+      initializeHexagonRemoveExtendArgsPass(*PassRegistry::getPassRegistry());
+    }
     virtual bool runOnFunction(Function &F);
 
     const char *getPassName() const {
@@ -41,11 +48,9 @@ namespace {
 }
 
 char HexagonRemoveExtendArgs::ID = 0;
-RegisterPass<HexagonRemoveExtendArgs> X("reargs",
-                                        "Remove Sign and Zero Extends for Args"
-                                        );
 
-
+INITIALIZE_PASS(HexagonRemoveExtendArgs, "reargs",
+                "Remove Sign and Zero Extends for Args", false, false)
 
 bool HexagonRemoveExtendArgs::runOnFunction(Function &F) {
   unsigned Idx = 1;

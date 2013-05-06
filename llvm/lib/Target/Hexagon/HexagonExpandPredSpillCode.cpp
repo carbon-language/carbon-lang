@@ -41,6 +41,11 @@
 using namespace llvm;
 
 
+namespace llvm {
+  void initializeHexagonExpandPredSpillCodePass(PassRegistry&);
+}
+
+
 namespace {
 
 class HexagonExpandPredSpillCode : public MachineFunctionPass {
@@ -50,7 +55,10 @@ class HexagonExpandPredSpillCode : public MachineFunctionPass {
  public:
     static char ID;
     HexagonExpandPredSpillCode(const HexagonTargetMachine& TM) :
-      MachineFunctionPass(ID), QTM(TM), QST(*TM.getSubtargetImpl()) {}
+      MachineFunctionPass(ID), QTM(TM), QST(*TM.getSubtargetImpl()) {
+      PassRegistry &Registry = *PassRegistry::getPassRegistry();
+      initializeHexagonExpandPredSpillCodePass(Registry);
+    }
 
     const char *getPassName() const {
       return "Hexagon Expand Predicate Spill Code";
@@ -174,6 +182,18 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
 //===----------------------------------------------------------------------===//
 //                         Public Constructor Functions
 //===----------------------------------------------------------------------===//
+
+static void initializePassOnce(PassRegistry &Registry) {
+  const char *Name = "Hexagon Expand Predicate Spill Code";
+  PassInfo *PI = new PassInfo(Name, "hexagon-spill-pred",
+                              &HexagonExpandPredSpillCode::ID,
+                              0, false, false);
+  Registry.registerPass(*PI, true);
+}
+
+void llvm::initializeHexagonExpandPredSpillCodePass(PassRegistry &Registry) {
+  CALL_ONCE_INITIALIZATION(initializePassOnce)
+}
 
 FunctionPass*
 llvm::createHexagonExpandPredSpillCode(const HexagonTargetMachine &TM) {

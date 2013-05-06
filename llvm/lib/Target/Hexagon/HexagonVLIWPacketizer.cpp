@@ -56,9 +56,6 @@ static cl::opt<bool> PacketizeVolatiles("hexagon-packetize-volatiles",
       cl::ZeroOrMore, cl::Hidden, cl::init(true),
       cl::desc("Allow non-solo packetization of volatile memory references"));
 
-extern cl::opt<bool> ScheduleInlineAsm;
-extern cl::opt<bool> CountDeadOutput;
-
 namespace llvm {
   void initializeHexagonPacketizerPass(PassRegistry&);
 }
@@ -180,6 +177,7 @@ INITIALIZE_PASS_BEGIN(HexagonPacketizer, "packets", "Hexagon Packetizer",
 INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
 INITIALIZE_PASS_DEPENDENCY(MachineBranchProbabilityInfo)
 INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(HexagonPacketizer, "packets", "Hexagon Packetizer",
                     false, false)
 

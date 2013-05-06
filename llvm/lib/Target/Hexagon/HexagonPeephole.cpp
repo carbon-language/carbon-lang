@@ -61,10 +61,6 @@ static cl::opt<bool> DisableHexagonPeephole("disable-hexagon-peephole",
     cl::Hidden, cl::ZeroOrMore, cl::init(false),
     cl::desc("Disable Peephole Optimization"));
 
-static cl::opt<int>
-DbgPNPCount("pnp-count", cl::init(-1), cl::Hidden,
-  cl::desc("Maximum number of P=NOT(P) to be optimized"));
-
 static cl::opt<bool> DisablePNotP("disable-hexagon-pnotp",
     cl::Hidden, cl::ZeroOrMore, cl::init(false),
     cl::desc("Disable Optimization of PNotP"));
@@ -77,6 +73,10 @@ static cl::opt<bool> DisableOptExtTo64("disable-hexagon-opt-ext-to-64",
     cl::Hidden, cl::ZeroOrMore, cl::init(false),
     cl::desc("Disable Optimization of extensions to i64."));
 
+namespace llvm {
+  void initializeHexagonPeepholePass(PassRegistry&);
+}
+
 namespace {
   struct HexagonPeephole : public MachineFunctionPass {
     const HexagonInstrInfo    *QII;
@@ -85,7 +85,9 @@ namespace {
 
   public:
     static char ID;
-    HexagonPeephole() : MachineFunctionPass(ID) { }
+    HexagonPeephole() : MachineFunctionPass(ID) {
+      initializeHexagonPeepholePass(*PassRegistry::getPassRegistry());
+    }
 
     bool runOnMachineFunction(MachineFunction &MF);
 
@@ -104,8 +106,10 @@ namespace {
 
 char HexagonPeephole::ID = 0;
 
-bool HexagonPeephole::runOnMachineFunction(MachineFunction &MF) {
+INITIALIZE_PASS(HexagonPeephole, "hexagon-peephole", "Hexagon Peephole",
+                false, false)
 
+bool HexagonPeephole::runOnMachineFunction(MachineFunction &MF) {
   QII = static_cast<const HexagonInstrInfo *>(MF.getTarget().
                                         getInstrInfo());
   QRI = static_cast<const HexagonRegisterInfo *>(MF.getTarget().
