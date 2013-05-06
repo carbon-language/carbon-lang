@@ -759,7 +759,7 @@ The following options can be used to set or enable LLVM specific options:
   case. The current set of targets is:
 
     ``arm, cpp, hexagon, mblaze, mips, mipsel, msp430, powerpc, ptx, sparc, spu,
-    x86, x86_64, xcore``.
+    systemz, x86, x86_64, xcore``.
 
 ``--enable-doxygen``
 
