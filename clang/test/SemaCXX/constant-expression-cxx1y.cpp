@@ -334,6 +334,58 @@ namespace incdec {
   static_assert(incr(0) == 101, "");
 }
 
+namespace compound_assign {
+  constexpr bool test_int() {
+    int a = 3;
+    a += 6;
+    if (a != 9) throw 0;
+    a -= 2;
+    if (a != 7) throw 0;
+    a *= 3;
+    if (a != 21) throw 0;
+    a /= 10;
+    if (a != 2) throw 0;
+    a <<= 3;
+    if (a != 16) throw 0;
+    a %= 6;
+    if (a != 4) throw 0;
+    a >>= 1;
+    if (a != 2) throw 0;
+    a ^= 10;
+    if (a != 8) throw 0;
+    a |= 5;
+    if (a != 13) throw 0;
+    a &= 14;
+    if (a != 12) throw 0;
+    return true;
+  }
+  static_assert(test_int(), "");
+
+  template<typename T>
+  constexpr bool test_overflow() {
+    T a = 1;
+    while (a)
+      a *= 2; // expected-note {{value 2147483648 is outside the range}} expected-note {{ 9223372036854775808 }}
+    return true;
+  }
+
+  static_assert(test_overflow<int>(), ""); // expected-error {{constant}} expected-note {{call}}
+  static_assert(test_overflow<unsigned>(), ""); // ok, unsigned overflow is defined
+  static_assert(test_overflow<short>(), ""); // ok, short is promoted to int before multiplication
+  static_assert(test_overflow<unsigned short>(), ""); // ok
+  static_assert(test_overflow<unsigned long long>(), ""); // ok
+  static_assert(test_overflow<long long>(), ""); // expected-error {{constant}} expected-note {{call}}
+
+  constexpr short test_promotion(short k) {
+    short s = k;
+    s *= s;
+    return s;
+  }
+  static_assert(test_promotion(100) == 10000, "");
+  static_assert(test_promotion(200) == -25536, "");
+  static_assert(test_promotion(256) == 0, "");
+}
+
 namespace loops {
   constexpr int fib_loop(int a) {
     int f_k = 0, f_k_plus_one = 1;
@@ -407,7 +459,7 @@ namespace loops {
     int arr[] = { 1, 2, 3, 4, 5 };
     int sum = 0;
     for (int x : arr)
-      sum = sum + x;
+      sum += x;
     return sum;
   }
   static_assert(range_for() == 15, "");
@@ -450,7 +502,7 @@ namespace loops {
     array<int, 5> arr { 1, 2, 3, 4, 5 };
     int sum = 0;
     for (int k : arr) {
-      sum = sum + k;
+      sum += k;
       if (sum > 8) break;
     }
     return sum;
@@ -458,7 +510,7 @@ namespace loops {
   static_assert(range_for_2() == 10, "");
 }
 
-namespace assignment {
+namespace assignment_op {
   struct A {
     constexpr A() : n(5) {}
     int n;
