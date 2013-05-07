@@ -266,10 +266,14 @@ def IIC_SSE_PINSRW : InstrItinClass;
 def IIC_SSE_PABS_RR : InstrItinClass;
 def IIC_SSE_PABS_RM : InstrItinClass;
 
-def IIC_SSE_SQRTP_RR : InstrItinClass;
-def IIC_SSE_SQRTP_RM : InstrItinClass;
-def IIC_SSE_SQRTS_RR : InstrItinClass;
-def IIC_SSE_SQRTS_RM : InstrItinClass;
+def IIC_SSE_SQRTPS_RR : InstrItinClass;
+def IIC_SSE_SQRTPS_RM : InstrItinClass;
+def IIC_SSE_SQRTSS_RR : InstrItinClass;
+def IIC_SSE_SQRTSS_RM : InstrItinClass;
+def IIC_SSE_SQRTPD_RR : InstrItinClass;
+def IIC_SSE_SQRTPD_RM : InstrItinClass;
+def IIC_SSE_SQRTSD_RR : InstrItinClass;
+def IIC_SSE_SQRTSD_RM : InstrItinClass;
 
 def IIC_SSE_RCPP_RR : InstrItinClass;
 def IIC_SSE_RCPP_RM : InstrItinClass;

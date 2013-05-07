@@ -3049,12 +3049,20 @@ let isCodeGenOnly = 1 in {
 /// And, we have a special variant form for a full-vector intrinsic form.
 
 let Sched = WriteFSqrt in {
-def SSE_SQRTP : OpndItins<
-  IIC_SSE_SQRTP_RR, IIC_SSE_SQRTP_RM
+def SSE_SQRTPS : OpndItins<
+  IIC_SSE_SQRTPS_RR, IIC_SSE_SQRTPS_RM
 >;
 
-def SSE_SQRTS : OpndItins<
-  IIC_SSE_SQRTS_RR, IIC_SSE_SQRTS_RM
+def SSE_SQRTSS : OpndItins<
+  IIC_SSE_SQRTSS_RR, IIC_SSE_SQRTSS_RM
+>;
+
+def SSE_SQRTPD : OpndItins<
+  IIC_SSE_SQRTPD_RR, IIC_SSE_SQRTPD_RM
+>;
+
+def SSE_SQRTSD : OpndItins<
+  IIC_SSE_SQRTSD_RR, IIC_SSE_SQRTSD_RM
 >;
 }
 
@@ -3319,18 +3327,18 @@ let Predicates = [HasAVX] in {
 
 // Square root.
 defm SQRT  : sse1_fp_unop_s<0x51, "sqrt",  fsqrt, int_x86_sse_sqrt_ss,
-                            SSE_SQRTS>,
-             sse1_fp_unop_p<0x51, "sqrt", fsqrt, SSE_SQRTP>,
+                            SSE_SQRTSS>,
+             sse1_fp_unop_p<0x51, "sqrt", fsqrt, SSE_SQRTPS>,
              sse2_fp_unop_s<0x51, "sqrt",  fsqrt, int_x86_sse2_sqrt_sd,
-                            SSE_SQRTS>,
-             sse2_fp_unop_p<0x51, "sqrt", fsqrt, SSE_SQRTP>;
+                            SSE_SQRTSD>,
+             sse2_fp_unop_p<0x51, "sqrt", fsqrt, SSE_SQRTPD>;
 
 // Reciprocal approximations. Note that these typically require refinement
 // in order to obtain suitable precision.
-defm RSQRT : sse1_fp_unop_rw<0x52, "rsqrt", X86frsqrt, SSE_SQRTS>,
-             sse1_fp_unop_p<0x52, "rsqrt", X86frsqrt, SSE_SQRTP>,
+defm RSQRT : sse1_fp_unop_rw<0x52, "rsqrt", X86frsqrt, SSE_SQRTSS>,
+             sse1_fp_unop_p<0x52, "rsqrt", X86frsqrt, SSE_SQRTPS>,
              sse1_fp_unop_p_int<0x52, "rsqrt", int_x86_sse_rsqrt_ps,
-                                int_x86_avx_rsqrt_ps_256, SSE_SQRTP>;
+                                int_x86_avx_rsqrt_ps_256, SSE_SQRTPS>;
 defm RCP   : sse1_fp_unop_rw<0x53, "rcp", X86frcp, SSE_RCPS>,
              sse1_fp_unop_p<0x53, "rcp", X86frcp, SSE_RCPP>,
              sse1_fp_unop_p_int<0x53, "rcp", int_x86_sse_rcp_ps,
