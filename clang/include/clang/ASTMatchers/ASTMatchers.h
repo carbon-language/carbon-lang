@@ -1841,6 +1841,8 @@ AST_MATCHER_P(QualType, references, internal::Matcher<QualType>,
 /// varDecl(hasType(qualType(hasCanonicalType(referenceType())))))) does.
 AST_MATCHER_P(QualType, hasCanonicalType, internal::Matcher<QualType>,
               InnerMatcher) {
+  if (Node.isNull())
+    return false;
   return InnerMatcher.matches(Node.getCanonicalType(), Finder, Builder);
 }
 
