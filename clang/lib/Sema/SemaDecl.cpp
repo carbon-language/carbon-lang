@@ -858,18 +858,16 @@ Corrected:
 
   // Check for a tag type hidden by a non-type decl in a few cases where it
   // seems likely a type is wanted instead of the non-type that was found.
-  if (!getLangOpts().ObjC1) {
-    bool NextIsOp = NextToken.is(tok::amp) || NextToken.is(tok::star);
-    if ((NextToken.is(tok::identifier) ||
-         (NextIsOp && FirstDecl->isFunctionOrFunctionTemplate())) &&
-        isTagTypeWithMissingTag(*this, Result, S, SS, Name, NameLoc)) {
-      TypeDecl *Type = Result.getAsSingle<TypeDecl>();
-      DiagnoseUseOfDecl(Type, NameLoc);
-      QualType T = Context.getTypeDeclType(Type);
-      if (SS.isNotEmpty())
-        return buildNestedType(*this, SS, T, NameLoc);
-      return ParsedType::make(T);
-    }
+  bool NextIsOp = NextToken.is(tok::amp) || NextToken.is(tok::star);
+  if ((NextToken.is(tok::identifier) ||
+       (NextIsOp && FirstDecl->isFunctionOrFunctionTemplate())) &&
+      isTagTypeWithMissingTag(*this, Result, S, SS, Name, NameLoc)) {
+    TypeDecl *Type = Result.getAsSingle<TypeDecl>();
+    DiagnoseUseOfDecl(Type, NameLoc);
+    QualType T = Context.getTypeDeclType(Type);
+    if (SS.isNotEmpty())
+      return buildNestedType(*this, SS, T, NameLoc);
+    return ParsedType::make(T);
   }
   
   if (FirstDecl->isCXXClassMember())
