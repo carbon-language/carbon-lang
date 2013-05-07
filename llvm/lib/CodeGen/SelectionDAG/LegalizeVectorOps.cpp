@@ -652,12 +652,13 @@ SDValue VectorLegalizer::ExpandSEXTINREG(SDValue Op) {
 SDValue VectorLegalizer::ExpandVSELECT(SDValue Op) {
   // Implement VSELECT in terms of XOR, AND, OR
   // on platforms which do not support blend natively.
-  EVT VT =  Op.getOperand(0).getValueType();
   DebugLoc DL = Op.getDebugLoc();
 
   SDValue Mask = Op.getOperand(0);
   SDValue Op1 = Op.getOperand(1);
   SDValue Op2 = Op.getOperand(2);
+
+  EVT VT = Mask.getValueType();
 
   // If we can't even use the basic vector operations of
   // AND,OR,XOR, we will have to scalarize the op.
@@ -673,8 +674,12 @@ SDValue VectorLegalizer::ExpandVSELECT(SDValue Op) {
       TargetLowering::ZeroOrNegativeOneBooleanContent)
     return DAG.UnrollVectorOp(Op.getNode());
 
-  assert(VT.getSizeInBits() == Op1.getValueType().getSizeInBits()
-         && "Invalid mask size");
+  // If the mask and the type are different sizes, unroll the vector op. This
+  // can occur when getSetCCResultType returns something that is different in
+  // size from the operand types. For example, v4i8 = select v4i32, v4i8, v4i8.
+  if (VT.getSizeInBits() != Op1.getValueType().getSizeInBits())
+    return DAG.UnrollVectorOp(Op.getNode());
+
   // Bitcast the operands to be the same type as the mask.
   // This is needed when we select between FP types because
   // the mask is a vector of integers.
