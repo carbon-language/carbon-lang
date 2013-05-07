@@ -24,7 +24,9 @@
 #include "sanitizer_procmaps.h"
 #include "sanitizer_stacktrace.h"
 
+#ifdef __x86_64__
 #include <asm/prctl.h>
+#endif
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -64,7 +66,9 @@ const int FUTEX_WAKE = 1;
 # define SANITIZER_LINUX_USES_64BIT_SYSCALLS 0
 #endif
 
+#ifdef __x86_64__
 extern "C" int arch_prctl(int code, __sanitizer::uptr *addr);
+#endif
 
 namespace __sanitizer {
 
