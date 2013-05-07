@@ -292,7 +292,8 @@ struct __weak_result_type<_Rp (_Cp::*)(_A1, _A2, _A3...) const volatile>
 
 // bullets 1 and 2
 
-template <class _Fp, class _A0, class ..._Args>
+template <class _Fp, class _A0, class ..._Args,
+            class>
 inline _LIBCPP_INLINE_VISIBILITY
 auto
 __invoke(_Fp&& __f, _A0&& __a0, _Args&& ...__args)
@@ -301,7 +302,8 @@ __invoke(_Fp&& __f, _A0&& __a0, _Args&& ...__args)
     return (_VSTD::forward<_A0>(__a0).*__f)(_VSTD::forward<_Args>(__args)...);
 }
 
-template <class _Fp, class _A0, class ..._Args>
+template <class _Fp, class _A0, class ..._Args,
+            class>
 inline _LIBCPP_INLINE_VISIBILITY
 auto
 __invoke(_Fp&& __f, _A0&& __a0, _Args&& ...__args)
@@ -312,7 +314,8 @@ __invoke(_Fp&& __f, _A0&& __a0, _Args&& ...__args)
 
 // bullets 3 and 4
 
-template <class _Fp, class _A0>
+template <class _Fp, class _A0,
+            class>
 inline _LIBCPP_INLINE_VISIBILITY
 auto
 __invoke(_Fp&& __f, _A0&& __a0)
@@ -321,7 +324,8 @@ __invoke(_Fp&& __f, _A0&& __a0)
     return _VSTD::forward<_A0>(__a0).*__f;
 }
 
-template <class _Fp, class _A0>
+template <class _Fp, class _A0,
+            class>
 inline _LIBCPP_INLINE_VISIBILITY
 auto
 __invoke(_Fp&& __f, _A0&& __a0)

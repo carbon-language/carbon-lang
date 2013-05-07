@@ -28,6 +28,12 @@ struct S
 typedef void (S::*PMS)(long) const;
 typedef char S::*PMD;
 
+struct wat
+{
+    wat& operator*() { return *this; }
+    void foo();
+};
+
 int main()
 {
     static_assert((std::is_same<std::result_of<S(int)>::type, short>::value), "Error!");
@@ -40,4 +46,5 @@ int main()
     static_assert((std::is_same<std::result_of<PMD(S)>::type, char&&>::value), "Error!");
 #endif
     static_assert((std::is_same<std::result_of<PMD(const S*)>::type, const char&>::value), "Error!");
+    using type = std::result_of<decltype(&wat::foo)(wat)>::type;
 }

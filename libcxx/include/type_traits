@@ -2878,13 +2878,27 @@ __invoke(__any, _Args&& ...__args)
 
 // bullets 1 and 2
 
-template <class _Fp, class _A0, class ..._Args>
+template <class _Fp, class _A0, class ..._Args,
+            class = typename enable_if
+            <
+                is_member_function_pointer<typename remove_reference<_Fp>::type>::value &&
+                is_base_of<typename __member_pointer_traits<typename remove_reference<_Fp>::type>::_ClassType,
+                           typename remove_reference<_A0>::type>::value
+            >::type
+         >
 _LIBCPP_INLINE_VISIBILITY
 auto
 __invoke(_Fp&& __f, _A0&& __a0, _Args&& ...__args)
     -> decltype((_VSTD::forward<_A0>(__a0).*__f)(_VSTD::forward<_Args>(__args)...));
 
-template <class _Fp, class _A0, class ..._Args>
+template <class _Fp, class _A0, class ..._Args,
+            class = typename enable_if
+            <
+                is_member_function_pointer<typename remove_reference<_Fp>::type>::value &&
+                !is_base_of<typename __member_pointer_traits<typename remove_reference<_Fp>::type>::_ClassType,
+                           typename remove_reference<_A0>::type>::value
+            >::type
+         >
 _LIBCPP_INLINE_VISIBILITY
 auto
 __invoke(_Fp&& __f, _A0&& __a0, _Args&& ...__args)
@@ -2892,13 +2906,27 @@ __invoke(_Fp&& __f, _A0&& __a0, _Args&& ...__args)
 
 // bullets 3 and 4
 
-template <class _Fp, class _A0>
+template <class _Fp, class _A0,
+            class = typename enable_if
+            <
+                is_member_object_pointer<typename remove_reference<_Fp>::type>::value &&
+                is_base_of<typename __member_pointer_traits<typename remove_reference<_Fp>::type>::_ClassType,
+                           typename remove_reference<_A0>::type>::value
+            >::type
+         >
 _LIBCPP_INLINE_VISIBILITY
 auto
 __invoke(_Fp&& __f, _A0&& __a0)
     -> decltype(_VSTD::forward<_A0>(__a0).*__f);
 
-template <class _Fp, class _A0>
+template <class _Fp, class _A0,
+            class = typename enable_if
+            <
+                is_member_object_pointer<typename remove_reference<_Fp>::type>::value &&
+                !is_base_of<typename __member_pointer_traits<typename remove_reference<_Fp>::type>::_ClassType,
+                           typename remove_reference<_A0>::type>::value
+            >::type
+         >
 _LIBCPP_INLINE_VISIBILITY
 auto
 __invoke(_Fp&& __f, _A0&& __a0)
