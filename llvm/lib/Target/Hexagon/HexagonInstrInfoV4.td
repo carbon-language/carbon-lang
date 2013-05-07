@@ -213,7 +213,7 @@ def COMBINE_iI_V4 : ALU32_ii<(outs DoubleRegs:$dst),
 // Template class for load instructions with Absolute set addressing mode.
 //===----------------------------------------------------------------------===//
 let isExtended = 1, opExtendable = 2, neverHasSideEffects = 1,
-validSubTargets = HasV4SubT in
+validSubTargets = HasV4SubT, addrMode = AbsoluteSet in
 class T_LD_abs_set<string mnemonic, RegisterClass RC>:
             LDInst2<(outs RC:$dst1, IntRegs:$dst2),
             (ins u0AlwaysExt:$addr),
@@ -266,12 +266,23 @@ multiclass ld_idxd_shl<string mnemonic, string CextOp, RegisterClass RC> {
 }
 
 let addrMode = BaseRegOffset in {
-  defm LDrib_indexed_shl: ld_idxd_shl<"memb", "LDrib", IntRegs>, AddrModeRel;
-  defm LDriub_indexed_shl: ld_idxd_shl<"memub", "LDriub", IntRegs>, AddrModeRel;
-  defm LDrih_indexed_shl: ld_idxd_shl<"memh", "LDrih", IntRegs>, AddrModeRel;
-  defm LDriuh_indexed_shl: ld_idxd_shl<"memuh", "LDriuh", IntRegs>, AddrModeRel;
-  defm LDriw_indexed_shl: ld_idxd_shl<"memw", "LDriw", IntRegs>, AddrModeRel;
-  defm LDrid_indexed_shl: ld_idxd_shl<"memd", "LDrid", DoubleRegs>, AddrModeRel;
+  let accessSize = ByteAccess in {
+    defm LDrib_indexed_shl: ld_idxd_shl<"memb", "LDrib", IntRegs>,
+                                        AddrModeRel;
+    defm LDriub_indexed_shl: ld_idxd_shl<"memub", "LDriub", IntRegs>,
+                                        AddrModeRel;
+  }
+  let accessSize = HalfWordAccess in {
+    defm LDrih_indexed_shl: ld_idxd_shl<"memh", "LDrih", IntRegs>, AddrModeRel;
+    defm LDriuh_indexed_shl: ld_idxd_shl<"memuh", "LDriuh", IntRegs>,
+                             AddrModeRel;
+  }
+  let accessSize = WordAccess in
+     defm LDriw_indexed_shl: ld_idxd_shl<"memw", "LDriw", IntRegs>, AddrModeRel;
+
+  let accessSize = DoubleWordAccess in
+    defm LDrid_indexed_shl: ld_idxd_shl<"memd", "LDrid", DoubleRegs>,
+                             AddrModeRel;
 }
 
 // 'def pats' for load instructions with base + register offset and non-zero
@@ -456,7 +467,8 @@ def:  Pat <(i64 (extloadi32 (i32 (add IntRegs:$src1, s11_2ExtPred:$offset)))),
 //===----------------------------------------------------------------------===//
 // Template class for store instructions with Absolute set addressing mode.
 //===----------------------------------------------------------------------===//
-let isExtended = 1, opExtendable = 2, validSubTargets = HasV4SubT in
+let isExtended = 1, opExtendable = 2, validSubTargets = HasV4SubT,
+addrMode = AbsoluteSet in
 class T_ST_abs_set<string mnemonic, RegisterClass RC>:
             STInst2<(outs IntRegs:$dst1),
             (ins RC:$src1, u0AlwaysExt:$src2),
@@ -551,17 +563,20 @@ multiclass ST_Idxd_shl_nv<string mnemonic, string CextOp, RegisterClass RC> {
 
 let addrMode = BaseRegOffset, neverHasSideEffects = 1,
 validSubTargets = HasV4SubT in {
-  defm STrib_indexed_shl: ST_Idxd_shl<"memb", "STrib", IntRegs>,
-                          ST_Idxd_shl_nv<"memb", "STrib", IntRegs>, AddrModeRel;
+  let accessSize = ByteAccess in
+    defm STrib_indexed_shl: ST_Idxd_shl<"memb", "STrib", IntRegs>,
+                            ST_Idxd_shl_nv<"memb", "STrib", IntRegs>, AddrModeRel;
 
-  defm STrih_indexed_shl: ST_Idxd_shl<"memh", "STrih", IntRegs>,
-                          ST_Idxd_shl_nv<"memh", "STrih", IntRegs>, AddrModeRel;
+  let accessSize = HalfWordAccess in
+    defm STrih_indexed_shl: ST_Idxd_shl<"memh", "STrih", IntRegs>,
+                            ST_Idxd_shl_nv<"memh", "STrih", IntRegs>, AddrModeRel;
 
-  defm STriw_indexed_shl: ST_Idxd_shl<"memw", "STriw", IntRegs>,
-                          ST_Idxd_shl_nv<"memw", "STriw", IntRegs>, AddrModeRel;
+  let accessSize = WordAccess in
+    defm STriw_indexed_shl: ST_Idxd_shl<"memw", "STriw", IntRegs>,
+                            ST_Idxd_shl_nv<"memw", "STriw", IntRegs>, AddrModeRel;
 
-  let isNVStorable = 0 in
-  defm STrid_indexed_shl: ST_Idxd_shl<"memd", "STrid", DoubleRegs>, AddrModeRel;
+  let isNVStorable = 0, accessSize = DoubleWordAccess in
+    defm STrid_indexed_shl: ST_Idxd_shl<"memd", "STrid", DoubleRegs>, AddrModeRel;
 }
 
 let Predicates = [HasV4T], AddedComplexity = 10 in {
@@ -695,10 +710,15 @@ multiclass ST_Imm<string mnemonic, string CextOp, Operand OffsetOp> {
 }
 
 let addrMode = BaseImmOffset, InputType = "imm",
-    validSubTargets = HasV4SubT in {
-  defm STrib_imm : ST_Imm<"memb", "STrib", u6_0Imm>, ImmRegRel, PredNewRel;
-  defm STrih_imm : ST_Imm<"memh", "STrih", u6_1Imm>, ImmRegRel, PredNewRel;
-  defm STriw_imm : ST_Imm<"memw", "STriw", u6_2Imm>, ImmRegRel, PredNewRel;
+validSubTargets = HasV4SubT in {
+  let accessSize = ByteAccess in
+    defm STrib_imm : ST_Imm<"memb", "STrib", u6_0Imm>, ImmRegRel, PredNewRel;
+
+  let accessSize = HalfWordAccess in
+    defm STrih_imm : ST_Imm<"memh", "STrih", u6_1Imm>, ImmRegRel, PredNewRel;
+
+  let accessSize = WordAccess in
+    defm STriw_imm : ST_Imm<"memw", "STriw", u6_2Imm>, ImmRegRel, PredNewRel;
 }
 
 let Predicates = [HasV4T], AddedComplexity = 10 in {
@@ -834,12 +854,17 @@ multiclass ST_Idxd_nv<string mnemonic, string CextOp, RegisterClass RC,
 }
 
 let addrMode = BaseImmOffset, validSubTargets = HasV4SubT in {
-  defm STrib_indexed: ST_Idxd_nv<"memb", "STrib", IntRegs, s11_0Ext,
-                                 u6_0Ext, 11, 6>, AddrModeRel;
-  defm STrih_indexed: ST_Idxd_nv<"memh", "STrih", IntRegs, s11_1Ext,
-                                 u6_1Ext, 12, 7>, AddrModeRel;
-  defm STriw_indexed: ST_Idxd_nv<"memw", "STriw", IntRegs, s11_2Ext,
-                                 u6_2Ext, 13, 8>, AddrModeRel;
+  let accessSize = ByteAccess in
+    defm STrib_indexed: ST_Idxd_nv<"memb", "STrib", IntRegs, s11_0Ext,
+                                   u6_0Ext, 11, 6>, AddrModeRel;
+
+  let accessSize = HalfWordAccess in
+    defm STrih_indexed: ST_Idxd_nv<"memh", "STrih", IntRegs, s11_1Ext,
+                                   u6_1Ext, 12, 7>, AddrModeRel;
+
+  let accessSize = WordAccess in
+    defm STriw_indexed: ST_Idxd_nv<"memw", "STriw", IntRegs, s11_2Ext,
+                                   u6_2Ext, 13, 8>, AddrModeRel;
 }
 
 // multiclass for new-value store instructions with base + immediate offset.
@@ -887,9 +912,14 @@ multiclass ST_MEMri_nv<string mnemonic, string CextOp, RegisterClass RC,
 
 let addrMode = BaseImmOffset, isMEMri = "true", validSubTargets = HasV4SubT,
 mayStore = 1 in {
-  defm STrib: ST_MEMri_nv<"memb", "STrib", IntRegs, 11, 6>, AddrModeRel;
-  defm STrih: ST_MEMri_nv<"memh", "STrih", IntRegs, 12, 7>, AddrModeRel;
-  defm STriw: ST_MEMri_nv<"memw", "STriw", IntRegs, 13, 8>, AddrModeRel;
+  let accessSize = ByteAccess in
+    defm STrib: ST_MEMri_nv<"memb", "STrib", IntRegs, 11, 6>, AddrModeRel;
+
+  let accessSize = HalfWordAccess in
+    defm STrih: ST_MEMri_nv<"memh", "STrih", IntRegs, 12, 7>, AddrModeRel;
+
+  let accessSize = WordAccess in
+    defm STriw: ST_MEMri_nv<"memw", "STriw", IntRegs, 13, 8>, AddrModeRel;
 }
 
 //===----------------------------------------------------------------------===//
@@ -939,7 +969,7 @@ multiclass ST_PostInc_nv<string mnemonic, string BaseOp, RegisterClass RC,
   }
 }
 
-let validSubTargets = HasV4SubT in {
+let addrMode = PostInc, validSubTargets = HasV4SubT in {
 defm POST_STbri: ST_PostInc_nv <"memb", "STrib", IntRegs, s4_0Imm>, AddrModeRel;
 defm POST_SThri: ST_PostInc_nv <"memh", "STrih", IntRegs, s4_1Imm>, AddrModeRel;
 defm POST_STwri: ST_PostInc_nv <"memw", "STriw", IntRegs, s4_2Imm>, AddrModeRel;

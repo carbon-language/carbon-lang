@@ -54,6 +54,7 @@ def AbsoluteSet    : AddrModeType<2>;  // Absolute set addressing mode
 def BaseImmOffset  : AddrModeType<3>;  // Indirect with offset
 def BaseLongOffset : AddrModeType<4>;  // Indirect with long offset
 def BaseRegOffset  : AddrModeType<5>;  // Indirect with register offset
+def PostInc        : AddrModeType<6>;  // Post increment addressing mode
 
 class MemAccessSize<bits<3> value> {
   bits<3> Value = value;

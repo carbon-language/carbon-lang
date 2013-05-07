@@ -932,12 +932,21 @@ multiclass LD_MEMri<string mnemonic, string CextOp, RegisterClass RC,
 }
 
 let addrMode = BaseImmOffset, isMEMri = "true" in {
-  defm LDrib: LD_MEMri < "memb", "LDrib", IntRegs, 11, 6>, AddrModeRel;
-  defm LDriub: LD_MEMri < "memub" , "LDriub", IntRegs, 11, 6>, AddrModeRel;
-  defm LDrih: LD_MEMri < "memh", "LDrih", IntRegs, 12, 7>, AddrModeRel;
-  defm LDriuh: LD_MEMri < "memuh", "LDriuh", IntRegs, 12, 7>, AddrModeRel;
-  defm LDriw: LD_MEMri < "memw", "LDriw", IntRegs, 13, 8>, AddrModeRel;
-  defm LDrid: LD_MEMri < "memd", "LDrid", DoubleRegs, 14, 9>, AddrModeRel;
+  let accessSize = ByteAccess in {
+    defm LDrib: LD_MEMri < "memb", "LDrib", IntRegs, 11, 6>, AddrModeRel;
+    defm LDriub: LD_MEMri < "memub" , "LDriub", IntRegs, 11, 6>, AddrModeRel;
+ }
+
+  let accessSize = HalfWordAccess in {
+    defm LDrih: LD_MEMri < "memh", "LDrih", IntRegs, 12, 7>, AddrModeRel;
+    defm LDriuh: LD_MEMri < "memuh", "LDriuh", IntRegs, 12, 7>, AddrModeRel;
+ }
+
+  let accessSize = WordAccess in
+    defm LDriw: LD_MEMri < "memw", "LDriw", IntRegs, 13, 8>, AddrModeRel;
+
+  let accessSize = DoubleWordAccess in
+    defm LDrid: LD_MEMri < "memd", "LDrid", DoubleRegs, 14, 9>, AddrModeRel;
 }
 
 def : Pat < (i32 (sextloadi8 ADDRriS11_0:$addr)),
@@ -1000,18 +1009,25 @@ multiclass LD_Idxd<string mnemonic, string CextOp, RegisterClass RC,
 }
 
 let addrMode = BaseImmOffset in {
-  defm LDrib_indexed: LD_Idxd <"memb", "LDrib", IntRegs, s11_0Ext, u6_0Ext,
-                               11, 6>, AddrModeRel;
-  defm LDriub_indexed: LD_Idxd <"memub" , "LDriub", IntRegs, s11_0Ext, u6_0Ext,
-                                11, 6>, AddrModeRel;
-  defm LDrih_indexed: LD_Idxd <"memh", "LDrih", IntRegs, s11_1Ext, u6_1Ext,
-                               12, 7>, AddrModeRel;
-  defm LDriuh_indexed: LD_Idxd <"memuh", "LDriuh", IntRegs, s11_1Ext, u6_1Ext,
-                                12, 7>, AddrModeRel;
-  defm LDriw_indexed: LD_Idxd <"memw", "LDriw", IntRegs, s11_2Ext, u6_2Ext,
-                               13, 8>, AddrModeRel;
-  defm LDrid_indexed: LD_Idxd <"memd", "LDrid", DoubleRegs, s11_3Ext, u6_3Ext,
-                               14, 9>, AddrModeRel;
+  let accessSize = ByteAccess in {
+    defm LDrib_indexed: LD_Idxd <"memb", "LDrib", IntRegs, s11_0Ext, u6_0Ext,
+                                  11, 6>, AddrModeRel;
+    defm LDriub_indexed: LD_Idxd <"memub" , "LDriub", IntRegs, s11_0Ext, u6_0Ext,
+                                   11, 6>, AddrModeRel;
+  }
+  let accessSize = HalfWordAccess in {
+    defm LDrih_indexed: LD_Idxd <"memh", "LDrih", IntRegs, s11_1Ext, u6_1Ext,
+                                 12, 7>, AddrModeRel;
+    defm LDriuh_indexed: LD_Idxd <"memuh", "LDriuh", IntRegs, s11_1Ext, u6_1Ext,
+                                  12, 7>, AddrModeRel;
+  }
+  let accessSize = WordAccess in
+    defm LDriw_indexed: LD_Idxd <"memw", "LDriw", IntRegs, s11_2Ext, u6_2Ext,
+                                 13, 8>, AddrModeRel;
+
+  let accessSize = DoubleWordAccess in
+    defm LDrid_indexed: LD_Idxd <"memd", "LDrid", DoubleRegs, s11_3Ext, u6_3Ext,
+                                 14, 9>, AddrModeRel;
 }
 
 let AddedComplexity = 20 in {
@@ -1036,8 +1052,6 @@ def : Pat < (i64 (load (add IntRegs:$src1, s11_3ExtPred:$offset))),
 
 //===----------------------------------------------------------------------===//
 // Post increment load
-// Make sure that in post increment load, the first operand is always the post
-// increment operand.
 //===----------------------------------------------------------------------===//
 
 multiclass LD_PostInc_Pbase<string mnemonic, RegisterClass RC, Operand ImmOp,
@@ -1079,7 +1093,7 @@ multiclass LD_PostInc<string mnemonic, string BaseOp, RegisterClass RC,
   }
 }
 
-let hasCtrlDep = 1, neverHasSideEffects = 1 in {
+let hasCtrlDep = 1, neverHasSideEffects = 1, addrMode = PostInc in {
   defm POST_LDrib : LD_PostInc<"memb", "LDrib", IntRegs, s4_0Imm>,
                     PredNewRel;
   defm POST_LDriub : LD_PostInc<"memub", "LDriub", IntRegs, s4_0Imm>,
@@ -1382,7 +1396,7 @@ multiclass ST_PostInc_Pbase<string mnemonic, RegisterClass RC, Operand ImmOp,
 multiclass ST_PostInc_Pred<string mnemonic, RegisterClass RC,
                            Operand ImmOp, bit PredNot> {
   let isPredicatedFalse = PredNot in {
-    defm _c#NAME# : ST_PostInc_Pbase<mnemonic, RC, ImmOp, PredNot, 0>;
+    defm _c#NAME : ST_PostInc_Pbase<mnemonic, RC, ImmOp, PredNot, 0>;
     // Predicate new
     let Predicates = [HasV4T], validSubTargets = HasV4SubT in
     defm _cdn#NAME#_V4 : ST_PostInc_Pbase<mnemonic, RC, ImmOp, PredNot, 1>;
@@ -1397,7 +1411,7 @@ multiclass ST_PostInc<string mnemonic, string BaseOp, RegisterClass RC,
     let isPredicable = 1 in
     def NAME : STInst2PI<(outs IntRegs:$dst),
                 (ins IntRegs:$src1, ImmOp:$offset, RC:$src2),
-                #mnemonic#"($src1++#$offset) = $src2",
+                mnemonic#"($src1++#$offset) = $src2",
                 [],
                 "$src1 = $dst">;
 
@@ -1474,12 +1488,17 @@ multiclass ST_MEMri<string mnemonic, string CextOp, RegisterClass RC,
 }
 
 let addrMode = BaseImmOffset, isMEMri = "true" in {
-  defm STrib: ST_MEMri < "memb", "STrib", IntRegs, 11, 6>, AddrModeRel;
-  defm STrih: ST_MEMri < "memh", "STrih", IntRegs, 12, 7>, AddrModeRel;
-  defm STriw: ST_MEMri < "memw", "STriw", IntRegs, 13, 8>, AddrModeRel;
+  let accessSize = ByteAccess in
+    defm STrib: ST_MEMri < "memb", "STrib", IntRegs, 11, 6>, AddrModeRel;
 
-  let isNVStorable = 0 in
-  defm STrid: ST_MEMri < "memd", "STrid", DoubleRegs, 14, 9>, AddrModeRel;
+  let accessSize = HalfWordAccess in
+    defm STrih: ST_MEMri < "memh", "STrih", IntRegs, 12, 7>, AddrModeRel;
+
+  let accessSize = WordAccess in
+    defm STriw: ST_MEMri < "memw", "STriw", IntRegs, 13, 8>, AddrModeRel;
+
+  let accessSize = DoubleWordAccess, isNVStorable = 0 in
+    defm STrid: ST_MEMri < "memd", "STrid", DoubleRegs, 14, 9>, AddrModeRel;
 }
 
 def : Pat<(truncstorei8 (i32 IntRegs:$src1), ADDRriS11_0:$addr),
@@ -1541,15 +1560,21 @@ multiclass ST_Idxd<string mnemonic, string CextOp, RegisterClass RC,
 }
 
 let addrMode = BaseImmOffset, InputType = "reg" in {
-  defm STrib_indexed: ST_Idxd < "memb", "STrib", IntRegs, s11_0Ext,
-                                u6_0Ext, 11, 6>, AddrModeRel, ImmRegRel;
-  defm STrih_indexed: ST_Idxd < "memh", "STrih", IntRegs, s11_1Ext,
-                                u6_1Ext, 12, 7>, AddrModeRel, ImmRegRel;
-  defm STriw_indexed: ST_Idxd < "memw", "STriw", IntRegs, s11_2Ext,
-                                u6_2Ext, 13, 8>, AddrModeRel, ImmRegRel;
-  let isNVStorable = 0 in
-  defm STrid_indexed: ST_Idxd < "memd", "STrid", DoubleRegs, s11_3Ext,
-                                u6_3Ext, 14, 9>, AddrModeRel;
+  let accessSize = ByteAccess in
+    defm STrib_indexed: ST_Idxd < "memb", "STrib", IntRegs, s11_0Ext,
+                                  u6_0Ext, 11, 6>, AddrModeRel, ImmRegRel;
+
+  let accessSize = HalfWordAccess in
+    defm STrih_indexed: ST_Idxd < "memh", "STrih", IntRegs, s11_1Ext,
+                                  u6_1Ext, 12, 7>, AddrModeRel, ImmRegRel;
+
+  let accessSize = WordAccess in
+    defm STriw_indexed: ST_Idxd < "memw", "STriw", IntRegs, s11_2Ext,
+                                  u6_2Ext, 13, 8>, AddrModeRel, ImmRegRel;
+
+  let accessSize = DoubleWordAccess, isNVStorable = 0 in
+    defm STrid_indexed: ST_Idxd < "memd", "STrid", DoubleRegs, s11_3Ext,
+                                  u6_3Ext, 14, 9>, AddrModeRel;
 }
 
 let AddedComplexity = 10 in {
