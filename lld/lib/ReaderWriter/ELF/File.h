@@ -272,7 +272,6 @@ public:
   /// Undefined symbols, absolute symbols
   bool createSymbolsFromAtomizableSections(llvm::error_code &EC) {
     llvm::object::section_iterator sit(_objFile->begin_sections());
-    llvm::object::section_iterator sie(_objFile->end_sections());
 
     // Increment over all the symbols collecting atoms and symbol names for
     // later use.
