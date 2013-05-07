@@ -1770,7 +1770,7 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
             }
 
             if (str) {
-              PathDiagnosticLocation L(Term, SM, PDB.LC);
+              PathDiagnosticLocation L(TermCond, SM, PDB.LC);
               PathDiagnosticEventPiece *PE =
                 new PathDiagnosticEventPiece(L, str);
               EventCategory[PE] = EC;
