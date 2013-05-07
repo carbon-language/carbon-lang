@@ -749,7 +749,7 @@ static uptr g_tls_size;
 #endif
 
 void InitTlsSize() {
-#ifndef SANITIZER_GO
+#if !defined(SANITIZER_GO) && !SANITIZER_ANDROID
   typedef void (*get_tls_func)(size_t*, size_t*) DL_INTERNAL_FUNCTION;
   get_tls_func get_tls;
   void *get_tls_static_info_ptr = dlsym(RTLD_NEXT, "_dl_get_tls_static_info");
