@@ -1261,23 +1261,32 @@ static void reversePropagateInterestingSymbols(BugReport &R,
 // Functions for determining if a loop was executed 0 times.
 //===----------------------------------------------------------------------===//
 
-/// Return true if the terminator is a loop and the destination is the
-/// false branch.
-static bool isLoopJumpPastBody(const Stmt *Term, const BlockEdge *BE) {
+static bool isLoop(const Stmt *Term) {
   switch (Term->getStmtClass()) {
     case Stmt::ForStmtClass:
     case Stmt::WhileStmtClass:
     case Stmt::ObjCForCollectionStmtClass:
-      break;
+      return true;
     default:
       // Note that we intentionally do not include do..while here.
       return false;
   }
+}
 
-  // Did we take the false branch?
+static bool isJumpToFalseBranch(const BlockEdge *BE) {
   const CFGBlock *Src = BE->getSrc();
   assert(Src->succ_size() == 2);
   return (*(Src->succ_begin()+1) == BE->getDst());
+}
+
+/// Return true if the terminator is a loop and the destination is the
+/// false branch.
+static bool isLoopJumpPastBody(const Stmt *Term, const BlockEdge *BE) {
+  if (!isLoop(Term))
+    return false;
+
+  // Did we take the false branch?
+  return isJumpToFalseBranch(BE);
 }
 
 static bool isContainedByStmt(ParentMap &PM, const Stmt *S, const Stmt *SubS) {
@@ -1557,6 +1566,45 @@ static void addEdgeToPath(PathPieces &path,
   PrevLoc = NewLoc;
 }
 
+enum EventCategorization { EC_None, EC_EnterLoop, EC_LoopingBack };
+
+typedef llvm::DenseMap<const PathDiagnosticEventPiece *,
+                       enum EventCategorization>
+        EventCategoryMap;
+
+
+static void pruneLoopEvents(PathPieces &path, EventCategoryMap &ECM) {
+  for (PathPieces::iterator I = path.begin(), E = path.end(); I != E; ++I) {
+    if (PathDiagnosticCallPiece *call = dyn_cast<PathDiagnosticCallPiece>(*I)) {
+      pruneLoopEvents(call->path, ECM);
+      continue;
+    }
+
+    PathDiagnosticEventPiece *I_event = dyn_cast<PathDiagnosticEventPiece>(*I);
+    if (!I_event || ECM[I_event] != EC_LoopingBack)
+      continue;
+
+    PathPieces::iterator Next = I; ++Next;
+    PathDiagnosticEventPiece *Next_event = 0;
+    for ( ; Next != E ; ++Next) {
+      Next_event = dyn_cast<PathDiagnosticEventPiece>(*Next);
+      if (Next_event)
+        break;
+    }
+
+    if (Next_event) {
+      EventCategorization E = ECM[Next_event];
+      if (E == EC_EnterLoop) {
+        PathDiagnosticLocation L = I_event->getLocation();
+        PathDiagnosticLocation L_next = Next_event->getLocation();
+        if (L == L_next) {
+          path.erase(Next);
+        }
+      }
+    }
+  }
+}
+
 static bool
 GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
                                          PathDiagnosticBuilder &PDB,
@@ -1572,6 +1620,8 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
   // Record the last location for a given visited stack frame.
   llvm::DenseMap<const StackFrameContext *, PathDiagnosticLocation>
     PrevLocMap;
+
+  EventCategoryMap EventCategory;
 
   const ExplodedNode *NextNode = N->getFirstPred();
   while (NextNode) {
@@ -1687,33 +1737,48 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
 
           addEdgeToPath(PD.getActivePath(), PrevLoc, p->getLocation(), LC);
           PD.getActivePath().push_front(p);
+          EventCategory[p] = EC_LoopingBack;
 
           if (CS) {
             addEdgeToPath(PD.getActivePath(), PrevLoc,
                           PathDiagnosticLocation::createEndBrace(CS, SM), LC);
           }
         }
-        
+
         const CFGBlock *BSrc = BE->getSrc();
         ParentMap &PM = PDB.getParentMap();
 
         if (const Stmt *Term = BSrc->getTerminator()) {
           // Are we jumping past the loop body without ever executing the
           // loop (because the condition was false)?
-          if (isLoopJumpPastBody(Term, &*BE) &&
-              !isInLoopBody(PM,
-                            getStmtBeforeCond(PM,
-                                              BSrc->getTerminatorCondition(),
-                                              N),
-                            Term))
-          {
-            PathDiagnosticLocation L(Term, SM, PDB.LC);
-            PathDiagnosticEventPiece *PE =
-              new PathDiagnosticEventPiece(L, "Loop body executed 0 times");
-            PE->setPrunable(true);
-            addEdgeToPath(PD.getActivePath(), PrevLoc,
-                          PE->getLocation(), LC);
-            PD.getActivePath().push_front(PE);
+          if (isLoop(Term)) {
+            const Stmt *TermCond = BSrc->getTerminatorCondition();
+            bool IsInLoopBody =
+              isInLoopBody(PM, getStmtBeforeCond(PM, TermCond, N), Term);
+
+            const char *str = 0;
+            enum EventCategorization EC = EC_None;
+
+            if (isJumpToFalseBranch(&*BE)) {
+              if (!IsInLoopBody) {
+                str = "Loop body executed 0 times";
+              }
+            }
+            else {
+              str = "Entering loop body";
+              EC = EC_EnterLoop;
+            }
+
+            if (str) {
+              PathDiagnosticLocation L(Term, SM, PDB.LC);
+              PathDiagnosticEventPiece *PE =
+                new PathDiagnosticEventPiece(L, str);
+              EventCategory[PE] = EC;
+              PE->setPrunable(true);
+              addEdgeToPath(PD.getActivePath(), PrevLoc,
+                            PE->getLocation(), LC);
+              PD.getActivePath().push_front(PE);
+            }
           }
         }
         break;
@@ -1733,6 +1798,11 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
         updateStackPiecesWithMessage(p, CallStack);
       }
     }
+  }
+
+  if (report->isValid()) {
+    // Prune redundant loop diagnostics.
+    pruneLoopEvents(PD.getMutablePieces(), EventCategory);
   }
 
   return report->isValid();
