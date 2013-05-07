@@ -21,6 +21,7 @@
 #ifdef SCOPLIB_FOUND
 #include "polly/CodeGen/CodeGeneration.h"
 #include "polly/Dependences.h"
+#include "polly/Options.h"
 #include "polly/ScheduleOptimizer.h"
 #include "polly/ScopInfo.h"
 
@@ -29,7 +30,6 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/system_error.h"
 #include "llvm/ADT/OwningPtr.h"
 
@@ -44,7 +44,8 @@ using namespace polly;
 
 static cl::opt<std::string> PlutoFuse("pluto-fuse", cl::desc(""), cl::Hidden,
                                       cl::value_desc("Set fuse mode of Pluto"),
-                                      cl::init("maxfuse"));
+                                      cl::init("maxfuse"),
+                                      cl::cat(PollyCategory));
 
 namespace {
 

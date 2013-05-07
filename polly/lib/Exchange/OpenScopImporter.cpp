@@ -15,10 +15,9 @@
 #include "polly/LinkAllPasses.h"
 
 #include "polly/Dependences.h"
+#include "polly/Options.h"
 #include "polly/ScopInfo.h"
 #include "polly/ScopPass.h"
-
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Assembly/Writer.h"
 
 #ifdef OPENSCOP_FOUND

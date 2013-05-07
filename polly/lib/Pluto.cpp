@@ -17,12 +17,12 @@
 #include "polly/CodeGen/CodeGeneration.h"
 #include "polly/Dependences.h"
 #include "polly/LinkAllPasses.h"
+#include "polly/Options.h"
 #include "polly/ScopInfo.h"
 #include "polly/Support/GICHelper.h"
 
 #define DEBUG_TYPE "polly-opt-pluto"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/CommandLine.h"
 
 #include "pluto/libpluto.h"
 #include "isl/map.h"
@@ -31,7 +31,8 @@ using namespace llvm;
 using namespace polly;
 
 static cl::opt<bool> EnableTiling("polly-pluto-tile", cl::desc("Enable tiling"),
-                                  cl::Hidden, cl::init(false));
+                                  cl::Hidden, cl::init(false),
+                                  cl::cat(PollyCategory));
 
 namespace {
 /// Convert an int into a string.

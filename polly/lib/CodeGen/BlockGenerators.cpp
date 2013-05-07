@@ -16,6 +16,7 @@
 #include "polly/ScopInfo.h"
 #include "polly/CodeGen/CodeGeneration.h"
 #include "polly/CodeGen/BlockGenerators.h"
+#include "polly/Options.h"
 #include "polly/Support/GICHelper.h"
 #include "polly/Support/SCEVValidator.h"
 #include "polly/Support/ScopHelper.h"
@@ -24,7 +25,6 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Support/CommandLine.h"
 
 #include "isl/aff.h"
 #include "isl/set.h"
@@ -35,12 +35,12 @@ using namespace polly;
 static cl::opt<bool>
 Aligned("enable-polly-aligned", cl::desc("Assumed aligned memory accesses."),
         cl::Hidden, cl::value_desc("OpenMP code generation enabled if true"),
-        cl::init(false), cl::ZeroOrMore);
+        cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
 static cl::opt<bool, true>
 SCEVCodegenF("polly-codegen-scev", cl::desc("Use SCEV based code generation."),
              cl::Hidden, cl::location(SCEVCodegen), cl::init(false),
-             cl::ZeroOrMore);
+             cl::ZeroOrMore, cl::cat(PollyCategory));
 
 bool polly::SCEVCodegen;
 

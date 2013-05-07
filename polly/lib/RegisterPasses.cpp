@@ -26,22 +26,24 @@
 #include "polly/CodeGen/Cloog.h"
 #include "polly/CodeGen/CodeGeneration.h"
 #include "polly/Dependences.h"
+#include "polly/Options.h"
 #include "polly/ScopDetection.h"
 #include "polly/ScopInfo.h"
 #include "polly/TempScopInfo.h"
 
 #include "llvm/Analysis/CFGPrinter.h"
 #include "llvm/PassManager.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Vectorize.h"
 
 using namespace llvm;
+cl::OptionCategory PollyCategory("Polly Options",
+                                 "Configure the polly loop optimizer");
 
 static cl::opt<bool>
-PollyEnabled("polly", cl::desc("Enable the default passes of Polly in -O3"),
-             cl::init(false), cl::ZeroOrMore);
+PollyEnabled("polly", cl::desc("Enable the polly optimizer (only at -O3)"),
+             cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
 enum OptimizerChoice {
   OPTIMIZER_NONE,
@@ -66,7 +68,8 @@ static cl::opt<OptimizerChoice> Optimizer(
 #endif
         clEnumValN(OPTIMIZER_ISL, "isl", "The isl scheduling optimizer"),
         clEnumValEnd),
-    cl::Hidden, cl::init(OPTIMIZER_ISL), cl::ZeroOrMore);
+    cl::Hidden, cl::init(OPTIMIZER_ISL), cl::ZeroOrMore,
+    cl::cat(PollyCategory));
 
 enum CodeGenChoice {
 #ifdef CLOOG_FOUND
@@ -90,11 +93,12 @@ static cl::opt<CodeGenChoice> CodeGenerator(
 #endif
         clEnumValN(CODEGEN_ISL, "isl", "isl code generator"),
         clEnumValN(CODEGEN_NONE, "none", "no code generation"), clEnumValEnd),
-    cl::Hidden, cl::init(DefaultCodeGen), cl::ZeroOrMore);
+    cl::Hidden, cl::init(DefaultCodeGen), cl::ZeroOrMore,
+    cl::cat(PollyCategory));
 
 VectorizerChoice polly::PollyVectorizerChoice;
 static cl::opt<polly::VectorizerChoice, true> Vectorizer(
-    "polly-vectorizer", cl::desc("Select the scheduling optimizer"),
+    "polly-vectorizer", cl::desc("Select the vectorization strategy"),
     cl::values(clEnumValN(polly::VECTORIZER_NONE, "none", "No Vectorization"),
                clEnumValN(polly::VECTORIZER_POLLY, "polly",
                           "Polly internal vectorizer"),
@@ -103,44 +107,52 @@ static cl::opt<polly::VectorizerChoice, true> Vectorizer(
                clEnumValN(polly::VECTORIZER_BB, "bb",
                           "The Basic Block vectorizer driven by Polly"),
                clEnumValEnd),
-    cl::Hidden, cl::location(PollyVectorizerChoice),
-    cl::init(polly::VECTORIZER_NONE), cl::ZeroOrMore);
+    cl::location(PollyVectorizerChoice), cl::init(polly::VECTORIZER_NONE),
+    cl::ZeroOrMore, cl::cat(PollyCategory));
 
 static cl::opt<bool>
 ImportJScop("polly-import",
             cl::desc("Export the polyhedral description of the detected Scops"),
-            cl::Hidden, cl::init(false), cl::ZeroOrMore);
+            cl::Hidden, cl::init(false), cl::ZeroOrMore,
+            cl::cat(PollyCategory));
+
 static cl::opt<bool>
 ExportJScop("polly-export",
             cl::desc("Export the polyhedral description of the detected Scops"),
-            cl::Hidden, cl::init(false), cl::ZeroOrMore);
+            cl::Hidden, cl::init(false), cl::ZeroOrMore,
+            cl::cat(PollyCategory));
 
 static cl::opt<bool> DeadCodeElim("polly-run-dce",
                                   cl::desc("Run the dead code elimination"),
-                                  cl::Hidden, cl::init(false), cl::ZeroOrMore);
+                                  cl::Hidden, cl::init(false), cl::ZeroOrMore,
+                                  cl::cat(PollyCategory));
 
 static cl::opt<bool>
 PollyViewer("polly-show", cl::desc("Enable the Polly DOT viewer in -O3"),
             cl::Hidden, cl::value_desc("Run the Polly DOT viewer at -O3"),
-            cl::init(false), cl::ZeroOrMore);
+            cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+
 static cl::opt<bool> PollyOnlyViewer(
     "polly-show-only",
     cl::desc("Enable the Polly DOT viewer in -O3 (no BB content)"), cl::Hidden,
     cl::value_desc("Run the Polly DOT viewer at -O3 (no BB content"),
-    cl::init(false));
+    cl::init(false), cl::cat(PollyCategory));
+
 static cl::opt<bool>
 PollyPrinter("polly-dot", cl::desc("Enable the Polly DOT printer in -O3"),
              cl::Hidden, cl::value_desc("Run the Polly DOT printer at -O3"),
-             cl::init(false));
+             cl::init(false), cl::cat(PollyCategory));
+
 static cl::opt<bool> PollyOnlyPrinter(
     "polly-dot-only",
     cl::desc("Enable the Polly DOT printer in -O3 (no BB content)"), cl::Hidden,
     cl::value_desc("Run the Polly DOT printer at -O3 (no BB content"),
-    cl::init(false));
+    cl::init(false), cl::cat(PollyCategory));
+
 static cl::opt<bool>
 CFGPrinter("polly-view-cfg",
            cl::desc("Show the Polly CFG right after code generation"),
-           cl::Hidden, cl::init(false));
+           cl::Hidden, cl::init(false), cl::cat(PollyCategory));
 
 namespace {
 static void initializePollyPasses(PassRegistry &Registry) {

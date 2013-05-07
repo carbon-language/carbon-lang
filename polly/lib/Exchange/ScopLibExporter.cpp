@@ -15,11 +15,11 @@
 
 #ifdef SCOPLIB_FOUND
 
+#include "polly/Options.h"
 #include "polly/ScopInfo.h"
 #include "polly/ScopPass.h"
 #include "polly/ScopLib.h"
 
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Assembly/Writer.h"
 
 #include "stdio.h"
@@ -34,7 +34,7 @@ static cl::opt<std::string>
 ExportDir("polly-export-scoplib-dir",
           cl::desc("The directory to export the .scoplib files to."),
           cl::Hidden, cl::value_desc("Directory path"), cl::ValueRequired,
-          cl::init("."));
+          cl::init("."), cl::cat(PollyCategory));
 
 class ScopLibExporter : public ScopPass {
   Scop *S;

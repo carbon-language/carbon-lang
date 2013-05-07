@@ -23,12 +23,9 @@
 #include "polly/Dependences.h"
 
 #include "polly/LinkAllPasses.h"
+#include "polly/Options.h"
 #include "polly/ScopInfo.h"
 #include "polly/Support/GICHelper.h"
-
-#define DEBUG_TYPE "polly-dependences"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/CommandLine.h"
 
 #include <isl/aff.h>
 #include <isl/flow.h>
@@ -41,12 +38,12 @@ using namespace llvm;
 static cl::opt<bool>
 LegalityCheckDisabled("disable-polly-legality",
                       cl::desc("Disable polly legality check"), cl::Hidden,
-                      cl::init(false));
+                      cl::init(false), cl::cat(PollyCategory));
 
 static cl::opt<bool>
 ValueDependences("polly-value-dependences",
                  cl::desc("Use value instead of memory based dependences"),
-                 cl::Hidden, cl::init(true));
+                 cl::Hidden, cl::init(true), cl::cat(PollyCategory));
 
 //===----------------------------------------------------------------------===//
 Dependences::Dependences() : ScopPass(ID) { RAW = WAR = WAW = NULL; }

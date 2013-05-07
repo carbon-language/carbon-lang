@@ -16,10 +16,11 @@
 
 #ifdef SCOPLIB_FOUND
 
+#include "polly/Dependences.h"
+#include "polly/Options.h"
 #include "polly/ScopInfo.h"
 #include "polly/ScopLib.h"
-#include "polly/Dependences.h"
-#include "llvm/Support/CommandLine.h"
+
 #include "llvm/Assembly/Writer.h"
 
 #define SCOPLIB_INT_T_IS_MP
@@ -36,12 +37,13 @@ static cl::opt<std::string>
 ImportDir("polly-import-scoplib-dir",
           cl::desc("The directory to import the .scoplib files from."),
           cl::Hidden, cl::value_desc("Directory path"), cl::ValueRequired,
-          cl::init("."));
+          cl::init("."), cl::cat(PollyCategory));
+
 static cl::opt<std::string>
 ImportPostfix("polly-import-scoplib-postfix",
               cl::desc("Postfix to append to the import .scoplib files."),
               cl::Hidden, cl::value_desc("File postfix"), cl::ValueRequired,
-              cl::init(""));
+              cl::init(""), cl::cat(PollyCategory));
 
 struct ScopLibImporter : public RegionPass {
   static char ID;

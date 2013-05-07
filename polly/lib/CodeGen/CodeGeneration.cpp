@@ -26,6 +26,7 @@
 #define DEBUG_TYPE "polly-codegen"
 #include "polly/Dependences.h"
 #include "polly/LinkAllPasses.h"
+#include "polly/Options.h"
 #include "polly/ScopInfo.h"
 #include "polly/TempScopInfo.h"
 #include "polly/CodeGen/CodeGeneration.h"
@@ -41,7 +42,6 @@
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -63,19 +63,19 @@ struct isl_set;
 namespace polly {
 static cl::opt<bool>
 OpenMP("enable-polly-openmp", cl::desc("Generate OpenMP parallel code"),
-       cl::Hidden, cl::value_desc("OpenMP code generation enabled if true"),
-       cl::init(false), cl::ZeroOrMore);
+       cl::value_desc("OpenMP code generation enabled if true"),
+       cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
 #ifdef GPU_CODEGEN
 static cl::opt<bool>
 GPGPU("enable-polly-gpgpu", cl::desc("Generate GPU parallel code"), cl::Hidden,
       cl::value_desc("GPGPU code generation enabled if true"), cl::init(false),
-      cl::ZeroOrMore);
+      cl::ZeroOrMore, cl::cat(PollyCategory));
 
 static cl::opt<std::string>
 GPUTriple("polly-gpgpu-triple",
           cl::desc("Target triple for GPU code generation"), cl::Hidden,
-          cl::init(""));
+          cl::init(""), cl::cat(PollyCategory));
 #endif /* GPU_CODEGEN */
 
 typedef DenseMap<const char *, Value *> CharMapT;

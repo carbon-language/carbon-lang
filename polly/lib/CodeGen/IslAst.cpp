@@ -24,10 +24,10 @@
 
 #include "polly/LinkAllPasses.h"
 #include "polly/Dependences.h"
+#include "polly/Options.h"
 #include "polly/ScopInfo.h"
 
 #define DEBUG_TYPE "polly-ast"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 
 #include "isl/union_map.h"
@@ -42,11 +42,13 @@ using namespace polly;
 
 static cl::opt<bool> UseContext("polly-ast-use-context",
                                 cl::desc("Use context"), cl::Hidden,
-                                cl::init(false), cl::ZeroOrMore);
+                                cl::init(false), cl::ZeroOrMore,
+                                cl::cat(PollyCategory));
 
 static cl::opt<bool> DetectParallel("polly-ast-detect-parallel",
                                     cl::desc("Detect parallelism"), cl::Hidden,
-                                    cl::init(false), cl::ZeroOrMore);
+                                    cl::init(false), cl::ZeroOrMore,
+                                    cl::cat(PollyCategory));
 
 namespace polly {
 class IslAst {
