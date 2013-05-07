@@ -16,7 +16,7 @@ import platform
 
 # LLVM_VERSION: sync with PACKAGE_VERSION in autoconf/configure.ac and CMakeLists.txt
 #               but leave out the 'svn' suffix.
-LLVM_VERSION = '3.3'
+LLVM_VERSION = '3.4'
 
 __all__ = [
     'c_object_p',
