@@ -49,6 +49,11 @@ TEST(SanitizerCommon, mem_is_zero) {
   delete [] x;
 }
 
+struct stat_and_more {
+  struct stat st;
+  unsigned char z;
+};
+
 TEST(SanitizerCommon, FileOps) {
   const char *str1 = "qwerty";
   uptr len1 = internal_strlen(str1);
@@ -86,6 +91,15 @@ TEST(SanitizerCommon, FileOps) {
   EXPECT_EQ(0, internal_lstat(temp_filename, &st2));
   EXPECT_EQ(0, internal_fstat(fd, &st3));
   EXPECT_EQ(fsize, (uptr)st3.st_size);
+
+  // Verify that internal_fstat does not write beyond the end of the supplied
+  // buffer.
+  struct stat_and_more sam;
+  memset(&sam, 0xAB, sizeof(sam));
+  EXPECT_EQ(0, internal_fstat(fd, &sam.st));
+  EXPECT_EQ(0xAB, sam.z);
+  EXPECT_NE(0xAB, sam.st.st_size);
+  EXPECT_NE(0, sam.st.st_size);
 #endif
 
   char buf[64] = {};
@@ -97,3 +111,4 @@ TEST(SanitizerCommon, FileOps) {
   EXPECT_EQ(0, internal_memcmp(buf, str2, len2));
   internal_close(fd);
 }
+

@@ -108,11 +108,34 @@ uptr internal_write(fd_t fd, const void *buf, uptr count) {
   return res;
 }
 
+#if !SANITIZER_LINUX_USES_64BIT_SYSCALLS
+static void stat64_to_stat(struct stat64 *in, struct stat *out) {
+  internal_memset(out, 0, sizeof(*out));
+  out->st_dev = in->st_dev;
+  out->st_ino = in->st_ino;
+  out->st_mode = in->st_mode;
+  out->st_nlink = in->st_nlink;
+  out->st_uid = in->st_uid;
+  out->st_gid = in->st_gid;
+  out->st_rdev = in->st_rdev;
+  out->st_size = in->st_size;
+  out->st_blksize = in->st_blksize;
+  out->st_blocks = in->st_blocks;
+  out->st_atime = in->st_atime;
+  out->st_mtime = in->st_mtime;
+  out->st_ctime = in->st_ctime;
+  out->st_ino = in->st_ino;
+}
+#endif
+
 int internal_stat(const char *path, void *buf) {
 #if SANITIZER_LINUX_USES_64BIT_SYSCALLS
   return syscall(__NR_stat, path, buf);
 #else
-  return syscall(__NR_stat64, path, buf);
+  struct stat64 buf64;
+  int res = syscall(__NR_stat64, path, &buf64);
+  stat64_to_stat(&buf64, (struct stat *)buf);
+  return res;
 #endif
 }
 
@@ -120,7 +143,10 @@ int internal_lstat(const char *path, void *buf) {
 #if SANITIZER_LINUX_USES_64BIT_SYSCALLS
   return syscall(__NR_lstat, path, buf);
 #else
-  return syscall(__NR_lstat64, path, buf);
+  struct stat64 buf64;
+  int res = syscall(__NR_lstat64, path, &buf64);
+  stat64_to_stat(&buf64, (struct stat *)buf);
+  return res;
 #endif
 }
 
@@ -128,16 +154,15 @@ int internal_fstat(fd_t fd, void *buf) {
 #if SANITIZER_LINUX_USES_64BIT_SYSCALLS
   return syscall(__NR_fstat, fd, buf);
 #else
-  return syscall(__NR_fstat64, fd, buf);
+  struct stat64 buf64;
+  int res = syscall(__NR_fstat64, fd, &buf64);
+  stat64_to_stat(&buf64, (struct stat *)buf);
+  return res;
 #endif
 }
 
 uptr internal_filesize(fd_t fd) {
-#if SANITIZER_LINUX_USES_64BIT_SYSCALLS
   struct stat st;
-#else
-  struct stat64 st;
-#endif
   if (internal_fstat(fd, &st))
     return -1;
   return (uptr)st.st_size;
@@ -166,15 +191,9 @@ void internal__exit(int exitcode) {
 
 // ----------------- sanitizer_common.h
 bool FileExists(const char *filename) {
-#if SANITIZER_LINUX_USES_64BIT_SYSCALLS
   struct stat st;
-  if (syscall(__NR_stat, filename, &st))
+  if (internal_stat(filename, &st))
     return false;
-#else
-  struct stat64 st;
-  if (syscall(__NR_stat64, filename, &st))
-    return false;
-#endif
   // Sanity check: filename is a regular file.
   return S_ISREG(st.st_mode);
 }
