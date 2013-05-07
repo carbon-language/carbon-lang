@@ -15,6 +15,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Breakpoint/Watchpoint.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Target/Process.h"
@@ -229,6 +230,10 @@ POSIXThread::Notify(const ProcessMessage &message)
         BreakNotify(message);
         break;
 
+    case ProcessMessage::eWatchpointMessage:
+        WatchNotify(message);
+        break;
+
     case ProcessMessage::eCrashMessage:
         CrashNotify(message);
         break;
@@ -237,6 +242,58 @@ POSIXThread::Notify(const ProcessMessage &message)
         ThreadNotify(message);
         break;
     }
+}
+
+bool
+POSIXThread::EnableHardwareWatchpoint(Watchpoint *wp)
+{
+    bool result = false;
+    if (wp)
+    {
+        addr_t wp_addr = wp->GetLoadAddress();
+        size_t wp_size = wp->GetByteSize();
+        bool wp_read = wp->WatchpointRead();
+        bool wp_write = wp->WatchpointWrite();
+        uint32_t wp_hw_index;
+        lldb::RegisterContextSP reg_ctx_sp = GetRegisterContext();
+        if (reg_ctx_sp.get())
+        {
+            wp_hw_index = reg_ctx_sp->SetHardwareWatchpoint(wp_addr, wp_size,
+                                                            wp_read, wp_write);
+            if (wp_hw_index != LLDB_INVALID_INDEX32)
+            {
+                wp->SetHardwareIndex(wp_hw_index);
+                result = true;
+            }
+        }
+    }
+    return result;
+}
+
+bool
+POSIXThread::DisableHardwareWatchpoint(Watchpoint *wp)
+{
+    bool result = false;
+    if (wp)
+    {
+        lldb::RegisterContextSP reg_ctx_sp = GetRegisterContext();
+        if (reg_ctx_sp.get())
+        {
+            result = reg_ctx_sp->ClearHardwareWatchpoint(wp->GetHardwareIndex());
+            if (result == true)
+                wp->SetHardwareIndex(LLDB_INVALID_INDEX32);
+        }
+    }
+    return result;
+}
+
+uint32_t
+POSIXThread::NumSupportedHardwareWatchpoints()
+{
+    lldb::RegisterContextSP reg_ctx_sp = GetRegisterContext();
+    if (reg_ctx_sp.get())
+        return reg_ctx_sp->NumSupportedHardwareWatchpoints();
+    return 0;
 }
 
 void
@@ -260,9 +317,47 @@ POSIXThread::BreakNotify(const ProcessMessage &message)
     lldb::break_id_t bp_id = bp_site->GetID();
     assert(bp_site && bp_site->ValidForThisThread(this));
 
-    
     m_breakpoint = bp_site;
     SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID(*this, bp_id));
+}
+
+void
+POSIXThread::WatchNotify(const ProcessMessage &message)
+{
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
+
+    lldb::addr_t halt_addr = message.GetHWAddress();
+    if (log)
+        log->Printf ("POSIXThread::%s () Hardware Watchpoint Address = 0x%8.8"
+                     PRIx64, __FUNCTION__, halt_addr);
+
+    RegisterContextPOSIX* reg_ctx = GetRegisterContextPOSIX();
+    if (reg_ctx)
+    {
+        uint32_t num_hw_wps = reg_ctx->NumSupportedHardwareWatchpoints();
+        uint32_t wp_idx;
+        for (wp_idx = 0; wp_idx < num_hw_wps; wp_idx++)
+        {
+            if (reg_ctx->IsWatchpointHit(wp_idx))
+            {
+                // Clear the watchpoint hit here
+                reg_ctx->ClearWatchpointHits();
+                break;
+            }
+        }
+
+        if (wp_idx == num_hw_wps)
+            return;
+
+        Target &target = GetProcess()->GetTarget();
+        lldb::addr_t wp_monitor_addr = reg_ctx->GetWatchpointAddress(wp_idx);
+        const WatchpointList &wp_list = target.GetWatchpointList();
+        lldb::WatchpointSP wp_sp = wp_list.FindByAddress(wp_monitor_addr);
+
+        if (wp_sp)
+            SetStopInfo (StopInfo::CreateStopReasonWithWatchpointID(*this,
+                                                                    wp_sp->GetID()));
+    }
 }
 
 void

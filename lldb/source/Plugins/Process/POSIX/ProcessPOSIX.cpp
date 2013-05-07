@@ -14,6 +14,7 @@
 
 // C++ Includes
 // Other libraries and framework includes
+#include "lldb/Breakpoint/Watchpoint.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
@@ -364,6 +365,7 @@ ProcessPOSIX::SendMessage(const ProcessMessage &message)
 
     case ProcessMessage::eTraceMessage:
     case ProcessMessage::eBreakpointMessage:
+    case ProcessMessage::eWatchpointMessage:
         SetPrivateState(eStateStopped);
         break;
 
@@ -544,6 +546,132 @@ Error
 ProcessPOSIX::DisableBreakpointSite(BreakpointSite *bp_site)
 {
     return DisableSoftwareBreakpoint(bp_site);
+}
+
+Error
+ProcessPOSIX::EnableWatchpoint(Watchpoint *wp, bool notify)
+{
+    Error error;
+    if (wp)
+    {
+        user_id_t watchID = wp->GetID();
+        addr_t addr = wp->GetLoadAddress();
+        Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_WATCHPOINTS));
+        if (log)
+            log->Printf ("ProcessPOSIX::EnableWatchpoint(watchID = %" PRIu64 ")",
+                         watchID);
+        if (wp->IsEnabled())
+        {
+            if (log)
+                log->Printf("ProcessPOSIX::EnableWatchpoint(watchID = %" PRIu64
+                            ") addr = 0x%8.8" PRIx64 ": watchpoint already enabled.",
+                            watchID, (uint64_t)addr);
+            return error;
+        }
+
+        bool wp_enabled = true;
+        uint32_t thread_count = m_thread_list.GetSize(false);
+        for (uint32_t i = 0; i < thread_count; ++i)
+        {
+            POSIXThread *thread = static_cast<POSIXThread*>(
+                                  m_thread_list.GetThreadAtIndex(i, false).get());
+            if (thread)
+                wp_enabled &= thread->EnableHardwareWatchpoint(wp);
+            else
+            {
+                wp_enabled = false;
+                break;
+            }
+        }
+        if (wp_enabled)
+        {
+            wp->SetEnabled(true, notify);
+            return error;
+        }
+        else
+        {
+            // Watchpoint enabling failed on at least one
+            // of the threads so roll back all of them
+            DisableWatchpoint(wp, false);
+            error.SetErrorString("Setting hardware watchpoint failed");
+        }
+    }
+    else
+        error.SetErrorString("Watchpoint argument was NULL.");
+    return error;
+}
+
+Error
+ProcessPOSIX::DisableWatchpoint(Watchpoint *wp, bool notify)
+{
+    Error error;
+    if (wp)
+    {
+        user_id_t watchID = wp->GetID();
+        addr_t addr = wp->GetLoadAddress();
+        Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_WATCHPOINTS));
+        if (log)
+            log->Printf("ProcessPOSIX::DisableWatchpoint(watchID = %" PRIu64 ")",
+                        watchID);
+        if (!wp->IsEnabled())
+        {
+            if (log)
+                log->Printf("ProcessPOSIX::DisableWatchpoint(watchID = %" PRIu64
+                            ") addr = 0x%8.8" PRIx64 ": watchpoint already disabled.",
+                            watchID, (uint64_t)addr);
+            // This is needed (for now) to keep watchpoints disabled correctly
+            wp->SetEnabled(false, notify);
+            return error;
+        }
+
+        if (wp->IsHardware())
+        {
+            bool wp_disabled = true;
+            uint32_t thread_count = m_thread_list.GetSize(false);
+            for (uint32_t i = 0; i < thread_count; ++i)
+            {
+                POSIXThread *thread = static_cast<POSIXThread*>(
+                                      m_thread_list.GetThreadAtIndex(i, false).get());
+                if (thread)
+                    wp_disabled &= thread->DisableHardwareWatchpoint(wp);
+                else
+                    wp_disabled = false;
+            }
+            if (wp_disabled)
+            {
+                wp->SetEnabled(false, notify);
+                return error;
+            }
+            else
+                error.SetErrorString("Disabling hardware watchpoint failed");
+        }
+    }
+    else
+        error.SetErrorString("Watchpoint argument was NULL.");
+    return error;
+}
+
+Error
+ProcessPOSIX::GetWatchpointSupportInfo(uint32_t &num)
+{
+    Error error;
+    POSIXThread *thread = static_cast<POSIXThread*>(
+                          m_thread_list.GetThreadAtIndex(0, false).get());
+    if (thread)
+        num = thread->NumSupportedHardwareWatchpoints();
+    else
+        error.SetErrorString("Process does not exist.");
+    return error;
+}
+
+Error
+ProcessPOSIX::GetWatchpointSupportInfo(uint32_t &num, bool &after)
+{
+    Error error = GetWatchpointSupportInfo(num);
+    // Watchpoints trigger and halt the inferior after
+    // the corresponding instruction has been executed.
+    after = true;
+    return error;
 }
 
 uint32_t

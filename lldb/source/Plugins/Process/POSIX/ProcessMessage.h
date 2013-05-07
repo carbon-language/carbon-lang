@@ -29,6 +29,7 @@ public:
         eSignalDeliveredMessage,
         eTraceMessage,
         eBreakpointMessage,
+        eWatchpointMessage,
         eCrashMessage,
         eNewThreadMessage
     };
@@ -104,6 +105,10 @@ public:
         return ProcessMessage(tid, eBreakpointMessage);
     }
 
+    static ProcessMessage Watch(lldb::tid_t tid, lldb::addr_t wp_addr) {
+        return ProcessMessage(tid, eWatchpointMessage, 0, wp_addr);
+    }
+
     /// Indicates that the thread @p tid crashed.
     static ProcessMessage Crash(lldb::pid_t pid, CrashReason reason,
                                 int signo, lldb::addr_t fault_addr) {
@@ -140,6 +145,11 @@ public:
 
     lldb::addr_t GetFaultAddress() const {
         assert(GetKind() == eCrashMessage);
+        return m_addr;
+    }
+
+    lldb::addr_t GetHWAddress() const {
+        assert(GetKind() == eWatchpointMessage);
         return m_addr;
     }
 

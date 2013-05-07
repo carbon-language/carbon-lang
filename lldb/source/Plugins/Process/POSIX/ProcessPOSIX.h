@@ -108,6 +108,18 @@ public:
     virtual lldb_private::Error
     DisableBreakpointSite(lldb_private::BreakpointSite *bp_site);
 
+    virtual lldb_private::Error
+    EnableWatchpoint(lldb_private::Watchpoint *wp, bool notify = true);
+
+    virtual lldb_private::Error
+    DisableWatchpoint(lldb_private::Watchpoint *wp, bool notify = true);
+
+    virtual lldb_private::Error
+    GetWatchpointSupportInfo(uint32_t &num);
+
+    virtual lldb_private::Error
+    GetWatchpointSupportInfo(uint32_t &num, bool &after);
+
     virtual uint32_t
     UpdateThreadListIfNeeded();
 

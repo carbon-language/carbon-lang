@@ -69,6 +69,15 @@ public:
 
     void Notify(const ProcessMessage &message);
 
+    //--------------------------------------------------------------------------
+    // These methods provide an interface to watchpoints
+    //
+    bool EnableHardwareWatchpoint(lldb_private::Watchpoint *wp);
+
+    bool DisableHardwareWatchpoint(lldb_private::Watchpoint *wp);
+
+    uint32_t NumSupportedHardwareWatchpoints();
+
 private:
     RegisterContextPOSIX *
     GetRegisterContextPOSIX ()
@@ -92,6 +101,7 @@ private:
     GetPrivateStopReason();
 
     void BreakNotify(const ProcessMessage &message);
+    void WatchNotify(const ProcessMessage &message);
     void TraceNotify(const ProcessMessage &message);
     void LimboNotify(const ProcessMessage &message);
     void SignalNotify(const ProcessMessage &message);

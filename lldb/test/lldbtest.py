@@ -549,6 +549,42 @@ def expectedFailureLinux(bugnumber=None):
               return wrapper
         return expectedFailureLinux_impl
 
+def expectedFailureDarwin(bugnumber=None):
+     if callable(bugnumber):
+        @wraps(bugnumber)
+        def expectedFailureDarwin_easy_wrapper(*args, **kwargs):
+            from unittest2 import case
+            self = args[0]
+            platform = sys.platform
+            try:
+                bugnumber(*args, **kwargs)
+            except Exception:
+                if "darwin" in platform:
+                    raise case._ExpectedFailure(sys.exc_info(),None)
+                else:
+                    raise
+            if "darwin" in platform:
+                raise case._UnexpectedSuccess(sys.exc_info(),None)
+        return expectedFailureDarwin_easy_wrapper
+     else:
+        def expectedFailureDarwin_impl(func):
+              @wraps(func)
+              def wrapper(*args, **kwargs):
+                from unittest2 import case
+                self = args[0]
+                platform = sys.platform
+                try:
+                    func(*args, **kwargs)
+                except Exception:
+                    if "darwin" in platform:
+                        raise case._ExpectedFailure(sys.exc_info(),bugnumber)
+                    else:
+                        raise
+                if "darwin" in platform:
+                    raise case._UnexpectedSuccess(sys.exc_info(),bugnumber)
+              return wrapper
+        return expectedFailureDarwin_impl
+
 def skipOnLinux(func):
     """Decorate the item to skip tests that should be skipped on Linux."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):

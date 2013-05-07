@@ -340,6 +340,11 @@ g_reg_sets[k_num_register_sets] =
       { gcc_dwarf_fpu_##reg##i, gcc_dwarf_fpu_##reg##i,            \
         LLDB_INVALID_REGNUM, gdb_fpu_##reg##i, fpu_##reg##i }, NULL, NULL }
 
+#define DEFINE_DR(reg, i)                                              \
+    { #reg#i, NULL, 0, 0, eEncodingUint, eFormatHex,                   \
+      { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, \
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM }, NULL, NULL }
+
 #define REG_CONTEXT_SIZE (GetGPRSize() + sizeof(RegisterContext_x86_64::FPR))
 
 static RegisterInfo
@@ -439,7 +444,17 @@ g_register_infos[k_num_registers] =
     DEFINE_YMM(ymm, 12),
     DEFINE_YMM(ymm, 13),
     DEFINE_YMM(ymm, 14),
-    DEFINE_YMM(ymm, 15)
+    DEFINE_YMM(ymm, 15),
+
+    // Debug registers for lldb internal use
+    DEFINE_DR(dr, 0),
+    DEFINE_DR(dr, 1),
+    DEFINE_DR(dr, 2),
+    DEFINE_DR(dr, 3),
+    DEFINE_DR(dr, 4),
+    DEFINE_DR(dr, 5),
+    DEFINE_DR(dr, 6),
+    DEFINE_DR(dr, 7)
 };
 
 RegisterInfo *RegisterContext_x86_64::m_register_infos = g_register_infos;
@@ -869,6 +884,27 @@ RegisterContext_x86_64::WriteAllRegisterValues(const DataBufferSP &data_sp)
 }
 
 bool
+RegisterContext_x86_64::ReadRegister(const unsigned reg,
+                                     RegisterValue &value)
+{
+    ProcessMonitor &monitor = GetMonitor();
+    return monitor.ReadRegisterValue(m_thread.GetID(),
+                                     GetRegisterOffset(reg),
+                                     GetRegisterSize(reg),
+                                     value);
+}
+
+bool
+RegisterContext_x86_64::WriteRegister(const unsigned reg,
+                                      const RegisterValue &value)
+{
+    ProcessMonitor &monitor = GetMonitor();
+    return monitor.WriteRegisterValue(m_thread.GetID(),
+                                      GetRegisterOffset(reg),
+                                      value);
+}
+
+bool
 RegisterContext_x86_64::UpdateAfterBreakpoint()
 {
     // PC points one byte past the int3 responsible for the breakpoint.
@@ -1176,6 +1212,183 @@ RegisterContext_x86_64::ConvertRegisterKindToRegisterNumber(uint32_t kind,
     }
 
     return LLDB_INVALID_REGNUM;
+}
+
+uint32_t
+RegisterContext_x86_64::NumSupportedHardwareWatchpoints()
+{
+    // Available debug address registers: dr0, dr1, dr2, dr3
+    return 4;
+}
+
+bool
+RegisterContext_x86_64::IsWatchpointVacant(uint32_t hw_index)
+{
+    bool is_vacant = false;
+    RegisterValue value;
+
+    if (ReadRegister(dr7, value))
+    {
+        uint64_t val = value.GetAsUInt64();
+        is_vacant = (val & (3 << 2*hw_index)) == 0;
+    }
+
+    return is_vacant;
+}
+
+static uint32_t
+size_and_rw_bits(size_t size, bool read, bool write)
+{
+    uint32_t rw;
+    if (read) {
+        rw = 0x3; // READ or READ/WRITE
+    } else if (write) {
+        rw = 0x1; // WRITE
+    } else {
+        assert(0 && "read and write cannot both be false");
+    }
+
+    switch (size) {
+    case 1:
+        return rw;
+    case 2:
+        return (0x1 << 2) | rw;
+    case 4:
+        return (0x3 << 2) | rw;
+    case 8:
+        return (0x2 << 2) | rw;
+    default:
+        assert(0 && "invalid size, must be one of 1, 2, 4, or 8");
+    }
+}
+
+uint32_t
+RegisterContext_x86_64::SetHardwareWatchpoint(addr_t addr, size_t size,
+                                              bool read, bool write)
+{
+    const uint32_t num_hw_watchpoints = NumSupportedHardwareWatchpoints();
+
+    if (num_hw_watchpoints == 0)
+        return LLDB_INVALID_INDEX32;
+
+    if (!(size == 1 || size == 2 || size == 4 || size == 8))
+        return LLDB_INVALID_INDEX32;
+
+    if (read == false && write == false)
+        return LLDB_INVALID_INDEX32;
+
+    uint32_t hw_index = 0;
+    for (hw_index = 0; hw_index < num_hw_watchpoints; ++hw_index)
+    {
+        if (IsWatchpointVacant(hw_index))
+            break;
+    }
+
+    // Set both dr7 (debug control register) and dri (debug address register).
+
+    // dr7{7-0} encodes the local/gloabl enable bits:
+    //  global enable --. .-- local enable
+    //                  | |
+    //                  v v
+    //      dr0 -> bits{1-0}
+    //      dr1 -> bits{3-2}
+    //      dr2 -> bits{5-4}
+    //      dr3 -> bits{7-6}
+    //
+    // dr7{31-16} encodes the rw/len bits:
+    //  b_x+3, b_x+2, b_x+1, b_x
+    //      where bits{x+1, x} => rw
+    //            0b00: execute, 0b01: write, 0b11: read-or-write,
+    //            0b10: io read-or-write (unused)
+    //      and bits{x+3, x+2} => len
+    //            0b00: 1-byte, 0b01: 2-byte, 0b11: 4-byte, 0b10: 8-byte
+    //
+    //      dr0 -> bits{19-16}
+    //      dr1 -> bits{23-20}
+    //      dr2 -> bits{27-24}
+    //      dr3 -> bits{31-28}
+    if (hw_index < num_hw_watchpoints)
+    {
+        RegisterValue current_dr7_bits;
+
+        if (ReadRegister(dr7, current_dr7_bits))
+        {
+            uint64_t new_dr7_bits = current_dr7_bits.GetAsUInt64() |
+                                    (1 << (2*hw_index) |
+                                    size_and_rw_bits(size, read, write) <<
+                                    (16+4*hw_index));
+
+            if (WriteRegister(dr0 + hw_index, RegisterValue(addr)) &&
+                WriteRegister(dr7, RegisterValue(new_dr7_bits)))
+                return hw_index;
+        }
+    }
+
+    return LLDB_INVALID_INDEX32;
+}
+
+bool
+RegisterContext_x86_64::ClearHardwareWatchpoint(uint32_t hw_index)
+{
+    if (hw_index < NumSupportedHardwareWatchpoints())
+    {
+        RegisterValue current_dr7_bits;
+
+        if (ReadRegister(dr7, current_dr7_bits))
+        {
+            uint64_t new_dr7_bits = current_dr7_bits.GetAsUInt64() & ~(3 << (2*hw_index));
+
+            if (WriteRegister(dr7, RegisterValue(new_dr7_bits)))
+                return true;
+        }
+    }
+
+    return false;
+}
+
+bool
+RegisterContext_x86_64::IsWatchpointHit(uint32_t hw_index)
+{
+    bool is_hit = false;
+
+    if (hw_index < NumSupportedHardwareWatchpoints())
+    {
+        RegisterValue value;
+
+        if (ReadRegister(dr6, value))
+        {
+            uint64_t val = value.GetAsUInt64();
+            is_hit = val & (1 << hw_index);
+        }
+    }
+
+    return is_hit;
+}
+
+addr_t
+RegisterContext_x86_64::GetWatchpointAddress(uint32_t hw_index)
+{
+    addr_t wp_monitor_addr = LLDB_INVALID_ADDRESS;
+
+    if (hw_index < NumSupportedHardwareWatchpoints())
+    {
+        if (!IsWatchpointVacant(hw_index))
+        {
+            RegisterValue value;
+
+            if (ReadRegister(dr0 + hw_index, value))
+                wp_monitor_addr = value.GetAsUInt64();
+        }
+    }
+
+    return wp_monitor_addr;
+}
+
+
+bool
+RegisterContext_x86_64::ClearWatchpointHits()
+{
+    return WriteRegister(dr6, RegisterValue((uint64_t)0));
 }
 
 bool

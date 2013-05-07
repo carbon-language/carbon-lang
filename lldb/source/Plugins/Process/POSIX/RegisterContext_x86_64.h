@@ -110,6 +110,15 @@ enum
     fpu_ymm15,
     k_last_avx = fpu_ymm15,
 
+    dr0,
+    dr1,
+    dr2,
+    dr3,
+    dr4,
+    dr5,
+    dr6,
+    dr7,
+
     k_num_registers,
     k_num_gpr_registers = k_last_gpr - k_first_gpr + 1,
     k_num_fpr_registers = k_last_fpr - k_first_fpr + 1,
@@ -175,15 +184,37 @@ public:
     uint32_t
     ConvertRegisterKindToRegisterNumber(uint32_t kind, uint32_t num);
 
+    uint32_t
+    NumSupportedHardwareWatchpoints();
+
+    uint32_t
+    SetHardwareWatchpoint(lldb::addr_t, size_t size, bool read, bool write);
+
+    bool
+    ClearHardwareWatchpoint(uint32_t hw_index);
+
     bool
     HardwareSingleStep(bool enable);
 
     bool
     UpdateAfterBreakpoint();
 
+    bool
+    IsWatchpointVacant(uint32_t hw_index);
+
+    bool
+    IsWatchpointHit (uint32_t hw_index);
+
+    lldb::addr_t
+    GetWatchpointAddress (uint32_t hw_index);
+
+    bool
+    ClearWatchpointHits();
+
     //---------------------------------------------------------------------------
     // Generic floating-point registers
     //---------------------------------------------------------------------------
+
     struct MMSReg
     {
         uint8_t bytes[10];
@@ -279,6 +310,12 @@ protected:
 
     virtual const lldb_private::RegisterInfo *
     GetRegisterInfo();
+
+    virtual bool
+    ReadRegister(const unsigned reg, lldb_private::RegisterValue &value);
+
+    virtual bool
+    WriteRegister(const unsigned reg, const lldb_private::RegisterValue &value);
 
 private:
     static lldb_private::RegisterInfo *m_register_infos;

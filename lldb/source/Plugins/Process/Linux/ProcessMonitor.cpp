@@ -47,6 +47,11 @@
   #define PTRACE_SETREGSET 0x4205
 #endif
 
+// Support hardware breakpoints in case it has not been defined
+#ifndef TRAP_HWBKPT
+  #define TRAP_HWBKPT 4
+#endif
+
 using namespace lldb_private;
 
 // FIXME: this code is host-dependent with respect to types and
@@ -1414,6 +1419,10 @@ ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor,
     case SI_KERNEL:
     case TRAP_BRKPT:
         message = ProcessMessage::Break(pid);
+        break;
+
+    case TRAP_HWBKPT:
+        message = ProcessMessage::Watch(pid, (lldb::addr_t)info->si_addr);
         break;
     }
 

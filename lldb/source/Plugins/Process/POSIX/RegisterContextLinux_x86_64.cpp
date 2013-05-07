@@ -25,6 +25,15 @@ do {                                                                        \
     m_register_infos[gpr_##i386_reg].byte_offset = GPR_OFFSET(reg);         \
 } while(false);
 
+#define DR_OFFSET(reg_index)                                                \
+    (offsetof(UserArea, u_debugreg[reg_index]))
+
+#define UPDATE_DR_INFO(reg_index)                                                \
+do {                                                                             \
+    m_register_infos[dr##reg_index].byte_size = sizeof(UserArea::u_debugreg[0]); \
+    m_register_infos[dr##reg_index].byte_offset = DR_OFFSET(reg_index);          \
+} while(false);
+
 typedef struct _GPR
 {
     uint64_t r15;
@@ -155,5 +164,14 @@ RegisterContextLinux_x86_64::UpdateRegisterInfo()
     UPDATE_I386_GPR_INFO(esp, rsp);
     UPDATE_I386_GPR_INFO(eip, rip);
     UPDATE_I386_GPR_INFO(eflags, rflags);
+
+    UPDATE_DR_INFO(0);
+    UPDATE_DR_INFO(1);
+    UPDATE_DR_INFO(2);
+    UPDATE_DR_INFO(3);
+    UPDATE_DR_INFO(4);
+    UPDATE_DR_INFO(5);
+    UPDATE_DR_INFO(6);
+    UPDATE_DR_INFO(7);
 }
 

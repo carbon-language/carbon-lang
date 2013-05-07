@@ -35,6 +35,20 @@ public:
     /// @return
     ///    True if the operation succeeded and false otherwise.
     virtual bool UpdateAfterBreakpoint() { return true; }
+
+    // Checks to see if a watchpoint specified by hw_index caused the inferior
+    // to stop.
+    virtual bool
+    IsWatchpointHit (uint32_t hw_index) { return false; }
+
+    // Resets any watchpoints that have been hit.
+    virtual bool
+    ClearWatchpointHits () { return false; }
+
+    // Returns the watchpoint address associated with a watchpoint hardware
+    // index.
+    virtual lldb::addr_t
+    GetWatchpointAddress (uint32_t hw_index) {return LLDB_INVALID_ADDRESS; }
 };
 
 #endif // #ifndef liblldb_RegisterContextPOSIX_H_

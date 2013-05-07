@@ -221,6 +221,9 @@ ProcessMessage::PrintKind(Kind kind)
     case eBreakpointMessage:
         str = "eBreakpointMessage";
         break;
+    case eWatchpointMessage:
+        str = "eWatchpointMessage";
+        break;
     case eCrashMessage:
         str = "eCrashMessage";
         break;
