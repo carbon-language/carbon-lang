@@ -1480,20 +1480,16 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
 
   // Emit the compact unwind info if available.
   if (IsEH && MOFI->getCompactUnwindSection()) {
-    unsigned NumFrameInfos = Streamer.getNumFrameInfos();
     bool SectionEmitted = false;
-
-    if (NumFrameInfos) {
-      for (unsigned i = 0; i < NumFrameInfos; ++i) {
-        const MCDwarfFrameInfo &Frame = Streamer.getFrameInfo(i);
-        if (Frame.CompactUnwindEncoding == 0) continue;
-        if (!SectionEmitted) {
-          Streamer.SwitchSection(MOFI->getCompactUnwindSection());
-          Streamer.EmitValueToAlignment(Context.getAsmInfo().getPointerSize());
-          SectionEmitted = true;
-        }
-        Emitter.EmitCompactUnwind(Streamer, Frame);
+    for (unsigned i = 0, n = FrameArray.size(); i < n; ++i) {
+      const MCDwarfFrameInfo &Frame = FrameArray[i];
+      if (Frame.CompactUnwindEncoding == 0) continue;
+      if (!SectionEmitted) {
+        Streamer.SwitchSection(MOFI->getCompactUnwindSection());
+        Streamer.EmitValueToAlignment(Context.getAsmInfo().getPointerSize());
+        SectionEmitted = true;
       }
+      Emitter.EmitCompactUnwind(Streamer, Frame);
     }
   }
 
