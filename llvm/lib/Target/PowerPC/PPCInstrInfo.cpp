@@ -1153,25 +1153,19 @@ bool PPCInstrInfo::optimizeCompareInstr(MachineInstr *CmpInstr,
       MachineInstr *UseMI = &*I;
       if (UseMI->getOpcode() == PPC::BCC) {
         unsigned Pred = UseMI->getOperand(0).getImm();
-        if (Pred == PPC::PRED_EQ || Pred == PPC::PRED_NE)
-          continue;
-
-        return false;
+        if (Pred != PPC::PRED_EQ && Pred != PPC::PRED_NE)
+          return false;
       } else if (UseMI->getOpcode() == PPC::ISEL ||
                  UseMI->getOpcode() == PPC::ISEL8) {
         unsigned SubIdx = UseMI->getOperand(3).getSubReg();
-        if (SubIdx == PPC::sub_eq)
-          continue;
-
-        return false;
+        if (SubIdx != PPC::sub_eq)
+          return false;
       } else
         return false;
     }
   }
 
-  // Get ready to iterate backward from CmpInstr.
-  MachineBasicBlock::iterator I = CmpInstr, E = MI,
-                              B = CmpInstr->getParent()->begin();
+  MachineBasicBlock::iterator I = CmpInstr;
 
   // Scan forward to find the first use of the compare.
   for (MachineBasicBlock::iterator EL = CmpInstr->getParent()->end();
@@ -1187,9 +1181,6 @@ bool PPCInstrInfo::optimizeCompareInstr(MachineInstr *CmpInstr,
     if (FoundUse)
       break;
   }
-
-  // Early exit if we're at the beginning of the BB.
-  if (I == B) return false;
 
   // There are two possible candidates which can be changed to set CR[01].
   // One is MI, the other is a SUB instruction.
@@ -1210,6 +1201,11 @@ bool PPCInstrInfo::optimizeCompareInstr(MachineInstr *CmpInstr,
   // Search for Sub.
   const TargetRegisterInfo *TRI = &getRegisterInfo();
   --I;
+
+  // Get ready to iterate backward from CmpInstr.
+  MachineBasicBlock::iterator E = MI,
+                              B = CmpInstr->getParent()->begin();
+
   for (; I != E && !noSub; --I) {
     const MachineInstr &Instr = *I;
     unsigned IOpC = Instr.getOpcode();
