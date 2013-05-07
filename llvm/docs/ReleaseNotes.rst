@@ -70,6 +70,9 @@ Non-comprehensive list of changes in this release
   examples of the new syntax. The old syntax using register classes still
   works, but it will be removed in a future LLVM release.
 
+* MCJIT now supports exception handling. Support for it in the old jit will be
+  removed in the 3.4 release.
+
 * ... next change ...
 
 .. NOTE
