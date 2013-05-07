@@ -52,6 +52,9 @@ class ThreadLister {
 
 void AdjustStackSizeLinux(void *attr, int verbosity);
 
+// Exposed for testing.
+uptr ThreadDescriptorSize();
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_LINUX_H

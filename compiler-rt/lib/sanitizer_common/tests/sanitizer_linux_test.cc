@@ -18,12 +18,19 @@
 
 #include "sanitizer_common/sanitizer_common.h"
 
+#ifdef __x86_64__
+#include <asm/prctl.h>
+#endif
 #include <pthread.h>
 #include <sched.h>
 #include <stdlib.h>
 
 #include <algorithm>
 #include <vector>
+
+#ifdef __x86_64__
+extern "C" int arch_prctl(int code, __sanitizer::uptr *addr);
+#endif
 
 namespace __sanitizer {
 
@@ -193,6 +200,28 @@ TEST(SanitizerCommon, SetEnvTest) {
   unsetenv(kEnvName);
   EXPECT_EQ(0, getenv(kEnvName));
 }
+
+#ifdef __x86_64__
+// libpthread puts the thread descriptor (%fs:0x0) at the end of stack space.
+void *thread_descriptor_test_func(void *arg) {
+  uptr fs;
+  arch_prctl(ARCH_GET_FS, &fs);
+  pthread_attr_t attr;
+  pthread_getattr_np(pthread_self(), &attr);
+  void *stackaddr;
+  uptr stacksize;
+  pthread_attr_getstack(&attr, &stackaddr, &stacksize);
+  return (void *)((uptr)stackaddr + stacksize - fs);
+}
+
+TEST(SanitizerLinux, ThreadDescriptorSize) {
+  pthread_t tid;
+  void *result;
+  pthread_create(&tid, 0, thread_descriptor_test_func, 0);
+  ASSERT_EQ(0, pthread_join(tid, &result));
+  EXPECT_EQ((uptr)result, ThreadDescriptorSize());
+}
+#endif
 
 }  // namespace __sanitizer
 

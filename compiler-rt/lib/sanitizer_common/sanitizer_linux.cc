@@ -24,6 +24,7 @@
 #include "sanitizer_procmaps.h"
 #include "sanitizer_stacktrace.h"
 
+#include <asm/prctl.h>
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -62,6 +63,8 @@ const int FUTEX_WAKE = 1;
 #else
 # define SANITIZER_LINUX_USES_64BIT_SYSCALLS 0
 #endif
+
+extern "C" int arch_prctl(int code, __sanitizer::uptr *addr);
 
 namespace __sanitizer {
 
@@ -759,6 +762,50 @@ void InitTlsSize() {
 
 uptr GetTlsSize() {
   return g_tls_size;
+}
+
+// sizeof(struct thread) from glibc.
+#ifdef __x86_64__
+const uptr kThreadDescriptorSize = 2304;
+
+uptr ThreadDescriptorSize() {
+  return kThreadDescriptorSize;
+}
+#endif
+
+void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
+                          uptr *tls_addr, uptr *tls_size) {
+#ifndef SANITIZER_GO
+#ifdef __x86_64__
+  arch_prctl(ARCH_GET_FS, tls_addr);
+  *tls_size = GetTlsSize();
+  *tls_addr -= *tls_size;
+  *tls_addr += kThreadDescriptorSize;
+#else
+  *tls_addr = 0;
+  *tls_size = 0;
+#endif
+
+  uptr stack_top, stack_bottom;
+  GetThreadStackTopAndBottom(main, &stack_top, &stack_bottom);
+  *stk_addr = stack_bottom;
+  *stk_size = stack_top - stack_bottom;
+
+  if (!main) {
+    // If stack and tls intersect, make them non-intersecting.
+    if (*tls_addr > *stk_addr && *tls_addr < *stk_addr + *stk_size) {
+      CHECK_GT(*tls_addr + *tls_size, *stk_addr);
+      CHECK_LE(*tls_addr + *tls_size, *stk_addr + *stk_size);
+      *stk_size -= *tls_size;
+      *tls_addr = *stk_addr + *stk_size;
+    }
+  }
+#else  // SANITIZER_GO
+  *stk_addr = 0;
+  *stk_size = 0;
+  *tls_addr = 0;
+  *tls_size = 0;
+#endif  // SANITIZER_GO
 }
 
 void AdjustStackSizeLinux(void *attr_, int verbosity) {

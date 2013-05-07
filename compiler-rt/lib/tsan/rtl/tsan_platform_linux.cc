@@ -23,7 +23,6 @@
 #include "tsan_rtl.h"
 #include "tsan_flags.h"
 
-#include <asm/prctl.h>
 #include <fcntl.h>
 #include <pthread.h>
 #include <signal.h>
@@ -46,7 +45,6 @@
 #include <resolv.h>
 #include <malloc.h>
 
-extern "C" int arch_prctl(int code, __sanitizer::uptr *addr);
 extern "C" struct mallinfo __libc_mallinfo();
 
 namespace __tsan {
@@ -356,35 +354,6 @@ const char *InitializePlatform() {
   InitDataSeg();
 #endif
   return GetEnv(kTsanOptionsEnv);
-}
-
-void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
-                          uptr *tls_addr, uptr *tls_size) {
-#ifndef TSAN_GO
-  arch_prctl(ARCH_GET_FS, tls_addr);
-  *tls_size = GetTlsSize();
-  *tls_addr -= *tls_size;
-
-  uptr stack_top, stack_bottom;
-  GetThreadStackTopAndBottom(main, &stack_top, &stack_bottom);
-  *stk_addr = stack_bottom;
-  *stk_size = stack_top - stack_bottom;
-
-  if (!main) {
-    // If stack and tls intersect, make them non-intersecting.
-    if (*tls_addr > *stk_addr && *tls_addr < *stk_addr + *stk_size) {
-      CHECK_GT(*tls_addr + *tls_size, *stk_addr);
-      CHECK_LE(*tls_addr + *tls_size, *stk_addr + *stk_size);
-      *stk_size -= *tls_size;
-      *tls_addr = *stk_addr + *stk_size;
-    }
-  }
-#else
-  *stk_addr = 0;
-  *stk_size = 0;
-  *tls_addr = 0;
-  *tls_size = 0;
-#endif
 }
 
 bool IsGlobalVar(uptr addr) {
