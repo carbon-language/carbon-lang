@@ -38,8 +38,7 @@ void CodeGenFunction::EmitStopPoint(const Stmt *S) {
       Loc = S->getLocStart();
     DI->EmitLocation(Builder, Loc);
 
-    //if (++NumStopPoints == 1)
-      LastStopPoint = Loc;
+    LastStopPoint = Loc;
   }
 }
 
