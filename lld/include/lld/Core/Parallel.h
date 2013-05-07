@@ -93,7 +93,9 @@ public:
   }
 
   ~ThreadPoolExecutor() {
+    std::unique_lock<std::mutex> lock(_mutex);
     _stop = true;
+    lock.unlock();
     _cond.notify_all();
     // Wait for ~Latch.
   }
@@ -140,14 +142,14 @@ class ConcRTExecutor : public Executor {
     static void run(void *p) {
       Taskish *self = static_cast<Taskish *>(p);
       self->_task();
-      delete self;
+      concurrency::Free(self);
     }
   };
 
 public:
   virtual void add(std::function<void()> func) {
     Concurrency::CurrentScheduler::ScheduleTask(Taskish::run,
-                                                new Taskish(func));
+        new (concurrency::Alloc(sizeof(Taskish))) Taskish(func));
   }
 };
 
