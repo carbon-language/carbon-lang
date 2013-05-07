@@ -1005,7 +1005,7 @@ public:
       return SourceLocation();
     
     unsigned FileOffset = Entry.getOffset();
-    return SourceLocation::getFileLoc(FileOffset + getFileIDSize(FID) - 1);
+    return SourceLocation::getFileLoc(FileOffset + getFileIDSize(FID));
   }
 
   /// \brief Returns the include location if \p FID is a \#include'd file

@@ -464,7 +464,7 @@ bool InclusionRewriter::Process(FileID FileId,
     RawLex.LexFromRawLexer(RawToken);
   }
   OutputContentUpTo(FromFile, NextToWrite,
-    SM.getFileOffset(SM.getLocForEndOfFile(FileId)) + 1, EOL, Line,
+    SM.getFileOffset(SM.getLocForEndOfFile(FileId)), EOL, Line,
     /*EnsureNewline*/true);
   return true;
 }
