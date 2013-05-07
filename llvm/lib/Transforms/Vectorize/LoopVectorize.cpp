@@ -2870,6 +2870,26 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
   return true;
 }
 
+static bool hasMultipleUsesOf(Instruction *I,
+                              SmallPtrSet<Instruction *, 8> &Insts) {
+  unsigned NumUses = 0;
+  for(User::op_iterator Use = I->op_begin(), E = I->op_end(); Use != E; ++Use) {
+    if (Insts.count(dyn_cast<Instruction>(*Use)))
+      ++NumUses;
+    if (NumUses > 1)
+      return true;
+  }
+
+  return false;
+}
+
+static bool areAllUsesIn(Instruction *I, SmallPtrSet<Instruction *, 8> &Set) {
+  for(User::op_iterator Use = I->op_begin(), E = I->op_end(); Use != E; ++Use)
+    if (!Set.count(dyn_cast<Instruction>(*Use)))
+      return false;
+  return true;
+}
+
 bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
                                                 ReductionKind Kind) {
   if (Phi->getNumIncomingValues() != 2)
@@ -2888,116 +2908,144 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
   // This includes users of the reduction, variables (which form a cycle
   // which ends in the phi node).
   Instruction *ExitInstruction = 0;
-  // Indicates that we found a binary operation in our scan.
-  bool FoundBinOp = false;
+  // Indicates that we found a reduction operation in our scan.
+  bool FoundReduxOp = false;
 
-  // Iter is our iterator. We start with the PHI node and scan for all of the
-  // users of this instruction. All users must be instructions that can be
-  // used as reduction variables (such as ADD). We may have a single
-  // out-of-block user. The cycle must end with the original PHI.
-  Instruction *Iter = Phi;
+  // We start with the PHI node and scan for all of the users of this
+  // instruction. All users must be instructions that can be used as reduction
+  // variables (such as ADD). We must have a single out-of-block user. The cycle
+  // must include the original PHI.
+  bool FoundStartPHI = false;
 
   // To recognize min/max patterns formed by a icmp select sequence, we store
   // the number of instruction we saw from the recognized min/max pattern,
-  // such that we don't stop when we see the phi has two uses (one by the select
-  // and one by the icmp) and to make sure we only see exactly the two
-  // instructions.
+  //  to make sure we only see exactly the two instructions.
   unsigned NumCmpSelectPatternInst = 0;
   ReductionInstDesc ReduxDesc(false, 0);
 
-  // Avoid cycles in the chain.
   SmallPtrSet<Instruction *, 8> VisitedInsts;
-  while (VisitedInsts.insert(Iter)) {
-    // If the instruction has no users then this is a broken
-    // chain and can't be a reduction variable.
-    if (Iter->use_empty())
+  SmallVector<Instruction *, 8> Worklist;
+  Worklist.push_back(Phi);
+  VisitedInsts.insert(Phi);
+
+  // A value in the reduction can be used:
+  //  - By the reduction:
+  //      - Reduction operation:
+  //        - One use of reduction value (safe).
+  //        - Multiple use of reduction value (not safe).
+  //      - PHI:
+  //        - All uses of the PHI must be the reduction (safe).
+  //        - Otherwise, not safe.
+  //  - By one instruction outside of the loop (safe).
+  //  - By further instructions outside of the loop (not safe).
+  //  - By an instruction that is not part of the reduction (not safe).
+  //    This is either:
+  //      * An instruction type other than PHI or the reduction operation.
+  //      * A PHI in the header other than the initial PHI.
+  while (!Worklist.empty()) {
+    Instruction *Cur = Worklist.back();
+    Worklist.pop_back();
+
+    // No Users.
+    // If the instruction has no users then this is a broken chain and can't be
+    // a reduction variable.
+    if (Cur->use_empty())
       return false;
 
-    // Did we find a user inside this loop already ?
-    bool FoundInBlockUser = false;
-    // Did we reach the initial PHI node already ?
-    bool FoundStartPHI = false;
+    bool IsAPhi = isa<PHINode>(Cur);
 
-    // Is this a bin op ?
-    FoundBinOp |= !isa<PHINode>(Iter);
+    // A header PHI use other than the original PHI.
+    if (Cur != Phi && IsAPhi && Cur->getParent() == Phi->getParent())
+      return false;
 
-    // For each of the *users* of iter.
-    for (Value::use_iterator it = Iter->use_begin(), e = Iter->use_end();
-         it != e; ++it) {
-      Instruction *U = cast<Instruction>(*it);
-      // We already know that the PHI is a user.
-      if (U == Phi) {
-        FoundStartPHI = true;
-        continue;
-      }
+    // Reductions of instructions such as Div, and Sub is only possible if the
+    // LHS is the reduction variable.
+    if (!Cur->isCommutative() && !IsAPhi && !isa<SelectInst>(Cur) &&
+        !isa<ICmpInst>(Cur) && !isa<FCmpInst>(Cur) &&
+        !VisitedInsts.count(dyn_cast<Instruction>(Cur->getOperand(0))))
+      return false;
+
+    // Any reduction instruction must be of one of the allowed kinds.
+    ReduxDesc = isReductionInstr(Cur, Kind, ReduxDesc);
+    if (!ReduxDesc.IsReduction)
+      return false;
+
+    // A reduction operation must only have one use of the reduction value.
+    if (!IsAPhi && Kind != RK_IntegerMinMax && Kind != RK_FloatMinMax &&
+        hasMultipleUsesOf(Cur, VisitedInsts))
+      return false;
+
+    // All inputs to a PHI node must be a reduction value.
+    if(IsAPhi && Cur != Phi && !areAllUsesIn(Cur, VisitedInsts))
+      return false;
+
+    if (Kind == RK_IntegerMinMax && (isa<ICmpInst>(Cur) ||
+                                     isa<SelectInst>(Cur)))
+      ++NumCmpSelectPatternInst;
+    if (Kind == RK_FloatMinMax && (isa<FCmpInst>(Cur) ||
+                                   isa<SelectInst>(Cur)))
+      ++NumCmpSelectPatternInst;
+
+    // Check  whether we found a reduction operator.
+    FoundReduxOp |= !IsAPhi;
+
+    // Process users of current instruction. Push non PHI nodes after PHI nodes
+    // onto the stack. This way we are going to have seen all inputs to PHI
+    // nodes once we get to them.
+    SmallVector<Instruction *, 8> NonPHIs;
+    SmallVector<Instruction *, 8> PHIs;
+    for (Value::use_iterator UI = Cur->use_begin(), E = Cur->use_end(); UI != E;
+         ++UI) {
+      Instruction *Usr = cast<Instruction>(*UI);
 
       // Check if we found the exit user.
-      BasicBlock *Parent = U->getParent();
+      BasicBlock *Parent = Usr->getParent();
       if (!TheLoop->contains(Parent)) {
         // Exit if you find multiple outside users.
         if (ExitInstruction != 0)
           return false;
-        ExitInstruction = Iter;
+        ExitInstruction = Cur;
+        continue;
       }
 
-      // We allow in-loop PHINodes which are not the original reduction PHI
-      // node. If this PHI is the only user of Iter (happens in IF w/ no ELSE
-      // structure) then don't skip this PHI.
-      if (isa<PHINode>(Iter) && isa<PHINode>(U) &&
-          U->getParent() != TheLoop->getHeader() &&
-          TheLoop->contains(U) &&
-          Iter->hasNUsesOrMore(2))
-        continue;
-
-      // We can't have multiple inside users except for a combination of
-      // icmp/select both using the phi.
-      if (FoundInBlockUser && !NumCmpSelectPatternInst)
-        return false;
-      FoundInBlockUser = true;
-
-      // Any reduction instr must be of one of the allowed kinds.
-      ReduxDesc = isReductionInstr(U, Kind, ReduxDesc);
-      if (!ReduxDesc.IsReduction)
-        return false;
-
-      if (Kind == RK_IntegerMinMax && (isa<ICmpInst>(U) || isa<SelectInst>(U)))
-          ++NumCmpSelectPatternInst;
-      if (Kind == RK_FloatMinMax && (isa<FCmpInst>(U) || isa<SelectInst>(U)))
-          ++NumCmpSelectPatternInst;
-
-      // Reductions of instructions such as Div, and Sub is only
-      // possible if the LHS is the reduction variable.
-      if (!U->isCommutative() && !isa<PHINode>(U) && !isa<SelectInst>(U) &&
-          !isa<ICmpInst>(U) && !isa<FCmpInst>(U) && U->getOperand(0) != Iter)
-        return false;
-
-      Iter = ReduxDesc.PatternLastInst;
+      // Process instructions only once (termination).
+      if (VisitedInsts.insert(Usr)) {
+        if (isa<PHINode>(Usr))
+          PHIs.push_back(Usr);
+        else
+          NonPHIs.push_back(Usr);
+      }
+      // Remember that we completed the cycle.
+      if (Usr == Phi)
+        FoundStartPHI = true;
     }
-
-    // This means we have seen one but not the other instruction of the
-    // pattern or more than just a select and cmp.
-    if ((Kind == RK_IntegerMinMax || Kind == RK_FloatMinMax) &&
-        NumCmpSelectPatternInst != 2)
-      return false;
-
-    // We found a reduction var if we have reached the original
-    // phi node and we only have a single instruction with out-of-loop
-    // users.
-    if (FoundStartPHI) {
-      // This instruction is allowed to have out-of-loop users.
-      AllowedExit.insert(ExitInstruction);
-
-      // Save the description of this reduction variable.
-      ReductionDescriptor RD(RdxStart, ExitInstruction, Kind,
-                             ReduxDesc.MinMaxKind);
-      Reductions[Phi] = RD;
-      // We've ended the cycle. This is a reduction variable if we have an
-      // outside user and it has a binary op.
-      return FoundBinOp && ExitInstruction;
-    }
+    Worklist.append(PHIs.begin(), PHIs.end());
+    Worklist.append(NonPHIs.begin(), NonPHIs.end());
   }
 
-  return false;
+  // This means we have seen one but not the other instruction of the
+  // pattern or more than just a select and cmp.
+  if ((Kind == RK_IntegerMinMax || Kind == RK_FloatMinMax) &&
+      NumCmpSelectPatternInst != 2)
+    return false;
+
+  if (!FoundStartPHI || !FoundReduxOp || !ExitInstruction)
+    return false;
+
+  // We found a reduction var if we have reached the original phi node and we
+  // only have a single instruction with out-of-loop users.
+
+  // This instruction is allowed to have out-of-loop users.
+  AllowedExit.insert(ExitInstruction);
+
+  // Save the description of this reduction variable.
+  ReductionDescriptor RD(RdxStart, ExitInstruction, Kind,
+                         ReduxDesc.MinMaxKind);
+  Reductions[Phi] = RD;
+  // We've ended the cycle. This is a reduction variable if we have an
+  // outside user and it has a binary op.
+
+  return true;
 }
 
 /// Returns true if the instruction is a Select(ICmp(X, Y), X, Y) instruction

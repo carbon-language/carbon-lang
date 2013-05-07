@@ -323,3 +323,122 @@ for.end:                                          ; preds = %for.body, %entry
   %x.0.lcssa = phi i32 [ 0, %entry ], [ %sub, %for.body ]
   ret i32 %x.0.lcssa
 }
+
+; We can vectorize conditional reductions with multi-input phis.
+; CHECK: reduction_conditional
+; CHECK: fadd <4 x float>
+
+define float @reduction_conditional(float* %A, float* %B, float* %C, float %S) {
+entry:
+  br label %for.body
+
+for.body:
+  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.inc ]
+  %sum.033 = phi float [ %S, %entry ], [ %sum.1, %for.inc ]
+  %arrayidx = getelementptr inbounds float* %A, i64 %indvars.iv
+  %0 = load float* %arrayidx, align 4
+  %arrayidx2 = getelementptr inbounds float* %B, i64 %indvars.iv
+  %1 = load float* %arrayidx2, align 4
+  %cmp3 = fcmp ogt float %0, %1
+  br i1 %cmp3, label %if.then, label %for.inc
+
+if.then:
+  %cmp6 = fcmp ogt float %1, 1.000000e+00
+  br i1 %cmp6, label %if.then8, label %if.else
+
+if.then8:
+  %add = fadd fast float %sum.033, %0
+  br label %for.inc
+
+if.else:
+  %cmp14 = fcmp ogt float %0, 2.000000e+00
+  br i1 %cmp14, label %if.then16, label %for.inc
+
+if.then16:
+  %add19 = fadd fast float %sum.033, %1
+  br label %for.inc
+
+for.inc:
+  %sum.1 = phi float [ %add, %if.then8 ], [ %add19, %if.then16 ], [ %sum.033, %if.else ], [ %sum.033, %for.body ]
+  %indvars.iv.next = add i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp ne i32 %lftr.wideiv, 128
+  br i1 %exitcond, label %for.body, label %for.end
+
+for.end:
+  %sum.1.lcssa = phi float [ %sum.1, %for.inc ]
+  ret float %sum.1.lcssa
+}
+
+; We can't vectorize reductions with phi inputs from outside the reduction.
+; CHECK: noreduction_phi
+; CHECK-NOT: fadd <4 x float>
+define float @noreduction_phi(float* %A, float* %B, float* %C, float %S) {
+entry:
+  br label %for.body
+
+for.body:
+  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.inc ]
+  %sum.033 = phi float [ %S, %entry ], [ %sum.1, %for.inc ]
+  %arrayidx = getelementptr inbounds float* %A, i64 %indvars.iv
+  %0 = load float* %arrayidx, align 4
+  %arrayidx2 = getelementptr inbounds float* %B, i64 %indvars.iv
+  %1 = load float* %arrayidx2, align 4
+  %cmp3 = fcmp ogt float %0, %1
+  br i1 %cmp3, label %if.then, label %for.inc
+
+if.then:
+  %cmp6 = fcmp ogt float %1, 1.000000e+00
+  br i1 %cmp6, label %if.then8, label %if.else
+
+if.then8:
+  %add = fadd fast float %sum.033, %0
+  br label %for.inc
+
+if.else:
+  %cmp14 = fcmp ogt float %0, 2.000000e+00
+  br i1 %cmp14, label %if.then16, label %for.inc
+
+if.then16:
+  %add19 = fadd fast float %sum.033, %1
+  br label %for.inc
+
+for.inc:
+  %sum.1 = phi float [ %add, %if.then8 ], [ %add19, %if.then16 ], [ 0.000000e+00, %if.else ], [ %sum.033, %for.body ]
+  %indvars.iv.next = add i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp ne i32 %lftr.wideiv, 128
+  br i1 %exitcond, label %for.body, label %for.end
+
+for.end:
+  %sum.1.lcssa = phi float [ %sum.1, %for.inc ]
+  ret float %sum.1.lcssa
+}
+
+; We can't vectorize reductions that feed another header PHI.
+; CHECK: noredux_header_phi
+; CHECK-NOT: fadd <4 x float>
+
+define float @noredux_header_phi(float* %A, float* %B, float* %C, float %S)  {
+entry:
+  br label %for.body
+
+for.body:
+  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
+  %sum2.09 = phi float [ 0.000000e+00, %entry ], [ %add1, %for.body ]
+  %sum.08 = phi float [ %S, %entry ], [ %add, %for.body ]
+  %arrayidx = getelementptr inbounds float* %B, i64 %indvars.iv
+  %0 = load float* %arrayidx, align 4
+  %add = fadd fast float %sum.08, %0
+  %add1 = fadd fast float %sum2.09, %add
+  %indvars.iv.next = add i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp ne i32 %lftr.wideiv, 128
+  br i1 %exitcond, label %for.body, label %for.end
+
+for.end:
+  %add1.lcssa = phi float [ %add1, %for.body ]
+  %add.lcssa = phi float [ %add, %for.body ]
+  %add2 = fadd fast float %add.lcssa, %add1.lcssa
+  ret float %add2
+}
