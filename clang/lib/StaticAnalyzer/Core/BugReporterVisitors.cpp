@@ -697,10 +697,13 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
   if (P.getAs<CallEnter>() && InitE)
     L = PathDiagnosticLocation(InitE, BRC.getSourceManager(),
                                P.getLocationContext());
-  else
+
+  if (!L.isValid() || !L.asLocation().isValid())
     L = PathDiagnosticLocation::create(P, BRC.getSourceManager());
-  if (!L.isValid())
+
+  if (!L.isValid() || !L.asLocation().isValid())
     return NULL;
+
   return new PathDiagnosticEventPiece(L, os.str());
 }
 
