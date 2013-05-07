@@ -1281,14 +1281,14 @@ ProcessGDBRemote::DoResume ()
 void
 ProcessGDBRemote::ClearThreadIDList ()
 {
-    Mutex::Locker locker(m_thread_list_real.GetMutex());
+    Mutex::Locker locker(m_thread_list.GetMutex());
     m_thread_ids.clear();
 }
 
 bool
 ProcessGDBRemote::UpdateThreadIDList ()
 {
-    Mutex::Locker locker(m_thread_list_real.GetMutex());
+    Mutex::Locker locker(m_thread_list.GetMutex());
     bool sequence_mutex_unavailable = false;
     m_gdb_comm.GetCurrentThreadIDs (m_thread_ids, sequence_mutex_unavailable);
     if (sequence_mutex_unavailable)
@@ -1323,6 +1323,12 @@ ProcessGDBRemote::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new
         {
             tid_t tid = m_thread_ids[i];
             ThreadSP thread_sp (old_thread_list_copy.RemoveThreadByProtocolID(tid, false));
+            if (thread_sp)
+            {
+                ThreadSP backing_thread_sp (thread_sp->GetBackingThread());
+                if (backing_thread_sp && backing_thread_sp->GetProtocolID() == tid)
+                    thread_sp = backing_thread_sp;
+            }
             if (!thread_sp)
                 thread_sp.reset (new ThreadGDBRemote (*this, tid));
             new_thread_list.AddThread(thread_sp);
@@ -1379,6 +1385,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
             std::vector<addr_t> exc_data;
             addr_t thread_dispatch_qaddr = LLDB_INVALID_ADDRESS;
             ThreadSP thread_sp;
+            ThreadSP backing_thread_sp;
             ThreadGDBRemote *gdb_thread = NULL;
 
             while (stop_packet.GetNameColonValue(name, value))
@@ -1397,24 +1404,31 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 {
                     // thread in big endian hex
                     lldb::tid_t tid = Args::StringToUInt64 (value.c_str(), LLDB_INVALID_THREAD_ID, 16);
-                    // m_thread_list_real does have its own mutex, but we need to
-                    // hold onto the mutex between the call to m_thread_list_real.FindThreadByID(...)
-                    // and the m_thread_list_real.AddThread(...) so it doesn't change on us
-                    Mutex::Locker locker (m_thread_list_real.GetMutex ());
-                    thread_sp = m_thread_list_real.FindThreadByProtocolID(tid, false);
+                    // m_thread_list does have its own mutex, but we need to
+                    // hold onto the mutex between the call to m_thread_list.FindThreadByID(...)
+                    // and the m_thread_list.AddThread(...) so it doesn't change on us
+                    Mutex::Locker locker (m_thread_list.GetMutex ());
+                    thread_sp = m_thread_list.FindThreadByProtocolID(tid, false);
 
-                    if (!thread_sp)
+                    if (thread_sp)
+                    {
+                        backing_thread_sp = thread_sp->GetBackingThread();
+                        if (backing_thread_sp)
+                            gdb_thread = static_cast<ThreadGDBRemote *> (backing_thread_sp.get());
+                        else
+                            gdb_thread = static_cast<ThreadGDBRemote *> (thread_sp.get());
+                    }
+                    else
                     {
                         // Create the thread if we need to
                         thread_sp.reset (new ThreadGDBRemote (*this, tid));
-                        m_thread_list_real.AddThread(thread_sp);
+                        gdb_thread = static_cast<ThreadGDBRemote *> (thread_sp.get());
+                        m_thread_list.AddThread(thread_sp);
                     }
-                    gdb_thread = static_cast<ThreadGDBRemote *> (thread_sp.get());
-
                 }
                 else if (name.compare("threads") == 0)
                 {
-                    Mutex::Locker locker(m_thread_list_real.GetMutex());
+                    Mutex::Locker locker(m_thread_list.GetMutex());
                     m_thread_ids.clear();
                     // A comma separated list of all threads in the current
                     // process that includes the thread for this stop reply
@@ -1494,9 +1508,6 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
 
             if (thread_sp)
             {
-                // Clear the stop info just in case we don't set it to anything
-                thread_sp->SetStopInfo (StopInfoSP());
-
                 gdb_thread->SetThreadDispatchQAddr (thread_dispatch_qaddr);
                 gdb_thread->SetName (thread_name.empty() ? NULL : thread_name.c_str());
                 if (exc_type != 0)
@@ -1599,6 +1610,11 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                         if (!handled)
                             thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithSignal (*thread_sp, signo));
                     }
+                    else
+                    {
+                        StopInfoSP invalid_stop_info_sp;
+                        thread_sp->SetStopInfo (invalid_stop_info_sp);
+                    }
                     
                     if (!description.empty())
                     {
@@ -1631,7 +1647,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
 void
 ProcessGDBRemote::RefreshStateAfterStop ()
 {
-    Mutex::Locker locker(m_thread_list_real.GetMutex());
+    Mutex::Locker locker(m_thread_list.GetMutex());
     m_thread_ids.clear();
     // Set the thread stop info. It might have a "threads" key whose value is
     // a list of all thread IDs in the current process, so m_thread_ids might
@@ -1646,7 +1662,7 @@ ProcessGDBRemote::RefreshStateAfterStop ()
 
     // Let all threads recover from stopping and do any clean up based
     // on the previous thread state (if any).
-    m_thread_list_real.RefreshStateAfterStop();
+    m_thread_list.RefreshStateAfterStop();
     
 }
 
@@ -2314,7 +2330,6 @@ void
 ProcessGDBRemote::Clear()
 {
     m_flags = 0;
-    m_thread_list_real.Clear();
     m_thread_list.Clear();
 }
 

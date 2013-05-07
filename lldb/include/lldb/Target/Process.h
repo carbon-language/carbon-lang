@@ -3631,10 +3631,7 @@ protected:
     std::map<uint64_t, uint32_t> m_thread_id_to_index_id_map;
     int                         m_exit_status;          ///< The exit status of the process, or -1 if not set.
     std::string                 m_exit_string;          ///< A textual description of why a process exited.
-    Mutex                       m_thread_mutex;
-    ThreadList                  m_thread_list_real;     ///< The threads for this process as are known to the protocol we are debugging with
-    ThreadList                  m_thread_list;          ///< The threads for this process as the user will see them. This is usually the same as
-                                                        ///< m_thread_list_real, but might be different if there is an OS plug-in creating memory threads
+    ThreadList                  m_thread_list;          ///< The threads for this process.
     std::vector<Notifications>  m_notifications;        ///< The list of notifications that this process can deliver.
     std::vector<lldb::addr_t>   m_image_tokens;
     Listener                    &m_listener;

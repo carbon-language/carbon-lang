@@ -225,6 +225,12 @@ protected:
     bool
     ProcessIDIsValid ( ) const;
     
+    //    static void
+    //    STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_len);
+    
+    //    void
+    //    AppendSTDOUT (const char* s, size_t len);
+    
     void
     Clear ( );
     
@@ -239,7 +245,8 @@ protected:
     };
     
     lldb::ThreadSP
-    GetKernelThread ();
+    GetKernelThread (lldb_private::ThreadList &old_thread_list,
+                     lldb_private::ThreadList &new_thread_list);
 
     //------------------------------------------------------------------
     /// Broadcaster event bits definitions.
@@ -250,7 +257,6 @@ protected:
     std::string m_dyld_plugin_name;
     lldb::addr_t m_kernel_load_addr;
     lldb::CommandObjectSP m_command_sp;
-    lldb::ThreadWP m_kernel_thread_wp;
 
 
     bool

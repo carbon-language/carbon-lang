@@ -44,8 +44,6 @@
 using namespace lldb;
 using namespace lldb_private;
 
-static const lldb::tid_t g_kernel_tid = 1;
-
 const char *
 ProcessKDP::GetPluginNameStatic()
 {
@@ -118,8 +116,7 @@ ProcessKDP::ProcessKDP(Target& target, Listener &listener) :
     m_async_thread (LLDB_INVALID_HOST_THREAD),
     m_dyld_plugin_name (),
     m_kernel_load_addr (LLDB_INVALID_ADDRESS),
-    m_command_sp(),
-    m_kernel_thread_wp()
+    m_command_sp()
 {
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadShouldExit,   "async thread should exit");
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncContinue,           "async thread continue");
@@ -380,8 +377,7 @@ ProcessKDP::DoResume ()
     bool resume = false;
     
     // With KDP there is only one thread we can tell what to do
-    ThreadSP kernel_thread_sp (m_thread_list.FindThreadByProtocolID(g_kernel_tid));
-                            
+    ThreadSP kernel_thread_sp (GetKernelThread(m_thread_list, m_thread_list));
     if (kernel_thread_sp)
     {
         const StateType thread_resume_state = kernel_thread_sp->GetTemporaryResumeState();
@@ -453,17 +449,15 @@ ProcessKDP::DoResume ()
 }
 
 lldb::ThreadSP
-ProcessKDP::GetKernelThread()
+ProcessKDP::GetKernelThread(ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
     // KDP only tells us about one thread/core. Any other threads will usually
     // be the ones that are read from memory by the OS plug-ins.
-    
-    ThreadSP thread_sp (m_kernel_thread_wp.lock());
+    const lldb::tid_t kernel_tid = 1;
+    ThreadSP thread_sp (old_thread_list.FindThreadByID (kernel_tid, false));
     if (!thread_sp)
-    {
-        thread_sp.reset(new ThreadKDP (*this, g_kernel_tid));
-        m_kernel_thread_wp = thread_sp;
-    }
+        thread_sp.reset(new ThreadKDP (*this, kernel_tid));
+    new_thread_list.AddThread(thread_sp);
     return thread_sp;
 }
 
@@ -480,10 +474,7 @@ ProcessKDP::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_threa
     
     // Even though there is a CPU mask, it doesn't mean we can see each CPU
     // indivudually, there is really only one. Lets call this thread 1.
-    ThreadSP thread_sp (old_thread_list.FindThreadByProtocolID(g_kernel_tid, false));
-    if (!thread_sp)
-        thread_sp = GetKernelThread ();
-    new_thread_list.AddThread(thread_sp);
+    GetKernelThread (old_thread_list, new_thread_list);
 
     return new_thread_list.GetSize(false) > 0;
 }
@@ -807,7 +798,7 @@ ProcessKDP::AsyncThread (void *arg)
                             is_running = true;
                             if (process->m_comm.WaitForPacketWithTimeoutMicroSeconds (exc_reply_packet, 1 * USEC_PER_SEC))
                             {
-                                ThreadSP thread_sp (process->GetKernelThread());
+                                ThreadSP thread_sp (process->GetKernelThread(process->GetThreadList(), process->GetThreadList()));
                                 if (thread_sp)
                                 {
                                     lldb::RegisterContextSP reg_ctx_sp (thread_sp->GetRegisterContext());

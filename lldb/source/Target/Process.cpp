@@ -1016,8 +1016,6 @@ Process::Process(Target &target, Listener &listener) :
     m_thread_id_to_index_id_map (),
     m_exit_status (-1),
     m_exit_string (),
-    m_thread_mutex (Mutex::eMutexTypeRecursive),
-    m_thread_list_real (this),
     m_thread_list (this),
     m_notifications (),
     m_image_tokens (),
@@ -1142,7 +1140,6 @@ Process::Finalize()
     m_abi_sp.reset();
     m_os_ap.reset();
     m_dyld_ap.reset();
-    m_thread_list_real.Destroy();
     m_thread_list.Destroy();
     std::vector<Notifications> empty_notifications;
     m_notifications.swap(empty_notifications);
@@ -1540,12 +1537,10 @@ Process::UpdateThreadListIfNeeded ()
             // m_thread_list does have its own mutex, but we need to
             // hold onto the mutex between the call to UpdateThreadList(...)
             // and the os->UpdateThreadList(...) so it doesn't change on us
-            ThreadList &old_thread_list = m_thread_list;
-            ThreadList real_thread_list(this);
             ThreadList new_thread_list(this);
             // Always update the thread list with the protocol specific
             // thread list, but only update if "true" is returned
-            if (UpdateThreadList (m_thread_list_real, real_thread_list))
+            if (UpdateThreadList (m_thread_list, new_thread_list))
             {
                 // Don't call into the OperatingSystem to update the thread list if we are shutting down, since
                 // that may call back into the SBAPI's, requiring the API lock which is already held by whoever is
@@ -1557,23 +1552,16 @@ Process::UpdateThreadListIfNeeded ()
                     {
                         // Clear any old backing threads where memory threads might have been
                         // backed by actual threads from the lldb_private::Process subclass
-                        size_t num_old_threads = old_thread_list.GetSize(false);
+                        size_t num_old_threads = m_thread_list.GetSize(false);
                         for (size_t i=0; i<num_old_threads; ++i)
-                            old_thread_list.GetThreadAtIndex(i, false)->ClearBackingThread();
+                            m_thread_list.GetThreadAtIndex(i, false)->ClearBackingThread();
 
                         // Now let the OperatingSystem plug-in update the thread list
-                        os->UpdateThreadList (old_thread_list,  // Old list full of threads created by OS plug-in
-                                              real_thread_list, // The actual thread list full of threads created by each lldb_private::Process subclass
-                                              new_thread_list); // The new thread list that we will show to the user that gets filled in
+                        os->UpdateThreadList (m_thread_list, new_thread_list);
                     }
-                    else
-                    {
-                        // No OS plug-in, the new thread list is the same as the real thread list
-                        new_thread_list = real_thread_list;
-                    }
+                    m_thread_list.Update (new_thread_list);
+                    m_thread_list.SetStopID (stop_id);
                 }
-                m_thread_list.Update (new_thread_list);
-                m_thread_list.SetStopID (stop_id);
             }
         }
     }

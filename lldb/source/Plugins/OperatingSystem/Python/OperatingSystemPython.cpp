@@ -171,9 +171,7 @@ OperatingSystemPython::GetPluginVersion()
 }
 
 bool
-OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list,
-                                         ThreadList &core_thread_list,
-                                         ThreadList &new_thread_list)
+OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
     if (!m_interpreter || !m_python_object_sp)
         return false;
@@ -196,6 +194,8 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list,
     PythonList threads_list(m_interpreter->OSPlugin_ThreadsInfo(m_python_object_sp));
     if (threads_list)
     {
+        ThreadList core_thread_list(new_thread_list);
+
         uint32_t i;
         const uint32_t num_threads = threads_list.GetSize();
         for (i=0; i<num_threads; ++i)
