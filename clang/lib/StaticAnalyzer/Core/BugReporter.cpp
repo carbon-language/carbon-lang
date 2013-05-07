@@ -1769,6 +1769,11 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
               PD.getActivePath().push_front(PE);
             }
           }
+          else if (isa<BreakStmt>(Term) || isa<ContinueStmt>(Term) ||
+                   isa<GotoStmt>(Term)) {
+            PathDiagnosticLocation L(Term, SM, PDB.LC);
+            addEdgeToPath(PD.getActivePath(), PrevLoc, L, LC);
+          }
         }
         break;
       }
