@@ -121,13 +121,12 @@ public:
 
   ELFFile(const ELFTargetInfo &ti, std::unique_ptr<llvm::MemoryBuffer> MB,
           llvm::error_code &EC)
-      : File(MB->getBufferIdentifier(), kindObject), _elfTargetInfo(ti) {
+      : File(MB->getBufferIdentifier(), kindObject), _elfTargetInfo(ti),
+        _doStringsMerge(false) {
     llvm::OwningPtr<llvm::object::Binary> binaryFile;
     EC = createBinary(MB.release(), binaryFile);
     if (EC)
       return;
-
-    int ordinal = 0;
 
     // Point Obj to correct class and bitwidth ELF object
     _objFile.reset(
@@ -140,13 +139,32 @@ public:
 
     binaryFile.take();
 
-    std::map<const Elf_Shdr *, std::vector<const Elf_Sym *> > sectionSymbols;
+    _doStringsMerge = _elfTargetInfo.mergeCommonStrings();
 
-    // Sections that have merge string property
-    std::vector<const Elf_Shdr *> mergeStringSections;
+    // Read input sections from the input file
+    // that need to be converted to
+    // atoms
+    if (createAtomizableSections(EC))
+      return;
 
-    bool doStringsMerge = _elfTargetInfo.mergeCommonStrings();
+    // For mergeable strings, we would need to split the section
+    // into various atoms
+    if (createMergeableAtoms(EC))
+      return;
 
+    // Create the necessary symbols that are part of the section
+    // that we created in createAtomizableSections function
+    if (createSymbolsFromAtomizableSections(EC))
+      return;
+
+    // Create the appropriate atoms fom the file
+    if (createAtoms(EC))
+      return;
+  }
+
+  /// \brief Read input sections and populate necessary data structures
+  /// to read them later and create atoms
+  bool createAtomizableSections(llvm::error_code &EC) {
     // Handle: SHT_REL and SHT_RELA sections:
     // Increment over the sections, when REL/RELA section types are found add
     // the contents to the RelocationReferences map.
@@ -156,41 +174,26 @@ public:
     uint64_t totalRelocs = 0;
     for (; sit != sie; sit.increment(EC)) {
       if (EC)
-        return;
+        return true;
 
       const Elf_Shdr *section = _objFile->getElfSection(sit);
-      switch (section->sh_type) {
-      case llvm::ELF::SHT_NOTE:
-      case llvm::ELF::SHT_STRTAB:
-      case llvm::ELF::SHT_SYMTAB:
-      case llvm::ELF::SHT_SYMTAB_SHNDX:
-        continue;
-      }
-      if (section->sh_size == 0)
+
+      if (isIgnoredSection(section))
         continue;
 
-      if (doStringsMerge) {
-        int64_t sectionFlags = section->sh_flags;
-        sectionFlags &= ~llvm::ELF::SHF_ALLOC;
-
-        // If the section have mergeable strings, the linker would
-        // need to split the section into multiple atoms and mark them
-        // mergeByContent
-        if ((section->sh_entsize < 2) &&
-           (sectionFlags == (llvm::ELF::SHF_MERGE | llvm::ELF::SHF_STRINGS))) {
-          mergeStringSections.push_back(section);
-          continue;
-        }
+      if (isMergeableSection(section)) {
+        _mergeStringSections.push_back(section);
+        continue;
       }
 
       // Create a sectionSymbols entry for every progbits section.
       if (section->sh_type == llvm::ELF::SHT_PROGBITS)
-        sectionSymbols[section];
+        _sectionSymbols[section];
 
       if (section->sh_type == llvm::ELF::SHT_RELA) {
         StringRef sectionName;
         if ((EC = _objFile->getSectionName(section, sectionName)))
-          return;
+          return true;
         // Get rid of the leading .rela so Atoms can use their own section
         // name to find the relocs.
         sectionName = sectionName.drop_front(5);
@@ -198,14 +201,14 @@ public:
         auto rai(_objFile->beginELFRela(section));
         auto rae(_objFile->endELFRela(section));
 
-        _relocationAddendRefences[sectionName] = make_range(rai, rae);
+        _relocationAddendReferences[sectionName] = make_range(rai, rae);
         totalRelocs += std::distance(rai, rae);
       }
 
       if (section->sh_type == llvm::ELF::SHT_REL) {
         StringRef sectionName;
         if ((EC = _objFile->getSectionName(section, sectionName)))
-          return;
+          return true;
         // Get rid of the leading .rel so Atoms can use their own section
         // name to find the relocs.
         sectionName = sectionName.drop_front(4);
@@ -218,20 +221,26 @@ public:
       }
     }
     _references.reserve(totalRelocs);
+    return false;
+  }
+
+  /// \brief Create mergeable atoms from sections that have the merge attribute
+  /// set
+  bool createMergeableAtoms(llvm::error_code &EC) {
 
     // Divide the section that contains mergeable strings into tokens
     // TODO
     // a) add resolver support to recognize multibyte chars
     // b) Create a seperate section chunk to write mergeable atoms
     std::vector<MergeString *> tokens;
-    for (auto msi : mergeStringSections) {
+    for (auto msi : _mergeStringSections) {
       StringRef sectionContents;
       StringRef sectionName;
       if ((EC = _objFile->getSectionName(msi, sectionName)))
-        return;
+        return true;
 
       if ((EC = _objFile->getSectionContents(msi, sectionContents)))
-        return;
+        return true;
 
       unsigned int prev = 0;
       for (std::size_t i = 0, e = sectionContents.size(); i != e; ++i) {
@@ -255,6 +264,15 @@ public:
       _definedAtoms._atoms.push_back(mergeAtom);
       _mergeAtoms.push_back(mergeAtom);
     }
+    return false;
+  }
+
+  /// \brief Add the symbols that the sections contain. The symbols will be
+  /// converted to atoms for
+  /// Undefined symbols, absolute symbols
+  bool createSymbolsFromAtomizableSections(llvm::error_code &EC) {
+    llvm::object::section_iterator sit(_objFile->begin_sections());
+    llvm::object::section_iterator sie(_objFile->end_sections());
 
     // Increment over all the symbols collecting atoms and symbol names for
     // later use.
@@ -263,17 +281,17 @@ public:
 
     for (; it != ie; it.increment(EC)) {
       if (EC)
-        return;
+        return true;
 
       if ((EC = it->getSection(sit)))
-        return;
+        return true;
 
       const Elf_Shdr *section = _objFile->getElfSection(sit);
       const Elf_Sym *symbol = _objFile->getElfSymbol(it);
 
       StringRef symbolName;
       if ((EC = _objFile->getSymbolName(section, symbol, symbolName)))
-        return;
+        return true;
 
       if (symbol->st_shndx == llvm::ELF::SHN_ABS) {
         // Create an absolute atom.
@@ -292,25 +310,38 @@ public:
       } else {
         // This is actually a defined symbol. Add it to its section's list of
         // symbols.
-        if (symbol->getType() == llvm::ELF::STT_NOTYPE || symbol->getType() ==
-            llvm::ELF::STT_OBJECT || symbol->getType() == llvm::ELF::STT_FUNC ||
+        if (symbol->getType() == llvm::ELF::STT_NOTYPE ||
+            symbol->getType() == llvm::ELF::STT_OBJECT ||
+            symbol->getType() == llvm::ELF::STT_FUNC ||
             symbol->getType() == llvm::ELF::STT_GNU_IFUNC ||
-            symbol->getType() == llvm::ELF::STT_SECTION || symbol->getType() ==
-            llvm::ELF::STT_FILE || symbol->getType() == llvm::ELF::STT_TLS ||
+            symbol->getType() == llvm::ELF::STT_SECTION ||
+            symbol->getType() == llvm::ELF::STT_FILE ||
+            symbol->getType() == llvm::ELF::STT_TLS ||
             symbol->getType() == llvm::ELF::STT_COMMON ||
             symbol->st_shndx == llvm::ELF::SHN_COMMON) {
-          sectionSymbols[section].push_back(symbol);
+          _sectionSymbols[section].push_back(symbol);
         } else {
           llvm::errs() << "Unable to create atom for: " << symbolName << "\n";
           EC = llvm::object::object_error::parse_failed;
-          return;
+          return true;
         }
       }
     }
+    return false;
+  }
 
-    for (auto &i : sectionSymbols) {
+  /// \brief Create individual atoms
+  bool createAtoms(llvm::error_code &EC) {
+
+    int64_t ordinal = 0;
+
+    // Cached value of the targetHandler
+    TargetHandler<ELFT> &targetHandler =
+        _elfTargetInfo.template getTargetHandler<ELFT>();
+
+    for (auto &i : _sectionSymbols) {
       auto &symbols = i.second;
-      // Sort symbols by position.
+        // Sort symbols by position.
       std::stable_sort(symbols.begin(), symbols.end(),
                        [](const Elf_Sym * A, const Elf_Sym * B) {
         return A->st_value < B->st_value;
@@ -318,11 +349,11 @@ public:
 
       StringRef sectionContents;
       if ((EC = _objFile->getSectionContents(i.first, sectionContents)))
-        return;
+        return true;
 
       StringRef sectionName;
       if ((EC = _objFile->getSectionName(i.first, sectionName)))
-        return;
+        return true;
 
       // If the section has no symbols, create a custom atom for it.
       if (i.first->sh_type == llvm::ELF::SHT_PROGBITS && symbols.empty() &&
@@ -355,28 +386,22 @@ public:
         StringRef symbolName = "";
         if ((*si)->getType() != llvm::ELF::STT_SECTION)
           if ((EC = _objFile->getSymbolName(i.first, *si, symbolName)))
-            return;
+            return true;
 
         const Elf_Shdr *section = _objFile->getSection(*si);
 
         bool isCommon = (*si)->getType() == llvm::ELF::STT_COMMON ||
                         (*si)->st_shndx == llvm::ELF::SHN_COMMON;
 
-        if ((section && section->sh_flags & llvm::ELF::SHF_MASKPROC) ||
-            (((*si)->st_shndx >= llvm::ELF::SHN_LOPROC) &&
-             ((*si)->st_shndx <= llvm::ELF::SHN_HIPROC))) {
-          TargetHandler<ELFT> &TargetHandler =
-              _elfTargetInfo.template getTargetHandler<ELFT>();
-          TargetAtomHandler<ELFT> &elfAtomHandler =
-              TargetHandler.targetAtomHandler();
-          int64_t targetSymType = elfAtomHandler.getType(*si);
-
-          if (targetSymType == llvm::ELF::STT_COMMON)
-            isCommon = true;
+        if (isTargetAtom(section, *si)) {
+          TargetAtomHandler<ELFT> &_targetAtomHandler =
+              targetHandler.targetAtomHandler();
+          isCommon =
+              ((_targetAtomHandler.getType(*si)) == llvm::ELF::STT_COMMON);
         }
 
-        // Get the symbol's content:
-        uint64_t contentSize;
+        // Get the symbol's content size
+        uint64_t contentSize = 0;
         if (si + 1 == se) {
           // if this is the last symbol, take up the remaining data.
           contentSize = isCommon ? 0 : i.first->sh_size - (*si)->st_value;
@@ -442,12 +467,7 @@ public:
         // mergeable section, treat them as defined atoms as they shouldnt be
         // merged away as well as these symbols have to be part of symbol
         // resolution
-        int64_t sectionFlags = 0;
-        if (section)
-          sectionFlags = section->sh_flags;
-        sectionFlags &= ~llvm::ELF::SHF_ALLOC;
-        if (doStringsMerge && section && (section->sh_entsize < 2) &&
-            (sectionFlags == (llvm::ELF::SHF_MERGE | llvm::ELF::SHF_STRINGS))) {
+        if (isMergeableSection(section)) {
           if ((*si)->getBinding() == llvm::ELF::STB_GLOBAL) {
             auto definedMergeAtom = new (_readerStorage) ELFDefinedAtom<ELFT>(
                 *this, symbolName, sectionName, (*si), section, symbolData,
@@ -504,45 +524,8 @@ public:
       }
     }
 
-    // All the Atoms and References are created.  Now update each Reference's
-    // target with the Atom pointer it refers to.
-    for (auto &ri : _references) {
-      if (ri->kind() >= lld::Reference::kindTargetLow) {
-        const Elf_Sym *Symbol = _objFile->getElfSymbol(ri->targetSymbolIndex());
-        const Elf_Shdr *shdr = _objFile->getSection(Symbol);
-        int64_t sectionFlags = 0;
-        if (shdr)
-          sectionFlags = shdr->sh_flags;
-        sectionFlags &= ~llvm::ELF::SHF_ALLOC;
-
-        // If the section has mergeable strings, then make the relocation
-        // refer to the MergeAtom to allow deduping
-        if (doStringsMerge && shdr && (shdr->sh_entsize < 2) &&
-            (sectionFlags == (llvm::ELF::SHF_MERGE | llvm::ELF::SHF_STRINGS))) {
-          const TargetRelocationHandler<ELFT> &relHandler = _elfTargetInfo
-              .template getTargetHandler<ELFT>().getRelocationHandler();
-          int64_t relocAddend = relHandler.relocAddend(*ri);
-          uint64_t addend = ri->addend() + relocAddend;
-          const MergeSectionKey ms(shdr, addend);
-          auto msec = _mergedSectionMap.find(ms);
-          if (msec == _mergedSectionMap.end()) {
-            if (Symbol->getType() != llvm::ELF::STT_SECTION)
-              addend = Symbol->st_value + addend;
-            MergeAtomsIter mai = findMergeAtom(shdr, addend);
-            if (mai != _mergeAtoms.end()) {
-              ri->setOffset(addend - ((*mai)->offset()));
-              ri->setAddend(0);
-              ri->setTarget(*mai);
-            } // check
-                else
-              llvm_unreachable("unable to find a merge atom");
-          } // find
-              else
-            ri->setTarget(msec->second);
-        } else
-          ri->setTarget(findAtom(Symbol));
-      }
-    }
+    updateReferences();
+    return false;
   }
 
   virtual const atom_collection<DefinedAtom> &defined() const {
@@ -577,9 +560,9 @@ private:
     // Only relocations that are inside the domain of the atom are added.
 
     // Add Rela (those with r_addend) references:
-    auto rari = _relocationAddendRefences.find(sectionName);
+    auto rari = _relocationAddendReferences.find(sectionName);
     auto rri = _relocationReferences.find(sectionName);
-    if (rari != _relocationAddendRefences.end())
+    if (rari != _relocationAddendReferences.end())
       for (auto &rai : rari->second) {
         if (!((rai.r_offset >= symbol->st_value) &&
               (rai.r_offset < symbol->st_value + content.size())))
@@ -622,6 +605,86 @@ private:
     return ret;
   }
 
+  /// \brief After all the Atoms and References are created, update each
+  /// Reference's target with the Atom pointer it refers to.
+  void updateReferences() {
+
+    /// cached value of target relocation handler
+    const TargetRelocationHandler<ELFT> &_targetRelocationHandler =
+        _elfTargetInfo.template getTargetHandler<ELFT>().getRelocationHandler();
+
+    for (auto &ri : _references) {
+      if (ri->kind() >= lld::Reference::kindTargetLow) {
+        const Elf_Sym *Symbol = _objFile->getElfSymbol(ri->targetSymbolIndex());
+        const Elf_Shdr *shdr = _objFile->getSection(Symbol);
+        if (isMergeableSection(shdr)) {
+          int64_t relocAddend = _targetRelocationHandler.relocAddend(*ri);
+          uint64_t addend = ri->addend() + relocAddend;
+          const MergeSectionKey ms(shdr, addend);
+          auto msec = _mergedSectionMap.find(ms);
+          if (msec == _mergedSectionMap.end()) {
+            if (Symbol->getType() != llvm::ELF::STT_SECTION)
+              addend = Symbol->st_value + addend;
+            MergeAtomsIter mai = findMergeAtom(shdr, addend);
+            if (mai != _mergeAtoms.end()) {
+              ri->setOffset(addend - ((*mai)->offset()));
+              ri->setAddend(0);
+              ri->setTarget(*mai);
+            } // check
+                else
+              llvm_unreachable("unable to find a merge atom");
+          } // find
+              else
+            ri->setTarget(msec->second);
+        } else
+          ri->setTarget(findAtom(Symbol));
+      }
+    }
+  }
+
+  /// \brief Is the atom corresponding to the value of the section and the
+  /// symbol a targetAtom ? If so, let the target determine its contentType
+  inline bool isTargetAtom(const Elf_Shdr *shdr, const Elf_Sym *sym) {
+    if ((shdr && shdr->sh_flags & llvm::ELF::SHF_MASKPROC) ||
+        ((sym->st_shndx >= llvm::ELF::SHN_LOPROC) &&
+         (sym->st_shndx <= llvm::ELF::SHN_HIPROC)))
+      return true;
+    return false;
+  }
+
+  /// \brief Do we want to ignore the section. Ignored sections are
+  /// not processed to create atoms
+  bool isIgnoredSection(const Elf_Shdr *section) {
+    if (section->sh_size == 0)
+      return true;
+    switch (section->sh_type) {
+    case llvm::ELF::SHT_NOTE:
+    case llvm::ELF::SHT_STRTAB:
+    case llvm::ELF::SHT_SYMTAB:
+    case llvm::ELF::SHT_SYMTAB_SHNDX:
+      return true;
+    default:
+      break;
+    }
+    return false;
+  }
+
+  /// \brief Is the current section be treated as a mergeable string section
+  bool isMergeableSection(const Elf_Shdr *section) {
+    if (_doStringsMerge && section) {
+      int64_t sectionFlags = section->sh_flags;
+      sectionFlags &= ~llvm::ELF::SHF_ALLOC;
+      // If the section have mergeable strings, the linker would
+      // need to split the section into multiple atoms and mark them
+      // mergeByContent
+      if ((section->sh_entsize < 2) &&
+          (sectionFlags == (llvm::ELF::SHF_MERGE | llvm::ELF::SHF_STRINGS))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   llvm::BumpPtrAllocator _readerStorage;
   std::unique_ptr<llvm::object::ELFObjectFile<ELFT> > _objFile;
   atom_collection_vector<DefinedAtom> _definedAtoms;
@@ -629,24 +692,37 @@ private:
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
   atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
 
-  /// \brief _relocationAddendRefences and _relocationReferences contain the
+  /// \brief _relocationAddendReferences and _relocationReferences contain the
   /// list of relocations references.  In ELF, if a section named, ".text" has
   /// relocations will also have a section named ".rel.text" or ".rela.text"
   /// which will hold the entries. -- .rel or .rela is prepended to create
   /// the SHT_REL(A) section name.
   std::unordered_map<
       StringRef,
-      range<typename llvm::object::ELFObjectFile<ELFT>::Elf_Rela_Iter>>
-    _relocationAddendRefences;
+      range<typename llvm::object::ELFObjectFile<ELFT>::Elf_Rela_Iter> >
+  _relocationAddendReferences;
   MergedSectionMapT _mergedSectionMap;
   std::unordered_map<
       StringRef,
-      range<typename llvm::object::ELFObjectFile<ELFT>::Elf_Rel_Iter>>
-    _relocationReferences;
+      range<typename llvm::object::ELFObjectFile<ELFT>::Elf_Rel_Iter> >
+  _relocationReferences;
   std::vector<ELFReference<ELFT> *> _references;
   llvm::DenseMap<const Elf_Sym *, Atom *> _symbolToAtomMapping;
   const ELFTargetInfo &_elfTargetInfo;
+
+  /// \brief Atoms that are created for a section that has the merge property
+  /// set
   MergeAtomsT _mergeAtoms;
+
+  /// \brief the section and the symbols that are contained within it to create
+  /// used to create atoms
+  std::map<const Elf_Shdr *, std::vector<const Elf_Sym *> > _sectionSymbols;
+
+  /// \brief Sections that have merge string property
+  std::vector<const Elf_Shdr *> _mergeStringSections;
+
+  /// \brief the cached options relevant while reading the ELF File
+  bool _doStringsMerge : 1;
 };
 } // end namespace elf
 } // end namespace lld
