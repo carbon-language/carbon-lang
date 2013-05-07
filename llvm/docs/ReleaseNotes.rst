@@ -73,6 +73,13 @@ Non-comprehensive list of changes in this release
 * MCJIT now supports exception handling. Support for it in the old jit will be
   removed in the 3.4 release.
 
+* Command line options can now be grouped into categories which are shown in
+  the output of ``-help``. See :ref:`grouping options into categories`.
+
+* The appearance of command line options in ``-help`` that are inherited by
+  linking with libraries that use the LLVM Command line support library can now
+  be modified at runtime. See :ref:`cl::getRegisteredOptions`.
+
 * ... next change ...
 
 .. NOTE
