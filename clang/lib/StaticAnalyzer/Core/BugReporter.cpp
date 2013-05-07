@@ -1848,6 +1848,13 @@ static bool isConditionForTerminator(const Stmt *S, const Stmt *Cond) {
   }
 }
 
+static bool isIncrementInForLoop(const Stmt *S, const Stmt *FL) {
+  const ForStmt *FS = dyn_cast<ForStmt>(FL);
+  if (!FL)
+    return false;
+  return FS->getInc() == S;
+}
+
 typedef llvm::DenseSet<const PathDiagnosticCallPiece *>
         OptimizedCallsSet;
 
@@ -1950,7 +1957,9 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
     // to prevent this optimization.
     //
     if (s1End && s1End == s2Start &&
-        isa<Expr>(s1End) && PM.isConsumedExpr(cast<Expr>(s1End)) &&
+        isa<Expr>(s1End) &&
+        (PM.isConsumedExpr(cast<Expr>(s1End)) ||
+         isIncrementInForLoop(s1End, level2)) &&
         (!level2 || !isConditionForTerminator(level2, s1End))) {
       PieceI->setEndLocation(PieceNextI->getEndLocation());
       path.erase(NextI);
