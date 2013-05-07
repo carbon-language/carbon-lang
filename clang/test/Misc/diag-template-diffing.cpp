@@ -1002,6 +1002,33 @@ namespace VariadicDefault {
   }
 }
 
+namespace PointerArguments {
+  template <int *p> class T {};
+  template <int* ...> class U {};
+  int a, b, c;
+  int z[5];
+  void test() {
+    T<&a> ta;
+    T<z> tz;
+    T<&b> tb(ta);
+    // CHECK-ELIDE-NOTREE: no matching constructor for initialization of 'T<&b>'
+    // CHECK-ELIDE-NOTREE: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'T<&a>' to 'const T<&b>' for 1st argument
+    T<&c> tc(tz);
+    // CHECK-ELIDE-NOTREE: no matching constructor for initialization of 'T<&c>'
+    // CHECK-ELIDE-NOTREE: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'T<z>' to 'const T<&c>' for 1st argument
+
+    U<&a, &a> uaa;
+    U<&b> ub(uaa);
+    // CHECK-ELIDE-NOTREE: no matching constructor for initialization of 'U<&b>'
+    // CHECK-ELIDE-NOTREE: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'U<&a, &a>' to 'const U<&b, (no argument)>' for 1st argument
+
+    U<&b, &b, &b> ubbb(uaa);
+    // CHECK-ELIDE-NOTREE: no matching constructor for initialization of 'U<&b, &b, &b>'
+    // CHECK-ELIDE-NOTREE: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'U<&a, &a, (no argument)>' to 'const U<&b, &b, &b>' for 1st argument
+
+  }
+}
+
 // CHECK-ELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-NOELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-ELIDE-TREE: {{[0-9]*}} errors generated.
