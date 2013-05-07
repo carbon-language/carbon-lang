@@ -29,6 +29,7 @@ namespace llvm {
     bool IsGlobalInSmallSection(const GlobalValue *GV,
                                 const TargetMachine &TM) const;
 
+    bool IsSmallDataEnabled () const;
     const MCSection* SelectSectionForGlobal(const GlobalValue *GV,
                                             SectionKind Kind,
                                             Mangler *Mang,

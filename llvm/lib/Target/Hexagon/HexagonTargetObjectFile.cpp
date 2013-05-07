@@ -25,7 +25,8 @@
 using namespace llvm;
 
 static cl::opt<int> SmallDataThreshold("hexagon-small-data-threshold",
-                                cl::init(8), cl::Hidden);
+                                cl::init(8), cl::Hidden,
+                cl::desc("The maximum size of an object in the sdata section"));
 
 void HexagonTargetObjectFile::Initialize(MCContext &Ctx,
                                          const TargetMachine &TM) {
@@ -46,6 +47,11 @@ void HexagonTargetObjectFile::Initialize(MCContext &Ctx,
 static bool IsInSmallSection(uint64_t Size) {
   return Size > 0 && Size <= (uint64_t)SmallDataThreshold;
 }
+
+bool HexagonTargetObjectFile::IsSmallDataEnabled () const {
+  return SmallDataThreshold > 0;
+}
+
 /// IsGlobalInSmallSection - Return true if this global value should be
 /// placed into small data/bss section.
 bool HexagonTargetObjectFile::IsGlobalInSmallSection(const GlobalValue *GV,
