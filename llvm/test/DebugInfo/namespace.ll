@@ -23,6 +23,8 @@
 ; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F1]])
 ; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x04)
 ; CHECK-NEXT: DW_AT_import{{.*}}=> {[[NS2]]})
+; CHECK: NULL
+; CHECK-NOT: NULL
 
 ; CHECK: DW_TAG_subprogram
 ; CHECK-NEXT: DW_AT_MIPS_linkage_name
@@ -39,6 +41,15 @@
 ; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F2]])
 ; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x0b)
 ; CHECK-NEXT: DW_AT_import{{.*}}=> {[[NS2]]})
+; CHECK: NULL
+; CHECK: NULL
+; CHECK-NOT: NULL
+
+; CHECK: DW_TAG_imported_module
+; Same bug as above, this should be F2, not F1
+; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F1]])
+; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x07)
+; CHECK-NEXT: DW_AT_import{{.*}}=> {[[NS1]]})
 
 ; CHECK: file_names[  [[F1]]]{{.*}}debug-info-namespace.cpp
 ; CHECK: file_names[  [[F2]]]{{.*}}foo.cpp

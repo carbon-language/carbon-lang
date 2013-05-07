@@ -685,6 +685,7 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   CompileUnit *NewCU = new CompileUnit(GlobalCUIndexCount++,
                                        DIUnit.getLanguage(), Die, Asm,
                                        this, &InfoHolder);
+  NewCU->insertDIE(N, Die);
 
   FileIDCUMap[NewCU->getUniqueID()] = 0;
   // Call this to emit a .file directive if it wasn't emitted for the source
