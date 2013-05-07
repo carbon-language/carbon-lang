@@ -1587,25 +1587,81 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
     N = NextNode;
     NextNode = N->getFirstPred();
     ProgramPoint P = N->getLocation();
-    const LocationContext *LC = N->getLocationContext();
-    assert(!LCM[&PD.getActivePath()] || LCM[&PD.getActivePath()] == LC);
-    LCM[&PD.getActivePath()] = LC;
-    PathDiagnosticLocation &PrevLoc = PrevLocMap[LC->getCurrentStackFrame()];
 
     do {
-      if (Optional<PostStmt> PS = P.getAs<PostStmt>()) {
-        // For expressions, make sure we propagate the
-        // interesting symbols correctly.
-        if (const Expr *Ex = PS->getStmtAs<Expr>())
-          reversePropagateIntererstingSymbols(*PDB.getBugReport(), IE,
-                                              N->getState().getPtr(), Ex,
-                                              N->getLocationContext());
+      // Have we encountered an entrance to a call?  It may be
+      // the case that we have not encountered a matching
+      // call exit before this point.  This means that the path
+      // terminated within the call itself.
+      if (Optional<CallEnter> CE = P.getAs<CallEnter>()) {
+        // Add an edge to the start of the function.
+        const StackFrameContext *CalleeLC = CE->getCalleeContext();
+        PathDiagnosticLocation &PrevLocCallee = PrevLocMap[CalleeLC];
+        const Decl *D = CalleeLC->getDecl();
+        addEdgeToPath(PD.getActivePath(), PrevLocCallee,
+                      PathDiagnosticLocation::createBegin(D, SM),
+                      CalleeLC);
 
-        PathDiagnosticLocation L =
-          PathDiagnosticLocation(PS->getStmt(), SM, LC);
-        addEdgeToPath(PD.getActivePath(), PrevLoc, L, LC);
+        // Did we visit an entire call?
+        bool VisitedEntireCall = PD.isWithinCall();
+        PD.popActivePath();
+
+        PathDiagnosticCallPiece *C;
+        if (VisitedEntireCall) {
+          PathDiagnosticPiece *P = PD.getActivePath().front().getPtr();
+          C = cast<PathDiagnosticCallPiece>(P);
+        } else {
+          const Decl *Caller = CE->getLocationContext()->getDecl();
+          C = PathDiagnosticCallPiece::construct(PD.getActivePath(), Caller);
+
+          // Since we just transferred the path over to the call piece,
+          // reset the mapping from active to location context.
+          assert(PD.getActivePath().size() == 1 &&
+                 PD.getActivePath().front() == C);
+          LCM[&PD.getActivePath()] = 0;
+
+          // Record the location context mapping for the path within
+          // the call.
+          assert(LCM[&C->path] == 0 ||
+                 LCM[&C->path] == CE->getCalleeContext());
+          LCM[&C->path] = CE->getCalleeContext();
+
+          // If this is the first item in the active path, record
+          // the new mapping from active path to location context.
+          const LocationContext *&NewLC = LCM[&PD.getActivePath()];
+          if (!NewLC) {
+            NewLC = N->getLocationContext();
+          }
+          PDB.LC = NewLC;
+
+          // Update the previous location in the active path
+          // since we just created the call piece lazily.
+          PrevLocMap[PDB.LC->getCurrentStackFrame()] = C->getLocation();
+        }
+        C->setCallee(*CE, SM);
+
+        if (!CallStack.empty()) {
+          assert(CallStack.back().first == C);
+          CallStack.pop_back();
+        }
         break;
       }
+
+      // Query the location context here and the previous location
+      // as processing CallEnter may change the active path.
+      PDB.LC = N->getLocationContext();
+
+      // Get the previous location for the current active
+      // location context.  All edges will be based on this
+      // location, and it will be updated in place.
+      PathDiagnosticLocation &PrevLoc =
+        PrevLocMap[PDB.LC->getCurrentStackFrame()];
+
+      // Record the mapping from the active path to the location
+      // context.
+      assert(!LCM[&PD.getActivePath()] ||
+             LCM[&PD.getActivePath()] == PDB.LC);
+      LCM[&PD.getActivePath()] = PDB.LC;
 
       // Have we encountered an exit from a function call?
       if (Optional<CallExitEnd> CE = P.getAs<CallExitEnd>()) {
@@ -1626,7 +1682,8 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
         LCM[&C->path] = CE->getCalleeContext();
 
         // Add the edge to the return site.
-        addEdgeToPath(PD.getActivePath(), PrevLoc, C->callReturn, LC);
+        addEdgeToPath(PD.getActivePath(), PrevLoc, C->callReturn, PDB.LC);
+        PD.getActivePath().push_front(C);
 
         // Make the contents of the call the active path for now.
         PD.pushActivePath(&C->path);
@@ -1634,34 +1691,17 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
         break;
       }
 
-      // Have we encountered an entrance to a call?  It may be
-      // the case that we have not encountered a matching
-      // call exit before this point.  This means that the path
-      // terminated within the call itself.
-      if (Optional<CallEnter> CE = P.getAs<CallEnter>()) {
-        // Add an edge to the start of the function.
-        const Decl *D = CE->getCalleeContext()->getDecl();
-        addEdgeToPath(PD.getActivePath(), PrevLoc,
-                      PathDiagnosticLocation::createBegin(D, SM), LC);
+      if (Optional<PostStmt> PS = P.getAs<PostStmt>()) {
+        // For expressions, make sure we propagate the
+        // interesting symbols correctly.
+        if (const Expr *Ex = PS->getStmtAs<Expr>())
+          reversePropagateIntererstingSymbols(*PDB.getBugReport(), IE,
+                                              N->getState().getPtr(), Ex,
+                                              N->getLocationContext());
 
-        // Did we visit an entire call?
-        bool VisitedEntireCall = PD.isWithinCall();
-        PD.popActivePath();
-
-        PathDiagnosticCallPiece *C;
-        if (VisitedEntireCall) {
-          C = cast<PathDiagnosticCallPiece>(PD.getActivePath().front());
-        } else {
-          const Decl *Caller = CE->getLocationContext()->getDecl();
-          C = PathDiagnosticCallPiece::construct(PD.getActivePath(), Caller);
-          LCM[&C->path] = CE->getCalleeContext();
-        }
-        C->setCallee(*CE, SM);
-
-        if (!CallStack.empty()) {
-          assert(CallStack.back().first == C);
-          CallStack.pop_back();
-        }
+        PathDiagnosticLocation L =
+          PathDiagnosticLocation(PS->getStmt(), SM, PDB.LC);
+        addEdgeToPath(PD.getActivePath(), PrevLoc, L, PDB.LC);
         break;
       }
 
@@ -1688,7 +1728,7 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
                                             "of the loop");
           p->setPrunable(true);
 
-          addEdgeToPath(PD.getActivePath(), PrevLoc, p->getLocation(), LC);
+          addEdgeToPath(PD.getActivePath(), PrevLoc, p->getLocation(), PDB.LC);
           PD.getActivePath().push_front(p);
         }
 
@@ -1720,14 +1760,14 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
                 new PathDiagnosticEventPiece(L, str);
               PE->setPrunable(true);
               addEdgeToPath(PD.getActivePath(), PrevLoc,
-                            PE->getLocation(), LC);
+                            PE->getLocation(), PDB.LC);
               PD.getActivePath().push_front(PE);
             }
           }
           else if (isa<BreakStmt>(Term) || isa<ContinueStmt>(Term) ||
                    isa<GotoStmt>(Term)) {
             PathDiagnosticLocation L(Term, SM, PDB.LC);
-            addEdgeToPath(PD.getActivePath(), PrevLoc, L, LC);
+            addEdgeToPath(PD.getActivePath(), PrevLoc, L, PDB.LC);
           }
         }
         break;
@@ -1737,12 +1777,17 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
     if (!NextNode)
       continue;
 
+    // Since the active path may have been updated prior
+    // to this point, query the active location context now.
+    PathDiagnosticLocation &PrevLoc =
+      PrevLocMap[PDB.LC->getCurrentStackFrame()];
+
     // Add pieces from custom visitors.
     for (ArrayRef<BugReporterVisitor *>::iterator I = visitors.begin(),
          E = visitors.end();
          I != E; ++I) {
       if (PathDiagnosticPiece *p = (*I)->VisitNode(N, NextNode, PDB, *report)) {
-        addEdgeToPath(PD.getActivePath(), PrevLoc, p->getLocation(), LC);
+        addEdgeToPath(PD.getActivePath(), PrevLoc, p->getLocation(), PDB.LC);
         PD.getActivePath().push_front(p);
         updateStackPiecesWithMessage(p, CallStack);
       }
