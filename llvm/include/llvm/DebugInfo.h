@@ -125,7 +125,7 @@ namespace llvm {
     bool isTemplateTypeParameter() const;
     bool isTemplateValueParameter() const;
     bool isObjCProperty() const;
-    bool isImportedModule() const;
+    bool isImportedEntity() const;
 
     /// print - print descriptor.
     void print(raw_ostream &OS) const;
@@ -200,7 +200,7 @@ namespace llvm {
     DIArray getRetainedTypes() const;
     DIArray getSubprograms() const;
     DIArray getGlobalVariables() const;
-    DIArray getImportedModules() const;
+    DIArray getImportedEntities() const;
 
     StringRef getSplitDebugFilename() const { return getStringField(12); }
 
@@ -684,13 +684,13 @@ namespace llvm {
   };
 
   /// \brief An imported module (C++ using directive or similar).
-  class DIImportedModule : public DIDescriptor {
+  class DIImportedEntity : public DIDescriptor {
     friend class DIDescriptor;
     void printInternal(raw_ostream &OS) const;
   public:
-    explicit DIImportedModule(const MDNode *N) : DIDescriptor(N) { }
+    explicit DIImportedEntity(const MDNode *N) : DIDescriptor(N) { }
     DIScope getContext() const { return getFieldAs<DIScope>(1); }
-    DINameSpace getNameSpace() const { return getFieldAs<DINameSpace>(2); }
+    DIDescriptor getEntity() const { return getFieldAs<DIDescriptor>(2); }
     unsigned getLineNumber() const { return getUnsignedField(3); }
     bool Verify() const;
   };

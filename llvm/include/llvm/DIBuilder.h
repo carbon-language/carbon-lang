@@ -37,7 +37,7 @@ namespace llvm {
   class DIType;
   class DIArray;
   class DIGlobalVariable;
-  class DIImportedModule;
+  class DIImportedEntity;
   class DINameSpace;
   class DIVariable;
   class DISubrange;
@@ -577,8 +577,17 @@ namespace llvm {
     /// @param Context The scope this module is imported into
     /// @param NS The namespace being imported here
     /// @param Line Line number
-    DIImportedModule createImportedModule(DIScope Context, DINameSpace NS,
+    DIImportedEntity createImportedModule(DIScope Context, DINameSpace NS,
                                           unsigned Line);
+
+    /// \brief Create a descriptor for an imported function.
+    /// @param Context The scope this module is imported into
+    /// @param Decl The declaration (or definition) of a function, type, or
+    ///             variable
+    /// @param Line Line number
+    DIImportedEntity createImportedDeclaration(DIScope Context,
+                                               DIDescriptor Decl,
+                                               unsigned Line);
 
     /// insertDeclare - Insert a new llvm.dbg.declare intrinsic call.
     /// @param Storage     llvm::Value of the variable

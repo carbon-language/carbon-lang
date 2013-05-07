@@ -128,7 +128,7 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
   NMD->addOperand(TheCU);
 }
 
-DIImportedModule DIBuilder::createImportedModule(DIScope Context,
+DIImportedEntity DIBuilder::createImportedModule(DIScope Context,
                                                  DINameSpace NS,
                                                  unsigned Line) {
   Value *Elts[] = {
@@ -137,7 +137,22 @@ DIImportedModule DIBuilder::createImportedModule(DIScope Context,
     NS,
     ConstantInt::get(Type::getInt32Ty(VMContext), Line),
   };
-  DIImportedModule M(MDNode::get(VMContext, Elts));
+  DIImportedEntity M(MDNode::get(VMContext, Elts));
+  assert(M.Verify() && "Imported module should be valid");
+  AllImportedModules.push_back(M);
+  return M;
+}
+
+DIImportedEntity DIBuilder::createImportedDeclaration(DIScope Context,
+                                                      DIDescriptor Decl,
+                                                      unsigned Line) {
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_imported_declaration),
+    Context,
+    Decl,
+    ConstantInt::get(Type::getInt32Ty(VMContext), Line),
+  };
+  DIImportedEntity M(MDNode::get(VMContext, Elts));
   assert(M.Verify() && "Imported module should be valid");
   AllImportedModules.push_back(M);
   return M;

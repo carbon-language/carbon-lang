@@ -65,7 +65,7 @@ bool DIDescriptor::Verify() const {
           DIObjCProperty(DbgNode).Verify() ||
           DITemplateTypeParameter(DbgNode).Verify() ||
           DITemplateValueParameter(DbgNode).Verify() ||
-          DIImportedModule(DbgNode).Verify());
+          DIImportedEntity(DbgNode).Verify());
 }
 
 static Value *getField(const MDNode *DbgNode, unsigned Elt) {
@@ -338,9 +338,11 @@ bool DIDescriptor::isObjCProperty() const {
   return DbgNode && getTag() == dwarf::DW_TAG_APPLE_property;
 }
 
-/// \brief Return true if the specified tag is DW_TAG_imported_module.
-bool DIDescriptor::isImportedModule() const {
-  return DbgNode && getTag() == dwarf::DW_TAG_imported_module;
+/// \brief Return true if the specified tag is DW_TAG_imported_module or
+/// DW_TAG_imported_declaration.
+bool DIDescriptor::isImportedEntity() const {
+  return DbgNode && (getTag() == dwarf::DW_TAG_imported_module ||
+                     getTag() == dwarf::DW_TAG_imported_declaration);
 }
 
 //===----------------------------------------------------------------------===//
@@ -588,8 +590,8 @@ bool DITemplateValueParameter::Verify() const {
 }
 
 /// \brief Verify that the imported module descriptor is well formed.
-bool DIImportedModule::Verify() const {
-  return isImportedModule() && DbgNode->getNumOperands() == 4;
+bool DIImportedEntity::Verify() const {
+  return isImportedEntity() && DbgNode->getNumOperands() == 4;
 }
 
 /// getOriginalTypeSize - If this type is derived from a base type then
@@ -742,7 +744,7 @@ DIArray DICompileUnit::getGlobalVariables() const {
   return DIArray();
 }
 
-DIArray DICompileUnit::getImportedModules() const {
+DIArray DICompileUnit::getImportedEntities() const {
   if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
