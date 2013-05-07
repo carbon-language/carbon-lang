@@ -59,7 +59,6 @@ bool TargetOptions::operator==(const TargetOptions &TO) {
     ARE_EQUAL(HonorSignDependentRoundingFPMathOption) &&
     ARE_EQUAL(UseSoftFloat) &&
     ARE_EQUAL(NoZerosInBSS) &&
-    ARE_EQUAL(JITExceptionHandling) &&
     ARE_EQUAL(JITEmitDebugInfo) &&
     ARE_EQUAL(JITEmitDebugInfoToDisk) &&
     ARE_EQUAL(GuaranteedTailCallOpt) &&

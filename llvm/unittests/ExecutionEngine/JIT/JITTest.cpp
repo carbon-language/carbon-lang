@@ -143,54 +143,6 @@ public:
     deallocateFunctionBodyCalls.push_back(DeallocateFunctionBodyCall(Body));
     Base->deallocateFunctionBody(Body);
   }
-  struct DeallocateExceptionTableCall {
-    DeallocateExceptionTableCall(const void *ET) : ET(ET) {}
-    const void *ET;
-  };
-  std::vector<DeallocateExceptionTableCall> deallocateExceptionTableCalls;
-  virtual void deallocateExceptionTable(void *ET) {
-    deallocateExceptionTableCalls.push_back(DeallocateExceptionTableCall(ET));
-    Base->deallocateExceptionTable(ET);
-  }
-  struct StartExceptionTableCall {
-    StartExceptionTableCall(uint8_t *Result, const Function *F,
-                            uintptr_t ActualSize, uintptr_t ActualSizeResult)
-      : Result(Result), F(F), F_dump(DumpFunction(F)),
-        ActualSize(ActualSize), ActualSizeResult(ActualSizeResult) {}
-    uint8_t *Result;
-    const Function *F;
-    std::string F_dump;
-    uintptr_t ActualSize;
-    uintptr_t ActualSizeResult;
-  };
-  std::vector<StartExceptionTableCall> startExceptionTableCalls;
-  virtual uint8_t *startExceptionTable(const Function *F,
-                                       uintptr_t &ActualSize) {
-    uintptr_t InitialActualSize = ActualSize;
-    uint8_t *Result = Base->startExceptionTable(F, ActualSize);
-    startExceptionTableCalls.push_back(
-      StartExceptionTableCall(Result, F, InitialActualSize, ActualSize));
-    return Result;
-  }
-  struct EndExceptionTableCall {
-    EndExceptionTableCall(const Function *F, uint8_t *TableStart,
-                          uint8_t *TableEnd, uint8_t* FrameRegister)
-      : F(F), F_dump(DumpFunction(F)),
-        TableStart(TableStart), TableEnd(TableEnd),
-        FrameRegister(FrameRegister) {}
-    const Function *F;
-    std::string F_dump;
-    uint8_t *TableStart;
-    uint8_t *TableEnd;
-    uint8_t *FrameRegister;
-  };
-  std::vector<EndExceptionTableCall> endExceptionTableCalls;
-  virtual void endExceptionTable(const Function *F, uint8_t *TableStart,
-                                 uint8_t *TableEnd, uint8_t* FrameRegister) {
-      endExceptionTableCalls.push_back(
-          EndExceptionTableCall(F, TableStart, TableEnd, FrameRegister));
-    return Base->endExceptionTable(F, TableStart, TableEnd, FrameRegister);
-  }
 };
 
 bool LoadAssemblyInto(Module *M, const char *assembly) {
@@ -216,7 +168,6 @@ class JITTest : public testing::Test {
     RJMM->setPoisonMemory(true);
     std::string Error;
     TargetOptions Options;
-    Options.JITExceptionHandling = true;
     TheJIT.reset(EngineBuilder(M).setEngineKind(EngineKind::JIT)
                  .setJITMemoryManager(RJMM)
                  .setErrorStr(&Error)
@@ -300,46 +251,6 @@ TEST(JIT, GlobalInFunction) {
   // F2() should *still* increment G.
   F2Ptr();
   EXPECT_EQ(3, *GPtr);
-}
-
-// Regression test for a bug.  The JITEmitter wasn't checking to verify that
-// it hadn't run out of space while generating the DWARF exception information
-// for an emitted function.
-
-class ExceptionMemoryManagerMock : public RecordingJITMemoryManager {
- public:
-  virtual uint8_t *startExceptionTable(const Function *F,
-                                       uintptr_t &ActualSize) {
-    // force an insufficient size the first time through.
-    bool ChangeActualSize = false;
-    if (ActualSize == 0)
-      ChangeActualSize = true;;
-    uint8_t *result =
-      RecordingJITMemoryManager::startExceptionTable(F, ActualSize);
-    if (ChangeActualSize)
-      ActualSize = 1;
-    return result;
-  }
-};
-
-class JITExceptionMemoryTest : public JITTest {
- protected:
-  virtual RecordingJITMemoryManager *createMemoryManager() {
-    return new ExceptionMemoryManagerMock;
-  }
-};
-
-TEST_F(JITExceptionMemoryTest, ExceptionTableOverflow) {
-  Function *F = Function::Create(TypeBuilder<void(void), false>::get(Context),
-                                 Function::ExternalLinkage,
-                                 "func1", M);
-  BasicBlock *Block = BasicBlock::Create(Context, "block", F);
-  IRBuilder<> Builder(Block);
-  Builder.CreateRetVoid();
-  TheJIT->getPointerToFunction(F);
-  ASSERT_TRUE(RJMM->startExceptionTableCalls.size() == 2);
-  ASSERT_TRUE(RJMM->deallocateExceptionTableCalls.size() == 1);
-  ASSERT_TRUE(RJMM->endExceptionTableCalls.size() == 1);
 }
 
 int PlusOne(int arg) {
@@ -501,27 +412,6 @@ TEST_F(JITTest, ModuleDeletion) {
   }
   EXPECT_EQ(RJMM->startFunctionBodyCalls.size(),
             RJMM->deallocateFunctionBodyCalls.size());
-
-  SmallPtrSet<const void*, 2> ExceptionTablesDeallocated;
-  unsigned NumTablesDeallocated = 0;
-  for (unsigned i = 0, e = RJMM->deallocateExceptionTableCalls.size();
-       i != e; ++i) {
-    ExceptionTablesDeallocated.insert(
-        RJMM->deallocateExceptionTableCalls[i].ET);
-    if (RJMM->deallocateExceptionTableCalls[i].ET != NULL) {
-        // If JITEmitDebugInfo is off, we'll "deallocate" NULL, which doesn't
-        // appear in startExceptionTableCalls.
-        NumTablesDeallocated++;
-    }
-  }
-  for (unsigned i = 0, e = RJMM->startExceptionTableCalls.size(); i != e; ++i) {
-    EXPECT_TRUE(ExceptionTablesDeallocated.count(
-                  RJMM->startExceptionTableCalls[i].Result))
-      << "Function's exception table leaked: \n"
-      << RJMM->startExceptionTableCalls[i].F_dump;
-  }
-  EXPECT_EQ(RJMM->startExceptionTableCalls.size(),
-            NumTablesDeallocated);
 }
 
 // ARM, MIPS and PPC still emit stubs for calls since the target may be

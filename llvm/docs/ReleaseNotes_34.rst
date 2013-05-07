@@ -41,6 +41,9 @@ Non-comprehensive list of changes in this release
    functionality, or simply have a lot to talk about), see the `NOTE` below
    for adding a new subsection.
 
+* Support for exception handling has been removed from the old JIT. Use MCJIT
+  if you need EH support.
+
 * ... next change ...
 
 .. NOTE

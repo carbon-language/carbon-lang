@@ -98,17 +98,6 @@ uint8_t *RecordingMemoryManager::allocateGlobal(uintptr_t Size, unsigned Alignme
 void RecordingMemoryManager::deallocateFunctionBody(void *Body) {
   llvm_unreachable("Unexpected!");
 }
-uint8_t* RecordingMemoryManager::startExceptionTable(const Function* F, uintptr_t &ActualSize) {
-  llvm_unreachable("Unexpected!");
-  return 0;
-}
-void RecordingMemoryManager::endExceptionTable(const Function *F, uint8_t *TableStart,
-                                               uint8_t *TableEnd, uint8_t* FrameRegister) {
-  llvm_unreachable("Unexpected!");
-}
-void RecordingMemoryManager::deallocateExceptionTable(void *ET) {
-  llvm_unreachable("Unexpected!");
-}
 
 static int jit_noop() {
   return 0;

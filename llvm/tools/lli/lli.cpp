@@ -159,11 +159,6 @@ namespace {
                      clEnumValEnd));
 
   cl::opt<bool>
-  EnableJITExceptionHandling("jit-enable-eh",
-    cl::desc("Emit exception handling information"),
-    cl::init(false));
-
-  cl::opt<bool>
   GenerateSoftFloatCalls("soft-float",
     cl::desc("Generate software floating point library calls"),
     cl::init(false));
@@ -381,7 +376,6 @@ int main(int argc, char **argv, char * const *envp) {
 
   // Remote target execution doesn't handle EH or debug registration.
   if (!RemoteMCJIT) {
-    Options.JITExceptionHandling = EnableJITExceptionHandling;
     Options.JITEmitDebugInfo = EmitJitDebugInfo;
     Options.JITEmitDebugInfoToDisk = EmitJitDebugInfoToDisk;
   }

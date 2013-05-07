@@ -1950,7 +1950,6 @@ int main(int argc, char *argv[]) {
 
   // If not set, exception handling will not be turned on
   llvm::TargetOptions Opts;
-  Opts.JITExceptionHandling = true;
 
   llvm::InitializeNativeTarget();
   llvm::InitializeNativeTargetAsmPrinter();

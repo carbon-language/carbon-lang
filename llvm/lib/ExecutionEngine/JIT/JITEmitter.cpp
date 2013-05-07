@@ -363,22 +363,16 @@ namespace {
     /// Instance of the JIT
     JIT *TheJIT;
 
-    bool JITExceptionHandling;
-
   public:
     JITEmitter(JIT &jit, JITMemoryManager *JMM, TargetMachine &TM)
       : SizeEstimate(0), Resolver(jit, *this), MMI(0), CurFn(0),
-        EmittedFunctions(this), TheJIT(&jit),
-        JITExceptionHandling(TM.Options.JITExceptionHandling) {
+        EmittedFunctions(this), TheJIT(&jit) {
       MemMgr = JMM ? JMM : JITMemoryManager::CreateDefaultMemManager();
       if (jit.getJITInfo().needsGOT()) {
         MemMgr->AllocateGOT();
         DEBUG(dbgs() << "JIT is managing a GOT\n");
       }
 
-      if (JITExceptionHandling) {
-        DE.reset(new JITDwarfEmitter(jit));
-      }
     }
     ~JITEmitter() {
       delete MemMgr;
@@ -964,40 +958,6 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
       }
     });
 
-  if (JITExceptionHandling) {
-    uintptr_t ActualSize = 0;
-    SavedBufferBegin = BufferBegin;
-    SavedBufferEnd = BufferEnd;
-    SavedCurBufferPtr = CurBufferPtr;
-    uint8_t *FrameRegister;
-
-    while (true) {
-      BufferBegin = CurBufferPtr = MemMgr->startExceptionTable(F.getFunction(),
-                                                               ActualSize);
-      BufferEnd = BufferBegin+ActualSize;
-      EmittedFunctions[F.getFunction()].ExceptionTable = BufferBegin;
-      uint8_t *EhStart;
-      FrameRegister = DE->EmitDwarfTable(F, *this, FnStart, FnEnd, EhStart);
-
-      // If the buffer was large enough to hold the table then we are done.
-      if (CurBufferPtr != BufferEnd)
-        break;
-
-      // Try again with twice as much space.
-      ActualSize = (CurBufferPtr - BufferBegin) * 2;
-      MemMgr->deallocateExceptionTable(BufferBegin);
-    }
-    MemMgr->endExceptionTable(F.getFunction(), BufferBegin, CurBufferPtr,
-                              FrameRegister);
-    BufferBegin = SavedBufferBegin;
-    BufferEnd = SavedBufferEnd;
-    CurBufferPtr = SavedCurBufferPtr;
-
-    if (JITExceptionHandling) {
-      TheJIT->RegisterTable(F.getFunction(), FrameRegister);
-    }
-  }
-
   if (MMI)
     MMI->EndFunction();
 
@@ -1027,14 +987,9 @@ void JITEmitter::deallocateMemForFunction(const Function *F) {
     Emitted = EmittedFunctions.find(F);
   if (Emitted != EmittedFunctions.end()) {
     MemMgr->deallocateFunctionBody(Emitted->second.FunctionBody);
-    MemMgr->deallocateExceptionTable(Emitted->second.ExceptionTable);
     TheJIT->NotifyFreeingMachineCode(Emitted->second.Code);
 
     EmittedFunctions.erase(Emitted);
-  }
-
-  if (JITExceptionHandling) {
-    TheJIT->DeregisterTable(F);
   }
 }
 

@@ -45,7 +45,7 @@ namespace llvm {
           NoFramePointerElimNonLeaf(false), LessPreciseFPMADOption(false),
           UnsafeFPMath(false), NoInfsFPMath(false),
           NoNaNsFPMath(false), HonorSignDependentRoundingFPMathOption(false),
-          UseSoftFloat(false), NoZerosInBSS(false), JITExceptionHandling(false),
+          UseSoftFloat(false), NoZerosInBSS(false),
           JITEmitDebugInfo(false), JITEmitDebugInfoToDisk(false),
           GuaranteedTailCallOpt(false), DisableTailCalls(false),
           StackAlignmentOverride(0), RealignStack(true), SSPBufferSize(0),
@@ -122,10 +122,6 @@ namespace llvm {
     /// .bss section. This flag disables such behaviour (necessary, e.g. for
     /// crt*.o compiling).
     unsigned NoZerosInBSS : 1;
-
-    /// JITExceptionHandling - This flag indicates that the JIT should emit
-    /// exception handling information.
-    unsigned JITExceptionHandling : 1;
 
     /// JITEmitDebugInfo - This flag indicates that the JIT should try to emit
     /// debug information and notify a debugger about it.
