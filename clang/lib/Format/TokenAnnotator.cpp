@@ -664,8 +664,8 @@ private:
   }
 
   /// \brief Return the type of the given token assuming it is * or &.
-  TokenType
-  determineStarAmpUsage(const AnnotatedToken &Tok, bool IsExpression) {
+  TokenType determineStarAmpUsage(const AnnotatedToken &Tok,
+                                  bool IsExpression) {
     const AnnotatedToken *PrevToken = Tok.getPreviousNoneComment();
     if (PrevToken == NULL)
       return TT_UnaryOperator;
@@ -679,7 +679,7 @@ private:
 
     if (PrevToken->isOneOf(tok::l_paren, tok::l_square, tok::l_brace,
                            tok::comma, tok::semi, tok::kw_return, tok::colon,
-                           tok::equal) ||
+                           tok::equal, tok::kw_delete) ||
         PrevToken->Type == TT_BinaryOperator ||
         PrevToken->Type == TT_UnaryOperator || PrevToken->Type == TT_CastRParen)
       return TT_UnaryOperator;

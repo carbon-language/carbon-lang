@@ -2598,6 +2598,9 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyIndependentOfContext("A = new SomeType *[Length]();");
   verifyGoogleFormat("A = new SomeType* [Length]();");
   verifyGoogleFormat("A = new SomeType* [Length];");
+  FormatStyle PointerLeft = getLLVMStyle();
+  PointerLeft.PointerBindsToType = true;
+  verifyFormat("delete *x;", PointerLeft);
 }
 
 TEST_F(FormatTest, UnderstandsEllipsis) {
