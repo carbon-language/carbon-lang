@@ -10,7 +10,7 @@ class TracebackFancy:
 		return FrameFancy(self.t.tb_frame)
 
 	def getLineNumber(self):
-		return self.t.tb_lineno
+		return self.t.tb_lineno if self.t != None else None
 
 	def getNext(self):
 		return TracebackFancy(self.t.tb_next)
@@ -49,16 +49,19 @@ class CodeFancy:
 		self.c = code
 
 	def getArgCount(self):
-		return self.c.co_argcount
+		return self.c.co_argcount if self.c != None else 0
 
 	def getFilename(self):
-		return self.c.co_filename
+		return self.c.co_filename if self.c != None else ""
 
 	def getVariables(self):
-		return self.c.co_varnames
+		return self.c.co_varnames if self.c != None else []
 
 	def getName(self):
-		return self.c.co_name
+		return self.c.co_name if self.c != None else ""
+
+	def getFileName(self):
+		return self.c.co_filename if self.c != None else ""
 
 class ArgsFancy:
 	def __init__(self,frame,arginfo):
@@ -121,22 +124,25 @@ class FrameFancy:
 		return FrameFancy(self.f.f_back)
 
 	def getLineNumber(self):
-		return self.f.f_lineno
+		return self.f.f_lineno if self.f != None else 0
 
 	def getCodeInformation(self):
-		return CodeFancy(self.f.f_code)
+		return CodeFancy(self.f.f_code) if self.f != None else None
 
 	def getExceptionInfo(self):
-		return ExceptionFancy(self.f)
+		return ExceptionFancy(self.f) if self.f != None else None
 
 	def getName(self):
-		return self.f.f_code.co_name
+		return self.getCodeInformation().getName() if self.f != None else ""
+
+	def getFileName(self):
+		return self.getCodeInformation().getFileName() if self.f != None else ""
 
 	def getLocals(self):
-		return self.f.f_locals
+		return self.f.f_locals if self.f != None else {}
 		
 	def getArgumentInfo(self):
-		return ArgsFancy(self.f,inspect.getargvalues(self.f))
+		return ArgsFancy(self.f,inspect.getargvalues(self.f)) if self.f != None else None
 
 class TracerClass:
 	def callEvent(self,frame):
@@ -206,12 +212,85 @@ class LoggingTracer:
 		print "call " + frame.getName() + " from " + frame.getCaller().getName() + " @ " + str(frame.getCaller().getLineNumber()) + " args are " + str(frame.getArgumentInfo())
 
 	def lineEvent(self,frame):
-		print "running " + frame.getName() + " @ " + str(frame.getLineNumber()) + " locals are " + str(frame.getLocals())
+		print "running " + frame.getName() + " @ " + str(frame.getLineNumber()) + " locals are " + str(frame.getLocals()) + " in " + frame.getFileName()
 
 	def returnEvent(self,frame,retval):
 		print "return from " + frame.getName() + " value is " + str(retval) + " locals are " + str(frame.getLocals())
 
 	def exceptionEvent(self,frame,exception):
+		print "exception %s %s raised from %s @ %s" %  (exception.getType(), str(exception.getValue()), frame.getName(), frame.getLineNumber())
+		print "tb: " + str(exception.getTraceback())
+
+# the same functionality as LoggingTracer, but with a little more lldb-specific smarts
+class LLDBAwareTracer:
+	def callEvent(self,frame):
+		if frame.getName() == "<module>":
+			return
+		if frame.getName() == "run_one_line":
+			print "call run_one_line(%s)" % (frame.getArgumentInfo().getArgs()["input_string"])
+			return
+		if "Python.framework" in frame.getFileName():
+			print "call into Python at " + frame.getName()
+			return
+		if frame.getName() == "__init__" and frame.getCaller().getName() == "run_one_line" and frame.getCaller().getLineNumber() == 101:
+			return False
+		strout = "call " + frame.getName()
+		if (frame.getCaller().getFileName() == ""):
+			strout += " from LLDB - args are "
+			args = frame.getArgumentInfo().getArgs()
+			for arg in args:
+				if arg == "dict" or arg == "internal_dict":
+					continue
+				strout = strout + ("%s = %s " % (arg,args[arg]))
+		else:
+			strout += " from " + frame.getCaller().getName() + " @ " + str(frame.getCaller().getLineNumber()) + " args are " + str(frame.getArgumentInfo())
+		print strout
+
+	def lineEvent(self,frame):
+		if frame.getName() == "<module>":
+			return
+		if frame.getName() == "run_one_line":
+			print "running run_one_line(%s) @ %s" % (frame.getArgumentInfo().getArgs()["input_string"],frame.getLineNumber())
+			return
+		if "Python.framework" in frame.getFileName():
+			print "running into Python at " + frame.getName() + " @ " + str(frame.getLineNumber())
+			return
+		strout = "running " + frame.getName() + " @ " + str(frame.getLineNumber()) + " locals are " 
+		if (frame.getCaller().getFileName() == ""):
+			locals = frame.getLocals()
+			for local in locals:
+				if local == "dict" or local == "internal_dict":
+					continue
+				strout = strout + ("%s = %s " % (local,locals[local]))
+		else:
+			strout = strout + str(frame.getLocals())
+		strout = strout + " in " + frame.getFileName()
+		print strout
+
+	def returnEvent(self,frame,retval):
+		if frame.getName() == "<module>":
+			return
+		if frame.getName() == "run_one_line":
+			print "return from run_one_line(%s) return value is %s" % (frame.getArgumentInfo().getArgs()["input_string"],retval)
+			return
+		if "Python.framework" in frame.getFileName():
+			print "return from Python at " + frame.getName() + " return value is " + str(retval)
+			return
+		strout = "return from " + frame.getName() + " return value is " + str(retval) + " locals are "
+		if (frame.getCaller().getFileName() == ""):
+			locals = frame.getLocals()
+			for local in locals:
+				if local == "dict" or local == "internal_dict":
+					continue
+				strout = strout + ("%s = %s " % (local,locals[local]))
+		else:
+			strout = strout + str(frame.getLocals())
+		strout = strout + " in " + frame.getFileName()
+		print strout
+
+	def exceptionEvent(self,frame,exception):
+		if frame.getName() == "<module>":
+			return
 		print "exception %s %s raised from %s @ %s" %  (exception.getType(), str(exception.getValue()), frame.getName(), frame.getLineNumber())
 		print "tb: " + str(exception.getTraceback())
 
