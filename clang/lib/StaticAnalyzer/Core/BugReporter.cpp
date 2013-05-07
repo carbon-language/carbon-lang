@@ -1820,10 +1820,11 @@ const Stmt *getStmtParent(const Stmt *S, ParentMap &PM) {
   return PM.getParentIgnoreParens(S);
 }
 
-#if 0
 static bool isConditionForTerminator(const Stmt *S, const Stmt *Cond) {
   // Note that we intentionally to do not handle || and && here.
   switch (S->getStmtClass()) {
+    case Stmt::IfStmtClass:
+      return cast<IfStmt>(S)->getCond() == Cond;
     case Stmt::ForStmtClass:
       return cast<ForStmt>(S)->getCond() == Cond;
     case Stmt::WhileStmtClass:
@@ -1846,21 +1847,11 @@ static bool isConditionForTerminator(const Stmt *S, const Stmt *Cond) {
       return false;
   }
 }
-#endif
-
-typedef llvm::DenseSet<const PathDiagnosticControlFlowPiece *>
-        ControlFlowBarrierSet;
 
 typedef llvm::DenseSet<const PathDiagnosticCallPiece *>
         OptimizedCallsSet;
 
-static bool isBarrier(ControlFlowBarrierSet &CFBS,
-                      const PathDiagnosticControlFlowPiece *P) {
-  return CFBS.count(P);
-}
-
 static bool optimizeEdges(PathPieces &path, SourceManager &SM,
-                          ControlFlowBarrierSet &CFBS,
                           OptimizedCallsSet &OCS,
                           LocationContextMap &LCM) {
   bool hasChanges = false;
@@ -1877,7 +1868,7 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
       // Record the fact that a call has been optimized so we only do the
       // effort once.
       if (!OCS.count(CallI)) {
-        while (optimizeEdges(CallI->path, SM, CFBS, OCS, LCM)) {}
+        while (optimizeEdges(CallI->path, SM, OCS, LCM)) {}
         OCS.insert(CallI);
       }
       ++I;
@@ -1900,18 +1891,9 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
     const Stmt *level2 = getStmtParent(s1End, PM);
 
     if (wasFirst) {
-#if 0
-      // Apply the "first edge" case for Rule V. here.
-      if (s1Start && level1 && isConditionForTerminator(level1, s1Start)) {
-        PathDiagnosticLocation NewLoc(level2, SM, LC);
-        PieceI->setStartLocation(NewLoc);
-        CFBS.insert(PieceI);
-        return true;
-      }
-#endif
-      // Apply the "first edge" case for Rule III. here.
-      if (!isBarrier(CFBS, PieceI) &&
-          level1 && level2 && level2 == PM.getParent(level1)) {
+      // If the first edge (in isolation) is just a transition from
+      // an expression to a parent expression then eliminate that edge.
+      if (level1 && level2 && level2 == PM.getParent(level1)) {
         path.erase(I);
         // Since we are erasing the current edge at the start of the
         // path, just return now so we start analyzing the start of the path
@@ -1961,88 +1943,20 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
 
     // Rule II.
     //
-    // If we have two consecutive control edges where we decend to a
-    // subexpression and then pop out merge them.
+    // Eliminate edges between subexpressions and parent expressions
+    // when the subexpression is consumed.
     //
     // NOTE: this will be limited later in cases where we add barriers
     // to prevent this optimization.
     //
-    // For example:
-    //
-    // (1.1 -> 1.1.1) -> (1.1.1 -> 1.2) becomes (1.1 -> 1.2).
-    if (level1 && level2 &&
-        level1 == level4 &&
-        level2 == level3 && PM.getParentIgnoreParens(level2) == level1) {
+    if (s1End && s1End == s2Start &&
+        isa<Expr>(s1End) && PM.isConsumedExpr(cast<Expr>(s1End)) &&
+        (!level2 || !isConditionForTerminator(level2, s1End))) {
       PieceI->setEndLocation(PieceNextI->getEndLocation());
       path.erase(NextI);
       hasChanges = true;
       continue;
     }
-
-    // Rule III.
-    //
-    // Eliminate unnecessary edges where we descend to a subexpression from
-    // a statement at the same level as our parent.
-    //
-    // NOTE: this will be limited later in cases where we add barriers
-    // to prevent this optimization.
-    //
-    // For example:
-    //
-    // (1.1 -> 1.1.1) -> (1.1.1 -> X) becomes (1.1 -> X).
-    //
-    if (level1 && level2 && level1 == PM.getParentIgnoreParens(level2)) {
-      PieceI->setEndLocation(PieceNextI->getEndLocation());
-      path.erase(NextI);
-      hasChanges = true;
-      continue;
-    }
-
-    // Rule IV.
-    //
-    // Eliminate unnecessary edges where we ascend from a subexpression to
-    // a statement at the same level as our parent.
-    //
-    // NOTE: this will be limited later in cases where we add barriers
-    // to prevent this optimization.
-    //
-    // For example:
-    //
-    // (X -> 1.1.1) -> (1.1.1 -> 1.1) becomes (X -> 1.1).
-    // [first edge] (1.1.1 -> 1.1) -> eliminate
-    //
-    if (level2 && level4 && level2 == level3 && level4 == PM.getParent(level2)){
-      PieceI->setEndLocation(PieceNextI->getEndLocation());
-      path.erase(NextI);
-      hasChanges = true;
-      continue;
-    }
-#if 0
-    // Rule V.
-    //
-    // Replace terminator conditions with terminators when the condition
-    // itself has no control-flow.
-    //
-    // For example:
-    //
-    // (X -> condition) -> (condition -> Y) becomes (X -> term) -> (term -> Y)
-    // [first edge] (condition -> Y) becomes (term -> Y)
-    //
-    // This applies to 'if', 'for', 'while', 'do .. while', 'switch'...
-    //
-    if (!isBarrier(CFBS, PieceNextI) &&
-        s1End && s1End == s2Start && level2) {
-      if (isConditionForTerminator(level2, s1End)) {
-        PathDiagnosticLocation NewLoc(level2, SM, LC);
-        PieceI->setEndLocation(NewLoc);
-        PieceNextI->setStartLocation(NewLoc);
-        CFBS.insert(PieceI);
-        hasChanges = true;
-        continue;
-      }
-
-    }
-#endif
 
     // No changes at this index?  Move to the next one.
     ++I;
@@ -2737,9 +2651,8 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
       adjustCallLocations(PD.getMutablePieces());
 
       if (ActiveScheme == PathDiagnosticConsumer::AlternateExtensive) {
-        ControlFlowBarrierSet CFBS;
         OptimizedCallsSet OCS;
-        while (optimizeEdges(PD.getMutablePieces(), getSourceManager(), CFBS,
+        while (optimizeEdges(PD.getMutablePieces(), getSourceManager(),
                              OCS, LCM)) {}
       }
     }
