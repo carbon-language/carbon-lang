@@ -859,8 +859,12 @@ namespace {
       }
 
     void addNextField(FieldDecl *F) {
-      assert(F->getFieldIndex() == LastAddedFieldIndex + 1 &&
-             "Cannot aggregate non-contiguous fields.");
+      // For the most part, the following invariant will hold:
+      //   F->getFieldIndex() == LastAddedFieldIndex + 1
+      // The one exception is that Sema won't add a copy-initializer for an
+      // unnamed bitfield, which will show up here as a gap in the sequence.
+      assert(F->getFieldIndex() >= LastAddedFieldIndex + 1 &&
+             "Cannot aggregate fields out of order.");
       LastAddedFieldIndex = F->getFieldIndex();
 
       // The 'first' and 'last' fields are chosen by offset, rather than field
