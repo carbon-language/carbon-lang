@@ -357,18 +357,24 @@ lldb::StopInfoSP
 Thread::GetStopInfo ()
 {
     ThreadPlanSP plan_sp (GetCompletedPlan());
+    ProcessSP process_sp (GetProcess());
+    const uint32_t stop_id = process_sp ? process_sp->GetStopID() : UINT32_MAX;
     if (plan_sp && plan_sp->PlanSucceeded())
+    {
         return StopInfo::CreateStopReasonWithPlan (plan_sp, GetReturnValueObject());
+    }
     else
     {
-        ProcessSP process_sp (GetProcess());
-        if (process_sp 
-            && m_actual_stop_info_sp 
-            && m_actual_stop_info_sp->IsValid()
-            && m_thread_stop_reason_stop_id == process_sp->GetStopID())
+        if ((m_thread_stop_reason_stop_id == stop_id) ||   // Stop info is valid, just return what we have (even if empty)
+            (m_actual_stop_info_sp && m_actual_stop_info_sp->IsValid()))  // Stop info is valid, just return what we have
+        {
             return m_actual_stop_info_sp;
+        }
         else
-            return GetPrivateStopReason ();
+        {
+            GetPrivateStopReason ();
+            return m_actual_stop_info_sp;
+        }
     }
 }
 

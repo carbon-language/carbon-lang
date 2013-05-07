@@ -65,7 +65,8 @@ public:
     // lldb_private::OperatingSystem Methods
     //------------------------------------------------------------------
     virtual bool
-    UpdateThreadList (lldb_private::ThreadList &old_thread_list, 
+    UpdateThreadList (lldb_private::ThreadList &old_thread_list,
+                      lldb_private::ThreadList &real_thread_list,
                       lldb_private::ThreadList &new_thread_list);
     
     virtual void

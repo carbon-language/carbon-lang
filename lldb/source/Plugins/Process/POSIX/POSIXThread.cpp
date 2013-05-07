@@ -140,7 +140,7 @@ POSIXThread::CreateRegisterContextForFrame(lldb_private::StackFrame *frame)
 lldb::StopInfoSP
 POSIXThread::GetPrivateStopReason()
 {
-    return m_stop_info;
+    return m_actual_stop_info_sp;
 }
 
 Unwind *
@@ -262,19 +262,19 @@ POSIXThread::BreakNotify(const ProcessMessage &message)
 
     
     m_breakpoint = bp_site;
-    m_stop_info = StopInfo::CreateStopReasonWithBreakpointSiteID(*this, bp_id);
+    SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID(*this, bp_id));
 }
 
 void
 POSIXThread::TraceNotify(const ProcessMessage &message)
 {
-    m_stop_info = StopInfo::CreateStopReasonToTrace(*this);
+    SetStopInfo (StopInfo::CreateStopReasonToTrace(*this));
 }
 
 void
 POSIXThread::LimboNotify(const ProcessMessage &message)
 {
-    m_stop_info = lldb::StopInfoSP(new POSIXLimboStopInfo(*this));
+    SetStopInfo (lldb::StopInfoSP(new POSIXLimboStopInfo(*this)));
 }
 
 void
@@ -282,7 +282,7 @@ POSIXThread::SignalNotify(const ProcessMessage &message)
 {
     int signo = message.GetSignal();
 
-    m_stop_info = StopInfo::CreateStopReasonWithSignal(*this, signo);
+    SetStopInfo (StopInfo::CreateStopReasonWithSignal(*this, signo));
     SetResumeSignal(signo);
 }
 
@@ -291,7 +291,7 @@ POSIXThread::SignalDeliveredNotify(const ProcessMessage &message)
 {
     int signo = message.GetSignal();
 
-    m_stop_info = StopInfo::CreateStopReasonWithSignal(*this, signo);
+    SetStopInfo (StopInfo::CreateStopReasonWithSignal(*this, signo));
     SetResumeSignal(signo);
 }
 
@@ -306,15 +306,14 @@ POSIXThread::CrashNotify(const ProcessMessage &message)
     if (log)
         log->Printf ("POSIXThread::%s () signo = %i, reason = '%s'", __FUNCTION__, signo, message.PrintCrashReason());
 
-    m_stop_info = lldb::StopInfoSP(new POSIXCrashStopInfo(
-                                       *this, signo, message.GetCrashReason()));
+    SetStopInfo (lldb::StopInfoSP(new POSIXCrashStopInfo(*this, signo, message.GetCrashReason())));
     SetResumeSignal(signo);
 }
 
 void
 POSIXThread::ThreadNotify(const ProcessMessage &message)
 {
-    m_stop_info = lldb::StopInfoSP(new POSIXNewThreadStopInfo(*this));
+    SetStopInfo (lldb::StopInfoSP(new POSIXNewThreadStopInfo(*this)));
 }
 
 unsigned

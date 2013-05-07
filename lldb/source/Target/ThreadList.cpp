@@ -24,16 +24,14 @@ ThreadList::ThreadList (Process *process) :
     m_process (process),
     m_stop_id (0),
     m_threads(),
-    m_threads_mutex (Mutex::eMutexTypeRecursive),
     m_selected_tid (LLDB_INVALID_THREAD_ID)
 {
 }
 
 ThreadList::ThreadList (const ThreadList &rhs) :
-    m_process (),
-    m_stop_id (),
+    m_process (rhs.m_process),
+    m_stop_id (rhs.m_stop_id),
     m_threads (),
-    m_threads_mutex (Mutex::eMutexTypeRecursive),
     m_selected_tid ()
 {
     // Use the assignment operator since it uses the mutex
@@ -47,8 +45,7 @@ ThreadList::operator = (const ThreadList& rhs)
     {
         // Lock both mutexes to make sure neither side changes anyone on us
         // while the assignement occurs
-        Mutex::Locker locker_lhs(m_threads_mutex);
-        Mutex::Locker locker_rhs(rhs.m_threads_mutex);
+        Mutex::Locker locker(GetMutex());
         m_process = rhs.m_process;
         m_stop_id = rhs.m_stop_id;
         m_threads = rhs.m_threads;
@@ -83,14 +80,14 @@ ThreadList::SetStopID (uint32_t stop_id)
 void
 ThreadList::AddThread (const ThreadSP &thread_sp)
 {
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
     m_threads.push_back(thread_sp);
 }
 
 uint32_t
 ThreadList::GetSize (bool can_update)
 {
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
     if (can_update)
         m_process->UpdateThreadListIfNeeded();
     return m_threads.size();
@@ -99,7 +96,7 @@ ThreadList::GetSize (bool can_update)
 ThreadSP
 ThreadList::GetThreadAtIndex (uint32_t idx, bool can_update)
 {
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
     if (can_update)
         m_process->UpdateThreadListIfNeeded();
 
@@ -112,7 +109,7 @@ ThreadList::GetThreadAtIndex (uint32_t idx, bool can_update)
 ThreadSP
 ThreadList::FindThreadByID (lldb::tid_t tid, bool can_update)
 {
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
 
     if (can_update)
         m_process->UpdateThreadListIfNeeded();
@@ -134,7 +131,7 @@ ThreadList::FindThreadByID (lldb::tid_t tid, bool can_update)
 ThreadSP
 ThreadList::FindThreadByProtocolID (lldb::tid_t tid, bool can_update)
 {
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
     
     if (can_update)
         m_process->UpdateThreadListIfNeeded();
@@ -157,7 +154,7 @@ ThreadList::FindThreadByProtocolID (lldb::tid_t tid, bool can_update)
 ThreadSP
 ThreadList::RemoveThreadByID (lldb::tid_t tid, bool can_update)
 {
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
     
     if (can_update)
         m_process->UpdateThreadListIfNeeded();
@@ -180,7 +177,7 @@ ThreadList::RemoveThreadByID (lldb::tid_t tid, bool can_update)
 ThreadSP
 ThreadList::RemoveThreadByProtocolID (lldb::tid_t tid, bool can_update)
 {
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
     
     if (can_update)
         m_process->UpdateThreadListIfNeeded();
@@ -206,7 +203,7 @@ ThreadList::GetThreadSPForThreadPtr (Thread *thread_ptr)
     ThreadSP thread_sp;
     if (thread_ptr)
     {
-        Mutex::Locker locker(m_threads_mutex);
+        Mutex::Locker locker(GetMutex());
 
         uint32_t idx = 0;
         const uint32_t num_threads = m_threads.size();
@@ -227,7 +224,7 @@ ThreadList::GetThreadSPForThreadPtr (Thread *thread_ptr)
 ThreadSP
 ThreadList::FindThreadByIndexID (uint32_t index_id, bool can_update)
 {
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
 
     if (can_update)
         m_process->UpdateThreadListIfNeeded();
@@ -263,7 +260,7 @@ ThreadList::ShouldStop (Event *event_ptr)
     collection threads_copy;
     {
         // Scope for locker
-        Mutex::Locker locker(m_threads_mutex);
+        Mutex::Locker locker(GetMutex());
 
         m_process->UpdateThreadListIfNeeded();
         threads_copy = m_threads;
@@ -331,7 +328,7 @@ ThreadList::ShouldStop (Event *event_ptr)
 Vote
 ThreadList::ShouldReportStop (Event *event_ptr)
 {
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
 
     Vote result = eVoteNoOpinion;
     m_process->UpdateThreadListIfNeeded();
@@ -383,7 +380,7 @@ Vote
 ThreadList::ShouldReportRun (Event *event_ptr)
 {
 
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
 
     Vote result = eVoteNoOpinion;
     m_process->UpdateThreadListIfNeeded();
@@ -422,7 +419,7 @@ ThreadList::ShouldReportRun (Event *event_ptr)
 void
 ThreadList::Clear()
 {
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
     m_stop_id = 0;
     m_threads.clear();
     m_selected_tid = LLDB_INVALID_THREAD_ID;
@@ -431,7 +428,7 @@ ThreadList::Clear()
 void
 ThreadList::Destroy()
 {
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
     const uint32_t num_threads = m_threads.size();
     for (uint32_t idx = 0; idx < num_threads; ++idx)
     {
@@ -442,7 +439,7 @@ ThreadList::Destroy()
 void
 ThreadList::RefreshStateAfterStop ()
 {
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
 
     m_process->UpdateThreadListIfNeeded();
     
@@ -460,7 +457,7 @@ ThreadList::DiscardThreadPlans ()
 {
     // You don't need to update the thread list here, because only threads
     // that you currently know about have any thread plans.
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
 
     collection::iterator pos, end = m_threads.end();
     for (pos = m_threads.begin(); pos != end; ++pos)
@@ -475,7 +472,7 @@ ThreadList::WillResume ()
     // But we only do this for threads that are running, user suspended
     // threads stay where they are.
 
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
     m_process->UpdateThreadListIfNeeded();
 
     collection::iterator pos, end = m_threads.end();
@@ -626,7 +623,7 @@ ThreadList::WillResume ()
 void
 ThreadList::DidResume ()
 {
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
     collection::iterator pos, end = m_threads.end();
     for (pos = m_threads.begin(); pos != end; ++pos)
     {
@@ -641,7 +638,7 @@ ThreadList::DidResume ()
 ThreadSP
 ThreadList::GetSelectedThread ()
 {
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
     ThreadSP thread_sp = FindThreadByID(m_selected_tid);
     if (!thread_sp.get())
     {
@@ -656,7 +653,7 @@ ThreadList::GetSelectedThread ()
 bool
 ThreadList::SetSelectedThreadByID (lldb::tid_t tid, bool notify)
 {
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
     ThreadSP selected_thread_sp(FindThreadByID(tid));
     if  (selected_thread_sp)
     {
@@ -675,7 +672,7 @@ ThreadList::SetSelectedThreadByID (lldb::tid_t tid, bool notify)
 bool
 ThreadList::SetSelectedThreadByIndexID (uint32_t index_id, bool notify)
 {
-    Mutex::Locker locker(m_threads_mutex);
+    Mutex::Locker locker(GetMutex());
     ThreadSP selected_thread_sp (FindThreadByIndexID(index_id));
     if  (selected_thread_sp.get())
     {
@@ -707,8 +704,7 @@ ThreadList::Update (ThreadList &rhs)
     {
         // Lock both mutexes to make sure neither side changes anyone on us
         // while the assignement occurs
-        Mutex::Locker locker_lhs(m_threads_mutex);
-        Mutex::Locker locker_rhs(rhs.m_threads_mutex);
+        Mutex::Locker locker(GetMutex());
         m_process = rhs.m_process;
         m_stop_id = rhs.m_stop_id;
         m_threads.swap(rhs.m_threads);
@@ -745,9 +741,15 @@ ThreadList::Update (ThreadList &rhs)
 void
 ThreadList::Flush ()
 {
-    Mutex::Locker locker(m_threads_mutex);    
+    Mutex::Locker locker(GetMutex());
     collection::iterator pos, end = m_threads.end();
     for (pos = m_threads.begin(); pos != end; ++pos)
         (*pos)->Flush ();
+}
+
+Mutex &
+ThreadList::GetMutex ()
+{
+    return m_process->m_thread_mutex;
 }
 

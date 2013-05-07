@@ -84,7 +84,6 @@ private:
     std::unique_ptr<lldb_private::StackFrame> m_frame_ap;
 
     lldb::BreakpointSiteSP m_breakpoint;
-    lldb::StopInfoSP m_stop_info;
 
     ProcessMonitor &
     GetMonitor();
