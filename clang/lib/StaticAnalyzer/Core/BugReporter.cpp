@@ -1815,8 +1815,13 @@ const Stmt *getStmtParent(const Stmt *S, ParentMap &PM) {
 }
 
 static bool isConditionForTerminator(const Stmt *S, const Stmt *Cond) {
-  // Note that we intentionally to do not handle || and && here.
   switch (S->getStmtClass()) {
+    case Stmt::BinaryOperatorClass: {
+      const BinaryOperator *BO = cast<BinaryOperator>(S);
+      if (!BO->isLogicalOp())
+        return false;
+      return BO->getLHS() == Cond || BO->getRHS() == Cond;
+    }
     case Stmt::IfStmtClass:
       return cast<IfStmt>(S)->getCond() == Cond;
     case Stmt::ForStmtClass:
