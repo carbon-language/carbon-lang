@@ -63,8 +63,20 @@ struct T : SS, NonLiteral { // expected-note {{base class 'NonLiteral' of non-li
 #ifndef CXX1Y
   // expected-error@-2 {{an explicitly-defaulted copy assignment operator may not have 'const', 'constexpr' or 'volatile' qualifiers}}
   // expected-warning@-3 {{C++1y}}
+#else
+  // expected-error@-5 {{defaulted definition of copy assignment operator is not constexpr}}
 #endif
 };
+#ifdef CXX1Y
+struct T2 {
+  int n = 0;
+  constexpr T2 &operator=(const T2&) = default; // ok
+};
+struct T3 {
+  constexpr T3 &operator=(const T3&) const = default;
+  // expected-error@-1 {{an explicitly-defaulted copy assignment operator may not have 'const' or 'volatile' qualifiers}}
+};
+#endif
 struct U {
   constexpr U SelfReturn() const;
   constexpr int SelfParam(U) const;

@@ -5718,7 +5718,7 @@ def err_defaulted_special_member_return_type : Error<
   "return %1">;
 def err_defaulted_special_member_quals : Error<
   "an explicitly-defaulted %select{copy|move}0 assignment operator may not "
-  "have 'const', 'constexpr' or 'volatile' qualifiers">;
+  "have 'const'%select{, 'constexpr'|}1 or 'volatile' qualifiers">;
 def err_defaulted_special_member_volatile_param : Error<
   "the parameter for an explicitly-defaulted %select{<<ERROR>>|"
   "copy constructor|move constructor|copy assignment operator|"
@@ -5740,7 +5740,8 @@ def err_incorrect_defaulted_exception_spec : Error<
   "calculated one">;
 def err_incorrect_defaulted_constexpr : Error<
   "defaulted definition of %select{default constructor|copy constructor|"
-  "move constructor}0 is not constexpr">;
+  "move constructor|copy assignment operator|move assignment operator}0 "
+  "is not constexpr">;
 def err_out_of_line_default_deletes : Error<
   "defaulting this %select{default constructor|copy constructor|move "
   "constructor|copy assignment operator|move assignment operator|destructor}0 "

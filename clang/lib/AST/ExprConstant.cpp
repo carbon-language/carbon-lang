@@ -2774,6 +2774,27 @@ static bool HandleFunctionCall(SourceLocation CallLoc,
     return false;
 
   CallStackFrame Frame(Info, CallLoc, Callee, This, ArgValues.data());
+
+  // For a trivial copy or move assignment, perform an APValue copy. This is
+  // essential for unions, where the operations performed by the assignment
+  // operator cannot be represented as statements.
+  const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Callee);
+  if (MD && MD->isDefaulted() && MD->isTrivial()) {
+    assert(This &&
+           (MD->isCopyAssignmentOperator() || MD->isMoveAssignmentOperator()));
+    LValue RHS;
+    RHS.setFrom(Info.Ctx, ArgValues[0]);
+    APValue RHSValue;
+    if (!handleLValueToRValueConversion(Info, Args[0], Args[0]->getType(),
+                                        RHS, RHSValue))
+      return false;
+    if (!handleAssignment(Info, Args[0], *This, MD->getThisType(Info.Ctx),
+                          RHSValue))
+      return false;
+    This->moveInto(Result);
+    return true;
+  }
+
   EvalStmtResult ESR = EvaluateStmt(Result, Info, Body);
   if (ESR == ESR_Succeeded) {
     if (Callee->getResultType()->isVoidType())

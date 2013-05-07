@@ -457,3 +457,46 @@ namespace loops {
   }
   static_assert(range_for_2() == 10, "");
 }
+
+namespace assignment {
+  struct A {
+    constexpr A() : n(5) {}
+    int n;
+    struct B {
+      int k = 1;
+      union U {
+        constexpr U() : y(4) {}
+        int x;
+        int y;
+      } u;
+    } b;
+  };
+  constexpr bool testA() {
+    A a, b;
+    a.n = 7;
+    a.b.u.y = 5;
+    b = a;
+    return b.n == 7 && b.b.u.y == 5 && b.b.k == 1;
+  }
+  static_assert(testA(), "");
+
+  struct B {
+    bool assigned = false;
+    constexpr B &operator=(const B&) {
+      assigned = true;
+      return *this;
+    }
+  };
+  struct C : B {
+    B b;
+    int n = 5;
+  };
+  constexpr bool testC() {
+    C c, d;
+    c.n = 7;
+    d = c;
+    c.n = 3;
+    return d.n == 7 && d.assigned && d.b.assigned;
+  }
+  static_assert(testC(), "");
+}
