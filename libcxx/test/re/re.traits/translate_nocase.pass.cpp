@@ -14,6 +14,9 @@
 
 // charT translate_nocase(charT c) const;
 
+// XFAIL: with_system_lib=x86_64-apple-darwin11
+// XFAIL: with_system_lib=x86_64-apple-darwin12
+
 #include <regex>
 #include <cassert>
 
