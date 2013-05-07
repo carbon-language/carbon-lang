@@ -12,9 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/CodeGen/Utils.h"
-
 #include "polly/ScopInfo.h"
-
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"

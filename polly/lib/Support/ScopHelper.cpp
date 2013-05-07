@@ -13,7 +13,6 @@
 
 #include "polly/Support/ScopHelper.h"
 #include "polly/ScopInfo.h"
-
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"

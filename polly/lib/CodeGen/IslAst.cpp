@@ -21,9 +21,8 @@
 
 #include "polly/CodeGen/CodeGeneration.h"
 #include "polly/CodeGen/IslAst.h"
-
-#include "polly/LinkAllPasses.h"
 #include "polly/Dependences.h"
+#include "polly/LinkAllPasses.h"
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
 

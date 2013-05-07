@@ -21,12 +21,10 @@
 //===----------------------------------------------------------------------===//
 //
 #include "polly/Dependences.h"
-
 #include "polly/LinkAllPasses.h"
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
 #include "polly/Support/GICHelper.h"
-
 #include <isl/aff.h>
 #include <isl/flow.h>
 #include <isl/map.h>

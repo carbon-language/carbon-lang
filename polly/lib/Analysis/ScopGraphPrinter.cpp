@@ -16,7 +16,6 @@
 
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopDetection.h"
-
 #include "llvm/Analysis/DOTGraphTraitsPass.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/RegionIterator.h"

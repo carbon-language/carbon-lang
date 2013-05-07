@@ -13,16 +13,14 @@
 
 #include "polly/TempScopInfo.h"
 #include "polly/MayAliasSet.h"
-
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/Analysis/RegionInfo.h"
-#include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AliasSetTracker.h"
+#include "llvm/Analysis/RegionInfo.h"
+#include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/Support/raw_ostream.h"
-
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 using namespace polly;

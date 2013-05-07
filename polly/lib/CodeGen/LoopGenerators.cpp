@@ -14,10 +14,9 @@
 
 #include "polly/ScopDetection.h"
 #include "polly/CodeGen/LoopGenerators.h"
-
-#include "llvm/IR/Module.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 using namespace llvm;

@@ -16,13 +16,12 @@
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
 #include "polly/ScopPass.h"
-
-#include "llvm/Support/ToolOutputFile.h"
-#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/system_error.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Assembly/Writer.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/ToolOutputFile.h"
+#include "llvm/Support/system_error.h"
 
 #define DEBUG_TYPE "polly-import-jscop"
 

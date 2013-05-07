@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/LinkAllPasses.h"
-
 #include "polly/Dependences.h"
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"

@@ -12,16 +12,15 @@
 //===----------------------------------------------------------------------===//
 //
 #include "polly/LinkAllPasses.h"
-#include "polly/ScopDetection.h"
-#include "polly/Support/ScopHelper.h"
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/CodeGen/Cloog.h"
-
+#include "polly/ScopDetection.h"
+#include "polly/Support/ScopHelper.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Transforms/Utils/Local.h"
 
 #define DEBUG_TYPE "polly-independent"
 #include "llvm/Support/Debug.h"

@@ -20,21 +20,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/RegisterPasses.h"
-#include "polly/LinkAllPasses.h"
-
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/CodeGen/Cloog.h"
 #include "polly/CodeGen/CodeGeneration.h"
 #include "polly/Dependences.h"
+#include "polly/LinkAllPasses.h"
 #include "polly/Options.h"
 #include "polly/ScopDetection.h"
 #include "polly/ScopInfo.h"
 #include "polly/TempScopInfo.h"
-
 #include "llvm/Analysis/CFGPrinter.h"
 #include "llvm/PassManager.h"
-#include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Vectorize.h"
 
 using namespace llvm;
