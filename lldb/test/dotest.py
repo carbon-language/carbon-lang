@@ -318,6 +318,15 @@ o GDB_REMOTE_LOG: if defined, specifies the log file pathname for the
     sys.exit(0)
 
 
+def unique_string_match(yourentry,list):
+	candidate = None
+	for item in list:
+		if item.startswith(yourentry):
+			if candidate:
+				return None
+			candidate = item
+	return candidate
+
 def parseOptionsAndInitTestdirs():
     """Initialize the list of directories containing our unittest scripts.
 
@@ -459,13 +468,18 @@ def parseOptionsAndInitTestdirs():
             archs = [platform_machine]
 
     if args.categoriesList:
+        finalCategoriesList = []
         for category in args.categoriesList:
+            origCategory = category
             if not(category in validCategories):
-                print "fatal error: category '" + category + "' is not a valid category"
+                category = unique_string_match(category,validCategories)
+            if not(category in validCategories) or category == None:
+                print "fatal error: category '" + origCategory + "' is not a valid category"
                 print "if you have added a new category, please edit dotest.py, adding your new category to validCategories"
                 print "else, please specify one or more of the following: " + str(validCategories.keys())
                 sys.exit(1)
-        categoriesList = set(args.categoriesList)
+            finalCategoriesList.append(category)
+        categoriesList = set(finalCategoriesList)
         useCategories = True
     else:
         categoriesList = []
