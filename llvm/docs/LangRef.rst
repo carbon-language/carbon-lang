@@ -4008,7 +4008,7 @@ Example:
       <result> = lshr i32 4, 1   ; yields {i32}:result = 2
       <result> = lshr i32 4, 2   ; yields {i32}:result = 1
       <result> = lshr i8  4, 3   ; yields {i8}:result = 0
-      <result> = lshr i8 -2, 1   ; yields {i8}:result = 0x7FFFFFFF
+      <result> = lshr i8 -2, 1   ; yields {i8}:result = 0x7F
       <result> = lshr i32 1, 32  ; undefined
       <result> = lshr <2 x i32> < i32 -2, i32 4>, < i32 1, i32 2>   ; yields: result=<2 x i32> < i32 0x7FFFFFFF, i32 1>
 
