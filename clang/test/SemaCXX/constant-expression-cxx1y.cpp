@@ -338,34 +338,63 @@ namespace compound_assign {
   constexpr bool test_int() {
     int a = 3;
     a += 6;
-    if (a != 9) throw 0;
+    if (a != 9) return false;
     a -= 2;
-    if (a != 7) throw 0;
+    if (a != 7) return false;
     a *= 3;
-    if (a != 21) throw 0;
-    a /= 10;
-    if (a != 2) throw 0;
+    if (a != 21) return false;
+    if (&(a /= 10) != &a) return false;
+    if (a != 2) return false;
     a <<= 3;
-    if (a != 16) throw 0;
+    if (a != 16) return false;
     a %= 6;
-    if (a != 4) throw 0;
+    if (a != 4) return false;
     a >>= 1;
-    if (a != 2) throw 0;
+    if (a != 2) return false;
     a ^= 10;
-    if (a != 8) throw 0;
+    if (a != 8) return false;
     a |= 5;
-    if (a != 13) throw 0;
+    if (a != 13) return false;
     a &= 14;
-    if (a != 12) throw 0;
+    if (a != 12) return false;
     return true;
   }
   static_assert(test_int(), "");
 
+  constexpr bool test_float() {
+    float f = 123.;
+    f *= 2;
+    if (f != 246.) return false;
+    if ((f -= 0.5) != 245.5) return false;
+    if (f != 245.5) return false;
+    f /= 0.5;
+    if (f != 491.) return false;
+    f += -40;
+    if (f != 451.) return false;
+    return true;
+  }
+  static_assert(test_float(), "");
+
+  constexpr bool test_ptr() {
+    int arr[123] = {};
+    int *p = arr;
+    if ((p += 4) != &arr[4]) return false;
+    if (p != &arr[4]) return false;
+    p += -1;
+    if (p != &arr[3]) return false;
+    if ((p -= -10) != &arr[13]) return false;
+    if (p != &arr[13]) return false;
+    p -= 11;
+    if (p != &arr[2]) return false;
+    return true;
+  }
+  static_assert(test_ptr(), "");
+
   template<typename T>
   constexpr bool test_overflow() {
     T a = 1;
-    while (a)
-      a *= 2; // expected-note {{value 2147483648 is outside the range}} expected-note {{ 9223372036854775808 }}
+    while (a != a / 2)
+      a *= 2; // expected-note {{value 2147483648 is outside the range}} expected-note {{ 9223372036854775808 }} expected-note {{floating point arithmetic produces an infinity}}
     return true;
   }
 
@@ -375,6 +404,7 @@ namespace compound_assign {
   static_assert(test_overflow<unsigned short>(), ""); // ok
   static_assert(test_overflow<unsigned long long>(), ""); // ok
   static_assert(test_overflow<long long>(), ""); // expected-error {{constant}} expected-note {{call}}
+  static_assert(test_overflow<float>(), ""); // expected-error {{constant}} expected-note {{call}}
 
   constexpr short test_promotion(short k) {
     short s = k;
@@ -384,6 +414,17 @@ namespace compound_assign {
   static_assert(test_promotion(100) == 10000, "");
   static_assert(test_promotion(200) == -25536, "");
   static_assert(test_promotion(256) == 0, "");
+
+  constexpr const char *test_bounds(const char *p, int o) {
+    return p += o; // expected-note {{element 5 of}} expected-note {{element -1 of}} expected-note {{element 1000 of}}
+  }
+  static_assert(test_bounds("foo", 0)[0] == 'f', "");
+  static_assert(test_bounds("foo", 3)[0] == 0, "");
+  static_assert(test_bounds("foo", 4)[-3] == 'o', "");
+  static_assert(test_bounds("foo" + 4, -4)[0] == 'f', "");
+  static_assert(test_bounds("foo", 5) != 0, ""); // expected-error {{constant}} expected-note {{call}}
+  static_assert(test_bounds("foo", -1) != 0, ""); // expected-error {{constant}} expected-note {{call}}
+  static_assert(test_bounds("foo", 1000) != 0, ""); // expected-error {{constant}} expected-note {{call}}
 }
 
 namespace loops {

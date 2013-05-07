@@ -23,8 +23,8 @@
 //    where it is possible to determine the evaluated result regardless.
 //
 //  * A set of notes indicating why the evaluation was not a constant expression
-//    (under the C++11 rules only, at the moment), or, if folding failed too,
-//    why the expression could not be folded.
+//    (under the C++11 / C++1y rules only, at the moment), or, if folding failed
+//    too, why the expression could not be folded.
 //
 // If we are checking for a potential constant expression, failure to constant
 // fold a potential constant sub-expression will be indicated by a 'false'
@@ -925,6 +925,13 @@ static bool EvaluateIgnoredValue(EvalInfo &Info, const Expr *E) {
   return true;
 }
 
+/// Sign- or zero-extend a value to 64 bits. If it's already 64 bits, just
+/// return its existing value.
+static int64_t getExtValue(const APSInt &Value) {
+  return Value.isSigned() ? Value.getSExtValue()
+                          : static_cast<int64_t>(Value.getZExtValue());
+}
+
 /// Should this call expression be treated as a string literal?
 static bool IsStringLiteralCall(const CallExpr *E) {
   unsigned Builtin = E->isBuiltinCall();
@@ -1421,6 +1428,33 @@ static bool handleIntIntBinOp(EvalInfo &Info, const Expr *E, const APSInt &LHS,
   }
 }
 
+/// Perform the given binary floating-point operation, in-place, on LHS.
+static bool handleFloatFloatBinOp(EvalInfo &Info, const Expr *E,
+                                  APFloat &LHS, BinaryOperatorKind Opcode,
+                                  const APFloat &RHS) {
+  switch (Opcode) {
+  default:
+    Info.Diag(E);
+    return false;
+  case BO_Mul:
+    LHS.multiply(RHS, APFloat::rmNearestTiesToEven);
+    break;
+  case BO_Add:
+    LHS.add(RHS, APFloat::rmNearestTiesToEven);
+    break;
+  case BO_Sub:
+    LHS.subtract(RHS, APFloat::rmNearestTiesToEven);
+    break;
+  case BO_Div:
+    LHS.divide(RHS, APFloat::rmNearestTiesToEven);
+    break;
+  }
+
+  if (LHS.isInfinity() || LHS.isNaN())
+    Info.CCEDiag(E, diag::note_constexpr_float_arithmetic) << LHS.isNaN();
+  return true;
+}
+
 /// Cast an lvalue referring to a base subobject to a derived class, by
 /// truncating the lvalue's path to the given length.
 static bool CastToDerivedClass(EvalInfo &Info, const Expr *E, LValue &Result,
@@ -1737,7 +1771,7 @@ static void expandArray(APValue &Array, unsigned Index) {
   Array.swap(NewValue);
 }
 
-/// Kinds of access we can perform on an object.
+/// Kinds of access we can perform on an object, for diagnostics.
 enum AccessKinds {
   AK_Read,
   AK_Assign,
@@ -2340,12 +2374,11 @@ struct CompoundAssignSubobjectHandler {
     return true;
   }
   bool found(APFloat &Value, QualType SubobjType) {
-    if (!checkConst(SubobjType))
-      return false;
-
-    // FIXME: Implement.
-    Info.Diag(E);
-    return false;
+    return checkConst(SubobjType) &&
+           HandleFloatToFloatCast(Info, E, SubobjType, PromotedLHSType,
+                                  Value) &&
+           handleFloatFloatBinOp(Info, E, Value, Opcode, RHS.getFloat()) &&
+           HandleFloatToFloatCast(Info, E, PromotedLHSType, SubobjType, Value);
   }
   bool foundPointer(APValue &Subobj, QualType SubobjType) {
     if (!checkConst(SubobjType))
@@ -2354,14 +2387,23 @@ struct CompoundAssignSubobjectHandler {
     QualType PointeeType;
     if (const PointerType *PT = SubobjType->getAs<PointerType>())
       PointeeType = PT->getPointeeType();
-    else {
+
+    if (PointeeType.isNull() || !RHS.isInt() ||
+        (Opcode != BO_Add && Opcode != BO_Sub)) {
       Info.Diag(E);
       return false;
     }
 
-    // FIXME: Implement.
-    Info.Diag(E);
-    return false;
+    int64_t Offset = getExtValue(RHS.getInt());
+    if (Opcode == BO_Sub)
+      Offset = -Offset;
+
+    LValue LVal;
+    LVal.setFrom(Info.Ctx, Subobj);
+    if (!HandleLValueArrayAdjustment(Info, E, LVal, PointeeType, Offset))
+      return false;
+    LVal.moveInto(Subobj);
+    return true;
   }
   bool foundString(APValue &Subobj, QualType SubobjType, uint64_t Character) {
     llvm_unreachable("shouldn't encounter string elements here");
@@ -3829,11 +3871,9 @@ bool LValueExprEvaluator::VisitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   APSInt Index;
   if (!EvaluateInteger(E->getIdx(), Index, Info))
     return false;
-  int64_t IndexValue
-    = Index.isSigned() ? Index.getSExtValue()
-                       : static_cast<int64_t>(Index.getZExtValue());
 
-  return HandleLValueArrayAdjustment(Info, E, Result, E->getType(), IndexValue);
+  return HandleLValueArrayAdjustment(Info, E, Result, E->getType(),
+                                     getExtValue(Index));
 }
 
 bool LValueExprEvaluator::VisitUnaryDeref(const UnaryOperator *E) {
@@ -3986,9 +4026,8 @@ bool PointerExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   llvm::APSInt Offset;
   if (!EvaluateInteger(IExp, Offset, Info) || !EvalPtrOK)
     return false;
-  int64_t AdditionalOffset
-    = Offset.isSigned() ? Offset.getSExtValue()
-                        : static_cast<int64_t>(Offset.getZExtValue());
+
+  int64_t AdditionalOffset = getExtValue(Offset);
   if (E->getOpcode() == BO_Sub)
     AdditionalOffset = -AdditionalOffset;
 
@@ -6137,7 +6176,7 @@ bool IntExprEvaluator::VisitOffsetOfExpr(const OffsetOfExpr *OOE) {
       CurrentType = AT->getElementType();
       CharUnits ElementSize = Info.Ctx.getTypeSizeInChars(CurrentType);
       Result += IdxResult.getSExtValue() * ElementSize;
-        break;
+      break;
     }
 
     case OffsetOfExpr::OffsetOfNode::Field: {
@@ -6568,28 +6607,8 @@ bool FloatExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   bool LHSOK = EvaluateFloat(E->getLHS(), Result, Info);
   if (!LHSOK && !Info.keepEvaluatingAfterFailure())
     return false;
-  if (!EvaluateFloat(E->getRHS(), RHS, Info) || !LHSOK)
-    return false;
-
-  switch (E->getOpcode()) {
-  default: return Error(E);
-  case BO_Mul:
-    Result.multiply(RHS, APFloat::rmNearestTiesToEven);
-    break;
-  case BO_Add:
-    Result.add(RHS, APFloat::rmNearestTiesToEven);
-    break;
-  case BO_Sub:
-    Result.subtract(RHS, APFloat::rmNearestTiesToEven);
-    break;
-  case BO_Div:
-    Result.divide(RHS, APFloat::rmNearestTiesToEven);
-    break;
-  }
-
-  if (Result.isInfinity() || Result.isNaN())
-    CCEDiag(E, diag::note_constexpr_float_arithmetic) << Result.isNaN();
-  return true;
+  return EvaluateFloat(E->getRHS(), RHS, Info) && LHSOK &&
+         handleFloatFloatBinOp(Info, E, Result, E->getOpcode(), RHS);
 }
 
 bool FloatExprEvaluator::VisitFloatingLiteral(const FloatingLiteral *E) {
