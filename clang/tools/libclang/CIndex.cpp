@@ -426,6 +426,9 @@ bool CursorVisitor::visitPreprocessedEntities(InputIterator First,
       continue;
 
     PreprocessedEntity *PPE = *First;
+    if (!PPE)
+      continue;
+
     if (MacroExpansion *ME = dyn_cast<MacroExpansion>(PPE)) {
       if (Visit(MakeMacroExpansionCursor(ME, TU)))
         return true;
