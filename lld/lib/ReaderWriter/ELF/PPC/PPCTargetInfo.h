@@ -22,10 +22,7 @@ namespace elf {
 class PPCTargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
   PPCTargetInfo(llvm::Triple triple)
-    : ELFTargetInfo(triple) {
-    _targetHandler = std::unique_ptr<TargetHandlerBase>(
-        new PPCTargetHandler(*this));
-  }
+    : ELFTargetInfo(triple, std::unique_ptr<TargetHandlerBase>(new PPCTargetHandler(*this))) {}
 
   virtual bool isLittleEndian() const { return false; }
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;

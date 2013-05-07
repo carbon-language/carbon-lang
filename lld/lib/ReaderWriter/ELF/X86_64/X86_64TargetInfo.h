@@ -29,10 +29,7 @@ enum {
 class X86_64TargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
   X86_64TargetInfo(llvm::Triple triple) 
-    : ELFTargetInfo(triple) {
-    _targetHandler =
-        std::unique_ptr<TargetHandlerBase>(new X86_64TargetHandler(*this));
-  }
+    : ELFTargetInfo(triple, std::unique_ptr<TargetHandlerBase>(new X86_64TargetHandler(*this))) {}
 
   virtual void addPasses(PassManager &) const;
 

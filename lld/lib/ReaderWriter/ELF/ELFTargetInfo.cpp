@@ -12,6 +12,7 @@
 #include "TargetHandler.h"
 #include "Targets.h"
 
+#include "lld/Core/Instrumentation.h"
 #include "lld/Passes/LayoutPass.h"
 #include "lld/ReaderWriter/ReaderLinkerScript.h"
 
@@ -21,17 +22,17 @@
 #include "llvm/Support/Path.h"
 
 namespace lld {
-ELFTargetInfo::ELFTargetInfo(llvm::Triple triple)
- : _outputFileType(elf::ET_EXEC)
- , _triple(triple)
- , _baseAddress(0)
- , _isStaticExecutable(false)
- , _outputYAML(false)
- , _noInhibitExec(false)
- , _mergeCommonStrings(false)
- , _runLayoutPass(true)
- , _useShlibUndefines(false) {
-}
+ELFTargetInfo::ELFTargetInfo(llvm::Triple triple, std::unique_ptr<TargetHandlerBase> targetHandler)
+    : _outputFileType(elf::ET_EXEC),
+      _triple(triple),
+      _targetHandler(std::move(targetHandler))
+    , _baseAddress(0)
+    , _isStaticExecutable(false)
+    , _outputYAML(false)
+    , _noInhibitExec(false)
+    , _mergeCommonStrings(false)
+    , _runLayoutPass(true)
+    , _useShlibUndefines(false) {}
 
 bool ELFTargetInfo::is64Bits() const {
   return getTriple().isArch64Bit();
@@ -74,10 +75,13 @@ bool ELFTargetInfo::validate(raw_ostream &diagnostics) {
     return true;
   }
 
+  _elfReader = createReaderELF(*this);
+  _yamlReader = createReaderYAML(*this);
+  _linkerScriptReader.reset(new ReaderLinkerScript(*this));
+  _writer = _outputYAML ? createWriterYAML(*this) : createWriterELF(*this);
 
   return false;
 }
-
 
 bool ELFTargetInfo::isDynamic() const {
   switch (_outputFileType) {
@@ -94,34 +98,20 @@ bool ELFTargetInfo::isDynamic() const {
 
 error_code ELFTargetInfo::parseFile(std::unique_ptr<MemoryBuffer> &mb,
                           std::vector<std::unique_ptr<File>> &result) const {
-  if (!_elfReader)
-    _elfReader = createReaderELF(*this);
   error_code ec = _elfReader->parseFile(mb, result);
   if (ec) {
     // Not an ELF file, check file extension to see if it might be yaml
     StringRef path = mb->getBufferIdentifier();
-    if ( path.endswith(".objtxt") ) {
-      if (!_yamlReader)
-          _yamlReader = createReaderYAML(*this);
+    if (path.endswith(".objtxt"))
       ec = _yamlReader->parseFile(mb, result);
-    }
-    if (ec) {
+    if (ec)
       // Not a yaml file, assume it is a linkerscript
-      if (!_linkerScriptReader)
-        _linkerScriptReader.reset(new ReaderLinkerScript(*this));
       ec = _linkerScriptReader->parseFile(mb, result);
-    }
   }
   return ec;
 }
 
 Writer &ELFTargetInfo::writer() const {
-  if (!_writer) {
-    if (_outputYAML)
-      _writer = createWriterYAML(*this);
-    else
-      _writer = createWriterELF(*this);
-  }
   return *_writer;
 }
 

@@ -23,10 +23,7 @@ namespace elf {
 class HexagonTargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
   HexagonTargetInfo(llvm::Triple triple) 
-    : ELFTargetInfo(triple) {
-    _targetHandler = std::unique_ptr<TargetHandlerBase>(
-        new HexagonTargetHandler(*this));
-  }
+      : ELFTargetInfo(triple, std::unique_ptr<TargetHandlerBase>(new HexagonTargetHandler(*this))) {}
 
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;

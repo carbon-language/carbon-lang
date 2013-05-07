@@ -112,7 +112,7 @@ public:
 private:
   ELFTargetInfo() LLVM_DELETED_FUNCTION;
 protected:
-  ELFTargetInfo(llvm::Triple);
+  ELFTargetInfo(llvm::Triple, std::unique_ptr<TargetHandlerBase>);
 
   virtual Writer &writer() const;
 
@@ -128,10 +128,10 @@ protected:
   bool                               _useShlibUndefines;
   std::vector<StringRef>             _inputSearchPaths;
   llvm::BumpPtrAllocator             _extraStrings;
-  mutable std::unique_ptr<Reader>    _elfReader;
-  mutable std::unique_ptr<Reader>    _yamlReader;
-  mutable std::unique_ptr<Writer>    _writer;
-  mutable std::unique_ptr<Reader>    _linkerScriptReader;
+  std::unique_ptr<Reader>            _elfReader;
+  std::unique_ptr<Reader>            _yamlReader;
+  std::unique_ptr<Writer>            _writer;
+  std::unique_ptr<Reader>            _linkerScriptReader;
 };
 } // end namespace lld
 
