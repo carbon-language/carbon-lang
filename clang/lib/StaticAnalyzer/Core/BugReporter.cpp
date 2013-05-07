@@ -1848,11 +1848,11 @@ static bool isConditionForTerminator(const Stmt *S, const Stmt *Cond) {
   }
 }
 
-static bool isIncrementInForLoop(const Stmt *S, const Stmt *FL) {
+static bool isIncrementOrInitInForLoop(const Stmt *S, const Stmt *FL) {
   const ForStmt *FS = dyn_cast<ForStmt>(FL);
-  if (!FL)
+  if (!FS)
     return false;
-  return FS->getInc() == S;
+  return FS->getInc() == S || FS->getInit() == S;
 }
 
 typedef llvm::DenseSet<const PathDiagnosticCallPiece *>
@@ -1907,6 +1907,13 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
         // again.
         return true;
       }
+
+      // If the first edge (in isolation) is a transition from the
+      // initialization or increment in a for loop then remove it.
+      if (level1 && isIncrementOrInitInForLoop(s1Start, level1)) {
+        path.erase(I);
+        return true;
+      }
     }
 
     PathPieces::iterator NextI = I; ++NextI;
@@ -1956,15 +1963,16 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
     // NOTE: this will be limited later in cases where we add barriers
     // to prevent this optimization.
     //
-    if (s1End && s1End == s2Start &&
-        isa<Expr>(s1End) &&
-        (PM.isConsumedExpr(cast<Expr>(s1End)) ||
-         isIncrementInForLoop(s1End, level2)) &&
-        (!level2 || !isConditionForTerminator(level2, s1End))) {
-      PieceI->setEndLocation(PieceNextI->getEndLocation());
-      path.erase(NextI);
-      hasChanges = true;
-      continue;
+    if (s1End && s1End == s2Start && level2) {
+      if (isIncrementOrInitInForLoop(s1End, level2) ||
+          (isa<Expr>(s1End) && PM.isConsumedExpr(cast<Expr>(s1End)) &&
+            !isConditionForTerminator(level2, s1End)))
+      {
+        PieceI->setEndLocation(PieceNextI->getEndLocation());
+        path.erase(NextI);
+        hasChanges = true;
+        continue;
+      }
     }
 
     // No changes at this index?  Move to the next one.
