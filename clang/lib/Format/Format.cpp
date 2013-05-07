@@ -28,8 +28,58 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/YAMLTraits.h"
 #include <queue>
 #include <string>
+
+namespace llvm {
+namespace yaml {
+template <>
+struct ScalarEnumerationTraits<clang::format::FormatStyle::LanguageStandard> {
+  static void enumeration(IO &io,
+                          clang::format::FormatStyle::LanguageStandard &value) {
+    io.enumCase(value, "C++03", clang::format::FormatStyle::LS_Cpp03);
+    io.enumCase(value, "C++11", clang::format::FormatStyle::LS_Cpp11);
+    io.enumCase(value, "Auto", clang::format::FormatStyle::LS_Auto);
+  }
+};
+
+template <> struct MappingTraits<clang::format::FormatStyle> {
+  static void mapping(llvm::yaml::IO &IO, clang::format::FormatStyle &Style) {
+    if (!IO.outputting()) {
+      StringRef BasedOnStyle;
+      IO.mapOptional("BasedOnStyle", BasedOnStyle);
+
+      if (!BasedOnStyle.empty())
+        Style = clang::format::getPredefinedStyle(BasedOnStyle);
+    }
+
+    IO.mapOptional("AccessModifierOffset", Style.AccessModifierOffset);
+    IO.mapOptional("AlignEscapedNewlinesLeft", Style.AlignEscapedNewlinesLeft);
+    IO.mapOptional("AllowAllParametersOfDeclarationOnNextLine",
+                   Style.AllowAllParametersOfDeclarationOnNextLine);
+    IO.mapOptional("AllowShortIfStatementsOnASingleLine",
+                   Style.AllowShortIfStatementsOnASingleLine);
+    IO.mapOptional("BinPackParameters", Style.BinPackParameters);
+    IO.mapOptional("ColumnLimit", Style.ColumnLimit);
+    IO.mapOptional("ConstructorInitializerAllOnOneLineOrOnePerLine",
+                   Style.ConstructorInitializerAllOnOneLineOrOnePerLine);
+    IO.mapOptional("DerivePointerBinding", Style.DerivePointerBinding);
+    IO.mapOptional("IndentCaseLabels", Style.IndentCaseLabels);
+    IO.mapOptional("MaxEmptyLinesToKeep", Style.MaxEmptyLinesToKeep);
+    IO.mapOptional("ObjCSpaceBeforeProtocolList",
+                   Style.ObjCSpaceBeforeProtocolList);
+    IO.mapOptional("PenaltyExcessCharacter", Style.PenaltyExcessCharacter);
+    IO.mapOptional("PenaltyReturnTypeOnItsOwnLine",
+                   Style.PenaltyReturnTypeOnItsOwnLine);
+    IO.mapOptional("PointerBindsToType", Style.PointerBindsToType);
+    IO.mapOptional("SpacesBeforeTrailingComments",
+                   Style.SpacesBeforeTrailingComments);
+    IO.mapOptional("Standard", Style.Standard);
+  }
+};
+}
+}
 
 namespace clang {
 namespace format {
@@ -96,6 +146,37 @@ FormatStyle getMozillaStyle() {
   MozillaStyle.PenaltyReturnTypeOnItsOwnLine = 200;
   MozillaStyle.PointerBindsToType = true;
   return MozillaStyle;
+}
+
+FormatStyle getPredefinedStyle(StringRef Name) {
+  if (Name.equals_lower("llvm"))
+    return getLLVMStyle();
+  if (Name.equals_lower("chromium"))
+    return getChromiumStyle();
+  if (Name.equals_lower("mozilla"))
+    return getMozillaStyle();
+  if (Name.equals_lower("google"))
+    return getGoogleStyle();
+
+  llvm::errs() << "Unknown style " << Name << ", using Google style.\n";
+  return getGoogleStyle();
+}
+
+llvm::error_code parseConfiguration(StringRef Text, FormatStyle *Style) {
+  llvm::yaml::Input Input(Text);
+  Input >> *Style;
+  return Input.error();
+}
+
+std::string configurationAsText(const FormatStyle &Style) {
+  std::string Text;
+  llvm::raw_string_ostream Stream(Text);
+  llvm::yaml::Output Output(Stream);
+  // We use the same mapping method for input and output, so we need a non-const
+  // reference here.
+  FormatStyle NonConstStyle = Style;
+  Output << NonConstStyle;
+  return Text;
 }
 
 // Returns the length of everything up to the first possible line break after

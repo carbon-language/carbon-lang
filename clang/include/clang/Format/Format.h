@@ -17,6 +17,7 @@
 
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Tooling/Refactoring.h"
+#include "llvm/Support/system_error.h"
 
 namespace clang {
 
@@ -109,6 +110,18 @@ FormatStyle getChromiumStyle();
 /// \brief Returns a format style complying with Mozilla's style guide:
 /// https://developer.mozilla.org/en-US/docs/Developer_Guide/Coding_Style.
 FormatStyle getMozillaStyle();
+
+/// \brief Returns a predefined style by name.
+///
+/// Currently supported names: LLVM, Google, Chromium, Mozilla. Names are
+/// compared case-insensitively.
+FormatStyle getPredefinedStyle(StringRef Name);
+
+/// \brief Parse configuration from YAML-formatted text.
+llvm::error_code parseConfiguration(StringRef Text, FormatStyle *Style);
+
+/// \brief Gets configuration in a YAML string.
+std::string configurationAsText(const FormatStyle &Style);
 
 /// \brief Reformats the given \p Ranges in the token stream coming out of
 /// \c Lex.
