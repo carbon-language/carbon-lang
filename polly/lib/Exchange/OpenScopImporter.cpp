@@ -38,10 +38,11 @@ static cl::opt<std::string>
 ImportDir("polly-import-dir",
           cl::desc("The directory to import the .scop files from."), cl::Hidden,
           cl::value_desc("Directory path"), cl::ValueRequired, cl::init("."));
-static cl::opt<std::string> ImportPostfix(
-    "polly-import-postfix",
-    cl::desc("Postfix to append to the import .scop files."), cl::Hidden,
-    cl::value_desc("File postfix"), cl::ValueRequired, cl::init(""));
+static cl::opt<std::string>
+ImportPostfix("polly-import-postfix",
+              cl::desc("Postfix to append to the import .scop files."),
+              cl::Hidden, cl::value_desc("File postfix"), cl::ValueRequired,
+              cl::init(""));
 
 struct ScopImporter : public ScopPass {
   static char ID;
@@ -237,9 +238,9 @@ void ScopImporter::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<Dependences>();
 }
 
-static RegisterPass<ScopImporter>
-A("polly-import", "Polly - Import Scops with OpenScop library"
-                  " (Reads a .scop file for each Scop)");
+static RegisterPass<ScopImporter> A("polly-import",
+                                    "Polly - Import Scops with OpenScop library"
+                                    " (Reads a .scop file for each Scop)");
 
 Pass *polly::createScopImporterPass() { return new ScopImporter(); }
 

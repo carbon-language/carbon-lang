@@ -229,8 +229,8 @@ MemoryAccess::~MemoryAccess() {
   isl_map_free(newAccessRelation);
 }
 
-static void
-replace(std::string &str, const std::string &find, const std::string &replace) {
+static void replace(std::string &str, const std::string &find,
+                    const std::string &replace) {
   size_t pos = 0;
   while ((pos = str.find(find, pos)) != std::string::npos) {
     str.replace(pos, find.length(), replace);
@@ -543,8 +543,9 @@ __isl_give isl_set *ScopStmt::addLoopBoundsToDomain(__isl_take isl_set *Domain,
   return Domain;
 }
 
-__isl_give isl_set *ScopStmt::addConditionsToDomain(
-    __isl_take isl_set *Domain, TempScop &tempScop, const Region &CurRegion) {
+__isl_give isl_set *ScopStmt::addConditionsToDomain(__isl_take isl_set *Domain,
+                                                    TempScop &tempScop,
+                                                    const Region &CurRegion) {
   const Region *TopRegion = tempScop.getMaxRegion().getParent(),
                *CurrentRegion = &CurRegion;
   const BasicBlock *BranchingBB = BB;
@@ -566,8 +567,8 @@ __isl_give isl_set *ScopStmt::addConditionsToDomain(
   return Domain;
 }
 
-__isl_give isl_set *
-ScopStmt::buildDomain(TempScop &tempScop, const Region &CurRegion) {
+__isl_give isl_set *ScopStmt::buildDomain(TempScop &tempScop,
+                                          const Region &CurRegion) {
   isl_space *Space;
   isl_set *Domain;
   isl_id *Id;

@@ -181,8 +181,8 @@ bool PollyIndVarSimplify::isValidRewrite(Value *FromVal, Value *ToVal) {
 /// before the user. SCEVExpander or LICM will hoist loop invariants out of the
 /// loop. For PHI nodes, there may be multiple uses, so compute the nearest
 /// common dominator for the incoming blocks.
-static Instruction *
-getInsertPointForUses(Instruction *User, Value *Def, DominatorTree *DT) {
+static Instruction *getInsertPointForUses(Instruction *User, Value *Def,
+                                          DominatorTree *DT) {
   PHINode *PHI = dyn_cast<PHINode>(User);
   if (!PHI)
     return User;
@@ -492,8 +492,8 @@ void PollyIndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
 /// happen later, except that it's more powerful in some cases, because it's
 /// able to brute-force evaluate arbitrary instructions as long as they have
 /// constant operands at the beginning of the loop.
-void
-PollyIndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
+void PollyIndVarSimplify::RewriteLoopExitValues(Loop *L,
+                                                SCEVExpander &Rewriter) {
   // Verify the input to the pass in already in LCSSA form.
   assert(L->isLCSSAForm(*DT));
 
@@ -645,8 +645,8 @@ static bool isSafe(const SCEV *S, const Loop *L, ScalarEvolution *SE) {
   return false;
 }
 
-void
-PollyIndVarSimplify::RewriteIVExpressions(Loop *L, SCEVExpander &Rewriter) {
+void PollyIndVarSimplify::RewriteIVExpressions(Loop *L,
+                                               SCEVExpander &Rewriter) {
   // Rewrite all induction variable expressions in terms of the canonical
   // induction variable.
   //
@@ -834,8 +834,8 @@ public:
   PHINode *CreateWideIV(SCEVExpander &Rewriter);
 
 protected:
-  Value *
-  getExtend(Value *NarrowOper, Type *WideType, bool IsSigned, Instruction *Use);
+  Value *getExtend(Value *NarrowOper, Type *WideType, bool IsSigned,
+                   Instruction *Use);
 
   Instruction *CloneIVUser(NarrowIVDefUse DU);
 
@@ -1462,9 +1462,9 @@ static bool AlmostDeadIV(PHINode *Phi, BasicBlock *LatchBlock, Value *Cond) {
 /// FIXME: Accept non-unit stride as long as SCEV can reduce BECount * Stride.
 /// This is difficult in general for SCEV because of potential overflow. But we
 /// could at least handle constant BECounts.
-static PHINode *
-FindLoopCounter(Loop *L, const SCEV *BECount, ScalarEvolution *SE,
-                DominatorTree *DT, const DataLayout *TD) {
+static PHINode *FindLoopCounter(Loop *L, const SCEV *BECount,
+                                ScalarEvolution *SE, DominatorTree *DT,
+                                const DataLayout *TD) {
   uint64_t BCWidth = SE->getTypeSizeInBits(BECount->getType());
 
   Value *Cond =

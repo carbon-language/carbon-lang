@@ -571,9 +571,9 @@ void ScopExporter::getAnalysisUsage(AnalysisUsage &AU) const {
   ScopPass::getAnalysisUsage(AU);
 }
 
-static RegisterPass<ScopExporter>
-A("polly-export", "Polly - Export Scops with OpenScop library"
-                  " (Writes a .scop file for each Scop)");
+static RegisterPass<ScopExporter> A("polly-export",
+                                    "Polly - Export Scops with OpenScop library"
+                                    " (Writes a .scop file for each Scop)");
 
 Pass *polly::createScopExporterPass() { return new ScopExporter(); }
 

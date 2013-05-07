@@ -37,9 +37,10 @@ Aligned("enable-polly-aligned", cl::desc("Assumed aligned memory accesses."),
         cl::Hidden, cl::value_desc("OpenMP code generation enabled if true"),
         cl::init(false), cl::ZeroOrMore);
 
-static cl::opt<bool, true> SCEVCodegenF(
-    "polly-codegen-scev", cl::desc("Use SCEV based code generation."),
-    cl::Hidden, cl::location(SCEVCodegen), cl::init(false), cl::ZeroOrMore);
+static cl::opt<bool, true>
+SCEVCodegenF("polly-codegen-scev", cl::desc("Use SCEV based code generation."),
+             cl::Hidden, cl::location(SCEVCodegen), cl::init(false),
+             cl::ZeroOrMore);
 
 bool polly::SCEVCodegen;
 
@@ -284,9 +285,11 @@ Value *BlockGenerator::getNewAccessOperand(
   return NewOperand;
 }
 
-Value *BlockGenerator::generateLocationAccessed(
-    const Instruction *Inst, const Value *Pointer, ValueMapT &BBMap,
-    ValueMapT &GlobalMap, LoopToScevMapT &LTS) {
+Value *BlockGenerator::generateLocationAccessed(const Instruction *Inst,
+                                                const Value *Pointer,
+                                                ValueMapT &BBMap,
+                                                ValueMapT &GlobalMap,
+                                                LoopToScevMapT &LTS) {
   MemoryAccess &Access = Statement.getAccessFor(Inst);
   isl_map *CurrentAccessRelation = Access.getAccessRelation();
   isl_map *NewAccessRelation = Access.getNewAccessRelation();
@@ -314,9 +317,10 @@ Loop *BlockGenerator::getLoopForInst(const llvm::Instruction *Inst) {
   return P->getAnalysis<LoopInfo>().getLoopFor(Inst->getParent());
 }
 
-Value *
-BlockGenerator::generateScalarLoad(const LoadInst *Load, ValueMapT &BBMap,
-                                   ValueMapT &GlobalMap, LoopToScevMapT &LTS) {
+Value *BlockGenerator::generateScalarLoad(const LoadInst *Load,
+                                          ValueMapT &BBMap,
+                                          ValueMapT &GlobalMap,
+                                          LoopToScevMapT &LTS) {
   const Value *Pointer = Load->getPointerOperand();
   const Instruction *Inst = dyn_cast<Instruction>(Load);
   Value *NewPointer =
@@ -326,9 +330,10 @@ BlockGenerator::generateScalarLoad(const LoadInst *Load, ValueMapT &BBMap,
   return ScalarLoad;
 }
 
-Value *
-BlockGenerator::generateScalarStore(const StoreInst *Store, ValueMapT &BBMap,
-                                    ValueMapT &GlobalMap, LoopToScevMapT &LTS) {
+Value *BlockGenerator::generateScalarStore(const StoreInst *Store,
+                                           ValueMapT &BBMap,
+                                           ValueMapT &GlobalMap,
+                                           LoopToScevMapT &LTS) {
   const Value *Pointer = Store->getPointerOperand();
   Value *NewPointer =
       generateLocationAccessed(Store, Pointer, BBMap, GlobalMap, LTS);
@@ -338,9 +343,9 @@ BlockGenerator::generateScalarStore(const StoreInst *Store, ValueMapT &BBMap,
   return Builder.CreateStore(ValueOperand, NewPointer);
 }
 
-void
-BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
-                                ValueMapT &GlobalMap, LoopToScevMapT &LTS) {
+void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
+                                     ValueMapT &GlobalMap,
+                                     LoopToScevMapT &LTS) {
   // Terminator instructions control the control flow. They are explicitly
   // expressed in the clast and do not need to be copied.
   if (Inst->isTerminator())
@@ -377,19 +382,22 @@ void BlockGenerator::copyBB(ValueMapT &GlobalMap, LoopToScevMapT &LTS) {
     copyInstruction(II, BBMap, GlobalMap, LTS);
 }
 
-VectorBlockGenerator::VectorBlockGenerator(
-    IRBuilder<> &B, VectorValueMapT &GlobalMaps,
-    std::vector<LoopToScevMapT> &VLTS, ScopStmt &Stmt,
-    __isl_keep isl_map *Schedule, Pass *P)
+VectorBlockGenerator::VectorBlockGenerator(IRBuilder<> &B,
+                                           VectorValueMapT &GlobalMaps,
+                                           std::vector<LoopToScevMapT> &VLTS,
+                                           ScopStmt &Stmt,
+                                           __isl_keep isl_map *Schedule,
+                                           Pass *P)
     : BlockGenerator(B, Stmt, P), GlobalMaps(GlobalMaps), VLTS(VLTS),
       Schedule(Schedule) {
   assert(GlobalMaps.size() > 1 && "Only one vector lane found");
   assert(Schedule && "No statement domain provided");
 }
 
-Value *
-VectorBlockGenerator::getVectorValue(const Value *Old, ValueMapT &VectorMap,
-                                     VectorValueMapT &ScalarMaps, Loop *L) {
+Value *VectorBlockGenerator::getVectorValue(const Value *Old,
+                                            ValueMapT &VectorMap,
+                                            VectorValueMapT &ScalarMaps,
+                                            Loop *L) {
   if (VectorMap.count(Old))
     return VectorMap[Old];
 
@@ -456,8 +464,9 @@ Value *VectorBlockGenerator::generateStrideZeroLoad(const LoadInst *Load,
   return VectorLoad;
 }
 
-Value *VectorBlockGenerator::generateUnknownStrideLoad(
-    const LoadInst *Load, VectorValueMapT &ScalarMaps) {
+Value *
+VectorBlockGenerator::generateUnknownStrideLoad(const LoadInst *Load,
+                                                VectorValueMapT &ScalarMaps) {
   int VectorWidth = getVectorWidth();
   const Value *Pointer = Load->getPointerOperand();
   VectorType *VectorType = VectorType::get(
@@ -477,8 +486,9 @@ Value *VectorBlockGenerator::generateUnknownStrideLoad(
   return Vector;
 }
 
-void VectorBlockGenerator::generateLoad(
-    const LoadInst *Load, ValueMapT &VectorMap, VectorValueMapT &ScalarMaps) {
+void VectorBlockGenerator::generateLoad(const LoadInst *Load,
+                                        ValueMapT &VectorMap,
+                                        VectorValueMapT &ScalarMaps) {
   if (PollyVectorizerChoice >= VECTORIZER_FIRST_NEED_GROUPED_UNROLL ||
       !VectorType::isValidElementType(Load->getType())) {
     for (int i = 0; i < getVectorWidth(); i++)
@@ -530,8 +540,9 @@ void VectorBlockGenerator::copyBinaryInst(const BinaryOperator *Inst,
   VectorMap[Inst] = NewInst;
 }
 
-void VectorBlockGenerator::copyStore(
-    const StoreInst *Store, ValueMapT &VectorMap, VectorValueMapT &ScalarMaps) {
+void VectorBlockGenerator::copyStore(const StoreInst *Store,
+                                     ValueMapT &VectorMap,
+                                     VectorValueMapT &ScalarMaps) {
   int VectorWidth = getVectorWidth();
 
   MemoryAccess &Access = Statement.getAccessFor(Store);

@@ -79,9 +79,9 @@ IgnoreAliasing("polly-ignore-aliasing",
                cl::desc("Ignore possible aliasing of the array bases"),
                cl::Hidden, cl::init(false));
 
-static cl::opt<bool>
-ReportLevel("polly-report", cl::desc("Print information about Polly"),
-            cl::Hidden, cl::init(false));
+static cl::opt<bool> ReportLevel("polly-report",
+                                 cl::desc("Print information about Polly"),
+                                 cl::Hidden, cl::init(false));
 
 static cl::opt<bool>
 AllowNonAffine("polly-allow-nonaffine",
@@ -150,8 +150,8 @@ std::string ScopDetection::regionIsInvalidBecause(const Region *R) const {
   return InvalidRegions.find(R)->second;
 }
 
-bool
-ScopDetection::isValidCFG(BasicBlock &BB, DetectionContext &Context) const {
+bool ScopDetection::isValidCFG(BasicBlock &BB,
+                               DetectionContext &Context) const {
   Region &RefRegion = Context.CurRegion;
   TerminatorInst *TI = BB.getTerminator();
 
@@ -315,8 +315,8 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   return true;
 }
 
-bool
-ScopDetection::hasScalarDependency(Instruction &Inst, Region &RefRegion) const {
+bool ScopDetection::hasScalarDependency(Instruction &Inst,
+                                        Region &RefRegion) const {
   for (Instruction::use_iterator UI = Inst.use_begin(), UE = Inst.use_end();
        UI != UE; ++UI)
     if (Instruction *Use = dyn_cast<Instruction>(*UI))
@@ -549,7 +549,7 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
     return false;
   }
 
-  if (!R.getEnteringBlock()){
+  if (!R.getEnteringBlock()) {
     Loop *L = LI->getLoopFor(R.getEntry());
     if (L && !L->isLoopSimplifyForm())
       INVALID(SimpleLoop, "Loop not in simplify form is invalid!");

@@ -279,10 +279,11 @@ class ScopStmt {
   /// Build the statment.
   //@{
   __isl_give isl_set *buildConditionSet(const Comparison &Cmp);
-  __isl_give isl_set *addConditionsToDomain(
-      __isl_take isl_set *Domain, TempScop &tempScop, const Region &CurRegion);
-  __isl_give isl_set *
-  addLoopBoundsToDomain(__isl_take isl_set *Domain, TempScop &tempScop);
+  __isl_give isl_set *addConditionsToDomain(__isl_take isl_set *Domain,
+                                            TempScop &tempScop,
+                                            const Region &CurRegion);
+  __isl_give isl_set *addLoopBoundsToDomain(__isl_take isl_set *Domain,
+                                            TempScop &tempScop);
   __isl_give isl_set *buildDomain(TempScop &tempScop, const Region &CurRegion);
   void buildScattering(SmallVectorImpl<unsigned> &Scatter);
   void buildAccesses(TempScop &tempScop, const Region &CurRegion);

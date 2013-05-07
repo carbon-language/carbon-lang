@@ -492,8 +492,8 @@ ScopLib::~ScopLib() {
 /// @param Space An isl space object, describing how to spilt the dimensions.
 ///
 /// @return An isl constraint representing this integer array.
-isl_constraint *
-constraintFromMatrixRow(isl_int *row, __isl_take isl_space *Space) {
+isl_constraint *constraintFromMatrixRow(isl_int *row,
+                                        __isl_take isl_space *Space) {
   isl_constraint *c;
 
   unsigned NbIn = isl_space_dim(Space, isl_dim_in);
@@ -563,8 +563,8 @@ isl_map *mapFromMatrix(scoplib_matrix_p m, __isl_take isl_space *Space,
 /// @param Space An isl space object, describing how to spilt the dimensions.
 ///
 /// @return An isl constraint representing this integer array.
-isl_constraint *
-constraintFromMatrixRowFull(isl_int *row, __isl_take isl_space *Space) {
+isl_constraint *constraintFromMatrixRowFull(isl_int *row,
+                                            __isl_take isl_space *Space) {
   isl_constraint *c;
 
   unsigned NbOut = isl_space_dim(Space, isl_dim_out);
@@ -621,8 +621,8 @@ isl_map *mapFromMatrix(scoplib_matrix_p m, __isl_take isl_space *Space) {
 /// @param PollyStmt The statement to create the scattering for.
 ///
 /// @return An isl_map describing the scattering.
-isl_map *
-scatteringForStmt(scoplib_matrix_p m, ScopStmt *PollyStmt, int scatteringDims) {
+isl_map *scatteringForStmt(scoplib_matrix_p m, ScopStmt *PollyStmt,
+                           int scatteringDims) {
 
   unsigned NbParam = PollyStmt->getNumParams();
   unsigned NbIterators = PollyStmt->getNumIterators();

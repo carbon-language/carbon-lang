@@ -66,10 +66,10 @@ public:
   ///                    instructions that form the actual loop body.
   ///
   /// @return Value*     The newly created induction variable for this loop.
-  Value *
-  createParallelLoop(Value *LowerBound, Value *UpperBound, Value *Stride,
-                     SetVector<Value *> &UsedValues, ValueToValueMapTy &VMap,
-                     BasicBlock::iterator *LoopBody);
+  Value *createParallelLoop(Value *LowerBound, Value *UpperBound, Value *Stride,
+                            SetVector<Value *> &UsedValues,
+                            ValueToValueMapTy &VMap,
+                            BasicBlock::iterator *LoopBody);
 
 private:
   IRBuilder<> &Builder;
@@ -103,9 +103,9 @@ private:
   /// @param SubFunction  The newly created SubFunction is returned here.
   ///
   /// @return Value*      The newly created induction variable.
-  Value *
-  createSubfunction(Value *Stride, Value *Struct, SetVector<Value *> UsedValues,
-                    ValueToValueMapTy &VMap, Function **SubFunction);
+  Value *createSubfunction(Value *Stride, Value *Struct,
+                           SetVector<Value *> UsedValues,
+                           ValueToValueMapTy &VMap, Function **SubFunction);
 
   /// @brief Create the definition of the OpenMP subfunction.
   Function *createSubfunctionDefinition();

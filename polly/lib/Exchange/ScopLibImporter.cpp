@@ -32,14 +32,16 @@ using namespace llvm;
 using namespace polly;
 
 namespace {
-static cl::opt<std::string> ImportDir(
-    "polly-import-scoplib-dir",
-    cl::desc("The directory to import the .scoplib files from."), cl::Hidden,
-    cl::value_desc("Directory path"), cl::ValueRequired, cl::init("."));
-static cl::opt<std::string> ImportPostfix(
-    "polly-import-scoplib-postfix",
-    cl::desc("Postfix to append to the import .scoplib files."), cl::Hidden,
-    cl::value_desc("File postfix"), cl::ValueRequired, cl::init(""));
+static cl::opt<std::string>
+ImportDir("polly-import-scoplib-dir",
+          cl::desc("The directory to import the .scoplib files from."),
+          cl::Hidden, cl::value_desc("Directory path"), cl::ValueRequired,
+          cl::init("."));
+static cl::opt<std::string>
+ImportPostfix("polly-import-scoplib-postfix",
+              cl::desc("Postfix to append to the import .scoplib files."),
+              cl::Hidden, cl::value_desc("File postfix"), cl::ValueRequired,
+              cl::init(""));
 
 struct ScopLibImporter : public RegionPass {
   static char ID;

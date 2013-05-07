@@ -63,9 +63,9 @@ APInt polly::APInt_from_MPZ(const mpz_t mpz) {
 }
 
 template <typename ISLTy, typename ISL_CTX_GETTER, typename ISL_PRINTER>
-static inline std::string
-stringFromIslObjInternal(__isl_keep ISLTy *isl_obj,
-                         ISL_CTX_GETTER ctx_getter_fn, ISL_PRINTER printer_fn) {
+static inline std::string stringFromIslObjInternal(__isl_keep ISLTy *isl_obj,
+                                                   ISL_CTX_GETTER ctx_getter_fn,
+                                                   ISL_PRINTER printer_fn) {
   isl_ctx *ctx = ctx_getter_fn(isl_obj);
   isl_printer *p = isl_printer_to_str(ctx);
   printer_fn(p, isl_obj);

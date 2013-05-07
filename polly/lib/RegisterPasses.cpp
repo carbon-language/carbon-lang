@@ -115,9 +115,9 @@ ExportJScop("polly-export",
             cl::desc("Export the polyhedral description of the detected Scops"),
             cl::Hidden, cl::init(false), cl::ZeroOrMore);
 
-static cl::opt<bool>
-DeadCodeElim("polly-run-dce", cl::desc("Run the dead code elimination"),
-             cl::Hidden, cl::init(false), cl::ZeroOrMore);
+static cl::opt<bool> DeadCodeElim("polly-run-dce",
+                                  cl::desc("Run the dead code elimination"),
+                                  cl::Hidden, cl::init(false), cl::ZeroOrMore);
 
 static cl::opt<bool>
 PollyViewer("polly-show", cl::desc("Enable the Polly DOT viewer in -O3"),
@@ -128,9 +128,10 @@ static cl::opt<bool> PollyOnlyViewer(
     cl::desc("Enable the Polly DOT viewer in -O3 (no BB content)"), cl::Hidden,
     cl::value_desc("Run the Polly DOT viewer at -O3 (no BB content"),
     cl::init(false));
-static cl::opt<bool> PollyPrinter(
-    "polly-dot", cl::desc("Enable the Polly DOT printer in -O3"), cl::Hidden,
-    cl::value_desc("Run the Polly DOT printer at -O3"), cl::init(false));
+static cl::opt<bool>
+PollyPrinter("polly-dot", cl::desc("Enable the Polly DOT printer in -O3"),
+             cl::Hidden, cl::value_desc("Run the Polly DOT printer at -O3"),
+             cl::init(false));
 static cl::opt<bool> PollyOnlyPrinter(
     "polly-dot-only",
     cl::desc("Enable the Polly DOT printer in -O3 (no BB content)"), cl::Hidden,
@@ -298,8 +299,9 @@ static void registerPollyPasses(llvm::PassManagerBase &PM) {
     PM.add(llvm::createCFGPrinterPass());
 }
 
-static void registerPollyEarlyAsPossiblePasses(
-    const llvm::PassManagerBuilder &Builder, llvm::PassManagerBase &PM) {
+static void
+registerPollyEarlyAsPossiblePasses(const llvm::PassManagerBuilder &Builder,
+                                   llvm::PassManagerBase &PM) {
 
   if (Builder.OptLevel == 0)
     return;

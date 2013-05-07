@@ -40,9 +40,10 @@ using namespace llvm;
 using namespace polly;
 
 namespace polly { bool DisablePollyTiling; }
-static cl::opt<bool, true> DisableTiling(
-    "polly-no-tiling", cl::desc("Disable tiling in the scheduler"), cl::Hidden,
-    cl::location(polly::DisablePollyTiling), cl::init(false));
+static cl::opt<bool, true>
+DisableTiling("polly-no-tiling", cl::desc("Disable tiling in the scheduler"),
+              cl::Hidden, cl::location(polly::DisablePollyTiling),
+              cl::init(false));
 
 static cl::opt<std::string>
 OptimizeDeps("polly-opt-optimize-only",
@@ -64,13 +65,15 @@ MaxCoefficient("polly-opt-max-coefficient",
                cl::desc("The maximal coefficient allowed (-1 is unlimited)"),
                cl::Hidden, cl::init(20));
 
-static cl::opt<std::string> FusionStrategy(
-    "polly-opt-fusion", cl::desc("The fusion strategy to choose (min/max)"),
-    cl::Hidden, cl::init("min"));
+static cl::opt<std::string>
+FusionStrategy("polly-opt-fusion",
+               cl::desc("The fusion strategy to choose (min/max)"), cl::Hidden,
+               cl::init("min"));
 
-static cl::opt<std::string> MaximizeBandDepth(
-    "polly-opt-maximize-bands", cl::desc("Maximize the band depth (yes/no)"),
-    cl::Hidden, cl::init("yes"));
+static cl::opt<std::string>
+MaximizeBandDepth("polly-opt-maximize-bands",
+                  cl::desc("Maximize the band depth (yes/no)"), cl::Hidden,
+                  cl::init("yes"));
 
 namespace {
 
@@ -211,8 +214,10 @@ void IslScheduleOptimizer::extendScattering(Scop &S, unsigned NewDimensions) {
   }
 }
 
-isl_basic_map *IslScheduleOptimizer::getTileMap(
-    isl_ctx *ctx, int scheduleDimensions, isl_space *SpaceModel, int tileSize) {
+isl_basic_map *IslScheduleOptimizer::getTileMap(isl_ctx *ctx,
+                                                int scheduleDimensions,
+                                                isl_space *SpaceModel,
+                                                int tileSize) {
   // We construct
   //
   // tileMap := [p0] -> {[s0, s1] -> [t0, t1, p0, p1, a0, a1]:
@@ -271,8 +276,8 @@ isl_basic_map *IslScheduleOptimizer::getTileMap(
   return tileMap;
 }
 
-isl_union_map *
-IslScheduleOptimizer::getScheduleForBand(isl_band *Band, int *Dimensions) {
+isl_union_map *IslScheduleOptimizer::getScheduleForBand(isl_band *Band,
+                                                        int *Dimensions) {
   isl_union_map *PartialSchedule;
   isl_ctx *ctx;
   isl_space *Space;
@@ -300,8 +305,9 @@ IslScheduleOptimizer::getScheduleForBand(isl_band *Band, int *Dimensions) {
   return isl_union_map_apply_range(PartialSchedule, TileUMap);
 }
 
-isl_map *IslScheduleOptimizer::getPrevectorMap(
-    isl_ctx *ctx, int DimToVectorize, int ScheduleDimensions, int VectorWidth) {
+isl_map *IslScheduleOptimizer::getPrevectorMap(isl_ctx *ctx, int DimToVectorize,
+                                               int ScheduleDimensions,
+                                               int VectorWidth) {
   isl_space *Space;
   isl_local_space *LocalSpace, *LocalSpaceRange;
   isl_set *Modulo;

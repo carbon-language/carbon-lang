@@ -576,8 +576,8 @@ private:
   //    of loop iterations.
   //
   // 3. With the existing code, upper bounds have been easier to implement.
-  __isl_give isl_ast_expr *
-  getUpperBound(__isl_keep isl_ast_node *For, CmpInst::Predicate &Predicate);
+  __isl_give isl_ast_expr *getUpperBound(__isl_keep isl_ast_node *For,
+                                         CmpInst::Predicate &Predicate);
 
   unsigned getNumberOfIterations(__isl_keep isl_ast_node *For);
 
@@ -587,20 +587,24 @@ private:
   void createSubstitutions(__isl_take isl_pw_multi_aff *PMA,
                            __isl_take isl_ast_build *Context, ScopStmt *Stmt,
                            ValueMapT &VMap, LoopToScevMapT &LTS);
-  void createSubstitutionsVector(
-      __isl_take isl_pw_multi_aff *PMA, __isl_take isl_ast_build *Context,
-      ScopStmt *Stmt, VectorValueMapT &VMap, std::vector<LoopToScevMapT> &VLTS,
-      std::vector<Value *> &IVS, __isl_take isl_id *IteratorID);
+  void createSubstitutionsVector(__isl_take isl_pw_multi_aff *PMA,
+                                 __isl_take isl_ast_build *Context,
+                                 ScopStmt *Stmt, VectorValueMapT &VMap,
+                                 std::vector<LoopToScevMapT> &VLTS,
+                                 std::vector<Value *> &IVS,
+                                 __isl_take isl_id *IteratorID);
   void createIf(__isl_take isl_ast_node *If);
-  void createUserVector(
-      __isl_take isl_ast_node *User, std::vector<Value *> &IVS,
-      __isl_take isl_id *IteratorID, __isl_take isl_union_map *Schedule);
+  void createUserVector(__isl_take isl_ast_node *User,
+                        std::vector<Value *> &IVS,
+                        __isl_take isl_id *IteratorID,
+                        __isl_take isl_union_map *Schedule);
   void createUser(__isl_take isl_ast_node *User);
   void createBlock(__isl_take isl_ast_node *Block);
 };
 
-__isl_give isl_ast_expr *IslNodeBuilder::getUpperBound(
-    __isl_keep isl_ast_node *For, ICmpInst::Predicate &Predicate) {
+__isl_give isl_ast_expr *
+IslNodeBuilder::getUpperBound(__isl_keep isl_ast_node *For,
+                              ICmpInst::Predicate &Predicate) {
   isl_id *UBID, *IteratorID;
   isl_ast_expr *Cond, *Iterator, *UB, *Arg0;
   isl_ast_op_type Type;
@@ -669,9 +673,10 @@ unsigned IslNodeBuilder::getNumberOfIterations(__isl_keep isl_ast_node *For) {
   return NumberOfIterations + 1;
 }
 
-void IslNodeBuilder::createUserVector(
-    __isl_take isl_ast_node *User, std::vector<Value *> &IVS,
-    __isl_take isl_id *IteratorID, __isl_take isl_union_map *Schedule) {
+void IslNodeBuilder::createUserVector(__isl_take isl_ast_node *User,
+                                      std::vector<Value *> &IVS,
+                                      __isl_take isl_id *IteratorID,
+                                      __isl_take isl_union_map *Schedule) {
   isl_id *Annotation = isl_ast_node_get_annotation(User);
   assert(Annotation && "Vector user statement is not annotated");
 
@@ -698,8 +703,8 @@ void IslNodeBuilder::createUserVector(
   isl_ast_node_free(User);
 }
 
-void
-IslNodeBuilder::createForVector(__isl_take isl_ast_node *For, int VectorWidth) {
+void IslNodeBuilder::createForVector(__isl_take isl_ast_node *For,
+                                     int VectorWidth) {
   isl_ast_node *Body = isl_ast_node_for_get_body(For);
   isl_ast_expr *Init = isl_ast_node_for_get_init(For);
   isl_ast_expr *Inc = isl_ast_node_for_get_inc(For);
@@ -887,9 +892,10 @@ void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
   isl_ast_node_free(If);
 }
 
-void IslNodeBuilder::createSubstitutions(
-    __isl_take isl_pw_multi_aff *PMA, __isl_take isl_ast_build *Context,
-    ScopStmt *Stmt, ValueMapT &VMap, LoopToScevMapT &LTS) {
+void IslNodeBuilder::createSubstitutions(__isl_take isl_pw_multi_aff *PMA,
+                                         __isl_take isl_ast_build *Context,
+                                         ScopStmt *Stmt, ValueMapT &VMap,
+                                         LoopToScevMapT &LTS) {
   for (unsigned i = 0; i < isl_pw_multi_aff_dim(PMA, isl_dim_out); ++i) {
     isl_pw_aff *Aff;
     isl_ast_expr *Expr;
@@ -1026,8 +1032,8 @@ public:
   bool runOnScop(Scop &S) {
     IslAstInfo &AstInfo = getAnalysis<IslAstInfo>();
 
-    assert(!S.getRegion().isTopLevelRegion()
-           && "Top level regions are not supported");
+    assert(!S.getRegion().isTopLevelRegion() &&
+           "Top level regions are not supported");
 
     simplifyRegion(&S, this);
 

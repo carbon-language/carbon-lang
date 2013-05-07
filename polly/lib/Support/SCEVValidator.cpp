@@ -211,7 +211,7 @@ public:
         continue;
 
       if (Op.isPARAM() && Return.isPARAM()) {
-        HasMultipleParams  = true;
+        HasMultipleParams = true;
         continue;
       }
 
@@ -467,9 +467,10 @@ bool isAffineExpr(const Region *R, const SCEV *Expr, ScalarEvolution &SE,
   return Result.isValid();
 }
 
-std::vector<const SCEV *>
-getParamsInAffineExpr(const Region *R, const SCEV *Expr, ScalarEvolution &SE,
-                      const Value *BaseAddress) {
+std::vector<const SCEV *> getParamsInAffineExpr(const Region *R,
+                                                const SCEV *Expr,
+                                                ScalarEvolution &SE,
+                                                const Value *BaseAddress) {
   if (isa<SCEVCouldNotCompute>(Expr))
     return std::vector<const SCEV *>();
 

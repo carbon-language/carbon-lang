@@ -30,10 +30,11 @@ using namespace llvm;
 using namespace polly;
 
 namespace {
-static cl::opt<std::string> ExportDir(
-    "polly-export-scoplib-dir",
-    cl::desc("The directory to export the .scoplib files to."), cl::Hidden,
-    cl::value_desc("Directory path"), cl::ValueRequired, cl::init("."));
+static cl::opt<std::string>
+ExportDir("polly-export-scoplib-dir",
+          cl::desc("The directory to export the .scoplib files to."),
+          cl::Hidden, cl::value_desc("Directory path"), cl::ValueRequired,
+          cl::init("."));
 
 class ScopLibExporter : public ScopPass {
   Scop *S;

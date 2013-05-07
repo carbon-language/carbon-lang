@@ -40,13 +40,13 @@
 using namespace llvm;
 using namespace polly;
 
-static cl::opt<bool>
-UseContext("polly-ast-use-context", cl::desc("Use context"), cl::Hidden,
-           cl::init(false), cl::ZeroOrMore);
+static cl::opt<bool> UseContext("polly-ast-use-context",
+                                cl::desc("Use context"), cl::Hidden,
+                                cl::init(false), cl::ZeroOrMore);
 
-static cl::opt<bool>
-DetectParallel("polly-ast-detect-parallel", cl::desc("Detect parallelism"),
-               cl::Hidden, cl::init(false), cl::ZeroOrMore);
+static cl::opt<bool> DetectParallel("polly-ast-detect-parallel",
+                                    cl::desc("Detect parallelism"), cl::Hidden,
+                                    cl::init(false), cl::ZeroOrMore);
 
 namespace polly {
 class IslAst {
@@ -78,9 +78,10 @@ struct AstBuildUserInfo {
 };
 
 // Print a loop annotated with OpenMP or vector pragmas.
-static __isl_give isl_printer *printParallelFor(
-    __isl_keep isl_ast_node *Node, __isl_take isl_printer *Printer,
-    __isl_take isl_ast_print_options *PrintOptions, IslAstUser *Info) {
+static __isl_give isl_printer *
+printParallelFor(__isl_keep isl_ast_node *Node, __isl_take isl_printer *Printer,
+                 __isl_take isl_ast_print_options *PrintOptions,
+                 IslAstUser *Info) {
   if (Info) {
     if (Info->IsInnermostParallel) {
       Printer = isl_printer_start_line(Printer);
@@ -143,8 +144,8 @@ static void freeIslAstUser(void *Ptr) {
 // dimension, then the loop is parallel. The distance is zero in the current
 // dimension if it is a subset of a map with equal values for the current
 // dimension.
-static bool
-astScheduleDimIsParallel(__isl_keep isl_ast_build *Build, Dependences *D) {
+static bool astScheduleDimIsParallel(__isl_keep isl_ast_build *Build,
+                                     Dependences *D) {
   isl_union_map *Schedule, *Deps;
   isl_map *ScheduleDeps, *Test;
   isl_space *ScheduleSpace;
@@ -201,8 +202,8 @@ static void markOpenmpParallel(__isl_keep isl_ast_build *Build,
 //
 // - Detection of openmp parallel loops
 //
-static __isl_give isl_id *
-astBuildBeforeFor(__isl_keep isl_ast_build *Build, void *User) {
+static __isl_give isl_id *astBuildBeforeFor(__isl_keep isl_ast_build *Build,
+                                            void *User) {
   struct AstBuildUserInfo *BuildInfo = (struct AstBuildUserInfo *)User;
   struct IslAstUser *NodeInfo = allocateIslAstUser();
   isl_id *Id = isl_id_alloc(isl_ast_build_get_ctx(Build), "", NodeInfo);
@@ -283,9 +284,9 @@ astBuildAfterFor(__isl_take isl_ast_node *Node, __isl_keep isl_ast_build *Build,
   return Node;
 }
 
-static __isl_give isl_ast_node *
-AtEachDomain(__isl_take isl_ast_node *Node, __isl_keep isl_ast_build *Context,
-             void *User) {
+static __isl_give isl_ast_node *AtEachDomain(__isl_take isl_ast_node *Node,
+                                             __isl_keep isl_ast_build *Context,
+                                             void *User) {
   struct IslAstUser *Info = NULL;
   isl_id *Id = isl_ast_node_get_annotation(Node);
 

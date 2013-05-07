@@ -42,9 +42,9 @@
 using namespace llvm;
 using namespace polly;
 
-static cl::opt<std::string>
-PlutoFuse("pluto-fuse", cl::desc(""), cl::Hidden,
-          cl::value_desc("Set fuse mode of Pluto"), cl::init("maxfuse"));
+static cl::opt<std::string> PlutoFuse("pluto-fuse", cl::desc(""), cl::Hidden,
+                                      cl::value_desc("Set fuse mode of Pluto"),
+                                      cl::init("maxfuse"));
 
 namespace {
 

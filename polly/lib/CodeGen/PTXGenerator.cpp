@@ -67,9 +67,10 @@ Function *PTXGenerator::createSubfunctionDefinition(int NumArgs) {
   return FN;
 }
 
-void PTXGenerator::createSubfunction(
-    SetVector<Value *> &UsedValues, SetVector<Value *> &OriginalIVS,
-    PTXGenerator::ValueToValueMapTy &VMap, Function **SubFunction) {
+void PTXGenerator::createSubfunction(SetVector<Value *> &UsedValues,
+                                     SetVector<Value *> &OriginalIVS,
+                                     PTXGenerator::ValueToValueMapTy &VMap,
+                                     Function **SubFunction) {
   Function *FN = createSubfunctionDefinition(UsedValues.size());
   Module *M = getModule();
   LLVMContext &Context = FN->getContext();
@@ -201,9 +202,10 @@ void PTXGenerator::createSubfunction(
   *SubFunction = FN;
 }
 
-void PTXGenerator::startGeneration(
-    SetVector<Value *> &UsedValues, SetVector<Value *> &OriginalIVS,
-    ValueToValueMapTy &VMap, BasicBlock::iterator *LoopBody) {
+void PTXGenerator::startGeneration(SetVector<Value *> &UsedValues,
+                                   SetVector<Value *> &OriginalIVS,
+                                   ValueToValueMapTy &VMap,
+                                   BasicBlock::iterator *LoopBody) {
   Function *SubFunction;
   BasicBlock::iterator PrevInsertPoint = Builder.GetInsertPoint();
   createSubfunction(UsedValues, OriginalIVS, VMap, &SubFunction);
@@ -316,8 +318,9 @@ void PTXGenerator::createCallGetPTXKernelEntry(Value *Entry, Value *Module,
   Builder.CreateCall3(F, Entry, Module, Kernel);
 }
 
-void PTXGenerator::createCallAllocateMemoryForHostAndDevice(
-    Value *HostData, Value *DeviceData, Value *Size) {
+void PTXGenerator::createCallAllocateMemoryForHostAndDevice(Value *HostData,
+                                                            Value *DeviceData,
+                                                            Value *Size) {
   const char *Name = "polly_allocateMemoryForHostAndDevice";
   Module *M = getModule();
   Function *F = M->getFunction(Name);
@@ -336,8 +339,9 @@ void PTXGenerator::createCallAllocateMemoryForHostAndDevice(
   Builder.CreateCall3(F, HostData, DeviceData, Size);
 }
 
-void PTXGenerator::createCallCopyFromHostToDevice(
-    Value *DeviceData, Value *HostData, Value *Size) {
+void PTXGenerator::createCallCopyFromHostToDevice(Value *DeviceData,
+                                                  Value *HostData,
+                                                  Value *Size) {
   const char *Name = "polly_copyFromHostToDevice";
   Module *M = getModule();
   Function *F = M->getFunction(Name);
@@ -356,8 +360,9 @@ void PTXGenerator::createCallCopyFromHostToDevice(
   Builder.CreateCall3(F, DeviceData, HostData, Size);
 }
 
-void PTXGenerator::createCallCopyFromDeviceToHost(
-    Value *HostData, Value *DeviceData, Value *Size) {
+void PTXGenerator::createCallCopyFromDeviceToHost(Value *HostData,
+                                                  Value *DeviceData,
+                                                  Value *Size) {
   const char *Name = "polly_copyFromDeviceToHost";
   Module *M = getModule();
   Function *F = M->getFunction(Name);
@@ -376,8 +381,10 @@ void PTXGenerator::createCallCopyFromDeviceToHost(
   Builder.CreateCall3(F, HostData, DeviceData, Size);
 }
 
-void PTXGenerator::createCallSetKernelParameters(
-    Value *Kernel, Value *BlockWidth, Value *BlockHeight, Value *DeviceData) {
+void PTXGenerator::createCallSetKernelParameters(Value *Kernel,
+                                                 Value *BlockWidth,
+                                                 Value *BlockHeight,
+                                                 Value *DeviceData) {
   const char *Name = "polly_setKernelParameters";
   Module *M = getModule();
   Function *F = M->getFunction(Name);
@@ -436,8 +443,9 @@ void PTXGenerator::createCallStartTimerByCudaEvent(Value *StartEvent,
   Builder.CreateCall2(F, StartEvent, StopEvent);
 }
 
-void PTXGenerator::createCallStopTimerByCudaEvent(
-    Value *StartEvent, Value *StopEvent, Value *Timer) {
+void PTXGenerator::createCallStopTimerByCudaEvent(Value *StartEvent,
+                                                  Value *StopEvent,
+                                                  Value *Timer) {
   const char *Name = "polly_stopTimerByCudaEvent";
   Module *M = getModule();
   Function *F = M->getFunction(Name);
@@ -456,9 +464,11 @@ void PTXGenerator::createCallStopTimerByCudaEvent(
   Builder.CreateCall3(F, StartEvent, StopEvent, Timer);
 }
 
-void PTXGenerator::createCallCleanupGPGPUResources(
-    Value *HostData, Value *DeviceData, Value *Module, Value *Context,
-    Value *Kernel) {
+void PTXGenerator::createCallCleanupGPGPUResources(Value *HostData,
+                                                   Value *DeviceData,
+                                                   Value *Module,
+                                                   Value *Context,
+                                                   Value *Kernel) {
   const char *Name = "polly_cleanupGPGPUResources";
   llvm::Module *M = getModule();
   Function *F = M->getFunction(Name);

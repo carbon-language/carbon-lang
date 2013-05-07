@@ -235,8 +235,8 @@ void IndependentBlocks::moveOperandTree(Instruction *Inst, const Region *R,
   SE->forgetValue(Inst);
 }
 
-bool
-IndependentBlocks::createIndependentBlocks(BasicBlock *BB, const Region *R) {
+bool IndependentBlocks::createIndependentBlocks(BasicBlock *BB,
+                                                const Region *R) {
   std::vector<Instruction *> WorkList;
   for (BasicBlock::iterator II = BB->begin(), IE = BB->end(); II != IE; ++II)
     if (!isSafeToMove(II) && !canSynthesize(II, LI, SE, R))
@@ -295,8 +295,9 @@ bool IndependentBlocks::isEscapeUse(const Value *Use, const Region *R) {
   return !R->contains(cast<Instruction>(Use));
 }
 
-bool IndependentBlocks::isEscapeOperand(
-    const Value *Operand, const BasicBlock *CurBB, const Region *R) const {
+bool IndependentBlocks::isEscapeOperand(const Value *Operand,
+                                        const BasicBlock *CurBB,
+                                        const Region *R) const {
   const Instruction *OpInst = dyn_cast<Instruction>(Operand);
 
   // Non-instruction operand will never escape.
@@ -363,8 +364,8 @@ bool IndependentBlocks::onlyUsedInRegion(Instruction *Inst, const Region *R) {
   return true;
 }
 
-bool
-IndependentBlocks::translateScalarToArray(Instruction *Inst, const Region *R) {
+bool IndependentBlocks::translateScalarToArray(Instruction *Inst,
+                                               const Region *R) {
   if (canSynthesize(Inst, LI, SE, R) && onlyUsedInRegion(Inst, R))
     return false;
 
@@ -418,8 +419,8 @@ IndependentBlocks::translateScalarToArray(Instruction *Inst, const Region *R) {
   return true;
 }
 
-bool
-IndependentBlocks::translateScalarToArray(BasicBlock *BB, const Region *R) {
+bool IndependentBlocks::translateScalarToArray(BasicBlock *BB,
+                                               const Region *R) {
   bool changed = false;
 
   SmallVector<Instruction *, 32> Insts;
@@ -434,8 +435,8 @@ IndependentBlocks::translateScalarToArray(BasicBlock *BB, const Region *R) {
   return changed;
 }
 
-bool
-IndependentBlocks::isIndependentBlock(const Region *R, BasicBlock *BB) const {
+bool IndependentBlocks::isIndependentBlock(const Region *R,
+                                           BasicBlock *BB) const {
   for (BasicBlock::iterator II = BB->begin(), IE = --BB->end(); II != IE;
        ++II) {
     Instruction *Inst = &*II;
