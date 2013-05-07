@@ -19,7 +19,6 @@ class ProcessAttachTestCase(TestBase):
         self.buildDsym()
         self.process_attach_by_id()
 
-    @expectedFailureLinux # lldb is unable to attach to process by id
     @dwarf_test
     def test_attach_to_process_by_id_with_dwarf(self):
         """Test attach by process id"""
@@ -48,8 +47,6 @@ class ProcessAttachTestCase(TestBase):
         """Test attach by process id"""
 
         exe = os.path.join(os.getcwd(), "a.out")
-
-        #target = self.dbg.CreateTarget(exe)
 
         # Spawn a new process
         popen = self.spawnSubprocess(exe)

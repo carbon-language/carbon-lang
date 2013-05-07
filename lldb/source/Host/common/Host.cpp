@@ -1189,7 +1189,7 @@ Host::FindProcesses (const ProcessInstanceInfoMatch &match_info, ProcessInstance
 }
 #endif
 
-#if !defined (__APPLE__) && !defined (__FreeBSD__)
+#if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined(__linux__)
 bool
 Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 {

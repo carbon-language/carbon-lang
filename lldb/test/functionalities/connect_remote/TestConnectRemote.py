@@ -31,7 +31,10 @@ class ConnectRemoteTestCase(TestBase):
         fakeserver.expect_exact('Listening on localhost:12345')
 
         # Connect to the fake server....
-        self.runCmd("process connect connect://localhost:12345")
+        if sys.platform.startswith("linux"):
+            self.runCmd("process connect -p gdb-remote connect://localhost:12345")
+        else:
+            self.runCmd("process connect connect://localhost:12345")
 
 
 if __name__ == '__main__':

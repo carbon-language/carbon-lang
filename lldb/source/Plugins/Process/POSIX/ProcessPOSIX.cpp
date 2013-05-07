@@ -22,6 +22,7 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/DynamicLoader.h"
+#include "lldb/Target/Platform.h"
 #include "lldb/Target/Target.h"
 
 #include "ProcessPOSIX.h"
@@ -99,7 +100,8 @@ ProcessPOSIX::CanDebug(Target &target, bool plugin_specified_by_name)
     ModuleSP exe_module_sp(target.GetExecutableModule());
     if (exe_module_sp.get())
         return exe_module_sp->GetFileSpec().Exists();
-    return false;
+    // If there is no executable module, we return true since we might be preparing to attach.
+    return true;
 }
 
 Error
@@ -117,7 +119,38 @@ ProcessPOSIX::DoAttachToProcessWithID(lldb::pid_t pid)
     if (!error.Success())
         return error;
 
+    PlatformSP platform_sp (m_target.GetPlatform ());
+    assert (platform_sp.get());
+    if (!platform_sp)
+        return error;  // FIXME: Detatch?
+
+    // Find out what we can about this process
+    ProcessInstanceInfo process_info;
+    platform_sp->GetProcessInfo (pid, process_info);
+
+    // Resolve the executable module
+    ModuleSP exe_module_sp;
+    FileSpecList executable_search_paths (Target::GetDefaultExecutableSearchPaths());
+    error = platform_sp->ResolveExecutable(process_info.GetExecutableFile(),
+                                           m_target.GetArchitecture(),
+                                           exe_module_sp,
+                                           executable_search_paths.GetSize() ? &executable_search_paths : NULL);
+
+    // Fix the target architecture if necessary
+    const ArchSpec &module_arch = exe_module_sp->GetArchitecture();
+    if (module_arch.IsValid() && !m_target.GetArchitecture().IsExactMatch(module_arch))
+        m_target.SetArchitecture(module_arch);
+
+    // Initialize the target module list
+    m_target.SetExecutableModule (exe_module_sp, true);
+
+    if (!error.Success())
+        return error;
+
+    SetSTDIOFileDescriptor(m_monitor->GetTerminalFD());
+
     SetID(pid);
+
     return error;
 }
 

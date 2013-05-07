@@ -59,7 +59,12 @@ DYLDRendezvous::DYLDRendezvous(Process *process)
       m_removed_soentries()
 {
     // Cache a copy of the executable path
-    m_process->GetTarget().GetExecutableModule().get()->GetFileSpec().GetPath(m_exe_path, PATH_MAX);
+    if (m_process)
+    {
+        Module *exe_mod = m_process->GetTarget().GetExecutableModulePointer();
+        if (exe_mod)
+            exe_mod->GetFileSpec().GetPath(m_exe_path, PATH_MAX);
+    }
 }
 
 bool
