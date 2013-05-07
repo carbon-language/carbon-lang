@@ -239,7 +239,7 @@ void test() {
 
 namespace PR13387 {
 struct A {
-  void CreateFoo(float, float); // expected-note {{'CreateFoo' declared here}}
+  void CreateFoo(float, float);
   void CreateBar(float, float);
 };
 struct B : A {
@@ -259,4 +259,46 @@ struct T {
 // should be void T::f();
 void f() {
  data_struct->foo(); // expected-error-re{{use of undeclared identifier 'data_struct'$}}
+}
+
+namespace b6956809_test1 {
+  struct A {};
+  struct B {};
+
+  struct S1 {
+    void method(A*);  // no note here
+    void method(B*);
+  };
+
+  void test1() {
+    B b;
+    S1 s;
+    s.methodd(&b);  // expected-error{{no member named 'methodd' in 'b6956809_test1::S1'; did you mean 'method'}}
+  }
+
+  struct S2 {
+    S2();
+    void method(A*) const;  // expected-note{{candidate function not viable}}
+   private:
+    void method(B*);  // expected-note{{candidate function not viable}}
+  };
+
+  void test2() {
+    B b;
+    const S2 s;
+    s.methodd(&b);  // expected-error{{no member named 'methodd' in 'b6956809_test1::S2'; did you mean 'method'}}  expected-error{{no matching member function for call to 'method'}}
+  }
+}
+
+namespace b6956809_test2 {
+  template<typename T> struct Err { typename T::error n; };  // expected-error{{type 'void *' cannot be used prior to '::' because it has no members}}
+  struct S {
+    template<typename T> typename Err<T>::type method(T);  // expected-note{{in instantiation of template class 'b6956809_test2::Err<void *>' requested here}}  expected-note{{while substituting deduced template arguments into function template 'method' [with T = void *]}}
+    template<typename T> int method(T *);
+  };
+
+  void test() {
+    S s;
+    int k = s.methodd((void*)0);  // expected-error{{no member named 'methodd' in 'b6956809_test2::S'; did you mean 'method'?}}
+  }
 }

@@ -116,7 +116,7 @@ public:
   }
 
   /// \brief Gets the pointer to the declaration of the typo correction
-  NamedDecl* getCorrectionDecl() const {
+  NamedDecl *getCorrectionDecl() const {
     return hasCorrectionDecl() ? *(CorrectionDecls.begin()) : 0;
   }
   template <class DeclClass>

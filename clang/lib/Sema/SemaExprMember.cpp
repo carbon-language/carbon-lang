@@ -605,19 +605,33 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
                                                  R.getLookupKind(), NULL,
                                                  &SS, Validator, DC);
   R.clear();
-  if (NamedDecl *ND = Corrected.getCorrectionDecl()) {
+  if (Corrected.isResolved() && !Corrected.isKeyword()) {
     std::string CorrectedStr(
         Corrected.getAsString(SemaRef.getLangOpts()));
     std::string CorrectedQuotedStr(
         Corrected.getQuoted(SemaRef.getLangOpts()));
+
     R.setLookupName(Corrected.getCorrection());
-    R.addDecl(ND);
+    for (TypoCorrection::decl_iterator DI = Corrected.begin(),
+                                       DIEnd = Corrected.end();
+         DI != DIEnd; ++DI) {
+      R.addDecl(*DI);
+    }
+    R.resolveKind();
+
     SemaRef.Diag(R.getNameLoc(), diag::err_no_member_suggest)
       << Name << DC << CorrectedQuotedStr << SS.getRange()
       << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
                                       CorrectedStr);
-    SemaRef.Diag(ND->getLocation(), diag::note_previous_decl)
-      << ND->getDeclName();
+
+    // If we're typo-correcting to an overloaded name, we don't yet have enough
+    // information to do overload resolution, so we don't know which previous
+    // declaration to point to.
+    if (!Corrected.isOverloaded()) {
+      NamedDecl *ND = Corrected.getCorrectionDecl();
+      SemaRef.Diag(ND->getLocation(), diag::note_previous_decl)
+        << ND->getDeclName();
+    }
   }
 
   return false;
