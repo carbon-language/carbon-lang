@@ -149,7 +149,7 @@ public:
     }
 
     lldb::addr_t GetHWAddress() const {
-        assert(GetKind() == eWatchpointMessage);
+        assert(GetKind() == eWatchpointMessage || GetKind() == eTraceMessage);
         return m_addr;
     }
 
