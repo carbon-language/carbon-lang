@@ -148,7 +148,7 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
     // First module is the binary itself.
     uptr module_name_len = internal_readlink(
         "/proc/self/exe", module_name.data(), module_name.size());
-    if (module_name_len == (uptr)-1) {
+    if (internal_iserror(module_name_len)) {
       // We can't read /proc/self/exe for some reason, assume the name of the
       // binary is unknown.
       module_name_len = internal_snprintf(module_name.data(),

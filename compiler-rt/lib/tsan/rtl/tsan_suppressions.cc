@@ -38,12 +38,13 @@ static char *ReadFile(const char *filename) {
     internal_snprintf(tmp.data(), tmp.size(), "%s", filename);
   else
     internal_snprintf(tmp.data(), tmp.size(), "%s/%s", GetPwd(), filename);
-  fd_t fd = OpenFile(tmp.data(), false);
-  if (fd == kInvalidFd) {
+  uptr openrv = OpenFile(tmp.data(), false);
+  if (internal_iserror(openrv)) {
     Printf("ThreadSanitizer: failed to open suppressions file '%s'\n",
                tmp.data());
     Die();
   }
+  fd_t fd = openrv;
   const uptr fsize = internal_filesize(fd);
   if (fsize == (uptr)-1) {
     Printf("ThreadSanitizer: failed to stat suppressions file '%s'\n",

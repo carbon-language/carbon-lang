@@ -121,10 +121,12 @@ static void BackgroundThread(void *arg) {
     InternalScopedBuffer<char> filename(4096);
     internal_snprintf(filename.data(), filename.size(), "%s.%d",
         flags()->profile_memory, GetPid());
-    mprof_fd = OpenFile(filename.data(), true);
-    if (mprof_fd == kInvalidFd) {
+    uptr openrv = OpenFile(filename.data(), true);
+    if (internal_iserror(openrv)) {
       Printf("ThreadSanitizer: failed to open memory profile file '%s'\n",
           &filename[0]);
+    } else {
+      mprof_fd = openrv;
     }
   }
 

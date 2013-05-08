@@ -72,46 +72,52 @@ extern "C" int arch_prctl(int code, __sanitizer::uptr *addr);
 
 namespace __sanitizer {
 
+#ifdef __x86_64__
+#include "sanitizer_syscall_linux_x86_64.inc"
+#else
+#include "sanitizer_syscall_generic.inc"
+#endif
+
 // --------------- sanitizer_libc.h
-void *internal_mmap(void *addr, uptr length, int prot, int flags,
+uptr internal_mmap(void *addr, uptr length, int prot, int flags,
                     int fd, u64 offset) {
 #if SANITIZER_LINUX_USES_64BIT_SYSCALLS
-  return (void *)syscall(__NR_mmap, addr, length, prot, flags, fd, offset);
+  return internal_syscall(__NR_mmap, addr, length, prot, flags, fd, offset);
 #else
-  return (void *)syscall(__NR_mmap2, addr, length, prot, flags, fd, offset);
+  return internal_syscall(__NR_mmap2, addr, length, prot, flags, fd, offset);
 #endif
 }
 
-int internal_munmap(void *addr, uptr length) {
-  return syscall(__NR_munmap, addr, length);
+uptr internal_munmap(void *addr, uptr length) {
+  return internal_syscall(__NR_munmap, addr, length);
 }
 
-int internal_close(fd_t fd) {
-  return syscall(__NR_close, fd);
+uptr internal_close(fd_t fd) {
+  return internal_syscall(__NR_close, fd);
 }
 
-fd_t internal_open(const char *filename, int flags) {
-  return syscall(__NR_open, filename, flags);
+uptr internal_open(const char *filename, int flags) {
+  return internal_syscall(__NR_open, filename, flags);
 }
 
-fd_t internal_open(const char *filename, int flags, u32 mode) {
-  return syscall(__NR_open, filename, flags, mode);
+uptr internal_open(const char *filename, int flags, u32 mode) {
+  return internal_syscall(__NR_open, filename, flags, mode);
 }
 
-fd_t OpenFile(const char *filename, bool write) {
+uptr OpenFile(const char *filename, bool write) {
   return internal_open(filename,
       write ? O_WRONLY | O_CREAT /*| O_CLOEXEC*/ : O_RDONLY, 0660);
 }
 
 uptr internal_read(fd_t fd, void *buf, uptr count) {
   sptr res;
-  HANDLE_EINTR(res, (sptr)syscall(__NR_read, fd, buf, count));
+  HANDLE_EINTR(res, (sptr)internal_syscall(__NR_read, fd, buf, count));
   return res;
 }
 
 uptr internal_write(fd_t fd, const void *buf, uptr count) {
   sptr res;
-  HANDLE_EINTR(res, (sptr)syscall(__NR_write, fd, buf, count));
+  HANDLE_EINTR(res, (sptr)internal_syscall(__NR_write, fd, buf, count));
   return res;
 }
 
@@ -135,34 +141,34 @@ static void stat64_to_stat(struct stat64 *in, struct stat *out) {
 }
 #endif
 
-int internal_stat(const char *path, void *buf) {
+uptr internal_stat(const char *path, void *buf) {
 #if SANITIZER_LINUX_USES_64BIT_SYSCALLS
-  return syscall(__NR_stat, path, buf);
+  return internal_syscall(__NR_stat, path, buf);
 #else
   struct stat64 buf64;
-  int res = syscall(__NR_stat64, path, &buf64);
+  int res = internal_syscall(__NR_stat64, path, &buf64);
   stat64_to_stat(&buf64, (struct stat *)buf);
   return res;
 #endif
 }
 
-int internal_lstat(const char *path, void *buf) {
+uptr internal_lstat(const char *path, void *buf) {
 #if SANITIZER_LINUX_USES_64BIT_SYSCALLS
-  return syscall(__NR_lstat, path, buf);
+  return internal_syscall(__NR_lstat, path, buf);
 #else
   struct stat64 buf64;
-  int res = syscall(__NR_lstat64, path, &buf64);
+  int res = internal_syscall(__NR_lstat64, path, &buf64);
   stat64_to_stat(&buf64, (struct stat *)buf);
   return res;
 #endif
 }
 
-int internal_fstat(fd_t fd, void *buf) {
+uptr internal_fstat(fd_t fd, void *buf) {
 #if SANITIZER_LINUX_USES_64BIT_SYSCALLS
-  return syscall(__NR_fstat, fd, buf);
+  return internal_syscall(__NR_fstat, fd, buf);
 #else
   struct stat64 buf64;
-  int res = syscall(__NR_fstat64, fd, &buf64);
+  int res = internal_syscall(__NR_fstat64, fd, &buf64);
   stat64_to_stat(&buf64, (struct stat *)buf);
   return res;
 #endif
@@ -175,25 +181,30 @@ uptr internal_filesize(fd_t fd) {
   return (uptr)st.st_size;
 }
 
-int internal_dup2(int oldfd, int newfd) {
-  return syscall(__NR_dup2, oldfd, newfd);
+uptr internal_dup2(int oldfd, int newfd) {
+  return internal_syscall(__NR_dup2, oldfd, newfd);
 }
 
 uptr internal_readlink(const char *path, char *buf, uptr bufsize) {
-  return (uptr)syscall(__NR_readlink, path, buf, bufsize);
+  return internal_syscall(__NR_readlink, path, buf, bufsize);
 }
 
-int internal_unlink(const char *path) {
-  return syscall(__NR_unlink, path);
+uptr internal_unlink(const char *path) {
+  return internal_syscall(__NR_unlink, path);
 }
 
-int internal_sched_yield() {
-  return syscall(__NR_sched_yield);
+uptr internal_sched_yield() {
+  return internal_syscall(__NR_sched_yield);
 }
 
 void internal__exit(int exitcode) {
-  syscall(__NR_exit_group, exitcode);
+  internal_syscall(__NR_exit_group, exitcode);
   Die();  // Unreachable.
+}
+
+uptr internal_execve(const char *filename, char *const argv[],
+                     char *const envp[]) {
+  return internal_syscall(__NR_execve, filename, argv, envp);
 }
 
 // ----------------- sanitizer_common.h
@@ -206,12 +217,12 @@ bool FileExists(const char *filename) {
 }
 
 uptr GetTid() {
-  return syscall(__NR_gettid);
+  return internal_syscall(__NR_gettid);
 }
 
 u64 NanoTime() {
   kernel_timeval tv;
-  syscall(__NR_gettimeofday, &tv, 0);
+  internal_syscall(__NR_gettimeofday, &tv, 0);
   return (u64)tv.tv_sec * 1000*1000*1000 + tv.tv_usec * 1000;
 }
 
@@ -349,8 +360,10 @@ static void GetArgsAndEnv(char ***argv, char ***envp) {
 void ReExec() {
   char **argv, **envp;
   GetArgsAndEnv(&argv, &envp);
-  execve("/proc/self/exe", argv, envp);
-  Printf("execve failed, errno %d\n", errno);
+  uptr rv = internal_execve("/proc/self/exe", argv, envp);
+  int rverrno;
+  CHECK_EQ(internal_iserror(rv, &rverrno), true);
+  Printf("execve failed, errno %d\n", rverrno);
   Die();
 }
 
@@ -616,7 +629,7 @@ void BlockingMutex::Lock() {
   if (atomic_exchange(m, MtxLocked, memory_order_acquire) == MtxUnlocked)
     return;
   while (atomic_exchange(m, MtxSleeping, memory_order_acquire) != MtxUnlocked)
-    syscall(__NR_futex, m, FUTEX_WAIT, MtxSleeping, 0, 0, 0);
+    internal_syscall(__NR_futex, m, FUTEX_WAIT, MtxSleeping, 0, 0, 0);
 }
 
 void BlockingMutex::Unlock() {
@@ -624,7 +637,7 @@ void BlockingMutex::Unlock() {
   u32 v = atomic_exchange(m, MtxUnlocked, memory_order_relaxed);
   CHECK_NE(v, MtxUnlocked);
   if (v == MtxSleeping)
-    syscall(__NR_futex, m, FUTEX_WAKE, 1, 0, 0, 0);
+    internal_syscall(__NR_futex, m, FUTEX_WAKE, 1, 0, 0, 0);
 }
 
 void BlockingMutex::CheckLocked() {
@@ -644,33 +657,37 @@ struct linux_dirent {
 };
 
 // Syscall wrappers.
-long internal_ptrace(int request, int pid, void *addr, void *data) {
-  return syscall(__NR_ptrace, request, pid, addr, data);
+uptr internal_ptrace(int request, int pid, void *addr, void *data) {
+  return internal_syscall(__NR_ptrace, request, pid, addr, data);
 }
 
-int internal_waitpid(int pid, int *status, int options) {
-  return syscall(__NR_wait4, pid, status, options, NULL /* rusage */);
+uptr internal_waitpid(int pid, int *status, int options) {
+  return internal_syscall(__NR_wait4, pid, status, options, 0 /* rusage */);
 }
 
-int internal_getppid() {
-  return syscall(__NR_getppid);
+uptr internal_getpid() {
+  return internal_syscall(__NR_getpid);
 }
 
-int internal_getdents(fd_t fd, struct linux_dirent *dirp, unsigned int count) {
-  return syscall(__NR_getdents, fd, dirp, count);
+uptr internal_getppid() {
+  return internal_syscall(__NR_getppid);
 }
 
-OFF_T internal_lseek(fd_t fd, OFF_T offset, int whence) {
-  return syscall(__NR_lseek, fd, offset, whence);
+uptr internal_getdents(fd_t fd, struct linux_dirent *dirp, unsigned int count) {
+  return internal_syscall(__NR_getdents, fd, dirp, count);
 }
 
-int internal_prctl(int option, uptr arg2, uptr arg3, uptr arg4, uptr arg5) {
-  return syscall(__NR_prctl, option, arg2, arg3, arg4, arg5);
+uptr internal_lseek(fd_t fd, OFF_T offset, int whence) {
+  return internal_syscall(__NR_lseek, fd, offset, whence);
 }
 
-int internal_sigaltstack(const struct sigaltstack *ss,
+uptr internal_prctl(int option, uptr arg2, uptr arg3, uptr arg4, uptr arg5) {
+  return internal_syscall(__NR_prctl, option, arg2, arg3, arg4, arg5);
+}
+
+uptr internal_sigaltstack(const struct sigaltstack *ss,
                          struct sigaltstack *oss) {
-  return syscall(__NR_sigaltstack, ss, oss);
+  return internal_syscall(__NR_sigaltstack, ss, oss);
 }
 
 // ThreadLister implementation.
@@ -684,12 +701,13 @@ ThreadLister::ThreadLister(int pid)
   char task_directory_path[80];
   internal_snprintf(task_directory_path, sizeof(task_directory_path),
                     "/proc/%d/task/", pid);
-  descriptor_ = internal_open(task_directory_path, O_RDONLY | O_DIRECTORY);
-  if (descriptor_ < 0) {
+  uptr openrv = internal_open(task_directory_path, O_RDONLY | O_DIRECTORY);
+  if (internal_iserror(openrv)) {
     error_ = true;
     Report("Can't open /proc/%d/task for reading.\n", pid);
   } else {
     error_ = false;
+    descriptor_ = openrv;
   }
 }
 
@@ -729,7 +747,7 @@ bool ThreadLister::GetDirectoryEntries() {
   bytes_read_ = internal_getdents(descriptor_,
                                   (struct linux_dirent *)buffer_.data(),
                                   buffer_.size());
-  if (bytes_read_ < 0) {
+  if (internal_iserror(bytes_read_)) {
     Report("Can't read directory entries from /proc/%d/task.\n", pid_);
     error_ = true;
     return false;

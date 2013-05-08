@@ -178,9 +178,10 @@ static void MapRodata() {
   char filename[256];
   internal_snprintf(filename, sizeof(filename), "%s/tsan.rodata.%u",
                     tmpdir, GetPid());
-  fd_t fd = internal_open(filename, O_RDWR | O_CREAT | O_EXCL, 0600);
-  if (fd == kInvalidFd)
+  uptr openrv = internal_open(filename, O_RDWR | O_CREAT | O_EXCL, 0600);
+  if (internal_iserror(openrv))
     return;
+  fd_t fd = openrv;
   // Fill the file with kShadowRodata.
   const uptr kMarkerSize = 512 * 1024 / sizeof(u64);
   InternalScopedBuffer<u64> marker(kMarkerSize);
@@ -188,9 +189,9 @@ static void MapRodata() {
     *p = kShadowRodata;
   internal_write(fd, marker.data(), marker.size());
   // Map the file into memory.
-  void *page = internal_mmap(0, kPageSize, PROT_READ | PROT_WRITE,
-                             MAP_PRIVATE | MAP_ANONYMOUS, fd, 0);
-  if (page == MAP_FAILED) {
+  uptr page = internal_mmap(0, kPageSize, PROT_READ | PROT_WRITE,
+                            MAP_PRIVATE | MAP_ANONYMOUS, fd, 0);
+  if (internal_iserror(page)) {
     internal_close(fd);
     internal_unlink(filename);
     return;

@@ -69,8 +69,8 @@ static void MaybeOpenReportFile() {
   InternalScopedBuffer<char> report_path_full(4096);
   internal_snprintf(report_path_full.data(), report_path_full.size(),
                     "%s.%d", report_path_prefix, GetPid());
-  fd_t fd = OpenFile(report_path_full.data(), true);
-  if (fd == kInvalidFd) {
+  uptr openrv = OpenFile(report_path_full.data(), true);
+  if (internal_iserror(openrv)) {
     report_fd = kStderrFd;
     log_to_file = false;
     Report("ERROR: Can't open file: %s\n", report_path_full.data());
@@ -80,7 +80,7 @@ static void MaybeOpenReportFile() {
     // We're in the child. Close the parent's log.
     internal_close(report_fd);
   }
-  report_fd = fd;
+  report_fd = openrv;
   report_fd_pid = GetPid();
 }
 
@@ -108,8 +108,9 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
   *buff_size = 0;
   // The files we usually open are not seekable, so try different buffer sizes.
   for (uptr size = kMinFileLen; size <= max_len; size *= 2) {
-    fd_t fd = OpenFile(file_name, /*write*/ false);
-    if (fd == kInvalidFd) return 0;
+    uptr openrv = OpenFile(file_name, /*write*/ false);
+    if (internal_iserror(openrv)) return 0;
+    fd_t fd = openrv;
     UnmapOrDie(*buff, *buff_size);
     *buff = (char*)MmapOrDie(size, __FUNCTION__);
     *buff_size = size;

@@ -273,10 +273,12 @@ extern "C" void* _ReturnAddress(void);
 # define GET_CURRENT_FRAME() (uptr)0xDEADBEEF
 #endif
 
-#define HANDLE_EINTR(res, f) {                               \
-  do {                                                                  \
-    res = (f);                                                         \
-  } while (res == -1 && errno == EINTR); \
+#define HANDLE_EINTR(res, f)                                       \
+  {                                                                \
+    int rverrno;                                                   \
+    do {                                                           \
+      res = (f);                                                   \
+    } while (internal_iserror(res, &rverrno) && rverrno == EINTR); \
   }
 
 #endif  // SANITIZER_DEFS_H

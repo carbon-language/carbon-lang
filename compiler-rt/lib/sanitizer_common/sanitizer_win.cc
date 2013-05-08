@@ -29,6 +29,8 @@
 
 namespace __sanitizer {
 
+#include "sanitizer_syscall_generic.inc"
+
 // --------------------- sanitizer_common.h
 uptr GetPageSize() {
   return 1U << 14;  // FIXME: is this configurable?
@@ -217,7 +219,7 @@ int internal_munmap(void *addr, uptr length) {
   UNIMPLEMENTED();
 }
 
-int internal_close(fd_t fd) {
+uptr internal_close(fd_t fd) {
   UNIMPLEMENTED();
 }
 
@@ -233,7 +235,7 @@ fd_t internal_open(const char *filename, int flags, u32 mode) {
   UNIMPLEMENTED();
 }
 
-fd_t OpenFile(const char *filename, bool write) {
+uptr OpenFile(const char *filename, bool write) {
   UNIMPLEMENTED();
 }
 
@@ -253,15 +255,15 @@ uptr internal_write(fd_t fd, const void *buf, uptr count) {
   return ret;
 }
 
-int internal_stat(const char *path, void *buf) {
+uptr internal_stat(const char *path, void *buf) {
   UNIMPLEMENTED();
 }
 
-int internal_lstat(const char *path, void *buf) {
+uptr internal_lstat(const char *path, void *buf) {
   UNIMPLEMENTED();
 }
 
-int internal_fstat(fd_t fd, void *buf) {
+uptr internal_fstat(fd_t fd, void *buf) {
   UNIMPLEMENTED();
 }
 
@@ -269,7 +271,7 @@ uptr internal_filesize(fd_t fd) {
   UNIMPLEMENTED();
 }
 
-int internal_dup2(int oldfd, int newfd) {
+uptr internal_dup2(int oldfd, int newfd) {
   UNIMPLEMENTED();
 }
 
@@ -277,7 +279,7 @@ uptr internal_readlink(const char *path, char *buf, uptr bufsize) {
   UNIMPLEMENTED();
 }
 
-int internal_sched_yield() {
+uptr internal_sched_yield() {
   Sleep(0);
   return 0;
 }

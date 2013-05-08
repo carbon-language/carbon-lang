@@ -53,42 +53,45 @@ bool mem_is_zero(const char *mem, uptr size);
 
 
 // Memory
-void *internal_mmap(void *addr, uptr length, int prot, int flags,
-                    int fd, u64 offset);
-int internal_munmap(void *addr, uptr length);
+uptr internal_mmap(void *addr, uptr length, int prot, int flags,
+                   int fd, u64 offset);
+uptr internal_munmap(void *addr, uptr length);
 
 // I/O
 const fd_t kInvalidFd = -1;
 const fd_t kStdinFd = 0;
 const fd_t kStdoutFd = 1;
 const fd_t kStderrFd = 2;
-int internal_close(fd_t fd);
+uptr internal_close(fd_t fd);
 int internal_isatty(fd_t fd);
 
 // Use __sanitizer::OpenFile() instead.
-fd_t internal_open(const char *filename, int flags);
-fd_t internal_open(const char *filename, int flags, u32 mode);
+uptr internal_open(const char *filename, int flags);
+uptr internal_open(const char *filename, int flags, u32 mode);
 
 uptr internal_read(fd_t fd, void *buf, uptr count);
 uptr internal_write(fd_t fd, const void *buf, uptr count);
 
 // OS
 uptr internal_filesize(fd_t fd);  // -1 on error.
-int internal_stat(const char *path, void *buf);
-int internal_lstat(const char *path, void *buf);
-int internal_fstat(fd_t fd, void *buf);
-int internal_dup2(int oldfd, int newfd);
+uptr internal_stat(const char *path, void *buf);
+uptr internal_lstat(const char *path, void *buf);
+uptr internal_fstat(fd_t fd, void *buf);
+uptr internal_dup2(int oldfd, int newfd);
 uptr internal_readlink(const char *path, char *buf, uptr bufsize);
-int internal_unlink(const char *path);
+uptr internal_unlink(const char *path);
 void NORETURN internal__exit(int exitcode);
-OFF_T internal_lseek(fd_t fd, OFF_T offset, int whence);
+uptr internal_lseek(fd_t fd, OFF_T offset, int whence);
 
-long internal_ptrace(int request, int pid, void *addr, void *data);
-int internal_waitpid(int pid, int *status, int options);
-int internal_getppid();
+uptr internal_ptrace(int request, int pid, void *addr, void *data);
+uptr internal_waitpid(int pid, int *status, int options);
+uptr internal_getppid();
 
 // Threading
-int internal_sched_yield();
+uptr internal_sched_yield();
+
+// Error handling
+bool internal_iserror(uptr retval, int *rverrno = 0);
 
 }  // namespace __sanitizer
 

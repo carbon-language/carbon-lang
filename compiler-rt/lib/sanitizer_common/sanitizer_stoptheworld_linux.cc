@@ -101,23 +101,26 @@ bool ThreadSuspender::SuspendThread(SuspendedThreadID thread_id) {
   // usually small.
   if (suspended_threads_list_.Contains(thread_id))
     return false;
-  if (internal_ptrace(PTRACE_ATTACH, thread_id, NULL, NULL) != 0) {
+  int pterrno;
+  if (internal_iserror(internal_ptrace(PTRACE_ATTACH, thread_id, NULL, NULL),
+                       &pterrno)) {
     // Either the thread is dead, or something prevented us from attaching.
     // Log this event and move on.
-    Report("Could not attach to thread %d (errno %d).\n", thread_id, errno);
+    Report("Could not attach to thread %d (errno %d).\n", thread_id, pterrno);
     return false;
   } else {
     if (SanitizerVerbosity > 0)
       Report("Attached to thread %d.\n", thread_id);
     // The thread is not guaranteed to stop before ptrace returns, so we must
     // wait on it.
-    int waitpid_status;
+    uptr waitpid_status;
     HANDLE_EINTR(waitpid_status, internal_waitpid(thread_id, NULL, __WALL));
-    if (waitpid_status < 0) {
+    int wperrno;
+    if (internal_iserror(waitpid_status, &wperrno)) {
       // Got a ECHILD error. I don't think this situation is possible, but it
       // doesn't hurt to report it.
       Report("Waiting on thread %d failed, detaching (errno %d).\n", thread_id,
-             errno);
+             wperrno);
       internal_ptrace(PTRACE_DETACH, thread_id, NULL, NULL);
       return false;
     }
@@ -129,14 +132,16 @@ bool ThreadSuspender::SuspendThread(SuspendedThreadID thread_id) {
 void ThreadSuspender::ResumeAllThreads() {
   for (uptr i = 0; i < suspended_threads_list_.thread_count(); i++) {
     pid_t tid = suspended_threads_list_.GetThreadID(i);
-    if (internal_ptrace(PTRACE_DETACH, tid, NULL, NULL) == 0) {
+    int pterrno;
+    if (!internal_iserror(internal_ptrace(PTRACE_DETACH, tid, NULL, NULL),
+                          &pterrno)) {
       if (SanitizerVerbosity > 0)
         Report("Detached from thread %d.\n", tid);
     } else {
       // Either the thread is dead, or we are already detached.
       // The latter case is possible, for instance, if this function was called
       // from a signal handler.
-      Report("Could not detach from thread %d (errno %d).\n", tid, errno);
+      Report("Could not detach from thread %d (errno %d).\n", tid, pterrno);
     }
   }
 }
@@ -330,9 +335,10 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
     // must avoid using errno while the tracer thread is running.
     // At this point, any signal will either be blocked or kill us, so waitpid
     // should never return (and set errno) while the tracer thread is alive.
-    int waitpid_status = internal_waitpid(tracer_pid, NULL, __WALL);
-    if (waitpid_status < 0)
-      Report("Waiting on the tracer thread failed (errno %d).\n", errno);
+    uptr waitpid_status = internal_waitpid(tracer_pid, NULL, __WALL);
+    int wperrno;
+    if (internal_iserror(waitpid_status, &wperrno))
+      Report("Waiting on the tracer thread failed (errno %d).\n", wperrno);
   }
   // Restore the dumpable flag.
   if (!process_was_dumpable)
@@ -358,9 +364,11 @@ int SuspendedThreadsList::GetRegistersAndSP(uptr index,
                                             uptr *sp) const {
   pid_t tid = GetThreadID(index);
   regs_struct regs;
-  if (internal_ptrace(PTRACE_GETREGS, tid, NULL, &regs) != 0) {
+  int pterrno;
+  if (internal_iserror(internal_ptrace(PTRACE_GETREGS, tid, NULL, &regs),
+                       &pterrno)) {
     Report("Could not get registers from thread %d (errno %d).\n",
-           tid, errno);
+           tid, pterrno);
     return -1;
   }
 #if defined(__arm__)
