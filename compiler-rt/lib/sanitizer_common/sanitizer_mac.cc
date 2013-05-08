@@ -39,18 +39,19 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <libkern/OSAtomic.h>
+#include <errno.h>
 
 namespace __sanitizer {
 
 #include "sanitizer_syscall_generic.inc"
 
 // ---------------------- sanitizer_libc.h
-void *internal_mmap(void *addr, size_t length, int prot, int flags,
-                    int fd, u64 offset) {
-  return mmap(addr, length, prot, flags, fd, offset);
+uptr internal_mmap(void *addr, size_t length, int prot, int flags,
+                   int fd, u64 offset) {
+  return (uptr)mmap(addr, length, prot, flags, fd, offset);
 }
 
-int internal_munmap(void *addr, uptr length) {
+uptr internal_munmap(void *addr, uptr length) {
   return munmap(addr, length);
 }
 
