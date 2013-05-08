@@ -53,6 +53,9 @@ struct HeaderFileInfo {
 
   /// \brief Whether this header is part of a module.
   unsigned isModuleHeader : 1;
+
+  /// \brief Whether this header is part of the module that we are building.
+  unsigned isCompilingModuleHeader : 1;
   
   /// \brief Whether this structure is considered to already have been
   /// "resolved", meaning that it was loaded from the external source.
@@ -93,8 +96,8 @@ struct HeaderFileInfo {
   
   HeaderFileInfo()
     : isImport(false), isPragmaOnce(false), DirInfo(SrcMgr::C_User), 
-      External(false), isModuleHeader(false), Resolved(false),
-      IndexHeaderMapHeader(false),
+      External(false), isModuleHeader(false), isCompilingModuleHeader(false),
+      Resolved(false), IndexHeaderMapHeader(false),
       NumIncludes(0), ControllingMacroID(0), ControllingMacro(0)  {}
 
   /// \brief Retrieve the controlling macro for this header file, if
@@ -405,7 +408,7 @@ public:
   }
 
   /// \brief Mark the specified file as part of a module.
-  void MarkFileModuleHeader(const FileEntry *File);
+  void MarkFileModuleHeader(const FileEntry *File, bool IsCompiledModuleHeader);
 
   /// \brief Increment the count for the number of times the specified
   /// FileEntry has been entered.

@@ -866,12 +866,14 @@ bool HeaderSearch::isFileMultipleIncludeGuarded(const FileEntry *File) {
       HFI.ControllingMacro || HFI.ControllingMacroID;
 }
 
-void HeaderSearch::MarkFileModuleHeader(const FileEntry *FE) {
+void HeaderSearch::MarkFileModuleHeader(const FileEntry *FE,
+                                        bool isCompilingModuleHeader) {
   if (FE->getUID() >= FileInfo.size())
     FileInfo.resize(FE->getUID()+1);
 
   HeaderFileInfo &HFI = FileInfo[FE->getUID()];
   HFI.isModuleHeader = true;
+  HFI.isCompilingModuleHeader = isCompilingModuleHeader;
 }
 
 void HeaderSearch::setHeaderFileInfoForUID(HeaderFileInfo HFI, unsigned UID) {

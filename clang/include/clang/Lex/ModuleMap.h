@@ -52,6 +52,9 @@ class ModuleMap {
   /// These are always simple C language options.
   LangOptions MMapLangOpts;
 
+  // The module that we are building; related to \c LangOptions::CurrentModule.
+  Module *CompilingModule;
+
   /// \brief The top-level modules that are known.
   llvm::StringMap<Module *> Modules;
 

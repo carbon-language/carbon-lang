@@ -1542,6 +1542,8 @@ void ASTWriter::WriteHeaderSearch(const HeaderSearch &HS, StringRef isysroot) {
     const HeaderFileInfo &HFI = HS.getFileInfo(File);
     if (HFI.External && Chain)
       continue;
+    if (HFI.isModuleHeader && !HFI.isCompilingModuleHeader)
+      continue;
 
     // Turn the file name into an absolute path, if it isn't already.
     const char *Filename = File->getName();
