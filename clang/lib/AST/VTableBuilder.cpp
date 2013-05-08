@@ -34,7 +34,8 @@ struct BaseOffset {
   const CXXRecordDecl *DerivedClass;
   
   /// VirtualBase - If the path from the derived class to the base class
-  /// involves a virtual base class, this holds its declaration.
+  /// involves virtual base classes, this holds the declaration of the last
+  /// virtual base in this path (i.e. closest to the base class).
   const CXXRecordDecl *VirtualBase;
 
   /// NonVirtualOffset - The offset from the derived class to the base class.
@@ -219,16 +220,15 @@ static BaseOffset ComputeBaseOffset(ASTContext &Context,
   const CXXRecordDecl *VirtualBase = 0;
   
   // First, look for the virtual base class.
-  for (unsigned I = 0, E = Path.size(); I != E; ++I) {
-    const CXXBasePathElement &Element = Path[I];
-    
+  for (int I = Path.size(), E = 0; I != E; --I) {
+    const CXXBasePathElement &Element = Path[I - 1];
+
     if (Element.Base->isVirtual()) {
-      // FIXME: Can we break when we find the first virtual base?
-      // (If we can't, can't we just iterate over the path in reverse order?)
-      NonVirtualStart = I + 1;
+      NonVirtualStart = I;
       QualType VBaseType = Element.Base->getType();
-      VirtualBase = 
+      VirtualBase =
         cast<CXXRecordDecl>(VBaseType->getAs<RecordType>()->getDecl());
+      break;
     }
   }
   
