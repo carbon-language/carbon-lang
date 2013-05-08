@@ -35,13 +35,12 @@ public:
 
     virtual void GetDescription (Stream *s, lldb::DescriptionLevel level);
     virtual bool ValidatePlan (Stream *error);
-    virtual bool PlanExplainsStop (Event *event_ptr);
     virtual bool ShouldStop (Event *event_ptr);
+    virtual Vote ShouldReportStop (Event *event_ptr);
     virtual bool StopOthers ();
     virtual lldb::StateType GetPlanRunState ();
     virtual bool WillStop ();
     virtual bool MischiefManaged ();
-    virtual bool WillResume (lldb::StateType resume_state, bool current_plan);
 
     virtual bool OkayToDiscard()
     {
@@ -55,6 +54,8 @@ public:
     }
     
 protected:
+    virtual bool DoWillResume (lldb::StateType resume_state, bool current_plan);
+    virtual bool DoPlanExplainsStop (Event *event_ptr);
     ThreadPlanBase (Thread &thread);
 
 private:

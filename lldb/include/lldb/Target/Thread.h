@@ -288,7 +288,7 @@ public:
 
     Vote
     ShouldReportStop (Event *event_ptr);
-
+    
     Vote
     ShouldReportRun (Event *event_ptr);
     
@@ -927,6 +927,9 @@ public:
     void
     SetStopInfo (const lldb::StopInfoSP &stop_info_sp);
 
+    void
+    SetShouldReportStop (Vote vote);
+
 protected:
 
     friend class ThreadPlan;
@@ -1015,7 +1018,7 @@ protected:
     bool                m_destroy_called;       // This is used internally to make sure derived Thread classes call DestroyThread.
     uint32_t m_thread_stop_reason_stop_id;      // This is the stop id for which the StopInfo is valid.  Can use this so you know that
                                                 // the thread's m_actual_stop_info_sp is current and you don't have to fetch it again
-
+    LazyBool            m_override_should_notify;
 private:
     //------------------------------------------------------------------
     // For Thread only

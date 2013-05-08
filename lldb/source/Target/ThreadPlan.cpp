@@ -36,6 +36,7 @@ ThreadPlan::ThreadPlan(ThreadPlanKind kind, const char *name, Thread &thread, Vo
     m_kind (kind),
     m_name (name),
     m_plan_complete_mutex (Mutex::eMutexTypeRecursive),
+    m_cached_plan_explains_stop (eLazyBoolCalculate),
     m_plan_complete (false),
     m_plan_private (false),
     m_okay_to_discard (true),
@@ -50,6 +51,21 @@ ThreadPlan::ThreadPlan(ThreadPlanKind kind, const char *name, Thread &thread, Vo
 //----------------------------------------------------------------------
 ThreadPlan::~ThreadPlan()
 {
+}
+
+bool
+ThreadPlan::PlanExplainsStop (Event *event_ptr)
+{
+    if (m_cached_plan_explains_stop == eLazyBoolCalculate)
+    {
+        bool actual_value = DoPlanExplainsStop(event_ptr);
+        m_cached_plan_explains_stop = actual_value ? eLazyBoolYes : eLazyBoolNo;
+        return actual_value;
+    }
+    else
+    {
+        return m_cached_plan_explains_stop == eLazyBoolYes;
+    }
 }
 
 bool
@@ -131,6 +147,8 @@ ThreadPlan::SetStopOthers (bool new_value)
 bool
 ThreadPlan::WillResume (StateType resume_state, bool current_plan)
 {
+    m_cached_plan_explains_stop = eLazyBoolCalculate;
+    
     if (current_plan)
     {
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
@@ -154,7 +172,7 @@ ThreadPlan::WillResume (StateType resume_state, bool current_plan)
                         StopOthers());
         }
     }
-    return true;
+    return DoWillResume (resume_state, current_plan);
 }
 
 lldb::user_id_t

@@ -34,11 +34,9 @@ public:
 
     virtual void GetDescription (Stream *s, lldb::DescriptionLevel level);
     virtual bool ValidatePlan (Stream *error);
-    virtual bool PlanExplainsStop (Event *event_ptr);
     virtual bool ShouldStop (Event *event_ptr);
     virtual bool StopOthers ();
     virtual lldb::StateType GetPlanRunState ();
-    virtual bool WillResume (lldb::StateType resume_state, bool current_plan);
     virtual bool WillStop ();
     virtual bool MischiefManaged ();
     virtual void DidPush();
@@ -50,6 +48,8 @@ public:
     }
 
 protected:
+    virtual bool DoPlanExplainsStop (Event *event_ptr);
+    virtual bool DoWillResume (lldb::StateType resume_state, bool current_plan);
     bool QueueInlinedStepPlan (bool queue_now);
 
 private:

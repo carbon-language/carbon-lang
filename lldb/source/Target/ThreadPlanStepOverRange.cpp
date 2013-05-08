@@ -290,7 +290,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
 }
 
 bool
-ThreadPlanStepOverRange::PlanExplainsStop (Event *event_ptr)
+ThreadPlanStepOverRange::DoPlanExplainsStop (Event *event_ptr)
 {
     // For crashes, breakpoint hits, signals, etc, let the base plan (or some plan above us)
     // handle the stop.  That way the user can see the stop, step around, and then when they
@@ -301,6 +301,8 @@ ThreadPlanStepOverRange::PlanExplainsStop (Event *event_ptr)
     
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     StopInfoSP stop_info_sp = GetPrivateStopReason();
+    bool return_value;
+    
     if (stop_info_sp)
     {
         StopReason reason = stop_info_sp->GetStopReason();
@@ -308,13 +310,13 @@ ThreadPlanStepOverRange::PlanExplainsStop (Event *event_ptr)
         switch (reason)
         {
         case eStopReasonTrace:
-            return true;
+            return_value = true;
             break;
         case eStopReasonBreakpoint:
             if (NextRangeBreakpointExplainsStop(stop_info_sp))
-                return true;
+                return_value = true;
             else
-                return false;
+                return_value = false;
             break;
         case eStopReasonWatchpoint:
         case eStopReasonSignal:
@@ -324,15 +326,18 @@ ThreadPlanStepOverRange::PlanExplainsStop (Event *event_ptr)
         default:
             if (log)
                 log->PutCString ("ThreadPlanStepInRange got asked if it explains the stop for some reason other than step.");
-            return false;
+            return_value = false;
             break;
         }
     }
-    return true;
+    else
+        return_value = true;
+
+    return return_value;
 }
 
 bool
-ThreadPlanStepOverRange::WillResume (lldb::StateType resume_state, bool current_plan)
+ThreadPlanStepOverRange::DoWillResume (lldb::StateType resume_state, bool current_plan)
 {
     if (resume_state != eStateSuspended && m_first_resume)
     {
@@ -346,7 +351,7 @@ ThreadPlanStepOverRange::WillResume (lldb::StateType resume_state, bool current_
             {
                 Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
                 if (log)
-                    log->Printf ("ThreadPlanStepInRange::WillResume: adjusting range to the frame at inlined depth %d.",
+                    log->Printf ("ThreadPlanStepInRange::DoWillResume: adjusting range to the frame at inlined depth %d.",
                                  m_thread.GetCurrentInlinedDepth());
                 StackFrameSP stack_sp = m_thread.GetStackFrameAtIndex(0);
                 if (stack_sp)
@@ -379,5 +384,5 @@ ThreadPlanStepOverRange::WillResume (lldb::StateType resume_state, bool current_
         }
     }
     
-    return ThreadPlan::WillResume(resume_state, current_plan);
+    return true;
 }

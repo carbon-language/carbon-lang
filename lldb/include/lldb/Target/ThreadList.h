@@ -137,6 +137,9 @@ public:
 protected:
 
     void
+    SetShouldReportStop (Vote vote);
+
+    void
     NotifySelectedThreadChanged (lldb::tid_t tid);
 
     typedef std::vector<lldb::ThreadSP> collection;

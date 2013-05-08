@@ -376,6 +376,19 @@ ThreadList::ShouldReportStop (Event *event_ptr)
     return result;
 }
 
+void
+ThreadList::SetShouldReportStop (Vote vote)
+{
+    Mutex::Locker locker(GetMutex());
+    m_process->UpdateThreadListIfNeeded();
+    collection::iterator pos, end = m_threads.end();
+    for (pos = m_threads.begin(); pos != end; ++pos)
+    {
+        ThreadSP thread_sp(*pos);
+        thread_sp->SetShouldReportStop (vote);
+    }
+}
+
 Vote
 ThreadList::ShouldReportRun (Event *event_ptr)
 {

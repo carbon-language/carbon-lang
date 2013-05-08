@@ -59,9 +59,6 @@ public:
     ValidatePlan (Stream *error);
 
     virtual bool
-    PlanExplainsStop (Event *event_ptr);
-
-    virtual bool
     ShouldStop (Event *event_ptr);
     
     virtual Vote
@@ -135,8 +132,12 @@ public:
     virtual bool
     RestoreThreadState();
 
-protected:
+protected:    
     void ReportRegisterState (const char *message);
+
+    virtual bool
+    DoPlanExplainsStop (Event *event_ptr);
+
 private:
 
     bool

@@ -259,7 +259,8 @@ Thread::Thread (Process &process, lldb::tid_t tid) :
     m_temporary_resume_state (eStateRunning),
     m_unwinder_ap (),
     m_destroy_called (false),
-    m_thread_stop_reason_stop_id (0)
+    m_thread_stop_reason_stop_id (0),
+    m_override_should_notify (eLazyBoolCalculate)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
@@ -394,12 +395,31 @@ Thread::SetStopInfo (const lldb::StopInfoSP &stop_info_sp)
 {
     m_actual_stop_info_sp = stop_info_sp;
     if (m_actual_stop_info_sp)
+    {
         m_actual_stop_info_sp->MakeStopInfoValid();
+        // If we are overriding the ShouldReportStop, do that here:
+        if (m_override_should_notify != eLazyBoolCalculate)
+            m_actual_stop_info_sp->OverrideShouldNotify (m_override_should_notify == eLazyBoolYes);
+    }
+    
     ProcessSP process_sp (GetProcess());
     if (process_sp)
         m_thread_stop_reason_stop_id = process_sp->GetStopID();
     else
         m_thread_stop_reason_stop_id = UINT32_MAX;
+}
+
+void
+Thread::SetShouldReportStop (Vote vote)
+{
+    if (vote == eVoteNoOpinion)
+        return;
+    else
+    {
+        m_override_should_notify = (vote == eVoteYes ? eLazyBoolYes : eLazyBoolNo);
+        if (m_actual_stop_info_sp)
+            m_actual_stop_info_sp->OverrideShouldNotify (m_override_should_notify == eLazyBoolYes);
+    }
 }
 
 void
@@ -530,6 +550,7 @@ Thread::ShouldResume (StateType resume_state)
     // At this point clear the completed plan stack.
     m_completed_plan_stack.clear();
     m_discarded_plan_stack.clear();
+    m_override_should_notify = eLazyBoolCalculate;
 
     m_temporary_resume_state = resume_state;
     

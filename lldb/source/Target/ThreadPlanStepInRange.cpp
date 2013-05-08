@@ -379,7 +379,7 @@ ThreadPlanStepInRange::DefaultShouldStopHereCallback (ThreadPlan *current_plan, 
 }
 
 bool
-ThreadPlanStepInRange::PlanExplainsStop (Event *event_ptr)
+ThreadPlanStepInRange::DoPlanExplainsStop (Event *event_ptr)
 {
     // We always explain a stop.  Either we've just done a single step, in which
     // case we'll do our ordinary processing, or we stopped for some
@@ -394,41 +394,54 @@ ThreadPlanStepInRange::PlanExplainsStop (Event *event_ptr)
     //
     // The only variation is that if we are doing "step by running to next branch" in which case
     // if we hit our branch breakpoint we don't set the plan to complete.
+            
+    bool return_value;
     
     if (m_virtual_step)
-        return true;
-    
-    StopInfoSP stop_info_sp = GetPrivateStopReason();
-    if (stop_info_sp)
     {
-        StopReason reason = stop_info_sp->GetStopReason();
-
-        switch (reason)
-        {
-        case eStopReasonBreakpoint:
-            if (NextRangeBreakpointExplainsStop(stop_info_sp))
-                return true;
-        case eStopReasonWatchpoint:
-        case eStopReasonSignal:
-        case eStopReasonException:
-        case eStopReasonExec:
-        case eStopReasonThreadExiting:
-            {
-                Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-                if (log)
-                    log->PutCString ("ThreadPlanStepInRange got asked if it explains the stop for some reason other than step.");
-            }
-            return false;
-            break;
-        default:
-            break;
-        }
+        return_value = true;
     }
-    return true;
+    else
+    {
+        StopInfoSP stop_info_sp = GetPrivateStopReason();
+        if (stop_info_sp)
+        {
+            StopReason reason = stop_info_sp->GetStopReason();
+
+            switch (reason)
+            {
+            case eStopReasonBreakpoint:
+                if (NextRangeBreakpointExplainsStop(stop_info_sp))
+                {
+                    return_value = true;
+                    break;
+                }
+            case eStopReasonWatchpoint:
+            case eStopReasonSignal:
+            case eStopReasonException:
+            case eStopReasonExec:
+            case eStopReasonThreadExiting:
+                {
+                    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+                    if (log)
+                        log->PutCString ("ThreadPlanStepInRange got asked if it explains the stop for some reason other than step.");
+                }
+                return_value = false;
+                break;
+            default:
+                return_value = true;
+                break;
+            }
+        }
+        else
+            return_value = true;
+    }
+    
+    return return_value;
 }
 
 bool
-ThreadPlanStepInRange::WillResume (lldb::StateType resume_state, bool current_plan)
+ThreadPlanStepInRange::DoWillResume (lldb::StateType resume_state, bool current_plan)
 {
     if (resume_state == eStateStepping && current_plan)
     {
@@ -438,7 +451,7 @@ ThreadPlanStepInRange::WillResume (lldb::StateType resume_state, bool current_pl
         {
             Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
             if (log)
-                log->Printf ("ThreadPlanStepInRange::WillResume: returning false, inline_depth: %d",
+                log->Printf ("ThreadPlanStepInRange::DoWillResume: returning false, inline_depth: %d",
                              m_thread.GetCurrentInlinedDepth());
             SetStopInfo(StopInfo::CreateStopReasonToTrace(m_thread));
             
@@ -448,7 +461,5 @@ ThreadPlanStepInRange::WillResume (lldb::StateType resume_state, bool current_pl
         }
         return !step_without_resume;
     }
-    else
-        return ThreadPlan::WillResume(resume_state, current_plan);
-    
+    return true;
 }

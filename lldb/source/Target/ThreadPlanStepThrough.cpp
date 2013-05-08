@@ -139,7 +139,7 @@ ThreadPlanStepThrough::ValidatePlan (Stream *error)
 }
 
 bool
-ThreadPlanStepThrough::PlanExplainsStop (Event *event_ptr)
+ThreadPlanStepThrough::DoPlanExplainsStop (Event *event_ptr)
 {
     // If we have a sub-plan, it will have been asked first if we explain the stop, and
     // we won't get asked.  The only time we would be the one directly asked this question
@@ -223,9 +223,8 @@ ThreadPlanStepThrough::GetPlanRunState ()
 }
 
 bool
-ThreadPlanStepThrough::WillResume (StateType resume_state, bool current_plan)
+ThreadPlanStepThrough::DoWillResume (StateType resume_state, bool current_plan)
 {
-    ThreadPlan::WillResume(resume_state, current_plan);
     return true;
 }
 

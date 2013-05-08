@@ -58,7 +58,7 @@ ThreadPlanStepOverBreakpoint::ValidatePlan (Stream *error)
 }
 
 bool
-ThreadPlanStepOverBreakpoint::PlanExplainsStop (Event *event_ptr)
+ThreadPlanStepOverBreakpoint::DoPlanExplainsStop (Event *event_ptr)
 {
     StopInfoSP stop_info_sp = GetPrivateStopReason();
     if (stop_info_sp)
@@ -91,10 +91,8 @@ ThreadPlanStepOverBreakpoint::GetPlanRunState ()
 }
 
 bool
-ThreadPlanStepOverBreakpoint::WillResume (StateType resume_state, bool current_plan)
+ThreadPlanStepOverBreakpoint::DoWillResume (StateType resume_state, bool current_plan)
 {
-    ThreadPlan::WillResume (resume_state, current_plan);
-
     if (current_plan)
     {
         BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByAddress (m_breakpoint_addr));

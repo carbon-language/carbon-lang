@@ -3348,13 +3348,15 @@ public:
     void
     RestoreProcessEvents ();
 
-protected:
+private:
     //------------------------------------------------------------------
     /// This is the part of the event handling that for a process event.
     /// It decides what to do with the event and returns true if the
     /// event needs to be propagated to the user, and false otherwise.
     /// If the event is not propagated, this call will most likely set
     /// the target to executing again.
+    /// There is only one place where this call should be called, HandlePrivateEvent.
+    /// Don't call it from anywhere else...
     ///
     /// @param[in] event_ptr
     ///     This is the event we are handling.
@@ -3526,6 +3528,9 @@ protected:
     // new "NextEventAction" is added while one is already present, the
     // old action will be discarded (with HandleBeingUnshipped called 
     // after it is discarded.)
+    //
+    // If you want to resume the process as a result of a resume action,
+    // call RequestResume, don't call Resume directly.
     //------------------------------------------------------------------
     class NextEventAction
     {
@@ -3551,6 +3556,10 @@ protected:
         virtual void HandleBeingUnshipped () {}
         virtual EventActionResult HandleBeingInterrupted () = 0;
         virtual const char *GetExitString() = 0;
+        void RequestResume()
+        {
+            m_process->m_resume_requested = true;
+        }
     protected:
         Process *m_process;
     };
@@ -3661,7 +3670,9 @@ protected:
 #if defined(__APPLE__)
     ReadWriteLock               m_private_run_lock;
 #endif
-    Predicate<bool>             m_currently_handling_event;
+    Predicate<bool>             m_currently_handling_event; // This predicate is set in HandlePrivateEvent while all its business is being done.
+    bool                        m_currently_handling_do_on_removals;
+    bool                        m_resume_requested;         // If m_currently_handling_event or m_currently_handling_do_on_removals are true, Resume will only request a resume, using this flag to check.
     bool                        m_finalize_called;
     lldb::StateType             m_last_broadcast_state;   /// This helps with the Public event coalescing in ShouldBroadcastEvent.
     bool m_destroy_in_process;
@@ -3679,7 +3690,7 @@ protected:
     SynchronouslyNotifyStateChanged (lldb::StateType state);
 
     void
-    SetPublicState (lldb::StateType new_state);
+    SetPublicState (lldb::StateType new_state, bool restarted);
 
     void
     SetPrivateState (lldb::StateType state);

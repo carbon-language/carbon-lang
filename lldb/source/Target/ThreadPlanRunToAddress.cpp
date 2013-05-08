@@ -188,7 +188,7 @@ ThreadPlanRunToAddress::ValidatePlan (Stream *error)
 }
 
 bool
-ThreadPlanRunToAddress::PlanExplainsStop (Event *event_ptr)
+ThreadPlanRunToAddress::DoPlanExplainsStop (Event *event_ptr)
 {
     return AtOurAddress();
 }

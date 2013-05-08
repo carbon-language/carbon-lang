@@ -79,7 +79,11 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "python_api/hello_world"
+            argument = "-f"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "ConditionalBreakTestCase.test_with_dwarf_command"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

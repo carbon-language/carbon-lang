@@ -362,7 +362,7 @@ ThreadPlanCallFunction::ShouldReportStop(Event *event_ptr)
 }
 
 bool
-ThreadPlanCallFunction::PlanExplainsStop (Event *event_ptr)
+ThreadPlanCallFunction::DoPlanExplainsStop (Event *event_ptr)
 {    
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP|LIBLLDB_LOG_PROCESS));
     m_real_stop_info_sp = GetPrivateStopReason();
@@ -475,9 +475,9 @@ ThreadPlanCallFunction::PlanExplainsStop (Event *event_ptr)
 bool
 ThreadPlanCallFunction::ShouldStop (Event *event_ptr)
 {
-    // We do some computation in PlanExplainsStop that may or may not set the plan as complete.
+    // We do some computation in DoPlanExplainsStop that may or may not set the plan as complete.
     // We need to do that here to make sure our state is correct.
-    PlanExplainsStop(event_ptr);
+    DoPlanExplainsStop(event_ptr);
     
     if (IsPlanComplete())
     {

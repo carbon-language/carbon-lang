@@ -79,11 +79,20 @@ public:
         return true;
     }
 
+    void
+    OverrideShouldNotify (bool override_value)
+    {
+        m_override_should_notify = override_value ? eLazyBoolYes : eLazyBoolNo;
+    }
+    
     // If should stop returns false, check if we should notify of this event
     virtual bool
     ShouldNotify (Event *event_ptr)
     {
-        return false;
+        if (m_override_should_notify == eLazyBoolCalculate)
+            return DoShouldNotify (event_ptr);
+        else
+            return m_override_should_notify == eLazyBoolYes;
     }
 
     virtual void
@@ -116,20 +125,19 @@ public:
     void
     OverrideShouldStop (bool override_value)
     {
-        m_override_set = true;
-        m_override_value = override_value;
+        m_override_should_stop = override_value ? eLazyBoolYes : eLazyBoolNo;
     }
     
     bool
     GetOverrideShouldStop()
     {
-        return m_override_set;
+        return m_override_should_stop != eLazyBoolCalculate;
     }
     
     bool
     GetOverriddenShouldStopValue ()
     {
-        return m_override_value;
+        return m_override_should_stop == eLazyBoolYes;
     }
     
     static lldb::StopInfoSP
@@ -169,6 +177,12 @@ protected:
     {
     }
 
+    virtual bool
+    DoShouldNotify (Event *event_ptr)
+    {
+        return false;
+    }
+    
     // Stop the thread by default. Subclasses can override this to allow
     // the thread to continue if desired.  The ShouldStop method should not do anything
     // that might run code.  If you need to run code when deciding whether to stop
@@ -189,8 +203,8 @@ protected:
     uint32_t        m_resume_id; // This is the resume ID when we made this stop ID.
     uint64_t        m_value;    // A generic value that can be used for things pertaining to this stop info
     std::string     m_description; // A textual description describing this stop.
-    bool            m_override_set;
-    bool            m_override_value;
+    LazyBool        m_override_should_notify;
+    LazyBool        m_override_should_stop;
     
     // This determines whether the target has run since this stop info.
     // N.B. running to evaluate a user expression does not count. 

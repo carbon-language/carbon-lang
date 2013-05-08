@@ -45,10 +45,6 @@ public:
     virtual bool
     ValidatePlan (Stream *error);
 
-    virtual bool
-    PlanExplainsStop (Event *event_ptr);
-
-
     virtual lldb::StateType
     GetPlanRunState ();
 
@@ -81,6 +77,8 @@ protected:
 	//------------------------------------------------------------------
 	// Classes that inherit from AppleThreadPlanStepThroughObjCTrampoline can see and modify these
 	//------------------------------------------------------------------
+    virtual bool
+    DoPlanExplainsStop (Event *event_ptr);
 	
 private:
     bool

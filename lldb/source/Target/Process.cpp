@@ -1643,11 +1643,11 @@ Process::GetState()
 }
 
 void
-Process::SetPublicState (StateType new_state)
+Process::SetPublicState (StateType new_state, bool restarted)
 {
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STATE | LIBLLDB_LOG_PROCESS));
     if (log)
-        log->Printf("Process::SetPublicState (%s)", StateAsCString(new_state));
+        log->Printf("Process::SetPublicState (state = %s, restarted = %i)", StateAsCString(new_state), restarted);
     const StateType old_state = m_public_state.GetValue();
     m_public_state.SetValue (new_state);
     
@@ -1666,9 +1666,9 @@ Process::SetPublicState (StateType new_state)
         {
             const bool old_state_is_stopped = StateIsStoppedState(old_state, false);
             const bool new_state_is_stopped = StateIsStoppedState(new_state, false);
-            if (old_state_is_stopped != new_state_is_stopped)
+            if ((old_state_is_stopped != new_state_is_stopped))
             {
-                if (new_state_is_stopped)
+                if (new_state_is_stopped && !restarted)
                 {
                     if (log)
                         log->Printf("Process::SetPublicState (%s) -- unlocking run lock", StateAsCString(new_state));
@@ -2866,7 +2866,8 @@ Process::Launch (const ProcessLaunchInfo &launch_info)
             error = WillLaunch (exe_module);
             if (error.Success())
             {
-                SetPublicState (eStateLaunching);
+                const bool restarted = false;
+                SetPublicState (eStateLaunching, restarted);
                 m_should_detach = false;
 
                 if (m_public_run_lock.WriteTryLock())
@@ -2993,11 +2994,13 @@ Process::AttachCompletionHandler::PerformAction (lldb::EventSP &event_sp)
                 // During attach, prior to sending the eStateStopped event, 
                 // lldb_private::Process subclasses must set the new process ID.
                 assert (m_process->GetID() != LLDB_INVALID_PROCESS_ID);
+                // We don't want these events to be reported, so go set the ShouldReportStop here:
+                m_process->GetThreadList().SetShouldReportStop (eVoteNo);
+                
                 if (m_exec_count > 0)
                 {
                     --m_exec_count;
-                    m_process->PrivateResume ();
-                    Process::ProcessEventData::SetRestartedInEvent (event_sp.get(), true);
+                    RequestResume();
                     return eEventActionRetry;
                 }
                 else
@@ -3056,7 +3059,8 @@ Process::Attach (ProcessAttachInfo &attach_info)
                     if (m_public_run_lock.WriteTryLock())
                     {
                         m_should_detach = true;
-                        SetPublicState (eStateAttaching);
+                        const bool restarted = false;
+                        SetPublicState (eStateAttaching, restarted);
                         // Now attach using these arguments.
                         error = DoAttachToProcessWithName (process_name, wait_for_launch, attach_info);
                     }
@@ -3134,7 +3138,8 @@ Process::Attach (ProcessAttachInfo &attach_info)
             {
                 // Now attach using these arguments.
                 m_should_detach = true;
-                SetPublicState (eStateAttaching);
+                const bool restarted = false;
+                SetPublicState (eStateAttaching, restarted);
                 error = DoAttachToProcessWithID (attach_pid, attach_info);
             }
             else
@@ -3287,7 +3292,7 @@ Process::PrivateResume ()
         // that they are supposed to have when the process is resumed
         // (suspended/running/stepping). Threads should also check
         // their resume signal in lldb::Thread::GetResumeSignal()
-        // to see if they are suppoed to start back up with a signal.
+        // to see if they are supposed to start back up with a signal.
         if (m_thread_list.WillResume())
         {
             // Last thing, do the PreResumeActions.
@@ -3677,6 +3682,7 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
             // If we are going to stop, then we always broadcast the event.
             // If we aren't going to stop, let the thread plans decide if we're going to report this event.
             // If no thread has an opinion, we don't report it.
+
             RefreshStateAfterStop ();
             if (ProcessEventData::GetInterruptedFromEvent (event_ptr))
             {
@@ -3688,15 +3694,17 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
             }
             else
             {
+                bool was_restarted = ProcessEventData::GetRestartedFromEvent (event_ptr);
+                bool should_resume = false;
+                
                 // It makes no sense to ask "ShouldStop" if we've already been restarted...
                 // Asking the thread list is also not likely to go well, since we are running again.
                 // So in that case just report the event.
                 
-                bool was_restarted = ProcessEventData::GetRestartedFromEvent (event_ptr);
-                bool should_resume = false;
                 if (!was_restarted)
                     should_resume = m_thread_list.ShouldStop (event_ptr) == false;
-                if (was_restarted || should_resume)
+                
+                if (was_restarted || should_resume || m_resume_requested)
                 {
                     Vote stop_vote = m_thread_list.ShouldReportStop (event_ptr);
                     if (log)
@@ -3883,6 +3891,8 @@ void
 Process::HandlePrivateEvent (EventSP &event_sp)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+    m_resume_requested = false;
+    
     m_currently_handling_event.SetValue(true, eBroadcastNever);
     
     const StateType new_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
@@ -3911,6 +3921,7 @@ Process::HandlePrivateEvent (EventSP &event_sp)
                 {
                     // FIXME: should cons up an exited event, and discard this one.
                     SetExitStatus(0, m_next_event_action_ap->GetExitString());
+                    m_currently_handling_event.SetValue(false, eBroadcastAlways);
                     SetNextEventAction(NULL);
                     return;
                 }
@@ -4095,12 +4106,11 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
     // the public event queue, then other times when we're pretending that this is where we stopped at the
     // end of expression evaluation.  m_update_state is used to distinguish these
     // three cases; it is 0 when we're just pulling it off for private handling, 
-    // and > 1 for expression evaluation, and we don't want to do the breakpoint command handling then.
-    
+    // and > 1 for expression evaluation, and we don't want to do the breakpoint command handling then.    
     if (m_update_state != 1)
         return;
     
-    m_process_sp->SetPublicState (m_state);
+    m_process_sp->SetPublicState (m_state, Process::ProcessEventData::GetRestartedFromEvent(event_ptr));
         
     // If we're stopped and haven't restarted, then do the breakpoint commands here:
     if (m_state == eStateStopped && ! m_restarted)

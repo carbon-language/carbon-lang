@@ -59,13 +59,12 @@ public:
 
     static void
     SetDefaultFlagValue (uint32_t new_value);
-
-    virtual bool
-    PlanExplainsStop (Event *event_ptr);
-
-    virtual bool WillResume (lldb::StateType resume_state, bool current_plan);
     
 protected:
+    virtual bool DoWillResume (lldb::StateType resume_state, bool current_plan);
+
+    virtual bool
+    DoPlanExplainsStop (Event *event_ptr);
 
     virtual void
     SetFlagsToDefault ();

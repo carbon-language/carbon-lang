@@ -81,7 +81,7 @@ ThreadPlanStepInstruction::ValidatePlan (Stream *error)
 }
 
 bool
-ThreadPlanStepInstruction::PlanExplainsStop (Event *event_ptr)
+ThreadPlanStepInstruction::DoPlanExplainsStop (Event *event_ptr)
 {
     StopInfoSP stop_info_sp = GetPrivateStopReason();
     if (stop_info_sp)

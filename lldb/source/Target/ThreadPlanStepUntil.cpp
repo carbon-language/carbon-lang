@@ -305,7 +305,7 @@ ThreadPlanStepUntil::AnalyzeStop()
 }
 
 bool
-ThreadPlanStepUntil::PlanExplainsStop (Event *event_ptr)
+ThreadPlanStepUntil::DoPlanExplainsStop (Event *event_ptr)
 {
     // We don't explain signals or breakpoints (breakpoints that handle stepping in or
     // out will be handled by a child plan.
@@ -341,9 +341,8 @@ ThreadPlanStepUntil::GetPlanRunState ()
 }
 
 bool
-ThreadPlanStepUntil::WillResume (StateType resume_state, bool current_plan)
+ThreadPlanStepUntil::DoWillResume (StateType resume_state, bool current_plan)
 {
-    ThreadPlan::WillResume (resume_state, current_plan);
     if (current_plan)
     {
         TargetSP target_sp (m_thread.CalculateTarget());

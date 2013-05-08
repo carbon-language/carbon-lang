@@ -47,9 +47,6 @@ public:
     ValidatePlan (Stream *error);
 
     virtual bool
-    PlanExplainsStop (Event *event_ptr);
-
-    virtual bool
     ShouldStop (Event *event_ptr);
 
     virtual bool
@@ -68,6 +65,9 @@ public:
     MischiefManaged ();
 
 protected:
+    virtual bool
+    DoPlanExplainsStop (Event *event_ptr);
+
     void SetInitialBreakpoints();
     bool AtOurAddress();
 private:

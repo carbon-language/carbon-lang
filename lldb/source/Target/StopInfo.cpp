@@ -39,8 +39,8 @@ StopInfo::StopInfo (Thread &thread, uint64_t value) :
     m_stop_id (thread.GetProcess()->GetStopID()),
     m_resume_id (thread.GetProcess()->GetResumeID()),
     m_value (value),
-    m_override_set(false),
-    m_override_value(true)
+    m_override_should_notify (eLazyBoolCalculate),
+    m_override_should_stop (eLazyBoolCalculate)
 {
 }
 
@@ -201,7 +201,7 @@ public:
     }
     
     virtual bool
-    ShouldNotify (Event *event_ptr)
+    DoShouldNotify (Event *event_ptr)
     {
         ThreadSP thread_sp (m_thread_wp.lock());
         if (thread_sp)
@@ -849,7 +849,7 @@ public:
     
     // If should stop returns false, check if we should notify of this event
     virtual bool
-    ShouldNotify (Event *event_ptr)
+    DoShouldNotify (Event *event_ptr)
     {
         ThreadSP thread_sp (m_thread_wp.lock());
         if (thread_sp)

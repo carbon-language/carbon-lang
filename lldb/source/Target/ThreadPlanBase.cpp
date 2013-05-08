@@ -68,7 +68,7 @@ ThreadPlanBase::ValidatePlan (Stream *error)
 }
 
 bool
-ThreadPlanBase::PlanExplainsStop (Event *event_ptr)
+ThreadPlanBase::DoPlanExplainsStop (Event *event_ptr)
 {
     // The base plan should defer to its tracer, since by default it
     // always handles the stop.
@@ -76,6 +76,22 @@ ThreadPlanBase::PlanExplainsStop (Event *event_ptr)
         return false;
     else
         return true;
+}
+
+Vote
+ThreadPlanBase::ShouldReportStop(Event *event_ptr)
+{
+    StopInfoSP stop_info_sp = m_thread.GetStopInfo ();
+    if (stop_info_sp)
+    {
+        bool should_notify = stop_info_sp->ShouldNotify(event_ptr);
+        if (should_notify)
+            return eVoteYes;
+        else
+            return eVoteNoOpinion;
+    }
+    else
+        return eVoteNoOpinion;
 }
 
 bool
@@ -201,7 +217,7 @@ ThreadPlanBase::WillStop ()
 }
 
 bool 
-ThreadPlanBase::WillResume (lldb::StateType resume_state, bool current_plan)
+ThreadPlanBase::DoWillResume (lldb::StateType resume_state, bool current_plan)
 {
     // Reset these to the default values so we don't set them wrong, then not get asked
     // for a while, then return the wrong answer.
