@@ -1202,6 +1202,12 @@ Windows targets.
    record layout. GCC also contains support for this feature, however
    where MSVC and GCC are incompatible clang follows the MSVC
    definition.
+-  clang supports the Microsoft ``#pragma comment(lib, "foo.lib")`` feature for
+   automatically linking against the specified library.  Currently this feature
+   only works with the Visual C++ linker.
+-  clang supports the Microsoft ``#pragma comment(linker, "/flag:foo")`` feature
+   for adding linker flags to COFF object files.  The user is responsible for
+   ensuring that the linker understands the flags.
 -  clang defaults to C++11 for Windows targets.
 
 .. _cxx:
