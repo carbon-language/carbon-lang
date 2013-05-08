@@ -275,11 +275,12 @@ static EnumDecl *findEnumForBlockReturn(Expr *E) {
   //   - it is an implicit integral conversion applied to an
   //     enumerator-like expression of type T or
   if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
-    // We can only see integral conversions in valid enumerator-like
-    // expressions.
+    // We can sometimes see integral conversions in valid
+    // enumerator-like expressions.
     if (ICE->getCastKind() == CK_IntegralCast)
       return findEnumForBlockReturn(ICE->getSubExpr());
-    return 0;
+
+    // Otherwise, just rely on the type.
   }
 
   //   - it is an expression of that formal enum type.

@@ -86,9 +86,11 @@ typedef enum CStyleEnum (^cse_block_t)();
 
 void testCStyleEnumInference(bool arg) {
   cse_block_t a;
+  enum CStyleEnum value;
 
   // No warnings here.
   a = ^{ return getCSE(); };
+  a = ^{ return value; };
 
   a = ^{ // expected-error {{incompatible block pointer types assigning to 'cse_block_t' (aka 'enum CStyleEnum (^)()') from 'int (^)(void)'}}
     return 1;
@@ -102,6 +104,7 @@ void testCStyleEnumInference(bool arg) {
   // No warnings here.
   a = ^{ if (arg) return CSE_Value; else return getCSE();  };
   a = ^{ if (arg) return getCSE();  else return CSE_Value; };
+  a = ^{ if (arg) return value;     else return CSE_Value; };
 
   // These two blocks actually return 'int'
   a = ^{ // expected-error {{incompatible block pointer types assigning to 'cse_block_t' (aka 'enum CStyleEnum (^)()') from 'int (^)(void)'}}
@@ -116,6 +119,13 @@ void testCStyleEnumInference(bool arg) {
       return CSE_Value;
     else
       return 1;
+  };
+
+  a = ^{ // expected-error {{incompatible block pointer types assigning to 'cse_block_t' (aka 'enum CStyleEnum (^)()') from 'int (^)(void)'}}
+    if (arg)
+      return 1;
+    else
+      return value; // expected-error {{return type 'enum CStyleEnum' must match previous return type 'int'}}
   };
 
   // rdar://13200889
