@@ -102,24 +102,6 @@ void AsanPlatformThreadInit() {
   // Nothing here for now.
 }
 
-void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp, bool fast) {
-#if defined(__arm__) || \
-    defined(__powerpc__) || defined(__powerpc64__) || \
-    defined(__sparc__)
-  fast = false;
-#endif
-  if (!fast)
-    return stack->SlowUnwindStack(pc, max_s);
-  stack->size = 0;
-  stack->trace[0] = pc;
-  if (max_s > 1) {
-    stack->max_size = max_s;
-    if (!asan_inited) return;
-    if (AsanThread *t = GetCurrentThread())
-      stack->FastUnwindStack(pc, bp, t->stack_top(), t->stack_bottom());
-  }
-}
-
 #if !SANITIZER_ANDROID
 void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
   ucontext_t *ucp = (ucontext_t*)context;

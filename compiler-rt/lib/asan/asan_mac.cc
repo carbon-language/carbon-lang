@@ -229,18 +229,6 @@ bool AsanInterceptsSignal(int signum) {
 void AsanPlatformThreadInit() {
 }
 
-void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp, bool fast) {
-  (void)fast;
-  stack->size = 0;
-  stack->trace[0] = pc;
-  if ((max_s) > 1) {
-    stack->max_size = max_s;
-    if (!asan_inited) return;
-    if (AsanThread *t = GetCurrentThread())
-      stack->FastUnwindStack(pc, bp, t->stack_top(), t->stack_bottom());
-  }
-}
-
 void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
   UNIMPLEMENTED();
 }

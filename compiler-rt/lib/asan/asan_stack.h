@@ -15,12 +15,12 @@
 #define ASAN_STACK_H
 
 #include "asan_flags.h"
+#include "asan_thread.h"
 #include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
 
 namespace __asan {
 
-void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp, bool fast);
 void PrintStack(StackTrace *stack);
 
 }  // namespace __asan
@@ -28,10 +28,24 @@ void PrintStack(StackTrace *stack);
 // Get the stack trace with the given pc and bp.
 // The pc will be in the position 0 of the resulting stack trace.
 // The bp may refer to the current frame or to the caller's frame.
-// fast_unwind is currently unused.
+#if SANITIZER_WINDOWS
 #define GET_STACK_TRACE_WITH_PC_AND_BP(max_s, pc, bp, fast)     \
   StackTrace stack;                                             \
-  GetStackTrace(&stack, max_s, pc, bp, fast)
+  GetStackTrace(&stack, max_s, pc, bp, 0, 0, fast)
+#else
+#define GET_STACK_TRACE_WITH_PC_AND_BP(max_s, pc, bp, fast)     \
+  StackTrace stack;                                             \
+  {                                                             \
+    uptr stack_top = 0, stack_bottom = 0;                       \
+    AsanThread *t;                                              \
+    if (asan_inited && (t = GetCurrentThread())) {              \
+      stack_top = t->stack_top();                               \
+      stack_bottom = t->stack_bottom();                         \
+    }                                                           \
+    GetStackTrace(&stack, max_s, pc, bp,                        \
+                  stack_top, stack_bottom, fast);               \
+  }
+#endif  // SANITIZER_WINDOWS
 
 // NOTE: A Rule of thumb is to retrieve stack trace in the interceptors
 // as early as possible (in functions exposed to the user), as we generally

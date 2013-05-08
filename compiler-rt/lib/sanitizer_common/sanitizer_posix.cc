@@ -18,6 +18,7 @@
 #include "sanitizer_common.h"
 #include "sanitizer_libc.h"
 #include "sanitizer_procmaps.h"
+#include "sanitizer_stacktrace.h"
 
 #include <errno.h>
 #include <pthread.h>
@@ -228,6 +229,26 @@ int internal_isatty(fd_t fd) {
   return isatty(fd);
 }
 
+void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
+                   uptr stack_top, uptr stack_bottom, bool fast) {
+#if !SANITIZER_CAN_FAST_UNWIND
+  fast = false;
+#endif
+#if SANITIZER_MAC
+  // Always unwind fast on Mac.
+  (void)fast;
+#else
+  if (!fast || (stack_top == stack_bottom))
+    return stack->SlowUnwindStack(pc, max_s);
+#endif  // SANITIZER_MAC
+  stack->size = 0;
+  stack->trace[0] = pc;
+  if (max_s > 1) {
+    stack->max_size = max_s;
+    stack->FastUnwindStack(pc, bp, stack_top, stack_bottom);
+  }
+}
+
 }  // namespace __sanitizer
 
-#endif  // SANITIZER_LINUX || __APPLE_
+#endif  // SANITIZER_LINUX || SANITIZER_MAC

@@ -23,8 +23,9 @@
 
 #include "sanitizer_common.h"
 #include "sanitizer_libc.h"
-#include "sanitizer_placement_new.h"
 #include "sanitizer_mutex.h"
+#include "sanitizer_placement_new.h"
+#include "sanitizer_stacktrace.h"
 
 namespace __sanitizer {
 
@@ -344,6 +345,33 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
   *stk_size = stack_top - stack_bottom;
   *tls_addr = 0;
   *tls_size = 0;
+}
+
+void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
+                   uptr stack_top, uptr stack_bottom, bool fast) {
+  (void)fast;
+  (void)stack_top;
+  (void)stack_bottom;
+  stack->max_size = max_s;
+  void *tmp[kStackTraceMax];
+
+  // FIXME: CaptureStackBackTrace might be too slow for us.
+  // FIXME: Compare with StackWalk64.
+  // FIXME: Look at LLVMUnhandledExceptionFilter in Signals.inc
+  uptr cs_ret = CaptureStackBackTrace(1, stack->max_size, tmp, 0);
+  uptr offset = 0;
+  // Skip the RTL frames by searching for the PC in the stacktrace.
+  // FIXME: this doesn't work well for the malloc/free stacks yet.
+  for (uptr i = 0; i < cs_ret; i++) {
+    if (pc != (uptr)tmp[i])
+      continue;
+    offset = i;
+    break;
+  }
+
+  stack->size = cs_ret - offset;
+  for (uptr i = 0; i < stack->size; i++)
+    stack->trace[i] = (uptr)tmp[i + offset];
 }
 
 }  // namespace __sanitizer
