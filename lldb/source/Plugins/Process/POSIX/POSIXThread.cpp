@@ -363,6 +363,20 @@ POSIXThread::WatchNotify(const ProcessMessage &message)
 void
 POSIXThread::TraceNotify(const ProcessMessage &message)
 {
+    RegisterContextPOSIX* reg_ctx = GetRegisterContextPOSIX();
+    if (reg_ctx)
+    {
+        uint32_t num_hw_wps = reg_ctx->NumSupportedHardwareWatchpoints();
+        uint32_t wp_idx;
+        for (wp_idx = 0; wp_idx < num_hw_wps; wp_idx++)
+        {
+            if (reg_ctx->IsWatchpointHit(wp_idx))
+            {
+                WatchNotify(message);
+                return;
+            }
+        }
+    }
     SetStopInfo (StopInfo::CreateStopReasonToTrace(*this));
 }
 
