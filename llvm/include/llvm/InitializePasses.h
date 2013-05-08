@@ -100,6 +100,7 @@ void initializeDAEPass(PassRegistry&);
 void initializeDAHPass(PassRegistry&);
 void initializeDCEPass(PassRegistry&);
 void initializeDSEPass(PassRegistry&);
+void initializeDebugIRPass(PassRegistry&);
 void initializeDeadInstEliminationPass(PassRegistry&);
 void initializeDeadMachineInstructionElimPass(PassRegistry&);
 void initializeDependenceAnalysisPass(PassRegistry&);

@@ -695,6 +695,13 @@ DIArray DISubprogram::getVariables() const {
   return DIArray();
 }
 
+void DIScope::setFilename(StringRef Name, LLVMContext &Context) {
+  if (!DbgNode)
+    return;
+  MDString *MDName(MDString::get(Context, Name));
+  const_cast<MDNode*>(getNodeField(DbgNode, 1))->replaceOperandWith(0, MDName);
+}
+
 StringRef DIScope::getFilename() const {
   if (!DbgNode)
     return StringRef();
