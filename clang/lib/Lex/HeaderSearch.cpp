@@ -876,13 +876,6 @@ void HeaderSearch::MarkFileModuleHeader(const FileEntry *FE,
   HFI.isCompilingModuleHeader = isCompilingModuleHeader;
 }
 
-void HeaderSearch::setHeaderFileInfoForUID(HeaderFileInfo HFI, unsigned UID) {
-  if (UID >= FileInfo.size())
-    FileInfo.resize(UID+1);
-  HFI.Resolved = true;
-  FileInfo[UID] = HFI;
-}
-
 bool HeaderSearch::ShouldEnterIncludeFile(const FileEntry *File, bool isImport){
   ++NumIncluded; // Count # of attempted #includes.
 

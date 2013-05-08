@@ -509,23 +509,19 @@ class ASTInfoCollector : public ASTReaderListener {
   Preprocessor &PP;
   ASTContext &Context;
   LangOptions &LangOpt;
-  HeaderSearch &HSI;
   IntrusiveRefCntPtr<TargetOptions> &TargetOpts;
   IntrusiveRefCntPtr<TargetInfo> &Target;
   unsigned &Counter;
 
-  unsigned NumHeaderInfos;
-
   bool InitializedLanguage;
 public:
   ASTInfoCollector(Preprocessor &PP, ASTContext &Context, LangOptions &LangOpt, 
-                   HeaderSearch &HSI, 
                    IntrusiveRefCntPtr<TargetOptions> &TargetOpts,
                    IntrusiveRefCntPtr<TargetInfo> &Target,
                    unsigned &Counter)
-    : PP(PP), Context(Context), LangOpt(LangOpt), HSI(HSI), 
+    : PP(PP), Context(Context), LangOpt(LangOpt),
       TargetOpts(TargetOpts), Target(Target),
-      Counter(Counter), NumHeaderInfos(0),
+      Counter(Counter),
       InitializedLanguage(false) {}
 
   virtual bool ReadLanguageOptions(const LangOptions &LangOpts,
@@ -552,10 +548,6 @@ public:
 
     updated();
     return false;
-  }
-
-  virtual void ReadHeaderFileInfo(const HeaderFileInfo &HFI, unsigned ID) {
-    HSI.setHeaderFileInfoForUID(HFI, NumHeaderInfos++);
   }
 
   virtual void ReadCounter(const serialization::ModuleFile &M, unsigned Value) {
@@ -798,7 +790,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
     ReaderCleanup(Reader.get());
 
   Reader->setListener(new ASTInfoCollector(*AST->PP, Context,
-                                           AST->ASTFileLangOpts, HeaderInfo, 
+                                           AST->ASTFileLangOpts,
                                            AST->TargetOpts, AST->Target, 
                                            Counter));
 

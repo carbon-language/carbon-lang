@@ -519,9 +519,6 @@ public:
   
   unsigned header_file_size() const { return FileInfo.size(); }
 
-  // Used by ASTReader.
-  void setHeaderFileInfoForUID(HeaderFileInfo HFI, unsigned UID);
-
   /// \brief Return the HeaderFileInfo structure for the specified FileEntry.
   const HeaderFileInfo &getFileInfo(const FileEntry *FE) const {
     return const_cast<HeaderSearch*>(this)->getFileInfo(FE);

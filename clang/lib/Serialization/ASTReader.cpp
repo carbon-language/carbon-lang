@@ -377,12 +377,6 @@ bool PCHValidator::ReadPreprocessorOptions(const PreprocessorOptions &PPOpts,
                                   PP.getLangOpts());
 }
 
-void PCHValidator::ReadHeaderFileInfo(const HeaderFileInfo &HFI,
-                                      unsigned ID) {
-  PP.getHeaderSearchInfo().setHeaderFileInfoForUID(HFI, ID);
-  ++NumHeaderInfos;
-}
-
 void PCHValidator::ReadCounter(const ModuleFile &M, unsigned Value) {
   PP.setCounterValue(Value);
 }
@@ -4394,11 +4388,8 @@ namespace {
 HeaderFileInfo ASTReader::GetHeaderFileInfo(const FileEntry *FE) {
   HeaderFileInfoVisitor Visitor(FE);
   ModuleMgr.visit(&HeaderFileInfoVisitor::visit, &Visitor);
-  if (Optional<HeaderFileInfo> HFI = Visitor.getHeaderFileInfo()) {
-    if (Listener)
-      Listener->ReadHeaderFileInfo(*HFI, FE->getUID());
+  if (Optional<HeaderFileInfo> HFI = Visitor.getHeaderFileInfo())
     return *HFI;
-  }
   
   return HeaderFileInfo();
 }
