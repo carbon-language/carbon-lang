@@ -229,6 +229,7 @@ int internal_isatty(fd_t fd) {
   return isatty(fd);
 }
 
+#ifndef SANITIZER_GO
 void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
                    uptr stack_top, uptr stack_bottom, bool fast) {
 #if !SANITIZER_CAN_FAST_UNWIND
@@ -248,6 +249,7 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
     stack->FastUnwindStack(pc, bp, stack_top, stack_bottom);
   }
 }
+#endif  // SANITIZER_GO
 
 }  // namespace __sanitizer
 
