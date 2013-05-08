@@ -355,7 +355,7 @@ void Lexer::lexCommentText(Token &T) {
         if (!Info) {
           formTokenWithChars(T, TokenPtr, tok::unknown_command);
           T.setUnknownCommandName(CommandName);
-          if (Info = Traits.getTypoCorrectCommandInfo(CommandName)) {
+          if ((Info = Traits.getTypoCorrectCommandInfo(CommandName))) {
             StringRef CorrectedName = Info->Name;
             SourceRange CommandRange(T.getLocation().getLocWithOffset(1),
                                      T.getEndLocation());
