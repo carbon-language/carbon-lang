@@ -436,15 +436,6 @@ namespace llvm {
     /// by AM is legal for this target, for a load/store of the specified type.
     virtual bool isLegalAddressingMode(const AddrMode &AM, Type *Ty)const;
 
-    /// isLegalAddressImmediate - Return true if the integer value can be used
-    /// as the offset of the target addressing mode for load / store of the
-    /// given type.
-    virtual bool isLegalAddressImmediate(int64_t V, Type *Ty) const;
-
-    /// isLegalAddressImmediate - Return true if the GlobalValue can be used as
-    /// the offset of the target addressing mode.
-    virtual bool isLegalAddressImmediate(GlobalValue *GV) const;
-
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
 
     /// getOptimalMemOpType - Returns the target specific optimal type for load
