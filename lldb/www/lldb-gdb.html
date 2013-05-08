@@ -942,7 +942,7 @@
                             <b>(gdb)</b> info malloc 0x10010d680
                         </td>
                         <td class="content">
-                            <b>(lldb)</b> script import lldb.macosx.heap<br>
+                            <b>(lldb)</b> command script import lldb.macosx.heap<br>
                             <b>(lldb)</b> process launch --environment MallocStackLogging=1 -- [ARGS]<br>	
                             <b>(lldb)</b> malloc_info --stack-history 0x10010d680<br>
                         </td>
@@ -952,7 +952,7 @@
                         <td class="content">
                         </td>
                         <td class="content">
-                            <b>(lldb)</b> script import lldb.macosx.heap<br>
+                            <b>(lldb)</b> command script import lldb.macosx.heap<br>
                             <b>(lldb)</b> malloc_info --type 0x10010d680<br>
                         </td>
                     </tr>
@@ -961,7 +961,7 @@
                         <td class="content">
                         </td>
                         <td class="content">
-                            <b>(lldb)</b> script import lldb.macosx.heap<br>
+                            <b>(lldb)</b> command script import lldb.macosx.heap<br>
                             <b>(lldb)</b> ptr_refs EXPR <br>
                         </td>
                     </tr>
@@ -970,7 +970,7 @@
                         <td class="content">
                         </td>
                         <td class="content">
-                            <b>(lldb)</b> script import lldb.macosx.heap<br>
+                            <b>(lldb)</b> command script import lldb.macosx.heap<br>
                             <b>(lldb)</b> cstr_refs CSTRING<br>
                         </td>
                     </tr>
