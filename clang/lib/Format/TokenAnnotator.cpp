@@ -173,6 +173,9 @@ private:
       }
       if (CurrentToken->isOneOf(tok::r_square, tok::r_brace))
         return false;
+      if (CurrentToken->Parent->Type == TT_PointerOrReference &&
+          CurrentToken->Parent->Parent->isOneOf(tok::l_paren, tok::coloncolon))
+        Left->DefinesFunctionType = true;
       updateParameterCount(Left, CurrentToken);
       if (!consumeToken())
         return false;
@@ -1025,6 +1028,9 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return Left.FormatTok.Tok.isLiteral() ||
            ((Left.Type != TT_PointerOrReference) && Left.isNot(tok::l_paren) &&
             !Style.PointerBindsToType);
+  if (Right.DefinesFunctionType &&
+      (Left.Type != TT_PointerOrReference || Style.PointerBindsToType))
+    return true;
   if (Left.Type == TT_PointerOrReference)
     return Right.FormatTok.Tok.isLiteral() ||
            ((Right.Type != TT_PointerOrReference) &&
@@ -1091,13 +1097,6 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   if (Tok.is(tok::colon))
     return !Line.First.isOneOf(tok::kw_case, tok::kw_default) &&
            Tok.getNextNoneComment() != NULL && Tok.Type != TT_ObjCMethodExpr;
-  if (Tok.is(tok::l_paren) && !Tok.Children.empty() &&
-      Tok.Children[0].Type == TT_PointerOrReference &&
-      !Tok.Children[0].Children.empty() &&
-      Tok.Children[0].Children[0].isNot(tok::r_paren) &&
-      Tok.Parent->isNot(tok::l_paren) &&
-      (Tok.Parent->Type != TT_PointerOrReference || Style.PointerBindsToType))
-    return true;
   if (Tok.Parent->Type == TT_UnaryOperator || Tok.Parent->Type == TT_CastRParen)
     return false;
   if (Tok.Type == TT_UnaryOperator)

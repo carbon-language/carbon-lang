@@ -2417,14 +2417,15 @@ TEST_F(FormatTest, UnderstandsBinaryOperators) {
 
 TEST_F(FormatTest, UnderstandsPointersToMembers) {
   verifyFormat("int A::*x;");
-  // FIXME: Recognize pointers to member functions.
-  //verifyFormat("int (S::*func)(void *);");
-  verifyFormat("int(S::*func)(void *);");
-  verifyFormat("(a->*f)();");
-  verifyFormat("a->*x;");
-  verifyFormat("(a.*f)();");
-  verifyFormat("((*a).*f)();");
-  verifyFormat("a.*x;");
+  verifyFormat("int (S::*func)(void *);");
+  verifyFormat("typedef bool (Class::*Member)() const;");
+  verifyFormat("void f() {\n"
+               "  (a->*f)();\n"
+               "  a->*x;\n"
+               "  (a.*f)();\n"
+               "  ((*a).*f)();\n"
+               "  a.*x;\n"
+               "}");
 }
 
 TEST_F(FormatTest, UnderstandsUnaryOperators) {

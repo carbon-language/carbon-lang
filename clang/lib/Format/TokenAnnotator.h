@@ -75,7 +75,7 @@ public:
         CanBreakBefore(false), MustBreakBefore(false),
         ClosesTemplateDeclaration(false), MatchingParen(NULL),
         ParameterCount(0), BindingStrength(0), SplitPenalty(0),
-        LongestObjCSelectorName(0), Parent(NULL),
+        LongestObjCSelectorName(0), DefinesFunctionType(false), Parent(NULL),
         FakeRParens(0), LastInChainOfCalls(false),
         PartOfMultiVariableDeclStmt(false), NoMoreTokensOnLevel(false) {}
 
@@ -163,6 +163,9 @@ public:
   /// \brief If this is the first ObjC selector name in an ObjC method
   /// definition or call, this contains the length of the longest name.
   unsigned LongestObjCSelectorName;
+
+  /// \brief \c true if this is a "(" that starts a function type definition.
+  bool DefinesFunctionType;
 
   std::vector<AnnotatedToken> Children;
   AnnotatedToken *Parent;
