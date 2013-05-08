@@ -83,6 +83,8 @@ def note_constexpr_depth_limit_exceeded : Note<
   "constexpr evaluation exceeded maximum depth of %0 calls">;
 def note_constexpr_call_limit_exceeded : Note<
   "constexpr evaluation hit maximum call limit">;
+def note_constexpr_step_limit_exceeded : Note<
+  "constexpr evaluation hit maximum step limit; possible infinite loop?">;
 def note_constexpr_lifetime_ended : Note<
   "%select{read of|assignment to|increment of|decrement of}0 "
   "%select{temporary|variable}1 whose lifetime has ended">;

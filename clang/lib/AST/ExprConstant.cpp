@@ -380,6 +380,11 @@ namespace {
     /// NextCallIndex - The next call index to assign.
     unsigned NextCallIndex;
 
+    /// StepsLeft - The remaining number of evaluation steps we're permitted
+    /// to perform. This is essentially a limit for the number of statements
+    /// we will evaluate.
+    unsigned StepsLeft;
+
     /// BottomFrame - The frame in which evaluation started. This must be
     /// initialized after CurrentCall and CallStackDepth.
     CallStackFrame BottomFrame;
@@ -404,9 +409,10 @@ namespace {
     bool IntOverflowCheckMode;
 
     EvalInfo(const ASTContext &C, Expr::EvalStatus &S,
-             bool OverflowCheckMode=false)
+             bool OverflowCheckMode = false)
       : Ctx(const_cast<ASTContext&>(C)), EvalStatus(S), CurrentCall(0),
         CallStackDepth(0), NextCallIndex(1),
+        StepsLeft(getLangOpts().ConstexprStepLimit),
         BottomFrame(*this, SourceLocation(), 0, 0, 0),
         EvaluatingDecl(0), EvaluatingDeclValue(0), HasActiveDiagnostic(false),
         CheckingPotentialConstantExpression(false),
@@ -444,6 +450,15 @@ namespace {
       while (Frame->Index > CallIndex)
         Frame = Frame->Caller;
       return (Frame->Index == CallIndex) ? Frame : 0;
+    }
+
+    bool nextStep(const Stmt *S) {
+      if (!StepsLeft) {
+        Diag(S->getLocStart(), diag::note_constexpr_step_limit_exceeded);
+        return false;
+      }
+      --StepsLeft;
+      return true;
     }
 
   private:
@@ -530,9 +545,9 @@ namespace {
     bool keepEvaluatingAfterFailure() {
       // Should return true in IntOverflowCheckMode, so that we check for
       // overflow even if some subexpressions can't be evaluated as constants.
-      return IntOverflowCheckMode ||
-             (CheckingPotentialConstantExpression &&
-              EvalStatus.Diag && EvalStatus.Diag->empty());
+      return StepsLeft && (IntOverflowCheckMode ||
+                           (CheckingPotentialConstantExpression &&
+                            EvalStatus.Diag && EvalStatus.Diag->empty()));
     }
   };
 
@@ -2794,6 +2809,9 @@ static EvalStmtResult EvaluateLoopBody(APValue &Result, EvalInfo &Info,
 // Evaluate a statement.
 static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
                                    const Stmt *S) {
+  if (!Info.nextStep(S))
+    return ESR_Failed;
+
   // FIXME: Mark all temporaries in the current frame as destroyed at
   // the end of each full-expression.
   switch (S->getStmtClass()) {
