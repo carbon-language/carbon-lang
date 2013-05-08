@@ -69,9 +69,9 @@ class ProcessAttachTestCase(TestBase):
         popen = self.spawnSubprocess(exe)
         self.addTearDownHook(self.cleanupSubprocesses)
 
-        target = self.dbg.GetSelectedTarget()
-
         self.runCmd("process attach -n a.out")
+
+        target = self.dbg.GetSelectedTarget()
 
         process = target.GetProcess()
         self.assertTrue(process, PROCESS_IS_VALID)
