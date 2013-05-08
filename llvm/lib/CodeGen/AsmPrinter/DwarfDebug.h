@@ -563,11 +563,11 @@ private:
   void constructImportedEntityDIE(CompileUnit *TheCU, const MDNode *N);
 
   /// \brief Construct import_module DIE.
-  void constructImportedModuleDIE(CompileUnit *TheCU, const MDNode *N,
+  void constructImportedEntityDIE(CompileUnit *TheCU, const MDNode *N,
                                   DIE *Context);
 
   /// \brief Construct import_module DIE.
-  void constructImportedModuleDIE(CompileUnit *TheCU,
+  void constructImportedEntityDIE(CompileUnit *TheCU,
                                   const DIImportedEntity &Module,
                                   DIE *Context);
 

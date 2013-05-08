@@ -612,7 +612,7 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
       return NULL;
     ScopeDIE = constructLexicalScopeDIE(TheCU, Scope);
     for (ImportedEntityMap::const_iterator i = Range.first; i != Range.second; ++i)
-      constructImportedModuleDIE(TheCU, i->second, ScopeDIE);
+      constructImportedEntityDIE(TheCU, i->second, ScopeDIE);
   }
 
   if (!ScopeDIE) return NULL;
@@ -782,18 +782,18 @@ void DwarfDebug::constructImportedEntityDIE(CompileUnit *TheCU,
   if (!Module.Verify())
     return;
   if (DIE *D = TheCU->getOrCreateContextDIE(Module.getContext()))
-    constructImportedModuleDIE(TheCU, Module, D);
+    constructImportedEntityDIE(TheCU, Module, D);
 }
 
-void DwarfDebug::constructImportedModuleDIE(CompileUnit *TheCU, const MDNode *N,
+void DwarfDebug::constructImportedEntityDIE(CompileUnit *TheCU, const MDNode *N,
                                             DIE *Context) {
   DIImportedEntity Module(N);
   if (!Module.Verify())
     return;
-  return constructImportedModuleDIE(TheCU, Module, Context);
+  return constructImportedEntityDIE(TheCU, Module, Context);
 }
 
-void DwarfDebug::constructImportedModuleDIE(CompileUnit *TheCU,
+void DwarfDebug::constructImportedEntityDIE(CompileUnit *TheCU,
                                             const DIImportedEntity &Module,
                                             DIE *Context) {
   assert(Module.Verify() &&
