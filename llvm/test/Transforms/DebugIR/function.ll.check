@@ -1,0 +1,36 @@
+; CHECK:  %i.addr = alloca i32*, align 8, !dbg !
+; CHECK:  store i32* %i, i32** %i.addr, align 8, !dbg !
+; CHECK:  %0 = load i32** %i.addr, align 8, !dbg !
+; CHECK:  %1 = load i32* %0, align 4, !dbg !
+; CHECK:  %add = add nsw i32 %1, 1, !dbg !
+; CHECK:  store i32 %add, i32* %0, align 4, !dbg !
+; CHECK:  ret void, !dbg !
+
+; CHECK:  %retval = alloca i32, align 4, !dbg !
+; CHECK:  %argc.addr = alloca i32, align 4, !dbg !
+; CHECK:  %argv.addr = alloca i8**, align 8, !dbg !
+; CHECK:  %i = alloca i32, align 4, !dbg !
+; CHECK:  store i32 0, i32* %retval, !dbg !
+; CHECK:  store i32 %argc, i32* %argc.addr, align 4, !dbg !
+; CHECK:  store i8** %argv, i8*** %argv.addr, align 8, !dbg !
+; CHECK:  store i32 7, i32* %i, align 4, !dbg !
+; CHECK:  call void @blah(i32* %i), !dbg !
+; CHECK:  %0 = load i32* %i, align 4, !dbg !
+; CHECK:  ret i32 %0, !dbg !
+
+; CHECK: !1 = metadata !{metadata !"function-debug.ll", metadata !""}
+
+; CHECK: = metadata !{i32 8, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 9, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 10, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 11, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 12, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 13, i32 0, metadata !4, null}
+
+; CHECK: = metadata !{i32 24, i32 0, metadata !10, null}
+; CHECK: = metadata !{i32 25, i32 0, metadata !10, null}
+; CHECK: = metadata !{i32 26, i32 0, metadata !10, null}
+; CHECK: = metadata !{i32 27, i32 0, metadata !10, null}
+; CHECK: = metadata !{i32 28, i32 0, metadata !10, null}
+; CHECK: = metadata !{i32 29, i32 0, metadata !10, null}
+; CHECK: = metadata !{i32 30, i32 0, metadata !10, null}

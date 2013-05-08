@@ -1,0 +1,39 @@
+; CHECK:  store double %a.coerce, double* %0, align 1, !dbg !
+; CHECK:  %a1 = load <2 x float>* %a, align 8, !dbg !
+; CHECK:  store <2 x float> %a1, <2 x float>* %a.addr, align 8, !dbg !
+; CHECK:  store double %b.coerce, double* %1, align 1, !dbg !
+; CHECK:  %b2 = load <2 x float>* %b, align 8, !dbg !
+; CHECK:  store <2 x float> %b2, <2 x float>* %b.addr, align 8, !dbg !
+; CHECK:  %2 = load <2 x float>* %a.addr, align 8, !dbg !
+; CHECK:  %3 = load <4 x float>* %c, align 16, !dbg !
+; CHECK:  %4 = shufflevector <2 x float> %2, <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>, !dbg !
+; CHECK:  %5 = shufflevector <4 x float> %3, <4 x float> %4, <4 x i32> <i32 4, i32 1, i32 5, i32 3>, !dbg !
+; CHECK:  store <4 x float> %5, <4 x float>* %c, align 16, !dbg !
+; CHECK:  %6 = load <2 x float>* %b.addr, align 8, !dbg !
+; CHECK:  %7 = load <4 x float>* %c, align 16, !dbg !
+; CHECK:  %8 = shufflevector <2 x float> %6, <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>, !dbg !
+; CHECK:  %9 = shufflevector <4 x float> %7, <4 x float> %8, <4 x i32> <i32 0, i32 4, i32 2, i32 5>, !dbg !
+; CHECK:  store <4 x float> %9, <4 x float>* %c, align 16, !dbg !
+; CHECK:  %10 = load <4 x float>* %c, align 16, !dbg !
+; CHECK:  ret <4 x float> %10, !dbg !
+
+; CHECK: = metadata !{metadata !"vector-debug.ll", metadata !""}
+; CHECK: = metadata !{i32 13, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 14, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 15, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 16, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 17, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 18, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 19, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 20, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 21, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 22, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 23, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 24, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 25, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 26, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 27, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 28, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 29, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 30, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 31, i32 0, metadata !4, null}

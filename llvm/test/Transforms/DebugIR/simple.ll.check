@@ -1,0 +1,13 @@
+; CHECK: store i32 0, i32* %retval, !dbg !
+; CHECK: store i32 %argc, i32* %argc.addr, align 4, !dbg !
+; CHECK: store i8** %argv, i8*** %argv.addr, align 8, !dbg !
+; CHECK: %0 = load i32* %argc.addr, align 4, !dbg !
+; CHECK: ret i32 %0, !dbg !
+
+; CHECK: !1 = metadata !{metadata !"simple-debug.ll", metadata !""}
+
+; CHECK: = metadata !{i32 10, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 11, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 12, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 13, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 14, i32 0, metadata !4, null}

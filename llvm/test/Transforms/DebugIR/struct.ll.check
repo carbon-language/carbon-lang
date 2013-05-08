@@ -1,0 +1,12 @@
+; CHECK: %retval = alloca i32, align 4, !dbg !
+; CHECK: %b = alloca %struct.blah, align 4, !dbg !
+; CHECK: store i32 0, i32* %retval, !dbg !
+; CHECK: %a = getelementptr inbounds %struct.blah* %b, i32 0, i32 0, !dbg !
+; CHECK: %0 = load i32* %a, align 4, !dbg !
+; CHECK: ret i32 %0, !dbg !
+
+; CHECK: = metadata !{metadata !"struct-debug.ll", metadata !""}
+; CHECK: = metadata !{i32 11, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 12, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 13, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 14, i32 0, metadata !4, null}

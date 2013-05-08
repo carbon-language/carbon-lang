@@ -1,0 +1,23 @@
+; CHECK:  store i32 0, i32* %retval, !dbg !
+; CHECK:  store i32 %argc, i32* %argc.addr, align 4, !dbg !
+; CHECK:  store i8** %argv, i8*** %argv.addr, align 8, !dbg !
+; CHECK:  store i32* null, i32** %null_ptr, align 8, !dbg !
+; CHECK:  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([18 x i8]* @.str, i32 0, i32 0)), !dbg !
+; CHECK:  %0 = load i32** %null_ptr, align 8, !dbg !
+; CHECK:  %1 = load i32* %0, align 4, !dbg !
+; CHECK:  %call1 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([14 x i8]* @.str1, i32 0, i32 0), i32 %1), !dbg !
+; CHECK:  %2 = load i32* %argc.addr, align 4, !dbg !
+; CHECK:  ret i32 %2, !dbg !
+
+; CHECK: !1 = metadata !{metadata !"crash-debug.ll", metadata !""}
+
+; CHECK: = metadata !{i32 14, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 15, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 16, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 17, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 18, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 19, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 20, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 21, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 22, i32 0, metadata !4, null}
+; CHECK: = metadata !{i32 23, i32 0, metadata !4, null}
