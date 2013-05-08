@@ -3460,6 +3460,15 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
       return DAG.getNode(NewOpcode, N->getDebugLoc(), VT, LHS, RHS);
     }
   }
+  // fold (xor (and x, y), y) -> (and (not x), y)
+  if (N0.getOpcode() == ISD::AND && N0.getNode()->hasOneUse() &&
+      N0->getOperand(1) == N1) {
+    SDValue X = N0->getOperand(0);
+    SDValue NotX = DAG.getNode(ISD::XOR, X.getDebugLoc(), VT, X,
+      DAG.getConstant(APInt::getAllOnesValue(VT.getSizeInBits()), VT));
+    AddToWorkList(NotX.getNode());
+    return DAG.getNode(ISD::AND, N->getDebugLoc(), VT, NotX, N1);
+  }
   // fold (xor (xor x, c1), c2) -> (xor x, (xor c1, c2))
   if (N1C && N0.getOpcode() == ISD::XOR) {
     ConstantSDNode *N00C = dyn_cast<ConstantSDNode>(N0.getOperand(0));

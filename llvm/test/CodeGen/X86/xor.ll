@@ -142,3 +142,15 @@ entry:
 ; X32: test8:
 ; X32:   notl %eax
 }
+
+define i32 @test9(i32 %a) nounwind {
+  %1 = and i32 %a, 4096
+  %2 = xor i32 %1, 4096
+  ret i32 %2
+; X64: test9:
+; X64:    notl	[[REG:%[a-z]+]]
+; X64:    andl	{{.*}}[[REG:%[a-z]+]]
+; X32: test9:
+; X32:    notl	[[REG:%[a-z]+]]
+; X32:    andl	{{.*}}[[REG:%[a-z]+]]
+}
