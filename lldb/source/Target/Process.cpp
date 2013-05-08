@@ -1722,6 +1722,19 @@ Process::SetPrivateState (StateType new_state)
         m_private_state.SetValueNoLock (new_state);
         if (StateIsStoppedState(new_state, false))
         {
+            // Note, this currently assumes that all threads in the list
+            // stop when the process stops.  In the future we will want to
+            // support a debugging model where some threads continue to run
+            // while others are stopped.  When that happens we will either need
+            // a way for the thread list to identify which threads are stopping
+            // or create a special thread list containing only threads which
+            // actually stopped.
+            //
+            // The process plugin is responsible for managing the actual
+            // behavior of the threads and should have stopped any threads
+            // that are going to stop before we get here.
+            m_thread_list.DidStop();
+
             m_mod_id.BumpStopID();
             m_memory_cache.Clear();
             if (log)

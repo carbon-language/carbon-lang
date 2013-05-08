@@ -120,6 +120,9 @@ public:
     DidResume ();
 
     void
+    DidStop ();
+
+    void
     DiscardThreadPlans();
 
     uint32_t
