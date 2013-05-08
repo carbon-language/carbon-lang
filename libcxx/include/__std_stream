@@ -55,6 +55,8 @@ private:
     const codecvt<char_type, char, state_type>* __cv_;
     state_type* __st_;
     int __encoding_;
+    int_type __last_consumed_;
+    bool __last_consumed_is_next_;
     bool __always_noconv_;
 
     __stdinbuf(const __stdinbuf&);
@@ -66,7 +68,9 @@ private:
 template <class _CharT>
 __stdinbuf<_CharT>::__stdinbuf(FILE* __fp, state_type* __st)
     : __file_(__fp),
-      __st_(__st)
+      __st_(__st),
+      __last_consumed_(traits_type::eof()),
+      __last_consumed_is_next_(false)
 {
     imbue(this->getloc());
 }
@@ -100,6 +104,16 @@ template <class _CharT>
 typename __stdinbuf<_CharT>::int_type
 __stdinbuf<_CharT>::__getchar(bool __consume)
 {
+    if (__last_consumed_is_next_)
+    {
+        int_type __result = __last_consumed_;
+        if (__consume)
+        {
+            __last_consumed_ = traits_type::eof();
+            __last_consumed_is_next_ = false;
+        }
+        return __result;
+    }
     char __extbuf[__limit];
     int __nread = _VSTD::max(1, __encoding_);
     for (int __i = 0; __i < __nread; ++__i)
@@ -154,6 +168,8 @@ __stdinbuf<_CharT>::__getchar(bool __consume)
                 return traits_type::eof();
         }
     }
+    else
+        __last_consumed_ = traits_type::to_int_type(__1buf);
     return traits_type::to_int_type(__1buf);
 }
 
@@ -162,28 +178,41 @@ typename __stdinbuf<_CharT>::int_type
 __stdinbuf<_CharT>::pbackfail(int_type __c)
 {
     if (traits_type::eq_int_type(__c, traits_type::eof()))
-        return __c;
-    char __extbuf[__limit];
-    char* __enxt;
-    const char_type __ci = traits_type::to_char_type(__c);
-    const char_type* __inxt;
-    switch (__cv_->out(*__st_, &__ci, &__ci + 1, __inxt,
-                              __extbuf, __extbuf + sizeof(__extbuf), __enxt))
     {
-    case _VSTD::codecvt_base::ok:
-        break;
-    case _VSTD::codecvt_base::noconv:
-        __extbuf[0] = static_cast<char>(__c);
-        __enxt = __extbuf + 1;
-        break;
-    case codecvt_base::partial:
-    case codecvt_base::error:
-        return traits_type::eof();
+        if (!__last_consumed_is_next_)
+        {
+            __c = __last_consumed_;
+            __last_consumed_is_next_ = !traits_type::eq_int_type(__last_consumed_,
+                                                                 traits_type::eof());
+        }
+        return __c;
     }
-    while (__enxt > __extbuf)
-        if (ungetc(*--__enxt, __file_) == EOF)
+    if (__last_consumed_is_next_)
+    {
+        char __extbuf[__limit];
+        char* __enxt;
+        const char_type __ci = traits_type::to_char_type(__last_consumed_);
+        const char_type* __inxt;
+        switch (__cv_->out(*__st_, &__ci, &__ci + 1, __inxt,
+                                  __extbuf, __extbuf + sizeof(__extbuf), __enxt))
+        {
+        case _VSTD::codecvt_base::ok:
+            break;
+        case _VSTD::codecvt_base::noconv:
+            __extbuf[0] = static_cast<char>(__last_consumed_);
+            __enxt = __extbuf + 1;
+            break;
+        case codecvt_base::partial:
+        case codecvt_base::error:
             return traits_type::eof();
- return traits_type::not_eof(__c);
+        }
+        while (__enxt > __extbuf)
+            if (ungetc(*--__enxt, __file_) == EOF)
+                return traits_type::eof();
+    }
+    __last_consumed_ = __c;
+    __last_consumed_is_next_ = true;
+    return __c;
 }
 
 // __stdoutbuf
