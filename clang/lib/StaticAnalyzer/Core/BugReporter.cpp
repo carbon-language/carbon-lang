@@ -1833,8 +1833,12 @@ static bool isConditionForTerminator(const Stmt *S, const Stmt *Cond) {
       return cast<SwitchStmt>(S)->getCond() == Cond;
     case Stmt::BinaryConditionalOperatorClass:
       return cast<BinaryConditionalOperator>(S)->getCond() == Cond;
-    case Stmt::ConditionalOperatorClass:
-      return cast<ConditionalOperator>(S)->getCond() == Cond;
+    case Stmt::ConditionalOperatorClass: {
+      const ConditionalOperator *CO = cast<ConditionalOperator>(S);
+      return CO->getCond() == Cond ||
+             CO->getLHS() == Cond ||
+             CO->getRHS() == Cond;
+    }
     case Stmt::ObjCForCollectionStmtClass:
       return cast<ObjCForCollectionStmt>(S)->getElement() == Cond;
     default:
