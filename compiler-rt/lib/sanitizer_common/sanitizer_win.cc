@@ -210,12 +210,12 @@ int Atexit(void (*function)(void)) {
 #endif
 
 // ------------------ sanitizer_libc.h
-void *internal_mmap(void *addr, uptr length, int prot, int flags,
-                    int fd, u64 offset) {
+uptr internal_mmap(void *addr, uptr length, int prot, int flags,
+                   int fd, u64 offset) {
   UNIMPLEMENTED();
 }
 
-int internal_munmap(void *addr, uptr length) {
+uptr internal_munmap(void *addr, uptr length) {
   UNIMPLEMENTED();
 }
 
@@ -227,11 +227,11 @@ int internal_isatty(fd_t fd) {
   return _isatty(fd);
 }
 
-fd_t internal_open(const char *filename, int flags) {
+uptr internal_open(const char *filename, int flags) {
   UNIMPLEMENTED();
 }
 
-fd_t internal_open(const char *filename, int flags, u32 mode) {
+uptr internal_open(const char *filename, int flags, u32 mode) {
   UNIMPLEMENTED();
 }
 
