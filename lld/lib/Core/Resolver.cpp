@@ -200,7 +200,11 @@ void Resolver::resolveUndefines() {
       StringRef undefName = undefAtom->name();
       // load for previous undefine may also have loaded this undefine
       if (!_symbolTable.isDefined(undefName)) {
-        _inputFiles.searchLibraries(undefName, true, true, false, *this);
+        _inputFiles.searchLibraries(undefName,
+                                    true,   // searchSharedLibs
+                                    true,   // searchArchives
+                                    false,  // dataSymbolOnly
+                                    *this);
       }
     }
     // search libraries for overrides of common symbols
@@ -213,10 +217,13 @@ void Resolver::resolveUndefines() {
         const Atom *curAtom = _symbolTable.findByName(tentDefName);
         assert(curAtom != nullptr);
         if (const DefinedAtom* curDefAtom = dyn_cast<DefinedAtom>(curAtom)) {
-          if (curDefAtom->merge() == DefinedAtom::mergeAsTentative ) {
+          if (curDefAtom->merge() == DefinedAtom::mergeAsTentative) {
             // Still tentative definition, so look for override.
-            _inputFiles.searchLibraries(tentDefName, searchSharedLibs,
-                                        searchArchives, true, *this);
+            _inputFiles.searchLibraries(tentDefName,
+                                        searchSharedLibs,
+                                        searchArchives,
+                                        true,  // dataSymbolOnly
+                                        *this);
           }
         }
       }
