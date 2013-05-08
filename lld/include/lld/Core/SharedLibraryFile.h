@@ -35,7 +35,7 @@ public:
                                            bool dataSymbolOnly) const = 0;
 protected:
   /// only subclasses of SharedLibraryFile can be instantiated
-  SharedLibraryFile(StringRef path) : File(path, kindSharedLibrary) {}
+  explicit SharedLibraryFile(StringRef path) : File(path, kindSharedLibrary) {}
 };
 
 } // namespace lld

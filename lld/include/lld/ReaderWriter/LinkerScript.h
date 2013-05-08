@@ -51,7 +51,8 @@ public:
 
 class Lexer {
 public:
-  Lexer(std::unique_ptr<llvm::MemoryBuffer> mb) : _buffer(mb->getBuffer()) {
+  explicit Lexer(std::unique_ptr<llvm::MemoryBuffer> mb)
+      : _buffer(mb->getBuffer()) {
     _sourceManager.AddNewSourceBuffer(mb.release(), llvm::SMLoc());
   }
 
@@ -85,7 +86,7 @@ public:
   virtual ~Command() {}
 
 protected:
-  Command(Kind k) : _kind(k) {}
+  explicit Command(Kind k) : _kind(k) {}
 
 private:
   Kind _kind;
@@ -93,7 +94,7 @@ private:
 
 class OutputFormat : public Command {
 public:
-  OutputFormat(StringRef format)
+  explicit OutputFormat(StringRef format)
       : Command(Kind::OutputFormat), _format(format) {}
 
   static bool classof(const Command *c) {
@@ -115,13 +116,14 @@ struct Path {
   bool _asNeeded;
 
   Path() : _asNeeded(false) {}
-  Path(StringRef path, bool asNeeded = false)
+  explicit Path(StringRef path, bool asNeeded = false)
       : _path(path), _asNeeded(asNeeded) {}
 };
 
 class Group : public Command {
 public:
-  template <class RangeT> Group(RangeT range) : Command(Kind::Group) {
+  template <class RangeT>
+  explicit Group(RangeT range) : Command(Kind::Group) {
     using std::begin;
     using std::end;
     std::copy(begin(range), end(range), std::back_inserter(_paths));
@@ -164,7 +166,7 @@ public:
 
 class Parser {
 public:
-  Parser(Lexer &lex) : _lex(lex) {}
+  explicit Parser(Lexer &lex) : _lex(lex) {}
 
   LinkerScript *parse();
 

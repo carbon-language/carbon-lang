@@ -67,7 +67,7 @@ public:
 
 protected:
   /// Atom is an abstract base class.  Only subclasses can access constructor.
-  Atom(Definition def) : _definition(def) {}
+  explicit Atom(Definition def) : _definition(def) {}
 
   /// The memory for Atom objects is always managed by the owning File
   /// object.  Therefore, no one but the owning File object should call

@@ -37,7 +37,7 @@ class UndefinedAtom;
 /// if an atom has been coalesced away.
 class SymbolTable {
 public:
-  SymbolTable(const TargetInfo &);
+  explicit SymbolTable(const TargetInfo &);
 
   /// @brief add atom to symbol table
   void add(const DefinedAtom &);

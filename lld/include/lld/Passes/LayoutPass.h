@@ -36,7 +36,7 @@ public:
   // Compare and Sort Atoms by their ordinals
   class CompareAtoms {
   public:
-    CompareAtoms(const LayoutPass &pass) : _layout(pass) {}
+    explicit CompareAtoms(const LayoutPass &pass) : _layout(pass) {}
     bool operator()(const DefinedAtom *left, const DefinedAtom *right);
   private:
     const LayoutPass &_layout;

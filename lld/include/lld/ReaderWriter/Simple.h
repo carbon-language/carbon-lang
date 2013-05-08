@@ -96,7 +96,7 @@ private:
 
 class SimpleDefinedAtom : public DefinedAtom {
 public:
-  SimpleDefinedAtom(const File &f) : _file(f) {
+  explicit SimpleDefinedAtom(const File &f) : _file(f) {
     static uint32_t lastOrdinal = 0;
     _ordinal = lastOrdinal++;
   }

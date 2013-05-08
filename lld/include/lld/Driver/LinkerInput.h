@@ -45,9 +45,9 @@ class LinkerInput {
   LinkerInput(const LinkerInput &) LLVM_DELETED_FUNCTION;
 
 public:
-  LinkerInput(StringRef file) : _file(file) {}
+  explicit LinkerInput(StringRef file) : _file(file) {}
 
-  LinkerInput(std::unique_ptr<llvm::MemoryBuffer> buffer)
+  explicit LinkerInput(std::unique_ptr<llvm::MemoryBuffer> buffer)
       : _buffer(std::move(buffer)), _file(_buffer->getBufferIdentifier()) {
   }
 

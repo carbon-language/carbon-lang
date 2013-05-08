@@ -21,7 +21,7 @@ class TargetInfo;
 /// \brief ReaderLinkerScript is a class for reading linker scripts
 class ReaderLinkerScript : public Reader {
 public:
-  ReaderLinkerScript(const TargetInfo &ti)
+  explicit ReaderLinkerScript(const TargetInfo &ti)
       : Reader(ti) {}
 
   /// \brief Returns a vector of Files that are contained in the archive file

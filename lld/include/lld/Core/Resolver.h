@@ -70,21 +70,21 @@ private:
 
     virtual const atom_collection<DefinedAtom> &defined() const {
       return _definedAtoms;
-  }
-  virtual const atom_collection<UndefinedAtom>& undefined() const {
+    }
+    virtual const atom_collection<UndefinedAtom>& undefined() const {
       return _undefinedAtoms;
-  }
-  virtual const atom_collection<SharedLibraryAtom>& sharedLibrary() const {
+    }
+    virtual const atom_collection<SharedLibraryAtom>& sharedLibrary() const {
       return _sharedLibraryAtoms;
-  }
-  virtual const atom_collection<AbsoluteAtom>& absolute() const {
+    }
+    virtual const atom_collection<AbsoluteAtom>& absolute() const {
       return _absoluteAtoms;
-  }
+    }
 
-  void addAtoms(std::vector<const Atom*>& atoms);
+    void addAtoms(std::vector<const Atom*>& atoms);
 
-  virtual void addAtom(const Atom& atom);
-  virtual DefinedAtomRange definedAtoms();
+    virtual void addAtom(const Atom& atom);
+    virtual DefinedAtomRange definedAtoms();
 
   private:
     friend class Resolver;

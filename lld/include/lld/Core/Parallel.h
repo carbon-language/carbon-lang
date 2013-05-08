@@ -49,7 +49,7 @@ class Latch {
   mutable std::condition_variable _cond;
 
 public:
-  Latch(uint32_t count = 0) : _count(count) {}
+  explicit Latch(uint32_t count = 0) : _count(count) {}
   ~Latch() { sync(); }
   void inc() { ++_count; }
 
@@ -77,8 +77,8 @@ public:
 ///   in filo order.
 class ThreadPoolExecutor : public Executor {
 public:
-  ThreadPoolExecutor(unsigned threadCount =
-                         std::thread::hardware_concurrency())
+  explicit ThreadPoolExecutor(unsigned threadCount =
+                                  std::thread::hardware_concurrency())
       : _stop(false), _done(threadCount) {
     // Spawn all but one of the threads in another thread as spawning threads
     // can take a while.
