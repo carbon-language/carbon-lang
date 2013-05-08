@@ -320,7 +320,7 @@ private:
         Tok->Type = TT_ObjCMethodExpr;
         Tok->Parent->Type = TT_ObjCSelectorName;
         if (Tok->Parent->FormatTok.TokenLength >
-                Contexts.back().LongestObjCSelectorName)
+            Contexts.back().LongestObjCSelectorName)
           Contexts.back().LongestObjCSelectorName =
               Tok->Parent->FormatTok.TokenLength;
         if (Contexts.back().FirstObjCSelectorName == NULL)
@@ -606,7 +606,8 @@ private:
       if (Current.Parent && Current.is(tok::identifier) &&
           ((Current.Parent->is(tok::identifier) &&
             Current.Parent->FormatTok.Tok.getIdentifierInfo()
-                ->getPPKeywordID() == tok::pp_not_keyword) ||
+                    ->getPPKeywordID() ==
+                tok::pp_not_keyword) ||
            isSimpleTypeSpecifier(*Current.Parent) ||
            Current.Parent->Type == TT_PointerOrReference ||
            Current.Parent->Type == TT_TemplateCloser)) {
