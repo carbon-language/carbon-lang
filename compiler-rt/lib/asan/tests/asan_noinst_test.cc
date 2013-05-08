@@ -15,7 +15,6 @@
 #include "asan_allocator.h"
 #include "asan_internal.h"
 #include "asan_mapping.h"
-#include "asan_stack.h"
 #include "asan_test_utils.h"
 
 #include <assert.h>
@@ -33,17 +32,17 @@ TEST(AddressSanitizer, InternalSimpleDeathTest) {
 
 static void MallocStress(size_t n) {
   u32 seed = my_rand();
-  __asan::StackTrace stack1;
+  StackTrace stack1;
   stack1.trace[0] = 0xa123;
   stack1.trace[1] = 0xa456;
   stack1.size = 2;
 
-  __asan::StackTrace stack2;
+  StackTrace stack2;
   stack2.trace[0] = 0xb123;
   stack2.trace[1] = 0xb456;
   stack2.size = 2;
 
-  __asan::StackTrace stack3;
+  StackTrace stack3;
   stack3.trace[0] = 0xc123;
   stack3.trace[1] = 0xc456;
   stack3.size = 2;
@@ -216,16 +215,16 @@ void CompressStackTraceTest(size_t n_iter) {
 
   for (size_t iter = 0; iter < n_iter; iter++) {
     std::random_shuffle(pc_array, pc_array + kNumPcs);
-    __asan::StackTrace stack0, stack1;
+    StackTrace stack0, stack1;
     stack0.CopyFrom(pc_array, kNumPcs);
     stack0.size = std::max((size_t)1, (size_t)(my_rand_r(&seed) % stack0.size));
     size_t compress_size =
       std::max((size_t)2, (size_t)my_rand_r(&seed) % (2 * kNumPcs));
     size_t n_frames =
-      __asan::StackTrace::CompressStack(&stack0, compressed, compress_size);
+      StackTrace::CompressStack(&stack0, compressed, compress_size);
     Ident(n_frames);
     assert(n_frames <= stack0.size);
-    __asan::StackTrace::UncompressStack(&stack1, compressed, compress_size);
+    StackTrace::UncompressStack(&stack1, compressed, compress_size);
     assert(stack1.size == n_frames);
     for (size_t i = 0; i < stack1.size; i++) {
       assert(stack0.trace[i] == stack1.trace[i]);
@@ -242,13 +241,13 @@ void CompressStackTraceBenchmark(size_t n_iter) {
   u32 compressed[2 * kNumPcs];
   std::random_shuffle(pc_array, pc_array + kNumPcs);
 
-  __asan::StackTrace stack0;
+  StackTrace stack0;
   stack0.CopyFrom(pc_array, kNumPcs);
   stack0.size = kNumPcs;
   for (size_t iter = 0; iter < n_iter; iter++) {
     size_t compress_size = kNumPcs;
     size_t n_frames =
-      __asan::StackTrace::CompressStack(&stack0, compressed, compress_size);
+      StackTrace::CompressStack(&stack0, compressed, compress_size);
     Ident(n_frames);
   }
 }
@@ -258,7 +257,7 @@ TEST(AddressSanitizer, CompressStackTraceBenchmark) {
 }
 
 TEST(AddressSanitizer, QuarantineTest) {
-  __asan::StackTrace stack;
+  StackTrace stack;
   stack.trace[0] = 0x890;
   stack.size = 1;
 
@@ -279,7 +278,7 @@ TEST(AddressSanitizer, QuarantineTest) {
 void *ThreadedQuarantineTestWorker(void *unused) {
   (void)unused;
   u32 seed = my_rand();
-  __asan::StackTrace stack;
+  StackTrace stack;
   stack.trace[0] = 0x890;
   stack.size = 1;
 
@@ -306,7 +305,7 @@ TEST(AddressSanitizer, ThreadedQuarantineTest) {
 
 void *ThreadedOneSizeMallocStress(void *unused) {
   (void)unused;
-  __asan::StackTrace stack;
+  StackTrace stack;
   stack.trace[0] = 0x890;
   stack.size = 1;
   const size_t kNumMallocs = 1000;
