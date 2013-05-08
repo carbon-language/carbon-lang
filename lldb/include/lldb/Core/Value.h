@@ -100,15 +100,17 @@ public:
 		{
             Scalar scalar;
             if (IsValid())
-                if (length == 1) scalar = *(uint8_t *)bytes;
-                if (length == 2) scalar = *(uint16_t *)bytes;
-                if (length == 4) scalar = *(uint32_t *)bytes;
-                if (length == 8) scalar = *(uint64_t *)bytes;
+            {
+                if (length == 1) scalar = *(const uint8_t *)bytes;
+                else if (length == 2) scalar = *(const uint16_t *)bytes;
+                else if (length == 4) scalar = *(const uint32_t *)bytes;
+                else if (length == 8) scalar = *(const uint64_t *)bytes;
 #if defined (ENABLE_128_BIT_SUPPORT)
-                if (length >= 16) scalar = *(__uint128_t *)bytes;
+                else if (length >= 16) scalar = *(const __uint128_t *)bytes;
 #else
-                if (length >= 16) scalar = *(__uint64_t *)bytes;
+                else if (length >= 16) scalar = *(const __uint64_t *)bytes;
 #endif
+            }
             return scalar;
         }
     };
