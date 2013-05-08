@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -Wdocumentation -verify %s
-// RUN: %clang_cc1 -fsyntax-only -Wdocumentation -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck %s
+// RUN: %clang_cc1 -fsyntax-only -Wdocumentation -fcomment-block-commands=foobar -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wdocumentation -fcomment-block-commands=foobar -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck %s
 
 // expected-warning@+1 {{parameter 'ZZZZZZZZZZ' not found in the function declaration}} expected-note@+1 {{did you mean 'a'?}}
 /// \param ZZZZZZZZZZ Blah blah.
@@ -63,6 +63,10 @@ void test_deprecated_9(int a);
 /// \retur int in FooBar
 int FooBar();
 
+// expected-warning@+1  {{unknown command tag name 'fooba'; did you mean 'foobar'?}}
+/// \fooba bbb IS_DOXYGEN_END
+int gorf();
+
 // CHECK: fix-it:"{{.*}}":{5:12-5:22}:"a"
 // CHECK: fix-it:"{{.*}}":{9:12-9:15}:"aaa"
 // CHECK: fix-it:"{{.*}}":{13:13-13:23}:"T"
@@ -75,3 +79,4 @@ int FooBar();
 // CHECK: fix-it:"{{.*}}":{50:27-50:27}:" __attribute__((deprecated))"
 // CHECK: fix-it:"{{.*}}":{58:30-58:30}:" MY_ATTR_DEPRECATED"
 // CHECK: fix-it:"{{.*}}":{63:6-63:11}:"return"
+// CHECK: fix-it:"{{.*}}":{67:6-67:11}:"foobar"

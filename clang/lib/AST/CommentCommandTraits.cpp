@@ -43,30 +43,41 @@ const CommandInfo *CommandTraits::getCommandInfo(unsigned CommandID) const {
   return getRegisteredCommandInfo(CommandID);
 }
 
-const CommandInfo *
-CommandTraits::getTypoCorrectCommandInfo(StringRef Typo) const {
+static void
+HelperTypoCorrectCommandInfo(SmallVectorImpl<const CommandInfo *> &BestCommand,
+                             StringRef Typo, const CommandInfo *Command) {
   const unsigned MaxEditDistance = 1;
   unsigned BestEditDistance = MaxEditDistance + 1;
+  StringRef Name = Command->Name;
+  
+  unsigned MinPossibleEditDistance = abs((int)Name.size() - (int)Typo.size());
+  if (MinPossibleEditDistance > 0 &&
+      Typo.size() / MinPossibleEditDistance < 1)
+    return;
+  unsigned EditDistance = Typo.edit_distance(Name, true, MaxEditDistance);
+  if (EditDistance > MaxEditDistance)
+    return;
+  if (EditDistance == BestEditDistance)
+    BestCommand.push_back(Command);
+  else if (EditDistance < BestEditDistance) {
+    BestCommand.clear();
+    BestCommand.push_back(Command);
+    BestEditDistance = EditDistance;
+  }
+}
+
+const CommandInfo *
+CommandTraits::getTypoCorrectCommandInfo(StringRef Typo) const {
   SmallVector<const CommandInfo *, 2> BestCommand;
   
   int NumOfCommands = sizeof(Commands) / sizeof(CommandInfo);
-  for (int i = 0; i < NumOfCommands; i++) {
-    StringRef Name = Commands[i].Name;
-    unsigned MinPossibleEditDistance = abs((int)Name.size() - (int)Typo.size());
-    if (MinPossibleEditDistance > 0 &&
-        Typo.size() / MinPossibleEditDistance < 1)
-      continue;
-    unsigned EditDistance = Typo.edit_distance(Name, true, MaxEditDistance);
-    if (EditDistance > MaxEditDistance)
-      continue;
-    if (EditDistance == BestEditDistance)
-      BestCommand.push_back(&Commands[i]);
-    else if (EditDistance < BestEditDistance) {
-      BestCommand.clear();
-      BestCommand.push_back(&Commands[i]);
-      BestEditDistance = EditDistance;
-    }
-  }
+  for (int i = 0; i < NumOfCommands; i++)
+    HelperTypoCorrectCommandInfo(BestCommand, Typo, &Commands[i]);
+  
+  for (unsigned i = 0, e = RegisteredCommands.size(); i != e; ++i)
+    if (!RegisteredCommands[i]->IsUnknownCommand)
+      HelperTypoCorrectCommandInfo(BestCommand, Typo, RegisteredCommands[i]);
+  
   return (BestCommand.size() != 1) ? NULL : BestCommand[0];
 }
 
