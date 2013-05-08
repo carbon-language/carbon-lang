@@ -62,6 +62,11 @@ public:
     AppendVariablesIfUnique (const RegularExpression& regex, 
                              VariableList &var_list, 
                              size_t& total_matches);
+    
+    size_t
+    AppendVariablesWithScope (lldb::ValueType type,
+                              VariableList &var_list,
+                              bool if_unique = true);
 
     uint32_t
     FindIndexForVariable (Variable* variable);

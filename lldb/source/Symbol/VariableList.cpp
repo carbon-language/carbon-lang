@@ -134,6 +134,27 @@ VariableList::AppendVariablesIfUnique (const RegularExpression& regex, VariableL
     return var_list.GetSize() - initial_size;
 }
 
+size_t
+VariableList::AppendVariablesWithScope (lldb::ValueType type,
+                                        VariableList &var_list,
+                                        bool if_unique)
+{
+    const size_t initial_size = var_list.GetSize();
+    iterator pos, end = m_variables.end();
+    for (pos = m_variables.begin(); pos != end; ++pos)
+    {
+        if ((*pos)->GetScope() == type)
+        {
+            if (if_unique)
+                var_list.AddVariableIfUnique (*pos);
+            else
+                var_list.AddVariable(*pos);
+        }
+    }
+    // Return the number of new unique variables added to "var_list"
+    return var_list.GetSize() - initial_size;
+}
+
 uint32_t
 VariableList::FindIndexForVariable (Variable* variable)
 {

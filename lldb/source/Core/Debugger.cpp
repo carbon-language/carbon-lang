@@ -2251,16 +2251,7 @@ Debugger::FormatPrompt
                                                 
                                                 VariableList args;
                                                 if (variable_list_sp)
-                                                {
-                                                    const size_t num_variables = variable_list_sp->GetSize();
-                                                    for (size_t var_idx = 0; var_idx < num_variables; ++var_idx)
-                                                    {
-                                                        VariableSP var_sp (variable_list_sp->GetVariableAtIndex(var_idx));
-                                                        if (var_sp->GetScope() == eValueTypeVariableArgument)
-                                                            args.AddVariable (var_sp);
-                                                    }
-
-                                                }
+                                                    variable_list_sp->AppendVariablesWithScope(eValueTypeVariableArgument, args);
                                                 if (args.GetSize() > 0)
                                                 {
                                                     const char *open_paren = strchr (cstr, '(');
@@ -2294,7 +2285,12 @@ Debugger::FormatPrompt
                                                         if (arg_idx > 0)
                                                             s.PutCString (", ");
                                                         if (var_value_sp->GetError().Success())
-                                                            s.Printf ("%s=%s", var_name, var_value);
+                                                        {
+                                                            if (var_value)
+                                                                s.Printf ("%s=%s", var_name, var_value);
+                                                            else
+                                                                s.Printf ("%s=%s at %s", var_name, var_value_sp->GetTypeName().GetCString(), var_value_sp->GetLocationAsCString());
+                                                        }
                                                         else
                                                             s.Printf ("%s=<unavailable>", var_name);
                                                     }
