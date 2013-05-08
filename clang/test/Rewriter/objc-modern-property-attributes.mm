@@ -16,6 +16,10 @@ typedef void (^void_block_t)(void);
 
 @property (copy) void_block_t completionBlock;
 @property (retain) PropertyClass* Yblock;
+@property (readonly) PropertyClass* readonlyAttr;
+@property (readonly,copy) PropertyClass* readonlyCopyAttr;
+@property (readonly,retain) PropertyClass* readonlyRetainAttr;
+@property (readonly,retain,nonatomic) PropertyClass* readonlyNonatomicAttr;
 @property (copy) id ID;
 
 @end
@@ -25,6 +29,10 @@ typedef void (^void_block_t)(void);
 @dynamic r;     // attributes should be "Ti,D"
 @synthesize completionBlock=__completion; // "T@?,C,V__completion"
 @synthesize Yblock = YVAR; // "T@\"PropertyClass\",&,VYVAR"
+@synthesize readonlyAttr;
+@synthesize readonlyCopyAttr;
+@synthesize readonlyRetainAttr;
+@synthesize readonlyNonatomicAttr;
 @synthesize  ID; // "T@,C,VID"
 @end
 
@@ -32,6 +40,10 @@ typedef void (^void_block_t)(void);
 // CHECK: Ti,D
 // CHECK: T@?,C,V__completion
 // CHECK: T@\"PropertyClass\",&,VYVAR
+// CHECK: T@\"PropertyClass\",R,VreadonlyAttr
+// CHECK: T@\"PropertyClass\",R,C,VreadonlyCopyAttr
+// CHECK: T@\"PropertyClass\",R,&,VreadonlyRetainAttr
+// CHECK: T@\"PropertyClass\",R,&,N,VreadonlyNonatomicAttr
 
 @interface Test @end
 @interface Test (Category)
