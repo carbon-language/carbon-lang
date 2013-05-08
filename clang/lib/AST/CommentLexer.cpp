@@ -265,6 +265,7 @@ const char *findCCommentEnd(const char *BufferPtr, const char *BufferEnd) {
   }
   llvm_unreachable("buffer end hit before '*/' was seen");
 }
+    
 } // unnamed namespace
 
 void Lexer::lexCommentText(Token &T) {
@@ -354,8 +355,17 @@ void Lexer::lexCommentText(Token &T) {
         if (!Info) {
           formTokenWithChars(T, TokenPtr, tok::unknown_command);
           T.setUnknownCommandName(CommandName);
-          Diag(T.getLocation(), diag::warn_unknown_comment_command_name);
-          return;
+          if (Info = Traits.getTypoCorrectCommandInfo(CommandName)) {
+            StringRef CorrectedName = Info->Name;
+            SourceRange CommandRange(T.getLocation().getLocWithOffset(1),
+                                     T.getEndLocation());
+            Diag(T.getLocation(), diag::warn_correct_comment_command_name)
+              << CommandName << CorrectedName
+              << FixItHint::CreateReplacement(CommandRange, CorrectedName);
+          } else {
+            Diag(T.getLocation(), diag::warn_unknown_comment_command_name);
+            return;
+          }
         }
         if (Info->IsVerbatimBlockCommand) {
           setupAndLexVerbatimBlock(T, TokenPtr, *BufferPtr, Info);

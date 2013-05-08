@@ -43,6 +43,33 @@ const CommandInfo *CommandTraits::getCommandInfo(unsigned CommandID) const {
   return getRegisteredCommandInfo(CommandID);
 }
 
+const CommandInfo *
+CommandTraits::getTypoCorrectCommandInfo(StringRef Typo) const {
+  const unsigned MaxEditDistance = 1;
+  unsigned BestEditDistance = MaxEditDistance + 1;
+  SmallVector<const CommandInfo *, 2> BestCommand;
+  
+  int NumOfCommands = sizeof(Commands) / sizeof(CommandInfo);
+  for (int i = 0; i < NumOfCommands; i++) {
+    StringRef Name = Commands[i].Name;
+    unsigned MinPossibleEditDistance = abs((int)Name.size() - (int)Typo.size());
+    if (MinPossibleEditDistance > 0 &&
+        Typo.size() / MinPossibleEditDistance < 1)
+      continue;
+    unsigned EditDistance = Typo.edit_distance(Name, true, MaxEditDistance);
+    if (EditDistance > MaxEditDistance)
+      continue;
+    if (EditDistance == BestEditDistance)
+      BestCommand.push_back(&Commands[i]);
+    else if (EditDistance < BestEditDistance) {
+      BestCommand.clear();
+      BestCommand.push_back(&Commands[i]);
+      BestEditDistance = EditDistance;
+    }
+  }
+  return (BestCommand.size() != 1) ? NULL : BestCommand[0];
+}
+
 CommandInfo *CommandTraits::createCommandInfoWithName(StringRef CommandName) {
   char *Name = Allocator.Allocate<char>(CommandName.size() + 1);
   memcpy(Name, CommandName.data(), CommandName.size());

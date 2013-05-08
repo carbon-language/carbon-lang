@@ -142,6 +142,8 @@ public:
     llvm_unreachable("the command should be known");
   }
 
+  const CommandInfo *getTypoCorrectCommandInfo(StringRef Typo) const;
+  
   const CommandInfo *getCommandInfo(unsigned CommandID) const;
 
   const CommandInfo *registerUnknownCommand(StringRef CommandName);

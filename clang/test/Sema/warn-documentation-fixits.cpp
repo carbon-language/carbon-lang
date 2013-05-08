@@ -57,6 +57,12 @@ struct test_deprecated_6 {
 /// \deprecated
 void test_deprecated_9(int a);
 
+// rdar://12381408
+// expected-warning@+2  {{unknown command tag name 'retur'; did you mean 'return'?}}
+/// \brief testing fixit
+/// \retur int in FooBar
+int FooBar();
+
 // CHECK: fix-it:"{{.*}}":{5:12-5:22}:"a"
 // CHECK: fix-it:"{{.*}}":{9:12-9:15}:"aaa"
 // CHECK: fix-it:"{{.*}}":{13:13-13:23}:"T"
@@ -68,4 +74,4 @@ void test_deprecated_9(int a);
 // CHECK: fix-it:"{{.*}}":{46:27-46:27}:" __attribute__((deprecated))"
 // CHECK: fix-it:"{{.*}}":{50:27-50:27}:" __attribute__((deprecated))"
 // CHECK: fix-it:"{{.*}}":{58:30-58:30}:" MY_ATTR_DEPRECATED"
-
+// CHECK: fix-it:"{{.*}}":{63:6-63:11}:"return"
