@@ -21,7 +21,7 @@ class WatchpointForMultipleThreadsTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.hello_multiple_threads()
 
-    @expectedFailureLinux # bugzilla 14416
+    @skipOnLinux # bugzilla 14323 - skip due to incomplete multi-threaded debug support
     @dwarf_test
     def test_watchpoint_multiple_threads_with_dwarf(self):
         """Test that lldb watchpoint works for multiple threads."""
@@ -37,7 +37,7 @@ class WatchpointForMultipleThreadsTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.hello_multiple_threads_wp_set_and_then_delete()
 
-    @expectedFailureLinux # bugzilla 14416
+    @skipOnLinux # bugzilla 14323 - skip due to incomplete multi-threaded debug support
     @dwarf_test
     def test_watchpoint_multiple_threads_wp_set_and_then_delete_with_dwarf(self):
         """Test that lldb watchpoint works for multiple threads, and after the watchpoint is deleted, the watchpoint event should no longer fires."""
