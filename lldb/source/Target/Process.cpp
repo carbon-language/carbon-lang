@@ -559,7 +559,6 @@ ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error,
 
                 shell_command.PutCString ("exec");
 
-#if defined(__APPLE__)
                 // Only Apple supports /usr/bin/arch being able to specify the architecture
                 if (GetArchitecture().IsValid())
                 {
@@ -577,12 +576,6 @@ ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error,
                     // 2 - then we will stop in our program
                     SetResumeCount(1);
                 }
-#else
-                // Set the resume count to 1:
-                // 1 - stop in shell
-                // 2 - then we will stop in our program
-                SetResumeCount(1);
-#endif
             }
         
             if (first_arg_is_full_shell_command)
@@ -1038,9 +1031,7 @@ Process::Process(Target &target, Listener &listener) :
     m_should_detach (false),
     m_next_event_action_ap(),
     m_public_run_lock (),
-#if defined(__APPLE__)
     m_private_run_lock (),
-#endif
     m_currently_handling_event(false),
     m_finalize_called(false),
     m_last_broadcast_state (eStateInvalid),
@@ -1166,10 +1157,8 @@ Process::Finalize()
     m_private_state_listener.Clear();
     m_public_run_lock.WriteTryLock(); // This will do nothing if already locked
     m_public_run_lock.WriteUnlock();
-#if defined(__APPLE__)
     m_private_run_lock.WriteTryLock(); // This will do nothing if already locked
     m_private_run_lock.WriteUnlock();
-#endif
     m_finalize_called = true;
 }
 
@@ -1718,7 +1707,6 @@ Process::SetPrivateState (StateType new_state)
     // the private process state with another run lock. Right now it doesn't
     // seem like we need to do this, but if we ever do, we can uncomment and
     // use this code.
-#if defined(__APPLE__)
     const bool old_state_is_stopped = StateIsStoppedState(old_state, false);
     const bool new_state_is_stopped = StateIsStoppedState(new_state, false);
     if (old_state_is_stopped != new_state_is_stopped)
@@ -1728,7 +1716,6 @@ Process::SetPrivateState (StateType new_state)
         else
             m_private_run_lock.WriteLock();
     }
-#endif
     
     if (state_changed)
     {

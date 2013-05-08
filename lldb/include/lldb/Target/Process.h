@@ -3507,7 +3507,6 @@ public:
     ReadWriteLock &
     GetRunLock ()
     {
-#if defined(__APPLE__)
         // The "m_private_run_lock" causes problems for other platforms
         // right now, so we are leaving this in for Apple builds only
         // until we can get the kinks worked out.
@@ -3515,9 +3514,6 @@ public:
             return m_private_run_lock;
         else
             return m_public_run_lock;
-#else
-        return m_public_run_lock;
-#endif
     }
 
 protected:
@@ -3667,9 +3663,7 @@ protected:
     std::unique_ptr<NextEventAction> m_next_event_action_ap;
     std::vector<PreResumeCallbackAndBaton> m_pre_resume_actions;
     ReadWriteLock               m_public_run_lock;
-#if defined(__APPLE__)
     ReadWriteLock               m_private_run_lock;
-#endif
     Predicate<bool>             m_currently_handling_event; // This predicate is set in HandlePrivateEvent while all its business is being done.
     bool                        m_currently_handling_do_on_removals;
     bool                        m_resume_requested;         // If m_currently_handling_event or m_currently_handling_do_on_removals are true, Resume will only request a resume, using this flag to check.
