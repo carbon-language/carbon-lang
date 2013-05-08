@@ -2602,13 +2602,8 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
                         Locker::AcquireLock      | (init_session ? Locker::InitSession     : 0),
                         Locker::FreeAcquiredLock | (init_session ? Locker::TearDownSession : 0));
         
-        if (target_file.GetFileType() == FileSpec::eFileTypeDirectory)
-        {
-            // for directories, just import
-            basename = pathname;
-        }
-        else if (target_file.GetFileType() == FileSpec::eFileTypeInvalid ||
-                 target_file.GetFileType() == FileSpec::eFileTypeUnknown)
+        if (target_file.GetFileType() == FileSpec::eFileTypeInvalid ||
+            target_file.GetFileType() == FileSpec::eFileTypeUnknown)
         {
             // if not a valid file of any sort, check if it might be a filename still
             // dot can't be used but / and \ can, and if either is found, reject
@@ -2619,7 +2614,9 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
             }
             basename = pathname; // not a filename, probably a package of some sort, let it go through
         }
-        else
+        else if (target_file.GetFileType() == FileSpec::eFileTypeDirectory ||
+                 target_file.GetFileType() == FileSpec::eFileTypeRegular ||
+                 target_file.GetFileType() == FileSpec::eFileTypeSymbolicLink)
         {
             const char* directory = target_file.GetDirectory().GetCString();
             
@@ -2644,6 +2641,11 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
                 else if(::strcmp(extension.GetCString(), "pyc") == 0)
                     basename.resize(basename.length()-4);
             }
+        }
+        else
+        {
+            error.SetErrorString("no known way to import this module specification");
+            return false;
         }
         
         // check if the module is already import-ed
