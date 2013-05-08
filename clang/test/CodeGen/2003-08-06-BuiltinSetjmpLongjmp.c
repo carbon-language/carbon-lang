@@ -1,8 +1,9 @@
-/* RUN: %clang_cc1  %s -emit-llvm -o - | not grep __builtin_
+/* RUN: %clang_cc1  %s -emit-llvm -o - | FileCheck %s
  *
- * __builtin_longjmp/setjmp should get transformed into llvm.setjmp/longjmp 
- * just like explicit setjmp/longjmp calls are.
+ * __builtin_longjmp/setjmp should get transformed into intrinsics.
  */
+
+// CHECK-NOT: builtin_longjmp
 
 void jumpaway(int *ptr) {
   __builtin_longjmp(ptr,1);
