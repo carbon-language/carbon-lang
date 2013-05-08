@@ -1150,20 +1150,24 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   // Add function template parameters.
   addTemplateParams(*SPDie, SP.getTemplateParams());
 
-  // Unfortunately this code needs to stay here instead of below the
-  // AT_specification code in order to work around a bug in older
-  // gdbs that requires the linkage name to resolve multiple template
-  // functions.
-  // TODO: Remove this set of code when we get rid of the old gdb
-  // compatibility.
   StringRef LinkageName = SP.getLinkageName();
-  if (!LinkageName.empty() && DD->useDarwinGDBCompat())
-    addString(SPDie, dwarf::DW_AT_MIPS_linkage_name,
-              getRealLinkageName(LinkageName));
 
   // If this DIE is going to refer declaration info using AT_specification
-  // then there is no need to add other attributes.
+  // then there is no need to add other attributes, except
+  // DW_AT_MIPS_linkage_name in two cases:
+  // 1) The current DIE has a linkage name but the referred-to declaration
+  // doesn't have one (e.g. constructor/destructor).
+  // 2) To work around a bug in older gdbs that requires the linkage name to
+  // resolve multiple template functions. TODO: Remove this case (the
+  // DD->useDarwinGDBCompat() condition) when we get rid of the old gdb
+  // compatibility.
+
   if (DeclDie) {
+    if (!LinkageName.empty()
+        && (SPDecl.getLinkageName().empty() || DD->useDarwinGDBCompat()))
+      addString(SPDie, dwarf::DW_AT_MIPS_linkage_name,
+                getRealLinkageName(LinkageName));
+
     // Refer function declaration directly.
     addDIEEntry(SPDie, dwarf::DW_AT_specification, dwarf::DW_FORM_ref4,
                 DeclDie);
@@ -1172,7 +1176,7 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   }
 
   // Add the linkage name if we have one.
-  if (!LinkageName.empty() && !DD->useDarwinGDBCompat())
+  if (!LinkageName.empty())
     addString(SPDie, dwarf::DW_AT_MIPS_linkage_name,
               getRealLinkageName(LinkageName));
 
