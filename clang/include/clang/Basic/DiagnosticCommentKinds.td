@@ -157,7 +157,8 @@ def warn_verbatim_block_end_without_start : Warning<
   InGroup<Documentation>, DefaultIgnore;
 
 def warn_unknown_comment_command_name : Warning<
-  "unknown command tag name">, InGroup<Documentation>, DefaultIgnore;
+  "unknown command tag name">,
+  InGroup<DocumentationUnknownCommand>, DefaultIgnore;
 
 def warn_correct_comment_command_name : Warning<
   "unknown command tag name '%0'; did you mean '%1'?">,
