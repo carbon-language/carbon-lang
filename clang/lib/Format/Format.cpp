@@ -338,10 +338,6 @@ private:
         return ColonPos < Other.ColonPos;
       if (StartOfFunctionCall != Other.StartOfFunctionCall)
         return StartOfFunctionCall < Other.StartOfFunctionCall;
-      if (NestedNameSpecifierContinuation !=
-          Other.NestedNameSpecifierContinuation)
-        return NestedNameSpecifierContinuation <
-               Other.NestedNameSpecifierContinuation;
       if (CallContinuation != Other.CallContinuation)
         return CallContinuation < Other.CallContinuation;
       if (VariablePos != Other.VariablePos)
@@ -432,13 +428,6 @@ private:
       } else if (Current.is(tok::lessless) &&
                  State.Stack.back().FirstLessLess != 0) {
         State.Column = State.Stack.back().FirstLessLess;
-      } else if (Previous.is(tok::coloncolon)) {
-        if (State.Stack.back().NestedNameSpecifierContinuation == 0) {
-          State.Column = ContinuationIndent;
-          State.Stack.back().NestedNameSpecifierContinuation = State.Column;
-        } else {
-          State.Column = State.Stack.back().NestedNameSpecifierContinuation;
-        }
       } else if (Current.isOneOf(tok::period, tok::arrow)) {
         if (State.Stack.back().CallContinuation == 0) {
           State.Column = ContinuationIndent;
@@ -464,7 +453,8 @@ private:
           State.Stack.back().ColonPos =
               State.Column + Current.FormatTok.TokenLength;
         }
-      } else if (Current.Type == TT_StartOfName || Previous.is(tok::equal) ||
+      } else if (Current.Type == TT_StartOfName ||
+                 Previous.isOneOf(tok::coloncolon, tok::equal) ||
                  Previous.Type == TT_ObjCMethodExpr) {
         State.Column = ContinuationIndent;
       } else {
@@ -854,6 +844,7 @@ private:
 
     // Reconstruct the solution.
     reconstructPath(InitialState, Queue.top().second);
+    DEBUG(llvm::errs() << "Total number of analyzed states: " << Count << "\n");
     DEBUG(llvm::errs() << "---\n");
 
     // Return the column after the last token of the solution.
