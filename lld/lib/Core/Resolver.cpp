@@ -27,10 +27,12 @@
 
 namespace lld {
 
+namespace {
+
 /// This is used as a filter function to std::remove_if to dead strip atoms.
 class NotLive {
 public:
-       NotLive(const llvm::DenseSet<const Atom*>& la) : _liveAtoms(la) { }
+  explicit NotLive(const llvm::DenseSet<const Atom*>& la) : _liveAtoms(la) { }
 
   bool operator()(const Atom *atom) const {
     // don't remove if live
@@ -53,7 +55,7 @@ private:
 /// This is used as a filter function to std::remove_if to coalesced atoms.
 class AtomCoalescedAway {
 public:
-  AtomCoalescedAway(SymbolTable &sym) : _symbolTable(sym) {}
+  explicit AtomCoalescedAway(SymbolTable &sym) : _symbolTable(sym) {}
 
   bool operator()(const Atom *atom) const {
     const Atom *rep = _symbolTable.replacement(atom);
@@ -63,6 +65,8 @@ public:
 private:
   SymbolTable &_symbolTable;
 };
+
+} // namespace
 
 
 // add all atoms from all initial .o files
