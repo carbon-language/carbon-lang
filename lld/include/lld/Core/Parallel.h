@@ -44,16 +44,21 @@ namespace lld {
 ///
 /// Calling dec() on a Latch with a count of 0 has undefined behaivor.
 class Latch {
-  std::atomic<uint32_t> _count;
+  uint32_t _count;
   mutable std::mutex _condMut;
   mutable std::condition_variable _cond;
 
 public:
   explicit Latch(uint32_t count = 0) : _count(count) {}
   ~Latch() { sync(); }
-  void inc() { ++_count; }
+
+  void inc() {
+    std::unique_lock<std::mutex> lock(_condMut);
+    ++_count;
+  }
 
   void dec() {
+    std::unique_lock<std::mutex> lock(_condMut);
     if (--_count == 0)
       _cond.notify_all();
   }
