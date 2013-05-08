@@ -1710,8 +1710,8 @@ void PrintVersionMessage();
 ///
 /// NOTE: THIS FUNCTION TERMINATES THE PROGRAM!
 ///
-/// \param hidden if true will print hidden options
-/// \param categorized if true print options in categories
+/// \param Hidden if true will print hidden options
+/// \param Categorized if true print options in categories
 void PrintHelpMessage(bool Hidden=false, bool Categorized=false);
 
 
@@ -1722,7 +1722,7 @@ void PrintHelpMessage(bool Hidden=false, bool Categorized=false);
 /// \brief Use this to get a StringMap to all registered named options
 /// (e.g. -help). Note \p Map Should be an empty StringMap.
 ///
-/// \param [out] map will be filled with mappings where the key is the
+/// \param [out] Map will be filled with mappings where the key is the
 /// Option argument string (e.g. "help") and value is the corresponding
 /// Option*.
 ///
