@@ -1795,7 +1795,7 @@ ARMTargetLowering::HandleByVal(
       // else parameter would be splitted between registers and stack,
       // end register would be r4 in this case.
       unsigned ByValRegBegin = reg;
-      unsigned ByValRegEnd = (size < excess) ? reg + size/4 : ARM::R4;
+      unsigned ByValRegEnd = (size < excess) ? reg + size/4 : (unsigned)ARM::R4;
       State->addInRegsParamInfo(ByValRegBegin, ByValRegEnd);
       // Note, first register is allocated in the beginning of function already,
       // allocate remained amount of registers we need.
