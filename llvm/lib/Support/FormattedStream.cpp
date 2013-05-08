@@ -17,38 +17,43 @@
 
 using namespace llvm;
 
-/// CountColumns - Examine the given char sequence and figure out which
-/// column we end up in after output.
+/// UpdatePosition - Examine the given char sequence and figure out which
+/// column we end up in after output, and how many line breaks are contained.
 ///
-static unsigned CountColumns(unsigned Column, const char *Ptr, size_t Size) {
-  // Keep track of the current column by scanning the string for
-  // special characters
+static void UpdatePosition(std::pair<unsigned, unsigned> &Position, const char *Ptr, size_t Size) {
+  unsigned &Column = Position.first;
+  unsigned &Line = Position.second;
 
+  // Keep track of the current column and line by scanning the string for
+  // special characters
   for (const char *End = Ptr + Size; Ptr != End; ++Ptr) {
     ++Column;
-    if (*Ptr == '\n' || *Ptr == '\r')
+    switch (*Ptr) {
+    case '\n':
+      Line += 1;
+    case '\r':
       Column = 0;
-    else if (*Ptr == '\t')
+      break;
+    case '\t':
       // Assumes tab stop = 8 characters.
       Column += (8 - (Column & 0x7)) & 0x7;
+      break;
+    }
   }
-
-  return Column;
 }
 
-/// ComputeColumn - Examine the current output and figure out which
-/// column we end up in after output.
-void formatted_raw_ostream::ComputeColumn(const char *Ptr, size_t Size) {
+/// ComputePosition - Examine the current output and update line and column
+/// counts.
+void formatted_raw_ostream::ComputePosition(const char *Ptr, size_t Size) {
   // If our previous scan pointer is inside the buffer, assume we already
   // scanned those bytes. This depends on raw_ostream to not change our buffer
   // in unexpected ways.
-  if (Ptr <= Scanned && Scanned <= Ptr + Size) {
+  if (Ptr <= Scanned && Scanned <= Ptr + Size)
     // Scan all characters added since our last scan to determine the new
     // column.
-    ColumnScanned = CountColumns(ColumnScanned, Scanned, 
-                                 Size - (Scanned - Ptr));
-  } else
-    ColumnScanned = CountColumns(ColumnScanned, Ptr, Size);
+    UpdatePosition(Position, Scanned, Size - (Scanned - Ptr));
+  else
+    UpdatePosition(Position, Ptr, Size);
 
   // Update the scanning pointer.
   Scanned = Ptr + Size;
@@ -60,16 +65,16 @@ void formatted_raw_ostream::ComputeColumn(const char *Ptr, size_t Size) {
 ///
 formatted_raw_ostream &formatted_raw_ostream::PadToColumn(unsigned NewCol) { 
   // Figure out what's in the buffer and add it to the column count.
-  ComputeColumn(getBufferStart(), GetNumBytesInBuffer());
+  ComputePosition(getBufferStart(), GetNumBytesInBuffer());
 
   // Output spaces until we reach the desired column.
-  indent(std::max(int(NewCol - ColumnScanned), 1));
+  indent(std::max(int(NewCol - getColumn()), 1));
   return *this;
 }
 
 void formatted_raw_ostream::write_impl(const char *Ptr, size_t Size) {
   // Figure out what's in the buffer and add it to the column count.
-  ComputeColumn(Ptr, Size);
+  ComputePosition(Ptr, Size);
 
   // Write the data to the underlying stream (which is unbuffered, so
   // the data will be immediately written out).
