@@ -20,6 +20,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -114,6 +115,14 @@ namespace {
         return;
 
       Builder->EmitVTable(RD, DefinitionRequired);
+    }
+
+    virtual void HandleLinkerOptionPragma(llvm::StringRef Opts) {
+      Builder->AppendLinkerOptions(Opts);
+    }
+
+    virtual void HandleDependentLibrary(llvm::StringRef Lib) {
+      Builder->AddDependentLib(Lib);
     }
   };
 }

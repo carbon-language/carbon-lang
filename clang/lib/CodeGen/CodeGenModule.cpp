@@ -186,7 +186,8 @@ void CodeGenModule::Release() {
   EmitStaticExternCAliases();
   EmitLLVMUsed();
 
-  if (CodeGenOpts.Autolink && Context.getLangOpts().Modules) {
+  if (CodeGenOpts.Autolink &&
+      (Context.getLangOpts().Modules || !LinkerOptionsMetadata.empty())) {
     EmitModuleLinkOptions();
   }
 
@@ -762,31 +763,41 @@ void CodeGenModule::EmitLLVMUsed() {
   GV->setSection("llvm.metadata");
 }
 
+void CodeGenModule::AppendLinkerOptions(StringRef Opts) {
+  llvm::Value *MDOpts = llvm::MDString::get(getLLVMContext(), Opts);
+  LinkerOptionsMetadata.push_back(llvm::MDNode::get(getLLVMContext(), MDOpts));
+}
+
+void CodeGenModule::AddDependentLib(StringRef Lib) {
+  llvm::SmallString<24> Opt;
+  getTargetCodeGenInfo().getDependentLibraryOption(Lib, Opt);
+  llvm::Value *MDOpts = llvm::MDString::get(getLLVMContext(), Opt);
+  LinkerOptionsMetadata.push_back(llvm::MDNode::get(getLLVMContext(), MDOpts));
+}
+
 /// \brief Add link options implied by the given module, including modules
 /// it depends on, using a postorder walk.
-static void addLinkOptionsPostorder(llvm::LLVMContext &Context,
+static void addLinkOptionsPostorder(CodeGenModule &CGM,
                                     Module *Mod,
                                     SmallVectorImpl<llvm::Value *> &Metadata,
                                     llvm::SmallPtrSet<Module *, 16> &Visited) {
   // Import this module's parent.
   if (Mod->Parent && Visited.insert(Mod->Parent)) {
-    addLinkOptionsPostorder(Context, Mod->Parent, Metadata, Visited);
+    addLinkOptionsPostorder(CGM, Mod->Parent, Metadata, Visited);
   }
 
   // Import this module's dependencies.
   for (unsigned I = Mod->Imports.size(); I > 0; --I) {
     if (Visited.insert(Mod->Imports[I-1]))
-      addLinkOptionsPostorder(Context, Mod->Imports[I-1], Metadata, Visited);
+      addLinkOptionsPostorder(CGM, Mod->Imports[I-1], Metadata, Visited);
   }
 
   // Add linker options to link against the libraries/frameworks
   // described by this module.
+  llvm::LLVMContext &Context = CGM.getLLVMContext();
   for (unsigned I = Mod->LinkLibraries.size(); I > 0; --I) {
-    // FIXME: -lfoo is Unix-centric and -framework Foo is Darwin-centric.
-    // We need to know more about the linker to know how to encode these
-    // options propertly.
-
-    // Link against a framework.
+    // Link against a framework.  Frameworks are currently Darwin only, so we
+    // don't to ask TargetCodeGenInfo for the spelling of the linker option.
     if (Mod->LinkLibraries[I-1].IsFramework) {
       llvm::Value *Args[2] = {
         llvm::MDString::get(Context, "-framework"),
@@ -798,9 +809,10 @@ static void addLinkOptionsPostorder(llvm::LLVMContext &Context,
     }
 
     // Link against a library.
-    llvm::Value *OptString
-    = llvm::MDString::get(Context,
-                          "-l" + Mod->LinkLibraries[I-1].Library);
+    llvm::SmallString<24> Opt;
+    CGM.getTargetCodeGenInfo().getDependentLibraryOption(
+      Mod->LinkLibraries[I-1].Library, Opt);
+    llvm::Value *OptString = llvm::MDString::get(Context, Opt);
     Metadata.push_back(llvm::MDNode::get(Context, OptString));
   }
 }
@@ -852,20 +864,23 @@ void CodeGenModule::EmitModuleLinkOptions() {
   }
 
   // Add link options for all of the imported modules in reverse topological
-  // order.
+  // order.  We don't do anything to try to order import link flags with respect
+  // to linker options inserted by things like #pragma comment().
   SmallVector<llvm::Value *, 16> MetadataArgs;
   Visited.clear();
   for (llvm::SetVector<clang::Module *>::iterator M = LinkModules.begin(),
                                                MEnd = LinkModules.end();
        M != MEnd; ++M) {
     if (Visited.insert(*M))
-      addLinkOptionsPostorder(getLLVMContext(), *M, MetadataArgs, Visited);
+      addLinkOptionsPostorder(*this, *M, MetadataArgs, Visited);
   }
   std::reverse(MetadataArgs.begin(), MetadataArgs.end());
+  LinkerOptionsMetadata.append(MetadataArgs.begin(), MetadataArgs.end());
 
   // Add the linker options metadata flag.
   getModule().addModuleFlag(llvm::Module::AppendUnique, "Linker Options",
-                            llvm::MDNode::get(getLLVMContext(), MetadataArgs));
+                            llvm::MDNode::get(getLLVMContext(),
+                                              LinkerOptionsMetadata));
 }
 
 void CodeGenModule::EmitDeferred() {

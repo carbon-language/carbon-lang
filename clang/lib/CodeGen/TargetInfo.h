@@ -18,6 +18,7 @@
 #include "clang/AST/Type.h"
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/SmallString.h"
 
 namespace llvm {
   class GlobalValue;
@@ -167,6 +168,11 @@ namespace clang {
     /// that unprototyped calls to varargs functions still succeed.
     virtual bool isNoProtoCallVariadic(const CodeGen::CallArgList &args,
                                        const FunctionNoProtoType *fnType) const;
+
+    /// Gets the linker options necessary to link a dependent library on this
+    /// platform.
+    virtual void getDependentLibraryOption(llvm::StringRef Lib,
+                                           llvm::SmallString<24> &Opt) const;
   };
 }
 

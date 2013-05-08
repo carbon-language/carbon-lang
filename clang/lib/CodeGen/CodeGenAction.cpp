@@ -179,6 +179,14 @@ namespace clang {
       Gen->HandleVTable(RD, DefinitionRequired);
     }
 
+    virtual void HandleLinkerOptionPragma(llvm::StringRef Opts) {
+      Gen->HandleLinkerOptionPragma(Opts);
+    }
+
+    virtual void HandleDependentLibrary(llvm::StringRef Opts) {
+      Gen->HandleDependentLibrary(Opts);
+    }
+
     static void InlineAsmDiagHandler(const llvm::SMDiagnostic &SM,void *Context,
                                      unsigned LocCookie) {
       SourceLocation Loc = SourceLocation::getFromRawEncoding(LocCookie);

@@ -103,7 +103,7 @@ Parser::Parser(Preprocessor &pp, Sema &actions, bool skipFunctionBodies)
   PP.AddPragmaHandler(OpenMPHandler.get());
 
   if (getLangOpts().MicrosoftExt) {
-    MSCommentHandler.reset(new PragmaCommentHandler());
+    MSCommentHandler.reset(new PragmaCommentHandler(actions));
     PP.AddPragmaHandler(MSCommentHandler.get());
   }
 

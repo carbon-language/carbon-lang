@@ -14,6 +14,8 @@
 #ifndef LLVM_CLANG_AST_ASTCONSUMER_H
 #define LLVM_CLANG_AST_ASTCONSUMER_H
 
+#include "llvm/ADT/StringRef.h"
+
 namespace clang {
   class ASTContext;
   class CXXRecordDecl;
@@ -85,6 +87,15 @@ public:
   /// inclusion directive.
   /// The default implementation passes it to HandleTopLevelDecl.
   virtual void HandleImplicitImportDecl(ImportDecl *D);
+
+  /// \brief Handle a pragma that appends to Linker Options.  Currently this
+  /// only exists to support Microsoft's #pragma comment(linker, "/foo").
+  virtual void HandleLinkerOptionPragma(llvm::StringRef Opts) {}
+
+  /// \brief Handle a dependent library created by a pragma in the source.
+  /// Currently this only exists to support Microsoft's
+  /// #pragma comment(lib, "/foo").
+  virtual void HandleDependentLibrary(llvm::StringRef Lib) {}
 
   /// CompleteTentativeDefinition - Callback invoked at the end of a translation
   /// unit to notify the consumer that the given tentative definition should be

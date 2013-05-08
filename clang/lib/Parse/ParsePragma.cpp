@@ -821,10 +821,16 @@ void PragmaCommentHandler::HandlePragma(Preprocessor &PP,
   }
 
   // Verify that this is one of the 5 whitelisted options.
-  // FIXME: warn that 'exestr' is deprecated.
-  const IdentifierInfo *II = Tok.getIdentifierInfo();
-  if (!II->isStr("compiler") && !II->isStr("exestr") && !II->isStr("lib") &&
-      !II->isStr("linker") && !II->isStr("user")) {
+  IdentifierInfo *II = Tok.getIdentifierInfo();
+  Sema::PragmaMSCommentKind Kind =
+    llvm::StringSwitch<Sema::PragmaMSCommentKind>(II->getName())
+    .Case("linker",   Sema::PCK_Linker)
+    .Case("lib",      Sema::PCK_Lib)
+    .Case("compiler", Sema::PCK_Compiler)
+    .Case("exestr",   Sema::PCK_ExeStr)
+    .Case("user",     Sema::PCK_User)
+    .Default(Sema::PCK_Unknown);
+  if (Kind == Sema::PCK_Unknown) {
     PP.Diag(Tok.getLocation(), diag::err_pragma_comment_unknown_kind);
     return;
   }
@@ -837,11 +843,12 @@ void PragmaCommentHandler::HandlePragma(Preprocessor &PP,
                                                  /*MacroExpansion=*/true))
     return;
 
+  // FIXME: warn that 'exestr' is deprecated.
   // FIXME: If the kind is "compiler" warn if the string is present (it is
   // ignored).
-  // FIXME: 'lib' requires a comment string.
-  // FIXME: 'linker' requires a comment string, and has a specific list of
-  // things that are allowable.
+  // The MSDN docs say that "lib" and "linker" require a string and have a short
+  // whitelist of linker options they support, but in practice MSVC doesn't
+  // issue a diagnostic.  Therefore neither does clang.
 
   if (Tok.isNot(tok::r_paren)) {
     PP.Diag(Tok.getLocation(), diag::err_pragma_comment_malformed);
@@ -857,4 +864,6 @@ void PragmaCommentHandler::HandlePragma(Preprocessor &PP,
   // If the pragma is lexically sound, notify any interested PPCallbacks.
   if (PP.getPPCallbacks())
     PP.getPPCallbacks()->PragmaComment(CommentLoc, II, ArgumentString);
+
+  Actions.ActOnPragmaMSComment(Kind, ArgumentString);
 }

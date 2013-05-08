@@ -419,6 +419,10 @@ private:
   void HandlePragmaMSStruct();
 
   /// \brief Handle the annotation token produced for
+  /// #pragma comment...
+  void HandlePragmaMSComment();
+
+  /// \brief Handle the annotation token produced for
   /// #pragma align...
   void HandlePragmaAlign();
 

@@ -143,6 +143,16 @@ bool TargetCodeGenInfo::isNoProtoCallVariadic(const CallArgList &args,
   return false;
 }
 
+void
+TargetCodeGenInfo::getDependentLibraryOption(llvm::StringRef Lib,
+                                             llvm::SmallString<24> &Opt) const {
+  // This assumes the user is passing a library name like "rt" instead of a
+  // filename like "librt.a/so", and that they don't care whether it's static or
+  // dynamic.
+  Opt = "-l";
+  Opt += Lib;
+}
+
 static bool isEmptyRecord(ASTContext &Context, QualType T, bool AllowArrays);
 
 /// isEmptyField - Return true iff a the field is "empty", that is it
@@ -1256,6 +1266,18 @@ public:
 
 };
 
+class WinX86_32TargetCodeGenInfo : public X86_32TargetCodeGenInfo {
+public:
+  WinX86_32TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, unsigned RegParms)
+    : X86_32TargetCodeGenInfo(CGT, false, true, true, RegParms) {}
+
+  void getDependentLibraryOption(llvm::StringRef Lib,
+                                 llvm::SmallString<24> &Opt) const {
+    Opt = "/DEFAULTLIB:";
+    Opt += Lib;
+  }
+};
+
 class WinX86_64TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
   WinX86_64TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT)
@@ -1273,6 +1295,12 @@ public:
     // 16 is %rip.
     AssignToArrayRange(CGF.Builder, Address, Eight8, 0, 16);
     return false;
+  }
+
+  void getDependentLibraryOption(llvm::StringRef Lib,
+                                 llvm::SmallString<24> &Opt) const {
+    Opt = "/DEFAULTLIB:";
+    Opt += Lib;
   }
 };
 
@@ -5173,8 +5201,8 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
 
     case llvm::Triple::Win32:
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(Types, false, true, true,
-                                           CodeGenOpts.NumRegisterParameters));
+               new WinX86_32TargetCodeGenInfo(Types,
+                                              CodeGenOpts.NumRegisterParameters));
 
     default:
       return *(TheTargetCodeGenInfo =
