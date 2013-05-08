@@ -1843,7 +1843,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
     // Interface types may have elements added to them by a
     // subsequent implementation or extension, so we keep them in
     // the ObjCInterfaceCache together with a checksum. Instead of
-    // the (possibly) incomplete interace type, we return a forward
+    // the (possibly) incomplete interface type, we return a forward
     // declaration that gets RAUW'd in CGDebugInfo::finalize().
     llvm::DenseMap<void *, std::pair<llvm::WeakVH, unsigned > >
       ::iterator it = ObjCInterfaceCache.find(TyPtr);
