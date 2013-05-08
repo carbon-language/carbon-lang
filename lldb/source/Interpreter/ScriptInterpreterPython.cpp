@@ -2602,12 +2602,22 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
                         Locker::AcquireLock      | (init_session ? Locker::InitSession     : 0),
                         Locker::FreeAcquiredLock | (init_session ? Locker::TearDownSession : 0));
         
-        if (target_file.GetFileType() == FileSpec::eFileTypeInvalid ||
-            target_file.GetFileType() == FileSpec::eFileTypeUnknown ||
-            target_file.GetFileType() == FileSpec::eFileTypeDirectory )
+        if (target_file.GetFileType() == FileSpec::eFileTypeDirectory)
         {
-            // if not a filename, try to just plain import
+            // for directories, just import
             basename = pathname;
+        }
+        else if (target_file.GetFileType() == FileSpec::eFileTypeInvalid ||
+                 target_file.GetFileType() == FileSpec::eFileTypeUnknown)
+        {
+            // if not a valid file of any sort, check if it might be a filename still
+            // dot can't be used but / and \ can, and if either is found, reject
+            if (strchr(pathname,'\\') || strchr(pathname,'/'))
+            {
+                error.SetErrorString("invalid pathname");
+                return false;
+            }
+            basename = pathname; // not a filename, probably a package of some sort, let it go through
         }
         else
         {
