@@ -126,6 +126,7 @@ set(SANITIZER_COMMON_CFLAGS
   -fno-exceptions
   -fomit-frame-pointer
   -funwind-tables
+  -fno-stack-protector
   -O3
   )
 if(NOT WIN32)
