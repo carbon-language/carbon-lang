@@ -1376,7 +1376,7 @@ locale::id codecvt<wchar_t, char, mbstate_t>::id;
 
 codecvt<wchar_t, char, mbstate_t>::codecvt(size_t refs)
     : locale::facet(refs),
-      __l(0)
+      __l(_LIBCPP_GET_C_LOCALE)
 {
 }
 
