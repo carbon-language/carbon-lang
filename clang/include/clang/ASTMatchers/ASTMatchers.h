@@ -2542,6 +2542,21 @@ AST_MATCHER(CXXMethodDecl, isVirtual) {
   return Node.isVirtual();
 }
 
+/// \brief Matches if the given method declaration is const.
+///
+/// Given
+/// \code
+/// struct A {
+///   void foo() const;
+///   void bar();
+/// };
+/// \endcode
+///
+/// methodDecl(isConst()) matches A::foo() but not A::bar()
+AST_MATCHER(CXXMethodDecl, isConst) {
+  return Node.isConst();
+}
+
 /// \brief Matches if the given method declaration overrides another method.
 ///
 /// Given

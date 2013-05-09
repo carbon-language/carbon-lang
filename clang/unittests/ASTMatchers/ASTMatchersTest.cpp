@@ -1507,6 +1507,13 @@ TEST(Matcher, MatchesVirtualMethod) {
       methodDecl(isVirtual())));
 }
 
+TEST(Matcher, MatchesConstMethod) {
+  EXPECT_TRUE(matches("struct A { void foo() const; };",
+                      methodDecl(isConst())));
+  EXPECT_TRUE(notMatches("struct A { void foo(); };",
+                         methodDecl(isConst())));
+}
+
 TEST(Matcher, MatchesOverridingMethod) {
   EXPECT_TRUE(matches("class X { virtual int f(); }; "
                       "class Y : public X { int f(); };",
