@@ -735,83 +735,6 @@ bool HexagonInstrInfo::isNewValueStore(const MachineInstr *MI) const {
   }
 }
 
-bool HexagonInstrInfo::isPostIncrement (const MachineInstr* MI) const {
-  switch (MI->getOpcode())
-  {
-    default: return false;
-    // Load Byte
-    case Hexagon::POST_LDrib:
-    case Hexagon::POST_LDrib_cPt:
-    case Hexagon::POST_LDrib_cNotPt:
-    case Hexagon::POST_LDrib_cdnPt_V4:
-    case Hexagon::POST_LDrib_cdnNotPt_V4:
-
-    // Load unsigned byte
-    case Hexagon::POST_LDriub:
-    case Hexagon::POST_LDriub_cPt:
-    case Hexagon::POST_LDriub_cNotPt:
-    case Hexagon::POST_LDriub_cdnPt_V4:
-    case Hexagon::POST_LDriub_cdnNotPt_V4:
-
-    // Load halfword
-    case Hexagon::POST_LDrih:
-    case Hexagon::POST_LDrih_cPt:
-    case Hexagon::POST_LDrih_cNotPt:
-    case Hexagon::POST_LDrih_cdnPt_V4:
-    case Hexagon::POST_LDrih_cdnNotPt_V4:
-
-    // Load unsigned halfword
-    case Hexagon::POST_LDriuh:
-    case Hexagon::POST_LDriuh_cPt:
-    case Hexagon::POST_LDriuh_cNotPt:
-    case Hexagon::POST_LDriuh_cdnPt_V4:
-    case Hexagon::POST_LDriuh_cdnNotPt_V4:
-
-    // Load word
-    case Hexagon::POST_LDriw:
-    case Hexagon::POST_LDriw_cPt:
-    case Hexagon::POST_LDriw_cNotPt:
-    case Hexagon::POST_LDriw_cdnPt_V4:
-    case Hexagon::POST_LDriw_cdnNotPt_V4:
-
-    // Load double word
-    case Hexagon::POST_LDrid:
-    case Hexagon::POST_LDrid_cPt:
-    case Hexagon::POST_LDrid_cNotPt:
-    case Hexagon::POST_LDrid_cdnPt_V4:
-    case Hexagon::POST_LDrid_cdnNotPt_V4:
-
-    // Store byte
-    case Hexagon::POST_STbri:
-    case Hexagon::POST_STbri_cPt:
-    case Hexagon::POST_STbri_cNotPt:
-    case Hexagon::POST_STbri_cdnPt_V4:
-    case Hexagon::POST_STbri_cdnNotPt_V4:
-
-    // Store halfword
-    case Hexagon::POST_SThri:
-    case Hexagon::POST_SThri_cPt:
-    case Hexagon::POST_SThri_cNotPt:
-    case Hexagon::POST_SThri_cdnPt_V4:
-    case Hexagon::POST_SThri_cdnNotPt_V4:
-
-    // Store word
-    case Hexagon::POST_STwri:
-    case Hexagon::POST_STwri_cPt:
-    case Hexagon::POST_STwri_cNotPt:
-    case Hexagon::POST_STwri_cdnPt_V4:
-    case Hexagon::POST_STwri_cdnNotPt_V4:
-
-    // Store double word
-    case Hexagon::POST_STdri:
-    case Hexagon::POST_STdri_cPt:
-    case Hexagon::POST_STdri_cNotPt:
-    case Hexagon::POST_STdri_cdnPt_V4:
-    case Hexagon::POST_STdri_cdnNotPt_V4:
-      return true;
-  }
-}
-
 bool HexagonInstrInfo::isNewValueInst(const MachineInstr *MI) const {
   if (isNewValueJump(MI))
     return true;
@@ -1672,6 +1595,10 @@ bool HexagonInstrInfo::isNewValueJump(const MachineInstr *MI) const {
   return false;
 }
 
+bool HexagonInstrInfo::isPostIncrement (const MachineInstr* MI) const {
+  return (getAddrMode(MI) == HexagonII::PostInc);
+}
+
 bool HexagonInstrInfo::isNewValue(const MachineInstr* MI) const {
   const uint64_t F = MI->getDesc().TSFlags;
   return ((F >> HexagonII::NewValuePos) & HexagonII::NewValueMask);
@@ -1683,6 +1610,44 @@ bool HexagonInstrInfo::isDotNewInst (const MachineInstr* MI) const {
   return (isNewValueInst(MI) ||
      (isPredicated(MI) && isPredicatedNew(MI)));
 }
+
+// Return .new predicate version for an instruction.
+int HexagonInstrInfo::GetDotNewPredOp(MachineInstr *MI,
+                                      const MachineBranchProbabilityInfo
+                                      *MBPI) const {
+
+  int NewOpcode = Hexagon::getPredNewOpcode(MI->getOpcode());
+  if (NewOpcode >= 0) // Valid predicate new instruction
+    return NewOpcode;
+
+  switch (MI->getOpcode()) {
+  default: llvm_unreachable("Unknown .new type");
+  // Condtional Jumps
+  case Hexagon::JMP_t:
+  case Hexagon::JMP_f:
+    return getDotNewPredJumpOp(MI, MBPI);
+
+  case Hexagon::JMPR_t:
+    return Hexagon::JMPR_tnew_tV3;
+
+  case Hexagon::JMPR_f:
+    return Hexagon::JMPR_fnew_tV3;
+
+  case Hexagon::JMPret_t:
+    return Hexagon::JMPret_tnew_tV3;
+
+  case Hexagon::JMPret_f:
+    return Hexagon::JMPret_fnew_tV3;
+
+
+  // Conditional combine
+  case Hexagon::COMBINE_rr_cPt :
+    return Hexagon::COMBINE_rr_cdnPt;
+  case Hexagon::COMBINE_rr_cNotPt :
+    return Hexagon::COMBINE_rr_cdnNotPt;
+  }
+}
+
 
 unsigned HexagonInstrInfo::getAddrMode(const MachineInstr* MI) const {
   const uint64_t F = MI->getDesc().TSFlags;
