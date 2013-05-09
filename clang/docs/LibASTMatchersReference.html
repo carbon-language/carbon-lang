@@ -212,6 +212,17 @@ Example matches X, S, the anonymous union type, i, and U;
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('namespaceDecl0')"><a name="namespaceDecl0Anchor">namespaceDecl</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1NamespaceDecl.html">NamespaceDecl</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="namespaceDecl0"><pre>Matches a declaration of a namespace.
+
+Given
+  namespace {}
+  namespace test {}
+namespaceDecl()
+  matches "namespace {}" and "namespace test {}"
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('recordDecl0')"><a name="recordDecl0Anchor">recordDecl</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXRecordDecl.html">CXXRecordDecl</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="recordDecl0"><pre>Matches C++ class declarations.
 
