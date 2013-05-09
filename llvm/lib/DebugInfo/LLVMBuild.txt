@@ -19,4 +19,4 @@
 type = Library
 name = DebugInfo
 parent = Libraries
-required_libraries = Support
+required_libraries = Object Support
