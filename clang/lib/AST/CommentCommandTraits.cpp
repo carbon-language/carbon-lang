@@ -68,6 +68,11 @@ HelperTypoCorrectCommandInfo(SmallVectorImpl<const CommandInfo *> &BestCommand,
 
 const CommandInfo *
 CommandTraits::getTypoCorrectCommandInfo(StringRef Typo) const {
+  // single character command impostures, such as \t or \n must not go
+  // through the fixit logic.
+  if (Typo.size() <= 1)
+    return NULL;
+  
   SmallVector<const CommandInfo *, 2> BestCommand;
   
   int NumOfCommands = sizeof(Commands) / sizeof(CommandInfo);

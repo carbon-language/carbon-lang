@@ -172,3 +172,7 @@ struct S;
   @struct S1 THIS IS IT
 */
 @interface S1 @end
+
+// expected-warning@+1 {{unknown command tag name}}
+/// \t bbb IS_DOXYGEN_END
+int FooBar();
