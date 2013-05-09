@@ -130,6 +130,14 @@ private:
     return  llvm::Constant::getAllOnesValue(CGM.IntTy);
   }
 
+  llvm::Constant *getConstantOrZeroInt(llvm::Constant *C) {
+    return C ? C : getZeroInt();
+  }
+
+  llvm::Value *getValueOrZeroInt(llvm::Value *C) {
+    return C ? C : getZeroInt();
+  }
+
   void
   GetNullMemberPointerFields(const MemberPointerType *MPT,
                              llvm::SmallVectorImpl<llvm::Constant *> &fields);
@@ -143,7 +151,15 @@ private:
   /// function member pointers.
   llvm::Constant *EmitFullMemberPointer(llvm::Constant *FirstField,
                                         bool IsMemberFunction,
-                                        const CXXRecordDecl *RD);
+                                        const CXXRecordDecl *RD,
+                                        CharUnits NonVirtualBaseAdjustment);
+
+  llvm::Constant *BuildMemberPointer(const CXXRecordDecl *RD,
+                                     const CXXMethodDecl *MD,
+                                     CharUnits NonVirtualBaseAdjustment);
+
+  bool MemberPointerConstantIsNull(const MemberPointerType *MPT,
+                                   llvm::Constant *MP);
 
 public:
   virtual llvm::Type *ConvertMemberPointerType(const MemberPointerType *MPT);
@@ -171,6 +187,13 @@ public:
                                                     llvm::Value *Base,
                                                     llvm::Value *MemPtr,
                                                   const MemberPointerType *MPT);
+
+  virtual llvm::Value *EmitMemberPointerConversion(CodeGenFunction &CGF,
+                                                   const CastExpr *E,
+                                                   llvm::Value *Src);
+
+  virtual llvm::Constant *EmitMemberPointerConversion(const CastExpr *E,
+                                                      llvm::Constant *Src);
 
   virtual llvm::Value *
   EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
@@ -429,8 +452,10 @@ static bool hasVBPtrOffsetField(MSInheritanceModel Inheritance) {
   return Inheritance == MSIM_Unspecified;
 }
 
-static bool hasOnlyOneField(MSInheritanceModel Inheritance) {
-  return Inheritance <= MSIM_SinglePolymorphic;
+static bool hasOnlyOneField(bool IsMemberFunction,
+                            MSInheritanceModel Inheritance) {
+  return Inheritance <= MSIM_SinglePolymorphic ||
+      (!IsMemberFunction && Inheritance <= MSIM_MultiplePolymorphic);
 }
 
 // Only member pointers to functions need a this adjustment, since it can be
@@ -531,22 +556,25 @@ MicrosoftCXXABI::EmitNullMemberPointer(const MemberPointerType *MPT) {
 llvm::Constant *
 MicrosoftCXXABI::EmitFullMemberPointer(llvm::Constant *FirstField,
                                        bool IsMemberFunction,
-                                       const CXXRecordDecl *RD)
+                                       const CXXRecordDecl *RD,
+                                       CharUnits NonVirtualBaseAdjustment)
 {
   MSInheritanceModel Inheritance = RD->getMSInheritanceModel();
 
   // Single inheritance class member pointer are represented as scalars instead
   // of aggregates.
-  if (hasOnlyOneField(Inheritance))
+  if (hasOnlyOneField(IsMemberFunction, Inheritance))
     return FirstField;
 
   llvm::SmallVector<llvm::Constant *, 4> fields;
   fields.push_back(FirstField);
 
   if (hasNonVirtualBaseAdjustmentField(IsMemberFunction, Inheritance))
-    fields.push_back(getZeroInt());
+    fields.push_back(llvm::ConstantInt::get(
+      CGM.IntTy, NonVirtualBaseAdjustment.getQuantity()));
 
   if (hasVBPtrOffsetField(Inheritance)) {
+    // FIXME: We actually need to search non-virtual bases for vbptrs.
     int64_t VBPtrOffset =
       getContext().getASTRecordLayout(RD).getVBPtrOffset().getQuantity();
     if (VBPtrOffset == -1)
@@ -567,14 +595,40 @@ MicrosoftCXXABI::EmitMemberDataPointer(const MemberPointerType *MPT,
   const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
   llvm::Constant *FirstField =
     llvm::ConstantInt::get(CGM.IntTy, offset.getQuantity());
-  return EmitFullMemberPointer(FirstField, /*IsMemberFunction=*/false, RD);
+  return EmitFullMemberPointer(FirstField, /*IsMemberFunction=*/false, RD,
+                               CharUnits::Zero());
+}
+
+llvm::Constant *MicrosoftCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
+  return BuildMemberPointer(MD->getParent(), MD, CharUnits::Zero());
+}
+
+llvm::Constant *MicrosoftCXXABI::EmitMemberPointer(const APValue &MP,
+                                                   QualType MPType) {
+  const MemberPointerType *MPT = MPType->castAs<MemberPointerType>();
+  const ValueDecl *MPD = MP.getMemberPointerDecl();
+  if (!MPD)
+    return EmitNullMemberPointer(MPT);
+
+  CharUnits ThisAdjustment = getMemberPointerPathAdjustment(MP);
+
+  // FIXME PR15713: Support virtual inheritance paths.
+
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(MPD))
+    return BuildMemberPointer(MPT->getClass()->getAsCXXRecordDecl(),
+                              MD, ThisAdjustment);
+
+  CharUnits FieldOffset =
+    getContext().toCharUnitsFromBits(getContext().getFieldOffset(MPD));
+  return EmitMemberDataPointer(MPT, ThisAdjustment + FieldOffset);
 }
 
 llvm::Constant *
-MicrosoftCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
+MicrosoftCXXABI::BuildMemberPointer(const CXXRecordDecl *RD,
+                                    const CXXMethodDecl *MD,
+                                    CharUnits NonVirtualBaseAdjustment) {
   assert(MD->isInstance() && "Member function must not be static!");
   MD = MD->getCanonicalDecl();
-  const CXXRecordDecl *RD = MD->getParent();
   CodeGenTypes &Types = CGM.getTypes();
 
   llvm::Constant *FirstField;
@@ -599,15 +653,8 @@ MicrosoftCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
   }
 
   // The rest of the fields are common with data member pointers.
-  return EmitFullMemberPointer(FirstField, /*IsMemberFunction=*/true, RD);
-}
-
-llvm::Constant *
-MicrosoftCXXABI::EmitMemberPointer(const APValue &MP, QualType MPT) {
-  // FIXME PR15875: Implement member pointer conversions for Constants.
-  const CXXRecordDecl *RD = MPT->castAs<MemberPointerType>()->getClass()->getAsCXXRecordDecl();
-  return EmitFullMemberPointer(llvm::Constant::getNullValue(CGM.VoidPtrTy),
-                               /*IsMemberFunction=*/true, RD);
+  return EmitFullMemberPointer(FirstField, /*IsMemberFunction=*/true, RD,
+                               NonVirtualBaseAdjustment);
 }
 
 /// Member pointers are the same if they're either bitwise identical *or* both
@@ -638,7 +685,7 @@ MicrosoftCXXABI::EmitMemberPointerComparison(CodeGenFunction &CGF,
   // single icmp.
   const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
   MSInheritanceModel Inheritance = RD->getMSInheritanceModel();
-  if (hasOnlyOneField(Inheritance))
+  if (hasOnlyOneField(MPT->isMemberFunctionPointer(), Inheritance))
     return Builder.CreateICmp(Eq, L, R);
 
   // Compare the first field.
@@ -701,6 +748,37 @@ MicrosoftCXXABI::EmitMemberPointerIsNotNull(CodeGenFunction &CGF,
     Res = Builder.CreateAnd(Res, Next, "memptr.tobool");
   }
   return Res;
+}
+
+bool MicrosoftCXXABI::MemberPointerConstantIsNull(const MemberPointerType *MPT,
+                                                  llvm::Constant *Val) {
+  // Function pointers are null if the pointer in the first field is null.
+  if (MPT->isMemberFunctionPointer()) {
+    llvm::Constant *FirstField = Val->getType()->isStructTy() ?
+      Val->getAggregateElement(0U) : Val;
+    return FirstField->isNullValue();
+  }
+
+  // If it's not a function pointer and it's zero initializable, we can easily
+  // check zero.
+  if (isZeroInitializable(MPT) && Val->isNullValue())
+    return true;
+
+  // Otherwise, break down all the fields for comparison.  Hopefully these
+  // little Constants are reused, while a big null struct might not be.
+  llvm::SmallVector<llvm::Constant *, 4> Fields;
+  GetNullMemberPointerFields(MPT, Fields);
+  if (Fields.size() == 1) {
+    assert(Val->getType()->isIntegerTy());
+    return Val == Fields[0];
+  }
+
+  unsigned I, E;
+  for (I = 0, E = Fields.size(); I != E; ++I) {
+    if (Val->getAggregateElement(I) != Fields[I])
+      break;
+  }
+  return I == E;
 }
 
 // Returns an adjusted base cast to i8*, since we do more address arithmetic on
@@ -801,6 +879,194 @@ MicrosoftCXXABI::EmitMemberDataPointerAddress(CodeGenFunction &CGF,
   // Cast the address to the appropriate pointer type, adopting the address
   // space of the base pointer.
   return Builder.CreateBitCast(Addr, PType);
+}
+
+static MSInheritanceModel
+getInheritanceFromMemptr(const MemberPointerType *MPT) {
+  return MPT->getClass()->getAsCXXRecordDecl()->getMSInheritanceModel();
+}
+
+llvm::Value *
+MicrosoftCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
+                                             const CastExpr *E,
+                                             llvm::Value *Src) {
+  assert(E->getCastKind() == CK_DerivedToBaseMemberPointer ||
+         E->getCastKind() == CK_BaseToDerivedMemberPointer ||
+         E->getCastKind() == CK_ReinterpretMemberPointer);
+
+  // Use constant emission if we can.
+  if (isa<llvm::Constant>(Src))
+    return EmitMemberPointerConversion(E, cast<llvm::Constant>(Src));
+
+  // We may be adding or dropping fields from the member pointer, so we need
+  // both types and the inheritance models of both records.
+  const MemberPointerType *SrcTy =
+    E->getSubExpr()->getType()->castAs<MemberPointerType>();
+  const MemberPointerType *DstTy = E->getType()->castAs<MemberPointerType>();
+  MSInheritanceModel SrcInheritance = getInheritanceFromMemptr(SrcTy);
+  MSInheritanceModel DstInheritance = getInheritanceFromMemptr(DstTy);
+  bool IsFunc = SrcTy->isMemberFunctionPointer();
+
+  // If the classes use the same null representation, reinterpret_cast is a nop.
+  bool IsReinterpret = E->getCastKind() == CK_ReinterpretMemberPointer;
+  if (IsReinterpret && (IsFunc ||
+                        nullFieldOffsetIsZero(SrcInheritance) ==
+                        nullFieldOffsetIsZero(DstInheritance)))
+    return Src;
+
+  CGBuilderTy &Builder = CGF.Builder;
+
+  // Branch past the conversion if Src is null.
+  llvm::Value *IsNotNull = EmitMemberPointerIsNotNull(CGF, Src, SrcTy);
+  llvm::Constant *DstNull = EmitNullMemberPointer(DstTy);
+
+  // C++ 5.2.10p9: The null member pointer value is converted to the null member
+  //   pointer value of the destination type.
+  if (IsReinterpret) {
+    // For reinterpret casts, sema ensures that src and dst are both functions
+    // or data and have the same size, which means the LLVM types should match.
+    assert(Src->getType() == DstNull->getType());
+    return Builder.CreateSelect(IsNotNull, Src, DstNull);
+  }
+
+  llvm::BasicBlock *OriginalBB = Builder.GetInsertBlock();
+  llvm::BasicBlock *ConvertBB = CGF.createBasicBlock("memptr.convert");
+  llvm::BasicBlock *ContinueBB = CGF.createBasicBlock("memptr.converted");
+  Builder.CreateCondBr(IsNotNull, ConvertBB, ContinueBB);
+  CGF.EmitBlock(ConvertBB);
+
+  // Decompose src.
+  llvm::Value *FirstField = Src;
+  llvm::Value *NonVirtualBaseAdjustment = 0;
+  llvm::Value *VirtualBaseAdjustmentOffset = 0;
+  llvm::Value *VBPtrOffset = 0;
+  if (!hasOnlyOneField(IsFunc, SrcInheritance)) {
+    // We need to extract values.
+    unsigned I = 0;
+    FirstField = Builder.CreateExtractValue(Src, I++);
+    if (hasNonVirtualBaseAdjustmentField(IsFunc, SrcInheritance))
+      NonVirtualBaseAdjustment = Builder.CreateExtractValue(Src, I++);
+    if (hasVBPtrOffsetField(SrcInheritance))
+      VBPtrOffset = Builder.CreateExtractValue(Src, I++);
+    if (hasVirtualBaseAdjustmentField(SrcInheritance))
+      VirtualBaseAdjustmentOffset = Builder.CreateExtractValue(Src, I++);
+  }
+
+  // For data pointers, we adjust the field offset directly.  For functions, we
+  // have a separate field.
+  llvm::Constant *Adj = getMemberPointerAdjustment(E);
+  if (Adj) {
+    Adj = llvm::ConstantExpr::getTruncOrBitCast(Adj, CGM.IntTy);
+    llvm::Value *&NVAdjustField = IsFunc ? NonVirtualBaseAdjustment : FirstField;
+    bool isDerivedToBase = (E->getCastKind() == CK_DerivedToBaseMemberPointer);
+    if (!NVAdjustField)  // If this field didn't exist in src, it's zero.
+      NVAdjustField = getZeroInt();
+    if (isDerivedToBase)
+      NVAdjustField = Builder.CreateNSWSub(NVAdjustField, Adj, "adj");
+    else
+      NVAdjustField = Builder.CreateNSWAdd(NVAdjustField, Adj, "adj");
+  }
+
+  // FIXME PR15713: Support conversions through virtually derived classes.
+
+  // Recompose dst from the null struct and the adjusted fields from src.
+  llvm::Value *Dst;
+  if (hasOnlyOneField(IsFunc, DstInheritance)) {
+    Dst = FirstField;
+  } else {
+    Dst = llvm::UndefValue::get(DstNull->getType());
+    unsigned Idx = 0;
+    Dst = Builder.CreateInsertValue(Dst, FirstField, Idx++);
+    if (hasNonVirtualBaseAdjustmentField(IsFunc, DstInheritance))
+      Dst = Builder.CreateInsertValue(
+        Dst, getValueOrZeroInt(NonVirtualBaseAdjustment), Idx++);
+    if (hasVBPtrOffsetField(DstInheritance))
+      Dst = Builder.CreateInsertValue(
+        Dst, getValueOrZeroInt(VBPtrOffset), Idx++);
+    if (hasVirtualBaseAdjustmentField(DstInheritance))
+      Dst = Builder.CreateInsertValue(
+        Dst, getValueOrZeroInt(VirtualBaseAdjustmentOffset), Idx++);
+  }
+  Builder.CreateBr(ContinueBB);
+
+  // In the continuation, choose between DstNull and Dst.
+  CGF.EmitBlock(ContinueBB);
+  llvm::PHINode *Phi = Builder.CreatePHI(DstNull->getType(), 2, "memptr.converted");
+  Phi->addIncoming(DstNull, OriginalBB);
+  Phi->addIncoming(Dst, ConvertBB);
+  return Phi;
+}
+
+llvm::Constant *
+MicrosoftCXXABI::EmitMemberPointerConversion(const CastExpr *E,
+                                             llvm::Constant *Src) {
+  const MemberPointerType *SrcTy =
+    E->getSubExpr()->getType()->castAs<MemberPointerType>();
+  const MemberPointerType *DstTy = E->getType()->castAs<MemberPointerType>();
+
+  // If src is null, emit a new null for dst.  We can't return src because dst
+  // might have a new representation.
+  if (MemberPointerConstantIsNull(SrcTy, Src))
+    return EmitNullMemberPointer(DstTy);
+
+  // We don't need to do anything for reinterpret_casts of non-null member
+  // pointers.  We should only get here when the two type representations have
+  // the same size.
+  if (E->getCastKind() == CK_ReinterpretMemberPointer)
+    return Src;
+
+  MSInheritanceModel SrcInheritance = getInheritanceFromMemptr(SrcTy);
+  MSInheritanceModel DstInheritance = getInheritanceFromMemptr(DstTy);
+
+  // Decompose src.
+  llvm::Constant *FirstField = Src;
+  llvm::Constant *NonVirtualBaseAdjustment = 0;
+  llvm::Constant *VirtualBaseAdjustmentOffset = 0;
+  llvm::Constant *VBPtrOffset = 0;
+  bool IsFunc = SrcTy->isMemberFunctionPointer();
+  if (!hasOnlyOneField(IsFunc, SrcInheritance)) {
+    // We need to extract values.
+    unsigned I = 0;
+    FirstField = Src->getAggregateElement(I++);
+    if (hasNonVirtualBaseAdjustmentField(IsFunc, SrcInheritance))
+      NonVirtualBaseAdjustment = Src->getAggregateElement(I++);
+    if (hasVBPtrOffsetField(SrcInheritance))
+      VBPtrOffset = Src->getAggregateElement(I++);
+    if (hasVirtualBaseAdjustmentField(SrcInheritance))
+      VirtualBaseAdjustmentOffset = Src->getAggregateElement(I++);
+  }
+
+  // For data pointers, we adjust the field offset directly.  For functions, we
+  // have a separate field.
+  llvm::Constant *Adj = getMemberPointerAdjustment(E);
+  if (Adj) {
+    Adj = llvm::ConstantExpr::getTruncOrBitCast(Adj, CGM.IntTy);
+    llvm::Constant *&NVAdjustField =
+      IsFunc ? NonVirtualBaseAdjustment : FirstField;
+    bool IsDerivedToBase = (E->getCastKind() == CK_DerivedToBaseMemberPointer);
+    if (!NVAdjustField)  // If this field didn't exist in src, it's zero.
+      NVAdjustField = getZeroInt();
+    if (IsDerivedToBase)
+      NVAdjustField = llvm::ConstantExpr::getNSWSub(NVAdjustField, Adj);
+    else
+      NVAdjustField = llvm::ConstantExpr::getNSWAdd(NVAdjustField, Adj);
+  }
+
+  // FIXME PR15713: Support conversions through virtually derived classes.
+
+  // Recompose dst from the null struct and the adjusted fields from src.
+  if (hasOnlyOneField(IsFunc, DstInheritance))
+    return FirstField;
+
+  llvm::SmallVector<llvm::Constant *, 4> Fields;
+  Fields.push_back(FirstField);
+  if (hasNonVirtualBaseAdjustmentField(IsFunc, DstInheritance))
+    Fields.push_back(getConstantOrZeroInt(NonVirtualBaseAdjustment));
+  if (hasVBPtrOffsetField(DstInheritance))
+    Fields.push_back(getConstantOrZeroInt(VBPtrOffset));
+  if (hasVirtualBaseAdjustmentField(DstInheritance))
+    Fields.push_back(getConstantOrZeroInt(VirtualBaseAdjustmentOffset));
+  return llvm::ConstantStruct::getAnon(Fields);
 }
 
 llvm::Value *

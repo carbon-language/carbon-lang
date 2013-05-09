@@ -573,22 +573,7 @@ llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const APValue &MP,
   if (!MPD)
     return EmitNullMemberPointer(MPT);
 
-  // Compute the this-adjustment.
-  CharUnits ThisAdjustment = CharUnits::Zero();
-  ArrayRef<const CXXRecordDecl*> Path = MP.getMemberPointerPath();
-  bool DerivedMember = MP.isMemberPointerToDerivedMember();
-  const CXXRecordDecl *RD = cast<CXXRecordDecl>(MPD->getDeclContext());
-  for (unsigned I = 0, N = Path.size(); I != N; ++I) {
-    const CXXRecordDecl *Base = RD;
-    const CXXRecordDecl *Derived = Path[I];
-    if (DerivedMember)
-      std::swap(Base, Derived);
-    ThisAdjustment +=
-      getContext().getASTRecordLayout(Derived).getBaseClassOffset(Base);
-    RD = Path[I];
-  }
-  if (DerivedMember)
-    ThisAdjustment = -ThisAdjustment;
+  CharUnits ThisAdjustment = getMemberPointerPathAdjustment(MP);
 
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(MPD))
     return BuildMemberPointer(MD, ThisAdjustment);
