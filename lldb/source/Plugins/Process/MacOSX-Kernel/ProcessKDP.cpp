@@ -541,15 +541,20 @@ ProcessKDP::DoDetach(bool keep_stopped)
         if (!keep_stopped && m_comm.IsConnected())
         {
 
-            m_comm.SendRequestDisconnect();
+            bool disconnect_success = m_comm.SendRequestDisconnect();
+            if (!disconnect_success)
+            {
+                if (log)
+                    log->PutCString ("ProcessKDP::DoDetach(): send disconnect request failed");
+            }
 
-            size_t response_size = m_comm.Disconnect ();
+            ConnectionStatus comm_disconnect_result = m_comm.Disconnect ();
             if (log)
             {
-                if (response_size)
-                    log->PutCString ("ProcessKDP::DoDetach() detach packet sent successfully");
+                if (comm_disconnect_result == eConnectionStatusSuccess)
+                    log->PutCString ("ProcessKDP::DoDetach() conncection channel shutdown successfully");
                 else
-                    log->PutCString ("ProcessKDP::DoDetach() detach packet send failed");
+                    log->PutCString ("ProcessKDP::DoDetach() connection channel shutdown failed");
             }
         }
     }
