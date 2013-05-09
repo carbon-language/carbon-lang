@@ -49,6 +49,10 @@ HelperTypoCorrectCommandInfo(SmallVectorImpl<const CommandInfo *> &BestCommand,
   const unsigned MaxEditDistance = 1;
   unsigned BestEditDistance = MaxEditDistance + 1;
   StringRef Name = Command->Name;
+  // Don't attempt trying to typo fix single character commands.
+  // \t and \n are very common
+  if (Name.size() <= 1)
+    return;
   
   unsigned MinPossibleEditDistance = abs((int)Name.size() - (int)Typo.size());
   if (MinPossibleEditDistance > 0 &&

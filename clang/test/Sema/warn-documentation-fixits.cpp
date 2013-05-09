@@ -67,6 +67,9 @@ int FooBar();
 /// \fooba bbb IS_DOXYGEN_END
 int gorf();
 
+/// \t bbb IS_DOXYGEN_END
+int Bar();
+
 // CHECK: fix-it:"{{.*}}":{5:12-5:22}:"a"
 // CHECK: fix-it:"{{.*}}":{9:12-9:15}:"aaa"
 // CHECK: fix-it:"{{.*}}":{13:13-13:23}:"T"
