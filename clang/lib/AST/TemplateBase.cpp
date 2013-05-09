@@ -353,9 +353,10 @@ void TemplateArgument::print(const PrintingPolicy &Policy,
     
   case Declaration: {
     NamedDecl *ND = cast<NamedDecl>(getAsDecl());
+    Out << '&';
     if (ND->getDeclName()) {
       // FIXME: distinguish between pointer and reference args?
-      Out << *ND;
+      ND->printQualifiedName(Out);
     } else {
       Out << "<anonymous>";
     }
