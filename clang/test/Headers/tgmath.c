@@ -1,6 +1,5 @@
-// RUN: %clang -fsyntax-only %s
-
-#ifdef __STDC_HOSTED__
+// RUN: %clang -fsyntax-only -isystem %S/Inputs/include -Xclang -verify %s
+// expected-no-diagnostics
 
 #include <tgmath.h>
 
@@ -37,5 +36,3 @@ _Static_assert(sizeof(fabs(lc)) == sizeof(l), "");
 _Static_assert(sizeof(logb(f)) == sizeof(f), "");
 _Static_assert(sizeof(logb(d)) == sizeof(d), "");
 _Static_assert(sizeof(logb(l)) == sizeof(l), "");
-
-#endif
