@@ -1561,18 +1561,16 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
   if (AllocElemType->isRecordType() && !UseGlobal) {
     CXXRecordDecl *Record
       = cast<CXXRecordDecl>(AllocElemType->getAs<RecordType>()->getDecl());
-    if (FindAllocationOverload(StartLoc, Range, NewName, &AllocArgs[0],
-                          AllocArgs.size(), Record, /*AllowMissing=*/true,
-                          OperatorNew))
+    if (FindAllocationOverload(StartLoc, Range, NewName, AllocArgs, Record,
+                               /*AllowMissing=*/true, OperatorNew))
       return true;
   }
   if (!OperatorNew) {
     // Didn't find a member overload. Look for a global one.
     DeclareGlobalNewDelete();
     DeclContext *TUDecl = Context.getTranslationUnitDecl();
-    if (FindAllocationOverload(StartLoc, Range, NewName, &AllocArgs[0],
-                          AllocArgs.size(), TUDecl, /*AllowMissing=*/false,
-                          OperatorNew))
+    if (FindAllocationOverload(StartLoc, Range, NewName, AllocArgs, TUDecl,
+                               /*AllowMissing=*/false, OperatorNew))
       return true;
   }
 
@@ -1714,8 +1712,8 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
 /// FindAllocationOverload - Find an fitting overload for the allocation
 /// function in the specified scope.
 bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
-                                  DeclarationName Name, Expr** Args,
-                                  unsigned NumArgs, DeclContext *Ctx,
+                                  DeclarationName Name, MultiExprArg Args,
+                                  DeclContext *Ctx,
                                   bool AllowMissing, FunctionDecl *&Operator,
                                   bool Diagnose) {
   LookupResult R(*this, Name, StartLoc, LookupOrdinaryName);
@@ -1742,15 +1740,13 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
     if (FunctionTemplateDecl *FnTemplate = dyn_cast<FunctionTemplateDecl>(D)) {
       AddTemplateOverloadCandidate(FnTemplate, Alloc.getPair(),
                                    /*ExplicitTemplateArgs=*/0,
-                                   llvm::makeArrayRef(Args, NumArgs),
-                                   Candidates,
+                                   Args, Candidates,
                                    /*SuppressUserConversions=*/false);
       continue;
     }
 
     FunctionDecl *Fn = cast<FunctionDecl>(D);
-    AddOverloadCandidate(Fn, Alloc.getPair(),
-                         llvm::makeArrayRef(Args, NumArgs), Candidates,
+    AddOverloadCandidate(Fn, Alloc.getPair(), Args, Candidates,
                          /*SuppressUserConversions=*/false);
   }
 
@@ -1766,7 +1762,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
     // asserted on, though, since invalid decls are left in there.)
     // Watch out for variadic allocator function.
     unsigned NumArgsInFnDecl = FnDecl->getNumParams();
-    for (unsigned i = 0; (i < NumArgs && i < NumArgsInFnDecl); ++i) {
+    for (unsigned i = 0; (i < Args.size() && i < NumArgsInFnDecl); ++i) {
       InitializedEntity Entity = InitializedEntity::InitializeParameter(Context,
                                                        FnDecl->getParamDecl(i));
 
@@ -1794,8 +1790,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
     if (Diagnose) {
       Diag(StartLoc, diag::err_ovl_no_viable_function_in_call)
         << Name << Range;
-      Candidates.NoteCandidates(*this, OCD_AllCandidates,
-                                llvm::makeArrayRef(Args, NumArgs));
+      Candidates.NoteCandidates(*this, OCD_AllCandidates, Args);
     }
     return true;
 
@@ -1803,8 +1798,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
     if (Diagnose) {
       Diag(StartLoc, diag::err_ovl_ambiguous_call)
         << Name << Range;
-      Candidates.NoteCandidates(*this, OCD_ViableCandidates,
-                                llvm::makeArrayRef(Args, NumArgs));
+      Candidates.NoteCandidates(*this, OCD_ViableCandidates, Args);
     }
     return true;
 
@@ -1815,8 +1809,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
         << Name 
         << getDeletedOrUnavailableSuffix(Best->Function)
         << Range;
-      Candidates.NoteCandidates(*this, OCD_AllCandidates,
-                                llvm::makeArrayRef(Args, NumArgs));
+      Candidates.NoteCandidates(*this, OCD_AllCandidates, Args);
     }
     return true;
   }
@@ -2051,10 +2044,9 @@ bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
   DeclContext *TUDecl = Context.getTranslationUnitDecl();
 
   CXXNullPtrLiteralExpr Null(Context.VoidPtrTy, SourceLocation());
-  Expr* DeallocArgs[1];
-  DeallocArgs[0] = &Null;
+  Expr *DeallocArgs[1] = { &Null };
   if (FindAllocationOverload(StartLoc, SourceRange(), Name,
-                             DeallocArgs, 1, TUDecl, !Diagnose,
+                             DeallocArgs, TUDecl, !Diagnose,
                              Operator, Diagnose))
     return true;
 
@@ -2244,11 +2236,12 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
       DeclareGlobalNewDelete();
       DeclContext *TUDecl = Context.getTranslationUnitDecl();
       Expr *Arg = Ex.get();
+      Expr *DeallocArgs[1] = { Arg };
       if (!Context.hasSameType(Arg->getType(), Context.VoidPtrTy))
         Arg = ImplicitCastExpr::Create(Context, Context.VoidPtrTy,
                                        CK_BitCast, Arg, 0, VK_RValue);
       if (FindAllocationOverload(StartLoc, SourceRange(), DeleteName,
-                                 &Arg, 1, TUDecl, /*AllowMissing=*/false,
+                                 DeallocArgs, TUDecl, /*AllowMissing=*/false,
                                  OperatorDelete))
         return ExprError();
     }
