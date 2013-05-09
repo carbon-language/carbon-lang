@@ -658,12 +658,6 @@ Thread::DidResume ()
     SetResumeSignal (LLDB_INVALID_SIGNAL_NUMBER);
 }
 
-void
-Thread::DidStop ()
-{
-    SetState (eStateStopped);
-}
-
 bool
 Thread::ShouldStop (Event* event_ptr)
 {

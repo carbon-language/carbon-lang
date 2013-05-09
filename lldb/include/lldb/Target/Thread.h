@@ -277,10 +277,6 @@ public:
     virtual void
     DidResume ();
 
-    // This notifies the thread when a private stop occurs.
-    virtual void
-    DidStop ();
-
     virtual void
     RefreshStateAfterStop() = 0;
 

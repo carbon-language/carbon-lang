@@ -11,7 +11,6 @@
 #include <algorithm>
 
 #include "lldb/Core/Log.h"
-#include "lldb/Core/State.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/ThreadList.h"
 #include "lldb/Target/Thread.h"
@@ -641,27 +640,6 @@ ThreadList::DidResume ()
         ThreadSP thread_sp(*pos);
         if (thread_sp->GetResumeState() != eStateSuspended)
             thread_sp->DidResume ();
-    }
-}
-
-void
-ThreadList::DidStop ()
-{
-    Mutex::Locker locker(GetMutex());
-    collection::iterator pos, end = m_threads.end();
-    for (pos = m_threads.begin(); pos != end; ++pos)
-    {
-        // Notify threads that the process just stopped.
-        // Note, this currently assumes that all threads in the list
-        // stop when the process stops.  In the future we will want to support
-        // a debugging model where some threads continue to run while others
-        // are stopped.  We either need to handle that somehow here or
-        // create a special thread list containing only threads which will
-        // stop in the code that calls this method (currently
-        // Process::SetPrivateState).
-        ThreadSP thread_sp(*pos);
-        if (StateIsRunningState(thread_sp->GetState()))
-            thread_sp->DidStop ();
     }
 }
 

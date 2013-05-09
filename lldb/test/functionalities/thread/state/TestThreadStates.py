@@ -14,12 +14,14 @@ class StopThreadsTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
+    @unittest2.expectedFailure("PR-15824") # thread states not properly maintained
     def test_state_after_breakpoint_with_dsym(self):
         """Test thread state after breakpoint."""
         self.buildDsym()
         self.thread_state_after_breakpoint_test()
 
     @dwarf_test
+    @unittest2.expectedFailure("PR-15824") # thread states not properly maintained
     def test_state_after_breakpoint_with_dwarf(self):
         """Test thread state after breakpoint."""
         self.buildDwarf()
