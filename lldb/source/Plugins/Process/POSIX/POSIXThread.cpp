@@ -141,7 +141,7 @@ POSIXThread::CreateRegisterContextForFrame(lldb_private::StackFrame *frame)
 bool
 POSIXThread::CalculateStopInfo()
 {
-    SetStopInfo (m_actual_stop_info_sp);
+    SetStopInfo (m_stop_info_sp);
     return true;
 }
 
