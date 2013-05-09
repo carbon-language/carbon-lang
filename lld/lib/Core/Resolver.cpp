@@ -176,9 +176,8 @@ void Resolver::doAbsoluteAtom(const AbsoluteAtom& atom) {
 
 // utility to add a vector of atoms
 void Resolver::addAtoms(const std::vector<const DefinedAtom*>& newAtoms) {
-  for (std::vector<const DefinedAtom *>::const_iterator it = newAtoms.begin();
-       it != newAtoms.end(); ++it) {
-    this->doDefinedAtom(**it);
+  for (const DefinedAtom *newAtom : newAtoms) {
+    this->doDefinedAtom(*newAtom);
   }
 }
 
