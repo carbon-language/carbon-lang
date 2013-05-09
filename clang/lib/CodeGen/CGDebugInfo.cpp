@@ -1585,7 +1585,7 @@ llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
       Align = 0;
     else
       Align = CGM.getContext().getTypeAlign(Ty->getElementType());
-  } else if (Ty->isDependentSizedArrayType() || Ty->isIncompleteType()) {
+  } else if (Ty->isIncompleteType()) {
     Size = 0;
     Align = 0;
   } else {
