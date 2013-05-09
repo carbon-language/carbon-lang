@@ -2523,7 +2523,8 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
 
   if (!Induction) {
     DEBUG(dbgs() << "LV: Did not find one integer induction var.\n");
-    assert(getInductionVars()->size() && "No induction variables");
+    if (Inductions.empty())
+      return false;
   }
 
   return true;
