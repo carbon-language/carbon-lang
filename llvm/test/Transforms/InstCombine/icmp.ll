@@ -707,6 +707,18 @@ define i1 @test69(i32 %c) nounwind uwtable {
   ret i1 %3
 }
 
+; PR15940
+; CHECK: @test70
+; CHECK-NEXT: %A = srem i32 5, %X
+; CHECK-NEXT: %C = icmp ne i32 %A, 2
+; CHECK-NEXT: ret i1 %C
+define i1 @test70(i32 %X) {
+  %A = srem i32 5, %X
+  %B = add i32 %A, 2
+  %C = icmp ne i32 %B, 4
+  ret i1 %C
+}
+
 ; CHECK: @icmp_sext16trunc
 ; CHECK-NEXT: %1 = trunc i32 %x to i16
 ; CHECK-NEXT: %cmp = icmp slt i16 %1, 36
