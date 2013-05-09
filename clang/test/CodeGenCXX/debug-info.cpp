@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm-only -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -g %s -o - | FileCheck %s
 template<typename T> struct Identity {
   typedef T Type;
 };
