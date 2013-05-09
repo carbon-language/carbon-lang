@@ -791,7 +791,8 @@ void LoopFixer::doConversion(ASTContext *Context,
                              bool AliasFromForInit,
                              const ForStmt *TheLoop,
                              bool ContainerNeedsDereference,
-                             bool DerefByValue) {
+                             bool DerefByValue,
+                             bool DerefByConstRef) {
   std::string VarName;
   bool VarNameFromAlias = Usages.size() == 1 && AliasDecl;
   bool AliasVarIsRef = false;
@@ -849,8 +850,11 @@ void LoopFixer::doConversion(ASTContext *Context,
     // to 'T&&'.
     if (DerefByValue)
       AutoRefType = Context->getRValueReferenceType(AutoRefType);
-    else
+    else {
+      if (DerefByConstRef)
+        AutoRefType = Context->getConstType(AutoRefType);
       AutoRefType = Context->getLValueReferenceType(AutoRefType);
+    }
   }
 
   std::string MaybeDereference = ContainerNeedsDereference ? "*" : "";
@@ -979,6 +983,7 @@ void LoopFixer::findAndVerifyUsages(ASTContext *Context,
                                     const Expr *BoundExpr,
                                     bool ContainerNeedsDereference,
                                     bool DerefByValue,
+                                    bool DerefByConstRef,
                                     const ForStmt *TheLoop,
                                     Confidence ConfidenceLevel) {
   ForLoopIndexUseVisitor Finder(Context, LoopVar, EndVar, ContainerExpr,
@@ -1013,7 +1018,7 @@ void LoopFixer::findAndVerifyUsages(ASTContext *Context,
   doConversion(Context, LoopVar, getReferencedVariable(ContainerExpr),
                ContainerString, Finder.getUsages(), Finder.getAliasDecl(),
                Finder.aliasUseRequired(), Finder.aliasFromForInit(), TheLoop,
-               ContainerNeedsDereference, DerefByValue);
+               ContainerNeedsDereference, DerefByValue, DerefByConstRef);
   ++*AcceptedChanges;
 }
 
@@ -1051,14 +1056,67 @@ void LoopFixer::run(const MatchFinder::MatchResult &Result) {
     ConfidenceLevel.lowerTo(RL_Reasonable);
 
   const Expr *ContainerExpr = NULL;
+  bool DerefByValue = false;
+  bool DerefByConstRef = false;
   bool ContainerNeedsDereference = false;
   // FIXME: Try to put most of this logic inside a matcher. Currently, matchers
   // don't allow the right-recursive checks in digThroughConstructors.
-  if (FixerKind == LFK_Iterator)
+  if (FixerKind == LFK_Iterator) {
     ContainerExpr = findContainer(Context, LoopVar->getInit(),
                                   EndVar ? EndVar->getInit() : EndCall,
                                   &ContainerNeedsDereference);
-  else if (FixerKind == LFK_PseudoArray) {
+
+    QualType InitVarType = InitVar->getType();
+    QualType CanonicalInitVarType = InitVarType.getCanonicalType();
+
+    const CXXMemberCallExpr *BeginCall =
+        Nodes.getNodeAs<CXXMemberCallExpr>(BeginCallName);
+    assert(BeginCall != 0 && "Bad Callback. No begin call expression.");
+    QualType CanonicalBeginType =
+        BeginCall->getMethodDecl()->getResultType().getCanonicalType();
+
+    if (CanonicalBeginType->isPointerType() &&
+        CanonicalInitVarType->isPointerType()) {
+      QualType BeginPointeeType = CanonicalBeginType->getPointeeType();
+      QualType InitPointeeType = CanonicalInitVarType->getPointeeType();
+      // If the initializer and the variable are both pointers check if the
+      // un-qualified pointee types match otherwise we don't use auto.
+      if (!Context->hasSameUnqualifiedType(InitPointeeType, BeginPointeeType))
+        return;
+    } else {
+      // Check for qualified types to avoid conversions from non-const to const
+      // iterator types.
+      if (!Context->hasSameType(CanonicalInitVarType, CanonicalBeginType))
+        return;
+    }
+
+    DerefByValue = Nodes.getNodeAs<QualType>(DerefByValueResultName) != 0;
+    if (!DerefByValue) {
+      if (const QualType *DerefType =
+              Nodes.getNodeAs<QualType>(DerefByRefResultName)) {
+        // A node will only be bound with DerefByRefResultName if we're dealing
+        // with a user-defined iterator type. Test the const qualification of
+        // the reference type.
+        DerefByConstRef = (*DerefType)->getAs<ReferenceType>()->getPointeeType()
+            .isConstQualified();
+      } else {
+        // By nature of the matcher this case is triggered only for built-in
+        // iterator types (i.e. pointers).
+        assert(isa<PointerType>(CanonicalInitVarType) &&
+               "Non-class iterator type is not a pointer type");
+        QualType InitPointeeType = CanonicalInitVarType->getPointeeType();
+        QualType BeginPointeeType = CanonicalBeginType->getPointeeType();
+        // If the initializer and variable have both the same type just use auto
+        // otherwise we test for const qualification of the pointed-at type.
+        if (!Context->hasSameType(InitPointeeType, BeginPointeeType))
+          DerefByConstRef = InitPointeeType.isConstQualified();
+      }
+    } else {
+      // If the de-referece operator return by value then test for the canonical
+      // const qualification of the init variable type.
+      DerefByConstRef = CanonicalInitVarType.isConstQualified();
+    }
+  } else if (FixerKind == LFK_PseudoArray) {
     if (!EndCall)
       return;
     ContainerExpr = EndCall->getImplicitObjectArgument();
@@ -1071,9 +1129,7 @@ void LoopFixer::run(const MatchFinder::MatchResult &Result) {
   if (!ContainerExpr && !BoundExpr)
     return;
 
-  bool DerefByValue = Nodes.getNodeAs<QualType>(DerefByValueResultName) != 0;
-
   findAndVerifyUsages(Context, LoopVar, EndVar, ContainerExpr, BoundExpr,
-                      ContainerNeedsDereference, DerefByValue, TheLoop,
-                      ConfidenceLevel);
+                      ContainerNeedsDereference, DerefByValue, DerefByConstRef,
+                      TheLoop, ConfidenceLevel);
 }

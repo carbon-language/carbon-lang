@@ -54,4 +54,16 @@ void f() {
   // CHECK: for (auto & elem : NestT) {
   // CHECK-NEXT: for (T::iterator TI = (elem).begin(), TE = (elem).end(); TI != TE; ++TI) {
   // CHECK-NEXT: printf("%d", *TI);
+
+  Nested<S> NestS;
+  for (Nested<S>::const_iterator I = NestS.begin(), E = NestS.end(); I != E; ++I) {
+    for (S::const_iterator SI = (*I).begin(), SE = (*I).end(); SI != SE; ++SI) {
+      printf("%d", *SI);
+    }
+  }
+  // The inner loop is also convertible, but doesn't need to be converted
+  // immediately. Update this test when that changes!
+  // CHECK: for (auto const & elem : NestS) {
+  // CHECK-NEXT: for (S::const_iterator SI = (elem).begin(), SE = (elem).end(); SI != SE; ++SI) {
+  // CHECK-NEXT: printf("%d", *SI);
 }

@@ -77,7 +77,8 @@ class LoopFixer : public clang::ast_matchers::MatchFinder::MatchCallback {
                     bool AliasFromForInit,
                     const clang::ForStmt *TheLoop,
                     bool ContainerNeedsDereference,
-                    bool DerefByValue);
+                    bool DerefByValue,
+                    bool DerefByConstRef);
 
   /// \brief Given a loop header that would be convertible, discover all usages
   /// of the index variable and convert the loop if possible.
@@ -88,6 +89,7 @@ class LoopFixer : public clang::ast_matchers::MatchFinder::MatchCallback {
                            const clang::Expr *BoundExpr,
                            bool ContainerNeedsDereference,
                            bool DerefByValue,
+                           bool DerefByConstRef,
                            const clang::ForStmt *TheLoop,
                            Confidence ConfidenceLevel);
 

@@ -131,10 +131,13 @@ class transparent {
 template<typename IteratorType>
 struct Nested {
   typedef IteratorType* iterator;
+  typedef const IteratorType* const_iterator;
   IteratorType *operator->();
   IteratorType operator*();
   iterator begin();
   iterator end();
+  const_iterator begin() const;
+  const_iterator end() const;
 };
 
 // Like llvm::SmallPtrSet, the iterator has a dereference operator that returns

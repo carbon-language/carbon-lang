@@ -22,10 +22,12 @@ const char ConditionBoundName[] = "conditionBound";
 const char ConditionVarName[] = "conditionVar";
 const char IncrementVarName[] = "incrementVar";
 const char InitVarName[] = "initVar";
+const char BeginCallName[] = "beginCall";
 const char EndCallName[] = "endCall";
 const char ConditionEndVarName[] = "conditionEndVar";
 const char EndVarName[] = "endVar";
 const char DerefByValueResultName[] = "derefByValueResult";
+const char DerefByRefResultName[] = "derefByRefResult";
 
 // shared matchers
 static const TypeMatcher AnyType = anything();
@@ -109,10 +111,23 @@ StatementMatcher makeArrayLoopMatcher() {
 ///   - If the end iterator variable 'g' is defined, it is the same as 'f'
 StatementMatcher makeIteratorLoopMatcher() {
   StatementMatcher BeginCallMatcher =
-      memberCallExpr(argumentCountIs(0), callee(methodDecl(hasName("begin"))));
+      memberCallExpr(
+        argumentCountIs(0),
+        callee(
+          methodDecl(hasName("begin"))
+        )
+      ).bind(BeginCallName);
 
   DeclarationMatcher InitDeclMatcher =
-      varDecl(hasInitializer(anything())).bind(InitVarName);
+      varDecl(
+        hasInitializer(
+          anyOf(
+            ignoringParenImpCasts(BeginCallMatcher),
+            materializeTemporaryExpr(ignoringParenImpCasts(BeginCallMatcher)),
+            hasDescendant(BeginCallMatcher)
+          )
+        )
+      ).bind(InitVarName);
 
   DeclarationMatcher EndDeclMatcher =
       varDecl(hasInitializer(anything())).bind(EndVarName);
@@ -157,13 +172,18 @@ StatementMatcher makeIteratorLoopMatcher() {
                 returns(
                   // Skip loops where the iterator's operator* returns an
                   // rvalue reference. This is just weird.
-                  qualType(unless(hasCanonicalType(rValueReferenceType())))
+                  qualType(
+                    unless(
+                      hasCanonicalType(rValueReferenceType())
+                    )
+                  ).bind(DerefByRefResultName)
                 )
               )
             )
           )
         )
       );
+
 
   return
     forStmt(

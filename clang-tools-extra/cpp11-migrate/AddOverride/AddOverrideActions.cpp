@@ -32,6 +32,10 @@ void AddOverrideFixer::run(const MatchFinder::MatchResult &Result) {
   const CXXMethodDecl *M = Result.Nodes.getDeclAs<CXXMethodDecl>(MethodId);
   assert(M && "Bad Callback. No node provided");
 
+  // Check that the method declaration in the main file
+  if (!SM.isFromMainFile(M->getLocStart()))
+    return;
+
   // First check that there isn't already an override attribute.
   if (!M->hasAttr<OverrideAttr>()) {
     if (M->getLocStart().isFileID()) {

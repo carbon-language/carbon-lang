@@ -32,11 +32,19 @@ void sameNames() {
 
 void macroConflict() {
   S MAXs;
-  for (S::const_iterator it = MAXs.begin(), e = MAXs.end(); it != e; ++it) {
+  for (S::iterator it = MAXs.begin(), e = MAXs.end(); it != e; ++it) {
     printf("s has value %d\n", (*it).x);
     printf("Max of 3 and 5: %d\n", MAX(3,5));
   }
   // CHECK: for (auto & MAXs_it : MAXs)
+  // CHECK-NEXT: printf("s has value %d\n", (MAXs_it).x);
+  // CHECK-NEXT: printf("Max of 3 and 5: %d\n", MAX(3,5));
+
+  for (S::const_iterator it = MAXs.begin(), e = MAXs.end(); it != e; ++it) {
+    printf("s has value %d\n", (*it).x);
+    printf("Max of 3 and 5: %d\n", MAX(3,5));
+  }
+  // CHECK: for (auto const & MAXs_it : MAXs)
   // CHECK-NEXT: printf("s has value %d\n", (MAXs_it).x);
   // CHECK-NEXT: printf("Max of 3 and 5: %d\n", MAX(3,5));
 

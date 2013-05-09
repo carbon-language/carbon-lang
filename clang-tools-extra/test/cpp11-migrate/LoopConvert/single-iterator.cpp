@@ -34,20 +34,20 @@ void f() {
   // CHECK-NEXT: printf("I found %d\n", elem);
 
   S s;
-  for (S::const_iterator it = s.begin(); it != s.end(); ++it) {
+  for (S::iterator it = s.begin(); it != s.end(); ++it) {
     printf("s has value %d\n", (*it).x);
   }
   // CHECK: for (auto & elem : s)
   // CHECK-NEXT: printf("s has value %d\n", (elem).x);
 
   S *ps;
-  for (S::const_iterator it = ps->begin(); it != ps->end(); ++it) {
+  for (S::iterator it = ps->begin(); it != ps->end(); ++it) {
     printf("s has value %d\n", (*it).x);
   }
   // CHECK: for (auto & p : *ps)
   // CHECK-NEXT: printf("s has value %d\n", (p).x);
 
-  for (S::const_iterator it = s.begin(); it != s.end(); ++it) {
+  for (S::iterator it = s.begin(); it != s.end(); ++it) {
     printf("s has value %d\n", it->x);
   }
   // CHECK: for (auto & elem : s)
@@ -91,18 +91,18 @@ void f() {
   // CHECK-NEXT: int k = A->x + elem.x;
 
   dependent<int> v;
-  for (dependent<int>::const_iterator it = v.begin();
+  for (dependent<int>::iterator it = v.begin();
        it != v.end(); ++it) {
     printf("Fibonacci number is %d\n", *it);
   }
-  // CHECK: for (auto & elem : v)
+  // CHECK: for (auto & elem : v) {
   // CHECK-NEXT: printf("Fibonacci number is %d\n", elem);
 
-  for (dependent<int>::const_iterator it(v.begin());
+  for (dependent<int>::iterator it(v.begin());
        it != v.end(); ++it) {
     printf("Fibonacci number is %d\n", *it);
   }
-  // CHECK: for (auto & elem : v)
+  // CHECK: for (auto & elem : v) {
   // CHECK-NEXT: printf("Fibonacci number is %d\n", elem);
 
   doublyDependent<int,int> intmap;
@@ -112,4 +112,41 @@ void f() {
   }
   // CHECK: for (auto & elem : intmap)
   // CHECK-NEXT: printf("intmap[%d] = %d", elem.first, elem.second);
+}
+
+void different_type() {
+  // Tests to verify the proper use of auto where the init variable type and the
+  // initializer type differ or are mostly the same except for const qualifiers.
+
+  // s.begin() returns a type 'iterator' which is just a non-const pointer and
+  // differs from const_iterator only on the const qualification.
+  S s;
+  for (S::const_iterator it = s.begin(); it != s.end(); ++it) {
+    printf("s has value %d\n", (*it).x);
+  }
+  // CHECK: for (auto const & elem : s)
+  // CHECK-NEXT: printf("s has value %d\n", (elem).x);
+
+  S *ps;
+  for (S::const_iterator it = ps->begin(); it != ps->end(); ++it) {
+    printf("s has value %d\n", (*it).x);
+  }
+  // CHECK: for (auto const & p : *ps)
+  // CHECK-NEXT: printf("s has value %d\n", (p).x);
+
+  // v.begin() returns a user-defined type 'iterator' which, since it's
+  // different from const_iterator, disqualifies these loops from
+  // transformation.
+  dependent<int> v;
+  for (dependent<int>::const_iterator it = v.begin(); it != v.end(); ++it) {
+    printf("Fibonacci number is %d\n", *it);
+  }
+  // CHECK: for (dependent<int>::const_iterator it = v.begin(); it != v.end(); ++it) {
+  // CHECK-NEXT: printf("Fibonacci number is %d\n", *it);
+
+  for (dependent<int>::const_iterator it(v.begin()); it != v.end(); ++it) {
+    printf("Fibonacci number is %d\n", *it);
+  }
+  // CHECK: for (dependent<int>::const_iterator it(v.begin()); it != v.end(); ++it) {
+  // CHECK-NEXT: printf("Fibonacci number is %d\n", *it);
 }
