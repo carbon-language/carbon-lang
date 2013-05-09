@@ -11212,12 +11212,12 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
         return true;
       }
     }
-    // Lambdas are not allowed to capture __block variables; they don't
-    // support the expected semantics.
-    if (IsLambda && HasBlocksAttr) {
+    // Lambdas and captured statements are not allowed to capture __block
+    // variables; they don't support the expected semantics.
+    if (HasBlocksAttr && (IsLambda || isa<CapturedRegionScopeInfo>(CSI))) {
       if (BuildAndDiagnose) {
-        Diag(Loc, diag::err_lambda_capture_block) 
-          << Var->getDeclName();
+        Diag(Loc, diag::err_capture_block_variable)
+          << Var->getDeclName() << !IsLambda;
         Diag(Var->getLocation(), diag::note_previous_decl) 
           << Var->getDeclName();
       }

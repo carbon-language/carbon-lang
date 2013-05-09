@@ -4848,8 +4848,6 @@ let CategoryName = "Lambda Issue" in {
     "duration">;
   def err_this_capture : Error<
     "'this' cannot be %select{implicitly |}0captured in this context">;
-  def err_lambda_capture_block : Error<
-    "__block variable %0 cannot be captured in a lambda expression">;
   def err_lambda_capture_anonymous_var : Error<
     "unnamed variable cannot be implicitly captured in a lambda expression">;
   def err_lambda_capture_vm_type : Error<
@@ -4893,6 +4891,9 @@ let CategoryName = "Lambda Issue" in {
 
 def err_return_in_captured_stmt : Error<
   "cannot return from %0">;
+def err_capture_block_variable : Error<
+  "__block variable %0 cannot be captured in a "
+  "%select{lambda expression|captured statement}1">;
 
 def err_operator_arrow_circular : Error<
   "circular pointer delegation detected">;

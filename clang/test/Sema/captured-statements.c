@@ -49,29 +49,29 @@ void test_nest() {
 }
 
 void test_nest_block() {
-  __block int x;
+  __block int x; // expected-note {{'x' declared here}}
   int y;
   ^{
     int z;
     #pragma clang __debug captured
     {
-      x = y; // OK
+      x = y; // expected-error{{__block variable 'x' cannot be captured in a captured statement}}
       y = z; // expected-error{{variable is not assignable (missing __block type specifier)}}
       z = y; // OK
     }
   }();
 
-  __block int a;
+  __block int a; // expected-note 2 {{'a' declared here}}
   int b;
   #pragma clang __debug captured
   {
     __block int c;
     int d;
     ^{
-      a = b; // OK
-      a = c; // OK
+      a = b; // expected-error{{__block variable 'a' cannot be captured in a captured statement}}
       b = d; // OK - Consistent with block inside a lambda
-      c = a; // OK
+      c = a; // expected-error{{__block variable 'a' cannot be captured in a captured statement}}
+      c = d; // OK
       d = b; // expected-error{{variable is not assignable (missing __block type specifier)}}
     }();
   }
