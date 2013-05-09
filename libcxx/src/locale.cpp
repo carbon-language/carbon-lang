@@ -1393,7 +1393,7 @@ codecvt<wchar_t, char, mbstate_t>::codecvt(const char* nm, size_t refs)
 
 codecvt<wchar_t, char, mbstate_t>::~codecvt()
 {
-    if (__l != 0)
+    if (__l != _LIBCPP_GET_C_LOCALE)
         freelocale(__l);
 }
 
