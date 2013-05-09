@@ -219,7 +219,9 @@ private:
     const MCExpr *getSym() { return Sym; }
     StringRef getSymName() { return SymName; }
     int64_t getImm() { return Imm + IC.execute(); }
-    bool isValidEndState() { return State == IES_RBRAC; }
+    bool isValidEndState() {
+      return State == IES_RBRAC || State == IES_INTEGER;
+    }
     bool getStopOnLBrac() { return StopOnLBrac; }
     bool getAddImmPrefix() { return AddImmPrefix; }
     bool hadError() { return State == IES_ERROR; }
