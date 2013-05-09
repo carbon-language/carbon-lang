@@ -2254,12 +2254,11 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
                           const DeclSpec &DS,
                           SourceLocation IdLoc,
                           SourceLocation LParenLoc,
-                          Expr **Args, unsigned NumArgs,
+                          ArrayRef<Expr *> Args,
                           SourceLocation RParenLoc,
                           SourceLocation EllipsisLoc) {
   Expr *List = new (Context) ParenListExpr(Context, LParenLoc,
-                                           llvm::makeArrayRef(Args, NumArgs),
-                                           RParenLoc);
+                                           Args, RParenLoc);
   return BuildMemInitializer(ConstructorD, S, SS, MemberOrBase, TemplateTypeTy,
                              DS, IdLoc, List, EllipsisLoc);
 }

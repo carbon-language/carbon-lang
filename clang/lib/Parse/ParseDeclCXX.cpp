@@ -2809,9 +2809,8 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
 
     return Actions.ActOnMemInitializer(ConstructorDecl, getCurScope(), SS, II,
                                        TemplateTypeTy, DS, IdLoc,
-                                       T.getOpenLocation(), ArgExprs.data(),
-                                       ArgExprs.size(), T.getCloseLocation(),
-                                       EllipsisLoc);
+                                       T.getOpenLocation(), ArgExprs,
+                                       T.getCloseLocation(), EllipsisLoc);
   }
 
   Diag(Tok, getLangOpts().CPlusPlus11 ? diag::err_expected_lparen_or_lbrace

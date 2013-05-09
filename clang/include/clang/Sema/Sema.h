@@ -4467,7 +4467,7 @@ public:
                                     const DeclSpec &DS,
                                     SourceLocation IdLoc,
                                     SourceLocation LParenLoc,
-                                    Expr **Args, unsigned NumArgs,
+                                    ArrayRef<Expr *> Args,
                                     SourceLocation RParenLoc,
                                     SourceLocation EllipsisLoc);
 
