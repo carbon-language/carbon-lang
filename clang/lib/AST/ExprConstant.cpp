@@ -391,7 +391,7 @@ namespace {
 
     /// EvaluatingDecl - This is the declaration whose initializer is being
     /// evaluated, if any.
-    const VarDecl *EvaluatingDecl;
+    APValue::LValueBase EvaluatingDecl;
 
     /// EvaluatingDeclValue - This is the value being constructed for the
     /// declaration whose initializer is being evaluated, if any.
@@ -414,12 +414,12 @@ namespace {
         CallStackDepth(0), NextCallIndex(1),
         StepsLeft(getLangOpts().ConstexprStepLimit),
         BottomFrame(*this, SourceLocation(), 0, 0, 0),
-        EvaluatingDecl(0), EvaluatingDeclValue(0), HasActiveDiagnostic(false),
-        CheckingPotentialConstantExpression(false),
+        EvaluatingDecl((const ValueDecl*)0), EvaluatingDeclValue(0),
+        HasActiveDiagnostic(false), CheckingPotentialConstantExpression(false),
         IntOverflowCheckMode(OverflowCheckMode) {}
 
-    void setEvaluatingDecl(const VarDecl *VD, APValue &Value) {
-      EvaluatingDecl = VD;
+    void setEvaluatingDecl(APValue::LValueBase Base, APValue &Value) {
+      EvaluatingDecl = Base;
       EvaluatingDeclValue = &Value;
     }
 
@@ -899,19 +899,11 @@ namespace {
       return false;
     return LHS.Path == RHS.Path;
   }
-
-  /// Kinds of constant expression checking, for diagnostics.
-  enum CheckConstantExpressionKind {
-    CCEK_Constant,    ///< A normal constant.
-    CCEK_ReturnValue, ///< A constexpr function return value.
-    CCEK_MemberInit   ///< A constexpr constructor mem-initializer.
-  };
 }
 
 static bool Evaluate(APValue &Result, EvalInfo &Info, const Expr *E);
 static bool EvaluateInPlace(APValue &Result, EvalInfo &Info,
                             const LValue &This, const Expr *E,
-                            CheckConstantExpressionKind CCEK = CCEK_Constant,
                             bool AllowNonLiteralTypes = false);
 static bool EvaluateLValue(const Expr *E, LValue &Result, EvalInfo &Info);
 static bool EvaluatePointer(const Expr *E, LValue &Result, EvalInfo &Info);
@@ -1079,8 +1071,17 @@ static bool CheckLValueConstantExpression(EvalInfo &Info, SourceLocation Loc,
 
 /// Check that this core constant expression is of literal type, and if not,
 /// produce an appropriate diagnostic.
-static bool CheckLiteralType(EvalInfo &Info, const Expr *E) {
+static bool CheckLiteralType(EvalInfo &Info, const Expr *E,
+                             const LValue *This = 0) {
   if (!E->isRValue() || E->getType()->isLiteralType(Info.Ctx))
+    return true;
+
+  // C++1y: A constant initializer for an object o [...] may also invoke
+  // constexpr constructors for o and its subobjects even if those objects
+  // are of non-literal class types.
+  if (Info.getLangOpts().CPlusPlus1y && This &&
+      Info.EvaluatingDecl.getOpaqueValue() ==
+          This->getLValueBase().getOpaqueValue())
     return true;
 
   // Prvalue constant expressions must be of literal types.
@@ -1672,7 +1673,7 @@ static bool evaluateVarDeclInit(EvalInfo &Info, const Expr *E,
 
   // If we're currently evaluating the initializer of this declaration, use that
   // in-flight value.
-  if (Info.EvaluatingDecl == VD) {
+  if (Info.EvaluatingDecl.dyn_cast<const ValueDecl*>() == VD) {
     Result = Info.EvaluatingDeclValue;
     return !Result->isUninit();
   }
@@ -2134,9 +2135,6 @@ CompleteObject findCompleteObject(EvalInfo &Info, const Expr *E, AccessKinds AK,
       NoteLValueLocation(Info, LVal.Base);
       return CompleteObject();
     }
-  } else if (AK != AK_Read) {
-    Info.Diag(E, diag::note_constexpr_modify_global);
-    return CompleteObject();
   }
 
   // C++11 DR1311: An lvalue-to-rvalue conversion on a volatile-qualified type
@@ -2190,8 +2188,16 @@ CompleteObject findCompleteObject(EvalInfo &Info, const Expr *E, AccessKinds AK,
     // Unless we're looking at a local variable or argument in a constexpr call,
     // the variable we're reading must be const.
     if (!Frame) {
-      assert(AK == AK_Read && "can't modify non-local");
-      if (VD->isConstexpr()) {
+      if (Info.getLangOpts().CPlusPlus1y &&
+          VD == Info.EvaluatingDecl.dyn_cast<const ValueDecl *>()) {
+        // OK, we can read and modify an object if we're in the process of
+        // evaluating its initializer, because its lifetime began in this
+        // evaluation.
+      } else if (AK != AK_Read) {
+        // All the remaining cases only permit reading.
+        Info.Diag(E, diag::note_constexpr_modify_global);
+        return CompleteObject();
+      } else if (VD->isConstexpr()) {
         // OK, we can read this variable.
       } else if (BaseType->isIntegralOrEnumerationType()) {
         if (!BaseType.isConstQualified()) {
@@ -2249,6 +2255,15 @@ CompleteObject findCompleteObject(EvalInfo &Info, const Expr *E, AccessKinds AK,
       }
       return CompleteObject();
     }
+  }
+
+  // During the construction of an object, it is not yet 'const'.
+  // FIXME: We don't set up EvaluatingDecl for local variables or temporaries,
+  // and this doesn't do quite the right thing for const subobjects of the
+  // object under construction.
+  if (LVal.getLValueBase() == Info.EvaluatingDecl) {
+    BaseType = Info.Ctx.getCanonicalType(BaseType);
+    BaseType.removeLocalConst();
   }
 
   // In C++1y, we can't safely access any mutable state when checking a
@@ -3210,9 +3225,7 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
       llvm_unreachable("unknown base initializer kind");
     }
 
-    if (!EvaluateInPlace(*Value, Info, Subobject, (*I)->getInit(),
-                         (*I)->isBaseInitializer()
-                                      ? CCEK_Constant : CCEK_MemberInit)) {
+    if (!EvaluateInPlace(*Value, Info, Subobject, (*I)->getInit())) {
       // If we're checking for a potential constant expression, evaluate all
       // initializers even if some of them fail.
       if (!Info.keepEvaluatingAfterFailure())
@@ -7150,9 +7163,8 @@ static bool Evaluate(APValue &Result, EvalInfo &Info, const Expr *E) {
 /// cases, the in-place evaluation is essential, since later initializers for
 /// an object can indirectly refer to subobjects which were initialized earlier.
 static bool EvaluateInPlace(APValue &Result, EvalInfo &Info, const LValue &This,
-                            const Expr *E, CheckConstantExpressionKind CCEK,
-                            bool AllowNonLiteralTypes) {
-  if (!AllowNonLiteralTypes && !CheckLiteralType(Info, E))
+                            const Expr *E, bool AllowNonLiteralTypes) {
+  if (!AllowNonLiteralTypes && !CheckLiteralType(Info, E, &This))
     return false;
 
   if (E->isRValue()) {
@@ -7284,13 +7296,13 @@ bool Expr::EvaluateAsInitializer(APValue &Value, const ASTContext &Ctx,
   if (Ctx.getLangOpts().CPlusPlus && !VD->hasLocalStorage() &&
       !VD->getType()->isReferenceType()) {
     ImplicitValueInitExpr VIE(VD->getType());
-    if (!EvaluateInPlace(Value, InitInfo, LVal, &VIE, CCEK_Constant,
+    if (!EvaluateInPlace(Value, InitInfo, LVal, &VIE,
                          /*AllowNonLiteralTypes=*/true))
       return false;
   }
 
-  if (!EvaluateInPlace(Value, InitInfo, LVal, this, CCEK_Constant,
-                         /*AllowNonLiteralTypes=*/true) ||
+  if (!EvaluateInPlace(Value, InitInfo, LVal, this,
+                       /*AllowNonLiteralTypes=*/true) ||
       EStatus.HasSideEffects)
     return false;
 
@@ -7834,7 +7846,7 @@ bool Expr::isPotentialConstantExpr(const FunctionDecl *FD,
   const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD);
   const CXXRecordDecl *RD = MD ? MD->getParent()->getCanonicalDecl() : 0;
 
-  // FIXME: Fabricate an arbitrary expression on the stack and pretend that it
+  // Fabricate an arbitrary expression on the stack and pretend that it
   // is a temporary being used as the 'this' pointer.
   LValue This;
   ImplicitValueInitExpr VIE(RD ? Info.Ctx.getRecordType(RD) : Info.Ctx.IntTy);
@@ -7845,9 +7857,12 @@ bool Expr::isPotentialConstantExpr(const FunctionDecl *FD,
   SourceLocation Loc = FD->getLocation();
 
   APValue Scratch;
-  if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD))
+  if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
+    // Evaluate the call as a constant initializer, to allow the construction
+    // of objects of non-literal types.
+    Info.setEvaluatingDecl(This.getLValueBase(), Scratch);
     HandleConstructorCall(Loc, This, Args, CD, Info, Scratch);
-  else
+  } else
     HandleFunctionCall(Loc, FD, (MD && MD->isInstance()) ? &This : 0,
                        Args, FD->getBody(), Info, Scratch);
 

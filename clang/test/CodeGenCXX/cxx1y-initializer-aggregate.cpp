@@ -25,7 +25,11 @@ A b { 4, "bazquux", .x = 42, .c = 9 };
 A c { 1, 0, 'A', f(), { 3 } };
 
 // CHECK: @[[STR_A:.*]] = {{.*}} [7 x i8] c"foobar\00"
+// CHECK: @a = global {{.*}} zeroinitializer
+
+// @b has a constant initializer
 // CHECK: @[[STR_B:.*]] = {{.*}} [8 x i8] c"bazquux\00"
+// CHECK: @b = global {{.*}} i32 4, {{.*}} @[[STR_B]], {{.*}} i8 117, i32 42, {{.*}} i8 9
 
 B x;
 B y {};
@@ -44,18 +48,9 @@ B z { 1 };
 // CHECK: store i32 %{{.*}}, i32* getelementptr inbounds ({{.*}}* @a, i32 0, i32 3)
 // CHECK: call void @{{.*}}C1Ev({{.*}} getelementptr inbounds (%struct.A* @a, i32 0, i32 4))
 
-// Initialization of 'b':
+// No dynamic initialization of 'b':
 
-// CHECK: store i32 4, i32* getelementptr inbounds ({{.*}} @b, i32 0, i32 0)
-// CHECK: store i8* {{.*}} @[[STR_B]]{{.*}}, i8** getelementptr inbounds ({{.*}} @b, i32 0, i32 1)
-// CHECK: load i32* getelementptr inbounds ({{.*}} @b, i32 0, i32 0)
-// CHECK: load i8** getelementptr inbounds ({{.*}} @b, i32 0, i32 1)
-// CHECK: getelementptr inbounds i8* %{{.*}}, {{.*}} %{{.*}}
-// CHECK: store i8 %{{.*}}, i8* getelementptr inbounds ({{.*}} @b, i32 0, i32 2)
-// CHECK-NOT: @_ZN1A1fEv
-// CHECK: store i32 42, i32* getelementptr inbounds ({{.*}}* @b, i32 0, i32 3)
-// CHECK-NOT: C1Ev
-// CHECK: store i8 9, i8* {{.*}} @b, i32 0, i32 4)
+// CHECK-NOT: @b
 
 // Initialization of 'c':
 
