@@ -32,15 +32,15 @@ static Test test;
 
 // PR9608
 template <int i> struct TheTemplate {
-  struct Empty2 {}; 
-  typedef const Empty2 DependentType[i]; 
-  TheTemplate() {} 
-}; 
+  struct Empty2 {};
+  typedef const Empty2 DependentType[i];
+  TheTemplate() {}
+};
 
-class TheTemplateTest : public TheTemplate<42> { 
-  TheTemplateTest(); 
-  void method(const TheTemplate<42>::DependentType *) {} 
-}; 
+class TheTemplateTest : public TheTemplate<42> {
+  TheTemplateTest();
+  void method(const TheTemplate<42>::DependentType *) {}
+};
 
-TheTemplateTest::TheTemplateTest() : TheTemplate<42>() {} 
+TheTemplateTest::TheTemplateTest() : TheTemplate<42>() {}
 
