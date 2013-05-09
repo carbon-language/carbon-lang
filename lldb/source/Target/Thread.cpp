@@ -243,9 +243,9 @@ Thread::Thread (Process &process, lldb::tid_t tid) :
     UserID (tid),
     Broadcaster(&process.GetTarget().GetDebugger(), Thread::GetStaticBroadcasterClass().AsCString()),
     m_process_wp (process.shared_from_this()),
-    m_actual_stop_info_sp (),
+    m_stop_info_sp (),
+    m_stop_info_stop_id (0),
     m_index_id (process.GetNextThreadIndexID(tid)),
-    m_protocol_tid (tid),
     m_reg_context_sp (),
     m_state (eStateUnloaded),
     m_state_mutex (Mutex::eMutexTypeRecursive),
@@ -259,7 +259,6 @@ Thread::Thread (Process &process, lldb::tid_t tid) :
     m_temporary_resume_state (eStateRunning),
     m_unwinder_ap (),
     m_destroy_called (false),
-    m_thread_stop_reason_stop_id (0),
     m_override_should_notify (eLazyBoolCalculate)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
@@ -283,11 +282,17 @@ Thread::~Thread()
 void 
 Thread::DestroyThread ()
 {
+    // Tell any plans on the plan stack that the thread is being destroyed since
+    // any active plans that have a thread go away in the middle of might need
+    // to do cleanup.
+    for (auto plan : m_plan_stack)
+        plan->ThreadDestroyed();
+
     m_destroy_called = true;
     m_plan_stack.clear();
     m_discarded_plan_stack.clear();
     m_completed_plan_stack.clear();
-    m_actual_stop_info_sp.reset();
+    m_stop_info_sp.reset();
     m_reg_context_sp.reset();
     m_unwinder_ap.reset();
     Mutex::Locker locker(m_frame_mutex);
@@ -366,18 +371,57 @@ Thread::GetStopInfo ()
     }
     else
     {
-        if ((m_thread_stop_reason_stop_id == stop_id) ||   // Stop info is valid, just return what we have (even if empty)
-            (m_actual_stop_info_sp && m_actual_stop_info_sp->IsValid()))  // Stop info is valid, just return what we have
+        if ((m_stop_info_stop_id == stop_id) ||   // Stop info is valid, just return what we have (even if empty)
+            (m_stop_info_sp && m_stop_info_sp->IsValid()))  // Stop info is valid, just return what we have
         {
-            return m_actual_stop_info_sp;
+            return m_stop_info_sp;
         }
         else
         {
-            GetPrivateStopReason ();
-            return m_actual_stop_info_sp;
+            GetPrivateStopInfo ();
+            return m_stop_info_sp;
         }
     }
 }
+
+lldb::StopInfoSP
+Thread::GetPrivateStopInfo ()
+{
+    ProcessSP process_sp (GetProcess());
+    if (process_sp)
+    {
+        ProcessSP process_sp (GetProcess());
+        if (process_sp)
+        {
+            const uint32_t process_stop_id = process_sp->GetStopID();
+            if (m_stop_info_stop_id != process_stop_id)
+            {
+                if (m_stop_info_sp)
+                {
+                    if (m_stop_info_sp->IsValid())
+                    {
+                        SetStopInfo (m_stop_info_sp);
+                    }
+                    else
+                    {
+                        if (IsStillAtLastBreakpointHit())
+                            SetStopInfo(m_stop_info_sp);
+                        else
+                            m_stop_info_sp.reset();
+                    }
+                }
+                
+                if (!m_stop_info_sp)
+                {
+                    if (CalculateStopInfo() == false)
+                        SetStopInfo (StopInfoSP());
+                }
+            }
+        }
+    }
+    return m_stop_info_sp;
+}
+
 
 lldb::StopReason
 Thread::GetStopReason()
@@ -393,20 +437,20 @@ Thread::GetStopReason()
 void
 Thread::SetStopInfo (const lldb::StopInfoSP &stop_info_sp)
 {
-    m_actual_stop_info_sp = stop_info_sp;
-    if (m_actual_stop_info_sp)
+    m_stop_info_sp = stop_info_sp;
+    if (m_stop_info_sp)
     {
-        m_actual_stop_info_sp->MakeStopInfoValid();
+        m_stop_info_sp->MakeStopInfoValid();
         // If we are overriding the ShouldReportStop, do that here:
         if (m_override_should_notify != eLazyBoolCalculate)
-            m_actual_stop_info_sp->OverrideShouldNotify (m_override_should_notify == eLazyBoolYes);
+            m_stop_info_sp->OverrideShouldNotify (m_override_should_notify == eLazyBoolYes);
     }
     
     ProcessSP process_sp (GetProcess());
     if (process_sp)
-        m_thread_stop_reason_stop_id = process_sp->GetStopID();
+        m_stop_info_stop_id = process_sp->GetStopID();
     else
-        m_thread_stop_reason_stop_id = UINT32_MAX;
+        m_stop_info_stop_id = UINT32_MAX;
 }
 
 void
@@ -417,8 +461,8 @@ Thread::SetShouldReportStop (Vote vote)
     else
     {
         m_override_should_notify = (vote == eVoteYes ? eLazyBoolYes : eLazyBoolNo);
-        if (m_actual_stop_info_sp)
-            m_actual_stop_info_sp->OverrideShouldNotify (m_override_should_notify == eLazyBoolYes);
+        if (m_stop_info_sp)
+            m_stop_info_sp->OverrideShouldNotify (m_override_should_notify == eLazyBoolYes);
     }
 }
 
@@ -433,7 +477,7 @@ Thread::SetStopInfoToNothing()
 bool
 Thread::ThreadStoppedForAReason (void)
 {
-    return (bool) GetPrivateStopReason ();
+    return (bool) GetPrivateStopInfo ();
 }
 
 bool
@@ -554,18 +598,22 @@ Thread::ShouldResume (StateType resume_state)
 
     m_temporary_resume_state = resume_state;
     
-    // Make sure m_actual_stop_info_sp is valid
-    GetPrivateStopReason();
+    lldb::ThreadSP backing_thread_sp (GetBackingThread ());
+    if (backing_thread_sp)
+        backing_thread_sp->m_temporary_resume_state = resume_state;
+
+    // Make sure m_stop_info_sp is valid
+    GetPrivateStopInfo();
     
     // This is a little dubious, but we are trying to limit how often we actually fetch stop info from
     // the target, 'cause that slows down single stepping.  So assume that if we got to the point where
     // we're about to resume, and we haven't yet had to fetch the stop reason, then it doesn't need to know
     // about the fact that we are resuming...
         const uint32_t process_stop_id = GetProcess()->GetStopID();
-    if (m_thread_stop_reason_stop_id == process_stop_id &&
-        (m_actual_stop_info_sp && m_actual_stop_info_sp->IsValid()))
+    if (m_stop_info_stop_id == process_stop_id &&
+        (m_stop_info_sp && m_stop_info_sp->IsValid()))
     {
-        StopInfo *stop_info = GetPrivateStopReason().get();
+        StopInfo *stop_info = GetPrivateStopInfo().get();
         if (stop_info)
             stop_info->WillResume (resume_state);
     }
@@ -590,7 +638,7 @@ Thread::ShouldResume (StateType resume_state)
         
         if (need_to_resume && resume_state != eStateSuspended)
         {
-            m_actual_stop_info_sp.reset();
+            m_stop_info_sp.reset();
         }
     }
 
@@ -676,7 +724,7 @@ Thread::ShouldStop (Event* event_ptr)
     // First query the stop info's ShouldStopSynchronous.  This handles "synchronous" stop reasons, for example the breakpoint
     // command on internal breakpoints.  If a synchronous stop reason says we should not stop, then we don't have to
     // do any more work on this stop.
-    StopInfoSP private_stop_info (GetPrivateStopReason());
+    StopInfoSP private_stop_info (GetPrivateStopInfo());
     if (private_stop_info && private_stop_info->ShouldStopSynchronous(event_ptr) == false)
     {
         if (log)
@@ -1906,10 +1954,10 @@ Thread::IsStillAtLastBreakpointHit ()
     // If we are currently stopped at a breakpoint, always return that stopinfo and don't reset it.
     // This allows threads to maintain their breakpoint stopinfo, such as when thread-stepping in
     // multithreaded programs.
-    if (m_actual_stop_info_sp) {
-        StopReason stop_reason = m_actual_stop_info_sp->GetStopReason();
+    if (m_stop_info_sp) {
+        StopReason stop_reason = m_stop_info_sp->GetStopReason();
         if (stop_reason == lldb::eStopReasonBreakpoint) {
-            uint64_t value = m_actual_stop_info_sp->GetValue();
+            uint64_t value = m_stop_info_sp->GetValue();
             lldb::RegisterContextSP reg_ctx_sp (GetRegisterContext());
             if (reg_ctx_sp)
             {

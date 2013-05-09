@@ -117,39 +117,16 @@ ThreadMachCore::CreateRegisterContextForFrame (StackFrame *frame)
     return reg_ctx_sp;
 }
 
-lldb::StopInfoSP
-ThreadMachCore::GetPrivateStopReason ()
+bool
+ThreadMachCore::CalculateStopInfo ()
 {
     ProcessSP process_sp (GetProcess());
-
     if (process_sp)
     {
-        const uint32_t process_stop_id = process_sp->GetStopID();
-        if (m_thread_stop_reason_stop_id != process_stop_id ||
-            (m_actual_stop_info_sp && !m_actual_stop_info_sp->IsValid()))
-        {
-            if (IsStillAtLastBreakpointHit())
-                return m_actual_stop_info_sp;
-
-            // TODO: can we query the initial state of the thread here?
-            // For now I am just going to pretend that a SIGSTOP happened.
-
-            SetStopInfo(StopInfo::CreateStopReasonWithSignal (*this, SIGSTOP));
-
-            // If GetKDPProcess().SetThreadStopInfo() doesn't find a stop reason
-            // for this thread, then m_actual_stop_info_sp will not ever contain
-            // a valid stop reason and the "m_actual_stop_info_sp->IsValid() == false"
-            // check will never be able to tell us if we have the correct stop info
-            // for this thread and we will continually send qThreadStopInfo packets
-            // down to the remote KDP server, so we need to keep our own notion
-            // of the stop ID that m_actual_stop_info_sp is valid for (even if it
-            // contains nothing). We use m_thread_stop_reason_stop_id for this below.
-    //        m_thread_stop_reason_stop_id = process_stop_id;
-    //        m_actual_stop_info_sp.reset();
-
-        }
+        SetStopInfo(StopInfo::CreateStopReasonWithSignal (*this, SIGSTOP));
+        return true;
     }
-    return m_actual_stop_info_sp;
+    return false;
 }
 
 

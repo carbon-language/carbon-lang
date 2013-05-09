@@ -148,26 +148,23 @@ ThreadKDP::CreateRegisterContextForFrame (StackFrame *frame)
     return reg_ctx_sp;
 }
 
-lldb::StopInfoSP
-ThreadKDP::GetPrivateStopReason ()
+bool
+ThreadKDP::CalculateStopInfo ()
 {
     ProcessSP process_sp (GetProcess());
     if (process_sp)
     {
-        const uint32_t process_stop_id = process_sp->GetStopID();
-        if (m_thread_stop_reason_stop_id != process_stop_id ||
-            (m_actual_stop_info_sp && !m_actual_stop_info_sp->IsValid()))
+        if (m_cached_stop_info_sp)
         {
-            if (IsStillAtLastBreakpointHit())
-                return m_actual_stop_info_sp;
-
-            if (m_cached_stop_info_sp)
-                SetStopInfo (m_cached_stop_info_sp);
-            else
-                SetStopInfo(StopInfo::CreateStopReasonWithSignal (*this, SIGSTOP));
+            SetStopInfo (m_cached_stop_info_sp);
         }
+        else
+        {
+            SetStopInfo(StopInfo::CreateStopReasonWithSignal (*this, SIGSTOP));
+        }
+        return true;
     }
-    return m_actual_stop_info_sp;
+    return false;
 }
 
 void

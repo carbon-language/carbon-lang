@@ -1770,7 +1770,7 @@ ProcessGDBRemote::DoDestroy ()
                     for (size_t i = 0; i < num_threads; i++)
                     {
                         ThreadSP thread_sp = threads.GetThreadAtIndex(i);
-                        StopInfoSP stop_info_sp = thread_sp->GetPrivateStopReason();
+                        StopInfoSP stop_info_sp = thread_sp->GetPrivateStopInfo();
                         StopReason reason = eStopReasonInvalid;
                         if (stop_info_sp)
                             reason = stop_info_sp->GetStopReason();
@@ -1805,7 +1805,7 @@ ProcessGDBRemote::DoDestroy ()
                         for (size_t i = 0; i < num_threads; i++)
                         {
                             ThreadSP thread_sp = threads.GetThreadAtIndex(i);
-                            StopInfoSP stop_info_sp = thread_sp->GetPrivateStopReason();
+                            StopInfoSP stop_info_sp = thread_sp->GetPrivateStopInfo();
                             StopReason reason = eStopReasonInvalid;
                             if (stop_info_sp)
                                 reason = stop_info_sp->GetStopReason();

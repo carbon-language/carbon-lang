@@ -197,56 +197,18 @@ ThreadGDBRemote::PrivateSetRegisterValue (uint32_t reg, StringExtractor &respons
     return gdb_reg_ctx->PrivateSetRegisterValue (reg, response);
 }
 
-lldb::StopInfoSP
-ThreadGDBRemote::GetPrivateStopReason ()
+bool
+ThreadGDBRemote::CalculateStopInfo ()
 {
     ProcessSP process_sp (GetProcess());
     if (process_sp)
     {
-        const uint32_t process_stop_id = process_sp->GetStopID();
-        if (m_thread_stop_reason_stop_id == process_stop_id)
-        {
-            // Our stop info is up to date even if it is empty...
-            return m_actual_stop_info_sp;
-        }
-            
-        if (m_actual_stop_info_sp && m_actual_stop_info_sp->IsValid())
-        {
-            // The stop info is up to date, reset it so everything updates
-            SetStopInfo (m_actual_stop_info_sp);
-        }
-        else
-        {
-            if (IsStillAtLastBreakpointHit())
-            {
-                SetStopInfo(m_actual_stop_info_sp);
-            }
-            else
-            {
-                // If GetGDBProcess().SetThreadStopInfo() doesn't find a stop reason
-                // for this thread, then m_actual_stop_info_sp will not ever contain
-                // a valid stop reason and the "m_actual_stop_info_sp->IsValid() == false"
-                // check will never be able to tell us if we have the correct stop info
-                // for this thread and we will continually send qThreadStopInfo packets
-                // down to the remote GDB server, so we need to keep our own notion
-                // of the stop ID that m_actual_stop_info_sp is valid for (even if it
-                // contains nothing). We use m_thread_stop_reason_stop_id for this below.
-                m_actual_stop_info_sp.reset();
-
-                StringExtractorGDBRemote stop_packet;
-                ProcessGDBRemote *gdb_process = static_cast<ProcessGDBRemote *>(process_sp.get());
-                if (gdb_process->GetGDBRemote().GetThreadStopInfo(GetProtocolID(), stop_packet))
-                {
-                    gdb_process->SetThreadStopInfo (stop_packet);
-                }
-                else
-                {
-                    SetStopInfo (StopInfoSP());
-                }
-            }
-        }
+        StringExtractorGDBRemote stop_packet;
+        ProcessGDBRemote *gdb_process = static_cast<ProcessGDBRemote *>(process_sp.get());
+        if (gdb_process->GetGDBRemote().GetThreadStopInfo(GetProtocolID(), stop_packet))
+            return gdb_process->SetThreadStopInfo (stop_packet) == eStateStopped;
     }
-    return m_actual_stop_info_sp;
+    return false;
 }
 
 

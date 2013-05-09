@@ -385,11 +385,16 @@ ProcessKDP::DoResume ()
     if (kernel_thread_sp)
     {
         const StateType thread_resume_state = kernel_thread_sp->GetTemporaryResumeState();
+        
+        if (log)
+            log->Printf ("ProcessKDP::DoResume() thread_resume_state = %s", StateAsCString(thread_resume_state));
         switch (thread_resume_state)
         {
             case eStateSuspended:
                 // Nothing to do here when a thread will stay suspended
                 // we just leave the CPU mask bit set to zero for the thread
+                if (log)
+                    log->Printf ("ProcessKDP::DoResume() = suspended???");
                 break;
                 
             case eStateStepping:
@@ -398,6 +403,8 @@ ProcessKDP::DoResume ()
 
                     if (reg_ctx_sp)
                     {
+                        if (log)
+                            log->Printf ("ProcessKDP::DoResume () reg_ctx_sp->HardwareSingleStep (true);");
                         reg_ctx_sp->HardwareSingleStep (true);
                         resume = true;
                     }
@@ -412,15 +419,17 @@ ProcessKDP::DoResume ()
                 {
                     lldb::RegisterContextSP reg_ctx_sp (kernel_thread_sp->GetRegisterContext());
                     
-                        if (reg_ctx_sp)
-                        {
-                            reg_ctx_sp->HardwareSingleStep (false);
-                            resume = true;
-                        }
-                        else
-                        {
-                            error.SetErrorStringWithFormat("KDP thread 0x%llx has no register context", kernel_thread_sp->GetID());
-                        }
+                    if (reg_ctx_sp)
+                    {
+                        if (log)
+                            log->Printf ("ProcessKDP::DoResume () reg_ctx_sp->HardwareSingleStep (false);");
+                        reg_ctx_sp->HardwareSingleStep (false);
+                        resume = true;
+                    }
+                    else
+                    {
+                        error.SetErrorStringWithFormat("KDP thread 0x%llx has no register context", kernel_thread_sp->GetID());
+                    }
                 }
                 break;
 
@@ -540,22 +549,15 @@ ProcessKDP::DoDetach(bool keep_stopped)
         // If we are going to keep the target stopped, then don't send the disconnect message.
         if (!keep_stopped && m_comm.IsConnected())
         {
-
-            bool disconnect_success = m_comm.SendRequestDisconnect();
-            if (!disconnect_success)
-            {
-                if (log)
-                    log->PutCString ("ProcessKDP::DoDetach(): send disconnect request failed");
-            }
-
-            ConnectionStatus comm_disconnect_result = m_comm.Disconnect ();
+            const bool success = m_comm.SendRequestDisconnect();
             if (log)
             {
-                if (comm_disconnect_result == eConnectionStatusSuccess)
-                    log->PutCString ("ProcessKDP::DoDetach() conncection channel shutdown successfully");
+                if (success)
+                    log->PutCString ("ProcessKDP::DoDetach() detach packet sent successfully");
                 else
                     log->PutCString ("ProcessKDP::DoDetach() connection channel shutdown failed");
             }
+            m_comm.Disconnect ();
         }
     }
     StopAsyncThread ();    

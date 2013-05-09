@@ -138,10 +138,11 @@ POSIXThread::CreateRegisterContextForFrame(lldb_private::StackFrame *frame)
     return reg_ctx_sp;
 }
 
-lldb::StopInfoSP
-POSIXThread::GetPrivateStopReason()
+bool
+POSIXThread::CalculateStopInfo()
 {
-    return m_actual_stop_info_sp;
+    SetStopInfo (m_actual_stop_info_sp);
+    return true;
 }
 
 Unwind *

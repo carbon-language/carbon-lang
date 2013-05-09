@@ -410,6 +410,13 @@ public:
     virtual bool
     MischiefManaged ();
 
+    virtual void
+    ThreadDestroyed ()
+    {
+        // Any cleanup that a plan might want to do in case the thread goes away
+        // in the middle of the plan being queued on a thread can be done here.
+    }
+
     bool
     GetPrivate ()
     {
@@ -537,7 +544,7 @@ protected:
     lldb::StopInfoSP 
     GetPrivateStopReason()
     {
-        return m_thread.GetPrivateStopReason ();
+        return m_thread.GetPrivateStopInfo ();
     }
     
     void

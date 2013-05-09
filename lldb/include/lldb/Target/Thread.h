@@ -848,13 +848,7 @@ public:
     virtual lldb::user_id_t
     GetProtocolID () const
     {
-        return m_protocol_tid.GetID();
-    }
-
-    virtual void
-    SetProtocolID (lldb::user_id_t api_tid)
-    {
-        return m_protocol_tid.SetID(api_tid);
+        return GetID();
     }
 
     //------------------------------------------------------------------
@@ -905,7 +899,19 @@ public:
     // valid.  The stop info may be a "checkpointed and restored" stop info, so if it is still around it is right
     // even if you have not calculated this yourself, or if it disagrees with what you might have calculated.
     virtual lldb::StopInfoSP
-    GetPrivateStopReason () = 0;
+    GetPrivateStopInfo ();
+
+    //----------------------------------------------------------------------
+    // Ask the thread subclass to set its stop info.
+    //
+    // Thread subclasses should call Thread::SetStopInfo(...) with the
+    // reason the thread stopped.
+    //
+    // @return
+    //      True if Thread::SetStopInfo(...) was called, false otherwise.
+    //----------------------------------------------------------------------
+    virtual bool
+    CalculateStopInfo () = 0;
 
     //----------------------------------------------------------------------
     // Gets the temporary resume state for a thread.
@@ -1002,9 +1008,10 @@ protected:
     // Classes that inherit from Process can see and modify these
     //------------------------------------------------------------------
     lldb::ProcessWP     m_process_wp;           ///< The process that owns this thread.
-    lldb::StopInfoSP    m_actual_stop_info_sp;  ///< The private stop reason for this thread
+    lldb::StopInfoSP    m_stop_info_sp;         ///< The private stop reason for this thread
+    uint32_t            m_stop_info_stop_id;    // This is the stop id for which the StopInfo is valid.  Can use this so you know that
+    // the thread's m_stop_info_sp is current and you don't have to fetch it again
     const uint32_t      m_index_id;             ///< A unique 1 based index assigned to each thread for easy UI/command line access.
-    UserID              m_protocol_tid;         ///< The thread ID used in the system level debugging or protocol functions calls. This is usually the same as the Thread::GetID(), but not always.
     lldb::RegisterContextSP m_reg_context_sp;   ///< The register context for this thread's current register state.
     lldb::StateType     m_state;                ///< The state of our process.
     mutable Mutex       m_state_mutex;          ///< Multithreaded protection for m_state.
@@ -1020,8 +1027,6 @@ protected:
                                                   /// It gets set in Thread::ShoudResume.
     std::unique_ptr<lldb_private::Unwind> m_unwinder_ap;
     bool                m_destroy_called;       // This is used internally to make sure derived Thread classes call DestroyThread.
-    uint32_t m_thread_stop_reason_stop_id;      // This is the stop id for which the StopInfo is valid.  Can use this so you know that
-                                                // the thread's m_actual_stop_info_sp is current and you don't have to fetch it again
     LazyBool            m_override_should_notify;
 private:
     //------------------------------------------------------------------

@@ -505,6 +505,8 @@ ThreadList::WillResume ()
         if ((*pos)->GetResumeState() != eStateSuspended &&
                  (*pos)->GetCurrentPlan()->StopOthers())
         {
+            if ((*pos)->IsOperatingSystemPluginThread() && !(*pos)->GetBackingThread())
+                continue;
             wants_solo_run = true;
             break;
         }
@@ -535,6 +537,8 @@ ThreadList::WillResume ()
         if ((*pos)->GetResumeState() != eStateSuspended
             && (!wants_solo_run || (*pos)->GetCurrentPlan()->StopOthers()))
         {
+            if ((*pos)->IsOperatingSystemPluginThread() && !(*pos)->GetBackingThread())
+                continue;
             (*pos)->SetupForResume ();
         }
     }
@@ -546,7 +550,6 @@ ThreadList::WillResume ()
     
     run_me_only_list.SetStopID(m_process->GetStopID());
 
-    ThreadSP immediate_thread_sp;
     bool run_only_current_thread = false;
 
     for (pos = m_threads.begin(); pos != end; ++pos)
@@ -555,6 +558,9 @@ ThreadList::WillResume ()
         if (thread_sp->GetResumeState() != eStateSuspended &&
                  thread_sp->GetCurrentPlan()->StopOthers())
         {
+            if ((*pos)->IsOperatingSystemPluginThread() && !(*pos)->GetBackingThread())
+                continue;
+
             // You can't say "stop others" and also want yourself to be suspended.
             assert (thread_sp->GetCurrentPlan()->RunState() != eStateSuspended);
 
@@ -573,18 +579,7 @@ ThreadList::WillResume ()
 
     bool need_to_resume = true;
     
-    if (immediate_thread_sp)
-    {
-        for (pos = m_threads.begin(); pos != end; ++pos)
-        {
-            ThreadSP thread_sp(*pos);
-            if (thread_sp.get() == immediate_thread_sp.get())
-                thread_sp->ShouldResume(thread_sp->GetCurrentPlan()->RunState());
-            else
-                thread_sp->ShouldResume (eStateSuspended);
-        }
-    }
-    else if (run_me_only_list.GetSize (false) == 0)
+    if (run_me_only_list.GetSize (false) == 0)
     {
         // Everybody runs as they wish:
         for (pos = m_threads.begin(); pos != end; ++pos)

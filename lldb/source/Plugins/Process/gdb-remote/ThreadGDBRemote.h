@@ -98,8 +98,8 @@ protected:
     void
     SetStopInfoFromPacket (StringExtractor &stop_packet, uint32_t stop_id);
 
-    virtual lldb::StopInfoSP
-    GetPrivateStopReason ();
+    virtual bool
+    CalculateStopInfo ();
 
 
 };

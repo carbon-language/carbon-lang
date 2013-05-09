@@ -32,6 +32,7 @@ public:
     virtual lldb::StateType GetPlanRunState ();
     virtual bool WillStop ();
     virtual bool MischiefManaged ();
+    virtual void ThreadDestroyed ();
     void SetAutoContinue (bool do_it);
     virtual bool ShouldAutoContinue(Event *event_ptr);
 
@@ -39,11 +40,13 @@ protected:
     virtual bool DoPlanExplainsStop (Event *event_ptr);
     virtual bool DoWillResume (lldb::StateType resume_state, bool current_plan);
 
+    void ReenableBreakpointSite ();
 private:
 
     lldb::addr_t m_breakpoint_addr;
     lldb::user_id_t m_breakpoint_site_id;
     bool m_auto_continue;
+    bool m_reenabled_breakpoint_site;
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepOverBreakpoint);
 

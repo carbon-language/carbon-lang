@@ -39,8 +39,8 @@ public:
     virtual lldb::RegisterContextSP
     CreateRegisterContextForFrame (lldb_private::StackFrame *frame);
 
-    virtual lldb::StopInfoSP
-    GetPrivateStopReason ();
+    virtual bool
+    CalculateStopInfo ();
 
     virtual const char *
     GetInfo ()

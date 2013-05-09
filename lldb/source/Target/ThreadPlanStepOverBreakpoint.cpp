@@ -34,7 +34,8 @@ ThreadPlanStepOverBreakpoint::ThreadPlanStepOverBreakpoint (Thread &thread) :
                             // first in the thread plan stack when stepping
                             // over a breakpoint
     m_breakpoint_addr (LLDB_INVALID_ADDRESS),
-    m_auto_continue(false)
+    m_auto_continue(false),
+    m_reenabled_breakpoint_site (false)
 
 {
     m_breakpoint_addr = m_thread.GetRegisterContext()->GetPC();
@@ -105,9 +106,7 @@ ThreadPlanStepOverBreakpoint::DoWillResume (StateType resume_state, bool current
 bool
 ThreadPlanStepOverBreakpoint::WillStop ()
 {
-    BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByAddress (m_breakpoint_addr));
-    if (bp_site_sp)
-        m_thread.GetProcess()->EnableBreakpointSite (bp_site_sp.get());
+    ReenableBreakpointSite ();
     return true;
 }
 
@@ -128,12 +127,29 @@ ThreadPlanStepOverBreakpoint::MischiefManaged ()
         if (log)
             log->Printf("Completed step over breakpoint plan.");
         // Otherwise, re-enable the breakpoint we were stepping over, and we're done.
-        BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByAddress (m_breakpoint_addr));
-        if (bp_site_sp)
-            m_thread.GetProcess()->EnableBreakpointSite (bp_site_sp.get());
+        ReenableBreakpointSite ();
         ThreadPlan::MischiefManaged ();
         return true;
     }
+}
+
+void
+ThreadPlanStepOverBreakpoint::ReenableBreakpointSite ()
+{
+    if (!m_reenabled_breakpoint_site)
+    {
+        m_reenabled_breakpoint_site = true;
+        BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByAddress (m_breakpoint_addr));
+        if (bp_site_sp)
+        {
+            m_thread.GetProcess()->EnableBreakpointSite (bp_site_sp.get());
+        }
+    }
+}
+void
+ThreadPlanStepOverBreakpoint::ThreadDestroyed ()
+{
+    ReenableBreakpointSite ();
 }
 
 void

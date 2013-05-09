@@ -97,8 +97,8 @@ private:
     ProcessMonitor &
     GetMonitor();
 
-    lldb::StopInfoSP
-    GetPrivateStopReason();
+    virtual bool
+    CalculateStopInfo();
 
     void BreakNotify(const ProcessMessage &message);
     void WatchNotify(const ProcessMessage &message);

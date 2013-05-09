@@ -89,13 +89,10 @@ protected:
     lldb::addr_t m_thread_dispatch_qaddr;
     lldb::StopInfoSP m_cached_stop_info_sp;
     //------------------------------------------------------------------
-    // Member variables.
+    // Protected member functions.
     //------------------------------------------------------------------
-
-    virtual lldb::StopInfoSP
-    GetPrivateStopReason ();
-
-
+    virtual bool
+    CalculateStopInfo ();
 };
 
 #endif  // liblldb_ThreadKDP_h_
