@@ -69,42 +69,32 @@ private:
 
 namespace llvm {
 
+template <class ELFT>
+static error_code createELFDumper(const ELFObjectFile<ELFT> *Obj,
+                                  StreamWriter &Writer,
+                                  OwningPtr<ObjDumper> &Result) {
+  Result.reset(new ELFDumper<ELFT>(Obj, Writer));
+  return readobj_error::success;
+}
+
 error_code createELFDumper(const object::ObjectFile *Obj,
                            StreamWriter& Writer,
                            OwningPtr<ObjDumper> &Result) {
-  typedef ELFType<support::little, 4, false> Little32ELF;
-  typedef ELFType<support::big,    4, false> Big32ELF;
-  typedef ELFType<support::little, 4, true > Little64ELF;
-  typedef ELFType<support::big,    8, true > Big64ELF;
-
-  typedef ELFObjectFile<Little32ELF> LittleELF32Obj;
-  typedef ELFObjectFile<Big32ELF   > BigELF32Obj;
-  typedef ELFObjectFile<Little64ELF> LittleELF64Obj;
-  typedef ELFObjectFile<Big64ELF   > BigELF64Obj;
-
   // Little-endian 32-bit
-  if (const LittleELF32Obj *ELFObj = dyn_cast<LittleELF32Obj>(Obj)) {
-    Result.reset(new ELFDumper<Little32ELF>(ELFObj, Writer));
-    return readobj_error::success;
-  }
+  if (const ELF32LEObjectFile *ELFObj = dyn_cast<ELF32LEObjectFile>(Obj))
+    return createELFDumper(ELFObj, Writer, Result);
 
   // Big-endian 32-bit
-  if (const BigELF32Obj *ELFObj = dyn_cast<BigELF32Obj>(Obj)) {
-    Result.reset(new ELFDumper<Big32ELF>(ELFObj, Writer));
-    return readobj_error::success;
-  }
+  if (const ELF32BEObjectFile *ELFObj = dyn_cast<ELF32BEObjectFile>(Obj))
+    return createELFDumper(ELFObj, Writer, Result);
 
   // Little-endian 64-bit
-  if (const LittleELF64Obj *ELFObj = dyn_cast<LittleELF64Obj>(Obj)) {
-    Result.reset(new ELFDumper<Little64ELF>(ELFObj, Writer));
-    return readobj_error::success;
-  }
+  if (const ELF64LEObjectFile *ELFObj = dyn_cast<ELF64LEObjectFile>(Obj))
+    return createELFDumper(ELFObj, Writer, Result);
 
   // Big-endian 64-bit
-  if (const BigELF64Obj *ELFObj = dyn_cast<BigELF64Obj>(Obj)) {
-    Result.reset(new ELFDumper<Big64ELF>(ELFObj, Writer));
-    return readobj_error::success;
-  }
+  if (const ELF64BEObjectFile *ELFObj = dyn_cast<ELF64BEObjectFile>(Obj))
+    return createELFDumper(ELFObj, Writer, Result);
 
   return readobj_error::unsupported_obj_file_format;
 }

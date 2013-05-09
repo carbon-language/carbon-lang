@@ -839,6 +839,13 @@ public:
   }
 };
 
+// Use an alignment of 2 for the typedefs since that is the worst case for
+// ELF files in archives.
+typedef ELFObjectFile<ELFType<support::little, 2, false> > ELF32LEObjectFile;
+typedef ELFObjectFile<ELFType<support::little, 2, true> > ELF64LEObjectFile;
+typedef ELFObjectFile<ELFType<support::big, 2, false> > ELF32BEObjectFile;
+typedef ELFObjectFile<ELFType<support::big, 2, true> > ELF64BEObjectFile;
+
 // Iterate through the version definitions, and place each Elf_Verdef
 // in the VersionMap according to its index.
 template<class ELFT>
@@ -2955,23 +2962,19 @@ static inline error_code getELFRelocationAddend(const RelocationRef R,
   const ObjectFile *Obj = R.getObjectFile();
   DataRefImpl DRI = R.getRawDataRefImpl();
   // Little-endian 32-bit
-  if (const ELFObjectFile<ELFType<support::little, 4, false> > *ELFObj =
-          dyn_cast<ELFObjectFile<ELFType<support::little, 4, false> > >(Obj))
+  if (const ELF32LEObjectFile *ELFObj = dyn_cast<ELF32LEObjectFile>(Obj))
     return ELFObj->getRelocationAddend(DRI, Addend);
 
   // Big-endian 32-bit
-  if (const ELFObjectFile<ELFType<support::big, 4, false> > *ELFObj =
-          dyn_cast<ELFObjectFile<ELFType<support::big, 4, false> > >(Obj))
+  if (const ELF32BEObjectFile *ELFObj = dyn_cast<ELF32BEObjectFile>(Obj))
     return ELFObj->getRelocationAddend(DRI, Addend);
 
   // Little-endian 64-bit
-  if (const ELFObjectFile<ELFType<support::little, 8, true> > *ELFObj =
-          dyn_cast<ELFObjectFile<ELFType<support::little, 8, true> > >(Obj))
+  if (const ELF64LEObjectFile *ELFObj = dyn_cast<ELF64LEObjectFile>(Obj))
     return ELFObj->getRelocationAddend(DRI, Addend);
 
   // Big-endian 64-bit
-  if (const ELFObjectFile<ELFType<support::big, 8, true> > *ELFObj =
-          dyn_cast<ELFObjectFile<ELFType<support::big, 8, true> > >(Obj))
+  if (const ELF64BEObjectFile *ELFObj = dyn_cast<ELF64BEObjectFile>(Obj))
     return ELFObj->getRelocationAddend(DRI, Addend);
 
   llvm_unreachable("Object passed to getELFRelocationAddend() is not ELF");
@@ -2984,23 +2987,19 @@ static inline error_code GetELFSymbolVersion(const ObjectFile *Obj,
                                              StringRef &Version,
                                              bool &IsDefault) {
   // Little-endian 32-bit
-  if (const ELFObjectFile<ELFType<support::little, 4, false> > *ELFObj =
-          dyn_cast<ELFObjectFile<ELFType<support::little, 4, false> > >(Obj))
+  if (const ELF32LEObjectFile *ELFObj = dyn_cast<ELF32LEObjectFile>(Obj))
     return ELFObj->getSymbolVersion(Sym, Version, IsDefault);
 
   // Big-endian 32-bit
-  if (const ELFObjectFile<ELFType<support::big, 4, false> > *ELFObj =
-          dyn_cast<ELFObjectFile<ELFType<support::big, 4, false> > >(Obj))
+  if (const ELF32BEObjectFile *ELFObj = dyn_cast<ELF32BEObjectFile>(Obj))
     return ELFObj->getSymbolVersion(Sym, Version, IsDefault);
 
   // Little-endian 64-bit
-  if (const ELFObjectFile<ELFType<support::little, 8, true> > *ELFObj =
-          dyn_cast<ELFObjectFile<ELFType<support::little, 8, true> > >(Obj))
+  if (const ELF64LEObjectFile *ELFObj = dyn_cast<ELF64LEObjectFile>(Obj))
     return ELFObj->getSymbolVersion(Sym, Version, IsDefault);
 
   // Big-endian 64-bit
-  if (const ELFObjectFile<ELFType<support::big, 8, true> > *ELFObj =
-          dyn_cast<ELFObjectFile<ELFType<support::big, 8, true> > >(Obj))
+  if (const ELF64BEObjectFile *ELFObj = dyn_cast<ELF64BEObjectFile>(Obj))
     return ELFObj->getSymbolVersion(Sym, Version, IsDefault);
 
   llvm_unreachable("Object passed to GetELFSymbolVersion() is not ELF");
