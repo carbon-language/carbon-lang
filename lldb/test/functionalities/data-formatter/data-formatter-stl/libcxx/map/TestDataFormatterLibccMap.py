@@ -29,14 +29,12 @@ class LibcxxMapDataFormatterTestCase(TestBase):
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
-        # Find the line number to break at.
-        self.line = line_number('main.cpp', '// Set break point at this line.')
 
     def data_formatter_commands(self):
         """Test that that file and class static variables display correctly."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
-        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=-1)
+        lldbutil.run_break_set_by_source_regexp (self, "Set break point at this line.")
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -67,7 +65,7 @@ class LibcxxMapDataFormatterTestCase(TestBase):
             substrs = ['map has 0 items',
                        '{}'])
 
-        self.runCmd("n");self.runCmd("n");
+        self.runCmd("continue");
 
         self.expect('frame variable ii',
                     substrs = ['map has 2 items',
@@ -78,7 +76,7 @@ class LibcxxMapDataFormatterTestCase(TestBase):
                                'first = 1',
                                'second = 1'])
 
-        self.runCmd("n");self.runCmd("n");
+        self.runCmd("continue");
 
         self.expect('frame variable ii',
                     substrs = ['map has 4 items',
@@ -89,9 +87,7 @@ class LibcxxMapDataFormatterTestCase(TestBase):
                                'first = 3',
                                'second = 1'])
 
-        self.runCmd("n");self.runCmd("n");
-        self.runCmd("n");self.runCmd("n");
-        self.runCmd("frame select 0")
+        self.runCmd("continue");
 
         self.expect("frame variable ii",
                     substrs = ['map has 8 items',
@@ -130,7 +126,7 @@ class LibcxxMapDataFormatterTestCase(TestBase):
         #self.expect("expression ii[8]", matching=False, error=True,
         #            substrs = ['1234567'])
 
-        self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd('frame select 0')
+        self.runCmd("continue");
         
         self.expect('frame variable ii',
                     substrs = ['map has 0 items',
@@ -142,7 +138,7 @@ class LibcxxMapDataFormatterTestCase(TestBase):
                     substrs = ['map has 0 items',
                                '{}'])
 
-        self.runCmd("n");self.runCmd("n");self.runCmd('frame select 0')
+        self.runCmd("continue");
 
         self.expect('frame variable si',
                     substrs = ['map has 1 items',
@@ -150,9 +146,7 @@ class LibcxxMapDataFormatterTestCase(TestBase):
                                'first = \"zero\"',
                                'second = 0'])
 
-        self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");
-        self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n")
-        self.runCmd("n");self.runCmd("n");self.runCmd('frame select 0')
+        self.runCmd("continue");
 
         self.expect("frame variable si",
                     substrs = ['map has 4 items',
@@ -200,20 +194,20 @@ class LibcxxMapDataFormatterTestCase(TestBase):
         #self.expect("expression si[0]", matching=False, error=True,
         #            substrs = ['first = ', 'zero'])
 
-        self.runCmd("n");self.runCmd("n");
+        self.runCmd("continue");
         
         self.expect('frame variable si',
                     substrs = ['map has 0 items',
                                '{}'])
 
-        self.runCmd("n")
+        self.runCmd("continue");
         self.runCmd("frame variable is --show-types")
         
         self.expect('frame variable is',
                     substrs = ['map has 0 items',
                                '{}'])
 
-        self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");
+        self.runCmd("continue");
 
         self.expect("frame variable is",
                     substrs = ['map has 4 items',
@@ -261,21 +255,20 @@ class LibcxxMapDataFormatterTestCase(TestBase):
         #self.expect("expression is[0]", matching=False, error=True,
         #            substrs = ['first = ', 'goofy'])
 
-        self.runCmd("n")
+        self.runCmd("continue");
         
         self.expect('frame variable is',
                     substrs = ['map has 0 items',
                                '{}'])
 
-        self.runCmd("n");self.runCmd("n");
+        self.runCmd("continue");
         self.runCmd("frame variable ss --show-types")
         
         self.expect('frame variable ss',
                     substrs = ['map has 0 items',
                                '{}'])
 
-        self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");
-        self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd('frame select 0')
+        self.runCmd("continue");
 
         self.expect("frame variable ss",
                     substrs = ['map has 3 items',
@@ -316,7 +309,7 @@ class LibcxxMapDataFormatterTestCase(TestBase):
         #self.expect("expression ss[3]", matching=False, error=True,
         #            substrs = ['gatto'])
 
-        self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd('frame select 0')
+        self.runCmd("continue");
         
         self.expect('frame variable ss',
                     substrs = ['map has 0 items',
