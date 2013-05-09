@@ -2011,34 +2011,38 @@ static void adjustLoopEdges(PathPieces &pieces, LocationContextMap &LCM,
     if (!Dst || !Src)
       continue;
 
-    const ForStmt *FS = 0;
+    const Stmt *Loop = 0;
     const Stmt *S = Dst;
     while (const Stmt *Parent = PM.getParentIgnoreParens(S)) {
-      FS = dyn_cast<ForStmt>(Parent);
-      if (FS) {
-        if (FS->getCond()->IgnoreParens() != S)
-          FS = 0;
+      if (const ForStmt *FS = dyn_cast<ForStmt>(Parent)) {
+        if (FS->getCond()->IgnoreParens() == S)
+          Loop = FS;
+        break;
+      }
+      if (const WhileStmt *WS = dyn_cast<WhileStmt>(Parent)) {
+        if (WS->getCond()->IgnoreParens() == S)
+          Loop = WS;
         break;
       }
       S = Parent;
     }
 
-    // If 'FS' is non-null we have found a match where we have an edge
-    // incident on the condition of a for statement.
-    if (!FS)
+    // If 'Loop' is non-null we have found a match where we have an edge
+    // incident on the condition of a for/while statement.
+    if (!Loop)
       continue;
 
-    // If the current source of the edge is the 'for', then there is nothing
-    // left to be done.
-    if (Src == FS)
+    // If the current source of the edge is the 'for'/'while', then there is
+    // nothing left to be done.
+    if (Src == Loop)
       continue;
 
     // Now look at the previous edge.  We want to know if this was in the same
     // "level" as the for statement.
     const Stmt *SrcParent = PM.getParentIgnoreParens(Src);
-    const Stmt *FSParent = PM.getParentIgnoreParens(FS);
+    const Stmt *FSParent = PM.getParentIgnoreParens(Loop);
     if (SrcParent && SrcParent == FSParent) {
-      PathDiagnosticLocation L(FS, SM, LC);
+      PathDiagnosticLocation L(Loop, SM, LC);
       bool needsEdge = true;
 
       if (Prev != E) {
