@@ -1722,6 +1722,12 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
         // Are we jumping to the head of a loop?  Add a special diagnostic.
         if (const Stmt *Loop = BE->getSrc()->getLoopTarget()) {
           PathDiagnosticLocation L(Loop, SM, PDB.LC);
+          const CompoundStmt *CS = NULL;
+
+          if (const ForStmt *FS = dyn_cast<ForStmt>(Loop))
+            CS = dyn_cast<CompoundStmt>(FS->getBody());
+          else if (const WhileStmt *WS = dyn_cast<WhileStmt>(Loop))
+            CS = dyn_cast<CompoundStmt>(WS->getBody());
 
           PathDiagnosticEventPiece *p =
             new PathDiagnosticEventPiece(L, "Looping back to the head "
@@ -1730,6 +1736,12 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
 
           addEdgeToPath(PD.getActivePath(), PrevLoc, p->getLocation(), PDB.LC);
           PD.getActivePath().push_front(p);
+
+          if (CS) {
+            addEdgeToPath(PD.getActivePath(), PrevLoc,
+                          PathDiagnosticLocation::createEndBrace(CS, SM),
+                          PDB.LC);
+          }
         }
 
         const CFGBlock *BSrc = BE->getSrc();
