@@ -9,7 +9,8 @@
 ///
 /// \file
 ///
-/// Concrete instance of the Driver for darwin's ld.
+/// Driver for "universal" lld tool which can mimic any linker command line
+/// parsing once it figures out which command line flavor to use.
 ///
 //===----------------------------------------------------------------------===//
 
