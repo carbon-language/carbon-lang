@@ -989,12 +989,6 @@ MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
   return object_error::success;
 }
 
-error_code MachOObjectFile::getRelocationAdditionalInfo(DataRefImpl Rel,
-                                                        int64_t &Res) const {
-  Res = 0;
-  return object_error::success;
-}
-
 error_code
 MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
                                           SmallVectorImpl<char> &Result) const {

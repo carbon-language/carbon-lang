@@ -519,10 +519,10 @@ void RuntimeDyldELF::findOPDEntrySection(ObjectImage &Obj,
 
       SymbolRef TargetSymbol;
       uint64_t TargetSymbolOffset;
-      int64_t TargetAdditionalInfo;
       check(i->getSymbol(TargetSymbol));
       check(i->getOffset(TargetSymbolOffset));
-      check(i->getAdditionalInfo(TargetAdditionalInfo));
+      int64_t Addend;
+      check(getELFRelocationAddend(*i, Addend));
 
       i = i.increment(err);
       if (i == e)
@@ -544,7 +544,7 @@ void RuntimeDyldELF::findOPDEntrySection(ObjectImage &Obj,
       section_iterator tsi(Obj.end_sections());
       check(TargetSymbol.getSection(tsi));
       Rel.SectionID = findOrEmitSection(Obj, (*tsi), true, LocalSections);
-      Rel.Addend = (intptr_t)TargetAdditionalInfo;
+      Rel.Addend = (intptr_t)Addend;
       return;
     }
   }
@@ -742,7 +742,7 @@ void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
   uint64_t RelType;
   Check(RelI.getType(RelType));
   int64_t Addend;
-  Check(RelI.getAdditionalInfo(Addend));
+  Check(getELFRelocationAddend(RelI, Addend));
   SymbolRef Symbol;
   Check(RelI.getSymbol(Symbol));
 

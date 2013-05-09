@@ -119,7 +119,6 @@ public:
   ///
   /// This is for display purposes only.
   error_code getTypeName(SmallVectorImpl<char> &Result) const;
-  error_code getAdditionalInfo(int64_t &Result) const;
 
   /// @brief Get a string that represents the calculation of the value of this
   ///        relocation.
@@ -128,6 +127,7 @@ public:
   error_code getValueString(SmallVectorImpl<char> &Result) const;
 
   DataRefImpl getRawDataRefImpl() const;
+  const ObjectFile *getObjectFile() const;
 };
 typedef content_iterator<RelocationRef> relocation_iterator;
 
@@ -342,8 +342,6 @@ protected:
                                        uint64_t &Res) const = 0;
   virtual error_code getRelocationTypeName(DataRefImpl Rel,
                                        SmallVectorImpl<char> &Result) const = 0;
-  virtual error_code getRelocationAdditionalInfo(DataRefImpl Rel,
-                                                 int64_t &Res) const = 0;
   virtual error_code getRelocationValueString(DataRefImpl Rel,
                                        SmallVectorImpl<char> &Result) const = 0;
   virtual error_code getRelocationHidden(DataRefImpl Rel, bool &Result) const {
@@ -579,10 +577,6 @@ inline error_code RelocationRef::getTypeName(SmallVectorImpl<char> &Result)
   return OwningObject->getRelocationTypeName(RelocationPimpl, Result);
 }
 
-inline error_code RelocationRef::getAdditionalInfo(int64_t &Result) const {
-  return OwningObject->getRelocationAdditionalInfo(RelocationPimpl, Result);
-}
-
 inline error_code RelocationRef::getValueString(SmallVectorImpl<char> &Result)
   const {
   return OwningObject->getRelocationValueString(RelocationPimpl, Result);
@@ -594,6 +588,10 @@ inline error_code RelocationRef::getHidden(bool &Result) const {
 
 inline DataRefImpl RelocationRef::getRawDataRefImpl() const {
   return RelocationPimpl;
+}
+
+inline const ObjectFile *RelocationRef::getObjectFile() const {
+  return OwningObject;
 }
 
 // Inline function definitions.

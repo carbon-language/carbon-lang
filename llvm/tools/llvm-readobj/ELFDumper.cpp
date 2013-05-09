@@ -579,7 +579,7 @@ void ELFDumper<ELFT>::printRelocation(section_iterator Sec,
   uint64_t Offset;
   uint64_t RelocType;
   SmallString<32> RelocName;
-  int64_t Info;
+  int64_t Addend;
   StringRef SymbolName;
   SymbolRef Symbol;
   if (Obj->getElfHeader()->e_type == ELF::ET_REL){
@@ -589,7 +589,7 @@ void ELFDumper<ELFT>::printRelocation(section_iterator Sec,
   }
   if (error(RelI->getType(RelocType))) return;
   if (error(RelI->getTypeName(RelocName))) return;
-  if (error(RelI->getAdditionalInfo(Info))) return;
+  if (error(getELFRelocationAddend(*RelI, Addend))) return;
   if (error(RelI->getSymbol(Symbol))) return;
   if (error(Symbol.getName(SymbolName))) return;
 
@@ -598,13 +598,13 @@ void ELFDumper<ELFT>::printRelocation(section_iterator Sec,
     W.printHex("Offset", Offset);
     W.printNumber("Type", RelocName, RelocType);
     W.printString("Symbol", SymbolName.size() > 0 ? SymbolName : "-");
-    W.printHex("Info", Info);
+    W.printHex("Addend", Addend);
   } else {
     raw_ostream& OS = W.startLine();
     OS << W.hex(Offset)
        << " " << RelocName
        << " " << (SymbolName.size() > 0 ? SymbolName : "-")
-       << " " << W.hex(Info)
+       << " " << W.hex(Addend)
        << "\n";
   }
 }

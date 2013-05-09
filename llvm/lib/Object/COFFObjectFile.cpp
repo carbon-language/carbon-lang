@@ -798,11 +798,6 @@ error_code COFFObjectFile::getRelocationTypeName(DataRefImpl Rel,
 
 #undef LLVM_COFF_SWITCH_RELOC_TYPE_NAME
 
-error_code COFFObjectFile::getRelocationAdditionalInfo(DataRefImpl Rel,
-                                                       int64_t &Res) const {
-  Res = 0;
-  return object_error::success;
-}
 error_code COFFObjectFile::getRelocationValueString(DataRefImpl Rel,
                                           SmallVectorImpl<char> &Result) const {
   const coff_relocation *reloc = toRel(Rel);

@@ -677,6 +677,7 @@ public:
   error_code getSymbolVersion(SymbolRef Symb, StringRef &Version,
                               bool &IsDefault) const;
   uint64_t getSymbolIndex(const Elf_Sym *sym) const;
+  error_code getRelocationAddend(DataRefImpl Rel, int64_t &Res) const;
 protected:
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const;
@@ -725,8 +726,6 @@ protected:
                                        uint64_t &Res) const;
   virtual error_code getRelocationTypeName(DataRefImpl Rel,
                                            SmallVectorImpl<char> &Result) const;
-  virtual error_code getRelocationAdditionalInfo(DataRefImpl Rel,
-                                                 int64_t &Res) const;
   virtual error_code getRelocationValueString(DataRefImpl Rel,
                                            SmallVectorImpl<char> &Result) const;
 
@@ -2227,7 +2226,7 @@ error_code ELFObjectFile<ELFT>::getRelocationTypeName(
 }
 
 template<class ELFT>
-error_code ELFObjectFile<ELFT>::getRelocationAdditionalInfo(
+error_code ELFObjectFile<ELFT>::getRelocationAddend(
     DataRefImpl Rel, int64_t &Result) const {
   const Elf_Shdr *sec = getSection(Rel.w.b);
   switch (sec->sh_type) {
@@ -2947,6 +2946,35 @@ error_code ELFObjectFile<ELFT>::getSymbolVersion(const Elf_Shdr *section,
   }
 
   return object_error::success;
+}
+
+/// FIXME: Maybe we should have a base ElfObjectFile that is not a template
+/// and make these member functions?
+static inline error_code getELFRelocationAddend(const RelocationRef R,
+                                                int64_t &Addend) {
+  const ObjectFile *Obj = R.getObjectFile();
+  DataRefImpl DRI = R.getRawDataRefImpl();
+  // Little-endian 32-bit
+  if (const ELFObjectFile<ELFType<support::little, 4, false> > *ELFObj =
+          dyn_cast<ELFObjectFile<ELFType<support::little, 4, false> > >(Obj))
+    return ELFObj->getRelocationAddend(DRI, Addend);
+
+  // Big-endian 32-bit
+  if (const ELFObjectFile<ELFType<support::big, 4, false> > *ELFObj =
+          dyn_cast<ELFObjectFile<ELFType<support::big, 4, false> > >(Obj))
+    return ELFObj->getRelocationAddend(DRI, Addend);
+
+  // Little-endian 64-bit
+  if (const ELFObjectFile<ELFType<support::little, 8, true> > *ELFObj =
+          dyn_cast<ELFObjectFile<ELFType<support::little, 8, true> > >(Obj))
+    return ELFObj->getRelocationAddend(DRI, Addend);
+
+  // Big-endian 64-bit
+  if (const ELFObjectFile<ELFType<support::big, 8, true> > *ELFObj =
+          dyn_cast<ELFObjectFile<ELFType<support::big, 8, true> > >(Obj))
+    return ELFObj->getRelocationAddend(DRI, Addend);
+
+  llvm_unreachable("Object passed to getELFRelocationAddend() is not ELF");
 }
 
 /// This is a generic interface for retrieving GNU symbol version
