@@ -1397,6 +1397,13 @@ protected:
         Error error;
         
         const bool init_session = true;
+        // FIXME: this is necessary because CommandObject::CheckRequirements() assumes that
+        // commands won't ever be recursively invoked, but it's actually possible to craft
+        // a Python script that does other "command script imports" in __lldb_init_module
+        // the real fix is to have recursive commands possible with a CommandInvocation object
+        // separate from the CommandObject itself, so that recursive command invocations
+        // won't stomp on each other (wrt to execution contents, options, and more)
+        m_exe_ctx.Clear();
         if (m_interpreter.GetScriptInterpreter()->LoadScriptingModule(path.c_str(),
                                                                       m_options.m_allow_reload,
                                                                       init_session,
