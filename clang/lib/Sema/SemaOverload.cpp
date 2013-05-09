@@ -10945,15 +10945,14 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
 ExprResult
 Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
                                    SourceLocation LParenLoc,
-                                   Expr **Args, unsigned NumArgs,
+                                   MultiExprArg Args,
                                    SourceLocation RParenLoc) {
   if (checkPlaceholderForOverload(*this, Obj))
     return ExprError();
   ExprResult Object = Owned(Obj);
 
   UnbridgedCastsSet UnbridgedCasts;
-  if (checkArgPlaceholdersForOverload(*this, MultiExprArg(Args, NumArgs),
-                                      UnbridgedCasts))
+  if (checkArgPlaceholdersForOverload(*this, Args, UnbridgedCasts))
     return ExprError();
 
   assert(Object.get()->getType()->isRecordType() && "Requires object type argument");
@@ -10980,8 +10979,8 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
   for (LookupResult::iterator Oper = R.begin(), OperEnd = R.end();
        Oper != OperEnd; ++Oper) {
     AddMethodCandidate(Oper.getPair(), Object.get()->getType(),
-                       Object.get()->Classify(Context), 
-                       llvm::makeArrayRef(Args, NumArgs), CandidateSet,
+                       Object.get()->Classify(Context),
+                       Args, CandidateSet,
                        /*SuppressUserConversions=*/ false);
   }
 
@@ -11028,8 +11027,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
       if (const FunctionProtoType *Proto = ConvType->getAs<FunctionProtoType>())
       {
         AddSurrogateCandidate(Conv, I.getPair(), ActingContext, Proto,
-                              Object.get(), llvm::makeArrayRef(Args, NumArgs),
-                              CandidateSet);
+                              Object.get(), Args, CandidateSet);
       }
     }
   }
@@ -11054,16 +11052,14 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
       Diag(Object.get()->getLocStart(),
            diag::err_ovl_no_viable_object_call)
         << Object.get()->getType() << Object.get()->getSourceRange();
-    CandidateSet.NoteCandidates(*this, OCD_AllCandidates,
-                                llvm::makeArrayRef(Args, NumArgs));
+    CandidateSet.NoteCandidates(*this, OCD_AllCandidates, Args);
     break;
 
   case OR_Ambiguous:
     Diag(Object.get()->getLocStart(),
          diag::err_ovl_ambiguous_object_call)
       << Object.get()->getType() << Object.get()->getSourceRange();
-    CandidateSet.NoteCandidates(*this, OCD_ViableCandidates,
-                                llvm::makeArrayRef(Args, NumArgs));
+    CandidateSet.NoteCandidates(*this, OCD_ViableCandidates, Args);
     break;
 
   case OR_Deleted:
@@ -11073,8 +11069,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
       << Object.get()->getType() 
       << getDeletedOrUnavailableSuffix(Best->Function)
       << Object.get()->getSourceRange();
-    CandidateSet.NoteCandidates(*this, OCD_AllCandidates,
-                                llvm::makeArrayRef(Args, NumArgs));
+    CandidateSet.NoteCandidates(*this, OCD_AllCandidates, Args);
     break;
   }
 
@@ -11109,8 +11104,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
                                           CK_UserDefinedConversion,
                                           Call.get(), 0, VK_RValue));
 
-    return ActOnCallExpr(S, Call.get(), LParenLoc, MultiExprArg(Args, NumArgs),
-                         RParenLoc);
+    return ActOnCallExpr(S, Call.get(), LParenLoc, Args, RParenLoc);
   }
 
   CheckMemberOperatorAccess(LParenLoc, Object.get(), 0, Best->FoundDecl);
@@ -11128,20 +11122,20 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
     Method->getType()->getAs<FunctionProtoType>();
 
   unsigned NumArgsInProto = Proto->getNumArgs();
-  unsigned NumArgsToCheck = NumArgs;
+  unsigned NumArgsToCheck = Args.size();
 
   // Build the full argument list for the method call (the
   // implicit object parameter is placed at the beginning of the
   // list).
   Expr **MethodArgs;
-  if (NumArgs < NumArgsInProto) {
+  if (Args.size() < NumArgsInProto) {
     NumArgsToCheck = NumArgsInProto;
     MethodArgs = new Expr*[NumArgsInProto + 1];
   } else {
-    MethodArgs = new Expr*[NumArgs + 1];
+    MethodArgs = new Expr*[Args.size() + 1];
   }
   MethodArgs[0] = Object.get();
-  for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
+  for (unsigned ArgIdx = 0, e = Args.size(); ArgIdx != e; ++ArgIdx)
     MethodArgs[ArgIdx + 1] = Args[ArgIdx];
 
   DeclarationNameInfo OpLocInfo(
@@ -11162,7 +11156,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
 
   CXXOperatorCallExpr *TheCall =
     new (Context) CXXOperatorCallExpr(Context, OO_Call, NewFn.take(),
-                                      llvm::makeArrayRef(MethodArgs, NumArgs+1),
+                                      llvm::makeArrayRef(MethodArgs, Args.size()+1),
                                       ResultTy, VK, RParenLoc, false);
   delete [] MethodArgs;
 
@@ -11172,9 +11166,9 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
 
   // We may have default arguments. If so, we need to allocate more
   // slots in the call for them.
-  if (NumArgs < NumArgsInProto)
+  if (Args.size() < NumArgsInProto)
     TheCall->setNumArgs(Context, NumArgsInProto + 1);
-  else if (NumArgs > NumArgsInProto)
+  else if (Args.size() > NumArgsInProto)
     NumArgsToCheck = NumArgsInProto;
 
   bool IsError = false;
@@ -11192,7 +11186,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
   // Check the argument types.
   for (unsigned i = 0; i != NumArgsToCheck; i++) {
     Expr *Arg;
-    if (i < NumArgs) {
+    if (i < Args.size()) {
       Arg = Args[i];
 
       // Pass the argument.
@@ -11222,7 +11216,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
   // If this is a variadic call, handle args passed through "...".
   if (Proto->isVariadic()) {
     // Promote the arguments (C99 6.5.2.2p7).
-    for (unsigned i = NumArgsInProto; i < NumArgs; i++) {
+    for (unsigned i = NumArgsInProto, e = Args.size(); i < e; i++) {
       ExprResult Arg = DefaultVariadicArgumentPromotion(Args[i], VariadicMethod, 0);
       IsError |= Arg.isInvalid();
       TheCall->setArg(i + 1, Arg.take());
@@ -11231,7 +11225,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
 
   if (IsError) return true;
 
-  DiagnoseSentinelCalls(Method, LParenLoc, llvm::makeArrayRef(Args, NumArgs));
+  DiagnoseSentinelCalls(Method, LParenLoc, Args);
 
   if (CheckFunctionCall(Method, TheCall, Proto))
     return true;
