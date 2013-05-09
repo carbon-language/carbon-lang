@@ -87,29 +87,62 @@ template <class InputIterator1, class InputIterator2>
     pair<InputIterator1, InputIterator2>
     mismatch(InputIterator1 first1, InputIterator1 last1, InputIterator2 first2);
 
+template <class InputIterator1, class InputIterator2>
+    pair<InputIterator1, InputIterator2>
+    mismatch(InputIterator1 first1, InputIterator1 last1, 
+             InputIterator2 first2, InputIterator2 last2); // **C++14**
+
 template <class InputIterator1, class InputIterator2, class BinaryPredicate>
     pair<InputIterator1, InputIterator2>
     mismatch(InputIterator1 first1, InputIterator1 last1,
              InputIterator2 first2, BinaryPredicate pred);
 
+template <class InputIterator1, class InputIterator2, class BinaryPredicate>
+    pair<InputIterator1, InputIterator2>
+    mismatch(InputIterator1 first1, InputIterator1 last1,
+             InputIterator2 first2, InputIterator2 last2,
+             BinaryPredicate pred); // **C++14**
+
 template <class InputIterator1, class InputIterator2>
     bool
     equal(InputIterator1 first1, InputIterator1 last1, InputIterator2 first2);
+
+template <class InputIterator1, class InputIterator2>
+    bool
+    equal(InputIterator1 first1, InputIterator1 last1, 
+          InputIterator2 first2, InputIterator2 last2); // **C++14**
 
 template <class InputIterator1, class InputIterator2, class BinaryPredicate>
     bool
     equal(InputIterator1 first1, InputIterator1 last1,
           InputIterator2 first2, BinaryPredicate pred);
 
+template <class InputIterator1, class InputIterator2, class BinaryPredicate>
+    bool
+    equal(InputIterator1 first1, InputIterator1 last1,
+          InputIterator2 first2, InputIterator2 last2,
+          BinaryPredicate pred); // **C++14**
+
 template<class ForwardIterator1, class ForwardIterator2>
     bool
     is_permutation(ForwardIterator1 first1, ForwardIterator1 last1,
                    ForwardIterator2 first2);
 
+template<class ForwardIterator1, class ForwardIterator2>
+    bool
+    is_permutation(ForwardIterator1 first1, ForwardIterator1 last1,
+                   ForwardIterator2 first2, ForwardIterator2 last2); // **C++14**
+
 template<class ForwardIterator1, class ForwardIterator2, class BinaryPredicate>
     bool
     is_permutation(ForwardIterator1 first1, ForwardIterator1 last1,
                    ForwardIterator2 first2, BinaryPredicate pred);
+
+template<class ForwardIterator1, class ForwardIterator2, class BinaryPredicate>
+    bool
+    is_permutation(ForwardIterator1 first1, ForwardIterator1 last1,
+                   ForwardIterator2 first2, ForwardIterator2 last2,
+                   BinaryPredicate pred);  // **C++14**
 
 template <class ForwardIterator1, class ForwardIterator2>
     ForwardIterator1
@@ -1087,6 +1120,32 @@ mismatch(_InputIterator1 __first1, _InputIterator1 __last1, _InputIterator2 __fi
     return _VSTD::mismatch(__first1, __last1, __first2, __equal_to<__v1, __v2>());
 }
 
+#if _LIBCPP_STD_VER > 11
+template <class _InputIterator1, class _InputIterator2, class _BinaryPredicate>
+inline _LIBCPP_INLINE_VISIBILITY
+pair<_InputIterator1, _InputIterator2>
+mismatch(_InputIterator1 __first1, _InputIterator1 __last1,
+         _InputIterator2 __first2, _InputIterator2 __last2,
+         _BinaryPredicate __pred)
+{
+    for (; __first1 != __last1 && __first2 != __last2; ++__first1, ++__first2)
+        if (!__pred(*__first1, *__first2))
+            break;
+    return pair<_InputIterator1, _InputIterator2>(__first1, __first2);
+}
+
+template <class _InputIterator1, class _InputIterator2>
+inline _LIBCPP_INLINE_VISIBILITY
+pair<_InputIterator1, _InputIterator2>
+mismatch(_InputIterator1 __first1, _InputIterator1 __last1,
+         _InputIterator2 __first2, _InputIterator2 __last2)
+{
+    typedef typename iterator_traits<_InputIterator1>::value_type __v1;
+    typedef typename iterator_traits<_InputIterator2>::value_type __v2;
+    return _VSTD::mismatch(__first1, __last1, __first2, __last2, __equal_to<__v1, __v2>());
+}
+#endif
+
 // equal
 
 template <class _InputIterator1, class _InputIterator2, class _BinaryPredicate>
@@ -1109,6 +1168,60 @@ equal(_InputIterator1 __first1, _InputIterator1 __last1, _InputIterator2 __first
     typedef typename iterator_traits<_InputIterator2>::value_type __v2;
     return _VSTD::equal(__first1, __last1, __first2, __equal_to<__v1, __v2>());
 }
+
+#if _LIBCPP_STD_VER > 11
+template <class _BinaryPredicate, class _InputIterator1, class _InputIterator2>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__equal(_InputIterator1 __first1, _InputIterator1 __last1, 
+        _InputIterator2 __first2, _InputIterator2 __last2, _BinaryPredicate __pred,
+        input_iterator_tag, input_iterator_tag )
+{
+    for (; __first1 != __last1 && __first2 != __last2; ++__first1, ++__first2)
+        if (!__pred(*__first1, *__first2))
+            return false;
+    return __first1 == __last1 && __first2 == __last2;
+}
+
+template <class _BinaryPredicate, class _RandomAccessIterator1, class _RandomAccessIterator2>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__equal(_RandomAccessIterator1 __first1, _RandomAccessIterator1 __last1, 
+        _RandomAccessIterator2 __first2, _RandomAccessIterator2 __last2, _BinaryPredicate __pred, 
+      random_access_iterator_tag, random_access_iterator_tag )
+{
+    if ( _VSTD::distance(__first1, __last1) != _VSTD::distance(__first2, __last2))
+        return false;
+    return _VSTD::equal<_RandomAccessIterator1, _RandomAccessIterator2,
+                        typename add_lvalue_reference<_BinaryPredicate>::type>
+                       (__first1, __last1, __first2, __pred );
+}
+
+template <class _InputIterator1, class _InputIterator2, class _BinaryPredicate>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+equal(_InputIterator1 __first1, _InputIterator1 __last1, 
+      _InputIterator2 __first2, _InputIterator2 __last2, _BinaryPredicate __pred )
+{
+    return _VSTD::__equal<typename add_lvalue_reference<_BinaryPredicate>::type>
+       (__first1, __last1, __first2, __last2, __pred, 
+        typename iterator_traits<_InputIterator1>::iterator_category(),
+        typename iterator_traits<_InputIterator2>::iterator_category());
+}
+
+template <class _InputIterator1, class _InputIterator2>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+equal(_InputIterator1 __first1, _InputIterator1 __last1, 
+      _InputIterator2 __first2, _InputIterator2 __last2)
+{
+    typedef typename iterator_traits<_InputIterator1>::value_type __v1;
+    typedef typename iterator_traits<_InputIterator2>::value_type __v2;
+    return _VSTD::__equal(__first1, __last1, __first2, __last2, __equal_to<__v1, __v2>(),
+        typename iterator_traits<_InputIterator1>::iterator_category(),
+        typename iterator_traits<_InputIterator2>::iterator_category());
+}
+#endif
 
 // is_permutation
 
@@ -1168,6 +1281,100 @@ is_permutation(_ForwardIterator1 __first1, _ForwardIterator1 __last1,
     typedef typename iterator_traits<_ForwardIterator2>::value_type __v2;
     return _VSTD::is_permutation(__first1, __last1, __first2, __equal_to<__v1, __v2>());
 }
+
+#if _LIBCPP_STD_VER > 11
+template<class _BinaryPredicate, class _ForwardIterator1, class _ForwardIterator2>
+bool
+__is_permutation(_ForwardIterator1 __first1, _ForwardIterator1 __last1,
+                 _ForwardIterator2 __first2, _ForwardIterator2 __last2, 
+                 _BinaryPredicate __pred,
+                 forward_iterator_tag, forward_iterator_tag )
+{
+    // shorten sequences as much as possible by lopping of any equal parts
+    for (; __first1 != __last1 && __first2 != __last2; ++__first1, ++__first2)
+        if (!__pred(*__first1, *__first2))
+            goto __not_done;
+    return __first1 == __last1 && __first2 == __last2;
+__not_done:
+    // __first1 != __last1 && __first2 != __last2 && *__first1 != *__first2
+    typedef typename iterator_traits<_ForwardIterator1>::difference_type _D1;
+    _D1 __l1 = _VSTD::distance(__first1, __last1);
+
+    typedef typename iterator_traits<_ForwardIterator2>::difference_type _D2;
+    _D1 __l2 = _VSTD::distance(__first2, __last2);
+    if (__l1 != __l2)
+        return false;
+
+    // For each element in [f1, l1) see if there are the same number of
+    //    equal elements in [f2, l2)
+    for (_ForwardIterator1 __i = __first1; __i != __last1; ++__i)
+    {
+        // Have we already counted the number of *__i in [f1, l1)?
+        for (_ForwardIterator1 __j = __first1; __j != __i; ++__j)
+            if (__pred(*__j, *__i))
+                goto __next_iter;
+        {
+            // Count number of *__i in [f2, l2)
+            _D1 __c2 = 0;
+            for (_ForwardIterator2 __j = __first2; __j != __last2; ++__j)
+                if (__pred(*__i, *__j))
+                    ++__c2;
+            if (__c2 == 0)
+                return false;
+            // Count number of *__i in [__i, l1) (we can start with 1)
+            _D1 __c1 = 1;
+            for (_ForwardIterator1 __j = _VSTD::next(__i); __j != __last1; ++__j)
+                if (__pred(*__i, *__j))
+                    ++__c1;
+            if (__c1 != __c2)
+                return false;
+        }
+__next_iter:;
+    }
+    return true;
+}
+
+template<class _BinaryPredicate, class _RandomAccessIterator1, class _RandomAccessIterator2>
+bool
+__is_permutation(_RandomAccessIterator1 __first1, _RandomAccessIterator2 __last1,
+               _RandomAccessIterator1 __first2, _RandomAccessIterator2 __last2, 
+               _BinaryPredicate __pred,
+               random_access_iterator_tag, random_access_iterator_tag )
+{
+    if ( _VSTD::distance(__first1, __last1) != _VSTD::distance(__first2, __last2))
+        return false;
+    return _VSTD::is_permutation<_RandomAccessIterator1, _RandomAccessIterator2,
+                                 typename add_lvalue_reference<_BinaryPredicate>::type>
+                                (__first1, __last1, __first2, __pred );
+}
+
+template<class _ForwardIterator1, class _ForwardIterator2, class _BinaryPredicate>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+is_permutation(_ForwardIterator1 __first1, _ForwardIterator1 __last1,
+               _ForwardIterator2 __first2, _ForwardIterator2 __last2,
+               _BinaryPredicate __pred )
+{
+    return _VSTD::__is_permutation<typename add_lvalue_reference<_BinaryPredicate>::type>
+       (__first1, __last1, __first2, __last2, __pred,
+        typename iterator_traits<_ForwardIterator1>::iterator_category(),
+        typename iterator_traits<_ForwardIterator2>::iterator_category());
+}
+
+template<class _ForwardIterator1, class _ForwardIterator2>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+is_permutation(_ForwardIterator1 __first1, _ForwardIterator1 __last1,
+               _ForwardIterator2 __first2, _ForwardIterator2 __last2)
+{
+    typedef typename iterator_traits<_ForwardIterator1>::value_type __v1;
+    typedef typename iterator_traits<_ForwardIterator2>::value_type __v2;
+    return _VSTD::__is_permutation(__first1, __last1, __first2, __last2,
+        __equal_to<__v1, __v2>(),
+        typename iterator_traits<_ForwardIterator1>::iterator_category(),
+        typename iterator_traits<_ForwardIterator2>::iterator_category());
+}
+#endif
 
 // search
 

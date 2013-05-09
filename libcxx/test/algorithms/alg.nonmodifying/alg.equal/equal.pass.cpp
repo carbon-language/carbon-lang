@@ -19,6 +19,10 @@
 
 #include "test_iterators.h"
 
+#if _LIBCPP_STD_VER > 11
+#define	HAS_FOUR_ITERATOR_VERSION
+#endif
+
 int main()
 {
     int ia[] = {0, 1, 2, 3, 4, 5};
@@ -27,7 +31,36 @@ int main()
     assert(std::equal(input_iterator<const int*>(ia),
                       input_iterator<const int*>(ia+s),
                       input_iterator<const int*>(ia)));
+#ifdef HAS_FOUR_ITERATOR_VERSION
+    assert(std::equal(input_iterator<const int*>(ia),
+                      input_iterator<const int*>(ia+s),
+                      input_iterator<const int*>(ia),
+                      input_iterator<const int*>(ia+s)));
+    assert(std::equal(random_access_iterator<const int*>(ia),
+                      random_access_iterator<const int*>(ia+s),
+                      random_access_iterator<const int*>(ia),
+                      random_access_iterator<const int*>(ia+s)));
+#endif
     assert(!std::equal(input_iterator<const int*>(ia),
                        input_iterator<const int*>(ia+s),
                        input_iterator<const int*>(ib)));
+#ifdef HAS_FOUR_ITERATOR_VERSION
+    assert(!std::equal(input_iterator<const int*>(ia),
+                       input_iterator<const int*>(ia+s),
+                       input_iterator<const int*>(ib),
+                       input_iterator<const int*>(ib+s)));
+    assert(!std::equal(random_access_iterator<const int*>(ia),
+                       random_access_iterator<const int*>(ia+s),
+                       random_access_iterator<const int*>(ib),
+                       random_access_iterator<const int*>(ib+s)));
+    assert(!std::equal(input_iterator<const int*>(ia),
+                       input_iterator<const int*>(ia+s),
+                       input_iterator<const int*>(ia),
+                       input_iterator<const int*>(ia+s-1)));
+    assert(!std::equal(random_access_iterator<const int*>(ia),
+                       random_access_iterator<const int*>(ia+s),
+                       random_access_iterator<const int*>(ia),
+                       random_access_iterator<const int*>(ia+s-1)));
+    
+#endif
 }

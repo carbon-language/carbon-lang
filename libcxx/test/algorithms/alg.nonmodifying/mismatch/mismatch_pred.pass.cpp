@@ -21,6 +21,11 @@
 
 #include "test_iterators.h"
 
+#if _LIBCPP_STD_VER > 11
+#define HAS_FOUR_ITERATOR_VERSION
+#endif
+
+
 int main()
 {
     int ia[] = {0, 1, 2, 2, 0, 1, 2, 3};
@@ -34,6 +39,24 @@ int main()
                                     input_iterator<const int*> >(
                             input_iterator<const int*>(ia+3),
                             input_iterator<const int*>(ib+3))));
+#ifdef HAS_FOUR_ITERATOR_VERSION
+    assert(std::mismatch(input_iterator<const int*>(ia),
+                         input_iterator<const int*>(ia + sa),
+                         input_iterator<const int*>(ib),
+                         input_iterator<const int*>(ib + sa),
+                         std::equal_to<int>()) ==
+                         (std::pair<input_iterator<const int*>,
+                                    input_iterator<const int*> >(
+                            input_iterator<const int*>(ia+3),
+                            input_iterator<const int*>(ib+3))));
+#endif
+
     assert(std::mismatch(ia, ia + sa, ib, std::equal_to<int>()) ==
            (std::pair<int*,int*>(ia+3,ib+3)));
+#ifdef HAS_FOUR_ITERATOR_VERSION
+    assert(std::mismatch(ia, ia + sa, ib, ib + sa, std::equal_to<int>()) ==
+           (std::pair<int*,int*>(ia+3,ib+3)));
+    assert(std::mismatch(ia, ia + sa, ib, ib + 2, std::equal_to<int>()) ==
+           (std::pair<int*,int*>(ia+2,ib+2)));
+#endif
 }

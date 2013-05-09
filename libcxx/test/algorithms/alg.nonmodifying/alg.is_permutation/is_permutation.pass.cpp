@@ -19,6 +19,10 @@
 
 #include "test_iterators.h"
 
+#if _LIBCPP_STD_VER > 11
+#define	HAS_FOUR_ITERATOR_VERSION
+#endif
+
 int main()
 {
     {
@@ -28,9 +32,25 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + 0),
                                    forward_iterator<const int*>(ib)) == true);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + 0),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + 0)) == true);
+#endif
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == true);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == true);
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa - 1)) == false);
+#endif
     }
     {
         const int ia[] = {0};
@@ -39,6 +59,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
 
     {
@@ -48,6 +74,16 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == true);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == true);
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa - 1)) == false);
+#endif
     }
     {
         const int ia[] = {0, 0};
@@ -56,6 +92,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {0, 0};
@@ -64,6 +106,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {0, 0};
@@ -72,6 +120,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {0, 1};
@@ -80,6 +134,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {0, 1};
@@ -88,6 +148,16 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == true);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == true);
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa - 1)) == false);
+#endif
     }
     {
         const int ia[] = {0, 1};
@@ -96,6 +166,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == true);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == true);
+#endif
     }
     {
         const int ia[] = {0, 1};
@@ -104,6 +180,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {1, 0};
@@ -112,6 +194,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {1, 0};
@@ -120,6 +208,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == true);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == true);
+#endif
     }
     {
         const int ia[] = {1, 0};
@@ -128,6 +222,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == true);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == true);
+#endif
     }
     {
         const int ia[] = {1, 0};
@@ -136,6 +236,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {1, 1};
@@ -144,6 +250,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {1, 1};
@@ -152,6 +264,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {1, 1};
@@ -160,6 +278,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {1, 1};
@@ -168,6 +292,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == true);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == true);
+#endif
     }
 
     {
@@ -177,6 +307,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {0, 0, 0};
@@ -185,6 +321,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {0, 0, 0};
@@ -193,6 +335,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {0, 0, 0};
@@ -201,6 +349,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {0, 0, 0};
@@ -209,6 +363,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {0, 0, 0};
@@ -217,6 +377,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {0, 0, 0};
@@ -225,6 +391,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {0, 0, 0};
@@ -233,6 +405,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {0, 0, 0};
@@ -241,6 +419,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {0, 0, 1};
@@ -249,6 +433,16 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == true);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == true);
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa - 1)) == false);
+#endif
     }
     {
         const int ia[] = {0, 0, 1};
@@ -257,6 +451,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {0, 1, 2};
@@ -265,6 +465,16 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == true);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == true);
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa - 1)) == false);
+#endif
     }
     {
         const int ia[] = {0, 1, 2};
@@ -273,6 +483,16 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == true);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == true);
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa - 1)) == false);
+#endif
     }
     {
         const int ia[] = {0, 1, 2};
@@ -281,6 +501,16 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == true);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == true);
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa - 1)) == false);
+#endif
     }
     {
         const int ia[] = {0, 1, 2};
@@ -289,6 +519,16 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == true);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == true);
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa - 1)) == false);
+#endif
     }
     {
         const int ia[] = {0, 0, 1};
@@ -297,6 +537,12 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
     {
         const int ia[] = {0, 0, 1};
@@ -305,6 +551,20 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == true);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == true);
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib + 1),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa - 1)) == false);
+#endif
     }
     {
         const int ia[] = {0, 1, 2, 3, 0, 5, 6, 2, 4, 4};
@@ -313,6 +573,20 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == true);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == true);
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib + 1 ),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa - 1)) == false);
+#endif
     }
     {
         const int ia[] = {0, 1, 2, 3, 0, 5, 6, 2, 4, 4};
@@ -321,5 +595,11 @@ int main()
         assert(std::is_permutation(forward_iterator<const int*>(ia),
                                    forward_iterator<const int*>(ia + sa),
                                    forward_iterator<const int*>(ib)) == false);
+#ifdef HAS_FOUR_ITERATOR_VERSION
+        assert(std::is_permutation(forward_iterator<const int*>(ia),
+                                   forward_iterator<const int*>(ia + sa),
+                                   forward_iterator<const int*>(ib),
+                                   forward_iterator<const int*>(ib + sa)) == false);
+#endif
     }
 }

@@ -21,6 +21,17 @@
 
 #include "test_iterators.h"
 
+#if _LIBCPP_STD_VER > 11
+#define	HAS_FOUR_ITERATOR_VERSION
+#endif
+
+int comparison_count = 0;
+template <typename T>
+bool counting_equals ( const T &a, const T &b ) {
+	++comparison_count;
+	return a == b;
+	}
+
 int main()
 {
     int ia[] = {0, 1, 2, 3, 4, 5};
@@ -30,8 +41,47 @@ int main()
                       input_iterator<const int*>(ia+s),
                       input_iterator<const int*>(ia),
                       std::equal_to<int>()));
+#ifdef HAS_FOUR_ITERATOR_VERSION
+    assert(std::equal(input_iterator<const int*>(ia),
+                      input_iterator<const int*>(ia+s),
+                      input_iterator<const int*>(ia),
+                      input_iterator<const int*>(ia+s),
+                      std::equal_to<int>()));
+    assert(std::equal(random_access_iterator<const int*>(ia),
+                      random_access_iterator<const int*>(ia+s),
+                      random_access_iterator<const int*>(ia),
+                      random_access_iterator<const int*>(ia+s),
+                      std::equal_to<int>()));
+
+    comparison_count = 0;
+    assert(!std::equal(input_iterator<const int*>(ia),
+                      input_iterator<const int*>(ia+s),
+                      input_iterator<const int*>(ia),
+                      input_iterator<const int*>(ia+s-1),
+                      counting_equals<int>));
+    assert(comparison_count > 0);
+    comparison_count = 0;
+    assert(!std::equal(random_access_iterator<const int*>(ia),
+                      random_access_iterator<const int*>(ia+s),
+                      random_access_iterator<const int*>(ia),
+                      random_access_iterator<const int*>(ia+s-1),
+                      counting_equals<int>));
+    assert(comparison_count == 0);
+#endif
     assert(!std::equal(input_iterator<const int*>(ia),
                        input_iterator<const int*>(ia+s),
                        input_iterator<const int*>(ib),
                        std::equal_to<int>()));
+#ifdef HAS_FOUR_ITERATOR_VERSION
+    assert(!std::equal(input_iterator<const int*>(ia),
+                       input_iterator<const int*>(ia+s),
+                       input_iterator<const int*>(ib),
+                       input_iterator<const int*>(ib+s),
+                       std::equal_to<int>()));
+    assert(!std::equal(random_access_iterator<const int*>(ia),
+                       random_access_iterator<const int*>(ia+s),
+                       random_access_iterator<const int*>(ib),
+                       random_access_iterator<const int*>(ib+s),
+                       std::equal_to<int>()));
+#endif
 }
