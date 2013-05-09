@@ -190,9 +190,9 @@ namespace options {
     /// Index to the position where argument parsing should resume
     /// (even if the argument is missing values).
     ///
-    /// \parm ArgSize The number of bytes taken up by the matched Option prefix
-    ///               and name. This is used to determine where joined values
-    ///               start.
+    /// \param ArgSize The number of bytes taken up by the matched Option prefix
+    ///                and name. This is used to determine where joined values
+    ///                start.
     Arg *accept(const ArgList &Args, unsigned &Index, unsigned ArgSize) const;
 
     void dump() const;
