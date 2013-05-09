@@ -258,10 +258,57 @@ StatementMatcher makeIteratorLoopMatcher() {
 ///   - If the end iterator variable 'g' is defined, it is the same as 'j'
 ///   - The container's iterators would not be invalidated during the loop
 StatementMatcher makePseudoArrayLoopMatcher() {
+  // Test that the incoming type has a record declaration that has methods
+  // called 'begin' and 'end'. If the incoming type is const, then make sure
+  // these methods are also marked const.
+  // 
+  // FIXME: To be completely thorough this matcher should also ensure the
+  // return type of begin/end is an iterator that dereferences to the same as
+  // what operator[] or at() returns. Such a test isn't likely to fail except
+  // for pathological cases.
+  //
+  // FIXME: Also, a record doesn't necessarily need begin() and end(). Free
+  // functions called begin() and end() taking the container as an argument
+  // are also allowed.
+  TypeMatcher RecordWithBeginEnd = 
+    qualType(anyOf(
+      qualType(
+        isConstQualified(),
+        hasDeclaration(
+          recordDecl(
+            hasMethod(
+              methodDecl(
+                hasName("begin"),
+                isConst()
+              )
+            ),
+            hasMethod(
+              methodDecl(
+                hasName("end"),
+                isConst()
+              )
+            )
+          )
+        ) // hasDeclaration
+      ), // qualType
+      qualType(
+        unless(isConstQualified()),
+        hasDeclaration(
+          recordDecl(
+            hasMethod(hasName("begin")),
+            hasMethod(hasName("end"))
+          )
+        )
+      ) // qualType
+    )
+  );
+
   StatementMatcher SizeCallMatcher =
       memberCallExpr(argumentCountIs(0),
                      callee(methodDecl(anyOf(hasName("size"),
-                                             hasName("length")))));
+                                             hasName("length")))),
+                     on(anyOf(hasType(pointsTo(RecordWithBeginEnd)),
+                              hasType(RecordWithBeginEnd))));
 
   StatementMatcher EndInitMatcher =
       expr(anyOf(

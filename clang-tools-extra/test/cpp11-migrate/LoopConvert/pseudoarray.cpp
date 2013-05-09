@@ -1,5 +1,5 @@
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
-// RUN: cpp11-migrate -loop-convert %t.cpp -- -I %S/Inputs
+// RUN: cpp11-migrate -loop-convert %t.cpp -- -I %S/Inputs -std=c++11
 // RUN: FileCheck -input-file=%t.cpp %s
 #include "structures.h"
 
@@ -64,3 +64,42 @@ void noContainer() {
   for (auto i = 0; i < v.size(); ++i) ;
   // CHECK: for (auto & elem : v) ;
 }
+
+struct NoBeginEnd {
+  unsigned size() const;
+};
+
+struct NoConstBeginEnd {
+  NoConstBeginEnd();
+  unsigned size() const;
+  unsigned begin();
+  unsigned end();
+};
+
+struct ConstBeginEnd {
+  ConstBeginEnd();
+  unsigned size() const;
+  unsigned begin() const;
+  unsigned end() const;
+};
+
+// Shouldn't transform pseudo-array uses if the container doesn't provide
+// begin() and end() of the right const-ness.
+void NoBeginEndTest() {
+  NoBeginEnd NBE;
+  for (unsigned i = 0, e = NBE.size(); i < e; ++i) {}
+  // CHECK: for (unsigned i = 0, e = NBE.size(); i < e; ++i) {}
+
+  const NoConstBeginEnd const_NCBE;
+  for (unsigned i = 0, e = const_NCBE.size(); i < e; ++i) {}
+  // CHECK: for (unsigned i = 0, e = const_NCBE.size(); i < e; ++i) {}
+
+  ConstBeginEnd CBE;
+  for (unsigned i = 0, e = CBE.size(); i < e; ++i) {}
+  // CHECK: for (auto & elem : CBE) {}
+
+  const ConstBeginEnd const_CBE;
+  for (unsigned i = 0, e = const_CBE.size(); i < e; ++i) {}
+  // CHECK: for (auto & elem : const_CBE) {}
+}
+
