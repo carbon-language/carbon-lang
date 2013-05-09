@@ -6302,6 +6302,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                          is_variadic, 
                                                          type_quals);
                     
+                    bool ignore_containing_context = false;
+                    
                     if (type_name_cstr)
                     {
                         bool type_handled = false;
@@ -6520,7 +6522,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                     }
                                                     else
                                                     {
-                                                        return TypeSP();
+                                                        ignore_containing_context = true;
                                                     }
                                                 }
                                             }
@@ -6562,7 +6564,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         if (!type_handled)
                         {
                             // We just have a function that isn't part of a class
-                            clang::FunctionDecl *function_decl = ast.CreateFunctionDeclaration (containing_decl_ctx,
+                            clang::FunctionDecl *function_decl = ast.CreateFunctionDeclaration (ignore_containing_context ? GetClangASTContext().GetTranslationUnitDecl() : containing_decl_ctx,
                                                                                                 type_name_cstr, 
                                                                                                 clang_type, 
                                                                                                 storage, 
