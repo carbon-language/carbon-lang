@@ -116,9 +116,9 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
   }
   bool emitFrameMoves = XCoreRegisterInfo::needsFrameMoves(MF);
 
+  bool saveLR = XFI->getUsesLR();
   // Do we need to allocate space on the stack?
   if (FrameSize) {
-    bool saveLR = XFI->getUsesLR();
     bool LRSavedOnEntry = false;
     int Opcode;
     if (saveLR && (MFI->getObjectOffset(XFI->getLRSpillSlot()) == 0)) {
@@ -148,18 +148,18 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
         Moves.push_back(MachineMove(FrameLabel, CSDst, CSSrc));
       }
     }
-    if (saveLR) {
-      int LRSpillOffset = MFI->getObjectOffset(XFI->getLRSpillSlot());
-      storeToStack(MBB, MBBI, XCore::LR, LRSpillOffset + FrameSize*4, dl, TII);
-      MBB.addLiveIn(XCore::LR);
+  }
+  if (saveLR) {
+    int LRSpillOffset = MFI->getObjectOffset(XFI->getLRSpillSlot());
+    storeToStack(MBB, MBBI, XCore::LR, LRSpillOffset + FrameSize*4, dl, TII);
+    MBB.addLiveIn(XCore::LR);
 
-      if (emitFrameMoves) {
-        MCSymbol *SaveLRLabel = MMI->getContext().CreateTempSymbol();
-        BuildMI(MBB, MBBI, dl, TII.get(XCore::PROLOG_LABEL)).addSym(SaveLRLabel);
-        MachineLocation CSDst(MachineLocation::VirtualFP, LRSpillOffset);
-        MachineLocation CSSrc(XCore::LR);
-        MMI->getFrameMoves().push_back(MachineMove(SaveLRLabel, CSDst, CSSrc));
-      }
+    if (emitFrameMoves) {
+      MCSymbol *SaveLRLabel = MMI->getContext().CreateTempSymbol();
+      BuildMI(MBB, MBBI, dl, TII.get(XCore::PROLOG_LABEL)).addSym(SaveLRLabel);
+      MachineLocation CSDst(MachineLocation::VirtualFP, LRSpillOffset);
+      MachineLocation CSSrc(XCore::LR);
+      MMI->getFrameMoves().push_back(MachineMove(SaveLRLabel, CSDst, CSSrc));
     }
   }
 
@@ -213,6 +213,7 @@ void XCoreFrameLowering::emitEpilogue(MachineFunction &MF,
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   const XCoreInstrInfo &TII =
     *static_cast<const XCoreInstrInfo*>(MF.getTarget().getInstrInfo());
+  XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
   DebugLoc dl = MBBI->getDebugLoc();
 
   bool FP = hasFP(MF);
@@ -237,24 +238,26 @@ void XCoreFrameLowering::emitEpilogue(MachineFunction &MF,
     report_fatal_error("emitEpilogue Frame size too big: " + Twine(FrameSize));
   }
 
-  if (FrameSize) {
-    XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
+  if (FP) {
+    // Restore R10
+    int FPSpillOffset = MFI->getObjectOffset(XFI->getFPSpillSlot());
+    FPSpillOffset += FrameSize*4;
+    loadFromStack(MBB, MBBI, XCore::R10, FPSpillOffset, dl, TII);
+  }
 
-    if (FP) {
-      // Restore R10
-      int FPSpillOffset = MFI->getObjectOffset(XFI->getFPSpillSlot());
-      FPSpillOffset += FrameSize*4;
-      loadFromStack(MBB, MBBI, XCore::R10, FPSpillOffset, dl, TII);
-    }
-    bool restoreLR = XFI->getUsesLR();
-    if (restoreLR && MFI->getObjectOffset(XFI->getLRSpillSlot()) != 0) {
-      int LRSpillOffset = MFI->getObjectOffset(XFI->getLRSpillSlot());
-      LRSpillOffset += FrameSize*4;
-      loadFromStack(MBB, MBBI, XCore::LR, LRSpillOffset, dl, TII);
-      restoreLR = false;
-    }
+  bool restoreLR = XFI->getUsesLR();
+  if (restoreLR &&
+      (FrameSize == 0 || MFI->getObjectOffset(XFI->getLRSpillSlot()) != 0)) {
+    int LRSpillOffset = MFI->getObjectOffset(XFI->getLRSpillSlot());
+    LRSpillOffset += FrameSize*4;
+    loadFromStack(MBB, MBBI, XCore::LR, LRSpillOffset, dl, TII);
+    restoreLR = false;
+  }
+
+  if (FrameSize) {
     if (restoreLR) {
       // Fold prologue into return instruction
+      assert(MFI->getObjectOffset(XFI->getLRSpillSlot()) == 0);
       assert(MBBI->getOpcode() == XCore::RETSP_u6
         || MBBI->getOpcode() == XCore::RETSP_lu6);
       int Opcode = (isU6) ? XCore::RETSP_u6 : XCore::RETSP_lu6;
