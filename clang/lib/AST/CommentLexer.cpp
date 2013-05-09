@@ -355,6 +355,10 @@ void Lexer::lexCommentText(Token &T) {
         if (!Info) {
           formTokenWithChars(T, TokenPtr, tok::unknown_command);
           T.setUnknownCommandName(CommandName);
+          // single character command impostures, such as \t or \n must not go
+          // through the fixit logic.
+          if (CommandName.size() <= 1)
+            return;
           if ((Info = Traits.getTypoCorrectCommandInfo(CommandName))) {
             StringRef CorrectedName = Info->Name;
             SourceRange CommandRange(T.getLocation().getLocWithOffset(1),
