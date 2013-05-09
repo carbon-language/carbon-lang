@@ -1,46 +1,19 @@
 // RUN: %clang -emit-llvm -g -S %s -o - | FileCheck %s
 
-//CHECK: TC<int>
-//CHECK: DW_TAG_template_type_parameter
+// CHECK: [[INT:![0-9]*]] = {{.*}} ; [ DW_TAG_base_type ] [int]
+// CHECK: metadata [[TCI:![0-9]*]], i32 0, i32 1, %class.TC* @tci, null} ; [ DW_TAG_variable ] [tci]
+// CHECK: [[TC:![0-9]*]] = {{.*}}, metadata [[TCARGS:![0-9]*]]} ; [ DW_TAG_class_type ] [TC<int, 2>]
+// CHECK: [[TCARGS]] = metadata !{metadata [[TCARG1:![0-9]*]], metadata [[TCARG2:![0-9]*]]}
+//
+// We seem to be missing file/line/col info on template value parameters -
+// metadata supports it but it's not populated.
+//
+// CHECK: [[TCARG1]] = {{.*}}metadata !"T", metadata [[INT]], {{.*}} ; [ DW_TAG_template_type_parameter ]
+// CHECK: [[TCARG2]] = {{.*}}metadata !"", metadata [[UINT:![0-9]*]], i64 2, {{.*}} ; [ DW_TAG_template_value_parameter ]
+// CHECK: [[UINT]] = {{.*}} ; [ DW_TAG_base_type ] [unsigned int]
 
-template<typename T>
+template<typename T, unsigned>
 class TC {
-public:
-  TC(const TC &) {}
-  TC() {}
 };
 
-TC<int> tci;
-
-//CHECK: TU<2>
-//CHECK: DW_TAG_template_value_parameter
-template<unsigned >
-class TU {
-  int b;
-};
-
-TU<2> u2;
-
-// PR9600
-template<typename T> class vector {};
-class Foo;
-typedef vector<Foo*> FooVector[3];
-struct Test {
-  virtual void foo(FooVector *);
-};
-static Test test;
-
-// PR9608
-template <int i> struct TheTemplate {
-  struct Empty2 {};
-  typedef const Empty2 DependentType[i];
-  TheTemplate() {}
-};
-
-class TheTemplateTest : public TheTemplate<42> {
-  TheTemplateTest();
-  void method(const TheTemplate<42>::DependentType *) {}
-};
-
-TheTemplateTest::TheTemplateTest() : TheTemplate<42>() {}
-
+TC<int, 2> tci;

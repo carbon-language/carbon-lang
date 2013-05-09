@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm-only -g %s
+// RUN: %clang_cc1 -emit-llvm-only -g %s -o - | FileCheck %s
 template<typename T> struct Identity {
   typedef T Type;
 };
@@ -66,4 +66,13 @@ class Cls {
 };
 
 Cls obj;
+}
+
+namespace pr9608 { // also pr9600
+struct incomplete;
+incomplete (*x)[3];
+// CHECK: metadata [[INCARRAYPTR:![0-9]*]], i32 0, i32 1, [3 x i8]** @_ZN6pr96081xE, null} ; [ DW_TAG_variable ] [x]
+// CHECK: [[INCARRAYPTR]] = {{.*}}metadata [[INCARRAY:![0-9]*]]} ; [ DW_TAG_pointer_type ]
+// CHECK: [[INCARRAY]] = {{.*}}metadata [[INCTYPE:![0-9]*]], metadata {{![0-9]*}}, i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 0, align 0, offset 0] [from incomplete]
+// CHECK: [[INCTYPE]] = {{.*}} ; [ DW_TAG_structure_type ] [incomplete]{{.*}} [fwd]
 }
