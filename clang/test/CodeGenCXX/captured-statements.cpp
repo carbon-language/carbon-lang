@@ -34,7 +34,7 @@ void test1() {
   // CHECK-1:   store %struct.Foo* %f, %struct.Foo**
   // CHECK-1:   getelementptr inbounds %[[Capture]]* %{{[^,]*}}, i32 0, i32 1
   // CHECK-1:   call void @[[HelperName:[A-Za-z0-9_]+]](%[[Capture]]*
-  // CHECK-1:   call void @_ZN3FooD1Ev
+  // CHECK-1:   call {{.*}}FooD1Ev
   // CHECK-1:   ret
 }
 
@@ -93,5 +93,5 @@ void test4() {
   //
   // CHECK-4: define internal void @[[HelperName]]
   // CHECK-4:   store i32 5, i32*
-  // CHECK-4:   call void @{{.*}}FooD1Ev(%struct.Foo*
+  // CHECK-4:   call {{.*}}FooD1Ev
 }
