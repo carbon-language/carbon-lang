@@ -300,6 +300,7 @@ D: Added STI Cell SPU backend.
 N: Kai Nacke
 E: kai@redstar.de
 D: Support for implicit TLS model used with MS VC runtime
+D: Dumping of Win64 EH structures
 
 N: Takumi Nakamura
 E: geek4civic@gmail.com
