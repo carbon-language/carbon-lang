@@ -37,6 +37,9 @@ def note_possibility : Note<"one possibility">;
 def note_also_found : Note<"also found">;
 
 // Parse && Lex
+
+let CategoryName = "Lexical or Preprocessor Issue" in {
+
 def err_expected_colon : Error<"expected ':'">;
 def err_expected_colon_after_setter_name : Error<
   "method name referenced in property setter attribute "
@@ -51,7 +54,12 @@ def err_invalid_character_udl : Error<
 def err_invalid_numeric_udl : Error<
   "numeric literal with user-defined suffix cannot be used here">;
 
+}
+
 // Parse && Sema
+
+let CategoryName = "Parse Issue" in {
+
 def err_param_redefinition : Error<"redefinition of parameter %0">;
 def warn_method_param_redefinition : Warning<"redefinition of method parameter %0">;
 def warn_method_param_declaration : Warning<"redeclaration of method parameter %0">,
@@ -78,6 +86,8 @@ def note_decl_hiding_tag_type : Note<
 def err_attribute_not_type_attr : Error<
   "%0 attribute cannot be applied to types">;
 def err_enum_template : Error<"enumeration cannot be a template">;
+
+}
 
 // Sema && Lex
 def ext_c99_longlong : Extension<
