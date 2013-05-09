@@ -49,17 +49,17 @@ public:
     CreateRegisterContextForFrame (lldb_private::StackFrame *frame);
 
     //--------------------------------------------------------------------------
-    // These static functions provide a mapping from the register offset
+    // These functions provide a mapping from the register offset
     // back to the register index or name for use in debugging or log
     // output.
 
-    static unsigned
+    unsigned
     GetRegisterIndexFromOffset(unsigned offset);
 
-    static const char *
+    const char *
     GetRegisterName(unsigned reg);
 
-    static const char *
+    const char *
     GetRegisterNameFromOffset(unsigned offset);
 
     //--------------------------------------------------------------------------

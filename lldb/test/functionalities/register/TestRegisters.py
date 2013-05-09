@@ -2,7 +2,7 @@
 Test the 'register' command.
 """
 
-import os, time
+import os, sys, time
 import re
 import unittest2
 import lldb
@@ -12,6 +12,10 @@ import lldbutil
 class RegisterCommandsTestCase(TestBase):
 
     mydir = os.path.join("functionalities", "register")
+
+    def setUp(self):
+        TestBase.setUp(self)
+        self.has_teardown = False
 
     def test_register_commands(self):
         """Test commands related to registers, in particular vector registers."""
@@ -51,6 +55,8 @@ class RegisterCommandsTestCase(TestBase):
 
     def common_setup(self):
         exe = os.path.join(os.getcwd(), "a.out")
+        self.log_file = exe + ".log"
+
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Break in main().
@@ -62,9 +68,26 @@ class RegisterCommandsTestCase(TestBase):
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ['stopped', 'stop reason = breakpoint'])
 
+    # platform specific logging of the specified category
+    def log_enable(self, category):
+        self.platform = ""
+        if sys.platform.startswith("darwin"):
+            self.platform = "" # TODO: add support for "log enable darwin registers"
+        if sys.platform.startswith("linux"):
+            self.platform = "linux"
+
+        if self.platform != "":
+            self.runCmd("log enable " + self.platform + " " + str(category) + " registers -v -f " + self.log_file, RUN_SUCCEEDED)
+            if not self.has_teardown:
+                self.has_teardown = True
+                self.addTearDownHook(lambda: os.remove(self.log_file))
+
     def register_commands(self):
         """Test commands related to registers, in particular vector registers."""
         self.common_setup()
+
+        # verify that logging does not assert
+        self.log_enable("registers")
 
         self.expect("register read -a", MISSING_EXPECTED_REGISTERS,
             substrs = ['registers were unavailable'], matching = False)

@@ -36,6 +36,10 @@ public:
     ///    True if the operation succeeded and false otherwise.
     virtual bool UpdateAfterBreakpoint() { return true; }
 
+    /// Determines the index in lldb's register file given a kernel byte offset.
+    virtual unsigned
+    GetRegisterIndexFromOffset(unsigned offset) { return LLDB_INVALID_REGNUM; }
+
     // Checks to see if a watchpoint specified by hw_index caused the inferior
     // to stop.
     virtual bool

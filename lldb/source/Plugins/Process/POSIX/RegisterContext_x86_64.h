@@ -161,10 +161,10 @@ public:
     const lldb_private::RegisterSet *
     GetRegisterSet(size_t set);
 
-    static unsigned
+    unsigned
     GetRegisterIndexFromOffset(unsigned offset);
 
-    static const char *
+    const char *
     GetRegisterName(unsigned reg);
 
     virtual bool
@@ -318,9 +318,6 @@ protected:
     WriteRegister(const unsigned reg, const lldb_private::RegisterValue &value);
 
 private:
-    static lldb_private::RegisterInfo *m_register_infos;
-
-private:
     uint64_t m_gpr[k_num_gpr_registers]; // general purpose registers.
     FPRType  m_fpr_type;                 // determines the type of data stored by union FPR, if any.
     FPR      m_fpr;                      // floating-point registers including extended register sets.
@@ -332,7 +329,7 @@ private:
 
     bool CopyXSTATEtoYMM(uint32_t reg, lldb::ByteOrder byte_order);
     bool CopyYMMtoXSTATE(uint32_t reg, lldb::ByteOrder byte_order);
-    static bool IsFPR(unsigned reg, FPRType fpr_type);
+    bool IsFPR(unsigned reg, FPRType fpr_type);
 
     bool ReadGPR();
     bool ReadFPR();

@@ -449,9 +449,9 @@ WriteOperation::Execute(ProcessMonitor *monitor)
 class ReadRegOperation : public Operation
 {
 public:
-    ReadRegOperation(lldb::tid_t tid, unsigned offset,
+    ReadRegOperation(lldb::tid_t tid, unsigned offset, const char *reg_name,
                      RegisterValue &value, bool &result)
-        : m_tid(tid), m_offset(offset),
+        : m_tid(tid), m_offset(offset), m_reg_name(reg_name),
           m_value(value), m_result(result)
         { }
 
@@ -460,6 +460,7 @@ public:
 private:
     lldb::tid_t m_tid;
     uintptr_t m_offset;
+    const char *m_reg_name;
     RegisterValue &m_value;
     bool &m_result;
 };
@@ -481,7 +482,7 @@ ReadRegOperation::Execute(ProcessMonitor *monitor)
     }
     if (log)
         log->Printf ("ProcessMonitor::%s() reg %s: 0x%" PRIx64, __FUNCTION__,
-                     POSIXThread::GetRegisterNameFromOffset(m_offset), data);
+                     m_reg_name, data);
 }
 
 //------------------------------------------------------------------------------
@@ -490,9 +491,9 @@ ReadRegOperation::Execute(ProcessMonitor *monitor)
 class WriteRegOperation : public Operation
 {
 public:
-    WriteRegOperation(lldb::tid_t tid, unsigned offset,
+    WriteRegOperation(lldb::tid_t tid, unsigned offset, const char *reg_name,
                       const RegisterValue &value, bool &result)
-        : m_tid(tid), m_offset(offset),
+        : m_tid(tid), m_offset(offset), m_reg_name(reg_name),
           m_value(value), m_result(result)
         { }
 
@@ -501,6 +502,7 @@ public:
 private:
     lldb::tid_t m_tid;
     uintptr_t m_offset;
+    const char *m_reg_name;
     const RegisterValue &m_value;
     bool &m_result;
 };
@@ -518,8 +520,7 @@ WriteRegOperation::Execute(ProcessMonitor *monitor)
 #endif
 
     if (log)
-        log->Printf ("ProcessMonitor::%s() reg %s: %p", __FUNCTION__,
-                     POSIXThread::GetRegisterNameFromOffset(m_offset), buf);
+        log->Printf ("ProcessMonitor::%s() reg %s: %p", __FUNCTION__, m_reg_name, buf);
     if (PTRACE(PTRACE_POKEUSER, m_tid, (void*)m_offset, buf, 0))
         m_result = false;
     else
@@ -1715,21 +1716,21 @@ ProcessMonitor::WriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size,
 }
 
 bool
-ProcessMonitor::ReadRegisterValue(lldb::tid_t tid, unsigned offset,
+ProcessMonitor::ReadRegisterValue(lldb::tid_t tid, unsigned offset, const char* reg_name,
                                   unsigned size, RegisterValue &value)
 {
     bool result;
-    ReadRegOperation op(tid, offset, value, result);
+    ReadRegOperation op(tid, offset, reg_name, value, result);
     DoOperation(&op);
     return result;
 }
 
 bool
 ProcessMonitor::WriteRegisterValue(lldb::tid_t tid, unsigned offset,
-                                   const RegisterValue &value)
+                                   const char* reg_name, const RegisterValue &value)
 {
     bool result;
-    WriteRegOperation op(tid, offset, value, result);
+    WriteRegOperation op(tid, offset, reg_name, value, result);
     DoOperation(&op);
     return result;
 }

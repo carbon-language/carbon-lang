@@ -43,10 +43,10 @@ public:
     const lldb_private::RegisterSet *
     GetRegisterSet(size_t set);
 
-    static unsigned
+    unsigned
     GetRegisterIndexFromOffset(unsigned offset);
 
-    static const char *
+    const char *
     GetRegisterName(unsigned reg);
 
     bool

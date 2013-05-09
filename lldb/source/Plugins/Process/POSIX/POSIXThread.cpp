@@ -441,11 +441,14 @@ POSIXThread::GetRegisterIndexFromOffset(unsigned offset)
     case ArchSpec::eCore_x86_32_i386:
     case ArchSpec::eCore_x86_32_i486:
     case ArchSpec::eCore_x86_32_i486sx:
-        reg = RegisterContext_i386::GetRegisterIndexFromOffset(offset);
-        break;
-
     case ArchSpec::eCore_x86_64_x86_64:
-        reg = RegisterContext_x86_64::GetRegisterIndexFromOffset(offset);
+        {
+            RegisterContextSP base = GetRegisterContext();
+            if (base) {
+                RegisterContextPOSIX &context = static_cast<RegisterContextPOSIX &>(*base);
+                reg = context.GetRegisterIndexFromOffset(offset);
+            }
+        }
         break;
     }
     return reg;
@@ -454,7 +457,7 @@ POSIXThread::GetRegisterIndexFromOffset(unsigned offset)
 const char *
 POSIXThread::GetRegisterName(unsigned reg)
 {
-    const char * name;
+    const char * name = nullptr;
     ArchSpec arch = Host::GetArchitecture();
 
     switch (arch.GetCore())
@@ -466,11 +469,8 @@ POSIXThread::GetRegisterName(unsigned reg)
     case ArchSpec::eCore_x86_32_i386:
     case ArchSpec::eCore_x86_32_i486:
     case ArchSpec::eCore_x86_32_i486sx:
-        name = RegisterContext_i386::GetRegisterName(reg);
-        break;
-
     case ArchSpec::eCore_x86_64_x86_64:
-        name = RegisterContext_x86_64::GetRegisterName(reg);
+        name = GetRegisterContext()->GetRegisterName(reg);
         break;
     }
     return name;

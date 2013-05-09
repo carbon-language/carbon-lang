@@ -9,11 +9,13 @@
 
 #include "RegisterContextLinux_x86_64.h"
 
+using namespace lldb_private;
+
 // Computes the offset of the given GPR in the user data area.
 #define GPR_OFFSET(regname)                                                 \
     (offsetof(GPR, regname))
 
-// Updates the Linux specific information (offset and size)
+// Update the Linux specific information (offset and size).
 #define UPDATE_GPR_INFO(reg)                                                \
 do {                                                                        \
     m_register_infos[gpr_##reg].byte_size = sizeof(GPR::reg);               \
@@ -114,14 +116,17 @@ const RegisterInfo *
 RegisterContextLinux_x86_64::GetRegisterInfo()
 {
     // Allocate RegisterInfo only once
-    if (m_register_infos == nullptr)
+    if (!m_register_infos)
     {
         m_register_infos = new RegisterInfo[k_num_registers];
         // Copy the register information from base class
-        memcpy(m_register_infos, RegisterContext_x86_64::GetRegisterInfo(),
-               sizeof(RegisterInfo) * k_num_registers);
-        // Update the Linux specific register information(offset and size)
-        UpdateRegisterInfo();
+        if (m_register_infos)
+        {
+            memcpy(m_register_infos, RegisterContext_x86_64::GetRegisterInfo(),
+                   sizeof(RegisterInfo) * k_num_registers);
+            // Update the Linux specific register information (offset and size).
+            UpdateRegisterInfo();
+        }
     }
     return m_register_infos;
 }

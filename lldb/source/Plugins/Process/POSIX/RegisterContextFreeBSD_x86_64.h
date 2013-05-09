@@ -12,24 +12,25 @@
 
 #include "Plugins/Process/POSIX/RegisterContext_x86_64.h"
 
-using namespace lldb_private;
-
 class RegisterContextFreeBSD_x86_64:
     public RegisterContext_x86_64
 {
 public:
-    RegisterContextFreeBSD_x86_64(Thread &thread, uint32_t concrete_frame_idx);
+    RegisterContextFreeBSD_x86_64(lldb_private::Thread &thread, uint32_t concrete_frame_idx);
     virtual ~RegisterContextFreeBSD_x86_64();
 
-    size_t GetGPRSize();
+    size_t
+    GetGPRSize();
 
 protected:
     virtual const lldb_private::RegisterInfo *
     GetRegisterInfo();
 
+    virtual void
+    UpdateRegisterInfo();
+
 private:
     static lldb_private::RegisterInfo *m_register_infos;
-    void UpdateRegisterInfo();
 };
 
 #endif

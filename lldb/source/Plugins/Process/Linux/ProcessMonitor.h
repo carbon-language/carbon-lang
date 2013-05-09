@@ -24,12 +24,10 @@ namespace lldb_private
 class Error;
 class Module;
 class Scalar;
-
 } // End lldb_private namespace.
 
 class ProcessLinux;
 class Operation;
-class ProcessPOSIX;
 
 /// @class ProcessMonitor
 /// @brief Manages communication with the inferior (debugee) process.
@@ -107,7 +105,7 @@ public:
     ///
     /// This method is provided for use by RegisterContextLinux derivatives.
     bool
-    ReadRegisterValue(lldb::tid_t tid, unsigned offset,
+    ReadRegisterValue(lldb::tid_t tid, unsigned offset, const char *reg_name,
                       unsigned size, lldb_private::RegisterValue &value);
 
     /// Writes the given value to the register identified by the given
@@ -115,7 +113,7 @@ public:
     ///
     /// This method is provided for use by RegisterContextLinux derivatives.
     bool
-    WriteRegisterValue(lldb::tid_t tid, unsigned offset,
+    WriteRegisterValue(lldb::tid_t tid, unsigned offset, const char *reg_name,
                        const lldb_private::RegisterValue &value);
 
     /// Reads all general purpose registers into the specified buffer.

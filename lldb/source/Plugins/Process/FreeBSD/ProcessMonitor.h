@@ -107,7 +107,7 @@ public:
     /// FIXME: The FreeBSD implementation of this function should use tid in order
     ///        to enable support for debugging threaded programs.
     bool
-    ReadRegisterValue(lldb::tid_t tid, unsigned offset,
+    ReadRegisterValue(lldb::tid_t tid, unsigned offset, const char *reg_name,
                       unsigned size, lldb_private::RegisterValue &value);
 
     /// Writes the given value to the register identified by the given
@@ -117,7 +117,7 @@ public:
     /// FIXME: The FreeBSD implementation of this function should use tid in order
     ///        to enable support for debugging threaded programs.
     bool
-    WriteRegisterValue(lldb::tid_t tid, unsigned offset,
+    WriteRegisterValue(lldb::tid_t tid, unsigned offset, const char *reg_name,
                        const lldb_private::RegisterValue &value);
 
     /// Reads all general purpose registers into the specified buffer.

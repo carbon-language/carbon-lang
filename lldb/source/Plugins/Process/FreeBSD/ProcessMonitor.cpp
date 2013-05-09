@@ -1437,7 +1437,7 @@ ProcessMonitor::WriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size,
 }
 
 bool
-ProcessMonitor::ReadRegisterValue(lldb::tid_t tid, unsigned offset,
+ProcessMonitor::ReadRegisterValue(lldb::tid_t tid, unsigned offset, const char* reg_name,
                                   unsigned size, RegisterValue &value)
 {
     bool result;
@@ -1448,7 +1448,7 @@ ProcessMonitor::ReadRegisterValue(lldb::tid_t tid, unsigned offset,
 
 bool
 ProcessMonitor::WriteRegisterValue(lldb::tid_t tid, unsigned offset,
-                                   const RegisterValue &value)
+                                   const char* reg_name, const RegisterValue &value)
 {
     bool result;
     WriteRegOperation op(offset, value, result);

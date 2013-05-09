@@ -341,7 +341,8 @@ RegisterContext_i386::ReadRegister(const RegisterInfo *reg_info,
 {
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
     ProcessMonitor &monitor = GetMonitor();
-    return monitor.ReadRegisterValue(m_thread.GetID(), GetRegOffset(reg), GetRegSize(reg), value);
+    return monitor.ReadRegisterValue(m_thread.GetID(), GetRegOffset(reg),
+                                     GetRegisterName(reg), GetRegSize(reg), value);
 }
 
 bool
@@ -351,11 +352,12 @@ RegisterContext_i386::ReadAllRegisterValues(DataBufferSP &data_sp)
 }
 
 bool RegisterContext_i386::WriteRegister(const RegisterInfo *reg_info,
-                                              const RegisterValue &value)
+                                         const RegisterValue &value)
 {
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
     ProcessMonitor &monitor = GetMonitor();
-    return monitor.WriteRegisterValue(m_thread.GetID(), GetRegOffset(reg), value);
+    return monitor.WriteRegisterValue(m_thread.GetID(), GetRegOffset(reg),
+                                      GetRegisterName(reg), value);
 }
 
 bool

@@ -457,8 +457,6 @@ g_register_infos[k_num_registers] =
     DEFINE_DR(dr, 7)
 };
 
-RegisterInfo *RegisterContext_x86_64::m_register_infos = g_register_infos;
-
 static bool IsGPR(unsigned reg)
 {
     return reg <= k_last_gpr;   // GPR's come first.
@@ -549,7 +547,7 @@ RegisterContext_x86_64::GetRegisterCount()
 const RegisterInfo *
 RegisterContext_x86_64::GetRegisterInfo()
 {
-    return m_register_infos;
+    return g_register_infos;
 }
 
 const RegisterInfo *
@@ -587,7 +585,7 @@ RegisterContext_x86_64::GetRegisterIndexFromOffset(unsigned offset)
     unsigned reg;
     for (reg = 0; reg < k_num_registers; reg++)
     {
-        if (m_register_infos[reg].byte_offset == offset)
+        if (GetRegisterInfo()[reg].byte_offset == offset)
             break;
     }
     assert(reg < k_num_registers && "Invalid register offset.");
@@ -598,7 +596,7 @@ const char *
 RegisterContext_x86_64::GetRegisterName(unsigned reg)
 {
     assert(reg < k_num_registers && "Invalid register offset.");
-    return m_register_infos[reg].name;
+    return GetRegisterInfo()[reg].name;
 }
 
 lldb::ByteOrder
@@ -690,7 +688,8 @@ RegisterContext_x86_64::ReadRegister(const RegisterInfo *reg_info, RegisterValue
     }
     else {
         ProcessMonitor &monitor = GetMonitor();
-        return monitor.ReadRegisterValue(m_thread.GetID(), GetRegisterOffset(reg), GetRegisterSize(reg), value);
+        return monitor.ReadRegisterValue(m_thread.GetID(), GetRegisterOffset(reg),
+                                         GetRegisterName(reg), GetRegisterSize(reg), value);
     }
 
     if (reg_info->encoding == eEncodingVector) {
@@ -788,7 +787,7 @@ RegisterContext_x86_64::WriteRegister(const lldb_private::RegisterInfo *reg_info
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
     if (IsGPR(reg)) {
         ProcessMonitor &monitor = GetMonitor();
-        return monitor.WriteRegisterValue(m_thread.GetID(), GetRegisterOffset(reg), value);
+        return monitor.WriteRegisterValue(m_thread.GetID(), GetRegisterOffset(reg), GetRegisterName(reg), value);
     }
 
     if (IsFPR(reg, m_fpr_type)) {
@@ -890,6 +889,7 @@ RegisterContext_x86_64::ReadRegister(const unsigned reg,
     ProcessMonitor &monitor = GetMonitor();
     return monitor.ReadRegisterValue(m_thread.GetID(),
                                      GetRegisterOffset(reg),
+                                     GetRegisterName(reg),
                                      GetRegisterSize(reg),
                                      value);
 }
@@ -901,6 +901,7 @@ RegisterContext_x86_64::WriteRegister(const unsigned reg,
     ProcessMonitor &monitor = GetMonitor();
     return monitor.WriteRegisterValue(m_thread.GetID(),
                                       GetRegisterOffset(reg),
+                                      GetRegisterName(reg),
                                       value);
 }
 
