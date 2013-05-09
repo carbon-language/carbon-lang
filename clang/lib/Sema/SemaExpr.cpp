@@ -316,7 +316,7 @@ std::string Sema::getDeletedOrUnavailableSuffix(const FunctionDecl *FD) {
 /// if so, it checks that the requirements of the sentinel are
 /// satisfied.
 void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
-                                 Expr **args, unsigned numArgs) {
+                                 ArrayRef<Expr *> Args) {
   const SentinelAttr *attr = D->getAttr<SentinelAttr>();
   if (!attr)
     return;
@@ -370,14 +370,14 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
 
   // If there aren't enough arguments for all the formal parameters,
   // the sentinel, and the args after the sentinel, complain.
-  if (numArgs < numFormalParams + numArgsAfterSentinel + 1) {
+  if (Args.size() < numFormalParams + numArgsAfterSentinel + 1) {
     Diag(Loc, diag::warn_not_enough_argument) << D->getDeclName();
     Diag(D->getLocation(), diag::note_sentinel_here) << calleeType;
     return;
   }
 
   // Otherwise, find the sentinel expression.
-  Expr *sentinelExpr = args[numArgs - numArgsAfterSentinel - 1];
+  Expr *sentinelExpr = Args[Args.size() - numArgsAfterSentinel - 1];
   if (!sentinelExpr) return;
   if (sentinelExpr->isValueDependent()) return;
   if (Context.isSentinelNullExpr(sentinelExpr)) return;
@@ -3811,7 +3811,7 @@ bool
 Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
                               FunctionDecl *FDecl,
                               const FunctionProtoType *Proto,
-                              Expr **Args, unsigned NumArgs,
+                              ArrayRef<Expr *> Args,
                               SourceLocation RParenLoc,
                               bool IsExecConfig) {
   // Bail out early if calling a builtin with custom typechecking.
@@ -3833,8 +3833,8 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
 
   // If too few arguments are available (and we don't have default
   // arguments for the remaining parameters), don't make the call.
-  if (NumArgs < NumArgsInProto) {
-    if (NumArgs < MinArgs) {
+  if (Args.size() < NumArgsInProto) {
+    if (Args.size() < MinArgs) {
       if (MinArgs == 1 && FDecl && FDecl->getParamDecl(0)->getDeclName())
         Diag(RParenLoc, MinArgs == NumArgsInProto && !Proto->isVariadic()
                           ? diag::err_typecheck_call_too_few_args_one
@@ -3846,7 +3846,8 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
                           ? diag::err_typecheck_call_too_few_args
                           : diag::err_typecheck_call_too_few_args_at_least)
           << FnKind
-          << MinArgs << NumArgs << Fn->getSourceRange();
+          << MinArgs << static_cast<unsigned>(Args.size())
+          << Fn->getSourceRange();
 
       // Emit the location of the prototype.
       if (FDecl && !FDecl->getBuiltinID() && !IsExecConfig)
@@ -3860,7 +3861,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
 
   // If too many are passed and not variadic, error on the extras and drop
   // them.
-  if (NumArgs > NumArgsInProto) {
+  if (Args.size() > NumArgsInProto) {
     if (!Proto->isVariadic()) {
       if (NumArgsInProto == 1 && FDecl && FDecl->getParamDecl(0)->getDeclName())
         Diag(Args[NumArgsInProto]->getLocStart(),
@@ -3868,18 +3869,20 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
                ? diag::err_typecheck_call_too_many_args_one
                : diag::err_typecheck_call_too_many_args_at_most_one)
           << FnKind
-          << FDecl->getParamDecl(0) << NumArgs << Fn->getSourceRange()
+          << FDecl->getParamDecl(0) << static_cast<unsigned>(Args.size())
+          << Fn->getSourceRange()
           << SourceRange(Args[NumArgsInProto]->getLocStart(),
-                         Args[NumArgs-1]->getLocEnd());
+                         Args.back()->getLocEnd());
       else
         Diag(Args[NumArgsInProto]->getLocStart(),
              MinArgs == NumArgsInProto
                ? diag::err_typecheck_call_too_many_args
                : diag::err_typecheck_call_too_many_args_at_most)
           << FnKind
-          << NumArgsInProto << NumArgs << Fn->getSourceRange()
+          << NumArgsInProto << static_cast<unsigned>(Args.size())
+          << Fn->getSourceRange()
           << SourceRange(Args[NumArgsInProto]->getLocStart(),
-                         Args[NumArgs-1]->getLocEnd());
+                         Args.back()->getLocEnd());
 
       // Emit the location of the prototype.
       if (FDecl && !FDecl->getBuiltinID() && !IsExecConfig)
@@ -3895,7 +3898,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
   VariadicCallType CallType = getVariadicCallType(FDecl, Proto, Fn);
   
   Invalid = GatherArgumentsForCall(Call->getLocStart(), FDecl,
-                                   Proto, 0, Args, NumArgs, AllArgs, CallType);
+                                   Proto, 0, Args, AllArgs, CallType);
   if (Invalid)
     return true;
   unsigned TotalNumArgs = AllArgs.size();
@@ -3909,15 +3912,15 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
                                   FunctionDecl *FDecl,
                                   const FunctionProtoType *Proto,
                                   unsigned FirstProtoArg,
-                                  Expr **Args, unsigned NumArgs,
+                                  ArrayRef<Expr *> Args,
                                   SmallVector<Expr *, 8> &AllArgs,
                                   VariadicCallType CallType,
                                   bool AllowExplicit,
                                   bool IsListInitialization) {
   unsigned NumArgsInProto = Proto->getNumArgs();
-  unsigned NumArgsToCheck = NumArgs;
+  unsigned NumArgsToCheck = Args.size();
   bool Invalid = false;
-  if (NumArgs != NumArgsInProto)
+  if (Args.size() != NumArgsInProto)
     // Use default arguments for missing arguments
     NumArgsToCheck = NumArgsInProto;
   unsigned ArgIx = 0;
@@ -3927,7 +3930,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
 
     Expr *Arg;
     ParmVarDecl *Param;
-    if (ArgIx < NumArgs) {
+    if (ArgIx < Args.size()) {
       Arg = Args[ArgIx++];
 
       if (RequireCompleteType(Arg->getLocStart(),
@@ -3988,7 +3991,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
     // return __unknown_anytype aren't *really* variadic.
     if (Proto->getResultType() == Context.UnknownAnyTy &&
         FDecl && FDecl->isExternC()) {
-      for (unsigned i = ArgIx; i != NumArgs; ++i) {
+      for (unsigned i = ArgIx, e = Args.size(); i != e; ++i) {
         QualType paramType; // ignored
         ExprResult arg = checkUnknownAnyArg(CallLoc, Args[i], paramType);
         Invalid |= arg.isInvalid();
@@ -3997,7 +4000,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
 
     // Otherwise do argument promotion, (C99 6.5.2.2p7).
     } else {
-      for (unsigned i = ArgIx; i != NumArgs; ++i) {
+      for (unsigned i = ArgIx, e = Args.size(); i != e; ++i) {
         ExprResult Arg = DefaultVariadicArgumentPromotion(Args[i], CallType,
                                                           FDecl);
         Invalid |= Arg.isInvalid();
@@ -4006,7 +4009,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
     }
 
     // Check for array bounds violations.
-    for (unsigned i = ArgIx; i != NumArgs; ++i)
+    for (unsigned i = ArgIx, e = Args.size(); i != e; ++i)
       CheckArrayAccess(Args[i]);
   }
   return Invalid;
@@ -4198,8 +4201,7 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
     }
 
     if (Fn->getType() == Context.BoundMemberTy) {
-      return BuildCallToMemberFunction(S, Fn, LParenLoc, ArgExprs.data(),
-                                       ArgExprs.size(), RParenLoc);
+      return BuildCallToMemberFunction(S, Fn, LParenLoc, ArgExprs, RParenLoc);
     }
   }
 
@@ -4212,11 +4214,11 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
       OverloadExpr *ovl = find.Expression;
       if (isa<UnresolvedLookupExpr>(ovl)) {
         UnresolvedLookupExpr *ULE = cast<UnresolvedLookupExpr>(ovl);
-        return BuildOverloadedCallExpr(S, Fn, ULE, LParenLoc, ArgExprs.data(),
-                                       ArgExprs.size(), RParenLoc, ExecConfig);
+        return BuildOverloadedCallExpr(S, Fn, ULE, LParenLoc, ArgExprs,
+                                       RParenLoc, ExecConfig);
       } else {
-        return BuildCallToMemberFunction(S, Fn, LParenLoc, ArgExprs.data(),
-                                         ArgExprs.size(), RParenLoc);
+        return BuildCallToMemberFunction(S, Fn, LParenLoc, ArgExprs,
+                                         RParenLoc);
       }
     }
   }
@@ -4240,9 +4242,8 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
   else if (isa<MemberExpr>(NakedFn))
     NDecl = cast<MemberExpr>(NakedFn)->getMemberDecl();
 
-  return BuildResolvedCallExpr(Fn, NDecl, LParenLoc, ArgExprs.data(),
-                               ArgExprs.size(), RParenLoc, ExecConfig,
-                               IsExecConfig);
+  return BuildResolvedCallExpr(Fn, NDecl, LParenLoc, ArgExprs, RParenLoc,
+                               ExecConfig, IsExecConfig);
 }
 
 ExprResult
@@ -4292,7 +4293,7 @@ ExprResult Sema::ActOnAsTypeExpr(Expr *E, ParsedType ParsedDestTy,
 ExprResult
 Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
                             SourceLocation LParenLoc,
-                            Expr **Args, unsigned NumArgs,
+                            ArrayRef<Expr *> Args,
                             SourceLocation RParenLoc,
                             Expr *Config, bool IsExecConfig) {
   FunctionDecl *FDecl = dyn_cast_or_null<FunctionDecl>(NDecl);
@@ -4318,17 +4319,12 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
   CallExpr *TheCall;
   if (Config)
     TheCall = new (Context) CUDAKernelCallExpr(Context, Fn,
-                                               cast<CallExpr>(Config),
-                                               llvm::makeArrayRef(Args,NumArgs),
-                                               Context.BoolTy,
-                                               VK_RValue,
+                                               cast<CallExpr>(Config), Args,
+                                               Context.BoolTy, VK_RValue,
                                                RParenLoc);
   else
-    TheCall = new (Context) CallExpr(Context, Fn,
-                                     llvm::makeArrayRef(Args, NumArgs),
-                                     Context.BoolTy,
-                                     VK_RValue,
-                                     RParenLoc);
+    TheCall = new (Context) CallExpr(Context, Fn, Args, Context.BoolTy,
+                                     VK_RValue, RParenLoc);
 
   // Bail out early if calling a builtin with custom typechecking.
   if (BuiltinID && Context.BuiltinInfo.hasCustomTypechecking(BuiltinID))
@@ -4391,8 +4387,8 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
 
   const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FuncT);
   if (Proto) {
-    if (ConvertArgumentsForCall(TheCall, Fn, FDecl, Proto, Args, NumArgs,
-                                RParenLoc, IsExecConfig))
+    if (ConvertArgumentsForCall(TheCall, Fn, FDecl, Proto, Args, RParenLoc,
+                                IsExecConfig))
       return ExprError();
   } else {
     assert(isa<FunctionNoProtoType>(FuncT) && "Unknown FunctionType!");
@@ -4401,11 +4397,11 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
       // Check if we have too few/too many template arguments, based
       // on our knowledge of the function definition.
       const FunctionDecl *Def = 0;
-      if (FDecl->hasBody(Def) && NumArgs != Def->param_size()) {
+      if (FDecl->hasBody(Def) && Args.size() != Def->param_size()) {
         Proto = Def->getType()->getAs<FunctionProtoType>();
-        if (!Proto || !(Proto->isVariadic() && NumArgs >= Def->param_size()))
+       if (!Proto || !(Proto->isVariadic() && Args.size() >= Def->param_size()))
           Diag(RParenLoc, diag::warn_call_wrong_number_of_arguments)
-            << (NumArgs > Def->param_size()) << FDecl << Fn->getSourceRange();
+          << (Args.size() > Def->param_size()) << FDecl << Fn->getSourceRange();
       }
       
       // If the function we're calling isn't a function prototype, but we have
@@ -4415,7 +4411,7 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
     }
 
     // Promote the arguments (C99 6.5.2.2p6).
-    for (unsigned i = 0; i != NumArgs; i++) {
+    for (unsigned i = 0, e = Args.size(); i != e; i++) {
       Expr *Arg = Args[i];
 
       if (Proto && i < Proto->getNumArgs()) {
@@ -4456,7 +4452,7 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
 
   // Check for sentinels
   if (NDecl)
-    DiagnoseSentinelCalls(NDecl, LParenLoc, Args, NumArgs);
+    DiagnoseSentinelCalls(NDecl, LParenLoc, Args);
 
   // Do special checking on direct calls to functions.
   if (FDecl) {

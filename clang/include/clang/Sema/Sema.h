@@ -2160,14 +2160,13 @@ public:
   ExprResult BuildOverloadedCallExpr(Scope *S, Expr *Fn,
                                      UnresolvedLookupExpr *ULE,
                                      SourceLocation LParenLoc,
-                                     Expr **Args, unsigned NumArgs,
+                                     MultiExprArg Args,
                                      SourceLocation RParenLoc,
                                      Expr *ExecConfig,
                                      bool AllowTypoCorrection=true);
 
   bool buildOverloadedCallSet(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
-                              Expr **Args, unsigned NumArgs,
-                              SourceLocation RParenLoc,
+                              MultiExprArg Args, SourceLocation RParenLoc,
                               OverloadCandidateSet *CandidateSet,
                               ExprResult *Result);
 
@@ -2187,8 +2186,9 @@ public:
 
   ExprResult
   BuildCallToMemberFunction(Scope *S, Expr *MemExpr,
-                            SourceLocation LParenLoc, Expr **Args,
-                            unsigned NumArgs, SourceLocation RParenLoc);
+                            SourceLocation LParenLoc,
+                            MultiExprArg Args,
+                            SourceLocation RParenLoc);
   ExprResult
   BuildCallToObjectOfClassType(Scope *S, Expr *Object, SourceLocation LParenLoc,
                                Expr **Args, unsigned NumArgs,
@@ -2945,7 +2945,7 @@ public:
                                         ObjCMethodDecl *Getter,
                                         SourceLocation Loc);
   void DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
-                             Expr **Args, unsigned NumArgs);
+                             ArrayRef<Expr *> Args);
 
   void PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext,
                                        Decl *LambdaContextDecl = 0,
@@ -3256,7 +3256,7 @@ public:
   bool ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
                                FunctionDecl *FDecl,
                                const FunctionProtoType *Proto,
-                               Expr **Args, unsigned NumArgs,
+                               ArrayRef<Expr *> Args,
                                SourceLocation RParenLoc,
                                bool ExecConfig = false);
   void CheckStaticArrayArgument(SourceLocation CallLoc,
@@ -3271,7 +3271,7 @@ public:
                            Expr *ExecConfig = 0, bool IsExecConfig = false);
   ExprResult BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
                                    SourceLocation LParenLoc,
-                                   Expr **Args, unsigned NumArgs,
+                                   ArrayRef<Expr *> Arg,
                                    SourceLocation RParenLoc,
                                    Expr *Config = 0,
                                    bool IsExecConfig = false);
@@ -6778,7 +6778,7 @@ public:
                               FunctionDecl *FDecl,
                               const FunctionProtoType *Proto,
                               unsigned FirstProtoArg,
-                              Expr **Args, unsigned NumArgs,
+                              ArrayRef<Expr *> Args,
                               SmallVector<Expr *, 8> &AllArgs,
                               VariadicCallType CallType = VariadicDoesNotApply,
                               bool AllowExplicit = false,

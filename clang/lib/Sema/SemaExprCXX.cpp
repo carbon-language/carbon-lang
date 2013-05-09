@@ -1334,7 +1334,8 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
       Proto->isVariadic() ? VariadicFunction : VariadicDoesNotApply;
 
     if (GatherArgumentsForCall(PlacementLParen, OperatorNew,
-                               Proto, 1, PlaceArgs, NumPlaceArgs,
+                               Proto, 1,
+                               llvm::makeArrayRef(PlaceArgs, NumPlaceArgs),
                                AllPlaceArgs, CallType))
       return ExprError();
 
@@ -1343,7 +1344,7 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
       PlaceArgs = &AllPlaceArgs[0];
 
     DiagnoseSentinelCalls(OperatorNew, PlacementLParen,
-                          PlaceArgs, NumPlaceArgs);
+                          llvm::makeArrayRef(PlaceArgs, NumPlaceArgs));
 
     // FIXME: Missing call to CheckFunctionCall or equivalent
   }

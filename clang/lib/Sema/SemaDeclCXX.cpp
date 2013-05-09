@@ -8557,7 +8557,7 @@ buildSingleCopyAssignRecursively(Sema &S, SourceLocation Loc, QualType T,
 
     ExprResult Call = S.BuildCallToMemberFunction(/*Scope=*/0,
                                                   OpEqualRef.takeAs<Expr>(),
-                                                  Loc, &From, 1, Loc);
+                                                  Loc, From, Loc);
     if (Call.isInvalid())
       return StmtError();
 
@@ -10081,12 +10081,14 @@ Sema::CompleteConstructorCall(CXXConstructorDecl *Constructor,
     Proto->isVariadic() ? VariadicConstructor : VariadicDoesNotApply;
   SmallVector<Expr *, 8> AllArgs;
   bool Invalid = GatherArgumentsForCall(Loc, Constructor,
-                                        Proto, 0, Args, NumArgs, AllArgs, 
+                                        Proto, 0,
+                                        llvm::makeArrayRef(Args, NumArgs),
+                                        AllArgs,
                                         CallType, AllowExplicit,
                                         IsListInitialization);
   ConvertedArgs.append(AllArgs.begin(), AllArgs.end());
 
-  DiagnoseSentinelCalls(Constructor, Loc, AllArgs.data(), AllArgs.size());
+  DiagnoseSentinelCalls(Constructor, Loc, AllArgs);
 
   CheckConstructorCall(Constructor,
                        llvm::makeArrayRef<const Expr *>(AllArgs.data(),

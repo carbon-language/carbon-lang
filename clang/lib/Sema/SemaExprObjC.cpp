@@ -1323,7 +1323,7 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
     }
   }
 
-  DiagnoseSentinelCalls(Method, SelLoc, Args, NumArgs);
+  DiagnoseSentinelCalls(Method, SelLoc, llvm::makeArrayRef(Args, NumArgs));
 
   // Do additional checkings on method.
   IsError |= CheckObjCMethodCall(Method, SelLoc,
