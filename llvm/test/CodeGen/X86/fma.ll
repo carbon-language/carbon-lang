@@ -34,6 +34,14 @@ entry:
   ret x86_fp80 %call
 }
 
+; CHECK: test_f32_cst
+; CHECK-NOT: fma
+define float @test_f32_cst() nounwind readnone ssp {
+entry:
+  %call = tail call float @llvm.fma.f32(float 3.0, float 3.0, float 3.0) nounwind readnone
+  ret float %call
+}
+
 declare float @llvm.fma.f32(float, float, float) nounwind readnone
 declare double @llvm.fma.f64(double, double, double) nounwind readnone
 declare x86_fp80 @llvm.fma.f80(x86_fp80, x86_fp80, x86_fp80) nounwind readnone

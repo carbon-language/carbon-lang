@@ -3261,6 +3261,21 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
   // Perform various simplifications.
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode());
   switch (Opcode) {
+  case ISD::FMA: {
+    ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
+    ConstantFPSDNode *N2CFP = dyn_cast<ConstantFPSDNode>(N2);
+    ConstantFPSDNode *N3CFP = dyn_cast<ConstantFPSDNode>(N3);
+    if (N1CFP && N2CFP && N3CFP) {
+      APFloat  V1 = N1CFP->getValueAPF();
+      const APFloat &V2 = N2CFP->getValueAPF();
+      const APFloat &V3 = N3CFP->getValueAPF();
+      APFloat::opStatus s =
+        V1.fusedMultiplyAdd(V2, V3, APFloat::rmNearestTiesToEven);
+      if (s != APFloat::opInvalidOp)
+        return getConstantFP(V1, VT);
+    }
+    break;
+  }
   case ISD::CONCAT_VECTORS:
     // A CONCAT_VECTOR with all operands BUILD_VECTOR can be simplified to
     // one big BUILD_VECTOR.
