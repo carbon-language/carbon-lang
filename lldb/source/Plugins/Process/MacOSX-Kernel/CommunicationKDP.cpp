@@ -544,6 +544,17 @@ CommunicationKDP::RemoteIsEFI ()
         return false;
 }
 
+bool
+CommunicationKDP::RemoteIsDarwinKernel ()
+{
+    if (GetKernelVersion() == NULL)
+        return false;
+    if (m_kernel_version.find("Darwin Kernel") != std::string::npos)
+        return true;
+    else
+        return false;
+}
+
 lldb::addr_t
 CommunicationKDP::GetLoadAddress ()
 {

@@ -233,6 +233,9 @@ public:
     bool
     RemoteIsEFI ();
 
+    bool
+    RemoteIsDarwinKernel ();
+
     lldb::addr_t
     GetLoadAddress ();
 

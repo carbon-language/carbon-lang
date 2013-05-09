@@ -242,13 +242,13 @@ ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
                     {
                         m_dyld_plugin_name = DynamicLoaderStatic::GetPluginNameStatic();
                     }
-                    else 
+                    else if (m_comm.RemoteIsDarwinKernel ())
                     {
+                        m_dyld_plugin_name = DynamicLoaderDarwinKernel::GetPluginNameStatic();
                         if (kernel_load_addr != LLDB_INVALID_ADDRESS)
                         {
                             m_kernel_load_addr = kernel_load_addr;
                         }
-                        m_dyld_plugin_name = DynamicLoaderDarwinKernel::GetPluginNameStatic();
                     }
 
                     // Set the thread ID
