@@ -2088,13 +2088,15 @@ private:
 struct LambdaCapture {
   LambdaCaptureKind Kind;
   SourceLocation Loc;
-  IdentifierInfo* Id;
+  IdentifierInfo *Id;
   SourceLocation EllipsisLoc;
-  
+  ExprResult Init;
+
   LambdaCapture(LambdaCaptureKind Kind, SourceLocation Loc,
                 IdentifierInfo* Id = 0,
-                SourceLocation EllipsisLoc = SourceLocation())
-    : Kind(Kind), Loc(Loc), Id(Id), EllipsisLoc(EllipsisLoc)
+                SourceLocation EllipsisLoc = SourceLocation(),
+                ExprResult Init = ExprResult())
+    : Kind(Kind), Loc(Loc), Id(Id), EllipsisLoc(EllipsisLoc), Init(Init)
   {}
 };
 
@@ -2111,11 +2113,11 @@ struct LambdaIntroducer {
   /// \brief Append a capture in a lambda introducer.
   void addCapture(LambdaCaptureKind Kind,
                   SourceLocation Loc,
-                  IdentifierInfo* Id = 0, 
-                  SourceLocation EllipsisLoc = SourceLocation()) {
-    Captures.push_back(LambdaCapture(Kind, Loc, Id, EllipsisLoc));
+                  IdentifierInfo* Id = 0,
+                  SourceLocation EllipsisLoc = SourceLocation(),
+                  ExprResult Init = ExprResult()) {
+    Captures.push_back(LambdaCapture(Kind, Loc, Id, EllipsisLoc, Init));
   }
-
 };
 
 } // end namespace clang

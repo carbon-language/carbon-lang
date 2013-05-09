@@ -17,6 +17,16 @@ class C {
     [foo,bar] () { return 3; }; 
     [=,&foo] () {}; 
     [this] () {}; 
+
+    [foo(bar)] () {}; // expected-error {{not supported}}
+    [foo = bar] () {}; // expected-error {{not supported}}
+    [foo{bar}] () {}; // expected-error {{not supported}}
+    [foo = {bar}] () {}; // expected-error {{not supported}}
+
+    [foo(bar) baz] () {}; // expected-error {{called object type 'int' is not a function}}
+
+    // FIXME: These are some appalling diagnostics.
+    [foo = bar baz]; // expected-error {{missing '['}} expected-warning 2{{receiver type 'int'}} expected-warning 2{{instance method '-baz'}}
   }
 
 };

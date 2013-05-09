@@ -4887,6 +4887,8 @@ let CategoryName = "Lambda Issue" in {
   def note_lambda_to_block_conv : Note<
     "implicit capture of lambda object due to conversion to block pointer "
     "here">;
+  def err_lambda_init_capture_unsupported : Error<
+    "sorry, initialized lambda-captures are not supported yet">;
 }
 
 def err_return_in_captured_stmt : Error<

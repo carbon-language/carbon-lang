@@ -559,6 +559,14 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       continue;
     }
 
+    // FIXME: C++1y [expr.prim.lambda]p11
+    if (C->Init.isInvalid())
+      continue;
+    if (C->Init.isUsable()) {
+      Diag(C->Loc, diag::err_lambda_init_capture_unsupported);
+      continue;
+    }
+
     assert(C->Id && "missing identifier for capture");
 
     // C++11 [expr.prim.lambda]p8:
