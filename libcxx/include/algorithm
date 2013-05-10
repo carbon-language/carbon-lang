@@ -1301,7 +1301,7 @@ __not_done:
     _D1 __l1 = _VSTD::distance(__first1, __last1);
 
     typedef typename iterator_traits<_ForwardIterator2>::difference_type _D2;
-    _D1 __l2 = _VSTD::distance(__first2, __last2);
+    _D2 __l2 = _VSTD::distance(__first2, __last2);
     if (__l1 != __l2)
         return false;
 
