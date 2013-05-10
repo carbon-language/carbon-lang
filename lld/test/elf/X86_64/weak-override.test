@@ -6,7 +6,7 @@ RUN: lld -flavor gnu -target x86_64 %p/Inputs/weak.o \
 RUN:   %p/Inputs/ovrd.o -o %t2 -emit-yaml --noinhibit-exec
 RUN: FileCheck -check-prefix=WEAKATOMSORDER %s < %t2
 
-WEAKORDER: 004001ec T f
+WEAKORDER: {{[0-9a-c]+}} T f
 
 WEAKATOMSORDER:    references:      
 WEAKATOMSORDER:      - kind:            layout-after

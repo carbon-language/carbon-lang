@@ -6,8 +6,8 @@ RUN: lld -flavor gnu -target x86_64 %p/Inputs/multi-weak.o \
 RUN:    %p/Inputs/multi-ovrd.o -emit-yaml -o %t2 --noinhibit-exec
 RUN: FileCheck -check-prefix=WEAKATOMSORDER %s < %t2
 
-WEAKORDER: 0040020c T f
-WEAKORDER: 0040021c T g
+WEAKORDER: {{[0-9a-f]+}} T f
+WEAKORDER: {{[0-9a-f]+}} T g
 
 WEAKATOMSORDER:  - ref-name:        {{[A-Z0-9]+}}
 WEAKATOMSORDER:  - ref-name:        {{[A-Z0-9]+}}

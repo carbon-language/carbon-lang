@@ -1,3 +1,5 @@
+# This test checks that IRELATIVE relocations are created for symbols that 
+# need relocation even for static links. 
 RUN: lld -flavor gnu -target x86_64-linux -emit-yaml -r \
 RUN:   %p/Inputs/ifunc.x86-64  | FileCheck %s
 
@@ -12,12 +14,6 @@ RUN: && llvm-objdump -d -s %t| FileCheck %s --check-prefix=BIN
 
 PLT: defined-atoms:
 
-// Make sure there's a got entry with a IRELATIVE relocation.
-PLT: type: got
-PLT: references:
-PLT:  kind: R_X86_64_IRELATIVE
-PLT:  target: hey
-
 PLT: name:  plt
 PLT: scope: global
 PLT: references:
@@ -25,11 +21,18 @@ PLT:   kind:   R_X86_64_PC32
 PLT:   target: [[PLTNAME:[-a-zA-Z0-9_]+]]
 PLT:   kind: layout-before
 PLT:   target: __hey_1
+
 PLT: name: main
 PLT: scope: global
 PLT: references:
 PLT:   kind: R_X86_64_PC32
 PLT:   target: [[PLTNAME]]
+
+// Make sure there's a got entry with a IRELATIVE relocation.
+PLT: type: got
+PLT: references:
+PLT:  kind: R_X86_64_IRELATIVE
+PLT:  target: hey
 
 // Make sure the target of main's relocation is a stub with a PC32 relocation.
 // This relocation is to the got atom, but you can't really write that check in

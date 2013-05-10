@@ -31,6 +31,30 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
   if (left == right)
     return false;
 
+  DEBUG(llvm::dbgs() << "Sorting by override\n");
+
+  AtomToOrdinalT::const_iterator lPos = _layout._ordinalOverrideMap.find(left);
+  AtomToOrdinalT::const_iterator rPos = _layout._ordinalOverrideMap.find(right);
+  AtomToOrdinalT::const_iterator end = _layout._ordinalOverrideMap.end();
+  if (lPos != end) {
+    if (rPos != end) {
+      // both left and right are overridden, so compare overridden ordinals
+      if (lPos->second != rPos->second)
+        return lPos->second < rPos->second;
+    } else {
+      // left is overridden and right is not, so left < right
+      return true;
+    }
+  } else {
+    if (rPos != end) {
+      // right is overridden and left is not, so right < left
+      return false;
+    } else {
+      // neither are overridden,
+      // fall into default sorting below
+    }
+  }
+
   // Sort same permissions together.
   DefinedAtom::ContentPermissions leftPerms = left->permissions();
   DefinedAtom::ContentPermissions rightPerms = right->permissions();
@@ -65,30 +89,6 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
   if (leftSpecialPos || rightSpecialPos) {
     if (leftPos != rightPos)
       return leftPos < rightPos;
-  }
-
-  DEBUG(llvm::dbgs() << "Sorting by override\n");
-
-  AtomToOrdinalT::const_iterator lPos = _layout._ordinalOverrideMap.find(left);
-  AtomToOrdinalT::const_iterator rPos = _layout._ordinalOverrideMap.find(right);
-  AtomToOrdinalT::const_iterator end = _layout._ordinalOverrideMap.end();
-  if (lPos != end) {
-    if (rPos != end) {
-      // both left and right are overridden, so compare overridden ordinals
-      if (lPos->second != rPos->second)
-        return lPos->second < rPos->second;
-    } else {
-      // left is overridden and right is not, so left < right
-      return true;
-    }
-  } else {
-    if (rPos != end) {
-      // right is overridden and left is not, so right < left
-      return false;
-    } else {
-      // neither are overridden,
-      // fall into default sorting below
-    }
   }
 
   // Sort by .o order.
