@@ -22,6 +22,15 @@ Modifying the Driver
 See :doc:`Driver`.
 
 
+Debugging
+---------
+
+You can run lld with ``-mllvm=-debug`` command line option to enable debugging
+printouts. If you want to enable debug information for some specific pass, you
+can run it with ``-mllvm='-debug-only <pass>'``, where pass is a name used in
+the ``DEBUG_WITH_TYPE()`` macro.
+
+
 
 Documentation
 -------------
