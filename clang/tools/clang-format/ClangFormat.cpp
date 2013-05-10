@@ -28,13 +28,19 @@ using namespace llvm;
 
 static cl::opt<bool> Help("h", cl::desc("Alias for -help"), cl::Hidden);
 
-static cl::list<unsigned>
-Offsets("offset", cl::desc("Format a range starting at this byte offset. Can "
-                           "only be used with one input file."));
-static cl::list<unsigned>
-Lengths("length", cl::desc("Format a range of this length (in bytes). "
-                           "When it's not specified, end of file is used. "
-                           "Can only be used with one input file."));
+static cl::list<unsigned> Offsets(
+    "offset",
+    cl::desc(
+        "Format a range starting at this byte offset. Multiple ranges can be "
+        "formatted by specifying several -offset and -length pairs. Can "
+        "only be used with one input file."));
+static cl::list<unsigned> Lengths(
+    "length",
+    cl::desc("Format a range of this length (in bytes). Multiple ranges can be "
+             "formatted by specifying several -offset and -length pairs. When "
+             "only a single -offset is specified without -length, clang-format "
+             "will format up to the end of the file. Can only be used with one "
+             "input file."));
 static cl::opt<std::string> Style(
     "style",
     cl::desc(
