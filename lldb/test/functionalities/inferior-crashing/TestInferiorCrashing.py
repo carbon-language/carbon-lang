@@ -38,26 +38,24 @@ class CrashingInferiorTestCase(TestBase):
         self.inferior_crashing_python()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    @expectedFailureDarwin # bugzilla 15784
     def test_inferior_crashing_expr(self):
         """Test that the lldb expression interpreter can read from the inferior after crashing (command)."""
         self.buildDsym()
         self.inferior_crashing_expr()
 
-    @expectedFailureDarwin # bugzilla 15784
+    # bugzilla 15784 - the same commands fail when run on Linux from the lldb command line
     def test_inferior_crashing_expr(self):
         """Test that the lldb expression interpreter can read from the inferior after crashing (command)."""
         self.buildDwarf()
         self.inferior_crashing_expr()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    @expectedFailureDarwin # bugzilla 15784
     def test_inferior_crashing_step(self):
         """Test that lldb functions correctly after stepping through a crash."""
         self.buildDsym()
         self.inferior_crashing_step()
 
-    @expectedFailureDarwin # bugzilla 15784
+    # bugzilla 15784 - the same commands fail when run on Linux from the lldb command line
     def test_inferior_crashing_step(self):
         """Test that lldb functions correctly after stepping through a crash."""
         self.buildDwarf()
