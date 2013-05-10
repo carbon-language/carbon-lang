@@ -77,8 +77,9 @@ void xpc_connection_set_context(xpc_connection_t connection, void *context);
 void xpc_connection_set_finalizer_f(xpc_connection_t connection, xpc_finalizer_t finalizer);
 void xpc_connection_resume(xpc_connection_t connection);
 
-//The following is a fake system header function
+//The following are fake system header functions for generic testing.
 void fakeSystemHeaderCallInt(int *);
+void fakeSystemHeaderCallIntPtr(int **);
 
 typedef struct __SomeStruct {
   char * p;

@@ -1057,12 +1057,6 @@ void testPassConstPointerIndirectly() {
   return; // expected-warning {{leak}}
 }
 
-void testPassToSystemHeaderFunctionIndirectly() {
-  int *p = malloc(4);
-  p++;
-  fakeSystemHeaderCallInt(p);
-} // expected-warning {{leak}}
-
 void testPassConstPointerIndirectlyStruct() {
   struct HasPtr hp;
   hp.p = malloc(10);
@@ -1073,8 +1067,32 @@ void testPassConstPointerIndirectlyStruct() {
 void testPassToSystemHeaderFunctionIndirectlyStruct() {
   SomeStruct ss;
   ss.p = malloc(1);
-  fakeSystemHeaderCall(&ss);
-} // expected-warning {{Potential leak of memory pointed to by 'ss.p'}}
+  fakeSystemHeaderCall(&ss); // invalidates ss, making ss.p unreachable
+  // Technically a false negative here -- we know the system function won't free
+  // ss.p, but nothing else will either!
+} // no-warning
+
+void testPassToSystemHeaderFunctionIndirectlyStructFree() {
+  SomeStruct ss;
+  ss.p = malloc(1);
+  fakeSystemHeaderCall(&ss); // invalidates ss, making ss.p unreachable
+  free(ss.p);
+} // no-warning
+
+void testPassToSystemHeaderFunctionIndirectlyArray() {
+  int *p[1];
+  p[0] = malloc(sizeof(int));
+  fakeSystemHeaderCallIntPtr(p); // invalidates p, making p[0] unreachable
+  // Technically a false negative here -- we know the system function won't free
+  // p[0], but nothing else will either!
+} // no-warning
+
+void testPassToSystemHeaderFunctionIndirectlyArrayFree() {
+  int *p[1];
+  p[0] = malloc(sizeof(int));
+  fakeSystemHeaderCallIntPtr(p); // invalidates p, making p[0] unreachable
+  free(p[0]);
+} // no-warning
 
 int *testOffsetAllocate(size_t size) {
   int *memoryBlock = (int *)malloc(size + sizeof(int));
@@ -1199,4 +1217,12 @@ void testMallocWithParam(int **p) {
 
 void testMallocWithParam_2(int **p) {
   *p = (int*) malloc(sizeof(int)); // no-warning
+}
+
+void testPassToSystemHeaderFunctionIndirectly() {
+  int *p = malloc(4);
+  p++;
+  fakeSystemHeaderCallInt(p);
+  // FIXME: This is a leak: if we think a system function won't free p, it
+  // won't free (p-1) either.
 }

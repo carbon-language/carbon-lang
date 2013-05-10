@@ -87,5 +87,5 @@ void testPassConstPointer() {
 void testPassToSystemHeaderFunctionIndirectly() {
   FileStruct fs;
   fs.p = fopen("myfile.txt", "w");
-  fakeSystemHeaderCall(&fs);
-}  // expected-warning {{Opened file is never closed; potential resource leak}}
+  fakeSystemHeaderCall(&fs); // invalidates fs, making fs.p unreachable
+}  // no-warning

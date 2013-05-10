@@ -2012,8 +2012,7 @@ ProgramStateRef MallocChecker::checkPointerEscapeAux(ProgramStateRef State,
                                   bool(*CheckRefState)(const RefState*)) const {
   // If we know that the call does not free memory, or we want to process the
   // call later, keep tracking the top level arguments.
-  if ((Kind == PSK_DirectEscapeOnCall ||
-       Kind == PSK_IndirectEscapeOnCall) &&
+  if (Kind == PSK_DirectEscapeOnCall &&
       doesNotFreeMemOrInteresting(Call, State)) {
     return State;
   }

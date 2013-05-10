@@ -259,9 +259,7 @@ SimpleStreamChecker::checkPointerEscape(ProgramStateRef State,
                                         const CallEvent *Call,
                                         PointerEscapeKind Kind) const {
   // If we know that the call cannot close a file, there is nothing to do.
-  if ((Kind == PSK_DirectEscapeOnCall ||
-       Kind == PSK_IndirectEscapeOnCall) &&
-      guaranteedNotToCloseFile(*Call)) {
+  if (Kind == PSK_DirectEscapeOnCall && guaranteedNotToCloseFile(*Call)) {
     return State;
   }
 
