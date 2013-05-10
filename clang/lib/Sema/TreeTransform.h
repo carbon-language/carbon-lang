@@ -1767,12 +1767,10 @@ public:
                                          SourceLocation DefaultLoc,
                                          SourceLocation RParenLoc,
                                          Expr *ControllingExpr,
-                                         TypeSourceInfo **Types,
-                                         Expr **Exprs,
-                                         unsigned NumAssocs) {
+                                         ArrayRef<TypeSourceInfo *> Types,
+                                         ArrayRef<Expr *> Exprs) {
     return getSema().CreateGenericSelectionExpr(KeyLoc, DefaultLoc, RParenLoc,
-                                                ControllingExpr, Types, Exprs,
-                                                NumAssocs);
+                                                ControllingExpr, Types, Exprs);
   }
 
   /// \brief Build a new overloaded operator call expression.
@@ -6289,9 +6287,8 @@ TreeTransform<Derived>::TransformGenericSelectionExpr(GenericSelectionExpr *E) {
                                                   E->getDefaultLoc(),
                                                   E->getRParenLoc(),
                                                   ControllingExpr.release(),
-                                                  AssocTypes.data(),
-                                                  AssocExprs.data(),
-                                                  E->getNumAssocs());
+                                                  AssocTypes,
+                                                  AssocExprs);
 }
 
 template<typename Derived>

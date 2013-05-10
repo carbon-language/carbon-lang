@@ -3144,15 +3144,14 @@ public:
                                        SourceLocation DefaultLoc,
                                        SourceLocation RParenLoc,
                                        Expr *ControllingExpr,
-                                       MultiTypeArg ArgTypes,
-                                       MultiExprArg ArgExprs);
+                                       ArrayRef<ParsedType> ArgTypes,
+                                       ArrayRef<Expr *> ArgExprs);
   ExprResult CreateGenericSelectionExpr(SourceLocation KeyLoc,
                                         SourceLocation DefaultLoc,
                                         SourceLocation RParenLoc,
                                         Expr *ControllingExpr,
-                                        TypeSourceInfo **Types,
-                                        Expr **Exprs,
-                                        unsigned NumAssocs);
+                                        ArrayRef<TypeSourceInfo *> Types,
+                                        ArrayRef<Expr *> Exprs);
 
   // Binary/Unary Operators.  'Tok' is the token for the operator.
   ExprResult CreateBuiltinUnaryOp(SourceLocation OpLoc, UnaryOperatorKind Opc,
