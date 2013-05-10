@@ -677,7 +677,6 @@ static bool CanEvaluateZExtd(Value *V, Type *Ty, unsigned &BitsToClear) {
   case Instruction::Add:
   case Instruction::Sub:
   case Instruction::Mul:
-  case Instruction::Shl:
     if (!CanEvaluateZExtd(I->getOperand(0), Ty, BitsToClear) ||
         !CanEvaluateZExtd(I->getOperand(1), Ty, Tmp))
       return false;
@@ -701,6 +700,17 @@ static bool CanEvaluateZExtd(Value *V, Type *Ty, unsigned &BitsToClear) {
     // Otherwise, we don't know how to analyze this BitsToClear case yet.
     return false;
 
+  case Instruction::Shl:
+    // We can promote shl(x, cst) if we can promote x.  Since shl overwrites the
+    // upper bits we can reduce BitsToClear by the shift amount.
+    if (ConstantInt *Amt = dyn_cast<ConstantInt>(I->getOperand(1))) {
+      if (!CanEvaluateZExtd(I->getOperand(0), Ty, BitsToClear))
+        return false;
+      uint64_t ShiftAmt = Amt->getZExtValue();
+      BitsToClear = ShiftAmt < BitsToClear ? BitsToClear - ShiftAmt : 0;
+      return true;
+    }
+    return false;
   case Instruction::LShr:
     // We can promote lshr(x, cst) if we can promote x.  This requires the
     // ultimate 'and' to clear out the high zero bits we're clearing out though.

@@ -898,3 +898,31 @@ define double @test81(double *%p, float %f) {
   %l = load double* %r
   ret double %l
 }
+
+define i64 @test82(i64 %A) nounwind {
+  %B = trunc i64 %A to i32
+  %C = lshr i32 %B, 8
+  %D = shl i32 %C, 9
+  %E = zext i32 %D to i64
+  ret i64 %E
+
+; CHECK: @test82
+; CHECK-NEXT:   [[REG:%[0-9]*]] = shl i64 %A, 1
+; CHECK-NEXT:   %E = and i64 [[REG]], 4294966784
+; CHECK-NEXT:   ret i64 %E
+}
+
+; PR15959
+define i64 @test83(i16 %a, i64 %k) {
+  %conv = sext i16 %a to i32
+  %sub = add nsw i64 %k, -1
+  %sh_prom = trunc i64 %sub to i32
+  %shl = shl i32 %conv, %sh_prom
+  %sh_prom1 = zext i32 %shl to i64
+  ret i64 %sh_prom1
+
+; CHECK: @test83
+; CHECK: %sub = add nsw i64 %k, 4294967295
+; CHECK: %sh_prom = trunc i64 %sub to i32
+; CHECK: %shl = shl i32 %conv, %sh_prom
+}
