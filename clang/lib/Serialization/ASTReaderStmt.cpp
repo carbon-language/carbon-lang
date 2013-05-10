@@ -847,7 +847,7 @@ void ASTStmtReader::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   unsigned NumExprs = Record[Idx++];
   while (NumExprs--)
     Exprs.push_back(Reader.ReadSubExpr());
-  E->setExprs(Reader.getContext(), Exprs.data(), Exprs.size());
+  E->setExprs(Reader.getContext(), Exprs);
   E->setBuiltinLoc(ReadSourceLocation(Record, Idx));
   E->setRParenLoc(ReadSourceLocation(Record, Idx));
 }
