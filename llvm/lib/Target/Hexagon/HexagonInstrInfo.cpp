@@ -1027,6 +1027,16 @@ bool HexagonInstrInfo::isPredicatedNew(unsigned Opcode) const {
   return ((F >> HexagonII::PredicatedNewPos) & HexagonII::PredicatedNewMask);
 }
 
+// Returns true, if a ST insn can be promoted to a new-value store.
+bool HexagonInstrInfo::mayBeNewStore(const MachineInstr *MI) const {
+  const HexagonRegisterInfo& QRI = getRegisterInfo();
+  const uint64_t F = MI->getDesc().TSFlags;
+
+  return ((F >> HexagonII::mayNVStorePos) &
+           HexagonII::mayNVStoreMask &
+           QRI.Subtarget.hasV4TOps());
+}
+
 bool
 HexagonInstrInfo::DefinesPredicate(MachineInstr *MI,
                                    std::vector<MachineOperand> &Pred) const {
@@ -1518,6 +1528,31 @@ bool HexagonInstrInfo::isNewValue(const MachineInstr* MI) const {
 bool HexagonInstrInfo::isDotNewInst (const MachineInstr* MI) const {
   return (isNewValueInst(MI) ||
      (isPredicated(MI) && isPredicatedNew(MI)));
+}
+
+// Returns the most basic instruction for the .new predicated instructions and
+// new-value stores.
+// For example, all of the following instructions will be converted back to the
+// same instruction:
+// 1) if (p0.new) memw(R0+#0) = R1.new  --->
+// 2) if (p0) memw(R0+#0)= R1.new      -------> if (p0) memw(R0+#0) = R1
+// 3) if (p0.new) memw(R0+#0) = R1      --->
+//
+
+int HexagonInstrInfo::GetDotOldOp(const int opc) const {
+  int NewOp = opc;
+  if (isPredicated(NewOp) && isPredicatedNew(NewOp)) { // Get predicate old form
+    NewOp = Hexagon::getPredOldOpcode(NewOp);
+    if (NewOp < 0)
+      assert(0 && "Couldn't change predicate new instruction to its old form.");
+  }
+
+  if (isNewValueStore(NewOp)) { // Convert into non new-value format
+    NewOp = Hexagon::getNonNVStore(NewOp);
+    if (NewOp < 0)
+      assert(0 && "Couldn't change new-value store to its old form.");
+  }
+  return NewOp;
 }
 
 // Return the new value instruction for a given store.

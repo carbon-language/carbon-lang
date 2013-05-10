@@ -120,6 +120,18 @@ def getPredNewOpcode : InstrMapping {
 }
 
 //===----------------------------------------------------------------------===//
+// Generate mapping table to relate .new predicated instructions with their old
+// format.
+//
+def getPredOldOpcode : InstrMapping {
+  let FilterClass = "PredNewRel";
+  let RowFields = ["BaseOpcode", "PredSense", "isNVStore"];
+  let ColFields = ["PNewValue"];
+  let KeyCol = ["new"];
+  let ValueCols = [[""]];
+}
+
+//===----------------------------------------------------------------------===//
 // Generate mapping table to relate store instructions with their new-value
 // format.
 //
@@ -129,6 +141,18 @@ def getNewValueOpcode : InstrMapping {
   let ColFields = ["NValueST"];
   let KeyCol = ["false"];
   let ValueCols = [["true"]];
+}
+
+//===----------------------------------------------------------------------===//
+// Generate mapping table to relate new-value store instructions with their old
+// format.
+//
+def getNonNVStore : InstrMapping {
+  let FilterClass = "NewValueRel";
+  let RowFields = ["BaseOpcode", "PredSense", "PNewValue"];
+  let ColFields = ["NValueST"];
+  let KeyCol = ["true"];
+  let ValueCols = [["false"]];
 }
 
 def getBasedWithImmOffset : InstrMapping {
