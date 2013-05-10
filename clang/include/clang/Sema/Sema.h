@@ -3984,8 +3984,8 @@ public:
                                FunctionDecl *&OperatorNew,
                                FunctionDecl *&OperatorDelete);
   bool FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
-                              DeclarationName Name, Expr** Args,
-                              unsigned NumArgs, DeclContext *Ctx,
+                              DeclarationName Name, MultiExprArg Args,
+                              DeclContext *Ctx,
                               bool AllowMissing, FunctionDecl *&Operator,
                               bool Diagnose = true);
   void DeclareGlobalNewDelete();
