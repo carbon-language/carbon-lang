@@ -401,7 +401,7 @@ namespace llvm {
     DIScope getContext() const       { return getFieldAs<DIScope>(1); }
     StringRef getName() const        { return getStringField(2); }
     DIType getType() const           { return getFieldAs<DIType>(3); }
-    uint64_t getValue() const         { return getUInt64Field(4); }
+    Value *getValue() const;
     StringRef getFilename() const    {
       return getFieldAs<DIFile>(5).getFilename();
     }

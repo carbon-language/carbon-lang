@@ -695,6 +695,10 @@ DIArray DISubprogram::getVariables() const {
   return DIArray();
 }
 
+Value *DITemplateValueParameter::getValue() const {
+  return getField(DbgNode, 4);
+}
+
 void DIScope::setFilename(StringRef Name, LLVMContext &Context) {
   if (!DbgNode)
     return;

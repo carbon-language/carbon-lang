@@ -588,6 +588,9 @@ static bool isTypeSigned(DIType Ty, int *SizeInBits) {
 /// addConstantValue - Add constant value entry in variable DIE.
 bool CompileUnit::addConstantValue(DIE *Die, const MachineOperand &MO,
                                    DIType Ty) {
+  // FIXME: This is a bit conservative/simple - it emits negative values at
+  // their maximum bit width which is a bit unfortunate (& doesn't prefer
+  // udata/sdata over dataN as suggested by the DWARF spec)
   assert(MO.isImm() && "Invalid machine operand!");
   DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
   int SizeInBits = -1;
@@ -1095,8 +1098,21 @@ CompileUnit::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter TPV){
   addType(ParamDIE, TPV.getType());
   if (!TPV.getName().empty())
     addString(ParamDIE, dwarf::DW_AT_name, TPV.getName());
-  addUInt(ParamDIE, dwarf::DW_AT_const_value, dwarf::DW_FORM_udata,
-          TPV.getValue());
+  if (Value *Val = TPV.getValue()) {
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(Val))
+      addConstantValue(ParamDIE, CI, TPV.getType().isUnsignedDIType());
+    else if (GlobalValue *GV = dyn_cast<GlobalValue>(Val)) {
+      // For declaration non-type template parameters (such as global values and
+      // functions)
+      DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
+      addOpAddress(Block, Asm->Mang->getSymbol(GV));
+      // Emit DW_OP_stack_value to use the address as the immediate value of the
+      // parameter, rather than a pointer to it.
+      addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_stack_value);
+      addBlock(ParamDIE, dwarf::DW_AT_location, 0, Block);
+    }
+  }
+
   return ParamDIE;
 }
 

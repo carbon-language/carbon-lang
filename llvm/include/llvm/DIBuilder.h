@@ -332,10 +332,9 @@ namespace llvm {
     /// @param LineNo       Line number.
     /// @param ColumnNo     Column Number.
     DITemplateValueParameter
-    createTemplateValueParameter(DIDescriptor Scope, StringRef Name, DIType Ty,
-                                 uint64_t Value,
-                                 MDNode *File = 0, unsigned LineNo = 0,
-                                 unsigned ColumnNo = 0);
+    createTemplateValueParameter(DIDescriptor Scope, StringRef Name,
+                                 DIType Ty, Value *Val, MDNode *File = 0,
+                                 unsigned LineNo = 0, unsigned ColumnNo = 0);
 
     /// createArrayType - Create debugging information entry for an array.
     /// @param Size         Array size.

@@ -502,7 +502,7 @@ DIBuilder::createTemplateTypeParameter(DIDescriptor Context, StringRef Name,
 /// value parameter.
 DITemplateValueParameter
 DIBuilder::createTemplateValueParameter(DIDescriptor Context, StringRef Name,
-                                        DIType Ty, uint64_t Val,
+                                        DIType Ty, Value *Val,
                                         MDNode *File, unsigned LineNo,
                                         unsigned ColumnNo) {
   Value *Elts[] = {
@@ -510,7 +510,7 @@ DIBuilder::createTemplateValueParameter(DIDescriptor Context, StringRef Name,
     getNonCompileUnitScope(Context),
     MDString::get(VMContext, Name),
     Ty,
-    ConstantInt::get(Type::getInt64Ty(VMContext), Val),
+    Val,
     File,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
     ConstantInt::get(Type::getInt32Ty(VMContext), ColumnNo)
