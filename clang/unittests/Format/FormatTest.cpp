@@ -2490,6 +2490,8 @@ TEST_F(FormatTest, UndestandsOverloadedOperators) {
   verifyFormat("void *operator new[](std::size_t size);");
   verifyFormat("void operator delete(void *ptr);");
   verifyFormat("void operator delete[](void *ptr);");
+  verifyFormat("template <typename AAAAAAA, typename BBBBBBB>\n"
+               "AAAAAAA operator/(const AAAAAAA &a, BBBBBBB &b);");
 
   verifyFormat(
       "ostream &operator<<(ostream &OutputStream,\n"

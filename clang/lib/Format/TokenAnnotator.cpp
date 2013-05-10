@@ -390,8 +390,11 @@ private:
           CurrentToken->Type = TT_PointerOrReference;
         consumeToken();
       }
-      if (CurrentToken)
+      if (CurrentToken) {
         CurrentToken->Type = TT_OverloadedOperatorLParen;
+        if (CurrentToken->Parent->Type == TT_BinaryOperator)
+          CurrentToken->Parent->Type = TT_OverloadedOperator;
+      }
       break;
     case tok::question:
       parseConditional();
