@@ -7111,7 +7111,7 @@ public:
   /// \param [out] ReturnType - The return type of the send.
   /// \return true iff there were any incompatible types.
   bool CheckMessageArgumentTypes(QualType ReceiverType,
-                                 Expr **Args, unsigned NumArgs, Selector Sel,
+                                 MultiExprArg Args, Selector Sel,
                                  ArrayRef<SourceLocation> SelectorLocs,
                                  ObjCMethodDecl *Method, bool isClassMessage,
                                  bool isSuperMessage,

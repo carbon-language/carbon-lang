@@ -1184,8 +1184,8 @@ void Sema::EmitRelatedResultTypeNote(const Expr *E) {
 }
 
 bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
-                                     Expr **Args, unsigned NumArgs,
-                                     Selector Sel, 
+                                     MultiExprArg Args,
+                                     Selector Sel,
                                      ArrayRef<SourceLocation> SelectorLocs,
                                      ObjCMethodDecl *Method,
                                      bool isClassMessage, bool isSuperMessage,
@@ -1199,7 +1199,7 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
 
   if (!Method) {
     // Apply default argument promotion as for (C99 6.5.2.2p6).
-    for (unsigned i = 0; i != NumArgs; i++) {
+    for (unsigned i = 0, e = Args.size(); i != e; i++) {
       if (Args[i]->isTypeDependent())
         continue;
 
@@ -1247,9 +1247,9 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
   if (Method->param_size() > Sel.getNumArgs())
     NumNamedArgs = Method->param_size();
   // FIXME. This need be cleaned up.
-  if (NumArgs < NumNamedArgs) {
+  if (Args.size() < NumNamedArgs) {
     Diag(SelLoc, diag::err_typecheck_call_too_few_args)
-      << 2 << NumNamedArgs << NumArgs;
+      << 2 << NumNamedArgs << static_cast<unsigned>(Args.size());
     return false;
   }
 
@@ -1302,7 +1302,7 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
 
   // Promote additional arguments to variadic methods.
   if (Method->isVariadic()) {
-    for (unsigned i = NumNamedArgs; i < NumArgs; ++i) {
+    for (unsigned i = NumNamedArgs, e = Args.size(); i < e; ++i) {
       if (Args[i]->isTypeDependent())
         continue;
 
@@ -1313,21 +1313,22 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
     }
   } else {
     // Check for extra arguments to non-variadic methods.
-    if (NumArgs != NumNamedArgs) {
+    if (Args.size() != NumNamedArgs) {
       Diag(Args[NumNamedArgs]->getLocStart(),
            diag::err_typecheck_call_too_many_args)
-        << 2 /*method*/ << NumNamedArgs << NumArgs
+        << 2 /*method*/ << NumNamedArgs << static_cast<unsigned>(Args.size())
         << Method->getSourceRange()
         << SourceRange(Args[NumNamedArgs]->getLocStart(),
-                       Args[NumArgs-1]->getLocEnd());
+                       Args.back()->getLocEnd());
     }
   }
 
-  DiagnoseSentinelCalls(Method, SelLoc, llvm::makeArrayRef(Args, NumArgs));
+  DiagnoseSentinelCalls(Method, SelLoc, Args);
 
   // Do additional checkings on method.
-  IsError |= CheckObjCMethodCall(Method, SelLoc,
-                               llvm::makeArrayRef<const Expr *>(Args, NumArgs));
+  IsError |= CheckObjCMethodCall(
+                  Method, SelLoc,
+                  llvm::makeArrayRef<const Expr *>(Args.data(), Args.size()));
 
   return IsError;
 }
@@ -2065,7 +2066,8 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
 
   unsigned NumArgs = ArgsIn.size();
   Expr **Args = ArgsIn.data();
-  if (CheckMessageArgumentTypes(ReceiverType, Args, NumArgs, Sel, SelectorLocs,
+  if (CheckMessageArgumentTypes(ReceiverType, MultiExprArg(Args, NumArgs),
+                                Sel, SelectorLocs,
                                 Method, true,
                                 SuperLoc.isValid(), LBracLoc, RBracLoc, 
                                 ReturnType, VK))
@@ -2410,8 +2412,8 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
   ExprValueKind VK = VK_RValue;
   bool ClassMessage = (ReceiverType->isObjCClassType() ||
                        ReceiverType->isObjCQualifiedClassType());
-  if (CheckMessageArgumentTypes(ReceiverType, Args, NumArgs, Sel,
-                                SelectorLocs, Method, 
+  if (CheckMessageArgumentTypes(ReceiverType, MultiExprArg(Args, NumArgs),
+                                Sel, SelectorLocs, Method,
                                 ClassMessage, SuperLoc.isValid(), 
                                 LBracLoc, RBracLoc, ReturnType, VK))
     return ExprError();
