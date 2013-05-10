@@ -471,6 +471,7 @@ public:
     return OriginalSourceFile;
   }
 
+  ASTMutationListener *getASTMutationListener();
   ASTDeserializationListener *getDeserializationListener();
 
   /// \brief Add a temporary file that the ASTUnit depends on.

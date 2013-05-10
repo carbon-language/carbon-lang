@@ -638,6 +638,12 @@ void StoredDiagnosticConsumer::HandleDiagnostic(DiagnosticsEngine::Level Level,
     StoredDiags.push_back(StoredDiagnostic(Level, Info));
 }
 
+ASTMutationListener *ASTUnit::getASTMutationListener() {
+  if (WriterData)
+    return &WriterData->Writer;
+  return 0;
+}
+
 ASTDeserializationListener *ASTUnit::getDeserializationListener() {
   if (WriterData)
     return &WriterData->Writer;
@@ -927,6 +933,10 @@ public:
   void HandleTopLevelDeclInObjCContainer(DeclGroupRef D) {
     for (DeclGroupRef::iterator it = D.begin(), ie = D.end(); it != ie; ++it)
       handleTopLevelDecl(*it);
+  }
+
+  virtual ASTMutationListener *GetASTMutationListener() {
+    return Unit.getASTMutationListener();
   }
 
   virtual ASTDeserializationListener *GetASTDeserializationListener() {
