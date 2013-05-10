@@ -520,6 +520,8 @@ public:
 
   virtual uint64_t offset() const { return _offset; }
 
+  void setOrdinal(uint64_t ord) { _ordinal = ord; }
+
   virtual uint64_t ordinal() const { return _ordinal; }
 
   virtual uint64_t size() const { return _contentData.size(); }

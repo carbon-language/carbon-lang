@@ -122,7 +122,7 @@ public:
   ELFFile(const ELFTargetInfo &ti, std::unique_ptr<llvm::MemoryBuffer> MB,
           llvm::error_code &EC)
       : File(MB->getBufferIdentifier(), kindObject), _elfTargetInfo(ti),
-        _doStringsMerge(false) {
+        _ordinal(0), _doStringsMerge(false) {
     llvm::OwningPtr<llvm::object::Binary> binaryFile;
     EC = createBinary(MB.release(), binaryFile);
     if (EC)
@@ -261,6 +261,7 @@ public:
       const MergeSectionKey mergedSectionKey(tai->_shdr, tai->_offset);
       if (_mergedSectionMap.find(mergedSectionKey) == _mergedSectionMap.end())
         _mergedSectionMap.insert(std::make_pair(mergedSectionKey, mergeAtom));
+      mergeAtom->setOrdinal(++_ordinal);
       _definedAtoms._atoms.push_back(mergeAtom);
       _mergeAtoms.push_back(mergeAtom);
     }
@@ -332,8 +333,6 @@ public:
   /// \brief Create individual atoms
   bool createAtoms(llvm::error_code &EC) {
 
-    int64_t ordinal = 0;
-
     // Cached value of the targetHandler
     TargetHandler<ELFT> &targetHandler =
         _elfTargetInfo.template getTargetHandler<ELFT>();
@@ -368,7 +367,7 @@ public:
                                   sectionContents.size());
         auto newAtom = new (_readerStorage) ELFDefinedAtom<ELFT>(
             *this, "", sectionName, sym, i.first, content, 0, 0, _references);
-        newAtom->setOrdinal(++ordinal);
+        newAtom->setOrdinal(++_ordinal);
         _definedAtoms._atoms.push_back(newAtom);
         continue;
       }
@@ -441,7 +440,7 @@ public:
               ArrayRef<uint8_t>(
                   (uint8_t *)sectionContents.data() + (*si)->st_value,
                   contentSize));
-          anonAtom->setOrdinal(++ordinal);
+          anonAtom->setOrdinal(++_ordinal);
 
           // If this is the last atom, lets not create a followon
           // reference
@@ -479,7 +478,7 @@ public:
         auto newAtom = createDefinedAtomAndAssignRelocations(
             symbolName, sectionName, *si, i.first, symbolData);
 
-        newAtom->setOrdinal(++ordinal);
+        newAtom->setOrdinal(++_ordinal);
 
         // If the atom was a weak symbol, lets create a followon
         // reference to the anonymous atom that we created
@@ -719,6 +718,8 @@ private:
 
   /// \brief Sections that have merge string property
   std::vector<const Elf_Shdr *> _mergeStringSections;
+
+  int64_t _ordinal;
 
   /// \brief the cached options relevant while reading the ELF File
   bool _doStringsMerge : 1;
