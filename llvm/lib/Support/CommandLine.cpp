@@ -913,11 +913,20 @@ size_t alias::getOptionWidth() const {
   return std::strlen(ArgStr)+6;
 }
 
+static void printHelpStr(StringRef HelpStr, size_t Indent,
+                         size_t FirstLineIndentedBy) {
+  std::pair<StringRef, StringRef> Split = HelpStr.split('\n');
+  outs().indent(Indent - FirstLineIndentedBy) << " - " << Split.first << "\n";
+  while (!Split.second.empty()) {
+    Split = Split.second.split('\n');
+    outs().indent(Indent) << Split.first << "\n";
+  }
+}
+
 // Print out the option for the alias.
 void alias::printOptionInfo(size_t GlobalWidth) const {
-  size_t L = std::strlen(ArgStr);
   outs() << "  -" << ArgStr;
-  outs().indent(GlobalWidth-L-6) << " - " << HelpStr << "\n";
+  printHelpStr(HelpStr, GlobalWidth, std::strlen(ArgStr) + 6);
 }
 
 //===----------------------------------------------------------------------===//
@@ -946,7 +955,7 @@ void basic_parser_impl::printOptionInfo(const Option &O,
   if (const char *ValName = getValueName())
     outs() << "=<" << getValueStr(O, ValName) << '>';
 
-  outs().indent(GlobalWidth-getOptionWidth(O)) << " - " << O.HelpStr << '\n';
+  printHelpStr(O.HelpStr, GlobalWidth, getOptionWidth(O));
 }
 
 void basic_parser_impl::printOptionName(const Option &O,
@@ -1087,9 +1096,8 @@ size_t generic_parser_base::getOptionWidth(const Option &O) const {
 void generic_parser_base::printOptionInfo(const Option &O,
                                           size_t GlobalWidth) const {
   if (O.hasArgStr()) {
-    size_t L = std::strlen(O.ArgStr);
     outs() << "  -" << O.ArgStr;
-    outs().indent(GlobalWidth-L-6) << " - " << O.HelpStr << '\n';
+    printHelpStr(O.HelpStr, GlobalWidth, std::strlen(O.ArgStr) + 6);
 
     for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
       size_t NumSpaces = GlobalWidth-strlen(getOption(i))-8;
@@ -1100,9 +1108,9 @@ void generic_parser_base::printOptionInfo(const Option &O,
     if (O.HelpStr[0])
       outs() << "  " << O.HelpStr << '\n';
     for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
-      size_t L = std::strlen(getOption(i));
-      outs() << "    -" << getOption(i);
-      outs().indent(GlobalWidth-L-8) << " - " << getDescription(i) << '\n';
+      const char *Option = getOption(i);
+      outs() << "    -" << Option;
+      printHelpStr(getDescription(i), GlobalWidth, std::strlen(Option) + 8);
     }
   }
 }
