@@ -232,7 +232,7 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
             {
                 error.SetErrorStringWithFormat ("'%s' doesn't contain any '%s' platform architectures: %s",
                                                 exe_file.GetPath().c_str(),
-                                                GetShortPluginName(),
+                                                GetPluginName().GetCString(),
                                                 arch_names.GetString().c_str());
             }
         }
@@ -501,7 +501,7 @@ PlatformDarwin::ConnectRemote (Args& args)
     Error error;
     if (IsHost())
     {
-        error.SetErrorStringWithFormat ("can't connect to the host platform '%s', always connected", GetShortPluginName());
+        error.SetErrorStringWithFormat ("can't connect to the host platform '%s', always connected", GetPluginName().GetCString());
     }
     else
     {
@@ -539,7 +539,7 @@ PlatformDarwin::DisconnectRemote ()
     
     if (IsHost())
     {
-        error.SetErrorStringWithFormat ("can't disconnect from the host platform '%s', always connected", GetShortPluginName());
+        error.SetErrorStringWithFormat ("can't disconnect from the host platform '%s', always connected", GetPluginName().GetCString());
     }
     else
     {

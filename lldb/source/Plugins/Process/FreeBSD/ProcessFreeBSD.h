@@ -42,7 +42,7 @@ public:
     static void
     Terminate();
 
-    static const char *
+    static lldb_private::ConstString
     GetPluginNameStatic();
 
     static const char *
@@ -60,11 +60,8 @@ public:
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual const char *
+    virtual lldb_private::ConstString
     GetPluginName();
-
-    virtual const char *
-    GetShortPluginName();
 
     virtual uint32_t
     GetPluginVersion();

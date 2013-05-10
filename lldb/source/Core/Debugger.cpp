@@ -2644,7 +2644,7 @@ Debugger::EnableLog (const char *channel, const char **categories, const char *l
     if (log_options == 0)
         log_options = LLDB_LOG_OPTION_PREPEND_THREAD_NAME | LLDB_LOG_OPTION_THREADSAFE;
         
-    if (Log::GetLogChannelCallbacks (channel, log_callbacks))
+    if (Log::GetLogChannelCallbacks (ConstString(channel), log_callbacks))
     {
         log_callbacks.enable (log_stream_sp, log_options, categories, &error_stream);
         return true;

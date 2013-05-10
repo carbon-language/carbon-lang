@@ -56,7 +56,8 @@ Disassembler::FindPlugin (const ArchSpec &arch, const char *flavor, const char *
     
     if (plugin_name)
     {
-        create_callback = PluginManager::GetDisassemblerCreateCallbackForPluginName (plugin_name);
+        ConstString const_plugin_name (plugin_name);
+        create_callback = PluginManager::GetDisassemblerCreateCallbackForPluginName (const_plugin_name);
         if (create_callback)
         {
             DisassemblerSP disassembler_sp(create_callback(arch, flavor));

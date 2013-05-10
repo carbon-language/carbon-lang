@@ -11,6 +11,7 @@
 #define lldb_EmulateInstructionARM_h_
 
 #include "lldb/Core/EmulateInstruction.h"
+#include "lldb/Core/ConstString.h"
 #include "lldb/Core/Error.h"
 #include "Plugins/Process/Utility/ARMDefines.h"
 
@@ -67,7 +68,7 @@ public:
     static void
     Terminate ();
 
-    static const char *
+    static lldb_private::ConstString
     GetPluginNameStatic ();
     
     static const char *
@@ -93,14 +94,8 @@ public:
         return false;
     }
 
-    virtual const char *
+    virtual lldb_private::ConstString
     GetPluginName()
-    {
-        return "EmulateInstructionARM";
-    }
-
-    virtual const char *
-    GetShortPluginName()
     {
         return GetPluginNameStatic();
     }

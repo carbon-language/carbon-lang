@@ -28,6 +28,7 @@ public:
         m_uuid (),
         m_object_name (),
         m_object_offset (0),
+        m_object_mod_time (),
         m_source_mappings ()
     {
     }
@@ -40,6 +41,7 @@ public:
         m_uuid (),
         m_object_name (),
         m_object_offset (0),
+        m_object_mod_time (),
         m_source_mappings ()
     {
     }
@@ -52,6 +54,7 @@ public:
         m_uuid (),
         m_object_name (),
         m_object_offset (0),
+        m_object_mod_time (),
         m_source_mappings ()
     {
     }
@@ -64,6 +67,7 @@ public:
         m_uuid (rhs.m_uuid),
         m_object_name (rhs.m_object_name),
         m_object_offset (rhs.m_object_offset),
+        m_object_mod_time (rhs.m_object_mod_time),
         m_source_mappings (rhs.m_source_mappings)
     {
     }
@@ -80,6 +84,7 @@ public:
             m_uuid = rhs.m_uuid;
             m_object_name = rhs.m_object_name;
             m_object_offset = rhs.m_object_offset;
+            m_object_mod_time = rhs.m_object_mod_time;
             m_source_mappings = rhs.m_source_mappings;
         }
         return *this;
@@ -248,6 +253,18 @@ public:
     {
         m_object_offset = object_offset;
     }
+    
+    TimeValue &
+    GetObjectModificationTime ()
+    {
+        return m_object_mod_time;
+    }
+    
+    const TimeValue &
+    GetObjectModificationTime () const
+    {
+        return m_object_mod_time;
+    }
 
     PathMappingList &
     GetSourceMappingList () const
@@ -266,6 +283,7 @@ public:
         m_object_name.Clear();
         m_object_offset = 0;
         m_source_mappings.Clear(false);
+        m_object_mod_time.Clear();
     }
 
 protected:
@@ -276,6 +294,7 @@ protected:
     UUID m_uuid;
     ConstString m_object_name;
     uint64_t m_object_offset;
+    TimeValue m_object_mod_time;
     mutable PathMappingList m_source_mappings;
 };
 

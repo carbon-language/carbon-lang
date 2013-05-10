@@ -40,22 +40,17 @@ DynamicLoaderPOSIXDYLD::Terminate()
 {
 }
 
-const char *
+lldb_private::ConstString
 DynamicLoaderPOSIXDYLD::GetPluginName()
 {
-    return "DynamicLoaderPOSIXDYLD";
+    return GetPluginNameStatic();
 }
 
-const char *
-DynamicLoaderPOSIXDYLD::GetShortPluginName()
-{
-    return "linux-dyld";
-}
-
-const char *
+lldb_private::ConstString
 DynamicLoaderPOSIXDYLD::GetPluginNameStatic()
 {
-    return "dynamic-loader.linux-dyld";
+    static ConstString g_name("linux-dyld");
+    return g_name;
 }
 
 const char *

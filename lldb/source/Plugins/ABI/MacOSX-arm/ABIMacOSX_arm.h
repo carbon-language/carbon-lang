@@ -114,14 +114,14 @@ public:
     static lldb::ABISP
     CreateInstance (const lldb_private::ArchSpec &arch);
     
+    static lldb_private::ConstString
+    GetPluginNameStatic();
+    
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual const char *
+    virtual lldb_private::ConstString
     GetPluginName();
-    
-    virtual const char *
-    GetShortPluginName();
     
     virtual uint32_t
     GetPluginVersion();

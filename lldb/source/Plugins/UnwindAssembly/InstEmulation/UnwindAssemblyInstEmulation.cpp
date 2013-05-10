@@ -309,19 +309,11 @@ UnwindAssemblyInstEmulation::CreateInstance (const ArchSpec &arch)
 //------------------------------------------------------------------
 // PluginInterface protocol in UnwindAssemblyParser_x86
 //------------------------------------------------------------------
-
-const char *
+ConstString
 UnwindAssemblyInstEmulation::GetPluginName()
 {
-    return "UnwindAssemblyInstEmulation";
+    return GetPluginNameStatic();
 }
-
-const char *
-UnwindAssemblyInstEmulation::GetShortPluginName()
-{
-    return "unwindassembly.inst-emulation";
-}
-
 
 uint32_t
 UnwindAssemblyInstEmulation::GetPluginVersion()
@@ -344,10 +336,11 @@ UnwindAssemblyInstEmulation::Terminate()
 }
 
 
-const char *
+ConstString
 UnwindAssemblyInstEmulation::GetPluginNameStatic()
 {
-    return "UnwindAssemblyInstEmulation";
+    static ConstString g_name("inst-emulation");
+    return g_name;
 }
 
 const char *

@@ -32,11 +32,8 @@ public:
     static void
     Terminate ();
     
-    static const char *
-    GetPluginNameStatic ();
-
-    static const char *
-    GetShortPluginNameStatic(bool is_host);
+    static lldb_private::ConstString
+    GetPluginNameStatic (bool is_host);
 
     static const char *
     GetDescriptionStatic(bool is_host);
@@ -52,16 +49,10 @@ public:
     //------------------------------------------------------------
     // lldb_private::PluginInterface functions
     //------------------------------------------------------------
-    virtual const char *
+    virtual lldb_private::ConstString
     GetPluginName()
     {
-        return GetPluginNameStatic ();
-    }
-    
-    virtual const char *
-    GetShortPluginName()
-    {
-        return GetShortPluginNameStatic (IsHost());
+        return GetPluginNameStatic (IsHost());
     }
     
     virtual uint32_t

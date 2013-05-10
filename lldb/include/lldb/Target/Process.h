@@ -1747,7 +1747,7 @@ public:
     DoLoadCore ()
     {
         Error error;
-        error.SetErrorStringWithFormat("error: %s does not support loading core files.", GetShortPluginName());
+        error.SetErrorStringWithFormat("error: %s does not support loading core files.", GetPluginName().GetCString());
         return error;
     }
     
@@ -2059,7 +2059,7 @@ public:
     DoAttachToProcessWithID (lldb::pid_t pid)
     {
         Error error;
-        error.SetErrorStringWithFormat("error: %s does not support attaching to a process by pid", GetShortPluginName());
+        error.SetErrorStringWithFormat("error: %s does not support attaching to a process by pid", GetPluginName().GetCString());
         return error;
     }
 
@@ -2082,7 +2082,7 @@ public:
     DoAttachToProcessWithID (lldb::pid_t pid,  const ProcessAttachInfo &attach_info)
     {
         Error error;
-        error.SetErrorStringWithFormat("error: %s does not support attaching to a process by pid", GetShortPluginName());
+        error.SetErrorStringWithFormat("error: %s does not support attaching to a process by pid", GetPluginName().GetCString());
         return error;
     }
 
@@ -2208,7 +2208,7 @@ public:
               const ProcessLaunchInfo &launch_info)
     {
         Error error;
-        error.SetErrorStringWithFormat("error: %s does not support launching processes", GetShortPluginName());
+        error.SetErrorStringWithFormat("error: %s does not support launching processes", GetPluginName().GetCString());
         return error;
     }
 
@@ -2257,7 +2257,7 @@ public:
     DoResume ()
     {
         Error error;
-        error.SetErrorStringWithFormat("error: %s does not support resuming processes", GetShortPluginName());
+        error.SetErrorStringWithFormat("error: %s does not support resuming processes", GetPluginName().GetCString());
         return error;
     }
 
@@ -2306,7 +2306,7 @@ public:
     DoHalt (bool &caused_stop)
     {
         Error error;
-        error.SetErrorStringWithFormat("error: %s does not support halting processes", GetShortPluginName());
+        error.SetErrorStringWithFormat("error: %s does not support halting processes", GetPluginName().GetCString());
         return error;
     }
 
@@ -2346,7 +2346,7 @@ public:
     DoDetach (bool keep_stopped)
     {
         Error error;
-        error.SetErrorStringWithFormat("error: %s does not support detaching from processes", GetShortPluginName());
+        error.SetErrorStringWithFormat("error: %s does not support detaching from processes", GetPluginName().GetCString());
         return error;
     }
 
@@ -2387,7 +2387,7 @@ public:
     DoSignal (int signal)
     {
         Error error;
-        error.SetErrorStringWithFormat("error: %s does not support senging signals to processes", GetShortPluginName());
+        error.SetErrorStringWithFormat("error: %s does not support senging signals to processes", GetPluginName().GetCString());
         return error;
     }
 
@@ -2817,7 +2817,7 @@ public:
     virtual size_t
     DoWriteMemory (lldb::addr_t vm_addr, const void *buf, size_t size, Error &error)
     {
-        error.SetErrorStringWithFormat("error: %s does not support writing to processes", GetShortPluginName());
+        error.SetErrorStringWithFormat("error: %s does not support writing to processes", GetPluginName().GetCString());
         return 0;
     }
 
@@ -2914,7 +2914,7 @@ public:
     virtual lldb::addr_t
     DoAllocateMemory (size_t size, uint32_t permissions, Error &error)
     {
-        error.SetErrorStringWithFormat("error: %s does not support allocating in the debug process", GetShortPluginName());
+        error.SetErrorStringWithFormat("error: %s does not support allocating in the debug process", GetPluginName().GetCString());
         return LLDB_INVALID_ADDRESS;
     }
 
@@ -2963,7 +2963,7 @@ public:
     virtual lldb::addr_t
     ResolveIndirectFunction(const Address *address, Error &error)
     {
-        error.SetErrorStringWithFormat("error: %s does not support indirect functions in the debug process", GetShortPluginName());
+        error.SetErrorStringWithFormat("error: %s does not support indirect functions in the debug process", GetPluginName().GetCString());
         return LLDB_INVALID_ADDRESS;
     }
 
@@ -3084,7 +3084,7 @@ public:
     DoDeallocateMemory (lldb::addr_t ptr)
     {
         Error error;
-        error.SetErrorStringWithFormat("error: %s does not support deallocating in the debug process", GetShortPluginName());
+        error.SetErrorStringWithFormat("error: %s does not support deallocating in the debug process", GetPluginName().GetCString());
         return error;
     }
 
@@ -3189,7 +3189,7 @@ public:
     EnableBreakpointSite (BreakpointSite *bp_site)
     {
         Error error;
-        error.SetErrorStringWithFormat("error: %s does not support enabling breakpoints", GetShortPluginName());
+        error.SetErrorStringWithFormat("error: %s does not support enabling breakpoints", GetPluginName().GetCString());
         return error;
     }
 
@@ -3198,7 +3198,7 @@ public:
     DisableBreakpointSite (BreakpointSite *bp_site)
     {
         Error error;
-        error.SetErrorStringWithFormat("error: %s does not support disabling breakpoints", GetShortPluginName());
+        error.SetErrorStringWithFormat("error: %s does not support disabling breakpoints", GetPluginName().GetCString());
         return error;
     }
 

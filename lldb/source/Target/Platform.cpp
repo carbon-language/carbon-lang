@@ -96,7 +96,7 @@ Platform::LocateExecutableScriptingResources (Target *target, Module &module)
 }
 
 Platform*
-Platform::FindPlugin (Process *process, const char *plugin_name)
+Platform::FindPlugin (Process *process, const ConstString &plugin_name)
 {
     PlatformCreateInstance create_callback = NULL;
     if (plugin_name)
@@ -156,7 +156,8 @@ Platform::Create (const char *platform_name, Error &error)
     lldb::PlatformSP platform_sp;
     if (platform_name && platform_name[0])
     {
-        create_callback = PluginManager::GetPlatformCreateCallbackForPluginName (platform_name);
+        ConstString const_platform_name (platform_name);
+        create_callback = PluginManager::GetPlatformCreateCallbackForPluginName (const_platform_name);
         if (create_callback)
             platform_sp.reset(create_callback(true, NULL));
         else
@@ -273,7 +274,7 @@ Platform::GetStatus (Stream &strm)
     uint32_t minor = UINT32_MAX;
     uint32_t update = UINT32_MAX;
     std::string s;
-    strm.Printf ("  Platform: %s\n", GetShortPluginName());
+    strm.Printf ("  Platform: %s\n", GetPluginName().GetCString());
 
     ArchSpec arch (GetSystemArchitecture());
     if (arch.IsValid())
@@ -388,13 +389,13 @@ Platform::GetOSKernelDescription (std::string &s)
         return GetRemoteOSKernelDescription (s);
 }
 
-const char *
+ConstString
 Platform::GetName ()
 {
     const char *name = GetHostname();
     if (name == NULL || name[0] == '\0')
-        name = GetShortPluginName();
-    return name;
+        return GetPluginName();
+    return ConstString (name);
 }
 
 const char *
@@ -592,9 +593,9 @@ Platform::ConnectRemote (Args& args)
 {
     Error error;
     if (IsHost())
-        error.SetErrorStringWithFormat ("The currently selected platform (%s) is the host platform and is always connected.", GetShortPluginName());
+        error.SetErrorStringWithFormat ("The currently selected platform (%s) is the host platform and is always connected.", GetPluginName().GetCString());
     else
-        error.SetErrorStringWithFormat ("Platform::ConnectRemote() is not supported by %s", GetShortPluginName());
+        error.SetErrorStringWithFormat ("Platform::ConnectRemote() is not supported by %s", GetPluginName().GetCString());
     return error;
 }
 
@@ -603,9 +604,9 @@ Platform::DisconnectRemote ()
 {
     Error error;
     if (IsHost())
-        error.SetErrorStringWithFormat ("The currently selected platform (%s) is the host platform and is always connected.", GetShortPluginName());
+        error.SetErrorStringWithFormat ("The currently selected platform (%s) is the host platform and is always connected.", GetPluginName().GetCString());
     else
-        error.SetErrorStringWithFormat ("Platform::DisconnectRemote() is not supported by %s", GetShortPluginName());
+        error.SetErrorStringWithFormat ("Platform::DisconnectRemote() is not supported by %s", GetPluginName().GetCString());
     return error;
 }
 

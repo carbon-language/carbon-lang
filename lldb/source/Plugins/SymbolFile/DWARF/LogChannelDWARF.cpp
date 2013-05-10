@@ -51,7 +51,7 @@ LogChannelDWARF::CreateInstance ()
     return new LogChannelDWARF ();
 }
 
-const char *
+lldb_private::ConstString
 LogChannelDWARF::GetPluginNameStatic()
 {
     return SymbolFileDWARF::GetPluginNameStatic();
@@ -63,14 +63,8 @@ LogChannelDWARF::GetPluginDescriptionStatic()
     return "DWARF log channel for debugging plug-in issues.";
 }
 
-const char *
+lldb_private::ConstString
 LogChannelDWARF::GetPluginName()
-{
-    return GetPluginDescriptionStatic();
-}
-
-const char *
-LogChannelDWARF::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }
@@ -187,7 +181,7 @@ LogChannelDWARF::ListCategories (Stream *strm)
                   "  lookups - log any lookups that happen by name, regex, or address\n"
                   "  completion - log struct/unions/class type completions\n"
                   "  map - log insertions of object files into DWARF debug maps\n",
-                  SymbolFileDWARF::GetPluginNameStatic());
+                  SymbolFileDWARF::GetPluginNameStatic().GetCString());
 }
 
 Log *

@@ -53,7 +53,7 @@ PlatformDarwinKernel::Initialize ()
 {
     if (g_initialize_count++ == 0)
     {
-        PluginManager::RegisterPlugin (PlatformDarwinKernel::GetShortPluginNameStatic(),
+        PluginManager::RegisterPlugin (PlatformDarwinKernel::GetPluginNameStatic(),
                                        PlatformDarwinKernel::GetDescriptionStatic(),
                                        PlatformDarwinKernel::CreateInstance,
                                        PlatformDarwinKernel::DebuggerInitialize);
@@ -147,16 +147,11 @@ PlatformDarwinKernel::CreateInstance (bool force, const ArchSpec *arch)
 }
 
 
-const char *
+lldb_private::ConstString
 PlatformDarwinKernel::GetPluginNameStatic ()
 {
-    return "PlatformDarwinKernel";
-}
-
-const char *
-PlatformDarwinKernel::GetShortPluginNameStatic()
-{
-    return "darwin-kernel";
+    static ConstString g_name("darwin-kernel");
+    return g_name;
 }
 
 const char *

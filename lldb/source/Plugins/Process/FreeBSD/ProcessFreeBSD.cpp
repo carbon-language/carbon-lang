@@ -64,10 +64,11 @@ ProcessFreeBSD::Initialize()
     }
 }
 
-const char *
+lldb_private::ConstString
 ProcessFreeBSD::GetPluginNameStatic()
 {
-    return "freebsd";
+    static ConstString g_name("freebsd");
+    return g_name;
 }
 
 const char *
@@ -79,16 +80,10 @@ ProcessFreeBSD::GetPluginDescriptionStatic()
 //------------------------------------------------------------------------------
 // ProcessInterface protocol.
 
-const char *
+lldb_private::ConstString
 ProcessFreeBSD::GetPluginName()
 {
-    return "process.freebsd";
-}
-
-const char *
-ProcessFreeBSD::GetShortPluginName()
-{
-    return "process.freebsd";
+    return GetPluginNameStatic();
 }
 
 uint32_t

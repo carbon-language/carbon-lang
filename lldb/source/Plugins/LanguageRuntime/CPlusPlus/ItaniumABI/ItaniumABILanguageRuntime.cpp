@@ -32,9 +32,6 @@
 using namespace lldb;
 using namespace lldb_private;
 
-static const char *pluginName = "ItaniumABILanguageRuntime";
-static const char *pluginDesc = "Itanium ABI for the C++ language";
-static const char *pluginShort = "language.itanium";
 static const char *vtable_demangled_prefix = "vtable for ";
 
 bool
@@ -306,8 +303,8 @@ ItaniumABILanguageRuntime::CreateInstance (Process *process, lldb::LanguageType 
 void
 ItaniumABILanguageRuntime::Initialize()
 {
-    PluginManager::RegisterPlugin (pluginName,
-                                   pluginDesc,
+    PluginManager::RegisterPlugin (GetPluginNameStatic(),
+                                   "Itanium ABI for the C++ language",
                                    CreateInstance);    
 }
 
@@ -317,19 +314,20 @@ ItaniumABILanguageRuntime::Terminate()
     PluginManager::UnregisterPlugin (CreateInstance);
 }
 
+lldb_private::ConstString
+ItaniumABILanguageRuntime::GetPluginNameStatic()
+{
+    static ConstString g_name("itanium");
+    return g_name;
+}
+
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+lldb_private::ConstString
 ItaniumABILanguageRuntime::GetPluginName()
 {
-    return pluginName;
-}
-
-const char *
-ItaniumABILanguageRuntime::GetShortPluginName()
-{
-    return pluginShort;
+    return GetPluginNameStatic();
 }
 
 uint32_t

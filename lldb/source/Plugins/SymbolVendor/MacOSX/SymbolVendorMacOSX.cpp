@@ -141,10 +141,11 @@ SymbolVendorMacOSX::Terminate()
 }
 
 
-const char *
+lldb_private::ConstString
 SymbolVendorMacOSX::GetPluginNameStatic()
 {
-    return "symbol-vendor.macosx";
+    static ConstString g_name("macosx");
+    return g_name;
 }
 
 const char *
@@ -332,14 +333,8 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp, lldb_privat
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+ConstString
 SymbolVendorMacOSX::GetPluginName()
-{
-    return "SymbolVendorMacOSX";
-}
-
-const char *
-SymbolVendorMacOSX::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }

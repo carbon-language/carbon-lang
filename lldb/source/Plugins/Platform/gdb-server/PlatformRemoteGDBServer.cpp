@@ -41,7 +41,7 @@ PlatformRemoteGDBServer::Initialize ()
     if (g_initialized == false)
     {
         g_initialized = true;
-        PluginManager::RegisterPlugin (PlatformRemoteGDBServer::GetShortPluginNameStatic(),
+        PluginManager::RegisterPlugin (PlatformRemoteGDBServer::GetPluginNameStatic(),
                                        PlatformRemoteGDBServer::GetDescriptionStatic(),
                                        PlatformRemoteGDBServer::CreateInstance);
     }
@@ -71,10 +71,11 @@ PlatformRemoteGDBServer::CreateInstance (bool force, const lldb_private::ArchSpe
 }
 
 
-const char *
-PlatformRemoteGDBServer::GetShortPluginNameStatic()
+lldb_private::ConstString
+PlatformRemoteGDBServer::GetPluginNameStatic()
 {
-    return "remote-gdb-server";
+    static ConstString g_name("remote-gdb-server");
+    return g_name;
 }
 
 const char *

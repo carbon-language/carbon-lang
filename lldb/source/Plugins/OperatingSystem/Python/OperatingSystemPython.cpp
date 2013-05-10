@@ -69,10 +69,11 @@ OperatingSystemPython::CreateInstance (Process *process, bool force)
 }
 
 
-const char *
+ConstString
 OperatingSystemPython::GetPluginNameStatic()
 {
-    return "python";
+    static ConstString g_name("python");
+    return g_name;
 }
 
 const char *
@@ -152,14 +153,8 @@ OperatingSystemPython::GetDynamicRegisterInfo ()
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+ConstString
 OperatingSystemPython::GetPluginName()
-{
-    return "OperatingSystemPython";
-}
-
-const char *
-OperatingSystemPython::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }

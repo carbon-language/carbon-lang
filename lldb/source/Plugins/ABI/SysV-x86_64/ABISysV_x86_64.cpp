@@ -33,11 +33,6 @@
 using namespace lldb;
 using namespace lldb_private;
 
-static const char *pluginName = "ABISysV_x86_64";
-static const char *pluginDesc = "System V ABI for x86_64 targets";
-static const char *pluginShort = "abi.sysv-x86_64";
-
-
 enum gcc_dwarf_regnums
 {
     gcc_dwarf_rax = 0,
@@ -1269,8 +1264,8 @@ ABISysV_x86_64::RegisterIsCalleeSaved (const RegisterInfo *reg_info)
 void
 ABISysV_x86_64::Initialize()
 {
-    PluginManager::RegisterPlugin (pluginName,
-                                   pluginDesc,
+    PluginManager::RegisterPlugin (GetPluginNameStatic(),
+                                   "System V ABI for x86_64 targets",
                                    CreateInstance);
 }
 
@@ -1280,19 +1275,20 @@ ABISysV_x86_64::Terminate()
     PluginManager::UnregisterPlugin (CreateInstance);
 }
 
+lldb_private::ConstString
+ABISysV_x86_64::GetPluginNameStatic()
+{
+    static ConstString g_name("sysv-x86_64");
+    return g_name;
+}
+
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+lldb_private::ConstString
 ABISysV_x86_64::GetPluginName()
 {
-    return pluginName;
-}
-
-const char *
-ABISysV_x86_64::GetShortPluginName()
-{
-    return pluginShort;
+    return GetPluginNameStatic();
 }
 
 uint32_t

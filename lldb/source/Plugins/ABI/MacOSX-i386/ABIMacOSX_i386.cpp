@@ -30,10 +30,6 @@
 using namespace lldb;
 using namespace lldb_private;
 
-static const char *pluginName = "ABIMacOSX_i386";
-static const char *pluginDesc = "Mac OS X ABI for i386 targets";
-static const char *pluginShort = "abi.macosx-i386";
-
 enum
 {
     gcc_eax = 0,
@@ -974,8 +970,8 @@ ABIMacOSX_i386::RegisterIsCalleeSaved (const RegisterInfo *reg_info)
 void
 ABIMacOSX_i386::Initialize()
 {
-    PluginManager::RegisterPlugin (pluginName,
-                                   pluginDesc,
+    PluginManager::RegisterPlugin (GetPluginNameStatic(),
+                                   "Mac OS X ABI for i386 targets",
                                    CreateInstance);    
 }
 
@@ -985,19 +981,21 @@ ABIMacOSX_i386::Terminate()
     PluginManager::UnregisterPlugin (CreateInstance);
 }
 
+lldb_private::ConstString
+ABIMacOSX_i386::GetPluginNameStatic ()
+{
+    static ConstString g_short_name("abi.macosx-i386");
+    return g_short_name;
+    
+}
+
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+lldb_private::ConstString
 ABIMacOSX_i386::GetPluginName()
 {
-    return pluginName;
-}
-
-const char *
-ABIMacOSX_i386::GetShortPluginName()
-{
-    return pluginShort;
+    return GetPluginNameStatic();
 }
 
 uint32_t

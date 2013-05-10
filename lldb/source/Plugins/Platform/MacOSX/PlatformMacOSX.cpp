@@ -41,7 +41,7 @@ PlatformMacOSX::Initialize ()
         default_platform_sp->SetSystemArchitecture (Host::GetArchitecture());
         Platform::SetDefaultPlatform (default_platform_sp);
 #endif        
-        PluginManager::RegisterPlugin (PlatformMacOSX::GetShortPluginNameStatic(false),
+        PluginManager::RegisterPlugin (PlatformMacOSX::GetPluginNameStatic(false),
                                        PlatformMacOSX::GetDescriptionStatic(false),
                                        PlatformMacOSX::CreateInstance);
     }
@@ -115,20 +115,19 @@ PlatformMacOSX::CreateInstance (bool force, const ArchSpec *arch)
     return NULL;
 }
 
-
-const char *
-PlatformMacOSX::GetPluginNameStatic ()
-{
-    return "PlatformMacOSX";
-}
-
-const char *
-PlatformMacOSX::GetShortPluginNameStatic (bool is_host)
+lldb_private::ConstString
+PlatformMacOSX::GetPluginNameStatic (bool is_host)
 {
     if (is_host)
-        return Platform::GetHostPlatformName ();
+    {
+        static ConstString g_host_name(Platform::GetHostPlatformName ());
+        return g_host_name;
+    }
     else
-        return "remote-macosx";
+    {
+        static ConstString g_remote_name("remote-macosx");
+        return g_remote_name;
+    }
 }
 
 const char *

@@ -35,12 +35,7 @@
 using namespace lldb;
 using namespace lldb_private;
 
-static const char *pluginName = "ABIMacOSX_arm";
-static const char *pluginDesc = "Mac OS X ABI for arm targets";
-static const char *pluginShort = "abi.macosx-arm";
-
-
-static RegisterInfo g_register_infos[] = 
+static RegisterInfo g_register_infos[] =
 {
     //  NAME       ALT       SZ OFF ENCODING         FORMAT          COMPILER                DWARF               GENERIC                     GDB                     LLDB NATIVE            VALUE REGS    INVALIDATE REGS
     //  ========== =======   == === =============    ============    ======================= =================== =========================== ======================= ====================== ==========    ===============
@@ -841,8 +836,8 @@ ABIMacOSX_arm::RegisterIsVolatile (const RegisterInfo *reg_info)
 void
 ABIMacOSX_arm::Initialize()
 {
-    PluginManager::RegisterPlugin (pluginName,
-                                   pluginDesc,
+    PluginManager::RegisterPlugin (GetPluginNameStatic(),
+                                   "Mac OS X ABI for arm targets",
                                    CreateInstance);    
 }
 
@@ -852,19 +847,20 @@ ABIMacOSX_arm::Terminate()
     PluginManager::UnregisterPlugin (CreateInstance);
 }
 
+lldb_private::ConstString
+ABIMacOSX_arm::GetPluginNameStatic()
+{
+    static ConstString g_name("macosx-arm");
+    return g_name;
+}
+
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+lldb_private::ConstString
 ABIMacOSX_arm::GetPluginName()
 {
-    return pluginName;
-}
-
-const char *
-ABIMacOSX_arm::GetShortPluginName()
-{
-    return pluginShort;
+    return GetPluginNameStatic();
 }
 
 uint32_t

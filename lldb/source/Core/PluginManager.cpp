@@ -233,7 +233,7 @@ struct ABIInstance
     {
     }
 
-    std::string name;
+    ConstString name;
     std::string description;
     ABICreateInstance create_callback;
 };
@@ -257,7 +257,7 @@ GetABIInstances ()
 bool
 PluginManager::RegisterPlugin
 (
-    const char *name,
+    const ConstString &name,
     const char *description,
     ABICreateInstance create_callback
 )
@@ -265,8 +265,8 @@ PluginManager::RegisterPlugin
     if (create_callback)
     {
         ABIInstance instance;
-        assert (name && name[0]);
-        instance.name.assign (name);
+        assert ((bool)name);
+        instance.name = name;
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
@@ -309,18 +309,17 @@ PluginManager::GetABICreateCallbackAtIndex (uint32_t idx)
 }
 
 ABICreateInstance
-PluginManager::GetABICreateCallbackForPluginName (const char *name)
+PluginManager::GetABICreateCallbackForPluginName (const ConstString &name)
 {
-    if (name && name[0])
+    if (name)
     {
         Mutex::Locker locker (GetABIInstancesMutex ());
-        llvm::StringRef name_sref(name);
         ABIInstances &instances = GetABIInstances ();
 
         ABIInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (name_sref.equals (pos->name))
+            if (name == pos->name)
                 return pos->create_callback;
         }
     }
@@ -340,7 +339,7 @@ struct DisassemblerInstance
     {
     }
 
-    std::string name;
+    ConstString name;
     std::string description;
     DisassemblerCreateInstance create_callback;
 };
@@ -364,7 +363,7 @@ GetDisassemblerInstances ()
 bool
 PluginManager::RegisterPlugin
 (
-    const char *name,
+    const ConstString &name,
     const char *description,
     DisassemblerCreateInstance create_callback
 )
@@ -372,7 +371,7 @@ PluginManager::RegisterPlugin
     if (create_callback)
     {
         DisassemblerInstance instance;
-        assert (name && name[0]);
+        assert ((bool)name);
         instance.name = name;
         if (description && description[0])
             instance.description = description;
@@ -416,18 +415,17 @@ PluginManager::GetDisassemblerCreateCallbackAtIndex (uint32_t idx)
 }
 
 DisassemblerCreateInstance
-PluginManager::GetDisassemblerCreateCallbackForPluginName (const char *name)
+PluginManager::GetDisassemblerCreateCallbackForPluginName (const ConstString &name)
 {
-    if (name && name[0])
+    if (name)
     {
-        llvm::StringRef name_sref(name);
         Mutex::Locker locker (GetDisassemblerMutex ());
         DisassemblerInstances &instances = GetDisassemblerInstances ();
         
         DisassemblerInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (name_sref.equals (pos->name))
+            if (name == pos->name)
                 return pos->create_callback;
         }
     }
@@ -449,7 +447,7 @@ struct DynamicLoaderInstance
     {
     }
 
-    std::string name;
+    ConstString name;
     std::string description;
     DynamicLoaderCreateInstance create_callback;
     DebuggerInitializeCallback debugger_init_callback;
@@ -476,7 +474,7 @@ GetDynamicLoaderInstances ()
 bool
 PluginManager::RegisterPlugin
 (
-    const char *name,
+    const ConstString &name,
     const char *description,
     DynamicLoaderCreateInstance create_callback,
     DebuggerInitializeCallback debugger_init_callback
@@ -485,7 +483,7 @@ PluginManager::RegisterPlugin
     if (create_callback)
     {
         DynamicLoaderInstance instance;
-        assert (name && name[0]);
+        assert ((bool)name);
         instance.name = name;
         if (description && description[0])
             instance.description = description;
@@ -529,18 +527,17 @@ PluginManager::GetDynamicLoaderCreateCallbackAtIndex (uint32_t idx)
 }
 
 DynamicLoaderCreateInstance
-PluginManager::GetDynamicLoaderCreateCallbackForPluginName (const char *name)
+PluginManager::GetDynamicLoaderCreateCallbackForPluginName (const ConstString &name)
 {
-    if (name && name[0])
+    if (name)
     {
-        llvm::StringRef name_sref(name);
         Mutex::Locker locker (GetDynamicLoaderMutex ());
         DynamicLoaderInstances &instances = GetDynamicLoaderInstances ();
         
         DynamicLoaderInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (name_sref.equals (pos->name))
+            if (name == pos->name)
                 return pos->create_callback;
         }
     }
@@ -559,7 +556,7 @@ struct EmulateInstructionInstance
     {
     }
     
-    std::string name;
+    ConstString name;
     std::string description;
     EmulateInstructionCreateInstance create_callback;
 };
@@ -584,7 +581,7 @@ GetEmulateInstructionInstances ()
 bool
 PluginManager::RegisterPlugin
 (
-    const char *name,
+    const ConstString &name,
     const char *description,
     EmulateInstructionCreateInstance create_callback
 )
@@ -592,7 +589,7 @@ PluginManager::RegisterPlugin
     if (create_callback)
     {
         EmulateInstructionInstance instance;
-        assert (name && name[0]);
+        assert ((bool)name);
         instance.name = name;
         if (description && description[0])
             instance.description = description;
@@ -635,18 +632,17 @@ PluginManager::GetEmulateInstructionCreateCallbackAtIndex (uint32_t idx)
 }
 
 EmulateInstructionCreateInstance
-PluginManager::GetEmulateInstructionCreateCallbackForPluginName (const char *name)
+PluginManager::GetEmulateInstructionCreateCallbackForPluginName (const ConstString &name)
 {
-    if (name && name[0])
+    if (name)
     {
-        llvm::StringRef name_sref(name);
         Mutex::Locker locker (GetEmulateInstructionMutex ());
         EmulateInstructionInstances &instances = GetEmulateInstructionInstances ();
         
         EmulateInstructionInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (name_sref.equals (pos->name))
+            if (name == pos->name)
                 return pos->create_callback;
         }
     }
@@ -664,7 +660,7 @@ struct OperatingSystemInstance
     {
     }
     
-    std::string name;
+    ConstString name;
     std::string description;
     OperatingSystemCreateInstance create_callback;
 };
@@ -686,17 +682,14 @@ GetOperatingSystemInstances ()
 }
 
 bool
-PluginManager::RegisterPlugin
-(
- const char *name,
- const char *description,
- OperatingSystemCreateInstance create_callback
- )
+PluginManager::RegisterPlugin (const ConstString &name,
+                               const char *description,
+                               OperatingSystemCreateInstance create_callback)
 {
     if (create_callback)
     {
         OperatingSystemInstance instance;
-        assert (name && name[0]);
+        assert ((bool)name);
         instance.name = name;
         if (description && description[0])
             instance.description = description;
@@ -739,18 +732,17 @@ PluginManager::GetOperatingSystemCreateCallbackAtIndex (uint32_t idx)
 }
 
 OperatingSystemCreateInstance
-PluginManager::GetOperatingSystemCreateCallbackForPluginName (const char *name)
+PluginManager::GetOperatingSystemCreateCallbackForPluginName (const ConstString &name)
 {
-    if (name && name[0])
+    if (name)
     {
-        llvm::StringRef name_sref(name);
         Mutex::Locker locker (GetOperatingSystemMutex ());
         OperatingSystemInstances &instances = GetOperatingSystemInstances ();
         
         OperatingSystemInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (name_sref.equals (pos->name))
+            if (name == pos->name)
                 return pos->create_callback;
         }
     }
@@ -770,7 +762,7 @@ struct LanguageRuntimeInstance
     {
     }
 
-    std::string name;
+    ConstString name;
     std::string description;
     LanguageRuntimeCreateInstance create_callback;
 };
@@ -794,7 +786,7 @@ GetLanguageRuntimeInstances ()
 bool
 PluginManager::RegisterPlugin
 (
-    const char *name,
+    const ConstString &name,
     const char *description,
     LanguageRuntimeCreateInstance create_callback
 )
@@ -802,7 +794,7 @@ PluginManager::RegisterPlugin
     if (create_callback)
     {
         LanguageRuntimeInstance instance;
-        assert (name && name[0]);
+        assert ((bool)name);
         instance.name = name;
         if (description && description[0])
             instance.description = description;
@@ -845,18 +837,17 @@ PluginManager::GetLanguageRuntimeCreateCallbackAtIndex (uint32_t idx)
 }
 
 LanguageRuntimeCreateInstance
-PluginManager::GetLanguageRuntimeCreateCallbackForPluginName (const char *name)
+PluginManager::GetLanguageRuntimeCreateCallbackForPluginName (const ConstString &name)
 {
-    if (name && name[0])
+    if (name)
     {
-        llvm::StringRef name_sref(name);
         Mutex::Locker locker (GetLanguageRuntimeMutex ());
         LanguageRuntimeInstances &instances = GetLanguageRuntimeInstances ();
         
         LanguageRuntimeInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (name_sref.equals (pos->name))
+            if (name == pos->name)
                 return pos->create_callback;
         }
     }
@@ -876,7 +867,7 @@ struct ObjectFileInstance
     {
     }
 
-    std::string name;
+    ConstString name;
     std::string description;
     ObjectFileCreateInstance create_callback;
     ObjectFileCreateMemoryInstance create_memory_callback;
@@ -901,7 +892,7 @@ GetObjectFileInstances ()
 
 
 bool
-PluginManager::RegisterPlugin (const char *name,
+PluginManager::RegisterPlugin (const ConstString &name,
                                const char *description,
                                ObjectFileCreateInstance create_callback,
                                ObjectFileCreateMemoryInstance create_memory_callback,
@@ -910,7 +901,7 @@ PluginManager::RegisterPlugin (const char *name,
     if (create_callback)
     {
         ObjectFileInstance instance;
-        assert (name && name[0]);
+        assert ((bool)name);
         instance.name = name;
         if (description && description[0])
             instance.description = description;
@@ -976,18 +967,17 @@ PluginManager::GetObjectFileGetModuleSpecificationsCallbackAtIndex (uint32_t idx
 }
 
 ObjectFileCreateInstance
-PluginManager::GetObjectFileCreateCallbackForPluginName (const char *name)
+PluginManager::GetObjectFileCreateCallbackForPluginName (const ConstString &name)
 {
-    if (name && name[0])
+    if (name)
     {
-        llvm::StringRef name_sref(name);
         Mutex::Locker locker (GetObjectFileMutex ());
         ObjectFileInstances &instances = GetObjectFileInstances ();
         
         ObjectFileInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (name_sref.equals (pos->name))
+            if (name == pos->name)
                 return pos->create_callback;
         }
     }
@@ -996,18 +986,17 @@ PluginManager::GetObjectFileCreateCallbackForPluginName (const char *name)
 
 
 ObjectFileCreateMemoryInstance
-PluginManager::GetObjectFileCreateMemoryCallbackForPluginName (const char *name)
+PluginManager::GetObjectFileCreateMemoryCallbackForPluginName (const ConstString &name)
 {
-    if (name && name[0])
+    if (name)
     {
-        llvm::StringRef name_sref(name);
         Mutex::Locker locker (GetObjectFileMutex ());
         ObjectFileInstances &instances = GetObjectFileInstances ();
         
         ObjectFileInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (name_sref.equals (pos->name))
+            if (name == pos->name)
                 return pos->create_memory_callback;
         }
     }
@@ -1028,7 +1017,7 @@ struct ObjectContainerInstance
     {
     }
 
-    std::string name;
+    ConstString name;
     std::string description;
     ObjectContainerCreateInstance create_callback;
     ObjectFileGetModuleSpecifications get_module_specifications;
@@ -1052,7 +1041,7 @@ GetObjectContainerInstances ()
 }
 
 bool
-PluginManager::RegisterPlugin (const char *name,
+PluginManager::RegisterPlugin (const ConstString &name,
                                const char *description,
                                ObjectContainerCreateInstance create_callback,
                                ObjectFileGetModuleSpecifications get_module_specifications)
@@ -1060,7 +1049,7 @@ PluginManager::RegisterPlugin (const char *name,
     if (create_callback)
     {
         ObjectContainerInstance instance;
-        assert (name && name[0]);
+        assert ((bool)name);
         instance.name = name;
         if (description && description[0])
             instance.description = description;
@@ -1104,18 +1093,17 @@ PluginManager::GetObjectContainerCreateCallbackAtIndex (uint32_t idx)
 }
 
 ObjectContainerCreateInstance
-PluginManager::GetObjectContainerCreateCallbackForPluginName (const char *name)
+PluginManager::GetObjectContainerCreateCallbackForPluginName (const ConstString &name)
 {
-    if (name && name[0])
+    if (name)
     {
-        llvm::StringRef name_sref(name);
         Mutex::Locker locker (GetObjectContainerMutex ());
         ObjectContainerInstances &instances = GetObjectContainerInstances ();
         
         ObjectContainerInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (name_sref.equals (pos->name))
+            if (name == pos->name)
                 return pos->create_callback;
         }
     }
@@ -1143,7 +1131,7 @@ struct LogInstance
     {
     }
 
-    std::string name;
+    ConstString name;
     std::string description;
     LogChannelCreateInstance create_callback;
 };
@@ -1169,7 +1157,7 @@ GetLogInstances ()
 bool
 PluginManager::RegisterPlugin
 (
-    const char *name,
+    const ConstString &name,
     const char *description,
     LogChannelCreateInstance create_callback
 )
@@ -1177,7 +1165,7 @@ PluginManager::RegisterPlugin
     if (create_callback)
     {
         LogInstance instance;
-        assert (name && name[0]);
+        assert ((bool)name);
         instance.name = name;
         if (description && description[0])
             instance.description = description;
@@ -1215,7 +1203,7 @@ PluginManager::GetLogChannelCreateNameAtIndex (uint32_t idx)
     Mutex::Locker locker (GetLogMutex ());
     LogInstances &instances = GetLogInstances ();
     if (idx < instances.size())
-        return instances[idx].name.c_str();
+        return instances[idx].name.GetCString();
     return NULL;
 }
 
@@ -1231,18 +1219,17 @@ PluginManager::GetLogChannelCreateCallbackAtIndex (uint32_t idx)
 }
 
 LogChannelCreateInstance
-PluginManager::GetLogChannelCreateCallbackForPluginName (const char *name)
+PluginManager::GetLogChannelCreateCallbackForPluginName (const ConstString &name)
 {
-    if (name && name[0])
+    if (name)
     {
-        llvm::StringRef name_sref(name);
         Mutex::Locker locker (GetLogMutex ());
         LogInstances &instances = GetLogInstances ();
         
         LogInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (name_sref.equals (pos->name))
+            if (name == pos->name)
                 return pos->create_callback;
         }
     }
@@ -1261,7 +1248,7 @@ struct PlatformInstance
     {
     }
     
-    std::string name;
+    ConstString name;
     std::string description;
     PlatformCreateInstance create_callback;
     DebuggerInitializeCallback debugger_init_callback;
@@ -1285,7 +1272,7 @@ GetPlatformInstances ()
 
 
 bool
-PluginManager::RegisterPlugin (const char *name,
+PluginManager::RegisterPlugin (const ConstString &name,
                                const char *description,
                                PlatformCreateInstance create_callback,
                                DebuggerInitializeCallback debugger_init_callback)
@@ -1295,7 +1282,7 @@ PluginManager::RegisterPlugin (const char *name,
         Mutex::Locker locker (GetPlatformInstancesMutex ());
         
         PlatformInstance instance;
-        assert (name && name[0]);
+        assert ((bool)name);
         instance.name = name;
         if (description && description[0])
             instance.description = description;
@@ -1314,7 +1301,7 @@ PluginManager::GetPlatformPluginNameAtIndex (uint32_t idx)
     Mutex::Locker locker (GetPlatformInstancesMutex ());
     PlatformInstances &instances = GetPlatformInstances ();
     if (idx < instances.size())
-        return instances[idx].name.c_str();
+        return instances[idx].name.GetCString();
     return NULL;
 }
 
@@ -1360,18 +1347,17 @@ PluginManager::GetPlatformCreateCallbackAtIndex (uint32_t idx)
 }
 
 PlatformCreateInstance
-PluginManager::GetPlatformCreateCallbackForPluginName (const char *name)
+PluginManager::GetPlatformCreateCallbackForPluginName (const ConstString &name)
 {
-    if (name && name[0])
+    if (name)
     {
         Mutex::Locker locker (GetPlatformInstancesMutex ());
         PlatformInstances &instances = GetPlatformInstances ();
-        llvm::StringRef name_sref(name);
 
         PlatformInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (name_sref.equals (pos->name))
+            if (name == pos->name)
                 return pos->create_callback;
         }
     }
@@ -1381,7 +1367,7 @@ PluginManager::GetPlatformCreateCallbackForPluginName (const char *name)
 size_t
 PluginManager::AutoCompletePlatformName (const char *name, StringList &matches)
 {
-    if (name && name[0])
+    if (name)
     {
         Mutex::Locker locker (GetPlatformInstancesMutex ());
         PlatformInstances &instances = GetPlatformInstances ();
@@ -1390,7 +1376,7 @@ PluginManager::AutoCompletePlatformName (const char *name, StringList &matches)
         PlatformInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            llvm::StringRef plugin_name (pos->name);
+            llvm::StringRef plugin_name (pos->name.GetCString());
             if (plugin_name.startswith(name_sref))
                 matches.AppendString (plugin_name.data());
         }
@@ -1408,7 +1394,7 @@ struct ProcessInstance
     {
     }
     
-    std::string name;
+    ConstString name;
     std::string description;
     ProcessCreateInstance create_callback;
 };
@@ -1433,7 +1419,7 @@ GetProcessInstances ()
 bool
 PluginManager::RegisterPlugin
 (
- const char *name,
+ const ConstString &name,
  const char *description,
  ProcessCreateInstance create_callback
  )
@@ -1441,7 +1427,7 @@ PluginManager::RegisterPlugin
     if (create_callback)
     {
         ProcessInstance instance;
-        assert (name && name[0]);
+        assert ((bool)name);
         instance.name = name;
         if (description && description[0])
             instance.description = description;
@@ -1458,7 +1444,7 @@ PluginManager::GetProcessPluginNameAtIndex (uint32_t idx)
     Mutex::Locker locker (GetProcessMutex ());
     ProcessInstances &instances = GetProcessInstances ();
     if (idx < instances.size())
-        return instances[idx].name.c_str();
+        return instances[idx].name.GetCString();
     return NULL;
 }
 
@@ -1505,18 +1491,17 @@ PluginManager::GetProcessCreateCallbackAtIndex (uint32_t idx)
 
 
 ProcessCreateInstance
-PluginManager::GetProcessCreateCallbackForPluginName (const char *name)
+PluginManager::GetProcessCreateCallbackForPluginName (const ConstString &name)
 {
-    if (name && name[0])
+    if (name)
     {
-        llvm::StringRef name_sref(name);
         Mutex::Locker locker (GetProcessMutex ());
         ProcessInstances &instances = GetProcessInstances ();
         
         ProcessInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (name_sref.equals (pos->name))
+            if (name == pos->name)
                 return pos->create_callback;
         }
     }
@@ -1534,7 +1519,7 @@ struct SymbolFileInstance
     {
     }
 
-    std::string name;
+    ConstString name;
     std::string description;
     SymbolFileCreateInstance create_callback;
 };
@@ -1559,7 +1544,7 @@ GetSymbolFileInstances ()
 bool
 PluginManager::RegisterPlugin
 (
-    const char *name,
+    const ConstString &name,
     const char *description,
     SymbolFileCreateInstance create_callback
 )
@@ -1567,7 +1552,7 @@ PluginManager::RegisterPlugin
     if (create_callback)
     {
         SymbolFileInstance instance;
-        assert (name && name[0]);
+        assert ((bool)name);
         instance.name = name;
         if (description && description[0])
             instance.description = description;
@@ -1610,18 +1595,17 @@ PluginManager::GetSymbolFileCreateCallbackAtIndex (uint32_t idx)
 }
 
 SymbolFileCreateInstance
-PluginManager::GetSymbolFileCreateCallbackForPluginName (const char *name)
+PluginManager::GetSymbolFileCreateCallbackForPluginName (const ConstString &name)
 {
-    if (name && name[0])
+    if (name)
     {
-        llvm::StringRef name_sref(name);
         Mutex::Locker locker (GetSymbolFileMutex ());
         SymbolFileInstances &instances = GetSymbolFileInstances ();
         
         SymbolFileInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (name_sref.equals (pos->name))
+            if (name == pos->name)
                 return pos->create_callback;
         }
     }
@@ -1641,7 +1625,7 @@ struct SymbolVendorInstance
     {
     }
 
-    std::string name;
+    ConstString name;
     std::string description;
     SymbolVendorCreateInstance create_callback;
 };
@@ -1665,7 +1649,7 @@ GetSymbolVendorInstances ()
 bool
 PluginManager::RegisterPlugin
 (
-    const char *name,
+    const ConstString &name,
     const char *description,
     SymbolVendorCreateInstance create_callback
 )
@@ -1673,7 +1657,7 @@ PluginManager::RegisterPlugin
     if (create_callback)
     {
         SymbolVendorInstance instance;
-        assert (name && name[0]);
+        assert ((bool)name);
         instance.name = name;
         if (description && description[0])
             instance.description = description;
@@ -1717,18 +1701,17 @@ PluginManager::GetSymbolVendorCreateCallbackAtIndex (uint32_t idx)
 
 
 SymbolVendorCreateInstance
-PluginManager::GetSymbolVendorCreateCallbackForPluginName (const char *name)
+PluginManager::GetSymbolVendorCreateCallbackForPluginName (const ConstString &name)
 {
-    if (name && name[0])
+    if (name)
     {
-        llvm::StringRef name_sref(name);
         Mutex::Locker locker (GetSymbolVendorMutex ());
         SymbolVendorInstances &instances = GetSymbolVendorInstances ();
         
         SymbolVendorInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (name_sref.equals (pos->name))
+            if (name == pos->name)
                 return pos->create_callback;
         }
     }
@@ -1747,7 +1730,7 @@ struct UnwindAssemblyInstance
     {
     }
 
-    std::string name;
+    ConstString name;
     std::string description;
     UnwindAssemblyCreateInstance create_callback;
 };
@@ -1771,7 +1754,7 @@ GetUnwindAssemblyInstances ()
 bool
 PluginManager::RegisterPlugin
 (
-    const char *name,
+    const ConstString &name,
     const char *description,
     UnwindAssemblyCreateInstance create_callback
 )
@@ -1779,7 +1762,7 @@ PluginManager::RegisterPlugin
     if (create_callback)
     {
         UnwindAssemblyInstance instance;
-        assert (name && name[0]);
+        assert ((bool)name);
         instance.name = name;
         if (description && description[0])
             instance.description = description;
@@ -1823,18 +1806,17 @@ PluginManager::GetUnwindAssemblyCreateCallbackAtIndex (uint32_t idx)
 
 
 UnwindAssemblyCreateInstance
-PluginManager::GetUnwindAssemblyCreateCallbackForPluginName (const char *name)
+PluginManager::GetUnwindAssemblyCreateCallbackForPluginName (const ConstString &name)
 {
-    if (name && name[0])
+    if (name)
     {
-        llvm::StringRef name_sref(name);
         Mutex::Locker locker (GetUnwindAssemblyMutex ());
         UnwindAssemblyInstances &instances = GetUnwindAssemblyInstances ();
         
         UnwindAssemblyInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (name_sref.equals (pos->name))
+            if (name == pos->name)
                 return pos->create_callback;
         }
     }

@@ -313,7 +313,7 @@ Log::Warning (const char *format, ...)
     }
 }
 
-typedef std::map <std::string, Log::Callbacks> CallbackMap;
+typedef std::map <ConstString, Log::Callbacks> CallbackMap;
 typedef CallbackMap::iterator CallbackMapIter;
 
 typedef std::map <ConstString, LogChannelSP> LogChannelMap;
@@ -337,19 +337,19 @@ GetChannelMap ()
 }
 
 void
-Log::RegisterLogChannel (const char *channel, const Log::Callbacks &log_callbacks)
+Log::RegisterLogChannel (const ConstString &channel, const Log::Callbacks &log_callbacks)
 {
     GetCallbackMap().insert(std::make_pair(channel, log_callbacks));
 }
 
 bool
-Log::UnregisterLogChannel (const char *channel)
+Log::UnregisterLogChannel (const ConstString &channel)
 {
     return GetCallbackMap().erase(channel) != 0;
 }
 
 bool
-Log::GetLogChannelCallbacks (const char *channel, Log::Callbacks &log_callbacks)
+Log::GetLogChannelCallbacks (const ConstString &channel, Log::Callbacks &log_callbacks)
 {
     CallbackMap &callback_map = GetCallbackMap ();
     CallbackMapIter pos = callback_map.find(channel);
@@ -427,7 +427,7 @@ void
 Log::Initialize()
 {
     Log::Callbacks log_callbacks = { DisableLog, EnableLog, ListLogCategories };
-    Log::RegisterLogChannel ("lldb", log_callbacks);
+    Log::RegisterLogChannel (ConstString("lldb"), log_callbacks);
 }
 
 void
@@ -495,7 +495,8 @@ LogChannel::FindPlugin (const char *plugin_name)
     LogChannelMapIter pos = channel_map.find (log_channel_name);
     if (pos == channel_map.end())
     {
-        LogChannelCreateInstance create_callback  = PluginManager::GetLogChannelCreateCallbackForPluginName (plugin_name);
+        ConstString const_plugin_name (plugin_name);
+        LogChannelCreateInstance create_callback  = PluginManager::GetLogChannelCreateCallbackForPluginName (const_plugin_name);
         if (create_callback)
         {
             log_channel_sp.reset(create_callback());

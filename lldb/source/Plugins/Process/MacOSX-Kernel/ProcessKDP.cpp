@@ -46,10 +46,11 @@ using namespace lldb_private;
 
 static const lldb::tid_t g_kernel_tid = 1;
 
-const char *
+ConstString
 ProcessKDP::GetPluginNameStatic()
 {
-    return "kdp-remote";
+    static ConstString g_name("kdp-remote");
+    return g_name;
 }
 
 const char *
@@ -141,14 +142,8 @@ ProcessKDP::~ProcessKDP()
 //----------------------------------------------------------------------
 // PluginInterface
 //----------------------------------------------------------------------
-const char *
+lldb_private::ConstString
 ProcessKDP::GetPluginName()
-{
-    return "Process debugging plug-in that uses the Darwin KDP remote protocol";
-}
-
-const char *
-ProcessKDP::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }

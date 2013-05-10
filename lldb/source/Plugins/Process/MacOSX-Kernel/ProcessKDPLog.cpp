@@ -167,7 +167,8 @@ ProcessKDPLog::ListLogCategories (Stream *strm)
                   "  thread - log thread events and activities\n"
                   "  step - log step related activities\n"
                   "  verbose - enable verbose logging\n"
-                  "  watch - log watchpoint related activities\n", ProcessKDP::GetPluginNameStatic());
+                  "  watch - log watchpoint related activities\n",
+                  ProcessKDP::GetPluginNameStatic().GetCString());
 }
 
 

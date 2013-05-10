@@ -282,7 +282,7 @@ protected:
 
             std::string channel(args.GetArgumentAtIndex(0));
             args.Shift ();  // Shift off the channel
-            if (Log::GetLogChannelCallbacks (channel.c_str(), log_callbacks))
+            if (Log::GetLogChannelCallbacks (ConstString(channel.c_str()), log_callbacks))
             {
                 log_callbacks.disable (args.GetConstArgumentVector(), &result.GetErrorStream());
                 result.SetStatus(eReturnStatusSuccessFinishNoResult);
@@ -356,7 +356,7 @@ protected:
                 Log::Callbacks log_callbacks;
 
                 std::string channel(args.GetArgumentAtIndex(i));
-                if (Log::GetLogChannelCallbacks (channel.c_str(), log_callbacks))
+                if (Log::GetLogChannelCallbacks (ConstString(channel.c_str()), log_callbacks))
                 {
                     log_callbacks.list_categories (&result.GetOutputStream());
                     result.SetStatus(eReturnStatusSuccessFinishResult);

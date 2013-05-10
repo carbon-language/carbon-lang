@@ -40,7 +40,7 @@ public:
     static void
     Terminate();
 
-    static const char *
+    static lldb_private::ConstString
     GetPluginNameStatic();
 
     static const char *
@@ -112,11 +112,8 @@ public:
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual const char *
+    virtual lldb_private::ConstString
     GetPluginName();
-
-    virtual const char *
-    GetShortPluginName();
 
     virtual uint32_t
     GetPluginVersion();
@@ -133,11 +130,9 @@ protected:
     struct OSOInfo
     {
         lldb::ModuleSP module_sp;
-        bool symbol_file_supported;
         
         OSOInfo() :
-            module_sp (),
-            symbol_file_supported (true)
+            module_sp ()
         {
         }
     };
@@ -153,6 +148,7 @@ protected:
     {
         lldb_private::FileSpec so_file;
         lldb_private::ConstString oso_path;
+        lldb_private::TimeValue oso_mod_time;
         OSOInfoSP oso_sp;
         lldb::CompUnitSP compile_unit_sp;
         uint32_t first_symbol_index;
@@ -166,6 +162,7 @@ protected:
         CompileUnitInfo() :
             so_file (),
             oso_path (),
+            oso_mod_time (),
             oso_sp (),
             compile_unit_sp (),
             first_symbol_index (UINT32_MAX),
@@ -192,6 +189,10 @@ protected:
     {
         return (uint32_t)((uid >> 32ull) - 1ull);
     }
+    
+    static SymbolFileDWARF *
+    GetSymbolFileAsSymbolFileDWARF (SymbolFile *sym_file);
+    
     bool
     GetFileSpecForSO (uint32_t oso_idx, lldb_private::FileSpec &file_spec);
 

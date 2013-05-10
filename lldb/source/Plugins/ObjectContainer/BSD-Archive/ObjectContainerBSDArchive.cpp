@@ -148,11 +148,29 @@ ObjectContainerBSDArchive::Archive::ParseObjects ()
 }
 
 ObjectContainerBSDArchive::Object *
-ObjectContainerBSDArchive::Archive::FindObject (const ConstString &object_name)
+ObjectContainerBSDArchive::Archive::FindObject (const ConstString &object_name, const TimeValue &object_mod_time)
 {
     const ObjectNameToIndexMap::Entry *match = m_object_name_to_index_map.FindFirstValueForName (object_name.GetCString());
     if (match)
-        return &m_objects[match->value];
+    {
+        if (object_mod_time.IsValid())
+        {
+            const uint64_t object_date = object_mod_time.GetAsSecondsSinceJan1_1970();
+            if (m_objects[match->value].ar_date == object_date)
+                return &m_objects[match->value];
+            const ObjectNameToIndexMap::Entry *next_match = m_object_name_to_index_map.FindNextValueForName (match);
+            while (next_match)
+            {
+                if (m_objects[next_match->value].ar_date == object_date)
+                    return &m_objects[next_match->value];
+                next_match = m_object_name_to_index_map.FindNextValueForName (next_match);
+            }
+        }
+        else
+        {
+            return &m_objects[match->value];
+        }
+    }
     return NULL;
 }
 
@@ -250,10 +268,11 @@ ObjectContainerBSDArchive::Terminate()
 }
 
 
-const char *
+lldb_private::ConstString
 ObjectContainerBSDArchive::GetPluginNameStatic()
 {
-    return "object-container.bsd-archive";
+    static ConstString g_name("bsd-archive");
+    return g_name;
 }
 
 const char *
@@ -297,11 +316,11 @@ ObjectContainerBSDArchive::CreateInstance
 
                 Archive::shared_ptr archive_sp (Archive::FindCachedArchive (*file, module_sp->GetArchitecture(), module_sp->GetModificationTime()));
                 std::unique_ptr<ObjectContainerBSDArchive> container_ap(new ObjectContainerBSDArchive (module_sp,
-                                                                                                      archive_data_sp,
-                                                                                                      archive_data_offset,
-                                                                                                      file,
-                                                                                                      file_offset,
-                                                                                                      length));
+                                                                                                       archive_data_sp,
+                                                                                                       archive_data_offset,
+                                                                                                       file,
+                                                                                                       file_offset,
+                                                                                                       length));
 
                 if (container_ap.get())
                 {
@@ -434,7 +453,8 @@ ObjectContainerBSDArchive::GetObjectFile (const FileSpec *file)
     {
         if (module_sp->GetObjectName() && m_archive_sp)
         {
-            Object *object = m_archive_sp->FindObject (module_sp->GetObjectName());
+            Object *object = m_archive_sp->FindObject (module_sp->GetObjectName(),
+                                                       module_sp->GetObjectModificationTime());
             if (object)
             {
                 lldb::offset_t data_offset = m_offset + object->ar_file_offset;
@@ -454,14 +474,8 @@ ObjectContainerBSDArchive::GetObjectFile (const FileSpec *file)
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+lldb_private::ConstString
 ObjectContainerBSDArchive::GetPluginName()
-{
-    return "object-container.bsd-archive";
-}
-
-const char *
-ObjectContainerBSDArchive::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }

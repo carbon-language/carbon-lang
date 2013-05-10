@@ -136,6 +136,7 @@ Module::Module (const ModuleSpec &module_spec) :
     m_symfile_spec (module_spec.GetSymbolFileSpec()),
     m_object_name (module_spec.GetObjectName()),
     m_object_offset (module_spec.GetObjectOffset()),
+    m_object_mod_time (module_spec.GetObjectModificationTime()),
     m_objfile_sp (),
     m_symfile_ap (),
     m_ast (),
@@ -168,7 +169,8 @@ Module::Module (const ModuleSpec &module_spec) :
 Module::Module(const FileSpec& file_spec, 
                const ArchSpec& arch, 
                const ConstString *object_name, 
-               off_t object_offset) :
+               off_t object_offset,
+               const TimeValue *object_mod_time_ptr) :
     m_mutex (Mutex::eMutexTypeRecursive),
     m_mod_time (file_spec.GetModificationTime()),
     m_arch (arch),
@@ -178,6 +180,7 @@ Module::Module(const FileSpec& file_spec,
     m_symfile_spec (),
     m_object_name (),
     m_object_offset (object_offset),
+    m_object_mod_time (),
     m_objfile_sp (),
     m_symfile_ap (),
     m_ast (),
@@ -198,6 +201,10 @@ Module::Module(const FileSpec& file_spec,
 
     if (object_name)
         m_object_name = *object_name;
+    
+    if (object_mod_time_ptr)
+        m_object_mod_time = *object_mod_time_ptr;
+
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_OBJECT|LIBLLDB_LOG_MODULES));
     if (log)
         log->Printf ("%p Module::Module((%s) '%s%s%s%s')",
@@ -1184,12 +1191,6 @@ Module::FindSymbolsMatchingRegExAndType (const RegularExpression &regex, SymbolT
         }
     }
     return sc_list.GetSize() - initial_size;
-}
-
-const TimeValue &
-Module::GetModificationTime () const
-{
-    return m_mod_time;
 }
 
 void

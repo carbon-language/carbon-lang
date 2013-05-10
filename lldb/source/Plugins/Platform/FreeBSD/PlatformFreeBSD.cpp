@@ -85,19 +85,19 @@ PlatformFreeBSD::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
 
 }
 
-const char *
-PlatformFreeBSD::GetPluginNameStatic()
-{
-    return "plugin.platform.freebsd";
-}
-
-const char *
-PlatformFreeBSD::GetShortPluginNameStatic (bool is_host)
+lldb_private::ConstString
+PlatformFreeBSD::GetPluginNameStatic (bool is_host)
 {
     if (is_host)
-        return Platform::GetHostPlatformName ();
+    {
+        static ConstString g_host_name(Platform::GetHostPlatformName ());
+        return g_host_name;
+    }
     else
-        return "remote-freebsd";
+    {
+        static ConstString g_remote_name("remote-freebsd");
+        return g_remote_name;
+    }
 }
 
 const char *
@@ -122,7 +122,7 @@ PlatformFreeBSD::Initialize ()
         default_platform_sp->SetSystemArchitecture (Host::GetArchitecture());
         Platform::SetDefaultPlatform (default_platform_sp);
 #endif
-        PluginManager::RegisterPlugin(PlatformFreeBSD::GetShortPluginNameStatic(false),
+        PluginManager::RegisterPlugin(PlatformFreeBSD::GetPluginNameStatic(false),
                                       PlatformFreeBSD::GetDescriptionStatic(false),
                                       PlatformFreeBSD::CreateInstance);
     }
@@ -269,7 +269,7 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
             {
                 error.SetErrorStringWithFormat ("'%s' doesn't contain any '%s' platform architectures: %s",
                                                 exe_file.GetPath().c_str(),
-                                                GetShortPluginName(),
+                                                GetPluginName().GetCString(),
                                                 arch_names.GetString().c_str());
             }
         }
@@ -377,7 +377,7 @@ PlatformFreeBSD::ConnectRemote (Args& args)
     Error error;
     if (IsHost())
     {
-        error.SetErrorStringWithFormat ("can't connect to the host platform '%s', always connected", GetShortPluginName());
+        error.SetErrorStringWithFormat ("can't connect to the host platform '%s', always connected", GetPluginName().GetCString());
     }
     else
     {
@@ -415,7 +415,7 @@ PlatformFreeBSD::DisconnectRemote ()
 
     if (IsHost())
     {
-        error.SetErrorStringWithFormat ("can't disconnect from the host platform '%s', always connected", GetShortPluginName());
+        error.SetErrorStringWithFormat ("can't disconnect from the host platform '%s', always connected", GetPluginName().GetCString());
     }
     else
     {

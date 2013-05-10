@@ -946,7 +946,8 @@ Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener
     ProcessCreateInstance create_callback = NULL;
     if (plugin_name)
     {
-        create_callback  = PluginManager::GetProcessCreateCallbackForPluginName (plugin_name);
+        ConstString const_plugin_name(plugin_name);
+        create_callback  = PluginManager::GetProcessCreateCallbackForPluginName (const_plugin_name);
         if (create_callback)
         {
             process_sp = create_callback(target, listener, crash_file_path);

@@ -174,10 +174,11 @@ EmulateInstructionARM::Terminate ()
     PluginManager::UnregisterPlugin (CreateInstance);
 }
 
-const char *
+ConstString
 EmulateInstructionARM::GetPluginNameStatic ()
 {
-    return "lldb.emulate-instruction.arm";
+    static ConstString g_name("arm");
+    return g_name;
 }
 
 const char *

@@ -207,10 +207,11 @@ SymbolFileDWARF::Terminate()
 }
 
 
-const char *
+lldb_private::ConstString
 SymbolFileDWARF::GetPluginNameStatic()
 {
-    return "dwarf";
+    static ConstString g_name("dwarf");
+    return g_name;
 }
 
 const char *
@@ -7557,14 +7558,8 @@ SymbolFileDWARF::ParseVariables
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+ConstString
 SymbolFileDWARF::GetPluginName()
-{
-    return "SymbolFileDWARF";
-}
-
-const char *
-SymbolFileDWARF::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }

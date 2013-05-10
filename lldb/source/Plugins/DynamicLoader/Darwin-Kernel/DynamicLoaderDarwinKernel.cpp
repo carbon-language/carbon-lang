@@ -26,7 +26,7 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlanRunToAddress.h"
-
+#include "Plugins/Platform/MacOSX/PlatformDarwinKernel.h"
 
 #include "DynamicLoaderDarwinKernel.h"
 
@@ -460,7 +460,7 @@ DynamicLoaderDarwinKernel::DynamicLoaderDarwinKernel (Process* process, lldb::ad
     m_mutex(Mutex::eMutexTypeRecursive),
     m_break_id (LLDB_INVALID_BREAK_ID)
 {
-    PlatformSP platform_sp(Platform::FindPlugin (process, "darwin-kernel"));
+    PlatformSP platform_sp(Platform::FindPlugin (process, PlatformDarwinKernel::GetPluginNameStatic ()));
     // Only select the darwin-kernel Platform if we've been asked to load kexts.
     // It can take some time to scan over all of the kext info.plists and that
     // shouldn't be done if kext loading is explicitly disabled.
@@ -811,8 +811,9 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
             PlatformSP platform_sp (target.GetPlatform());
             if (platform_sp)
             {
-                const char *pname = platform_sp->GetShortPluginName();
-                if (pname && strcmp (pname, "darwin-kernel") == 0)
+                ConstString platform_name (platform_sp->GetPluginName());
+                static ConstString g_platform_name (PlatformDarwinKernel::GetPluginNameStatic());
+                if (platform_name == g_platform_name)
                 {
                     ModuleSpec kext_bundle_module_spec(module_spec);
                     FileSpec kext_filespec(m_name.c_str(), false);
@@ -1594,10 +1595,11 @@ DynamicLoaderDarwinKernel::DebuggerInitialize (lldb_private::Debugger &debugger)
     }
 }
 
-const char *
+lldb_private::ConstString
 DynamicLoaderDarwinKernel::GetPluginNameStatic()
 {
-    return "dynamic-loader.darwin-kernel";
+    static ConstString g_name("darwin-kernel");
+    return g_name;
 }
 
 const char *
@@ -1610,14 +1612,8 @@ DynamicLoaderDarwinKernel::GetPluginDescriptionStatic()
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+lldb_private::ConstString
 DynamicLoaderDarwinKernel::GetPluginName()
-{
-    return "DynamicLoaderDarwinKernel";
-}
-
-const char *
-DynamicLoaderDarwinKernel::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }

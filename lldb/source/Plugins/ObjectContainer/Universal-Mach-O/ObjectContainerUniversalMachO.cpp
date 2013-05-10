@@ -37,10 +37,11 @@ ObjectContainerUniversalMachO::Terminate()
 }
 
 
-const char *
+lldb_private::ConstString
 ObjectContainerUniversalMachO::GetPluginNameStatic()
 {
-    return "object-container.mach-o";
+    static ConstString g_name("mach-o");
+    return g_name;
 }
 
 const char *
@@ -259,14 +260,8 @@ ObjectContainerUniversalMachO::GetObjectFile (const FileSpec *file)
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+lldb_private::ConstString
 ObjectContainerUniversalMachO::GetPluginName()
-{
-    return "ObjectContainerUniversalMachO";
-}
-
-const char *
-ObjectContainerUniversalMachO::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }

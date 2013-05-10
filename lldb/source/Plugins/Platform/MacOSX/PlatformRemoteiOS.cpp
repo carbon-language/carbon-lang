@@ -65,7 +65,7 @@ PlatformRemoteiOS::Initialize ()
 {
     if (g_initialize_count++ == 0)
     {
-        PluginManager::RegisterPlugin (PlatformRemoteiOS::GetShortPluginNameStatic(),
+        PluginManager::RegisterPlugin (PlatformRemoteiOS::GetPluginNameStatic(),
                                        PlatformRemoteiOS::GetDescriptionStatic(),
                                        PlatformRemoteiOS::CreateInstance);
     }
@@ -148,16 +148,11 @@ PlatformRemoteiOS::CreateInstance (bool force, const ArchSpec *arch)
 }
 
 
-const char *
+lldb_private::ConstString
 PlatformRemoteiOS::GetPluginNameStatic ()
 {
-    return "PlatformRemoteiOS";
-}
-
-const char *
-PlatformRemoteiOS::GetShortPluginNameStatic()
-{
-    return "remote-ios";
+    static ConstString g_name("remote-ios");
+    return g_name;
 }
 
 const char *
@@ -279,7 +274,7 @@ PlatformRemoteiOS::ResolveExecutable (const FileSpec &exe_file,
         {
             error.SetErrorStringWithFormat ("'%s' doesn't contain any '%s' platform architectures: %s",
                                             exe_file.GetPath().c_str(),
-                                            GetShortPluginName(),
+                                            GetPluginName().GetCString(),
                                             arch_names.GetString().c_str());
         }
     }
@@ -661,7 +656,7 @@ PlatformRemoteiOS::GetSymbolFile (const FileSpec &platform_file,
 
         error.SetErrorStringWithFormat ("unable to locate a platform file for '%s' in platform '%s'", 
                                         platform_file_path,
-                                        GetPluginName());
+                                        GetPluginName().GetCString());
     }
     else
     {

@@ -37,11 +37,6 @@
 using namespace lldb;
 using namespace lldb_private;
 
-static const char *pluginName = "AppleObjCRuntimeV1";
-static const char *pluginDesc = "Apple Objective C Language Runtime - Version 1";
-static const char *pluginShort = "language.apple.objc.v1";
-
-
 AppleObjCRuntimeV1::AppleObjCRuntimeV1(Process *process) :
     AppleObjCRuntime (process),
     m_hash_signature (),
@@ -96,8 +91,8 @@ AppleObjCRuntimeV1::CreateInstance (Process *process, lldb::LanguageType languag
 void
 AppleObjCRuntimeV1::Initialize()
 {
-    PluginManager::RegisterPlugin (pluginName,
-                                   pluginDesc,
+    PluginManager::RegisterPlugin (GetPluginNameStatic(),
+                                   "Apple Objective C Language Runtime - Version 1",
                                    CreateInstance);    
 }
 
@@ -107,19 +102,20 @@ AppleObjCRuntimeV1::Terminate()
     PluginManager::UnregisterPlugin (CreateInstance);
 }
 
+lldb_private::ConstString
+AppleObjCRuntimeV1::GetPluginNameStatic()
+{
+    static ConstString g_name("apple-objc-v1");
+    return g_name;
+}
+
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+ConstString
 AppleObjCRuntimeV1::GetPluginName()
 {
-    return pluginName;
-}
-
-const char *
-AppleObjCRuntimeV1::GetShortPluginName()
-{
-    return pluginShort;
+    return GetPluginNameStatic();
 }
 
 uint32_t

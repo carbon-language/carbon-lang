@@ -89,7 +89,7 @@ SBProcess::GetPluginName ()
     ProcessSP process_sp(GetSP());
     if (process_sp)
     {
-        return process_sp->GetPluginName();
+        return process_sp->GetPluginName().GetCString();
     }
     return "<Unknown>";
 }
@@ -100,7 +100,7 @@ SBProcess::GetShortPluginName ()
     ProcessSP process_sp(GetSP());
     if (process_sp)
     {
-        return process_sp->GetShortPluginName();
+        return process_sp->GetPluginName().GetCString();
     }
     return "<Unknown>";
 }

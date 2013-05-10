@@ -179,8 +179,9 @@ public:
                     const FileSpec& file_spec,
                     const ArchSpec& arch,
                     const ConstString *object_name,
-                    off_t object_offset) :
-        Module (file_spec, arch, object_name, object_offset),
+                    off_t object_offset,
+                    const TimeValue *object_mod_time_ptr) :
+        Module (file_spec, arch, object_name, object_offset, object_mod_time_ptr),
         m_exe_module_wp (exe_module_sp),
         m_cu_idx (cu_idx)
     {
@@ -213,7 +214,7 @@ public:
                     // Set a a pointer to this class to set our OSO DWARF file know
                     // that the DWARF is being used along with a debug map and that
                     // it will have the remapped sections that we do below.
-                    SymbolFileDWARF *oso_symfile = (SymbolFileDWARF *)symbol_vendor->GetSymbolFile();
+                    SymbolFileDWARF *oso_symfile = SymbolFileDWARFDebugMap::GetSymbolFileAsSymbolFileDWARF(symbol_vendor->GetSymbolFile());
                     
                     if (!oso_symfile)
                         return NULL;
@@ -263,10 +264,11 @@ SymbolFileDWARFDebugMap::Terminate()
 }
 
 
-const char *
+lldb_private::ConstString
 SymbolFileDWARFDebugMap::GetPluginNameStatic()
 {
-    return "dwarf-debugmap";
+    static ConstString g_name("dwarf-debugmap");
+    return g_name;
 }
 
 const char *
@@ -381,6 +383,9 @@ SymbolFileDWARFDebugMap::InitOSO()
                 {
                     m_compile_unit_infos[i].so_file.SetFile(so_symbol->GetName().AsCString(), false);
                     m_compile_unit_infos[i].oso_path = oso_symbol->GetName();
+                    TimeValue oso_mod_time;
+                    oso_mod_time.OffsetWithSeconds(oso_symbol->GetAddress().GetOffset());
+                    m_compile_unit_infos[i].oso_mod_time = oso_mod_time;
                     uint32_t sibling_idx = so_symbol->GetSiblingIndex();
                     // The sibling index can't be less that or equal to the current index "i"
                     if (sibling_idx <= i)
@@ -436,12 +441,26 @@ SymbolFileDWARFDebugMap::GetModuleByCompUnitInfo (CompileUnitInfo *comp_unit_inf
         }
         else
         {
+            ObjectFile *obj_file = GetObjectFile();
             comp_unit_info->oso_sp.reset (new OSOInfo());
             m_oso_map[comp_unit_info->oso_path] = comp_unit_info->oso_sp;
             const char *oso_path = comp_unit_info->oso_path.GetCString();
             FileSpec oso_file (oso_path, false);
             ConstString oso_object;
-            if (!oso_file.Exists())
+            if (oso_file.Exists())
+            {
+                TimeValue oso_mod_time (oso_file.GetModificationTime());
+                if (oso_mod_time != comp_unit_info->oso_mod_time)
+                {
+                    obj_file->GetModule()->ReportError ("debug map object file '%s' has changed (actual time is 0x%" PRIx64 ", debug map time is 0x%" PRIx64 ") since this executable was linked, file will be ignored",
+                                                        oso_file.GetPath().c_str(),
+                                                        oso_mod_time.GetAsSecondsSinceJan1_1970(),
+                                                        comp_unit_info->oso_mod_time.GetAsSecondsSinceJan1_1970());
+                    return NULL;
+                }
+
+            }
+            else
             {
                 const bool must_exist = true;
 
@@ -450,7 +469,6 @@ SymbolFileDWARFDebugMap::GetModuleByCompUnitInfo (CompileUnitInfo *comp_unit_inf
                                                              oso_object,
                                                              must_exist))
                 {
-                    comp_unit_info->oso_sp->symbol_file_supported = false;
                     return NULL;
                 }
             }
@@ -458,12 +476,13 @@ SymbolFileDWARFDebugMap::GetModuleByCompUnitInfo (CompileUnitInfo *comp_unit_inf
             // use the debug map, to add new sections to each .o file and
             // even though a .o file might not have changed, the sections
             // that get added to the .o file can change.
-            comp_unit_info->oso_sp->module_sp.reset (new DebugMapModule (GetObjectFile()->GetModule(),
+            comp_unit_info->oso_sp->module_sp.reset (new DebugMapModule (obj_file->GetModule(),
                                                                          GetCompUnitInfoIndex(comp_unit_info),
                                                                          oso_file,
                                                                          m_obj_file->GetModule()->GetArchitecture(),
                                                                          oso_object ? &oso_object : NULL,
-                                                                         0));
+                                                                         0,
+                                                                         oso_object ? &comp_unit_info->oso_mod_time : NULL));
         }
     }
     if (comp_unit_info->oso_sp)
@@ -538,6 +557,14 @@ SymbolFileDWARFDebugMap::GetSymbolFileByOSOIndex (uint32_t oso_idx)
 }
 
 SymbolFileDWARF *
+SymbolFileDWARFDebugMap::GetSymbolFileAsSymbolFileDWARF (SymbolFile *sym_file)
+{
+    if (sym_file && sym_file->GetPluginName() == SymbolFileDWARF::GetPluginNameStatic())
+        return (SymbolFileDWARF *)sym_file;
+    return NULL;
+}
+
+SymbolFileDWARF *
 SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit_info)
 {
     Module *oso_module = GetModuleByCompUnitInfo (comp_unit_info);
@@ -545,7 +572,7 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
     {
         SymbolVendor *sym_vendor = oso_module->GetSymbolVendor();
         if (sym_vendor)
-            return (SymbolFileDWARF *)sym_vendor->GetSymbolFile();
+            return GetSymbolFileAsSymbolFileDWARF (sym_vendor->GetSymbolFile());
     }
     return NULL;
 }
@@ -1219,14 +1246,8 @@ SymbolFileDWARFDebugMap::FindNamespace (const lldb_private::SymbolContext& sc,
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+lldb_private::ConstString
 SymbolFileDWARFDebugMap::GetPluginName()
-{
-    return "SymbolFileDWARFDebugMap";
-}
-
-const char *
-SymbolFileDWARFDebugMap::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }
@@ -1454,7 +1475,7 @@ SymbolFileDWARFDebugMap::LinkOSOAddress (Address &addr)
     if (addr_module == exe_module)
         return true; // Address is already in terms of the main executable module
 
-    CompileUnitInfo *cu_info = GetCompileUnitInfo ((SymbolFileDWARF *)addr_module->GetSymbolVendor()->GetSymbolFile());
+    CompileUnitInfo *cu_info = GetCompileUnitInfo (GetSymbolFileAsSymbolFileDWARF(addr_module->GetSymbolVendor()->GetSymbolFile()));
     if (cu_info)
     {
         const lldb::addr_t oso_file_addr = addr.GetFileAddress();

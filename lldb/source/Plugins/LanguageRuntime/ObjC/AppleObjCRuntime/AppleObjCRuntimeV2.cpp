@@ -50,10 +50,6 @@
 using namespace lldb;
 using namespace lldb_private;
 
-static const char *pluginName = "AppleObjCRuntimeV2";
-static const char *pluginDesc = "Apple Objective C Language Runtime - Version 2";
-static const char *pluginShort = "language.apple.objc.v2";
-
 // 2 second timeout when running utility functions
 #define UTILITY_FUNCTION_TIMEOUT_USEC 2*1000*1000
 
@@ -427,8 +423,8 @@ AppleObjCRuntimeV2::CreateInstance (Process *process, LanguageType language)
 void
 AppleObjCRuntimeV2::Initialize()
 {
-    PluginManager::RegisterPlugin (pluginName,
-                                   pluginDesc,
+    PluginManager::RegisterPlugin (GetPluginNameStatic(),
+                                   "Apple Objective C Language Runtime - Version 2",
                                    CreateInstance);    
 }
 
@@ -438,19 +434,21 @@ AppleObjCRuntimeV2::Terminate()
     PluginManager::UnregisterPlugin (CreateInstance);
 }
 
+lldb_private::ConstString
+AppleObjCRuntimeV2::GetPluginNameStatic()
+{
+    static ConstString g_name("apple-objc-v2");
+    return g_name;
+}
+
+
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+lldb_private::ConstString
 AppleObjCRuntimeV2::GetPluginName()
 {
-    return pluginName;
-}
-
-const char *
-AppleObjCRuntimeV2::GetShortPluginName()
-{
-    return pluginShort;
+    return GetPluginNameStatic();
 }
 
 uint32_t

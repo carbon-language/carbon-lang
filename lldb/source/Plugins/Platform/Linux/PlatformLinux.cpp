@@ -86,19 +86,20 @@ PlatformLinux::CreateInstance (bool force, const ArchSpec *arch)
     return NULL;
 }
 
-const char *
-PlatformLinux::GetPluginNameStatic()
-{
-    return "plugin.platform.linux";
-}
 
-const char *
-PlatformLinux::GetShortPluginNameStatic (bool is_host)
+lldb_private::ConstString
+PlatformLinux::GetPluginNameStatic (bool is_host)
 {
     if (is_host)
-        return Platform::GetHostPlatformName ();
+    {
+        static ConstString g_host_name(Platform::GetHostPlatformName ());
+        return g_host_name;
+    }
     else
-        return "remote-linux";
+    {
+        static ConstString g_remote_name("remote-linux");
+        return g_remote_name;
+    }
 }
 
 const char *
@@ -108,6 +109,12 @@ PlatformLinux::GetPluginDescriptionStatic (bool is_host)
         return "Local Linux user platform plug-in.";
     else
         return "Remote Linux user platform plug-in.";
+}
+
+lldb_private::ConstString
+PlatformLinux::GetPluginName()
+{
+    return GetPluginNameStatic(IsHost());
 }
 
 void
@@ -120,7 +127,7 @@ PlatformLinux::Initialize ()
         default_platform_sp->SetSystemArchitecture (Host::GetArchitecture());
         Platform::SetDefaultPlatform (default_platform_sp);
 #endif
-        PluginManager::RegisterPlugin(PlatformLinux::GetShortPluginNameStatic(false),
+        PluginManager::RegisterPlugin(PlatformLinux::GetPluginNameStatic(false),
                                       PlatformLinux::GetPluginDescriptionStatic(false),
                                       PlatformLinux::CreateInstance);
     }
@@ -242,7 +249,7 @@ PlatformLinux::ResolveExecutable (const FileSpec &exe_file,
             {
                 error.SetErrorStringWithFormat ("'%s' doesn't contain any '%s' platform architectures: %s",
                                                 exe_file.GetPath().c_str(),
-                                                GetShortPluginName(),
+                                                GetPluginName().GetCString(),
                                                 arch_names.GetString().c_str());
             }
         }

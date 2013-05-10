@@ -1760,10 +1760,11 @@ DynamicLoaderMacOSXDYLD::Terminate()
 }
 
 
-const char *
+lldb_private::ConstString
 DynamicLoaderMacOSXDYLD::GetPluginNameStatic()
 {
-    return "dynamic-loader.macosx-dyld";
+    static ConstString g_name("macosx-dyld");
+    return g_name;
 }
 
 const char *
@@ -1776,14 +1777,8 @@ DynamicLoaderMacOSXDYLD::GetPluginDescriptionStatic()
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+lldb_private::ConstString
 DynamicLoaderMacOSXDYLD::GetPluginName()
-{
-    return "DynamicLoaderMacOSXDYLD";
-}
-
-const char *
-DynamicLoaderMacOSXDYLD::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }

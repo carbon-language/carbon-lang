@@ -108,7 +108,7 @@ namespace lldb_private {
         ///     should be used. If NULL, pick the best plug-in.
         //------------------------------------------------------------------
         static Platform*
-        FindPlugin (Process *process, const char *plugin_name);
+        FindPlugin (Process *process, const ConstString &plugin_name);
 
         //------------------------------------------------------------------
         /// Set the target's executable based off of the existing 
@@ -215,7 +215,7 @@ namespace lldb_private {
 
         // Returns the the hostname if we are connected, else the short plugin
         // name.
-        const char *
+        ConstString
         GetName ();
 
         virtual const char *

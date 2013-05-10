@@ -433,16 +433,11 @@ SymbolVendor::GetCompileUnitAtIndex(size_t idx)
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+lldb_private::ConstString
 SymbolVendor::GetPluginName()
 {
-    return "SymbolVendor";
-}
-
-const char *
-SymbolVendor::GetShortPluginName()
-{
-    return "vendor-default";
+    static ConstString g_name("vendor-default");
+    return g_name;
 }
 
 uint32_t

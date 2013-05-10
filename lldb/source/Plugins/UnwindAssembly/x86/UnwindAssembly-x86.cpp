@@ -931,16 +931,10 @@ UnwindAssembly_x86::CreateInstance (const ArchSpec &arch)
 // PluginInterface protocol in UnwindAssemblyParser_x86
 //------------------------------------------------------------------
 
-const char *
+ConstString
 UnwindAssembly_x86::GetPluginName()
 {
-    return "UnwindAssembly_x86";
-}
-
-const char *
-UnwindAssembly_x86::GetShortPluginName()
-{
-    return "unwindassembly.x86";
+    return GetPluginNameStatic();
 }
 
 
@@ -965,10 +959,11 @@ UnwindAssembly_x86::Terminate()
 }
 
 
-const char *
+lldb_private::ConstString
 UnwindAssembly_x86::GetPluginNameStatic()
 {
-    return "UnwindAssembly_x86";
+    static ConstString g_name("x86");
+    return g_name;
 }
 
 const char *

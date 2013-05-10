@@ -88,7 +88,8 @@ public:
     Module (const FileSpec& file_spec,
             const ArchSpec& arch,
             const ConstString *object_name = NULL,
-            off_t object_offset = 0);
+            off_t object_offset = 0,
+            const TimeValue *object_mod_time_ptr = NULL);
 
     Module (const ModuleSpec &module_spec);
     //------------------------------------------------------------------
@@ -552,8 +553,23 @@ public:
     SetSymbolFileFileSpec (const FileSpec &file);
 
     const TimeValue &
-    GetModificationTime () const;
-   
+    GetModificationTime () const
+    {
+        return m_mod_time;
+    }
+
+    const TimeValue &
+    GetObjectModificationTime () const
+    {
+        return m_object_mod_time;
+    }
+
+    void
+    SetObjectModificationTime (const TimeValue &mod_time)
+    {
+        m_mod_time = mod_time;
+    }
+
     //------------------------------------------------------------------
     /// Tells whether this module is capable of being the main executable
     /// for a process.
@@ -963,6 +979,7 @@ protected:
     FileSpec                    m_symfile_spec; ///< If this path is valid, then this is the file that _will_ be used as the symbol file for this module
     ConstString                 m_object_name;  ///< The name an object within this module that is selected, or empty of the module is represented by \a m_file.
     uint64_t                    m_object_offset;
+    TimeValue                   m_object_mod_time;
     lldb::ObjectFileSP          m_objfile_sp;   ///< A shared pointer to the object file parser for this module as it may or may not be shared with the SymbolFile
     std::unique_ptr<SymbolVendor> m_symfile_ap;   ///< A pointer to the symbol vendor for this module.
     ClangASTContext             m_ast;          ///< The AST context for this module.

@@ -694,7 +694,7 @@ void
 DisassemblerLLVMC::Initialize()
 {
     PluginManager::RegisterPlugin (GetPluginNameStatic(),
-                                   GetPluginDescriptionStatic(),
+                                   "Disassembler that uses LLVM MC to disassemble i386, x86_64 and ARM.",
                                    CreateInstance);
     
     llvm::InitializeAllTargetInfos();
@@ -710,16 +710,11 @@ DisassemblerLLVMC::Terminate()
 }
 
 
-const char *
+ConstString
 DisassemblerLLVMC::GetPluginNameStatic()
 {
-    return "llvm-mc";
-}
-
-const char *
-DisassemblerLLVMC::GetPluginDescriptionStatic()
-{
-    return "Disassembler that uses LLVM MC to disassemble i386, x86_64 and ARM.";
+    static ConstString g_name("llvm-mc");
+    return g_name;
 }
 
 int DisassemblerLLVMC::OpInfoCallback (void *disassembler,
@@ -813,14 +808,8 @@ const char *DisassemblerLLVMC::SymbolLookup (uint64_t value,
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+ConstString
 DisassemblerLLVMC::GetPluginName()
-{
-    return "DisassemblerLLVMC";
-}
-
-const char *
-DisassemblerLLVMC::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }

@@ -160,10 +160,11 @@ ObjectFileELF::Terminate()
     PluginManager::UnregisterPlugin(CreateInstance);
 }
 
-const char *
+lldb_private::ConstString
 ObjectFileELF::GetPluginNameStatic()
 {
-    return "object-file.elf";
+    static ConstString g_name("elf");
+    return g_name;
 }
 
 const char *
@@ -236,14 +237,8 @@ ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+lldb_private::ConstString
 ObjectFileELF::GetPluginName()
-{
-    return "ObjectFileELF";
-}
-
-const char *
-ObjectFileELF::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }

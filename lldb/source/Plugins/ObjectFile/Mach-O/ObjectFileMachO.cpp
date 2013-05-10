@@ -379,10 +379,11 @@ ObjectFileMachO::Terminate()
 }
 
 
-const char *
+lldb_private::ConstString
 ObjectFileMachO::GetPluginNameStatic()
 {
-    return "object-file.mach-o";
+    static ConstString g_name("mach-o");
+    return g_name;
 }
 
 const char *
@@ -4169,14 +4170,8 @@ ObjectFileMachO::GetLLDBSharedCacheUUID ()
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+lldb_private::ConstString
 ObjectFileMachO::GetPluginName()
-{
-    return "ObjectFileMachO";
-}
-
-const char *
-ObjectFileMachO::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }

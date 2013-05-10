@@ -32,8 +32,8 @@ public:
     static lldb_private::Platform* 
     CreateInstance (bool force, const lldb_private::ArchSpec *arch);
 
-    static const char *
-    GetShortPluginNameStatic();
+    static lldb_private::ConstString
+    GetPluginNameStatic();
 
     static const char *
     GetDescriptionStatic();
@@ -47,16 +47,10 @@ public:
     //------------------------------------------------------------
     // lldb_private::PluginInterface functions
     //------------------------------------------------------------
-    virtual const char *
+    virtual lldb_private::ConstString
     GetPluginName()
     {
-        return "PlatformRemoteGDBServer";
-    }
-    
-    virtual const char *
-    GetShortPluginName()
-    {
-        return GetShortPluginNameStatic();
+        return GetPluginNameStatic();
     }
     
     virtual uint32_t

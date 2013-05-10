@@ -39,26 +39,14 @@ namespace lldb_private {
         static Platform *
         CreateInstance (bool force, const lldb_private::ArchSpec *arch);
 
-        static const char *
-        GetPluginNameStatic();
+        static lldb_private::ConstString
+        GetPluginNameStatic (bool is_host);
 
         static const char *
-        GetShortPluginNameStatic(bool is_host);
+        GetPluginDescriptionStatic (bool is_host);
 
-        static const char *
-        GetPluginDescriptionStatic(bool is_host);
-
-        virtual const char *
-        GetPluginName()
-        {
-            return GetPluginNameStatic();
-        }
-        
-        virtual const char *
-        GetShortPluginName()
-        {
-            return "PlatformLinux";
-        }
+        virtual lldb_private::ConstString
+        GetPluginName();
         
         virtual uint32_t
         GetPluginVersion()

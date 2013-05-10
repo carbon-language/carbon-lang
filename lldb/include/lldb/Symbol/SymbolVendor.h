@@ -36,15 +36,6 @@ class SymbolVendor :
     public PluginInterface
 {
 public:
-    static bool
-    RegisterPlugin (const char *name,
-                    const char *description,
-                    SymbolVendorCreateInstance create_callback);
-
-    static bool
-    UnregisterPlugin (SymbolVendorCreateInstance create_callback);
-
-
     static SymbolVendor*
     FindPlugin (const lldb::ModuleSP &module_sp,
                 lldb_private::Stream *feedback_strm);
@@ -171,11 +162,8 @@ public:
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual const char *
+    virtual lldb_private::ConstString
     GetPluginName();
-
-    virtual const char *
-    GetShortPluginName();
 
     virtual uint32_t
     GetPluginVersion();

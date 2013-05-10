@@ -42,7 +42,7 @@ PlatformiOSSimulator::Initialize ()
 {
     if (g_initialize_count++ == 0)
     {
-        PluginManager::RegisterPlugin (PlatformiOSSimulator::GetShortPluginNameStatic(),
+        PluginManager::RegisterPlugin (PlatformiOSSimulator::GetPluginNameStatic(),
                                        PlatformiOSSimulator::GetDescriptionStatic(),
                                        PlatformiOSSimulator::CreateInstance);
     }
@@ -124,16 +124,11 @@ PlatformiOSSimulator::CreateInstance (bool force, const ArchSpec *arch)
 }
 
 
-const char *
+lldb_private::ConstString
 PlatformiOSSimulator::GetPluginNameStatic ()
 {
-    return "PlatformiOSSimulator";
-}
-
-const char *
-PlatformiOSSimulator::GetShortPluginNameStatic()
-{
-    return "ios-simulator";
+    static ConstString g_name("ios-simulator");
+    return g_name;
 }
 
 const char *
@@ -242,7 +237,7 @@ PlatformiOSSimulator::ResolveExecutable (const FileSpec &exe_file,
         {
             error.SetErrorStringWithFormat ("'%s' doesn't contain any '%s' platform architectures: %s",
                                             exe_file.GetPath().c_str(),
-                                            GetShortPluginName(),
+                                            GetPluginName().GetCString(),
                                             arch_names.GetString().c_str());
         }
     }
@@ -352,7 +347,7 @@ PlatformiOSSimulator::GetFile (const FileSpec &platform_file,
         }
         error.SetErrorStringWithFormat ("unable to locate a platform file for '%s' in platform '%s'", 
                                         platform_file_path,
-                                        GetPluginName());
+                                        GetPluginName().GetCString());
     }
     else
     {

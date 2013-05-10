@@ -178,10 +178,11 @@ DynamicLoaderStatic::Terminate()
 }
 
 
-const char *
+lldb_private::ConstString
 DynamicLoaderStatic::GetPluginNameStatic()
 {
-    return "dynamic-loader.static";
+    static ConstString g_name("static");
+    return g_name;
 }
 
 const char *
@@ -194,14 +195,8 @@ DynamicLoaderStatic::GetPluginDescriptionStatic()
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+lldb_private::ConstString
 DynamicLoaderStatic::GetPluginName()
-{
-    return "DynamicLoaderStatic";
-}
-
-const char *
-DynamicLoaderStatic::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }

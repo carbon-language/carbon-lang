@@ -118,11 +118,11 @@ public:
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual const char *
+    static lldb_private::ConstString
+    GetPluginNameStatic ();
+
+    virtual lldb_private::ConstString
     GetPluginName();
-    
-    virtual const char *
-    GetShortPluginName();
     
     virtual uint32_t
     GetPluginVersion();

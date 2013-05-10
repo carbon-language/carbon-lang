@@ -81,10 +81,11 @@ void
 ProcessLinux::Terminate()
 {
 }
-const char *
+lldb_private::ConstString
 ProcessLinux::GetPluginNameStatic()
 {
-    return "linux";
+    static ConstString g_name("linux");
+    return g_name;
 }
 
 const char *
@@ -105,16 +106,10 @@ ProcessLinux::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thre
 //------------------------------------------------------------------------------
 // ProcessInterface protocol.
 
-const char *
+lldb_private::ConstString
 ProcessLinux::GetPluginName()
 {
-    return "process.linux";
-}
-
-const char *
-ProcessLinux::GetShortPluginName()
-{
-    return "process.linux";
+    return GetPluginNameStatic();
 }
 
 uint32_t

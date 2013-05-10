@@ -24,11 +24,8 @@ public:
     virtual
     ~PluginInterface () {}
 
-    virtual const char *
+    virtual ConstString
     GetPluginName() = 0;
-
-    virtual const char *
-    GetShortPluginName() = 0;
 
     virtual uint32_t
     GetPluginVersion() = 0;

@@ -116,10 +116,11 @@ get_random_port ()
 }
 
 
-const char *
+lldb_private::ConstString
 ProcessGDBRemote::GetPluginNameStatic()
 {
-    return "gdb-remote";
+    static ConstString g_name("gdb-remote");
+    return g_name;
 }
 
 const char *
@@ -233,14 +234,8 @@ ProcessGDBRemote::~ProcessGDBRemote()
 //----------------------------------------------------------------------
 // PluginInterface
 //----------------------------------------------------------------------
-const char *
+ConstString
 ProcessGDBRemote::GetPluginName()
-{
-    return "Process debugging plug-in that uses the GDB remote protocol";
-}
-
-const char *
-ProcessGDBRemote::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }
@@ -1746,7 +1741,7 @@ ProcessGDBRemote::DoDestroy ()
         // FIXME: These should be ConstStrings so we aren't doing strcmp'ing.
         if (platform_sp
             && platform_sp->GetName()
-            && strcmp (platform_sp->GetName(), PlatformRemoteiOS::GetShortPluginNameStatic()) == 0)
+            && platform_sp->GetName() == PlatformRemoteiOS::GetPluginNameStatic())
         {
             if (m_destroy_tried_resuming)
             {

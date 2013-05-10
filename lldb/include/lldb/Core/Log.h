@@ -78,14 +78,14 @@ public:
     // Static accessors for logging channels
     //------------------------------------------------------------------
     static void
-    RegisterLogChannel (const char *channel,
+    RegisterLogChannel (const ConstString &channel,
                         const Log::Callbacks &log_callbacks);
 
     static bool
-    UnregisterLogChannel (const char *channel);
+    UnregisterLogChannel (const ConstString &channel);
 
     static bool
-    GetLogChannelCallbacks (const char *channel,
+    GetLogChannelCallbacks (const ConstString &channel,
                             Log::Callbacks &log_callbacks);
 
 

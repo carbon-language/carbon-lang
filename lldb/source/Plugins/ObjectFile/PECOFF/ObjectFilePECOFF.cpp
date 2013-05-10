@@ -133,10 +133,11 @@ ObjectFilePECOFF::Terminate()
 }
 
 
-const char *
+lldb_private::ConstString
 ObjectFilePECOFF::GetPluginNameStatic()
 {
-    return "object-file.pe-coff";
+    static ConstString g_name("pe-coff");
+    return g_name;
 }
 
 const char *
@@ -954,14 +955,8 @@ ObjectFilePECOFF::CalculateStrata()
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+ConstString
 ObjectFilePECOFF::GetPluginName()
-{
-    return "ObjectFilePECOFF";
-}
-
-const char *
-ObjectFilePECOFF::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }

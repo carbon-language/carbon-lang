@@ -40,10 +40,11 @@ SymbolFileSymtab::Terminate()
 }
 
 
-const char *
+lldb_private::ConstString
 SymbolFileSymtab::GetPluginNameStatic()
 {
-    return "symbol-file.symtab";
+    static ConstString g_name("symtab");
+    return g_name;
 }
 
 const char *
@@ -387,14 +388,8 @@ SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc,
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------
-const char *
+lldb_private::ConstString
 SymbolFileSymtab::GetPluginName()
-{
-    return "SymbolFileSymtab";
-}
-
-const char *
-SymbolFileSymtab::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }

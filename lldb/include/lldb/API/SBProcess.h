@@ -51,6 +51,7 @@ public:
     const char *
     GetPluginName ();
     
+    // DEPRECATED: use GetPluginName()
     const char *
     GetShortPluginName ();
     

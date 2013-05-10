@@ -38,10 +38,11 @@
 using namespace lldb;
 using namespace lldb_private;
 
-const char *
+ConstString
 ProcessMachCore::GetPluginNameStatic()
 {
-    return "mach-o-core";
+    static ConstString g_name("mach-o-core");
+    return g_name;
 }
 
 const char *
@@ -125,14 +126,8 @@ ProcessMachCore::~ProcessMachCore()
 //----------------------------------------------------------------------
 // PluginInterface
 //----------------------------------------------------------------------
-const char *
+ConstString
 ProcessMachCore::GetPluginName()
-{
-    return "Process debugging plug-in that loads mach-o core files.";
-}
-
-const char *
-ProcessMachCore::GetShortPluginName()
 {
     return GetPluginNameStatic();
 }
