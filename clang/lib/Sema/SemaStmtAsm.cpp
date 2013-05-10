@@ -77,13 +77,12 @@ static bool isOperandMentioned(unsigned OpNo,
 StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
                                  bool IsVolatile, unsigned NumOutputs,
                                  unsigned NumInputs, IdentifierInfo **Names,
-                                 MultiExprArg constraints, MultiExprArg exprs,
+                                 MultiExprArg constraints, MultiExprArg Exprs,
                                  Expr *asmString, MultiExprArg clobbers,
                                  SourceLocation RParenLoc) {
   unsigned NumClobbers = clobbers.size();
   StringLiteral **Constraints =
     reinterpret_cast<StringLiteral**>(constraints.data());
-  Expr **Exprs = exprs.data();
   StringLiteral *AsmString = cast<StringLiteral>(asmString);
   StringLiteral **Clobbers = reinterpret_cast<StringLiteral**>(clobbers.data());
 
@@ -204,8 +203,8 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
 
   GCCAsmStmt *NS =
     new (Context) GCCAsmStmt(Context, AsmLoc, IsSimple, IsVolatile, NumOutputs,
-                             NumInputs, Names, Constraints, Exprs, AsmString,
-                             NumClobbers, Clobbers, RParenLoc);
+                             NumInputs, Names, Constraints, Exprs.data(),
+                             AsmString, NumClobbers, Clobbers, RParenLoc);
   // Validate the asm string, ensuring it makes sense given the operands we
   // have.
   SmallVector<GCCAsmStmt::AsmStringPiece, 8> Pieces;
