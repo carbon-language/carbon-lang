@@ -1870,7 +1870,9 @@ bool Lexer::SkipWhitespace(Token &Result, const char *CurPtr) {
   // Whitespace - Skip it, then return the token after the whitespace.
   bool SawNewline = isVerticalWhitespace(CurPtr[-1]);
 
-  unsigned char Char = *CurPtr;  // Skip consequtive spaces efficiently.
+  unsigned char Char = *CurPtr;
+
+  // Skip consecutive spaces efficiently.
   while (1) {
     // Skip horizontal whitespace very aggressively.
     while (isHorizontalWhitespace(Char))
@@ -1886,7 +1888,7 @@ bool Lexer::SkipWhitespace(Token &Result, const char *CurPtr) {
       return false;
     }
 
-    // ok, but handle newline.
+    // OK, but handle newline.
     SawNewline = true;
     Char = *++CurPtr;
   }
