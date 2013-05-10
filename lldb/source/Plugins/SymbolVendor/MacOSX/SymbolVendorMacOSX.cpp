@@ -107,16 +107,6 @@ ReplaceDSYMSectionsWithExecutableSections (ObjectFile *exec_objfile, ObjectFile 
                 // and in the dSYM with those from the executable. If we fail to
                 // replace the one in the dSYM, then add the executable section to
                 // the dSYM.
-                SectionSP dsym_sect_sp(dsym_section_list->FindSectionByID(exec_sect_sp->GetID()));
-                if (dsym_sect_sp.get() && dsym_sect_sp->GetName() != exec_sect_sp->GetName())
-                {
-                    // The sections in a dSYM are normally a superset of the sections in an executable.
-                    // If we find a section # in the exectuable & dSYM that don't have the same name,
-                    // something has changed since the dSYM was written.  The mach_kernel DSTROOT binary
-                    // has a CTF segment added, for instance, and it's easiest to simply not add that to
-                    // the dSYM - none of the nlist entries are going to have references to that section.
-                    continue;
-                }
                 if (dsym_section_list->ReplaceSection(exec_sect_sp->GetID(), exec_sect_sp, 0) == false)
                     dsym_section_list->AddSection(exec_sect_sp);
             }
