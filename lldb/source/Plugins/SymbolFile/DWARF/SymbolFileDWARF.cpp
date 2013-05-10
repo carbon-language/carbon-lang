@@ -3542,8 +3542,38 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
             Index ();
 
         if (name_type_mask & eFunctionNameTypeFull)
+        {
             FindFunctions (name, m_function_fullname_index, sc_list);
 
+            // Temporary workaround for global/anonymous namespace functions on linux
+#if defined (__linux__)
+            // If we didn't find any functions in the global namespace try
+            // looking in the basename index but ignore any returned
+            // functions that have a namespace (ie. mangled names starting with 
+            // '_ZN') but keep functions which have an anonymous namespace
+            if (sc_list.GetSize() == 0)
+            {
+                SymbolContextList temp_sc_list;
+                FindFunctions (name, m_function_basename_index, temp_sc_list);
+                if (!namespace_decl)
+                {
+                    SymbolContext sc;
+                    for (uint32_t i = 0; i < temp_sc_list.GetSize(); i++)
+                    {
+                        if (temp_sc_list.GetContextAtIndex(i, sc))
+                        {
+                            ConstString func_name = sc.GetFunctionName(Mangled::ePreferDemangled);
+                            if (!strncmp(name.GetCString(), "_ZN", 3) ||
+                                strncmp(name.GetCString(), "(anonymous namespace)", 21))
+                            {
+                                sc_list.Append(sc);
+                            }
+                        }
+                    }
+                }
+            }
+#endif
+        }
         DIEArray die_offsets;
         DWARFCompileUnit *dwarf_cu = NULL;
         
