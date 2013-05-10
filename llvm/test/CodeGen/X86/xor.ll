@@ -154,3 +154,14 @@ define i32 @test9(i32 %a) nounwind {
 ; X32:    notl	[[REG:%[a-z]+]]
 ; X32:    andl	{{.*}}[[REG:%[a-z]+]]
 }
+
+; PR15948
+define <4 x i32> @test10(<4 x i32> %a) nounwind {
+  %1 = and <4 x i32> %a, <i32 4096, i32 4096, i32 4096, i32 4096>
+  %2 = xor <4 x i32> %1, <i32 4096, i32 4096, i32 4096, i32 4096>
+  ret <4 x i32> %2
+; X64: test10:
+; X64:    andnps
+; X32: test10:
+; X32:    andnps
+}

@@ -3464,8 +3464,7 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
   if (N0.getOpcode() == ISD::AND && N0.getNode()->hasOneUse() &&
       N0->getOperand(1) == N1) {
     SDValue X = N0->getOperand(0);
-    SDValue NotX = DAG.getNode(ISD::XOR, X.getDebugLoc(), VT, X,
-      DAG.getConstant(APInt::getAllOnesValue(VT.getSizeInBits()), VT));
+    SDValue NotX = DAG.getNOT(X.getDebugLoc(), X, VT);
     AddToWorkList(NotX.getNode());
     return DAG.getNode(ISD::AND, N->getDebugLoc(), VT, NotX, N1);
   }
