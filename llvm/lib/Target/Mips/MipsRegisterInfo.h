@@ -46,6 +46,7 @@ public:
                                MachineFunction &MF) const;
   const uint16_t *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
   const uint32_t *getCallPreservedMask(CallingConv::ID) const;
+  static const uint32_t *getMips16RetHelperMask();
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 

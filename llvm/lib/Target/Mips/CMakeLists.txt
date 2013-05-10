@@ -15,6 +15,7 @@ add_public_tablegen_target(MipsCommonTableGen)
 
 add_llvm_target(MipsCodeGen
   Mips16FrameLowering.cpp
+  Mips16HardFloat.cpp
   Mips16InstrInfo.cpp
   Mips16ISelDAGToDAG.cpp
   Mips16ISelLowering.cpp

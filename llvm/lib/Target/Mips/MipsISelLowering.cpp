@@ -2229,6 +2229,15 @@ getOpndList(SmallVectorImpl<SDValue> &Ops,
   const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
   const uint32_t *Mask = TRI->getCallPreservedMask(CLI.CallConv);
   assert(Mask && "Missing call preserved mask for calling convention");
+  if (Subtarget->inMips16HardFloat()) {
+    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(CLI.Callee)) {
+      llvm::StringRef Sym = G->getGlobal()->getName();
+      Function *F = G->getGlobal()->getParent()->getFunction(Sym);
+      if (F->hasFnAttribute("__Mips16RetHelper")) {
+        Mask = MipsRegisterInfo::getMips16RetHelperMask();
+      }
+    }
+  }
   Ops.push_back(CLI.DAG.getRegisterMask(Mask));
 
   if (InFlag.getNode())
@@ -2260,7 +2269,9 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, IsVarArg, DAG.getMachineFunction(),
                  getTargetMachine(), ArgLocs, *DAG.getContext());
-  MipsCC MipsCCInfo(CallConv, IsO32, CCInfo);
+  MipsCC::SpecialCallingConvType SpecialCallingConv =
+    getSpecialCallingConv(Callee);
+  MipsCC MipsCCInfo(CallConv, IsO32, CCInfo, SpecialCallingConv);
 
   MipsCCInfo.analyzeCallOperands(Outs, IsVarArg,
                                  getTargetMachine().Options.UseSoftFloat,
@@ -3029,12 +3040,31 @@ static bool originalTypeIsF128(const Type *Ty, const SDNode *CallNode) {
   return (ES && Ty->isIntegerTy(128) && isF128SoftLibCall(ES->getSymbol()));
 }
 
-MipsTargetLowering::MipsCC::MipsCC(CallingConv::ID CC, bool IsO32_,
-                                   CCState &Info)
-  : CCInfo(Info), CallConv(CC), IsO32(IsO32_) {
+MipsTargetLowering::MipsCC::SpecialCallingConvType
+  MipsTargetLowering::getSpecialCallingConv(SDValue Callee) const {
+  MipsCC::SpecialCallingConvType SpecialCallingConv =
+    MipsCC::NoSpecialCallingConv;;
+  if (Subtarget->inMips16HardFloat()) {
+    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+      llvm::StringRef Sym = G->getGlobal()->getName();
+      Function *F = G->getGlobal()->getParent()->getFunction(Sym);
+      if (F->hasFnAttribute("__Mips16RetHelper")) {
+        SpecialCallingConv = MipsCC::Mips16RetHelperConv;
+      }
+    }
+  }
+  return SpecialCallingConv;
+}
+
+MipsTargetLowering::MipsCC::MipsCC(
+  CallingConv::ID CC, bool IsO32_, CCState &Info,
+    MipsCC::SpecialCallingConvType SpecialCallingConv_)
+  : CCInfo(Info), CallConv(CC), IsO32(IsO32_),
+    SpecialCallingConv(SpecialCallingConv_){
   // Pre-allocate reserved argument area.
   CCInfo.AllocateStack(reservedArgArea(), 1);
 }
+
 
 void MipsTargetLowering::MipsCC::
 analyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Args,
@@ -3183,6 +3213,8 @@ llvm::CCAssignFn *MipsTargetLowering::MipsCC::fixedArgFn() const {
   if (CallConv == CallingConv::Fast)
     return CC_Mips_FastCC;
 
+  if (SpecialCallingConv == Mips16RetHelperConv)
+    return CC_Mips16RetHelper;
   return IsO32 ? CC_MipsO32 : CC_MipsN;
 }
 

@@ -13,6 +13,7 @@
 #define DEBUG_TYPE "mips-lower"
 #include "Mips16ISelLowering.h"
 #include "MipsRegisterInfo.h"
+#include "MipsTargetMachine.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Support/CommandLine.h"
@@ -20,11 +21,6 @@
 #include <set>
 
 using namespace llvm;
-
-static cl::opt<bool>
-Mips16HardFloat("mips16-hard-float", cl::NotHidden,
-                cl::desc("MIPS: mips16 hard float enable."),
-                cl::init(false));
 
 static cl::opt<bool> DontExpandCondPseudos16(
   "mips16-dont-expand-cond-pseudo",
@@ -50,7 +46,7 @@ Mips16TargetLowering::Mips16TargetLowering(MipsTargetMachine &TM)
   // Set up the register classes
   addRegisterClass(MVT::i32, &Mips::CPU16RegsRegClass);
 
-  if (Mips16HardFloat)
+  if (Subtarget->inMips16HardFloat())
     setMips16HardFloatLibCalls();
 
   setOperationAction(ISD::ATOMIC_FENCE,       MVT::Other, Expand);
@@ -374,7 +370,8 @@ getOpndList(SmallVectorImpl<SDValue> &Ops,
   const char* Mips16HelperFunction = 0;
   bool NeedMips16Helper = false;
 
-  if (getTargetMachine().Options.UseSoftFloat && Mips16HardFloat) {
+  if (getTargetMachine().Options.UseSoftFloat &&
+      Subtarget->inMips16HardFloat()) {
     //
     // currently we don't have symbols tagged with the mips16 or mips32
     // qualifier so we will assume that we don't know what kind it is.

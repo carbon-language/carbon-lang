@@ -93,6 +93,9 @@ protected:
   // InMips16 -- can process Mips16 instructions
   bool InMips16Mode;
 
+  // Mips16 hard float
+  bool InMips16HardFloat;
+
   // PreviousInMips16 -- the function we just processed was in Mips 16 Mode
   bool PreviousInMips16Mode;
 
@@ -170,8 +173,11 @@ public:
     }
     llvm_unreachable("Unexpected mode");
   }
-  bool inMips16ModeDefault() {
+  bool inMips16ModeDefault() const {
     return InMips16Mode;
+  }
+  bool inMips16HardFloat() const {
+    return inMips16Mode() && InMips16HardFloat;
   }
   bool inMicroMipsMode() const { return InMicroMipsMode; }
   bool hasDSP() const { return HasDSP; }
@@ -188,7 +194,8 @@ public:
   bool hasBitCount()  const { return HasBitCount; }
   bool hasFPIdx()     const { return HasFPIdx; }
 
-  bool allowMixed16_32() const { return AllowMixed16_32;};
+  bool allowMixed16_32() const { return inMips16ModeDefault() |
+                                        AllowMixed16_32;}
 
   bool os16() const { return Os16;};
 

@@ -196,6 +196,13 @@ def CC_Mips_FastCC : CallingConv<[
   CCDelegateTo<CC_MipsN_FastCC>
 ]>;
 
+//==
+
+def CC_Mips16RetHelper : CallingConv<[
+  // Integer arguments are passed in integer registers.
+  CCIfType<[i32], CCAssignToReg<[V0, V1, A0, A1]>>
+]>;
+
 //===----------------------------------------------------------------------===//
 // Mips Calling Convention Dispatch
 //===----------------------------------------------------------------------===//
@@ -223,3 +230,6 @@ def CSR_N32 : CalleeSavedRegs<(add D31_64, D29_64, D27_64, D25_64, D24_64,
 
 def CSR_N64 : CalleeSavedRegs<(add (sequence "D%u_64", 31, 24), RA_64, FP_64,
                                    GP_64, (sequence "S%u_64", 7, 0))>;
+
+def CSR_Mips16RetHelper : 
+  CalleeSavedRegs<(add V0, V1, (sequence "A%u", 3, 0), S0, S1)>;

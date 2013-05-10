@@ -100,6 +100,10 @@ MipsRegisterInfo::getCallPreservedMask(CallingConv::ID) const {
   return CSR_N64_RegMask;
 }
 
+const uint32_t *MipsRegisterInfo::getMips16RetHelperMask() {
+  return CSR_Mips16RetHelper_RegMask;
+}
+
 BitVector MipsRegisterInfo::
 getReservedRegs(const MachineFunction &MF) const {
   static const uint16_t ReservedCPURegs[] = {
