@@ -23,43 +23,57 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/ADT/StringMap.h"
 
 using namespace llvm;
 
 static cl::opt<bool> Help("h", cl::desc("Alias for -help"), cl::Hidden);
 
-static cl::list<unsigned> Offsets(
-    "offset",
-    cl::desc(
-        "Format a range starting at this byte offset. Multiple ranges can be "
-        "formatted by specifying several -offset and -length pairs. Can "
-        "only be used with one input file."));
-static cl::list<unsigned> Lengths(
-    "length",
-    cl::desc("Format a range of this length (in bytes). Multiple ranges can be "
-             "formatted by specifying several -offset and -length pairs. When "
-             "only a single -offset is specified without -length, clang-format "
-             "will format up to the end of the file. Can only be used with one "
-             "input file."));
-static cl::opt<std::string> Style(
-    "style",
-    cl::desc(
-        "Coding style, currently supports: LLVM, Google, Chromium, Mozilla. "
-        "Use '-style file' to load style configuration from .clang-format file "
-        "located in one of the parent directories of the source file (or "
-        "current directory for stdin)."),
-    cl::init("LLVM"));
-static cl::opt<bool> Inplace("i",
-                             cl::desc("Inplace edit <file>s, if specified."));
+// Mark all our options with this category, everything else (except for -version
+// and -help) will be hidden.
+cl::OptionCategory ClangFormatCategory("Clang-format options");
 
-static cl::opt<bool> OutputXML(
-    "output-replacements-xml", cl::desc("Output replacements as XML."));
+static cl::list<unsigned>
+    Offsets("offset",
+            cl::desc("Format a range starting at this byte offset.\n"
+                     "Multiple ranges can be formatted by specifying\n"
+                     "several -offset and -length pairs.\n"
+                     "Can only be used with one input file."),
+            cl::cat(ClangFormatCategory));
+static cl::list<unsigned>
+    Lengths("length",
+            cl::desc("Format a range of this length (in bytes).\n"
+                     "Multiple ranges can be formatted by specifying\n"
+                     "several -offset and -length pairs.\n"
+                     "When only a single -offset is specified without\n"
+                     "-length, clang-format will format up to the end\n"
+                     "of the file.\n"
+                     "Can only be used with one input file."),
+            cl::cat(ClangFormatCategory));
+static cl::opt<std::string>
+    Style("style",
+          cl::desc("Coding style, currently supports:\n"
+                   "  LLVM, Google, Chromium, Mozilla.\n"
+                   "Use '-style file' to load style configuration from\n"
+                   ".clang-format file located in one of the parent\n"
+                   "directories of the source file (or current\n"
+                   "directory for stdin)."),
+          cl::init("LLVM"), cl::cat(ClangFormatCategory));
+static cl::opt<bool> Inplace("i",
+                             cl::desc("Inplace edit <file>s, if specified."),
+                             cl::cat(ClangFormatCategory));
+
+static cl::opt<bool> OutputXML("output-replacements-xml",
+                               cl::desc("Output replacements as XML."),
+                               cl::cat(ClangFormatCategory));
 static cl::opt<bool>
     DumpConfig("dump-config",
-               cl::desc("Dump configuration options to stdout and exit. Can be used with -style option."));
+               cl::desc("Dump configuration options to stdout and exit.\n"
+                        "Can be used with -style option."),
+               cl::cat(ClangFormatCategory));
 
-static cl::list<std::string> FileNames(cl::Positional,
-                                       cl::desc("[<file> ...]"));
+static cl::list<std::string> FileNames(cl::Positional, cl::desc("[<file> ...]"),
+                                       cl::cat(ClangFormatCategory));
 
 namespace clang {
 namespace format {
@@ -196,6 +210,17 @@ static bool format(std::string FileName) {
 
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
+
+  // Hide unrelated options.
+  StringMap<cl::Option*> Options;
+  cl::getRegisteredOptions(Options);
+  for (StringMap<cl::Option *>::iterator I = Options.begin(), E = Options.end();
+       I != E; ++I) {
+    if (I->second->Category != &ClangFormatCategory && I->first() != "help" &&
+        I->first() != "version")
+      I->second->setHiddenFlag(cl::ReallyHidden);
+  }
+
   cl::ParseCommandLineOptions(
       argc, argv,
       "A tool to format C/C++/Obj-C code.\n\n"

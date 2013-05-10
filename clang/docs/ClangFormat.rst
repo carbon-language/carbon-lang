@@ -20,21 +20,43 @@ to format C/C++/Obj-C code.
 
   If no arguments are specified, it formats the code from standard input
   and writes the result to the standard output.
-  If <file> is given, it reformats the file. If -i is specified together
-  with <file>, the file is edited in-place. Otherwise, the result is
-  written to the standard output.
+  If <file>s are given, it reformats the files. If -i is specified
+  together with <file>s, the files are edited in-place. Otherwise, the
+  result is written to the standard output.
 
-  USAGE: clang-format [options] [<file>]
+  USAGE: clang-format [options] [<file> ...]
 
   OPTIONS:
-    -fatal-assembler-warnings - Consider warnings as error
-    -help                     - Display available options (-help-hidden for more)
-    -i                        - Inplace edit <file>, if specified.
-    -length=<int>             - Format a range of this length, -1 for end of file.
-    -offset=<int>             - Format a range starting at this file offset.
-    -stats                    - Enable statistics output from program
-    -style=<string>           - Coding style, currently supports: LLVM, Google, Chromium.
-    -version                  - Display the version of this program
+
+  Clang-format options:
+
+    -dump-config             - Dump configuration options to stdout and exit.
+                               Can be used with -style option.
+    -i                       - Inplace edit <file>s, if specified.
+    -length=<uint>           - Format a range of this length (in bytes).
+                               Multiple ranges can be formatted by specifying
+                               several -offset and -length pairs.
+                               When only a single -offset is specified without
+                               -length, clang-format will format up to the end
+                               of the file.
+                               Can only be used with one input file.
+    -offset=<uint>           - Format a range starting at this byte offset.
+                               Multiple ranges can be formatted by specifying
+                               several -offset and -length pairs.
+                               Can only be used with one input file.
+    -output-replacements-xml - Output replacements as XML.
+    -style=<string>          - Coding style, currently supports:
+                                 LLVM, Google, Chromium, Mozilla.
+                               Use '-style file' to load style configuration from
+                               .clang-format file located in one of the parent
+                               directories of the source file (or current
+                               directory for stdin).
+
+  General options:
+
+    -help                    - Display available options (-help-hidden for more)
+    -help-list               - Display list of available options (-help-list-hidden for more)
+    -version                 - Display the version of this program
 
 
 Vim Integration
