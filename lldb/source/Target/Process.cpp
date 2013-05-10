@@ -1035,6 +1035,7 @@ Process::Process(Target &target, Listener &listener) :
     m_private_run_lock (),
     m_currently_handling_event(false),
     m_finalize_called(false),
+    m_clear_thread_plans_on_stop (false),
     m_last_broadcast_state (eStateInvalid),
     m_destroy_in_process (false),
     m_can_jit(eCanJITDontKnow)
@@ -3332,8 +3333,13 @@ Process::PrivateResume ()
 }
 
 Error
-Process::Halt ()
+Process::Halt (bool clear_thread_plans)
 {
+    // Don't clear the m_clear_thread_plans_on_stop, only set it to true if
+    // in case it was already set and some thread plan logic calls halt on its
+    // own.
+    m_clear_thread_plans_on_stop |= clear_thread_plans;
+    
     // First make sure we aren't in the middle of handling an event, or we might restart.  This is pretty weak, since
     // we could just straightaway get another event.  It just narrows the window...
     m_currently_handling_event.WaitForValueEqualTo(false);
@@ -4035,6 +4041,12 @@ Process::RunPrivateStateThread ()
 
         if (internal_state != eStateInvalid)
         {
+            if (m_clear_thread_plans_on_stop &&
+                StateIsStoppedState(internal_state, true))
+            {
+                m_clear_thread_plans_on_stop = false;
+                m_thread_list.DiscardThreadPlans();
+            }
             HandlePrivateEvent (event_sp);
         }
 

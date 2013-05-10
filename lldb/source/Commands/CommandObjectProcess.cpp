@@ -1470,7 +1470,7 @@ public:
 protected:
     bool
     DoExecute (Args& command,
-             CommandReturnObject &result)
+               CommandReturnObject &result)
     {
         Process *process = m_exe_ctx.GetProcessPtr();
         if (process == NULL)
@@ -1482,14 +1482,11 @@ protected:
 
         if (command.GetArgumentCount() == 0)
         {
-            Error error(process->Halt ());
+            bool clear_thread_plans = true;
+            Error error(process->Halt (clear_thread_plans));
             if (error.Success())
             {
                 result.SetStatus (eReturnStatusSuccessFinishResult);
-                
-                // Maybe we should add a "SuspendThreadPlans so we
-                // can halt, and keep in place all the current thread plans.
-                process->GetThreadList().DiscardThreadPlans();
             }
             else
             {
