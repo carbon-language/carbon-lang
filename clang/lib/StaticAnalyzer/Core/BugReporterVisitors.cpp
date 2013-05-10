@@ -1539,12 +1539,11 @@ LikelyFalsePositiveSuppressionBRVisitor::getEndPath(BugReporterContext &BRC,
   SourceManager &SM = BRC.getSourceManager();
   FullSourceLoc Loc = BR.getLocation(SM).asLocation();
   while (Loc.isMacroID()) {
-    if (SM.isInSystemMacro(Loc) &&
-       (SM.getFilename(SM.getSpellingLoc(Loc)).endswith("sys/queue.h"))) {
+    Loc = Loc.getSpellingLoc();
+    if (SM.getFilename(Loc).endswith("sys/queue.h")) {
       BR.markInvalid(getTag(), 0);
       return 0;
     }
-    Loc = Loc.getSpellingLoc();
   }
 
   return 0;
