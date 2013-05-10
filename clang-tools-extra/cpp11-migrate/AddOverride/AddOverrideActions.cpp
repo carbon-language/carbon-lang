@@ -36,28 +36,40 @@ void AddOverrideFixer::run(const MatchFinder::MatchResult &Result) {
   if (!SM.isFromMainFile(M->getLocStart()))
     return;
 
-  // First check that there isn't already an override attribute.
-  if (!M->hasAttr<OverrideAttr>()) {
-    if (M->getLocStart().isFileID()) {
-      SourceLocation StartLoc;
-      if (M->hasInlineBody()) {
-        // Start at the beginning of the body and rewind back to the last
-        // non-whitespace character. We will insert the override keyword
-        // after that character.
-        // FIXME: This transform won't work if there is a comment between
-        // the end of the function prototype and the start of the body.
-        StartLoc = M->getBody()->getLocStart();
-        do {
-          StartLoc = StartLoc.getLocWithOffset(-1);
-        } while (isWhitespace(*FullSourceLoc(StartLoc, SM).getCharacterData()));
-        StartLoc = StartLoc.getLocWithOffset(1);
-      } else {
-        StartLoc = SM.getSpellingLoc(M->getLocEnd());
-        StartLoc = Lexer::getLocForEndOfToken(StartLoc, 0, SM, LangOptions());
-      }
-      Replace.insert(tooling::Replacement(SM, StartLoc, 0, " override"));
-      ++AcceptedChanges;
-    }
-  }
-}
+  if (!SM.isFromMainFile(M->getLocStart()))
+    return;
 
+  // First check that there isn't already an override attribute.
+  if (M->hasAttr<OverrideAttr>())
+    return;
+
+  // FIXME: Pure methods are not supported yet as it is difficult to track down
+  // the location of '= 0'.
+  if (M->isPure())
+    return;
+
+  if (const FunctionDecl *TemplateMethod = M->getTemplateInstantiationPattern())
+    M = cast<CXXMethodDecl>(TemplateMethod);
+
+  if (M->getParent()->hasAnyDependentBases())
+    return;
+
+  SourceLocation StartLoc;
+  if (M->hasInlineBody()) {
+    // Start at the beginning of the body and rewind back to the last
+    // non-whitespace character. We will insert the override keyword
+    // after that character.
+    // FIXME: This transform won't work if there is a comment between
+    // the end of the function prototype and the start of the body.
+    StartLoc = M->getBody()->getLocStart();
+    do {
+      StartLoc = StartLoc.getLocWithOffset(-1);
+    } while (isWhitespace(*FullSourceLoc(StartLoc, SM).getCharacterData()));
+    StartLoc = StartLoc.getLocWithOffset(1);
+  } else {
+    StartLoc = SM.getSpellingLoc(M->getLocEnd());
+    StartLoc = Lexer::getLocForEndOfToken(StartLoc, 0, SM, LangOptions());
+  }
+  Replace.insert(tooling::Replacement(SM, StartLoc, 0, " override"));
+  ++AcceptedChanges;
+}

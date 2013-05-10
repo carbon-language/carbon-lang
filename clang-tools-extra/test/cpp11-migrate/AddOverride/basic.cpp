@@ -108,3 +108,41 @@ public:
   // CHECK: void h() const LLVM_OVERRIDE;
 };
 
+// Test that override isn't added at the wrong place for "pure overrides"
+struct APure {
+  virtual APure *clone() = 0;
+};
+struct BPure : APure {
+  virtual BPure *clone() { return new BPure(); }
+};
+struct CPure : BPure {
+  virtual BPure *clone() = 0;
+  // CHECK: struct CPure : BPure {
+  // CHECK-NOT: virtual BPure *clone() = 0 override;
+  // CHECK: };
+};
+struct DPure : CPure {
+  virtual DPure *clone() { return new DPure(); }
+};
+
+// Test that override is not added on dangerous template constructs
+struct Base1 {
+  virtual void f();
+};
+struct Base2 {};
+template<typename T> struct Derived : T {
+  void f(); // adding 'override' here will break instantiation of Derived<Base2>
+  // CHECK: struct Derived
+  // CHECK: void f();
+};
+Derived<Base1> d1;
+Derived<Base2> d2;
+
+template <typename T>
+class M : public A {
+public:
+  virtual void i();
+  // CHECK: class M : public A {
+  // CHECK: virtual void i() override;
+};
+M<int> b;
