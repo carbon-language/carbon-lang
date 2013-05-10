@@ -3568,8 +3568,8 @@ ShuffleVectorExpr::ShuffleVectorExpr(ASTContext &C, ArrayRef<Expr*> args,
 void ShuffleVectorExpr::setExprs(ASTContext &C, ArrayRef<Expr *> Exprs) {
   if (SubExprs) C.Deallocate(SubExprs);
 
-  SubExprs = new (C) Stmt* [NumExprs];
   this->NumExprs = Exprs.size();
+  SubExprs = new (C) Stmt*[NumExprs];
   memcpy(SubExprs, Exprs.data(), sizeof(Expr *) * Exprs.size());
 }
 
