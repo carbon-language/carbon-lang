@@ -1289,9 +1289,29 @@ TEST_F(FormatTest, LayoutCodeInMacroDefinitions) {
 
 TEST_F(FormatTest, LayoutRemainingTokens) { EXPECT_EQ("{}", format("{}")); }
 
-TEST_F(FormatTest, LayoutSingleUnwrappedLineInMacro) {
-  EXPECT_EQ("# define A\\\n  b;",
-            format("# define A b;", 11, 2, getLLVMStyleWithColumns(11)));
+TEST_F(FormatTest, AlwaysFormatsEntireMacroDefinitions) {
+  EXPECT_EQ("int  i;\n"
+            "#define A \\\n"
+            "  int i;  \\\n"
+            "  int j\n"
+            "int  k;",
+            format("int  i;\n"
+                   "#define A  \\\n"
+                   " int   i    ;  \\\n"
+                   " int   j\n"
+                   "int  k;",
+                   8, 0, getGoogleStyle())); // 8: position of "#define".
+  EXPECT_EQ("int  i;\n"
+            "#define A \\\n"
+            "  int i;  \\\n"
+            "  int j\n"
+            "int  k;",
+            format("int  i;\n"
+                   "#define A  \\\n"
+                   " int   i    ;  \\\n"
+                   " int   j\n"
+                   "int  k;",
+                   45, 0, getGoogleStyle())); // 45: position of "j".
 }
 
 TEST_F(FormatTest, MacroDefinitionInsideStatement) {

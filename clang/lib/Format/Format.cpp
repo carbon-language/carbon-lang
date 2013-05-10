@@ -1118,12 +1118,21 @@ public:
     std::vector<int> IndentForLevel;
     bool PreviousLineWasTouched = false;
     const AnnotatedToken *PreviousLineLastToken = 0;
+    bool FormatPPDirective = false;
     for (std::vector<AnnotatedLine>::iterator I = AnnotatedLines.begin(),
                                               E = AnnotatedLines.end();
          I != E; ++I) {
       const AnnotatedLine &TheLine = *I;
       const FormatToken &FirstTok = TheLine.First.FormatTok;
       int Offset = getIndentOffset(TheLine.First);
+
+      // Check whether this line is part of a formatted preprocessor directive.
+      if (FirstTok.HasUnescapedNewline)
+        FormatPPDirective = false;
+      if (!FormatPPDirective && TheLine.InPPDirective &&
+          (touchesLine(TheLine) || touchesPPDirective(I + 1, E)))
+        FormatPPDirective = true;
+
       while (IndentForLevel.size() <= TheLine.Level)
         IndentForLevel.push_back(-1);
       IndentForLevel.resize(TheLine.Level + 1);
@@ -1135,7 +1144,7 @@ public:
                                         /*WhitespaceStartColumn*/ 0);
         }
       } else if (TheLine.Type != LT_Invalid &&
-                 (WasMoved || touchesLine(TheLine))) {
+                 (WasMoved || FormatPPDirective || touchesLine(TheLine))) {
         unsigned LevelIndent = getIndent(IndentForLevel, TheLine.Level);
         unsigned Indent = LevelIndent;
         if (static_cast<int>(Indent) + Offset >= 0)
@@ -1410,6 +1419,17 @@ private:
         First->WhiteSpaceStart.getLocWithOffset(First->LastNewlineOffset),
         Last->Tok.getLocation());
     return touchesRanges(LineRange);
+  }
+
+  bool touchesPPDirective(std::vector<AnnotatedLine>::iterator I,
+                          std::vector<AnnotatedLine>::iterator E) {
+    for (; I != E; ++I) {
+      if (I->First.FormatTok.HasUnescapedNewline)
+        return false;
+      if (touchesLine(*I))
+        return true;
+    }
+    return false;
   }
 
   bool touchesEmptyLineBefore(const AnnotatedLine &TheLine) {
