@@ -1976,7 +1976,7 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaa *aaaaaaaaa = aaaaaa->aaaaaaaaaaaa()\n"
       "    ->aaaaaaaaaaaaaaaa(\n"
-      "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+      "          aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
       "    ->aaaaaaaaaaaaaaaaa();");
 }
 
@@ -2296,8 +2296,8 @@ TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
       "aaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
       "      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
       "    .aaaaaaaaaaaaaaa(\n"
-      "        aa(aaaaaaaaaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
-      "           aaaaaaaaaaaaaaaaaaaaaaaaaaa));");
+      "         aa(aaaaaaaaaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+      "            aaaaaaaaaaaaaaaaaaaaaaaaaaa));");
   verifyFormat("if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
                "        .aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
                "        .aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"

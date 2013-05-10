@@ -496,6 +496,8 @@ private:
       }
 
       State.Stack.back().LastSpace = State.Column;
+      if (Current.isOneOf(tok::arrow, tok::period))
+        State.Stack.back().LastSpace += Current.FormatTok.TokenLength;
       State.StartOfLineLevel = State.ParenLevel;
 
       // Any break on this level means that the parent level has been broken
@@ -599,7 +601,8 @@ private:
     if (Current.isOneOf(tok::period, tok::arrow) &&
         Line.Type == LT_BuilderTypeCall && State.ParenLevel == 0)
       State.Stack.back().StartOfFunctionCall =
-          Current.LastInChainOfCalls ? 0 : State.Column;
+          Current.LastInChainOfCalls ? 0 : State.Column +
+                                               Current.FormatTok.TokenLength;
     if (Current.Type == TT_CtorInitializerColon) {
       State.Stack.back().Indent = State.Column + 2;
       if (Style.ConstructorInitializerAllOnOneLineOrOnePerLine)
