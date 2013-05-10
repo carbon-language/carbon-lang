@@ -51,8 +51,8 @@ static MCSubtargetInfo *createXCoreMCSubtargetInfo(StringRef TT, StringRef CPU,
   return X;
 }
 
-static MCAsmInfo *createXCoreMCAsmInfo(const Target &T, StringRef TT) {
-  MCAsmInfo *MAI = new XCoreMCAsmInfo(T, TT);
+static MCAsmInfo *createXCoreMCAsmInfo(StringRef TT) {
+  MCAsmInfo *MAI = new XCoreMCAsmInfo(TT);
 
   // Initial state of the frame pointer is SP.
   MachineLocation Dst(MachineLocation::VirtualFP);

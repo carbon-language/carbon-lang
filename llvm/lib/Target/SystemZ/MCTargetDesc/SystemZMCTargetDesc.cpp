@@ -27,8 +27,8 @@
 
 using namespace llvm;
 
-static MCAsmInfo *createSystemZMCAsmInfo(const Target &T, StringRef TT) {
-  MCAsmInfo *MAI = new SystemZMCAsmInfo(T, TT);
+static MCAsmInfo *createSystemZMCAsmInfo(StringRef TT) {
+  MCAsmInfo *MAI = new SystemZMCAsmInfo(TT);
   MachineLocation FPDst(MachineLocation::VirtualFP);
   MachineLocation FPSrc(SystemZ::R15D, -SystemZMC::CFAOffsetFromInitialSP);
   MAI->addInitialFrameState(0, FPDst, FPSrc);

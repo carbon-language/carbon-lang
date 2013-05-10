@@ -70,8 +70,7 @@ namespace llvm {
 
     typedef unsigned (*TripleMatchQualityFnTy)(const std::string &TT);
 
-    typedef MCAsmInfo *(*MCAsmInfoCtorFnTy)(const Target &T,
-                                            StringRef TT);
+    typedef MCAsmInfo *(*MCAsmInfoCtorFnTy)(StringRef TT);
     typedef MCCodeGenInfo *(*MCCodeGenInfoCtorFnTy)(StringRef TT,
                                                     Reloc::Model RM,
                                                     CodeModel::Model CM,
@@ -269,7 +268,7 @@ namespace llvm {
     MCAsmInfo *createMCAsmInfo(StringRef Triple) const {
       if (!MCAsmInfoCtorFn)
         return 0;
-      return MCAsmInfoCtorFn(*this, Triple);
+      return MCAsmInfoCtorFn(Triple);
     }
 
     /// createMCCodeGenInfo - Create a MCCodeGenInfo implementation.
@@ -804,8 +803,8 @@ namespace llvm {
       TargetRegistry::RegisterMCAsmInfo(T, &Allocator);
     }
   private:
-    static MCAsmInfo *Allocator(const Target &T, StringRef TT) {
-      return new MCAsmInfoImpl(T, TT);
+    static MCAsmInfo *Allocator(StringRef TT) {
+      return new MCAsmInfoImpl(TT);
     }
 
   };

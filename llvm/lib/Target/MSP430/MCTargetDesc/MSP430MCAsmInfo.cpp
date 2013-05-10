@@ -17,7 +17,7 @@ using namespace llvm;
 
 void MSP430MCAsmInfo::anchor() { }
 
-MSP430MCAsmInfo::MSP430MCAsmInfo(const Target &T, StringRef TT) {
+MSP430MCAsmInfo::MSP430MCAsmInfo(StringRef TT) {
   PointerSize = CalleeSaveStackSlotSize = 2;
 
   PrivateGlobalPrefix = ".L";

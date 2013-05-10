@@ -13,7 +13,7 @@ using namespace llvm;
 
 void XCoreMCAsmInfo::anchor() { }
 
-XCoreMCAsmInfo::XCoreMCAsmInfo(const Target &T, StringRef TT) {
+XCoreMCAsmInfo::XCoreMCAsmInfo(StringRef TT) {
   SupportsDebugInformation = true;
   Data16bitsDirective = "\t.short\t";
   Data32bitsDirective = "\t.long\t";

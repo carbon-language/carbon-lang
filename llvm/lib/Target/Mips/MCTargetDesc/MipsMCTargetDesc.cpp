@@ -93,8 +93,8 @@ static MCSubtargetInfo *createMipsMCSubtargetInfo(StringRef TT, StringRef CPU,
   return X;
 }
 
-static MCAsmInfo *createMipsMCAsmInfo(const Target &T, StringRef TT) {
-  MCAsmInfo *MAI = new MipsMCAsmInfo(T, TT);
+static MCAsmInfo *createMipsMCAsmInfo(StringRef TT) {
+  MCAsmInfo *MAI = new MipsMCAsmInfo(TT);
 
   MachineLocation Dst(MachineLocation::VirtualFP);
   MachineLocation Src(Mips::SP, 0);

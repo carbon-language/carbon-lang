@@ -18,11 +18,9 @@
 #include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
-  class Target;
-
   class HexagonMCAsmInfo : public MCAsmInfo {
   public:
-    explicit HexagonMCAsmInfo(const Target &T, StringRef TT);
+    explicit HexagonMCAsmInfo(StringRef TT);
   };
 
 } // namespace llvm

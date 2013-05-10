@@ -23,7 +23,7 @@ namespace llvm {
   class XCoreMCAsmInfo : public MCAsmInfo {
     virtual void anchor();
   public:
-    explicit XCoreMCAsmInfo(const Target &T, StringRef TT);
+    explicit XCoreMCAsmInfo(StringRef TT);
   };
 
 } // namespace llvm

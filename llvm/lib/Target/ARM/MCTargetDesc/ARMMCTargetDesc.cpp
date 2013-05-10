@@ -159,7 +159,7 @@ static MCRegisterInfo *createARMMCRegisterInfo(StringRef Triple) {
   return X;
 }
 
-static MCAsmInfo *createARMMCAsmInfo(const Target &T, StringRef TT) {
+static MCAsmInfo *createARMMCAsmInfo(StringRef TT) {
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin())

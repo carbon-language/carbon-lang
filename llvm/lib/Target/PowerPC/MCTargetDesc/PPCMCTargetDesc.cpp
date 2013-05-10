@@ -58,7 +58,7 @@ static MCSubtargetInfo *createPPCMCSubtargetInfo(StringRef TT, StringRef CPU,
   return X;
 }
 
-static MCAsmInfo *createPPCMCAsmInfo(const Target &T, StringRef TT) {
+static MCAsmInfo *createPPCMCAsmInfo(StringRef TT) {
   Triple TheTriple(TT);
   bool isPPC64 = TheTriple.getArch() == Triple::ppc64;
 

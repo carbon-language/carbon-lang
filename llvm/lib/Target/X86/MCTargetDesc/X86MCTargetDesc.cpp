@@ -263,7 +263,7 @@ static MCRegisterInfo *createX86MCRegisterInfo(StringRef TT) {
   return X;
 }
 
-static MCAsmInfo *createX86MCAsmInfo(const Target &T, StringRef TT) {
+static MCAsmInfo *createX86MCAsmInfo(StringRef TT) {
   Triple TheTriple(TT);
   bool is64Bit = TheTriple.getArch() == Triple::x86_64;
 

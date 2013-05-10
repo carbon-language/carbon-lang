@@ -54,8 +54,8 @@ static MCSubtargetInfo *createHexagonMCSubtargetInfo(StringRef TT,
   return X;
 }
 
-static MCAsmInfo *createHexagonMCAsmInfo(const Target &T, StringRef TT) {
-  MCAsmInfo *MAI = new HexagonMCAsmInfo(T, TT);
+static MCAsmInfo *createHexagonMCAsmInfo(StringRef TT) {
+  MCAsmInfo *MAI = new HexagonMCAsmInfo(TT);
 
   // VirtualFP = (R30 + #0).
   MachineLocation Dst(MachineLocation::VirtualFP);
