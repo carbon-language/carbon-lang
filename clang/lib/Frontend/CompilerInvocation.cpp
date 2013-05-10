@@ -30,6 +30,7 @@
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/system_error.h"
+#include <sys/stat.h>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -1689,7 +1690,8 @@ std::string CompilerInvocation::getModuleHash() const {
                       hsOpts.UseStandardCXXIncludes,
                       hsOpts.UseLibcxx);
 
-  // Darwin-specific hack: if we have a sysroot, use the contents of
+  // Darwin-specific hack: if we have a sysroot, use the contents and
+  // modification time of
   //   $sysroot/System/Library/CoreServices/SystemVersion.plist
   // as part of the module hash.
   if (!hsOpts.Sysroot.empty()) {
@@ -1702,6 +1704,10 @@ std::string CompilerInvocation::getModuleHash() const {
     llvm::sys::path::append(systemVersionFile, "SystemVersion.plist");
     if (!llvm::MemoryBuffer::getFile(systemVersionFile, buffer)) {
       code = hash_combine(code, buffer.get()->getBuffer());
+
+      struct stat statBuf;
+      if (stat(systemVersionFile.c_str(), &statBuf) == 0)
+        code = hash_combine(code, statBuf.st_mtime);
     }
   }
 
