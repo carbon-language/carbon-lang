@@ -1267,7 +1267,7 @@ CollectTemplateParams(const TemplateParameterList *TPList,
     case TemplateArgument::Pack:
       // And this with DW_TAG_GNU_template_parameter_pack
       break;
-    // these next 4 should never occur
+    // And the following should never occur:
     case TemplateArgument::Expression:
     case TemplateArgument::TemplateExpansion:
     case TemplateArgument::Null:
