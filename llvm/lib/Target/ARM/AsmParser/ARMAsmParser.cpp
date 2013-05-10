@@ -49,6 +49,20 @@ class ARMAsmParser : public MCTargetAsmParser {
   MCAsmParser &Parser;
   const MCRegisterInfo *MRI;
 
+  // Unwind directives state
+  SMLoc FnStartLoc;
+  SMLoc CantUnwindLoc;
+  SMLoc PersonalityLoc;
+  SMLoc HandlerDataLoc;
+  int FPReg;
+  void resetUnwindDirectiveParserState() {
+    FnStartLoc = SMLoc();
+    CantUnwindLoc = SMLoc();
+    PersonalityLoc = SMLoc();
+    HandlerDataLoc = SMLoc();
+    FPReg = -1;
+  }
+
   // Map of register aliases registers via the .req directive.
   StringMap<unsigned> RegisterReqs;
 
@@ -113,6 +127,14 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool parseDirectiveUnreq(SMLoc L);
   bool parseDirectiveArch(SMLoc L);
   bool parseDirectiveEabiAttr(SMLoc L);
+  bool parseDirectiveFnStart(SMLoc L);
+  bool parseDirectiveFnEnd(SMLoc L);
+  bool parseDirectiveCantUnwind(SMLoc L);
+  bool parseDirectivePersonality(SMLoc L);
+  bool parseDirectiveHandlerData(SMLoc L);
+  bool parseDirectiveSetFP(SMLoc L);
+  bool parseDirectivePad(SMLoc L);
+  bool parseDirectiveRegSave(SMLoc L, bool IsVector);
 
   StringRef splitMnemonic(StringRef Mnemonic, unsigned &PredicationCode,
                           bool &CarrySetting, unsigned &ProcessorIMod,
@@ -242,7 +264,7 @@ public:
   };
 
   ARMAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser)
-    : MCTargetAsmParser(), STI(_STI), Parser(_Parser) {
+    : MCTargetAsmParser(), STI(_STI), Parser(_Parser), FPReg(-1) {
     MCAsmParserExtension::Initialize(_Parser);
 
     // Cache the MCRegisterInfo.
@@ -7658,6 +7680,24 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveArch(DirectiveID.getLoc());
   else if (IDVal == ".eabi_attribute")
     return parseDirectiveEabiAttr(DirectiveID.getLoc());
+  else if (IDVal == ".fnstart")
+    return parseDirectiveFnStart(DirectiveID.getLoc());
+  else if (IDVal == ".fnend")
+    return parseDirectiveFnEnd(DirectiveID.getLoc());
+  else if (IDVal == ".cantunwind")
+    return parseDirectiveCantUnwind(DirectiveID.getLoc());
+  else if (IDVal == ".personality")
+    return parseDirectivePersonality(DirectiveID.getLoc());
+  else if (IDVal == ".handlerdata")
+    return parseDirectiveHandlerData(DirectiveID.getLoc());
+  else if (IDVal == ".setfp")
+    return parseDirectiveSetFP(DirectiveID.getLoc());
+  else if (IDVal == ".pad")
+    return parseDirectivePad(DirectiveID.getLoc());
+  else if (IDVal == ".save")
+    return parseDirectiveRegSave(DirectiveID.getLoc(), false);
+  else if (IDVal == ".vsave")
+    return parseDirectiveRegSave(DirectiveID.getLoc(), true);
   return true;
 }
 
@@ -7856,6 +7896,219 @@ bool ARMAsmParser::parseDirectiveArch(SMLoc L) {
 ///  ::= .eabi_attribute int, int
 bool ARMAsmParser::parseDirectiveEabiAttr(SMLoc L) {
   return true;
+}
+
+/// parseDirectiveFnStart
+///  ::= .fnstart
+bool ARMAsmParser::parseDirectiveFnStart(SMLoc L) {
+  if (FnStartLoc.isValid()) {
+    Error(L, ".fnstart starts before the end of previous one");
+    Error(FnStartLoc, "previous .fnstart starts here");
+    return true;
+  }
+
+  FnStartLoc = L;
+  getParser().getStreamer().EmitFnStart();
+  return false;
+}
+
+/// parseDirectiveFnEnd
+///  ::= .fnend
+bool ARMAsmParser::parseDirectiveFnEnd(SMLoc L) {
+  // Check the ordering of unwind directives
+  if (!FnStartLoc.isValid())
+    return Error(L, ".fnstart must precede .fnend directive");
+
+  // Reset the unwind directives parser state
+  resetUnwindDirectiveParserState();
+
+  getParser().getStreamer().EmitFnEnd();
+  return false;
+}
+
+/// parseDirectiveCantUnwind
+///  ::= .cantunwind
+bool ARMAsmParser::parseDirectiveCantUnwind(SMLoc L) {
+  // Check the ordering of unwind directives
+  CantUnwindLoc = L;
+  if (!FnStartLoc.isValid())
+    return Error(L, ".fnstart must precede .cantunwind directive");
+  if (HandlerDataLoc.isValid()) {
+    Error(L, ".cantunwind can't be used with .handlerdata directive");
+    Error(HandlerDataLoc, ".handlerdata was specified here");
+    return true;
+  }
+  if (PersonalityLoc.isValid()) {
+    Error(L, ".cantunwind can't be used with .personality directive");
+    Error(PersonalityLoc, ".personality was specified here");
+    return true;
+  }
+
+  getParser().getStreamer().EmitCantUnwind();
+  return false;
+}
+
+/// parseDirectivePersonality
+///  ::= .personality name
+bool ARMAsmParser::parseDirectivePersonality(SMLoc L) {
+  // Check the ordering of unwind directives
+  PersonalityLoc = L;
+  if (!FnStartLoc.isValid())
+    return Error(L, ".fnstart must precede .personality directive");
+  if (CantUnwindLoc.isValid()) {
+    Error(L, ".personality can't be used with .cantunwind directive");
+    Error(CantUnwindLoc, ".cantunwind was specified here");
+    return true;
+  }
+  if (HandlerDataLoc.isValid()) {
+    Error(L, ".personality must precede .handlerdata directive");
+    Error(HandlerDataLoc, ".handlerdata was specified here");
+    return true;
+  }
+
+  // Parse the name of the personality routine
+  if (Parser.getTok().isNot(AsmToken::Identifier)) {
+    Parser.eatToEndOfStatement();
+    return Error(L, "unexpected input in .personality directive.");
+  }
+  StringRef Name(Parser.getTok().getIdentifier());
+  Parser.Lex();
+
+  MCSymbol *PR = getParser().getContext().GetOrCreateSymbol(Name);
+  getParser().getStreamer().EmitPersonality(PR);
+  return false;
+}
+
+/// parseDirectiveHandlerData
+///  ::= .handlerdata
+bool ARMAsmParser::parseDirectiveHandlerData(SMLoc L) {
+  // Check the ordering of unwind directives
+  HandlerDataLoc = L;
+  if (!FnStartLoc.isValid())
+    return Error(L, ".fnstart must precede .personality directive");
+  if (CantUnwindLoc.isValid()) {
+    Error(L, ".handlerdata can't be used with .cantunwind directive");
+    Error(CantUnwindLoc, ".cantunwind was specified here");
+    return true;
+  }
+
+  getParser().getStreamer().EmitHandlerData();
+  return false;
+}
+
+/// parseDirectiveSetFP
+///  ::= .setfp fpreg, spreg [, offset]
+bool ARMAsmParser::parseDirectiveSetFP(SMLoc L) {
+  // Check the ordering of unwind directives
+  if (!FnStartLoc.isValid())
+    return Error(L, ".fnstart must precede .setfp directive");
+  if (HandlerDataLoc.isValid())
+    return Error(L, ".setfp must precede .handlerdata directive");
+
+  // Parse fpreg
+  SMLoc NewFPRegLoc = Parser.getTok().getLoc();
+  int NewFPReg = tryParseRegister();
+  if (NewFPReg == -1)
+    return Error(NewFPRegLoc, "frame pointer register expected");
+
+  // Consume comma
+  if (!Parser.getTok().is(AsmToken::Comma))
+    return Error(Parser.getTok().getLoc(), "comma expected");
+  Parser.Lex(); // skip comma
+
+  // Parse spreg
+  SMLoc NewSPRegLoc = Parser.getTok().getLoc();
+  int NewSPReg = tryParseRegister();
+  if (NewSPReg == -1)
+    return Error(NewSPRegLoc, "stack pointer register expected");
+
+  if (NewSPReg != ARM::SP && NewSPReg != FPReg)
+    return Error(NewSPRegLoc,
+                 "register should be either $sp or the latest fp register");
+
+  // Update the frame pointer register
+  FPReg = NewFPReg;
+
+  // Parse offset
+  int64_t Offset = 0;
+  if (Parser.getTok().is(AsmToken::Comma)) {
+    Parser.Lex(); // skip comma
+
+    if (Parser.getTok().isNot(AsmToken::Hash) &&
+        Parser.getTok().isNot(AsmToken::Dollar)) {
+      return Error(Parser.getTok().getLoc(), "'#' expected");
+    }
+    Parser.Lex(); // skip hash token.
+
+    const MCExpr *OffsetExpr;
+    SMLoc ExLoc = Parser.getTok().getLoc();
+    SMLoc EndLoc;
+    if (getParser().parseExpression(OffsetExpr, EndLoc))
+      return Error(ExLoc, "malformed setfp offset");
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(OffsetExpr);
+    if (!CE)
+      return Error(ExLoc, "setfp offset must be an immediate");
+
+    Offset = CE->getValue();
+  }
+
+  getParser().getStreamer().EmitSetFP(static_cast<unsigned>(NewFPReg),
+                                      static_cast<unsigned>(NewSPReg),
+                                      Offset);
+  return false;
+}
+
+/// parseDirective
+///  ::= .pad offset
+bool ARMAsmParser::parseDirectivePad(SMLoc L) {
+  // Check the ordering of unwind directives
+  if (!FnStartLoc.isValid())
+    return Error(L, ".fnstart must precede .pad directive");
+  if (HandlerDataLoc.isValid())
+    return Error(L, ".pad must precede .handlerdata directive");
+
+  // Parse the offset
+  if (Parser.getTok().isNot(AsmToken::Hash) &&
+      Parser.getTok().isNot(AsmToken::Dollar)) {
+    return Error(Parser.getTok().getLoc(), "'#' expected");
+  }
+  Parser.Lex(); // skip hash token.
+
+  const MCExpr *OffsetExpr;
+  SMLoc ExLoc = Parser.getTok().getLoc();
+  SMLoc EndLoc;
+  if (getParser().parseExpression(OffsetExpr, EndLoc))
+    return Error(ExLoc, "malformed pad offset");
+  const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(OffsetExpr);
+  if (!CE)
+    return Error(ExLoc, "pad offset must be an immediate");
+
+  getParser().getStreamer().EmitPad(CE->getValue());
+  return false;
+}
+
+/// parseDirectiveRegSave
+///  ::= .save  { registers }
+///  ::= .vsave { registers }
+bool ARMAsmParser::parseDirectiveRegSave(SMLoc L, bool IsVector) {
+  // Check the ordering of unwind directives
+  if (!FnStartLoc.isValid())
+    return Error(L, ".fnstart must precede .save or .vsave directives");
+  if (HandlerDataLoc.isValid())
+    return Error(L, ".save or .vsave must precede .handlerdata directive");
+
+  // Parse the register list
+  SmallVector<MCParsedAsmOperand*, 1> Operands;
+  if (parseRegisterList(Operands))
+    return true;
+  ARMOperand *Op = (ARMOperand*)Operands[0];
+  if (!IsVector && !Op->isRegList())
+    return Error(L, ".save expects GPR registers");
+  if (IsVector && !Op->isDPRRegList())
+    return Error(L, ".vsave expects DPR registers");
+
+  getParser().getStreamer().EmitRegSave(Op->getRegList(), IsVector);
+  return false;
 }
 
 /// Force static initialization.
