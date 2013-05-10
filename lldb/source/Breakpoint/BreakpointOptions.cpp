@@ -162,6 +162,9 @@ BreakpointOptions::HasCallback ()
 void 
 BreakpointOptions::SetCondition (const char *condition)
 {
+    if (!condition)
+        condition = "";
+    
     m_condition_text.assign(condition);
     std::hash<std::string> hasher;
     m_condition_text_hash = hasher(m_condition_text);

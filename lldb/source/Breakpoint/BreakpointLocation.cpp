@@ -254,7 +254,10 @@ BreakpointLocation::ConditionSaysStop (ExecutionContext &exe_ctx, Error &error)
     const char *condition_text = GetConditionText(&condition_hash);
     
     if (!condition_text)
+    {
+        m_user_expression_sp.reset();
         return false;
+    }
     
     if (condition_hash != m_condition_hash ||
         !m_user_expression_sp ||
