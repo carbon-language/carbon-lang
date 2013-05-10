@@ -8849,7 +8849,9 @@ bool Sema::canSkipFunctionBody(Decl *D) {
   // We cannot skip the body of a function (or function template) which is
   // constexpr, since we may need to evaluate its body in order to parse the
   // rest of the file.
-  return !FD->isConstexpr();
+  // We cannot skip the body of a function with an undeduced return type,
+  // because any callers of that function need to know the type.
+  return !FD->isConstexpr() && !FD->getResultType()->isUndeducedType();
 }
 
 Decl *Sema::ActOnSkippedFunctionBody(Decl *Decl) {
@@ -8879,18 +8881,21 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
   if (FD) {
     FD->setBody(Body);
 
-    if (getLangOpts().CPlusPlus1y && !FD->isInvalidDecl() &&
-        !FD->isDependentContext()) {
-      if (FD->getResultType()->isUndeducedType()) {
-        // If the function has a deduced result type but contains no 'return'
-        // statements, the result type as written must be exactly 'auto', and
-        // the deduced result type is 'void'.
-        if (!FD->getResultType()->getAs<AutoType>()) {
-          Diag(dcl->getLocation(), diag::err_auto_fn_no_return_but_not_auto)
-            << FD->getResultType();
-          FD->setInvalidDecl();
-        }
-        Context.adjustDeducedFunctionResultType(FD, Context.VoidTy);
+    if (getLangOpts().CPlusPlus1y && !FD->isInvalidDecl() && Body &&
+        !FD->isDependentContext() && FD->getResultType()->isUndeducedType()) {
+      // If the function has a deduced result type but contains no 'return'
+      // statements, the result type as written must be exactly 'auto', and
+      // the deduced result type is 'void'.
+      if (!FD->getResultType()->getAs<AutoType>()) {
+        Diag(dcl->getLocation(), diag::err_auto_fn_no_return_but_not_auto)
+          << FD->getResultType();
+        FD->setInvalidDecl();
+      } else {
+        // Substitute 'void' for the 'auto' in the type.
+        TypeLoc ResultType = FD->getTypeSourceInfo()->getTypeLoc().
+            IgnoreParens().castAs<FunctionProtoTypeLoc>().getResultLoc();
+        Context.adjustDeducedFunctionResultType(
+            FD, SubstAutoType(ResultType.getType(), Context.VoidTy));
       }
     }
 

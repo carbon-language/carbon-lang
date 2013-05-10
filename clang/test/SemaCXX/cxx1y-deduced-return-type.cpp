@@ -295,7 +295,12 @@ namespace NoReturn {
   auto f() {}
   void (*p)() = &f;
 
+  auto f(); // ok
+
   auto *g() {} // expected-error {{cannot deduce return type 'auto *' for function with no return statements}}
+
+  auto h() = delete; // expected-note {{explicitly deleted}}
+  auto x = h(); // expected-error {{call to deleted}}
 }
 
 namespace UseBeforeComplete {

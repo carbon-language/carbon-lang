@@ -2553,9 +2553,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   if (RetValExp && DiagnoseUnexpandedParameterPack(RetValExp))
     return StmtError();
 
-  // FIXME: Unify this and C++1y auto function handling. In particular, we
-  // should allow 'return { 1, 2, 3 };' in a lambda to deduce
-  // 'std::initializer_list<int>'.
+  // FIXME: Unify this and C++1y auto function handling.
   if (isa<CapturingScopeInfo>(getCurFunction()))
     return ActOnCapScopeReturnStmt(ReturnLoc, RetValExp);
 
