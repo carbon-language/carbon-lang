@@ -1306,16 +1306,13 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
 
   FunctionDecl *OperatorNew = 0;
   FunctionDecl *OperatorDelete = 0;
-  Expr **PlaceArgs = PlacementArgs.data();
-  unsigned NumPlaceArgs = PlacementArgs.size();
 
   if (!AllocType->isDependentType() &&
-      !Expr::hasAnyTypeDependentArguments(
-        llvm::makeArrayRef(PlaceArgs, NumPlaceArgs)) &&
+      !Expr::hasAnyTypeDependentArguments(PlacementArgs) &&
       FindAllocationFunctions(StartLoc,
                               SourceRange(PlacementLParen, PlacementRParen),
-                              UseGlobal, AllocType, ArraySize, PlaceArgs,
-                              NumPlaceArgs, OperatorNew, OperatorDelete))
+                              UseGlobal, AllocType, ArraySize, PlacementArgs,
+                              OperatorNew, OperatorDelete))
     return ExprError();
 
   // If this is an array allocation, compute whether the usual array
@@ -1333,25 +1330,21 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
     VariadicCallType CallType =
       Proto->isVariadic() ? VariadicFunction : VariadicDoesNotApply;
 
-    if (GatherArgumentsForCall(PlacementLParen, OperatorNew,
-                               Proto, 1,
-                               llvm::makeArrayRef(PlaceArgs, NumPlaceArgs),
-                               AllPlaceArgs, CallType))
+    if (GatherArgumentsForCall(PlacementLParen, OperatorNew, Proto, 1,
+                               PlacementArgs, AllPlaceArgs, CallType))
       return ExprError();
 
-    NumPlaceArgs = AllPlaceArgs.size();
-    if (NumPlaceArgs > 0)
-      PlaceArgs = &AllPlaceArgs[0];
+    if (!AllPlaceArgs.empty())
+      PlacementArgs = AllPlaceArgs;
 
-    DiagnoseSentinelCalls(OperatorNew, PlacementLParen,
-                          llvm::makeArrayRef(PlaceArgs, NumPlaceArgs));
+    DiagnoseSentinelCalls(OperatorNew, PlacementLParen, PlacementArgs);
 
     // FIXME: Missing call to CheckFunctionCall or equivalent
   }
 
   // Warn if the type is over-aligned and is being allocated by global operator
   // new.
-  if (NumPlaceArgs == 0 && OperatorNew && 
+  if (PlacementArgs.empty() && OperatorNew &&
       (OperatorNew->isImplicit() ||
        getSourceManager().isInSystemHeader(OperatorNew->getLocStart()))) {
     if (unsigned Align = Context.getPreferredTypeAlign(AllocType.getTypePtr())){
@@ -1459,8 +1452,7 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
   return Owned(new (Context) CXXNewExpr(Context, UseGlobal, OperatorNew,
                                         OperatorDelete,
                                         UsualArrayDeleteWantsSize,
-                                   llvm::makeArrayRef(PlaceArgs, NumPlaceArgs),
-                                        TypeIdParens,
+                                        PlacementArgs, TypeIdParens,
                                         ArraySize, initStyle, Initializer,
                                         ResultType, AllocTypeInfo,
                                         Range, DirectInitRange));
@@ -1521,8 +1513,7 @@ static bool isNonPlacementDeallocationFunction(FunctionDecl *FD) {
 /// that are appropriate for the allocation.
 bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
                                    bool UseGlobal, QualType AllocType,
-                                   bool IsArray, Expr **PlaceArgs,
-                                   unsigned NumPlaceArgs,
+                                   bool IsArray, MultiExprArg PlaceArgs,
                                    FunctionDecl *&OperatorNew,
                                    FunctionDecl *&OperatorDelete) {
   // --- Choosing an allocation function ---
@@ -1534,7 +1525,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
   // 3) The first argument is always size_t. Append the arguments from the
   //   placement form.
 
-  SmallVector<Expr*, 8> AllocArgs(1 + NumPlaceArgs);
+  SmallVector<Expr*, 8> AllocArgs(1 + PlaceArgs.size());
   // We don't care about the actual value of this argument.
   // FIXME: Should the Sema create the expression and embed it in the syntax
   // tree? Or should the consumer just recalculate the value?
@@ -1543,7 +1534,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
                       Context.getSizeType(),
                       SourceLocation());
   AllocArgs[0] = &Size;
-  std::copy(PlaceArgs, PlaceArgs + NumPlaceArgs, AllocArgs.begin() + 1);
+  std::copy(PlaceArgs.begin(), PlaceArgs.end(), AllocArgs.begin() + 1);
 
   // C++ [expr.new]p8:
   //   If the allocated type is a non-array type, the allocation
@@ -1583,8 +1574,8 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
 
   // FindAllocationOverload can change the passed in arguments, so we need to
   // copy them back.
-  if (NumPlaceArgs > 0)
-    std::copy(&AllocArgs[1], AllocArgs.end(), PlaceArgs);
+  if (!PlaceArgs.empty())
+    std::copy(AllocArgs.begin() + 1, AllocArgs.end(), PlaceArgs.data());
 
   // C++ [expr.new]p19:
   //
@@ -1618,7 +1609,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
   // we had explicit placement arguments.  This matters for things like
   //   struct A { void *operator new(size_t, int = 0); ... };
   //   A *a = new A()
-  bool isPlacementNew = (NumPlaceArgs > 0 || OperatorNew->param_size() != 1);
+  bool isPlacementNew = (!PlaceArgs.empty() || OperatorNew->param_size() != 1);
 
   if (isPlacementNew) {
     // C++ [expr.new]p20:
@@ -1693,11 +1684,11 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
     //   as a placement deallocation function, would have been
     //   selected as a match for the allocation function, the program
     //   is ill-formed.
-    if (NumPlaceArgs && getLangOpts().CPlusPlus11 &&
+    if (!PlaceArgs.empty() && getLangOpts().CPlusPlus11 &&
         isNonPlacementDeallocationFunction(OperatorDelete)) {
       Diag(StartLoc, diag::err_placement_new_non_placement_delete)
-        << SourceRange(PlaceArgs[0]->getLocStart(),
-                       PlaceArgs[NumPlaceArgs - 1]->getLocEnd());
+        << SourceRange(PlaceArgs.front()->getLocStart(),
+                       PlaceArgs.back()->getLocEnd());
       Diag(OperatorDelete->getLocation(), diag::note_previous_decl)
         << DeleteName;
     } else {
