@@ -759,6 +759,10 @@ bool ASTReader::ReadDeclContextStorage(ModuleFile &M,
 
 void ASTReader::Error(StringRef Msg) {
   Error(diag::err_fe_pch_malformed, Msg);
+  if (Context.getLangOpts().Modules && !Diags.isDiagnosticInFlight()) {
+    Diag(diag::note_module_cache_path)
+      << PP.getHeaderSearchInfo().getModuleCachePath();
+  }
 }
 
 void ASTReader::Error(unsigned DiagID,
@@ -1715,6 +1719,10 @@ InputFile ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
          )) {
       if (Complain) {
         Error(diag::err_fe_pch_file_modified, Filename, F.FileName);
+        if (Context.getLangOpts().Modules && !Diags.isDiagnosticInFlight()) {
+          Diag(diag::note_module_cache_path)
+            << PP.getHeaderSearchInfo().getModuleCachePath();
+        }
       }
 
       IsOutOfDate = true;

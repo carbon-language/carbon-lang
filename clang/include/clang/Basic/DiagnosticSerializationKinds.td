@@ -14,7 +14,7 @@ def err_fe_unable_to_read_pch_file : Error<
 def err_fe_not_a_pch_file : Error<
     "input is not a PCH file: '%0'">;
 def err_fe_pch_malformed : Error<
-    "malformed or corrupted PCH file: '%0'">, DefaultFatal;
+    "malformed or corrupted AST file: '%0'">, DefaultFatal;
 def err_fe_pch_malformed_block : Error<
     "malformed block record in PCH file: '%0'">, DefaultFatal;
 def err_fe_pch_file_modified : Error<
@@ -22,6 +22,8 @@ def err_fe_pch_file_modified : Error<
     DefaultFatal;
 def err_fe_pch_file_overridden : Error<
     "file '%0' from the precompiled header has been overridden">;
+def note_module_cache_path : Note<
+    "after modifying system headers, please delete the module cache at '%0'">;
 
 def err_pch_targetopt_mismatch : Error<
     "PCH file was compiled for the %0 '%1' but the current translation "
