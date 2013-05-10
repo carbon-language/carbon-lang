@@ -797,7 +797,8 @@ public:
   ///  is a non-static local variable.
   bool hasLocalStorage() const {
     if (getStorageClass() == SC_None)
-      return !isFileVarDecl();
+      // Second check is for C++11 [dcl.stc]p4.
+      return !isFileVarDecl() && getTSCSpec() != TSCS_thread_local;
 
     // Return true for:  Auto, Register.
     // Return false for: Extern, Static, PrivateExtern, OpenCLWorkGroupLocal.
@@ -808,7 +809,10 @@ public:
   /// isStaticLocal - Returns true if a variable with function scope is a
   /// static local variable.
   bool isStaticLocal() const {
-    return getStorageClass() == SC_Static && !isFileVarDecl();
+    return (getStorageClass() == SC_Static ||
+            // C++11 [dcl.stc]p4
+            (getStorageClass() == SC_None && getTSCSpec() == TSCS_thread_local))
+      && !isFileVarDecl();
   }
 
   /// \brief Returns true if a variable has extern or __private_extern__

@@ -4718,16 +4718,6 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     SC = SC_None;
   }
 
-  // C++11 [dcl.stc]p4:
-  //   When thread_local is applied to a variable of block scope the
-  //   storage-class-specifier static is implied if it does not appear
-  //   explicitly.
-  // Core issue: 'static' is not implied if the variable is declared 'extern'.
-  if (SCSpec == DeclSpec::SCS_unspecified &&
-      D.getDeclSpec().getThreadStorageClassSpec() ==
-          DeclSpec::TSCS_thread_local && DC->isFunctionOrMethod())
-    SC = SC_Static;
-
   IdentifierInfo *II = Name.getAsIdentifierInfo();
   if (!II) {
     Diag(D.getIdentifierLoc(), diag::err_bad_variable_name)
@@ -4885,11 +4875,22 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   NewVD->setLexicalDeclContext(CurContext);
 
   if (DeclSpec::TSCS TSCS = D.getDeclSpec().getThreadStorageClassSpec()) {
-    if (NewVD->hasLocalStorage())
-      Diag(D.getDeclSpec().getThreadStorageClassSpecLoc(),
-           diag::err_thread_non_global)
-        << DeclSpec::getSpecifierName(TSCS);
-    else if (!Context.getTargetInfo().isTLSSupported())
+    if (NewVD->hasLocalStorage()) {
+      // C++11 [dcl.stc]p4:
+      //   When thread_local is applied to a variable of block scope the
+      //   storage-class-specifier static is implied if it does not appear
+      //   explicitly.
+      // Core issue: 'static' is not implied if the variable is declared
+      //   'extern'.
+      if (SCSpec == DeclSpec::SCS_unspecified &&
+          TSCS == DeclSpec::TSCS_thread_local &&
+          DC->isFunctionOrMethod())
+        NewVD->setTSCSpec(TSCS);
+      else
+        Diag(D.getDeclSpec().getThreadStorageClassSpecLoc(),
+             diag::err_thread_non_global)
+          << DeclSpec::getSpecifierName(TSCS);
+    } else if (!Context.getTargetInfo().isTLSSupported())
       Diag(D.getDeclSpec().getThreadStorageClassSpecLoc(),
            diag::err_thread_unsupported);
     else
@@ -5237,7 +5238,7 @@ void Sema::CheckVariableDeclarationType(VarDecl *NewVD) {
       if (NewVD->isFileVarDecl())
         Diag(NewVD->getLocation(), diag::err_vla_decl_in_file_scope)
         << SizeRange;
-      else if (NewVD->getStorageClass() == SC_Static)
+      else if (NewVD->isStaticLocal())
         Diag(NewVD->getLocation(), diag::err_vla_decl_has_static_storage)
         << SizeRange;
       else
