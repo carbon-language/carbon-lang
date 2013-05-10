@@ -77,6 +77,8 @@ struct SLPVectorizer : public FunctionPass {
     if (!DL)
       return false;
 
+    DEBUG(dbgs()<<"SLP: Analyzing blocks in " << F.getName() << ".\n");
+
     for (Function::iterator it = F.begin(), e = F.end(); it != e; ++it) {
       BasicBlock *BB = it;
       bool BBChanged = false;
