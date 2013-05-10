@@ -14,7 +14,6 @@
 
 #define DEBUG_TYPE "jit"
 #include "JIT.h"
-#include "JITDwarfEmitter.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -325,9 +324,6 @@ namespace {
     /// Resolver - This contains info about the currently resolved functions.
     JITResolver Resolver;
 
-    /// DE - The dwarf emitter for the jit.
-    OwningPtr<JITDwarfEmitter> DE;
-
     /// LabelLocations - This vector is a mapping from Label ID's to their
     /// address.
     DenseMap<MCSymbol*, uintptr_t> LabelLocations;
@@ -454,7 +450,6 @@ namespace {
 
     virtual void setModuleInfo(MachineModuleInfo* Info) {
       MMI = Info;
-      if (DE.get()) DE->setModuleInfo(Info);
     }
 
   private:
