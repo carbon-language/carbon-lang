@@ -41,7 +41,7 @@ entry:
 }
 
 
-; int foo_fail(int * restrict B,  int * restrict A, int n, int m) {
+; int extr_user(int * restrict B,  int * restrict A, int n, int m) {
 ;   B[0] = n * A[0] + m * A[0];
 ;   B[1] = n * A[1] + m * A[1];
 ;   B[2] = n * A[2] + m * A[2];
@@ -49,10 +49,11 @@ entry:
 ;   return A[0];
 ; }
 
-; CHECK: @foo_fail
-; CHECK-NOT: load <4 x i32>
+; CHECK: @extr_user
+; CHECK: store <4 x i32>
+; CHECK-NEXT: extractelement <4 x i32>
 ; CHECK: ret
-define i32 @foo_fail(i32* noalias nocapture %B, i32* noalias nocapture %A, i32 %n, i32 %m) {
+define i32 @extr_user(i32* noalias nocapture %B, i32* noalias nocapture %A, i32 %n, i32 %m) {
 entry:
   %0 = load i32* %A, align 4
   %mul238 = add i32 %m, %n

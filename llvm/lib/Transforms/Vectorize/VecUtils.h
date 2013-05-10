@@ -127,6 +127,11 @@ private:
   /// NOTICE: The vectorization methods also use this set.
   ValueSet MustScalarize;
 
+  /// Contains values that have users outside of the vectorized graph.
+  /// We need to generate extract instructions for these values.
+  /// NOTICE: The vectorization methods also use this set.
+  ValueSet MustExtract;
+
   /// Contains a list of values that are used outside the current tree. This
   /// set must be reset between runs.
   ValueSet MultiUserVals;
