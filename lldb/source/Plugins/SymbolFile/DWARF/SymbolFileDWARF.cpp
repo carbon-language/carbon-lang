@@ -3563,9 +3563,10 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                     {
                         if (temp_sc_list.GetContextAtIndex(i, sc))
                         {
-                            ConstString func_name = sc.GetFunctionName(Mangled::ePreferDemangled);
-                            if (!strncmp(name.GetCString(), "_ZN", 3) ||
-                                strncmp(name.GetCString(), "(anonymous namespace)", 21))
+                            ConstString mangled_name = sc.GetFunctionName(Mangled::ePreferMangled);
+                            ConstString demangled_name = sc.GetFunctionName(Mangled::ePreferDemangled);
+                            if (!strncmp(mangled_name.GetCString(), "_ZN", 3) ||
+                                strncmp(demangled_name.GetCString(), "(anonymous namespace)", 21))
                             {
                                 sc_list.Append(sc);
                             }
