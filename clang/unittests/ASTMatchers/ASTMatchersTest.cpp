@@ -2924,6 +2924,31 @@ TEST(SwitchCase, MatchesSwitch) {
   EXPECT_TRUE(notMatches("void x() {}", switchStmt()));
 }
 
+TEST(SwitchCase, MatchesEachCase) {
+  EXPECT_TRUE(notMatches("void x() { switch(42); }",
+                         switchStmt(forEachSwitchCase(caseStmt()))));
+  EXPECT_TRUE(matches("void x() { switch(42) case 42:; }",
+                      switchStmt(forEachSwitchCase(caseStmt()))));
+  EXPECT_TRUE(matches("void x() { switch(42) { case 42:; } }",
+                      switchStmt(forEachSwitchCase(caseStmt()))));
+  EXPECT_TRUE(notMatches(
+      "void x() { if (1) switch(42) { case 42: switch (42) { default:; } } }",
+      ifStmt(has(switchStmt(forEachSwitchCase(defaultStmt()))))));
+  EXPECT_TRUE(matches("void x() { switch(42) { case 1+1: case 4:; } }",
+                      switchStmt(forEachSwitchCase(
+                          caseStmt(hasCaseConstant(integerLiteral()))))));
+  EXPECT_TRUE(notMatches("void x() { switch(42) { case 1+1: case 2+2:; } }",
+                         switchStmt(forEachSwitchCase(
+                             caseStmt(hasCaseConstant(integerLiteral()))))));
+  EXPECT_TRUE(notMatches("void x() { switch(42) { case 1 ... 2:; } }",
+                         switchStmt(forEachSwitchCase(
+                             caseStmt(hasCaseConstant(integerLiteral()))))));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "void x() { switch (42) { case 1: case 2: case 3: default:; } }",
+      switchStmt(forEachSwitchCase(caseStmt().bind("x"))),
+      new VerifyIdIsBoundTo<CaseStmt>("x", 3)));
+}
+
 TEST(ExceptionHandling, SimpleCases) {
   EXPECT_TRUE(matches("void foo() try { } catch(int X) { }", catchStmt()));
   EXPECT_TRUE(matches("void foo() try { } catch(int X) { }", tryStmt()));

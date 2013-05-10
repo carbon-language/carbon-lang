@@ -894,6 +894,26 @@ const internal::VariadicDynCastAllOfMatcher<Stmt, SwitchStmt> switchStmt;
 ///   matches 'case 42: break;' and 'default: break;'.
 const internal::VariadicDynCastAllOfMatcher<Stmt, SwitchCase> switchCase;
 
+/// \brief Matches case statements inside switch statements.
+///
+/// Given
+/// \code
+///   switch(a) { case 42: break; default: break; }
+/// \endcode
+/// caseStmt()
+///   matches 'case 42: break;'.
+const internal::VariadicDynCastAllOfMatcher<Stmt, CaseStmt> caseStmt;
+
+/// \brief Matches default statements inside switch statements.
+///
+/// Given
+/// \code
+///   switch(a) { case 42: break; default: break; }
+/// \endcode
+/// defaultStmt()
+///   matches 'default: break;'.
+const internal::VariadicDynCastAllOfMatcher<Stmt, DefaultStmt> defaultStmt;
+
 /// \brief Matches compound statements.
 ///
 /// Example matches '{}' and '{{}}'in 'for (;;) {{}}'
@@ -3347,6 +3367,54 @@ AST_MATCHER_P_OVERLOAD(Stmt, equalsNode, Stmt*, Other, 1) {
 }
 
 /// @}
+
+/// \brief Matches each case or default statement belonging to the given switch
+/// statement. This matcher may produce multiple matches.
+///
+/// Given
+/// \code
+///   switch (1) { case 1: case 2: default: switch (2) { case 3: case 4: ; } }
+/// \endcode
+/// switchStmt(forEachSwitchCase(caseStmt().bind("c"))).bind("s")
+///   matches four times, with "c" binding each of "case 1:", "case 2:",
+/// "case 3:" and "case 4:", and "s" respectively binding "switch (1)",
+/// "switch (1)", "switch (2)" and "switch (2)".
+AST_MATCHER_P(SwitchStmt, forEachSwitchCase, internal::Matcher<SwitchCase>,
+              InnerMatcher) {
+  // FIXME: getSwitchCaseList() does not necessarily guarantee a stable
+  // iteration order. We should use the more general iterating matchers once
+  // they are capable of expressing this matcher (for example, it should ignore
+  // case statements belonging to nested switch statements).
+  bool Matched = false;
+  for (const SwitchCase *SC = Node.getSwitchCaseList(); SC;
+       SC = SC->getNextSwitchCase()) {
+    BoundNodesTreeBuilder CaseBuilder;
+    bool CaseMatched = InnerMatcher.matches(*SC, Finder, &CaseBuilder);
+    if (CaseMatched) {
+      Matched = true;
+      Builder->addMatch(CaseBuilder.build());
+    }
+  }
+
+  return Matched;
+}
+
+/// \brief If the given case statement does not use the GNU case range
+/// extension, matches the constant given in the statement.
+///
+/// Given
+/// \code
+///   switch (1) { case 1: case 1+1: case 3 ... 4: ; }
+/// \endcode
+/// caseStmt(hasCaseConstant(integerLiteral()))
+///   matches "case 1:"
+AST_MATCHER_P(CaseStmt, hasCaseConstant, internal::Matcher<Expr>,
+              InnerMatcher) {
+  if (Node.getRHS())
+    return false;
+
+  return InnerMatcher.matches(*Node.getLHS(), Finder, Builder);
+}
 
 } // end namespace ast_matchers
 } // end namespace clang
