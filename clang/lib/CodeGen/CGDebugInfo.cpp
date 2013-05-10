@@ -1264,10 +1264,12 @@ CollectTemplateParams(const TemplateParameterList *TPList,
       // We could support this with the GCC extension
       // DW_TAG_GNU_template_template_param
       break;
+    case TemplateArgument::Pack:
+      // And this with DW_TAG_GNU_template_parameter_pack
+      break;
     // these next 4 should never occur
     case TemplateArgument::Expression:
     case TemplateArgument::TemplateExpansion:
-    case TemplateArgument::Pack:
     case TemplateArgument::Null:
       llvm_unreachable(
           "These argument types shouldn't exist in concrete types");

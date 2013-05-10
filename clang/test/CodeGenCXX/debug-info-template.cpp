@@ -1,5 +1,12 @@
 // RUN: %clang -S -emit-llvm -target x86_64-unknown_unknown -g %s -o - -std=c++11 | FileCheck %s
 
+// CHECK: [[EMPTY:![0-9]*]] = metadata !{i32 0}
+
+// func<...> doesn't have any template arguments listed since we don't support
+// packs yet. This could be encoded with GNU's
+// DW_TAG_GNU_template_parameter_pack extension.
+// CHECK: {{.*}}, metadata [[EMPTY]], i32 {{[0-9]*}}} ; [ DW_TAG_subprogram ] {{.*}} [func<int>]
+
 // CHECK: [[INT:![0-9]*]] = {{.*}} ; [ DW_TAG_base_type ] [int]
 // CHECK: metadata [[TCI:![0-9]*]], i32 0, i32 1, %class.TC* @tci, null} ; [ DW_TAG_variable ] [tci]
 // CHECK: [[TC:![0-9]*]] = {{.*}}, metadata [[TCARGS:![0-9]*]]} ; [ DW_TAG_class_type ] [TC<unsigned int, 2, &glb, &foo::e, &foo::f>]
@@ -67,3 +74,6 @@ int glb;
 
 TC<unsigned, 2, &glb, &foo::e, &foo::f> tci;
 TC<int, -3, nullptr, nullptr, nullptr> tcn;
+
+template<typename ...Ts> int func() { return 0; }
+int anchor = func<int>();
