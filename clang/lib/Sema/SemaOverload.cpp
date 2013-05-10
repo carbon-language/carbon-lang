@@ -1591,7 +1591,7 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
     // Integral conversions (C++ 4.7).
     SCS.Second = ICK_Integral_Conversion;
     FromType = ToType.getUnqualifiedType();
-  } else if (FromType->isAnyComplexType() && ToType->isComplexType()) {
+  } else if (FromType->isAnyComplexType() && ToType->isAnyComplexType()) {
     // Complex conversions (C99 6.3.1.6)
     SCS.Second = ICK_Complex_Conversion;
     FromType = ToType.getUnqualifiedType();
