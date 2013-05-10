@@ -185,6 +185,7 @@ public:
   bool isNewValueInst(const MachineInstr* MI) const;
   bool isNewValue(const MachineInstr* MI) const;
   bool isDotNewInst(const MachineInstr* MI) const;
+  int GetDotNewOp(const MachineInstr* MI) const;
   int GetDotNewPredOp(MachineInstr *MI,
                       const MachineBranchProbabilityInfo
                       *MBPI) const;
@@ -194,6 +195,7 @@ public:
   bool isExtended(const MachineInstr* MI) const;
   bool isPostIncrement(const MachineInstr* MI) const;
   bool isNewValueStore(const MachineInstr* MI) const;
+  bool isNewValueStore(unsigned Opcode) const;
   bool isNewValueJump(const MachineInstr* MI) const;
   bool isNewValueJumpCandidate(const MachineInstr *MI) const;
 

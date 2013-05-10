@@ -126,9 +126,9 @@ def getPredNewOpcode : InstrMapping {
 def getNewValueOpcode : InstrMapping {
   let FilterClass = "NewValueRel";
   let RowFields = ["BaseOpcode", "PredSense", "PNewValue"];
-  let ColFields = ["isNVStore"];
-  let KeyCol = ["0"];
-  let ValueCols = [["1"]];
+  let ColFields = ["NValueST"];
+  let KeyCol = ["false"];
+  let ValueCols = [["true"]];
 }
 
 def getBasedWithImmOffset : InstrMapping {

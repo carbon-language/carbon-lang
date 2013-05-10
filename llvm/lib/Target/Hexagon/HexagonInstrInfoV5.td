@@ -26,22 +26,29 @@ def CONST32_Float_Real : LDInst<(outs IntRegs:$dst), (ins f32imm:$src1),
 // Only works with single precision fp value.
 // For double precision, use CONST64_float_real, as 64bit transfer
 // can only hold 40-bit values - 32 from const ext + 8 bit immediate.
-let isMoveImm = 1, isReMaterializable = 1, isPredicable = 1 in
-def TFRI_f : ALU32_ri<(outs IntRegs:$dst), (ins f32imm:$src1),
-           "$dst = ##$src1",
+// Make sure that complexity is more than the CONST32 pattern in
+// HexagonInstrInfo.td patterns.
+let isExtended = 1, opExtendable = 1, isMoveImm = 1, isReMaterializable = 1,
+isPredicable = 1, AddedComplexity = 30, validSubTargets = HasV5SubT,
+isCodeGenOnly = 1 in
+def TFRI_f : ALU32_ri<(outs IntRegs:$dst), (ins f32Ext:$src1),
+           "$dst = #$src1",
            [(set IntRegs:$dst, fpimm:$src1)]>,
           Requires<[HasV5T]>;
 
+let isExtended = 1, opExtendable = 2, isPredicated = 1,
+neverHasSideEffects = 1, validSubTargets = HasV5SubT in
 def TFRI_cPt_f : ALU32_ri<(outs IntRegs:$dst),
-                          (ins PredRegs:$src1, f32imm:$src2),
-           "if ($src1) $dst = ##$src2",
+                          (ins PredRegs:$src1, f32Ext:$src2),
+           "if ($src1) $dst = #$src2",
            []>,
           Requires<[HasV5T]>;
 
-let isPredicated = 1 in
+let isExtended = 1, opExtendable = 2, isPredicated = 1, isPredicatedFalse = 1,
+neverHasSideEffects = 1, validSubTargets = HasV5SubT in
 def TFRI_cNotPt_f : ALU32_ri<(outs IntRegs:$dst),
-                             (ins PredRegs:$src1, f32imm:$src2),
-           "if (!$src1) $dst = ##$src2",
+                             (ins PredRegs:$src1, f32Ext:$src2),
+           "if (!$src1) $dst =#$src2",
            []>,
           Requires<[HasV5T]>;
 

@@ -2564,8 +2564,9 @@ def NTSTBIT_ri : SInst<(outs PredRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
 //Deallocate frame and return.
 //    dealloc_return
 let isReturn = 1, isTerminator = 1, isBarrier = 1, isPredicable = 1,
-  Defs = [R29, R30, R31, PC], Uses = [R29, R31], neverHasSideEffects = 1 in {
-  def DEALLOC_RET_V4 : NVInst_V4<(outs), (ins i32imm:$amt1),
+  Defs = [R29, R30, R31, PC], Uses = [R30], neverHasSideEffects = 1 in {
+let validSubTargets = HasV4SubT in
+  def DEALLOC_RET_V4 : LD0Inst<(outs), (ins),
             "dealloc_return",
             []>,
             Requires<[HasV4T]>;
@@ -2574,9 +2575,10 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, isPredicable = 1,
 // Restore registers and dealloc return function call.
 let isCall = 1, isBarrier = 1, isReturn = 1, isTerminator = 1,
   Defs = [R29, R30, R31, PC] in {
+let validSubTargets = HasV4SubT in
   def RESTORE_DEALLOC_RET_JMP_V4 : JInst<(outs),
                                    (ins calltarget:$dst),
-             "jump $dst // Restore_and_dealloc_return",
+             "jump $dst",
              []>,
              Requires<[HasV4T]>;
 }
@@ -2584,9 +2586,10 @@ let isCall = 1, isBarrier = 1, isReturn = 1, isTerminator = 1,
 // Restore registers and dealloc frame before a tail call.
 let isCall = 1, isBarrier = 1,
   Defs = [R29, R30, R31, PC] in {
+let validSubTargets = HasV4SubT in
   def RESTORE_DEALLOC_BEFORE_TAILCALL_V4 : JInst<(outs),
                                            (ins calltarget:$dst),
-             "call $dst // Restore_and_dealloc_before_tailcall",
+             "call $dst",
              []>,
              Requires<[HasV4T]>;
 }
@@ -2603,10 +2606,11 @@ let isCall = 1, isBarrier = 1,
 
 //    if (Ps) dealloc_return
 let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R29, R31], neverHasSideEffects = 1,
+    Defs = [R29, R30, R31, PC], Uses = [R30], neverHasSideEffects = 1,
     isPredicated = 1 in {
-  def DEALLOC_RET_cPt_V4 : NVInst_V4<(outs),
-                           (ins PredRegs:$src1, i32imm:$amt1),
+let validSubTargets = HasV4SubT in
+  def DEALLOC_RET_cPt_V4 : LD0Inst<(outs),
+                           (ins PredRegs:$src1),
             "if ($src1) dealloc_return",
             []>,
             Requires<[HasV4T]>;
@@ -2614,10 +2618,10 @@ let isReturn = 1, isTerminator = 1,
 
 //    if (!Ps) dealloc_return
 let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R29, R31], neverHasSideEffects = 1,
-    isPredicated = 1 in {
-  def DEALLOC_RET_cNotPt_V4 : NVInst_V4<(outs), (ins PredRegs:$src1,
-                                                     i32imm:$amt1),
+    Defs = [R29, R30, R31, PC], Uses = [R30], neverHasSideEffects = 1,
+    isPredicated = 1, isPredicatedFalse = 1 in {
+let validSubTargets = HasV4SubT in
+  def DEALLOC_RET_cNotPt_V4 : LD0Inst<(outs), (ins PredRegs:$src1),
             "if (!$src1) dealloc_return",
             []>,
             Requires<[HasV4T]>;
@@ -2625,10 +2629,10 @@ let isReturn = 1, isTerminator = 1,
 
 //    if (Ps.new) dealloc_return:nt
 let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R29, R31], neverHasSideEffects = 1,
+    Defs = [R29, R30, R31, PC], Uses = [R30], neverHasSideEffects = 1,
     isPredicated = 1 in {
-  def DEALLOC_RET_cdnPnt_V4 : NVInst_V4<(outs), (ins PredRegs:$src1,
-                                                     i32imm:$amt1),
+let validSubTargets = HasV4SubT in
+  def DEALLOC_RET_cdnPnt_V4 : LD0Inst<(outs), (ins PredRegs:$src1),
             "if ($src1.new) dealloc_return:nt",
             []>,
             Requires<[HasV4T]>;
@@ -2636,10 +2640,10 @@ let isReturn = 1, isTerminator = 1,
 
 //    if (!Ps.new) dealloc_return:nt
 let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R29, R31], neverHasSideEffects = 1,
-    isPredicated = 1 in {
-  def DEALLOC_RET_cNotdnPnt_V4 : NVInst_V4<(outs), (ins PredRegs:$src1,
-                                                        i32imm:$amt1),
+    Defs = [R29, R30, R31, PC], Uses = [R30], neverHasSideEffects = 1,
+    isPredicated = 1, isPredicatedFalse = 1 in {
+let validSubTargets = HasV4SubT in
+  def DEALLOC_RET_cNotdnPnt_V4 : LD0Inst<(outs), (ins PredRegs:$src1),
             "if (!$src1.new) dealloc_return:nt",
             []>,
             Requires<[HasV4T]>;
@@ -2647,21 +2651,21 @@ let isReturn = 1, isTerminator = 1,
 
 //    if (Ps.new) dealloc_return:t
 let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R29, R31], neverHasSideEffects = 1,
+    Defs = [R29, R30, R31, PC], Uses = [R30], neverHasSideEffects = 1,
     isPredicated = 1 in {
-  def DEALLOC_RET_cdnPt_V4 : NVInst_V4<(outs), (ins PredRegs:$src1,
-                                                    i32imm:$amt1),
+let validSubTargets = HasV4SubT in
+  def DEALLOC_RET_cdnPt_V4 : LD0Inst<(outs), (ins PredRegs:$src1),
             "if ($src1.new) dealloc_return:t",
             []>,
             Requires<[HasV4T]>;
 }
 
-//    if (!Ps.new) dealloc_return:nt
+// if (!Ps.new) dealloc_return:nt
 let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R29, R31], neverHasSideEffects = 1,
-    isPredicated = 1 in {
-  def DEALLOC_RET_cNotdnPt_V4 : NVInst_V4<(outs), (ins PredRegs:$src1,
-                                                       i32imm:$amt1),
+    Defs = [R29, R30, R31, PC], Uses = [R30], neverHasSideEffects = 1,
+    isPredicated = 1, isPredicatedFalse = 1 in {
+let validSubTargets = HasV4SubT in
+  def DEALLOC_RET_cNotdnPt_V4 : LD0Inst<(outs), (ins PredRegs:$src1),
             "if (!$src1.new) dealloc_return:t",
             []>,
             Requires<[HasV4T]>;
@@ -3063,37 +3067,42 @@ def : Pat<(HexagonCONST32_GP tblockaddress:$src1),
           (TFRI_V4 tblockaddress:$src1)>,
           Requires<[HasV4T]>;
 
-let AddedComplexity=50, neverHasSideEffects = 1, isPredicated = 1 in
+let isExtended = 1, opExtendable = 2, AddedComplexity=50,
+neverHasSideEffects = 1, isPredicated = 1, validSubTargets = HasV4SubT in
 def TFRI_cPt_V4 : ALU32_ri<(outs IntRegs:$dst),
-                           (ins PredRegs:$src1, globaladdress:$src2),
-           "if($src1) $dst = ##$src2",
+                           (ins PredRegs:$src1, s16Ext:$src2),
+           "if($src1) $dst = #$src2",
            []>,
            Requires<[HasV4T]>;
 
-let AddedComplexity=50, neverHasSideEffects = 1, isPredicated = 1 in
+let isExtended = 1, opExtendable = 2, AddedComplexity=50, isPredicatedFalse = 1,
+neverHasSideEffects = 1, isPredicated = 1, validSubTargets = HasV4SubT in
 def TFRI_cNotPt_V4 : ALU32_ri<(outs IntRegs:$dst),
-                              (ins PredRegs:$src1, globaladdress:$src2),
-           "if(!$src1) $dst = ##$src2",
+                              (ins PredRegs:$src1, s16Ext:$src2),
+           "if(!$src1) $dst = #$src2",
            []>,
            Requires<[HasV4T]>;
 
-let AddedComplexity=50, neverHasSideEffects = 1, isPredicated = 1 in
+let isExtended = 1, opExtendable = 2, AddedComplexity=50,
+neverHasSideEffects = 1, isPredicated = 1, validSubTargets = HasV4SubT in
 def TFRI_cdnPt_V4 : ALU32_ri<(outs IntRegs:$dst),
-                             (ins PredRegs:$src1, globaladdress:$src2),
-           "if($src1.new) $dst = ##$src2",
+                             (ins PredRegs:$src1, s16Ext:$src2),
+           "if($src1.new) $dst = #$src2",
            []>,
            Requires<[HasV4T]>;
 
-let AddedComplexity=50, neverHasSideEffects = 1, isPredicated = 1 in
+let isExtended = 1, opExtendable = 2, AddedComplexity=50, isPredicatedFalse = 1,
+neverHasSideEffects = 1, isPredicated = 1, validSubTargets = HasV4SubT in
 def TFRI_cdnNotPt_V4 : ALU32_ri<(outs IntRegs:$dst),
-                                (ins PredRegs:$src1, globaladdress:$src2),
-           "if(!$src1.new) $dst = ##$src2",
+                                (ins PredRegs:$src1, s16Ext:$src2),
+           "if(!$src1.new) $dst = #$src2",
            []>,
            Requires<[HasV4T]>;
 
 let AddedComplexity = 50, Predicates = [HasV4T] in
 def : Pat<(HexagonCONST32_GP tglobaladdr:$src1),
-           (TFRI_V4 tglobaladdr:$src1)>;
+           (TFRI_V4 tglobaladdr:$src1)>,
+           Requires<[HasV4T]>;
 
 
 // Load - Indirect with long offset: These instructions take global address

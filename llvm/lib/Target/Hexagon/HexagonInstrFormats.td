@@ -158,6 +158,7 @@ class InstHexagon<dag outs, dag ins, string asmstr, list<dag> pattern,
   string CextOpcode = "";
   string PredSense = "";
   string PNewValue = "";
+  string NValueST  = "";    // Set to "true" for new-value stores.
   string InputType = "";    // Input is "imm" or "reg" type.
   string isMEMri = "false"; // Set to "true" for load/store with MEMri operand.
   string isFloat = "false"; // Set to "true" for the floating-point load/store.
@@ -166,6 +167,7 @@ class InstHexagon<dag outs, dag ins, string asmstr, list<dag> pattern,
   let PredSense = !if(isPredicated, !if(isPredicatedFalse, "false", "true"),
                                     "");
   let PNewValue = !if(isPredicatedNew, "new", "");
+  let NValueST = !if(isNVStore, "true", "false");
 
   // *** Must match MCTargetDesc/HexagonBaseInfo.h ***
 }

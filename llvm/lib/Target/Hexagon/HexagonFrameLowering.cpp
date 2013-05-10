@@ -174,30 +174,56 @@ void HexagonFrameLowering::emitEpilogue(MachineFunction &MF,
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   DebugLoc dl = MBBI->getDebugLoc();
   //
-  // Only insert deallocframe if we need to.
+  // Only insert deallocframe if we need to.  Also at -O0.  See comment
+  // in emitPrologue above.
   //
-  if (hasFP(MF)) {
+  if (hasFP(MF) || MF.getTarget().getOptLevel() == CodeGenOpt::None) {
     MachineBasicBlock::iterator MBBI = prior(MBB.end());
     MachineBasicBlock::iterator MBBI_end = MBB.end();
-    //
-    // For Hexagon, we don't need the frame size.
-    //
-    MachineFrameInfo *MFI = MF.getFrameInfo();
-    int NumBytes = (int) MFI->getStackSize();
 
     const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
-
+    // Handle EH_RETURN.
+    if (MBBI->getOpcode() == Hexagon::EH_RETURN_JMPR) {
+      MachineOperand &OffsetReg  = MBBI->getOperand(0);
+      assert(OffsetReg.isReg() && "Offset should be in register!");
+      BuildMI(MBB, MBBI, dl, TII.get(Hexagon::DEALLOCFRAME));
+      BuildMI(MBB, MBBI, dl, TII.get(Hexagon::ADD_rr),
+              Hexagon::R29).addReg(Hexagon::R29).addReg(Hexagon::R28);
+      return;
+    }
     // Replace 'jumpr r31' instruction with dealloc_return for V4 and higher
     // versions.
     if (STI.hasV4TOps() && MBBI->getOpcode() == Hexagon::JMPret
                         && !DisableDeallocRet) {
-      // Remove jumpr node.
-      MBB.erase(MBBI);
+      // Check for RESTORE_DEALLOC_RET_JMP_V4 call. Don't emit an extra DEALLOC
+      // instruction if we encounter it.
+      MachineBasicBlock::iterator BeforeJMPR =
+        MBB.begin() == MBBI ? MBBI : prior(MBBI);
+      if (BeforeJMPR != MBBI &&
+          BeforeJMPR->getOpcode() == Hexagon::RESTORE_DEALLOC_RET_JMP_V4) {
+        // Remove the JMPR node.
+        MBB.erase(MBBI);
+        return;
+      }
+
       // Add dealloc_return.
-      BuildMI(MBB, MBBI_end, dl, TII.get(Hexagon::DEALLOC_RET_V4))
-        .addImm(NumBytes);
-    } else { // Add deallocframe for V2 and V3.
-      BuildMI(MBB, MBBI, dl, TII.get(Hexagon::DEALLOCFRAME)).addImm(NumBytes);
+      MachineInstrBuilder MIB =
+        BuildMI(MBB, MBBI_end, dl, TII.get(Hexagon::DEALLOC_RET_V4));
+      // Transfer the function live-out registers.
+      MIB->copyImplicitOps(*MBB.getParent(), &*MBBI);
+      // Remove the JUMPR node.
+      MBB.erase(MBBI);
+    } else { // Add deallocframe for V2 and V3, and V4 tail calls.
+      // Check for RESTORE_DEALLOC_BEFORE_TAILCALL_V4. We don't need an extra
+      // DEALLOCFRAME instruction after it.
+      MachineBasicBlock::iterator Term = MBB.getFirstTerminator();
+      MachineBasicBlock::iterator I =
+        Term == MBB.begin() ?  MBB.end() : prior(Term);
+      if (I != MBB.end() &&
+          I->getOpcode() == Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4)
+        return;
+
+      BuildMI(MBB, MBBI, dl, TII.get(Hexagon::DEALLOCFRAME));
     }
   }
 }

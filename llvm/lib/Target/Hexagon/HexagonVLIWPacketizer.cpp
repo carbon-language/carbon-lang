@@ -498,250 +498,6 @@ static bool DoesModifyCalleeSavedReg(MachineInstr *MI,
   return false;
 }
 
-// Return the new value instruction for a given store.
-static int GetDotNewOp(const int opc) {
-  switch (opc) {
-  default: llvm_unreachable("Unknown .new type");
-  // store new value byte
-  case Hexagon::STrib:
-    return Hexagon::STrib_nv_V4;
-
-  case Hexagon::STrib_indexed:
-    return Hexagon::STrib_indexed_nv_V4;
-
-  case Hexagon::STrib_indexed_shl_V4:
-    return Hexagon::STrib_indexed_shl_nv_V4;
-
-  case Hexagon::STrib_shl_V4:
-    return Hexagon::STrib_shl_nv_V4;
-
-  case Hexagon::STb_GP_V4:
-    return Hexagon::STb_GP_nv_V4;
-
-  case Hexagon::POST_STbri:
-    return Hexagon::POST_STbri_nv_V4;
-
-  case Hexagon::STrib_cPt:
-    return Hexagon::STrib_cPt_nv_V4;
-
-  case Hexagon::STrib_cdnPt_V4:
-    return Hexagon::STrib_cdnPt_nv_V4;
-
-  case Hexagon::STrib_cNotPt:
-    return Hexagon::STrib_cNotPt_nv_V4;
-
-  case Hexagon::STrib_cdnNotPt_V4:
-    return Hexagon::STrib_cdnNotPt_nv_V4;
-
-  case Hexagon::STrib_indexed_cPt:
-    return Hexagon::STrib_indexed_cPt_nv_V4;
-
-  case Hexagon::STrib_indexed_cdnPt_V4:
-    return Hexagon::STrib_indexed_cdnPt_nv_V4;
-
-  case Hexagon::STrib_indexed_cNotPt:
-    return Hexagon::STrib_indexed_cNotPt_nv_V4;
-
-  case Hexagon::STrib_indexed_cdnNotPt_V4:
-    return Hexagon::STrib_indexed_cdnNotPt_nv_V4;
-
-  case Hexagon::STrib_indexed_shl_cPt_V4:
-    return Hexagon::STrib_indexed_shl_cPt_nv_V4;
-
-  case Hexagon::STrib_indexed_shl_cdnPt_V4:
-    return Hexagon::STrib_indexed_shl_cdnPt_nv_V4;
-
-  case Hexagon::STrib_indexed_shl_cNotPt_V4:
-    return Hexagon::STrib_indexed_shl_cNotPt_nv_V4;
-
-  case Hexagon::STrib_indexed_shl_cdnNotPt_V4:
-    return Hexagon::STrib_indexed_shl_cdnNotPt_nv_V4;
-
-  case Hexagon::POST_STbri_cPt:
-    return Hexagon::POST_STbri_cPt_nv_V4;
-
-  case Hexagon::POST_STbri_cdnPt_V4:
-    return Hexagon::POST_STbri_cdnPt_nv_V4;
-
-  case Hexagon::POST_STbri_cNotPt:
-    return Hexagon::POST_STbri_cNotPt_nv_V4;
-
-  case Hexagon::POST_STbri_cdnNotPt_V4:
-    return Hexagon::POST_STbri_cdnNotPt_nv_V4;
-
-  case Hexagon::STb_GP_cPt_V4:
-    return Hexagon::STb_GP_cPt_nv_V4;
-
-  case Hexagon::STb_GP_cNotPt_V4:
-    return Hexagon::STb_GP_cNotPt_nv_V4;
-
-  case Hexagon::STb_GP_cdnPt_V4:
-    return Hexagon::STb_GP_cdnPt_nv_V4;
-
-  case Hexagon::STb_GP_cdnNotPt_V4:
-    return Hexagon::STb_GP_cdnNotPt_nv_V4;
-
-  // store new value halfword
-  case Hexagon::STrih:
-    return Hexagon::STrih_nv_V4;
-
-  case Hexagon::STrih_indexed:
-    return Hexagon::STrih_indexed_nv_V4;
-
-  case Hexagon::STrih_indexed_shl_V4:
-    return Hexagon::STrih_indexed_shl_nv_V4;
-
-  case Hexagon::STrih_shl_V4:
-    return Hexagon::STrih_shl_nv_V4;
-
-  case Hexagon::STh_GP_V4:
-    return Hexagon::STh_GP_nv_V4;
-
-  case Hexagon::POST_SThri:
-    return Hexagon::POST_SThri_nv_V4;
-
-  case Hexagon::STrih_cPt:
-    return Hexagon::STrih_cPt_nv_V4;
-
-  case Hexagon::STrih_cdnPt_V4:
-    return Hexagon::STrih_cdnPt_nv_V4;
-
-  case Hexagon::STrih_cNotPt:
-    return Hexagon::STrih_cNotPt_nv_V4;
-
-  case Hexagon::STrih_cdnNotPt_V4:
-    return Hexagon::STrih_cdnNotPt_nv_V4;
-
-  case Hexagon::STrih_indexed_cPt:
-    return Hexagon::STrih_indexed_cPt_nv_V4;
-
-  case Hexagon::STrih_indexed_cdnPt_V4:
-    return Hexagon::STrih_indexed_cdnPt_nv_V4;
-
-  case Hexagon::STrih_indexed_cNotPt:
-    return Hexagon::STrih_indexed_cNotPt_nv_V4;
-
-  case Hexagon::STrih_indexed_cdnNotPt_V4:
-    return Hexagon::STrih_indexed_cdnNotPt_nv_V4;
-
-  case Hexagon::STrih_indexed_shl_cPt_V4:
-    return Hexagon::STrih_indexed_shl_cPt_nv_V4;
-
-  case Hexagon::STrih_indexed_shl_cdnPt_V4:
-    return Hexagon::STrih_indexed_shl_cdnPt_nv_V4;
-
-  case Hexagon::STrih_indexed_shl_cNotPt_V4:
-    return Hexagon::STrih_indexed_shl_cNotPt_nv_V4;
-
-  case Hexagon::STrih_indexed_shl_cdnNotPt_V4:
-    return Hexagon::STrih_indexed_shl_cdnNotPt_nv_V4;
-
-  case Hexagon::POST_SThri_cPt:
-    return Hexagon::POST_SThri_cPt_nv_V4;
-
-  case Hexagon::POST_SThri_cdnPt_V4:
-    return Hexagon::POST_SThri_cdnPt_nv_V4;
-
-  case Hexagon::POST_SThri_cNotPt:
-    return Hexagon::POST_SThri_cNotPt_nv_V4;
-
-  case Hexagon::POST_SThri_cdnNotPt_V4:
-    return Hexagon::POST_SThri_cdnNotPt_nv_V4;
-
-  case Hexagon::STh_GP_cPt_V4:
-    return Hexagon::STh_GP_cPt_nv_V4;
-
-  case Hexagon::STh_GP_cNotPt_V4:
-    return Hexagon::STh_GP_cNotPt_nv_V4;
-
-  case Hexagon::STh_GP_cdnPt_V4:
-    return Hexagon::STh_GP_cdnPt_nv_V4;
-
-  case Hexagon::STh_GP_cdnNotPt_V4:
-    return Hexagon::STh_GP_cdnNotPt_nv_V4;
-
-  // store new value word
-  case Hexagon::STriw:
-    return Hexagon::STriw_nv_V4;
-
-  case Hexagon::STriw_indexed:
-    return Hexagon::STriw_indexed_nv_V4;
-
-  case Hexagon::STriw_indexed_shl_V4:
-    return Hexagon::STriw_indexed_shl_nv_V4;
-
-  case Hexagon::STriw_shl_V4:
-    return Hexagon::STriw_shl_nv_V4;
-
-  case Hexagon::STw_GP_V4:
-    return Hexagon::STw_GP_nv_V4;
-
-  case Hexagon::POST_STwri:
-    return Hexagon::POST_STwri_nv_V4;
-
-  case Hexagon::STriw_cPt:
-    return Hexagon::STriw_cPt_nv_V4;
-
-  case Hexagon::STriw_cdnPt_V4:
-    return Hexagon::STriw_cdnPt_nv_V4;
-
-  case Hexagon::STriw_cNotPt:
-    return Hexagon::STriw_cNotPt_nv_V4;
-
-  case Hexagon::STriw_cdnNotPt_V4:
-    return Hexagon::STriw_cdnNotPt_nv_V4;
-
-  case Hexagon::STriw_indexed_cPt:
-    return Hexagon::STriw_indexed_cPt_nv_V4;
-
-  case Hexagon::STriw_indexed_cdnPt_V4:
-    return Hexagon::STriw_indexed_cdnPt_nv_V4;
-
-  case Hexagon::STriw_indexed_cNotPt:
-    return Hexagon::STriw_indexed_cNotPt_nv_V4;
-
-  case Hexagon::STriw_indexed_cdnNotPt_V4:
-    return Hexagon::STriw_indexed_cdnNotPt_nv_V4;
-
-  case Hexagon::STriw_indexed_shl_cPt_V4:
-    return Hexagon::STriw_indexed_shl_cPt_nv_V4;
-
-  case Hexagon::STriw_indexed_shl_cdnPt_V4:
-    return Hexagon::STriw_indexed_shl_cdnPt_nv_V4;
-
-  case Hexagon::STriw_indexed_shl_cNotPt_V4:
-    return Hexagon::STriw_indexed_shl_cNotPt_nv_V4;
-
-  case Hexagon::STriw_indexed_shl_cdnNotPt_V4:
-    return Hexagon::STriw_indexed_shl_cdnNotPt_nv_V4;
-
-  case Hexagon::POST_STwri_cPt:
-    return Hexagon::POST_STwri_cPt_nv_V4;
-
-  case Hexagon::POST_STwri_cdnPt_V4:
-    return Hexagon::POST_STwri_cdnPt_nv_V4;
-
-  case Hexagon::POST_STwri_cNotPt:
-    return Hexagon::POST_STwri_cNotPt_nv_V4;
-
-  case Hexagon::POST_STwri_cdnNotPt_V4:
-    return Hexagon::POST_STwri_cdnNotPt_nv_V4;
-
-  case Hexagon::STw_GP_cPt_V4:
-    return Hexagon::STw_GP_cPt_nv_V4;
-
-  case Hexagon::STw_GP_cNotPt_V4:
-    return Hexagon::STw_GP_cNotPt_nv_V4;
-
-  case Hexagon::STw_GP_cdnPt_V4:
-    return Hexagon::STw_GP_cdnPt_nv_V4;
-
-  case Hexagon::STw_GP_cdnNotPt_V4:
-    return Hexagon::STw_GP_cdnNotPt_nv_V4;
-
-  }
-}
-
 // Returns true if an instruction can be promoted to .new predicate
 // or new-value store.
 bool HexagonPacketizerList::isNewifiable(MachineInstr* MI) {
@@ -781,7 +537,7 @@ bool HexagonPacketizerList::PromoteToDotNew(MachineInstr* MI,
   if (RC == &Hexagon::PredRegsRegClass)
     NewOpcode = QII->GetDotNewPredOp(MI, MBPI);
   else
-    NewOpcode = GetDotNewOp(MI->getOpcode());
+    NewOpcode = QII->GetDotNewOp(MI);
   MI->setDesc(QII->get(NewOpcode));
 
   return true;
@@ -1380,295 +1136,23 @@ bool HexagonPacketizerList::DemoteToDotOld(MachineInstr* MI) {
   return true;
 }
 
-// Returns true if an instruction is predicated on p0 and false if it's
-// predicated on !p0.
+enum PredicateKind {
+  PK_False,
+  PK_True,
+  PK_Unknown
+};
 
-static bool GetPredicateSense(MachineInstr* MI,
-                              const HexagonInstrInfo *QII) {
+/// Returns true if an instruction is predicated on p0 and false if it's
+/// predicated on !p0.
+static PredicateKind getPredicateSense(MachineInstr* MI,
+                                       const HexagonInstrInfo *QII) {
+  if (!QII->isPredicated(MI))
+    return PK_Unknown;
 
-  switch (MI->getOpcode()) {
-  default: llvm_unreachable("Unknown predicate sense of the instruction");
-  case Hexagon::TFR_cPt:
-  case Hexagon::TFR_cdnPt:
-  case Hexagon::TFRI_cPt:
-  case Hexagon::TFRI_cdnPt:
-  case Hexagon::STrib_cPt :
-  case Hexagon::STrib_cdnPt_V4 :
-  case Hexagon::STrib_indexed_cPt :
-  case Hexagon::STrib_indexed_cdnPt_V4 :
-  case Hexagon::STrib_indexed_shl_cPt_V4 :
-  case Hexagon::STrib_indexed_shl_cdnPt_V4 :
-  case Hexagon::POST_STbri_cPt :
-  case Hexagon::POST_STbri_cdnPt_V4 :
-  case Hexagon::STrih_cPt :
-  case Hexagon::STrih_cdnPt_V4 :
-  case Hexagon::STrih_indexed_cPt :
-  case Hexagon::STrih_indexed_cdnPt_V4 :
-  case Hexagon::STrih_indexed_shl_cPt_V4 :
-  case Hexagon::STrih_indexed_shl_cdnPt_V4 :
-  case Hexagon::POST_SThri_cPt :
-  case Hexagon::POST_SThri_cdnPt_V4 :
-  case Hexagon::STriw_cPt :
-  case Hexagon::STriw_cdnPt_V4 :
-  case Hexagon::STriw_indexed_cPt :
-  case Hexagon::STriw_indexed_cdnPt_V4 :
-  case Hexagon::STriw_indexed_shl_cPt_V4 :
-  case Hexagon::STriw_indexed_shl_cdnPt_V4 :
-  case Hexagon::POST_STwri_cPt :
-  case Hexagon::POST_STwri_cdnPt_V4 :
-  case Hexagon::STrib_imm_cPt_V4 :
-  case Hexagon::STrib_imm_cdnPt_V4 :
-  case Hexagon::STrid_cPt :
-  case Hexagon::STrid_cdnPt_V4 :
-  case Hexagon::STrid_indexed_cPt :
-  case Hexagon::STrid_indexed_cdnPt_V4 :
-  case Hexagon::STrid_indexed_shl_cPt_V4 :
-  case Hexagon::STrid_indexed_shl_cdnPt_V4 :
-  case Hexagon::POST_STdri_cPt :
-  case Hexagon::POST_STdri_cdnPt_V4 :
-  case Hexagon::STrih_imm_cPt_V4 :
-  case Hexagon::STrih_imm_cdnPt_V4 :
-  case Hexagon::STriw_imm_cPt_V4 :
-  case Hexagon::STriw_imm_cdnPt_V4 :
-  case Hexagon::JMP_tnew_t :
-  case Hexagon::LDrid_cPt :
-  case Hexagon::LDrid_cdnPt :
-  case Hexagon::LDrid_indexed_cPt :
-  case Hexagon::LDrid_indexed_cdnPt :
-  case Hexagon::POST_LDrid_cPt :
-  case Hexagon::POST_LDrid_cdnPt_V4 :
-  case Hexagon::LDriw_cPt :
-  case Hexagon::LDriw_cdnPt :
-  case Hexagon::LDriw_indexed_cPt :
-  case Hexagon::LDriw_indexed_cdnPt :
-  case Hexagon::POST_LDriw_cPt :
-  case Hexagon::POST_LDriw_cdnPt_V4 :
-  case Hexagon::LDrih_cPt :
-  case Hexagon::LDrih_cdnPt :
-  case Hexagon::LDrih_indexed_cPt :
-  case Hexagon::LDrih_indexed_cdnPt :
-  case Hexagon::POST_LDrih_cPt :
-  case Hexagon::POST_LDrih_cdnPt_V4 :
-  case Hexagon::LDrib_cPt :
-  case Hexagon::LDrib_cdnPt :
-  case Hexagon::LDrib_indexed_cPt :
-  case Hexagon::LDrib_indexed_cdnPt :
-  case Hexagon::POST_LDrib_cPt :
-  case Hexagon::POST_LDrib_cdnPt_V4 :
-  case Hexagon::LDriuh_cPt :
-  case Hexagon::LDriuh_cdnPt :
-  case Hexagon::LDriuh_indexed_cPt :
-  case Hexagon::LDriuh_indexed_cdnPt :
-  case Hexagon::POST_LDriuh_cPt :
-  case Hexagon::POST_LDriuh_cdnPt_V4 :
-  case Hexagon::LDriub_cPt :
-  case Hexagon::LDriub_cdnPt :
-  case Hexagon::LDriub_indexed_cPt :
-  case Hexagon::LDriub_indexed_cdnPt :
-  case Hexagon::POST_LDriub_cPt :
-  case Hexagon::POST_LDriub_cdnPt_V4 :
-  case Hexagon::LDrid_indexed_shl_cPt_V4 :
-  case Hexagon::LDrid_indexed_shl_cdnPt_V4 :
-  case Hexagon::LDrib_indexed_shl_cPt_V4 :
-  case Hexagon::LDrib_indexed_shl_cdnPt_V4 :
-  case Hexagon::LDriub_indexed_shl_cPt_V4 :
-  case Hexagon::LDriub_indexed_shl_cdnPt_V4 :
-  case Hexagon::LDrih_indexed_shl_cPt_V4 :
-  case Hexagon::LDrih_indexed_shl_cdnPt_V4 :
-  case Hexagon::LDriuh_indexed_shl_cPt_V4 :
-  case Hexagon::LDriuh_indexed_shl_cdnPt_V4 :
-  case Hexagon::LDriw_indexed_shl_cPt_V4 :
-  case Hexagon::LDriw_indexed_shl_cdnPt_V4 :
-  case Hexagon::ADD_ri_cPt :
-  case Hexagon::ADD_ri_cdnPt :
-  case Hexagon::ADD_rr_cPt :
-  case Hexagon::ADD_rr_cdnPt :
-  case Hexagon::XOR_rr_cPt :
-  case Hexagon::XOR_rr_cdnPt :
-  case Hexagon::AND_rr_cPt :
-  case Hexagon::AND_rr_cdnPt :
-  case Hexagon::OR_rr_cPt :
-  case Hexagon::OR_rr_cdnPt :
-  case Hexagon::SUB_rr_cPt :
-  case Hexagon::SUB_rr_cdnPt :
-  case Hexagon::COMBINE_rr_cPt :
-  case Hexagon::COMBINE_rr_cdnPt :
-  case Hexagon::ASLH_cPt_V4 :
-  case Hexagon::ASLH_cdnPt_V4 :
-  case Hexagon::ASRH_cPt_V4 :
-  case Hexagon::ASRH_cdnPt_V4 :
-  case Hexagon::SXTB_cPt_V4 :
-  case Hexagon::SXTB_cdnPt_V4 :
-  case Hexagon::SXTH_cPt_V4 :
-  case Hexagon::SXTH_cdnPt_V4 :
-  case Hexagon::ZXTB_cPt_V4 :
-  case Hexagon::ZXTB_cdnPt_V4 :
-  case Hexagon::ZXTH_cPt_V4 :
-  case Hexagon::ZXTH_cdnPt_V4 :
-  case Hexagon::LDd_GP_cPt_V4 :
-  case Hexagon::LDb_GP_cPt_V4 :
-  case Hexagon::LDub_GP_cPt_V4 :
-  case Hexagon::LDh_GP_cPt_V4 :
-  case Hexagon::LDuh_GP_cPt_V4 :
-  case Hexagon::LDw_GP_cPt_V4 :
-  case Hexagon::STd_GP_cPt_V4 :
-  case Hexagon::STb_GP_cPt_V4 :
-  case Hexagon::STh_GP_cPt_V4 :
-  case Hexagon::STw_GP_cPt_V4 :
-  case Hexagon::LDd_GP_cdnPt_V4 :
-  case Hexagon::LDb_GP_cdnPt_V4 :
-  case Hexagon::LDub_GP_cdnPt_V4 :
-  case Hexagon::LDh_GP_cdnPt_V4 :
-  case Hexagon::LDuh_GP_cdnPt_V4 :
-  case Hexagon::LDw_GP_cdnPt_V4 :
-  case Hexagon::STd_GP_cdnPt_V4 :
-  case Hexagon::STb_GP_cdnPt_V4 :
-  case Hexagon::STh_GP_cdnPt_V4 :
-  case Hexagon::STw_GP_cdnPt_V4 :
-    return true;
+  if (QII->isPredicatedTrue(MI))
+    return PK_True;
 
-  case Hexagon::TFR_cNotPt:
-  case Hexagon::TFR_cdnNotPt:
-  case Hexagon::TFRI_cNotPt:
-  case Hexagon::TFRI_cdnNotPt:
-  case Hexagon::STrib_cNotPt :
-  case Hexagon::STrib_cdnNotPt_V4 :
-  case Hexagon::STrib_indexed_cNotPt :
-  case Hexagon::STrib_indexed_cdnNotPt_V4 :
-  case Hexagon::STrib_indexed_shl_cNotPt_V4 :
-  case Hexagon::STrib_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::POST_STbri_cNotPt :
-  case Hexagon::POST_STbri_cdnNotPt_V4 :
-  case Hexagon::STrih_cNotPt :
-  case Hexagon::STrih_cdnNotPt_V4 :
-  case Hexagon::STrih_indexed_cNotPt :
-  case Hexagon::STrih_indexed_cdnNotPt_V4 :
-  case Hexagon::STrih_indexed_shl_cNotPt_V4 :
-  case Hexagon::STrih_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::POST_SThri_cNotPt :
-  case Hexagon::POST_SThri_cdnNotPt_V4 :
-  case Hexagon::STriw_cNotPt :
-  case Hexagon::STriw_cdnNotPt_V4 :
-  case Hexagon::STriw_indexed_cNotPt :
-  case Hexagon::STriw_indexed_cdnNotPt_V4 :
-  case Hexagon::STriw_indexed_shl_cNotPt_V4 :
-  case Hexagon::STriw_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::POST_STwri_cNotPt :
-  case Hexagon::POST_STwri_cdnNotPt_V4 :
-  case Hexagon::STrib_imm_cNotPt_V4 :
-  case Hexagon::STrib_imm_cdnNotPt_V4 :
-  case Hexagon::STrid_cNotPt :
-  case Hexagon::STrid_cdnNotPt_V4 :
-  case Hexagon::STrid_indexed_cdnNotPt_V4 :
-  case Hexagon::STrid_indexed_cNotPt :
-  case Hexagon::STrid_indexed_shl_cNotPt_V4 :
-  case Hexagon::STrid_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::POST_STdri_cNotPt :
-  case Hexagon::POST_STdri_cdnNotPt_V4 :
-  case Hexagon::STrih_imm_cNotPt_V4 :
-  case Hexagon::STrih_imm_cdnNotPt_V4 :
-  case Hexagon::STriw_imm_cNotPt_V4 :
-  case Hexagon::STriw_imm_cdnNotPt_V4 :
-  case Hexagon::JMP_fnew_t :
-  case Hexagon::LDrid_cNotPt :
-  case Hexagon::LDrid_cdnNotPt :
-  case Hexagon::LDrid_indexed_cNotPt :
-  case Hexagon::LDrid_indexed_cdnNotPt :
-  case Hexagon::POST_LDrid_cNotPt :
-  case Hexagon::POST_LDrid_cdnNotPt_V4 :
-  case Hexagon::LDriw_cNotPt :
-  case Hexagon::LDriw_cdnNotPt :
-  case Hexagon::LDriw_indexed_cNotPt :
-  case Hexagon::LDriw_indexed_cdnNotPt :
-  case Hexagon::POST_LDriw_cNotPt :
-  case Hexagon::POST_LDriw_cdnNotPt_V4 :
-  case Hexagon::LDrih_cNotPt :
-  case Hexagon::LDrih_cdnNotPt :
-  case Hexagon::LDrih_indexed_cNotPt :
-  case Hexagon::LDrih_indexed_cdnNotPt :
-  case Hexagon::POST_LDrih_cNotPt :
-  case Hexagon::POST_LDrih_cdnNotPt_V4 :
-  case Hexagon::LDrib_cNotPt :
-  case Hexagon::LDrib_cdnNotPt :
-  case Hexagon::LDrib_indexed_cNotPt :
-  case Hexagon::LDrib_indexed_cdnNotPt :
-  case Hexagon::POST_LDrib_cNotPt :
-  case Hexagon::POST_LDrib_cdnNotPt_V4 :
-  case Hexagon::LDriuh_cNotPt :
-  case Hexagon::LDriuh_cdnNotPt :
-  case Hexagon::LDriuh_indexed_cNotPt :
-  case Hexagon::LDriuh_indexed_cdnNotPt :
-  case Hexagon::POST_LDriuh_cNotPt :
-  case Hexagon::POST_LDriuh_cdnNotPt_V4 :
-  case Hexagon::LDriub_cNotPt :
-  case Hexagon::LDriub_cdnNotPt :
-  case Hexagon::LDriub_indexed_cNotPt :
-  case Hexagon::LDriub_indexed_cdnNotPt :
-  case Hexagon::POST_LDriub_cNotPt :
-  case Hexagon::POST_LDriub_cdnNotPt_V4 :
-  case Hexagon::LDrid_indexed_shl_cNotPt_V4 :
-  case Hexagon::LDrid_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDrib_indexed_shl_cNotPt_V4 :
-  case Hexagon::LDrib_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDriub_indexed_shl_cNotPt_V4 :
-  case Hexagon::LDriub_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDrih_indexed_shl_cNotPt_V4 :
-  case Hexagon::LDrih_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDriuh_indexed_shl_cNotPt_V4 :
-  case Hexagon::LDriuh_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::LDriw_indexed_shl_cNotPt_V4 :
-  case Hexagon::LDriw_indexed_shl_cdnNotPt_V4 :
-  case Hexagon::ADD_ri_cNotPt :
-  case Hexagon::ADD_ri_cdnNotPt :
-  case Hexagon::ADD_rr_cNotPt :
-  case Hexagon::ADD_rr_cdnNotPt :
-  case Hexagon::XOR_rr_cNotPt :
-  case Hexagon::XOR_rr_cdnNotPt :
-  case Hexagon::AND_rr_cNotPt :
-  case Hexagon::AND_rr_cdnNotPt :
-  case Hexagon::OR_rr_cNotPt :
-  case Hexagon::OR_rr_cdnNotPt :
-  case Hexagon::SUB_rr_cNotPt :
-  case Hexagon::SUB_rr_cdnNotPt :
-  case Hexagon::COMBINE_rr_cNotPt :
-  case Hexagon::COMBINE_rr_cdnNotPt :
-  case Hexagon::ASLH_cNotPt_V4 :
-  case Hexagon::ASLH_cdnNotPt_V4 :
-  case Hexagon::ASRH_cNotPt_V4 :
-  case Hexagon::ASRH_cdnNotPt_V4 :
-  case Hexagon::SXTB_cNotPt_V4 :
-  case Hexagon::SXTB_cdnNotPt_V4 :
-  case Hexagon::SXTH_cNotPt_V4 :
-  case Hexagon::SXTH_cdnNotPt_V4 :
-  case Hexagon::ZXTB_cNotPt_V4 :
-  case Hexagon::ZXTB_cdnNotPt_V4 :
-  case Hexagon::ZXTH_cNotPt_V4 :
-  case Hexagon::ZXTH_cdnNotPt_V4 :
-
-  case Hexagon::LDd_GP_cNotPt_V4 :
-  case Hexagon::LDb_GP_cNotPt_V4 :
-  case Hexagon::LDub_GP_cNotPt_V4 :
-  case Hexagon::LDh_GP_cNotPt_V4 :
-  case Hexagon::LDuh_GP_cNotPt_V4 :
-  case Hexagon::LDw_GP_cNotPt_V4 :
-  case Hexagon::STd_GP_cNotPt_V4 :
-  case Hexagon::STb_GP_cNotPt_V4 :
-  case Hexagon::STh_GP_cNotPt_V4 :
-  case Hexagon::STw_GP_cNotPt_V4 :
-  case Hexagon::LDd_GP_cdnNotPt_V4 :
-  case Hexagon::LDb_GP_cdnNotPt_V4 :
-  case Hexagon::LDub_GP_cdnNotPt_V4 :
-  case Hexagon::LDh_GP_cdnNotPt_V4 :
-  case Hexagon::LDuh_GP_cdnNotPt_V4 :
-  case Hexagon::LDw_GP_cdnNotPt_V4 :
-  case Hexagon::STd_GP_cdnNotPt_V4 :
-  case Hexagon::STb_GP_cdnNotPt_V4 :
-  case Hexagon::STh_GP_cdnNotPt_V4 :
-  case Hexagon::STw_GP_cdnNotPt_V4 :
-    return false;
-  }
-  // return *some value* to avoid compiler warning
-  return false;
+  return PK_False;
 }
 
 static MachineOperand& GetPostIncrementOperand(MachineInstr *MI,
@@ -1842,7 +1326,7 @@ bool HexagonPacketizerList::CanPromoteToNewValueStore( MachineInstr *MI,
 
     if (( predRegNumDst != predRegNumSrc) ||
           QII->isDotNewInst(PacketMI) != QII->isDotNewInst(MI)  ||
-          GetPredicateSense(MI, QII) != GetPredicateSense(PacketMI, QII)) {
+          getPredicateSense(MI, QII) != getPredicateSense(PacketMI, QII)) {
       return false;
     }
   }
@@ -1968,7 +1452,7 @@ bool HexagonPacketizerList::CanPromoteToDotNew( MachineInstr *MI,
   else {
     // Create a dot new machine instruction to see if resources can be
     // allocated. If not, bail out now.
-    int NewOpcode = GetDotNewOp(MI->getOpcode());
+    int NewOpcode = QII->GetDotNewOp(MI);
     const MCInstrDesc &desc = QII->get(NewOpcode);
     DebugLoc dl;
     MachineInstr *NewMI =
@@ -2109,7 +1593,7 @@ bool HexagonPacketizerList::ArePredicatesComplements (MachineInstr* MI1,
   // We also need to differentiate .old vs. .new:
   // !p0 is not complimentary to p0.new
   return ((MI1->getOperand(1).getReg() == MI2->getOperand(1).getReg()) &&
-          (GetPredicateSense(MI1, QII) != GetPredicateSense(MI2, QII)) &&
+          (getPredicateSense(MI1, QII) != getPredicateSense(MI2, QII)) &&
           (QII->isDotNewInst(MI1) == QII->isDotNewInst(MI2)));
 }
 
