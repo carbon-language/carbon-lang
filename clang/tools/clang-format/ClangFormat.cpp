@@ -29,10 +29,10 @@ using namespace llvm;
 static cl::opt<bool> Help("h", cl::desc("Alias for -help"), cl::Hidden);
 
 static cl::list<unsigned>
-Offsets("offset", cl::desc("Format a range starting at this file offset. Can "
+Offsets("offset", cl::desc("Format a range starting at this byte offset. Can "
                            "only be used with one input file."));
 static cl::list<unsigned>
-Lengths("length", cl::desc("Format a range of this length. "
+Lengths("length", cl::desc("Format a range of this length (in bytes). "
                            "When it's not specified, end of file is used. "
                            "Can only be used with one input file."));
 static cl::opt<std::string> Style(
@@ -80,6 +80,8 @@ FormatStyle getStyle(StringRef StyleName, StringRef FileName) {
     llvm::sys::path::append(ConfigFile, ".clang-format");
     DEBUG(llvm::dbgs() << "Trying " << ConfigFile << "...\n");
     bool IsFile = false;
+    // Ignore errors from is_regular_file: we only need to know if we can read
+    // the file or not.
     llvm::sys::fs::is_regular_file(Twine(ConfigFile), IsFile);
     if (IsFile) {
       OwningPtr<MemoryBuffer> Text;
