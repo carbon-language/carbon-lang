@@ -183,8 +183,7 @@ Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
   // specific module (e.g., in /usr/include).
   if (File->getDir() == BuiltinIncludeDir &&
       isBuiltinHeader(llvm::sys::path::filename(File->getName()))) {
-    SmallVector<Module *, 4> AllModules;
-    HeaderInfo.collectAllModules(AllModules);
+    HeaderInfo.loadTopLevelSystemModules();
 
     // Check again.
     Known = Headers.find(File);

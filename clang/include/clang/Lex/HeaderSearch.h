@@ -492,7 +492,10 @@ public:
   ///
   /// \param Modules Will be filled with the set of known, top-level modules.
   void collectAllModules(SmallVectorImpl<Module *> &Modules);
-                         
+
+  /// \brief Load all known, top-level system modules.
+  void loadTopLevelSystemModules();
+
 private:
   /// \brief Retrieve a module with the given name, which may be part of the
   /// given framework.
