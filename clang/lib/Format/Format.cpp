@@ -46,10 +46,19 @@ struct ScalarEnumerationTraits<clang::format::FormatStyle::LanguageStandard> {
 
 template <> struct MappingTraits<clang::format::FormatStyle> {
   static void mapping(llvm::yaml::IO &IO, clang::format::FormatStyle &Style) {
-    if (!IO.outputting()) {
+    if (IO.outputting()) {
+      StringRef StylesArray[] = { "LLVM", "Google", "Chromium", "Mozilla" };
+      ArrayRef<StringRef> Styles(StylesArray);
+      for (size_t i = 0, e = Styles.size(); i < e; ++i) {
+        StringRef StyleName(Styles[i]);
+        if (Style == clang::format::getPredefinedStyle(StyleName)) {
+          IO.mapOptional("# BasedOnStyle", StyleName);
+          break;
+        }
+      }
+    } else {
       StringRef BasedOnStyle;
       IO.mapOptional("BasedOnStyle", BasedOnStyle);
-
       if (!BasedOnStyle.empty())
         Style = clang::format::getPredefinedStyle(BasedOnStyle);
     }
@@ -245,9 +254,9 @@ public:
 private:
   void DebugTokenState(const AnnotatedToken &AnnotatedTok) {
     const Token &Tok = AnnotatedTok.FormatTok.Tok;
-    llvm::errs() << StringRef(SourceMgr.getCharacterData(Tok.getLocation()),
+    llvm::dbgs() << StringRef(SourceMgr.getCharacterData(Tok.getLocation()),
                               Tok.getLength());
-    llvm::errs();
+    llvm::dbgs();
   }
 
   struct ParenState {
@@ -825,7 +834,7 @@ private:
       unsigned Penalty = Queue.top().first.first;
       StateNode *Node = Queue.top().second;
       if (Node->State.NextToken == NULL) {
-        DEBUG(llvm::errs() << "\n---\nPenalty for line: " << Penalty << "\n");
+        DEBUG(llvm::dbgs() << "\n---\nPenalty for line: " << Penalty << "\n");
         break;
       }
       Queue.pop();
@@ -845,8 +854,8 @@ private:
 
     // Reconstruct the solution.
     reconstructPath(InitialState, Queue.top().second);
-    DEBUG(llvm::errs() << "Total number of analyzed states: " << Count << "\n");
-    DEBUG(llvm::errs() << "---\n");
+    DEBUG(llvm::dbgs() << "Total number of analyzed states: " << Count << "\n");
+    DEBUG(llvm::dbgs() << "---\n");
 
     // Return the column after the last token of the solution.
     return Queue.top().second->State.Column;
@@ -862,7 +871,7 @@ private:
     reconstructPath(State, Current->Previous);
     DEBUG({
       if (Current->NewLine) {
-        llvm::errs()
+        llvm::dbgs()
             << "Penalty for splitting before "
             << Current->Previous->State.NextToken->FormatTok.Tok.getName()
             << ": " << Current->Previous->State.NextToken->SplitPenalty << "\n";

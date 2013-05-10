@@ -3933,28 +3933,6 @@ TEST_F(FormatTest, DoNotCreateUnreasonableUnwrappedLines) {
                "}");
 }
 
-bool operator==(const FormatStyle &L, const FormatStyle &R) {
-  return L.AccessModifierOffset == R.AccessModifierOffset &&
-         L.AlignEscapedNewlinesLeft == R.AlignEscapedNewlinesLeft &&
-         L.AllowAllParametersOfDeclarationOnNextLine ==
-             R.AllowAllParametersOfDeclarationOnNextLine &&
-         L.AllowShortIfStatementsOnASingleLine ==
-             R.AllowShortIfStatementsOnASingleLine &&
-         L.BinPackParameters == R.BinPackParameters &&
-         L.ColumnLimit == R.ColumnLimit &&
-         L.ConstructorInitializerAllOnOneLineOrOnePerLine ==
-             R.ConstructorInitializerAllOnOneLineOrOnePerLine &&
-         L.DerivePointerBinding == R.DerivePointerBinding &&
-         L.IndentCaseLabels == R.IndentCaseLabels &&
-         L.MaxEmptyLinesToKeep == R.MaxEmptyLinesToKeep &&
-         L.ObjCSpaceBeforeProtocolList == R.ObjCSpaceBeforeProtocolList &&
-         L.PenaltyExcessCharacter == R.PenaltyExcessCharacter &&
-         L.PenaltyReturnTypeOnItsOwnLine == R.PenaltyReturnTypeOnItsOwnLine &&
-         L.PointerBindsToType == R.PointerBindsToType &&
-         L.SpacesBeforeTrailingComments == R.SpacesBeforeTrailingComments &&
-         L.Standard == R.Standard;
-}
-
 bool allStylesEqual(ArrayRef<FormatStyle> Styles) {
   for (size_t i = 1; i < Styles.size(); ++i)
     if (!(Styles[0] == Styles[i]))

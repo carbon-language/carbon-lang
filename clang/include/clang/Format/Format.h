@@ -93,6 +93,29 @@ struct FormatStyle {
   /// \brief If \c true, aligns escaped newlines as far left as possible.
   /// Otherwise puts them into the right-most column.
   bool AlignEscapedNewlinesLeft;
+
+  bool operator==(const FormatStyle &R) const {
+    return AccessModifierOffset == R.AccessModifierOffset &&
+           AlignEscapedNewlinesLeft == R.AlignEscapedNewlinesLeft &&
+           AllowAllParametersOfDeclarationOnNextLine ==
+               R.AllowAllParametersOfDeclarationOnNextLine &&
+           AllowShortIfStatementsOnASingleLine ==
+               R.AllowShortIfStatementsOnASingleLine &&
+           BinPackParameters == R.BinPackParameters &&
+           ColumnLimit == R.ColumnLimit &&
+           ConstructorInitializerAllOnOneLineOrOnePerLine ==
+               R.ConstructorInitializerAllOnOneLineOrOnePerLine &&
+           DerivePointerBinding == R.DerivePointerBinding &&
+           IndentCaseLabels == R.IndentCaseLabels &&
+           MaxEmptyLinesToKeep == R.MaxEmptyLinesToKeep &&
+           ObjCSpaceBeforeProtocolList == R.ObjCSpaceBeforeProtocolList &&
+           PenaltyExcessCharacter == R.PenaltyExcessCharacter &&
+           PenaltyReturnTypeOnItsOwnLine == R.PenaltyReturnTypeOnItsOwnLine &&
+           PointerBindsToType == R.PointerBindsToType &&
+           SpacesBeforeTrailingComments == R.SpacesBeforeTrailingComments &&
+           Standard == R.Standard;
+  }
+
 };
 
 /// \brief Returns a format style complying with the LLVM coding standards:
