@@ -1521,7 +1521,7 @@ StringRef BuiltinType::getName(const PrintingPolicy &Policy) const {
   case Double:            return "double";
   case LongDouble:        return "long double";
   case WChar_S:
-  case WChar_U:           return "wchar_t";
+  case WChar_U:           return Policy.MSWChar ? "__wchar_t" : "wchar_t";
   case Char16:            return "char16_t";
   case Char32:            return "char32_t";
   case NullPtr:           return "nullptr_t";

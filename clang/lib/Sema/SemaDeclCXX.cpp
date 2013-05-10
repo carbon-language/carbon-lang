@@ -10408,7 +10408,7 @@ bool Sema::CheckLiteralOperatorDeclaration(FunctionDecl *FnDecl) {
     if (Context.hasSameType(T, Context.UnsignedLongLongTy) ||
         Context.hasSameType(T, Context.LongDoubleTy) ||
         Context.hasSameType(T, Context.CharTy) ||
-        Context.hasSameType(T, Context.WCharTy) ||
+        Context.hasSameType(T, Context.WideCharTy) ||
         Context.hasSameType(T, Context.Char16Ty) ||
         Context.hasSameType(T, Context.Char32Ty)) {
       if (++Param == FnDecl->param_end())
@@ -10438,7 +10438,7 @@ bool Sema::CheckLiteralOperatorDeclaration(FunctionDecl *FnDecl) {
     // const char *, const wchar_t*, const char16_t*, and const char32_t*
     // are allowed as the first parameter to a two-parameter function
     if (!(Context.hasSameType(T, Context.CharTy) ||
-          Context.hasSameType(T, Context.WCharTy) ||
+          Context.hasSameType(T, Context.WideCharTy) ||
           Context.hasSameType(T, Context.Char16Ty) ||
           Context.hasSameType(T, Context.Char32Ty)))
       goto FinishedParams;

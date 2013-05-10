@@ -334,7 +334,7 @@ bool ArgType::matchesType(ASTContext &C, QualType argTy) const {
         return false;
       QualType pointeeTy =
         C.getCanonicalType(PT->getPointeeType()).getUnqualifiedType();
-      return pointeeTy == C.getWCharType();
+      return pointeeTy == C.getWideCharType();
     }
     
     case WIntTy: {
@@ -398,7 +398,7 @@ QualType ArgType::getRepresentativeType(ASTContext &C) const {
       Res = C.getPointerType(C.CharTy);
       break;
     case WCStrTy:
-      Res = C.getPointerType(C.getWCharType());
+      Res = C.getPointerType(C.getWideCharType());
       break;
     case ObjCPointerTy:
       Res = C.ObjCBuiltinIdTy;

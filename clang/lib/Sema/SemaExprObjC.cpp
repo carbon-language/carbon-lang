@@ -266,7 +266,7 @@ ExprResult Sema::BuildObjCNumericLiteral(SourceLocation AtLoc, Expr *Number) {
       break;
       
     case CharacterLiteral::Wide:
-      NumberType = Context.getWCharType();
+      NumberType = Context.getWideCharType();
       break;
       
     case CharacterLiteral::UTF16:
@@ -521,7 +521,7 @@ ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
         break;
         
       case CharacterLiteral::Wide:
-        ValueType = Context.getWCharType();
+        ValueType = Context.getWideCharType();
         break;
         
       case CharacterLiteral::UTF16:

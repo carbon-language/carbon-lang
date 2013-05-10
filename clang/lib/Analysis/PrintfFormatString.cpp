@@ -372,7 +372,7 @@ ArgType PrintfSpecifier::getArgType(ASTContext &Ctx,
     case ConversionSpecifier::CArg:
       if (IsObjCLiteral)
         return ArgType(Ctx.UnsignedShortTy, "unichar");
-      return ArgType(Ctx.WCharTy, "wchar_t");
+      return ArgType(Ctx.WideCharTy, "wchar_t");
     case ConversionSpecifier::pArg:
       return ArgType::CPointerTy;
     case ConversionSpecifier::ObjCObjArg:

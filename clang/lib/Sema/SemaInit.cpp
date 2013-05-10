@@ -65,7 +65,7 @@ static Expr *IsStringInit(Expr *Init, const ArrayType *AT,
     // correction from DR343): "An array with element type compatible with a
     // qualified or unqualified version of wchar_t may be initialized by a wide
     // string literal, optionally enclosed in braces."
-    if (Context.typesAreCompatible(Context.getWCharType(),
+    if (Context.typesAreCompatible(Context.getWideCharType(),
                                    ElemTy.getUnqualifiedType()))
       return Init;
 

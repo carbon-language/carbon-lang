@@ -1448,7 +1448,7 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks,
 
   QualType StrTy = Context.CharTy;
   if (Literal.isWide())
-    StrTy = Context.getWCharType();
+    StrTy = Context.getWideCharType();
   else if (Literal.isUTF16())
     StrTy = Context.Char16Ty;
   else if (Literal.isUTF32())
@@ -2720,7 +2720,7 @@ ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc, tok::TokenKind Kind) {
 
     llvm::APInt LengthI(32, Length + 1);
     if (IT == PredefinedExpr::LFunction)
-      ResTy = Context.WCharTy.withConst();
+      ResTy = Context.WideCharTy.withConst();
     else
       ResTy = Context.CharTy.withConst();
     ResTy = Context.getConstantArrayType(ResTy, LengthI, ArrayType::Normal, 0);
@@ -2742,7 +2742,7 @@ ExprResult Sema::ActOnCharacterConstant(const Token &Tok, Scope *UDLScope) {
 
   QualType Ty;
   if (Literal.isWide())
-    Ty = Context.WCharTy; // L'x' -> wchar_t in C and C++.
+    Ty = Context.WideCharTy; // L'x' -> wchar_t in C and C++.
   else if (Literal.isUTF16())
     Ty = Context.Char16Ty; // u'x' -> char16_t in C11 and C++11.
   else if (Literal.isUTF32())
