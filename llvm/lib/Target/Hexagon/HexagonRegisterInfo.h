@@ -78,7 +78,6 @@ struct HexagonRegisterInfo : public HexagonGenRegisterInfo {
   unsigned getRARegister() const;
   unsigned getFrameRegister(const MachineFunction &MF) const;
   unsigned getFrameRegister() const;
-  void getInitialFrameState(std::vector<MachineMove> &Moves) const;
   unsigned getStackRegister() const;
 
   // Exception handling queries.

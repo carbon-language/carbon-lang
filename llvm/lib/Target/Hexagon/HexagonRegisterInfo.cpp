@@ -295,16 +295,6 @@ unsigned HexagonRegisterInfo::getStackRegister() const {
   return Hexagon::R29;
 }
 
-void HexagonRegisterInfo::getInitialFrameState(std::vector<MachineMove>
-                                               &Moves)  const
-{
-  // VirtualFP = (R30 + #0).
-  unsigned FPReg = getFrameRegister();
-  MachineLocation Dst(MachineLocation::VirtualFP);
-  MachineLocation Src(FPReg, 0);
-  Moves.push_back(MachineMove(0, Dst, Src));
-}
-
 unsigned HexagonRegisterInfo::getEHExceptionRegister() const {
   llvm_unreachable("What is the exception register");
 }
