@@ -58,6 +58,7 @@ enum FoundationClass {
   FC_NSArray,
   FC_NSDictionary,
   FC_NSEnumerator,
+  FC_NSNull,
   FC_NSOrderedSet,
   FC_NSSet,
   FC_NSString
@@ -69,6 +70,7 @@ static FoundationClass findKnownClass(const ObjCInterfaceDecl *ID) {
     Classes["NSArray"] = FC_NSArray;
     Classes["NSDictionary"] = FC_NSDictionary;
     Classes["NSEnumerator"] = FC_NSEnumerator;
+    Classes["NSNull"] = FC_NSNull;
     Classes["NSOrderedSet"] = FC_NSOrderedSet;
     Classes["NSSet"] = FC_NSSet;
     Classes["NSString"] = FC_NSString;
@@ -845,6 +847,7 @@ class ObjCNonNilReturnValueChecker
     mutable bool Initialized;
     mutable Selector ObjectAtIndex;
     mutable Selector ObjectAtIndexedSubscript;
+    mutable Selector NullSelector;
 
 public:
   ObjCNonNilReturnValueChecker() : Initialized(false) {}
@@ -870,6 +873,7 @@ void ObjCNonNilReturnValueChecker::checkPostObjCMessage(const ObjCMethodCall &M,
     ASTContext &Ctx = C.getASTContext();
     ObjectAtIndex = GetUnarySelector("objectAtIndex", Ctx);
     ObjectAtIndexedSubscript = GetUnarySelector("objectAtIndexedSubscript", Ctx);
+    NullSelector = GetNullarySelector("null", Ctx);
   }
 
   // Check the receiver type.
@@ -889,13 +893,22 @@ void ObjCNonNilReturnValueChecker::checkPostObjCMessage(const ObjCMethodCall &M,
       State = assumeExprIsNonNull(M.getOriginExpr(), State, C);
     }
 
+    FoundationClass Cl = findKnownClass(Interface);
+
     // Objects returned from
     // [NSArray|NSOrderedSet]::[ObjectAtIndex|ObjectAtIndexedSubscript]
     // are never 'nil'.
-    FoundationClass Cl = findKnownClass(Interface);
     if (Cl == FC_NSArray || Cl == FC_NSOrderedSet) {
       Selector Sel = M.getSelector();
       if (Sel == ObjectAtIndex || Sel == ObjectAtIndexedSubscript) {
+        // Go ahead and assume the value is non-nil.
+        State = assumeExprIsNonNull(M.getOriginExpr(), State, C);
+      }
+    }
+
+    // Objects returned from [NSNull null] are not nil.
+    if (Cl == FC_NSNull) {
+      if (M.getSelector() == NullSelector) {
         // Go ahead and assume the value is non-nil.
         State = assumeExprIsNonNull(M.getOriginExpr(), State, C);
       }

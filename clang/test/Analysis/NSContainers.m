@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.NilArg -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.NonNilReturnValue,osx.cocoa.NilArg -verify -Wno-objc-root-class %s
 typedef unsigned long NSUInteger;
 typedef signed char BOOL;
 typedef struct _NSZone NSZone;
@@ -79,6 +79,10 @@ typedef struct _NSZone NSZone;
 
 @interface NSString : NSObject <NSCopying, NSMutableCopying, NSSecureCoding>
 
+@end
+
+@interface NSNull : NSObject <NSCopying, NSSecureCoding>
++ (NSNull *)null;
 @end
 
 // NSMutableArray API
@@ -195,6 +199,15 @@ void testNilReceiverRetNil2(NSMutableDictionary *D, Foo *FooPtrIn, id value) {
   // key is nil because FooPtr is nil. However, FooPtr is set to nil inside an
   // inlined function, so this error report should be suppressed.
   [D setObject: value forKey: key]; // no-warning
+}
+
+void testAssumeNSNullNullReturnsNonNil(NSMutableDictionary *Table, id Object,
+                                      id InValue) {
+  id Value = Object ? [Table objectForKey:Object] : [NSNull null];
+  if (!Value) {
+    Value = InValue;
+    [Table setObject:Value forKey:Object]; // no warning
+  }
 }
 
 
