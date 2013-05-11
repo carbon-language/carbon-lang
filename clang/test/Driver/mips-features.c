@@ -60,6 +60,18 @@
 // RUN:   | FileCheck --check-prefix=CHECK-NOXGOT %s
 // CHECK-NOXGOT-NOT: "-mllvm" "-mxgot"
 //
+// -mldc1-sdc1
+// RUN: %clang -target mips-linux-gnu -### -c %s \
+// RUN:     -mno-ldc1-sdc1 -mldc1-sdc1 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-LDC1SDC1 %s
+// CHECK-LDC1SDC1-NOT: "-mllvm" "-mno-ldc1-sdc1"
+//
+// -mno-ldc1-sdc1
+// RUN: %clang -target mips-linux-gnu -### -c %s \
+// RUN:     -mldc1-sdc1 -mno-ldc1-sdc1 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NOLDC1SDC1 %s
+// CHECK-NOLDC1SDC1: "-mllvm" "-mno-ldc1-sdc1"
+//
 // -G
 // RUN: %clang -target mips-linux-gnu -### -c %s \
 // RUN:     -G 16 2>&1 \
