@@ -297,7 +297,6 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
   SystemZMachineFunctionInfo *ZFI = MF.getInfo<SystemZMachineFunctionInfo>();
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineModuleInfo &MMI = MF.getMMI();
-  std::vector<MachineMove> &Moves = MMI.getFrameMoves();
   const std::vector<CalleeSavedInfo> &CSI = MFFrame->getCalleeSavedInfo();
   bool HasFP = hasFP(MF);
   DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
@@ -323,7 +322,7 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
         int64_t Offset = SPOffsetFromCFA + RegSpillOffsets[Reg];
         MachineLocation StackSlot(MachineLocation::VirtualFP, Offset);
         MachineLocation RegValue(Reg);
-        Moves.push_back(MachineMove(GPRSaveLabel, StackSlot, RegValue));
+        MMI.addFrameMove(GPRSaveLabel, StackSlot, RegValue);
       }
     }
   }
@@ -340,7 +339,7 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
       .addSym(AdjustSPLabel);
     MachineLocation FPDest(MachineLocation::VirtualFP);
     MachineLocation FPSrc(MachineLocation::VirtualFP, SPOffsetFromCFA + Delta);
-    Moves.push_back(MachineMove(AdjustSPLabel, FPDest, FPSrc));
+    MMI.addFrameMove(AdjustSPLabel, FPDest, FPSrc);
     SPOffsetFromCFA += Delta;
   }
 
@@ -355,7 +354,7 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
       .addSym(SetFPLabel);
     MachineLocation HardFP(SystemZ::R11D);
     MachineLocation VirtualFP(MachineLocation::VirtualFP);
-    Moves.push_back(MachineMove(SetFPLabel, HardFP, VirtualFP));
+    MMI.addFrameMove(SetFPLabel, HardFP, VirtualFP);
 
     // Mark the FramePtr as live at the beginning of every block except
     // the entry block.  (We'll have marked R11 as live on entry when
@@ -386,7 +385,7 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
       MachineLocation Slot(MachineLocation::VirtualFP,
                            SPOffsetFromCFA + Offset);
       MachineLocation RegValue(Reg);
-      Moves.push_back(MachineMove(FPRSaveLabel, Slot, RegValue));
+      MMI.addFrameMove(FPRSaveLabel, Slot, RegValue);
     }
   }
   // Complete the CFI for the FPR saves, modelling them as taking effect

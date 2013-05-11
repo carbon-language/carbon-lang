@@ -312,7 +312,6 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
   if (CSI.empty()) return;
 
-  std::vector<MachineMove> &Moves = MMI.getFrameMoves();
   const X86RegisterInfo *RegInfo = TM.getRegisterInfo();
   bool HasFP = hasFP(MF);
 
@@ -362,7 +361,7 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
 
     MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
     MachineLocation CSSrc(Reg);
-    Moves.push_back(MachineMove(Label, CSDst, CSSrc));
+    MMI.addFrameMove(Label, CSDst, CSSrc);
   }
 }
 
@@ -732,7 +731,6 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   //        REG < 64                    => DW_CFA_offset + Reg
   //        ELSE                        => DW_CFA_offset_extended
 
-  std::vector<MachineMove> &Moves = MMI.getFrameMoves();
   uint64_t NumBytes = 0;
   int stackGrowth = -SlotSize;
 
@@ -768,17 +766,17 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
       if (StackSize) {
         MachineLocation SPDst(MachineLocation::VirtualFP);
         MachineLocation SPSrc(MachineLocation::VirtualFP, 2 * stackGrowth);
-        Moves.push_back(MachineMove(FrameLabel, SPDst, SPSrc));
+        MMI.addFrameMove(FrameLabel, SPDst, SPSrc);
       } else {
         MachineLocation SPDst(StackPtr);
         MachineLocation SPSrc(StackPtr, stackGrowth);
-        Moves.push_back(MachineMove(FrameLabel, SPDst, SPSrc));
+        MMI.addFrameMove(FrameLabel, SPDst, SPSrc);
       }
 
       // Change the rule for the FramePtr to be an "offset" rule.
       MachineLocation FPDst(MachineLocation::VirtualFP, 2 * stackGrowth);
       MachineLocation FPSrc(FramePtr);
-      Moves.push_back(MachineMove(FrameLabel, FPDst, FPSrc));
+      MMI.addFrameMove(FrameLabel, FPDst, FPSrc);
     }
 
     // Update EBP with the new base value.
@@ -796,7 +794,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
       // Define the current CFA to use the EBP/RBP register.
       MachineLocation FPDst(FramePtr);
       MachineLocation FPSrc(MachineLocation::VirtualFP);
-      Moves.push_back(MachineMove(FrameLabel, FPDst, FPSrc));
+      MMI.addFrameMove(FrameLabel, FPDst, FPSrc);
     }
 
     // Mark the FramePtr as live-in in every block except the entry.
@@ -827,7 +825,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
       unsigned Ptr = StackSize ? MachineLocation::VirtualFP : StackPtr;
       MachineLocation SPDst(Ptr);
       MachineLocation SPSrc(Ptr, StackOffset);
-      Moves.push_back(MachineMove(Label, SPDst, SPSrc));
+      MMI.addFrameMove(Label, SPDst, SPSrc);
       StackOffset += stackGrowth;
     }
   }
@@ -965,11 +963,11 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
         MachineLocation SPDst(MachineLocation::VirtualFP);
         MachineLocation SPSrc(MachineLocation::VirtualFP,
                               -StackSize + stackGrowth);
-        Moves.push_back(MachineMove(Label, SPDst, SPSrc));
+        MMI.addFrameMove(Label, SPDst, SPSrc);
       } else {
         MachineLocation SPDst(StackPtr);
         MachineLocation SPSrc(StackPtr, stackGrowth);
-        Moves.push_back(MachineMove(Label, SPDst, SPSrc));
+        MMI.addFrameMove(Label, SPDst, SPSrc);
       }
     }
 

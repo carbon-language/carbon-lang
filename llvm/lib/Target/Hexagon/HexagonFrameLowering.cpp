@@ -113,8 +113,6 @@ void HexagonFrameLowering::emitPrologue(MachineFunction &MF) const {
     MO.setImm(MFI->getMaxCallFrameSize());
   }
 
- std::vector<MachineMove> &Moves = MMI.getFrameMoves();
-
  if (needsFrameMoves) {
    // Advance CFA. DW_CFA_def_cfa
    unsigned FPReg = QRI->getFrameRegister();
@@ -122,17 +120,17 @@ void HexagonFrameLowering::emitPrologue(MachineFunction &MF) const {
 
    MachineLocation Dst(MachineLocation::VirtualFP);
    MachineLocation Src(FPReg, -8);
-   Moves.push_back(MachineMove(0, Dst, Src));
+   MMI.addFrameMove(0, Dst, Src);
 
    // R31 = (R31 - #4)
    MachineLocation LRDst(RAReg, -4);
    MachineLocation LRSrc(RAReg);
-   Moves.push_back(MachineMove(0, LRDst, LRSrc));
+   MMI.addFrameMove(0, LRDst, LRSrc);
 
    // R30 = (R30 - #8)
    MachineLocation SPDst(FPReg, -8);
    MachineLocation SPSrc(FPReg);
-   Moves.push_back(MachineMove(0, SPDst, SPSrc));
+   MMI.addFrameMove(0, SPDst, SPSrc);
  }
 
   //

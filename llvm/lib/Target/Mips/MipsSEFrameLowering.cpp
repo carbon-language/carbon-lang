@@ -262,7 +262,6 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
   if (StackSize == 0 && !MFI->adjustsStack()) return;
 
   MachineModuleInfo &MMI = MF.getMMI();
-  std::vector<MachineMove> &Moves = MMI.getFrameMoves();
   MachineLocation DstML, SrcML;
 
   // Adjust stack.
@@ -274,7 +273,7 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
           TII.get(TargetOpcode::PROLOG_LABEL)).addSym(AdjustSPLabel);
   DstML = MachineLocation(MachineLocation::VirtualFP);
   SrcML = MachineLocation(MachineLocation::VirtualFP, -StackSize);
-  Moves.push_back(MachineMove(AdjustSPLabel, DstML, SrcML));
+  MMI.addFrameMove(AdjustSPLabel, DstML, SrcML);
 
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
 
@@ -306,13 +305,13 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
         if (!STI.isLittle())
           std::swap(SrcML0, SrcML1);
 
-        Moves.push_back(MachineMove(CSLabel, DstML0, SrcML0));
-        Moves.push_back(MachineMove(CSLabel, DstML1, SrcML1));
+        MMI.addFrameMove(CSLabel, DstML0, SrcML0);
+        MMI.addFrameMove(CSLabel, DstML1, SrcML1);
       } else {
         // Reg is either in CPURegs or FGR32.
         DstML = MachineLocation(MachineLocation::VirtualFP, Offset);
         SrcML = MachineLocation(Reg);
-        Moves.push_back(MachineMove(CSLabel, DstML, SrcML));
+        MMI.addFrameMove(CSLabel, DstML, SrcML);
       }
     }
   }
@@ -337,7 +336,7 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
       int64_t Offset = MFI->getObjectOffset(MipsFI->getEhDataRegFI(I));
       DstML = MachineLocation(MachineLocation::VirtualFP, Offset);
       SrcML = MachineLocation(ehDataReg(I));
-      Moves.push_back(MachineMove(CSLabel2, DstML, SrcML));
+      MMI.addFrameMove(CSLabel2, DstML, SrcML);
     }
   }
 
@@ -352,7 +351,7 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
             TII.get(TargetOpcode::PROLOG_LABEL)).addSym(SetFPLabel);
     DstML = MachineLocation(FP);
     SrcML = MachineLocation(MachineLocation::VirtualFP);
-    Moves.push_back(MachineMove(SetFPLabel, DstML, SrcML));
+    MMI.addFrameMove(SetFPLabel, DstML, SrcML);
   }
 }
 

@@ -515,8 +515,6 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
     }
   }
 
-  std::vector<MachineMove> &Moves = MMI.getFrameMoves();
-
   // Add the "machine moves" for the instructions we generated above, but in
   // reverse order.
   if (needsFrameMoves) {
@@ -528,22 +526,22 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
     if (NegFrameSize) {
       MachineLocation SPDst(MachineLocation::VirtualFP);
       MachineLocation SPSrc(MachineLocation::VirtualFP, NegFrameSize);
-      Moves.push_back(MachineMove(FrameLabel, SPDst, SPSrc));
+      MMI.addFrameMove(FrameLabel, SPDst, SPSrc);
     } else {
       MachineLocation SP(isPPC64 ? PPC::X31 : PPC::R31);
-      Moves.push_back(MachineMove(FrameLabel, SP, SP));
+      MMI.addFrameMove(FrameLabel, SP, SP);
     }
 
     if (HasFP) {
       MachineLocation FPDst(MachineLocation::VirtualFP, FPOffset);
       MachineLocation FPSrc(isPPC64 ? PPC::X31 : PPC::R31);
-      Moves.push_back(MachineMove(FrameLabel, FPDst, FPSrc));
+      MMI.addFrameMove(FrameLabel, FPDst, FPSrc);
     }
 
     if (MustSaveLR) {
       MachineLocation LRDst(MachineLocation::VirtualFP, LROffset);
       MachineLocation LRSrc(isPPC64 ? PPC::LR8 : PPC::LR);
-      Moves.push_back(MachineMove(FrameLabel, LRDst, LRSrc));
+      MMI.addFrameMove(FrameLabel, LRDst, LRSrc);
     }
   }
 
@@ -570,7 +568,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       MachineLocation FPDst(HasFP ? (isPPC64 ? PPC::X31 : PPC::R31) :
                                     (isPPC64 ? PPC::X1 : PPC::R1));
       MachineLocation FPSrc(MachineLocation::VirtualFP);
-      Moves.push_back(MachineMove(ReadyLabel, FPDst, FPSrc));
+      MMI.addFrameMove(ReadyLabel, FPDst, FPSrc);
     }
   }
 
@@ -602,14 +600,14 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
 	  && (PPC::CR2 <= Reg && Reg <= PPC::CR4)) {
 	MachineLocation CSDst(PPC::X1, 8);
 	MachineLocation CSSrc(PPC::CR2);
-	Moves.push_back(MachineMove(Label, CSDst, CSSrc));
+	MMI.addFrameMove(Label, CSDst, CSSrc);
 	continue;
       }
 
       int Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
       MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
       MachineLocation CSSrc(Reg);
-      Moves.push_back(MachineMove(Label, CSDst, CSSrc));
+      MMI.addFrameMove(Label, CSDst, CSSrc);
     }
   }
 }

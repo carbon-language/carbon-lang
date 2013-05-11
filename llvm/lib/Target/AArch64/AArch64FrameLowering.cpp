@@ -54,7 +54,6 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
   DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
 
   MachineModuleInfo &MMI = MF.getMMI();
-  std::vector<MachineMove> &Moves = MMI.getFrameMoves();
   bool NeedsFrameMoves = MMI.hasDebugInfo()
     || MF.getFunction()->needsUnwindTableEntry();
 
@@ -98,7 +97,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
 
     MachineLocation Dst(MachineLocation::VirtualFP);
     MachineLocation Src(AArch64::XSP, NumInitialBytes);
-    Moves.push_back(MachineMove(SPLabel, Dst, Src));
+    MMI.addFrameMove(SPLabel, Dst, Src);
   }
 
   // Otherwise we need to set the frame pointer and/or add a second stack
@@ -133,7 +132,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
           .addSym(FPLabel);
         MachineLocation Dst(MachineLocation::VirtualFP);
         MachineLocation Src(AArch64::X29, -MFI->getObjectOffset(X29FrameIdx));
-        Moves.push_back(MachineMove(FPLabel, Dst, Src));
+        MMI.addFrameMove(FPLabel, Dst, Src);
       }
 
       FPNeedsSetting = false;
@@ -165,7 +164,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
 
     MachineLocation Dst(MachineLocation::VirtualFP);
     MachineLocation Src(AArch64::XSP, NumResidualBytes + NumInitialBytes);
-    Moves.push_back(MachineMove(CSLabel, Dst, Src));
+    MMI.addFrameMove(CSLabel, Dst, Src);
   }
 
   // And any callee-saved registers (it's fine to leave them to the end here,
@@ -183,7 +182,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
       MachineLocation Dst(MachineLocation::VirtualFP,
                           MFI->getObjectOffset(I->getFrameIdx()));
       MachineLocation Src(I->getReg());
-      Moves.push_back(MachineMove(CSLabel, Dst, Src));
+      MMI.addFrameMove(CSLabel, Dst, Src);
     }
   }
 }
