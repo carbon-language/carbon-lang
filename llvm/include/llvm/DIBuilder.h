@@ -327,7 +327,7 @@ namespace llvm {
     /// @param Scope        Scope in which this type is defined.
     /// @param Name         Value parameter name.
     /// @param Ty           Parameter type.
-    /// @param Value        Constant parameter value.
+    /// @param Val          Constant parameter value.
     /// @param File         File where this type parameter is defined.
     /// @param LineNo       Line number.
     /// @param ColumnNo     Column Number.
