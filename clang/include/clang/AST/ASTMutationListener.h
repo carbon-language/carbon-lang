@@ -27,6 +27,7 @@ namespace clang {
   class ObjCContainerDecl;
   class ObjCInterfaceDecl;
   class ObjCPropertyDecl;
+  class QualType;
   class TagDecl;
   class VarDecl;
 
@@ -55,6 +56,9 @@ public:
   /// template declaration.
   virtual void AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
                                               const FunctionDecl *D) {}
+
+  /// \brief A function's return type has been deduced.
+  virtual void DeducedReturnType(const FunctionDecl *FD, QualType ReturnType);
 
   /// \brief An implicit member got a definition.
   virtual void CompletedImplicitDefinition(const FunctionDecl *D) {}

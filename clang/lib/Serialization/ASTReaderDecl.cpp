@@ -2582,6 +2582,13 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
       cast<VarDecl>(D)->getMemberSpecializationInfo()->setPointOfInstantiation(
           Reader.ReadSourceLocation(ModuleFile, Record, Idx));
       break;
+
+    case UPD_CXX_DEDUCED_RETURN_TYPE: {
+      FunctionDecl *FD = cast<FunctionDecl>(D);
+      Reader.Context.adjustDeducedFunctionResultType(
+          FD, Reader.readType(ModuleFile, Record, Idx));
+      break;
+    }
     }
   }
 }
