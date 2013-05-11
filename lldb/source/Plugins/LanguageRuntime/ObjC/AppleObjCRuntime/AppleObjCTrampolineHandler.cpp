@@ -661,9 +661,12 @@ AppleObjCTrampolineHandler::AppleObjCTrampolineHandler (const ProcessSP &process
     {
         // If we can't even find the ordinary get method implementation function, then we aren't going to be able to
         // step through any method dispatches.  Warn to that effect and get out of here.
-        process_sp->GetTarget().GetDebugger().GetErrorStream().Printf("Could not find implementation lookup function \"%s\""
-                                                                      " step in through ObjC method dispatch will not work.\n",
-                                                                      get_impl_name.AsCString());
+        if (process_sp->CanJIT())
+        {
+            process_sp->GetTarget().GetDebugger().GetErrorStream().Printf("Could not find implementation lookup function \"%s\""
+                                                                          " step in through ObjC method dispatch will not work.\n",
+                                                                          get_impl_name.AsCString());
+        }
         return;
     }
     else if (m_impl_stret_fn_addr == LLDB_INVALID_ADDRESS)

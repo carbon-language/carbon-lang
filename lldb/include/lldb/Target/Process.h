@@ -2631,6 +2631,20 @@ public:
     IsAlive () = 0;
 
     //------------------------------------------------------------------
+    /// Before lldb detaches from a process, it warns the user that they are about to lose their debug session.
+    /// In some cases, this warning doesn't need to be emitted -- for instance, with core file debugging where 
+    /// the user can reconstruct the "state" by simply re-running the debugger on the core file.  
+    ///
+    /// @return
+    //      true if the user should be warned about detaching from this process.
+    //------------------------------------------------------------------
+    virtual bool
+    WarnBeforeDetach () const
+    {
+        return true;
+    }
+
+    //------------------------------------------------------------------
     /// Actually do the reading of memory from a process.
     ///
     /// Subclasses must override this function and can return fewer 

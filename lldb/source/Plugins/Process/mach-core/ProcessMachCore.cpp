@@ -366,6 +366,12 @@ ProcessMachCore::IsAlive ()
     return true;
 }
 
+bool
+ProcessMachCore::WarnBeforeDetach () const
+{
+    return false;
+}
+
 //------------------------------------------------------------------
 // Process Memory
 //------------------------------------------------------------------

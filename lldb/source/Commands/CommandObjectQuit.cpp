@@ -60,9 +60,10 @@ CommandObjectQuit::ShouldAskForConfirmation (bool& is_a_detach)
             if (!target_sp)
                 continue;
             ProcessSP process_sp(target_sp->GetProcessSP());
-            if (process_sp &&
-                process_sp->IsValid() &&
-                process_sp->IsAlive())
+            if (process_sp
+                && process_sp->IsValid()
+                && process_sp->IsAlive()
+                && process_sp->WarnBeforeDetach())
             {
                 should_prompt = true;
                 if (process_sp->GetShouldDetach() == false)
