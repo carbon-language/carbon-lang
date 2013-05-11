@@ -1027,29 +1027,11 @@ Instruction *InstCombiner::visitURem(BinaryOperator &I) {
   if (Instruction *common = commonIRemTransforms(I))
     return common;
 
-  // X urem C^2 -> X and C-1
-  { const APInt *C;
-    if (match(Op1, m_Power2(C)))
-      return BinaryOperator::CreateAnd(Op0,
-                                       ConstantInt::get(I.getType(), *C-1));
-  }
-
-  // Turn A % (C << N), where C is 2^k, into A & ((C << N)-1)
-  if (match(Op1, m_Shl(m_Power2(), m_Value()))) {
+  // X urem Y -> X and Y-1, where Y is a power of 2,
+  if (isKnownToBeAPowerOfTwo(Op1, /*OrZero*/true)) {
     Constant *N1 = Constant::getAllOnesValue(I.getType());
     Value *Add = Builder->CreateAdd(Op1, N1);
     return BinaryOperator::CreateAnd(Op0, Add);
-  }
-
-  // urem X, (select Cond, 2^C1, 2^C2) -->
-  //    select Cond, (and X, C1-1), (and X, C2-1)
-  // when C1&C2 are powers of two.
-  { Value *Cond; const APInt *C1, *C2;
-    if (match(Op1, m_Select(m_Value(Cond), m_Power2(C1), m_Power2(C2)))) {
-      Value *TrueAnd = Builder->CreateAnd(Op0, *C1-1, Op1->getName()+".t");
-      Value *FalseAnd = Builder->CreateAnd(Op0, *C2-1, Op1->getName()+".f");
-      return SelectInst::Create(Cond, TrueAnd, FalseAnd);
-    }
   }
 
   // (zext A) urem (zext B) --> zext (A urem B)
