@@ -1361,6 +1361,8 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   PHINode *ResumeIndex = 0;
   LoopVectorizationLegality::InductionList::iterator I, E;
   LoopVectorizationLegality::InductionList *List = Legal->getInductionVars();
+  // Set builder to point to last bypass block.
+  BypassBuilder.SetInsertPoint(LoopBypassBlocks.back()->getTerminator());
   for (I = List->begin(), E = List->end(); I != E; ++I) {
     PHINode *OrigPhi = I->first;
     LoopVectorizationLegality::InductionInfo II = I->second;
@@ -1382,42 +1384,28 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
     }
     case LoopVectorizationLegality::IK_ReverseIntInduction: {
       // Convert the CountRoundDown variable to the PHI size.
-      unsigned CRDSize = CountRoundDown->getType()->getScalarSizeInBits();
-      unsigned IISize = II.StartValue->getType()->getScalarSizeInBits();
-      Value *CRD = CountRoundDown;
-      if (CRDSize > IISize)
-        CRD = CastInst::Create(Instruction::Trunc, CountRoundDown,
-                               II.StartValue->getType(), "tr.crd",
-                               LoopBypassBlocks.back()->getTerminator());
-      else if (CRDSize < IISize)
-        CRD = CastInst::Create(Instruction::SExt, CountRoundDown,
-                               II.StartValue->getType(),
-                               "sext.crd",
-                               LoopBypassBlocks.back()->getTerminator());
-      // Handle reverse integer induction counter:
-      EndValue =
-        BinaryOperator::CreateSub(II.StartValue, CRD, "rev.ind.end",
-                                  LoopBypassBlocks.back()->getTerminator());
+      Value *CRD = BypassBuilder.CreateSExtOrTrunc(CountRoundDown,
+                                                   II.StartValue->getType(),
+                                                   "cast.crd");
+      // Handle reverse integer induction counter.
+      EndValue = BypassBuilder.CreateSub(II.StartValue, CRD, "rev.ind.end");
       break;
     }
     case LoopVectorizationLegality::IK_PtrInduction: {
       // For pointer induction variables, calculate the offset using
       // the end index.
-      EndValue =
-        GetElementPtrInst::Create(II.StartValue, CountRoundDown, "ptr.ind.end",
-                                  LoopBypassBlocks.back()->getTerminator());
+      EndValue = BypassBuilder.CreateGEP(II.StartValue, CountRoundDown,
+                                         "ptr.ind.end");
       break;
     }
     case LoopVectorizationLegality::IK_ReversePtrInduction: {
       // The value at the end of the loop for the reverse pointer is calculated
       // by creating a GEP with a negative index starting from the start value.
       Value *Zero = ConstantInt::get(CountRoundDown->getType(), 0);
-      Value *NegIdx = BinaryOperator::CreateSub(Zero, CountRoundDown,
-                                  "rev.ind.end",
-                                  LoopBypassBlocks.back()->getTerminator());
-      EndValue = GetElementPtrInst::Create(II.StartValue, NegIdx,
-                                  "rev.ptr.ind.end",
-                                  LoopBypassBlocks.back()->getTerminator());
+      Value *NegIdx = BypassBuilder.CreateSub(Zero, CountRoundDown,
+                                              "rev.ind.end");
+      EndValue = BypassBuilder.CreateGEP(II.StartValue, NegIdx,
+                                         "rev.ptr.ind.end");
       break;
     }
     }// end of case
