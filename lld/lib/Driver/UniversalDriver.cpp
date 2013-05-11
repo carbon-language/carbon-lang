@@ -102,7 +102,8 @@ Flavor selectFlavor(std::vector<const char *> &args, raw_ostream &diag) {
   // If flavor still undetermined, then error out.
   if (flavor == Flavor::invalid)
     diag << "error: failed to determine driver flavor from program name"
-            " '" << args[0] << "'.\n";
+         << " '" << args[0] << "'.\n"
+         << "select a flavor with -flavor [gnu|darwin|core].\n";
   return flavor;
 }
 }
