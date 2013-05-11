@@ -76,7 +76,7 @@ static bool compareDIEs(const DwarfAccelTable::HashDataContents *A,
   return A->Die->getOffset() < B->Die->getOffset();
 }
 
-void DwarfAccelTable::FinalizeTable(AsmPrinter *Asm, const char *Prefix) {
+void DwarfAccelTable::FinalizeTable(AsmPrinter *Asm, StringRef Prefix) {
   // Create the individual hash data outputs.
   for (StringMap<DataArray>::iterator
          EI = Entries.begin(), EE = Entries.end(); EI != EE; ++EI) {

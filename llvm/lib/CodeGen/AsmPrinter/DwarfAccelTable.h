@@ -271,7 +271,7 @@ private:
   DwarfAccelTable(ArrayRef<DwarfAccelTable::Atom>);
   ~DwarfAccelTable();
   void AddName(StringRef, DIE*, char = 0);
-  void FinalizeTable(AsmPrinter *, const char *);
+  void FinalizeTable(AsmPrinter *, StringRef);
   void Emit(AsmPrinter *, MCSymbol *, DwarfUnits *);
 #ifndef NDEBUG
   void print(raw_ostream &O);
