@@ -19,6 +19,7 @@
 // Other libraries and framework includes
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Broadcaster.h"
+#include "lldb/Core/ConstString.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/InputReader.h"
 #include "lldb/Core/StreamString.h"
@@ -244,7 +245,7 @@ protected:
     CommunicationKDP m_comm;
     lldb_private::Broadcaster m_async_broadcaster;
     lldb::thread_t m_async_thread;
-    std::string m_dyld_plugin_name;
+    lldb_private::ConstString m_dyld_plugin_name;
     lldb::addr_t m_kernel_load_addr;
     lldb::CommandObjectSP m_command_sp;
     lldb::ThreadWP m_kernel_thread_wp;

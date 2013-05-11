@@ -17,6 +17,7 @@
 #include <vector>
 
 // Other libraries and framework includes
+#include "lldb/Core/ConstString.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Target/Process.h"
 
@@ -136,7 +137,7 @@ private:
     lldb::ModuleSP m_core_module_sp;
     lldb_private::FileSpec m_core_file;
     lldb::addr_t m_dyld_addr;
-    std::string  m_dyld_plugin_name;
+    lldb_private::ConstString m_dyld_plugin_name;
     DISALLOW_COPY_AND_ASSIGN (ProcessMachCore);
     
 };
