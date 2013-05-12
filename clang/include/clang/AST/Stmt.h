@@ -967,9 +967,6 @@ public:
   SwitchCase *getSwitchCaseList() { return FirstCase; }
 
   /// \brief Set the case list for this switch statement.
-  ///
-  /// The caller is responsible for incrementing the retain counts on
-  /// all of the SwitchCase statements in this list.
   void setSwitchCaseList(SwitchCase *SC) { FirstCase = SC; }
 
   SourceLocation getSwitchLoc() const { return SwitchLoc; }

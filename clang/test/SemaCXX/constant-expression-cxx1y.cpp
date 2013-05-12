@@ -593,3 +593,117 @@ namespace assignment_op {
   }
   static_assert(testC(), "");
 }
+
+namespace switch_stmt {
+  constexpr int f(char k) {
+    bool b = false;
+    int z = 6;
+    switch (k) {
+      return -1;
+    case 0:
+      if (false) {
+      case 1:
+        z = 1;
+        for (; b;) {
+          return 5;
+          while (0)
+            case 2: return 2;
+          case 7: z = 7;
+          do case 6: {
+            return z;
+            if (false)
+              case 3: return 3;
+            case 4: z = 4;
+          } while (1);
+          case 5: b = true;
+          case 9: z = 9;
+        }
+        return z;
+      } else if (false) case 8: z = 8;
+      else if (false) {
+      case 10:
+        z = -10;
+        break;
+      }
+      else z = 0;
+      return z;
+    default:
+      return -1;
+    }
+    return -z;
+  }
+  static_assert(f(0) == 0, "");
+  static_assert(f(1) == 1, "");
+  static_assert(f(2) == 2, "");
+  static_assert(f(3) == 3, "");
+  static_assert(f(4) == 4, "");
+  static_assert(f(5) == 5, "");
+  static_assert(f(6) == 6, "");
+  static_assert(f(7) == 7, "");
+  static_assert(f(8) == 8, "");
+  static_assert(f(9) == 9, "");
+  static_assert(f(10) == 10, "");
+
+  // Check that we can continue an outer loop from within a switch.
+  constexpr bool contin() {
+    for (int n = 0; n != 10; ++n) {
+      switch (n) {
+      case 0:
+        ++n;
+        continue;
+      case 1:
+        return false;
+      case 2:
+        return true;
+      }
+    }
+    return false;
+  }
+  static_assert(contin(), "");
+
+  constexpr bool switch_into_for() {
+    int n = 0;
+    switch (n) {
+      for (; n == 1; ++n) {
+        return n == 1;
+      case 0: ;
+      }
+    }
+    return false;
+  }
+  static_assert(switch_into_for(), "");
+
+  constexpr void duff_copy(char *a, const char *b, int n) {
+    switch ((n - 1) % 8 + 1) {
+      for ( ; n; n = (n - 1) & ~7) {
+      case 8: a[n-8] = b[n-8];
+      case 7: a[n-7] = b[n-7];
+      case 6: a[n-6] = b[n-6];
+      case 5: a[n-5] = b[n-5];
+      case 4: a[n-4] = b[n-4];
+      case 3: a[n-3] = b[n-3];
+      case 2: a[n-2] = b[n-2];
+      case 1: a[n-1] = b[n-1];
+      }
+      case 0: ;
+    }
+  }
+
+  constexpr bool test_copy(const char *str, int n) {
+    char buffer[16] = {};
+    duff_copy(buffer, str, n);
+    for (int i = 0; i != sizeof(buffer); ++i)
+      if (buffer[i] != (i < n ? str[i] : 0))
+        return false;
+    return true;
+  }
+  static_assert(test_copy("foo", 0), "");
+  static_assert(test_copy("foo", 1), "");
+  static_assert(test_copy("foo", 2), "");
+  static_assert(test_copy("hello world", 0), "");
+  static_assert(test_copy("hello world", 7), "");
+  static_assert(test_copy("hello world", 8), "");
+  static_assert(test_copy("hello world", 9), "");
+  static_assert(test_copy("hello world", 10), "");
+  static_assert(test_copy("hello world", 10), "");
+}

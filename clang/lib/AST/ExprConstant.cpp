@@ -2769,7 +2769,9 @@ enum EvalStmtResult {
   /// Hit a 'continue' statement.
   ESR_Continue,
   /// Hit a 'break' statement.
-  ESR_Break
+  ESR_Break,
+  /// Still scanning for 'case' or 'default' statement.
+  ESR_CaseNotFound
 };
 }
 
@@ -2803,12 +2805,13 @@ static bool EvaluateCond(EvalInfo &Info, const VarDecl *CondDecl,
 }
 
 static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
-                                   const Stmt *S);
+                                   const Stmt *S, const SwitchCase *SC = 0);
 
 /// Evaluate the body of a loop, and translate the result as appropriate.
 static EvalStmtResult EvaluateLoopBody(APValue &Result, EvalInfo &Info,
-                                       const Stmt *Body) {
-  switch (EvalStmtResult ESR = EvaluateStmt(Result, Info, Body)) {
+                                       const Stmt *Body,
+                                       const SwitchCase *Case = 0) {
+  switch (EvalStmtResult ESR = EvaluateStmt(Result, Info, Body, Case)) {
   case ESR_Break:
     return ESR_Succeeded;
   case ESR_Succeeded:
@@ -2816,16 +2819,127 @@ static EvalStmtResult EvaluateLoopBody(APValue &Result, EvalInfo &Info,
     return ESR_Continue;
   case ESR_Failed:
   case ESR_Returned:
+  case ESR_CaseNotFound:
     return ESR;
   }
   llvm_unreachable("Invalid EvalStmtResult!");
 }
 
+/// Evaluate a switch statement.
+static EvalStmtResult EvaluateSwitch(APValue &Result, EvalInfo &Info,
+                                     const SwitchStmt *SS) {
+  // Evaluate the switch condition.
+  if (SS->getConditionVariable() &&
+      !EvaluateDecl(Info, SS->getConditionVariable()))
+    return ESR_Failed;
+  APSInt Value;
+  if (!EvaluateInteger(SS->getCond(), Value, Info))
+    return ESR_Failed;
+
+  // Find the switch case corresponding to the value of the condition.
+  // FIXME: Cache this lookup.
+  const SwitchCase *Found = 0;
+  for (const SwitchCase *SC = SS->getSwitchCaseList(); SC;
+       SC = SC->getNextSwitchCase()) {
+    if (isa<DefaultStmt>(SC)) {
+      Found = SC;
+      continue;
+    }
+
+    const CaseStmt *CS = cast<CaseStmt>(SC);
+    APSInt LHS = CS->getLHS()->EvaluateKnownConstInt(Info.Ctx);
+    APSInt RHS = CS->getRHS() ? CS->getRHS()->EvaluateKnownConstInt(Info.Ctx)
+                              : LHS;
+    if (LHS <= Value && Value <= RHS) {
+      Found = SC;
+      break;
+    }
+  }
+
+  if (!Found)
+    return ESR_Succeeded;
+
+  // Search the switch body for the switch case and evaluate it from there.
+  switch (EvalStmtResult ESR = EvaluateStmt(Result, Info, SS->getBody(), Found)) {
+  case ESR_Break:
+    return ESR_Succeeded;
+  case ESR_Succeeded:
+  case ESR_Continue:
+  case ESR_Failed:
+  case ESR_Returned:
+    return ESR;
+  case ESR_CaseNotFound:
+    Found->dump();
+    SS->getBody()->dump();
+    llvm_unreachable("couldn't find switch case");
+  }
+}
+
 // Evaluate a statement.
 static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
-                                   const Stmt *S) {
+                                   const Stmt *S, const SwitchCase *Case) {
   if (!Info.nextStep(S))
     return ESR_Failed;
+
+  // If we're hunting down a 'case' or 'default' label, recurse through
+  // substatements until we hit the label.
+  if (Case) {
+    // FIXME: We don't start the lifetime of objects whose initialization we
+    // jump over. However, such objects must be of class type with a trivial
+    // default constructor that initialize all subobjects, so must be empty,
+    // so this almost never matters.
+    switch (S->getStmtClass()) {
+    case Stmt::CompoundStmtClass:
+      // FIXME: Precompute which substatement of a compound statement we
+      // would jump to, and go straight there rather than performing a
+      // linear scan each time.
+    case Stmt::LabelStmtClass:
+    case Stmt::AttributedStmtClass:
+    case Stmt::DoStmtClass:
+      break;
+
+    case Stmt::CaseStmtClass:
+    case Stmt::DefaultStmtClass:
+      if (Case == S)
+        Case = 0;
+      break;
+
+    case Stmt::IfStmtClass: {
+      // FIXME: Precompute which side of an 'if' we would jump to, and go
+      // straight there rather than scanning both sides.
+      const IfStmt *IS = cast<IfStmt>(S);
+      EvalStmtResult ESR = EvaluateStmt(Result, Info, IS->getThen(), Case);
+      if (ESR != ESR_CaseNotFound || !IS->getElse())
+        return ESR;
+      return EvaluateStmt(Result, Info, IS->getElse(), Case);
+    }
+
+    case Stmt::WhileStmtClass: {
+      EvalStmtResult ESR =
+          EvaluateLoopBody(Result, Info, cast<WhileStmt>(S)->getBody(), Case);
+      if (ESR != ESR_Continue)
+        return ESR;
+      break;
+    }
+
+    case Stmt::ForStmtClass: {
+      const ForStmt *FS = cast<ForStmt>(S);
+      EvalStmtResult ESR =
+          EvaluateLoopBody(Result, Info, FS->getBody(), Case);
+      if (ESR != ESR_Continue)
+        return ESR;
+      if (FS->getInc() && !EvaluateIgnoredValue(Info, FS->getInc()))
+        return ESR_Failed;
+      break;
+    }
+
+    case Stmt::DeclStmtClass:
+      // FIXME: If the variable has initialization that can't be jumped over,
+      // bail out of any immediately-surrounding compound-statement too.
+    default:
+      return ESR_CaseNotFound;
+    }
+  }
 
   // FIXME: Mark all temporaries in the current frame as destroyed at
   // the end of each full-expression.
@@ -2865,11 +2979,13 @@ static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
     const CompoundStmt *CS = cast<CompoundStmt>(S);
     for (CompoundStmt::const_body_iterator BI = CS->body_begin(),
            BE = CS->body_end(); BI != BE; ++BI) {
-      EvalStmtResult ESR = EvaluateStmt(Result, Info, *BI);
-      if (ESR != ESR_Succeeded)
+      EvalStmtResult ESR = EvaluateStmt(Result, Info, *BI, Case);
+      if (ESR == ESR_Succeeded)
+        Case = 0;
+      else if (ESR != ESR_CaseNotFound)
         return ESR;
     }
-    return ESR_Succeeded;
+    return Case ? ESR_CaseNotFound : ESR_Succeeded;
   }
 
   case Stmt::IfStmtClass: {
@@ -2909,9 +3025,10 @@ static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
     const DoStmt *DS = cast<DoStmt>(S);
     bool Continue;
     do {
-      EvalStmtResult ESR = EvaluateLoopBody(Result, Info, DS->getBody());
+      EvalStmtResult ESR = EvaluateLoopBody(Result, Info, DS->getBody(), Case);
       if (ESR != ESR_Continue)
         return ESR;
+      Case = 0;
 
       if (!EvaluateAsBooleanCondition(DS->getCond(), Continue, Info))
         return ESR_Failed;
@@ -2983,11 +3100,27 @@ static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
     return ESR_Succeeded;
   }
 
+  case Stmt::SwitchStmtClass:
+    return EvaluateSwitch(Result, Info, cast<SwitchStmt>(S));
+
   case Stmt::ContinueStmtClass:
     return ESR_Continue;
 
   case Stmt::BreakStmtClass:
     return ESR_Break;
+
+  case Stmt::LabelStmtClass:
+    return EvaluateStmt(Result, Info, cast<LabelStmt>(S)->getSubStmt(), Case);
+
+  case Stmt::AttributedStmtClass:
+    // As a general principle, C++11 attributes can be ignored without
+    // any semantic impact.
+    return EvaluateStmt(Result, Info, cast<AttributedStmt>(S)->getSubStmt(),
+                        Case);
+
+  case Stmt::CaseStmtClass:
+  case Stmt::DefaultStmtClass:
+    return EvaluateStmt(Result, Info, cast<SwitchCase>(S)->getSubStmt(), Case);
   }
 }
 
