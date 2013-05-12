@@ -798,7 +798,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            //.Case("cxx_generalized_capture", LangOpts.CPlusPlus1y)
            //.Case("cxx_generic_lambda", LangOpts.CPlusPlus1y)
            //.Case("cxx_relaxed_constexpr", LangOpts.CPlusPlus1y)
-           //.Case("cxx_return_type_deduction", LangOpts.CPlusPlus1y)
+           .Case("cxx_return_type_deduction", LangOpts.CPlusPlus1y)
            //.Case("cxx_runtime_array", LangOpts.CPlusPlus1y)
            .Case("cxx_aggregate_nsdmi", LangOpts.CPlusPlus1y)
            //.Case("cxx_variable_templates", LangOpts.CPlusPlus1y)

@@ -346,3 +346,13 @@ int no_aggregate_nsdmi();
 // CHECK-1Y: has_aggregate_nsdmi
 // CHECK-11: no_aggregate_nsdmi
 // CHECK-NO-11: no_aggregate_nsdmi
+
+#if __has_feature(cxx_return_type_deduction)
+int has_return_type_deduction();
+#else
+int no_return_type_deduction();
+#endif
+
+// CHECK-1Y: has_return_type_deduction
+// CHECK-11: no_return_type_deduction
+// CHECK-NO-11: no_return_type_deduction

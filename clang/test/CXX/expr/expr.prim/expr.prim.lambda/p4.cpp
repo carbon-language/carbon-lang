@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++11 %s -verify
+// RUN: %clang_cc1 -fsyntax-only -std=c++1y %s -verify
 
 void missing_lambda_declarator() {
   [](){}();

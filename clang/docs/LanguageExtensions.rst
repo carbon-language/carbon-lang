@@ -852,7 +852,6 @@ Use ``__has_feature(cxx_return_type_deduction)`` or
 ``__has_extension(cxx_return_type_deduction)`` to determine if support
 for return type deduction for functions (using ``auto`` as a return type)
 is enabled.
-Clang's implementation of this feature is incomplete.
 
 C++1y runtime-sized arrays
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
