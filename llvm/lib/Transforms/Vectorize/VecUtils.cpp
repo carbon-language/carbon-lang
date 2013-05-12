@@ -633,6 +633,7 @@ Value *BoUpSLP::vectorizeTree(ArrayRef<Value *> VL, int VF) {
   numberInstructions();
   MustScalarize.clear();
   MustExtract.clear();
+  VectorizedValues.clear();
   return V;
 }
 
