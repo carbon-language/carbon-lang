@@ -2172,8 +2172,19 @@ llvm::DIType CGDebugInfo::CreateMemberType(llvm::DIFile Unit, QualType FType,
 }
 
 llvm::DIDescriptor CGDebugInfo::getDeclarationOrDefinition(const Decl *D) {
+  // We only need a declaration (not a definition) of the type - so use whatever
+  // we would otherwise do to get a type for a pointee. (forward declarations in
+  // limited debug info, full definitions (if the type definition is available)
+  // in unlimited debug info)
   if (const TypeDecl *RD = dyn_cast<TypeDecl>(D))
     return CreatePointeeType(QualType(RD->getTypeForDecl(), 0), llvm::DIFile());
+  // Otherwise fall back to a fairly rudimentary cache of existing declarations.
+  // This doesn't handle providing declarations (for functions or variables) for
+  // entities without definitions in this TU, nor when the definition proceeds
+  // the call to this function.
+  // FIXME: This should be split out into more specific maps with support for
+  // emitting forward declarations and merging definitions with declarations,
+  // the same way as we do for types.
   llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator I =
       DeclCache.find(D->getCanonicalDecl());
   if (I == DeclCache.end())

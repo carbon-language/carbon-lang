@@ -95,6 +95,8 @@ class CGDebugInfo {
 
   llvm::DenseMap<const char *, llvm::WeakVH> DIFileCache;
   llvm::DenseMap<const FunctionDecl *, llvm::WeakVH> SPCache;
+  /// \brief Cache declarations relevant to DW_TAG_imported_declarations (C++
+  /// using declarations) that aren't covered by other more specific caches.
   llvm::DenseMap<const Decl *, llvm::WeakVH> DeclCache;
   llvm::DenseMap<const NamespaceDecl *, llvm::WeakVH> NameSpaceCache;
   llvm::DenseMap<const Decl *, llvm::WeakVH> StaticDataMemberCache;
