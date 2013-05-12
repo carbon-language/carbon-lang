@@ -660,9 +660,20 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
     // this translation unit.  However, we should use the C linkage
     // rules instead for extern "C" declarations.
     if (Context.getLangOpts().CPlusPlus &&
-        !Function->isInExternCContext() &&
-        Function->getType()->getLinkage() == UniqueExternalLinkage)
-      return LinkageInfo::uniqueExternal();
+        !Function->isInExternCContext()) {
+      // Only look at the type-as-written. If this function has an auto-deduced
+      // return type, we can't compute the linkage of that type because it could
+      // require looking at the linkage of this function, and we don't need this
+      // for correctness because the type is not part of the function's
+      // signature.
+      // FIXME: This is a hack. We should be able to solve this circularity some
+      // other way.
+      QualType TypeAsWritten = Function->getType();
+      if (TypeSourceInfo *TSI = Function->getTypeSourceInfo())
+        TypeAsWritten = TSI->getType();
+      if (TypeAsWritten->getLinkage() == UniqueExternalLinkage)
+        return LinkageInfo::uniqueExternal();
+    }
 
     // Consider LV from the template and the template arguments.
     // We're at file scope, so we do not need to worry about nested
