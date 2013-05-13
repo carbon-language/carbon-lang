@@ -872,7 +872,21 @@ APFloat::multiplySignificand(const APFloat &rhs, const APFloat *addend)
   omsb = APInt::tcMSB(fullSignificand, newPartsCount) + 1;
   exponent += rhs.exponent;
 
+  // Assume the operands involved in the multiplication are single-precision
+  // FP, and the two multiplicants are:
+  //   *this = a23 . a22 ... a0 * 2^e1
+  //     rhs = b23 . b22 ... b0 * 2^e2
+  // the result of multiplication is:
+  //   *this = c47 c46 . c45 ... c0 * 2^(e1+e2)
+  // Note that there are two significant bits at the left-hand side of the 
+  // radix point. Move the radix point toward left by one bit, and adjust
+  // exponent accordingly.
+  exponent += 1;
+
   if (addend) {
+    // The intermediate result of the multiplication has "2 * precision" 
+    // signicant bit; adjust the addend to be consistent with mul result.
+    //
     Significand savedSignificand = significand;
     const fltSemantics *savedSemantics = semantics;
     fltSemantics extendedSemantics;
@@ -880,8 +894,9 @@ APFloat::multiplySignificand(const APFloat &rhs, const APFloat *addend)
     unsigned int extendedPrecision;
 
     /* Normalize our MSB.  */
-    extendedPrecision = precision + precision - 1;
+    extendedPrecision = 2 * precision;
     if (omsb != extendedPrecision) {
+      assert(extendedPrecision > omsb);
       APInt::tcShiftLeft(fullSignificand, newPartsCount,
                          extendedPrecision - omsb);
       exponent -= extendedPrecision - omsb;
@@ -912,8 +927,18 @@ APFloat::multiplySignificand(const APFloat &rhs, const APFloat *addend)
     omsb = APInt::tcMSB(fullSignificand, newPartsCount) + 1;
   }
 
-  exponent -= (precision - 1);
+  // Convert the result having "2 * precision" significant-bits back to the one
+  // having "precision" significant-bits. First, move the radix point from 
+  // poision "2*precision - 1" to "precision - 1". The exponent need to be
+  // adjusted by "2*precision - 1" - "precision - 1" = "precision".
+  exponent -= precision;
 
+  // In case MSB resides at the left-hand side of radix point, shift the
+  // mantissa right by some amount to make sure the MSB reside right before
+  // the radix point (i.e. "MSB . rest-significant-bits").
+  //
+  // Note that the result is not normalized when "omsb < precision". So, the
+  // caller needs to call APFloat::normalize() if normalized value is expected.
   if (omsb > precision) {
     unsigned int bits, significantParts;
     lostFraction lf;

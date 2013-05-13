@@ -33,6 +33,29 @@ static std::string convertToString(double d, unsigned Prec, unsigned Pad) {
 
 namespace {
 
+TEST(APFloatTest, FMA) {
+  APFloat::roundingMode rdmd = APFloat::rmNearestTiesToEven;
+
+  {
+    APFloat f1(14.5f);
+    APFloat f2(-14.5f);
+    APFloat f3(225.0f);
+    f1.fusedMultiplyAdd(f2, f3, APFloat::rmNearestTiesToEven);
+    EXPECT_EQ(14.75f, f1.convertToFloat());
+  }
+
+  {
+    APFloat Val2(2.0f);
+    APFloat f1((float)1.17549435e-38F);
+    APFloat f2((float)1.17549435e-38F);
+    f1.divide(Val2, rdmd);
+    f2.divide(Val2, rdmd);
+    APFloat f3(12.0f);
+    f1.fusedMultiplyAdd(f2, f3, APFloat::rmNearestTiesToEven);
+    EXPECT_EQ(12.0f, f1.convertToFloat());
+  }
+}
+
 TEST(APFloatTest, Denormal) {
   APFloat::roundingMode rdmd = APFloat::rmNearestTiesToEven;
 
