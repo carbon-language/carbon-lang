@@ -1220,9 +1220,11 @@ CollectTemplateParams(const TemplateParameterList *TPList,
         V = CGM.GetAddrOfGlobalVar(VD);
       // Member function pointers have special support for building them, though
       // this is currently unsupported in LLVM CodeGen.
-      if (InstanceMember)
+      if (InstanceMember) {
         if (const CXXMethodDecl *method = dyn_cast<CXXMethodDecl>(D))
           V = CGM.getCXXABI().EmitMemberPointer(method);
+      } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+        V = CGM.GetAddrOfFunction(FD);
       // Member data pointers have special handling too to compute the fixed
       // offset within the object.
       if (isa<FieldDecl>(D)) {
