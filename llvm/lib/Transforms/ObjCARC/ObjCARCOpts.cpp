@@ -587,10 +587,16 @@ namespace {
     /// definition.
     void SetAsExit()  { BottomUpPathCount = 1; }
 
+    /// Attempt to find the PtrState object describing the top down state for
+    /// pointer Arg. Return a new initialized PtrState describing the top down
+    /// state for Arg if we do not find one.
     PtrState &getPtrTopDownState(const Value *Arg) {
       return PerPtrTopDown[Arg];
     }
 
+    /// Attempt to find the PtrState object describing the bottom up state for
+    /// pointer Arg. Return a new initialized PtrState describing the bottom up
+    /// state for Arg if we do not find one.
     PtrState &getPtrBottomUpState(const Value *Arg) {
       return PerPtrBottomUp[Arg];
     }
