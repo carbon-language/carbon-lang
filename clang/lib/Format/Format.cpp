@@ -204,8 +204,7 @@ std::string configurationAsText(const FormatStyle &Style) {
   // reference here.
   FormatStyle NonConstStyle = Style;
   Output << NonConstStyle;
-  Stream.flush();
-  return Text;
+  return Stream.str();
 }
 
 // Returns the length of everything up to the first possible line break after
