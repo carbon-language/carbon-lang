@@ -653,4 +653,22 @@ PlatformDarwinKernel::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &a
 #endif
 }
 
+#else  // __APPLE__
+
+// Since DynamicLoaderDarwinKernel is compiled in for all systems, and relies on
+// PlatformDarwinKernel for the plug-in name, we compile just the plug-in name in
+// here to avoid issues. We are tracking an internal bug to resolve this issue by
+// either not compiling in DynamicLoaderDarwinKernel for non-apple builds, or to make
+// PlatformDarwinKernel build on all systems. PlatformDarwinKernel is currently not
+// compiled on other platforms due to the use of the Mac-specific
+// source/Host/macosx/cfcpp utilities.
+
+lldb_private::ConstString
+PlatformDarwinKernel::GetPluginNameStatic ()
+{
+    static ConstString g_name("darwin-kernel");
+    return g_name;
+}
+
+
 #endif // __APPLE__
