@@ -70,6 +70,7 @@
 # CHECK:  addiu  $9, $6, -15001  # encoding: [0x67,0xc5,0xc9,0x24]
 # CHECK:  addi   $9, $6, 17767   # encoding: [0x67,0x45,0xc9,0x20]
 # CHECK:  addiu  $9, $6, -15001  # encoding: [0x67,0xc5,0xc9,0x24]
+# CHECK:  addiu  $11, $11, 40    # encoding: [0x28,0x00,0x6b,0x25]
 # CHECK:  addu   $9, $6, $7      # encoding: [0x21,0x48,0xc7,0x00]
 # CHECK:  madd   $6, $7          # encoding: [0x00,0x00,0xc7,0x70]
 # CHECK:  maddu  $6, $7          # encoding: [0x01,0x00,0xc7,0x70]
@@ -91,6 +92,7 @@
     addu   $9,$6,-15001
     addi   $9,$6,17767
     addiu  $9,$6,-15001
+    addiu  $11,40
     addu   $9,$6,$7
     madd   $6,$7
     maddu  $6,$7

@@ -1095,7 +1095,8 @@ def : InstAlias<"mfc2 $rt, $rd",
                 (MFC2_3OP CPURegsOpnd:$rt, CPURegsOpnd:$rd, 0), 0>;
 def : InstAlias<"mtc2 $rt, $rd",
                 (MTC2_3OP CPURegsOpnd:$rd, 0, CPURegsOpnd:$rt), 0>;
-
+def : InstAlias<"addiu $rs, $imm",
+                (ADDiu CPURegsOpnd:$rs, CPURegsOpnd:$rs, simm16:$imm), 0>;
 //===----------------------------------------------------------------------===//
 // Assembler Pseudo Instructions
 //===----------------------------------------------------------------------===//
