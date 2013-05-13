@@ -105,7 +105,7 @@ namespace {
                       bool CanBeSubscript = false) const;
 
     void generateBugReport(ExplodedNode *N,
-                           llvm::raw_svector_ostream &os,
+                           StringRef Msg,
                            SourceRange Range,
                            const Expr *Expr,
                            CheckerContext &C) const;
@@ -123,14 +123,10 @@ void NilArgChecker::warnIfNilExpr(const Expr *E,
                                   const char *Msg,
                                   CheckerContext &C) const {
   ProgramStateRef State = C.getState();
-  SVal SV = State->getSVal(E, C.getLocationContext());
-  if (State->isNull(SV).isConstrainedTrue()) {
+  if (State->isNull(C.getSVal(E)).isConstrainedTrue()) {
 
     if (ExplodedNode *N = C.generateSink()) {
-      SmallString<128> sbuf;
-      llvm::raw_svector_ostream os(sbuf);
-      os << Msg;
-      generateBugReport(N, os, E->getSourceRange(), E, C);
+      generateBugReport(N, Msg, E->getSourceRange(), E, C);
     }
     
   }
@@ -180,22 +176,22 @@ void NilArgChecker::warnIfNilArg(CheckerContext &C,
       }
     }
     
-    generateBugReport(N, os, msg.getArgSourceRange(Arg),
+    generateBugReport(N, os.str(), msg.getArgSourceRange(Arg),
                       msg.getArgExpr(Arg), C);
   }
 }
 
 void NilArgChecker::generateBugReport(ExplodedNode *N,
-                                      llvm::raw_svector_ostream &os,
+                                      StringRef Msg,
                                       SourceRange Range,
-                                      const Expr *Expr,
+                                      const Expr *E,
                                       CheckerContext &C) const {
   if (!BT)
     BT.reset(new APIMisuse("nil argument"));
 
-  BugReport *R = new BugReport(*BT, os.str(), N);
+  BugReport *R = new BugReport(*BT, Msg, N);
   R->addRange(Range);
-  bugreporter::trackNullOrUndefValue(N, Expr, *R);
+  bugreporter::trackNullOrUndefValue(N, E, *R);
   C.emitReport(R);
 }
 
@@ -290,14 +286,16 @@ void NilArgChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
 
 void NilArgChecker::checkPostStmt(const ObjCArrayLiteral *AL,
                                   CheckerContext &C) const {
-  for (unsigned i = 0; i < AL->getNumElements(); ++i) {
+  unsigned NumOfElements = AL->getNumElements();
+  for (unsigned i = 0; i < NumOfElements; ++i) {
     warnIfNilExpr(AL->getElement(i), "Array element cannot be nil", C);
   }
 }
 
 void NilArgChecker::checkPostStmt(const ObjCDictionaryLiteral *DL,
                                   CheckerContext &C) const {
-  for (unsigned i = 0; i < DL->getNumElements(); ++i) {
+  unsigned NumOfElements = DL->getNumElements();
+  for (unsigned i = 0; i < NumOfElements; ++i) {
     ObjCDictionaryElement Element = DL->getKeyValueElement(i);
     warnIfNilExpr(Element.Key, "Dictionary key cannot be nil", C);
     warnIfNilExpr(Element.Value, "Dictionary value cannot be nil", C);
