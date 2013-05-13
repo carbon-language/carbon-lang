@@ -278,9 +278,19 @@ typedef __char32_t char32_t;
 #define _LIBCPP_HAS_NO_CONSTEXPR
 #endif
 
-#if ( defined(__FreeBSD__) || defined(__linux__) ) && (__ISO_C_VISIBLE >= 2011 || __cplusplus >= 201103L)
+#if __ISO_C_VISIBLE >= 2011 || __cplusplus >= 201103L
+#if defined(__FreeBSD__)
 #define _LIBCPP_HAS_QUICK_EXIT
 #define _LIBCPP_HAS_C11_FEATURES
+#elif defined(__linux__)
+#include <features.h>
+#if __GLIBC_PREREQ(2, 15)
+#define _LIBCPP_HAS_QUICK_EXIT
+#endif
+#if __GLIBC_PREREQ(2, 17)
+#define _LIBCPP_HAS_C11_FEATURES
+#endif
+#endif
 #endif
 
 #if (__has_feature(cxx_noexcept))
