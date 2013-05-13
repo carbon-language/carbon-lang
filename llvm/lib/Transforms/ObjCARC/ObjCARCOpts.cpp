@@ -303,11 +303,11 @@ STATISTIC(NumRets,        "Number of return value forwarding "
                           "retain+autoreleaes eliminated");
 STATISTIC(NumRRs,         "Number of retain+release paths eliminated");
 STATISTIC(NumPeeps,       "Number of calls peephole-optimized");
+#ifndef NDEBUG
 STATISTIC(NumRetainsBeforeOpt,
           "Number of retains before optimization.");
 STATISTIC(NumReleasesBeforeOpt,
           "Number of releases before optimization.");
-#ifndef NDEBUG
 STATISTIC(NumRetainsAfterOpt,
           "Number of retains after optimization.");
 STATISTIC(NumReleasesAfterOpt,
