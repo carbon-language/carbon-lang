@@ -2869,10 +2869,9 @@ static EvalStmtResult EvaluateSwitch(APValue &Result, EvalInfo &Info,
   case ESR_Returned:
     return ESR;
   case ESR_CaseNotFound:
-    Found->dump();
-    SS->getBody()->dump();
     llvm_unreachable("couldn't find switch case");
   }
+  llvm_unreachable("Invalid EvalStmtResult!");
 }
 
 // Evaluate a statement.
