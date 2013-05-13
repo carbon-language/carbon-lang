@@ -154,6 +154,7 @@ class LW_FT<string opstr, RegisterClass RC, InstrItinClass Itin,
   InstSE<(outs RC:$rt), (ins MemOpnd:$addr), !strconcat(opstr, "\t$rt, $addr"),
          [(set RC:$rt, (OpNode addrDefault:$addr))], Itin, FrmFI> {
   let DecoderMethod = "DecodeFMem";
+  let mayLoad = 1;
 }
 
 class SW_FT<string opstr, RegisterClass RC, InstrItinClass Itin,
@@ -161,6 +162,7 @@ class SW_FT<string opstr, RegisterClass RC, InstrItinClass Itin,
   InstSE<(outs), (ins RC:$rt, MemOpnd:$addr), !strconcat(opstr, "\t$rt, $addr"),
          [(OpNode RC:$rt, addrDefault:$addr)], Itin, FrmFI> {
   let DecoderMethod = "DecodeFMem";
+  let mayStore = 1;
 }
 
 class MADDS_FT<string opstr, RegisterClass RC, InstrItinClass Itin,
@@ -314,8 +316,12 @@ let Predicates = [NotN64, HasMips64, HasStdEnc],
 }
 
 let Predicates = [NotN64, NotMips64, HasStdEnc] in {
-  def LDC1 : LW_FT<"ldc1", AFGR64, IILoad, mem, load>, LW_FM<0x35>;
-  def SDC1 : SW_FT<"sdc1", AFGR64, IIStore, mem, store>, LW_FM<0x3d>;
+  let isPseudo = 1, isCodeGenOnly = 1 in {
+    def PseudoLDC1 : LW_FT<"", AFGR64, IILoad, mem, load>;
+    def PseudoSDC1 : SW_FT<"", AFGR64, IIStore, mem, store>;
+  }
+  def LDC1 : LW_FT<"ldc1", AFGR64, IILoad, mem>, LW_FM<0x35>;
+  def SDC1 : SW_FT<"sdc1", AFGR64, IIStore, mem>, LW_FM<0x3d>;
 }
 
 // Indexed loads and stores.
@@ -523,7 +529,7 @@ let AddedComplexity = 40 in {
   }
 
   let Predicates = [NotN64, NotMips64, HasStdEnc] in {
-    def : LoadRegImmPat<LDC1, f64, load>;
-    def : StoreRegImmPat<SDC1, f64>;
+    def : LoadRegImmPat<PseudoLDC1, f64, load>;
+    def : StoreRegImmPat<PseudoSDC1, f64>;
   }
 }

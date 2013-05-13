@@ -87,6 +87,9 @@ private:
                                MachineBasicBlock::iterator I) const;
   void expandBuildPairF64(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator I) const;
+  void expandDPLoadStore(MachineBasicBlock &MBB,
+                         MachineBasicBlock::iterator I, unsigned OpcD,
+                         unsigned OpcS) const;
   void expandEhReturn(MachineBasicBlock &MBB,
                       MachineBasicBlock::iterator I) const;
 };

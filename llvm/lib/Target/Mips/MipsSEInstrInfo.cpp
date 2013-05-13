@@ -18,10 +18,16 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
+
+static cl::opt<bool> NoDPLoadStore("mno-ldc1-sdc1", cl::init(false),
+                                   cl::desc("Expand double precision loads and "
+                                            "stores to their single precision "
+                                            "counterparts."));
 
 MipsSEInstrInfo::MipsSEInstrInfo(MipsTargetMachine &tm)
   : MipsInstrInfo(tm,
@@ -253,6 +259,12 @@ bool MipsSEInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   case Mips::ExtractElementF64:
     expandExtractElementF64(MBB, MI);
     break;
+  case Mips::PseudoLDC1:
+    expandDPLoadStore(MBB, MI, Mips::LDC1, Mips::LWC1);
+    break;
+  case Mips::PseudoSDC1:
+    expandDPLoadStore(MBB, MI, Mips::SDC1, Mips::SWC1);
+    break;
   case Mips::MIPSeh_return32:
   case Mips::MIPSeh_return64:
     expandEhReturn(MBB, MI);
@@ -391,6 +403,56 @@ void MipsSEInstrInfo::expandBuildPairF64(MachineBasicBlock &MBB,
     .addReg(LoReg);
   BuildMI(MBB, I, dl, Mtc1Tdd, TRI.getSubReg(DstReg, Mips::sub_fpodd))
     .addReg(HiReg);
+}
+
+/// Add 4 to the displacement of operand MO.
+static void fixDisp(MachineOperand &MO) {
+  switch (MO.getType()) {
+  default:
+    llvm_unreachable("Unhandled operand type.");
+  case MachineOperand::MO_Immediate:
+    MO.setImm(MO.getImm() + 4);
+    break;
+  case MachineOperand::MO_GlobalAddress:
+  case MachineOperand::MO_ConstantPoolIndex:
+  case MachineOperand::MO_BlockAddress:
+  case MachineOperand::MO_TargetIndex:
+  case MachineOperand::MO_ExternalSymbol:
+    MO.setOffset(MO.getOffset() + 4);
+    break;
+  }
+}
+
+void MipsSEInstrInfo::expandDPLoadStore(MachineBasicBlock &MBB,
+                                        MachineBasicBlock::iterator I,
+                                        unsigned OpcD, unsigned OpcS) const {
+  // If NoDPLoadStore is false, just change the opcode.
+  if (!NoDPLoadStore) {
+    genInstrWithNewOpc(OpcD, I);
+    return;
+  }
+
+  // Expand a double precision FP load or store to two single precision
+  // instructions.
+
+  const TargetRegisterInfo &TRI = getRegisterInfo();
+  const MachineOperand &ValReg = I->getOperand(0);
+  unsigned LoReg = TRI.getSubReg(ValReg.getReg(), Mips::sub_fpeven);
+  unsigned HiReg = TRI.getSubReg(ValReg.getReg(), Mips::sub_fpodd);
+
+  if (!TM.getSubtarget<MipsSubtarget>().isLittle())
+    std::swap(LoReg, HiReg);
+
+  // Create an instruction which loads from or stores to the lower memory
+  // address.
+  MachineInstrBuilder MIB = genInstrWithNewOpc(OpcS, I);
+  MIB->getOperand(0).setReg(LoReg);
+
+  // Create an instruction which loads from or stores to the higher memory
+  // address.
+  MIB = genInstrWithNewOpc(OpcS, I);
+  MIB->getOperand(0).setReg(HiReg);
+  fixDisp(MIB->getOperand(2));
 }
 
 void MipsSEInstrInfo::expandEhReturn(MachineBasicBlock &MBB,
