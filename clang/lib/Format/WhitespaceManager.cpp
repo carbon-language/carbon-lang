@@ -143,9 +143,9 @@ std::string WhitespaceManager::getNewLineText(unsigned NewLines,
 }
 
 std::string WhitespaceManager::getIndentText(unsigned Spaces) {
-  if (!Style.UseTab) {
+  if (!Style.UseTab)
     return std::string(Spaces, ' ');
-  }
+
   return std::string(Spaces / Style.IndentWidth, '\t') +
          std::string(Spaces % Style.IndentWidth, ' ');
 }
