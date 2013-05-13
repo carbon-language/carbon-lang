@@ -287,11 +287,11 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
   // it later.
   SrcMgr.setIncludeDirs(Opts.IncludePaths);
 
-  OwningPtr<MCAsmInfo> MAI(TheTarget->createMCAsmInfo(Opts.Triple));
-  assert(MAI && "Unable to create target asm info!");
-
   OwningPtr<MCRegisterInfo> MRI(TheTarget->createMCRegInfo(Opts.Triple));
   assert(MRI && "Unable to create target register info!");
+
+  OwningPtr<MCAsmInfo> MAI(TheTarget->createMCAsmInfo(*MRI, Opts.Triple));
+  assert(MAI && "Unable to create target asm info!");
 
   bool IsBinary = Opts.OutputType == AssemblerInvocation::FT_Obj;
   formatted_raw_ostream *Out = GetOutputStream(Opts, Diags, IsBinary);

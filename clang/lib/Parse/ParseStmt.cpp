@@ -2091,8 +2091,8 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
   const std::string &TT = TheTriple.getTriple();
   const llvm::Target *TheTarget = llvm::TargetRegistry::lookupTarget(TT, Error);
 
-  OwningPtr<llvm::MCAsmInfo> MAI(TheTarget->createMCAsmInfo(TT));
   OwningPtr<llvm::MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TT));
+  OwningPtr<llvm::MCAsmInfo> MAI(TheTarget->createMCAsmInfo(*MRI, TT));
   OwningPtr<llvm::MCObjectFileInfo> MOFI(new llvm::MCObjectFileInfo());
   OwningPtr<llvm::MCSubtargetInfo>
     STI(TheTarget->createMCSubtargetInfo(TT, "", ""));
