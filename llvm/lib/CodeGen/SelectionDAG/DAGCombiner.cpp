@@ -9263,7 +9263,6 @@ static SDValue partitionShuffleOfConcats(SDNode *N, SelectionDAG &DAG) {
     }
 
     if (NoUndef) {
-      unsigned Begin = I * NumElemsPerConcat;
       if (SVN->getMaskElt(Begin) % NumElemsPerConcat != 0)
         return SDValue();
 
