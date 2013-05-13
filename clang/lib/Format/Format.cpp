@@ -36,11 +36,21 @@ namespace llvm {
 namespace yaml {
 template <>
 struct ScalarEnumerationTraits<clang::format::FormatStyle::LanguageStandard> {
-  static void enumeration(IO &io,
-                          clang::format::FormatStyle::LanguageStandard &value) {
-    io.enumCase(value, "C++03", clang::format::FormatStyle::LS_Cpp03);
-    io.enumCase(value, "C++11", clang::format::FormatStyle::LS_Cpp11);
-    io.enumCase(value, "Auto", clang::format::FormatStyle::LS_Auto);
+  static void enumeration(IO &IO,
+                          clang::format::FormatStyle::LanguageStandard &Value) {
+    IO.enumCase(Value, "C++03", clang::format::FormatStyle::LS_Cpp03);
+    IO.enumCase(Value, "C++11", clang::format::FormatStyle::LS_Cpp11);
+    IO.enumCase(Value, "Auto", clang::format::FormatStyle::LS_Auto);
+  }
+};
+
+template<>
+struct ScalarEnumerationTraits<clang::format::FormatStyle::BraceBreakingStyle> {
+  static void
+  enumeration(IO &IO, clang::format::FormatStyle::BraceBreakingStyle &Value) {
+    IO.enumCase(Value, "Attach", clang::format::FormatStyle::BS_Attach);
+    IO.enumCase(Value, "Linux", clang::format::FormatStyle::BS_Linux);
+    IO.enumCase(Value, "Stroustrup", clang::format::FormatStyle::BS_Stroustrup);
   }
 };
 
@@ -87,6 +97,7 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
     IO.mapOptional("Standard", Style.Standard);
     IO.mapOptional("IndentWidth", Style.IndentWidth);
     IO.mapOptional("UseTab", Style.UseTab);
+    IO.mapOptional("BreakBeforeBraces", Style.BreakBeforeBraces);
   }
 };
 }
@@ -115,6 +126,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.Standard = FormatStyle::LS_Cpp03;
   LLVMStyle.IndentWidth = 2;
   LLVMStyle.UseTab = false;
+  LLVMStyle.BreakBeforeBraces = FormatStyle::BS_Attach;
   return LLVMStyle;
 }
 
@@ -138,6 +150,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.Standard = FormatStyle::LS_Auto;
   GoogleStyle.IndentWidth = 2;
   GoogleStyle.UseTab = false;
+  GoogleStyle.BreakBeforeBraces = FormatStyle::BS_Attach;
   return GoogleStyle;
 }
 

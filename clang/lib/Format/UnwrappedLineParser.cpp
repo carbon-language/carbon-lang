@@ -402,6 +402,10 @@ void UnwrappedLineParser::parseStructuralElement() {
       // structural element.
       // FIXME: Figure out cases where this is not true, and add projections for
       // them (the one we know is missing are lambdas).
+      if (Style.BreakBeforeBraces == FormatStyle::BS_Linux ||
+          Style.BreakBeforeBraces == FormatStyle::BS_Stroustrup)
+        addUnwrappedLine();
+
       parseBlock(/*MustBeDeclaration=*/ false);
       addUnwrappedLine();
       return;
@@ -577,6 +581,9 @@ void UnwrappedLineParser::parseNamespace() {
   if (FormatTok.Tok.is(tok::identifier))
     nextToken();
   if (FormatTok.Tok.is(tok::l_brace)) {
+    if (Style.BreakBeforeBraces == FormatStyle::BS_Linux)
+      addUnwrappedLine();
+
     parseBlock(/*MustBeDeclaration=*/ true, 0);
     // Munch the semicolon after a namespace. This is more common than one would
     // think. Puttin the semicolon into its own line is very ugly.
@@ -751,8 +758,12 @@ void UnwrappedLineParser::parseRecord() {
       }
     }
   }
-  if (FormatTok.Tok.is(tok::l_brace))
+  if (FormatTok.Tok.is(tok::l_brace)) {
+    if (Style.BreakBeforeBraces == FormatStyle::BS_Linux)
+      addUnwrappedLine();
+
     parseBlock(/*MustBeDeclaration=*/ true);
+  }
   // We fall through to parsing a structural element afterwards, so
   // class A {} n, m;
   // will end up in one unwrapped line.

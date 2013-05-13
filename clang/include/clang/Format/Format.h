@@ -101,6 +101,20 @@ struct FormatStyle {
   /// tab characters.
   bool UseTab;
 
+  /// \brief Different ways to attach braces to their surrounding context.
+  enum BraceBreakingStyle {
+    /// Always attach braces to surrounding context.
+    BS_Attach,
+    /// Like \c Attach, but break before braces on function, namespace and
+    /// class definitions.
+    BS_Linux,
+    /// Like \c Attach, but break before function definitions.
+    BS_Stroustrup
+  };
+
+  /// \brief The brace breaking style to use.
+  BraceBreakingStyle BreakBeforeBraces;
+
   bool operator==(const FormatStyle &R) const {
     return AccessModifierOffset == R.AccessModifierOffset &&
            AlignEscapedNewlinesLeft == R.AlignEscapedNewlinesLeft &&
@@ -122,7 +136,8 @@ struct FormatStyle {
            SpacesBeforeTrailingComments == R.SpacesBeforeTrailingComments &&
            Standard == R.Standard &&
            IndentWidth == R.IndentWidth &&
-           UseTab == R.UseTab;
+           UseTab == R.UseTab &&
+           BreakBeforeBraces == R.BreakBeforeBraces;
   }
 
 };

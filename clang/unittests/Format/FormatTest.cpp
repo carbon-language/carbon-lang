@@ -4037,6 +4037,42 @@ TEST_F(FormatTest, ConfigurableUseOfTab) {
                Tab);
 }
 
+TEST_F(FormatTest, LinuxBraceBreaking) {
+  FormatStyle BreakBeforeBrace = getLLVMStyle();
+  BreakBeforeBrace.BreakBeforeBraces = FormatStyle::BS_Linux;
+  verifyFormat("namespace a\n"
+               "{\n"
+               "class A\n"
+               "{\n"
+               "  void f()\n"
+               "  {\n"
+               "    if (true) {\n"
+               "      a();\n"
+               "      b();\n"
+               "    }\n"
+               "  }\n"
+               "}\n"
+               "}",
+               BreakBeforeBrace);
+}
+
+TEST_F(FormatTest, StroustrupBraceBreaking) {
+  FormatStyle BreakBeforeBrace = getLLVMStyle();
+  BreakBeforeBrace.BreakBeforeBraces = FormatStyle::BS_Stroustrup;
+  verifyFormat("namespace a {\n"
+               "class A {\n"
+               "  void f()\n"
+               "  {\n"
+               "    if (true) {\n"
+               "      a();\n"
+               "      b();\n"
+               "    }\n"
+               "  }\n"
+               "}\n"
+               "}",
+               BreakBeforeBrace);
+}
+
 bool allStylesEqual(ArrayRef<FormatStyle> Styles) {
   for (size_t i = 1; i < Styles.size(); ++i)
     if (!(Styles[0] == Styles[i]))
@@ -4112,6 +4148,14 @@ TEST_F(FormatTest, ParsesConfiguration) {
   FormatStyle BaseStyle = getLLVMStyle();
   CHECK_PARSE("BasedOnStyle: LLVM", ColumnLimit, BaseStyle.ColumnLimit);
   CHECK_PARSE("BasedOnStyle: LLVM\nColumnLimit: 1234", ColumnLimit, 1234u);
+
+  Style.BreakBeforeBraces = FormatStyle::BS_Stroustrup;
+  CHECK_PARSE("BreakBeforeBraces: Attach", BreakBeforeBraces,
+              FormatStyle::BS_Attach);
+  CHECK_PARSE("BreakBeforeBraces: Linux", BreakBeforeBraces,
+              FormatStyle::BS_Linux);
+  CHECK_PARSE("BreakBeforeBraces: Stroustrup", BreakBeforeBraces,
+              FormatStyle::BS_Stroustrup);
 
 #undef CHECK_PARSE
 #undef CHECK_PARSE_BOOL
