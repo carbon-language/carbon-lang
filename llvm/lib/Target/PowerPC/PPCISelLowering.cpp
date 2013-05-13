@@ -16,6 +16,7 @@
 #include "PPCMachineFunctionInfo.h"
 #include "PPCPerfectShuffle.h"
 #include "PPCTargetMachine.h"
+#include "PPCTargetObjectFile.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -63,6 +64,9 @@ cl::desc("disable unaligned load/store generation on PPC"), cl::Hidden);
 static TargetLoweringObjectFile *CreateTLOF(const PPCTargetMachine &TM) {
   if (TM.getSubtargetImpl()->isDarwin())
     return new TargetLoweringObjectFileMachO();
+
+  if (TM.getSubtargetImpl()->isSVR4ABI())
+    return new PPC64LinuxTargetObjectFile();
 
   return new TargetLoweringObjectFileELF();
 }
