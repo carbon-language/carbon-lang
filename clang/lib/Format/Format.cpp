@@ -191,6 +191,7 @@ std::string configurationAsText(const FormatStyle &Style) {
   // reference here.
   FormatStyle NonConstStyle = Style;
   Output << NonConstStyle;
+  Stream.flush();
   return Text;
 }
 
