@@ -8,8 +8,8 @@ Configs :=
 
 # We don't currently have any general purpose way to target architectures other
 # than the compiler defaults (because there is no generalized way to invoke
-# cross compilers). For now, we just find the target archicture of the compiler
-# and only define configurations we know that compiler can generate.
+# cross compilers). For now, we just find the target architecture of the
+# compiler and only define configurations we know that compiler can generate.
 CompilerTargetTriple := $(shell \
 	$(CC) -v 2>&1 | grep 'Target:' | cut -d' ' -f2)
 ifneq ($(DEBUGMAKE),)
