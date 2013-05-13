@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++1y -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -std=c++1y -triple x86_64-linux-gnu -emit-llvm %s -o - | FileCheck %s
 
 // CHECK: @x = global {{.*}} zeroinitializer
 
