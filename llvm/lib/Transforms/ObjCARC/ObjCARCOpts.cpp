@@ -1440,11 +1440,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
     case IC_RetainBlock:
       // If we strength reduce an objc_retainBlock to an objc_retain, continue
       // onto the objc_retain peephole optimizations. Otherwise break.
-      if (!OptimizeRetainBlockCall(F, Inst, Class))
-        break;
-      // FALLTHROUGH
-    case IC_Retain:
-      ++NumRetainsBeforeOpt;
+      OptimizeRetainBlockCall(F, Inst, Class);
       break;
     case IC_RetainRV:
       if (OptimizeRetainRVCall(F, Inst))
@@ -1452,9 +1448,6 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
       break;
     case IC_AutoreleaseRV:
       OptimizeAutoreleaseRVCall(F, Inst, Class);
-      break;
-    case IC_Release:
-      ++NumReleasesBeforeOpt;
       break;
     }
 
@@ -3049,6 +3042,12 @@ bool ObjCARCOpt::runOnFunction(Function &F) {
         "\n");
 
   PA.setAA(&getAnalysis<AliasAnalysis>());
+
+#ifndef NDEBUG
+  if (AreStatisticsEnabled()) {
+    GatherStatistics(F, false);
+  }
+#endif
 
   // This pass performs several distinct transformations. As a compile-time aid
   // when compiling code that isn't ObjC, skip these if the relevant ObjC
