@@ -639,6 +639,7 @@ Value *BoUpSLP::vectorizeTree(ArrayRef<Value *> VL, int VF) {
       Replaced = true;
     }
     assert(Replaced && "Must replace at least one outside user");
+    (void)Replaced;
   }
 
   // We moved some instructions around. We have to number them again

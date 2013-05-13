@@ -1196,6 +1196,7 @@ RewriteIntelBracExpression(SmallVectorImpl<AsmRewrite> *AsmRewrites,
         }
       }
       assert (Found && "Unable to rewrite ImmDisp.");
+      (void)Found;
     } else {
       // We have a symbolic and an immediate displacement, but no displacement
       // before the bracketed expression.  Put the immediate displacement

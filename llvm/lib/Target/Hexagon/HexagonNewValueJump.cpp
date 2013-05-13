@@ -631,6 +631,7 @@ bool HexagonNewValueJump::runOnMachineFunction(MachineFunction &MF) {
                                     .addMBB(jmpTarget);
 
           assert(NewMI && "New Value Jump Instruction Not created!");
+          (void)NewMI;
           if (cmpInstr->getOperand(0).isReg() &&
               cmpInstr->getOperand(0).isKill())
             cmpInstr->getOperand(0).setIsKill(false);
