@@ -26,12 +26,12 @@ set(LLDB_TRACE_DIR "${CMAKE_BINARY_DIR}/lldb-test-traces"
   )
 
 set(LLDB_COMMON_TEST_ARGS
-  #--headers
-  #${LLDB_SOURCE_DIR}/include
   --executable
   ${CMAKE_BINARY_DIR}/bin/lldb
   -s
   ${LLDB_TRACE_DIR}
+  -u CXXFLAGS
+  -u CFLAGS
   )
 
 add_python_test_target(check-lldb-single

@@ -30,4 +30,4 @@ clean::
 #----------------------------------------------------------------------
 check-local::
 	rm -rf lldb-test-traces
-	python $(PROJ_SRC_DIR)/dosep.ty -o "--executable $(ToolDir)/lldb -q -s lldb-test-traces -C $(subst ccache,,$(CC))"
+	python $(PROJ_SRC_DIR)/dosep.ty -o "--executable $(ToolDir)/lldb -q -s lldb-test-traces -u CXXFLAGS -u CFLAGS -C $(subst ccache,,$(CC))"
