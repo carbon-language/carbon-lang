@@ -96,9 +96,7 @@ ifeq ($(HOST_OS),Linux)
   USEDLIBS += lldbHostLinux.a \
               lldbPluginProcessLinux.a \
               lldbPluginProcessPOSIX.a \
-              lldbPluginDynamicLoaderMacOSX.a \
-              lldbPluginDynamicLoaderDarwinKernel.a
-
+              lldbPluginDynamicLoaderMacOSX.a
 endif
 
 ifeq ($(HOST_OS),FreeBSD)

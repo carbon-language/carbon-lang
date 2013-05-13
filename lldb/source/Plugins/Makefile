@@ -32,7 +32,7 @@ DIRS += Process/mach-core
 endif
 
 ifeq ($(HOST_OS),Linux)
-DIRS += DynamicLoader/MacOSX-DYLD DynamicLoader/Darwin-Kernel
+DIRS += DynamicLoader/MacOSX-DYLD
 DIRS += Process/Linux Process/POSIX
 endif
 
