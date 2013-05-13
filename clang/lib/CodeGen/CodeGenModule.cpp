@@ -1763,7 +1763,7 @@ void CodeGenModule::MaybeHandleStaticInExternC(const SomeDecl *D,
     return;
 
   // Must have internal linkage and an ordinary name.
-  if (!D->getIdentifier() || D->getLinkage() != InternalLinkage)
+  if (!D->getIdentifier() || D->getFormalLinkage() != InternalLinkage)
     return;
 
   // Must be in an extern "C" context. Entities declared directly within

@@ -212,11 +212,26 @@ public:
   bool isCXXInstanceMember() const;
 
   /// \brief Determine what kind of linkage this entity has.
-  Linkage getLinkage() const;
+  /// This is not the linkage as defined by the standard or the codegen notion
+  /// of linkage. It is just an implementation detail that is used to compute
+  /// those.
+  Linkage getLinkageInternal() const;
+
+  /// \brief Get the linkage from a semantic point of view. Entities in
+  /// anonymous namespaces are external (in c++98).
+  Linkage getFormalLinkage() const {
+    Linkage L = getLinkageInternal();
+    if (L == UniqueExternalLinkage)
+      return ExternalLinkage;
+    return L;
+  }
 
   /// \brief True if this decl has external linkage.
-  bool hasExternalLinkage() const {
-    return getLinkage() == ExternalLinkage;
+  bool hasExternalFormalLinkage() const {
+    return getFormalLinkage() == ExternalLinkage;
+  }
+  bool isExternallyVisible() const {
+    return getLinkageInternal() == ExternalLinkage;
   }
 
   /// \brief Determines the visibility of this entity.

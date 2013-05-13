@@ -216,7 +216,7 @@ class Sema {
     // it will keep having external linkage. If it has internal linkage, we
     // will not link it. Since it has no previous decls, it will remain
     // with internal linkage.
-    return !Old->isHidden() || New->hasExternalLinkage();
+    return !Old->isHidden() || New->isExternallyVisible();
   }
 
 public:

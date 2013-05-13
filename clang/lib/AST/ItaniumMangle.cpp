@@ -405,7 +405,7 @@ bool ItaniumMangleContext::shouldMangleDeclName(const NamedDecl *D) {
     if (DC->isFunctionOrMethod() && D->hasLinkage())
       while (!DC->isNamespace() && !DC->isTranslationUnit())
         DC = getEffectiveParentContext(DC);
-    if (DC->isTranslationUnit() && D->getLinkage() != InternalLinkage)
+    if (DC->isTranslationUnit() && D->getFormalLinkage() != InternalLinkage)
       return false;
   }
 
@@ -1053,7 +1053,7 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       //   static void foo();
       // This naming convention is the same as that followed by GCC,
       // though it shouldn't actually matter.
-      if (ND && ND->getLinkage() == InternalLinkage &&
+      if (ND && ND->getFormalLinkage() == InternalLinkage &&
           getEffectiveDeclContext(ND)->isFileContext())
         Out << 'L';
 

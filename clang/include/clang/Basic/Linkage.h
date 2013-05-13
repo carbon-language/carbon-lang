@@ -62,11 +62,6 @@ enum GVALinkage {
   GVA_ExplicitTemplateInstantiation
 };
 
-/// \brief Determine whether the given linkage is semantically external.
-inline bool isExternalLinkage(Linkage L) {
-  return L == UniqueExternalLinkage || L == ExternalLinkage;
-}
-
 /// \brief Compute the minimum linkage given two linages.
 inline Linkage minLinkage(Linkage L1, Linkage L2) {
   return L1 < L2? L1 : L2;

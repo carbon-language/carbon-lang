@@ -151,7 +151,7 @@ bool USRGenerator::EmitDeclName(const NamedDecl *D) {
 }
 
 static inline bool ShouldGenerateLocation(const NamedDecl *D) {
-  return D->getLinkage() != ExternalLinkage;
+  return !D->isExternallyVisible();
 }
 
 void USRGenerator::VisitDeclContext(const DeclContext *DC) {

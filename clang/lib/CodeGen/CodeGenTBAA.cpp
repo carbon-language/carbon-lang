@@ -162,8 +162,7 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
     // on their mangled names, if they're external.
     // TODO: Is there a way to get a program-wide unique name for a
     // decl with local linkage or no linkage?
-    if (Features.CPlusPlus &&
-        ETy->getDecl()->getLinkage() != ExternalLinkage)
+    if (Features.CPlusPlus && !ETy->getDecl()->isExternallyVisible())
       return MetadataCache[Ty] = getChar();
 
     // TODO: This is using the RTTI name. Is there a better way to get

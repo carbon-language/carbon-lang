@@ -210,11 +210,12 @@ bool IndexingContext::isFunctionLocalDecl(const Decl *D) {
     return false;
 
   if (const NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
-    switch (ND->getLinkage()) {
+    switch (ND->getFormalLinkage()) {
     case NoLinkage:
     case InternalLinkage:
       return true;
     case UniqueExternalLinkage:
+      llvm_unreachable("Not a sema linkage");
     case ExternalLinkage:
       return false;
     }

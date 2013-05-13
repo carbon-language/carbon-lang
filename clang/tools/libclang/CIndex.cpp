@@ -5681,7 +5681,7 @@ CXLinkageKind clang_getCursorLinkage(CXCursor cursor) {
 
   const Decl *D = cxcursor::getCursorDecl(cursor);
   if (const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(D))
-    switch (ND->getLinkage()) {
+    switch (ND->getLinkageInternal()) {
       case NoLinkage: return CXLinkage_NoLinkage;
       case InternalLinkage: return CXLinkage_Internal;
       case UniqueExternalLinkage: return CXLinkage_UniqueExternal;

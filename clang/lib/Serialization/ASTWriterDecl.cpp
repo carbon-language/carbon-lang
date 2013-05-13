@@ -334,7 +334,7 @@ void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   Record.push_back(D->hasImplicitReturnZero());
   Record.push_back(D->isConstexpr());
   Record.push_back(D->HasSkippedBody);
-  Record.push_back(D->getLinkage());
+  Record.push_back(D->getLinkageInternal());
   Writer.AddSourceLocation(D->getLocEnd(), Record);
 
   Record.push_back(D->getTemplatedKind());
@@ -694,7 +694,7 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
   Record.push_back(D->isCXXForRangeDecl());
   Record.push_back(D->isARCPseudoStrong());
   Record.push_back(D->isConstexpr());
-  Record.push_back(D->getLinkage());
+  Record.push_back(D->getLinkageInternal());
 
   if (D->getInit()) {
     Record.push_back(!D->isInitKnownICE() ? 1 : (D->isInitICE() ? 3 : 2));

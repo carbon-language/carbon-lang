@@ -332,7 +332,7 @@ static bool ShouldRemoveFromUnused(Sema *SemaRef, const DeclaratorDecl *D) {
   if (D->getMostRecentDecl()->isUsed())
     return true;
 
-  if (D->hasExternalLinkage())
+  if (D->isExternallyVisible())
     return true;
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
@@ -402,13 +402,13 @@ void Sema::getUndefinedButUsed(
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)) {
       if (FD->isDefined())
         continue;
-      if (FD->hasExternalLinkage() &&
+      if (FD->isExternallyVisible() &&
           !FD->getMostRecentDecl()->isInlined())
         continue;
     } else {
       if (cast<VarDecl>(ND)->hasDefinition() != VarDecl::DeclarationOnly)
         continue;
-      if (ND->hasExternalLinkage())
+      if (ND->isExternallyVisible())
         continue;
     }
 
@@ -435,7 +435,7 @@ static void checkUndefinedButUsed(Sema &S) {
          I = Undefined.begin(), E = Undefined.end(); I != E; ++I) {
     NamedDecl *ND = I->first;
 
-    if (ND->getLinkage() != ExternalLinkage) {
+    if (!ND->isExternallyVisible()) {
       S.Diag(ND->getLocation(), diag::warn_undefined_internal)
         << isa<VarDecl>(ND) << ND;
     } else {

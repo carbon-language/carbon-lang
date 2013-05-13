@@ -483,6 +483,10 @@ static bool isSingleLineExternC(const Decl &D) {
   return false;
 }
 
+static bool isExternalLinkage(Linkage L) {
+  return L == UniqueExternalLinkage || L == ExternalLinkage;
+}
+
 static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
                                               LVComputationKind computation) {
   assert(D->getDeclContext()->getRedeclContext()->isFileContext() &&
@@ -885,7 +889,7 @@ bool NamedDecl::isLinkageValid() const {
     Linkage(CachedLinkage);
 }
 
-Linkage NamedDecl::getLinkage() const {
+Linkage NamedDecl::getLinkageInternal() const {
   if (HasCachedLinkage)
     return Linkage(CachedLinkage);
 
@@ -1289,7 +1293,7 @@ bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
 }
 
 bool NamedDecl::hasLinkage() const {
-  return getLinkage() != NoLinkage;
+  return getLinkageInternal() != NoLinkage;
 }
 
 NamedDecl *NamedDecl::getUnderlyingDeclImpl() {
@@ -1513,7 +1517,7 @@ template<typename T>
 static LanguageLinkage getLanguageLinkageTemplate(const T &D) {
   // C++ [dcl.link]p1: All function types, function names with external linkage,
   // and variable names with external linkage have a language linkage.
-  if (!isExternalLinkage(D.getLinkage()))
+  if (!D.hasExternalFormalLinkage())
     return NoLanguageLinkage;
 
   // Language linkage is a C++ concept, but saying that everything else in C has

@@ -719,7 +719,7 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
 /// Note that we only call this at the end of the translation unit.
 llvm::GlobalVariable::LinkageTypes 
 CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
-  if (RD->getLinkage() != ExternalLinkage)
+  if (!RD->isExternallyVisible())
     return llvm::GlobalVariable::InternalLinkage;
 
   // We're at the end of the translation unit, so the current key

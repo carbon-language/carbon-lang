@@ -7767,30 +7767,23 @@ QualType ASTContext::GetBuiltinType(unsigned Id,
 }
 
 GVALinkage ASTContext::GetGVALinkageForFunction(const FunctionDecl *FD) {
-  GVALinkage External = GVA_StrongExternal;
-
-  Linkage L = FD->getLinkage();
-  switch (L) {
-  case NoLinkage:
-  case InternalLinkage:
-  case UniqueExternalLinkage:
+  if (!FD->isExternallyVisible())
     return GVA_Internal;
-    
-  case ExternalLinkage:
-    switch (FD->getTemplateSpecializationKind()) {
-    case TSK_Undeclared:
-    case TSK_ExplicitSpecialization:
-      External = GVA_StrongExternal;
-      break;
 
-    case TSK_ExplicitInstantiationDefinition:
-      return GVA_ExplicitTemplateInstantiation;
+  GVALinkage External = GVA_StrongExternal;
+  switch (FD->getTemplateSpecializationKind()) {
+  case TSK_Undeclared:
+  case TSK_ExplicitSpecialization:
+    External = GVA_StrongExternal;
+    break;
 
-    case TSK_ExplicitInstantiationDeclaration:
-    case TSK_ImplicitInstantiation:
-      External = GVA_TemplateInstantiation;
-      break;
-    }
+  case TSK_ExplicitInstantiationDefinition:
+    return GVA_ExplicitTemplateInstantiation;
+
+  case TSK_ExplicitInstantiationDeclaration:
+  case TSK_ImplicitInstantiation:
+    External = GVA_TemplateInstantiation;
+    break;
   }
 
   if (!FD->isInlined())
@@ -7820,6 +7813,9 @@ GVALinkage ASTContext::GetGVALinkageForFunction(const FunctionDecl *FD) {
 }
 
 GVALinkage ASTContext::GetGVALinkageForVariable(const VarDecl *VD) {
+  if (!VD->isExternallyVisible())
+    return GVA_Internal;
+
   // If this is a static data member, compute the kind of template
   // specialization. Otherwise, this variable is not part of a
   // template.
@@ -7827,33 +7823,21 @@ GVALinkage ASTContext::GetGVALinkageForVariable(const VarDecl *VD) {
   if (VD->isStaticDataMember())
     TSK = VD->getTemplateSpecializationKind();
 
-  Linkage L = VD->getLinkage();
+  switch (TSK) {
+  case TSK_Undeclared:
+  case TSK_ExplicitSpecialization:
+    return GVA_StrongExternal;
 
-  switch (L) {
-  case NoLinkage:
-  case InternalLinkage:
-  case UniqueExternalLinkage:
-    return GVA_Internal;
+  case TSK_ExplicitInstantiationDeclaration:
+    llvm_unreachable("Variable should not be instantiated");
+  // Fall through to treat this like any other instantiation.
 
-  case ExternalLinkage:
-    switch (TSK) {
-    case TSK_Undeclared:
-    case TSK_ExplicitSpecialization:
-      return GVA_StrongExternal;
+  case TSK_ExplicitInstantiationDefinition:
+    return GVA_ExplicitTemplateInstantiation;
 
-    case TSK_ExplicitInstantiationDeclaration:
-      llvm_unreachable("Variable should not be instantiated");
-      // Fall through to treat this like any other instantiation.
-        
-    case TSK_ExplicitInstantiationDefinition:
-      return GVA_ExplicitTemplateInstantiation;
-
-    case TSK_ImplicitInstantiation:
-      return GVA_TemplateInstantiation;      
-    }
+  case TSK_ImplicitInstantiation:
+    return GVA_TemplateInstantiation;
   }
-
-  llvm_unreachable("Invalid Linkage!");
 }
 
 bool ASTContext::DeclMustBeEmitted(const Decl *D) {
@@ -7986,7 +7970,8 @@ size_t ASTContext::getSideTableAllocatedMemory() const {
 void ASTContext::addUnnamedTag(const TagDecl *Tag) {
   // FIXME: This mangling should be applied to function local classes too
   if (!Tag->getName().empty() || Tag->getTypedefNameForAnonDecl() ||
-      !isa<CXXRecordDecl>(Tag->getParent()) || Tag->getLinkage() != ExternalLinkage)
+      !isa<CXXRecordDecl>(Tag->getParent()) ||
+      !Tag->isExternallyVisible())
     return;
 
   std::pair<llvm::DenseMap<const DeclContext *, unsigned>::iterator, bool> P =

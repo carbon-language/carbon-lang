@@ -2354,7 +2354,7 @@ static const CXXMethodDecl *computeKeyFunction(ASTContext &Context,
   // A class that is not externally visible doesn't have a key function. (Or
   // at least, there's no point to assigning a key function to such a class;
   // this doesn't affect the ABI.)
-  if (RD->getLinkage() != ExternalLinkage)
+  if (!RD->isExternallyVisible())
     return 0;
 
   // Template instantiations don't have key functions,see Itanium C++ ABI 5.2.6.

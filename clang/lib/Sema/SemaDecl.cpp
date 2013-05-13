@@ -1194,7 +1194,7 @@ bool Sema::mightHaveNonExternalLinkage(const DeclaratorDecl *D) {
     DC = DC->getParent();
   }
 
-  return !D->hasExternalLinkage();
+  return !D->isExternallyVisible();
 }
 
 bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
@@ -1614,7 +1614,7 @@ static void filterNonConflictingPreviousDecls(ASTContext &context,
     if (!old->isHidden())
       continue;
 
-    if (old->getLinkage() != ExternalLinkage)
+    if (!old->isExternallyVisible())
       filter.erase();
   }
 
@@ -2314,7 +2314,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S) {
   // storage classes.
   if (!isa<CXXMethodDecl>(New) && !isa<CXXMethodDecl>(Old) &&
       New->getStorageClass() == SC_Static &&
-      isExternalLinkage(Old->getLinkage()) &&
+      Old->hasExternalFormalLinkage() &&
       !New->getTemplateSpecializationInfo() &&
       !canRedefineFunction(Old, getLangOpts())) {
     if (getLangOpts().MicrosoftExt) {
@@ -2923,7 +2923,7 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous,
   // [dcl.stc]p8: Check if we have a non-static decl followed by a static.
   if (New->getStorageClass() == SC_Static &&
       !New->isStaticDataMember() &&
-      isExternalLinkage(Old->getLinkage())) {
+      Old->hasExternalFormalLinkage()) {
     Diag(New->getLocation(), diag::err_static_non_static) << New->getDeclName();
     Diag(Old->getLocation(), diag::note_previous_definition);
     return New->setInvalidDecl();
@@ -4625,13 +4625,13 @@ bool Sema::inferObjCARCLifetime(ValueDecl *decl) {
 static void checkAttributesAfterMerging(Sema &S, NamedDecl &ND) {
   // 'weak' only applies to declarations with external linkage.
   if (WeakAttr *Attr = ND.getAttr<WeakAttr>()) {
-    if (ND.getLinkage() != ExternalLinkage) {
+    if (!ND.isExternallyVisible()) {
       S.Diag(Attr->getLocation(), diag::err_attribute_weak_static);
       ND.dropAttr<WeakAttr>();
     }
   }
   if (WeakRefAttr *Attr = ND.getAttr<WeakRefAttr>()) {
-    if (ND.hasExternalLinkage()) {
+    if (ND.isExternallyVisible()) {
       S.Diag(Attr->getLocation(), diag::err_attribute_weakref_not_static);
       ND.dropAttr<WeakRefAttr>();
     }
@@ -6579,7 +6579,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
   // If there's a #pragma GCC visibility in scope, and this isn't a class
   // member, set the visibility of this function.
-  if (!DC->isRecord() && NewFD->hasExternalLinkage())
+  if (!DC->isRecord() && NewFD->isExternallyVisible())
     AddPushedVisibilityAttribute(NewFD);
 
   // If there's a #pragma clang arc_cf_code_audited in scope, consider
@@ -7816,7 +7816,7 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
       // declared with no linkage (C99 6.2.2p6), the type for the
       // object shall be complete.
       if (!Type->isDependentType() && Var->isLocalVarDecl() && 
-          !Var->getLinkage() && !Var->isInvalidDecl() &&
+          !Var->hasLinkage() && !Var->isInvalidDecl() &&
           RequireCompleteType(Var->getLocation(), Type,
                               diag::err_typecheck_decl_incomplete_type))
         Var->setInvalidDecl();
@@ -8029,7 +8029,7 @@ void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
   }
 
   if (var->isThisDeclarationADefinition() &&
-      var->hasExternalLinkage() &&
+      var->isExternallyVisible() &&
       getDiagnostics().getDiagnosticLevel(
                        diag::warn_missing_variable_declarations,
                        var->getLocation())) {
@@ -8138,7 +8138,7 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
   const DeclContext *DC = VD->getDeclContext();
   // If there's a #pragma GCC visibility in scope, and this isn't a class
   // member, set the visibility of this variable.
-  if (!DC->isRecord() && VD->hasExternalLinkage())
+  if (!DC->isRecord() && VD->isExternallyVisible())
     AddPushedVisibilityAttribute(VD);
 
   if (VD->isFileVarDecl())
@@ -8904,7 +8904,7 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
     // ODR use before the definition. Avoid the expensive map lookup if this
     // is the first declaration.
     if (FD->getPreviousDecl() != 0 && FD->getPreviousDecl()->isUsed()) {
-      if (FD->getLinkage() != ExternalLinkage)
+      if (!FD->isExternallyVisible())
         UndefinedButUsed.erase(FD);
       else if (FD->isInlined() &&
                (LangOpts.CPlusPlus || !LangOpts.GNUInline) &&

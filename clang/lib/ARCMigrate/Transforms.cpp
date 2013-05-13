@@ -94,7 +94,7 @@ bool trans::isPlusOne(const Expr *E) {
       if (FD->isGlobal() &&
           FD->getIdentifier() &&
           FD->getParent()->isTranslationUnit() &&
-          FD->hasExternalLinkage() &&
+          FD->isExternallyVisible() &&
           ento::cocoa::isRefType(callE->getType(), "CF",
                                  FD->getIdentifier()->getName())) {
         StringRef fname = FD->getIdentifier()->getName();
@@ -198,7 +198,7 @@ bool trans::isGlobalVar(Expr *E) {
   E = E->IgnoreParenCasts();
   if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
     return DRE->getDecl()->getDeclContext()->isFileContext() &&
-           DRE->getDecl()->hasExternalLinkage();
+           DRE->getDecl()->isExternallyVisible();
   if (ConditionalOperator *condOp = dyn_cast<ConditionalOperator>(E))
     return isGlobalVar(condOp->getTrueExpr()) &&
            isGlobalVar(condOp->getFalseExpr());

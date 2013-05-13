@@ -2610,8 +2610,8 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
         continue;
     
       if (FunctionDecl *FoundFunction = dyn_cast<FunctionDecl>(FoundDecls[I])) {
-        if (isExternalLinkage(FoundFunction->getLinkage()) &&
-            isExternalLinkage(D->getLinkage())) {
+        if (FoundFunction->hasExternalFormalLinkage() &&
+            D->hasExternalFormalLinkage()) {
           if (Importer.IsStructurallyEquivalent(D->getType(), 
                                                 FoundFunction->getType())) {
             // FIXME: Actually try to merge the body and other attributes.
@@ -2995,8 +2995,8 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
       
       if (VarDecl *FoundVar = dyn_cast<VarDecl>(FoundDecls[I])) {
         // We have found a variable that we may need to merge with. Check it.
-        if (isExternalLinkage(FoundVar->getLinkage()) &&
-            isExternalLinkage(D->getLinkage())) {
+        if (FoundVar->hasExternalFormalLinkage() &&
+            D->hasExternalFormalLinkage()) {
           if (Importer.IsStructurallyEquivalent(D->getType(), 
                                                 FoundVar->getType())) {
             MergeWithVar = FoundVar;

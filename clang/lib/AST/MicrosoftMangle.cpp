@@ -199,7 +199,7 @@ bool MicrosoftMangleContext::shouldMangleDeclName(const NamedDecl *D) {
   // Variables at global scope with internal linkage are not mangled.
   if (!FD) {
     const DeclContext *DC = D->getDeclContext();
-    if (DC->isTranslationUnit() && D->getLinkage() == InternalLinkage)
+    if (DC->isTranslationUnit() && D->getFormalLinkage() == InternalLinkage)
       return false;
   }
 

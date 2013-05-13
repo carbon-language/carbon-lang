@@ -68,7 +68,7 @@ bool CheckerContext::isCLibraryFunction(const FunctionDecl *FD,
   // If this function is not externally visible, it is not a C library function.
   // Note that we make an exception for inline functions, which may be
   // declared in header files without external linkage.
-  if (!FD->isInlined() && FD->getLinkage() != ExternalLinkage)
+  if (!FD->isInlined() && !FD->isExternallyVisible())
     return false;
 
   if (Name.empty())

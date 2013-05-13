@@ -197,11 +197,11 @@ static void diagnoseUseOfInternalDeclInInlineFunction(Sema &S,
     return;
   if (!Current->isInlined())
     return;
-  if (Current->getLinkage() != ExternalLinkage)
+  if (!Current->isExternallyVisible())
     return;
-  
+
   // Check if the decl has internal linkage.
-  if (D->getLinkage() != InternalLinkage)
+  if (D->getFormalLinkage() != InternalLinkage)
     return;
 
   // Downgrade from ExtWarn to Extension if
@@ -11459,7 +11459,7 @@ static void MarkVarDeclODRUsed(Sema &SemaRef, VarDecl *Var,
   // Keep track of used but undefined variables.
   // FIXME: We shouldn't suppress this warning for static data members.
   if (Var->hasDefinition(SemaRef.Context) == VarDecl::DeclarationOnly &&
-      Var->getLinkage() != ExternalLinkage &&
+      !Var->isExternallyVisible() &&
       !(Var->isStaticDataMember() && Var->hasInit())) {
     SourceLocation &old = SemaRef.UndefinedButUsed[Var->getCanonicalDecl()];
     if (old.isInvalid()) old = Loc;
