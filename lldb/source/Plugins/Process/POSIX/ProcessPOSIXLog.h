@@ -49,6 +49,11 @@ public:
         m_pluginname = pluginName;
     }
 
+    static void
+    RegisterPluginName(lldb_private::ConstString pluginName)
+        {
+            m_pluginname = pluginName.GetCString();
+        }
 
     static lldb_private::Log *
     GetLogIfAllCategoriesSet(uint32_t mask = 0);
