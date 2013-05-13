@@ -72,6 +72,7 @@ MipsTargetMachine(const Target &T, StringRef TT,
     FrameLowering(MipsFrameLowering::create(*this, Subtarget)),
     TLInfo(MipsTargetLowering::create(*this)),
     TSInfo(*this), JITInfo() {
+  initAsmInfo();
 }
 
 

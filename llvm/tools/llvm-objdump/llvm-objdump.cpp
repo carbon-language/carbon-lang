@@ -272,8 +272,15 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     if (Symbols.empty())
       Symbols.push_back(std::make_pair(0, name));
 
+    OwningPtr<const MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
+    if (!MRI) {
+      errs() << "error: no register info for target " << TripleName << "\n";
+      return;
+    }
+
     // Set up disassembler.
-    OwningPtr<const MCAsmInfo> AsmInfo(TheTarget->createMCAsmInfo(TripleName));
+    OwningPtr<const MCAsmInfo> AsmInfo(
+        TheTarget->createMCAsmInfo(*MRI, TripleName));
 
     if (!AsmInfo) {
       errs() << "error: no assembly info for target " << TripleName << "\n";
@@ -292,12 +299,6 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       TheTarget->createMCDisassembler(*STI));
     if (!DisAsm) {
       errs() << "error: no disassembler for target " << TripleName << "\n";
-      return;
-    }
-
-    OwningPtr<const MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
-    if (!MRI) {
-      errs() << "error: no register info for target " << TripleName << "\n";
       return;
     }
 

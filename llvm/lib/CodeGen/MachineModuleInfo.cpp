@@ -268,6 +268,39 @@ MachineModuleInfo::MachineModuleInfo()
 MachineModuleInfo::~MachineModuleInfo() {
 }
 
+static MCCFIInstruction convertMoveToCFI(const MCRegisterInfo &MRI,
+                                         MCSymbol *Label,
+                                         const MachineLocation &Dst,
+                                         const MachineLocation &Src) {
+  // If advancing cfa.
+  if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
+    if (Src.getReg() == MachineLocation::VirtualFP)
+      return MCCFIInstruction::createDefCfaOffset(Label, Src.getOffset());
+    // Reg + Offset
+    return MCCFIInstruction::createDefCfa(
+        Label, MRI.getDwarfRegNum(Src.getReg(), true), -Src.getOffset());
+  }
+
+  if (Src.isReg() && Src.getReg() == MachineLocation::VirtualFP) {
+    assert(Dst.isReg() && "Machine move not supported yet.");
+    return MCCFIInstruction::createDefCfaRegister(
+        Label, MRI.getDwarfRegNum(Dst.getReg(), true));
+  }
+
+  assert(!Dst.isReg() && "Machine move not supported yet.");
+  return MCCFIInstruction::createOffset(
+      Label, MRI.getDwarfRegNum(Src.getReg(), true), Dst.getOffset());
+}
+
+
+void MachineModuleInfo::addFrameMove(MCSymbol *Label,
+                                     const MachineLocation &Dst,
+                                     const MachineLocation &Src) {
+  MCCFIInstruction I =
+      convertMoveToCFI(Context.getRegisterInfo(), Label, Dst, Src);
+  FrameInstructions.push_back(I);
+}
+
 bool MachineModuleInfo::doInitialization(Module &M) {
 
   ObjFileMMI = 0;
@@ -303,7 +336,7 @@ bool MachineModuleInfo::doFinalization(Module &M) {
 ///
 void MachineModuleInfo::EndFunction() {
   // Clean up frame info.
-  FrameMoves.clear();
+  FrameInstructions.clear();
 
   // Clean up exception info.
   LandingPads.clear();

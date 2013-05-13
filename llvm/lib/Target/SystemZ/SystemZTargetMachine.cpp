@@ -33,6 +33,7 @@ SystemZTargetMachine::SystemZTargetMachine(const Target &T, StringRef TT,
        "-f32:32-f64:64-f128:64-a0:8:16-n32:64"),
     InstrInfo(*this), TLInfo(*this), TSInfo(*this),
     FrameLowering(*this, Subtarget) {
+  initAsmInfo();
 }
 
 namespace {

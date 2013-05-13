@@ -93,12 +93,12 @@ static MCSubtargetInfo *createMipsMCSubtargetInfo(StringRef TT, StringRef CPU,
   return X;
 }
 
-static MCAsmInfo *createMipsMCAsmInfo(StringRef TT) {
+static MCAsmInfo *createMipsMCAsmInfo(const MCRegisterInfo &MRI, StringRef TT) {
   MCAsmInfo *MAI = new MipsMCAsmInfo(TT);
 
-  MachineLocation Dst(MachineLocation::VirtualFP);
-  MachineLocation Src(Mips::SP, 0);
-  MAI->addInitialFrameState(0, Dst, Src);
+  unsigned SP = MRI.getDwarfRegNum(Mips::SP, true);
+  MCCFIInstruction Inst = MCCFIInstruction::createDefCfa(0, SP, 0);
+  MAI->addInitialFrameState(Inst);
 
   return MAI;
 }

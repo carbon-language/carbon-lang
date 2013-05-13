@@ -27,11 +27,13 @@
 
 using namespace llvm;
 
-static MCAsmInfo *createSystemZMCAsmInfo(StringRef TT) {
+static MCAsmInfo *createSystemZMCAsmInfo(const MCRegisterInfo &MRI,
+                                         StringRef TT) {
   MCAsmInfo *MAI = new SystemZMCAsmInfo(TT);
-  MachineLocation FPDst(MachineLocation::VirtualFP);
-  MachineLocation FPSrc(SystemZ::R15D, -SystemZMC::CFAOffsetFromInitialSP);
-  MAI->addInitialFrameState(0, FPDst, FPSrc);
+  MCCFIInstruction Inst =
+      MCCFIInstruction::createDefCfa(0, MRI.getDwarfRegNum(SystemZ::R15D, true),
+                                     SystemZMC::CFAOffsetFromInitialSP);
+  MAI->addInitialFrameState(Inst);
   return MAI;
 }
 

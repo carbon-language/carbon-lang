@@ -42,17 +42,17 @@ LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
   const Target *TheTarget = TargetRegistry::lookupTarget(Triple, Error);
   assert(TheTarget && "Unable to create target!");
 
+  const MCRegisterInfo *MRI = TheTarget->createMCRegInfo(Triple);
+  if (!MRI)
+    return 0;
+
   // Get the assembler info needed to setup the MCContext.
-  const MCAsmInfo *MAI = TheTarget->createMCAsmInfo(Triple);
+  const MCAsmInfo *MAI = TheTarget->createMCAsmInfo(*MRI, Triple);
   if (!MAI)
     return 0;
 
   const MCInstrInfo *MII = TheTarget->createMCInstrInfo();
   if (!MII)
-    return 0;
-
-  const MCRegisterInfo *MRI = TheTarget->createMCRegInfo(Triple);
-  if (!MRI)
     return 0;
 
   // Package up features to be passed to target/subtarget

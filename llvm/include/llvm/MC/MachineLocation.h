@@ -10,11 +10,6 @@
 // frame.  Locations will be one of two forms; a register or an address formed
 // from a base address plus an offset.  Register indirection can be specified by
 // explicitly passing an offset to the constructor.
-//
-// The MachineMove class is used to represent abstract move operations in the
-// prolog/epilog of a compiled function.  A collection of these objects can be
-// used by a debug consumer to track the location of values when unwinding stack
-// frames.
 //===----------------------------------------------------------------------===//
 
 
@@ -74,30 +69,6 @@ public:
   void dump();
 #endif
 };
-
-/// MachineMove - This class represents the save or restore of a callee saved
-/// register that exception or debug info needs to know about.
-class MachineMove {
-private:
-  /// Label - Symbol for post-instruction address when result of move takes
-  /// effect.
-  MCSymbol *Label;
-
-  // Move to & from location.
-  MachineLocation Destination, Source;
-public:
-  MachineMove() : Label(0) {}
-
-  MachineMove(MCSymbol *label, const MachineLocation &D,
-              const MachineLocation &S)
-  : Label(label), Destination(D), Source(S) {}
-
-  // Accessors
-  MCSymbol *getLabel()                    const { return Label; }
-  const MachineLocation &getDestination() const { return Destination; }
-  const MachineLocation &getSource()      const { return Source; }
-};
-
 } // End llvm namespace
 
 #endif

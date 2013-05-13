@@ -873,17 +873,6 @@ static void EmitPersonality(MCStreamer &streamer, const MCSymbol &symbol,
   streamer.EmitValue(v, size);
 }
 
-static const MachineLocation TranslateMachineLocation(
-                                                  const MCRegisterInfo &MRI,
-                                                  const MachineLocation &Loc) {
-  unsigned Reg = Loc.getReg() == MachineLocation::VirtualFP ?
-    MachineLocation::VirtualFP :
-    unsigned(MRI.getDwarfRegNum(Loc.getReg(), true));
-  const MachineLocation &NewLoc = Loc.isReg() ?
-    MachineLocation(Reg) : MachineLocation(Reg, Loc.getOffset());
-  return NewLoc;
-}
-
 namespace {
   class FrameEmitterImpl {
     int CFAOffset;
@@ -1316,32 +1305,8 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   // Initial Instructions
 
   const MCAsmInfo &MAI = context.getAsmInfo();
-  const std::vector<MachineMove> &Moves = MAI.getInitialFrameState();
-  std::vector<MCCFIInstruction> Instructions;
-
-  for (int i = 0, n = Moves.size(); i != n; ++i) {
-    MCSymbol *Label = Moves[i].getLabel();
-    const MachineLocation &Dst =
-      TranslateMachineLocation(MRI, Moves[i].getDestination());
-    const MachineLocation &Src =
-      TranslateMachineLocation(MRI, Moves[i].getSource());
-
-    if (Dst.isReg()) {
-      assert(Dst.getReg() == MachineLocation::VirtualFP);
-      assert(!Src.isReg());
-      MCCFIInstruction Inst =
-        MCCFIInstruction::createDefCfa(Label, Src.getReg(), -Src.getOffset());
-      Instructions.push_back(Inst);
-    } else {
-      assert(Src.isReg());
-      unsigned Reg = Src.getReg();
-      int Offset = Dst.getOffset();
-      MCCFIInstruction Inst =
-        MCCFIInstruction::createOffset(Label, Reg, Offset);
-      Instructions.push_back(Inst);
-    }
-  }
-
+  const std::vector<MCCFIInstruction> &Instructions =
+      MAI.getInitialFrameState();
   EmitCFIInstructions(streamer, Instructions, NULL);
 
   // Padding

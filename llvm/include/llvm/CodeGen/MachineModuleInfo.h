@@ -106,9 +106,9 @@ class MachineModuleInfo : public ImmutablePass {
   /// want.
   MachineModuleInfoImpl *ObjFileMMI;
 
-  /// FrameMoves - List of moves done by a function's prolog.  Used to construct
-  /// frame maps by debug and exception handling consumers.
-  std::vector<MachineMove> FrameMoves;
+  /// List of moves done by a function's prolog.  Used to construct frame maps
+  /// by debug and exception handling consumers.
+  std::vector<MCCFIInstruction> FrameInstructions;
 
   /// CompactUnwindEncoding - If the target supports it, this is the compact
   /// unwind encoding. It replaces a function's CIE and FDE.
@@ -231,15 +231,15 @@ public:
     UsesVAFloatArgument = b;
   }
 
-  /// getFrameMoves - Returns a reference to a list of moves done in the current
+  /// \brief Returns a reference to a list of cfi instructions in the current
   /// function's prologue.  Used to construct frame maps for debug and exception
   /// handling comsumers.
-  const std::vector<MachineMove> &getFrameMoves() { return FrameMoves; }
+  const std::vector<MCCFIInstruction> &getFrameInstructions() {
+    return FrameInstructions;
+  }
 
   void addFrameMove(MCSymbol *Label, const MachineLocation &Dst,
-                    const MachineLocation &Src) {
-    FrameMoves.push_back(MachineMove(Label, Dst, Src));
-  }
+                    const MachineLocation &Src);
 
   /// getCompactUnwindEncoding - Returns the compact unwind encoding for a
   /// function if the target supports the encoding. This encoding replaces a

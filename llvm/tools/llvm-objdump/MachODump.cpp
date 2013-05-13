@@ -251,11 +251,12 @@ static void DisassembleInputMachO2(StringRef Filename,
     InstrAnalysis(TheTarget->createMCInstrAnalysis(InstrInfo.get()));
 
   // Set up disassembler.
-  OwningPtr<const MCAsmInfo> AsmInfo(TheTarget->createMCAsmInfo(TripleName));
+  OwningPtr<const MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
+  OwningPtr<const MCAsmInfo> AsmInfo(
+      TheTarget->createMCAsmInfo(*MRI, TripleName));
   OwningPtr<const MCSubtargetInfo>
     STI(TheTarget->createMCSubtargetInfo(TripleName, "", ""));
   OwningPtr<const MCDisassembler> DisAsm(TheTarget->createMCDisassembler(*STI));
-  OwningPtr<const MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
   OwningPtr<MCInstPrinter>
     IP(TheTarget->createMCInstPrinter(AsmPrinterVariant, *AsmInfo, *InstrInfo,

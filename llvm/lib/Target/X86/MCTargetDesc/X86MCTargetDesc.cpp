@@ -263,7 +263,7 @@ static MCRegisterInfo *createX86MCRegisterInfo(StringRef TT) {
   return X;
 }
 
-static MCAsmInfo *createX86MCAsmInfo(StringRef TT) {
+static MCAsmInfo *createX86MCAsmInfo(const MCRegisterInfo &MRI, StringRef TT) {
   Triple TheTriple(TT);
   bool is64Bit = TheTriple.getArch() == Triple::x86_64;
 
@@ -290,14 +290,16 @@ static MCAsmInfo *createX86MCAsmInfo(StringRef TT) {
   int stackGrowth = is64Bit ? -8 : -4;
 
   // Initial state of the frame pointer is esp+stackGrowth.
-  MachineLocation Dst(MachineLocation::VirtualFP);
-  MachineLocation Src(is64Bit ? X86::RSP : X86::ESP, stackGrowth);
-  MAI->addInitialFrameState(0, Dst, Src);
+  unsigned StackPtr = is64Bit ? X86::RSP : X86::ESP;
+  MCCFIInstruction Inst = MCCFIInstruction::createDefCfa(
+      0, MRI.getDwarfRegNum(StackPtr, true), -stackGrowth);
+  MAI->addInitialFrameState(Inst);
 
   // Add return address to move list
-  MachineLocation CSDst(is64Bit ? X86::RSP : X86::ESP, stackGrowth);
-  MachineLocation CSSrc(is64Bit ? X86::RIP : X86::EIP);
-  MAI->addInitialFrameState(0, CSDst, CSSrc);
+  unsigned InstPtr = is64Bit ? X86::RIP : X86::EIP;
+  MCCFIInstruction Inst2 = MCCFIInstruction::createOffset(
+      0, MRI.getDwarfRegNum(InstPtr, true), stackGrowth);
+  MAI->addInitialFrameState(Inst2);
 
   return MAI;
 }

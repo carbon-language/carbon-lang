@@ -48,6 +48,7 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, StringRef TT,
   // The binutils for the BG/P are too old for CFI.
   if (Subtarget.isBGP())
     setMCUseCFI(false);
+  initAsmInfo();
 }
 
 void PPC32TargetMachine::anchor() { }

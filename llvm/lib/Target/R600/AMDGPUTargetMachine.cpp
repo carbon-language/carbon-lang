@@ -70,6 +70,7 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, StringRef TT,
     InstrInfo = new SIInstrInfo(*this);
     TLInfo = new SITargetLowering(*this);
   }
+  initAsmInfo();
 }
 
 AMDGPUTargetMachine::~AMDGPUTargetMachine() {

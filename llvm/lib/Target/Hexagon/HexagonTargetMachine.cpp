@@ -79,6 +79,7 @@ HexagonTargetMachine::HexagonTargetMachine(const Target &T, StringRef TT,
     FrameLowering(Subtarget),
     InstrItins(&Subtarget.getInstrItineraryData()) {
     setMCUseCFI(false);
+    initAsmInfo();
 }
 
 // addPassesForOptimizations - Allow the backend (target) to add Target

@@ -57,13 +57,14 @@ static MCRegisterInfo *createAArch64MCRegisterInfo(StringRef Triple) {
   return X;
 }
 
-static MCAsmInfo *createAArch64MCAsmInfo(StringRef TT) {
+static MCAsmInfo *createAArch64MCAsmInfo(const MCRegisterInfo &MRI,
+                                         StringRef TT) {
   Triple TheTriple(TT);
 
   MCAsmInfo *MAI = new AArch64ELFMCAsmInfo();
-  MachineLocation Dst(MachineLocation::VirtualFP);
-  MachineLocation Src(AArch64::XSP, 0);
-  MAI->addInitialFrameState(0, Dst, Src);
+  unsigned Reg = MRI.getDwarfRegNum(AArch64::XSP, true);
+  MCCFIInstruction Inst = MCCFIInstruction::createDefCfa(0, Reg, 0);
+  MAI->addInitialFrameState(Inst);
 
   return MAI;
 }

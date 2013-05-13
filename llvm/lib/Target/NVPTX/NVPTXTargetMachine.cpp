@@ -72,7 +72,9 @@ NVPTXTargetMachine::NVPTXTargetMachine(
       Subtarget(TT, CPU, FS, is64bit), DL(Subtarget.getDataLayout()),
       InstrInfo(*this), TLInfo(*this), TSInfo(*this),
       FrameLowering(
-          *this, is64bit) /*FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0)*/ {}
+          *this, is64bit) /*FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0)*/ {
+  initAsmInfo();
+}
 
 void NVPTXTargetMachine32::anchor() {}
 

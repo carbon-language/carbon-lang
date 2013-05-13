@@ -58,7 +58,7 @@ static MCSubtargetInfo *createPPCMCSubtargetInfo(StringRef TT, StringRef CPU,
   return X;
 }
 
-static MCAsmInfo *createPPCMCAsmInfo(StringRef TT) {
+static MCAsmInfo *createPPCMCAsmInfo(const MCRegisterInfo &MRI, StringRef TT) {
   Triple TheTriple(TT);
   bool isPPC64 = TheTriple.getArch() == Triple::ppc64;
 
@@ -69,9 +69,10 @@ static MCAsmInfo *createPPCMCAsmInfo(StringRef TT) {
     MAI = new PPCLinuxMCAsmInfo(isPPC64);
 
   // Initial state of the frame pointer is R1.
-  MachineLocation Dst(MachineLocation::VirtualFP);
-  MachineLocation Src(isPPC64? PPC::X1 : PPC::R1, 0);
-  MAI->addInitialFrameState(0, Dst, Src);
+  unsigned Reg = isPPC64 ? PPC::X1 : PPC::R1;
+  MCCFIInstruction Inst =
+      MCCFIInstruction::createDefCfa(0, MRI.getDwarfRegNum(Reg, true), 0);
+  MAI->addInitialFrameState(Inst);
 
   return MAI;
 }
