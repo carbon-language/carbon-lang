@@ -1761,6 +1761,33 @@ TEST_F(FormatTest, MemoizationTests) {
       "            aaaaa(aaaaa(aaaaa(aaaaa(aaaaa(aaaaa(aaaaa(aaaaa(aaaaa(\n"
       "                aaaaa())))))))))))))))))))))))))))))))))))))));",
       getLLVMStyleWithColumns(65));
+  verifyFormat(
+      "aaaaa(\n"
+      "    aaaaa,\n"
+      "    aaaaa(\n"
+      "        aaaaa,\n"
+      "        aaaaa(\n"
+      "            aaaaa,\n"
+      "            aaaaa(\n"
+      "                aaaaa,\n"
+      "                aaaaa(\n"
+      "                    aaaaa,\n"
+      "                    aaaaa(\n"
+      "                        aaaaa,\n"
+      "                        aaaaa(\n"
+      "                            aaaaa,\n"
+      "                            aaaaa(\n"
+      "                                aaaaa,\n"
+      "                                aaaaa(\n"
+      "                                    aaaaa,\n"
+      "                                    aaaaa(\n"
+      "                                        aaaaa,\n"
+      "                                        aaaaa(\n"
+      "                                            aaaaa,\n"
+      "                                            aaaaa(\n"
+      "                                                aaaaa,\n"
+      "                                                aaaaa))))))))))));",
+      getLLVMStyleWithColumns(65));
 
   // This test takes VERY long when memoization is broken.
   FormatStyle OnePerLine = getLLVMStyle();
