@@ -2147,7 +2147,7 @@ bool ARMTargetLowering::isUsedByReturnOnly(SDNode *N, SDValue &Chain) const {
     Copy = *Copy->use_begin();
     if (Copy->getOpcode() != ISD::CopyToReg || !Copy->hasNUsesOfValue(1, 0))
       return false;
-    Chain = Copy->getOperand(0);
+    TCChain = Copy->getOperand(0);
   } else {
     return false;
   }

@@ -162,3 +162,20 @@ define i32 @t9() nounwind {
 declare %class.MutexLock* @_ZN9MutexLockC1Ev(%class.MutexLock*) unnamed_addr nounwind align 2
 
 declare %class.MutexLock* @_ZN9MutexLockD1Ev(%class.MutexLock*) unnamed_addr nounwind align 2
+
+; rdar://13827621
+; Correctly preserve the input chain for the tailcall node in the bitcast case,
+; otherwise the call to floorf is lost.
+define float @libcall_tc_test2(float* nocapture %a, float %b) {
+; CHECKT2D: libcall_tc_test2:
+; CHECKT2D: blx _floorf
+; CHECKT2D: b.w _truncf
+  %1 = load float* %a, align 4
+  %call = tail call float @floorf(float %1)
+  store float %call, float* %a, align 4
+  %call1 = tail call float @truncf(float %b)
+  ret float %call1
+}
+
+declare float @floorf(float) readnone
+declare float @truncf(float) readnone
