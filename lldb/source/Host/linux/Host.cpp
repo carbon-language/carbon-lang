@@ -170,3 +170,50 @@ Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 
     return true;
 }
+
+void
+Host::ThreadCreated (const char *thread_name)
+{
+    if (!Host::SetThreadName (LLDB_INVALID_PROCESS_ID, LLDB_INVALID_THREAD_ID, thread_name))
+    {
+        // pthread_setname_np_func can fail if the thread name is longer than
+        //  the supported limit on Linux. When this occurs, the error ERANGE is returned
+        // and SetThreadName will fail. Let's drop it down to 16 characters and try again.
+        char namebuf[16];
+
+        // Thread names are coming in like '<lldb.comm.debugger.edit>' and '<lldb.comm.debugger.editline>'
+        // So just chopping the end of the string off leads to a lot of similar named threads.
+        // Go through the thread name and search for the last dot and use that.
+        const char *lastdot = ::strrchr( thread_name, '.' );
+
+        if (lastdot && lastdot != thread_name)
+            thread_name = lastdot + 1;
+        ::strncpy (namebuf, thread_name, sizeof(namebuf));
+        namebuf[ sizeof(namebuf) - 1 ] = 0;
+
+        int namebuflen = strlen(namebuf);
+        if (namebuflen > 0)
+        {
+            if (namebuf[namebuflen - 1] == '(' || namebuf[namebuflen - 1] == '>')
+            {
+                // Trim off trailing '(' and '>' characters for a bit more cleanup.
+                namebuflen--;
+                namebuf[namebuflen] = 0;
+            }
+            Host::SetThreadName (LLDB_INVALID_PROCESS_ID, LLDB_INVALID_THREAD_ID, namebuf);
+        }
+    }
+}
+
+void
+Host::Backtrace (Stream &strm, uint32_t max_frames)
+{
+    // TODO: Is there a way to backtrace the current process on linux?
+}
+
+size_t
+Host::GetEnvironment (StringList &env)
+{
+    // TODO: Is there a way to the host environment for this process on linux?
+    return 0;
+}

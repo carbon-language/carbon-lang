@@ -299,7 +299,7 @@ public:
     ///     \b true if the thread name was able to be set, \b false
     ///     otherwise.
     //------------------------------------------------------------------
-    static void
+    static bool
     SetThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name);
 
     //------------------------------------------------------------------

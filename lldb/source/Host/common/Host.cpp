@@ -512,7 +512,8 @@ Host::WillTerminate ()
 {
 }
 
-#if !defined (__APPLE__) && !defined (__FreeBSD__) // see macosx/Host.mm
+#if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__linux__) // see macosx/Host.mm
+
 void
 Host::ThreadCreated (const char *thread_name)
 {
@@ -531,7 +532,7 @@ Host::GetEnvironment (StringList &env)
     return 0;
 }
 
-#endif
+#endif // #if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__linux__)
 
 struct HostThreadCreateInfo
 {
@@ -652,7 +653,7 @@ Host::GetThreadName (lldb::pid_t pid, lldb::tid_t tid)
     return thread_name;
 }
 
-void
+bool
 Host::SetThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name)
 {
 #if defined(__APPLE__) && MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5
@@ -667,8 +668,33 @@ Host::SetThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name)
     // Set the pthread name if possible
     if (pid == curr_pid && tid == curr_tid)
     {
-        ::pthread_setname_np (name);
+        if (::pthread_setname_np (name) == 0)
+            return true;
     }
+    return false;
+#elif defined (__linux__)
+    void *fn = dlsym (RTLD_DEFAULT, "pthread_setname_np");
+    if (fn)
+    {
+        int (*pthread_setname_np_func)(pthread_t thread, const char *name);
+        *reinterpret_cast<void **> (&pthread_setname_np_func) = fn;
+
+        lldb::pid_t curr_pid = Host::GetCurrentProcessID();
+        lldb::tid_t curr_tid = Host::GetCurrentThreadID();
+
+        if (pid == LLDB_INVALID_PROCESS_ID)
+            pid = curr_pid;
+
+        if (tid == LLDB_INVALID_THREAD_ID)
+            tid = curr_tid;
+
+        if (pid == curr_pid)
+        {
+            if (pthread_setname_np_func (tid, name) == 0)
+                return true;
+        }
+    }
+    return false;
 #endif
 }
 
