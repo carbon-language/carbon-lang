@@ -27,7 +27,6 @@ def walk_and_invoke(test_root, dotest_options):
                 continue
 
             command = template % (test_root, dotest_options if dotest_options else "", name, root)
-            print "Running %s" % (command)
             if 0 != os.system(command):
                 failed.append(name) 
             else:
