@@ -36,6 +36,10 @@ typedef struct _NSZone NSZone;
 - (void)setObject:(id)obj atIndexedSubscript:(NSUInteger)idx __attribute__((availability(macosx,introduced=10.8)));
 @end
 
+@interface NSArray (NSArrayCreation)
++ (instancetype)arrayWithObjects:(const id [])objects count:(NSUInteger)cnt;
+@end
+
 @interface NSMutableArray : NSArray
 
 - (void)addObject:(id)anObject;
@@ -58,6 +62,8 @@ typedef struct _NSZone NSZone;
 
 + (id)dictionary;
 + (id)dictionaryWithObject:(id)object forKey:(id <NSCopying>)key;
++ (instancetype)dictionaryWithObjects:(const id [])objects forKeys:(const id <NSCopying> [])keys count:(NSUInteger)cnt;
+
 @end
 
 @interface NSMutableDictionary : NSDictionary
@@ -145,6 +151,33 @@ NSDictionary *testNilArgNSDictionary1(NSString* key) {
 }
 NSDictionary *testNilArgNSDictionary2(NSObject *obj) {
   return [NSDictionary dictionaryWithObject:obj forKey:0]; // expected-warning {{Key argument to 'dictionaryWithObject:forKey:' cannot be nil}}
+}
+
+id testCreateDictionaryLiteralKey(id value, id nilKey) {
+  if (nilKey)
+    ;
+  return @{@"abc":value, nilKey:@"abc"}; // expected-warning {{Dictionary key cannot be nil}}
+}
+
+id testCreateDictionaryLiteralValue(id nilValue) {
+  if (nilValue)
+    ;
+  return @{@"abc":nilValue}; // expected-warning {{Dictionary value cannot be nil}}
+}
+
+id testCreateDictionaryLiteral(id nilValue, id nilKey) {
+  if (nilValue)
+    ;
+  if (nilKey)
+    ;
+  return @{@"abc":nilValue, nilKey:@"abc"}; // expected-warning {{Dictionary key cannot be nil}}
+                                            // expected-warning@-1 {{Dictionary value cannot be nil}}
+}
+
+id testCreateArrayLiteral(id myNil) {
+  if (myNil)
+    ;
+  return @[ @"a", myNil, @"c" ]; // expected-warning {{Array element cannot be nil}}
 }
 
 // Test inline defensive checks suppression.
