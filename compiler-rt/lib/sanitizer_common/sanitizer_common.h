@@ -340,6 +340,44 @@ class InternalVector {
   uptr capacity_;
   uptr size_;
 };
+
+// HeapSort for arrays and InternalVector.
+template<class Container, class Compare>
+void InternalSort(Container *v, uptr size, Compare comp) {
+  if (size < 2)
+    return;
+  // Stage 1: insert elements to the heap.
+  for (uptr i = 1; i < size; i++) {
+    uptr j, p;
+    for (j = i; j > 0; j = p) {
+      p = (j - 1) / 2;
+      if (comp((*v)[p], (*v)[j]))
+        Swap((*v)[j], (*v)[p]);
+      else
+        break;
+    }
+  }
+  // Stage 2: swap largest element with the last one,
+  // and sink the new top.
+  for (uptr i = size - 1; i > 0; i--) {
+    Swap((*v)[0], (*v)[i]);
+    uptr j, max_ind;
+    for (j = 0; j < i; j = max_ind) {
+      uptr left = 2 * j + 1;
+      uptr right = 2 * j + 2;
+      max_ind = j;
+      if (left < i && comp((*v)[max_ind], (*v)[left]))
+        max_ind = left;
+      if (right < i && comp((*v)[max_ind], (*v)[right]))
+        max_ind = right;
+      if (max_ind != j)
+        Swap((*v)[j], (*v)[max_ind]);
+      else
+        break;
+    }
+  }
+}
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_COMMON_H
