@@ -77,7 +77,7 @@ MipsInstrInfo::emitFrameIndexDebugValue(MachineFunction &MF, int FrameIx,
 void MipsInstrInfo::AnalyzeCondBr(const MachineInstr *Inst, unsigned Opc,
                                   MachineBasicBlock *&BB,
                                   SmallVectorImpl<MachineOperand> &Cond) const {
-  assert(GetAnalyzableBrOpc(Opc) && "Not an analyzable branch");
+  assert(getAnalyzableBrOpc(Opc) && "Not an analyzable branch");
   int NumOp = Inst->getNumExplicitOperands();
 
   // for both int and fp branches, the last explicit operand is the
@@ -167,7 +167,7 @@ RemoveBranch(MachineBasicBlock &MBB) const
   // Up to 2 branches are removed.
   // Note that indirect branches are not removed.
   for(removed = 0; I != REnd && removed < 2; ++I, ++removed)
-    if (!GetAnalyzableBrOpc(I->getOpcode()))
+    if (!getAnalyzableBrOpc(I->getOpcode()))
       break;
 
   MBB.erase(I.base(), FirstBr.base());
@@ -182,7 +182,7 @@ ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const
 {
   assert( (Cond.size() && Cond.size() <= 3) &&
           "Invalid Mips branch condition!");
-  Cond[0].setImm(GetOppositeBranchOpc(Cond[0].getImm()));
+  Cond[0].setImm(getOppositeBranchOpc(Cond[0].getImm()));
   return false;
 }
 
@@ -210,7 +210,7 @@ AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
   BranchInstrs.push_back(LastInst);
 
   // Not an analyzable branch (e.g., indirect jump).
-  if (!GetAnalyzableBrOpc(LastOpc))
+  if (!getAnalyzableBrOpc(LastOpc))
     return LastInst->isIndirectBranch() ? BT_Indirect : BT_None;
 
   // Get the second to last instruction in the block.
@@ -219,7 +219,7 @@ AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
 
   if (++I != REnd) {
     SecondLastInst = &*I;
-    SecondLastOpc = GetAnalyzableBrOpc(SecondLastInst->getOpcode());
+    SecondLastOpc = getAnalyzableBrOpc(SecondLastInst->getOpcode());
 
     // Not an analyzable branch (must be an indirect jump).
     if (isUnpredicatedTerminator(SecondLastInst) && !SecondLastOpc)

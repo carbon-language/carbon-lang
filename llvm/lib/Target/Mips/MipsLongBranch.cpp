@@ -217,7 +217,7 @@ int64_t MipsLongBranch::computeOffset(const MachineInstr *Br) {
 // MachineBasicBlock operand MBBOpnd.
 void MipsLongBranch::replaceBranch(MachineBasicBlock &MBB, Iter Br,
                                    DebugLoc DL, MachineBasicBlock *MBBOpnd) {
-  unsigned NewOpc = TII->GetOppositeBranchOpc(Br->getOpcode());
+  unsigned NewOpc = TII->getOppositeBranchOpc(Br->getOpcode());
   const MCInstrDesc &NewDesc = TII->get(NewOpc);
 
   MachineInstrBuilder MIB = BuildMI(MBB, Br, DL, NewDesc);

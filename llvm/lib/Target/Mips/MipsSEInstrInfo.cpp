@@ -245,17 +245,17 @@ bool MipsSEInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   default:
     return false;
   case Mips::RetRA:
-    ExpandRetRA(MBB, MI, Mips::RET);
+    expandRetRA(MBB, MI, Mips::RET);
     break;
   case Mips::BuildPairF64:
-    ExpandBuildPairF64(MBB, MI);
+    expandBuildPairF64(MBB, MI);
     break;
   case Mips::ExtractElementF64:
-    ExpandExtractElementF64(MBB, MI);
+    expandExtractElementF64(MBB, MI);
     break;
   case Mips::MIPSeh_return32:
   case Mips::MIPSeh_return64:
-    ExpandEhReturn(MBB, MI);
+    expandEhReturn(MBB, MI);
     break;
   }
 
@@ -263,9 +263,9 @@ bool MipsSEInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   return true;
 }
 
-/// GetOppositeBranchOpc - Return the inverse of the specified
+/// getOppositeBranchOpc - Return the inverse of the specified
 /// opcode, e.g. turning BEQ to BNE.
-unsigned MipsSEInstrInfo::GetOppositeBranchOpc(unsigned Opc) const {
+unsigned MipsSEInstrInfo::getOppositeBranchOpc(unsigned Opc) const {
   switch (Opc) {
   default:           llvm_unreachable("Illegal opcode!");
   case Mips::BEQ:    return Mips::BNE;
@@ -346,7 +346,7 @@ MipsSEInstrInfo::loadImmediate(int64_t Imm, MachineBasicBlock &MBB,
   return Reg;
 }
 
-unsigned MipsSEInstrInfo::GetAnalyzableBrOpc(unsigned Opc) const {
+unsigned MipsSEInstrInfo::getAnalyzableBrOpc(unsigned Opc) const {
   return (Opc == Mips::BEQ    || Opc == Mips::BNE    || Opc == Mips::BGTZ   ||
           Opc == Mips::BGEZ   || Opc == Mips::BLTZ   || Opc == Mips::BLEZ   ||
           Opc == Mips::BEQ64  || Opc == Mips::BNE64  || Opc == Mips::BGTZ64 ||
@@ -356,13 +356,13 @@ unsigned MipsSEInstrInfo::GetAnalyzableBrOpc(unsigned Opc) const {
          Opc : 0;
 }
 
-void MipsSEInstrInfo::ExpandRetRA(MachineBasicBlock &MBB,
+void MipsSEInstrInfo::expandRetRA(MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator I,
                                 unsigned Opc) const {
   BuildMI(MBB, I, I->getDebugLoc(), get(Opc)).addReg(Mips::RA);
 }
 
-void MipsSEInstrInfo::ExpandExtractElementF64(MachineBasicBlock &MBB,
+void MipsSEInstrInfo::expandExtractElementF64(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator I) const {
   unsigned DstReg = I->getOperand(0).getReg();
   unsigned SrcReg = I->getOperand(1).getReg();
@@ -377,7 +377,7 @@ void MipsSEInstrInfo::ExpandExtractElementF64(MachineBasicBlock &MBB,
   BuildMI(MBB, I, dl, Mfc1Tdd, DstReg).addReg(SubReg);
 }
 
-void MipsSEInstrInfo::ExpandBuildPairF64(MachineBasicBlock &MBB,
+void MipsSEInstrInfo::expandBuildPairF64(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator I) const {
   unsigned DstReg = I->getOperand(0).getReg();
   unsigned LoReg = I->getOperand(1).getReg(), HiReg = I->getOperand(2).getReg();
@@ -393,7 +393,7 @@ void MipsSEInstrInfo::ExpandBuildPairF64(MachineBasicBlock &MBB,
     .addReg(HiReg);
 }
 
-void MipsSEInstrInfo::ExpandEhReturn(MachineBasicBlock &MBB,
+void MipsSEInstrInfo::expandEhReturn(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const {
   // This pseudo instruction is generated as part of the lowering of
   // ISD::EH_RETURN. We convert it to a stack increment by OffsetReg, and

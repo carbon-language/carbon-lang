@@ -64,7 +64,7 @@ public:
 
   virtual bool expandPostRAPseudo(MachineBasicBlock::iterator MI) const;
 
-  virtual unsigned GetOppositeBranchOpc(unsigned Opc) const;
+  virtual unsigned getOppositeBranchOpc(unsigned Opc) const;
 
   // Adjust SP by FrameSize bytes. Save RA, S0, S1
   void makeFrame(unsigned SP, int64_t FrameSize, MachineBasicBlock &MBB,
@@ -102,7 +102,7 @@ public:
     (MachineBasicBlock &MBB, MachineBasicBlock::iterator I, int64_t Imm) const;
 
 private:
-  virtual unsigned GetAnalyzableBrOpc(unsigned Opc) const;
+  virtual unsigned getAnalyzableBrOpc(unsigned Opc) const;
 
   void ExpandRetRA16(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                    unsigned Opc) const;

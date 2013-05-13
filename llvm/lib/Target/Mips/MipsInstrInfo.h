@@ -81,7 +81,7 @@ public:
   ///
   virtual const MipsRegisterInfo &getRegisterInfo() const = 0;
 
-  virtual unsigned GetOppositeBranchOpc(unsigned Opc) const = 0;
+  virtual unsigned getOppositeBranchOpc(unsigned Opc) const = 0;
 
   /// Return the number of bytes of code the specified instruction may be.
   unsigned GetInstSizeInBytes(const MachineInstr *MI) const;
@@ -123,7 +123,7 @@ protected:
                                    unsigned Flag) const;
 
 private:
-  virtual unsigned GetAnalyzableBrOpc(unsigned Opc) const = 0;
+  virtual unsigned getAnalyzableBrOpc(unsigned Opc) const = 0;
 
   void AnalyzeCondBr(const MachineInstr *Inst, unsigned Opc,
                      MachineBasicBlock *&BB,
