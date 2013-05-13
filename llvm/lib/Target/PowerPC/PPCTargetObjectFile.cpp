@@ -32,7 +32,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (DefaultSection != ReadOnlySection)
     return DefaultSection;
 
-  // Here override isReadOnly() to isReadOnlyWithRel() for PPC64 SVR4 ABI
+  // Here override ReadOnlySection to DataRelROSection for PPC64 SVR4 ABI
   // when we have a constant that contains global relocations.  This is
   // necessary because of this ABI's handling of pointers to functions in
   // a shared library.  The address of a function is actually the address
@@ -43,7 +43,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   // pointers to functions in shared libraries into dynamic relocations,
   // because of an ordering problem with initialization of copy relocs and
   // PLT entries.  The dynamic relocation will be initialized by the dynamic
-  // linker, so we must use the DataRelRO section instead of ReadOnlySection.
+  // linker, so we must use DataRelROSection instead of ReadOnlySection.
   // For more information, see the description of ELIMINATE_COPY_RELOCS in
   // GNU ld.
   const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
