@@ -4016,6 +4016,27 @@ TEST_F(FormatTest, ConfigurableIndentWidth) {
                EightIndent);
 }
 
+TEST_F(FormatTest, ConfigurableUseOfTab) {
+  FormatStyle Tab = getLLVMStyleWithColumns(42);
+  Tab.IndentWidth = 8;
+  Tab.UseTab = true;
+  Tab.AlignEscapedNewlinesLeft = true;
+  verifyFormat("class X {\n"
+               "\tvoid f() {\n"
+               "\t\tsomeFunction(parameter1,\n"
+               "\t\t\t     parameter2);\n"
+               "\t}\n"
+               "};",
+               Tab);
+  verifyFormat("#define A                        \\\n"
+               "\tvoid f() {               \\\n"
+               "\t\tsomeFunction(    \\\n"
+               "\t\t    parameter1,  \\\n"
+               "\t\t    parameter2); \\\n"
+               "\t}",
+               Tab);
+}
+
 bool allStylesEqual(ArrayRef<FormatStyle> Styles) {
   for (size_t i = 1; i < Styles.size(); ++i)
     if (!(Styles[0] == Styles[i]))
@@ -4070,6 +4091,7 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE_BOOL(IndentCaseLabels);
   CHECK_PARSE_BOOL(ObjCSpaceBeforeProtocolList);
   CHECK_PARSE_BOOL(PointerBindsToType);
+  CHECK_PARSE_BOOL(UseTab);
 
   CHECK_PARSE("AccessModifierOffset: -1234", AccessModifierOffset, -1234);
   CHECK_PARSE("ColumnLimit: 1234", ColumnLimit, 1234u);

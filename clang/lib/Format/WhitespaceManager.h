@@ -78,6 +78,8 @@ private:
                              unsigned WhitespaceStartColumn,
                              unsigned EscapedNewlineColumn);
 
+  std::string getIndentText(unsigned Spaces);
+
   /// \brief Structure to store tokens for later layout and alignment.
   struct StoredToken {
     StoredToken(SourceLocation ReplacementLoc, unsigned ReplacementLength,

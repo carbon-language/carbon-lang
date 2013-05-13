@@ -122,7 +122,7 @@ void WhitespaceManager::addUntouchableComment(unsigned Column) {
 
 std::string WhitespaceManager::getNewLineText(unsigned NewLines,
                                               unsigned Spaces) {
-  return std::string(NewLines, '\n') + std::string(Spaces, ' ');
+  return std::string(NewLines, '\n') + getIndentText(Spaces);
 }
 
 std::string WhitespaceManager::getNewLineText(unsigned NewLines,
@@ -139,7 +139,15 @@ std::string WhitespaceManager::getNewLineText(unsigned NewLines,
       Offset = 0;
     }
   }
-  return NewLineText + std::string(Spaces, ' ');
+  return NewLineText + getIndentText(Spaces);
+}
+
+std::string WhitespaceManager::getIndentText(unsigned Spaces) {
+  if (!Style.UseTab) {
+    return std::string(Spaces, ' ');
+  }
+  return std::string(Spaces / Style.IndentWidth, '\t') +
+         std::string(Spaces % Style.IndentWidth, ' ');
 }
 
 void WhitespaceManager::alignComments() {

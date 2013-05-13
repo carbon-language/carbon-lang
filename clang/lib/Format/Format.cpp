@@ -86,6 +86,7 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
                    Style.SpacesBeforeTrailingComments);
     IO.mapOptional("Standard", Style.Standard);
     IO.mapOptional("IndentWidth", Style.IndentWidth);
+    IO.mapOptional("UseTab", Style.UseTab);
   }
 };
 }
@@ -113,6 +114,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.SpacesBeforeTrailingComments = 1;
   LLVMStyle.Standard = FormatStyle::LS_Cpp03;
   LLVMStyle.IndentWidth = 2;
+  LLVMStyle.UseTab = false;
   return LLVMStyle;
 }
 
@@ -135,6 +137,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.SpacesBeforeTrailingComments = 2;
   GoogleStyle.Standard = FormatStyle::LS_Auto;
   GoogleStyle.IndentWidth = 2;
+  GoogleStyle.UseTab = false;
   return GoogleStyle;
 }
 

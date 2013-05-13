@@ -97,6 +97,10 @@ struct FormatStyle {
   /// \brief The number of characters to use for indentation.
   unsigned IndentWidth;
 
+  /// \brief If true, \c IndentWidth consecutive spaces will be replaced with
+  /// tab characters.
+  bool UseTab;
+
   bool operator==(const FormatStyle &R) const {
     return AccessModifierOffset == R.AccessModifierOffset &&
            AlignEscapedNewlinesLeft == R.AlignEscapedNewlinesLeft &&
@@ -117,7 +121,8 @@ struct FormatStyle {
            PointerBindsToType == R.PointerBindsToType &&
            SpacesBeforeTrailingComments == R.SpacesBeforeTrailingComments &&
            Standard == R.Standard &&
-           IndentWidth == IndentWidth;
+           IndentWidth == R.IndentWidth &&
+           UseTab == R.UseTab;
   }
 
 };
