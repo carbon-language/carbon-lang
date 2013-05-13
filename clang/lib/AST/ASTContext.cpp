@@ -7838,6 +7838,8 @@ GVALinkage ASTContext::GetGVALinkageForVariable(const VarDecl *VD) {
   case TSK_ImplicitInstantiation:
     return GVA_TemplateInstantiation;
   }
+
+  llvm_unreachable("Invalid Linkage!");
 }
 
 bool ASTContext::DeclMustBeEmitted(const Decl *D) {
