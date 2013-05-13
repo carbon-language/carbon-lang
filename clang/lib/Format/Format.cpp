@@ -85,6 +85,7 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
     IO.mapOptional("SpacesBeforeTrailingComments",
                    Style.SpacesBeforeTrailingComments);
     IO.mapOptional("Standard", Style.Standard);
+    IO.mapOptional("IndentWidth", Style.IndentWidth);
   }
 };
 }
@@ -111,6 +112,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.PointerBindsToType = false;
   LLVMStyle.SpacesBeforeTrailingComments = 1;
   LLVMStyle.Standard = FormatStyle::LS_Cpp03;
+  LLVMStyle.IndentWidth = 2;
   return LLVMStyle;
 }
 
@@ -132,6 +134,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.PointerBindsToType = true;
   GoogleStyle.SpacesBeforeTrailingComments = 2;
   GoogleStyle.Standard = FormatStyle::LS_Auto;
+  GoogleStyle.IndentWidth = 2;
   return GoogleStyle;
 }
 
@@ -429,7 +432,7 @@ private:
     if (Newline) {
       unsigned WhitespaceStartColumn = State.Column;
       if (Current.is(tok::r_brace)) {
-        State.Column = Line.Level * 2;
+        State.Column = Line.Level * Style.IndentWidth;
       } else if (Current.is(tok::string_literal) &&
                  State.StartOfStringLiteral != 0) {
         State.Column = State.StartOfStringLiteral;
@@ -604,6 +607,11 @@ private:
           Current.LastInChainOfCalls ? 0 : State.Column +
                                                Current.FormatTok.TokenLength;
     if (Current.Type == TT_CtorInitializerColon) {
+      // Indent 2 from the column, so:
+      // SomeClass::SomeClass()
+      //     : First(...), ...
+      //       Next(...)
+      //       ^ line up here.
       State.Stack.back().Indent = State.Column + 2;
       if (Style.ConstructorInitializerAllOnOneLineOrOnePerLine)
         State.Stack.back().AvoidBinPacking = true;
@@ -656,7 +664,7 @@ private:
       unsigned NewIndent;
       bool AvoidBinPacking;
       if (Current.is(tok::l_brace)) {
-        NewIndent = 2 + State.Stack.back().LastSpace;
+        NewIndent = Style.IndentWidth + State.Stack.back().LastSpace;
         AvoidBinPacking = false;
       } else {
         NewIndent = 4 + std::max(State.Stack.back().LastSpace,
@@ -1253,7 +1261,7 @@ private:
       return IndentForLevel[Level];
     if (Level == 0)
       return 0;
-    return getIndent(IndentForLevel, Level - 1) + 2;
+    return getIndent(IndentForLevel, Level - 1) + Style.IndentWidth;
   }
 
   /// \brief Get the offset of the line relatively to the level.

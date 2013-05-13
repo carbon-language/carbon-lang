@@ -3959,6 +3959,36 @@ TEST_F(FormatTest, DoNotCreateUnreasonableUnwrappedLines) {
                "}");
 }
 
+TEST_F(FormatTest, FormatsClosingBracesInEmptyNestedBlocks) {
+  verifyFormat("class X {\n"
+               "  void f() {\n"
+               "  }\n"
+               "};",
+               getLLVMStyleWithColumns(12));
+}
+
+TEST_F(FormatTest, ConfigurableIndentWidth) {
+  FormatStyle EightIndent = getLLVMStyleWithColumns(18);
+  EightIndent.IndentWidth = 8;
+  verifyFormat("void f() {\n"
+               "        someFunction();\n"
+               "        if (true) {\n"
+               "                f();\n"
+               "        }\n"
+               "}",
+               EightIndent);
+  verifyFormat("class X {\n"
+               "        void f() {\n"
+               "        }\n"
+               "};",
+               EightIndent);
+  verifyFormat("int x[] = {\n"
+               "        call(),\n"
+               "        call(),\n"
+               "};",
+               EightIndent);
+}
+
 bool allStylesEqual(ArrayRef<FormatStyle> Styles) {
   for (size_t i = 1; i < Styles.size(); ++i)
     if (!(Styles[0] == Styles[i]))
@@ -4022,6 +4052,7 @@ TEST_F(FormatTest, ParsesConfiguration) {
               PenaltyReturnTypeOnItsOwnLine, 1234u);
   CHECK_PARSE("SpacesBeforeTrailingComments: 1234",
               SpacesBeforeTrailingComments, 1234u);
+  CHECK_PARSE("IndentWidth: 32", IndentWidth, 32u);
 
   Style.Standard = FormatStyle::LS_Auto;
   CHECK_PARSE("Standard: C++03", Standard, FormatStyle::LS_Cpp03);
