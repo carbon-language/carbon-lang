@@ -2231,6 +2231,14 @@ TEST_F(FormatTest, AlignsStringLiterals) {
       "#define LL_FORMAT \"ll\"\n"
       "printf(\"aaaaa: %d, bbbbbb: %\" LL_FORMAT \"d, cccccccc: %\" LL_FORMAT\n"
       "       \"d, ddddddddd: %\" LL_FORMAT \"d\");");
+
+  verifyFormat("#define A(X)          \\\n"
+               "  \"aaaaa\" #X \"bbbbbb\" \\\n"
+               "  \"ccccc\"",
+               getLLVMStyleWithColumns(23));
+  verifyFormat("#define A \"def\"\n"
+               "f(\"abc\" A \"ghi\"\n"
+               "  \"jkl\");");
 }
 
 TEST_F(FormatTest, AlignsPipes) {

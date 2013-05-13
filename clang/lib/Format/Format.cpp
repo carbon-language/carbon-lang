@@ -738,10 +738,10 @@ private:
       State.Stack.back().VariablePos = VariablePos;
     }
 
-    if (Current.is(tok::string_literal)) {
+    if (Current.is(tok::string_literal) && State.StartOfStringLiteral == 0) {
       State.StartOfStringLiteral = State.Column;
-    } else if (Current.isNot(tok::comment)) {
-      State.StartOfStringLiteral = 0;
+    } else if (!Current.isOneOf(tok::comment, tok::identifier, tok::hash,
+                                tok::string_literal)) {
     }
 
     State.Column += Current.FormatTok.TokenLength;
