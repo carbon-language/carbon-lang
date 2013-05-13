@@ -106,6 +106,16 @@ class NamespaceTestCase(TestBase):
         self.expect("expression -- A::B::j", VARIABLES_DISPLAYED_CORRECTLY,
             patterns = [' = 4$'])
 
+        # expression command with function in anonymous namespace
+        self.expect("expression -- myanonfunc(3)",
+            patterns = [' = 6'])
+
+        # global namespace qualification with function in anonymous namespace
+        self.expect("expression -- ::myanonfunc(4)",
+            patterns = [' = 8'])
+
+        self.expect("p myanonfunc",
+            patterns = ['\(anonymous namespace\)::myanonfunc\(int\)'])
 
 if __name__ == '__main__':
     import atexit

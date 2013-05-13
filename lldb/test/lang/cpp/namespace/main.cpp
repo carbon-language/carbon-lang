@@ -10,6 +10,11 @@
 namespace {
     typedef unsigned int my_uint_t;
     int i; // Find the line number for anonymous namespace variable i.
+
+    int myanonfunc (int a)
+    {
+        return a + a;
+    }
 }
 
 namespace A {
@@ -62,6 +67,7 @@ int Foo::myfunc(int a)
     j = 4;
     printf("::i=%d\n", ::i);
     printf("A::B::j=%d\n", A::B::j);
+    myanonfunc(3);
     return myfunc2(3) + j + i + a + 2 + anon_uint + a_uint + b_uint + y_uint; // Set break point at this line.
 }
 
