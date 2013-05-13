@@ -57,7 +57,6 @@ set( LLDB_USED_LIBS
   lldbPluginDynamicLoaderMacOSXDYLD
   lldbPluginUnwindAssemblyInstEmulation
   lldbPluginUnwindAssemblyX86
-  lldbPluginDynamicLoaderDarwinKernel
   lldbPluginAppleObjCRuntime
   lldbPluginCXXItaniumABI
   lldbPluginABIMacOSX_arm
@@ -90,6 +89,7 @@ endif ()
 if ( CMAKE_SYSTEM_NAME MATCHES "Darwin" )
   list(APPEND LLDB_USED_LIBS
     lldbHostMacOSX
+    lldbPluginDynamicLoaderDarwinKernel
     lldbPluginOSDarwinKernel
     lldbPluginProcessMacOSXKernel
     lldbPluginSymbolVendorMacOSX
