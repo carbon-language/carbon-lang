@@ -282,3 +282,16 @@ unsigned MipsInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   }
   }
 }
+
+MachineInstrBuilder
+MipsInstrInfo::genInstrWithNewOpc(unsigned NewOpc,
+                                  MachineBasicBlock::iterator I) const {
+  MachineInstrBuilder MIB;
+  MIB = BuildMI(*I->getParent(), I, I->getDebugLoc(), get(NewOpc));
+
+  for (unsigned J = 0, E = I->getDesc().getNumOperands(); J < E; ++J)
+    MIB.addOperand(I->getOperand(J));
+
+  MIB.setMemRefs(I->memoperands_begin(), I->memoperands_end());
+  return MIB;
+}

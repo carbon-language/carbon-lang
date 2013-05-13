@@ -17,6 +17,7 @@
 #include "Mips.h"
 #include "MipsAnalyzeImmediate.h"
 #include "MipsRegisterInfo.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
@@ -115,6 +116,11 @@ public:
                                 const TargetRegisterClass *RC,
                                 const TargetRegisterInfo *TRI,
                                 int64_t Offset) const = 0;
+
+  /// Create an instruction which has the same operands and memory operands
+  /// as MI but has a new opcode.
+  MachineInstrBuilder genInstrWithNewOpc(unsigned NewOpc,
+                                         MachineBasicBlock::iterator I) const;
 
 protected:
   bool isZeroImm(const MachineOperand &op) const;
