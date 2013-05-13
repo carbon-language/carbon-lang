@@ -730,15 +730,15 @@ Value *BoUpSLP::vectorizeTree_rec(ArrayRef<Value *> VL, int VF) {
   case Instruction::Xor: {
     ValueList LHSVL, RHSVL;
     for (int i = 0; i < VF; ++i) {
-      RHSVL.push_back(cast<Instruction>(VL[i])->getOperand(0));
-      LHSVL.push_back(cast<Instruction>(VL[i])->getOperand(1));
+      LHSVL.push_back(cast<Instruction>(VL[i])->getOperand(0));
+      RHSVL.push_back(cast<Instruction>(VL[i])->getOperand(1));
     }
 
-    Value *RHS = vectorizeTree_rec(RHSVL, VF);
     Value *LHS = vectorizeTree_rec(LHSVL, VF);
+    Value *RHS = vectorizeTree_rec(RHSVL, VF);
     IRBuilder<> Builder(GetLastInstr(VL, VF));
     BinaryOperator *BinOp = cast<BinaryOperator>(VL0);
-    Value *V = Builder.CreateBinOp(BinOp->getOpcode(), RHS,LHS);
+    Value *V = Builder.CreateBinOp(BinOp->getOpcode(), LHS,RHS);
 
     for (int i = 0; i < VF; ++i)
       VectorizedValues[VL[i]] = V;
