@@ -9254,19 +9254,34 @@ static SDValue partitionShuffleOfConcats(SDNode *N, SelectionDAG &DAG) {
   for (unsigned I = 0; I != NumConcats; ++I) {
     // Make sure we're dealing with a copy.
     unsigned Begin = I * NumElemsPerConcat;
-    if (SVN->getMaskElt(Begin) % NumElemsPerConcat != 0)
-      return SDValue();
-
-    for (unsigned J = 1; J != NumElemsPerConcat; ++J) {
-      if (SVN->getMaskElt(Begin + J - 1) + 1 != SVN->getMaskElt(Begin + J))
-        return SDValue();
+    bool AllUndef = true, NoUndef = true;
+    for (unsigned J = Begin; J != Begin + NumElemsPerConcat; ++J) {
+      if (SVN->getMaskElt(J) >= 0)
+        AllUndef = false;
+      else
+        NoUndef = false;
     }
 
-    unsigned FirstElt = SVN->getMaskElt(Begin) / NumElemsPerConcat;
-    if (FirstElt < N0.getNumOperands())
-      Ops.push_back(N0.getOperand(FirstElt));
-    else
-      Ops.push_back(N1.getOperand(FirstElt - N0.getNumOperands()));
+    if (NoUndef) {
+      unsigned Begin = I * NumElemsPerConcat;
+      if (SVN->getMaskElt(Begin) % NumElemsPerConcat != 0)
+        return SDValue();
+
+      for (unsigned J = 1; J != NumElemsPerConcat; ++J)
+        if (SVN->getMaskElt(Begin + J - 1) + 1 != SVN->getMaskElt(Begin + J))
+          return SDValue();
+
+      unsigned FirstElt = SVN->getMaskElt(Begin) / NumElemsPerConcat;
+      if (FirstElt < N0.getNumOperands())
+        Ops.push_back(N0.getOperand(FirstElt));
+      else
+        Ops.push_back(N1.getOperand(FirstElt - N0.getNumOperands()));
+
+    } else if (AllUndef) {
+      Ops.push_back(DAG.getUNDEF(N0.getOperand(0).getValueType()));
+    } else { // Mixed with general masks and undefs, can't do optimization.
+      return SDValue();
+    }
   }
 
   return DAG.getNode(ISD::CONCAT_VECTORS, N->getDebugLoc(), VT, Ops.data(),
