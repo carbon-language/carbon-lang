@@ -12,8 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/ASTConsumer.h"
-#include "clang/Parse/Parser.h"
 #include "clang/Parse/ParseDiagnostic.h"
+#include "clang/Parse/Parser.h"
+#include "clang/Sema/Scope.h"
+#include "llvm/ADT/PointerIntPair.h"
 #include "RAIIObjectsForParser.h"
 using namespace clang;
 
@@ -21,22 +23,24 @@ using namespace clang;
 // OpenMP declarative directives.
 //===----------------------------------------------------------------------===//
 
-/// \brief Parses OpenMP declarative directive
-///       threadprivate-directive
-///         annot_pragma_openmp threadprivate simple-variable-list
+/// \brief Parsing of declarative OpenMP directives.
+///
+///       threadprivate-directive:
+///         annot_pragma_openmp 'threadprivate' simple-variable-list
 ///
 Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
   assert(Tok.is(tok::annot_pragma_openmp) && "Not an OpenMP directive!");
 
   SourceLocation Loc = ConsumeToken();
-  SmallVector<DeclarationNameInfo, 5> Identifiers;
-  OpenMPDirectiveKind Kind = Tok.isAnnotation() ?
-                                 OMPD_unknown :
-                                 getOpenMPDirectiveKind(PP.getSpelling(Tok));
-  switch(Kind) {
+  SmallVector<Expr *, 5> Identifiers;
+  OpenMPDirectiveKind DKind = Tok.isAnnotation() ?
+                                  OMPD_unknown :
+                                  getOpenMPDirectiveKind(PP.getSpelling(Tok));
+
+  switch (DKind) {
   case OMPD_threadprivate:
     ConsumeToken();
-    if (!ParseOpenMPSimpleVarList(OMPD_threadprivate, Identifiers)) {
+    if (!ParseOpenMPSimpleVarList(OMPD_threadprivate, Identifiers, true)) {
       // The last seen token is annot_pragma_openmp_end - need to check for
       // extra tokens.
       if (Tok.isNot(tok::annot_pragma_openmp_end)) {
@@ -44,9 +48,9 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
           << getOpenMPDirectiveName(OMPD_threadprivate);
         SkipUntil(tok::annot_pragma_openmp_end, false, true);
       }
+      // Skip the last annot_pragma_openmp_end.
       ConsumeToken();
       return Actions.ActOnOpenMPThreadprivateDirective(Loc,
-                                                       getCurScope(),
                                                        Identifiers);
     }
     break;
@@ -55,7 +59,7 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
     break;
   default:
     Diag(Tok, diag::err_omp_unexpected_directive)
-      << getOpenMPDirectiveName(Kind);
+      << getOpenMPDirectiveName(DKind);
     break;
   }
   SkipUntil(tok::annot_pragma_openmp_end, false);
@@ -63,56 +67,69 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
 }
 
 /// \brief Parses list of simple variables for '#pragma omp threadprivate'
-/// directive
-/// simple-variable-list:
-///   ( unqualified-id {, unqualified-id} ) annot_pragma_openmp_end
+/// directive.
 ///
-bool Parser::ParseOpenMPSimpleVarList(
-  OpenMPDirectiveKind Kind,
-  SmallVectorImpl<DeclarationNameInfo> &IdList) {
+///   simple-variable-list:
+///         '(' id-expression {, id-expression} ')'
+///
+bool Parser::ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
+                                      SmallVectorImpl<Expr *> &VarList,
+                                      bool AllowScopeSpecifier) {
+  VarList.clear();
   // Parse '('.
-  bool IsCorrect = true;
-  BalancedDelimiterTracker T(*this, tok::l_paren);
-  if (T.expectAndConsume(diag::err_expected_lparen_after,
-                         getOpenMPDirectiveName(Kind))) {
-    SkipUntil(tok::annot_pragma_openmp_end, false, true);
-    return false;
-  }
+  BalancedDelimiterTracker T(*this, tok::l_paren, tok::annot_pragma_openmp_end);
+  bool LParen = !T.expectAndConsume(diag::err_expected_lparen_after,
+                                    getOpenMPDirectiveName(Kind));
+  bool IsCorrect = LParen;
+  bool NoIdentIsFound = true;
 
   // Read tokens while ')' or annot_pragma_openmp_end is not found.
-  do {
+  while (Tok.isNot(tok::r_paren) && Tok.isNot(tok::annot_pragma_openmp_end)) {
     CXXScopeSpec SS;
     SourceLocation TemplateKWLoc;
     UnqualifiedId Name;
     // Read var name.
     Token PrevTok = Tok;
+    NoIdentIsFound = false;
 
-    if (ParseUnqualifiedId(SS, false, false, false, ParsedType(),
-                           TemplateKWLoc, Name)) {
+    if (AllowScopeSpecifier && getLangOpts().CPlusPlus &&
+        ParseOptionalCXXScopeSpecifier(SS, ParsedType(), false)) {
       IsCorrect = false;
       SkipUntil(tok::comma, tok::r_paren, tok::annot_pragma_openmp_end,
                 false, true);
-    }
-    else if (Tok.isNot(tok::comma) && Tok.isNot(tok::r_paren) &&
-             Tok.isNot(tok::annot_pragma_openmp_end)) {
+    } else if (ParseUnqualifiedId(SS, false, false, false, ParsedType(),
+                                  TemplateKWLoc, Name)) {
       IsCorrect = false;
       SkipUntil(tok::comma, tok::r_paren, tok::annot_pragma_openmp_end,
                 false, true);
-      Diag(PrevTok.getLocation(), diag::err_expected_unqualified_id)
-        << getLangOpts().CPlusPlus
+    } else if (Tok.isNot(tok::comma) && Tok.isNot(tok::r_paren) &&
+               Tok.isNot(tok::annot_pragma_openmp_end)) {
+      IsCorrect = false;
+      SkipUntil(tok::comma, tok::r_paren, tok::annot_pragma_openmp_end,
+                false, true);
+      Diag(PrevTok.getLocation(), diag::err_expected_ident)
         << SourceRange(PrevTok.getLocation(), PrevTokLocation);
     } else {
-      IdList.push_back(Actions.GetNameFromUnqualifiedId(Name));
+      DeclarationNameInfo NameInfo = Actions.GetNameFromUnqualifiedId(Name);
+      ExprResult Res = Actions.ActOnOpenMPIdExpression(getCurScope(), SS,
+                                                       NameInfo);
+      if (Res.isUsable())
+        VarList.push_back(Res.take());
     }
     // Consume ','.
     if (Tok.is(tok::comma)) {
       ConsumeToken();
     }
-  } while (Tok.isNot(tok::r_paren) && Tok.isNot(tok::annot_pragma_openmp_end));
-
-  if (IsCorrect || Tok.is(tok::r_paren)) {
-    IsCorrect = !T.consumeClose() && IsCorrect;
   }
 
-  return !IsCorrect && IdList.empty();
+  if (NoIdentIsFound) {
+    Diag(Tok, diag::err_expected_ident);
+    IsCorrect = false;
+  }
+
+  // Parse ')'.
+  IsCorrect = ((LParen || Tok.is(tok::r_paren)) && !T.consumeClose())
+              && IsCorrect;
+
+  return !IsCorrect && VarList.empty();
 }

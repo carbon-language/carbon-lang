@@ -358,7 +358,7 @@ namespace clang {
   /// pair, such as braces { ... } or parentheses ( ... ).
   class BalancedDelimiterTracker : public GreaterThanIsOperatorScope {
     Parser& P;
-    tok::TokenKind Kind, Close;
+    tok::TokenKind Kind, Close, FinalToken;
     SourceLocation (Parser::*Consumer)();
     SourceLocation LOpen, LClose;
     
@@ -377,9 +377,10 @@ namespace clang {
     bool diagnoseMissingClose();
     
   public:
-    BalancedDelimiterTracker(Parser& p, tok::TokenKind k)
+    BalancedDelimiterTracker(Parser& p, tok::TokenKind k,
+                             tok::TokenKind FinalToken = tok::semi)
       : GreaterThanIsOperatorScope(p.GreaterThanIsOperator, true),
-        P(p), Kind(k)
+        P(p), Kind(k), FinalToken(FinalToken)
     {
       switch (Kind) {
         default: llvm_unreachable("Unexpected balanced token");

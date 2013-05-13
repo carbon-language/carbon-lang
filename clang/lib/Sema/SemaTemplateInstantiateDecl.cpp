@@ -2231,13 +2231,13 @@ Decl *TemplateDeclInstantiator::VisitClassScopeFunctionSpecializationDecl(
 
 Decl *TemplateDeclInstantiator::VisitOMPThreadPrivateDecl(
                                      OMPThreadPrivateDecl *D) {
-  SmallVector<DeclRefExpr *, 5> Vars;
-  for (ArrayRef<DeclRefExpr *>::iterator I = D->varlist_begin(),
-                                         E = D->varlist_end();
+  SmallVector<Expr *, 5> Vars;
+  for (ArrayRef<Expr *>::iterator I = D->varlist_begin(),
+                                  E = D->varlist_end();
        I != E; ++I) {
     Expr *Var = SemaRef.SubstExpr(*I, TemplateArgs).take();
     assert(isa<DeclRefExpr>(Var) && "threadprivate arg is not a DeclRefExpr");
-    Vars.push_back(cast<DeclRefExpr>(Var));
+    Vars.push_back(Var);
   }
 
   OMPThreadPrivateDecl *TD =

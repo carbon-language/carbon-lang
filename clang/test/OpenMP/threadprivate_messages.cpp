@@ -1,8 +1,8 @@
 // RUN: %clang_cc1 -triple x86_64-apple-macos10.7.0 -verify -fopenmp -ferror-limit 100 %s
 
-#pragma omp threadprivate // expected-error {{expected '(' after 'threadprivate'}}
-#pragma omp threadprivate( // expected-error {{expected unqualified-id}}
-#pragma omp threadprivate() // expected-error {{expected unqualified-id}}
+#pragma omp threadprivate // expected-error {{expected '(' after 'threadprivate'}} expected-error {{expected identifier}}
+#pragma omp threadprivate( // expected-error {{expected identifier}} expected-error {{expected ')'}} expected-note {{to match this '('}}
+#pragma omp threadprivate() // expected-error {{expected identifier}}
 #pragma omp threadprivate(1) // expected-error {{expected unqualified-id}}
 struct CompleteSt{
  int a;
@@ -11,27 +11,27 @@ struct CompleteSt{
 struct CompleteSt1{
 #pragma omp threadprivate(1) // expected-error {{expected unqualified-id}}
  int a;
-} d; // expected-note {{forward declaration of 'd'}}
+} d; // expected-note {{'d' defined here}}
 
-int a; // expected-note {{forward declaration of 'a'}}
+int a; // expected-note {{'a' defined here}}
 
 #pragma omp threadprivate(a)
 #pragma omp threadprivate(u) // expected-error {{use of undeclared identifier 'u'}}
 #pragma omp threadprivate(d, a) // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'a'}}
 int foo() { // expected-note {{declared here}}
   static int l;
-#pragma omp threadprivate(l)) // expected-warning {{extra tokens at end of '#pragma omp threadprivate' are ignored}}
+#pragma omp threadprivate(l)) // expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
   return (a);
 }
 
-#pragma omp threadprivate a // expected-error {{expected '(' after 'threadprivate'}}
+#pragma omp threadprivate a // expected-error {{expected '(' after 'threadprivate'}} expected-error {{'#pragma omp threadprivate' must precede all references to variable 'a'}}
 #pragma omp threadprivate(d // expected-error {{expected ')'}} expected-note {{to match this '('}} expected-error {{'#pragma omp threadprivate' must precede all references to variable 'd'}}
-#pragma omp threadprivate(d))
+#pragma omp threadprivate(d)) // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'd'}} expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
 int x, y;
-#pragma omp threadprivate(x)) // expected-warning {{extra tokens at end of '#pragma omp threadprivate' are ignored}}
-#pragma omp threadprivate(y)), // expected-warning {{extra tokens at end of '#pragma omp threadprivate' are ignored}}
+#pragma omp threadprivate(x)) // expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
+#pragma omp threadprivate(y)), // expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
 #pragma omp threadprivate(a,d)  // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'a'}} expected-error {{'#pragma omp threadprivate' must precede all references to variable 'd'}}
-#pragma omp threadprivate(d.a) // expected-error {{expected unqualified-id}}
+#pragma omp threadprivate(d.a) // expected-error {{expected identifier}}
 #pragma omp threadprivate((float)a) // expected-error {{expected unqualified-id}}
 int foa;
 #pragma omp threadprivate(faa) // expected-error {{use of undeclared identifier 'faa'; did you mean 'foa'?}}
@@ -41,31 +41,31 @@ int foa;
 struct IncompleteSt; // expected-note {{forward declaration of 'IncompleteSt'}}
 
 extern IncompleteSt e;
-#pragma omp threadprivate (e) // expected-error {{a threadprivate variable must not have incomplete type 'IncompleteSt'}}
+#pragma omp threadprivate (e) // expected-error {{threadprivate variable with incomplete type 'IncompleteSt'}}
 
-int &f = a; // expected-note {{forward declaration of 'f'}}
-#pragma omp threadprivate (f) // expected-error {{arguments of '#pragma omp threadprivate' cannot be of reference type 'int &'}}
+int &f = a; // expected-note {{'f' defined here}}
+#pragma omp threadprivate (f) // expected-error {{arguments of '#pragma omp threadprivate' cannot be of reference type}}
 
 class Class {
   private:
     int a; // expected-note {{declared here}}
-    static int b;
+    static int b; // expected-note {{'b' declared here}}
     Class() : a(0){}
   public:
     Class (int aaa) : a(aaa) {}
 #pragma omp threadprivate (b, a) // expected-error {{'a' is not a global variable, static local variable or static data member}}
 } g(10);
 #pragma omp threadprivate (b) // expected-error {{use of undeclared identifier 'b'}}
-#pragma omp threadprivate (Class::b) // expected-error {{expected unqualified-id}}
+#pragma omp threadprivate (Class::b) // expected-error {{'#pragma omp threadprivate' must appear in the scope of the 'Class::b' variable declaration}}
 #pragma omp threadprivate (g)
 
 namespace ns {
-  int m;
+  int m; // expected-note 2 {{'m' defined here}}
 #pragma omp threadprivate (m)
 }
 #pragma omp threadprivate (m) // expected-error {{use of undeclared identifier 'm'}}
-#pragma omp threadprivate (ns::m) // expected-error {{expected unqualified-id}}
-#pragma omp threadprivate (ns:m) // expected-error {{expected unqualified-id}}
+#pragma omp threadprivate (ns::m) // expected-error {{'#pragma omp threadprivate' must appear in the scope of the 'ns::m' variable declaration}}
+#pragma omp threadprivate (ns:m) // expected-error {{unexpected ':' in nested name specifier; did you mean '::'?}} expected-error {{'#pragma omp threadprivate' must appear in the scope of the 'ns::m' variable declaration}}
 
 const int h = 12;
 const volatile int i = 10;
@@ -84,26 +84,30 @@ class TempClass {
 };
 #pragma omp threadprivate (s) // expected-error {{use of undeclared identifier 's'}}
 
-static __thread int t; // expected-note {{forward declaration of 't'}}
+static __thread int t; // expected-note {{'t' defined here}}
 #pragma omp threadprivate (t) // expected-error {{variable 't' cannot be threadprivate because it is thread-local}}
 
 int o; // expected-note {{candidate found by name lookup is 'o'}}
+#pragma omp threadprivate (o)
 namespace {
 int o; // expected-note {{candidate found by name lookup is '<anonymous namespace>::o'}}
+#pragma omp threadprivate (o)
+#pragma omp threadprivate (o) // expected-error {{'#pragma omp threadprivate' must precede all references to variable '<anonymous namespace>::o'}}
 }
 #pragma omp threadprivate (o) // expected-error {{reference to 'o' is ambiguous}}
+#pragma omp threadprivate (::o) // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'o'}}
 
-int main(int argc, char **argv) { // expected-note {{forward declaration of 'argc'}}
+int main(int argc, char **argv) { // expected-note {{'argc' defined here}}
 
-  int x, y = argc; // expected-note {{forward declaration of 'y'}}
+  int x, y = argc; // expected-note {{'y' defined here}}
   static double d1;
   static double d2;
-  static double d3; // expected-note {{forward declaration of 'd3'}}
+  static double d3; // expected-note {{'d3' defined here}}
 
   d.a = a;
   d2++;
   ;
-#pragma omp threadprivate(argc+y) // expected-error {{expected unqualified-id}}
+#pragma omp threadprivate(argc+y) // expected-error {{expected identifier}}
 #pragma omp threadprivate(argc,y) // expected-error 2 {{arguments of '#pragma omp threadprivate' must have static storage duration}}
 #pragma omp threadprivate(d2) // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'd2'}}
 #pragma omp threadprivate(d1)

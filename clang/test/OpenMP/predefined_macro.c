@@ -31,4 +31,3 @@
 #error "_OPENMP macro is defined without -fopenmp option"
 #endif // _OPENMP
 #endif // FOPENMP
-

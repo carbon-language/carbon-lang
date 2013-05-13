@@ -6682,16 +6682,19 @@ public:
                       unsigned SpellingListIndex, bool IsPackExpansion);
 
   // OpenMP directives and clauses.
-
+  /// \brief Called on correct id-expression from the '#pragma omp
+  /// threadprivate'.
+  ExprResult ActOnOpenMPIdExpression(Scope *CurScope,
+                                     CXXScopeSpec &ScopeSpec,
+                                     const DeclarationNameInfo &Id);
   /// \brief Called on well-formed '#pragma omp threadprivate'.
   DeclGroupPtrTy ActOnOpenMPThreadprivateDirective(
-                        SourceLocation Loc,
-                        Scope *CurScope,
-                        ArrayRef<DeclarationNameInfo> IdList);
-  /// \brief Build a new OpenMPThreadPrivateDecl and check its correctness.
+                                     SourceLocation Loc,
+                                     ArrayRef<Expr *> VarList);
+  // \brief Builds a new OpenMPThreadPrivateDecl and checks its correctness.
   OMPThreadPrivateDecl *CheckOMPThreadPrivateDecl(
-                        SourceLocation Loc,
-                        ArrayRef<DeclRefExpr *> VarList);
+                                     SourceLocation Loc,
+                                     ArrayRef<Expr *> VarList);
 
   /// \brief The kind of conversion being performed.
   enum CheckedConversionKind {

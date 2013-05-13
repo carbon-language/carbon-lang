@@ -1644,10 +1644,10 @@ void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *D,
 void ASTDeclReader::VisitOMPThreadPrivateDecl(OMPThreadPrivateDecl *D) {
   VisitDecl(D);
   unsigned NumVars = D->varlist_size();
-  SmallVector<DeclRefExpr *, 16> Vars;
+  SmallVector<Expr *, 16> Vars;
   Vars.reserve(NumVars);
   for (unsigned i = 0; i != NumVars; ++i) {
-    Vars.push_back(cast<DeclRefExpr>(Reader.ReadExpr(F)));
+    Vars.push_back(Reader.ReadExpr(F));
   }
   D->setVars(Vars);
 }

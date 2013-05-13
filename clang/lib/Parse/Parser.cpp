@@ -1897,7 +1897,7 @@ bool BalancedDelimiterTracker::diagnoseOverflow() {
   P.Diag(P.Tok, diag::err_bracket_depth_exceeded)
     << P.getLangOpts().BracketDepth;
   P.Diag(P.Tok, diag::note_bracket_depth);
-  P.SkipUntil(tok::eof);
+  P.SkipUntil(tok::eof, FinalToken);
   return true;  
 }
 
@@ -1927,7 +1927,8 @@ bool BalancedDelimiterTracker::diagnoseMissingClose() {
   }
   P.Diag(P.Tok, DID);
   P.Diag(LOpen, diag::note_matching) << LHSName;
-  if (P.SkipUntil(Close, /*StopAtSemi*/ true, /*DontConsume*/ true))
+  if (P.SkipUntil(Close, FinalToken, /*StopAtSemi*/ true, /*DontConsume*/ true)
+      && P.Tok.is(Close))
     LClose = P.ConsumeAnyToken();
   return true;
 }

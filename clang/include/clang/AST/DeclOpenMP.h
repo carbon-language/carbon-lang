@@ -1,4 +1,4 @@
-//===--- OpenMP.h - Classes for representing OpenMP directives ---*- C++ -*-===//
+//===- DeclOpenMP.h - Classes for representing OpenMP directives -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file defines OpenMP nodes.
+/// \brief This file defines OpenMP nodes for declarative directives.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -19,8 +19,6 @@
 #include "llvm/ADT/ArrayRef.h"
 
 namespace clang {
-
-class DeclRefExpr;
 
 /// \brief This represents '#pragma omp threadprivate ...' directive.
 /// For example, in the following, both 'a' and 'A::b' are threadprivate:
@@ -43,29 +41,29 @@ class OMPThreadPrivateDecl : public Decl {
   OMPThreadPrivateDecl(Kind DK, DeclContext *DC, SourceLocation L) :
     Decl(DK, DC, L), NumVars(0) { }
 
-  ArrayRef<const DeclRefExpr *> getVars() const {
-    return ArrayRef<const DeclRefExpr *>(
-                   reinterpret_cast<const DeclRefExpr * const *>(this + 1),
+  ArrayRef<const Expr *> getVars() const {
+    return ArrayRef<const Expr *>(
+                   reinterpret_cast<const Expr * const *>(this + 1),
                    NumVars);
   }
 
-  llvm::MutableArrayRef<DeclRefExpr *> getVars() {
-    return llvm::MutableArrayRef<DeclRefExpr *>(
-                                 reinterpret_cast<DeclRefExpr **>(this + 1),
+  llvm::MutableArrayRef<Expr *> getVars() {
+    return llvm::MutableArrayRef<Expr *>(
+                                 reinterpret_cast<Expr **>(this + 1),
                                  NumVars);
   }
 
-  void setVars(ArrayRef<DeclRefExpr *> VL);
+  void setVars(ArrayRef<Expr *> VL);
 
 public:
   static OMPThreadPrivateDecl *Create(ASTContext &C, DeclContext *DC,
                                       SourceLocation L,
-                                      ArrayRef<DeclRefExpr *> VL);
+                                      ArrayRef<Expr *> VL);
   static OMPThreadPrivateDecl *CreateDeserialized(ASTContext &C,
                                                   unsigned ID, unsigned N);
 
-  typedef llvm::MutableArrayRef<DeclRefExpr *>::iterator varlist_iterator;
-  typedef ArrayRef<const DeclRefExpr *>::iterator varlist_const_iterator;
+  typedef llvm::MutableArrayRef<Expr *>::iterator varlist_iterator;
+  typedef ArrayRef<const Expr *>::iterator varlist_const_iterator;
 
   unsigned varlist_size() const { return NumVars; }
   bool varlist_empty() const { return NumVars == 0; }

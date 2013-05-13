@@ -28,9 +28,9 @@ void OMPThreadPrivateDecl::anchor() { }
 OMPThreadPrivateDecl *OMPThreadPrivateDecl::Create(ASTContext &C,
                                                    DeclContext *DC,
                                                    SourceLocation L,
-                                                   ArrayRef<DeclRefExpr *> VL) {
+                                                   ArrayRef<Expr *> VL) {
   unsigned Size = sizeof(OMPThreadPrivateDecl) +
-                  (VL.size() * sizeof(DeclRefExpr *));
+                  (VL.size() * sizeof(Expr *));
 
   void *Mem = C.Allocate(Size, llvm::alignOf<OMPThreadPrivateDecl>());
   OMPThreadPrivateDecl *D = new (Mem) OMPThreadPrivateDecl(OMPThreadPrivate,
@@ -43,7 +43,7 @@ OMPThreadPrivateDecl *OMPThreadPrivateDecl::Create(ASTContext &C,
 OMPThreadPrivateDecl *OMPThreadPrivateDecl::CreateDeserialized(ASTContext &C,
                                                                unsigned ID,
                                                                unsigned N) {
-  unsigned Size = sizeof(OMPThreadPrivateDecl) + (N * sizeof(DeclRefExpr *));
+  unsigned Size = sizeof(OMPThreadPrivateDecl) + (N * sizeof(Expr *));
 
   void *Mem = AllocateDeserializedDecl(C, ID, Size);
   OMPThreadPrivateDecl *D = new (Mem) OMPThreadPrivateDecl(OMPThreadPrivate,
@@ -52,9 +52,9 @@ OMPThreadPrivateDecl *OMPThreadPrivateDecl::CreateDeserialized(ASTContext &C,
   return D;
 }
 
-void OMPThreadPrivateDecl::setVars(ArrayRef<DeclRefExpr *> VL) {
+void OMPThreadPrivateDecl::setVars(ArrayRef<Expr *> VL) {
   assert(VL.size() == NumVars &&
          "Number of variables is not the same as the preallocated buffer");
-  DeclRefExpr **Vars = reinterpret_cast<DeclRefExpr **>(this + 1);
+  Expr **Vars = reinterpret_cast<Expr **>(this + 1);
   std::copy(VL.begin(), VL.end(), Vars);
 }

@@ -2138,9 +2138,18 @@ private:
 
   //===--------------------------------------------------------------------===//
   // OpenMP: Directives and clauses.
+  /// \brief Parses declarative OpenMP directives.
   DeclGroupPtrTy ParseOpenMPDeclarativeDirective();
+  /// \brief Parses simple list of variables.
+  ///
+  /// \param Kind Kind of the directive.
+  /// \param [out] VarList List of referenced variables.
+  /// \param AllowScopeSpecifier true, if the variables can have fully
+  /// qualified names.
+  ///
   bool ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
-                                SmallVectorImpl<DeclarationNameInfo> &IdList);
+                                SmallVectorImpl<Expr *> &VarList,
+                                bool AllowScopeSpecifier);
 public:
   bool ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
                           bool AllowDestructorName,

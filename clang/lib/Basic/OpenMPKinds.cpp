@@ -32,7 +32,7 @@ const char *clang::getOpenMPDirectiveName(OpenMPDirectiveKind Kind) {
   assert(Kind < NUM_OPENMP_DIRECTIVES);
   switch (Kind) {
   case OMPD_unknown:
-    return ("unknown");
+    return "unknown";
 #define OPENMP_DIRECTIVE(Name) \
   case OMPD_##Name : return #Name;
 #include "clang/Basic/OpenMPKinds.def"
@@ -41,3 +41,4 @@ const char *clang::getOpenMPDirectiveName(OpenMPDirectiveKind Kind) {
   }
   llvm_unreachable("Invalid OpenMP directive kind");
 }
+
