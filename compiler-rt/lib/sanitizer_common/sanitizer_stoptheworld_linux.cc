@@ -24,7 +24,7 @@
 #include <sys/prctl.h> // for PR_* definitions
 #include <sys/ptrace.h> // for PTRACE_* definitions
 #include <sys/types.h> // for pid_t
-#if defined(SANITIZER_ANDROID) && defined(__arm__)
+#if SANITIZER_ANDROID && defined(__arm__)
 # include <linux/user.h>  // for pt_regs
 #else
 # include <sys/user.h>  // for user_regs_struct
@@ -353,11 +353,25 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
 }
 
 // Platform-specific methods from SuspendedThreadsList.
-#if defined(__arm__)
+#if SANITIZER_ANDROID && defined(__arm__)
 typedef pt_regs regs_struct;
-#else
+#define REG_SP ARM_sp
+
+#elif SANITIZER_LINUX && defined(__arm__)
+typedef user_regs regs_struct;
+#define REG_SP uregs[13]
+
+#elif defined(__i386__) || defined(__x86_64__)
 typedef user_regs_struct regs_struct;
+#if defined(__i386__)
+#define REG_SP esp
+#else
+#define REG_SP rsp
 #endif
+
+#else
+#error "Unsupported architecture"
+#endif // SANITIZER_ANDROID && defined(__arm__)
 
 int SuspendedThreadsList::GetRegistersAndSP(uptr index,
                                             uptr *buffer,
@@ -371,15 +385,8 @@ int SuspendedThreadsList::GetRegistersAndSP(uptr index,
            tid, pterrno);
     return -1;
   }
-#if defined(__arm__)
-  *sp = regs.ARM_sp;
-#elif defined(__i386__)
-  *sp = regs.esp;
-#elif defined(__x86_64__)
-  *sp = regs.rsp;
-#else
-  UNIMPLEMENTED("Unknown architecture");
-#endif
+
+  *sp = regs.REG_SP;
   internal_memcpy(buffer, &regs, sizeof(regs));
   return 0;
 }
