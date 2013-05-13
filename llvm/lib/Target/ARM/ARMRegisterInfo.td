@@ -157,12 +157,15 @@ def Q15 : ARMReg<15, "q15", [D30, D31]>;
 
 // Current Program Status Register.
 // We model fpscr with two registers: FPSCR models the control bits and will be
-// reserved. FPSCR_NZCV models the flag bits and will be unreserved. 
-def CPSR       : ARMReg<0, "cpsr">;
-def APSR       : ARMReg<1, "apsr">;
-def SPSR       : ARMReg<2, "spsr">;
-def FPSCR      : ARMReg<3, "fpscr">;
-def FPSCR_NZCV : ARMReg<3, "fpscr_nzcv"> {
+// reserved. FPSCR_NZCV models the flag bits and will be unreserved. APSR_NZCV
+// models the APSR when it's accessed by some special instructions. In such cases 
+// it has the same encoding as PC.
+def CPSR       : ARMReg<0,  "cpsr">;
+def APSR       : ARMReg<1,  "apsr">;
+def APSR_NZCV  : ARMReg<15, "apsr_nzcv">; 
+def SPSR       : ARMReg<2,  "spsr">;
+def FPSCR      : ARMReg<3,  "fpscr">;
+def FPSCR_NZCV : ARMReg<3,  "fpscr_nzcv"> {
   let Aliases = [FPSCR];
 }
 def ITSTATE    : ARMReg<4, "itstate">;
@@ -201,6 +204,16 @@ def GPR : RegisterClass<"ARM", [i32], 32, (add (sequence "R%u", 0, 12),
 // certain operand slots, particularly as the destination.  Primarily
 // useful for disassembly.
 def GPRnopc : RegisterClass<"ARM", [i32], 32, (sub GPR, PC)> {
+  let AltOrders = [(add LR, GPRnopc), (trunc GPRnopc, 8)];
+  let AltOrderSelect = [{
+      return 1 + MF.getTarget().getSubtarget<ARMSubtarget>().isThumb1Only();
+  }];
+}
+
+// GPRs without the PC but with APSR. Some instructions allow accessing the
+// APSR, while actually encoding PC in the register field. This is usefull
+// for assembly and disassembly only.
+def GPRwithAPSR : RegisterClass<"ARM", [i32], 32, (add GPR, APSR_NZCV)> {
   let AltOrders = [(add LR, GPRnopc), (trunc GPRnopc, 8)];
   let AltOrderSelect = [{
       return 1 + MF.getTarget().getSubtarget<ARMSubtarget>().isThumb1Only();

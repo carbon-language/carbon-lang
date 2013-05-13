@@ -4636,11 +4636,11 @@ def : ARMInstAlias<"mcr${p} $cop, $opc1, $Rt, $CRn, $CRm",
                    (MCR p_imm:$cop, imm0_7:$opc1, GPR:$Rt, c_imm:$CRn,
                         c_imm:$CRm, 0, pred:$p)>;
 def MRC : MovRCopro<"mrc", 1 /* from coprocessor to ARM core register */,
-                    (outs GPR:$Rt),
+                    (outs GPRwithAPSR:$Rt),
                     (ins p_imm:$cop, imm0_7:$opc1, c_imm:$CRn, c_imm:$CRm,
                          imm0_7:$opc2), []>;
 def : ARMInstAlias<"mrc${p} $cop, $opc1, $Rt, $CRn, $CRm",
-                   (MRC GPR:$Rt, p_imm:$cop, imm0_7:$opc1, c_imm:$CRn,
+                   (MRC GPRwithAPSR:$Rt, p_imm:$cop, imm0_7:$opc1, c_imm:$CRn,
                         c_imm:$CRm, 0, pred:$p)>;
 
 def : ARMPat<(int_arm_mrc imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2),
@@ -4650,7 +4650,7 @@ class MovRCopro2<string opc, bit direction, dag oops, dag iops,
                  list<dag> pattern>
   : ABXI<0b1110, oops, iops, NoItinerary,
          !strconcat(opc, "\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2"), pattern> {
-  let Inst{31-28} = 0b1111;
+  let Inst{31-24} = 0b11111110;
   let Inst{20} = direction;
   let Inst{4} = 1;
 
@@ -4679,11 +4679,11 @@ def : ARMInstAlias<"mcr2$ $cop, $opc1, $Rt, $CRn, $CRm",
                    (MCR2 p_imm:$cop, imm0_7:$opc1, GPR:$Rt, c_imm:$CRn,
                          c_imm:$CRm, 0)>;
 def MRC2 : MovRCopro2<"mrc2", 1 /* from coprocessor to ARM core register */,
-                      (outs GPR:$Rt),
+                      (outs GPRwithAPSR:$Rt),
                       (ins p_imm:$cop, imm0_7:$opc1, c_imm:$CRn, c_imm:$CRm,
                            imm0_7:$opc2), []>;
 def : ARMInstAlias<"mrc2$ $cop, $opc1, $Rt, $CRn, $CRm",
-                   (MRC2 GPR:$Rt, p_imm:$cop, imm0_7:$opc1, c_imm:$CRn,
+                   (MRC2 GPRwithAPSR:$Rt, p_imm:$cop, imm0_7:$opc1, c_imm:$CRn,
                          c_imm:$CRm, 0)>;
 
 def : ARMV5TPat<(int_arm_mrc2 imm:$cop, imm:$opc1, imm:$CRn,

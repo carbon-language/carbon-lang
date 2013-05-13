@@ -94,6 +94,7 @@ getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(ARM::SP);
   Reserved.set(ARM::PC);
   Reserved.set(ARM::FPSCR);
+  Reserved.set(ARM::APSR_NZCV);
   if (TFI->hasFP(MF))
     Reserved.set(FramePtr);
   if (hasBasePointer(MF))
