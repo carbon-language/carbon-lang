@@ -147,6 +147,12 @@ public:
     bool
     GetUseFastStepping() const;
     
+    bool
+    GetLoadScriptFromSymbolFile() const;
+
+    void
+    SetLoadScriptFromSymbolFile(bool b);
+
 };
 
 typedef std::shared_ptr<TargetProperties> TargetPropertiesSP;

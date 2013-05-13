@@ -2301,6 +2301,7 @@ g_properties[] =
     // FIXME: This is the wrong way to do per-architecture settings, but we don't have a general per architecture settings system in place yet.
     { "x86-disassembly-flavor"             , OptionValue::eTypeEnum      , false, eX86DisFlavorDefault,       NULL, g_x86_dis_flavor_value_types, "The default disassembly flavor to use for x86 or x86-64 targets." },
     { "use-fast-stepping"                  , OptionValue::eTypeBoolean   , false, true,                       NULL, NULL, "Use a fast stepping algorithm based on running from branch to branch rather than instruction single-stepping." },
+    { "load-script-from-symbol-file"       , OptionValue::eTypeBoolean   , false, false,                      NULL, NULL, "Allow LLDB to load scripting resources embedded in symbol files when available." },
     { NULL                                 , OptionValue::eTypeInvalid   , false, 0                         , NULL, NULL, NULL }
 };
 enum
@@ -2326,7 +2327,8 @@ enum
     ePropertyDisableSTDIO,
     ePropertyInlineStrategy,
     ePropertyDisassemblyFlavor,
-    ePropertyUseFastStepping
+    ePropertyUseFastStepping,
+    ePropertyLoadScriptFromSymbolFile
 };
 
 
@@ -2670,6 +2672,20 @@ TargetProperties::GetUseFastStepping () const
 {
     const uint32_t idx = ePropertyUseFastStepping;
     return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+}
+
+bool
+TargetProperties::GetLoadScriptFromSymbolFile () const
+{
+    const uint32_t idx = ePropertyLoadScriptFromSymbolFile;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+}
+
+void
+TargetProperties::SetLoadScriptFromSymbolFile (bool b)
+{
+    const uint32_t idx = ePropertyLoadScriptFromSymbolFile;
+    m_collection_sp->SetPropertyAtIndexAsBoolean(NULL, idx, b);
 }
 
 const TargetPropertiesSP &

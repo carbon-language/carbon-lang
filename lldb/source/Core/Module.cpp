@@ -1243,6 +1243,8 @@ Module::LoadScriptingResourceInTarget (Target *target, Error& error)
         return false;
     }
     
+    bool shoud_load = target->TargetProperties::GetLoadScriptFromSymbolFile();
+    
     Debugger &debugger = target->GetDebugger();
     const ScriptLanguage script_language = debugger.GetScriptLanguage();
     if (script_language != eScriptLanguageNone)
@@ -1271,7 +1273,11 @@ Module::LoadScriptingResourceInTarget (Target *target, Error& error)
                     FileSpec scripting_fspec (file_specs.GetFileSpecAtIndex(i));
                     if (scripting_fspec && scripting_fspec.Exists())
                     {
-
+                        if (!shoud_load)
+                        {
+                            error.SetErrorString("Target doesn't allow loading scripting resource. Please set target.load-script-from-symbol-file and retry.");
+                            return false;
+                        }
                         StreamString scripting_stream;
                         scripting_fspec.Dump(&scripting_stream);
                         const bool can_reload = false;
