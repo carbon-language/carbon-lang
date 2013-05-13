@@ -45,7 +45,7 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.convenience_registers()
 
-    @expectedFailureLinux # bugzilla 14600 - Convenience registers not fully supported on Linux
+    @skipOnLinux # Expression evaluation fails after attach by pid
     def test_convenience_registers_with_process_attach(self):
         """Test convenience registers after a 'process attach'."""
         if not self.getArchitecture() in ['x86_64']:
@@ -202,10 +202,14 @@ class RegisterCommandsTestCase(TestBase):
         """Test convenience registers."""
         self.common_setup()
 
-        # The command "register read -a" does output a derived register like eax.
+        # The command "register read -a" does output a derived register like eax...
         self.expect("register read -a", matching=True,
             substrs = ['eax'])
 
+        # ...however, the vanilla "register read" command should not output derived registers like eax.
+        self.expect("register read", matching=False,
+            substrs = ['eax'])
+        
         # Test reading of rax and eax.
         self.expect("register read rax eax",
             substrs = ['rax = 0x', 'eax = 0x'])
@@ -231,12 +235,9 @@ class RegisterCommandsTestCase(TestBase):
         # Check that "register read eax" works.
         self.runCmd("register read eax")
 
-        # The vanilla "register read" command should not output derived registers like eax.
-        self.expect("register read", matching=False,
-            substrs = ['eax'])
-        
         self.expect("expr -- ($rax & 0xffffffff) == $eax",
             substrs = ['true'])
+
         self.expect("expr -- $ax == (($ah << 8) | $al)",
             substrs = ['true'])
 

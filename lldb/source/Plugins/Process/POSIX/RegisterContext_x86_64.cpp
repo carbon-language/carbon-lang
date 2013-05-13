@@ -314,9 +314,12 @@ g_reg_sets[k_num_register_sets] =
     { #reg, alt, 0, 0, eEncodingUint,                              \
       eFormatHex, { kind1, kind2, kind3, kind4, gpr_##reg }, NULL, NULL }
 
+// Dummy data for RegisterInfo::value_regs as expected by DumpRegisterSet. 
+static uint32_t value_regs = LLDB_INVALID_REGNUM;
+
 #define DEFINE_GPR_i386(reg_i386, reg_x86_64, alt, kind1, kind2, kind3, kind4) \
     { #reg_i386, alt, GPR_i386_SIZE(reg_i386), 0, eEncodingUint,   \
-      eFormatHex, { kind1, kind2, kind3, kind4, gpr_##reg_i386 }, NULL, NULL }
+      eFormatHex, { kind1, kind2, kind3, kind4, gpr_##reg_i386 }, &value_regs, NULL }
 
 #define DEFINE_FPR(reg, kind1, kind2, kind3, kind4)                \
     { #reg, NULL, FPR_SIZE(reg), FPR_OFFSET(reg), eEncodingUint,   \
