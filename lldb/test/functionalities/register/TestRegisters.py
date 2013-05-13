@@ -186,6 +186,12 @@ class RegisterCommandsTestCase(TestBase):
         """Test expression evaluation with commands related to registers."""
         self.common_setup()
 
+        self.expect("expr/x $eax",
+            substrs = ['unsigned int', ' = 0x'])
+
+        self.expect("expr -- ($rax & 0xffffffff) == $eax",
+            substrs = ['true'])
+
         self.expect("expr $xmm0",
             substrs = ['vector_type'])
 

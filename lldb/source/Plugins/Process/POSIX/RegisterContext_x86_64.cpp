@@ -547,6 +547,8 @@ RegisterContext_x86_64::GetRegisterCount()
 const RegisterInfo *
 RegisterContext_x86_64::GetRegisterInfo()
 {
+    // Commonly, this method is overridden and g_register_infos is copied and specialized.
+    // So, use GetRegisterInfo() rather than g_register_infos in this scope.
     return g_register_infos;
 }
 
@@ -680,6 +682,9 @@ RegisterContext_x86_64::IsRegisterSetAvailable(size_t set_index)
 bool
 RegisterContext_x86_64::ReadRegister(const RegisterInfo *reg_info, RegisterValue &value)
 {
+    if (!reg_info)
+        return false;
+
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
 
     if (IsFPR(reg, m_fpr_type)) {
@@ -688,8 +693,14 @@ RegisterContext_x86_64::ReadRegister(const RegisterInfo *reg_info, RegisterValue
     }
     else {
         ProcessMonitor &monitor = GetMonitor();
-        return monitor.ReadRegisterValue(m_thread.GetID(), GetRegisterOffset(reg),
-                                         GetRegisterName(reg), GetRegisterSize(reg), value);
+        bool success = monitor.ReadRegisterValue(m_thread.GetID(), GetRegisterOffset(reg),
+                                                 GetRegisterName(reg), GetRegisterSize(reg), value);
+
+        // If an i386 register should be parsed from an x86_64 register...
+        if (success && reg >= k_first_i386 && reg <= k_last_i386)
+            if (value.GetByteSize() > reg_info->byte_size)
+                value.SetType(reg_info); // ...use the type specified by reg_info rather than the uint64_t default
+        return success; 
     }
 
     if (reg_info->encoding == eEncodingVector) {

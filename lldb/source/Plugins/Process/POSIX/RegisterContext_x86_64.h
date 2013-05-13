@@ -43,7 +43,8 @@ enum
     gpr_ss,
     gpr_ds,
     gpr_es,
-    gpr_eax,
+    k_first_i386,
+    gpr_eax = k_first_i386,
     gpr_ebx,
     gpr_ecx,
     gpr_edx,
@@ -52,8 +53,9 @@ enum
     gpr_ebp,
     gpr_esp,
     gpr_eip,
-    gpr_eflags,
-    k_last_gpr = gpr_eflags, // eRegisterKindLLDB == 33
+    gpr_eflags, // eRegisterKindLLDB == 33
+    k_last_i386 = gpr_eflags,
+    k_last_gpr = gpr_eflags,
 
     k_first_fpr,
     fpu_fcw = k_first_fpr,
