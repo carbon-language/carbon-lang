@@ -591,6 +591,7 @@ private:
       }
     } else if (Current.isOneOf(tok::kw_return, tok::kw_throw) ||
                (Current.is(tok::l_paren) && !Line.MustBeDeclaration &&
+                !Line.InPPDirective &&
                 (!Current.Parent || Current.Parent->isNot(tok::kw_for)))) {
       Contexts.back().IsExpression = true;
     } else if (Current.isOneOf(tok::r_paren, tok::greater, tok::comma)) {
