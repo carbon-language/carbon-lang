@@ -9,6 +9,9 @@
 
 #include "PlatformDarwinKernel.h"
 
+using namespace lldb;
+using namespace lldb_private;
+
 #if defined (__APPLE__)  // This Plugin uses the Mac-specific source/Host/macosx/cfcpp utilities
 
 
@@ -36,9 +39,6 @@
 #include <CoreFoundation/CoreFoundation.h>
 
 #include "Host/macosx/cfcpp/CFCBundle.h"
-
-using namespace lldb;
-using namespace lldb_private;
 
 //------------------------------------------------------------------
 // Static Variables
