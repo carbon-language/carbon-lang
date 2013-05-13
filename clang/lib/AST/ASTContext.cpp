@@ -409,6 +409,8 @@ comments::FullComment *ASTContext::cloneFullComment(comments::FullComment *FC,
 comments::FullComment *ASTContext::getCommentForDecl(
                                               const Decl *D,
                                               const Preprocessor *PP) const {
+  if (D->isInvalidDecl())
+    return NULL;
   D = adjustDeclToTemplate(D);
   
   const Decl *Canonical = D->getCanonicalDecl();

@@ -3052,6 +3052,8 @@ Decl *Sema::ActOnMethodDeclaration(
     Diag(ObjCMethod->getLocation(), diag::err_duplicate_method_decl)
       << ObjCMethod->getDeclName();
     Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
+    ObjCMethod->setInvalidDecl();
+    return ObjCMethod;
   }
 
   // If this Objective-C method does not have a related result type, but we
