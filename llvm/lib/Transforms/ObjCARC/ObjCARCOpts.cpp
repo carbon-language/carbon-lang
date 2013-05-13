@@ -107,6 +107,12 @@ namespace {
       return std::make_pair(Vector.begin() + Pair.first->second, false);
     }
 
+    iterator find(const KeyT &Key) {
+      typename MapTy::iterator It = Map.find(Key);
+      if (It == Map.end()) return Vector.end();
+      return Vector.begin() + It->second;
+    }
+
     const_iterator find(const KeyT &Key) const {
       typename MapTy::const_iterator It = Map.find(Key);
       if (It == Map.end()) return Vector.end();
@@ -252,6 +258,40 @@ static bool DoesRetainableObjPtrEscape(const User *Ptr) {
   DEBUG(dbgs() << "Ptr does not escape.\n");
   return false;
 }
+
+/// This is a wrapper around getUnderlyingObjCPtr along the lines of
+/// GetUnderlyingObjects except that it returns early when it sees the first
+/// alloca.
+static inline bool AreAnyUnderlyingObjectsAnAlloca(const Value *V) {
+  SmallPtrSet<const Value *, 4> Visited;
+  SmallVector<const Value *, 4> Worklist;
+  Worklist.push_back(V);
+  do {
+    const Value *P = Worklist.pop_back_val();
+    P = GetUnderlyingObjCPtr(P);
+    
+    if (isa<AllocaInst>(P))
+      return true;
+    
+    if (!Visited.insert(P))
+      continue;
+    
+    if (const SelectInst *SI = dyn_cast<const SelectInst>(P)) {
+      Worklist.push_back(SI->getTrueValue());
+      Worklist.push_back(SI->getFalseValue());
+      continue;
+    }
+    
+    if (const PHINode *PN = dyn_cast<const PHINode>(P)) {
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+        Worklist.push_back(PN->getIncomingValue(i));
+      continue;
+    }
+  } while (!Worklist.empty());
+
+  return false;
+}
+
 
 /// @}
 ///
@@ -414,8 +454,18 @@ namespace {
     /// sequence.
     SmallPtrSet<Instruction *, 2> ReverseInsertPts;
 
+    /// Does this pointer have multiple owners?
+    ///
+    /// In the presence of multiple owners with the same provenance caused by
+    /// allocas, we can not assume that the frontend will emit balanced code
+    /// since it could put the release on the pointer loaded from the
+    /// alloca. This confuses the optimizer so we must be more conservative in
+    /// that case.
+    bool MultipleOwners;
+
     RRInfo() :
-      KnownSafe(false), IsTailCallRelease(false), ReleaseMetadata(0) {}
+      KnownSafe(false), IsTailCallRelease(false), ReleaseMetadata(0),
+      MultipleOwners(false) {}
 
     void clear();
 
@@ -428,6 +478,7 @@ namespace {
 void RRInfo::clear() {
   KnownSafe = false;
   IsTailCallRelease = false;
+  MultipleOwners = false;
   ReleaseMetadata = 0;
   Calls.clear();
   ReverseInsertPts.clear();
@@ -516,6 +567,7 @@ PtrState::Merge(const PtrState &Other, bool TopDown) {
     RRI.IsTailCallRelease = RRI.IsTailCallRelease &&
                             Other.RRI.IsTailCallRelease;
     RRI.Calls.insert(Other.RRI.Calls.begin(), Other.RRI.Calls.end());
+    RRI.MultipleOwners |= Other.RRI.MultipleOwners;
 
     // Merge the insert point sets. If there are any differences,
     // that makes this a partial merge.
@@ -599,6 +651,12 @@ namespace {
     /// state for Arg if we do not find one.
     PtrState &getPtrBottomUpState(const Value *Arg) {
       return PerPtrBottomUp[Arg];
+    }
+
+    /// Attempt to find the PtrState object describing the bottom up state for
+    /// pointer Arg.
+    ptr_iterator findPtrBottomUpState(const Value *Arg) {
+      return PerPtrBottomUp.find(Arg);
     }
 
     void clearBottomUpPointers() {
@@ -1865,6 +1923,28 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
   case IC_None:
     // These are irrelevant.
     return NestingDetected;
+  case IC_User:
+    // If we have a store into an alloca of a pointer we are tracking, the
+    // pointer has multiple owners implying that we must be more conservative.
+    //
+    // This comes up in the context of a pointer being ``KnownSafe''. In the
+    // presense of a block being initialized, the frontend will emit the
+    // objc_retain on the original pointer and the release on the pointer loaded
+    // from the alloca. The optimizer will through the provenance analysis
+    // realize that the two are related, but since we only require KnownSafe in
+    // one direction, will match the inner retain on the original pointer with
+    // the guard release on the original pointer. This is fixed by ensuring that
+    // in the presense of allocas we only unconditionally remove pointers if
+    // both our retain and our release are KnownSafe.
+    if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+      if (AreAnyUnderlyingObjectsAnAlloca(SI->getPointerOperand())) {
+        BBState::ptr_iterator I = MyStates.findPtrBottomUpState(
+          StripPointerCastsAndObjCCalls(SI->getValueOperand()));
+        if (I != MyStates.bottom_up_ptr_end())
+          I->second.RRI.MultipleOwners = true;
+      }
+    }
+    break;
   default:
     break;
   }
@@ -2411,8 +2491,10 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
                                   bool KnownSafe,
                                   bool &AnyPairsCompletelyEliminated) {
   // If a pair happens in a region where it is known that the reference count
-  // is already incremented, we can similarly ignore possible decrements.
+  // is already incremented, we can similarly ignore possible decrements unless
+  // we are dealing with a retainable object with multiple provenance sources.
   bool KnownSafeTD = true, KnownSafeBU = true;
+  bool MultipleOwners = false;
 
   // Connect the dots between the top-down-collected RetainsToMove and
   // bottom-up-collected ReleasesToMove to form sets of related calls.
@@ -2431,6 +2513,7 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
       assert(It != Retains.end());
       const RRInfo &NewRetainRRI = It->second;
       KnownSafeTD &= NewRetainRRI.KnownSafe;
+      MultipleOwners |= NewRetainRRI.MultipleOwners;
       for (SmallPtrSet<Instruction *, 2>::const_iterator
              LI = NewRetainRRI.Calls.begin(),
              LE = NewRetainRRI.Calls.end(); LI != LE; ++LI) {
@@ -2524,9 +2607,12 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
     if (NewRetains.empty()) break;
   }
 
-  // If the pointer is known incremented or nested, we can safely delete the
-  // pair regardless of what's between them.
-  if (KnownSafeTD || KnownSafeBU) {
+  // If the pointer is known incremented in 1 direction and we do not have
+  // MultipleOwners, we can safely remove the retain/releases. Otherwise we need
+  // to be known safe in both directions.
+  bool UnconditionallySafe = (KnownSafeTD && KnownSafeBU) ||
+    ((KnownSafeTD || KnownSafeBU) && !MultipleOwners);
+  if (UnconditionallySafe) {
     RetainsToMove.ReverseInsertPts.clear();
     ReleasesToMove.ReverseInsertPts.clear();
     NewCount = 0;
