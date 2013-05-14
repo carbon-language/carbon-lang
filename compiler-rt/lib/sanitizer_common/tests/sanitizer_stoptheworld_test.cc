@@ -11,7 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifdef __linux__
+#include "sanitizer_common/sanitizer_platform.h"
+#if SANITIZER_LINUX
 
 #include "sanitizer_common/sanitizer_stoptheworld.h"
 #include "gtest/gtest.h"
@@ -190,4 +191,4 @@ TEST(StopTheWorld, SuspendThreadsAdvanced) {
 
 }  // namespace __sanitizer
 
-#endif  // __linux__
+#endif  // SANITIZER_LINUX

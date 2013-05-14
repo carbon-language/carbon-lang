@@ -11,12 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifdef __linux__
+#include "sanitizer_common/sanitizer_platform.h"
+#if SANITIZER_LINUX
 
 #include "sanitizer_common/sanitizer_linux.h"
-#include "gtest/gtest.h"
 
 #include "sanitizer_common/sanitizer_common.h"
+#include "gtest/gtest.h"
 
 #ifdef __x86_64__
 #include <asm/prctl.h>
@@ -225,4 +226,4 @@ TEST(SanitizerLinux, ThreadDescriptorSize) {
 
 }  // namespace __sanitizer
 
-#endif  // __linux__
+#endif  // SANITIZER_LINUX 

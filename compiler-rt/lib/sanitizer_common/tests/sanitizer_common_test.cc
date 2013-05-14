@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
+#include "sanitizer_common/sanitizer_platform.h"
 #include "gtest/gtest.h"
 
 namespace __sanitizer {
@@ -79,7 +80,7 @@ TEST(SanitizerCommon, MmapAlignedOrDie) {
   }
 }
 
-#ifdef __linux__
+#if SANITIZER_LINUX
 TEST(SanitizerCommon, SanitizerSetThreadName) {
   const char *names[] = {
     "0123456789012",
@@ -125,7 +126,7 @@ void TestThreadInfo(bool main) {
   EXPECT_GT((uptr)&stack_var, stk_addr);
   EXPECT_LT((uptr)&stack_var, stk_addr + stk_size);
 
-#if defined(__linux__) && defined(__x86_64__)
+#if SANITIZER_LINUX && defined(__x86_64__)
   static __thread int thread_var;
   EXPECT_NE(tls_addr, (uptr)0);
   EXPECT_NE(tls_size, (uptr)0);
@@ -150,7 +151,7 @@ TEST(SanitizerCommon, ThreadStackTlsMain) {
   TestThreadInfo(true);
 }
 
-TEST(Platform, ThreadStackTlsWorker) {
+TEST(SanitizerCommon, ThreadStackTlsWorker) {
   InitTlsSize();
   pthread_t t;
   pthread_create(&t, 0, WorkerThread, 0);

@@ -16,7 +16,8 @@ clang++ -fno-exceptions -g -fPIC -I. \
 LD_PRELOAD=`pwd`/teststoptheworld.so /your/app
 */
 
-#ifdef __linux__
+#include "sanitizer_common/sanitizer_platform.h"
+#if SANITIZER_LINUX
 
 #include <dlfcn.h>
 #include <stddef.h>
@@ -49,4 +50,4 @@ __attribute__((constructor)) void StopTheWorldTestLibConstructor(void) {
 }
 }  // namespace
 
-#endif  // __linux__
+#endif  // SANITIZER_LINUX

@@ -11,9 +11,10 @@
 
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
+#include "sanitizer_common/sanitizer_platform.h"
 #include "gtest/gtest.h"
 
-#if defined(__linux__) || defined(__APPLE__)
+#if SANITIZER_LINUX || SANITIZER_MAC
 # define SANITIZER_TEST_HAS_STAT_H 1
 # include <sys/stat.h>
 #else
@@ -62,7 +63,7 @@ TEST(SanitizerCommon, FileOps) {
 
   u32 uid = GetUid();
   char temp_filename[128];
-#ifdef __ANDROID__
+#if SANITIZER_ANDROID
   // I don't know a way to query temp directory location on Android without
   // going through Java interfaces. The code below is not ideal, but should
   // work. May require "adb root", but it is needed for almost any use of ASan
