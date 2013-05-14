@@ -56,6 +56,10 @@ void AdjustStackSizeLinux(void *attr, int verbosity);
 // Exposed for testing.
 uptr ThreadDescriptorSize();
 
+// Matches a library's file name against a base name (stripping path and version
+// information).
+bool LibraryNameIs(const char *full_name, const char *base_name);
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_LINUX_H

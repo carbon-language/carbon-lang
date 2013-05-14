@@ -854,6 +854,18 @@ void AdjustStackSizeLinux(void *attr_, int verbosity) {
   }
 }
 
+// Match full names of the form /path/to/base_name{-,.}*
+bool LibraryNameIs(const char *full_name, const char *base_name) {
+  const char *name = full_name;
+  // Strip path.
+  while (*name != '\0') name++;
+  while (name > full_name && *name != '/') name--;
+  if (*name == '/') name++;
+  uptr base_name_length = internal_strlen(base_name);
+  if (internal_strncmp(name, base_name, base_name_length)) return false;
+  return (name[base_name_length] == '-' || name[base_name_length] == '.');
+}
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_LINUX

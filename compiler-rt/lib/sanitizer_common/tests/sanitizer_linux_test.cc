@@ -224,6 +224,30 @@ TEST(SanitizerLinux, ThreadDescriptorSize) {
 }
 #endif
 
+TEST(SanitizerCommon, LibraryNameIs) {
+  EXPECT_FALSE(LibraryNameIs("", ""));
+
+  char full_name[256];
+  const char *paths[] = { "", "/", "/path/to/" };
+  const char *suffixes[] = { "", "-linux", ".1.2", "-linux.1.2" };
+  const char *base_names[] = { "lib", "lib.0", "lib-i386" };
+  const char *wrong_names[] = { "", "lib.9", "lib-x86_64" };
+  for (uptr i = 0; i < ARRAY_SIZE(paths); i++)
+    for (uptr j = 0; j < ARRAY_SIZE(suffixes); j++) {
+      for (uptr k = 0; k < ARRAY_SIZE(base_names); k++) {
+        internal_snprintf(full_name, ARRAY_SIZE(full_name), "%s%s%s.so",
+                          paths[i], base_names[k], suffixes[j]);
+        EXPECT_TRUE(LibraryNameIs(full_name, base_names[k]))
+            << "Full name " << full_name
+            << " doesn't match base name " << base_names[k];
+        for (uptr m = 0; m < ARRAY_SIZE(wrong_names); m++)
+          EXPECT_FALSE(LibraryNameIs(full_name, wrong_names[m]))
+            << "Full name " << full_name
+            << " matches base name " << wrong_names[m];
+      }
+    }
+}
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_LINUX 
