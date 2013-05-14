@@ -218,7 +218,7 @@ TEST_F(FormatTest, ReformatsMovedLines) {
 // Tests for control statements.
 //===----------------------------------------------------------------------===//
 
-TEST_F(FormatTest, FormatIfWithoutCompountStatement) {
+TEST_F(FormatTest, FormatIfWithoutCompoundStatement) {
   verifyFormat("if (true)\n  f();\ng();");
   verifyFormat("if (a)\n  if (b)\n    if (c)\n      g();\nh();");
   verifyFormat("if (a)\n  if (b) {\n    f();\n  }\ng();");
@@ -246,6 +246,8 @@ TEST_F(FormatTest, FormatIfWithoutCompountStatement) {
                AllowsMergedIf);
 
   EXPECT_EQ("if (a) return;", format("if(a)\nreturn;", 7, 1, AllowsMergedIf));
+  EXPECT_EQ("if (a) return;  // comment",
+            format("if(a)\nreturn; // comment", 20, 1, AllowsMergedIf));
 
   AllowsMergedIf.ColumnLimit = 14;
   verifyFormat("if (a) return;", AllowsMergedIf);

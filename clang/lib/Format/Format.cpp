@@ -1473,9 +1473,9 @@ private:
   bool touchesLine(const AnnotatedLine &TheLine) {
     const FormatToken *First = &TheLine.First.FormatTok;
     const FormatToken *Last = &TheLine.Last->FormatTok;
-    CharSourceRange LineRange = CharSourceRange::getTokenRange(
+    CharSourceRange LineRange = CharSourceRange::getCharRange(
         First->WhiteSpaceStart.getLocWithOffset(First->LastNewlineOffset),
-        Last->Tok.getLocation());
+        Last->Tok.getLocation().getLocWithOffset(Last->TokenLength - 1));
     return touchesRanges(LineRange);
   }
 
