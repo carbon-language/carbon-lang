@@ -837,16 +837,38 @@ bool HexagonPacketizerList::RestrictingDepExistInPacket (MachineInstr* MI,
 }
 
 
+/// Gets the predicate register of a predicated instruction.
+unsigned getPredicatedRegister(MachineInstr *MI, const HexagonInstrInfo *QII) {
+  /// We use the following rule: The first predicate register that is a use is
+  /// the predicate register of a predicated instruction.
+
+  assert(QII->isPredicated(MI) && "Must be predicated instruction");
+
+  for (MachineInstr::mop_iterator OI = MI->operands_begin(),
+       OE = MI->operands_end(); OI != OE; ++OI) {
+    MachineOperand &Op = *OI;
+    if (Op.isReg() && Op.getReg() && Op.isUse() &&
+        Hexagon::PredRegsRegClass.contains(Op.getReg()))
+      return Op.getReg();
+  }
+
+  llvm_unreachable("Unknown instruction operand layout");
+
+  return 0;
+}
+
 // Given two predicated instructions, this function detects whether
 // the predicates are complements
 bool HexagonPacketizerList::ArePredicatesComplements (MachineInstr* MI1,
      MachineInstr* MI2, std::map <MachineInstr*, SUnit*> MIToSUnit) {
 
   const HexagonInstrInfo *QII = (const HexagonInstrInfo *) TII;
-  // Currently can only reason about conditional transfers
-  if (!QII->isConditionalTransfer(MI1) || !QII->isConditionalTransfer(MI2)) {
+
+  // If we don't know the predicate sense of the instructions bail out early, we
+  // need it later.
+  if (getPredicateSense(MI1, QII) == PK_Unknown ||
+      getPredicateSense(MI2, QII) == PK_Unknown)
     return false;
-  }
 
   // Scheduling unit for candidate
   SUnit* SU = MIToSUnit[MI1];
@@ -885,9 +907,9 @@ bool HexagonPacketizerList::ArePredicatesComplements (MachineInstr* MI1,
         // there already exist anti dep on the same pred in
         // the packet.
         if (PacketSU->Succs[i].getSUnit() == SU &&
+            PacketSU->Succs[i].getKind() == SDep::Data &&
             Hexagon::PredRegsRegClass.contains(
               PacketSU->Succs[i].getReg()) &&
-            PacketSU->Succs[i].getKind() == SDep::Data &&
             // Here I know that *VIN is predicate setting instruction
             // with true data dep to candidate on the register
             // we care about - c) in the above example.
@@ -908,7 +930,11 @@ bool HexagonPacketizerList::ArePredicatesComplements (MachineInstr* MI1,
   // that the predicate sense is different
   // We also need to differentiate .old vs. .new:
   // !p0 is not complimentary to p0.new
-  return ((MI1->getOperand(1).getReg() == MI2->getOperand(1).getReg()) &&
+  unsigned PReg1 = getPredicatedRegister(MI1, QII);
+  unsigned PReg2 = getPredicatedRegister(MI2, QII);
+  return ((PReg1 == PReg2) &&
+          Hexagon::PredRegsRegClass.contains(PReg1) &&
+          Hexagon::PredRegsRegClass.contains(PReg2) &&
           (getPredicateSense(MI1, QII) != getPredicateSense(MI2, QII)) &&
           (QII->isDotNewInst(MI1) == QII->isDotNewInst(MI2)));
 }
