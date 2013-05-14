@@ -75,10 +75,11 @@ public:
       : FormatTok(FormatTok), Type(TT_Unknown), SpacesRequiredBefore(0),
         CanBreakBefore(false), MustBreakBefore(false),
         ClosesTemplateDeclaration(false), MatchingParen(NULL),
-        ParameterCount(0), BindingStrength(0), SplitPenalty(0),
-        LongestObjCSelectorName(0), DefinesFunctionType(false), Parent(NULL),
-        FakeRParens(0), LastInChainOfCalls(false),
-        PartOfMultiVariableDeclStmt(false), NoMoreTokensOnLevel(false) {}
+        ParameterCount(0), TotalLength(FormatTok.TokenLength),
+        BindingStrength(0), SplitPenalty(0), LongestObjCSelectorName(0),
+        DefinesFunctionType(false), Parent(NULL), FakeRParens(0),
+        LastInChainOfCalls(false), PartOfMultiVariableDeclStmt(false),
+        NoMoreTokensOnLevel(false) {}
 
   bool is(tok::TokenKind Kind) const { return FormatTok.Tok.is(Kind); }
 

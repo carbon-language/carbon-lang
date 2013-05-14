@@ -874,8 +874,6 @@ void TokenAnnotator::annotate(AnnotatedLine &Line) {
   Line.First.SpacesRequiredBefore = 1;
   Line.First.MustBreakBefore = Line.First.FormatTok.MustBreakBefore;
   Line.First.CanBreakBefore = Line.First.MustBreakBefore;
-
-  Line.First.TotalLength = Line.First.FormatTok.TokenLength;
 }
 
 void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
