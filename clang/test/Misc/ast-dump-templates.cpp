@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -ast-print %s > %t
 // RUN: FileCheck < %t %s -check-prefix=CHECK1
 // RUN: FileCheck < %t %s -check-prefix=CHECK2
+// RUN: %clang_cc1 -ast-dump %s | FileCheck --check-prefix=DUMP %s
 
 template <int X, typename Y, int Z = 5>
 struct foo {
@@ -37,3 +38,14 @@ void baz() {
 // Template definition - bar
 // CHECK1: template <int A, typename B> B bar()
 // CHECK2: template <int A, typename B> B bar()
+
+namespace test2 {
+void func(int);
+void func(float);
+template<typename T>
+void tmpl() {
+  func(T());
+}
+
+// DUMP: UnresolvedLookupExpr {{.*}} <col:3> '<overloaded function type>' lvalue (ADL) = 'func'
+}

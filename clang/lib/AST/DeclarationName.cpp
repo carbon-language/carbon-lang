@@ -133,6 +133,66 @@ int DeclarationName::compare(DeclarationName LHS, DeclarationName RHS) {
   llvm_unreachable("Invalid DeclarationName Kind!");
 }
 
+raw_ostream &operator<<(raw_ostream &OS, DeclarationName N) {
+  switch (N.getNameKind()) {
+  case DeclarationName::Identifier:
+    if (const IdentifierInfo *II = N.getAsIdentifierInfo())
+      OS << II->getName();
+    return OS;
+
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+    return OS << N.getObjCSelector().getAsString();
+
+  case DeclarationName::CXXConstructorName: {
+    QualType ClassType = N.getCXXNameType();
+    if (const RecordType *ClassRec = ClassType->getAs<RecordType>())
+      return OS << *ClassRec->getDecl();
+    return OS << ClassType.getAsString();
+  }
+
+  case DeclarationName::CXXDestructorName: {
+    OS << '~';
+    QualType Type = N.getCXXNameType();
+    if (const RecordType *Rec = Type->getAs<RecordType>())
+      return OS << *Rec->getDecl();
+    return OS << Type.getAsString();
+  }
+
+  case DeclarationName::CXXOperatorName: {
+    static const char* const OperatorNames[NUM_OVERLOADED_OPERATORS] = {
+      0,
+#define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) \
+      Spelling,
+#include "clang/Basic/OperatorKinds.def"
+    };
+    const char *OpName = OperatorNames[N.getCXXOverloadedOperator()];
+    assert(OpName && "not an overloaded operator");
+
+    OS << "operator";
+    if (OpName[0] >= 'a' && OpName[0] <= 'z')
+      OS << ' ';
+    return OS << OpName;
+  }
+
+  case DeclarationName::CXXLiteralOperatorName:
+    return OS << "operator \"\" " << N.getCXXLiteralIdentifier()->getName();
+
+  case DeclarationName::CXXConversionFunctionName: {
+    OS << "operator ";
+    QualType Type = N.getCXXNameType();
+    if (const RecordType *Rec = Type->getAs<RecordType>())
+      return OS << *Rec->getDecl();
+    return OS << Type.getAsString();
+  }
+  case DeclarationName::CXXUsingDirective:
+    return OS << "<using-directive>";
+  }
+
+  llvm_unreachable("Unexpected declaration name kind");
+}
+
 } // end namespace clang
 
 DeclarationName::NameKind DeclarationName::getNameKind() const {
@@ -180,78 +240,8 @@ bool DeclarationName::isDependentName() const {
 std::string DeclarationName::getAsString() const {
   std::string Result;
   llvm::raw_string_ostream OS(Result);
-  printName(OS);
+  OS << *this;
   return OS.str();
-}
-
-void DeclarationName::printName(raw_ostream &OS) const {
-  switch (getNameKind()) {
-  case Identifier:
-    if (const IdentifierInfo *II = getAsIdentifierInfo())
-      OS << II->getName();
-    return;
-
-  case ObjCZeroArgSelector:
-  case ObjCOneArgSelector:
-  case ObjCMultiArgSelector:
-    OS << getObjCSelector().getAsString();
-    return;
-
-  case CXXConstructorName: {
-    QualType ClassType = getCXXNameType();
-    if (const RecordType *ClassRec = ClassType->getAs<RecordType>())
-      OS << *ClassRec->getDecl();
-    else
-      OS << ClassType.getAsString();
-    return;
-  }
-
-  case CXXDestructorName: {
-    OS << '~';
-    QualType Type = getCXXNameType();
-    if (const RecordType *Rec = Type->getAs<RecordType>())
-      OS << *Rec->getDecl();
-    else
-      OS << Type.getAsString();
-    return;
-  }
-
-  case CXXOperatorName: {
-    static const char* const OperatorNames[NUM_OVERLOADED_OPERATORS] = {
-      0,
-#define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) \
-      Spelling,
-#include "clang/Basic/OperatorKinds.def"
-    };
-    const char *OpName = OperatorNames[getCXXOverloadedOperator()];
-    assert(OpName && "not an overloaded operator");
-
-    OS << "operator";
-    if (OpName[0] >= 'a' && OpName[0] <= 'z')
-      OS << ' ';
-    OS << OpName;
-    return;
-  }
-
-  case CXXLiteralOperatorName:
-    OS << "operator \"\" " << getCXXLiteralIdentifier()->getName();
-    return;
-
-  case CXXConversionFunctionName: {
-    OS << "operator ";
-    QualType Type = getCXXNameType();
-    if (const RecordType *Rec = Type->getAs<RecordType>())
-      OS << *Rec->getDecl();
-    else
-      OS << Type.getAsString();
-    return;
-  }
-  case CXXUsingDirective:
-    OS << "<using-directive>";
-    return;
-  }
-
-  llvm_unreachable("Unexpected declaration name kind");
 }
 
 QualType DeclarationName::getCXXNameType() const {
@@ -336,8 +326,7 @@ DeclarationName DeclarationName::getUsingDirectiveName() {
 }
 
 void DeclarationName::dump() const {
-  printName(llvm::errs());
-  llvm::errs() << '\n';
+  llvm::errs() << *this << '\n';
 }
 
 DeclarationNameTable::DeclarationNameTable(const ASTContext &C) : Ctx(C) {
@@ -537,7 +526,7 @@ void DeclarationNameInfo::printName(raw_ostream &OS) const {
   case DeclarationName::CXXOperatorName:
   case DeclarationName::CXXLiteralOperatorName:
   case DeclarationName::CXXUsingDirective:
-    Name.printName(OS);
+    OS << Name;
     return;
 
   case DeclarationName::CXXConstructorName:
@@ -549,9 +538,8 @@ void DeclarationNameInfo::printName(raw_ostream &OS) const {
       else if (Name.getNameKind() == DeclarationName::CXXConversionFunctionName)
         OS << "operator ";
       OS << TInfo->getType().getAsString();
-    }
-    else
-      Name.printName(OS);
+    } else
+      OS << Name;
     return;
   }
   llvm_unreachable("Unexpected declaration name kind");

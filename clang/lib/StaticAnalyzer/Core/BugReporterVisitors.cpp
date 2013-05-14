@@ -1465,9 +1465,7 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
   SmallString<256> Buf;
   llvm::raw_svector_ostream Out(Buf);
     
-  Out << "Assuming '";
-  VD->getDeclName().printName(Out);
-  Out << "' is ";
+  Out << "Assuming '" << VD->getDeclName() << "' is ";
     
   QualType VDTy = VD->getType();
   

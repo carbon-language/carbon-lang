@@ -300,8 +300,7 @@ void clang::FormatASTNodeDiagnosticArgument(
         assert(ModLen == 0 && ArgLen == 0 &&
                "Invalid modifier for DeclarationName argument");
 
-      DeclarationName N = DeclarationName::getFromOpaqueInteger(Val);
-      N.printName(OS);
+      OS << DeclarationName::getFromOpaqueInteger(Val);
       break;
     }
     case DiagnosticsEngine::ak_nameddecl: {
