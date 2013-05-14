@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=sparcv9 | FileCheck %s
-; Testing 64-bit conditionals.
+; RUN: llc < %s -mtriple=sparc64-pc-openbsd | FileCheck %s
+; Testing 64-bit conditionals. The sparc64 triple is an alias for sparcv9.
 
 ; CHECK: cmpri
 ; CHECK: subcc %i1, 1

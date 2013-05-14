@@ -239,7 +239,7 @@ static Triple::ArchType parseArch(StringRef ArchName) {
     .Case("hexagon", Triple::hexagon)
     .Case("s390x", Triple::systemz)
     .Case("sparc", Triple::sparc)
-    .Case("sparcv9", Triple::sparcv9)
+    .Cases("sparcv9", "sparc64", Triple::sparcv9)
     .Case("tce", Triple::tce)
     .Case("xcore", Triple::xcore)
     .Case("nvptx", Triple::nvptx)
