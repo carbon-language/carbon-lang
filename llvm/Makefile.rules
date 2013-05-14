@@ -674,7 +674,8 @@ CompileCommonOpts += -Wall -W -Wno-unused-parameter -Wwrite-strings \
                      $(NO_UNINITIALIZED) $(NO_MAYBE_UNINITIALIZED) \
                      $(NO_MISSING_FIELD_INITIALIZERS)
 # Enable cast-qual for C++; the workaround is to use const_cast.
-CXX.Flags += -Wcast-qual
+# Also enable -Wreorder.
+CXX.Flags += -Wcast-qual -Wreorder
 
 ifeq ($(HOST_OS),HP-UX)
   CompileCommonOpts := -D_REENTRANT -D_HPUX_SOURCE
