@@ -846,7 +846,7 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
 /// FP value and:
 ///    1) 1/C is exact, or
 ///    2) reciprocal is allowed.
-/// If the convertion was successful, the simplified expression "X * 1/C" is
+/// If the conversion was successful, the simplified expression "X * 1/C" is
 /// returned; otherwise, NULL is returned.
 ///
 static Instruction *CvtFDivConstToReciprocal(Value *Dividend,

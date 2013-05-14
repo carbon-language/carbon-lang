@@ -545,7 +545,7 @@ bool AsmParser::EnterIncludeFile(const std::string &Filename) {
   return false;
 }
 
-/// Process the specified .incbin file by seaching for it in the include paths
+/// Process the specified .incbin file by searching for it in the include paths
 /// then just emitting the byte contents of the file to the streamer. This
 /// returns true on failure.
 bool AsmParser::ProcessIncbinFile(const std::string &Filename) {
