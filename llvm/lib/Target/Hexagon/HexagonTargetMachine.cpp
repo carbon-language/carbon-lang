@@ -169,9 +169,6 @@ bool HexagonPassConfig::addPreSched2() {
     printAndVerify("After hexagon split const32/64 pass");
   }
   return true;
-  if (getOptLevel() != CodeGenOpt::None)
-    addPass(&IfConverterID);
-  return false;
 }
 
 bool HexagonPassConfig::addPreEmitPass() {
