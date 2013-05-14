@@ -1645,11 +1645,10 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
 Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
                                            const CallExpr *E) {
   if (BuiltinID == ARM::BI__clear_cache) {
+    assert(E->getNumArgs() == 2 && "__clear_cache takes 2 arguments");
     const FunctionDecl *FD = E->getDirectCallee();
-    // Oddly people write this call without args on occasion and gcc accepts
-    // it - it's also marked as varargs in the description file.
     SmallVector<Value*, 2> Ops;
-    for (unsigned i = 0; i < E->getNumArgs(); i++)
+    for (unsigned i = 0; i < 2; i++)
       Ops.push_back(EmitScalarExpr(E->getArg(i)));
     llvm::Type *Ty = CGM.getTypes().ConvertType(FD->getType());
     llvm::FunctionType *FTy = cast<llvm::FunctionType>(Ty);

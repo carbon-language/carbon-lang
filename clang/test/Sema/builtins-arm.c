@@ -1,15 +1,15 @@
-// RUN: %clang_cc1 -triple armv7 -fsyntax-only -verify -DTEST0 %s
-// RUN: %clang_cc1 -triple armv7 -fsyntax-only -verify -DTEST1 %s
+// RUN: %clang_cc1 -triple armv7 -fsyntax-only -verify %s
 // RUN: %clang_cc1 -triple armv7 -target-abi apcs-gnu \
-// RUN:   -fsyntax-only -verify -DTEST1 %s
+// RUN:   -fsyntax-only -verify %s
 
-#ifdef TEST0
+void f(char *a, char *b) {
+  __clear_cache(); // expected-error {{too few arguments to function call, expected 2, have 0}} // expected-note {{'__clear_cache' is a builtin with type 'void (char *, char *)}}
+  __clear_cache(a); // expected-error {{too few arguments to function call, expected 2, have 1}}
+  __clear_cache(a, b);
+}
+
+void __clear_cache(void*, void*); // expected-error {{conflicting types for '__clear_cache'}}
 void __clear_cache(char*, char*);
-#endif
-
-#ifdef TEST1
-void __clear_cache(void*, void*);
-#endif
 
 #if defined(__ARM_PCS) || defined(__ARM_EABI__)
 // va_list on ARM AAPCS is struct { void* __ap }.
