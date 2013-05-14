@@ -134,6 +134,7 @@ struct DlIteratePhdrData {
   LoadedModule *modules;
   uptr current_n;
   uptr max_n;
+  string_predicate_t filter;
 };
 
 static const uptr kMaxPathLength = 512;
@@ -161,6 +162,8 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   }
   if (module_name.data()[0] == '\0')
     return 0;
+  if (data->filter && !data->filter(module_name.data()))
+    return 0;
   void *mem = &data->modules[data->current_n];
   LoadedModule *cur_module = new(mem) LoadedModule(module_name.data(),
                                                    info->dlpi_addr);
@@ -176,9 +179,10 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   return 0;
 }
 
-uptr GetListOfModules(LoadedModule *modules, uptr max_modules) {
+uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
+                      string_predicate_t filter) {
   CHECK(modules);
-  DlIteratePhdrData data = {modules, 0, max_modules};
+  DlIteratePhdrData data = {modules, 0, max_modules, filter};
   dl_iterate_phdr(dl_iterate_phdr_cb, &data);
   return data.current_n;
 }

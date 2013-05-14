@@ -383,7 +383,8 @@ class Symbolizer {
       modules_ = (LoadedModule*)(symbolizer_allocator.Allocate(
           kMaxNumberOfModuleContexts * sizeof(LoadedModule)));
       CHECK(modules_);
-      n_modules_ = GetListOfModules(modules_, kMaxNumberOfModuleContexts);
+      n_modules_ = GetListOfModules(modules_, kMaxNumberOfModuleContexts,
+                                    /* filter */ 0);
       // FIXME: Return this check when GetListOfModules is implemented on Mac.
       // CHECK_GT(n_modules_, 0);
       CHECK_LT(n_modules_, kMaxNumberOfModuleContexts);
