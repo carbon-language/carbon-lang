@@ -2790,6 +2790,10 @@ TEST_F(FormatTest, FormatsFunctionTypes) {
 
   verifyGoogleFormat("A<void*(int*, SomeType*)>;");
   verifyGoogleFormat("void* (*a)(int);");
+
+  // Other constructs can look like function types:
+  verifyFormat("A<sizeof(*x)> a;");
+  verifyFormat("A<alignof(*x)> a;");
 }
 
 TEST_F(FormatTest, BreaksLongDeclarations) {
