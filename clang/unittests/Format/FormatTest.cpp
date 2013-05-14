@@ -1646,6 +1646,14 @@ TEST_F(FormatTest, LineBreakingInBinaryExpressions) {
                "    SourceMgr.getSpellingColumnNumber(\n"
                "        TheLine.Last->FormatTok.Tok.getLocation()) -\n"
                "    1);");
+
+  FormatStyle OnePerLine = getLLVMStyle();
+  OnePerLine.BinPackParameters = false;
+  verifyFormat(
+      "if (aaaaaaaaaaaaaaaaaaaaaaaaaaaa || aaaaaaaaaaaaaaaaaaaaaaaaaaaa ||\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaaaaaa || aaaaaaaaaaaaaaaaaaaaaaaaaaaa ||\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaaaaaa) {\n}",
+      OnePerLine);
 }
 
 TEST_F(FormatTest, ExpressionIndentation) {

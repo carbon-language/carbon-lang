@@ -543,7 +543,8 @@ private:
       if (State.Stack.back().AvoidBinPacking) {
         // If we are breaking after '(', '{', '<', this is not bin packing
         // unless AllowAllParametersOfDeclarationOnNextLine is false.
-        if ((Previous.isNot(tok::l_paren) && Previous.isNot(tok::l_brace)) ||
+        if (!(Previous.isOneOf(tok::l_paren, tok::l_brace) ||
+              Previous.Type == TT_BinaryOperator) ||
             (!Style.AllowAllParametersOfDeclarationOnNextLine &&
              Line.MustBeDeclaration))
           State.Stack.back().BreakBeforeParameter = true;
