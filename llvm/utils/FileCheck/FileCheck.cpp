@@ -588,6 +588,17 @@ struct CheckString {
 
   CheckString(const Pattern &P, SMLoc L, bool isCheckNext)
     : Pat(P), Loc(L), IsCheckNext(isCheckNext) {}
+
+  /// Check - Match check string and its "not strings".
+  size_t Check(const SourceMgr &SM, StringRef Buffer, size_t &MatchLen,
+               StringMap<StringRef> &VariableTable) const;
+
+  /// CheckNext - Verify there is a single line in the given buffer.
+  bool CheckNext(const SourceMgr &SM, StringRef Buffer) const;
+
+  /// CheckNot - Verify there's no "not strings" in the given buffer.
+  bool CheckNot(const SourceMgr &SM, StringRef Buffer,
+                StringMap<StringRef> &VariableTable) const;
 };
 
 /// Canonicalize whitespaces in the input file. Line endings are replaced
@@ -785,6 +796,86 @@ static unsigned CountNumNewlinesBetween(StringRef Range) {
   }
 }
 
+size_t CheckString::Check(const SourceMgr &SM, StringRef Buffer,
+                          size_t &MatchLen,
+                          StringMap<StringRef> &VariableTable) const {
+  size_t MatchPos = Pat.Match(Buffer, MatchLen, VariableTable);
+  if (MatchPos == StringRef::npos) {
+    PrintCheckFailed(SM, *this, Buffer, VariableTable);
+    return StringRef::npos;
+  }
+
+  StringRef SkippedRegion = Buffer.substr(0, MatchPos);
+
+  // If this check is a "CHECK-NEXT", verify that the previous match was on
+  // the previous line (i.e. that there is one newline between them).
+  if (CheckNext(SM, SkippedRegion))
+    return StringRef::npos;
+
+  // If this match had "not strings", verify that they don't exist in the
+  // skipped region.
+  if (CheckNot(SM, SkippedRegion, VariableTable))
+    return StringRef::npos;
+
+  return MatchPos;
+}
+
+bool CheckString::CheckNext(const SourceMgr &SM, StringRef Buffer) const {
+  if (!IsCheckNext)
+    return false;
+
+  // Count the number of newlines between the previous match and this one.
+  assert(Buffer.data() !=
+         SM.getMemoryBuffer(
+           SM.FindBufferContainingLoc(
+             SMLoc::getFromPointer(Buffer.data())))->getBufferStart() &&
+         "CHECK-NEXT can't be the first check in a file");
+
+  unsigned NumNewLines = CountNumNewlinesBetween(Buffer);
+
+  if (NumNewLines == 0) {
+    SM.PrintMessage(Loc, SourceMgr::DK_Error, CheckPrefix+
+                    "-NEXT: is on the same line as previous match");
+    SM.PrintMessage(SMLoc::getFromPointer(Buffer.end()),
+                    SourceMgr::DK_Note, "'next' match was here");
+    SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()), SourceMgr::DK_Note,
+                    "previous match ended here");
+    return true;
+  }
+
+  if (NumNewLines != 1) {
+    SM.PrintMessage(Loc, SourceMgr::DK_Error, CheckPrefix+
+                    "-NEXT: is not on the line after the previous match");
+    SM.PrintMessage(SMLoc::getFromPointer(Buffer.end()),
+                    SourceMgr::DK_Note, "'next' match was here");
+    SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()), SourceMgr::DK_Note,
+                    "previous match ended here");
+    return true;
+  }
+
+  return false;
+}
+
+bool CheckString::CheckNot(const SourceMgr &SM, StringRef Buffer,
+                           StringMap<StringRef> &VariableTable) const {
+  for (unsigned ChunkNo = 0, e = NotStrings.size();
+       ChunkNo != e; ++ChunkNo) {
+    size_t MatchLen = 0;
+    size_t Pos = NotStrings[ChunkNo].Match(Buffer, MatchLen, VariableTable);
+
+    if (Pos == StringRef::npos) continue;
+
+    SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()+Pos),
+                    SourceMgr::DK_Error,
+                    CheckPrefix+"-NOT: string occurred!");
+    SM.PrintMessage(NotStrings[ChunkNo].getLoc(), SourceMgr::DK_Note,
+                    CheckPrefix+"-NOT: pattern specified here");
+    return true;
+  }
+
+  return false;
+}
+
 int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
@@ -825,76 +916,17 @@ int main(int argc, char **argv) {
   // file.
   StringRef Buffer = F->getBuffer();
 
-  const char *LastMatch = Buffer.data();
-
   for (unsigned StrNo = 0, e = CheckStrings.size(); StrNo != e; ++StrNo) {
     const CheckString &CheckStr = CheckStrings[StrNo];
 
-    StringRef SearchFrom = Buffer;
-
     // Find StrNo in the file.
     size_t MatchLen = 0;
-    size_t MatchPos = CheckStr.Pat.Match(Buffer, MatchLen, VariableTable);
-    Buffer = Buffer.substr(MatchPos);
+    size_t MatchPos = CheckStr.Check(SM, Buffer, MatchLen, VariableTable);
 
-    // If we didn't find a match, reject the input.
-    if (MatchPos == StringRef::npos) {
-      PrintCheckFailed(SM, CheckStr, SearchFrom, VariableTable);
+    if (MatchPos == StringRef::npos)
       return 1;
-    }
 
-    StringRef SkippedRegion(LastMatch, Buffer.data()-LastMatch);
-
-    // If this check is a "CHECK-NEXT", verify that the previous match was on
-    // the previous line (i.e. that there is one newline between them).
-    if (CheckStr.IsCheckNext) {
-      // Count the number of newlines between the previous match and this one.
-      assert(LastMatch != F->getBufferStart() &&
-             "CHECK-NEXT can't be the first check in a file");
-
-      unsigned NumNewLines = CountNumNewlinesBetween(SkippedRegion);
-      if (NumNewLines == 0) {
-        SM.PrintMessage(CheckStr.Loc, SourceMgr::DK_Error,
-                    CheckPrefix+"-NEXT: is on the same line as previous match");
-        SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()),
-                        SourceMgr::DK_Note, "'next' match was here");
-        SM.PrintMessage(SMLoc::getFromPointer(LastMatch), SourceMgr::DK_Note,
-                        "previous match was here");
-        return 1;
-      }
-
-      if (NumNewLines != 1) {
-        SM.PrintMessage(CheckStr.Loc, SourceMgr::DK_Error, CheckPrefix+
-                        "-NEXT: is not on the line after the previous match");
-        SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()),
-                        SourceMgr::DK_Note, "'next' match was here");
-        SM.PrintMessage(SMLoc::getFromPointer(LastMatch), SourceMgr::DK_Note,
-                        "previous match was here");
-        return 1;
-      }
-    }
-
-    // If this match had "not strings", verify that they don't exist in the
-    // skipped region.
-    for (unsigned ChunkNo = 0, e = CheckStr.NotStrings.size();
-         ChunkNo != e; ++ChunkNo) {
-      size_t MatchLen = 0;
-      size_t Pos = CheckStr.NotStrings[ChunkNo].Match(SkippedRegion, MatchLen,
-                                                      VariableTable);
-      if (Pos == StringRef::npos) continue;
-
-      SM.PrintMessage(SMLoc::getFromPointer(LastMatch+Pos), SourceMgr::DK_Error,
-                      CheckPrefix+"-NOT: string occurred!");
-      SM.PrintMessage(CheckStr.NotStrings[ChunkNo].getLoc(), SourceMgr::DK_Note,
-                      CheckPrefix+"-NOT: pattern specified here");
-      return 1;
-    }
-
-
-    // Otherwise, everything is good.  Step over the matched text and remember
-    // the position after the match as the end of the last match.
-    Buffer = Buffer.substr(MatchLen);
-    LastMatch = Buffer.data();
+    Buffer = Buffer.substr(MatchPos + MatchLen);
   }
 
   return 0;
