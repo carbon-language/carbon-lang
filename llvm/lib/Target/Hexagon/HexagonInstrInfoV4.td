@@ -3188,6 +3188,93 @@ def STriw_offset_ext_V4 : STInst<(outs),
                     (add IntRegs:$src1, u6_2ImmPred:$src2))]>,
             Requires<[HasV4T]>;
 
+def : Pat<(i64 (ctlz (i64 DoubleRegs:$src1))),
+          (i64 (COMBINE_Ir_V4 (i32 0), (i32 (CTLZ64_rr DoubleRegs:$src1))))>,
+          Requires<[HasV4T]>;
+
+def : Pat<(i64 (cttz (i64 DoubleRegs:$src1))),
+          (i64 (COMBINE_Ir_V4 (i32 0), (i32 (CTTZ64_rr DoubleRegs:$src1))))>,
+          Requires<[HasV4T]>;
+
+
+// i8 -> i64 loads
+// We need a complexity of 120 here to overide preceeding handling of
+// zextloadi8.
+let Predicates = [HasV4T], AddedComplexity = 120 in {
+def:  Pat <(i64 (extloadi8 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
+      (i64 (COMBINE_Ir_V4 0, (LDrib_abs_V4 tglobaladdr:$addr)))>;
+
+def:  Pat <(i64 (zextloadi8 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
+      (i64 (COMBINE_Ir_V4 0, (LDriub_abs_V4 tglobaladdr:$addr)))>;
+
+def:  Pat <(i64 (sextloadi8 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
+      (i64 (SXTW (LDrib_abs_V4 tglobaladdr:$addr)))>;
+
+def:  Pat <(i64 (extloadi8 FoldGlobalAddr:$addr)),
+      (i64 (COMBINE_Ir_V4 0, (LDrib_abs_V4 FoldGlobalAddr:$addr)))>;
+
+def:  Pat <(i64 (zextloadi8 FoldGlobalAddr:$addr)),
+      (i64 (COMBINE_Ir_V4 0, (LDriub_abs_V4 FoldGlobalAddr:$addr)))>;
+
+def:  Pat <(i64 (sextloadi8 FoldGlobalAddr:$addr)),
+      (i64 (SXTW (LDrib_abs_V4 FoldGlobalAddr:$addr)))>;
+}
+// i16 -> i64 loads
+// We need a complexity of 120 here to overide preceeding handling of
+// zextloadi16.
+let AddedComplexity = 120 in {
+def:  Pat <(i64 (extloadi16 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
+      (i64 (COMBINE_Ir_V4 0, (LDrih_abs_V4 tglobaladdr:$addr)))>,
+      Requires<[HasV4T]>;
+
+def:  Pat <(i64 (zextloadi16 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
+      (i64 (COMBINE_Ir_V4 0, (LDriuh_abs_V4 tglobaladdr:$addr)))>,
+      Requires<[HasV4T]>;
+
+def:  Pat <(i64 (sextloadi16 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
+      (i64 (SXTW (LDrih_abs_V4 tglobaladdr:$addr)))>,
+      Requires<[HasV4T]>;
+
+def:  Pat <(i64 (extloadi16 FoldGlobalAddr:$addr)),
+      (i64 (COMBINE_Ir_V4 0, (LDrih_abs_V4 FoldGlobalAddr:$addr)))>,
+      Requires<[HasV4T]>;
+
+def:  Pat <(i64 (zextloadi16 FoldGlobalAddr:$addr)),
+      (i64 (COMBINE_Ir_V4 0, (LDriuh_abs_V4 FoldGlobalAddr:$addr)))>,
+      Requires<[HasV4T]>;
+
+def:  Pat <(i64 (sextloadi16 FoldGlobalAddr:$addr)),
+      (i64 (SXTW (LDrih_abs_V4 FoldGlobalAddr:$addr)))>,
+      Requires<[HasV4T]>;
+}
+// i32->i64 loads
+// We need a complexity of 120 here to overide preceeding handling of
+// zextloadi32.
+let AddedComplexity = 120 in {
+def:  Pat <(i64 (extloadi32 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
+      (i64 (COMBINE_Ir_V4 0, (LDriw_abs_V4 tglobaladdr:$addr)))>,
+      Requires<[HasV4T]>;
+
+def:  Pat <(i64 (zextloadi32 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
+      (i64 (COMBINE_Ir_V4 0, (LDriw_abs_V4 tglobaladdr:$addr)))>,
+      Requires<[HasV4T]>;
+
+def:  Pat <(i64 (sextloadi32 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
+      (i64 (SXTW (LDriw_abs_V4 tglobaladdr:$addr)))>,
+      Requires<[HasV4T]>;
+
+def:  Pat <(i64 (extloadi32 FoldGlobalAddr:$addr)),
+      (i64 (COMBINE_Ir_V4 0, (LDriw_abs_V4 FoldGlobalAddr:$addr)))>,
+      Requires<[HasV4T]>;
+
+def:  Pat <(i64 (zextloadi32 FoldGlobalAddr:$addr)),
+      (i64 (COMBINE_Ir_V4 0, (LDriw_abs_V4 FoldGlobalAddr:$addr)))>,
+      Requires<[HasV4T]>;
+
+def:  Pat <(i64 (sextloadi32 FoldGlobalAddr:$addr)),
+      (i64 (SXTW (LDriw_abs_V4 FoldGlobalAddr:$addr)))>,
+      Requires<[HasV4T]>;
+}
 
 // Indexed store double word - global address.
 // memw(Rs+#u6:2)=#S8
