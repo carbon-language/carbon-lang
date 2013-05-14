@@ -289,25 +289,43 @@ public:
         SetError (GPRRegSet, Read, -1);
         SetError (FPURegSet, Read, -1);
         SetError (EXCRegSet, Read, -1);
-        int flavor = data.GetU32 (&offset);
-        uint32_t count = data.GetU32 (&offset);
-        switch (flavor)
+        bool done = false;
+
+        while (!done)
         {
-            case GPRRegSet:
-                for (uint32_t i=0; i<count; ++i)
-                    gpr.r[i] = data.GetU32(&offset);
-                SetError (GPRRegSet, Read, 0);
-                break;
-            case FPURegSet:
-                // TODO: fill in FPU regs....
-                //SetError (FPURegSet, Read, -1);
-                break;
-            case EXCRegSet:
-                exc.exception = data.GetU32(&offset);
-                exc.fsr = data.GetU32(&offset);
-                exc.far = data.GetU32(&offset);
-                SetError (EXCRegSet, Read, 0);
-                break;
+            int flavor = data.GetU32 (&offset);
+            uint32_t count = data.GetU32 (&offset);
+            switch (flavor)
+            {
+                case GPRRegSet:
+                    for (uint32_t i=0; i<count; ++i)
+                        gpr.r[i] = data.GetU32(&offset);
+                    SetError (GPRRegSet, Read, 0);
+                    break;
+
+                case FPURegSet:
+                    {
+                        uint32_t *d = &fpu.floats.s[0];
+                        for (uint32_t i = 0; i < count && d < d + (sizeof (fpu.floats) / sizeof (uint32_t)); i++)
+                        {
+                            *d++ = data.GetU32(&offset);
+                        }
+                        SetError (FPURegSet, Read, 0);
+                    }
+                    break;
+
+                case EXCRegSet:
+                    exc.exception = data.GetU32(&offset);
+                    exc.fsr = data.GetU32(&offset);
+                    exc.far = data.GetU32(&offset);
+                    SetError (EXCRegSet, Read, 0);
+                    done = true;
+                    break;
+
+                // Unknown register set flavor, stop trying to parse.
+                default:
+                    done = true;
+            }
         }
     }
 protected:

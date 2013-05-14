@@ -114,11 +114,17 @@ public:
     };
 
 
+    struct QReg
+    {
+        uint8_t bytes[16];
+    };
+
     struct FPU
     {
         union {
             uint32_t s[32];
-            uint64_t d[16];
+            uint64_t d[32];
+            QReg     q[16];  // the 128-bit NEON registers
         } floats;
         uint32_t fpscr;
     };
@@ -160,10 +166,10 @@ protected:
 
     enum
     {
-        GPRRegSet = 1,
-        FPURegSet = 2,
-        EXCRegSet = 3,
-        DBGRegSet = 4
+        GPRRegSet = 1, // ARM_THREAD_STATE
+        FPURegSet = 2, // ARM_VFP_STATE
+        EXCRegSet = 3, // ARM_EXCEPTION_STATE
+        DBGRegSet = 4  // ARM_DEBUG_STATE
     };
 
     enum
