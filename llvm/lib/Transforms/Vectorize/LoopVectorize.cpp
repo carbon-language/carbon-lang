@@ -1389,9 +1389,10 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
     case LoopVectorizationLegality::IK_NoInduction:
       llvm_unreachable("Unknown induction");
     case LoopVectorizationLegality::IK_IntInduction: {
-      // Handle the integer induction counter:
+      // Handle the integer induction counter.
       assert(OrigPhi->getType()->isIntegerTy() && "Invalid type");
-      assert(OrigPhi == OldInduction && "Unknown integer PHI");
+
+      // We have the canonical induction variable.
       if (OrigPhi == OldInduction) {
         // Create a truncated version of the resume value for the scalar loop,
         // we might have promoted the type to a larger width.
@@ -1402,11 +1403,20 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
         for (unsigned I = 0, E = LoopBypassBlocks.size(); I != E; ++I)
           TruncResumeVal->addIncoming(II.StartValue, LoopBypassBlocks[I]);
         TruncResumeVal->addIncoming(EndValue, VecBody);
+
+        // We know what the end value is.
+        EndValue = IdxEndRoundDown;
+        // We also know which PHI node holds it.
+        ResumeIndex = ResumeVal;
+        break;
       }
-      // We know what the end value is.
-      EndValue = IdxEndRoundDown;
-      // We also know which PHI node holds it.
-      ResumeIndex = ResumeVal;
+
+      // Not the canonical induction variable - add the vector loop count to the
+      // start value.
+      Value *CRD = BypassBuilder.CreateSExtOrTrunc(CountRoundDown,
+                                                   II.StartValue->getType(),
+                                                   "cast.crd");
+      EndValue = BypassBuilder.CreateAdd(CRD, II.StartValue , "ind.end");
       break;
     }
     case LoopVectorizationLegality::IK_ReverseIntInduction: {
@@ -2056,12 +2066,25 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
       case LoopVectorizationLegality::IK_NoInduction:
         llvm_unreachable("Unknown induction");
       case LoopVectorizationLegality::IK_IntInduction: {
-        assert(P == OldInduction && "Unexpected PHI");
-        // We might have had to extend the type.
-        Value *Trunc = Builder.CreateTrunc(Induction, P->getType());
-        Value *Broadcasted = getBroadcastInstrs(Trunc);
-        // After broadcasting the induction variable we need to make the
-        // vector consecutive by adding 0, 1, 2 ...
+        assert(P->getType() == II.StartValue->getType() && "Types must match");
+        Type *PhiTy = P->getType();
+        Value *Broadcasted;
+        if (P == OldInduction) {
+          // Handle the canonical induction variable. We might have had to
+          // extend the type.
+          Broadcasted = Builder.CreateTrunc(Induction, PhiTy);
+        } else {
+          // Handle other induction variables that are now based on the
+          // canonical one.
+          Value *NormalizedIdx = Builder.CreateSub(Induction, ExtendedIdx,
+                                                   "normalized.idx");
+          NormalizedIdx = Builder.CreateSExtOrTrunc(NormalizedIdx, PhiTy);
+          Broadcasted = Builder.CreateAdd(II.StartValue, NormalizedIdx,
+                                          "offset.idx");
+        }
+        Broadcasted = getBroadcastInstrs(Broadcasted);
+        // After broadcasting the induction variable we need to make the vector
+        // consecutive by adding 0, 1, 2, etc.
         for (unsigned part = 0; part < UF; ++part)
           Entry[part] = getConsecutiveVector(Broadcasted, VF * part, false);
         continue;
@@ -2466,11 +2489,11 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
 
           // Int inductions are special because we only allow one IV.
           if (IK == IK_IntInduction) {
-            if (Induction) {
-              DEBUG(dbgs() << "LV: Found too many inductions."<< *Phi <<"\n");
-              return false;
-            }
-            Induction = Phi;
+            // Use the phi node with the widest type as induction. Use the last
+            // one if there are multiple (no good reason for doing this other
+            // than it is expedient).
+            if (!Induction || PhiTy == WidestIndTy)
+              Induction = Phi;
           }
 
           DEBUG(dbgs() << "LV: Found an induction variable.\n");
