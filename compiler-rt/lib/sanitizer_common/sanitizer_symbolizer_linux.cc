@@ -133,6 +133,7 @@ typedef ElfW(Phdr) Elf_Phdr;
 struct DlIteratePhdrData {
   LoadedModule *modules;
   uptr current_n;
+  bool first;
   uptr max_n;
   string_predicate_t filter;
 };
@@ -145,7 +146,8 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
     return 0;
   InternalScopedBuffer<char> module_name(kMaxPathLength);
   module_name.data()[0] = '\0';
-  if (data->current_n == 0) {
+  if (data->first) {
+    data->first = false;
     // First module is the binary itself.
     uptr module_name_len = internal_readlink(
         "/proc/self/exe", module_name.data(), module_name.size());
@@ -182,7 +184,7 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
                       string_predicate_t filter) {
   CHECK(modules);
-  DlIteratePhdrData data = {modules, 0, max_modules, filter};
+  DlIteratePhdrData data = {modules, 0, true, max_modules, filter};
   dl_iterate_phdr(dl_iterate_phdr_cb, &data);
   return data.current_n;
 }
