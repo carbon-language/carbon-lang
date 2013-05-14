@@ -241,7 +241,7 @@ static void swapFPIntParams
 static void assureFPCallStub(Function &F, Module *M,  
                              const MipsSubtarget &Subtarget){
   // for now we only need them for static relocation
-  if (!Subtarget.getRelocationModel() == Reloc::PIC_)
+  if (Subtarget.getRelocationModel() == Reloc::PIC_)
     return;
   LLVMContext &Context = M->getContext();
   bool LE = Subtarget.isLittle();
