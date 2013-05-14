@@ -160,9 +160,7 @@ static Value *EmitFAbs(CodeGenFunction &CGF, Value *V, QualType ValTy) {
                                                    false);
   llvm::Value *Fn = CGF.CGM.CreateRuntimeFunction(FT, FnName);
 
-  llvm::CallInst *Call = CGF.EmitNounwindRuntimeCall(Fn, V, "abs");
-  Call->setDoesNotAccessMemory();
-  return Call;
+  return CGF.EmitNounwindRuntimeCall(Fn, V, "abs");
 }
 
 static RValue emitLibraryCall(CodeGenFunction &CGF, const FunctionDecl *Fn,
