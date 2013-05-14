@@ -175,8 +175,9 @@ static bool needsFPHelperFromSig(Function &F) {
 // interoperate
 //
 
-void swapFPIntParams(FPParamVariant PV, Module *M, InlineAsmHelper &IAH,
-               bool LE, bool ToFP) {
+static void swapFPIntParams
+  (FPParamVariant PV, Module *M, InlineAsmHelper &IAH,
+   bool LE, bool ToFP) {
   //LLVMContext &Context = M->getContext();
   std::string MI = ToFP? "mtc1 ": "mfc1 ";
   switch (PV) {
@@ -237,7 +238,8 @@ void swapFPIntParams(FPParamVariant PV, Module *M, InlineAsmHelper &IAH,
 // Make sure that we know we already need a stub for this function.
 // Having called needsFPHelperFromSig
 //
-void assureFPCallStub(Function &F, Module *M,  const MipsSubtarget &Subtarget){
+static void assureFPCallStub(Function &F, Module *M,  
+                             const MipsSubtarget &Subtarget){
   // for now we only need them for static relocation
   if (!Subtarget.getRelocationModel() == Reloc::PIC_)
     return;
