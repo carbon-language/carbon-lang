@@ -144,15 +144,16 @@ const DefinedAtom *LayoutPass::findAtomFollowedBy(
 bool LayoutPass::checkAllPrevAtomsZeroSize(const DefinedAtom *targetAtom) {
   const DefinedAtom *atom = _followOnRoots[targetAtom];
   while (true) {
-    AtomToAtomT::iterator targetFollowOnAtomsIter = _followOnNexts.find(atom);
-    // The target atom must be in the chain of its root.
-    assert(targetFollowOnAtomsIter != _followOnNexts.end());
     if (atom == targetAtom)
       return true;
     if ((*atom).size() != 0)
       // TODO: print warning that an impossible layout is being desired by the
       // user.
       return false;
+    AtomToAtomT::iterator targetFollowOnAtomsIter = _followOnNexts.find(atom);
+    // The target atom must be in the chain of its root.
+    assert(targetFollowOnAtomsIter != _followOnNexts.end());
+    atom = targetFollowOnAtomsIter->second;
   }
 }
 
