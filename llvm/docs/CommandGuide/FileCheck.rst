@@ -194,6 +194,55 @@ can be used:
    ; CHECK: ret i8
    }
 
+The "CHECK-DAG:" directive
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If it's necessary to match strings that don't occur in a strictly sequential
+order, "``CHECK-DAG:``" could be used to verify them between two matches (or
+before the first match, or after the last match). For example, clang emits
+vtable globals in reverse order. Using ``CHECK-DAG:``, we can keep the checks
+in the natural order:
+
+.. code-block:: c++
+
+    // RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
+
+    struct Foo { virtual void method(); };
+    Foo f;  // emit vtable
+    // CHECK-DAG: @_ZTV3Foo =
+
+    struct Bar { virtual void method(); };
+    Bar b;
+    // CHECK-DAG: @_ZTV3Bar =
+
+
+With captured variables, ``CHECK-DAG:`` is able to match valid topological
+orderings of a DAG with edges from the definition of a variable to its use.
+It's useful, e.g., when your test cases need to match different output
+sequences from the instruction scheduler. For example,
+
+.. code-block:: llvm
+
+   ; CHECK-DAG: add [[REG1:r[0-9]+]], r1, r2
+   ; CHECK-DAG: add [[REG2:r[0-9]+]], r3, r4
+   ; CHECK:     mul r5, [[REG1]], [[REG2]]
+
+In this case, any order of that two ``add`` instructions will be allowed.
+
+``CHECK-NOT:`` directives could be mixed with ``CHECK-DAG:`` directives to
+exclude strings between the surrounding ``CHECK-DAG:`` directives. As a result,
+the surrounding ``CHECK-DAG:`` directives cannot be reordered, i.e. all
+occurrences matching ``CHECK-DAG:`` before ``CHECK-NOT:`` must not fall behind
+occurrences matching ``CHECK-DAG:`` after ``CHECK-NOT:``. For example,
+
+.. code-block:: llvm
+
+   ; CHECK-DAG: BEFORE
+   ; CHECK-NOT: NOT
+   ; CHECK-DAG: AFTER
+
+This case will reject input strings where ``BEFORE`` occurs after ``AFTER``.
+
 FileCheck Pattern Matching Syntax
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
