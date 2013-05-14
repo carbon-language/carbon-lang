@@ -49,8 +49,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, R1 = 15 in {
   // the asm parser, so that we don't relax Js to external symbols into JGs.
   let isCodeGenOnly = 1 in
     def J : InstRI<0xA74, (outs), (ins brtarget16:$I2), "j\t$I2", []>;
-  let isAsmParserOnly = 1 in
-    def AsmJ : InstRI<0xA74, (outs), (ins brtarget16:$I2), "j\t$I2", []>;
+  def AsmJ : InstRI<0xA74, (outs), (ins brtarget16:$I2), "j\t$I2", []>;
 
   // An assembler extended mnemonic for BRCL.  (The extension is "G"
   // rather than "L" because "JL" is "Jump if Less".)
@@ -70,8 +69,7 @@ multiclass CondBranches<Operand imm, string short, string long> {
 }
 let isCodeGenOnly = 1 in
   defm BRC : CondBranches<cond4, "j$R1\t$I2", "jg$R1\t$I2">;
-let isAsmParserOnly = 1 in
-  defm AsmBRC : CondBranches<uimm8zx4, "brc\t$R1, $I2", "brcl\t$R1, $I2">;
+defm AsmBRC : CondBranches<uimm8zx4, "brc\t$R1, $I2", "brcl\t$R1, $I2">;
 
 def : Pat<(z_br_ccmask cond4:$cond, bb:$dst), (BRCL cond4:$cond, bb:$dst)>;
 
@@ -84,22 +82,20 @@ multiclass CondExtendedMnemonic<bits<4> Cond, string name> {
                     "jg"##name##"\t$I2", []>;
   }
 }
-let isAsmParserOnly = 1 in {
-  defm AsmJO   : CondExtendedMnemonic<1,  "o">;
-  defm AsmJH   : CondExtendedMnemonic<2,  "h">;
-  defm AsmJNLE : CondExtendedMnemonic<3,  "nle">;
-  defm AsmJL   : CondExtendedMnemonic<4,  "l">;
-  defm AsmJNHE : CondExtendedMnemonic<5,  "nhe">;
-  defm AsmJLH  : CondExtendedMnemonic<6,  "lh">;
-  defm AsmJNE  : CondExtendedMnemonic<7,  "ne">;
-  defm AsmJE   : CondExtendedMnemonic<8,  "e">;
-  defm AsmJNLH : CondExtendedMnemonic<9,  "nlh">;
-  defm AsmJHE  : CondExtendedMnemonic<10, "he">;
-  defm AsmJNL  : CondExtendedMnemonic<11, "nl">;
-  defm AsmJLE  : CondExtendedMnemonic<12, "le">;
-  defm AsmJNH  : CondExtendedMnemonic<13, "nh">;
-  defm AsmJNO  : CondExtendedMnemonic<14, "no">;
-}
+defm AsmJO   : CondExtendedMnemonic<1,  "o">;
+defm AsmJH   : CondExtendedMnemonic<2,  "h">;
+defm AsmJNLE : CondExtendedMnemonic<3,  "nle">;
+defm AsmJL   : CondExtendedMnemonic<4,  "l">;
+defm AsmJNHE : CondExtendedMnemonic<5,  "nhe">;
+defm AsmJLH  : CondExtendedMnemonic<6,  "lh">;
+defm AsmJNE  : CondExtendedMnemonic<7,  "ne">;
+defm AsmJE   : CondExtendedMnemonic<8,  "e">;
+defm AsmJNLH : CondExtendedMnemonic<9,  "nlh">;
+defm AsmJHE  : CondExtendedMnemonic<10, "he">;
+defm AsmJNL  : CondExtendedMnemonic<11, "nl">;
+defm AsmJLE  : CondExtendedMnemonic<12, "le">;
+defm AsmJNH  : CondExtendedMnemonic<13, "nh">;
+defm AsmJNO  : CondExtendedMnemonic<14, "no">;
 
 def Select32 : SelectWrapper<GR32>;
 def Select64 : SelectWrapper<GR64>;
@@ -122,14 +118,12 @@ let isCall = 1, Defs = [R0D, R1D, R2D, R3D, R4D, R5D, R14D,
 
 // Define the general form of the call instructions for the asm parser.
 // These instructions don't hard-code %r14 as the return address register.
-let isAsmParserOnly = 1 in {
-  def AsmBRAS  : InstRI<0xA75, (outs), (ins GR64:$R1, brtarget16:$I2),
-                        "bras\t$R1, $I2", []>;
-  def AsmBRASL : InstRIL<0xC05, (outs), (ins GR64:$R1, brtarget32:$I2),
-                        "brasl\t$R1, $I2", []>;
-  def AsmBASR  : InstRR<0x0D, (outs), (ins GR64:$R1, ADDR64:$R2),
-                        "basr\t$R1, $R2", []>;
-}
+def AsmBRAS  : InstRI<0xA75, (outs), (ins GR64:$R1, brtarget16:$I2),
+                      "bras\t$R1, $I2", []>;
+def AsmBRASL : InstRIL<0xC05, (outs), (ins GR64:$R1, brtarget32:$I2),
+                       "brasl\t$R1, $I2", []>;
+def AsmBASR  : InstRR<0x0D, (outs), (ins GR64:$R1, ADDR64:$R2),
+                      "basr\t$R1, $R2", []>;
 
 //===----------------------------------------------------------------------===//
 // Move instructions
