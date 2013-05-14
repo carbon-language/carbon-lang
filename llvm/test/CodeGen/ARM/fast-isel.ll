@@ -144,15 +144,19 @@ define void @test4() {
   store i32 %b, i32* @test4g
   ret void
 
-; THUMB: movw r0, :lower16:L_test4g$non_lazy_ptr
-; THUMB: movt r0, :upper16:L_test4g$non_lazy_ptr
+
+; Note that relocations are either movw/movt or constant pool
+; loads. Different platforms will select different approaches.
+
+; THUMB: {{(movw r0, :lower16:L_test4g\$non_lazy_ptr)|(ldr.n r0, .LCPI)}}
+; THUMB: {{(movt r0, :upper16:L_test4g\$non_lazy_ptr)?}}
 ; THUMB: ldr r0, [r0]
 ; THUMB: ldr r1, [r0]
 ; THUMB: adds r1, #1
 ; THUMB: str r1, [r0]
 
-; ARM: movw r0, :lower16:L_test4g$non_lazy_ptr
-; ARM: movt r0, :upper16:L_test4g$non_lazy_ptr
+; ARM: {{(movw r0, :lower16:L_test4g\$non_lazy_ptr)|(ldr r0, .LCPI)}}
+; ARM: {{(movt r0, :upper16:L_test4g\$non_lazy_ptr)?}}
 ; ARM: ldr r0, [r0]
 ; ARM: ldr r1, [r0]
 ; ARM: add r1, r1, #1

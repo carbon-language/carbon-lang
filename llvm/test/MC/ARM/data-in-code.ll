@@ -1,7 +1,9 @@
-;; RUN: llc -O0 -mtriple=armv7-linux-gnueabi -filetype=obj %s -o - | \
+;; RUN: llc -O0 -verify-machineinstrs -fast-isel-abort \
+;; RUN:   -mtriple=armv7-linux-gnueabi -filetype=obj %s -o - | \
 ;; RUN:   llvm-readobj -t | FileCheck -check-prefix=ARM %s
 
-;; RUN: llc -O0 -mtriple=thumbv7-linux-gnueabi -filetype=obj %s -o - | \
+;; RUN: llc -O0 -verify-machineinstrs -fast-isel-abort \
+;; RUN:   -mtriple=thumbv7-linux-gnueabi -filetype=obj %s -o - | \
 ;; RUN:   llvm-readobj -t | FileCheck -check-prefix=TMB %s
 
 ;; Ensure that if a jump table is generated that it has Mapping Symbols
@@ -119,7 +121,7 @@ exit:
 
 ;; ARM:        Symbol {
 ;; ARM:          Name: $a
-;; ARM-NEXT:     Value: 0xAC
+;; ARM-NEXT:     Value: 0x{{[0-9A-F]+}}
 ;; ARM-NEXT:     Size: 0
 ;; ARM-NEXT:     Binding: Local
 ;; ARM-NEXT:     Type: None
@@ -135,7 +137,7 @@ exit:
 
 ;; ARM:        Symbol {
 ;; ARM:          Name: $d
-;; ARM-NEXT:     Value: 0x30
+;; ARM-NEXT:     Value: 0x{{[0-9A-F]+}}
 ;; ARM-NEXT:     Size: 0
 ;; ARM-NEXT:     Binding: Local
 ;; ARM-NEXT:     Type: None
@@ -146,7 +148,7 @@ exit:
 
 ;; TMB:        Symbol {
 ;; TMB:          Name: $d.2
-;; TMB-NEXT:     Value: 0x16
+;; TMB-NEXT:     Value: 0x{{[0-9A-F]+}}
 ;; TMB-NEXT:     Size: 0
 ;; TMB-NEXT:     Binding: Local
 ;; TMB-NEXT:     Type: None
@@ -164,7 +166,7 @@ exit:
 
 ;; TMB:        Symbol {
 ;; TMB:          Name: $t
-;; TMB-NEXT:     Value: 0x36
+;; TMB-NEXT:     Value: 0x{{[0-9A-F]+}}
 ;; TMB-NEXT:     Size: 0
 ;; TMB-NEXT:     Binding: Local
 ;; TMB-NEXT:     Type: None

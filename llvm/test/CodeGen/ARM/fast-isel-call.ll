@@ -2,8 +2,12 @@
 ; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios | FileCheck %s --check-prefix=THUMB
 ; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=armv7-apple-ios -arm-long-calls | FileCheck %s --check-prefix=ARM-LONG
 ; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios -arm-long-calls | FileCheck %s --check-prefix=THUMB-LONG
-; RUN: llc < %s -O0 -relocation-model=dynamic-no-pic -mtriple=armv7-apple-ios -mattr=-vfp2 | FileCheck %s --check-prefix=ARM-NOVFP
-; RUN: llc < %s -O0 -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios -mattr=-vfp2 | FileCheck %s --check-prefix=THUMB-NOVFP
+; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=armv7-apple-ios -mattr=-vfp2 | FileCheck %s --check-prefix=ARM-NOVFP
+; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios -mattr=-vfp2 | FileCheck %s --check-prefix=THUMB-NOVFP
+
+; Note that some of these tests assume that relocations are either
+; movw/movt or constant pool loads. Different platforms will select
+; different approaches.
 
 define i32 @t0(i1 zeroext %a) nounwind {
   %1 = zext i1 %a to i32
@@ -88,53 +92,53 @@ declare zeroext i1 @t9();
 define i32 @t10(i32 %argc, i8** nocapture %argv) {
 entry:
 ; ARM: @t10
-; ARM: movw r0, #0
-; ARM: movw r1, #248
-; ARM: movw r2, #187
-; ARM: movw r3, #28
-; ARM: movw r9, #40
-; ARM: movw r12, #186
-; ARM: uxtb r0, r0
-; ARM: uxtb r1, r1
-; ARM: uxtb r2, r2
-; ARM: uxtb r3, r3
-; ARM: uxtb r9, r9
-; ARM: str r9, [sp]
-; ARM: uxtb r9, r12
-; ARM: str r9, [sp, #4]
-; ARM: bl _bar
+; ARM: movw [[R0:l?r[0-9]*]], #0
+; ARM: movw [[R1:l?r[0-9]*]], #248
+; ARM: movw [[R2:l?r[0-9]*]], #187
+; ARM: movw [[R3:l?r[0-9]*]], #28
+; ARM: movw [[R4:l?r[0-9]*]], #40
+; ARM: movw [[R5:l?r[0-9]*]], #186
+; ARM: uxtb [[R0]], [[R0]]
+; ARM: uxtb [[R1]], [[R1]]
+; ARM: uxtb [[R2]], [[R2]]
+; ARM: uxtb [[R3]], [[R3]]
+; ARM: uxtb [[R4]], [[R4]]
+; ARM: str [[R4]], [sp]
+; ARM: uxtb [[R4]], [[R5]]
+; ARM: str [[R4]], [sp, #4]
+; ARM: bl {{_?}}bar
 ; ARM-LONG: @t10
-; ARM-LONG: movw lr, :lower16:L_bar$non_lazy_ptr
-; ARM-LONG: movt lr, :upper16:L_bar$non_lazy_ptr
-; ARM-LONG: ldr lr, [lr]
-; ARM-LONG: blx lr
+; ARM-LONG: {{(movw)|(ldr)}} [[R:l?r[0-9]*]], {{(:lower16:L_bar\$non_lazy_ptr)|(.LCPI)}}
+; ARM-LONG: {{(movt [[R]], :upper16:L_bar\$non_lazy_ptr)?}}
+; ARM-LONG: ldr [[R]], {{\[}}[[R]]{{\]}}
+; ARM-LONG: blx [[R]]
 ; THUMB: @t10
-; THUMB: movs r0, #0
-; THUMB: movt r0, #0
-; THUMB: movs r1, #248
-; THUMB: movt r1, #0
-; THUMB: movs r2, #187
-; THUMB: movt r2, #0
-; THUMB: movs r3, #28
-; THUMB: movt r3, #0
-; THUMB: movw r9, #40
-; THUMB: movt r9, #0
-; THUMB: movw r12, #186
-; THUMB: movt r12, #0
-; THUMB: uxtb r0, r0
-; THUMB: uxtb r1, r1
-; THUMB: uxtb r2, r2
-; THUMB: uxtb r3, r3
-; THUMB: uxtb.w r9, r9
-; THUMB: str.w r9, [sp]
-; THUMB: uxtb.w r9, r12
-; THUMB: str.w r9, [sp, #4]
-; THUMB: bl _bar
+; THUMB: movs [[R0:l?r[0-9]*]], #0
+; THUMB: movt [[R0]], #0
+; THUMB: movs [[R1:l?r[0-9]*]], #248
+; THUMB: movt [[R1]], #0
+; THUMB: movs [[R2:l?r[0-9]*]], #187
+; THUMB: movt [[R2]], #0
+; THUMB: movs [[R3:l?r[0-9]*]], #28
+; THUMB: movt [[R3]], #0
+; THUMB: movw [[R4:l?r[0-9]*]], #40
+; THUMB: movt [[R4]], #0
+; THUMB: movw [[R5:l?r[0-9]*]], #186
+; THUMB: movt [[R5]], #0
+; THUMB: uxtb [[R0]], [[R0]]
+; THUMB: uxtb [[R1]], [[R1]]
+; THUMB: uxtb [[R2]], [[R2]]
+; THUMB: uxtb [[R3]], [[R3]]
+; THUMB: uxtb.w [[R4]], [[R4]]
+; THUMB: str.w [[R4]], [sp]
+; THUMB: uxtb.w [[R4]], [[R5]]
+; THUMB: str.w [[R4]], [sp, #4]
+; THUMB: bl {{_?}}bar
 ; THUMB-LONG: @t10
-; THUMB-LONG: movw lr, :lower16:L_bar$non_lazy_ptr
-; THUMB-LONG: movt lr, :upper16:L_bar$non_lazy_ptr
-; THUMB-LONG: ldr.w lr, [lr]
-; THUMB-LONG: blx lr
+; THUMB-LONG: {{(movw)|(ldr.n)}} [[R:l?r[0-9]*]], {{(:lower16:L_bar\$non_lazy_ptr)|(.LCPI)}}
+; THUMB-LONG: {{(movt [[R]], :upper16:L_bar\$non_lazy_ptr)?}}
+; THUMB-LONG: ldr{{(.w)?}} [[R]], {{\[}}[[R]]{{\]}}
+; THUMB-LONG: blx [[R]]
   %call = call i32 @bar(i8 zeroext 0, i8 zeroext -8, i8 zeroext -69, i8 zeroext 28, i8 zeroext 40, i8 zeroext -70)
   ret i32 0
 }
@@ -147,12 +151,12 @@ define i32 @bar0(i32 %i) nounwind {
 
 define void @foo3() uwtable {
 ; ARM: movw    r0, #0
-; ARM: movw    r1, :lower16:_bar0
-; ARM: movt    r1, :upper16:_bar0
+; ARM: {{(movw r1, :lower16:_?bar0)|(ldr r1, .LCPI)}}
+; ARM: {{(movt r1, :upper16:_?bar0)|(ldr r1, \[r1\])}}
 ; ARM: blx     r1
 ; THUMB: movs    r0, #0
-; THUMB: movw    r1, :lower16:_bar0
-; THUMB: movt    r1, :upper16:_bar0
+; THUMB: {{(movw r1, :lower16:_?bar0)|(ldr.n r1, .LCPI)}}
+; THUMB: {{(movt r1, :upper16:_?bar0)|(ldr r1, \[r1\])}}
 ; THUMB: blx     r1
   %fptr = alloca i32 (i32)*, align 8
   store i32 (i32)* @bar0, i32 (i32)** %fptr, align 8
@@ -164,65 +168,22 @@ define void @foo3() uwtable {
 define i32 @LibCall(i32 %a, i32 %b) {
 entry:
 ; ARM: LibCall
-; ARM: bl ___udivsi3
+; ARM: bl {{___udivsi3|__aeabi_uidiv}}
 ; ARM-LONG: LibCall
-; ARM-LONG: movw r2, :lower16:L___udivsi3$non_lazy_ptr
-; ARM-LONG: movt r2, :upper16:L___udivsi3$non_lazy_ptr
+; ARM-LONG: {{(movw r2, :lower16:L___udivsi3\$non_lazy_ptr)|(ldr r2, .LCPI)}}
+; ARM-LONG: {{(movt r2, :upper16:L___udivsi3\$non_lazy_ptr)?}}
 ; ARM-LONG: ldr r2, [r2]
 ; ARM-LONG: blx r2
 ; THUMB: LibCall
-; THUMB: bl ___udivsi3
+; THUMB: bl {{___udivsi3|__aeabi_uidiv}}
 ; THUMB-LONG: LibCall
-; THUMB-LONG: movw r2, :lower16:L___udivsi3$non_lazy_ptr
-; THUMB-LONG: movt r2, :upper16:L___udivsi3$non_lazy_ptr
+; THUMB-LONG: {{(movw r2, :lower16:L___udivsi3\$non_lazy_ptr)|(ldr.n r2, .LCPI)}}
+; THUMB-LONG: {{(movt r2, :upper16:L___udivsi3\$non_lazy_ptr)?}}
 ; THUMB-LONG: ldr r2, [r2]
 ; THUMB-LONG: blx r2
         %tmp1 = udiv i32 %a, %b         ; <i32> [#uses=1]
         ret i32 %tmp1
 }
-
-define i32 @VarArg() nounwind {
-entry:
-  %i = alloca i32, align 4
-  %j = alloca i32, align 4
-  %k = alloca i32, align 4
-  %m = alloca i32, align 4
-  %n = alloca i32, align 4
-  %tmp = alloca i32, align 4
-  %0 = load i32* %i, align 4
-  %1 = load i32* %j, align 4
-  %2 = load i32* %k, align 4
-  %3 = load i32* %m, align 4
-  %4 = load i32* %n, align 4
-; ARM: VarArg
-; ARM: mov r7, sp
-; ARM: movw r0, #5
-; ARM: ldr r1, [r7, #-4]
-; ARM: ldr r2, [r7, #-8]
-; ARM: ldr r3, [r7, #-12]
-; ARM: ldr r9, [sp, #16]
-; ARM: ldr r12, [sp, #12]
-; ARM: str r9, [sp]
-; ARM: str r12, [sp, #4]
-; ARM: bl _CallVariadic
-; THUMB: mov r7, sp
-; THUMB: movs r0, #5
-; THUMB: movt r0, #0
-; THUMB: ldr r1, [sp, #28]
-; THUMB: ldr r2, [sp, #24]
-; THUMB: ldr r3, [sp, #20]
-; THUMB: ldr.w r9, [sp, #16]
-; THUMB: ldr.w r12, [sp, #12]
-; THUMB: str.w r9, [sp]
-; THUMB: str.w r12, [sp, #4]
-; THUMB: bl _CallVariadic
-  %call = call i32 (i32, ...)* @CallVariadic(i32 5, i32 %0, i32 %1, i32 %2, i32 %3, i32 %4)
-  store i32 %call, i32* %tmp, align 4
-  %5 = load i32* %tmp, align 4
-  ret i32 %5
-}
-
-declare i32 @CallVariadic(i32, ...)
 
 ; Test fastcc
 
