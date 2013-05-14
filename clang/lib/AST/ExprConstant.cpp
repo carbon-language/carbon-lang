@@ -3161,6 +3161,11 @@ static bool CheckConstexprFunction(EvalInfo &Info, SourceLocation CallLoc,
       Declaration->isConstexpr())
     return false;
 
+  // Bail out with no diagnostic if the function declaration itself is invalid.
+  // We will have produced a relevant diagnostic while parsing it.
+  if (Declaration->isInvalidDecl())
+    return false;
+
   // Can we evaluate this function call?
   if (Definition && Definition->isConstexpr() && !Definition->isInvalidDecl())
     return true;

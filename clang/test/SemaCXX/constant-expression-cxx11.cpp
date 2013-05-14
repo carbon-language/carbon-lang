@@ -1503,3 +1503,11 @@ namespace PR15884 {
   // expected-note@-3 {{pointer to temporary is not a constant expression}}
   // expected-note@-4 {{temporary created here}}
 }
+
+namespace AfterError {
+  // FIXME: Suppress the 'no return statements' diagnostic if the body is invalid.
+  constexpr int error() { // expected-error {{no return statement}}
+    return foobar; // expected-error {{undeclared identifier}}
+  }
+  constexpr int k = error(); // expected-error {{must be initialized by a constant expression}}
+}

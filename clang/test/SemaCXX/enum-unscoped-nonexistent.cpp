@@ -6,7 +6,7 @@ struct Base {
 template<typename T> struct S : Base {
   enum E : int;
   constexpr int f() const;
-  constexpr int g() const; // expected-note {{declared here}}
+  constexpr int g() const;
   void h();
 };
 template<> enum S<char>::E : int {}; // expected-note {{enum 'S<char>::E' was explicitly specialized here}}
@@ -23,7 +23,7 @@ static_assert(S<int>().f() == 1, "");
 // The unqualified-id here names a member of the current instantiation, which
 // bizarrely might not exist in some instantiations.
 template<typename T> constexpr int S<T>::g() const { return b; } // expected-error {{enumerator 'b' does not exist in instantiation of 'S<char>'}}
-static_assert(S<char>().g() == 1, ""); // expected-note {{here}} expected-error {{not an integral constant expression}} expected-note {{undefined}}
+static_assert(S<char>().g() == 1, ""); // expected-note {{here}} expected-error {{not an integral constant expression}}
 static_assert(S<short>().g() == 2, "");
 static_assert(S<long>().g() == 8, "");
 
