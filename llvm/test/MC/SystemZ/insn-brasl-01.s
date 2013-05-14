@@ -1,5 +1,18 @@
 # RUN: llvm-mc -triple s390x-linux-gnu -show-encoding %s | FileCheck %s
 
+#CHECK: brasl	%r0, .[[LAB:L.*]]-4294967296 # encoding: [0xc0,0x05,A,A,A,A]
+#CHECK:  fixup A - offset: 2, value: (.[[LAB]]-4294967296)+2, kind: FK_390_PC32DBL
+	brasl	%r0, -0x100000000
+#CHECK: brasl	%r0, .[[LAB:L.*]]-2	# encoding: [0xc0,0x05,A,A,A,A]
+#CHECK:  fixup A - offset: 2, value: (.[[LAB]]-2)+2, kind: FK_390_PC32DBL
+	brasl	%r0, -2
+#CHECK: brasl	%r0, .[[LAB:L.*]]	# encoding: [0xc0,0x05,A,A,A,A]
+#CHECK:  fixup A - offset: 2, value: .[[LAB]]+2, kind: FK_390_PC32DBL
+	brasl	%r0, 0
+#CHECK: brasl	%r0, .[[LAB:L.*]]+4294967294 # encoding: [0xc0,0x05,A,A,A,A]
+#CHECK:  fixup A - offset: 2, value: (.[[LAB]]+4294967294)+2, kind: FK_390_PC32DBL
+	brasl	%r0, 0xfffffffe
+
 #CHECK: brasl	%r0, foo                # encoding: [0xc0,0x05,A,A,A,A]
 #CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC32DBL
 #CHECK: brasl	%r14, foo               # encoding: [0xc0,0xe5,A,A,A,A]

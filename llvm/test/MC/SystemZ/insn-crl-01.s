@@ -1,10 +1,17 @@
 # RUN: llvm-mc -triple s390x-linux-gnu -show-encoding %s | FileCheck %s
 
-#CHECK: crl	%r0, 2864434397         # encoding: [0xc6,0x0d,0x55,0x5d,0xe6,0x6e]
-#CHECK: crl	%r15, 2864434397        # encoding: [0xc6,0xfd,0x55,0x5d,0xe6,0x6e]
-
-	crl	%r0,0xaabbccdd
-	crl	%r15,0xaabbccdd
+#CHECK: crl	%r0, .[[LAB:L.*]]-4294967296 # encoding: [0xc6,0x0d,A,A,A,A]
+#CHECK:  fixup A - offset: 2, value: (.[[LAB]]-4294967296)+2, kind: FK_390_PC32DBL
+	crl	%r0, -0x100000000
+#CHECK: crl	%r0, .[[LAB:L.*]]-2	# encoding: [0xc6,0x0d,A,A,A,A]
+#CHECK:  fixup A - offset: 2, value: (.[[LAB]]-2)+2, kind: FK_390_PC32DBL
+	crl	%r0, -2
+#CHECK: crl	%r0, .[[LAB:L.*]]	# encoding: [0xc6,0x0d,A,A,A,A]
+#CHECK:  fixup A - offset: 2, value: .[[LAB]]+2, kind: FK_390_PC32DBL
+	crl	%r0, 0
+#CHECK: crl	%r0, .[[LAB:L.*]]+4294967294 # encoding: [0xc6,0x0d,A,A,A,A]
+#CHECK:  fixup A - offset: 2, value: (.[[LAB]]+4294967294)+2, kind: FK_390_PC32DBL
+	crl	%r0, 0xfffffffe
 
 #CHECK: crl	%r0, foo                # encoding: [0xc6,0x0d,A,A,A,A]
 # fixup A - offset: 2, value: foo+2, kind: FK_390_PC32DBL

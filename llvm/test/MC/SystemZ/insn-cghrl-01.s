@@ -1,10 +1,17 @@
 # RUN: llvm-mc -triple s390x-linux-gnu -show-encoding %s | FileCheck %s
 
-#CHECK: cghrl	%r0, 2864434397         # encoding: [0xc6,0x04,0x55,0x5d,0xe6,0x6e]
-#CHECK: cghrl	%r15, 2864434397        # encoding: [0xc6,0xf4,0x55,0x5d,0xe6,0x6e]
-
-	cghrl	%r0,0xaabbccdd
-	cghrl	%r15,0xaabbccdd
+#CHECK: cghrl	%r0, .[[LAB:L.*]]-4294967296 # encoding: [0xc6,0x04,A,A,A,A]
+#CHECK:  fixup A - offset: 2, value: (.[[LAB]]-4294967296)+2, kind: FK_390_PC32DBL
+	cghrl	%r0, -0x100000000
+#CHECK: cghrl	%r0, .[[LAB:L.*]]-2	# encoding: [0xc6,0x04,A,A,A,A]
+#CHECK:  fixup A - offset: 2, value: (.[[LAB]]-2)+2, kind: FK_390_PC32DBL
+	cghrl	%r0, -2
+#CHECK: cghrl	%r0, .[[LAB:L.*]]	# encoding: [0xc6,0x04,A,A,A,A]
+#CHECK:  fixup A - offset: 2, value: .[[LAB]]+2, kind: FK_390_PC32DBL
+	cghrl	%r0, 0
+#CHECK: cghrl	%r0, .[[LAB:L.*]]+4294967294 # encoding: [0xc6,0x04,A,A,A,A]
+#CHECK:  fixup A - offset: 2, value: (.[[LAB]]+4294967294)+2, kind: FK_390_PC32DBL
+	cghrl	%r0, 0xfffffffe
 
 #CHECK: cghrl	%r0, foo                # encoding: [0xc6,0x04,A,A,A,A]
 # fixup A - offset: 2, value: foo+2, kind: FK_390_PC32DBL

@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/SystemZMCTargetDesc.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
@@ -368,6 +369,17 @@ public:
   }
   OperandMatchResultTy
   parseAccessReg(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+  OperandMatchResultTy
+  parsePCRel(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+             int64_t MinVal, int64_t MaxVal);
+  OperandMatchResultTy
+  parsePCRel16(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+    return parsePCRel(Operands, -(1LL << 16), (1LL << 16) - 1);
+  }
+  OperandMatchResultTy
+  parsePCRel32(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+    return parsePCRel(Operands, -(1LL << 32), (1LL << 32) - 1);
+  }
 };
 }
 
@@ -650,6 +662,37 @@ parseAccessReg(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   }
   Operands.push_back(SystemZOperand::createAccessReg(Reg.Number,
                                                      Reg.StartLoc, Reg.EndLoc));
+  return MatchOperand_Success;
+}
+
+SystemZAsmParser::OperandMatchResultTy SystemZAsmParser::
+parsePCRel(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+           int64_t MinVal, int64_t MaxVal) {
+  MCContext &Ctx = getContext();
+  MCStreamer &Out = getStreamer();
+  const MCExpr *Expr;
+  SMLoc StartLoc = Parser.getTok().getLoc();
+  if (getParser().parseExpression(Expr))
+    return MatchOperand_NoMatch;
+
+  // For consistency with the GNU assembler, treat immediates as offsets
+  // from ".".
+  if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr)) {
+    int64_t Value = CE->getValue();
+    if ((Value & 1) || Value < MinVal || Value > MaxVal) {
+      Error(StartLoc, "offset out of range");
+      return MatchOperand_ParseFail;
+    }
+    MCSymbol *Sym = Ctx.CreateTempSymbol();
+    Out.EmitLabel(Sym);
+    const MCExpr *Base = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None,
+                                                 Ctx);
+    Expr = Value == 0 ? Base : MCBinaryExpr::CreateAdd(Base, Expr, Ctx);
+  }
+
+  SMLoc EndLoc =
+    SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
+  Operands.push_back(SystemZOperand::createImm(Expr, StartLoc, EndLoc));
   return MatchOperand_Success;
 }
 

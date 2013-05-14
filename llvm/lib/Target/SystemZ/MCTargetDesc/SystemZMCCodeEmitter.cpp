@@ -162,19 +162,19 @@ SystemZMCCodeEmitter::getPCRelEncoding(const MCInst &MI, unsigned OpNum,
                                        SmallVectorImpl<MCFixup> &Fixups,
                                        unsigned Kind, int64_t Offset) const {
   const MCOperand &MO = MI.getOperand(OpNum);
-  // For compatibility with the GNU assembler, treat constant operands as
-  // unadjusted PC-relative offsets.
+  const MCExpr *Expr;
   if (MO.isImm())
-    return MO.getImm() / 2;
-
-  const MCExpr *Expr = MO.getExpr();
-  if (Offset) {
-    // The operand value is relative to the start of MI, but the fixup
-    // is relative to the operand field itself, which is Offset bytes
-    // into MI.  Add Offset to the relocation value to cancel out
-    // this difference.
-    const MCExpr *OffsetExpr = MCConstantExpr::Create(Offset, Ctx);
-    Expr = MCBinaryExpr::CreateAdd(Expr, OffsetExpr, Ctx);
+    Expr = MCConstantExpr::Create(MO.getImm() + Offset, Ctx);
+  else {
+    Expr = MO.getExpr();
+    if (Offset) {
+      // The operand value is relative to the start of MI, but the fixup
+      // is relative to the operand field itself, which is Offset bytes
+      // into MI.  Add Offset to the relocation value to cancel out
+      // this difference.
+      const MCExpr *OffsetExpr = MCConstantExpr::Create(Offset, Ctx);
+      Expr = MCBinaryExpr::CreateAdd(Expr, OffsetExpr, Ctx);
+    }
   }
   Fixups.push_back(MCFixup::Create(Offset, Expr, (MCFixupKind)Kind));
   return 0;
