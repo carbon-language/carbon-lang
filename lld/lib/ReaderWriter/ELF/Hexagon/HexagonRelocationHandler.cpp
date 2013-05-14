@@ -62,7 +62,7 @@ int reloc32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
 
 int reloc32_6_X(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   int64_t result = ((S + A) >> 6);
-  int64_t range = 1L << 32;
+  int64_t range = ((int64_t)1) << 32;
   if (result > range)
     return 1;
   result = lld::scatterBits<int32_t>(result, 0xfff3fff);
