@@ -10,3 +10,7 @@ add_clang_library(clangDynamicASTMatchers
 add_dependencies(clangDynamicASTMatchers
   clangASTMatchers
   )
+
+target_link_libraries(clangDynamicASTMatchers
+  clangASTMatchers
+  )
