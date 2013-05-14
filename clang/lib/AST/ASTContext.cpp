@@ -1353,7 +1353,8 @@ static getConstantArrayInfoInChars(const ASTContext &Context,
   std::pair<CharUnits, CharUnits> EltInfo =
       Context.getTypeInfoInChars(CAT->getElementType());
   uint64_t Size = CAT->getSize().getZExtValue();
-  assert((Size == 0 || EltInfo.first.getQuantity() <= (uint64_t)(-1)/Size) &&
+  assert((Size == 0 || static_cast<uint64_t>(EltInfo.first.getQuantity()) <=
+              (uint64_t)(-1)/Size) &&
          "Overflow in array type char size evaluation");
   uint64_t Width = EltInfo.first.getQuantity() * Size;
   unsigned Align = EltInfo.second.getQuantity();
