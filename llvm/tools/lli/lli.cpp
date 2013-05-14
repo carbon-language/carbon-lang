@@ -337,14 +337,14 @@ int main(int argc, char **argv, char * const *envp) {
     Mod->setTargetTriple(Triple::normalize(TargetTriple));
 
   // Enable MCJIT if desired.
-  JITMemoryManager *JMM = 0;
+  RTDyldMemoryManager *RTDyldMM = 0;
   if (UseMCJIT && !ForceInterpreter) {
     builder.setUseMCJIT(true);
     if (RemoteMCJIT)
-      JMM = new RecordingMemoryManager();
+      RTDyldMM = new RecordingMemoryManager();
     else
-      JMM = new SectionMemoryManager();
-    builder.setJITMemoryManager(JMM);
+      RTDyldMM = new SectionMemoryManager();
+    builder.setMCJITMemoryManager(RTDyldMM);
   } else {
     if (RemoteMCJIT) {
       errs() << "error: Remote process execution requires -use-mcjit\n";
@@ -461,7 +461,7 @@ int main(int argc, char **argv, char * const *envp) {
 
   int Result;
   if (RemoteMCJIT) {
-    RecordingMemoryManager *MM = static_cast<RecordingMemoryManager*>(JMM);
+    RecordingMemoryManager *MM = static_cast<RecordingMemoryManager*>(RTDyldMM);
     // Everything is prepared now, so lay out our program for the target
     // address space, assign the section addresses to resolve any relocations,
     // and send it to the target.
@@ -495,8 +495,8 @@ int main(int argc, char **argv, char * const *envp) {
     // invalidated will be known.
     (void)EE->getPointerToFunction(EntryFn);
     // Clear instruction cache before code will be executed.
-    if (JMM)
-      static_cast<SectionMemoryManager*>(JMM)->invalidateInstructionCache();
+    if (RTDyldMM)
+      static_cast<SectionMemoryManager*>(RTDyldMM)->invalidateInstructionCache();
 
     // Run main.
     Result = EE->runFunctionAsMain(EntryFn, InputArgv, envp);

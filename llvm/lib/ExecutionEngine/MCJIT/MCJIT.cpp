@@ -39,7 +39,7 @@ extern "C" void LLVMLinkInMCJIT() {
 
 ExecutionEngine *MCJIT::createJIT(Module *M,
                                   std::string *ErrorStr,
-                                  JITMemoryManager *JMM,
+                                  RTDyldMemoryManager *MemMgr,
                                   bool GVsWithCode,
                                   TargetMachine *TM) {
   // Try to register the program as a source of symbols to resolve against.
@@ -47,14 +47,14 @@ ExecutionEngine *MCJIT::createJIT(Module *M,
   // FIXME: Don't do this here.
   sys::DynamicLibrary::LoadLibraryPermanently(0, NULL);
 
-  return new MCJIT(M, TM, JMM ? JMM : new SectionMemoryManager(), GVsWithCode);
+  return new MCJIT(M, TM, MemMgr ? MemMgr : new SectionMemoryManager(),
+                   GVsWithCode);
 }
 
 MCJIT::MCJIT(Module *m, TargetMachine *tm, RTDyldMemoryManager *MM,
              bool AllocateGVsWithCode)
-  : ExecutionEngine(m), TM(tm), Ctx(0),
-    MemMgr(MM ? MM : new SectionMemoryManager()), Dyld(MemMgr),
-    IsLoaded(false), M(m), ObjCache(0)  {
+  : ExecutionEngine(m), TM(tm), Ctx(0), MemMgr(MM), Dyld(MM),
+    IsLoaded(false), M(m), ObjCache(0) {
 
   setDataLayout(TM->getDataLayout());
 }

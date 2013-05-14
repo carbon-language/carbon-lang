@@ -34,6 +34,7 @@ namespace llvm {
 
 struct GenericValue;
 class Constant;
+class DataLayout;
 class ExecutionEngine;
 class Function;
 class GlobalVariable;
@@ -44,7 +45,7 @@ class MachineCodeInfo;
 class Module;
 class MutexGuard;
 class ObjectCache;
-class DataLayout;
+class RTDyldMemoryManager;
 class Triple;
 class Type;
 
@@ -142,7 +143,7 @@ protected:
   static ExecutionEngine *(*MCJITCtor)(
     Module *M,
     std::string *ErrorStr,
-    JITMemoryManager *JMM,
+    RTDyldMemoryManager *MCJMM,
     bool GVsWithCode,
     TargetMachine *TM);
   static ExecutionEngine *(*InterpCtor)(Module *M, std::string *ErrorStr);
@@ -496,6 +497,7 @@ private:
   EngineKind::Kind WhichEngine;
   std::string *ErrorStr;
   CodeGenOpt::Level OptLevel;
+  RTDyldMemoryManager *MCJMM;
   JITMemoryManager *JMM;
   bool AllocateGVsWithCode;
   TargetOptions Options;
@@ -511,6 +513,7 @@ private:
     WhichEngine = EngineKind::Either;
     ErrorStr = NULL;
     OptLevel = CodeGenOpt::Default;
+    MCJMM = NULL;
     JMM = NULL;
     Options = TargetOptions();
     AllocateGVsWithCode = false;
@@ -532,12 +535,29 @@ public:
     WhichEngine = w;
     return *this;
   }
+  
+  /// setMCJITMemoryManager - Sets the MCJIT memory manager to use. This allows
+  /// clients to customize their memory allocation policies for the MCJIT. This
+  /// is only appropriate for the MCJIT; setting this and configuring the builder
+  /// to create anything other than MCJIT will cause a runtime error. If create()
+  /// is called and is successful, the created engine takes ownership of the
+  /// memory manager. This option defaults to NULL. Using this option nullifies
+  /// the setJITMemoryManager() option.
+  EngineBuilder &setMCJITMemoryManager(RTDyldMemoryManager *mcjmm) {
+    MCJMM = mcjmm;
+    JMM = NULL;
+    return *this;
+  }
 
-  /// setJITMemoryManager - Sets the memory manager to use.  This allows
-  /// clients to customize their memory allocation policies.  If create() is
-  /// called and is successful, the created engine takes ownership of the
-  /// memory manager.  This option defaults to NULL.
+  /// setJITMemoryManager - Sets the JIT memory manager to use.  This allows
+  /// clients to customize their memory allocation policies.  This is only
+  /// appropriate for either JIT or MCJIT; setting this and configuring the
+  /// builder to create an interpreter will cause a runtime error. If create()
+  /// is called and is successful, the created engine takes ownership of the
+  /// memory manager.  This option defaults to NULL. This option overrides
+  /// setMCJITMemoryManager() as well.
   EngineBuilder &setJITMemoryManager(JITMemoryManager *jmm) {
+    MCJMM = NULL;
     JMM = jmm;
     return *this;
   }

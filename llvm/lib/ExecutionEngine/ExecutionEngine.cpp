@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "jit"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
@@ -47,7 +48,7 @@ ExecutionEngine *(*ExecutionEngine::JITCtor)(
 ExecutionEngine *(*ExecutionEngine::MCJITCtor)(
   Module *M,
   std::string *ErrorStr,
-  JITMemoryManager *JMM,
+  RTDyldMemoryManager *MCJMM,
   bool GVsWithCode,
   TargetMachine *TM) = 0;
 ExecutionEngine *(*ExecutionEngine::InterpCtor)(Module *M,
@@ -455,10 +456,12 @@ ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
   if (sys::DynamicLibrary::LoadLibraryPermanently(0, ErrorStr))
     return 0;
 
+  assert(!(JMM && MCJMM));
+  
   // If the user specified a memory manager but didn't specify which engine to
   // create, we assume they only want the JIT, and we fail if they only want
   // the interpreter.
-  if (JMM) {
+  if (JMM || MCJMM) {
     if (WhichEngine & EngineKind::JIT)
       WhichEngine = EngineKind::JIT;
     else {
@@ -466,6 +469,14 @@ ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
         *ErrorStr = "Cannot create an interpreter with a memory manager.";
       return 0;
     }
+  }
+  
+  if (MCJMM && ! UseMCJIT) {
+    if (ErrorStr)
+      *ErrorStr =
+        "Cannot create a legacy JIT with a runtime dyld memory "
+        "manager.";
+    return 0;
   }
 
   // Unless the interpreter was explicitly selected or the JIT is not linked,
@@ -480,7 +491,7 @@ ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
 
     if (UseMCJIT && ExecutionEngine::MCJITCtor) {
       ExecutionEngine *EE =
-        ExecutionEngine::MCJITCtor(M, ErrorStr, JMM,
+        ExecutionEngine::MCJITCtor(M, ErrorStr, MCJMM ? MCJMM : JMM,
                                    AllocateGVsWithCode, TheTM.take());
       if (EE) return EE;
     } else if (ExecutionEngine::JITCtor) {

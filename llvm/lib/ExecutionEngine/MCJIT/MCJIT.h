@@ -98,7 +98,7 @@ public:
 
   static ExecutionEngine *createJIT(Module *M,
                                     std::string *ErrorStr,
-                                    JITMemoryManager *JMM,
+                                    RTDyldMemoryManager *MemMgr,
                                     bool GVsWithCode,
                                     TargetMachine *TM);
 

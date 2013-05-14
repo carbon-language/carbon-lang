@@ -165,7 +165,7 @@ protected:
     std::string Error;
     TheJIT.reset(EB.setEngineKind(EngineKind::JIT)
                  .setUseMCJIT(true) /* can this be folded into the EngineKind enum? */
-                 .setJITMemoryManager(MM)
+                 .setMCJITMemoryManager(MM)
                  .setErrorStr(&Error)
                  .setOptLevel(CodeGenOpt::None)
                  .setAllocateGVsWithCode(false) /*does this do anything?*/
@@ -188,7 +188,7 @@ protected:
   OwningPtr<TargetMachine> TM;
   OwningPtr<ExecutionEngine> TheJIT;
   IRBuilder<> Builder;
-  JITMemoryManager *MM;
+  RTDyldMemoryManager *MM;
 
   OwningPtr<Module> M;
 };
