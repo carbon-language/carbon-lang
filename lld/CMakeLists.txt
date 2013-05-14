@@ -88,16 +88,11 @@ if (MSVC11)
   # Do nothing, we're good.
 elseif (NOT MSVC)
   # gcc and clang require the -std=c++0x or -std=c++11 flag.
-  if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU" OR
-      "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-    if (NOT ("${CMAKE_CXX_FLAGS}" MATCHES "-std=c\\+\\+0x" OR
-             "${CMAKE_CXX_FLAGS}" MATCHES "-std=gnu\\+\\+0x" OR
-             "${CMAKE_CXX_FLAGS}" MATCHES "-std=c\\+\\+11" OR
-             "${CMAKE_CXX_FLAGS}" MATCHES "-std=gnu\\+\\+11"))
-      message(FATAL_ERROR
-        "lld requires c++11. Clang and gcc require -std=c++0x or -std=c++11 to "
-        "enter this mode. Please set CMAKE_CXX_FLAGS accordingly.")
-    endif()
+  if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU|Clang" AND
+      NOT ("${CMAKE_CXX_FLAGS}" MATCHES ".*-std=(c|gnu)\\+\\+(0x|11).*"))
+    message(FATAL_ERROR
+      "lld requires c++11. Clang and gcc require -std=c++0x or -std=c++11 to "
+      "enter this mode. Please set CMAKE_CXX_FLAGS accordingly.")
   endif()
 else()
   message(FATAL_ERROR "The selected compiler does not support c++11 which is "
