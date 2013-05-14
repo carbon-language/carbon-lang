@@ -162,6 +162,10 @@ def PPCeh_sjlj_longjmp : SDNode<"PPCISD::EH_SJLJ_LONGJMP",
                                 SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>,
                                 [SDNPHasChain, SDNPSideEffect]>;
 
+def SDT_PPCsc     : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
+def PPCsc         : SDNode<"PPCISD::SC", SDT_PPCsc,
+                           [SDNPHasChain, SDNPSideEffect]>;
+
 def PPCvcmp       : SDNode<"PPCISD::VCMP" , SDT_PPCvcmp, []>;
 def PPCvcmp_o     : SDNode<"PPCISD::VCMPo", SDT_PPCvcmp, [SDNPOutGlue]>;
 
@@ -985,6 +989,12 @@ let hasSideEffects = 1, isBarrier = 1, usesCustomInserter = 1 in {
 let isBranch = 1, isTerminator = 1 in {
   def EH_SjLj_Setup : Pseudo<(outs), (ins directbrtarget:$dst),
                         "#EH_SjLj_Setup\t$dst", []>;
+}
+
+// System call.
+let PPC970_Unit = 7 in {
+  def SC     : SCForm<17, 1, (outs), (ins i32imm:$lev),
+                      "sc $lev", BrB, [(PPCsc (i32 imm:$lev))]>;
 }
 
 // DCB* instructions.

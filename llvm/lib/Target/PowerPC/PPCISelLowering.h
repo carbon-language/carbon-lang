@@ -238,6 +238,10 @@ namespace llvm {
       /// optimizations due to constant folding.
       VADD_SPLAT,
 
+      /// CHAIN = SC CHAIN, Imm128 - System call.  The 7-bit unsigned
+      /// operand identifies the operating system entry point.
+      SC,
+
       /// CHAIN = STBRX CHAIN, GPRC, Ptr, Type - This is a
       /// byte-swapping store instruction.  It byte-swaps the low "Type" bits of
       /// the GPRC input, then stores it through Ptr.  Type can be either i16 or
