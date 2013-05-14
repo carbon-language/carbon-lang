@@ -305,12 +305,18 @@ public:
 
                 case FPURegSet:
                     {
-                        uint32_t *d = &fpu.floats.s[0];
-                        for (uint32_t i = 0; i < count && d < d + (sizeof (fpu.floats) / sizeof (uint32_t)); i++)
+                        uint8_t  *fpu_reg_buf = (uint8_t*) &fpu.floats.s[0];
+                        const int fpu_reg_buf_size = sizeof (fpu.floats);
+                        if (data.ExtractBytes (offset, fpu_reg_buf_size, eByteOrderLittle, fpu_reg_buf) == fpu_reg_buf_size)
                         {
-                            *d++ = data.GetU32(&offset);
+                            offset += fpu_reg_buf_size;
+                            fpu.fpscr = data.GetU32(&offset);
+                            SetError (FPURegSet, Read, 0);
                         }
-                        SetError (FPURegSet, Read, 0);
+                        else
+                        {
+                            done = true;
+                        }
                     }
                     break;
 
