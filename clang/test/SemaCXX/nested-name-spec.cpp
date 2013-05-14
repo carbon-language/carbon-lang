@@ -297,3 +297,13 @@ namespace NS {
 int foobar = a + longer_b; // expected-error {{use of undeclared identifier 'a'; did you mean 'NS::a'?}} \
                            // expected-error {{use of undeclared identifier 'longer_b'; did you mean 'NS::longer_b'?}}
 }
+
+// <rdar://problem/13853540>
+namespace N {
+  struct X { };
+  namespace N {
+    struct Foo {
+      struct N::X *foo(); // expected-error{{no struct named 'X' in namespace 'N::N'}}
+    };
+  }
+}

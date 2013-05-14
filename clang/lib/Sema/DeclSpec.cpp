@@ -651,7 +651,7 @@ bool DeclSpec::SetTypeSpecType(TST T, SourceLocation TagKwLoc,
   DeclRep = Rep;
   TSTLoc = TagKwLoc;
   TSTNameLoc = TagNameLoc;
-  TypeSpecOwned = Owned;
+  TypeSpecOwned = Owned && Rep != 0;
   return false;
 }
 
