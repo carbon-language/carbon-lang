@@ -22,6 +22,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/Basic/ABI.h"
 #include "clang/Basic/DiagnosticOptions.h"
+#include "clang/Basic/TargetInfo.h"
 #include <map>
 
 using namespace clang;
@@ -58,18 +59,26 @@ class MicrosoftCXXNameMangler {
 
   ASTContext &getASTContext() const { return Context.getASTContext(); }
 
+  // FIXME: If we add support for __ptr32/64 qualifiers, then we should push
+  // this check into mangleQualifiers().
+  const bool PointersAre64Bit;
+
 public:
   enum QualifierMangleMode { QMM_Drop, QMM_Mangle, QMM_Escape, QMM_Result };
 
   MicrosoftCXXNameMangler(MangleContext &C, raw_ostream &Out_)
     : Context(C), Out(Out_),
       Structor(0), StructorType(-1),
+      PointersAre64Bit(C.getASTContext().getTargetInfo().getPointerWidth(0) ==
+                       64),
       UseNameBackReferences(true) { }
 
   MicrosoftCXXNameMangler(MangleContext &C, raw_ostream &Out_,
                           const CXXDestructorDecl *D, CXXDtorType Type)
     : Context(C), Out(Out_),
       Structor(getStructor(D)), StructorType(Type),
+      PointersAre64Bit(C.getASTContext().getTargetInfo().getPointerWidth(0) ==
+                       64),
       UseNameBackReferences(true) { }
 
   raw_ostream &getStream() const { return Out; }
@@ -1228,32 +1237,36 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
 }
 
 void MicrosoftCXXNameMangler::mangleFunctionClass(const FunctionDecl *FD) {
-  // <function-class> ::= A # private: near
-  //                  ::= B # private: far
-  //                  ::= C # private: static near
-  //                  ::= D # private: static far
-  //                  ::= E # private: virtual near
-  //                  ::= F # private: virtual far
-  //                  ::= G # private: thunk near
-  //                  ::= H # private: thunk far
-  //                  ::= I # protected: near
-  //                  ::= J # protected: far
-  //                  ::= K # protected: static near
-  //                  ::= L # protected: static far
-  //                  ::= M # protected: virtual near
-  //                  ::= N # protected: virtual far
-  //                  ::= O # protected: thunk near
-  //                  ::= P # protected: thunk far
-  //                  ::= Q # public: near
-  //                  ::= R # public: far
-  //                  ::= S # public: static near
-  //                  ::= T # public: static far
-  //                  ::= U # public: virtual near
-  //                  ::= V # public: virtual far
-  //                  ::= W # public: thunk near
-  //                  ::= X # public: thunk far
-  //                  ::= Y # global near
-  //                  ::= Z # global far
+  // <function-class>  ::= <member-function> E? # E designates a 64-bit 'this'
+  //                                            # pointer. in 64-bit mode *all*
+  //                                            # 'this' pointers are 64-bit.
+  //                   ::= <global-function>
+  // <member-function> ::= A # private: near
+  //                   ::= B # private: far
+  //                   ::= C # private: static near
+  //                   ::= D # private: static far
+  //                   ::= E # private: virtual near
+  //                   ::= F # private: virtual far
+  //                   ::= G # private: thunk near
+  //                   ::= H # private: thunk far
+  //                   ::= I # protected: near
+  //                   ::= J # protected: far
+  //                   ::= K # protected: static near
+  //                   ::= L # protected: static far
+  //                   ::= M # protected: virtual near
+  //                   ::= N # protected: virtual far
+  //                   ::= O # protected: thunk near
+  //                   ::= P # protected: thunk far
+  //                   ::= Q # public: near
+  //                   ::= R # public: far
+  //                   ::= S # public: static near
+  //                   ::= T # public: static far
+  //                   ::= U # public: virtual near
+  //                   ::= V # public: virtual far
+  //                   ::= W # public: thunk near
+  //                   ::= X # public: thunk far
+  // <global-function> ::= Y # global near
+  //                   ::= Z # global far
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
     switch (MD->getAccess()) {
       default:
@@ -1281,6 +1294,8 @@ void MicrosoftCXXNameMangler::mangleFunctionClass(const FunctionDecl *FD) {
         else
           Out << 'Q';
     }
+    if (PointersAre64Bit && !MD->isStatic())
+      Out << 'E';
   } else
     Out << 'Y';
 }
@@ -1380,9 +1395,9 @@ void MicrosoftCXXNameMangler::mangleType(const TagType *T) {
 // <type>       ::= <array-type>
 // <array-type> ::= <pointer-cvr-qualifiers> <cvr-qualifiers>
 //                  [Y <dimension-count> <dimension>+]
-//                  <element-type> # as global
-//              ::= Q <cvr-qualifiers> [Y <dimension-count> <dimension>+]
-//                  <element-type> # as param
+//                  <element-type> # as global, E is never required
+//              ::= Q E? <cvr-qualifiers> [Y <dimension-count> <dimension>+]
+//                  <element-type> # as param, E is required for 64-bit
 // It's supposed to be the other way around, but for some strange reason, it
 // isn't. Today this behavior is retained for the sole purpose of backwards
 // compatibility.
@@ -1394,6 +1409,8 @@ void MicrosoftCXXNameMangler::mangleDecayedArrayType(const ArrayType *T,
     manglePointerQualifiers(T->getElementType().getQualifiers());
   } else {
     Out << 'Q';
+    if (PointersAre64Bit)
+      Out << 'E';
   }
   mangleType(T->getElementType(), SourceRange());
 }
@@ -1494,10 +1511,13 @@ void MicrosoftCXXNameMangler::mangleType(
 }
 
 // <type> ::= <pointer-type>
-// <pointer-type> ::= <pointer-cvr-qualifiers> <cvr-qualifiers> <type>
+// <pointer-type> ::= E? <pointer-cvr-qualifiers> <cvr-qualifiers> <type>
+//                       # the E is required for 64-bit non static pointers
 void MicrosoftCXXNameMangler::mangleType(const PointerType *T,
                                          SourceRange Range) {
   QualType PointeeTy = T->getPointeeType();
+  if (PointersAre64Bit && !T->getPointeeType()->isFunctionType())
+    Out << 'E';
   mangleType(PointeeTy, Range);
 }
 void MicrosoftCXXNameMangler::mangleType(const ObjCObjectPointerType *T,
@@ -1508,18 +1528,24 @@ void MicrosoftCXXNameMangler::mangleType(const ObjCObjectPointerType *T,
 }
 
 // <type> ::= <reference-type>
-// <reference-type> ::= A <cvr-qualifiers> <type>
+// <reference-type> ::= A E? <cvr-qualifiers> <type>
+//                 # the E is required for 64-bit non static lvalue references
 void MicrosoftCXXNameMangler::mangleType(const LValueReferenceType *T,
                                          SourceRange Range) {
   Out << 'A';
+  if (PointersAre64Bit && !T->getPointeeType()->isFunctionType())
+    Out << 'E';
   mangleType(T->getPointeeType(), Range);
 }
 
 // <type> ::= <r-value-reference-type>
-// <r-value-reference-type> ::= $$Q <cvr-qualifiers> <type>
+// <r-value-reference-type> ::= $$Q E? <cvr-qualifiers> <type>
+//                 # the E is required for 64-bit non static rvalue references
 void MicrosoftCXXNameMangler::mangleType(const RValueReferenceType *T,
                                          SourceRange Range) {
   Out << "$$Q";
+  if (PointersAre64Bit && !T->getPointeeType()->isFunctionType())
+    Out << 'E';
   mangleType(T->getPointeeType(), Range);
 }
 

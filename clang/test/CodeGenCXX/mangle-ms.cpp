@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fms-extensions -fblocks -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 | FileCheck %s
-// RUN: %clang_cc1 -fms-compatibility -fblocks -emit-llvm %s -o - -cxx-abi microsoft -triple=x86_64-pc-win32 | FileCheck -check-prefix X64 %s
+// RUN: %clang_cc1 -fblocks -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 | FileCheck %s
+// RUN: %clang_cc1 -fblocks -emit-llvm %s -o - -cxx-abi microsoft -triple=x86_64-pc-win32 | FileCheck -check-prefix X64 %s
 
 // CHECK: @"\01?a@@3HA"
 // CHECK: @"\01?b@N@@3HA"
@@ -33,6 +33,7 @@ namespace N {
 static int c;
 int _c(void) {return N::anonymous + c;}
 // CHECK: @"\01?_c@@YAHXZ"
+// X64: @"\01?_c@@YAHXZ"
 
 class foo {
   static const short d;
@@ -43,15 +44,19 @@ public:
   int operator+(int a);
   foo(){}
 //CHECK: @"\01??0foo@@QAE@XZ"
+//X64: @"\01??0foo@@QEAA@XZ"
 
   ~foo(){}
 //CHECK: @"\01??1foo@@QAE@XZ"
+//X64: @"\01??1foo@@QEAA@XZ
 
   foo(int i){}
 //CHECK: @"\01??0foo@@QAE@H@Z"
+//X64: @"\01??0foo@@QEAA@H@Z"
 
   foo(char *q){}
 //CHECK: @"\01??0foo@@QAE@PAD@Z"
+//X64: @"\01??0foo@@QEAA@PEAD@Z"
 
   static foo* static_method() { return 0; }
 
@@ -77,12 +82,15 @@ enum quux {
 
 foo bar() { return foo(); }
 //CHECK: @"\01?bar@@YA?AVfoo@@XZ"
+//X64: @"\01?bar@@YA?AVfoo@@XZ"
 
 int foo::operator+(int a) {
 //CHECK: @"\01??Hfoo@@QAEHH@Z"
+//X64: @"\01??Hfoo@@QEAAHH@Z"
 
   foo::static_method();
 //CHECK: @"\01?static_method@foo@@SAPAV1@XZ"
+//X64: @"\01?static_method@foo@@SAPEAV1@XZ"
   bar();
   return a;
 }
@@ -109,6 +117,7 @@ int (foo2::*l)(int);
 static void __stdcall alpha(float a, double b) throw() {}
 bool __fastcall beta(long long a, wchar_t b) throw(signed char, unsigned char) {
 // CHECK: @"\01?beta@@YI_N_J_W@Z"
+// X64: @"\01?beta@@YA_N_J_W@Z"
   alpha(0.f, 0.0);
   return false;
 }
@@ -119,17 +128,21 @@ bool __fastcall beta(long long a, wchar_t b) throw(signed char, unsigned char) {
 // Make sure tag-type mangling works.
 void gamma(class foo, struct bar, union baz, enum quux) {}
 // CHECK: @"\01?gamma@@YAXVfoo@@Ubar@@Tbaz@@W4quux@@@Z"
+// X64: @"\01?gamma@@YAXVfoo@@Ubar@@Tbaz@@W4quux@@@Z"
 
 // Make sure pointer/reference-type mangling works.
 void delta(int * const a, const long &) {}
 // CHECK: @"\01?delta@@YAXQAHABJ@Z"
+// X64: @"\01?delta@@YAXQEAHAEBJ@Z"
 
 // Array mangling.
 void epsilon(int a[][10][20]) {}
 // CHECK: @"\01?epsilon@@YAXQAY19BE@H@Z"
+// X64: @"\01?epsilon@@YAXQEAY19BE@H@Z"
 
 void zeta(int (*)(int, int)) {}
 // CHECK: @"\01?zeta@@YAXP6AHHH@Z@Z"
+// X64: @"\01?zeta@@YAXP6AHHH@Z@Z"
 
 // Blocks mangling (Clang extension). A block should be mangled slightly
 // differently from a similar function pointer.
@@ -158,6 +171,7 @@ void operator_new_delete() {
 void (redundant_parens)();
 void redundant_parens_use() { redundant_parens(); }
 // CHECK: @"\01?redundant_parens@@YAXXZ"
+// X64: @"\01?redundant_parens@@YAXXZ"
 
 // PR13047
 typedef double RGB[3];
@@ -169,10 +183,12 @@ extern RGB const ((color4)[5]) = {};
 // PR12603
 enum E {};
 // CHECK: "\01?fooE@@YA?AW4E@@XZ"
+// X64: "\01?fooE@@YA?AW4E@@XZ"
 E fooE() { return E(); }
 
 class X {};
 // CHECK: "\01?fooX@@YA?AVX@@XZ"
+// X64: "\01?fooX@@YA?AVX@@XZ"
 X fooX() { return X(); }
 
 namespace PR13182 {
