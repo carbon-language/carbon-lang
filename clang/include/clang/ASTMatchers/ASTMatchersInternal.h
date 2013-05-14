@@ -239,6 +239,9 @@ public:
                        ASTMatchFinder *Finder,
                        BoundNodesTreeBuilder *Builder) const = 0;
 
+  /// \brief Makes a copy of this matcher object.
+  virtual DynTypedMatcher *clone() const = 0;
+
   /// \brief Returns a unique ID for the matcher.
   virtual uint64_t getID() const = 0;
 };
@@ -300,6 +303,9 @@ public:
     if (!Node) return false;
     return matches(*Node, Finder, Builder);
   }
+
+  /// \brief Makes a copy of this matcher object.
+  virtual Matcher<T> *clone() const { return new Matcher<T>(*this); }
 
   /// \brief Allows the conversion of a \c Matcher<Type> to a \c
   /// Matcher<QualType>.

@@ -9,6 +9,8 @@
 
 CLANG_LEVEL = ../..
 
+PARALLEL_DIRS = Dynamic
+
 TESTNAME = ASTMatchers
 include $(CLANG_LEVEL)/../../Makefile.config
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc

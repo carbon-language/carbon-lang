@@ -1,4 +1,4 @@
-##===- clang/lib/ASTMatchers/Makefile ----------------------*- Makefile -*-===##
+##===- clang/lib/ASTMatchers/Dynamic/Makefile --------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,9 +7,7 @@
 #
 ##===----------------------------------------------------------------------===##
 
-CLANG_LEVEL := ../..
-LIBRARYNAME := clangASTMatchers
-
-PARALLEL_DIRS = Dynamic
+CLANG_LEVEL := ../../..
+LIBRARYNAME := clangDynamicASTMatchers
 
 include $(CLANG_LEVEL)/Makefile
