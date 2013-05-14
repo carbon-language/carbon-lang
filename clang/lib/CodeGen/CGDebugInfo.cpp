@@ -2178,8 +2178,10 @@ llvm::DIDescriptor CGDebugInfo::getDeclarationOrDefinition(const Decl *D) {
   // we would otherwise do to get a type for a pointee. (forward declarations in
   // limited debug info, full definitions (if the type definition is available)
   // in unlimited debug info)
-  if (const TypeDecl *RD = dyn_cast<TypeDecl>(D))
-    return CreatePointeeType(QualType(RD->getTypeForDecl(), 0), llvm::DIFile());
+  if (const TypeDecl *TD = dyn_cast<TypeDecl>(D)) {
+    llvm::DIFile DefUnit = getOrCreateFile(TD->getLocation());
+    return CreatePointeeType(CGM.getContext().getTypeDeclType(TD), DefUnit);
+  }
   // Otherwise fall back to a fairly rudimentary cache of existing declarations.
   // This doesn't handle providing declarations (for functions or variables) for
   // entities without definitions in this TU, nor when the definition proceeds
