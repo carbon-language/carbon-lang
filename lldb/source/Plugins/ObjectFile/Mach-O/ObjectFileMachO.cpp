@@ -1712,8 +1712,10 @@ ObjectFileMachO::ParseSymtab (bool minimize)
         std::vector<uint32_t> N_COMM_indexes;
         typedef std::map <uint64_t, uint32_t> ValueToSymbolIndexMap;
         typedef std::map <uint32_t, uint32_t> NListIndexToSymbolIndexMap;
+        typedef std::map <const char *, uint32_t> ConstNameToSymbolIndexMap;
         ValueToSymbolIndexMap N_FUN_addr_to_sym_idx;
         ValueToSymbolIndexMap N_STSYM_addr_to_sym_idx;
+        ConstNameToSymbolIndexMap N_GSYM_name_to_sym_idx;
         // Any symbols that get merged into another will get an entry
         // in this map so we know
         NListIndexToSymbolIndexMap m_nlist_idx_to_sym_idx;
@@ -1970,6 +1972,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                             bool add_nlist = true;
                                             bool is_debug = ((nlist.n_type & NlistMaskStab) != 0);
                                             bool demangled_is_synthesized = false;
+                                            bool is_gsym = false;
 
                                             assert (sym_idx < num_syms);
 
@@ -1997,6 +2000,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                             add_nlist = false;
                                                         else
                                                         {
+                                                            is_gsym = true;
                                                             sym[sym_idx].SetExternal(true);
                                                             if (nlist.n_value != 0)
                                                                 symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
@@ -2510,53 +2514,10 @@ ObjectFileMachO::ParseSymtab (bool minimize)
 
                                                     if (symbol_name)
                                                     {
-                                                        sym[sym_idx].GetMangled().SetValue(ConstString(symbol_name), symbol_name_is_mangled);
-                                                    }
-                                                }
-
-                                                if (is_debug == false)
-                                                {
-                                                    if (type == eSymbolTypeCode)
-                                                    {
-                                                        // See if we can find a N_FUN entry for any code symbols.
-                                                        // If we do find a match, and the name matches, then we
-                                                        // can merge the two into just the function symbol to avoid
-                                                        // duplicate entries in the symbol table
-                                                        ValueToSymbolIndexMap::const_iterator pos = N_FUN_addr_to_sym_idx.find (nlist.n_value);
-                                                        if (pos != N_FUN_addr_to_sym_idx.end())
-                                                        {
-                                                            if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
-                                                                (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
-                                                            {
-                                                                m_nlist_idx_to_sym_idx[nlist_idx] = pos->second;
-                                                                // We just need the flags from the linker symbol, so put these flags
-                                                                // into the N_FUN flags to avoid duplicate symbols in the symbol table
-                                                                sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
-                                                                sym[sym_idx].Clear();
-                                                                continue;
-                                                            }
-                                                        }
-                                                    }
-                                                    else if (type == eSymbolTypeData)
-                                                    {
-                                                        // See if we can find a N_STSYM entry for any data symbols.
-                                                        // If we do find a match, and the name matches, then we
-                                                        // can merge the two into just the Static symbol to avoid
-                                                        // duplicate entries in the symbol table
-                                                        ValueToSymbolIndexMap::const_iterator pos = N_STSYM_addr_to_sym_idx.find (nlist.n_value);
-                                                        if (pos != N_STSYM_addr_to_sym_idx.end())
-                                                        {
-                                                            if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
-                                                                (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
-                                                            {
-                                                                m_nlist_idx_to_sym_idx[nlist_idx] = pos->second;
-                                                                // We just need the flags from the linker symbol, so put these flags
-                                                                // into the N_STSYM flags to avoid duplicate symbols in the symbol table
-                                                                sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
-                                                                sym[sym_idx].Clear();
-                                                                continue;
-                                                            }
-                                                        }
+                                                        ConstString const_symbol_name(symbol_name);
+                                                        if (is_gsym)
+                                                            N_GSYM_name_to_sym_idx[const_symbol_name.GetCString()] = sym_idx;
+                                                        sym[sym_idx].GetMangled().SetValue(const_symbol_name, symbol_name_is_mangled);
                                                     }
                                                 }
                                                 if (symbol_section)
@@ -2610,6 +2571,71 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                         }
                                                     }
                                                     symbol_value -= section_file_addr;
+                                                }
+
+                                                if (is_debug == false)
+                                                {
+                                                    if (type == eSymbolTypeCode)
+                                                    {
+                                                        // See if we can find a N_FUN entry for any code symbols.
+                                                        // If we do find a match, and the name matches, then we
+                                                        // can merge the two into just the function symbol to avoid
+                                                        // duplicate entries in the symbol table
+                                                        ValueToSymbolIndexMap::const_iterator pos = N_FUN_addr_to_sym_idx.find (nlist.n_value);
+                                                        if (pos != N_FUN_addr_to_sym_idx.end())
+                                                        {
+                                                            if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
+                                                                (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
+                                                            {
+                                                                m_nlist_idx_to_sym_idx[nlist_idx] = pos->second;
+                                                                // We just need the flags from the linker symbol, so put these flags
+                                                                // into the N_FUN flags to avoid duplicate symbols in the symbol table
+                                                                sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
+                                                                sym[sym_idx].Clear();
+                                                                continue;
+                                                            }
+                                                        }
+                                                    }
+                                                    else if (type == eSymbolTypeData)
+                                                    {
+                                                        // See if we can find a N_STSYM entry for any data symbols.
+                                                        // If we do find a match, and the name matches, then we
+                                                        // can merge the two into just the Static symbol to avoid
+                                                        // duplicate entries in the symbol table
+                                                        ValueToSymbolIndexMap::const_iterator pos = N_STSYM_addr_to_sym_idx.find (nlist.n_value);
+                                                        if (pos != N_STSYM_addr_to_sym_idx.end())
+                                                        {
+                                                            if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
+                                                                (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
+                                                            {
+                                                                m_nlist_idx_to_sym_idx[nlist_idx] = pos->second;
+                                                                // We just need the flags from the linker symbol, so put these flags
+                                                                // into the N_STSYM flags to avoid duplicate symbols in the symbol table
+                                                                sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
+                                                                sym[sym_idx].Clear();
+                                                                continue;
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            // Combine N_GSYM stab entries with the non stab symbol
+                                                            ConstNameToSymbolIndexMap::const_iterator pos = N_GSYM_name_to_sym_idx.find(sym[sym_idx].GetMangled().GetMangledName().GetCString());
+                                                            if (pos != N_GSYM_name_to_sym_idx.end())
+                                                            {
+                                                                const uint32_t GSYM_sym_idx = pos->second;
+                                                                m_nlist_idx_to_sym_idx[nlist_idx] = GSYM_sym_idx;
+                                                                // Copy the address, because often the N_GSYM address has an invalid address of zero
+                                                                // when the global is a common symbol
+                                                                sym[GSYM_sym_idx].GetAddress().SetSection (symbol_section);
+                                                                sym[GSYM_sym_idx].GetAddress().SetOffset (symbol_value);
+                                                                // We just need the flags from the linker symbol, so put these flags
+                                                                // into the N_STSYM flags to avoid duplicate symbols in the symbol table
+                                                                sym[GSYM_sym_idx].SetFlags (nlist.n_type << 16 | nlist.n_desc);
+                                                                sym[sym_idx].Clear();
+                                                                continue;
+                                                            }
+                                                        }
+                                                    }
                                                 }
 
                                                 sym[sym_idx].SetID (nlist_idx);
@@ -2711,6 +2737,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
             SectionSP symbol_section;
             lldb::addr_t symbol_byte_size = 0;
             bool add_nlist = true;
+            bool is_gsym = false;
             bool is_debug = ((nlist.n_type & NlistMaskStab) != 0);
             bool demangled_is_synthesized = false;
 
@@ -2740,6 +2767,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         add_nlist = false;
                     else
                     {
+                        is_gsym = true;
                         sym[sym_idx].SetExternal(true);
                         if (nlist.n_value != 0)
                             symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
@@ -3258,53 +3286,10 @@ ObjectFileMachO::ParseSymtab (bool minimize)
 
                     if (symbol_name)
                     {
-                        sym[sym_idx].GetMangled().SetValue(ConstString(symbol_name), symbol_name_is_mangled);
-                    }
-                }
-
-                if (is_debug == false)
-                {
-                    if (type == eSymbolTypeCode)
-                    {
-                        // See if we can find a N_FUN entry for any code symbols.
-                        // If we do find a match, and the name matches, then we
-                        // can merge the two into just the function symbol to avoid
-                        // duplicate entries in the symbol table
-                        ValueToSymbolIndexMap::const_iterator pos = N_FUN_addr_to_sym_idx.find (nlist.n_value);
-                        if (pos != N_FUN_addr_to_sym_idx.end())
-                        {
-                            if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
-                                (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
-                            {
-                                m_nlist_idx_to_sym_idx[nlist_idx] = pos->second;
-                                // We just need the flags from the linker symbol, so put these flags
-                                // into the N_FUN flags to avoid duplicate symbols in the symbol table
-                                sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
-                                sym[sym_idx].Clear();
-                                continue;
-                            }
-                        }
-                    }
-                    else if (type == eSymbolTypeData)
-                    {
-                        // See if we can find a N_STSYM entry for any data symbols.
-                        // If we do find a match, and the name matches, then we
-                        // can merge the two into just the Static symbol to avoid
-                        // duplicate entries in the symbol table
-                        ValueToSymbolIndexMap::const_iterator pos = N_STSYM_addr_to_sym_idx.find (nlist.n_value);
-                        if (pos != N_STSYM_addr_to_sym_idx.end())
-                        {
-                            if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
-                                (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
-                            {
-                                m_nlist_idx_to_sym_idx[nlist_idx] = pos->second;
-                                // We just need the flags from the linker symbol, so put these flags
-                                // into the N_STSYM flags to avoid duplicate symbols in the symbol table
-                                sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
-                                sym[sym_idx].Clear();
-                                continue;
-                            }
-                        }
+                        ConstString const_symbol_name(symbol_name);
+                        if (is_gsym)
+                            N_GSYM_name_to_sym_idx[const_symbol_name.GetCString()] = sym_idx;
+                        sym[sym_idx].GetMangled().SetValue(const_symbol_name, symbol_name_is_mangled);
                     }
                 }
                 if (symbol_section)
@@ -3353,6 +3338,71 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         }
                     }
                     symbol_value -= section_file_addr;
+                }
+
+                if (is_debug == false)
+                {
+                    if (type == eSymbolTypeCode)
+                    {
+                        // See if we can find a N_FUN entry for any code symbols.
+                        // If we do find a match, and the name matches, then we
+                        // can merge the two into just the function symbol to avoid
+                        // duplicate entries in the symbol table
+                        ValueToSymbolIndexMap::const_iterator pos = N_FUN_addr_to_sym_idx.find (nlist.n_value);
+                        if (pos != N_FUN_addr_to_sym_idx.end())
+                        {
+                            if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
+                                (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
+                            {
+                                m_nlist_idx_to_sym_idx[nlist_idx] = pos->second;
+                                // We just need the flags from the linker symbol, so put these flags
+                                // into the N_FUN flags to avoid duplicate symbols in the symbol table
+                                sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
+                                sym[sym_idx].Clear();
+                                continue;
+                            }
+                        }
+                    }
+                    else if (type == eSymbolTypeData)
+                    {
+                        // See if we can find a N_STSYM entry for any data symbols.
+                        // If we do find a match, and the name matches, then we
+                        // can merge the two into just the Static symbol to avoid
+                        // duplicate entries in the symbol table
+                        ValueToSymbolIndexMap::const_iterator pos = N_STSYM_addr_to_sym_idx.find (nlist.n_value);
+                        if (pos != N_STSYM_addr_to_sym_idx.end())
+                        {
+                            if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
+                                (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
+                            {
+                                m_nlist_idx_to_sym_idx[nlist_idx] = pos->second;
+                                // We just need the flags from the linker symbol, so put these flags
+                                // into the N_STSYM flags to avoid duplicate symbols in the symbol table
+                                sym[pos->second].SetFlags (nlist.n_type << 16 | nlist.n_desc);
+                                sym[sym_idx].Clear();
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            // Combine N_GSYM stab entries with the non stab symbol
+                            ConstNameToSymbolIndexMap::const_iterator pos = N_GSYM_name_to_sym_idx.find(sym[sym_idx].GetMangled().GetMangledName().GetCString());
+                            if (pos != N_GSYM_name_to_sym_idx.end())
+                            {
+                                const uint32_t GSYM_sym_idx = pos->second;
+                                m_nlist_idx_to_sym_idx[nlist_idx] = GSYM_sym_idx;
+                                // Copy the address, because often the N_GSYM address has an invalid address of zero
+                                // when the global is a common symbol
+                                sym[GSYM_sym_idx].GetAddress().SetSection (symbol_section);
+                                sym[GSYM_sym_idx].GetAddress().SetOffset (symbol_value);
+                                // We just need the flags from the linker symbol, so put these flags
+                                // into the N_STSYM flags to avoid duplicate symbols in the symbol table
+                                sym[GSYM_sym_idx].SetFlags (nlist.n_type << 16 | nlist.n_desc);
+                                sym[sym_idx].Clear();
+                                continue;
+                            }
+                        }
+                    }
                 }
 
                 sym[sym_idx].SetID (nlist_idx);
