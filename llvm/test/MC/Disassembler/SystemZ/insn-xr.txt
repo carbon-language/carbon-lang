@@ -1,0 +1,12 @@
+# RUN: llvm-mc --disassemble %s -triple=s390x-linux-gnu | FileCheck %s
+# CHECK: xr %r0, %r0
+0x17 0x00
+
+# CHECK: xr %r0, %r15
+0x17 0x0f
+
+# CHECK: xr %r15, %r0
+0x17 0xf0
+
+# CHECK: xr %r7, %r8
+0x17 0x78

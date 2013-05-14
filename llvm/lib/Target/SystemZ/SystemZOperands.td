@@ -24,6 +24,7 @@ class ImmediateAsmOperand<string name>
 class Immediate<ValueType vt, code pred, SDNodeXForm xform, string asmop>
   : PatLeaf<(vt imm), pred, xform>, Operand<vt> {
   let PrintMethod = "print"##asmop##"Operand";
+  let DecoderMethod = "decode"##asmop##"Operand";
   let ParserMatchClass = !cast<AsmOperandClass>(asmop);
 }
 
@@ -37,6 +38,7 @@ class PCRelAsmOperand<string size> : ImmediateAsmOperand<"PCRel"##size> {
 // Constructs an operand for a PC-relative address with address type VT.
 // ASMOP is the associated asm operand.
 class PCRelOperand<ValueType vt, AsmOperandClass asmop> : Operand<vt> {
+  let PrintMethod = "printPCRelOperand";
   let ParserMatchClass = asmop;
 }
 
@@ -59,8 +61,9 @@ class AddressAsmOperand<string format, string bitsize, string dispsize>
 }
 
 // Constructs both a DAG pattern and instruction operand for an addressing mode.
-// The mode is selected by custom code in select<TYPE><DISPSIZE><SUFFIX>()
-// and encoded by custom code in get<FORMAT><DISPSIZE>Encoding().
+// The mode is selected by custom code in select<TYPE><DISPSIZE><SUFFIX>(),
+// encoded by custom code in get<FORMAT><DISPSIZE>Encoding() and decoded
+// by custom code in decode<TYPE><BITSIZE>Disp<DISPSIZE>Operand().
 // The address registers have BITSIZE bits and displacements have
 // DISPSIZE bits.  NUMOPS is the number of operands that make up an
 // address and OPERANDS lists the types of those operands using (ops ...).
@@ -74,6 +77,7 @@ class AddressingMode<string type, string bitsize, string dispsize,
     Operand<!cast<ValueType>("i"##bitsize)> {
   let PrintMethod = "print"##format##"Operand";
   let EncoderMethod = "get"##format##dispsize##"Encoding";
+  let DecoderMethod = "decode"##format##bitsize##"Disp"##dispsize##"Operand";
   let MIOperandInfo = operands;
   let ParserMatchClass =
     !cast<AddressAsmOperand>(format##bitsize##"Disp"##dispsize);
@@ -359,15 +363,18 @@ def PCRel32 : PCRelAsmOperand<"32">;
 // and multiplied by 2.
 def brtarget16 : PCRelOperand<OtherVT, PCRel16> {
   let EncoderMethod = "getPC16DBLEncoding";
+  let DecoderMethod = "decodePC16DBLOperand";
 }
 def brtarget32 : PCRelOperand<OtherVT, PCRel32> {
   let EncoderMethod = "getPC32DBLEncoding";
+  let DecoderMethod = "decodePC32DBLOperand";
 }
 
 // A PC-relative offset of a global value.  The offset is sign-extended
 // and multiplied by 2.
 def pcrel32 : PCRelAddress<i64, "pcrel32", PCRel32> {
   let EncoderMethod = "getPC32DBLEncoding";
+  let DecoderMethod = "decodePC32DBLOperand";
 }
 
 // A PC-relative offset of a global value when the value is used as a
@@ -375,10 +382,12 @@ def pcrel32 : PCRelAddress<i64, "pcrel32", PCRel32> {
 def pcrel16call : PCRelAddress<i64, "pcrel16call", PCRel16> {
   let PrintMethod = "printCallOperand";
   let EncoderMethod = "getPLT16DBLEncoding";
+  let DecoderMethod = "decodePC16DBLOperand";
 }
 def pcrel32call : PCRelAddress<i64, "pcrel32call", PCRel32> {
   let PrintMethod = "printCallOperand";
   let EncoderMethod = "getPLT32DBLEncoding";
+  let DecoderMethod = "decodePC32DBLOperand";
 }
 
 //===----------------------------------------------------------------------===//
