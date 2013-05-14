@@ -3944,6 +3944,48 @@ TEST_F(FormatTest, BreakStringLiterals) {
       format("#define A \"some text other\";", AlignLeft));
 }
 
+TEST_F(FormatTest, BreakStringLiteralsBeforeUnbreakableTokenSequence) {
+  EXPECT_EQ("someFunction(\"aaabbbcccd\"\n"
+            "             \"ddeeefff\");",
+            format("someFunction(\"aaabbbcccdddeeefff\");",
+                   getLLVMStyleWithColumns(25)));
+  EXPECT_EQ("someFunction1234567890(\n"
+            "    \"aaabbbcccdddeeefff\");",
+            format("someFunction1234567890(\"aaabbbcccdddeeefff\");",
+                   getLLVMStyleWithColumns(26)));
+  EXPECT_EQ("someFunction1234567890(\n"
+            "    \"aaabbbcccdddeeeff\"\n"
+            "    \"f\");",
+            format("someFunction1234567890(\"aaabbbcccdddeeefff\");",
+                   getLLVMStyleWithColumns(25)));
+  EXPECT_EQ("someFunction1234567890(\n"
+            "    \"aaabbbcccdddeeeff\"\n"
+            "    \"f\");",
+            format("someFunction1234567890(\"aaabbbcccdddeeefff\");",
+                   getLLVMStyleWithColumns(24)));
+  EXPECT_EQ("someFunction(\n"
+            "    \"aaabbbcc \"\n"
+            "    \"dddeeefff\");",
+            format("someFunction(\"aaabbbcc dddeeefff\");",
+                   getLLVMStyleWithColumns(25)));
+  EXPECT_EQ("someFunction(\"aaabbbccc \"\n"
+            "             \"ddeeefff\");",
+            format("someFunction(\"aaabbbccc ddeeefff\");",
+                   getLLVMStyleWithColumns(25)));
+  EXPECT_EQ("someFunction1234567890(\n"
+            "    \"aaabb \"\n"
+            "    \"cccdddeeefff\");",
+            format("someFunction1234567890(\"aaabb cccdddeeefff\");",
+                   getLLVMStyleWithColumns(25)));
+  EXPECT_EQ("#define A          \\\n"
+            "  string s =       \\\n"
+            "      \"123456789\"  \\\n"
+            "      \"0\";         \\\n"
+            "  int i;",
+            format("#define A string s = \"1234567890\"; int i;",
+                   getLLVMStyleWithColumns(20)));
+}
+
 TEST_F(FormatTest, DoNotBreakStringLiteralsInEscapeSequence) {
   EXPECT_EQ("\"\\a\"",
             format("\"\\a\"", getLLVMStyleWithColumns(3)));

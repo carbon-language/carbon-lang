@@ -756,10 +756,18 @@ private:
 
   /// \brief If the current token sticks out over the end of the line, break
   /// it if possible.
+  ///
+  /// \returns An extra penalty if a token was broken, otherwise 0.
+  ///
+  /// Note that the penalty of the token protruding the allowed line length is
+  /// already handled in \c addNextStateToQueue; the returned penalty will only
+  /// cover the cost of the additional line breaks.
   unsigned breakProtrudingToken(const AnnotatedToken &Current, LineState &State,
-                                bool DryRun) {
+                                bool DryRun,
+                                unsigned UnbreakableTailLength = 0) {
     llvm::OwningPtr<BreakableToken> Token;
-    unsigned StartColumn = State.Column - Current.FormatTok.TokenLength;
+    unsigned StartColumn = State.Column - Current.FormatTok.TokenLength -
+                           UnbreakableTailLength;
     if (Current.is(tok::string_literal)) {
       // Only break up default narrow strings.
       const char *LiteralData = SourceMgr.getCharacterData(
@@ -780,42 +788,55 @@ private:
                 Current.Parent->Type != TT_ImplicitStringLiteral)) {
       Token.reset(new BreakableLineComment(SourceMgr, Current, StartColumn));
     } else {
-      return 0;
+      // If a token that we cannot breaks protrudes, it means we were unable to
+      // break a sequence of tokens due to disallowed breaks between the tokens.
+      // Thus, we recursively search backwards to try to find a breakable token.
+      if (State.Column <= getColumnLimit() ||
+          Current.CanBreakBefore || !Current.Parent)
+        return 0;
+      return breakProtrudingToken(
+          *Current.Parent, State, DryRun,
+          UnbreakableTailLength + Current.FormatTok.TokenLength);
     }
+    if (UnbreakableTailLength >= getColumnLimit())
+      return 0;
+    unsigned RemainingSpace = getColumnLimit() - UnbreakableTailLength;
 
     bool BreakInserted = false;
     unsigned Penalty = 0;
+    unsigned PositionAfterLastLineInToken = 0;
     for (unsigned LineIndex = 0; LineIndex < Token->getLineCount();
          ++LineIndex) {
       unsigned TailOffset = 0;
-      unsigned RemainingLength =
+      unsigned RemainingTokenLength =
           Token->getLineLengthAfterSplit(LineIndex, TailOffset);
-      while (RemainingLength > getColumnLimit()) {
+      while (RemainingTokenLength > RemainingSpace) {
         BreakableToken::Split Split =
-            Token->getSplit(LineIndex, TailOffset, getColumnLimit());
+            Token->getSplit(LineIndex, TailOffset, RemainingSpace);
         if (Split.first == StringRef::npos)
           break;
         assert(Split.first != 0);
-        unsigned NewRemainingLength = Token->getLineLengthAfterSplit(
+        unsigned NewRemainingTokenLength = Token->getLineLengthAfterSplit(
             LineIndex, TailOffset + Split.first + Split.second);
-        if (NewRemainingLength >= RemainingLength)
+        if (NewRemainingTokenLength >= RemainingTokenLength)
           break;
         if (!DryRun) {
           Token->insertBreak(LineIndex, TailOffset, Split, Line.InPPDirective,
                              Whitespaces);
         }
         TailOffset += Split.first + Split.second;
-        RemainingLength = NewRemainingLength;
+        RemainingTokenLength = NewRemainingTokenLength;
         Penalty += Style.PenaltyExcessCharacter;
         BreakInserted = true;
       }
-      State.Column = RemainingLength;
+      PositionAfterLastLineInToken = RemainingTokenLength;
       if (!DryRun) {
         Token->trimLine(LineIndex, TailOffset, Line.InPPDirective, Whitespaces);
       }
     }
 
     if (BreakInserted) {
+      State.Column = PositionAfterLastLineInToken + UnbreakableTailLength;
       for (unsigned i = 0, e = State.Stack.size(); i != e; ++i)
         State.Stack[i].BreakBeforeParameter = true;
       State.Stack.back().LastSpace = StartColumn;
