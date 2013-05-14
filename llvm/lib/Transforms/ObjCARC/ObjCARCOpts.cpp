@@ -269,19 +269,19 @@ static inline bool AreAnyUnderlyingObjectsAnAlloca(const Value *V) {
   do {
     const Value *P = Worklist.pop_back_val();
     P = GetUnderlyingObjCPtr(P);
-    
+
     if (isa<AllocaInst>(P))
       return true;
-    
+
     if (!Visited.insert(P))
       continue;
-    
+
     if (const SelectInst *SI = dyn_cast<const SelectInst>(P)) {
       Worklist.push_back(SI->getTrueValue());
       Worklist.push_back(SI->getFalseValue());
       continue;
     }
-    
+
     if (const PHINode *PN = dyn_cast<const PHINode>(P)) {
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
         Worklist.push_back(PN->getIncomingValue(i));
