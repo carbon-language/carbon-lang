@@ -60,6 +60,9 @@ public:
     static void
     SetDefaultFlagValue (uint32_t new_value);
     
+    bool
+    IsVirtualStep();
+
 protected:
     virtual bool DoWillResume (lldb::StateType resume_state, bool current_plan);
 

@@ -390,32 +390,23 @@ Thread::GetPrivateStopInfo ()
     ProcessSP process_sp (GetProcess());
     if (process_sp)
     {
-        ProcessSP process_sp (GetProcess());
-        if (process_sp)
+        const uint32_t process_stop_id = process_sp->GetStopID();
+        if (m_stop_info_stop_id != process_stop_id)
         {
-            const uint32_t process_stop_id = process_sp->GetStopID();
-            if (m_stop_info_stop_id != process_stop_id)
+            if (m_stop_info_sp)
             {
-                if (m_stop_info_sp)
-                {
-                    if (m_stop_info_sp->IsValid())
-                    {
-                        SetStopInfo (m_stop_info_sp);
-                    }
-                    else
-                    {
-                        if (IsStillAtLastBreakpointHit())
-                            SetStopInfo(m_stop_info_sp);
-                        else
-                            m_stop_info_sp.reset();
-                    }
-                }
-                
-                if (!m_stop_info_sp)
-                {
-                    if (CalculateStopInfo() == false)
-                        SetStopInfo (StopInfoSP());
-                }
+                if (m_stop_info_sp->IsValid()
+                    || IsStillAtLastBreakpointHit()
+                    || GetCurrentPlan()->IsVirtualStep())
+                    SetStopInfo (m_stop_info_sp);
+                else
+                    m_stop_info_sp.reset();
+            }
+
+            if (!m_stop_info_sp)
+            {
+                if (CalculateStopInfo() == false)
+                    SetStopInfo (StopInfoSP());
             }
         }
     }
@@ -693,6 +684,10 @@ Thread::ShouldStop (Event* event_ptr)
         return false;
     }
     
+    // Based on the current thread plan and process stop info, check if this
+    // thread caused the process to stop. NOTE: this must take place before
+    // the plan is moved from the current plan stack to the completed plan
+    // stack.
     if (ThreadStoppedForAReason() == false)
     {
         if (log)

@@ -463,3 +463,9 @@ ThreadPlanStepInRange::DoWillResume (lldb::StateType resume_state, bool current_
     }
     return true;
 }
+
+bool
+ThreadPlanStepInRange::IsVirtualStep()
+{
+  return m_virtual_step;
+}

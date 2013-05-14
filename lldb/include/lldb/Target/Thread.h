@@ -895,9 +895,19 @@ public:
         return !m_destroy_called;
     }
 
-    // When you implement this method, make sure you don't overwrite the m_actual_stop_info if it claims to be
-    // valid.  The stop info may be a "checkpointed and restored" stop info, so if it is still around it is right
-    // even if you have not calculated this yourself, or if it disagrees with what you might have calculated.
+    // Sets and returns a valid stop info based on the process stop ID and the
+    // current thread plan. If the thread stop ID does not match the process'
+    // stop ID, the private stop reason is not set and an invalid StopInfoSP may
+    // be returned.
+    //
+    // NOTE: This function must be called before the current thread plan is
+    // moved to the completed plan stack (in Thread::ShouldStop()).
+    //
+    // NOTE: If subclasses override this function, ensure they do not overwrite
+    // the m_actual_stop_info if it is valid.  The stop info may be a
+    // "checkpointed and restored" stop info, so if it is still around it is
+    // right even if you have not calculated this yourself, or if it disagrees
+    // with what you might have calculated.
     virtual lldb::StopInfoSP
     GetPrivateStopInfo ();
 

@@ -516,6 +516,12 @@ public:
         // Nothing to do in general.
         return true;
     }
+
+    virtual bool
+    IsVirtualStep()
+    {
+        return false;
+    }
     
 protected:
     //------------------------------------------------------------------
