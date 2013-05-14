@@ -44,7 +44,7 @@ struct ScalarEnumerationTraits<clang::format::FormatStyle::LanguageStandard> {
   }
 };
 
-template<>
+template <>
 struct ScalarEnumerationTraits<clang::format::FormatStyle::BraceBreakingStyle> {
   static void
   enumeration(IO &IO, clang::format::FormatStyle::BraceBreakingStyle &Value) {
@@ -1193,9 +1193,15 @@ public:
           (touchesLine(TheLine) || touchesPPDirective(I + 1, E)))
         FormatPPDirective = true;
 
+      // Determine indent and try to merge multiple unwrapped lines.
       while (IndentForLevel.size() <= TheLine.Level)
         IndentForLevel.push_back(-1);
       IndentForLevel.resize(TheLine.Level + 1);
+      unsigned Indent = getIndent(IndentForLevel, TheLine.Level);
+      if (static_cast<int>(Indent) + Offset >= 0)
+        Indent += Offset;
+      tryFitMultipleLinesInOne(Indent, I, E);
+
       bool WasMoved = PreviousLineWasTouched && FirstTok.NewlinesBefore == 0;
       if (TheLine.First.is(tok::eof)) {
         if (PreviousLineWasTouched) {
@@ -1206,9 +1212,6 @@ public:
       } else if (TheLine.Type != LT_Invalid &&
                  (WasMoved || FormatPPDirective || touchesLine(TheLine))) {
         unsigned LevelIndent = getIndent(IndentForLevel, TheLine.Level);
-        unsigned Indent = LevelIndent;
-        if (static_cast<int>(Indent) + Offset >= 0)
-          Indent += Offset;
         if (FirstTok.WhiteSpaceStart.isValid() &&
             // Insert a break even if there is a structural error in case where
             // we break apart a line consisting of multiple unwrapped lines.
@@ -1219,7 +1222,6 @@ public:
           Indent = LevelIndent =
               SourceMgr.getSpellingColumnNumber(FirstTok.Tok.getLocation()) - 1;
         }
-        tryFitMultipleLinesInOne(Indent, I, E);
         UnwrappedLineFormatter Formatter(Style, SourceMgr, TheLine, Indent,
                                          TheLine.First, Whitespaces);
         PreviousEndOfLineColumn =
@@ -1228,18 +1230,17 @@ public:
         PreviousLineWasTouched = true;
       } else {
         if (FirstTok.NewlinesBefore > 0 || FirstTok.IsFirst) {
-          unsigned Indent =
+          unsigned LevelIndent =
               SourceMgr.getSpellingColumnNumber(FirstTok.Tok.getLocation()) - 1;
-          unsigned LevelIndent = Indent;
+          // Remove trailing whitespace of the previous line if it was touched.
+          if (PreviousLineWasTouched || touchesEmptyLineBefore(TheLine))
+            formatFirstToken(TheLine.First, PreviousLineLastToken, LevelIndent,
+                             TheLine.InPPDirective, PreviousEndOfLineColumn);
+
           if (static_cast<int>(LevelIndent) - Offset >= 0)
             LevelIndent -= Offset;
           if (TheLine.First.isNot(tok::comment))
             IndentForLevel[TheLine.Level] = LevelIndent;
-
-          // Remove trailing whitespace of the previous line if it was touched.
-          if (PreviousLineWasTouched || touchesEmptyLineBefore(TheLine))
-            formatFirstToken(TheLine.First, PreviousLineLastToken, Indent,
-                             TheLine.InPPDirective, PreviousEndOfLineColumn);
         }
         // If we did not reformat this unwrapped line, the column at the end of
         // the last token is unchanged - thus, we can calculate the end of the
@@ -1327,8 +1328,6 @@ private:
   ///
   /// This will change \c Line and \c AnnotatedLine to contain the merged line,
   /// if possible; note that \c I will be incremented when lines are merged.
-  ///
-  /// Returns whether the resulting \c Line can fit in a single line.
   void tryFitMultipleLinesInOne(unsigned Indent,
                                 std::vector<AnnotatedLine>::iterator &I,
                                 std::vector<AnnotatedLine>::iterator E) {
@@ -1352,7 +1351,6 @@ private:
                                     I->First.FormatTok.IsFirst)) {
       tryMergeSimplePPDirective(I, E, Limit);
     }
-    return;
   }
 
   void tryMergeSimplePPDirective(std::vector<AnnotatedLine>::iterator &I,
