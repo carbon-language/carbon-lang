@@ -27,6 +27,48 @@
 
 using namespace llvm;
 
+const unsigned SystemZMC::GR32Regs[16] = {
+  SystemZ::R0W, SystemZ::R1W, SystemZ::R2W, SystemZ::R3W,
+  SystemZ::R4W, SystemZ::R5W, SystemZ::R6W, SystemZ::R7W,
+  SystemZ::R8W, SystemZ::R9W, SystemZ::R10W, SystemZ::R11W,
+  SystemZ::R12W, SystemZ::R13W, SystemZ::R14W, SystemZ::R15W
+};
+
+const unsigned SystemZMC::GR64Regs[16] = {
+  SystemZ::R0D, SystemZ::R1D, SystemZ::R2D, SystemZ::R3D,
+  SystemZ::R4D, SystemZ::R5D, SystemZ::R6D, SystemZ::R7D,
+  SystemZ::R8D, SystemZ::R9D, SystemZ::R10D, SystemZ::R11D,
+  SystemZ::R12D, SystemZ::R13D, SystemZ::R14D, SystemZ::R15D
+};
+
+const unsigned SystemZMC::GR128Regs[16] = {
+  SystemZ::R0Q, 0, SystemZ::R2Q, 0,
+  SystemZ::R4Q, 0, SystemZ::R6Q, 0,
+  SystemZ::R8Q, 0, SystemZ::R10Q, 0,
+  SystemZ::R12Q, 0, SystemZ::R14Q, 0
+};
+
+const unsigned SystemZMC::FP32Regs[16] = {
+  SystemZ::F0S, SystemZ::F1S, SystemZ::F2S, SystemZ::F3S,
+  SystemZ::F4S, SystemZ::F5S, SystemZ::F6S, SystemZ::F7S,
+  SystemZ::F8S, SystemZ::F9S, SystemZ::F10S, SystemZ::F11S,
+  SystemZ::F12S, SystemZ::F13S, SystemZ::F14S, SystemZ::F15S
+};
+
+const unsigned SystemZMC::FP64Regs[16] = {
+  SystemZ::F0D, SystemZ::F1D, SystemZ::F2D, SystemZ::F3D,
+  SystemZ::F4D, SystemZ::F5D, SystemZ::F6D, SystemZ::F7D,
+  SystemZ::F8D, SystemZ::F9D, SystemZ::F10D, SystemZ::F11D,
+  SystemZ::F12D, SystemZ::F13D, SystemZ::F14D, SystemZ::F15D
+};
+
+const unsigned SystemZMC::FP128Regs[16] = {
+  SystemZ::F0Q, SystemZ::F1Q, 0, 0,
+  SystemZ::F4Q, SystemZ::F5Q, 0, 0,
+  SystemZ::F8Q, SystemZ::F9Q, 0, 0,
+  SystemZ::F12Q, SystemZ::F13Q, 0, 0
+};
+
 static MCAsmInfo *createSystemZMCAsmInfo(const MCRegisterInfo &MRI,
                                          StringRef TT) {
   MCAsmInfo *MAI = new SystemZMCAsmInfo(TT);

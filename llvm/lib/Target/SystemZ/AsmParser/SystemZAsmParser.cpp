@@ -250,46 +250,6 @@ public:
   bool isS32Imm() const { return isImm(-(1LL << 31), (1LL << 31) - 1); }
 };
 
-// Maps of asm register numbers to LLVM register numbers, with 0 indicating
-// an invalid register.  We don't use register class directly because that
-// specifies the allocation order.
-static const unsigned GR32Regs[] = {
-  SystemZ::R0W, SystemZ::R1W, SystemZ::R2W, SystemZ::R3W,
-  SystemZ::R4W, SystemZ::R5W, SystemZ::R6W, SystemZ::R7W,
-  SystemZ::R8W, SystemZ::R9W, SystemZ::R10W, SystemZ::R11W,
-  SystemZ::R12W, SystemZ::R13W, SystemZ::R14W, SystemZ::R15W
-};
-static const unsigned GR64Regs[] = {
-  SystemZ::R0D, SystemZ::R1D, SystemZ::R2D, SystemZ::R3D,
-  SystemZ::R4D, SystemZ::R5D, SystemZ::R6D, SystemZ::R7D,
-  SystemZ::R8D, SystemZ::R9D, SystemZ::R10D, SystemZ::R11D,
-  SystemZ::R12D, SystemZ::R13D, SystemZ::R14D, SystemZ::R15D
-};
-static const unsigned GR128Regs[] = {
-  SystemZ::R0Q, 0, SystemZ::R2Q, 0,
-  SystemZ::R4Q, 0, SystemZ::R6Q, 0,
-  SystemZ::R8Q, 0, SystemZ::R10Q, 0,
-  SystemZ::R12Q, 0, SystemZ::R14Q, 0
-};
-static const unsigned FP32Regs[] = {
-  SystemZ::F0S, SystemZ::F1S, SystemZ::F2S, SystemZ::F3S,
-  SystemZ::F4S, SystemZ::F5S, SystemZ::F6S, SystemZ::F7S,
-  SystemZ::F8S, SystemZ::F9S, SystemZ::F10S, SystemZ::F11S,
-  SystemZ::F12S, SystemZ::F13S, SystemZ::F14S, SystemZ::F15S
-};
-static const unsigned FP64Regs[] = {
-  SystemZ::F0D, SystemZ::F1D, SystemZ::F2D, SystemZ::F3D,
-  SystemZ::F4D, SystemZ::F5D, SystemZ::F6D, SystemZ::F7D,
-  SystemZ::F8D, SystemZ::F9D, SystemZ::F10D, SystemZ::F11D,
-  SystemZ::F12D, SystemZ::F13D, SystemZ::F14D, SystemZ::F15D
-};
-static const unsigned FP128Regs[] = {
-  SystemZ::F0Q, SystemZ::F1Q, 0, 0,
-  SystemZ::F4Q, SystemZ::F5Q, 0, 0,
-  SystemZ::F8Q, SystemZ::F9Q, 0, 0,
-  SystemZ::F12Q, SystemZ::F13Q, 0, 0
-};
-
 class SystemZAsmParser : public MCTargetAsmParser {
 #define GET_ASSEMBLER_HEADER
 #include "SystemZGenAsmMatcher.inc"
@@ -349,25 +309,28 @@ public:
   // Used by the TableGen code to parse particular operand types.
   OperandMatchResultTy
   parseGR32(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-    return parseRegister(Operands, 'r', GR32Regs, SystemZOperand::GR32Reg);
+    return parseRegister(Operands, 'r', SystemZMC::GR32Regs,
+                         SystemZOperand::GR32Reg);
   }
   OperandMatchResultTy
   parseGR64(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-    return parseRegister(Operands, 'r', GR64Regs, SystemZOperand::GR64Reg);
+    return parseRegister(Operands, 'r', SystemZMC::GR64Regs,
+                         SystemZOperand::GR64Reg);
   }
   OperandMatchResultTy
   parseGR128(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-    return parseRegister(Operands, 'r', GR128Regs, SystemZOperand::GR128Reg);
+    return parseRegister(Operands, 'r', SystemZMC::GR128Regs,
+                         SystemZOperand::GR128Reg);
   }
   OperandMatchResultTy
   parseADDR32(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-    return parseRegister(Operands, 'r', GR32Regs, SystemZOperand::ADDR32Reg,
-                         true);
+    return parseRegister(Operands, 'r', SystemZMC::GR32Regs,
+                         SystemZOperand::ADDR32Reg, true);
   }
   OperandMatchResultTy
   parseADDR64(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-    return parseRegister(Operands, 'r', GR64Regs, SystemZOperand::ADDR64Reg,
-                         true);
+    return parseRegister(Operands, 'r', SystemZMC::GR64Regs,
+                         SystemZOperand::ADDR64Reg, true);
   }
   OperandMatchResultTy
   parseADDR128(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
@@ -375,27 +338,33 @@ public:
   }
   OperandMatchResultTy
   parseFP32(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-    return parseRegister(Operands, 'f', FP32Regs, SystemZOperand::FP32Reg);
+    return parseRegister(Operands, 'f', SystemZMC::FP32Regs,
+                         SystemZOperand::FP32Reg);
   }
   OperandMatchResultTy
   parseFP64(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-    return parseRegister(Operands, 'f', FP64Regs, SystemZOperand::FP64Reg);
+    return parseRegister(Operands, 'f', SystemZMC::FP64Regs,
+                         SystemZOperand::FP64Reg);
   }
   OperandMatchResultTy
   parseFP128(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-    return parseRegister(Operands, 'f', FP128Regs, SystemZOperand::FP128Reg);
+    return parseRegister(Operands, 'f', SystemZMC::FP128Regs,
+                         SystemZOperand::FP128Reg);
   }
   OperandMatchResultTy
   parseBDAddr32(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-    return parseAddress(Operands, GR32Regs, SystemZOperand::ADDR32Reg, false);
+    return parseAddress(Operands, SystemZMC::GR32Regs,
+                        SystemZOperand::ADDR32Reg, false);
   }
   OperandMatchResultTy
   parseBDAddr64(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-    return parseAddress(Operands, GR64Regs, SystemZOperand::ADDR64Reg, false);
+    return parseAddress(Operands, SystemZMC::GR64Regs,
+                        SystemZOperand::ADDR64Reg, false);
   }
   OperandMatchResultTy
   parseBDXAddr64(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-    return parseAddress(Operands, GR64Regs, SystemZOperand::ADDR64Reg, true);
+    return parseAddress(Operands, SystemZMC::GR64Regs,
+                        SystemZOperand::ADDR64Reg, true);
   }
   OperandMatchResultTy
   parseAccessReg(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
@@ -502,7 +471,8 @@ SystemZAsmParser::parseAddress(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
 
     // Parse the first register.
     Register Reg;
-    OperandMatchResultTy Result = parseRegister(Reg, 'r', GR64Regs, true);
+    OperandMatchResultTy Result = parseRegister(Reg, 'r', SystemZMC::GR64Regs,
+                                                true);
     if (Result != MatchOperand_Success)
       return Result;
 
@@ -517,7 +487,7 @@ SystemZAsmParser::parseAddress(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
       }
 
       Index = Reg.Number;
-      Result = parseRegister(Reg, 'r', GR64Regs, true);
+      Result = parseRegister(Reg, 'r', SystemZMC::GR64Regs, true);
       if (Result != MatchOperand_Success)
         return Result;
     }
@@ -546,9 +516,9 @@ bool SystemZAsmParser::ParseRegister(unsigned &RegNo, SMLoc &StartLoc,
   if (parseRegister(Reg))
     return Error(Reg.StartLoc, "register expected");
   if (Reg.Prefix == 'r' && Reg.Number < 16)
-    RegNo = GR64Regs[Reg.Number];
+    RegNo = SystemZMC::GR64Regs[Reg.Number];
   else if (Reg.Prefix == 'f' && Reg.Number < 16)
-    RegNo = FP64Regs[Reg.Number];
+    RegNo = SystemZMC::FP64Regs[Reg.Number];
   else
     return Error(Reg.StartLoc, "invalid register");
   StartLoc = Reg.StartLoc;

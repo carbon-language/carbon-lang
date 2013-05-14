@@ -34,6 +34,16 @@ namespace SystemZMC {
 
   // The offset of the DWARF CFA from the incoming stack pointer.
   const int64_t CFAOffsetFromInitialSP = CallFrameSize;
+
+  // Maps of asm register numbers to LLVM register numbers, with 0 indicating
+  // an invalid register.  We don't use the register classes directly because
+  // they specify the allocation order.
+  extern const unsigned GR32Regs[16];
+  extern const unsigned GR64Regs[16];
+  extern const unsigned GR128Regs[16];
+  extern const unsigned FP32Regs[16];
+  extern const unsigned FP64Regs[16];
+  extern const unsigned FP128Regs[16];
 }
 
 MCCodeEmitter *createSystemZMCCodeEmitter(const MCInstrInfo &MCII,
