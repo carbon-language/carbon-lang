@@ -508,10 +508,12 @@ namespace {
                  Seq(S_None) {}
 
     void SetKnownPositiveRefCount() {
+      DEBUG(dbgs() << "Setting Known Positive.\n");
       KnownPositiveRefCount = true;
     }
 
     void ClearKnownPositiveRefCount() {
+      DEBUG(dbgs() << "Clearing Known Positive.\n");
       KnownPositiveRefCount = false;
     }
 
