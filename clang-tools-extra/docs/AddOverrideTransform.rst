@@ -28,20 +28,17 @@ For example:
 
 Known Limitations
 -----------------
-* This transform will fail if a method declaration has an inlined method
-  body and there is a comment between the method declaration and the body.
-  In this case, the override keyword will incorrectly be inserted at the 
-  end of the comment.
+* This transform will not insert the override keyword if a method is
+  pure. At the moment it's not possible to track down the pure
+  specifier location.
 
 .. code-block:: c++
 
   class B : public A {
   public:
-    virtual void h() const // comment
-    { }
+    virtual void h() const = 0;
 
-    // The declaration of h is transformed to
-    virtual void h() const // comment override
-    { }
+    // The declaration of h is NOT transformed to
+    virtual void h() const override = 0;
   };
 

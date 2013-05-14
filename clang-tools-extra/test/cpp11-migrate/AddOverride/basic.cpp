@@ -57,8 +57,12 @@ public:
 class G : public A {
 public:
   void h() const; // comment
+  void i() // comment
+  {}
   // CHECK: class G
   // CHECK: void h() const override; // comment
+  // CHECK: void i() override // comment
+  // CHECK-NEXT: {}
 };
 
 // Test that override is placed correctly if there is an inline body.

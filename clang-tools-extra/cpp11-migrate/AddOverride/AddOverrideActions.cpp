@@ -26,16 +26,41 @@ using namespace clang::ast_matchers;
 using namespace clang::tooling;
 using namespace clang;
 
+namespace {
+
+SourceLocation
+backwardSkipWhitespacesAndComments(const SourceManager &SM,
+                                   const clang::ASTContext &Context,
+                                   SourceLocation Loc) {
+  for (;;) {
+    do {
+      Loc = Loc.getLocWithOffset(-1);
+    } while (isWhitespace(*FullSourceLoc(Loc, SM).getCharacterData()));
+
+    Token Tok;
+    SourceLocation Beginning =
+        Lexer::GetBeginningOfToken(Loc, SM, Context.getLangOpts());
+    const bool Invalid =
+        Lexer::getRawToken(Beginning, Tok, SM, Context.getLangOpts());
+
+    assert(!Invalid && "Expected a valid token.");
+    if (Invalid || Tok.getKind() != tok::comment)
+      return Loc.getLocWithOffset(1);
+  }
+}
+
+} // end anonymous namespace
+
 void AddOverrideFixer::run(const MatchFinder::MatchResult &Result) {
   SourceManager &SM = *Result.SourceManager;
 
   const CXXMethodDecl *M = Result.Nodes.getDeclAs<CXXMethodDecl>(MethodId);
   assert(M && "Bad Callback. No node provided");
 
-  // Check that the method declaration in the main file
-  if (!SM.isFromMainFile(M->getLocStart()))
-    return;
+  if (const FunctionDecl *TemplateMethod = M->getTemplateInstantiationPattern())
+    M = cast<CXXMethodDecl>(TemplateMethod);
 
+  // Check that the method declaration is in the main file
   if (!SM.isFromMainFile(M->getLocStart()))
     return;
 
@@ -48,24 +73,14 @@ void AddOverrideFixer::run(const MatchFinder::MatchResult &Result) {
   if (M->isPure())
     return;
 
-  if (const FunctionDecl *TemplateMethod = M->getTemplateInstantiationPattern())
-    M = cast<CXXMethodDecl>(TemplateMethod);
-
   if (M->getParent()->hasAnyDependentBases())
     return;
 
   SourceLocation StartLoc;
   if (M->hasInlineBody()) {
-    // Start at the beginning of the body and rewind back to the last
-    // non-whitespace character. We will insert the override keyword
-    // after that character.
-    // FIXME: This transform won't work if there is a comment between
-    // the end of the function prototype and the start of the body.
-    StartLoc = M->getBody()->getLocStart();
-    do {
-      StartLoc = StartLoc.getLocWithOffset(-1);
-    } while (isWhitespace(*FullSourceLoc(StartLoc, SM).getCharacterData()));
-    StartLoc = StartLoc.getLocWithOffset(1);
+    // Insert the override specifier before the function body.
+    StartLoc = backwardSkipWhitespacesAndComments(SM, *Result.Context,
+                                                  M->getBody()->getLocStart());
   } else {
     StartLoc = SM.getSpellingLoc(M->getLocEnd());
     StartLoc = Lexer::getLocForEndOfToken(StartLoc, 0, SM, LangOptions());
