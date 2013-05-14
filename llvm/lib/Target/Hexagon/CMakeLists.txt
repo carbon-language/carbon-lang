@@ -35,6 +35,7 @@ add_llvm_target(HexagonCodeGen
   HexagonTargetObjectFile.cpp
   HexagonVLIWPacketizer.cpp
   HexagonNewValueJump.cpp
+  HexagonCopyToCombine.cpp
 )
 
 add_subdirectory(TargetInfo)

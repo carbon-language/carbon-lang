@@ -44,6 +44,8 @@ namespace llvm {
   FunctionPass *createHexagonHardwareLoops();
   FunctionPass *createHexagonPeephole();
   FunctionPass *createHexagonFixupHwLoops();
+  FunctionPass *createHexagonNewValueJump();
+  FunctionPass *createHexagonCopyToCombine();
   FunctionPass *createHexagonPacketizer();
   FunctionPass *createHexagonNewValueJump();
 

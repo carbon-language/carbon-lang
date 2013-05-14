@@ -162,6 +162,7 @@ bool HexagonPassConfig::addPreSched2() {
   HexagonTargetObjectFile &TLOF =
     (HexagonTargetObjectFile&)(getTargetLowering()->getObjFileLowering());
 
+  addPass(createHexagonCopyToCombine());
   if (getOptLevel() != CodeGenOpt::None)
     addPass(&IfConverterID);
   if (!TLOF.IsSmallDataEnabled()) {
