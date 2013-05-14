@@ -157,6 +157,12 @@ public:
                                         VariableList &variable_list,
                                         ValueObjectList &valobj_list);
 
+    static size_t
+    AutoComplete (const ExecutionContext &exe_ctx,
+                  const char *name,
+                  StringList &matches,
+                  bool &word_complete);
+
 protected:
     ConstString m_name;                 // The basename of the variable (no namespaces)
     Mangled m_mangled;                  // The mangled name of the variable

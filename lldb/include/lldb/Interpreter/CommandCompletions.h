@@ -49,10 +49,11 @@ public:
         eSettingsNameCompletion   = (1u << 5),
         ePlatformPluginCompletion = (1u << 6),
         eArchitectureCompletion   = (1u << 7),
+        eVariablePathCompletion   = (1u << 8),
         // This item serves two purposes.  It is the last element in the enum,
         // so you can add custom enums starting from here in your Option class.
         // Also if you & in this bit the base code will not process the option.
-        eCustomCompletion         = (1u << 8)  
+        eCustomCompletion         = (1u << 9)
 
     } CommonCompletionTypes;
 
@@ -145,7 +146,16 @@ public:
                        SearchFilter *searcher,
                        bool &word_complete,
                        lldb_private::StringList &matches);
-    
+
+    static int
+    VariablePath (CommandInterpreter &interpreter,
+                  const char *partial_file_name,
+                  int match_start_point,
+                  int max_return_elements,
+                  SearchFilter *searcher,
+                  bool &word_complete,
+                  lldb_private::StringList &matches);
+
     //----------------------------------------------------------------------
     // The Completer class is a convenient base class for building searchers
     // that go along with the SearchFilter passed to the standard Completer

@@ -27,6 +27,7 @@
 #include "lldb/Interpreter/CommandCompletions.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Symbol/CompileUnit.h"
+#include "lldb/Symbol/Variable.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Utility/CleanUp.h"
 
@@ -44,6 +45,7 @@ CommandCompletions::g_common_completions[] =
     {eSettingsNameCompletion,    CommandCompletions::SettingsNames},
     {ePlatformPluginCompletion,  CommandCompletions::PlatformPluginNames},
     {eArchitectureCompletion,    CommandCompletions::ArchitectureNames},
+    {eVariablePathCompletion,    CommandCompletions::VariablePath},
     {eNoCompletion,              NULL}      // This one has to be last in the list.
 };
 
@@ -456,6 +458,19 @@ CommandCompletions::ArchitectureNames (CommandInterpreter &interpreter,
     const uint32_t num_matches = ArchSpec::AutoComplete (partial_name, matches);
     word_complete = num_matches == 1;
     return num_matches;
+}
+
+
+int
+CommandCompletions::VariablePath (CommandInterpreter &interpreter,
+                                  const char *partial_name,
+                                  int match_start_point,
+                                  int max_return_elements,
+                                  SearchFilter *searcher,
+                                  bool &word_complete,
+                                  lldb_private::StringList &matches)
+{
+    return Variable::AutoComplete (interpreter.GetExecutionContext(), partial_name, matches, word_complete);
 }
 
 

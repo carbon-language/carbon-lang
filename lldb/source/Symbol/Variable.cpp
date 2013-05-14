@@ -516,6 +516,397 @@ Variable::DumpLocationForAddress (Stream *s, const Address &address)
         }
     }
     return false;
+}
 
+
+static void
+PrivateAutoComplete (StackFrame *frame,
+                     const std::string &partial_path,
+                     const std::string &prefix_path, // Anything that has been resolved already will be in here
+                     const ClangASTType& clang_type,
+                     StringList &matches,
+                     bool &word_complete);
+
+static void
+PrivateAutoCompleteMembers (StackFrame *frame,
+                            const std::string &partial_member_name,
+                            const std::string &partial_path,
+                            const std::string &prefix_path, // Anything that has been resolved already will be in here
+                            const ClangASTType& clang_type,
+                            StringList &matches,
+                            bool &word_complete);
+
+static void
+PrivateAutoCompleteMembers (StackFrame *frame,
+                            const std::string &partial_member_name,
+                            const std::string &partial_path,
+                            const std::string &prefix_path, // Anything that has been resolved already will be in here
+                            const ClangASTType& clang_type,
+                            StringList &matches,
+                            bool &word_complete)
+{
+
+    // We are in a type parsing child members
+    const uint32_t num_bases = ClangASTContext::GetNumDirectBaseClasses(clang_type.GetASTContext(),
+                                                                        clang_type.GetOpaqueQualType());
+    
+    if (num_bases > 0)
+    {
+        for (uint32_t i = 0; i < num_bases; ++i)
+        {
+            ClangASTType base_class_type (clang_type.GetASTContext(),
+                                          ClangASTContext::GetDirectBaseClassAtIndex (clang_type.GetASTContext(),
+                                                                                      clang_type.GetOpaqueQualType(),
+                                                                                      i,
+                                                                                      NULL));
+            
+            PrivateAutoCompleteMembers (frame,
+                                        partial_member_name,
+                                        partial_path,
+                                        prefix_path,
+                                        base_class_type.GetCanonicalType(),
+                                        matches,
+                                        word_complete);
+        }
+    }
+
+    const uint32_t num_vbases = ClangASTContext::GetNumVirtualBaseClasses(clang_type.GetASTContext(),
+                                                                          clang_type.GetOpaqueQualType());
+    
+    if (num_vbases > 0)
+    {
+        for (uint32_t i = 0; i < num_vbases; ++i)
+        {
+            ClangASTType vbase_class_type (clang_type.GetASTContext(),
+                                          ClangASTContext::GetVirtualBaseClassAtIndex(clang_type.GetASTContext(),
+                                                                                      clang_type.GetOpaqueQualType(),
+                                                                                      i,
+                                                                                      NULL));
+            
+            PrivateAutoCompleteMembers (frame,
+                                        partial_member_name,
+                                        partial_path,
+                                        prefix_path,
+                                        vbase_class_type.GetCanonicalType(),
+                                        matches,
+                                        word_complete);
+        }
+    }
+
+    // We are in a type parsing child members
+    const uint32_t num_fields = ClangASTContext::GetNumFields(clang_type.GetASTContext(),
+                                                              clang_type.GetOpaqueQualType());
+    
+    if (num_fields > 0)
+    {
+        for (uint32_t i = 0; i < num_fields; ++i)
+        {
+            std::string member_name;
+            
+            lldb::clang_type_t member_type = ClangASTContext::GetFieldAtIndex (clang_type.GetASTContext(),
+                                                                               clang_type.GetOpaqueQualType(),
+                                                                               i,
+                                                                               member_name,
+                                                                               NULL,
+                                                                               NULL,
+                                                                               NULL);
+            
+            if (partial_member_name.empty() ||
+                member_name.find(partial_member_name) == 0)
+            {
+                if (member_name == partial_member_name)
+                {
+                    ClangASTType member_clang_type (clang_type.GetASTContext(), member_type);
+                    PrivateAutoComplete (frame,
+                                         partial_path,
+                                         prefix_path + member_name, // Anything that has been resolved already will be in here
+                                         member_clang_type.GetCanonicalType(),
+                                         matches,
+                                         word_complete);
+                }
+                else
+                {
+                    matches.AppendString (prefix_path + member_name);
+                }
+            }
+        }
+    }
+}
+
+static void
+PrivateAutoComplete (StackFrame *frame,
+                     const std::string &partial_path,
+                     const std::string &prefix_path, // Anything that has been resolved already will be in here
+                     const ClangASTType& clang_type,
+                     StringList &matches,
+                     bool &word_complete)
+{
+//    printf ("\nPrivateAutoComplete()\n\tprefix_path = '%s'\n\tpartial_path = '%s'\n", prefix_path.c_str(), partial_path.c_str());
+    std::string remaining_partial_path;
+
+    const lldb::TypeClass type_class = clang_type.GetTypeClass();
+    if (partial_path.empty())
+    {
+        if (clang_type.IsValid())
+        {
+            switch (type_class)
+            {
+                default:
+                case eTypeClassArray:
+                case eTypeClassBlockPointer:
+                case eTypeClassBuiltin:
+                case eTypeClassComplexFloat:
+                case eTypeClassComplexInteger:
+                case eTypeClassEnumeration:
+                case eTypeClassFunction:
+                case eTypeClassMemberPointer:
+                case eTypeClassReference:
+                case eTypeClassTypedef:
+                case eTypeClassVector:
+                    {
+                        matches.AppendString (prefix_path);
+                        word_complete = matches.GetSize() == 1;
+                    }
+                    break;
+                    
+                case eTypeClassClass:
+                case eTypeClassStruct:
+                case eTypeClassUnion:
+                    if (prefix_path.back() != '.')
+                        matches.AppendString (prefix_path + '.');
+                    break;
+
+                case eTypeClassObjCObject:
+                case eTypeClassObjCInterface:
+                    break;
+                case eTypeClassObjCObjectPointer:
+                case eTypeClassPointer:
+                    {
+                        bool omit_empty_base_classes = true;
+                        if (ClangASTContext::GetNumChildren (clang_type.GetASTContext(), clang_type.GetPointeeType(), omit_empty_base_classes) > 0)
+                            matches.AppendString (prefix_path + "->");
+                        else
+                        {
+                            matches.AppendString (prefix_path);
+                            word_complete = true;
+                        }
+                    }
+                    break;
+            }
+        }
+        else
+        {
+            if (frame)
+            {
+                const bool get_file_globals = true;
+                
+                VariableList *variable_list = frame->GetVariableList(get_file_globals);
+                
+                const size_t num_variables = variable_list->GetSize();
+                for (size_t i=0; i<num_variables; ++i)
+                {
+                    Variable *variable = variable_list->GetVariableAtIndex(i).get();
+                    matches.AppendString (variable->GetName().AsCString());
+                }
+            }
+        }
+    }
+    else
+    {
+        const char ch = partial_path[0];
+        switch (ch)
+        {
+        case '*':
+            if (prefix_path.empty())
+            {
+                PrivateAutoComplete (frame,
+                                     partial_path.substr(1),
+                                     std::string("*"),
+                                     clang_type,
+                                     matches,
+                                     word_complete);
+            }
+            break;
+
+        case '&':
+            if (prefix_path.empty())
+            {
+                PrivateAutoComplete (frame,
+                                     partial_path.substr(1),
+                                     std::string("&"),
+                                     clang_type,
+                                     matches,
+                                     word_complete);
+            }
+            break;
+
+        case '-':
+            if (partial_path[1] == '>' && !prefix_path.empty())
+            {
+                switch (type_class)
+                {
+                    case lldb::eTypeClassPointer:
+                        {
+                            ClangASTType pointee_type(clang_type.GetASTContext(), clang_type.GetPointeeType());
+                            if (partial_path[2])
+                            {
+                                // If there is more after the "->", then search deeper
+                                PrivateAutoComplete (frame,
+                                                     partial_path.substr(2),
+                                                     prefix_path + "->",
+                                                     pointee_type.GetCanonicalType(),
+                                                     matches,
+                                                     word_complete);
+                            }
+                            else
+                            {
+                                // Nothing after the "->", so list all members
+                                PrivateAutoCompleteMembers (frame,
+                                                            std::string(),
+                                                            std::string(),
+                                                            prefix_path + "->",
+                                                            pointee_type.GetCanonicalType(),
+                                                            matches,
+                                                            word_complete);                            
+                            }
+                        }
+                    default:
+                        break;
+                }
+            }
+            break;
+            
+        case '.':
+            if (clang_type.IsValid())
+            {
+                switch (type_class)
+                {
+                    case lldb::eTypeClassUnion:
+                    case lldb::eTypeClassStruct:
+                    case lldb::eTypeClassClass:
+                        if (partial_path[1])
+                        {
+                            // If there is more after the ".", then search deeper
+                            PrivateAutoComplete (frame,
+                                                 partial_path.substr(1),
+                                                 prefix_path + ".",
+                                                 clang_type,
+                                                 matches,
+                                                 word_complete);
+                            
+                        }
+                        else
+                        {
+                            // Nothing after the ".", so list all members
+                            PrivateAutoCompleteMembers (frame,
+                                                        std::string(),
+                                                        partial_path,
+                                                        prefix_path + ".",
+                                                        clang_type,
+                                                        matches,
+                                                        word_complete);
+                        }
+                    default:
+                        break;
+                }
+            }
+            break;
+        default:
+            if (isalpha(ch) || ch == '_' || ch == '$')
+            {
+                const size_t partial_path_len = partial_path.size();
+                size_t pos = 1;
+                while (pos < partial_path_len)
+                {
+                    const char curr_ch = partial_path[pos];
+                    if (isalnum(curr_ch) || curr_ch == '_'  || curr_ch == '$')
+                    {
+                        ++pos;
+                        continue;
+                    }
+                    break;
+                }
+
+                std::string token(partial_path, 0, pos);
+                remaining_partial_path = partial_path.substr(pos);
+                
+                if (clang_type.IsValid())
+                {
+                    PrivateAutoCompleteMembers (frame,
+                                                token,
+                                                remaining_partial_path,
+                                                prefix_path,
+                                                clang_type,
+                                                matches,
+                                                word_complete);
+                }
+                else if (frame)
+                {
+                    // We haven't found our variable yet
+                    const bool get_file_globals = true;
+                    
+                    VariableList *variable_list = frame->GetVariableList(get_file_globals);
+                    
+                    const size_t num_variables = variable_list->GetSize();
+                    for (size_t i=0; i<num_variables; ++i)
+                    {
+                        Variable *variable = variable_list->GetVariableAtIndex(i).get();
+                        const char *variable_name = variable->GetName().AsCString();
+                        if (strstr(variable_name, token.c_str()) == variable_name)
+                        {
+                            if (strcmp (variable_name, token.c_str()) == 0)
+                            {
+                                Type *variable_type = variable->GetType();
+                                if (variable_type)
+                                {
+                                    ClangASTType variable_clang_type (variable_type->GetClangAST(), variable_type->GetClangForwardType());
+                                    PrivateAutoComplete (frame,
+                                                         remaining_partial_path,
+                                                         prefix_path + token, // Anything that has been resolved already will be in here
+                                                         variable_clang_type.GetCanonicalType(),
+                                                         matches,
+                                                         word_complete);
+                                }
+                                else
+                                {
+                                    matches.AppendString (prefix_path + variable_name);
+                                }
+                            }
+                            else if (remaining_partial_path.empty())
+                            {
+                                matches.AppendString (prefix_path + variable_name);
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+        }
+    }
+}
+
+
+
+size_t
+Variable::AutoComplete (const ExecutionContext &exe_ctx,
+                        const char *partial_path_cstr,
+                        StringList &matches,
+                        bool &word_complete)
+{
+    word_complete = false;
+    std::string partial_path;
+    std::string prefix_path;
+    ClangASTType clang_type;
+    if (partial_path_cstr && partial_path_cstr[0])
+        partial_path = partial_path_cstr;
+
+    PrivateAutoComplete (exe_ctx.GetFramePtr(),
+                         partial_path,
+                         prefix_path,
+                         clang_type,
+                         matches,
+                         word_complete);
+
+    return matches.GetSize();
 }
 

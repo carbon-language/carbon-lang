@@ -79,6 +79,14 @@ ClangASTType::GetTypeNameForOpaqueQualType (clang::ASTContext *ast, clang_type_t
     return GetTypeNameForQualType (ast, clang::QualType::getFromOpaquePtr(opaque_qual_type));
 }
 
+ClangASTType
+ClangASTType::GetCanonicalType (clang::ASTContext *ast, lldb::clang_type_t opaque_qual_type)
+{
+    if (ast && opaque_qual_type)
+        return ClangASTType (ast,
+                             clang::QualType::getFromOpaquePtr(opaque_qual_type).getCanonicalType().getAsOpaquePtr());
+    return ClangASTType();
+}
 
 ConstString
 ClangASTType::GetConstTypeName ()
@@ -124,7 +132,7 @@ ClangASTType::GetConstTypeName (clang::ASTContext *ast, clang_type_t clang_type)
 }
 
 clang_type_t
-ClangASTType::GetPointeeType ()
+ClangASTType::GetPointeeType () const
 {
     return GetPointeeType (m_type);
 }

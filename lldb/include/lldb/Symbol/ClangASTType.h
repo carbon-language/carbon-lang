@@ -76,6 +76,15 @@ public:
         return m_ast; 
     }
 
+    static ClangASTType
+    GetCanonicalType (clang::ASTContext *ast, lldb::clang_type_t clang_type);
+
+    ClangASTType
+    GetCanonicalType ()
+    {
+        return GetCanonicalType (GetASTContext(), GetOpaqueQualType());
+    }
+
     ConstString
     GetConstTypeName ();
     
@@ -136,6 +145,12 @@ public:
     static lldb::TypeClass
     GetTypeClass (clang::ASTContext *ast_context, 
                   lldb::clang_type_t clang_type);
+
+    lldb::TypeClass
+    GetTypeClass () const
+    {
+        return GetTypeClass (GetASTContext(), GetOpaqueQualType());
+    }
 
     void
     DumpValue (ExecutionContext *exe_ctx,
@@ -310,7 +325,7 @@ public:
                    StreamString &new_value);
 
     lldb::clang_type_t
-    GetPointeeType ();
+    GetPointeeType () const;
 
     static lldb::clang_type_t
     GetPointeeType (lldb::clang_type_t opaque_clang_qual_type);
