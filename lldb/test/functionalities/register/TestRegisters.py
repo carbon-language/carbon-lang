@@ -189,8 +189,9 @@ class RegisterCommandsTestCase(TestBase):
         self.expect("expr/x $eax",
             substrs = ['unsigned int', ' = 0x'])
 
-        self.expect("expr -- ($rax & 0xffffffff) == $eax",
-            substrs = ['true'])
+        if self.getArchitecture() in ['x86_64']:
+            self.expect("expr -- ($rax & 0xffffffff) == $eax",
+                substrs = ['true'])
 
         self.expect("expr $xmm0",
             substrs = ['vector_type'])
@@ -235,8 +236,9 @@ class RegisterCommandsTestCase(TestBase):
         # Check that "register read eax" works.
         self.runCmd("register read eax")
 
-        self.expect("expr -- ($rax & 0xffffffff) == $eax",
-            substrs = ['true'])
+        if self.getArchitecture() in ['x86_64']:
+            self.expect("expr -- ($rax & 0xffffffff) == $eax",
+                substrs = ['true'])
 
         self.expect("expr -- $ax == (($ah << 8) | $al)",
             substrs = ['true'])
