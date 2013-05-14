@@ -222,7 +222,9 @@ setupFunctionContext(Function &F, ArrayRef<LandingPadInst*> LPads) {
     PersonalityFn = LPads[0]->getPersonalityFn();
   Value *PersonalityFieldPtr = Builder.CreateConstGEP2_32(FuncCtx, 0, 3,
                                                           "pers_fn_gep");
-  Builder.CreateStore(PersonalityFn, PersonalityFieldPtr, /*isVolatile=*/true);
+  Builder.CreateStore(Builder.CreateBitCast(PersonalityFn,
+                                            Builder.getInt8PtrTy()),
+                      PersonalityFieldPtr, /*isVolatile=*/true);
 
   // LSDA address
   Value *LSDA = Builder.CreateCall(LSDAAddrFn, "lsda_addr");
