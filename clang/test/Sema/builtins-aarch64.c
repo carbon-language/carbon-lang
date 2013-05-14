@@ -2,7 +2,7 @@
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -DTEST1 -fsyntax-only -verify %s
 
 #ifdef TEST1
-void __clear_cache(char *start, char *end);
+void __clear_cache(void *start, void *end);
 #endif
 
 void test_clear_cache_chars(char *start, char *end) {
