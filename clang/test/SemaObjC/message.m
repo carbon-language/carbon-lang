@@ -107,7 +107,7 @@ void foo5(id p) {
                  // expected-warning {{instance method '-bar' not found}}
 }
 
-@interface I1
+@interface I1 // expected-note {{receiver is object of the class that is declared here}}
 -(void)unavail_meth  __attribute__((unavailable)); // expected-note {{marked unavailable here}}
 @end
 

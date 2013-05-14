@@ -1221,10 +1221,19 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
     else
       DiagID = isClassMessage ? diag::warn_class_method_not_found
                               : diag::warn_inst_method_not_found;
-    if (!getLangOpts().DebuggerSupport)
+    if (!getLangOpts().DebuggerSupport) {
       Diag(SelLoc, DiagID)
         << Sel << isClassMessage << SourceRange(SelectorLocs.front(), 
                                                 SelectorLocs.back());
+      // Find the class to which we are sending this message.
+      if (ReceiverType->isObjCObjectPointerType()) {
+        QualType ClassType =
+          ReceiverType->getAs<ObjCObjectPointerType>()->getPointeeType();
+        if (const ObjCObjectType *ClassTPtr = ClassType->getAs<ObjCObjectType>())
+          if (ObjCInterfaceDecl *Class = ClassTPtr->getInterface())
+            Diag(Class->getLocation(), diag::note_receiver_class_declared);
+      }
+    }
 
     // In debuggers, we want to use __unknown_anytype for these
     // results so that clients can cast them.

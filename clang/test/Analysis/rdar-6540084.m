@@ -9,13 +9,13 @@ typedef struct _NSZone NSZone;
 @protocol NSObject  - (BOOL)isEqual:(id)object; @end
 @interface NSObject <NSObject> {} @end
 extern id NSAllocateObject(Class aClass, NSUInteger extraBytes, NSZone *zone);
-@class NSArray;
+@class NSArray; // expected-note {{receiver is object of the class that is declared here}}
 @class NSMutableArray, NSIndexSet, NSView, NSPredicate, NSString, NSViewAnimation, NSTimer; // expected-note{{forward declaration of class here}}
 @interface FooBazController : NSObject {}
 @end
 typedef struct {} TazVersion;
 @class TazNode;
-@interface TazGuttenberg : NSObject {} typedef NSUInteger BugsBunnyType; @end
+@interface TazGuttenberg : NSObject {} typedef NSUInteger BugsBunnyType; @end // expected-note {{receiver is object of the class that is declared here}}
 @interface FooBaz : NSObject {}
 @property (nonatomic) BugsBunnyType matchType;
 @property (nonatomic, retain) NSArray *papyrus; @end

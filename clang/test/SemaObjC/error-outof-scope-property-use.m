@@ -2,7 +2,7 @@
 // RUN: %clang_cc1 -x objective-c++ -fsyntax-only -fobjc-default-synthesize-properties -verify -Wno-objc-root-class %s
 // rdar://13178483
 
-@class NSMutableDictionary;
+@class NSMutableDictionary; // expected-note {{receiver is object of the class that is declared here}}
 
 @interface LaunchdJobs 
 

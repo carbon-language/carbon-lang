@@ -7,7 +7,7 @@
 @protocol P
 @end
 
-@interface INTF<P>
+@interface INTF<P> // expected-note {{receiver is object of the class that is declared here}}
 - (void)IMeth;
 @end
 

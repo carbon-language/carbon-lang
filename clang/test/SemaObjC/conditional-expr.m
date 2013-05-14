@@ -33,7 +33,8 @@
 @end
 
 // No @interface declaration for DTFilterOutputStream3
-@implementation DTFilterOutputStream3 // expected-warning {{cannot find interface declaration for 'DTFilterOutputStream3'}}
+@implementation DTFilterOutputStream3 // expected-warning {{cannot find interface declaration for 'DTFilterOutputStream3'}} \
+				      // expected-note {{receiver is object of the class that is declared here}}
 - (id)initWithNextOutputStream:(id <DTOutputStreams>) outputStream {
   id <DTOutputStreams> nextOutputStream = [self nextOutputStream]; // expected-warning {{method '-nextOutputStream' not found (return type defaults to 'id')}}
   self = nextOutputStream; // expected-warning {{assigning to 'DTFilterOutputStream3 *' from incompatible type 'id<DTOutputStreams>'}}
