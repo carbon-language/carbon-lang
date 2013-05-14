@@ -16,6 +16,7 @@ struct Exception : public std::exception
 {
   std::string s;
   Exception(std::string ss) : s(ss) {}
+  virtual ~Exception() throw () { }
   const char* what() const throw() { return s.c_str(); }
 };
 
