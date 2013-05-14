@@ -162,6 +162,7 @@ private:
     lldb::SBInputReader m_editline_reader;
     std::unique_ptr<IOChannel> m_io_channel_ap;
     OptionData m_option_data;
+    bool m_executing_user_command;
     bool m_waiting_for_command;
     bool m_done;
 

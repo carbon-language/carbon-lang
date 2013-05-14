@@ -120,6 +120,7 @@ Driver::Driver () :
     m_editline_reader (),
     m_io_channel_ap (),
     m_option_data (),
+    m_executing_user_command (false),
     m_waiting_for_command (false),
     m_done(false)
 {
@@ -775,7 +776,7 @@ Driver::GetProcessSTDOUT ()
     size_t total_bytes = 0;
     while ((len = m_debugger.GetSelectedTarget().GetProcess().GetSTDOUT (stdio_buffer, sizeof (stdio_buffer))) > 0)
     {
-        m_io_channel_ap->OutWrite (stdio_buffer, len, ASYNC);
+        m_io_channel_ap->OutWrite (stdio_buffer, len, NO_ASYNC);
         total_bytes += len;
     }
     return total_bytes;
@@ -790,7 +791,7 @@ Driver::GetProcessSTDERR ()
     size_t total_bytes = 0;
     while ((len = m_debugger.GetSelectedTarget().GetProcess().GetSTDERR (stdio_buffer, sizeof (stdio_buffer))) > 0)
     {
-        m_io_channel_ap->ErrWrite (stdio_buffer, len, ASYNC);
+        m_io_channel_ap->ErrWrite (stdio_buffer, len, NO_ASYNC);
         total_bytes += len;
     }
     return total_bytes;
@@ -1069,17 +1070,28 @@ Driver::HandleIOEvent (const SBEvent &event)
         
         // We don't want the result to bypass the OutWrite function in IOChannel, as this can result in odd
         // output orderings and problems with the prompt.
+        
+        // Note that we are in the process of executing a command
+        m_executing_user_command = true;
+
         m_debugger.GetCommandInterpreter().HandleCommand (command_string, result, true);
+
+        // Note that we are back from executing a user command
+        m_executing_user_command = false;
+
+        // Display any STDOUT/STDERR _prior_ to emitting the command result text
+        GetProcessSTDOUT ();
+        GetProcessSTDERR ();
 
         const bool only_if_no_immediate = true;
 
+        // Now emit the command output text from the command we just executed
         const size_t output_size = result.GetOutputSize();
-        
         if (output_size > 0)
             m_io_channel_ap->OutWrite (result.GetOutput(only_if_no_immediate), output_size, NO_ASYNC);
 
+        // Now emit the command error text from the command we just executed
         const size_t error_size = result.GetErrorSize();
-
         if (error_size > 0)
             m_io_channel_ap->OutWrite (result.GetError(only_if_no_immediate), error_size, NO_ASYNC);
 
@@ -1149,7 +1161,8 @@ Driver::EditLineInputReaderCallback
         break;
 
     case eInputReaderReactivate:
-        driver->ReadyForCommand();
+        if (driver->m_executing_user_command == false)
+            driver->ReadyForCommand();
         break;
 
     case eInputReaderDeactivate:
