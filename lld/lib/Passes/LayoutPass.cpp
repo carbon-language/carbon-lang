@@ -146,7 +146,7 @@ bool LayoutPass::checkAllPrevAtomsZeroSize(const DefinedAtom *targetAtom) {
   while (true) {
     if (atom == targetAtom)
       return true;
-    if ((*atom).size() != 0)
+    if (atom->size() != 0)
       // TODO: print warning that an impossible layout is being desired by the
       // user.
       return false;
@@ -192,7 +192,7 @@ void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
   // number of atoms that we have.
   _followOnRoots.resize(range.size());
   _followOnNexts.resize(range.size());
-  for (auto ai : range) {
+  for (const DefinedAtom *ai : range) {
     for (const Reference *r : *ai) {
       if (r->kind() != lld::Reference::kindLayoutAfter)
         continue;
@@ -222,7 +222,7 @@ void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
         // the beginning of the chain. All the atoms followed by the target
         // atom must be of size zero in that case to satisfy the followon
         // relationships.
-        size_t currentAtomSize = (*ai).size();
+        size_t currentAtomSize = ai->size();
         if (currentAtomSize == 0) {
           const DefinedAtom *targetPrevAtom = findAtomFollowedBy(targetAtom);
           _followOnNexts[targetPrevAtom] = ai;
@@ -253,7 +253,7 @@ void LayoutPass::buildInGroupTable(MutableFile::DefinedAtomRange &range) {
   ScopedTask task(getDefaultDomain(), "LayoutPass::buildInGroupTable");
   // This table would convert precededby references to follow on
   // references so that we have only one table
-  for (auto ai : range) {
+  for (const DefinedAtom *ai : range) {
     for (const Reference *r : *ai) {
       if (r->kind() == lld::Reference::kindInGroup) {
         const DefinedAtom *rootAtom = llvm::dyn_cast<DefinedAtom>(r->target());
@@ -325,7 +325,7 @@ void LayoutPass::buildPrecededByTable(MutableFile::DefinedAtomRange &range) {
   ScopedTask task(getDefaultDomain(), "LayoutPass::buildPrecededByTable");
   // This table would convert precededby references to follow on
   // references so that we have only one table
-  for (auto ai : range) {
+  for (const DefinedAtom *ai : range) {
     for (const Reference *r : *ai) {
       if (r->kind() == lld::Reference::kindLayoutBefore) {
         const DefinedAtom *targetAtom = llvm::dyn_cast<DefinedAtom>(r->target());
@@ -378,7 +378,7 @@ void LayoutPass::buildPrecededByTable(MutableFile::DefinedAtomRange &range) {
 void LayoutPass::buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range) {
   ScopedTask task(getDefaultDomain(), "LayoutPass::buildOrdinalOverrideMap");
   uint64_t index = 0;
-  for (auto ai : range) {
+  for (const DefinedAtom *ai : range) {
     const DefinedAtom *atom = ai;
     if (_ordinalOverrideMap.find(atom) != _ordinalOverrideMap.end())
       continue;
