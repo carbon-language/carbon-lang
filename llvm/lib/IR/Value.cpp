@@ -112,21 +112,20 @@ bool Value::hasNUsesOrMore(unsigned N) const {
 /// isUsedInBasicBlock - Return true if this value is used in the specified
 /// basic block.
 bool Value::isUsedInBasicBlock(const BasicBlock *BB) const {
-  // Start by scanning over the instructions looking for a use before we start
-  // the expensive use iteration.
-  unsigned MaxBlockSize = 3;
-  for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-    if (std::find(I->op_begin(), I->op_end(), this) != I->op_end())
+  // This can be computed either by scanning the instructions in BB, or by
+  // scanning the use list of this Value. Both lists can be very long, but
+  // usually one is quite short.
+  //
+  // Scan both lists simultaneously until one is exhausted. This limits the
+  // search to the shorter list.
+  BasicBlock::const_iterator BI = BB->begin(), BE = BB->end();
+  const_use_iterator UI = use_begin(), UE = use_end();
+  for (; BI != BE && UI != UE; ++BI, ++UI) {
+    // Scan basic block: Check if this Value is used by the instruction at BI.
+    if (std::find(BI->op_begin(), BI->op_end(), this) != BI->op_end())
       return true;
-    if (--MaxBlockSize == 0) // If the block is larger fall back to use_iterator
-      break;
-  }
-
-  if (MaxBlockSize != 0) // We scanned the entire block and found no use.
-    return false;
-
-  for (const_use_iterator I = use_begin(), E = use_end(); I != E; ++I) {
-    const Instruction *User = dyn_cast<Instruction>(*I);
+    // Scan use list: Check if the use at UI is in BB.
+    const Instruction *User = dyn_cast<Instruction>(*UI);
     if (User && User->getParent() == BB)
       return true;
   }
