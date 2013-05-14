@@ -42,20 +42,20 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, hasCtrlDep = 1,
 // Unconditional branches.  R1 is the condition-code mask (all 1s).
 let isBranch = 1, isTerminator = 1, isBarrier = 1, R1 = 15 in {
   let isIndirectBranch = 1 in
-    def BR : InstRR<0x07, (outs), (ins ADDR64:$dst),
-                    "br\t$dst", [(brind ADDR64:$dst)]>;
+    def BR : InstRR<0x07, (outs), (ins ADDR64:$R2),
+                    "br\t$R2", [(brind ADDR64:$R2)]>;
 
   // An assembler extended mnemonic for BRC.  Use a separate instruction for
   // the asm parser, so that we don't relax Js to external symbols into JGs.
   let isCodeGenOnly = 1 in
-    def J : InstRI<0xA74, (outs), (ins brtarget16:$dst), "j\t$dst", []>;
+    def J : InstRI<0xA74, (outs), (ins brtarget16:$I2), "j\t$I2", []>;
   let isAsmParserOnly = 1 in
-    def AsmJ : InstRI<0xA74, (outs), (ins brtarget16:$dst), "j\t$dst", []>;
+    def AsmJ : InstRI<0xA74, (outs), (ins brtarget16:$I2), "j\t$I2", []>;
 
   // An assembler extended mnemonic for BRCL.  (The extension is "G"
   // rather than "L" because "JL" is "Jump if Less".)
-  def JG : InstRIL<0xC04, (outs), (ins brtarget32:$dst),
-                   "jg\t$dst", [(br bb:$dst)]>;
+  def JG : InstRIL<0xC04, (outs), (ins brtarget32:$I2),
+                   "jg\t$I2", [(br bb:$I2)]>;
 }
 
 // Conditional branches.  It's easier for LLVM to handle these branches
@@ -64,24 +64,24 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, R1 = 15 in {
 // JE and JLH when writing out the assembly though.
 multiclass CondBranches<Operand imm, string short, string long> {
   let isBranch = 1, isTerminator = 1, Uses = [PSW] in {
-    def "" : InstRI<0xA74, (outs), (ins imm:$cond, brtarget16:$dst), short, []>;
-    def L  : InstRIL<0xC04, (outs), (ins imm:$cond, brtarget32:$dst), long, []>;
+    def "" : InstRI<0xA74, (outs), (ins imm:$R1, brtarget16:$I2), short, []>;
+    def L  : InstRIL<0xC04, (outs), (ins imm:$R1, brtarget32:$I2), long, []>;
   }
 }
 let isCodeGenOnly = 1 in
-  defm BRC : CondBranches<cond4, "j$cond\t$dst", "jg$cond\t$dst">;
+  defm BRC : CondBranches<cond4, "j$R1\t$I2", "jg$R1\t$I2">;
 let isAsmParserOnly = 1 in
-  defm AsmBRC : CondBranches<uimm8zx4, "brc\t$cond, $dst", "brcl\t$cond, $dst">;
+  defm AsmBRC : CondBranches<uimm8zx4, "brc\t$R1, $I2", "brcl\t$R1, $I2">;
 
 def : Pat<(z_br_ccmask cond4:$cond, bb:$dst), (BRCL cond4:$cond, bb:$dst)>;
 
 // Define AsmParser mnemonics for each condition code.
 multiclass CondExtendedMnemonic<bits<4> Cond, string name> {
   let R1 = Cond in {
-    def "" : InstRI<0xA74, (outs), (ins brtarget16:$dst),
-                    "j"##name##"\t$dst", []>;
-    def L  : InstRIL<0xC04, (outs), (ins brtarget32:$dst),
-                    "jg"##name##"\t$dst", []>;
+    def "" : InstRI<0xA74, (outs), (ins brtarget16:$I2),
+                    "j"##name##"\t$I2", []>;
+    def L  : InstRIL<0xC04, (outs), (ins brtarget32:$I2),
+                    "jg"##name##"\t$I2", []>;
   }
 }
 let isAsmParserOnly = 1 in {
@@ -112,23 +112,23 @@ def Select64 : SelectWrapper<GR64>;
 let isCall = 1, Defs = [R0D, R1D, R2D, R3D, R4D, R5D, R14D,
                         F0D, F1D, F2D, F3D, F4D, F5D, F6D, F7D],
     R1 = 14, isCodeGenOnly = 1 in {
-  def BRAS  : InstRI<0xA75, (outs), (ins pcrel16call:$dst, variable_ops),
-                     "bras\t%r14, $dst", []>;
-  def BRASL : InstRIL<0xC05, (outs), (ins pcrel32call:$dst, variable_ops),
-                      "brasl\t%r14, $dst", [(z_call pcrel32call:$dst)]>;
-  def BASR  : InstRR<0x0D, (outs), (ins ADDR64:$dst, variable_ops),
-                     "basr\t%r14, $dst", [(z_call ADDR64:$dst)]>;
+  def BRAS  : InstRI<0xA75, (outs), (ins pcrel16call:$I2, variable_ops),
+                     "bras\t%r14, $I2", []>;
+  def BRASL : InstRIL<0xC05, (outs), (ins pcrel32call:$I2, variable_ops),
+                      "brasl\t%r14, $I2", [(z_call pcrel32call:$I2)]>;
+  def BASR  : InstRR<0x0D, (outs), (ins ADDR64:$R2, variable_ops),
+                     "basr\t%r14, $R2", [(z_call ADDR64:$R2)]>;
 }
 
 // Define the general form of the call instructions for the asm parser.
 // These instructions don't hard-code %r14 as the return address register.
 let isAsmParserOnly = 1 in {
-  def AsmBRAS  : InstRI<0xA75, (outs), (ins GR64:$save, brtarget16:$dst),
-                        "bras\t$save, $dst", []>;
-  def AsmBRASL : InstRIL<0xC05, (outs), (ins GR64:$save, brtarget32:$dst),
-                        "brasl\t$save, $dst", []>;
-  def AsmBASR  : InstRR<0x0D, (outs), (ins GR64:$save, ADDR64:$dst),
-                        "basr\t$save, $dst", []>;
+  def AsmBRAS  : InstRI<0xA75, (outs), (ins GR64:$R1, brtarget16:$I2),
+                        "bras\t$R1, $I2", []>;
+  def AsmBRASL : InstRIL<0xC05, (outs), (ins GR64:$R1, brtarget32:$I2),
+                        "brasl\t$R1, $I2", []>;
+  def AsmBASR  : InstRR<0x0D, (outs), (ins GR64:$R1, ADDR64:$R2),
+                        "basr\t$R1, $R2", []>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -337,21 +337,21 @@ def STRVG : StoreRXY<"strvg", 0xE32F, storeu<bswap>, GR64>;
 // Load BDX-style addresses.
 let neverHasSideEffects = 1, Function = "la" in {
   let PairType = "12" in
-    def LA : InstRX<0x41, (outs GR64:$dst), (ins laaddr12pair:$src),
-                    "la\t$dst, $src",
-                    [(set GR64:$dst, laaddr12pair:$src)]>;
+    def LA : InstRX<0x41, (outs GR64:$R1), (ins laaddr12pair:$XBD2),
+                    "la\t$R1, $XBD2",
+                    [(set GR64:$R1, laaddr12pair:$XBD2)]>;
   let PairType = "20" in
-    def LAY : InstRXY<0xE371, (outs GR64:$dst), (ins laaddr20pair:$src),
-                      "lay\t$dst, $src",
-                      [(set GR64:$dst, laaddr20pair:$src)]>;
+    def LAY : InstRXY<0xE371, (outs GR64:$R1), (ins laaddr20pair:$XBD2),
+                      "lay\t$R1, $XBD2",
+                      [(set GR64:$R1, laaddr20pair:$XBD2)]>;
 }
 
 // Load a PC-relative address.  There's no version of this instruction
 // with a 16-bit offset, so there's no relaxation.
 let neverHasSideEffects = 1 in {
-  def LARL : InstRIL<0xC00, (outs GR64:$dst), (ins pcrel32:$src),
-                     "larl\t$dst, $src",
-                     [(set GR64:$dst, pcrel32:$src)]>;
+  def LARL : InstRIL<0xC00, (outs GR64:$R1), (ins pcrel32:$I2),
+                     "larl\t$R1, $I2",
+                     [(set GR64:$R1, pcrel32:$I2)]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -903,9 +903,9 @@ let Defs = [PSW] in {
 // Read a 32-bit access register into a GR32.  As with all GR32 operations,
 // the upper 32 bits of the enclosing GR64 remain unchanged, which is useful
 // when a 64-bit address is stored in a pair of access registers.
-def EAR : InstRRE<0xB24F, (outs GR32:$dst), (ins access_reg:$src),
-                  "ear\t$dst, $src",
-                  [(set GR32:$dst, (z_extract_access access_reg:$src))]>;
+def EAR : InstRRE<0xB24F, (outs GR32:$R1), (ins access_reg:$R2),
+                  "ear\t$R1, $R2",
+                  [(set GR32:$R1, (z_extract_access access_reg:$R2))]>;
 
 // Find leftmost one, AKA count leading zeros.  The instruction actually
 // returns a pair of GR64s, the first giving the number of leading zeros

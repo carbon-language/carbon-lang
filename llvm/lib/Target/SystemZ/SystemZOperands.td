@@ -45,11 +45,13 @@ class AddressAsmOperand<string format, string bitsize, string dispsize>
 }
 
 // Constructs both a DAG pattern and instruction operand for an addressing mode.
-// The mode is selected by custom code in selectTYPE...SUFFIX().  The address
-// registers have BITSIZE bits and displacements have DISPSIZE bits.  NUMOPS is
-// the number of operands that make up an address and OPERANDS lists the types
-// of those operands using (ops ...).  FORMAT is the type of addressing mode,
-// which needs to match the names used in AddressAsmOperand.
+// The mode is selected by custom code in select<TYPE><DISPSIZE><SUFFIX>()
+// and encoded by custom code in get<FORMAT><DISPSIZE>Encoding().
+// The address registers have BITSIZE bits and displacements have
+// DISPSIZE bits.  NUMOPS is the number of operands that make up an
+// address and OPERANDS lists the types of those operands using (ops ...).
+// FORMAT is the type of addressing mode, which needs to match the names
+// used in AddressAsmOperand.
 class AddressingMode<string type, string bitsize, string dispsize,
                      string suffix, int numops, string format, dag operands>
   : ComplexPattern<!cast<ValueType>("i"##bitsize), numops,
@@ -57,6 +59,7 @@ class AddressingMode<string type, string bitsize, string dispsize,
                    [add, sub, or, frameindex, z_adjdynalloc]>,
     Operand<!cast<ValueType>("i"##bitsize)> {
   let PrintMethod = "print"##format##"Operand";
+  let EncoderMethod = "get"##format##dispsize##"Encoding";
   let MIOperandInfo = operands;
   let ParserMatchClass =
     !cast<AddressAsmOperand>(format##bitsize##"Disp"##dispsize);

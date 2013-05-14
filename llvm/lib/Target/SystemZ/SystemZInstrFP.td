@@ -40,24 +40,22 @@ def LDGR : UnaryRRE<"ldgr", 0xB3C1, bitconvert, FP64, GR64>;
 
 // fcopysign with an FP32 result.
 let isCodeGenOnly = 1 in {
-  def CPSDRss : BinaryRevRRF<"cpsdr", 0xB372, fcopysign, FP32, FP32>;
-  def CPSDRsd : BinaryRevRRF<"cpsdr", 0xB372, fcopysign, FP32, FP64>;
+  def CPSDRss : BinaryRRF<"cpsdr", 0xB372, fcopysign, FP32, FP32>;
+  def CPSDRsd : BinaryRRF<"cpsdr", 0xB372, fcopysign, FP32, FP64>;
 }
 
-// The sign of an FP128 is in the high register.  Give the CPSDRsd
-// operands in R1, R2, R3 order.
+// The sign of an FP128 is in the high register.
 def : Pat<(fcopysign FP32:$src1, FP128:$src2),
-          (CPSDRsd (EXTRACT_SUBREG FP128:$src2, subreg_high), FP32:$src1)>;
+          (CPSDRsd FP32:$src1, (EXTRACT_SUBREG FP128:$src2, subreg_high))>;
 
 // fcopysign with an FP64 result.
 let isCodeGenOnly = 1 in
-  def CPSDRds : BinaryRevRRF<"cpsdr", 0xB372, fcopysign, FP64, FP32>;
-def CPSDRdd : BinaryRevRRF<"cpsdr", 0xB372, fcopysign, FP64, FP64>;
+  def CPSDRds : BinaryRRF<"cpsdr", 0xB372, fcopysign, FP64, FP32>;
+def CPSDRdd : BinaryRRF<"cpsdr", 0xB372, fcopysign, FP64, FP64>;
 
-// The sign of an FP128 is in the high register.  Give the CPSDRdd
-// operands in R1, R2, R3 order.
+// The sign of an FP128 is in the high register.
 def : Pat<(fcopysign FP64:$src1, FP128:$src2),
-          (CPSDRdd (EXTRACT_SUBREG FP128:$src2, subreg_high), FP64:$src1)>;
+          (CPSDRdd FP64:$src1, (EXTRACT_SUBREG FP128:$src2, subreg_high))>;
 
 // fcopysign with an FP128 result.  Use "upper" as the high half and leave
 // the low half as-is.
@@ -65,13 +63,12 @@ class CopySign128<RegisterOperand cls, dag upper>
   : Pat<(fcopysign FP128:$src1, cls:$src2),
         (INSERT_SUBREG FP128:$src1, upper, subreg_high)>;
 
-// Give the CPSDR* operands in R1, R2, R3 order.
-def : CopySign128<FP32,  (CPSDRds FP32:$src2,
-                                  (EXTRACT_SUBREG FP128:$src1, subreg_high))>;
-def : CopySign128<FP64,  (CPSDRdd FP64:$src2,
-                                  (EXTRACT_SUBREG FP128:$src1, subreg_high))>;
-def : CopySign128<FP128, (CPSDRdd (EXTRACT_SUBREG FP128:$src2, subreg_high),
-                                  (EXTRACT_SUBREG FP128:$src1, subreg_high))>;
+def : CopySign128<FP32,  (CPSDRds (EXTRACT_SUBREG FP128:$src1, subreg_high),
+                                  FP32:$src2)>;
+def : CopySign128<FP64,  (CPSDRdd (EXTRACT_SUBREG FP128:$src1, subreg_high),
+                                  FP64:$src2)>;
+def : CopySign128<FP128, (CPSDRdd (EXTRACT_SUBREG FP128:$src1, subreg_high),
+                                  (EXTRACT_SUBREG FP128:$src2, subreg_high))>;
 
 //===----------------------------------------------------------------------===//
 // Load instructions
@@ -155,13 +152,13 @@ let Defs = [PSW] in {
 }
 
 // fp_to_sint always rounds towards zero, which is modifier value 5.
-def : Pat<(i32 (fp_to_sint FP32:$src)),  (CFEBR FP32:$src,  5)>;
-def : Pat<(i32 (fp_to_sint FP64:$src)),  (CFDBR FP64:$src,  5)>;
-def : Pat<(i32 (fp_to_sint FP128:$src)), (CFXBR FP128:$src, 5)>;
+def : Pat<(i32 (fp_to_sint FP32:$src)),  (CFEBR 5, FP32:$src)>;
+def : Pat<(i32 (fp_to_sint FP64:$src)),  (CFDBR 5, FP64:$src)>;
+def : Pat<(i32 (fp_to_sint FP128:$src)), (CFXBR 5, FP128:$src)>;
 
-def : Pat<(i64 (fp_to_sint FP32:$src)),  (CGEBR FP32:$src,  5)>;
-def : Pat<(i64 (fp_to_sint FP64:$src)),  (CGDBR FP64:$src,  5)>;
-def : Pat<(i64 (fp_to_sint FP128:$src)), (CGXBR FP128:$src, 5)>;
+def : Pat<(i64 (fp_to_sint FP32:$src)),  (CGEBR 5, FP32:$src)>;
+def : Pat<(i64 (fp_to_sint FP64:$src)),  (CGDBR 5, FP64:$src)>;
+def : Pat<(i64 (fp_to_sint FP128:$src)), (CGXBR 5, FP128:$src)>;
 
 //===----------------------------------------------------------------------===//
 // Unary arithmetic
@@ -210,9 +207,9 @@ let Defs = [PSW] in {
 
 // frint rounds according to the current mode (modifier 0) and detects
 // inexact conditions.
-def : Pat<(frint FP32:$src),  (FIEBR FP32:$src,  0)>;
-def : Pat<(frint FP64:$src),  (FIDBR FP64:$src,  0)>;
-def : Pat<(frint FP128:$src), (FIXBR FP128:$src, 0)>;
+def : Pat<(frint FP32:$src),  (FIEBR 0, FP32:$src)>;
+def : Pat<(frint FP64:$src),  (FIDBR 0, FP64:$src)>;
+def : Pat<(frint FP128:$src), (FIXBR 0, FP128:$src)>;
 
 //===----------------------------------------------------------------------===//
 // Binary arithmetic
