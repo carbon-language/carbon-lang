@@ -118,6 +118,58 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
   return false;
 }
 
+// Returns the atom immediately followed by the given atom in the followon
+// chain.
+const DefinedAtom *LayoutPass::findAtomFollowedBy(
+    const DefinedAtom *targetAtom) {
+  // Start from the beginning of the chain and follow the chain until
+  // we find the targetChain.
+  const DefinedAtom *atom = _followOnRoots[targetAtom];
+  while (true) {
+    const DefinedAtom *prevAtom = atom;
+    AtomToAtomT::iterator targetFollowOnAtomsIter = _followOnNexts.find(atom);
+    // The target atom must be in the chain of its root.
+    assert(targetFollowOnAtomsIter != _followOnNexts.end());
+    atom = targetFollowOnAtomsIter->second;
+    if (atom == targetAtom)
+      return prevAtom;
+  }
+}
+
+// Check if all the atoms followed by the given target atom are of size zero.
+// When this method is called, an atom being added is not of size zero and
+// will be added to the head of the followon chain. All the atoms between the
+// atom and the targetAtom (specified by layout-after) need to be of size zero
+// in this case. Otherwise the desired layout is impossible.
+bool LayoutPass::checkAllPrevAtomsZeroSize(const DefinedAtom *targetAtom) {
+  const DefinedAtom *atom = _followOnRoots[targetAtom];
+  while (true) {
+    AtomToAtomT::iterator targetFollowOnAtomsIter = _followOnNexts.find(atom);
+    // The target atom must be in the chain of its root.
+    assert(targetFollowOnAtomsIter != _followOnNexts.end());
+    if (atom == targetAtom)
+      return true;
+    if ((*atom).size() != 0)
+      // TODO: print warning that an impossible layout is being desired by the
+      // user.
+      return false;
+  }
+}
+
+// Set the root of all atoms in targetAtom's chain to the given root.
+void LayoutPass::setChainRoot(const DefinedAtom *targetAtom,
+                              const DefinedAtom *root) {
+  // Walk through the followon chain and override each node's root.
+  while (true) {
+    _followOnRoots[targetAtom] = root;
+    AtomToAtomT::iterator targetFollowOnAtomsIter =
+        _followOnNexts.find(targetAtom);
+    if (targetFollowOnAtomsIter == _followOnNexts.end())
+      return;
+    targetAtom = targetFollowOnAtomsIter->second;
+  }
+}
+
 /// This pass builds the followon tables described by two DenseMaps
 /// followOnRoots and followonNexts.
 /// The followOnRoots map contains a mapping of a DefinedAtom to its root
@@ -135,115 +187,54 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
 ///    targetAtoms and its tree to the current chain
 void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
   ScopedTask task(getDefaultDomain(), "LayoutPass::buildFollowOnTable");
-  // Set the initial size of the followon and
-  // the followonNext hash to the number of atoms
-  // that we have
+  // Set the initial size of the followon and the followonNext hash to the
+  // number of atoms that we have.
   _followOnRoots.resize(range.size());
   _followOnNexts.resize(range.size());
   for (auto ai : range) {
     for (const Reference *r : *ai) {
-      if (r->kind() == lld::Reference::kindLayoutAfter) {
-        const DefinedAtom *targetAtom =
-            llvm::dyn_cast<DefinedAtom>(r->target());
-        _followOnNexts[ai] = targetAtom;
-        // If we find a followon for the first time, lets make that
-        // atom as the root atom
-        if (_followOnRoots.count(ai) == 0) {
-          _followOnRoots[ai] = ai;
-        }
-        // If the targetAtom is not a root of any chain, lets make
-        // the root of the targetAtom to the root of the current chain
-        auto iter = _followOnRoots.find(targetAtom);
-        if (iter == _followOnRoots.end()) {
-          auto tmp = _followOnRoots[ai];
-          _followOnRoots[targetAtom] = tmp;
+      if (r->kind() != lld::Reference::kindLayoutAfter)
+        continue;
+      const DefinedAtom *targetAtom = llvm::dyn_cast<DefinedAtom>(r->target());
+      _followOnNexts[ai] = targetAtom;
+
+      // If we find a followon for the first time, lets make that atom as the
+      // root atom.
+      if (_followOnRoots.count(ai) == 0)
+        _followOnRoots[ai] = ai;
+
+      auto iter = _followOnRoots.find(targetAtom);
+      if (iter == _followOnRoots.end()) {
+        // If the targetAtom is not a root of any chain, lets make the root of
+        // the targetAtom to the root of the current chain.
+        _followOnRoots[targetAtom] = _followOnRoots[ai];
+      } else if (iter->second == targetAtom) {
+        // If the targetAtom is the root of a chain, the chain becomes part of
+        // the current chain. Rewrite the subchain's root to the current
+        // chain's root.
+        setChainRoot(targetAtom, _followOnRoots[ai]);
+      } else {
+        // The targetAtom is already a part of a chain. If the current atom is
+        // of size zero, we can insert it in the middle of the chain just
+        // before the target atom, while not breaking other atom's followon
+        // relationships. If it's not, we can only insert the current atom at
+        // the beginning of the chain. All the atoms followed by the target
+        // atom must be of size zero in that case to satisfy the followon
+        // relationships.
+        size_t currentAtomSize = (*ai).size();
+        if (currentAtomSize == 0) {
+          const DefinedAtom *targetPrevAtom = findAtomFollowedBy(targetAtom);
+          _followOnNexts[targetPrevAtom] = ai;
+          _followOnRoots[ai] = _followOnRoots[targetPrevAtom];
         } else {
-          // The followon is part of another chain
-          if (iter->second == targetAtom) {
-            const DefinedAtom *a = targetAtom;
-            while (true) {
-              _followOnRoots[a] = _followOnRoots[ai];
-              // Set all the follow on's for the targetAtom to be
-              // the current root
-              AtomToAtomT::iterator targetFollowOnAtomsIter =
-                  _followOnNexts.find(a);
-
-              if (targetFollowOnAtomsIter != _followOnNexts.end())
-                a = targetFollowOnAtomsIter->second;
-              else
-                break;
-            }      // while true
-          } else { // the atom could be part of chain already
-                   // Get to the root of the chain
-            const DefinedAtom *a = _followOnRoots[targetAtom];
-            const DefinedAtom *targetPrevAtom = nullptr;
-
-            // If the size of the atom is 0, and the target
-            // is already part of a chain, lets bring the current
-            // atom into the chain
-            size_t currentAtomSize = (*ai).size();
-
-            // Lets add to the chain only if the atoms that
-            // appear before the targetAtom in the chain
-            // are of size 0
-            bool foundNonZeroSizeAtom = false;
-            while (true) {
-              targetPrevAtom = a;
-
-              // Set all the follow on's for the targetAtom to be
-              // the current root
-              AtomToAtomT::iterator targetFollowOnAtomsIter =
-                  _followOnNexts.find(a);
-
-              if (targetFollowOnAtomsIter != _followOnNexts.end())
-                a = targetFollowOnAtomsIter->second;
-              else
-                break;
-
-              if ((a->size() != 0) && (currentAtomSize != 0)) {
-                foundNonZeroSizeAtom = true;
-                break;
-              }
-
-              if (a == targetAtom)
-                break;
-
-            } // while true
-            if (foundNonZeroSizeAtom) {
-              // TODO: print warning that an impossible layout
-              // is being desired by the user
-              // Continue to the next atom
-              break;
-            }
-
-            // If the atom is a zero sized atom, then make the target
-            // follow the zero sized atom, as the zero sized atom may be
-            // a weak symbol
-            if ((currentAtomSize == 0) && (targetPrevAtom)) {
-              _followOnNexts[targetPrevAtom] = ai;
-              _followOnRoots[ai] = _followOnRoots[targetPrevAtom];
-              _followOnNexts[ai] = targetAtom;
-            } else {
-              _followOnNexts[ai] = _followOnRoots[targetAtom];
-              // Set the root of all atoms in the
-              a = _followOnRoots[targetAtom];
-              while (true) {
-                _followOnRoots[a] = _followOnRoots[ai];
-                // Set all the follow on's for the targetAtom to be
-                // the current root
-                AtomToAtomT::iterator targetFollowOnAtomsIter =
-                    _followOnNexts.find(a);
-                if (targetFollowOnAtomsIter != _followOnNexts.end())
-                  a = targetFollowOnAtomsIter->second;
-                else
-                  break;
-              } // while true
-            } // end else (currentAtomSize != 0)
-          }   // end else
-        }     // else
-      }       // kindLayoutAfter
-    }         // Reference
-  }           // range
+          if (!checkAllPrevAtomsZeroSize(targetAtom))
+            break;
+          _followOnNexts[ai] = _followOnRoots[targetAtom];
+          setChainRoot(_followOnRoots[targetAtom], _followOnRoots[ai]);
+        }
+      }
+    }
+  }
 }
 
 /// This pass builds the followon tables using InGroup relationships
@@ -276,25 +267,10 @@ void LayoutPass::buildInGroupTable(MutableFile::DefinedAtomRange &range) {
         auto iter = _followOnRoots.find(ai);
         if (iter == _followOnRoots.end()) {
           _followOnRoots[ai] = rootAtom;
-        }
-        else if (iter->second == ai) {
-          if (iter->second != rootAtom) {
-            const DefinedAtom *a = iter->second;
-            // Change all the followon next references to the ingroup reference root
-            while (true) {
-              _followOnRoots[a] = rootAtom;
-              // Set all the follow on's for the targetAtom to be
-              // the current root
-              AtomToAtomT::iterator targetFollowOnAtomsIter =
-                  _followOnNexts.find(a);
-              if (targetFollowOnAtomsIter != _followOnNexts.end())
-                a = targetFollowOnAtomsIter->second;
-              else
-                break;
-            } // while true
-          }
-        }
-        else {
+        } else if (iter->second == ai) {
+          if (iter->second != rootAtom)
+            setChainRoot(iter->second, rootAtom);
+        } else {
           // TODO : Flag an error that the root of the tree
           // is different, Here is an example
           // Say there are atoms
@@ -385,22 +361,11 @@ void LayoutPass::buildPrecededByTable(MutableFile::DefinedAtomRange &range) {
           // Change the roots of the targetAtom and its chain to
           // the current atoms root
           if (changeRoots) {
-            const DefinedAtom *a = _followOnRoots[targetAtom];
-            while (true) {
-              _followOnRoots[a] = _followOnRoots[ai];
-              // Set all the follow on's for the targetAtom to be
-              // the current root
-              AtomToAtomT::iterator targetFollowOnAtomsIter =
-                  _followOnNexts.find(a);
-              if (targetFollowOnAtomsIter != _followOnNexts.end())
-                a = targetFollowOnAtomsIter->second;
-              else
-                break;
-            }
-          } // changeRoots
+            setChainRoot(_followOnRoots[targetAtom], _followOnRoots[ai]);
+          }
         }   // Is targetAtom root
       }     // kindLayoutBefore
-    }       //  Reference
+    }       // Reference
   }         // atom iteration
 }           // end function
 

@@ -71,6 +71,12 @@ private:
   AtomToAtomT _followOnRoots;
   AtomToOrdinalT _ordinalOverrideMap;
   CompareAtoms _compareAtoms;
+
+  // Helper methods for buildFollowOnTable().
+  const DefinedAtom *findAtomFollowedBy(const DefinedAtom *targetAtom);
+  bool checkAllPrevAtomsZeroSize(const DefinedAtom *targetAtom);
+
+  void setChainRoot(const DefinedAtom *targetAtom, const DefinedAtom *root);
 };
 
 } // namespace lld
