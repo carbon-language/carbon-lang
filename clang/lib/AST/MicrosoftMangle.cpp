@@ -69,17 +69,17 @@ public:
   MicrosoftCXXNameMangler(MangleContext &C, raw_ostream &Out_)
     : Context(C), Out(Out_),
       Structor(0), StructorType(-1),
+      UseNameBackReferences(true),
       PointersAre64Bit(C.getASTContext().getTargetInfo().getPointerWidth(0) ==
-                       64),
-      UseNameBackReferences(true) { }
+                       64) { }
 
   MicrosoftCXXNameMangler(MangleContext &C, raw_ostream &Out_,
                           const CXXDestructorDecl *D, CXXDtorType Type)
     : Context(C), Out(Out_),
       Structor(getStructor(D)), StructorType(Type),
+      UseNameBackReferences(true),
       PointersAre64Bit(C.getASTContext().getTargetInfo().getPointerWidth(0) ==
-                       64),
-      UseNameBackReferences(true) { }
+                       64) { }
 
   raw_ostream &getStream() const { return Out; }
 
