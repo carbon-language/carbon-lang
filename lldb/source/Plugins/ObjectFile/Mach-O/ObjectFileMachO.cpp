@@ -295,12 +295,20 @@ public:
         {
             int flavor = data.GetU32 (&offset);
             uint32_t count = data.GetU32 (&offset);
+            lldb::offset_t next_thread_state = offset + (count * 4);
             switch (flavor)
             {
                 case GPRRegSet:
                     for (uint32_t i=0; i<count; ++i)
+                    {
                         gpr.r[i] = data.GetU32(&offset);
+                    }
+
+                    // Note that gpr.cpsr is also copied by the above loop; this loop technically extends 
+                    // one element past the end of the gpr.r[] array.
+
                     SetError (GPRRegSet, Read, 0);
+                    offset = next_thread_state;
                     break;
 
                 case FPURegSet:
@@ -318,14 +326,19 @@ public:
                             done = true;
                         }
                     }
+                    offset = next_thread_state;
                     break;
 
                 case EXCRegSet:
-                    exc.exception = data.GetU32(&offset);
-                    exc.fsr = data.GetU32(&offset);
-                    exc.far = data.GetU32(&offset);
-                    SetError (EXCRegSet, Read, 0);
+                    if (count == 3)
+                    {
+                        exc.exception = data.GetU32(&offset);
+                        exc.fsr = data.GetU32(&offset);
+                        exc.far = data.GetU32(&offset);
+                        SetError (EXCRegSet, Read, 0);
+                    }
                     done = true;
+                    offset = next_thread_state;
                     break;
 
                 // Unknown register set flavor, stop trying to parse.
@@ -338,19 +351,19 @@ protected:
     virtual int
     DoReadGPR (lldb::tid_t tid, int flavor, GPR &gpr)
     {
-        return 0;
+        return -1;
     }
 
     virtual int
     DoReadFPU (lldb::tid_t tid, int flavor, FPU &fpu)
     {
-        return 0;
+        return -1;
     }
 
     virtual int
     DoReadEXC (lldb::tid_t tid, int flavor, EXC &exc)
     {
-        return 0;
+        return -1;
     }
 
     virtual int
