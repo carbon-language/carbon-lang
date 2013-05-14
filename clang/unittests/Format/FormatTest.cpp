@@ -4122,9 +4122,9 @@ TEST_F(FormatTest, ParsesConfiguration) {
 #define CHECK_PARSE_BOOL(FIELD)                                                \
   Style.FIELD = false;                                                         \
   EXPECT_EQ(0, parseConfiguration(#FIELD ": true", &Style).value());           \
-  EXPECT_EQ(true, Style.FIELD);                                                \
+  EXPECT_TRUE(Style.FIELD);                                                \
   EXPECT_EQ(0, parseConfiguration(#FIELD ": false", &Style).value());          \
-  EXPECT_EQ(false, Style.FIELD);
+  EXPECT_FALSE(Style.FIELD);
 
   CHECK_PARSE_BOOL(AlignEscapedNewlinesLeft);
   CHECK_PARSE_BOOL(AllowAllParametersOfDeclarationOnNextLine);
