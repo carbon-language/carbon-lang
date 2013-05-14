@@ -1,16 +1,16 @@
-;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
+; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=R600-CHECK %s
+; RUN: llc < %s -march=r600 -mcpu=verde | FileCheck --check-prefix=SI-CHECK %s
 
-;CHECK: TRUNC * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; R600-CHECK: @amdgpu_trunc
+; R600-CHECK: TRUNC * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; SI-CHECK: @amdgpu_trunc
+; SI-CHECK: V_TRUNC_F32
 
-define void @test() {
-   %r0 = call float @llvm.R600.load.input(i32 0)
-   %r1 = call float @llvm.AMDGPU.trunc( float %r0)
-   call void @llvm.AMDGPU.store.output(float %r1, i32 0)
-   ret void
+define void @amdgpu_trunc(float addrspace(1)* %out, float %x) {
+entry:
+  %0 = call float @llvm.AMDGPU.trunc(float %x)
+  store float %0, float addrspace(1)* %out
+  ret void
 }
-
-declare float @llvm.R600.load.input(i32) readnone
-
-declare void @llvm.AMDGPU.store.output(float, i32)
 
 declare float @llvm.AMDGPU.trunc(float ) readnone
