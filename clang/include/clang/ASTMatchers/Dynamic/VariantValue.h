@@ -26,7 +26,7 @@ namespace clang {
 namespace ast_matchers {
 namespace dynamic {
 
-typedef ast_matchers::internal::DynTypedMatcher DynTypedMatcher;
+using ast_matchers::internal::DynTypedMatcher;
 
 /// \brief Variant value class.
 ///
