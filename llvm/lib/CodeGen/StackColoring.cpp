@@ -42,6 +42,7 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/IR/Function.h"
@@ -526,6 +527,10 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
         const Value *V = MMO->getValue();
 
         if (!V)
+          continue;
+
+        const PseudoSourceValue *PSV = dyn_cast<const PseudoSourceValue>(V);
+        if (PSV && PSV->isConstant(MFI))
           continue;
 
         // Climb up and find the original alloca.
