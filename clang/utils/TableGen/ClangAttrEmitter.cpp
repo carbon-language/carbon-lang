@@ -1094,13 +1094,13 @@ void EmitClangAttrList(RecordKeeper &Records, raw_ostream &OS) {
         " INHERITABLE_PARAM_ATTR(NAME)\n";
   OS << "#endif\n\n";
 
-  OS << "#ifndef MS_INHERITABLE_ATTR\n";
-  OS << "#define MS_INHERITABLE_ATTR(NAME) INHERITABLE_ATTR(NAME)\n";
+  OS << "#ifndef MS_INHERITANCE_ATTR\n";
+  OS << "#define MS_INHERITANCE_ATTR(NAME) INHERITABLE_ATTR(NAME)\n";
   OS << "#endif\n\n";
 
-  OS << "#ifndef LAST_MS_INHERITABLE_ATTR\n";
-  OS << "#define LAST_MS_INHERITABLE_ATTR(NAME)"
-        " MS_INHERITABLE_ATTR(NAME)\n";
+  OS << "#ifndef LAST_MS_INHERITANCE_ATTR\n";
+  OS << "#define LAST_MS_INHERITANCE_ATTR(NAME)"
+        " MS_INHERITANCE_ATTR(NAME)\n";
   OS << "#endif\n\n";
 
   Record *InhClass = Records.getClass("InheritableAttr");
@@ -1124,16 +1124,16 @@ void EmitClangAttrList(RecordKeeper &Records, raw_ostream &OS) {
   }
 
   EmitAttrList(OS, "INHERITABLE_PARAM_ATTR", InhParamAttrs);
-  EmitAttrList(OS, "MS_INHERITABLE_ATTR", MSInhAttrs);
+  EmitAttrList(OS, "MS_INHERITANCE_ATTR", MSInhAttrs);
   EmitAttrList(OS, "INHERITABLE_ATTR", InhAttrs);
   EmitAttrList(OS, "ATTR", NonInhAttrs);
 
   OS << "#undef LAST_ATTR\n";
   OS << "#undef INHERITABLE_ATTR\n";
-  OS << "#undef MS_INHERITABLE_ATTR\n";
+  OS << "#undef MS_INHERITANCE_ATTR\n";
   OS << "#undef LAST_INHERITABLE_ATTR\n";
   OS << "#undef LAST_INHERITABLE_PARAM_ATTR\n";
-  OS << "#undef LAST_MS_INHERITABLE_ATTR\n";
+  OS << "#undef LAST_MS_INHERITANCE_ATTR\n";
   OS << "#undef ATTR\n";
 }
 

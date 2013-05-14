@@ -145,7 +145,7 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *A) {
     // Relies on relative order of enum emission with respect to param attrs.
-    return (A->getKind() <= attr::LAST_MS_INHERITABLE &&
+    return (A->getKind() <= attr::LAST_MS_INHERITANCE &&
             A->getKind() > attr::LAST_INHERITABLE_PARAM);
   }
 };
