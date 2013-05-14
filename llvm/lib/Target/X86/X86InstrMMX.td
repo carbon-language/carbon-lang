@@ -357,21 +357,21 @@ defm MMX_PHADDSW : SS3I_binop_rm_int_mm<0x03, "phaddsw",int_x86_ssse3_phadd_sw,
 defm MMX_PSUBB : MMXI_binop_rm_int<0xF8, "psubb", int_x86_mmx_psub_b,
                                    MMX_INTALU_ITINS>;
 defm MMX_PSUBW : MMXI_binop_rm_int<0xF9, "psubw", int_x86_mmx_psub_w,
-                                   MMX_INTALU_ITINS, 1>;
+                                   MMX_INTALU_ITINS>;
 defm MMX_PSUBD : MMXI_binop_rm_int<0xFA, "psubd", int_x86_mmx_psub_d,
-                                   MMX_INTALU_ITINS, 1>;
+                                   MMX_INTALU_ITINS>;
 defm MMX_PSUBQ : MMXI_binop_rm_int<0xFB, "psubq", int_x86_mmx_psub_q,
-                                   MMX_INTALUQ_ITINS, 1>;
+                                   MMX_INTALUQ_ITINS>;
 
 defm MMX_PSUBSB  : MMXI_binop_rm_int<0xE8, "psubsb" , int_x86_mmx_psubs_b,
-                                   MMX_INTALU_ITINS, 1>;
+                                   MMX_INTALU_ITINS>;
 defm MMX_PSUBSW  : MMXI_binop_rm_int<0xE9, "psubsw" , int_x86_mmx_psubs_w,
-                                   MMX_INTALU_ITINS, 1>;
+                                   MMX_INTALU_ITINS>;
 
 defm MMX_PSUBUSB : MMXI_binop_rm_int<0xD8, "psubusb", int_x86_mmx_psubus_b,
-                                   MMX_INTALU_ITINS, 1>;
+                                   MMX_INTALU_ITINS>;
 defm MMX_PSUBUSW : MMXI_binop_rm_int<0xD9, "psubusw", int_x86_mmx_psubus_w,
-                                   MMX_INTALU_ITINS, 1>;
+                                   MMX_INTALU_ITINS>;
 
 defm MMX_PHSUBW  : SS3I_binop_rm_int_mm<0x05, "phsubw", int_x86_ssse3_phsub_w,
                                    MMX_PHADDSUBW>;
