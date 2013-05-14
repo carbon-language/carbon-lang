@@ -33,7 +33,7 @@
 #endif
 
 extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
-extern "C" void __clear_cache(char *, char*);
+extern "C" void __clear_cache(void *, void*);
 
 namespace {
 
