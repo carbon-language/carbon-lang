@@ -69,3 +69,15 @@ int test4 = __builtin_offsetof(Array, array);
 int test5() {
   return __builtin_offsetof(Array, array[*(int*)0]); // expected-warning{{indirection of non-volatile null pointer}} expected-note{{__builtin_trap}}
 }
+
+// PR15216
+// Don't crash when taking computing the offset of structs with large arrays.
+const unsigned long Size = (1l << 62);
+
+struct Chunk {
+  char padding[Size];
+  char more_padding[1][Size];
+  char data;
+};
+
+int test6 = __builtin_offsetof(struct Chunk, data); 

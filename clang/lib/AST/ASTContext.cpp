@@ -1345,8 +1345,27 @@ ASTContext::getTypeInfoDataSizeInChars(QualType T) const {
   return sizeAndAlign;
 }
 
+/// getConstantArrayInfoInChars - Performing the computation in CharUnits
+/// instead of in bits prevents overflowing the uint64_t for some large arrays.
+std::pair<CharUnits, CharUnits>
+static getConstantArrayInfoInChars(const ASTContext &Context,
+                                   const ConstantArrayType *CAT) {
+  std::pair<CharUnits, CharUnits> EltInfo =
+      Context.getTypeInfoInChars(CAT->getElementType());
+  uint64_t Size = CAT->getSize().getZExtValue();
+  assert((Size == 0 || EltInfo.first.getQuantity() <= (uint64_t)(-1)/Size) &&
+         "Overflow in array type char size evaluation");
+  uint64_t Width = EltInfo.first.getQuantity() * Size;
+  unsigned Align = EltInfo.second.getQuantity();
+  Width = llvm::RoundUpToAlignment(Width, Align);
+  return std::make_pair(CharUnits::fromQuantity(Width),
+                        CharUnits::fromQuantity(Align));
+}
+
 std::pair<CharUnits, CharUnits>
 ASTContext::getTypeInfoInChars(const Type *T) const {
+  if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(T))
+    return getConstantArrayInfoInChars(*this, CAT);
   std::pair<uint64_t, unsigned> Info = getTypeInfo(T);
   return std::make_pair(toCharUnitsFromBits(Info.first),
                         toCharUnitsFromBits(Info.second));
@@ -1702,10 +1721,10 @@ int64_t ASTContext::toBits(CharUnits CharSize) const {
 /// getTypeSizeInChars - Return the size of the specified type, in characters.
 /// This method does not work on incomplete types.
 CharUnits ASTContext::getTypeSizeInChars(QualType T) const {
-  return toCharUnitsFromBits(getTypeSize(T));
+  return getTypeInfoInChars(T).first;
 }
 CharUnits ASTContext::getTypeSizeInChars(const Type *T) const {
-  return toCharUnitsFromBits(getTypeSize(T));
+  return getTypeInfoInChars(T).first;
 }
 
 /// getTypeAlignInChars - Return the ABI-specified alignment of a type, in 
