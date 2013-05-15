@@ -39,9 +39,23 @@ const MCSymbol *MCELFObjectTargetWriter::undefinedExplicitRelSym(const MCValue &
   return &Symbol.AliasedSymbol();
 }
 
+// ELF doesn't require relocations to be in any order. We sort by the r_offset,
+// just to match gnu as for easier comparison. The use type and index is an
+// arbitrary way of making the sort deterministic.
+static int cmpRel(const void *AP, const void *BP) {
+  const ELFRelocationEntry &A = *(const ELFRelocationEntry *)AP;
+  const ELFRelocationEntry &B = *(const ELFRelocationEntry *)BP;
+  if (A.r_offset != B.r_offset)
+    return B.r_offset - A.r_offset;
+  if (B.Type != A.Type)
+    return A.Type - B.Type;
+  if (B.Index != A.Index)
+    return B.Index - A.Index;
+  llvm_unreachable("ELFRelocs might be unstable!");
+}
+
 void
 MCELFObjectTargetWriter::sortRelocs(const MCAssembler &Asm,
                                     std::vector<ELFRelocationEntry> &Relocs) {
-  // Sort by the r_offset, just like gnu as does.
-  array_pod_sort(Relocs.begin(), Relocs.end());
+  array_pod_sort(Relocs.begin(), Relocs.end(), cmpRel);
 }
