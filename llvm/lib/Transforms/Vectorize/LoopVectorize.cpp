@@ -318,6 +318,93 @@ private:
   ValueMap WidenMap;
 };
 
+/// \brief Check if conditionally executed loads are hoistable.
+///
+/// This class has two functions. isHoistableLoad and canHoistAllLoads.
+/// isHoistableLoad should be called on all load instructions that are executed
+/// conditionally. After all conditional loads are processed, the client should
+/// call canHoistAllLoads to determine if all of the conditional execute loads
+/// have an unconditional memory access in the loop.
+class LoadHoisting {
+  typedef SmallPtrSet<Value *, 8> MemorySet;
+
+  Loop *TheLoop;
+  DominatorTree *DT;
+  MemorySet CondLoadAddrSet;
+
+public:
+  LoadHoisting(Loop *L, DominatorTree *D) : TheLoop(L), DT(D) {}
+
+  /// \brief Check if the instruction is a load with a identifiable address.
+  bool isHoistableLoad(Instruction *L);
+
+  /// \brief Check if all of the conditional loads are hoistable because there
+  /// exists an unconditional memory access to the same address in the loop.
+  bool canHoistAllLoads();
+};
+
+bool LoadHoisting::isHoistableLoad(Instruction *L) {
+  LoadInst *LI = dyn_cast<LoadInst>(L);
+  if (!LI)
+    return false;
+
+  CondLoadAddrSet.insert(LI->getPointerOperand());
+  return true;
+}
+
+static void addMemAccesses(BasicBlock *BB, SmallPtrSet<Value *, 8> &Set) {
+  for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE; ++BI) {
+    Instruction *I = &*BI;
+    Value *Addr = 0;
+
+    // Try a load.
+    LoadInst *LI = dyn_cast<LoadInst>(I);
+    if (LI) {
+      Addr = LI->getPointerOperand();
+      Set.insert(Addr);
+      continue;
+    }
+
+    // Try a store.
+    StoreInst *SI = dyn_cast<StoreInst>(I);
+    if (!SI)
+      continue;
+
+    Addr = SI->getPointerOperand();
+    Set.insert(Addr);
+  }
+}
+
+bool LoadHoisting::canHoistAllLoads() {
+  // No conditional loads.
+  if (CondLoadAddrSet.empty())
+    return true;
+
+  MemorySet UncondMemAccesses;
+  std::vector<BasicBlock*> &LoopBlocks = TheLoop->getBlocksVector();
+  BasicBlock *LoopLatch = TheLoop->getLoopLatch();
+
+  // Iterate over the unconditional blocks and collect memory access addresses.
+  for (unsigned i = 0, e = LoopBlocks.size(); i < e; ++i) {
+    BasicBlock *BB = LoopBlocks[i];
+
+    // Ignore conditional blocks.
+    if (BB != LoopLatch && !DT->dominates(BB, LoopLatch))
+      continue;
+
+    addMemAccesses(BB, UncondMemAccesses);
+  }
+
+  // And make sure there is a matching unconditional access for every
+  // conditional load.
+  for (MemorySet::iterator MI = CondLoadAddrSet.begin(),
+       ME = CondLoadAddrSet.end(); MI != ME; ++MI)
+    if (!UncondMemAccesses.count(*MI))
+      return false;
+
+  return true;
+}
+
 /// LoopVectorizationLegality checks if it is legal to vectorize a loop, and
 /// to what vectorization factor.
 /// This class does not look at the profitability of vectorization, only the
@@ -337,7 +424,8 @@ public:
                             DominatorTree *DT, TargetTransformInfo* TTI,
                             AliasAnalysis *AA, TargetLibraryInfo *TLI)
       : TheLoop(L), SE(SE), DL(DL), DT(DT), TTI(TTI), AA(AA), TLI(TLI),
-        Induction(0), WidestIndTy(0), HasFunNoNaNAttr(false) {}
+        Induction(0), WidestIndTy(0), HasFunNoNaNAttr(false),
+        LoadSpeculation(L, DT) {}
 
   /// This enum represents the kinds of reductions that we support.
   enum ReductionKind {
@@ -598,6 +686,9 @@ private:
   RuntimePointerCheck PtrRtCheck;
   /// Can we assume the absence of NaNs.
   bool HasFunNoNaNAttr;
+
+  /// Utility to determine whether loads can be speculated.
+  LoadHoisting LoadSpeculation;
 };
 
 /// LoopVectorizationCostModel - estimates the expected speedups due to
@@ -3259,8 +3350,12 @@ bool LoopVectorizationLegality::blockNeedsPredication(BasicBlock *BB)  {
 
 bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB) {
   for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
-    // We don't predicate loads/stores at the moment.
-    if (it->mayReadFromMemory() || it->mayWriteToMemory() || it->mayThrow())
+    // We might be able to hoist the load.
+    if (it->mayReadFromMemory() && !LoadSpeculation.isHoistableLoad(it))
+      return false;
+
+    // We predicate stores at the moment.
+    if (it->mayWriteToMemory() || it->mayThrow())
       return false;
 
     // The instructions below can trap.
@@ -3273,6 +3368,10 @@ bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB) {
              return false;
     }
   }
+
+  // Check that we can actually speculate the hoistable loads.
+  if (!LoadSpeculation.canHoistAllLoads())
+    return false;
 
   return true;
 }
