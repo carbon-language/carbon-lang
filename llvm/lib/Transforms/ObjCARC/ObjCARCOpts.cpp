@@ -340,18 +340,18 @@ STATISTIC(NumNoops,       "Number of no-op objc calls eliminated");
 STATISTIC(NumPartialNoops, "Number of partially no-op objc calls eliminated");
 STATISTIC(NumAutoreleases,"Number of autoreleases converted to releases");
 STATISTIC(NumRets,        "Number of return value forwarding "
-                          "retain+autoreleaes eliminated");
+                          "retain+autoreleases eliminated");
 STATISTIC(NumRRs,         "Number of retain+release paths eliminated");
 STATISTIC(NumPeeps,       "Number of calls peephole-optimized");
 #ifndef NDEBUG
 STATISTIC(NumRetainsBeforeOpt,
-          "Number of retains before optimization.");
+          "Number of retains before optimization");
 STATISTIC(NumReleasesBeforeOpt,
-          "Number of releases before optimization.");
+          "Number of releases before optimization");
 STATISTIC(NumRetainsAfterOpt,
-          "Number of retains after optimization.");
+          "Number of retains after optimization");
 STATISTIC(NumReleasesAfterOpt,
-          "Number of releases after optimization.");
+          "Number of releases after optimization");
 #endif
 
 namespace {
