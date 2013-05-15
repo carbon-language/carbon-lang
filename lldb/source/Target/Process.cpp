@@ -3955,7 +3955,7 @@ Process::HandlePrivateEvent (EventSP &event_sp)
         Process::ProcessEventData::SetUpdateStateOnRemoval(event_sp.get());
         if (StateIsRunningState (new_state))
             PushProcessInputReader ();
-        else 
+        else if (!Process::ProcessEventData::GetRestartedFromEvent(event_sp.get()))
             PopProcessInputReader ();
 
         BroadcastEvent (event_sp);
