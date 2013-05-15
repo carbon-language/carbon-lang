@@ -759,9 +759,6 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   uint64_t RelocOffset = Layout.getFragmentOffset(Fragment) +
     Fixup.getOffset();
 
-  // FIXME: no tests cover this. Is adjustFixupOffset dead code?
-  TargetObjectWriter->adjustFixupOffset(Fixup, RelocOffset);
-
   if (!hasRelocationAddend())
     Addend = 0;
 

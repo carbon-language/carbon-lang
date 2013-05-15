@@ -39,10 +39,6 @@ const MCSymbol *MCELFObjectTargetWriter::undefinedExplicitRelSym(const MCValue &
   return &Symbol.AliasedSymbol();
 }
 
-void MCELFObjectTargetWriter::adjustFixupOffset(const MCFixup &Fixup,
-                                                uint64_t &RelocOffset) {
-}
-
 void
 MCELFObjectTargetWriter::sortRelocs(const MCAssembler &Asm,
                                     std::vector<ELFRelocationEntry> &Relocs) {

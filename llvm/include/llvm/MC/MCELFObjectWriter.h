@@ -94,8 +94,6 @@ public:
   virtual const MCSymbol *undefinedExplicitRelSym(const MCValue &Target,
                                                   const MCFixup &Fixup,
                                                   bool IsPCRel) const;
-  virtual void adjustFixupOffset(const MCFixup &Fixup,
-                                 uint64_t &RelocOffset);
 
   virtual void sortRelocs(const MCAssembler &Asm,
                           std::vector<ELFRelocationEntry> &Relocs);
