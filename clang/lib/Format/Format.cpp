@@ -1348,8 +1348,7 @@ private:
     if (I + 1 == E || (I + 1)->Type == LT_Invalid)
       return;
 
-    if (I->Last->is(tok::l_brace) &&
-        Style.BreakBeforeBraces == FormatStyle::BS_Attach) {
+    if (I->Last->is(tok::l_brace)) {
       tryMergeSimpleBlock(I, E, Limit);
     } else if (I->First.is(tok::kw_if)) {
       tryMergeSimpleIf(I, E, Limit);
@@ -1402,13 +1401,17 @@ private:
   void tryMergeSimpleBlock(std::vector<AnnotatedLine>::iterator &I,
                            std::vector<AnnotatedLine>::iterator E,
                            unsigned Limit) {
+    // No merging if the brace already is on the next line.
+    if (Style.BreakBeforeBraces != FormatStyle::BS_Attach)
+      return;
+
     // First, check that the current line allows merging. This is the case if
     // we're not in a control flow statement and the last token is an opening
     // brace.
     AnnotatedLine &Line = *I;
     if (Line.First.isOneOf(tok::kw_if, tok::kw_while, tok::kw_do, tok::r_brace,
                            tok::kw_else, tok::kw_try, tok::kw_catch,
-                           tok::kw_for,
+                           tok::kw_for, tok::kw_namespace,
                            // This gets rid of all ObjC @ keywords and methods.
                            tok::at, tok::minus, tok::plus))
       return;

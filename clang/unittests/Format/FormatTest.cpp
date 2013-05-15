@@ -745,11 +745,11 @@ TEST_F(FormatTest, SplitsLongCxxComments) {
 }
 
 TEST_F(FormatTest, ParsesCommentsAdjacentToPPDirectives) {
-  EXPECT_EQ("namespace {}\n// Test\n#define A",
+  EXPECT_EQ("namespace {\n}\n// Test\n#define A",
             format("namespace {}\n   // Test\n#define A"));
-  EXPECT_EQ("namespace {}\n/* Test */\n#define A",
+  EXPECT_EQ("namespace {\n}\n/* Test */\n#define A",
             format("namespace {}\n   /* Test */\n#define A"));
-  EXPECT_EQ("namespace {}\n/* Test */ #define A",
+  EXPECT_EQ("namespace {\n}\n/* Test */ #define A",
             format("namespace {}\n   /* Test */    #define A"));
 }
 
@@ -2921,7 +2921,10 @@ TEST_F(FormatTest, IncorrectCodeMissingSemicolon) {
             "    return\n"
             "}",
             format("void  f  (  )  {  if  ( a )  return  }"));
-  EXPECT_EQ("namespace N { void f() }", format("namespace  N  {  void f()  }"));
+  EXPECT_EQ("namespace N {\n"
+            "void f()\n"
+            "}",
+            format("namespace  N  {  void f()  }"));
   EXPECT_EQ("namespace N {\n"
             "void f() {}\n"
             "void g()\n"
