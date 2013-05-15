@@ -1410,12 +1410,17 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += ", (int64x1_t)__b, 0, 1);";
     break;
   case OpHi:
-    s += "(" + ts +
-      ")__builtin_shufflevector((int64x2_t)__a, (int64x2_t)__a, 1);";
+    // nElts is for the result vector, so the source is twice that number.
+    s += "__builtin_shufflevector(__a, __a";
+    for (unsigned i = nElts; i < nElts * 2; ++i)
+      s += ", " + utostr(i);
+    s+= ");";
     break;
   case OpLo:
-    s += "(" + ts +
-      ")__builtin_shufflevector((int64x2_t)__a, (int64x2_t)__a, 0);";
+    s += "__builtin_shufflevector(__a, __a";
+    for (unsigned i = 0; i < nElts; ++i)
+      s += ", " + utostr(i);
+    s+= ");";
     break;
   case OpDup:
     s += Duplicate(nElts, typestr, "__a") + ";";
