@@ -16,7 +16,6 @@
 #define DEBUG_TYPE "format-parser"
 
 #include "UnwrappedLineParser.h"
-#include "clang/Basic/Diagnostic.h"
 #include "llvm/Support/Debug.h"
 
 namespace clang {
@@ -125,11 +124,11 @@ private:
   UnwrappedLine *PreBlockLine;
 };
 
-UnwrappedLineParser::UnwrappedLineParser(
-    clang::DiagnosticsEngine &Diag, const FormatStyle &Style,
-    FormatTokenSource &Tokens, UnwrappedLineConsumer &Callback)
+UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style,
+                                         FormatTokenSource &Tokens,
+                                         UnwrappedLineConsumer &Callback)
     : Line(new UnwrappedLine), MustBreakBeforeNextToken(false),
-      CurrentLines(&Lines), StructuralError(false), Diag(Diag), Style(Style),
+      CurrentLines(&Lines), StructuralError(false), Style(Style),
       Tokens(&Tokens), Callback(Callback) {}
 
 bool UnwrappedLineParser::parse() {
@@ -173,9 +172,6 @@ void UnwrappedLineParser::parseLevel(bool HasOpeningBrace) {
     case tok::r_brace:
       if (HasOpeningBrace)
         return;
-      Diag.Report(FormatTok.Tok.getLocation(),
-                  Diag.getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                       "unexpected '}'"));
       StructuralError = true;
       nextToken();
       addUnwrappedLine();

@@ -19,11 +19,9 @@
 #include "TokenAnnotator.h"
 #include "UnwrappedLineParser.h"
 #include "WhitespaceManager.h"
-#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/OperatorPrecedence.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Format/Format.h"
-#include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Lex/Lexer.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Allocator.h"
@@ -1140,17 +1138,16 @@ private:
 
 class Formatter : public UnwrappedLineConsumer {
 public:
-  Formatter(DiagnosticsEngine &Diag, const FormatStyle &Style, Lexer &Lex,
-            SourceManager &SourceMgr,
+  Formatter(const FormatStyle &Style, Lexer &Lex, SourceManager &SourceMgr,
             const std::vector<CharSourceRange> &Ranges)
-      : Diag(Diag), Style(Style), Lex(Lex), SourceMgr(SourceMgr),
+      : Style(Style), Lex(Lex), SourceMgr(SourceMgr),
         Whitespaces(SourceMgr, Style), Ranges(Ranges) {}
 
   virtual ~Formatter() {}
 
   tooling::Replacements format() {
     LexerBasedFormatTokenSource Tokens(Lex, SourceMgr);
-    UnwrappedLineParser Parser(Diag, Style, Tokens, *this);
+    UnwrappedLineParser Parser(Style, Tokens, *this);
     bool StructuralError = Parser.parse();
     unsigned PreviousEndOfLineColumn = 0;
     TokenAnnotator Annotator(Style, SourceMgr, Lex,
@@ -1529,7 +1526,6 @@ private:
     }
   }
 
-  DiagnosticsEngine &Diag;
   FormatStyle Style;
   Lexer &Lex;
   SourceManager &SourceMgr;
@@ -1540,20 +1536,8 @@ private:
 
 tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
                                SourceManager &SourceMgr,
-                               std::vector<CharSourceRange> Ranges,
-                               DiagnosticConsumer *DiagClient) {
-  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
-  OwningPtr<DiagnosticConsumer> DiagPrinter;
-  if (DiagClient == 0) {
-    DiagPrinter.reset(new TextDiagnosticPrinter(llvm::errs(), &*DiagOpts));
-    DiagPrinter->BeginSourceFile(Lex.getLangOpts(), Lex.getPP());
-    DiagClient = DiagPrinter.get();
-  }
-  DiagnosticsEngine Diagnostics(
-      IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()), &*DiagOpts,
-      DiagClient, false);
-  Diagnostics.setSourceManager(&SourceMgr);
-  Formatter formatter(Diagnostics, Style, Lex, SourceMgr, Ranges);
+                               std::vector<CharSourceRange> Ranges) {
+  Formatter formatter(Style, Lex, SourceMgr, Ranges);
   return formatter.format();
 }
 

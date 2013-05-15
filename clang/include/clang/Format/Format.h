@@ -177,15 +177,11 @@ std::string configurationAsText(const FormatStyle &Style);
 /// everything that might influence its formatting or might be influenced by its
 /// formatting.
 ///
-/// \param DiagClient A custom DiagnosticConsumer. Can be 0, in this case
-/// diagnostic is output to llvm::errs().
-///
 /// Returns the \c Replacements necessary to make all \p Ranges comply with
 /// \p Style.
 tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
                                SourceManager &SourceMgr,
-                               std::vector<CharSourceRange> Ranges,
-                               DiagnosticConsumer *DiagClient = 0);
+                               std::vector<CharSourceRange> Ranges);
 
 /// \brief Returns the \c LangOpts that the formatter expects you to set.
 LangOptions getFormattingLangOpts();

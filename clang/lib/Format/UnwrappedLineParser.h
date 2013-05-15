@@ -23,9 +23,6 @@
 #include <list>
 
 namespace clang {
-
-class DiagnosticsEngine;
-
 namespace format {
 
 /// \brief A wrapper around a \c Token storing information about the
@@ -129,8 +126,7 @@ public:
 
 class UnwrappedLineParser {
 public:
-  UnwrappedLineParser(clang::DiagnosticsEngine &Diag, const FormatStyle &Style,
-                      FormatTokenSource &Tokens,
+  UnwrappedLineParser(const FormatStyle &Style, FormatTokenSource &Tokens,
                       UnwrappedLineConsumer &Callback);
 
   /// Returns true in case of a structural error.
@@ -203,7 +199,6 @@ private:
   // indentation levels.
   bool StructuralError;
 
-  clang::DiagnosticsEngine &Diag;
   const FormatStyle &Style;
   FormatTokenSource *Tokens;
   UnwrappedLineConsumer &Callback;

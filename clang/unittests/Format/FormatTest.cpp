@@ -32,8 +32,8 @@ protected:
         CharSourceRange::getCharRange(Start, Start.getLocWithOffset(Length)));
     Lexer Lex(ID, Context.Sources.getBuffer(ID), Context.Sources,
               getFormattingLangOpts());
-    tooling::Replacements Replace = reformat(
-        Style, Lex, Context.Sources, Ranges, new IgnoringDiagConsumer());
+    tooling::Replacements Replace =
+        reformat(Style, Lex, Context.Sources, Ranges);
     ReplacementCount = Replace.size();
     EXPECT_TRUE(applyAllReplacements(Replace, Context.Rewrite));
     DEBUG(llvm::errs() << "\n" << Context.getRewrittenText(ID) << "\n\n");
