@@ -27,7 +27,8 @@
 #include <mach-o/dyld.h>
 #include <mach/mach_port.h>
 
-#elif defined (__linux__)
+#elif defined (__linux__) || defined(__FreeBSD_kernel__)
+/*  Linux or the FreeBSD kernel with glibc (Debian KFreeBSD for example) */
 
 #include <sys/wait.h>
 
