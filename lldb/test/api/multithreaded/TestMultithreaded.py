@@ -56,7 +56,7 @@ class SBBreakpointCallbackCase(TestBase):
     def build_and_test(self, sources, test_name, args = None):
         """ Build LLDB test from sources, and run expecting 0 exit code """
         self.buildDriver(sources, test_name)
-        self.addTearDownHook(lambda: os.remove(test_name))
+        #self.addTearDownHook(lambda: os.remove(test_name))
 
         exe = [os.path.join(os.getcwd(), test_name), self.inferior]
 
