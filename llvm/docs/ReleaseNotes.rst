@@ -191,6 +191,20 @@ LLVM-based code generators "on the fly" for the designed TTA processors and
 loads them in to the compiler backend as runtime libraries to avoid
 per-target recompilation of larger parts of the compiler chain.
 
+Just-in-time Adaptive Decoder Engine (Jade)
+-------------------------------------------
+
+`Jade <https://github.com/orcc/jade>`_ (Just-in-time Adaptive Decoder Engine)
+is a generic video decoder engine using LLVM for just-in-time compilation of
+video decoder configurations. Those configurations are designed by MPEG
+Reconfigurable Video Coding (RVC) committee. MPEG RVC standard is built on a
+stream-based dataflow representation of decoders. It is composed of a standard
+library of coding tools written in RVC-CAL language and a dataflow
+configuration --- block diagram --- of a decoder.
+
+Jade project is hosted as part of the Open RVC-CAL Compiler
+(`Orcc <http://orcc.sf.net>`_) and requires it to translate the RVC-CAL standard
+library of video coding tools into an LLVM assembly code.
 
 Additional Information
 ======================
