@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -triple i386-apple-darwin9 -fsyntax-only -verify -Wno-objc-root-class %s 
 
-@interface I0  // expected-note {{receiver is object of the class that is declared here}}
+@interface I0  // expected-note {{receiver is instance of class declared here}}
 @end
 
 @implementation I0 // expected-note {{implementation started here}}

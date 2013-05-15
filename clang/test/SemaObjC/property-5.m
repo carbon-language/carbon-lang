@@ -8,7 +8,7 @@
 
 @interface MutableNSData : NSData @end
 
-@interface Base : NSData <P1> // expected-note {{receiver is object of the class that is declared here}}
+@interface Base : NSData <P1> // expected-note {{receiver is instance of class declared here}}
 @property(readonly) id ref;
 @property(readonly) Base *p_base;
 @property(readonly) NSData *nsdata;

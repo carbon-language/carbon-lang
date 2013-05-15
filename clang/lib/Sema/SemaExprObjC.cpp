@@ -1227,11 +1227,9 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
                                                 SelectorLocs.back());
       // Find the class to which we are sending this message.
       if (ReceiverType->isObjCObjectPointerType()) {
-        QualType ClassType =
-          ReceiverType->getAs<ObjCObjectPointerType>()->getPointeeType();
-        if (const ObjCObjectType *ClassTPtr = ClassType->getAs<ObjCObjectType>())
-          if (ObjCInterfaceDecl *Class = ClassTPtr->getInterface())
-            Diag(Class->getLocation(), diag::note_receiver_class_declared);
+        if (ObjCInterfaceDecl *Class =
+              ReceiverType->getAs<ObjCObjectPointerType>()->getInterfaceDecl())
+          Diag(Class->getLocation(), diag::note_receiver_class_declared);
       }
     }
 

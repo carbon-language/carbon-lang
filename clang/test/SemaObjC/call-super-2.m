@@ -14,7 +14,7 @@ id objc_getClass(const char *s);
 - (int) instance_func0;
 @end
 
-@interface Derived: Object // expected-note {{receiver is object of the class that is declared here}}
+@interface Derived: Object // expected-note {{receiver is instance of class declared here}}
 + (int) class_func1;
 + (int) class_func2;
 + (int) class_func3;

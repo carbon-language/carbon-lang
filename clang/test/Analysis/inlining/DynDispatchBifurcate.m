@@ -181,7 +181,7 @@ int testPropertySynthesized(PublicClass *p) {
 }
 
 // Test definition not available edge case.
-@interface DefNotAvailClass : NSObject // expected-note {{receiver is object of the class that is declared here}}
+@interface DefNotAvailClass : NSObject // expected-note {{receiver is instance of class declared here}}
 @end
 id testDefNotAvailableInlined(DefNotAvailClass *C) {
   return [C mem]; // expected-warning {{instance method '-mem' not found}}

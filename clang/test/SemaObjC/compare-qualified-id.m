@@ -12,7 +12,7 @@ typedef struct _NSZone NSZone;
 typedef struct {} NSFastEnumerationState;
 @protocol NSFastEnumeration  - (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id *)stackbuf count:(NSUInteger)len; @end
 @interface NSDictionary : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>  - (NSUInteger)count; @end
-@interface NSMutableDictionary : NSDictionary  - (void)removeObjectForKey:(id)aKey; @end // expected-note {{receiver is object of the class that is declared here}}
+@interface NSMutableDictionary : NSDictionary  - (void)removeObjectForKey:(id)aKey; @end // expected-note {{receiver is instance of class declared here}}
 extern NSString * const NSTaskDidTerminateNotification;
 
 @interface XCPropertyExpansionContext : NSObject <NSCopying> { // expected-note {{required for direct or indirect protocol 'NSCopying'}}

@@ -25,7 +25,7 @@
 - (instancetype)otherMethodInProto2; // expected-note{{overridden method returns an instance of its class type}}
 @end
 
-@interface Subclass1 : Root // expected-note 4 {{receiver is object of the class that is declared here}}
+@interface Subclass1 : Root // expected-note 4 {{receiver is instance of class declared here}}
 - (instancetype)initSubclass1;
 - (void)methodOnSubclass1;
 + (instancetype)allocSubclass1;

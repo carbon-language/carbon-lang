@@ -10,7 +10,7 @@
 
 // expected-note@Inputs/category_left.h:14 {{previous definition}}
 // expected-warning@Inputs/category_right.h:11 {{duplicate definition of category}}
-// expected-note@Inputs/category_top.h:1 {{receiver is object of the class that is declared here}}
+// expected-note@Inputs/category_top.h:1 {{receiver is instance of class declared here}}
 
 @interface Foo(Source)
 -(void)source; 
