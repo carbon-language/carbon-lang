@@ -22,7 +22,7 @@
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
-static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
+static uint64_t adjustFixupValue(unsigned Kind, uint64_t Value) {
   switch (Kind) {
   default:
     llvm_unreachable("Unknown fixup kind!");
@@ -47,6 +47,29 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     return Value & 0xffff;
   case PPC::fixup_ppc_lo16_ds:
     return Value & 0xfffc;
+  }
+}
+
+static unsigned getFixupKindNumBytes(unsigned Kind) {
+  switch (Kind) {
+  default:
+    llvm_unreachable("Unknown fixup kind!");
+  case FK_Data_1:
+    return 1;
+  case FK_Data_2:
+    return 2;
+  case FK_Data_4:
+  case PPC::fixup_ppc_brcond14:
+  case PPC::fixup_ppc_br24:
+  case PPC::fixup_ppc_ha16:
+  case PPC::fixup_ppc_lo16:
+  case PPC::fixup_ppc_lo16_ds:
+    return 4;
+  case FK_Data_8:
+    return 8;
+  case PPC::fixup_ppc_tlsreg:
+  case PPC::fixup_ppc_nofixup:
+    return 0;
   }
 }
 
@@ -98,12 +121,13 @@ public:
     if (!Value) return;           // Doesn't change encoding.
 
     unsigned Offset = Fixup.getOffset();
+    unsigned NumBytes = getFixupKindNumBytes(Fixup.getKind());
 
     // For each byte of the fragment that the fixup touches, mask in the bits
     // from the fixup value. The Value has been "split up" into the appropriate
     // bitfields above.
-    for (unsigned i = 0; i != 4; ++i)
-      Data[Offset + i] |= uint8_t((Value >> ((4 - i - 1)*8)) & 0xff);
+    for (unsigned i = 0; i != NumBytes; ++i)
+      Data[Offset + i] |= uint8_t((Value >> ((NumBytes - i - 1)*8)) & 0xff);
   }
 
   bool mayNeedRelaxation(const MCInst &Inst) const {
