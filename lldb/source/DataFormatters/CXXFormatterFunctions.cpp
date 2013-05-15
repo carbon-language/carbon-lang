@@ -654,9 +654,16 @@ lldb_private::formatters::WCharSummaryProvider (ValueObject& valobj, Stream& str
     return true;
 }
 
-// this function extracts information from a libcxx std::basic_string<>
-// irregardless of template arguments. it reports the size (in item count not bytes)
-// and the location in memory where the string data can be found
+// the field layout in a libc++ string (cap, side, data or data, size, cap)
+enum LibcxxStringLayoutMode
+{
+    eLibcxxStringLayoutModeCSD = 0,
+    eLibcxxStringLayoutModeDSC = 1,
+    eLibcxxStringLayoutModeInvalid = 0xffff
+};
+
+// this function abstracts away the layout and mode details of a libc++ string
+// and returns the address of the data and the size ready for callers to consume
 static bool
 ExtractLibcxxStringInfo (ValueObject& valobj,
                          ValueObjectSP &location_sp,
@@ -666,19 +673,52 @@ ExtractLibcxxStringInfo (ValueObject& valobj,
     if (!D)
         return false;
     
-    ValueObjectSP size_mode(D->GetChildAtIndexPath({1,0,0}));
-    if (!size_mode)
+    ValueObjectSP layout_decider(D->GetChildAtIndexPath({0,0}));
+    
+    // this child should exist
+    if (!layout_decider)
         return false;
     
-    uint64_t size_mode_value(size_mode->GetValueAsUnsigned(0));
+    ConstString g_data_name("__data_");
+    ConstString g_size_name("__size_");
+    bool short_mode = false; // this means the string is in short-mode and the data is stored inline
+    LibcxxStringLayoutMode layout = (layout_decider->GetName() == g_data_name) ? eLibcxxStringLayoutModeDSC : eLibcxxStringLayoutModeCSD;
+    uint64_t size_mode_value = 0;
     
-    if ((size_mode_value & 1) == 0) // this means the string is in short-mode and the data is stored inline
+    if (layout == eLibcxxStringLayoutModeDSC)
+    {
+        ValueObjectSP size_mode(D->GetChildAtIndexPath({1,1,0}));
+        if (!size_mode)
+            return false;
+        
+        if (size_mode->GetName() != g_size_name)
+        {
+            // we are hitting the padding structure, move along
+            size_mode = D->GetChildAtIndexPath({1,1,1});
+            if (!size_mode)
+                return false;
+        }
+        
+        size_mode_value = (size_mode->GetValueAsUnsigned(0));
+        short_mode = ((size_mode_value & 0x80) == 0);
+    }
+    else
+    {
+        ValueObjectSP size_mode(D->GetChildAtIndexPath({1,0,0}));
+        if (!size_mode)
+            return false;
+        
+        size_mode_value = (size_mode->GetValueAsUnsigned(0));
+        short_mode = ((size_mode_value & 1) == 0);
+    }
+    
+    if (short_mode)
     {
         ValueObjectSP s(D->GetChildAtIndex(1, true));
         if (!s)
             return false;
-        size = ((size_mode_value >> 1) % 256);
-        location_sp = s->GetChildAtIndex(1, true);
+        location_sp = s->GetChildAtIndex((layout == eLibcxxStringLayoutModeDSC) ? 0 : 1, true);
+        size = (layout == eLibcxxStringLayoutModeDSC) ? size_mode_value : ((size_mode_value >> 1) % 256);
         return (location_sp.get() != nullptr);
     }
     else
@@ -686,7 +726,8 @@ ExtractLibcxxStringInfo (ValueObject& valobj,
         ValueObjectSP l(D->GetChildAtIndex(0, true));
         if (!l)
             return false;
-        location_sp = l->GetChildAtIndex(2, true);
+        // we can use the layout_decider object as the data pointer
+        location_sp = (layout == eLibcxxStringLayoutModeDSC) ? layout_decider : l->GetChildAtIndex(2, true);
         ValueObjectSP size_vo(l->GetChildAtIndex(1, true));
         if (!size_vo || !location_sp)
             return false;
@@ -706,7 +747,7 @@ lldb_private::formatters::LibcxxWStringSummaryProvider (ValueObject& valobj, Str
     {
         stream.Printf("L\"\"");
         return true;
-    }
+    }   
     if (!location_sp)
         return false;
     return WCharStringSummaryProvider(*location_sp.get(), stream);
