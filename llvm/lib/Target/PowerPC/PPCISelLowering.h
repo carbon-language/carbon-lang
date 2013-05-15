@@ -222,7 +222,7 @@ namespace llvm {
 
       /// G8RC = ADDIS_DTPREL_HA %X3, Symbol, Chain - For the
       /// local-dynamic TLS model, produces an ADDIS8 instruction
-      /// that adds X3 to sym@dtprel@ha.  The Chain operand is needed 
+      /// that adds X3 to sym@dtprel@ha.  The Chain operand is needed
       /// to tie this in place following a copy to %X3 from the result
       /// of a GET_TLSLD_ADDR.
       ADDIS_DTPREL_HA,
@@ -454,7 +454,7 @@ namespace llvm {
     /// It returns EVT::Other if the type should be determined using generic
     /// target-independent logic.
     virtual EVT
-    getOptimalMemOpType(uint64_t Size, unsigned DstAlign, unsigned SrcAlign, 
+    getOptimalMemOpType(uint64_t Size, unsigned DstAlign, unsigned SrcAlign,
                         bool IsMemset, bool ZeroMemset, bool MemcpyStrSrc,
                         MachineFunction &MF) const;
 
