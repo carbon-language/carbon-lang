@@ -763,15 +763,10 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
         .addSym(FrameLabel);
 
       // Define the current CFA rule to use the provided offset.
-      if (StackSize) {
-        MachineLocation SPDst(MachineLocation::VirtualFP);
-        MachineLocation SPSrc(MachineLocation::VirtualFP, 2 * stackGrowth);
-        MMI.addFrameMove(FrameLabel, SPDst, SPSrc);
-      } else {
-        MachineLocation SPDst(StackPtr);
-        MachineLocation SPSrc(StackPtr, stackGrowth);
-        MMI.addFrameMove(FrameLabel, SPDst, SPSrc);
-      }
+      assert(StackSize);
+      MachineLocation SPDst(MachineLocation::VirtualFP);
+      MachineLocation SPSrc(MachineLocation::VirtualFP, 2 * stackGrowth);
+      MMI.addFrameMove(FrameLabel, SPDst, SPSrc);
 
       // Change the rule for the FramePtr to be an "offset" rule.
       MachineLocation FPDst(MachineLocation::VirtualFP, 2 * stackGrowth);
@@ -959,16 +954,11 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
 
     if (!HasFP && NumBytes) {
       // Define the current CFA rule to use the provided offset.
-      if (StackSize) {
-        MachineLocation SPDst(MachineLocation::VirtualFP);
-        MachineLocation SPSrc(MachineLocation::VirtualFP,
-                              -StackSize + stackGrowth);
-        MMI.addFrameMove(Label, SPDst, SPSrc);
-      } else {
-        MachineLocation SPDst(StackPtr);
-        MachineLocation SPSrc(StackPtr, stackGrowth);
-        MMI.addFrameMove(Label, SPDst, SPSrc);
-      }
+      assert(StackSize);
+      MachineLocation SPDst(MachineLocation::VirtualFP);
+      MachineLocation SPSrc(MachineLocation::VirtualFP,
+                            -StackSize + stackGrowth);
+      MMI.addFrameMove(Label, SPDst, SPSrc);
     }
 
     // Emit DWARF info specifying the offsets of the callee-saved registers.
