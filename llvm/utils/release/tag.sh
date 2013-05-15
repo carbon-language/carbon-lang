@@ -17,6 +17,7 @@ set -e
 release=""
 rc=""
 rebranch="no"
+projects=llvm cfe dragonegg test-suite compiler-rt libcxx clang-tools-extra polly lldb
 
 base_url="https://llvm.org/svn/llvm-project"
 
@@ -32,7 +33,7 @@ function usage() {
 
 function tag_version() {
     set -x
-    for proj in llvm cfe dragonegg test-suite compiler-rt libcxx clang-tools-extra ; do
+    for proj in  $projects; do
         if svn ls $base_url/$proj/branches/release_$release > /dev/null 2>&1 ; then
             if [ $rebranch = "no" ]; then
                 continue
@@ -49,7 +50,7 @@ function tag_version() {
 
 function tag_release_candidate() {
     set -x
-    for proj in llvm cfe dragonegg test-suite compiler-rt libcxx clang-tools-extra ; do
+    for proj in $projects ; do
         if ! svn ls $base_url/$proj/tags/RELEASE_$release > /dev/null 2>&1 ; then
             svn mkdir -m "Creating release directory for release_$release." $base_url/$proj/tags/RELEASE_$release
         fi
