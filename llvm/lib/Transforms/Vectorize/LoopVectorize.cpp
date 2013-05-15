@@ -2432,6 +2432,10 @@ bool LoopVectorizationLegality::canVectorizeWithIfConvert() {
       return false;
   }
 
+  // Check that we can actually speculate the hoistable loads.
+  if (!LoadSpeculation.canHoistAllLoads())
+    return false;
+
   // We can if-convert this loop.
   return true;
 }
@@ -3368,10 +3372,6 @@ bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB) {
              return false;
     }
   }
-
-  // Check that we can actually speculate the hoistable loads.
-  if (!LoadSpeculation.canHoistAllLoads())
-    return false;
 
   return true;
 }
