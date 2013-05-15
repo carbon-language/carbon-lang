@@ -72,13 +72,14 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::Block:
   case Decl::Captured:
   case Decl::ClassScopeFunctionSpecialization:
-  case Decl::UsingShadow:
     llvm_unreachable("Declaration should not be in declstmts!");
   case Decl::Function:  // void X();
   case Decl::Record:    // struct/union/class X;
   case Decl::Enum:      // enum X;
   case Decl::EnumConstant: // enum ? { X = ? }
   case Decl::CXXRecord: // struct/union/class X; [C++]
+  case Decl::Using:          // using X; [C++]
+  case Decl::UsingShadow:
   case Decl::NamespaceAlias:
   case Decl::StaticAssert: // static_assert(X, ""); [C++0x]
   case Decl::Label:        // __label__ x;
@@ -88,10 +89,6 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
     // None of these decls require codegen support.
     return;
 
-  case Decl::Using:          // using X; [C++]
-    if (CGDebugInfo *DI = getDebugInfo())
-      DI->EmitUsingDecl(cast<UsingDecl>(D));
-    return;
   case Decl::UsingDirective: // using namespace X; [C++]
     if (CGDebugInfo *DI = getDebugInfo())
       DI->EmitUsingDirective(cast<UsingDirectiveDecl>(D));
