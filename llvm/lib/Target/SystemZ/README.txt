@@ -29,9 +29,17 @@ to load 103.  This seems to be a general target-independent problem.
 
 --
 
-The tuning of the choice between Load Address (LA) and addition in
+The tuning of the choice between LOAD ADDRESS (LA) and addition in
 SystemZISelDAGToDAG.cpp is suspect.  It should be tweaked based on
 performance measurements.
+
+--
+
+We don't support tail calls at present.
+
+--
+
+We don't support prefetching yet.
 
 --
 
@@ -39,7 +47,26 @@ There is no scheduling support.
 
 --
 
-We don't use the Branch on Count or Branch on Index families of instruction.
+We don't use the BRANCH ON COUNT or BRANCH ON INDEX families of instruction.
+
+--
+
+We might want to use BRANCH ON CONDITION for conditional indirect calls
+and conditional returns.
+
+--
+
+We don't use the combined COMPARE AND BRANCH instructions.  Using them
+would require a change to the way we handle out-of-range branches.
+At the moment, we start with 32-bit forms like BRCL and shorten them
+to forms like BRC where possible, but COMPARE AND BRANCH does not have
+a 32-bit form.
+
+--
+
+We should probably model just CC, not the PSW as a whole.  Strictly
+speaking, every instruction changes the PSW since the PSW contains the
+current instruction address.
 
 --
 
@@ -54,7 +81,30 @@ equality after an integer comparison, etc.
 
 --
 
-We don't optimize string and block memory operations.
+We don't use the LOAD AND TEST or TEST DATA CLASS instructions.
+
+--
+
+We could use the generic floating-point forms of LOAD COMPLEMENT,
+LOAD NEGATIVE and LOAD POSITIVE in cases where we don't need the
+condition codes.  For example, we could use LCDFR instead of LCDBR.
+
+--
+
+We don't optimize block memory operations.
+
+It's definitely worth using things like MVC, CLC, NC, XC and OC with
+constant lengths.  MVCIN may be worthwhile too.
+
+We should probably implement things like memcpy using MVC with EXECUTE.
+Likewise memcmp and CLC.  MVCLE and CLCLE could be useful too.
+
+--
+
+We don't optimize string operations.
+
+MVST, CLST, SRST and CUSE could be useful here.  Some of the TRANSLATE
+family might be too, although they are probably more difficult to exploit.
 
 --
 
@@ -63,9 +113,33 @@ conventions require f128s to be returned by invisible reference.
 
 --
 
+ADD LOGICAL WITH SIGNED IMMEDIATE could be useful when we need to
+produce a carry.  SUBTRACT LOGICAL IMMEDIATE could be useful when we
+need to produce a borrow.  (Note that there are no memory forms of
+ADD LOGICAL WITH CARRY and SUBTRACT LOGICAL WITH BORROW, so the high
+part of 128-bit memory operations would probably need to be done
+via a register.)
+
+--
+
+We don't use the halfword forms of LOAD REVERSED and STORE REVERSED
+(LRVH and STRVH).
+
+--
+
+We could take advantage of the various ... UNDER MASK instructions,
+such as ICM and STCM.
+
+--
+
+We could make more use of the ROTATE AND ... SELECTED BITS instructions.
+At the moment we only use RISBG, and only then for subword atomic operations.
+
+--
+
 DAGCombiner can detect integer absolute, but there's not yet an associated
-ISD opcode.  We could add one and implement it using Load Positive.
-Negated absolutes could use Load Negative.
+ISD opcode.  We could add one and implement it using LOAD POSITIVE.
+Negated absolutes could use LOAD NEGATIVE.
 
 --
 
@@ -142,5 +216,15 @@ See CodeGen/SystemZ/alloca-01.ll for an example.
 --
 
 Atomic loads and stores use the default compare-and-swap based implementation.
-This is probably much too conservative in practice, and the overhead is
-especially bad for 8- and 16-bit accesses.
+This is much too conservative in practice, since the architecture guarantees
+that 1-, 2-, 4- and 8-byte loads and stores to aligned addresses are
+inherently atomic.
+
+--
+
+If needed, we can support 16-byte atomics using LPQ, STPQ and CSDG.
+
+--
+
+We might want to model all access registers and use them to spill
+32-bit values.
