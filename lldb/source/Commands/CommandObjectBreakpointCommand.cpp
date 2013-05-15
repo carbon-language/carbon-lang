@@ -581,7 +581,8 @@ protected:
                         // what the user would do manually: make their breakpoint command be a function call
                         else if (m_options.m_function_name.size())
                         {
-                            std::string oneliner(m_options.m_function_name);
+                            std::string oneliner("return ");
+                            oneliner += m_options.m_function_name;
                             oneliner += "(frame, bp_loc, internal_dict)";
                             m_interpreter.GetScriptInterpreter()->SetBreakpointCommandCallback (bp_options,
                                                                                                 oneliner.c_str());

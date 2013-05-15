@@ -151,6 +151,10 @@ LLDBSwigPythonBreakpointCallbackFunction
                 
                 if (pvalue != NULL)
                 {
+                    // be very conservative here and only refuse to stop if the user
+                    // actually returned False - anything else, just stop
+                    if (pvalue == Py_False)
+                        stop_at_breakpoint = false;
                     Py_DECREF (pvalue);
                 }
                 else if (PyErr_Occurred ())
