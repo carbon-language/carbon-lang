@@ -162,23 +162,10 @@ void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
   if (!isThumb() || hasThumb2())
     PostRAScheduler = true;
 
-  if (!StrictAlign) {
-    // Assume pre-ARMv6 doesn't support unaligned accesses.
-    //
-    // ARMv6 may or may not support unaligned accesses depending on the
-    // SCTLR.U bit, which is architecture-specific. We assume ARMv6
-    // Darwin targets support unaligned accesses, and others don't.
-    //
-    // ARMv7 always has SCTLR.U set to 1, but it has a new SCTLR.A bit
-    // which raises an alignment fault on unaligned accesses. Linux
-    // defaults this bit to 0 and handles it as a system-wide (not
-    // per-process) setting. It is therefore safe to assume that ARMv7+
-    // targets support unaligned accesses.
-    //
-    // The above behavior is consistent with GCC.
-    if (hasV7Ops() || (hasV6Ops() && isTargetDarwin()))
-      AllowsUnalignedMem = true;
-  }
+  // v6+ may or may not support unaligned mem access depending on the system
+  // configuration.
+  if (!StrictAlign && hasV6Ops() && isTargetDarwin())
+    AllowsUnalignedMem = true;
 
   // NEON f32 ops are non-IEEE 754 compliant. Darwin is ok with it by default.
   uint64_t Bits = getFeatureBits();
