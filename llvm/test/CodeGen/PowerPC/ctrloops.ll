@@ -22,7 +22,7 @@ for.end:                                          ; preds = %for.body
 ; CHECK: @test1
 ; CHECK-NOT: or 3, 3, 3
 ; CHECK: mtctr
-; CHECK-NOT: addi
+; CHECK-NOT: addi {[0-9]+}
 ; CHECK-NOT: cmplwi
 ; CHECK: bdnz
 }
@@ -45,7 +45,7 @@ for.end:                                          ; preds = %for.body, %entry
   ret void
 ; CHECK: @test2
 ; CHECK: mtctr
-; CHECK-NOT: addi
+; CHECK-NOT: addi {[0-9]+}
 ; CHECK-NOT: cmplwi
 ; CHECK: bdnz
 }
@@ -69,7 +69,7 @@ for.end:                                          ; preds = %for.body, %entry
   ret void
 ; CHECK: @test3
 ; CHECK: mtctr
-; CHECK-NOT: addi
+; CHECK-NOT: addi {[0-9]+}
 ; CHECK-NOT: cmplwi
 ; CHECK: bdnz
 }

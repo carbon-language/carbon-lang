@@ -1242,6 +1242,15 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
                         getI32Imm(BROpc) };
     return CurDAG->SelectNodeTo(N, SelectCCOp, N->getValueType(0), Ops, 4);
   }
+  case PPCISD::BDNZ:
+  case PPCISD::BDZ: {
+    bool IsPPC64 = PPCSubTarget.isPPC64();
+    SDValue Ops[] = { N->getOperand(1), N->getOperand(0) };
+    return CurDAG->SelectNodeTo(N, N->getOpcode() == PPCISD::BDNZ ?
+                                   (IsPPC64 ? PPC::BDNZ8 : PPC::BDNZ) :
+                                   (IsPPC64 ? PPC::BDZ8 : PPC::BDZ),
+                                MVT::Other, Ops, 2);
+  }
   case PPCISD::COND_BRANCH: {
     // Op #0 is the Chain.
     // Op #1 is the PPC::PRED_* number.

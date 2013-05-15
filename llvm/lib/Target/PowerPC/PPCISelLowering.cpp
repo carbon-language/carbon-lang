@@ -313,6 +313,9 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
+  // To handle counter-based loop conditions.
+  setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::i1, Custom);
+
   // Comparisons that require checking two conditions.
   setCondCodeAction(ISD::SETULT, MVT::f32, Expand);
   setCondCodeAction(ISD::SETULT, MVT::f64, Expand);
@@ -646,6 +649,8 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::LARX:            return "PPCISD::LARX";
   case PPCISD::STCX:            return "PPCISD::STCX";
   case PPCISD::COND_BRANCH:     return "PPCISD::COND_BRANCH";
+  case PPCISD::BDNZ:            return "PPCISD::BDNZ";
+  case PPCISD::BDZ:             return "PPCISD::BDZ";
   case PPCISD::MFFS:            return "PPCISD::MFFS";
   case PPCISD::FADDRTZ:         return "PPCISD::FADDRTZ";
   case PPCISD::TC_RETURN:       return "PPCISD::TC_RETURN";
@@ -5777,6 +5782,9 @@ SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::SCALAR_TO_VECTOR:   return LowerSCALAR_TO_VECTOR(Op, DAG);
   case ISD::MUL:                return LowerMUL(Op, DAG);
 
+  // For counter-based loop handling.
+  case ISD::INTRINSIC_W_CHAIN:  return SDValue();
+
   // Frame & Return address.
   case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG);
   case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
@@ -5791,6 +5799,22 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
   switch (N->getOpcode()) {
   default:
     llvm_unreachable("Do not know how to custom type legalize this operation!");
+  case ISD::INTRINSIC_W_CHAIN: {
+    if (cast<ConstantSDNode>(N->getOperand(1))->getZExtValue() !=
+        Intrinsic::ppc_is_decremented_ctr_nonzero)
+      break;
+
+    assert(N->getValueType(0) == MVT::i1 &&
+           "Unexpected result type for CTR decrement intrinsic");
+    EVT SVT = getSetCCResultType(N->getValueType(0));
+    SDVTList VTs = DAG.getVTList(SVT, MVT::Other);
+    SDValue NewInt = DAG.getNode(N->getOpcode(), dl, VTs, N->getOperand(0),
+                                 N->getOperand(1)); 
+
+    Results.push_back(NewInt);
+    Results.push_back(NewInt.getValue(1));
+    break;
+  }
   case ISD::VAARG: {
     if (!TM.getSubtarget<PPCSubtarget>().isSVR4ABI()
         || TM.getSubtarget<PPCSubtarget>().isPPC64())
@@ -7102,6 +7126,39 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
     // compare down to code that is difficult to reassemble.
     ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(1))->get();
     SDValue LHS = N->getOperand(2), RHS = N->getOperand(3);
+
+    // Sometimes the promoted value of the intrinsic is ANDed by some non-zero
+    // value. If so, pass-through the AND to get to the intrinsic.
+    if (LHS.getOpcode() == ISD::AND &&
+        LHS.getOperand(0).getOpcode() == ISD::INTRINSIC_W_CHAIN &&
+        cast<ConstantSDNode>(LHS.getOperand(0).getOperand(1))->getZExtValue() ==
+          Intrinsic::ppc_is_decremented_ctr_nonzero &&
+        isa<ConstantSDNode>(LHS.getOperand(1)) &&
+        !cast<ConstantSDNode>(LHS.getOperand(1))->getConstantIntValue()->
+          isZero())
+      LHS = LHS.getOperand(0);
+
+    if (LHS.getOpcode() == ISD::INTRINSIC_W_CHAIN &&
+        cast<ConstantSDNode>(LHS.getOperand(1))->getZExtValue() ==
+          Intrinsic::ppc_is_decremented_ctr_nonzero &&
+        isa<ConstantSDNode>(RHS)) {
+      assert((CC == ISD::SETEQ || CC == ISD::SETNE) &&
+             "Counter decrement comparison is not EQ or NE");
+
+      unsigned Val = cast<ConstantSDNode>(RHS)->getZExtValue();
+      bool isBDNZ = (CC == ISD::SETEQ && Val) ||
+                    (CC == ISD::SETNE && !Val);
+
+      // We now need to make the intrinsic dead (it cannot be instruction
+      // selected).
+      DAG.ReplaceAllUsesOfValueWith(LHS.getValue(1), LHS.getOperand(0));
+      assert(LHS.getNode()->hasOneUse() &&
+             "Counter decrement has more than one use");
+
+      return DAG.getNode(isBDNZ ? PPCISD::BDNZ : PPCISD::BDZ, dl, MVT::Other,
+                         N->getOperand(0), N->getOperand(4));
+    }
+
     int CompareOpc;
     bool isDot;
 

@@ -136,6 +136,11 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(PPC::FP);
   Reserved.set(PPC::FP8);
 
+  // The counter registers must be reserved so that counter-based loops can
+  // be correctly formed (and the mtctr instructions are not DCE'd).
+  Reserved.set(PPC::CTR);
+  Reserved.set(PPC::CTR8);
+
   Reserved.set(PPC::R1);
   Reserved.set(PPC::LR);
   Reserved.set(PPC::LR8);

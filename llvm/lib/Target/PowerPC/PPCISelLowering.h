@@ -146,6 +146,10 @@ namespace llvm {
       /// an optional input flag argument.
       COND_BRANCH,
 
+      /// CHAIN = BDNZ CHAIN, DESTBB - These are used to create counter-based
+      /// loops.
+      BDNZ, BDZ,
+
       /// F8RC = FADDRTZ F8RC, F8RC - This is an FADD done with rounding
       /// towards zero.  Used only as part of the long double-to-int
       /// conversion sequence.

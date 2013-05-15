@@ -293,6 +293,12 @@ def MTCTR8 : XFXForm_7_ext<31, 467, 9, (outs), (ins g8rc:$rS),
                            "mtctr $rS", SprMTSPR>,
              PPC970_DGroup_First, PPC970_Unit_FXU;
 }
+let hasSideEffects = 1, isCodeGenOnly = 1, Defs = [CTR8] in {
+let Pattern = [(int_ppc_mtctr i64:$rS)] in
+def MTCTR8se : XFXForm_7_ext<31, 467, 9, (outs), (ins g8rc:$rS),
+                             "mtctr $rS", SprMTSPR>,
+               PPC970_DGroup_First, PPC970_Unit_FXU;
+}
 
 let Pattern = [(set i64:$rT, readcyclecounter)] in
 def MFTB8 : XFXForm_1_ext<31, 339, 268, (outs g8rc:$rT), (ins),

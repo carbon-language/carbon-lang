@@ -91,7 +91,7 @@ public:
     return *getPPCTargetMachine().getSubtargetImpl();
   }
 
-  virtual bool addPreRegAlloc();
+  virtual bool addPreISel();
   virtual bool addILPOpts();
   virtual bool addInstSelector();
   virtual bool addPreSched2();
@@ -103,9 +103,9 @@ TargetPassConfig *PPCTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new PPCPassConfig(this, PM);
 }
 
-bool PPCPassConfig::addPreRegAlloc() {
+bool PPCPassConfig::addPreISel() {
   if (!DisableCTRLoops && getOptLevel() != CodeGenOpt::None)
-    addPass(createPPCCTRLoops());
+    addPass(createPPCCTRLoops(getPPCTargetMachine()));
 
   return false;
 }
