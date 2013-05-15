@@ -1341,7 +1341,8 @@ private:
     if (I + 1 == E || (I + 1)->Type == LT_Invalid)
       return;
 
-    if (I->Last->is(tok::l_brace)) {
+    if (I->Last->is(tok::l_brace) &&
+        Style.BreakBeforeBraces == FormatStyle::BS_Attach) {
       tryMergeSimpleBlock(I, E, Limit);
     } else if (I->First.is(tok::kw_if)) {
       tryMergeSimpleIf(I, E, Limit);

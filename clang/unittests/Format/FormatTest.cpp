@@ -4117,6 +4117,10 @@ TEST_F(FormatTest, LinuxBraceBreaking) {
                "      b();\n"
                "    }\n"
                "  }\n"
+               "  void g()\n"
+               "  {\n"
+               "    return;\n"
+               "  }\n"
                "}\n"
                "}",
                BreakBeforeBrace);
@@ -4133,6 +4137,10 @@ TEST_F(FormatTest, StroustrupBraceBreaking) {
                "      a();\n"
                "      b();\n"
                "    }\n"
+               "  }\n"
+               "  void g()\n"
+               "  {\n"
+               "    return;\n"
                "  }\n"
                "}\n"
                "}",
