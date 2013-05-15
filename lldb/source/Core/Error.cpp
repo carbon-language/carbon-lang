@@ -20,7 +20,7 @@
 #include <cstdlib>
 #include <cstring>
 
-#if defined (__arm__)
+#if defined (__arm__) && defined (__APPLE__)
 #include <SpringBoardServices/SpringBoardServer.h>
 #endif
 
