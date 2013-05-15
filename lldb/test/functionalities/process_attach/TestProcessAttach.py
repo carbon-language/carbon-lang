@@ -32,7 +32,6 @@ class ProcessAttachTestCase(TestBase):
         self.buildDsym()
         self.process_attach_by_name()
 
-    @expectedFailureLinux # due to bugzilla 14541 -- lldb is unable to attach to process by name
     @dwarf_test
     def test_attach_to_process_by_name_with_dwarf(self):
         """Test attach by process name"""
