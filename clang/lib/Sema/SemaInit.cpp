@@ -32,54 +32,99 @@ using namespace clang;
 // Sema Initialization Checking
 //===----------------------------------------------------------------------===//
 
-static Expr *IsStringInit(Expr *Init, const ArrayType *AT,
-                          ASTContext &Context) {
+/// \brief Check whether T is compatible with a wide character type (wchar_t,
+/// char16_t or char32_t).
+static bool IsWideCharCompatible(QualType T, ASTContext &Context) {
+  if (Context.typesAreCompatible(Context.getWideCharType(), T))
+    return true;
+  if (Context.getLangOpts().CPlusPlus || Context.getLangOpts().C11) {
+    return Context.typesAreCompatible(Context.Char16Ty, T) ||
+           Context.typesAreCompatible(Context.Char32Ty, T);
+  }
+  return false;
+}
+
+enum StringInitFailureKind {
+  SIF_None,
+  SIF_NarrowStringIntoWideChar,
+  SIF_WideStringIntoChar,
+  SIF_IncompatWideStringIntoWideChar,
+  SIF_Other
+};
+
+/// \brief Check whether the array of type AT can be initialized by the Init
+/// expression by means of string initialization. Returns SIF_None if so,
+/// otherwise returns a StringInitFailureKind that describes why the
+/// initialization would not work.
+static StringInitFailureKind IsStringInit(Expr *Init, const ArrayType *AT,
+                                          ASTContext &Context) {
   if (!isa<ConstantArrayType>(AT) && !isa<IncompleteArrayType>(AT))
-    return 0;
+    return SIF_Other;
 
   // See if this is a string literal or @encode.
   Init = Init->IgnoreParens();
 
   // Handle @encode, which is a narrow string.
   if (isa<ObjCEncodeExpr>(Init) && AT->getElementType()->isCharType())
-    return Init;
+    return SIF_None;
 
   // Otherwise we can only handle string literals.
   StringLiteral *SL = dyn_cast<StringLiteral>(Init);
-  if (SL == 0) return 0;
+  if (SL == 0)
+    return SIF_Other;
 
-  QualType ElemTy = Context.getCanonicalType(AT->getElementType());
+  const QualType ElemTy =
+      Context.getCanonicalType(AT->getElementType()).getUnqualifiedType();
 
   switch (SL->getKind()) {
   case StringLiteral::Ascii:
   case StringLiteral::UTF8:
     // char array can be initialized with a narrow string.
     // Only allow char x[] = "foo";  not char x[] = L"foo";
-    return ElemTy->isCharType() ? Init : 0;
+    if (ElemTy->isCharType())
+      return SIF_None;
+    if (IsWideCharCompatible(ElemTy, Context))
+      return SIF_NarrowStringIntoWideChar;
+    return SIF_Other;
+  // C99 6.7.8p15 (with correction from DR343), or C11 6.7.9p15:
+  // "An array with element type compatible with a qualified or unqualified
+  // version of wchar_t, char16_t, or char32_t may be initialized by a wide
+  // string literal with the corresponding encoding prefix (L, u, or U,
+  // respectively), optionally enclosed in braces.
   case StringLiteral::UTF16:
-    return ElemTy->isChar16Type() ? Init : 0;
+    if (Context.typesAreCompatible(Context.Char16Ty, ElemTy))
+      return SIF_None;
+    if (ElemTy->isCharType())
+      return SIF_WideStringIntoChar;
+    if (IsWideCharCompatible(ElemTy, Context))
+      return SIF_IncompatWideStringIntoWideChar;
+    return SIF_Other;
   case StringLiteral::UTF32:
-    return ElemTy->isChar32Type() ? Init : 0;
+    if (Context.typesAreCompatible(Context.Char32Ty, ElemTy))
+      return SIF_None;
+    if (ElemTy->isCharType())
+      return SIF_WideStringIntoChar;
+    if (IsWideCharCompatible(ElemTy, Context))
+      return SIF_IncompatWideStringIntoWideChar;
+    return SIF_Other;
   case StringLiteral::Wide:
-    // wchar_t array can be initialized with a wide string: C99 6.7.8p15 (with
-    // correction from DR343): "An array with element type compatible with a
-    // qualified or unqualified version of wchar_t may be initialized by a wide
-    // string literal, optionally enclosed in braces."
-    if (Context.typesAreCompatible(Context.getWideCharType(),
-                                   ElemTy.getUnqualifiedType()))
-      return Init;
-
-    return 0;
+    if (Context.typesAreCompatible(Context.getWideCharType(), ElemTy))
+      return SIF_None;
+    if (ElemTy->isCharType())
+      return SIF_WideStringIntoChar;
+    if (IsWideCharCompatible(ElemTy, Context))
+      return SIF_IncompatWideStringIntoWideChar;
+    return SIF_Other;
   }
 
   llvm_unreachable("missed a StringLiteral kind?");
 }
 
-static Expr *IsStringInit(Expr *init, QualType declType, ASTContext &Context) {
+static bool IsStringInit(Expr* init, QualType declType, ASTContext& Context) {
   const ArrayType *arrayType = Context.getAsArrayType(declType);
-  if (!arrayType) return 0;
-
-  return IsStringInit(init, arrayType, Context);
+  if (!arrayType)
+    return false;
+  return IsStringInit(init, arrayType, Context) == SIF_None;
 }
 
 /// Update the type of a string literal, including any surrounding parentheses,
@@ -806,10 +851,10 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
     // array member.  There's nothing we can do with the completed
     // type here, though.
 
-    if (Expr *Str = IsStringInit(expr, arrayType, SemaRef.Context)) {
+    if (IsStringInit(expr, arrayType, SemaRef.Context) == SIF_None) {
       if (!VerifyOnly) {
-        CheckStringInit(Str, ElemType, arrayType, SemaRef);
-        UpdateStructuredListElement(StructuredList, StructuredIndex, Str);
+        CheckStringInit(expr, ElemType, arrayType, SemaRef);
+        UpdateStructuredListElement(StructuredList, StructuredIndex, expr);
       }
       ++Index;
       return;
@@ -1189,16 +1234,17 @@ void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
 
   // Check for the special-case of initializing an array with a string.
   if (Index < IList->getNumInits()) {
-    if (Expr *Str = IsStringInit(IList->getInit(Index), arrayType,
-                                 SemaRef.Context)) {
+    if (IsStringInit(IList->getInit(Index), arrayType, SemaRef.Context) ==
+        SIF_None) {
       // We place the string literal directly into the resulting
       // initializer list. This is the only place where the structure
       // of the structured initializer list doesn't match exactly,
       // because doing so would involve allocating one character
       // constant for each string.
       if (!VerifyOnly) {
-        CheckStringInit(Str, DeclType, arrayType, SemaRef);
-        UpdateStructuredListElement(StructuredList, StructuredIndex, Str);
+        CheckStringInit(IList->getInit(Index), DeclType, arrayType, SemaRef);
+        UpdateStructuredListElement(StructuredList, StructuredIndex,
+                                    IList->getInit(Index));
         StructuredList->resizeInits(SemaRef.Context, StructuredIndex);
       }
       ++Index;
@@ -2507,6 +2553,10 @@ bool InitializationSequence::isAmbiguous() const {
   case FK_TooManyInitsForReference:
   case FK_ArrayNeedsInitList:
   case FK_ArrayNeedsInitListOrStringLiteral:
+  case FK_ArrayNeedsInitListOrWideStringLiteral:
+  case FK_NarrowStringIntoWideCharArray:
+  case FK_WideStringIntoCharArray:
+  case FK_IncompatWideStringIntoWideChar:
   case FK_AddressOfOverloadFailed: // FIXME: Could do better
   case FK_NonConstLValueReferenceBindingToTemporary:
   case FK_NonConstLValueReferenceBindingToUnrelated:
@@ -4278,9 +4328,23 @@ InitializationSequence::InitializationSequence(Sema &S,
       return;
     }
 
-    if (Initializer && IsStringInit(Initializer, DestAT, Context)) {
-      TryStringLiteralInitialization(S, Entity, Kind, Initializer, *this);
-      return;
+    if (Initializer) {
+      switch (IsStringInit(Initializer, DestAT, Context)) {
+      case SIF_None:
+        TryStringLiteralInitialization(S, Entity, Kind, Initializer, *this);
+        return;
+      case SIF_NarrowStringIntoWideChar:
+        SetFailed(FK_NarrowStringIntoWideCharArray);
+        return;
+      case SIF_WideStringIntoChar:
+        SetFailed(FK_WideStringIntoCharArray);
+        return;
+      case SIF_IncompatWideStringIntoWideChar:
+        SetFailed(FK_IncompatWideStringIntoWideChar);
+        return;
+      case SIF_Other:
+        break;
+      }
     }
 
     // Note: as an GNU C extension, we allow initialization of an
@@ -4307,8 +4371,10 @@ InitializationSequence::InitializationSequence(Sema &S,
       TryListInitialization(S, Entity, Kind, cast<InitListExpr>(Initializer),
                             *this);
       AddParenthesizedArrayInitStep(DestType);
-    } else if (DestAT->getElementType()->isAnyCharacterType())
+    } else if (DestAT->getElementType()->isCharType())
       SetFailed(FK_ArrayNeedsInitListOrStringLiteral);
+    else if (IsWideCharCompatible(DestAT->getElementType(), Context))
+      SetFailed(FK_ArrayNeedsInitListOrWideStringLiteral);
     else
       SetFailed(FK_ArrayNeedsInitList);
 
@@ -5816,11 +5882,24 @@ bool InitializationSequence::Diagnose(Sema &S,
     break;
 
   case FK_ArrayNeedsInitList:
-  case FK_ArrayNeedsInitListOrStringLiteral:
-    S.Diag(Kind.getLocation(), diag::err_array_init_not_init_list)
-      << (Failure == FK_ArrayNeedsInitListOrStringLiteral);
+    S.Diag(Kind.getLocation(), diag::err_array_init_not_init_list) << 0;
     break;
-
+  case FK_ArrayNeedsInitListOrStringLiteral:
+    S.Diag(Kind.getLocation(), diag::err_array_init_not_init_list) << 1;
+    break;
+  case FK_ArrayNeedsInitListOrWideStringLiteral:
+    S.Diag(Kind.getLocation(), diag::err_array_init_not_init_list) << 2;
+    break;
+  case FK_NarrowStringIntoWideCharArray:
+    S.Diag(Kind.getLocation(), diag::err_array_init_narrow_string_into_wchar);
+    break;
+  case FK_WideStringIntoCharArray:
+    S.Diag(Kind.getLocation(), diag::err_array_init_wide_string_into_char);
+    break;
+  case FK_IncompatWideStringIntoWideChar:
+    S.Diag(Kind.getLocation(),
+           diag::err_array_init_incompat_wide_string_into_wchar);
+    break;
   case FK_ArrayTypeMismatch:
   case FK_NonConstantArrayInit:
     S.Diag(Kind.getLocation(), 
@@ -6190,6 +6269,22 @@ void InitializationSequence::dump(raw_ostream &OS) const {
 
     case FK_ArrayNeedsInitListOrStringLiteral:
       OS << "array requires initializer list or string literal";
+      break;
+
+    case FK_ArrayNeedsInitListOrWideStringLiteral:
+      OS << "array requires initializer list or wide string literal";
+      break;
+
+    case FK_NarrowStringIntoWideCharArray:
+      OS << "narrow string into wide char array";
+      break;
+
+    case FK_WideStringIntoCharArray:
+      OS << "wide string into char array";
+      break;
+
+    case FK_IncompatWideStringIntoWideChar:
+      OS << "incompatible wide string into wide char array";
       break;
 
     case FK_ArrayTypeMismatch:

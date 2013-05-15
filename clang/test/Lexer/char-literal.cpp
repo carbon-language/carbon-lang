@@ -36,8 +36,4 @@ char16_t p[2] = u"\U0000FFFF";
 char16_t q[2] = u"\U00010000";
 #ifdef __cplusplus
 // expected-error@-2 {{too long}}
-#else
-// FIXME: The above should be accepted in C11 mode.
-// expected-error@-6 {{must be an initializer list}}
-// expected-error@-6 {{must be an initializer list}}
 #endif
