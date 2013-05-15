@@ -260,6 +260,24 @@ test_void_2()
     }
 }
 
+struct TFENode
+{
+    bool foo(unsigned long long) const
+    {
+        return true;
+    }
+};
+
+void
+test3()
+{
+    using namespace std;
+    using namespace std::placeholders;
+    const auto f = bind(&TFENode::foo, _1, 0UL);
+    const TFENode n = TFENode{};
+    bool b = f(n);
+}
+
 int main()
 {
     test_void_1();
