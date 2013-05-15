@@ -478,6 +478,7 @@ let Defs = [PSW] in {
   def SGR  : BinaryRRE<"sgr",  0xB909, sub,       GR64, GR64>;
 
   // Subtraction of memory.
+  defm SH  : BinaryRXPair<"sh", 0x4B, 0xE37B, sub, GR32, sextloadi16>;
   defm S   : BinaryRXPair<"s", 0x5B, 0xE35B, sub, GR32, load>;
   def  SGF : BinaryRXY<"sgf", 0xE319, sub, GR64, sextloadi32>;
   def  SG  : BinaryRXY<"sg",  0xE309, sub, GR64, load>;

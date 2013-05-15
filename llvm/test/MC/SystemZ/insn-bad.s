@@ -2338,6 +2338,22 @@
 	sgf	%r0, 524288
 
 #CHECK: error: invalid operand
+#CHECK: sh	%r0, -1
+#CHECK: error: invalid operand
+#CHECK: sh	%r0, 4096
+
+	sh	%r0, -1
+	sh	%r0, 4096
+
+#CHECK: error: invalid operand
+#CHECK: shy	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: shy	%r0, 524288
+
+	shy	%r0, -524289
+	shy	%r0, 524288
+
+#CHECK: error: invalid operand
 #CHECK: sl	%r0, -1
 #CHECK: error: invalid operand
 #CHECK: sl	%r0, 4096
