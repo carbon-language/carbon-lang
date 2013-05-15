@@ -504,6 +504,8 @@ private:
            !State.Stack.back().AvoidBinPacking) ||
           Previous.Type == TT_BinaryOperator)
         State.Stack.back().BreakBeforeParameter = false;
+      if (Previous.Type == TT_TemplateCloser && State.ParenLevel == 0)
+        State.Stack.back().BreakBeforeParameter = false;
 
       if (!DryRun) {
         unsigned NewLines = 1;
@@ -531,6 +533,7 @@ private:
       }
       const AnnotatedToken *TokenBefore = Current.getPreviousNoneComment();
       if (TokenBefore && !TokenBefore->isOneOf(tok::comma, tok::semi) &&
+          TokenBefore->Type != TT_TemplateCloser &&
           TokenBefore->Type != TT_BinaryOperator && !TokenBefore->opensScope())
         State.Stack.back().BreakBeforeParameter = true;
 
@@ -1016,6 +1019,10 @@ private:
     if (Current.isOneOf(tok::period, tok::arrow) &&
         getRemainingLength(State) + State.Column > getColumnLimit() &&
         State.ParenLevel < State.StartOfLineLevel)
+      return true;
+
+    if (Current.Type == TT_StartOfName && Line.MightBeFunctionDecl &&
+        State.Stack.back().BreakBeforeParameter && State.ParenLevel == 0)
       return true;
     return false;
   }

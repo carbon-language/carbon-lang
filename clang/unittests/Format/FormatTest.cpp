@@ -2002,7 +2002,7 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
       "    .StartsWith(\".eh_frame\", ORDER_EH_FRAME).StartsWith(\".init\", ORDER_INIT)\n"
       "    .StartsWith(\".fini\", ORDER_FINI).StartsWith(\".hash\", ORDER_HASH)\n"
       "    .Default(ORDER_TEXT);\n");
-      
+
   verifyFormat("return aaaaaaaaaaaaaaaaa->aaaaa().aaaaaaaaaaaaa().aaaaaa() <\n"
                "       aaaaaaaaaaaaaaa->aaaaa().aaaaaaaaaaaaa().aaaaaa();");
   verifyFormat(
@@ -2835,6 +2835,10 @@ TEST_F(FormatTest, BreaksLongDeclarations) {
                "        ReallyReallyLongParameterName,\n"
                "    const SomeType<string, SomeOtherTemplateParameter> &\n"
                "        AnotherLongParameterName) {}");
+  verifyFormat("template <typename A>\n"
+               "SomeLoooooooooooooooooooooongType<\n"
+               "    typename some_namespace::SomeOtherType<A>::Type>\n"
+               "Function() {}");
   verifyFormat(
       "aaaaaaaaaaaaaaaa::aaaaaaaaaaaaaaaa<aaaaaaaaaaaaa, aaaaaaaaaaaa>\n"
       "    aaaaaaaaaaaaaaaaaaaaaaa;");
