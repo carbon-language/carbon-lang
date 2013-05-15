@@ -678,7 +678,7 @@ SBFrame::GetValueForVariablePath (const char *var_path, DynamicValueType use_dyn
     
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
-    StackFrame *frame = exe_ctx.GetFramePtr();
+    StackFrame *frame = NULL;
     Target *target = exe_ctx.GetTargetPtr();
     Process *process = exe_ctx.GetProcessPtr();
     if (target && process)

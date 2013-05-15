@@ -1365,7 +1365,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 }
             }
             
-            if (!context.m_found.variable && !namespace_decl)
+            if (target && !context.m_found.variable && !namespace_decl)
             {
                 // We couldn't find a non-symbol variable for this.  Now we'll hunt for a generic 
                 // data symbol, and -- if it is found -- treat it as a variable.

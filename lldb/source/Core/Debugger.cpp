@@ -1174,7 +1174,8 @@ ScanFormatDescriptor (const char* var_name_begin,
                     *val_obj_display = ValueObject::eValueObjectRepresentationStyleType;
                     break;
                 default:
-                    log->Printf("ScanFormatDescriptor] %s is an error, leaving the previous value alone", format_name.c_str());
+                    if (log)
+                        log->Printf("ScanFormatDescriptor] %s is an error, leaving the previous value alone", format_name.c_str());
                     break;
             }
         }

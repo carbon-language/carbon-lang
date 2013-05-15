@@ -70,7 +70,7 @@ IRMemoryMap::FindSpace (size_t size)
     
     for (int iterations = 0; iterations < 16; ++iterations)
     {
-        lldb::addr_t candidate;
+        lldb::addr_t candidate = LLDB_INVALID_ADDRESS;
         
         switch (target_sp->GetArchitecture().GetAddressByteSize())
         {

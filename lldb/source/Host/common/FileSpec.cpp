@@ -980,6 +980,8 @@ FileSpec::EnumerateDirectory
                             {
                                 // The subdirectory returned Quit, which means to 
                                 // stop all directory enumerations at all levels.
+                                if (buf)
+                                    free (buf);
                                 return eEnumerateDirectoryResultQuit;
                             }
                             break;

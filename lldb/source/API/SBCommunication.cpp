@@ -188,7 +188,6 @@ SBCommunication::ReadThreadStart ()
     if (m_opaque)
         success = m_opaque->StartReadThread ();
 
-    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
         log->Printf ("SBCommunication(%p)::ReadThreadStart () => %i", m_opaque, success);
 

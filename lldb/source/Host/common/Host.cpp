@@ -696,6 +696,8 @@ Host::SetThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name)
         }
     }
     return false;
+#else
+    return false;
 #endif
 }
 

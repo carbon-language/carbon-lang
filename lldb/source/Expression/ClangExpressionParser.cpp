@@ -550,7 +550,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
         
         if (execution_policy == eExecutionPolicyAlways || !can_interpret)
         {
-            if (!process->GetDynamicCheckers() && m_expr.NeedsValidation())
+            if (m_expr.NeedsValidation() && (process && (!process->GetDynamicCheckers())))
             {                
                 DynamicCheckerFunctions *dynamic_checkers = new DynamicCheckerFunctions();
                 

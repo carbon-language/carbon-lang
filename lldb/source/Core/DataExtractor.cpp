@@ -1132,6 +1132,9 @@ uint64_t
 DataExtractor::GetULEB128 (offset_t *offset_ptr) const
 {
     const uint8_t *src = (const uint8_t *)PeekData (*offset_ptr, 1);
+    if (src == NULL)
+        return 0;
+    
     const uint8_t *end = m_end;
     
     if (src < end)
@@ -1169,6 +1172,9 @@ int64_t
 DataExtractor::GetSLEB128 (offset_t *offset_ptr) const
 {
     const uint8_t *src = (const uint8_t *)PeekData (*offset_ptr, 1);
+    if (src == NULL)
+        return 0;
+    
     const uint8_t *end = m_end;
     
     if (src < end)
@@ -1213,6 +1219,9 @@ DataExtractor::Skip_LEB128 (offset_t *offset_ptr) const
 {
     uint32_t bytes_consumed = 0;
     const uint8_t *src = (const uint8_t *)PeekData (*offset_ptr, 1);
+    if (src == NULL)
+        return 0;
+        
     const uint8_t *end = m_end;
     
     if (src < end)
