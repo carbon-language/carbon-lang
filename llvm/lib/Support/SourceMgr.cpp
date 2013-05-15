@@ -65,7 +65,7 @@ unsigned SourceMgr::AddIncludeFile(const std::string &Filename,
     MemoryBuffer::getFile(IncludedFile.c_str(), NewBuf);
   }
 
-  if (NewBuf == 0) return ~0U;
+  if (!NewBuf) return ~0U;
 
   return AddNewSourceBuffer(NewBuf.take(), IncludeLoc);
 }

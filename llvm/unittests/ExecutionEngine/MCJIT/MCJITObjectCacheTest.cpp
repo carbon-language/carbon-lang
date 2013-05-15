@@ -98,7 +98,7 @@ protected:
 
   void compileAndRun(int ExpectedRC = OriginalRC) {
     // This function shouldn't be called until after SetUp.
-    ASSERT_TRUE(0 != TheJIT);
+    ASSERT_TRUE(TheJIT.isValid());
     ASSERT_TRUE(0 != Main);
 
     TheJIT->finalizeObject();

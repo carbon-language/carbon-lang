@@ -89,7 +89,7 @@ bool MemoryDependenceAnalysis::runOnFunction(Function &) {
   AA = &getAnalysis<AliasAnalysis>();
   TD = getAnalysisIfAvailable<DataLayout>();
   DT = getAnalysisIfAvailable<DominatorTree>();
-  if (PredCache == 0)
+  if (!PredCache)
     PredCache.reset(new PredIteratorCache());
   return false;
 }

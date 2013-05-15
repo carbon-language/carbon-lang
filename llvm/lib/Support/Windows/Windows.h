@@ -75,7 +75,7 @@ public:
   }
 
   // True if Handle is valid.
-  operator bool() const {
+  LLVM_EXPLICIT operator bool() const {
     return HandleTraits::IsValid(Handle) ? true : false;
   }
 

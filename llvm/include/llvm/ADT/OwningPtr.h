@@ -70,8 +70,9 @@ public:
 
   T *operator->() const { return Ptr; }
   T *get() const { return Ptr; }
-  operator bool() const { return Ptr != 0; }
+  LLVM_EXPLICIT operator bool() const { return Ptr != 0; }
   bool operator!() const { return Ptr == 0; }
+  bool isValid() const { return Ptr != 0; }
 
   void swap(OwningPtr &RHS) {
     T *Tmp = RHS.Ptr;
@@ -132,7 +133,7 @@ public:
   }
 
   T *get() const { return Ptr; }
-  operator bool() const { return Ptr != 0; }
+  LLVM_EXPLICIT operator bool() const { return Ptr != 0; }
   bool operator!() const { return Ptr == 0; }
 
   void swap(OwningArrayPtr &RHS) {

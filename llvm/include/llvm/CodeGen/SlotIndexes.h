@@ -162,7 +162,7 @@ namespace llvm {
     }
 
     /// Return true for a valid index.
-    operator bool() const { return isValid(); }
+    LLVM_EXPLICIT operator bool() const { return isValid(); }
 
     /// Print this index to the given raw_ostream.
     void print(raw_ostream &os) const;
