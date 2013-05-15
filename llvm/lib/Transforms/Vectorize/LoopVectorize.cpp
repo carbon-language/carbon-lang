@@ -320,11 +320,11 @@ private:
 
 /// \brief Check if conditionally executed loads are hoistable.
 ///
-/// This class has two functions. isHoistableLoad and canHoistAllLoads.
+/// This class has two functions: isHoistableLoad and canHoistAllLoads.
 /// isHoistableLoad should be called on all load instructions that are executed
 /// conditionally. After all conditional loads are processed, the client should
-/// call canHoistAllLoads to determine if all of the conditional execute loads
-/// have an unconditional memory access in the loop.
+/// call canHoistAllLoads to determine if all of the conditional executed loads
+/// have an unconditional memory access to the same memory address in the loop.
 class LoadHoisting {
   typedef SmallPtrSet<Value *, 8> MemorySet;
 
@@ -3354,7 +3354,7 @@ bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB) {
     if (it->mayReadFromMemory() && !LoadSpeculation.isHoistableLoad(it))
       return false;
 
-    // We predicate stores at the moment.
+    // We don't predicate stores at the moment.
     if (it->mayWriteToMemory() || it->mayThrow())
       return false;
 
