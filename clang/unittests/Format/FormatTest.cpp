@@ -3077,6 +3077,13 @@ TEST_F(FormatTest, UnderstandContextOfRecordTypeKeywords) {
   verifyFormat("class A::B::C {\n} n;");
 
   // Template definitions.
+  verifyFormat(
+      "template <typename F>\n"
+      "Matcher(const Matcher<F> &Other,\n"
+      "        typename enable_if_c<is_base_of<F, T>::value &&\n"
+      "                             !is_same<F, T>::value>::type * = 0)\n"
+      "    : Implementation(new ImplicitCastMatcher<F>(Other)) {}");
+
   // FIXME: This is still incorrectly handled at the formatter side.
   verifyFormat("template <> struct X < 15, i < 3 && 42 < 50 && 33<28> {\n};");
 

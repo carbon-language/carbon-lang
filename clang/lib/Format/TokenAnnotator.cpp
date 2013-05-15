@@ -101,8 +101,10 @@ private:
         return true;
       }
       if (CurrentToken->isOneOf(tok::r_paren, tok::r_square, tok::r_brace,
-                                tok::pipepipe, tok::ampamp, tok::question,
-                                tok::colon))
+                                tok::question, tok::colon))
+        return false;
+      if (CurrentToken->isOneOf(tok::pipepipe, tok::ampamp) &&
+          Line.First.isNot(tok::kw_template))
         return false;
       updateParameterCount(Left, CurrentToken);
       if (!consumeToken())
