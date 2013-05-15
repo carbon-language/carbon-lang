@@ -741,11 +741,11 @@ int comment_to_xml_conversion_12;
 
 /// Aaa.
 namespace comment_to_xml_conversion_13 {
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:11: Namespace=comment_to_xml_conversion_13:{{.*}} FullCommentAsXML=[<Namespace file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="11"><Name>comment_to_xml_conversion_13</Name><USR>c:@N@comment_to_xml_conversion_13</USR><Declaration>namespace comment_to_xml_conversion_13 {}</Declaration><Abstract><Para> Aaa.</Para></Abstract></Namespace>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:11: Namespace=comment_to_xml_conversion_13:{{.*}} FullCommentAsXML=[<Namespace file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="11"><Name>comment_to_xml_conversion_13</Name><USR>c:@N@comment_to_xml_conversion_13</USR><Declaration>namespace comment_to_xml_conversion_13 {\n}</Declaration><Abstract><Para> Aaa.</Para></Abstract></Namespace>]
 
   /// Aaa.
   namespace comment_to_xml_conversion_14 {
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:13: Namespace=comment_to_xml_conversion_14:{{.*}} FullCommentAsXML=[<Namespace file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="13"><Name>comment_to_xml_conversion_14</Name><USR>c:@N@comment_to_xml_conversion_13@N@comment_to_xml_conversion_14</USR><Declaration>namespace comment_to_xml_conversion_14 {}</Declaration><Abstract><Para> Aaa.</Para></Abstract></Namespace>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:13: Namespace=comment_to_xml_conversion_14:{{.*}} FullCommentAsXML=[<Namespace file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="13"><Name>comment_to_xml_conversion_14</Name><USR>c:@N@comment_to_xml_conversion_13@N@comment_to_xml_conversion_14</USR><Declaration>namespace comment_to_xml_conversion_14 {\n}</Declaration><Abstract><Para> Aaa.</Para></Abstract></Namespace>]
   }
 }
 
