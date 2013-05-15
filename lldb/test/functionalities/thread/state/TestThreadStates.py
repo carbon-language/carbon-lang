@@ -53,14 +53,14 @@ class StopThreadsTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
-    @unittest2.expectedFailure("PR-15824") # thread states not properly maintained
+    @unittest2.expectedFailure("llvm.org/pr15824") # thread states not properly maintained
     def test_process_interrupt_with_dsym(self):
         """Test process interrupt."""
         self.buildDsym()
         self.process_interrupt_test()
 
     @dwarf_test
-    @unittest2.expectedFailure("PR-15824") # thread states not properly maintained
+    @unittest2.expectedFailure("llvm.org/pr15824") # thread states not properly maintained
     def test_process_interrupt_with_dwarf(self):
         """Test process interrupt."""
         self.buildDwarf()
@@ -68,14 +68,14 @@ class StopThreadsTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
-    @unittest2.expectedFailure("PR-15824") # thread states not properly maintained
+    @unittest2.expectedFailure("llvm.org/pr15824") # thread states not properly maintained
     def test_process_state_with_dsym(self):
         """Test thread states (comprehensive)."""
         self.buildDsym()
         self.thread_states_test()
 
     @dwarf_test
-    @unittest2.expectedFailure("PR-15824") # thread states not properly maintained
+    @unittest2.expectedFailure("llvm.org/pr15824") # thread states not properly maintained
     def test_process_state_with_dwarf(self):
         """Test thread states (comprehensive)."""
         self.buildDwarf()

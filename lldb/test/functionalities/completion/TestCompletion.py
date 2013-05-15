@@ -34,7 +34,7 @@ class CommandLineCompletionTestCase(TestBase):
         self.complete_from_to('process attach --con', 'process attach --continue ')
 
     # <rdar://problem/11052829>
-    @skipOnLinux # llvm.org/pr14637: this test case fails (with GCC 4.6 but not clang) because the input prompt "(lldb)" is missing
+    @skipIfLinux # llvm.org/pr14637: this test case fails (with GCC 4.6 but not clang) because the input prompt "(lldb)" is missing
     def test_infinite_loop_while_completing(self):
         """Test that 'process print hello\' completes to itself and does not infinite loop."""
         self.complete_from_to('process print hello\\', 'process print hello\\',

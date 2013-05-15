@@ -18,7 +18,7 @@ class ConvenienceVariablesCase(TestBase):
         self.convenience_variables()
 
     @dwarf_test
-    @skipOnLinux # llvm.org/pr14637: this test case fails sometimes because the input prompt "(lldb)" is missing
+    @skipIfLinux # llvm.org/pr14637: this test case fails sometimes because the input prompt "(lldb)" is missing
     def test_with_dwarf_and_run_commands(self):
         """Test convenience variables lldb.debugger, lldb.target, lldb.process, lldb.thread, and lldb.frame."""
         self.buildDwarf()

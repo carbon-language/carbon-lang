@@ -18,7 +18,7 @@ class ThreadsStackTracesTestCase(TestBase):
         # Find the line number to break inside main().
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
-    @expectedFailureLinux # bugzilla 14323
+    @expectedFailureLinux # llvm.org/pr14323
     @python_api_test
     def test_stack_traces(self):
         """Test SBprocess and SBThread APIs with printing of the stack traces."""

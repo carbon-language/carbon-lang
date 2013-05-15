@@ -21,7 +21,7 @@ class BuiltinTrapTestCase(TestBase):
         self.builtin_trap_unwind()
 
     @dwarf_test
-    @expectedFailureGcc # PR-15936: LLDB is omits a function that contains an
+    @expectedFailureGcc # llvm.org/pr15936: LLDB is omits a function that contains an
                         #           illegal opcode from backtraces. This
                         #           failure is GCC 4.6 specific.
     def test_with_dwarf_and_run_command(self):

@@ -235,7 +235,7 @@ class SBDataAPICase(TestBase):
         self.assert_data(data.GetUnsignedInt8, offset, 68)
         offset += 1
 
-        # check the new API calls introduced per LLVM bugzilla enhancement request
+        # check the new API calls introduced per LLVM llvm.org/prenhancement request
         # 11619 (Allow creating SBData values from arrays or primitives in Python)
 
         hello_str = "hello!"

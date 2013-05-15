@@ -19,7 +19,7 @@ class DeadStripTestCase(TestBase):
         self.buildDsym()
         self.dead_strip()
 
-    @skipOnLinux # The -dead_strip linker option isn't supported on Linux versions of ld.
+    @skipIfLinux # The -dead_strip linker option isn't supported on Linux versions of ld.
     @dwarf_test
     def test_with_dwarf(self):
         """Test breakpoint works correctly with dead-code stripping."""

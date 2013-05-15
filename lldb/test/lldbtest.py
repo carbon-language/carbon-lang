@@ -585,10 +585,10 @@ def expectedFailureDarwin(bugnumber=None):
               return wrapper
         return expectedFailureDarwin_impl
 
-def skipOnLinux(func):
+def skipIfLinux(func):
     """Decorate the item to skip tests that should be skipped on Linux."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@skipOnLinux can only be used to decorate a test method")
+        raise Exception("@skipIfLinux can only be used to decorate a test method")
     @wraps(func)
     def wrapper(*args, **kwargs):
         from unittest2 import case

@@ -21,7 +21,7 @@ class TestObjCStepping(TestBase):
         self.buildDsym()
         self.step_over_stepping()
 
-    @expectedFailureLinux # bugzilla 14437
+    @expectedFailureLinux # llvm.org/pr14437
     @python_api_test
     @dwarf_test
     def test_with_dwarf_and_python_api(self):

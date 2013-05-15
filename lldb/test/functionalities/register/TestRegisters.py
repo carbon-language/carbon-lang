@@ -45,7 +45,7 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.convenience_registers()
 
-    @skipOnLinux # Expression evaluation fails after attach by pid
+    @skipIfLinux # Expression evaluation fails after attach by pid
     def test_convenience_registers_with_process_attach(self):
         """Test convenience registers after a 'process attach'."""
         if not self.getArchitecture() in ['x86_64']:

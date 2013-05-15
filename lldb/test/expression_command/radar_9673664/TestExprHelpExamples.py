@@ -20,7 +20,7 @@ class Radar9673644TestCase(TestBase):
         self.line = line_number(self.main_source, '// Set breakpoint here.')
 
     # rdar://problem/9673664
-    @skipOnLinux # PR-14805: expressions that require memory allocation evaluate incorrectly on Linux
+    @skipIfLinux # llvm.org/pr14805: expressions that require memory allocation evaluate incorrectly on Linux
     def test_expr_commands(self):
         """The following expression commands should just work."""
         self.buildDefault()

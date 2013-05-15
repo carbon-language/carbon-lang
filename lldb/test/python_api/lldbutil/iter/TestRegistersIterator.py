@@ -18,7 +18,7 @@ class RegistersIteratorTestCase(TestBase):
         # Find the line number to break inside main().
         self.line1 = line_number('main.cpp', '// Set break point at this line.')
 
-    @expectedFailureLinux # bugzilla 14600 - Exception state registers not supported on Linux
+    @expectedFailureLinux # llvm.org/pr14600 - Exception state registers not supported on Linux
     @python_api_test
     def test_iter_registers(self):
         """Test iterator works correctly for lldbutil.iter_registers()."""

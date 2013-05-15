@@ -27,7 +27,7 @@ class PlatformCommandTestCase(TestBase):
         self.expect("platform process info", error=True,
             substrs = ['one or more process id(s) must be specified'])
 
-    @expectedFailureLinux # due to bugzilla 14806 -- "platform status" prints more information on Mac OS X than on Linux
+    @expectedFailureLinux # due to llvm.org/pr14806 -- "platform status" prints more information on Mac OS X than on Linux
     def test_status(self):
         self.expect("platform status",
             substrs = ['Platform', 'Triple', 'OS Version', 'Kernel', 'Hostname'])
