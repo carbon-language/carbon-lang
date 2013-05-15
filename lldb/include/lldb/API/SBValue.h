@@ -15,11 +15,14 @@
 #include "lldb/API/SBType.h"
 
 class ValueImpl;
+class ValueLocker;
 
 namespace lldb {
 
 class SBValue
 {
+friend class ValueLocker;
+
 public:
     SBValue ();
 
@@ -414,6 +417,16 @@ public:
     lldb::SBWatchpoint
     WatchPointee (bool resolve_location, bool read, bool write, SBError &error);
 
+    //------------------------------------------------------------------
+    /// Same as the protected version of GetSP that takes a locker, except that we make the
+    /// locker locally in the function.  Since the Target API mutex is recursive, and the
+    /// StopLocker is a read lock, you can call this function even if you are already
+    /// holding the two above-mentioned locks.
+    ///
+    /// @return
+    ///     A ValueObjectSP of the best kind (static, dynamic or synthetic) we
+    ///     can cons up, in accordance with the SBValue's settings.
+    //------------------------------------------------------------------
     lldb::ValueObjectSP
     GetSP () const;
 
@@ -424,6 +437,28 @@ protected:
     friend class SBThread;
     friend class SBValueList;
 
+    //------------------------------------------------------------------
+    /// Get the appropriate ValueObjectSP from this SBValue, consulting the
+    /// use_dynamic and use_synthetic options passed in to SetSP when the
+    /// SBValue's contents were set.  Since this often requires examining memory,
+    /// and maybe even running code, it needs to acquire the Target API and Process StopLock.
+    /// Those are held in an opaque class ValueLocker which is currently local to SBValue.cpp.
+    /// So you don't have to get these yourself just default construct a ValueLocker, and pass it into this.
+    /// If we need to make a ValueLocker and use it in some other .cpp file, we'll have to move it to
+    /// ValueObject.h/cpp or somewhere else convenient.  We haven't needed to so far.
+    ///
+    /// @param[in] value_locker
+    ///     An object that will hold the Target API, and Process RunLocks, and
+    ///     auto-destroy them when it goes out of scope.  Currently this is only useful in
+    ///     SBValue.cpp.
+    ///
+    /// @return
+    ///     A ValueObjectSP of the best kind (static, dynamic or synthetic) we
+    ///     can cons up, in accordance with the SBValue's settings.
+    //------------------------------------------------------------------
+    lldb::ValueObjectSP
+    GetSP (ValueLocker &value_locker) const;
+    
     // these calls do the right thing WRT adjusting their settings according to the target's preferences
     void
     SetSP (const lldb::ValueObjectSP &sp);
@@ -436,6 +471,9 @@ protected:
 
     void
     SetSP (const lldb::ValueObjectSP &sp, lldb::DynamicValueType use_dynamic, bool use_synthetic);
+    
+    void
+    SetSP (const lldb::ValueObjectSP &sp, lldb::DynamicValueType use_dynamic, bool use_synthetic, const char *name);
     
 private:
     typedef std::shared_ptr<ValueImpl> ValueImplSP;
