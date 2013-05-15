@@ -18,7 +18,7 @@ class SBBreakpointCallbackCase(TestBase):
           self.buildProgram('inferior.cpp', self.inferior)
           self.addTearDownHook(lambda: os.remove(self.inferior))
 
-    @unittest2.expectedFailure # llvm.org/pr-1600: SBBreakpoint.SetCallback() does nothing
+    @unittest2.expectedFailure # llvm.org/pr16000: SBBreakpoint.SetCallback() does nothing
     @skipIfi386
     @skipIfLinuxClang # buildbot clang version unable to use libstdc++ with c++11
     def test_breakpoint_callback(self):
@@ -47,6 +47,7 @@ class SBBreakpointCallbackCase(TestBase):
 
     @skipIfi386
     @skipIfLinuxClang # buildbot clang version unable to use libstdc++ with c++11
+    @skipIfLinux # llvm.org/pr16016 assertion failure in ProcessPOSIX.cpp.
     def test_sb_api_listener_resume(self):
         """ Test that a process can be resumed from a non-main thread. """
         self.build_and_test('driver.cpp listener_test.cpp test_listener_resume.cpp',
