@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mattr=+bmi,+bmi2,+popcnt | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-pc-linux -mattr=+bmi,+bmi2,+popcnt | FileCheck %s
 declare void @foo(i32)
 
 ; CHECK: neg:
