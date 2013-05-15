@@ -395,7 +395,7 @@ public:
   /// @name ASTConsumer
   /// {
 
-  bool hasASTConsumer() const { return Consumer != 0; }
+  bool hasASTConsumer() const { return Consumer.isValid(); }
 
   ASTConsumer &getASTConsumer() const {
     assert(Consumer && "Compiler instance has no AST consumer!");
@@ -413,7 +413,7 @@ public:
   /// }
   /// @name Semantic analysis
   /// {
-  bool hasSema() const { return TheSema != 0; }
+  bool hasSema() const { return TheSema.isValid(); }
   
   Sema &getSema() const { 
     assert(TheSema && "Compiler instance has no Sema object!");
@@ -433,7 +433,9 @@ public:
   /// @name Code Completion
   /// {
 
-  bool hasCodeCompletionConsumer() const { return CompletionConsumer != 0; }
+  bool hasCodeCompletionConsumer() const {
+    return CompletionConsumer.isValid();
+  }
 
   CodeCompleteConsumer &getCodeCompletionConsumer() const {
     assert(CompletionConsumer &&
@@ -455,7 +457,7 @@ public:
   /// @name Frontend timer
   /// {
 
-  bool hasFrontendTimer() const { return FrontendTimer != 0; }
+  bool hasFrontendTimer() const { return FrontendTimer.isValid(); }
 
   llvm::Timer &getFrontendTimer() const {
     assert(FrontendTimer && "Compiler instance has no frontend timer!");

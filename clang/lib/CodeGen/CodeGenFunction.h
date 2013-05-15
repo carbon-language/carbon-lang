@@ -2422,7 +2422,7 @@ public:
       return ConstantEmission(C, false);
     }
 
-    operator bool() const { return ValueAndIsReference.getOpaqueValue() != 0; }
+    LLVM_EXPLICIT operator bool() const { return ValueAndIsReference.getOpaqueValue() != 0; }
 
     bool isReference() const { return ValueAndIsReference.getInt(); }
     LValue getReferenceLValue(CodeGenFunction &CGF, Expr *refExpr) const {

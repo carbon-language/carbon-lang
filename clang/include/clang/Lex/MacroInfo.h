@@ -421,7 +421,7 @@ public:
     bool isValid() const { return DefDirective != 0; }
     bool isInvalid() const { return !isValid(); }
 
-    operator bool() const { return isValid(); }
+    LLVM_EXPLICIT operator bool() const { return isValid(); }
 
     inline DefInfo getPreviousDefinition(bool AllowHidden = false);
     const DefInfo getPreviousDefinition(bool AllowHidden = false) const {

@@ -231,7 +231,11 @@ public:
 
   /// \brief Evalutes true when this nested-name-specifier location is
   /// non-empty.
-  operator bool() const { return Qualifier; }
+  LLVM_EXPLICIT operator bool() const { return Qualifier; }
+
+  /// \brief Evalutes true when this nested-name-specifier location is
+  /// empty.
+  bool hasQualifier() const { return Qualifier; }
 
   /// \brief Retrieve the nested-name-specifier to which this instance
   /// refers.

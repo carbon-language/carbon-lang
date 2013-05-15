@@ -65,7 +65,7 @@ namespace clang {
       Ptr = Traits::getAsVoidPointer(P);
     }
 
-    operator bool() const { return Ptr != 0; }
+    LLVM_EXPLICIT operator bool() const { return Ptr != 0; }
 
     void *getAsOpaquePtr() const { return Ptr; }
     static OpaquePtr getFromOpaquePtr(void *P) { return OpaquePtr(P); }

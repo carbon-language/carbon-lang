@@ -182,9 +182,14 @@ public:
 
   // operator bool() - Evaluates true when this declaration name is
   // non-empty.
-  operator bool() const {
+  LLVM_EXPLICIT operator bool() const {
     return ((Ptr & PtrMask) != 0) ||
            (reinterpret_cast<IdentifierInfo *>(Ptr & ~PtrMask));
+  }
+
+  /// \brief Evaluates true when this declaration name is empty.
+  bool isEmpty() const {
+    return !*this;
   }
 
   /// Predicate functions for querying what type of name this is.

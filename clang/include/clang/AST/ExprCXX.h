@@ -1935,7 +1935,7 @@ public:
   /// \brief Determines whether this member expression actually had
   /// a C++ nested-name-specifier prior to the name of the member, e.g.,
   /// x->Base::foo.
-  bool hasQualifier() const { return QualifierLoc; }
+  bool hasQualifier() const { return QualifierLoc.hasQualifier(); }
 
   /// \brief Retrieves the nested-name-specifier that qualifies the type name,
   /// with source-location information.

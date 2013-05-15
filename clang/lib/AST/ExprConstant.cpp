@@ -1809,7 +1809,7 @@ struct CompleteObject {
     assert(Value && "missing value for complete object");
   }
 
-  operator bool() const { return Value; }
+  LLVM_EXPLICIT operator bool() const { return Value; }
 };
 
 /// Find the designated sub-object of an rvalue.

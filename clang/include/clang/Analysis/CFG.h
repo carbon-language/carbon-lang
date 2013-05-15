@@ -269,7 +269,7 @@ public:
   Stmt &operator*() { return *getStmt(); }
   const Stmt &operator*() const { return *getStmt(); }
 
-  operator bool() const { return getStmt(); }
+  LLVM_EXPLICIT operator bool() const { return getStmt(); }
 };
 
 /// CFGBlock - Represents a single basic block in a source-level CFG.

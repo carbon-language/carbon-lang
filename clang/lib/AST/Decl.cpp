@@ -2319,7 +2319,7 @@ bool FunctionDecl::doesDeclarationForceExternallyVisibleDefinition() const {
     const FunctionDecl *Prev = this;
     bool FoundBody = false;
     while ((Prev = Prev->getPreviousDecl())) {
-      FoundBody |= Prev->Body;
+      FoundBody |= Prev->Body.isValid();
 
       if (Prev->Body) {
         // If it's not the case that both 'inline' and 'extern' are
@@ -2347,7 +2347,7 @@ bool FunctionDecl::doesDeclarationForceExternallyVisibleDefinition() const {
   const FunctionDecl *Prev = this;
   bool FoundBody = false;
   while ((Prev = Prev->getPreviousDecl())) {
-    FoundBody |= Prev->Body;
+    FoundBody |= Prev->Body.isValid();
     if (RedeclForcesDefC99(Prev))
       return false;
   }

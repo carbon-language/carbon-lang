@@ -90,7 +90,7 @@ public:
   }
 
   bool isNull() const { return !Ty; }
-  operator bool() const { return Ty; }
+  LLVM_EXPLICIT operator bool() const { return Ty; }
 
   /// \brief Returns the size of type source info data block for the given type.
   static unsigned getFullDataSizeForType(QualType Ty);

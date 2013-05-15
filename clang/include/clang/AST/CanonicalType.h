@@ -81,7 +81,7 @@ public:
   operator QualType() const { return Stored; }
 
   /// \brief Implicit conversion to bool.
-  operator bool() const { return !isNull(); }
+  LLVM_EXPLICIT operator bool() const { return !isNull(); }
   
   bool isNull() const {
     return Stored.isNull();

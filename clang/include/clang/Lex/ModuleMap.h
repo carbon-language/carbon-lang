@@ -80,7 +80,7 @@ class ModuleMap {
 
     // \brief Whether this known header is valid (i.e., it has an
     // associated module).
-    operator bool() const { return Storage.getPointer() != 0; }
+    LLVM_EXPLICIT operator bool() const { return Storage.getPointer() != 0; }
   };
 
   typedef llvm::DenseMap<const FileEntry *, KnownHeader> HeadersMap;

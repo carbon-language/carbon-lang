@@ -423,7 +423,7 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
     FoundD = 0;
 
   std::size_t Size = sizeof(DeclRefExpr);
-  if (QualifierLoc != 0)
+  if (QualifierLoc)
     Size += sizeof(NestedNameSpecifierLoc);
   if (FoundD)
     Size += sizeof(NamedDecl *);

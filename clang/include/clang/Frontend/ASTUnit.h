@@ -456,7 +456,7 @@ public:
   void setASTContext(ASTContext *ctx) { Ctx = ctx; }
   void setPreprocessor(Preprocessor *pp);
 
-  bool hasSema() const { return TheSema; }
+  bool hasSema() const { return TheSema.isValid(); }
   Sema &getSema() const { 
     assert(TheSema && "ASTUnit does not have a Sema object!");
     return *TheSema; 

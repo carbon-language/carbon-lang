@@ -453,7 +453,7 @@ TEST(ParseFixedCompilationDatabase, ReturnsArgumentsAfterDoubleDash) {
   const char *Argv[] = { "1", "2", "--\0no-constant-folding", "3", "4" };
   OwningPtr<FixedCompilationDatabase> Database(
       FixedCompilationDatabase::loadFromCommandLine(Argc, Argv));
-  ASSERT_TRUE(Database);
+  ASSERT_TRUE(Database.isValid());
   std::vector<CompileCommand> Result =
     Database->getCompileCommands("source");
   ASSERT_EQ(1ul, Result.size());
@@ -472,7 +472,7 @@ TEST(ParseFixedCompilationDatabase, ReturnsEmptyCommandLine) {
   const char *Argv[] = { "1", "2", "--\0no-constant-folding" };
   OwningPtr<FixedCompilationDatabase> Database(
       FixedCompilationDatabase::loadFromCommandLine(Argc, Argv));
-  ASSERT_TRUE(Database);
+  ASSERT_TRUE(Database.isValid());
   std::vector<CompileCommand> Result =
     Database->getCompileCommands("source");
   ASSERT_EQ(1ul, Result.size());

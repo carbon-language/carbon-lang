@@ -1329,7 +1329,7 @@ void ASTDumper::dumpStmt(const Stmt *S) {
     return;
   }
 
-  setMoreChildren(S->children());
+  setMoreChildren(!S->children().empty());
   ConstStmtVisitor<ASTDumper>::Visit(S);
   setMoreChildren(false);
   for (Stmt::const_child_range CI = S->children(); CI; ++CI) {

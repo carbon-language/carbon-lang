@@ -504,7 +504,7 @@ public:
   }
   
   bool hasCallStackHint() {
-    return (CallStackHint != 0);
+    return CallStackHint.isValid();
   }
 
   /// Produce the hint for the given node. The node contains 

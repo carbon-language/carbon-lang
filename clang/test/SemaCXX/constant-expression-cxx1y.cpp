@@ -250,11 +250,12 @@ namespace lifetime {
 }
 
 namespace const_modify {
-  constexpr int modify(int &n) { return n = 1; } // expected-note {{modification of object of const-qualified type 'const int'}}
+  constexpr int modify(int &n) { return n = 1; } // expected-note 2 {{modification of object of const-qualified type 'const int'}}
   constexpr int test1() { int k = 0; return modify(k); }
-  constexpr int test2() { const int k = 0; return modify(const_cast<int&>(k)); } // expected-note {{in call}}
+  constexpr int test2() { const int k = 0; return modify(const_cast<int&>(k)); } // expected-note 2 {{in call}}
   static_assert(test1() == 1, "");
   static_assert(test2() == 1, ""); // expected-error {{constant expression}} expected-note {{in call}}
+  constexpr int i = test2(); // expected-error {{constant expression}} expected-note {{in call}}
 }
 
 namespace null {

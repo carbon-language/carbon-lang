@@ -505,7 +505,7 @@ struct ImplicitNullDerefEvent {
 struct DefaultBool {
   bool val;
   DefaultBool() : val(false) {}
-  operator bool() const { return val; }
+  LLVM_EXPLICIT operator bool() const { return val; }
   DefaultBool &operator=(bool b) { val = b; return *this; }
 };
 

@@ -2878,7 +2878,7 @@ Decl *ASTNodeImporter::VisitIndirectFieldDecl(IndirectFieldDecl *D) {
 
       if (Importer.IsStructurallyEquivalent(D->getType(), 
                                             FoundField->getType(),
-                                            Name)) {
+                                            !Name.isEmpty())) {
         Importer.Imported(D, FoundField);
         return FoundField;
       }

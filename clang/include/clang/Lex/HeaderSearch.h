@@ -264,7 +264,7 @@ public:
 
   /// \brief Checks whether the map exists or not.
   bool HasIncludeAliasMap() const {
-    return IncludeAliases;
+    return IncludeAliases.isValid();
   }
 
   /// \brief Map the source include name to the dest include name.

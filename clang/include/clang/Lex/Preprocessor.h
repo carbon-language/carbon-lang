@@ -1400,7 +1400,7 @@ private:
   bool InCachingLexMode() const {
     // If the Lexer pointers are 0 and IncludeMacroStack is empty, it means
     // that we are past EOF, not that we are in CachingLex mode.
-    return CurPPLexer == 0 && CurTokenLexer == 0 && CurPTHLexer == 0 &&
+    return !CurPPLexer && !CurTokenLexer && !CurPTHLexer &&
            !IncludeMacroStack.empty();
   }
   void EnterCachingLexMode();

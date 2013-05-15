@@ -2524,7 +2524,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // erroneous: We already checked about that it has no type specifier, and
       // C++ doesn't have implicit int.  Diagnose it as a typo w.r.t. to the
       // typename.
-      if (TypeRep == 0) {
+      if (!TypeRep) {
         ConsumeToken();   // Eat the scope spec so the identifier is current.
         ParsedAttributesWithRange Attrs(AttrFactory);
         if (ParseImplicitInt(DS, &SS, TemplateInfo, AS, DSContext, Attrs)) {

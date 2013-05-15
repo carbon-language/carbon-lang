@@ -463,7 +463,7 @@ public:
     }
   }
 
-  bool ok() { return FileStream; }
+  bool ok() { return FileStream.isValid(); }
   raw_ostream &getStream() { return *FileStream; }
 
 private:

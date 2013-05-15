@@ -2945,7 +2945,7 @@ Decl *Sema::ActOnMethodDeclaration(
     QualType ArgType;
     TypeSourceInfo *DI;
 
-    if (ArgInfo[i].Type == 0) {
+    if (!ArgInfo[i].Type) {
       ArgType = Context.getObjCIdType();
       DI = 0;
     } else {

@@ -9307,7 +9307,7 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
   ParmVarDecl *Other = MoveAssignOperator->getParamDecl(0);
   QualType OtherRefType = Other->getType()->
       getAs<RValueReferenceType>()->getPointeeType();
-  assert(OtherRefType.getQualifiers() == 0 &&
+  assert(!OtherRefType.getQualifiers() &&
          "Bad argument type of defaulted move assignment");
 
   // Our location for everything implicitly-generated.

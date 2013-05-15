@@ -228,7 +228,7 @@ inline CXXRecordDecl::friend_iterator CXXRecordDecl::friend_end() const {
 }
 
 inline void CXXRecordDecl::pushFriendDecl(FriendDecl *FD) {
-  assert(FD->NextFriend == 0 && "friend already has next friend?");
+  assert(!FD->NextFriend && "friend already has next friend?");
   FD->NextFriend = data().FirstFriend;
   data().FirstFriend = FD;
 }

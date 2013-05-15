@@ -70,7 +70,7 @@ PreprocessorLexer *Preprocessor::getCurrentFileLexer() const {
 /// start lexing tokens from it instead of the current buffer.
 void Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir,
                                    SourceLocation Loc) {
-  assert(CurTokenLexer == 0 && "Cannot #include a file inside a macro!");
+  assert(!CurTokenLexer && "Cannot #include a file inside a macro!");
   ++NumEnteredSourceFiles;
 
   if (MaxIncludeStackDepth < IncludeMacroStack.size())

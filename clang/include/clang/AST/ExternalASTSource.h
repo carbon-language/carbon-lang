@@ -329,7 +329,12 @@ public:
   /// \brief Whether this pointer is non-NULL.
   ///
   /// This operation does not require the AST node to be deserialized.
-  operator bool() const { return Ptr != 0; }
+  LLVM_EXPLICIT operator bool() const { return Ptr != 0; }
+
+  /// \brief Whether this pointer is non-NULL.
+  ///
+  /// This operation does not require the AST node to be deserialized.
+  bool isValid() const { return Ptr != 0; }
 
   /// \brief Whether this pointer is currently stored as an offset.
   bool isOffset() const { return Ptr & 0x01; }
