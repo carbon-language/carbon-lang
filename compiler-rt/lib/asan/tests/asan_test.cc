@@ -567,7 +567,10 @@ TEST(AddressSanitizer, LongJmpTest) {
   }
 }
 
-#if not defined(__ANDROID__)
+#if !defined(__ANDROID__) && \
+    !defined(__powerpc64__) && !defined(__powerpc__)
+// Does not work on Power:
+// https://code.google.com/p/address-sanitizer/issues/detail?id=185
 TEST(AddressSanitizer, BuiltinLongJmpTest) {
   static jmp_buf buf;
   if (!__builtin_setjmp((void**)buf)) {
