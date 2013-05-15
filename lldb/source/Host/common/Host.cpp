@@ -1207,14 +1207,14 @@ Host::GetEffectiveGroupID ()
     return getegid();
 }
 
-#if !defined (__APPLE__)
+#if !defined (__APPLE__) && !defined(__linux__)
 uint32_t
 Host::FindProcesses (const ProcessInstanceInfoMatch &match_info, ProcessInstanceInfoList &process_infos)
 {
     process_infos.Clear();
     return process_infos.GetSize();
 }
-#endif
+#endif // #if !defined (__APPLE__) && !defined(__linux__)
 
 #if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined(__linux__)
 bool
