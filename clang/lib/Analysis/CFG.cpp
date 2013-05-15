@@ -3400,113 +3400,6 @@ bool CFGImplicitDtor::isNoReturn(ASTContext &astContext) const {
 }
 
 //===----------------------------------------------------------------------===//
-// CFG: Queries for BlkExprs.
-//===----------------------------------------------------------------------===//
-
-namespace {
-  typedef llvm::DenseMap<const Stmt*,unsigned> BlkExprMapTy;
-}
-
-static void FindSubExprAssignments(const Stmt *S,
-                                   llvm::SmallPtrSet<const Expr*,50>& Set) {
-  if (!S)
-    return;
-
-  for (Stmt::const_child_range I = S->children(); I; ++I) {
-    const Stmt *child = *I;
-    if (!child)
-      continue;
-
-    if (const BinaryOperator* B = dyn_cast<BinaryOperator>(child))
-      if (B->isAssignmentOp()) Set.insert(B);
-
-    FindSubExprAssignments(child, Set);
-  }
-}
-
-static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
-  BlkExprMapTy* M = new BlkExprMapTy();
-
-  // Look for assignments that are used as subexpressions.  These are the only
-  // assignments that we want to *possibly* register as a block-level
-  // expression.  Basically, if an assignment occurs both in a subexpression and
-  // at the block-level, it is a block-level expression.
-  llvm::SmallPtrSet<const Expr*,50> SubExprAssignments;
-
-  for (CFG::iterator I=cfg.begin(), E=cfg.end(); I != E; ++I)
-    for (CFGBlock::iterator BI=(*I)->begin(), EI=(*I)->end(); BI != EI; ++BI)
-      if (Optional<CFGStmt> S = BI->getAs<CFGStmt>())
-        FindSubExprAssignments(S->getStmt(), SubExprAssignments);
-
-  for (CFG::iterator I=cfg.begin(), E=cfg.end(); I != E; ++I) {
-
-    // Iterate over the statements again on identify the Expr* and Stmt* at the
-    // block-level that are block-level expressions.
-
-    for (CFGBlock::iterator BI=(*I)->begin(), EI=(*I)->end(); BI != EI; ++BI) {
-      Optional<CFGStmt> CS = BI->getAs<CFGStmt>();
-      if (!CS)
-        continue;
-      if (const Expr *Exp = dyn_cast<Expr>(CS->getStmt())) {
-        assert((Exp->IgnoreParens() == Exp) && "No parens on block-level exps");
-
-        if (const BinaryOperator* B = dyn_cast<BinaryOperator>(Exp)) {
-          // Assignment expressions that are not nested within another
-          // expression are really "statements" whose value is never used by
-          // another expression.
-          if (B->isAssignmentOp() && !SubExprAssignments.count(Exp))
-            continue;
-        } else if (const StmtExpr *SE = dyn_cast<StmtExpr>(Exp)) {
-          // Special handling for statement expressions.  The last statement in
-          // the statement expression is also a block-level expr.
-          const CompoundStmt *C = SE->getSubStmt();
-          if (!C->body_empty()) {
-            const Stmt *Last = C->body_back();
-            if (const Expr *LastEx = dyn_cast<Expr>(Last))
-              Last = LastEx->IgnoreParens();
-            unsigned x = M->size();
-            (*M)[Last] = x;
-          }
-        }
-
-        unsigned x = M->size();
-        (*M)[Exp] = x;
-      }
-    }
-
-    // Look at terminators.  The condition is a block-level expression.
-
-    Stmt *S = (*I)->getTerminatorCondition();
-
-    if (S && M->find(S) == M->end()) {
-      unsigned x = M->size();
-      (*M)[S] = x;
-    }
-  }
-
-  return M;
-}
-
-CFG::BlkExprNumTy CFG::getBlkExprNum(const Stmt *S) {
-  assert(S != NULL);
-  if (!BlkExprMap) { BlkExprMap = (void*) PopulateBlkExprMap(*this); }
-
-  BlkExprMapTy* M = reinterpret_cast<BlkExprMapTy*>(BlkExprMap);
-  BlkExprMapTy::iterator I = M->find(S);
-  return (I == M->end()) ? CFG::BlkExprNumTy() : CFG::BlkExprNumTy(I->second);
-}
-
-unsigned CFG::getNumBlkExprs() {
-  if (const BlkExprMapTy* M = reinterpret_cast<const BlkExprMapTy*>(BlkExprMap))
-    return M->size();
-
-  // We assume callers interested in the number of BlkExprs will want
-  // the map constructed if it doesn't already exist.
-  BlkExprMap = (void*) PopulateBlkExprMap(*this);
-  return reinterpret_cast<BlkExprMapTy*>(BlkExprMap)->size();
-}
-
-//===----------------------------------------------------------------------===//
 // Filtered walking of the CFG.
 //===----------------------------------------------------------------------===//
 
@@ -3527,14 +3420,6 @@ bool CFGBlock::FilterEdge(const CFGBlock::FilterOptions &F,
   }
 
   return false;
-}
-
-//===----------------------------------------------------------------------===//
-// Cleanup: CFG dstor.
-//===----------------------------------------------------------------------===//
-
-CFG::~CFG() {
-  delete reinterpret_cast<const BlkExprMapTy*>(BlkExprMap);
 }
 
 //===----------------------------------------------------------------------===//

@@ -18,7 +18,6 @@
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
-#include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
@@ -391,26 +390,24 @@ public:
 //===----------------------------------------------------------------------===//
 
 namespace {
-class FindEscaped : public CFGRecStmtDeclVisitor<FindEscaped>{
-  CFG *cfg;
+class FindEscaped {
 public:
-  FindEscaped(CFG *c) : cfg(c) {}
-
-  CFG& getCFG() { return *cfg; }
-
   llvm::SmallPtrSet<const VarDecl*, 20> Escaped;
 
-  void VisitUnaryOperator(UnaryOperator* U) {
-    // Check for '&'.  Any VarDecl whose value has its address-taken we
-    // treat as escaped.
-    Expr *E = U->getSubExpr()->IgnoreParenCasts();
-    if (U->getOpcode() == UO_AddrOf)
-      if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E))
-        if (VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
-          Escaped.insert(VD);
-          return;
-        }
-    Visit(E);
+  void operator()(const Stmt *S) {
+    // Check for '&'. Any VarDecl whose address has been taken we treat as
+    // escaped.
+    // FIXME: What about references?
+    const UnaryOperator *U = dyn_cast<UnaryOperator>(S);
+    if (!U)
+      return;
+    if (U->getOpcode() != UO_AddrOf)
+      return;
+
+    const Expr *E = U->getSubExpr()->IgnoreParenCasts();
+    if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E))
+      if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl()))
+        Escaped.insert(VD);
   }
 };
 } // end anonymous namespace
@@ -438,8 +435,8 @@ public:
       CFG &cfg = *mgr.getCFG(D);
       AnalysisDeclContext *AC = mgr.getAnalysisDeclContext(D);
       ParentMap &pmap = mgr.getParentMap(D);
-      FindEscaped FS(&cfg);
-      FS.getCFG().VisitBlockStmts(FS);
+      FindEscaped FS;
+      cfg.VisitBlockStmts(FS);
       DeadStoreObs A(cfg, BR.getContext(), BR, AC, pmap, FS.Escaped);
       L->runOnAllBlocks(A);
     }

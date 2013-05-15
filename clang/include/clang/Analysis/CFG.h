@@ -763,21 +763,6 @@ public:
   // CFG Introspection.
   //===--------------------------------------------------------------------===//
 
-  struct   BlkExprNumTy {
-    const signed Idx;
-    explicit BlkExprNumTy(signed idx) : Idx(idx) {}
-    explicit BlkExprNumTy() : Idx(-1) {}
-    operator bool() const { return Idx >= 0; }
-    operator unsigned() const { assert(Idx >=0); return (unsigned) Idx; }
-  };
-
-  bool isBlkExpr(const Stmt *S) { return getBlkExprNum(S); }
-  bool isBlkExpr(const Stmt *S) const {
-    return const_cast<CFG*>(this)->isBlkExpr(S);
-  }
-  BlkExprNumTy  getBlkExprNum(const Stmt *S);
-  unsigned      getNumBlkExprs();
-
   /// getNumBlockIDs - Returns the total number of BlockIDs allocated (which
   /// start at 0).
   unsigned getNumBlockIDs() const { return NumBlockIDs; }
@@ -800,9 +785,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   CFG() : Entry(NULL), Exit(NULL), IndirectGotoBlock(NULL), NumBlockIDs(0),
-          BlkExprMap(NULL), Blocks(BlkBVC, 10) {}
-
-  ~CFG();
+          Blocks(BlkBVC, 10) {}
 
   llvm::BumpPtrAllocator& getAllocator() {
     return BlkBVC.getAllocator();
@@ -818,11 +801,6 @@ private:
   CFGBlock* IndirectGotoBlock;  // Special block to contain collective dispatch
                                 // for indirect gotos
   unsigned  NumBlockIDs;
-
-  // BlkExprMap - An opaque pointer to prevent inclusion of DenseMap.h.
-  //  It represents a map from Expr* to integers to record the set of
-  //  block-level expressions and their "statement number" in the CFG.
-  void *    BlkExprMap;
 
   BumpVectorContext BlkBVC;
 
