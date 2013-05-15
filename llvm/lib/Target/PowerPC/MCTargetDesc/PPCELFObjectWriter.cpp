@@ -33,7 +33,6 @@ namespace {
     virtual const MCSymbol *undefinedExplicitRelSym(const MCValue &Target,
                                                     const MCFixup &Fixup,
                                                     bool IsPCRel) const;
-    virtual void adjustFixupOffset(const MCFixup &Fixup, uint64_t &RelocOffset);
 
     virtual void sortRelocs(const MCAssembler &Asm,
                             std::vector<ELFRelocationEntry> &Relocs);
@@ -238,19 +237,6 @@ const MCSymbol *PPCELFObjectWriter::undefinedExplicitRelSym(const MCValue &Targe
   if (EmitThisSym && !Symbol.isTemporary())
     return &Symbol;
   return NULL;
-}
-
-void PPCELFObjectWriter::
-adjustFixupOffset(const MCFixup &Fixup, uint64_t &RelocOffset) {
-  switch ((unsigned)Fixup.getKind()) {
-    case PPC::fixup_ppc_ha16:
-    case PPC::fixup_ppc_lo16:
-    case PPC::fixup_ppc_lo16_ds:
-      RelocOffset += 2;
-      break;
-    default:
-      break;
-  }
 }
 
 // The standard sorter only sorts on the r_offset field, but PowerPC can

@@ -57,13 +57,13 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   case FK_Data_1:
     return 1;
   case FK_Data_2:
+  case PPC::fixup_ppc_ha16:
+  case PPC::fixup_ppc_lo16:
+  case PPC::fixup_ppc_lo16_ds:
     return 2;
   case FK_Data_4:
   case PPC::fixup_ppc_brcond14:
   case PPC::fixup_ppc_br24:
-  case PPC::fixup_ppc_ha16:
-  case PPC::fixup_ppc_lo16:
-  case PPC::fixup_ppc_lo16_ds:
     return 4;
   case FK_Data_8:
     return 8;
@@ -100,9 +100,9 @@ public:
       // name                    offset  bits  flags
       { "fixup_ppc_br24",        6,      24,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_ppc_brcond14",    16,     14,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_ppc_lo16",        16,     16,   0 },
-      { "fixup_ppc_ha16",        16,     16,   0 },
-      { "fixup_ppc_lo16_ds",     16,     14,   0 },
+      { "fixup_ppc_lo16",         0,     16,   0 },
+      { "fixup_ppc_ha16",         0,     16,   0 },
+      { "fixup_ppc_lo16_ds",      0,     14,   0 },
       { "fixup_ppc_tlsreg",       0,      0,   0 },
       { "fixup_ppc_nofixup",      0,      0,   0 }
     };

@@ -142,7 +142,7 @@ unsigned PPCMCCodeEmitter::getHA16Encoding(const MCInst &MI, unsigned OpNo,
   if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups);
   
   // Add a fixup for the branch target.
-  Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
+  Fixups.push_back(MCFixup::Create(2, MO.getExpr(),
                                    (MCFixupKind)PPC::fixup_ppc_ha16));
   return 0;
 }
@@ -153,7 +153,7 @@ unsigned PPCMCCodeEmitter::getLO16Encoding(const MCInst &MI, unsigned OpNo,
   if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups);
   
   // Add a fixup for the branch target.
-  Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
+  Fixups.push_back(MCFixup::Create(2, MO.getExpr(),
                                    (MCFixupKind)PPC::fixup_ppc_lo16));
   return 0;
 }
@@ -170,7 +170,7 @@ unsigned PPCMCCodeEmitter::getMemRIEncoding(const MCInst &MI, unsigned OpNo,
     return (getMachineOpValue(MI, MO, Fixups) & 0xFFFF) | RegBits;
   
   // Add a fixup for the displacement field.
-  Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
+  Fixups.push_back(MCFixup::Create(2, MO.getExpr(),
                                    (MCFixupKind)PPC::fixup_ppc_lo16));
   return RegBits;
 }
@@ -188,7 +188,7 @@ unsigned PPCMCCodeEmitter::getMemRIXEncoding(const MCInst &MI, unsigned OpNo,
     return (getMachineOpValue(MI, MO, Fixups) & 0x3FFF) | RegBits;
   
   // Add a fixup for the displacement field.
-  Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
+  Fixups.push_back(MCFixup::Create(2, MO.getExpr(),
                                    (MCFixupKind)PPC::fixup_ppc_lo16_ds));
   return RegBits;
 }
