@@ -188,7 +188,23 @@ bool PPCCTRLoops::convertToCTRLoop(Loop *L) {
           if (F->getIntrinsicID() != Intrinsic::not_intrinsic) {
             switch (F->getIntrinsicID()) {
             default: continue;
+
+// VisualStudio defines setjmp as _setjmp
+#if defined(_MSC_VER) && defined(setjmp) && \
+                         !defined(setjmp_undefined_for_msvc)
+#  pragma push_macro("setjmp")
+#  undef setjmp
+#  define setjmp_undefined_for_msvc
+#endif
+
             case Intrinsic::setjmp:
+
+#if defined(_MSC_VER) && defined(setjmp_undefined_for_msvc)
+   // let's return it to _setjmp state
+#  pragma pop_macro("setjmp")
+#  undef setjmp_undefined_for_msvc
+#endif
+
             case Intrinsic::longjmp:
             case Intrinsic::memcpy:
             case Intrinsic::memmove:
