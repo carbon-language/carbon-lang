@@ -168,23 +168,6 @@ Constant *Module::getOrInsertFunction(StringRef Name,
   return F;
 }
 
-Constant *Module::getOrInsertTargetIntrinsic(StringRef Name,
-                                             FunctionType *Ty,
-                                             AttributeSet AttributeList) {
-  // See if we have a definition for the specified function already.
-  GlobalValue *F = getNamedValue(Name);
-  if (F == 0) {
-    // Nope, add it
-    Function *New = Function::Create(Ty, GlobalVariable::ExternalLinkage, Name);
-    New->setAttributes(AttributeList);
-    FunctionList.push_back(New);
-    return New; // Return the new prototype.
-  }
-
-  // Otherwise, we just found the existing function or a prototype.
-  return F;
-}
-
 Constant *Module::getOrInsertFunction(StringRef Name,
                                       FunctionType *Ty) {
   return getOrInsertFunction(Name, Ty, AttributeSet());

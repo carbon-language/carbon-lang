@@ -340,10 +340,6 @@ public:
   Constant *getOrInsertFunction(StringRef Name, Type *RetTy, ...)
     END_WITH_NULL;
 
-  Constant *getOrInsertTargetIntrinsic(StringRef Name,
-                                       FunctionType *Ty,
-                                       AttributeSet AttributeList);
-
   /// getFunction - Look up the specified function in the module symbol table.
   /// If it does not exist, return null.
   Function *getFunction(StringRef Name) const;
