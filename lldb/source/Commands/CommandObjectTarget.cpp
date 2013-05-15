@@ -4272,7 +4272,53 @@ protected:
             // current target, so we need to find that module in the
             // target
             ModuleList matching_module_list;
-            size_t num_matches = target->GetImages().FindModules (module_spec, matching_module_list);
+            
+            size_t num_matches = 0;
+            // First extract all module specs from the symbol file
+            lldb_private::ModuleSpecList symfile_module_specs;
+            if (ObjectFile::GetModuleSpecifications(module_spec.GetSymbolFileSpec(), 0, symfile_module_specs))
+            {
+                // Now extract the module spec that matches the target architecture
+                ModuleSpec target_arch_module_spec;
+                ModuleSpec symfile_module_spec;
+                target_arch_module_spec.GetArchitecture() = target->GetArchitecture();
+                if (symfile_module_specs.FindMatchingModuleSpec(target_arch_module_spec, symfile_module_spec))
+                {
+                    // See if it has a UUID?
+                    if (symfile_module_spec.GetUUID().IsValid())
+                    {
+                        // It has a UUID, look for this UUID in the target modules
+                        ModuleSpec symfile_uuid_module_spec;
+                        symfile_uuid_module_spec.GetUUID() = symfile_module_spec.GetUUID();
+                        num_matches = target->GetImages().FindModules (symfile_uuid_module_spec, matching_module_list);
+                    }
+                }
+                
+                if (num_matches == 0)
+                {
+                    // No matches yet, iterate through the module specs to find a UUID value that
+                    // we can match up to an image in our target
+                    const size_t num_symfile_module_specs = symfile_module_specs.GetSize();
+                    for (size_t i=0; i<num_symfile_module_specs && num_matches == 0; ++i)
+                    {
+                        if (symfile_module_specs.GetModuleSpecAtIndex(i, symfile_module_spec))
+                        {
+                            if (symfile_module_spec.GetUUID().IsValid())
+                            {
+                                // It has a UUID, look for this UUID in the target modules
+                                ModuleSpec symfile_uuid_module_spec;
+                                symfile_uuid_module_spec.GetUUID() = symfile_module_spec.GetUUID();
+                                num_matches = target->GetImages().FindModules (symfile_uuid_module_spec, matching_module_list);
+                            }                            
+                        }
+                    }
+                }
+            }
+
+            // Just try to match up the file by basename if we have no matches at this point
+            if (num_matches == 0)
+                num_matches = target->GetImages().FindModules (module_spec, matching_module_list);
+    
             while (num_matches == 0)
             {
                 ConstString filename_no_extension(module_spec.GetFileSpec().GetFileNameStrippingExtension());
@@ -4288,6 +4334,7 @@ protected:
                 module_spec.GetFileSpec().GetFilename() = filename_no_extension;
                 
                 num_matches = target->GetImages().FindModules (module_spec, matching_module_list);
+                
             }
 
             if (num_matches > 1)

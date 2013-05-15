@@ -397,6 +397,26 @@ protected:
     }
 };
 
+static uint32_t
+MachHeaderSizeFromMagic(uint32_t magic)
+{
+    switch (magic)
+    {
+        case HeaderMagic32:
+        case HeaderMagic32Swapped:
+            return sizeof(struct mach_header);
+            
+        case HeaderMagic64:
+        case HeaderMagic64Swapped:
+            return sizeof(struct mach_header_64);
+            break;
+            
+        default:
+            break;
+    }
+    return 0;
+}
+
 #define MACHO_NLIST_ARM_SYMBOL_IS_THUMB 0x0008
 
 void
@@ -493,7 +513,7 @@ ObjectFileMachO::GetModuleSpecifications (const lldb_private::FileSpec& file,
             if (header.sizeofcmds >= data_sp->GetByteSize())
             {
                 data_sp = file.ReadFileContents(file_offset, header.sizeofcmds);
-                data_offset = 0;
+                data_offset = MachHeaderSizeFromMagic(header.magic) + file_offset;
             }
             if (data_sp)
             {
@@ -549,29 +569,6 @@ ObjectFileMachO::GetSectionNameEHFrame()
     static ConstString g_section_name_eh_frame ("__eh_frame");
     return g_section_name_eh_frame;
 }
-
-
-
-static uint32_t
-MachHeaderSizeFromMagic(uint32_t magic)
-{
-    switch (magic)
-    {
-    case HeaderMagic32:
-    case HeaderMagic32Swapped:
-        return sizeof(struct mach_header);
-
-    case HeaderMagic64:
-    case HeaderMagic64Swapped:
-        return sizeof(struct mach_header_64);
-        break;
-
-    default:
-        break;
-    }
-    return 0;
-}
-
 
 bool
 ObjectFileMachO::MagicBytesMatch (DataBufferSP& data_sp,
