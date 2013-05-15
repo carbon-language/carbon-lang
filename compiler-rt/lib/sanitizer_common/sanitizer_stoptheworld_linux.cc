@@ -369,6 +369,10 @@ typedef user_regs_struct regs_struct;
 #define REG_SP rsp
 #endif
 
+#elif defined(__powerpc__) || defined(__powerpc64__)
+typedef pt_regs regs_struct;
+#define REG_SP gpr[PT_R1]
+
 #else
 #error "Unsupported architecture"
 #endif // SANITIZER_ANDROID && defined(__arm__)

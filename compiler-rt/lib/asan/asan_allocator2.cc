@@ -58,10 +58,11 @@ struct AsanMapUnmapCallback {
 #if SANITIZER_WORDSIZE == 64
 #if defined(__powerpc64__)
 const uptr kAllocatorSpace =  0xa0000000000ULL;
+const uptr kAllocatorSize  =  0x20000000000ULL;  // 2T.
 #else
 const uptr kAllocatorSpace = 0x600000000000ULL;
-#endif
 const uptr kAllocatorSize  =  0x40000000000ULL;  // 4T.
+#endif
 typedef DefaultSizeClassMap SizeClassMap;
 typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, 0 /*metadata*/,
     SizeClassMap, AsanMapUnmapCallback> PrimaryAllocator;

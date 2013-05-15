@@ -250,4 +250,4 @@ TEST(SanitizerCommon, LibraryNameIs) {
 
 }  // namespace __sanitizer
 
-#endif  // SANITIZER_LINUX 
+#endif  // SANITIZER_LINUX

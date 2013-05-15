@@ -108,7 +108,7 @@ bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
 // OS-dependent function that fills array with descriptions of at most
 // "max_modules" currently loaded modules. Returns the number of
 // initialized modules. If filter is nonzero, ignores modules for which
-// filter(full_name) is false. 
+// filter(full_name) is false.
 typedef bool (*string_predicate_t)(const char *);
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
                       string_predicate_t filter);
