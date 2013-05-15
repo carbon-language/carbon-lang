@@ -4304,6 +4304,11 @@ public:
     // FIXME: Support Sparc quad-precision long double?
     DescriptionString = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32:64-S128";
+    // This is an LP64 platform.
+    LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
+    IntMaxType = SignedLong;
+    UIntMaxType = UnsignedLong;
+    Int64Type = SignedLong;
   }
 
   virtual void getTargetDefines(const LangOptions &Opts,
