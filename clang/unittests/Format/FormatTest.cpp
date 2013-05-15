@@ -1110,7 +1110,7 @@ TEST_F(FormatTest, FormatsInlineASM) {
       "asm(\"movq\\t%%rbx, %%rsi\\n\\t\"\n"
       "    \"cpuid\\n\\t\"\n"
       "    \"xchgq\\t%%rbx, %%rsi\\n\\t\"\n"
-      "    : \"=a\" (*rEAX), \"=S\" (*rEBX), \"=c\" (*rECX), \"=d\" (*rEDX)\n"
+      "    : \"=a\"(*rEAX), \"=S\"(*rEBX), \"=c\"(*rECX), \"=d\"(*rEDX)\n"
       "    : \"a\"(value));");
 }
 
@@ -2803,9 +2803,9 @@ TEST_F(FormatTest, FormatsFunctionTypes) {
   verifyGoogleFormat("A<void*(int*, SomeType*)>;");
   verifyGoogleFormat("void* (*a)(int);");
 
-  // Other constructs can look like function types:
+  // Other constructs can look somewhat like function types:
   verifyFormat("A<sizeof(*x)> a;");
-  verifyFormat("A<alignof(*x)> a;");
+  verifyFormat("#define DEREF_AND_CALL_F(x) f(*x)");
 }
 
 TEST_F(FormatTest, BreaksLongDeclarations) {
