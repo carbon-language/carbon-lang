@@ -350,6 +350,28 @@ bb3:
   ret i32 0
 }
 
+
+; Regression test for PR15707.  %buf1 and %buf2 should not be merged
+; in this test case.
+;YESCOLOR: myCall_pr15707
+;YESCOLOR: subq $200008, %rsp
+;NOCOLOR: myCall_pr15707
+;NOCOLOR: subq $200008, %rsp
+define void @myCall_pr15707() {
+  %buf1 = alloca i8, i32 100000, align 16
+  %buf2 = alloca i8, i32 100000, align 16
+
+  call void @llvm.lifetime.start(i64 -1, i8* %buf1)
+  call void @llvm.lifetime.end(i64 -1, i8* %buf1)
+
+  call void @llvm.lifetime.start(i64 -1, i8* %buf1)
+  call void @llvm.lifetime.start(i64 -1, i8* %buf2)
+  %result1 = call i32 @foo(i32 0, i8* %buf1)
+  %result2 = call i32 @foo(i32 0, i8* %buf2)
+  ret void
+}
+
+
 ; Check that we don't assert and crash even when there are allocas
 ; outside the declared lifetime regions.
 ;YESCOLOR: bad_range

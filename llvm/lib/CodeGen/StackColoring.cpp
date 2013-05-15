@@ -429,17 +429,14 @@ void StackColoring::calculateLiveIntervals(unsigned NumSlots) {
     }
 
     // Create the interval of the blocks that we previously found to be 'alive'.
-    BitVector Alive = BlockLiveness[MBB].LiveIn;
-    Alive |= BlockLiveness[MBB].LiveOut;
-
-    if (Alive.any()) {
-      for (int pos = Alive.find_first(); pos != -1;
-           pos = Alive.find_next(pos)) {
-        if (!Starts[pos].isValid())
-          Starts[pos] = Indexes->getMBBStartIdx(MBB);
-        if (!Finishes[pos].isValid())
-          Finishes[pos] = Indexes->getMBBEndIdx(MBB);
-      }
+    BlockLifetimeInfo &MBBLiveness = BlockLiveness[MBB];
+    for (int pos = MBBLiveness.LiveIn.find_first(); pos != -1;
+         pos = MBBLiveness.LiveIn.find_next(pos)) {
+      Starts[pos] = Indexes->getMBBStartIdx(MBB);
+    }
+    for (int pos = MBBLiveness.LiveOut.find_first(); pos != -1;
+         pos = MBBLiveness.LiveOut.find_next(pos)) {
+      Finishes[pos] = Indexes->getMBBEndIdx(MBB);
     }
 
     for (unsigned i = 0; i < NumSlots; ++i) {
