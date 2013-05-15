@@ -160,8 +160,11 @@ if ( NOT CMAKE_SYSTEM_NAME MATCHES "Windows" )
   execute_process(COMMAND ${CMAKE_SOURCE_DIR}/utils/GetRepositoryPath ${LLDB_SOURCE_DIR}
                   OUTPUT_VARIABLE LLDB_REPOSITORY)
   if ( LLDB_REPOSITORY )
-    string(REGEX REPLACE "(\r?\n)+$" "" LLDB_REPOSITORY ${LLDB_REPOSITORY})
-    string(REPLACE " " "" LLDB_REPOSITORY ${LLDB_REPOSITORY})
+    # Replace newline characters with spaces
+    string(REGEX REPLACE "(\r?\n)+" " " LLDB_REPOSITORY ${LLDB_REPOSITORY})
+
+    # Remove trailing spaces
+    string(REGEX REPLACE "(\ )+$" "" LLDB_REPOSITORY ${LLDB_REPOSITORY})
   endif()
 
   set_property(
