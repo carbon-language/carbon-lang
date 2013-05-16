@@ -207,6 +207,51 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     FeaturesStr = Features.getString();
   }
 
+  OwningPtr<const MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
+  if (!MRI) {
+    errs() << "error: no register info for target " << TripleName << "\n";
+    return;
+  }
+
+  // Set up disassembler.
+  OwningPtr<const MCAsmInfo> AsmInfo(
+    TheTarget->createMCAsmInfo(*MRI, TripleName));
+
+  if (!AsmInfo) {
+    errs() << "error: no assembly info for target " << TripleName << "\n";
+    return;
+  }
+
+  OwningPtr<const MCSubtargetInfo> STI(
+    TheTarget->createMCSubtargetInfo(TripleName, "", FeaturesStr));
+
+  if (!STI) {
+    errs() << "error: no subtarget info for target " << TripleName << "\n";
+    return;
+  }
+
+  OwningPtr<const MCDisassembler> DisAsm(
+    TheTarget->createMCDisassembler(*STI));
+  if (!DisAsm) {
+    errs() << "error: no disassembler for target " << TripleName << "\n";
+    return;
+  }
+
+  OwningPtr<const MCInstrInfo> MII(TheTarget->createMCInstrInfo());
+  if (!MII) {
+    errs() << "error: no instruction info for target " << TripleName << "\n";
+    return;
+  }
+
+  int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
+  OwningPtr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
+      AsmPrinterVariant, *AsmInfo, *MII, *MRI, *STI));
+  if (!IP) {
+    errs() << "error: no instruction printer for target " << TripleName
+      << '\n';
+    return;
+  }
+
   error_code ec;
   for (section_iterator i = Obj->begin_sections(),
                         e = Obj->end_sections();
@@ -271,51 +316,6 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     // the whole section.
     if (Symbols.empty())
       Symbols.push_back(std::make_pair(0, name));
-
-    OwningPtr<const MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
-    if (!MRI) {
-      errs() << "error: no register info for target " << TripleName << "\n";
-      return;
-    }
-
-    // Set up disassembler.
-    OwningPtr<const MCAsmInfo> AsmInfo(
-        TheTarget->createMCAsmInfo(*MRI, TripleName));
-
-    if (!AsmInfo) {
-      errs() << "error: no assembly info for target " << TripleName << "\n";
-      return;
-    }
-
-    OwningPtr<const MCSubtargetInfo> STI(
-      TheTarget->createMCSubtargetInfo(TripleName, "", FeaturesStr));
-
-    if (!STI) {
-      errs() << "error: no subtarget info for target " << TripleName << "\n";
-      return;
-    }
-
-    OwningPtr<const MCDisassembler> DisAsm(
-      TheTarget->createMCDisassembler(*STI));
-    if (!DisAsm) {
-      errs() << "error: no disassembler for target " << TripleName << "\n";
-      return;
-    }
-
-    OwningPtr<const MCInstrInfo> MII(TheTarget->createMCInstrInfo());
-    if (!MII) {
-      errs() << "error: no instruction info for target " << TripleName << "\n";
-      return;
-    }
-
-    int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
-    OwningPtr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
-                                AsmPrinterVariant, *AsmInfo, *MII, *MRI, *STI));
-    if (!IP) {
-      errs() << "error: no instruction printer for target " << TripleName
-             << '\n';
-      return;
-    }
 
     StringRef Bytes;
     if (error(i->getContents(Bytes))) break;
