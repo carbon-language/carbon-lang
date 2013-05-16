@@ -273,6 +273,45 @@ getLVForTemplateParameterList(const TemplateParameterList *params) {
 static LinkageInfo getLVForDecl(const NamedDecl *D,
                                 LVComputationKind computation);
 
+static const FunctionDecl *getOutermostFunctionContext(const Decl *D) {
+  const FunctionDecl *Ret = NULL;
+  const DeclContext *DC = D->getDeclContext();
+  while (DC->getDeclKind() != Decl::TranslationUnit) {
+    const FunctionDecl *F = dyn_cast<FunctionDecl>(DC);
+    if (F)
+      Ret = F;
+    DC = DC->getParent();
+  }
+  return Ret;
+}
+
+/// Get the linkage and visibility to be used when this type is a template
+/// argument. This is normally just the linkage and visibility of the type,
+/// but for function local types we need to check the linkage and visibility
+/// of the function.
+static LinkageInfo getLIForTemplateTypeArgument(QualType T) {
+  LinkageInfo LI = T->getLinkageAndVisibility();
+  if (LI.getLinkage() != NoLinkage)
+    return LI;
+
+  const TagType *TT = dyn_cast<TagType>(T);
+  if (!TT)
+    return LI;
+
+  const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(TT->getDecl());
+  if (!RD)
+    return LI;
+
+  const FunctionDecl *FD = getOutermostFunctionContext(RD);
+  if (!FD)
+    return LI;
+
+  if (!FD->isInlined())
+    return LI;
+
+  return FD->getLinkageAndVisibility();
+}
+
 /// \brief Get the most restrictive linkage for the types and
 /// declarations in the given template argument list.
 ///
@@ -291,7 +330,7 @@ getLVForTemplateArgumentList(ArrayRef<TemplateArgument> args) {
       continue;
 
     case TemplateArgument::Type:
-      LV.merge(arg.getAsType()->getLinkageAndVisibility());
+      LV.merge(getLIForTemplateTypeArgument(arg.getAsType()));
       continue;
 
     case TemplateArgument::Declaration:
