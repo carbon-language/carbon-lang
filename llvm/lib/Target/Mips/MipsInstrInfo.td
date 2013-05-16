@@ -391,6 +391,7 @@ class ArithLogicI<string opstr, Operand Od, RegisterOperand RO,
          [(set RO:$rt, (OpNode RO:$rs, imm_type:$imm16))],
          IIAlu, FrmI, opstr> {
   let isReMaterializable = 1;
+  let TwoOperandAliasConstraint = "$rs = $rt";
 }
 
 // Arithmetic Multiply ADD/SUB
@@ -1098,8 +1099,6 @@ def : InstAlias<"mfc2 $rt, $rd",
                 (MFC2_3OP CPURegsOpnd:$rt, CPURegsOpnd:$rd, 0), 0>;
 def : InstAlias<"mtc2 $rt, $rd",
                 (MTC2_3OP CPURegsOpnd:$rd, 0, CPURegsOpnd:$rt), 0>;
-def : InstAlias<"addiu $rs, $imm",
-                (ADDiu CPURegsOpnd:$rs, CPURegsOpnd:$rs, simm16:$imm), 0>;
 def : InstAlias<"bnez $rs,$offset",
                  (BNE CPURegsOpnd:$rs, ZERO, brtarget:$offset), 1>,
                  Requires<[NotMips64]>;
