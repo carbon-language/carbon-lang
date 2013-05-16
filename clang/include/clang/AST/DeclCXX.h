@@ -988,6 +988,8 @@ public:
   ///
   /// \param ThisCapture Will be set to the field declaration for the
   /// 'this' capture.
+  ///
+  /// \note No entries will be added for init-captures.
   void getCaptureFields(llvm::DenseMap<const VarDecl *, FieldDecl *> &Captures,
                         FieldDecl *&ThisCapture) const;
 

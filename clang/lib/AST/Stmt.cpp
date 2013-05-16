@@ -1128,7 +1128,7 @@ Stmt::child_range CapturedStmt::children() {
 bool CapturedStmt::capturesVariable(const VarDecl *Var) const {
   for (const_capture_iterator I = capture_begin(),
                               E = capture_end(); I != E; ++I) {
-    if (I->capturesThis())
+    if (!I->capturesVariable())
       continue;
 
     // This does not handle variable redeclarations. This should be

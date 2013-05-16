@@ -3063,7 +3063,7 @@ static void buildCapturedStmtCaptureList(
     if (Cap->isThisCapture()) {
       Captures.push_back(CapturedStmt::Capture(Cap->getLocation(),
                                                CapturedStmt::VCK_This));
-      CaptureInits.push_back(Cap->getCopyExpr());
+      CaptureInits.push_back(Cap->getInitExpr());
       continue;
     }
 
@@ -3073,7 +3073,7 @@ static void buildCapturedStmtCaptureList(
     Captures.push_back(CapturedStmt::Capture(Cap->getLocation(),
                                              CapturedStmt::VCK_ByRef,
                                              Cap->getVariable()));
-    CaptureInits.push_back(Cap->getCopyExpr());
+    CaptureInits.push_back(Cap->getInitExpr());
   }
 }
 

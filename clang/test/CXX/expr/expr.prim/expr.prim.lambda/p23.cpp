@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++11 %s -verify
+// RUN: %clang_cc1 -fsyntax-only -std=c++1y %s -verify
 
 void print();
 
@@ -56,3 +57,25 @@ void variadic_lambda(Args... args) {
 }
 
 template void variadic_lambda(int*, float*, double*);
+
+template<typename ...Args>
+void init_capture_pack_err(Args ...args) {
+  [as(args)...] {} (); // expected-error {{expected ','}}
+  [as...(args)]{} (); // expected-error {{expected ','}}
+}
+
+template<typename ...Args>
+void init_capture_pack_multi(Args ...args) {
+  [as(args...)] {} (); // expected-error {{initializer missing}} expected-error {{multiple}}
+}
+template void init_capture_pack_multi(); // expected-note {{instantiation}}
+template void init_capture_pack_multi(int);
+template void init_capture_pack_multi(int, int); // expected-note {{instantiation}}
+
+template<typename ...Args>
+void init_capture_pack_outer(Args ...args) {
+  print([as(args)] { return sizeof(as); } () ...);
+}
+template void init_capture_pack_outer();
+template void init_capture_pack_outer(int);
+template void init_capture_pack_outer(int, int);

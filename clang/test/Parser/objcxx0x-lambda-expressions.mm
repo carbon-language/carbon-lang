@@ -18,10 +18,10 @@ class C {
     [=,&foo] () {}; 
     [this] () {}; 
 
-    [foo(bar)] () {}; // expected-error {{not supported}}
-    [foo = bar] () {}; // expected-error {{not supported}}
-    [foo{bar}] () {}; // expected-error {{not supported}}
-    [foo = {bar}] () {}; // expected-error {{not supported}}
+    [foo(bar)] () {};
+    [foo = bar] () {};
+    [foo{bar}] () {}; // expected-error {{<initializer_list>}}
+    [foo = {bar}] () {}; // expected-error {{<initializer_list>}}
 
     [foo(bar) baz] () {}; // expected-error {{called object type 'int' is not a function}}
 

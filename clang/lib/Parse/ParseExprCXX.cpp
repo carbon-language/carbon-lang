@@ -766,9 +766,6 @@ Optional<unsigned> Parser::ParseLambdaIntroducer(LambdaIntroducer &Intro) {
       if (Tok.is(tok::identifier)) {
         Id = Tok.getIdentifierInfo();
         Loc = ConsumeToken();
-        
-        if (Tok.is(tok::ellipsis))
-          EllipsisLoc = ConsumeToken();
       } else if (Tok.is(tok::kw_this)) {
         // FIXME: If we want to suggest a fixit here, will need to return more
         // than just DiagnosticID. Perhaps full DiagnosticBuilder that can be
@@ -798,7 +795,8 @@ Optional<unsigned> Parser::ParseLambdaIntroducer(LambdaIntroducer &Intro) {
           ConsumeToken();
 
         Init = ParseInitializer();
-      }
+      } else if (Tok.is(tok::ellipsis))
+        EllipsisLoc = ConsumeToken();
     }
 
     Intro.addCapture(Kind, Loc, Id, EllipsisLoc, Init);

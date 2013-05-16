@@ -153,9 +153,11 @@ public:
     if (C.capturesThis())
       return true;
 
-    if (IndexCtx.shouldIndexFunctionLocalSymbols())
+    if (C.capturesVariable() && IndexCtx.shouldIndexFunctionLocalSymbols())
       IndexCtx.handleReference(C.getCapturedVar(), C.getLocation(),
                                Parent, ParentDC);
+
+    // FIXME: Lambda init-captures.
     return true;
   }
 

@@ -1387,6 +1387,13 @@ void StmtPrinter::VisitLambdaExpr(LambdaExpr *Node) {
         OS << '=';
       OS << C->getCapturedVar()->getName();
       break;
+
+    case LCK_Init:
+      if (C->getInitCaptureField()->getType()->isReferenceType())
+        OS << '&';
+      OS << C->getInitCaptureField()->getName();
+      PrintExpr(Node->getInitCaptureInit(C));
+      break;
     }
   }
   OS << ']';

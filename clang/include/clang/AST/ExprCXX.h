@@ -1256,7 +1256,7 @@ class LambdaExpr : public Expr {
     /// capture was implicit.
     Capture_Implicit = 0x01,
 
-    /// \brief Flag used by the Capture class to indciate that the
+    /// \brief Flag used by the Capture class to indicate that the
     /// given capture was by-copy.
     Capture_ByCopy = 0x02
   };
@@ -1299,7 +1299,7 @@ class LambdaExpr : public Expr {
 public:
   /// \brief Describes the capture of either a variable or 'this'.
   class Capture {
-    llvm::PointerIntPair<VarDecl *, 2> VarAndBits;
+    llvm::PointerIntPair<Decl *, 2> DeclAndBits;
     SourceLocation Loc;
     SourceLocation EllipsisLoc;
     
@@ -1315,7 +1315,8 @@ public:
     ///
     /// \param Implicit Whether the capture was implicit or explicit.
     ///
-    /// \param Var The local variable being captured, or null if capturing this.
+    /// \param Var The local variable being captured, or null if capturing this
+    ///        or if this is an init-capture.
     ///
     /// \param EllipsisLoc The location of the ellipsis (...) for a
     /// capture that is a pack expansion, or an invalid source
@@ -1324,29 +1325,43 @@ public:
             LambdaCaptureKind Kind, VarDecl *Var = 0,
             SourceLocation EllipsisLoc = SourceLocation());
 
+    /// \brief Create a new init-capture.
+    Capture(FieldDecl *Field);
+
     /// \brief Determine the kind of capture.
     LambdaCaptureKind getCaptureKind() const;
 
     /// \brief Determine whether this capture handles the C++ 'this'
     /// pointer.
-    bool capturesThis() const { return VarAndBits.getPointer() == 0; }
+    bool capturesThis() const { return DeclAndBits.getPointer() == 0; }
 
     /// \brief Determine whether this capture handles a variable.
-    bool capturesVariable() const { return VarAndBits.getPointer() != 0; }
+    bool capturesVariable() const {
+      return dyn_cast_or_null<VarDecl>(DeclAndBits.getPointer());
+    }
+
+    /// \brief Determines whether this is an init-capture.
+    bool isInitCapture() const { return getCaptureKind() == LCK_Init; }
 
     /// \brief Retrieve the declaration of the local variable being
     /// captured.
     ///
-    /// This operation is only valid if this capture does not capture
-    /// 'this'.
-    VarDecl *getCapturedVar() const { 
-      assert(!capturesThis() && "No variable available for 'this' capture");
-      return VarAndBits.getPointer();
+    /// This operation is only valid if this capture is a variable capture
+    /// (other than a capture of 'this').
+    VarDecl *getCapturedVar() const {
+      assert(capturesVariable() && "No variable available for 'this' capture");
+      return cast<VarDecl>(DeclAndBits.getPointer());
+    }
+
+    /// \brief Retrieve the field for an init-capture.
+    FieldDecl *getInitCaptureField() const {
+      assert(getCaptureKind() == LCK_Init && "no field for non-init-capture");
+      return cast<FieldDecl>(DeclAndBits.getPointer());
     }
 
     /// \brief Determine whether this was an implicit capture (not
     /// written between the square brackets introducing the lambda).
-    bool isImplicit() const { return VarAndBits.getInt() & Capture_Implicit; }
+    bool isImplicit() const { return DeclAndBits.getInt() & Capture_Implicit; }
 
     /// \brief Determine whether this was an explicit capture, written
     /// between the square brackets introducing the lambda.
@@ -1481,6 +1496,16 @@ public:
   /// initialization argument for this lambda expression.
   capture_init_iterator capture_init_end() const {
     return capture_init_begin() + NumCaptures;    
+  }
+
+  /// \brief Retrieve the initializer for an init-capture.
+  Expr *getInitCaptureInit(capture_iterator Capture) {
+    assert(Capture >= explicit_capture_begin() &&
+           Capture <= explicit_capture_end() && Capture->isInitCapture());
+    return capture_init_begin()[Capture - capture_begin()];
+  }
+  const Expr *getInitCaptureInit(capture_iterator Capture) const {
+    return const_cast<LambdaExpr*>(this)->getInitCaptureInit(Capture);
   }
 
   /// \brief Retrieve the set of index variables used in the capture 

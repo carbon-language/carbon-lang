@@ -9932,7 +9932,7 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
     if (Cap.isThisCapture())
       continue;
     BlockDecl::Capture NewCap(Cap.getVariable(), Cap.isBlockCapture(),
-                              Cap.isNested(), Cap.getCopyExpr());
+                              Cap.isNested(), Cap.getInitExpr());
     Captures.push_back(NewCap);
   }
   BSI->TheDecl->setCaptures(Context, Captures.begin(), Captures.end(),
@@ -11144,17 +11144,18 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
       cast<CapturingScopeInfo>(FunctionScopes[FunctionScopesIndex]);
 
     // Check whether we've already captured it.
-    if (CSI->CaptureMap.count(Var)) {
+    if (CSI->isCaptured(Var)) {
+      const CapturingScopeInfo::Capture &Cap = CSI->getCapture(Var);
+
       // If we found a capture, any subcaptures are nested.
       Nested = true;
       
       // Retrieve the capture type for this variable.
-      CaptureType = CSI->getCapture(Var).getCaptureType();
+      CaptureType = Cap.getCaptureType();
       
       // Compute the type of an expression that refers to this variable.
       DeclRefType = CaptureType.getNonReferenceType();
       
-      const CapturingScopeInfo::Capture &Cap = CSI->getCapture(Var);
       if (Cap.isCopyCapture() &&
           !(isa<LambdaScopeInfo>(CSI) && cast<LambdaScopeInfo>(CSI)->Mutable))
         DeclRefType.addConst();

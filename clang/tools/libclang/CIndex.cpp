@@ -2366,9 +2366,10 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
         for (LambdaExpr::capture_iterator C = E->explicit_capture_begin(),
                                        CEnd = E->explicit_capture_end();
              C != CEnd; ++C) {
-          if (C->capturesThis())
+          // FIXME: Lambda init-captures.
+          if (!C->capturesVariable())
             continue;
-          
+
           if (Visit(MakeCursorVariableRef(C->getCapturedVar(),
                                           C->getLocation(),
                                           TU)))

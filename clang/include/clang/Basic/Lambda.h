@@ -31,7 +31,8 @@ enum LambdaCaptureDefault {
 enum LambdaCaptureKind {
   LCK_This,
   LCK_ByCopy,
-  LCK_ByRef
+  LCK_ByRef,
+  LCK_Init
 };
 
 } // end namespace clang

@@ -4313,6 +4313,11 @@ public:
                                           bool ExplicitResultType,
                                           bool Mutable);
 
+  /// \brief Check and build an init-capture with the specified name and
+  /// initializer.
+  FieldDecl *checkInitCapture(SourceLocation Loc, bool ByRef,
+                              IdentifierInfo *Id, Expr *Init);
+
   /// \brief Note that we have finished the explicit captures for the
   /// given lambda.
   void finishLambdaExplicitCaptures(sema::LambdaScopeInfo *LSI);

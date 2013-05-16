@@ -1160,9 +1160,22 @@ void ASTDeclReader::ReadCXXDefinitionData(
       SourceLocation Loc = ReadSourceLocation(Record, Idx);
       bool IsImplicit = Record[Idx++];
       LambdaCaptureKind Kind = static_cast<LambdaCaptureKind>(Record[Idx++]);
-      VarDecl *Var = ReadDeclAs<VarDecl>(Record, Idx);
-      SourceLocation EllipsisLoc = ReadSourceLocation(Record, Idx);
-      *ToCapture++ = Capture(Loc, IsImplicit, Kind, Var, EllipsisLoc);
+      switch (Kind) {
+      case LCK_This:
+        *ToCapture++ = Capture(Loc, IsImplicit, Kind, 0, SourceLocation());
+        break;
+      case LCK_ByCopy:
+      case LCK_ByRef: {
+        VarDecl *Var = ReadDeclAs<VarDecl>(Record, Idx);
+        SourceLocation EllipsisLoc = ReadSourceLocation(Record, Idx);
+        *ToCapture++ = Capture(Loc, IsImplicit, Kind, Var, EllipsisLoc);
+        break;
+      }
+      case LCK_Init:
+        FieldDecl *Field = ReadDeclAs<FieldDecl>(Record, Idx);
+        *ToCapture++ = Capture(Field);
+        break;
+      }
     }
   }
 }

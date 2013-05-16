@@ -5047,12 +5047,25 @@ void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Rec
       LambdaExpr::Capture &Capture = Lambda.Captures[I];
       AddSourceLocation(Capture.getLocation(), Record);
       Record.push_back(Capture.isImplicit());
-      Record.push_back(Capture.getCaptureKind()); // FIXME: stable!
-      VarDecl *Var = Capture.capturesVariable()? Capture.getCapturedVar() : 0;
-      AddDeclRef(Var, Record);
-      AddSourceLocation(Capture.isPackExpansion()? Capture.getEllipsisLoc()
-                                                 : SourceLocation(), 
-                        Record);
+      Record.push_back(Capture.getCaptureKind());
+      switch (Capture.getCaptureKind()) {
+      case LCK_This:
+        break;
+      case LCK_ByCopy:
+      case LCK_ByRef: {
+        VarDecl *Var =
+            Capture.capturesVariable() ? Capture.getCapturedVar() : 0;
+        AddDeclRef(Var, Record);
+        AddSourceLocation(Capture.isPackExpansion() ? Capture.getEllipsisLoc()
+                                                    : SourceLocation(),
+                          Record);
+        break;
+      }
+      case LCK_Init:
+        FieldDecl *Field = Capture.getInitCaptureField();
+        AddDeclRef(Field, Record);
+        break;
+      }
     }
   }
 }

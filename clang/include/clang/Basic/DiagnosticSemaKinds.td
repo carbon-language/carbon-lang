@@ -4895,8 +4895,16 @@ let CategoryName = "Lambda Issue" in {
   def note_lambda_to_block_conv : Note<
     "implicit capture of lambda object due to conversion to block pointer "
     "here">;
-  def err_lambda_init_capture_unsupported : Error<
-    "sorry, initialized lambda-captures are not supported yet">;
+
+  // C++1y lambda init-captures.
+  def err_init_capture_no_expression : Error<
+    "initializer missing for lambda capture %0">;
+  def err_init_capture_multiple_expressions : Error<
+    "initializer for lambda capture %0 contains multiple expressions">;
+  def err_init_capture_deduction_failure : Error<
+    "cannot deduce type for lambda capture %0 from initializer of type %1">;
+  def err_init_capture_deduction_failure_from_init_list : Error<
+    "cannot deduce type for lambda capture %0 from initializer list">;
 }
 
 def err_return_in_captured_stmt : Error<

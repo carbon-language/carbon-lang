@@ -26,4 +26,7 @@ void S2::f(int i) {
   (void)[=, this]{ }; // expected-error{{'this' cannot be explicitly captured}}
   (void)[=]{ this->g(i); };
   (void)[i, i]{ }; // expected-error{{'i' can appear only once in a capture list}}
+  (void)[i(0), i(1)]{ }; // expected-error{{'i' can appear only once in a capture list}}
+  (void)[i, i(1)]{ }; // expected-error{{'i' can appear only once in a capture list}}
+  (void)[i(0), i]{ }; // expected-error{{'i' can appear only once in a capture list}}
 }

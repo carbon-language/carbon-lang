@@ -940,12 +940,10 @@ void CXXRecordDecl::getCaptureFields(
   RecordDecl::field_iterator Field = field_begin();
   for (LambdaExpr::Capture *C = Lambda.Captures, *CEnd = C + Lambda.NumCaptures;
        C != CEnd; ++C, ++Field) {
-    if (C->capturesThis()) {
+    if (C->capturesThis())
       ThisCapture = *Field;
-      continue;
-    }
-
-    Captures[C->getCapturedVar()] = *Field;
+    else if (C->capturesVariable())
+      Captures[C->getCapturedVar()] = *Field;
   }
 }
 
