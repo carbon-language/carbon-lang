@@ -840,7 +840,7 @@ static void adjustSubwordCmp(SelectionDAG &DAG, bool &IsUnsigned,
   uint64_t Mask = (1 << NumBits) - 1;
   if (Load->getExtensionType() == ISD::SEXTLOAD) {
     int64_t SignedValue = Constant->getSExtValue();
-    if (uint64_t(SignedValue) + (1 << (NumBits - 1)) > Mask)
+    if (uint64_t(SignedValue) + (1ULL << (NumBits - 1)) > Mask)
       return;
     // Unsigned comparison between two sign-extended values is equivalent
     // to unsigned comparison between two zero-extended values.
