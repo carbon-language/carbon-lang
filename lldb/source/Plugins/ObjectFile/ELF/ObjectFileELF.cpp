@@ -311,7 +311,7 @@ ObjectFileELF::SectionIndex(const SectionHeaderCollConstIter &I) const
 bool
 ObjectFileELF::ParseHeader()
 {
-    lldb::offset_t offset = GetFileOffset();
+    lldb::offset_t offset = 0;
     return m_header.Parse(m_data, &offset);
 }
 
