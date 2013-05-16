@@ -34,3 +34,19 @@ if.end:
 ; CHECK: test2:
 ; CHECK: cmpb $47, %{{dil|cl}}
 }
+
+define void @test3(i32 %X) nounwind {
+entry:
+  %and = and i32 %X, 255
+  %cmp = icmp eq i32 %and, 255
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:
+  tail call void @bar() nounwind
+  br label %if.end
+
+if.end:
+  ret void
+; CHECK: test3:
+; CHECK: cmpb $-1, %{{dil|cl}}
+}
