@@ -1080,8 +1080,7 @@ static bool CheckLiteralType(EvalInfo &Info, const Expr *E,
   // constexpr constructors for o and its subobjects even if those objects
   // are of non-literal class types.
   if (Info.getLangOpts().CPlusPlus1y && This &&
-      Info.EvaluatingDecl.getOpaqueValue() ==
-          This->getLValueBase().getOpaqueValue())
+      Info.EvaluatingDecl == This->getLValueBase())
     return true;
 
   // Prvalue constant expressions must be of literal types.
