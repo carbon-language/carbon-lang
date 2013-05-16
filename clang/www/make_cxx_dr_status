@@ -1,0 +1,136 @@
+#! /usr/bin/env python
+import sys
+
+index = 'cwg_index.html'
+if len(sys.argv) == 1:
+  pass
+elif len(sys.argv) == 2:
+  index = sys.argv[1]
+else:
+  print >>sys.stderr, 'Usage: make_drs [<path to cwg_index.html>]'
+  sys.exit(1)
+
+class DR:
+  def __init__(self, section, issue, url, status, title):
+    self.section, self.issue, self.url, self.status, self.title = \
+        section, issue, url, status, title
+  def __repr__(self):
+    return '%s (%s): %s' % (self.issue, self.status, self.title)
+
+def parse(dr):
+  section, issue_link, status, title = [
+      col.split('>', 1)[1].split('</TD>')[0]
+      for col in dr.split('</TR>', 1)[0].split('<TD')[1:]
+  ]
+  _, url, issue = issue_link.split('"', 2)
+  url = url.strip()
+  issue = int(issue.split('>', 1)[1].split('<', 1)[0])
+  title = title.replace('<issue_title>', '').replace('</issue_title>', '').strip()
+  return DR(section, issue, url, status, title)
+
+status_list = [line.split(' ', 1) for line in file('cxx_dr_status', 'r').readlines()]
+status_map = dict((int(issue), status.strip()) for issue, status in status_list)
+drs = sorted((parse(dr) for dr in file(index, 'r').read().split('<TR>')[2:]),
+             key = lambda dr: dr.issue)
+
+print '''<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+  <title>Clang - C++ Defect Report Status</title>
+  <link type="text/css" rel="stylesheet" href="menu.css">
+  <link type="text/css" rel="stylesheet" href="content.css">
+  <style type="text/css">
+    .none { background-color: #FFCCCC }
+    .partial { background-color: #FFE0B0 }
+    .svn  { background-color: #FFFF99 }
+    .full { background-color: #CCFF99 }
+    .na { background-color: #DDDDDD }
+    .open * { color: #AAAAAA }
+    //.open { filter: opacity(0.2) }
+    span:target { background-color: #FFFFBB; outline: #DDDD55 solid thin; }
+    th { background-color: #FFDDAA }
+  </style>
+</head>
+<body>
+
+<!--#include virtual="menu.html.incl"-->
+
+<div id="content">
+
+<!--*************************************************************************-->
+<h1>C++ Defect Report Support in Clang</h1>
+<!--*************************************************************************-->
+<p>Last updated: $Date$</p>
+
+<h2 id="cxxdr">C++ defect report implementation status</h2>
+
+<p>This page tracks which C++ defect reports are implemented within Clang.</p>
+
+<table width="689" border="1" cellspacing="0">
+  <tr>
+    <th>Number</th>
+    <th>Status</th>
+    <th>Issue title</th>
+    <th>Available in Clang?</th>
+  </tr>'''
+
+def availability(issue):
+  status = status_map.get(issue, 'unknown')
+  if status == 'unknown':
+    avail = 'Unknown'
+    avail_style = ' class="none"'
+  elif status == '3.4':
+    avail = 'SVN'
+    avail_style = ' class="svn"'
+  elif status in ('3.1', '3.2', '3.3'):
+    avail = 'Clang %s' % status
+    avail_style = ' class="full"'
+  elif status == 'yes':
+    avail = 'Yes'
+    avail_style = ' class="full"'
+  elif status == 'partial':
+    avail = 'Partial'
+    avail_style = ' class="partial"'
+  elif status == 'no':
+    avail = 'No'
+    avail_style = ' class="none"'
+  elif status == 'na':
+    avail = 'N/A'
+    avail_style = ' class="na"'
+  elif status.startswith('dup '):
+    dup = int(status.split(' ', 1)[1])
+    avail = 'Dup %s' % dup
+    _, avail_style = availability(dup)
+  else:
+    assert False, 'unknown status %s for issue %s' % (status, dr.issue)
+  return (avail, avail_style)
+
+for dr in drs:
+  if dr.status in ('concepts',):
+    # Yeah, cool story bro.
+    continue
+  if dr.status in ('open', 'concurrency', 'drafting', 'review', 'extension'):
+    # We may have to deal with these some day, but not yet.
+    row_style = ' class="open"'
+    avail = 'Not resolved'
+    avail_style = ''
+    assert dr.issue not in status_map, "have status for not-ready dr %s" % dr.issue
+  else:
+    row_style = ''
+    avail, avail_style = availability(dr.issue)
+
+  print '''  <tr%s>
+    <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/%s">%s</a></td>
+    <td>%s</td>
+    <td>%s</td>
+    <td%s align="center">%s</td>
+  </tr>''' % (row_style, dr.url, dr.issue, dr.status, dr.title, avail_style,
+              avail)
+
+print '''</table>
+
+</div>
+</body>
+</html>'''
