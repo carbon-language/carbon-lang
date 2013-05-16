@@ -105,7 +105,7 @@ class SizeClassMap {
     void *batch[kMaxNumCached];
   };
 
-  static const uptr kMaxSize = 1 << kMaxSizeLog;
+  static const uptr kMaxSize = 1UL << kMaxSizeLog;
   static const uptr kNumClasses =
       kMidClass + ((kMaxSizeLog - kMidSizeLog) << S) + 1;
   COMPILER_CHECK(kNumClasses >= 32 && kNumClasses <= 256);
