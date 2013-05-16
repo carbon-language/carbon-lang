@@ -523,14 +523,10 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
     BuildMI(MBB, MBBI, dl, TII.get(PPC::PROLOG_LABEL)).addSym(FrameLabel);
 
     // Show update of SP.
-    if (NegFrameSize) {
-      MachineLocation SPDst(MachineLocation::VirtualFP);
-      MachineLocation SPSrc(MachineLocation::VirtualFP, NegFrameSize);
-      MMI.addFrameMove(FrameLabel, SPDst, SPSrc);
-    } else {
-      MachineLocation SP(isPPC64 ? PPC::X31 : PPC::R31);
-      MMI.addFrameMove(FrameLabel, SP, SP);
-    }
+    assert(NegFrameSize);
+    MachineLocation SPDst(MachineLocation::VirtualFP);
+    MachineLocation SPSrc(MachineLocation::VirtualFP, NegFrameSize);
+    MMI.addFrameMove(FrameLabel, SPDst, SPSrc);
 
     if (HasFP) {
       MachineLocation FPDst(MachineLocation::VirtualFP, FPOffset);
