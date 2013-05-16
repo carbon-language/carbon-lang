@@ -86,6 +86,9 @@ struct FormatStyle {
   /// \brief If true, "if (a) return;" can be put on a single line.
   bool AllowShortIfStatementsOnASingleLine;
 
+  /// \brief If true, "while (true) continue;" can be put on a single line.
+  bool AllowShortLoopsOnASingleLine;
+
   /// \brief Add a space in front of an Objective-C protocol list, i.e. use
   /// Foo <Protocol> instead of Foo<Protocol>.
   bool ObjCSpaceBeforeProtocolList;

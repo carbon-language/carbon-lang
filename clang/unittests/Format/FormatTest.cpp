@@ -214,20 +214,26 @@ TEST_F(FormatTest, FormatIfWithoutCompoundStatement) {
   verifyFormat("if (a)\n  if (b)\n    if (c)\n      g();\nh();");
   verifyFormat("if (a)\n  if (b) {\n    f();\n  }\ng();");
 
-  FormatStyle AllowsMergedIf = getGoogleStyle();
+  FormatStyle AllowsMergedIf = getLLVMStyle();
   AllowsMergedIf.AllowShortIfStatementsOnASingleLine = true;
   verifyFormat("if (a)\n"
                "  // comment\n"
                "  f();",
                AllowsMergedIf);
+  verifyFormat("if (a)\n"
+               "  ;",
+               AllowsMergedIf);
+  verifyFormat("if (a)\n"
+               "  if (b) return;",
+               AllowsMergedIf);
 
-  verifyFormat("if (a)  // Can't merge this\n"
+  verifyFormat("if (a) // Can't merge this\n"
                "  f();\n",
                AllowsMergedIf);
   verifyFormat("if (a) /* still don't merge */\n"
                "  f();",
                AllowsMergedIf);
-  verifyFormat("if (a) {  // Never merge this\n"
+  verifyFormat("if (a) { // Never merge this\n"
                "  f();\n"
                "}",
                AllowsMergedIf);
@@ -237,7 +243,7 @@ TEST_F(FormatTest, FormatIfWithoutCompoundStatement) {
                AllowsMergedIf);
 
   EXPECT_EQ("if (a) return;", format("if(a)\nreturn;", 7, 1, AllowsMergedIf));
-  EXPECT_EQ("if (a) return;  // comment",
+  EXPECT_EQ("if (a) return; // comment",
             format("if(a)\nreturn; // comment", 20, 1, AllowsMergedIf));
 
   AllowsMergedIf.ColumnLimit = 14;
@@ -248,6 +254,29 @@ TEST_F(FormatTest, FormatIfWithoutCompoundStatement) {
 
   AllowsMergedIf.ColumnLimit = 13;
   verifyFormat("if (a)\n  return;", AllowsMergedIf);
+}
+
+TEST_F(FormatTest, FormatLoopsWithoutCompoundStatement) {
+  FormatStyle AllowsMergedLoops = getLLVMStyle();
+  AllowsMergedLoops.AllowShortLoopsOnASingleLine = true;
+  verifyFormat("while (true) continue;", AllowsMergedLoops);
+  verifyFormat("for (;;) continue;", AllowsMergedLoops);
+  verifyFormat("for (int &v : vec) v *= 2;", AllowsMergedLoops);
+  verifyFormat("while (true)\n"
+               "  ;",
+               AllowsMergedLoops);
+  verifyFormat("for (;;)\n"
+               "  ;",
+               AllowsMergedLoops);
+  verifyFormat("for (;;)\n"
+               "  for (;;) continue;",
+               AllowsMergedLoops);
+  verifyFormat("for (;;) // Can't merge this\n"
+               "  continue;",
+               AllowsMergedLoops);
+  verifyFormat("for (;;) /* still don't merge */\n"
+               "  continue;",
+               AllowsMergedLoops);
 }
 
 TEST_F(FormatTest, ParseIfElse) {

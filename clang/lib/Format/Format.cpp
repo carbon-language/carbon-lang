@@ -78,6 +78,8 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
                    Style.AllowAllParametersOfDeclarationOnNextLine);
     IO.mapOptional("AllowShortIfStatementsOnASingleLine",
                    Style.AllowShortIfStatementsOnASingleLine);
+    IO.mapOptional("AllowShortLoopsOnASingleLine",
+                   Style.AllowShortLoopsOnASingleLine);
     IO.mapOptional("BinPackParameters", Style.BinPackParameters);
     IO.mapOptional("ColumnLimit", Style.ColumnLimit);
     IO.mapOptional("ConstructorInitializerAllOnOneLineOrOnePerLine",
@@ -111,6 +113,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.AlignEscapedNewlinesLeft = false;
   LLVMStyle.AllowAllParametersOfDeclarationOnNextLine = true;
   LLVMStyle.AllowShortIfStatementsOnASingleLine = false;
+  LLVMStyle.AllowShortLoopsOnASingleLine = false;
   LLVMStyle.BinPackParameters = true;
   LLVMStyle.ColumnLimit = 80;
   LLVMStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = false;
@@ -135,6 +138,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.AlignEscapedNewlinesLeft = true;
   GoogleStyle.AllowAllParametersOfDeclarationOnNextLine = true;
   GoogleStyle.AllowShortIfStatementsOnASingleLine = true;
+  GoogleStyle.AllowShortLoopsOnASingleLine= true;
   GoogleStyle.BinPackParameters = true;
   GoogleStyle.ColumnLimit = 80;
   GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
@@ -157,6 +161,7 @@ FormatStyle getChromiumStyle() {
   FormatStyle ChromiumStyle = getGoogleStyle();
   ChromiumStyle.AllowAllParametersOfDeclarationOnNextLine = false;
   ChromiumStyle.AllowShortIfStatementsOnASingleLine = false;
+  ChromiumStyle.AllowShortLoopsOnASingleLine = false;
   ChromiumStyle.BinPackParameters = false;
   ChromiumStyle.Standard = FormatStyle::LS_Cpp03;
   ChromiumStyle.DerivePointerBinding = false;
@@ -1352,8 +1357,12 @@ private:
 
     if (I->Last->is(tok::l_brace)) {
       tryMergeSimpleBlock(I, E, Limit);
-    } else if (I->First.is(tok::kw_if)) {
-      tryMergeSimpleIf(I, E, Limit);
+    } else if (Style.AllowShortIfStatementsOnASingleLine &&
+               I->First.is(tok::kw_if)) {
+      tryMergeSimpleControlStatement(I, E, Limit);
+    } else if (Style.AllowShortLoopsOnASingleLine &&
+               I->First.isOneOf(tok::kw_for, tok::kw_while)) {
+      tryMergeSimpleControlStatement(I, E, Limit);
     } else if (I->InPPDirective && (I->First.FormatTok.HasUnescapedNewline ||
                                     I->First.FormatTok.IsFirst)) {
       tryMergeSimplePPDirective(I, E, Limit);
@@ -1376,12 +1385,10 @@ private:
     join(Line, *(++I));
   }
 
-  void tryMergeSimpleIf(std::vector<AnnotatedLine>::iterator &I,
-                        std::vector<AnnotatedLine>::iterator E,
-                        unsigned Limit) {
+  void tryMergeSimpleControlStatement(std::vector<AnnotatedLine>::iterator &I,
+                                      std::vector<AnnotatedLine>::iterator E,
+                                      unsigned Limit) {
     if (Limit == 0)
-      return;
-    if (!Style.AllowShortIfStatementsOnASingleLine)
       return;
     if ((I + 1)->InPPDirective != I->InPPDirective ||
         ((I + 1)->InPPDirective &&
@@ -1392,10 +1399,13 @@ private:
       return;
     if (1 + (I + 1)->Last->TotalLength > Limit)
       return;
-    if ((I + 1)->First.is(tok::kw_if) || (I + 1)->First.Type == TT_LineComment)
+    if ((I + 1)->First.isOneOf(tok::semi, tok::kw_if, tok::kw_for,
+                               tok::kw_while) ||
+        (I + 1)->First.Type == TT_LineComment)
       return;
     // Only inline simple if's (no nested if or else).
-    if (I + 2 != E && (I + 2)->First.is(tok::kw_else))
+    if (I + 2 != E && Line.First.is(tok::kw_if) &&
+        (I + 2)->First.is(tok::kw_else))
       return;
     join(Line, *(++I));
   }
