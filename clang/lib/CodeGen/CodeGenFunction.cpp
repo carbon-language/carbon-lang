@@ -192,10 +192,12 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   bool OnlySimpleReturnStmts = NumSimpleReturnExprs > 0
     && NumSimpleReturnExprs == NumReturnExprs;
   // If the function contains only a simple return statement, the
-  // cleanup code may become the first breakpoint in the function. To
-  // be safe, set the debug location for it to the location of the
-  // return statement.  Otherwise point it to end of the function's
-  // lexical scope.
+  // location before the cleanup code becomes the last useful
+  // breakpoint in the function, because the simple return expression
+  // will be evaluated after the cleanup code. To be safe, set the
+  // debug location for cleanup code to the location of the return
+  // statement. Otherwise the cleanup code should be at the end of the
+  // function's lexical scope.
   if (CGDebugInfo *DI = getDebugInfo()) {
     if (OnlySimpleReturnStmts)
        DI->EmitLocation(Builder, LastStopPoint);
