@@ -96,6 +96,7 @@ namespace {
                                   SmallVectorImpl<BasicBlock*> &SplitPreds,
                                   Loop *L);
 
+    bool mightUseCTR(const Triple &TT, BasicBlock *BB);
     bool convertToCTRLoop(Loop *L);
   private:
     PPCTargetMachine *TM;
@@ -143,6 +144,161 @@ bool PPCCTRLoops::runOnFunction(Function &F) {
   return MadeChange;
 }
 
+bool PPCCTRLoops::mightUseCTR(const Triple &TT, BasicBlock *BB) {
+  for (BasicBlock::iterator J = BB->begin(), JE = BB->end();
+       J != JE; ++J) {
+    if (CallInst *CI = dyn_cast<CallInst>(J)) {
+      if (!TM)
+        return true;
+      const TargetLowering *TLI = TM->getTargetLowering();
+
+      if (Function *F = CI->getCalledFunction()) {
+        // Most intrinsics don't become function calls, but some might.
+        // sin, cos, exp and log are always calls.
+        unsigned Opcode;
+        if (F->getIntrinsicID() != Intrinsic::not_intrinsic) {
+          switch (F->getIntrinsicID()) {
+          default: continue;
+
+// VisualStudio defines setjmp as _setjmp
+#if defined(_MSC_VER) && defined(setjmp) && \
+                       !defined(setjmp_undefined_for_msvc)
+#  pragma push_macro("setjmp")
+#  undef setjmp
+#  define setjmp_undefined_for_msvc
+#endif
+
+          case Intrinsic::setjmp:
+
+#if defined(_MSC_VER) && defined(setjmp_undefined_for_msvc)
+ // let's return it to _setjmp state
+#  pragma pop_macro("setjmp")
+#  undef setjmp_undefined_for_msvc
+#endif
+
+          case Intrinsic::longjmp:
+          case Intrinsic::memcpy:
+          case Intrinsic::memmove:
+          case Intrinsic::memset:
+          case Intrinsic::powi:
+          case Intrinsic::log:
+          case Intrinsic::log2:
+          case Intrinsic::log10:
+          case Intrinsic::exp:
+          case Intrinsic::exp2:
+          case Intrinsic::pow:
+          case Intrinsic::sin:
+          case Intrinsic::cos:
+            return true;
+          case Intrinsic::sqrt:      Opcode = ISD::FSQRT;      break;
+          case Intrinsic::floor:     Opcode = ISD::FFLOOR;     break;
+          case Intrinsic::ceil:      Opcode = ISD::FCEIL;      break;
+          case Intrinsic::trunc:     Opcode = ISD::FTRUNC;     break;
+          case Intrinsic::rint:      Opcode = ISD::FRINT;      break;
+          case Intrinsic::nearbyint: Opcode = ISD::FNEARBYINT; break;
+          }
+        }
+
+        // PowerPC does not use [US]DIVREM or other library calls for
+        // operations on regular types which are not otherwise library calls
+        // (i.e. soft float or atomics). If adapting for targets that do,
+        // additional care is required here.
+
+        LibFunc::Func Func;
+        if (!F->hasLocalLinkage() && F->hasName() && LibInfo &&
+            LibInfo->getLibFunc(F->getName(), Func) &&
+            LibInfo->hasOptimizedCodeGen(Func)) {
+          // Non-read-only functions are never treated as intrinsics.
+          if (!CI->onlyReadsMemory())
+            return true;
+
+          // Conversion happens only for FP calls.
+          if (!CI->getArgOperand(0)->getType()->isFloatingPointTy())
+            return true;
+
+          switch (Func) {
+          default: return true;
+          case LibFunc::copysign:
+          case LibFunc::copysignf:
+          case LibFunc::copysignl:
+            continue; // ISD::FCOPYSIGN is never a library call.
+          case LibFunc::fabs:
+          case LibFunc::fabsf:
+          case LibFunc::fabsl:
+            continue; // ISD::FABS is never a library call.
+          case LibFunc::sqrt:
+          case LibFunc::sqrtf:
+          case LibFunc::sqrtl:
+            Opcode = ISD::FSQRT; break;
+          case LibFunc::floor:
+          case LibFunc::floorf:
+          case LibFunc::floorl:
+            Opcode = ISD::FFLOOR; break;
+          case LibFunc::nearbyint:
+          case LibFunc::nearbyintf:
+          case LibFunc::nearbyintl:
+            Opcode = ISD::FNEARBYINT; break;
+          case LibFunc::ceil:
+          case LibFunc::ceilf:
+          case LibFunc::ceill:
+            Opcode = ISD::FCEIL; break;
+          case LibFunc::rint:
+          case LibFunc::rintf:
+          case LibFunc::rintl:
+            Opcode = ISD::FRINT; break;
+          case LibFunc::trunc:
+          case LibFunc::truncf:
+          case LibFunc::truncl:
+            Opcode = ISD::FTRUNC; break;
+          }
+
+          MVT VTy =
+            TLI->getSimpleValueType(CI->getArgOperand(0)->getType(), true);
+          if (VTy == MVT::Other)
+            return true;
+          
+          if (TLI->isOperationLegalOrCustom(Opcode, VTy))
+            continue;
+          else if (VTy.isVector() &&
+                   TLI->isOperationLegalOrCustom(Opcode, VTy.getScalarType()))
+            continue;
+
+          return true;
+        }
+      }
+
+      return true;
+    } else if (isa<BinaryOperator>(J) &&
+               J->getType()->getScalarType()->isPPC_FP128Ty()) {
+      // Most operations on ppc_f128 values become calls.
+      return true;
+    } else if (isa<UIToFPInst>(J) || isa<SIToFPInst>(J) ||
+               isa<FPToUIInst>(J) || isa<FPToSIInst>(J)) {
+      CastInst *CI = cast<CastInst>(J);
+      if (CI->getSrcTy()->getScalarType()->isPPC_FP128Ty() ||
+          CI->getDestTy()->getScalarType()->isPPC_FP128Ty() ||
+          (TT.isArch32Bit() &&
+           (CI->getSrcTy()->getScalarType()->isIntegerTy(64) ||
+            CI->getDestTy()->getScalarType()->isIntegerTy(64))
+          ))
+        return true;
+    } else if (isa<IndirectBrInst>(J) || isa<InvokeInst>(J)) {
+      // On PowerPC, indirect jumps use the counter register.
+      return true;
+    } else if (SwitchInst *SI = dyn_cast<SwitchInst>(J)) {
+      if (!TM)
+        return true;
+      const TargetLowering *TLI = TM->getTargetLowering();
+
+      if (TLI->supportJumpTables() &&
+          SI->getNumCases()+1 >= (unsigned) TLI->getMinimumJumpTableEntries())
+        return true;
+    }
+  }
+
+  return false;
+}
+
 bool PPCCTRLoops::convertToCTRLoop(Loop *L) {
   bool MadeChange = false;
 
@@ -173,158 +329,9 @@ bool PPCCTRLoops::convertToCTRLoop(Loop *L) {
   // We don't want to spill/restore the counter register, and so we don't
   // want to use the counter register if the loop contains calls.
   for (Loop::block_iterator I = L->block_begin(), IE = L->block_end();
-       I != IE; ++I) {
-    for (BasicBlock::iterator J = (*I)->begin(), JE = (*I)->end();
-         J != JE; ++J) {
-      if (CallInst *CI = dyn_cast<CallInst>(J)) {
-        if (!TM)
-          return MadeChange;
-        const TargetLowering *TLI = TM->getTargetLowering();
-
-        if (Function *F = CI->getCalledFunction()) {
-          // Most intrinsics don't become function calls, but some might.
-          // sin, cos, exp and log are always calls.
-          unsigned Opcode;
-          if (F->getIntrinsicID() != Intrinsic::not_intrinsic) {
-            switch (F->getIntrinsicID()) {
-            default: continue;
-
-// VisualStudio defines setjmp as _setjmp
-#if defined(_MSC_VER) && defined(setjmp) && \
-                         !defined(setjmp_undefined_for_msvc)
-#  pragma push_macro("setjmp")
-#  undef setjmp
-#  define setjmp_undefined_for_msvc
-#endif
-
-            case Intrinsic::setjmp:
-
-#if defined(_MSC_VER) && defined(setjmp_undefined_for_msvc)
-   // let's return it to _setjmp state
-#  pragma pop_macro("setjmp")
-#  undef setjmp_undefined_for_msvc
-#endif
-
-            case Intrinsic::longjmp:
-            case Intrinsic::memcpy:
-            case Intrinsic::memmove:
-            case Intrinsic::memset:
-            case Intrinsic::powi:
-            case Intrinsic::log:
-            case Intrinsic::log2:
-            case Intrinsic::log10:
-            case Intrinsic::exp:
-            case Intrinsic::exp2:
-            case Intrinsic::pow:
-            case Intrinsic::sin:
-            case Intrinsic::cos:
-              return MadeChange;
-            case Intrinsic::sqrt:      Opcode = ISD::FSQRT;      break;
-            case Intrinsic::floor:     Opcode = ISD::FFLOOR;     break;
-            case Intrinsic::ceil:      Opcode = ISD::FCEIL;      break;
-            case Intrinsic::trunc:     Opcode = ISD::FTRUNC;     break;
-            case Intrinsic::rint:      Opcode = ISD::FRINT;      break;
-            case Intrinsic::nearbyint: Opcode = ISD::FNEARBYINT; break;
-            }
-          }
-
-          // PowerPC does not use [US]DIVREM or other library calls for
-          // operations on regular types which are not otherwise library calls
-          // (i.e. soft float or atomics). If adapting for targets that do,
-          // additional care is required here.
-
-          LibFunc::Func Func;
-          if (!F->hasLocalLinkage() && F->hasName() && LibInfo &&
-              LibInfo->getLibFunc(F->getName(), Func) &&
-              LibInfo->hasOptimizedCodeGen(Func)) {
-            // Non-read-only functions are never treated as intrinsics.
-            if (!CI->onlyReadsMemory())
-              return MadeChange;
-
-            // Conversion happens only for FP calls.
-            if (!CI->getArgOperand(0)->getType()->isFloatingPointTy())
-              return MadeChange;
-
-            switch (Func) {
-            default: return MadeChange;
-            case LibFunc::copysign:
-            case LibFunc::copysignf:
-            case LibFunc::copysignl:
-              continue; // ISD::FCOPYSIGN is never a library call.
-            case LibFunc::fabs:
-            case LibFunc::fabsf:
-            case LibFunc::fabsl:
-              continue; // ISD::FABS is never a library call.
-            case LibFunc::sqrt:
-            case LibFunc::sqrtf:
-            case LibFunc::sqrtl:
-              Opcode = ISD::FSQRT; break;
-            case LibFunc::floor:
-            case LibFunc::floorf:
-            case LibFunc::floorl:
-              Opcode = ISD::FFLOOR; break;
-            case LibFunc::nearbyint:
-            case LibFunc::nearbyintf:
-            case LibFunc::nearbyintl:
-              Opcode = ISD::FNEARBYINT; break;
-            case LibFunc::ceil:
-            case LibFunc::ceilf:
-            case LibFunc::ceill:
-              Opcode = ISD::FCEIL; break;
-            case LibFunc::rint:
-            case LibFunc::rintf:
-            case LibFunc::rintl:
-              Opcode = ISD::FRINT; break;
-            case LibFunc::trunc:
-            case LibFunc::truncf:
-            case LibFunc::truncl:
-              Opcode = ISD::FTRUNC; break;
-            }
-
-            MVT VTy =
-              TLI->getSimpleValueType(CI->getArgOperand(0)->getType(), true);
-            if (VTy == MVT::Other)
-              return MadeChange;
-            
-            if (TLI->isOperationLegalOrCustom(Opcode, VTy))
-              continue;
-            else if (VTy.isVector() &&
-                     TLI->isOperationLegalOrCustom(Opcode, VTy.getScalarType()))
-              continue;
-
-            return MadeChange;
-          }
-        }
-
-        return MadeChange;
-      } else if (isa<BinaryOperator>(J) &&
-                 J->getType()->getScalarType()->isPPC_FP128Ty()) {
-        // Most operations on ppc_f128 values become calls.
-        return MadeChange;
-      } else if (isa<UIToFPInst>(J) || isa<SIToFPInst>(J) ||
-                 isa<FPToUIInst>(J) || isa<FPToSIInst>(J)) {
-        CastInst *CI = cast<CastInst>(J);
-        if (CI->getSrcTy()->getScalarType()->isPPC_FP128Ty() ||
-            CI->getDestTy()->getScalarType()->isPPC_FP128Ty() ||
-            (TT.isArch32Bit() &&
-             (CI->getSrcTy()->getScalarType()->isIntegerTy(64) ||
-              CI->getDestTy()->getScalarType()->isIntegerTy(64))
-            ))
-          return MadeChange;
-      } else if (isa<IndirectBrInst>(J) || isa<InvokeInst>(J)) {
-        // On PowerPC, indirect jumps use the counter register.
-        return MadeChange;
-      } else if (SwitchInst *SI = dyn_cast<SwitchInst>(J)) {
-        if (!TM)
-          return MadeChange;
-        const TargetLowering *TLI = TM->getTargetLowering();
-
-        if (TLI->supportJumpTables() &&
-            SI->getNumCases()+1 >= (unsigned) TLI->getMinimumJumpTableEntries())
-          return MadeChange;
-      }
-    }
-  }
+       I != IE; ++I)
+    if (mightUseCTR(TT, *I))
+      return MadeChange;
 
   SmallVector<BasicBlock*, 4> ExitingBlocks;
   L->getExitingBlocks(ExitingBlocks);
@@ -391,7 +398,12 @@ bool PPCCTRLoops::convertToCTRLoop(Loop *L) {
     return MadeChange;
 
   BasicBlock *Preheader = L->getLoopPreheader();
-  if (!Preheader)
+
+  // If we don't have a preheader, then insert one. If we already have a
+  // preheader, then we can use it (except if the preheader contains a use of
+  // the CTR register because some such uses might be reordered by the
+  // selection DAG after the mtctr instruction).
+  if (!Preheader || mightUseCTR(TT, Preheader))
     Preheader = InsertPreheaderForLoop(L);
   if (!Preheader)
     return MadeChange;

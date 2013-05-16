@@ -26,3 +26,35 @@ for.end:                                          ; preds = %for.body
 ; CHECK: @foo
 ; CHECK-NOT: mtctr
 
+@init_value = global double 1.000000e+00, align 8
+@data64 = global [8000 x i64] zeroinitializer, align 8
+
+define i32 @main(i32 %argc, i8** nocapture %argv) {
+entry:
+  %0 = load double* @init_value, align 8
+  %conv = fptosi double %0 to i64
+  %broadcast.splatinsert.i = insertelement <2 x i64> undef, i64 %conv, i32 0
+  %broadcast.splat.i = shufflevector <2 x i64> %broadcast.splatinsert.i, <2 x i64> undef, <2 x i32> zeroinitializer
+  br label %vector.body.i
+
+vector.body.i:                                    ; preds = %vector.body.i, %entry
+  %index.i = phi i32 [ 0, %entry ], [ %index.next.i, %vector.body.i ]
+  %next.gep.i = getelementptr [8000 x i64]* @data64, i32 0, i32 %index.i
+  %1 = bitcast i64* %next.gep.i to <2 x i64>*
+  store <2 x i64> %broadcast.splat.i, <2 x i64>* %1, align 8
+  %next.gep.sum24.i = or i32 %index.i, 2
+  %2 = getelementptr [8000 x i64]* @data64, i32 0, i32 %next.gep.sum24.i
+  %3 = bitcast i64* %2 to <2 x i64>*
+  store <2 x i64> %broadcast.splat.i, <2 x i64>* %3, align 8
+  %index.next.i = add i32 %index.i, 4
+  %4 = icmp eq i32 %index.next.i, 8000
+  br i1 %4, label %_Z4fillIPxxEvT_S1_T0_.exit, label %vector.body.i
+
+_Z4fillIPxxEvT_S1_T0_.exit:                       ; preds = %vector.body.i
+  ret i32 0
+}
+
+; CHECK: @main
+; CHECK: __fixdfdi
+; CHECK: mtctr
+
