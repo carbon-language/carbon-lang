@@ -701,4 +701,33 @@ TEST(SanitizerCommon, LargeMmapAllocatorIteration) {
   }
 }
 
+#if SANITIZER_WORDSIZE == 64
+// Regression test for out-of-memory condition in PopulateFreeList().
+TEST(SanitizerCommon, SizeClassAllocator64PopulateFreeListOOM) {
+  // In a world where regions are small and chunks are huge...
+  typedef SizeClassMap<63, 128, 16> SpecialSizeClassMap;
+  typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, 0,
+                               SpecialSizeClassMap> SpecialAllocator64;
+  const uptr kRegionSize =
+      kAllocatorSize / SpecialSizeClassMap::kNumClassesRounded;
+  SpecialAllocator64 *a = new SpecialAllocator64;
+  a->Init();
+  SizeClassAllocatorLocalCache<SpecialAllocator64> cache;
+  memset(&cache, 0, sizeof(cache));
+  cache.Init(0);
+
+  // ...one man is on a mission to overflow a region with a series of
+  // successive allocations.
+  const uptr kClassID = 107;
+  const uptr kAllocationSize = DefaultSizeClassMap::Size(kClassID);
+  ASSERT_LT(2 * kAllocationSize, kRegionSize);
+  ASSERT_GT(3 * kAllocationSize, kRegionSize);
+  cache.Allocate(a, kClassID);
+  EXPECT_DEATH(cache.Allocate(a, kClassID) && cache.Allocate(a, kClassID),
+               "The process has exhausted");
+  a->TestOnlyUnmap();
+  delete a;
+}
+#endif
+
 #endif  // #if TSAN_DEBUG==0
