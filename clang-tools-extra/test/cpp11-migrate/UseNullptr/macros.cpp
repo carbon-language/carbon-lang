@@ -153,4 +153,12 @@ void test_macro_args() {
   // CHECK: PTR_AND_PTR_USE(nullptr);
   PTR_AND_PTR_USE(NULL);
   // CHECK: PTR_AND_PTR_USE(nullptr);
+
+#define OPTIONAL_CODE(...) __VA_ARGS__
+#define NOT_NULL dummy(0)
+#define CALL(X) X
+  OPTIONAL_CODE(NOT_NULL);
+  // CHECK: OPTIONAL_CODE(NOT_NULL);
+  CALL(NOT_NULL);
+  // CHECK: CALL(NOT_NULL);
 }

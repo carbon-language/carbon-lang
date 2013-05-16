@@ -286,10 +286,16 @@ private:
       const SrcMgr::SLocEntry *E = &SM.getSLocEntry(LocInfo.first);
       const SrcMgr::ExpansionInfo &Expansion = E->getExpansion();
 
+      SourceLocation OldArgLoc = ArgLoc;
       ArgLoc = Expansion.getExpansionLocStart();
       if (!Expansion.isMacroArgExpansion()) {
-        // TODO: Insert test for user-defined null macro here.
-        return MacroLoc.isFileID();
+        if (!MacroLoc.isFileID())
+          return false;
+
+        StringRef Name =
+            Lexer::getImmediateMacroName(OldArgLoc, SM, Context.getLangOpts());
+        return std::find(UserNullMacros.begin(), UserNullMacros.end(), Name) !=
+               UserNullMacros.end();
       }
 
       MacroLoc = SM.getImmediateExpansionRange(ArgLoc).first;
