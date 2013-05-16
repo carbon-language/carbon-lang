@@ -798,14 +798,10 @@ bool Lexer::isAtStartOfMacroExpansion(SourceLocation loc,
                                       SourceLocation *MacroBegin) {
   assert(loc.isValid() && loc.isMacroID() && "Expected a valid macro loc");
 
-  std::pair<FileID, unsigned> infoLoc = SM.getDecomposedLoc(loc);
-  // FIXME: If the token comes from the macro token paste operator ('##')
-  // this function will always return false;
-  if (infoLoc.second > 0)
-    return false; // Does not point at the start of token.
+  SourceLocation expansionLoc;
+  if (!SM.isAtStartOfImmediateMacroExpansion(loc, &expansionLoc))
+    return false;
 
-  SourceLocation expansionLoc =
-    SM.getSLocEntry(infoLoc.first).getExpansion().getExpansionLocStart();
   if (expansionLoc.isFileID()) {
     // No other macro expansions, this is the first.
     if (MacroBegin)
@@ -829,16 +825,11 @@ bool Lexer::isAtEndOfMacroExpansion(SourceLocation loc,
   if (tokLen == 0)
     return false;
 
-  FileID FID = SM.getFileID(loc);
-  SourceLocation afterLoc = loc.getLocWithOffset(tokLen+1);
-  if (SM.isInFileID(afterLoc, FID))
-    return false; // Still in the same FileID, does not point to the last token.
+  SourceLocation afterLoc = loc.getLocWithOffset(tokLen);
+  SourceLocation expansionLoc;
+  if (!SM.isAtEndOfImmediateMacroExpansion(afterLoc, &expansionLoc))
+    return false;
 
-  // FIXME: If the token comes from the macro token paste operator ('##')
-  // or the stringify operator ('#') this function will always return false;
-
-  SourceLocation expansionLoc =
-    SM.getSLocEntry(FID).getExpansion().getExpansionLocEnd();
   if (expansionLoc.isFileID()) {
     // No other macro expansions.
     if (MacroEnd)
@@ -916,25 +907,25 @@ CharSourceRange Lexer::makeFileCharRange(CharSourceRange Range,
     return makeRangeFromFileLocs(Range, SM, LangOpts);
   }
 
-  FileID FID;
-  unsigned BeginOffs;
-  llvm::tie(FID, BeginOffs) = SM.getDecomposedLoc(Begin);
-  if (FID.isInvalid())
+  bool Invalid = false;
+  const SrcMgr::SLocEntry &BeginEntry = SM.getSLocEntry(SM.getFileID(Begin),
+                                                        &Invalid);
+  if (Invalid)
     return CharSourceRange();
 
-  unsigned EndOffs;
-  if (!SM.isInFileID(End, FID, &EndOffs) ||
-      BeginOffs > EndOffs)
-    return CharSourceRange();
+  if (BeginEntry.getExpansion().isMacroArgExpansion()) {
+    const SrcMgr::SLocEntry &EndEntry = SM.getSLocEntry(SM.getFileID(End),
+                                                        &Invalid);
+    if (Invalid)
+      return CharSourceRange();
 
-  const SrcMgr::SLocEntry *E = &SM.getSLocEntry(FID);
-  const SrcMgr::ExpansionInfo &Expansion = E->getExpansion();
-  if (Expansion.isMacroArgExpansion() &&
-      Expansion.getSpellingLoc().isFileID()) {
-    SourceLocation SpellLoc = Expansion.getSpellingLoc();
-    Range.setBegin(SpellLoc.getLocWithOffset(BeginOffs));
-    Range.setEnd(SpellLoc.getLocWithOffset(EndOffs));
-    return makeRangeFromFileLocs(Range, SM, LangOpts);
+    if (EndEntry.getExpansion().isMacroArgExpansion() &&
+        BeginEntry.getExpansion().getExpansionLocStart() ==
+            EndEntry.getExpansion().getExpansionLocStart()) {
+      Range.setBegin(SM.getImmediateSpellingLoc(Begin));
+      Range.setEnd(SM.getImmediateSpellingLoc(End));
+      return makeFileCharRange(Range, SM, LangOpts);
+    }
   }
 
   return CharSourceRange();
