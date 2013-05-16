@@ -122,4 +122,7 @@ SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_allocated_memory(const void* data, uptr size);
 }  // extern "C"
 
+// Unpoison first n function arguments.
+void __msan_unpoison_param(uptr n);
+
 #endif  // MSAN_INTERFACE_INTERNAL_H

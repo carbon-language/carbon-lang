@@ -815,6 +815,31 @@ INTERCEPTOR(void *, dlopen, const char *filename, int flag) {
   return (void *)map;
 }
 
+typedef int (*dl_iterate_phdr_cb)(void *info, SIZE_T size, void *data);
+struct dl_iterate_phdr_data {
+  dl_iterate_phdr_cb callback;
+  void *data;
+};
+
+static int msan_dl_iterate_phdr_cb(void *info, SIZE_T size, void *data) {
+  if (info)
+    __msan_unpoison(info, size);
+  dl_iterate_phdr_data *cbdata = (dl_iterate_phdr_data *)data;
+  __msan_unpoison_param(3);
+  return cbdata->callback(info, size, cbdata->data);
+}
+
+INTERCEPTOR(int, dl_iterate_phdr, dl_iterate_phdr_cb callback, void *data) {
+  ENSURE_MSAN_INITED();
+  EnterLoader();
+  dl_iterate_phdr_data cbdata;
+  cbdata.callback = callback;
+  cbdata.data = data;
+  int res = REAL(dl_iterate_phdr)(msan_dl_iterate_phdr_cb, (void *)&cbdata);
+  ExitLoader();
+  return res;
+}
+
 INTERCEPTOR(int, getrusage, int who, void *usage) {
   ENSURE_MSAN_INITED();
   int res = REAL(getrusage)(who, usage);
@@ -1138,6 +1163,7 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(recvmsg);
   INTERCEPT_FUNCTION(dladdr);
   INTERCEPT_FUNCTION(dlopen);
+  INTERCEPT_FUNCTION(dl_iterate_phdr);
   INTERCEPT_FUNCTION(getrusage);
   INTERCEPT_FUNCTION(sigaction);
   INTERCEPT_FUNCTION(signal);

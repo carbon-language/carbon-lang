@@ -30,6 +30,7 @@
 #include <dlfcn.h>
 #include <grp.h>
 #include <unistd.h>
+#include <link.h>
 #include <limits.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -1452,9 +1453,8 @@ TEST(MemorySanitizer, getrlimit) {
   __msan_poison(&limit, sizeof(limit));
   int result = getrlimit(RLIMIT_DATA, &limit);
   assert(result == 0);
-  volatile rlim_t t;
-  t = limit.rlim_cur;
-  t = limit.rlim_max;
+  EXPECT_NOT_POISONED(limit.rlim_cur);
+  EXPECT_NOT_POISONED(limit.rlim_max);
 }
 
 TEST(MemorySanitizer, getrusage) {
@@ -1462,7 +1462,6 @@ TEST(MemorySanitizer, getrusage) {
   __msan_poison(&usage, sizeof(usage));
   int result = getrusage(RUSAGE_SELF, &usage);
   assert(result == 0);
-  volatile struct timeval t;
   EXPECT_NOT_POISONED(usage.ru_utime.tv_sec);
   EXPECT_NOT_POISONED(usage.ru_utime.tv_usec);
   EXPECT_NOT_POISONED(usage.ru_stime.tv_sec);
@@ -1491,6 +1490,22 @@ TEST(MemorySanitizer, dladdr) {
   if (info.dli_sname)
     EXPECT_NOT_POISONED(strlen(info.dli_sname));
   EXPECT_NOT_POISONED((unsigned long)info.dli_saddr);
+}
+
+static int dl_phdr_callback(struct dl_phdr_info *info, size_t size, void *data) {
+  (*(int *)data)++;
+  EXPECT_NOT_POISONED(info->dlpi_addr);
+  EXPECT_NOT_POISONED(strlen(info->dlpi_name));
+  EXPECT_NOT_POISONED(info->dlpi_phnum);
+  for (int i = 0; i < info->dlpi_phnum; ++i)
+    EXPECT_NOT_POISONED(info->dlpi_phdr[i]);
+  return 0;
+}
+
+TEST(MemorySanitizer, dl_iterate_phdr) {
+  int count = 0;
+  int result = dl_iterate_phdr(dl_phdr_callback, &count);
+  assert(count > 0);
 }
 
 namespace {

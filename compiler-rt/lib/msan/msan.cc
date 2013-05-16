@@ -331,6 +331,10 @@ void __msan_print_param_shadow() {
   Printf("\n");
 }
 
+void __msan_unpoison_param(uptr n) {
+  internal_memset(__msan_param_tls, 0, n * sizeof(*__msan_param_tls));
+}
+
 sptr __msan_test_shadow(const void *x, uptr size) {
   unsigned char *s = (unsigned char*)MEM_TO_SHADOW((uptr)x);
   for (uptr i = 0; i < size; ++i)
