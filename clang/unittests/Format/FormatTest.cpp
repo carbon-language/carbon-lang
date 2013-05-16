@@ -10,7 +10,6 @@
 #define DEBUG_TYPE "format-test"
 
 #include "clang/Format/Format.h"
-#include "../Tooling/RewriterTestContext.h"
 #include "clang/Lex/Lexer.h"
 #include "llvm/Support/Debug.h"
 #include "gtest/gtest.h"
@@ -23,21 +22,13 @@ protected:
   std::string format(llvm::StringRef Code, unsigned Offset, unsigned Length,
                      const FormatStyle &Style) {
     DEBUG(llvm::errs() << "---\n");
-    RewriterTestContext Context;
-    FileID ID = Context.createInMemoryFile("input.cc", Code);
-    SourceLocation Start =
-        Context.Sources.getLocForStartOfFile(ID).getLocWithOffset(Offset);
-    std::vector<CharSourceRange> Ranges(
-        1,
-        CharSourceRange::getCharRange(Start, Start.getLocWithOffset(Length)));
-    Lexer Lex(ID, Context.Sources.getBuffer(ID), Context.Sources,
-              getFormattingLangOpts());
-    tooling::Replacements Replace =
-        reformat(Style, Lex, Context.Sources, Ranges);
-    ReplacementCount = Replace.size();
-    EXPECT_TRUE(applyAllReplacements(Replace, Context.Rewrite));
-    DEBUG(llvm::errs() << "\n" << Context.getRewrittenText(ID) << "\n\n");
-    return Context.getRewrittenText(ID);
+    std::vector<tooling::Range> Ranges(1, tooling::Range(Offset, Length));
+    tooling::Replacements Replaces = reformat(Style, Code, Ranges);
+    ReplacementCount = Replaces.size();
+    std::string Result = applyAllReplacements(Code, Replaces);
+    EXPECT_NE("", Result);
+    DEBUG(llvm::errs() << "\n" << Result << "\n\n");
+    return Result;
   }
 
   std::string

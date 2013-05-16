@@ -183,6 +183,13 @@ tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
                                SourceManager &SourceMgr,
                                std::vector<CharSourceRange> Ranges);
 
+/// \brief Reformats the given \p Ranges in \p Code.
+///
+/// Otherwise identical to the reformat() function consuming a \c Lexer.
+tooling::Replacements reformat(const FormatStyle &Style, StringRef Code,
+                               std::vector<tooling::Range> Ranges,
+                               StringRef FileName = "<stdin>");
+
 /// \brief Returns the \c LangOpts that the formatter expects you to set.
 LangOptions getFormattingLangOpts();
 

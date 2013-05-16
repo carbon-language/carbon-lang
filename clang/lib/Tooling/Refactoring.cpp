@@ -26,12 +26,12 @@ namespace tooling {
 static const char * const InvalidLocation = "";
 
 Replacement::Replacement()
-  : FilePath(InvalidLocation), Offset(0), Length(0) {}
+  : FilePath(InvalidLocation) {}
 
-Replacement::Replacement(StringRef FilePath, unsigned Offset,
-                         unsigned Length, StringRef ReplacementText)
-  : FilePath(FilePath), Offset(Offset),
-    Length(Length), ReplacementText(ReplacementText) {}
+Replacement::Replacement(StringRef FilePath, unsigned Offset, unsigned Length,
+                         StringRef ReplacementText)
+    : FilePath(FilePath), ReplacementRange(Offset, Length),
+      ReplacementText(ReplacementText) {}
 
 Replacement::Replacement(SourceManager &Sources, SourceLocation Start,
                          unsigned Length, StringRef ReplacementText) {
@@ -62,11 +62,12 @@ bool Replacement::apply(Rewriter &Rewrite) const {
   // the remapping API is not public in the RewriteBuffer.
   const SourceLocation Start =
     SM.getLocForStartOfFile(ID).
-    getLocWithOffset(Offset);
+    getLocWithOffset(ReplacementRange.getOffset());
   // ReplaceText returns false on success.
   // ReplaceText only fails if the source location is not a file location, in
   // which case we already returned false earlier.
-  bool RewriteSucceeded = !Rewrite.ReplaceText(Start, Length, ReplacementText);
+  bool RewriteSucceeded = !Rewrite.ReplaceText(
+      Start, ReplacementRange.getLength(), ReplacementText);
   assert(RewriteSucceeded);
   return RewriteSucceeded;
 }
@@ -74,16 +75,18 @@ bool Replacement::apply(Rewriter &Rewrite) const {
 std::string Replacement::toString() const {
   std::string result;
   llvm::raw_string_ostream stream(result);
-  stream << FilePath << ": " << Offset << ":+" << Length
-         << ":\"" << ReplacementText << "\"";
+  stream << FilePath << ": " << ReplacementRange.getOffset() << ":+"
+         << ReplacementRange.getLength() << ":\"" << ReplacementText << "\"";
   return result;
 }
 
 bool Replacement::Less::operator()(const Replacement &R1,
                                    const Replacement &R2) const {
   if (R1.FilePath != R2.FilePath) return R1.FilePath < R2.FilePath;
-  if (R1.Offset != R2.Offset) return R1.Offset < R2.Offset;
-  if (R1.Length != R2.Length) return R1.Length < R2.Length;
+  if (R1.ReplacementRange.getOffset() != R2.ReplacementRange.getOffset())
+    return R1.ReplacementRange.getOffset() < R2.ReplacementRange.getOffset();
+  if (R1.ReplacementRange.getLength() != R2.ReplacementRange.getLength())
+    return R1.ReplacementRange.getLength() < R2.ReplacementRange.getLength();
   return R1.ReplacementText < R2.ReplacementText;
 }
 
@@ -94,8 +97,7 @@ void Replacement::setFromSourceLocation(SourceManager &Sources,
       Sources.getDecomposedLoc(Start);
   const FileEntry *Entry = Sources.getFileEntryForID(DecomposedLocation.first);
   this->FilePath = Entry != NULL ? Entry->getName() : InvalidLocation;
-  this->Offset = DecomposedLocation.second;
-  this->Length = Length;
+  this->ReplacementRange = Range(DecomposedLocation.second, Length);
   this->ReplacementText = ReplacementText;
 }
 
@@ -132,6 +134,35 @@ bool applyAllReplacements(Replacements &Replaces, Rewriter &Rewrite) {
       Result = false;
     }
   }
+  return Result;
+}
+
+std::string applyAllReplacements(StringRef Code, Replacements &Replaces) {
+  FileManager Files((FileSystemOptions()));
+  DiagnosticsEngine Diagnostics(
+      IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
+      new DiagnosticOptions);
+  Diagnostics.setClient(new TextDiagnosticPrinter(
+      llvm::outs(), &Diagnostics.getDiagnosticOptions()));
+  SourceManager SourceMgr(Diagnostics, Files);
+  Rewriter Rewrite(SourceMgr, LangOptions());
+  llvm::MemoryBuffer *Buf = llvm::MemoryBuffer::getMemBuffer(Code, "<stdin>");
+  const clang::FileEntry *Entry =
+      Files.getVirtualFile("<stdin>", Buf->getBufferSize(), 0);
+  SourceMgr.overrideFileContents(Entry, Buf);
+  FileID ID =
+      SourceMgr.createFileID(Entry, SourceLocation(), clang::SrcMgr::C_User);
+  for (Replacements::iterator I = Replaces.begin(), E = Replaces.end(); I != E;
+       ++I) {
+    Replacement Replace("<stdin>", I->getOffset(), I->getLength(),
+                        I->getReplacementText());
+    if (!Replace.apply(Rewrite))
+      return "";
+  }
+  std::string Result;
+  llvm::raw_string_ostream OS(Result);
+  Rewrite.getEditBuffer(ID).write(OS);
+  OS.flush();
   return Result;
 }
 

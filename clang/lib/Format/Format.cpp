@@ -19,6 +19,7 @@
 #include "TokenAnnotator.h"
 #include "UnwrappedLineParser.h"
 #include "WhitespaceManager.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/OperatorPrecedence.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Format/Format.h"
@@ -1551,6 +1552,31 @@ tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
                                std::vector<CharSourceRange> Ranges) {
   Formatter formatter(Style, Lex, SourceMgr, Ranges);
   return formatter.format();
+}
+
+tooling::Replacements reformat(const FormatStyle &Style, StringRef Code,
+                               std::vector<tooling::Range> Ranges,
+                               StringRef FileName) {
+  FileManager Files((FileSystemOptions()));
+  DiagnosticsEngine Diagnostics(
+      IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
+      new DiagnosticOptions);
+  SourceManager SourceMgr(Diagnostics, Files);
+  llvm::MemoryBuffer *Buf = llvm::MemoryBuffer::getMemBuffer(Code, FileName);
+  const clang::FileEntry *Entry =
+      Files.getVirtualFile(FileName, Buf->getBufferSize(), 0);
+  SourceMgr.overrideFileContents(Entry, Buf);
+  FileID ID =
+      SourceMgr.createFileID(Entry, SourceLocation(), clang::SrcMgr::C_User);
+  Lexer Lex(ID, SourceMgr.getBuffer(ID), SourceMgr, getFormattingLangOpts());
+  SourceLocation StartOfFile = SourceMgr.getLocForStartOfFile(ID);
+  std::vector<CharSourceRange> CharRanges;
+  for (unsigned i = 0, e = Ranges.size(); i != e; ++i) {
+    SourceLocation Start = StartOfFile.getLocWithOffset(Ranges[i].getOffset());
+    SourceLocation End = Start.getLocWithOffset(Ranges[i].getLength());
+    CharRanges.push_back(CharSourceRange::getCharRange(Start, End));
+  }
+  return reformat(Style, Lex, SourceMgr, CharRanges);
 }
 
 LangOptions getFormattingLangOpts() {
