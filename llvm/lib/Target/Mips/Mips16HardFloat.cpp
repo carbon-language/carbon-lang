@@ -320,7 +320,7 @@ static void assureFPCallStub(Function &F, Module *M,
 
 //
 // Returns of float, double and complex need to be handled with a helper
-// function. The "AndCal" part is coming in a later patch.
+// function.
 //
 static bool fixupFPReturnAndCall
   (Function &F, Module *M,  const MipsSubtarget &Subtarget) {
@@ -378,6 +378,41 @@ static bool fixupFPReturnAndCall
   return Modified;
 }
 
+static void createFPFnStub(Function *F, Module *M, FPParamVariant PV,
+                  const MipsSubtarget &Subtarget ) {
+  bool PicMode = Subtarget.getRelocationModel() == Reloc::PIC_;
+  bool LE = Subtarget.isLittle();
+  LLVMContext &Context = M->getContext();
+  std::string Name = F->getName();
+  std::string SectionName = ".mips16.fn." + Name;
+  std::string StubName = "__fn_stub_" + Name;
+  std::string LocalName = "__fn_local_" + Name;
+  Function *FStub = Function::Create
+    (F->getFunctionType(),
+     Function::ExternalLinkage, StubName, M);
+  FStub->addFnAttr("mips16_fp_stub");
+  FStub->addFnAttr(llvm::Attribute::Naked);
+  FStub->addFnAttr(llvm::Attribute::NoUnwind);
+  FStub->addFnAttr("nomips16");
+  FStub->setSection(SectionName);
+  BasicBlock *BB = BasicBlock::Create(Context, "entry", FStub);
+  InlineAsmHelper IAH(Context, BB);
+  IAH.Out(" .set  macro");
+  if (PicMode) {
+    IAH.Out(".set noreorder");
+    IAH.Out(".cpload  $$2");
+    IAH.Out(".set reorder");
+    IAH.Out(".reloc 0,R_MIPS_NONE," + Name);
+    IAH.Out("la $$25," + LocalName);
+  }
+  else
+    IAH.Out("la $$25, " + Name);
+  swapFPIntParams(PV, M, IAH, LE, false);
+  IAH.Out("jr $$25");
+  IAH.Out(LocalName + " = " + Name);
+  new UnreachableInst(FStub->getContext(), BB);
+}
+
 namespace llvm {
 
 //
@@ -389,10 +424,10 @@ namespace llvm {
 //       by calling a helper function before the actual return.
 //    2) generate helper functions (stubs) that can be called by mips32 functions
 //       that will move parameters passed normally passed in floating point
-//       registers the soft float equivalents. (Coming in a later patch).
+//       registers the soft float equivalents.
 //    3) in the case of static relocation, generate helper functions so that
 //       mips16 functions can call extern functions of unknown type (mips16 or
-//       mips32). (Coming in a later patch).
+//       mips32).
 //    4) TBD. For pic, calls to extern functions of unknown type are handled by
 //       predefined helper functions in libc but this work is currently done
 //       during call lowering but it should be moved here in the future.
@@ -404,6 +439,11 @@ bool Mips16HardFloat::runOnModule(Module &M) {
     if (F->isDeclaration() || F->hasFnAttribute("mips16_fp_stub") ||
         F->hasFnAttribute("nomips16")) continue;
     Modified |= fixupFPReturnAndCall(*F, &M, Subtarget);
+    FPParamVariant V = whichFPParamVariantNeeded(*F);
+    if (V != NoSig) {
+      Modified = true;
+      createFPFnStub(F, &M, V, Subtarget);
+    }
   }
   return Modified;
 }
