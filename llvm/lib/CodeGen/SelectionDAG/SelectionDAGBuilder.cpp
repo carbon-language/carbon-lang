@@ -6753,8 +6753,14 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
 
     // If this argument is unused then remember its value. It is used to generate
     // debugging information.
-    if (I->use_empty() && NumValues)
+    if (I->use_empty() && NumValues) {
       SDB->setUnusedArgValue(I, InVals[i]);
+
+      // Also remember any frame index for use in FastISel.
+      if (FrameIndexSDNode *FI =
+          dyn_cast<FrameIndexSDNode>(InVals[i].getNode()))
+        FuncInfo->setArgumentFrameIndex(I, FI->getIndex());
+    }
 
     for (unsigned Val = 0; Val != NumValues; ++Val) {
       EVT VT = ValueVTs[Val];
