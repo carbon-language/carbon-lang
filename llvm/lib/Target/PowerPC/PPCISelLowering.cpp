@@ -1061,7 +1061,7 @@ bool PPCTargetLowering::SelectAddressRegImm(SDValue N, SDValue &Disp,
   if (N.getOpcode() == ISD::ADD) {
     short imm = 0;
     if (isIntS16Immediate(N.getOperand(1), imm)) {
-      Disp = DAG.getTargetConstant((int)imm & 0xFFFF, MVT::i32);
+      Disp = DAG.getTargetConstant(imm, N.getValueType());
       if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N.getOperand(0))) {
         Base = DAG.getTargetFrameIndex(FI->getIndex(), N.getValueType());
       } else {
@@ -1093,7 +1093,7 @@ bool PPCTargetLowering::SelectAddressRegImm(SDValue N, SDValue &Disp,
         // If all of the bits are known zero on the LHS or RHS, the add won't
         // carry.
         Base = N.getOperand(0);
-        Disp = DAG.getTargetConstant((int)imm & 0xFFFF, MVT::i32);
+        Disp = DAG.getTargetConstant(imm, N.getValueType());
         return true;
       }
     }
