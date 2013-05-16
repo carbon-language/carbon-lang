@@ -3,7 +3,7 @@
 
 declare void @foo()
 
-define i32 @test_cr2() nounwind {
+define i32 @test_cr2() nounwind uwtable {
 entry:
   %ret = alloca i32, align 4
   %0 = call i32 asm sideeffect "\0A\09mtcr $4\0A\09cmp 2,$2,$1\0A\09mfcr $0", "=r,r,r,r,r,~{cr2}"(i32 1, i32 2, i32 3, i32 0) nounwind
@@ -20,12 +20,17 @@ entry:
 ; PPC32: lwz 12, 24(31)
 ; PPC32-NEXT: mtcrf 32, 12
 
+; PPC64: .cfi_startproc
 ; PPC64: mfcr 12
 ; PPC64: stw 12, 8(1)
 ; PPC64: stdu 1, -[[AMT:[0-9]+]](1)
+; PPC64: .cfi_def_cfa_offset 128
+; PPC64: .cfi_offset lr, 16
+; PPC64: .cfi_offset cr2, 8
 ; PPC64: addi 1, 1, [[AMT]]
 ; PPC64: lwz 12, 8(1)
 ; PPC64: mtcrf 32, 12
+; PPC64: .cfi_endproc
 
 define i32 @test_cr234() nounwind {
 entry:
