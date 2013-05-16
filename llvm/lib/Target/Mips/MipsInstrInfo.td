@@ -26,7 +26,8 @@ def SDT_MipsCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
 def SDT_ExtractLOHI : SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisVT<1, untyped>,
                                            SDTCisVT<2, i32>]>;
 def SDT_InsertLOHI : SDTypeProfile<1, 2, [SDTCisVT<0, untyped>,
-                                          SDTCisVT<1, i32>, SDTCisSameAs<1, 2>]>;
+                                          SDTCisVT<1, i32>,
+                                          SDTCisSameAs<1, 2>]>;
 def SDT_MipsMultDiv : SDTypeProfile<1, 2, [SDTCisVT<0, untyped>, SDTCisInt<1>,
                                     SDTCisSameAs<1, 2>]>;
 def SDT_MipsMAddMSub : SDTypeProfile<1, 3,
@@ -104,7 +105,8 @@ def MipsMSubu : SDNode<"MipsISD::MSubu", SDT_MipsMAddMSub>;
 // DivRem(u) nodes
 def MipsDivRem    : SDNode<"MipsISD::DivRem", SDT_MipsMultDiv>;
 def MipsDivRemU   : SDNode<"MipsISD::DivRemU", SDT_MipsMultDiv>;
-def MipsDivRem16  : SDNode<"MipsISD::DivRem16", SDT_MipsDivRem16, [SDNPOutGlue]>;
+def MipsDivRem16  : SDNode<"MipsISD::DivRem16", SDT_MipsDivRem16,
+                           [SDNPOutGlue]>;
 def MipsDivRemU16 : SDNode<"MipsISD::DivRemU16", SDT_MipsDivRem16,
                            [SDNPOutGlue]>;
 
@@ -989,7 +991,8 @@ def PseudoMULT  : MultDivPseudo<MULT, ACRegs, CPURegsOpnd, MipsMult, IIImul>;
 def PseudoMULTu : MultDivPseudo<MULTu, ACRegs, CPURegsOpnd, MipsMultu, IIImul>;
 def SDIV  : Div<"div", IIIdiv, CPURegsOpnd, [HI, LO]>, MULT_FM<0, 0x1a>;
 def UDIV  : Div<"divu", IIIdiv, CPURegsOpnd, [HI, LO]>, MULT_FM<0, 0x1b>;
-def PseudoSDIV : MultDivPseudo<SDIV, ACRegs, CPURegsOpnd, MipsDivRem, IIIdiv, 0>;
+def PseudoSDIV : MultDivPseudo<SDIV, ACRegs, CPURegsOpnd, MipsDivRem, IIIdiv,
+                               0>;
 def PseudoUDIV : MultDivPseudo<UDIV, ACRegs, CPURegsOpnd, MipsDivRemU, IIIdiv,
                                0>;
 
