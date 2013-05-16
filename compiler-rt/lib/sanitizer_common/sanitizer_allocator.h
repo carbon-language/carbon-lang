@@ -495,7 +495,7 @@ class SizeClassAllocator64 {
     uptr offset = chunk % kRegionSize;
     // Here we divide by a non-constant. This is costly.
     // size always fits into 32-bits. If the offset fits too, use 32-bit div.
-    if (offset >> 32)
+    if (offset >> (SANITIZER_WORDSIZE / 2))
       return offset / size;
     return (u32)offset / (u32)size;
   }
