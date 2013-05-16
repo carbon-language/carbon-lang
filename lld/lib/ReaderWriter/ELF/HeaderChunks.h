@@ -163,20 +163,18 @@ public:
   }
 
 private:
-  std::pair<Elf_Phdr *, bool> allocateProgramHeader() {
+  Elf_Phdr *allocateProgramHeader(bool &allocatedNew) {
     Elf_Phdr *phdr;
-    bool ret = false;
     if (_phi == _ph.end()) {
       phdr = new (_allocator) Elf_Phdr;
       _ph.push_back(phdr);
       _phi = _ph.end();
-      ret = true;
+      allocatedNew = true;
     } else {
       phdr = (*_phi);
       ++_phi;
     }
-
-    return std::make_pair(phdr, ret);
+    return phdr;
   }
 
   std::vector<Elf_Phdr *> _ph;
@@ -191,17 +189,15 @@ bool ProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
   // just pick the values directly from the segment as there
   // wouldnt be any slices within that
   if (segment->segmentType() != llvm::ELF::PT_LOAD) {
-    auto phdr = allocateProgramHeader();
-    if (phdr.second)
-      allocatedNew = true;
-    phdr.first->p_type = segment->segmentType();
-    phdr.first->p_offset = segment->fileOffset();
-    phdr.first->p_vaddr = segment->virtualAddr();
-    phdr.first->p_paddr = segment->virtualAddr();
-    phdr.first->p_filesz = segment->fileSize();
-    phdr.first->p_memsz = segment->memSize();
-    phdr.first->p_flags = segment->flags();
-    phdr.first->p_align = segment->align2();
+    Elf_Phdr *phdr = allocateProgramHeader(allocatedNew);
+    phdr->p_type = segment->segmentType();
+    phdr->p_offset = segment->fileOffset();
+    phdr->p_vaddr = segment->virtualAddr();
+    phdr->p_paddr = segment->virtualAddr();
+    phdr->p_filesz = segment->fileSize();
+    phdr->p_memsz = segment->memSize();
+    phdr->p_flags = segment->flags();
+    phdr->p_align = segment->align2();
     this->_fsize = fileSize();
     this->_msize = this->_fsize;
     return allocatedNew;
@@ -209,17 +205,15 @@ bool ProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
   // For all other segments, use the slice
   // to derive program headers
   for (auto slice : segment->slices()) {
-    auto phdr = allocateProgramHeader();
-    if (phdr.second)
-      allocatedNew = true;
-    phdr.first->p_type = segment->segmentType();
-    phdr.first->p_offset = slice->fileOffset();
-    phdr.first->p_vaddr = slice->virtualAddr();
-    phdr.first->p_paddr = slice->virtualAddr();
-    phdr.first->p_filesz = slice->fileSize();
-    phdr.first->p_memsz = slice->memSize();
-    phdr.first->p_flags = segment->flags();
-    phdr.first->p_align = (phdr.first->p_type == llvm::ELF::PT_LOAD) ?
+    Elf_Phdr *phdr = allocateProgramHeader(allocatedNew);
+    phdr->p_type = segment->segmentType();
+    phdr->p_offset = slice->fileOffset();
+    phdr->p_vaddr = slice->virtualAddr();
+    phdr->p_paddr = slice->virtualAddr();
+    phdr->p_filesz = slice->fileSize();
+    phdr->p_memsz = slice->memSize();
+    phdr->p_flags = segment->flags();
+    phdr->p_align = (phdr->p_type == llvm::ELF::PT_LOAD) ?
                           segment->pageSize() : slice->align2();
   }
   this->_fsize = fileSize();
