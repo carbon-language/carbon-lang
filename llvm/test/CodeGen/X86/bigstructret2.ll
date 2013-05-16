@@ -1,4 +1,12 @@
-; RUN: llc < %s -march=x86 -o %t
+; RUN: llc < %s -march=x86 | FileCheck %s
+
+; CHECK: .cfi_startproc
+; CHECK: .cfi_def_cfa_offset 8
+; CHECK: .cfi_def_cfa_offset 12
+; CHECK: .cfi_def_cfa_offset 32
+; CHECK: .cfi_offset %esi, -12
+; CHECK: .cfi_offset %edi, -8
+; CHECK: .cfi_endproc
 
 %0 = type { i64, i64 }
 
