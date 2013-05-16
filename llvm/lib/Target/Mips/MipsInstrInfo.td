@@ -521,7 +521,7 @@ multiclass StoreLeftRightM<string opstr, SDNode OpNode, RegisterClass RC> {
 }
 
 // Conditional Branch
-class CBranch<string opstr, PatFrag cond_op, RegisterClass RC> :
+class CBranch<string opstr, PatFrag cond_op, RegisterOperand RC> :
   InstSE<(outs), (ins RC:$rs, RC:$rt, brtarget:$offset),
          !strconcat(opstr, "\t$rs, $rt, $offset"),
          [(brcond (i32 (cond_op RC:$rs, RC:$rt)), bb:$offset)], IIBranch,
@@ -532,7 +532,7 @@ class CBranch<string opstr, PatFrag cond_op, RegisterClass RC> :
   let Defs = [AT];
 }
 
-class CBranchZero<string opstr, PatFrag cond_op, RegisterClass RC> :
+class CBranchZero<string opstr, PatFrag cond_op, RegisterOperand RC> :
   InstSE<(outs), (ins RC:$rs, brtarget:$offset),
          !strconcat(opstr, "\t$rs, $offset"),
          [(brcond (i32 (cond_op RC:$rs, 0)), bb:$offset)], IIBranch, FrmI> {
@@ -940,12 +940,12 @@ def J       : JumpFJ<jmptarget, "j", br, bb>, FJ<2>,
               Requires<[RelocStatic, HasStdEnc]>, IsBranch;
 def JR      : IndirectBranch<CPURegs>, MTLO_FM<8>;
 def B       : UncondBranch<"b">, B_FM;
-def BEQ     : CBranch<"beq", seteq, CPURegs>, BEQ_FM<4>;
-def BNE     : CBranch<"bne", setne, CPURegs>, BEQ_FM<5>;
-def BGEZ    : CBranchZero<"bgez", setge, CPURegs>, BGEZ_FM<1, 1>;
-def BGTZ    : CBranchZero<"bgtz", setgt, CPURegs>, BGEZ_FM<7, 0>;
-def BLEZ    : CBranchZero<"blez", setle, CPURegs>, BGEZ_FM<6, 0>;
-def BLTZ    : CBranchZero<"bltz", setlt, CPURegs>, BGEZ_FM<1, 0>;
+def BEQ     : CBranch<"beq", seteq, CPURegsOpnd>, BEQ_FM<4>;
+def BNE     : CBranch<"bne", setne, CPURegsOpnd>, BEQ_FM<5>;
+def BGEZ    : CBranchZero<"bgez", setge, CPURegsOpnd>, BGEZ_FM<1, 1>;
+def BGTZ    : CBranchZero<"bgtz", setgt, CPURegsOpnd>, BGEZ_FM<7, 0>;
+def BLEZ    : CBranchZero<"blez", setle, CPURegsOpnd>, BGEZ_FM<6, 0>;
+def BLTZ    : CBranchZero<"bltz", setlt, CPURegsOpnd>, BGEZ_FM<1, 0>;
 
 def BAL_BR: BAL_FT, BAL_FM;
 
@@ -1097,6 +1097,12 @@ def : InstAlias<"mtc2 $rt, $rd",
                 (MTC2_3OP CPURegsOpnd:$rd, 0, CPURegsOpnd:$rt), 0>;
 def : InstAlias<"addiu $rs, $imm",
                 (ADDiu CPURegsOpnd:$rs, CPURegsOpnd:$rs, simm16:$imm), 0>;
+def : InstAlias<"bnez $rs,$offset",
+                 (BNE CPURegsOpnd:$rs, ZERO, brtarget:$offset), 1>,
+                 Requires<[NotMips64]>;
+def : InstAlias<"beqz $rs,$offset",
+                 (BEQ CPURegsOpnd:$rs, ZERO, brtarget:$offset), 1>,
+                 Requires<[NotMips64]>;
 //===----------------------------------------------------------------------===//
 // Assembler Pseudo Instructions
 //===----------------------------------------------------------------------===//

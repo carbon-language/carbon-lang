@@ -167,12 +167,12 @@ let Predicates = [IsN64, HasStdEnc], isCodeGenOnly = 1 in {
 
 /// Jump and Branch Instructions
 def JR64   : IndirectBranch<CPU64Regs>, MTLO_FM<8>;
-def BEQ64  : CBranch<"beq", seteq, CPU64Regs>, BEQ_FM<4>;
-def BNE64  : CBranch<"bne", setne, CPU64Regs>, BEQ_FM<5>;
-def BGEZ64 : CBranchZero<"bgez", setge, CPU64Regs>, BGEZ_FM<1, 1>;
-def BGTZ64 : CBranchZero<"bgtz", setgt, CPU64Regs>, BGEZ_FM<7, 0>;
-def BLEZ64 : CBranchZero<"blez", setle, CPU64Regs>, BGEZ_FM<6, 0>;
-def BLTZ64 : CBranchZero<"bltz", setlt, CPU64Regs>, BGEZ_FM<1, 0>;
+def BEQ64  : CBranch<"beq", seteq, CPU64RegsOpnd>, BEQ_FM<4>;
+def BNE64  : CBranch<"bne", setne, CPU64RegsOpnd>, BEQ_FM<5>;
+def BGEZ64 : CBranchZero<"bgez", setge, CPU64RegsOpnd>, BGEZ_FM<1, 1>;
+def BGTZ64 : CBranchZero<"bgtz", setgt, CPU64RegsOpnd>, BGEZ_FM<7, 0>;
+def BLEZ64 : CBranchZero<"blez", setle, CPU64RegsOpnd>, BGEZ_FM<6, 0>;
+def BLTZ64 : CBranchZero<"bltz", setlt, CPU64RegsOpnd>, BGEZ_FM<1, 0>;
 }
 let DecoderNamespace = "Mips64" in
 def JALR64 : JumpLinkReg<"jalr", CPU64Regs>, JALR_FM;
@@ -361,8 +361,14 @@ def : InstAlias<"dadd $rs, $rt, $imm",
 def : InstAlias<"or $rs, $rt, $imm",
                 (ORi64 CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, uimm16_64:$imm),
                 1>, Requires<[HasMips64]>;
-/// Move between CPU and coprocessor registers
+def : InstAlias<"bnez $rs,$offset",
+                 (BNE64 CPU64RegsOpnd:$rs, ZERO_64, brtarget:$offset), 1>,
+                 Requires<[HasMips64]>;
+def : InstAlias<"beqz $rs,$offset",
+                 (BEQ64 CPU64RegsOpnd:$rs, ZERO_64, brtarget:$offset), 1>,
+                 Requires<[HasMips64]>;
 
+/// Move between CPU and coprocessor registers
 let DecoderNamespace = "Mips64" in {
 def DMFC0_3OP64 : MFC3OP<(outs CPU64RegsOpnd:$rt),
                          (ins CPU64RegsOpnd:$rd, uimm16:$sel),

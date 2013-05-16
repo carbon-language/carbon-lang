@@ -26,7 +26,11 @@
 # CHECK32:   nop                    # encoding: [0x00,0x00,0x00,0x00]
 # CHECK32:   bne $9, $6, 1332       # encoding: [0x4d,0x01,0x26,0x15]
 # CHECK32:   nop                    # encoding: [0x00,0x00,0x00,0x00]
-# CHECK32:   bal     1332           # encoding: [0x4d,0x01,0x11,0x04]
+# CHECK32:   bal  1332              # encoding: [0x4d,0x01,0x11,0x04]
+# CHECK32:   nop                    # encoding: [0x00,0x00,0x00,0x00]
+# CHECK32:   bne  $11, $zero, 1332  # encoding: [0x4d,0x01,0x60,0x15]
+# CHECK32:   nop                    # encoding: [0x00,0x00,0x00,0x00]
+# CHECK32:   beq  $11, $zero, 1332  # encoding: [0x4d,0x01,0x60,0x11]
 # CHECK32:   nop                    # encoding: [0x00,0x00,0x00,0x00]
 
 # CHECK64:   b 1332                 # encoding: [0x4d,0x01,0x00,0x10]
@@ -48,6 +52,10 @@
 # CHECK64:   bne $9, $6, 1332       # encoding: [0x4d,0x01,0x26,0x15]
 # CHECK64:   nop                    # encoding: [0x00,0x00,0x00,0x00]
 # CHECK64:   bal     1332           # encoding: [0x4d,0x01,0x11,0x04]
+# CHECK64:   nop                    # encoding: [0x00,0x00,0x00,0x00]
+# CHECK64:   bne  $11, $zero, 1332  # encoding: [0x4d,0x01,0x60,0x15]
+# CHECK64:   nop                    # encoding: [0x00,0x00,0x00,0x00]
+# CHECK64:   beq  $11, $zero, 1332  # encoding: [0x4d,0x01,0x60,0x11]
 # CHECK64:   nop                    # encoding: [0x00,0x00,0x00,0x00]
 
 .set noreorder
@@ -71,6 +79,10 @@
          bne $9,$6,1332
          nop
          bal 1332
+         nop
+         bnez $11,1332
+         nop
+         beqz $11,1332
          nop
 
 end_of_code:
