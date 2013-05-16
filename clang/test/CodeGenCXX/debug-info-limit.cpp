@@ -1,6 +1,6 @@
 // RUN: %clang  -emit-llvm -g -S %s -o - | FileCheck %s
 
-// TAG_member is used to encode debug info for class constructor.
+// TAG_member is used to encode debug info for 'z' in A.
 // CHECK: TAG_member
 class A {
 public:
