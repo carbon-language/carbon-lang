@@ -305,7 +305,11 @@ bool PPCCTRLoops::convertToCTRLoop(Loop *L) {
                  isa<FPToUIInst>(J) || isa<FPToSIInst>(J)) {
         CastInst *CI = cast<CastInst>(J);
         if (CI->getSrcTy()->getScalarType()->isPPC_FP128Ty() ||
-            CI->getDestTy()->getScalarType()->isPPC_FP128Ty())
+            CI->getDestTy()->getScalarType()->isPPC_FP128Ty() ||
+            (TT.isArch32Bit() &&
+             (CI->getSrcTy()->getScalarType()->isIntegerTy(64) ||
+              CI->getDestTy()->getScalarType()->isIntegerTy(64))
+            ))
           return MadeChange;
       } else if (isa<IndirectBrInst>(J) || isa<InvokeInst>(J)) {
         // On PowerPC, indirect jumps use the counter register.
