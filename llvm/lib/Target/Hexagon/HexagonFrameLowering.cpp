@@ -76,16 +76,11 @@ void HexagonFrameLowering::determineFrameLayout(MachineFunction &MF) const {
 void HexagonFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  MachineModuleInfo &MMI = MF.getMMI();
   MachineBasicBlock::iterator MBBI = MBB.begin();
   const HexagonRegisterInfo *QRI =
     static_cast<const HexagonRegisterInfo *>(MF.getTarget().getRegisterInfo());
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
   determineFrameLayout(MF);
-
-  // Check if frame moves are needed for EH.
-  bool needsFrameMoves = MMI.hasDebugInfo() ||
-    !MF.getFunction()->needsUnwindTableEntry();
 
   // Get the number of bytes to allocate from the FrameInfo.
   int NumBytes = (int) MFI->getStackSize();
@@ -112,26 +107,6 @@ void HexagonFrameLowering::emitPrologue(MachineFunction &MF) const {
     assert(MO.isImm() && "Expected immediate");
     MO.setImm(MFI->getMaxCallFrameSize());
   }
-
- if (needsFrameMoves) {
-   // Advance CFA. DW_CFA_def_cfa
-   unsigned FPReg = QRI->getFrameRegister();
-   unsigned RAReg = QRI->getRARegister();
-
-   MachineLocation Dst(MachineLocation::VirtualFP);
-   MachineLocation Src(FPReg, -8);
-   MMI.addFrameMove(0, Dst, Src);
-
-   // R31 = (R31 - #4)
-   MachineLocation LRDst(RAReg, -4);
-   MachineLocation LRSrc(RAReg);
-   MMI.addFrameMove(0, LRDst, LRSrc);
-
-   // R30 = (R30 - #8)
-   MachineLocation SPDst(FPReg, -8);
-   MachineLocation SPSrc(FPReg);
-   MMI.addFrameMove(0, SPDst, SPSrc);
- }
 
   //
   // Only insert ALLOCFRAME if we need to.
