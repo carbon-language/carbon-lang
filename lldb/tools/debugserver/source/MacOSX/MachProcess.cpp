@@ -95,6 +95,7 @@ MachProcess::MachProcess() :
     m_state             (eStateUnloaded),
     m_state_mutex       (PTHREAD_MUTEX_RECURSIVE),
     m_events            (0, kAllEventsMask),
+    m_private_events    (0, kAllEventsMask),
     m_breakpoints       (),
     m_watchpoints       (),
     m_name_to_addr_callback(NULL),
@@ -258,8 +259,6 @@ MachProcess::SetState(nub_state_t new_state)
     // Scope for mutex locker
     {
         PTHREAD_MUTEX_LOCKER(locker, m_state_mutex);
-        DNBLogThreadedIf(LOG_PROCESS, "MachProcess::SetState ( %s )", DNBStateAsString(new_state));
-
         const nub_state_t old_state = m_state;
 
         if (old_state != new_state)
@@ -269,15 +268,26 @@ MachProcess::SetState(nub_state_t new_state)
             else
                 event_mask = eEventProcessRunningStateChanged;
 
+            DNBLogThreadedIf(LOG_PROCESS, "MachProcess::SetState ( old = %s, new = %s ) updating state, event_mask = 0x%8.8x", DNBStateAsString(old_state), DNBStateAsString(new_state), event_mask);
+
             m_state = new_state;
             if (new_state == eStateStopped)
                 m_stop_count++;
+        }
+        else
+        {
+            DNBLogThreadedIf(LOG_PROCESS, "MachProcess::SetState ( old = %s, new = %s ) ignoring state...", DNBStateAsString(old_state), DNBStateAsString(new_state));
         }
     }
 
     if (event_mask != 0)
     {
         m_events.SetEvents (event_mask);
+        m_private_events.SetEvents (event_mask);
+        if (event_mask == eEventProcessStoppedStateChanged)
+            m_private_events.ResetEvents (eEventProcessRunningStateChanged);
+        else
+            m_private_events.ResetEvents (eEventProcessStoppedStateChanged);
 
         // Wait for the event bit to reset if a reset ACK is requested
         m_events.WaitForResetAck(event_mask);
@@ -419,7 +429,7 @@ MachProcess::Signal (int signal, const struct timespec *timeout_abstime)
         if (IsRunning(state) && timeout_abstime)
         {
             DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Signal (signal = %d, timeout = %p) waiting for signal to stop process...", signal, timeout_abstime);
-            m_events.WaitForSetEvents(eEventProcessStoppedStateChanged, timeout_abstime);
+            m_private_events.WaitForSetEvents(eEventProcessStoppedStateChanged, timeout_abstime);
             state = GetState();
             DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Signal (signal = %d, timeout = %p) state = %s", signal, timeout_abstime, DNBStateAsString(state));
             return !IsRunning (state);

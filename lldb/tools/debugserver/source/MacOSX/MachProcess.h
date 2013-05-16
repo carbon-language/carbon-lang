@@ -300,6 +300,7 @@ private:
     nub_state_t                 m_state;                    // The state of our process
     PThreadMutex                m_state_mutex;              // Multithreaded protection for m_state
     PThreadEvent                m_events;                   // Process related events in the child processes lifetime can be waited upon
+    PThreadEvent                m_private_events;           // Used to coordinate running and stopping the process without affecting m_events
     DNBBreakpointList           m_breakpoints;              // Breakpoint list for this process
     DNBBreakpointList           m_watchpoints;              // Watchpoint list for this process
     DNBCallbackNameToAddress    m_name_to_addr_callback;
