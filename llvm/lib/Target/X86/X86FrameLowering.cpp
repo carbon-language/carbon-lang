@@ -817,7 +817,8 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
       BuildMI(MBB, MBBI, DL, TII.get(X86::PROLOG_LABEL)).addSym(Label);
 
       // Define the current CFA rule to use the provided offset.
-      unsigned Ptr = StackSize ? MachineLocation::VirtualFP : StackPtr;
+      assert(StackSize);
+      unsigned Ptr = MachineLocation::VirtualFP;
       MachineLocation SPDst(Ptr);
       MachineLocation SPSrc(Ptr, StackOffset);
       MMI.addFrameMove(Label, SPDst, SPSrc);
