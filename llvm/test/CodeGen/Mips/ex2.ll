@@ -7,9 +7,11 @@ define i32 @main() {
 ; 16: main:
 ; 16: 	.cfi_startproc
 ; 16: 	save	$ra, $s0, $s1, 32
+; 16:   .cfi_def_cfa_offset 32
 ; 16:   .cfi_offset 17, -8
 ; 16: 	.cfi_offset 16, -12
 ; 16: 	.cfi_offset 31, -4
+; 16:   .cfi_endproc
 entry:
   %retval = alloca i32, align 4
   store i32 0, i32* %retval
