@@ -371,8 +371,7 @@ void CodeGenFunction::ResolveBranchFixups(llvm::BasicBlock *Block) {
 }
 
 /// Pops cleanup blocks until the given savepoint is reached.
-void CodeGenFunction::PopCleanupBlocks(EHScopeStack::stable_iterator Old,
-                                       SourceLocation EHLoc) {
+void CodeGenFunction::PopCleanupBlocks(EHScopeStack::stable_iterator Old) {
   assert(Old.isValid());
 
   while (EHStack.stable_begin() != Old) {
@@ -384,7 +383,7 @@ void CodeGenFunction::PopCleanupBlocks(EHScopeStack::stable_iterator Old,
     bool FallThroughIsBranchThrough =
       Old.strictlyEncloses(Scope.getEnclosingNormalCleanup());
 
-    PopCleanupBlock(FallThroughIsBranchThrough, EHLoc);
+    PopCleanupBlock(FallThroughIsBranchThrough);
   }
 }
 
@@ -533,8 +532,7 @@ static void destroyOptimisticNormalEntry(CodeGenFunction &CGF,
 /// Pops a cleanup block.  If the block includes a normal cleanup, the
 /// current insertion point is threaded through the cleanup, as are
 /// any branch fixups on the cleanup.
-void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough,
-                                      SourceLocation EHLoc) {
+void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
   assert(!EHStack.empty() && "cleanup stack is empty!");
   assert(isa<EHCleanupScope>(*EHStack.begin()) && "top not a cleanup!");
   EHCleanupScope &Scope = cast<EHCleanupScope>(*EHStack.begin());
@@ -836,7 +834,7 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough,
   // Emit the EH cleanup if required.
   if (RequiresEHCleanup) {
     if (CGDebugInfo *DI = getDebugInfo())
-      DI->EmitLocation(Builder, EHLoc);
+      DI->EmitLocation(Builder, CurEHLocation);
 
     CGBuilderTy::InsertPoint SavedIP = Builder.saveAndClearIP();
 

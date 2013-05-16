@@ -209,7 +209,7 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   // edges will be *really* confused.
   bool EmitRetDbgLoc = true;
   if (EHStack.stable_begin() != PrologueCleanupDepth) {
-    PopCleanupBlocks(PrologueCleanupDepth, EndLoc);
+    PopCleanupBlocks(PrologueCleanupDepth);
 
     // Make sure the line table doesn't jump back into the body for
     // the ret after it's been at EndLoc.
@@ -666,6 +666,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
 
   SourceRange BodyRange;
   if (Stmt *Body = FD->getBody()) BodyRange = Body->getSourceRange();
+  CurEHLocation = BodyRange.getEnd();
 
   // CalleeWithThisReturn keeps track of the last callee inside this function
   // that returns 'this'. Before starting the function, we set it to null.
