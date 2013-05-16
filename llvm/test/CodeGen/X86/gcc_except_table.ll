@@ -2,6 +2,12 @@
 @_ZTIi = external constant i8*
 
 define i32 @main() uwtable optsize ssp {
+; CHECK: .cfi_startproc
+; CHECK: .cfi_personality 155, ___gxx_personality_v0
+; CHECK: .cfi_lsda 16, Lexception0
+; CHECK: .cfi_def_cfa_offset 16
+; CHECK: .cfi_endproc
+
 entry:
   invoke void @_Z1fv() optsize
           to label %try.cont unwind label %lpad
