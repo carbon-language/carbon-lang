@@ -877,7 +877,11 @@ TEST(AddressSanitizer, ShadowGapTest) {
 #if SANITIZER_WORDSIZE == 32
   char *addr = (char*)0x22000000;
 #else
+# if defined(__powerpc64__)
+  char *addr = (char*)0x024000800000;
+# else
   char *addr = (char*)0x0000100000080000;
+# endif
 #endif
   EXPECT_DEATH(*addr = 1, "AddressSanitizer: SEGV on unknown");
 }
