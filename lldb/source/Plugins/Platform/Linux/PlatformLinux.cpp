@@ -336,12 +336,14 @@ PlatformLinux::GetStatus (Stream &strm)
 {
     struct utsname un;
 
-    if (uname(&un)) {
-        strm << "Linux";
-        return;
-    }
+    Platform::GetStatus(strm);
 
-    strm << un.sysname << ' ' << un.release << ' ' << un.version << '\n';
+    if (uname(&un))
+        return;
+
+    strm.Printf ("    Kernel: %s\n", un.sysname);
+    strm.Printf ("   Release: %s\n", un.release);
+    strm.Printf ("   Version: %s\n", un.version);
 }
 
 size_t
