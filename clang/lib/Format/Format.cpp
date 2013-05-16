@@ -1418,7 +1418,7 @@ private:
       return;
 
     AnnotatedToken *Tok = &(I + 1)->First;
-    if (Tok->Children.empty() && Tok->is(tok::r_brace) &&
+    if (Tok->getNextNoneComment() == NULL && Tok->is(tok::r_brace) &&
         !Tok->MustBreakBefore) {
       // We merge empty blocks even if the line exceeds the column limit.
       Tok->SpacesRequiredBefore = 0;
@@ -1443,7 +1443,7 @@ private:
 
       // Last, check that the third line contains a single closing brace.
       Tok = &(I + 2)->First;
-      if (!Tok->Children.empty() || Tok->isNot(tok::r_brace) ||
+      if (Tok->getNextNoneComment() != NULL || Tok->isNot(tok::r_brace) ||
           Tok->MustBreakBefore)
         return;
 
