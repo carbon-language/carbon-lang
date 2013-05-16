@@ -65,6 +65,10 @@ public:
   StoreManagerCreator getStoreManagerCreator() {
     return CreateStoreMgr;
   }
+  
+  AnalyzerOptions& getAnalyzerOptions() {
+    return options;
+  }
 
   ConstraintManagerCreator getConstraintManagerCreator() {
     return CreateConstraintMgr;

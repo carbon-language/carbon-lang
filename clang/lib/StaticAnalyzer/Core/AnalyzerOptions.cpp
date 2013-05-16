@@ -171,6 +171,12 @@ bool AnalyzerOptions::shouldSuppressFromCXXStandardLibrary() {
                           /* Default = */ false);
 }
 
+bool AnalyzerOptions::shouldReportIssuesInMainSourceFile() {
+  return getBooleanOption(ReportIssuesInMainSourceFile,
+                          "report-in-main-source-file",
+                          /* Default = */ false);
+}
+
 int AnalyzerOptions::getOptionAsInteger(StringRef Name, int DefaultVal) {
   SmallString<10> StrBuf;
   llvm::raw_svector_ostream OS(StrBuf);

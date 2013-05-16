@@ -223,6 +223,9 @@ private:
   /// \sa shouldSuppressFromCXXStandardLibrary
   Optional<bool> SuppressFromCXXStandardLibrary;
 
+  /// \sa reportIssuesInMainSourceFile
+  Optional<bool> ReportIssuesInMainSourceFile;
+
   /// \sa getGraphTrimInterval
   Optional<unsigned> GraphTrimInterval;
 
@@ -325,6 +328,13 @@ public:
   /// This is controlled by the 'suppress-c++-stdlib' config option,
   /// which accepts the values "true" and "false".
   bool shouldSuppressFromCXXStandardLibrary();
+
+  /// Returns whether or not the diagnostic report should be always reported
+  /// in the main source file and not the headers.
+  ///
+  /// This is controlled by the 'report-in-main-source-file' config option,
+  /// which accepts the values "true" and "false".
+  bool shouldReportIssuesInMainSourceFile();
 
   /// Returns whether irrelevant parts of a bug report path should be pruned
   /// out of the final output.

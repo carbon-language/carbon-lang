@@ -2661,7 +2661,7 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
   PathGenerationScheme ActiveScheme = PC.getGenerationScheme();
 
   if (ActiveScheme == PathDiagnosticConsumer::Extensive) {
-    AnalyzerOptions &options = getEngine().getAnalysisManager().options;
+    AnalyzerOptions &options = getAnalyzerOptions();
     if (options.getBooleanOption("path-diagnostics-alternate", false)) {
       ActiveScheme = PathDiagnosticConsumer::AlternateExtensive;
     }
@@ -2757,8 +2757,7 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
       // Remove messages that are basically the same.
       removeRedundantMsgs(PD.getMutablePieces());
 
-      if (R->shouldPrunePath() &&
-          getEngine().getAnalysisManager().options.shouldPrunePaths()) {
+      if (R->shouldPrunePath() && getAnalyzerOptions().shouldPrunePaths()) {
         bool stillHasNotes = removeUnneededCalls(PD.getMutablePieces(), R, LCM);
         assert(stillHasNotes);
         (void)stillHasNotes;
@@ -2971,6 +2970,12 @@ void BugReporter::FlushReport(BugReport *exampleReport,
 
   MaxValidBugClassSize = std::max(bugReports.size(),
                                   static_cast<size_t>(MaxValidBugClassSize));
+
+  // Examine the report and see if the last piece is in a header. Reset the
+  // report location to the last piece in the main source file.
+  AnalyzerOptions& Opts = getAnalyzerOptions();
+  if (Opts.shouldReportIssuesInMainSourceFile() && !Opts.AnalyzeAll)
+    D->resetDiagnosticLocationToMainFile();
 
   // If the path is empty, generate a single step path with the location
   // of the issue.

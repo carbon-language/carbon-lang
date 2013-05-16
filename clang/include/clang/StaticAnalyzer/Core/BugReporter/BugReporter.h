@@ -16,6 +16,7 @@
 #define LLVM_CLANG_GR_BUGREPORTER
 
 #include "clang/Basic/SourceLocation.h"
+#include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporterVisitor.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
@@ -375,6 +376,7 @@ public:
   virtual ArrayRef<PathDiagnosticConsumer*> getPathDiagnosticConsumers() = 0;
   virtual ASTContext &getASTContext() = 0;
   virtual SourceManager& getSourceManager() = 0;
+  virtual AnalyzerOptions& getAnalyzerOptions() = 0;
 };
 
 /// BugReporter is a utility class for generating PathDiagnostics for analysis.
@@ -441,6 +443,8 @@ public:
   ASTContext &getContext() { return D.getASTContext(); }
 
   SourceManager& getSourceManager() { return D.getSourceManager(); }
+
+  AnalyzerOptions& getAnalyzerOptions() { return D.getAnalyzerOptions(); }
 
   virtual bool generatePathDiagnostic(PathDiagnostic& pathDiagnostic,
                                       PathDiagnosticConsumer &PC,

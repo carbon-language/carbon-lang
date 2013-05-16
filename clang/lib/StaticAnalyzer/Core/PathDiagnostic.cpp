@@ -48,10 +48,11 @@ static StringRef StripTrailingDots(StringRef s) {
 
 PathDiagnosticPiece::PathDiagnosticPiece(StringRef s,
                                          Kind k, DisplayHint hint)
-  : str(StripTrailingDots(s)), kind(k), Hint(hint) {}
+  : str(StripTrailingDots(s)), kind(k), Hint(hint),
+    LastInMainSourceFile(false) {}
 
 PathDiagnosticPiece::PathDiagnosticPiece(Kind k, DisplayHint hint)
-  : kind(k), Hint(hint) {}
+  : kind(k), Hint(hint), LastInMainSourceFile(false) {}
 
 PathDiagnosticPiece::~PathDiagnosticPiece() {}
 PathDiagnosticEventPiece::~PathDiagnosticEventPiece() {}
@@ -118,6 +119,62 @@ PathDiagnostic::PathDiagnostic(const Decl *declWithIssue,
     UniqueingLoc(LocationToUnique),
     UniqueingDecl(DeclToUnique),
     path(pathImpl) {}
+
+static PathDiagnosticCallPiece *
+getFirstStackedCallToHeaderFile(PathDiagnosticCallPiece *CP,
+                                const SourceManager &SMgr) {
+  assert(SMgr.isFromMainFile(CP->callEnter.asLocation()) &&
+         "The call piece should be in the main file.");
+
+  // Check if CP represents a path through a function outside of the main file.
+  if (!SMgr.isFromMainFile(CP->callEnterWithin.asLocation()))
+    return CP;
+
+  // Check if the last piece in the callee path is a call to a function outside
+  // of the main file.
+  const PathPieces &Path = CP->path;
+  if (PathDiagnosticCallPiece *CPInner =
+      dyn_cast<PathDiagnosticCallPiece>(Path.back())) {
+    return getFirstStackedCallToHeaderFile(CPInner, SMgr);
+  }
+
+  // Otherwise, the last piece is in the main file.
+  return 0;
+}
+
+void PathDiagnostic::resetDiagnosticLocationToMainFile() {
+  if (path.empty())
+    return;
+
+  PathDiagnosticPiece *LastP = path.back().getPtr();
+  const SourceManager &SMgr = LastP->getLocation().getManager();
+  assert(LastP);
+
+  // We only need to check if the report ends inside headers, if the last piece
+  // is a call piece.
+  if (PathDiagnosticCallPiece *CP = dyn_cast<PathDiagnosticCallPiece>(LastP)) {
+    CP = getFirstStackedCallToHeaderFile(CP, SMgr);
+    if (CP) {
+      // Mark the piece.
+       CP->setAsLastInMainSourceFile();
+
+      // Update the path diagnostic message.
+      const NamedDecl *ND = dyn_cast<NamedDecl>(CP->getCallee());
+      if (ND) {
+        SmallString<200> buf;
+        llvm::raw_svector_ostream os(buf);
+        os << " (within a call to " << ND->getDeclName().getAsString() << ")";
+        appendToDesc(os.str());
+      }
+
+      // Reset the report containing declaration and location.
+      DeclWithIssue = CP->getCaller();
+      Loc = CP->getLocation();
+      
+      return;
+    }
+  }
+}
 
 void PathDiagnosticConsumer::anchor() { }
 
