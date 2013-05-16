@@ -1999,16 +1999,8 @@ static SDValue createStoreLR(unsigned Opc, SelectionDAG &DAG, StoreSDNode *SD,
 }
 
 // Expand an unaligned 32 or 64-bit integer store node.
-SDValue MipsTargetLowering::lowerSTORE(SDValue Op, SelectionDAG &DAG) const {
-  StoreSDNode *SD = cast<StoreSDNode>(Op);
-  EVT MemVT = SD->getMemoryVT();
-
-  // Return if store is aligned or if MemVT is neither i32 nor i64.
-  if ((SD->getAlignment() >= MemVT.getSizeInBits() / 8) ||
-      ((MemVT != MVT::i32) && (MemVT != MVT::i64)))
-    return SDValue();
-
-  bool IsLittle = Subtarget->isLittle();
+static SDValue lowerUnalignedIntStore(StoreSDNode *SD, SelectionDAG &DAG,
+                                      bool IsLittle) {
   SDValue Value = SD->getValue(), Chain = SD->getChain();
   EVT VT = Value.getValueType();
 
@@ -2033,6 +2025,18 @@ SDValue MipsTargetLowering::lowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   //  (sdr val, baseptr)
   SDValue SDL = createStoreLR(MipsISD::SDL, DAG, SD, Chain, IsLittle ? 7 : 0);
   return createStoreLR(MipsISD::SDR, DAG, SD, SDL, IsLittle ? 0 : 7);
+}
+
+SDValue MipsTargetLowering::lowerSTORE(SDValue Op, SelectionDAG &DAG) const {
+  StoreSDNode *SD = cast<StoreSDNode>(Op);
+  EVT MemVT = SD->getMemoryVT();
+
+  // Lower unaligned integer stores.
+  if ((SD->getAlignment() < MemVT.getSizeInBits() / 8) &&
+      ((MemVT == MVT::i32) || (MemVT == MVT::i64)))
+    return lowerUnalignedIntStore(SD, DAG, Subtarget->isLittle());
+
+  return SDValue();
 }
 
 SDValue MipsTargetLowering::lowerADD(SDValue Op, SelectionDAG &DAG) const {
