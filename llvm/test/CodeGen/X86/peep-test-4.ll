@@ -78,7 +78,7 @@ return:
 ; CHECK-NEXT: addq  %rdi, %rax
 ; CHECK-NEXT: adcq  $0, %rsi
 ; CHECK-NEXT: sete  %al
-; CHECK-NEXT: ret
+; CHECK: ret
 define zeroext i1 @adc(i128 %x) nounwind {
   %add = add i128 %x, 9223372036854775808
   %cmp = icmp ult i128 %add, 18446744073709551616
@@ -89,7 +89,7 @@ define zeroext i1 @adc(i128 %x) nounwind {
 ; CHECK: cmpq  %rdx, %rdi
 ; CHECK-NEXT: sbbq  %rcx, %rsi
 ; CHECK-NEXT: setns %al
-; CHECK-NEXT: ret
+; CHECK: ret
 define zeroext i1 @sbb(i128 %x, i128 %y) nounwind {
   %sub = sub i128 %x, %y
   %cmp = icmp sge i128 %sub, 0
