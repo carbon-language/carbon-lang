@@ -52,7 +52,9 @@ entry:
   unreachable
 
 ; CHECK:        f2
+; CHECK:        .cfi_startproc
 ; CHECK:        daddiu  $sp, $sp, -[[spoffset:[0-9]+]]
+; CHECK:        .cfi_def_cfa_offset [[spoffset]]
 
 ; check that $a0-$a3 are saved on stack.
 ; CHECK:        sd      $4, [[offset0:[0-9]+]]($sp)
@@ -61,10 +63,10 @@ entry:
 ; CHECK:        sd      $7, [[offset3:[0-9]+]]($sp)
 
 ; check that .cfi_offset directives are emitted for $a0-$a3.
-; CHECK:        .cfi_offset 4,
-; CHECK:        .cfi_offset 5,
-; CHECK:        .cfi_offset 6,
-; CHECK:        .cfi_offset 7,
+; CHECK:        .cfi_offset 4, -8
+; CHECK:        .cfi_offset 5, -16
+; CHECK:        .cfi_offset 6, -24
+; CHECK:        .cfi_offset 7, -32
 
 ; check that stack adjustment and handler are put in $v1 and $v0.
 ; CHECK:        move    $3, $4
@@ -83,5 +85,5 @@ entry:
 ; CHECK:        move    $ra, $2
 ; CHECK:        jr      $ra
 ; CHECK:        daddu   $sp, $sp, $3
-
+; CHECK:        .cfi_endproc
 }
