@@ -271,6 +271,10 @@ frame #0: 0x0000000100000bb6 a.out main + 54 at main.c:16
                         </td>
                     </tr>
                     </table>
+             <p>Optionally, a Python breakpoint command can return a value. Returning False tells LLDB that you do not want to stop at the breakpoint.
+                Any other return value (including None or leaving out the return statement altogether) is akin to telling LLDB to actually stop at the breakpoint.
+                This can be useful in situations where a breakpoint only needs to stop the process when certain conditions are met, and you do not want to inspect the
+                program state manually at every stop and then continue.
              <p>An example will show how simple it is to write some python code and attach it to a breakpoint. 
                 The following example will allow you to track the order in which the functions in a given shared library 
                 are first executed during one run of your program.  This is a simple method to gather an order file which
