@@ -299,30 +299,30 @@ void MemorySanitizer::initializeCallbacks(Module &M) {
   RetvalTLS = new GlobalVariable(
     M, ArrayType::get(IRB.getInt64Ty(), 8), false,
     GlobalVariable::ExternalLinkage, 0, "__msan_retval_tls", 0,
-    GlobalVariable::GeneralDynamicTLSModel);
+    GlobalVariable::InitialExecTLSModel);
   RetvalOriginTLS = new GlobalVariable(
     M, OriginTy, false, GlobalVariable::ExternalLinkage, 0,
-    "__msan_retval_origin_tls", 0, GlobalVariable::GeneralDynamicTLSModel);
+    "__msan_retval_origin_tls", 0, GlobalVariable::InitialExecTLSModel);
 
   ParamTLS = new GlobalVariable(
     M, ArrayType::get(IRB.getInt64Ty(), 1000), false,
     GlobalVariable::ExternalLinkage, 0, "__msan_param_tls", 0,
-    GlobalVariable::GeneralDynamicTLSModel);
+    GlobalVariable::InitialExecTLSModel);
   ParamOriginTLS = new GlobalVariable(
     M, ArrayType::get(OriginTy, 1000), false, GlobalVariable::ExternalLinkage,
-    0, "__msan_param_origin_tls", 0, GlobalVariable::GeneralDynamicTLSModel);
+    0, "__msan_param_origin_tls", 0, GlobalVariable::InitialExecTLSModel);
 
   VAArgTLS = new GlobalVariable(
     M, ArrayType::get(IRB.getInt64Ty(), 1000), false,
     GlobalVariable::ExternalLinkage, 0, "__msan_va_arg_tls", 0,
-    GlobalVariable::GeneralDynamicTLSModel);
+    GlobalVariable::InitialExecTLSModel);
   VAArgOverflowSizeTLS = new GlobalVariable(
     M, IRB.getInt64Ty(), false, GlobalVariable::ExternalLinkage, 0,
     "__msan_va_arg_overflow_size_tls", 0,
-    GlobalVariable::GeneralDynamicTLSModel);
+    GlobalVariable::InitialExecTLSModel);
   OriginTLS = new GlobalVariable(
     M, IRB.getInt32Ty(), false, GlobalVariable::ExternalLinkage, 0,
-    "__msan_origin_tls", 0, GlobalVariable::GeneralDynamicTLSModel);
+    "__msan_origin_tls", 0, GlobalVariable::InitialExecTLSModel);
 
   // We insert an empty inline asm after __msan_report* to avoid callback merge.
   EmptyAsm = InlineAsm::get(FunctionType::get(IRB.getVoidTy(), false),
