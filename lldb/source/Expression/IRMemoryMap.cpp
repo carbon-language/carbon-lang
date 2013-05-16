@@ -31,19 +31,14 @@ IRMemoryMap::~IRMemoryMap ()
     
     if (process_sp)
     {
-        for (AllocationMap::value_type &allocation : m_allocations)
+        AllocationMap::iterator iter;
+        
+        Error err;
+
+        while ((iter = m_allocations.begin()) != m_allocations.end())
         {
-            if (allocation.second.m_policy == eAllocationPolicyMirror ||
-                allocation.second.m_policy == eAllocationPolicyProcessOnly ||
-                (allocation.second.m_policy == eAllocationPolicyHostOnly && process_sp->CanJIT()))
-                process_sp->DeallocateMemory(allocation.second.m_process_alloc);
-            
-            if (lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS))
-            {
-                log->Printf("IRMemoryMap::~IRMemoryMap deallocated [0x%llx..0x%llx)",
-                            (uint64_t)allocation.second.m_process_start,
-                            (uint64_t)allocation.second.m_process_start + (uint64_t)allocation.second.m_size);
-            }
+            err.Clear();
+            Free(iter->first, err);
         }
     }
 }
@@ -65,6 +60,14 @@ IRMemoryMap::FindSpace (size_t size)
         if (!alloc_error.Success())
             return LLDB_INVALID_ADDRESS;
         else
+            return ret;
+    }
+    
+    if (process_sp)
+    {
+        ret = process_sp->GetReservationCache().Find(size);
+        
+        if (ret != LLDB_INVALID_ADDRESS)
             return ret;
     }
     
@@ -106,6 +109,11 @@ IRMemoryMap::FindSpace (size_t size)
             continue;
         
         ret = candidate;
+        
+        if (process_sp)
+            process_sp->GetReservationCache().Reserve(candidate, size);
+    
+        return ret;
     }
     
     return ret;
@@ -382,9 +390,14 @@ IRMemoryMap::Free (lldb::addr_t process_address, Error &error)
     case eAllocationPolicyHostOnly:
         {
             lldb::ProcessSP process_sp = m_process_wp.lock();
-            if (process_sp && process_sp->CanJIT())
-                process_sp->DeallocateMemory(allocation.m_process_alloc); // FindSpace allocated this for real
-
+            if (process_sp)
+            {
+                if (process_sp->CanJIT())
+                    process_sp->DeallocateMemory(allocation.m_process_alloc); // FindSpace allocated this for real
+                else
+                    process_sp->GetReservationCache().Unreserve(allocation.m_process_alloc); // FindSpace registered this memory
+            }
+    
             break;
         }
     case eAllocationPolicyMirror:
