@@ -744,7 +744,9 @@ CommandObjectTypeFormatList_LoopCallback (
 //-------------------------------------------------------------------------
 
 static const char *g_summary_addreader_instructions = "Enter your Python command(s). Type 'DONE' to end.\n"
-                                                       "def function (valobj,internal_dict):";
+                                                       "def function (valobj,internal_dict):\n"
+                                                       "     \"\"\"valobj: an SBValue which you want to provide a summary for\n"
+                                                       "        internal_dict: an LLDB support object not to be used\"\"\"";
 
 class TypeScriptAddInputReader : public InputReaderEZ
 {

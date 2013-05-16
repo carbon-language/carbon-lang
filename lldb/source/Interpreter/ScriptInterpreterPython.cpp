@@ -1248,6 +1248,12 @@ ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string, const Exec
 
 static const char *g_reader_instructions = "Enter your Python command(s). Type 'DONE' to end.";
 
+static const char *g_bkpt_command_reader_instructions = "Enter your Python command(s). Type 'DONE' to end.\n"
+                                                        "def function(frame,bp_loc,internal_dict):\n"
+                                                        "    \"\"\"frame: the SBFrame for the location at which you stopped\n"
+                                                        "       bp_loc: an SBBreakpointLocation for the breakpoint location information\n"
+                                                        "       internal_dict: an LLDB support object not to be used\"\"\"";
+
 size_t
 ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
 (
@@ -1270,7 +1276,7 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
             commands_in_progress.Clear();
             if (!batch_mode)
             {
-                out_stream->Printf ("%s\n", g_reader_instructions);
+                out_stream->Printf ("%s\n", g_bkpt_command_reader_instructions);
                 if (reader.GetPrompt())
                     out_stream->Printf ("%s", reader.GetPrompt());
                 out_stream->Flush ();
@@ -1497,7 +1503,7 @@ ScriptInterpreterPython::CollectDataForBreakpointCommandCallback (BreakpointOpti
                 bp_options,                 // baton
                 eInputReaderGranularityLine, // token size, for feeding data to callback function
                 "DONE",                     // end token
-                "> ",                       // prompt
+                "    ",                     // prompt
                 true);                      // echo input
     
         if (err.Success())
