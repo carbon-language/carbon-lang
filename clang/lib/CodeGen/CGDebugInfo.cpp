@@ -591,8 +591,9 @@ llvm::DIDescriptor CGDebugInfo::createContextChain(const Decl *Context) {
 
   if (const RecordDecl *RD = dyn_cast<RecordDecl>(Context)) {
     if (!RD->isDependentType()) {
-      llvm::DIType Ty = getOrCreateLimitedType(CGM.getContext().getTypeDeclType(RD),
-                                               getOrCreateMainFile());
+      llvm::DIType Ty =
+        getOrCreateLimitedType(CGM.getContext().getTypeDeclType(RD),
+                               getOrCreateMainFile());
       return llvm::DIDescriptor(Ty);
     }
   }
@@ -648,7 +649,8 @@ llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
                                     Size, Align);
 }
 
-llvm::DIType CGDebugInfo::getOrCreateStructPtrType(StringRef Name, llvm::DIType &Cache) {
+llvm::DIType CGDebugInfo::getOrCreateStructPtrType(StringRef Name,
+                                                   llvm::DIType &Cache) {
     if (Cache.Verify())
       return Cache;
     Cache =
@@ -986,7 +988,8 @@ llvm::DIType CGDebugInfo::getOrCreateInstanceMethodType(
     uint64_t Size = CGM.getTarget().getPointerWidth(AS);
     uint64_t Align = CGM.getContext().getTypeAlign(ThisPtrTy);
     llvm::DIType PointeeType = getOrCreateType(PointeeTy, Unit);
-    llvm::DIType ThisPtrType = DBuilder.createPointerType(PointeeType, Size, Align);
+    llvm::DIType ThisPtrType =
+      DBuilder.createPointerType(PointeeType, Size, Align);
     TypeCache[ThisPtr.getAsOpaquePtr()] = ThisPtrType;
     // TODO: This and the artificial type below are misleading, the
     // types aren't artificial the argument is, but the current
@@ -1360,7 +1363,8 @@ CollectVTableInfo(const CXXRecordDecl *RD, llvm::DIFile Unit,
   unsigned Size = CGM.getContext().getTypeSize(CGM.getContext().VoidPtrTy);
   llvm::DIType VPTR
     = DBuilder.createMemberType(Unit, getVTableName(RD), Unit,
-                                0, Size, 0, 0, llvm::DIDescriptor::FlagArtificial,
+                                0, Size, 0, 0,
+                                llvm::DIDescriptor::FlagArtificial,
                                 getOrCreateVTablePtrType(Unit));
   EltTys.push_back(VPTR);
 }
@@ -1827,7 +1831,8 @@ static QualType UnwrapTypeForDebugInfo(QualType T, const ASTContext &C) {
   } while (true);
 }
 
-/// getType - Get the type from the cache or return null type if it doesn't exist.
+/// getType - Get the type from the cache or return null type if it doesn't
+/// exist.
 llvm::DIType CGDebugInfo::getTypeOrNull(QualType Ty) {
 
   // Unwrap the type as needed for debug information.
@@ -1957,7 +1962,8 @@ unsigned CGDebugInfo::Checksum(const ObjCInterfaceDecl
 ObjCInterfaceDecl *CGDebugInfo::getObjCInterfaceDecl(QualType Ty) {
   switch (Ty->getTypeClass()) {
   case Type::ObjCObjectPointer:
-    return getObjCInterfaceDecl(cast<ObjCObjectPointerType>(Ty)->getPointeeType());
+    return getObjCInterfaceDecl(cast<ObjCObjectPointerType>(Ty)
+                                    ->getPointeeType());
   case Type::ObjCInterface:
     return cast<ObjCInterfaceType>(Ty)->getDecl();
   default:
@@ -2111,7 +2117,8 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
                                         llvm::DIArray());
   } else
     RealDecl = DBuilder.createStructType(RDContext, RDName, DefUnit, Line,
-                                         Size, Align, 0, llvm::DIType(), llvm::DIArray());
+                                         Size, Align, 0, llvm::DIType(),
+                                         llvm::DIArray());
 
   RegionMap[Ty->getDecl()] = llvm::WeakVH(RealDecl);
   TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RealDecl;
@@ -2399,7 +2406,8 @@ void CGDebugInfo::CreateLexicalBlock(SourceLocation Loc) {
 
 /// EmitLexicalBlockStart - Constructs the debug code for entering a declarative
 /// region - beginning of a DW_TAG_lexical_block.
-void CGDebugInfo::EmitLexicalBlockStart(CGBuilderTy &Builder, SourceLocation Loc) {
+void CGDebugInfo::EmitLexicalBlockStart(CGBuilderTy &Builder,
+                                        SourceLocation Loc) {
   // Set our current location.
   setLocation(Loc);
 
@@ -2414,7 +2422,8 @@ void CGDebugInfo::EmitLexicalBlockStart(CGBuilderTy &Builder, SourceLocation Loc
 
 /// EmitLexicalBlockEnd - Constructs the debug code for exiting a declarative
 /// region - end of a DW_TAG_lexical_block.
-void CGDebugInfo::EmitLexicalBlockEnd(CGBuilderTy &Builder, SourceLocation Loc) {
+void CGDebugInfo::EmitLexicalBlockEnd(CGBuilderTy &Builder,
+                                      SourceLocation Loc) {
   assert(!LexicalBlockStack.empty() && "Region stack mismatch, stack empty!");
 
   // Provide an entry in the line table for the end of the block.
@@ -2542,7 +2551,8 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
       // by using reference of the aggregate type as a argument type.
       if (Record->hasNonTrivialCopyConstructor() ||
           !Record->hasTrivialDestructor())
-        Ty = DBuilder.createReferenceType(llvm::dwarf::DW_TAG_reference_type, Ty);
+        Ty = DBuilder.createReferenceType(llvm::dwarf::DW_TAG_reference_type,
+                                          Ty);
     }
   }
 
@@ -2665,7 +2675,8 @@ void CGDebugInfo::EmitDeclareOfAutoVariable(const VarDecl *VD,
 /// never happen though, since creating a type for the implicit self
 /// argument implies that we already parsed the interface definition
 /// and the ivar declarations in the implementation.
-llvm::DIType CGDebugInfo::CreateSelfType(const QualType &QualTy, llvm::DIType Ty) {
+llvm::DIType CGDebugInfo::CreateSelfType(const QualType &QualTy,
+                                         llvm::DIType Ty) {
   llvm::DIType CachedTy = getTypeOrNull(QualTy);
   if (CachedTy.Verify()) Ty = CachedTy;
   else DEBUG(llvm::dbgs() << "No cached type for self.");
