@@ -33,24 +33,24 @@ constexpr Tape move(const Tape &old, Dir dir) { return Tape(old, dir); }
 // Run turing machine 'tm' on tape 'tape' from state 'state'. Return number of
 // steps taken until halt.
 constexpr unsigned run(const State *tm, const Tape &tape, unsigned state) {
-  return state == halt ? 1 :
+  return state == halt ? 0 :
          run(tm, move(update(tape, tm[state][tape.val].tape),
                       tm[state][tape.val].dir),
              tm[state][tape.val].next) + 1;
 }
 
-// 3-state busy beaver. 14 steps.
+// 3-state busy beaver. S(bb3) = 21.
 constexpr State bb3[] = {
-  { { true, R, 1 }, { true, L, 2 } },
-  { { true, L, 0 }, { true, R, 1 } },
-  { { true, L, 1 }, { true, R, halt } }
+  { { true, R, 1 }, { true, R, halt } },
+  { { true, L, 1 }, { false, R, 2 } },
+  { { true, L, 2 }, { true, L, 0 } }
 };
-static_assert(run(bb3, Tape(), 0) == 14, "");
+static_assert(run(bb3, Tape(), 0) == 21, "");
 
-// 4-state busy beaver. 108 steps.
+// 4-state busy beaver. S(bb4) = 107.
 constexpr State bb4[] = {
   { { true, R, 1 }, { true, L, 1 } },
   { { true, L, 0 }, { false, L, 2 } },
   { { true, R, halt }, { true, L, 3 } },
   { { true, R, 3 }, { false, R, 0 } } };
-static_assert(run(bb4, Tape(), 0) == 108, "");
+static_assert(run(bb4, Tape(), 0) == 107, "");
