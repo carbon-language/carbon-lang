@@ -334,6 +334,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
     *static_cast<const PPCInstrInfo*>(MF.getTarget().getInstrInfo());
 
   MachineModuleInfo &MMI = MF.getMMI();
+  const MCRegisterInfo &MRI = MMI.getContext().getRegisterInfo();
   DebugLoc dl;
   bool needsFrameMoves = MMI.hasDebugInfo() ||
     MF.getFunction()->needsUnwindTableEntry();
@@ -524,20 +525,21 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
 
     // Show update of SP.
     assert(NegFrameSize);
-    MachineLocation SPDst(MachineLocation::VirtualFP);
-    MachineLocation SPSrc(MachineLocation::VirtualFP, NegFrameSize);
-    MMI.addFrameMove(FrameLabel, SPDst, SPSrc);
+    MMI.addFrameInst(
+        MCCFIInstruction::createDefCfaOffset(FrameLabel, NegFrameSize));
 
     if (HasFP) {
-      MachineLocation FPDst(MachineLocation::VirtualFP, FPOffset);
-      MachineLocation FPSrc(isPPC64 ? PPC::X31 : PPC::R31);
-      MMI.addFrameMove(FrameLabel, FPDst, FPSrc);
+      unsigned Reg = isPPC64 ? PPC::X31 : PPC::R31;
+      Reg = MRI.getDwarfRegNum(Reg, true);
+      MMI.addFrameInst(
+          MCCFIInstruction::createOffset(FrameLabel, Reg, FPOffset));
     }
 
     if (MustSaveLR) {
-      MachineLocation LRDst(MachineLocation::VirtualFP, LROffset);
-      MachineLocation LRSrc(isPPC64 ? PPC::LR8 : PPC::LR);
-      MMI.addFrameMove(FrameLabel, LRDst, LRSrc);
+      unsigned Reg = isPPC64 ? PPC::LR8 : PPC::LR;
+      Reg = MRI.getDwarfRegNum(Reg, true);
+      MMI.addFrameInst(
+          MCCFIInstruction::createOffset(FrameLabel, Reg, LROffset));
     }
   }
 
@@ -561,10 +563,10 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       // Mark effective beginning of when frame pointer is ready.
       BuildMI(MBB, MBBI, dl, TII.get(PPC::PROLOG_LABEL)).addSym(ReadyLabel);
 
-      MachineLocation FPDst(HasFP ? (isPPC64 ? PPC::X31 : PPC::R31) :
-                                    (isPPC64 ? PPC::X1 : PPC::R1));
-      MachineLocation FPSrc(MachineLocation::VirtualFP);
-      MMI.addFrameMove(ReadyLabel, FPDst, FPSrc);
+      unsigned Reg = HasFP ? (isPPC64 ? PPC::X31 : PPC::R31)
+                           : (isPPC64 ? PPC::X1 : PPC::R1);
+      Reg = MRI.getDwarfRegNum(Reg, true);
+      MMI.addFrameInst(MCCFIInstruction::createDefCfaRegister(ReadyLabel, Reg));
     }
   }
 
@@ -594,16 +596,14 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       if (Subtarget.isSVR4ABI()
 	  && Subtarget.isPPC64()
 	  && (PPC::CR2 <= Reg && Reg <= PPC::CR4)) {
-	MachineLocation CSDst(PPC::X1, 8);
-	MachineLocation CSSrc(PPC::CR2);
-	MMI.addFrameMove(Label, CSDst, CSSrc);
+        MMI.addFrameInst(MCCFIInstruction::createOffset(
+            Label, MRI.getDwarfRegNum(PPC::CR2, true), 8));
 	continue;
       }
 
       int Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
-      MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
-      MachineLocation CSSrc(Reg);
-      MMI.addFrameMove(Label, CSDst, CSSrc);
+      MMI.addFrameInst(MCCFIInstruction::createOffset(
+          Label, MRI.getDwarfRegNum(Reg, true), Offset));
     }
   }
 }

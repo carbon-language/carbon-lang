@@ -238,8 +238,9 @@ public:
     return FrameInstructions;
   }
 
-  void addFrameMove(MCSymbol *Label, const MachineLocation &Dst,
-                    const MachineLocation &Src);
+  void addFrameInst(const MCCFIInstruction &Inst) {
+    FrameInstructions.push_back(Inst);
+  }
 
   /// getCompactUnwindEncoding - Returns the compact unwind encoding for a
   /// function if the target supports the encoding. This encoding replaces a

@@ -40,6 +40,7 @@ void Mips16FrameLowering::emitPrologue(MachineFunction &MF) const {
   if (StackSize == 0 && !MFI->adjustsStack()) return;
 
   MachineModuleInfo &MMI = MF.getMMI();
+  const MCRegisterInfo &MRI = MMI.getContext().getRegisterInfo();
   MachineLocation DstML, SrcML;
 
   // Adjust stack.
@@ -49,24 +50,20 @@ void Mips16FrameLowering::emitPrologue(MachineFunction &MF) const {
   MCSymbol *AdjustSPLabel = MMI.getContext().CreateTempSymbol();
   BuildMI(MBB, MBBI, dl,
           TII.get(TargetOpcode::PROLOG_LABEL)).addSym(AdjustSPLabel);
-  DstML = MachineLocation(MachineLocation::VirtualFP);
-  SrcML = MachineLocation(MachineLocation::VirtualFP, -StackSize);
-  MMI.addFrameMove(AdjustSPLabel, DstML, SrcML);
+  MMI.addFrameInst(
+      MCCFIInstruction::createDefCfaOffset(AdjustSPLabel, -StackSize));
 
   MCSymbol *CSLabel = MMI.getContext().CreateTempSymbol();
   BuildMI(MBB, MBBI, dl,
           TII.get(TargetOpcode::PROLOG_LABEL)).addSym(CSLabel);
-  DstML = MachineLocation(MachineLocation::VirtualFP, -8);
-  SrcML = MachineLocation(Mips::S1);
-  MMI.addFrameMove(CSLabel, DstML, SrcML);
+  unsigned S1 = MRI.getDwarfRegNum(Mips::S1, true);
+  MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, S1, -8));
 
-  DstML = MachineLocation(MachineLocation::VirtualFP, -12);
-  SrcML = MachineLocation(Mips::S0);
-  MMI.addFrameMove(CSLabel, DstML, SrcML);
+  unsigned S0 = MRI.getDwarfRegNum(Mips::S0, true);
+  MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, S0, -12));
 
-  DstML = MachineLocation(MachineLocation::VirtualFP, -4);
-  SrcML = MachineLocation(Mips::RA);
-  MMI.addFrameMove(CSLabel, DstML, SrcML);
+  unsigned RA = MRI.getDwarfRegNum(Mips::RA, true);
+  MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, RA, -4));
 
   if (hasFP(MF))
     BuildMI(MBB, MBBI, dl, TII.get(Mips::MoveR3216), Mips::S0)

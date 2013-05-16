@@ -307,6 +307,7 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
                                                  unsigned FramePtr) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo &MMI = MF.getMMI();
+  const MCRegisterInfo &MRI = MMI.getContext().getRegisterInfo();
 
   // Add callee saved registers to move list.
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
@@ -359,9 +360,8 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
     if (HasFP && FramePtr == Reg)
       continue;
 
-    MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
-    MachineLocation CSSrc(Reg);
-    MMI.addFrameMove(Label, CSDst, CSSrc);
+    unsigned DwarfReg = MRI.getDwarfRegNum(Reg, true);
+    MMI.addFrameInst(MCCFIInstruction::createOffset(Label, DwarfReg, Offset));
   }
 }
 
@@ -764,14 +764,13 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
 
       // Define the current CFA rule to use the provided offset.
       assert(StackSize);
-      MachineLocation SPDst(MachineLocation::VirtualFP);
-      MachineLocation SPSrc(MachineLocation::VirtualFP, 2 * stackGrowth);
-      MMI.addFrameMove(FrameLabel, SPDst, SPSrc);
+      MMI.addFrameInst(
+          MCCFIInstruction::createDefCfaOffset(FrameLabel, 2 * stackGrowth));
 
       // Change the rule for the FramePtr to be an "offset" rule.
-      MachineLocation FPDst(MachineLocation::VirtualFP, 2 * stackGrowth);
-      MachineLocation FPSrc(FramePtr);
-      MMI.addFrameMove(FrameLabel, FPDst, FPSrc);
+      unsigned DwarfFramePtr = RegInfo->getDwarfRegNum(FramePtr, true);
+      MMI.addFrameInst(MCCFIInstruction::createOffset(FrameLabel, DwarfFramePtr,
+                                                      2 * stackGrowth));
     }
 
     // Update EBP with the new base value.
@@ -787,9 +786,9 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
         .addSym(FrameLabel);
 
       // Define the current CFA to use the EBP/RBP register.
-      MachineLocation FPDst(FramePtr);
-      MachineLocation FPSrc(MachineLocation::VirtualFP);
-      MMI.addFrameMove(FrameLabel, FPDst, FPSrc);
+      unsigned DwarfFramePtr = RegInfo->getDwarfRegNum(FramePtr, true);
+      MMI.addFrameInst(
+          MCCFIInstruction::createDefCfaRegister(FrameLabel, DwarfFramePtr));
     }
 
     // Mark the FramePtr as live-in in every block except the entry.
@@ -818,10 +817,8 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
 
       // Define the current CFA rule to use the provided offset.
       assert(StackSize);
-      unsigned Ptr = MachineLocation::VirtualFP;
-      MachineLocation SPDst(Ptr);
-      MachineLocation SPSrc(Ptr, StackOffset);
-      MMI.addFrameMove(Label, SPDst, SPSrc);
+      MMI.addFrameInst(
+          MCCFIInstruction::createDefCfaOffset(Label, StackOffset));
       StackOffset += stackGrowth;
     }
   }
@@ -956,10 +953,8 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     if (!HasFP && NumBytes) {
       // Define the current CFA rule to use the provided offset.
       assert(StackSize);
-      MachineLocation SPDst(MachineLocation::VirtualFP);
-      MachineLocation SPSrc(MachineLocation::VirtualFP,
-                            -StackSize + stackGrowth);
-      MMI.addFrameMove(Label, SPDst, SPSrc);
+      MMI.addFrameInst(MCCFIInstruction::createDefCfaOffset(
+          Label, -StackSize + stackGrowth));
     }
 
     // Emit DWARF info specifying the offsets of the callee-saved registers.
