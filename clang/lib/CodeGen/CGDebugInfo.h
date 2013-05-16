@@ -206,6 +206,9 @@ public:
   /// invalid it is ignored.
   void setLocation(SourceLocation Loc);
 
+  /// getLocation - Return the current source location.
+  SourceLocation getLocation() const { return CurLoc; }
+
   /// EmitLocation - Emit metadata to indicate a change in line/column
   /// information in the source file.
   /// \param ForceColumnInfo  Assume DebugColumnInfo option is true.
