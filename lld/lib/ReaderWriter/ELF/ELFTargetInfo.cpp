@@ -25,14 +25,14 @@ namespace lld {
 ELFTargetInfo::ELFTargetInfo(llvm::Triple triple, std::unique_ptr<TargetHandlerBase> targetHandler)
     : _outputFileType(elf::ET_EXEC),
       _triple(triple),
-      _targetHandler(std::move(targetHandler))
-    , _baseAddress(0)
-    , _isStaticExecutable(false)
-    , _outputYAML(false)
-    , _noInhibitExec(false)
-    , _mergeCommonStrings(false)
-    , _runLayoutPass(true)
-    , _useShlibUndefines(false) {}
+      _targetHandler(std::move(targetHandler)),
+      _baseAddress(0),
+      _isStaticExecutable(false),
+      _outputYAML(false),
+      _noInhibitExec(false),
+      _mergeCommonStrings(false),
+      _runLayoutPass(true),
+      _useShlibUndefines(false) {}
 
 bool ELFTargetInfo::is64Bits() const {
   return getTriple().isArch64Bit();
@@ -64,10 +64,9 @@ uint16_t ELFTargetInfo::getOutputMachine() const {
 }
 
 bool ELFTargetInfo::validate(raw_ostream &diagnostics) {
-  if (_outputFileType == elf::ET_EXEC) {
-    if (_entrySymbolName.empty()) {
-      _entrySymbolName = "_start";
-    }
+  if (_outputFileType == elf::ET_EXEC &&
+      _entrySymbolName.empty()) {
+    _entrySymbolName = "_start";
   }
 
   if (_inputFiles.empty()) {
@@ -79,17 +78,13 @@ bool ELFTargetInfo::validate(raw_ostream &diagnostics) {
   _yamlReader = createReaderYAML(*this);
   _linkerScriptReader.reset(new ReaderLinkerScript(*this));
   _writer = _outputYAML ? createWriterYAML(*this) : createWriterELF(*this);
-
   return false;
 }
 
 bool ELFTargetInfo::isDynamic() const {
   switch (_outputFileType) {
   case llvm::ELF::ET_EXEC:
-    if (_isStaticExecutable)
-      return false;
-    else
-      return true;
+    return !_isStaticExecutable;
   case llvm::ELF::ET_DYN:
     return true;
   }
@@ -129,7 +124,7 @@ std::unique_ptr<ELFTargetInfo> ELFTargetInfo::create(llvm::Triple triple) {
   case llvm::Triple::ppc:
     return std::unique_ptr<ELFTargetInfo>(new lld::elf::PPCTargetInfo(triple));
   default:
-    return std::unique_ptr<ELFTargetInfo>();
+    return nullptr;
   }
 }
 
@@ -161,7 +156,7 @@ bool ELFTargetInfo::appendLibrary(StringRef libName) {
       unsigned pathlen = pathref.size();
       char *x = _extraStrings.Allocate<char>(pathlen);
       memcpy(x, pathref.data(), pathlen);
-      appendInputFile(StringRef(x,pathlen));
+      appendInputFile(StringRef(x, pathlen));
       return false;
     }
   }
