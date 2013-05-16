@@ -777,7 +777,8 @@ private:
     llvm::OwningPtr<BreakableToken> Token;
     unsigned StartColumn = State.Column - Current.FormatTok.TokenLength -
                            UnbreakableTailLength;
-    if (Current.is(tok::string_literal)) {
+    if (Current.is(tok::string_literal) &&
+        Current.Type != TT_ImplicitStringLiteral) {
       // Only break up default narrow strings.
       const char *LiteralData = SourceMgr.getCharacterData(
           Current.FormatTok.getStartOfNonWhitespace());

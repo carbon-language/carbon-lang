@@ -2894,6 +2894,7 @@ TEST_F(FormatTest, HandlesIncludeDirectives) {
                "#include <a-a>\n"
                "#include < path with space >\n"
                "#include \"abc.h\" // this is included for ABC\n"
+               "#include \"some long include\" // with a comment\n"
                "#include \"some very long include paaaaaaaaaaaaaaaaaaaaaaath\"",
                getLLVMStyleWithColumns(35));
 
