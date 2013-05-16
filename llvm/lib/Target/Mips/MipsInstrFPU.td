@@ -30,6 +30,7 @@ def SDT_MipsFPCmp : SDTypeProfile<0, 3, [SDTCisSameAs<0, 1>, SDTCisFP<1>,
                                          SDTCisVT<2, i32>]>;
 def SDT_MipsCMovFP : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>,
                                           SDTCisSameAs<1, 2>]>;
+def SDT_MipsTruncIntFP : SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisFP<1>]>;
 def SDT_MipsBuildPairF64 : SDTypeProfile<1, 2, [SDTCisVT<0, f64>,
                                                 SDTCisVT<1, i32>,
                                                 SDTCisSameAs<1, 2>]>;
@@ -42,6 +43,7 @@ def MipsCMovFP_T : SDNode<"MipsISD::CMovFP_T", SDT_MipsCMovFP, [SDNPInGlue]>;
 def MipsCMovFP_F : SDNode<"MipsISD::CMovFP_F", SDT_MipsCMovFP, [SDNPInGlue]>;
 def MipsFPBrcond : SDNode<"MipsISD::FPBrcond", SDT_MipsFPBrcond,
                           [SDNPHasChain, SDNPOptInGlue]>;
+def MipsTruncIntFP : SDNode<"MipsISD::TruncIntFP", SDT_MipsTruncIntFP>;
 def MipsBuildPairF64 : SDNode<"MipsISD::BuildPairF64", SDT_MipsBuildPairF64>;
 def MipsExtractElementF64 : SDNode<"MipsISD::ExtractElementF64",
                                    SDT_MipsExtractElementF64>;
@@ -485,13 +487,12 @@ def : MipsPat<(f32 fpimm0), (MTC1 ZERO)>;
 def : MipsPat<(f32 fpimm0neg), (FNEG_S (MTC1 ZERO))>;
 
 def : MipsPat<(f32 (sint_to_fp CPURegs:$src)), (PseudoCVT_S_W CPURegs:$src)>;
-def : MipsPat<(i32 (fp_to_sint FGR32:$src)), (MFC1 (TRUNC_W_S FGR32:$src))>;
+def : MipsPat<(MipsTruncIntFP FGR32:$src), (TRUNC_W_S FGR32:$src)>;
 
 let Predicates = [NotFP64bit, HasStdEnc] in {
   def : MipsPat<(f64 (sint_to_fp CPURegs:$src)),
                 (PseudoCVT_D32_W CPURegs:$src)>;
-  def : MipsPat<(i32 (fp_to_sint AFGR64:$src)),
-                (MFC1 (TRUNC_W_D32 AFGR64:$src))>;
+  def : MipsPat<(MipsTruncIntFP AFGR64:$src), (TRUNC_W_D32 AFGR64:$src)>;
   def : MipsPat<(f32 (fround AFGR64:$src)), (CVT_S_D32 AFGR64:$src)>;
   def : MipsPat<(f64 (fextend FGR32:$src)), (CVT_D32_S FGR32:$src)>;
 }
@@ -507,11 +508,9 @@ let Predicates = [IsFP64bit, HasStdEnc] in {
   def : MipsPat<(f64 (sint_to_fp CPU64Regs:$src)),
                 (PseudoCVT_D64_L CPU64Regs:$src)>;
 
-  def : MipsPat<(i32 (fp_to_sint FGR64:$src)),
-                (MFC1 (TRUNC_W_D64 FGR64:$src))>;
-  def : MipsPat<(i64 (fp_to_sint FGR32:$src)), (DMFC1 (TRUNC_L_S FGR32:$src))>;
-  def : MipsPat<(i64 (fp_to_sint FGR64:$src)),
-                (DMFC1 (TRUNC_L_D64 FGR64:$src))>;
+  def : MipsPat<(MipsTruncIntFP FGR64:$src), (TRUNC_W_D64 FGR64:$src)>;
+  def : MipsPat<(MipsTruncIntFP FGR32:$src), (TRUNC_L_S FGR32:$src)>;
+  def : MipsPat<(MipsTruncIntFP FGR64:$src), (TRUNC_L_D64 FGR64:$src)>;
 
   def : MipsPat<(f32 (fround FGR64:$src)), (CVT_S_D64 FGR64:$src)>;
   def : MipsPat<(f64 (fextend FGR32:$src)), (CVT_D64_S FGR32:$src)>;

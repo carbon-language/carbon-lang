@@ -60,6 +60,9 @@ namespace llvm {
       CMovFP_T,
       CMovFP_F,
 
+      // FP-to-int truncation node.
+      TruncIntFP,
+
       // Return
       Ret,
 
@@ -361,6 +364,7 @@ namespace llvm {
     SDValue lowerLOAD(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerSTORE(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerADD(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) const;
 
     /// isEligibleForTailCallOptimization - Check whether the call is eligible
     /// for tail call optimization.
