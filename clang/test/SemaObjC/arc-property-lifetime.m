@@ -182,3 +182,26 @@ void foo(Baz *f) {
 
 @implementation Foo2
 @end
+
+// rdar://13885083
+@interface NSObject 
+-(id)init;
+@end
+
+typedef char BOOL;
+@interface Test13885083 : NSObject
+
+@property (nonatomic, assign) BOOL retain; // expected-error {{ARC forbids synthesis of 'retain'}}
+
+-(id)init;
+
+@end
+
+@implementation Test13885083
+-(id) init
+{
+  self = [super init];
+  return self;
+}
+@end
+

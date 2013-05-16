@@ -350,7 +350,7 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
     case OMF_release:
     case OMF_autorelease:
       Diag(MDecl->getLocation(), diag::err_arc_illegal_method_def)
-        << MDecl->getSelector();
+        << 0 << MDecl->getSelector();
       break;
 
     case OMF_None:

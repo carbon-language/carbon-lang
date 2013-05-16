@@ -1158,6 +1158,18 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
            diag::warn_property_getter_owning_mismatch);
       Diag(property->getLocation(), diag::note_property_declare);
     }
+    if (getLangOpts().ObjCAutoRefCount && Synthesize)
+      switch (getterMethod->getMethodFamily()) {
+        case OMF_retain:
+        case OMF_retainCount:
+        case OMF_release:
+        case OMF_autorelease:
+          Diag(getterMethod->getLocation(), diag::err_arc_illegal_method_def)
+            << 1 << getterMethod->getSelector();
+          break;
+        default:
+          break;
+      }
   }
   if (ObjCMethodDecl *setterMethod = property->getSetterMethodDecl()) {
     setterMethod->createImplicitParams(Context, IDecl);
