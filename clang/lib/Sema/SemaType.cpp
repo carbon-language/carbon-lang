@@ -1549,10 +1549,12 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
       // Is the array too large?
       unsigned ActiveSizeBits
         = ConstantArrayType::getNumAddressingBits(Context, T, ConstVal);
-      if (ActiveSizeBits > ConstantArrayType::getMaxSizeBits(Context))
+      if (ActiveSizeBits > ConstantArrayType::getMaxSizeBits(Context)) {
         Diag(ArraySize->getLocStart(), diag::err_array_too_large)
           << ConstVal.toString(10)
           << ArraySize->getSourceRange();
+        return QualType();
+      }
     }
 
     T = Context.getConstantArrayType(T, ConstVal, ASM, Quals);
