@@ -260,6 +260,14 @@ let Predicates = [IsFP64bit, HasStdEnc], DecoderNamespace = "Mips64" in {
   def CVT_D64_L : ABSS_FT<"cvt.d.l", FGR64, FGR64, IIFcvt>, ABSS_FM<0x21, 21>;
 }
 
+let isPseudo = 1, isCodeGenOnly = 1 in {
+  def PseudoCVT_S_W : ABSS_FT<"", FGR32, CPURegs, IIFcvt>;
+  def PseudoCVT_D32_W : ABSS_FT<"", AFGR64, CPURegs, IIFcvt>;
+  def PseudoCVT_S_L : ABSS_FT<"", FGR64, CPU64Regs, IIFcvt>;
+  def PseudoCVT_D64_W : ABSS_FT<"", FGR64, CPURegs, IIFcvt>;
+  def PseudoCVT_D64_L : ABSS_FT<"", FGR64, CPU64Regs, IIFcvt>;
+}
+
 let Predicates = [NoNaNsFPMath, HasStdEnc] in {
   def FABS_S : ABSS_FT<"abs.s", FGR32, FGR32, IIFcvt, fabs>, ABSS_FM<0x5, 16>;
   def FNEG_S : ABSS_FT<"neg.s", FGR32, FGR32, IIFcvt, fneg>, ABSS_FM<0x7, 16>;
@@ -476,12 +484,12 @@ def ExtractElementF64 :
 def : MipsPat<(f32 fpimm0), (MTC1 ZERO)>;
 def : MipsPat<(f32 fpimm0neg), (FNEG_S (MTC1 ZERO))>;
 
-def : MipsPat<(f32 (sint_to_fp CPURegs:$src)), (CVT_S_W (MTC1 CPURegs:$src))>;
+def : MipsPat<(f32 (sint_to_fp CPURegs:$src)), (PseudoCVT_S_W CPURegs:$src)>;
 def : MipsPat<(i32 (fp_to_sint FGR32:$src)), (MFC1 (TRUNC_W_S FGR32:$src))>;
 
 let Predicates = [NotFP64bit, HasStdEnc] in {
   def : MipsPat<(f64 (sint_to_fp CPURegs:$src)),
-                (CVT_D32_W (MTC1 CPURegs:$src))>;
+                (PseudoCVT_D32_W CPURegs:$src)>;
   def : MipsPat<(i32 (fp_to_sint AFGR64:$src)),
                 (MFC1 (TRUNC_W_D32 AFGR64:$src))>;
   def : MipsPat<(f32 (fround AFGR64:$src)), (CVT_S_D32 AFGR64:$src)>;
@@ -493,11 +501,11 @@ let Predicates = [IsFP64bit, HasStdEnc] in {
   def : MipsPat<(f64 fpimm0neg), (FNEG_D64 (DMTC1 ZERO_64))>;
 
   def : MipsPat<(f64 (sint_to_fp CPURegs:$src)),
-                (CVT_D64_W (MTC1 CPURegs:$src))>;
+                (PseudoCVT_D64_W CPURegs:$src)>;
   def : MipsPat<(f32 (sint_to_fp CPU64Regs:$src)),
-                (CVT_S_L (DMTC1 CPU64Regs:$src))>;
+                (EXTRACT_SUBREG (PseudoCVT_S_L CPU64Regs:$src), sub_32)>;
   def : MipsPat<(f64 (sint_to_fp CPU64Regs:$src)),
-                (CVT_D64_L (DMTC1 CPU64Regs:$src))>;
+                (PseudoCVT_D64_L CPU64Regs:$src)>;
 
   def : MipsPat<(i32 (fp_to_sint FGR64:$src)),
                 (MFC1 (TRUNC_W_D64 FGR64:$src))>;

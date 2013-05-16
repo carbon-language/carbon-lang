@@ -83,6 +83,9 @@ private:
 
   void expandRetRA(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                    unsigned Opc) const;
+  void expandCvtFPInt(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+                      unsigned CvtOpc, unsigned MovOpc, bool DstIsLarger,
+                      bool SrcIsLarger, bool IsI64) const;
   void expandExtractElementF64(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator I) const;
   void expandBuildPairF64(MachineBasicBlock &MBB,

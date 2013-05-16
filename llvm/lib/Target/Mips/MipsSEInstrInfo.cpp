@@ -253,6 +253,21 @@ bool MipsSEInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   case Mips::RetRA:
     expandRetRA(MBB, MI, Mips::RET);
     break;
+  case Mips::PseudoCVT_S_W:
+    expandCvtFPInt(MBB, MI, Mips::CVT_S_W, Mips::MTC1, false, false, false);
+    break;
+  case Mips::PseudoCVT_D32_W:
+    expandCvtFPInt(MBB, MI, Mips::CVT_D32_W, Mips::MTC1, true, false, false);
+    break;
+  case Mips::PseudoCVT_S_L:
+    expandCvtFPInt(MBB, MI, Mips::CVT_S_L, Mips::DMTC1, false, true, true);
+    break;
+  case Mips::PseudoCVT_D64_W:
+    expandCvtFPInt(MBB, MI, Mips::CVT_D64_W, Mips::MTC1, true, false, true);
+    break;
+  case Mips::PseudoCVT_D64_L:
+    expandCvtFPInt(MBB, MI, Mips::CVT_D64_L, Mips::DMTC1, false, false, true);
+    break;
   case Mips::BuildPairF64:
     expandBuildPairF64(MBB, MI);
     break;
@@ -372,6 +387,28 @@ void MipsSEInstrInfo::expandRetRA(MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator I,
                                 unsigned Opc) const {
   BuildMI(MBB, I, I->getDebugLoc(), get(Opc)).addReg(Mips::RA);
+}
+
+void MipsSEInstrInfo::expandCvtFPInt(MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator I,
+                                     unsigned CvtOpc, unsigned MovOpc,
+                                     bool DstIsLarger, bool SrcIsLarger,
+                                     bool IsI64) const {
+  const MCInstrDesc &CvtDesc = get(CvtOpc), &MovDesc = get(MovOpc);
+  const MachineOperand &Dst = I->getOperand(0), &Src = I->getOperand(1);
+  unsigned DstReg = Dst.getReg(), SrcReg = Src.getReg(), TmpReg = DstReg;
+  unsigned KillSrc =  getKillRegState(Src.isKill());
+  DebugLoc DL = I->getDebugLoc();
+  unsigned SubIdx = (IsI64 ? Mips::sub_32 : Mips::sub_fpeven);
+
+  if (DstIsLarger)
+    TmpReg = getRegisterInfo().getSubReg(DstReg, SubIdx);
+
+  if (SrcIsLarger)
+    DstReg = getRegisterInfo().getSubReg(DstReg, SubIdx);
+
+  BuildMI(MBB, I, DL, MovDesc, TmpReg).addReg(SrcReg, KillSrc);
+  BuildMI(MBB, I, DL, CvtDesc, DstReg).addReg(TmpReg, RegState::Kill);
 }
 
 void MipsSEInstrInfo::expandExtractElementF64(MachineBasicBlock &MBB,
