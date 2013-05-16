@@ -744,6 +744,7 @@ private:
       State.StartOfStringLiteral = State.Column;
     } else if (!Current.isOneOf(tok::comment, tok::identifier, tok::hash,
                                 tok::string_literal)) {
+      State.StartOfStringLiteral = 0;
     }
 
     State.Column += Current.FormatTok.TokenLength;

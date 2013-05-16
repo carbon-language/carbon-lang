@@ -2238,6 +2238,8 @@ TEST_F(FormatTest, AlignsStringLiterals) {
   verifyFormat("a = a + \"a\"\n"
                "        \"a\"\n"
                "        \"a\";");
+  verifyFormat("f(\"a\", \"b\"\n"
+               "       \"c\");");
 
   verifyFormat(
       "#define LL_FORMAT \"ll\"\n"
