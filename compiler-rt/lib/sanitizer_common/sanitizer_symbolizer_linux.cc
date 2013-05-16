@@ -126,7 +126,7 @@ bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
 #if SANITIZER_ANDROID
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
                       string_predicate_t filter) {
-  UNIMPLEMENTED();
+  return 0;
 }
 #else  // SANITIZER_ANDROID
 typedef ElfW(Phdr) Elf_Phdr;

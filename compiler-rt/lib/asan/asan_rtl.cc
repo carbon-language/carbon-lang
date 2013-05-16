@@ -129,7 +129,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
 void InitializeFlags(Flags *f, const char *env) {
   CommonFlags *cf = common_flags();
   cf->external_symbolizer_path = GetEnv("ASAN_SYMBOLIZER_PATH");
-  cf->symbolize = (cf->external_symbolizer_path != 0);
+  cf->symbolize = true;
   cf->malloc_context_size = kDefaultMallocContextSize;
   cf->fast_unwind_on_fatal = false;
   cf->fast_unwind_on_malloc = true;
