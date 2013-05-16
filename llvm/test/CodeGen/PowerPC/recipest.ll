@@ -14,8 +14,8 @@ entry:
   ret double %r
 
 ; CHECK: @foo
-; CHECK: frsqrte
-; CHECK: fnmsub
+; CHECK-DAG: frsqrte
+; CHECK-DAG: fnmsub
 ; CHECK: fmul
 ; CHECK: fmadd
 ; CHECK: fmul
@@ -39,8 +39,8 @@ entry:
   ret double %r
 
 ; CHECK: @foof
-; CHECK: frsqrtes
-; CHECK: fnmsubs
+; CHECK-DAG: frsqrtes
+; CHECK-DAG: fnmsubs
 ; CHECK: fmuls
 ; CHECK: fmadds
 ; CHECK: fmuls
@@ -61,8 +61,8 @@ entry:
   ret float %r
 
 ; CHECK: @foo
-; CHECK: frsqrte
-; CHECK: fnmsub
+; CHECK-DAG: frsqrte
+; CHECK-DAG: fnmsub
 ; CHECK: fmul
 ; CHECK: fmadd
 ; CHECK: fmul
@@ -86,8 +86,8 @@ entry:
   ret float %r
 
 ; CHECK: @goo
-; CHECK: frsqrtes
-; CHECK: fnmsubs
+; CHECK-DAG: frsqrtes
+; CHECK-DAG: fnmsubs
 ; CHECK: fmuls
 ; CHECK: fmadds
 ; CHECK: fmuls
@@ -120,8 +120,8 @@ entry:
   ret double %r
 
 ; CHECK: @foo2
-; CHECK: fre
-; CHECK: fnmsub
+; CHECK-DAG: fre
+; CHECK-DAG: fnmsub
 ; CHECK: fmadd
 ; CHECK: fnmsub
 ; CHECK: fmadd
@@ -139,8 +139,8 @@ entry:
   ret float %r
 
 ; CHECK: @goo2
-; CHECK: fres
-; CHECK: fnmsubs
+; CHECK-DAG: fres
+; CHECK-DAG: fnmsubs
 ; CHECK: fmadds
 ; CHECK: fmuls
 ; CHECK: blr
@@ -169,8 +169,8 @@ entry:
   ret double %r
 
 ; CHECK: @foo3
-; CHECK: frsqrte
-; CHECK: fnmsub
+; CHECK-DAG: frsqrte
+; CHECK-DAG: fnmsub
 ; CHECK: fmul
 ; CHECK: fmadd
 ; CHECK: fmul
@@ -195,8 +195,8 @@ entry:
   ret float %r
 
 ; CHECK: @goo3
-; CHECK: frsqrtes
-; CHECK: fnmsubs
+; CHECK-DAG: frsqrtes
+; CHECK-DAG: fnmsubs
 ; CHECK: fmuls
 ; CHECK: fmadds
 ; CHECK: fmuls
