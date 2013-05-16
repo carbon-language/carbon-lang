@@ -156,7 +156,6 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::FPCmp:             return "MipsISD::FPCmp";
   case MipsISD::CMovFP_T:          return "MipsISD::CMovFP_T";
   case MipsISD::CMovFP_F:          return "MipsISD::CMovFP_F";
-  case MipsISD::FPRound:           return "MipsISD::FPRound";
   case MipsISD::ExtractLOHI:       return "MipsISD::ExtractLOHI";
   case MipsISD::InsertLOHI:        return "MipsISD::InsertLOHI";
   case MipsISD::Mult:              return "MipsISD::Mult";

@@ -60,9 +60,6 @@ namespace llvm {
       CMovFP_T,
       CMovFP_F,
 
-      // Floating Point Rounding
-      FPRound,
-
       // Return
       Ret,
 
