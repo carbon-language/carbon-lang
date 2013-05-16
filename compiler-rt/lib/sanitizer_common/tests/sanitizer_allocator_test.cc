@@ -176,10 +176,39 @@ TEST(SanitizerCommon, SizeClassAllocator64MetadataStress) {
 TEST(SanitizerCommon, SizeClassAllocator64CompactMetadataStress) {
   SizeClassAllocatorMetadataStress<Allocator64Compact>();
 }
-#endif
+#endif  // SANITIZER_WORDSIZE == 64
 TEST(SanitizerCommon, SizeClassAllocator32CompactMetadataStress) {
   SizeClassAllocatorMetadataStress<Allocator32Compact>();
 }
+
+template <class Allocator>
+void SizeClassAllocatorGetBlockBeginStress() {
+  Allocator *a = new Allocator;
+  a->Init();
+  SizeClassAllocatorLocalCache<Allocator> cache;
+  memset(&cache, 0, sizeof(cache));
+  cache.Init(0);
+
+  uptr max_size_class = Allocator::kNumClasses - 1;
+  uptr size = Allocator::SizeClassMapT::Size(max_size_class);
+  u64 G8 = 1ULL << 33;
+  for (size_t i = 0; i <= G8 / size; i++) {
+    void *x = cache.Allocate(a, max_size_class);
+    void *beg = a->GetBlockBegin(x);
+    if ((i & (i - 1)) == 0)
+      fprintf(stderr, "[%zd] %p %p\n", i, x, beg);
+    EXPECT_EQ(x, beg);
+  }
+
+  a->TestOnlyUnmap();
+  delete a;
+}
+
+#if SANITIZER_WORDSIZE == 64
+TEST(SanitizerCommon, DISABLED_SizeClassAllocator64GetBlockBegin) {
+  SizeClassAllocatorGetBlockBeginStress<Allocator64>();
+}
+#endif  // SANITIZER_WORDSIZE == 64
 
 struct TestMapUnmapCallback {
   static int map_count, unmap_count;
