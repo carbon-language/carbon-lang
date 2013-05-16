@@ -1270,7 +1270,9 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
      << "(unsigned RA, unsigned DwarfFlavour, unsigned EHFlavour, unsigned PC)\n"
      << "  : TargetRegisterInfo(" << TargetName << "RegInfoDesc"
      << ", RegisterClasses, RegisterClasses+" << RegisterClasses.size() <<",\n"
-     << "             SubRegIndexNameTable, SubRegIndexLaneMaskTable) {\n"
+     << "             SubRegIndexNameTable, SubRegIndexLaneMaskTable, 0x";
+  OS.write_hex(RegBank.CoveringLanes);
+  OS << ") {\n"
      << "  InitMCRegisterInfo(" << TargetName << "RegDesc, "
      << Regs.size()+1 << ", RA, PC,\n                     " << TargetName
      << "MCRegisterClasses, " << RegisterClasses.size() << ",\n"

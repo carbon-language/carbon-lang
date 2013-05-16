@@ -28,7 +28,7 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 CodeGenSubRegIndex::CodeGenSubRegIndex(Record *R, unsigned Enum)
-  : TheDef(R), EnumValue(Enum), LaneMask(0) {
+  : TheDef(R), EnumValue(Enum), LaneMask(0), AllSuperRegsCovered(true) {
   Name = R->getName();
   if (R->getValue("Namespace"))
     Namespace = R->getValueAsString("Namespace");
@@ -36,7 +36,8 @@ CodeGenSubRegIndex::CodeGenSubRegIndex(Record *R, unsigned Enum)
 
 CodeGenSubRegIndex::CodeGenSubRegIndex(StringRef N, StringRef Nspace,
                                        unsigned Enum)
-  : TheDef(0), Name(N), Namespace(Nspace), EnumValue(Enum), LaneMask(0) {
+  : TheDef(0), Name(N), Namespace(Nspace), EnumValue(Enum),
+    LaneMask(0), AllSuperRegsCovered(true) {
 }
 
 std::string CodeGenSubRegIndex::getQualifiedName() const {
@@ -312,6 +313,11 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
       PrintFatalError(Loc, "Register " + getName() +
                       " has itself as a sub-register");
     }
+
+    // Compute AllSuperRegsCovered.
+    if (!CoveredBySubRegs)
+      SI->first->AllSuperRegsCovered = false;
+
     // Ensure that every sub-register has a unique name.
     DenseMap<const CodeGenRegister*, CodeGenSubRegIndex*>::iterator Ins =
       SubReg2Idx.insert(std::make_pair(SI->second, SI->first)).first;
@@ -1195,6 +1201,8 @@ void CodeGenRegBank::computeComposites() {
 void CodeGenRegBank::computeSubRegIndexLaneMasks() {
   // First assign individual bits to all the leaf indices.
   unsigned Bit = 0;
+  // Determine mask of lanes that cover their registers.
+  CoveringLanes = ~0u;
   for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i) {
     CodeGenSubRegIndex *Idx = SubRegIndices[i];
     if (Idx->getComposites().empty()) {
@@ -1206,7 +1214,12 @@ void CodeGenRegBank::computeSubRegIndexLaneMasks() {
       // view of lanes beyond the 32nd.
       //
       // See also the comment for getSubRegIndexLaneMask().
-      if (Bit < 31) ++Bit;
+      if (Bit < 31)
+        ++Bit;
+      else
+        // Once bit 31 is shared among multiple leafs, the 'lane' it represents
+        // is no longer covering its registers.
+        CoveringLanes &= ~(1u << Bit);
     } else {
       Idx->LaneMask = 0;
     }
@@ -1216,8 +1229,13 @@ void CodeGenRegBank::computeSubRegIndexLaneMasks() {
   // by the sub-register graph? This doesn't occur in any known targets.
 
   // Inherit lanes from composites.
-  for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i)
-    SubRegIndices[i]->computeLaneMask();
+  for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i) {
+    unsigned Mask = SubRegIndices[i]->computeLaneMask();
+    // If some super-registers without CoveredBySubRegs use this index, we can
+    // no longer assume that the lanes are covering their registers.
+    if (!SubRegIndices[i]->AllSuperRegsCovered)
+      CoveringLanes &= ~Mask;
+  }
 }
 
 namespace {

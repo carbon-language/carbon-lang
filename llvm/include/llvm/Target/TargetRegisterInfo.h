@@ -226,13 +226,15 @@ private:
   const unsigned *SubRegIndexLaneMasks;
 
   regclass_iterator RegClassBegin, RegClassEnd;   // List of regclasses
+  unsigned CoveringLanes;
 
 protected:
   TargetRegisterInfo(const TargetRegisterInfoDesc *ID,
                      regclass_iterator RegClassBegin,
                      regclass_iterator RegClassEnd,
                      const char *const *SRINames,
-                     const unsigned *SRILaneMasks);
+                     const unsigned *SRILaneMasks,
+                     unsigned CoveringLanes);
   virtual ~TargetRegisterInfo();
 public:
 
@@ -361,6 +363,31 @@ public:
     assert(SubIdx < getNumSubRegIndices() && "This is not a subregister index");
     return SubRegIndexLaneMasks[SubIdx];
   }
+
+  /// The lane masks returned by getSubRegIndexLaneMask() above can only be
+  /// used to determine if sub-registers overlap - they can't be used to
+  /// determine if a set of sub-registers completely cover another
+  /// sub-register.
+  ///
+  /// The X86 general purpose registers have two lanes corresponding to the
+  /// sub_8bit and sub_8bit_hi sub-registers. Both sub_32bit and sub_16bit have
+  /// lane masks '3', but the sub_16bit sub-register doesn't fully cover the
+  /// sub_32bit sub-register.
+  ///
+  /// On the other hand, the ARM NEON lanes fully cover their registers: The
+  /// dsub_0 sub-register is completely covered by the ssub_0 and ssub_1 lanes.
+  /// This is related to the CoveredBySubRegs property on register definitions.
+  ///
+  /// This function returns a bit mask of lanes that completely cover their
+  /// sub-registers. More precisely, given:
+  ///
+  ///   Covering = getCoveringLanes();
+  ///   MaskA = getSubRegIndexLaneMask(SubA);
+  ///   MaskB = getSubRegIndexLaneMask(SubB);
+  ///
+  /// If (MaskA & ~(MaskB & Covering)) == 0, then SubA is completely covered by
+  /// SubB.
+  unsigned getCoveringLanes() const { return CoveringLanes; }
 
   /// regsOverlap - Returns true if the two registers are equal or alias each
   /// other. The registers may be virtual register.
