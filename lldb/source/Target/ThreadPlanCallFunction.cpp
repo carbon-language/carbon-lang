@@ -591,7 +591,15 @@ ThreadPlanCallFunction::BreakpointsExplainStop()
        ||(m_objc_language_runtime &&
             m_objc_language_runtime->ExceptionBreakpointsExplainStop(stop_info_sp)))
     {
+        Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP));
+        if (log)
+            log->Printf ("ThreadPlanCallFunction::BreakpointsExplainStop - Hit an exception breakpoint, setting plan complete.");
+        
         SetPlanComplete(false);
+        
+        // If the user has set the ObjC language breakpoint, it would normally get priority over our internal
+        // catcher breakpoint, but in this case we can't let that happen, so force the ShouldStop here.
+        stop_info_sp->OverrideShouldStop (true);
         return true;
     }
     
