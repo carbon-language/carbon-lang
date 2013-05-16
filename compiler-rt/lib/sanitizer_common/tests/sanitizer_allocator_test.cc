@@ -147,24 +147,26 @@ void SizeClassAllocatorMetadataStress() {
   SizeClassAllocatorLocalCache<Allocator> cache;
   memset(&cache, 0, sizeof(cache));
   cache.Init(0);
-  static volatile void *sink;
 
-  const uptr kNumAllocs = 10000;
+  const uptr kNumAllocs = 1 << 13;
   void *allocated[kNumAllocs];
+  void *meta[kNumAllocs];
   for (uptr i = 0; i < kNumAllocs; i++) {
     void *x = cache.Allocate(a, 1 + i % 50);
     allocated[i] = x;
+    meta[i] = a->GetMetaData(x);
   }
   // Get Metadata kNumAllocs^2 times.
   for (uptr i = 0; i < kNumAllocs * kNumAllocs; i++) {
-    sink = a->GetMetaData(allocated[i % kNumAllocs]);
+    uptr idx = i % kNumAllocs;
+    void *m = a->GetMetaData(allocated[idx]);
+    EXPECT_EQ(m, meta[idx]);
   }
   for (uptr i = 0; i < kNumAllocs; i++) {
     cache.Deallocate(a, 1 + i % 50, allocated[i]);
   }
 
   a->TestOnlyUnmap();
-  (void)sink;
   delete a;
 }
 
@@ -192,6 +194,7 @@ void SizeClassAllocatorGetBlockBeginStress() {
   uptr max_size_class = Allocator::kNumClasses - 1;
   uptr size = Allocator::SizeClassMapT::Size(max_size_class);
   u64 G8 = 1ULL << 33;
+  // Make sure we correctly compute GetBlockBegin() w/o overflow.
   for (size_t i = 0; i <= G8 / size; i++) {
     void *x = cache.Allocate(a, max_size_class);
     void *beg = a->GetBlockBegin(x);
@@ -205,8 +208,14 @@ void SizeClassAllocatorGetBlockBeginStress() {
 }
 
 #if SANITIZER_WORDSIZE == 64
-TEST(SanitizerCommon, DISABLED_SizeClassAllocator64GetBlockBegin) {
+TEST(SanitizerCommon, SizeClassAllocator64GetBlockBegin) {
   SizeClassAllocatorGetBlockBeginStress<Allocator64>();
+}
+TEST(SanitizerCommon, SizeClassAllocator64CompactGetBlockBegin) {
+  SizeClassAllocatorGetBlockBeginStress<Allocator64Compact>();
+}
+TEST(SanitizerCommon, SizeClassAllocator32CompactGetBlockBegin) {
+  SizeClassAllocatorGetBlockBeginStress<Allocator32Compact>();
 }
 #endif  // SANITIZER_WORDSIZE == 64
 

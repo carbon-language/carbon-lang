@@ -492,11 +492,12 @@ class SizeClassAllocator64 {
   }
 
   static uptr GetChunkIdx(uptr chunk, uptr size) {
-    u32 offset = chunk % kRegionSize;
+    uptr offset = chunk % kRegionSize;
     // Here we divide by a non-constant. This is costly.
-    // We require that kRegionSize is at least 2^32 so that offset is 32-bit.
-    // We save 2x by using 32-bit div, but may need to use a 256-way switch.
-    return offset / (u32)size;
+    // size always fits into 32-bits. If the offset fits too, use 32-bit div.
+    if (offset >> 32)
+      return offset / size;
+    return (u32)offset / (u32)size;
   }
 
   NOINLINE Batch* PopulateFreeList(AllocatorStats *stat, AllocatorCache *c,
