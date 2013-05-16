@@ -18,6 +18,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/DIBuilder.h"
 #include "llvm/DebugInfo.h"
@@ -46,6 +47,7 @@ namespace CodeGen {
 /// the backend.
 class CGDebugInfo {
   CodeGenModule &CGM;
+  CodeGenOptions::DebugInfoKind DebugKind;
   llvm::DIBuilder DBuilder;
   llvm::DICompileUnit TheCU;
   SourceLocation CurLoc, PrevLoc;
@@ -274,7 +276,7 @@ public:
   /// getOrCreateInterfaceType - Emit an objective c interface type standalone
   /// debug info.
   llvm::DIType getOrCreateInterfaceType(QualType Ty,
-					SourceLocation Loc);
+                                        SourceLocation Loc);
 
 private:
   /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
