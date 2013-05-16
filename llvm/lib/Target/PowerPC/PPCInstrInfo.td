@@ -287,7 +287,7 @@ def imm16ShiftedSExt : PatLeaf<(imm), [{
 }], HI16>;
 
 // Some r+i load/store instructions (such as LD, STD, LDU, etc.) that require
-// restricted memrix (offset/4) constants are alignment sensitive. If these
+// restricted memrix (4-aligned) constants are alignment sensitive. If these
 // offsets are hidden behind TOC entries than the values of the lower-order
 // bits cannot be checked directly. As a result, we need to also incorporate
 // an alignment check into the relevant patterns.
@@ -492,12 +492,14 @@ def ptr_rc_idx : Operand<iPTR>, PointerLikeRegClass<0> {
 
 def PPCDispRIOperand : AsmOperandClass {
  let Name = "DispRI"; let PredicateMethod = "isS16Imm";
+ let RenderMethod = "addImmOperands";
 }
 def dispRI : Operand<iPTR> {
   let ParserMatchClass = PPCDispRIOperand;
 }
 def PPCDispRIXOperand : AsmOperandClass {
  let Name = "DispRIX"; let PredicateMethod = "isS16ImmX4";
+ let RenderMethod = "addImmOperands";
 }
 def dispRIX : Operand<iPTR> {
   let ParserMatchClass = PPCDispRIXOperand;
@@ -512,8 +514,8 @@ def memrr : Operand<iPTR> {
   let PrintMethod = "printMemRegReg";
   let MIOperandInfo = (ops ptr_rc_nor0:$ptrreg, ptr_rc_idx:$offreg);
 }
-def memrix : Operand<iPTR> {   // memri where the imm is shifted 2 bits.
-  let PrintMethod = "printMemRegImmShifted";
+def memrix : Operand<iPTR> {   // memri where the imm is 4-aligned.
+  let PrintMethod = "printMemRegImm";
   let MIOperandInfo = (ops dispRIX:$imm, ptr_rc_nor0:$reg);
   let EncoderMethod = "getMemRIXEncoding";
 }
@@ -534,7 +536,7 @@ def pred : Operand<OtherVT> {
 def iaddr  : ComplexPattern<iPTR, 2, "SelectAddrImm",    [], []>;
 def xaddr  : ComplexPattern<iPTR, 2, "SelectAddrIdx",    [], []>;
 def xoaddr : ComplexPattern<iPTR, 2, "SelectAddrIdxOnly",[], []>;
-def ixaddr : ComplexPattern<iPTR, 2, "SelectAddrImmShift", [], []>; // "std"
+def ixaddr : ComplexPattern<iPTR, 2, "SelectAddrImmX4",  [], []>; // "std"
 
 // The address in a single register. This is used with the SjLj
 // pseudo-instructions.

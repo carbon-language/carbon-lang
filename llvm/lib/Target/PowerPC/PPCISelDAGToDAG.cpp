@@ -116,7 +116,7 @@ namespace {
     /// a base register plus a signed 16-bit displacement [r+imm].
     bool SelectAddrImm(SDValue N, SDValue &Disp,
                        SDValue &Base) {
-      return PPCLowering.SelectAddressRegImm(N, Disp, Base, *CurDAG);
+      return PPCLowering.SelectAddressRegImm(N, Disp, Base, *CurDAG, false);
     }
 
     /// SelectAddrImmOffs - Return true if the operand is valid for a preinc
@@ -145,11 +145,11 @@ namespace {
       return PPCLowering.SelectAddressRegRegOnly(N, Base, Index, *CurDAG);
     }
 
-    /// SelectAddrImmShift - Returns true if the address N can be represented by
-    /// a base register plus a signed 14-bit displacement [r+imm*4].  Suitable
-    /// for use by STD and friends.
-    bool SelectAddrImmShift(SDValue N, SDValue &Disp, SDValue &Base) {
-      return PPCLowering.SelectAddressRegImmShift(N, Disp, Base, *CurDAG);
+    /// SelectAddrImmX4 - Returns true if the address N can be represented by
+    /// a base register plus a signed 16-bit displacement that is a multiple of 4.
+    /// Suitable for use by STD and friends.
+    bool SelectAddrImmX4(SDValue N, SDValue &Disp, SDValue &Base) {
+      return PPCLowering.SelectAddressRegImm(N, Disp, Base, *CurDAG, true);
     }
 
     // Select an address into a single register.

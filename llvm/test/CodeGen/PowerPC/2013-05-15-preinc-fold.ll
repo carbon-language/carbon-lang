@@ -17,3 +17,17 @@ entry:
 ; CHECK-NEXT: stb 4, 2(3)
 ; CHECK-NEXT: blr
 
+define i64* @test64(i64* %base, i64 %val) {
+entry:
+  %arrayidx = getelementptr inbounds i64* %base, i32 -1
+  store i64 %val, i64* %arrayidx, align 8
+  %arrayidx2 = getelementptr inbounds i64* %base, i32 1
+  store i64 %val, i64* %arrayidx2, align 8
+  ret i64* %arrayidx
+}
+; CHECK: @test64
+; CHECK: %entry
+; CHECK-NEXT: stdu 4, -8(3)
+; CHECK-NEXT: std 4, 16(3)
+; CHECK-NEXT: blr
+

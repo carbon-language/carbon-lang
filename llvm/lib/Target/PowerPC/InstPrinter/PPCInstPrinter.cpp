@@ -137,14 +137,6 @@ void PPCInstPrinter::printU16ImmOperand(const MCInst *MI, unsigned OpNo,
   O << (unsigned short)MI->getOperand(OpNo).getImm();
 }
 
-void PPCInstPrinter::printS16X4ImmOperand(const MCInst *MI, unsigned OpNo,
-                                          raw_ostream &O) {
-  if (MI->getOperand(OpNo).isImm())
-    O << (short)(MI->getOperand(OpNo).getImm()*4);
-  else
-    printOperand(MI, OpNo, O);
-}
-
 void PPCInstPrinter::printBranchOperand(const MCInst *MI, unsigned OpNo,
                                         raw_ostream &O) {
   if (!MI->getOperand(OpNo).isImm())
@@ -190,22 +182,6 @@ void PPCInstPrinter::printMemRegImm(const MCInst *MI, unsigned OpNo,
     printOperand(MI, OpNo+1, O);
   O << ')';
 }
-
-void PPCInstPrinter::printMemRegImmShifted(const MCInst *MI, unsigned OpNo,
-                                           raw_ostream &O) {
-  if (MI->getOperand(OpNo).isImm())
-    printS16X4ImmOperand(MI, OpNo, O);
-  else
-    printSymbolLo(MI, OpNo, O);
-  O << '(';
-  
-  if (MI->getOperand(OpNo+1).getReg() == PPC::R0)
-    O << "0";
-  else
-    printOperand(MI, OpNo+1, O);
-  O << ')';
-}
-
 
 void PPCInstPrinter::printMemRegReg(const MCInst *MI, unsigned OpNo,
                                     raw_ostream &O) {

@@ -400,13 +400,13 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
     if (HasFP)
       BuildMI(MBB, MBBI, dl, TII.get(PPC::STD))
         .addReg(PPC::X31)
-        .addImm(FPOffset/4)
+        .addImm(FPOffset)
         .addReg(PPC::X1);
 
     if (MustSaveLR)
       BuildMI(MBB, MBBI, dl, TII.get(PPC::STD))
         .addReg(PPC::X0)
-        .addImm(LROffset / 4)
+        .addImm(LROffset)
         .addReg(PPC::X1);
 
     if (!MustSaveCRs.empty())
@@ -500,7 +500,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
     } else if (isInt<16>(NegFrameSize)) {
       BuildMI(MBB, MBBI, dl, TII.get(PPC::STDU), PPC::X1)
         .addReg(PPC::X1)
-        .addImm(NegFrameSize / 4)
+        .addImm(NegFrameSize)
         .addReg(PPC::X1);
     } else {
       BuildMI(MBB, MBBI, dl, TII.get(PPC::LIS8), PPC::X0)
@@ -741,7 +741,7 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
   if (isPPC64) {
     if (MustSaveLR)
       BuildMI(MBB, MBBI, dl, TII.get(PPC::LD), PPC::X0)
-        .addImm(LROffset/4).addReg(PPC::X1);
+        .addImm(LROffset).addReg(PPC::X1);
 
     if (!MustSaveCRs.empty())
       BuildMI(MBB, MBBI, dl, TII.get(PPC::LWZ8), PPC::X12)
@@ -749,7 +749,7 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
 
     if (HasFP)
       BuildMI(MBB, MBBI, dl, TII.get(PPC::LD), PPC::X31)
-        .addImm(FPOffset/4).addReg(PPC::X1);
+        .addImm(FPOffset).addReg(PPC::X1);
 
     if (!MustSaveCRs.empty())
       for (unsigned i = 0, e = MustSaveCRs.size(); i != e; ++i)

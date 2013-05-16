@@ -237,7 +237,7 @@ unsigned PPCCodeEmitter::getMemRIXEncoding(const MachineInstr &MI,
   
   const MachineOperand &MO = MI.getOperand(OpNo);
   if (MO.isImm())
-    return (getMachineOpValue(MI, MO) & 0x3FFF) | RegBits;
+    return ((getMachineOpValue(MI, MO) >> 2) & 0x3FFF) | RegBits;
   
   MCE.addRelocation(GetRelocation(MO, PPC::reloc_absolute_low_ix));
   return RegBits;

@@ -185,7 +185,7 @@ unsigned PPCMCCodeEmitter::getMemRIXEncoding(const MCInst &MI, unsigned OpNo,
   
   const MCOperand &MO = MI.getOperand(OpNo);
   if (MO.isImm())
-    return (getMachineOpValue(MI, MO, Fixups) & 0x3FFF) | RegBits;
+    return ((getMachineOpValue(MI, MO, Fixups) >> 2) & 0x3FFF) | RegBits;
   
   // Add a fixup for the displacement field.
   Fixups.push_back(MCFixup::Create(2, MO.getExpr(),

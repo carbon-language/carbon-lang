@@ -366,20 +366,15 @@ namespace llvm {
 
     /// SelectAddressRegImm - Returns true if the address N can be represented
     /// by a base register plus a signed 16-bit displacement [r+imm], and if it
-    /// is not better represented as reg+reg.
+    /// is not better represented as reg+reg.  If Aligned is true, only accept
+    /// displacements suitable for STD and friends, i.e. multiples of 4.
     bool SelectAddressRegImm(SDValue N, SDValue &Disp, SDValue &Base,
-                             SelectionDAG &DAG) const;
+                             SelectionDAG &DAG, bool Aligned) const;
 
     /// SelectAddressRegRegOnly - Given the specified addressed, force it to be
     /// represented as an indexed [r+r] operation.
     bool SelectAddressRegRegOnly(SDValue N, SDValue &Base, SDValue &Index,
                                  SelectionDAG &DAG) const;
-
-    /// SelectAddressRegImmShift - Returns true if the address N can be
-    /// represented by a base register plus a signed 14-bit displacement
-    /// [r+imm*4].  Suitable for use by STD and friends.
-    bool SelectAddressRegImmShift(SDValue N, SDValue &Disp, SDValue &Base,
-                                  SelectionDAG &DAG) const;
 
     Sched::Preference getSchedulingPreference(SDNode *N) const;
 

@@ -346,22 +346,6 @@ public:
       Inst.addOperand(MCOperand::CreateExpr(getExpr()));
   }
 
-  void addDispRIOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    if (Kind == Immediate)
-      Inst.addOperand(MCOperand::CreateImm(getImm()));
-    else
-      Inst.addOperand(MCOperand::CreateExpr(getExpr()));
-  }
-
-  void addDispRIXOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    if (Kind == Immediate)
-      Inst.addOperand(MCOperand::CreateImm(getImm() / 4));
-    else
-      Inst.addOperand(MCOperand::CreateExpr(getExpr()));
-  }
-
   StringRef getToken() const {
     assert(Kind == Token && "Invalid access!");
     return StringRef(Tok.Data, Tok.Length);
