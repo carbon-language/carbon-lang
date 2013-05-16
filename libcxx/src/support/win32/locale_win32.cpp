@@ -9,8 +9,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "support/win32/locale_win32.h"
-
-#include <stdarg.h> // va_start, va_end
+#include <cstdarg> // va_start, va_end
+#include <cwchar>  // mbstate_t
 
 // FIXME: base currently unused. Needs manual work to construct the new locale
 locale_t newlocale( int mask, const char * locale, locale_t /*base*/ )

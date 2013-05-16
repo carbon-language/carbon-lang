@@ -8,38 +8,55 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <support/win32/support.h>
-#include <stdarg.h> // va_start, va_end
-#include <stddef.h> // size_t
-#include <stdlib.h> // malloc
-#include <stdio.h>  // vsprintf, vsnprintf
-#include <string.h> // strcpy, wcsncpy
+#include <cstdarg> // va_start, va_end
+#include <cstddef> // size_t
+#include <cstdlib> // malloc
+#include <cstdio>  // vsprintf, vsnprintf
+#include <cstring> // strcpy, wcsncpy
+#include <cwchar>  // mbstate_t
+#include <memory> // unique_ptr
 
-int asprintf(char **sptr, const char *__restrict fmt, ...)
+namespace { // Private
+
+	struct free_deleter { 
+		inline void operator()(char* p) { free(p); } 
+	}; 
+}
+// Some of these functions aren't standard or if they conform, the name does not.
+
+int asprintf(char **sptr, const char *__restrict format, ...)
 {
     va_list ap;
-    va_start(ap, fmt);
-    int result = vasprintf(sptr, fmt, ap);
+    va_start(ap, format);
+    int result;
+#ifndef _LIBCPP_NO_EXCEPTIONS
+    try {
+#endif
+        result = vasprintf(sptr, format, ap);
+#ifndef _LIBCPP_NO_EXCEPTIONS
+    } catch( ... ) {
+        va_end(ap);
+        throw;
+    }
+#endif
     va_end(ap);
     return result;
 }
 
 // Like sprintf, but when return value >= 0 it returns a pointer to a malloc'd string in *sptr.
 // If return >= 0, use free to delete *sptr.
-int vasprintf( char **sptr, const char *__restrict fmt, va_list ap )
+int vasprintf( char **sptr, const char *__restrict format, va_list ap )
 {
     *sptr = NULL;
-    int count = vsnprintf( NULL, 0, fmt, ap ); // Query the buffer size required.
+    int count = _vsnprintf( NULL, 0, format, ap ); // Query the buffer size required.
     if( count >= 0 ) {
-        char* p = static_cast<char*>(malloc(count+1)); // Allocate memory for it and the terminator.
-        if ( p == NULL )
+        std::unique_ptr<char, free_deleter> p( static_cast<char*>(malloc(count+1)) );
+        if ( ! p )
             return -1;
-        if ( vsnprintf( p, count+1, fmt, ap ) == count ) // We should have used exactly what was required.
-            *sptr = p;
-        else { // Otherwise something is wrong, likely a bug in vsnprintf. If so free the memory and report the error.
-            free(p);
-            return -1;
-        }
+        if ( vsnprintf( p.get(), count+1, format, ap ) == count ) // We should have used exactly what was required.
+            *sptr = p.release();
+        else // Otherwise something is wrong, likely a bug in vsnprintf. If so free the memory and report the error.
+            return -1; // Pointer will get automaticlaly deleted.
     }
 
     return count;
@@ -120,7 +137,7 @@ size_t wcsnrtombs( char *__restrict dst, const wchar_t **__restrict src,
         if ( dst )
             result = wcrtomb_s( &char_size, dst + dest_converted, dest_remaining, c, ps);
         else
-            result = wcrtomb_s( &char_size, NULL, 0, c, ps); 
+            result = wcrtomb_s( &char_size, NULL, 0, c, ps);
         // If result is zero there is no error and char_size contains the size of the multi-byte-sequence converted.
         // Otherwise result indicates an errno type error.
         if ( result == no_error ) {

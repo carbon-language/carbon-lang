@@ -15,26 +15,23 @@
    Functions and constants used in libc++ that are missing from the Windows C library.
   */
 
-#include <__config>
-#include <wchar.h>  // mbstate_t
-#include <stdio.h> // _snwprintf
+#include <cwchar>  // mbstate_t
+#include <cstdarg> // va_ macros
 #define swprintf _snwprintf
 #define vswprintf _vsnwprintf
-#define vfscnaf fscanf
 
-int vasprintf( char **sptr, const char *__restrict fmt , va_list ap );
+extern "C" {
+
+int vasprintf( char **sptr, const char *__restrict fmt, va_list ap );
 int asprintf( char **sptr, const char *__restrict fmt, ...);
-//int vfscanf( FILE *__restrict stream, const char *__restrict format,
-//             va_list arg);
-
 size_t mbsnrtowcs( wchar_t *__restrict dst, const char **__restrict src,
                    size_t nmc, size_t len, mbstate_t *__restrict ps );
 size_t wcsnrtombs( char *__restrict dst, const wchar_t **__restrict src,
                    size_t nwc, size_t len, mbstate_t *__restrict ps );
+}
 
 #if defined(_MSC_VER)
 #define snprintf _snprintf
-
 #include <xlocinfo.h>
 #define atoll _atoi64
 #define strtoll _strtoi64
@@ -85,9 +82,11 @@ _LIBCPP_ALWAYS_INLINE int __builtin_ctz( unsigned int x )
    _BitScanReverse(&r, x);
    return static_cast<int>(r);
 }
+
 // sizeof(long) == sizeof(int) on Windows
 _LIBCPP_ALWAYS_INLINE int __builtin_ctzl( unsigned long x )
 { return __builtin_ctz( static_cast<int>(x) ); }
+
 _LIBCPP_ALWAYS_INLINE int __builtin_ctzll( unsigned long long x )
 {
     DWORD r = 0;
