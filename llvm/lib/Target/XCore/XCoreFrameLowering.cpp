@@ -119,13 +119,11 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
   bool saveLR = XFI->getUsesLR();
   // Do we need to allocate space on the stack?
   if (FrameSize) {
-    bool LRSavedOnEntry = false;
     int Opcode;
     if (saveLR && (MFI->getObjectOffset(XFI->getLRSpillSlot()) == 0)) {
       Opcode = (isU6) ? XCore::ENTSP_u6 : XCore::ENTSP_lu6;
       MBB.addLiveIn(XCore::LR);
       saveLR = false;
-      LRSavedOnEntry = true;
     } else {
       Opcode = (isU6) ? XCore::EXTSP_u6 : XCore::EXTSP_lu6;
     }
