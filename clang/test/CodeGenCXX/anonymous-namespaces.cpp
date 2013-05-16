@@ -66,3 +66,12 @@ namespace test2 {
 
   // CHECK-2: define internal void @_ZN5test21A1BINS_12_GLOBAL__N_11CEE3fooEv()
 }
+
+namespace {
+
+int bar() {
+  extern int a;
+  return a;
+}
+
+} // namespace
