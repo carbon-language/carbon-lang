@@ -87,4 +87,21 @@ entry:
   ret i32 0
 }
 
+define i32 @prevent_o7_in_call_delay_slot(i32 %i0) {
+entry:
+;CHECK:       prevent_o7_in_call_delay_slot
+;CHECK:       add %i0, 2, %o5
+;CHECK:       add %i0, 3, %o7
+;CHECK:       add %o5, %o7, %o0
+;CHECK:       call bar
+;CHECK-NEXT:  nop
+  %0 = add nsw i32 %i0, 2
+  %1 = add nsw i32 %i0, 3
+  tail call void asm sideeffect "", "r,r,~{l0},~{l1},~{l2},~{l3},~{l4},~{l5},~{l6},~{l7},~{i0},~{i1},~{i2},~{i3},~{i4},~{i5},~{i6},~{i7},~{o0},~{o1},~{o2},~{o3},~{o4}"(i32 %0, i32 %1)
+  %2 = add nsw i32 %0, %1
+  %3 = tail call i32 @bar(i32 %2)
+  ret i32 %3
+}
+
+
 declare i32 @func(i32*)
