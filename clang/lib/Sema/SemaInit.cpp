@@ -120,11 +120,12 @@ static StringInitFailureKind IsStringInit(Expr *Init, const ArrayType *AT,
   llvm_unreachable("missed a StringLiteral kind?");
 }
 
-static bool IsStringInit(Expr* init, QualType declType, ASTContext& Context) {
+static StringInitFailureKind IsStringInit(Expr *init, QualType declType,
+                                          ASTContext &Context) {
   const ArrayType *arrayType = Context.getAsArrayType(declType);
   if (!arrayType)
-    return false;
-  return IsStringInit(init, arrayType, Context) == SIF_None;
+    return SIF_Other;
+  return IsStringInit(init, arrayType, Context);
 }
 
 /// Update the type of a string literal, including any surrounding parentheses,
@@ -712,7 +713,8 @@ void InitListChecker::CheckExplicitInitList(const InitializedEntity &Entity,
     }
 
     if (StructuredIndex == 1 &&
-        IsStringInit(StructuredList->getInit(0), T, SemaRef.Context)) {
+        IsStringInit(StructuredList->getInit(0), T, SemaRef.Context) ==
+            SIF_None) {
       unsigned DK = diag::warn_excess_initializers_in_char_array_initializer;
       if (SemaRef.getLangOpts().CPlusPlus) {
         DK = diag::err_excess_initializers_in_char_array_initializer;
