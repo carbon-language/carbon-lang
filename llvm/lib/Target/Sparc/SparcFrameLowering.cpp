@@ -106,3 +106,18 @@ void SparcFrameLowering::emitEpilogue(MachineFunction &MF,
   BuildMI(MBB, MBBI, dl, TII.get(SP::RESTORErr), SP::G0).addReg(SP::G0)
     .addReg(SP::G0);
 }
+
+bool SparcFrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
+  //Reserve call frame if there are no variable sized objects on the stack
+  return !MF.getFrameInfo()->hasVarSizedObjects();
+}
+
+// hasFP - Return true if the specified function should have a dedicated frame
+// pointer register.  This is true if the function has variable sized allocas or
+// if frame pointer elimination is disabled.
+bool SparcFrameLowering::hasFP(const MachineFunction &MF) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  return MF.getTarget().Options.DisableFramePointerElim(MF) ||
+    MFI->hasVarSizedObjects() || MFI->isFrameAddressTaken();
+}
+

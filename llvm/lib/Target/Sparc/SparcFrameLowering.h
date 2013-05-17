@@ -38,7 +38,8 @@ public:
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;
 
-  bool hasFP(const MachineFunction &MF) const { return false; }
+  bool hasReservedCallFrame(const MachineFunction &MF) const;
+  bool hasFP(const MachineFunction &MF) const;
 };
 
 } // End llvm namespace
