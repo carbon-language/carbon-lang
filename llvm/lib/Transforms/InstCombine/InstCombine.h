@@ -1,4 +1,4 @@
-//===- InstCombine.h - Main InstCombine pass definition -------------------===//
+//===- InstCombine.h - Main InstCombine pass definition ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
