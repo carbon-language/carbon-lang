@@ -277,6 +277,7 @@ void RuntimeDyldELF::resolveX86Relocation(const SectionEntry &Section,
   }
 }
 
+// FIXME: PR16013: this routine needs modification to handle repeated relocations.
 void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
                                               uint64_t Offset,
                                               uint64_t Value,
@@ -356,6 +357,7 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
   }
 }
 
+// FIXME: PR16013: this routine needs modification to handle repeated relocations.
 void RuntimeDyldELF::resolveARMRelocation(const SectionEntry &Section,
                                           uint64_t Offset,
                                           uint32_t Value,
@@ -391,8 +393,8 @@ void RuntimeDyldELF::resolveARMRelocation(const SectionEntry &Section,
     // We are not expecting any other addend in the relocation address.
     // Using 0x000F0FFF because MOVW has its 16 bit immediate split into 2
     // non-contiguous fields.
-    assert((*TargetPtr & 0x000F0FFF) == 0);
     Value = Value & 0xFFFF;
+    *TargetPtr &= ~0x000F0FFF; // Not really right; see FIXME at top.
     *TargetPtr |= Value & 0xFFF;
     *TargetPtr |= ((Value >> 12) & 0xF) << 16;
     break;
@@ -402,8 +404,8 @@ void RuntimeDyldELF::resolveARMRelocation(const SectionEntry &Section,
   case ELF::R_ARM_MOVT_ABS :
     // We are not expecting any other addend in the relocation address.
     // Use 0x000F0FFF for the same reason as R_ARM_MOVW_ABS_NC.
-    assert((*TargetPtr & 0x000F0FFF) == 0);
     Value = (Value >> 16) & 0xFFFF;
+    *TargetPtr &= ~0x000F0FFF; // Not really right; see FIXME at top.
     *TargetPtr |= Value & 0xFFF;
     *TargetPtr |= ((Value >> 12) & 0xF) << 16;
     break;
