@@ -358,7 +358,7 @@ class R600_1OP <bits<11> inst, string opName, list<dag> pattern,
                    LAST:$last, R600_Pred:$pred_sel, LITERAL:$literal,
                    BANK_SWIZZLE:$bank_swizzle),
               !strconcat("  ", opName,
-                   "$last$clamp $dst$write$dst_rel$omod, "
+                   "$clamp $last $dst$write$dst_rel$omod, "
                    "$src0_neg$src0_abs$src0$src0_abs$src0_rel, "
                    "$pred_sel $bank_swizzle"),
               pattern,
@@ -399,7 +399,7 @@ class R600_2OP <bits<11> inst, string opName, list<dag> pattern,
                LAST:$last, R600_Pred:$pred_sel, LITERAL:$literal,
                BANK_SWIZZLE:$bank_swizzle),
           !strconcat("  ", opName,
-                "$last$clamp $update_exec_mask$update_pred$dst$write$dst_rel$omod, "
+                "$clamp $last $update_exec_mask$update_pred$dst$write$dst_rel$omod, "
                 "$src0_neg$src0_abs$src0$src0_abs$src0_rel, "
                 "$src1_neg$src1_abs$src1$src1_abs$src1_rel, "
                 "$pred_sel $bank_swizzle"),
@@ -436,7 +436,7 @@ class R600_3OP <bits<5> inst, string opName, list<dag> pattern,
                R600_Reg32:$src2, NEG:$src2_neg, REL:$src2_rel, SEL:$src2_sel,
                LAST:$last, R600_Pred:$pred_sel, LITERAL:$literal,
                BANK_SWIZZLE:$bank_swizzle),
-          !strconcat("  ", opName, "$last$clamp $dst$dst_rel, "
+          !strconcat("  ", opName, "$clamp $last $dst$dst_rel, "
                              "$src0_neg$src0$src0_rel, "
                              "$src1_neg$src1$src1_rel, "
                              "$src2_neg$src2$src2_rel, "
