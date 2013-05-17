@@ -25,7 +25,7 @@ R600RegisterInfo::R600RegisterInfo(AMDGPUTargetMachine &tm,
 : AMDGPURegisterInfo(tm, tii),
   TM(tm),
   TII(tii)
-  { }
+  { RCW.RegWeight = 0; RCW.WeightLimit = 0;}
 
 BitVector R600RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
@@ -97,3 +97,7 @@ unsigned R600RegisterInfo::getSubRegFromChannel(unsigned Channel) const {
   }
 }
 
+const RegClassWeight &R600RegisterInfo::getRegClassWeight(
+  const TargetRegisterClass *RC) const {
+  return RCW;
+}

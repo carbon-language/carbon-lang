@@ -26,6 +26,7 @@ class TargetInstrInfo;
 struct R600RegisterInfo : public AMDGPURegisterInfo {
   AMDGPUTargetMachine &TM;
   const TargetInstrInfo &TII;
+  RegClassWeight RCW;
 
   R600RegisterInfo(AMDGPUTargetMachine &tm, const TargetInstrInfo &tii);
 
@@ -47,6 +48,8 @@ struct R600RegisterInfo : public AMDGPURegisterInfo {
   /// \returns the sub reg enum value for the given \p Channel
   /// (e.g. getSubRegFromChannel(0) -> AMDGPU::sel_x)
   unsigned getSubRegFromChannel(unsigned Channel) const;
+
+  virtual const RegClassWeight &getRegClassWeight(const TargetRegisterClass *RC) const;
 
 };
 

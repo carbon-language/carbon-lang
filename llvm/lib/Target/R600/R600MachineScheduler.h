@@ -45,13 +45,13 @@ class R600SchedStrategy : public MachineSchedStrategy {
     AluT_Z,
     AluT_W,
     AluT_XYZW,
+    AluPredX,
     AluDiscarded, // LLVM Instructions that are going to be eliminated
     AluLast
   };
 
   std::vector<SUnit *> Available[IDLast], Pending[IDLast];
   std::vector<SUnit *> AvailableAlus[AluLast];
-  std::vector<SUnit *> FakeCopy;
 
   InstKind CurInstKind;
   int CurEmitted;

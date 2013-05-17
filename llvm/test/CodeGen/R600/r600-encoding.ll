@@ -5,10 +5,10 @@
 ; the VLIW4/5 GPUs.
 
 ; EG-CHECK: @test
-; EG-CHECK: MUL_IEEE {{[ *TXYZW.,0-9]+}} ; encoding: [{{0x[0-9a-f]+,0x[0-9a-f]+,0x[0-9a-f]+,0x[0-9a-f]+,0x10,0x01,0x[0-9a-f]+,0x[0-9a-f]+}}]
+; EG-CHECK: MUL_IEEE {{[ *TXYZWPVxyzw.,0-9]+}} ; encoding: [{{0x[0-9a-f]+,0x[0-9a-f]+,0x[0-9a-f]+,0x[0-9a-f]+,0x10,0x01,0x[0-9a-f]+,0x[0-9a-f]+}}]
 
 ; R600-CHECK: @test
-; R600-CHECK: MUL_IEEE {{[ *TXYZW.,0-9]+}} ; encoding: [{{0x[0-9a-f]+,0x[0-9a-f]+,0x[0-9a-f]+,0x[0-9a-f]+,0x10,0x02,0x[0-9a-f]+,0x[0-9a-f]+}}]
+; R600-CHECK: MUL_IEEE {{[ *TXYZWPVxyzw.,0-9]+}} ; encoding: [{{0x[0-9a-f]+,0x[0-9a-f]+,0x[0-9a-f]+,0x[0-9a-f]+,0x10,0x02,0x[0-9a-f]+,0x[0-9a-f]+}}]
 
 define void @test() {
 entry:

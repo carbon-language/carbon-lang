@@ -34,7 +34,7 @@ void R600SchedStrategy::initialize(ScheduleDAGMI *dag) {
   CurEmitted = 0;
   OccupedSlotsMask = 15;
   InstKindLimit[IDAlu] = TII->getMaxAlusPerClause();
-
+  InstKindLimit[IDOther] = 32;
 
   const AMDGPUSubtarget &ST = DAG->TM.getSubtarget<AMDGPUSubtarget>();
   InstKindLimit[IDFetch] = ST.getTexVTXClauseSize();
@@ -49,12 +49,12 @@ void R600SchedStrategy::MoveUnits(std::vector<SUnit *> &QSrc,
 
 SUnit* R600SchedStrategy::pickNode(bool &IsTopNode) {
   SUnit *SU = 0;
-  IsTopNode = true;
   NextInstKind = IDOther;
 
+  IsTopNode = false;
+
   // check if we might want to switch current clause type
-  bool AllowSwitchToAlu = (CurInstKind == IDOther) ||
-      (CurEmitted >= InstKindLimit[CurInstKind]) ||
+  bool AllowSwitchToAlu = (CurEmitted >= InstKindLimit[CurInstKind]) ||
       (Available[CurInstKind].empty());
   bool AllowSwitchFromAlu = (CurEmitted >= InstKindLimit[CurInstKind]) &&
       (!Available[IDFetch].empty() || !Available[IDOther].empty());
@@ -86,10 +86,10 @@ SUnit* R600SchedStrategy::pickNode(bool &IsTopNode) {
 
   DEBUG(
       if (SU) {
-        dbgs() << "picked node: ";
+        dbgs() << " ** Pick node **\n";
         SU->dump(DAG);
       } else {
-        dbgs() << "NO NODE ";
+        dbgs() << "NO NODE \n";
         for (unsigned i = 0; i < DAG->SUnits.size(); i++) {
           const SUnit &S = DAG->SUnits[i];
           if (!S.isScheduled)
@@ -102,9 +102,6 @@ SUnit* R600SchedStrategy::pickNode(bool &IsTopNode) {
 }
 
 void R600SchedStrategy::schedNode(SUnit *SU, bool IsTopNode) {
-
-  DEBUG(dbgs() << "scheduled: ");
-  DEBUG(SU->dump(DAG));
 
   if (NextInstKind != CurInstKind) {
     DEBUG(dbgs() << "Instruction Type Switch\n");
@@ -141,19 +138,23 @@ void R600SchedStrategy::schedNode(SUnit *SU, bool IsTopNode) {
   if (CurInstKind != IDFetch) {
     MoveUnits(Pending[IDFetch], Available[IDFetch]);
   }
-  MoveUnits(Pending[IDOther], Available[IDOther]);
 }
 
 void R600SchedStrategy::releaseTopNode(SUnit *SU) {
-  int IK = getInstKind(SU);
+  DEBUG(dbgs() << "Top Releasing ";SU->dump(DAG););
 
-  DEBUG(dbgs() << IK << " <= ");
-  DEBUG(SU->dump(DAG));
-
-  Pending[IK].push_back(SU);
 }
 
 void R600SchedStrategy::releaseBottomNode(SUnit *SU) {
+  DEBUG(dbgs() << "Bottom Releasing ";SU->dump(DAG););
+
+  int IK = getInstKind(SU);
+  // There is no export clause, we can schedule one as soon as its ready
+  if (IK == IDOther)
+    Available[IDOther].push_back(SU);
+  else
+    Pending[IK].push_back(SU);
+
 }
 
 bool R600SchedStrategy::regBelongsToClass(unsigned Reg,
@@ -169,18 +170,15 @@ R600SchedStrategy::AluKind R600SchedStrategy::getAluKind(SUnit *SU) const {
   MachineInstr *MI = SU->getInstr();
 
     switch (MI->getOpcode()) {
+    case AMDGPU::PRED_X:
+      return AluPredX;
     case AMDGPU::INTERP_PAIR_XY:
     case AMDGPU::INTERP_PAIR_ZW:
     case AMDGPU::INTERP_VEC_LOAD:
     case AMDGPU::DOT_4:
       return AluT_XYZW;
     case AMDGPU::COPY:
-      if (TargetRegisterInfo::isPhysicalRegister(MI->getOperand(1).getReg())) {
-        // %vregX = COPY Tn_X is likely to be discarded in favor of an
-        // assignement of Tn_X to %vregX, don't considers it in scheduling
-        return AluDiscarded;
-      }
-      else if (MI->getOperand(1).isUndef()) {
+      if (MI->getOperand(1).isUndef()) {
         // MI will become a KILL, don't considers it in scheduling
         return AluDiscarded;
       }
@@ -238,6 +236,7 @@ int R600SchedStrategy::getInstKind(SUnit* SU) {
   }
 
   switch (Opcode) {
+  case AMDGPU::PRED_X:
   case AMDGPU::COPY:
   case AMDGPU::CONST_COPY:
   case AMDGPU::INTERP_PAIR_XY:
@@ -328,12 +327,18 @@ bool R600SchedStrategy::isAvailablesAluEmpty() const {
   return Pending[IDAlu].empty() && AvailableAlus[AluAny].empty() &&
       AvailableAlus[AluT_XYZW].empty() && AvailableAlus[AluT_X].empty() &&
       AvailableAlus[AluT_Y].empty() && AvailableAlus[AluT_Z].empty() &&
-      AvailableAlus[AluT_W].empty() && AvailableAlus[AluDiscarded].empty();
+      AvailableAlus[AluT_W].empty() && AvailableAlus[AluDiscarded].empty() &&
+      AvailableAlus[AluPredX].empty();
 }
 
 SUnit* R600SchedStrategy::pickAlu() {
   while (!isAvailablesAluEmpty()) {
     if (!OccupedSlotsMask) {
+      // Bottom up scheduling : predX must comes first
+      if (!AvailableAlus[AluPredX].empty()) {
+        OccupedSlotsMask = 15;
+        return PopInst(AvailableAlus[AluPredX]);
+      }
       // Flush physical reg copies (RA will discard them)
       if (!AvailableAlus[AluDiscarded].empty()) {
         OccupedSlotsMask = 15;
@@ -345,7 +350,7 @@ SUnit* R600SchedStrategy::pickAlu() {
         return PopInst(AvailableAlus[AluT_XYZW]);
       }
     }
-    for (unsigned Chan = 0; Chan < 4; ++Chan) {
+    for (int Chan = 3; Chan > -1; --Chan) {
       bool isOccupied = OccupedSlotsMask & (1 << Chan);
       if (!isOccupied) {
         SUnit *SU = AttemptFillSlot(Chan);
