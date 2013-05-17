@@ -4519,16 +4519,11 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
         return DAG.getSetCC(N->getDebugLoc(), VT, N0.getOperand(0),
                              N0.getOperand(1),
                              cast<CondCodeSDNode>(N0.getOperand(2))->get());
+
       // If the desired elements are smaller or larger than the source
       // elements we can use a matching integer vector type and then
       // truncate/sign extend
-      EVT MatchingElementType =
-        EVT::getIntegerVT(*DAG.getContext(),
-                          N0VT.getScalarType().getSizeInBits());
-      EVT MatchingVectorType =
-        EVT::getVectorVT(*DAG.getContext(), MatchingElementType,
-                         N0VT.getVectorNumElements());
-
+      EVT MatchingVectorType = N0VT.changeVectorElementTypeToInteger();
       if (SVT == MatchingVectorType) {
         SDValue VsetCC = DAG.getSetCC(N->getDebugLoc(), MatchingVectorType,
                                N0.getOperand(0), N0.getOperand(1),
