@@ -1594,14 +1594,6 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
       // call exit before this point.  This means that the path
       // terminated within the call itself.
       if (Optional<CallEnter> CE = P.getAs<CallEnter>()) {
-        // Add an edge to the start of the function.
-        const StackFrameContext *CalleeLC = CE->getCalleeContext();
-        PathDiagnosticLocation &PrevLocCallee = PrevLocMap[CalleeLC];
-        const Decl *D = CalleeLC->getDecl();
-        addEdgeToPath(PD.getActivePath(), PrevLocCallee,
-                      PathDiagnosticLocation::createBegin(D, SM),
-                      CalleeLC);
-
         // Did we visit an entire call?
         bool VisitedEntireCall = PD.isWithinCall();
         PD.popActivePath();
