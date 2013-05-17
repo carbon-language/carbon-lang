@@ -156,5 +156,17 @@ int main(int argc, char **argv) {
     // CHECK: auto I = MapFind.find("foo");
   }
 
+  // Test for declaration lists
+  {
+    // Ensusre declaration lists that matches the declaration type with written
+    // no-list initializer are transformed.
+    std::vector<int>::iterator I = Vec.begin(), E = Vec.end();
+    // CHECK: auto I = Vec.begin(), E = Vec.end();
+
+    // Declaration lists with non-initialized variables should not be
+    // transformed.
+    std::vector<int>::iterator J = Vec.begin(), K;
+    // CHECK: std::vector<int>::iterator J = Vec.begin(), K;
+  }
   return 0;
 }

@@ -17,14 +17,14 @@
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 
-extern const char *IteratorDeclId;
+extern const char *IteratorDeclStmtId;
 extern const char *DeclWithNewId;
 extern const char *NewExprId;
 
-/// \brief Create a matcher that matches variable declarations where the type
-/// is an iterator for an std container and has an explicit initializer of the
-/// same type.
-clang::ast_matchers::DeclarationMatcher makeIteratorDeclMatcher();
+/// \brief Create a matcher that matches declaration staments that have
+/// variable declarations where the type is an iterator for an std container
+/// and has an explicit initializer of the same type.
+clang::ast_matchers::StatementMatcher makeIteratorDeclMatcher();
 
 /// \brief Create a matcher that matches variable declarations that are
 /// initialized by a C++ new expression.

@@ -18,7 +18,7 @@
 using namespace clang::ast_matchers;
 using namespace clang;
 
-const char *IteratorDeclId = "iterator_decl";
+const char *IteratorDeclStmtId = "iterator_decl";
 const char *DeclWithNewId = "decl_new";
 const char *NewExprId = "new_expr";
 
@@ -232,20 +232,30 @@ TypeMatcher iteratorFromUsingDeclaration() {
 }
 } // namespace
 
-DeclarationMatcher makeIteratorDeclMatcher() {
-  return varDecl(allOf(
-                   hasWrittenNonListInitializer(),
-                   unless(hasType(autoType())),
-                   hasType(
-                     isSugarFor(
-                       anyOf(
-                         typedefIterator(),
-                         nestedIterator(),
-                         iteratorFromUsingDeclaration()
-                       )
-                     )
-                   )
-                 )).bind(IteratorDeclId);
+// \brief This matcher returns delaration statements that contain variable
+// declarations with written non-list initializer for standard iterators.
+StatementMatcher makeIteratorDeclMatcher() {
+  return declStmt(
+    // At least one varDecl should be a child of the declStmt to ensure it's a
+    // declaration list and avoid matching other declarations
+    // e.g. using directives.
+    has(varDecl()),
+    unless(has(varDecl(
+      anyOf(
+        unless(hasWrittenNonListInitializer()),
+        hasType(autoType()),
+        unless(hasType(
+          isSugarFor(
+            anyOf(
+              typedefIterator(),
+              nestedIterator(),
+              iteratorFromUsingDeclaration()
+            )
+          )
+        ))
+      )
+    )))
+  ).bind(IteratorDeclStmtId);
 }
 
 DeclarationMatcher makeDeclWithNewMatcher() {

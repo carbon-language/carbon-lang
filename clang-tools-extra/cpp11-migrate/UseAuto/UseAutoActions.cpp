@@ -20,54 +20,60 @@ using namespace clang::ast_matchers;
 using namespace clang::tooling;
 using namespace clang;
 
-void IteratorReplacer::run(const MatchFinder::MatchResult &Result) {
-  const VarDecl *D = Result.Nodes.getNodeAs<VarDecl>(IteratorDeclId);
 
+void IteratorReplacer::run(const MatchFinder::MatchResult &Result) {
+  const DeclStmt *D = Result.Nodes.getNodeAs<DeclStmt>(IteratorDeclStmtId);
   assert(D && "Bad Callback. No node provided");
 
   SourceManager &SM = *Result.SourceManager;
   if (!SM.isFromMainFile(D->getLocStart()))
     return;
 
-  const Expr *ExprInit = D->getInit();
+  for (clang::DeclStmt::const_decl_iterator I  = D->decl_begin(),
+        E = D->decl_end(); I != E; ++I) {
+    const VarDecl *V = cast<VarDecl>(*I);
 
-  // Skip expressions with cleanups from the initializer expression.
-  if (const ExprWithCleanups *E = dyn_cast<ExprWithCleanups>(ExprInit))
-    ExprInit = E->getSubExpr();
+    const Expr *ExprInit = V->getInit();
 
-  const CXXConstructExpr *Construct = cast<CXXConstructExpr>(ExprInit);
+    // Skip expressions with cleanups from the initializer expression.
+    if (const ExprWithCleanups *E = dyn_cast<ExprWithCleanups>(ExprInit))
+      ExprInit = E->getSubExpr();
 
-  assert(Construct->getNumArgs() == 1u &&
-         "Expected constructor with single argument");
+    const CXXConstructExpr *Construct = cast<CXXConstructExpr>(ExprInit);
 
-  // Drill down to the as-written initializer.
-  const Expr *E = Construct->arg_begin()->IgnoreParenImpCasts();
-  if (E != E->IgnoreConversionOperator())
-    // We hit a conversion operator. Early-out now as they imply an implicit
-    // conversion from a different type. Could also mean an explicit conversion
-    // from the same type but that's pretty rare.
-    return;
+    assert(Construct->getNumArgs() == 1u &&
+           "Expected constructor with single argument");
 
-  if (const CXXConstructExpr *NestedConstruct = dyn_cast<CXXConstructExpr>(E))
-    // If we ran into an implicit conversion constructor, can't convert.
-    //
-    // FIXME: The following only checks if the constructor can be used
-    // implicitly, not if it actually was. Cases where the converting constructor
-    // was used explicitly won't get converted.
-    if (NestedConstruct->getConstructor()->isConvertingConstructor(false))
+    // Drill down to the as-written initializer.
+    const Expr *E = Construct->arg_begin()->IgnoreParenImpCasts();
+    if (E != E->IgnoreConversionOperator())
+      // We hit a conversion operator. Early-out now as they imply an implicit
+      // conversion from a different type. Could also mean an explicit conversion
+      // from the same type but that's pretty rare.
       return;
 
-  if (Result.Context->hasSameType(D->getType(), E->getType())) {
-    TypeLoc TL = D->getTypeSourceInfo()->getTypeLoc();
-
-    // WARNING: TypeLoc::getSourceRange() will include the identifier for things
-    // like function pointers. Not a concern since this action only works with
-    // iterators but something to keep in mind in the future.
-
-    CharSourceRange Range(TL.getSourceRange(), true);
-    Replace.insert(tooling::Replacement(SM, Range, "auto"));
-    ++AcceptedChanges;
+    if (const CXXConstructExpr *NestedConstruct = dyn_cast<CXXConstructExpr>(E))
+      // If we ran into an implicit conversion constructor, can't convert.
+      //
+      // FIXME: The following only checks if the constructor can be used
+      // implicitly, not if it actually was. Cases where the converting constructor
+      // was used explicitly won't get converted.
+      if (NestedConstruct->getConstructor()->isConvertingConstructor(false))
+        return;
+    if (!Result.Context->hasSameType(V->getType(), E->getType()))
+      return;
   }
+  // Get the type location using the first declartion.
+  const VarDecl *V = cast<VarDecl>(*D->decl_begin());
+  TypeLoc TL = V->getTypeSourceInfo()->getTypeLoc();
+
+  // WARNING: TypeLoc::getSourceRange() will include the identifier for things
+  // like function pointers. Not a concern since this action only works with
+  // iterators but something to keep in mind in the future.
+
+  CharSourceRange Range(TL.getSourceRange(), true);
+  Replace.insert(tooling::Replacement(SM, Range, "auto"));
+  ++AcceptedChanges;
 }
 
 void NewReplacer::run(const MatchFinder::MatchResult &Result) {
@@ -77,7 +83,7 @@ void NewReplacer::run(const MatchFinder::MatchResult &Result) {
   SourceManager &SM = *Result.SourceManager;
   if (!SM.isFromMainFile(D->getLocStart()))
     return;
-  
+
   const CXXNewExpr *NewExpr = Result.Nodes.getNodeAs<CXXNewExpr>(NewExprId);
   assert(NewExpr && "Bad Callback. No CXXNewExpr bound");
 
