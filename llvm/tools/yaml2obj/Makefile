@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TOOLNAME = yaml2obj
-LINK_COMPONENTS := support
+LINK_COMPONENTS := object
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1
