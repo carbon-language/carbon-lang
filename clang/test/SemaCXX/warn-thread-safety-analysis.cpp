@@ -11,8 +11,10 @@
 #define PT_GUARDED_VAR      __attribute__ ((pt_guarded_var))
 #define ACQUIRED_AFTER(...) __attribute__ ((acquired_after(__VA_ARGS__)))
 #define ACQUIRED_BEFORE(...) __attribute__ ((acquired_before(__VA_ARGS__)))
-#define EXCLUSIVE_LOCK_FUNCTION(...)   __attribute__ ((exclusive_lock_function(__VA_ARGS__)))
-#define SHARED_LOCK_FUNCTION(...)      __attribute__ ((shared_lock_function(__VA_ARGS__)))
+#define EXCLUSIVE_LOCK_FUNCTION(...)    __attribute__ ((exclusive_lock_function(__VA_ARGS__)))
+#define SHARED_LOCK_FUNCTION(...)       __attribute__ ((shared_lock_function(__VA_ARGS__)))
+#define ASSERT_EXCLUSIVE_LOCK(...)      __attribute__ ((assert_exclusive_lock(__VA_ARGS__)))
+#define ASSERT_SHARED_LOCK(...)         __attribute__ ((assert_shared_lock(__VA_ARGS__)))
 #define EXCLUSIVE_TRYLOCK_FUNCTION(...) __attribute__ ((exclusive_trylock_function(__VA_ARGS__)))
 #define SHARED_TRYLOCK_FUNCTION(...)    __attribute__ ((shared_trylock_function(__VA_ARGS__)))
 #define UNLOCK_FUNCTION(...)            __attribute__ ((unlock_function(__VA_ARGS__)))
@@ -33,6 +35,9 @@ class  __attribute__((lockable)) Mutex {
   bool TryLock() __attribute__((exclusive_trylock_function(true)));
   bool ReaderTryLock() __attribute__((shared_trylock_function(true)));
   void LockWhen(const int &cond) __attribute__((exclusive_lock_function));
+
+  void AssertHeld()       ASSERT_EXCLUSIVE_LOCK();
+  void AssertReaderHeld() ASSERT_SHARED_LOCK();
 };
 
 class __attribute__((scoped_lockable)) MutexLock {
@@ -3984,4 +3989,106 @@ private:
 };
 
 }  // end namespace LockUnlockFunctionTest
+
+
+namespace AssertHeldTest {
+
+class Foo {
+public:
+  int c;
+  int a GUARDED_BY(mu_);
+  Mutex mu_;
+
+  void test1() {
+    mu_.AssertHeld();
+    int b = a;
+    a = 0;
+  }
+
+  void test2() {
+    mu_.AssertReaderHeld();
+    int b = a;
+    a = 0;   // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+  }
+
+  void test3() {
+    if (c) {
+      mu_.AssertHeld();
+    }
+    else {
+      mu_.AssertHeld();
+    }
+    int b = a;
+    a = 0;
+  }
+
+  void test4() EXCLUSIVE_LOCKS_REQUIRED(mu_) {
+    mu_.AssertHeld();
+    int b = a;
+    a = 0;
+  }
+
+  void test5() UNLOCK_FUNCTION(mu_) {
+    mu_.AssertHeld();
+    mu_.Unlock();
+  }
+
+  void test6() {
+    mu_.AssertHeld();
+    mu_.Unlock();
+  }  // should this be a warning?
+
+  void test7() {
+    if (c) {
+      mu_.AssertHeld();
+    }
+    else {
+      mu_.Lock();
+    }
+    int b = a;
+    a = 0;
+    mu_.Unlock();
+  }
+
+  void test8() {
+    if (c) {
+      mu_.Lock();
+    }
+    else {
+      mu_.AssertHeld();
+    }
+    int b = a;
+    a = 0;
+    mu_.Unlock();
+  }
+
+  void test9() {
+    if (c) {
+      mu_.AssertHeld();
+    }
+    else {
+      mu_.Lock();  // expected-note {{mutex acquired here}}
+    }
+  }  // expected-warning {{mutex 'mu_' is still locked at the end of function}}
+
+  void test10() {
+    if (c) {
+      mu_.Lock();  // expected-note {{mutex acquired here}}
+    }
+    else {
+      mu_.AssertHeld();
+    }
+  }  // expected-warning {{mutex 'mu_' is still locked at the end of function}}
+
+  void assertMu() ASSERT_EXCLUSIVE_LOCK(mu_);
+
+  void test11() {
+    assertMu();
+    int b = a;
+    a = 0;
+  }
+};
+
+}  // end namespace AssertHeldTest
+
 

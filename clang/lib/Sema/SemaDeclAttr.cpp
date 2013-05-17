@@ -788,6 +788,34 @@ static void handleExclusiveLockFunctionAttr(Sema &S, Decl *D,
                                        Attr.getAttributeSpellingListIndex()));
 }
 
+static void handleAssertSharedLockAttr(Sema &S, Decl *D,
+                                       const AttributeList &Attr) {
+  SmallVector<Expr*, 1> Args;
+  if (!checkLockFunAttrCommon(S, D, Attr, Args))
+    return;
+
+  unsigned Size = Args.size();
+  Expr **StartArg = Size == 0 ? 0 : &Args[0];
+  D->addAttr(::new (S.Context)
+             AssertSharedLockAttr(Attr.getRange(), S.Context, StartArg, Size,
+                                  Attr.getAttributeSpellingListIndex()));
+}
+
+static void handleAssertExclusiveLockAttr(Sema &S, Decl *D,
+                                          const AttributeList &Attr) {
+  SmallVector<Expr*, 1> Args;
+  if (!checkLockFunAttrCommon(S, D, Attr, Args))
+    return;
+
+  unsigned Size = Args.size();
+  Expr **StartArg = Size == 0 ? 0 : &Args[0];
+  D->addAttr(::new (S.Context)
+             AssertExclusiveLockAttr(Attr.getRange(), S.Context,
+                                     StartArg, Size,
+                                     Attr.getAttributeSpellingListIndex()));
+}
+
+
 static bool checkTryLockFunAttrCommon(Sema &S, Decl *D,
                                       const AttributeList &Attr,
                                       SmallVector<Expr*, 2> &Args) {
@@ -4918,6 +4946,12 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     break;
 
   // Thread safety attributes:
+  case AttributeList::AT_AssertExclusiveLock:
+    handleAssertExclusiveLockAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_AssertSharedLock:
+    handleAssertSharedLockAttr(S, D, Attr);
+    break;
   case AttributeList::AT_GuardedVar:
     handleGuardedVarAttr(S, D, Attr);
     break;

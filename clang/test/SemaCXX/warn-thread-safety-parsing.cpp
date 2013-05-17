@@ -8,8 +8,10 @@
 #define PT_GUARDED_VAR      __attribute__ ((pt_guarded_var))
 #define ACQUIRED_AFTER(...) __attribute__ ((acquired_after(__VA_ARGS__)))
 #define ACQUIRED_BEFORE(...) __attribute__ ((acquired_before(__VA_ARGS__)))
-#define EXCLUSIVE_LOCK_FUNCTION(...)   __attribute__ ((exclusive_lock_function(__VA_ARGS__)))
-#define SHARED_LOCK_FUNCTION(...)      __attribute__ ((shared_lock_function(__VA_ARGS__)))
+#define EXCLUSIVE_LOCK_FUNCTION(...)    __attribute__ ((exclusive_lock_function(__VA_ARGS__)))
+#define SHARED_LOCK_FUNCTION(...)       __attribute__ ((shared_lock_function(__VA_ARGS__)))
+#define ASSERT_EXCLUSIVE_LOCK(...)      __attribute__ ((assert_exclusive_lock(__VA_ARGS__)))
+#define ASSERT_SHARED_LOCK(...)         __attribute__ ((assert_shared_lock(__VA_ARGS__)))
 #define EXCLUSIVE_TRYLOCK_FUNCTION(...) __attribute__ ((exclusive_trylock_function(__VA_ARGS__)))
 #define SHARED_TRYLOCK_FUNCTION(...)    __attribute__ ((shared_trylock_function(__VA_ARGS__)))
 #define UNLOCK_FUNCTION(...)            __attribute__ ((unlock_function(__VA_ARGS__)))
@@ -24,7 +26,15 @@
 
 class LOCKABLE Mutex {
   public:
-  void Lock();
+  void Lock()          EXCLUSIVE_LOCK_FUNCTION();
+  void ReaderLock()    SHARED_LOCK_FUNCTION();
+  void Unlock()        UNLOCK_FUNCTION();
+
+  bool TryLock()       EXCLUSIVE_TRYLOCK_FUNCTION(true);
+  bool ReaderTryLock() SHARED_TRYLOCK_FUNCTION(true);
+
+  void AssertHeld()       ASSERT_EXCLUSIVE_LOCK();
+  void AssertReaderHeld() ASSERT_SHARED_LOCK();
 };
 
 class UnlockableMu{

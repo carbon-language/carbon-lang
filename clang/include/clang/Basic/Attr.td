@@ -852,6 +852,20 @@ def SharedLockFunction : InheritableAttr {
   let TemplateDependent = 1;
 }
 
+def AssertExclusiveLock : InheritableAttr {
+  let Spellings = [GNU<"assert_exclusive_lock">];
+  let Args = [VariadicExprArgument<"Args">];
+  let LateParsed = 1;
+  let TemplateDependent = 1;
+}
+
+def AssertSharedLock : InheritableAttr {
+  let Spellings = [GNU<"assert_shared_lock">];
+  let Args = [VariadicExprArgument<"Args">];
+  let LateParsed = 1;
+  let TemplateDependent = 1;
+}
+
 // The first argument is an integer or boolean value specifying the return value
 // of a successful lock acquisition.
 def ExclusiveTrylockFunction : InheritableAttr {
