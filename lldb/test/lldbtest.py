@@ -370,7 +370,7 @@ def dwarf_test(func):
     wrapper.__dwarf_test__ = True
     return wrapper
 
-def expectedFailureGcc(bugnumber=None):
+def expectedFailureGcc(bugnumber=None, compiler_version=["=", None]):
      if callable(bugnumber):
         @wraps(bugnumber)
         def expectedFailureGcc_easy_wrapper(*args, **kwargs):
@@ -380,7 +380,7 @@ def expectedFailureGcc(bugnumber=None):
             try:
                 bugnumber(*args, **kwargs)
             except Exception:
-                if "gcc" in test_compiler:
+                if "gcc" in test_compiler and self.expectedVersion(compiler_version):
                     raise case._ExpectedFailure(sys.exc_info(),None)
                 else:
                     raise
@@ -397,7 +397,7 @@ def expectedFailureGcc(bugnumber=None):
                 try:
                     func(*args, **kwargs)
                 except Exception:
-                    if "gcc" in test_compiler:
+                    if "gcc" in test_compiler and self.expectedVersion(compiler_version):
                         raise case._ExpectedFailure(sys.exc_info(),bugnumber)
                     else:
                         raise
@@ -515,7 +515,7 @@ def expectedFailurei386(bugnumber=None):
               return wrapper
         return expectedFailurei386_impl
 
-def expectedFailureLinux(bugnumber=None):
+def expectedFailureLinux(bugnumber=None, compilers=None):
      if callable(bugnumber):
         @wraps(bugnumber)
         def expectedFailureLinux_easy_wrapper(*args, **kwargs):
@@ -525,11 +525,11 @@ def expectedFailureLinux(bugnumber=None):
             try:
                 bugnumber(*args, **kwargs)
             except Exception:
-                if "linux" in platform:
+                if "linux" in platform and self.expectedCompiler(compilers):
                     raise case._ExpectedFailure(sys.exc_info(),None)
                 else:
                     raise
-            if "linux" in platform:
+            if "linux" in platform and self.expectedCompiler(compilers):
                 raise case._UnexpectedSuccess(sys.exc_info(),None)
         return expectedFailureLinux_easy_wrapper
      else:
@@ -542,11 +542,11 @@ def expectedFailureLinux(bugnumber=None):
                 try:
                     func(*args, **kwargs)
                 except Exception:
-                    if "linux" in platform:
+                    if "linux" in platform and self.expectedCompiler(compilers):
                         raise case._ExpectedFailure(sys.exc_info(),bugnumber)
                     else:
                         raise
-                if "linux" in platform:
+                if "linux" in platform and self.expectedCompiler(compilers):
                     raise case._UnexpectedSuccess(sys.exc_info(),bugnumber)
               return wrapper
         return expectedFailureLinux_impl
@@ -1150,6 +1150,32 @@ class Base(unittest2.TestCase):
             if m:
                 version = m.group(1)
         return version
+
+    def expectedVersion(self, compiler_version):
+        """Determines if compiler_version matches the current tool chain."""
+        if (compiler_version == None):
+            return True
+        operator = str(compiler_version[0])
+        version = compiler_version[1]
+
+        if (version == None):
+            return True
+        if (operator == '>'):
+            return self.getCompilerVersion() > version
+        if (operator == '>=' or operator == '=>'): 
+            return self.getCompilerVersion() >= version
+        if (operator == '<'):
+            return self.getCompilerVersion() < version
+        if (operator == '<=' or operator == '=<'):
+            return self.getCompilerVersion() <= version
+        if (operator == '!=' or operator == '!' or operator == 'not'):
+            return str(version) not in str(self.getCompilerVersion())
+        return str(version) in str(self.getCompilerVersion())
+
+    def expectedCompiler(self, compilers):
+        if (compilers == None):
+            return True
+        return self.getCompiler() in compilers
 
     def getRunOptions(self):
         """Command line option for -A and -C to run this test again, called from
