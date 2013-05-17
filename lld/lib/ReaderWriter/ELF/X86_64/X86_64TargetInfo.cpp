@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Atoms.h"
+#include "X86_64DynamicAtoms.h"
 #include "X86_64TargetInfo.h"
 
 #include "lld/Core/File.h"
@@ -24,61 +24,6 @@ using namespace lld::elf;
 
 namespace {
 using namespace llvm::ELF;
-
-class X86_64GOTAtom : public GOTAtom {
-  static const uint8_t _defaultContent[8];
-
-public:
-  X86_64GOTAtom(const File &f, StringRef secName)
-      : GOTAtom(f, secName) {
-  }
-
-  virtual ArrayRef<uint8_t> rawContent() const {
-    return ArrayRef<uint8_t>(_defaultContent, 8);
-  }
-};
-
-const uint8_t X86_64GOTAtom::_defaultContent[8] = { 0 };
-
-class X86_64PLTAtom : public PLTAtom {
-  static const uint8_t _defaultContent[16];
-
-public:
-  X86_64PLTAtom(const File &f, StringRef secName)
-      : PLTAtom(f, secName) {
-  }
-
-  virtual ArrayRef<uint8_t> rawContent() const {
-    return ArrayRef<uint8_t>(_defaultContent, 16);
-  }
-};
-
-const uint8_t X86_64PLTAtom::_defaultContent[16] = {
-  0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmpq *gotatom(%rip)
-  0x68, 0x00, 0x00, 0x00, 0x00,       // pushq reloc-index
-  0xe9, 0x00, 0x00, 0x00, 0x00        // jmpq plt[-1]
-};
-
-class X86_64PLT0Atom : public PLT0Atom {
-  static const uint8_t _plt0Content[16];
-
-public:
-  X86_64PLT0Atom(const File &f) : PLT0Atom(f) {
-#ifndef NDEBUG
-    _name = ".PLT0";
-#endif
-  }
-
-  virtual ArrayRef<uint8_t> rawContent() const {
-    return ArrayRef<uint8_t>(_plt0Content, 16);
-  }
-};
-
-const uint8_t X86_64PLT0Atom::_plt0Content[16] = {
-  0xff, 0x35, 0x00, 0x00, 0x00, 0x00, // pushq GOT+8(%rip)
-  0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmp *GOT+16(%rip)
-  0x90, 0x90, 0x90, 0x90        // nopnopnop
-};
 
 class ELFPassFile : public SimpleFile {
 public:
@@ -420,7 +365,7 @@ void elf::X86_64TargetInfo::addPasses(PassManager &pm) const {
 
 #define LLD_CASE(name) .Case(#name, llvm::ELF::name)
 
-ErrorOr<Reference::Kind> 
+ErrorOr<Reference::Kind>
 elf::X86_64TargetInfo::relocKindFromString(StringRef str) const {
   int32_t ret = llvm::StringSwitch<int32_t>(str)
     LLD_CASE(R_X86_64_NONE)
@@ -473,7 +418,7 @@ elf::X86_64TargetInfo::relocKindFromString(StringRef str) const {
 
 #define LLD_CASE(name) case llvm::ELF::name: return std::string(#name);
 
-ErrorOr<std::string> 
+ErrorOr<std::string>
 elf::X86_64TargetInfo::stringFromRelocKind(Reference::Kind kind) const {
   switch (kind) {
   LLD_CASE(R_X86_64_NONE)
