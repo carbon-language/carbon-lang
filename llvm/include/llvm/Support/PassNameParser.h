@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file the PassNameParser and FilteredPassNameParser<> classes, which are
-// used to add command line arguments to a utility for all of the passes that
-// have been registered into the system.
+// This file contains the PassNameParser and FilteredPassNameParser<> classes,
+// which are used to add command line arguments to a utility for all of the
+// passes that have been registered into the system.
 //
 // The PassNameParser class adds ALL passes linked into the system (that are
 // creatable) as command line arguments to the tool (when instantiated with the
