@@ -354,24 +354,10 @@ bool LoadHoisting::isHoistableLoad(Instruction *L) {
 
 static void addMemAccesses(BasicBlock *BB, SmallPtrSet<Value *, 8> &Set) {
   for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE; ++BI) {
-    Instruction *I = &*BI;
-    Value *Addr = 0;
-
-    // Try a load.
-    LoadInst *LI = dyn_cast<LoadInst>(I);
-    if (LI) {
-      Addr = LI->getPointerOperand();
-      Set.insert(Addr);
-      continue;
-    }
-
-    // Try a store.
-    StoreInst *SI = dyn_cast<StoreInst>(I);
-    if (!SI)
-      continue;
-
-    Addr = SI->getPointerOperand();
-    Set.insert(Addr);
+    if (LoadInst *LI = dyn_cast<LoadInst>(BI)) // Try a load.
+      Set.insert(LI->getPointerOperand());
+    else if (StoreInst *SI = dyn_cast<StoreInst>(BI)) // Try a store.
+      Set.insert(SI->getPointerOperand());
   }
 }
 
@@ -2708,9 +2694,7 @@ void LoopVectorizationLegality::collectLoopUniforms() {
     Uniforms.insert(I);
 
     // Insert all operands.
-    for (int i = 0, Op = I->getNumOperands(); i < Op; ++i) {
-      Worklist.push_back(I->getOperand(i));
-    }
+    Worklist.insert(Worklist.end(), I->op_begin(), I->op_end());
   }
 }
 
