@@ -198,8 +198,8 @@ void SizeClassAllocatorGetBlockBeginStress() {
   for (size_t i = 0; i <= G8 / size; i++) {
     void *x = cache.Allocate(a, max_size_class);
     void *beg = a->GetBlockBegin(x);
-    if ((i & (i - 1)) == 0)
-      fprintf(stderr, "[%zd] %p %p\n", i, x, beg);
+    // if ((i & (i - 1)) == 0)
+    //   fprintf(stderr, "[%zd] %p %p\n", i, x, beg);
     EXPECT_EQ(x, beg);
   }
 
