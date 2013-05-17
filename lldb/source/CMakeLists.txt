@@ -144,7 +144,11 @@ add_lldb_library(liblldb
   lldb-log.cpp
   ${LLDB_BINARY_DIR}/scripts/LLDBWrapPython.cpp
   )
-set_target_properties(liblldb PROPERTIES OUTPUT_NAME lldb)
+set_target_properties(liblldb
+  PROPERTIES
+  OUTPUT_NAME lldb
+  VERSION ${LLDB_VERSION}
+  )
 add_dependencies(liblldb ${LLDB_BINARY_DIR}/scripts/LLDBWrapPython.cpp)
 target_link_libraries(liblldb ${LLDB_SYSTEM_LIBS})
 
