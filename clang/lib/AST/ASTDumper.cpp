@@ -762,6 +762,19 @@ void ASTDumper::VisitFunctionDecl(const FunctionDecl *D) {
   else if (D->isDeletedAsWritten())
     OS << " delete";
 
+  if (const FunctionProtoType *FPT = D->getType()->getAs<FunctionProtoType>()) {
+    FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
+    switch (EPI.ExceptionSpecType) {
+    default: break;
+    case EST_Unevaluated:
+      OS << " noexcept-unevaluated " << EPI.ExceptionSpecDecl;
+      break;
+    case EST_Uninstantiated:
+      OS << " noexcept-uninstantiated " << EPI.ExceptionSpecTemplate;
+      break;
+    }
+  }
+
   bool OldMoreChildren = hasMoreChildren();
   const FunctionTemplateSpecializationInfo *FTSI =
       D->getTemplateSpecializationInfo();
