@@ -243,6 +243,9 @@ R600SchedStrategy::AluKind R600SchedStrategy::getAluKind(SUnit *SU) const {
 int R600SchedStrategy::getInstKind(SUnit* SU) {
   int Opcode = SU->getInstr()->getOpcode();
 
+  if (TII->usesTextureCache(Opcode) || TII->usesVertexCache(Opcode))
+    return IDFetch;
+
   if (TII->isALUInstr(Opcode)) {
     return IDAlu;
   }
@@ -255,30 +258,7 @@ int R600SchedStrategy::getInstKind(SUnit* SU) {
   case AMDGPU::INTERP_VEC_LOAD:
   case AMDGPU::DOT_4:
     return IDAlu;
-  case AMDGPU::TEX_VTX_CONSTBUF:
-  case AMDGPU::TEX_VTX_TEXBUF:
-  case AMDGPU::TEX_LD:
-  case AMDGPU::TEX_GET_TEXTURE_RESINFO:
-  case AMDGPU::TEX_GET_GRADIENTS_H:
-  case AMDGPU::TEX_GET_GRADIENTS_V:
-  case AMDGPU::TEX_SET_GRADIENTS_H:
-  case AMDGPU::TEX_SET_GRADIENTS_V:
-  case AMDGPU::TEX_SAMPLE:
-  case AMDGPU::TEX_SAMPLE_C:
-  case AMDGPU::TEX_SAMPLE_L:
-  case AMDGPU::TEX_SAMPLE_C_L:
-  case AMDGPU::TEX_SAMPLE_LB:
-  case AMDGPU::TEX_SAMPLE_C_LB:
-  case AMDGPU::TEX_SAMPLE_G:
-  case AMDGPU::TEX_SAMPLE_C_G:
-  case AMDGPU::TXD:
-  case AMDGPU::TXD_SHADOW:
-    return IDFetch;
   default:
-    DEBUG(
-        dbgs() << "other inst: ";
-        SU->dump(DAG);
-    );
     return IDOther;
   }
 }
