@@ -524,7 +524,7 @@ void __asan_init() {
       0, true, 0, &create_main_args);
   CHECK_EQ(0, main_tid);
   SetCurrentThread(main_thread);
-  main_thread->ThreadStart(GetPid());
+  main_thread->ThreadStart(internal_getpid());
   force_interface_symbols();  // no-op.
 
   InitializeAllocator();

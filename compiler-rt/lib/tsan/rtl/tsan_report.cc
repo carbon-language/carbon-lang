@@ -179,7 +179,8 @@ ReportStack *SkipTsanInternalFrames(ReportStack *ent) {
 void PrintReport(const ReportDesc *rep) {
   Printf("==================\n");
   const char *rep_typ_str = ReportTypeString(rep->typ);
-  Printf("WARNING: ThreadSanitizer: %s (pid=%d)\n", rep_typ_str, GetPid());
+  Printf("WARNING: ThreadSanitizer: %s (pid=%d)\n", rep_typ_str,
+         (int)internal_getpid());
 
   for (uptr i = 0; i < rep->stacks.Size(); i++) {
     if (i)

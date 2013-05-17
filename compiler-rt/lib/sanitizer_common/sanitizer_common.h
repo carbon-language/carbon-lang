@@ -40,7 +40,6 @@ uptr GetPageSize();
 uptr GetPageSizeCached();
 uptr GetMmapGranularity();
 // Threads
-int GetPid();
 uptr GetTid();
 uptr GetThreadSelf();
 void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,

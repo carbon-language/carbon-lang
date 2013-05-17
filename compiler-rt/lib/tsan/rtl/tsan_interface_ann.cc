@@ -196,7 +196,7 @@ void PrintMatchedBenignRaces() {
       &ExpectRace::addcount);
   if (hit_matched.Size()) {
     Printf("ThreadSanitizer: Matched %d \"benign\" races (pid=%d):\n",
-        hit_count, GetPid());
+        hit_count, (int)internal_getpid());
     for (uptr i = 0; i < hit_matched.Size(); i++) {
       Printf("%d %s:%d %s\n",
           hit_matched[i].hitcount, hit_matched[i].file,
@@ -206,7 +206,7 @@ void PrintMatchedBenignRaces() {
   if (hit_matched.Size()) {
     Printf("ThreadSanitizer: Annotated %d \"benign\" races, %d unique"
            " (pid=%d):\n",
-        add_count, unique_count, GetPid());
+        add_count, unique_count, (int)internal_getpid());
     for (uptr i = 0; i < add_matched.Size(); i++) {
       Printf("%d %s:%d %s\n",
           add_matched[i].addcount, add_matched[i].file,

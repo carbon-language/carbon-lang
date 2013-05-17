@@ -44,7 +44,7 @@ bool FileExists(const char *filename) {
   UNIMPLEMENTED();
 }
 
-int GetPid() {
+uptr internal_getpid() {
   return GetProcessId(GetCurrentProcess());
 }
 

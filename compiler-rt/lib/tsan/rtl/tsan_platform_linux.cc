@@ -176,8 +176,8 @@ static void MapRodata() {
   if (tmpdir == 0)
     return;
   char filename[256];
-  internal_snprintf(filename, sizeof(filename), "%s/tsan.rodata.%u",
-                    tmpdir, GetPid());
+  internal_snprintf(filename, sizeof(filename), "%s/tsan.rodata.%d",
+                    tmpdir, (int)internal_getpid());
   uptr openrv = internal_open(filename, O_RDWR | O_CREAT | O_EXCL, 0600);
   if (internal_iserror(openrv))
     return;

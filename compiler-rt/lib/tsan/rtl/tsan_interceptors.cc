@@ -1754,11 +1754,11 @@ TSAN_INTERCEPTOR(int, kill, int pid, int sig) {
   SignalContext *sctx = SigCtx(thr);
   CHECK_NE(sctx, 0);
   int prev = sctx->int_signal_send;
-  if (pid == GetPid()) {
+  if (pid == (int)internal_getpid()) {
     sctx->int_signal_send = sig;
   }
   int res = REAL(kill)(pid, sig);
-  if (pid == GetPid()) {
+  if (pid == (int)internal_getpid()) {
     CHECK_EQ(sctx->int_signal_send, sig);
     sctx->int_signal_send = prev;
   }

@@ -43,10 +43,6 @@ uptr GetMmapGranularity() {
   return GetPageSize();
 }
 
-int GetPid() {
-  return getpid();
-}
-
 u32 GetUid() {
   return getuid();
 }

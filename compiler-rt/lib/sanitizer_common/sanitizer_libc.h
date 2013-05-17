@@ -85,6 +85,7 @@ uptr internal_lseek(fd_t fd, OFF_T offset, int whence);
 
 uptr internal_ptrace(int request, int pid, void *addr, void *data);
 uptr internal_waitpid(int pid, int *status, int options);
+uptr internal_getpid();
 uptr internal_getppid();
 
 // Threading

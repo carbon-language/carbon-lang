@@ -194,7 +194,7 @@ void PrintMatchedSuppressions() {
   if (hit_count == 0)
     return;
   Printf("ThreadSanitizer: Matched %d suppressions (pid=%d):\n",
-      hit_count, GetPid());
+      hit_count, (int)internal_getpid());
   for (Suppression *supp = g_suppressions; supp; supp = supp->next) {
     if (supp->hit_count == 0)
       continue;

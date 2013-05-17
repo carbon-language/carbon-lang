@@ -87,7 +87,8 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   DlIteratePhdrCtx *ctx = (DlIteratePhdrCtx*)arg;
   InternalScopedBuffer<char> tmp(128);
   if (ctx->is_first) {
-    internal_snprintf(tmp.data(), tmp.size(), "/proc/%d/exe", GetPid());
+    internal_snprintf(tmp.data(), tmp.size(), "/proc/%d/exe",
+                      (int)internal_getpid());
     info->dlpi_name = tmp.data();
   }
   ctx->is_first = false;

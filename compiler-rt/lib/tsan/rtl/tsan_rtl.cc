@@ -120,7 +120,7 @@ static void BackgroundThread(void *arg) {
   if (flags()->profile_memory && flags()->profile_memory[0]) {
     InternalScopedBuffer<char> filename(4096);
     internal_snprintf(filename.data(), filename.size(), "%s.%d",
-        flags()->profile_memory, GetPid());
+        flags()->profile_memory, (int)internal_getpid());
     uptr openrv = OpenFile(filename.data(), true);
     if (internal_iserror(openrv)) {
       Printf("ThreadSanitizer: failed to open memory profile file '%s'\n",
@@ -229,19 +229,19 @@ void Initialize(ThreadState *thr) {
 
   if (ctx->flags.verbosity)
     Printf("***** Running under ThreadSanitizer v2 (pid %d) *****\n",
-               GetPid());
+           (int)internal_getpid());
 
   // Initialize thread 0.
   int tid = ThreadCreate(thr, 0, 0, true);
   CHECK_EQ(tid, 0);
-  ThreadStart(thr, tid, GetPid());
+  ThreadStart(thr, tid, internal_getpid());
   CHECK_EQ(thr->in_rtl, 1);
   ctx->initialized = true;
 
   if (flags()->stop_on_start) {
     Printf("ThreadSanitizer is suspended at startup (pid %d)."
            " Call __tsan_resume().\n",
-           GetPid());
+           (int)internal_getpid());
     while (__tsan_resumed == 0) {}
   }
 }
