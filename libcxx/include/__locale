@@ -339,12 +339,12 @@ public:
     static const mask punct  = _PUNCT;
     static const mask xdigit = _HEX;
     static const mask blank  = _BLANK;
-#elif (defined(__APPLE__) || defined(__FreeBSD__)) || defined(EMSCRIPTEN)
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(EMSCRIPTEN) || defined(__NetBSD__)
 #ifdef __APPLE__
     typedef __uint32_t mask;
 #elif defined(__FreeBSD__)
     typedef unsigned long mask;
-#elif defined(EMSCRIPTEN)
+#elif defined(EMSCRIPTEN) ||  defined(__NetBSD__)
     typedef unsigned short mask;
 #endif
     static const mask space  = _CTYPE_S;
@@ -356,7 +356,11 @@ public:
     static const mask digit  = _CTYPE_D;
     static const mask punct  = _CTYPE_P;
     static const mask xdigit = _CTYPE_X;
+# if defined(__NetBSD__)
+    static const mask blank  = _CTYPE_BL;
+# else
     static const mask blank  = _CTYPE_B;
+# endif
 #elif defined(__sun__)
     typedef unsigned int mask;
     static const mask space  = _ISSPACE;
@@ -595,6 +599,10 @@ public:
 #if defined(__GLIBC__) || defined(EMSCRIPTEN)
     static const int* __classic_upper_table() _NOEXCEPT;
     static const int* __classic_lower_table() _NOEXCEPT;
+#endif
+#if defined(__NetBSD__)
+    static const short* __classic_upper_table() _NOEXCEPT;
+    static const short* __classic_lower_table() _NOEXCEPT;
 #endif
 
 protected:

@@ -56,6 +56,18 @@
 # endif  // __LONG_LONG_SUPPORTED
 #endif  // __FreeBSD__
 
+#ifdef __NetBSD__
+# include <sys/endian.h>
+#  if _BYTE_ORDER == _LITTLE_ENDIAN
+#   define _LIBCPP_LITTLE_ENDIAN 1
+#   define _LIBCPP_BIG_ENDIAN    0
+# else  // _BYTE_ORDER == _LITTLE_ENDIAN
+#   define _LIBCPP_LITTLE_ENDIAN 0
+#   define _LIBCPP_BIG_ENDIAN    1
+# endif  // _BYTE_ORDER == _LITTLE_ENDIAN
+# define _LIBCPP_HAS_QUICK_EXIT
+#endif  // __NetBSD__
+
 #ifdef _WIN32
 #  define _LIBCPP_LITTLE_ENDIAN 1
 #  define _LIBCPP_BIG_ENDIAN    0
@@ -473,7 +485,7 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_EXTERN_TEMPLATE(...) extern template __VA_ARGS__;
 #endif
 
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(_WIN32) || defined(__sun__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(_WIN32) || defined(__sun__) || defined(__NetBSD__)
 #define _LIBCPP_LOCALE__L_EXTENSIONS 1
 #endif
 #ifdef __FreeBSD__
