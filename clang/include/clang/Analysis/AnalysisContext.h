@@ -82,6 +82,7 @@ class AnalysisDeclContext {
 
   bool builtCFG, builtCompleteCFG;
   OwningPtr<ParentMap> PM;
+  OwningPtr<ParentMap> SemanticPM;
   OwningPtr<PseudoConstantAnalysis> PCA;
   OwningPtr<CFGReverseBlockReachabilityAnalysis> CFA;
 
@@ -165,6 +166,9 @@ public:
   bool isCFGBuilt() const { return builtCFG; }
 
   ParentMap &getParentMap();
+
+  ParentMap &getSemanticParentMap();
+
   PseudoConstantAnalysis *getPseudoConstantAnalysis();
 
   typedef const VarDecl * const * referenced_decls_iterator;
@@ -243,6 +247,10 @@ public:
 
   ParentMap &getParentMap() const {
     return getAnalysisDeclContext()->getParentMap();
+  }
+
+  ParentMap &getSemanticParentMap() const {
+    return getAnalysisDeclContext()->getSemanticParentMap();
   }
 
   const ImplicitParamDecl *getSelfDecl() const {

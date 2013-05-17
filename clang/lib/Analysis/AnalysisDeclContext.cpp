@@ -212,18 +212,32 @@ void AnalysisDeclContext::dumpCFG(bool ShowColors) {
     getCFG()->dump(getASTContext().getLangOpts(), ShowColors);
 }
 
-ParentMap &AnalysisDeclContext::getParentMap() {
-  if (!PM) {
-    PM.reset(new ParentMap(getBody()));
-    if (const CXXConstructorDecl *C = dyn_cast<CXXConstructorDecl>(getDecl())) {
-      for (CXXConstructorDecl::init_const_iterator I = C->init_begin(),
-                                                   E = C->init_end();
-           I != E; ++I) {
-        PM->addStmt((*I)->getInit());
-      }
+static ParentMap *constructParentMap(bool isSemantic,
+                                     Stmt *Body,
+                                     const Decl *D) {
+  ParentMap *PM = new ParentMap(Body, isSemantic);
+  if (const CXXConstructorDecl *C = dyn_cast<CXXConstructorDecl>(D)) {
+    for (CXXConstructorDecl::init_const_iterator I = C->init_begin(),
+         E = C->init_end();
+         I != E; ++I) {
+      PM->addStmt((*I)->getInit());
     }
   }
+  return PM;
+}
+
+ParentMap &AnalysisDeclContext::getParentMap() {
+  if (!PM) {
+    PM.reset(constructParentMap(false, getBody(), getDecl()));
+  }
   return *PM;
+}
+
+ParentMap &AnalysisDeclContext::getSemanticParentMap() {
+  if (!SemanticPM) {
+    SemanticPM.reset(constructParentMap(true, getBody(), getDecl()));
+  }
+  return *SemanticPM;
 }
 
 PseudoConstantAnalysis *AnalysisDeclContext::getPseudoConstantAnalysis() {

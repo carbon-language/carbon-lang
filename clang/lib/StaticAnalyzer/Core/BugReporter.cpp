@@ -1873,9 +1873,78 @@ static bool isIncrementOrInitInForLoop(const Stmt *S, const Stmt *FL) {
 typedef llvm::DenseSet<const PathDiagnosticCallPiece *>
         OptimizedCallsSet;
 
+typedef llvm::DenseMap<const Stmt *,
+                       Optional<const PseudoObjectExpr *> >
+        PseudoObjectExprMap;
+
+/// Return the PseudoObjectExpr that contains this statement (if any).
+static const PseudoObjectExpr *
+getContainingPseudoObjectExpr(PseudoObjectExprMap &PEM,
+                              ParentMap &PM,
+                              const Stmt *S) {
+  if (!S)
+    return 0;
+
+  Optional<const PseudoObjectExpr *> &Entry = PEM[S];
+  if (!Entry.hasValue()) {
+    const Stmt *Parent = PM.getParentIgnoreParens(S);
+    if (const PseudoObjectExpr *PE = dyn_cast_or_null<PseudoObjectExpr>(Parent))
+      Entry = PE;
+    else
+      Entry = getContainingPseudoObjectExpr(PEM, PM, Parent);
+  }
+  return Entry.getValue();
+}
+
+#if 0
+static void printPath(PathPieces &path, ParentMap &PM) {
+  unsigned index = 0;
+  for (PathPieces::iterator I = path.begin(), E = path.end(); I != E; ++I ) {
+    llvm::errs() << "[" << index++ << "]\n";
+    if (isa<PathDiagnosticCallPiece>(*I)) {
+      llvm::errs() << "  CALL\n";
+      continue;
+    }
+    if (isa<PathDiagnosticEventPiece>(*I)) {
+      llvm::errs() << "  EVENT\n";
+      continue;
+    }
+    if (const PathDiagnosticControlFlowPiece *CP = dyn_cast<PathDiagnosticControlFlowPiece>(*I)) {
+      llvm::errs() << "  CONTROL\n";
+      const Stmt *s1Start = getLocStmt(CP->getStartLocation());
+      const Stmt *s1End   = getLocStmt(CP->getEndLocation());
+      if (s1Start) {
+        s1Start->dump();
+        llvm::errs() << "PARENT: \n";
+        const Stmt *Parent = getStmtParent(s1Start, PM);
+        if (Parent) {
+          Parent->dump();
+        }
+      }
+      else {
+        llvm::errs() << "NULL\n";
+      }
+      llvm::errs() << " --------- ===== ----- \n";
+      if (s1End) {
+        s1End->dump();
+        llvm::errs() << "PARENT: \n";
+        const Stmt *Parent = getStmtParent(s1End, PM);
+        if (Parent) {
+          Parent->dump();
+        }
+      }
+      else {
+        llvm::errs() << "NULL\n";
+      }
+    }
+  }
+}
+#endif
+
 static bool optimizeEdges(PathPieces &path, SourceManager &SM,
                           OptimizedCallsSet &OCS,
-                          LocationContextMap &LCM) {
+                          LocationContextMap &LCM,
+                          PseudoObjectExprMap &PEM) {
   bool hasChanges = false;
   const LocationContext *LC = LCM[&path];
   assert(LC);
@@ -1890,7 +1959,7 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
       // Record the fact that a call has been optimized so we only do the
       // effort once.
       if (!OCS.count(CallI)) {
-        while (optimizeEdges(CallI->path, SM, OCS, LCM)) {}
+        while (optimizeEdges(CallI->path, SM, OCS, LCM, PEM)) {}
         OCS.insert(CallI);
       }
       ++I;
@@ -1906,7 +1975,7 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
       continue;
     }
 
-    ParentMap &PM = LC->getParentMap();
+    ParentMap &PM = LC->getSemanticParentMap();
     const Stmt *s1Start = getLocStmt(PieceI->getStartLocation());
     const Stmt *s1End   = getLocStmt(PieceI->getEndLocation());
     const Stmt *level1 = getStmtParent(s1Start, PM);
@@ -1933,6 +2002,39 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
       }
     }
 
+    // Prune out edges for pseudo object expressions.
+    //
+    // Case 1: incoming into a pseudo expr.
+    //
+    // An edge into a subexpression of a pseudo object expression
+    // should be replaced with an edge to the pseudo object expression
+    // itself.
+    const PseudoObjectExpr *PE = getContainingPseudoObjectExpr(PEM, PM, s1End);
+    if (PE) {
+      PathDiagnosticLocation L(PE, SM, LC);
+      PieceI->setEndLocation(L);
+      // Do not increment the iterator.  It is possible we will match again.
+      hasChanges = true;
+      continue;
+    }
+
+    // Prune out edges for pseudo object expressions.
+    //
+    // Case 2: outgoing from a pseudo expr.
+    //
+    // An edge into a subexpression of a pseudo object expression
+    // should be replaced with an edge to the pseudo object expression
+    // itself.
+    PE = getContainingPseudoObjectExpr(PEM, PM, s1Start);
+    if (PE) {
+      PathDiagnosticLocation L(PE, SM, LC);
+      PieceI->setStartLocation(L);
+      // Do not increment the iterator.  It is possible we will match again.
+      hasChanges = true;
+      continue;
+    }
+
+    // Pattern match on two edges after this point.
     PathPieces::iterator NextI = I; ++NextI;
     if (NextI == E)
       break;
@@ -2782,7 +2884,8 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
         // to an aesthetically pleasing subset that conveys the
         // necessary information.
         OptimizedCallsSet OCS;
-        while (optimizeEdges(PD.getMutablePieces(), SM, OCS, LCM)) {}
+        PseudoObjectExprMap PEM;
+        while (optimizeEdges(PD.getMutablePieces(), SM, OCS, LCM, PEM)) {}
 
         // Adjust edges into loop conditions to make them more uniform
         // and aesthetically pleasing.
