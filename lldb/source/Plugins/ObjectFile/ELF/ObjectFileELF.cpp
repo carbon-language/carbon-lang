@@ -222,6 +222,18 @@ ObjectFileELF::CreateMemoryInstance (const lldb::ModuleSP &module_sp,
     return NULL;
 }
 
+bool
+ObjectFileELF::MagicBytesMatch (DataBufferSP& data_sp,
+                                  lldb::addr_t data_offset,
+                                  lldb::addr_t data_length)
+{
+    if (data_sp && data_sp->GetByteSize() > (llvm::ELF::EI_NIDENT + data_offset))
+    {
+        const uint8_t *magic = data_sp->GetBytes() + data_offset;
+        return ELFHeader::MagicBytesMatch(magic);
+    }
+    return false;
+}
 
 size_t
 ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
@@ -231,7 +243,33 @@ ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
                                         lldb::offset_t length,
                                         lldb_private::ModuleSpecList &specs)
 {
-    return 0;
+    const size_t initial_count = specs.GetSize();
+    
+    if (ObjectFileELF::MagicBytesMatch(data_sp, 0, data_sp->GetByteSize()))
+    {
+        DataExtractor data;
+        data.SetData(data_sp);
+        elf::ELFHeader header;
+        if (header.Parse(data, &data_offset))
+        {
+            if (data_sp)
+            {
+                ModuleSpec spec;
+                spec.GetFileSpec() = file;
+                spec.GetArchitecture().SetArchitecture(eArchTypeELF,
+                                                       header.e_machine,
+                                                       LLDB_INVALID_CPUTYPE);
+                if (spec.GetArchitecture().IsValid())
+                {
+                    // ObjectFileMachO adds the UUID here also, but that isn't in the elf header
+                    // so we'd have to read the entire file in and calculate the md5sum.
+                    // That'd be bad for this routine...
+                    specs.Append(spec);
+                }
+            }
+        }
+    }
+    return specs.GetSize() - initial_count;
 }
 
 //------------------------------------------------------------------

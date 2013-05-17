@@ -65,6 +65,12 @@ public:
                              lldb::offset_t file_offset,
                              lldb::offset_t length,
                              lldb_private::ModuleSpecList &specs);
+
+    static bool
+    MagicBytesMatch (lldb::DataBufferSP& data_sp,
+                     lldb::addr_t offset, 
+                     lldb::addr_t length);
+
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------

@@ -208,6 +208,29 @@ PlatformLinux::ResolveExecutable (const FileSpec &exe_file,
                                                  NULL, 
                                                  NULL,
                                                  NULL);
+            if (error.Fail())
+            {
+                // If we failed, it may be because the vendor and os aren't known. If that is the
+                // case, try setting them to the host architecture and give it another try.
+                llvm::Triple &module_triple = module_spec.GetArchitecture().GetTriple(); 
+                bool is_vendor_specified = (module_triple.getVendor() != llvm::Triple::UnknownVendor);
+                bool is_os_specified = (module_triple.getOS() != llvm::Triple::UnknownOS);
+                if (!is_vendor_specified || !is_os_specified)
+                {
+                    const llvm::Triple &host_triple = Host::GetArchitecture (Host::eSystemDefaultArchitecture).GetTriple();
+
+                    if (!is_vendor_specified)
+                        module_triple.setVendorName (host_triple.getVendorName());
+                    if (!is_os_specified)
+                        module_triple.setOSName (host_triple.getOSName());
+
+                    error = ModuleList::GetSharedModule (module_spec, 
+                                                         exe_module_sp, 
+                                                         NULL, 
+                                                         NULL,
+                                                         NULL);
+                }
+            }
         
             // TODO find out why exe_module_sp might be NULL            
             if (!exe_module_sp || exe_module_sp->GetObjectFile() == NULL)
