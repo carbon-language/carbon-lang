@@ -107,13 +107,13 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   } else if (IS_TEX(Desc)) {
       int64_t Sampler = MI.getOperand(14).getImm();
 
-      uint32_t SrcSelect[4] = {
+      int64_t SrcSelect[4] = {
         MI.getOperand(2).getImm(),
         MI.getOperand(3).getImm(),
         MI.getOperand(4).getImm(),
         MI.getOperand(5).getImm()
       };
-      uint32_t Offsets[3] = {
+      long Offsets[3] = {
         MI.getOperand(6).getImm() & 0x1F,
         MI.getOperand(7).getImm() & 0x1F,
         MI.getOperand(8).getImm() & 0x1F
