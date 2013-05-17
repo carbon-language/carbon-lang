@@ -7,6 +7,10 @@ AST. It is targeted at developers who either want to contribute to
 Clang, or use tools that work based on Clang's AST, like the AST
 matchers.
 
+.. raw:: html
+
+  <center><iframe width="560" height="315" src="http://www.youtube.com/embed/VqCkCDFLSsc?vq=hd720" frameborder="0" allowfullscreen></iframe></center>
+
 Introduction
 ============
 
