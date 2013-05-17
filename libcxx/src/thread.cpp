@@ -21,6 +21,10 @@
 #endif // !__sun__ && !__linux__
 #endif // !_WIN32
 
+#if defined(__NetBSD__)
+#pragma weak pthread_create // Do not create libpthread dependency
+#endif
+
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 thread::~thread()
