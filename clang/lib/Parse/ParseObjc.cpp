@@ -1541,6 +1541,12 @@ Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc) {
       return DeclGroupPtrTy();
     }
     rparenLoc = ConsumeParen();
+    if (Tok.is(tok::less)) { // we have illegal '<' try to recover
+      Diag(Tok, diag::err_unexpected_protocol_qualifier);
+      AttributeFactory attr;
+      DeclSpec DS(attr);
+      (void)ParseObjCProtocolQualifiers(DS);
+    }
     ObjCImpDecl = Actions.ActOnStartCategoryImplementation(
                                     AtLoc, nameId, nameLoc, categoryId,
                                     categoryLoc);

@@ -19,3 +19,11 @@
 
 @implementation K <P // expected-error {{@implementation declaration can not be protocol qualified}}
 @end // expected-error {{expected '>'}}
+
+// rdar://13920026
+@implementation I (Cat) <P>  // expected-error {{@implementation declaration can not be protocol qualified}}
+- (void) Meth {}
+@end
+
+@implementation I (Cat1) <P // expected-error {{@implementation declaration can not be protocol qualified}}
+@end // expected-error {{expected '>'}}
