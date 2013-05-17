@@ -33,7 +33,7 @@ namespace llvm {
 /// Any client using this memory manager MUST ensure that section-specific
 /// page permissions have been applied before attempting to execute functions
 /// in the JITed object.  Permissions can be applied either by calling
-/// MCJIT::finalizeObject or by calling SectionMemoryManager::applyPermissions
+/// MCJIT::finalizeObject or by calling SectionMemoryManager::finalizeMemory
 /// directly.  Clients of MCJIT should call MCJIT::finalizeObject.
 class SectionMemoryManager : public RTDyldMemoryManager {
   SectionMemoryManager(const SectionMemoryManager&) LLVM_DELETED_FUNCTION;
@@ -60,17 +60,18 @@ public:
                                        unsigned SectionID,
                                        bool isReadOnly);
 
-  /// \brief Applies section-specific memory permissions.
+  /// \brief Update section-specific memory permissions and other attributes.
   ///
   /// This method is called when object loading is complete and section page
   /// permissions can be applied.  It is up to the memory manager implementation
   /// to decide whether or not to act on this method.  The memory manager will
   /// typically allocate all sections as read-write and then apply specific
   /// permissions when this method is called.  Code sections cannot be executed
-  /// until this function has been called.
+  /// until this function has been called.  In addition, any cache coherency
+  /// operations needed to reliably use the memory are also performed.
   ///
   /// \returns true if an error occurred, false otherwise.
-  virtual bool applyPermissions(std::string *ErrMsg = 0);
+  virtual bool finalizeMemory(std::string *ErrMsg = 0);
 
   void registerEHFrames(StringRef SectionData);
 
@@ -89,7 +90,7 @@ public:
   /// explicit cache flush, otherwise JIT code manipulations (like resolved
   /// relocations) will get to the data cache but not to the instruction cache.
   ///
-  /// This method is called from applyPermissions.
+  /// This method is called from finalizeMemory.
   virtual void invalidateInstructionCache();
 
 private:

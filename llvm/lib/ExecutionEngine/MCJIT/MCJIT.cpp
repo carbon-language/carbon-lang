@@ -178,7 +178,7 @@ void MCJIT::finalizeObject() {
     MemMgr->registerEHFrames(EHData);
 
   // Set page permissions.
-  MemMgr->applyPermissions();
+  MemMgr->finalizeMemory();
 }
 
 void *MCJIT::getPointerToBasicBlock(BasicBlock *BB) {

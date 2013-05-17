@@ -127,7 +127,7 @@ public:
                                        unsigned SectionID) {
     return Base->allocateCodeSection(Size, Alignment, SectionID);
   }
-  virtual bool applyPermissions(std::string *ErrMsg) { return false; }
+  virtual bool finalizeMemory(std::string *ErrMsg) { return false; }
   virtual uint8_t *allocateSpace(intptr_t Size, unsigned Alignment) {
     return Base->allocateSpace(Size, Alignment);
   }

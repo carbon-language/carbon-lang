@@ -509,7 +509,7 @@ namespace {
       return (uint8_t*)DataAllocator.Allocate(Size, Alignment);
     }
 
-    bool applyPermissions(std::string *ErrMsg) {
+    bool finalizeMemory(std::string *ErrMsg) {
       return false;
     }
 

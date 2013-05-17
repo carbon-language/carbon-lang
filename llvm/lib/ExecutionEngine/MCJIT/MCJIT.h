@@ -52,6 +52,13 @@ public:
   /// Sets the object manager that MCJIT should use to avoid compilation.
   virtual void setObjectCache(ObjectCache *manager);
 
+  /// finalizeObject - ensure the module is fully processed and is usable.
+  ///
+  /// It is the user-level function for completing the process of making the
+  /// object usable for execution. It should be called after sections within an
+  /// object have been relocated using mapSectionAddress.  When this method is
+  /// called the MCJIT execution engine will reapply relocations for a loaded
+  /// object.
   virtual void finalizeObject();
 
   virtual void *getPointerToBasicBlock(BasicBlock *BB);

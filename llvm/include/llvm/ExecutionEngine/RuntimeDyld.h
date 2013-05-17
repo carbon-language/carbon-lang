@@ -62,10 +62,12 @@ public:
   /// permissions can be applied.  It is up to the memory manager implementation
   /// to decide whether or not to act on this method.  The memory manager will
   /// typically allocate all sections as read-write and then apply specific
-  /// permissions when this method is called.
+  /// permissions when this method is called.  Code sections cannot be executed
+  /// until this function has been called.  In addition, any cache coherency
+  /// operations needed to reliably use the memory are also performed.
   ///
   /// Returns true if an error occurred, false otherwise.
-  virtual bool applyPermissions(std::string *ErrMsg = 0) = 0;
+  virtual bool finalizeMemory(std::string *ErrMsg = 0) = 0;
 
   /// Register the EH frames with the runtime so that c++ exceptions work. The
   /// default implementation does nothing. Look at SectionMemoryManager for one

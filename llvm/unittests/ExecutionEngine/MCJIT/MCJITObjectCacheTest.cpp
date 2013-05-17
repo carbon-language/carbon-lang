@@ -101,10 +101,9 @@ protected:
     ASSERT_TRUE(TheJIT.isValid());
     ASSERT_TRUE(0 != Main);
 
+    // We may be using a null cache, so ensure compilation is valid.
     TheJIT->finalizeObject();
     void *vPtr = TheJIT->getPointerToFunction(Main);
-
-    static_cast<SectionMemoryManager*>(MM)->invalidateInstructionCache();
 
     EXPECT_TRUE(0 != vPtr)
       << "Unable to get pointer to main() from JIT";

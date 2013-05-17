@@ -111,7 +111,7 @@ uint8_t *SectionMemoryManager::allocateSection(MemoryGroup &MemGroup,
   return (uint8_t*)Addr;
 }
 
-bool SectionMemoryManager::applyPermissions(std::string *ErrMsg)
+bool SectionMemoryManager::finalizeMemory(std::string *ErrMsg)
 {
   // FIXME: Should in-progress permissions be reverted if an error occurs?
   error_code ec;

@@ -252,11 +252,14 @@ public:
                      "EE!");
   }
 
-  // finalizeObject - This method should be called after sections within an
-  // object have been relocated using mapSectionAddress.  When this method is
-  // called the MCJIT execution engine will reapply relocations for a loaded
-  // object.  This method has no effect for the legacy JIT engine or the
-  // interpeter.
+  /// finalizeObject - ensure the module is fully processed and is usable.
+  ///
+  /// It is the user-level function for completing the process of making the
+  /// object usable for execution.  It should be called after sections within an
+  /// object have been relocated using mapSectionAddress.  When this method is
+  /// called the MCJIT execution engine will reapply relocations for a loaded
+  /// object.  This method has no effect for the legacy JIT engine or the
+  /// interpeter.
   virtual void finalizeObject() {}
 
   /// runStaticConstructorsDestructors - This method is used to execute all of

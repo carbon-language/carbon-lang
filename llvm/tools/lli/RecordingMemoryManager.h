@@ -58,7 +58,7 @@ public:
   void *getPointerToNamedFunction(const std::string &Name,
                                   bool AbortOnFailure = true);
 
-  bool applyPermissions(std::string *ErrMsg) { return false; }
+  bool finalizeMemory(std::string *ErrMsg) { return false; }
 
   // The following obsolete JITMemoryManager calls are stubbed out for
   // this model.

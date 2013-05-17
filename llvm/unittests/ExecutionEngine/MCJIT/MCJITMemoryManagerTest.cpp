@@ -46,7 +46,7 @@ TEST(MCJITMemoryManagerTest, BasicAllocations) {
   }
 
   std::string Error;
-  EXPECT_FALSE(MemMgr->applyPermissions(&Error));
+  EXPECT_FALSE(MemMgr->finalizeMemory(&Error));
 }
 
 TEST(MCJITMemoryManagerTest, LargeAllocations) {
@@ -79,7 +79,7 @@ TEST(MCJITMemoryManagerTest, LargeAllocations) {
   }
 
   std::string Error;
-  EXPECT_FALSE(MemMgr->applyPermissions(&Error));
+  EXPECT_FALSE(MemMgr->finalizeMemory(&Error));
 }
 
 TEST(MCJITMemoryManagerTest, ManyAllocations) {
@@ -114,7 +114,7 @@ TEST(MCJITMemoryManagerTest, ManyAllocations) {
   }
 
   std::string Error;
-  EXPECT_FALSE(MemMgr->applyPermissions(&Error));
+  EXPECT_FALSE(MemMgr->finalizeMemory(&Error));
 }
 
 TEST(MCJITMemoryManagerTest, ManyVariedAllocations) {
