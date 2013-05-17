@@ -23,6 +23,10 @@ set(SANITIZER_SOURCES
   sanitizer_win.cc
   )
 
+set(SANITIZER_LIBCDEP_SOURCES
+  sanitizer_common_libcdep.cc
+  )
+
 # Explicitly list all sanitizer_common headers. Not all of these are
 # included in sanitizer_common source files, but we need to depend on
 # headers when building our custom unit tests.
@@ -62,11 +66,12 @@ if(APPLE)
   # Build universal binary on APPLE.
   add_compiler_rt_osx_object_library(RTSanitizerCommon
     ARCH ${SANITIZER_COMMON_SUPPORTED_ARCH}
-    SOURCES ${SANITIZER_SOURCES}
+    SOURCES ${SANITIZER_SOURCES} ${SANITIZER_LIBCDEP_SOURCES}
     CFLAGS ${SANITIZER_CFLAGS})
   list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.osx)
 elseif(ANDROID)
-  add_library(RTSanitizerCommon.arm.android OBJECT ${SANITIZER_SOURCES})
+  add_library(RTSanitizerCommon.arm.android OBJECT
+    ${SANITIZER_SOURCES} ${SANITIZER_LIBCDEP_SOURCES})
   set_target_compile_flags(RTSanitizerCommon.arm.android
     ${SANITIZER_CFLAGS})
   list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.arm.android)
@@ -75,6 +80,8 @@ else()
   foreach(arch ${SANITIZER_COMMON_SUPPORTED_ARCH})
     add_compiler_rt_object_library(RTSanitizerCommon ${arch}
       SOURCES ${SANITIZER_SOURCES} CFLAGS ${SANITIZER_CFLAGS})
+    add_compiler_rt_object_library(RTSanitizerCommonLibc ${arch}
+      SOURCES ${SANITIZER_LIBCDEP_SOURCES} CFLAGS ${SANITIZER_CFLAGS})
     add_compiler_rt_static_runtime(clang_rt.san-${arch} ${arch}
       SOURCES ${SANITIZER_SOURCES} CFLAGS ${SANITIZER_CFLAGS})
     list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.${arch})

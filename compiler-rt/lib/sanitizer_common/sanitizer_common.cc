@@ -31,7 +31,7 @@ static bool log_to_file = false;  // Set to true by __sanitizer_set_report_path
 // By default, dump to stderr. If |log_to_file| is true and |report_fd_pid|
 // isn't equal to the current PID, try to obtain file descriptor by opening
 // file "report_path_prefix.<PID>".
-static fd_t report_fd = kStderrFd;
+fd_t report_fd = kStderrFd;
 static char report_path_prefix[4096];  // Set via __sanitizer_set_report_path.
 // PID of process that opened |report_fd|. If a fork() occurs, the PID of the
 // child thread will be different from |report_fd_pid|.
@@ -64,7 +64,7 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
   Die();
 }
 
-static void MaybeOpenReportFile() {
+void MaybeOpenReportFile() {
   if (!log_to_file || (report_fd_pid == GetPid())) return;
   InternalScopedBuffer<char> report_path_full(4096);
   internal_snprintf(report_path_full.data(), report_path_full.size(),
@@ -82,11 +82,6 @@ static void MaybeOpenReportFile() {
   }
   report_fd = openrv;
   report_fd_pid = GetPid();
-}
-
-bool PrintsToTty() {
-  MaybeOpenReportFile();
-  return internal_isatty(report_fd);
 }
 
 void RawWrite(const char *buffer) {

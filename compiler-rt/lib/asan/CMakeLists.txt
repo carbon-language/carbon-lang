@@ -84,6 +84,7 @@ else()
       SOURCES ${ASAN_SOURCES}
               $<TARGET_OBJECTS:RTInterception.${arch}>
               $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
+              $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
       CFLAGS ${ASAN_CFLAGS}
       DEFS ${ASAN_COMMON_DEFINITIONS}
       SYMS asan.syms)

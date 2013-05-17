@@ -43,6 +43,7 @@ if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE)
     SOURCES ${TSAN_SOURCES} ${TSAN_ASM_SOURCES}
             $<TARGET_OBJECTS:RTInterception.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
+            $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
     CFLAGS ${TSAN_CFLAGS}
     DEFS ${TSAN_COMMON_DEFINITIONS}
     SYMS tsan.syms)

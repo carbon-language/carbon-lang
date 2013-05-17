@@ -114,6 +114,8 @@ void Report(const char *format, ...);
 void SetPrintfAndReportCallback(void (*callback)(const char *));
 // Can be used to prevent mixing error reports from different sanitizers.
 extern StaticSpinMutex CommonSanitizerReportMutex;
+void MaybeOpenReportFile();
+extern fd_t report_fd;
 
 uptr OpenFile(const char *filename, bool write);
 // Opens the file 'file_name" and reads up to 'max_len' bytes.
