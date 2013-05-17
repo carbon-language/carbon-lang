@@ -977,9 +977,17 @@ private:
 
   /// \brief Returns \c true, if a line break after \p State is allowed.
   bool canBreak(const LineState &State) {
-    if (!State.NextToken->CanBreakBefore &&
-        !(State.NextToken->is(tok::r_brace) &&
+    const AnnotatedToken &Current = *State.NextToken;
+    const AnnotatedToken &Previous = *Current.Parent;
+    if (!Current.CanBreakBefore &&
+        !(Current.is(tok::r_brace) &&
           State.Stack.back().BreakBeforeClosingBrace))
+      return false;
+    // The opening "{" of a braced list has to be on the same line as the first
+    // element if it is nested in another braced init list or function call.
+    if (!Current.MustBreakBefore && Previous.is(tok::l_brace) &&
+        Previous.Parent &&
+        Previous.Parent->isOneOf(tok::l_brace, tok::l_paren, tok::comma))
       return false;
     return !State.Stack.back().NoLineBreak;
   }

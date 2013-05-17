@@ -1192,6 +1192,18 @@ TEST_F(FormatTest, StaticInitializers) {
       "static SomeClass = { a, b, c, d, e, f, g, h, i, j,\n"
       "                     looooooooooooooooooooooooooooooooooongname,\n"
       "                     looooooooooooooooooooooooooooooong };");
+  // Here, everything other than the "}" would fit on a line.
+  verifyFormat("static int LooooooooooooooooooooooooongVariable[1] = {\n"
+               "  100000000000000000000000\n"
+               "};");
+
+  // FIXME: This would fit into the column limit if we'd fit "{ {" on the first
+  // line. However, the formatting looks a bit off and this probably doesn't
+  // happen often in practice.
+  verifyFormat("static int Variable[1] = {\n"
+               "  { 1000000000000000000000000000000000000 }\n"
+               "};",
+               getLLVMStyleWithColumns(40));
 }
 
 TEST_F(FormatTest, NestedStaticInitializers) {
