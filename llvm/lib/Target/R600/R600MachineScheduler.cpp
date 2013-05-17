@@ -21,7 +21,6 @@
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/raw_ostream.h"
-#include <set>
 
 using namespace llvm;
 
@@ -31,9 +30,6 @@ void R600SchedStrategy::initialize(ScheduleDAGMI *dag) {
   TII = static_cast<const R600InstrInfo*>(DAG->TII);
   TRI = static_cast<const R600RegisterInfo*>(DAG->TRI);
   MRI = &DAG->MRI;
-  Available[IDAlu]->clear();
-  Available[IDFetch]->clear();
-  Available[IDOther]->clear();
   CurInstKind = IDOther;
   CurEmitted = 0;
   OccupedSlotsMask = 15;
@@ -44,16 +40,11 @@ void R600SchedStrategy::initialize(ScheduleDAGMI *dag) {
   InstKindLimit[IDFetch] = ST.getTexVTXClauseSize();
 }
 
-void R600SchedStrategy::MoveUnits(ReadyQueue *QSrc, ReadyQueue *QDst)
+void R600SchedStrategy::MoveUnits(std::vector<SUnit *> &QSrc,
+                                  std::vector<SUnit *> &QDst)
 {
-  if (QSrc->empty())
-    return;
-  for (ReadyQueue::iterator I = QSrc->begin(),
-      E = QSrc->end(); I != E; ++I) {
-    (*I)->NodeQueueId &= ~QSrc->getID();
-    QDst->push(*I);
-  }
-  QSrc->clear();
+  QDst.insert(QDst.end(), QSrc.begin(), QSrc.end());
+  QSrc.clear();
 }
 
 SUnit* R600SchedStrategy::pickNode(bool &IsTopNode) {
@@ -64,9 +55,9 @@ SUnit* R600SchedStrategy::pickNode(bool &IsTopNode) {
   // check if we might want to switch current clause type
   bool AllowSwitchToAlu = (CurInstKind == IDOther) ||
       (CurEmitted >= InstKindLimit[CurInstKind]) ||
-      (Available[CurInstKind]->empty());
+      (Available[CurInstKind].empty());
   bool AllowSwitchFromAlu = (CurEmitted >= InstKindLimit[CurInstKind]) &&
-      (!Available[IDFetch]->empty() || !Available[IDOther]->empty());
+      (!Available[IDFetch].empty() || !Available[IDOther].empty());
 
   if ((AllowSwitchToAlu && CurInstKind != IDAlu) ||
       (!AllowSwitchFromAlu && CurInstKind == IDAlu)) {
@@ -99,10 +90,6 @@ SUnit* R600SchedStrategy::pickNode(bool &IsTopNode) {
         SU->dump(DAG);
       } else {
         dbgs() << "NO NODE ";
-        for (int i = 0; i < IDLast; ++i) {
-          Available[i]->dump();
-          Pending[i]->dump();
-        }
         for (unsigned i = 0; i < DAG->SUnits.size(); i++) {
           const SUnit &S = DAG->SUnits[i];
           if (!S.isScheduled)
@@ -163,7 +150,7 @@ void R600SchedStrategy::releaseTopNode(SUnit *SU) {
   DEBUG(dbgs() << IK << " <= ");
   DEBUG(SU->dump(DAG));
 
-  Pending[IK]->push(SU);
+  Pending[IK].push_back(SU);
 }
 
 void R600SchedStrategy::releaseBottomNode(SUnit *SU) {
@@ -263,16 +250,16 @@ int R600SchedStrategy::getInstKind(SUnit* SU) {
   }
 }
 
-SUnit *R600SchedStrategy::PopInst(std::multiset<SUnit *, CompareSUnit> &Q) {
+SUnit *R600SchedStrategy::PopInst(std::vector<SUnit *> &Q) {
   if (Q.empty())
     return NULL;
-  for (std::set<SUnit *, CompareSUnit>::iterator It = Q.begin(), E = Q.end();
+  for (std::vector<SUnit *>::reverse_iterator It = Q.rbegin(), E = Q.rend();
       It != E; ++It) {
     SUnit *SU = *It;
     InstructionsGroupCandidate.push_back(SU->getInstr());
     if (TII->canBundle(InstructionsGroupCandidate)) {
       InstructionsGroupCandidate.pop_back();
-      Q.erase(It);
+      Q.erase((It + 1).base());
       return SU;
     } else {
       InstructionsGroupCandidate.pop_back();
@@ -282,14 +269,12 @@ SUnit *R600SchedStrategy::PopInst(std::multiset<SUnit *, CompareSUnit> &Q) {
 }
 
 void R600SchedStrategy::LoadAlu() {
-  ReadyQueue *QSrc = Pending[IDAlu];
-  for (ReadyQueue::iterator I = QSrc->begin(),
-        E = QSrc->end(); I != E; ++I) {
-      (*I)->NodeQueueId &= ~QSrc->getID();
-      AluKind AK = getAluKind(*I);
-      AvailableAlus[AK].insert(*I);
-    }
-    QSrc->clear();
+  std::vector<SUnit *> &QSrc = Pending[IDAlu];
+  for (unsigned i = 0, e = QSrc.size(); i < e; ++i) {
+    AluKind AK = getAluKind(QSrc[i]);
+    AvailableAlus[AK].push_back(QSrc[i]);
+  }
+  QSrc.clear();
 }
 
 void R600SchedStrategy::PrepareNextSlot() {
@@ -331,27 +316,16 @@ void R600SchedStrategy::AssignSlot(MachineInstr* MI, unsigned Slot) {
 SUnit *R600SchedStrategy::AttemptFillSlot(unsigned Slot) {
   static const AluKind IndexToID[] = {AluT_X, AluT_Y, AluT_Z, AluT_W};
   SUnit *SlotedSU = PopInst(AvailableAlus[IndexToID[Slot]]);
-  SUnit *UnslotedSU = PopInst(AvailableAlus[AluAny]);
-  if (!UnslotedSU) {
+  if (SlotedSU)
     return SlotedSU;
-  } else if (!SlotedSU) {
+  SUnit *UnslotedSU = PopInst(AvailableAlus[AluAny]);
+  if (UnslotedSU)
     AssignSlot(UnslotedSU->getInstr(), Slot);
-    return UnslotedSU;
-  } else {
-    //Determine which one to pick (the lesser one)
-    if (CompareSUnit()(SlotedSU, UnslotedSU)) {
-      AvailableAlus[AluAny].insert(UnslotedSU);
-      return SlotedSU;
-    } else {
-      AvailableAlus[IndexToID[Slot]].insert(SlotedSU);
-      AssignSlot(UnslotedSU->getInstr(), Slot);
-      return UnslotedSU;
-    }
-  }
+  return UnslotedSU;
 }
 
 bool R600SchedStrategy::isAvailablesAluEmpty() const {
-  return Pending[IDAlu]->empty() && AvailableAlus[AluAny].empty() &&
+  return Pending[IDAlu].empty() && AvailableAlus[AluAny].empty() &&
       AvailableAlus[AluT_XYZW].empty() && AvailableAlus[AluT_X].empty() &&
       AvailableAlus[AluT_Y].empty() && AvailableAlus[AluT_Z].empty() &&
       AvailableAlus[AluT_W].empty() && AvailableAlus[AluDiscarded].empty();
@@ -389,14 +363,14 @@ SUnit* R600SchedStrategy::pickAlu() {
 
 SUnit* R600SchedStrategy::pickOther(int QID) {
   SUnit *SU = 0;
-  ReadyQueue *AQ = Available[QID];
+  std::vector<SUnit *> &AQ = Available[QID];
 
-  if (AQ->empty()) {
+  if (AQ.empty()) {
     MoveUnits(Pending[QID], AQ);
   }
-  if (!AQ->empty()) {
-    SU = *AQ->begin();
-    AQ->remove(AQ->begin());
+  if (!AQ.empty()) {
+    SU = AQ.back();
+    AQ.resize(AQ.size() - 1);
   }
   return SU;
 }
