@@ -47,6 +47,7 @@ typedef struct ProcessStatInfo
 // Get the process info with additional information from /proc/$PID/stat (like process state, and tracer pid).
 static bool GetProcessAndStatInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info, ProcessStatInfo &stat_info, lldb::pid_t &tracerpid);
 
+
 namespace
 {
 
