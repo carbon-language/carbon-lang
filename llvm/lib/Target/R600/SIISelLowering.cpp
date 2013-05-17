@@ -156,8 +156,9 @@ SDValue SITargetLowering::LowerFormalArguments(
 
   for (unsigned i = 0, e = Ins.size(), ArgIdx = 0; i != e; ++i) {
 
+    const ISD::InputArg &Arg = Ins[i];
     if (Skipped & (1 << i)) {
-      InVals.push_back(SDValue());
+      InVals.push_back(DAG.getUNDEF(Arg.VT));
       continue;
     }
 
@@ -181,7 +182,6 @@ SDValue SITargetLowering::LowerFormalArguments(
     Reg = MF.addLiveIn(Reg, RC);
     SDValue Val = DAG.getCopyFromReg(Chain, DL, Reg, VT);
 
-    const ISD::InputArg &Arg = Ins[i];
     if (Arg.VT.isVector()) {
 
       // Build a vector from the registers
