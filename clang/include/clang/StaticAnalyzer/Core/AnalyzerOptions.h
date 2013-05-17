@@ -201,6 +201,9 @@ private:
   /// \sa mayInlineCXXContainerCtorsAndDtors
   Optional<bool> InlineCXXContainerCtorsAndDtors;
 
+  /// \sa mayInlineCXXSharedPtrDtor
+  Optional<bool> InlineCXXSharedPtrDtor;
+
   /// \sa mayInlineObjCMethod
   Optional<bool> ObjCInliningMode;
 
@@ -293,6 +296,16 @@ public:
   /// This is controlled by the 'c++-container-inlining' config option, which
   /// accepts the values "true" and "false".
   bool mayInlineCXXContainerCtorsAndDtors();
+
+  /// Returns whether or not the destructor of C++ 'shared_ptr' may be
+  /// considered for inlining.
+  ///
+  /// This covers std::shared_ptr, std::tr1::shared_ptr, and boost::shared_ptr,
+  /// and indeed any destructor named "~shared_ptr".
+  ///
+  /// This is controlled by the 'c++-shared_ptr-inlining' config option, which
+  /// accepts the values "true" and "false".
+  bool mayInlineCXXSharedPtrDtor();
 
   /// Returns whether or not paths that go through null returns should be
   /// suppressed.

@@ -13,6 +13,7 @@ public:
 // CHECK: [config]
 // CHECK-NEXT: c++-container-inlining = false
 // CHECK-NEXT: c++-inlining = destructors
+// CHECK-NEXT: c++-shared_ptr-inlining = false
 // CHECK-NEXT: c++-stdlib-inlining = true
 // CHECK-NEXT: c++-template-inlining = true
 // CHECK-NEXT: cfg-conditional-static-initializers = true
@@ -28,4 +29,4 @@ public:
 // CHECK-NEXT: mode = deep
 // CHECK-NEXT: region-store-small-struct-limit = 2
 // CHECK-NEXT: [stats]
-// CHECK-NEXT: num-entries = 16
+// CHECK-NEXT: num-entries = 17

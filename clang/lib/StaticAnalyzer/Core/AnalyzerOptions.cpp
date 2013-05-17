@@ -140,6 +140,12 @@ bool AnalyzerOptions::mayInlineCXXContainerCtorsAndDtors() {
                           /*Default=*/false);
 }
 
+bool AnalyzerOptions::mayInlineCXXSharedPtrDtor() {
+  return getBooleanOption(InlineCXXSharedPtrDtor,
+                          "c++-shared_ptr-inlining",
+                          /*Default=*/false);
+}
+
 
 bool AnalyzerOptions::mayInlineObjCMethod() {
   return getBooleanOption(ObjCInliningMode,

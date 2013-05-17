@@ -717,6 +717,21 @@ static bool isContainerCtorOrDtor(const ASTContext &Ctx,
   return isContainerClass(Ctx, RD);
 }
 
+/// Returns true if the given function is the destructor of a class named
+/// "shared_ptr".
+static bool isCXXSharedPtrDtor(const FunctionDecl *FD) {
+  const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(FD);
+  if (!Dtor)
+    return false;
+
+  const CXXRecordDecl *RD = Dtor->getParent();
+  if (const IdentifierInfo *II = RD->getDeclName().getAsIdentifierInfo())
+    if (II->isStr("shared_ptr"))
+        return true;
+
+  return false;
+}
+
 /// Returns true if the function in \p CalleeADC may be inlined in general.
 ///
 /// This checks static properties of the function, such as its signature and
@@ -749,6 +764,15 @@ static bool mayInlineDecl(const CallEvent &Call, AnalysisDeclContext *CalleeADC,
         if (!Ctx.getSourceManager().isFromMainFile(FD->getLocation()))
           if (isContainerCtorOrDtor(Ctx, FD))
             return false;
+            
+      // Conditionally control the inlining of the destructor of C++ shared_ptr.
+      // We don't currently do a good job modeling shared_ptr because we can't
+      // see the reference count, so treating as opaque is probably the best
+      // idea.
+      if (!Opts.mayInlineCXXSharedPtrDtor())
+        if (isCXXSharedPtrDtor(FD))
+          return false;
+
     }
   }
 

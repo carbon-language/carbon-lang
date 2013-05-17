@@ -206,3 +206,98 @@ void testConstEscapePlacementNew() {
   void *y = new (x) int;
   escapeVoidPtr(y);
 } // no-warning
+
+
+namespace reference_count {
+  class control_block {
+    unsigned count;
+  public:
+    control_block() : count(0) {}
+    void retain() { ++count; }
+    int release() { return --count; }
+  };
+
+  template <typename T>
+  class shared_ptr {
+    T *p;
+    control_block *control;
+
+  public:
+    shared_ptr() : p(0), control(0) {}
+    explicit shared_ptr(T *p) : p(p), control(new control_block) {
+      control->retain();
+    }
+    shared_ptr(shared_ptr &other) : p(other.p), control(other.control) {
+      if (control)
+          control->retain();
+    }
+    ~shared_ptr() {
+      if (control && control->release() == 0) {
+        delete p;
+        delete control;
+      }
+    };
+
+    T &operator *() {
+      return *p;
+    };
+
+    void swap(shared_ptr &other) {
+      T *tmp = p;
+      p = other.p;
+      other.p = tmp;
+
+      control_block *ctrlTmp = control;
+      control = other.control;
+      other.control = ctrlTmp;
+    }
+  };
+
+  void testSingle() {
+    shared_ptr<int> a(new int);
+    *a = 1;
+  }
+
+  void testDouble() {
+    shared_ptr<int> a(new int);
+    shared_ptr<int> b = a;
+    *a = 1;
+  }
+
+  void testInvalidated() {
+    shared_ptr<int> a(new int);
+    shared_ptr<int> b = a;
+    *a = 1;
+
+    extern void use(shared_ptr<int> &);
+    use(b);
+  }
+
+  void testNestedScope() {
+    shared_ptr<int> a(new int);
+    {
+      shared_ptr<int> b = a;
+    }
+    *a = 1;
+  }
+
+  void testSwap() {
+    shared_ptr<int> a(new int);
+    shared_ptr<int> b;
+    shared_ptr<int> c = a;
+    shared_ptr<int>(c).swap(b);
+  }
+
+  void testUseAfterFree() {
+    int *p = new int;
+    {
+      shared_ptr<int> a(p);
+      shared_ptr<int> b = a;
+    }
+
+    // FIXME: We should get a warning here, but we don't because we've
+    // conservatively modeled ~shared_ptr.
+    *p = 1;
+  }
+}
+
