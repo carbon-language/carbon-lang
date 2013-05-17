@@ -691,8 +691,8 @@ void ProcessPendingSignals(ThreadState *thr);
 void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
                  bool rw, bool recursive, bool linker_init);
 void MutexDestroy(ThreadState *thr, uptr pc, uptr addr);
-void MutexLock(ThreadState *thr, uptr pc, uptr addr);
-void MutexUnlock(ThreadState *thr, uptr pc, uptr addr);
+void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec = 1);
+int  MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all = false);
 void MutexReadLock(ThreadState *thr, uptr pc, uptr addr);
 void MutexReadUnlock(ThreadState *thr, uptr pc, uptr addr);
 void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr);

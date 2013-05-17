@@ -271,6 +271,7 @@ void __tsan_java_mutex_lock(jptr addr) {
   CHECK_GE(addr, jctx->heap_begin);
   CHECK_LT(addr, jctx->heap_begin + jctx->heap_size);
 
+  MutexCreate(thr, pc, addr, true, true, true);
   MutexLock(thr, pc, addr);
 }
 
@@ -291,6 +292,7 @@ void __tsan_java_mutex_read_lock(jptr addr) {
   CHECK_GE(addr, jctx->heap_begin);
   CHECK_LT(addr, jctx->heap_begin + jctx->heap_size);
 
+  MutexCreate(thr, pc, addr, true, true, true);
   MutexReadLock(thr, pc, addr);
 }
 
@@ -302,4 +304,26 @@ void __tsan_java_mutex_read_unlock(jptr addr) {
   CHECK_LT(addr, jctx->heap_begin + jctx->heap_size);
 
   MutexReadUnlock(thr, pc, addr);
+}
+
+void __tsan_java_mutex_lock_rec(jptr addr, int rec) {
+  SCOPED_JAVA_FUNC(__tsan_java_mutex_lock_rec);
+  DPrintf("#%d: java_mutex_lock_rec(%p, %d)\n", thr->tid, addr, rec);
+  CHECK_NE(jctx, 0);
+  CHECK_GE(addr, jctx->heap_begin);
+  CHECK_LT(addr, jctx->heap_begin + jctx->heap_size);
+  CHECK_GT(rec, 0);
+
+  MutexCreate(thr, pc, addr, true, true, true);
+  MutexLock(thr, pc, addr, rec);
+}
+
+int __tsan_java_mutex_unlock_rec(jptr addr) {
+  SCOPED_JAVA_FUNC(__tsan_java_mutex_unlock_rec);
+  DPrintf("#%d: java_mutex_unlock_rec(%p)\n", thr->tid, addr);
+  CHECK_NE(jctx, 0);
+  CHECK_GE(addr, jctx->heap_begin);
+  CHECK_LT(addr, jctx->heap_begin + jctx->heap_size);
+
+  return MutexUnlock(thr, pc, addr, true);
 }

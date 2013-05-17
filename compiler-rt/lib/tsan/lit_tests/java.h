@@ -14,4 +14,6 @@ void __tsan_java_mutex_lock(jptr addr);
 void __tsan_java_mutex_unlock(jptr addr);
 void __tsan_java_mutex_read_lock(jptr addr);
 void __tsan_java_mutex_read_unlock(jptr addr);
+void __tsan_java_mutex_lock_rec(jptr addr, int rec);
+int  __tsan_java_mutex_unlock_rec(jptr addr);
 }
