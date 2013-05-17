@@ -147,6 +147,11 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
 "`CMakeFiles'. Please delete them.")
 endif()
 
+# Compute the LLDB version from the LLVM version.
+string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" LLDB_VERSION
+  ${PACKAGE_VERSION})
+message(STATUS "LLDB version: ${LLDB_VERSION}")
+
 macro(add_lldb_library name)
   llvm_process_sources(srcs ${ARGN})
   if (MSVC_IDE OR XCODE)
