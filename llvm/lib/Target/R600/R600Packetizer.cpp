@@ -60,15 +60,6 @@ private:
   const R600InstrInfo *TII;
   const R600RegisterInfo &TRI;
 
-  enum BankSwizzle {
-    ALU_VEC_012 = 0,
-    ALU_VEC_021,
-    ALU_VEC_120,
-    ALU_VEC_102,
-    ALU_VEC_201,
-    ALU_VEC_210
-  };
-
   unsigned getSlot(const MachineInstr *MI) const {
     return TRI.getHWRegChan(MI->getOperand(0).getReg());
   }
@@ -222,7 +213,9 @@ public:
       });
     const DenseMap<unsigned, unsigned> &PV =
         getPreviousVector(CurrentPacketMIs.front());
-    bool FitsReadPortLimits = fitsReadPortLimitation(CurrentPacketMIs, PV);
+    std::vector<R600InstrInfo::BankSwizzle> BS;
+    bool FitsReadPortLimits =
+        TII->fitsReadPortLimitations(CurrentPacketMIs, PV, BS);
     DEBUG(
       if (!FitsReadPortLimits) {
         dbgs() << "Couldn't pack :\n";
@@ -235,6 +228,14 @@ public:
         dbgs() << "because of Read port limitations\n";
       });
     bool isBundlable = FitsConstLimits && FitsReadPortLimits;
+    if (isBundlable) {
+      for (unsigned i = 0, e = CurrentPacketMIs.size(); i < e; i++) {
+        MachineInstr *MI = CurrentPacketMIs[i];
+            unsigned Op = TII->getOperandIdx(MI->getOpcode(),
+                R600Operands::BANK_SWIZZLE);
+            MI->getOperand(Op).setImm(BS[i]);
+      }
+    }
     CurrentPacketMIs.pop_back();
     if (!isBundlable) {
       endPacket(MI->getParent(), MI);
@@ -245,134 +246,6 @@ public:
       setIsLastBit(CurrentPacketMIs.back(), 0);
     substitutePV(MI, PV);
     return VLIWPacketizerList::addToPacket(MI);
-  }
-private:
-  std::vector<std::pair<int, unsigned> >
-  ExtractSrcs(const MachineInstr *MI, const DenseMap<unsigned, unsigned> &PV)
-      const {
-    R600Operands::Ops Ops[] = {
-      R600Operands::SRC0,
-      R600Operands::SRC1,
-      R600Operands::SRC2
-    };
-    std::vector<std::pair<int, unsigned> > Result;
-    for (unsigned i = 0; i < 3; i++) {
-      int OperandIdx = TII->getOperandIdx(MI->getOpcode(), Ops[i]);
-      if (OperandIdx < 0){
-        Result.push_back(std::pair<int, unsigned>(-1,0));
-        continue;
-      }
-      unsigned Src = MI->getOperand(OperandIdx).getReg();
-      if (PV.find(Src) != PV.end()) {
-        Result.push_back(std::pair<int, unsigned>(-1,0));
-        continue;
-      }
-      unsigned Reg = TRI.getEncodingValue(Src) & 0xff;
-      if (Reg > 127) {
-        Result.push_back(std::pair<int, unsigned>(-1,0));
-        continue;
-      }
-      unsigned Chan = TRI.getHWRegChan(Src);
-      Result.push_back(std::pair<int, unsigned>(Reg, Chan));
-    }
-    return Result;
-  }
-
-  std::vector<std::pair<int, unsigned> >
-  Swizzle(std::vector<std::pair<int, unsigned> > Src,
-  BankSwizzle Swz) const {
-    switch (Swz) {
-    case ALU_VEC_012:
-      break;
-    case ALU_VEC_021:
-      std::swap(Src[1], Src[2]);
-      break;
-    case ALU_VEC_102:
-      std::swap(Src[0], Src[1]);
-      break;
-    case ALU_VEC_120:
-      std::swap(Src[0], Src[1]);
-      std::swap(Src[0], Src[2]);
-      break;
-    case ALU_VEC_201:
-      std::swap(Src[0], Src[2]);
-      std::swap(Src[0], Src[1]);
-      break;
-    case ALU_VEC_210:
-      std::swap(Src[0], Src[2]);
-      break;
-    }
-    return Src;
-  }
-
-  bool isLegal(const std::vector<MachineInstr *> &IG,
-      const std::vector<BankSwizzle> &Swz,
-      const DenseMap<unsigned, unsigned> &PV) const {
-    assert (Swz.size() == IG.size());
-    int Vector[4][3];
-    memset(Vector, -1, sizeof(Vector));
-    for (unsigned i = 0, e = IG.size(); i < e; i++) {
-      const std::vector<std::pair<int, unsigned> > &Srcs =
-          Swizzle(ExtractSrcs(IG[i], PV), Swz[i]);
-      for (unsigned j = 0; j < 3; j++) {
-        const std::pair<int, unsigned> &Src = Srcs[j];
-        if (Src.first < 0)
-          continue;
-        if (Vector[Src.second][j] < 0)
-          Vector[Src.second][j] = Src.first;
-        if (Vector[Src.second][j] != Src.first)
-          return false;
-      }
-    }
-    return true;
-  }
-
-  bool recursiveFitsFPLimitation(
-  std::vector<MachineInstr *> IG,
-  const DenseMap<unsigned, unsigned> &PV,
-  std::vector<BankSwizzle> &SwzCandidate,
-  std::vector<MachineInstr *> CurrentlyChecked)
-      const {
-    if (!isLegal(CurrentlyChecked, SwzCandidate, PV))
-      return false;
-    if (IG.size() == CurrentlyChecked.size()) {
-      return true;
-    }
-    BankSwizzle AvailableSwizzle[] = {
-      ALU_VEC_012,
-      ALU_VEC_021,
-      ALU_VEC_120,
-      ALU_VEC_102,
-      ALU_VEC_201,
-      ALU_VEC_210
-    };
-    CurrentlyChecked.push_back(IG[CurrentlyChecked.size()]);
-    for (unsigned i = 0; i < 6; i++) {
-      SwzCandidate.push_back(AvailableSwizzle[i]);
-      if (recursiveFitsFPLimitation(IG, PV, SwzCandidate, CurrentlyChecked))
-        return true;
-      SwzCandidate.pop_back();
-    }
-    return false;
-  }
-
-  bool fitsReadPortLimitation(
-  std::vector<MachineInstr *> IG,
-  const DenseMap<unsigned, unsigned> &PV)
-      const {
-    //Todo : support shared src0 - src1 operand
-    std::vector<BankSwizzle> SwzCandidate;
-    bool Result = recursiveFitsFPLimitation(IG, PV, SwzCandidate,
-        std::vector<MachineInstr *>());
-    if (!Result)
-      return false;
-    for (unsigned i = 0, e = IG.size(); i < e; i++) {
-      MachineInstr *MI = IG[i];
-      unsigned Op = TII->getOperandIdx(MI->getOpcode(),
-          R600Operands::BANK_SWIZZLE);
-      MI->getOperand(Op).setImm(SwzCandidate[i]);
-    }
-    return true;
   }
 };
 

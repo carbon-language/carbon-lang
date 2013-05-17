@@ -172,22 +172,20 @@ private:
       AMDGPU::ALU_LITERAL_Z,
       AMDGPU::ALU_LITERAL_W
     };
-    for (unsigned i = 0, e = MI->getNumOperands(); i < e; ++i) {
-      MachineOperand &MO = MI->getOperand(i);
-      if (!MO.isReg())
+    const SmallVector<std::pair<MachineOperand *, int64_t>, 3 > Srcs =
+        TII->getSrcs(MI);
+    for (unsigned i = 0, e = Srcs.size(); i < e; ++i) {
+      if (Srcs[i].first->getReg() != AMDGPU::ALU_LITERAL_X)
         continue;
-      if (MO.getReg() != AMDGPU::ALU_LITERAL_X)
-        continue;
-      unsigned ImmIdx = TII->getOperandIdx(MI->getOpcode(), R600Operands::IMM);
-      int64_t Imm = MI->getOperand(ImmIdx).getImm();
+      int64_t Imm = Srcs[i].second;
       std::vector<int64_t>::iterator It =
           std::find(Lits.begin(), Lits.end(), Imm);
       if (It != Lits.end()) {
         unsigned Index = It - Lits.begin();
-        MO.setReg(LiteralRegs[Index]);
+        Srcs[i].first->setReg(LiteralRegs[Index]);
       } else {
         assert(Lits.size() < 4 && "Too many literals in Instruction Group");
-        MO.setReg(LiteralRegs[Lits.size()]);
+        Srcs[i].first->setReg(LiteralRegs[Lits.size()]);
         Lits.push_back(Imm);
       }
     }
