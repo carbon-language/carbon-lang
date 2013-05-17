@@ -28,7 +28,15 @@ int DoSEGV() {
 int main() {
   user_sigaction.sa_sigaction = User_OnSIGSEGV;
   user_sigaction.sa_flags = SA_SIGINFO;
-  if (sigaction(SIGSEGV, &user_sigaction, &original_sigaction)) {
+#if defined(__APPLE__) && !defined(__LP64__)
+  // On 32-bit Darwin KERN_PROTECTION_FAILURE (SIGBUS) is delivered.
+  int signum = SIGBUS;
+#else
+  // On 64-bit Darwin KERN_INVALID_ADDRESS (SIGSEGV) is delivered.
+  // On Linux SIGSEGV is delivered as well.
+  int signum = SIGSEGV;
+#endif
+  if (sigaction(signum, &user_sigaction, &original_sigaction)) {
     perror("sigaction");
     return 1;
   }
