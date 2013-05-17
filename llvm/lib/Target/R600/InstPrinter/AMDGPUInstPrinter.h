@@ -49,6 +49,8 @@ private:
   void printWrite(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printSel(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printBankSwizzle(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printRSel(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printCT(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printKCache(const MCInst *MI, unsigned OpNo, raw_ostream &O);
 };
 

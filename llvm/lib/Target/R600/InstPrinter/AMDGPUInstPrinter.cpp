@@ -198,6 +198,51 @@ void AMDGPUInstPrinter::printBankSwizzle(const MCInst *MI, unsigned OpNo,
   return;
 }
 
+void AMDGPUInstPrinter::printRSel(const MCInst *MI, unsigned OpNo,
+                                  raw_ostream &O) {
+  unsigned Sel = MI->getOperand(OpNo).getImm();
+  switch (Sel) {
+  case 0:
+    O << "X";
+    break;
+  case 1:
+    O << "Y";
+    break;
+  case 2:
+    O << "Z";
+    break;
+  case 3:
+    O << "W";
+    break;
+  case 4:
+    O << "0";
+    break;
+  case 5:
+    O << "1";
+    break;
+  case 7:
+    O << "_";
+    break;
+  default:
+    break;
+  }
+}
+
+void AMDGPUInstPrinter::printCT(const MCInst *MI, unsigned OpNo,
+                                  raw_ostream &O) {
+  unsigned CT = MI->getOperand(OpNo).getImm();
+  switch (CT) {
+  case 0:
+    O << "U";
+    break;
+  case 1:
+    O << "N";
+    break;
+  default:
+    break;
+  }
+}
+
 void AMDGPUInstPrinter::printKCache(const MCInst *MI, unsigned OpNo,
                                     raw_ostream &O) {
   int KCacheMode = MI->getOperand(OpNo).getImm();

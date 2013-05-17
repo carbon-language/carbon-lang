@@ -111,6 +111,8 @@ AMDGPUPassConfig::addPreISel() {
   if (ST.device()->getGeneration() > AMDGPUDeviceInfo::HD6XXX) {
     addPass(createAMDGPUStructurizeCFGPass());
     addPass(createSIAnnotateControlFlowPass());
+  } else {
+    addPass(createR600TextureIntrinsicsReplacer());
   }
   return false;
 }

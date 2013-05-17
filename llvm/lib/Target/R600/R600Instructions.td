@@ -96,6 +96,12 @@ def UP : InstFlag <"printUpdatePred">;
 // Once we start using the packetizer in this backend we should have this
 // default to 0.
 def LAST : InstFlag<"printLast", 1>;
+def RSel : Operand<i32> {
+  let PrintMethod = "printRSel";
+}
+def CT: Operand<i32> {
+  let PrintMethod = "printCT";
+}
 
 def FRAMEri : Operand<iPTR> {
   let MIOperandInfo = (ops R600_Reg32:$ptr, i32imm:$index);
@@ -463,38 +469,7 @@ class R600_REDUCTION <bits<11> inst, dag ins, string asm, list<dag> pattern,
           pattern,
           itin>;
 
-class R600_TEX <bits<11> inst, string opName, list<dag> pattern,
-                InstrItinClass itin = AnyALU> :
-  InstR600 <(outs R600_Reg128:$DST_GPR),
-          (ins R600_Reg128:$SRC_GPR, i32imm:$RESOURCE_ID, i32imm:$SAMPLER_ID, i32imm:$textureTarget),
-          !strconcat(opName, "$DST_GPR, $SRC_GPR, $RESOURCE_ID, $SAMPLER_ID, $textureTarget"),
-          pattern,
-          itin>, TEX_WORD0, TEX_WORD1, TEX_WORD2 {
-    let Inst{31-0} = Word0;
-    let Inst{63-32} = Word1;
 
-    let TEX_INST = inst{4-0};
-    let SRC_REL = 0;
-    let DST_REL = 0;
-    let DST_SEL_X = 0;
-    let DST_SEL_Y = 1;
-    let DST_SEL_Z = 2;
-    let DST_SEL_W = 3;
-    let LOD_BIAS = 0;
-
-    let INST_MOD = 0;
-    let FETCH_WHOLE_QUAD = 0;
-    let ALT_CONST = 0;
-    let SAMPLER_INDEX_MODE = 0;
-    let RESOURCE_INDEX_MODE = 0;
-
-    let COORD_TYPE_X = 0;
-    let COORD_TYPE_Y = 0;
-    let COORD_TYPE_Z = 0;
-    let COORD_TYPE_W = 0;
-
-    let TEXInst = 1;
-  }
 
 } // End mayLoad = 1, mayStore = 0, hasSideEffects = 0
 
@@ -617,6 +592,29 @@ def CONST_ADDRESS: SDNode<"AMDGPUISD::CONST_ADDRESS",
   SDTypeProfile<1, -1, [SDTCisInt<0>, SDTCisPtrTy<1>]>,
   [SDNPVariadic]
 >;
+
+def TEXTURE_FETCH_Type : SDTypeProfile<1, 19, [SDTCisFP<0>]>;
+
+def TEXTURE_FETCH: SDNode<"AMDGPUISD::TEXTURE_FETCH", TEXTURE_FETCH_Type, []>;
+
+multiclass TexPattern<bits<32> TextureOp, Instruction inst, ValueType vt = v4f32> {
+def : Pat<(TEXTURE_FETCH (i32 TextureOp), vt:$SRC_GPR,
+          (i32 imm:$srcx), (i32 imm:$srcy), (i32 imm:$srcz), (i32 imm:$srcw),
+          (i32 imm:$offsetx), (i32 imm:$offsety), (i32 imm:$offsetz),
+          (i32 imm:$DST_SEL_X), (i32 imm:$DST_SEL_Y), (i32 imm:$DST_SEL_Z),
+          (i32 imm:$DST_SEL_W),
+          (i32 imm:$RESOURCE_ID), (i32 imm:$SAMPLER_ID),
+          (i32 imm:$COORD_TYPE_X), (i32 imm:$COORD_TYPE_Y), (i32 imm:$COORD_TYPE_Z),
+          (i32 imm:$COORD_TYPE_W)),
+          (inst R600_Reg128:$SRC_GPR,
+          imm:$srcx, imm:$srcy, imm:$srcz, imm:$srcw,
+          imm:$offsetx, imm:$offsety, imm:$offsetz,
+          imm:$DST_SEL_X, imm:$DST_SEL_Y, imm:$DST_SEL_Z,
+          imm:$DST_SEL_W,
+          imm:$RESOURCE_ID, imm:$SAMPLER_ID,
+          imm:$COORD_TYPE_X, imm:$COORD_TYPE_Y, imm:$COORD_TYPE_Z,
+          imm:$COORD_TYPE_W)>;
+}
 
 //===----------------------------------------------------------------------===//
 // Interpolation Instructions
@@ -1132,92 +1130,70 @@ def CNDGT_INT : R600_3OP <
 // Texture instructions
 //===----------------------------------------------------------------------===//
 
-def TEX_LD : R600_TEX <
-  0x03, "TEX_LD",
-  [(set v4f32:$DST_GPR, (int_AMDGPU_txf v4f32:$SRC_GPR,
-      imm:$OFFSET_X, imm:$OFFSET_Y, imm:$OFFSET_Z, imm:$RESOURCE_ID,
-      imm:$SAMPLER_ID, imm:$textureTarget))]
-> {
-let AsmString = "TEX_LD $DST_GPR, $SRC_GPR, $OFFSET_X, $OFFSET_Y, $OFFSET_Z,"
-    "$RESOURCE_ID, $SAMPLER_ID, $textureTarget";
-let InOperandList = (ins R600_Reg128:$SRC_GPR, i32imm:$OFFSET_X,
-    i32imm:$OFFSET_Y, i32imm:$OFFSET_Z, i32imm:$RESOURCE_ID, i32imm:$SAMPLER_ID,
-    i32imm:$textureTarget);
+let mayLoad = 0, mayStore = 0, hasSideEffects = 0 in {
+
+class R600_TEX <bits<11> inst, string opName> :
+  InstR600 <(outs R600_Reg128:$DST_GPR),
+          (ins R600_Reg128:$SRC_GPR,
+          RSel:$srcx, RSel:$srcy, RSel:$srcz, RSel:$srcw,
+          i32imm:$offsetx, i32imm:$offsety, i32imm:$offsetz,
+          RSel:$DST_SEL_X, RSel:$DST_SEL_Y, RSel:$DST_SEL_Z, RSel:$DST_SEL_W,
+          i32imm:$RESOURCE_ID, i32imm:$SAMPLER_ID,
+          CT:$COORD_TYPE_X, CT:$COORD_TYPE_Y, CT:$COORD_TYPE_Z,
+          CT:$COORD_TYPE_W),
+          !strconcat(opName,
+          " $DST_GPR.$DST_SEL_X$DST_SEL_Y$DST_SEL_Z$DST_SEL_W, "
+          "$SRC_GPR.$srcx$srcy$srcz$srcw "
+          "RID:$RESOURCE_ID SID:$SAMPLER_ID "
+          "CT:$COORD_TYPE_X$COORD_TYPE_Y$COORD_TYPE_Z$COORD_TYPE_W"),
+          [],
+          NullALU>, TEX_WORD0, TEX_WORD1, TEX_WORD2 {
+  let Inst{31-0} = Word0;
+  let Inst{63-32} = Word1;
+
+  let TEX_INST = inst{4-0};
+  let SRC_REL = 0;
+  let DST_REL = 0;
+  let LOD_BIAS = 0;
+
+  let INST_MOD = 0;
+  let FETCH_WHOLE_QUAD = 0;
+  let ALT_CONST = 0;
+  let SAMPLER_INDEX_MODE = 0;
+  let RESOURCE_INDEX_MODE = 0;
+
+  let TEXInst = 1;
 }
 
-def TEX_GET_TEXTURE_RESINFO : R600_TEX <
-  0x04, "TEX_GET_TEXTURE_RESINFO",
-  [(set v4f32:$DST_GPR, (int_AMDGPU_txq v4f32:$SRC_GPR,
-      imm:$RESOURCE_ID, imm:$SAMPLER_ID, imm:$textureTarget))]
->;
+} // End mayLoad = 0, mayStore = 0, hasSideEffects = 0
 
-def TEX_GET_GRADIENTS_H : R600_TEX <
-  0x07, "TEX_GET_GRADIENTS_H",
-  [(set v4f32:$DST_GPR, (int_AMDGPU_ddx v4f32:$SRC_GPR,
-      imm:$RESOURCE_ID, imm:$SAMPLER_ID, imm:$textureTarget))]
->;
 
-def TEX_GET_GRADIENTS_V : R600_TEX <
-  0x08, "TEX_GET_GRADIENTS_V",
-  [(set v4f32:$DST_GPR, (int_AMDGPU_ddy v4f32:$SRC_GPR,
-      imm:$RESOURCE_ID, imm:$SAMPLER_ID, imm:$textureTarget))]
->;
 
-def TEX_SET_GRADIENTS_H : R600_TEX <
-  0x0B, "TEX_SET_GRADIENTS_H",
-  []
->;
+def TEX_SAMPLE : R600_TEX <0x10, "TEX_SAMPLE">;
+def TEX_SAMPLE_C : R600_TEX <0x18, "TEX_SAMPLE_C">;
+def TEX_SAMPLE_L : R600_TEX <0x11, "TEX_SAMPLE_L">;
+def TEX_SAMPLE_C_L : R600_TEX <0x19, "TEX_SAMPLE_C_L">;
+def TEX_SAMPLE_LB : R600_TEX <0x12, "TEX_SAMPLE_LB">;
+def TEX_SAMPLE_C_LB : R600_TEX <0x1A, "TEX_SAMPLE_C_LB">;
+def TEX_LD : R600_TEX <0x03, "TEX_LD">;
+def TEX_GET_TEXTURE_RESINFO : R600_TEX <0x04, "TEX_GET_TEXTURE_RESINFO">;
+def TEX_GET_GRADIENTS_H : R600_TEX <0x07, "TEX_GET_GRADIENTS_H">;
+def TEX_GET_GRADIENTS_V : R600_TEX <0x08, "TEX_GET_GRADIENTS_V">;
+def TEX_SET_GRADIENTS_H : R600_TEX <0x0B, "TEX_SET_GRADIENTS_H">;
+def TEX_SET_GRADIENTS_V : R600_TEX <0x0C, "TEX_SET_GRADIENTS_V">;
+def TEX_SAMPLE_G : R600_TEX <0x14, "TEX_SAMPLE_G">;
+def TEX_SAMPLE_C_G : R600_TEX <0x1C, "TEX_SAMPLE_C_G">;
 
-def TEX_SET_GRADIENTS_V : R600_TEX <
-  0x0C, "TEX_SET_GRADIENTS_V",
-  []
->;
-
-def TEX_SAMPLE : R600_TEX <
-  0x10, "TEX_SAMPLE",
-  [(set v4f32:$DST_GPR, (int_AMDGPU_tex v4f32:$SRC_GPR,
-      imm:$RESOURCE_ID, imm:$SAMPLER_ID, imm:$textureTarget))]
->;
-
-def TEX_SAMPLE_C : R600_TEX <
-  0x18, "TEX_SAMPLE_C",
-  [(set v4f32:$DST_GPR, (int_AMDGPU_tex v4f32:$SRC_GPR,
-      imm:$RESOURCE_ID, imm:$SAMPLER_ID, TEX_SHADOW:$textureTarget))]
->;
-
-def TEX_SAMPLE_L : R600_TEX <
-  0x11, "TEX_SAMPLE_L",
-  [(set v4f32:$DST_GPR, (int_AMDGPU_txl v4f32:$SRC_GPR,
-      imm:$RESOURCE_ID, imm:$SAMPLER_ID, imm:$textureTarget))]
->;
-
-def TEX_SAMPLE_C_L : R600_TEX <
-  0x19, "TEX_SAMPLE_C_L",
-  [(set v4f32:$DST_GPR, (int_AMDGPU_txl v4f32:$SRC_GPR,
-      imm:$RESOURCE_ID, imm:$SAMPLER_ID, TEX_SHADOW:$textureTarget))]
->;
-
-def TEX_SAMPLE_LB : R600_TEX <
-  0x12, "TEX_SAMPLE_LB",
-  [(set v4f32:$DST_GPR, (int_AMDGPU_txb v4f32:$SRC_GPR,
-      imm:$RESOURCE_ID, imm:$SAMPLER_ID, imm:$textureTarget))]
->;
-
-def TEX_SAMPLE_C_LB : R600_TEX <
-  0x1A, "TEX_SAMPLE_C_LB",
-  [(set v4f32:$DST_GPR, (int_AMDGPU_txb v4f32:$SRC_GPR,
-      imm:$RESOURCE_ID, imm:$SAMPLER_ID, TEX_SHADOW:$textureTarget))]
->;
-
-def TEX_SAMPLE_G : R600_TEX <
-  0x14, "TEX_SAMPLE_G",
-  []
->;
-
-def TEX_SAMPLE_C_G : R600_TEX <
-  0x1C, "TEX_SAMPLE_C_G",
-  []
->;
+defm : TexPattern<0, TEX_SAMPLE>;
+defm : TexPattern<1, TEX_SAMPLE_C>;
+defm : TexPattern<2, TEX_SAMPLE_L>;
+defm : TexPattern<3, TEX_SAMPLE_C_L>;
+defm : TexPattern<4, TEX_SAMPLE_LB>;
+defm : TexPattern<5, TEX_SAMPLE_C_LB>;
+defm : TexPattern<6, TEX_LD, v4i32>;
+defm : TexPattern<7, TEX_GET_TEXTURE_RESINFO, v4i32>;
+defm : TexPattern<8, TEX_GET_GRADIENTS_H>;
+defm : TexPattern<9, TEX_GET_GRADIENTS_V>;
 
 //===----------------------------------------------------------------------===//
 // Helper classes for common instructions
