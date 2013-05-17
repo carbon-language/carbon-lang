@@ -153,7 +153,7 @@ public:
     /// information in this context. If a module, function, file and
     /// line number are available, they will be dumped. If only a
     /// module and function or symbol name with offset is available,
-    /// that will be ouput. Else just the address at which the target
+    /// that will be output. Else just the address at which the target
     /// was stopped will be displayed.
     ///
     /// @param[in] s
