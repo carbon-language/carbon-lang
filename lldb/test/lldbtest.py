@@ -101,6 +101,8 @@ STEP_OUT_SUCCEEDED = "Thread step-out succeeded"
 
 STOPPED_DUE_TO_EXC_BAD_ACCESS = "Process should be stopped due to bad access exception"
 
+STOPPED_DUE_TO_ASSERT = "Process should be stopped due to an assertion"
+
 STOPPED_DUE_TO_BREAKPOINT = "Process should be stopped due to breakpoint"
 
 STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS = "%s, %s" % (
