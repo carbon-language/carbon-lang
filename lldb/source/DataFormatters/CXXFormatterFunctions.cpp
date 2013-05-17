@@ -939,8 +939,13 @@ ReadAsciiBufferAndDumpToStream (lldb::addr_t location,
     
     if (my_error.Fail())
         return false;
+    
+    dest.Printf("%c%c",prefix_token,quote);
+    
     if (my_data_read)
-        dest.Printf("%c%c%s%c",prefix_token,quote,(char*)buffer_sp->GetBytes(),quote);
+        dest.Printf("%s",(char*)buffer_sp->GetBytes());
+    
+    dest.Printf("%c",quote);
     
     return true;
 }
