@@ -71,13 +71,12 @@ public:
 };
 
 /// \brief Simple callback implementation. Marshaller and function are provided.
-///
-/// \param Marshaller Function to unpack the arguments and call \c Func
-/// \param Func Matcher construct function. This is the function that
-///   compile-time matcher expressions would use to create the matcher.
 template <typename MarshallerType, typename FuncType>
 class FixedArgCountMatcherCreateCallback : public MatcherCreateCallback {
 public:
+  /// \param Marshaller Function to unpack the arguments and call \c Func
+  /// \param Func Matcher construct function. This is the function that
+  ///   compile-time matcher expressions would use to create the matcher.
   FixedArgCountMatcherCreateCallback(MarshallerType Marshaller, FuncType Func,
                                      StringRef MatcherName)
       : Marshaller(Marshaller), Func(Func), MatcherName(MatcherName.str()) {}
