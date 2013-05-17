@@ -29,9 +29,10 @@ void IteratorReplacer::run(const MatchFinder::MatchResult &Result) {
   if (!SM.isFromMainFile(D->getLocStart()))
     return;
 
-  for (clang::DeclStmt::const_decl_iterator I  = D->decl_begin(),
-        E = D->decl_end(); I != E; ++I) {
-    const VarDecl *V = cast<VarDecl>(*I);
+  for (clang::DeclStmt::const_decl_iterator DI = D->decl_begin(),
+                                            DE = D->decl_end();
+       DI != DE; ++DI) {
+    const VarDecl *V = cast<VarDecl>(*DI);
 
     const Expr *ExprInit = V->getInit();
 
