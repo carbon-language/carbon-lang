@@ -1475,6 +1475,32 @@ TEST(MemorySanitizer, getrusage) {
   EXPECT_NOT_POISONED(usage.ru_nivcsw);
 }
 
+#ifdef __GLIBC__
+extern "C" {
+  extern void *__libc_stack_end;
+}
+
+static char **GetArgv(void) {
+  uintptr_t *stack_end = (uintptr_t *)__libc_stack_end;
+  return (char**)(stack_end + 1);
+}
+
+#else  // __GLIBC__
+# error "TODO: port this"
+#endif
+
+// Compute the path to our loadable DSO.  We assume it's in the same
+// directory.  Only use string routines that we intercept so far to do this.
+static int PathToLoadable(char *buf, size_t sz) {
+  char **argv = GetArgv();
+  const char *basename = "libmsan_loadable.x86_64.so";
+  char *last_slash = strrchr(argv[0], '/');
+  assert(last_slash);
+  int res = snprintf(buf, sz, "%.*s/%s", int(last_slash - argv[0]), argv[0],
+                     basename);
+  return res < sz ? 0 : res;
+}
+
 static void dladdr_testfn() {}
 
 TEST(MemorySanitizer, dladdr) {
@@ -1503,37 +1529,27 @@ static int dl_phdr_callback(struct dl_phdr_info *info, size_t size, void *data) 
 }
 
 TEST(MemorySanitizer, dl_iterate_phdr) {
+  char path[4096];
+  int res = PathToLoadable(path, sizeof(path));
+  assert(!res);
+
+  // Having at least one dlopen'ed library in the process makes this more
+  // entertaining.
+  void *lib = dlopen(path, RTLD_LAZY);
+  ASSERT_NE((void*)0, lib);
+
   int count = 0;
   int result = dl_iterate_phdr(dl_phdr_callback, &count);
   assert(count > 0);
+  
+  dlclose(lib);
 }
 
-namespace {
-#ifdef __GLIBC__
-extern "C" {
-  extern void *__libc_stack_end;
-}
-
-static char **GetArgv(void) {
-  uintptr_t *stack_end = (uintptr_t *)__libc_stack_end;
-  return (char**)(stack_end + 1);
-}
-
-#else  // __GLIBC__
-# error "TODO: port this"
-#endif
 
 TEST(MemorySanitizer, dlopen) {
-  // Compute the path to our loadable DSO.  We assume it's in the same
-  // directory.  Only use string routines that we intercept so far to do this.
-  char **argv = GetArgv();
-  const char *basename = "libmsan_loadable.x86_64.so";
-  size_t path_max = strlen(argv[0]) + 1 + strlen(basename) + 1;
-  char *path = new char[path_max];
-  char *last_slash = strrchr(argv[0], '/');
-  assert(last_slash);
-  snprintf(path, path_max, "%.*s/%s", int(last_slash - argv[0]),
-           argv[0], basename);
+  char path[4096];
+  int res = PathToLoadable(path, sizeof(path));
+  assert(!res);
 
   // We need to clear shadow for globals when doing dlopen.  In order to test
   // this, we have to poison the shadow for the DSO before we load it.  In
@@ -1554,8 +1570,6 @@ TEST(MemorySanitizer, dlopen) {
     EXPECT_POISONED(*dso_global);
     dlclose(lib);
   }
-
-  delete[] path;
 }
 
 // Regression test for a crash in dlopen() interceptor.
@@ -1564,7 +1578,6 @@ TEST(MemorySanitizer, dlopenFailed) {
   void *lib = dlopen(path, RTLD_LAZY);
   ASSERT_EQ(0, lib);
 }
-} // namespace
 
 TEST(MemorySanitizer, scanf) {
   const char *input = "42 hello";

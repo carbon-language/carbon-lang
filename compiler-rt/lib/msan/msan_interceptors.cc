@@ -815,15 +815,20 @@ INTERCEPTOR(void *, dlopen, const char *filename, int flag) {
   return (void *)map;
 }
 
-typedef int (*dl_iterate_phdr_cb)(void *info, SIZE_T size, void *data);
+typedef int (*dl_iterate_phdr_cb)(__sanitizer_dl_phdr_info *info, SIZE_T size,
+                                  void *data);
 struct dl_iterate_phdr_data {
   dl_iterate_phdr_cb callback;
   void *data;
 };
 
-static int msan_dl_iterate_phdr_cb(void *info, SIZE_T size, void *data) {
-  if (info)
+static int msan_dl_iterate_phdr_cb(__sanitizer_dl_phdr_info *info, SIZE_T size,
+                                   void *data) {
+  if (info) {
     __msan_unpoison(info, size);
+    if (info->dlpi_name)
+      __msan_unpoison(info->dlpi_name, REAL(strlen)(info->dlpi_name) + 1);
+  }
   dl_iterate_phdr_data *cbdata = (dl_iterate_phdr_data *)data;
   __msan_unpoison_param(3);
   return cbdata->callback(info, size, cbdata->data);

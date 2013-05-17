@@ -74,6 +74,15 @@ namespace __sanitizer {
   extern uptr sig_dfl;
 
   uptr __sanitizer_in_addr_sz(int af);
+
+#if SANITIZER_LINUX
+  struct __sanitizer_dl_phdr_info {
+    uptr dlpi_addr;
+    const char *dlpi_name;
+    const void *dlpi_phdr;
+    short dlpi_phnum;
+  };
+#endif
 }  // namespace __sanitizer
 
 #endif

@@ -38,6 +38,7 @@
 #endif // !SANITIZER_ANDROID
 
 #if SANITIZER_LINUX
+#include <link.h>
 #include <sys/vfs.h>
 #include <sys/epoll.h>
 #endif // SANITIZER_LINUX
@@ -120,4 +121,15 @@ namespace __sanitizer {
 COMPILER_CHECK(sizeof(__sanitizer_pthread_attr_t) >= sizeof(pthread_attr_t));
 COMPILER_CHECK(sizeof(__sanitizer::struct_sigaction_max_sz) >=
                    sizeof(__sanitizer::struct_sigaction_sz));
+#if SANITIZER_LINUX
+COMPILER_CHECK(offsetof(struct __sanitizer_dl_phdr_info, dlpi_addr) ==
+               offsetof(struct dl_phdr_info, dlpi_addr));
+COMPILER_CHECK(offsetof(struct __sanitizer_dl_phdr_info, dlpi_name) ==
+               offsetof(struct dl_phdr_info, dlpi_name));
+COMPILER_CHECK(offsetof(struct __sanitizer_dl_phdr_info, dlpi_phdr) ==
+               offsetof(struct dl_phdr_info, dlpi_phdr));
+COMPILER_CHECK(offsetof(struct __sanitizer_dl_phdr_info, dlpi_phnum) ==
+               offsetof(struct dl_phdr_info, dlpi_phnum));
+#endif
+
 #endif  // SANITIZER_LINUX || SANITIZER_MAC
