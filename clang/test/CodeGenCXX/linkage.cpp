@@ -1,14 +1,7 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -std=c++11 -O1 -disable-llvm-optzns %s -o - | FileCheck %s
 
-// CHECK: define internal void @_ZN5test31fIZNS_1gEvE1SEEvT_(
-// CHECK: define linkonce_odr void @_ZN5test41fIZNS_1gILi1EEEPvvE1SEEvT_(
-// CHECK: define linkonce_odr void @_ZN5test51fIZNS_1gILi1EEEPvvE1S_1EEvT_(
-// CHECK: define internal void @_ZN5test71fIZZNS_1gEvEN1S1hEvE1T_4EEvv(
-// CHECK: define linkonce_odr void @_ZN5test61fIZZNS_1gEvEN1S1hE_2vE1T_3EEvv(
-// CHECK: define internal void @_ZN5test21fIZNS_L1gEvE1S_0EEvT_(
-// CHECK: define linkonce_odr void @_ZN5test11fIZNS_1gEvE1SEEvT_(
-
 namespace test1 {
+  // CHECK-DAG: define linkonce_odr void @_ZN5test11fIZNS_1gEvE1SEEvT_(
   template <typename T> void f(T) {}
   inline void *g() {
     struct S {
@@ -19,6 +12,7 @@ namespace test1 {
 }
 
 namespace test2 {
+  // CHECK-DAG: define internal void @_ZN5test21fIZNS_L1gEvE1S_0EEvT_(
   template <typename T> void f(T) {}
   static inline void *g() {
     struct S {
@@ -29,6 +23,7 @@ namespace test2 {
 }
 
 namespace test3 {
+  // CHECK-DAG: define internal void @_ZN5test31fIZNS_1gEvE1SEEvT_(
   template <typename T> void f(T) {}
   void *g() {
     struct S {
@@ -39,6 +34,7 @@ namespace test3 {
 }
 
 namespace test4 {
+  // CHECK-DAG: define linkonce_odr void @_ZN5test41fIZNS_1gILi1EEEPvvE1SEEvT_(
   template <typename T> void f(T) {}
   template <int N> inline void *g() {
     struct S {
@@ -50,6 +46,7 @@ namespace test4 {
 }
 
 namespace test5 {
+  // CHECK-DAG: define linkonce_odr void @_ZN5test51fIZNS_1gILi1EEEPvvE1S_1EEvT_(
   template <typename T> void f(T) {}
   template <int N> inline void *g() {
     struct S {
@@ -61,6 +58,7 @@ namespace test5 {
 }
 
 namespace test6 {
+  // CHECK-DAG: define linkonce_odr void @_ZN5test61fIZZNS_1gEvEN1S1hE_2vE1T_3EEvv(
   template <typename T> void f() {}
 
   inline void *g() {
@@ -78,6 +76,7 @@ namespace test6 {
 }
 
 namespace test7 {
+  // CHECK-DAG: define internal void @_ZN5test71fIZZNS_1gEvEN1S1hEvE1T_4EEvv(
   template <typename T> void f() {}
 
   void *g() {
