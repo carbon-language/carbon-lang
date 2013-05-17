@@ -530,7 +530,11 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
     case AMDGPUIntrinsic::R600_load_input: {
       int64_t RegIndex = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
       unsigned Reg = AMDGPU::R600_TReg32RegClass.getRegister(RegIndex);
-      return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass, Reg, VT);
+      MachineFunction &MF = DAG.getMachineFunction();
+      MachineRegisterInfo &MRI = MF.getRegInfo();
+      MRI.addLiveIn(Reg);
+      return DAG.getCopyFromReg(DAG.getEntryNode(),
+          DAG.getEntryNode().getDebugLoc(), Reg, VT);
     }
 
     case AMDGPUIntrinsic::R600_interp_input: {
