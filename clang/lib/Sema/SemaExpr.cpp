@@ -5630,7 +5630,14 @@ ExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
   Expr *commonExpr = 0;
   if (LHSExpr == 0) {
     commonExpr = CondExpr;
-
+    // Lower out placeholder types first.  This is important so that we don't
+    // try to capture a placeholder. This happens in few cases in C++; such
+    // as Objective-C++'s dictionary subscripting syntax.
+    if (commonExpr->hasPlaceholderType()) {
+      ExprResult result = CheckPlaceholderExpr(commonExpr);
+      if (!result.isUsable()) return ExprError();
+      commonExpr = result.take();
+    }
     // We usually want to apply unary conversions *before* saving, except
     // in the special case of a C++ l-value conditional.
     if (!(getLangOpts().CPlusPlus
