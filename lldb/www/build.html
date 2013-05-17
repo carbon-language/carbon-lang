@@ -162,6 +162,24 @@
                 <tt>--enable-libcpp</tt> flag.</p>
                 <p> If you wish to build a release version of LLDB, run configure with the <tt>--enable-optimized</tt> flag.</p>
 
+                <h2>Testing</h2>
+                <p>In addition to running all the LLDB test suites with the "check-lldb" CMake target above, it is possible to
+                run individual LLDB tests. For example, to run the test cases defined in TestInferiorCrashing.py, run:</p>
+                <code>
+                  <br>&gt; cd $lldb/test
+                  <br>&gt; python dotest.py --executable &lt;path-to-lldb&gt;  -p TestInferiorCrashing.py
+                </code>
+                <p>In addition to running a test by name, it is also possible to specify a directory path to <tt>dotest.py</tt>
+                in order to run all the tests under that directory. For example, to run all the tests under the
+                'functionalities/data-formatter' directory, run:</p>
+                <code>
+                  <br>&gt; python dotest.py --executable &lt;path-to-lldb&gt; functionalities/data-formatter
+                </code>
+                <p>To dump additional information to <tt>stdout</tt> about how the test harness is driving LLDB, run
+                <tt>dotest.py</tt> with the <tt>-t</tt> flag. Many more options that are available. To see a list of all of them, run:</p>
+                <code>
+                  <br>&gt; python dotest.py -h
+                </code>
                 <h2>Additional Notes</h2>
                 <p>LLDB has a Python scripting capability and supplies its own Python module named <tt>lldb</tt>.
                 If a script is run inside the command line <tt>lldb</tt> application, the Python module
