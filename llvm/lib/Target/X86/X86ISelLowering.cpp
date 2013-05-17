@@ -4756,19 +4756,27 @@ static SDValue getShuffleScalarElt(SDNode *N, unsigned Index, SelectionDAG &DAG,
 /// getNumOfConsecutiveZeros - Return the number of elements of a vector
 /// shuffle operation which come from a consecutively from a zero. The
 /// search can start in two different directions, from left or right.
-static
-unsigned getNumOfConsecutiveZeros(ShuffleVectorSDNode *SVOp, unsigned NumElems,
-                                  bool ZerosFromLeft, SelectionDAG &DAG) {
-  unsigned i;
-  for (i = 0; i != NumElems; ++i) {
-    unsigned Index = ZerosFromLeft ? i : NumElems-i-1;
+/// We count undefs as zeros until PreferredNum is reached.
+static unsigned getNumOfConsecutiveZeros(ShuffleVectorSDNode *SVOp,
+                                         unsigned NumElems, bool ZerosFromLeft,
+                                         SelectionDAG &DAG,
+                                         unsigned PreferredNum = -1U) {
+  unsigned NumZeros = 0;
+  for (unsigned i = 0; i != NumElems; ++i) {
+    unsigned Index = ZerosFromLeft ? i : NumElems - i - 1;
     SDValue Elt = getShuffleScalarElt(SVOp, Index, DAG, 0);
-    if (!(Elt.getNode() &&
-         (Elt.getOpcode() == ISD::UNDEF || X86::isZeroNode(Elt))))
+    if (!Elt.getNode())
+      break;
+
+    if (X86::isZeroNode(Elt))
+      ++NumZeros;
+    else if (Elt.getOpcode() == ISD::UNDEF) // Undef as zero up to PreferredNum.
+      NumZeros = std::min(NumZeros + 1, PreferredNum);
+    else
       break;
   }
 
-  return i;
+  return NumZeros;
 }
 
 /// isShuffleMaskConsecutive - Check if the shuffle mask indicies [MaskI, MaskE)
@@ -4806,8 +4814,9 @@ bool isShuffleMaskConsecutive(ShuffleVectorSDNode *SVOp,
 static bool isVectorShiftRight(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG,
                                bool &isLeft, SDValue &ShVal, unsigned &ShAmt) {
   unsigned NumElems = SVOp->getValueType(0).getVectorNumElements();
-  unsigned NumZeros = getNumOfConsecutiveZeros(SVOp, NumElems,
-              false /* check zeros from right */, DAG);
+  unsigned NumZeros = getNumOfConsecutiveZeros(
+      SVOp, NumElems, false /* check zeros from right */, DAG,
+      SVOp->getMaskElt(0));
   unsigned OpSrc;
 
   if (!NumZeros)
@@ -4839,8 +4848,9 @@ static bool isVectorShiftRight(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG,
 static bool isVectorShiftLeft(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG,
                               bool &isLeft, SDValue &ShVal, unsigned &ShAmt) {
   unsigned NumElems = SVOp->getValueType(0).getVectorNumElements();
-  unsigned NumZeros = getNumOfConsecutiveZeros(SVOp, NumElems,
-              true /* check zeros from left */, DAG);
+  unsigned NumZeros = getNumOfConsecutiveZeros(
+      SVOp, NumElems, true /* check zeros from left */, DAG,
+      NumElems - SVOp->getMaskElt(NumElems - 1) - 1);
   unsigned OpSrc;
 
   if (!NumZeros)
@@ -6871,6 +6881,11 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
                                 TargetMask, DAG);
   }
 
+  if (isPALIGNRMask(M, VT, Subtarget))
+    return getTargetShuffleNode(X86ISD::PALIGNR, dl, VT, V1, V2,
+                                getShufflePALIGNRImmediate(SVOp),
+                                DAG);
+
   // Check if this can be converted into a logical shift.
   bool isLeft = false;
   unsigned ShAmt = 0;
@@ -6987,11 +7002,6 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   // The checks below are all present in isShuffleMaskLegal, but they are
   // inlined here right now to enable us to directly emit target specific
   // nodes, and remove one by one until they don't return Op anymore.
-
-  if (isPALIGNRMask(M, VT, Subtarget))
-    return getTargetShuffleNode(X86ISD::PALIGNR, dl, VT, V1, V2,
-                                getShufflePALIGNRImmediate(SVOp),
-                                DAG);
 
   if (ShuffleVectorSDNode::isSplatMask(&M[0], VT) &&
       SVOp->getSplatIndex() == 0 && V2IsUndef) {
