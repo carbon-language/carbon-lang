@@ -694,7 +694,8 @@ static void PrintCursor(CXCursor Cursor,
       printf(" (static)");
     if (clang_CXXMethod_isVirtual(Cursor))
       printf(" (virtual)");
-
+    if (clang_CXXMethod_isPureVirtual(Cursor))
+      printf(" (pure)");
     if (clang_Cursor_isVariadic(Cursor))
       printf(" (variadic)");
     

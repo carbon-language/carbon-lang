@@ -4035,6 +4035,12 @@ CINDEX_LINKAGE CXString clang_FullComment_getAsXML(CXComment Comment);
  */
 
 /**
+ * \brief Determine if a C++ member function or member function template is
+ * pure virtual.
+ */
+CINDEX_LINKAGE unsigned clang_CXXMethod_isPureVirtual(CXCursor C);
+
+/**
  * \brief Determine if a C++ member function or member function template is 
  * declared 'static'.
  */

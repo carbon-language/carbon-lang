@@ -2590,6 +2590,10 @@ functionList = [
    [Index, c_char_p],
    c_object_p),
 
+  ("clang_CXXMethod_isPureVirtual",
+   [Cursor],
+   bool),
+
   ("clang_CXXMethod_isStatic",
    [Cursor],
    bool),
