@@ -20,6 +20,9 @@
 #include "sanitizer_placement_new.h"
 #include "sanitizer_symbolizer.h"
 
+// Android NDK r8e elf.h depends on stdint.h without including the latter.
+#include <stdint.h>
+
 #include <elf.h>
 #include <errno.h>
 #include <poll.h>
