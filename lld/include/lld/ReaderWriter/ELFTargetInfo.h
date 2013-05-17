@@ -86,7 +86,10 @@ public:
   }
 
   /// \brief Does the output have dynamic sections.
-  bool isDynamic() const;
+  virtual bool isDynamic() const;
+
+  /// \brief Is the relocation a relative relocation
+  virtual bool isRelativeReloc(const Reference &r) const;
 
   template <typename ELFT>
   lld::elf::TargetHandler<ELFT> &getTargetHandler() const {

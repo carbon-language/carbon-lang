@@ -22,8 +22,9 @@ namespace elf {
 
 class HexagonTargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
-  HexagonTargetInfo(llvm::Triple triple) 
-      : ELFTargetInfo(triple, std::unique_ptr<TargetHandlerBase>(new HexagonTargetHandler(*this))) {}
+  HexagonTargetInfo(llvm::Triple triple)
+      : ELFTargetInfo(triple, std::unique_ptr<TargetHandlerBase>(
+                                  new HexagonTargetHandler(*this))) {}
 
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
@@ -45,6 +46,17 @@ public:
                                const Reference &r) const {
     switch (r.kind()){
     case llvm::ELF::R_HEX_JMP_SLOT:
+      return true;
+    default:
+      return false;
+    }
+  }
+
+  /// \brief Hexagon has only one relative relocation
+  /// a) for supporting relative relocs - R_HEX_RELATIVE
+  virtual bool isRelativeReloc(const Reference &r) const {
+    switch (r.kind()) {
+    case llvm::ELF::R_HEX_RELATIVE:
       return true;
     default:
       return false;

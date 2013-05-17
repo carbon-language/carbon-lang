@@ -25,6 +25,10 @@ public:
     : ELFTargetInfo(triple, std::unique_ptr<TargetHandlerBase>(new PPCTargetHandler(*this))) {}
 
   virtual bool isLittleEndian() const { return false; }
+
+  /// \brief PPC has no relative relocations defined
+  virtual bool isRelativeReloc(const Reference &) const { return false; }
+
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 };

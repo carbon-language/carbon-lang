@@ -933,10 +933,9 @@ public:
       r->setSymbolAndType(index, rel.second->kind());
       r->r_offset =
           writer->addressOfAtom(rel.first) + rel.second->offsetInAtom();
-      // FIXME: The addend is used only by IRELATIVE relocations while static
-      // linking executable statically, check to see how does dynamic linking
-      // work with IFUNC and change accordingly
-      if (!this->_targetInfo.isDynamic())
+      r->r_addend = 0;
+      // The addend is used only by relative relocations
+      if (this->_targetInfo.isRelativeReloc(*rel.second))
         r->r_addend =
             writer->addressOfAtom(rel.second->target()) + rel.second->addend();
       dest += sizeof(Elf_Rela);

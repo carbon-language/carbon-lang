@@ -21,9 +21,22 @@ namespace lld {
 namespace elf {
 class X86TargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
-  X86TargetInfo(llvm::Triple triple) 
-      : ELFTargetInfo(triple, std::unique_ptr<TargetHandlerBase>(new X86TargetHandler(*this))) {}
+  X86TargetInfo(llvm::Triple triple)
+      : ELFTargetInfo(triple, std::unique_ptr<TargetHandlerBase>(
+                                  new X86TargetHandler(*this))) {}
 
+  /// \brief X86 has only two relative relocation
+  /// a) for supporting IFUNC relocs - R_386_IRELATIVE
+  /// b) for supporting relative relocs - R_386_RELATIVE
+  virtual bool isRelativeReloc(const Reference &r) const {
+    switch (r.kind()) {
+    case llvm::ELF::R_386_IRELATIVE:
+    case llvm::ELF::R_386_RELATIVE:
+      return true;
+    default:
+      return false;
+    }
+  }
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 };

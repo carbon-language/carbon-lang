@@ -28,8 +28,9 @@ enum {
 
 class X86_64TargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
-  X86_64TargetInfo(llvm::Triple triple) 
-    : ELFTargetInfo(triple, std::unique_ptr<TargetHandlerBase>(new X86_64TargetHandler(*this))) {}
+  X86_64TargetInfo(llvm::Triple triple)
+      : ELFTargetInfo(triple, std::unique_ptr<TargetHandlerBase>(
+                                  new X86_64TargetHandler(*this))) {}
 
   virtual void addPasses(PassManager &) const;
 
@@ -55,6 +56,19 @@ public:
     switch (r.kind()){
     case llvm::ELF::R_X86_64_JUMP_SLOT:
     case llvm::ELF::R_X86_64_IRELATIVE:
+      return true;
+    default:
+      return false;
+    }
+  }
+
+  /// \brief X86_64 has two relative relocations
+  /// a) for supporting IFUNC - R_X86_64_IRELATIVE
+  /// b) for supporting relative relocs - R_X86_64_RELATIVE
+  virtual bool isRelativeReloc(const Reference &r) const {
+    switch (r.kind()) {
+    case llvm::ELF::R_X86_64_IRELATIVE:
+    case llvm::ELF::R_X86_64_RELATIVE:
       return true;
     default:
       return false;
