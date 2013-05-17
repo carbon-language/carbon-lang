@@ -72,7 +72,7 @@ Sema::getTemplateInstantiationArgs(NamedDecl *D,
       if (TemplateTemplateParmDecl *TTP 
                                       = dyn_cast<TemplateTemplateParmDecl>(D)) {
         for (unsigned I = 0, N = TTP->getDepth() + 1; I != N; ++I)
-          Result.addOuterTemplateArguments(0, 0);
+          Result.addOuterTemplateArguments(None);
         return Result;
       }
     }
@@ -116,9 +116,7 @@ Sema::getTemplateInstantiationArgs(NamedDecl *D,
       } else if (FunctionTemplateDecl *FunTmpl
                                    = Function->getDescribedFunctionTemplate()) {
         // Add the "injected" template arguments.
-        std::pair<const TemplateArgument *, unsigned>
-          Injected = FunTmpl->getInjectedTemplateArgs();
-        Result.addOuterTemplateArguments(Injected.first, Injected.second);
+        Result.addOuterTemplateArguments(FunTmpl->getInjectedTemplateArgs());
       }
       
       // If this is a friend declaration and it declares an entity at
@@ -135,9 +133,10 @@ Sema::getTemplateInstantiationArgs(NamedDecl *D,
     } else if (CXXRecordDecl *Rec = dyn_cast<CXXRecordDecl>(Ctx)) {
       if (ClassTemplateDecl *ClassTemplate = Rec->getDescribedClassTemplate()) {
         QualType T = ClassTemplate->getInjectedClassNameSpecialization();
-        const TemplateSpecializationType *TST
-          = cast<TemplateSpecializationType>(Context.getCanonicalType(T));
-        Result.addOuterTemplateArguments(TST->getArgs(), TST->getNumArgs());
+        const TemplateSpecializationType *TST =
+            cast<TemplateSpecializationType>(Context.getCanonicalType(T));
+        Result.addOuterTemplateArguments(
+            llvm::makeArrayRef(TST->getArgs(), TST->getNumArgs()));
         if (ClassTemplate->isMemberSpecialization())
           break;
       }

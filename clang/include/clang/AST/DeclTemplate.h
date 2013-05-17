@@ -847,7 +847,7 @@ public:
   /// arguments for a function template, the notion is convenient when
   /// we need to perform substitutions inside the definition of a function
   /// template.
-  std::pair<const TemplateArgument *, unsigned> getInjectedTemplateArgs();
+  ArrayRef<TemplateArgument> getInjectedTemplateArgs();
 
   /// \brief Create a function template node.
   static FunctionTemplateDecl *Create(ASTContext &C, DeclContext *DC,

@@ -2007,7 +2007,7 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
     TemplateArgLists.addOuterTemplateArguments(&TemplateArgs);
     unsigned Depth = AliasTemplate->getTemplateParameters()->getDepth();
     for (unsigned I = 0; I < Depth; ++I)
-      TemplateArgLists.addOuterTemplateArguments(0, 0);
+      TemplateArgLists.addOuterTemplateArguments(None);
 
     LocalInstantiationScope Scope(*this);
     InstantiatingTemplate Inst(*this, TemplateLoc, Template);
