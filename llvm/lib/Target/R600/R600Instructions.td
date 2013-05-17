@@ -1751,8 +1751,7 @@ let usesCustomInserter = 1 in {
 
 class RAT_WRITE_CACHELESS_eg <dag ins, bits<4> comp_mask, string name,
                               list<dag> pattern>
-    : EG_CF_RAT <0x57, 0x2, 0, (outs), ins,
-                 !strconcat(name, " $rw_gpr, $index_gpr, $eop"), pattern> {
+    : EG_CF_RAT <0x57, 0x2, 0, (outs), ins, name, pattern> {
   let RIM         = 0;
   // XXX: Have a separate instruction for non-indexed writes.
   let TYPE        = 1;
@@ -1772,19 +1771,19 @@ class RAT_WRITE_CACHELESS_eg <dag ins, bits<4> comp_mask, string name,
 // 32-bit store
 def RAT_WRITE_CACHELESS_32_eg : RAT_WRITE_CACHELESS_eg <
   (ins R600_TReg32_X:$rw_gpr, R600_TReg32_X:$index_gpr, InstFlag:$eop),
-  0x1, "RAT_WRITE_CACHELESS_32_eg",
+  0x1, "RAT_WRITE_CACHELESS_32_eg $rw_gpr, $index_gpr, $eop",
   [(global_store i32:$rw_gpr, i32:$index_gpr)]
 >;
 
 //128-bit store
 def RAT_WRITE_CACHELESS_128_eg : RAT_WRITE_CACHELESS_eg <
   (ins R600_Reg128:$rw_gpr, R600_TReg32_X:$index_gpr, InstFlag:$eop),
-  0xf, "RAT_WRITE_CACHELESS_128",
+  0xf, "RAT_WRITE_CACHELESS_128 $rw_gpr.XYZW, $index_gpr, $eop",
   [(global_store v4i32:$rw_gpr, i32:$index_gpr)]
 >;
 
 class VTX_READ_eg <string name, bits<8> buffer_id, dag outs, list<dag> pattern>
-    : InstR600ISA <outs, (ins MEMxi:$ptr), name#" $dst, $ptr", pattern>,
+    : InstR600ISA <outs, (ins MEMxi:$ptr), name, pattern>,
       VTX_WORD1_GPR, VTX_WORD0 {
 
   // Static fields
@@ -1839,7 +1838,7 @@ class VTX_READ_eg <string name, bits<8> buffer_id, dag outs, list<dag> pattern>
 }
 
 class VTX_READ_8_eg <bits<8> buffer_id, list<dag> pattern>
-    : VTX_READ_eg <"VTX_READ_8", buffer_id, (outs R600_TReg32_X:$dst),
+    : VTX_READ_eg <"VTX_READ_8 $dst, $ptr", buffer_id, (outs R600_TReg32_X:$dst),
                    pattern> {
 
   let MEGA_FETCH_COUNT = 1;
@@ -1851,7 +1850,7 @@ class VTX_READ_8_eg <bits<8> buffer_id, list<dag> pattern>
 }
 
 class VTX_READ_16_eg <bits<8> buffer_id, list<dag> pattern>
-    : VTX_READ_eg <"VTX_READ_16", buffer_id, (outs R600_TReg32_X:$dst),
+    : VTX_READ_eg <"VTX_READ_16 $dst, $ptr", buffer_id, (outs R600_TReg32_X:$dst),
                     pattern> {
   let MEGA_FETCH_COUNT = 2;
   let DST_SEL_X = 0;
@@ -1863,7 +1862,7 @@ class VTX_READ_16_eg <bits<8> buffer_id, list<dag> pattern>
 }
 
 class VTX_READ_32_eg <bits<8> buffer_id, list<dag> pattern>
-    : VTX_READ_eg <"VTX_READ_32", buffer_id, (outs R600_TReg32_X:$dst),
+    : VTX_READ_eg <"VTX_READ_32 $dst, $ptr", buffer_id, (outs R600_TReg32_X:$dst),
                    pattern> {
 
   let MEGA_FETCH_COUNT = 4;
@@ -1884,7 +1883,7 @@ class VTX_READ_32_eg <bits<8> buffer_id, list<dag> pattern>
 }
 
 class VTX_READ_128_eg <bits<8> buffer_id, list<dag> pattern>
-    : VTX_READ_eg <"VTX_READ_128", buffer_id, (outs R600_Reg128:$dst),
+    : VTX_READ_eg <"VTX_READ_128 $dst.XYZW, $ptr", buffer_id, (outs R600_Reg128:$dst),
                    pattern> {
 
   let MEGA_FETCH_COUNT = 16;

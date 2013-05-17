@@ -1,21 +1,21 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
-;CHECK: TEX_SAMPLET{{[0-9]+\.XYZW, T[0-9]+\.XYZW}}, 0, 0, 1
-;CHECK: TEX_SAMPLET{{[0-9]+\.XYZW, T[0-9]+\.XYZW}}, 0, 0, 2
-;CHECK: TEX_SAMPLET{{[0-9]+\.XYZW, T[0-9]+\.XYZW}}, 0, 0, 3
-;CHECK: TEX_SAMPLET{{[0-9]+\.XYZW, T[0-9]+\.XYZW}}, 0, 0, 4
-;CHECK: TEX_SAMPLET{{[0-9]+\.XYZW, T[0-9]+\.XYZW}}, 0, 0, 5
-;CHECK: TEX_SAMPLE_CT{{[0-9]+\.XYZW, T[0-9]+\.XYZW}}, 0, 0, 6
-;CHECK: TEX_SAMPLE_CT{{[0-9]+\.XYZW, T[0-9]+\.XYZW}}, 0, 0, 7
-;CHECK: TEX_SAMPLE_CT{{[0-9]+\.XYZW, T[0-9]+\.XYZW}}, 0, 0, 8
-;CHECK: TEX_SAMPLET{{[0-9]+\.XYZW, T[0-9]+\.XYZW}}, 0, 0, 9
-;CHECK: TEX_SAMPLET{{[0-9]+\.XYZW, T[0-9]+\.XYZW}}, 0, 0, 10
-;CHECK: TEX_SAMPLE_CT{{[0-9]+\.XYZW, T[0-9]+\.XYZW}}, 0, 0, 11
-;CHECK: TEX_SAMPLE_CT{{[0-9]+\.XYZW, T[0-9]+\.XYZW}}, 0, 0, 12
-;CHECK: TEX_SAMPLE_CT{{[0-9]+\.XYZW, T[0-9]+\.XYZW}}, 0, 0, 13
-;CHECK: TEX_SAMPLET{{[0-9]+\.XYZW, T[0-9]+\.XYZW}}, 0, 0, 14
-;CHECK: TEX_SAMPLET{{[0-9]+\.XYZW, T[0-9]+\.XYZW}}, 0, 0, 15
-;CHECK: TEX_SAMPLET{{[0-9]+\.XYZW, T[0-9]+\.XYZW}}, 0, 0, 16
+;CHECK: TEX_SAMPLET{{[0-9]+, T[0-9]+}}, 0, 0, 1
+;CHECK: TEX_SAMPLET{{[0-9]+, T[0-9]+}}, 0, 0, 2
+;CHECK: TEX_SAMPLET{{[0-9]+, T[0-9]+}}, 0, 0, 3
+;CHECK: TEX_SAMPLET{{[0-9]+, T[0-9]+}}, 0, 0, 4
+;CHECK: TEX_SAMPLET{{[0-9]+, T[0-9]+}}, 0, 0, 5
+;CHECK: TEX_SAMPLE_CT{{[0-9]+, T[0-9]+}}, 0, 0, 6
+;CHECK: TEX_SAMPLE_CT{{[0-9]+, T[0-9]+}}, 0, 0, 7
+;CHECK: TEX_SAMPLE_CT{{[0-9]+, T[0-9]+}}, 0, 0, 8
+;CHECK: TEX_SAMPLET{{[0-9]+, T[0-9]+}}, 0, 0, 9
+;CHECK: TEX_SAMPLET{{[0-9]+, T[0-9]+}}, 0, 0, 10
+;CHECK: TEX_SAMPLE_CT{{[0-9]+, T[0-9]+}}, 0, 0, 11
+;CHECK: TEX_SAMPLE_CT{{[0-9]+, T[0-9]+}}, 0, 0, 12
+;CHECK: TEX_SAMPLE_CT{{[0-9]+, T[0-9]+}}, 0, 0, 13
+;CHECK: TEX_SAMPLET{{[0-9]+, T[0-9]+}}, 0, 0, 14
+;CHECK: TEX_SAMPLET{{[0-9]+, T[0-9]+}}, 0, 0, 15
+;CHECK: TEX_SAMPLET{{[0-9]+, T[0-9]+}}, 0, 0, 16
 
 define void @test(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)* %in) {
    %addr = load <4 x float> addrspace(1)* %in
