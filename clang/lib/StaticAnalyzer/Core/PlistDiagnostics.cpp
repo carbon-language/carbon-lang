@@ -224,7 +224,7 @@ static void ReportEvent(raw_ostream &o, const PathDiagnosticPiece& P,
   Indent(o, indent) << "<key>kind</key><string>event</string>\n";
 
   if (isKeyEvent) {
-    Indent(o, indent) << "<key>key_event</key><string>YES</string>\n";
+    Indent(o, indent) << "<key>key_event</key><true/>\n";
   }
 
   // Output the location.

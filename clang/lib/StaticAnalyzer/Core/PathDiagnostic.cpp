@@ -130,9 +130,12 @@ getFirstStackedCallToHeaderFile(PathDiagnosticCallPiece *CP,
   if (!SMgr.isFromMainFile(CP->callEnterWithin.asLocation()))
     return CP;
 
+  const PathPieces &Path = CP->path;
+  if (Path.empty())
+    return 0;
+
   // Check if the last piece in the callee path is a call to a function outside
   // of the main file.
-  const PathPieces &Path = CP->path;
   if (PathDiagnosticCallPiece *CPInner =
       dyn_cast<PathDiagnosticCallPiece>(Path.back())) {
     return getFirstStackedCallToHeaderFile(CPInner, SMgr);
@@ -147,8 +150,8 @@ void PathDiagnostic::resetDiagnosticLocationToMainFile() {
     return;
 
   PathDiagnosticPiece *LastP = path.back().getPtr();
-  const SourceManager &SMgr = LastP->getLocation().getManager();
   assert(LastP);
+  const SourceManager &SMgr = LastP->getLocation().getManager();
 
   // We only need to check if the report ends inside headers, if the last piece
   // is a call piece.
@@ -163,7 +166,7 @@ void PathDiagnostic::resetDiagnosticLocationToMainFile() {
       if (ND) {
         SmallString<200> buf;
         llvm::raw_svector_ostream os(buf);
-        os << " (within a call to " << ND->getDeclName().getAsString() << ")";
+        os << " (within a call to '" << ND->getDeclName() << "')";
         appendToDesc(os.str());
       }
 

@@ -181,7 +181,7 @@ void mainPlustHeaderCallAndReturnPlusMain() {
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
-// CHECK-NEXT:      <key>key_event</key><string>YES</string>
+// CHECK-NEXT:      <key>key_event</key><true/>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
 // CHECK-NEXT:       <key>line</key><integer>7</integer>
@@ -272,7 +272,7 @@ void mainPlustHeaderCallAndReturnPlusMain() {
 // CHECK-NEXT:      <string>Memory allocated by &apos;new[]&apos; should be deallocated by &apos;delete[]&apos;, not &apos;delete&apos;</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Memory allocated by &apos;new[]&apos; should be deallocated by &apos;delete[]&apos;, not &apos;delete&apos; (within a call to ~auto_ptr)</string>
+// CHECK-NEXT:    <key>description</key><string>Memory allocated by &apos;new[]&apos; should be deallocated by &apos;delete[]&apos;, not &apos;delete&apos; (within a call to &apos;~auto_ptr&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Bad deallocator</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
@@ -435,7 +435,7 @@ void mainPlustHeaderCallAndReturnPlusMain() {
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
-// CHECK-NEXT:      <key>key_event</key><string>YES</string>
+// CHECK-NEXT:      <key>key_event</key><true/>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
 // CHECK-NEXT:       <key>line</key><integer>12</integer>
@@ -604,7 +604,7 @@ void mainPlustHeaderCallAndReturnPlusMain() {
 // CHECK-NEXT:      <string>Division by zero</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
-// CHECK-NEXT:    <key>description</key><string>Division by zero (within a call to cause_div_by_zero_in_header)</string>
+// CHECK-NEXT:    <key>description</key><string>Division by zero (within a call to &apos;cause_div_by_zero_in_header&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Division by zero</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
