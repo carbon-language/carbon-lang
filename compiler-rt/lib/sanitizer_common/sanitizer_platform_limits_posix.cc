@@ -25,6 +25,7 @@
 #include <pthread.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stddef.h>
 #include <sys/utsname.h>
 #include <sys/types.h>
 #include <sys/stat.h>
