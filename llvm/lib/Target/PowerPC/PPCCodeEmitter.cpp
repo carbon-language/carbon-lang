@@ -64,8 +64,7 @@ namespace {
     unsigned getDirectBrEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getCondBrEncoding(const MachineInstr &MI, unsigned OpNo) const;
 
-    unsigned getHA16Encoding(const MachineInstr &MI, unsigned OpNo) const;
-    unsigned getLO16Encoding(const MachineInstr &MI, unsigned OpNo) const;
+    unsigned getS16ImmEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getMemRIEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getMemRIXEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getTLSRegEncoding(const MachineInstr &MI, unsigned OpNo) const;
@@ -194,21 +193,19 @@ unsigned PPCCodeEmitter::getCondBrEncoding(const MachineInstr &MI,
   return 0;
 }
 
-unsigned PPCCodeEmitter::getHA16Encoding(const MachineInstr &MI,
-                                         unsigned OpNo) const {
+unsigned PPCCodeEmitter::getS16ImmEncoding(const MachineInstr &MI,
+                                           unsigned OpNo) const {
   const MachineOperand &MO = MI.getOperand(OpNo);
   if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO);
 
-  MCE.addRelocation(GetRelocation(MO, PPC::reloc_absolute_high));
-  return 0;
-}
+  unsigned RelocID;
+  switch (MO.getTargetFlags() & PPCII::MO_ACCESS_MASK) {
+    default: llvm_unreachable("Unsupported target operand flags!");
+    case PPCII::MO_HA16: RelocID = PPC::reloc_absolute_high; break;
+    case PPCII::MO_LO16: RelocID = PPC::reloc_absolute_low; break;
+  }
 
-unsigned PPCCodeEmitter::getLO16Encoding(const MachineInstr &MI,
-                                         unsigned OpNo) const {
-  const MachineOperand &MO = MI.getOperand(OpNo);
-  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO);
-  
-  MCE.addRelocation(GetRelocation(MO, PPC::reloc_absolute_low));
+  MCE.addRelocation(GetRelocation(MO, RelocID));
   return 0;
 }
 

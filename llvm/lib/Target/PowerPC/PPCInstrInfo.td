@@ -458,12 +458,12 @@ def aaddr : Operand<iPTR> {
 }
 def symbolHi: Operand<i32> {
   let PrintMethod = "printSymbolHi";
-  let EncoderMethod = "getHA16Encoding";
+  let EncoderMethod = "getS16ImmEncoding";
   let ParserMatchClass = PPCS16ImmAsmOperand;
 }
 def symbolLo: Operand<i32> {
   let PrintMethod = "printSymbolLo";
-  let EncoderMethod = "getLO16Encoding";
+  let EncoderMethod = "getS16ImmEncoding";
   let ParserMatchClass = PPCS16ImmAsmOperand;
 }
 def PPCCRBitMaskOperand : AsmOperandClass {
