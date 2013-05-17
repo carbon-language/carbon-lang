@@ -37,13 +37,9 @@ static uint64_t adjustFixupValue(unsigned Kind, uint64_t Value) {
     return Value & 0xfffc;
   case PPC::fixup_ppc_br24:
     return Value & 0x3fffffc;
-#if 0
-  case PPC::fixup_ppc_hi16:
-#endif
-  case PPC::fixup_ppc_ha16:
-  case PPC::fixup_ppc_lo16:
+  case PPC::fixup_ppc_half16:
     return Value & 0xffff;
-  case PPC::fixup_ppc_lo16_ds:
+  case PPC::fixup_ppc_half16ds:
     return Value & 0xfffc;
   }
 }
@@ -55,9 +51,8 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   case FK_Data_1:
     return 1;
   case FK_Data_2:
-  case PPC::fixup_ppc_ha16:
-  case PPC::fixup_ppc_lo16:
-  case PPC::fixup_ppc_lo16_ds:
+  case PPC::fixup_ppc_half16:
+  case PPC::fixup_ppc_half16ds:
     return 2;
   case FK_Data_4:
   case PPC::fixup_ppc_brcond14:
@@ -98,9 +93,8 @@ public:
       // name                    offset  bits  flags
       { "fixup_ppc_br24",        6,      24,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_ppc_brcond14",    16,     14,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_ppc_lo16",         0,     16,   0 },
-      { "fixup_ppc_ha16",         0,     16,   0 },
-      { "fixup_ppc_lo16_ds",      0,     14,   0 },
+      { "fixup_ppc_half16",       0,     16,   0 },
+      { "fixup_ppc_half16ds",     0,     14,   0 },
       { "fixup_ppc_tlsreg",       0,      0,   0 },
       { "fixup_ppc_nofixup",      0,      0,   0 }
     };

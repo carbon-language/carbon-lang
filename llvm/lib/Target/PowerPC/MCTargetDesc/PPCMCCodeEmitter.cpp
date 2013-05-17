@@ -143,7 +143,7 @@ unsigned PPCMCCodeEmitter::getHA16Encoding(const MCInst &MI, unsigned OpNo,
   
   // Add a fixup for the branch target.
   Fixups.push_back(MCFixup::Create(2, MO.getExpr(),
-                                   (MCFixupKind)PPC::fixup_ppc_ha16));
+                                   (MCFixupKind)PPC::fixup_ppc_half16));
   return 0;
 }
 
@@ -154,7 +154,7 @@ unsigned PPCMCCodeEmitter::getLO16Encoding(const MCInst &MI, unsigned OpNo,
   
   // Add a fixup for the branch target.
   Fixups.push_back(MCFixup::Create(2, MO.getExpr(),
-                                   (MCFixupKind)PPC::fixup_ppc_lo16));
+                                   (MCFixupKind)PPC::fixup_ppc_half16));
   return 0;
 }
 
@@ -171,7 +171,7 @@ unsigned PPCMCCodeEmitter::getMemRIEncoding(const MCInst &MI, unsigned OpNo,
   
   // Add a fixup for the displacement field.
   Fixups.push_back(MCFixup::Create(2, MO.getExpr(),
-                                   (MCFixupKind)PPC::fixup_ppc_lo16));
+                                   (MCFixupKind)PPC::fixup_ppc_half16));
   return RegBits;
 }
 
@@ -189,7 +189,7 @@ unsigned PPCMCCodeEmitter::getMemRIXEncoding(const MCInst &MI, unsigned OpNo,
   
   // Add a fixup for the displacement field.
   Fixups.push_back(MCFixup::Create(2, MO.getExpr(),
-                                   (MCFixupKind)PPC::fixup_ppc_lo16_ds));
+                                   (MCFixupKind)PPC::fixup_ppc_half16ds));
   return RegBits;
 }
 
