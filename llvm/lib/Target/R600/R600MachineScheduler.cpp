@@ -41,11 +41,7 @@ void R600SchedStrategy::initialize(ScheduleDAGMI *dag) {
 
 
   const AMDGPUSubtarget &ST = DAG->TM.getSubtarget<AMDGPUSubtarget>();
-  if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD5XXX) {
-    InstKindLimit[IDFetch] = 7; // 8 minus 1 for security
-  } else {
-    InstKindLimit[IDFetch] = 15; // 16 minus 1 for security
-  }
+  InstKindLimit[IDFetch] = ST.getTexVTXClauseSize();
 }
 
 void R600SchedStrategy::MoveUnits(ReadyQueue *QSrc, ReadyQueue *QDst)
@@ -67,9 +63,9 @@ SUnit* R600SchedStrategy::pickNode(bool &IsTopNode) {
 
   // check if we might want to switch current clause type
   bool AllowSwitchToAlu = (CurInstKind == IDOther) ||
-      (CurEmitted > InstKindLimit[CurInstKind]) ||
+      (CurEmitted >= InstKindLimit[CurInstKind]) ||
       (Available[CurInstKind]->empty());
-  bool AllowSwitchFromAlu = (CurEmitted > InstKindLimit[CurInstKind]) &&
+  bool AllowSwitchFromAlu = (CurEmitted >= InstKindLimit[CurInstKind]) &&
       (!Available[IDFetch]->empty() || !Available[IDOther]->empty());
 
   if ((AllowSwitchToAlu && CurInstKind != IDAlu) ||
@@ -77,7 +73,7 @@ SUnit* R600SchedStrategy::pickNode(bool &IsTopNode) {
     // try to pick ALU
     SU = pickAlu();
     if (SU) {
-      if (CurEmitted >  InstKindLimit[IDAlu])
+      if (CurEmitted >= InstKindLimit[IDAlu])
         CurEmitted = 0;
       NextInstKind = IDAlu;
     }

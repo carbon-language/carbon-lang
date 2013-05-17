@@ -148,7 +148,7 @@ private:
     for (MachineBasicBlock::iterator E = MBB.end(); I != E; ++I) {
       if (IsTrivialInst(I))
         continue;
-      if (AluInstCount > MaxFetchInst)
+      if (AluInstCount >= MaxFetchInst)
         break;
       if ((IsTex && !TII->usesTextureCache(I)) ||
           (!IsTex && !TII->usesVertexCache(I)))
@@ -316,10 +316,7 @@ public:
     TRI(TII->getRegisterInfo()),
     ST(tm.getSubtarget<AMDGPUSubtarget>()) {
       const AMDGPUSubtarget &ST = tm.getSubtarget<AMDGPUSubtarget>();
-      if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD4XXX)
-        MaxFetchInst = 8;
-      else
-        MaxFetchInst = 16;
+      MaxFetchInst = ST.getTexVTXClauseSize();
   }
 
   virtual bool runOnMachineFunction(MachineFunction &MF) {
