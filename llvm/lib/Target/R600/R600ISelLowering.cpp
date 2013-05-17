@@ -631,6 +631,27 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
       };
       return DAG.getNode(AMDGPUISD::TEXTURE_FETCH, DL, MVT::v4f32, TexArgs, 19);
     }
+    case AMDGPUIntrinsic::AMDGPU_dp4: {
+      SDValue Args[8] = {
+      DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, MVT::f32, Op.getOperand(1),
+          DAG.getConstant(0, MVT::i32)),
+      DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, MVT::f32, Op.getOperand(2),
+          DAG.getConstant(0, MVT::i32)),
+      DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, MVT::f32, Op.getOperand(1),
+          DAG.getConstant(1, MVT::i32)),
+      DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, MVT::f32, Op.getOperand(2),
+          DAG.getConstant(1, MVT::i32)),
+      DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, MVT::f32, Op.getOperand(1),
+          DAG.getConstant(2, MVT::i32)),
+      DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, MVT::f32, Op.getOperand(2),
+          DAG.getConstant(2, MVT::i32)),
+      DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, MVT::f32, Op.getOperand(1),
+          DAG.getConstant(3, MVT::i32)),
+      DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, MVT::f32, Op.getOperand(2),
+          DAG.getConstant(3, MVT::i32))
+      };
+      return DAG.getNode(AMDGPUISD::DOT4, DL, MVT::f32, Args, 8);
+    }
 
     case r600_read_ngroups_x:
       return LowerImplicitParameter(DAG, VT, DL, 0);

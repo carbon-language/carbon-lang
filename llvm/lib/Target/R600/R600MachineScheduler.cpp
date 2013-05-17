@@ -185,6 +185,7 @@ R600SchedStrategy::AluKind R600SchedStrategy::getAluKind(SUnit *SU) const {
     case AMDGPU::INTERP_PAIR_XY:
     case AMDGPU::INTERP_PAIR_ZW:
     case AMDGPU::INTERP_VEC_LOAD:
+    case AMDGPU::DOT_4:
       return AluT_XYZW;
     case AMDGPU::COPY:
       if (TargetRegisterInfo::isPhysicalRegister(MI->getOperand(1).getReg())) {
@@ -252,8 +253,7 @@ int R600SchedStrategy::getInstKind(SUnit* SU) {
   case AMDGPU::INTERP_PAIR_XY:
   case AMDGPU::INTERP_PAIR_ZW:
   case AMDGPU::INTERP_VEC_LOAD:
-  case AMDGPU::DOT4_eg_pseudo:
-  case AMDGPU::DOT4_r600_pseudo:
+  case AMDGPU::DOT_4:
     return IDAlu;
   case AMDGPU::TEX_VTX_CONSTBUF:
   case AMDGPU::TEX_VTX_TEXBUF:

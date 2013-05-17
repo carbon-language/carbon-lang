@@ -36,8 +36,7 @@ private:
     case AMDGPU::INTERP_PAIR_XY:
     case AMDGPU::INTERP_PAIR_ZW:
     case AMDGPU::INTERP_VEC_LOAD:
-    case AMDGPU::DOT4_eg_pseudo:
-    case AMDGPU::DOT4_r600_pseudo:
+    case AMDGPU::DOT_4:
       return 4;
     case AMDGPU::KILL:
       return 0;
@@ -71,8 +70,7 @@ private:
     case AMDGPU::INTERP_PAIR_ZW:
     case AMDGPU::INTERP_VEC_LOAD:
     case AMDGPU::COPY:
-    case AMDGPU::DOT4_eg_pseudo:
-    case AMDGPU::DOT4_r600_pseudo:
+    case AMDGPU::DOT_4:
       return true;
     default:
       return false;

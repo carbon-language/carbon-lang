@@ -198,6 +198,11 @@ namespace llvm {
                                               unsigned Src0Reg,
                                               unsigned Src1Reg = 0) const;
 
+  MachineInstr *buildSlotOfVectorInstruction(MachineBasicBlock &MBB,
+                                             MachineInstr *MI,
+                                             unsigned Slot,
+                                             unsigned DstReg) const;
+
   MachineInstr *buildMovImm(MachineBasicBlock &BB,
                                   MachineBasicBlock::iterator I,
                                   unsigned DstReg,

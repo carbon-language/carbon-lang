@@ -182,6 +182,41 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
         MI.eraseFromParent();
         continue;
         }
+      case AMDGPU::DOT_4: {
+
+        const R600RegisterInfo &TRI = TII->getRegisterInfo();
+
+        unsigned DstReg = MI.getOperand(0).getReg();
+        unsigned DstBase = TRI.getEncodingValue(DstReg) & HW_REG_MASK;
+
+        for (unsigned Chan = 0; Chan < 4; ++Chan) {
+          bool Mask = (Chan != TRI.getHWRegChan(DstReg));
+          unsigned SubDstReg =
+              AMDGPU::R600_TReg32RegClass.getRegister((DstBase * 4) + Chan);
+          MachineInstr *BMI =
+              TII->buildSlotOfVectorInstruction(MBB, &MI, Chan, SubDstReg);
+          if (Chan > 0) {
+            BMI->bundleWithPred();
+          }
+          if (Mask) {
+            TII->addFlag(BMI, 0, MO_FLAG_MASK);
+          }
+          if (Chan != 3)
+            TII->addFlag(BMI, 0, MO_FLAG_NOT_LAST);
+          unsigned Opcode = BMI->getOpcode();
+          // While not strictly necessary from hw point of view, we force
+          // all src operands of a dot4 inst to belong to the same slot.
+          unsigned Src0 = BMI->getOperand(
+              TII->getOperandIdx(Opcode, R600Operands::SRC0))
+              .getReg();
+          unsigned Src1 = BMI->getOperand(
+              TII->getOperandIdx(Opcode, R600Operands::SRC1))
+              .getReg();
+          assert(TRI.getHWRegChan(Src0) == TRI.getHWRegChan(Src1));
+        }
+        MI.eraseFromParent();
+        continue;
+      }
       }
 
       bool IsReduction = TII->isReductionOp(MI.getOpcode());
@@ -267,12 +302,6 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
           break;
         case AMDGPU::CUBE_eg_pseudo:
           Opcode = AMDGPU::CUBE_eg_real;
-          break;
-        case AMDGPU::DOT4_r600_pseudo:
-          Opcode = AMDGPU::DOT4_r600_real;
-          break;
-        case AMDGPU::DOT4_eg_pseudo:
-          Opcode = AMDGPU::DOT4_eg_real;
           break;
         default:
           break;

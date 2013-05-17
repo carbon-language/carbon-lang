@@ -86,7 +86,8 @@ private:
       if (BI->getOperand(OperandIdx).getImm() == 0)
         continue;
       unsigned Dst = BI->getOperand(0).getReg();
-      if (BI->getOpcode() == AMDGPU::DOT4_r600_real) {
+      if (BI->getOpcode() == AMDGPU::DOT4_r600 ||
+          BI->getOpcode() == AMDGPU::DOT4_eg) {
         Result[Dst] = AMDGPU::PV_X;
         continue;
       }

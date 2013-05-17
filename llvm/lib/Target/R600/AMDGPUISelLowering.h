@@ -126,6 +126,7 @@ enum {
   SMIN,
   UMIN,
   URECIP,
+  DOT4,
   TEXTURE_FETCH,
   EXPORT,
   CONST_ADDRESS,

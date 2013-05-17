@@ -593,6 +593,13 @@ def CONST_ADDRESS: SDNode<"AMDGPUISD::CONST_ADDRESS",
   [SDNPVariadic]
 >;
 
+def DOT4 : SDNode<"AMDGPUISD::DOT4",
+  SDTypeProfile<1, 8, [SDTCisFP<0>, SDTCisVT<1, f32>, SDTCisVT<2, f32>,
+      SDTCisVT<3, f32>, SDTCisVT<4, f32>, SDTCisVT<5, f32>,
+      SDTCisVT<6, f32>, SDTCisVT<7, f32>, SDTCisVT<8, f32>]>,
+  []
+>;
+
 def TEXTURE_FETCH_Type : SDTypeProfile<1, 19, [SDTCisFP<0>]>;
 
 def TEXTURE_FETCH: SDNode<"AMDGPUISD::TEXTURE_FETCH", TEXTURE_FETCH_Type, []>;
@@ -1229,16 +1236,48 @@ class CNDGE_Common <bits<5> inst> : R600_3OP <
   [(set f32:$dst, (selectcc f32:$src0, FP_ZERO, f32:$src1, f32:$src2, COND_GE))]
 >;
 
-multiclass DOT4_Common <bits<11> inst> {
 
-  def _pseudo : R600_REDUCTION <inst,
-    (ins R600_Reg128:$src0, R600_Reg128:$src1),
-    "DOT4 $dst $src0, $src1",
-    [(set f32:$dst, (int_AMDGPU_dp4 v4f32:$src0, v4f32:$src1))]
-  >;
-
-  def _real : R600_2OP <inst, "DOT4", []>;
+let isCodeGenOnly = 1, isPseudo = 1, Namespace = "AMDGPU"  in {
+class R600_VEC2OP<list<dag> pattern> : InstR600 <(outs R600_Reg32:$dst), (ins
+// Slot X
+   UEM:$update_exec_mask_X, UP:$update_pred_X, WRITE:$write_X,
+   OMOD:$omod_X, REL:$dst_rel_X, CLAMP:$clamp_X,
+   R600_TReg32_X:$src0_X, NEG:$src0_neg_X, REL:$src0_rel_X, ABS:$src0_abs_X, SEL:$src0_sel_X,
+   R600_TReg32_X:$src1_X, NEG:$src1_neg_X, REL:$src1_rel_X, ABS:$src1_abs_X, SEL:$src1_sel_X,
+   R600_Pred:$pred_sel_X,
+// Slot Y
+   UEM:$update_exec_mask_Y, UP:$update_pred_Y, WRITE:$write_Y,
+   OMOD:$omod_Y, REL:$dst_rel_Y, CLAMP:$clamp_Y,
+   R600_TReg32_Y:$src0_Y, NEG:$src0_neg_Y, REL:$src0_rel_Y, ABS:$src0_abs_Y, SEL:$src0_sel_Y,
+   R600_TReg32_Y:$src1_Y, NEG:$src1_neg_Y, REL:$src1_rel_Y, ABS:$src1_abs_Y, SEL:$src1_sel_Y,
+   R600_Pred:$pred_sel_Y,
+// Slot Z
+   UEM:$update_exec_mask_Z, UP:$update_pred_Z, WRITE:$write_Z,
+   OMOD:$omod_Z, REL:$dst_rel_Z, CLAMP:$clamp_Z,
+   R600_TReg32_Z:$src0_Z, NEG:$src0_neg_Z, REL:$src0_rel_Z, ABS:$src0_abs_Z, SEL:$src0_sel_Z,
+   R600_TReg32_Z:$src1_Z, NEG:$src1_neg_Z, REL:$src1_rel_Z, ABS:$src1_abs_Z, SEL:$src1_sel_Z,
+   R600_Pred:$pred_sel_Z,
+// Slot W
+   UEM:$update_exec_mask_W, UP:$update_pred_W, WRITE:$write_W,
+   OMOD:$omod_W, REL:$dst_rel_W, CLAMP:$clamp_W,
+   R600_TReg32_W:$src0_W, NEG:$src0_neg_W, REL:$src0_rel_W, ABS:$src0_abs_W, SEL:$src0_sel_W,
+   R600_TReg32_W:$src1_W, NEG:$src1_neg_W, REL:$src1_rel_W, ABS:$src1_abs_W, SEL:$src1_sel_W,
+   R600_Pred:$pred_sel_W,
+   LITERAL:$literal0, LITERAL:$literal1),
+  "",
+  pattern,
+  AnyALU> {}
 }
+
+def DOT_4 : R600_VEC2OP<[(set R600_Reg32:$dst, (DOT4
+  R600_TReg32_X:$src0_X, R600_TReg32_X:$src1_X,
+  R600_TReg32_Y:$src0_Y, R600_TReg32_Y:$src1_Y,
+  R600_TReg32_Z:$src0_Z, R600_TReg32_Z:$src1_Z,
+  R600_TReg32_W:$src0_W, R600_TReg32_W:$src1_W))]>;
+
+
+class DOT4_Common <bits<11> inst> : R600_2OP <inst, "DOT4", []>;
+
 
 let mayLoad = 0, mayStore = 0, hasSideEffects = 0 in {
 multiclass CUBE_Common <bits<11> inst> {
@@ -1412,7 +1451,7 @@ let Predicates = [isR600] in {
   def CNDE_r600 : CNDE_Common<0x18>;
   def CNDGT_r600 : CNDGT_Common<0x19>;
   def CNDGE_r600 : CNDGE_Common<0x1A>;
-  defm DOT4_r600 : DOT4_Common<0x50>;
+  def DOT4_r600 : DOT4_Common<0x50>;
   defm CUBE_r600 : CUBE_Common<0x52>;
   def EXP_IEEE_r600 : EXP_IEEE_Common<0x61>;
   def LOG_CLAMPED_r600 : LOG_CLAMPED_Common<0x62>;
@@ -1611,7 +1650,7 @@ let Predicates = [isEGorCayman] in {
   def CNDGE_eg : CNDGE_Common<0x1B>;
   def MUL_LIT_eg : MUL_LIT_Common<0x1F>;
   def LOG_CLAMPED_eg : LOG_CLAMPED_Common<0x82>;
-  defm DOT4_eg : DOT4_Common<0xBE>;
+  def DOT4_eg : DOT4_Common<0xBE>;
   defm CUBE_eg : CUBE_Common<0xC0>;
 
 let hasSideEffects = 1 in {

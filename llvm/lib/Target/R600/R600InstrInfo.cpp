@@ -116,9 +116,6 @@ bool R600InstrInfo::isPlaceHolderOpcode(unsigned Opcode) const {
 bool R600InstrInfo::isReductionOp(unsigned Opcode) const {
   switch(Opcode) {
     default: return false;
-    case AMDGPU::DOT4_r600_pseudo:
-    case AMDGPU::DOT4_eg_pseudo:
-      return true;
   }
 }
 
@@ -863,6 +860,95 @@ MachineInstrBuilder R600InstrInfo::buildDefaultInstruction(MachineBasicBlock &MB
       .addImm(0)         // $literal
       .addImm(0);        // $bank_swizzle
 
+  return MIB;
+}
+
+#define OPERAND_CASE(Label) \
+  case Label: { \
+    static const R600Operands::VecOps Ops[] = \
+    { \
+      Label##_X, \
+      Label##_Y, \
+      Label##_Z, \
+      Label##_W \
+    }; \
+    return Ops[Slot]; \
+  }
+
+static R600Operands::VecOps
+getSlotedOps(R600Operands::Ops Op, unsigned Slot) {
+  switch (Op) {
+  OPERAND_CASE(R600Operands::UPDATE_EXEC_MASK)
+  OPERAND_CASE(R600Operands::UPDATE_PREDICATE)
+  OPERAND_CASE(R600Operands::WRITE)
+  OPERAND_CASE(R600Operands::OMOD)
+  OPERAND_CASE(R600Operands::DST_REL)
+  OPERAND_CASE(R600Operands::CLAMP)
+  OPERAND_CASE(R600Operands::SRC0)
+  OPERAND_CASE(R600Operands::SRC0_NEG)
+  OPERAND_CASE(R600Operands::SRC0_REL)
+  OPERAND_CASE(R600Operands::SRC0_ABS)
+  OPERAND_CASE(R600Operands::SRC0_SEL)
+  OPERAND_CASE(R600Operands::SRC1)
+  OPERAND_CASE(R600Operands::SRC1_NEG)
+  OPERAND_CASE(R600Operands::SRC1_REL)
+  OPERAND_CASE(R600Operands::SRC1_ABS)
+  OPERAND_CASE(R600Operands::SRC1_SEL)
+  OPERAND_CASE(R600Operands::PRED_SEL)
+  default:
+    llvm_unreachable("Wrong Operand");
+  }
+}
+
+#undef OPERAND_CASE
+
+static int
+getVecOperandIdx(R600Operands::VecOps Op) {
+  return 1 + Op;
+}
+
+
+MachineInstr *R600InstrInfo::buildSlotOfVectorInstruction(
+    MachineBasicBlock &MBB, MachineInstr *MI, unsigned Slot, unsigned DstReg)
+    const {
+  assert (MI->getOpcode() == AMDGPU::DOT_4 && "Not Implemented");
+  unsigned Opcode;
+  const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
+  if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD4XXX)
+    Opcode = AMDGPU::DOT4_r600;
+  else
+    Opcode = AMDGPU::DOT4_eg;
+  MachineBasicBlock::iterator I = MI;
+  MachineOperand &Src0 = MI->getOperand(
+      getVecOperandIdx(getSlotedOps(R600Operands::SRC0, Slot)));
+  MachineOperand &Src1 = MI->getOperand(
+      getVecOperandIdx(getSlotedOps(R600Operands::SRC1, Slot)));
+  MachineInstr *MIB = buildDefaultInstruction(
+      MBB, I, Opcode, DstReg, Src0.getReg(), Src1.getReg());
+  static const R600Operands::Ops Operands[14] = {
+    R600Operands::UPDATE_EXEC_MASK,
+    R600Operands::UPDATE_PREDICATE,
+    R600Operands::WRITE,
+    R600Operands::OMOD,
+    R600Operands::DST_REL,
+    R600Operands::CLAMP,
+    R600Operands::SRC0_NEG,
+    R600Operands::SRC0_REL,
+    R600Operands::SRC0_ABS,
+    R600Operands::SRC0_SEL,
+    R600Operands::SRC1_NEG,
+    R600Operands::SRC1_REL,
+    R600Operands::SRC1_ABS,
+    R600Operands::SRC1_SEL,
+  };
+
+  for (unsigned i = 0; i < 14; i++) {
+    MachineOperand &MO = MI->getOperand(
+        getVecOperandIdx(getSlotedOps(Operands[i], Slot)));
+    assert (MO.isImm());
+    setImmOperand(MIB, Operands[i], MO.getImm());
+  }
+  MIB->getOperand(20).setImm(0);
   return MIB;
 }
 
