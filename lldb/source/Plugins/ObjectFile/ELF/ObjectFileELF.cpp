@@ -243,8 +243,11 @@ ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
                                         lldb::offset_t length,
                                         lldb_private::ModuleSpecList &specs)
 {
+// FIXME: mikesart@valvesoftware.com
+// Implementing this function has broken several tests. Specifically this one:
+// Python dotest.py --executable <path-to-lldb> -p TestCallStdStringFunction.py
     const size_t initial_count = specs.GetSize();
-    
+#if 0    
     if (ObjectFileELF::MagicBytesMatch(data_sp, 0, data_sp->GetByteSize()))
     {
         DataExtractor data;
@@ -269,6 +272,7 @@ ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
             }
         }
     }
+#endif
     return specs.GetSize() - initial_count;
 }
 
