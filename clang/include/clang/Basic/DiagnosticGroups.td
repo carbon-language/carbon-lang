@@ -85,8 +85,8 @@ def FormatExtraArgs : DiagGroup<"format-extra-args">;
 def FormatZeroLength : DiagGroup<"format-zero-length">;
 
 // Warnings for C++1y code which is not compatible with prior C++ standards.
-def CXXPre1yCompat : DiagGroup<"cxx98-cxx11-compat">;
-def CXXPre1yCompatPedantic : DiagGroup<"cxx98-cxx11-compat-pedantic",
+def CXXPre1yCompat : DiagGroup<"c++98-c++11-compat">;
+def CXXPre1yCompatPedantic : DiagGroup<"c++98-c++11-compat-pedantic",
                                        [CXXPre1yCompat]>;
 
 def CXX98CompatBindToTemporaryCopy :
