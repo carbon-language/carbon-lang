@@ -39,10 +39,8 @@ static uint64_t adjustFixupValue(unsigned Kind, uint64_t Value) {
     return Value & 0x3fffffc;
 #if 0
   case PPC::fixup_ppc_hi16:
-    return (Value >> 16) & 0xffff;
 #endif
   case PPC::fixup_ppc_ha16:
-    return ((Value >> 16) + ((Value & 0x8000) ? 1 : 0)) & 0xffff;
   case PPC::fixup_ppc_lo16:
     return Value & 0xffff;
   case PPC::fixup_ppc_lo16_ds:

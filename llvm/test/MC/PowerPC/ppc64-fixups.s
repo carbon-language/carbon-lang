@@ -27,6 +27,26 @@
 # CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16_LO target 0x0
          addi 4, 3, target@l
 
+# CHECK: li 3, target@ha                 # encoding: [0x38,0x60,A,A]
+# CHECK-NEXT:                            #   fixup A - offset: 2, value: target@ha, kind: fixup_ppc_lo16
+# CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16_HA target 0x0
+         li 3, target@ha
+
+# CHECK: lis 3, target@l                 # encoding: [0x3c,0x60,A,A]
+# CHECK-NEXT:                            #   fixup A - offset: 2, value: target@l, kind: fixup_ppc_ha16
+# CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16_LO target 0x0
+         lis 3, target@l
+
+# CHECK: li 3, target                    # encoding: [0x38,0x60,A,A]
+# CHECK-NEXT:                            #   fixup A - offset: 2, value: target, kind: fixup_ppc_lo16
+# CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16 target 0x0
+         li 3, target
+
+# CHECK: lis 3, target                   # encoding: [0x3c,0x60,A,A]
+# CHECK-NEXT:                            #   fixup A - offset: 2, value: target, kind: fixup_ppc_ha16
+# CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16 target 0x0
+         lis 3, target
+
 # CHECK: lwz 1, target@l(3)              # encoding: [0x80,0x23,A,A]
 # CHECK-NEXT:                            #   fixup A - offset: 2, value: target@l, kind: fixup_ppc_lo16
 # CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16_LO target 0x0
