@@ -260,7 +260,7 @@ struct QuarantineCallback {
   }
 
   void Recycle(AsanChunk *m) {
-    CHECK(m->chunk_state == CHUNK_QUARANTINE);
+    CHECK_EQ(m->chunk_state, CHUNK_QUARANTINE);
     m->chunk_state = CHUNK_AVAILABLE;
     CHECK_NE(m->alloc_tid, kInvalidTid);
     CHECK_NE(m->free_tid, kInvalidTid);
@@ -454,7 +454,7 @@ static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
     m->free_context_id = 0;
     StackTrace::CompressStack(stack, m->FreeStackBeg(), m->FreeStackSize());
   }
-  CHECK(m->chunk_state == CHUNK_QUARANTINE);
+  CHECK_EQ(m->chunk_state, CHUNK_QUARANTINE);
   // Poison the region.
   PoisonShadow(m->Beg(),
                RoundUpTo(m->UsedSize(), SHADOW_GRANULARITY),
@@ -488,7 +488,7 @@ static void *Reallocate(void *old_ptr, uptr new_size, StackTrace *stack) {
   thread_stats.reallocs++;
   thread_stats.realloced += new_size;
 
-  CHECK(m->chunk_state == CHUNK_ALLOCATED);
+  CHECK_EQ(m->chunk_state, CHUNK_ALLOCATED);
   uptr old_size = m->UsedSize();
   uptr memcpy_size = Min(new_size, old_size);
   void *new_ptr = Allocate(new_size, 8, stack, FROM_MALLOC, true);
