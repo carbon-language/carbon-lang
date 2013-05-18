@@ -3449,10 +3449,25 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
 
   // The instruction to be updated is either Sub or MI.
   Sub = IsCmpZero ? MI : Sub;
-  // Move Movr0Inst to the place right before Sub.
+  // Move Movr0Inst to the appropriate place before Sub.
   if (Movr0Inst) {
-    Sub->getParent()->remove(Movr0Inst);
-    Sub->getParent()->insert(MachineBasicBlock::iterator(Sub), Movr0Inst);
+    // Look backwards until we find a def that doesn't use the current EFLAGS.
+    Def = Sub;
+    MachineBasicBlock::reverse_iterator
+      InsertI = MachineBasicBlock::reverse_iterator(++Def),
+                InsertE = Sub->getParent()->rend();
+    for (; InsertI != InsertE; ++InsertI) {
+      MachineInstr *Instr = &*InsertI;
+      if (!Instr->readsRegister(X86::EFLAGS, TRI) &&
+          Instr->modifiesRegister(X86::EFLAGS, TRI)) {
+        Sub->getParent()->remove(Movr0Inst);
+        Instr->getParent()->insert(MachineBasicBlock::iterator(Instr),
+                                   Movr0Inst);
+        break;
+      }
+    }
+    if (InsertI == InsertE)
+      return false;
   }
 
   // Make sure Sub instruction defines EFLAGS and mark the def live.
