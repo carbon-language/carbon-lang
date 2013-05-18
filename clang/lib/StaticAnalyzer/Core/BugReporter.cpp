@@ -1581,6 +1581,8 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
   // Record the last location for a given visited stack frame.
   llvm::DenseMap<const StackFrameContext *, PathDiagnosticLocation>
     PrevLocMap;
+  PrevLocMap[N->getLocationContext()->getCurrentStackFrame()] =
+    PD.getLocation();
 
   const ExplodedNode *NextNode = N->getFirstPred();
   while (NextNode) {
