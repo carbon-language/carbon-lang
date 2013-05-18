@@ -601,16 +601,11 @@ unsigned DataLayout::getPreferredTypeAlignmentShift(Type *Ty) const {
   return Log2_32(Align);
 }
 
-/// getIntPtrType - Return an integer type with size at least as big as that
-/// of a pointer in the given address space.
 IntegerType *DataLayout::getIntPtrType(LLVMContext &C,
                                        unsigned AddressSpace) const {
   return IntegerType::get(C, getPointerSizeInBits(AddressSpace));
 }
 
-/// getIntPtrType - Return an integer (vector of integer) type with size at
-/// least as big as that of a pointer of the given pointer (vector of pointer)
-/// type.
 Type *DataLayout::getIntPtrType(Type *Ty) const {
   assert(Ty->isPtrOrPtrVectorTy() &&
          "Expected a pointer or pointer vector type.");
