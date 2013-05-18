@@ -33,6 +33,11 @@ static void BuildParentMap(MapTy& M, Stmt* S,
     assert(OVMode == OV_Transparent && "Should not appear alongside OVEs");
     PseudoObjectExpr *POE = cast<PseudoObjectExpr>(S);
 
+    // If we are rebuilding the map, clear out any existing state.
+    if (M[POE->getSyntacticForm()])
+      for (Stmt::child_range I = S->children(); I; ++I)
+        M[*I] = 0;
+
     M[POE->getSyntacticForm()] = S;
     BuildParentMap(M, POE->getSyntacticForm(), OV_Transparent);
 
@@ -62,13 +67,19 @@ static void BuildParentMap(MapTy& M, Stmt* S,
 
     break;
   }
-  case Stmt::OpaqueValueExprClass:
-    if (OVMode == OV_Transparent) {
-      OpaqueValueExpr *OVE = cast<OpaqueValueExpr>(S);
+  case Stmt::OpaqueValueExprClass: {
+    // FIXME: This isn't correct; it assumes that multiple OpaqueValueExprs
+    // share a single source expression, but in the AST a single
+    // OpaqueValueExpr is shared among multiple parent expressions.
+    // The right thing to do is to give the OpaqueValueExpr its syntactic
+    // parent, then not reassign that when traversing the semantic expressions.
+    OpaqueValueExpr *OVE = cast<OpaqueValueExpr>(S);
+    if (OVMode == OV_Transparent || !M[OVE->getSourceExpr()]) {
       M[OVE->getSourceExpr()] = S;
       BuildParentMap(M, OVE->getSourceExpr(), OV_Transparent);
     }
     break;
+  }
   default:
     for (Stmt::child_range I = S->children(); I; ++I) {
       if (*I) {
