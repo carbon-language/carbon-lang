@@ -298,11 +298,8 @@ static LinkageInfo getLIForTemplateTypeArgument(QualType T) {
   if (!TT)
     return LI;
 
-  const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(TT->getDecl());
-  if (!RD)
-    return LI;
-
-  const FunctionDecl *FD = getOutermostFunctionContext(RD);
+  const Decl *D = TT->getDecl();
+  const FunctionDecl *FD = getOutermostFunctionContext(D);
   if (!FD)
     return LI;
 

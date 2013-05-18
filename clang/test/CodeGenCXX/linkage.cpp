@@ -92,3 +92,14 @@ namespace test7 {
 
   void *h() { return g(); }
 }
+
+namespace test8 {
+  // CHECK-DAG: define linkonce_odr void @_ZN5test81fIZNS_1gEvE1SEEvT_(
+  template <typename T> void f(T) {}
+  inline void *g() {
+    enum S {
+    };
+    return reinterpret_cast<void *>(f<S>);
+  }
+  void *h() { return g(); }
+}
