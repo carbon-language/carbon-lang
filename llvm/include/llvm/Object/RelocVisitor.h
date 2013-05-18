@@ -85,6 +85,14 @@ public:
         HasError = true;
         return RelocToApply();
       }
+    } else if (FileFormat == "ELF32-ppc") {
+      switch (RelocType) {
+      case llvm::ELF::R_PPC_ADDR32:
+        return visitELF_PPC_ADDR32(R, Value);
+      default:
+        HasError = true;
+        return RelocToApply();
+      }
     } else if (FileFormat == "ELF32-mips") {
       switch (RelocType) {
       case llvm::ELF::R_MIPS_32:
@@ -206,6 +214,13 @@ private:
   /// PPC64 ELF
   RelocToApply visitELF_PPC64_ADDR32(RelocationRef R, uint64_t Value) {
     int64_t Addend = getAddend64BE(R);
+    uint32_t Res = (Value + Addend) & 0xFFFFFFFF;
+    return RelocToApply(Res, 4);
+  }
+
+  /// PPC32 ELF
+  RelocToApply visitELF_PPC_ADDR32(RelocationRef R, uint64_t Value) {
+    int64_t Addend = getAddend32BE(R);
     uint32_t Res = (Value + Addend) & 0xFFFFFFFF;
     return RelocToApply(Res, 4);
   }
