@@ -855,6 +855,17 @@ bool llvm::isKnownToBeAPowerOfTwo(Value *V, bool OrZero, unsigned Depth) {
     return false;
   }
 
+  // Adding a power of two to the same power of two is a power of two or zero.
+  if (OrZero && match(V, m_Add(m_Value(X), m_Value(Y)))) {
+    if (match(X, m_And(m_Value(), m_Specific(Y)))) {
+      if (isKnownToBeAPowerOfTwo(Y, /*OrZero*/true, Depth))
+        return true;
+    } else if (match(Y, m_And(m_Value(), m_Specific(X)))) {
+      if (isKnownToBeAPowerOfTwo(X, /*OrZero*/true, Depth))
+        return true;
+    }
+  }
+
   // An exact divide or right shift can only shift off zero bits, so the result
   // is a power of two only if the first operand is a power of two and not
   // copying a sign bit (sdiv int_min, 2).

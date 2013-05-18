@@ -149,3 +149,17 @@ define i64 @test15(i32 %x, i32 %y) {
 	%urem = urem i64 %zext1, %zext0
 	ret i64 %urem
 }
+
+define i32 @test16(i32 %x, i32 %y) {
+; CHECK: @test16
+; CHECK-NEXT: [[SHR:%.*]] = lshr i32 %y, 11
+; CHECK-NEXT: [[AND:%.*]] = and i32 [[SHR]], 4
+; CHECK-NEXT: [[OR:%.*]] = or i32 [[AND]], 3
+; CHECK-NEXT: [[REM:%.*]] = and i32 [[OR]], %x
+; CHECK-NEXT: ret i32 [[REM]]
+	%shr = lshr i32 %y, 11
+	%and = and i32 %shr, 4
+	%add = add i32 %and, 4
+	%rem = urem i32 %x, %add
+	ret i32 %rem
+}
