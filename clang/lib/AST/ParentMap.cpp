@@ -25,7 +25,7 @@ enum OpaqueValueMode {
   OV_Opaque
 };
 
-static void BuildParentMap(MapTy& M, Stmt* S, bool isSemantic,
+static void BuildParentMap(MapTy& M, Stmt* S,
                            OpaqueValueMode OVMode = OV_Transparent) {
 
   switch (S->getStmtClass()) {
@@ -33,17 +33,14 @@ static void BuildParentMap(MapTy& M, Stmt* S, bool isSemantic,
     assert(OVMode == OV_Transparent && "Should not appear alongside OVEs");
     PseudoObjectExpr *POE = cast<PseudoObjectExpr>(S);
 
-    if (!isSemantic) {
-      M[POE->getSyntacticForm()] = S;
-      BuildParentMap(M, POE->getSyntacticForm(), OV_Transparent);
-    }
+    M[POE->getSyntacticForm()] = S;
+    BuildParentMap(M, POE->getSyntacticForm(), OV_Transparent);
 
     for (PseudoObjectExpr::semantics_iterator I = POE->semantics_begin(),
                                               E = POE->semantics_end();
          I != E; ++I) {
       M[*I] = S;
-      BuildParentMap(M, *I, isSemantic,
-                     isSemantic ? OV_Transparent : OV_Opaque);
+      BuildParentMap(M, *I, OV_Opaque);
     }
     break;
   }
@@ -52,16 +49,16 @@ static void BuildParentMap(MapTy& M, Stmt* S, bool isSemantic,
     BinaryConditionalOperator *BCO = cast<BinaryConditionalOperator>(S);
 
     M[BCO->getCommon()] = S;
-    BuildParentMap(M, BCO->getCommon(), isSemantic, OV_Transparent);
+    BuildParentMap(M, BCO->getCommon(), OV_Transparent);
 
     M[BCO->getCond()] = S;
-    BuildParentMap(M, BCO->getCond(), isSemantic, OV_Opaque);
+    BuildParentMap(M, BCO->getCond(), OV_Opaque);
 
     M[BCO->getTrueExpr()] = S;
-    BuildParentMap(M, BCO->getTrueExpr(), isSemantic, OV_Opaque);
+    BuildParentMap(M, BCO->getTrueExpr(), OV_Opaque);
 
     M[BCO->getFalseExpr()] = S;
-    BuildParentMap(M, BCO->getFalseExpr(), isSemantic, OV_Transparent);
+    BuildParentMap(M, BCO->getFalseExpr(), OV_Transparent);
 
     break;
   }
@@ -69,25 +66,24 @@ static void BuildParentMap(MapTy& M, Stmt* S, bool isSemantic,
     if (OVMode == OV_Transparent) {
       OpaqueValueExpr *OVE = cast<OpaqueValueExpr>(S);
       M[OVE->getSourceExpr()] = S;
-      BuildParentMap(M, OVE->getSourceExpr(), isSemantic, OV_Transparent);
+      BuildParentMap(M, OVE->getSourceExpr(), OV_Transparent);
     }
     break;
   default:
     for (Stmt::child_range I = S->children(); I; ++I) {
       if (*I) {
         M[*I] = S;
-        BuildParentMap(M, *I, isSemantic, OVMode);
+        BuildParentMap(M, *I, OVMode);
       }
     }
     break;
   }
 }
 
-ParentMap::ParentMap(Stmt* S, bool isSemantic) : Impl(0),
-                                                 IsSemantic(isSemantic) {
+ParentMap::ParentMap(Stmt* S) : Impl(0) {
   if (S) {
     MapTy *M = new MapTy();
-    BuildParentMap(*M, S, isSemantic);
+    BuildParentMap(*M, S);
     Impl = M;
   }
 }
@@ -98,7 +94,7 @@ ParentMap::~ParentMap() {
 
 void ParentMap::addStmt(Stmt* S) {
   if (S) {
-    BuildParentMap(*(MapTy*) Impl, S, IsSemantic);
+    BuildParentMap(*(MapTy*) Impl, S);
   }
 }
 

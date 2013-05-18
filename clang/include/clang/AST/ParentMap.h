@@ -20,9 +20,8 @@ class Expr;
 
 class ParentMap {
   void* Impl;
-  bool IsSemantic;
 public:
-  ParentMap(Stmt* ASTRoot, bool isSemantic = false);
+  ParentMap(Stmt* ASTRoot);
   ~ParentMap();
 
   /// \brief Adds and/or updates the parent/child-relations of the complete
