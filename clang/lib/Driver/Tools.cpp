@@ -2208,8 +2208,17 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Arg *A = Args.getLastArg(options::OPT_ffast_math, FastMathAliasOption,
                                options::OPT_fno_fast_math,
                                options::OPT_fmath_errno,
-                               options::OPT_fno_math_errno))
-    MathErrno = A->getOption().getID() == options::OPT_fmath_errno;
+                               options::OPT_fno_math_errno)) {
+    // Turning on -ffast_math (with either flag) removes the need for MathErrno.
+    // However, turning *off* -ffast_math merely restores the toolchain default
+    // (which may be false).
+    if (A->getOption().getID() == options::OPT_fno_math_errno ||
+        A->getOption().getID() == options::OPT_ffast_math ||
+        A->getOption().getID() == options::OPT_Ofast)
+      MathErrno = false;
+    else if (A->getOption().getID() == options::OPT_fmath_errno)
+      MathErrno = true;
+  }
   if (MathErrno)
     CmdArgs.push_back("-fmath-errno");
 
