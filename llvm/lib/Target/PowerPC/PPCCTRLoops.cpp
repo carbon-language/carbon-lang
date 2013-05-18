@@ -33,6 +33,7 @@
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
@@ -148,6 +149,20 @@ bool PPCCTRLoops::mightUseCTR(const Triple &TT, BasicBlock *BB) {
   for (BasicBlock::iterator J = BB->begin(), JE = BB->end();
        J != JE; ++J) {
     if (CallInst *CI = dyn_cast<CallInst>(J)) {
+      if (InlineAsm *IA = dyn_cast<InlineAsm>(CI->getCalledValue())) {
+        // Inline ASM is okay, unless it clobbers the ctr register.
+        InlineAsm::ConstraintInfoVector CIV = IA->ParseConstraints();
+        for (unsigned i = 0, ie = CIV.size(); i < ie; ++i) {
+          InlineAsm::ConstraintInfo &C = CIV[i];
+          if (C.Type != InlineAsm::isInput)
+            for (unsigned j = 0, je = C.Codes.size(); j < je; ++j)
+              if (StringRef(C.Codes[j]).equals_lower("{ctr}"))
+                return true;
+        }
+
+        continue;
+      }
+
       if (!TM)
         return true;
       const TargetLowering *TLI = TM->getTargetLowering();
