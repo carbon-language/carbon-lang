@@ -2105,7 +2105,6 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
         // optimizations will clean it up.
 
         unsigned NumIncoming = P->getNumIncomingValues();
-        assert(NumIncoming > 1 && "Invalid PHI");
 
         // Generate a sequence of selects of the form:
         // SELECT(Mask3, In3,
@@ -2117,10 +2116,11 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
           VectorParts &In0 = getVectorValue(P->getIncomingValue(In));
 
           for (unsigned part = 0; part < UF; ++part) {
-            // We don't need to 'select' the first PHI operand because it is
-            // the default value if all of the other masks don't match.
+            // We might have single edge PHIs (blocks) - use an identity
+            // 'select' for the first PHI operand.
             if (In == 0)
-              Entry[part] = In0[part];
+              Entry[part] = Builder.CreateSelect(Cond[part], In0[part],
+                                                 In0[part]);
             else
               // Select between the current value and the previous incoming edge
               // based on the incoming mask.

@@ -37,3 +37,25 @@ if.end21:                                         ; preds = %lor.lhs.false
 if.end25:                                         ; preds = %entry
   ret void
 }
+
+; PR15990
+; We can have basic blocks with single entry PHI nodes.
+define void @single_entry_phi(i32* %a, i32 *%b) {
+entry:
+  br label %for.cond1.preheader
+
+for.cond1.preheader:
+  %inc10 = phi i32 [ 0, %entry ], [ %inc, %for.end ]
+  br label %for.end
+
+for.end:
+  %malicious.phi = phi i32 [ 0, %for.cond1.preheader ]
+  %inc = add nsw i32 %inc10, 1
+  %tobool = icmp eq i32 %inc, 0
+  br i1 %tobool, label %for.cond.for.end5, label %for.cond1.preheader
+
+for.cond.for.end5:
+  %and.lcssa = phi i32 [ %malicious.phi, %for.end ]
+  store i32 %and.lcssa, i32* %a, align 4
+  ret void
+}
