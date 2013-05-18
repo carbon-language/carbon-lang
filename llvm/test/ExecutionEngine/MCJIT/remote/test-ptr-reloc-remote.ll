@@ -14,4 +14,3 @@ entry:
   %. = zext i1 %cmp to i32
   ret i32 %.
 }
-

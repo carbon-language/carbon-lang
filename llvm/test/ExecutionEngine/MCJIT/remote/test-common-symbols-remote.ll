@@ -9,14 +9,14 @@
 ; int zero_int;
 ; double zero_double;
 ; int zero_arr[10];
-; 
+;
 ; int main()
 ; {
 ;     zero_arr[zero_int + 5] = 40;
-; 
+;
 ;     if (zero_double < 1.0)
 ;         zero_arr[zero_int + 2] = 70;
-; 
+;
 ;     for (int i = 1; i < 10; ++i) {
 ;         zero_arr[i] = zero_arr[i - 1] + zero_arr[i];
 ;     }

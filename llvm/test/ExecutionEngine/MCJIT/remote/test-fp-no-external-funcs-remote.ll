@@ -19,4 +19,3 @@ define i32 @main() {
 	call double @test( double* %X, double 2.000000e+00 )		; <double>:1 [#uses=0]
 	ret i32 0
 }
-
