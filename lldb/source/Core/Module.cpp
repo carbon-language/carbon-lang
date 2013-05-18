@@ -1438,8 +1438,19 @@ Module::PrepareForFunctionNameLookup (const ConstString &name,
             if (ObjCLanguageRuntime::IsPossibleObjCSelector(name_cstr))
                 lookup_name_type_mask |= eFunctionNameTypeSelector;
             
-            if (CPPLanguageRuntime::IsPossibleCPPCall(name_cstr, base_name_start, base_name_end))
+            CPPLanguageRuntime::MethodName cpp_method (name);
+            llvm::StringRef basename (cpp_method.GetBasename());
+            if (basename.empty())
+            {
+                if (CPPLanguageRuntime::StripNamespacesFromVariableName (name_cstr, base_name_start, base_name_end))
+                    lookup_name_type_mask |= (eFunctionNameTypeMethod | eFunctionNameTypeBase);
+            }
+            else
+            {
+                base_name_start = basename.data();
+                base_name_end = base_name_start + basename.size();
                 lookup_name_type_mask |= (eFunctionNameTypeMethod | eFunctionNameTypeBase);
+            }
         }
     }
     else
@@ -1449,11 +1460,30 @@ Module::PrepareForFunctionNameLookup (const ConstString &name,
         {
             // If they've asked for a CPP method or function name and it can't be that, we don't
             // even need to search for CPP methods or names.
-            if (!CPPLanguageRuntime::IsPossibleCPPCall(name_cstr, base_name_start, base_name_end))
+            CPPLanguageRuntime::MethodName cpp_method (name);
+            if (cpp_method.IsValid())
             {
-                lookup_name_type_mask &= ~(eFunctionNameTypeMethod | eFunctionNameTypeBase);
-                if (lookup_name_type_mask == eFunctionNameTypeNone)
-                    return;
+                llvm::StringRef basename (cpp_method.GetBasename());
+                base_name_start = basename.data();
+                base_name_end = base_name_start + basename.size();
+
+                if (!cpp_method.GetQualifiers().empty())
+                {
+                    // There is a "const" or other qualifer following the end of the fucntion parens,
+                    // this can't be a eFunctionNameTypeBase
+                    lookup_name_type_mask &= ~(eFunctionNameTypeBase);
+                    if (lookup_name_type_mask == eFunctionNameTypeNone)
+                        return;
+                }
+            }
+            else
+            {
+                if (!CPPLanguageRuntime::StripNamespacesFromVariableName (name_cstr, base_name_start, base_name_end))
+                {
+                    lookup_name_type_mask &= ~(eFunctionNameTypeMethod | eFunctionNameTypeBase);
+                    if (lookup_name_type_mask == eFunctionNameTypeNone)
+                        return;
+                }
             }
         }
         

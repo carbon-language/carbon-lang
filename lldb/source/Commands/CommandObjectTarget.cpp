@@ -1676,7 +1676,7 @@ LookupFunctionInModule (CommandInterpreter &interpreter,
             ConstString function_name (name);
             num_matches = module->FindFunctions (function_name,
                                                  NULL,
-                                                 eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeMethod | eFunctionNameTypeSelector, 
+                                                 eFunctionNameTypeAuto,
                                                  include_symbols,
                                                  include_inlines, 
                                                  append, 
