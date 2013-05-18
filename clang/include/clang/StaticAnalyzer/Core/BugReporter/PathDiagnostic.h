@@ -415,6 +415,8 @@ public:
     flattenTo(Result, Result, ShouldFlattenMacros);
     return Result;
   }
+
+  LLVM_ATTRIBUTE_USED void dump() const;
 };
 
 class PathDiagnosticSpotPiece : public PathDiagnosticPiece {
