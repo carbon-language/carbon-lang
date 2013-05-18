@@ -39,18 +39,14 @@
 //
 // RUN: %clang -### -fmath-errno -c %s 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-MATH-ERRNO %s
+// RUN: %clang -### -target x86_64-unknown-linux -c %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MATH-ERRNO %s
+// RUN: %clang -### -fmath-errno -fno-fast-math -c %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MATH-ERRNO %s
+// RUN: %clang -### -fno-fast-math -fmath-errno -c %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MATH-ERRNO %s
 // CHECK-MATH-ERRNO: "-cc1"
 // CHECK-MATH-ERRNO: "-fmath-errno"
-//
-// RUN: %clang -### -fno-fast-math -fmath-errno -c %s 2>&1 \
-// RUN:   | FileCheck --check-prefix=CHECK-NO-FAST-MATH-MATH-ERRNO %s
-// CHECK-NO-FAST-MATH-MATH-ERRNO: "-cc1"
-// CHECK-NO-FAST-MATH-MATH-ERRNO: "-fmath-errno"
-//
-// RUN: %clang -### -fmath-errno -fno-fast-math -c %s 2>&1 \
-// RUN:   | FileCheck --check-prefix=CHECK-MATH-ERRNO-NO-FAST-MATH %s
-// CHECK-MATH-ERRNO-NO-FAST-MATH: "-cc1"
-// CHECK-MATH-ERRNO-NO-FAST-MATH-NOT: "-fmath-errno"
 //
 // RUN: %clang -### -fmath-errno -fno-math-errno -c %s 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NO-MATH-ERRNO %s
