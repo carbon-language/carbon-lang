@@ -139,7 +139,7 @@ namespace llvm {
 
     SDValue  LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
     SDValue  LowerConstantPool(SDValue Op, SelectionDAG &DAG) const;
-    virtual EVT getSetCCResultType(EVT VT) const {
+    virtual EVT getSetCCResultType(LLVMContext &, EVT) const {
       return MVT::i1;
     }
 

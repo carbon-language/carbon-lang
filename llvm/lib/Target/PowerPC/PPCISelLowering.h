@@ -226,7 +226,7 @@ namespace llvm {
 
       /// G8RC = ADDIS_DTPREL_HA %X3, Symbol, Chain - For the
       /// local-dynamic TLS model, produces an ADDIS8 instruction
-      /// that adds X3 to sym\@dtprel\@ha.  The Chain operand is needed
+      /// that adds X3 to sym\@dtprel\@ha. The Chain operand is needed
       /// to tie this in place following a copy to %X3 from the result
       /// of a GET_TLSLD_ADDR.
       ADDIS_DTPREL_HA,
@@ -348,7 +348,7 @@ namespace llvm {
     virtual MVT getScalarShiftAmountTy(EVT LHSTy) const { return MVT::i32; }
 
     /// getSetCCResultType - Return the ISD::SETCC ValueType
-    virtual EVT getSetCCResultType(EVT VT) const;
+    virtual EVT getSetCCResultType(LLVMContext &Context, EVT VT) const;
 
     /// getPreIndexedAddressParts - returns true by value, base pointer and
     /// offset pointer and addressing mode by reference if the node's address

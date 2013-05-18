@@ -100,7 +100,7 @@ public:
   /// getFunctionAlignment - Return the Log2 alignment of this function.
   virtual unsigned getFunctionAlignment(const Function *F) const;
 
-  virtual EVT getSetCCResultType(EVT VT) const {
+  virtual EVT getSetCCResultType(LLVMContext &, EVT VT) const {
     if (VT.isVector())
       return MVT::getVectorVT(MVT::i1, VT.getVectorNumElements());
     return MVT::i1;

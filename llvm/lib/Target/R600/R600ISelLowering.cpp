@@ -1219,7 +1219,7 @@ SDValue R600TargetLowering::LowerFormalArguments(
   return Chain;
 }
 
-EVT R600TargetLowering::getSetCCResultType(EVT VT) const {
+EVT R600TargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
    if (!VT.isVector()) return MVT::i32;
    return VT.changeVectorElementTypeToInteger();
 }

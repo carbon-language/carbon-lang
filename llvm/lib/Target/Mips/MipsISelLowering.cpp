@@ -409,7 +409,7 @@ const MipsTargetLowering *MipsTargetLowering::create(MipsTargetMachine &TM) {
   return llvm::createMipsSETargetLowering(TM);
 }
 
-EVT MipsTargetLowering::getSetCCResultType(EVT VT) const {
+EVT MipsTargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
   if (!VT.isVector())
     return MVT::i32;
   return VT.changeVectorElementTypeToInteger();
@@ -1420,7 +1420,8 @@ lowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const
 {
   DebugLoc DL = Op.getDebugLoc();
   EVT Ty = Op.getOperand(0).getValueType();
-  SDValue Cond = DAG.getNode(ISD::SETCC, DL, getSetCCResultType(Ty),
+  SDValue Cond = DAG.getNode(ISD::SETCC, DL,
+                             getSetCCResultType(*DAG.getContext(), Ty),
                              Op.getOperand(0), Op.getOperand(1),
                              Op.getOperand(4));
 

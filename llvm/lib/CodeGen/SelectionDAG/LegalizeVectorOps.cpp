@@ -597,7 +597,7 @@ SDValue VectorLegalizer::ExpandSELECT(SDValue Op) {
     return DAG.UnrollVectorOp(Op.getNode());
 
   // Generate a mask operand.
-  EVT MaskTy = TLI.getSetCCResultType(VT);
+  EVT MaskTy = TLI.getSetCCResultType(*DAG.getContext(), VT);
   assert(MaskTy.isVector() && "Invalid CC type");
   assert(MaskTy.getSizeInBits() == Op1.getValueType().getSizeInBits()
          && "Invalid mask size");
@@ -758,7 +758,8 @@ SDValue VectorLegalizer::UnrollVSETCC(SDValue Op) {
                                   DAG.getIntPtrConstant(i));
     SDValue RHSElem = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, TmpEltVT, RHS,
                                   DAG.getIntPtrConstant(i));
-    Ops[i] = DAG.getNode(ISD::SETCC, dl, TLI.getSetCCResultType(TmpEltVT),
+    Ops[i] = DAG.getNode(ISD::SETCC, dl,
+                         TLI.getSetCCResultType(*DAG.getContext(), TmpEltVT),
                          LHSElem, RHSElem, CC);
     Ops[i] = DAG.getNode(ISD::SELECT, dl, EltVT, Ops[i],
                          DAG.getConstant(APInt::getAllOnesValue

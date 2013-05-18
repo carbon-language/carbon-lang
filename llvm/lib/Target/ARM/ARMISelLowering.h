@@ -270,7 +270,7 @@ namespace llvm {
     }
 
     /// getSetCCResultType - Return the value type to use for ISD::SETCC.
-    virtual EVT getSetCCResultType(EVT VT) const;
+    virtual EVT getSetCCResultType(LLVMContext &Context, EVT VT) const;
 
     virtual MachineBasicBlock *
       EmitInstrWithCustomInserter(MachineInstr *MI,

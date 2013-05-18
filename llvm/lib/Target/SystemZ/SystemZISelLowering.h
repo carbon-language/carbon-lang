@@ -117,7 +117,7 @@ public:
   virtual MVT getScalarShiftAmountTy(EVT LHSTy) const LLVM_OVERRIDE {
     return MVT::i32;
   }
-  virtual EVT getSetCCResultType(EVT VT) const {
+  virtual EVT getSetCCResultType(LLVMContext &, EVT) const {
     return MVT::i32;
   }
   virtual bool isFMAFasterThanMulAndAdd(EVT) const LLVM_OVERRIDE {

@@ -511,7 +511,7 @@ namespace llvm {
     /// It returns EVT::Other if the type should be determined using generic
     /// target-independent logic.
     virtual EVT
-    getOptimalMemOpType(uint64_t Size, unsigned DstAlign, unsigned SrcAlign, 
+    getOptimalMemOpType(uint64_t Size, unsigned DstAlign, unsigned SrcAlign,
                         bool IsMemset, bool ZeroMemset, bool MemcpyStrSrc,
                         MachineFunction &MF) const;
 
@@ -563,7 +563,7 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType - Return the value type to use for ISD::SETCC.
-    virtual EVT getSetCCResultType(EVT VT) const;
+    virtual EVT getSetCCResultType(LLVMContext &Context, EVT VT) const;
 
     /// computeMaskedBitsForTargetNode - Determine which of the bits specified
     /// in Mask are known to be either zero or one and return them in the

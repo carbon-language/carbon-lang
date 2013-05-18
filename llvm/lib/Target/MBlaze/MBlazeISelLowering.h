@@ -102,7 +102,7 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType - get the ISD::SETCC result ValueType
-    EVT getSetCCResultType(EVT VT) const;
+    EVT getSetCCResultType(LLVMContext &Context, EVT VT) const;
 
   private:
     // Subtarget Info

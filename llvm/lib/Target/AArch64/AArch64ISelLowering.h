@@ -171,7 +171,7 @@ public:
   SDValue addTokenForArgument(SDValue Chain, SelectionDAG &DAG,
                               MachineFrameInfo *MFI, int ClobberedFI) const;
 
-  EVT getSetCCResultType(EVT VT) const;
+  EVT getSetCCResultType(LLVMContext &Context, EVT VT) const;
 
   bool DoesCalleeRestoreStack(CallingConv::ID CallCC, bool TailCallOpt) const;
 

@@ -2385,7 +2385,7 @@ SDValue DAGTypeLegalizer::WidenVecOp_SETCC(SDNode *N) {
 
   // Get a new SETCC node to compare the newly widened operands.
   // Only some of the compared elements are legal.
-  EVT SVT = TLI.getSetCCResultType(InOp0.getValueType());
+  EVT SVT = TLI.getSetCCResultType(*DAG.getContext(), InOp0.getValueType());
   SDValue WideSETCC = DAG.getNode(ISD::SETCC, N->getDebugLoc(),
                      SVT, InOp0, InOp1, N->getOperand(2));
 

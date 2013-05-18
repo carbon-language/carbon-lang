@@ -192,7 +192,7 @@ MBlazeTargetLowering::MBlazeTargetLowering(MBlazeTargetMachine &TM)
   computeRegisterProperties();
 }
 
-EVT MBlazeTargetLowering::getSetCCResultType(EVT VT) const {
+EVT MBlazeTargetLowering::getSetCCResultType(LLVMContext &, EVT) const {
   return MVT::i32;
 }
 

@@ -73,6 +73,10 @@ private:
     return TLI.getTypeAction(*DAG.getContext(), VT) == TargetLowering::TypeLegal;
   }
 
+  EVT getSetCCResultType(EVT VT) const {
+    return TLI.getSetCCResultType(*DAG.getContext(), VT);
+  }
+
   /// IgnoreNodeResults - Pretend all of this node's results are legal.
   bool IgnoreNodeResults(SDNode *N) const {
     return N->getOpcode() == ISD::TargetConstant;

@@ -1361,7 +1361,7 @@ void X86TargetLowering::resetOperationActions() {
   setPrefFunctionAlignment(4); // 2^4 bytes.
 }
 
-EVT X86TargetLowering::getSetCCResultType(EVT VT) const {
+EVT X86TargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
   if (!VT.isVector()) return MVT::i8;
   return VT.changeVectorElementTypeToInteger();
 }
@@ -6722,10 +6722,10 @@ X86TargetLowering::LowerVectorIntExtend(SDValue Op, SelectionDAG &DAG) const {
         // (bitcast (sclr2vec (ext_vec_elt x))) -> (bitcast (extract_subvector x)).
         unsigned Ratio = V.getValueSizeInBits() / V1.getValueSizeInBits();
         EVT FullVT = V.getValueType();
-        EVT SubVecVT = EVT::getVectorVT(*Context, 
+        EVT SubVecVT = EVT::getVectorVT(*Context,
                                         FullVT.getVectorElementType(),
                                         FullVT.getVectorNumElements()/Ratio);
-        V = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SubVecVT, V, 
+        V = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SubVecVT, V,
                         DAG.getIntPtrConstant(0));
       }
       V1 = DAG.getNode(ISD::BITCAST, DL, V1.getValueType(), V);
@@ -8250,7 +8250,8 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
   APInt FF(32, 0x5F800000ULL);
 
   // Check whether the sign bit is set.
-  SDValue SignSet = DAG.getSetCC(dl, getSetCCResultType(MVT::i64),
+  SDValue SignSet = DAG.getSetCC(dl,
+                                 getSetCCResultType(*DAG.getContext(), MVT::i64),
                                  Op.getOperand(0), DAG.getConstant(0, MVT::i64),
                                  ISD::SETLT);
 
@@ -17412,7 +17413,7 @@ static SDValue PerformVZEXT_MOVLCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
-static SDValue PerformSIGN_EXTEND_INREGCombine(SDNode *N, SelectionDAG &DAG, 
+static SDValue PerformSIGN_EXTEND_INREGCombine(SDNode *N, SelectionDAG &DAG,
                                                const X86Subtarget *Subtarget) {
   EVT VT = N->getValueType(0);
   if (!VT.isVector())
@@ -17432,14 +17433,14 @@ static SDValue PerformSIGN_EXTEND_INREGCombine(SDNode *N, SelectionDAG &DAG,
       N0.getOpcode() == ISD::SIGN_EXTEND)) {
     SDValue N00 = N0.getOperand(0);
 
-    // EXTLOAD has a better solution on AVX2, 
+    // EXTLOAD has a better solution on AVX2,
     // it may be replaced with X86ISD::VSEXT node.
     if (N00.getOpcode() == ISD::LOAD && Subtarget->hasInt256())
       if (!ISD::isNormalLoad(N00.getNode()))
         return SDValue();
 
     if (N00.getValueType() == MVT::v4i32 && ExtraVT.getSizeInBits() < 128) {
-        SDValue Tmp = DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, MVT::v4i32, 
+        SDValue Tmp = DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, MVT::v4i32,
                                   N00, N1);
       return DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::v4i64, Tmp);
     }

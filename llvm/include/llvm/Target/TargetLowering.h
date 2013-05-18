@@ -198,7 +198,7 @@ public:
   /// the condition operand of SELECT and BRCOND nodes.  In the case of
   /// BRCOND the argument passed is MVT::Other since there are no other
   /// operands to get a type hint from.
-  virtual EVT getSetCCResultType(EVT VT) const;
+  virtual EVT getSetCCResultType(LLVMContext &Context, EVT VT) const;
 
   /// getCmpLibcallReturnType - Return the ValueType for comparison
   /// libcalls. Comparions libcalls include floating point comparion calls,

@@ -260,7 +260,7 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
   setExceptionSelectorRegister(AArch64::X1);
 }
 
-EVT AArch64TargetLowering::getSetCCResultType(EVT VT) const {
+EVT AArch64TargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
   // It's reasonably important that this value matches the "natural" legal
   // promotion from i1 for scalar types. Otherwise LegalizeTypes can get itself
   // in a twist (e.g. inserting an any_extend which then becomes i64 -> i64).

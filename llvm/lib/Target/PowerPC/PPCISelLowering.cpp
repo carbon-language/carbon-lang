@@ -675,7 +675,7 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
-EVT PPCTargetLowering::getSetCCResultType(EVT VT) const {
+EVT PPCTargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
   if (!VT.isVector())
     return MVT::i32;
   return VT.changeVectorElementTypeToInteger();
@@ -2105,7 +2105,7 @@ PPCTargetLowering::extendArgForPPC64(ISD::ArgFlagsTy Flags, EVT ObjectVT,
   else if (Flags.isZExt())
     ArgVal = DAG.getNode(ISD::AssertZext, dl, MVT::i64, ArgVal,
                          DAG.getValueType(ObjectVT));
-  
+
   return DAG.getNode(ISD::TRUNCATE, dl, MVT::i32, ArgVal);
 }
 
@@ -3868,7 +3868,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
         // register.
         // FIXME: The memcpy seems to produce pretty awful code for
         // small aggregates, particularly for packed ones.
-        // FIXME: It would be preferable to use the slot in the 
+        // FIXME: It would be preferable to use the slot in the
         // parameter save area instead of a new local variable.
         SDValue Const = DAG.getConstant(8 - Size, PtrOff.getValueType());
         SDValue AddPtr = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff, Const);
@@ -5724,7 +5724,7 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
 
     assert(N->getValueType(0) == MVT::i1 &&
            "Unexpected result type for CTR decrement intrinsic");
-    EVT SVT = getSetCCResultType(N->getValueType(0));
+    EVT SVT = getSetCCResultType(*DAG.getContext(), N->getValueType(0));
     SDVTList VTs = DAG.getVTList(SVT, MVT::Other);
     SDValue NewInt = DAG.getNode(N->getOpcode(), dl, VTs, N->getOperand(0),
                                  N->getOperand(1)); 

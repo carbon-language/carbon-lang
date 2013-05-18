@@ -1069,7 +1069,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
-EVT ARMTargetLowering::getSetCCResultType(EVT VT) const {
+EVT ARMTargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
   if (!VT.isVector()) return getPointerTy();
   return VT.changeVectorElementTypeToInteger();
 }
