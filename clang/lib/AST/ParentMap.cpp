@@ -74,7 +74,7 @@ static void BuildParentMap(MapTy& M, Stmt* S,
     // The right thing to do is to give the OpaqueValueExpr its syntactic
     // parent, then not reassign that when traversing the semantic expressions.
     OpaqueValueExpr *OVE = cast<OpaqueValueExpr>(S);
-    if (OVMode == OV_Transparent || !M[OVE->getSourceExpr()]) {
+    if (OVMode == OV_Transparent || !M[OVE->getSourceExpr()]) {
       M[OVE->getSourceExpr()] = S;
       BuildParentMap(M, OVE->getSourceExpr(), OV_Transparent);
     }
