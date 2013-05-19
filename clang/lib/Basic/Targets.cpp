@@ -4307,9 +4307,16 @@ public:
                         "i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32:64-S128";
     // This is an LP64 platform.
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
-    IntMaxType = SignedLong;
-    UIntMaxType = UnsignedLong;
-    Int64Type = SignedLong;
+
+    // OpenBSD uses long long for int64_t and intmax_t.
+    if (getTriple().getOS() == llvm::Triple::OpenBSD) {
+      IntMaxType = SignedLongLong;
+      UIntMaxType = UnsignedLongLong;
+    } else {
+      IntMaxType = SignedLong;
+      UIntMaxType = UnsignedLong;
+    }
+    Int64Type = IntMaxType;
   }
 
   virtual void getTargetDefines(const LangOptions &Opts,

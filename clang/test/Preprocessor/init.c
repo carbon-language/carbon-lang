@@ -2795,12 +2795,18 @@
 // X86_64-LINUX:#define __x86_64__ 1
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc64-none-none < /dev/null | FileCheck -check-prefix SPARCV9 %s
+// SPARCV9:#define __INT64_TYPE__ long int
 // SPARCV9:#define __INTMAX_TYPE__ long int
 // SPARCV9:#define __INTPTR_TYPE__ long int
 // SPARCV9:#define __LONG_MAX__ 9223372036854775807L
 // SPARCV9:#define __LP64__ 1
 // SPARCV9:#define __SIZEOF_LONG__ 8
 // SPARCV9:#define __SIZEOF_POINTER__ 8
+//
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc64-none-openbsd < /dev/null | FileCheck -check-prefix SPARC64-OBSD %s
+// SPARC64-OBSD:#define __INT64_TYPE__ long long int
+// SPARC64-OBSD:#define __INTMAX_TYPE__ long long int
+// SPARC64-OBSD:#define __UINTMAX_TYPE__ long long unsigned int
 //
 // RUN: %clang_cc1 -x c++ -triple i686-pc-linux-gnu -fobjc-runtime=gcc -E -dM < /dev/null | FileCheck -check-prefix GNUSOURCE %s
 // GNUSOURCE:#define _GNU_SOURCE 1
