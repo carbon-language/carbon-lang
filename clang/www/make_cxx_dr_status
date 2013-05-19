@@ -1,7 +1,10 @@
 #! /usr/bin/env python
-import sys
+import sys, os, re
 
 index = 'cwg_index.html'
+output = 'cxx_dr_status.html'
+dr_test_dir = '../test/CXX/drs'
+
 if len(sys.argv) == 1:
   pass
 elif len(sys.argv) == 2:
@@ -28,12 +31,23 @@ def parse(dr):
   title = title.replace('<issue_title>', '').replace('</issue_title>', '').strip()
   return DR(section, issue, url, status, title)
 
-status_list = [line.split(' ', 1) for line in file('cxx_dr_status', 'r').readlines()]
-status_map = dict((int(issue), status.strip()) for issue, status in status_list)
+status_re = re.compile(r'\bdr([0-9]+): (.*)')
+status_map = {}
+for test_cpp in os.listdir(dr_test_dir):
+  test_cpp = os.path.join(dr_test_dir, test_cpp)
+  found_any = False;
+  for match in re.finditer(status_re, file(test_cpp, 'r').read()):
+    status_map[int(match.group(1))] = match.group(2)
+    found_any = True
+  if not found_any:
+    print >> sys.stderr, "warning:%s: no '// dr123: foo' comments in this file" % test_cpp
+
 drs = sorted((parse(dr) for dr in file(index, 'r').read().split('<TR>')[2:]),
              key = lambda dr: dr.issue)
+out_file = file(output, 'w')
 
-print '''<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+print >> out_file, '''\
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
           "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
@@ -99,9 +113,13 @@ def availability(issue):
   elif status == 'na':
     avail = 'N/A'
     avail_style = ' class="na"'
+  elif status.startswith('sup '):
+    dup = int(status.split(' ', 1)[1])
+    avail = 'Superseded by %s' % dup
+    _, avail_style = availability(dup)
   elif status.startswith('dup '):
     dup = int(status.split(' ', 1)[1])
-    avail = 'Dup %s' % dup
+    avail = 'Duplicate of %s' % dup
     _, avail_style = availability(dup)
   else:
     assert False, 'unknown status %s for issue %s' % (status, dr.issue)
@@ -121,7 +139,8 @@ for dr in drs:
     row_style = ''
     avail, avail_style = availability(dr.issue)
 
-  print '''  <tr%s>
+  print >> out_file, '''\
+  <tr%s>
     <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/%s">%s</a></td>
     <td>%s</td>
     <td>%s</td>
@@ -129,7 +148,8 @@ for dr in drs:
   </tr>''' % (row_style, dr.url, dr.issue, dr.status, dr.title, avail_style,
               avail)
 
-print '''</table>
+print >> out_file, '''\
+</table>
 
 </div>
 </body>
