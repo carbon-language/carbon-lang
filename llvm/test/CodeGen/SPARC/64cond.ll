@@ -65,3 +65,25 @@ entry:
   %rv = select i1 %tobool, i64 %a, i64 %b
   ret i64 %rv
 }
+
+; CHECK: selectf32_xcc
+; CHECK: subcc %i0, %i1
+; CHECK: fmovsg %xcc, %f5, %f7
+; CHECK: fmovs %f7, %f1
+define float @selectf32_xcc(i64 %x, i64 %y, float %a, float %b) {
+entry:
+  %tobool = icmp sgt i64 %x, %y
+  %rv = select i1 %tobool, float %a, float %b
+  ret float %rv
+}
+
+; CHECK: selectf64_xcc
+; CHECK: subcc %i0, %i1
+; CHECK: fmovdg %xcc, %f4, %f6
+; CHECK: fmovd %f6, %f0
+define double @selectf64_xcc(i64 %x, i64 %y, double %a, double %b) {
+entry:
+  %tobool = icmp sgt i64 %x, %y
+  %rv = select i1 %tobool, double %a, double %b
+  ret double %rv
+}

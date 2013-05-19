@@ -323,6 +323,16 @@ def MOVXCCri : Pseudo<(outs IntRegs:$rd),
                       "mov$cond %xcc, $i, $rd",
                       [(set i32:$rd,
                        (SPselectxcc simm11:$i, i32:$f, imm:$cond))]>;
+def FMOVS_XCC : Pseudo<(outs FPRegs:$rd),
+                      (ins FPRegs:$rs2, FPRegs:$f, CCOp:$cond),
+                      "fmovs$cond %xcc, $rs2, $rd",
+                      [(set f32:$rd,
+                       (SPselectxcc f32:$rs2, f32:$f, imm:$cond))]>;
+def FMOVD_XCC : Pseudo<(outs DFPRegs:$rd),
+                      (ins DFPRegs:$rs2, DFPRegs:$f, CCOp:$cond),
+                      "fmovd$cond %xcc, $rs2, $rd",
+                      [(set f64:$rd,
+                       (SPselectxcc f64:$rs2, f64:$f, imm:$cond))]>;
 } // Uses, Constraints
 
 def : Pat<(SPselectxcc i64:$t, i64:$f, imm:$cond),
