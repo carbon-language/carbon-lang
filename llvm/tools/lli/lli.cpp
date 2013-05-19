@@ -254,7 +254,7 @@ void layoutRemoteTargetMemory(RemoteTarget *T, RecordingMemoryManager *JMM) {
     EE->mapSectionAddress(const_cast<void*>(Offsets[i].first), Addr);
 
     DEBUG(dbgs() << "  Mapping local: " << Offsets[i].first
-                 << " to remote: " << format("%p", Addr) << "\n");
+                 << " to remote: 0x" << format("%llx", Addr) << "\n");
 
   }
 
@@ -269,12 +269,12 @@ void layoutRemoteTargetMemory(RemoteTarget *T, RecordingMemoryManager *JMM) {
       T->loadCode(Addr, Offsets[i].first, Sizes[i]);
 
       DEBUG(dbgs() << "  loading code: " << Offsets[i].first
-            << " to remote: " << format("%p", Addr) << "\n");
+            << " to remote: 0x" << format("%llx", Addr) << "\n");
     } else {
       T->loadData(Addr, Offsets[i].first, Sizes[i]);
 
       DEBUG(dbgs() << "  loading data: " << Offsets[i].first
-            << " to remote: " << format("%p", Addr) << "\n");
+            << " to remote: 0x" << format("%llx", Addr) << "\n");
     }
 
   }
@@ -483,8 +483,8 @@ int main(int argc, char **argv, char * const *envp) {
     // FIXME: argv and envp handling.
     uint64_t Entry = (uint64_t)EE->getPointerToFunction(EntryFn);
 
-    DEBUG(dbgs() << "Executing '" << EntryFn->getName() << "' at "
-                 << format("%p", Entry) << "\n");
+    DEBUG(dbgs() << "Executing '" << EntryFn->getName() << "' at 0x"
+                 << format("%llx", Entry) << "\n");
 
     if (Target.executeCode(Entry, Result))
       errs() << "ERROR: " << Target.getErrorMsg() << "\n";
