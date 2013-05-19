@@ -98,3 +98,14 @@ entry:
   %rv = select i1 %tobool, double %a, double %b
   ret double %rv
 }
+
+; The MOVXCC instruction can't use %g0 for its tied operand.
+; CHECK: select_consti64_xcc
+; CHECK: subcc
+; CHECK: movg %xcc, 123, %i0
+define i64 @select_consti64_xcc(i64 %x, i64 %y) {
+entry:
+  %tobool = icmp sgt i64 %x, %y
+  %rv = select i1 %tobool, i64 123, i64 0
+  ret i64 %rv
+}

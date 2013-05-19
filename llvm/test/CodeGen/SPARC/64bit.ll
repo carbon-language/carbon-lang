@@ -26,7 +26,7 @@ define i64 @sra_reg(i64 %a, i64 %b) {
 ;     restore %g0, %g0, %o0
 ;
 ; CHECK: ret_imm0
-; CHECK: or %g0, %g0, %i0
+; CHECK: or %g0, 0, %i0
 define i64 @ret_imm0() {
   ret i64 0
 }

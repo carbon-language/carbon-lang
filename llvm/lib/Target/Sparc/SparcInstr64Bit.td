@@ -59,10 +59,6 @@ defm SRAX : F3_S<"srax", 0b100111, 1, sra, i64, I64Regs>;
 // preferable to use a constant pool load instead, depending on the
 // microarchitecture.
 
-// The %g0 register is constant 0.
-// This is useful for stx %g0, [...], for example.
-def : Pat<(i64 0), (i64 G0)>, Requires<[Is64Bit]>;
-
 // Single-instruction patterns.
 
 // The ALU instructions want their simm13 operands as i32 immediates.
