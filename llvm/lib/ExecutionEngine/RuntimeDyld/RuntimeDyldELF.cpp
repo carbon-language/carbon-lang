@@ -277,7 +277,6 @@ void RuntimeDyldELF::resolveX86Relocation(const SectionEntry &Section,
   }
 }
 
-// FIXME: PR16013: this routine needs modification to handle repeated relocations.
 void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
                                               uint64_t Offset,
                                               uint64_t Value,
@@ -303,7 +302,7 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
     *TargetPtr = Value + Addend;
     break;
   }
-  case ELF::R_AARCH64_PREL32: { // test-shift.ll (.eh_frame)
+  case ELF::R_AARCH64_PREL32: {
     uint64_t Result = Value + Addend - FinalAddress;
     assert(static_cast<int64_t>(Result) >= INT32_MIN && 
            static_cast<int64_t>(Result) <= UINT32_MAX);
@@ -319,12 +318,20 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
     // "Check that -2^27 <= result < 2^27".
     assert(-(1LL << 27) <= static_cast<int64_t>(BranchImm) && 
            static_cast<int64_t>(BranchImm) < (1LL << 27));
+
+    // AArch64 code is emitted with .rela relocations. The data already in any
+    // bits affected by the relocation on entry is garbage.
+    *TargetPtr &= 0xfc000000U;
     // Immediate goes in bits 25:0 of B and BL.
     *TargetPtr |= static_cast<uint32_t>(BranchImm & 0xffffffcU) >> 2;
     break;
   }
   case ELF::R_AARCH64_MOVW_UABS_G3: {
     uint64_t Result = Value + Addend;
+
+    // AArch64 code is emitted with .rela relocations. The data already in any
+    // bits affected by the relocation on entry is garbage.
+    *TargetPtr &= 0xff80001fU;
     // Immediate goes in bits 20:5 of MOVZ/MOVK instruction
     *TargetPtr |= Result >> (48 - 5);
     // Shift is "lsl #48", in bits 22:21
@@ -333,6 +340,11 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
   }
   case ELF::R_AARCH64_MOVW_UABS_G2_NC: {
     uint64_t Result = Value + Addend;
+
+
+    // AArch64 code is emitted with .rela relocations. The data already in any
+    // bits affected by the relocation on entry is garbage.
+    *TargetPtr &= 0xff80001fU;
     // Immediate goes in bits 20:5 of MOVZ/MOVK instruction
     *TargetPtr |= ((Result & 0xffff00000000ULL) >> (32 - 5));
     // Shift is "lsl #32", in bits 22:21
@@ -341,6 +353,10 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
   }
   case ELF::R_AARCH64_MOVW_UABS_G1_NC: {
     uint64_t Result = Value + Addend;
+
+    // AArch64 code is emitted with .rela relocations. The data already in any
+    // bits affected by the relocation on entry is garbage.
+    *TargetPtr &= 0xff80001fU;
     // Immediate goes in bits 20:5 of MOVZ/MOVK instruction
     *TargetPtr |= ((Result & 0xffff0000U) >> (16 - 5));
     // Shift is "lsl #16", in bits 22:21
@@ -349,6 +365,10 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
   }
   case ELF::R_AARCH64_MOVW_UABS_G0_NC: {
     uint64_t Result = Value + Addend;
+
+    // AArch64 code is emitted with .rela relocations. The data already in any
+    // bits affected by the relocation on entry is garbage.
+    *TargetPtr &= 0xff80001fU;
     // Immediate goes in bits 20:5 of MOVZ/MOVK instruction
     *TargetPtr |= ((Result & 0xffffU) << 5);
     // Shift is "lsl #0", in bits 22:21. No action needed.
