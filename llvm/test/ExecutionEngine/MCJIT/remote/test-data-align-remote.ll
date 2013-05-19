@@ -1,5 +1,5 @@
 ; RUN:  %lli_mcjit -remote-mcjit -O0 %s
-; XFAIL: armv7, mips
+; XFAIL: mips
 
 ; Check that a variable is always aligned as specified.
 

@@ -1,5 +1,5 @@
 ; RUN: %lli_mcjit -remote-mcjit -O0 -disable-lazy-compilation=false %s
-; XFAIL: arm, mips
+; XFAIL: mips
 
 ; The intention of this test is to verify that symbols mapped to COMMON in ELF
 ; work as expected.

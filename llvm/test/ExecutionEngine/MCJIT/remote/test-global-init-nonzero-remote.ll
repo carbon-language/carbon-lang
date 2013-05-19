@@ -1,5 +1,5 @@
 ; RUN: %lli_mcjit -remote-mcjit %s > /dev/null
-; XFAIL: arm, mips
+; XFAIL: mips
 
 @count = global i32 1, align 4
 
