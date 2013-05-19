@@ -27,6 +27,9 @@
 
 using namespace llvm;
 
+// Default style to use when no style specified or specified style not found.
+static const char *DefaultStyle = "LLVM";
+
 static cl::opt<bool> Help("h", cl::desc("Alias for -help"), cl::Hidden);
 
 // Mark all our options with this category, everything else (except for -version
@@ -54,11 +57,14 @@ static cl::opt<std::string>
     Style("style",
           cl::desc("Coding style, currently supports:\n"
                    "  LLVM, Google, Chromium, Mozilla.\n"
-                   "Use '-style file' to load style configuration from\n"
+                   "Use -style=file to load style configuration from\n"
                    ".clang-format file located in one of the parent\n"
                    "directories of the source file (or current\n"
-                   "directory for stdin)."),
-          cl::init("LLVM"), cl::cat(ClangFormatCategory));
+                   "directory for stdin).\n"
+                   "Use -style=\"{key: value, ...}\" to set specific\n"
+                   "parameters, e.g.:\n"
+                   "  -style=\"{BasedOnStyle: llvm, IndentWidth: 8}\""),
+          cl::init(DefaultStyle), cl::cat(ClangFormatCategory));
 static cl::opt<bool> Inplace("i",
                              cl::desc("Inplace edit <file>s, if specified."),
                              cl::cat(ClangFormatCategory));
@@ -88,8 +94,24 @@ static FileID createInMemoryFile(StringRef FileName, const MemoryBuffer *Source,
 }
 
 FormatStyle getStyle(StringRef StyleName, StringRef FileName) {
-  if (!StyleName.equals_lower("file"))
-    return getPredefinedStyle(StyleName);
+  FormatStyle Style;
+  getPredefinedStyle(DefaultStyle, &Style);
+
+  if (StyleName.startswith("{")) {
+    // Parse YAML/JSON style from the command line.
+    if (error_code ec = parseConfiguration(StyleName, &Style)) {
+      llvm::errs() << "Error parsing -style: " << ec.message()
+                   << ", using " << DefaultStyle << " style\n";
+    }
+    return Style;
+  }
+
+  if (!StyleName.equals_lower("file")) {
+    if (!getPredefinedStyle(StyleName, &Style))
+      llvm::errs() << "Invalid value for -style, using " << DefaultStyle
+                   << " style\n";
+    return Style;
+  }
 
   SmallString<128> Path(FileName);
   llvm::sys::fs::make_absolute(Path);
@@ -109,7 +131,6 @@ FormatStyle getStyle(StringRef StyleName, StringRef FileName) {
         llvm::errs() << ec.message() << "\n";
         continue;
       }
-      FormatStyle Style;
       if (error_code ec = parseConfiguration(Text->getBuffer(), &Style)) {
         llvm::errs() << "Error reading " << ConfigFile << ": " << ec.message()
                      << "\n";
@@ -119,8 +140,9 @@ FormatStyle getStyle(StringRef StyleName, StringRef FileName) {
       return Style;
     }
   }
-  llvm::errs() << "Can't find usable .clang-format, using LLVM style\n";
-  return getLLVMStyle();
+  llvm::errs() << "Can't find usable .clang-format, using " << DefaultStyle
+               << " style\n";
+  return Style;
 }
 
 // Returns true on error.

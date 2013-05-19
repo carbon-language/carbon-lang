@@ -4209,27 +4209,29 @@ bool allStylesEqual(ArrayRef<FormatStyle> Styles) {
 }
 
 TEST_F(FormatTest, GetsPredefinedStyleByName) {
-  FormatStyle LLVMStyles[] = { getLLVMStyle(), getPredefinedStyle("LLVM"),
-                               getPredefinedStyle("llvm"),
-                               getPredefinedStyle("lLvM") };
-  EXPECT_TRUE(allStylesEqual(LLVMStyles));
+  FormatStyle Styles[3];
 
-  FormatStyle GoogleStyles[] = { getGoogleStyle(), getPredefinedStyle("Google"),
-                                 getPredefinedStyle("google"),
-                                 getPredefinedStyle("gOOgle") };
-  EXPECT_TRUE(allStylesEqual(GoogleStyles));
+  Styles[0] = getLLVMStyle();
+  EXPECT_TRUE(getPredefinedStyle("LLVM", &Styles[1]));
+  EXPECT_TRUE(getPredefinedStyle("lLvM", &Styles[2]));
+  EXPECT_TRUE(allStylesEqual(Styles));
 
-  FormatStyle ChromiumStyles[] = { getChromiumStyle(),
-                                   getPredefinedStyle("Chromium"),
-                                   getPredefinedStyle("chromium"),
-                                   getPredefinedStyle("chROmiUM") };
-  EXPECT_TRUE(allStylesEqual(ChromiumStyles));
+  Styles[0] = getGoogleStyle();
+  EXPECT_TRUE(getPredefinedStyle("Google", &Styles[1]));
+  EXPECT_TRUE(getPredefinedStyle("gOOgle", &Styles[2]));
+  EXPECT_TRUE(allStylesEqual(Styles));
 
-  FormatStyle MozillaStyles[] = { getMozillaStyle(),
-                                  getPredefinedStyle("Mozilla"),
-                                  getPredefinedStyle("mozilla"),
-                                  getPredefinedStyle("moZilla") };
-  EXPECT_TRUE(allStylesEqual(MozillaStyles));
+  Styles[0] = getChromiumStyle();
+  EXPECT_TRUE(getPredefinedStyle("Chromium", &Styles[1]));
+  EXPECT_TRUE(getPredefinedStyle("cHRoMiUM", &Styles[2]));
+  EXPECT_TRUE(allStylesEqual(Styles));
+
+  Styles[0] = getMozillaStyle();
+  EXPECT_TRUE(getPredefinedStyle("Mozilla", &Styles[1]));
+  EXPECT_TRUE(getPredefinedStyle("moZILla", &Styles[2]));
+  EXPECT_TRUE(allStylesEqual(Styles));
+
+  EXPECT_FALSE(getPredefinedStyle("qwerty", &Styles[0]));
 }
 
 TEST_F(FormatTest, ParsesConfiguration) {
@@ -4242,7 +4244,7 @@ TEST_F(FormatTest, ParsesConfiguration) {
 #define CHECK_PARSE_BOOL(FIELD)                                                \
   Style.FIELD = false;                                                         \
   EXPECT_EQ(0, parseConfiguration(#FIELD ": true", &Style).value());           \
-  EXPECT_TRUE(Style.FIELD);                                                \
+  EXPECT_TRUE(Style.FIELD);                                                    \
   EXPECT_EQ(0, parseConfiguration(#FIELD ": false", &Style).value());          \
   EXPECT_FALSE(Style.FIELD);
 

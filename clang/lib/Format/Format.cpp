@@ -60,7 +60,9 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
       ArrayRef<StringRef> Styles(StylesArray);
       for (size_t i = 0, e = Styles.size(); i < e; ++i) {
         StringRef StyleName(Styles[i]);
-        if (Style == clang::format::getPredefinedStyle(StyleName)) {
+        clang::format::FormatStyle PredefinedStyle;
+        if (clang::format::getPredefinedStyle(StyleName, &PredefinedStyle) &&
+            Style == PredefinedStyle) {
           IO.mapOptional("# BasedOnStyle", StyleName);
           break;
         }
@@ -69,7 +71,10 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
       StringRef BasedOnStyle;
       IO.mapOptional("BasedOnStyle", BasedOnStyle);
       if (!BasedOnStyle.empty())
-        Style = clang::format::getPredefinedStyle(BasedOnStyle);
+        if (!clang::format::getPredefinedStyle(BasedOnStyle, &Style)) {
+          IO.setError(Twine("Unknown value for BasedOnStyle: ", BasedOnStyle));
+          return;
+        }
     }
 
     IO.mapOptional("AccessModifierOffset", Style.AccessModifierOffset);
@@ -180,18 +185,19 @@ FormatStyle getMozillaStyle() {
   return MozillaStyle;
 }
 
-FormatStyle getPredefinedStyle(StringRef Name) {
+bool getPredefinedStyle(StringRef Name, FormatStyle *Style) {
   if (Name.equals_lower("llvm"))
-    return getLLVMStyle();
-  if (Name.equals_lower("chromium"))
-    return getChromiumStyle();
-  if (Name.equals_lower("mozilla"))
-    return getMozillaStyle();
-  if (Name.equals_lower("google"))
-    return getGoogleStyle();
+    *Style = getLLVMStyle();
+  else if (Name.equals_lower("chromium"))
+    *Style = getChromiumStyle();
+  else if (Name.equals_lower("mozilla"))
+    *Style = getMozillaStyle();
+  else if (Name.equals_lower("google"))
+    *Style = getGoogleStyle();
+  else
+    return false;
 
-  llvm::errs() << "Unknown style " << Name << ", using Google style.\n";
-  return getGoogleStyle();
+  return true;
 }
 
 llvm::error_code parseConfiguration(StringRef Text, FormatStyle *Style) {

@@ -161,11 +161,13 @@ FormatStyle getChromiumStyle();
 /// https://developer.mozilla.org/en-US/docs/Developer_Guide/Coding_Style.
 FormatStyle getMozillaStyle();
 
-/// \brief Returns a predefined style by name.
+/// \brief Gets a predefined style by name.
 ///
 /// Currently supported names: LLVM, Google, Chromium, Mozilla. Names are
 /// compared case-insensitively.
-FormatStyle getPredefinedStyle(StringRef Name);
+///
+/// Returns true if the Style has been set.
+bool getPredefinedStyle(StringRef Name, FormatStyle *Style);
 
 /// \brief Parse configuration from YAML-formatted text.
 llvm::error_code parseConfiguration(StringRef Text, FormatStyle *Style);
