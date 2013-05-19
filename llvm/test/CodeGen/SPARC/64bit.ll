@@ -181,3 +181,13 @@ define i64 @unsigned_divide(i64 %a, i64 %b) {
   %r = udiv i64 %a, %b
   ret i64 %r
 }
+
+define void @access_fi() {
+entry:
+  %b = alloca [32 x i8], align 1
+  %arraydecay = getelementptr inbounds [32 x i8]* %b, i64 0, i64 0
+  call void @g(i8* %arraydecay) #2
+  ret void
+}
+
+declare void @g(i8*)

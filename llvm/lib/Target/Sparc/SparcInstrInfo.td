@@ -463,7 +463,7 @@ defm ADD   : F3_12<"add", 0b000000, add>;
 def LEA_ADDri   : F3_2<2, 0b000000,
                    (outs IntRegs:$dst), (ins MEMri:$addr),
                    "add ${addr:arith}, $dst",
-                   [(set i32:$dst, ADDRri:$addr)]>;
+                   [(set iPTR:$dst, ADDRri:$addr)]>;
 
 let Defs = [ICC] in                   
   defm ADDCC  : F3_12<"addcc", 0b010000, addc>;
