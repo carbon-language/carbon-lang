@@ -54,3 +54,14 @@ entry:
   %rv = select i1 %tobool, i64 %a, i64 %b
   ret i64 %rv
 }
+
+; CHECK: selecti64_fcc
+; CHECK: fcmps %f1, %f3
+; CHECK: movul %fcc0, %i2, %i3
+; CHECK: or %g0, %i3, %i0
+define i64 @selecti64_fcc(float %x, float %y, i64 %a, i64 %b) {
+entry:
+  %tobool = fcmp ult float %x, %y
+  %rv = select i1 %tobool, i64 %a, i64 %b
+  ret i64 %rv
+}

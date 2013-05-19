@@ -322,12 +322,17 @@ def MOVXCCri : Pseudo<(outs IntRegs:$rd),
                       (ins i32imm:$i, IntRegs:$f, CCOp:$cond),
                       "mov$cond %xcc, $i, $rd",
                       [(set i32:$rd,
-                       (SPselecticc simm11:$i, i32:$f, imm:$cond))]>;
+                       (SPselectxcc simm11:$i, i32:$f, imm:$cond))]>;
 } // Uses, Constraints
 
 def : Pat<(SPselectxcc i64:$t, i64:$f, imm:$cond),
           (MOVXCCrr $t, $f, imm:$cond)>;
 def : Pat<(SPselectxcc (i64 simm11:$t), i64:$f, imm:$cond),
           (MOVXCCri (as_i32imm $t), $f, imm:$cond)>;
+
+def : Pat<(SPselectfcc i64:$t, i64:$f, imm:$cond),
+          (MOVFCCrr $t, $f, imm:$cond)>;
+def : Pat<(SPselectfcc (i64 simm11:$t), i64:$f, imm:$cond),
+          (MOVFCCri (as_i32imm $t), $f, imm:$cond)>;
 
 } // Predicates = [Is64Bit]

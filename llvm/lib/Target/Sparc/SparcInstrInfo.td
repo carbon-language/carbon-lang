@@ -698,52 +698,51 @@ let Defs = [FCC] in {
 //===----------------------------------------------------------------------===//
 
 // V9 Conditional Moves.
-let Predicates = [HasV9], Constraints = "$T = $dst" in {
+let Predicates = [HasV9], Constraints = "$f = $rd" in {
   // Move Integer Register on Condition (MOVcc) p. 194 of the V9 manual.
   // FIXME: Add instruction encodings for the JIT some day.
   let Uses = [ICC] in {
     def MOVICCrr
-      : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, IntRegs:$F, CCOp:$cc),
-               "mov$cc %icc, $F, $dst",
-               [(set i32:$dst, (SPselecticc i32:$F, i32:$T, imm:$cc))]>;
+      : Pseudo<(outs IntRegs:$rd), (ins IntRegs:$rs2, IntRegs:$f, CCOp:$cc),
+               "mov$cc %icc, $rs2, $rd",
+               [(set i32:$rd, (SPselecticc i32:$rs2, i32:$f, imm:$cc))]>;
     def MOVICCri
-      : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, i32imm:$F, CCOp:$cc),
-               "mov$cc %icc, $F, $dst",
-               [(set i32:$dst, (SPselecticc simm11:$F, i32:$T, imm:$cc))]>;
+      : Pseudo<(outs IntRegs:$rd), (ins i32imm:$i, IntRegs:$f, CCOp:$cc),
+               "mov$cc %icc, $i, $rd",
+               [(set i32:$rd, (SPselecticc simm11:$i, i32:$f, imm:$cc))]>;
   }
 
   let Uses = [FCC] in {
     def MOVFCCrr
-      : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, IntRegs:$F, CCOp:$cc),
-               "mov$cc %fcc0, $F, $dst",
-               [(set i32:$dst, (SPselectfcc i32:$F, i32:$T, imm:$cc))]>;
+      : Pseudo<(outs IntRegs:$rd), (ins IntRegs:$rs2, IntRegs:$f, CCOp:$cc),
+               "mov$cc %fcc0, $rs2, $rd",
+               [(set i32:$rd, (SPselectfcc i32:$rs2, i32:$f, imm:$cc))]>;
     def MOVFCCri
-      : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, i32imm:$F, CCOp:$cc),
-               "mov$cc %fcc0, $F, $dst",
-               [(set i32:$dst, (SPselectfcc simm11:$F, i32:$T, imm:$cc))]>;
+      : Pseudo<(outs IntRegs:$rd), (ins i32imm:$i, IntRegs:$f, CCOp:$cc),
+               "mov$cc %fcc0, $i, $rd",
+               [(set i32:$rd, (SPselectfcc simm11:$i, i32:$f, imm:$cc))]>;
   }
 
   let Uses = [ICC] in {
     def FMOVS_ICC
-      : Pseudo<(outs FPRegs:$dst), (ins FPRegs:$T, FPRegs:$F, CCOp:$cc),
-               "fmovs$cc %icc, $F, $dst",
-               [(set f32:$dst,
-                           (SPselecticc f32:$F, f32:$T, imm:$cc))]>;
+      : Pseudo<(outs FPRegs:$rd), (ins FPRegs:$rs2, FPRegs:$f, CCOp:$cc),
+               "fmovs$cc %icc, $rs2, $rd",
+               [(set f32:$rd, (SPselecticc f32:$rs2, f32:$f, imm:$cc))]>;
     def FMOVD_ICC
-      : Pseudo<(outs DFPRegs:$dst), (ins DFPRegs:$T, DFPRegs:$F, CCOp:$cc),
-               "fmovd$cc %icc, $F, $dst",
-               [(set f64:$dst, (SPselecticc f64:$F, f64:$T, imm:$cc))]>;
+      : Pseudo<(outs DFPRegs:$rd), (ins DFPRegs:$rs2, DFPRegs:$f, CCOp:$cc),
+               "fmovd$cc %icc, $rs2, $rd",
+               [(set f64:$rd, (SPselecticc f64:$rs2, f64:$f, imm:$cc))]>;
   }
 
   let Uses = [FCC] in {
     def FMOVS_FCC
-      : Pseudo<(outs FPRegs:$dst), (ins FPRegs:$T, FPRegs:$F, CCOp:$cc),
-               "fmovs$cc %fcc0, $F, $dst",
-               [(set f32:$dst, (SPselectfcc f32:$F, f32:$T, imm:$cc))]>;
+      : Pseudo<(outs FPRegs:$rd), (ins FPRegs:$rs2, FPRegs:$f, CCOp:$cc),
+               "fmovs$cc %fcc0, $rs2, $rd",
+               [(set f32:$rd, (SPselectfcc f32:$rs2, f32:$f, imm:$cc))]>;
     def FMOVD_FCC
-      : Pseudo<(outs DFPRegs:$dst), (ins DFPRegs:$T, DFPRegs:$F, CCOp:$cc),
-               "fmovd$cc %fcc0, $F, $dst",
-               [(set f64:$dst, (SPselectfcc f64:$F, f64:$T, imm:$cc))]>;
+      : Pseudo<(outs DFPRegs:$rd), (ins DFPRegs:$rs2, DFPRegs:$f, CCOp:$cc),
+               "fmovd$cc %fcc0, $rs2, $rd",
+               [(set f64:$rd, (SPselectfcc f64:$rs2, f64:$f, imm:$cc))]>;
   }
 
 }
