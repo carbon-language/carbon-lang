@@ -55,6 +55,17 @@ entry:
   ret i64 %rv
 }
 
+; CHECK: selecti64_icc
+; CHECK: subcc %i0, %i1
+; CHECK: movg %icc, %i2, %i3
+; CHECK: or %g0, %i3, %i0
+define i64 @selecti64_icc(i32 %x, i32 %y, i64 %a, i64 %b) {
+entry:
+  %tobool = icmp sgt i32 %x, %y
+  %rv = select i1 %tobool, i64 %a, i64 %b
+  ret i64 %rv
+}
+
 ; CHECK: selecti64_fcc
 ; CHECK: fcmps %f1, %f3
 ; CHECK: movul %fcc0, %i2, %i3
