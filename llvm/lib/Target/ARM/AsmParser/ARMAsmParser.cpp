@@ -7423,8 +7423,7 @@ processInstruction(MCInst &Inst,
     unsigned TZ = CountTrailingZeros_32(Mask);
     if ((Inst.getOperand(0).getImm() & 1) == 0) {
       assert(Mask && TZ <= 3 && "illegal IT mask value!");
-      for (unsigned i = 3; i != TZ; --i)
-        Mask ^= 1 << i;
+      Mask ^= (0xE << TZ) & 0xF;
     }
     MO.setImm(Mask);
 

@@ -10434,17 +10434,15 @@ ARMTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
 
 bool ARM::isBitFieldInvertedMask(unsigned v) {
   if (v == 0xffffffff)
-    return 0;
+    return false;
+
   // there can be 1's on either or both "outsides", all the "inside"
   // bits must be 0's
-  unsigned int lsb = 0, msb = 31;
-  while (v & (1 << msb)) --msb;
-  while (v & (1 << lsb)) ++lsb;
-  for (unsigned int i = lsb; i <= msb; ++i) {
-    if (v & (1 << i))
-      return 0;
-  }
-  return 1;
+  unsigned TO = CountTrailingOnes_32(v);
+  unsigned LO = CountLeadingOnes_32(v);
+  v = (v >> TO) << TO;
+  v = (v << LO) >> LO;
+  return v == 0;
 }
 
 /// isFPImmLegal - Returns true if the target can instruction select the
