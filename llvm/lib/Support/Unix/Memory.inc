@@ -32,8 +32,11 @@
 #  endif
 #endif
 
+#ifdef __APPLE__
 extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
+#else
 extern "C" void __clear_cache(void *, void*);
+#endif
 
 namespace {
 
