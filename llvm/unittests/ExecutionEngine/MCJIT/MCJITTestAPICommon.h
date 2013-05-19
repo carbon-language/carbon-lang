@@ -49,11 +49,23 @@ protected:
   /// Returns true if the host architecture is known to support MCJIT
   bool ArchSupportsMCJIT() {
     Triple Host(HostTriple);
+    // If ARCH is not supported, bail
     if (std::find(SupportedArchs.begin(), SupportedArchs.end(), Host.getArch())
-        == SupportedArchs.end()) {
+        == SupportedArchs.end())
       return false;
-    }
-    return true;
+
+    // If ARCH is supported and has no specific sub-arch support
+    if (std::find(HasSubArchs.begin(), HasSubArchs.end(), Host.getArch())
+        == HasSubArchs.end())
+      return true;
+
+    // If ARCH has sub-arch support, find it
+    SmallVectorImpl<std::string>::const_iterator I = SupportedSubArchs.begin();
+    for(; I != SupportedSubArchs.end(); ++I)
+      if (Host.getArchName().startswith(I->c_str()))
+        return true;
+
+    return false;
   }
 
   /// Returns true if the host OS is known to support MCJIT
@@ -68,6 +80,8 @@ protected:
 
   std::string HostTriple;
   SmallVector<Triple::ArchType, 4> SupportedArchs;
+  SmallVector<Triple::ArchType, 1> HasSubArchs;
+  SmallVector<std::string, 2> SupportedSubArchs; // We need to own the memory
   SmallVector<Triple::OSType, 4> UnsupportedOSs;
 };
 

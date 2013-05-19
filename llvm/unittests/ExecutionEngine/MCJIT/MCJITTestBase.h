@@ -50,6 +50,13 @@ protected:
     SupportedArchs.push_back(Triple::x86);
     SupportedArchs.push_back(Triple::x86_64);
 
+    // Some architectures have sub-architectures in which tests will fail, like
+    // ARM. These two vectors will define if they do have sub-archs (to avoid
+    // extra work for those who don't), and if so, if they are listed to work
+    HasSubArchs.push_back(Triple::arm);
+    SupportedSubArchs.push_back("armv6");
+    SupportedSubArchs.push_back("armv7");
+
     // The operating systems below are known to be incompatible with MCJIT as
     // they are copied from the test/ExecutionEngine/MCJIT/lit.local.cfg and
     // should be kept in sync.
