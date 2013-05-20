@@ -209,3 +209,19 @@ define i64 @spill_i64(i64 %x) {
   call void asm sideeffect "", "~{i0},~{i1},~{i2},~{i3},~{i4},~{i5},~{o0},~{o1},~{o2},~{o3},~{o4},~{o5},~{o7},~{l0},~{l1},~{l2},~{l3},~{l4},~{l5},~{l6},~{l7},~{g1},~{g2},~{g3},~{g4},~{g5},~{g6},~{g7}"()
   ret i64 %x
 }
+
+; CHECK: bitcast_i64_f64
+; CHECK: std
+; CHECK: ldx
+define i64 @bitcast_i64_f64(double %x) {
+  %y = bitcast double %x to i64
+  ret i64 %y
+}
+
+; CHECK: bitcast_f64_i64
+; CHECK: stx
+; CHECK: ldd
+define double @bitcast_f64_i64(i64 %x) {
+  %y = bitcast i64 %x to double
+  ret double %y
+}
