@@ -40,6 +40,7 @@ SparcInstrInfo::SparcInstrInfo(SparcSubtarget &ST)
 unsigned SparcInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
                                              int &FrameIndex) const {
   if (MI->getOpcode() == SP::LDri ||
+      MI->getOpcode() == SP::LDXri ||
       MI->getOpcode() == SP::LDFri ||
       MI->getOpcode() == SP::LDDFri) {
     if (MI->getOperand(1).isFI() && MI->getOperand(2).isImm() &&
@@ -59,6 +60,7 @@ unsigned SparcInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
 unsigned SparcInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
                                             int &FrameIndex) const {
   if (MI->getOpcode() == SP::STri ||
+      MI->getOpcode() == SP::STXri ||
       MI->getOpcode() == SP::STFri ||
       MI->getOpcode() == SP::STDFri) {
     if (MI->getOperand(0).isFI() && MI->getOperand(1).isImm() &&
@@ -303,7 +305,10 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   if (I != MBB.end()) DL = I->getDebugLoc();
 
   // On the order of operands here: think "[FrameIdx + 0] = SrcReg".
-  if (RC == &SP::IntRegsRegClass)
+  if (RC == &SP::I64RegsRegClass)
+    BuildMI(MBB, I, DL, get(SP::STXri)).addFrameIndex(FI).addImm(0)
+      .addReg(SrcReg, getKillRegState(isKill));
+  else if (RC == &SP::IntRegsRegClass)
     BuildMI(MBB, I, DL, get(SP::STri)).addFrameIndex(FI).addImm(0)
       .addReg(SrcReg, getKillRegState(isKill));
   else if (RC == &SP::FPRegsRegClass)
@@ -324,7 +329,9 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
 
-  if (RC == &SP::IntRegsRegClass)
+  if (RC == &SP::I64RegsRegClass)
+    BuildMI(MBB, I, DL, get(SP::LDXri), DestReg).addFrameIndex(FI).addImm(0);
+  else if (RC == &SP::IntRegsRegClass)
     BuildMI(MBB, I, DL, get(SP::LDri), DestReg).addFrameIndex(FI).addImm(0);
   else if (RC == &SP::FPRegsRegClass)
     BuildMI(MBB, I, DL, get(SP::LDFri), DestReg).addFrameIndex(FI).addImm(0);
