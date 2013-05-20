@@ -591,7 +591,8 @@ bool DITemplateValueParameter::Verify() const {
 
 /// \brief Verify that the imported module descriptor is well formed.
 bool DIImportedEntity::Verify() const {
-  return isImportedEntity() && DbgNode->getNumOperands() == 4;
+  return isImportedEntity() &&
+         (DbgNode->getNumOperands() == 4 || DbgNode->getNumOperands() == 5);
 }
 
 /// getOriginalTypeSize - If this type is derived from a base type then

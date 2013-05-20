@@ -128,19 +128,48 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
   NMD->addOperand(TheCU);
 }
 
-DIImportedEntity DIBuilder::createImportedModule(DIScope Context,
-                                                 DINameSpace NS,
-                                                 unsigned Line) {
-  Value *Elts[] = {
-    GetTagConstant(VMContext, dwarf::DW_TAG_imported_module),
-    Context,
-    NS,
-    ConstantInt::get(Type::getInt32Ty(VMContext), Line),
-  };
-  DIImportedEntity M(MDNode::get(VMContext, Elts));
+static DIImportedEntity
+createImportedModule(LLVMContext &C, DIScope Context, DIDescriptor NS,
+                     unsigned Line, StringRef Name,
+                     SmallVectorImpl<Value *> &AllImportedModules) {
+  const MDNode *R;
+  if (Name.empty()) {
+    Value *Elts[] = {
+      GetTagConstant(C, dwarf::DW_TAG_imported_module),
+      Context,
+      NS,
+      ConstantInt::get(Type::getInt32Ty(C), Line),
+    };
+    R = MDNode::get(C, Elts);
+  } else {
+    Value *Elts[] = {
+      GetTagConstant(C, dwarf::DW_TAG_imported_module),
+      Context,
+      NS,
+      ConstantInt::get(Type::getInt32Ty(C), Line),
+      MDString::get(C, Name)
+    };
+    R = MDNode::get(C, Elts);
+  }
+  DIImportedEntity M(R);
   assert(M.Verify() && "Imported module should be valid");
   AllImportedModules.push_back(M);
   return M;
+}
+
+DIImportedEntity DIBuilder::createImportedModule(DIScope Context,
+                                                 DINameSpace NS, unsigned Line,
+                                                 StringRef Name) {
+  return ::createImportedModule(VMContext, Context, NS, Line, Name,
+                                AllImportedModules);
+}
+
+DIImportedEntity DIBuilder::createImportedModule(DIScope Context,
+                                                 DIImportedEntity NS,
+                                                 unsigned Line,
+                                                 StringRef Name) {
+  return ::createImportedModule(VMContext, Context, NS, Line, Name,
+                                AllImportedModules);
 }
 
 DIImportedEntity DIBuilder::createImportedDeclaration(DIScope Context,

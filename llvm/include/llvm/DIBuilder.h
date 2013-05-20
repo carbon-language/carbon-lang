@@ -577,8 +577,17 @@ namespace llvm {
     /// @param NS The namespace being imported here
     /// @param Line Line number
     DIImportedEntity createImportedModule(DIScope Context, DINameSpace NS,
-                                          unsigned Line);
+                                          unsigned Line,
+                                          StringRef Name = StringRef());
 
+    /// \brief Create a descriptor for an imported module.
+    /// @param Context The scope this module is imported into
+    /// @param NS An aliased namespace
+    /// @param Line Line number
+    DIImportedEntity createImportedModule(DIScope Context, DIImportedEntity NS,
+                                          unsigned Line, StringRef Name);
+
+    /// \brief Create a descriptor for an imported function.
     /// \brief Create a descriptor for an imported function.
     /// @param Context The scope this module is imported into
     /// @param Decl The declaration (or definition) of a function, type, or

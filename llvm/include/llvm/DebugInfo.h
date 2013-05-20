@@ -695,6 +695,7 @@ namespace llvm {
     DIScope getContext() const { return getFieldAs<DIScope>(1); }
     DIDescriptor getEntity() const { return getFieldAs<DIDescriptor>(2); }
     unsigned getLineNumber() const { return getUnsignedField(3); }
+    StringRef getName() const { return getStringField(4); }
     bool Verify() const;
   };
 
