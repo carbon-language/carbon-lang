@@ -23,12 +23,6 @@ def AMDGPUDTIntTernaryOp : SDTypeProfile<1, 3, [
 // AMDGPU DAG Nodes
 //
 
-// out = ((a << 32) | b) >> c)
-//
-// Can be used to optimize rtol:
-// rotl(a, b) = bitalign(a, a, 32 - b)
-def AMDGPUbitalign : SDNode<"AMDGPUISD::BITALIGN", AMDGPUDTIntTernaryOp>;
-
 // This argument to this node is a dword address.
 def AMDGPUdwordaddr : SDNode<"AMDGPUISD::DWORDADDR", SDTIntUnaryOp>;
 

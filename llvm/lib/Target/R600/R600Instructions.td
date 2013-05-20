@@ -1635,10 +1635,8 @@ let Predicates = [isEGorCayman] in {
   def BFI_INT_eg : R600_3OP <0x06, "BFI_INT", [], VecALU>;
   defm : BFIPatterns <BFI_INT_eg>;
 
-  def BIT_ALIGN_INT_eg : R600_3OP <0xC, "BIT_ALIGN_INT",
-    [(set i32:$dst, (AMDGPUbitalign i32:$src0, i32:$src1, i32:$src2))],
-    VecALU
-  >;
+  def BIT_ALIGN_INT_eg : R600_3OP <0xC, "BIT_ALIGN_INT", [], VecALU>;
+  def : ROTRPattern <BIT_ALIGN_INT_eg>;
 
   def MULADD_eg : MULADD_Common<0x14>;
   def MULADD_IEEE_eg : MULADD_IEEE_Common<0x18>;

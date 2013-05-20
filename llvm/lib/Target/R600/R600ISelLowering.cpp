@@ -72,8 +72,6 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::i1, Custom);
 
-  setOperationAction(ISD::ROTL, MVT::i32, Custom);
-
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
 
@@ -480,7 +478,6 @@ using namespace llvm::AMDGPUIntrinsic;
 SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
-  case ISD::ROTL: return LowerROTL(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
   case ISD::SELECT: return LowerSELECT(Op, DAG);
   case ISD::STORE: return LowerSTORE(Op, DAG);
@@ -763,18 +760,6 @@ SDValue R600TargetLowering::LowerFrameIndex(SDValue Op, SelectionDAG &DAG) const
   unsigned FrameIndex = FIN->getIndex();
   unsigned Offset = TFL->getFrameIndexOffset(MF, FrameIndex);
   return DAG.getConstant(Offset * 4 * TFL->getStackWidth(MF), MVT::i32);
-}
-
-SDValue R600TargetLowering::LowerROTL(SDValue Op, SelectionDAG &DAG) const {
-  DebugLoc DL = Op.getDebugLoc();
-  EVT VT = Op.getValueType();
-
-  return DAG.getNode(AMDGPUISD::BITALIGN, DL, VT,
-                     Op.getOperand(0),
-                     Op.getOperand(0),
-                     DAG.getNode(ISD::SUB, DL, VT,
-                                 DAG.getConstant(32, MVT::i32),
-                                 Op.getOperand(1)));
 }
 
 bool R600TargetLowering::isZero(SDValue Op) const {
