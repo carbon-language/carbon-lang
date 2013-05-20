@@ -982,9 +982,15 @@ def V_SAD_U32 : VOP3_32 <0x0000015d, "V_SAD_U32", []>;
 ////def V_CVT_PK_U8_F32 : VOP3_U8 <0x0000015e, "V_CVT_PK_U8_F32", []>;
 def V_DIV_FIXUP_F32 : VOP3_32 <0x0000015f, "V_DIV_FIXUP_F32", []>;
 def V_DIV_FIXUP_F64 : VOP3_64 <0x00000160, "V_DIV_FIXUP_F64", []>;
-def V_LSHL_B64 : VOP3_64 <0x00000161, "V_LSHL_B64", []>;
-def V_LSHR_B64 : VOP3_64 <0x00000162, "V_LSHR_B64", []>;
-def V_ASHR_I64 : VOP3_64 <0x00000163, "V_ASHR_I64", []>;
+
+def V_LSHL_B64 : VOP3_64_Shift <0x00000161, "V_LSHL_B64",
+  [(set i64:$dst, (shl i64:$src0, i32:$src1))]
+>;
+def V_LSHR_B64 : VOP3_64_Shift <0x00000162, "V_LSHR_B64",
+  [(set i64:$dst, (srl i64:$src0, i32:$src1))]
+>;
+def V_ASHR_I64 : VOP3_64_Shift <0x00000163, "V_ASHR_I64", []>;
+
 def V_ADD_F64 : VOP3_64 <0x00000164, "V_ADD_F64", []>;
 def V_MUL_F64 : VOP3_64 <0x00000165, "V_MUL_F64", []>;
 def V_MIN_F64 : VOP3_64 <0x00000166, "V_MIN_F64", []>;

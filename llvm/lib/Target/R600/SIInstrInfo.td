@@ -263,6 +263,19 @@ class VOP3_32 <bits<9> op, string opName, list<dag> pattern> : VOP3 <
   opName#" $dst, $src0, $src1, $src2, $abs, $clamp, $omod, $neg", pattern
 >, VOP <opName>;
 
+class VOP3_64_Shift <bits <9> op, string opName, list<dag> pattern> : VOP3 <
+  op, (outs VReg_64:$dst),
+  (ins VSrc_64:$src0, VSrc_32:$src1),
+  opName#" $dst, $src0, $src1", pattern
+>, VOP <opName> {
+
+  let src2 = SIOperand.ZERO;
+  let abs = 0;
+  let clamp = 0;
+  let omod = 0;
+  let neg = 0;
+}
+
 class VOP3_64 <bits<9> op, string opName, list<dag> pattern> : VOP3 <
   op, (outs VReg_64:$dst),
   (ins VSrc_64:$src0, VSrc_64:$src1, VSrc_64:$src2,
