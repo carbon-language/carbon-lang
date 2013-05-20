@@ -315,21 +315,11 @@ bool SetEnv(const char *name, const char *value) {
 }
 #endif
 
-#ifdef __GLIBC__
-
 extern "C" {
-  extern void *__libc_stack_end;
+  extern void *__libc_stack_end SANITIZER_WEAK_ATTRIBUTE;
 }
 
-static void GetArgsAndEnv(char ***argv, char ***envp) {
-  uptr *stack_end = (uptr *)__libc_stack_end;
-  int argc = *stack_end;
-  *argv = (char**)(stack_end + 1);
-  *envp = (char**)(stack_end + argc + 2);
-}
-
-#else  // __GLIBC__
-
+#if !SANITIZER_GO
 static void ReadNullSepFileToArray(const char *path, char ***arr,
                                    int arr_size) {
   char *buff;
@@ -348,14 +338,24 @@ static void ReadNullSepFileToArray(const char *path, char ***arr,
   }
   (*arr)[count] = 0;
 }
+#endif
 
-static void GetArgsAndEnv(char ***argv, char ***envp) {
-  static const int kMaxArgv = 2000, kMaxEnvp = 2000;
-  ReadNullSepFileToArray("/proc/self/cmdline", argv, kMaxArgv);
-  ReadNullSepFileToArray("/proc/self/environ", envp, kMaxEnvp);
+static void GetArgsAndEnv(char*** argv, char*** envp) {
+#if !SANITIZER_GO
+  if (&__libc_stack_end) {
+#endif
+    uptr* stack_end = (uptr*)__libc_stack_end;
+    int argc = *stack_end;
+    *argv = (char**)(stack_end + 1);
+    *envp = (char**)(stack_end + argc + 2);
+#if !SANITIZER_GO
+  } else {
+    static const int kMaxArgv = 2000, kMaxEnvp = 2000;
+    ReadNullSepFileToArray("/proc/self/cmdline", argv, kMaxArgv);
+    ReadNullSepFileToArray("/proc/self/environ", envp, kMaxEnvp);
+  }
+#endif
 }
-
-#endif  // __GLIBC__
 
 void ReExec() {
   char **argv, **envp;
