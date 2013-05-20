@@ -5896,7 +5896,7 @@ void Sema::CheckConstructor(CXXConstructorDecl *Constructor) {
 bool Sema::CheckDestructor(CXXDestructorDecl *Destructor) {
   CXXRecordDecl *RD = Destructor->getParent();
   
-  if (Destructor->isVirtual()) {
+  if (!Destructor->getOperatorDelete() && Destructor->isVirtual()) {
     SourceLocation Loc;
     
     if (!Destructor->isImplicit())
