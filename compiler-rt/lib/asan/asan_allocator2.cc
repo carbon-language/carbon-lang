@@ -174,7 +174,6 @@ struct ChunkHeader {
 
 struct ChunkBase : ChunkHeader {
   // Header2, intersects with user memory.
-  AsanChunk *next;
   u32 free_context_id;
 };
 
@@ -195,7 +194,8 @@ struct AsanChunk: ChunkBase {
       return allocator.GetBlockBegin(reinterpret_cast<void *>(this));
     return reinterpret_cast<void*>(Beg() - RZLog2Size(rz_log));
   }
-  // We store the alloc/free stack traces in the chunk itself.
+  // If we don't use stack depot, we store the alloc/free stack traces
+  // in the chunk itself.
   u32 *AllocStackBeg() {
     return (u32*)(Beg() - RZLog2Size(rz_log));
   }
@@ -322,9 +322,7 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
   CHECK(IsPowerOfTwo(alignment));
   uptr rz_log = ComputeRZLog(size);
   uptr rz_size = RZLog2Size(rz_log);
-  uptr rounded_size = RoundUpTo(size, alignment);
-  if (rounded_size < kChunkHeader2Size)
-    rounded_size = kChunkHeader2Size;
+  uptr rounded_size = RoundUpTo(Max(size, kChunkHeader2Size), alignment);
   uptr needed_size = rounded_size + rz_size;
   if (alignment > min_alignment)
     needed_size += alignment;
