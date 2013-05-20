@@ -1022,7 +1022,7 @@ ModuleList::LoadScriptingResourcesInTarget (Target *target,
         if (module)
         {
             module->LoadScriptingResourceInTarget(target, error);
-            if (error.Fail())
+            if (error.Fail() && error.AsCString())
             {
                 error.SetErrorStringWithFormat("unable to load scripting data for module %s - error reported was %s",
                                                module->GetFileSpec().GetFileNameStrippingExtension().GetCString(),

@@ -4377,7 +4377,7 @@ protected:
                             // in the debug info files in case the platform supports that.
                             Error error;
                             module_sp->LoadScriptingResourceInTarget (target, error);
-                            if (error.Fail())
+                            if (error.Fail() && error.AsCString())
                                 result.AppendWarningWithFormat("unable to load scripting data for module %s - error reported was %s",
                                                                module_sp->GetFileSpec().GetFileNameStrippingExtension().GetCString(),
                                                                error.AsCString());

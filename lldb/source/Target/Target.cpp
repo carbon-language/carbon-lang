@@ -984,7 +984,7 @@ static void
 LoadScriptingResourceForModule (const ModuleSP &module_sp, Target *target)
 {
     Error error;
-    if (module_sp && !module_sp->LoadScriptingResourceInTarget(target, error))
+    if (module_sp && !module_sp->LoadScriptingResourceInTarget(target, error) && error.AsCString())
     {
         target->GetDebugger().GetOutputStream().Printf("unable to load scripting data for module %s - error reported was %s\n",
                                                        module_sp->GetFileSpec().GetFileNameStrippingExtension().GetCString(),
