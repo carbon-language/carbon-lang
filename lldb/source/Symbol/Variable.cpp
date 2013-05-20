@@ -465,7 +465,7 @@ Variable::GetValuesForVariableExpressionPath (const char *variable_expr_path,
                         }
                     }
                 }
-                error.SetErrorStringWithFormat ("unable to extracta variable name from '%s'", variable_expr_path);
+                error.SetErrorStringWithFormat ("unable to extract a variable name from '%s'", variable_expr_path);
             }
             break;
         }
