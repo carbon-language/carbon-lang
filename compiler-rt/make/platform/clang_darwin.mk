@@ -133,6 +133,7 @@ CFLAGS.asan_osx         := $(CFLAGS) -mmacosx-version-min=10.5 -fno-builtin \
                            -fno-rtti -DASAN_FLEXIBLE_MAPPING_AND_OFFSET=1
 CFLAGS.asan_osx_dynamic := \
 	$(CFLAGS) -mmacosx-version-min=10.5 -fno-builtin \
+	-gline-tables-only \
 	-DMAC_INTERPOSE_FUNCTIONS=1 \
   -DASAN_FLEXIBLE_MAPPING_AND_OFFSET=1
 
