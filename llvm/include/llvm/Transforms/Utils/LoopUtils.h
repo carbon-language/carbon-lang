@@ -1,4 +1,4 @@
-//===- llvm/Transforms/Utils/LoopSimplify.h - Loop utilities -*- C++ -*-======//
+//===- llvm/Transforms/Utils/LoopUtils.h - Loop utilities -*- C++ -*-=========//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TRANSFORMS_UTILS_LOOPSIMPLIFY_H
-#define LLVM_TRANSFORMS_UTILS_LOOPSIMPLIFY_H
+#ifndef LLVM_TRANSFORMS_UTILS_LOOPUTILS_H
+#define LLVM_TRANSFORMS_UTILS_LOOPUTILS_H
 
 namespace llvm {
 

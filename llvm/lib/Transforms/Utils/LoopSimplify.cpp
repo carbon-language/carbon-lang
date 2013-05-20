@@ -59,7 +59,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Transforms/Utils/LoopSimplify.h"
+#include "llvm/Transforms/Utils/LoopUtils.h"
 using namespace llvm;
 
 STATISTIC(NumInserted, "Number of pre-header or exit blocks inserted");
