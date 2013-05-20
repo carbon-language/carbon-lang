@@ -31,6 +31,7 @@ if [ "`uname -a | grep Linux`" != "" ]; then
 		../rtl/tsan_platform_linux.cc
 		../../sanitizer_common/sanitizer_posix.cc
 		../../sanitizer_common/sanitizer_linux.cc
+		../../sanitizer_common/sanitizer_linux_libcdep.cc
 	"
 elif [ "`uname -a | grep Darwin`" != "" ]; then
 	SUFFIX="darwin_amd64"

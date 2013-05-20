@@ -25,6 +25,7 @@ set(SANITIZER_SOURCES
 
 set(SANITIZER_LIBCDEP_SOURCES
   sanitizer_common_libcdep.cc
+  sanitizer_linux_libcdep.cc
   )
 
 # Explicitly list all sanitizer_common headers. Not all of these are
