@@ -146,6 +146,10 @@ void *PointsIntoChunk(void* p) {
   return 0;
 }
 
+void *GetUserBegin(void *p) {
+  return p;
+}
+
 LsanMetadata::LsanMetadata(void *chunk) {
   metadata_ = Metadata(chunk);
   CHECK(metadata_);

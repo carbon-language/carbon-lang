@@ -177,6 +177,7 @@ static void FloodFillReachable(InternalVector<uptr> *frontier) {
 
 // Mark leaked chunks which are reachable from other leaked chunks.
 void MarkIndirectlyLeakedCb::operator()(void *p) const {
+  p = GetUserBegin(p);
   LsanMetadata m(p);
   if (m.allocated() && m.tag() != kReachable) {
     ScanRangeForPointers(reinterpret_cast<uptr>(p),
@@ -205,6 +206,7 @@ static void ClassifyAllChunks(SuspendedThreadsList const &suspended_threads) {
 }
 
 void ClearTagCb::operator()(void *p) const {
+  p = GetUserBegin(p);
   LsanMetadata m(p);
   m.set_tag(kDirectlyLeaked);
 }
@@ -228,6 +230,7 @@ static void LockAndSuspendThreads(StopTheWorldCallback callback, void *arg) {
 ///// Normal leak checking. /////
 
 void CollectLeaksCb::operator()(void *p) const {
+  p = GetUserBegin(p);
   LsanMetadata m(p);
   if (!m.allocated()) return;
   if (m.tag() != kReachable) {
@@ -249,6 +252,7 @@ static void CollectLeaks(LeakReport *leak_report) {
 }
 
 void PrintLeakedCb::operator()(void *p) const {
+  p = GetUserBegin(p);
   LsanMetadata m(p);
   if (!m.allocated()) return;
   if (m.tag() != kReachable) {
@@ -291,6 +295,7 @@ void DoLeakCheck() {
 ///// Reporting of leaked blocks' addresses (for testing). /////
 
 void ReportLeakedCb::operator()(void *p) const {
+  p = GetUserBegin(p);
   LsanMetadata m(p);
   if (m.allocated() && m.tag() != kReachable)
     leaked_->push_back(p);

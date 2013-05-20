@@ -170,11 +170,14 @@ bool GetThreadRangesLocked(uptr os_id, uptr *stack_begin, uptr *stack_end,
                            uptr *tls_begin, uptr *tls_end,
                            uptr *cache_begin, uptr *cache_end);
 // If p points into a chunk that has been allocated to the user, return its
-// address. Otherwise, return 0.
+// user-visible address. Otherwise, return 0.
 void *PointsIntoChunk(void *p);
+// Return address of user-visible chunk contained in this allocator chunk.
+void *GetUserBegin(void *p);
 // Wrapper for chunk metadata operations.
 class LsanMetadata {
  public:
+  // Constructor accepts pointer to user-visible chunk.
   explicit LsanMetadata(void *chunk);
   bool allocated() const;
   ChunkTag tag() const;
