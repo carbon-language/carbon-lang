@@ -476,6 +476,20 @@ class RDHWR_FM {
   let Inst{5-0}   = 0x3b;
 }
 
+class TEQ_FM<bits<6> funct> {
+  bits<5> rs;
+  bits<5> rt;
+  bits<10> code_;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0;
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-6}  = code_;
+  let Inst{5-0}   = funct;
+}
+
 //===----------------------------------------------------------------------===//
 //
 //  FLOATING POINT INSTRUCTION FORMATS

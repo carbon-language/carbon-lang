@@ -86,7 +86,9 @@ entry:
 
 define i64 @f14(i64 %a, i64 %b) nounwind readnone {
 entry:
-; CHECK: ddiv $zero
+; CHECK: f14:
+; CHECK: ddiv $zero, ${{[0-9]+}}, $[[R0:[0-9]+]]
+; CHECK: teq $[[R0]], $zero, 7
 ; CHECK: mflo
   %div = sdiv i64 %a, %b
   ret i64 %div
@@ -94,7 +96,9 @@ entry:
 
 define i64 @f15(i64 %a, i64 %b) nounwind readnone {
 entry:
-; CHECK: ddivu $zero
+; CHECK: f15:
+; CHECK: ddivu $zero, ${{[0-9]+}}, $[[R0:[0-9]+]]
+; CHECK: teq $[[R0]], $zero, 7
 ; CHECK: mflo
   %div = udiv i64 %a, %b
   ret i64 %div
@@ -102,7 +106,9 @@ entry:
 
 define i64 @f16(i64 %a, i64 %b) nounwind readnone {
 entry:
-; CHECK: ddiv $zero
+; CHECK: f16:
+; CHECK: ddiv $zero, ${{[0-9]+}}, $[[R0:[0-9]+]]
+; CHECK: teq $[[R0]], $zero, 7
 ; CHECK: mfhi
   %rem = srem i64 %a, %b
   ret i64 %rem
@@ -110,7 +116,9 @@ entry:
 
 define i64 @f17(i64 %a, i64 %b) nounwind readnone {
 entry:
-; CHECK: ddivu $zero
+; CHECK: f17:
+; CHECK: ddivu $zero, ${{[0-9]+}}, $[[R0:[0-9]+]]
+; CHECK: teq $[[R0]], $zero, 7
 ; CHECK: mfhi
   %rem = urem i64 %a, %b
   ret i64 %rem

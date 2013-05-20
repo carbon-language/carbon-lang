@@ -43,6 +43,11 @@ static cl::opt<bool>
 LargeGOT("mxgot", cl::Hidden,
          cl::desc("MIPS: Enable GOT larger than 64k."), cl::init(false));
 
+static cl::opt<bool>
+NoZeroDivCheck("mnocheck-zero-division", cl::Hidden,
+               cl::desc("MIPS: Don't trap on integer division by zero."),
+               cl::init(false));
+
 static const uint16_t O32IntRegs[4] = {
   Mips::A0, Mips::A1, Mips::A2, Mips::A3
 };
@@ -766,6 +771,26 @@ addLiveIn(MachineFunction &MF, unsigned PReg, const TargetRegisterClass *RC)
   return VReg;
 }
 
+static MachineBasicBlock *expandPseudoDIV(MachineInstr *MI,
+                                          MachineBasicBlock &MBB,
+                                          const TargetInstrInfo &TII,
+                                          bool Is64Bit) {
+  if (NoZeroDivCheck)
+    return &MBB;
+
+  // Insert instruction "teq $divisor_reg, $zero, 7".
+  MachineBasicBlock::iterator I(MI);
+  MachineInstrBuilder MIB;
+  MIB = BuildMI(MBB, llvm::next(I), MI->getDebugLoc(), TII.get(Mips::TEQ))
+    .addOperand(MI->getOperand(2)).addReg(Mips::ZERO).addImm(7);
+
+  // Use the 32-bit sub-register if this is a 64-bit division.
+  if (Is64Bit)
+    MIB->getOperand(0).setSubReg(Mips::sub_32);
+
+  return &MBB;
+}
+
 MachineBasicBlock *
 MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                 MachineBasicBlock *BB) const {
@@ -875,6 +900,12 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case Mips::ATOMIC_CMP_SWAP_I64:
   case Mips::ATOMIC_CMP_SWAP_I64_P8:
     return emitAtomicCmpSwap(MI, BB, 8);
+  case Mips::PseudoSDIV:
+  case Mips::PseudoUDIV:
+    return expandPseudoDIV(MI, *BB, *getTargetMachine().getInstrInfo(), false);
+  case Mips::PseudoDSDIV:
+  case Mips::PseudoDUDIV:
+    return expandPseudoDIV(MI, *BB, *getTargetMachine().getInstrInfo(), true);
   }
 }
 

@@ -640,6 +640,11 @@ class SYNC_FT :
   InstSE<(outs), (ins i32imm:$stype), "sync $stype", [(MipsSync imm:$stype)],
          NoItinerary, FrmOther>;
 
+let hasSideEffects = 1 in
+class TEQ_FT<string opstr, RegisterOperand RO> :
+  InstSE<(outs), (ins RO:$rs, RO:$rt, uimm16:$code_),
+         !strconcat(opstr, "\t$rs, $rt, $code_"), [], NoItinerary, FrmI>;
+
 // Mul, Div
 class Mult<string opstr, InstrItinClass itin, RegisterOperand RO,
            list<Register> DefRegs> :
@@ -654,12 +659,14 @@ class Mult<string opstr, InstrItinClass itin, RegisterOperand RO,
 // operands.
 class MultDivPseudo<Instruction RealInst, RegisterClass R0, RegisterOperand R1,
                     SDPatternOperator OpNode, InstrItinClass Itin,
-                    bit IsComm = 1, bit HasSideEffects = 0> :
+                    bit IsComm = 1, bit HasSideEffects = 0,
+                    bit UsesCustomInserter = 0> :
   PseudoSE<(outs R0:$ac), (ins R1:$rs, R1:$rt),
            [(set R0:$ac, (OpNode R1:$rs, R1:$rt))], Itin>,
   PseudoInstExpansion<(RealInst R1:$rs, R1:$rt)> {
   let isCommutable = IsComm;
   let hasSideEffects = HasSideEffects;
+  let usesCustomInserter = UsesCustomInserter;
 }
 
 // Pseudo multiply add/sub instruction with explicit accumulator register
@@ -926,6 +933,7 @@ defm SWL : StoreLeftRightM<"swl", MipsSWL, CPURegs>, LW_FM<0x2a>;
 defm SWR : StoreLeftRightM<"swr", MipsSWR, CPURegs>, LW_FM<0x2e>;
 
 def SYNC : SYNC_FT, SYNC_FM;
+def TEQ : TEQ_FT<"teq", CPURegsOpnd>, TEQ_FM<0x34>;
 
 /// Load-linked, Store-conditional
 let Predicates = [NotN64, HasStdEnc] in {
@@ -993,9 +1001,9 @@ def PseudoMULTu : MultDivPseudo<MULTu, ACRegs, CPURegsOpnd, MipsMultu, IIImul>;
 def SDIV  : Div<"div", IIIdiv, CPURegsOpnd, [HI, LO]>, MULT_FM<0, 0x1a>;
 def UDIV  : Div<"divu", IIIdiv, CPURegsOpnd, [HI, LO]>, MULT_FM<0, 0x1b>;
 def PseudoSDIV : MultDivPseudo<SDIV, ACRegs, CPURegsOpnd, MipsDivRem, IIIdiv,
-                               0>;
+                               0, 1, 1>;
 def PseudoUDIV : MultDivPseudo<UDIV, ACRegs, CPURegsOpnd, MipsDivRemU, IIIdiv,
-                               0>;
+                               0, 1, 1>;
 
 def MTHI : MoveToLOHI<"mthi", CPURegs, [HI]>, MTLO_FM<0x11>;
 def MTLO : MoveToLOHI<"mtlo", CPURegs, [LO]>, MTLO_FM<0x13>;
