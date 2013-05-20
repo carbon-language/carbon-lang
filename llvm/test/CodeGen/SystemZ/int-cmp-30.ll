@@ -202,7 +202,7 @@ define double @f14(double %a, double %b, i16 *%ptr) {
 define double @f15(double %a, double %b, i16 *%ptr) {
 ; CHECK: f15:
 ; CHECK: chhsi 0(%r2), -32767
-; CHECK-NEXT: j{{g?}}g
+; CHECK-NEXT: j{{g?}}h
 ; CHECK: br %r14
   %val = load i16 *%ptr
   %ext = sext i16 %val to i32

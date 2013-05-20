@@ -13,6 +13,7 @@
 
 #include "SystemZInstrInfo.h"
 #include "SystemZInstrBuilder.h"
+#include "llvm/Target/TargetMachine.h"
 
 #define GET_INSTRINFO_CTOR
 #define GET_INSTRMAP_INFO
@@ -229,19 +230,19 @@ SystemZInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   if (Cond.empty()) {
     // Unconditional branch?
     assert(!FBB && "Unconditional branch with multiple successors!");
-    BuildMI(&MBB, DL, get(SystemZ::JG)).addMBB(TBB);
+    BuildMI(&MBB, DL, get(SystemZ::J)).addMBB(TBB);
     return 1;
   }
 
   // Conditional branch.
   unsigned Count = 0;
   unsigned CC = Cond[0].getImm();
-  BuildMI(&MBB, DL, get(SystemZ::BRCL)).addImm(CC).addMBB(TBB);
+  BuildMI(&MBB, DL, get(SystemZ::BRC)).addImm(CC).addMBB(TBB);
   ++Count;
 
   if (FBB) {
     // Two-way Conditional branch. Insert the second branch.
-    BuildMI(&MBB, DL, get(SystemZ::JG)).addMBB(FBB);
+    BuildMI(&MBB, DL, get(SystemZ::J)).addMBB(FBB);
     ++Count;
   }
   return Count;
@@ -346,6 +347,15 @@ ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   assert(Cond.size() == 1 && "Invalid branch condition!");
   Cond[0].setImm(Cond[0].getImm() ^ SystemZ::CCMASK_ANY);
   return false;
+}
+
+uint64_t SystemZInstrInfo::getInstSizeInBytes(const MachineInstr *MI) const {
+  if (MI->getOpcode() == TargetOpcode::INLINEASM) {
+    const MachineFunction *MF = MI->getParent()->getParent();
+    const char *AsmStr = MI->getOperand(0).getSymbolName();
+    return getInlineAsmLength(AsmStr, *MF->getTarget().getMCAsmInfo());
+  }
+  return MI->getDesc().getSize();
 }
 
 bool SystemZInstrInfo::isBranch(const MachineInstr *MI, unsigned &Cond,

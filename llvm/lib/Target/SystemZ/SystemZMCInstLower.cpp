@@ -15,15 +15,10 @@
 
 using namespace llvm;
 
-// Where relaxable pairs of reloc-generating instructions exist,
-// we tend to use the longest form by default, since that produces
-// correct assembly in cases where no relaxation is performed.
-// If Opcode is one such instruction, return the opcode for the
-// shortest possible form instead, otherwise return Opcode itself.
+// If Opcode is an interprocedural reference that can be shortened,
+// return the short form, otherwise return 0.
 static unsigned getShortenedInstr(unsigned Opcode) {
   switch (Opcode) {
-  case SystemZ::BRCL:  return SystemZ::BRC;
-  case SystemZ::JG:    return SystemZ::J;
   case SystemZ::BRASL: return SystemZ::BRAS;
   }
   return Opcode;

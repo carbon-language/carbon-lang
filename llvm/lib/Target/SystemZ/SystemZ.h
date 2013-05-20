@@ -73,5 +73,6 @@ namespace llvm {
 
   FunctionPass *createSystemZISelDag(SystemZTargetMachine &TM,
                                      CodeGenOpt::Level OptLevel);
+  FunctionPass *createSystemZLongBranchPass(SystemZTargetMachine &TM);
 } // end namespace llvm;
 #endif

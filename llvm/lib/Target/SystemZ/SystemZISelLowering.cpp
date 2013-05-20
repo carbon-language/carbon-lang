@@ -1632,7 +1632,7 @@ SystemZTargetLowering::emitSelect(MachineInstr *MI,
   //   jCC JoinMBB
   //   # fallthrough to FalseMBB
   MBB = StartMBB;
-  BuildMI(MBB, DL, TII->get(SystemZ::BRCL)).addImm(CCMask).addMBB(JoinMBB);
+  BuildMI(MBB, DL, TII->get(SystemZ::BRC)).addImm(CCMask).addMBB(JoinMBB);
   MBB->addSuccessor(JoinMBB);
   MBB->addSuccessor(FalseMBB);
 
@@ -1769,7 +1769,7 @@ SystemZTargetLowering::emitAtomicLoadBinary(MachineInstr *MI,
       .addReg(RotatedNewVal).addReg(NegBitShift).addImm(0);
   BuildMI(MBB, DL, TII->get(CSOpcode), Dest)
     .addReg(OldVal).addReg(NewVal).addOperand(Base).addImm(Disp);
-  BuildMI(MBB, DL, TII->get(SystemZ::BRCL)).addImm(MaskNE).addMBB(LoopMBB);
+  BuildMI(MBB, DL, TII->get(SystemZ::BRC)).addImm(MaskNE).addMBB(LoopMBB);
   MBB->addSuccessor(LoopMBB);
   MBB->addSuccessor(DoneMBB);
 
@@ -1846,7 +1846,7 @@ SystemZTargetLowering::emitAtomicLoadMinMax(MachineInstr *MI,
   //   %OldVal        = phi [ %OrigVal, StartMBB ], [ %Dest, UpdateMBB ]
   //   %RotatedOldVal = RLL %OldVal, 0(%BitShift)
   //   CompareOpcode %RotatedOldVal, %Src2
-  //   BRCL KeepOldMask, UpdateMBB
+  //   BRC KeepOldMask, UpdateMBB
   MBB = LoopMBB;
   BuildMI(MBB, DL, TII->get(SystemZ::PHI), OldVal)
     .addReg(OrigVal).addMBB(StartMBB)
@@ -1856,7 +1856,7 @@ SystemZTargetLowering::emitAtomicLoadMinMax(MachineInstr *MI,
       .addReg(OldVal).addReg(BitShift).addImm(0);
   BuildMI(MBB, DL, TII->get(CompareOpcode))
     .addReg(RotatedOldVal).addReg(Src2);
-  BuildMI(MBB, DL, TII->get(SystemZ::BRCL))
+  BuildMI(MBB, DL, TII->get(SystemZ::BRC))
     .addImm(KeepOldMask).addMBB(UpdateMBB);
   MBB->addSuccessor(UpdateMBB);
   MBB->addSuccessor(UseAltMBB);
@@ -1887,7 +1887,7 @@ SystemZTargetLowering::emitAtomicLoadMinMax(MachineInstr *MI,
       .addReg(RotatedNewVal).addReg(NegBitShift).addImm(0);
   BuildMI(MBB, DL, TII->get(CSOpcode), Dest)
     .addReg(OldVal).addReg(NewVal).addOperand(Base).addImm(Disp);
-  BuildMI(MBB, DL, TII->get(SystemZ::BRCL)).addImm(MaskNE).addMBB(LoopMBB);
+  BuildMI(MBB, DL, TII->get(SystemZ::BRC)).addImm(MaskNE).addMBB(LoopMBB);
   MBB->addSuccessor(LoopMBB);
   MBB->addSuccessor(DoneMBB);
 
@@ -1978,7 +1978,7 @@ SystemZTargetLowering::emitAtomicCmpSwapW(MachineInstr *MI,
     .addReg(CmpVal).addReg(Dest).addImm(32).addImm(63 - BitSize).addImm(0);
   BuildMI(MBB, DL, TII->get(SystemZ::CR))
     .addReg(Dest).addReg(RetryCmpVal);
-  BuildMI(MBB, DL, TII->get(SystemZ::BRCL)).addImm(MaskNE).addMBB(DoneMBB);
+  BuildMI(MBB, DL, TII->get(SystemZ::BRC)).addImm(MaskNE).addMBB(DoneMBB);
   MBB->addSuccessor(DoneMBB);
   MBB->addSuccessor(SetMBB);
 
@@ -1998,7 +1998,7 @@ SystemZTargetLowering::emitAtomicCmpSwapW(MachineInstr *MI,
     .addReg(RetrySwapVal).addReg(NegBitShift).addImm(-BitSize);
   BuildMI(MBB, DL, TII->get(CSOpcode), RetryOldVal)
     .addReg(OldVal).addReg(StoreVal).addOperand(Base).addImm(Disp);
-  BuildMI(MBB, DL, TII->get(SystemZ::BRCL)).addImm(MaskNE).addMBB(LoopMBB);
+  BuildMI(MBB, DL, TII->get(SystemZ::BRC)).addImm(MaskNE).addMBB(LoopMBB);
   MBB->addSuccessor(LoopMBB);
   MBB->addSuccessor(DoneMBB);
 

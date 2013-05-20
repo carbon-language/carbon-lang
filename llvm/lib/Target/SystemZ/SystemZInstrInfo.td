@@ -45,16 +45,13 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, R1 = 15 in {
     def BR : InstRR<0x07, (outs), (ins ADDR64:$R2),
                     "br\t$R2", [(brind ADDR64:$R2)]>;
 
-  // An assembler extended mnemonic for BRC.  Use a separate instruction for
-  // the asm parser, so that we don't relax Js to external symbols into JGs.
-  let isCodeGenOnly = 1 in
-    def J : InstRI<0xA74, (outs), (ins brtarget16:$I2), "j\t$I2", []>;
-  def AsmJ : InstRI<0xA74, (outs), (ins brtarget16:$I2), "j\t$I2", []>;
+  // An assembler extended mnemonic for BRC.
+  def J : InstRI<0xA74, (outs), (ins brtarget16:$I2), "j\t$I2",
+                 [(br bb:$I2)]>;
 
   // An assembler extended mnemonic for BRCL.  (The extension is "G"
   // rather than "L" because "JL" is "Jump if Less".)
-  def JG : InstRIL<0xC04, (outs), (ins brtarget32:$I2),
-                   "jg\t$I2", [(br bb:$I2)]>;
+  def JG : InstRIL<0xC04, (outs), (ins brtarget32:$I2), "jg\t$I2", []>;
 }
 
 // Conditional branches.  It's easier for LLVM to handle these branches
@@ -71,7 +68,7 @@ let isCodeGenOnly = 1 in
   defm BRC : CondBranches<cond4, "j$R1\t$I2", "jg$R1\t$I2">;
 defm AsmBRC : CondBranches<uimm8zx4, "brc\t$R1, $I2", "brcl\t$R1, $I2">;
 
-def : Pat<(z_br_ccmask cond4:$cond, bb:$dst), (BRCL cond4:$cond, bb:$dst)>;
+def : Pat<(z_br_ccmask cond4:$cond, bb:$dst), (BRC cond4:$cond, bb:$dst)>;
 
 // Define AsmParser mnemonics for each condition code.
 multiclass CondExtendedMnemonic<bits<4> Cond, string name> {

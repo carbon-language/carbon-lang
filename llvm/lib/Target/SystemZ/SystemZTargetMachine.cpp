@@ -47,13 +47,19 @@ public:
     return getTM<SystemZTargetMachine>();
   }
 
-  virtual bool addInstSelector();
+  virtual bool addInstSelector() LLVM_OVERRIDE;
+  virtual bool addPreEmitPass() LLVM_OVERRIDE;
 };
 } // end anonymous namespace
 
 bool SystemZPassConfig::addInstSelector() {
   addPass(createSystemZISelDag(getSystemZTargetMachine(), getOptLevel()));
   return false;
+}
+
+bool SystemZPassConfig::addPreEmitPass() {
+  addPass(createSystemZLongBranchPass(getSystemZTargetMachine()));
+  return true;
 }
 
 TargetPassConfig *SystemZTargetMachine::createPassConfig(PassManagerBase &PM) {

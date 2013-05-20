@@ -35,11 +35,10 @@ static uint64_t extractBitsForFixup(MCFixupKind Kind, uint64_t Value) {
   llvm_unreachable("Unknown fixup kind!");
 }
 
-// If Opcode can be relaxed, return the relaxed form, otherwise return 0.
+// If Opcode is a relaxable interprocedural reference, return the relaxed form,
+// otherwise return 0.
 static unsigned getRelaxedOpcode(unsigned Opcode) {
   switch (Opcode) {
-  case SystemZ::BRC:  return SystemZ::BRCL;
-  case SystemZ::J:    return SystemZ::JG;
   case SystemZ::BRAS: return SystemZ::BRASL;
   }
   return 0;

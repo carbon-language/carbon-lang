@@ -56,11 +56,7 @@ and conditional returns.
 
 --
 
-We don't use the combined COMPARE AND BRANCH instructions.  Using them
-would require a change to the way we handle out-of-range branches.
-At the moment, we start with 32-bit forms like BRCL and shorten them
-to forms like BRC where possible, but COMPARE AND BRANCH does not have
-a 32-bit form.
+We don't use the combined COMPARE AND BRANCH instructions.
 
 --
 

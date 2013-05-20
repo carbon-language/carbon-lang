@@ -93,6 +93,9 @@ public:
   // Return the SystemZRegisterInfo, which this class owns.
   const SystemZRegisterInfo &getRegisterInfo() const { return RI; }
 
+  // Return the size in bytes of MI.
+  uint64_t getInstSizeInBytes(const MachineInstr *MI) const;
+
   // Return true if MI is a conditional or unconditional branch.
   // When returning true, set Cond to the mask of condition-code
   // values on which the instruction will branch, and set Target
