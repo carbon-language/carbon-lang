@@ -177,7 +177,6 @@ public:
   typedef typename super::reference reference;
   typedef typename super::pointer pointer;
 
-  value_use_iterator(const _Self &I) : U(I.U) {}
   value_use_iterator() {}
 
   bool operator==(const _Self &x) const {
