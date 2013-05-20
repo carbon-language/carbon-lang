@@ -149,6 +149,7 @@ def IncompatiblePointerTypes
   : DiagGroup<"incompatible-pointer-types",
     [IncompatiblePointerTypesDiscardsQualifiers]>;
 def IncompleteUmbrella : DiagGroup<"incomplete-umbrella">;
+def IncompleteModule : DiagGroup<"incomplete-module", [IncompleteUmbrella]>;
 def InvalidNoreturn : DiagGroup<"invalid-noreturn">;
 def InvalidSourceEncoding : DiagGroup<"invalid-source-encoding">;
 def KNRPromotedParameter : DiagGroup<"knr-promoted-parameter">;

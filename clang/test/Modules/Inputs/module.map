@@ -209,3 +209,7 @@ module linkage_merge {
   }
 
 }
+
+module incomplete_mod {
+  header "incomplete_mod.h"
+}
