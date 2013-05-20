@@ -18,7 +18,7 @@ extern int Module;
 // CHECK-REDEF: In module 'Module' imported from
 // CHECK-REDEF: Module.h:15:12: note: previous definition is here
 
-// RUN: not %clang_cc1 -fmodules-cache-path=%t -fmodules -F %S/Inputs -DgetModuleVersion="epic fail" -serialize-diagnostic-file %t/tmp.diag %s 2>&1
+// RUN: not %clang_cc1 -Wincomplete-umbrella -fmodules-cache-path=%t -fmodules -F %S/Inputs -DgetModuleVersion="epic fail" -serialize-diagnostic-file %t/tmp.diag %s 2>&1
 // RUN: c-index-test -read-diagnostics %t/tmp.diag 2>&1 | FileCheck -check-prefix=CHECK-SDIAG %s
 
 // CHECK-SDIAG: Module.h:9:13: error: expected ';' after top level declarator
