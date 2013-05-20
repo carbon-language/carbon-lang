@@ -88,7 +88,8 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   const Thumb1InstrInfo &TII =
     *static_cast<const Thumb1InstrInfo*>(MF.getTarget().getInstrInfo());
 
-  unsigned ArgRegsSaveSize = AFI->getArgRegsSaveSize();
+  unsigned Align = MF.getTarget().getFrameLowering()->getStackAlignment();
+  unsigned ArgRegsSaveSize = AFI->getArgRegsSaveSize(Align);
   unsigned NumBytes = MFI->getStackSize();
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
@@ -249,7 +250,8 @@ void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
   const Thumb1InstrInfo &TII =
     *static_cast<const Thumb1InstrInfo*>(MF.getTarget().getInstrInfo());
 
-  unsigned ArgRegsSaveSize = AFI->getArgRegsSaveSize();
+  unsigned Align = MF.getTarget().getFrameLowering()->getStackAlignment();
+  unsigned ArgRegsSaveSize = AFI->getArgRegsSaveSize(Align);
   int NumBytes = (int)MFI->getStackSize();
   const uint16_t *CSRegs = RegInfo->getCalleeSavedRegs();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);

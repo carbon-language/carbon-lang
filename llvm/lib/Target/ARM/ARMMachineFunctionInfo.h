@@ -36,6 +36,13 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   /// 'isThumb'.
   bool hasThumb2;
 
+  /// StByValParamsPadding - For parameter that is split between
+  /// GPRs and memory; while recovering GPRs part, when
+  /// StackAlignment == 8, and GPRs-part-size mod 8 != 0,
+  /// we need to insert gap before parameter start address. It allows to
+  /// "attach" GPR-part to the part that was passed via stack.
+  unsigned StByValParamsPadding;
+
   /// VarArgsRegSaveSize - Size of the register save area for vararg functions.
   ///
   unsigned ArgRegsSaveSize;
@@ -129,6 +136,7 @@ public:
   explicit ARMFunctionInfo(MachineFunction &MF) :
     isThumb(MF.getTarget().getSubtarget<ARMSubtarget>().isThumb()),
     hasThumb2(MF.getTarget().getSubtarget<ARMSubtarget>().hasThumb2()),
+    StByValParamsPadding(0),
     ArgRegsSaveSize(0), HasStackFrame(false), RestoreSPFromFP(false),
     LRSpilledForFarJump(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
@@ -141,7 +149,14 @@ public:
   bool isThumb1OnlyFunction() const { return isThumb && !hasThumb2; }
   bool isThumb2Function() const { return isThumb && hasThumb2; }
 
-  unsigned getArgRegsSaveSize() const { return ArgRegsSaveSize; }
+  unsigned getStoredByValParamsPadding() const { return StByValParamsPadding; }
+  void setStoredByValParamsPadding(unsigned p) { StByValParamsPadding = p; }
+
+  unsigned getArgRegsSaveSize(unsigned Align = 0) const {
+    if (!Align)
+      return ArgRegsSaveSize;
+    return (ArgRegsSaveSize + Align - 1) & ~(Align - 1);
+  }
   void setArgRegsSaveSize(unsigned s) { ArgRegsSaveSize = s; }
 
   bool hasStackFrame() const { return HasStackFrame; }

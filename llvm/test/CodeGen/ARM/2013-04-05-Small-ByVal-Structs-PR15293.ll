@@ -4,24 +4,24 @@
 ;CHECK: foo:
 ;CHECK: 	sub	sp, sp, #8
 ;CHECK: 	push	{r11, lr}
-;CHECK: 	str	r0, [sp, #12]
-;CHECK: 	add	r0, sp, #12
+;CHECK: 	str	r0, [sp, #8]
+;CHECK: 	add	r0, sp, #8
 ;CHECK: 	bl	fooUseParam
 ;CHECK: 	pop	{r11, lr}
 ;CHECK: 	add	sp, sp, #8
 ;CHECK: 	mov	pc, lr
 
 ;CHECK: foo2:
-;CHECK: 	sub	sp, sp, #16
+;CHECK: 	sub	sp, sp, #8
 ;CHECK: 	push	{r11, lr}
-;CHECK: 	str	r0, [sp, #12]
-;CHECK: 	add	r0, sp, #12
-;CHECK: 	str	r2, [sp, #16]
+;CHECK: 	str	r0, [sp, #8]
+;CHECK: 	add	r0, sp, #8
+;CHECK: 	str	r2, [sp, #12]
 ;CHECK: 	bl	fooUseParam
-;CHECK: 	add	r0, sp, #16
+;CHECK: 	add	r0, sp, #12
 ;CHECK: 	bl	fooUseParam
 ;CHECK: 	pop	{r11, lr}
-;CHECK: 	add	sp, sp, #16
+;CHECK: 	add	sp, sp, #8
 ;CHECK: 	mov	pc, lr
 
 ;CHECK: doFoo:
