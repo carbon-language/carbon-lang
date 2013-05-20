@@ -191,3 +191,13 @@ entry:
 }
 
 declare void @g(i8*)
+
+; CHECK: expand_setcc
+; CHECK: subcc %i0, 1,
+; CHECK: movl %xcc, 1,
+define i32 @expand_setcc(i64 %a) {
+  %cond = icmp sle i64 %a, 0
+  %cast2 = zext i1 %cond to i32
+  %RV = sub i32 1, %cast2
+  ret i32 %RV
+}
