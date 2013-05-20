@@ -197,3 +197,9 @@ int FooBar();
 {
 }
 @end
+
+// rdar://13927330
+/// @class Asset  <- '@class' may be used in a comment attached to a an interface declaration
+@interface Asset : NSObject
+@end
+

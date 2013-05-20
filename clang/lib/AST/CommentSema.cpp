@@ -132,6 +132,11 @@ void Sema::checkContainerDeclVerbatimLine(const BlockCommandComment *Comment) {
   switch (Comment->getCommandID()) {
     case CommandTraits::KCI_class:
       DiagSelect = !isClassOrStructDecl() ? 1 : 0;
+      // Allow @class command on @interface declarations.
+      // FIXME. Currently, \class and @class are indistinguishable. So,
+      // \class is also allowed on an @interface declaration
+      if (DiagSelect && Comment->getCommandMarker() && isObjCInterfaceDecl())
+        DiagSelect = 0;
       break;
     case CommandTraits::KCI_interface:
       DiagSelect = !isObjCInterfaceDecl() ? 2 : 0;
