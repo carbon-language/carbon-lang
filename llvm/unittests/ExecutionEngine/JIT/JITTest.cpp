@@ -35,8 +35,8 @@ using namespace llvm;
 
 namespace {
 
-// Tests on ARM, PowerPC and SystemZ disabled as we're running the old jit
-#if !defined(__arm__) && !defined(__powerpc__) && !defined(__s390__)
+// Tests on PowerPC and SystemZ disabled as we're running the old jit
+#if !defined(__powerpc__) && !defined(__s390__)
 
 Function *makeReturnGlobal(std::string Name, GlobalVariable *G, Module *M) {
   std::vector<Type*> params;
@@ -185,6 +185,9 @@ class JITTest : public testing::Test {
   OwningPtr<ExecutionEngine> TheJIT;
 };
 
+// Tests on ARM disabled as we're running the old jit
+#if !defined(__arm__)
+
 // Regression test for a bug.  The JIT used to allocate globals inside the same
 // memory block used for the function, and when the function code was freed,
 // the global was left in the same place.  This test allocates a function
@@ -252,6 +255,11 @@ TEST(JIT, GlobalInFunction) {
   F2Ptr();
   EXPECT_EQ(3, *GPtr);
 }
+
+#endif // !defined(__arm__)
+
+// ARM tests disabled pending fix for PR10783.
+#if !defined(__arm__)
 
 int PlusOne(int arg) {
   return arg + 1;
@@ -413,6 +421,7 @@ TEST_F(JITTest, ModuleDeletion) {
   EXPECT_EQ(RJMM->startFunctionBodyCalls.size(),
             RJMM->deallocateFunctionBodyCalls.size());
 }
+#endif // !defined(__arm__)
 
 // ARM, MIPS and PPC still emit stubs for calls since the target may be
 // too far away to call directly.  This #if can probably be removed when
@@ -458,6 +467,9 @@ TEST_F(JITTest, NoStubs) {
 }
 #endif  // !ARM && !PPC
 
+// Tests on ARM disabled as we're running the old jit
+#if !defined(__arm__)
+
 TEST_F(JITTest, FunctionPointersOutliveTheirCreator) {
   TheJIT->DisableLazyCompilation(true);
   LoadAssembly("define i8()* @get_foo_addr() { "
@@ -492,6 +504,9 @@ TEST_F(JITTest, FunctionPointersOutliveTheirCreator) {
 #endif
 }
 
+#endif //!defined(__arm__)
+
+// Tests on ARM disabled as we're running the old jit. In addition, 
 // ARM does not have an implementation of replaceMachineCodeForFunction(),
 // so recompileAndRelinkFunction doesn't work.
 #if !defined(__arm__)
@@ -535,6 +550,9 @@ extern "C" int32_t JITTest_AvailableExternallyGlobal;
 int32_t JITTest_AvailableExternallyGlobal LLVM_ATTRIBUTE_USED = 42;
 namespace {
 
+// Tests on ARM disabled as we're running the old jit
+#if !defined(__arm__)
+
 TEST_F(JITTest, AvailableExternallyGlobalIsntEmitted) {
   TheJIT->DisableLazyCompilation(true);
   LoadAssembly("@JITTest_AvailableExternallyGlobal = "
@@ -551,6 +569,7 @@ TEST_F(JITTest, AvailableExternallyGlobalIsntEmitted) {
   EXPECT_EQ(42, loader()) << "func should return 42 from the external global,"
                           << " not 7 from the IR version.";
 }
+#endif //!defined(__arm__)
 }  // anonymous namespace
 // This function is intentionally defined differently in the statically-compiled
 // program from the IR input to the JIT to assert that the JIT doesn't use its
@@ -561,6 +580,8 @@ extern "C" int32_t JITTest_AvailableExternallyFunction() {
 }
 namespace {
 
+// ARM tests disabled pending fix for PR10783.
+#if !defined(__arm__)
 TEST_F(JITTest, AvailableExternallyFunctionIsntCompiled) {
   TheJIT->DisableLazyCompilation(true);
   LoadAssembly("define available_externally i32 "
@@ -716,7 +737,8 @@ TEST(LazyLoadedJITTest, EagerCompiledRecursionThroughGhost) {
     (intptr_t)TheJIT->getPointerToFunction(recur1IR));
   EXPECT_EQ(3, recur1(4));
 }
-#endif // !defined(__arm__) && !defined(__powerpc__) && !defined(__s390__)
+#endif // !defined(__arm__)
+#endif // !defined(__powerpc__) && !defined(__s390__)
 
 // This code is copied from JITEventListenerTest, but it only runs once for all
 // the tests in this directory.  Everything seems fine, but that's strange
