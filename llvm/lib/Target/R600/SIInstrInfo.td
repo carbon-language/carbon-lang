@@ -163,8 +163,8 @@ multiclass VOP1_Helper <bits<8> op, RegisterClass drc, RegisterClass src,
          i32imm:$omod, i32imm:$neg),
     opName#"_e64 $dst, $src0, $abs, $clamp, $omod, $neg", []
   >, VOP <opName> {
-    let SRC1 = SIOperand.ZERO;
-    let SRC2 = SIOperand.ZERO;
+    let src1 = SIOperand.ZERO;
+    let src2 = SIOperand.ZERO;
   }
 }
 
@@ -189,7 +189,7 @@ multiclass VOP2_Helper <bits<6> op, RegisterClass vrc, RegisterClass arc,
          i32imm:$omod, i32imm:$neg),
     opName#"_e64 $dst, $src0, $src1, $abs, $clamp, $omod, $neg", []
   >, VOP <opName>, VOP2_REV<revOp#"_e64", !eq(revOp, opName)> {
-    let SRC2 = SIOperand.ZERO;
+    let src2 = SIOperand.ZERO;
   }
 }
 
@@ -217,11 +217,11 @@ multiclass VOP2b_32 <bits<6> op, string opName, list<dag> pattern,
          i32imm:$omod, i32imm:$neg),
     opName#"_e64 $dst, $src0, $src1, $abs, $clamp, $omod, $neg", []
   >, VOP <opName>, VOP2_REV<revOp#"_e64", !eq(revOp, opName)> {
-    let SRC2 = SIOperand.ZERO;
+    let src2 = SIOperand.ZERO;
     /* the VOP2 variant puts the carry out into VCC, the VOP3 variant
        can write it into any SGPR. We currently don't use the carry out,
        so for now hardcode it to VCC as well */
-    let SDST = SIOperand.VCC;
+    let sdst = SIOperand.VCC;
   }
 }
 
@@ -244,7 +244,7 @@ multiclass VOPC_Helper <bits<8> op, RegisterClass vrc, RegisterClass arc,
       [(set SReg_64:$dst, (i1 (setcc (vt arc:$src0), arc:$src1, cond)))]
     )
   >, VOP <opName> {
-    let SRC2 = SIOperand.ZERO;
+    let src2 = SIOperand.ZERO;
   }
 }
 

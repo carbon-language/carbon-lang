@@ -185,25 +185,25 @@ class VOP2 <bits<6> op, dag outs, dag ins, string asm, list<dag> pattern> :
 class VOP3 <bits<9> op, dag outs, dag ins, string asm, list<dag> pattern> :
     Enc64 <outs, ins, asm, pattern> {
 
-  bits<8> VDST;
-  bits<9> SRC0;
-  bits<9> SRC1;
-  bits<9> SRC2;
-  bits<3> ABS; 
-  bits<1> CLAMP;
-  bits<2> OMOD;
-  bits<3> NEG;
+  bits<8> dst;
+  bits<9> src0;
+  bits<9> src1;
+  bits<9> src2;
+  bits<3> abs;
+  bits<1> clamp;
+  bits<2> omod;
+  bits<3> neg;
 
-  let Inst{7-0} = VDST;
-  let Inst{10-8} = ABS;
-  let Inst{11} = CLAMP;
+  let Inst{7-0} = dst;
+  let Inst{10-8} = abs;
+  let Inst{11} = clamp;
   let Inst{25-17} = op;
   let Inst{31-26} = 0x34; //encoding
-  let Inst{40-32} = SRC0;
-  let Inst{49-41} = SRC1;
-  let Inst{58-50} = SRC2;
-  let Inst{60-59} = OMOD;
-  let Inst{63-61} = NEG;
+  let Inst{40-32} = src0;
+  let Inst{49-41} = src1;
+  let Inst{58-50} = src2;
+  let Inst{60-59} = omod;
+  let Inst{63-61} = neg;
   
   let mayLoad = 0;
   let mayStore = 0;
@@ -213,23 +213,23 @@ class VOP3 <bits<9> op, dag outs, dag ins, string asm, list<dag> pattern> :
 class VOP3b <bits<9> op, dag outs, dag ins, string asm, list<dag> pattern> :
     Enc64 <outs, ins, asm, pattern> {
 
-  bits<8> VDST;
-  bits<9> SRC0;
-  bits<9> SRC1;
-  bits<9> SRC2;
-  bits<7> SDST;
-  bits<2> OMOD;
-  bits<3> NEG;
+  bits<8> dst;
+  bits<9> src0;
+  bits<9> src1;
+  bits<9> src2;
+  bits<7> sdst;
+  bits<2> omod;
+  bits<3> neg;
 
-  let Inst{7-0} = VDST;
-  let Inst{14-8} = SDST;
+  let Inst{7-0} = dst;
+  let Inst{14-8} = sdst;
   let Inst{25-17} = op;
   let Inst{31-26} = 0x34; //encoding
-  let Inst{40-32} = SRC0;
-  let Inst{49-41} = SRC1;
-  let Inst{58-50} = SRC2;
-  let Inst{60-59} = OMOD;
-  let Inst{63-61} = NEG;
+  let Inst{40-32} = src0;
+  let Inst{49-41} = src1;
+  let Inst{58-50} = src2;
+  let Inst{60-59} = omod;
+  let Inst{63-61} = neg;
 
   let mayLoad = 0;
   let mayStore = 0;
