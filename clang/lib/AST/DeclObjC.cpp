@@ -1493,6 +1493,30 @@ void ObjCProtocolDecl::collectPropertiesToImplement(PropertyMap &PM,
   }
 }
 
+    
+void ObjCProtocolDecl::collectInheritedProtocolProperties(
+                                                const ObjCPropertyDecl *Property,
+                                                ProtocolPropertyMap &PM) const {
+  if (const ObjCProtocolDecl *PDecl = getDefinition()) {
+    bool MatchFound = false;
+    for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
+         E = PDecl->prop_end(); P != E; ++P) {
+      ObjCPropertyDecl *Prop = *P;
+      if (Prop == Property)
+        continue;
+      if (Prop->getIdentifier() == Property->getIdentifier()) {
+        PM[PDecl] = Prop;
+        MatchFound = true;
+        break;
+      }
+    }
+    // Scan through protocol's protocols which did not have a matching property.
+    if (!MatchFound)
+      for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
+           E = PDecl->protocol_end(); PI != E; ++PI)
+        (*PI)->collectInheritedProtocolProperties(Property, PM);
+  }
+}
 
 //===----------------------------------------------------------------------===//
 // ObjCCategoryDecl
