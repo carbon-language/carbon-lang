@@ -189,7 +189,9 @@ ValueObjectVariable::UpdateValue ()
             default:
                 m_error.SetErrorStringWithFormat("Variable %s has an expression result value %d which is currently unhandled",variable->GetName().GetCString(),value_type);
                 break;
-
+                    
+            case Value::eValueTypeVector:
+                    // fall through
             case Value::eValueTypeScalar:
                 // The variable value is in the Scalar value inside the m_value.
                 // We can point our m_data right to it.
