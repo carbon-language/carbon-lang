@@ -69,8 +69,12 @@ typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, 0 /*metadata*/,
 #elif SANITIZER_WORDSIZE == 32
 static const u64 kAddressSpaceSize = 1ULL << 32;
 typedef CompactSizeClassMap SizeClassMap;
+static const uptr kRegionSizeLog = 20;
+static const uptr kFlatByteMapSize = kAddressSpaceSize >> kRegionSizeLog;
 typedef SizeClassAllocator32<0, kAddressSpaceSize, 16,
-  SizeClassMap, AsanMapUnmapCallback> PrimaryAllocator;
+  SizeClassMap, kRegionSizeLog,
+  FlatByteMap<kFlatByteMapSize>,
+  AsanMapUnmapCallback> PrimaryAllocator;
 #endif
 
 typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;

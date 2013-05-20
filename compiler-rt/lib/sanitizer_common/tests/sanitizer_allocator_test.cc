@@ -41,8 +41,16 @@ typedef SizeClassAllocator64<
 static const u64 kAddressSpaceSize = 1ULL << 32;
 #endif
 
+static const uptr kRegionSizeLog = FIRST_32_SECOND_64(20, 24);
+static const uptr kFlatByteMapSize = kAddressSpaceSize >> kRegionSizeLog;
+
 typedef SizeClassAllocator32<
-  0, kAddressSpaceSize, 16, CompactSizeClassMap> Allocator32Compact;
+  0, kAddressSpaceSize,
+  /*kMetadataSize*/16,
+  CompactSizeClassMap,
+  kRegionSizeLog,
+  FlatByteMap<kFlatByteMapSize> >
+  Allocator32Compact;
 
 template <class SizeClassMap>
 void TestSizeClassMap() {
@@ -254,20 +262,25 @@ TEST(SanitizerCommon, SizeClassAllocator32MapUnmapCallback) {
   TestMapUnmapCallback::map_count = 0;
   TestMapUnmapCallback::unmap_count = 0;
   typedef SizeClassAllocator32<
-      0, kAddressSpaceSize, 16, CompactSizeClassMap,
-      TestMapUnmapCallback> Allocator32WithCallBack;
+      0, kAddressSpaceSize,
+      /*kMetadataSize*/16,
+      CompactSizeClassMap,
+      kRegionSizeLog,
+      FlatByteMap<kFlatByteMapSize>,
+      TestMapUnmapCallback>
+    Allocator32WithCallBack;
   Allocator32WithCallBack *a = new Allocator32WithCallBack;
   a->Init();
-  EXPECT_EQ(TestMapUnmapCallback::map_count, 1);  // Allocator state.
+  EXPECT_EQ(TestMapUnmapCallback::map_count, 0);
   SizeClassAllocatorLocalCache<Allocator32WithCallBack>  cache;
   memset(&cache, 0, sizeof(cache));
   cache.Init(0);
   AllocatorStats stats;
   stats.Init();
   a->AllocateBatch(&stats, &cache, 32);
-  EXPECT_EQ(TestMapUnmapCallback::map_count, 2);  // alloc.
+  EXPECT_EQ(TestMapUnmapCallback::map_count, 1);
   a->TestOnlyUnmap();
-  EXPECT_EQ(TestMapUnmapCallback::unmap_count, 2);  // The whole thing + alloc.
+  EXPECT_EQ(TestMapUnmapCallback::unmap_count, 1);
   delete a;
   // fprintf(stderr, "Map: %d Unmap: %d\n",
   //         TestMapUnmapCallback::map_count,
