@@ -35,7 +35,8 @@ typedef __sanitizer::OFF64_T OFF64_T;
 //      int foo(const char *bar, double baz);
 // You'll need to:
 //      1) define INTERCEPTOR(int, foo, const char *bar, double baz) { ... } in
-//         your source file.
+//         your source file. See the notes below for cases when
+//         INTERCEPTOR_WITH_SUFFIX(...) should be used instead.
 //      2) Call "INTERCEPT_FUNCTION(foo)" prior to the first call of "foo".
 //         INTERCEPT_FUNCTION(foo) evaluates to "true" iff the function was
 //         intercepted successfully.
@@ -58,6 +59,11 @@ typedef __sanitizer::OFF64_T OFF64_T;
 //           but instead you'll have to add
 //           DECLARE_REAL(int, foo, const char *bar, double baz) in your
 //           source file (to define a pointer to overriden function).
+//        3. Some Mac functions have symbol variants discriminated by
+//           additional suffixes, e.g. _$UNIX2003 (see
+//           https://developer.apple.com/library/mac/#releasenotes/Darwin/SymbolVariantsRelNotes/index.html
+//           for more details). To intercept such functions you need to use the
+//           INTERCEPTOR_WITH_SUFFIX(...) macro.
 
 // How it works:
 // To replace system functions on Linux we just need to declare functions
@@ -81,6 +87,7 @@ typedef __sanitizer::OFF64_T OFF64_T;
 // INTERCEPT_FUNCTION() is effectively a no-op on this system.
 
 #if defined(__APPLE__)
+#include <sys/cdefs.h>  // For __DARWIN_ALIAS_C().
 
 // Just a pair of pointers.
 struct interpose_substitution {
@@ -174,12 +181,24 @@ const interpose_substitution substitution_##func_name[] \
   extern "C" \
   INTERCEPTOR_ATTRIBUTE \
   ret_type WRAP(func)(__VA_ARGS__)
+
+// We don't need INTERCEPTOR_WITH_SUFFIX on non-Darwin for now.
+#define INTERCEPTOR_WITH_SUFFIX(ret_type, func, ...) \
+  INTERCEPTOR(ret_type, func, __VA_ARGS__)
+
 #else  // __APPLE__
-#define INTERCEPTOR(ret_type, func, ...) \
-  extern "C" ret_type func(__VA_ARGS__); \
+
+#define INTERCEPTOR_ZZZ(suffix, ret_type, func, ...) \
+  extern "C" ret_type func(__VA_ARGS__) suffix; \
   extern "C" ret_type WRAP(func)(__VA_ARGS__); \
   INTERPOSER(func); \
   extern "C" INTERCEPTOR_ATTRIBUTE ret_type WRAP(func)(__VA_ARGS__)
+
+#define INTERCEPTOR(ret_type, func, ...) \
+  INTERCEPTOR_ZZZ(/*no symbol variants*/, ret_type, func, __VA_ARGS__)
+
+#define INTERCEPTOR_WITH_SUFFIX(ret_type, func, ...) \
+  INTERCEPTOR_ZZZ(__DARWIN_ALIAS_C(func), ret_type, func, __VA_ARGS__)
 
 // Override |overridee| with |overrider|.
 #define OVERRIDE_FUNCTION(overridee, overrider) \

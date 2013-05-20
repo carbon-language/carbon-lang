@@ -640,7 +640,10 @@ INTERCEPTOR(int, glob64, const char *pattern, int flags,
 
 
 #if SANITIZER_INTERCEPT_WAIT
-INTERCEPTOR(int, wait, int *status) {
+// According to sys/wait.h, wait(), waitid(), waitpid() may have symbol version
+// suffixes on Darwin. See the declaration of INTERCEPTOR_WITH_SUFFIX for
+// details.
+INTERCEPTOR_WITH_SUFFIX(int, wait, int *status) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, wait, status);
   int res = REAL(wait)(status);
@@ -648,7 +651,7 @@ INTERCEPTOR(int, wait, int *status) {
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, status, sizeof(*status));
   return res;
 }
-INTERCEPTOR(int, waitid, int idtype, int id, void *infop, int options) {
+INTERCEPTOR_WITH_SUFFIX(int, waitid, int idtype, int id, void *infop, int options) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, waitid, idtype, id, infop, options);
   int res = REAL(waitid)(idtype, id, infop, options);
@@ -656,7 +659,7 @@ INTERCEPTOR(int, waitid, int idtype, int id, void *infop, int options) {
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, infop, siginfo_t_sz);
   return res;
 }
-INTERCEPTOR(int, waitpid, int pid, int *status, int options) {
+INTERCEPTOR_WITH_SUFFIX(int, waitpid, int pid, int *status, int options) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, waitpid, pid, status, options);
   int res = REAL(waitpid)(pid, status, options);
