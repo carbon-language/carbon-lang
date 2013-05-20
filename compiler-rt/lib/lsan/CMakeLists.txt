@@ -14,13 +14,17 @@ set(LSAN_SOURCES
 set(LSAN_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(LSAN_RUNTIME_LIBRARIES)
-set(arch "x86_64")
-add_compiler_rt_static_runtime(clang_rt.lsan-${arch} ${arch}
-  SOURCES ${LSAN_SOURCES}
-          $<TARGET_OBJECTS:RTInterception.${arch}>
-          $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
-          $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
-  CFLAGS ${LSAN_CFLAGS})
-list(APPEND LSAN_RUNTIME_LIBRARIES clang_rt.lsan-${arch})
+
+# FIXME: support LSan for other arches.
+if(CAN_TARGET_x86_64)
+  set(arch "x86_64")
+  add_compiler_rt_static_runtime(clang_rt.lsan-${arch} ${arch}
+    SOURCES ${LSAN_SOURCES}
+            $<TARGET_OBJECTS:RTInterception.${arch}>
+            $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
+            $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
+    CFLAGS ${LSAN_CFLAGS})
+  list(APPEND LSAN_RUNTIME_LIBRARIES clang_rt.lsan-${arch})
+endif()
 
 add_subdirectory(tests)
