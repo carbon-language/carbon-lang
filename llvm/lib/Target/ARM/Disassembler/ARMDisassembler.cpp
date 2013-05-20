@@ -241,6 +241,14 @@ static DecodeStatus DecodeAddrMode6Operand(MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeVLDInstruction(MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeVST1Instruction(MCInst &Inst, unsigned Val,
+                               uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeVST2Instruction(MCInst &Inst, unsigned Val,
+                               uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeVST3Instruction(MCInst &Inst, unsigned Val,
+                               uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeVST4Instruction(MCInst &Inst, unsigned Val,
+                               uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeVSTInstruction(MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeVLD1DupInstruction(MCInst &Inst, unsigned Val,
@@ -2448,6 +2456,49 @@ static DecodeStatus DecodeVLDInstruction(MCInst &Inst, unsigned Insn,
   }
 
   return S;
+}
+
+static DecodeStatus DecodeVST1Instruction(MCInst& Inst, unsigned Insn,
+                                          uint64_t Addr, const void* Decoder) {
+  unsigned type = fieldFromInstruction(Insn, 8, 4);
+  unsigned align = fieldFromInstruction(Insn, 4, 2);
+  if(type == 7 && (align & 2)) return MCDisassembler::Fail;
+  if(type == 10 && align == 3) return MCDisassembler::Fail;
+  if(type == 6 && (align & 2)) return MCDisassembler::Fail;
+  
+  return DecodeVSTInstruction(Inst, Insn, Addr, Decoder);
+}
+
+static DecodeStatus DecodeVST2Instruction(MCInst& Inst, unsigned Insn,
+                                          uint64_t Addr, const void* Decoder) {
+  unsigned size = fieldFromInstruction(Insn, 6, 2);
+  if(size == 3) return MCDisassembler::Fail;
+
+  unsigned type = fieldFromInstruction(Insn, 8, 4);
+  unsigned align = fieldFromInstruction(Insn, 4, 2);
+  if(type == 8 && align == 3) return MCDisassembler::Fail;
+  if(type == 9 && align == 3) return MCDisassembler::Fail;
+  
+  return DecodeVSTInstruction(Inst, Insn, Addr, Decoder);
+}
+
+static DecodeStatus DecodeVST3Instruction(MCInst& Inst, unsigned Insn,
+                                          uint64_t Addr, const void* Decoder) {
+  unsigned size = fieldFromInstruction(Insn, 6, 2);
+  if(size == 3) return MCDisassembler::Fail;
+
+  unsigned align = fieldFromInstruction(Insn, 4, 2);
+  if(align & 2) return MCDisassembler::Fail;
+
+  return DecodeVSTInstruction(Inst, Insn, Addr, Decoder);
+}
+
+static DecodeStatus DecodeVST4Instruction(MCInst& Inst, unsigned Insn,
+                                          uint64_t Addr, const void* Decoder) {
+  unsigned size = fieldFromInstruction(Insn, 6, 2);
+  if(size == 3) return MCDisassembler::Fail;
+
+  return DecodeVSTInstruction(Inst, Insn, Addr, Decoder);
 }
 
 static DecodeStatus DecodeVSTInstruction(MCInst &Inst, unsigned Insn,
