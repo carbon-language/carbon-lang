@@ -101,6 +101,7 @@ static uptr GetCallerPC(u32 stack_id) {
 }
 
 void ProcessPlatformSpecificAllocationsCb::operator()(void *p) const {
+  p = GetUserBegin(p);
   LsanMetadata m(p);
   if (m.allocated() && m.tag() != kReachable) {
     if (linker->containsAddress(GetCallerPC(m.stack_trace_id()))) {
