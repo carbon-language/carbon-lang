@@ -513,7 +513,7 @@ bool SITargetLowering::foldImm(SDValue &Operand, int32_t &Immediate,
 }
 
 /// \brief Does "Op" fit into register class "RegClass" ?
-bool SITargetLowering::fitsRegClass(SelectionDAG &DAG, SDValue &Op,
+bool SITargetLowering::fitsRegClass(SelectionDAG &DAG, const SDValue &Op,
                                     unsigned RegClass) const {
 
   MachineRegisterInfo &MRI = DAG.getMachineFunction().getRegInfo();
