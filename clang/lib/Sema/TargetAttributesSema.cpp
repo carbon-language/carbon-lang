@@ -161,6 +161,15 @@ DLLImportAttr *Sema::mergeDLLImportAttr(Decl *D, SourceRange Range,
   if (D->hasAttr<DLLImportAttr>())
     return NULL;
 
+  if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (VD->hasDefinition()) {
+      // dllimport cannot be applied to definitions.
+      Diag(D->getLocation(), diag::warn_attribute_invalid_on_definition)
+        << "dllimport";
+      return NULL;
+    }
+  }
+
   return ::new (Context) DLLImportAttr(Range, Context,
                                        AttrSpellingListIndex);
 }

@@ -41,3 +41,8 @@ void __attribute__((dllexport)) foo13();
 
 extern int foo14 __attribute__((dllexport));
 extern int foo14 __attribute__((dllimport));  // expected-warning{{dllimport attribute ignored}}
+
+__declspec(dllimport) int foo15 = 54; // expected-warning{{'dllimport' attribute cannot be specified on a definition}}
+
+extern __declspec(dllimport) int foo17;
+int foo17 = 54; // expected-warning{{'dllimport' attribute cannot be specified on a definition}}
