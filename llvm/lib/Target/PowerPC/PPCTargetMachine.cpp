@@ -122,6 +122,12 @@ bool PPCPassConfig::addILPOpts() {
 bool PPCPassConfig::addInstSelector() {
   // Install an instruction selector.
   addPass(createPPCISelDag(getPPCTargetMachine()));
+
+#ifndef NDEBUG
+  if (!DisableCTRLoops && getOptLevel() != CodeGenOpt::None)
+    addPass(createPPCCTRLoopsVerify());
+#endif
+
   return false;
 }
 

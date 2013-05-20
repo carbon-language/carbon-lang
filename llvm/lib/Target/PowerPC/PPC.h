@@ -31,6 +31,9 @@ namespace llvm {
   class MCInst;
 
   FunctionPass *createPPCCTRLoops(PPCTargetMachine &TM);
+#ifndef NDEBUG
+  FunctionPass *createPPCCTRLoopsVerify();
+#endif
   FunctionPass *createPPCEarlyReturnPass();
   FunctionPass *createPPCBranchSelectionPass();
   FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
