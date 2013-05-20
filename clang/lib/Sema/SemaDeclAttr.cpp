@@ -4718,6 +4718,16 @@ static void handleForceInlineAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                              Attr.getAttributeSpellingListIndex()));
 }
 
+static void handleSelectAnyAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  if (!checkMicrosoftExt(S, Attr))
+    return;
+  // Check linkage after possibly merging declaratinos.  See
+  // checkAttributesAfterMerging().
+  D->addAttr(::new (S.Context)
+             SelectAnyAttr(Attr.getRange(), S.Context,
+                           Attr.getAttributeSpellingListIndex()));
+}
+
 //===----------------------------------------------------------------------===//
 // Top Level Sema Entry Points
 //===----------------------------------------------------------------------===//
@@ -4943,6 +4953,9 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_ForceInline:
     handleForceInlineAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_SelectAny:
+    handleSelectAnyAttr(S, D, Attr);
     break;
 
   // Thread safety attributes:
