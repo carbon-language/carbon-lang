@@ -201,6 +201,8 @@ bool getPredefinedStyle(StringRef Name, FormatStyle *Style) {
 }
 
 llvm::error_code parseConfiguration(StringRef Text, FormatStyle *Style) {
+  if (Text.trim().empty())
+    return llvm::make_error_code(llvm::errc::invalid_argument);
   llvm::yaml::Input Input(Text);
   Input >> *Style;
   return Input.error();
