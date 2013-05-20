@@ -424,16 +424,10 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
   return res;
 }
 
-static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
-  uptr p = reinterpret_cast<uptr>(ptr);
-  if (p == 0) return;
-  ASAN_FREE_HOOK(ptr);
-  uptr chunk_beg = p - kChunkHeaderSize;
-  AsanChunk *m = reinterpret_cast<AsanChunk *>(chunk_beg);
-
+static void AtomicallySetQuarantineFlag(AsanChunk *m,
+                                        void *ptr, StackTrace *stack) {
   u8 old_chunk_state = CHUNK_ALLOCATED;
   // Flip the chunk_state atomically to avoid race on double-free.
-  // Must be the first mutation of metadata in this function.
   if (!atomic_compare_exchange_strong((atomic_uint8_t*)m, &old_chunk_state,
                                       CHUNK_QUARANTINE, memory_order_acquire)) {
     if (old_chunk_state == CHUNK_QUARANTINE)
@@ -442,6 +436,19 @@ static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
       ReportFreeNotMalloced((uptr)ptr, stack);
   }
   CHECK_EQ(CHUNK_ALLOCATED, old_chunk_state);
+}
+
+// Expects the chunk to already be marked as quarantined by using
+// AtomicallySetQuarantineFlag.
+static void QuarantineChunk(AsanChunk *m, void *ptr,
+                            StackTrace *stack, AllocType alloc_type) {
+  CHECK_EQ(m->chunk_state, CHUNK_QUARANTINE);
+
+  // FIXME: if the free hook produces an ASan report (e.g. due to a bug),
+  // printing the report may crash as the AsanChunk free-related fields have not
+  // been updated yet. We might need to introduce yet another chunk state to
+  // handle this correctly, but don't want to yet.
+  ASAN_FREE_HOOK(ptr);
 
   if (m->alloc_type != alloc_type && flags()->alloc_dealloc_mismatch)
     ReportAllocTypeMismatch((uptr)ptr, stack,
@@ -458,7 +465,6 @@ static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
     m->free_context_id = 0;
     StackTrace::CompressStack(stack, m->FreeStackBeg(), m->FreeStackSize());
   }
-  CHECK_EQ(m->chunk_state, CHUNK_QUARANTINE);
   // Poison the region.
   PoisonShadow(m->Beg(),
                RoundUpTo(m->UsedSize(), SHADOW_GRANULARITY),
@@ -482,6 +488,17 @@ static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
   }
 }
 
+static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
+  uptr p = reinterpret_cast<uptr>(ptr);
+  if (p == 0) return;
+
+  uptr chunk_beg = p - kChunkHeaderSize;
+  AsanChunk *m = reinterpret_cast<AsanChunk *>(chunk_beg);
+  // Must mark the chunk as quarantined before any changes to its metadata.
+  AtomicallySetQuarantineFlag(m, ptr, stack);
+  QuarantineChunk(m, ptr, stack, alloc_type);
+}
+
 static void *Reallocate(void *old_ptr, uptr new_size, StackTrace *stack) {
   CHECK(old_ptr && new_size);
   uptr p = reinterpret_cast<uptr>(old_ptr);
@@ -492,14 +509,17 @@ static void *Reallocate(void *old_ptr, uptr new_size, StackTrace *stack) {
   thread_stats.reallocs++;
   thread_stats.realloced += new_size;
 
-  CHECK_EQ(m->chunk_state, CHUNK_ALLOCATED);
+  // Must mark the chunk as quarantined before any changes to its metadata.
+  // This also ensures that other threads can't deallocate it in the meantime.
+  AtomicallySetQuarantineFlag(m, old_ptr, stack);
+
   uptr old_size = m->UsedSize();
   uptr memcpy_size = Min(new_size, old_size);
   void *new_ptr = Allocate(new_size, 8, stack, FROM_MALLOC, true);
   if (new_ptr) {
     CHECK_NE(REAL(memcpy), (void*)0);
     REAL(memcpy)(new_ptr, old_ptr, memcpy_size);
-    Deallocate(old_ptr, stack, FROM_MALLOC);
+    QuarantineChunk(m, old_ptr, stack, FROM_MALLOC);
   }
   return new_ptr;
 }
