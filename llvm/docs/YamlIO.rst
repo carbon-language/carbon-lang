@@ -109,7 +109,7 @@ ScalarEnumerationTraits on that type and define the enumeration() method:
 
 As with all YAML I/O template specializations, the ScalarEnumerationTraits is used for 
 both reading and writing YAML. That is, the mapping between in-memory enum
-values and the YAML string representation is only in place.
+values and the YAML string representation is only in one place.
 This assures that the code for writing and parsing of YAML stays in sync.
 
 To specify a YAML mappings, you define a specialization on 
@@ -533,7 +533,7 @@ coordinates into polar when reading YAML.
             y(polar.distance * sin(polar.angle)) {
         }
         Polar denormalize(IO &) {
-          return Polar(sqrt(x*x+y*y, arctan(x,y));
+          return Polar(sqrt(x*x+y*y), arctan(x,y));
         }
          
         float        x;
