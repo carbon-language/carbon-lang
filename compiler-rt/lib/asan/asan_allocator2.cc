@@ -265,7 +265,7 @@ struct QuarantineCallback {
 
   void Recycle(AsanChunk *m) {
     CHECK_EQ(m->chunk_state, CHUNK_QUARANTINE);
-    m->chunk_state = CHUNK_AVAILABLE;
+    atomic_store((atomic_uint8_t*)m, CHUNK_AVAILABLE, memory_order_relaxed);
     CHECK_NE(m->alloc_tid, kInvalidTid);
     CHECK_NE(m->free_tid, kInvalidTid);
     PoisonShadow(m->Beg(),
@@ -362,7 +362,6 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
   CHECK_LE(user_end, alloc_end);
   uptr chunk_beg = user_beg - kChunkHeaderSize;
   AsanChunk *m = reinterpret_cast<AsanChunk *>(chunk_beg);
-  m->chunk_state = CHUNK_ALLOCATED;
   m->alloc_type = alloc_type;
   m->rz_log = rz_log;
   u32 alloc_tid = t ? t->tid() : 0;
@@ -419,6 +418,8 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
     uptr fill_size = Min(size, (uptr)fl.max_malloc_fill_size);
     REAL(memset)(res, fl.malloc_fill_byte, fill_size);
   }
+  // Must be the last mutation of metadata in this function.
+  atomic_store((atomic_uint8_t *)m, CHUNK_ALLOCATED, memory_order_release);
   ASAN_MALLOC_HOOK(res, size);
   return res;
 }
@@ -432,8 +433,9 @@ static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
 
   u8 old_chunk_state = CHUNK_ALLOCATED;
   // Flip the chunk_state atomically to avoid race on double-free.
+  // Must be the first mutation of metadata in this function.
   if (!atomic_compare_exchange_strong((atomic_uint8_t*)m, &old_chunk_state,
-                                      CHUNK_QUARANTINE, memory_order_relaxed)) {
+                                      CHUNK_QUARANTINE, memory_order_acquire)) {
     if (old_chunk_state == CHUNK_QUARANTINE)
       ReportDoubleFree((uptr)ptr, stack);
     else
