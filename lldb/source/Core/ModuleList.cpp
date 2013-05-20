@@ -1008,4 +1008,30 @@ ModuleList::RemoveSharedModuleIfOrphaned (const Module *module_ptr)
     return GetSharedModuleList ().RemoveIfOrphaned (module_ptr);
 }
 
-
+bool
+ModuleList::LoadScriptingResourcesInTarget (Target *target,
+                                            std::list<Error>& errors,
+                                            bool continue_on_error)
+{
+    if (!target)
+        return false;
+    Mutex::Locker locker(m_modules_mutex);
+    for (auto module : m_modules)
+    {
+        Error error;
+        if (module)
+        {
+            module->LoadScriptingResourceInTarget(target, error);
+            if (error.Fail())
+            {
+                error.SetErrorStringWithFormat("unable to load scripting data for module %s - error reported was %s",
+                                               module->GetFileSpec().GetFileNameStrippingExtension().GetCString(),
+                                               error.AsCString());
+                errors.push_back(error);
+            }
+            if (!continue_on_error)
+                return false;
+        }
+    }
+    return errors.size() == 0;
+}

@@ -47,6 +47,7 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StopInfo.h"
+#include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Utility/AnsiTerminal.h"
 
@@ -170,14 +171,37 @@ Debugger::SetPropertyValue (const ExecutionContext *exe_ctx,
                             const char *property_path,
                             const char *value)
 {
+    bool is_load_script = strcmp(property_path,"target.load-script-from-symbol-file") == 0;
+    TargetSP target_sp;
+    LoadScriptFromSymFile load_script_old_value;
+    if (is_load_script && exe_ctx->GetTargetSP())
+    {
+        target_sp = exe_ctx->GetTargetSP();
+        load_script_old_value = target_sp->TargetProperties::GetLoadScriptFromSymbolFile();
+    }
     Error error (Properties::SetPropertyValue (exe_ctx, op, property_path, value));
     if (error.Success())
     {
+        // FIXME it would be nice to have "on-change" callbacks for properties
         if (strcmp(property_path, g_properties[ePropertyPrompt].name) == 0)
         {
             const char *new_prompt = GetPrompt();
             EventSP prompt_change_event_sp (new Event(CommandInterpreter::eBroadcastBitResetPrompt, new EventDataBytes (new_prompt)));
             GetCommandInterpreter().BroadcastEvent (prompt_change_event_sp);
+        }
+        else if (is_load_script && target_sp && load_script_old_value == LoadScriptFromSymFile::eDefault)
+        {
+            if (target_sp->TargetProperties::GetLoadScriptFromSymbolFile() == LoadScriptFromSymFile::eYes)
+            {
+                std::list<Error> errors;
+                if (!target_sp->LoadScriptingResources(errors))
+                {
+                    for (auto error : errors)
+                    {
+                        GetErrorStream().Printf("unable to autoload scripting data: %s\n",error.AsCString());
+                    }
+                }
+            }
         }
     }
     return error;

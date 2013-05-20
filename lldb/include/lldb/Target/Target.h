@@ -12,6 +12,7 @@
 
 // C Includes
 // C++ Includes
+#include <list>
 
 // Other libraries and framework includes
 // Project includes
@@ -45,6 +46,13 @@ typedef enum InlineStrategy
     eInlineBreakpointsHeaders,
     eInlineBreakpointsAlways
 } InlineStrategy;
+    
+enum class LoadScriptFromSymFile : int64_t
+{
+    eDefault, // warn me if there is a script but don't load it
+    eNo, // do not load any scripts - fail silently
+    eYes // load all scripts
+};
 
 //----------------------------------------------------------------------
 // TargetProperties
@@ -147,11 +155,8 @@ public:
     bool
     GetUseFastStepping() const;
     
-    bool
+    LoadScriptFromSymFile
     GetLoadScriptFromSymbolFile() const;
-
-    void
-    SetLoadScriptFromSymbolFile(bool b);
 
 };
 
@@ -730,6 +735,13 @@ public:
     void
     SetExecutableModule (lldb::ModuleSP& module_sp, bool get_dependent_files);
 
+    bool
+    LoadScriptingResources (std::list<Error>& errors,
+                            bool continue_on_error = true)
+    {
+        return m_images.LoadScriptingResourcesInTarget(this,errors,continue_on_error);
+    }
+    
     //------------------------------------------------------------------
     /// Get accessor for the images for this process.
     ///

@@ -1243,7 +1243,7 @@ Module::LoadScriptingResourceInTarget (Target *target, Error& error)
         return false;
     }
     
-    bool shoud_load = target->TargetProperties::GetLoadScriptFromSymbolFile();
+    LoadScriptFromSymFile shoud_load = target->TargetProperties::GetLoadScriptFromSymbolFile();
     
     Debugger &debugger = target->GetDebugger();
     const ScriptLanguage script_language = debugger.GetScriptLanguage();
@@ -1273,9 +1273,10 @@ Module::LoadScriptingResourceInTarget (Target *target, Error& error)
                     FileSpec scripting_fspec (file_specs.GetFileSpecAtIndex(i));
                     if (scripting_fspec && scripting_fspec.Exists())
                     {
-                        if (!shoud_load)
+                        if (shoud_load != LoadScriptFromSymFile::eYes)
                         {
-                            error.SetErrorString("Target doesn't allow loading scripting resource. Please set target.load-script-from-symbol-file and retry.");
+                            if (shoud_load == LoadScriptFromSymFile::eDefault)
+                                error.SetErrorStringWithFormat("the setting target.load-script-from-symbol-file disallows loading script files - change it to yes or manually command script import %s",scripting_fspec.GetPath().c_str());
                             return false;
                         }
                         StreamString scripting_stream;
