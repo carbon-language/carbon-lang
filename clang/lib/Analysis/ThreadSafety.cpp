@@ -866,6 +866,16 @@ public:
     return false;
   }
 
+  // Returns an iterator
+  iterator findLockIter(FactManager &FM, const SExpr &M) {
+    for (iterator I = begin(), E = end(); I != E; ++I) {
+      const SExpr &Exp = FM[*I].MutID;
+      if (Exp.matches(M))
+        return I;
+    }
+    return end();
+  }
+
   LockData* findLock(FactManager &FM, const SExpr &M) const {
     for (const_iterator I = begin(), E = end(); I != E; ++I) {
       const SExpr &Exp = FM[*I].MutID;
@@ -2189,24 +2199,27 @@ void ThreadSafetyAnalyzer::intersectAndWarn(FactSet &FSet1,
                                             bool Modify) {
   FactSet FSet1Orig = FSet1;
 
+  // Find locks in FSet2 that conflict or are not in FSet1, and warn.
   for (FactSet::const_iterator I = FSet2.begin(), E = FSet2.end();
        I != E; ++I) {
     const SExpr &FSet2Mutex = FactMan[*I].MutID;
     const LockData &LDat2 = FactMan[*I].LDat;
+    FactSet::iterator I1 = FSet1.findLockIter(FactMan, FSet2Mutex);
 
-    if (LockData *LDat1 = FSet1.findLock(FactMan, FSet2Mutex)) {
+    if (I1 != FSet1.end()) {
+      const LockData* LDat1 = &FactMan[*I1].LDat;
       if (LDat1->LKind != LDat2.LKind) {
         Handler.handleExclusiveAndShared(FSet2Mutex.toString(),
                                          LDat2.AcquireLoc,
                                          LDat1->AcquireLoc);
         if (Modify && LDat1->LKind != LK_Exclusive) {
-          FSet1.removeLock(FactMan, FSet2Mutex);
-          FSet1.addLock(FactMan, FSet2Mutex, LDat2);
+          // Take the exclusive lock, which is the one in FSet2.
+          *I1 = *I;
         }
       }
-      if (LDat1->Asserted && !LDat2.Asserted) {
-        // The non-asserted lock is the one we want to track.
-        *LDat1 = LDat2;
+      else if (LDat1->Asserted && !LDat2.Asserted) {
+        // The non-asserted lock in FSet2 is the one we want to track.
+        *I1 = *I;
       }
     } else {
       if (LDat2.UnderlyingMutex.isValid()) {
@@ -2226,7 +2239,8 @@ void ThreadSafetyAnalyzer::intersectAndWarn(FactSet &FSet1,
     }
   }
 
-  for (FactSet::const_iterator I = FSet1.begin(), E = FSet1.end();
+  // Find locks in FSet1 that are not in FSet2, and remove them.
+  for (FactSet::const_iterator I = FSet1Orig.begin(), E = FSet1Orig.end();
        I != E; ++I) {
     const SExpr &FSet1Mutex = FactMan[*I].MutID;
     const LockData &LDat1 = FactMan[*I].LDat;
