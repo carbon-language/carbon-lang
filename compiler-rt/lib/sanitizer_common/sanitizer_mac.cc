@@ -170,6 +170,10 @@ void PrepareForSandboxing() {
   // Nothing here for now.
 }
 
+uptr GetPageSize() {
+  return sysconf(_SC_PAGESIZE);
+}
+
 // ----------------- sanitizer_procmaps.h
 
 MemoryMappingLayout::MemoryMappingLayout(bool cache_enabled) {

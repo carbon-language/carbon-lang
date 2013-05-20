@@ -613,6 +613,10 @@ bool ThreadLister::GetDirectoryEntries() {
   return true;
 }
 
+uptr GetPageSize() {
+  return EXEC_PAGESIZE;
+}
+
 // Match full names of the form /path/to/base_name{-,.}*
 bool LibraryNameIs(const char *full_name, const char *base_name) {
   const char *name = full_name;

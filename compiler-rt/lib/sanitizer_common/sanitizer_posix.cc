@@ -35,10 +35,6 @@
 namespace __sanitizer {
 
 // ------------- sanitizer_common.h
-uptr GetPageSize() {
-  return sysconf(_SC_PAGESIZE);
-}
-
 uptr GetMmapGranularity() {
   return GetPageSize();
 }
