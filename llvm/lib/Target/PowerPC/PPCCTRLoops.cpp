@@ -627,7 +627,7 @@ check_block:
   CheckPreds = true;
   for (MachineBasicBlock::iterator IE = MBB->begin();; --I) {
     unsigned Opc = I->getOpcode();
-    if (Opc == PPC::MTCTRse || Opc == PPC::MTCTR8se) {
+    if (Opc == PPC::MTCTRloop || Opc == PPC::MTCTR8loop) {
       CheckPreds = false;
       break;
     }

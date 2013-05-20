@@ -1704,9 +1704,9 @@ def MTCTR : XFXForm_7_ext<31, 467, 9, (outs), (ins gprc:$rS),
 }
 let hasSideEffects = 1, isCodeGenOnly = 1, Defs = [CTR] in {
 let Pattern = [(int_ppc_mtctr i32:$rS)] in
-def MTCTRse : XFXForm_7_ext<31, 467, 9, (outs), (ins gprc:$rS),
-                            "mtctr $rS", SprMTSPR>,
-              PPC970_DGroup_First, PPC970_Unit_FXU;
+def MTCTRloop : XFXForm_7_ext<31, 467, 9, (outs), (ins gprc:$rS),
+                              "mtctr $rS", SprMTSPR>,
+                PPC970_DGroup_First, PPC970_Unit_FXU;
 }
 
 let Defs = [LR] in {
