@@ -19,25 +19,27 @@
 
 namespace llvm {
 
-/// Triple - Helper class for working with target triples.
+/// Triple - Helper class for working with autoconf configuration names. For
+/// historical reasons, we also call these 'triples' (they used to contain
+/// exactly three fields).
 ///
-/// Target triples are strings in the canonical form:
+/// Configuration names are strings in the canonical form:
 ///   ARCHITECTURE-VENDOR-OPERATING_SYSTEM
 /// or
 ///   ARCHITECTURE-VENDOR-OPERATING_SYSTEM-ENVIRONMENT
 ///
 /// This class is used for clients which want to support arbitrary
-/// target triples, but also want to implement certain special
-/// behavior for particular targets. This class isolates the mapping
-/// from the components of the target triple to well known IDs.
+/// configuration names, but also want to implement certain special
+/// behavior for particular configurations. This class isolates the mapping
+/// from the components of the configuration name to well known IDs.
 ///
 /// At its core the Triple class is designed to be a wrapper for a triple
 /// string; the constructor does not change or normalize the triple string.
 /// Clients that need to handle the non-canonical triples that users often
 /// specify should use the normalize method.
 ///
-/// See autoconf/config.guess for a glimpse into what triples look like in
-/// practice.
+/// See autoconf/config.guess for a glimpse into what configuration names
+/// look like in practice.
 class Triple {
 public:
   enum ArchType {
