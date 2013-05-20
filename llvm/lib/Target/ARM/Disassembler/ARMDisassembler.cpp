@@ -1048,7 +1048,7 @@ static const uint16_t QPRDecoderTable[] = {
 
 static DecodeStatus DecodeQPRRegisterClass(MCInst &Inst, unsigned RegNo,
                                    uint64_t Address, const void *Decoder) {
-  if (RegNo > 31)
+  if (RegNo > 31 || (RegNo & 1) != 0)
     return MCDisassembler::Fail;
   RegNo >>= 1;
 
