@@ -1279,11 +1279,13 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr,
       SortedFiles.push_front(Entry);
   }
 
+  FileManager &FileMgr = SourceMgr.getFileManager();
+
+#ifdef __APPLE__
   // If we have an isysroot for a Darwin SDK, include its SDKSettings.plist in
   // the set of (non-system) input files. This is simple heuristic for
   // detecting whether the system headers may have changed, because it is too
   // expensive to stat() all of the system headers.
-  FileManager &FileMgr = SourceMgr.getFileManager();
   if (!HSOpts.Sysroot.empty() && !Chain) {
     llvm::SmallString<128> SDKSettingsFileName(HSOpts.Sysroot);
     llvm::sys::path::append(SDKSettingsFileName, "SDKSettings.plist");
@@ -1292,6 +1294,7 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr,
       SortedFiles.push_front(Entry);
     }
   }
+#endif
 
   unsigned UserFilesNum = 0;
   // Write out all of the input files.
