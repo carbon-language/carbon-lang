@@ -4,6 +4,16 @@ module _Builtin_intrinsics [system] {
     header "altivec.h"
   }
 
+  explicit module arm {
+    requires arm
+
+    explicit module neon {
+      requires neon
+      header "arm_neon.h"
+      export *
+    }
+  }
+
   explicit module intel {
     requires x86
     export *
