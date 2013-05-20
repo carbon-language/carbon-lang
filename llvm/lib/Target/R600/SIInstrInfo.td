@@ -300,17 +300,29 @@ class MTBUF_Store_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBU
   let mayLoad = 0;
 }
 
-class MUBUF_Load_Helper <bits<7> op, string asm, RegisterClass regClass> : MUBUF <
-  op,
-  (outs regClass:$vdata),
-  (ins i16imm:$offset, i1imm:$offen, i1imm:$idxen, i1imm:$glc, i1imm:$addr64,
-       i1imm:$lds, VReg_32:$vaddr, SReg_128:$srsrc, i1imm:$slc,
-       i1imm:$tfe, SSrc_32:$soffset),
-  asm#" $vdata, $offset, $offen, $idxen, $glc, $addr64, "
-     #"$lds, $vaddr, $srsrc, $slc, $tfe, $soffset",
-  []> {
-  let mayLoad = 1;
-  let mayStore = 0;
+multiclass MUBUF_Load_Helper <bits<7> op, string asm, RegisterClass regClass> {
+
+  let glc = 0, lds = 0, slc = 0, tfe = 0, soffset = 128 /* ZERO */,
+                                          mayLoad = 1 in {
+
+  let offen = 1, idxen = 0, addr64 = 0, offset = 0 in {
+    def _OFFEN  : MUBUF <op, (outs regClass:$vdata),
+                         (ins SReg_128:$srsrc, VReg_32:$vaddr),
+                         asm#" $vdata, $srsrc + $vaddr", []>;
+  }
+
+  let offen = 0, idxen = 1, addr64 = 0 in {
+    def _IDXEN  : MUBUF <op, (outs regClass:$vdata),
+                         (ins SReg_128:$srsrc, VReg_32:$vaddr, i16imm:$offset),
+                         asm#" $vdata, $srsrc[$vaddr] + $offset", []>;
+  }
+
+  let offen = 0, idxen = 0, addr64 = 1 in {
+    def _ADDR64 : MUBUF <op, (outs regClass:$vdata),
+                         (ins SReg_128:$srsrc, VReg_64:$vaddr, i16imm:$offset),
+                         asm#" $vdata, $srsrc + $vaddr + $offset", []>;
+  }
+  }
 }
 
 class MUBUF_Store_Helper <bits<7> op, string name, RegisterClass vdataClass,
