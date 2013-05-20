@@ -229,7 +229,7 @@ public:
       Int32Type,
       Int32Type,
     };
-    TexSign = FunctionType::get(V4f32Type, ArgsType);
+    TexSign = FunctionType::get(V4f32Type, ArgsType, /*isVarArg=*/false);
     Type *ArgsQType[] = {
       V4i32Type,
       Int32Type,
@@ -242,7 +242,7 @@ public:
       Int32Type,
       Int32Type,
     };
-    TexQSign = FunctionType::get(V4f32Type, ArgsQType);
+    TexQSign = FunctionType::get(V4f32Type, ArgsQType, /*isVarArg=*/false);
     return false;
   }
 
