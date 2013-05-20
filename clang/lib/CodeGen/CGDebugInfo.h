@@ -36,6 +36,7 @@ namespace clang {
   class ObjCIvarDecl;
   class ClassTemplateSpecializationDecl;
   class GlobalDecl;
+  class UsingDecl;
 
 namespace CodeGen {
   class CodeGenModule;
@@ -96,6 +97,9 @@ class CGDebugInfo {
 
   llvm::DenseMap<const char *, llvm::WeakVH> DIFileCache;
   llvm::DenseMap<const FunctionDecl *, llvm::WeakVH> SPCache;
+  /// \brief Cache declarations relevant to DW_TAG_imported_declarations (C++
+  /// using declarations) that aren't covered by other more specific caches.
+  llvm::DenseMap<const Decl *, llvm::WeakVH> DeclCache;
   llvm::DenseMap<const NamespaceDecl *, llvm::WeakVH> NameSpaceCache;
   llvm::DenseMap<const Decl *, llvm::WeakVH> StaticDataMemberCache;
 
@@ -270,6 +274,9 @@ public:
   /// \brief - Emit C++ using directive.
   void EmitUsingDirective(const UsingDirectiveDecl &UD);
 
+  /// \brief - Emit C++ using declaration.
+  void EmitUsingDecl(const UsingDecl &UD);
+
   /// getOrCreateRecordType - Emit record type's standalone debug info.
   llvm::DIType getOrCreateRecordType(QualType Ty, SourceLocation L);
 
@@ -290,6 +297,8 @@ private:
 
   /// getContextDescriptor - Get context info for the decl.
   llvm::DIScope getContextDescriptor(const Decl *Decl);
+
+  llvm::DIScope getCurrentContextDescriptor(const Decl *Decl);
 
   /// createRecordFwdDecl - Create a forward decl for a RecordType in a given
   /// context.
@@ -333,6 +342,10 @@ private:
   /// CreateMemberType - Create new member and increase Offset by FType's size.
   llvm::DIType CreateMemberType(llvm::DIFile Unit, QualType FType,
                                 StringRef Name, uint64_t *Offset);
+
+  /// \brief Retrieve the DIDescriptor, if any, for the canonical form of this
+  /// declaration.
+  llvm::DIDescriptor getDeclarationOrDefinition(const Decl *D);
 
   /// getFunctionDeclaration - Return debug info descriptor to describe method
   /// declaration for the given method definition.
