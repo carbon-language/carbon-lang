@@ -44,6 +44,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/LoopSimplify.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "PPCTargetMachine.h"
 #include "PPC.h"
@@ -101,14 +102,9 @@ namespace {
     }
 
   private:
-    // FIXME: Copied from LoopSimplify.
-    BasicBlock *InsertPreheaderForLoop(Loop *L);
-    void PlaceSplitBlockCarefully(BasicBlock *NewBB,
-                                  SmallVectorImpl<BasicBlock*> &SplitPreds,
-                                  Loop *L);
-
     bool mightUseCTR(const Triple &TT, BasicBlock *BB);
     bool convertToCTRLoop(Loop *L);
+
   private:
     PPCTargetMachine *TM;
     LoopInfo *LI;
@@ -464,7 +460,7 @@ bool PPCCTRLoops::convertToCTRLoop(Loop *L) {
   // the CTR register because some such uses might be reordered by the
   // selection DAG after the mtctr instruction).
   if (!Preheader || mightUseCTR(TT, Preheader))
-    Preheader = InsertPreheaderForLoop(L);
+    Preheader = InsertPreheaderForLoop(L, this);
   if (!Preheader)
     return MadeChange;
 
@@ -510,84 +506,6 @@ bool PPCCTRLoops::convertToCTRLoop(Loop *L) {
 
   ++NumCTRLoops;
   return MadeChange;
-}
-
-// FIXME: Copied from LoopSimplify.
-BasicBlock *PPCCTRLoops::InsertPreheaderForLoop(Loop *L) {
-  BasicBlock *Header = L->getHeader();
-
-  // Compute the set of predecessors of the loop that are not in the loop.
-  SmallVector<BasicBlock*, 8> OutsideBlocks;
-  for (pred_iterator PI = pred_begin(Header), PE = pred_end(Header);
-       PI != PE; ++PI) {
-    BasicBlock *P = *PI;
-    if (!L->contains(P)) {         // Coming in from outside the loop?
-      // If the loop is branched to from an indirect branch, we won't
-      // be able to fully transform the loop, because it prohibits
-      // edge splitting.
-      if (isa<IndirectBrInst>(P->getTerminator())) return 0;
-
-      // Keep track of it.
-      OutsideBlocks.push_back(P);
-    }
-  }
-
-  // Split out the loop pre-header.
-  BasicBlock *PreheaderBB;
-  if (!Header->isLandingPad()) {
-    PreheaderBB = SplitBlockPredecessors(Header, OutsideBlocks, ".preheader",
-                                         this);
-  } else {
-    SmallVector<BasicBlock*, 2> NewBBs;
-    SplitLandingPadPredecessors(Header, OutsideBlocks, ".preheader",
-                                ".split-lp", this, NewBBs);
-    PreheaderBB = NewBBs[0];
-  }
-
-  PreheaderBB->getTerminator()->setDebugLoc(
-                                      Header->getFirstNonPHI()->getDebugLoc());
-  DEBUG(dbgs() << "Creating pre-header "
-               << PreheaderBB->getName() << "\n");
-
-  // Make sure that NewBB is put someplace intelligent, which doesn't mess up
-  // code layout too horribly.
-  PlaceSplitBlockCarefully(PreheaderBB, OutsideBlocks, L);
-
-  return PreheaderBB;
-}
-
-void PPCCTRLoops::PlaceSplitBlockCarefully(BasicBlock *NewBB,
-                                       SmallVectorImpl<BasicBlock*> &SplitPreds,
-                                            Loop *L) {
-  // Check to see if NewBB is already well placed.
-  Function::iterator BBI = NewBB; --BBI;
-  for (unsigned i = 0, e = SplitPreds.size(); i != e; ++i) {
-    if (&*BBI == SplitPreds[i])
-      return;
-  }
-
-  // If it isn't already after an outside block, move it after one.  This is
-  // always good as it makes the uncond branch from the outside block into a
-  // fall-through.
-
-  // Figure out *which* outside block to put this after.  Prefer an outside
-  // block that neighbors a BB actually in the loop.
-  BasicBlock *FoundBB = 0;
-  for (unsigned i = 0, e = SplitPreds.size(); i != e; ++i) {
-    Function::iterator BBI = SplitPreds[i];
-    if (++BBI != NewBB->getParent()->end() &&
-        L->contains(BBI)) {
-      FoundBB = SplitPreds[i];
-      break;
-    }
-  }
-
-  // If our heuristic for a *good* bb to place this after doesn't find
-  // anything, just pick something.  It's likely better than leaving it within
-  // the loop.
-  if (!FoundBB)
-    FoundBB = SplitPreds[0];
-  NewBB->moveAfter(FoundBB);
 }
 
 #ifndef NDEBUG
