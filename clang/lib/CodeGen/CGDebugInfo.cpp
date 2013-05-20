@@ -3084,6 +3084,30 @@ void CGDebugInfo::EmitUsingDecl(const UsingDecl &UD) {
         getLineNumber(USD.getLocation()));
 }
 
+llvm::DIImportedEntity
+CGDebugInfo::EmitNamespaceAlias(const NamespaceAliasDecl &NA) {
+  if (CGM.getCodeGenOpts().getDebugInfo() < CodeGenOptions::LimitedDebugInfo)
+    return llvm::DIImportedEntity(0);
+  llvm::WeakVH &VH = NamespaceAliasCache[&NA];
+  if (VH)
+    return llvm::DIImportedEntity(cast<llvm::MDNode>(VH));
+  llvm::DIImportedEntity R(0);
+  if (const NamespaceAliasDecl *Underlying =
+          dyn_cast<NamespaceAliasDecl>(NA.getAliasedNamespace()))
+    // This could cache & dedup here rather than relying on metadata deduping.
+    R = DBuilder.createImportedModule(
+        getCurrentContextDescriptor(cast<Decl>(NA.getDeclContext())),
+        EmitNamespaceAlias(*Underlying), getLineNumber(NA.getLocation()),
+        NA.getName());
+  else
+    R = DBuilder.createImportedModule(
+        getCurrentContextDescriptor(cast<Decl>(NA.getDeclContext())),
+        getOrCreateNameSpace(cast<NamespaceDecl>(NA.getAliasedNamespace())),
+        getLineNumber(NA.getLocation()), NA.getName());
+  VH = R;
+  return R;
+}
+
 /// getOrCreateNamesSpace - Return namespace descriptor for the given
 /// namespace decl.
 llvm::DINameSpace

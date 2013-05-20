@@ -101,6 +101,7 @@ class CGDebugInfo {
   /// using declarations) that aren't covered by other more specific caches.
   llvm::DenseMap<const Decl *, llvm::WeakVH> DeclCache;
   llvm::DenseMap<const NamespaceDecl *, llvm::WeakVH> NameSpaceCache;
+  llvm::DenseMap<const NamespaceAliasDecl *, llvm::WeakVH> NamespaceAliasCache;
   llvm::DenseMap<const Decl *, llvm::WeakVH> StaticDataMemberCache;
 
   /// Helper functions for getOrCreateType.
@@ -276,6 +277,9 @@ public:
 
   /// \brief - Emit C++ using declaration.
   void EmitUsingDecl(const UsingDecl &UD);
+
+  /// \brief - Emit C++ namespace alias.
+  llvm::DIImportedEntity EmitNamespaceAlias(const NamespaceAliasDecl &NA);
 
   /// getOrCreateRecordType - Emit record type's standalone debug info.
   llvm::DIType getOrCreateRecordType(QualType Ty, SourceLocation L);

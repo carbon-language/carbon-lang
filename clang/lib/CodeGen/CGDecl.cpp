@@ -79,7 +79,6 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::Enum:      // enum X;
   case Decl::EnumConstant: // enum ? { X = ? }
   case Decl::CXXRecord: // struct/union/class X; [C++]
-  case Decl::NamespaceAlias:
   case Decl::StaticAssert: // static_assert(X, ""); [C++0x]
   case Decl::Label:        // __label__ x;
   case Decl::Import:
@@ -88,6 +87,10 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
     // None of these decls require codegen support.
     return;
 
+  case Decl::NamespaceAlias:
+    if (CGDebugInfo *DI = getDebugInfo())
+        DI->EmitNamespaceAlias(cast<NamespaceAliasDecl>(D));
+    return;
   case Decl::Using:          // using X; [C++]
     if (CGDebugInfo *DI = getDebugInfo())
         DI->EmitUsingDecl(cast<UsingDecl>(D));

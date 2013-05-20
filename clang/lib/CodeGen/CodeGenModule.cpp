@@ -2879,10 +2879,13 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::ClassTemplate:
   case Decl::FunctionTemplate:
   case Decl::TypeAliasTemplate:
-  case Decl::NamespaceAlias:
   case Decl::Block:
   case Decl::Empty:
     break;
+  case Decl::NamespaceAlias:
+    if (CGDebugInfo *DI = getModuleDebugInfo())
+        DI->EmitNamespaceAlias(cast<NamespaceAliasDecl>(*D));
+    return;
   case Decl::UsingDirective: // using namespace X; [C++]
     if (CGDebugInfo *DI = getModuleDebugInfo())
       DI->EmitUsingDirective(cast<UsingDirectiveDecl>(*D));
