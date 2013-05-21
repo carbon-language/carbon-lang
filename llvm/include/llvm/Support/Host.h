@@ -19,7 +19,7 @@
 #if defined(__linux__)
 #include <endian.h>
 #else
-#ifndef LLVM_ON_WIN32
+#if !defined(BYTE_ORDER) && !defined(LLVM_ON_WIN32)
 #include <machine/endian.h>
 #endif
 #endif
