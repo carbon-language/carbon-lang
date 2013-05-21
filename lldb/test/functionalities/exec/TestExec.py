@@ -10,11 +10,11 @@ from lldbtest import *
 import lldbutil
 
 def execute_command (command):
-    print '%% %s' % (command)
+    #print '%% %s' % (command)
     (exit_status, output) = commands.getstatusoutput (command)
-    if output:
-        print output
-    print 'status = %u' % (exit_status)
+    #if output:
+    #    print output
+    #print 'status = %u' % (exit_status)
     return exit_status
 
 class ExecTestCase(TestBase):
@@ -55,10 +55,8 @@ class ExecTestCase(TestBase):
         # Create the target
         target = self.dbg.CreateTarget(exe)
         
-        print target
         # Create any breakpoints we need
         breakpoint = target.BreakpointCreateBySourceRegex ('Set breakpoint 1 here', lldb.SBFileSpec ("main.cpp", False))
-        print breakpoint
         self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         # Launch the process
@@ -77,19 +75,12 @@ class ExecTestCase(TestBase):
 
             stop_reason = thread.GetStopReason()
             
-            print 'stop_reason = %u' % (stop_reason)
-
-            print thread
-            for frame in thread:
-                print frame
-
             self.assertTrue (stop_reason == lldb.eStopReasonBreakpoint,
                              "Thread in process stopped in 'main' should have a stop reason of eStopReasonBreakpoint");
 
             # Run and we should stop due to exec
             process.Continue()
         
-            print process
             self.assertTrue(process.GetState() == lldb.eStateStopped,
                             "Process should be stopped at __dyld_start")
                         
@@ -98,20 +89,13 @@ class ExecTestCase(TestBase):
             self.assertTrue (thread.IsValid(),
                              "Process stopped at exec should have a valid thread");
         
-            print thread
-            for frame in thread:
-                print frame
-
             stop_reason = thread.GetStopReason()
         
-            print 'stop_reason = %u' % (stop_reason)
-
             self.assertTrue (stop_reason == lldb.eStopReasonExec,
                              "Thread in process stopped on exec should have a stop reason of eStopReasonExec");
         
              # Run and we should stop at breakpoint in main after exec
-            process.Continue()
-        
+            process.Continue()        
 
 if __name__ == '__main__':
     import atexit
