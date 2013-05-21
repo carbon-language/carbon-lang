@@ -13,7 +13,6 @@
 // This variant uses the allocator from sanitizer_common, i.e. the one shared
 // with ThreadSanitizer and MemorySanitizer.
 //
-// Status: under development, not enabled by default yet.
 //===----------------------------------------------------------------------===//
 #include "asan_allocator.h"
 
@@ -27,6 +26,7 @@
 #include "sanitizer_common/sanitizer_list.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
 #include "sanitizer_common/sanitizer_quarantine.h"
+#include "lsan/lsan_common.h"
 
 namespace __asan {
 
@@ -164,6 +164,7 @@ struct ChunkHeader {
   u32 from_memalign     : 1;
   u32 alloc_type        : 2;
   u32 rz_log            : 3;
+  u32 lsan_tag          : 2;
   // 2-nd 8 bytes
   // This field is used for small sizes. For large sizes it is equal to
   // SizeClassMap::kMaxSize and the actual size is stored in the
@@ -210,6 +211,9 @@ struct AsanChunk: ChunkBase {
     if (user_requested_size < kChunkHeader2Size) return 0;
     uptr available = RoundUpTo(user_requested_size, SHADOW_GRANULARITY);
     return (available - kChunkHeader2Size) / sizeof(u32);
+  }
+  bool AddrIsInside(uptr addr) {
+    return (addr >= Beg()) && (addr < Beg() + UsedSize());
   }
 };
 
@@ -699,6 +703,82 @@ void asan_mz_force_unlock() {
 }
 
 }  // namespace __asan
+
+// --- Implementation of LSan-specific functions --- {{{1
+namespace __lsan {
+void LockAllocator() {
+  __asan::allocator.ForceLock();
+}
+
+void UnlockAllocator() {
+  __asan::allocator.ForceUnlock();
+}
+
+void GetAllocatorGlobalRange(uptr *begin, uptr *end) {
+  *begin = (uptr)&__asan::allocator;
+  *end = *begin + sizeof(__asan::allocator);
+}
+
+void *PointsIntoChunk(void* p) {
+  uptr addr = reinterpret_cast<uptr>(p);
+  __asan::AsanChunk *m = __asan::GetAsanChunkByAddr(addr);
+  if (!m) return 0;
+  uptr chunk = m->Beg();
+  if ((m->chunk_state == __asan::CHUNK_ALLOCATED) && m->AddrIsInside(addr))
+    return reinterpret_cast<void *>(chunk);
+  return 0;
+}
+
+void *GetUserBegin(void *p) {
+  __asan::AsanChunk *m = __asan::GetAsanChunkByAddr(reinterpret_cast<uptr>(p));
+  CHECK(m);
+  return reinterpret_cast<void *>(m->Beg());
+}
+
+LsanMetadata::LsanMetadata(void *chunk) {
+  uptr addr = reinterpret_cast<uptr>(chunk);
+  metadata_ = reinterpret_cast<void *>(addr - __asan::kChunkHeaderSize);
+}
+
+bool LsanMetadata::allocated() const {
+  __asan::AsanChunk *m = reinterpret_cast<__asan::AsanChunk *>(metadata_);
+  return m->chunk_state == __asan::CHUNK_ALLOCATED;
+}
+
+ChunkTag LsanMetadata::tag() const {
+  __asan::AsanChunk *m = reinterpret_cast<__asan::AsanChunk *>(metadata_);
+  return static_cast<ChunkTag>(m->lsan_tag);
+}
+
+void LsanMetadata::set_tag(ChunkTag value) {
+  __asan::AsanChunk *m = reinterpret_cast<__asan::AsanChunk *>(metadata_);
+  m->lsan_tag = value;
+}
+
+uptr LsanMetadata::requested_size() const {
+  __asan::AsanChunk *m = reinterpret_cast<__asan::AsanChunk *>(metadata_);
+  return m->UsedSize();
+}
+
+u32 LsanMetadata::stack_trace_id() const {
+  __asan::AsanChunk *m = reinterpret_cast<__asan::AsanChunk *>(metadata_);
+  return m->alloc_context_id;
+}
+
+template <typename Callable> void ForEachChunk(Callable const &callback) {
+  __asan::allocator.ForEachChunk(callback);
+}
+#if CAN_SANITIZE_LEAKS
+template void ForEachChunk<ProcessPlatformSpecificAllocationsCb>(
+    ProcessPlatformSpecificAllocationsCb const &callback);
+template void ForEachChunk<PrintLeakedCb>(PrintLeakedCb const &callback);
+template void ForEachChunk<CollectLeaksCb>(CollectLeaksCb const &callback);
+template void ForEachChunk<MarkIndirectlyLeakedCb>(
+    MarkIndirectlyLeakedCb const &callback);
+template void ForEachChunk<ReportLeakedCb>(ReportLeakedCb const &callback);
+template void ForEachChunk<ClearTagCb>(ClearTagCb const &callback);
+#endif  // SANITIZE_LEAKS
+}  // namespace __lsan
 
 // ---------------------- Interface ---------------- {{{1
 using namespace __asan;  // NOLINT
