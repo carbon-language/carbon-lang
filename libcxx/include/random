@@ -1835,7 +1835,7 @@ public:
     // types
     typedef _UIntType result_type;
 
-private:
+//private:
     result_type __x_;
 
     static _LIBCPP_CONSTEXPR const result_type _Mp = result_type(~0);
@@ -1880,7 +1880,7 @@ public:
         seed(_Sseq& __q)
             {__seed(__q, integral_constant<unsigned,
                 1 + (__m == 0 ? (sizeof(result_type) * __CHAR_BIT__ - 1)/32
-                             :  (__m-1) / 0x100000000ull)>());}
+                             :  (__m > 0x100000000ull))>());}
 
     // generating functions
     _LIBCPP_INLINE_VISIBILITY
@@ -1969,7 +1969,7 @@ linear_congruential_engine<_UIntType, __a, __c, __m>::__seed(_Sseq& __q,
     uint32_t __ar[__k+3];
     __q.generate(__ar, __ar + __k + 3);
     result_type __s = static_cast<result_type>((__ar[3] +
-                                                (uint64_t)__ar[4] << 32) % __m);
+                                              ((uint64_t)__ar[4] << 32)) % __m);
     __x_ = __c == 0 && __s == 0 ? result_type(1) : __s;
 }
 
