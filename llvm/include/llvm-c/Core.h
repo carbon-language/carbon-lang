@@ -411,6 +411,7 @@ void LLVMShutdown();
 
 /*===-- Error handling ----------------------------------------------------===*/
 
+char *LLVMCreateMessage(const char *Message);
 void LLVMDisposeMessage(char *Message);
 
 
