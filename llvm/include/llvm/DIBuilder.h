@@ -588,7 +588,6 @@ namespace llvm {
                                           unsigned Line, StringRef Name);
 
     /// \brief Create a descriptor for an imported function.
-    /// \brief Create a descriptor for an imported function.
     /// @param Context The scope this module is imported into
     /// @param Decl The declaration (or definition) of a function, type, or
     ///             variable
