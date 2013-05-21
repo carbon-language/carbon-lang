@@ -16,7 +16,7 @@
 #include "llvm/Support/ErrorHandling.h"
 
 #ifdef __linux__
-  // These includes used by SectionMemoryManager::getPointerToNamedFunction()
+  // These includes used by RTDyldMemoryManager::getPointerToNamedFunction()
   // for Glibc trickery. See comments in this function for more information.
   #ifdef HAVE_SYS_STAT_H
     #include <sys/stat.h>
