@@ -1005,15 +1005,6 @@ ProcessGDBRemote::DidAttach ()
     DidLaunchOrAttach ();
 }
 
-void
-ProcessGDBRemote::DoDidExec ()
-{
-    // The process exec'ed itself, figure out the dynamic loader, etc...
-    BuildDynamicRegisterInfo (true);
-    m_gdb_comm.ResetDiscoverableSettings();
-}
-
-
 
 Error
 ProcessGDBRemote::WillResume ()
@@ -1354,15 +1345,8 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
             // register info before we lookup and threads and populate the expedited
             // register values so we need to know this right away so we can cleanup
             // and update our registers.
-            const bool did_exec = stop_packet.GetStringRef().find(";reason:exec;") != std::string::npos;
-
-            if (did_exec)
-            {
-                m_thread_list_real.Clear();
-                m_thread_list.Clear();
-            }
-
-            if (GetStopID() == 0 || did_exec)
+            const uint32_t stop_id = GetStopID();
+            if (stop_id == 0)
             {
                 // Our first stop, make sure we have a process ID, and also make
                 // sure we know about our registers
@@ -1519,6 +1503,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 else
                 {
                     bool handled = false;
+                    bool did_exec = false;
                     if (!reason.empty())
                     {
                         if (reason.compare("trace") == 0)
@@ -1566,6 +1551,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                         }
                         else if (reason.compare("exec") == 0)
                         {
+                            did_exec = true;
                             thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithExec(*thread_sp));
                             handled = true;
                         }
@@ -1897,6 +1883,26 @@ ProcessGDBRemote::DoDestroy ()
     KillDebugserverProcess ();
     return error;
 }
+
+void
+ProcessGDBRemote::SetLastStopPacket (const StringExtractorGDBRemote &response)
+{
+    lldb_private::Mutex::Locker locker (m_last_stop_packet_mutex);
+    const bool did_exec = response.GetStringRef().find(";reason:exec;") != std::string::npos;
+    if (did_exec)
+    {
+        Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+        if (log)
+            log->Printf ("ProcessGDBRemote::SetLastStopPacket () - detected exec");
+
+        m_thread_list_real.Clear();
+        m_thread_list.Clear();
+        BuildDynamicRegisterInfo (true);
+        m_gdb_comm.ResetDiscoverableSettings();
+    }
+    m_last_stop_packet = response;
+}
+
 
 //------------------------------------------------------------------
 // Process Queries
