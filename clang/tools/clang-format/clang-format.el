@@ -40,14 +40,14 @@
         (call-process-region (point-min) (point-max) clang-format-binary t t nil
                              "-offset" (number-to-string (1- begin))
                              "-length" (number-to-string (- end begin))
-                             "-cursor" (number-to-string (point))
+                             "-cursor" (number-to-string (1- (point)))
                              "-style" style)
       (goto-char (point-min))
       (let ((json-output (json-read-from-string
                            (buffer-substring-no-properties
                              (point-min) (line-beginning-position 2)))))
         (delete-region (point-min) (line-beginning-position 2))
-        (goto-char (cdr (assoc 'Cursor json-output)))
+        (goto-char (1+ (cdr (assoc 'Cursor json-output))))
         (dotimes (index (length orig-windows))
           (set-window-start (nth index orig-windows)
                             (nth index orig-window-starts)))))))
