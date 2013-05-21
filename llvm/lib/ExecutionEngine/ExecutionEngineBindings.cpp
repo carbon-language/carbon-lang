@@ -15,7 +15,6 @@
 #include "llvm-c/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
-#include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -158,8 +157,10 @@ LLVMBool LLVMCreateJITCompilerForModule(LLVMExecutionEngineRef *OutJIT,
 void LLVMInitializeMCJITCompilerOptions(LLVMMCJITCompilerOptions *PassedOptions,
                                         size_t SizeOfPassedOptions) {
   LLVMMCJITCompilerOptions options;
-  memset(&options, 0, sizeof(options)); // Most fields are zero by default.
+  options.OptLevel = 0;
   options.CodeModel = LLVMCodeModelJITDefault;
+  options.NoFramePointerElim = false;
+  options.EnableFastISel = false;
   
   memcpy(PassedOptions, &options,
          std::min(sizeof(options), SizeOfPassedOptions));
@@ -198,8 +199,6 @@ LLVMBool LLVMCreateMCJITCompilerForModule(
          .setOptLevel((CodeGenOpt::Level)options.OptLevel)
          .setCodeModel(unwrap(options.CodeModel))
          .setTargetOptions(targetOptions);
-  if (options.MCJMM)
-    builder.setMCJITMemoryManager(unwrap(options.MCJMM));
   if (ExecutionEngine *JIT = builder.create()) {
     *OutJIT = wrap(JIT);
     return 0;
@@ -333,110 +332,3 @@ void *LLVMGetPointerToGlobal(LLVMExecutionEngineRef EE, LLVMValueRef Global) {
   
   return unwrap(EE)->getPointerToGlobal(unwrap<GlobalValue>(Global));
 }
-
-/*===-- Operations on memory managers -------------------------------------===*/
-
-namespace {
-
-struct SimpleBindingMMFunctions {
-  uint8_t *(*AllocateCodeSection)(void *Opaque,
-                                  uintptr_t Size, unsigned Alignment,
-                                  unsigned SectionID);
-  uint8_t *(*AllocateDataSection)(void *Opaque,
-                                  uintptr_t Size, unsigned Alignment,
-                                  unsigned SectionID, LLVMBool IsReadOnly);
-  LLVMBool (*FinalizeMemory)(void *Opaque, char **ErrMsg);
-  void (*Destroy)(void *Opaque);
-};
-
-class SimpleBindingMemoryManager : public RTDyldMemoryManager {
-public:
-  SimpleBindingMemoryManager(const SimpleBindingMMFunctions& Functions,
-                             void *Opaque);
-  virtual ~SimpleBindingMemoryManager();
-  
-  virtual uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
-                                       unsigned SectionID);
-
-  virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
-                                       unsigned SectionID,
-                                       bool isReadOnly);
-
-  virtual bool finalizeMemory(std::string *ErrMsg);
-  
-private:
-  SimpleBindingMMFunctions Functions;
-  void *Opaque;
-};
-
-SimpleBindingMemoryManager::SimpleBindingMemoryManager(
-  const SimpleBindingMMFunctions& Functions,
-  void *Opaque)
-  : Functions(Functions), Opaque(Opaque) {
-  assert(Functions.AllocateCodeSection &&
-         "No AllocateCodeSection function provided!");
-  assert(Functions.AllocateDataSection &&
-         "No AllocateDataSection function provided!");
-  assert(Functions.FinalizeMemory &&
-         "No FinalizeMemory function provided!");
-  assert(Functions.Destroy &&
-         "No Destroy function provided!");
-}
-
-SimpleBindingMemoryManager::~SimpleBindingMemoryManager() {
-  Functions.Destroy(Opaque);
-}
-
-uint8_t *SimpleBindingMemoryManager::allocateCodeSection(
-  uintptr_t Size, unsigned Alignment, unsigned SectionID) {
-  return Functions.AllocateCodeSection(Opaque, Size, Alignment, SectionID);
-}
-
-uint8_t *SimpleBindingMemoryManager::allocateDataSection(
-  uintptr_t Size, unsigned Alignment, unsigned SectionID, bool isReadOnly) {
-  return Functions.AllocateDataSection(Opaque, Size, Alignment, SectionID,
-                                       isReadOnly);
-}
-
-bool SimpleBindingMemoryManager::finalizeMemory(std::string *ErrMsg) {
-  char *errMsgCString = 0;
-  bool result = Functions.FinalizeMemory(Opaque, &errMsgCString);
-  assert((result || !errMsgCString) &&
-         "Did not expect an error message if FinalizeMemory succeeded");
-  if (errMsgCString) {
-    if (ErrMsg)
-      *ErrMsg = errMsgCString;
-    free(errMsgCString);
-  }
-  return result;
-}
-
-} // anonymous namespace
-
-LLVMMCJITMemoryManagerRef LLVMCreateSimpleMCJITMemoryManager(
-  void *Opaque,
-  uint8_t *(*AllocateCodeSection)(void *Opaque,
-                                  uintptr_t Size, unsigned Alignment,
-                                  unsigned SectionID),
-  uint8_t *(*AllocateDataSection)(void *Opaque,
-                                  uintptr_t Size, unsigned Alignment,
-                                  unsigned SectionID, LLVMBool IsReadOnly),
-  LLVMBool (*FinalizeMemory)(void *Opaque, char **ErrMsg),
-  void (*Destroy)(void *Opaque)) {
-  
-  if (!AllocateCodeSection || !AllocateDataSection || !FinalizeMemory ||
-      !Destroy)
-    return NULL;
-  
-  SimpleBindingMMFunctions functions;
-  functions.AllocateCodeSection = AllocateCodeSection;
-  functions.AllocateDataSection = AllocateDataSection;
-  functions.FinalizeMemory = FinalizeMemory;
-  functions.Destroy = Destroy;
-  return wrap(new SimpleBindingMemoryManager(functions, Opaque));
-}
-
-void LLVMDisposeMCJITMemoryManager(LLVMMCJITMemoryManagerRef MM) {
-  delete unwrap(MM);
-}
-

@@ -58,10 +58,6 @@ void LLVMShutdown() {
 
 /*===-- Error handling ----------------------------------------------------===*/
 
-char *LLVMCreateMessage(const char *Message) {
-  return strdup(Message);
-}
-
 void LLVMDisposeMessage(char *Message) {
   free(Message);
 }

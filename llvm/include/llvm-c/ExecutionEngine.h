@@ -40,14 +40,12 @@ void LLVMLinkInInterpreter(void);
 
 typedef struct LLVMOpaqueGenericValue *LLVMGenericValueRef;
 typedef struct LLVMOpaqueExecutionEngine *LLVMExecutionEngineRef;
-typedef struct LLVMOpaqueMCJITMemoryManager *LLVMMCJITMemoryManagerRef;
 
 struct LLVMMCJITCompilerOptions {
   unsigned OptLevel;
   LLVMCodeModel CodeModel;
   LLVMBool NoFramePointerElim;
   LLVMBool EnableFastISel;
-  LLVMMCJITMemoryManagerRef MCJMM;
 };
 
 /*===-- Operations on generic values --------------------------------------===*/
@@ -168,32 +166,6 @@ void LLVMAddGlobalMapping(LLVMExecutionEngineRef EE, LLVMValueRef Global,
                           void* Addr);
 
 void *LLVMGetPointerToGlobal(LLVMExecutionEngineRef EE, LLVMValueRef Global);
-
-/*===-- Operations on memory managers -------------------------------------===*/
-
-/**
- * Create a simple custom MCJIT memory manager. This memory manager can
- * intercept allocations in a module-oblivious way. This will return NULL
- * if any of the passed functions are NULL.
- *
- * @param Opaque An opaque client object to pass back to the callbacks.
- * @param AllocateCodeSection Allocate a block of memory for executable code.
- * @param AllocateDataSection Allocate a block of memory for data.
- * @param FinalizeMemory Set page permissions and flush cache. Return 0 on
- *   success, 1 on error.
- */
-LLVMMCJITMemoryManagerRef LLVMCreateSimpleMCJITMemoryManager(
-  void *Opaque,
-  uint8_t *(*AllocateCodeSection)(void *Opaque,
-                                  uintptr_t Size, unsigned Alignment,
-                                  unsigned SectionID),
-  uint8_t *(*AllocateDataSection)(void *Opaque,
-                                  uintptr_t Size, unsigned Alignment,
-                                  unsigned SectionID, LLVMBool IsReadOnly),
-  LLVMBool (*FinalizeMemory)(void *Opaque, char **ErrMsg),
-  void (*Destroy)(void *Opaque));
-
-void LLVMDisposeMCJITMemoryManager(LLVMMCJITMemoryManagerRef MM);
 
 /**
  * @}

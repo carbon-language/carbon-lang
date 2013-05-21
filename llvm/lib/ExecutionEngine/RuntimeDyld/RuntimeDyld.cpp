@@ -24,6 +24,8 @@ using namespace llvm;
 using namespace llvm::object;
 
 // Empty out-of-line virtual destructor as the key function.
+RTDyldMemoryManager::~RTDyldMemoryManager() {}
+void RTDyldMemoryManager::registerEHFrames(StringRef SectionData) {}
 RuntimeDyldImpl::~RuntimeDyldImpl() {}
 
 namespace llvm {
