@@ -957,7 +957,13 @@ public:
   sema::FunctionScopeInfo *getCurFunction() const {
     return FunctionScopes.back();
   }
-
+  
+  template <typename ExprT>
+  void recordUseOfEvaluatedWeak(const ExprT *E, bool IsRead=true) {
+    if (!isUnevaluatedContext())
+      getCurFunction()->recordUseOfWeak(E, IsRead);
+  }
+  
   void PushCompoundScope();
   void PopCompoundScope();
 

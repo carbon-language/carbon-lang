@@ -410,3 +410,18 @@ void doubleLevelAccessIvar(Test *a, Test *b) {
   use(a.strongProp.weakProp); // no-warning
 }
 
+// rdar://13942025
+@interface X
+@end
+
+@implementation X
+- (int) warningAboutWeakVariableInsideTypeof {
+    __typeof__(self) __weak weakSelf = self;
+    ^(){
+        __typeof__(weakSelf) blockSelf = weakSelf;
+        use(blockSelf);
+    }();
+    return sizeof(weakSelf);
+}
+@end
+

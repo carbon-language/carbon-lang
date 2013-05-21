@@ -1311,7 +1311,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
           Diags.getDiagnosticLevel(diag::warn_arc_repeated_use_of_weak,
                                    MemberLoc);
         if (Level != DiagnosticsEngine::Ignored)
-          getCurFunction()->recordUseOfWeak(Result);
+          recordUseOfEvaluatedWeak(Result);
       }
     }
 
