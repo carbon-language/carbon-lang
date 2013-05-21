@@ -61,6 +61,7 @@ $(OBJROOT)/libcompiler_rt-%.dylib : $(OBJROOT)/darwin_bni/Release/%/libcompiler_
 	   -Wl,-upward-lunwind \
 	   -Wl,-upward-lsystem_m \
 	   -Wl,-upward-lsystem_c \
+	   -Wl,-upward-lsystem_platform \
 	   -Wl,-ldyld \
 	   -Wl,-lsystem_kernel \
 	   -L$(SDKROOT)/usr/lib/system \

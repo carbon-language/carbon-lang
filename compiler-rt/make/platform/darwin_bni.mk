@@ -47,7 +47,7 @@ FUNCTIONS := absvdi2 absvsi2 addvdi3 addvsi3 ashldi3 ashrdi3 \
              mulodi4 muloti4 mulsc3 mulvdi3 mulvsi3 negdi2 negvdi2 negvsi2 \
              paritydi2 paritysi2 popcountdi2 popcountsi2 powidf2 \
              powisf2 subvdi3 subvsi3 ucmpdi2 udivdi3 \
-             udivmoddi4 umoddi3 apple_versioning eprintf
+             udivmoddi4 umoddi3 apple_versioning eprintf atomic
 
 FUNCTIONS.i386 := $(FUNCTIONS) \
                 divxc3 fixunsxfdi fixunsxfsi fixxfdi floatdixf \

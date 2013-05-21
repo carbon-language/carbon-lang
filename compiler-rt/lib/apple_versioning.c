@@ -13,6 +13,7 @@
 #if __APPLE__
   #if __arm__
     #define NOT_HERE_BEFORE_10_6(sym) 
+    #define NOT_HERE_IN_10_8_AND_EARLIER(sym) 
   #elif __ppc__
     #define NOT_HERE_BEFORE_10_6(sym) \
         extern const char sym##_tmp3 __asm("$ld$hide$os10.3$_" #sym ); \
@@ -27,6 +28,13 @@
             __attribute__((visibility("default"))) const char sym##_tmp4 = 0; \
         extern const char sym##_tmp5 __asm("$ld$hide$os10.5$_" #sym ); \
             __attribute__((visibility("default"))) const char sym##_tmp5 = 0; 
+    #define NOT_HERE_IN_10_8_AND_EARLIER(sym) \
+         extern const char sym##_tmp8 __asm("$ld$hide$os10.8$_" #sym ); \
+            __attribute__((visibility("default"))) const char sym##_tmp8 = 0; \
+        extern const char sym##_tmp7 __asm("$ld$hide$os10.7$_" #sym ); \
+            __attribute__((visibility("default"))) const char sym##_tmp7 = 0; \
+        extern const char sym##_tmp6 __asm("$ld$hide$os10.6$_" #sym ); \
+            __attribute__((visibility("default"))) const char sym##_tmp6 = 0; 
   #endif /* __ppc__ */
 
 
@@ -142,6 +150,56 @@ NOT_HERE_BEFORE_10_6(__gcc_qmul)
 NOT_HERE_BEFORE_10_6(__gcc_qsub)
 NOT_HERE_BEFORE_10_6(__trampoline_setup)
 #endif /* __ppc__ */
+
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_compare_exchange)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_compare_exchange_1)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_compare_exchange_2)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_compare_exchange_4)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_compare_exchange_8)
+
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_exchange)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_exchange_1)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_exchange_2)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_exchange_4)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_exchange_8)
+
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_add_1)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_add_2)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_add_4)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_add_8)
+
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_and_1)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_and_2)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_and_4)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_and_8)
+
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_or_1)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_or_2)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_or_4)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_or_8)
+
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_sub_1)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_sub_2)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_sub_4)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_sub_8)
+
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_xor_1)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_xor_2)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_xor_4)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_fetch_xor_8)
+
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_load)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_load_1)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_load_2)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_load_4)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_load_8)
+
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_store)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_store_1)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_store_2)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_store_4)
+NOT_HERE_IN_10_8_AND_EARLIER(__atomic_store_8)
+
 
 #if __arm__ && __DYNAMIC__
    #define NOT_HERE_UNTIL_AFTER_4_3(sym) \

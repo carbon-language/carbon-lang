@@ -30,10 +30,18 @@
 
 // Clang objects if you redefine a builtin.  This little hack allows us to
 // define a function with the same name as an intrinsic.
+#if __APPLE__
+// mach-o has extra leading underscore
+#pragma redefine_extname __atomic_load_c ___atomic_load
+#pragma redefine_extname __atomic_store_c ___atomic_store
+#pragma redefine_extname __atomic_exchange_c ___atomic_exchange
+#pragma redefine_extname __atomic_compare_exchange_c ___atomic_compare_exchange
+#else
 #pragma redefine_extname __atomic_load_c __atomic_load
 #pragma redefine_extname __atomic_store_c __atomic_store
 #pragma redefine_extname __atomic_exchange_c __atomic_exchange
 #pragma redefine_extname __atomic_compare_exchange_c __atomic_compare_exchange
+#endif
 
 /// Number of locks.  This allocates one page on 32-bit platforms, two on
 /// 64-bit.  This can be specified externally if a different trade between
@@ -70,6 +78,20 @@ inline static void lock(Lock *l) {
 }
 /// locks for atomic operations
 static Lock locks[SPINLOCK_COUNT] = { [0 ...  SPINLOCK_COUNT-1] = {0,1,0} };
+
+#elif defined(__APPLE__)
+#include <libkern/OSAtomic.h>
+typedef OSSpinLock Lock;
+inline static void unlock(Lock *l) {
+  OSSpinLockUnlock(l);
+}
+/// Locks a lock.  In the current implementation, this is potentially
+/// unbounded in the contended case.
+inline static void lock(Lock *l) {  
+  OSSpinLockLock(l);
+}
+static Lock locks[SPINLOCK_COUNT]; // initialized to OS_SPINLOCK_INIT which is 0
+
 #else
 typedef _Atomic(uintptr_t) Lock;
 /// Unlock a lock.  This is a release operation.
