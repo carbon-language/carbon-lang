@@ -174,6 +174,7 @@ enum StatType {
   StatInt_pthread_barrier_destroy,
   StatInt_pthread_barrier_wait,
   StatInt_pthread_once,
+  StatInt_pthread_getschedparam,
   StatInt_sem_init,
   StatInt_sem_destroy,
   StatInt_sem_wait,

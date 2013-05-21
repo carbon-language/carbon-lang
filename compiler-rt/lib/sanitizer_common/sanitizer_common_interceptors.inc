@@ -731,26 +731,42 @@ INTERCEPTOR(int, inet_pton, int af, const char *src, void *dst) {
 #define INIT_INET
 #endif
 
+#if SANITIZER_INTERCEPT_PTHREAD_GETSCHEDPARAM
+INTERCEPTOR(int, pthread_getschedparam, uptr thread, int *policy, int *param) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_getschedparam, thread, policy, param);
+  int res = REAL(pthread_getschedparam)(thread, policy, param);
+  if (res == 0) {
+    if (policy) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, policy, sizeof(*policy));
+    if (param) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, param, sizeof(*param));
+  }
+  return res;
+}
+#define INIT_PTHREAD_GETSCHEDPARAM INTERCEPT_FUNCTION(pthread_getschedparam);
+#else
+#define INIT_PTHREAD_GETSCHEDPARAM
+#endif
 
-#define SANITIZER_COMMON_INTERCEPTORS_INIT                                     \
-  INIT_STRCASECMP;                                                             \
-  INIT_STRNCASECMP;                                                            \
-  INIT_READ;                                                                   \
-  INIT_PREAD;                                                                  \
-  INIT_PREAD64;                                                                \
-  INIT_PRCTL;                                                                  \
-  INIT_WRITE;                                                                  \
-  INIT_PWRITE;                                                                 \
-  INIT_PWRITE64;                                                               \
-  INIT_LOCALTIME_AND_FRIENDS;                                                  \
-  INIT_SCANF;                                                                  \
-  INIT_FREXP;                                                                  \
-  INIT_FREXPF_FREXPL;                                                          \
-  INIT_GETPWNAM_AND_FRIENDS;                                                   \
-  INIT_GETPWNAM_R_AND_FRIENDS;                                                 \
-  INIT_CLOCK_GETTIME;                                                          \
-  INIT_GETITIMER;                                                              \
-  INIT_TIME;                                                                   \
-  INIT_GLOB;                                                                   \
-  INIT_WAIT;                                                                   \
-  INIT_INET;
+#define SANITIZER_COMMON_INTERCEPTORS_INIT \
+  INIT_STRCASECMP;                         \
+  INIT_STRNCASECMP;                        \
+  INIT_READ;                               \
+  INIT_PREAD;                              \
+  INIT_PREAD64;                            \
+  INIT_PRCTL;                              \
+  INIT_WRITE;                              \
+  INIT_PWRITE;                             \
+  INIT_PWRITE64;                           \
+  INIT_LOCALTIME_AND_FRIENDS;              \
+  INIT_SCANF;                              \
+  INIT_FREXP;                              \
+  INIT_FREXPF_FREXPL;                      \
+  INIT_GETPWNAM_AND_FRIENDS;               \
+  INIT_GETPWNAM_R_AND_FRIENDS;             \
+  INIT_CLOCK_GETTIME;                      \
+  INIT_GETITIMER;                          \
+  INIT_TIME;                               \
+  INIT_GLOB;                               \
+  INIT_WAIT;                               \
+  INIT_INET;                               \
+  INIT_PTHREAD_GETSCHEDPARAM;

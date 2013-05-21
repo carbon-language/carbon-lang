@@ -1656,6 +1656,15 @@ TEST(MemorySanitizer, PreAllocatedStackThread) {
   ASSERT_EQ(0, res);
 }
 
+TEST(MemorySanitizer, pthread_getschedparam) {
+  int policy;
+  struct sched_param param;
+  int res = pthread_getschedparam(pthread_self(), &policy, &param);
+  ASSERT_EQ(0, res);
+  EXPECT_NOT_POISONED(policy);
+  EXPECT_NOT_POISONED(param.sched_priority);
+}
+
 TEST(MemorySanitizer, posix_memalign) {
   void *p;
   EXPECT_POISONED(p);
