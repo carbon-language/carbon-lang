@@ -7,6 +7,7 @@ config.llvm_src_root = "@LLVM_SOURCE_DIR@"
 config.llvm_obj_root = "@LLVM_BINARY_DIR@"
 config.llvm_tools_dir = "@LLVM_TOOLS_DIR@"
 config.clang = "@LLVM_BINARY_DIR@/bin/clang"
+config.compiler_rt_arch = "@COMPILER_RT_SUPPORTED_ARCH@"
 
 # LLVM tools dir can be passed in lit parameters, so try to
 # apply substitution.
