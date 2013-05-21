@@ -46,9 +46,13 @@ Mips16TargetLowering::Mips16TargetLowering(MipsTargetMachine &TM)
   // Set up the register classes
   addRegisterClass(MVT::i32, &Mips::CPU16RegsRegClass);
 
-  if (Subtarget->inMips16HardFloat())
+  if (Subtarget->inMips16HardFloat()) {
     setMips16HardFloatLibCalls();
-
+    NoHelperNeeded.insert("__mips16_ret_sf");
+    NoHelperNeeded.insert("__mips16_ret_df");
+    NoHelperNeeded.insert("__mips16_ret_sc");
+    NoHelperNeeded.insert("__mips16_ret_dc");
+  }
   setOperationAction(ISD::ATOMIC_FENCE,       MVT::Other, Expand);
   setOperationAction(ISD::ATOMIC_CMP_SWAP,    MVT::i32,   Expand);
   setOperationAction(ISD::ATOMIC_SWAP,        MVT::i32,   Expand);
@@ -380,6 +384,13 @@ getOpndList(SmallVectorImpl<SDValue> &Ops,
     bool LookupHelper = true;
     if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(CLI.Callee)) {
       if (NoHelperNeeded.find(S->getSymbol()) != NoHelperNeeded.end()) {
+        LookupHelper = false;
+      }
+    }
+    else if (GlobalAddressSDNode *G = 
+             dyn_cast<GlobalAddressSDNode>(CLI.Callee)) {
+      if (NoHelperNeeded.find(G->getGlobal()->getName().data()) != 
+                              NoHelperNeeded.end()) {
         LookupHelper = false;
       }
     }
