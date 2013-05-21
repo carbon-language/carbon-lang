@@ -13,9 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common/sanitizer_platform.h"
-#if SANITIZER_LINUX
 #include "lsan_common.h"
 
+#if CAN_SANITIZE_LEAKS && SANITIZER_LINUX
 #include <link.h>
 
 #include "sanitizer_common/sanitizer_common.h"
@@ -120,4 +120,4 @@ void ProcessPlatformSpecificAllocations(InternalVector<uptr> *frontier) {
 }
 
 }  // namespace __lsan
-#endif  // SANITIZER_LINUX
+#endif  // CAN_SANITIZE_LEAKS && SANITIZER_LINUX
