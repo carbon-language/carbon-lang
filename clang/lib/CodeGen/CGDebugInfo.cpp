@@ -1936,16 +1936,17 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
       ::iterator it = ObjCInterfaceCache.find(TyPtr);
     if (it != ObjCInterfaceCache.end())
       TC = llvm::DIType(cast<llvm::MDNode>(it->second.first));
-    else
+    else {
       TC = DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
                                       Decl->getName(), TheCU, Unit,
                                       getLineNumber(Decl->getLocation()),
                                       TheCU.getLanguage());
-    // Store the forward declaration in the cache.
-    ObjCInterfaceCache[TyPtr] = std::make_pair(TC, Checksum(Decl));
+      // Store the forward declaration in the cache.
+      ObjCInterfaceCache[TyPtr] = std::make_pair(TC, Checksum(Decl));
 
-    // Register the type for replacement in finalize().
-    ReplaceMap.push_back(std::make_pair(TyPtr, static_cast<llvm::Value*>(TC)));
+      // Register the type for replacement in finalize().
+      ReplaceMap.push_back(std::make_pair(TyPtr, static_cast<llvm::Value*>(TC)));
+    }
     return TC;
   }
 
