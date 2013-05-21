@@ -66,7 +66,8 @@ struct DataInfo {
 // for a given address (in all inlined functions). Returns the number
 // of descriptions actually filled.
 // This function should NOT be called from two threads simultaneously.
-uptr SymbolizeCode(uptr address, AddressInfo *frames, uptr max_frames);
+uptr SymbolizeCode(uptr address, AddressInfo *frames, uptr max_frames)
+    SANITIZER_WEAK_ATTRIBUTE;
 bool SymbolizeData(uptr address, DataInfo *info);
 
 bool IsSymbolizerAvailable();

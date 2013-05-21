@@ -1,4 +1,4 @@
-//===-- sanitizer_symbolizer_linux.cc -------------------------------------===//
+//===-- sanitizer_symbolizer_linux_libcdep.cc -----------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
