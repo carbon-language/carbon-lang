@@ -30,6 +30,7 @@ if [ "`uname -a | grep Linux`" != "" ]; then
 	SRCS+="
 		../rtl/tsan_platform_linux.cc
 		../../sanitizer_common/sanitizer_posix.cc
+		../../sanitizer_common/sanitizer_posix_libcdep.cc
 		../../sanitizer_common/sanitizer_linux.cc
 		../../sanitizer_common/sanitizer_linux_libcdep.cc
 	"

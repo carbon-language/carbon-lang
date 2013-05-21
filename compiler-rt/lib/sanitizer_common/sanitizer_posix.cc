@@ -20,31 +20,13 @@
 #include "sanitizer_procmaps.h"
 #include "sanitizer_stacktrace.h"
 
-#include <errno.h>
-#include <pthread.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/mman.h>
-#include <sys/resource.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 namespace __sanitizer {
 
 // ------------- sanitizer_common.h
 uptr GetMmapGranularity() {
   return GetPageSize();
-}
-
-u32 GetUid() {
-  return getuid();
-}
-
-uptr GetThreadSelf() {
-  return (uptr)pthread_self();
 }
 
 void *MmapOrDie(uptr size, const char *mem_type) {
@@ -119,10 +101,6 @@ void *Mprotect(uptr fixed_addr, uptr size) {
                                MAP_NORESERVE, -1, 0);
 }
 
-void FlushUnneededShadowMemory(uptr addr, uptr size) {
-  madvise((void*)addr, size, MADV_DONTNEED);
-}
-
 void *MapFileToMemory(const char *file_name, uptr *buff_size) {
   uptr openrv = OpenFile(file_name, false);
   CHECK(!internal_iserror(openrv));
@@ -176,76 +154,6 @@ void DumpProcessMap() {
 const char *GetPwd() {
   return GetEnv("PWD");
 }
-
-void DisableCoreDumper() {
-  struct rlimit nocore;
-  nocore.rlim_cur = 0;
-  nocore.rlim_max = 0;
-  setrlimit(RLIMIT_CORE, &nocore);
-}
-
-bool StackSizeIsUnlimited() {
-  struct rlimit rlim;
-  CHECK_EQ(0, getrlimit(RLIMIT_STACK, &rlim));
-  return (rlim.rlim_cur == (uptr)-1);
-}
-
-void SetStackSizeLimitInBytes(uptr limit) {
-  struct rlimit rlim;
-  rlim.rlim_cur = limit;
-  rlim.rlim_max = limit;
-  if (setrlimit(RLIMIT_STACK, &rlim)) {
-    Report("ERROR: %s setrlimit() failed %d\n", SanitizerToolName, errno);
-    Die();
-  }
-  CHECK(!StackSizeIsUnlimited());
-}
-
-void SleepForSeconds(int seconds) {
-  sleep(seconds);
-}
-
-void SleepForMillis(int millis) {
-  usleep(millis * 1000);
-}
-
-void Abort() {
-  abort();
-}
-
-int Atexit(void (*function)(void)) {
-#ifndef SANITIZER_GO
-  return atexit(function);
-#else
-  return 0;
-#endif
-}
-
-int internal_isatty(fd_t fd) {
-  return isatty(fd);
-}
-
-#ifndef SANITIZER_GO
-void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
-                   uptr stack_top, uptr stack_bottom, bool fast) {
-#if !SANITIZER_CAN_FAST_UNWIND
-  fast = false;
-#endif
-#if SANITIZER_MAC
-  // Always unwind fast on Mac.
-  (void)fast;
-#else
-  if (!fast || (stack_top == stack_bottom))
-    return stack->SlowUnwindStack(pc, max_s);
-#endif  // SANITIZER_MAC
-  stack->size = 0;
-  stack->trace[0] = pc;
-  if (max_s > 1) {
-    stack->max_size = max_s;
-    stack->FastUnwindStack(pc, bp, stack_top, stack_bottom);
-  }
-}
-#endif  // SANITIZER_GO
 
 }  // namespace __sanitizer
 
