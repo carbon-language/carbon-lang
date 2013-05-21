@@ -708,3 +708,10 @@ namespace switch_stmt {
   static_assert(test_copy("hello world", 10), "");
   static_assert(test_copy("hello world", 10), "");
 }
+
+namespace deduced_return_type {
+  constexpr auto f() { return 0; }
+  template<typename T> constexpr auto g(T t) { return t; }
+  static_assert(f() == 0, "");
+  static_assert(g(true), "");
+}

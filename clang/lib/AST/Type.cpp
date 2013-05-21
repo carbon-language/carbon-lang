@@ -1196,6 +1196,11 @@ bool Type::isLiteralType(ASTContext &Ctx) const {
     return true;
   }
 
+  // If this type hasn't been deduced yet, then conservatively assume that
+  // it'll work out to be a literal type.
+  if (isa<AutoType>(BaseTy->getCanonicalTypeInternal()))
+    return true;
+
   return false;
 }
 
