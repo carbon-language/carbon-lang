@@ -15,7 +15,8 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS)
   # Run MSan tests only if we're sure we may produce working binaries.
   set(MSAN_TEST_DEPS
     ${SANITIZER_COMMON_LIT_TEST_DEPS}
-    ${MSAN_RUNTIME_LIBRARIES})
+    ${MSAN_RUNTIME_LIBRARIES}
+    msan_blacklist)
   set(MSAN_TEST_PARAMS
     msan_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
     )

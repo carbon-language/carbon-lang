@@ -30,6 +30,8 @@ if(CAN_TARGET_${arch})
   list(APPEND MSAN_RUNTIME_LIBRARIES clang_rt.msan-${arch})
 endif()
 
+add_compiler_rt_resource_file(msan_blacklist msan_blacklist.txt)
+
 if(LLVM_INCLUDE_TESTS)
   add_subdirectory(tests)
 endif()
