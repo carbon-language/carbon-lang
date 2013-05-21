@@ -2,11 +2,11 @@
 
 // Test1
 struct B {
-  operator char *(); // expected-note {{candidate function}}
+  operator char *(); // expected-note {{conversion to pointer type}}
 };
 
 struct D : B {
-  operator int *(); // expected-note {{candidate function}}
+  operator int *(); // expected-note {{conversion to pointer type}}
 };
 
 void f (D d)
@@ -30,11 +30,11 @@ void f1 (D1 d)
 
 // Test3
 struct B2 {
-  operator const int *();	// expected-note {{candidate function}}
+  operator const int *(); // expected-note {{conversion to pointer type}}
 };
 
 struct D2 : B2 {
-  operator int *();	// expected-note {{candidate function}}
+  operator int *(); // expected-note {{conversion to pointer type}}
 };
 
 void f2 (D2 d)
@@ -44,11 +44,11 @@ void f2 (D2 d)
 
 // Test4
 struct B3 {
-  operator const int *();	// expected-note {{candidate function}}
+  operator const int *(); // expected-note {{conversion to pointer type}}
 };
 
 struct A3 {
-  operator const int *();	// expected-note {{candidate function}}
+  operator const int *(); // expected-note {{conversion to pointer type}}
 };
 
 struct D3 : A3, B3 {
@@ -78,7 +78,7 @@ void f5(X1 x) { delete x; }  // OK. In selecting a conversion to pointer functio
 
 // Test7
 struct Base {
-   operator int*();	
+   operator int*();
 };
 
 struct Derived : Base {
@@ -87,9 +87,9 @@ struct Derived : Base {
 };
 
 void foo6(const Derived cd, Derived d) {
-	// overload resolution selects Derived::operator int*() const;
-	delete cd;
-	delete d;	
+  // overload resolution selects Derived::operator int*() const;
+  delete cd;
+  delete d;
 }
 
 // Test8
@@ -104,6 +104,6 @@ struct DD : BB {
 
 void foo7 (DD d)
 {
-        // OK. In selecting a conversion to pointer function, template convesions are skipped.
-	delete d;
+  // OK. In selecting a conversion to pointer function, template convesions are skipped.
+  delete d;
 }

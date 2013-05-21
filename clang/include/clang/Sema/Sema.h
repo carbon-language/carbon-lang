@@ -906,6 +906,15 @@ public:
       // Dispatch to Sema to emit the diagnostic.
       SemaRef.EmitCurrentDiagnostic(DiagID);
     }
+
+    /// Teach operator<< to produce an object of the correct type.
+    template<typename T>
+    friend const SemaDiagnosticBuilder &operator<<(
+        const SemaDiagnosticBuilder &Diag, const T &Value) {
+      const DiagnosticBuilder &BaseDiag = Diag;
+      BaseDiag << Value;
+      return Diag;
+    }
   };
 
   /// \brief Emit a diagnostic.
@@ -1928,58 +1937,83 @@ public:
   ExprResult CheckConvertedConstantExpression(Expr *From, QualType T,
                                               llvm::APSInt &Value, CCEKind CCE);
 
-  /// \brief Abstract base class used to diagnose problems that occur while
-  /// trying to convert an expression to integral or enumeration type.
-  class ICEConvertDiagnoser {
+  /// \brief Abstract base class used to perform a contextual implicit
+  /// conversion from an expression to any type passing a filter.
+  class ContextualImplicitConverter {
   public:
     bool Suppress;
     bool SuppressConversion;
 
-    ICEConvertDiagnoser(bool Suppress = false,
-                        bool SuppressConversion = false)
-      : Suppress(Suppress), SuppressConversion(SuppressConversion) { }
+    ContextualImplicitConverter(bool Suppress = false,
+                                bool SuppressConversion = false)
+        : Suppress(Suppress), SuppressConversion(SuppressConversion) {}
+
+    /// \brief Determine whether the specified type is a valid destination type
+    /// for this conversion.
+    virtual bool match(QualType T) = 0;
 
     /// \brief Emits a diagnostic complaining that the expression does not have
     /// integral or enumeration type.
-    virtual DiagnosticBuilder diagnoseNotInt(Sema &S, SourceLocation Loc,
-                                             QualType T) = 0;
+    virtual SemaDiagnosticBuilder
+    diagnoseNoMatch(Sema &S, SourceLocation Loc, QualType T) = 0;
 
     /// \brief Emits a diagnostic when the expression has incomplete class type.
-    virtual DiagnosticBuilder diagnoseIncomplete(Sema &S, SourceLocation Loc,
-                                                 QualType T) = 0;
+    virtual SemaDiagnosticBuilder
+    diagnoseIncomplete(Sema &S, SourceLocation Loc, QualType T) = 0;
 
     /// \brief Emits a diagnostic when the only matching conversion function
     /// is explicit.
-    virtual DiagnosticBuilder diagnoseExplicitConv(Sema &S, SourceLocation Loc,
-                                                   QualType T,
-                                                   QualType ConvTy) = 0;
+    virtual SemaDiagnosticBuilder diagnoseExplicitConv(
+        Sema &S, SourceLocation Loc, QualType T, QualType ConvTy) = 0;
 
     /// \brief Emits a note for the explicit conversion function.
-    virtual DiagnosticBuilder
+    virtual SemaDiagnosticBuilder
     noteExplicitConv(Sema &S, CXXConversionDecl *Conv, QualType ConvTy) = 0;
 
     /// \brief Emits a diagnostic when there are multiple possible conversion
     /// functions.
-    virtual DiagnosticBuilder diagnoseAmbiguous(Sema &S, SourceLocation Loc,
-                                                QualType T) = 0;
+    virtual SemaDiagnosticBuilder
+    diagnoseAmbiguous(Sema &S, SourceLocation Loc, QualType T) = 0;
 
     /// \brief Emits a note for one of the candidate conversions.
-    virtual DiagnosticBuilder noteAmbiguous(Sema &S, CXXConversionDecl *Conv,
-                                            QualType ConvTy) = 0;
+    virtual SemaDiagnosticBuilder
+    noteAmbiguous(Sema &S, CXXConversionDecl *Conv, QualType ConvTy) = 0;
 
     /// \brief Emits a diagnostic when we picked a conversion function
     /// (for cases when we are not allowed to pick a conversion function).
-    virtual DiagnosticBuilder diagnoseConversion(Sema &S, SourceLocation Loc,
-                                                 QualType T,
-                                                 QualType ConvTy) = 0;
+    virtual SemaDiagnosticBuilder diagnoseConversion(
+        Sema &S, SourceLocation Loc, QualType T, QualType ConvTy) = 0;
 
-    virtual ~ICEConvertDiagnoser() {}
+    virtual ~ContextualImplicitConverter() {}
   };
 
-  ExprResult
-  ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *FromE,
-                                     ICEConvertDiagnoser &Diagnoser,
-                                     bool AllowScopedEnumerations);
+  class ICEConvertDiagnoser : public ContextualImplicitConverter {
+    bool AllowScopedEnumerations;
+
+  public:
+    ICEConvertDiagnoser(bool AllowScopedEnumerations,
+                        bool Suppress, bool SuppressConversion)
+        : ContextualImplicitConverter(Suppress, SuppressConversion),
+          AllowScopedEnumerations(AllowScopedEnumerations) {}
+
+    /// Match an integral or (possibly scoped) enumeration type.
+    bool match(QualType T);
+
+    SemaDiagnosticBuilder
+    diagnoseNoMatch(Sema &S, SourceLocation Loc, QualType T) {
+      return diagnoseNotInt(S, Loc, T);
+    }
+
+    /// \brief Emits a diagnostic complaining that the expression does not have
+    /// integral or enumeration type.
+    virtual SemaDiagnosticBuilder
+    diagnoseNotInt(Sema &S, SourceLocation Loc, QualType T) = 0;
+  };
+
+  /// Perform a contextual implicit conversion.
+  ExprResult PerformContextualImplicitConversion(
+      SourceLocation Loc, Expr *FromE, ContextualImplicitConverter &Converter);
+
 
   enum ObjCSubscriptKind {
     OS_Array,

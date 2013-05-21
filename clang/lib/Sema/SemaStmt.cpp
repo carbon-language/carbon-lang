@@ -592,52 +592,50 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
 
   public:
     SwitchConvertDiagnoser(Expr *Cond)
-      : ICEConvertDiagnoser(false, true), Cond(Cond) { }
+        : ICEConvertDiagnoser(/*AllowScopedEnumerations*/true, false, true),
+          Cond(Cond) {}
 
-    virtual DiagnosticBuilder diagnoseNotInt(Sema &S, SourceLocation Loc,
-                                             QualType T) {
+    virtual SemaDiagnosticBuilder diagnoseNotInt(Sema &S, SourceLocation Loc,
+                                                 QualType T) {
       return S.Diag(Loc, diag::err_typecheck_statement_requires_integer) << T;
     }
 
-    virtual DiagnosticBuilder diagnoseIncomplete(Sema &S, SourceLocation Loc,
-                                                 QualType T) {
+    virtual SemaDiagnosticBuilder diagnoseIncomplete(
+        Sema &S, SourceLocation Loc, QualType T) {
       return S.Diag(Loc, diag::err_switch_incomplete_class_type)
                << T << Cond->getSourceRange();
     }
 
-    virtual DiagnosticBuilder diagnoseExplicitConv(Sema &S, SourceLocation Loc,
-                                                   QualType T,
-                                                   QualType ConvTy) {
+    virtual SemaDiagnosticBuilder diagnoseExplicitConv(
+        Sema &S, SourceLocation Loc, QualType T, QualType ConvTy) {
       return S.Diag(Loc, diag::err_switch_explicit_conversion) << T << ConvTy;
     }
 
-    virtual DiagnosticBuilder noteExplicitConv(Sema &S, CXXConversionDecl *Conv,
-                                               QualType ConvTy) {
+    virtual SemaDiagnosticBuilder noteExplicitConv(
+        Sema &S, CXXConversionDecl *Conv, QualType ConvTy) {
       return S.Diag(Conv->getLocation(), diag::note_switch_conversion)
         << ConvTy->isEnumeralType() << ConvTy;
     }
 
-    virtual DiagnosticBuilder diagnoseAmbiguous(Sema &S, SourceLocation Loc,
-                                                QualType T) {
+    virtual SemaDiagnosticBuilder diagnoseAmbiguous(Sema &S, SourceLocation Loc,
+                                                    QualType T) {
       return S.Diag(Loc, diag::err_switch_multiple_conversions) << T;
     }
 
-    virtual DiagnosticBuilder noteAmbiguous(Sema &S, CXXConversionDecl *Conv,
-                                            QualType ConvTy) {
+    virtual SemaDiagnosticBuilder noteAmbiguous(
+        Sema &S, CXXConversionDecl *Conv, QualType ConvTy) {
       return S.Diag(Conv->getLocation(), diag::note_switch_conversion)
       << ConvTy->isEnumeralType() << ConvTy;
     }
 
-    virtual DiagnosticBuilder diagnoseConversion(Sema &S, SourceLocation Loc,
-                                                 QualType T,
-                                                 QualType ConvTy) {
-      return DiagnosticBuilder::getEmpty();
+    virtual SemaDiagnosticBuilder diagnoseConversion(
+        Sema &S, SourceLocation Loc, QualType T, QualType ConvTy) {
+      llvm_unreachable("conversion functions are permitted");
     }
   } SwitchDiagnoser(Cond);
 
-  CondResult
-    = ConvertToIntegralOrEnumerationType(SwitchLoc, Cond, SwitchDiagnoser,
-                                         /*AllowScopedEnumerations*/ true);
+  CondResult =
+      PerformContextualImplicitConversion(SwitchLoc, Cond, SwitchDiagnoser);
   if (CondResult.isInvalid()) return StmtError();
   Cond = CondResult.take();
 

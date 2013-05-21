@@ -1180,54 +1180,53 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
   // C++11 [expr.new]p6: The expression [...] shall be of integral or unscoped
   //   enumeration type, or a class type for which a single non-explicit
   //   conversion function to integral or unscoped enumeration type exists.
+  // C++1y [expr.new]p6: The expression [...] is implicitly converted to
+  //   std::size_t. (FIXME)
   if (ArraySize && !ArraySize->isTypeDependent()) {
     class SizeConvertDiagnoser : public ICEConvertDiagnoser {
       Expr *ArraySize;
-      
+
     public:
       SizeConvertDiagnoser(Expr *ArraySize)
-        : ICEConvertDiagnoser(false, false), ArraySize(ArraySize) { }
-      
-      virtual DiagnosticBuilder diagnoseNotInt(Sema &S, SourceLocation Loc,
-                                               QualType T) {
+          : ICEConvertDiagnoser(/*AllowScopedEnumerations*/false, false, false),
+            ArraySize(ArraySize) {}
+
+      virtual SemaDiagnosticBuilder diagnoseNotInt(Sema &S, SourceLocation Loc,
+                                                   QualType T) {
         return S.Diag(Loc, diag::err_array_size_not_integral)
                  << S.getLangOpts().CPlusPlus11 << T;
       }
-      
-      virtual DiagnosticBuilder diagnoseIncomplete(Sema &S, SourceLocation Loc,
-                                                   QualType T) {
+
+      virtual SemaDiagnosticBuilder diagnoseIncomplete(
+          Sema &S, SourceLocation Loc, QualType T) {
         return S.Diag(Loc, diag::err_array_size_incomplete_type)
                  << T << ArraySize->getSourceRange();
       }
-      
-      virtual DiagnosticBuilder diagnoseExplicitConv(Sema &S,
-                                                     SourceLocation Loc,
-                                                     QualType T,
-                                                     QualType ConvTy) {
+
+      virtual SemaDiagnosticBuilder diagnoseExplicitConv(
+          Sema &S, SourceLocation Loc, QualType T, QualType ConvTy) {
         return S.Diag(Loc, diag::err_array_size_explicit_conversion) << T << ConvTy;
       }
-      
-      virtual DiagnosticBuilder noteExplicitConv(Sema &S,
-                                                 CXXConversionDecl *Conv,
-                                                 QualType ConvTy) {
+
+      virtual SemaDiagnosticBuilder noteExplicitConv(
+          Sema &S, CXXConversionDecl *Conv, QualType ConvTy) {
         return S.Diag(Conv->getLocation(), diag::note_array_size_conversion)
                  << ConvTy->isEnumeralType() << ConvTy;
       }
-      
-      virtual DiagnosticBuilder diagnoseAmbiguous(Sema &S, SourceLocation Loc,
-                                                  QualType T) {
+
+      virtual SemaDiagnosticBuilder diagnoseAmbiguous(
+          Sema &S, SourceLocation Loc, QualType T) {
         return S.Diag(Loc, diag::err_array_size_ambiguous_conversion) << T;
       }
-      
-      virtual DiagnosticBuilder noteAmbiguous(Sema &S, CXXConversionDecl *Conv,
-                                              QualType ConvTy) {
+
+      virtual SemaDiagnosticBuilder noteAmbiguous(
+          Sema &S, CXXConversionDecl *Conv, QualType ConvTy) {
         return S.Diag(Conv->getLocation(), diag::note_array_size_conversion)
                  << ConvTy->isEnumeralType() << ConvTy;
       }
-      
-      virtual DiagnosticBuilder diagnoseConversion(Sema &S, SourceLocation Loc,
-                                                   QualType T,
-                                                   QualType ConvTy) {
+
+      virtual SemaDiagnosticBuilder diagnoseConversion(
+          Sema &S, SourceLocation Loc, QualType T, QualType ConvTy) {
         return S.Diag(Loc,
                       S.getLangOpts().CPlusPlus11
                         ? diag::warn_cxx98_compat_array_size_conversion
@@ -1237,8 +1236,7 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
     } SizeDiagnoser(ArraySize);
 
     ExprResult ConvertedSize
-      = ConvertToIntegralOrEnumerationType(StartLoc, ArraySize, SizeDiagnoser,
-                                           /*AllowScopedEnumerations*/ false);
+      = PerformContextualImplicitConversion(StartLoc, ArraySize, SizeDiagnoser);
     if (ConvertedSize.isInvalid())
       return ExprError();
 
@@ -2054,7 +2052,8 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
                      bool ArrayForm, Expr *ExE) {
   // C++ [expr.delete]p1:
   //   The operand shall have a pointer type, or a class type having a single
-  //   conversion function to a pointer type. The result has type void.
+  //   non-explicit conversion function to a pointer type. The result has type
+  //   void.
   //
   // DR599 amends "pointer type" to "pointer to object type" in both cases.
 
@@ -2071,59 +2070,65 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
 
     QualType Type = Ex.get()->getType();
 
-    if (const RecordType *Record = Type->getAs<RecordType>()) {
-      if (RequireCompleteType(StartLoc, Type,
-                              diag::err_delete_incomplete_class_type))
-        return ExprError();
+    class DeleteConverter : public ContextualImplicitConverter {
+    public:
+      DeleteConverter() : ContextualImplicitConverter(false, true) {}
 
-      SmallVector<CXXConversionDecl*, 4> ObjectPtrConversions;
-
-      CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
-      std::pair<CXXRecordDecl::conversion_iterator,
-                CXXRecordDecl::conversion_iterator>
-        Conversions = RD->getVisibleConversionFunctions();
-      for (CXXRecordDecl::conversion_iterator
-             I = Conversions.first, E = Conversions.second; I != E; ++I) {
-        NamedDecl *D = I.getDecl();
-        if (isa<UsingShadowDecl>(D))
-          D = cast<UsingShadowDecl>(D)->getTargetDecl();
-
-        // Skip over templated conversion functions; they aren't considered.
-        if (isa<FunctionTemplateDecl>(D))
-          continue;
-
-        CXXConversionDecl *Conv = cast<CXXConversionDecl>(D);
-
-        QualType ConvType = Conv->getConversionType().getNonReferenceType();
+      bool match(QualType ConvType) {
+        // FIXME: If we have an operator T* and an operator void*, we must pick
+        // the operator T*.
         if (const PointerType *ConvPtrType = ConvType->getAs<PointerType>())
           if (ConvPtrType->getPointeeType()->isIncompleteOrObjectType())
-            ObjectPtrConversions.push_back(Conv);
+            return true;
+        return false;
       }
-      if (ObjectPtrConversions.size() == 1) {
-        // We have a single conversion to a pointer-to-object type. Perform
-        // that conversion.
-        // TODO: don't redo the conversion calculation.
-        ExprResult Res =
-          PerformImplicitConversion(Ex.get(),
-                            ObjectPtrConversions.front()->getConversionType(),
-                                    AA_Converting);
-        if (Res.isUsable()) {
-          Ex = Res;
-          Type = Ex.get()->getType();
-        }
-      }
-      else if (ObjectPtrConversions.size() > 1) {
-        Diag(StartLoc, diag::err_ambiguous_delete_operand)
-              << Type << Ex.get()->getSourceRange();
-        for (unsigned i= 0; i < ObjectPtrConversions.size(); i++)
-          NoteOverloadCandidate(ObjectPtrConversions[i]);
-        return ExprError();
-      }
-    }
 
-    if (!Type->isPointerType())
-      return ExprError(Diag(StartLoc, diag::err_delete_operand)
-        << Type << Ex.get()->getSourceRange());
+      SemaDiagnosticBuilder diagnoseNoMatch(Sema &S, SourceLocation Loc,
+                                            QualType T) {
+        return S.Diag(Loc, diag::err_delete_operand) << T;
+      }
+
+      SemaDiagnosticBuilder diagnoseIncomplete(Sema &S, SourceLocation Loc,
+                                               QualType T) {
+        return S.Diag(Loc, diag::err_delete_incomplete_class_type) << T;
+      }
+
+      SemaDiagnosticBuilder diagnoseExplicitConv(Sema &S, SourceLocation Loc,
+                                                 QualType T, QualType ConvTy) {
+        return S.Diag(Loc, diag::err_delete_explicit_conversion) << T << ConvTy;
+      }
+
+      SemaDiagnosticBuilder noteExplicitConv(Sema &S, CXXConversionDecl *Conv,
+                                             QualType ConvTy) {
+        return S.Diag(Conv->getLocation(), diag::note_delete_conversion)
+          << ConvTy;
+      }
+
+      SemaDiagnosticBuilder diagnoseAmbiguous(Sema &S, SourceLocation Loc,
+                                              QualType T) {
+        return S.Diag(Loc, diag::err_ambiguous_delete_operand) << T;
+      }
+
+      SemaDiagnosticBuilder noteAmbiguous(Sema &S, CXXConversionDecl *Conv,
+                                          QualType ConvTy) {
+        return S.Diag(Conv->getLocation(), diag::note_delete_conversion)
+          << ConvTy;
+      }
+
+      SemaDiagnosticBuilder diagnoseConversion(Sema &S, SourceLocation Loc,
+                                               QualType T, QualType ConvTy) {
+        llvm_unreachable("conversion functions are permitted");
+      }
+    } Converter;
+
+    Ex = PerformContextualImplicitConversion(StartLoc, Ex.take(), Converter);
+    if (Ex.isInvalid())
+      return ExprError();
+    Type = Ex.get()->getType();
+    if (!Converter.match(Type))
+      // FIXME: PerformContextualImplicitConversion should return ExprError
+      //        itself in this case.
+      return ExprError();
 
     QualType Pointee = Type->getAs<PointerType>()->getPointeeType();
     QualType PointeeElem = Context.getBaseElementType(Pointee);
@@ -2246,7 +2251,6 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
                       PDiag(diag::err_access_dtor) << PointeeElem);
       }
     }
-
   }
 
   return Owned(new (Context) CXXDeleteExpr(Context.VoidTy, UseGlobal, ArrayForm,

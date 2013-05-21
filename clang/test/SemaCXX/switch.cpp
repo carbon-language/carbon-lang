@@ -85,3 +85,18 @@ void local_class(int n) {
     }();
   }
 }
+
+namespace Conversion {
+  struct S {
+    explicit operator int(); // expected-note {{conversion}}
+  };
+  template<typename T> void f(T t) {
+    switch (t) { // expected-error {{explicit conversion}}
+    case 0:
+      return;
+    default:
+      break;
+    }
+  }
+  template void f(S); // expected-note {{instantiation of}}
+}

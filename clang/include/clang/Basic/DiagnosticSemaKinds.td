@@ -4759,13 +4759,17 @@ def err_default_init_const : Error<
 def err_delete_operand : Error<"cannot delete expression of type %0">;
 def ext_delete_void_ptr_operand : ExtWarn<
   "cannot delete expression with pointer-to-'void' type %0">;
-def err_ambiguous_delete_operand : Error<"ambiguous conversion of delete "
-                                         "expression of type %0 to a pointer">;
+def err_ambiguous_delete_operand : Error<
+  "ambiguous conversion of delete expression of type %0 to a pointer">;
 def warn_delete_incomplete : Warning<
   "deleting pointer to incomplete type %0 may cause undefined behavior">,
   InGroup<DiagGroup<"delete-incomplete">>;
 def err_delete_incomplete_class_type : Error<
   "deleting incomplete class type %0; no conversions to pointer type">;
+def err_delete_explicit_conversion : Error<
+  "converting delete expression from type %0 to type %1 invokes an explicit "
+  "conversion function">;
+def note_delete_conversion : Note<"conversion to pointer type %0">;
 def warn_delete_array_type : Warning<
   "'delete' applied to a pointer-to-array type %0 treated as delete[]">;
 def err_no_suitable_delete_member_function_found : Error<

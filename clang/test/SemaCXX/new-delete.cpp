@@ -116,8 +116,8 @@ struct X1 {
 };
 
 struct X2 {
-  operator int*(); // expected-note {{candidate function}}
-  operator float*(); // expected-note {{candidate function}}
+  operator int*(); // expected-note {{conversion}}
+  operator float*(); // expected-note {{conversion}}
 };
 
 void test_delete_conv(X0 x0, X1 x1, X2 x2) {

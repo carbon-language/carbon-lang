@@ -5116,34 +5116,31 @@ ExprResult Sema::PerformContextuallyConvertToObjCPointer(Expr *From) {
 
 /// Determine whether the provided type is an integral type, or an enumeration
 /// type of a permitted flavor.
-static bool isIntegralOrEnumerationType(QualType T, bool AllowScopedEnum) {
-  return AllowScopedEnum ? T->isIntegralOrEnumerationType()
-                         : T->isIntegralOrUnscopedEnumerationType();
+bool Sema::ICEConvertDiagnoser::match(QualType T) {
+  return AllowScopedEnumerations ? T->isIntegralOrEnumerationType()
+                                 : T->isIntegralOrUnscopedEnumerationType();
 }
 
-/// \brief Attempt to convert the given expression to an integral or
-/// enumeration type.
+/// \brief Attempt to convert the given expression to a type which is accepted
+/// by the given converter.
 ///
-/// This routine will attempt to convert an expression of class type to an
-/// integral or enumeration type, if that class type only has a single
-/// conversion to an integral or enumeration type.
+/// This routine will attempt to convert an expression of class type to a
+/// type accepted by the specified converter. In C++11 and before, the class
+/// must have a single non-explicit conversion function converting to a matching
+/// type. In C++1y, there can be multiple such conversion functions, but only
+/// one target type.
 ///
 /// \param Loc The source location of the construct that requires the
 /// conversion.
 ///
 /// \param From The expression we're converting from.
 ///
-/// \param Diagnoser Used to output any diagnostics.
-///
-/// \param AllowScopedEnumerations Specifies whether conversions to scoped
-/// enumerations should be considered.
+/// \param Converter Used to control and diagnose the conversion process.
 ///
 /// \returns The expression, converted to an integral or enumeration type if
 /// successful.
-ExprResult
-Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
-                                         ICEConvertDiagnoser &Diagnoser,
-                                         bool AllowScopedEnumerations) {
+ExprResult Sema::PerformContextualImplicitConversion(
+    SourceLocation Loc, Expr *From, ContextualImplicitConverter &Converter) {
   // We can't perform any more checking for type-dependent expressions.
   if (From->isTypeDependent())
     return Owned(From);
@@ -5155,34 +5152,34 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
     From = result.take();
   }
 
-  // If the expression already has integral or enumeration type, we're golden.
+  // If the expression already has a matching type, we're golden.
   QualType T = From->getType();
-  if (isIntegralOrEnumerationType(T, AllowScopedEnumerations))
+  if (Converter.match(T))
     return DefaultLvalueConversion(From);
 
   // FIXME: Check for missing '()' if T is a function type?
 
-  // If we don't have a class type in C++, there's no way we can get an
-  // expression of integral or enumeration type.
+  // We can only perform contextual implicit conversions on objects of class
+  // type.
   const RecordType *RecordTy = T->getAs<RecordType>();
   if (!RecordTy || !getLangOpts().CPlusPlus) {
-    if (!Diagnoser.Suppress)
-      Diagnoser.diagnoseNotInt(*this, Loc, T) << From->getSourceRange();
+    if (!Converter.Suppress)
+      Converter.diagnoseNoMatch(*this, Loc, T) << From->getSourceRange();
     return Owned(From);
   }
 
   // We must have a complete class type.
   struct TypeDiagnoserPartialDiag : TypeDiagnoser {
-    ICEConvertDiagnoser &Diagnoser;
+    ContextualImplicitConverter &Converter;
     Expr *From;
-    
-    TypeDiagnoserPartialDiag(ICEConvertDiagnoser &Diagnoser, Expr *From)
-      : TypeDiagnoser(Diagnoser.Suppress), Diagnoser(Diagnoser), From(From) {}
-    
+
+    TypeDiagnoserPartialDiag(ContextualImplicitConverter &Converter, Expr *From)
+        : TypeDiagnoser(Converter.Suppress), Converter(Converter), From(From) {}
+
     virtual void diagnose(Sema &S, SourceLocation Loc, QualType T) {
-      Diagnoser.diagnoseIncomplete(S, Loc, T) << From->getSourceRange();
+      Converter.diagnoseIncomplete(S, Loc, T) << From->getSourceRange();
     }
-  } IncompleteDiagnoser(Diagnoser, From);
+  } IncompleteDiagnoser(Converter, From);
 
   if (RequireCompleteType(Loc, T, IncompleteDiagnoser))
     return Owned(From);
@@ -5201,9 +5198,8 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
          I = Conversions.first, E = Conversions.second; I != E; ++I) {
     if (CXXConversionDecl *Conversion
           = dyn_cast<CXXConversionDecl>((*I)->getUnderlyingDecl())) {
-      if (isIntegralOrEnumerationType(
-            Conversion->getConversionType().getNonReferenceType(),
-            AllowScopedEnumerations)) {
+      if (Converter.match(
+              Conversion->getConversionType().getNonReferenceType())) {
         if (Conversion->isExplicit())
           ExplicitConversions.addDecl(I.getDecl(), I.getAccess());
         else
@@ -5212,9 +5208,10 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
     }
   }
 
+  // FIXME: Implement the C++11 rules!
   switch (ViableConversions.size()) {
   case 0:
-    if (ExplicitConversions.size() == 1 && !Diagnoser.Suppress) {
+    if (ExplicitConversions.size() == 1 && !Converter.Suppress) {
       DeclAccessPair Found = ExplicitConversions[0];
       CXXConversionDecl *Conversion
         = cast<CXXConversionDecl>(Found->getUnderlyingDecl());
@@ -5226,12 +5223,12 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
       std::string TypeStr;
       ConvTy.getAsStringInternal(TypeStr, getPrintingPolicy());
 
-      Diagnoser.diagnoseExplicitConv(*this, Loc, T, ConvTy)
+      Converter.diagnoseExplicitConv(*this, Loc, T, ConvTy)
         << FixItHint::CreateInsertion(From->getLocStart(),
                                       "static_cast<" + TypeStr + ">(")
         << FixItHint::CreateInsertion(PP.getLocForEndOfToken(From->getLocEnd()),
                                       ")");
-      Diagnoser.noteExplicitConv(*this, Conversion, ConvTy);
+      Converter.noteExplicitConv(*this, Conversion, ConvTy);
 
       // If we aren't in a SFINAE context, build a call to the
       // explicit conversion function.
@@ -5262,11 +5259,11 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
       = cast<CXXConversionDecl>(Found->getUnderlyingDecl());
     QualType ConvTy
       = Conversion->getConversionType().getNonReferenceType();
-    if (!Diagnoser.SuppressConversion) {
+    if (!Converter.SuppressConversion) {
       if (isSFINAEContext())
         return ExprError();
 
-      Diagnoser.diagnoseConversion(*this, Loc, T, ConvTy)
+      Converter.diagnoseConversion(*this, Loc, T, ConvTy)
         << From->getSourceRange();
     }
 
@@ -5283,24 +5280,22 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
   }
 
   default:
-    if (Diagnoser.Suppress)
+    if (Converter.Suppress)
       return ExprError();
 
-    Diagnoser.diagnoseAmbiguous(*this, Loc, T) << From->getSourceRange();
+    Converter.diagnoseAmbiguous(*this, Loc, T) << From->getSourceRange();
     for (unsigned I = 0, N = ViableConversions.size(); I != N; ++I) {
       CXXConversionDecl *Conv
         = cast<CXXConversionDecl>(ViableConversions[I]->getUnderlyingDecl());
       QualType ConvTy = Conv->getConversionType().getNonReferenceType();
-      Diagnoser.noteAmbiguous(*this, Conv, ConvTy);
+      Converter.noteAmbiguous(*this, Conv, ConvTy);
     }
     return Owned(From);
   }
 
-  if (!isIntegralOrEnumerationType(From->getType(), AllowScopedEnumerations) &&
-      !Diagnoser.Suppress) {
-    Diagnoser.diagnoseNotInt(*this, Loc, From->getType())
+  if (!Converter.match(From->getType()) && !Converter.Suppress)
+    Converter.diagnoseNoMatch(*this, Loc, From->getType())
       << From->getSourceRange();
-  }
 
   return DefaultLvalueConversion(From);
 }

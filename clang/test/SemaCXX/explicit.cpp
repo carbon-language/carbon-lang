@@ -145,14 +145,14 @@ namespace Conversion {
       operator int*();
     };
     struct NotPtr {
-      explicit operator int*();
+      explicit operator int*(); // expected-note {{conversion}}
     };
     
     Ptr    p;
     NotPtr np;
     
     delete p;
-    delete np; // expected-error {{cannot delete expression of type 'NotPtr'}}
+    delete np; // expected-error {{converting delete expression from type 'NotPtr' to type 'int *' invokes an explicit conversion function}}
   }
   
   void testFunctionPointer()
