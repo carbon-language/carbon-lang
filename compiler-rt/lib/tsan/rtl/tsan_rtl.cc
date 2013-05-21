@@ -84,8 +84,7 @@ ThreadState::ThreadState(Context *ctx, int tid, int unique_id, u64 epoch,
   : fast_state(tid, epoch)
   // Do not touch these, rely on zero initialization,
   // they may be accessed before the ctor.
-  // , fast_ignore_reads()
-  // , fast_ignore_writes()
+  // , ignore_reads_and_writes()
   // , in_rtl()
   , shadow_stack_pos(&shadow_stack[0])
 #ifndef TSAN_GO

@@ -165,8 +165,16 @@ static void MaybeReportThreadLeak(ThreadContextBase *tctx_base, void *arg) {
 }
 #endif
 
+static void ThreadCheckIgnore(ThreadState *thr) {
+  if (thr->ignore_reads_and_writes) {
+    Printf("ThreadSanitizer: thread T%d finished with ignores enabled.\n",
+           thr->tid);
+  }
+}
+
 void ThreadFinalize(ThreadState *thr) {
   CHECK_GT(thr->in_rtl, 0);
+  ThreadCheckIgnore(thr);
 #ifndef TSAN_GO
   if (!flags()->report_thread_leaks)
     return;
@@ -235,6 +243,7 @@ void ThreadStart(ThreadState *thr, int tid, uptr os_id) {
 
 void ThreadFinish(ThreadState *thr) {
   CHECK_GT(thr->in_rtl, 0);
+  ThreadCheckIgnore(thr);
   StatInc(thr, StatThreadFinish);
   if (thr->stk_addr && thr->stk_size)
     DontNeedShadowFor(thr->stk_addr, thr->stk_size);
