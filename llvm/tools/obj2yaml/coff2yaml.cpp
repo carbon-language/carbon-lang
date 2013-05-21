@@ -13,6 +13,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/YAMLTraits.h"
 
+#include <list>
+
 using namespace llvm;
 
 namespace {
@@ -24,7 +26,7 @@ class COFFDumper {
   void dumpSections(unsigned numSections);
   void dumpSymbols(unsigned numSymbols);
   StringRef getHexString(ArrayRef<uint8_t> Data);
-  std::vector<std::string> Strings;
+  std::list<std::string> Strings;
 
 public:
   COFFDumper(const object::COFFObjectFile &Obj);
