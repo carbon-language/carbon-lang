@@ -73,17 +73,6 @@ public:
   /// \returns true if an error occurred, false otherwise.
   virtual bool finalizeMemory(std::string *ErrMsg = 0);
 
-  void registerEHFrames(StringRef SectionData);
-
-  /// This method returns the address of the specified function. As such it is
-  /// only useful for resolving library symbols, not code generated symbols.
-  ///
-  /// If \p AbortOnFailure is false and no function with the given name is
-  /// found, this function returns a null pointer. Otherwise, it prints a
-  /// message to stderr and aborts.
-  virtual void *getPointerToNamedFunction(const std::string &Name,
-                                          bool AbortOnFailure = true);
-
   /// \brief Invalidate instruction cache for code sections.
   ///
   /// Some platforms with separate data cache and instruction cache require
