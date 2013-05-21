@@ -1838,7 +1838,9 @@ const Stmt *getStmtParent(const Stmt *S, ParentMap &PM) {
     if (!S)
       break;
 
-    if (isa<ExprWithCleanups>(S))
+    if (isa<ExprWithCleanups>(S) ||
+        isa<CXXBindTemporaryExpr>(S) ||
+        isa<SubstNonTypeTemplateParmExpr>(S))
       continue;
 
     break;
