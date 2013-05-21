@@ -44,7 +44,7 @@ LargeGOT("mxgot", cl::Hidden,
          cl::desc("MIPS: Enable GOT larger than 64k."), cl::init(false));
 
 static cl::opt<bool>
-NoZeroDivCheck("mnocheck-zero-division", cl::Hidden,
+NoZeroDivCheck("mno-check-zero-division", cl::Hidden,
                cl::desc("MIPS: Don't trap on integer division by zero."),
                cl::init(false));
 

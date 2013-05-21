@@ -1,5 +1,5 @@
 ; RUN: llc -march=mips < %s | FileCheck %s -check-prefix=TRAP
-; RUN: llc -march=mips -mnocheck-zero-division < %s |\
+; RUN: llc -march=mips -mno-check-zero-division < %s |\
 ; RUN: FileCheck %s -check-prefix=NOCHECK
 
 ; TRAP: sdiv1:
