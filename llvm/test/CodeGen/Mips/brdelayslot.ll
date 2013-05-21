@@ -131,7 +131,7 @@ declare void @foo11()
 ; filled.
 ;
 ; SUCCBB:      succbbs_loop1:
-; SUCCBB:      bne ${{[0-9]+}}, $zero, $BB
+; SUCCBB:      blez $5, $BB
 ; SUCCBB-NEXT: addiu
 ; SUCCBB:      bne ${{[0-9]+}}, $zero, $BB
 ; SUCCBB-NEXT: addiu

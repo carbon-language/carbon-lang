@@ -1,0 +1,36 @@
+; RUN: llc -march=mipsel < %s | FileCheck %s
+; RUN: llc -march=mips64el -mcpu=mips64 < %s | FileCheck %s
+
+; CHECK: test_blez:
+; CHECK: blez ${{[0-9]+}}, $BB
+
+define void @test_blez(i32 %a) {
+entry:
+  %cmp = icmp sgt i32 %a, 0
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:
+  tail call void @foo1()
+  br label %if.end
+
+if.end:
+  ret void
+}
+
+declare void @foo1()
+
+; CHECK: test_bgez:
+; CHECK: bgez ${{[0-9]+}}, $BB
+
+define void @test_bgez(i32 %a) {
+entry:
+  %cmp = icmp slt i32 %a, 0
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:
+  tail call void @foo1()
+  br label %if.end
+
+if.end:
+  ret void
+}
