@@ -1835,7 +1835,7 @@ public:
     // types
     typedef _UIntType result_type;
 
-//private:
+private:
     result_type __x_;
 
     static _LIBCPP_CONSTEXPR const result_type _Mp = result_type(~0);
