@@ -36,3 +36,13 @@ namespace PR5880 {
 
   template void test_anon_union<int>();
 }
+
+namespace AddrOfClassMember {
+  template <typename T> struct S {
+    int n;
+    static void f() {
+      +T::n; // expected-error {{invalid use of member}}
+    }
+  };
+  void g() { S<S<int> >::f(); } // expected-note {{in instantiation of}}
+}

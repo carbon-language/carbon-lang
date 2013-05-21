@@ -6320,7 +6320,11 @@ TreeTransform<Derived>::TransformAddressOfOperand(Expr *E) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformUnaryOperator(UnaryOperator *E) {
-  ExprResult SubExpr = TransformAddressOfOperand(E->getSubExpr());
+  ExprResult SubExpr;
+  if (E->getOpcode() == UO_AddrOf)
+    SubExpr = TransformAddressOfOperand(E->getSubExpr());
+  else
+    SubExpr = TransformExpr(E->getSubExpr());
   if (SubExpr.isInvalid())
     return ExprError();
 
