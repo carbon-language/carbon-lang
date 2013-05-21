@@ -1277,7 +1277,7 @@ Module::LoadScriptingResourceInTarget (Target *target, Error& error, Stream* fee
                         if (shoud_load == false)
                         {
                             if (should_warn == true && feedback_stream)
-                                feedback_stream->Printf("warning: the debug info scripting resource for '%s' was not loaded for security reasons. to override, set the \"target.load-script-from-symbol-file\" setting to true or manually run \"command script import %s\"\n",GetFileSpec().GetFileNameStrippingExtension().GetCString(),scripting_fspec.GetPath().c_str());
+                                feedback_stream->Printf("warning: the debug info scripting resource for '%s' was not loaded for security reasons. To override, set the \"target.load-script-from-symbol-file\" setting to true or manually run \"command script import %s\"\n",GetFileSpec().GetFileNameStrippingExtension().GetCString(),scripting_fspec.GetPath().c_str());
                             return false;
                         }
                         StreamString scripting_stream;
