@@ -18,7 +18,6 @@
 #include "DNBBreakpoint.h"
 #include "DNBError.h"
 #include "DNBThreadResumeActions.h"
-//#include "MachDYLD.h"
 #include "MachException.h"
 #include "MachVMMemory.h"
 #include "MachTask.h"
@@ -179,7 +178,7 @@ public:
     nub_thread_t            GetCurrentThreadMachPort ();
     nub_thread_t            SetCurrentThread (nub_thread_t tid);
     MachThreadList &        GetThreadList() { return m_thread_list; }
-    bool                    GetThreadStoppedReason(nub_thread_t tid, struct DNBThreadStopInfo *stop_info) const;
+    bool                    GetThreadStoppedReason(nub_thread_t tid, struct DNBThreadStopInfo *stop_info);
     void                    DumpThreadStoppedReason(nub_thread_t tid) const;
     const char *            GetThreadInfo (nub_thread_t tid) const;
 
@@ -308,6 +307,7 @@ private:
     DNBCallbackCopyExecutableImageInfos
                                 m_image_infos_callback;
     void *                      m_image_infos_baton;
+    bool                        m_did_exec;
 };
 
 

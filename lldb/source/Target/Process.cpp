@@ -5583,10 +5583,14 @@ Process::DidExec ()
     m_dynamic_checkers_ap.reset();
     m_abi_sp.reset();
     m_os_ap.reset();
-    m_dyld_ap.reset();    
+    m_dyld_ap.reset();
     m_image_tokens.clear();
     m_allocated_memory_cache.Clear();
     m_language_runtimes.clear();
+    m_thread_list.DiscardThreadPlans();
+    m_thread_list.Clear();
+    m_thread_list_real.Clear();
+    m_memory_cache.Clear(true);
     DoDidExec();
     CompleteAttach ();
 }

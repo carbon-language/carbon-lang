@@ -1011,7 +1011,6 @@ ProcessGDBRemote::DoDidExec ()
     // The process exec'ed itself, figure out the dynamic loader, etc...
     BuildDynamicRegisterInfo (true);
     m_gdb_comm.ResetDiscoverableSettings();
-    DidLaunchOrAttach ();
 }
 
 
@@ -1350,7 +1349,20 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
     case 'T':
     case 'S':
         {
-            if (GetStopID() == 0)
+            // This is a bit of a hack, but is is required. If we did exec, we
+            // need to clear our thread lists and also know to rebuild our dynamic
+            // register info before we lookup and threads and populate the expedited
+            // register values so we need to know this right away so we can cleanup
+            // and update our registers.
+            const bool did_exec = stop_packet.GetStringRef().find(";reason:exec;") != std::string::npos;
+
+            if (did_exec)
+            {
+                m_thread_list_real.Clear();
+                m_thread_list.Clear();
+            }
+
+            if (GetStopID() == 0 || did_exec)
             {
                 // Our first stop, make sure we have a process ID, and also make
                 // sure we know about our registers
@@ -1552,9 +1564,14 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                             thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithException(*thread_sp, description.c_str()));
                             handled = true;
                         }
+                        else if (reason.compare("exec") == 0)
+                        {
+                            thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithExec(*thread_sp));
+                            handled = true;
+                        }
                     }
                     
-                    if (signo)
+                    if (signo && did_exec == false)
                     {
                         if (signo == SIGTRAP)
                         {

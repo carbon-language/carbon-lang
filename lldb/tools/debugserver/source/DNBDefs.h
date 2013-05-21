@@ -237,7 +237,8 @@ enum DNBThreadStopType
 {
     eStopTypeInvalid = 0,
     eStopTypeSignal,
-    eStopTypeException
+    eStopTypeException,
+    eStopTypeExec
 };
 
 enum DNBMemoryPermissions

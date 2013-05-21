@@ -101,7 +101,8 @@ MachProcess::MachProcess() :
     m_name_to_addr_callback(NULL),
     m_name_to_addr_baton(NULL),
     m_image_infos_callback(NULL),
-    m_image_infos_baton(NULL)
+    m_image_infos_baton(NULL),
+    m_did_exec (false)
 {
     DNBLogThreadedIf(LOG_PROCESS | LOG_VERBOSE, "%s", __PRETTY_FUNCTION__);
 }
@@ -199,9 +200,15 @@ MachProcess::SetCurrentThread(nub_thread_t tid)
 }
 
 bool
-MachProcess::GetThreadStoppedReason(nub_thread_t tid, struct DNBThreadStopInfo *stop_info) const
+MachProcess::GetThreadStoppedReason(nub_thread_t tid, struct DNBThreadStopInfo *stop_info)
 {
-    return m_thread_list.GetThreadStoppedReason(tid, stop_info);
+    if (m_thread_list.GetThreadStoppedReason(tid, stop_info))
+    {
+        if (m_did_exec)
+            stop_info->reason = eStopTypeExec;
+        return true;
+    }
+    return false;
 }
 
 void
@@ -833,6 +840,11 @@ MachProcess::DisableBreakpoint(nub_break_t breakID, bool remove)
     DNBBreakpoint *bp = m_breakpoints.FindByID (breakID);
     if (bp)
     {
+        // After "exec" we might end up with a bunch of breakpoints that were disabled
+        // manually, just ignore them
+        if (!bp->IsEnabled())
+            return true;
+
         nub_addr_t addr = bp->Address();
         DNBLogThreadedIf(LOG_BREAKPOINTS | LOG_VERBOSE, "MachProcess::DisableBreakpoint ( breakID = %d, remove = %d ) addr = 0x%8.8llx", breakID, remove, (uint64_t)addr);
 
@@ -1155,13 +1167,62 @@ MachProcess::ExceptionMessageBundleComplete()
     DNBLogThreadedIf(LOG_EXCEPTIONS, "%s: %llu exception messages.", __PRETTY_FUNCTION__, (uint64_t)m_exception_messages.size());
     if (!m_exception_messages.empty())
     {
+        m_did_exec = false;
+        // First check for any SIGTRAP and make sure we didn't exec
+        const task_t task = m_task.TaskPort();
+        size_t i;
+        if (m_pid != 0)
+        {
+            for (i=0; i<m_exception_messages.size(); ++i)
+            {
+                if (m_exception_messages[i].state.task_port == task)
+                {
+                    const int signo = m_exception_messages[i].state.SoftSignal();
+                    if (signo == SIGTRAP)
+                    {
+                        // SIGTRAP could mean that we exec'ed. We need to check the
+                        // dyld all_image_infos.infoArray to see if it is NULL and if
+                        // so, say that we exec'ed.
+                        const nub_addr_t aii_addr = GetDYLDAllImageInfosAddress();
+                        if (aii_addr != INVALID_NUB_ADDRESS)
+                        {
+                            const nub_addr_t info_array_count_addr = aii_addr + 4;
+                            uint32_t info_array_count = 0;
+                            if (m_task.ReadMemory(info_array_count_addr, 4, &info_array_count) == 4)
+                            {
+                                DNBLog ("info_array_count is 0x%x", info_array_count);
+                                if (info_array_count == 0)
+                                    m_did_exec = true;
+                            }
+                            else
+                            {
+                                DNBLog ("error: failed to read all_image_infos.infoArrayCount from 0x%8.8llx", info_array_count_addr);
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            if (m_did_exec)
+            {
+                cpu_type_t process_cpu_type = MachProcess::GetCPUTypeForLocalProcess (m_pid);
+                if (m_cpu_type != process_cpu_type)
+                {
+                    DNBLog ("arch changed from 0x%8.8x to 0x%8.8x", m_cpu_type, process_cpu_type);
+                    m_cpu_type = process_cpu_type;
+                    DNBArchProtocol::SetArchitecture (process_cpu_type);
+                }
+                m_thread_list.Clear();
+                m_breakpoints.DisableAll();
+            }
+        }
+
         // Let all threads recover from stopping and do any clean up based
         // on the previous thread state (if any).
         m_thread_list.ProcessDidStop(this);
 
         // Let each thread know of any exceptions
-        task_t task = m_task.TaskPort();
-        size_t i;
         for (i=0; i<m_exception_messages.size(); ++i)
         {
             // Let the thread list figure use the MachProcess to forward all exceptions
