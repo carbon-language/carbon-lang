@@ -27,4 +27,8 @@
 // RUN: echo __asan_report_store_n >> %t.interface
 // RUN: cat %t.interface | sort -u | diff %t.symbols -
 
+// FIXME: nm -D on powerpc somewhy shows ASan interface symbols residing
+// in "initialized data section".
+// XFAIL: powerpc-supported-arch
+
 int main() { return 0; }

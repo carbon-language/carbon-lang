@@ -8,6 +8,8 @@
 // RUN: %clangxx_asan -m64 -DBUILD_SO=1 -fPIC -shared %s -o %t.so -Wl,-Ttext=0x3600000000
 // RUN: %clangxx_asan -m64 %t.o %t.so -Wl,-R. -o %t
 // RUN: ASAN_OPTIONS=verbosity=1 %t 2>&1 | FileCheck %s
+
+// REQUIRES: x86_64-supported-target
 #if BUILD_SO
 int G;
 int *getG() {

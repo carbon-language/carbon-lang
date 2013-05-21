@@ -11,6 +11,9 @@
 // RUN: %clangxx_asan -m32 -O2 -fsanitize-address-zero-base-shadow -fPIE -pie %s -o %t && %t 2>&1 | %symbolize > %t.out
 // RUN: FileCheck %s < %t.out && FileCheck %s --check-prefix=CHECK-32 < %t.out
 
+// Zero-base shadow only works on x86_64 and i386.
+// REQUIRES: x86_64-supported-target,i386-supported-target
+
 #include <string.h>
 int main(int argc, char **argv) {
   char x[10];
