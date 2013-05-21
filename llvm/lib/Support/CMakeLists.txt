@@ -35,6 +35,7 @@ add_llvm_library(LLVMSupport
   ManagedStatic.cpp
   MemoryBuffer.cpp
   MemoryObject.cpp
+  MD5.cpp
   PluginLoader.cpp
   PrettyStackTrace.cpp
   Regex.cpp
