@@ -1566,6 +1566,16 @@ static void addEdgeToPath(PathPieces &path,
   PrevLoc = NewLoc;
 }
 
+/// A customized wrapper for CFGBlock::getTerminatorCondition()
+/// which returns the element for ObjCForCollectionStmts.
+static const Stmt *getTerminatorCondition(const CFGBlock *B) {
+  const Stmt *S = B->getTerminatorCondition();
+  if (const ObjCForCollectionStmt *FS =
+      dyn_cast_or_null<ObjCForCollectionStmt>(S))
+    return FS->getElement();
+  return S;
+}
+
 static bool
 GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
                                          PathDiagnosticBuilder &PDB,
@@ -1693,9 +1703,14 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
                                               N->getState().getPtr(), Ex,
                                               N->getLocationContext());
 
-        PathDiagnosticLocation L =
-          PathDiagnosticLocation(PS->getStmt(), SM, PDB.LC);
-        addEdgeToPath(PD.getActivePath(), PrevLoc, L, PDB.LC);
+        // Add an edge.  If this is an ObjCForCollectionStmt do
+        // not add an edge here as it appears in the CFG both
+        // as a terminator and as a terminator condition.
+        if (!isa<ObjCForCollectionStmt>(PS->getStmt())) {
+          PathDiagnosticLocation L =
+            PathDiagnosticLocation(PS->getStmt(), SM, PDB.LC);
+          addEdgeToPath(PD.getActivePath(), PrevLoc, L, PDB.LC);
+        }
         break;
       }
 
@@ -1722,6 +1737,10 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
             CS = dyn_cast<CompoundStmt>(FS->getBody());
           else if (const WhileStmt *WS = dyn_cast<WhileStmt>(Loop))
             CS = dyn_cast<CompoundStmt>(WS->getBody());
+          else if (const ObjCForCollectionStmt *OFS =
+                   dyn_cast<ObjCForCollectionStmt>(Loop)) {
+            CS = dyn_cast<CompoundStmt>(OFS->getBody());
+          }
 
           PathDiagnosticEventPiece *p =
             new PathDiagnosticEventPiece(L, "Looping back to the head "
@@ -1745,7 +1764,7 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
           // Are we jumping past the loop body without ever executing the
           // loop (because the condition was false)?
           if (isLoop(Term)) {
-            const Stmt *TermCond = BSrc->getTerminatorCondition();
+            const Stmt *TermCond = getTerminatorCondition(BSrc);
             bool IsInLoopBody =
               isInLoopBody(PM, getStmtBeforeCond(PM, TermCond, N), Term);
 
@@ -2048,6 +2067,25 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
       }
     }
 
+    // Optimize edges for ObjC fast-enumeration loops.
+    //
+    // (X -> collection) -> (collection -> element)
+    //
+    // becomes:
+    //
+    // (X -> element)
+    if (s1End == s2Start) {
+      const ObjCForCollectionStmt *FS =
+        dyn_cast_or_null<ObjCForCollectionStmt>(level3);
+      if (FS && FS->getCollection()->IgnoreParens() == s2Start &&
+          s2End == FS->getElement()) {
+        PieceI->setEndLocation(PieceNextI->getEndLocation());
+        path.erase(NextI);
+        hasChanges = true;
+        continue;
+      }
+    }
+
     // No changes at this index?  Move to the next one.
     ++I;
   }
@@ -2102,6 +2140,13 @@ static void adjustBranchEdges(PathPieces &pieces, LocationContextMap &LCM,
           Branch = IS;
         break;
       }
+      if (const ObjCForCollectionStmt *OFS =
+          dyn_cast<ObjCForCollectionStmt>(Parent)) {
+        if (OFS->getElement() == S)
+          Branch = OFS;
+        break;
+      }
+
       S = Parent;
     }
 
