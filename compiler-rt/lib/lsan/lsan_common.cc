@@ -20,8 +20,9 @@
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_stoptheworld.h"
 
-namespace __lsan {
 #if CAN_SANITIZE_LEAKS
+namespace __lsan {
+
 Flags lsan_flags;
 
 static void InitializeFlags() {
@@ -381,8 +382,6 @@ void LeakReport::PrintLargest(uptr max_leaks) {
            remaining > 1 ? "s" : "");
   }
 }
-#else  // CAN_SANITIZE_LEAKS
-void InitCommonLsan() {}
-void DoLeakCheck() {}
-#endif  // CAN_SANITIZE_LEAKS
+
 }  // namespace __lsan
+#endif  // CAN_SANITIZE_LEAKS
