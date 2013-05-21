@@ -1935,7 +1935,7 @@ _ACEOF
 
 
 cat >>confdefs.h <<\_ACEOF
-#define LLVM_VERSION_MINOR 3
+#define LLVM_VERSION_MINOR 4
 _ACEOF
 
 
