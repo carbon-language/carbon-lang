@@ -19,6 +19,7 @@
 #include "asan_mapping.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
+#include "lsan/lsan_common.h"
 
 namespace __asan {
 
@@ -243,5 +244,22 @@ AsanThread *FindThreadByStackAddress(uptr addr) {
                                                    (void *)addr));
   return tctx ? tctx->thread : 0;
 }
-
 }  // namespace __asan
+
+// --- Implementation of LSan-specific functions --- {{{1
+namespace __lsan {
+bool GetThreadRangesLocked(uptr os_id, uptr *stack_begin, uptr *stack_end,
+                           uptr *tls_begin, uptr *tls_end,
+                           uptr *cache_begin, uptr *cache_end) {
+  // FIXME: Stub.
+  return false;
+}
+
+void LockThreadRegistry() {
+  __asan::asanThreadRegistry().Lock();
+}
+
+void UnlockThreadRegistry() {
+  __asan::asanThreadRegistry().Unlock();
+}
+}  // namespace __lsan
