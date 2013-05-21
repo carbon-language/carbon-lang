@@ -1628,12 +1628,6 @@ TEST_F(FormatTest, PutEmptyBlocksIntoOneLine) {
 // Line break tests.
 //===----------------------------------------------------------------------===//
 
-TEST_F(FormatTest, FormatsFunctionDefinition) {
-  verifyFormat("void f(int a, int b, int c, int d, int e, int f, int g,"
-               " int h, int j, int f,\n"
-               "       int c, int ddddddddddddd) {}");
-}
-
 TEST_F(FormatTest, FormatsAwesomeMethodCall) {
   verifyFormat(
       "SomeLongMethodName(SomeReallyLongMethod(CallOtherReallyLongMethod(\n"
@@ -1914,6 +1908,30 @@ TEST_F(FormatTest, BreaksFunctionDeclarations) {
                "    bbbb bbbb);");
 }
 
+TEST_F(FormatTest, BreaksFunctionDeclarationsWithTrailingTokens) {
+  verifyFormat("void someLongFunction(int someLongParameter)\n"
+               "    const;",
+               getLLVMStyleWithColumns(45));
+
+  verifyFormat("void aaaaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+               "    LOCKS_EXCLUDED(aaaaaaaaaaaaa);");
+  verifyFormat("void aaaaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) const\n"
+               "    LOCKS_EXCLUDED(aaaaaaaaaaaaa);");
+  verifyFormat("void aaaaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) const\n"
+               "    LOCKS_EXCLUDED(aaaaaaaaaaaaa) {}");
+
+  verifyFormat(
+      "void aaaaaaaaaaaaaaaaaa()\n"
+      "    __attribute__((aaaaaaaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaaa,\n"
+      "                   aaaaaaaaaaaaaaaaaaaaaaaaa));");
+  verifyFormat("bool aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+               "    __attribute__((unused));");
+  verifyFormat(
+      "bool aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+      "    GUARDED_BY(aaaaaaaaaaaa);");
+}
+
+
 TEST_F(FormatTest, BreaksDesireably) {
   verifyFormat("if (aaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaa) ||\n"
                "    aaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaa) ||\n"
@@ -2049,24 +2067,6 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
       "    ->aaaaaaaaaaaaaaaa(\n"
       "          aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
       "    ->aaaaaaaaaaaaaaaaa();");
-}
-
-TEST_F(FormatTest, DoesNotBreakTrailingAnnotation) {
-  verifyFormat("void aaaaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
-               "    LOCKS_EXCLUDED(aaaaaaaaaaaaa);");
-  verifyFormat("void aaaaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) const\n"
-               "    LOCKS_EXCLUDED(aaaaaaaaaaaaa);");
-  verifyFormat("void aaaaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) const\n"
-               "    LOCKS_EXCLUDED(aaaaaaaaaaaaa) {}");
-  verifyFormat(
-      "void aaaaaaaaaaaaaaaaaa()\n"
-      "    __attribute__((aaaaaaaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaaa,\n"
-      "                   aaaaaaaaaaaaaaaaaaaaaaaaa));");
-  verifyFormat("bool aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
-               "    __attribute__((unused));");
-  verifyFormat(
-      "bool aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
-      "    GUARDED_BY(aaaaaaaaaaaa);");
 }
 
 TEST_F(FormatTest, BreaksAccordingToOperatorPrecedence) {

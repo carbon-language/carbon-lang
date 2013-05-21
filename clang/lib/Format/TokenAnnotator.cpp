@@ -1187,7 +1187,7 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
                       tok::kw_class, tok::kw_struct) ||
          Right.isOneOf(tok::lessless, tok::arrow, tok::period, tok::colon) ||
          (Left.is(tok::r_paren) && Left.Type != TT_CastRParen &&
-          Right.isOneOf(tok::identifier, tok::kw___attribute)) ||
+          Right.isOneOf(tok::identifier, tok::kw_const, tok::kw___attribute)) ||
          (Left.is(tok::l_paren) && !Right.is(tok::r_paren)) ||
          (Left.is(tok::l_square) && !Right.is(tok::r_square));
 }
