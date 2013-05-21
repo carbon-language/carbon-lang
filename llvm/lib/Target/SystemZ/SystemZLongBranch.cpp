@@ -320,15 +320,15 @@ void SystemZLongBranch::setWorstCaseAddresses() {
 void SystemZLongBranch::relaxBranch(TerminatorInfo &Terminator) {
   MachineInstr *Branch = Terminator.Branch;
   switch (Branch->getOpcode()) {
-    case SystemZ::J:
-      Branch->setDesc(TII->get(SystemZ::JG));
-      break;
-    case SystemZ::BRC:
-      Branch->setDesc(TII->get(SystemZ::BRCL));
-      break;
-    default:
-      llvm_unreachable("Unrecognized branch");
-    }
+  case SystemZ::J:
+    Branch->setDesc(TII->get(SystemZ::JG));
+    break;
+  case SystemZ::BRC:
+    Branch->setDesc(TII->get(SystemZ::BRCL));
+    break;
+  default:
+    llvm_unreachable("Unrecognized branch");
+  }
 
   Terminator.Size += Terminator.ExtraRelaxSize;
   Terminator.ExtraRelaxSize = 0;
