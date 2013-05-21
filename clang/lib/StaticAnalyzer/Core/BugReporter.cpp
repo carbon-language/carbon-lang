@@ -1950,6 +1950,18 @@ void PathPieces::dump() const {
   }
 }
 
+/// \brief Return true if X is contained by Y.
+static bool lexicalContains(ParentMap &PM,
+                            const Stmt *X,
+                            const Stmt *Y) {
+  while (X) {
+    if (X == Y)
+      return true;
+    X = PM.getParent(X);
+  }
+  return false;
+}
+
 static bool optimizeEdges(PathPieces &path, SourceManager &SM,
                           OptimizedCallsSet &OCS,
                           LocationContextMap &LCM) {
@@ -2058,10 +2070,40 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
     // to prevent this optimization.
     //
     if (s1End && s1End == s2Start && level2) {
-      if (isIncrementOrInitInForLoop(s1End, level2) ||
-          (isa<Expr>(s1End) && PM.isConsumedExpr(cast<Expr>(s1End)) &&
-            !isConditionForTerminator(level2, s1End)))
-      {
+      bool removeEdge = false;
+      // Remove edges into the increment or initialization of a
+      // loop that have no interleaving event.  This means that
+      // they aren't interesting.
+      if (isIncrementOrInitInForLoop(s1End, level2))
+        removeEdge = true;
+      // Next only consider edges that are not anchored on
+      // the condition of a terminator.  This are intermediate edges
+      // that we might want to trim.
+      else if (!isConditionForTerminator(level2, s1End)) {
+        // Trim edges on expressions that are consumed by
+        // the parent expression.
+        if (isa<Expr>(s1End) && PM.isConsumedExpr(cast<Expr>(s1End))) {
+          removeEdge = true;          
+        }
+        // Trim edges where a lexical containment doesn't exist.
+        // For example:
+        //
+        //  X -> Y -> Z
+        //
+        // If 'Z' lexically contains Y (it is an ancestor) and
+        // 'X' does not lexically contain Y (it is a descendant OR
+        // it has no lexical relationship at all) then trim.
+        //
+        // This can eliminate edges where we dive into a subexpression
+        // and then pop back out, etc.
+        else if (s1Start && s2End &&
+                 lexicalContains(PM, s2Start, s2End) &&
+                 !lexicalContains(PM, s1End, s1Start)) {
+          removeEdge = true;
+        }
+      }
+
+      if (removeEdge) {
         PieceI->setEndLocation(PieceNextI->getEndLocation());
         path.erase(NextI);
         hasChanges = true;
