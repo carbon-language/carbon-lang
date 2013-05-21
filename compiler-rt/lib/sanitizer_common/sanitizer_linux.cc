@@ -614,7 +614,11 @@ bool ThreadLister::GetDirectoryEntries() {
 }
 
 uptr GetPageSize() {
+#if defined(__x86_64__) || defined(__i386__)
   return EXEC_PAGESIZE;
+#else
+  return sysconf(_SC_PAGESIZE);  // EXEC_PAGESIZE may not be trustworthy.
+#endif
 }
 
 // Match full names of the form /path/to/base_name{-,.}*
