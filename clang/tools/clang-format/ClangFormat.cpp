@@ -77,6 +77,11 @@ static cl::opt<bool>
                cl::desc("Dump configuration options to stdout and exit.\n"
                         "Can be used with -style option."),
                cl::cat(ClangFormatCategory));
+static cl::opt<unsigned>
+    Cursor("cursor",
+           cl::desc("The position of the cursor when invoking clang-format from"
+                    " an editor integration"),
+           cl::init(0), cl::cat(ClangFormatCategory));
 
 static cl::list<std::string> FileNames(cl::Positional, cl::desc("[<file> ...]"),
                                        cl::cat(ClangFormatCategory));
@@ -221,6 +226,9 @@ static bool format(std::string FileName) {
       Rewrite.getEditBuffer(ID).write(FileStream);
       FileStream.flush();
     } else {
+      if (Cursor != 0)
+        outs() << "{ \"Cursor\": " << tooling::shiftedCodePosition(
+                                          Replaces, Cursor) << " }\n";
       Rewrite.getEditBuffer(ID).write(outs());
     }
   }

@@ -166,6 +166,19 @@ std::string applyAllReplacements(StringRef Code, Replacements &Replaces) {
   return Result;
 }
 
+unsigned shiftedCodePosition(const Replacements &Replaces, unsigned Position) {
+  unsigned NewPosition = Position;
+  for (Replacements::iterator I = Replaces.begin(), E = Replaces.end(); I != E;
+       ++I) {
+    if (I->getOffset() >= Position)
+      break;
+    if (I->getOffset() + I->getLength() > Position)
+      NewPosition += I->getOffset() + I->getLength() - Position;
+    NewPosition += I->getReplacementText().size() - I->getLength();
+  }
+  return NewPosition;
+}
+
 RefactoringTool::RefactoringTool(const CompilationDatabase &Compilations,
                                  ArrayRef<std::string> SourcePaths)
   : ClangTool(Compilations, SourcePaths) {}

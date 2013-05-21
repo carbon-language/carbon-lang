@@ -132,6 +132,10 @@ bool applyAllReplacements(Replacements &Replaces, Rewriter &Rewrite);
 /// replacements cannot be applied, this returns an empty \c string.
 std::string applyAllReplacements(StringRef Code, Replacements &Replaces);
 
+/// \brief Calculates how a code \p Position is shifted when \p Replaces are
+/// applied.
+unsigned shiftedCodePosition(const Replacements& Replaces, unsigned Position);
+
 /// \brief A tool to run refactorings.
 ///
 /// This is a refactoring specific version of \see ClangTool. FrontendActions
