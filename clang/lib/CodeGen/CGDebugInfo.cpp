@@ -658,15 +658,13 @@ llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
 
 llvm::DIType CGDebugInfo::getOrCreateStructPtrType(StringRef Name,
                                                    llvm::DIType &Cache) {
-    if (Cache.Verify())
-      return Cache;
-    Cache =
-      DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
-                                 Name, TheCU, getOrCreateMainFile(),
-                                 0);
-    unsigned Size = CGM.getContext().getTypeSize(CGM.getContext().VoidPtrTy);
-    Cache = DBuilder.createPointerType(Cache, Size);
+  if (Cache.Verify())
     return Cache;
+  Cache = DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type, Name,
+                                     TheCU, getOrCreateMainFile(), 0);
+  unsigned Size = CGM.getContext().getTypeSize(CGM.getContext().VoidPtrTy);
+  Cache = DBuilder.createPointerType(Cache, Size);
+  return Cache;
 }
 
 llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
