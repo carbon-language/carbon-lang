@@ -47,13 +47,6 @@ typedef enum InlineStrategy
     eInlineBreakpointsAlways
 } InlineStrategy;
     
-enum class LoadScriptFromSymFile : int64_t
-{
-    eDefault, // warn me if there is a script but don't load it
-    eNo, // do not load any scripts - fail silently
-    eYes // load all scripts
-};
-
 //----------------------------------------------------------------------
 // TargetProperties
 //----------------------------------------------------------------------
@@ -155,8 +148,11 @@ public:
     bool
     GetUseFastStepping() const;
     
-    LoadScriptFromSymFile
+    bool
     GetLoadScriptFromSymbolFile() const;
+    
+    bool
+    GetWarnForScriptInSymbolFile() const;
 
 };
 
@@ -737,9 +733,10 @@ public:
 
     bool
     LoadScriptingResources (std::list<Error>& errors,
+                            Stream* feedback_stream = NULL,
                             bool continue_on_error = true)
     {
-        return m_images.LoadScriptingResourcesInTarget(this,errors,continue_on_error);
+        return m_images.LoadScriptingResourcesInTarget(this,errors,feedback_stream,continue_on_error);
     }
     
     //------------------------------------------------------------------

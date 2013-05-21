@@ -984,11 +984,16 @@ static void
 LoadScriptingResourceForModule (const ModuleSP &module_sp, Target *target)
 {
     Error error;
-    if (module_sp && !module_sp->LoadScriptingResourceInTarget(target, error) && error.AsCString())
+    StreamString feedback_stream;
+    if (module_sp && !module_sp->LoadScriptingResourceInTarget(target, error, &feedback_stream))
     {
-        target->GetDebugger().GetOutputStream().Printf("unable to load scripting data for module %s - error reported was %s\n",
-                                                       module_sp->GetFileSpec().GetFileNameStrippingExtension().GetCString(),
-                                                       error.AsCString());
+        if (error.AsCString())
+            target->GetDebugger().GetErrorStream().Printf("unable to load scripting data for module %s - error reported was %s\n",
+                                                           module_sp->GetFileSpec().GetFileNameStrippingExtension().GetCString(),
+                                                           error.AsCString());
+        if (feedback_stream.GetSize())
+            target->GetDebugger().GetOutputStream().Printf("%s\n",
+                                                           feedback_stream.GetData());
     }
 }
 
@@ -2265,15 +2270,6 @@ g_x86_dis_flavor_value_types[] =
     { 0, NULL, NULL }
 };
 
-static OptionEnumValueElement
-g_load_script_from_sym_file_enums[] =
-{
-    {(int64_t)LoadScriptFromSymFile::eDefault, "default", "Don't load scripts but warn when they are found (default)"},
-    {(int64_t)LoadScriptFromSymFile::eNo, "no", "Don't load scripts"},
-    {(int64_t)LoadScriptFromSymFile::eYes, "yes", "Load scripts"},
-    { 0, NULL, NULL }
-};
-
 static PropertyDefinition
 g_properties[] =
 {
@@ -2310,7 +2306,8 @@ g_properties[] =
     // FIXME: This is the wrong way to do per-architecture settings, but we don't have a general per architecture settings system in place yet.
     { "x86-disassembly-flavor"             , OptionValue::eTypeEnum      , false, eX86DisFlavorDefault,       NULL, g_x86_dis_flavor_value_types, "The default disassembly flavor to use for x86 or x86-64 targets." },
     { "use-fast-stepping"                  , OptionValue::eTypeBoolean   , false, true,                       NULL, NULL, "Use a fast stepping algorithm based on running from branch to branch rather than instruction single-stepping." },
-    { "load-script-from-symbol-file"       , OptionValue::eTypeEnum      , false, (int64_t)LoadScriptFromSymFile::eDefault, NULL, g_load_script_from_sym_file_enums, "Allow LLDB to load scripting resources embedded in symbol files when available." },
+    { "load-script-from-symbol-file"       , OptionValue::eTypeBoolean   , false, false,                      NULL, NULL, "Allow LLDB to load scripting resources embedded in symbol files when available." },
+    { "warn-on-script-from-symbol-file"    , OptionValue::eTypeBoolean   , false, true,                       NULL, NULL, "Tell me about scripting resources embedded in symbol files when available." },
     { NULL                                 , OptionValue::eTypeInvalid   , false, 0                         , NULL, NULL, NULL }
 };
 enum
@@ -2337,7 +2334,8 @@ enum
     ePropertyInlineStrategy,
     ePropertyDisassemblyFlavor,
     ePropertyUseFastStepping,
-    ePropertyLoadScriptFromSymbolFile
+    ePropertyLoadScriptFromSymbolFile,
+    ePropertyWarnForScriptFromSymbolFile
 };
 
 
@@ -2690,11 +2688,18 @@ TargetProperties::GetUseFastStepping () const
     return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
 }
 
-LoadScriptFromSymFile
+bool
 TargetProperties::GetLoadScriptFromSymbolFile () const
 {
     const uint32_t idx = ePropertyLoadScriptFromSymbolFile;
-    return (LoadScriptFromSymFile)m_collection_sp->GetPropertyAtIndexAsEnumeration (NULL, idx, g_properties[idx].default_uint_value);
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+}
+
+bool
+TargetProperties::GetWarnForScriptInSymbolFile() const
+{
+    const uint32_t idx = ePropertyWarnForScriptFromSymbolFile;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
 }
 
 const TargetPropertiesSP &

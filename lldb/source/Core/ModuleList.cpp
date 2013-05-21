@@ -1011,6 +1011,7 @@ ModuleList::RemoveSharedModuleIfOrphaned (const Module *module_ptr)
 bool
 ModuleList::LoadScriptingResourcesInTarget (Target *target,
                                             std::list<Error>& errors,
+                                            Stream *feedback_stream,
                                             bool continue_on_error)
 {
     if (!target)
@@ -1021,16 +1022,18 @@ ModuleList::LoadScriptingResourcesInTarget (Target *target,
         Error error;
         if (module)
         {
-            module->LoadScriptingResourceInTarget(target, error);
-            if (error.Fail() && error.AsCString())
+            if (!module->LoadScriptingResourceInTarget(target, error, feedback_stream))
             {
-                error.SetErrorStringWithFormat("unable to load scripting data for module %s - error reported was %s",
-                                               module->GetFileSpec().GetFileNameStrippingExtension().GetCString(),
-                                               error.AsCString());
-                errors.push_back(error);
+                if (error.Fail() && error.AsCString())
+                {
+                    error.SetErrorStringWithFormat("unable to load scripting data for module %s - error reported was %s",
+                                                   module->GetFileSpec().GetFileNameStrippingExtension().GetCString(),
+                                                   error.AsCString());
+                    errors.push_back(error);
+                }
+                if (!continue_on_error)
+                    return false;
             }
-            if (!continue_on_error)
-                return false;
         }
     }
     return errors.size() == 0;

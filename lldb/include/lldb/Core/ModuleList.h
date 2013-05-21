@@ -488,6 +488,7 @@ public:
     bool
     LoadScriptingResourcesInTarget (Target *target,
                                     std::list<Error>& errors,
+                                    Stream* feedback_stream = NULL,
                                     bool continue_on_error = true);
     
     static bool

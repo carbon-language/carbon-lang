@@ -173,7 +173,7 @@ Debugger::SetPropertyValue (const ExecutionContext *exe_ctx,
 {
     bool is_load_script = strcmp(property_path,"target.load-script-from-symbol-file") == 0;
     TargetSP target_sp;
-    LoadScriptFromSymFile load_script_old_value;
+    bool load_script_old_value;
     if (is_load_script && exe_ctx->GetTargetSP())
     {
         target_sp = exe_ctx->GetTargetSP();
@@ -189,17 +189,20 @@ Debugger::SetPropertyValue (const ExecutionContext *exe_ctx,
             EventSP prompt_change_event_sp (new Event(CommandInterpreter::eBroadcastBitResetPrompt, new EventDataBytes (new_prompt)));
             GetCommandInterpreter().BroadcastEvent (prompt_change_event_sp);
         }
-        else if (is_load_script && target_sp && load_script_old_value == LoadScriptFromSymFile::eDefault)
+        else if (is_load_script && target_sp && load_script_old_value == false)
         {
-            if (target_sp->TargetProperties::GetLoadScriptFromSymbolFile() == LoadScriptFromSymFile::eYes)
+            if (target_sp->TargetProperties::GetLoadScriptFromSymbolFile() == true)
             {
                 std::list<Error> errors;
-                if (!target_sp->LoadScriptingResources(errors))
+                StreamString feedback_stream;
+                if (!target_sp->LoadScriptingResources(errors,&feedback_stream))
                 {
                     for (auto error : errors)
                     {
-                        GetErrorStream().Printf("unable to autoload scripting data: %s\n",error.AsCString());
+                        GetErrorStream().Printf("%s\n",error.AsCString());
                     }
+                    if (feedback_stream.GetSize())
+                        GetErrorStream().Printf("%s",feedback_stream.GetData());
                 }
             }
         }
