@@ -9,6 +9,9 @@
 
 // Do not test with optimization -- the error may be optimized away.
 
+// FIXME: https://code.google.com/p/address-sanitizer/issues/detail?id=186
+// XFAIL: darwin
+
 #include <cstdio>
 
 // The structure of the test is:
