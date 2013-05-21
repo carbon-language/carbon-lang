@@ -155,9 +155,12 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
     // First module is the binary itself.
     uptr module_name_len = internal_readlink(
         "/proc/self/exe", module_name.data(), module_name.size());
-    if (internal_iserror(module_name_len)) {
+    int readlink_error;
+    if (internal_iserror(module_name_len, &readlink_error)) {
       // We can't read /proc/self/exe for some reason, assume the name of the
       // binary is unknown.
+      Report("WARNING: readlink(\"/proc/self/exe\") failed with errno %d, some "
+             "stack frames may not be symbolized\n", readlink_error);
       module_name_len = internal_snprintf(module_name.data(),
                                           module_name.size(), "/proc/self/exe");
     }
