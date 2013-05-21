@@ -17,15 +17,9 @@ clang++ ../sanitizer_common/sanitizer_*.cc ../interception/interception_*.cc \
  -o lsan.so
 LD_PRELOAD=./lsan.so /your/app
 */
-#include "lsan_common.h"
 #include "lsan.h"
 
 __attribute__((constructor))
 void constructor() {
   __lsan::Init();
-}
-
-__attribute__((destructor))
-void destructor() {
-  __lsan::DoLeakCheck();
 }

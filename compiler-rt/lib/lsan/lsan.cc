@@ -56,6 +56,11 @@ void Init() {
       external_symbolizer[0]) {
     InitializeExternalSymbolizer(external_symbolizer);
   }
+
+#if CAN_SANITIZE_LEAKS
+  __lsan::InitCommonLsan();
+    Atexit(__lsan::DoLeakCheck);
+#endif
 }
 
 }  // namespace __lsan

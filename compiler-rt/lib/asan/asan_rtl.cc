@@ -465,12 +465,6 @@ void __asan_init() {
     Atexit(asan_atexit);
   }
 
-#if CAN_SANITIZE_LEAKS
-  if (flags()->detect_leaks) {
-    Atexit(__lsan::DoLeakCheck);
-  }
-#endif
-
   // interceptors
   InitializeAsanInterceptors();
 
@@ -550,11 +544,14 @@ void __asan_init() {
   main_thread->ThreadStart(internal_getpid());
   force_interface_symbols();  // no-op.
 
+  InitializeAllocator();
+
 #if CAN_SANITIZE_LEAKS
   __lsan::InitCommonLsan();
+  if (flags()->detect_leaks) {
+    Atexit(__lsan::DoLeakCheck);
+  }
 #endif
-
-  InitializeAllocator();
 
   if (flags()->verbosity) {
     Report("AddressSanitizer Init done\n");
