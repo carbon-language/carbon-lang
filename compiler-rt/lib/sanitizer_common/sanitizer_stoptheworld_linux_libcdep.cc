@@ -1,4 +1,4 @@
-//===-- sanitizer_stoptheworld_linux.cc -----------------------------------===//
+//===-- sanitizer_stoptheworld_linux_libcdep.cc ---------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
