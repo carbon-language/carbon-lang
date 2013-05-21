@@ -1,6 +1,3 @@
-// RUN: %clangxx_asan -m32 -O2 %s -o %t
-// RUN: ASAN_OPTIONS=fast_unwind_on_malloc=1 %t 2>&1 | %symbolize | FileCheck %s --check-prefix=CHECK-FAST
-// RUN: ASAN_OPTIONS=fast_unwind_on_malloc=0 %t 2>&1 | %symbolize | FileCheck %s --check-prefix=CHECK-SLOW
 // RUN: %clangxx_asan -m64 -O2 %s -o %t
 // RUN: ASAN_OPTIONS=fast_unwind_on_malloc=1 %t 2>&1 | %symbolize | FileCheck %s --check-prefix=CHECK-FAST
 // RUN: ASAN_OPTIONS=fast_unwind_on_malloc=0 %t 2>&1 | %symbolize | FileCheck %s --check-prefix=CHECK-SLOW
@@ -10,7 +7,7 @@
 // https://code.google.com/p/address-sanitizer/issues/detail?id=137
 
 // Fast unwinder is only avaliable on x86_64 and i386.
-// REQUIRES: x86_64-supported-target,i386-supported-target
+// REQUIRES: x86_64-supported-target
 
 #include <stdlib.h>
 #include <stdio.h>
