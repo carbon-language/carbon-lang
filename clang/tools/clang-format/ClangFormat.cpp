@@ -226,7 +226,7 @@ static bool format(std::string FileName) {
       Rewrite.getEditBuffer(ID).write(FileStream);
       FileStream.flush();
     } else {
-      if (Cursor != 0)
+      if (Cursor.getNumOccurrences() != 0)
         outs() << "{ \"Cursor\": " << tooling::shiftedCodePosition(
                                           Replaces, Cursor) << " }\n";
       Rewrite.getEditBuffer(ID).write(outs());
