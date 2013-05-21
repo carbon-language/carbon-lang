@@ -24,6 +24,7 @@
 #include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
+#include "lsan/lsan_common.h"
 
 namespace __asan {
 
@@ -124,6 +125,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->use_stack_depot, "use_stack_depot");
   ParseFlag(str, &f->strict_memcmp, "strict_memcmp");
   ParseFlag(str, &f->strict_init_order, "strict_init_order");
+  ParseFlag(str, &f->detect_leaks, "detect_leaks");
 }
 
 void InitializeFlags(Flags *f, const char *env) {
@@ -171,6 +173,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->use_stack_depot = true;
   f->strict_memcmp = true;
   f->strict_init_order = false;
+  f->detect_leaks = false;
 
   // Override from compile definition.
   ParseFlagsFromString(f, MaybeUseAsanDefaultOptionsCompileDefiniton());
@@ -184,6 +187,20 @@ void InitializeFlags(Flags *f, const char *env) {
 
   // Override from command line.
   ParseFlagsFromString(f, env);
+
+#if !CAN_SANITIZE_LEAKS
+  if (f->detect_leaks) {
+    Report("%s: detect_leaks is not supported on this platform.\n",
+           SanitizerToolName);
+    f->detect_leaks = false;
+  }
+#endif
+
+  if (f->detect_leaks && !f->use_stack_depot) {
+    Report("%s: detect_leaks is ignored (requires use_stack_depot).\n",
+           SanitizerToolName);
+    f->detect_leaks = false;
+  }
 }
 
 // -------------------------- Globals --------------------- {{{1
@@ -448,6 +465,10 @@ void __asan_init() {
     Atexit(asan_atexit);
   }
 
+  if (flags()->detect_leaks) {
+    Atexit(__lsan::DoLeakCheck);
+  }
+
   // interceptors
   InitializeAsanInterceptors();
 
@@ -526,6 +547,8 @@ void __asan_init() {
   SetCurrentThread(main_thread);
   main_thread->ThreadStart(internal_getpid());
   force_interface_symbols();  // no-op.
+
+  __lsan::InitCommonLsan();
 
   InitializeAllocator();
 
