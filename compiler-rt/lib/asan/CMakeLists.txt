@@ -92,6 +92,8 @@ else()
   endforeach()
 endif()
 
+add_compiler_rt_resource_file(asan_blacklist asan_blacklist.txt)
+
 if(LLVM_INCLUDE_TESTS)
   add_subdirectory(tests)
 endif()
