@@ -1243,8 +1243,7 @@ Module::LoadScriptingResourceInTarget (Target *target, Error& error, Stream* fee
         return false;
     }
     
-    bool shoud_load = target->TargetProperties::GetLoadScriptFromSymbolFile();
-    bool should_warn = target->TargetProperties::GetWarnForScriptInSymbolFile();
+    LoadScriptFromSymFile shoud_load = target->TargetProperties::GetLoadScriptFromSymbolFile();
     
     Debugger &debugger = target->GetDebugger();
     const ScriptLanguage script_language = debugger.GetScriptLanguage();
@@ -1274,10 +1273,13 @@ Module::LoadScriptingResourceInTarget (Target *target, Error& error, Stream* fee
                     FileSpec scripting_fspec (file_specs.GetFileSpecAtIndex(i));
                     if (scripting_fspec && scripting_fspec.Exists())
                     {
-                        if (shoud_load == false)
+                        if (shoud_load == eLoadScriptFromSymFileFalse)
+                            return false;
+                        if (shoud_load == eLoadScriptFromSymFileWarn)
                         {
-                            if (should_warn == true && feedback_stream)
-                                feedback_stream->Printf("warning: the debug info scripting resource for '%s' was not loaded for security reasons. To override, set the \"target.load-script-from-symbol-file\" setting to true or manually run \"command script import %s\"\n",GetFileSpec().GetFileNameStrippingExtension().GetCString(),scripting_fspec.GetPath().c_str());
+                            if (feedback_stream)
+                                feedback_stream->Printf("warning: '%s' contains a debug script. To run this script in this debug session:\n\n    command script import \"%s\"\n\nTo run all discovered debug scripts in this session:\n\n    settings set target.load-script-from-symbol-file true"
+                                                        ,GetFileSpec().GetFileNameStrippingExtension().GetCString(),scripting_fspec.GetPath().c_str());
                             return false;
                         }
                         StreamString scripting_stream;

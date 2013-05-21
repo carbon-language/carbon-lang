@@ -173,7 +173,7 @@ Debugger::SetPropertyValue (const ExecutionContext *exe_ctx,
 {
     bool is_load_script = strcmp(property_path,"target.load-script-from-symbol-file") == 0;
     TargetSP target_sp;
-    bool load_script_old_value;
+    LoadScriptFromSymFile load_script_old_value;
     if (is_load_script && exe_ctx->GetTargetSP())
     {
         target_sp = exe_ctx->GetTargetSP();
@@ -189,9 +189,9 @@ Debugger::SetPropertyValue (const ExecutionContext *exe_ctx,
             EventSP prompt_change_event_sp (new Event(CommandInterpreter::eBroadcastBitResetPrompt, new EventDataBytes (new_prompt)));
             GetCommandInterpreter().BroadcastEvent (prompt_change_event_sp);
         }
-        else if (is_load_script && target_sp && load_script_old_value == false)
+        else if (is_load_script && target_sp && load_script_old_value == eLoadScriptFromSymFileWarn)
         {
-            if (target_sp->TargetProperties::GetLoadScriptFromSymbolFile() == true)
+            if (target_sp->TargetProperties::GetLoadScriptFromSymbolFile() == eLoadScriptFromSymFileTrue)
             {
                 std::list<Error> errors;
                 StreamString feedback_stream;

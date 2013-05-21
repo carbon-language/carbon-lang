@@ -2270,6 +2270,15 @@ g_x86_dis_flavor_value_types[] =
     { 0, NULL, NULL }
 };
 
+static OptionEnumValueElement
+g_load_script_from_sym_file_values[] =
+{
+    { eLoadScriptFromSymFileTrue,    "true",    "Load debug scripts inside symbol files"},
+    { eLoadScriptFromSymFileFalse,   "false",   "Do not load debug scripts inside symbol files."},
+    { eLoadScriptFromSymFileWarn,    "warn",    "Warn about debug scripts inside symbol files but do not load them."},
+    { 0, NULL, NULL }
+};
+
 static PropertyDefinition
 g_properties[] =
 {
@@ -2306,8 +2315,7 @@ g_properties[] =
     // FIXME: This is the wrong way to do per-architecture settings, but we don't have a general per architecture settings system in place yet.
     { "x86-disassembly-flavor"             , OptionValue::eTypeEnum      , false, eX86DisFlavorDefault,       NULL, g_x86_dis_flavor_value_types, "The default disassembly flavor to use for x86 or x86-64 targets." },
     { "use-fast-stepping"                  , OptionValue::eTypeBoolean   , false, true,                       NULL, NULL, "Use a fast stepping algorithm based on running from branch to branch rather than instruction single-stepping." },
-    { "load-script-from-symbol-file"       , OptionValue::eTypeBoolean   , false, false,                      NULL, NULL, "Allow LLDB to load scripting resources embedded in symbol files when available." },
-    { "warn-on-script-from-symbol-file"    , OptionValue::eTypeBoolean   , false, true,                       NULL, NULL, "Tell me about scripting resources embedded in symbol files when available." },
+    { "load-script-from-symbol-file"       , OptionValue::eTypeEnum   ,    false, eLoadScriptFromSymFileWarn, NULL, g_load_script_from_sym_file_values, "Allow LLDB to load scripting resources embedded in symbol files when available." },
     { NULL                                 , OptionValue::eTypeInvalid   , false, 0                         , NULL, NULL, NULL }
 };
 enum
@@ -2335,7 +2343,6 @@ enum
     ePropertyDisassemblyFlavor,
     ePropertyUseFastStepping,
     ePropertyLoadScriptFromSymbolFile,
-    ePropertyWarnForScriptFromSymbolFile
 };
 
 
@@ -2688,18 +2695,11 @@ TargetProperties::GetUseFastStepping () const
     return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
 }
 
-bool
+LoadScriptFromSymFile
 TargetProperties::GetLoadScriptFromSymbolFile () const
 {
     const uint32_t idx = ePropertyLoadScriptFromSymbolFile;
-    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
-}
-
-bool
-TargetProperties::GetWarnForScriptInSymbolFile() const
-{
-    const uint32_t idx = ePropertyWarnForScriptFromSymbolFile;
-    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+    return (LoadScriptFromSymFile)m_collection_sp->GetPropertyAtIndexAsEnumeration(NULL, idx, g_properties[idx].default_uint_value);
 }
 
 const TargetPropertiesSP &

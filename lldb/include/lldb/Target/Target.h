@@ -47,6 +47,13 @@ typedef enum InlineStrategy
     eInlineBreakpointsAlways
 } InlineStrategy;
     
+typedef enum LoadScriptFromSymFile
+{
+    eLoadScriptFromSymFileTrue,
+    eLoadScriptFromSymFileFalse,
+    eLoadScriptFromSymFileWarn
+} LoadScriptFromSymFile;
+    
 //----------------------------------------------------------------------
 // TargetProperties
 //----------------------------------------------------------------------
@@ -148,12 +155,9 @@ public:
     bool
     GetUseFastStepping() const;
     
-    bool
+    LoadScriptFromSymFile
     GetLoadScriptFromSymbolFile() const;
     
-    bool
-    GetWarnForScriptInSymbolFile() const;
-
 };
 
 typedef std::shared_ptr<TargetProperties> TargetPropertiesSP;
