@@ -825,8 +825,6 @@ def err_omp_unknown_directive : Error <
   "expected an OpenMP directive">;
 def err_omp_unexpected_directive : Error <
   "unexpected OpenMP directive '#pragma omp %0'">;
-def err_omp_expected_var : Error <
-  "expected '#pragma omp %0' argument to be a variable name">;
 } // end of Parse Issue category.
 
 let CategoryName = "Modules Issue" in {
