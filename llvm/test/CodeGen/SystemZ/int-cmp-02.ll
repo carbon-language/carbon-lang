@@ -6,7 +6,7 @@
 define double @f1(double %a, double %b, i32 %i1, i32 %i2) {
 ; CHECK: f1:
 ; CHECK: cr %r2, %r3
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp slt i32 %i1, %i2
@@ -18,7 +18,7 @@ define double @f1(double %a, double %b, i32 %i1, i32 %i2) {
 define double @f2(double %a, double %b, i32 %i1, i32 *%ptr) {
 ; CHECK: f2:
 ; CHECK: c %r2, 0(%r3)
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %i2 = load i32 *%ptr
@@ -31,7 +31,7 @@ define double @f2(double %a, double %b, i32 %i1, i32 *%ptr) {
 define double @f3(double %a, double %b, i32 %i1, i32 *%base) {
 ; CHECK: f3:
 ; CHECK: c %r2, 4092(%r3)
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%base, i64 1023
@@ -45,7 +45,7 @@ define double @f3(double %a, double %b, i32 %i1, i32 *%base) {
 define double @f4(double %a, double %b, i32 %i1, i32 *%base) {
 ; CHECK: f4:
 ; CHECK: cy %r2, 4096(%r3)
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%base, i64 1024
@@ -59,7 +59,7 @@ define double @f4(double %a, double %b, i32 %i1, i32 *%base) {
 define double @f5(double %a, double %b, i32 %i1, i32 *%base) {
 ; CHECK: f5:
 ; CHECK: cy %r2, 524284(%r3)
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%base, i64 131071
@@ -75,7 +75,7 @@ define double @f6(double %a, double %b, i32 %i1, i32 *%base) {
 ; CHECK: f6:
 ; CHECK: agfi %r3, 524288
 ; CHECK: c %r2, 0(%r3)
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%base, i64 131072
@@ -89,7 +89,7 @@ define double @f6(double %a, double %b, i32 %i1, i32 *%base) {
 define double @f7(double %a, double %b, i32 %i1, i32 *%base) {
 ; CHECK: f7:
 ; CHECK: cy %r2, -4(%r3)
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%base, i64 -1
@@ -103,7 +103,7 @@ define double @f7(double %a, double %b, i32 %i1, i32 *%base) {
 define double @f8(double %a, double %b, i32 %i1, i32 *%base) {
 ; CHECK: f8:
 ; CHECK: cy %r2, -524288(%r3)
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%base, i64 -131072
@@ -119,7 +119,7 @@ define double @f9(double %a, double %b, i32 %i1, i32 *%base) {
 ; CHECK: f9:
 ; CHECK: agfi %r3, -524292
 ; CHECK: c %r2, 0(%r3)
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%base, i64 -131073
@@ -133,7 +133,7 @@ define double @f9(double %a, double %b, i32 %i1, i32 *%base) {
 define double @f10(double %a, double %b, i32 %i1, i64 %base, i64 %index) {
 ; CHECK: f10:
 ; CHECK: c %r2, 4092({{%r4,%r3|%r3,%r4}})
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %add1 = add i64 %base, %index
@@ -149,7 +149,7 @@ define double @f10(double %a, double %b, i32 %i1, i64 %base, i64 %index) {
 define double @f11(double %a, double %b, i32 %i1, i64 %base, i64 %index) {
 ; CHECK: f11:
 ; CHECK: cy %r2, 4096({{%r4,%r3|%r3,%r4}})
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %add1 = add i64 %base, %index

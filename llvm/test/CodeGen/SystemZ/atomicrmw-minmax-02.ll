@@ -20,12 +20,12 @@ define i16 @f1(i16 *%src, i16 %b) {
 ; CHECK: [[LOOP:\.[^:]*]]:
 ; CHECK: rll [[ROT:%r[0-9]+]], [[OLD]], 0([[SHIFT]])
 ; CHECK: cr [[ROT]], %r3
-; CHECK: j{{g?}}le [[KEEP:\..*]]
+; CHECK: jle [[KEEP:\..*]]
 ; CHECK: risbg [[ROT]], %r3, 32, 47, 0
 ; CHECK: [[KEEP]]:
 ; CHECK: rll [[NEW:%r[0-9]+]], [[ROT]], 0({{%r[1-9]+}})
 ; CHECK: cs [[OLD]], [[NEW]], 0(%r2)
-; CHECK: j{{g?}}lh [[LOOP]]
+; CHECK: jlh [[LOOP]]
 ; CHECK: rll %r2, [[OLD]], 16([[SHIFT]])
 ; CHECK: br %r14
 ;
@@ -57,12 +57,12 @@ define i16 @f2(i16 *%src, i16 %b) {
 ; CHECK: [[LOOP:\.[^:]*]]:
 ; CHECK: rll [[ROT:%r[0-9]+]], [[OLD]], 0([[SHIFT]])
 ; CHECK: cr [[ROT]], %r3
-; CHECK: j{{g?}}he [[KEEP:\..*]]
+; CHECK: jhe [[KEEP:\..*]]
 ; CHECK: risbg [[ROT]], %r3, 32, 47, 0
 ; CHECK: [[KEEP]]:
 ; CHECK: rll [[NEW:%r[0-9]+]], [[ROT]], 0({{%r[1-9]+}})
 ; CHECK: cs [[OLD]], [[NEW]], 0(%r2)
-; CHECK: j{{g?}}lh [[LOOP]]
+; CHECK: jlh [[LOOP]]
 ; CHECK: rll %r2, [[OLD]], 16([[SHIFT]])
 ; CHECK: br %r14
 ;
@@ -94,12 +94,12 @@ define i16 @f3(i16 *%src, i16 %b) {
 ; CHECK: [[LOOP:\.[^:]*]]:
 ; CHECK: rll [[ROT:%r[0-9]+]], [[OLD]], 0([[SHIFT]])
 ; CHECK: clr [[ROT]], %r3
-; CHECK: j{{g?}}le [[KEEP:\..*]]
+; CHECK: jle [[KEEP:\..*]]
 ; CHECK: risbg [[ROT]], %r3, 32, 47, 0
 ; CHECK: [[KEEP]]:
 ; CHECK: rll [[NEW:%r[0-9]+]], [[ROT]], 0({{%r[1-9]+}})
 ; CHECK: cs [[OLD]], [[NEW]], 0(%r2)
-; CHECK: j{{g?}}lh [[LOOP]]
+; CHECK: jlh [[LOOP]]
 ; CHECK: rll %r2, [[OLD]], 16([[SHIFT]])
 ; CHECK: br %r14
 ;
@@ -131,12 +131,12 @@ define i16 @f4(i16 *%src, i16 %b) {
 ; CHECK: [[LOOP:\.[^:]*]]:
 ; CHECK: rll [[ROT:%r[0-9]+]], [[OLD]], 0([[SHIFT]])
 ; CHECK: clr [[ROT]], %r3
-; CHECK: j{{g?}}he [[KEEP:\..*]]
+; CHECK: jhe [[KEEP:\..*]]
 ; CHECK: risbg [[ROT]], %r3, 32, 47, 0
 ; CHECK: [[KEEP]]:
 ; CHECK: rll [[NEW:%r[0-9]+]], [[ROT]], 0({{%r[1-9]+}})
 ; CHECK: cs [[OLD]], [[NEW]], 0(%r2)
-; CHECK: j{{g?}}lh [[LOOP]]
+; CHECK: jlh [[LOOP]]
 ; CHECK: rll %r2, [[OLD]], 16([[SHIFT]])
 ; CHECK: br %r14
 ;

@@ -9,7 +9,7 @@
 define i32 @f1(i32 %src1) {
 ; CHECK: f1:
 ; CHECK: crl %r2, g
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: br %r14
 entry:
   %src2 = load i32 *@g
@@ -27,7 +27,7 @@ exit:
 define i32 @f2(i32 %src1) {
 ; CHECK: f2:
 ; CHECK: clrl %r2, g
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: br %r14
 entry:
   %src2 = load i32 *@g
@@ -45,7 +45,7 @@ exit:
 define i32 @f3(i32 %src1) {
 ; CHECK: f3:
 ; CHECK: c{{l?}}rl %r2, g
-; CHECK-NEXT: j{{g?}}e
+; CHECK-NEXT: je
 ; CHECK: br %r14
 entry:
   %src2 = load i32 *@g
@@ -63,7 +63,7 @@ exit:
 define i32 @f4(i32 %src1) {
 ; CHECK: f4:
 ; CHECK: c{{l?}}rl %r2, g
-; CHECK-NEXT: j{{g?}}lh
+; CHECK-NEXT: jlh
 ; CHECK: br %r14
 entry:
   %src2 = load i32 *@g

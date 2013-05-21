@@ -19,11 +19,11 @@ define i16 @f1(i16 %dummy, i16 *%src, i16 %cmp, i16 %swap) {
 ; CHECK-MAIN: rll %r2, [[OLD]], 16([[SHIFT]])
 ; CHECK-MAIN: risbg %r4, %r2, 32, 47, 0
 ; CHECK-MAIN: cr %r2, %r4
-; CHECK-MAIN: j{{g?}}lh [[EXIT:\.[^ ]*]]
+; CHECK-MAIN: jlh [[EXIT:\.[^ ]*]]
 ; CHECK-MAIN: risbg %r5, %r2, 32, 47, 0
 ; CHECK-MAIN: rll [[NEW:%r[0-9]+]], %r5, -16({{%r[1-9]+}})
 ; CHECK-MAIN: cs [[OLD]], [[NEW]], 0(%r3)
-; CHECK-MAIN: j{{g?}}lh [[LOOP]]
+; CHECK-MAIN: jlh [[LOOP]]
 ; CHECK-MAIN: [[EXIT]]:
 ; CHECK-MAIN-NOT: %r2
 ; CHECK-MAIN: br %r14

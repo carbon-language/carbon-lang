@@ -6,7 +6,7 @@
 define double @f1(double %a, double %b, i16 *%ptr) {
 ; CHECK: f1:
 ; CHECK: clhhsi 0(%r2), 0
-; CHECK-NEXT: j{{g?}}lh
+; CHECK-NEXT: jlh
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %val = load i16 *%ptr
@@ -19,7 +19,7 @@ define double @f1(double %a, double %b, i16 *%ptr) {
 define double @f2(double %a, double %b, i16 *%ptr) {
 ; CHECK: f2:
 ; CHECK: clhhsi 0(%r2), 65535
-; CHECK-NEXT: j{{g?}}lh
+; CHECK-NEXT: jlh
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %val = load i16 *%ptr
@@ -32,7 +32,7 @@ define double @f2(double %a, double %b, i16 *%ptr) {
 define double @f3(double %a, double %b, i16 *%ptr) {
 ; CHECK: f3:
 ; CHECK: clhhsi 0(%r2), 32768
-; CHECK-NEXT: j{{g?}}lh
+; CHECK-NEXT: jlh
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %val = load i16 *%ptr
@@ -45,7 +45,7 @@ define double @f3(double %a, double %b, i16 *%ptr) {
 define double @f4(double %a, double %b, i16 *%ptr) {
 ; CHECK: f4:
 ; CHECK: clhhsi 0(%r2), 32767
-; CHECK-NEXT: j{{g?}}lh
+; CHECK-NEXT: jlh
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %val = load i16 *%ptr

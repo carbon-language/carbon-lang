@@ -8,7 +8,7 @@
 define double @f1(double %a, double %b, i8 *%ptr) {
 ; CHECK: f1:
 ; CHECK: cli 0(%r2), 1
-; CHECK-NEXT: j{{g?}}h
+; CHECK-NEXT: jh
 ; CHECK: br %r14
   %val = load i8 *%ptr
   %ext = zext i8 %val to i64
@@ -22,7 +22,7 @@ define double @f1(double %a, double %b, i8 *%ptr) {
 define double @f2(double %a, double %b, i8 *%ptr) {
 ; CHECK: f2:
 ; CHECK: cli 0(%r2), 1
-; CHECK-NEXT: j{{g?}}h
+; CHECK-NEXT: jh
 ; CHECK: br %r14
   %val = load i8 *%ptr
   %ext = sext i8 %val to i64
@@ -36,7 +36,7 @@ define double @f2(double %a, double %b, i8 *%ptr) {
 define double @f3(double %a, double %b, i8 *%ptr) {
 ; CHECK: f3:
 ; CHECK: cli 0(%r2), 254
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: br %r14
   %val = load i8 *%ptr
   %ext = zext i8 %val to i64
@@ -50,7 +50,7 @@ define double @f3(double %a, double %b, i8 *%ptr) {
 define double @f4(double %a, double %b, i8 *%ptr) {
 ; CHECK: f4:
 ; CHECK: cli 0(%r2), 254
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: br %r14
   %val = load i8 *%ptr
   %ext = sext i8 %val to i64
@@ -105,7 +105,7 @@ define double @f7(double %a, double %b, i8 *%ptr) {
 define double @f8(double %a, double %b, i8 *%ptr) {
 ; CHECK: f8:
 ; CHECK: cli 0(%r2), 1
-; CHECK-NEXT: j{{g?}}h
+; CHECK-NEXT: jh
 ; CHECK: br %r14
   %val = load i8 *%ptr
   %ext = zext i8 %val to i64
@@ -132,7 +132,7 @@ define double @f9(double %a, double %b, i8 *%ptr) {
 define double @f10(double %a, double %b, i8 *%ptr) {
 ; CHECK: f10:
 ; CHECK: cli 0(%r2), 254
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: br %r14
   %val = load i8 *%ptr
   %ext = zext i8 %val to i64
@@ -171,7 +171,7 @@ define double @f12(double %a, double %b, i8 *%ptr) {
 define double @f13(double %a, double %b, i8 *%ptr) {
 ; CHECK: f13:
 ; CHECK: cli 0(%r2), 128
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: br %r14
   %val = load i8 *%ptr
   %ext = sext i8 %val to i64
@@ -184,7 +184,7 @@ define double @f13(double %a, double %b, i8 *%ptr) {
 define double @f14(double %a, double %b, i8 *%ptr) {
 ; CHECK: f14:
 ; CHECK: cli 0(%r2), 128
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: br %r14
   %val = load i8 *%ptr
   %ext = sext i8 %val to i64
@@ -197,7 +197,7 @@ define double @f14(double %a, double %b, i8 *%ptr) {
 define double @f15(double %a, double %b, i8 *%ptr) {
 ; CHECK: f15:
 ; CHECK: cli 0(%r2), 127
-; CHECK-NEXT: j{{g?}}h
+; CHECK-NEXT: jh
 ; CHECK: br %r14
   %val = load i8 *%ptr
   %ext = sext i8 %val to i64
@@ -210,7 +210,7 @@ define double @f15(double %a, double %b, i8 *%ptr) {
 define double @f16(double %a, double %b, i8 *%ptr) {
 ; CHECK: f16:
 ; CHECK: cli 0(%r2), 127
-; CHECK-NEXT: j{{g?}}h
+; CHECK-NEXT: jh
 ; CHECK: br %r14
   %val = load i8 *%ptr
   %ext = sext i8 %val to i64

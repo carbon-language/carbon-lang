@@ -9,10 +9,10 @@ define i32 @f1(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: [[LOOP:\.[^:]*]]:
 ; CHECK: cr %r2, %r4
 ; CHECK: lr [[NEW:%r[0-9]+]], %r2
-; CHECK: j{{g?}}le [[KEEP:\..*]]
+; CHECK: jle [[KEEP:\..*]]
 ; CHECK: lr [[NEW]], %r4
 ; CHECK: cs %r2, [[NEW]], 0(%r3)
-; CHECK: j{{g?}}lh [[LOOP]]
+; CHECK: jlh [[LOOP]]
 ; CHECK: br %r14
   %res = atomicrmw min i32 *%src, i32 %b seq_cst
   ret i32 %res
@@ -25,10 +25,10 @@ define i32 @f2(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: [[LOOP:\.[^:]*]]:
 ; CHECK: cr %r2, %r4
 ; CHECK: lr [[NEW:%r[0-9]+]], %r2
-; CHECK: j{{g?}}he [[KEEP:\..*]]
+; CHECK: jhe [[KEEP:\..*]]
 ; CHECK: lr [[NEW]], %r4
 ; CHECK: cs %r2, [[NEW]], 0(%r3)
-; CHECK: j{{g?}}lh [[LOOP]]
+; CHECK: jlh [[LOOP]]
 ; CHECK: br %r14
   %res = atomicrmw max i32 *%src, i32 %b seq_cst
   ret i32 %res
@@ -41,10 +41,10 @@ define i32 @f3(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: [[LOOP:\.[^:]*]]:
 ; CHECK: clr %r2, %r4
 ; CHECK: lr [[NEW:%r[0-9]+]], %r2
-; CHECK: j{{g?}}le [[KEEP:\..*]]
+; CHECK: jle [[KEEP:\..*]]
 ; CHECK: lr [[NEW]], %r4
 ; CHECK: cs %r2, [[NEW]], 0(%r3)
-; CHECK: j{{g?}}lh [[LOOP]]
+; CHECK: jlh [[LOOP]]
 ; CHECK: br %r14
   %res = atomicrmw umin i32 *%src, i32 %b seq_cst
   ret i32 %res
@@ -57,10 +57,10 @@ define i32 @f4(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: [[LOOP:\.[^:]*]]:
 ; CHECK: clr %r2, %r4
 ; CHECK: lr [[NEW:%r[0-9]+]], %r2
-; CHECK: j{{g?}}he [[KEEP:\..*]]
+; CHECK: jhe [[KEEP:\..*]]
 ; CHECK: lr [[NEW]], %r4
 ; CHECK: cs %r2, [[NEW]], 0(%r3)
-; CHECK: j{{g?}}lh [[LOOP]]
+; CHECK: jlh [[LOOP]]
 ; CHECK: br %r14
   %res = atomicrmw umax i32 *%src, i32 %b seq_cst
   ret i32 %res
@@ -166,10 +166,10 @@ define i32 @f13(i32 %dummy, i32 *%ptr) {
 ; CHECK: [[LOOP:\.[^:]*]]:
 ; CHECK: cr %r2, [[LIMIT]]
 ; CHECK: lr [[NEW:%r[0-9]+]], %r2
-; CHECK: j{{g?}}le [[KEEP:\..*]]
+; CHECK: jle [[KEEP:\..*]]
 ; CHECK: lr [[NEW]], [[LIMIT]]
 ; CHECK: cs %r2, [[NEW]], 0(%r3)
-; CHECK: j{{g?}}lh [[LOOP]]
+; CHECK: jlh [[LOOP]]
 ; CHECK: br %r14
   %res = atomicrmw min i32 *%ptr, i32 42 seq_cst
   ret i32 %res

@@ -6,7 +6,7 @@ define i32 @f1(i32 %x, i32 %y, i32 %op) {
 ; CHECK: f1:
 ; CHECK: ahi %r4, -1
 ; CHECK: clfi %r4, 5
-; CHECK-NEXT: j{{g?}}h
+; CHECK-NEXT: jh
 ; CHECK: llgfr [[OP64:%r[0-5]]], %r4
 ; CHECK: sllg [[INDEX:%r[1-5]]], [[OP64]], 3
 ; CHECK: larl [[BASE:%r[1-5]]]

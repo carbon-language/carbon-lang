@@ -6,7 +6,7 @@
 define double @f1(double %a, double %b, i32 %i1) {
 ; CHECK: f1:
 ; CHECK: chi %r2, 0
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp slt i32 %i1, 0
@@ -18,7 +18,7 @@ define double @f1(double %a, double %b, i32 %i1) {
 define double @f2(double %a, double %b, i32 %i1) {
 ; CHECK: f2:
 ; CHECK: chi %r2, 1
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp slt i32 %i1, 1
@@ -30,7 +30,7 @@ define double @f2(double %a, double %b, i32 %i1) {
 define double @f3(double %a, double %b, i32 %i1) {
 ; CHECK: f3:
 ; CHECK: chi %r2, 32767
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp slt i32 %i1, 32767
@@ -42,7 +42,7 @@ define double @f3(double %a, double %b, i32 %i1) {
 define double @f4(double %a, double %b, i32 %i1) {
 ; CHECK: f4:
 ; CHECK: cfi %r2, 32768
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp slt i32 %i1, 32768
@@ -54,7 +54,7 @@ define double @f4(double %a, double %b, i32 %i1) {
 define double @f5(double %a, double %b, i32 %i1) {
 ; CHECK: f5:
 ; CHECK: cfi %r2, 2147483647
-; CHECK-NEXT: j{{g?}}e
+; CHECK-NEXT: je
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp eq i32 %i1, 2147483647
@@ -66,7 +66,7 @@ define double @f5(double %a, double %b, i32 %i1) {
 define double @f6(double %a, double %b, i32 %i1) {
 ; CHECK: f6:
 ; CHECK: cfi %r2, -2147483648
-; CHECK-NEXT: j{{g?}}e
+; CHECK-NEXT: je
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp eq i32 %i1, 2147483648
@@ -78,7 +78,7 @@ define double @f6(double %a, double %b, i32 %i1) {
 define double @f7(double %a, double %b, i32 %i1) {
 ; CHECK: f7:
 ; CHECK: chi %r2, -1
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp slt i32 %i1, -1
@@ -90,7 +90,7 @@ define double @f7(double %a, double %b, i32 %i1) {
 define double @f8(double %a, double %b, i32 %i1) {
 ; CHECK: f8:
 ; CHECK: chi %r2, -32768
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp slt i32 %i1, -32768
@@ -102,7 +102,7 @@ define double @f8(double %a, double %b, i32 %i1) {
 define double @f9(double %a, double %b, i32 %i1) {
 ; CHECK: f9:
 ; CHECK: cfi %r2, -32769
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp slt i32 %i1, -32769
@@ -114,7 +114,7 @@ define double @f9(double %a, double %b, i32 %i1) {
 define double @f10(double %a, double %b, i32 %i1) {
 ; CHECK: f10:
 ; CHECK: cfi %r2, -2147483648
-; CHECK-NEXT: j{{g?}}e
+; CHECK-NEXT: je
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp eq i32 %i1, -2147483648
@@ -126,7 +126,7 @@ define double @f10(double %a, double %b, i32 %i1) {
 define double @f11(double %a, double %b, i32 %i1) {
 ; CHECK: f11:
 ; CHECK: cfi %r2, 2147483647
-; CHECK-NEXT: j{{g?}}e
+; CHECK-NEXT: je
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp eq i32 %i1, -2147483649

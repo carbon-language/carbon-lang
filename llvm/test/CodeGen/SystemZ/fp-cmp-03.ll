@@ -9,7 +9,7 @@ define i64 @f1(i64 %a, i64 %b, fp128 *%ptr, float %f2) {
 ; CHECK: ld %f1, 0(%r4)
 ; CHECK: ld %f3, 8(%r4)
 ; CHECK: cxbr %f1, %f0
-; CHECK-NEXT: j{{g?}}e
+; CHECK-NEXT: je
 ; CHECK: lgr %r2, %r3
 ; CHECK: br %r14
   %f2x = fpext float %f2 to fp128

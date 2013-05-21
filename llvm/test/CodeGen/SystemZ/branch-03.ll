@@ -7,7 +7,7 @@ define void @f1(i32 *%src, i32 %target) {
 ; CHECK: .cfi_startproc
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: cl %r3, 0(%r2)
-; CHECK-NEXT: j{{g?}}le .L[[LABEL]]
+; CHECK-NEXT: jle .L[[LABEL]]
   br label %loop
 loop:
   %val = load volatile i32 *%src
@@ -22,7 +22,7 @@ define void @f2(i32 *%src, i32 %target) {
 ; CHECK: .cfi_startproc
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: cl %r3, 0(%r2)
-; CHECK-NEXT: j{{g?}}l .L[[LABEL]]
+; CHECK-NEXT: jl .L[[LABEL]]
   br label %loop
 loop:
   %val = load volatile i32 *%src
@@ -37,7 +37,7 @@ define void @f3(i32 *%src, i32 %target) {
 ; CHECK: .cfi_startproc
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: cl %r3, 0(%r2)
-; CHECK-NEXT: j{{g?}}h .L[[LABEL]]
+; CHECK-NEXT: jh .L[[LABEL]]
   br label %loop
 loop:
   %val = load volatile i32 *%src
@@ -52,7 +52,7 @@ define void @f4(i32 *%src, i32 %target) {
 ; CHECK: .cfi_startproc
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: cl %r3, 0(%r2)
-; CHECK-NEXT: j{{g?}}he .L[[LABEL]]
+; CHECK-NEXT: jhe .L[[LABEL]]
   br label %loop
 loop:
   %val = load volatile i32 *%src

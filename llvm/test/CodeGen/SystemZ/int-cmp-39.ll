@@ -9,7 +9,7 @@
 define i64 @f1(i64 %src1) {
 ; CHECK: f1:
 ; CHECK: cghrl %r2, g
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: br %r14
 entry:
   %val = load i16 *@g
@@ -46,7 +46,7 @@ exit:
 define i64 @f3(i64 %src1) {
 ; CHECK: f3:
 ; CHECK: cghrl %r2, g
-; CHECK-NEXT: j{{g?}}e
+; CHECK-NEXT: je
 ; CHECK: br %r14
 entry:
   %val = load i16 *@g
@@ -65,7 +65,7 @@ exit:
 define i64 @f4(i64 %src1) {
 ; CHECK: f4:
 ; CHECK: cghrl %r2, g
-; CHECK-NEXT: j{{g?}}lh
+; CHECK-NEXT: jlh
 ; CHECK: br %r14
 entry:
   %val = load i16 *@g

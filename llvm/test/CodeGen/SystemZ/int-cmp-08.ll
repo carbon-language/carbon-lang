@@ -6,7 +6,7 @@
 define double @f1(double %a, double %b, i64 %i1, i64 %i2) {
 ; CHECK: f1:
 ; CHECK: clgr %r2, %r3
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp ult i64 %i1, %i2
@@ -18,7 +18,7 @@ define double @f1(double %a, double %b, i64 %i1, i64 %i2) {
 define double @f2(double %a, double %b, i64 %i1, i64 *%ptr) {
 ; CHECK: f2:
 ; CHECK: clg %r2, 0(%r3)
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %i2 = load i64 *%ptr
@@ -31,7 +31,7 @@ define double @f2(double %a, double %b, i64 %i1, i64 *%ptr) {
 define double @f3(double %a, double %b, i64 %i1, i64 *%base) {
 ; CHECK: f3:
 ; CHECK: clg %r2, 524280(%r3)
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%base, i64 65535
@@ -47,7 +47,7 @@ define double @f4(double %a, double %b, i64 %i1, i64 *%base) {
 ; CHECK: f4:
 ; CHECK: agfi %r3, 524288
 ; CHECK: clg %r2, 0(%r3)
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%base, i64 65536
@@ -61,7 +61,7 @@ define double @f4(double %a, double %b, i64 %i1, i64 *%base) {
 define double @f5(double %a, double %b, i64 %i1, i64 *%base) {
 ; CHECK: f5:
 ; CHECK: clg %r2, -8(%r3)
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%base, i64 -1
@@ -75,7 +75,7 @@ define double @f5(double %a, double %b, i64 %i1, i64 *%base) {
 define double @f6(double %a, double %b, i64 %i1, i64 *%base) {
 ; CHECK: f6:
 ; CHECK: clg %r2, -524288(%r3)
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%base, i64 -65536
@@ -91,7 +91,7 @@ define double @f7(double %a, double %b, i64 %i1, i64 *%base) {
 ; CHECK: f7:
 ; CHECK: agfi %r3, -524296
 ; CHECK: clg %r2, 0(%r3)
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%base, i64 -65537
@@ -105,7 +105,7 @@ define double @f7(double %a, double %b, i64 %i1, i64 *%base) {
 define double @f8(double %a, double %b, i64 %i1, i64 %base, i64 %index) {
 ; CHECK: f8:
 ; CHECK: clg %r2, 524280({{%r4,%r3|%r3,%r4}})
-; CHECK-NEXT: j{{g?}}l
+; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %add1 = add i64 %base, %index
