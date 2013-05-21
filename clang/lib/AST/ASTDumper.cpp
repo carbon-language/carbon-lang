@@ -665,15 +665,16 @@ void ASTDumper::dumpDecl(const Decl *D) {
   dumpSourceRange(D->getSourceRange());
 
   bool HasAttrs = D->attr_begin() != D->attr_end();
-  bool HasComment = D->getASTContext().getCommentForDecl(D, 0);
+  const FullComment *Comment =
+      D->getASTContext().getLocalCommentForDeclUncached(D);
   // Decls within functions are visited by the body
   bool HasDeclContext = !isa<FunctionDecl>(*D) && !isa<ObjCMethodDecl>(*D) &&
                          hasNodes(dyn_cast<DeclContext>(D));
 
-  setMoreChildren(HasAttrs || HasComment || HasDeclContext);
+  setMoreChildren(HasAttrs || Comment || HasDeclContext);
   ConstDeclVisitor<ASTDumper>::Visit(D);
 
-  setMoreChildren(HasComment || HasDeclContext);
+  setMoreChildren(Comment || HasDeclContext);
   for (Decl::attr_iterator I = D->attr_begin(), E = D->attr_end();
        I != E; ++I) {
     if (I + 1 == E)
@@ -683,7 +684,7 @@ void ASTDumper::dumpDecl(const Decl *D) {
 
   setMoreChildren(HasDeclContext);
   lastChild();
-  dumpFullComment(D->getASTContext().getCommentForDecl(D, 0));
+  dumpFullComment(Comment);
 
   setMoreChildren(false);
   if (HasDeclContext)

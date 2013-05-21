@@ -406,6 +406,11 @@ comments::FullComment *ASTContext::cloneFullComment(comments::FullComment *FC,
   
 }
 
+comments::FullComment *ASTContext::getLocalCommentForDeclUncached(const Decl *D) const {
+  const RawComment *RC = getRawCommentForDeclNoCache(D);
+  return RC ? RC->parse(*this, 0, D) : 0;
+}
+
 comments::FullComment *ASTContext::getCommentForDecl(
                                               const Decl *D,
                                               const Preprocessor *PP) const {

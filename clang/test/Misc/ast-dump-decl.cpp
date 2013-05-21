@@ -458,3 +458,19 @@ namespace TestFriendDecl2 {
 // CHECK:   |-CXXRecordDecl {{.*}} struct S
 // CHECK:   `-FriendDecl
 // CHECK:     `-FunctionDecl {{.*}} parent [[TestFriendDecl2]] prev [[TestFriendDecl2_f]] <{{.*}}> f 'void (void)'
+
+namespace Comment {
+  extern int Test;
+  /// Something here.
+  extern int Test;
+  extern int Test;
+}
+
+// CHECK: VarDecl {{.*}} Test 'int' extern
+// CHECK-NOT: FullComment
+// CHECK: VarDecl {{.*}} Test 'int' extern
+// CHECK: `-FullComment
+// CHECK:   `-ParagraphComment
+// CHECK:       `-TextComment
+// CHECK: VarDecl {{.*}} Test 'int' extern
+// CHECK-NOT: FullComment
