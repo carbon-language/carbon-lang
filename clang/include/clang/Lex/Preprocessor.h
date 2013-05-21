@@ -828,6 +828,13 @@ public:
       AnnotatePreviousCachedTokens(Tok);
   }
 
+  /// Get the location of the last cached token, suitable for setting the end
+  /// location of an annotation token.
+  SourceLocation getLastCachedTokenLocation() const {
+    assert(CachedLexPos != 0);
+    return CachedTokens[CachedLexPos-1].getLocation();
+  }
+
   /// \brief Replace the last token with an annotation token.
   ///
   /// Like AnnotateCachedTokens(), this routine replaces an

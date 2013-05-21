@@ -679,10 +679,17 @@ ExprResult Parser::TryParseLambdaExpression() {
   return ParseLambdaExpressionAfterIntroducer(Intro);
 }
 
-/// ParseLambdaExpression - Parse a lambda introducer.
-///
-/// Returns a DiagnosticID if it hit something unexpected.
-Optional<unsigned> Parser::ParseLambdaIntroducer(LambdaIntroducer &Intro) {
+/// \brief Parse a lambda introducer.
+/// \param Intro A LambdaIntroducer filled in with information about the
+///        contents of the lambda-introducer.
+/// \param SkippedInits If non-null, we are disambiguating between an Obj-C
+///        message send and a lambda expression. In this mode, we will
+///        sometimes skip the initializers for init-captures and not fully
+///        populate \p Intro. This flag will be set to \c true if we do so.
+/// \return A DiagnosticID if it hit something unexpected. The location for
+///         for the diagnostic is that of the current token.
+Optional<unsigned> Parser::ParseLambdaIntroducer(LambdaIntroducer &Intro,
+                                                 bool *SkippedInits) {
   typedef Optional<unsigned> DiagResult;
 
   assert(Tok.is(tok::l_square) && "Lambda expressions begin with '['.");
@@ -781,7 +788,10 @@ Optional<unsigned> Parser::ParseLambdaIntroducer(LambdaIntroducer &Intro) {
 
         ExprVector Exprs;
         CommaLocsTy Commas;
-        if (ParseExpressionList(Exprs, Commas)) {
+        if (SkippedInits) {
+          Parens.skipToEnd();
+          *SkippedInits = true;
+        } else if (ParseExpressionList(Exprs, Commas)) {
           Parens.skipToEnd();
           Init = ExprError();
         } else {
@@ -794,7 +804,53 @@ Optional<unsigned> Parser::ParseLambdaIntroducer(LambdaIntroducer &Intro) {
         if (Tok.is(tok::equal))
           ConsumeToken();
 
-        Init = ParseInitializer();
+        if (!SkippedInits)
+          Init = ParseInitializer();
+        else if (Tok.is(tok::l_brace)) {
+          BalancedDelimiterTracker Braces(*this, tok::l_brace);
+          Braces.consumeOpen();
+          Braces.skipToEnd();
+          *SkippedInits = true;
+        } else {
+          // We're disambiguating this:
+          //
+          //   [..., x = expr
+          //
+          // We need to find the end of the following expression in order to
+          // determine whether this is an Obj-C message send's receiver, or a
+          // lambda init-capture.
+          //
+          // Parse the expression to find where it ends, and annotate it back
+          // onto the tokens. We would have parsed this expression the same way
+          // in either case: both the RHS of an init-capture and the RHS of an
+          // assignment expression are parsed as an initializer-clause, and in
+          // neither case can anything be added to the scope between the '[' and
+          // here.
+          //
+          // FIXME: This is horrible. Adding a mechanism to skip an expression
+          // would be much cleaner.
+          // FIXME: If there is a ',' before the next ']' or ':', we can skip to
+          // that instead. (And if we see a ':' with no matching '?', we can
+          // classify this as an Obj-C message send.)
+          SourceLocation StartLoc = Tok.getLocation();
+          InMessageExpressionRAIIObject MaybeInMessageExpression(*this, true);
+          Init = ParseInitializer();
+
+          if (Tok.getLocation() != StartLoc) {
+            // Back out the lexing of the token after the initializer.
+            PP.RevertCachedTokens(1);
+
+            // Replace the consumed tokens with an appropriate annotation.
+            Tok.setLocation(StartLoc);
+            Tok.setKind(tok::annot_primary_expr);
+            setExprAnnotation(Tok, Init);
+            Tok.setAnnotationEndLoc(PP.getLastCachedTokenLocation());
+            PP.AnnotateCachedTokens(Tok);
+
+            // Consume the annotated initializer.
+            ConsumeToken();
+          }
+        }
       } else if (Tok.is(tok::ellipsis))
         EllipsisLoc = ConsumeToken();
     }
@@ -814,11 +870,21 @@ Optional<unsigned> Parser::ParseLambdaIntroducer(LambdaIntroducer &Intro) {
 bool Parser::TryParseLambdaIntroducer(LambdaIntroducer &Intro) {
   TentativeParsingAction PA(*this);
 
-  Optional<unsigned> DiagID(ParseLambdaIntroducer(Intro));
+  bool SkippedInits = false;
+  Optional<unsigned> DiagID(ParseLambdaIntroducer(Intro, &SkippedInits));
 
   if (DiagID) {
     PA.Revert();
     return true;
+  }
+
+  if (SkippedInits) {
+    // Parse it again, but this time parse the init-captures too.
+    PA.Revert();
+    Intro = LambdaIntroducer();
+    DiagID = ParseLambdaIntroducer(Intro);
+    assert(!DiagID && "parsing lambda-introducer failed on reparse");
+    return false;
   }
 
   PA.Commit();

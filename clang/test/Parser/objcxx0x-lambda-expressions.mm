@@ -1,9 +1,10 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wno-unused-value -std=c++11 %s
 
 class C {
+  id get(int);
 
   void f() {
-    int foo, bar;
+    int foo, bar, baz;
 
     // fail to parse as a lambda introducer, so we get objc message parsing errors instead
     [foo,+] {}; // expected-error {{expected expression}}
@@ -24,9 +25,18 @@ class C {
     [foo = {bar}] () {}; // expected-error {{<initializer_list>}}
 
     [foo(bar) baz] () {}; // expected-error {{called object type 'int' is not a function}}
+    [foo(bar), baz] () {}; // ok
 
-    // FIXME: These are some appalling diagnostics.
-    [foo = bar baz]; // expected-error {{missing '['}} expected-warning 2{{receiver type 'int'}} expected-warning 2{{instance method '-baz'}}
+    [foo = bar baz]; // expected-warning {{receiver type 'int'}} expected-warning {{instance method '-baz'}}
+
+    [get(bar) baz]; // expected-warning {{instance method '-baz'}}
+    [get(bar), baz]; // expected-error {{expected body of lambda}}
+
+    [foo = bar ++ baz]; // expected-warning {{receiver type 'int'}} expected-warning {{instance method '-baz'}}
+    [foo = bar + baz]; // expected-error {{expected body of lambda}}
+    [foo = { bar, baz }]; // expected-error {{<initializer_list>}} expected-error {{expected body of lambda}}
+    [foo = { bar } baz ]; // expected-warning {{receiver type 'int'}} expected-warning {{instance method '-baz'}}
+    [foo = { bar }, baz ]; // expected-error {{<initializer_list>}} expected-error {{expected body of lambda}}
   }
 
 };

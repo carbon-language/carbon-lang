@@ -1329,7 +1329,8 @@ private:
   // [...] () -> type {...}
   ExprResult ParseLambdaExpression();
   ExprResult TryParseLambdaExpression();
-  Optional<unsigned> ParseLambdaIntroducer(LambdaIntroducer &Intro);
+  Optional<unsigned> ParseLambdaIntroducer(LambdaIntroducer &Intro,
+                                           bool *SkippedInits = 0);
   bool TryParseLambdaIntroducer(LambdaIntroducer &Intro);
   ExprResult ParseLambdaExpressionAfterIntroducer(
                LambdaIntroducer &Intro);
