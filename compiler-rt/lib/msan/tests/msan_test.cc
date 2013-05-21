@@ -1476,15 +1476,7 @@ TEST(MemorySanitizer, getrusage) {
 }
 
 #ifdef __GLIBC__
-extern "C" {
-  extern void *__libc_stack_end;
-}
-
-static char **GetArgv(void) {
-  uintptr_t *stack_end = (uintptr_t *)__libc_stack_end;
-  return (char**)(stack_end + 1);
-}
-
+extern char *program_invocation_name;
 #else  // __GLIBC__
 # error "TODO: port this"
 #endif
@@ -1492,12 +1484,12 @@ static char **GetArgv(void) {
 // Compute the path to our loadable DSO.  We assume it's in the same
 // directory.  Only use string routines that we intercept so far to do this.
 static int PathToLoadable(char *buf, size_t sz) {
-  char **argv = GetArgv();
   const char *basename = "libmsan_loadable.x86_64.so";
-  char *last_slash = strrchr(argv[0], '/');
+  char *argv0 = program_invocation_name;
+  char *last_slash = strrchr(argv0, '/');
   assert(last_slash);
-  int res = snprintf(buf, sz, "%.*s/%s", int(last_slash - argv[0]), argv[0],
-                     basename);
+  int res =
+      snprintf(buf, sz, "%.*s/%s", int(last_slash - argv0), argv0, basename);
   return res < sz ? 0 : res;
 }
 
