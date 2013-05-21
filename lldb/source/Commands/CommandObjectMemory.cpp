@@ -827,12 +827,25 @@ protected:
         DataExtractor data (data_sp, 
                             target->GetArchitecture().GetByteOrder(), 
                             target->GetArchitecture().GetAddressByteSize());
-
+        
+        Format format = m_format_options.GetFormat();
+        if ( ( (format == eFormatChar) || (format == eFormatCharPrintable) )
+            && (item_byte_size != 1)
+            && (item_count == 1))
+        {
+            // this turns requests such as
+            // memory read -fc -s10 -c1 *charPtrPtr
+            // which make no sense (what is a char of size 10?)
+            // into a request for fetching 10 chars of size 1 from the same memory location
+            format = eFormatCharArray;
+            item_count = item_byte_size;
+            item_byte_size = 1;
+        }
 
         assert (output_stream);
         size_t bytes_dumped = data.Dump (output_stream,
                                          0,
-                                         m_format_options.GetFormat(),
+                                         format,
                                          item_byte_size,
                                          item_count,
                                          num_per_line,
