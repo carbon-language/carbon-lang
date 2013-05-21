@@ -2342,65 +2342,62 @@ let Constraints = "$src1 = $dst" in {
 // sse12_ord_cmp - Unordered/Ordered scalar fp compare and set EFLAGS
 multiclass sse12_ord_cmp<bits<8> opc, RegisterClass RC, SDNode OpNode,
                             ValueType vt, X86MemOperand x86memop,
-                            PatFrag ld_frag, string OpcodeStr, Domain d> {
-  def rr: PI<opc, MRMSrcReg, (outs), (ins RC:$src1, RC:$src2),
+                            PatFrag ld_frag, string OpcodeStr> {
+  def rr: SI<opc, MRMSrcReg, (outs), (ins RC:$src1, RC:$src2),
                      !strconcat(OpcodeStr, "\t{$src2, $src1|$src1, $src2}"),
                      [(set EFLAGS, (OpNode (vt RC:$src1), RC:$src2))],
-                     IIC_SSE_COMIS_RR, d>,
+                     IIC_SSE_COMIS_RR>,
           Sched<[WriteFAdd]>;
-  def rm: PI<opc, MRMSrcMem, (outs), (ins RC:$src1, x86memop:$src2),
+  def rm: SI<opc, MRMSrcMem, (outs), (ins RC:$src1, x86memop:$src2),
                      !strconcat(OpcodeStr, "\t{$src2, $src1|$src1, $src2}"),
                      [(set EFLAGS, (OpNode (vt RC:$src1),
                                            (ld_frag addr:$src2)))],
-                                           IIC_SSE_COMIS_RM, d>,
+                                           IIC_SSE_COMIS_RM>,
           Sched<[WriteFAddLd, ReadAfterLd]>;
 }
 
 let Defs = [EFLAGS] in {
   defm VUCOMISS : sse12_ord_cmp<0x2E, FR32, X86cmp, f32, f32mem, loadf32,
-                                  "ucomiss", SSEPackedSingle>, TB, VEX, VEX_LIG;
+                                  "ucomiss">, TB, VEX, VEX_LIG;
   defm VUCOMISD : sse12_ord_cmp<0x2E, FR64, X86cmp, f64, f64mem, loadf64,
-                                  "ucomisd", SSEPackedDouble>, TB, OpSize, VEX,
-                                  VEX_LIG;
+                                  "ucomisd">, TB, OpSize, VEX, VEX_LIG;
   let Pattern = []<dag> in {
     defm VCOMISS  : sse12_ord_cmp<0x2F, VR128, undef, v4f32, f128mem, load,
-                                    "comiss", SSEPackedSingle>, TB, VEX,
-                                    VEX_LIG;
+                                    "comiss">, TB, VEX, VEX_LIG;
     defm VCOMISD  : sse12_ord_cmp<0x2F, VR128, undef, v2f64, f128mem, load,
-                                    "comisd", SSEPackedDouble>, TB, OpSize, VEX,
-                                    VEX_LIG;
+                                    "comisd">, TB, OpSize, VEX, VEX_LIG;
   }
 
   defm Int_VUCOMISS  : sse12_ord_cmp<0x2E, VR128, X86ucomi, v4f32, f128mem,
-                            load, "ucomiss", SSEPackedSingle>, TB, VEX;
+                            load, "ucomiss">, TB, VEX;
   defm Int_VUCOMISD  : sse12_ord_cmp<0x2E, VR128, X86ucomi, v2f64, f128mem,
-                            load, "ucomisd", SSEPackedDouble>, TB, OpSize, VEX;
+                            load, "ucomisd">, TB, OpSize, VEX;
 
   defm Int_VCOMISS  : sse12_ord_cmp<0x2F, VR128, X86comi, v4f32, f128mem,
-                            load, "comiss", SSEPackedSingle>, TB, VEX;
+                            load, "comiss">, TB, VEX;
   defm Int_VCOMISD  : sse12_ord_cmp<0x2F, VR128, X86comi, v2f64, f128mem,
-                            load, "comisd", SSEPackedDouble>, TB, OpSize, VEX;
+                            load, "comisd">, TB, OpSize, VEX;
   defm UCOMISS  : sse12_ord_cmp<0x2E, FR32, X86cmp, f32, f32mem, loadf32,
-                                  "ucomiss", SSEPackedSingle>, TB;
+                                  "ucomiss">, TB;
   defm UCOMISD  : sse12_ord_cmp<0x2E, FR64, X86cmp, f64, f64mem, loadf64,
-                                  "ucomisd", SSEPackedDouble>, TB, OpSize;
+                                  "ucomisd">, TB, OpSize;
 
   let Pattern = []<dag> in {
     defm COMISS  : sse12_ord_cmp<0x2F, VR128, undef, v4f32, f128mem, load,
-                                    "comiss", SSEPackedSingle>, TB;
+                                    "comiss">, TB;
     defm COMISD  : sse12_ord_cmp<0x2F, VR128, undef, v2f64, f128mem, load,
-                                    "comisd", SSEPackedDouble>, TB, OpSize;
+                                    "comisd">, TB, OpSize;
   }
 
   defm Int_UCOMISS  : sse12_ord_cmp<0x2E, VR128, X86ucomi, v4f32, f128mem,
-                              load, "ucomiss", SSEPackedSingle>, TB;
+                              load, "ucomiss">, TB;
   defm Int_UCOMISD  : sse12_ord_cmp<0x2E, VR128, X86ucomi, v2f64, f128mem,
-                              load, "ucomisd", SSEPackedDouble>, TB, OpSize;
+                              load, "ucomisd">, TB, OpSize;
 
   defm Int_COMISS  : sse12_ord_cmp<0x2F, VR128, X86comi, v4f32, f128mem, load,
-                                  "comiss", SSEPackedSingle>, TB;
+                                  "comiss">, TB;
   defm Int_COMISD  : sse12_ord_cmp<0x2F, VR128, X86comi, v2f64, f128mem, load,
-                                  "comisd", SSEPackedDouble>, TB, OpSize;
+                                  "comisd">, TB, OpSize;
 } // Defs = [EFLAGS]
 
 // sse12_cmp_packed - sse 1 & 2 compare packed instructions

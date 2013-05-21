@@ -292,13 +292,18 @@ class Iseg32 <bits<8> o, Format f, dag outs, dag ins, string asm,
 }
 
 def __xs : XS;
+def __xd : XD;
 
 // SI - SSE 1 & 2 scalar instructions
 class SI<bits<8> o, Format F, dag outs, dag ins, string asm,
          list<dag> pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, asm, pattern, itin> {
   let Predicates = !if(hasVEXPrefix /* VEX */, [HasAVX],
-            !if(!eq(Prefix, __xs.Prefix), [UseSSE1], [UseSSE2]));
+                  //  !if(!eq(Prefix, __xs.Prefix), [UseSSE1], [UseSSE2]));
+                   // !if(hasOpSizePrefix, [UseSSE2], [UseSSE1])));
+                   !if(!eq(Prefix, __xs.Prefix), [UseSSE1],
+                   !if(!eq(Prefix, __xd.Prefix), [UseSSE2],
+                   !if(hasOpSizePrefix, [UseSSE2], [UseSSE1]))));
 
   // AVX instructions have a 'v' prefix in the mnemonic
   let AsmString = !if(hasVEXPrefix, !strconcat("v", asm), asm);
