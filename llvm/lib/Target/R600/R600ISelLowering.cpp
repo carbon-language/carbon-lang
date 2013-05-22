@@ -472,9 +472,6 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
 // Custom DAG Lowering Operations
 //===----------------------------------------------------------------------===//
 
-using namespace llvm::Intrinsic;
-using namespace llvm::AMDGPUIntrinsic;
-
 SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
@@ -654,41 +651,41 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
       return DAG.getNode(AMDGPUISD::DOT4, DL, MVT::f32, Args, 8);
     }
 
-    case r600_read_ngroups_x:
+    case Intrinsic::r600_read_ngroups_x:
       return LowerImplicitParameter(DAG, VT, DL, 0);
-    case r600_read_ngroups_y:
+    case Intrinsic::r600_read_ngroups_y:
       return LowerImplicitParameter(DAG, VT, DL, 1);
-    case r600_read_ngroups_z:
+    case Intrinsic::r600_read_ngroups_z:
       return LowerImplicitParameter(DAG, VT, DL, 2);
-    case r600_read_global_size_x:
+    case Intrinsic::r600_read_global_size_x:
       return LowerImplicitParameter(DAG, VT, DL, 3);
-    case r600_read_global_size_y:
+    case Intrinsic::r600_read_global_size_y:
       return LowerImplicitParameter(DAG, VT, DL, 4);
-    case r600_read_global_size_z:
+    case Intrinsic::r600_read_global_size_z:
       return LowerImplicitParameter(DAG, VT, DL, 5);
-    case r600_read_local_size_x:
+    case Intrinsic::r600_read_local_size_x:
       return LowerImplicitParameter(DAG, VT, DL, 6);
-    case r600_read_local_size_y:
+    case Intrinsic::r600_read_local_size_y:
       return LowerImplicitParameter(DAG, VT, DL, 7);
-    case r600_read_local_size_z:
+    case Intrinsic::r600_read_local_size_z:
       return LowerImplicitParameter(DAG, VT, DL, 8);
 
-    case r600_read_tgid_x:
+    case Intrinsic::r600_read_tgid_x:
       return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
                                   AMDGPU::T1_X, VT);
-    case r600_read_tgid_y:
+    case Intrinsic::r600_read_tgid_y:
       return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
                                   AMDGPU::T1_Y, VT);
-    case r600_read_tgid_z:
+    case Intrinsic::r600_read_tgid_z:
       return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
                                   AMDGPU::T1_Z, VT);
-    case r600_read_tidig_x:
+    case Intrinsic::r600_read_tidig_x:
       return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
                                   AMDGPU::T0_X, VT);
-    case r600_read_tidig_y:
+    case Intrinsic::r600_read_tidig_y:
       return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
                                   AMDGPU::T0_Y, VT);
-    case r600_read_tidig_z:
+    case Intrinsic::r600_read_tidig_z:
       return CreateLiveInRegister(DAG, &AMDGPU::R600_TReg32RegClass,
                                   AMDGPU::T0_Z, VT);
     }
