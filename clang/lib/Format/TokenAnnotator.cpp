@@ -160,8 +160,6 @@ private:
         if (CurrentToken->Children.empty() ||
             !CurrentToken->Children[0].isOneOf(tok::l_paren, tok::l_square))
           Left->DefinesFunctionType = false;
-        if (CurrentToken->Parent->closesScope())
-          CurrentToken->Parent->MatchingParen->NoMoreTokensOnLevel = true;
         Left->MatchingParen = CurrentToken;
         CurrentToken->MatchingParen = Left;
 

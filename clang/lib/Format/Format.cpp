@@ -257,6 +257,7 @@ public:
     State.ParenLevel = 0;
     State.StartOfStringLiteral = 0;
     State.StartOfLineLevel = State.ParenLevel;
+    State.IgnoreStackForComparison = false;
 
     // The first token has already been indented and thus consumed.
     moveStateToNextToken(State, /*DryRun=*/ false);
@@ -420,6 +421,21 @@ private:
     /// levels.
     std::vector<ParenState> Stack;
 
+    /// \brief Ignore the stack of \c ParenStates for state comparison.
+    ///
+    /// In long and deeply nested unwrapped lines, the current algorithm can
+    /// be insufficient for finding the best formatting with a reasonable amount
+    /// of time and memory. Setting this flag will effectively lead to the
+    /// algorithm not analyzing some combinations. However, these combinations
+    /// rarely contain the optimal solution: In short, accepting a higher
+    /// penalty early would need to lead to different values in the \c
+    /// ParenState stack (in an otherwise identical state) and these different
+    /// values would need to lead to a significant amount of avoided penalty
+    /// later.
+    ///
+    /// FIXME: Come up with a better algorithm instead.
+    bool IgnoreStackForComparison;
+
     /// \brief Comparison operator to be able to used \c LineState in \c map.
     bool operator<(const LineState &Other) const {
       if (NextToken != Other.NextToken)
@@ -435,6 +451,8 @@ private:
         return StartOfLineLevel < Other.StartOfLineLevel;
       if (StartOfStringLiteral != Other.StartOfStringLiteral)
         return StartOfStringLiteral < Other.StartOfStringLiteral;
+      if (IgnoreStackForComparison || Other.IgnoreStackForComparison)
+        return false;
       return Stack < Other.Stack;
     }
   };
@@ -713,18 +731,6 @@ private:
         AvoidBinPacking = !Style.BinPackParameters;
       }
 
-      if (Current.NoMoreTokensOnLevel && Current.FakeLParens.empty()) {
-        // This parenthesis was the last token possibly making use of Indent and
-        // LastSpace of the next higher ParenLevel. Thus, erase them to achieve
-        // better memoization results.
-        for (unsigned i = State.Stack.size() - 1; i > 0; --i) {
-          State.Stack[i].Indent = 0;
-          State.Stack[i].LastSpace = 0;
-          if (!State.Stack[i].ForFakeParenthesis)
-            break;
-        }
-      }
-
       State.Stack.push_back(ParenState(NewIndent, LastSpace, AvoidBinPacking,
                                        State.Stack.back().NoLineBreak));
       ++State.ParenLevel;
@@ -916,6 +922,11 @@ private:
         break;
       }
       Queue.pop();
+
+      // Cut off the analysis of certain solutions if the analysis gets too
+      // complex. See description of IgnoreStackForComparison.
+      if (Count > 10000)
+        Node->State.IgnoreStackForComparison = true;
 
       if (!Seen.insert(Node->State).second)
         // State already examined with lower penalty.

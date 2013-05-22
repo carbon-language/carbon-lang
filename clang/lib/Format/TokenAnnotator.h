@@ -78,8 +78,7 @@ public:
         ParameterCount(0), TotalLength(FormatTok.TokenLength),
         BindingStrength(0), SplitPenalty(0), LongestObjCSelectorName(0),
         DefinesFunctionType(false), Parent(NULL), FakeRParens(0),
-        LastInChainOfCalls(false), PartOfMultiVariableDeclStmt(false),
-        NoMoreTokensOnLevel(false) {}
+        LastInChainOfCalls(false), PartOfMultiVariableDeclStmt(false) {}
 
   bool is(tok::TokenKind Kind) const { return FormatTok.Tok.is(Kind); }
 
@@ -188,19 +187,6 @@ public:
   ///
   /// Only set if \c Type == \c TT_StartOfName.
   bool PartOfMultiVariableDeclStmt;
-
-  /// \brief Set to \c true for "("-tokens if this is the last token other than
-  /// ")" in the next higher parenthesis level.
-  ///
-  /// If this is \c true, no more formatting decisions have to be made on the
-  /// next higher parenthesis level, enabling optimizations.
-  ///
-  /// Example:
-  /// \code
-  /// aaaaaa(aaaaaa());
-  ///              ^  // Set to true for this parenthesis.
-  /// \endcode
-  bool NoMoreTokensOnLevel;
 
   /// \brief Returns the previous token ignoring comments.
   AnnotatedToken *getPreviousNoneComment() const;
