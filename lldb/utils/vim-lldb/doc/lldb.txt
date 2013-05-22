@@ -37,6 +37,12 @@ Possible window name arguments to the Lhide and Lshow commands include:
     * locals
     * registers
     * threads
+                                                lldb-:Lattach
+:Lattach <process-name> Attach to a process by name.
+
+                                                lldb-:Ldetach
+:Ldetach                Detach from the current process.
+
                                                 *lldb-:Ltarget*
 :Ltarget [[create] executable]
                         Create a target with the specified executable. If
