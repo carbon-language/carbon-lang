@@ -146,14 +146,17 @@ public:
     typeTLVInitializerPtr,  // pointer to thread local initializer [Darwin]
   };
 
+  // Permission bits for atoms and segments. The order of these values are
+  // important, because the layout pass may sort atoms by permission if other
+  // attributes are the same.
   enum ContentPermissions {
     perm___  = 0,           // mapped as unaccessible
     permR__  = 8,           // mapped read-only
     permRW_  = 8 + 2,       // mapped readable and writable
-    permR_X  = 8 + 4,       // mapped readable and executable
-    permRWX  = 8 + 4 + 2,   // mapped readable and writable and executable
-    permRW_L = 8 + 4 + 1,   // initially mapped r/w, then made read-only
+    permRW_L = 8 + 2 + 1,   // initially mapped r/w, then made read-only
                             // loader writable
+    permR_X  = 8 + 4,       // mapped readable and executable
+    permRWX  = 8 + 2 + 4,   // mapped readable and writable and executable
     permUnknown = 16        // unknown or invalid permissions
   };
 
