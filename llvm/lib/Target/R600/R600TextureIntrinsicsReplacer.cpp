@@ -259,20 +259,35 @@ public:
   }
 
   void visitCallInst(CallInst &I) {
-    if (I.getCalledFunction()->getName() == "llvm.AMDGPU.tex")
+    StringRef Name = I.getCalledFunction()->getName();
+    if (Name == "llvm.AMDGPU.tex") {
       ReplaceTexIntrinsic(I, false, TexSign, "llvm.R600.tex", "llvm.R600.texc");
-    if (I.getCalledFunction()->getName() == "llvm.AMDGPU.txl")
+      return;
+    }
+    if (Name == "llvm.AMDGPU.txl") {
       ReplaceTexIntrinsic(I, true, TexSign, "llvm.R600.txl", "llvm.R600.txlc");
-    if (I.getCalledFunction()->getName() == "llvm.AMDGPU.txb")
+      return;
+    }
+    if (Name == "llvm.AMDGPU.txb") {
       ReplaceTexIntrinsic(I, true, TexSign, "llvm.R600.txb", "llvm.R600.txbc");
-    if (I.getCalledFunction()->getName() == "llvm.AMDGPU.txf")
+      return;
+    }
+    if (Name == "llvm.AMDGPU.txf") {
       ReplaceTXF(I);
-    if (I.getCalledFunction()->getName() == "llvm.AMDGPU.txq")
+      return;
+    }
+    if (Name == "llvm.AMDGPU.txq") {
       ReplaceTexIntrinsic(I, false, TexQSign, "llvm.R600.txq", "llvm.R600.txq");
-    if (I.getCalledFunction()->getName() == "llvm.AMDGPU.ddx")
+      return;
+    }
+    if (Name == "llvm.AMDGPU.ddx") {
       ReplaceTexIntrinsic(I, false, TexSign, "llvm.R600.ddx", "llvm.R600.ddx");
-    if (I.getCalledFunction()->getName() == "llvm.AMDGPU.ddy")
+      return;
+    }
+    if (Name == "llvm.AMDGPU.ddy") {
       ReplaceTexIntrinsic(I, false, TexSign, "llvm.R600.ddy", "llvm.R600.ddy");
+      return;
+    }
   }
 
 };
