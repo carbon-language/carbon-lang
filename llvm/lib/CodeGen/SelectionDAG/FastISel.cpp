@@ -648,7 +648,7 @@ bool FastISel::SelectCall(const User *I) {
     else
       // We can't yet handle anything else here because it would require
       // generating code, thus altering codegen because of debug info.
-      DEBUG(dbgs() << "Dropping debug info for " << DI);
+      DEBUG(dbgs() << "Dropping debug info for " << *DI << "\n");
     return true;
   }
   case Intrinsic::dbg_value: {
@@ -682,7 +682,7 @@ bool FastISel::SelectCall(const User *I) {
     } else {
       // We can't yet handle anything else here because it would require
       // generating code, thus altering codegen because of debug info.
-      DEBUG(dbgs() << "Dropping debug info for " << DI);
+      DEBUG(dbgs() << "Dropping debug info for " << *DI << "\n");
     }
     return true;
   }
