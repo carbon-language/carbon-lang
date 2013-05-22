@@ -65,8 +65,6 @@ def AMDGPUumin : SDNode<"AMDGPUISD::UMIN", SDTIntBinOp,
 // e is rounding error
 def AMDGPUurecip : SDNode<"AMDGPUISD::URECIP", SDTIntUnaryOp>;
 
-def fpow : SDNode<"ISD::FPOW", SDTFPBinOp>;
-
 def AMDGPUregister_load : SDNode<"AMDGPUISD::REGISTER_LOAD",
                           SDTypeProfile<1, 2, [SDTCisPtrTy<1>, SDTCisInt<2>]>,
                           [SDNPHasChain, SDNPMayLoad]>;
