@@ -2026,6 +2026,31 @@ static void removePunyEdges(PathPieces &path,
   }
 }
 
+static void removeIdenticalEvents(PathPieces &path) {
+  for (PathPieces::iterator I = path.begin(), E = path.end(); I != E; ++I) {
+    PathDiagnosticEventPiece *PieceI =
+      dyn_cast<PathDiagnosticEventPiece>(*I);
+
+    if (!PieceI)
+      continue;
+
+    PathPieces::iterator NextI = I; ++NextI;
+    if (NextI == E)
+      return;
+
+    PathDiagnosticEventPiece *PieceNextI =
+      dyn_cast<PathDiagnosticEventPiece>(*I);
+
+    if (!PieceNextI)
+      continue;
+
+    // Erase the second piece if it has the same exact message text.
+    if (PieceI->getString() == PieceNextI->getString()) {
+      path.erase(NextI);
+    }
+  }
+}
+
 static bool optimizeEdges(PathPieces &path, SourceManager &SM,
                           OptimizedCallsSet &OCS,
                           LocationContextMap &LCM) {
@@ -2199,6 +2224,8 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
   if (!hasChanges) {
     // Remove any puny edges left over after primary optimization pass.
     removePunyEdges(path, SM, PM);
+    // Remove identical events.
+    removeIdenticalEvents(path);
   }
 
   return hasChanges;
