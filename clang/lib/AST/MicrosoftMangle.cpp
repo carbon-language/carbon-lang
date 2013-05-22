@@ -24,7 +24,6 @@
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/StringMap.h"
-#include <map>
 
 using namespace clang;
 
