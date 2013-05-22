@@ -90,13 +90,19 @@ namespace __sanitizer {
     int ai_family;
     int ai_socktype;
     int ai_protocol;
-#if SANITIZER_LINUX && !SANITIZER_ANDROID
-    uptr ai_addrlen;
-#else
+#if SANITIZER_MAC
     unsigned ai_addrlen;
-#endif
     void *ai_addr;
     char *ai_canonname;
+#elif SANITIZER_ANDROID
+    unsigned ai_addrlen;
+    char *ai_canonname;
+    void *ai_addr;
+#else // LINUX
+    uptr ai_addrlen;
+    void *ai_addr;
+    char *ai_canonname;
+#endif
     struct __sanitizer_addrinfo *ai_next;
   };
 }  // namespace __sanitizer
