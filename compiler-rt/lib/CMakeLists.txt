@@ -37,7 +37,8 @@ set(GENERIC_SOURCES
   ashlti3.c
   ashrdi3.c
   ashrti3.c
-  atomic.c
+  # FIXME: atomic.c may only be compiled if host compiler understands _Atomic
+  # atomic.c
   clear_cache.c
   clzdi2.c
   clzsi2.c
