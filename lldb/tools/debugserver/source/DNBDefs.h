@@ -356,6 +356,7 @@ enum DNBProfileDataScanType
     
     eProfileMemory              = (1 << 6), // By default, excludes eProfileMemoryDirtyPage.
     eProfileMemoryDirtyPage     = (1 << 7), // Assume eProfileMemory, get Dirty Page size as well.
+    eProfileMemoryAnonymous     = (1 << 8), // Assume eProfileMemory, get Anonymous memory as well.
     
     eProfileAll                 = 0xffffffff
 };
