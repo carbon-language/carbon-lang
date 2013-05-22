@@ -213,9 +213,8 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
         CopyMap.erase(*AI);
         AvailCopyMap.erase(*AI);
       }
-      CopyMap[Def] = MI;
-      AvailCopyMap[Def] = MI;
-      for (MCSubRegIterator SR(Def, TRI); SR.isValid(); ++SR) {
+      for (MCSubRegIterator SR(Def, TRI, /*IncludeSelf=*/true); SR.isValid();
+           ++SR) {
         CopyMap[*SR] = MI;
         AvailCopyMap[*SR] = MI;
       }

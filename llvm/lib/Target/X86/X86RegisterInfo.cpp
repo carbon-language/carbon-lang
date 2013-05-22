@@ -306,19 +306,19 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
 
   // Set the stack-pointer register and its aliases as reserved.
-  Reserved.set(X86::RSP);
-  for (MCSubRegIterator I(X86::RSP, this); I.isValid(); ++I)
+  for (MCSubRegIterator I(X86::RSP, this, /*IncludeSelf=*/true); I.isValid();
+       ++I)
     Reserved.set(*I);
 
   // Set the instruction pointer register and its aliases as reserved.
-  Reserved.set(X86::RIP);
-  for (MCSubRegIterator I(X86::RIP, this); I.isValid(); ++I)
+  for (MCSubRegIterator I(X86::RIP, this, /*IncludeSelf=*/true); I.isValid();
+       ++I)
     Reserved.set(*I);
 
   // Set the frame-pointer register and its aliases as reserved if needed.
   if (TFI->hasFP(MF)) {
-    Reserved.set(X86::RBP);
-    for (MCSubRegIterator I(X86::RBP, this); I.isValid(); ++I)
+    for (MCSubRegIterator I(X86::RBP, this, /*IncludeSelf=*/true); I.isValid();
+         ++I)
       Reserved.set(*I);
   }
 
@@ -331,8 +331,8 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
         "Stack realignment in presence of dynamic allocas is not supported with"
         "this calling convention.");
 
-    Reserved.set(getBaseRegister());
-    for (MCSubRegIterator I(getBaseRegister(), this); I.isValid(); ++I)
+    for (MCSubRegIterator I(getBaseRegister(), this, /*IncludeSelf=*/true);
+         I.isValid(); ++I)
       Reserved.set(*I);
   }
 

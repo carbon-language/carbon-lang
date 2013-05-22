@@ -31,9 +31,8 @@ using namespace llvm;
 
 /// setUsed - Set the register and its sub-registers as being used.
 void RegScavenger::setUsed(unsigned Reg) {
-  RegsAvailable.reset(Reg);
-
-  for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+  for (MCSubRegIterator SubRegs(Reg, TRI, /*IncludeSelf=*/true);
+       SubRegs.isValid(); ++SubRegs)
     RegsAvailable.reset(*SubRegs);
 }
 
@@ -105,8 +104,8 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
 }
 
 void RegScavenger::addRegWithSubRegs(BitVector &BV, unsigned Reg) {
-  BV.set(Reg);
-  for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+  for (MCSubRegIterator SubRegs(Reg, TRI, /*IncludeSelf=*/true);
+       SubRegs.isValid(); ++SubRegs)
     BV.set(*SubRegs);
 }
 

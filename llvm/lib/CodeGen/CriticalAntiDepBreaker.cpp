@@ -201,8 +201,8 @@ void CriticalAntiDepBreaker::PrescanInstruction(MachineInstr *MI) {
 
     if (MO.isUse() && Special) {
       if (!KeepRegs.test(Reg)) {
-        KeepRegs.set(Reg);
-        for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+        for (MCSubRegIterator SubRegs(Reg, TRI, /*IncludeSelf=*/true);
+             SubRegs.isValid(); ++SubRegs)
           KeepRegs.set(*SubRegs);
       }
     }

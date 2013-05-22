@@ -73,15 +73,15 @@ static void TrackDefUses(MachineInstr *MI,
 
   for (unsigned i = 0, e = LocalUses.size(); i != e; ++i) {
     unsigned Reg = LocalUses[i];
-    Uses.insert(Reg);
-    for (MCSubRegIterator Subreg(Reg, TRI); Subreg.isValid(); ++Subreg)
+    for (MCSubRegIterator Subreg(Reg, TRI, /*IncludeSelf=*/true);
+         Subreg.isValid(); ++Subreg)
       Uses.insert(*Subreg);
   }
 
   for (unsigned i = 0, e = LocalDefs.size(); i != e; ++i) {
     unsigned Reg = LocalDefs[i];
-    Defs.insert(Reg);
-    for (MCSubRegIterator Subreg(Reg, TRI); Subreg.isValid(); ++Subreg)
+    for (MCSubRegIterator Subreg(Reg, TRI, /*IncludeSelf=*/true);
+         Subreg.isValid(); ++Subreg)
       Defs.insert(*Subreg);
     if (Reg == ARM::CPSR)
       continue;
