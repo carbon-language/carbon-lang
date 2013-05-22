@@ -312,6 +312,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_inet_ntop]                = "  inet_ntop                       ";
   name[StatInt_inet_pton]                = "  inet_pton                       ";
   name[StatInt_getaddrinfo]              = "  getaddrinfo                     ";
+  name[StatInt_getsockname]              = "  getsockname                     ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

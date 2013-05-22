@@ -629,6 +629,28 @@ TEST(MemorySanitizer, socketpair) {
   close(sv[1]);
 }
 
+TEST(MemorySanitizer, bind_getsockname) {
+  int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+
+  struct sockaddr_in sai;
+  memset(&sai, 0, sizeof(sai));
+  sai.sin_family = AF_UNIX;
+  int res = bind(sock, (struct sockaddr *)&sai, sizeof(sai));
+
+  assert(!res);
+  char buf[200];
+  socklen_t addrlen;
+  EXPECT_UMR(getsockname(sock, (struct sockaddr *)&buf, &addrlen));
+
+  addrlen = sizeof(buf);
+  res = getsockname(sock, (struct sockaddr *)&buf, &addrlen);
+  EXPECT_NOT_POISONED(addrlen);
+  EXPECT_NOT_POISONED(buf[0]);
+  EXPECT_NOT_POISONED(buf[addrlen - 1]);
+  EXPECT_POISONED(buf[addrlen]);
+  close(sock);
+}
+
 TEST(MemorySanitizer, getcwd) {
   char path[PATH_MAX + 1];
   char* res = getcwd(path, sizeof(path));

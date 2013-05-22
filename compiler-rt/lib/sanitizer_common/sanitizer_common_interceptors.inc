@@ -779,6 +779,22 @@ INTERCEPTOR(int, getaddrinfo, char *node, char *service,
 #define INIT_GETADDRINFO
 #endif
 
+#if SANITIZER_INTERCEPT_GETSOCKNAME
+INTERCEPTOR(int, getsockname, int sock_fd, void *addr, int *addrlen) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getsockname, sock_fd, addr, addrlen);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, addrlen, sizeof(*addrlen));
+  int addrlen_in = *addrlen;
+  int res = REAL(getsockname)(sock_fd, addr, addrlen);
+  if (res == 0) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, addr, Min(addrlen_in, *addrlen));
+  }
+  return res;
+}
+#define INIT_GETSOCKNAME INTERCEPT_FUNCTION(getsockname);
+#else
+#define INIT_GETSOCKNAME
+#endif
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCASECMP;                         \
@@ -803,4 +819,5 @@ INTERCEPTOR(int, getaddrinfo, char *node, char *service,
   INIT_WAIT;                               \
   INIT_INET;                               \
   INIT_PTHREAD_GETSCHEDPARAM;              \
-  INIT_GETADDRINFO;
+  INIT_GETADDRINFO;                        \
+  INIT_GETSOCKNAME;
