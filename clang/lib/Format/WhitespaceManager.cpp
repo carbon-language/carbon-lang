@@ -129,6 +129,9 @@ void WhitespaceManager::calculateLineBreakInformation() {
         (Changes[i].NewlinesBefore > 0 || Changes[i].Kind == tok::eof) &&
         Changes[i - 1].Kind == tok::comment;
   }
+  // FIXME: The last token is currently not always an eof token; in those
+  // cases, setting TokenLength of the last token to 0 is wrong.
+  Changes.back().TokenLength = 0;
   Changes.back().IsTrailingComment = Changes.back().Kind == tok::comment;
 }
 
