@@ -9,6 +9,11 @@
 // are globals.
 // 6. BOOM
 
+// This sublte test assumes that after a foo.so is dlclose-d
+// we can mmap the region of memory that has been occupied by the library.
+// It works on i368/x86_64 Linux, but not necessary anywhere else.
+// REQUIRES: x86_64-supported-target,i386-supported-target
+
 // RUN: %clangxx_asan -m64 -O0 %p/SharedLibs/dlclose-test-so.cc \
 // RUN:     -fPIC -shared -o %t-so.so
 // RUN: %clangxx_asan -m64 -O0 %s -o %t && %t 2>&1 | FileCheck %s
@@ -44,12 +49,11 @@
 
 using std::string;
 
-static const int kPageSize = 4096;
-
 typedef int *(fun_t)();
 
 int main(int argc, char *argv[]) {
   string path = string(argv[0]) + "-so.so";
+  size_t PageSize = sysconf(_SC_PAGESIZE);
   printf("opening %s ... \n", path.c_str());
   void *lib = dlopen(path.c_str(), RTLD_NOW);
   if (!lib) {
@@ -73,8 +77,8 @@ int main(int argc, char *argv[]) {
     return 1;
   }
   // Now, the page where 'addr' is unmapped. Map it.
-  size_t page_beg = ((size_t)addr) & ~(kPageSize - 1);
-  void *res = mmap((void*)(page_beg), kPageSize,
+  size_t page_beg = ((size_t)addr) & ~(PageSize - 1);
+  void *res = mmap((void*)(page_beg), PageSize,
                    PROT_READ | PROT_WRITE,
                    MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE, 0, 0);
   if (res == (char*)-1L) {
