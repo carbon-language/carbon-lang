@@ -277,6 +277,10 @@ class LLDBController(object):
 
   def doShow(self, name):
     """ handle :Lshow <name> """
+    if not name:
+      self.ui.activate()
+      return
+
     if self.ui.showWindow(name):
       self.ui.update(self.target, "", self)
 

@@ -42,7 +42,7 @@ function! s:InitLldbPlugin()
 
   " Window show/hide commands
   command -complete=custom,s:CompleteWindow -nargs=1 Lhide               python ctrl.doHide('<args>')
-  command -complete=custom,s:CompleteWindow -nargs=1 Lshow               python ctrl.doShow('<args>')
+  command -complete=custom,s:CompleteWindow -nargs=0 Lshow               python ctrl.doShow('<args>')
  
   " Launching convenience commands (no autocompletion)
   command -nargs=* Lstart                                                python ctrl.doLaunch(True,  '<args>')
