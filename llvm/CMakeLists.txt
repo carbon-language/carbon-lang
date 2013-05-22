@@ -83,6 +83,7 @@ set(LLVM_ALL_TARGETS
   MSP430
   NVPTX
   PowerPC
+  R600
   Sparc
   SystemZ
   X86

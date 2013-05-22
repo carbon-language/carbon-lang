@@ -44,6 +44,8 @@ Non-comprehensive list of changes in this release
 * Support for exception handling has been removed from the old JIT. Use MCJIT
   if you need EH support.
 
+* The R600 backend is not marked experimental anymore and is built by default.
+
 * ... next change ...
 
 .. NOTE
