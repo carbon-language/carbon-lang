@@ -90,10 +90,10 @@ namespace __sanitizer {
     int ai_family;
     int ai_socktype;
     int ai_protocol;
-#if SANITIZER_MAC
-    unsigned ai_addrlen;
-#else
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
     uptr ai_addrlen;
+#else
+    unsigned ai_addrlen;
 #endif
     void *ai_addr;
     char *ai_canonname;
