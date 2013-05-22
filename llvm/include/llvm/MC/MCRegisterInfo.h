@@ -421,20 +421,28 @@ public:
 // aliasing registers. Use these iterator classes to traverse the lists.
 
 /// MCSubRegIterator enumerates all sub-registers of Reg.
+/// If IncludeSelf is set, Reg itself is included in the list.
 class MCSubRegIterator : public MCRegisterInfo::DiffListIterator {
 public:
-  MCSubRegIterator(unsigned Reg, const MCRegisterInfo *MCRI) {
+  MCSubRegIterator(unsigned Reg, const MCRegisterInfo *MCRI,
+                     bool IncludeSelf = false) {
     init(Reg, MCRI->DiffLists + MCRI->get(Reg).SubRegs);
-    ++*this;
+    // Initially, the iterator points to Reg itself.
+    if (!IncludeSelf)
+      ++*this;
   }
 };
 
 /// MCSuperRegIterator enumerates all super-registers of Reg.
+/// If IncludeSelf is set, Reg itself is included in the list.
 class MCSuperRegIterator : public MCRegisterInfo::DiffListIterator {
 public:
-  MCSuperRegIterator(unsigned Reg, const MCRegisterInfo *MCRI) {
+  MCSuperRegIterator(unsigned Reg, const MCRegisterInfo *MCRI,
+                     bool IncludeSelf = false) {
     init(Reg, MCRI->DiffLists + MCRI->get(Reg).SuperRegs);
-    ++*this;
+    // Initially, the iterator points to Reg itself.
+    if (!IncludeSelf)
+      ++*this;
   }
 };
 
@@ -443,7 +451,7 @@ public:
 class MCRegAliasIterator : public MCRegisterInfo::DiffListIterator {
 public:
   MCRegAliasIterator(unsigned Reg, const MCRegisterInfo *MCRI,
-                     bool IncludeSelf) {
+                     bool IncludeSelf = false) {
     init(Reg, MCRI->DiffLists + MCRI->get(Reg).Overlaps);
     // Initially, the iterator points to Reg itself.
     if (!IncludeSelf)
