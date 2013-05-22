@@ -47,6 +47,8 @@ function! s:InitLldbPlugin()
   " Launching convenience commands (no autocompletion)
   command -nargs=* Lstart                                                python ctrl.doLaunch(True,  '<args>')
   command -nargs=* Lrun                                                  python ctrl.doLaunch(False, '<args>')
+  command -nargs=1 Lattach                                               python ctrl.doAttach('<args>')
+  command -nargs=0 Ldetach                                               python ctrl.doDetach()
 
   " Regexp-commands: because vim's command mode does not support '_' or '-'
   " characters in command names, we omit them when creating the :L<cmd>

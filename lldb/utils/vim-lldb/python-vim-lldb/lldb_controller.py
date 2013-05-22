@@ -141,6 +141,33 @@ class LLDBController(object):
     else:
       self.doLaunch('-s' not in args, "")
 
+  def doAttach(self, process_name):
+    """ Handle process attach.  """
+    error = lldb.SBError()
+    
+    self.processListener = lldb.SBListener("process_event_listener")
+    self.target = self.dbg.CreateTarget('')
+    self.process = self.target.AttachToProcessWithName(self.processListener, process_name, False, error)
+    if not error.Success():
+      sys.stderr.write("Error during attach: " + str(error))
+      return
+
+    self.ui.activate()
+
+    # attach succeeded, store pid and add some event listeners
+    self.pid = self.process.GetProcessID()
+    self.process.GetBroadcaster().AddListener(self.processListener, lldb.SBProcess.eBroadcastBitStateChanged)
+    self.doContinue()
+
+    print "Attached to %s (pid=%d)" % (process_name, self.pid)
+
+  def doDetach(self):
+    if self.process is not None and self.process.IsValid():
+      pid = self.process.GetProcessID()
+      state = state_type_to_str(self.process.GetState())
+      self.process.Detach()
+      self.processPendingEvents(self.eventDelayLaunch)
+
   def doLaunch(self, stop_at_entry, args):
     """ Handle process launch.  """
     error = lldb.SBError()
