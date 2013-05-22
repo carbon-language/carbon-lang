@@ -31,6 +31,20 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
   if (left == right)
     return false;
 
+  // Sort by section position preference.
+  DefinedAtom::SectionPosition leftPos = left->sectionPosition();
+  DefinedAtom::SectionPosition rightPos = right->sectionPosition();
+
+  DEBUG(llvm::dbgs() << "Sorting by sectionPos"
+                     << "(" << leftPos << "," << rightPos << ")\n");
+
+  bool leftSpecialPos = (leftPos != DefinedAtom::sectionPositionAny);
+  bool rightSpecialPos = (rightPos != DefinedAtom::sectionPositionAny);
+  if (leftSpecialPos || rightSpecialPos) {
+    if (leftPos != rightPos)
+      return leftPos < rightPos;
+  }
+
   DEBUG(llvm::dbgs() << "Sorting by override\n");
 
   AtomToOrdinalT::const_iterator lPos = _layout._ordinalOverrideMap.find(left);
@@ -76,20 +90,6 @@ bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
     return leftType < rightType;
 
   // TO DO: Sort atoms in customs sections together.
-
-  // Sort by section position preference.
-  DefinedAtom::SectionPosition leftPos = left->sectionPosition();
-  DefinedAtom::SectionPosition rightPos = right->sectionPosition();
-
-  DEBUG(llvm::dbgs() << "Sorting by sectionPos"
-                     << "(" << leftPos << "," << rightPos << ")\n");
-
-  bool leftSpecialPos = (leftPos != DefinedAtom::sectionPositionAny);
-  bool rightSpecialPos = (rightPos != DefinedAtom::sectionPositionAny);
-  if (leftSpecialPos || rightSpecialPos) {
-    if (leftPos != rightPos)
-      return leftPos < rightPos;
-  }
 
   // Sort by .o order.
   const File *leftFile = &left->file();
@@ -392,7 +392,7 @@ void LayoutPass::buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range) {
         }
       }
     } else {
-      _ordinalOverrideMap[atom] = index;
+      _ordinalOverrideMap[atom] = index++;
     }
   }
 }

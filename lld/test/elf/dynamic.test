@@ -13,12 +13,12 @@ CHECK: kind: R_X86_64_PC32
 CHECK:  offset: 18
 CHECK:  target: [[PLTNAME:[-a-zA-Z0-9_]+]]
 
+CHECK: name: [[PLTNAME]]
+CHECK: type: stub
+
 CHECK: type: got
 CHECK: references:
 CHECK:   kind: R_X86_64_JUMP_SLOT
-
-CHECK: name: [[PLTNAME]]
-CHECK: type: stub
 
 CHECK: shared-library-atoms:
 CHECK:  name: foo

@@ -82,6 +82,62 @@ CHECKGOTPLT:        offset:          8
 CHECKGOTPLT:      - kind:            R_HEX_B22_PCREL
 CHECKGOTPLT:        offset:          12
                     target:          __plt_fn2
+              - name:            .PLT0
+CHECKGOTPLT:    type:            stub
+CHECKGOTPLT:    content:         [ 00, 40, 00, 00, 1C, C0, 49, 6A, 0E, 42, 9C, E2, 
+CHECKGOTPLT:                       4F, 40, 9C, 91, 3C, C0, 9C, 91, 0E, 42, 0E, 8C, 
+CHECKGOTPLT:                       00, C0, 9C, 52 ]
+CHECKGOTPLT:    alignment:       2^4
+CHECKGOTPLT:    section-name:    .plt
+CHECKGOTPLT:    references:      
+CHECKGOTPLT:      - kind:            R_HEX_B32_PCREL_X
+CHECKGOTPLT:        offset:          0
+                    target:          __got0
+CHECKGOTPLT:      - kind:            R_HEX_6_PCREL_X
+CHECKGOTPLT:        offset:          4
+                    target:          __got0
+              - name:            __plt_fn
+CHECKGOTPLT:    type:            stub
+CHECKGOTPLT:    content:         [ 00, 40, 00, 00, 0E, C0, 49, 6A, 1C, C0, 8E, 91, 
+CHECKGOTPLT:                       00, C0, 9C, 52 ]
+CHECKGOTPLT:    alignment:       2^4
+CHECKGOTPLT:    section-name:    .plt
+CHECKGOTPLT:    references:      
+CHECKGOTPLT:      - kind:            R_HEX_B32_PCREL_X
+CHECKGOTPLT:        offset:          0
+                    target:          __got_fn
+CHECKGOTPLT:      - kind:            R_HEX_6_PCREL_X
+CHECKGOTPLT:        offset:          4
+                    target:          __got_fn
+CHECKGOTPLT:        addend:          4
+              - name:            __plt_fn1
+CHECKGOTPLT:    type:            stub
+CHECKGOTPLT:    content:         [ 00, 40, 00, 00, 0E, C0, 49, 6A, 1C, C0, 8E, 91, 
+CHECKGOTPLT:                       00, C0, 9C, 52 ]
+CHECKGOTPLT:    alignment:       2^4
+CHECKGOTPLT:    section-name:    .plt
+CHECKGOTPLT:    references:      
+CHECKGOTPLT:      - kind:            R_HEX_B32_PCREL_X
+CHECKGOTPLT:        offset:          0
+                    target:          __got_fn1
+CHECKGOTPLT:      - kind:            R_HEX_6_PCREL_X
+CHECKGOTPLT:        offset:          4
+                    target:          __got_fn1
+CHECKGOTPLT:        addend:          4
+              - name:            __plt_fn2
+CHECKGOTPLT:    type:            stub
+CHECKGOTPLT:    content:         [ 00, 40, 00, 00, 0E, C0, 49, 6A, 1C, C0, 8E, 91, 
+CHECKGOTPLT:                       00, C0, 9C, 52 ]
+CHECKGOTPLT:    alignment:       2^4
+CHECKGOTPLT:    section-name:    .plt
+CHECKGOTPLT:    references:      
+CHECKGOTPLT:      - kind:            R_HEX_B32_PCREL_X
+CHECKGOTPLT:        offset:          0
+                    target:          __got_fn2
+CHECKGOTPLT:      - kind:            R_HEX_6_PCREL_X
+CHECKGOTPLT:        offset:          4
+                    target:          __got_fn2
+CHECKGOTPLT:        addend:          4
               - name:            __got0
 CHECKGOTPLT:    type:            got
 CHECKGOTPLT:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 
@@ -147,59 +203,3 @@ CHECKGOTPLT:        target:          fn2
 CHECKGOTPLT:      - kind:            R_HEX_32
 CHECKGOTPLT:        offset:          0
                     target:          .PLT0
-              - name:            .PLT0
-CHECKGOTPLT:    type:            stub
-CHECKGOTPLT:    content:         [ 00, 40, 00, 00, 1C, C0, 49, 6A, 0E, 42, 9C, E2, 
-CHECKGOTPLT:                       4F, 40, 9C, 91, 3C, C0, 9C, 91, 0E, 42, 0E, 8C, 
-CHECKGOTPLT:                       00, C0, 9C, 52 ]
-CHECKGOTPLT:    alignment:       2^4
-CHECKGOTPLT:    section-name:    .plt
-CHECKGOTPLT:    references:      
-CHECKGOTPLT:      - kind:            R_HEX_B32_PCREL_X
-CHECKGOTPLT:        offset:          0
-                    target:          __got0
-CHECKGOTPLT:      - kind:            R_HEX_6_PCREL_X
-CHECKGOTPLT:        offset:          4
-                    target:          __got0
-              - name:            __plt_fn
-CHECKGOTPLT:    type:            stub
-CHECKGOTPLT:    content:         [ 00, 40, 00, 00, 0E, C0, 49, 6A, 1C, C0, 8E, 91, 
-CHECKGOTPLT:                       00, C0, 9C, 52 ]
-CHECKGOTPLT:    alignment:       2^4
-CHECKGOTPLT:    section-name:    .plt
-CHECKGOTPLT:    references:      
-CHECKGOTPLT:      - kind:            R_HEX_B32_PCREL_X
-CHECKGOTPLT:        offset:          0
-                    target:          __got_fn
-CHECKGOTPLT:      - kind:            R_HEX_6_PCREL_X
-CHECKGOTPLT:        offset:          4
-                    target:          __got_fn
-CHECKGOTPLT:        addend:          4
-              - name:            __plt_fn1
-CHECKGOTPLT:    type:            stub
-CHECKGOTPLT:    content:         [ 00, 40, 00, 00, 0E, C0, 49, 6A, 1C, C0, 8E, 91, 
-CHECKGOTPLT:                       00, C0, 9C, 52 ]
-CHECKGOTPLT:    alignment:       2^4
-CHECKGOTPLT:    section-name:    .plt
-CHECKGOTPLT:    references:      
-CHECKGOTPLT:      - kind:            R_HEX_B32_PCREL_X
-CHECKGOTPLT:        offset:          0
-                    target:          __got_fn1
-CHECKGOTPLT:      - kind:            R_HEX_6_PCREL_X
-CHECKGOTPLT:        offset:          4
-                    target:          __got_fn1
-CHECKGOTPLT:        addend:          4
-              - name:            __plt_fn2
-CHECKGOTPLT:    type:            stub
-CHECKGOTPLT:    content:         [ 00, 40, 00, 00, 0E, C0, 49, 6A, 1C, C0, 8E, 91, 
-CHECKGOTPLT:                       00, C0, 9C, 52 ]
-CHECKGOTPLT:    alignment:       2^4
-CHECKGOTPLT:    section-name:    .plt
-CHECKGOTPLT:    references:      
-CHECKGOTPLT:      - kind:            R_HEX_B32_PCREL_X
-CHECKGOTPLT:        offset:          0
-                    target:          __got_fn2
-CHECKGOTPLT:      - kind:            R_HEX_6_PCREL_X
-CHECKGOTPLT:        offset:          4
-                    target:          __got_fn2
-CHECKGOTPLT:        addend:          4
