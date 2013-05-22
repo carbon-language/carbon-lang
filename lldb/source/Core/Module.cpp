@@ -218,6 +218,9 @@ Module::Module(const FileSpec& file_spec,
 
 Module::~Module()
 {
+    // Lock our module down while we tear everything down to make sure
+    // we don't get any access to the module while it is being destroyed
+    Mutex::Locker locker (m_mutex);
     // Scope for locker below...
     {
         Mutex::Locker locker (GetAllocationModuleCollectionMutex());
