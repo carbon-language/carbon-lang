@@ -2256,11 +2256,13 @@ llvm::DIType CGDebugInfo::getOrCreateFunctionType(const Decl *D,
     SmallVector<llvm::Value *, 16> Elts;
 
     // First element is always return type. For 'void' functions it is NULL.
-    QualType ResultTy =
-      OMethod->getResultType() == CGM.getContext().getObjCInstanceType()
-      ? CGM.getContext().getPointerType(
-          QualType(OMethod->getClassInterface()->getTypeForDecl(), 0))
-      : OMethod->getResultType();
+    QualType ResultTy = OMethod->getResultType();
+
+    // Replace the instancetype keyword with the actual type.
+    if (ResultTy == CGM.getContext().getObjCInstanceType())
+      ResultTy = CGM.getContext().getPointerType(
+        QualType(OMethod->getClassInterface()->getTypeForDecl(), 0));
+
     Elts.push_back(getOrCreateType(ResultTy, F));
     // "self" pointer is always first argument.
     QualType SelfDeclTy = OMethod->getSelfDecl()->getType();
