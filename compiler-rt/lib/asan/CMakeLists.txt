@@ -85,7 +85,7 @@ else()
               $<TARGET_OBJECTS:RTInterception.${arch}>
               $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
               $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
-              #$<TARGET_OBJECTS:RTLSanCommon.${arch}>
+              $<TARGET_OBJECTS:RTLSanCommon.${arch}>
       CFLAGS ${ASAN_CFLAGS}
       DEFS ${ASAN_COMMON_DEFINITIONS}
       SYMS asan.syms)

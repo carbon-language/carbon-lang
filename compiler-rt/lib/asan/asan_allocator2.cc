@@ -768,7 +768,7 @@ u32 LsanMetadata::stack_trace_id() const {
 template <typename Callable> void ForEachChunk(Callable const &callback) {
   __asan::allocator.ForEachChunk(callback);
 }
-#if 0
+#if CAN_SANITIZE_LEAKS
 template void ForEachChunk<ProcessPlatformSpecificAllocationsCb>(
     ProcessPlatformSpecificAllocationsCb const &callback);
 template void ForEachChunk<PrintLeakedCb>(PrintLeakedCb const &callback);

@@ -130,7 +130,7 @@ FUNCTIONS.san-x86_64 := $(SanitizerCommonFunctions)
 FUNCTIONS.asan-i386 := $(AsanFunctions) $(InterceptionFunctions) \
                                         $(SanitizerCommonFunctions)
 FUNCTIONS.asan-x86_64 := $(AsanFunctions) $(InterceptionFunctions) \
-                                          $(SanitizerCommonFunctions)
+                         $(SanitizerCommonFunctions) $(LsanCommonFunctions)
 FUNCTIONS.asan-arm-android := $(AsanFunctions) $(InterceptionFunctions) \
                                           $(SanitizerCommonFunctions)
 FUNCTIONS.tsan-x86_64 := $(TsanFunctions) $(InterceptionFunctions) \

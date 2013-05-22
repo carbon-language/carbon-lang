@@ -560,12 +560,12 @@ void __asan_init() {
 
   InitializeAllocator();
 
-#if 0
+#if CAN_SANITIZE_LEAKS
   __lsan::InitCommonLsan();
   if (flags()->detect_leaks) {
     Atexit(__lsan::DoLeakCheck);
   }
-#endif
+#endif  // CAN_SANITIZE_LEAKS
 
   if (flags()->verbosity) {
     Report("AddressSanitizer Init done\n");
