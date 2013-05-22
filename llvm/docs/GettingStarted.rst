@@ -81,7 +81,7 @@ Here's the short story for getting up and running quickly with LLVM:
 
    * ``make [-j]`` --- The ``-j`` specifies the number of jobs (commands) to run
      simultaneously.  This builds both LLVM and Clang for Debug+Asserts mode.
-     The ``--enabled-optimized`` configure option is used to specify a Release
+     The ``--enable-optimized`` configure option is used to specify a Release
      build.
 
    * ``make check-all`` --- This run the regression tests to ensure everything
