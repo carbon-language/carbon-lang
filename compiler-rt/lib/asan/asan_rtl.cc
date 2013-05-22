@@ -423,6 +423,20 @@ void NOINLINE __asan_handle_no_return() {
   uptr PageSize = GetPageSizeCached();
   uptr top = curr_thread->stack_top();
   uptr bottom = ((uptr)&local_stack - PageSize) & ~(PageSize-1);
+  static const uptr kMaxExpectedCleanupSize = 64 << 20;  // 64M
+  if (top - bottom > kMaxExpectedCleanupSize) {
+    static bool reported_warning = false;
+    if (reported_warning)
+      return;
+    reported_warning = true;
+    Report("WARNING: ASan is ignoring requested __asan_handle_no_return: "
+           "stack top: %p; bottom %p; size: %p (%zd)\n"
+           "False positive error reports may follow\n"
+           "For details see "
+           "http://code.google.com/p/address-sanitizer/issues/detail?id=189\n",
+           top, bottom, top - bottom, top - bottom);
+    return;
+  }
   PoisonShadow(bottom, top - bottom, 0);
 }
 

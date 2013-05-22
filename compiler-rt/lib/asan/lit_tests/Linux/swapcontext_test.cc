@@ -8,6 +8,9 @@
 // RUN: %clangxx_asan -m32 -O1 %s -o %t && %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -m32 -O2 %s -o %t && %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -m32 -O3 %s -o %t && %t 2>&1 | FileCheck %s
+//
+// This test is too sublte to try on non-x86 arch for now.
+// REQUIRES: x86_64-supported-target,i386-supported-target
 
 #include <stdio.h>
 #include <ucontext.h>
@@ -16,9 +19,26 @@
 ucontext_t orig_context;
 ucontext_t child_context;
 
+const int kStackSize = 1 << 20;
+
+__attribute__((noinline))
+void Throw() {
+  throw 1;
+}
+
+__attribute__((noinline))
+void ThrowAndCatch() {
+  try {
+    Throw();
+  } catch(int a) {
+    printf("ThrowAndCatch: %d\n", a);
+  }
+}
+
 void Child(int mode) {
   char x[32] = {0};  // Stack gets poisoned.
   printf("Child: %p\n", x);
+  ThrowAndCatch();  // Simulate __asan_handle_no_return().
   // (a) Do nothing, just return to parent function.
   // (b) Jump into the original function. Stack remains poisoned unless we do
   //     something.
@@ -30,9 +50,7 @@ void Child(int mode) {
   }
 }
 
-int Run(int arg, int mode) {
-  const int kStackSize = 1 << 20;
-  char child_stack[kStackSize + 1];
+int Run(int arg, int mode, char *child_stack) {
   printf("Child stack: %p\n", child_stack);
   // Setup child context.
   getcontext(&child_context);
@@ -54,13 +72,23 @@ int Run(int arg, int mode) {
 }
 
 int main(int argc, char **argv) {
+  char stack[kStackSize + 1];
   // CHECK: WARNING: ASan doesn't fully support makecontext/swapcontext
   int ret = 0;
-  ret += Run(argc - 1, 0);
+  ret += Run(argc - 1, 0, stack);
   printf("Test1 passed\n");
   // CHECK: Test1 passed
-  ret += Run(argc - 1, 1);
+  ret += Run(argc - 1, 1, stack);
   printf("Test2 passed\n");
   // CHECK: Test2 passed
+  char *heap = new char[kStackSize + 1];
+  ret += Run(argc - 1, 0, heap);
+  printf("Test3 passed\n");
+  // CHECK: Test3 passed
+  ret += Run(argc - 1, 1, heap);
+  printf("Test4 passed\n");
+  // CHECK: Test4 passed
+
+  delete [] heap;
   return ret;
 }

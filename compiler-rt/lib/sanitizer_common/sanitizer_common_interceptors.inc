@@ -651,7 +651,8 @@ INTERCEPTOR_WITH_SUFFIX(int, wait, int *status) {
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, status, sizeof(*status));
   return res;
 }
-INTERCEPTOR_WITH_SUFFIX(int, waitid, int idtype, int id, void *infop, int options) {
+INTERCEPTOR_WITH_SUFFIX(int, waitid, int idtype, int id, void *infop,
+  int options) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, waitid, idtype, id, infop, options);
   int res = REAL(waitid)(idtype, id, infop, options);
