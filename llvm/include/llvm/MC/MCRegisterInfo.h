@@ -510,9 +510,7 @@ public:
 // super-registers. All registers aliasing Unit can be visited like this:
 //
 //   for (MCRegUnitRootIterator RI(Unit, MCRI); RI.isValid(); ++RI) {
-//     unsigned Root = *RI;
-//     visit(Root);
-//     for (MCSuperRegIterator SI(Root, MCRI); SI.isValid(); ++SI)
+//     for (MCSuperRegIterator SI(Root, MCRI, true); SI.isValid(); ++SI)
 //       visit(*SI);
 //    }
 
