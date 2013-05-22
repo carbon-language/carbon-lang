@@ -768,7 +768,7 @@ u32 LsanMetadata::stack_trace_id() const {
 template <typename Callable> void ForEachChunk(Callable const &callback) {
   __asan::allocator.ForEachChunk(callback);
 }
-#if CAN_SANITIZE_LEAKS
+#if 0
 template void ForEachChunk<ProcessPlatformSpecificAllocationsCb>(
     ProcessPlatformSpecificAllocationsCb const &callback);
 template void ForEachChunk<PrintLeakedCb>(PrintLeakedCb const &callback);
@@ -777,7 +777,7 @@ template void ForEachChunk<MarkIndirectlyLeakedCb>(
     MarkIndirectlyLeakedCb const &callback);
 template void ForEachChunk<ReportLeakedCb>(ReportLeakedCb const &callback);
 template void ForEachChunk<ClearTagCb>(ClearTagCb const &callback);
-#endif  // SANITIZE_LEAKS
+#endif  // CAN_SANITIZE_LEAKS
 }  // namespace __lsan
 
 // ---------------------- Interface ---------------- {{{1

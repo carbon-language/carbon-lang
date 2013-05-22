@@ -560,7 +560,7 @@ void __asan_init() {
 
   InitializeAllocator();
 
-#if CAN_SANITIZE_LEAKS
+#if 0
   __lsan::InitCommonLsan();
   if (flags()->detect_leaks) {
     Atexit(__lsan::DoLeakCheck);
