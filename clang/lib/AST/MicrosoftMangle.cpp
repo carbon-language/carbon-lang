@@ -23,6 +23,7 @@
 #include "clang/Basic/ABI.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/StringMap.h"
 #include <map>
 
 using namespace clang;
@@ -48,9 +49,7 @@ class MicrosoftCXXNameMangler {
   const NamedDecl *Structor;
   unsigned StructorType;
 
-  // FIXME: audit the performance of BackRefMap as it might do way too many
-  // copying of strings.
-  typedef std::map<std::string, unsigned> BackRefMap;
+  typedef llvm::StringMap<unsigned> BackRefMap;
   BackRefMap NameBackReferences;
   bool UseNameBackReferences;
 
