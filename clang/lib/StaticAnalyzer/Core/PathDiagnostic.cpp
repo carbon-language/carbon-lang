@@ -123,7 +123,13 @@ PathDiagnostic::PathDiagnostic(const Decl *declWithIssue,
 static PathDiagnosticCallPiece *
 getFirstStackedCallToHeaderFile(PathDiagnosticCallPiece *CP,
                                 const SourceManager &SMgr) {
-  assert(SMgr.isFromMainFile(CP->callEnter.asLocation()) &&
+  SourceLocation CallLoc = CP->callEnter.asLocation();
+
+  // If the call is within a macro, don't do anything (for now).
+  if (CallLoc.isMacroID())
+    return 0;
+
+  assert(SMgr.isFromMainFile(CallLoc) &&
          "The call piece should be in the main file.");
 
   // Check if CP represents a path through a function outside of the main file.
