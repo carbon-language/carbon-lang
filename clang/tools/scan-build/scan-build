@@ -910,7 +910,7 @@ sub RunXcodebuild {
   # Detect the version of Xcode.  If Xcode 4.6 or higher, use new
   # in situ support for analyzer interposition without needed to override
   # the compiler.
-  open(DETECT_XCODE, "xcodebuild -version |") or
+  open(DETECT_XCODE, "-|", $Args->[0], "-version") or
     die "error: cannot detect version of xcodebuild\n";
 
   my $oldBehavior = 1;
@@ -976,16 +976,11 @@ sub RunBuildCommand {
   my $CCAnalyzer = shift;
   my $CXXAnalyzer = shift;
   my $Options = shift;
-  
-  # Get only the part of the command after the last '/'.
-  if ($Cmd =~ /\/([^\/]+)$/) {
-    $Cmd = $1;
-  }
-  
-  if ($Cmd eq "xcodebuild") {
+
+  if ($Cmd =~ /\bxcodebuild$/) {
     return RunXcodebuild($Args, $IgnoreErrors, $CCAnalyzer, $CXXAnalyzer, $Options);
   }
-  
+
   # Setup the environment.
   SetEnv($Options);
   
