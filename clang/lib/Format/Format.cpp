@@ -251,7 +251,7 @@ public:
     State.Column = FirstIndent;
     State.NextToken = &RootToken;
     State.Stack.push_back(
-        ParenState(FirstIndent, FirstIndent, !Style.BinPackParameters,
+        ParenState(FirstIndent, FirstIndent, /*AvoidBinPacking=*/ false,
                    /*NoLineBreak=*/ false));
     State.LineContainsContinuedForLoopSection = false;
     State.ParenLevel = 0;

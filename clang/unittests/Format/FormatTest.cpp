@@ -2077,6 +2077,10 @@ TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
       "      .aaaaaaa();\n"
       "}",
       NoBinPacking);
+  verifyFormat(
+      "template <class SomeType, class SomeOtherType>\n"
+      "SomeType SomeFunction(SomeType Type, SomeOtherType OtherType) {}",
+      NoBinPacking);
 }
 
 TEST_F(FormatTest, FormatsBuilderPattern) {
