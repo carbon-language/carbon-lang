@@ -2002,8 +2002,6 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
     const Stmt *level2 = getStmtParent(s1End, PM);
 
     if (wasFirst) {
-      wasFirst = false;
-
       // If the first edge (in isolation) is just a transition from
       // an expression to a parent expression then eliminate that edge.
       if (level1 && level2 && level2 == PM.getParent(level1)) {
