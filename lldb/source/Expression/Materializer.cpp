@@ -109,7 +109,11 @@ public:
         // Clear the flag if the variable will never be deallocated.
         
         if (m_persistent_variable_sp->m_flags & ClangExpressionVariable::EVKeepInTarget)
+        {
+            Error leak_error;
+            map.Leak(mem, leak_error);
             m_persistent_variable_sp->m_flags &= ~ClangExpressionVariable::EVNeedsAllocation;
+        }
         
         // Write the contents of the variable to the area.
         

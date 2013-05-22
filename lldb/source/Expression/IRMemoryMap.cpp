@@ -38,7 +38,10 @@ IRMemoryMap::~IRMemoryMap ()
         while ((iter = m_allocations.begin()) != m_allocations.end())
         {
             err.Clear();
-            Free(iter->first, err);
+            if (iter->second.m_leak)
+                m_allocations.erase(iter);
+            else
+                Free(iter->first, err);
         }
     }
 }
@@ -366,6 +369,25 @@ IRMemoryMap::Malloc (size_t size, uint8_t alignment, uint32_t permissions, Alloc
     }
     
     return aligned_address;
+}
+
+void
+IRMemoryMap::Leak (lldb::addr_t process_address, Error &error)
+{
+    error.Clear();
+    
+    AllocationMap::iterator iter = m_allocations.find(process_address);
+    
+    if (iter == m_allocations.end())
+    {
+        error.SetErrorToGenericError();
+        error.SetErrorString("Couldn't leak: allocation doesn't exist");
+        return;
+    }
+    
+    Allocation &allocation = iter->second;
+
+    allocation.m_leak = true;
 }
 
 void
