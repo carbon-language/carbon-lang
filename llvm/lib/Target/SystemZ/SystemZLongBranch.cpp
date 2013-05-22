@@ -37,12 +37,19 @@
 // are actually relatively cheap.  It therefore doesn't seem worth spending
 // much compilation time on the problem.  Instead, the approach we take is:
 //
-// (1) Check whether all branches can be short (the usual case).  Exit the
-//     pass if so.
-// (2) If one branch needs to be long, work out the address that each block
-//     would have if all branches need to be long, as for shortening above.
-// (3) Relax any branch that is out of range according to this pessimistic
-//     assumption.
+// (1) Work out the address that each block would have if no branches
+//     need relaxing.  Exit the pass early if all branches are in range
+//     according to this assumption.
+//
+// (2) Work out the address that each block would have if all branches
+//     need relaxing.
+//
+// (3) Walk through the block calculating the final address of each instruction
+//     and relaxing those that need to be relaxed.  For backward branches,
+//     this check uses the final address of the target block, as calculated
+//     earlier in the walk.  For forward branches, this check uses the
+//     address of the target block that was calculated in (2).  Both checks
+//     give a conservatively-correct range.
 //
 //===----------------------------------------------------------------------===//
 
@@ -68,10 +75,7 @@ namespace {
 
   // Represents positional information about a basic block.
   struct MBBInfo {
-    // The address that we currently assume the block has, relative to
-    // the start of the function.  This is designed so that taking the
-    // difference between two addresses gives a conservative upper bound
-    // on the distance between them.
+    // The address that we currently assume the block has.
     uint64_t Address;
 
     // The size of the block in bytes, excluding terminators.
@@ -95,8 +99,7 @@ namespace {
     // instruction, otherwise it is null.
     MachineInstr *Branch;
 
-    // The current address of the terminator, in the same form as
-    // for BlockInfo.
+    // The address that we currently assume the terminator has.
     uint64_t Address;
 
     // The current size of the terminator in bytes.
@@ -115,8 +118,7 @@ namespace {
 
   // Used to keep track of the current position while iterating over the blocks.
   struct BlockPosition {
-    // The offset from the start of the function, in the same form
-    // as BlockInfo.
+    // The address that we assume this position has.
     uint64_t Address;
 
     // The number of low bits in Address that are known to be the same
@@ -146,7 +148,7 @@ namespace {
                         bool AssumeRelaxed);
     TerminatorInfo describeTerminator(MachineInstr *MI);
     uint64_t initMBBInfo();
-    bool mustRelaxBranch(const TerminatorInfo &Terminator);
+    bool mustRelaxBranch(const TerminatorInfo &Terminator, uint64_t Address);
     bool mustRelaxABranch();
     void setWorstCaseAddresses();
     void relaxBranch(TerminatorInfo &Terminator);
@@ -274,17 +276,19 @@ uint64_t SystemZLongBranch::initMBBInfo() {
   return Position.Address;
 }
 
-// Return true if, under current assumptions, Terminator needs to be relaxed.
-bool SystemZLongBranch::mustRelaxBranch(const TerminatorInfo &Terminator) {
+// Return true if, under current assumptions, Terminator would need to be
+// relaxed if it were placed at address Address.
+bool SystemZLongBranch::mustRelaxBranch(const TerminatorInfo &Terminator,
+                                        uint64_t Address) {
   if (!Terminator.Branch)
     return false;
 
   const MBBInfo &Target = MBBs[Terminator.TargetBlock];
-  if (Target.Address < Terminator.Address) {
-    if (Terminator.Address - Target.Address <= MaxBackwardRange)
+  if (Address >= Target.Address) {
+    if (Address - Target.Address <= MaxBackwardRange)
       return false;
   } else {
-    if (Target.Address - Terminator.Address <= MaxForwardRange)
+    if (Target.Address - Address <= MaxForwardRange)
       return false;
   }
 
@@ -296,7 +300,7 @@ bool SystemZLongBranch::mustRelaxBranch(const TerminatorInfo &Terminator) {
 bool SystemZLongBranch::mustRelaxABranch() {
   for (SmallVector<TerminatorInfo, 16>::iterator TI = Terminators.begin(),
          TE = Terminators.end(); TI != TE; ++TI)
-    if (mustRelaxBranch(*TI))
+    if (mustRelaxBranch(*TI, TI->Address))
       return true;
   return false;
 }
@@ -337,12 +341,22 @@ void SystemZLongBranch::relaxBranch(TerminatorInfo &Terminator) {
   ++LongBranches;
 }
 
-// Relax any branches that need to be relaxed, under current assumptions.
+// Run a shortening pass and relax any branches that need to be relaxed.
 void SystemZLongBranch::relaxBranches() {
-  for (SmallVector<TerminatorInfo, 16>::iterator TI = Terminators.begin(),
-         TE = Terminators.end(); TI != TE; ++TI)
-    if (mustRelaxBranch(*TI))
-      relaxBranch(*TI);
+  SmallVector<TerminatorInfo, 16>::iterator TI = Terminators.begin();
+  BlockPosition Position(MF->getAlignment());
+  for (SmallVector<MBBInfo, 16>::iterator BI = MBBs.begin(), BE = MBBs.end();
+       BI != BE; ++BI) {
+    skipNonTerminators(Position, *BI);
+    for (unsigned BTI = 0, BTE = BI->NumTerminators; BTI != BTE; ++BTI) {
+      assert(Position.Address <= TI->Address &&
+             "Addresses shouldn't go forwards");
+      if (mustRelaxBranch(*TI, Position.Address))
+        relaxBranch(*TI);
+      skipTerminator(Position, *TI, false);
+      ++TI;
+    }
+  }
 }
 
 bool SystemZLongBranch::runOnMachineFunction(MachineFunction &F) {
