@@ -806,10 +806,19 @@ const VarRegion* MemRegionManager::getVarRegion(const VarDecl *D,
           sReg = getGlobalsRegion(MemRegion::StaticGlobalSpaceRegionKind,
                                   getFunctionTextRegion(cast<NamedDecl>(STCD)));
         else if (const BlockDecl *BD = dyn_cast<BlockDecl>(STCD)) {
+          // FIXME: The fallback type here is totally bogus -- though it should
+          // never be queried, it will prevent uniquing with the real
+          // BlockTextRegion. Ideally we'd fix the AST so that we always had a
+          // signature.
+          QualType T;
+          if (const TypeSourceInfo *TSI = BD->getSignatureAsWritten())
+            T = TSI->getType();
+          else
+            T = getContext().getFunctionNoProtoType(getContext().VoidTy);
+          
           const BlockTextRegion *BTR =
-            getBlockTextRegion(BD,
-                     C.getCanonicalType(BD->getSignatureAsWritten()->getType()),
-                     STC->getAnalysisDeclContext());
+            getBlockTextRegion(BD, C.getCanonicalType(T),
+                               STC->getAnalysisDeclContext());
           sReg = getGlobalsRegion(MemRegion::StaticGlobalSpaceRegionKind,
                                   BTR);
         }

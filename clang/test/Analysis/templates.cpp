@@ -48,3 +48,25 @@ void testNonTypeTemplateInstantiation() {
 #endif
 }
 
+namespace rdar13954714 {
+  template <bool VALUE>
+  bool blockInTemplate() {
+    return (^() {
+      return VALUE;
+    })();
+  }
+
+  // force instantiation
+  template bool blockInTemplate<true>();
+
+  template <bool VALUE>
+  void blockWithStatic() {
+    (void)^() {
+      static int x;
+      return ++x;
+    };
+  }
+
+  // force instantiation
+  template void blockWithStatic<true>();
+}

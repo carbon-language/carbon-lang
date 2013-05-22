@@ -245,10 +245,13 @@ QualType CallEvent::getDeclaredResultType(const Decl *D) {
     // Blocks are difficult because the return type may not be stored in the
     // BlockDecl itself. The AST should probably be enhanced, but for now we
     // just do what we can.
-    QualType Ty = BD->getSignatureAsWritten()->getType();
-    if (const FunctionType *FT = Ty->getAs<FunctionType>())
+    // FIXME: All blocks should have signatures-as-written, even if the return
+    // type is inferred. (That's signified is with a dependent result type.)
+    if (const TypeSourceInfo *TSI = BD->getSignatureAsWritten()) {
+      const FunctionType *FT = TSI->getType()->castAs<FunctionType>();
       if (!FT->getResultType()->isDependentType())
         return FT->getResultType();
+    }
 
     return QualType();
   }
