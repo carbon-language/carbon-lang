@@ -71,6 +71,10 @@ public:
   virtual bool finalizeMemory(std::string *ErrMsg = 0) = 0;
 };
 
+// Create wrappers for C Binding types (see CBindingWrapping.h).
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(
+    RTDyldMemoryManager, LLVMMCJITMemoryManagerRef)
+
 } // namespace llvm
 
 #endif // LLVM_EXECUTIONENGINE_RT_DYLD_MEMORY_MANAGER_H
