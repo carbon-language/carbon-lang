@@ -18,18 +18,41 @@
 namespace clang {
 namespace format {
 
-void WhitespaceManager::replaceWhitespace(const AnnotatedToken &Tok,
-                                          unsigned NewLines, unsigned Spaces,
-                                          unsigned WhitespaceStartColumn) {
-  if (NewLines > 0)
-    alignEscapedNewlines();
+bool
+WhitespaceManager::Change::IsBeforeInFile::operator()(const Change &C1,
+                                                      const Change &C2) const {
+  return SourceMgr.isBeforeInTranslationUnit(
+      C1.OriginalWhitespaceRange.getBegin(),
+      C2.OriginalWhitespaceRange.getBegin());
+}
 
-  // 2+ newlines mean an empty line separating logic scopes.
-  if (NewLines >= 2)
-    alignComments();
+WhitespaceManager::Change::Change(
+    bool CreateReplacement, const SourceRange &OriginalWhitespaceRange,
+    unsigned Spaces, unsigned StartOfTokenColumn, unsigned NewlinesBefore,
+    StringRef PreviousLinePostfix, StringRef CurrentLinePrefix,
+    tok::TokenKind Kind, bool ContinuesPPDirective)
+    : CreateReplacement(CreateReplacement),
+      OriginalWhitespaceRange(OriginalWhitespaceRange),
+      StartOfTokenColumn(StartOfTokenColumn), NewlinesBefore(NewlinesBefore),
+      PreviousLinePostfix(PreviousLinePostfix),
+      CurrentLinePrefix(CurrentLinePrefix), Kind(Kind),
+      ContinuesPPDirective(ContinuesPPDirective), Spaces(Spaces) {}
+
+void WhitespaceManager::replaceWhitespace(const AnnotatedToken &Tok,
+                                          unsigned Newlines, unsigned Spaces,
+                                          unsigned StartOfTokenColumn,
+                                          bool InPPDirective) {
+  Changes.push_back(Change(
+      true, SourceRange(Tok.FormatTok.WhiteSpaceStart,
+                        Tok.FormatTok.WhiteSpaceStart.getLocWithOffset(
+                            Tok.FormatTok.WhiteSpaceLength)),
+      Spaces, StartOfTokenColumn, Newlines, "", "", Tok.FormatTok.Tok.getKind(),
+      InPPDirective && !Tok.FormatTok.IsFirst));
 
   // Align line comments if they are trailing or if they continue other
   // trailing comments.
+  // FIXME: Pull this out and generalize so it works the same way in broken
+  // comments and unbroken comments with trailing whitespace.
   if (Tok.isTrailingComment()) {
     SourceLocation TokenEndLoc = Tok.FormatTok.getStartOfNonWhitespace()
         .getLocWithOffset(Tok.FormatTok.TokenLength);
@@ -37,75 +60,35 @@ void WhitespaceManager::replaceWhitespace(const AnnotatedToken &Tok,
     if (Tok.FormatTok.TrailingWhiteSpaceLength != 0)
       Replaces.insert(tooling::Replacement(
           SourceMgr, TokenEndLoc, Tok.FormatTok.TrailingWhiteSpaceLength, ""));
-
-    bool LineExceedsColumnLimit =
-        Spaces + WhitespaceStartColumn + Tok.FormatTok.TokenLength >
-        Style.ColumnLimit;
-    // Align comment with other comments.
-    if ((Tok.Parent != NULL || !Comments.empty()) &&
-        !LineExceedsColumnLimit) {
-      unsigned MinColumn =
-          NewLines > 0 ? Spaces : WhitespaceStartColumn + Spaces;
-      unsigned MaxColumn = Style.ColumnLimit - Tok.FormatTok.TokenLength;
-      Comments.push_back(StoredToken(
-          Tok.FormatTok.WhiteSpaceStart, Tok.FormatTok.WhiteSpaceLength,
-          MinColumn, MaxColumn, NewLines, Spaces));
-      return;
-    }
   }
-
-  // If this line does not have a trailing comment, align the stored comments.
-  if (Tok.Children.empty() && !Tok.isTrailingComment())
-    alignComments();
-
-  storeReplacement(Tok.FormatTok.WhiteSpaceStart,
-                   Tok.FormatTok.WhiteSpaceLength,
-                   getNewLineText(NewLines, Spaces));
 }
 
-void WhitespaceManager::replacePPWhitespace(const AnnotatedToken &Tok,
-                                            unsigned NewLines, unsigned Spaces,
-                                            unsigned WhitespaceStartColumn) {
-  if (NewLines == 0) {
-    replaceWhitespace(Tok, NewLines, Spaces, WhitespaceStartColumn);
-  } else {
-    // The earliest position for "\" is 2 after the last token.
-    unsigned MinColumn = WhitespaceStartColumn + 2;
-    unsigned MaxColumn = Style.ColumnLimit;
-    EscapedNewlines.push_back(StoredToken(
-        Tok.FormatTok.WhiteSpaceStart, Tok.FormatTok.WhiteSpaceLength,
-        MinColumn, MaxColumn, NewLines, Spaces));
-  }
+void WhitespaceManager::addUntouchableToken(const FormatToken &Tok,
+                                            bool InPPDirective) {
+  Changes.push_back(Change(
+      false,
+      SourceRange(Tok.WhiteSpaceStart,
+                  Tok.WhiteSpaceStart.getLocWithOffset(Tok.WhiteSpaceLength)),
+      Tok.WhiteSpaceLength - Tok.NewlinesBefore,
+      SourceMgr.getSpellingColumnNumber(Tok.Tok.getLocation()) - 1,
+      Tok.NewlinesBefore, "", "", Tok.Tok.getKind(),
+      InPPDirective && !Tok.IsFirst));
 }
 
 void WhitespaceManager::breakToken(const FormatToken &Tok, unsigned Offset,
-                                   unsigned ReplaceChars, StringRef Prefix,
-                                   StringRef Postfix, bool InPPDirective,
-                                   unsigned Spaces,
-                                   unsigned WhitespaceStartColumn) {
-  SourceLocation Location =
-      Tok.getStartOfNonWhitespace().getLocWithOffset(Offset);
-  if (InPPDirective) {
-    // The earliest position for "\" is 2 after the last token.
-    unsigned MinColumn = WhitespaceStartColumn + 2;
-    unsigned MaxColumn = Style.ColumnLimit;
-    StoredToken StoredTok = StoredToken(Location, ReplaceChars, MinColumn,
-                                        MaxColumn, /*NewLines=*/ 1, Spaces);
-    StoredTok.Prefix = Prefix;
-    StoredTok.Postfix = Postfix;
-    EscapedNewlines.push_back(StoredTok);
-  } else {
-    std::string ReplacementText =
-        (Prefix + getNewLineText(1, Spaces) + Postfix).str();
-    Replaces.insert(tooling::Replacement(SourceMgr, Location, ReplaceChars,
-                                         ReplacementText));
-  }
-}
-
-const tooling::Replacements &WhitespaceManager::generateReplacements() {
-  alignComments();
-  alignEscapedNewlines();
-  return Replaces;
+                                   unsigned ReplaceChars,
+                                   StringRef PreviousPostfix,
+                                   StringRef CurrentPrefix, bool InPPDirective,
+                                   unsigned Spaces) {
+  Changes.push_back(Change(
+      true, SourceRange(Tok.getStartOfNonWhitespace().getLocWithOffset(Offset),
+                        Tok.getStartOfNonWhitespace().getLocWithOffset(
+                            Offset + ReplaceChars)),
+      Spaces, Spaces, 1, PreviousPostfix, CurrentPrefix,
+      // FIXME: Unify token adjustment, so we don't split it between
+      // BreakableToken and the WhitespaceManager. That would also allow us to
+      // correctly store a tok::TokenKind instead of rolling our own enum.
+      tok::unknown, InPPDirective && !Tok.IsFirst));
 }
 
 void WhitespaceManager::addReplacement(const SourceLocation &SourceLoc,
@@ -114,10 +97,150 @@ void WhitespaceManager::addReplacement(const SourceLocation &SourceLoc,
       tooling::Replacement(SourceMgr, SourceLoc, ReplaceChars, Text));
 }
 
-void WhitespaceManager::addUntouchableComment(unsigned Column) {
-  StoredToken Tok = StoredToken(SourceLocation(), 0, Column, Column, 0, 0);
-  Tok.Untouchable = true;
-  Comments.push_back(Tok);
+const tooling::Replacements &WhitespaceManager::generateReplacements() {
+  if (Changes.empty())
+    return Replaces;
+
+  std::sort(Changes.begin(), Changes.end(), Change::IsBeforeInFile(SourceMgr));
+  calculateLineBreakInformation();
+  alignTrailingComments();
+  alignEscapedNewlines();
+  generateChanges();
+
+  return Replaces;
+}
+
+void WhitespaceManager::calculateLineBreakInformation() {
+  Changes[0].PreviousEndOfTokenColumn = 0;
+  for (unsigned i = 1, e = Changes.size(); i != e; ++i) {
+    unsigned OriginalWhitespaceStart =
+        SourceMgr.getFileOffset(Changes[i].OriginalWhitespaceRange.getBegin());
+    unsigned PreviousOriginalWhitespaceEnd = SourceMgr.getFileOffset(
+        Changes[i - 1].OriginalWhitespaceRange.getEnd());
+    Changes[i - 1].TokenLength =
+        OriginalWhitespaceStart - PreviousOriginalWhitespaceEnd +
+        Changes[i].PreviousLinePostfix.size() +
+        Changes[i - 1].CurrentLinePrefix.size();
+
+    Changes[i].PreviousEndOfTokenColumn =
+        Changes[i - 1].StartOfTokenColumn + Changes[i - 1].TokenLength;
+
+    Changes[i - 1].IsTrailingComment =
+        (Changes[i].NewlinesBefore > 0 || Changes[i].Kind == tok::eof) &&
+        Changes[i - 1].Kind == tok::comment;
+  }
+  Changes.back().IsTrailingComment = Changes.back().Kind == tok::comment;
+}
+
+void WhitespaceManager::alignTrailingComments() {
+  unsigned MinColumn = 0;
+  unsigned MaxColumn = UINT_MAX;
+  unsigned StartOfSequence = 0;
+  bool BreakBeforeNext = false;
+  unsigned Newlines = 0;
+  for (unsigned i = 0, e = Changes.size(); i != e; ++i) {
+    unsigned ChangeMinColumn = Changes[i].StartOfTokenColumn;
+    // FIXME: Correctly handle ChangeMaxColumn in PP directives.
+    unsigned ChangeMaxColumn = Style.ColumnLimit - Changes[i].TokenLength;
+    Newlines += Changes[i].NewlinesBefore;
+    if (Changes[i].IsTrailingComment) {
+      if (BreakBeforeNext || Newlines > 1 ||
+          (ChangeMinColumn > MaxColumn || ChangeMaxColumn < MinColumn) ||
+          // Break the comment sequence if the previous line did not end
+          // in a trailing comment.
+          (Changes[i].NewlinesBefore == 1 && i > 0 &&
+           !Changes[i - 1].IsTrailingComment)) {
+        alignTrailingComments(StartOfSequence, i, MinColumn);
+        MinColumn = ChangeMinColumn;
+        MaxColumn = ChangeMaxColumn;
+        StartOfSequence = i;
+      } else {
+        MinColumn = std::max(MinColumn, ChangeMinColumn);
+        MaxColumn = std::min(MaxColumn, ChangeMaxColumn);
+      }
+      BreakBeforeNext =
+          (i == 0) || (Changes[i].NewlinesBefore > 1) ||
+          (Changes[i].NewlinesBefore == 1 && !Changes[i - 1].IsTrailingComment);
+      Newlines = 0;
+    }
+  }
+  alignTrailingComments(StartOfSequence, Changes.size(), MinColumn);
+}
+
+void WhitespaceManager::alignTrailingComments(unsigned Start, unsigned End,
+                                              unsigned Column) {
+  for (unsigned i = Start; i != End; ++i) {
+    if (Changes[i].IsTrailingComment) {
+      assert(Column >= Changes[i].StartOfTokenColumn);
+      Changes[i].Spaces += Column - Changes[i].StartOfTokenColumn;
+      Changes[i].StartOfTokenColumn = Column;
+    }
+  }
+}
+
+void WhitespaceManager::alignEscapedNewlines() {
+  unsigned MaxEndOfLine = 0;
+  unsigned StartOfMacro = 0;
+  for (unsigned i = 1, e = Changes.size(); i < e; ++i) {
+    Change &C = Changes[i];
+    if (C.NewlinesBefore > 0) {
+      if (C.ContinuesPPDirective) {
+        if (Style.AlignEscapedNewlinesLeft)
+          MaxEndOfLine = std::max(C.PreviousEndOfTokenColumn + 2, MaxEndOfLine);
+        else
+          MaxEndOfLine = Style.ColumnLimit;
+      } else {
+        alignEscapedNewlines(StartOfMacro + 1, i, MaxEndOfLine);
+        MaxEndOfLine = 0;
+        StartOfMacro = i;
+      }
+    }
+  }
+  alignEscapedNewlines(StartOfMacro + 1, Changes.size(), MaxEndOfLine);
+}
+
+void WhitespaceManager::alignEscapedNewlines(unsigned Start, unsigned End,
+                                             unsigned Column) {
+  for (unsigned i = Start; i < End; ++i) {
+    Change &C = Changes[i];
+    if (C.NewlinesBefore > 0) {
+      assert(C.ContinuesPPDirective);
+      if (C.PreviousEndOfTokenColumn + 1 > Column)
+        C.EscapedNewlineColumn = 0;
+      else
+        C.EscapedNewlineColumn = Column;
+    }
+  }
+}
+
+void WhitespaceManager::generateChanges() {
+  for (unsigned i = 0, e = Changes.size(); i != e; ++i) {
+    const Change &C = Changes[i];
+    if (C.CreateReplacement) {
+      std::string ReplacementText =
+          C.PreviousLinePostfix +
+          (C.ContinuesPPDirective
+               ? getNewLineText(C.NewlinesBefore, C.Spaces,
+                                C.PreviousEndOfTokenColumn,
+                                C.EscapedNewlineColumn)
+               : getNewLineText(C.NewlinesBefore, C.Spaces)) +
+          C.CurrentLinePrefix;
+      storeReplacement(C.OriginalWhitespaceRange, ReplacementText);
+    }
+  }
+}
+
+void WhitespaceManager::storeReplacement(const SourceRange &Range,
+                                         StringRef Text) {
+  unsigned WhitespaceLength = SourceMgr.getFileOffset(Range.getEnd()) -
+                              SourceMgr.getFileOffset(Range.getBegin());
+  // Don't create a replacement, if it does not change anything.
+  if (StringRef(SourceMgr.getCharacterData(Range.getBegin()),
+                WhitespaceLength) ==
+      Text)
+    return;
+  Replaces.insert(tooling::Replacement(
+      SourceMgr, CharSourceRange::getCharRange(Range), Text));
 }
 
 std::string WhitespaceManager::getNewLineText(unsigned NewLines,
@@ -127,12 +250,12 @@ std::string WhitespaceManager::getNewLineText(unsigned NewLines,
 
 std::string WhitespaceManager::getNewLineText(unsigned NewLines,
                                               unsigned Spaces,
-                                              unsigned WhitespaceStartColumn,
+                                              unsigned PreviousEndOfTokenColumn,
                                               unsigned EscapedNewlineColumn) {
   std::string NewLineText;
   if (NewLines > 0) {
     unsigned Offset =
-        std::min<int>(EscapedNewlineColumn - 1, WhitespaceStartColumn);
+        std::min<int>(EscapedNewlineColumn - 1, PreviousEndOfTokenColumn);
     for (unsigned i = 0; i < NewLines; ++i) {
       NewLineText += std::string(EscapedNewlineColumn - Offset - 1, ' ');
       NewLineText += "\\\n";
@@ -148,71 +271,6 @@ std::string WhitespaceManager::getIndentText(unsigned Spaces) {
 
   return std::string(Spaces / Style.IndentWidth, '\t') +
          std::string(Spaces % Style.IndentWidth, ' ');
-}
-
-void WhitespaceManager::alignComments() {
-  unsigned MinColumn = 0;
-  unsigned MaxColumn = UINT_MAX;
-  token_iterator Start = Comments.begin();
-  for (token_iterator I = Start, E = Comments.end(); I != E; ++I) {
-    if (I->MinColumn > MaxColumn || I->MaxColumn < MinColumn) {
-      alignComments(Start, I, MinColumn);
-      MinColumn = I->MinColumn;
-      MaxColumn = I->MaxColumn;
-      Start = I;
-    } else {
-      MinColumn = std::max(MinColumn, I->MinColumn);
-      MaxColumn = std::min(MaxColumn, I->MaxColumn);
-    }
-  }
-  alignComments(Start, Comments.end(), MinColumn);
-  Comments.clear();
-}
-
-void WhitespaceManager::alignComments(token_iterator I, token_iterator E,
-                                      unsigned Column) {
-  while (I != E) {
-    if (!I->Untouchable) {
-      unsigned Spaces = I->Spaces + Column - I->MinColumn;
-      storeReplacement(I->ReplacementLoc, I->ReplacementLength,
-                       getNewLineText(I->NewLines, Spaces));
-    }
-    ++I;
-  }
-}
-
-void WhitespaceManager::alignEscapedNewlines() {
-  unsigned MinColumn;
-  if (Style.AlignEscapedNewlinesLeft) {
-    MinColumn = 0;
-    for (token_iterator I = EscapedNewlines.begin(), E = EscapedNewlines.end();
-         I != E; ++I) {
-      if (I->MinColumn > MinColumn)
-        MinColumn = I->MinColumn;
-    }
-  } else {
-    MinColumn = Style.ColumnLimit;
-  }
-
-  for (token_iterator I = EscapedNewlines.begin(), E = EscapedNewlines.end();
-       I != E; ++I) {
-    // I->MinColumn - 2 is the end of the previous token (i.e. the
-    // WhitespaceStartColumn).
-    storeReplacement(
-        I->ReplacementLoc, I->ReplacementLength,
-        I->Prefix + getNewLineText(I->NewLines, I->Spaces, I->MinColumn - 2,
-                                   MinColumn) + I->Postfix);
-
-  }
-  EscapedNewlines.clear();
-}
-
-void WhitespaceManager::storeReplacement(SourceLocation Loc, unsigned Length,
-                                         const std::string Text) {
-  // Don't create a replacement, if it does not change anything.
-  if (StringRef(SourceMgr.getCharacterData(Loc), Length) == Text)
-    return;
-  Replaces.insert(tooling::Replacement(SourceMgr, Loc, Length, Text));
 }
 
 } // namespace format

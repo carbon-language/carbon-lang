@@ -643,9 +643,9 @@ private:
         else
           Current.Type = TT_BlockComment;
       } else if (Current.is(tok::r_paren)) {
-        bool ParensNotExpr = !Current.Parent ||
-                             Current.Parent->Type == TT_PointerOrReference ||
-                             Current.Parent->Type == TT_TemplateCloser;
+        bool ParensNotExpr =
+            !Current.Parent || Current.Parent->Type == TT_PointerOrReference ||
+            Current.Parent->Type == TT_TemplateCloser;
         bool ParensCouldEndDecl =
             !Current.Children.empty() &&
             Current.Children[0].isOneOf(tok::equal, tok::semi, tok::l_brace);
@@ -920,9 +920,26 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
     Current = Current->Children.empty() ? NULL : &Current->Children[0];
   }
 
+  calculateUnbreakableTailLengths(Line);
   DEBUG({
     printDebugInfo(Line);
   });
+}
+
+void TokenAnnotator::calculateUnbreakableTailLengths(AnnotatedLine &Line) {
+  unsigned UnbreakableTailLength = 0;
+  AnnotatedToken *Current = Line.Last;
+  while (Current != NULL) {
+    Current->UnbreakableTailLength = UnbreakableTailLength;
+    if (Current->CanBreakBefore ||
+        Current->isOneOf(tok::comment, tok::string_literal)) {
+      UnbreakableTailLength = 0;
+    } else {
+      UnbreakableTailLength +=
+          Current->FormatTok.TokenLength + Current->SpacesRequiredBefore;
+    }
+    Current = Current->Parent;
+  }
 }
 
 unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,

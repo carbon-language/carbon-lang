@@ -1528,6 +1528,13 @@ TEST_F(FormatTest, MacroCallsWithoutTrailingSemicolon) {
                    "};"));
 }
 
+TEST_F(FormatTest, LayoutMacroDefinitionsStatementsSpanningBlocks) {
+  verifyFormat("#define A \\\n"
+               "  f({     \\\n"
+               "    g();  \\\n"
+               "  });", getLLVMStyleWithColumns(11));
+}
+
 TEST_F(FormatTest, IndentPreprocessorDirectivesAtZero) {
   EXPECT_EQ("{\n  {\n#define A\n  }\n}", format("{{\n#define A\n}}"));
 }

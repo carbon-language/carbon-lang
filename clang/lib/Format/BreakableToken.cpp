@@ -56,13 +56,10 @@ void BreakableComment::insertBreak(unsigned LineIndex, unsigned TailOffset,
     AdditionalPrefix = "";
   }
 
-  unsigned WhitespaceStartColumn =
-      getContentStartColumn(LineIndex, TailOffset) + Split.first;
   unsigned BreakOffset = Text.data() - TokenText.data() + Split.first;
   unsigned CharsToRemove = Split.second;
   Whitespaces.breakToken(Tok, BreakOffset, CharsToRemove, "", AdditionalPrefix,
-                         InPPDirective, IndentAtLineBreak,
-                         WhitespaceStartColumn);
+                         InPPDirective, IndentAtLineBreak);
 }
 
 BreakableBlockComment::BreakableBlockComment(const SourceManager &SourceMgr,
@@ -144,16 +141,25 @@ void BreakableBlockComment::trimLine(unsigned LineIndex, unsigned TailOffset,
   if (LineIndex == Lines.size() - 1)
     return;
   StringRef Text = Lines[LineIndex].substr(TailOffset);
+
+  // FIXME: The algorithm for trimming a line should naturally yield a
+  // non-change if there is nothing to trim; removing this line breaks the
+  // algorithm; investigate the root cause, and make sure to either document
+  // why exactly this is needed for remove it.
   if (!Text.endswith(" ") && !InPPDirective)
     return;
 
   StringRef TrimmedLine = Text.rtrim();
-  unsigned WhitespaceStartColumn =
-      getLineLengthAfterSplit(LineIndex, TailOffset);
   unsigned BreakOffset = TrimmedLine.end() - TokenText.data();
   unsigned CharsToRemove = Text.size() - TrimmedLine.size() + 1;
+  // FIXME: It seems like we're misusing the call to breakToken to remove
+  // whitespace instead of breaking a token. We should make this an explicit
+  // call option to the WhitespaceManager, or handle trimming and alignment
+  // of comments completely within in the WhitespaceManger. Passing '0' here
+  // and relying on this not breaking assumptions of the WhitespaceManager seems
+  // like a bad idea.
   Whitespaces.breakToken(Tok, BreakOffset, CharsToRemove, "", "", InPPDirective,
-                         0, WhitespaceStartColumn);
+                         0);
 }
 
 BreakableLineComment::BreakableLineComment(const SourceManager &SourceMgr,

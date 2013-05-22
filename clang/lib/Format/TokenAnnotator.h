@@ -76,9 +76,10 @@ public:
         CanBreakBefore(false), MustBreakBefore(false),
         ClosesTemplateDeclaration(false), MatchingParen(NULL),
         ParameterCount(0), TotalLength(FormatTok.TokenLength),
-        BindingStrength(0), SplitPenalty(0), LongestObjCSelectorName(0),
-        DefinesFunctionType(false), Parent(NULL), FakeRParens(0),
-        LastInChainOfCalls(false), PartOfMultiVariableDeclStmt(false) {}
+        UnbreakableTailLength(0), BindingStrength(0), SplitPenalty(0),
+        LongestObjCSelectorName(0), DefinesFunctionType(false), Parent(NULL),
+        FakeRParens(0), LastInChainOfCalls(false),
+        PartOfMultiVariableDeclStmt(false) {}
 
   bool is(tok::TokenKind Kind) const { return FormatTok.Tok.is(Kind); }
 
@@ -152,6 +153,10 @@ public:
 
   /// \brief The total length of the line up to and including this token.
   unsigned TotalLength;
+
+  /// \brief The length of following tokens until the next natural split point,
+  /// or the next token that can be broken.
+  unsigned UnbreakableTailLength;
 
   // FIXME: Come up with a 'cleaner' concept.
   /// \brief The binding strength of a token. This is a combined value of
@@ -267,6 +272,8 @@ private:
   bool canBreakBefore(const AnnotatedLine &Line, const AnnotatedToken &Right);
 
   void printDebugInfo(const AnnotatedLine &Line);
+
+  void calculateUnbreakableTailLengths(AnnotatedLine &Line);
 
   const FormatStyle &Style;
   SourceManager &SourceMgr;

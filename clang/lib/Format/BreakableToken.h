@@ -78,7 +78,10 @@ public:
     if (ColumnLimit <= getDecorationLength())
       return Split(StringRef::npos, 0);
     unsigned MaxSplit = ColumnLimit - getDecorationLength();
-    assert(MaxSplit < Text.size());
+    // FIXME: Reduce unit test case.
+    if (Text.empty())
+      return Split(StringRef::npos, 0);
+    MaxSplit = std::min<unsigned>(MaxSplit, Text.size() - 1);
     StringRef::size_type SpaceOffset = Text.rfind(' ', MaxSplit);
     if (SpaceOffset != StringRef::npos && SpaceOffset != 0)
       return Split(SpaceOffset + 1, 0);
@@ -94,10 +97,8 @@ public:
 
   virtual void insertBreak(unsigned LineIndex, unsigned TailOffset, Split Split,
                            bool InPPDirective, WhitespaceManager &Whitespaces) {
-    unsigned WhitespaceStartColumn = StartColumn + Split.first + 2;
     Whitespaces.breakToken(Tok, 1 + TailOffset + Split.first, Split.second,
-                           "\"", "\"", InPPDirective, StartColumn,
-                           WhitespaceStartColumn);
+                           "\"", "\"", InPPDirective, StartColumn);
   }
 
 private:
