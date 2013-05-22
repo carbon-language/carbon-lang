@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mtriple=x86_64-pc-linux -mattr=+bmi,+bmi2,+popcnt | FileCheck %s
 declare void @foo(i32)
+declare void @foo64(i64)
 
 ; CHECK: neg:
 ; CHECK: negl %edi
@@ -55,6 +56,24 @@ return:
   ret void
 }
 
+; CHECK: shri:
+; CHECK: shrl $3, %edi
+; CHECK-NEXT: je
+; CHECK: jmp foo
+; CHECK: ret
+define void @shri(i32 %x) nounwind {
+  %ashr = lshr i32 %x, 3
+  %cmp = icmp eq i32 %ashr, 0
+  br i1 %cmp, label %return, label %bb
+
+bb:
+  tail call void @foo(i32 %ashr)
+  br label %return
+
+return:
+  ret void
+}
+
 ; CHECK: shl:
 ; CHECK: addl %edi, %edi
 ; CHECK-NEXT: je
@@ -62,6 +81,24 @@ return:
 ; CHECK: ret
 define void @shl(i32 %x) nounwind {
   %shl = shl i32 %x, 1
+  %cmp = icmp eq i32 %shl, 0
+  br i1 %cmp, label %return, label %bb
+
+bb:
+  tail call void @foo(i32 %shl)
+  br label %return
+
+return:
+  ret void
+}
+
+; CHECK: shli:
+; CHECK: shll $4, %edi
+; CHECK-NEXT: je
+; CHECK: jmp foo
+; CHECK: ret
+define void @shli(i32 %x) nounwind {
+  %shl = shl i32 %x, 4
   %cmp = icmp eq i32 %shl, 0
   br i1 %cmp, label %return, label %bb
 
