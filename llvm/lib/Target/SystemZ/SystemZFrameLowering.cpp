@@ -283,7 +283,7 @@ static void emitIncrement(MachineBasicBlock &MBB,
     }
     MachineInstr *MI = BuildMI(MBB, MBBI, DL, TII->get(Opcode), Reg)
       .addReg(Reg).addImm(ThisVal);
-    // The PSW implicit def is dead.
+    // The CC implicit def is dead.
     MI->getOperand(3).setIsDead();
     NumBytes -= ThisVal;
   }

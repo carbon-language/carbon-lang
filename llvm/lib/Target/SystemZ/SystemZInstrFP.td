@@ -129,7 +129,7 @@ def LXEB : UnaryRXE<"lxeb", 0xED06, extloadf32, FP128>;
 def LXDB : UnaryRXE<"lxdb", 0xED05, extloadf64, FP128>;
 
 // Convert a signed integer register value to a floating-point one.
-let Defs = [PSW] in {
+let Defs = [CC] in {
   def CEFBR : UnaryRRE<"cefbr", 0xB394, sint_to_fp, FP32,  GR32>;
   def CDFBR : UnaryRRE<"cdfbr", 0xB395, sint_to_fp, FP64,  GR32>;
   def CXFBR : UnaryRRE<"cxfbr", 0xB396, sint_to_fp, FP128, GR32>;
@@ -141,7 +141,7 @@ let Defs = [PSW] in {
 
 // Convert a floating-point register value to a signed integer value,
 // with the second operand (modifier M3) specifying the rounding mode.
-let Defs = [PSW] in {
+let Defs = [CC] in {
   def CFEBR : UnaryRRF<"cfebr", 0xB398, GR32, FP32>;
   def CFDBR : UnaryRRF<"cfdbr", 0xB399, GR32, FP64>;
   def CFXBR : UnaryRRF<"cfxbr", 0xB39A, GR32, FP128>;
@@ -165,21 +165,21 @@ def : Pat<(i64 (fp_to_sint FP128:$src)), (CGXBR 5, FP128:$src)>;
 //===----------------------------------------------------------------------===//
 
 // Negation (Load Complement).
-let Defs = [PSW] in {
+let Defs = [CC] in {
   def LCEBR : UnaryRRE<"lcebr", 0xB303, fneg, FP32,  FP32>;
   def LCDBR : UnaryRRE<"lcdbr", 0xB313, fneg, FP64,  FP64>;
   def LCXBR : UnaryRRE<"lcxbr", 0xB343, fneg, FP128, FP128>;
 }
 
 // Absolute value (Load Positive).
-let Defs = [PSW] in {
+let Defs = [CC] in {
   def LPEBR : UnaryRRE<"lpebr", 0xB300, fabs, FP32,  FP32>;
   def LPDBR : UnaryRRE<"lpdbr", 0xB310, fabs, FP64,  FP64>;
   def LPXBR : UnaryRRE<"lpxbr", 0xB340, fabs, FP128, FP128>;
 }
 
 // Negative absolute value (Load Negative).
-let Defs = [PSW] in {
+let Defs = [CC] in {
   def LNEBR : UnaryRRE<"lnebr", 0xB301, fnabs, FP32,  FP32>;
   def LNDBR : UnaryRRE<"lndbr", 0xB311, fnabs, FP64,  FP64>;
   def LNXBR : UnaryRRE<"lnxbr", 0xB341, fnabs, FP128, FP128>;
@@ -199,7 +199,7 @@ def SQDB : UnaryRXE<"sqdb", 0xED15, loadu<fsqrt>, FP64>;
 // These forms always check for inexact conditions.  z196 added versions
 // that allow this to suppressed (as for fnearbyint), but we don't yet
 // support -march=z196.
-let Defs = [PSW] in {
+let Defs = [CC] in {
   def FIEBR : UnaryRRF<"fiebr", 0xB357, FP32,  FP32>;
   def FIDBR : UnaryRRF<"fidbr", 0xB35F, FP64,  FP64>;
   def FIXBR : UnaryRRF<"fixbr", 0xB347, FP128, FP128>;
@@ -216,7 +216,7 @@ def : Pat<(frint FP128:$src), (FIXBR 0, FP128:$src)>;
 //===----------------------------------------------------------------------===//
 
 // Addition.
-let Defs = [PSW] in {
+let Defs = [CC] in {
   let isCommutable = 1 in {
     def AEBR : BinaryRRE<"aebr", 0xB30A, fadd, FP32,  FP32>;
     def ADBR : BinaryRRE<"adbr", 0xB31A, fadd, FP64,  FP64>;
@@ -227,7 +227,7 @@ let Defs = [PSW] in {
 }
 
 // Subtraction.
-let Defs = [PSW] in {
+let Defs = [CC] in {
   def SEBR : BinaryRRE<"sebr", 0xB30B, fsub, FP32,  FP32>;
   def SDBR : BinaryRRE<"sdbr", 0xB31B, fsub, FP64,  FP64>;
   def SXBR : BinaryRRE<"sxbr", 0xB34B, fsub, FP128, FP128>;
@@ -297,7 +297,7 @@ def DDB : BinaryRXE<"ddb", 0xED1D, fdiv, FP64, load>;
 // Comparisons
 //===----------------------------------------------------------------------===//
 
-let Defs = [PSW] in {
+let Defs = [CC] in {
   def CEBR : CompareRRE<"cebr", 0xB309, z_cmp, FP32,  FP32>;
   def CDBR : CompareRRE<"cdbr", 0xB319, z_cmp, FP64,  FP64>;
   def CXBR : CompareRRE<"cxbr", 0xB349, z_cmp, FP128, FP128>;

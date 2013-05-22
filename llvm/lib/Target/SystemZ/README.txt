@@ -60,12 +60,6 @@ We don't use the combined COMPARE AND BRANCH instructions.
 
 --
 
-We should probably model just CC, not the PSW as a whole.  Strictly
-speaking, every instruction changes the PSW since the PSW contains the
-current instruction address.
-
---
-
 We don't use the condition code results of anything except comparisons.
 
 Implementing this may need something more finely grained than the z_cmp

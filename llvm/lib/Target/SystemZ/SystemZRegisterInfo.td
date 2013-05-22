@@ -146,5 +146,5 @@ defm FP128 : SystemZRegClass<"FP128", f128, 128, (add F0Q, F1Q, F4Q, F5Q,
 // Other registers
 //===----------------------------------------------------------------------===//
 
-// Status register
-def PSW : SystemZReg<"psw">;
+// The 2-bit condition code field of the PSW.
+def CC : SystemZReg<"cc">;

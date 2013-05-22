@@ -59,7 +59,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, R1 = 15 in {
 // the first operand.  It seems friendlier to use mnemonic forms like
 // JE and JLH when writing out the assembly though.
 multiclass CondBranches<Operand imm, string short, string long> {
-  let isBranch = 1, isTerminator = 1, Uses = [PSW] in {
+  let isBranch = 1, isTerminator = 1, Uses = [CC] in {
     def "" : InstRI<0xA74, (outs), (ins imm:$R1, brtarget16:$I2), short, []>;
     def L  : InstRIL<0xC04, (outs), (ins imm:$R1, brtarget32:$I2), long, []>;
   }
@@ -349,7 +349,7 @@ let neverHasSideEffects = 1 in {
 // Negation
 //===----------------------------------------------------------------------===//
 
-let Defs = [PSW] in {
+let Defs = [CC] in {
   def LCR   : UnaryRR <"lcr",   0x13,   ineg,      GR32, GR32>;
   def LCGR  : UnaryRRE<"lcgr",  0xB903, ineg,      GR64, GR64>;
   def LCGFR : UnaryRRE<"lcgfr", 0xB913, null_frag, GR64, GR32>;
@@ -403,7 +403,7 @@ def : Pat<(or (zext32 GR32:$src), imm64hf32:$imm),
 //===----------------------------------------------------------------------===//
 
 // Plain addition.
-let Defs = [PSW] in {
+let Defs = [CC] in {
   // Addition of a register.
   let isCommutable = 1 in {
     def AR  : BinaryRR <"ar",  0x1A,   add, GR32, GR32>;
@@ -432,7 +432,7 @@ let Defs = [PSW] in {
 defm : SXB<add, GR64, AGFR>;
 
 // Addition producing a carry.
-let Defs = [PSW] in {
+let Defs = [CC] in {
   // Addition of a register.
   let isCommutable = 1 in {
     def ALR  : BinaryRR <"alr",  0x1E,   addc, GR32, GR32>;
@@ -452,7 +452,7 @@ let Defs = [PSW] in {
 defm : ZXB<addc, GR64, ALGFR>;
 
 // Addition producing and using a carry.
-let Defs = [PSW], Uses = [PSW] in {
+let Defs = [CC], Uses = [CC] in {
   // Addition of a register.
   def ALCR  : BinaryRRE<"alcr",  0xB998, adde, GR32, GR32>;
   def ALCGR : BinaryRRE<"alcgr", 0xB988, adde, GR64, GR64>;
@@ -468,7 +468,7 @@ let Defs = [PSW], Uses = [PSW] in {
 
 // Plain substraction.  Although immediate forms exist, we use the
 // add-immediate instruction instead.
-let Defs = [PSW] in {
+let Defs = [CC] in {
   // Subtraction of a register.
   def SR   : BinaryRR <"sr",   0x1B,   sub,       GR32, GR32>;
   def SGFR : BinaryRRE<"sgfr", 0xB919, null_frag, GR64, GR32>;
@@ -483,7 +483,7 @@ let Defs = [PSW] in {
 defm : SXB<sub, GR64, SGFR>;
 
 // Subtraction producing a carry.
-let Defs = [PSW] in {
+let Defs = [CC] in {
   // Subtraction of a register.
   def SLR   : BinaryRR <"slr",   0x1F,   subc,      GR32, GR32>;
   def SLGFR : BinaryRRE<"slgfr", 0xB91B, null_frag, GR64, GR32>;
@@ -502,7 +502,7 @@ let Defs = [PSW] in {
 defm : ZXB<subc, GR64, SLGFR>;
 
 // Subtraction producing and using a carry.
-let Defs = [PSW], Uses = [PSW] in {
+let Defs = [CC], Uses = [CC] in {
   // Subtraction of a register.
   def SLBR  : BinaryRRE<"slbr",  0xB999, sube, GR32, GR32>;
   def SLGBR : BinaryRRE<"slbgr", 0xB989, sube, GR64, GR64>;
@@ -516,7 +516,7 @@ let Defs = [PSW], Uses = [PSW] in {
 // AND
 //===----------------------------------------------------------------------===//
 
-let Defs = [PSW] in {
+let Defs = [CC] in {
   // ANDs of a register.
   let isCommutable = 1 in {
     def NR  : BinaryRR <"nr",  0x14,   and, GR32, GR32>;
@@ -553,7 +553,7 @@ defm : RMWIByte<and, bdaddr20pair, NIY>;
 // OR
 //===----------------------------------------------------------------------===//
 
-let Defs = [PSW] in {
+let Defs = [CC] in {
   // ORs of a register.
   let isCommutable = 1 in {
     def OR  : BinaryRR <"or",  0x16,   or, GR32, GR32>;
@@ -590,7 +590,7 @@ defm : RMWIByte<or, bdaddr20pair, OIY>;
 // XOR
 //===----------------------------------------------------------------------===//
 
-let Defs = [PSW] in {
+let Defs = [CC] in {
   // XORs of a register.
   let isCommutable = 1 in {
     def XR  : BinaryRR <"xr",  0x17,   xor, GR32, GR32>;
@@ -679,7 +679,7 @@ let neverHasSideEffects = 1 in {
 }
 
 // Arithmetic shift right.
-let Defs = [PSW] in {
+let Defs = [CC] in {
   def SRA  : ShiftRS <"sra",  0x8A,   sra, GR32, shift12only>;
   def SRAG : ShiftRSY<"srag", 0xEB0A, sra, GR64, shift20only>;
 }
@@ -693,7 +693,7 @@ let neverHasSideEffects = 1 in {
 // Rotate second operand left and inserted selected bits into first operand.
 // These can act like 32-bit operands provided that the constant start and
 // end bits (operands 2 and 3) are in the range [32, 64)
-let Defs = [PSW] in {
+let Defs = [CC] in {
   let isCodeGenOnly = 1 in
     def RISBG32 : RotateSelectRIEf<"risbg",  0xEC55, GR32, GR32>;
   def RISBG : RotateSelectRIEf<"risbg",  0xEC55, GR64, GR64>;
@@ -704,7 +704,7 @@ let Defs = [PSW] in {
 //===----------------------------------------------------------------------===//
 
 // Signed comparisons.
-let Defs = [PSW] in {
+let Defs = [CC] in {
   // Comparison with a register.
   def CR   : CompareRR <"cr",   0x19,   z_cmp,     GR32, GR32>;
   def CGFR : CompareRRE<"cgfr", 0xB930, null_frag, GR64, GR32>;
@@ -738,7 +738,7 @@ let Defs = [PSW] in {
 defm : SXB<z_cmp, GR64, CGFR>;
 
 // Unsigned comparisons.
-let Defs = [PSW] in {
+let Defs = [CC] in {
   // Comparison with a register.
   def CLR   : CompareRR <"clr",   0x15,   z_ucmp,    GR32, GR32>;
   def CLGFR : CompareRRE<"clgfr", 0xB931, null_frag, GR64, GR32>;
@@ -877,13 +877,13 @@ def ATOMIC_CMP_SWAPW
                  (z_atomic_cmp_swapw bdaddr20only:$addr, GR32:$cmp, GR32:$swap,
                                      ADDR32:$bitshift, ADDR32:$negbitshift,
                                      uimm32:$bitsize))]> {
-  let Defs = [PSW];
+  let Defs = [CC];
   let mayLoad = 1;
   let mayStore = 1;
   let usesCustomInserter = 1;
 }
 
-let Defs = [PSW] in {
+let Defs = [CC] in {
   defm CS  : CmpSwapRSPair<"cs", 0xBA, 0xEB14, atomic_cmp_swap_32, GR32>;
   def  CSG : CmpSwapRSY<"csg", 0xEB30, atomic_cmp_swap_64, GR64>;
 }
@@ -903,7 +903,7 @@ def EAR : InstRRE<0xB24F, (outs GR32:$R1), (ins access_reg:$R2),
 // returns a pair of GR64s, the first giving the number of leading zeros
 // and the second giving a copy of the source with the leftmost one bit
 // cleared.  We only use the first result here.
-let Defs = [PSW] in {
+let Defs = [CC] in {
   def FLOGR : UnaryRRE<"flogr", 0xB983, null_frag, GR128, GR64>;
 }
 def : Pat<(ctlz GR64:$src),

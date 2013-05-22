@@ -913,10 +913,10 @@ class SelectWrapper<RegisterOperand cls>
            [(set cls:$dst, (z_select_ccmask cls:$src1, cls:$src2, imm:$cc))]> {
   let usesCustomInserter = 1;
   // Although the instructions used by these nodes do not in themselves
-  // change the PSW, the insertion requires new blocks, and the PSW cannot
-  // be live across them.
-  let Defs = [PSW];
-  let Uses = [PSW];
+  // change CC, the insertion requires new blocks, and CC cannot be live
+  // across them.
+  let Defs = [CC];
+  let Uses = [CC];
 }
 
 // OPERATOR is ATOMIC_SWAP or an ATOMIC_LOAD_* operation.  PAT and OPERAND
@@ -925,7 +925,7 @@ class AtomicLoadBinary<SDPatternOperator operator, RegisterOperand cls,
                        dag pat, DAGOperand operand>
   : Pseudo<(outs cls:$dst), (ins bdaddr20only:$ptr, operand:$src2),
            [(set cls:$dst, (operator bdaddr20only:$ptr, pat))]> {
-  let Defs = [PSW];
+  let Defs = [CC];
   let Has20BitOffset = 1;
   let mayLoad = 1;
   let mayStore = 1;
@@ -951,7 +951,7 @@ class AtomicLoadWBinary<SDPatternOperator operator, dag pat,
                 ADDR32:$negbitshift, uimm32:$bitsize),
            [(set GR32:$dst, (operator bdaddr20only:$ptr, pat, ADDR32:$bitshift,
                                       ADDR32:$negbitshift, uimm32:$bitsize))]> {
-  let Defs = [PSW];
+  let Defs = [CC];
   let Has20BitOffset = 1;
   let mayLoad = 1;
   let mayStore = 1;
