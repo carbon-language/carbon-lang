@@ -961,17 +961,17 @@ CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
 /// getOrCreateMethodType - CXXMethodDecl's type is a FunctionType. This
 /// function type is not updated to include implicit "this" pointer. Use this
 /// routine to get a method type which includes "this" pointer.
-llvm::DIType
+llvm::DICompositeType
 CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
                                    llvm::DIFile Unit) {
   const FunctionProtoType *Func = Method->getType()->getAs<FunctionProtoType>();
   if (Method->isStatic())
-    return getOrCreateType(QualType(Func, 0), Unit);
+    return llvm::DICompositeType(getOrCreateType(QualType(Func, 0), Unit));
   return getOrCreateInstanceMethodType(Method->getThisType(CGM.getContext()),
                                        Func, Unit);
 }
 
-llvm::DIType CGDebugInfo::getOrCreateInstanceMethodType(
+llvm::DICompositeType CGDebugInfo::getOrCreateInstanceMethodType(
     QualType ThisPtr, const FunctionProtoType *Func, llvm::DIFile Unit) {
   // Add "this" pointer.
   llvm::DIArray Args = llvm::DICompositeType(
@@ -1037,7 +1037,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
     isa<CXXConstructorDecl>(Method) || isa<CXXDestructorDecl>(Method);
 
   StringRef MethodName = getFunctionName(Method);
-  llvm::DIType MethodTy = getOrCreateMethodType(Method, Unit);
+  llvm::DICompositeType MethodTy = getOrCreateMethodType(Method, Unit);
 
   // Since a single ctor/dtor corresponds to multiple functions, it doesn't
   // make sense to give a single ctor/dtor a linkage name.
@@ -1409,7 +1409,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   llvm::DICompositeType FwdDecl(
       getOrCreateLimitedType(QualType(Ty, 0), DefUnit));
   assert(FwdDecl.Verify() &&
-         "The debug type of a RecordType should be a DICompositeType");
+         "The debug type of a RecordType should be a llvm::DICompositeType");
 
   if (FwdDecl.isForwardDecl())
     return FwdDecl;
@@ -2245,9 +2245,9 @@ llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
 
 // getOrCreateFunctionType - Construct DIType. If it is a c++ method, include
 // implicit parameter "this".
-llvm::DIType CGDebugInfo::getOrCreateFunctionType(const Decl *D,
-                                                  QualType FnType,
-                                                  llvm::DIFile F) {
+llvm::DICompositeType CGDebugInfo::getOrCreateFunctionType(const Decl *D,
+                                                           QualType FnType,
+                                                           llvm::DIFile F) {
 
   if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
     return getOrCreateMethodType(Method, F);
@@ -2279,7 +2279,7 @@ llvm::DIType CGDebugInfo::getOrCreateFunctionType(const Decl *D,
     llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(Elts);
     return DBuilder.createSubroutineType(F, EltTypeArray);
   }
-  return getOrCreateType(FnType, F);
+  return llvm::DICompositeType(getOrCreateType(FnType, F));
 }
 
 /// EmitFunctionStart - Constructs the debug code for entering a function.
@@ -2363,7 +2363,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   if (!HasDecl || D->isImplicit())
     Flags |= llvm::DIDescriptor::FlagArtificial;
 
-  llvm::DIType DIFnType;
+  llvm::DICompositeType DIFnType;
   llvm::DISubprogram SPDecl;
   if (HasDecl &&
       DebugKind >= CodeGenOptions::LimitedDebugInfo) {

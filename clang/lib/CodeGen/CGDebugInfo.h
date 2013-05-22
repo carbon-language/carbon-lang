@@ -129,12 +129,12 @@ class CGDebugInfo {
   llvm::DIType CreateSelfType(const QualType &QualTy, llvm::DIType Ty);
   llvm::DIType getTypeOrNull(const QualType);
   llvm::DIType getCompletedTypeOrNull(const QualType);
-  llvm::DIType getOrCreateMethodType(const CXXMethodDecl *Method,
-                                     llvm::DIFile F);
-  llvm::DIType getOrCreateInstanceMethodType(
+  llvm::DICompositeType getOrCreateMethodType(const CXXMethodDecl *Method,
+                                              llvm::DIFile F);
+  llvm::DICompositeType getOrCreateInstanceMethodType(
       QualType ThisPtr, const FunctionProtoType *Func, llvm::DIFile Unit);
-  llvm::DIType getOrCreateFunctionType(const Decl *D, QualType FnType,
-                                       llvm::DIFile F);
+  llvm::DICompositeType getOrCreateFunctionType(const Decl *D, QualType FnType,
+                                                llvm::DIFile F);
   llvm::DIType getOrCreateVTablePtrType(llvm::DIFile F);
   llvm::DINameSpace getOrCreateNameSpace(const NamespaceDecl *N);
   llvm::DIType CreatePointeeType(QualType PointeeTy, llvm::DIFile F);
