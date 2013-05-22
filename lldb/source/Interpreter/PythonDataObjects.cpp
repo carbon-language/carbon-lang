@@ -20,7 +20,8 @@
 #else
 #include <Python.h>
 #endif
-
+#include "lldb/Core/Stream.h"
+#include "lldb/Host/File.h"
 #include "lldb/Interpreter/PythonDataObjects.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
 
@@ -35,6 +36,30 @@ PythonObject::PythonObject (const lldb::ScriptInterpreterObjectSP &script_object
 {
     if (script_object_sp)
         Reset ((PyObject *)script_object_sp->GetObject());
+}
+
+void
+PythonObject::Dump (Stream &strm) const
+{
+    if (m_py_obj)
+    {
+        FILE *file = tmpfile();
+        if (file)
+        {
+            PyObject_Print (m_py_obj, file, 0);
+            const long length = ftell (file);
+            if (length)
+            {
+                rewind(file);
+                std::vector<char> file_contents (length,'\0');
+                const size_t length_read = fread(file_contents.data(), 1, file_contents.size(), file);
+                if (length_read > 0)
+                    strm.Write(file_contents.data(), length_read);
+            }
+        }
+    }
+    else
+        strm.PutCString ("NULL");
 }
 
 //----------------------------------------------------------------------
