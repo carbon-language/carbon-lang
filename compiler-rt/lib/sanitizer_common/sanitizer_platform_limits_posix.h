@@ -29,6 +29,7 @@ namespace __sanitizer {
   extern unsigned siginfo_t_sz;
   extern unsigned struct_itimerval_sz;
   extern unsigned pthread_t_sz;
+  extern unsigned struct_sockaddr_sz;
 
 #if !SANITIZER_ANDROID
   extern unsigned ucontext_t_sz;
@@ -83,6 +84,17 @@ namespace __sanitizer {
     short dlpi_phnum;
   };
 #endif
+
+  struct __sanitizer_addrinfo {
+    int ai_flags;
+    int ai_family;
+    int ai_socktype;
+    int ai_protocol;
+    uptr ai_addrlen;
+    void *ai_addr;
+    char *ai_canonname;
+    struct __sanitizer_addrinfo *ai_next;
+  };
 }  // namespace __sanitizer
 
 #endif

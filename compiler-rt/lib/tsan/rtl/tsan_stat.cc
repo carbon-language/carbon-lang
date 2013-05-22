@@ -311,6 +311,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_wait4]                    = "  wait4                           ";
   name[StatInt_inet_ntop]                = "  inet_ntop                       ";
   name[StatInt_inet_pton]                = "  inet_pton                       ";
+  name[StatInt_getaddrinfo]              = "  getaddrinfo                     ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

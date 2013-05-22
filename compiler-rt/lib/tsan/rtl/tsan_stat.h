@@ -306,6 +306,7 @@ enum StatType {
   StatInt_wait4,
   StatInt_inet_ntop,
   StatInt_inet_pton,
+  StatInt_getaddrinfo,
 
   // Dynamic annotations.
   StatAnnotation,

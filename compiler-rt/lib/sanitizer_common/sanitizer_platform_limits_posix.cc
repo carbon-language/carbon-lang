@@ -29,9 +29,11 @@
 #include <sys/utsname.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
+#include <netdb.h>
 #include <time.h>
 
 #if !SANITIZER_ANDROID
@@ -56,6 +58,7 @@ namespace __sanitizer {
   unsigned struct_sigaction_sz = sizeof(struct sigaction);
   unsigned struct_itimerval_sz = sizeof(struct itimerval);
   unsigned pthread_t_sz = sizeof(pthread_t);
+  unsigned struct_sockaddr_sz = sizeof(struct sockaddr);
 
 #if !SANITIZER_ANDROID
   unsigned ucontext_t_sz = sizeof(ucontext_t);
@@ -132,5 +135,13 @@ COMPILER_CHECK(offsetof(struct __sanitizer_dl_phdr_info, dlpi_phdr) ==
 COMPILER_CHECK(offsetof(struct __sanitizer_dl_phdr_info, dlpi_phnum) ==
                offsetof(struct dl_phdr_info, dlpi_phnum));
 #endif
+
+COMPILER_CHECK(sizeof(struct __sanitizer_addrinfo) == sizeof(struct addrinfo));
+COMPILER_CHECK(offsetof(struct __sanitizer_addrinfo, ai_addr) ==
+               offsetof(struct addrinfo, ai_addr));
+COMPILER_CHECK(offsetof(struct __sanitizer_addrinfo, ai_canonname) ==
+               offsetof(struct addrinfo, ai_canonname));
+COMPILER_CHECK(offsetof(struct __sanitizer_addrinfo, ai_next) ==
+               offsetof(struct addrinfo, ai_next));
 
 #endif  // SANITIZER_LINUX || SANITIZER_MAC

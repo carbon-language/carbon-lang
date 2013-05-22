@@ -748,6 +748,38 @@ INTERCEPTOR(int, pthread_getschedparam, uptr thread, int *policy, int *param) {
 #define INIT_PTHREAD_GETSCHEDPARAM
 #endif
 
+#if SANITIZER_INTERCEPT_GETADDRINFO
+INTERCEPTOR(int, getaddrinfo, char *node, char *service,
+            struct __sanitizer_addrinfo *hints,
+            struct __sanitizer_addrinfo **out) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getaddrinfo, node, service, hints, out);
+  if (node) COMMON_INTERCEPTOR_READ_RANGE(ctx, node, REAL(strlen)(node) + 1);
+  if (service)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, service, REAL(strlen)(service) + 1);
+  if (hints)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, hints, sizeof(__sanitizer_addrinfo));
+  int res = REAL(getaddrinfo)(node, service, hints, out);
+  if (res == 0) {
+    struct __sanitizer_addrinfo *p = *out;
+    while (p) {
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p, sizeof(__sanitizer_addrinfo));
+      if (p->ai_addr)
+        COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p->ai_addr, struct_sockaddr_sz);
+      if (p->ai_canonname)
+        COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p->ai_canonname,
+                                       REAL(strlen)(p->ai_canonname) + 1);
+      p = p->ai_next;
+    }
+  }
+  return res;
+}
+#define INIT_GETADDRINFO INTERCEPT_FUNCTION(getaddrinfo);
+#else
+#define INIT_GETADDRINFO
+#endif
+
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCASECMP;                         \
   INIT_STRNCASECMP;                        \
@@ -770,4 +802,5 @@ INTERCEPTOR(int, pthread_getschedparam, uptr thread, int *policy, int *param) {
   INIT_GLOB;                               \
   INIT_WAIT;                               \
   INIT_INET;                               \
-  INIT_PTHREAD_GETSCHEDPARAM;
+  INIT_PTHREAD_GETSCHEDPARAM;              \
+  INIT_GETADDRINFO;

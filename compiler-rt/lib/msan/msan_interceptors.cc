@@ -32,6 +32,18 @@ extern "C" const int __msan_keep_going;
 
 using namespace __msan;
 
+// True if this is a nested interceptor.
+static THREADLOCAL int in_interceptor_scope;
+
+struct InterceptorScope {
+  InterceptorScope() { ++in_interceptor_scope; }
+  ~InterceptorScope() { --in_interceptor_scope; }
+};
+
+bool IsInInterceptorScope() {
+  return in_interceptor_scope;
+}
+
 #define ENSURE_MSAN_INITED() do { \
   CHECK(!msan_init_is_running); \
   if (!msan_inited) { \
@@ -39,23 +51,29 @@ using namespace __msan;
   } \
 } while (0)
 
-#define CHECK_UNPOISONED(x, n) \
-  do { \
-    sptr offset = __msan_test_shadow(x, n);                 \
-    if (__msan::IsInSymbolizer()) break;                    \
-    if (offset >= 0 && __msan::flags()->report_umrs) {      \
-      GET_CALLER_PC_BP_SP;                                  \
-      (void)sp;                                             \
-      Printf("UMR in %s at offset %d inside [%p, +%d) \n",  \
-             __FUNCTION__, offset, x, n);                   \
-      __msan::PrintWarningWithOrigin(                       \
-        pc, bp, __msan_get_origin((char*)x + offset));      \
-      if (!__msan_keep_going) {                             \
-        Printf("Exiting\n");                                \
-        Die();                                              \
-      }                                                     \
-    }                                                       \
+// Check that [x, x+n) range is unpoisoned.
+#define CHECK_UNPOISONED_0(x, n)                                              \
+  do {                                                                        \
+    sptr offset = __msan_test_shadow(x, n);                                   \
+    if (__msan::IsInSymbolizer()) break;                                      \
+    if (offset >= 0 && __msan::flags()->report_umrs) {                        \
+      GET_CALLER_PC_BP_SP;                                                    \
+      (void) sp;                                                              \
+      Printf("UMR in %s at offset %d inside [%p, +%d) \n", __FUNCTION__,      \
+             offset, x, n);                                                   \
+      __msan::PrintWarningWithOrigin(pc, bp,                                  \
+                                     __msan_get_origin((char *) x + offset)); \
+      if (!__msan_keep_going) {                                               \
+        Printf("Exiting\n");                                                  \
+        Die();                                                                \
+      }                                                                       \
+    }                                                                         \
   } while (0)
+
+// Check that [x, x+n) range is unpoisoned unless we are in a nested
+// interceptor.
+#define CHECK_UNPOISONED(x, n) \
+  if (!IsInInterceptorScope()) CHECK_UNPOISONED_0(x, n);
 
 static void *fast_memset(void *ptr, int c, SIZE_T n);
 static void *fast_memcpy(void *dst, const void *src, SIZE_T n);
@@ -953,18 +971,28 @@ INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
   return res;
 }
 
+struct MSanInterceptorContext {
+  bool in_interceptor_scope;
+};
+
+// A version of CHECK_UNPOISED using a saved scope value. Used in common interceptors.
+#define CHECK_UNPOISONED_CTX(ctx, x, n)                        \
+  if (!((MSanInterceptorContext *) ctx)->in_interceptor_scope) \
+    CHECK_UNPOISONED_0(x, n);
+
 #define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size) \
-    __msan_unpoison(ptr, size)
-#define COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, size) do { } while (false)
-#define COMMON_INTERCEPTOR_ENTER(ctx, func, ...)  \
-  do {                                            \
-    if (msan_init_is_running)                     \
-      return REAL(func)(__VA_ARGS__);             \
-    ctx = 0;                                      \
-    (void)ctx;                                    \
-    ENSURE_MSAN_INITED();                         \
+  __msan_unpoison(ptr, size)
+#define COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, size) \
+  CHECK_UNPOISONED_CTX(ctx, ptr, size);
+#define COMMON_INTERCEPTOR_ENTER(ctx, func, ...)                \
+  if (msan_init_is_running) return REAL(func)(__VA_ARGS__);     \
+  MSanInterceptorContext msan_ctx = { IsInInterceptorScope() }; \
+  ctx = (void *)&msan_ctx;                                      \
+  InterceptorScope interceptor_scope;                           \
+  ENSURE_MSAN_INITED();
+#define COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd) \
+  do {                                         \
   } while (false)
-#define COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd) do { } while (false)
 #define COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd) do { } while (false)
 #define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) \
   do { } while (false)  // FIXME
