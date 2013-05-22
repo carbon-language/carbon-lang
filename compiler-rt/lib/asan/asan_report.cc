@@ -273,6 +273,14 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size) {
   uptr frame_pc = 0;
   char tname[128];
   const char *frame_descr = t->GetFrameNameByAddr(addr, &offset, &frame_pc);
+
+#ifdef __powerpc64__
+  // On PowerPC64, the address of a function actually points to a
+  // three-doubleword data structure with the first field containing
+  // the address of the function's code.
+  frame_pc = *reinterpret_cast<uptr *>(frame_pc);
+#endif
+
   // This string is created by the compiler and has the following form:
   // "n alloc_1 alloc_2 ... alloc_n"
   // where alloc_i looks like "offset size len ObjectName ".
