@@ -6,53 +6,39 @@ target triple = "i686-apple-darwin8"
 
 define float @test1(float %A, float %B, i1 %C) {
 EntryBlock:
-  ;; A*(1 - uitofp i1 C) -> select C, 0, A
+  ;;  select C, 0, B + select C, A, 0 -> select C, A, B
   %cf = uitofp i1 %C to float
-  %mc = fsub float 1.000000e+00, %cf
-  %p1 = fmul fast float %A, %mc
-  ret float %p1
+  %s1 = select i1 %C, float 0.000000e+00, float %B
+  %s2 = select i1 %C, float %A, float 0.000000e+00
+  %sum = fadd fast float %s1, %s2
+  ret float %sum
 ; CHECK: @test1
-; CHECK: select i1 %C, float -0.000000e+00, float %A
+; CHECK: select i1 %C, float %A, float %B
 }
 
 define float @test2(float %A, float %B, i1 %C) {
 EntryBlock:
-  ;; B*(uitofp i1 C) -> select C, B, 0
+  ;;  B*(uitofp i1 C) + A*(1 - uitofp i1 C) -> select C, A, B
   %cf = uitofp i1 %C to float
+  %mc = fsub fast float 1.000000e+00, %cf
+  %p1 = fmul fast float %A, %mc
   %p2 = fmul fast float %B, %cf
-  ret float %p2
+  %s1 = fadd fast float %p2, %p1
+  ret float %s1
 ; CHECK: @test2
-; CHECK: select i1 %C, float %B, float -0.000000e+00
+; CHECK: select i1 %C, float %B, float %A
 }
 
 define float @test3(float %A, float %B, i1 %C) {
 EntryBlock:
   ;; A*(1 - uitofp i1 C) + B*(uitofp i1 C) -> select C, A, B
   %cf = uitofp i1 %C to float
-  %mc = fsub float 1.000000e+00, %cf
+  %mc = fsub fast float 1.000000e+00, %cf
   %p1 = fmul fast float %A, %mc
   %p2 = fmul fast float %B, %cf
   %s1 = fadd fast float %p1, %p2
   ret float %s1
 ; CHECK: @test3
 ; CHECK: select i1 %C, float %B, float %A
-}
-
-; PR15952
-define float @test4(float %A, float %B, i32 %C) {
-  %cf = uitofp i32 %C to float
-  %mc = fsub float 1.000000e+00, %cf
-  %p1 = fmul fast float %A, %mc
-  ret float %p1
-; CHECK: @test4
-; CHECK: uitofp
-}
-
-define float @test5(float %A, float %B, i32 %C) {
-  %cf = uitofp i32 %C to float
-  %p2 = fmul fast float %B, %cf
-  ret float %p2
-; CHECK: @test5
-; CHECK: uitofp
 }
 
