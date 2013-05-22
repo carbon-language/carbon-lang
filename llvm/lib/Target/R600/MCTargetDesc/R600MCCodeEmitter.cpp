@@ -103,7 +103,7 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
 
     Emit(InstWord01, OS);
     Emit(InstWord2, OS);
-    Emit((u_int32_t) 0, OS);
+    Emit((uint32_t) 0, OS);
   } else if (IS_TEX(Desc)) {
       int64_t Sampler = MI.getOperand(14).getImm();
 
@@ -127,7 +127,7 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
 
       Emit(Word01, OS);
       Emit(Word2, OS);
-      Emit((u_int32_t) 0, OS);
+      Emit((uint32_t) 0, OS);
   } else {
     uint64_t Inst = getBinaryCodeForInstr(MI, Fixups);
     if ((STI.getFeatureBits() & AMDGPU::FeatureR600ALUInst) &&
