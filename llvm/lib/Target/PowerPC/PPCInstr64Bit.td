@@ -337,7 +337,7 @@ let neverHasSideEffects = 1 in {
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in {
 def LI8  : DForm_2_r0<14, (outs g8rc:$rD), (ins symbolLo64:$imm),
                       "li $rD, $imm", IntSimple,
-                      [(set i64:$rD, immSExt16:$imm)]>;
+                      [(set i64:$rD, imm64SExt16:$imm)]>;
 def LIS8 : DForm_2_r0<15, (outs g8rc:$rD), (ins symbolHi64:$imm),
                       "lis $rD, $imm", IntSimple,
                       [(set i64:$rD, imm16ShiftedSExt:$imm)]>;
@@ -410,10 +410,10 @@ defm ADDC8 : XOForm_1rc<31, 10, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
 let Defs = [CARRY] in
 def ADDIC8 : DForm_2<12, (outs g8rc:$rD), (ins g8rc:$rA, s16imm64:$imm),
                      "addic $rD, $rA, $imm", IntGeneral,
-                     [(set i64:$rD, (addc i64:$rA, immSExt16:$imm))]>;
+                     [(set i64:$rD, (addc i64:$rA, imm64SExt16:$imm))]>;
 def ADDI8  : DForm_2<14, (outs g8rc:$rD), (ins g8rc_nox0:$rA, symbolLo64:$imm),
                      "addi $rD, $rA, $imm", IntSimple,
-                     [(set i64:$rD, (add i64:$rA, immSExt16:$imm))]>;
+                     [(set i64:$rD, (add i64:$rA, imm64SExt16:$imm))]>;
 def ADDIS8 : DForm_2<15, (outs g8rc:$rD), (ins g8rc_nox0:$rA, symbolHi64:$imm),
                      "addis $rD, $rA, $imm", IntSimple,
                      [(set i64:$rD, (add i64:$rA, imm16ShiftedSExt:$imm))]>;
@@ -421,7 +421,7 @@ def ADDIS8 : DForm_2<15, (outs g8rc:$rD), (ins g8rc_nox0:$rA, symbolHi64:$imm),
 let Defs = [CARRY] in {
 def SUBFIC8: DForm_2< 8, (outs g8rc:$rD), (ins g8rc:$rA, s16imm64:$imm),
                      "subfic $rD, $rA, $imm", IntGeneral,
-                     [(set i64:$rD, (subc immSExt16:$imm, i64:$rA))]>;
+                     [(set i64:$rD, (subc imm64SExt16:$imm, i64:$rA))]>;
 defm SUBFC8 : XOForm_1r<31, 8, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
                         "subfc", "$rT, $rA, $rB", IntGeneral,
                         [(set i64:$rT, (subc i64:$rB, i64:$rA))]>,

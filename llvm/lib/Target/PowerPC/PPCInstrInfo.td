@@ -250,13 +250,15 @@ def maskimm32 : PatLeaf<(imm), [{
     return false;
 }]>;
 
-def immSExt16  : PatLeaf<(imm), [{
-  // immSExt16 predicate - True if the immediate fits in a 16-bit sign extended
-  // field.  Used by instructions like 'addi'.
-  if (N->getValueType(0) == MVT::i32)
-    return (int32_t)N->getZExtValue() == (short)N->getZExtValue();
-  else
-    return (int64_t)N->getZExtValue() == (short)N->getZExtValue();
+def imm32SExt16  : Operand<i32>, ImmLeaf<i32, [{
+  // imm32SExt16 predicate - True if the i32 immediate fits in a 16-bit
+  // sign extended field.  Used by instructions like 'addi'.
+  return (int32_t)Imm == (short)Imm;
+}]>;
+def imm64SExt16  : Operand<i64>, ImmLeaf<i64, [{
+  // imm64SExt16 predicate - True if the i64 immediate fits in a 16-bit
+  // sign extended field.  Used by instructions like 'addi'.
+  return (int64_t)Imm == (short)Imm;
 }]>;
 def immZExt16  : PatLeaf<(imm), [{
   // immZExt16 predicate - True if the immediate fits in a 16-bit zero extended
@@ -1403,12 +1405,12 @@ def SYNC : XForm_24_sync<31, 598, (outs), (ins),
 let PPC970_Unit = 1 in {  // FXU Operations.
 def ADDI   : DForm_2<14, (outs gprc:$rD), (ins gprc_nor0:$rA, symbolLo:$imm),
                      "addi $rD, $rA, $imm", IntSimple,
-                     [(set i32:$rD, (add i32:$rA, immSExt16:$imm))]>;
+                     [(set i32:$rD, (add i32:$rA, imm32SExt16:$imm))]>;
 let BaseName = "addic" in {
 let Defs = [CARRY] in
 def ADDIC  : DForm_2<12, (outs gprc:$rD), (ins gprc:$rA, s16imm:$imm),
                      "addic $rD, $rA, $imm", IntGeneral,
-                     [(set i32:$rD, (addc i32:$rA, immSExt16:$imm))]>,
+                     [(set i32:$rD, (addc i32:$rA, imm32SExt16:$imm))]>,
                      RecFormRel, PPC970_DGroup_Cracked;
 let Defs = [CARRY, CR0] in
 def ADDICo : DForm_2<13, (outs gprc:$rD), (ins gprc:$rA, s16imm:$imm),
@@ -1425,16 +1427,16 @@ def LA     : DForm_2<14, (outs gprc:$rD), (ins gprc_nor0:$rA, symbolLo:$sym),
                                           (PPClo tglobaladdr:$sym, 0)))]>;
 def MULLI  : DForm_2< 7, (outs gprc:$rD), (ins gprc:$rA, s16imm:$imm),
                      "mulli $rD, $rA, $imm", IntMulLI,
-                     [(set i32:$rD, (mul i32:$rA, immSExt16:$imm))]>;
+                     [(set i32:$rD, (mul i32:$rA, imm32SExt16:$imm))]>;
 let Defs = [CARRY] in
 def SUBFIC : DForm_2< 8, (outs gprc:$rD), (ins gprc:$rA, s16imm:$imm),
                      "subfic $rD, $rA, $imm", IntGeneral,
-                     [(set i32:$rD, (subc immSExt16:$imm, i32:$rA))]>;
+                     [(set i32:$rD, (subc imm32SExt16:$imm, i32:$rA))]>;
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in {
   def LI  : DForm_2_r0<14, (outs gprc:$rD), (ins symbolLo:$imm),
                        "li $rD, $imm", IntSimple,
-                       [(set i32:$rD, immSExt16:$imm)]>;
+                       [(set i32:$rD, imm32SExt16:$imm)]>;
   def LIS : DForm_2_r0<15, (outs gprc:$rD), (ins symbolHi:$imm),
                        "lis $rD, $imm", IntSimple,
                        [(set i32:$rD, imm16ShiftedSExt:$imm)]>;
@@ -2022,7 +2024,7 @@ def : Pat<(or i32:$in, imm:$imm),
 def : Pat<(xor i32:$in, imm:$imm),
           (XORIS (XORI $in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
 // SUBFIC
-def : Pat<(sub immSExt16:$imm, i32:$in),
+def : Pat<(sub imm32SExt16:$imm, i32:$in),
           (SUBFIC $in, imm:$imm)>;
 
 // SHL/SRL
