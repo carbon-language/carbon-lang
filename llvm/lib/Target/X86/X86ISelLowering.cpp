@@ -5109,15 +5109,27 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
   // load of the entire vector width starting at the base pointer.  If we found
   // consecutive loads for the low half, generate a vzext_load node.
   if (LastLoadedElt == NumElems - 1) {
+    SDValue NewLd = SDValue();
     if (DAG.InferPtrAlignment(LDBase->getBasePtr()) >= 16)
-      return DAG.getLoad(VT, DL, LDBase->getChain(), LDBase->getBasePtr(),
-                         LDBase->getPointerInfo(),
-                         LDBase->isVolatile(), LDBase->isNonTemporal(),
-                         LDBase->isInvariant(), 0);
-    return DAG.getLoad(VT, DL, LDBase->getChain(), LDBase->getBasePtr(),
-                       LDBase->getPointerInfo(),
-                       LDBase->isVolatile(), LDBase->isNonTemporal(),
-                       LDBase->isInvariant(), LDBase->getAlignment());
+      NewLd = DAG.getLoad(VT, DL, LDBase->getChain(), LDBase->getBasePtr(),
+                          LDBase->getPointerInfo(),
+                          LDBase->isVolatile(), LDBase->isNonTemporal(),
+                          LDBase->isInvariant(), 0);
+    NewLd = DAG.getLoad(VT, DL, LDBase->getChain(), LDBase->getBasePtr(),
+                        LDBase->getPointerInfo(),
+                        LDBase->isVolatile(), LDBase->isNonTemporal(),
+                        LDBase->isInvariant(), LDBase->getAlignment());
+
+    if (LDBase->hasAnyUseOfValue(1)) {
+      SDValue NewChain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other,
+                                     SDValue(LDBase, 1),
+                                     SDValue(NewLd.getNode(), 1));
+      DAG.ReplaceAllUsesOfValueWith(SDValue(LDBase, 1), NewChain);
+      DAG.UpdateNodeOperands(NewChain.getNode(), SDValue(LDBase, 1),
+                             SDValue(NewLd.getNode(), 1));
+    }
+
+    return NewLd;
   }
   if (NumElems == 4 && LastLoadedElt == 1 &&
       DAG.getTargetLoweringInfo().isTypeLegal(MVT::v2i64)) {
