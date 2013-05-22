@@ -108,7 +108,14 @@ static void diagnoseBadTypeAttribute(Sema &S, const AttributeList &attr,
     case AttributeList::AT_Regparm: \
     case AttributeList::AT_Pcs: \
     case AttributeList::AT_PnaclCall: \
-    case AttributeList::AT_IntelOclBicc \
+    case AttributeList::AT_IntelOclBicc
+
+// Microsoft-specific type qualifiers.
+#define MS_TYPE_ATTRS_CASELIST  \
+    case AttributeList::AT_Ptr32: \
+    case AttributeList::AT_Ptr64: \
+    case AttributeList::AT_SPtr: \
+    case AttributeList::AT_UPtr
 
 namespace {
   /// An object which stores processing state for the entire
@@ -291,6 +298,10 @@ static void processTypeAttrs(TypeProcessingState &state,
 static bool handleFunctionTypeAttr(TypeProcessingState &state,
                                    AttributeList &attr,
                                    QualType &type);
+
+static bool handleMSPointerTypeQualifierAttr(TypeProcessingState &state,
+                                             AttributeList &attr,
+                                             QualType &type);
 
 static bool handleObjCGCTypeAttr(TypeProcessingState &state,
                                  AttributeList &attr, QualType &type);
@@ -625,6 +636,10 @@ static void distributeTypeAttrsFromDeclarator(TypeProcessingState &state,
     FUNCTION_TYPE_ATTRS_CASELIST:
       distributeFunctionTypeAttrFromDeclarator(state, *attr, declSpecType);
       break;
+
+    MS_TYPE_ATTRS_CASELIST:
+      // Microsoft type attributes cannot go after the declarator-id.
+      continue;
 
     default:
       break;
@@ -3298,6 +3313,14 @@ static AttributeList::Kind getAttrListKind(AttributedType::Kind kind) {
     return AttributeList::AT_PnaclCall;
   case AttributedType::attr_inteloclbicc:
     return AttributeList::AT_IntelOclBicc;
+  case AttributedType::attr_ptr32:
+    return AttributeList::AT_Ptr32;
+  case AttributedType::attr_ptr64:
+    return AttributeList::AT_Ptr64;
+  case AttributedType::attr_sptr:
+    return AttributeList::AT_SPtr;
+  case AttributedType::attr_uptr:
+    return AttributeList::AT_UPtr;
   }
   llvm_unreachable("unexpected attribute kind!");
 }
@@ -4174,6 +4197,69 @@ namespace {
   };
 }
 
+static bool handleMSPointerTypeQualifierAttr(TypeProcessingState &State,
+                                             AttributeList &Attr,
+                                             QualType &Type) {
+  Sema &S = State.getSema();
+
+  AttributeList::Kind Kind = Attr.getKind();
+  QualType Desugared = Type;
+  const AttributedType *AT = dyn_cast<AttributedType>(Type);
+  while (AT) {
+    AttributedType::Kind CurAttrKind = AT->getAttrKind();
+
+    // You cannot specify duplicate type attributes, so if the attribute has
+    // already been applied, flag it.
+    if (getAttrListKind(CurAttrKind) == Kind) {
+      S.Diag(Attr.getLoc(), diag::warn_duplicate_attribute_exact)
+        << Attr.getName();
+      return true;
+    }
+
+    // You cannot have both __sptr and __uptr on the same type, nor can you
+    // have __ptr32 and __ptr64.
+    if ((CurAttrKind == AttributedType::attr_ptr32 &&
+         Kind == AttributeList::AT_Ptr64) ||
+        (CurAttrKind == AttributedType::attr_ptr64 &&
+         Kind == AttributeList::AT_Ptr32)) {
+      S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
+        << "'__ptr32'" << "'__ptr64'";
+      return true;
+    } else if ((CurAttrKind == AttributedType::attr_sptr &&
+                Kind == AttributeList::AT_UPtr) ||
+               (CurAttrKind == AttributedType::attr_uptr &&
+                Kind == AttributeList::AT_SPtr)) {
+      S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
+        << "'__sptr'" << "'__uptr'";
+      return true;
+    }
+    
+    Desugared = AT->getEquivalentType();
+    AT = dyn_cast<AttributedType>(Desugared);
+  }
+
+  // Pointer type qualifiers can only operate on pointer types, but not
+  // pointer-to-member types.
+  if (!isa<PointerType>(Desugared)) {
+    S.Diag(Attr.getLoc(), Type->isMemberPointerType() ?
+                          diag::err_attribute_no_member_pointers :
+                          diag::err_attribute_pointers_only) << Attr.getName();
+    return true;
+  }
+
+  AttributedType::Kind TAK;
+  switch (Kind) {
+  default: llvm_unreachable("Unknown attribute kind");
+  case AttributeList::AT_Ptr32: TAK = AttributedType::attr_ptr32; break;
+  case AttributeList::AT_Ptr64: TAK = AttributedType::attr_ptr64; break;
+  case AttributeList::AT_SPtr: TAK = AttributedType::attr_sptr; break;
+  case AttributeList::AT_UPtr: TAK = AttributedType::attr_uptr; break;
+  }
+
+  Type = S.Context.getAttributedType(TAK, Type, Type);
+  return false;
+}
+
 /// Process an individual function attribute.  Returns true to
 /// indicate that the attribute was handled, false if it wasn't.
 static bool handleFunctionTypeAttr(TypeProcessingState &state,
@@ -4576,11 +4662,11 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
       break;
 
     case AttributeList::AT_Win64:
-    case AttributeList::AT_Ptr32:
-    case AttributeList::AT_Ptr64:
-      // FIXME: Don't ignore these. We have partial handling for them as
-      // declaration attributes in SemaDeclAttr.cpp; that should be moved here.
       attr.setUsedAsTypeAttr();
+      break;
+    MS_TYPE_ATTRS_CASELIST:
+      if (!handleMSPointerTypeQualifierAttr(state, attr, type))
+        attr.setUsedAsTypeAttr();
       break;
 
     case AttributeList::AT_NSReturnsRetained:

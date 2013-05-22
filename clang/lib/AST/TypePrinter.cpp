@@ -1072,6 +1072,17 @@ void TypePrinter::printAttributedBefore(const AttributedType *T,
     return printBefore(T->getEquivalentType(), OS);
 
   printBefore(T->getModifiedType(), OS);
+
+  if (T->isMSTypeSpec()) {
+    switch (T->getAttrKind()) {
+    default: return;
+    case AttributedType::attr_ptr32: OS << " __ptr32"; break;
+    case AttributedType::attr_ptr64: OS << " __ptr64"; break;
+    case AttributedType::attr_sptr: OS << " __sptr"; break;
+    case AttributedType::attr_uptr: OS << " __uptr"; break;
+}
+    spaceBeforePlaceHolder(OS);
+  }
 }
 
 void TypePrinter::printAttributedAfter(const AttributedType *T,
@@ -1082,8 +1093,12 @@ void TypePrinter::printAttributedAfter(const AttributedType *T,
     return printAfter(T->getEquivalentType(), OS);
 
   // TODO: not all attributes are GCC-style attributes.
+  if (T->isMSTypeSpec())
+    return;
+
   OS << " __attribute__((";
   switch (T->getAttrKind()) {
+  default: llvm_unreachable("This attribute should have been handled already");
   case AttributedType::attr_address_space:
     OS << "address_space(";
     OS << T->getEquivalentType().getAddressSpace();

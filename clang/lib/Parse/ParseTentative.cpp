@@ -1122,6 +1122,8 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
   case tok::kw___fastcall:
   case tok::kw___thiscall:
   case tok::kw___w64:
+  case tok::kw___sptr:
+  case tok::kw___uptr:
   case tok::kw___ptr64:
   case tok::kw___ptr32:
   case tok::kw___forceinline:

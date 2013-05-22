@@ -4252,7 +4252,7 @@ static void handleArgumentWithTypeTagAttr(Sema &S, Decl *D,
     QualType BufferTy = getFunctionOrMethodArgType(D, ArgumentIdx);
     if (!BufferTy->isPointerType()) {
       S.Diag(Attr.getLoc(), diag::err_attribute_pointers_only)
-        << AttrName;
+        << Attr.getName();
     }
   }
 
@@ -4695,15 +4695,7 @@ static void handlePortabilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
 
   AttributeList::Kind Kind = Attr.getKind();
-  if (Kind == AttributeList::AT_Ptr32)
-    D->addAttr(
-        ::new (S.Context) Ptr32Attr(Attr.getRange(), S.Context,
-                                    Attr.getAttributeSpellingListIndex()));
-  else if (Kind == AttributeList::AT_Ptr64)
-    D->addAttr(
-        ::new (S.Context) Ptr64Attr(Attr.getRange(), S.Context,
-                                    Attr.getAttributeSpellingListIndex()));
-  else if (Kind == AttributeList::AT_Win64)
+    if (Kind == AttributeList::AT_Win64)
     D->addAttr(
         ::new (S.Context) Win64Attr(Attr.getRange(), S.Context,
                                     Attr.getAttributeSpellingListIndex()));
@@ -4754,6 +4746,10 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_VectorSize:
   case AttributeList::AT_NeonVectorType:
   case AttributeList::AT_NeonPolyVectorType:
+  case AttributeList::AT_Ptr32:
+  case AttributeList::AT_Ptr64:
+  case AttributeList::AT_SPtr:
+  case AttributeList::AT_UPtr:
     // Ignore these, these are type attributes, handled by
     // ProcessTypeAttributes.
     break;
@@ -4946,8 +4942,6 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     handleInheritanceAttr(S, D, Attr);
     break;
   case AttributeList::AT_Win64:
-  case AttributeList::AT_Ptr32:
-  case AttributeList::AT_Ptr64:
     handlePortabilityAttr(S, D, Attr);
     break;
   case AttributeList::AT_ForceInline:

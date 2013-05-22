@@ -102,3 +102,32 @@ void test( void ) {
 
 	enum DE1 no;	// no warning because E1 is not deprecated
 }
+
+int __sptr wrong1; // expected-error {{'__sptr' attribute only applies to pointer arguments}}
+// The modifier must follow the asterisk
+int __sptr *wrong_psp; // expected-error {{'__sptr' attribute only applies to pointer arguments}}
+int * __sptr __uptr wrong2; // expected-error {{'__sptr' and '__uptr' attributes are not compatible}}
+int * __sptr __sptr wrong3; // expected-warning {{attribute '__sptr' is already applied}}
+
+// It is illegal to overload based on the type attribute.
+void ptr_func(int * __ptr32 i) {}  // expected-note {{previous definition is here}}
+void ptr_func(int * __ptr64 i) {} // expected-error {{redefinition of 'ptr_func'}}
+
+// It is also illegal to overload based on the pointer type attribute.
+void ptr_func2(int * __sptr __ptr32 i) {}  // expected-note {{previous definition is here}}
+void ptr_func2(int * __uptr __ptr32 i) {} // expected-error {{redefinition of 'ptr_func2'}}
+
+int * __sptr __ptr32 __sptr wrong4; // expected-warning {{attribute '__sptr' is already applied}}
+
+__ptr32 int *wrong5; // expected-error {{'__ptr32' attribute only applies to pointer arguments}}
+
+int *wrong6 __ptr32;  // expected-error {{expected ';' after top level declarator}} expected-warning {{declaration does not declare anything}}
+
+int * __ptr32 __ptr64 wrong7;  // expected-error {{'__ptr32' and '__ptr64' attributes are not compatible}}
+
+int * __ptr32 __ptr32 wrong8;	// expected-warning {{attribute '__ptr32' is already applied}}
+
+int *(__ptr32 __sptr wrong9); // expected-error {{'__sptr' attribute only applies to pointer arguments}} // expected-error {{'__ptr32' attribute only applies to pointer arguments}}
+
+typedef int *T;
+T __ptr32 wrong10; // expected-error {{'__ptr32' attribute only applies to pointer arguments}}

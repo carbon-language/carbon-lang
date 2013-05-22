@@ -105,3 +105,14 @@ __declspec() void quux( void ) {
   struct S7 s;
   int i = s.t;	/* expected-warning {{'t' is deprecated}} */
 }
+
+int * __sptr psp;
+int * __uptr pup;
+/* Either ordering is acceptable */
+int * __ptr32 __sptr psp32;
+int * __ptr32 __uptr pup32;
+int * __sptr __ptr64 psp64;
+int * __uptr __ptr64 pup64;
+
+/* Legal to have nested pointer attributes */
+int * __sptr * __ptr32 ppsp32;

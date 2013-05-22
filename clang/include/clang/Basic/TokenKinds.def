@@ -509,6 +509,8 @@ ALIAS("__volatile__" , volatile   , KEYALL)
 // Microsoft extensions which should be disabled in strict conformance mode
 KEYWORD(__ptr64                       , KEYMS)
 KEYWORD(__ptr32                       , KEYMS)
+KEYWORD(__sptr                        , KEYMS)
+KEYWORD(__uptr                        , KEYMS)
 KEYWORD(__w64                         , KEYMS)
 KEYWORD(__uuidof                      , KEYMS | KEYBORLAND)
 KEYWORD(__try                         , KEYMS | KEYBORLAND)

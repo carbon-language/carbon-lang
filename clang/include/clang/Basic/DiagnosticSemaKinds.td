@@ -1788,7 +1788,9 @@ def err_attribute_uuid_malformed_guid : Error<
 def warn_nonnull_pointers_only : Warning<
   "nonnull attribute only applies to pointer arguments">;
 def err_attribute_pointers_only : Error<
-  "'%0' attribute only applies to pointer arguments">;
+  "%0 attribute only applies to pointer arguments">;
+def err_attribute_no_member_pointers : Error<
+  "%0 attribute cannot be used with pointers to members">;
 def err_attribute_invalid_implicit_this_argument : Error<
   "'%0' attribute is invalid for the implicit this argument">;
 def err_ownership_type : Error<
@@ -6191,6 +6193,9 @@ def warn_collection_expr_type : Warning<
 
 def err_invalid_conversion_between_ext_vectors : Error<
   "invalid conversion between ext-vector type %0 and %1">;
+
+def warn_duplicate_attribute_exact : Warning<
+  "attribute %0 is already applied">, InGroup<IgnoredAttributes>;
 
 def warn_duplicate_attribute : Warning<
   "attribute %0 is already applied with different parameters">,

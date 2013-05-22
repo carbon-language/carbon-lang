@@ -601,7 +601,8 @@ void Parser::ParseMicrosoftTypeAttributes(ParsedAttributes &attrs) {
   while (Tok.is(tok::kw___fastcall) || Tok.is(tok::kw___stdcall) ||
          Tok.is(tok::kw___thiscall) || Tok.is(tok::kw___cdecl)   ||
          Tok.is(tok::kw___ptr64) || Tok.is(tok::kw___w64) ||
-         Tok.is(tok::kw___ptr32) || Tok.is(tok::kw___unaligned)) {
+         Tok.is(tok::kw___ptr32) || Tok.is(tok::kw___unaligned) ||
+         Tok.is(tok::kw___sptr) || Tok.is(tok::kw___uptr)) {
     IdentifierInfo *AttrName = Tok.getIdentifierInfo();
     SourceLocation AttrNameLoc = ConsumeToken();
     attrs.addNew(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
@@ -2711,6 +2712,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       break;
     }
 
+    case tok::kw___sptr:
+    case tok::kw___uptr:
     case tok::kw___ptr64:
     case tok::kw___ptr32:
     case tok::kw___w64:
@@ -4145,6 +4148,8 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   case tok::kw___fastcall:
   case tok::kw___thiscall:
   case tok::kw___w64:
+  case tok::kw___sptr:
+  case tok::kw___uptr:
   case tok::kw___ptr64:
   case tok::kw___ptr32:
   case tok::kw___forceinline:
@@ -4321,6 +4326,8 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS,
       ParseOpenCLQualifiers(DS);
       break;
 
+    case tok::kw___sptr:
+    case tok::kw___uptr:
     case tok::kw___w64:
     case tok::kw___ptr64:
     case tok::kw___ptr32:
