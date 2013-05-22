@@ -102,6 +102,13 @@ public:
 
   bool empty() const { return NumItems == 0; }
   unsigned size() const { return NumItems; }
+
+  void swap(StringMapImpl &Other) {
+    std::swap(TheTable, Other.TheTable);
+    std::swap(NumBuckets, Other.NumBuckets);
+    std::swap(NumItems, Other.NumItems);
+    std::swap(NumTombstones, Other.NumTombstones);
+  }
 };
 
 /// StringMapEntry - This is used to represent one value that is inserted into
@@ -409,6 +416,8 @@ protected:
 public:
   typedef StringMapEntry<ValueTy> value_type;
 
+  StringMapConstIterator() : Ptr(0) { }
+
   explicit StringMapConstIterator(StringMapEntryBase **Bucket,
                                   bool NoAdvance = false)
   : Ptr(Bucket) {
@@ -448,6 +457,7 @@ private:
 template<typename ValueTy>
 class StringMapIterator : public StringMapConstIterator<ValueTy> {
 public:
+  StringMapIterator() : StringMapConstIterator() {}
   explicit StringMapIterator(StringMapEntryBase **Bucket,
                              bool NoAdvance = false)
     : StringMapConstIterator<ValueTy>(Bucket, NoAdvance) {
