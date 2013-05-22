@@ -1021,7 +1021,7 @@ SDValue R600TargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
       Value = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i32, Value);
     }
     Chain = DAG.getNode(AMDGPUISD::REGISTER_STORE, DL, MVT::Other, Chain, Value, Ptr,
-    DAG.getTargetConstant(0, MVT::i32)); // Channel 
+    DAG.getTargetConstant(0, MVT::i32)); // Channel
   }
 
   return Chain;
@@ -1100,7 +1100,7 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
       Result = DAG.getNode(AMDGPUISD::CONST_ADDRESS, DL, MVT::v4i32,
           DAG.getNode(ISD::SRL, DL, MVT::i32, Ptr, DAG.getConstant(4, MVT::i32)),
           DAG.getConstant(LoadNode->getAddressSpace() -
-	                  AMDGPUAS::CONSTANT_BUFFER_0, MVT::i32)
+                          AMDGPUAS::CONSTANT_BUFFER_0, MVT::i32)
           );
     }
 
