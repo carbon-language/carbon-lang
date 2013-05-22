@@ -212,6 +212,8 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
           unsigned Src1 = BMI->getOperand(
               TII->getOperandIdx(Opcode, R600Operands::SRC1))
               .getReg();
+          (void) Src0;
+          (void) Src1;
           assert(TRI.getHWRegChan(Src0) == TRI.getHWRegChan(Src1));
         }
         MI.eraseFromParent();
