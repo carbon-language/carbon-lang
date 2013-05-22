@@ -1208,13 +1208,11 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
 
   // Add Return Type.
   DICompositeType SPTy = SP.getType();
-  DIArray Args = SPTy.getTypeArray();
-  unsigned SPTag = SPTy.getTag();
+  assert(SPTy.getTag() == dwarf::DW_TAG_subroutine_type &&
+         "the type of a subprogram should be a subroutine");
 
-  if (Args.getNumElements() == 0 || SPTag != dwarf::DW_TAG_subroutine_type)
-    addType(SPDie, SPTy);
-  else
-    addType(SPDie, DIType(Args.getElement(0)));
+  DIArray Args = SPTy.getTypeArray();
+  addType(SPDie, DIType(Args.getElement(0)));
 
   unsigned VK = SP.getVirtuality();
   if (VK) {
@@ -1232,19 +1230,14 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
 
     // Add arguments. Do not add arguments for subprogram definition. They will
     // be handled while processing variables.
-    DICompositeType SPTy = SP.getType();
-    DIArray Args = SPTy.getTypeArray();
-    unsigned SPTag = SPTy.getTag();
-
-    if (SPTag == dwarf::DW_TAG_subroutine_type)
-      for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
-        DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
-        DIType ATy = DIType(Args.getElement(i));
-        addType(Arg, ATy);
-        if (ATy.isArtificial())
-          addFlag(Arg, dwarf::DW_AT_artificial);
-        SPDie->addChild(Arg);
-      }
+    for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
+      DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
+      DIType ATy = DIType(Args.getElement(i));
+      addType(Arg, ATy);
+      if (ATy.isArtificial())
+        addFlag(Arg, dwarf::DW_AT_artificial);
+      SPDie->addChild(Arg);
+    }
   }
 
   if (SP.isArtificial())
