@@ -457,7 +457,7 @@ private:
 template<typename ValueTy>
 class StringMapIterator : public StringMapConstIterator<ValueTy> {
 public:
-  StringMapIterator() : StringMapConstIterator() {}
+  StringMapIterator() : StringMapConstIterator<ValueTy>() {}
   explicit StringMapIterator(StringMapEntryBase **Bucket,
                              bool NoAdvance = false)
     : StringMapConstIterator<ValueTy>(Bucket, NoAdvance) {
