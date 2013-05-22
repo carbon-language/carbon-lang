@@ -16,9 +16,11 @@
 #define LLVM_TRANSFORMS_VECTORIZE_VECUTILS_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/IR/IRBuilder.h"
 #include <vector>
 
 namespace llvm {
@@ -107,9 +109,19 @@ private:
   /// \returns the pointer to the barrier instruction if we can't sink.
   Value *isUnsafeToSink(Instruction *Src, Instruction *Dst);
 
-  /// \returns the instruction that appears last in the BB from \p VL.
+  /// \returns the index of the last instrucion in the BB from \p VL.
   /// Only consider the first \p VF elements.
-  Instruction *GetLastInstr(ArrayRef<Value *> VL, unsigned VF);
+  int getLastIndex(ArrayRef<Value *> VL, unsigned VF);
+
+  /// \returns the index of the first User of \p VL.
+  /// Only consider the first \p VF elements.
+  int getFirstUserIndex(ArrayRef<Value *> VL, unsigned VF);
+
+  /// \returns the instruction \p I or \p Jt hat appears last in the BB .
+  int getLastIndex(Instruction *I, Instruction *J);
+
+  /// \returns the insertion point for \p Index.
+  Instruction *getInsertionPoint(unsigned Index);
 
   /// \returns a vector from a collection of scalars in \p VL.
   Value *Scalarize(ArrayRef<Value *> VL, VectorType *Ty);
@@ -130,17 +142,17 @@ private:
   /// Contains values that have users outside of the vectorized graph.
   /// We need to generate extract instructions for these values.
   /// NOTICE: The vectorization methods also use this set.
-  ValueSet MustExtract;
+  SetVector<Value*> MustExtract;
 
   /// Contains a list of values that are used outside the current tree. This
   /// set must be reset between runs.
-  ValueSet MultiUserVals;
+  SetVector<Value*> MultiUserVals;
   /// Maps values in the tree to the vector lanes that uses them. This map must
   /// be reset between runs of getCost.
   std::map<Value*, int> LaneMap;
   /// A list of instructions to ignore while sinking
   /// memory instructions. This map must be reset between runs of getCost.
-  SmallPtrSet<Value *, 8> MemBarrierIgnoreList;
+  ValueSet MemBarrierIgnoreList;
 
   // -- Containers that are used during vectorizeTree -- //
 
@@ -154,6 +166,9 @@ private:
   /// In many cases these instructions can be hoisted outside of the BB.
   /// Iterating over this list is faster than calling LICM.
   ValueList GatherInstructions;
+
+  /// Instruction builder to construct the vectorized tree.
+  IRBuilder<> Builder;
 
   // Analysis and block reference.
   BasicBlock *BB;

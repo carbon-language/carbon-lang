@@ -46,7 +46,7 @@ namespace llvm {
 
 BoUpSLP::BoUpSLP(BasicBlock *Bb, ScalarEvolution *S, DataLayout *Dl,
                  TargetTransformInfo *Tti, AliasAnalysis *Aa, Loop *Lp) :
-  BB(Bb), SE(S), DL(Dl), TTI(Tti), AA(Aa), L(Lp)  {
+  Builder(S->getContext()), BB(Bb), SE(S), DL(Dl), TTI(Tti), AA(Aa), L(Lp) {
   numberInstructions();
 }
 
@@ -121,6 +121,7 @@ bool BoUpSLP::vectorizeStoreChain(ArrayRef<Value *> Chain, int CostThreshold) {
     DEBUG(dbgs() << "SLP: Found cost=" << Cost << " for VF=" << VF << "\n");
     if (Cost < CostThreshold) {
       DEBUG(dbgs() << "SLP: Decided to vectorize cost=" << Cost << "\n");
+      Builder.SetInsertPoint(getInsertionPoint(getLastIndex(Operands,VF)));
       vectorizeTree(Operands, VF);
       i += VF - 1;
       Changed = true;
@@ -131,7 +132,7 @@ bool BoUpSLP::vectorizeStoreChain(ArrayRef<Value *> Chain, int CostThreshold) {
 }
 
 bool BoUpSLP::vectorizeStores(ArrayRef<StoreInst *> Stores, int costThreshold) {
-  ValueSet Heads, Tails;
+  SetVector<Value*> Heads, Tails;
   SmallDenseMap<Value*, Value*> ConsecutiveChain;
 
   // We may run into multiple chains that merge into a single chain. We mark the
@@ -152,7 +153,8 @@ bool BoUpSLP::vectorizeStores(ArrayRef<StoreInst *> Stores, int costThreshold) {
     }
 
   // For stores that start but don't end a link in the chain:
-  for (ValueSet::iterator it = Heads.begin(), e = Heads.end();it != e; ++it) {
+  for (SetVector<Value*>::iterator it = Heads.begin(), e = Heads.end();
+       it != e; ++it) {
     if (Tails.count(*it)) continue;
 
     // We found a store instr that starts a chain. Now follow the chain and try
@@ -224,9 +226,14 @@ Value *BoUpSLP::isUnsafeToSink(Instruction *Src, Instruction *Dst) {
 }
 
 void BoUpSLP::vectorizeArith(ArrayRef<Value *> Operands) {
+  int LastIdx = getLastIndex(Operands, Operands.size());
+  Instruction *Loc = getInsertionPoint(LastIdx);
+  Builder.SetInsertPoint(Loc);
+
+  assert(getFirstUserIndex(Operands, Operands.size()) > LastIdx  &&
+         "Vectorizing with in-tree users");
+
   Value *Vec = vectorizeTree(Operands, Operands.size());
-  BasicBlock::iterator Loc = cast<Instruction>(Vec);
-  IRBuilder<> Builder(++Loc);
   // After vectorizing the operands we need to generate extractelement
   // instructions and replace all of the uses of the scalar values with
   // the values that we extracted from the vectorized tree.
@@ -246,7 +253,13 @@ int BoUpSLP::getTreeCost(ArrayRef<Value *> VL) {
   MustExtract.clear();
 
   // Find the location of the last root.
-  unsigned LastRootIndex = InstrIdx[GetLastInstr(VL, VL.size())];
+  int LastRootIndex = getLastIndex(VL, VL.size());
+  int FirstUserIndex = getFirstUserIndex(VL, VL.size());
+
+  // Don't vectorize if there are users of the tree roots inside the tree
+  // itself.
+  if (LastRootIndex > FirstUserIndex)
+    return max_cost;
 
   // Scan the tree and find which value is used by which lane, and which values
   // must be scalarized.
@@ -254,7 +267,7 @@ int BoUpSLP::getTreeCost(ArrayRef<Value *> VL) {
 
   // Check that instructions with multiple users can be vectorized. Mark unsafe
   // instructions.
-  for (ValueSet::iterator it = MultiUserVals.begin(),
+  for (SetVector<Value*>::iterator it = MultiUserVals.begin(),
        e = MultiUserVals.end(); it != e; ++it) {
     // Check that all of the users of this instr are within the tree
     // and that they are all from the same lane.
@@ -267,17 +280,20 @@ int BoUpSLP::getTreeCost(ArrayRef<Value *> VL) {
         // We don't have an ordering problem if the user is not in this basic
         // block.
         Instruction *Inst = cast<Instruction>(*I);
-        if (Inst->getParent() == BB) {
-          // We don't have an ordering problem if the user is after the last
-          // root.
-          unsigned Idx = InstrIdx[Inst];
-          if (Idx < LastRootIndex) {
-            MustScalarize.insert(*it);
-            DEBUG(dbgs()<<"SLP: Adding to MustScalarize "
-                  "because of an unsafe out of tree usage.\n");
-            break;
-          }
+        if (Inst->getParent() != BB) {
+          MustExtract.insert(*it);
+          continue;
         }
+
+        // We don't have an ordering problem if the user is after the last root.
+        int Idx = InstrIdx[Inst];
+        if (Idx < LastRootIndex) {
+          MustScalarize.insert(*it);
+          DEBUG(dbgs()<<"SLP: Adding to MustScalarize "
+                "because of an unsafe out of tree usage.\n");
+          break;
+        }
+
 
         DEBUG(dbgs()<<"SLP: Adding to MustExtract "
               "because of a safe out of tree usage.\n");
@@ -332,20 +348,25 @@ void BoUpSLP::getTreeUses_rec(ArrayRef<Value *> VL, unsigned Depth) {
     if (!I || Opcode != I->getOpcode()) return;
   }
 
-  // Mark instructions with multiple users.
-  for (unsigned i = 0, e = VL.size(); i < e; ++i) {
-    Instruction *I = dyn_cast<Instruction>(VL[i]);
-    // Remember to check if all of the users of this instr are vectorized
-    // within our tree.
-    if (I && I->getNumUses() > 1) MultiUserVals.insert(I);
-  }
-
   for (int i = 0, e = VL.size(); i < e; ++i) {
     // Check that the instruction is only used within
     // one lane.
     if (LaneMap.count(VL[i]) && LaneMap[VL[i]] != i) return;
     // Make this instruction as 'seen' and remember the lane.
     LaneMap[VL[i]] = i;
+  }
+
+  // Mark instructions with multiple users.
+  for (unsigned i = 0, e = VL.size(); i < e; ++i) {
+    Instruction *I = dyn_cast<Instruction>(VL[i]);
+    // Remember to check if all of the users of this instr are vectorized
+    // within our tree. At depth zero we have no local users, only external
+    // users that we don't care about.
+    if (Depth && I && I->getNumUses() > 1) {
+      DEBUG(dbgs()<<"SLP: Adding to MultiUserVals "
+            "because it has multiple users:" << *I << " \n");
+      MultiUserVals.insert(I);
+    }
   }
 
   switch (Opcode) {
@@ -461,11 +482,9 @@ int BoUpSLP::getTreeCost_rec(ArrayRef<Value *> VL, unsigned Depth) {
 
   // Check if it is safe to sink the loads or the stores.
   if (Opcode == Instruction::Load || Opcode == Instruction::Store) {
-    int MaxIdx = InstrIdx[VL0];
-    for (unsigned i = 1, e = VL.size(); i < e; ++i )
-      MaxIdx = std::max(MaxIdx, InstrIdx[VL[i]]);
-
+    int MaxIdx = getLastIndex(VL, VL.size());
     Instruction *Last = InstrVec[MaxIdx];
+
     for (unsigned i = 0, e = VL.size(); i < e; ++i ) {
       if (VL[i] == Last) continue;
       Value *Barrier = isUnsafeToSink(cast<Instruction>(VL[i]), Last);
@@ -592,15 +611,40 @@ int BoUpSLP::getTreeCost_rec(ArrayRef<Value *> VL, unsigned Depth) {
   }
 }
 
-Instruction *BoUpSLP::GetLastInstr(ArrayRef<Value *> VL, unsigned VF) {
+int BoUpSLP::getLastIndex(ArrayRef<Value *> VL, unsigned VF) {
   int MaxIdx = InstrIdx[BB->getFirstNonPHI()];
   for (unsigned i = 0; i < VF; ++i )
     MaxIdx = std::max(MaxIdx, InstrIdx[VL[i]]);
-  return InstrVec[MaxIdx + 1];
+  return MaxIdx;
+}
+
+int BoUpSLP::getFirstUserIndex(ArrayRef<Value *> VL, unsigned VF) {
+  // Find the first user of the values.
+  int FirstUser = InstrVec.size();
+  for (unsigned i = 0; i < VF; ++i) {
+    for (Value::use_iterator U = VL[i]->use_begin(), UE = VL[i]->use_end();
+         U != UE; ++U) {
+      Instruction *Instr = dyn_cast<Instruction>(*U);
+      if (!Instr || Instr->getParent() != BB)
+        continue;
+
+      FirstUser = std::min(FirstUser, InstrIdx[Instr]);
+    }
+  }
+  return FirstUser;
+}
+
+int BoUpSLP::getLastIndex(Instruction *I, Instruction *J) {
+  assert(I->getParent() == BB && "Invalid parent for instruction I");
+  assert(J->getParent() == BB && "Invalid parent for instruction J");
+  return std::max(InstrIdx[I],InstrIdx[J]);
+}
+
+Instruction *BoUpSLP::getInsertionPoint(unsigned Index) {
+  return InstrVec[Index + 1];
 }
 
 Value *BoUpSLP::Scalarize(ArrayRef<Value *> VL, VectorType *Ty) {
-  IRBuilder<> Builder(GetLastInstr(VL, Ty->getNumElements()));
   Value *Vec = UndefValue::get(Ty);
   for (unsigned i=0; i < Ty->getNumElements(); ++i) {
     // Generate the 'InsertElement' instruction.
@@ -620,18 +664,26 @@ Value *BoUpSLP::Scalarize(ArrayRef<Value *> VL, VectorType *Ty) {
 Value *BoUpSLP::vectorizeTree(ArrayRef<Value *> VL, int VF) {
   Value *V = vectorizeTree_rec(VL, VF);
 
-  Instruction *LastInstr = GetLastInstr(VL, VL.size());
-  int LastInstrIdx = InstrIdx[LastInstr];
-  IRBuilder<> Builder(LastInstr);
-  for (ValueSet::iterator it = MustExtract.begin(), e = MustExtract.end();
-       it != e; ++it) {
+  int LastInstrIdx = getLastIndex(VL, VL.size());
+  for (SetVector<Value*>::iterator it = MustExtract.begin(),
+       e = MustExtract.end(); it != e; ++it) {
     Instruction *I = cast<Instruction>(*it);
+
+    // This is a scalarized value, so we can use the original value.
+    // No need to extract from the vector.
+    if (!LaneMap.count(I))
+      continue;
+
     Value *Vec = VectorizedValues[I];
-    assert(LaneMap.count(I) && "Unable to find the lane for the external use");
+    // We decided not to vectorize I because one of its users was not
+    // vectorizerd. This is okay.
+    if (!Vec)
+      continue;
+
     Value *Idx = Builder.getInt32(LaneMap[I]);
     Value *Extract = Builder.CreateExtractElement(Vec, Idx);
     bool Replaced = false;
-    for (Value::use_iterator U = I->use_begin(), UE = U->use_end(); U != UE;
+    for (Value::use_iterator U = I->use_begin(), UE = I->use_end(); U != UE;
          ++U) {
       Instruction *UI = cast<Instruction>(*U);
       if (UI->getParent() != I->getParent() || InstrIdx[UI] > LastInstrIdx)
@@ -670,19 +722,27 @@ Value *BoUpSLP::vectorizeTree_rec(ArrayRef<Value *> VL, int VF) {
   }
 
   // Check that this is a simple vector constant.
-  if (AllConst || AllSameScalar) return Scalarize(VL, VecTy);
+  if (AllConst || AllSameScalar)
+    return Scalarize(VL, VecTy);
 
   // Scalarize unknown structures.
   Instruction *VL0 = dyn_cast<Instruction>(VL[0]);
-  if (!VL0) return Scalarize(VL, VecTy);
+  if (!VL0)
+    return Scalarize(VL, VecTy);
 
-  if (VectorizedValues.count(VL0)) return VectorizedValues[VL0];
+  if (VectorizedValues.count(VL0)) {
+    Value * Vec = VectorizedValues[VL0];
+    for (int i = 0; i < VF; ++i)
+      VectorizedValues[VL[i]] = Vec;
+    return Vec;
+  }
 
   unsigned Opcode = VL0->getOpcode();
   for (unsigned i = 0, e = VF; i < e; ++i) {
     Instruction *I = dyn_cast<Instruction>(VL[i]);
     // If not all of the instructions are identical then we have to scalarize.
-    if (!I || Opcode != I->getOpcode()) return Scalarize(VL, VecTy);
+    if (!I || Opcode != I->getOpcode())
+      return Scalarize(VL, VecTy);
   }
 
   switch (Opcode) {
@@ -702,7 +762,6 @@ Value *BoUpSLP::vectorizeTree_rec(ArrayRef<Value *> VL, int VF) {
     for (int i = 0; i < VF; ++i)
       INVL.push_back(cast<Instruction>(VL[i])->getOperand(0));
     Value *InVec = vectorizeTree_rec(INVL, VF);
-    IRBuilder<> Builder(GetLastInstr(VL, VF));
     CastInst *CI = dyn_cast<CastInst>(VL0);
     Value *V = Builder.CreateCast(CI->getOpcode(), InVec, VecTy);
 
@@ -737,7 +796,6 @@ Value *BoUpSLP::vectorizeTree_rec(ArrayRef<Value *> VL, int VF) {
 
     Value *LHS = vectorizeTree_rec(LHSVL, VF);
     Value *RHS = vectorizeTree_rec(RHSVL, VF);
-    IRBuilder<> Builder(GetLastInstr(VL, VF));
     BinaryOperator *BinOp = cast<BinaryOperator>(VL0);
     Value *V = Builder.CreateBinOp(BinOp->getOpcode(), LHS,RHS);
 
@@ -755,10 +813,13 @@ Value *BoUpSLP::vectorizeTree_rec(ArrayRef<Value *> VL, int VF) {
       if (!isConsecutiveAccess(VL[i-1], VL[i]))
         return Scalarize(VL, VecTy);
 
-    IRBuilder<> Builder(GetLastInstr(VL, VF));
-    Value *VecPtr = Builder.CreateBitCast(LI->getPointerOperand(),
-                                          VecTy->getPointerTo());
-    LI = Builder.CreateLoad(VecPtr);
+    // Loads are inserted at the head of the tree because we don't want to sink
+    // them all the way down past store instructions.
+    Instruction *Loc = getInsertionPoint(getLastIndex(VL, VL.size()));
+    IRBuilder<> LoadBuilder(Loc);
+    Value *VecPtr = LoadBuilder.CreateBitCast(LI->getPointerOperand(),
+                                              VecTy->getPointerTo());
+    LI = LoadBuilder.CreateLoad(VecPtr);
     LI->setAlignment(Alignment);
 
     for (int i = 0; i < VF; ++i)
@@ -775,8 +836,6 @@ Value *BoUpSLP::vectorizeTree_rec(ArrayRef<Value *> VL, int VF) {
       ValueOp.push_back(cast<StoreInst>(VL[i])->getValueOperand());
 
     Value *VecValue = vectorizeTree_rec(ValueOp, VF);
-
-    IRBuilder<> Builder(GetLastInstr(VL, VF));
     Value *VecPtr = Builder.CreateBitCast(SI->getPointerOperand(),
                                           VecTy->getPointerTo());
     Builder.CreateStore(VecValue, VecPtr)->setAlignment(Alignment);
