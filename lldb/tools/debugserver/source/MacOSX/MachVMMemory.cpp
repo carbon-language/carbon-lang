@@ -452,9 +452,12 @@ GetPurgeableAndAnonymous(task_t task, uint64_t &purgeable, uint64_t &anonymous)
     mach_msg_type_number_t info_count;
     task_vm_info_data_t vm_info;
     
-    if (dlsym(RTLD_NEXT, "task_purgable_info") != NULL )
+    typedef kern_return_t (*task_purgable_info_type) (task_t, task_purgable_info_t *);
+    task_purgable_info_type task_purgable_info_ptr = NULL;
+    task_purgable_info_ptr = (task_purgable_info_type)dlsym(RTLD_NEXT, "task_purgable_info");
+    if (task_purgable_info_ptr != NULL)
     {
-        kr = task_purgable_info(task, &purgeable_info);
+        kr = (*task_purgable_info_ptr)(task, &purgeable_info);
         if (kr == KERN_SUCCESS) {
             purgeable_sum = SumVMPurgeableInfo(&purgeable_info);
             purgeable = purgeable_sum;
@@ -474,6 +477,7 @@ GetPurgeableAndAnonymous(task_t task, uint64_t &purgeable, uint64_t &anonymous)
             anonymous = 0;
         }
     }
+    
 #endif
 }
 
