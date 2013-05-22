@@ -217,8 +217,8 @@ MachineInstr *LiveVariables::FindLastPartialDef(unsigned Reg,
       continue;
     unsigned DefReg = MO.getReg();
     if (TRI->isSubRegister(Reg, DefReg)) {
-      PartDefRegs.insert(DefReg);
-      for (MCSubRegIterator SubRegs(DefReg, TRI); SubRegs.isValid(); ++SubRegs)
+      for (MCSubRegIterator SubRegs(DefReg, TRI, /*IncludeSelf=*/true);
+           SubRegs.isValid(); ++SubRegs)
         PartDefRegs.insert(*SubRegs);
     }
   }
@@ -271,8 +271,8 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
                                                   true/*IsImp*/));
 
   // Remember this use.
-  PhysRegUse[Reg]  = MI;
-  for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+  for (MCSubRegIterator SubRegs(Reg, TRI, /*IncludeSelf=*/true);
+       SubRegs.isValid(); ++SubRegs)
     PhysRegUse[*SubRegs] =  MI;
 }
 
@@ -350,8 +350,8 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
       continue;
     }
     if (MachineInstr *Use = PhysRegUse[SubReg]) {
-      PartUses.insert(SubReg);
-      for (MCSubRegIterator SS(SubReg, TRI); SS.isValid(); ++SS)
+      for (MCSubRegIterator SS(SubReg, TRI, /*IncludeSelf=*/true); SS.isValid();
+           ++SS)
         PartUses.insert(*SS);
       unsigned Dist = DistanceMap[Use];
       if (Dist > LastRefOrPartRefDist) {
@@ -387,8 +387,8 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
         LastSubRef->addRegisterKilled(SubReg, TRI, true);
       else {
         LastRefOrPartRef->addRegisterKilled(SubReg, TRI, true);
-        PhysRegUse[SubReg] = LastRefOrPartRef;
-        for (MCSubRegIterator SS(SubReg, TRI); SS.isValid(); ++SS)
+        for (MCSubRegIterator SS(SubReg, TRI, /*IncludeSelf=*/true);
+             SS.isValid(); ++SS)
           PhysRegUse[*SS] = LastRefOrPartRef;
       }
       for (MCSubRegIterator SS(SubReg, TRI); SS.isValid(); ++SS)
@@ -445,8 +445,8 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI,
   // What parts of the register are previously defined?
   SmallSet<unsigned, 32> Live;
   if (PhysRegDef[Reg] || PhysRegUse[Reg]) {
-    Live.insert(Reg);
-    for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+    for (MCSubRegIterator SubRegs(Reg, TRI, /*IncludeSelf=*/true);
+         SubRegs.isValid(); ++SubRegs)
       Live.insert(*SubRegs);
   } else {
     for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
@@ -460,8 +460,8 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI,
       if (Live.count(SubReg))
         continue;
       if (PhysRegDef[SubReg] || PhysRegUse[SubReg]) {
-        Live.insert(SubReg);
-        for (MCSubRegIterator SS(SubReg, TRI); SS.isValid(); ++SS)
+        for (MCSubRegIterator SS(SubReg, TRI, /*IncludeSelf=*/true);
+             SS.isValid(); ++SS)
           Live.insert(*SS);
       }
     }
@@ -488,9 +488,8 @@ void LiveVariables::UpdatePhysRegDefs(MachineInstr *MI,
   while (!Defs.empty()) {
     unsigned Reg = Defs.back();
     Defs.pop_back();
-    PhysRegDef[Reg]  = MI;
-    PhysRegUse[Reg]  = NULL;
-    for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
+    for (MCSubRegIterator SubRegs(Reg, TRI, /*IncludeSelf=*/true);
+         SubRegs.isValid(); ++SubRegs) {
       unsigned SubReg = *SubRegs;
       PhysRegDef[SubReg]  = MI;
       PhysRegUse[SubReg]  = NULL;
