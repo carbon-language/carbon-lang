@@ -1587,9 +1587,15 @@ Driver::MainLoop ()
                 }
             }
 
-            editline_output_pty.CloseMasterFileDescriptor();
+            master_out_comm.SetReadThreadBytesReceivedCallback(NULL, NULL);
             master_out_comm.Disconnect();
+            master_out_comm.ReadThreadStop();
+
+            out_comm_2.SetReadThreadBytesReceivedCallback(NULL, NULL);
             out_comm_2.Disconnect();
+            out_comm_2.ReadThreadStop();
+
+            editline_output_pty.CloseMasterFileDescriptor();
             reset_stdin_termios();
             fclose (stdin);
 
