@@ -16,7 +16,8 @@
 // CHECK: ![[FOO:[0-9]+]] = metadata {{.*}}; [ DW_TAG_structure_type ] [Foo]
 // CHECK: metadata !"+[Foo defaultFoo]", metadata !"", i32 [[@LINE-2]], metadata ![[TYPE:[0-9]+]]
 // CHECK: ![[TYPE]] = {{.*}} metadata ![[RESULT:[0-9]+]], i32 {{.*}}, i32 {{.*}}} ; [ DW_TAG_subroutine_type ]
-// CHECK: ![[RESULT]] = metadata !{metadata ![[FOO]],
+// CHECK: ![[RESULT]] = metadata {{.*}}{metadata ![[FOOPTR:[0-9]+]],
+// CHECK: ![[FOOPTR]] = {{.*}}, metadata ![[FOO]]}{{.*}}[ DW_TAG_pointer_type ] {{.*}} [from Foo]
 @end
 
 
