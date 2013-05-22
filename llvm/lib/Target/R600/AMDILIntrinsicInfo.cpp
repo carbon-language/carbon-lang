@@ -50,6 +50,9 @@ AMDGPUIntrinsicInfo::getName(unsigned int IntrID, Type **Tys,
 
 unsigned int
 AMDGPUIntrinsicInfo::lookupName(const char *Name, unsigned int Len) const  {
+  if (!StringRef(Name, Len).startswith("llvm."))
+    return 0; // All intrinsics start with 'llvm.'
+
 #define GET_FUNCTION_RECOGNIZER
 #include "AMDGPUGenIntrinsics.inc"
 #undef GET_FUNCTION_RECOGNIZER

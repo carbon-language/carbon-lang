@@ -58,9 +58,8 @@ std::string MBlazeIntrinsicInfo::getName(unsigned IntrID, Type **Tys,
 
 unsigned MBlazeIntrinsicInfo::
 lookupName(const char *Name, unsigned Len) const {
-  if (Len < 5 || Name[4] != '.' || Name[0] != 'l' || Name[1] != 'l'
-      || Name[2] != 'v' || Name[3] != 'm')
-    return 0;  // All intrinsics start with 'llvm.'
+  if (!StringRef(Name, Len).startswith("llvm."))
+    return 0; // All intrinsics start with 'llvm.'
 
 #define GET_FUNCTION_RECOGNIZER
 #include "MBlazeGenIntrinsics.inc"
