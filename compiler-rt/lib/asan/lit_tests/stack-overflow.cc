@@ -15,6 +15,6 @@ int main(int argc, char **argv) {
   // CHECK: {{READ of size 1 at 0x.* thread T0}}
   // CHECK: {{    #0 0x.* in _?main .*stack-overflow.cc:}}[[@LINE-2]]
   // CHECK: {{Address 0x.* is located in stack of thread T0 at offset}}
-  // CHECK: main
+  // CHECK-NEXT: in{{.*}}main{{.*}}stack-overflow.cc
   return res;
 }
