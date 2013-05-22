@@ -2017,10 +2017,8 @@ static void removePunyEdges(PathPieces &path,
       continue;
 
     if (abs(startCol - endCol) <= 2) {
-      PathPieces::iterator PieceToErase = I;
-      ++I;
+      I = path.erase(I);
       erased = true;
-      path.erase(PieceToErase);
       continue;
     }
   }
