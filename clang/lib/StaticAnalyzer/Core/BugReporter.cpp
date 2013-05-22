@@ -2016,7 +2016,7 @@ static void removePunyEdges(PathPieces &path,
     if (Invalid)
       continue;
 
-    if (::abs(startCol - endCol) <= 2) {
+    if (abs((int)startCol - (int)endCol) <= 2) {
       I = path.erase(I);
       erased = true;
       continue;
