@@ -16,6 +16,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Core/UUID.h"
 
 #include "ELFHeader.h"
 
@@ -153,6 +154,9 @@ private:
 
     /// ELF file header.
     elf::ELFHeader m_header;
+
+    /// ELF build ID
+    lldb_private::UUID m_uuid;
 
     /// Collection of program headers.
     ProgramHeaderColl m_program_headers;
