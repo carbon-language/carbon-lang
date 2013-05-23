@@ -83,27 +83,27 @@ public:
 
   virtual ~AssemblyWriter();
 
-  virtual void printMDNodeBody(const MDNode *MD);
-  virtual void printNamedMDNode(const NamedMDNode *NMD);
+  void printMDNodeBody(const MDNode *MD);
+  void printNamedMDNode(const NamedMDNode *NMD);
 
-  virtual void printModule(const Module *M);
+  void printModule(const Module *M);
 
-  virtual void writeOperand(const Value *Op, bool PrintType);
-  virtual void writeParamOperand(const Value *Operand, AttributeSet Attrs,unsigned Idx);
-  virtual void writeAtomic(AtomicOrdering Ordering, SynchronizationScope SynchScope);
+  void writeOperand(const Value *Op, bool PrintType);
+  void writeParamOperand(const Value *Operand, AttributeSet Attrs,unsigned Idx);
+  void writeAtomic(AtomicOrdering Ordering, SynchronizationScope SynchScope);
 
-  virtual void writeAllMDNodes();
-  virtual void writeMDNode(unsigned Slot, const MDNode *Node);
-  virtual void writeAllAttributeGroups();
+  void writeAllMDNodes();
+  void writeMDNode(unsigned Slot, const MDNode *Node);
+  void writeAllAttributeGroups();
 
-  virtual void printTypeIdentities();
-  virtual void printGlobal(const GlobalVariable *GV);
-  virtual void printAlias(const GlobalAlias *GV);
-  virtual void printFunction(const Function *F);
-  virtual void printArgument(const Argument *FA, AttributeSet Attrs, unsigned Idx);
-  virtual void printBasicBlock(const BasicBlock *BB);
-  virtual void printInstructionLine(const Instruction &I);
-  virtual void printInstruction(const Instruction &I);
+  void printTypeIdentities();
+  void printGlobal(const GlobalVariable *GV);
+  void printAlias(const GlobalAlias *GV);
+  void printFunction(const Function *F);
+  void printArgument(const Argument *FA, AttributeSet Attrs, unsigned Idx);
+  void printBasicBlock(const BasicBlock *BB);
+  void printInstructionLine(const Instruction &I);
+  void printInstruction(const Instruction &I);
 
 private:
   void init();

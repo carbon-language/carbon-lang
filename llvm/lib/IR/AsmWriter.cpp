@@ -14,6 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "AsmWriter.h"
+
 #include "llvm/Assembly/Writer.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
@@ -22,7 +24,6 @@
 #include "llvm/Assembly/AssemblyAnnotationWriter.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/DebugInfo.h"
-#include "llvm/IR/AsmWriter.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -39,6 +40,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/MathExtras.h"
+
 #include <algorithm>
 #include <cctype>
 using namespace llvm;

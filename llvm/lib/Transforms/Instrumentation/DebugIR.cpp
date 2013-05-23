@@ -13,7 +13,7 @@
 // The location where the IR file is emitted is the same as the directory
 // operand of the !llvm.dbg.cu metadata node present in the input module. The
 // file name is constructed from the original file name by stripping the
-// extension and replacing it with "-debug.ll" or the Postfix string specified
+// extension and replacing it with "-debug-ll" or the Postfix string specified
 // at construction.
 //
 // FIXME: instead of replacing debug metadata, additional metadata should be
@@ -28,111 +28,134 @@
 
 #include <string>
 
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/ValueMap.h"
+#include "llvm/Assembly/AssemblyAnnotationWriter.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/DIBuilder.h"
-#include "llvm/IR/AsmWriter.h"
+#include "llvm/InstVisitor.h"
 #include "llvm/IR/Instruction.h"
-#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Instrumentation.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ToolOutputFile.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FormattedStream.h"
 using namespace llvm;
 
 namespace {
 
-/// Returns true if Node's name contains the string "llvm.dbg"
-bool isDebugNamedMetadata(const NamedMDNode *Node) {
-  return Node->getName().str().find("llvm.dbg") != std::string::npos;
-}
+/// Builds a map of Value* to line numbers on which the Value appears in a
+/// textual representation of the IR by plugging into the AssemblyWriter by
+/// masquerading as an AssemblyAnnotationWriter.
+class ValueToLineMap : public AssemblyAnnotationWriter {
+  ValueMap<const Value *, unsigned int> Lines;
+  typedef ValueMap<const Value *, unsigned int>::const_iterator LineIter;
 
-/// Returns true if Inst is a call to llvm.dbg.value or llvm.dbg.declare
-bool isDebugIntrinsic(const IntrinsicInst *Inst) {
-  Intrinsic::ID id = Inst->getIntrinsicID();
-  return id == Intrinsic::dbg_value || id == Intrinsic::dbg_declare;
-}
+public:
 
-/// An AssemblyWriter which generates a succinct representation of the module
-/// (without debug intrinsics or metadata) suitable for debugging. As IR
-/// instructions are printed, !dbg metadata nodes are added (or updated)
-/// to point to the corresponding line in the generated IR file instead
-/// of the original source file. The input module must have been constructed
-/// with debug metadata (i.e. clang -g).
-class IRDebugInfoHelper : public llvm::AssemblyWriter {
+  /// Prints Module to a null buffer in order to build the map of Value pointers
+  /// to line numbers.
+  ValueToLineMap(Module *M) {
+    raw_null_ostream ThrowAway;
+    M->print(ThrowAway, this);
+  }
+
+  // This function is called after an Instruction, GlobalValue, or GlobalAlias
+  // is printed.
+  void printInfoComment(const Value &V, formatted_raw_ostream &Out) {
+    Out.flush();
+    Lines.insert(std::make_pair(&V, Out.getLine() + 1));
+  }
+
+  /// If V appears on a line in the textual IR representation, sets Line to the
+  /// line number and returns true, otherwise returns false.
+  bool getLine(const Value *V, unsigned int &Line) const {
+    LineIter i = Lines.find(V);
+    if (i != Lines.end()) {
+      Line = i->second;
+      return true;
+    }
+    return false;
+  }
+};
+
+/// Removes debug intrisncs like llvm.dbg.declare and llvm.dbg.value.
+class DebugIntrinsicsRemover : public InstVisitor<DebugIntrinsicsRemover> {
+  void remove(Instruction &I) { I.eraseFromParent(); }
+
+public:
+  void visitDbgDeclareInst(DbgDeclareInst &I) { remove(I); }
+  void visitDbgValueInst(DbgValueInst &I) { remove(I); }
+  void visitDbgInfoIntrinsic(DbgInfoIntrinsic &I) { remove(I); }
+};
+
+/// Removes debug metadata (!dbg) nodes from all instructions as well as
+/// metadata named "llvm.dbg.cu" in the Module.
+class DebugMetadataRemover : public InstVisitor<DebugMetadataRemover> {
+public:
+  void visitInstruction(Instruction &I) {
+    if (I.getMetadata(LLVMContext::MD_dbg))
+      I.setMetadata(LLVMContext::MD_dbg, 0);
+  }
+
+  void run(Module *M) {
+    // Remove debug metadata attached to instructions
+    visit(M);
+
+    // Remove CU named metadata (and all children nodes)
+    NamedMDNode *Node = M->getNamedMetadata("llvm.dbg.cu");
+    M->eraseNamedMetadata(Node);
+  }
+};
+
+/// Replaces line number metadata attached to Instruction nodes with new line
+/// numbers provided by the ValueToLineMap.
+class LineNumberReplacer : public InstVisitor<LineNumberReplacer> {
+  /// Table of line numbers
+  const ValueToLineMap &LineTable;
+
+  /// Table of cloned values
+  const ValueToValueMapTy &VMap;
+
   /// Directory of debug metadata
   const DebugInfoFinder &Finder;
 
-  /// Flags to control the verbosity of the generated IR file
-  bool hideDebugIntrinsics;
-  bool hideDebugMetadata;
-
-  /// Set to track metadata nodes to be printed (used only when
-  /// printDebugMetadata == false)
-  SmallSet<const MDNode *, 4> NonDebugNodes;
-
 public:
-  IRDebugInfoHelper(
-      formatted_raw_ostream &o, const Module *M,
-      AssemblyAnnotationWriter *AAW, const DebugInfoFinder &Finder,
-      bool hideDebugIntrinsics = true, bool hideDebugMetadata = true)
-      : AssemblyWriter(o, M, AAW), Finder(Finder),
-        hideDebugIntrinsics(hideDebugIntrinsics),
-        hideDebugMetadata(hideDebugMetadata) {}
+  LineNumberReplacer(const ValueToLineMap &VLM, const DebugInfoFinder &Finder,
+                     const ValueToValueMapTy &VMap)
+      : LineTable(VLM), VMap(VMap), Finder(Finder) {}
 
-private:
-  virtual void printInstruction(const Instruction &I) {
+  void visitInstruction(Instruction &I) {
     DebugLoc Loc(I.getDebugLoc());
 
-    if (hideDebugMetadata)
-      removeDebugMetadata(const_cast<Instruction &>(I));
-
-    AssemblyWriter::printInstruction(I);
-    Out.flush();
-    // Adjust line number by 1 because we have not yet printed the \n
-    unsigned Line = Out.getLine() + 1;
+    unsigned Col = 0; // FIXME: support columns
+    unsigned Line;
+    if (!LineTable.getLine(VMap.lookup(&I), Line))
+      // Instruction has no line, it may have been removed (in the module that
+      // will be passed to the debugger) so there is nothing to do here.
+      return;
 
     DebugLoc NewLoc;
     if (!Loc.isUnknown())
       // I had a previous debug location: re-use the DebugLoc
-      NewLoc = DebugLoc::get(Line, /* FIXME: support columns */ 0,
-                             Loc.getScope(I.getContext()),
+      NewLoc = DebugLoc::get(Line, Col, Loc.getScope(I.getContext()),
                              Loc.getInlinedAt(I.getContext()));
     else if (MDNode *scope = findFunctionMD(I.getParent()->getParent()))
       // I had no previous debug location, but M has some debug information
-      NewLoc = DebugLoc::get(Line, 0, scope, /*FIXME: inlined instructions*/ 0);
+      NewLoc =
+          DebugLoc::get(Line, Col, scope, /*FIXME: inlined instructions*/ 0);
     else
       // Neither I nor M has any debug information -- nothing to do here.
       // FIXME: support debugging of undecorated IR (generated by clang without
       //        the -g option)
       return;
 
-    if (hideDebugMetadata)
-      saveNonDebugMetadata(I);
-
     addDebugLocation(const_cast<Instruction &>(I), NewLoc);
   }
 
-  virtual void printInstructionLine(const Instruction &I) {
-    if (hideDebugIntrinsics)
-      if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(&I))
-        if (isDebugIntrinsic(II))
-          return;
-    AssemblyWriter::printInstructionLine(I);
-  }
-
-  virtual void writeMDNode(unsigned Slot, const MDNode *Node) {
-    if (hideDebugMetadata == false || isDebugMetadata(Node) == false)
-      AssemblyWriter::writeMDNode(Slot, Node);
-  }
-
-  virtual void printNamedMDNode(const NamedMDNode *NMD) {
-    if (hideDebugMetadata == false || isDebugNamedMetadata(NMD) == false)
-      AssemblyWriter::printNamedMDNode(NMD);
-  }
+private:
 
   /// Returns the MDNode that corresponds with F
   MDNode *findFunctionMD(const Function *F) {
@@ -147,27 +170,6 @@ private:
     return 0;
   }
 
-  /// Saves all non-debug metadata attached to I
-  void saveNonDebugMetadata(const Instruction &I) {
-    typedef SmallVector<std::pair<unsigned, MDNode *>, 4> MDNodeVector;
-    MDNodeVector Others;
-    I.getAllMetadataOtherThanDebugLoc(Others);
-    for (MDNodeVector::iterator i = Others.begin(), e = Others.end(); i != e;
-         ++i)
-      NonDebugNodes.insert(i->second);
-  }
-
-  /// Returns true if Node was not saved as non-debug metadata with
-  /// saveNonDebugMetadata(), false otherwise.
-  bool isDebugMetadata(const MDNode *Node) {
-    return NonDebugNodes.count(Node) == 0;
-  }
-
-  void removeDebugMetadata(Instruction &I) {
-    if (I.getMetadata(LLVMContext::MD_dbg))
-      I.setMetadata(LLVMContext::MD_dbg, 0);
-  }
-
   void addDebugLocation(Instruction &I, DebugLoc Loc) {
     MDNode *MD = Loc.getAsMDNode(I.getContext());
     I.setMetadata(LLVMContext::MD_dbg, MD);
@@ -177,20 +179,37 @@ private:
 class DebugIR : public ModulePass {
   std::string Postfix;
   std::string Filename;
-  DebugInfoFinder Finder;
+
+  /// Flags to control the verbosity of the generated IR file
+  bool hideDebugIntrinsics;
+  bool hideDebugMetadata;
 
 public:
   static char ID;
 
-  DebugIR() : ModulePass(ID), Postfix("-debug.ll") {}
+  const char *getPassName() const { return "DebugIR"; }
+
+  // FIXME: figure out if we are compiling something that already exists on disk
+  // in text IR form, in which case we can omit outputting a new IR file, or if
+  // we're building something from memory where we actually need to emit a new
+  // IR file for the debugger.
+
+  /// Output a file with the same base name as the original, but with the
+  /// postfix "-debug-ll" appended.
+  DebugIR()
+      : ModulePass(ID), Postfix("-debug-ll"), hideDebugIntrinsics(true),
+        hideDebugMetadata(true) {}
 
   /// Customize the postfix string used to replace the extension of the
   /// original filename that appears in the !llvm.dbg.cu metadata node.
-  DebugIR(StringRef postfix) : ModulePass(ID), Postfix(postfix) {}
+  DebugIR(StringRef postfix, bool hideDebugIntrinsics, bool hideDebugMetadata)
+      : ModulePass(ID), Postfix(postfix),
+        hideDebugIntrinsics(hideDebugIntrinsics),
+        hideDebugMetadata(hideDebugMetadata) {}
 
 private:
   // Modify the filename embedded in the Compilation-Unit debug information of M
-  bool replaceFilename(Module &M) {
+  bool replaceFilename(Module &M, const DebugInfoFinder &Finder) {
     bool changed = false;
 
     // Sanity check -- if llvm.dbg.cu node exists, the DebugInfoFinder
@@ -217,22 +236,64 @@ private:
     return changed;
   }
 
-  void writeAndUpdateDebugIRFile(Module *M) {
+  /// Replace existing line number metadata with line numbers that correspond
+  /// with the IR file that is seen by the debugger.
+  void addLineNumberMetadata(Module *M, const ValueToLineMap &VLM,
+                             const ValueToValueMapTy &VMap,
+                             const DebugInfoFinder &Finder) {
+    LineNumberReplacer Replacer(VLM, Finder, VMap);
+    Replacer.visit(M);
+  }
+
+  void writeDebugBitcode(Module *M) {
     std::string error;
     tool_output_file OutFile(Filename.c_str(), error);
     OutFile.keep();
     formatted_raw_ostream OS;
-    OS.setStream(OutFile.os(), false);
+    OS.setStream(OutFile.os());
+    M->print(OS, 0);
+  }
 
-    IRDebugInfoHelper W(OS, M, 0, Finder);
-    W.printModule(M);
+  void removeDebugIntrinsics(Module *M) {
+    DebugIntrinsicsRemover Remover;
+    Remover.visit(M);
+  }
+
+  void removeDebugMetadata(Module *M) {
+    DebugMetadataRemover Remover;
+    Remover.run(M);
+  }
+
+  void updateAndWriteDebugIRFile(Module *M, const DebugInfoFinder &Finder) {
+    // The module we output in text form for a debugger to open is stripped of
+    // 'extras' like debug intrinsics that end up in DWARF anyways and just
+    // clutter the debug experience.
+
+    ValueToValueMapTy VMap;
+    Module *DebuggerM = CloneModule(M, VMap);
+
+    if (hideDebugIntrinsics)
+      removeDebugIntrinsics(DebuggerM);
+
+    if (hideDebugMetadata)
+      removeDebugMetadata(DebuggerM);
+
+    // FIXME: remove all debug metadata from M once we support generating DWARF
+    // subprogram attributes.
+
+    ValueToLineMap LineTable(DebuggerM);
+    addLineNumberMetadata(M, LineTable, VMap, Finder);
+    writeDebugBitcode(DebuggerM);
   }
 
   bool runOnModule(Module &M) {
+    // Stores existing debug info needed when creating new line number entries.
+    DebugInfoFinder Finder;
     Finder.processModule(M);
-    bool changed = replaceFilename(M);
+
+    bool changed = replaceFilename(M, Finder);
     if (changed)
-      writeAndUpdateDebugIRFile(&M);
+      updateAndWriteDebugIRFile(&M, Finder);
     return changed;
   }
 };
@@ -241,6 +302,9 @@ private:
 
 char DebugIR::ID = 0;
 INITIALIZE_PASS(DebugIR, "debug-ir", "Enable debugging IR", false, false)
-    ModulePass *llvm::createDebugIRPass(StringRef FilenamePostfix) {
-  return new DebugIR(FilenamePostfix);
+
+ModulePass *llvm::createDebugIRPass(StringRef FilenamePostfix,
+                                    bool hideDebugIntrinsics,
+                                    bool hideDebugMetadata) {
+  return new DebugIR(FilenamePostfix, hideDebugIntrinsics, hideDebugMetadata);
 }
