@@ -229,13 +229,14 @@ void llvm_gcda_start_file(const char *orig_filename, const char version[4]) {
 
   if (fd == -1) {
     /* Try opening the file, creating it if necessary. */
+    int mode = 0644;
     new_file = 1;
     mode = "w+b";
-    fd = open(filename, O_RDWR | O_CREAT);
+    fd = open(filename, O_RDWR | O_CREAT, mode);
     if (fd == -1) {
       /* Try creating the directories first then opening the file. */
       recursive_mkdir(filename);
-      fd = open(filename, O_RDWR | O_CREAT);
+      fd = open(filename, O_RDWR | O_CREAT, mode);
       if (!output_file) {
         /* Bah! It's hopeless. */
         fprintf(stderr, "profiling:%s: cannot open\n", filename);
