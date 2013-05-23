@@ -220,3 +220,11 @@ void ___chkstk_ms(void) {
 
 }  // extern "C"
 }  // namespace __tsan
+
+namespace __sanitizer {
+
+void SymbolizerPrepareForSandboxing() {
+  // Nothing to do here for Go.
+}
+
+}  // namespace __sanitizer
