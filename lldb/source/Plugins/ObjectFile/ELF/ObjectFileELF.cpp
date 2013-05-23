@@ -1405,16 +1405,18 @@ ObjectFileELF::DumpELFProgramHeader(Stream *s, const ELFProgramHeader &ph)
 void
 ObjectFileELF::DumpELFProgramHeader_p_type(Stream *s, elf_word p_type)
 {
-    const int kStrWidth = 10;
+    const int kStrWidth = 15;
     switch (p_type)
     {
-    CASE_AND_STREAM(s, PT_NULL      , kStrWidth);
-    CASE_AND_STREAM(s, PT_LOAD      , kStrWidth);
-    CASE_AND_STREAM(s, PT_DYNAMIC   , kStrWidth);
-    CASE_AND_STREAM(s, PT_INTERP    , kStrWidth);
-    CASE_AND_STREAM(s, PT_NOTE      , kStrWidth);
-    CASE_AND_STREAM(s, PT_SHLIB     , kStrWidth);
-    CASE_AND_STREAM(s, PT_PHDR      , kStrWidth);
+    CASE_AND_STREAM(s, PT_NULL        , kStrWidth);
+    CASE_AND_STREAM(s, PT_LOAD        , kStrWidth);
+    CASE_AND_STREAM(s, PT_DYNAMIC     , kStrWidth);
+    CASE_AND_STREAM(s, PT_INTERP      , kStrWidth);
+    CASE_AND_STREAM(s, PT_NOTE        , kStrWidth);
+    CASE_AND_STREAM(s, PT_SHLIB       , kStrWidth);
+    CASE_AND_STREAM(s, PT_PHDR        , kStrWidth);
+    CASE_AND_STREAM(s, PT_TLS         , kStrWidth);
+    CASE_AND_STREAM(s, PT_GNU_EH_FRAME, kStrWidth);
     default:
         s->Printf("0x%8.8x%*s", p_type, kStrWidth - 10, "");
         break;
@@ -1448,9 +1450,9 @@ ObjectFileELF::DumpELFProgramHeaders(Stream *s)
     if (ParseProgramHeaders())
     {
         s->PutCString("Program Headers\n");
-        s->PutCString("IDX  p_type     p_offset p_vaddr  p_paddr  "
+        s->PutCString("IDX  p_type          p_offset p_vaddr  p_paddr  "
                       "p_filesz p_memsz  p_flags                   p_align\n");
-        s->PutCString("==== ---------- -------- -------- -------- "
+        s->PutCString("==== --------------- -------- -------- -------- "
                       "-------- -------- ------------------------- --------\n");
 
         uint32_t idx = 0;
