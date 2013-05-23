@@ -142,12 +142,26 @@ void WhitespaceManager::alignTrailingComments() {
     unsigned ChangeMaxColumn = Style.ColumnLimit - Changes[i].TokenLength;
     Newlines += Changes[i].NewlinesBefore;
     if (Changes[i].IsTrailingComment) {
+      bool WasAlignedWithStartOfNextLine =
+          // A comment on its own line.
+          Changes[i].NewlinesBefore == 1 &&
+          // Not the last line.
+          i + 1 != e &&
+          // The start of the next token was previously aligned with
+          // the start of this comment.
+          (SourceMgr.getSpellingColumnNumber(
+               Changes[i].OriginalWhitespaceRange.getEnd()) ==
+           SourceMgr.getSpellingColumnNumber(
+               Changes[i + 1].OriginalWhitespaceRange.getEnd())) &&
+          // Which is not a comment itself.
+          Changes[i + 1].Kind != tok::comment;
       if (BreakBeforeNext || Newlines > 1 ||
           (ChangeMinColumn > MaxColumn || ChangeMaxColumn < MinColumn) ||
           // Break the comment sequence if the previous line did not end
           // in a trailing comment.
           (Changes[i].NewlinesBefore == 1 && i > 0 &&
-           !Changes[i - 1].IsTrailingComment)) {
+           !Changes[i - 1].IsTrailingComment) ||
+          WasAlignedWithStartOfNextLine) {
         alignTrailingComments(StartOfSequence, i, MinColumn);
         MinColumn = ChangeMinColumn;
         MaxColumn = ChangeMaxColumn;
