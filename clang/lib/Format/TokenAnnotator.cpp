@@ -1089,6 +1089,11 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
       Right.FormatTok.Tok.getObjCKeywordID() != tok::objc_not_keyword)
     return false;
   if (Left.is(tok::l_brace) && Right.is(tok::r_brace))
+    return false; // No spaces in "{}".
+  if (Left.is(tok::l_brace) || Right.is(tok::r_brace))
+    return Style.SpacesInBracedLists;
+  if (Left.is(tok::identifier) && Right.is(tok::l_brace) &&
+      Right.getNextNoneComment())
     return false;
   if (Right.is(tok::ellipsis))
     return false;

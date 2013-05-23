@@ -118,6 +118,9 @@ struct FormatStyle {
   /// \brief The brace breaking style to use.
   BraceBreakingStyle BreakBeforeBraces;
 
+  /// \brief If \c true, format { 1 }, otherwise {1}.
+  bool SpacesInBracedLists;
+
   bool operator==(const FormatStyle &R) const {
     return AccessModifierOffset == R.AccessModifierOffset &&
            AlignEscapedNewlinesLeft == R.AlignEscapedNewlinesLeft &&
@@ -126,21 +129,22 @@ struct FormatStyle {
            AllowShortIfStatementsOnASingleLine ==
                R.AllowShortIfStatementsOnASingleLine &&
            BinPackParameters == R.BinPackParameters &&
+           BreakBeforeBraces == R.BreakBeforeBraces &&
            ColumnLimit == R.ColumnLimit &&
            ConstructorInitializerAllOnOneLineOrOnePerLine ==
                R.ConstructorInitializerAllOnOneLineOrOnePerLine &&
            DerivePointerBinding == R.DerivePointerBinding &&
            IndentCaseLabels == R.IndentCaseLabels &&
+           IndentWidth == R.IndentWidth &&
            MaxEmptyLinesToKeep == R.MaxEmptyLinesToKeep &&
            ObjCSpaceBeforeProtocolList == R.ObjCSpaceBeforeProtocolList &&
            PenaltyExcessCharacter == R.PenaltyExcessCharacter &&
            PenaltyReturnTypeOnItsOwnLine == R.PenaltyReturnTypeOnItsOwnLine &&
            PointerBindsToType == R.PointerBindsToType &&
            SpacesBeforeTrailingComments == R.SpacesBeforeTrailingComments &&
+           SpacesInBracedLists == R.SpacesInBracedLists &&
            Standard == R.Standard &&
-           IndentWidth == R.IndentWidth &&
-           UseTab == R.UseTab &&
-           BreakBeforeBraces == R.BreakBeforeBraces;
+           UseTab == R.UseTab;
   }
 
 };

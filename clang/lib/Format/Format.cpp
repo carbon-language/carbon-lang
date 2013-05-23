@@ -100,6 +100,8 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
     IO.mapOptional("PointerBindsToType", Style.PointerBindsToType);
     IO.mapOptional("SpacesBeforeTrailingComments",
                    Style.SpacesBeforeTrailingComments);
+    IO.mapOptional("SpacesInBracedLists",
+                   Style.SpacesInBracedLists);
     IO.mapOptional("Standard", Style.Standard);
     IO.mapOptional("IndentWidth", Style.IndentWidth);
     IO.mapOptional("UseTab", Style.UseTab);
@@ -130,6 +132,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.PenaltyReturnTypeOnItsOwnLine = 75;
   LLVMStyle.PointerBindsToType = false;
   LLVMStyle.SpacesBeforeTrailingComments = 1;
+  LLVMStyle.SpacesInBracedLists = true;
   LLVMStyle.Standard = FormatStyle::LS_Cpp03;
   LLVMStyle.IndentWidth = 2;
   LLVMStyle.UseTab = false;
@@ -155,6 +158,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.PenaltyReturnTypeOnItsOwnLine = 200;
   GoogleStyle.PointerBindsToType = true;
   GoogleStyle.SpacesBeforeTrailingComments = 2;
+  GoogleStyle.SpacesInBracedLists = false;
   GoogleStyle.Standard = FormatStyle::LS_Auto;
   GoogleStyle.IndentWidth = 2;
   GoogleStyle.UseTab = false;

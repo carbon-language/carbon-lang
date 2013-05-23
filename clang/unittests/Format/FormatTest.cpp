@@ -947,11 +947,11 @@ TEST_F(FormatTest, CommentsInStaticInitializers) {
                "                         // comment for bb....\n"
                "                         bbbbbbbbbbb, ccccccccccc };");
   verifyGoogleFormat(
-      "static SomeType type = { aaaaaaaaaaa,  // comment for aa...\n"
-      "                         bbbbbbbbbbb, ccccccccccc };");
-  verifyGoogleFormat("static SomeType type = { aaaaaaaaaaa,\n"
-                     "                         // comment for bb....\n"
-                     "                         bbbbbbbbbbb, ccccccccccc };");
+      "static SomeType type = {aaaaaaaaaaa,  // comment for aa...\n"
+      "                        bbbbbbbbbbb, ccccccccccc};");
+  verifyGoogleFormat("static SomeType type = {aaaaaaaaaaa,\n"
+                     "                        // comment for bb....\n"
+                     "                        bbbbbbbbbbb, ccccccccccc};");
 
   verifyFormat("S s = { { a, b, c },   // Group #1\n"
                "        { d, e, f },   // Group #2\n"
@@ -1189,9 +1189,9 @@ TEST_F(FormatTest, StaticInitializers) {
   // Allow bin-packing in static initializers as this would often lead to
   // terrible results, e.g.:
   verifyGoogleFormat(
-      "static SomeClass = { a, b, c, d, e, f, g, h, i, j,\n"
-      "                     looooooooooooooooooooooooooooooooooongname,\n"
-      "                     looooooooooooooooooooooooooooooong };");
+      "static SomeClass = {a, b, c, d, e, f, g, h, i, j,\n"
+      "                    looooooooooooooooooooooooooooooooooongname,\n"
+      "                    looooooooooooooooooooooooooooooong};");
   // Here, everything other than the "}" would fit on a line.
   verifyFormat("static int LooooooooooooooooooooooooongVariable[1] = {\n"
                "  100000000000000000000000\n"
@@ -1216,10 +1216,10 @@ TEST_F(FormatTest, NestedStaticInitializers) {
                "  { kGlobalRef, CANCELLED_CODE, NULL, NULL, NULL },\n"
                "  { kGlobalRef, UNKNOWN_CODE, NULL, NULL, NULL }\n"
                "};");
-  verifyGoogleFormat("somes Status::global_reps[3] = {\n"
-                     "  { kGlobalRef, OK_CODE, NULL, NULL, NULL },\n"
-                     "  { kGlobalRef, CANCELLED_CODE, NULL, NULL, NULL },\n"
-                     "  { kGlobalRef, UNKNOWN_CODE, NULL, NULL, NULL }\n"
+  verifyGoogleFormat("SomeType Status::global_reps[3] = {\n"
+                     "  {kGlobalRef, OK_CODE, NULL, NULL, NULL},\n"
+                     "  {kGlobalRef, CANCELLED_CODE, NULL, NULL, NULL},\n"
+                     "  {kGlobalRef, UNKNOWN_CODE, NULL, NULL, NULL}\n"
                      "};");
   verifyFormat(
       "CGRect cg_rect = { { rect.fLeft, rect.fTop },\n"
@@ -1238,6 +1238,12 @@ TEST_F(FormatTest, NestedStaticInitializers) {
       "                              222222222222222222222222222222,\n"
       "                              333333333333333333333333333333 } },\n"
       "                          { { 1, 2, 3 } }, { { 1, 2, 3 } } };");
+  verifyGoogleFormat(
+      "SomeArrayOfSomeType a = {{{1, 2, 3}}, {{1, 2, 3}},\n"
+      "                         {{111111111111111111111111111111,\n"
+      "                           222222222222222222222222222222,\n"
+      "                           333333333333333333333333333333}},\n"
+      "                         {{1, 2, 3}}, {{1, 2, 3}}};");
 
   // FIXME: We might at some point want to handle this similar to parameter
   // lists, where we have an option to put each on a single line.
@@ -3101,11 +3107,19 @@ TEST_F(FormatTest, LayoutBraceInitializersInReturnStatement) {
 }
 
 TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
-    verifyFormat("vector<int> x { 1, 2, 3, 4 };");
-    verifyFormat("vector<T> x { {}, {}, {}, {} };");
+    verifyFormat("vector<int> x{ 1, 2, 3, 4 };");
+    verifyFormat("vector<T> x{ {}, {}, {}, {} };");
     verifyFormat("f({ 1, 2 });");
-    verifyFormat("auto v = Foo { 1 };");
+    verifyFormat("auto v = Foo{ 1 };");
     verifyFormat("f({ 1, 2 }, { { 2, 3 }, { 4, 5 } }, c, { d });");
+
+    FormatStyle NoSpaces = getLLVMStyle();
+    NoSpaces.SpacesInBracedLists = false;
+    verifyFormat("vector<int> x{1, 2, 3, 4};", NoSpaces);
+    verifyFormat("vector<T> x{{}, {}, {}, {}};", NoSpaces);
+    verifyFormat("f({1, 2});", NoSpaces);
+    verifyFormat("auto v = Foo{1};", NoSpaces);
+    verifyFormat("f({1, 2}, {{2, 3}, {4, 5}}, c, {d});", NoSpaces);
 }
 
 TEST_F(FormatTest, LayoutTokensFollowingBlockInParentheses) {
@@ -4312,6 +4326,7 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE_BOOL(IndentCaseLabels);
   CHECK_PARSE_BOOL(ObjCSpaceBeforeProtocolList);
   CHECK_PARSE_BOOL(PointerBindsToType);
+  CHECK_PARSE_BOOL(SpacesInBracedLists);
   CHECK_PARSE_BOOL(UseTab);
 
   CHECK_PARSE("AccessModifierOffset: -1234", AccessModifierOffset, -1234);
