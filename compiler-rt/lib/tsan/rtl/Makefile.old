@@ -3,9 +3,6 @@ CLANG=clang
 ifeq ($(DEBUG), 0)
   CXXFLAGS += -O3
 endif
-ifeq ($(CXX), $(CLANG)++)
-  CXXFLAGS+= -Wgnu
-endif
 
 # For interception. FIXME: move interception one level higher.
 INTERCEPTION=../../interception
