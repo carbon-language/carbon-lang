@@ -1,4 +1,4 @@
-/* ===-- limits.h - stub SDK header for compiler-rt -------------------------===
+/* ===-- mman.h - stub SDK header for compiler-rt ---------------------------===
  *
  *                     The LLVM Compiler Infrastructure
  *
@@ -34,14 +34,9 @@ typedef __SIZE_TYPE__ size_t;
 #define MS_INVALIDATE 0x0002
 #define MS_SYNC       0x0010
 
-extern void *mmap(void *addr, size_t len, int prot, int flags, int fd,
-                  long long offset)
-  __attribute__((__nothrow__));
-extern int munmap(void *addr, size_t len)
-  __attribute__((__nothrow__));
-extern int msync(void *addr, size_t len, int flags)
-  __attribute__((__nothrow__));
-extern int mprotect (void *__addr, size_t __len, int __prot)
-  __attribute__((__nothrow__));
+void *mmap(void *addr, size_t len, int prot, int flags, int fd,
+           long long offset);
+int munmap(void *addr, size_t len);
+int msync(void *addr, size_t len, int flags);
 
 #endif /* __SYS_MMAN_H__ */

@@ -1,4 +1,4 @@
-/* ===-- stdlib.h - stub SDK header for compiler-rt -------------------------===
+/* ===-- fcntl.h - stub SDK header for compiler-rt --------------------------===
  *
  *                     The LLVM Compiler Infrastructure
  *
@@ -14,19 +14,16 @@
  * ===-----------------------------------------------------------------------===
  */
 
-#ifndef __STDLIB_H__
-#define __STDLIB_H__
+#ifndef _SYS_FCNTL_H_
+#define _SYS_FCNTL_H_
 
-#define NULL ((void *)0)
+#define O_RDONLY   0x0000
+#define O_WRONLY   0x0001
+#define O_RDWR     0x0002
+#define O_ACCMODE  0x0003
 
-typedef __SIZE_TYPE__ size_t;
+#define O_CREAT    0x0200
 
-void abort(void) __attribute__((__noreturn__));
-int atexit(void (*)(void));
-int atoi(const char *);
-void free(void *);
-char *getenv(const char *);
-void *malloc(size_t);
-void *realloc(void *, size_t);
+int open(const char *, int, ...);
 
-#endif /* __STDLIB_H__ */
+#endif /* _SYS_FCNTL_H_ */

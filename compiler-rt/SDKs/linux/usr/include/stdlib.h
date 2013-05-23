@@ -30,5 +30,7 @@ char *getenv(const char *) __attribute__((__nothrow__))
   __attribute__((__warn_unused_result__));
 void *malloc(size_t) __attribute__((__nothrow__)) __attribute((__malloc__))
      __attribute__((__warn_unused_result__));
+void *realloc(void *, size_t) __attribute__((__nothrow__)) __attribute((__malloc__))
+     __attribute__((__warn_unused_result__));
 
 #endif /* __STDLIB_H__ */
