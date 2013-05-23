@@ -87,8 +87,8 @@ private:
         DataBufferHeap  m_data;
         
         ///< Flags
-        AllocationPolicy    m_policy    : 2;
-        bool                m_leak      : 1;
+        AllocationPolicy    m_policy;
+        bool                m_leak;
     public:
         Allocation (lldb::addr_t process_alloc,
                     lldb::addr_t process_start,
