@@ -25,7 +25,7 @@
 
 namespace llvm {
 
-MCAsmInfo* createMCAsmInfo(const Target &T, StringRef TT);
+MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT);
 
 class AMDGPUTargetMachine : public LLVMTargetMachine {
 
@@ -33,36 +33,32 @@ class AMDGPUTargetMachine : public LLVMTargetMachine {
   const DataLayout Layout;
   AMDGPUFrameLowering FrameLowering;
   AMDGPUIntrinsicInfo IntrinsicInfo;
-  const AMDGPUInstrInfo * InstrInfo;
-  AMDGPUTargetLowering * TLInfo;
-  const InstrItineraryData* InstrItins;
+  const AMDGPUInstrInfo *InstrInfo;
+  AMDGPUTargetLowering *TLInfo;
+  const InstrItineraryData *InstrItins;
 
 public:
-   AMDGPUTargetMachine(const Target &T, StringRef TT, StringRef FS,
-                       StringRef CPU,
-                       TargetOptions Options,
-                       Reloc::Model RM, CodeModel::Model CM,
-                       CodeGenOpt::Level OL);
-   ~AMDGPUTargetMachine();
-   virtual const AMDGPUFrameLowering* getFrameLowering() const {
-     return &FrameLowering;
-   }
-   virtual const AMDGPUIntrinsicInfo* getIntrinsicInfo() const {
-     return &IntrinsicInfo;
-   }
-   virtual const AMDGPUInstrInfo *getInstrInfo() const {return InstrInfo;}
-   virtual const AMDGPUSubtarget *getSubtargetImpl() const {return &Subtarget; }
-   virtual const AMDGPURegisterInfo *getRegisterInfo() const {
-      return &InstrInfo->getRegisterInfo();
-   }
-   virtual AMDGPUTargetLowering * getTargetLowering() const {
-      return TLInfo;
-   }
-   virtual const InstrItineraryData* getInstrItineraryData() const {
-      return InstrItins;
-   }
-   virtual const DataLayout* getDataLayout() const { return &Layout; }
-   virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
+  AMDGPUTargetMachine(const Target &T, StringRef TT, StringRef FS,
+                      StringRef CPU, TargetOptions Options, Reloc::Model RM,
+                      CodeModel::Model CM, CodeGenOpt::Level OL);
+  ~AMDGPUTargetMachine();
+  virtual const AMDGPUFrameLowering *getFrameLowering() const {
+    return &FrameLowering;
+  }
+  virtual const AMDGPUIntrinsicInfo *getIntrinsicInfo() const {
+    return &IntrinsicInfo;
+  }
+  virtual const AMDGPUInstrInfo *getInstrInfo() const { return InstrInfo; }
+  virtual const AMDGPUSubtarget *getSubtargetImpl() const { return &Subtarget; }
+  virtual const AMDGPURegisterInfo *getRegisterInfo() const {
+    return &InstrInfo->getRegisterInfo();
+  }
+  virtual AMDGPUTargetLowering *getTargetLowering() const { return TLInfo; }
+  virtual const InstrItineraryData *getInstrItineraryData() const {
+    return InstrItins;
+  }
+  virtual const DataLayout *getDataLayout() const { return &Layout; }
+  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
 };
 
 } // End namespace llvm
