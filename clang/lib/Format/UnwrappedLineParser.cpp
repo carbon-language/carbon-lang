@@ -257,7 +257,7 @@ void UnwrappedLineParser::calculateBraceTypes() {
           // brace blocks inside it braced init list. That works good enough
           // for now, but we will need to fix it to correctly handle lambdas.
           if (NextTok.Tok.is(tok::comma) || NextTok.Tok.is(tok::semi) ||
-              NextTok.Tok.is(tok::r_paren))
+              NextTok.Tok.is(tok::r_paren) || NextTok.Tok.is(tok::l_brace))
             LBraces[LBraceStack.back()] = BS_BracedInit;
           else
             LBraces[LBraceStack.back()] = BS_Block;
