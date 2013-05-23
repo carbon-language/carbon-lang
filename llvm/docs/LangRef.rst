@@ -6663,6 +6663,9 @@ memory. Implementations are allowed to either return a application
 specific value or a system wide value. On backends without support, this
 is lowered to a constant 0.
 
+Note that runtime support may be conditional on the privilege-level code is
+running at and the host platform.
+
 Standard C Library Intrinsics
 -----------------------------
 

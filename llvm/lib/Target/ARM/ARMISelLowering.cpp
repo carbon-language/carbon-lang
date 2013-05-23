@@ -681,6 +681,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::CTTZ_ZERO_UNDEF  , MVT::i32  , Expand);
   setOperationAction(ISD::CTLZ_ZERO_UNDEF  , MVT::i32  , Expand);
 
+  setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, Custom);
+
   // Only ARMv6 has BSWAP.
   if (!Subtarget->hasV6Ops())
     setOperationAction(ISD::BSWAP, MVT::i32, Expand);
@@ -5702,7 +5704,6 @@ static SDValue LowerAtomicLoadStore(SDValue Op, SelectionDAG &DAG) {
   return SDValue();
 }
 
-
 static void
 ReplaceATOMIC_OP_64(SDNode *Node, SmallVectorImpl<SDValue>& Results,
                     SelectionDAG &DAG, unsigned NewOp) {
@@ -5734,6 +5735,44 @@ ReplaceATOMIC_OP_64(SDNode *Node, SmallVectorImpl<SDValue>& Results,
   SDValue OpsF[] = { Result.getValue(0), Result.getValue(1) };
   Results.push_back(DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, OpsF, 2));
   Results.push_back(Result.getValue(2));
+}
+
+static void ReplaceREADCYCLECOUNTER(SDNode *N,
+                                    SmallVectorImpl<SDValue> &Results,
+                                    SelectionDAG &DAG,
+                                    const ARMSubtarget *Subtarget) {
+  DebugLoc DL = N->getDebugLoc();
+  SDValue Cycles32, OutChain;
+
+  if (Subtarget->hasPerfMon()) {
+    // Under Power Management extensions, the cycle-count is:
+    //    mrc p15, #0, <Rt>, c9, c13, #0
+    SDValue Ops[] = { N->getOperand(0), // Chain
+                      DAG.getConstant(Intrinsic::arm_mrc, MVT::i32),
+                      DAG.getConstant(15, MVT::i32),
+                      DAG.getConstant(0, MVT::i32),
+                      DAG.getConstant(9, MVT::i32),
+                      DAG.getConstant(13, MVT::i32),
+                      DAG.getConstant(0, MVT::i32)
+    };
+
+    Cycles32 = DAG.getNode(ISD::INTRINSIC_W_CHAIN, DL,
+                           DAG.getVTList(MVT::i32, MVT::Other), &Ops[0],
+                           array_lengthof(Ops));
+    OutChain = Cycles32.getValue(1);
+  } else {
+    // Intrinsic is defined to return 0 on unsupported platforms. Technically
+    // there are older ARM CPUs that have implementation-specific ways of
+    // obtaining this information (FIXME!).
+    Cycles32 = DAG.getConstant(0, MVT::i32);
+    OutChain = DAG.getEntryNode();
+  }
+
+
+  SDValue Cycles64 = DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i64,
+                                 Cycles32, DAG.getConstant(0, MVT::i32));
+  Results.push_back(Cycles64);
+  Results.push_back(OutChain);
 }
 
 SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
@@ -5813,6 +5852,9 @@ void ARMTargetLowering::ReplaceNodeResults(SDNode *N,
   case ISD::SRA:
     Res = Expand64BitShift(N, DAG, Subtarget);
     break;
+  case ISD::READCYCLECOUNTER:
+    ReplaceREADCYCLECOUNTER(N, Results, DAG, Subtarget);
+    return;
   case ISD::ATOMIC_LOAD_ADD:
     ReplaceATOMIC_OP_64(N, Results, DAG, ARMISD::ATOMADD64_DAG);
     return;
