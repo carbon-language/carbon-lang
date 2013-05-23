@@ -223,12 +223,18 @@ namespace clang {
     void VisitTypedefDecl(TypedefDecl *TD);
     void VisitTypeAliasDecl(TypeAliasDecl *TD);
     void VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D);
-    void VisitTagDecl(TagDecl *TD);
+    RedeclarableResult VisitTagDecl(TagDecl *TD);
     void VisitEnumDecl(EnumDecl *ED);
-    void VisitRecordDecl(RecordDecl *RD);
-    void VisitCXXRecordDecl(CXXRecordDecl *D);
-    void VisitClassTemplateSpecializationDecl(
+    RedeclarableResult VisitRecordDeclImpl(RecordDecl *RD);
+    void VisitRecordDecl(RecordDecl *RD) { VisitRecordDeclImpl(RD); }
+    RedeclarableResult VisitCXXRecordDeclImpl(CXXRecordDecl *D);
+    void VisitCXXRecordDecl(CXXRecordDecl *D) { VisitCXXRecordDeclImpl(D); }
+    RedeclarableResult VisitClassTemplateSpecializationDeclImpl(
                                             ClassTemplateSpecializationDecl *D);
+    void VisitClassTemplateSpecializationDecl(
+        ClassTemplateSpecializationDecl *D) {
+      VisitClassTemplateSpecializationDeclImpl(D);
+    }
     void VisitClassTemplatePartialSpecializationDecl(
                                      ClassTemplatePartialSpecializationDecl *D);
     void VisitClassScopeFunctionSpecializationDecl(
@@ -424,7 +430,7 @@ void ASTDeclReader::VisitTypeAliasDecl(TypeAliasDecl *TD) {
   VisitTypedefNameDecl(TD);
 }
 
-void ASTDeclReader::VisitTagDecl(TagDecl *TD) {
+ASTDeclReader::RedeclarableResult ASTDeclReader::VisitTagDecl(TagDecl *TD) {
   RedeclarableResult Redecl = VisitRedeclarable(TD);
   VisitTypeDecl(TD);
   
@@ -442,7 +448,8 @@ void ASTDeclReader::VisitTagDecl(TagDecl *TD) {
   } else
     TD->setTypedefNameForAnonDecl(ReadDeclAs<TypedefNameDecl>(Record, Idx));
 
-  mergeRedeclarable(TD, Redecl);  
+  mergeRedeclarable(TD, Redecl);
+  return Redecl;
 }
 
 void ASTDeclReader::VisitEnumDecl(EnumDecl *ED) {
@@ -466,12 +473,14 @@ void ASTDeclReader::VisitEnumDecl(EnumDecl *ED) {
   }
 }
 
-void ASTDeclReader::VisitRecordDecl(RecordDecl *RD) {
-  VisitTagDecl(RD);
+ASTDeclReader::RedeclarableResult
+ASTDeclReader::VisitRecordDeclImpl(RecordDecl *RD) {
+  RedeclarableResult Redecl = VisitTagDecl(RD);
   RD->setHasFlexibleArrayMember(Record[Idx++]);
   RD->setAnonymousStructOrUnion(Record[Idx++]);
   RD->setHasObjectMember(Record[Idx++]);
   RD->setHasVolatileMember(Record[Idx++]);
+  return Redecl;
 }
 
 void ASTDeclReader::VisitValueDecl(ValueDecl *VD) {
@@ -1022,6 +1031,7 @@ void ASTDeclReader::VisitNamespaceDecl(NamespaceDecl *D) {
   D->setInline(Record[Idx++]);
   D->LocStart = ReadSourceLocation(Record, Idx);
   D->RBraceLoc = ReadSourceLocation(Record, Idx);
+  // FIXME: At the point of this call, D->getCanonicalDecl() returns 0.
   mergeRedeclarable(D, Redecl);
 
   if (Redecl.getFirstID() == ThisDeclID) {
@@ -1180,8 +1190,9 @@ void ASTDeclReader::ReadCXXDefinitionData(
   }
 }
 
-void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
-  VisitRecordDecl(D);
+ASTDeclReader::RedeclarableResult
+ASTDeclReader::VisitCXXRecordDeclImpl(CXXRecordDecl *D) {
+  RedeclarableResult Redecl = VisitRecordDeclImpl(D);
 
   ASTContext &C = Reader.getContext();
   if (Record[Idx++]) {
@@ -1236,6 +1247,8 @@ void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
     if (CXXMethodDecl *Key = ReadDeclAs<CXXMethodDecl>(Record, Idx))
       C.KeyFunctions[D] = Key;
   }
+
+  return Redecl;
 }
 
 void ASTDeclReader::VisitCXXMethodDecl(CXXMethodDecl *D) {
@@ -1391,9 +1404,10 @@ void ASTDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   }
 }
 
-void ASTDeclReader::VisitClassTemplateSpecializationDecl(
-                                           ClassTemplateSpecializationDecl *D) {
-  VisitCXXRecordDecl(D);
+ASTDeclReader::RedeclarableResult
+ASTDeclReader::VisitClassTemplateSpecializationDeclImpl(
+    ClassTemplateSpecializationDecl *D) {
+  RedeclarableResult Redecl = VisitCXXRecordDeclImpl(D);
   
   ASTContext &C = Reader.getContext();
   if (Decl *InstD = ReadDecl(Record, Idx)) {
@@ -1444,11 +1458,13 @@ void ASTDeclReader::VisitClassTemplateSpecializationDecl(
       }
     }
   }
+
+  return Redecl;
 }
 
 void ASTDeclReader::VisitClassTemplatePartialSpecializationDecl(
                                     ClassTemplatePartialSpecializationDecl *D) {
-  VisitClassTemplateSpecializationDecl(D);
+  RedeclarableResult Redecl = VisitClassTemplateSpecializationDeclImpl(D);
 
   ASTContext &C = Reader.getContext();
   D->TemplateParams = Reader.ReadTemplateParameterList(F, Record, Idx);
@@ -1464,7 +1480,7 @@ void ASTDeclReader::VisitClassTemplatePartialSpecializationDecl(
   D->SequenceNumber = Record[Idx++];
 
   // These are read/set from/to the first declaration.
-  if (D->getPreviousDecl() == 0) {
+  if (ThisDeclID == Redecl.getFirstID()) {
     D->InstantiatedFromMember.setPointer(
       ReadDeclAs<ClassTemplatePartialSpecializationDecl>(Record, Idx));
     D->InstantiatedFromMember.setInt(Record[Idx++]);
@@ -1780,6 +1796,13 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
   // Objective-C classes and protocols with the same name always match.
   if (isa<ObjCInterfaceDecl>(X) || isa<ObjCProtocolDecl>(X))
     return true;
+
+  if (isa<ClassTemplateSpecializationDecl>(X)) {
+    // FIXME: Deal with merging of template specializations.
+    // For now, don't merge these; we need to check more than just the name to
+    // determine if they refer to the same entity.
+    return false;
+  }
   
   // Compatible tags match.
   if (TagDecl *TagX = dyn_cast<TagDecl>(X)) {

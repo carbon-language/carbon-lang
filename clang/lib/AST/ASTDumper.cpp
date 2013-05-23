@@ -62,6 +62,9 @@ namespace  {
   // Null statements
   static const TerminalColor NullColor = { raw_ostream::BLUE, false };
 
+  // Undeserialized entities
+  static const TerminalColor UndeserializedColor = { raw_ostream::GREEN, true };
+
   // CastKind from CastExpr's
   static const TerminalColor CastColor = { raw_ostream::RED, false };
 
@@ -477,19 +480,27 @@ bool ASTDumper::hasNodes(const DeclContext *DC) {
   if (!DC)
     return false;
 
-  return DC->decls_begin() != DC->decls_end();
+  return DC->hasExternalLexicalStorage() ||
+         DC->noload_decls_begin() != DC->noload_decls_end();
 }
 
 void ASTDumper::dumpDeclContext(const DeclContext *DC) {
   if (!DC)
     return;
-  for (DeclContext::decl_iterator I = DC->decls_begin(), E = DC->decls_end();
+  bool HasUndeserializedDecls = DC->hasExternalLexicalStorage();
+  for (DeclContext::decl_iterator I = DC->noload_decls_begin(), E = DC->noload_decls_end();
        I != E; ++I) {
     DeclContext::decl_iterator Next = I;
     ++Next;
-    if (Next == E)
+    if (Next == E && !HasUndeserializedDecls)
       lastChild();
     dumpDecl(*I);
+  }
+  if (HasUndeserializedDecls) {
+    lastChild();
+    IndentScope Indent(*this);
+    ColorScope Color(*this, UndeserializedColor);
+    OS << "<undeserialized declarations>";
   }
 }
 
