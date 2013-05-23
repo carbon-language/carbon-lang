@@ -1362,8 +1362,8 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
 ///
 /// \return The pointer to the value of the previous store if the store can be
 ///         hoisted into the predecessor block. 0 otherwise.
-Value *isSafeToSpeculateStore(Instruction *I, BasicBlock *BrBB,
-                              BasicBlock *StoreBB, BasicBlock *EndBB) {
+static Value *isSafeToSpeculateStore(Instruction *I, BasicBlock *BrBB,
+                                     BasicBlock *StoreBB, BasicBlock *EndBB) {
   StoreInst *StoreToHoist = dyn_cast<StoreInst>(I);
   if (!StoreToHoist)
     return 0;
