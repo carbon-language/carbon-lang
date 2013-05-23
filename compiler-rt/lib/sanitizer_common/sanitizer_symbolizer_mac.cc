@@ -31,6 +31,10 @@ uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
   return 0;
 }
 
+void SymbolizerPrepareForSandboxing() {
+  // Do nothing on Mac.
+}
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_MAC

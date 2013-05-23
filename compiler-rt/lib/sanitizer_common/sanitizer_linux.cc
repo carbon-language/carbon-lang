@@ -23,6 +23,7 @@
 #include "sanitizer_placement_new.h"
 #include "sanitizer_procmaps.h"
 #include "sanitizer_stacktrace.h"
+#include "sanitizer_symbolizer.h"
 
 #include <asm/param.h>
 #include <dlfcn.h>
@@ -305,6 +306,8 @@ void PrepareForSandboxing() {
   // process will be able to load additional libraries, so it's fine to use the
   // cached mappings.
   MemoryMappingLayout::CacheMemoryMappings();
+  // Same for /proc/self/exe in the symbolizer.
+  SymbolizerPrepareForSandboxing();
 }
 
 // ----------------- sanitizer_procmaps.h

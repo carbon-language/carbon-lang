@@ -31,6 +31,10 @@ uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
   UNIMPLEMENTED();
 };
 
+void SymbolizerPrepareForSandboxing() {
+  // Do nothing on Windows.
+}
+
 const char *Demangle(const char *MangledName) {
   return MangledName;
 }
