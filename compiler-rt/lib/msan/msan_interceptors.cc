@@ -975,7 +975,8 @@ struct MSanInterceptorContext {
   bool in_interceptor_scope;
 };
 
-// A version of CHECK_UNPOISED using a saved scope value. Used in common interceptors.
+// A version of CHECK_UNPOISED using a saved scope value. Used in common
+// interceptors.
 #define CHECK_UNPOISONED_CTX(ctx, x, n)                        \
   if (!((MSanInterceptorContext *) ctx)->in_interceptor_scope) \
     CHECK_UNPOISONED_0(x, n);
