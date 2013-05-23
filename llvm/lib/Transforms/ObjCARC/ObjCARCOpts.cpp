@@ -2888,15 +2888,15 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
 /// Identify program paths which execute sequences of retains and releases which
 /// can be eliminated.
 bool ObjCARCOpt::OptimizeSequences(Function &F) {
-  /// Releases, Retains - These are used to store the results of the main flow
-  /// analysis. These use Value* as the key instead of Instruction* so that the
-  /// map stays valid when we get around to rewriting code and calls get
-  /// replaced by arguments.
+  // Releases, Retains - These are used to store the results of the main flow
+  // analysis. These use Value* as the key instead of Instruction* so that the
+  // map stays valid when we get around to rewriting code and calls get
+  // replaced by arguments.
   DenseMap<Value *, RRInfo> Releases;
   MapVector<Value *, RRInfo> Retains;
 
-  /// This is used during the traversal of the function to track the
-  /// states for each identified object at each block.
+  // This is used during the traversal of the function to track the
+  // states for each identified object at each block.
   DenseMap<const BasicBlock *, BBState> BBStates;
 
   // Analyze the CFG of the function, and all instructions.
