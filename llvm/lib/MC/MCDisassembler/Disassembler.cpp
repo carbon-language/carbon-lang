@@ -40,7 +40,8 @@ LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
   // Get the target.
   std::string Error;
   const Target *TheTarget = TargetRegistry::lookupTarget(Triple, Error);
-  assert(TheTarget && "Unable to create target!");
+  if (!TheTarget)
+    return 0;
 
   const MCRegisterInfo *MRI = TheTarget->createMCRegInfo(Triple);
   if (!MRI)
