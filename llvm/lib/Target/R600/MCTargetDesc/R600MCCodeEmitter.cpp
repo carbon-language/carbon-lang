@@ -113,7 +113,7 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
         MI.getOperand(4).getImm(),
         MI.getOperand(5).getImm()
       };
-      long Offsets[3] = {
+      int64_t Offsets[3] = {
         MI.getOperand(6).getImm() & 0x1F,
         MI.getOperand(7).getImm() & 0x1F,
         MI.getOperand(8).getImm() & 0x1F
