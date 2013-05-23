@@ -909,8 +909,16 @@ void ConnectedVNInfoEqClasses::Distribute(LiveInterval *LIV[],
     MachineOperand &MO = RI.getOperand();
     MachineInstr *MI = MO.getParent();
     ++RI;
-    // DBG_VALUE instructions should have been eliminated earlier.
-    LiveRangeQuery LRQ(LI, LIS.getInstructionIndex(MI));
+    // DBG_VALUE instructions don't have slot indexes, so get the index of the
+    // instruction before them.
+    // Normally, DBG_VALUE instructions are removed before this function is
+    // called, but it is not a requirement.
+    SlotIndex Idx;
+    if (MI->isDebugValue())
+      Idx = LIS.getSlotIndexes()->getIndexBefore(MI);
+    else
+      Idx = LIS.getInstructionIndex(MI);
+    LiveRangeQuery LRQ(LI, Idx);
     const VNInfo *VNI = MO.readsReg() ? LRQ.valueIn() : LRQ.valueDefined();
     // In the case of an <undef> use that isn't tied to any def, VNI will be
     // NULL. If the use is tied to a def, VNI will be the defined value.
