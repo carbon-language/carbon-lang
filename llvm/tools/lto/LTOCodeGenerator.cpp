@@ -220,9 +220,14 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg) {
   return _nativeObjectFile->getBufferStart();
 }
 
-bool LTOCodeGenerator::determineTarget(std::string& errMsg) {
+bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
   if (_target != NULL)
     return false;
+
+  // if options were requested, set them
+  if (!_codegenOptions.empty())
+    cl::ParseCommandLineOptions(_codegenOptions.size(),
+                                const_cast<char **>(&_codegenOptions[0]));
 
   std::string TripleStr = _linker.getModule()->getTargetTriple();
   if (TripleStr.empty())
@@ -361,12 +366,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
 
   Module* mergedModule = _linker.getModule();
 
-  // if options were requested, set them
-  if (!_codegenOptions.empty())
-    cl::ParseCommandLineOptions(_codegenOptions.size(),
-                                const_cast<char **>(&_codegenOptions[0]));
-
-  // mark which symbols can not be internalized
+  // Mark which symbols can not be internalized
   this->applyScopeRestrictions();
 
   // Instantiate the pass manager to organize the passes.
@@ -382,12 +382,11 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   // Enabling internalize here would use its AllButMain variant. It
   // keeps only main if it exists and does nothing for libraries. Instead
   // we create the pass ourselves with the symbol list provided by the linker.
-  if (!DisableOpt) {
+  if (!DisableOpt)
     PassManagerBuilder().populateLTOPassManager(passes,
                                               /*Internalize=*/false,
                                               !DisableInline,
                                               DisableGVNLoadPRE);
-  }
 
   // Make sure everything is still good.
   passes.add(createVerifierPass());
