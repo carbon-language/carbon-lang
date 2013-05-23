@@ -657,6 +657,26 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
             format("lineWith();   // comment\n"
                    "// at start\n"
                    "otherLine();   // comment"));
+  EXPECT_EQ("lineWith();\n"
+            "// at start\n"
+            "otherLine(); // comment",
+            format("lineWith();\n"
+                   " // at start\n"
+                   "otherLine();   // comment"));
+  EXPECT_EQ("// first\n"
+            "// at start\n"
+            "otherLine(); // comment",
+            format("// first\n"
+                   " // at start\n"
+                   "otherLine();   // comment"));
+  EXPECT_EQ("f();\n"
+            "// first\n"
+            "// at start\n"
+            "otherLine(); // comment",
+            format("f();\n"
+                   "// first\n"
+                   " // at start\n"
+                   "otherLine();   // comment"));
 }
 
 TEST_F(FormatTest, CanFormatCommentsLocally) {

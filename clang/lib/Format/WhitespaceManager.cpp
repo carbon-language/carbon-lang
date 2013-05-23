@@ -170,10 +170,11 @@ void WhitespaceManager::alignTrailingComments() {
         MinColumn = std::max(MinColumn, ChangeMinColumn);
         MaxColumn = std::min(MaxColumn, ChangeMaxColumn);
       }
-      BreakBeforeNext = (i == 0) || (Changes[i].NewlinesBefore > 1) ||
-                        (Changes[i].NewlinesBefore == 1 &&
-                         !Changes[i - 1].IsTrailingComment) ||
-                        WasAlignedWithStartOfNextLine;
+      BreakBeforeNext =
+          (i == 0) || (Changes[i].NewlinesBefore > 1) ||
+          // Never start a sequence with a comment at the beginning of
+          // the line.
+          (Changes[i].NewlinesBefore == 1 && StartOfSequence == i);
       Newlines = 0;
     }
   }
