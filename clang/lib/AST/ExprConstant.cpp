@@ -915,6 +915,7 @@ static bool EvaluateIntegerOrLValue(const Expr *E, APValue &Result,
                                     EvalInfo &Info);
 static bool EvaluateFloat(const Expr *E, APFloat &Result, EvalInfo &Info);
 static bool EvaluateComplex(const Expr *E, ComplexValue &Res, EvalInfo &Info);
+static bool EvaluateAtomic(const Expr *E, APValue &Result, EvalInfo &Info);
 
 //===----------------------------------------------------------------------===//
 // Misc utilities
@@ -3702,8 +3703,13 @@ public:
     default:
       break;
 
-    case CK_AtomicToNonAtomic:
-    case CK_NonAtomicToAtomic:
+    case CK_AtomicToNonAtomic: {
+      APValue AtomicVal;
+      if (!EvaluateAtomic(E->getSubExpr(), AtomicVal, Info))
+        return false;
+      return DerivedSuccess(AtomicVal, E);
+    }
+
     case CK_NoOp:
     case CK_UserDefinedConversion:
       return StmtVisitorTy::Visit(E->getSubExpr());
@@ -6469,6 +6475,7 @@ bool IntExprEvaluator::VisitCastExpr(const CastExpr *E) {
   case CK_IntegralComplexToFloatingComplex:
   case CK_BuiltinFnToFnPtr:
   case CK_ZeroToOCLEvent:
+  case CK_NonAtomicToAtomic:
     llvm_unreachable("invalid cast kind for integral value");
 
   case CK_BitCast:
@@ -6484,7 +6491,6 @@ bool IntExprEvaluator::VisitCastExpr(const CastExpr *E) {
   case CK_UserDefinedConversion:
   case CK_LValueToRValue:
   case CK_AtomicToNonAtomic:
-  case CK_NonAtomicToAtomic:
   case CK_NoOp:
     return ExprEvaluatorBaseTy::VisitCastExpr(E);
 
@@ -6937,11 +6943,11 @@ bool ComplexExprEvaluator::VisitCastExpr(const CastExpr *E) {
   case CK_CopyAndAutoreleaseBlockObject:
   case CK_BuiltinFnToFnPtr:
   case CK_ZeroToOCLEvent:
+  case CK_NonAtomicToAtomic:
     llvm_unreachable("invalid cast kind for complex value");
 
   case CK_LValueToRValue:
   case CK_AtomicToNonAtomic:
-  case CK_NonAtomicToAtomic:
   case CK_NoOp:
     return ExprEvaluatorBaseTy::VisitCastExpr(E);
 
@@ -7198,6 +7204,46 @@ bool ComplexExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
 }
 
 //===----------------------------------------------------------------------===//
+// Atomic expression evaluation, essentially just handling the NonAtomicToAtomic
+// implicit conversion.
+//===----------------------------------------------------------------------===//
+
+namespace {
+class AtomicExprEvaluator :
+    public ExprEvaluatorBase<AtomicExprEvaluator, bool> {
+  APValue &Result;
+public:
+  AtomicExprEvaluator(EvalInfo &Info, APValue &Result)
+      : ExprEvaluatorBaseTy(Info), Result(Result) {}
+
+  bool Success(const APValue &V, const Expr *E) {
+    Result = V;
+    return true;
+  }
+
+  bool ZeroInitialization(const Expr *E) {
+    ImplicitValueInitExpr VIE(
+        E->getType()->castAs<AtomicType>()->getValueType());
+    return Evaluate(Result, Info, &VIE);
+  }
+
+  bool VisitCastExpr(const CastExpr *E) {
+    switch (E->getCastKind()) {
+    default:
+      return ExprEvaluatorBaseTy::VisitCastExpr(E);
+    case CK_NonAtomicToAtomic:
+      return Evaluate(Result, Info, E->getSubExpr());
+    }
+  }
+};
+} // end anonymous namespace
+
+static bool EvaluateAtomic(const Expr *E, APValue &Result, EvalInfo &Info) {
+  assert(E->isRValue() && E->getType()->isAtomicType());
+  return AtomicExprEvaluator(Info, Result).Visit(E);
+}
+
+//===----------------------------------------------------------------------===//
 // Void expression evaluation, primarily for a cast to void on the LHS of a
 // comma operator
 //===----------------------------------------------------------------------===//
@@ -7234,55 +7280,59 @@ static bool EvaluateVoid(const Expr *E, EvalInfo &Info) {
 static bool Evaluate(APValue &Result, EvalInfo &Info, const Expr *E) {
   // In C, function designators are not lvalues, but we evaluate them as if they
   // are.
-  if (E->isGLValue() || E->getType()->isFunctionType()) {
+  QualType T = E->getType();
+  if (E->isGLValue() || T->isFunctionType()) {
     LValue LV;
     if (!EvaluateLValue(E, LV, Info))
       return false;
     LV.moveInto(Result);
-  } else if (E->getType()->isVectorType()) {
+  } else if (T->isVectorType()) {
     if (!EvaluateVector(E, Result, Info))
       return false;
-  } else if (E->getType()->isIntegralOrEnumerationType()) {
+  } else if (T->isIntegralOrEnumerationType()) {
     if (!IntExprEvaluator(Info, Result).Visit(E))
       return false;
-  } else if (E->getType()->hasPointerRepresentation()) {
+  } else if (T->hasPointerRepresentation()) {
     LValue LV;
     if (!EvaluatePointer(E, LV, Info))
       return false;
     LV.moveInto(Result);
-  } else if (E->getType()->isRealFloatingType()) {
+  } else if (T->isRealFloatingType()) {
     llvm::APFloat F(0.0);
     if (!EvaluateFloat(E, F, Info))
       return false;
     Result = APValue(F);
-  } else if (E->getType()->isAnyComplexType()) {
+  } else if (T->isAnyComplexType()) {
     ComplexValue C;
     if (!EvaluateComplex(E, C, Info))
       return false;
     C.moveInto(Result);
-  } else if (E->getType()->isMemberPointerType()) {
+  } else if (T->isMemberPointerType()) {
     MemberPtr P;
     if (!EvaluateMemberPointer(E, P, Info))
       return false;
     P.moveInto(Result);
     return true;
-  } else if (E->getType()->isArrayType()) {
+  } else if (T->isArrayType()) {
     LValue LV;
     LV.set(E, Info.CurrentCall->Index);
     if (!EvaluateArray(E, LV, Info.CurrentCall->Temporaries[E], Info))
       return false;
     Result = Info.CurrentCall->Temporaries[E];
-  } else if (E->getType()->isRecordType()) {
+  } else if (T->isRecordType()) {
     LValue LV;
     LV.set(E, Info.CurrentCall->Index);
     if (!EvaluateRecord(E, LV, Info.CurrentCall->Temporaries[E], Info))
       return false;
     Result = Info.CurrentCall->Temporaries[E];
-  } else if (E->getType()->isVoidType()) {
+  } else if (T->isVoidType()) {
     if (!Info.getLangOpts().CPlusPlus11)
       Info.CCEDiag(E, diag::note_constexpr_nonliteral)
         << E->getType();
     if (!EvaluateVoid(E, Info))
+      return false;
+  } else if (T->isAtomicType()) {
+    if (!EvaluateAtomic(E, Result, Info))
       return false;
   } else if (Info.getLangOpts().CPlusPlus11) {
     Info.Diag(E, diag::note_constexpr_nonliteral) << E->getType();

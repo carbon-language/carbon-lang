@@ -2555,6 +2555,14 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     FromType = From->getType();
   }
 
+  // If we're converting to an atomic type, first convert to the corresponding
+  // non-atomic type.
+  QualType ToAtomicType;
+  if (const AtomicType *ToAtomic = ToType->getAs<AtomicType>()) {
+    ToAtomicType = ToType;
+    ToType = ToAtomic->getValueType();
+  }
+
   // Perform the first implicit conversion.
   switch (SCS.First) {
   case ICK_Identity:
@@ -2864,7 +2872,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
         << ToType.getNonReferenceType();
 
     break;
-    }
+  }
 
   default:
     llvm_unreachable("Improper third standard conversion");
@@ -2872,11 +2880,13 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
 
   // If this conversion sequence involved a scalar -> atomic conversion, perform
   // that conversion now.
-  if (const AtomicType *ToAtomic = ToType->getAs<AtomicType>())
-    if (Context.hasSameType(ToAtomic->getValueType(), From->getType()))
-      From = ImpCastExprToType(From, ToType, CK_NonAtomicToAtomic, VK_RValue, 0,
-                               CCK).take();
-      
+  if (!ToAtomicType.isNull()) {
+    assert(Context.hasSameType(
+        ToAtomicType->castAs<AtomicType>()->getValueType(), From->getType()));
+    From = ImpCastExprToType(From, ToAtomicType, CK_NonAtomicToAtomic,
+                             VK_RValue, 0, CCK).take();
+  }
+
   return Owned(From);
 }
 

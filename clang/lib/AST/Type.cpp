@@ -1196,6 +1196,10 @@ bool Type::isLiteralType(ASTContext &Ctx) const {
     return true;
   }
 
+  // We treat _Atomic T as a literal type if T is a literal type.
+  if (const AtomicType *AT = BaseTy->getAs<AtomicType>())
+    return AT->getValueType()->isLiteralType(Ctx);
+
   // If this type hasn't been deduced yet, then conservatively assume that
   // it'll work out to be a literal type.
   if (isa<AutoType>(BaseTy->getCanonicalTypeInternal()))
