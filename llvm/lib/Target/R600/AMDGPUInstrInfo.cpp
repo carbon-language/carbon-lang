@@ -99,27 +99,6 @@ bool AMDGPUInstrInfo::getNextBranchInstr(MachineBasicBlock::iterator &iter,
   return false;
 }
 
-MachineBasicBlock::iterator skipFlowControl(MachineBasicBlock *MBB) {
-  MachineBasicBlock::iterator tmp = MBB->end();
-  if (!MBB->size()) {
-    return MBB->end();
-  }
-  while (--tmp) {
-    if (tmp->getOpcode() == AMDGPU::ENDLOOP
-        || tmp->getOpcode() == AMDGPU::ENDIF
-        || tmp->getOpcode() == AMDGPU::ELSE) {
-      if (tmp == MBB->begin()) {
-        return tmp;
-      } else {
-        continue;
-      }
-    }  else {
-      return ++tmp;
-    }
-  }
-  return MBB->end();
-}
-
 void
 AMDGPUInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator MI,

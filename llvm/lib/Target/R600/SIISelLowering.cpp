@@ -706,7 +706,7 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
 }
 
 /// \brief Helper function for adjustWritemask
-unsigned SubIdx2Lane(unsigned Idx) {
+static unsigned SubIdx2Lane(unsigned Idx) {
   switch (Idx) {
   default: return 0;
   case AMDGPU::sub0: return 0;

@@ -82,6 +82,8 @@ void AMDGPUAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
 // ELFAMDGPUAsmBackend class
 //===----------------------------------------------------------------------===//
 
+namespace {
+
 class ELFAMDGPUAsmBackend : public AMDGPUAsmBackend {
 public:
   ELFAMDGPUAsmBackend(const Target &T) : AMDGPUAsmBackend(T) { }
@@ -90,6 +92,8 @@ public:
     return createAMDGPUELFObjectWriter(OS);
   }
 };
+
+} // end anonymous namespace
 
 MCAsmBackend *llvm::createAMDGPUAsmBackend(const Target &T, StringRef TT,
                                            StringRef CPU) {
