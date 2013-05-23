@@ -52,8 +52,8 @@ static FILE *output_file = NULL;
 /*
  * Buffer that we write things into.
  */
-#define NEW_WRITE_BUFFER_SIZE (128 * 1024)
-static char *new_write_buffer = NULL;
+#define WRITE_BUFFER_SIZE (128 * 1024)
+static char *write_buffer = NULL;
 static uint64_t cur_buffer_size = 0;
 static uint64_t cur_pos = 0;
 static uint64_t file_size = 0;
@@ -90,15 +90,15 @@ static void resize_write_buffer(uint64_t size) {
   if (!new_file) return;
   size += cur_pos;
   if (size <= cur_buffer_size) return;
-  size = (size - 1) / NEW_WRITE_BUFFER_SIZE + 1;
-  size *= NEW_WRITE_BUFFER_SIZE;
-  new_write_buffer = realloc(new_write_buffer, size);
+  size = (size - 1) / WRITE_BUFFER_SIZE + 1;
+  size *= WRITE_BUFFER_SIZE;
+  write_buffer = realloc(write_buffer, size);
   cur_buffer_size = size;
 }
 
 static void write_bytes(const char *s, size_t len) {
   resize_write_buffer(len);
-  memcpy(&new_write_buffer[cur_pos], s, len);
+  memcpy(&write_buffer[cur_pos], s, len);
   cur_pos += len;
 }
 
@@ -127,7 +127,7 @@ static uint32_t read_32bit_value() {
   if (new_file)
     return (uint32_t)-1;
 
-  val = *(uint32_t*)&new_write_buffer[cur_pos];
+  val = *(uint32_t*)&write_buffer[cur_pos];
   cur_pos += 4;
   return val;
 }
@@ -138,7 +138,7 @@ static uint64_t read_64bit_value() {
   if (new_file)
     return (uint64_t)-1;
 
-  val = *(uint64_t*)&new_write_buffer[cur_pos];
+  val = *(uint64_t*)&write_buffer[cur_pos];
   cur_pos += 8;
   return val;
 }
@@ -200,14 +200,14 @@ static void map_file() {
   fseek(output_file, 0L, SEEK_END);
   file_size = ftell(output_file);
 
-  new_write_buffer = mmap(0, file_size, PROT_READ | PROT_WRITE,
-                          MAP_FILE | MAP_SHARED, fd, 0);
+  write_buffer = mmap(0, file_size, PROT_READ | PROT_WRITE,
+                      MAP_FILE | MAP_SHARED, fd, 0);
 }
 
 static void unmap_file() {
-  msync(new_write_buffer, file_size, MS_SYNC);
-  munmap(new_write_buffer, file_size);
-  new_write_buffer = NULL;
+  msync(write_buffer, file_size, MS_SYNC);
+  munmap(write_buffer, file_size);
+  write_buffer = NULL;
   file_size = 0;
 }
 
@@ -229,14 +229,13 @@ void llvm_gcda_start_file(const char *orig_filename, const char version[4]) {
 
   if (fd == -1) {
     /* Try opening the file, creating it if necessary. */
-    int mode = 0644;
     new_file = 1;
     mode = "w+b";
-    fd = open(filename, O_RDWR | O_CREAT, mode);
+    fd = open(filename, O_RDWR | O_CREAT, 0644);
     if (fd == -1) {
       /* Try creating the directories first then opening the file. */
       recursive_mkdir(filename);
-      fd = open(filename, O_RDWR | O_CREAT, mode);
+      fd = open(filename, O_RDWR | O_CREAT, 0644);
       if (!output_file) {
         /* Bah! It's hopeless. */
         fprintf(stderr, "profiling:%s: cannot open\n", filename);
@@ -249,13 +248,13 @@ void llvm_gcda_start_file(const char *orig_filename, const char version[4]) {
   output_file = fdopen(fd, mode);
 
   /* Initialize the write buffer. */
-  new_write_buffer = NULL;
+  write_buffer = NULL;
   cur_buffer_size = 0;
   cur_pos = 0;
 
   if (new_file) {
-    resize_write_buffer(NEW_WRITE_BUFFER_SIZE);
-    memset(new_write_buffer, 0, NEW_WRITE_BUFFER_SIZE);
+    resize_write_buffer(WRITE_BUFFER_SIZE);
+    memset(write_buffer, 0, WRITE_BUFFER_SIZE);
   } else {
     map_file();
   }
@@ -375,15 +374,15 @@ void llvm_gcda_end_file() {
   write_bytes("\0\0\0\0\0\0\0\0", 8);
 
   if (new_file) {
-    fwrite(new_write_buffer, cur_pos, 1, output_file);
-    free(new_write_buffer);
+    fwrite(write_buffer, cur_pos, 1, output_file);
+    free(write_buffer);
   } else {
     unmap_file();
   }
 
   fclose(output_file);
   output_file = NULL;
-  new_write_buffer = NULL;
+  write_buffer = NULL;
 
 #ifdef DEBUG_GCDAPROFILING
   fprintf(stderr, "llvmgcda: -----\n");
