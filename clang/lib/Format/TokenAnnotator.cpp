@@ -1095,8 +1095,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Right.Type == TT_UnaryOperator)
     return !Left.isOneOf(tok::l_paren, tok::l_square, tok::at) &&
            (Left.isNot(tok::colon) || Left.Type != TT_ObjCMethodExpr);
-  if (Left.is(tok::identifier) && Right.is(tok::l_brace) &&
-      Right.getNextNoneComment())
+  if (Left.isOneOf(tok::identifier, tok::greater, tok::r_square) &&
+      Right.is(tok::l_brace) && Right.getNextNoneComment())
     return false;
   if (Right.is(tok::ellipsis))
     return false;
