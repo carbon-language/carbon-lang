@@ -639,12 +639,7 @@ endif
 ifneq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
   ifneq ($(HOST_OS), Darwin)
     ifdef TOOLNAME
-      LD.Flags += $(RPATH) -Wl,'$$ORIGIN/../lib'
-      ifdef EXAMPLE_TOOL
-        LD.Flags += $(RPATH) -Wl,$(ExmplDir) $(DynamicFlag)
-      else
-        LD.Flags += $(RPATH) -Wl,$(ToolDir) $(DynamicFlag)
-      endif
+      LD.Flags += $(RPATH) -Wl,'$$ORIGIN/../lib' $(DynamicFlag)
     endif
   else
     ifneq ($(DARWIN_MAJVERS),4)
