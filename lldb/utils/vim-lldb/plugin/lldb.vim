@@ -82,7 +82,9 @@ function! s:InitLldbPlugin()
   command -complete=custom,s:CompleteCommand -nargs=* Lwatchpoint        python ctrl.doCommand('watchpoint', '<args>')
  
   " Convenience (shortcut) LLDB commands
-  command -complete=custom,s:CompleteCommand -nargs=* Lprint             python ctrl.doCommand('print', '<args>')
+  command -complete=custom,s:CompleteCommand -nargs=* Lprint             python ctrl.doCommand('print', vim.eval("s:CursorWord('<args>')"))
+  command -complete=custom,s:CompleteCommand -nargs=* Lpo                python ctrl.doCommand('po', vim.eval("s:CursorWord('<args>')"))
+  command -complete=custom,s:CompleteCommand -nargs=* LpO                python ctrl.doCommand('po', vim.eval("s:CursorWORD('<args>')"))
   command -complete=custom,s:CompleteCommand -nargs=* Lbt                python ctrl.doCommand('bt', '<args>')
 
   " Frame/Thread-Selection (commands that also do an Uupdate but do not
@@ -133,6 +135,17 @@ l = vim.eval("a:L")
 p = vim.eval("a:P")
 returnCompleteWindow(a, l, p)
 EOF
+endfunction()
+
+" Returns cword if search term is empty
+function! s:CursorWord(term) 
+  return empty(a:term) ? expand('<cword>') : a:term 
+endfunction()
+
+" Returns cleaned cWORD if search term is empty
+function! s:CursorWORD(term) 
+  " Will strip all non-alphabetic characters from both sides
+  return empty(a:term) ?  substitute(expand('<cWORD>'), '^\A*\(.\{-}\)\A*$', '\1', '') : a:term 
 endfunction()
 
 call s:InitLldbPlugin()
