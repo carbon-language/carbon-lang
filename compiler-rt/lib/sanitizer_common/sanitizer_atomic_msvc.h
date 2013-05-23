@@ -136,7 +136,7 @@ INLINE u16 atomic_exchange(volatile atomic_uint16_t *a,
 
 INLINE bool atomic_compare_exchange_strong(volatile atomic_uint8_t *a,
                                            u8 *cmp,
-                                           u8 xchg,
+                                           u8 xchgv,
                                            memory_order mo) {
   (void)mo;
   DCHECK(!((uptr)a % sizeof(*a)));
@@ -145,7 +145,7 @@ INLINE bool atomic_compare_exchange_strong(volatile atomic_uint8_t *a,
   __asm {
     mov al, cmpv
     mov ecx, a
-    mov dl, xchg
+    mov dl, xchgv
     lock cmpxchg [ecx], dl
     mov prev, al
   }
