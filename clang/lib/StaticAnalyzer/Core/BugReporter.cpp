@@ -2037,7 +2037,7 @@ static void removeIdenticalEvents(PathPieces &path) {
       return;
 
     PathDiagnosticEventPiece *PieceNextI =
-      dyn_cast<PathDiagnosticEventPiece>(*I);
+      dyn_cast<PathDiagnosticEventPiece>(*NextI);
 
     if (!PieceNextI)
       continue;
