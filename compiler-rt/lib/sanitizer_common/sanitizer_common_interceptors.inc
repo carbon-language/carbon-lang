@@ -796,6 +796,7 @@ INTERCEPTOR(int, getsockname, int sock_fd, void *addr, int *addrlen) {
 #define INIT_GETSOCKNAME
 #endif
 
+#if SANITIZER_INTERCEPT_GETHOSTBYNAME || SANITIZER_INTERCEPT_GETHOSTBYNAME_R
 static void write_hostent(void *ctx, struct __sanitizer_hostent *h) {
   COMMON_INTERCEPTOR_WRITE_RANGE(ctx, h, sizeof(__sanitizer_hostent));
   if (h->h_name)
@@ -815,6 +816,7 @@ static void write_hostent(void *ctx, struct __sanitizer_hostent *h) {
   COMMON_INTERCEPTOR_WRITE_RANGE(
       ctx, h->h_addr_list, (p - h->h_addr_list + 1) * sizeof(*h->h_addr_list));
 }
+#endif
 
 #if SANITIZER_INTERCEPT_GETHOSTBYNAME
 INTERCEPTOR(struct __sanitizer_hostent *, gethostbyname, char *name) {
