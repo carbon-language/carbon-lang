@@ -942,6 +942,23 @@ INTERCEPTOR(int, gethostbyname2_r, char *name, int af,
 #define INIT_GETHOSTBYNAME_R
 #endif
 
+#if SANITIZER_INTERCEPT_GETSOCKOPT
+INTERCEPTOR(int, getsockopt, int sockfd, int level, int optname, void *optval,
+            int *optlen) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getsockopt, sockfd, level, optname, optval,
+                           optlen);
+  if (optlen) COMMON_INTERCEPTOR_READ_RANGE(ctx, optlen, sizeof(*optlen));
+  int res = REAL(getsockopt)(sockfd, level, optname, optval, optlen);
+  if (res == 0)
+    if (optval && optlen) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, optval, *optlen);
+  return res;
+}
+#define INIT_GETSOCKOPT INTERCEPT_FUNCTION(getsockopt);
+#else
+#define INIT_GETSOCKOPT
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCASECMP;                         \
   INIT_STRNCASECMP;                        \
@@ -968,4 +985,5 @@ INTERCEPTOR(int, gethostbyname2_r, char *name, int af,
   INIT_GETADDRINFO;                        \
   INIT_GETSOCKNAME;                        \
   INIT_GETHOSTBYNAME;                      \
-  INIT_GETHOSTBYNAME_R;
+  INIT_GETHOSTBYNAME_R;                    \
+  INIT_GETSOCKOPT;

@@ -41,7 +41,6 @@
 #include <sys/utsname.h>
 #include <sys/mman.h>
 #include <sys/vfs.h>
-#include <sys/types.h>
 #include <dirent.h>
 #include <pwd.h>
 #include <sys/socket.h>
@@ -752,6 +751,17 @@ TEST(MemorySanitizer, gethostbyaddr_r) {
   ASSERT_NE((void *)NULL, result);
   EXPECT_HOSTENT_NOT_POISONED(result);
   EXPECT_NOT_POISONED(err);
+}
+
+TEST(MemorySanitizer, getsockopt) {
+  int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+  struct linger l[2];
+  socklen_t sz = sizeof(l[0]);
+  int res = getsockopt(sock, SOL_SOCKET, SO_LINGER, &l[0], &sz);
+  ASSERT_EQ(0, res);
+  ASSERT_EQ(sizeof(l[0]), sz);
+  EXPECT_NOT_POISONED(l[0]);
+  EXPECT_POISONED(*(char *)(l + 1));
 }
 
 TEST(MemorySanitizer, getcwd) {
