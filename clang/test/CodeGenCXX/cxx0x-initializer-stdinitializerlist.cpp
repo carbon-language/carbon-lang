@@ -275,3 +275,13 @@ namespace rdar13325066 {
     for (X x : { x1, x2 }) { }
   }
 }
+
+namespace dtors {
+  struct S {
+    S();
+    ~S();
+  };
+  void f() {
+    std::initializer_list<S>{ S(), S() };
+  }
+}

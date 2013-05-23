@@ -1159,12 +1159,13 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   if (E->hadArrayRangeDesignator())
     CGF.ErrorUnsupported(E, "GNU array range designator extension");
 
+  AggValueSlot Dest = EnsureSlot(E->getType());
+
   if (E->initializesStdInitializerList()) {
     EmitStdInitializerList(Dest.getAddr(), E);
     return;
   }
 
-  AggValueSlot Dest = EnsureSlot(E->getType());
   LValue DestLV = CGF.MakeAddrLValue(Dest.getAddr(), E->getType(),
                                      Dest.getAlignment());
 
