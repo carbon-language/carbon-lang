@@ -67,8 +67,19 @@ private:
 
   typedef llvm::DenseMap<const DefinedAtom *, const DefinedAtom *> AtomToAtomT;
   typedef llvm::DenseMap<const DefinedAtom *, uint64_t> AtomToOrdinalT;
+
+  // A map to be used to sort atoms. It represents the order of atoms in the
+  // result; if Atom X is mapped to atom Y in this map, X will be located
+  // immediately before Y in the output file. Y might be mapped to another
+  // atom, constructing a follow-on chain. An atom cannot be mapped to more
+  // than one atom unless all but one atom are of size zero.
   AtomToAtomT _followOnNexts;
+
+  // A map to be used to sort atoms. It's a map from an atom to its root of
+  // follow-on chain. A root atom is mapped to itself. If an atom is not in
+  // _followOnNexts, the atom is not in this map, and vice versa.
   AtomToAtomT _followOnRoots;
+
   AtomToOrdinalT _ordinalOverrideMap;
   CompareAtoms _compareAtoms;
 
