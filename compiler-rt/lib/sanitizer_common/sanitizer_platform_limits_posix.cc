@@ -144,4 +144,12 @@ COMPILER_CHECK(offsetof(struct __sanitizer_addrinfo, ai_canonname) ==
 COMPILER_CHECK(offsetof(struct __sanitizer_addrinfo, ai_next) ==
                offsetof(struct addrinfo, ai_next));
 
+COMPILER_CHECK(sizeof(struct __sanitizer_hostent) == sizeof(struct hostent));
+COMPILER_CHECK(offsetof(struct __sanitizer_hostent, h_name) ==
+               offsetof(struct hostent, h_name));
+COMPILER_CHECK(offsetof(struct __sanitizer_hostent, h_aliases) ==
+               offsetof(struct hostent, h_aliases));
+COMPILER_CHECK(offsetof(struct __sanitizer_hostent, h_addr_list) ==
+               offsetof(struct hostent, h_addr_list));
+
 #endif  // SANITIZER_LINUX || SANITIZER_MAC

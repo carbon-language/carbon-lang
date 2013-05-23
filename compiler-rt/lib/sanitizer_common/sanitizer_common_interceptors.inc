@@ -796,6 +796,152 @@ INTERCEPTOR(int, getsockname, int sock_fd, void *addr, int *addrlen) {
 #define INIT_GETSOCKNAME
 #endif
 
+static void write_hostent(void *ctx, struct __sanitizer_hostent *h) {
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, h, sizeof(__sanitizer_hostent));
+  if (h->h_name)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, h->h_name, REAL(strlen)(h->h_name) + 1);
+  char **p = h->h_aliases;
+  while (*p) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, *p, REAL(strlen)(*p) + 1);
+    ++p;
+  }
+  COMMON_INTERCEPTOR_WRITE_RANGE(
+      ctx, h->h_aliases, (p - h->h_aliases + 1) * sizeof(*h->h_aliases));
+  p = h->h_addr_list;
+  while (*p) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, *p, h->h_length);
+    ++p;
+  }
+  COMMON_INTERCEPTOR_WRITE_RANGE(
+      ctx, h->h_addr_list, (p - h->h_addr_list + 1) * sizeof(*h->h_addr_list));
+}
+
+#if SANITIZER_INTERCEPT_GETHOSTBYNAME
+INTERCEPTOR(struct __sanitizer_hostent *, gethostbyname, char *name) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, gethostbyname, name);
+  struct __sanitizer_hostent *res = REAL(gethostbyname)(name);
+  if (res) write_hostent(ctx, res);
+  return res;
+}
+
+INTERCEPTOR(struct __sanitizer_hostent *, gethostbyaddr, void *addr, int len,
+            int type) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, gethostbyaddr, addr, len, type);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, addr, len);
+  struct __sanitizer_hostent *res = REAL(gethostbyaddr)(addr, len, type);
+  if (res) write_hostent(ctx, res);
+  return res;
+}
+
+INTERCEPTOR(struct __sanitizer_hostent *, gethostent) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, gethostent);
+  struct __sanitizer_hostent *res = REAL(gethostent)();
+  if (res) write_hostent(ctx, res);
+  return res;
+}
+
+INTERCEPTOR(struct __sanitizer_hostent *, gethostbyname2, char *name, int af) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, gethostbyname2, name, af);
+  struct __sanitizer_hostent *res = REAL(gethostbyname2)(name, af);
+  if (res) write_hostent(ctx, res);
+  return res;
+}
+#define INIT_GETHOSTBYNAME           \
+  INTERCEPT_FUNCTION(gethostent);    \
+  INTERCEPT_FUNCTION(gethostbyaddr); \
+  INTERCEPT_FUNCTION(gethostbyname); \
+  INTERCEPT_FUNCTION(gethostbyname2);
+#else
+#define INIT_GETHOSTBYNAME
+#endif
+
+#if SANITIZER_INTERCEPT_GETHOSTBYNAME_R
+INTERCEPTOR(int, gethostent_r, struct __sanitizer_hostent *ret, char *buf,
+            SIZE_T buflen, __sanitizer_hostent **result, int *h_errnop) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, gethostent_r, ret, buf, buflen, result,
+                           h_errnop);
+  int res = REAL(gethostent_r)(ret, buf, buflen, result, h_errnop);
+  if (res == 0) {
+    if (result) {
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
+      if (*result) write_hostent(ctx, *result);
+    }
+    if (h_errnop)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, h_errnop, sizeof(*h_errnop));
+  }
+  return res;
+}
+
+INTERCEPTOR(int, gethostbyaddr_r, void *addr, int len, int type,
+            struct __sanitizer_hostent *ret, char *buf, SIZE_T buflen,
+            __sanitizer_hostent **result, int *h_errnop) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, gethostbyaddr_r, addr, len, type, ret, buf,
+                           buflen, result, h_errnop);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, addr, len);
+  int res = REAL(gethostbyaddr_r)(addr, len, type, ret, buf, buflen, result,
+                                  h_errnop);
+  if (res == 0) {
+    if (result) {
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
+      if (*result) write_hostent(ctx, *result);
+    }
+    if (h_errnop)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, h_errnop, sizeof(*h_errnop));
+  }
+  return res;
+}
+
+INTERCEPTOR(int, gethostbyname_r, char *name, struct __sanitizer_hostent *ret,
+            char *buf, SIZE_T buflen, __sanitizer_hostent **result,
+            int *h_errnop) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, gethostbyname_r, name, ret, buf, buflen, result,
+                           h_errnop);
+  int res = REAL(gethostbyname_r)(name, ret, buf, buflen, result, h_errnop);
+  if (res == 0) {
+    if (result) {
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
+      if (*result) write_hostent(ctx, *result);
+    }
+    if (h_errnop)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, h_errnop, sizeof(*h_errnop));
+  }
+  return res;
+}
+
+INTERCEPTOR(int, gethostbyname2_r, char *name, int af,
+            struct __sanitizer_hostent *ret, char *buf, SIZE_T buflen,
+            __sanitizer_hostent **result, int *h_errnop) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, gethostbyname2_r, name, af, ret, buf, buflen,
+                           result, h_errnop);
+  int res =
+      REAL(gethostbyname2_r)(name, af, ret, buf, buflen, result, h_errnop);
+  if (res == 0) {
+    if (result) {
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
+      if (*result) write_hostent(ctx, *result);
+    }
+    if (h_errnop)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, h_errnop, sizeof(*h_errnop));
+  }
+  return res;
+}
+#define INIT_GETHOSTBYNAME_R           \
+  INTERCEPT_FUNCTION(gethostent_r);    \
+  INTERCEPT_FUNCTION(gethostbyaddr_r); \
+  INTERCEPT_FUNCTION(gethostbyname_r); \
+  INTERCEPT_FUNCTION(gethostbyname2_r);
+#else
+#define INIT_GETHOSTBYNAME_R
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCASECMP;                         \
   INIT_STRNCASECMP;                        \
@@ -820,4 +966,6 @@ INTERCEPTOR(int, getsockname, int sock_fd, void *addr, int *addrlen) {
   INIT_INET;                               \
   INIT_PTHREAD_GETSCHEDPARAM;              \
   INIT_GETADDRINFO;                        \
-  INIT_GETSOCKNAME;
+  INIT_GETSOCKNAME;                        \
+  INIT_GETHOSTBYNAME;                      \
+  INIT_GETHOSTBYNAME_R;

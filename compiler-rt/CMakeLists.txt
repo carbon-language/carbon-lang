@@ -127,6 +127,7 @@ set(SANITIZER_COMMON_CFLAGS
   -fomit-frame-pointer
   -funwind-tables
   -fno-stack-protector
+  -Wno-gnu  # Variadic macros with 0 arguments for ...
   -O3
   )
 if(NOT WIN32)

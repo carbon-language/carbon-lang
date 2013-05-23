@@ -45,6 +45,7 @@
 #include <dirent.h>
 #include <pwd.h>
 #include <sys/socket.h>
+#include <netdb.h>
 
 #if defined(__i386__) || defined(__x86_64__)
 # include <emmintrin.h>
@@ -649,6 +650,108 @@ TEST(MemorySanitizer, bind_getsockname) {
   EXPECT_NOT_POISONED(buf[addrlen - 1]);
   EXPECT_POISONED(buf[addrlen]);
   close(sock);
+}
+
+#define EXPECT_HOSTENT_NOT_POISONED(he)        \
+  do {                                         \
+    EXPECT_NOT_POISONED(*(he));                \
+    ASSERT_NE((void *) 0, (he)->h_name);       \
+    ASSERT_NE((void *) 0, (he)->h_aliases);    \
+    ASSERT_NE((void *) 0, (he)->h_addr_list);  \
+    EXPECT_NOT_POISONED(strlen((he)->h_name)); \
+    char **p = (he)->h_aliases;                \
+    while (*p) {                               \
+      EXPECT_NOT_POISONED(strlen(*p));         \
+      ++p;                                     \
+    }                                          \
+    char **q = (he)->h_addr_list;              \
+    while (*q) {                               \
+      EXPECT_NOT_POISONED(*q[0]);              \
+      ++q;                                     \
+    }                                          \
+    EXPECT_NOT_POISONED(*q);                   \
+  } while (0)
+
+TEST(MemorySanitizer, gethostent) {
+  struct hostent *he = gethostent();
+  ASSERT_NE((void *)NULL, he);
+  EXPECT_HOSTENT_NOT_POISONED(he);
+}
+
+TEST(MemorySanitizer, gethostbyname) {
+  struct hostent *he = gethostbyname("localhost");
+  ASSERT_NE((void *)NULL, he);
+  EXPECT_HOSTENT_NOT_POISONED(he);
+}
+
+TEST(MemorySanitizer, gethostbyname2) {
+  struct hostent *he = gethostbyname2("localhost", AF_INET);
+  ASSERT_NE((void *)NULL, he);
+  EXPECT_HOSTENT_NOT_POISONED(he);
+}
+
+TEST(MemorySanitizer, gethostbyaddr) {
+  in_addr_t addr = inet_addr("127.0.0.1");
+  EXPECT_NOT_POISONED(addr);
+  struct hostent *he = gethostbyaddr(&addr, sizeof(addr), AF_INET);
+  ASSERT_NE((void *)NULL, he);
+  EXPECT_HOSTENT_NOT_POISONED(he);
+}
+
+TEST(MemorySanitizer, gethostent_r) {
+  char buf[2000];
+  struct hostent he;
+  struct hostent *result;
+  int err;
+  int res = gethostent_r(&he, buf, sizeof(buf), &result, &err);
+  ASSERT_EQ(0, res);
+  EXPECT_NOT_POISONED(result);
+  ASSERT_NE((void *)NULL, result);
+  EXPECT_HOSTENT_NOT_POISONED(result);
+  EXPECT_NOT_POISONED(err);
+}
+
+TEST(MemorySanitizer, gethostbyname_r) {
+  char buf[2000];
+  struct hostent he;
+  struct hostent *result;
+  int err;
+  int res = gethostbyname_r("localhost", &he, buf, sizeof(buf), &result, &err);
+  ASSERT_EQ(0, res);
+  EXPECT_NOT_POISONED(result);
+  ASSERT_NE((void *)NULL, result);
+  EXPECT_HOSTENT_NOT_POISONED(result);
+  EXPECT_NOT_POISONED(err);
+}
+
+TEST(MemorySanitizer, gethostbyname2_r) {
+  char buf[2000];
+  struct hostent he;
+  struct hostent *result;
+  int err;
+  int res = gethostbyname2_r("localhost", AF_INET, &he, buf, sizeof(buf),
+                             &result, &err);
+  ASSERT_EQ(0, res);
+  EXPECT_NOT_POISONED(result);
+  ASSERT_NE((void *)NULL, result);
+  EXPECT_HOSTENT_NOT_POISONED(result);
+  EXPECT_NOT_POISONED(err);
+}
+
+TEST(MemorySanitizer, gethostbyaddr_r) {
+  char buf[2000];
+  struct hostent he;
+  struct hostent *result;
+  int err;
+  in_addr_t addr = inet_addr("127.0.0.1");
+  EXPECT_NOT_POISONED(addr);
+  int res = gethostbyaddr_r(&addr, sizeof(addr), AF_INET, &he, buf, sizeof(buf),
+                            &result, &err);
+  ASSERT_EQ(0, res);
+  EXPECT_NOT_POISONED(result);
+  ASSERT_NE((void *)NULL, result);
+  EXPECT_HOSTENT_NOT_POISONED(result);
+  EXPECT_NOT_POISONED(err);
 }
 
 TEST(MemorySanitizer, getcwd) {

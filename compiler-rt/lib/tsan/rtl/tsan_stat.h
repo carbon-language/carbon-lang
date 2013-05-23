@@ -308,6 +308,14 @@ enum StatType {
   StatInt_inet_pton,
   StatInt_getaddrinfo,
   StatInt_getsockname,
+  StatInt_gethostent,
+  StatInt_gethostbyname,
+  StatInt_gethostbyname2,
+  StatInt_gethostbyaddr,
+  StatInt_gethostent_r,
+  StatInt_gethostbyname_r,
+  StatInt_gethostbyname2_r,
+  StatInt_gethostbyaddr_r,
 
   // Dynamic annotations.
   StatAnnotation,

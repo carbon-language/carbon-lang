@@ -313,6 +313,14 @@ void StatOutput(u64 *stat) {
   name[StatInt_inet_pton]                = "  inet_pton                       ";
   name[StatInt_getaddrinfo]              = "  getaddrinfo                     ";
   name[StatInt_getsockname]              = "  getsockname                     ";
+  name[StatInt_gethostent]               = "  gethostent                      ";
+  name[StatInt_gethostbyname]            = "  gethostbyname                   ";
+  name[StatInt_gethostbyname2]           = "  gethostbyname2                  ";
+  name[StatInt_gethostbyaddr]            = "  gethostbyaddr                   ";
+  name[StatInt_gethostent_r]             = "  gethostent_r                    ";
+  name[StatInt_gethostbyname_r]          = "  gethostbyname_r                 ";
+  name[StatInt_gethostbyname2_r]         = "  gethostbyname2_r                ";
+  name[StatInt_gethostbyaddr_r]          = "  gethostbyaddr_r                 ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";
