@@ -100,8 +100,7 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
     IO.mapOptional("PointerBindsToType", Style.PointerBindsToType);
     IO.mapOptional("SpacesBeforeTrailingComments",
                    Style.SpacesBeforeTrailingComments);
-    IO.mapOptional("SpacesInBracedLists",
-                   Style.SpacesInBracedLists);
+    IO.mapOptional("SpacesInBracedLists", Style.SpacesInBracedLists);
     IO.mapOptional("Standard", Style.Standard);
     IO.mapOptional("IndentWidth", Style.IndentWidth);
     IO.mapOptional("UseTab", Style.UseTab);
@@ -146,7 +145,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.AlignEscapedNewlinesLeft = true;
   GoogleStyle.AllowAllParametersOfDeclarationOnNextLine = true;
   GoogleStyle.AllowShortIfStatementsOnASingleLine = true;
-  GoogleStyle.AllowShortLoopsOnASingleLine= true;
+  GoogleStyle.AllowShortLoopsOnASingleLine = true;
   GoogleStyle.BinPackParameters = true;
   GoogleStyle.ColumnLimit = 80;
   GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
