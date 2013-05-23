@@ -2706,7 +2706,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyIndependentOfContext("Type **A = static_cast<Type **>(P);");
   verifyGoogleFormat("Type** A = static_cast<Type**>(P);");
   // FIXME: The newline is wrong.
-  verifyFormat("auto a = [](int **&, int ***) {}\n;");
+  verifyFormat("auto a = [](int **&, int ***) {};");
 
   verifyIndependentOfContext("InvalidRegions[*R] = 0;");
 
@@ -3098,6 +3098,14 @@ TEST_F(FormatTest, LayoutCallsInsideBraceInitializers) {
 
 TEST_F(FormatTest, LayoutBraceInitializersInReturnStatement) {
   verifyFormat("return (a)(b) { 1, 2, 3 };");
+}
+
+TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
+    verifyFormat("vector<int> x { 1, 2, 3, 4 };");
+    verifyFormat("vector<T> x { {}, {}, {}, {} };");
+    verifyFormat("f({ 1, 2 });");
+    verifyFormat("auto v = Foo { 1 };");
+    verifyFormat("f({ 1, 2 }, { { 2, 3 }, { 4, 5 } }, c, { d });");
 }
 
 TEST_F(FormatTest, LayoutTokensFollowingBlockInParentheses) {
@@ -3859,8 +3867,7 @@ TEST_F(FormatTest, ObjCLiterals) {
                "{ @2 : @1 }\n"
                "}");
   verifyFormat("@{ @\"one\" : @\n"
-               "{ @2 : @1 }\n"
-               ",\n"
+               "{ @2 : @1 },\n"
                "}");
 
   verifyFormat("@{ 1 > 2 ? @\"one\" : @\"two\" : 1 > 2 ? @1 : @2 }");
