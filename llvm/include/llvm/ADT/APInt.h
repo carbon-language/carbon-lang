@@ -6,7 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-/// 
+///
 /// \file
 /// \brief This file implements a class to represent arbitrary precision
 /// integral constant values and operations on them.
@@ -270,12 +270,12 @@ public:
   /// This constructor interprets the string \p str in the given radix. The
   /// interpretation stops when the first character that is not suitable for the
   /// radix is encountered, or the end of the string. Acceptable radix values
-  /// are 2, 8, 10, 16, and 36. It is an error for the value implied by the 
+  /// are 2, 8, 10, 16, and 36. It is an error for the value implied by the
   /// string to require more bits than numBits.
   ///
   /// \param numBits the bit width of the constructed APInt
   /// \param str the string to be interpreted
-  /// \param radix the radix to use for the conversion 
+  /// \param radix the radix to use for the conversion
   APInt(unsigned numBits, StringRef str, uint8_t radix);
 
   /// Simply makes *this a copy of that.
@@ -494,7 +494,7 @@ public:
     Res.setBit(BitNo);
     return Res;
   }
-  
+
   /// \brief Get a value with a block of bits set.
   ///
   /// Constructs an APInt value that has a contiguous range of bits set. The
@@ -576,7 +576,7 @@ public:
 
     return I1.zext(I2.getBitWidth()) == I2;
   }
-  
+
   /// \brief Overload to compute a hash_code for an APInt value.
   friend hash_code hash_value(const APInt &Arg);
 
