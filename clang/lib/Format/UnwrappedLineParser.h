@@ -127,7 +127,10 @@ public:
   // the UnwrappedLineParser once we switch to generate all tokens
   // up-front.
   virtual unsigned getPosition() { return 0; }
-  virtual FormatToken setPosition(unsigned Position) { assert(false); }
+  virtual FormatToken setPosition(unsigned Position) {
+    assert(false);
+    return FormatToken();
+  }
 };
 
 class UnwrappedLineParser {
