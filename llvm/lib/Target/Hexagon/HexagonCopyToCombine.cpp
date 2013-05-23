@@ -219,8 +219,9 @@ static void removeKillInfo(MachineInstr *MI, unsigned RegNotKilled) {
 
 /// isUnsafeToMoveAccross - Returns true if it is unsafe to move a copy
 /// instruction from \p UseReg to \p DestReg over the instruction \p I.
-bool isUnsafeToMoveAccross(MachineInstr *I, unsigned UseReg, unsigned DestReg,
-                            const TargetRegisterInfo *TRI) {
+static bool isUnsafeToMoveAccross(MachineInstr *I, unsigned UseReg,
+                                  unsigned DestReg,
+                                  const TargetRegisterInfo *TRI) {
   return (UseReg && (I->modifiesRegister(UseReg, TRI))) ||
           I->modifiesRegister(DestReg, TRI) ||
           I->readsRegister(DestReg, TRI) ||

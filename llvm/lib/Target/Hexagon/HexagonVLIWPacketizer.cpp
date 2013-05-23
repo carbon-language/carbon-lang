@@ -838,7 +838,8 @@ bool HexagonPacketizerList::RestrictingDepExistInPacket (MachineInstr* MI,
 
 
 /// Gets the predicate register of a predicated instruction.
-unsigned getPredicatedRegister(MachineInstr *MI, const HexagonInstrInfo *QII) {
+static unsigned getPredicatedRegister(MachineInstr *MI,
+                                      const HexagonInstrInfo *QII) {
   /// We use the following rule: The first predicate register that is a use is
   /// the predicate register of a predicated instruction.
 
