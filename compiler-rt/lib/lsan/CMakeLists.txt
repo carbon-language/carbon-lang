@@ -45,4 +45,7 @@ if (NOT APPLE AND NOT ANDROID)
   endforeach()
 endif()
 
-add_subdirectory(tests)
+if (LLVM_INCLUDE_TESTS)
+  add_subdirectory(tests)
+endif()
+add_subdirectory(lit_tests)
