@@ -5745,7 +5745,8 @@ InitializationSequence::Perform(Sema &S,
         ExprResult Res = S.PerformCopyInitialization(
                              Element, Init.get()->getExprLoc(), Init,
                              /*TopLevelOfInitList=*/ true);
-        assert(!Res.isInvalid() && "Result changed since try phase.");
+        if (Res.isInvalid())
+          return ExprError();
         Converted[i] = Res.take();
       }
       InitListExpr *Semantic = new (S.Context)

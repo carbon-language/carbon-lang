@@ -208,3 +208,13 @@ namespace init_list_deduction_failure {
   void h() { g({f}); }
   // expected-error@-1 {{no matching function for call to 'g'}}
 }
+
+namespace deleted_copy {
+  struct X {
+    X(int i) {}
+    X(const X& x) = delete; // expected-note {{here}}
+    void operator=(const X& x) = delete;
+  };
+
+  std::initializer_list<X> x{1}; // expected-error {{invokes deleted constructor}}
+}
