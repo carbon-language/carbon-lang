@@ -103,6 +103,7 @@ INTERCEPTOR(void*, valloc, uptr size) {
 }
 
 INTERCEPTOR(uptr, malloc_usable_size, void *ptr) {
+  Init();
   return GetMallocUsableSize(ptr);
 }
 
@@ -188,8 +189,9 @@ extern "C" void *__lsan_thread_start_func(void *arg) {
   return callback(param);
 }
 
-INTERCEPTOR(int, pthread_create,
-    void *th, void *attr, void *(*callback)(void*), void * param) {
+INTERCEPTOR(int, pthread_create, void *th, void *attr,
+            void *(*callback)(void *), void *param) {
+  Init();
   __sanitizer_pthread_attr_t myattr;
   if (attr == 0) {
     pthread_attr_init(&myattr);
@@ -216,6 +218,7 @@ INTERCEPTOR(int, pthread_create,
 }
 
 INTERCEPTOR(int, pthread_join, void *th, void **ret) {
+  Init();
   int tid = ThreadTid((uptr)th);
   int res = REAL(pthread_join)(th, ret);
   if (res == 0)

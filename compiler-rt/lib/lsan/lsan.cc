@@ -42,7 +42,6 @@ void Init() {
   SanitizerToolName = "LeakSanitizer";
   InitializeCommonFlags();
   InitializeAllocator();
-  InitCommonLsan();
   InitTlsSize();
   InitializeInterceptors();
   InitializeThreadRegistry();
@@ -57,10 +56,8 @@ void Init() {
     InitializeExternalSymbolizer(external_symbolizer);
   }
 
-#if CAN_SANITIZE_LEAKS
-  __lsan::InitCommonLsan();
-    Atexit(__lsan::DoLeakCheck);
-#endif
+  InitCommonLsan();
+  Atexit(DoLeakCheck);
 }
 
 }  // namespace __lsan
