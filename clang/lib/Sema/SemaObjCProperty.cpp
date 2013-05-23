@@ -717,8 +717,9 @@ static void setImpliedPropertyAttributeForReadOnlyProperty(
 /// DiagnosePropertyMismatchDeclInProtocols - diagnose properties declared
 /// in inherited protocols with mismatched types. Since any of them can
 /// be candidate for synthesis.
-void DiagnosePropertyMismatchDeclInProtocols(Sema &S, SourceLocation AtLoc,
-                                             ObjCInterfaceDecl *ClassDecl,
+static void
+DiagnosePropertyMismatchDeclInProtocols(Sema &S, SourceLocation AtLoc,
+                                        ObjCInterfaceDecl *ClassDecl,
                                         ObjCPropertyDecl *Property) {
   ObjCInterfaceDecl::ProtocolPropertyMap PropMap;
   for (ObjCInterfaceDecl::all_protocol_iterator

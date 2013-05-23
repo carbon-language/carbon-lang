@@ -1822,13 +1822,13 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
   return report->isValid();
 }
 
-const Stmt *getLocStmt(PathDiagnosticLocation L) {
+static const Stmt *getLocStmt(PathDiagnosticLocation L) {
   if (!L.isValid())
     return 0;
   return L.asStmt();
 }
 
-const Stmt *getStmtParent(const Stmt *S, ParentMap &PM) {
+static const Stmt *getStmtParent(const Stmt *S, ParentMap &PM) {
   if (!S)
     return 0;
 
