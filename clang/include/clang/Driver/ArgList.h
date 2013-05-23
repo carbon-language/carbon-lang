@@ -300,7 +300,7 @@ namespace driver {
 
     /// @}
 
-    void dump();
+    void dump() const;
   };
 
   class InputArgList : public ArgList  {

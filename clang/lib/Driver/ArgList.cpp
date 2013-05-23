@@ -321,11 +321,10 @@ const char *ArgList::GetOrMakeJoinedArgString(unsigned Index,
   return MakeArgString(LHS + RHS);
 }
 
-void ArgList::dump() {
+void ArgList::dump() const {
   llvm::errs() << "ArgList:";
-  for (iterator it = begin(), ie = end(); it != ie; ++it) {
+  for (const_iterator it = begin(), ie = end(); it != ie; ++it)
     llvm::errs() << " " << (*it)->getSpelling();
-  }
   llvm::errs() << "\n";
 }
 
