@@ -16,9 +16,9 @@
 #define R600MACHINESCHEDULER_H_
 
 #include "R600InstrInfo.h"
+#include "llvm/ADT/PriorityQueue.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/ADT/PriorityQueue.h"
 
 using namespace llvm;
 

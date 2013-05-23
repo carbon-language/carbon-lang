@@ -23,7 +23,9 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 
-namespace llvm {
+using namespace llvm;
+
+namespace {
 
 class R600EmitClauseMarkersPass : public MachineFunctionPass {
 
@@ -225,7 +227,7 @@ public:
 
 char R600EmitClauseMarkersPass::ID = 0;
 
-}
+} // end anonymous namespace
 
 
 llvm::FunctionPass *llvm::createR600EmitClauseMarkers(TargetMachine &TM) {

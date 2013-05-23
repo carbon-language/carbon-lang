@@ -13,12 +13,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPU.h"
-#include "llvm/Analysis/Passes.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/Passes.h"
 #include "llvm/IR/Function.h"
-#include "llvm/InstVisitor.h"
-#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/GlobalValue.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/InstVisitor.h"
 
 using namespace llvm;
 

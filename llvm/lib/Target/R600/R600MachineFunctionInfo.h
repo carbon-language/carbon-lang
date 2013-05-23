@@ -13,9 +13,9 @@
 #ifndef R600MACHINEFUNCTIONINFO_H
 #define R600MACHINEFUNCTIONINFO_H
 
+#include "AMDGPUMachineFunction.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "AMDGPUMachineFunction.h"
 #include <vector>
 
 namespace llvm {

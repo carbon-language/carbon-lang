@@ -14,22 +14,21 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef R600PACKETIZER_CPP
-#define R600PACKETIZER_CPP
-
 #define DEBUG_TYPE "packets"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/CodeGen/DFAPacketizer.h"
-#include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineDominators.h"
-#include "llvm/CodeGen/MachineLoopInfo.h"
-#include "llvm/CodeGen/ScheduleDAG.h"
 #include "AMDGPU.h"
 #include "R600InstrInfo.h"
+#include "llvm/CodeGen/DFAPacketizer.h"
+#include "llvm/CodeGen/MachineDominators.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
+#include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/Support/raw_ostream.h"
 
-namespace llvm {
+using namespace llvm;
+
+namespace {
 
 class R600Packetizer : public MachineFunctionPass {
 
@@ -324,10 +323,8 @@ bool R600Packetizer::runOnMachineFunction(MachineFunction &Fn) {
 
 }
 
-}
+} // end anonymous namespace
 
 llvm::FunctionPass *llvm::createR600Packetizer(TargetMachine &tm) {
   return new R600Packetizer(tm);
 }
-
-#endif // R600PACKETIZER_CPP

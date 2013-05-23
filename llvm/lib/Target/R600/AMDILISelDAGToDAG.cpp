@@ -19,9 +19,9 @@
 #include "SIISelLowering.h"
 #include "llvm/ADT/ValueMap.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/CodeGen/SelectionDAG.h"
 #include <list>
 #include <queue>
 

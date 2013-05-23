@@ -94,7 +94,7 @@ NVPTXTargetMachine64::NVPTXTargetMachine64(
     CodeGenOpt::Level OL)
     : NVPTXTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
 
-namespace llvm {
+namespace {
 class NVPTXPassConfig : public TargetPassConfig {
 public:
   NVPTXPassConfig(NVPTXTargetMachine *TM, PassManagerBase &PM)
@@ -108,7 +108,7 @@ public:
   virtual bool addInstSelector();
   virtual bool addPreRegAlloc();
 };
-}
+} // end anonymous namespace
 
 TargetPassConfig *NVPTXTargetMachine::createPassConfig(PassManagerBase &PM) {
   NVPTXPassConfig *PassConfig = new NVPTXPassConfig(this, PM);

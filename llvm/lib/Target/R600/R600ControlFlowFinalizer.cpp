@@ -14,8 +14,6 @@
 
 #define DEBUG_TYPE "r600cf"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
-
 #include "AMDGPU.h"
 #include "R600Defines.h"
 #include "R600InstrInfo.h"
@@ -24,8 +22,11 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Support/raw_ostream.h"
 
-namespace llvm {
+using namespace llvm;
+
+namespace {
 
 class R600ControlFlowFinalizer : public MachineFunctionPass {
 
@@ -483,7 +484,7 @@ public:
 
 char R600ControlFlowFinalizer::ID = 0;
 
-}
+} // end anonymous namespace
 
 
 llvm::FunctionPass *llvm::createR600ControlFlowFinalizer(TargetMachine &TM) {

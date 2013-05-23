@@ -15,8 +15,8 @@
 
 #include "AMDGPUISelLowering.h"
 #include "AMDGPURegisterInfo.h"
-#include "AMDILIntrinsicInfo.h"
 #include "AMDGPUSubtarget.h"
+#include "AMDILIntrinsicInfo.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
