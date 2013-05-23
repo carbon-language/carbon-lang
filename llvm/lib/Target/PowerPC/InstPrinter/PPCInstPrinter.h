@@ -57,10 +57,6 @@ public:
 
   void printMemRegImm(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printMemRegReg(const MCInst *MI, unsigned OpNo, raw_ostream &O);
-  
-  // FIXME: Remove
-  void printSymbolLo(const MCInst *MI, unsigned OpNo, raw_ostream &O);
-  void printSymbolHi(const MCInst *MI, unsigned OpNo, raw_ostream &O);
 };
 } // end namespace llvm
 

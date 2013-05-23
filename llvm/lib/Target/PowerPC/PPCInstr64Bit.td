@@ -24,12 +24,12 @@ def u16imm64 : Operand<i64> {
   let ParserMatchClass = PPCU16ImmAsmOperand;
 }
 def symbolHi64 : Operand<i64> {
-  let PrintMethod = "printSymbolHi";
+  let PrintMethod = "printS16ImmOperand";
   let EncoderMethod = "getS16ImmEncoding";
   let ParserMatchClass = PPCS16ImmAsmOperand;
 }
 def symbolLo64 : Operand<i64> {
-  let PrintMethod = "printSymbolLo";
+  let PrintMethod = "printS16ImmOperand";
   let EncoderMethod = "getS16ImmEncoding";
   let ParserMatchClass = PPCS16ImmAsmOperand;
 }

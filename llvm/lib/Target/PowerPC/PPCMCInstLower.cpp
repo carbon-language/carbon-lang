@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPC.h"
+#include "MCTargetDesc/PPCMCExpr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
@@ -110,32 +111,32 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
 
   unsigned access = MO.getTargetFlags() & PPCII::MO_ACCESS_MASK;
 
-  switch (access) {
-    case PPCII::MO_HA16: RefKind = isDarwin ? 
-                           MCSymbolRefExpr::VK_PPC_DARWIN_HA16 : 
-                           MCSymbolRefExpr::VK_PPC_GAS_HA16; 
-                         break;
-    case PPCII::MO_LO16: RefKind = isDarwin ? 
-                           MCSymbolRefExpr::VK_PPC_DARWIN_LO16 : 
-                           MCSymbolRefExpr::VK_PPC_GAS_LO16; 
-                         break;
-    case PPCII::MO_TPREL16_HA: RefKind = MCSymbolRefExpr::VK_PPC_TPREL16_HA;
-                               break;
-    case PPCII::MO_TPREL16_LO: RefKind = MCSymbolRefExpr::VK_PPC_TPREL16_LO;
-                               break;
-    case PPCII::MO_DTPREL16_LO: RefKind = MCSymbolRefExpr::VK_PPC_DTPREL16_LO;
-                                break;
-    case PPCII::MO_TLSLD16_LO: RefKind = MCSymbolRefExpr::VK_PPC_GOT_TLSLD16_LO;
-                               break;
-    case PPCII::MO_TOC16_LO: RefKind = MCSymbolRefExpr::VK_PPC_TOC16_LO;
-                             break;
-   }
+  if (!isDarwin) {
+    switch (access) {
+      case PPCII::MO_HA16:
+        RefKind = MCSymbolRefExpr::VK_PPC_ADDR16_HA;
+        break;
+      case PPCII::MO_LO16:
+        RefKind = MCSymbolRefExpr::VK_PPC_ADDR16_LO;
+        break;
+      case PPCII::MO_TPREL16_HA:
+        RefKind = MCSymbolRefExpr::VK_PPC_TPREL16_HA;
+        break;
+      case PPCII::MO_TPREL16_LO:
+        RefKind = MCSymbolRefExpr::VK_PPC_TPREL16_LO;
+        break;
+      case PPCII::MO_DTPREL16_LO:
+        RefKind = MCSymbolRefExpr::VK_PPC_DTPREL16_LO;
+        break;
+      case PPCII::MO_TLSLD16_LO:
+        RefKind = MCSymbolRefExpr::VK_PPC_GOT_TLSLD16_LO;
+        break;
+      case PPCII::MO_TOC16_LO:
+        RefKind = MCSymbolRefExpr::VK_PPC_TOC16_LO;
+        break;
+    }
+  }
 
-  // FIXME: This isn't right, but we don't have a good way to express this in
-  // the MC Level, see below.
-  if (MO.getTargetFlags() & PPCII::MO_PIC_FLAG)
-    RefKind = MCSymbolRefExpr::VK_None;
-  
   const MCExpr *Expr = MCSymbolRefExpr::Create(Symbol, RefKind, Ctx);
 
   if (!MO.isJTI() && MO.getOffset())
@@ -149,10 +150,20 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
     
     const MCExpr *PB = MCSymbolRefExpr::Create(MF->getPICBaseSymbol(), Ctx);
     Expr = MCBinaryExpr::CreateSub(Expr, PB, Ctx);
-    // FIXME: We have no way to make the result be VK_PPC_LO16/VK_PPC_HA16,
-    // since it is not a symbol!
   }
-  
+
+  // Add Darwin ha16() / lo16() markers if required.
+  if (isDarwin) {
+    switch (access) {
+      case PPCII::MO_HA16:
+        Expr = PPCMCExpr::CreateHa16(Expr, Ctx);
+        break;
+      case PPCII::MO_LO16:
+        Expr = PPCMCExpr::CreateLo16(Expr, Ctx);
+        break;
+    }
+  }
+
   return MCOperand::CreateExpr(Expr);
 }
 

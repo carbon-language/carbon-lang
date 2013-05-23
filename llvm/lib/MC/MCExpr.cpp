@@ -42,13 +42,6 @@ void MCExpr::print(raw_ostream &OS) const {
     // Parenthesize names that start with $ so that they don't look like
     // absolute names.
     bool UseParens = Sym.getName()[0] == '$';
-
-    if (SRE.getKind() == MCSymbolRefExpr::VK_PPC_DARWIN_HA16 ||
-        SRE.getKind() == MCSymbolRefExpr::VK_PPC_DARWIN_LO16) {
-      OS << MCSymbolRefExpr::getVariantKindName(SRE.getKind());
-      UseParens = true;
-    }
-
     if (UseParens)
       OS << '(' << Sym << ')';
     else
@@ -65,9 +58,7 @@ void MCExpr::print(raw_ostream &OS) const {
         SRE.getKind() == MCSymbolRefExpr::VK_ARM_TARGET2 ||
         SRE.getKind() == MCSymbolRefExpr::VK_ARM_PREL31)
       OS << MCSymbolRefExpr::getVariantKindName(SRE.getKind());
-    else if (SRE.getKind() != MCSymbolRefExpr::VK_None &&
-             SRE.getKind() != MCSymbolRefExpr::VK_PPC_DARWIN_HA16 &&
-             SRE.getKind() != MCSymbolRefExpr::VK_PPC_DARWIN_LO16)
+    else if (SRE.getKind() != MCSymbolRefExpr::VK_None)
       OS << '@' << MCSymbolRefExpr::getVariantKindName(SRE.getKind());
 
     return;
@@ -207,10 +198,8 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_ARM_PREL31: return "(prel31)";
   case VK_PPC_TOC: return "tocbase";
   case VK_PPC_TOC_ENTRY: return "toc";
-  case VK_PPC_DARWIN_HA16: return "ha16";
-  case VK_PPC_DARWIN_LO16: return "lo16";
-  case VK_PPC_GAS_HA16: return "ha";
-  case VK_PPC_GAS_LO16: return "l";
+  case VK_PPC_ADDR16_HA: return "ha";
+  case VK_PPC_ADDR16_LO: return "l";
   case VK_PPC_TPREL16_HA: return "tprel@ha";
   case VK_PPC_TPREL16_LO: return "tprel@l";
   case VK_PPC_DTPREL16_HA: return "dtprel@ha";
@@ -290,10 +279,10 @@ MCSymbolRefExpr::getVariantKindForName(StringRef Name) {
     .Case("imgrel", VK_COFF_IMGREL32)
     .Case("SECREL32", VK_SECREL)
     .Case("secrel32", VK_SECREL)
-    .Case("HA", VK_PPC_GAS_HA16)
-    .Case("ha", VK_PPC_GAS_HA16)
-    .Case("L", VK_PPC_GAS_LO16)
-    .Case("l", VK_PPC_GAS_LO16)
+    .Case("HA", VK_PPC_ADDR16_HA)
+    .Case("ha", VK_PPC_ADDR16_HA)
+    .Case("L", VK_PPC_ADDR16_LO)
+    .Case("l", VK_PPC_ADDR16_LO)
     .Case("TOCBASE", VK_PPC_TOC)
     .Case("tocbase", VK_PPC_TOC)
     .Case("TOC", VK_PPC_TOC_ENTRY)

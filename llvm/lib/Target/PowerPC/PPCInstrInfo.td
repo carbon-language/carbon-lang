@@ -459,12 +459,12 @@ def aaddr : Operand<iPTR> {
   let PrintMethod = "printAbsAddrOperand";
 }
 def symbolHi: Operand<i32> {
-  let PrintMethod = "printSymbolHi";
+  let PrintMethod = "printS16ImmOperand";
   let EncoderMethod = "getS16ImmEncoding";
   let ParserMatchClass = PPCS16ImmAsmOperand;
 }
 def symbolLo: Operand<i32> {
-  let PrintMethod = "printSymbolLo";
+  let PrintMethod = "printS16ImmOperand";
   let EncoderMethod = "getS16ImmEncoding";
   let ParserMatchClass = PPCS16ImmAsmOperand;
 }

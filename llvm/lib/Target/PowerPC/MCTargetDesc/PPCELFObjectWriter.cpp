@@ -90,8 +90,7 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
       case MCSymbolRefExpr::VK_PPC_DTPREL16_HA:
         Type = ELF::R_PPC64_DTPREL16_HA;
         break;
-      case MCSymbolRefExpr::VK_PPC_GAS_HA16:
-      case MCSymbolRefExpr::VK_PPC_DARWIN_HA16:
+      case MCSymbolRefExpr::VK_PPC_ADDR16_HA:
         Type = ELF::R_PPC_ADDR16_HA;
 	break;
       case MCSymbolRefExpr::VK_PPC_TOC16_HA:
@@ -115,8 +114,7 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
       case MCSymbolRefExpr::VK_None:
         Type = ELF::R_PPC_ADDR16;
         break;
-      case MCSymbolRefExpr::VK_PPC_GAS_LO16:
-      case MCSymbolRefExpr::VK_PPC_DARWIN_LO16:
+      case MCSymbolRefExpr::VK_PPC_ADDR16_LO:
         Type = ELF::R_PPC_ADDR16_LO;
 	break;
       case MCSymbolRefExpr::VK_PPC_TOC_ENTRY:
@@ -139,8 +137,7 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
       case MCSymbolRefExpr::VK_None:
         Type = ELF::R_PPC64_ADDR16_DS;
         break;
-      case MCSymbolRefExpr::VK_PPC_GAS_LO16:
-      case MCSymbolRefExpr::VK_PPC_DARWIN_LO16:
+      case MCSymbolRefExpr::VK_PPC_ADDR16_LO:
         Type = ELF::R_PPC64_ADDR16_LO_DS;
         break;
       case MCSymbolRefExpr::VK_PPC_TOC_ENTRY:
