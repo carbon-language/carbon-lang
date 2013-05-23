@@ -29,7 +29,7 @@ namespace format {
 /// whitespace characters preceeding it.
 struct FormatToken {
   FormatToken()
-      : NewlinesBefore(0), HasUnescapedNewline(false), WhiteSpaceLength(0),
+      : NewlinesBefore(0), HasUnescapedNewline(false),
         LastNewlineOffset(0), TokenLength(0), IsFirst(false),
         MustBreakBefore(false), TrailingWhiteSpaceLength(0) {}
 
@@ -46,15 +46,8 @@ struct FormatToken {
   /// Token.
   bool HasUnescapedNewline;
 
-  /// \brief The location of the start of the whitespace immediately preceeding
-  /// the \c Token.
-  ///
-  /// Used together with \c WhiteSpaceLength to create a \c Replacement.
-  SourceLocation WhiteSpaceStart;
-
-  /// \brief The length in characters of the whitespace immediately preceeding
-  /// the \c Token.
-  unsigned WhiteSpaceLength;
+  /// \brief The range of the whitespace immediately preceeding the \c Token.
+  SourceRange WhitespaceRange;
 
   /// \brief The offset just past the last '\n' in this token's leading
   /// whitespace (relative to \c WhiteSpaceStart). 0 if there is no '\n'.
@@ -83,7 +76,7 @@ struct FormatToken {
   /// This can be different to Tok.getLocation(), which includes leading escaped
   /// newlines.
   SourceLocation getStartOfNonWhitespace() const {
-    return WhiteSpaceStart.getLocWithOffset(WhiteSpaceLength);
+    return WhitespaceRange.getEnd();
   }
 };
 

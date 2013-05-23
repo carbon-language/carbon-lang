@@ -339,7 +339,8 @@ void UnwrappedLineParser::parsePPDefine() {
   }
   nextToken();
   if (FormatTok.Tok.getKind() == tok::l_paren &&
-      FormatTok.WhiteSpaceLength == 0) {
+      FormatTok.WhitespaceRange.getBegin() ==
+          FormatTok.WhitespaceRange.getEnd()) {
     parseParens();
   }
   addUnwrappedLine();

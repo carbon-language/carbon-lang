@@ -470,8 +470,13 @@ private:
     const AnnotatedToken &Previous = *State.NextToken->Parent;
 
     if (State.Stack.size() == 0 || Current.Type == TT_ImplicitStringLiteral) {
-      State.Column += State.NextToken->FormatTok.WhiteSpaceLength +
-                      State.NextToken->FormatTok.TokenLength;
+      // FIXME: Is this correct?
+      int WhitespaceLength =
+          SourceMgr.getSpellingColumnNumber(
+              State.NextToken->FormatTok.WhitespaceRange.getEnd()) -
+          SourceMgr.getSpellingColumnNumber(
+              State.NextToken->FormatTok.WhitespaceRange.getBegin());
+      State.Column += WhitespaceLength + State.NextToken->FormatTok.TokenLength;
       if (State.NextToken->Children.empty())
         State.NextToken = NULL;
       else
@@ -1078,9 +1083,9 @@ public:
   virtual FormatToken getNextToken() {
     if (GreaterStashed) {
       FormatTok.NewlinesBefore = 0;
-      FormatTok.WhiteSpaceStart =
+      SourceLocation GreaterLocation =
           FormatTok.Tok.getLocation().getLocWithOffset(1);
-      FormatTok.WhiteSpaceLength = 0;
+      FormatTok.WhitespaceRange = SourceRange(GreaterLocation, GreaterLocation);
       GreaterStashed = false;
       return FormatTok;
     }
@@ -1088,23 +1093,27 @@ public:
     FormatTok = FormatToken();
     Lex.LexFromRawLexer(FormatTok.Tok);
     StringRef Text = rawTokenText(FormatTok.Tok);
-    FormatTok.WhiteSpaceStart = FormatTok.Tok.getLocation();
-    if (SourceMgr.getFileOffset(FormatTok.WhiteSpaceStart) == 0)
+    SourceLocation WhitespaceStart = FormatTok.Tok.getLocation();
+    if (SourceMgr.getFileOffset(WhitespaceStart) == 0)
       FormatTok.IsFirst = true;
 
     // Consume and record whitespace until we find a significant token.
+    unsigned WhitespaceLength = 0;
     while (FormatTok.Tok.is(tok::unknown)) {
       unsigned Newlines = Text.count('\n');
       if (Newlines > 0)
-        FormatTok.LastNewlineOffset =
-            FormatTok.WhiteSpaceLength + Text.rfind('\n') + 1;
+        FormatTok.LastNewlineOffset = WhitespaceLength + Text.rfind('\n') + 1;
       unsigned EscapedNewlines = Text.count("\\\n");
       FormatTok.NewlinesBefore += Newlines;
       FormatTok.HasUnescapedNewline |= EscapedNewlines != Newlines;
-      FormatTok.WhiteSpaceLength += FormatTok.Tok.getLength();
+      WhitespaceLength += FormatTok.Tok.getLength();
 
-      if (FormatTok.Tok.is(tok::eof))
+      if (FormatTok.Tok.is(tok::eof)) {
+        FormatTok.WhitespaceRange =
+            SourceRange(WhitespaceStart,
+                        WhitespaceStart.getLocWithOffset(WhitespaceLength));
         return FormatTok;
+      }
       Lex.LexFromRawLexer(FormatTok.Tok);
       Text = rawTokenText(FormatTok.Tok);
     }
@@ -1126,7 +1135,7 @@ public:
     unsigned i = 0;
     while (i + 1 < Text.size() && Text[i] == '\\' && Text[i + 1] == '\n') {
       // FIXME: ++FormatTok.NewlinesBefore is missing...
-      FormatTok.WhiteSpaceLength += 2;
+      WhitespaceLength += 2;
       FormatTok.TokenLength -= 2;
       i += 2;
     }
@@ -1143,6 +1152,8 @@ public:
       GreaterStashed = true;
     }
 
+    FormatTok.WhitespaceRange = SourceRange(
+        WhitespaceStart, WhitespaceStart.getLocWithOffset(WhitespaceLength));
     return FormatTok;
   }
 
@@ -1235,7 +1246,7 @@ public:
       } else if (TheLine.Type != LT_Invalid &&
                  (WasMoved || FormatPPDirective || touchesLine(TheLine))) {
         unsigned LevelIndent = getIndent(IndentForLevel, TheLine.Level);
-        if (FirstTok.WhiteSpaceStart.isValid() &&
+        if (FirstTok.WhitespaceRange.isValid() &&
             // Insert a break even if there is a structural error in case where
             // we break apart a line consisting of multiple unwrapped lines.
             (FirstTok.NewlinesBefore == 0 || !StructuralError)) {
@@ -1300,8 +1311,11 @@ private:
       AnnotatedToken *Tok = &AnnotatedLines[i].First.Children[0];
       while (!Tok->Children.empty()) {
         if (Tok->Type == TT_PointerOrReference) {
-          bool SpacesBefore = Tok->FormatTok.WhiteSpaceLength > 0;
-          bool SpacesAfter = Tok->Children[0].FormatTok.WhiteSpaceLength > 0;
+          bool SpacesBefore = Tok->FormatTok.WhitespaceRange.getBegin() !=
+                              Tok->FormatTok.WhitespaceRange.getEnd();
+          bool SpacesAfter =
+              Tok->Children[0].FormatTok.WhitespaceRange.getBegin() !=
+              Tok->Children[0].FormatTok.WhitespaceRange.getEnd();
           if (SpacesBefore && !SpacesAfter)
             ++CountBoundToVariable;
           else if (!SpacesBefore && SpacesAfter)
@@ -1310,7 +1324,8 @@ private:
 
         if (Tok->Type == TT_TemplateCloser &&
             Tok->Parent->Type == TT_TemplateCloser &&
-            Tok->FormatTok.WhiteSpaceLength == 0)
+            Tok->FormatTok.WhitespaceRange.getBegin() ==
+                Tok->FormatTok.WhitespaceRange.getEnd())
           HasCpp03IncompatibleFormat = true;
         Tok = &Tok->Children[0];
       }
@@ -1509,7 +1524,8 @@ private:
     const FormatToken *First = &TheLine.First.FormatTok;
     const FormatToken *Last = &TheLine.Last->FormatTok;
     CharSourceRange LineRange = CharSourceRange::getCharRange(
-        First->WhiteSpaceStart.getLocWithOffset(First->LastNewlineOffset),
+        First->WhitespaceRange.getBegin().getLocWithOffset(
+            First->LastNewlineOffset),
         Last->Tok.getLocation().getLocWithOffset(Last->TokenLength - 1));
     return touchesRanges(LineRange);
   }
@@ -1528,8 +1544,9 @@ private:
   bool touchesEmptyLineBefore(const AnnotatedLine &TheLine) {
     const FormatToken *First = &TheLine.First.FormatTok;
     CharSourceRange LineRange = CharSourceRange::getCharRange(
-        First->WhiteSpaceStart,
-        First->WhiteSpaceStart.getLocWithOffset(First->LastNewlineOffset));
+        First->WhitespaceRange.getBegin(),
+        First->WhitespaceRange.getBegin().getLocWithOffset(
+            First->LastNewlineOffset));
     return touchesRanges(LineRange);
   }
 

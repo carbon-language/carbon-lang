@@ -43,9 +43,7 @@ void WhitespaceManager::replaceWhitespace(const AnnotatedToken &Tok,
                                           unsigned StartOfTokenColumn,
                                           bool InPPDirective) {
   Changes.push_back(Change(
-      true, SourceRange(Tok.FormatTok.WhiteSpaceStart,
-                        Tok.FormatTok.WhiteSpaceStart.getLocWithOffset(
-                            Tok.FormatTok.WhiteSpaceLength)),
+      true, Tok.FormatTok.WhitespaceRange,
       Spaces, StartOfTokenColumn, Newlines, "", "", Tok.FormatTok.Tok.getKind(),
       InPPDirective && !Tok.FormatTok.IsFirst));
 
@@ -65,14 +63,11 @@ void WhitespaceManager::replaceWhitespace(const AnnotatedToken &Tok,
 
 void WhitespaceManager::addUntouchableToken(const FormatToken &Tok,
                                             bool InPPDirective) {
-  Changes.push_back(Change(
-      false,
-      SourceRange(Tok.WhiteSpaceStart,
-                  Tok.WhiteSpaceStart.getLocWithOffset(Tok.WhiteSpaceLength)),
-      Tok.WhiteSpaceLength - Tok.NewlinesBefore,
-      SourceMgr.getSpellingColumnNumber(Tok.Tok.getLocation()) - 1,
-      Tok.NewlinesBefore, "", "", Tok.Tok.getKind(),
-      InPPDirective && !Tok.IsFirst));
+  Changes.push_back(
+      Change(false, Tok.WhitespaceRange, /*Spaces=*/0,
+             SourceMgr.getSpellingColumnNumber(Tok.Tok.getLocation()) - 1,
+             Tok.NewlinesBefore, "", "", Tok.Tok.getKind(),
+             InPPDirective && !Tok.IsFirst));
 }
 
 void WhitespaceManager::breakToken(const FormatToken &Tok, unsigned Offset,

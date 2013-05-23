@@ -567,6 +567,12 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
                "#include \"a/b/c\" // comment");
   verifyFormat("#include <a>     // comment\n"
                "#include <a/b/c> // comment");
+  EXPECT_EQ("#include \\\n"
+            "  \"a\"            // comment\n"
+            "#include \"a/b/c\" // comment",
+            format("#include \\\n"
+                   "  \"a\" // comment\n"
+                   "#include \"a/b/c\" // comment"));
 
   verifyFormat("enum E {\n"
                "  // comment\n"
