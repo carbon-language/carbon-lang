@@ -1747,13 +1747,11 @@ Thread::DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx)
 
     const char *thread_format = exe_ctx.GetTargetRef().GetDebugger().GetThreadFormat();
     assert (thread_format);
-    const char *end = NULL;
     Debugger::FormatPrompt (thread_format, 
                             frame_sp ? &frame_sc : NULL,
                             &exe_ctx, 
                             NULL,
-                            strm, 
-                            &end);
+                            strm);
 }
 
 void

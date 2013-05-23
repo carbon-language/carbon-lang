@@ -105,7 +105,9 @@ static OptionDefinition g_options[] =
         "Tells the debugger to open source files using the host's \"external editor\" mechanism." },
     { LLDB_3_TO_5,       false, "no-lldbinit"    , 'x', no_argument      , 0,  eArgTypeNone,
         "Do not automatically parse any '.lldbinit' files." },
-    { LLDB_OPT_SET_6,    true , "python-path"        , 'P', no_argument      , 0,  eArgTypeNone,
+    { LLDB_3_TO_5,       false, "no-use-colors"  , 'o', no_argument      , 0,  eArgTypeNone,
+        "Do not use colors." },
+    { LLDB_OPT_SET_6,    true , "python-path"    , 'P', no_argument      , 0,  eArgTypeNone,
         "Prints out the path to the lldb.py file for this version of lldb." },
     { 0,                 false, NULL             , 0  , 0                , 0,  eArgTypeNone,         NULL }
 };
@@ -619,6 +621,10 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
                     case 'x':
                         m_debugger.SkipLLDBInitFiles (true);
                         m_debugger.SkipAppInitFiles (true);
+                        break;
+
+                    case 'o':
+                        m_debugger.SetUseColor (false);
                         break;
 
                     case 'f':

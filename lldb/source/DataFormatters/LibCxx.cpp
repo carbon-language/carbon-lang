@@ -516,5 +516,5 @@ lldb_private::formatters::LibcxxContainerSummaryProvider (ValueObject& valobj, S
             return false;
         stream.Printf("0x%016llx ", value);
     }
-    return Debugger::FormatPrompt("size=${svar%#}", NULL, NULL, NULL, stream, NULL, &valobj);
+    return Debugger::FormatPrompt("size=${svar%#}", NULL, NULL, NULL, stream, &valobj);
 }
