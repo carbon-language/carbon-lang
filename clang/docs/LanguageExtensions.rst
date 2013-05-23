@@ -1410,7 +1410,9 @@ should only be used for timing small intervals.  When not supported by the
 target, the return value is always zero.  This builtin takes no arguments and
 produces an unsigned long long result.
 
-Query for this feature with ``__has_builtin(__builtin_readcyclecounter)``.
+Query for this feature with ``__has_builtin(__builtin_readcyclecounter)``. Note
+that even if present, its use may depend on run-time privilege or other OS
+controlled state.
 
 .. _langext-__builtin_shufflevector:
 
