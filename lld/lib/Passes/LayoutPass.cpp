@@ -11,9 +11,7 @@
 #define DEBUG_TYPE "LayoutPass"
 
 #include "lld/Passes/LayoutPass.h"
-
 #include "lld/Core/Instrumentation.h"
-
 #include "llvm/Support/Debug.h"
 
 using namespace lld;
@@ -413,7 +411,7 @@ void LayoutPass::perform(MutableFile &mergedFile) {
   // Build override maps
   buildOrdinalOverrideMap(atomRange);
 
-  DEBUG_WITH_TYPE("layout", {
+  DEBUG({
     llvm::dbgs() << "unsorted atoms:\n";
     for (const DefinedAtom *atom : atomRange) {
       llvm::dbgs() << "  file=" << atom->file().path()
@@ -428,7 +426,7 @@ void LayoutPass::perform(MutableFile &mergedFile) {
   // sort the atoms
   std::sort(atomRange.begin(), atomRange.end(), _compareAtoms);
 
-  DEBUG_WITH_TYPE("layout", {
+  DEBUG({
     llvm::dbgs() << "sorted atoms:\n";
     for (const DefinedAtom *atom : atomRange) {
       llvm::dbgs() << "  file=" << atom->file().path()
