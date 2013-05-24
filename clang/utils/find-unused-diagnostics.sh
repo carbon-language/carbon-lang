@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # This script produces a list of all diagnostics that are defined
 # in Diagnostic*.td files but not used in sources.
