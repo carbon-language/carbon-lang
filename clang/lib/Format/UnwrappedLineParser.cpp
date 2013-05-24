@@ -323,11 +323,69 @@ void UnwrappedLineParser::parsePPDirective() {
   switch (FormatTok.Tok.getIdentifierInfo()->getPPKeywordID()) {
   case tok::pp_define:
     parsePPDefine();
+    return;
+  case tok::pp_if:
+    parsePPIf();
+    break;
+  case tok::pp_ifdef:
+  case tok::pp_ifndef:
+    parsePPIfdef();
+    break;
+  case tok::pp_else:
+    parsePPElse();
+    break;
+  case tok::pp_elif:
+    parsePPElIf();
+    break;
+  case tok::pp_endif:
+    parsePPEndIf();
     break;
   default:
     parsePPUnknown();
     break;
   }
+}
+
+void UnwrappedLineParser::pushPPConditional() {
+  if (!PPStack.empty() && PPStack.back() == PP_Unreachable)
+    PPStack.push_back(PP_Unreachable);
+  else
+    PPStack.push_back(PP_Conditional);
+}
+
+void UnwrappedLineParser::parsePPIf() {
+  nextToken();
+  if ((FormatTok.Tok.isLiteral() &&
+       StringRef(FormatTok.Tok.getLiteralData(), FormatTok.Tok.getLength()) ==
+           "0") ||
+      FormatTok.Tok.is(tok::kw_false)) {
+    PPStack.push_back(PP_Unreachable);
+  } else {
+    pushPPConditional();
+  }
+  parsePPUnknown();
+}
+
+void UnwrappedLineParser::parsePPIfdef() {
+  pushPPConditional();
+  parsePPUnknown();
+}
+
+void UnwrappedLineParser::parsePPElse() {
+  if (!PPStack.empty())
+    PPStack.pop_back();
+  pushPPConditional();
+  parsePPUnknown();
+}
+
+void UnwrappedLineParser::parsePPElIf() {
+  parsePPElse();
+}
+
+void UnwrappedLineParser::parsePPEndIf() {
+  if (!PPStack.empty())
+    PPStack.pop_back();
+  parsePPUnknown();
 }
 
 void UnwrappedLineParser::parsePPDefine() {
@@ -1020,6 +1078,12 @@ void UnwrappedLineParser::readToken() {
       flushComments(FormatTok.NewlinesBefore > 0);
       parsePPDirective();
     }
+
+    if (!PPStack.empty() && (PPStack.back() == PP_Unreachable) &&
+        !Line->InPPDirective) {
+      continue;
+    }
+
     if (!FormatTok.Tok.is(tok::comment))
       return;
     if (FormatTok.NewlinesBefore > 0 || FormatTok.IsFirst) {

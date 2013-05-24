@@ -17,7 +17,6 @@
 #define LLVM_CLANG_FORMAT_UNWRAPPED_LINE_PARSER_H
 
 #include "clang/Basic/IdentifierTable.h"
-#include "clang/Basic/SourceManager.h"
 #include "clang/Format/Format.h"
 #include "clang/Lex/Lexer.h"
 #include <list>
@@ -140,6 +139,11 @@ private:
   void parseBlock(bool MustBeDeclaration, unsigned AddLevels = 1);
   void parsePPDirective();
   void parsePPDefine();
+  void parsePPIf();
+  void parsePPIfdef();
+  void parsePPElIf();
+  void parsePPElse();
+  void parsePPEndIf();
   void parsePPUnknown();
   void parseStructuralElement();
   bool tryToParseBracedList();
@@ -167,6 +171,7 @@ private:
   void flushComments(bool NewlineBeforeNext);
   void pushToken(const FormatToken &Tok);
   void calculateBraceTypes();
+  void pushPPConditional();
 
   // Represents what type of block a left brace opens.
   enum LBraceState {
@@ -223,6 +228,16 @@ private:
   // them as read-only; thus, we now store the brace state indexed by the
   // position of the token in the stream (see \c AllTokens).
   SmallVector<LBraceState, 16> LBraces;
+
+  // Represents preprocessor branch type, so we can find matching
+  // #if/#else/#endif directives.
+  enum PPBranchKind {
+    PP_Conditional,  // Any #if, #ifdef, #ifndef, #elif, block outside #if 0
+    PP_Unreachable   // #if 0 or a conditional preprocessor block inside #if 0
+  };
+
+  // Keeps a stack of currently active preprocessor branching directives.
+  SmallVector<PPBranchKind, 16> PPStack;
 
   friend class ScopedLineState;
 };
