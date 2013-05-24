@@ -8,4 +8,4 @@ int test1() __attribute__((__cold__)) {
 // CHECK: ret
 }
 
-// CHECK: attributes [[ATTR]] = { {{.*}}optsize{{.*}} }
+// CHECK: attributes [[ATTR]] = { {{.*}}cold{{.*}}optsize{{.*}} }

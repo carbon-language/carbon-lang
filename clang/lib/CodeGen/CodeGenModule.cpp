@@ -620,9 +620,10 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
     B.addAttribute(llvm::Attribute::AlwaysInline);
   }
 
-  // FIXME: Communicate hot and cold attributes to LLVM more directly.
-  if (D->hasAttr<ColdAttr>())
+  if (D->hasAttr<ColdAttr>()) {
     B.addAttribute(llvm::Attribute::OptimizeForSize);
+    B.addAttribute(llvm::Attribute::Cold);
+  }
 
   if (D->hasAttr<MinSizeAttr>())
     B.addAttribute(llvm::Attribute::MinSize);
