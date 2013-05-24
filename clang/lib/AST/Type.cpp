@@ -93,7 +93,7 @@ unsigned ConstantArrayType::getNumAddressingBits(ASTContext &Context,
   if ((ElementSize >> 32) == 0 && NumElements.getBitWidth() <= 64 &&
       (NumElements.getZExtValue() >> 32) == 0) {
     uint64_t TotalSize = NumElements.getZExtValue() * ElementSize;
-    return 64 - llvm::CountLeadingZeros_64(TotalSize);
+    return 64 - llvm::countLeadingZeros(TotalSize);
   }
 
   // Otherwise, use APSInt to handle arbitrary sized values.

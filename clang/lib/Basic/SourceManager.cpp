@@ -1258,7 +1258,7 @@ static void ComputeLineNumbers(DiagnosticsEngine &Diag, ContentCache *FI,
 
       // If we found a newline, adjust the pointer and jump to the handling code.
       if (Mask != 0) {
-        NextBuf += llvm::CountTrailingZeros_32(Mask);
+        NextBuf += llvm::countTrailingZeros(Mask);
         goto FoundSpecialChar;
       }
       NextBuf += 16;

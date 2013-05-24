@@ -2195,7 +2195,7 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
           // Adjust the pointer to point directly after the first slash. It's
           // not necessary to set C here, it will be overwritten at the end of
           // the outer loop.
-          CurPtr += llvm::CountTrailingZeros_32(cmp) + 1;
+          CurPtr += llvm::countTrailingZeros<unsigned>(cmp) + 1;
           goto FoundSlash;
         }
         CurPtr += 16;
