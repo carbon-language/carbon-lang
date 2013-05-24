@@ -98,6 +98,7 @@ class LeakReport {
   LeakReport() : leaks_(1) {}
   void Add(u32 stack_trace_id, uptr leaked_size, ChunkTag tag);
   void PrintLargest(uptr max_leaks);
+  void PrintSummary();
   bool IsEmpty() { return leaks_.size() == 0; }
  private:
   InternalVector<Leak> leaks_;
