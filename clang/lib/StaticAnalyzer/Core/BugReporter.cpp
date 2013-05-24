@@ -1588,11 +1588,7 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
   StackDiagVector CallStack;
   InterestingExprs IE;
 
-  // Record the last location for a given visited stack frame.
-  llvm::DenseMap<const StackFrameContext *, PathDiagnosticLocation>
-    PrevLocMap;
-  PrevLocMap[N->getLocationContext()->getCurrentStackFrame()] =
-    PD.getLocation();
+  PathDiagnosticLocation PrevLoc = PD.getLocation();
 
   const ExplodedNode *NextNode = N->getFirstPred();
   while (NextNode) {
@@ -1633,16 +1629,15 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
           // If this is the first item in the active path, record
           // the new mapping from active path to location context.
           const LocationContext *&NewLC = LCM[&PD.getActivePath()];
-          if (!NewLC) {
+          if (!NewLC)
             NewLC = N->getLocationContext();
-          }
-          PDB.LC = NewLC;
 
-          // Update the previous location in the active path
-          // since we just created the call piece lazily.
-          PrevLocMap[PDB.LC->getCurrentStackFrame()] = C->getLocation();
+          PDB.LC = NewLC;
         }
         C->setCallee(*CE, SM);
+
+        // Update the previous location in the active path.
+        PrevLoc = C->getLocation();
 
         if (!CallStack.empty()) {
           assert(CallStack.back().first == C);
@@ -1654,12 +1649,6 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
       // Query the location context here and the previous location
       // as processing CallEnter may change the active path.
       PDB.LC = N->getLocationContext();
-
-      // Get the previous location for the current active
-      // location context.  All edges will be based on this
-      // location, and it will be updated in place.
-      PathDiagnosticLocation &PrevLoc =
-        PrevLocMap[PDB.LC->getCurrentStackFrame()];
 
       // Record the mapping from the active path to the location
       // context.
@@ -1688,6 +1677,7 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
         // Add the edge to the return site.
         addEdgeToPath(PD.getActivePath(), PrevLoc, C->callReturn, PDB.LC);
         PD.getActivePath().push_front(C);
+        PrevLoc.invalidate();
 
         // Make the contents of the call the active path for now.
         PD.pushActivePath(&C->path);
@@ -1801,11 +1791,6 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
 
     if (!NextNode)
       continue;
-
-    // Since the active path may have been updated prior
-    // to this point, query the active location context now.
-    PathDiagnosticLocation &PrevLoc =
-      PrevLocMap[PDB.LC->getCurrentStackFrame()];
 
     // Add pieces from custom visitors.
     for (ArrayRef<BugReporterVisitor *>::iterator I = visitors.begin(),
