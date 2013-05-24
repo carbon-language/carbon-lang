@@ -398,7 +398,8 @@ private:
   /// \brief Abruptly cut off parsing; mainly used when we have reached the
   /// code-completion point.
   void cutOffParsing() {
-    PP.setCodeCompletionReached();
+    if (PP.isCodeCompletionEnabled())
+      PP.setCodeCompletionReached();
     // Cut off parsing by acting as if we reached the end-of-file.
     Tok.setKind(tok::eof);
   }

@@ -1247,12 +1247,14 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
     case ASTReader::VersionMismatch:
     case ASTReader::ConfigurationMismatch:
     case ASTReader::HadErrors:
+      ModuleLoader::HadFatalFailure = true;
       // FIXME: The ASTReader will already have complained, but can we showhorn
       // that diagnostic information into a more useful form?
       KnownModules[Path[0].first] = 0;
       return ModuleLoadResult();
 
     case ASTReader::Failure:
+      ModuleLoader::HadFatalFailure = true;
       // Already complained, but note now that we failed.
       KnownModules[Path[0].first] = 0;
       ModuleBuildFailed = true;

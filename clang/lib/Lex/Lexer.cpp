@@ -3426,6 +3426,12 @@ HandleDirective:
   FormTokenWithChars(Result, CurPtr, tok::hash);
   PP->HandleDirective(Result);
 
+  if (PP->hadModuleLoaderFatalFailure()) {
+    // With a fatal failure in the module loader, we abort parsing.
+    assert(Result.is(tok::eof) && "Preprocessor did not set tok:eof");
+    return;
+  }
+
   // As an optimization, if the preprocessor didn't switch lexers, tail
   // recurse.
   if (PP->isCurrentLexer(this)) {

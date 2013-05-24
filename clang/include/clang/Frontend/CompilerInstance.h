@@ -664,6 +664,10 @@ public:
                                  SourceLocation ImportLoc,
                                  bool Complain);
 
+  bool hadModuleLoaderFatalFailure() const {
+    return ModuleLoader::HadFatalFailure;
+  }
+
 };
 
 } // end namespace clang

@@ -309,6 +309,10 @@ private:
   /// \brief The module manager which manages modules and their dependencies
   ModuleManager ModuleMgr;
 
+  /// \brief The location where the module file will be considered as
+  /// imported from. For non-module AST types it should be invalid.
+  SourceLocation CurrentImportLoc;
+
   /// \brief The global module index, if loaded.
   llvm::OwningPtr<GlobalModuleIndex> GlobalIndex;
 

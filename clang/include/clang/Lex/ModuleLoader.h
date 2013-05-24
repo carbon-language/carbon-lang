@@ -54,6 +54,8 @@ public:
 /// then loading that module.
 class ModuleLoader {
 public:
+  ModuleLoader() : HadFatalFailure(false) {}
+
   virtual ~ModuleLoader();
   
   /// \brief Attempt to load the given module.
@@ -85,6 +87,8 @@ public:
                                  Module::NameVisibilityKind Visibility,
                                  SourceLocation ImportLoc,
                                  bool Complain) = 0;
+
+  bool HadFatalFailure;
 };
   
 }

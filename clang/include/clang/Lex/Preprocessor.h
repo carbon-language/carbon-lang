@@ -457,6 +457,10 @@ public:
   /// \brief Retrieve the module loader associated with this preprocessor.
   ModuleLoader &getModuleLoader() const { return TheModuleLoader; }
 
+  bool hadModuleLoaderFatalFailure() const {
+    return TheModuleLoader.HadFatalFailure;
+  }
+
   /// \brief True if we are currently preprocessing a #if or #elif directive
   bool isParsingIfOrElifDirective() const { 
     return ParsingIfOrElifDirective;

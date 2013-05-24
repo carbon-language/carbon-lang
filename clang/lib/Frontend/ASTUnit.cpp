@@ -216,7 +216,8 @@ const unsigned DefaultPreambleRebuildInterval = 5;
 static llvm::sys::cas_flag ActiveASTUnitObjects;
 
 ASTUnit::ASTUnit(bool _MainFileIsAST)
-  : Reader(0), OnlyLocalDecls(false), CaptureDiagnostics(false),
+  : Reader(0), HadModuleLoaderFatalFailure(false),
+    OnlyLocalDecls(false), CaptureDiagnostics(false),
     MainFileIsAST(_MainFileIsAST), 
     TUKind(TU_Complete), WantTiming(getenv("LIBCLANG_TIMING")),
     OwnsRemappedFileBuffers(true),
@@ -1705,6 +1706,7 @@ void ASTUnit::transferASTDataFromCompilerInstance(CompilerInstance &CI) {
   CI.setFileManager(0);
   Target = &CI.getTarget();
   Reader = CI.getModuleManager();
+  HadModuleLoaderFatalFailure = CI.hadModuleLoaderFatalFailure();
 }
 
 StringRef ASTUnit::getMainFileName() const {
@@ -2504,6 +2506,9 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
 }
 
 bool ASTUnit::Save(StringRef File) {
+  if (HadModuleLoaderFatalFailure)
+    return true;
+
   // Write to a temporary file and later rename it to the actual file, to avoid
   // possible race conditions.
   SmallString<128> TempPath;

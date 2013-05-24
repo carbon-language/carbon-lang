@@ -1884,7 +1884,13 @@ Parser::DeclGroupPtrTy Parser::ParseModuleImport(SourceLocation AtLoc) {
     
     break;
   } while (true);
-  
+
+  if (PP.hadModuleLoaderFatalFailure()) {
+    // With a fatal failure in the module loader, we abort parsing.
+    cutOffParsing();
+    return DeclGroupPtrTy();
+  }
+
   DeclResult Import = Actions.ActOnModuleImport(AtLoc, ImportLoc, Path);
   ExpectAndConsumeSemi(diag::err_module_expected_semi);
   if (Import.isInvalid())

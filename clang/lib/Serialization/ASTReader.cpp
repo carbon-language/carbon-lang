@@ -2900,6 +2900,9 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
                                             ModuleKind Type,
                                             SourceLocation ImportLoc,
                                             unsigned ClientLoadCapabilities) {
+  llvm::SaveAndRestore<SourceLocation>
+    SetCurImportLocRAII(CurrentImportLoc, ImportLoc);
+
   // Bump the generation number.
   unsigned PreviousGeneration = CurrentGeneration++;
 
@@ -7167,7 +7170,7 @@ CXXTemporary *ASTReader::ReadCXXTemporary(ModuleFile &F,
 }
 
 DiagnosticBuilder ASTReader::Diag(unsigned DiagID) {
-  return Diag(SourceLocation(), DiagID);
+  return Diag(CurrentImportLoc, DiagID);
 }
 
 DiagnosticBuilder ASTReader::Diag(SourceLocation Loc, unsigned DiagID) {
