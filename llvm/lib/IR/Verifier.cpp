@@ -692,7 +692,8 @@ void Verifier::VerifyAttributeTypes(AttributeSet Attrs, unsigned Idx,
         I->getKindAsEnum() == Attribute::SanitizeMemory ||
         I->getKindAsEnum() == Attribute::MinSize ||
         I->getKindAsEnum() == Attribute::NoDuplicate ||
-        I->getKindAsEnum() == Attribute::NoBuiltin) {
+        I->getKindAsEnum() == Attribute::NoBuiltin ||
+        I->getKindAsEnum() == Attribute::Cold) {
       if (!isFunction)
           CheckFailed("Attribute '" + I->getKindAsString() +
                       "' only applies to functions!", V);

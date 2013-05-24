@@ -812,6 +812,11 @@ example:
     This attribute indicates that the inliner should attempt to inline
     this function into callers whenever possible, ignoring any active
     inlining size threshold for this caller.
+``cold``
+    This attribute indicates that this function is rarely called. When
+    computing edge weights, basic blocks post-dominated by a cold
+    function call are also considered to be cold; and, thus, given low
+    weight.
 ``nonlazybind``
     This attribute suppresses lazy symbol binding for the function. This
     may make calls to the function faster, at the cost of extra program

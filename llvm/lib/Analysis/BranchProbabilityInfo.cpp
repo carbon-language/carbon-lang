@@ -69,6 +69,20 @@ static const uint32_t UR_TAKEN_WEIGHT = 1;
 /// easily subsume it.
 static const uint32_t UR_NONTAKEN_WEIGHT = 1024*1024 - 1;
 
+/// \brief Weight for a branch taken going into a cold block.
+///
+/// This is the weight for a branch taken toward a block marked
+/// cold.  A block is marked cold if it's postdominated by a
+/// block containing a call to a cold function.  Cold functions
+/// are those marked with attribute 'cold'.
+static const uint32_t CC_TAKEN_WEIGHT = 4;
+
+/// \brief Weight for a branch not-taken into a cold block.
+///
+/// This is the weight for a branch not taken toward a block marked
+/// cold.
+static const uint32_t CC_NONTAKEN_WEIGHT = 64;
+
 static const uint32_t PH_TAKEN_WEIGHT = 20;
 static const uint32_t PH_NONTAKEN_WEIGHT = 12;
 
@@ -189,6 +203,69 @@ bool BranchProbabilityInfo::calcMetadataWeights(BasicBlock *BB) {
   assert(Weights.size() == TI->getNumSuccessors() && "Checked above");
   for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
     setEdgeWeight(BB, i, Weights[i]);
+
+  return true;
+}
+
+/// \brief Calculate edge weights for edges leading to cold blocks.
+///
+/// A cold block is one post-dominated by  a block with a call to a
+/// cold function.  Those edges are unlikely to be taken, so we give
+/// them relatively low weight.
+///
+/// Return true if we could compute the weights for cold edges.
+/// Return false, otherwise.
+bool BranchProbabilityInfo::calcColdCallHeuristics(BasicBlock *BB) {
+  TerminatorInst *TI = BB->getTerminator();
+  if (TI->getNumSuccessors() == 0)
+    return false;
+
+  // Determine which successors are post-dominated by a cold block.
+  SmallVector<unsigned, 4> ColdEdges;
+  ColdEdges.reserve(TI->getNumSuccessors());
+  SmallVector<unsigned, 4> NormalEdges;
+  NormalEdges.reserve(TI->getNumSuccessors());
+  for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I)
+    if (PostDominatedByColdCall.count(*I))
+      ColdEdges.push_back(I.getSuccessorIndex());
+    else
+      NormalEdges.push_back(I.getSuccessorIndex());
+
+  // If all successors are in the set of blocks post-dominated by cold calls,
+  // this block is in the set post-dominated by cold calls.
+  if (ColdEdges.size() == TI->getNumSuccessors())
+    PostDominatedByColdCall.insert(BB);
+  else {
+    // Otherwise, if the block itself contains a cold function, add it to the
+    // set of blocks postdominated by a cold call.
+    assert(!PostDominatedByColdCall.count(BB));
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      if (CallInst *CI = dyn_cast<CallInst>(I))
+        if (CI->hasFnAttr(Attribute::Cold)) {
+          PostDominatedByColdCall.insert(BB);
+          break;
+        }
+  }
+
+  // Skip probabilities if this block has a single successor.
+  if (TI->getNumSuccessors() == 1 || ColdEdges.empty())
+    return false;
+
+  uint32_t ColdWeight =
+      std::max(CC_TAKEN_WEIGHT / (unsigned) ColdEdges.size(), MIN_WEIGHT);
+  for (SmallVector<unsigned, 4>::iterator I = ColdEdges.begin(),
+                                          E = ColdEdges.end();
+       I != E; ++I)
+    setEdgeWeight(BB, *I, ColdWeight);
+
+  if (NormalEdges.empty())
+    return true;
+  uint32_t NormalWeight = std::max(
+      CC_NONTAKEN_WEIGHT / (unsigned) NormalEdges.size(), NORMAL_WEIGHT);
+  for (SmallVector<unsigned, 4>::iterator I = NormalEdges.begin(),
+                                          E = NormalEdges.end();
+       I != E; ++I)
+    setEdgeWeight(BB, *I, NormalWeight);
 
   return true;
 }
@@ -397,6 +474,7 @@ bool BranchProbabilityInfo::runOnFunction(Function &F) {
   LastF = &F; // Store the last function we ran on for printing.
   LI = &getAnalysis<LoopInfo>();
   assert(PostDominatedByUnreachable.empty());
+  assert(PostDominatedByColdCall.empty());
 
   // Walk the basic blocks in post-order so that we can build up state about
   // the successors of a block iteratively.
@@ -407,6 +485,8 @@ bool BranchProbabilityInfo::runOnFunction(Function &F) {
     if (calcUnreachableHeuristics(*I))
       continue;
     if (calcMetadataWeights(*I))
+      continue;
+    if (calcColdCallHeuristics(*I))
       continue;
     if (calcLoopBranchHeuristics(*I))
       continue;
@@ -420,6 +500,7 @@ bool BranchProbabilityInfo::runOnFunction(Function &F) {
   }
 
   PostDominatedByUnreachable.clear();
+  PostDominatedByColdCall.clear();
   return false;
 }
 

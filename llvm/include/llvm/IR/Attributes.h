@@ -68,6 +68,7 @@ public:
                            ///< 0 means unaligned (different from align(1))
     AlwaysInline,          ///< inline=always
     ByVal,                 ///< Pass structure by value
+    Cold,                  ///< Marks function as being in a cold path.
     InlineHint,            ///< Source said inlining was desirable
     InReg,                 ///< Force argument to be passed in register
     MinSize,               ///< Function must be optimized for size first

@@ -96,6 +96,7 @@ namespace lltok {
     kw_alwaysinline,
     kw_sanitize_address,
     kw_byval,
+    kw_cold,
     kw_inlinehint,
     kw_inreg,
     kw_minsize,

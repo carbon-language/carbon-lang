@@ -217,6 +217,8 @@ std::string Attribute::getAsString(bool InAttrGrp) const {
     return "uwtable";
   if (hasAttribute(Attribute::ZExt))
     return "zeroext";
+  if (hasAttribute(Attribute::Cold))
+    return "cold";
 
   // FIXME: These should be output like this:
   //
@@ -396,6 +398,7 @@ uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   case Attribute::SanitizeMemory:  return 1ULL << 37;
   case Attribute::NoBuiltin:       return 1ULL << 38;
   case Attribute::Returned:        return 1ULL << 39;
+  case Attribute::Cold:            return 1ULL << 40;
   }
   llvm_unreachable("Unsupported attribute type");
 }

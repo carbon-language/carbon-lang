@@ -131,11 +131,15 @@ private:
   /// \brief Track the set of blocks directly succeeded by a returning block.
   SmallPtrSet<BasicBlock *, 16> PostDominatedByUnreachable;
 
+  /// \brief Track the set of blocks that always lead to a cold call.
+  SmallPtrSet<BasicBlock *, 16> PostDominatedByColdCall;
+
   /// \brief Get sum of the block successors' weights.
   uint32_t getSumForBlock(const BasicBlock *BB) const;
 
   bool calcUnreachableHeuristics(BasicBlock *BB);
   bool calcMetadataWeights(BasicBlock *BB);
+  bool calcColdCallHeuristics(BasicBlock *BB);
   bool calcPointerHeuristics(BasicBlock *BB);
   bool calcLoopBranchHeuristics(BasicBlock *BB);
   bool calcZeroHeuristics(BasicBlock *BB);

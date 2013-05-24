@@ -115,3 +115,61 @@ return:
 }
 
 !2 = metadata !{metadata !"branch_weights", i32 7, i32 6, i32 4, i32 4, i32 64}
+
+declare void @coldfunc() cold
+
+define i32 @test5(i32 %a, i32 %b, i1 %flag) {
+; CHECK: Printing analysis {{.*}} for function 'test5'
+entry:
+  br i1 %flag, label %then, label %else
+; CHECK: edge entry -> then probability is 4 / 68
+; CHECK: edge entry -> else probability is 64 / 68
+
+then:
+  call void @coldfunc()
+  br label %exit
+; CHECK: edge then -> exit probability is 16 / 16 = 100%
+
+else:
+  br label %exit
+; CHECK: edge else -> exit probability is 16 / 16 = 100%
+
+exit:
+  %result = phi i32 [ %a, %then ], [ %b, %else ]
+  ret i32 %result
+}
+
+declare i32 @regular_function(i32 %i)
+
+define i32 @test_cold_call_sites(i32* %a) {
+; Test that edges to blocks post-dominated by cold call sites
+; are marked as not expected to be taken.
+; TODO(dnovillo) The calls to regular_function should not be merged, but
+; they are currently being merged. Convert this into a code generation test
+; after that is fixed.
+
+; CHECK: Printing analysis {{.*}} for function 'test_cold_call_sites'
+; CHECK: edge entry -> then probability is 4 / 68 = 5.88235%
+; CHECK: edge entry -> else probability is 64 / 68 = 94.1176% [HOT edge]
+
+entry:
+  %gep1 = getelementptr i32* %a, i32 1
+  %val1 = load i32* %gep1
+  %cond1 = icmp ugt i32 %val1, 1
+  br i1 %cond1, label %then, label %else
+
+then:
+  ; This function is not declared cold, but this call site is.
+  %val4 = call i32 @regular_function(i32 %val1) cold
+  br label %exit
+
+else:
+  %gep2 = getelementptr i32* %a, i32 2
+  %val2 = load i32* %gep2
+  %val3 = call i32 @regular_function(i32 %val2)
+  br label %exit
+
+exit:
+  %ret = phi i32 [ %val4, %then ], [ %val3, %else ]
+  ret i32 %ret
+}

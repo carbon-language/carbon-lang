@@ -1089,3 +1089,35 @@ while.end:
   store double %rra.0, double* %arrayidx34, align 8
   br label %for.cond
 }
+
+declare void @cold_function() cold
+
+define i32 @test_cold_calls(i32* %a) {
+; Test that edges to blocks post-dominated by cold calls are
+; marked as not expected to be taken.  They should be laid out
+; at the bottom.
+; CHECK: test_cold_calls:
+; CHECK: %entry
+; CHECK: %else
+; CHECK: %exit
+; CHECK: %then
+
+entry:
+  %gep1 = getelementptr i32* %a, i32 1
+  %val1 = load i32* %gep1
+  %cond1 = icmp ugt i32 %val1, 1
+  br i1 %cond1, label %then, label %else
+
+then:
+  call void @cold_function()
+  br label %exit
+
+else:
+  %gep2 = getelementptr i32* %a, i32 2
+  %val2 = load i32* %gep2
+  br label %exit
+
+exit:
+  %ret = phi i32 [ %val1, %then ], [ %val2, %else ]
+  ret i32 %ret
+}
