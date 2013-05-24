@@ -13,7 +13,7 @@
 #CHECK: lr	%r0,%a1
 #CHECK: error: invalid operand for instruction
 #CHECK: lr	%r0,0
-#CHECK: error: unexpected token in argument list
+#CHECK: error: invalid operand for instruction
 #CHECK: lr	%r0,0(%r1)
 
 	lr	%f0,%r1
@@ -35,7 +35,7 @@
 #CHECK: lgr	%r0,%a1
 #CHECK: error: invalid operand for instruction
 #CHECK: lgr	%r0,0
-#CHECK: error: unexpected token in argument list
+#CHECK: error: invalid operand for instruction
 #CHECK: lgr	%r0,0(%r1)
 
 	lgr	%f0,%r1
@@ -73,7 +73,7 @@
 #CHECK: dlr	%r0,%a1
 #CHECK: error: invalid operand for instruction
 #CHECK: dlr	%r0,0
-#CHECK: error: unexpected token in argument list
+#CHECK: error: invalid operand for instruction
 #CHECK: dlr	%r0,0(%r1)
 
 	dlr	%r1,%r0
@@ -103,7 +103,7 @@
 #CHECK: ler	%f0,%a1
 #CHECK: error: invalid operand for instruction
 #CHECK: ler	%f0,0
-#CHECK: error: unexpected token in argument list
+#CHECK: error: invalid operand for instruction
 #CHECK: ler	%f0,0(%r1)
 
 	ler	%r0,%f1
@@ -125,7 +125,7 @@
 #CHECK: ldr	%f0,%a1
 #CHECK: error: invalid operand for instruction
 #CHECK: ldr	%f0,0
-#CHECK: error: unexpected token in argument list
+#CHECK: error: invalid operand for instruction
 #CHECK: ldr	%f0,0(%r1)
 
 	ldr	%r0,%f1
@@ -163,7 +163,7 @@
 #CHECK: lxr	%f0,%a1
 #CHECK: error: invalid operand for instruction
 #CHECK: lxr	%f0,0
-#CHECK: error: unexpected token in argument list
+#CHECK: error: invalid operand for instruction
 #CHECK: lxr	%f0,0(%r1)
 
 	lxr	%f2,%f0
@@ -189,7 +189,7 @@
 #CHECK: ear	%r0,%f0
 #CHECK: error: invalid operand for instruction
 #CHECK: ear	%r0,0
-#CHECK: error: unexpected token in argument list
+#CHECK: error: invalid operand for instruction
 #CHECK: ear	%r0,0(%r1)
 
 	ear	%r0,%r0

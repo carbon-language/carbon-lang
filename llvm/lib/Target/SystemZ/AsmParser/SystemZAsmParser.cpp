@@ -44,6 +44,7 @@ public:
 
 private:
   enum OperandKind {
+    KindInvalid,
     KindToken,
     KindReg,
     KindAccessReg,
@@ -108,6 +109,9 @@ private:
 
 public:
   // Create particular kinds of operand.
+  static SystemZOperand *createInvalid(SMLoc StartLoc, SMLoc EndLoc) {
+    return new SystemZOperand(KindInvalid, StartLoc, EndLoc);
+  }
   static SystemZOperand *createToken(StringRef Str, SMLoc Loc) {
     SystemZOperand *Op = new SystemZOperand(KindToken, Loc, Loc);
     Op->Token.Data = Str.data();
@@ -279,15 +283,19 @@ private:
 
   bool parseRegister(Register &Reg);
 
-  OperandMatchResultTy
-  parseRegister(Register &Reg, RegisterGroup Group, const unsigned *Regs,
-                bool IsAddress = false);
+  bool parseRegister(Register &Reg, RegisterGroup Group, const unsigned *Regs,
+                     bool IsAddress = false);
 
   OperandMatchResultTy
   parseRegister(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                 RegisterGroup Group, const unsigned *Regs,
                 SystemZOperand::RegisterKind Kind,
                 bool IsAddress = false);
+
+  bool parseAddress(unsigned &Base, const MCExpr *&Disp,
+                    unsigned &Index, const unsigned *Regs,
+                    SystemZOperand::RegisterKind RegKind,
+                    bool HasIndex);
 
   OperandMatchResultTy
   parseAddress(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
@@ -411,22 +419,22 @@ bool SystemZAsmParser::parseRegister(Register &Reg) {
 
   // Eat the % prefix.
   if (Parser.getTok().isNot(AsmToken::Percent))
-    return true;
+    return Error(Parser.getTok().getLoc(), "register expected");
   Parser.Lex();
 
   // Expect a register name.
   if (Parser.getTok().isNot(AsmToken::Identifier))
-    return true;
+    return Error(Reg.StartLoc, "invalid register");
 
   // Check that there's a prefix.
   StringRef Name = Parser.getTok().getString();
   if (Name.size() < 2)
-    return true;
+    return Error(Reg.StartLoc, "invalid register");
   char Prefix = Name[0];
 
   // Treat the rest of the register name as a register number.
   if (Name.substr(1).getAsInteger(10, Reg.Num))
-    return true;
+    return Error(Reg.StartLoc, "invalid register");
 
   // Look for valid combinations of prefix and number.
   if (Prefix == 'r' && Reg.Num < 16)
@@ -436,7 +444,7 @@ bool SystemZAsmParser::parseRegister(Register &Reg) {
   else if (Prefix == 'a' && Reg.Num < 16)
     Reg.Group = RegAccess;
   else
-    return true;
+    return Error(Reg.StartLoc, "invalid register");
 
   Reg.EndLoc = Parser.getTok().getLoc();
   Parser.Lex();
@@ -447,30 +455,19 @@ bool SystemZAsmParser::parseRegister(Register &Reg) {
 // the raw register number to LLVM numbering, with zero entries indicating
 // an invalid register.  IsAddress says whether the register appears in an
 // address context.
-SystemZAsmParser::OperandMatchResultTy
-SystemZAsmParser::parseRegister(Register &Reg, RegisterGroup Group,
-                                const unsigned *Regs, bool IsAddress) {
-  if (Parser.getTok().isNot(AsmToken::Percent))
-    return MatchOperand_NoMatch;
-  if (parseRegister(Reg)) {
-    Error(Reg.StartLoc, "invalid register");
-    return MatchOperand_ParseFail;
-  }
-  if (Reg.Group != Group) {
-    Error(Reg.StartLoc, "invalid operand for instruction");
-    return MatchOperand_ParseFail;
-  }
-  if (Regs && Regs[Reg.Num] == 0) {
-    Error(Reg.StartLoc, "invalid register pair");
-    return MatchOperand_ParseFail;
-  }
-  if (Reg.Num == 0 && IsAddress) {
-    Error(Reg.StartLoc, "%r0 used in an address");
-    return MatchOperand_ParseFail;
-  }
+bool SystemZAsmParser::parseRegister(Register &Reg, RegisterGroup Group,
+                                     const unsigned *Regs, bool IsAddress) {
+  if (parseRegister(Reg))
+    return true;
+  if (Reg.Group != Group)
+    return Error(Reg.StartLoc, "invalid operand for instruction");
+  if (Regs && Regs[Reg.Num] == 0)
+    return Error(Reg.StartLoc, "invalid register pair");
+  if (Reg.Num == 0 && IsAddress)
+    return Error(Reg.StartLoc, "%r0 used in an address");
   if (Regs)
     Reg.Num = Regs[Reg.Num];
-  return MatchOperand_Success;
+  return false;
 }
 
 // Parse a register and add it to Operands.  The other arguments are as above.
@@ -479,64 +476,75 @@ SystemZAsmParser::parseRegister(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                 RegisterGroup Group, const unsigned *Regs,
                                 SystemZOperand::RegisterKind Kind,
                                 bool IsAddress) {
-  Register Reg;
-  OperandMatchResultTy Result = parseRegister(Reg, Group, Regs, IsAddress);
-  if (Result == MatchOperand_Success)
-    Operands.push_back(SystemZOperand::createReg(Kind, Reg.Num,
-                                                 Reg.StartLoc, Reg.EndLoc));
-  return Result;
-}
-
-// Parse a memory operand and add it to Operands.  Regs maps asm register
-// numbers to LLVM address registers and RegKind says what kind of address
-// register we're using (ADDR32Reg or ADDR64Reg).  HasIndex says whether
-// the address allows index registers.
-SystemZAsmParser::OperandMatchResultTy
-SystemZAsmParser::parseAddress(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                               const unsigned *Regs,
-                               SystemZOperand::RegisterKind RegKind,
-                               bool HasIndex) {
-  SMLoc StartLoc = Parser.getTok().getLoc();
-
-  // Parse the displacement, which must always be present.
-  const MCExpr *Disp;
-  if (getParser().parseExpression(Disp))
+  if (Parser.getTok().isNot(AsmToken::Percent))
     return MatchOperand_NoMatch;
 
+  Register Reg;
+  if (parseRegister(Reg, Group, Regs, IsAddress))
+    return MatchOperand_ParseFail;
+
+  Operands.push_back(SystemZOperand::createReg(Kind, Reg.Num,
+                                               Reg.StartLoc, Reg.EndLoc));
+  return MatchOperand_Success;
+}
+
+// Parse a memory operand into Base, Disp and Index.  Regs maps asm
+// register numbers to LLVM register numbers and RegKind says what kind
+// of address register we're using (ADDR32Reg or ADDR64Reg).  HasIndex
+// says whether the address allows index registers.
+bool SystemZAsmParser::parseAddress(unsigned &Base, const MCExpr *&Disp,
+                                    unsigned &Index, const unsigned *Regs,
+                                    SystemZOperand::RegisterKind RegKind,
+                                    bool HasIndex) {
+  // Parse the displacement, which must always be present.
+  if (getParser().parseExpression(Disp))
+    return true;
+
   // Parse the optional base and index.
-  unsigned Index = 0;
-  unsigned Base = 0;
+  Index = 0;
+  Base = 0;
   if (getLexer().is(AsmToken::LParen)) {
     Parser.Lex();
 
     // Parse the first register.
     Register Reg;
-    OperandMatchResultTy Result = parseRegister(Reg, RegGR, Regs, true);
-    if (Result != MatchOperand_Success)
-      return Result;
+    if (parseRegister(Reg, RegGR, Regs, RegKind))
+      return true;
 
     // Check whether there's a second register.  If so, the one that we
     // just parsed was the index.
     if (getLexer().is(AsmToken::Comma)) {
       Parser.Lex();
 
-      if (!HasIndex) {
-        Error(Reg.StartLoc, "invalid use of indexed addressing");
-        return MatchOperand_ParseFail;
-      }
+      if (!HasIndex)
+        return Error(Reg.StartLoc, "invalid use of indexed addressing");
 
       Index = Reg.Num;
-      Result = parseRegister(Reg, RegGR, Regs, true);
-      if (Result != MatchOperand_Success)
-        return Result;
+      if (parseRegister(Reg, RegGR, Regs, RegKind))
+        return true;
     }
     Base = Reg.Num;
 
     // Consume the closing bracket.
     if (getLexer().isNot(AsmToken::RParen))
-      return MatchOperand_NoMatch;
+      return Error(Parser.getTok().getLoc(), "unexpected token in address");
     Parser.Lex();
   }
+  return false;
+}
+
+// Parse a memory operand and add it to Operands.  The other arguments
+// are as above.
+SystemZAsmParser::OperandMatchResultTy
+SystemZAsmParser::parseAddress(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                               const unsigned *Regs,
+                               SystemZOperand::RegisterKind RegKind,
+                               bool HasIndex) {
+  SMLoc StartLoc = Parser.getTok().getLoc();
+  unsigned Base, Index;
+  const MCExpr *Disp;
+  if (parseAddress(Base, Disp, Index, Regs, RegKind, HasIndex))
+    return MatchOperand_ParseFail;
 
   SMLoc EndLoc =
     SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
@@ -551,11 +559,9 @@ bool SystemZAsmParser::ParseDirective(AsmToken DirectiveID) {
 
 bool SystemZAsmParser::ParseRegister(unsigned &RegNo, SMLoc &StartLoc,
                                      SMLoc &EndLoc) {
-  if (Parser.getTok().isNot(AsmToken::Percent))
-    return Error(Parser.getTok().getLoc(), "register expected");
   Register Reg;
   if (parseRegister(Reg))
-    return Error(Reg.StartLoc, "invalid register");
+    return true;
   if (Reg.Group == RegGR)
     RegNo = SystemZMC::GR64Regs[Reg.Num];
   else if (Reg.Group == RegFP)
@@ -616,15 +622,34 @@ parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
   if (ResTy == MatchOperand_ParseFail)
     return true;
 
-  // The only other type of operand is an immediate.
-  const MCExpr *Expr;
+  // Check for a register.  All real register operands should have used
+  // a context-dependent parse routine, which gives the required register
+  // class.  The code is here to mop up other cases, like those where
+  // the instruction isn't recognized.
+  if (Parser.getTok().is(AsmToken::Percent)) {
+    Register Reg;
+    if (parseRegister(Reg))
+      return true;
+    Operands.push_back(SystemZOperand::createInvalid(Reg.StartLoc, Reg.EndLoc));
+    return false;
+  }
+
+  // The only other type of operand is an immediate or address.  As above,
+  // real address operands should have used a context-dependent parse routine,
+  // so we treat any plain expression as an immediate.
   SMLoc StartLoc = Parser.getTok().getLoc();
-  if (getParser().parseExpression(Expr))
+  unsigned Base, Index;
+  const MCExpr *Expr;
+  if (parseAddress(Base, Expr, Index, SystemZMC::GR64Regs,
+                   SystemZOperand::ADDR64Reg, true))
     return true;
 
   SMLoc EndLoc =
     SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
-  Operands.push_back(SystemZOperand::createImm(Expr, StartLoc, EndLoc));
+  if (Base || Index)
+    Operands.push_back(SystemZOperand::createInvalid(StartLoc, EndLoc));
+  else
+    Operands.push_back(SystemZOperand::createImm(Expr, StartLoc, EndLoc));
   return false;
 }
 
@@ -683,13 +708,17 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
 SystemZAsmParser::OperandMatchResultTy SystemZAsmParser::
 parseAccessReg(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  if (Parser.getTok().isNot(AsmToken::Percent))
+    return MatchOperand_NoMatch;
+
   Register Reg;
-  OperandMatchResultTy Result = parseRegister(Reg, RegAccess, 0);
-  if (Result == MatchOperand_Success)
-    Operands.push_back(SystemZOperand::createAccessReg(Reg.Num,
-                                                       Reg.StartLoc,
-                                                       Reg.EndLoc));
-  return Result;
+  if (parseRegister(Reg, RegAccess, 0))
+    return MatchOperand_ParseFail;
+
+  Operands.push_back(SystemZOperand::createAccessReg(Reg.Num,
+                                                     Reg.StartLoc,
+                                                     Reg.EndLoc));
+  return MatchOperand_Success;
 }
 
 SystemZAsmParser::OperandMatchResultTy SystemZAsmParser::
