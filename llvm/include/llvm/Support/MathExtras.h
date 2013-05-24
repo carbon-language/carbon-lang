@@ -177,7 +177,7 @@ inline std::size_t countLeadingZeros<uint64_t>(uint64_t Val, ZeroBehavior ZB) {
 ///   valid arguments.
 template <typename T>
 typename enable_if_c<std::numeric_limits<T>::is_integer &&
-                     !std::numeric_limits<T>::is_signed, std::size_t>::type
+                     !std::numeric_limits<T>::is_signed, T>::type
 findFirstSet(T Val, ZeroBehavior ZB = ZB_Max) {
   if (ZB == ZB_Max && Val == 0)
     return std::numeric_limits<T>::max();
@@ -188,7 +188,7 @@ findFirstSet(T Val, ZeroBehavior ZB = ZB_Max) {
 // Disable signed.
 template <typename T>
 typename enable_if_c<std::numeric_limits<T>::is_integer &&
-                     std::numeric_limits<T>::is_signed, std::size_t>::type
+                     std::numeric_limits<T>::is_signed, T>::type
 findFirstSet(T Val, ZeroBehavior ZB = ZB_Max) LLVM_DELETED_FUNCTION;
 
 /// \brief Get the index of the last set bit starting from the least
@@ -200,7 +200,7 @@ findFirstSet(T Val, ZeroBehavior ZB = ZB_Max) LLVM_DELETED_FUNCTION;
 ///   valid arguments.
 template <typename T>
 typename enable_if_c<std::numeric_limits<T>::is_integer &&
-                     !std::numeric_limits<T>::is_signed, std::size_t>::type
+                     !std::numeric_limits<T>::is_signed, T>::type
 findLastSet(T Val, ZeroBehavior ZB = ZB_Max) {
   if (ZB == ZB_Max && Val == 0)
     return std::numeric_limits<T>::max();
@@ -214,7 +214,7 @@ findLastSet(T Val, ZeroBehavior ZB = ZB_Max) {
 // Disable signed.
 template <typename T>
 typename enable_if_c<std::numeric_limits<T>::is_integer &&
-                     std::numeric_limits<T>::is_signed, std::size_t>::type
+                     std::numeric_limits<T>::is_signed, T>::type
 findLastSet(T Val, ZeroBehavior ZB = ZB_Max) LLVM_DELETED_FUNCTION;
 
 /// \brief Macro compressed bit reversal table for 256 bits.
