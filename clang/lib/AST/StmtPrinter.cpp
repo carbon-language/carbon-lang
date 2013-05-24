@@ -1339,6 +1339,8 @@ void StmtPrinter::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *Node) {
   for (CXXTemporaryObjectExpr::arg_iterator Arg = Node->arg_begin(),
                                          ArgEnd = Node->arg_end();
        Arg != ArgEnd; ++Arg) {
+    if (Arg->isDefaultArgument())
+      break;
     if (Arg != Node->arg_begin())
       OS << ", ";
     PrintExpr(*Arg);
