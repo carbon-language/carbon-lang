@@ -14,6 +14,97 @@ using namespace llvm;
 
 namespace {
 
+TEST(MathExtras, countTrailingZeros) {
+  uint8_t Z8 = 0;
+  uint16_t Z16 = 0;
+  uint32_t Z32 = 0;
+  uint64_t Z64 = 0;
+  EXPECT_EQ(8, countTrailingZeros(Z8));
+  EXPECT_EQ(16, countTrailingZeros(Z16));
+  EXPECT_EQ(32, countTrailingZeros(Z32));
+  EXPECT_EQ(64, countTrailingZeros(Z64));
+
+  uint8_t NZ8 = 42;
+  uint16_t NZ16 = 42;
+  uint32_t NZ32 = 42;
+  uint64_t NZ64 = 42;
+  EXPECT_EQ(1, countTrailingZeros(NZ8));
+  EXPECT_EQ(1, countTrailingZeros(NZ16));
+  EXPECT_EQ(1, countTrailingZeros(NZ32));
+  EXPECT_EQ(1, countTrailingZeros(NZ64));
+}
+
+TEST(MathExtras, countLeadingZeros) {
+  uint8_t Z8 = 0;
+  uint16_t Z16 = 0;
+  uint32_t Z32 = 0;
+  uint64_t Z64 = 0;
+  EXPECT_EQ(8, countLeadingZeros(Z8));
+  EXPECT_EQ(16, countLeadingZeros(Z16));
+  EXPECT_EQ(32, countLeadingZeros(Z32));
+  EXPECT_EQ(64, countLeadingZeros(Z64));
+
+  uint8_t NZ8 = 42;
+  uint16_t NZ16 = 42;
+  uint32_t NZ32 = 42;
+  uint64_t NZ64 = 42;
+  EXPECT_EQ(2, countLeadingZeros(NZ8));
+  EXPECT_EQ(10, countLeadingZeros(NZ16));
+  EXPECT_EQ(26, countLeadingZeros(NZ32));
+  EXPECT_EQ(58, countLeadingZeros(NZ64));
+}
+
+TEST(MathExtras, findFirstSet) {
+  uint8_t Z8 = 0;
+  uint16_t Z16 = 0;
+  uint32_t Z32 = 0;
+  uint64_t Z64 = 0;
+  EXPECT_EQ(0xFF, findFirstSet(Z8));
+  EXPECT_EQ(0xFFFF, findFirstSet(Z16));
+  EXPECT_EQ(0xFFFFFFFF, findFirstSet(Z32));
+  EXPECT_EQ(0xFFFFFFFFFFFFFFFF, findFirstSet(Z64));
+
+  uint8_t NZ8 = 42;
+  uint16_t NZ16 = 42;
+  uint32_t NZ32 = 42;
+  uint64_t NZ64 = 42;
+  EXPECT_EQ(1, findFirstSet(NZ8));
+  EXPECT_EQ(1, findFirstSet(NZ16));
+  EXPECT_EQ(1, findFirstSet(NZ32));
+  EXPECT_EQ(1, findFirstSet(NZ64));
+}
+
+TEST(MathExtras, findLastSet) {
+  uint8_t Z8 = 0;
+  uint16_t Z16 = 0;
+  uint32_t Z32 = 0;
+  uint64_t Z64 = 0;
+  EXPECT_EQ(0xFF, findLastSet(Z8));
+  EXPECT_EQ(0xFFFF, findLastSet(Z16));
+  EXPECT_EQ(0xFFFFFFFF, findLastSet(Z32));
+  EXPECT_EQ(0xFFFFFFFFFFFFFFFF, findLastSet(Z64));
+
+  uint8_t NZ8 = 42;
+  uint16_t NZ16 = 42;
+  uint32_t NZ32 = 42;
+  uint64_t NZ64 = 42;
+  EXPECT_EQ(5, findLastSet(NZ8));
+  EXPECT_EQ(5, findLastSet(NZ16));
+  EXPECT_EQ(5, findLastSet(NZ32));
+  EXPECT_EQ(5, findLastSet(NZ64));
+}
+
+TEST(MathExtras, reverseBits) {
+  uint8_t NZ8 = 42;
+  uint16_t NZ16 = 42;
+  uint32_t NZ32 = 42;
+  uint64_t NZ64 = 42;
+  EXPECT_EQ(0x54, reverseBits(NZ8));
+  EXPECT_EQ(0x5400, reverseBits(NZ16));
+  EXPECT_EQ(0x54000000, reverseBits(NZ32));
+  EXPECT_EQ(0x5400000000000000, reverseBits(NZ64));
+}
+
 TEST(MathExtras, isPowerOf2_32) {
   EXPECT_TRUE(isPowerOf2_32(1 << 6));
   EXPECT_TRUE(isPowerOf2_32(1 << 12));
