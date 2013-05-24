@@ -28,9 +28,12 @@
 #ifndef LLVM_SYSTEM_MD5_H
 #define LLVM_SYSTEM_MD5_H
 
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
+
+template <typename T> class ArrayRef;
 
 class MD5 {
   // Any 32-bit or wider unsigned integer data type will do.
@@ -41,17 +44,21 @@ class MD5 {
   unsigned char buffer[64];
   MD5_u32plus block[16];
 
- public:
+public:
+  typedef unsigned char MD5Result[16];
+
   MD5();
 
   /// \brief Updates the hash for arguments provided.
-  void Update(void *data, unsigned long size);
+  void update(ArrayRef<unsigned char> Data);
 
   /// \brief Finishes off the hash and puts the result in result.
-  void Final(unsigned char *result);
+  void final(MD5Result &result);
+
+  static void stringifyResult(MD5Result &Res, SmallString<32> &Str);
 
 private:
-  void *body(void *data, unsigned long size);
+  const unsigned char *body(ArrayRef<unsigned char> Data);
 };
 
 }
