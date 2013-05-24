@@ -23,9 +23,14 @@ MCDisassembler::setupForSymbolicDisassembly(
     void *DisInfo,
     MCContext *Ctx,
     OwningPtr<MCRelocationInfo> &RelInfo) {
+  this->GetOpInfo = GetOpInfo;
+  this->SymbolLookUp = SymbolLookUp;
+  this->DisInfo = DisInfo;
+  this->Ctx = Ctx;
   assert(Ctx != 0 && "No MCContext given for symbolic disassembly");
-  Symbolizer.reset(new MCExternalSymbolizer(*Ctx, RelInfo, GetOpInfo,
-                                            SymbolLookUp, DisInfo));
+  if (!Symbolizer)
+    Symbolizer.reset(new MCExternalSymbolizer(*Ctx, RelInfo, GetOpInfo,
+                                              SymbolLookUp, DisInfo));
 }
 
 bool MCDisassembler::tryAddingSymbolicOperand(MCInst &Inst, int64_t Value,

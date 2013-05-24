@@ -144,3 +144,17 @@ void MCExternalSymbolizer::tryAddingPcLoadReferenceComment(raw_ostream &cStream,
       cStream << "literal pool for: " << ReferenceName;
   }
 }
+
+namespace llvm {
+MCSymbolizer *createMCSymbolizer(StringRef TT, LLVMOpInfoCallback GetOpInfo,
+                                 LLVMSymbolLookupCallback SymbolLookUp,
+                                 void *DisInfo,
+                                 MCContext *Ctx,
+                                 MCRelocationInfo *RelInfo) {
+  assert(Ctx != 0 && "No MCContext given for symbolic disassembly");
+
+  OwningPtr<MCRelocationInfo> RelInfoOwingPtr(RelInfo);
+  return new MCExternalSymbolizer(*Ctx, RelInfoOwingPtr, GetOpInfo,
+                                  SymbolLookUp, DisInfo);
+}
+}

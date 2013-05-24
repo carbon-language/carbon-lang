@@ -384,14 +384,15 @@ static MCInstPrinter *createX86MCInstPrinter(const Target &T,
   return 0;
 }
 
-static MCRelocationInfo *createMCRelocationInfo(StringRef TT, MCContext &Ctx) {
+static MCRelocationInfo *createX86MCRelocationInfo(StringRef TT,
+                                                   MCContext &Ctx) {
   Triple TheTriple(TT);
   if (TheTriple.isEnvironmentMachO() && TheTriple.getArch() == Triple::x86_64)
     return createX86_64MachORelocationInfo(Ctx);
   else if (TheTriple.isOSBinFormatELF())
     return createX86_64ELFRelocationInfo(Ctx);
   // Default to the stock relocation info.
-  return llvm::createMCRelocationInfo(Ctx);
+  return llvm::createMCRelocationInfo(TT, Ctx);
 }
 
 static MCInstrAnalysis *createX86MCInstrAnalysis(const MCInstrInfo *Info) {
@@ -454,7 +455,7 @@ extern "C" void LLVMInitializeX86TargetMC() {
 
   // Register the MC relocation info.
   TargetRegistry::RegisterMCRelocationInfo(TheX86_32Target,
-                                           createMCRelocationInfo);
+                                           createX86MCRelocationInfo);
   TargetRegistry::RegisterMCRelocationInfo(TheX86_64Target,
-                                           createMCRelocationInfo);
+                                           createX86MCRelocationInfo);
 }
