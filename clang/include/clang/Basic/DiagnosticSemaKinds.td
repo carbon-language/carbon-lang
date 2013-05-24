@@ -6090,7 +6090,9 @@ def note_empty_body_on_separate_line : Note<
 def err_va_start_used_in_non_variadic_function : Error<
   "'va_start' used in function with fixed args">;
 def warn_second_parameter_of_va_start_not_last_named_argument : Warning<
-  "second parameter of 'va_start' not last named argument">;
+  "second parameter of 'va_start' not last named argument">, InGroup<Varargs>;
+def warn_va_start_of_reference_type_is_undefined : Warning<
+  "'va_start' has undefined behavior with reference types">, InGroup<Varargs>;
 def err_first_argument_to_va_arg_not_of_type_va_list : Error<
   "first argument to 'va_arg' is of type %0 and not 'va_list'">;
 def err_second_parameter_to_va_arg_incomplete: Error<
@@ -6105,7 +6107,7 @@ def warn_second_parameter_to_va_arg_ownership_qualified : Warning<
   InGroup<NonPODVarargs>, DefaultError;
 def warn_second_parameter_to_va_arg_never_compatible : Warning<
   "second argument to 'va_arg' is of promotable type %0; this va_arg has "
-  "undefined behavior because arguments will be promoted to %1">;
+  "undefined behavior because arguments will be promoted to %1">, InGroup<Varargs>;
 
 def warn_return_missing_expr : Warning<
   "non-void %select{function|method}1 %0 should return a value">, DefaultError,
