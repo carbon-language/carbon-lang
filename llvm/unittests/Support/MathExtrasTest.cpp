@@ -52,6 +52,18 @@ TEST(MathExtras, countLeadingZeros) {
   EXPECT_EQ(10u, countLeadingZeros(NZ16));
   EXPECT_EQ(26u, countLeadingZeros(NZ32));
   EXPECT_EQ(58u, countLeadingZeros(NZ64));
+
+  EXPECT_EQ(8u, countLeadingZeros(0x00F000FFu));
+  EXPECT_EQ(8u, countLeadingZeros(0x00F12345u));
+  for (unsigned i = 0; i <= 30; ++i) {
+    EXPECT_EQ(31 - i, countLeadingZeros(1u << i));
+  }
+
+  EXPECT_EQ(8u, countLeadingZeros(0x00F1234500F12345ULL));
+  EXPECT_EQ(1u, countLeadingZeros(1ULL << 62));
+  for (unsigned i = 0; i <= 62; ++i) {
+    EXPECT_EQ(63 - i, countLeadingZeros(1ULL << i));
+  }
 }
 
 TEST(MathExtras, findFirstSet) {
@@ -127,22 +139,6 @@ TEST(MathExtras, ByteSwap_32) {
 TEST(MathExtras, ByteSwap_64) {
   EXPECT_EQ(0x8877665544332211ULL, ByteSwap_64(0x1122334455667788LL));
   EXPECT_EQ(0x1100FFEEDDCCBBAAULL, ByteSwap_64(0xAABBCCDDEEFF0011LL));
-}
-
-TEST(MathExtras, CountLeadingZeros_32) {
-  EXPECT_EQ(8u, CountLeadingZeros_32(0x00F000FF));
-  EXPECT_EQ(8u, CountLeadingZeros_32(0x00F12345));
-  for (unsigned i = 0; i <= 30; ++i) {
-    EXPECT_EQ(31 - i, CountLeadingZeros_32(1 << i));
-  }
-}
-
-TEST(MathExtras, CountLeadingZeros_64) {
-  EXPECT_EQ(8u, CountLeadingZeros_64(0x00F1234500F12345LL));
-  EXPECT_EQ(1u, CountLeadingZeros_64(1LL << 62));
-  for (unsigned i = 0; i <= 62; ++i) {
-    EXPECT_EQ(63 - i, CountLeadingZeros_64(1LL << i));
-  }
 }
 
 TEST(MathExtras, CountLeadingOnes_32) {

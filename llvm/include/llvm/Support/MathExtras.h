@@ -374,84 +374,12 @@ inline uint64_t ByteSwap_64(uint64_t Value) {
   return sys::SwapByteOrder_64(Value);
 }
 
-/// CountLeadingZeros_32 - this function performs the platform optimal form of
-/// counting the number of zeros from the most significant bit to the first one
-/// bit.  Ex. CountLeadingZeros_32(0x00F000FF) == 8.
-/// Returns 32 if the word is zero.
-inline unsigned CountLeadingZeros_32(uint32_t Value) {
-  unsigned Count; // result
-#if __GNUC__ >= 4
-  // PowerPC is defined for __builtin_clz(0)
-#if !defined(__ppc__) && !defined(__ppc64__)
-  if (!Value) return 32;
-#endif
-  Count = __builtin_clz(Value);
-#else
-  if (!Value) return 32;
-  Count = 0;
-  // bisection method for count leading zeros
-  for (unsigned Shift = 32 >> 1; Shift; Shift >>= 1) {
-    uint32_t Tmp = Value >> Shift;
-    if (Tmp) {
-      Value = Tmp;
-    } else {
-      Count |= Shift;
-    }
-  }
-#endif
-  return Count;
-}
-
 /// CountLeadingOnes_32 - this function performs the operation of
 /// counting the number of ones from the most significant bit to the first zero
 /// bit.  Ex. CountLeadingOnes_32(0xFF0FFF00) == 8.
 /// Returns 32 if the word is all ones.
 inline unsigned CountLeadingOnes_32(uint32_t Value) {
-  return CountLeadingZeros_32(~Value);
-}
-
-/// CountLeadingZeros_64 - This function performs the platform optimal form
-/// of counting the number of zeros from the most significant bit to the first
-/// one bit (64 bit edition.)
-/// Returns 64 if the word is zero.
-inline unsigned CountLeadingZeros_64(uint64_t Value) {
-  unsigned Count; // result
-#if __GNUC__ >= 4
-  // PowerPC is defined for __builtin_clzll(0)
-#if !defined(__ppc__) && !defined(__ppc64__)
-  if (!Value) return 64;
-#endif
-  Count = __builtin_clzll(Value);
-#else
-  if (sizeof(long) == sizeof(int64_t)) {
-    if (!Value) return 64;
-    Count = 0;
-    // bisection method for count leading zeros
-    for (unsigned Shift = 64 >> 1; Shift; Shift >>= 1) {
-      uint64_t Tmp = Value >> Shift;
-      if (Tmp) {
-        Value = Tmp;
-      } else {
-        Count |= Shift;
-      }
-    }
-  } else {
-    // get hi portion
-    uint32_t Hi = Hi_32(Value);
-
-    // if some bits in hi portion
-    if (Hi) {
-        // leading zeros in hi portion plus all bits in lo portion
-        Count = CountLeadingZeros_32(Hi);
-    } else {
-        // get lo portion
-        uint32_t Lo = Lo_32(Value);
-        // same as 32 bit value
-        Count = CountLeadingZeros_32(Lo)+32;
-    }
-  }
-#endif
-  return Count;
+  return countLeadingZeros(~Value);
 }
 
 /// CountLeadingOnes_64 - This function performs the operation
@@ -459,27 +387,7 @@ inline unsigned CountLeadingZeros_64(uint64_t Value) {
 /// zero bit (64 bit edition.)
 /// Returns 64 if the word is all ones.
 inline unsigned CountLeadingOnes_64(uint64_t Value) {
-  return CountLeadingZeros_64(~Value);
-}
-
-/// CountTrailingZeros_32 - this function performs the platform optimal form of
-/// counting the number of zeros from the least significant bit to the first one
-/// bit.  Ex. CountTrailingZeros_32(0xFF00FF00) == 8.
-/// Returns 32 if the word is zero.
-inline unsigned CountTrailingZeros_32(uint32_t Value) {
-#if __GNUC__ >= 4
-  return Value ? __builtin_ctz(Value) : 32;
-#else
-  static const unsigned Mod37BitPosition[] = {
-    32, 0, 1, 26, 2, 23, 27, 0, 3, 16, 24, 30, 28, 11, 0, 13,
-    4, 7, 17, 0, 25, 22, 31, 15, 29, 10, 12, 6, 0, 21, 14, 9,
-    5, 20, 8, 19, 18
-  };
-  // Replace "-Value" by "1+~Value" in the following commented code to avoid 
-  // MSVC warning C4146
-  //    return Mod37BitPosition[(-Value & Value) % 37];
-  return Mod37BitPosition[((1 + ~Value) & Value) % 37];
-#endif
+  return countLeadingZeros(~Value);
 }
 
 /// CountTrailingOnes_32 - this function performs the operation of
@@ -487,29 +395,7 @@ inline unsigned CountTrailingZeros_32(uint32_t Value) {
 /// bit.  Ex. CountTrailingOnes_32(0x00FF00FF) == 8.
 /// Returns 32 if the word is all ones.
 inline unsigned CountTrailingOnes_32(uint32_t Value) {
-  return CountTrailingZeros_32(~Value);
-}
-
-/// CountTrailingZeros_64 - This function performs the platform optimal form
-/// of counting the number of zeros from the least significant bit to the first
-/// one bit (64 bit edition.)
-/// Returns 64 if the word is zero.
-inline unsigned CountTrailingZeros_64(uint64_t Value) {
-#if __GNUC__ >= 4
-  return Value ? __builtin_ctzll(Value) : 64;
-#else
-  static const unsigned Mod67Position[] = {
-    64, 0, 1, 39, 2, 15, 40, 23, 3, 12, 16, 59, 41, 19, 24, 54,
-    4, 64, 13, 10, 17, 62, 60, 28, 42, 30, 20, 51, 25, 44, 55,
-    47, 5, 32, 65, 38, 14, 22, 11, 58, 18, 53, 63, 9, 61, 27,
-    29, 50, 43, 46, 31, 37, 21, 57, 52, 8, 26, 49, 45, 36, 56,
-    7, 48, 35, 6, 34, 33, 0
-  };
-  // Replace "-Value" by "1+~Value" in the following commented code to avoid 
-  // MSVC warning C4146
-  //    return Mod67Position[(-Value & Value) % 67];
-  return Mod67Position[((1 + ~Value) & Value) % 67];
-#endif
+  return countTrailingZeros(~Value);
 }
 
 /// CountTrailingOnes_64 - This function performs the operation
