@@ -32,6 +32,7 @@ static void InitializeFlags() {
   f->report_blocks = false;
   f->resolution = 0;
   f->max_leaks = 0;
+  f->exitcode = 23;
   f->log_pointers = false;
   f->log_threads = false;
 
@@ -47,6 +48,7 @@ static void InitializeFlags() {
     CHECK_GE(&f->max_leaks, 0);
     ParseFlag(options, &f->log_pointers, "log_pointers");
     ParseFlag(options, &f->log_threads, "log_threads");
+    ParseFlag(options, &f->exitcode, "exitcode");
   }
 }
 
@@ -269,28 +271,42 @@ static void PrintLeaked() {
   ForEachChunk(PrintLeakedCb());
 }
 
+enum LeakCheckResult {
+  kFatalError,
+  kLeaksFound,
+  kNoLeaks
+};
+
 static void DoLeakCheckCallback(const SuspendedThreadsList &suspended_threads,
                                 void *arg) {
+  LeakCheckResult *result = reinterpret_cast<LeakCheckResult *>(arg);
+  CHECK_EQ(*result, kFatalError);
   // Allocator must not be locked when we call GetRegionBegin().
   UnlockAllocator();
-  bool *success = reinterpret_cast<bool *>(arg);
   ClassifyAllChunks(suspended_threads);
   LeakReport leak_report;
   CollectLeaks(&leak_report);
-  if (!leak_report.IsEmpty()) {
-    leak_report.PrintLargest(flags()->max_leaks);
-    if (flags()->report_blocks)
-      PrintLeaked();
+  if (leak_report.IsEmpty()) {
+    *result = kNoLeaks;
+    return;
   }
+  leak_report.PrintLargest(flags()->max_leaks);
+  if (flags()->report_blocks)
+    PrintLeaked();
   ForEachChunk(ClearTagCb());
-  *success = true;
+  *result = kLeaksFound;
 }
 
 void DoLeakCheck() {
-  bool success = false;
-  LockAndSuspendThreads(DoLeakCheckCallback, &success);
-  if (!success)
-    Report("Leak check failed!\n");
+  LeakCheckResult result = kFatalError;
+  LockAndSuspendThreads(DoLeakCheckCallback, &result);
+  if (result == kFatalError) {
+    Report("LeakSanitizer has encountered a fatal error.\n");
+    Die();
+  } else if (result == kLeaksFound) {
+    if (flags()->exitcode)
+      internal__exit(flags()->exitcode);
+  }
 }
 
 ///// Reporting of leaked blocks' addresses (for testing). /////

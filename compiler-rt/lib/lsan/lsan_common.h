@@ -68,6 +68,8 @@ struct Flags {
   int resolution;
   // The number of leaks reported.
   int max_leaks;
+  // If nonzero kill the process with this exit code upon finding leaks.
+  int exitcode;
 
   // Debug logging.
   bool log_pointers;
