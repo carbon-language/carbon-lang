@@ -272,10 +272,9 @@ void Sema::ActOnPragmaMSComment(PragmaMSCommentKind Kind, llvm::StringRef Arg) {
   case PCK_Linker:
     Consumer.HandleLinkerOptionPragma(Arg);
     return;
-  case PCK_Lib: {
+  case PCK_Lib:
     Consumer.HandleDependentLibrary(Arg);
     return;
-  }
   case PCK_Compiler:
   case PCK_ExeStr:
   case PCK_User:

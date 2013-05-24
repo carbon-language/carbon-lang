@@ -1266,6 +1266,17 @@ public:
 
 };
 
+static std::string qualifyWindowsLibrary(llvm::StringRef Lib) {
+  // If the argument does not end in .lib, automatically add the suffix. This
+  // matches the behavior of MSVC.
+  std::string ArgStr = Lib;
+  if (Lib.size() <= 4 ||
+      Lib.substr(Lib.size() - 4).compare_lower(".lib") != 0) {
+    ArgStr += ".lib";
+  }
+  return ArgStr;
+}
+
 class WinX86_32TargetCodeGenInfo : public X86_32TargetCodeGenInfo {
 public:
   WinX86_32TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, unsigned RegParms)
@@ -1274,7 +1285,7 @@ public:
   void getDependentLibraryOption(llvm::StringRef Lib,
                                  llvm::SmallString<24> &Opt) const {
     Opt = "/DEFAULTLIB:";
-    Opt += Lib;
+    Opt += qualifyWindowsLibrary(Lib);
   }
 };
 
@@ -1300,7 +1311,7 @@ public:
   void getDependentLibraryOption(llvm::StringRef Lib,
                                  llvm::SmallString<24> &Opt) const {
     Opt = "/DEFAULTLIB:";
-    Opt += Lib;
+    Opt += qualifyWindowsLibrary(Lib);
   }
 };
 

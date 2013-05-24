@@ -35,7 +35,7 @@ int use_no_umbrella() {
 // CHECK: !4 = metadata !{i32 6, metadata !"Linker Options", metadata ![[AUTOLINK_OPTIONS:[0-9]+]]}
 // CHECK: ![[AUTOLINK_OPTIONS]] = metadata !{metadata ![[AUTOLINK_FRAMEWORK:[0-9]+]], metadata ![[AUTOLINK:[0-9]+]], metadata ![[DEPENDSONMODULE:[0-9]+]], metadata ![[MODULE:[0-9]+]], metadata ![[NOUMBRELLA:[0-9]+]]}
 // CHECK: ![[AUTOLINK_FRAMEWORK]] = metadata !{metadata !"-framework", metadata !"autolink_framework"}
-// CHECK: ![[AUTOLINK]] = metadata !{metadata !"{{(-l|/DEFAULTLIB:)}}autolink"}
+// CHECK: ![[AUTOLINK]] = metadata !{metadata !"{{(-l|/DEFAULTLIB:)}}autolink{{(\.lib)?}}"}
 // CHECK: ![[DEPENDSONMODULE]] = metadata !{metadata !"-framework", metadata !"DependsOnModule"}
 // CHECK: ![[MODULE]] = metadata !{metadata !"-framework", metadata !"Module"}
 // CHECK: ![[NOUMBRELLA]] = metadata !{metadata !"-framework", metadata !"NoUmbrella"}
