@@ -10,12 +10,13 @@
 #include "llvm/MC/MCInstrAnalysis.h"
 using namespace llvm;
 
-uint64_t MCInstrAnalysis::evaluateBranch(const MCInst &Inst, uint64_t Addr,
-                                         uint64_t Size) const {
+bool MCInstrAnalysis::evaluateBranch(const MCInst &Inst, uint64_t Addr,
+                                     uint64_t Size, uint64_t &Target) const {
   if (Inst.getNumOperands() == 0 ||
       Info->get(Inst.getOpcode()).OpInfo[0].OperandType != MCOI::OPERAND_PCREL)
-    return -1ULL;
+    return false;
 
   int64_t Imm = Inst.getOperand(0).getImm();
-  return Addr+Size+Imm;
+  Target = Addr+Size+Imm;
+  return true;
 }

@@ -17,22 +17,26 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-objdump.h"
-#include "MCFunction.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCAtom.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
+#include "llvm/MC/MCFunction.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCModule.h"
+#include "llvm/MC/MCObjectDisassembler.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectSymbolizer.h"
 #include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCRelocationInfo.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Object/MachO.h"
@@ -131,6 +135,10 @@ static cl::opt<bool>
 Symbolize("symbolize", cl::desc("When disassembling instructions, "
                                 "try to symbolize operands."));
 
+static cl::opt<bool>
+CFG("cfg", cl::desc("Create a CFG for every function found in the object"
+                      " and write it to a graphviz file"));
+
 static StringRef ToolName;
 
 bool llvm::error(error_code ec) {
@@ -169,7 +177,51 @@ static const Target *getTarget(const ObjectFile *Obj = NULL) {
   return TheTarget;
 }
 
-void llvm::StringRefMemoryObject::anchor() { }
+// Write a graphviz file for the CFG inside an MCFunction.
+static void emitDOTFile(const char *FileName, const MCFunction &f,
+                        MCInstPrinter *IP) {
+  // Start a new dot file.
+  std::string Error;
+  raw_fd_ostream Out(FileName, Error);
+  if (!Error.empty()) {
+    errs() << "llvm-objdump: warning: " << Error << '\n';
+    return;
+  }
+
+  Out << "digraph \"" << f.getName() << "\" {\n";
+  Out << "graph [ rankdir = \"LR\" ];\n";
+  for (MCFunction::const_iterator i = f.begin(), e = f.end(); i != e; ++i) {
+    // Only print blocks that have predecessors.
+    bool hasPreds = (*i)->pred_begin() != (*i)->pred_end();
+
+    if (!hasPreds && i != f.begin())
+      continue;
+
+    Out << '"' << (*i)->getInsts()->getBeginAddr() << "\" [ label=\"<a>";
+    // Print instructions.
+    for (unsigned ii = 0, ie = (*i)->getInsts()->size(); ii != ie;
+        ++ii) {
+      if (ii != 0) // Not the first line, start a new row.
+        Out << '|';
+      if (ii + 1 == ie) // Last line, add an end id.
+        Out << "<o>";
+
+      // Escape special chars and print the instruction in mnemonic form.
+      std::string Str;
+      raw_string_ostream OS(Str);
+      IP->printInst(&(*i)->getInsts()->at(ii).Inst, OS, "");
+      Out << DOT::EscapeString(OS.str());
+    }
+    Out << "\" shape=\"record\" ];\n";
+
+    // Add edges.
+    for (MCBasicBlock::succ_const_iterator si = (*i)->succ_begin(),
+        se = (*i)->succ_end(); si != se; ++si)
+      Out << (*i)->getInsts()->getBeginAddr() << ":o -> "
+          << (*si)->getInsts()->getBeginAddr() << ":a\n";
+  }
+  Out << "}\n";
+}
 
 void llvm::DumpBytes(StringRef bytes) {
   static const char hex_rep[] = "0123456789abcdef";
@@ -269,6 +321,9 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     }
   }
 
+  OwningPtr<const MCInstrAnalysis>
+    MIA(TheTarget->createMCInstrAnalysis(MII.get()));
+
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
   OwningPtr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
       AsmPrinterVariant, *AsmInfo, *MII, *MRI, *STI));
@@ -277,6 +332,34 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       << '\n';
     return;
   }
+
+  if (CFG) {
+    OwningPtr<MCObjectDisassembler> OD(
+      new MCObjectDisassembler(*Obj, *DisAsm, *MIA));
+    OwningPtr<MCModule> Mod(OD->buildModule(/* withCFG */ true));
+    for (MCModule::const_atom_iterator AI = Mod->atom_begin(),
+                                       AE = Mod->atom_end();
+                                       AI != AE; ++AI) {
+      outs() << "Atom " << (*AI)->getName() << ": \n";
+      if (const MCTextAtom *TA = dyn_cast<MCTextAtom>(*AI)) {
+        for (MCTextAtom::const_iterator II = TA->begin(), IE = TA->end();
+             II != IE;
+             ++II) {
+          IP->printInst(&II->Inst, outs(), "");
+          outs() << "\n";
+        }
+      }
+    }
+    for (MCModule::const_func_iterator FI = Mod->func_begin(),
+                                       FE = Mod->func_end();
+                                       FI != FE; ++FI) {
+      static int filenum = 0;
+      emitDOTFile((Twine((*FI)->getName()) + "_" +
+                   utostr(filenum++) + ".dot").str().c_str(),
+                    **FI, IP.get());
+    }
+  }
+
 
   error_code ec;
   for (section_iterator i = Obj->begin_sections(),

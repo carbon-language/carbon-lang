@@ -15,6 +15,7 @@ add_llvm_library(LLVMMC
   MCELF.cpp
   MCELFObjectTargetWriter.cpp
   MCELFStreamer.cpp
+  MCFunction.cpp
   MCExpr.cpp
   MCExternalSymbolizer.cpp
   MCInst.cpp
@@ -26,6 +27,7 @@ add_llvm_library(LLVMMC
   MCModule.cpp
   MCNullStreamer.cpp
   MCObjectFileInfo.cpp
+  MCObjectDisassembler.cpp
   MCObjectStreamer.cpp
   MCObjectSymbolizer.cpp
   MCObjectWriter.cpp

@@ -136,17 +136,17 @@ public:
     return MCInstrAnalysis::isConditionalBranch(Inst);
   }
 
-  uint64_t evaluateBranch(const MCInst &Inst, uint64_t Addr,
-                          uint64_t Size) const {
+  bool evaluateBranch(const MCInst &Inst, uint64_t Addr,
+                      uint64_t Size, uint64_t &Target) const {
     unsigned LblOperand = Inst.getOpcode() == AArch64::Bcc ? 1 : 0;
     // FIXME: We only handle PCRel branches for now.
     if (Info->get(Inst.getOpcode()).OpInfo[LblOperand].OperandType
         != MCOI::OPERAND_PCREL)
-      return -1ULL;
+      return false;
 
     int64_t Imm = Inst.getOperand(LblOperand).getImm();
-
-    return Addr + Imm;
+    Target = Addr + Imm;
+    return true;
   }
 };
 
