@@ -146,8 +146,10 @@ Instruction *InstCombiner::scalarizePHI(ExtractElementInst &EI, PHINode *PN) {
       // vector operand.
       BinaryOperator *B0 = cast<BinaryOperator>(PHIUser);
       unsigned opId = (B0->getOperand(0) == PN) ? 1: 0;
-      Value *Op = Builder->CreateExtractElement(
-        B0->getOperand(opId), Elt, B0->getOperand(opId)->getName()+".Elt");
+      Value *Op = InsertNewInstWith(
+          ExtractElementInst::Create(B0->getOperand(opId), Elt,
+                                     B0->getOperand(opId)->getName() + ".Elt"),
+          *B0);
       Value *newPHIUser = InsertNewInstWith(
         BinaryOperator::Create(B0->getOpcode(), scalarPHI,Op),
         *B0);

@@ -25,3 +25,28 @@ ret:
   ret void
 }
 
+define i1 @g(<3 x i32> %input_2) {
+; CHECK: extractelement
+entry:
+  br label %for.cond
+
+for.cond:
+; CHECK: phi i32
+  %input_2.addr.0 = phi <3 x i32> [ %input_2, %entry ], [ %div45, %for.body ]
+  %input_1.addr.1 = phi <3 x i32> [ undef, %entry ], [ %dec43, %for.body ]
+  br i1 undef, label %for.end, label %for.body
+
+; CHECK extractelement
+for.body:
+  %dec43 = add <3 x i32> %input_1.addr.1, <i32 -1, i32 -1, i32 -1>
+  %sub44 = sub <3 x i32> zeroinitializer, %dec43
+  %div45 = sdiv <3 x i32> %input_2.addr.0, %sub44
+  br label %for.cond
+
+for.end:
+  %0 = extractelement <3 x i32> %input_2.addr.0, i32 0
+  %.89 = select i1 false, i32 0, i32 %0
+  %tobool313 = icmp eq i32 %.89, 0
+  ret i1 %tobool313
+}
+
