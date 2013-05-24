@@ -222,9 +222,7 @@ bool BranchProbabilityInfo::calcColdCallHeuristics(BasicBlock *BB) {
 
   // Determine which successors are post-dominated by a cold block.
   SmallVector<unsigned, 4> ColdEdges;
-  ColdEdges.reserve(TI->getNumSuccessors());
   SmallVector<unsigned, 4> NormalEdges;
-  NormalEdges.reserve(TI->getNumSuccessors());
   for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I)
     if (PostDominatedByColdCall.count(*I))
       ColdEdges.push_back(I.getSuccessorIndex());
