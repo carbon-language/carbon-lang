@@ -2544,8 +2544,12 @@ void clang_toggleCrashRecovery(unsigned isEnabled) {
   
 CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
                                               const char *ast_filename) {
-  if (!CIdx)
+  if (!CIdx || !ast_filename)
     return 0;
+
+  LOG_FUNC_SECTION {
+    *Log << ast_filename;
+  }
 
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
   FileSystemOptions FileSystemOpts;
