@@ -43,11 +43,11 @@ void InitializePlatformSpecificModules() {
     return;
   }
   if (num_matches == 0)
-    Report("%s: Dynamic linker not found. TLS will not be handled correctly.\n",
-           SanitizerToolName);
+    Report("LeakSanitizer: Dynamic linker not found. "
+           "TLS will not be handled correctly.\n");
   else if (num_matches > 1)
-    Report("%s: Multiple modules match \"%s\". TLS will not be handled "
-           "correctly.\n", SanitizerToolName, kLinkerName);
+    Report("LeakSanitizer: Multiple modules match \"%s\". "
+           "TLS will not be handled correctly.\n", kLinkerName);
   linker = 0;
 }
 

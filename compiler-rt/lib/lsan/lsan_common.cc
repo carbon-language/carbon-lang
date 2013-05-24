@@ -390,31 +390,31 @@ void LeakReport::PrintLargest(uptr max_leaks) {
            "reported.\n",
            kMaxLeaksConsidered);
   if (max_leaks > 0 && max_leaks < leaks_.size())
-    Printf("The %llu largest leak%s:\n", max_leaks, max_leaks > 1 ? "s" : "");
+    Printf("The %llu largest leak(s):\n", max_leaks);
   InternalSort(&leaks_, leaks_.size(), IsLarger);
   max_leaks = max_leaks > 0 ? Min(max_leaks, leaks_.size()) : leaks_.size();
   for (uptr i = 0; i < max_leaks; i++) {
-    Printf("%s leak of %llu bytes in %llu object%s allocated from:\n",
+    Printf("%s leak of %llu byte(s) in %llu object(s) allocated from:\n",
            leaks_[i].is_directly_leaked ? "Direct" : "Indirect",
-           leaks_[i].total_size, leaks_[i].hit_count,
-           leaks_[i].hit_count == 1 ? "" : "s");
+           leaks_[i].total_size, leaks_[i].hit_count);
     PrintStackTraceById(leaks_[i].stack_trace_id);
     Printf("\n");
   }
   if (max_leaks < leaks_.size()) {
     uptr remaining = leaks_.size() - max_leaks;
-    Printf("Omitting %llu more leak%s.\n", remaining,
-           remaining > 1 ? "s" : "");
+    Printf("Omitting %llu more leak(s).\n", remaining);
   }
 }
 
 void LeakReport::PrintSummary() {
   CHECK(leaks_.size() <= kMaxLeaksConsidered);
-  uptr bytes_leaked = 0;
+  uptr bytes = 0, allocations = 0;
   for (uptr i = 0; i < leaks_.size(); i++) {
-      bytes_leaked += leaks_[i].total_size;
+      bytes += leaks_[i].total_size;
+      allocations += leaks_[i].hit_count;
   }
-  Printf("SUMMARY: LeakSanitizer: %llu bytes leaked.\n", bytes_leaked);
+  Printf("SUMMARY: LeakSanitizer: %llu byte(s) leaked in %llu allocation(s).\n",
+         bytes, allocations);
 }
 }  // namespace __lsan
 #endif  // CAN_SANITIZE_LEAKS
