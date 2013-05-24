@@ -982,7 +982,7 @@ IntrusiveRefCntPtr<PathDiagnosticEventPiece>
 PathDiagnosticCallPiece::getCallEnterWithinCallerEvent() const {
   if (!callEnterWithin.asLocation().isValid())
     return 0;
-  if (Callee->isImplicit())
+  if (Callee->isImplicit() || !Callee->hasBody())
     return 0;
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Callee))
     if (MD->isDefaulted())

@@ -210,6 +210,13 @@ static bool removeUnneededCalls(PathPieces &pieces, BugReport *R,
   return containsSomethingInteresting;
 }
 
+/// Returns true if the given decl has been implicitly given a body, either by
+/// the analyzer or by the compiler proper.
+static bool hasImplicitBody(const Decl *D) {
+  assert(D);
+  return D->isImplicit() || !D->hasBody();
+}
+
 /// Recursively scan through a path and make sure that all call pieces have
 /// valid locations. Note that all other pieces with invalid locations should
 /// have already been pruned out.
@@ -224,11 +231,10 @@ static void adjustCallLocations(PathPieces &Pieces,
     }
 
     if (LastCallLocation) {
-      if (!Call->callEnter.asLocation().isValid() ||
-          Call->getCaller()->isImplicit())
+      bool CallerIsImplicit = hasImplicitBody(Call->getCaller());
+      if (CallerIsImplicit || !Call->callEnter.asLocation().isValid())
         Call->callEnter = *LastCallLocation;
-      if (!Call->callReturn.asLocation().isValid() ||
-          Call->getCaller()->isImplicit())
+      if (CallerIsImplicit || !Call->callReturn.asLocation().isValid())
         Call->callReturn = *LastCallLocation;
     }
 
@@ -236,7 +242,7 @@ static void adjustCallLocations(PathPieces &Pieces,
     // it contains any informative diagnostics.
     PathDiagnosticLocation *ThisCallLocation;
     if (Call->callEnterWithin.asLocation().isValid() &&
-        !Call->getCallee()->isImplicit())
+        !hasImplicitBody(Call->getCallee()))
       ThisCallLocation = &Call->callEnterWithin;
     else
       ThisCallLocation = &Call->callEnter;
