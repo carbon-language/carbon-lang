@@ -413,7 +413,7 @@ DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
          "Asked to disassemble an ARM instruction but Subtarget is in Thumb mode!");
 
   // We want to read exactly 4 bytes of data.
-  if (Region.readBytes(Address, 4, (uint8_t*)bytes, NULL) == -1) {
+  if (Region.readBytes(Address, 4, bytes) == -1) {
     Size = 0;
     return MCDisassembler::Fail;
   }
@@ -659,7 +659,7 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
          "Asked to disassemble in Thumb mode but Subtarget is in ARM mode!");
 
   // We want to read exactly 2 bytes of data.
-  if (Region.readBytes(Address, 2, (uint8_t*)bytes, NULL) == -1) {
+  if (Region.readBytes(Address, 2, bytes) == -1) {
     Size = 0;
     return MCDisassembler::Fail;
   }
@@ -711,7 +711,7 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   }
 
   // We want to read exactly 4 bytes of data.
-  if (Region.readBytes(Address, 4, (uint8_t*)bytes, NULL) == -1) {
+  if (Region.readBytes(Address, 4, bytes) == -1) {
     Size = 0;
     return MCDisassembler::Fail;
   }

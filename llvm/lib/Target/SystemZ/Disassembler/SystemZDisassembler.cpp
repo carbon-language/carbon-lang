@@ -272,7 +272,7 @@ DecodeStatus SystemZDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   // Get the first two bytes of the instruction.
   uint8_t Bytes[6];
   Size = 0;
-  if (Region.readBytes(Address, 2, Bytes, 0) == -1)
+  if (Region.readBytes(Address, 2, Bytes) == -1)
     return MCDisassembler::Fail;
 
   // The top 2 bits of the first byte specify the size.
@@ -289,7 +289,7 @@ DecodeStatus SystemZDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   }
 
   // Read any remaining bytes.
-  if (Size > 2 && Region.readBytes(Address + 2, Size - 2, Bytes + 2, 0) == -1)
+  if (Size > 2 && Region.readBytes(Address + 2, Size - 2, Bytes + 2) == -1)
     return MCDisassembler::Fail;
 
   // Construct the instruction.

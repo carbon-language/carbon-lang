@@ -252,7 +252,7 @@ static DecodeStatus readInstruction32(const MemoryObject &region,
   uint8_t Bytes[4];
 
   // We want to read exactly 4 Bytes of data.
-  if (region.readBytes(address, 4, (uint8_t*)Bytes, NULL) == -1) {
+  if (region.readBytes(address, 4, Bytes) == -1) {
     size = 0;
     return MCDisassembler::Fail;
   }

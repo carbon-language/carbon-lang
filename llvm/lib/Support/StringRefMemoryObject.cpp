@@ -20,15 +20,10 @@ int StringRefMemoryObject::readByte(uint64_t Addr, uint8_t *Byte) const {
 
 int StringRefMemoryObject::readBytes(uint64_t Addr,
                                      uint64_t Size,
-                                     uint8_t *Buf,
-                                     uint64_t *Copied) const {
-  if (Addr >= Base + getExtent() || Addr < Base)
-    return -1;
+                                     uint8_t *Buf) const {
   uint64_t Offset = Addr - Base;
-  if (Size > getExtent() - Offset)
-    Size = getExtent() - Offset;
+  if (Addr >= Base + getExtent() || Offset + Size > getExtent() || Addr < Base)
+    return -1;
   memcpy(Buf, Bytes.data() + Offset, Size);
-  if (Copied)
-    *Copied = Size;
   return 0;
 }

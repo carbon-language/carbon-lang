@@ -42,7 +42,7 @@ public:
   /// @param ptr      - A pointer to a byte to be filled in.  Must be non-NULL.
   /// @result         - 0 if successful; -1 if not.  Failure may be due to a
   ///                   bounds violation or an implementation-specific error.
-  virtual int readByte(uint64_t address, uint8_t* ptr) const = 0;
+  virtual int readByte(uint64_t address, uint8_t *ptr) const = 0;
 
   /// readBytes       - Tries to read a contiguous range of bytes from the
   ///                   region, up to the end of the region.
@@ -51,17 +51,12 @@ public:
   ///
   /// @param address  - The address of the first byte, in the same space as 
   ///                   getBase().
-  /// @param size     - The maximum number of bytes to copy.
+  /// @param size     - The number of bytes to copy.
   /// @param buf      - A pointer to a buffer to be filled in.  Must be non-NULL
   ///                   and large enough to hold size bytes.
-  /// @param copied   - A pointer to a nunber that is filled in with the number
-  ///                   of bytes actually read.  May be NULL.
   /// @result         - 0 if successful; -1 if not.  Failure may be due to a
   ///                   bounds violation or an implementation-specific error.
-  virtual int readBytes(uint64_t address,
-                        uint64_t size,
-                        uint8_t* buf,
-                        uint64_t* copied) const;
+  virtual int readBytes(uint64_t address, uint64_t size, uint8_t *buf) const;
 };
 
 }

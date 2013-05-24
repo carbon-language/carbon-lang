@@ -53,7 +53,7 @@ static bool readInstruction16(const MemoryObject &region,
   uint8_t Bytes[4];
 
   // We want to read exactly 2 Bytes of data.
-  if (region.readBytes(address, 2, Bytes, NULL) == -1) {
+  if (region.readBytes(address, 2, Bytes) == -1) {
     size = 0;
     return false;
   }
@@ -69,7 +69,7 @@ static bool readInstruction32(const MemoryObject &region,
   uint8_t Bytes[4];
 
   // We want to read exactly 4 Bytes of data.
-  if (region.readBytes(address, 4, Bytes, NULL) == -1) {
+  if (region.readBytes(address, 4, Bytes) == -1) {
     size = 0;
     return false;
   }
