@@ -1399,18 +1399,18 @@ public:
   /// equivalent of the string given by \p str.
   static unsigned getBitsNeeded(StringRef str, uint8_t radix);
 
-  /// \brief Count the number of zeros from the msb to the first one bit.
+  /// \brief The APInt version of the countLeadingZeros functions in
+  ///   MathExtras.h.
   ///
-  /// This function is an APInt version of the countLeadingZeros_{32,64}
-  /// functions in MathExtras.h. It counts the number of zeros from the most
-  /// significant bit to the first one bit.
+  /// It counts the number of zeros from the most significant bit to the first
+  /// one bit.
   ///
   /// \returns BitWidth if the value is zero, otherwise returns the number of
-  /// zeros from the most significant bit to the first one bits.
+  ///   zeros from the most significant bit to the first one bits.
   unsigned countLeadingZeros() const {
     if (isSingleWord()) {
       unsigned unusedBits = APINT_BITS_PER_WORD - BitWidth;
-      return CountLeadingZeros_64(VAL) - unusedBits;
+      return llvm::countLeadingZeros(VAL) - unusedBits;
     }
     return countLeadingZerosSlowCase();
   }

@@ -660,8 +660,8 @@ void ARMInstPrinter::printBitfieldInvMaskImmOperand(const MCInst *MI,
                                                     raw_ostream &O) {
   const MCOperand &MO = MI->getOperand(OpNum);
   uint32_t v = ~MO.getImm();
-  int32_t lsb = CountTrailingZeros_32(v);
-  int32_t width = (32 - CountLeadingZeros_32 (v)) - lsb;
+  int32_t lsb = countTrailingZeros(v);
+  int32_t width = (32 - countLeadingZeros (v)) - lsb;
   assert(MO.isImm() && "Not a valid bf_inv_mask_imm value!");
   O << markup("<imm:") << '#' << lsb << markup(">")
     << ", "
@@ -931,7 +931,7 @@ void ARMInstPrinter::printThumbITMask(const MCInst *MI, unsigned OpNum,
   unsigned Mask = MI->getOperand(OpNum).getImm();
   unsigned Firstcond = MI->getOperand(OpNum-1).getImm();
   unsigned CondBit0 = Firstcond & 1;
-  unsigned NumTZ = CountTrailingZeros_32(Mask);
+  unsigned NumTZ = countTrailingZeros(Mask);
   assert(NumTZ <= 3 && "Invalid IT mask!");
   for (unsigned Pos = 3, e = NumTZ; Pos > e; --Pos) {
     bool T = ((Mask >> Pos) & 1) == CondBit0;

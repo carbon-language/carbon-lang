@@ -487,7 +487,7 @@ void LTOModule::addDefinedSymbol(const GlobalValue *def, bool isFunction) {
 
   // set alignment part log2() can have rounding errors
   uint32_t align = def->getAlignment();
-  uint32_t attr = align ? CountTrailingZeros_32(def->getAlignment()) : 0;
+  uint32_t attr = align ? countTrailingZeros(def->getAlignment()) : 0;
 
   // set permissions part
   if (isFunction) {

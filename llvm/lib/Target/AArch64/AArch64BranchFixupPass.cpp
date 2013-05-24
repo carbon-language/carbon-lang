@@ -87,7 +87,7 @@ namespace {
         // If the block size isn't a multiple of the known bits, assume the
         // worst case padding.
         if (Size & ((1u << Bits) - 1))
-          Bits = CountTrailingZeros_32(Size);
+          Bits = countTrailingZeros(Size);
         return Bits;
       }
 

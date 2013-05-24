@@ -579,7 +579,7 @@ int ThreadSanitizer::getMemoryAccessFuncIndex(Value *Addr) {
     // Ignore all unusual sizes.
     return -1;
   }
-  size_t Idx = CountTrailingZeros_32(TypeSize / 8);
+  size_t Idx = countTrailingZeros(TypeSize / 8);
   assert(Idx < kNumberOfAccessSizes);
   return Idx;
 }

@@ -290,7 +290,7 @@ void llvm::ComputeMaskedBits(Value *V, APInt &KnownZero, APInt &KnownOne,
     }
     if (Align > 0)
       KnownZero = APInt::getLowBitsSet(BitWidth,
-                                       CountTrailingZeros_32(Align));
+                                       countTrailingZeros(Align));
     else
       KnownZero.clearAllBits();
     KnownOne.clearAllBits();
@@ -321,7 +321,7 @@ void llvm::ComputeMaskedBits(Value *V, APInt &KnownZero, APInt &KnownOne,
     }
 
     if (Align)
-      KnownZero = APInt::getLowBitsSet(BitWidth, CountTrailingZeros_32(Align));
+      KnownZero = APInt::getLowBitsSet(BitWidth, countTrailingZeros(Align));
     return;
   }
 
@@ -613,7 +613,7 @@ void llvm::ComputeMaskedBits(Value *V, APInt &KnownZero, APInt &KnownOne,
       Align = TD->getABITypeAlignment(AI->getType()->getElementType());
 
     if (Align > 0)
-      KnownZero = APInt::getLowBitsSet(BitWidth, CountTrailingZeros_32(Align));
+      KnownZero = APInt::getLowBitsSet(BitWidth, countTrailingZeros(Align));
     break;
   }
   case Instruction::GetElementPtr: {
@@ -633,8 +633,8 @@ void llvm::ComputeMaskedBits(Value *V, APInt &KnownZero, APInt &KnownOne,
         const StructLayout *SL = TD->getStructLayout(STy);
         unsigned Idx = cast<ConstantInt>(Index)->getZExtValue();
         uint64_t Offset = SL->getElementOffset(Idx);
-        TrailZ = std::min(TrailZ,
-                          CountTrailingZeros_64(Offset));
+        TrailZ = std::min<unsigned>(TrailZ,
+                                    countTrailingZeros(Offset));
       } else {
         // Handle array index arithmetic.
         Type *IndexedTy = GTI.getIndexedType();
@@ -644,7 +644,7 @@ void llvm::ComputeMaskedBits(Value *V, APInt &KnownZero, APInt &KnownOne,
         LocalKnownZero = LocalKnownOne = APInt(GEPOpiBits, 0);
         ComputeMaskedBits(Index, LocalKnownZero, LocalKnownOne, TD, Depth+1);
         TrailZ = std::min(TrailZ,
-                          unsigned(CountTrailingZeros_64(TypeSize) +
+                          unsigned(countTrailingZeros(TypeSize) +
                                    LocalKnownZero.countTrailingOnes()));
       }
     }

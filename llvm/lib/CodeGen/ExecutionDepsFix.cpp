@@ -91,7 +91,7 @@ struct DomainValue {
 
   // First domain available.
   unsigned getFirstDomain() const {
-    return CountTrailingZeros_32(AvailableDomains);
+    return countTrailingZeros(AvailableDomains);
   }
 
   DomainValue() : Refs(0) { clear(); }
@@ -564,7 +564,7 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
 
   // If the collapsed operands force a single domain, propagate the collapse.
   if (isPowerOf2_32(available)) {
-    unsigned domain = CountTrailingZeros_32(available);
+    unsigned domain = countTrailingZeros(available);
     TII->setExecutionDomain(mi, domain);
     visitHardInstr(mi, domain);
     return;

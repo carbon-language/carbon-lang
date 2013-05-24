@@ -332,17 +332,17 @@ static bool isOpcWithIntImmediate(SDNode *N, unsigned Opc, unsigned& Imm) {
 bool PPCDAGToDAGISel::isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
   if (isShiftedMask_32(Val)) {
     // look for the first non-zero bit
-    MB = CountLeadingZeros_32(Val);
+    MB = countLeadingZeros(Val);
     // look for the first zero bit after the run of ones
-    ME = CountLeadingZeros_32((Val - 1) ^ Val);
+    ME = countLeadingZeros((Val - 1) ^ Val);
     return true;
   } else {
     Val = ~Val; // invert mask
     if (isShiftedMask_32(Val)) {
       // effectively look for the first zero bit
-      ME = CountLeadingZeros_32(Val) - 1;
+      ME = countLeadingZeros(Val) - 1;
       // effectively look for the first one bit after the run of zeros
-      MB = CountLeadingZeros_32((Val - 1) ^ Val) + 1;
+      MB = countLeadingZeros((Val - 1) ^ Val) + 1;
       return true;
     }
   }
@@ -912,7 +912,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
 
       // If it can't be represented as a 32 bit value.
       if (!isInt<32>(Imm)) {
-        Shift = CountTrailingZeros_64(Imm);
+        Shift = countTrailingZeros<uint64_t>(Imm);
         int64_t ImmSh = static_cast<uint64_t>(Imm) >> Shift;
 
         // If the shifted value fits 32 bits.

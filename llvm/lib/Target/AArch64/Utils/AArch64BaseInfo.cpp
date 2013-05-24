@@ -972,7 +972,7 @@ bool A64Imms::isLogicalImm(unsigned RegWidth, uint64_t Imm, uint32_t &Bits) {
     // Now we have to work out the amount of rotation needed. The first part of
     // this calculation is actually independent of RepeatWidth, but the complex
     // case will depend on it.
-    Rotation = CountTrailingZeros_64(Imm);
+    Rotation = countTrailingZeros(Imm);
     if (Rotation == 0) {
       // There were no leading zeros, which means it's either in place or there
       // are 1s at each end (e.g. 0x8003 needs rotating).

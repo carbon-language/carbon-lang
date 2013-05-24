@@ -519,7 +519,7 @@ ModulePass *llvm::createAddressSanitizerModulePass(
 }
 
 static size_t TypeSizeToSizeIndex(uint32_t TypeSize) {
-  size_t Res = CountTrailingZeros_32(TypeSize / 8);
+  size_t Res = countTrailingZeros(TypeSize / 8);
   assert(Res < kNumberOfAccessSizes);
   return Res;
 }

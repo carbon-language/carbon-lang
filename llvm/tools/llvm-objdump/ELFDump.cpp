@@ -63,7 +63,7 @@ void printProgramHeaders(
            << format(Fmt, (uint64_t)pi->p_vaddr)
            << "paddr "
            << format(Fmt, (uint64_t)pi->p_paddr)
-           << format("align 2**%u\n", CountTrailingZeros_64(pi->p_align))
+           << format("align 2**%u\n", countTrailingZeros<uint64_t>(pi->p_align))
            << "         filesz "
            << format(Fmt, (uint64_t)pi->p_filesz)
            << "memsz "

@@ -1380,7 +1380,7 @@ static bool CollectBSwapParts(Value *V, int OverallLeftShift, uint32_t ByteMask,
   // into a byteswap.  At least one of the two bytes would not be aligned with
   // their ultimate destination.
   if (!isPowerOf2_32(ByteMask)) return true;
-  unsigned InputByteNo = CountTrailingZeros_32(ByteMask);
+  unsigned InputByteNo = countTrailingZeros(ByteMask);
 
   // 2) The input and ultimate destinations must line up: if byte 3 of an i32
   // is demanded, it needs to go into byte 0 of the result.  This means that the

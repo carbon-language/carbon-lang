@@ -1359,8 +1359,8 @@ getBitfieldInvertedMaskOpValue(const MCInst &MI, unsigned Op,
   // msb of the mask.
   const MCOperand &MO = MI.getOperand(Op);
   uint32_t v = ~MO.getImm();
-  uint32_t lsb = CountTrailingZeros_32(v);
-  uint32_t msb = (32 - CountLeadingZeros_32 (v)) - 1;
+  uint32_t lsb = countTrailingZeros(v);
+  uint32_t msb = (32 - countLeadingZeros (v)) - 1;
   assert (v != 0 && lsb < 32 && msb < 32 && "Illegal bitfield mask!");
   return lsb | (msb << 5);
 }

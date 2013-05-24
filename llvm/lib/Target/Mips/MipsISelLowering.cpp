@@ -70,7 +70,7 @@ static bool isShiftedMask(uint64_t I, uint64_t &Pos, uint64_t &Size) {
      return false;
 
   Size = CountPopulation_64(I);
-  Pos = CountTrailingZeros_64(I);
+  Pos = countTrailingZeros(I);
   return true;
 }
 

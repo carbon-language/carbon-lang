@@ -137,9 +137,9 @@ public:
     for (unsigned i = 0; i < BITWORDS_PER_ELEMENT; ++i)
       if (Bits[i] != 0) {
         if (sizeof(BitWord) == 4)
-          return i * BITWORD_SIZE + CountTrailingZeros_32(Bits[i]);
+          return i * BITWORD_SIZE + countTrailingZeros(Bits[i]);
         if (sizeof(BitWord) == 8)
-          return i * BITWORD_SIZE + CountTrailingZeros_64(Bits[i]);
+          return i * BITWORD_SIZE + countTrailingZeros(Bits[i]);
         llvm_unreachable("Unsupported!");
       }
     llvm_unreachable("Illegal empty element");
@@ -162,9 +162,9 @@ public:
 
     if (Copy != 0) {
       if (sizeof(BitWord) == 4)
-        return WordPos * BITWORD_SIZE + CountTrailingZeros_32(Copy);
+        return WordPos * BITWORD_SIZE + countTrailingZeros(Copy);
       if (sizeof(BitWord) == 8)
-        return WordPos * BITWORD_SIZE + CountTrailingZeros_64(Copy);
+        return WordPos * BITWORD_SIZE + countTrailingZeros(Copy);
       llvm_unreachable("Unsupported!");
     }
 
@@ -172,9 +172,9 @@ public:
     for (unsigned i = WordPos+1; i < BITWORDS_PER_ELEMENT; ++i)
       if (Bits[i] != 0) {
         if (sizeof(BitWord) == 4)
-          return i * BITWORD_SIZE + CountTrailingZeros_32(Bits[i]);
+          return i * BITWORD_SIZE + countTrailingZeros(Bits[i]);
         if (sizeof(BitWord) == 8)
-          return i * BITWORD_SIZE + CountTrailingZeros_64(Bits[i]);
+          return i * BITWORD_SIZE + countTrailingZeros(Bits[i]);
         llvm_unreachable("Unsupported!");
       }
     return -1;

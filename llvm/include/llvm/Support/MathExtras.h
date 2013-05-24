@@ -517,7 +517,7 @@ inline unsigned CountTrailingZeros_64(uint64_t Value) {
 /// zero bit (64 bit edition.)
 /// Returns 64 if the word is all ones.
 inline unsigned CountTrailingOnes_64(uint64_t Value) {
-  return CountTrailingZeros_64(~Value);
+  return countTrailingZeros(~Value);
 }
 
 /// CountPopulation_32 - this function counts the number of set bits in a value.
@@ -550,26 +550,26 @@ inline unsigned CountPopulation_64(uint64_t Value) {
 /// -1 if the value is zero. (32 bit edition.)
 /// Ex. Log2_32(32) == 5, Log2_32(1) == 0, Log2_32(0) == -1, Log2_32(6) == 2
 inline unsigned Log2_32(uint32_t Value) {
-  return 31 - CountLeadingZeros_32(Value);
+  return 31 - countLeadingZeros(Value);
 }
 
 /// Log2_64 - This function returns the floor log base 2 of the specified value,
 /// -1 if the value is zero. (64 bit edition.)
 inline unsigned Log2_64(uint64_t Value) {
-  return 63 - CountLeadingZeros_64(Value);
+  return 63 - countLeadingZeros(Value);
 }
 
 /// Log2_32_Ceil - This function returns the ceil log base 2 of the specified
 /// value, 32 if the value is zero. (32 bit edition).
 /// Ex. Log2_32_Ceil(32) == 5, Log2_32_Ceil(1) == 0, Log2_32_Ceil(6) == 3
 inline unsigned Log2_32_Ceil(uint32_t Value) {
-  return 32-CountLeadingZeros_32(Value-1);
+  return 32 - countLeadingZeros(Value - 1);
 }
 
 /// Log2_64_Ceil - This function returns the ceil log base 2 of the specified
 /// value, 64 if the value is zero. (64 bit edition.)
 inline unsigned Log2_64_Ceil(uint64_t Value) {
-  return 64-CountLeadingZeros_64(Value-1);
+  return 64 - countLeadingZeros(Value - 1);
 }
 
 /// GreatestCommonDivisor64 - Return the greatest common divisor of the two

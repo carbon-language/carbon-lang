@@ -1044,8 +1044,8 @@ void ARMCodeEmitter::emitDataProcessingInstruction(const MachineInstr &MI,
       return;
   } else if ((MCID.Opcode == ARM::BFC) || (MCID.Opcode == ARM::BFI)) {
       uint32_t v = ~MI.getOperand(2).getImm();
-      int32_t lsb = CountTrailingZeros_32(v);
-      int32_t msb = (32 - CountLeadingZeros_32(v)) - 1;
+      int32_t lsb = countTrailingZeros(v);
+      int32_t msb = (32 - countLeadingZeros(v)) - 1;
       // Instr{20-16} = msb, Instr{11-7} = lsb
       Binary |= (msb & 0x1F) << 16;
       Binary |= (lsb & 0x1F) << 7;

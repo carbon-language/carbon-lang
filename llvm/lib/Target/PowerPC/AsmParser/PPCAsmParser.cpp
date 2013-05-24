@@ -247,7 +247,7 @@ public:
 
   unsigned getCRBitMask() const {
     assert(isCRBitMask() && "Invalid access!");
-    return 7 - CountTrailingZeros_32(Imm.Val);
+    return 7 - countTrailingZeros<uint64_t>(Imm.Val);
   }
 
   bool isToken() const { return Kind == Token; }

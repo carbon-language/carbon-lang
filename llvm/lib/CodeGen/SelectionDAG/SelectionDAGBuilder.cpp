@@ -1816,7 +1816,7 @@ void SelectionDAGBuilder::visitBitTestCase(BitTestBlock &BB,
     Cmp = DAG.getSetCC(getCurDebugLoc(),
                        TLI.getSetCCResultType(*DAG.getContext(), VT),
                        ShiftOp,
-                       DAG.getConstant(CountTrailingZeros_64(B.Mask), VT),
+                       DAG.getConstant(countTrailingZeros(B.Mask), VT),
                        ISD::SETEQ);
   } else if (PopCount == BB.Range) {
     // There is only one zero bit in the range, test for it directly.

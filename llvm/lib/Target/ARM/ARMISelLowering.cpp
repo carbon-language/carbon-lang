@@ -8167,7 +8167,7 @@ static SDValue PerformMULCombine(SDNode *N,
     return SDValue();
 
   int64_t MulAmt = C->getSExtValue();
-  unsigned ShiftAmt = CountTrailingZeros_64(MulAmt);
+  unsigned ShiftAmt = countTrailingZeros<uint64_t>(MulAmt);
 
   ShiftAmt = ShiftAmt & (32 - 1);
   SDValue V = N->getOperand(0);
@@ -8388,7 +8388,7 @@ static SDValue PerformORCombine(SDNode *N,
       return SDValue();
 
     if (ARM::isBitFieldInvertedMask(Mask)) {
-      Val >>= CountTrailingZeros_32(~Mask);
+      Val >>= countTrailingZeros(~Mask);
 
       Res = DAG.getNode(ARMISD::BFI, DL, VT, N00,
                         DAG.getConstant(Val, MVT::i32),
@@ -8415,7 +8415,7 @@ static SDValue PerformORCombine(SDNode *N,
           (Mask == 0xffff || Mask == 0xffff0000))
         return SDValue();
       // 2a
-      unsigned amt = CountTrailingZeros_32(Mask2);
+      unsigned amt = countTrailingZeros(Mask2);
       Res = DAG.getNode(ISD::SRL, DL, VT, N1.getOperand(0),
                         DAG.getConstant(amt, MVT::i32));
       Res = DAG.getNode(ARMISD::BFI, DL, VT, N00, Res,
@@ -8431,7 +8431,7 @@ static SDValue PerformORCombine(SDNode *N,
           (Mask2 == 0xffff || Mask2 == 0xffff0000))
         return SDValue();
       // 2b
-      unsigned lsb = CountTrailingZeros_32(Mask);
+      unsigned lsb = countTrailingZeros(Mask);
       Res = DAG.getNode(ISD::SRL, DL, VT, N00,
                         DAG.getConstant(lsb, MVT::i32));
       Res = DAG.getNode(ARMISD::BFI, DL, VT, N1.getOperand(0), Res,
@@ -8449,7 +8449,7 @@ static SDValue PerformORCombine(SDNode *N,
     // where lsb(mask) == #shamt and masked bits of B are known zero.
     SDValue ShAmt = N00.getOperand(1);
     unsigned ShAmtC = cast<ConstantSDNode>(ShAmt)->getZExtValue();
-    unsigned LSB = CountTrailingZeros_32(Mask);
+    unsigned LSB = countTrailingZeros(Mask);
     if (ShAmtC != LSB)
       return SDValue();
 
@@ -8492,8 +8492,8 @@ static SDValue PerformBFICombine(SDNode *N,
     if (!N11C)
       return SDValue();
     unsigned InvMask = cast<ConstantSDNode>(N->getOperand(2))->getZExtValue();
-    unsigned LSB = CountTrailingZeros_32(~InvMask);
-    unsigned Width = (32 - CountLeadingZeros_32(~InvMask)) - LSB;
+    unsigned LSB = countTrailingZeros(~InvMask);
+    unsigned Width = (32 - countLeadingZeros(~InvMask)) - LSB;
     unsigned Mask = (1 << Width)-1;
     unsigned Mask2 = N11C->getZExtValue();
     if ((Mask & (~Mask2)) == 0)

@@ -2464,7 +2464,7 @@ static int32_t getLSBForBFI(SelectionDAG &DAG, DebugLoc DL, EVT VT,
   // cases (e.g. bitfield to bitfield copy) may still need a real shift before
   // the BFI.
 
-  uint64_t LSB = CountTrailingZeros_64(Mask);
+  uint64_t LSB = countTrailingZeros(Mask);
   int64_t ShiftRightRequired = LSB;
   if (MaskedVal.getOpcode() == ISD::SHL &&
       isa<ConstantSDNode>(MaskedVal.getOperand(1))) {

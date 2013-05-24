@@ -65,7 +65,7 @@ namespace {
       void setITState(char Firstcond, char Mask) {
         // (3 - the number of trailing zeros) is the number of then / else.
         unsigned CondBit0 = Firstcond & 1;
-        unsigned NumTZ = CountTrailingZeros_32(Mask);
+        unsigned NumTZ = countTrailingZeros<uint8_t>(Mask);
         unsigned char CCBits = static_cast<unsigned char>(Firstcond & 0xf);
         assert(NumTZ <= 3 && "Invalid IT mask!");
         // push condition codes onto the stack the correct order for the pops

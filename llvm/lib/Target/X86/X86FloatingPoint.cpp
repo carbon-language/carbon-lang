@@ -893,8 +893,8 @@ void FPS::adjustLiveRegs(unsigned Mask, MachineBasicBlock::iterator I) {
 
   // Produce implicit-defs for free by using killed registers.
   while (Kills && Defs) {
-    unsigned KReg = CountTrailingZeros_32(Kills);
-    unsigned DReg = CountTrailingZeros_32(Defs);
+    unsigned KReg = countTrailingZeros(Kills);
+    unsigned DReg = countTrailingZeros(Defs);
     DEBUG(dbgs() << "Renaming %FP" << KReg << " as imp %FP" << DReg << "\n");
     std::swap(Stack[getSlot(KReg)], Stack[getSlot(DReg)]);
     std::swap(RegMap[KReg], RegMap[DReg]);
@@ -917,7 +917,7 @@ void FPS::adjustLiveRegs(unsigned Mask, MachineBasicBlock::iterator I) {
 
   // Manually kill the rest.
   while (Kills) {
-    unsigned KReg = CountTrailingZeros_32(Kills);
+    unsigned KReg = countTrailingZeros(Kills);
     DEBUG(dbgs() << "Killing %FP" << KReg << "\n");
     freeStackSlotBefore(I, KReg);
     Kills &= ~(1 << KReg);
@@ -925,7 +925,7 @@ void FPS::adjustLiveRegs(unsigned Mask, MachineBasicBlock::iterator I) {
 
   // Load zeros for all the imp-defs.
   while(Defs) {
-    unsigned DReg = CountTrailingZeros_32(Defs);
+    unsigned DReg = countTrailingZeros(Defs);
     DEBUG(dbgs() << "Defining %FP" << DReg << " as 0\n");
     BuildMI(*MBB, I, DebugLoc(), TII->get(X86::LD_F0));
     pushReg(DReg);
@@ -1636,7 +1636,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     // Note: this might be a non-optimal pop sequence.  We might be able to do
     // better by trying to pop in stack order or something.
     while (FPKills) {
-      unsigned FPReg = CountTrailingZeros_32(FPKills);
+      unsigned FPReg = countTrailingZeros(FPKills);
       if (isLive(FPReg))
         freeStackSlotAfter(InsertPt, FPReg);
       FPKills &= ~(1U << FPReg);
