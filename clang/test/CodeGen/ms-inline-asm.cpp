@@ -103,3 +103,11 @@ void test5() {
   __asm mov x, eax
   // CHECK: call void asm sideeffect inteldialect "mov dword ptr $0, eax", "=*m,~{dirflag},~{fpsr},~{flags}"(i32* [[X]])
 }
+
+// Just verify this doesn't emit an error.
+void test6() {
+  __asm {
+   a:
+   jmp a
+  }
+}

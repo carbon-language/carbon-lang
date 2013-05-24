@@ -1821,7 +1821,8 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
                                    UnqualifiedId &Id,
                                    bool HasTrailingLParen,
                                    bool IsAddressOfOperand,
-                                   CorrectionCandidateCallback *CCC) {
+                                   CorrectionCandidateCallback *CCC,
+                                   bool IsInlineAsmIdentifier) {
   assert(!(IsAddressOfOperand && HasTrailingLParen) &&
          "cannot be direct & operand and have a trailing lparen");
 
@@ -1936,6 +1937,10 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
           return ActOnDependentIdExpression(SS, TemplateKWLoc, NameInfo,
                                             IsAddressOfOperand, TemplateArgs);
       }
+
+      // Don't diagnose an empty lookup for inline assmebly.
+      if (IsInlineAsmIdentifier)
+        return ExprError();
 
       CorrectionCandidateCallback DefaultValidator;
       if (DiagnoseEmptyLookup(S, SS, R, CCC ? *CCC : DefaultValidator))

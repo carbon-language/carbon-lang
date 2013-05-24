@@ -381,7 +381,9 @@ ExprResult Sema::LookupInlineAsmIdentifier(CXXScopeSpec &SS,
 
   ExprResult Result = ActOnIdExpression(getCurScope(), SS, TemplateKWLoc, Id,
                                         /*trailing lparen*/ false,
-                                        /*is & operand*/ false);
+                                        /*is & operand*/ false,
+                                        /*CorrectionCandidateCallback=*/0,
+                                        /*IsInlineAsmIdentifier=*/ true);
 
   if (IsUnevaluatedContext)
     PopExpressionEvaluationContext();
