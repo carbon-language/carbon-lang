@@ -455,8 +455,13 @@ namespace {
     /// sequence.
     SmallPtrSet<Instruction *, 2> ReverseInsertPts;
 
+    /// If this is true, we cannot perform code motion but can still remove
+    /// retain/release pairs.
+    bool CFGHazardAfflicted;
+
     RRInfo() :
-      KnownSafe(false), IsTailCallRelease(false), ReleaseMetadata(0) {}
+      KnownSafe(false), IsTailCallRelease(false), ReleaseMetadata(0),
+      CFGHazardAfflicted(false) {}
 
     void clear();
 
@@ -472,6 +477,7 @@ void RRInfo::clear() {
   ReleaseMetadata = 0;
   Calls.clear();
   ReverseInsertPts.clear();
+  CFGHazardAfflicted = false;
 }
 
 namespace {
@@ -559,6 +565,7 @@ PtrState::Merge(const PtrState &Other, bool TopDown) {
     RRI.IsTailCallRelease = RRI.IsTailCallRelease &&
                             Other.RRI.IsTailCallRelease;
     RRI.Calls.insert(Other.RRI.Calls.begin(), Other.RRI.Calls.end());
+    RRI.CFGHazardAfflicted |= Other.RRI.CFGHazardAfflicted;
 
     // Merge the insert point sets. If there are any differences,
     // that makes this a partial merge.
@@ -1690,6 +1697,7 @@ static void CheckForUseCFGHazard(const Sequence SuccSSeq,
                                  PtrState &S,
                                  bool &SomeSuccHasSame,
                                  bool &AllSuccsHaveSame,
+                                 bool &NotAllSeqEqualButKnownSafe,
                                  bool &ShouldContinue) {
   switch (SuccSSeq) {
   case S_CanRelease: {
@@ -1697,6 +1705,7 @@ static void CheckForUseCFGHazard(const Sequence SuccSSeq,
       S.ClearSequenceProgress();
       break;
     }
+    S.RRI.CFGHazardAfflicted = true;
     ShouldContinue = true;
     break;
   }
@@ -1708,6 +1717,8 @@ static void CheckForUseCFGHazard(const Sequence SuccSSeq,
   case S_MovableRelease:
     if (!S.RRI.KnownSafe && !SuccSRRIKnownSafe)
       AllSuccsHaveSame = false;
+    else
+      NotAllSeqEqualButKnownSafe = true;
     break;
   case S_Retain:
     llvm_unreachable("bottom-up pointer in retain state!");
@@ -1723,7 +1734,8 @@ static void CheckForCanReleaseCFGHazard(const Sequence SuccSSeq,
                                         const bool SuccSRRIKnownSafe,
                                         PtrState &S,
                                         bool &SomeSuccHasSame,
-                                        bool &AllSuccsHaveSame) {
+                                        bool &AllSuccsHaveSame,
+                                        bool &NotAllSeqEqualButKnownSafe) {
   switch (SuccSSeq) {
   case S_CanRelease:
     SomeSuccHasSame = true;
@@ -1734,6 +1746,8 @@ static void CheckForCanReleaseCFGHazard(const Sequence SuccSSeq,
   case S_Use:
     if (!S.RRI.KnownSafe && !SuccSRRIKnownSafe)
       AllSuccsHaveSame = false;
+    else
+      NotAllSeqEqualButKnownSafe = true;
     break;
   case S_Retain:
     llvm_unreachable("bottom-up pointer in retain state!");
@@ -1769,6 +1783,7 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
     const TerminatorInst *TI = cast<TerminatorInst>(&BB->back());
     bool SomeSuccHasSame = false;
     bool AllSuccsHaveSame = true;
+    bool NotAllSeqEqualButKnownSafe = false;
 
     succ_const_iterator SI(TI), SE(TI, false);
 
@@ -1800,17 +1815,17 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
       switch(S.GetSeq()) {
       case S_Use: {
         bool ShouldContinue = false;
-        CheckForUseCFGHazard(SuccSSeq, SuccSRRIKnownSafe, S,
-                             SomeSuccHasSame, AllSuccsHaveSame,
+        CheckForUseCFGHazard(SuccSSeq, SuccSRRIKnownSafe, S, SomeSuccHasSame,
+                             AllSuccsHaveSame, NotAllSeqEqualButKnownSafe,
                              ShouldContinue);
         if (ShouldContinue)
           continue;
         break;
       }
       case S_CanRelease: {
-        CheckForCanReleaseCFGHazard(SuccSSeq, SuccSRRIKnownSafe,
-                                    S, SomeSuccHasSame,
-                                    AllSuccsHaveSame);
+        CheckForCanReleaseCFGHazard(SuccSSeq, SuccSRRIKnownSafe, S,
+                                    SomeSuccHasSame, AllSuccsHaveSame,
+                                    NotAllSeqEqualButKnownSafe);
         break;
       }
       case S_Retain:
@@ -1825,8 +1840,15 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
     // If the state at the other end of any of the successor edges
     // matches the current state, require all edges to match. This
     // guards against loops in the middle of a sequence.
-    if (SomeSuccHasSame && !AllSuccsHaveSame)
+    if (SomeSuccHasSame && !AllSuccsHaveSame) {
       S.ClearSequenceProgress();
+    } else if (NotAllSeqEqualButKnownSafe) {
+      // If we would have cleared the state foregoing the fact that we are known
+      // safe, stop code motion. This is because whether or not it is safe to
+      // remove RR pairs via KnownSafe is an orthogonal concept to whether we
+      // are allowed to perform code motion.
+      S.RRI.CFGHazardAfflicted = true;
+    }
   }
 }
 
@@ -2489,6 +2511,7 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
   // we are dealing with a retainable object with multiple provenance sources.
   bool KnownSafeTD = true, KnownSafeBU = true;
   bool MultipleOwners = false;
+  bool CFGHazardAfflicted = false;
 
   // Connect the dots between the top-down-collected RetainsToMove and
   // bottom-up-collected ReleasesToMove to form sets of related calls.
@@ -2565,6 +2588,7 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
       assert(It != Releases.end());
       const RRInfo &NewReleaseRRI = It->second;
       KnownSafeBU &= NewReleaseRRI.KnownSafe;
+      CFGHazardAfflicted |= NewReleaseRRI.CFGHazardAfflicted;
       for (SmallPtrSet<Instruction *, 2>::const_iterator
              LI = NewReleaseRRI.Calls.begin(),
              LE = NewReleaseRRI.Calls.end(); LI != LE; ++LI) {
@@ -2617,6 +2641,14 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
     // TODO: If the fully aggressive solution isn't valid, try to find a
     // less aggressive solution which is.
     if (NewDelta != 0)
+      return false;
+
+    // At this point, we are not going to remove any RR pairs, but we still are
+    // able to move RR pairs. If one of our pointers is afflicted with
+    // CFGHazards, we cannot perform such code motion so exit early.
+    const bool WillPerformCodeMotion = RetainsToMove.ReverseInsertPts.size() ||
+      ReleasesToMove.ReverseInsertPts.size();
+    if (CFGHazardAfflicted && WillPerformCodeMotion)
       return false;
   }
 
