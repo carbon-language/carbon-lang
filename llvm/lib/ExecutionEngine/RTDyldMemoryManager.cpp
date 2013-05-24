@@ -16,6 +16,8 @@
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/ErrorHandling.h"
 
+#include <cstdlib>
+
 #ifdef __linux__
   // These includes used by RTDyldMemoryManager::getPointerToNamedFunction()
   // for Glibc trickery. See comments in this function for more information.
