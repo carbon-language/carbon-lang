@@ -14,6 +14,7 @@
 #ifndef LLVM_SUPPORT_MATHEXTRAS_H
 #define LLVM_SUPPORT_MATHEXTRAS_H
 
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/SwapByteOrder.h"
 #include "llvm/Support/type_traits.h"
 
@@ -86,6 +87,7 @@ inline std::size_t countTrailingZeros<uint32_t>(uint32_t Val, ZeroBehavior ZB) {
 #endif
 }
 
+#if !defined(_MSC_VER) || defined(_M_X64)
 template <>
 inline std::size_t countTrailingZeros<uint64_t>(uint64_t Val, ZeroBehavior ZB) {
   if (ZB != ZB_Undefined && Val == 0)
@@ -99,6 +101,7 @@ inline std::size_t countTrailingZeros<uint64_t>(uint64_t Val, ZeroBehavior ZB) {
   return Index;
 #endif
 }
+#endif
 #endif
 
 /// \brief Count number of 0's from the most significant bit to the least
@@ -148,6 +151,7 @@ inline std::size_t countLeadingZeros<uint32_t>(uint32_t Val, ZeroBehavior ZB) {
 #endif
 }
 
+#if !defined(_MSC_VER) || defined(_M_X64)
 template <>
 inline std::size_t countLeadingZeros<uint64_t>(uint64_t Val, ZeroBehavior ZB) {
   if (ZB != ZB_Undefined && Val == 0)
@@ -161,6 +165,7 @@ inline std::size_t countLeadingZeros<uint64_t>(uint64_t Val, ZeroBehavior ZB) {
   return Index ^ 63;
 #endif
 }
+#endif
 #endif
 
 /// \brief Get the index of the first set bit starting from the least
