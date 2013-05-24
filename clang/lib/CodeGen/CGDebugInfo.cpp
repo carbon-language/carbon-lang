@@ -1827,7 +1827,10 @@ static QualType UnwrapTypeForDebugInfo(QualType T, const ASTContext &C) {
       T = cast<SubstTemplateTypeParmType>(T)->getReplacementType();
       break;
     case Type::Auto:
-      T = cast<AutoType>(T)->getDeducedType();
+      QualType DT = cast<AutoType>(T)->getDeducedType();
+      if (DT.isNull())
+        return T;
+      T = DT;
       break;
     }
 
@@ -2044,8 +2047,10 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile Unit) {
   case Type::TypeOf:
   case Type::Decltype:
   case Type::UnaryTransform:
-  case Type::Auto:
     llvm_unreachable("type should have been unwrapped!");
+  case Type::Auto:
+    Diag = "auto";
+    break;
   }
 
   assert(Diag && "Fall through without a diagnostic?");
