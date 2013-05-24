@@ -190,7 +190,7 @@ public:
   ///
   /// \returns true if the call has been successfully evaluated
   /// and false otherwise. Note, that only one checker can evaluate a call. If
-  /// more then one checker claim that they can evaluate the same call the
+  /// more then one checker claims that they can evaluate the same call the
   /// first one wins.
   ///
   /// eval::Call
