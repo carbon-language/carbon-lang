@@ -15,6 +15,18 @@
 
 <h1>Release notes for <tt>checker-XXX</tt> builds</h1>
 
+<h4 id="checker_275">checker-275</h4>
+<p><b>built:</b> May 23, 2013</br>
+	<b>download:</b> <a href="https://attache.apple.com/AttacheWeb/dl?id=ATCa7ffcf434b2d42e2808c038760f52a77">checker-275.tar.bz2</a></p>
+	<p><b>highlights:</b></p>
+	<ul>
+    <li>Xcode: Includes a new arrow layout algorithm for issue presentation within Xcode.  The goal is for interprocedural bug reports to look cleaner and less busy (and easier to read).  Feedback appreciated.</li>
+    <li>Xcode: Bugs that occur within header code (e.g., C++) are now reported within the callers in the main source file.  For example, if you misuse a C++ function declared in a header the primary diagnostic will be in the caller (in the main source file).  The full expanded path, however, will show the bug in the header code as well.  These kind of cross-file issues are currently only support by Xcode, not the HTML output.</li>
+    <li>This build is built with LLVM's Link-Time Optimization (LTO), which should make it slightly faster.</li>
+    <li>LTO also reduces the download size (about 19% smaller than checker-274).</li>
+    <li>Many sundry fixes.</li>
+	</ul>
+
 <h4 id="checker_274">checker-274</h4>
 <p><b>built:</b> April 23, 2013</br>
 	<b>download:</b> <a href="https://attache.apple.com/AttacheWeb/dl?id=ATCdb3165f4406a4589b5878a22494c3b79">checker-274.tar.bz2</a></p>
