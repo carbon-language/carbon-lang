@@ -23,12 +23,16 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCObjectFileInfo.h"
+#include "llvm/MC/MCObjectSymbolizer.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/MCRelocationInfo.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Object/MachO.h"
@@ -123,6 +127,10 @@ static cl::alias
 PrivateHeadersShort("p", cl::desc("Alias for --private-headers"),
                     cl::aliasopt(PrivateHeaders));
 
+static cl::opt<bool>
+Symbolize("symbolize", cl::desc("When disassembling instructions, "
+                                "try to symbolize operands."));
+
 static StringRef ToolName;
 
 bool llvm::error(error_code ec) {
@@ -137,8 +145,13 @@ static const Target *getTarget(const ObjectFile *Obj = NULL) {
   // Figure out the target triple.
   llvm::Triple TheTriple("unknown-unknown-unknown");
   if (TripleName.empty()) {
-    if (Obj)
+    if (Obj) {
       TheTriple.setArch(Triple::ArchType(Obj->getArch()));
+      // TheTriple defaults to ELF, and COFF doesn't have an environment:
+      // the best we can do here is indicate that it is mach-o.
+      if (Obj->isMachO())
+        TheTriple.setEnvironment(Triple::MachO);
+    }
   } else
     TheTriple.setTriple(Triple::normalize(TripleName));
 
@@ -216,7 +229,6 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
   // Set up disassembler.
   OwningPtr<const MCAsmInfo> AsmInfo(
     TheTarget->createMCAsmInfo(*MRI, TripleName));
-
   if (!AsmInfo) {
     errs() << "error: no assembly info for target " << TripleName << "\n";
     return;
@@ -224,16 +236,8 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 
   OwningPtr<const MCSubtargetInfo> STI(
     TheTarget->createMCSubtargetInfo(TripleName, "", FeaturesStr));
-
   if (!STI) {
     errs() << "error: no subtarget info for target " << TripleName << "\n";
-    return;
-  }
-
-  OwningPtr<const MCDisassembler> DisAsm(
-    TheTarget->createMCDisassembler(*STI));
-  if (!DisAsm) {
-    errs() << "error: no disassembler for target " << TripleName << "\n";
     return;
   }
 
@@ -241,6 +245,28 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
   if (!MII) {
     errs() << "error: no instruction info for target " << TripleName << "\n";
     return;
+  }
+
+  OwningPtr<MCDisassembler> DisAsm(TheTarget->createMCDisassembler(*STI));
+  if (!DisAsm) {
+    errs() << "error: no disassembler for target " << TripleName << "\n";
+    return;
+  }
+
+  OwningPtr<const MCObjectFileInfo> MOFI;
+  OwningPtr<MCContext> Ctx;
+
+  if (Symbolize) {
+    MOFI.reset(new MCObjectFileInfo);
+    Ctx.reset(new MCContext(*AsmInfo.get(), *MRI.get(), MOFI.get()));
+    OwningPtr<MCRelocationInfo> RelInfo(
+      TheTarget->createMCRelocationInfo(TripleName, *Ctx.get()));
+    if (RelInfo) {
+      OwningPtr<MCSymbolizer> Symzer(
+        MCObjectSymbolizer::createObjectSymbolizer(*Ctx.get(), RelInfo, Obj));
+      if (Symzer)
+        DisAsm->setSymbolizer(Symzer);
+    }
   }
 
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
@@ -317,9 +343,13 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     if (Symbols.empty())
       Symbols.push_back(std::make_pair(0, name));
 
+
+    SmallString<40> Comments;
+    raw_svector_ostream CommentStream(Comments);
+
     StringRef Bytes;
     if (error(i->getContents(Bytes))) break;
-    StringRefMemoryObject memoryObject(Bytes);
+    StringRefMemoryObject memoryObject(Bytes, SectionAddr);
     uint64_t Size;
     uint64_t Index;
     uint64_t SectSize;
@@ -353,14 +383,17 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       for (Index = Start; Index < End; Index += Size) {
         MCInst Inst;
 
-        if (DisAsm->getInstruction(Inst, Size, memoryObject, Index,
-                                   DebugOut, nulls())) {
+        if (DisAsm->getInstruction(Inst, Size, memoryObject,
+                                   SectionAddr + Index,
+                                   DebugOut, CommentStream)) {
           outs() << format("%8" PRIx64 ":", SectionAddr + Index);
           if (!NoShowRawInsn) {
             outs() << "\t";
             DumpBytes(StringRef(Bytes.data() + Index, Size));
           }
           IP->printInst(&Inst, outs(), "");
+          outs() << CommentStream.str();
+          Comments.clear();
           outs() << "\n";
         } else {
           errs() << ToolName << ": warning: invalid instruction encoding\n";

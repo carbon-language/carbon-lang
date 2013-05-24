@@ -38,16 +38,18 @@ void printELFFileHeader(const object::ObjectFile *o);
 class StringRefMemoryObject : public MemoryObject {
   virtual void anchor();
   StringRef Bytes;
+  uint64_t Base;
 public:
-  StringRefMemoryObject(StringRef bytes) : Bytes(bytes) {}
+  StringRefMemoryObject(StringRef bytes, uint64_t Base = 0)
+    : Bytes(bytes), Base(Base) {}
 
-  uint64_t getBase() const { return 0; }
+  uint64_t getBase() const { return Base; }
   uint64_t getExtent() const { return Bytes.size(); }
 
   int readByte(uint64_t Addr, uint8_t *Byte) const {
-    if (Addr >= getExtent())
+    if (Addr >= Base + getExtent() || Addr < Base)
       return -1;
-    *Byte = Bytes[Addr];
+    *Byte = Bytes[Addr - Base];
     return 0;
   }
 };

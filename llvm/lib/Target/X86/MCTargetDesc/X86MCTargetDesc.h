@@ -25,6 +25,7 @@ class MCInstrInfo;
 class MCObjectWriter;
 class MCRegisterInfo;
 class MCSubtargetInfo;
+class MCRelocationInfo;
 class Target;
 class StringRef;
 class raw_ostream;
@@ -94,6 +95,12 @@ MCObjectWriter *createX86ELFObjectWriter(raw_ostream &OS,
                                          uint16_t EMachine);
 /// createX86WinCOFFObjectWriter - Construct an X86 Win COFF object writer.
 MCObjectWriter *createX86WinCOFFObjectWriter(raw_ostream &OS, bool Is64Bit);
+
+/// createX86_64MachORelocationInfo - Construct X86-64 Mach-O relocation info.
+MCRelocationInfo *createX86_64MachORelocationInfo(MCContext &Ctx);
+
+/// createX86_64ELFORelocationInfo - Construct X86-64 ELF relocation info.
+MCRelocationInfo *createX86_64ELFRelocationInfo(MCContext &Ctx);
 } // End llvm namespace
 
 

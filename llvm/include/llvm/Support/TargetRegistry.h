@@ -41,6 +41,7 @@ namespace llvm {
   class MCRegisterInfo;
   class MCStreamer;
   class MCSubtargetInfo;
+  class MCRelocationInfo;
   class MCTargetAsmParser;
   class TargetMachine;
   class TargetOptions;
@@ -55,6 +56,8 @@ namespace llvm {
                                 MCCodeEmitter *CE,
                                 MCAsmBackend *TAB,
                                 bool ShowInst);
+
+  MCRelocationInfo *createMCRelocationInfo(MCContext &Ctx);
 
   /// Target - Wrapper for Target specific information.
   ///
@@ -127,6 +130,8 @@ namespace llvm {
                                              MCCodeEmitter *CE,
                                              MCAsmBackend *TAB,
                                              bool ShowInst);
+    typedef MCRelocationInfo *(*MCRelocationInfoCtorTy)(StringRef TT,
+                                                        MCContext &Ctx);
 
   private:
     /// Next - The next registered target in the linked list, maintained by the
@@ -205,6 +210,10 @@ namespace llvm {
     /// AsmStreamerCtorFn - Construction function for this target's
     /// AsmStreamer, if registered (default = llvm::createAsmStreamer).
     AsmStreamerCtorTy AsmStreamerCtorFn;
+
+    /// MCRelocationInfoCtorFn - Construction function for this target's
+    /// MCRelocationInfo, if registered (default = llvm::createMCRelocationInfo)
+    MCRelocationInfoCtorTy MCRelocationInfoCtorFn;
 
   public:
     Target() : AsmStreamerCtorFn(llvm::createAsmStreamer) {}
@@ -431,6 +440,16 @@ namespace llvm {
       // AsmStreamerCtorFn is default to llvm::createAsmStreamer
       return AsmStreamerCtorFn(Ctx, OS, isVerboseAsm, useLoc, useCFI,
                                useDwarfDirectory, InstPrint, CE, TAB, ShowInst);
+    }
+
+    /// createMCRelocationInfo - Create a target specific MCRelocationInfo.
+    ///
+    /// \param TT The target triple.
+    /// \param Ctx The target context.
+    MCRelocationInfo *
+      createMCRelocationInfo(StringRef TT, MCContext &Ctx) const {
+      // MCRelocationInfoCtorFn defaults to createMCRelocationInfo
+      return MCRelocationInfoCtorFn(TT, Ctx);
     }
 
     /// @}
@@ -758,6 +777,21 @@ namespace llvm {
     static void RegisterAsmStreamer(Target &T, Target::AsmStreamerCtorTy Fn) {
       if (T.AsmStreamerCtorFn == createAsmStreamer)
         T.AsmStreamerCtorFn = Fn;
+    }
+
+    /// RegisterMCRelocationInfo - Register an MCRelocationInfo
+    /// implementation for the given target.
+    ///
+    /// Clients are responsible for ensuring that registration doesn't occur
+    /// while another thread is attempting to access the registry. Typically
+    /// this is done by initializing all targets at program startup.
+    ///
+    /// @param T - The target being registered.
+    /// @param Fn - A function to construct an MCRelocationInfo for the target.
+    static void RegisterMCRelocationInfo(Target &T,
+                                         Target::MCRelocationInfoCtorTy Fn) {
+      if (!T.MCRelocationInfoCtorFn)
+        T.MCRelocationInfoCtorFn = Fn;
     }
 
     /// @}

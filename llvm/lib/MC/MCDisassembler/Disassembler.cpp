@@ -16,6 +16,7 @@
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCRelocationInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryObject.h"
@@ -73,7 +74,14 @@ LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
   MCDisassembler *DisAsm = TheTarget->createMCDisassembler(*STI);
   if (!DisAsm)
     return 0;
-  DisAsm->setupForSymbolicDisassembly(GetOpInfo, SymbolLookUp, DisInfo, Ctx);
+
+  OwningPtr<MCRelocationInfo> RelInfo(
+    TheTarget->createMCRelocationInfo(Triple, *Ctx));
+  if (!RelInfo)
+    return 0;
+
+  DisAsm->setupForSymbolicDisassembly(GetOpInfo, SymbolLookUp, DisInfo,
+                                      Ctx, RelInfo);
 
   // Set up the instruction printer.
   int AsmPrinterVariant = MAI->getAssemblerDialect();
