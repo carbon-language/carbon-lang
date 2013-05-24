@@ -607,10 +607,10 @@ llvm::DIDescriptor CGDebugInfo::createContextChain(const Decl *Context) {
   return TheCU;
 }
 
-/// CreatePointeeType - Create Pointee type. If Pointee is a record
+/// getOrCreateTypeDeclaration - Create Pointee type. If Pointee is a record
 /// then emit record's fwd if debug info size reduction is enabled.
-llvm::DIType CGDebugInfo::CreatePointeeType(QualType PointeeTy,
-                                            llvm::DIFile Unit) {
+llvm::DIType CGDebugInfo::getOrCreateTypeDeclaration(QualType PointeeTy,
+                                                     llvm::DIFile Unit) {
   if (DebugKind > CodeGenOptions::LimitedDebugInfo)
     return getOrCreateType(PointeeTy, Unit);
 
@@ -642,8 +642,8 @@ llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
                                                 llvm::DIFile Unit) {
   if (Tag == llvm::dwarf::DW_TAG_reference_type ||
       Tag == llvm::dwarf::DW_TAG_rvalue_reference_type)
-    return DBuilder.createReferenceType(Tag,
-                                        CreatePointeeType(PointeeTy, Unit));
+    return DBuilder.createReferenceType(
+        Tag, getOrCreateTypeDeclaration(PointeeTy, Unit));
 
   // Bit size, align and offset of the type.
   // Size is always the size of a pointer. We can't use getTypeSize here
@@ -652,7 +652,7 @@ llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
   uint64_t Size = CGM.getTarget().getPointerWidth(AS);
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
 
-  return DBuilder.createPointerType(CreatePointeeType(PointeeTy, Unit),
+  return DBuilder.createPointerType(getOrCreateTypeDeclaration(PointeeTy, Unit),
                                     Size, Align);
 }
 
@@ -733,7 +733,8 @@ llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
 llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty, llvm::DIFile Unit) {
   // Typedefs are derived from some other type.  If we have a typedef of a
   // typedef, make sure to emit the whole chain.
-  llvm::DIType Src = CreatePointeeType(Ty->getDecl()->getUnderlyingType(), Unit);
+  llvm::DIType Src =
+      getOrCreateTypeDeclaration(Ty->getDecl()->getUnderlyingType(), Unit);
   if (!Src.Verify())
     return llvm::DIType();
   // We don't set size information, but do specify where the typedef was
@@ -1727,7 +1728,7 @@ llvm::DIType CGDebugInfo::CreateType(const MemberPointerType *Ty,
   llvm::DIType ClassType = getOrCreateType(QualType(Ty->getClass(), 0), U);
   if (!Ty->getPointeeType()->isFunctionType())
     return DBuilder.createMemberPointerType(
-        CreatePointeeType(Ty->getPointeeType(), U), ClassType);
+        getOrCreateTypeDeclaration(Ty->getPointeeType(), U), ClassType);
   return DBuilder.createMemberPointerType(getOrCreateInstanceMethodType(
       CGM.getContext().getPointerType(
           QualType(Ty->getClass(), Ty->getPointeeType().getCVRQualifiers())),
@@ -2198,7 +2199,8 @@ llvm::DIDescriptor CGDebugInfo::getDeclarationOrDefinition(const Decl *D) {
   // in unlimited debug info)
   if (const TypeDecl *TD = dyn_cast<TypeDecl>(D)) {
     llvm::DIFile DefUnit = getOrCreateFile(TD->getLocation());
-    return CreatePointeeType(CGM.getContext().getTypeDeclType(TD), DefUnit);
+    return getOrCreateTypeDeclaration(CGM.getContext().getTypeDeclType(TD),
+                                      DefUnit);
   }
   // Otherwise fall back to a fairly rudimentary cache of existing declarations.
   // This doesn't handle providing declarations (for functions or variables) for

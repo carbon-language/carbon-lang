@@ -137,7 +137,7 @@ class CGDebugInfo {
                                                 llvm::DIFile F);
   llvm::DIType getOrCreateVTablePtrType(llvm::DIFile F);
   llvm::DINameSpace getOrCreateNameSpace(const NamespaceDecl *N);
-  llvm::DIType CreatePointeeType(QualType PointeeTy, llvm::DIFile F);
+  llvm::DIType getOrCreateTypeDeclaration(QualType PointeeTy, llvm::DIFile F);
   llvm::DIType CreatePointerLikeType(unsigned Tag,
                                      const Type *Ty, QualType PointeeTy,
                                      llvm::DIFile F);
