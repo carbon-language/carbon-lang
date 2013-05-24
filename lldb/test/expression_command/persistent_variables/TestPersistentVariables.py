@@ -28,24 +28,24 @@ class PersistentVariablesTestCase(TestBase):
 
         self.expect("expression $i + 1",
             startstr = "(int) $1 = 6")
-        # (int) $0 = 6
 
         self.expect("expression $i + 3",
             startstr = "(int) $2 = 8")
-        # (int) $1 = 8
 
         self.expect("expression $2 + $1",
             startstr = "(int) $3 = 14")
-        # (int) $2 = 14
 
         self.expect("expression $3",
             startstr = "(int) $3 = 14")
-        # (int) $2 =  14
 
         self.expect("expression $2",
             startstr = "(int) $2 = 8")
-        # (int) $1 = 8
 
+        self.expect("expression (int)-2",
+            startstr = "(int) $4 = -2")
+
+        self.expect("expression $4 > (int)31",
+            startstr = "(bool) $5 = false")
 
 if __name__ == '__main__':
     import atexit

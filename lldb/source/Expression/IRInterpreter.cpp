@@ -662,12 +662,16 @@ IRInterpreter::Interpret (llvm::Module &module,
                         result = L - R;
                         break;
                     case Instruction::SDiv:
+                        L.MakeSigned();
+                        R.MakeSigned();
                         result = L / R;
                         break;
                     case Instruction::UDiv:
                         result = L.GetRawBits64(0) / R.GetRawBits64(1);
                         break;
                     case Instruction::SRem:
+                        L.MakeSigned();
+                        R.MakeSigned();
                         result = L % R;
                         break;
                     case Instruction::URem:
@@ -1004,15 +1008,23 @@ IRInterpreter::Interpret (llvm::Module &module,
                         result = (L.GetRawBits64(0) <= R.GetRawBits64(0));
                         break;
                     case CmpInst::ICMP_SGT:
+                        L.MakeSigned();
+                        R.MakeSigned();
                         result = (L > R);
                         break;
                     case CmpInst::ICMP_SGE:
+                        L.MakeSigned();
+                        R.MakeSigned();
                         result = (L >= R);
                         break;
                     case CmpInst::ICMP_SLT:
+                        L.MakeSigned();
+                        R.MakeSigned();
                         result = (L < R);
                         break;
                     case CmpInst::ICMP_SLE:
+                        L.MakeSigned();
+                        R.MakeSigned();
                         result = (L <= R);
                         break;
                 }
