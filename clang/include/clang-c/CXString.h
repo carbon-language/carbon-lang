@@ -46,7 +46,7 @@ typedef struct {
 CINDEX_LINKAGE const char *clang_getCString(CXString string);
 
 /**
- * \brief Free the given string,
+ * \brief Free the given string.
  */
 CINDEX_LINKAGE void clang_disposeString(CXString string);
 
