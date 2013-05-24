@@ -636,6 +636,21 @@ INTERCEPTOR(long long, atoll, const char *nptr) {  // NOLINT
 }
 #endif  // ASAN_INTERCEPT_ATOLL_AND_STRTOLL
 
+static void AtCxaAtexit(void *unused) {
+  (void)unused;
+  StopInitOrderChecking();
+}
+
+#if ASAN_INTERCEPT___CXA_ATEXIT
+INTERCEPTOR(int, __cxa_atexit, void (*func)(void *), void *arg,
+            void *dso_handle) {
+  ENSURE_ASAN_INITED();
+  int res = REAL(__cxa_atexit)(func, arg, dso_handle);
+  REAL(__cxa_atexit)(AtCxaAtexit, 0, 0);
+  return res;
+}
+#endif  // ASAN_INTERCEPT___CXA_ATEXIT
+
 #define ASAN_INTERCEPT_FUNC(name) do { \
       if (!INTERCEPT_FUNCTION(name) && flags()->verbosity > 0) \
         Report("AddressSanitizer: failed to intercept '" #name "'\n"); \
@@ -744,6 +759,11 @@ void InitializeAsanInterceptors() {
   // Intercept threading-related functions
 #if ASAN_INTERCEPT_PTHREAD_CREATE
   ASAN_INTERCEPT_FUNC(pthread_create);
+#endif
+
+  // Intercept atexit function.
+#if ASAN_INTERCEPT___CXA_ATEXIT
+  ASAN_INTERCEPT_FUNC(__cxa_atexit);
 #endif
 
   // Some Windows-specific interceptors.

@@ -77,6 +77,12 @@ using __sanitizer::uptr;
 # define ASAN_INTERCEPT___CXA_THROW 0
 #endif
 
+#if !SANITIZER_WINDOWS
+# define ASAN_INTERCEPT___CXA_ATEXIT 1
+#else
+# define ASAN_INTERCEPT___CXA_ATEXIT 0
+#endif
+
 # if SANITIZER_WINDOWS
 extern "C" {
 // Windows threads.
