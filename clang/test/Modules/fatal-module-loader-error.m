@@ -22,5 +22,5 @@
 
 // Also check that libclang does not create a PCH with such an error.
 // RUN: c-index-test -write-pch %t.pch -fmodules -fmodules-cache-path=%t %s \
-// RUN:    -Xclang -fdisable-module-hash -F %S/Inputs 2>&1 | Filecheck %s
+// RUN:    -Xclang -fdisable-module-hash -F %S/Inputs 2>&1 | FileCheck %s
 // CHECK: Unable to write PCH file
