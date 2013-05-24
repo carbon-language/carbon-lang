@@ -23,6 +23,16 @@
 .syntax unified
 .align 3
 DEFINE_COMPILERRT_FUNCTION(__modsi3)
+#if __ARM_ARCH_7S__
+	tst     r1, r1
+	beq     LOCAL_LABEL(divzero)
+	sdiv	r2, r0, r1
+	mls 	r0, r2, r1, r0
+	bx      lr
+LOCAL_LABEL(divzero):
+	mov     r0, #0
+	bx      lr
+#else
     ESTABLISH_FRAME
     //  Set aside the sign of the dividend.
     mov     r4,     r0
@@ -37,3 +47,4 @@ DEFINE_COMPILERRT_FUNCTION(__modsi3)
     eor     r0,     r0, r4, asr #31
     sub     r0,     r0, r4, asr #31
     CLEAR_FRAME_AND_RETURN
+#endif

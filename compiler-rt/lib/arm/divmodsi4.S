@@ -24,6 +24,18 @@
 .syntax unified
 .align 3
 DEFINE_COMPILERRT_FUNCTION(__divmodsi4)
+#if __ARM_ARCH_7S__
+	tst     r1, r1
+	beq     LOCAL_LABEL(divzero)
+	mov 	r3, r0
+	sdiv	r0, r3, r1
+	mls 	r1, r0, r1, r3
+	str 	r1, [r2]
+	bx  	lr
+LOCAL_LABEL(divzero):
+	mov     r0, #0
+	bx      lr
+#else
     ESTABLISH_FRAME
 //  Set aside the sign of the quotient and modulus, and the address for the
 //  modulus.
@@ -45,3 +57,4 @@ DEFINE_COMPILERRT_FUNCTION(__divmodsi4)
     sub     r1,     r1, r5, asr #31
     str     r1,    [r6]
     CLEAR_FRAME_AND_RETURN
+#endif
