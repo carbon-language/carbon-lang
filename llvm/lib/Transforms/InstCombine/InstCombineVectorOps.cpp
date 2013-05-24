@@ -125,17 +125,15 @@ Instruction *InstCombiner::scalarizePHI(ExtractElementInst &EI, PHINode *PN) {
   // and that it is a binary operation which is cheap to scalarize.
   // otherwise return NULL.
   if (!PHIUser->hasOneUse() || !(PHIUser->use_back() == PN) ||
-    !(isa<BinaryOperator>(PHIUser)) ||
-    !CheapToScalarize(PHIUser, true))
+      !(isa<BinaryOperator>(PHIUser)) || !CheapToScalarize(PHIUser, true))
     return NULL;
 
   // Create a scalar PHI node that will replace the vector PHI node
   // just before the current PHI node.
-  PHINode * scalarPHI = cast<PHINode>(
-    InsertNewInstWith(PHINode::Create(EI.getType(),
-    PN->getNumIncomingValues(), ""), *PN));
+  PHINode *scalarPHI = cast<PHINode>(InsertNewInstWith(
+      PHINode::Create(EI.getType(), PN->getNumIncomingValues(), ""), *PN));
   // Scalarize each PHI operand.
-  for (unsigned i=0; i < PN->getNumIncomingValues(); i++) {
+  for (unsigned i = 0; i < PN->getNumIncomingValues(); i++) {
     Value *PHIInVal = PN->getIncomingValue(i);
     BasicBlock *inBB = PN->getIncomingBlock(i);
     Value *Elt = EI.getIndexOperand();
@@ -145,19 +143,17 @@ Instruction *InstCombiner::scalarizePHI(ExtractElementInst &EI, PHINode *PN) {
       // scalar PHI and the second operand is extracted from the other
       // vector operand.
       BinaryOperator *B0 = cast<BinaryOperator>(PHIUser);
-      unsigned opId = (B0->getOperand(0) == PN) ? 1: 0;
+      unsigned opId = (B0->getOperand(0) == PN) ? 1 : 0;
       Value *Op = InsertNewInstWith(
           ExtractElementInst::Create(B0->getOperand(opId), Elt,
                                      B0->getOperand(opId)->getName() + ".Elt"),
           *B0);
       Value *newPHIUser = InsertNewInstWith(
-        BinaryOperator::Create(B0->getOpcode(), scalarPHI,Op),
-        *B0);
+          BinaryOperator::Create(B0->getOpcode(), scalarPHI, Op), *B0);
       scalarPHI->addIncoming(newPHIUser, inBB);
     } else {
       // Scalarize PHI input:
-      Instruction *newEI =
-        ExtractElementInst::Create(PHIInVal, Elt, "");
+      Instruction *newEI = ExtractElementInst::Create(PHIInVal, Elt, "");
       // Insert the new instruction into the predecessor basic block.
       Instruction *pos = dyn_cast<Instruction>(PHIInVal);
       BasicBlock::iterator InsertPos;
@@ -226,7 +222,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
     if (PHINode *PN = dyn_cast<PHINode>(EI.getOperand(0))) {
       Instruction *scalarPHI = scalarizePHI(EI, PN);
       if (scalarPHI)
-        return (scalarPHI);
+        return scalarPHI;
     }
   }
 
