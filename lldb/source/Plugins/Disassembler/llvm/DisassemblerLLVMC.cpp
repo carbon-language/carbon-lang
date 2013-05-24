@@ -10,6 +10,7 @@
 #include "DisassemblerLLVMC.h"
 
 #include "llvm-c/Disassembler.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
@@ -17,6 +18,7 @@
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCRelocationInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryObject.h"
@@ -442,12 +444,19 @@ DisassemblerLLVMC::LLVMCDisassembler::LLVMCDisassembler (const char *triple, uns
     m_context_ap.reset(new llvm::MCContext(*m_asm_info_ap.get(), *(m_reg_info_ap.get()), 0));
     
     m_disasm_ap.reset(curr_target->createMCDisassembler(*m_subtarget_info_ap.get()));
-    if (m_disasm_ap.get())
+    if (m_disasm_ap.get() && m_context_ap.get())
     {
+        llvm::OwningPtr<llvm::MCRelocationInfo> RelInfo(curr_target->createMCRelocationInfo(triple, *m_context_ap.get()));
+        if (!RelInfo)
+        {
+            m_is_valid = false;
+            return;
+        }
         m_disasm_ap->setupForSymbolicDisassembly(NULL,
-                                                  DisassemblerLLVMC::SymbolLookupCallback,
-                                                  (void *) &owner,
-                                                  m_context_ap.get());
+                                                 DisassemblerLLVMC::SymbolLookupCallback,
+                                                 (void *) &owner,
+                                                 m_context_ap.get(),
+                                                 RelInfo);
         
         unsigned asm_printer_variant;
         if (flavor == ~0U)
