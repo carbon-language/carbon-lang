@@ -2039,8 +2039,11 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   std::pair<FileID, unsigned> LOffs = getDecomposedLoc(LHS);
   std::pair<FileID, unsigned> ROffs = getDecomposedLoc(RHS);
 
+  // getDecomposedLoc may have failed to return a valid FileID because, e.g. it
+  // is a serialized one referring to a file that was removed after we loaded
+  // the PCH.
   if (LOffs.first.isInvalid() || ROffs.first.isInvalid())
-    return false;
+    return LOffs.first.isInvalid();
 
   // If the source locations are in the same file, just compare offsets.
   if (LOffs.first == ROffs.first)
