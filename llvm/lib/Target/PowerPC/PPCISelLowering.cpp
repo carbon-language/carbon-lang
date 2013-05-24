@@ -536,6 +536,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
 
   // We have target-specific dag combine patterns for the following nodes:
   setTargetDAGCombine(ISD::SINT_TO_FP);
+  setTargetDAGCombine(ISD::LOAD);
   setTargetDAGCombine(ISD::STORE);
   setTargetDAGCombine(ISD::BR_CC);
   setTargetDAGCombine(ISD::BSWAP);
@@ -5070,6 +5071,16 @@ static SDValue BuildSplatI(int Val, unsigned SplatSize, EVT VT,
   return DAG.getNode(ISD::BITCAST, dl, ReqVT, Res);
 }
 
+/// BuildIntrinsicOp - Return a unary operator intrinsic node with the
+/// specified intrinsic ID.
+static SDValue BuildIntrinsicOp(unsigned IID, SDValue Op,
+                                SelectionDAG &DAG, DebugLoc dl,
+                                EVT DestVT = MVT::Other) {
+  if (DestVT == MVT::Other) DestVT = Op.getValueType();
+  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, DestVT,
+                     DAG.getConstant(IID, MVT::i32), Op);
+}
+
 /// BuildIntrinsicOp - Return a binary operator intrinsic node with the
 /// specified intrinsic ID.
 static SDValue BuildIntrinsicOp(unsigned IID, SDValue LHS, SDValue RHS,
@@ -6944,6 +6955,124 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
                                 Ops, array_lengthof(Ops),
                                 cast<StoreSDNode>(N)->getMemoryVT(),
                                 cast<StoreSDNode>(N)->getMemOperand());
+    }
+    break;
+  case ISD::LOAD: {
+    LoadSDNode *LD = cast<LoadSDNode>(N);
+    EVT VT = LD->getValueType(0);
+    Type *Ty = LD->getMemoryVT().getTypeForEVT(*DAG.getContext());
+    unsigned ABIAlignment = getDataLayout()->getABITypeAlignment(Ty);
+    if (ISD::isNON_EXTLoad(N) && VT.isVector() &&
+        TM.getSubtarget<PPCSubtarget>().hasAltivec() &&
+        DCI.getDAGCombineLevel() == AfterLegalizeTypes &&
+        LD->getAlignment() < ABIAlignment) {
+      // This is a type-legal unaligned Altivec load.
+      SDValue Chain = LD->getChain();
+      SDValue Ptr = LD->getBasePtr();
+
+      // This implements the loading of unaligned vectors as described in
+      // the venerable Apple Velocity Engine overview. Specifically:
+      // https://developer.apple.com/hardwaredrivers/ve/alignment.html
+      // https://developer.apple.com/hardwaredrivers/ve/code_optimization.html
+      //
+      // The general idea is to expand a sequence of one or more unaligned
+      // loads into a alignment-based permutation-control instruction (lvsl),
+      // a series of regular vector loads (which always truncate their
+      // input address to an aligned address), and a series of permutations.
+      // The results of these permutations are the requested loaded values.
+      // The trick is that the last "extra" load is not taken from the address
+      // you might suspect (sizeof(vector) bytes after the last requested
+      // load), but rather sizeof(vector) - 1 bytes after the last
+      // requested vector. The point of this is to avoid a page fault if the
+      // base address happend to be aligned. This works because if the base
+      // address is aligned, then adding less than a full vector length will
+      // cause the last vector in the sequence to be (re)loaded. Otherwise,
+      // the next vector will be fetched as you might suspect was necessary.
+
+      // FIXME: We might be able to reuse the permutation generation from
+      // a different base address offset from this one by an aligned amount.
+      SDValue PermCntl = BuildIntrinsicOp(Intrinsic::ppc_altivec_lvsl, Ptr,
+                                          DAG, dl, MVT::v16i8);
+
+      // Refine the alignment of the original load (a "new" load created here
+      // which was identical to the first except for the alignment would be
+      // merged with the existing node regardless).
+      MachineFunction &MF = DAG.getMachineFunction();
+      MachineMemOperand *MMO =
+        MF.getMachineMemOperand(LD->getPointerInfo(),
+                                LD->getMemOperand()->getFlags(),
+                                LD->getMemoryVT().getStoreSize(),
+                                ABIAlignment);
+      LD->refineAlignment(MMO);
+      SDValue BaseLoad = SDValue(LD, 0);
+
+      // Note that the value of IncOffset (which is provided to the next
+      // load's pointer info offset value, and thus used to calculate the
+      // alignment), and the value of IncValue (which is actually used to
+      // increment the pointer value) are different! This is because we
+      // require the next load to appear to be aligned, even though it
+      // is actually offset from the base pointer by a lesser amount.
+      int IncOffset = VT.getSizeInBits() / 8;
+      int IncValue = IncOffset - 1;
+      SDValue Increment = DAG.getConstant(IncValue, getPointerTy());
+      Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr, Increment);
+
+      // FIXME: We might have another load (with a slightly-different
+      // real offset) that we can reuse here.
+      SDValue ExtraLoad =
+        DAG.getLoad(VT, dl, Chain, Ptr,
+                    LD->getPointerInfo().getWithOffset(IncOffset),
+                    LD->isVolatile(), LD->isNonTemporal(),
+                    LD->isInvariant(), ABIAlignment);
+
+      SDValue TF = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+        BaseLoad.getValue(1), ExtraLoad.getValue(1));
+
+      if (BaseLoad.getValueType() != MVT::v4i32)
+        BaseLoad = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, BaseLoad);
+
+      if (ExtraLoad.getValueType() != MVT::v4i32)
+        ExtraLoad = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, ExtraLoad);
+
+      SDValue Perm = BuildIntrinsicOp(Intrinsic::ppc_altivec_vperm,
+                                      BaseLoad, ExtraLoad, PermCntl, DAG, dl);
+
+      if (VT != MVT::v4i32)
+        Perm = DAG.getNode(ISD::BITCAST, dl, VT, Perm);
+
+      // Now we need to be really careful about how we update the users of the
+      // original load. We cannot just call DCI.CombineTo (or
+      // DAG.ReplaceAllUsesWith for that matter), because the load still has
+      // uses created here (the permutation for example) that need to stay.
+      SDNode::use_iterator UI = N->use_begin(), UE = N->use_end();
+      while (UI != UE) {
+        SDUse &Use = UI.getUse();
+        SDNode *User = *UI;
+        // Note: BaseLoad is checked here because it might not be N, but a
+        // bitcast of N.
+        if (User == Perm.getNode() || User == BaseLoad.getNode() ||
+            User == TF.getNode() || Use.getResNo() > 1) {
+          ++UI;
+          continue;
+        }
+
+        SDValue To = Use.getResNo() ? TF : Perm;
+        ++UI;
+
+        SmallVector<SDValue, 8> Ops;
+        for (SDNode::op_iterator O = User->op_begin(),
+             OE = User->op_end(); O != OE; ++O) {
+          if (*O == Use)
+            Ops.push_back(To);
+          else
+            Ops.push_back(*O);
+        }
+
+        DAG.UpdateNodeOperands(User, Ops.data(), Ops.size());
+      }
+
+      return SDValue(N, 0);
+    }
     }
     break;
   case ISD::BSWAP:
