@@ -25,7 +25,7 @@
 #include "Utility/ARM_DWARF_Registers.h"
 
 #include "llvm/Support/MathExtras.h" // for SignExtend32 template function
-                                     // and CountTrailingZeros_32 function
+                                     // and countTrailingZeros function
 
 using namespace lldb;
 using namespace lldb_private;
@@ -47,7 +47,7 @@ using namespace lldb_private;
 static uint32_t
 CountITSize (uint32_t ITMask) {
     // First count the trailing zeros of the IT mask.
-    uint32_t TZ = llvm::CountTrailingZeros_32(ITMask);
+    uint32_t TZ = llvm::countTrailingZeros(ITMask);
     if (TZ > 3)
     {
         printf("Encoding error: IT Mask '0000'\n");
