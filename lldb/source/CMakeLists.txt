@@ -90,7 +90,6 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Darwin" )
   list(APPEND LLDB_USED_LIBS
     lldbHostMacOSX
     lldbPluginDynamicLoaderDarwinKernel
-    lldbPluginOSDarwinKernel
     lldbPluginProcessMacOSXKernel
     lldbPluginSymbolVendorMacOSX
     )
