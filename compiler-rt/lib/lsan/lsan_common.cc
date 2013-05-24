@@ -155,15 +155,19 @@ static void ProcessThreads(SuspendedThreadsList const &suspended_threads,
 
     if (flags()->use_tls()) {
       if (flags()->log_threads) Report("TLS at %p-%p.\n", tls_begin, tls_end);
-      // Because LSan should not be loaded with dlopen(), we can assume
-      // that allocator cache will be part of static TLS image.
-      CHECK_LE(tls_begin, cache_begin);
-      CHECK_GE(tls_end, cache_end);
-      if (tls_begin < cache_begin)
-        ScanRangeForPointers(tls_begin, cache_begin, frontier, "TLS",
-                             kReachable);
-      if (tls_end > cache_end)
-        ScanRangeForPointers(cache_end, tls_end, frontier, "TLS", kReachable);
+      if (cache_begin == cache_end) {
+        ScanRangeForPointers(tls_begin, tls_end, frontier, "TLS", kReachable);
+      } else {
+        // Because LSan should not be loaded with dlopen(), we can assume
+        // that allocator cache will be part of static TLS image.
+        CHECK_LE(tls_begin, cache_begin);
+        CHECK_GE(tls_end, cache_end);
+        if (tls_begin < cache_begin)
+          ScanRangeForPointers(tls_begin, cache_begin, frontier, "TLS",
+                               kReachable);
+        if (tls_end > cache_end)
+          ScanRangeForPointers(cache_end, tls_end, frontier, "TLS", kReachable);
+      }
     }
   }
 }
