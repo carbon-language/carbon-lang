@@ -193,19 +193,13 @@
 	asi	0, -129
 	asi	0, 128
 
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: axbr	%f0, %f2
-#CHECK: error: invalid register
-#CHECK: axbr	%f0, %f14
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: axbr	%f2, %f0
-#CHECK: error: invalid register
-#CHECK: axbr	%f14, %f0
 
 	axbr	%f0, %f2
-	axbr	%f0, %f14
 	axbr	%f2, %f0
-	axbr	%f14, %f0
 
 
 #CHECK: error: invalid operand
@@ -310,34 +304,6 @@
 	cdb	%f0, -1
 	cdb	%f0, 4096
 
-#CHECK: error: invalid register
-#CHECK: cdfbr	%r0, %r0
-#CHECK: error: invalid register
-#CHECK: cdfbr	%f0, %f0
-#CHECK: error: invalid register
-#CHECK: cdfbr	%f0, %a0
-#CHECK: error: invalid register
-#CHECK: cdfbr	%a0, %r0
-
-	cdfbr	%r0, %r0
-	cdfbr	%f0, %f0
-	cdfbr	%f0, %a0
-	cdfbr	%a0, %r0
-
-#CHECK: error: invalid register
-#CHECK: cdgbr	%r0, %r0
-#CHECK: error: invalid register
-#CHECK: cdgbr	%f0, %f0
-#CHECK: error: invalid register
-#CHECK: cdgbr	%f0, %a0
-#CHECK: error: invalid register
-#CHECK: cdgbr	%a0, %r0
-
-	cdgbr	%r0, %r0
-	cdgbr	%f0, %f0
-	cdgbr	%f0, %a0
-	cdgbr	%a0, %r0
-
 #CHECK: error: invalid operand
 #CHECK: ceb	%f0, -1
 #CHECK: error: invalid operand
@@ -346,59 +312,19 @@
 	ceb	%f0, -1
 	ceb	%f0, 4096
 
-#CHECK: error: invalid register
-#CHECK: cefbr	%r0, %r0
-#CHECK: error: invalid register
-#CHECK: cefbr	%f0, %f0
-#CHECK: error: invalid register
-#CHECK: cefbr	%f0, %a0
-#CHECK: error: invalid register
-#CHECK: cefbr	%a0, %r0
-
-	cefbr	%r0, %r0
-	cefbr	%f0, %f0
-	cefbr	%f0, %a0
-	cefbr	%a0, %r0
-
-#CHECK: error: invalid register
-#CHECK: cegbr	%r0, %r0
-#CHECK: error: invalid register
-#CHECK: cegbr	%f0, %f0
-#CHECK: error: invalid register
-#CHECK: cegbr	%f0, %a0
-#CHECK: error: invalid register
-#CHECK: cegbr	%a0, %r0
-
-	cegbr	%r0, %r0
-	cegbr	%f0, %f0
-	cegbr	%f0, %a0
-	cegbr	%a0, %r0
-
-#CHECK: error: invalid register
-#CHECK: cfdbr	%r0, 0, %r0
-#CHECK: error: invalid register
-#CHECK: cfdbr	%f0, 0, %f0
 #CHECK: error: invalid operand
 #CHECK: cfdbr	%r0, -1, %f0
 #CHECK: error: invalid operand
 #CHECK: cfdbr	%r0, 16, %f0
 
-	cfdbr	%r0, 0, %r0
-	cfdbr	%f0, 0, %f0
 	cfdbr	%r0, -1, %f0
 	cfdbr	%r0, 16, %f0
 
-#CHECK: error: invalid register
-#CHECK: cfebr	%r0, 0, %r0
-#CHECK: error: invalid register
-#CHECK: cfebr	%f0, 0, %f0
 #CHECK: error: invalid operand
 #CHECK: cfebr	%r0, -1, %f0
 #CHECK: error: invalid operand
 #CHECK: cfebr	%r0, 16, %f0
 
-	cfebr	%r0, 0, %r0
-	cfebr	%f0, 0, %f0
 	cfebr	%r0, -1, %f0
 	cfebr	%r0, 16, %f0
 
@@ -410,25 +336,16 @@
 	cfi	%r0, (-1 << 31) - 1
 	cfi	%r0, (1 << 31)
 
-#CHECK: error: invalid register
-#CHECK: cfxbr	%r0, 0, %r0
-#CHECK: error: invalid register
-#CHECK: cfxbr	%f0, 0, %f0
 #CHECK: error: invalid operand
 #CHECK: cfxbr	%r0, -1, %f0
 #CHECK: error: invalid operand
 #CHECK: cfxbr	%r0, 16, %f0
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: cfxbr	%r0, 0, %f2
-#CHECK: error: invalid register
-#CHECK: cfxbr	%r0, 0, %f14
 
-	cfxbr	%r0, 0, %r0
-	cfxbr	%f0, 0, %f0
 	cfxbr	%r0, -1, %f0
 	cfxbr	%r0, 16, %f0
 	cfxbr	%r0, 0, %f2
-	cfxbr	%r0, 0, %f14
 
 
 #CHECK: error: invalid operand
@@ -439,31 +356,19 @@
 	cg	%r0, -524289
 	cg	%r0, 524288
 
-#CHECK: error: invalid register
-#CHECK: cgdbr	%r0, 0, %r0
-#CHECK: error: invalid register
-#CHECK: cgdbr	%f0, 0, %f0
 #CHECK: error: invalid operand
 #CHECK: cgdbr	%r0, -1, %f0
 #CHECK: error: invalid operand
 #CHECK: cgdbr	%r0, 16, %f0
 
-	cgdbr	%r0, 0, %r0
-	cgdbr	%f0, 0, %f0
 	cgdbr	%r0, -1, %f0
 	cgdbr	%r0, 16, %f0
 
-#CHECK: error: invalid register
-#CHECK: cgebr	%r0, 0, %r0
-#CHECK: error: invalid register
-#CHECK: cgebr	%f0, 0, %f0
 #CHECK: error: invalid operand
 #CHECK: cgebr	%r0, -1, %f0
 #CHECK: error: invalid operand
 #CHECK: cgebr	%r0, 16, %f0
 
-	cgebr	%r0, 0, %r0
-	cgebr	%f0, 0, %f0
 	cgebr	%r0, -1, %f0
 	cgebr	%r0, 16, %f0
 
@@ -561,25 +466,16 @@
 	cgrl	%r0, 1
 	cgrl	%r0, 0x100000000
 
-#CHECK: error: invalid register
-#CHECK: cgxbr	%r0, 0, %r0
-#CHECK: error: invalid register
-#CHECK: cgxbr	%f0, 0, %f0
 #CHECK: error: invalid operand
 #CHECK: cgxbr	%r0, -1, %f0
 #CHECK: error: invalid operand
 #CHECK: cgxbr	%r0, 16, %f0
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: cgxbr	%r0, 0, %f2
-#CHECK: error: invalid register
-#CHECK: cgxbr	%r0, 0, %f14
 
-	cgxbr	%r0, 0, %r0
-	cgxbr	%f0, 0, %f0
 	cgxbr	%r0, -1, %f0
 	cgxbr	%r0, 16, %f0
 	cgxbr	%r0, 0, %f2
-	cgxbr	%r0, 0, %f14
 
 
 #CHECK: error: invalid operand
@@ -907,60 +803,23 @@
 	csy	%r0, %r0, 524288
 	csy	%r0, %r0, 0(%r1,%r2)
 
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: cxbr	%f0, %f2
-#CHECK: error: invalid register
-#CHECK: cxbr	%f0, %f14
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: cxbr	%f2, %f0
-#CHECK: error: invalid register
-#CHECK: cxbr	%f14, %f0
 
 	cxbr	%f0, %f2
-	cxbr	%f0, %f14
 	cxbr	%f2, %f0
-	cxbr	%f14, %f0
 
-
-#CHECK: error: invalid register
-#CHECK: cxfbr	%r0, %r0
-#CHECK: error: invalid register
-#CHECK: cxfbr	%f0, %f0
-#CHECK: error: invalid register
-#CHECK: cxfbr	%f0, %a0
-#CHECK: error: invalid register
-#CHECK: cxfbr	%a0, %r0
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: cxfbr	%f2, %r0
-#CHECK: error: invalid register
-#CHECK: cxfbr	%f14, %r0
 
-	cxfbr	%r0, %r0
-	cxfbr	%f0, %f0
-	cxfbr	%f0, %a0
-	cxfbr	%a0, %r0
 	cxfbr	%f2, %r0
-	cxfbr	%f14, %r0
 
-#CHECK: error: invalid register
-#CHECK: cxgbr	%r0, %r0
-#CHECK: error: invalid register
-#CHECK: cxgbr	%f0, %f0
-#CHECK: error: invalid register
-#CHECK: cxgbr	%f0, %a0
-#CHECK: error: invalid register
-#CHECK: cxgbr	%a0, %r0
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: cxgbr	%f2, %r0
-#CHECK: error: invalid register
-#CHECK: cxgbr	%f14, %r0
 
-	cxgbr	%r0, %r0
-	cxgbr	%f0, %f0
-	cxgbr	%f0, %a0
-	cxgbr	%a0, %r0
 	cxgbr	%f2, %r0
-	cxgbr	%f14, %r0
 
 #CHECK: error: invalid operand
 #CHECK: cy	%r0, -524289
@@ -990,177 +849,108 @@
 #CHECK: dl	%r0, -524289
 #CHECK: error: invalid operand
 #CHECK: dl	%r0, 524288
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: dl	%r1, 0
-#CHECK: error: invalid register
-#CHECK: dl	%r15, 0
 
 	dl	%r0, -524289
 	dl	%r0, 524288
 	dl	%r1, 0
-	dl	%r15, 0
 
 #CHECK: error: invalid operand
 #CHECK: dlg	%r0, -524289
 #CHECK: error: invalid operand
 #CHECK: dlg	%r0, 524288
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: dlg	%r1, 0
-#CHECK: error: invalid register
-#CHECK: dlg	%r15, 0
 
 	dlg	%r0, -524289
 	dlg	%r0, 524288
 	dlg	%r1, 0
-	dlg	%r15, 0
 
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: dlgr	%r1, %r0
-#CHECK: error: invalid register
-#CHECK: dlgr	%r15, %r0
 
 	dlgr	%r1, %r0
-	dlgr	%r15, %r0
 
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: dlr	%r1, %r0
-#CHECK: error: invalid register
-#CHECK: dlr	%r15, %r0
 
 	dlr	%r1, %r0
-	dlr	%r15, %r0
 
 #CHECK: error: invalid operand
 #CHECK: dsg	%r0, -524289
 #CHECK: error: invalid operand
 #CHECK: dsg	%r0, 524288
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: dsg	%r1, 0
-#CHECK: error: invalid register
-#CHECK: dsg	%r15, 0
 
 	dsg	%r0, -524289
 	dsg	%r0, 524288
 	dsg	%r1, 0
-	dsg	%r15, 0
 
 #CHECK: error: invalid operand
 #CHECK: dsgf	%r0, -524289
 #CHECK: error: invalid operand
 #CHECK: dsgf	%r0, 524288
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: dsgf	%r1, 0
-#CHECK: error: invalid register
-#CHECK: dsgf	%r15, 0
 
 	dsgf	%r0, -524289
 	dsgf	%r0, 524288
 	dsgf	%r1, 0
-	dsgf	%r15, 0
 
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: dsgfr	%r1, %r0
-#CHECK: error: invalid register
-#CHECK: dsgfr	%r15, %r0
 
 	dsgfr	%r1, %r0
-	dsgfr	%r15, %r0
 
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: dsgr	%r1, %r0
-#CHECK: error: invalid register
-#CHECK: dsgr	%r15, %r0
 
 	dsgr	%r1, %r0
-	dsgr	%r15, %r0
 
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: dxbr	%f0, %f2
-#CHECK: error: invalid register
-#CHECK: dxbr	%f0, %f14
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: dxbr	%f2, %f0
-#CHECK: error: invalid register
-#CHECK: dxbr	%f14, %f0
 
 	dxbr	%f0, %f2
-	dxbr	%f0, %f14
 	dxbr	%f2, %f0
-	dxbr	%f14, %f0
 
-
-#CHECK: error: invalid operand
-#CHECK: ear	%r0, 0
-#CHECK: error: invalid register
-#CHECK: ear	%r0, %r0
-#CHECK: error: invalid register
-#CHECK: ear	%a0, %r0
-
-	ear	%r0, 0
-	ear	%r0, %r0
-	ear	%a0, %r0
-
-#CHECK: error: invalid register
-#CHECK: fidbr	%r0, 0, %f0
-#CHECK: error: invalid register
-#CHECK: fidbr	%f0, 0, %r0
 #CHECK: error: invalid operand
 #CHECK: fidbr	%f0, -1, %f0
 #CHECK: error: invalid operand
 #CHECK: fidbr	%f0, 16, %f0
 
-	fidbr	%r0, 0, %f0
-	fidbr	%f0, 0, %r0
 	fidbr	%f0, -1, %f0
 	fidbr	%f0, 16, %f0
 
-#CHECK: error: invalid register
-#CHECK: fiebr	%r0, 0, %f0
-#CHECK: error: invalid register
-#CHECK: fiebr	%f0, 0, %r0
 #CHECK: error: invalid operand
 #CHECK: fiebr	%f0, -1, %f0
 #CHECK: error: invalid operand
 #CHECK: fiebr	%f0, 16, %f0
 
-	fiebr	%r0, 0, %f0
-	fiebr	%f0, 0, %r0
 	fiebr	%f0, -1, %f0
 	fiebr	%f0, 16, %f0
 
-#CHECK: error: invalid register
-#CHECK: fixbr	%r0, 0, %f0
-#CHECK: error: invalid register
-#CHECK: fixbr	%f0, 0, %r0
 #CHECK: error: invalid operand
 #CHECK: fixbr	%f0, -1, %f0
 #CHECK: error: invalid operand
 #CHECK: fixbr	%f0, 16, %f0
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: fixbr	%f0, 0, %f2
-#CHECK: error: invalid register
-#CHECK: fixbr	%f0, 0, %f14
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: fixbr	%f2, 0, %f0
-#CHECK: error: invalid register
-#CHECK: fixbr	%f14, 0, %f0
 
-	fixbr	%r0, 0, %f0
-	fixbr	%f0, 0, %r0
 	fixbr	%f0, -1, %f0
 	fixbr	%f0, 16, %f0
 	fixbr	%f0, 0, %f2
-	fixbr	%f0, 0, %f14
 	fixbr	%f2, 0, %f0
-	fixbr	%f14, 0, %f0
 
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: flogr	%r1, %r0
-#CHECK: error: invalid register
-#CHECK: flogr	%r15, %r0
 
 	flogr	%r1, %r0
-	flogr	%r15, %r0
 
 #CHECK: error: invalid operand
 #CHECK: ic	%r0, -1
@@ -1272,20 +1062,13 @@
 	lb	%r0, -524289
 	lb	%r0, 524288
 
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: lcxbr	%f0, %f2
-#CHECK: error: invalid register
-#CHECK: lcxbr	%f0, %f14
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: lcxbr	%f2, %f0
-#CHECK: error: invalid register
-#CHECK: lcxbr	%f14, %f0
 
 	lcxbr	%f0, %f2
-	lcxbr	%f0, %f14
 	lcxbr	%f2, %f0
-	lcxbr	%f14, %f0
-
 
 #CHECK: error: invalid operand
 #CHECK: ld	%f0, -1
@@ -1303,33 +1086,13 @@
 	ldeb	%f0, -1
 	ldeb	%f0, 4096
 
-#CHECK: error: invalid register
-#CHECK: ldgr	%f0, %f0
-#CHECK: error: invalid register
-#CHECK: ldgr	%r0, %r0
-#CHECK: error: invalid register
-#CHECK: ldgr	%f0, %a0
-#CHECK: error: invalid register
-#CHECK: ldgr	%a0, %r0
-
-	ldgr	%f0, %f0
-	ldgr	%r0, %r0
-	ldgr	%f0, %a0
-	ldgr	%a0, %r0
-
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: ldxbr	%f0, %f2
-#CHECK: error: invalid register
-#CHECK: ldxbr	%f0, %f14
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: ldxbr	%f2, %f0
-#CHECK: error: invalid register
-#CHECK: ldxbr	%f14, %f0
 
 	ldxbr	%f0, %f2
-	ldxbr	%f0, %f14
 	ldxbr	%f2, %f0
-	ldxbr	%f14, %f0
 
 #CHECK: error: invalid operand
 #CHECK: ldy	%f0, -524289
@@ -1347,19 +1110,13 @@
 	le	%f0, -1
 	le	%f0, 4096
 
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: lexbr	%f0, %f2
-#CHECK: error: invalid register
-#CHECK: lexbr	%f0, %f14
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: lexbr	%f2, %f0
-#CHECK: error: invalid register
-#CHECK: lexbr	%f14, %f0
 
 	lexbr	%f0, %f2
-	lexbr	%f0, %f14
 	lexbr	%f2, %f0
-	lexbr	%f14, %f0
 
 #CHECK: error: invalid operand
 #CHECK: ley	%f0, -524289
@@ -1384,20 +1141,6 @@
 
 	lgb	%r0, -524289
 	lgb	%r0, 524288
-
-#CHECK: error: invalid register
-#CHECK: lgdr	%f0, %f0
-#CHECK: error: invalid register
-#CHECK: lgdr	%r0, %r0
-#CHECK: error: invalid register
-#CHECK: lgdr	%r0, %a0
-#CHECK: error: invalid register
-#CHECK: lgdr	%a0, %f0
-
-	lgdr	%f0, %f0
-	lgdr	%r0, %r0
-	lgdr	%r0, %a0
-	lgdr	%a0, %f0
 
 #CHECK: error: invalid operand
 #CHECK: lgf	%r0, -524289
@@ -1658,35 +1401,21 @@
 	lmg	%r0, %r0, 524288
 	lmg	%r0, %r0, 0(%r1,%r2)
 
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: lnxbr	%f0, %f2
-#CHECK: error: invalid register
-#CHECK: lnxbr	%f0, %f14
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: lnxbr	%f2, %f0
-#CHECK: error: invalid register
-#CHECK: lnxbr	%f14, %f0
 
 	lnxbr	%f0, %f2
-	lnxbr	%f0, %f14
 	lnxbr	%f2, %f0
-	lnxbr	%f14, %f0
 
-
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: lpxbr	%f0, %f2
-#CHECK: error: invalid register
-#CHECK: lpxbr	%f0, %f14
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: lpxbr	%f2, %f0
-#CHECK: error: invalid register
-#CHECK: lpxbr	%f14, %f0
 
 	lpxbr	%f0, %f2
-	lpxbr	%f0, %f14
 	lpxbr	%f2, %f0
-	lpxbr	%f14, %f0
-
 
 #CHECK: error: offset out of range
 #CHECK: lrl	%r0, -0x1000000002
@@ -1718,19 +1447,13 @@
 	lrvg	%r0, -524289
 	lrvg	%r0, 524288
 
-#CHECK: error: invalid register
-#CHECK: lxr	%f2, %f0
-#CHECK: error: invalid register
-#CHECK: lxr	%f15, %f0
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: lxr	%f0, %f2
-#CHECK: error: invalid register
-#CHECK: lxr	%f0, %f15
+#CHECK: error: invalid register pair
+#CHECK: lxr	%f2, %f0
 
-	lxr	%f2, %f0
-	lxr	%f15, %f0
 	lxr	%f0, %f2
-	lxr	%f0, %f15
+	lxr	%f2, %f0
 
 #CHECK: error: invalid operand
 #CHECK: ly	%r0, -524289
@@ -1740,16 +1463,10 @@
 	ly	%r0, -524289
 	ly	%r0, 524288
 
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: lzxr	%f2
-#CHECK: error: invalid register
-#CHECK: lzxr	%f14
-#CHECK: error: invalid register
-#CHECK: lzxr	%f15
 
 	lzxr	%f2
-	lzxr	%f14
-	lzxr	%f15
 
 #CHECK: error: invalid operand
 #CHECK: madb	%f0, %f0, -1
@@ -1833,23 +1550,17 @@
 #CHECK: mlg	%r0, -524289
 #CHECK: error: invalid operand
 #CHECK: mlg	%r0, 524288
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: mlg	%r1, 0
-#CHECK: error: invalid register
-#CHECK: mlg	%r15, 0
 
 	mlg	%r0, -524289
 	mlg	%r0, 524288
 	mlg	%r1, 0
-	mlg	%r15, 0
 
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: mlgr	%r1, %r0
-#CHECK: error: invalid register
-#CHECK: mlgr	%r15, %r0
 
 	mlgr	%r1, %r0
-	mlgr	%r15, %r0
 
 #CHECK: error: invalid operand
 #CHECK: ms	%r0, -1
@@ -2000,42 +1711,29 @@
 	mviy	0, -1
 	mviy	0, 256
 
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: mxbr	%f0, %f2
-#CHECK: error: invalid register
-#CHECK: mxbr	%f0, %f14
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: mxbr	%f2, %f0
-#CHECK: error: invalid register
-#CHECK: mxbr	%f14, %f0
 
 	mxbr	%f0, %f2
-	mxbr	%f0, %f14
 	mxbr	%f2, %f0
-	mxbr	%f14, %f0
 
-
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: mxdb	%f2, 0
-#CHECK: error: invalid register
-#CHECK: mxdb	%f15, 0
 #CHECK: error: invalid operand
 #CHECK: mxdb	%f0, -1
 #CHECK: error: invalid operand
 #CHECK: mxdb	%f0, 4096
 
 	mxdb	%f2, 0
-	mxdb	%f15, 0
 	mxdb	%f0, -1
 	mxdb	%f0, 4096
 
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: mxdbr	%f2, %f0
-#CHECK: error: invalid register
-#CHECK: mxdbr	%f15, %f0
 
 	mxdbr	%f2, %f0
-	mxdbr	%f15, %f0
 
 #CHECK: error: invalid operand
 #CHECK: n	%r0, -1
@@ -2461,20 +2159,13 @@
 	sqeb	%f0, -1
 	sqeb	%f0, 4096
 
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: sqxbr	%f0, %f2
-#CHECK: error: invalid register
-#CHECK: sqxbr	%f0, %f14
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: sqxbr	%f2, %f0
-#CHECK: error: invalid register
-#CHECK: sqxbr	%f14, %f0
 
 	sqxbr	%f0, %f2
-	sqxbr	%f0, %f14
 	sqxbr	%f2, %f0
-	sqxbr	%f14, %f0
-
 
 #CHECK: error: invalid operand
 #CHECK: sra	%r0,-1
@@ -2689,20 +2380,13 @@
 	sty	%r0, -524289
 	sty	%r0, 524288
 
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: sxbr	%f0, %f2
-#CHECK: error: invalid register
-#CHECK: sxbr	%f0, %f14
-#CHECK: error: invalid register
+#CHECK: error: invalid register pair
 #CHECK: sxbr	%f2, %f0
-#CHECK: error: invalid register
-#CHECK: sxbr	%f14, %f0
 
 	sxbr	%f0, %f2
-	sxbr	%f0, %f14
 	sxbr	%f2, %f0
-	sxbr	%f14, %f0
-
 
 #CHECK: error: invalid operand
 #CHECK: sy	%r0, -524289
