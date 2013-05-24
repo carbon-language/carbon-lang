@@ -30,6 +30,7 @@
 #include "ObjCARCAliasAnalysis.h"
 #include "ProvenanceAnalysis.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -454,18 +455,8 @@ namespace {
     /// sequence.
     SmallPtrSet<Instruction *, 2> ReverseInsertPts;
 
-    /// Does this pointer have multiple owners?
-    ///
-    /// In the presence of multiple owners with the same provenance caused by
-    /// allocas, we can not assume that the frontend will emit balanced code
-    /// since it could put the release on the pointer loaded from the
-    /// alloca. This confuses the optimizer so we must be more conservative in
-    /// that case.
-    bool MultipleOwners;
-
     RRInfo() :
-      KnownSafe(false), IsTailCallRelease(false), ReleaseMetadata(0),
-      MultipleOwners(false) {}
+      KnownSafe(false), IsTailCallRelease(false), ReleaseMetadata(0) {}
 
     void clear();
 
@@ -478,7 +469,6 @@ namespace {
 void RRInfo::clear() {
   KnownSafe = false;
   IsTailCallRelease = false;
-  MultipleOwners = false;
   ReleaseMetadata = 0;
   Calls.clear();
   ReverseInsertPts.clear();
@@ -569,7 +559,6 @@ PtrState::Merge(const PtrState &Other, bool TopDown) {
     RRI.IsTailCallRelease = RRI.IsTailCallRelease &&
                             Other.RRI.IsTailCallRelease;
     RRI.Calls.insert(Other.RRI.Calls.begin(), Other.RRI.Calls.end());
-    RRI.MultipleOwners |= Other.RRI.MultipleOwners;
 
     // Merge the insert point sets. If there are any differences,
     // that makes this a partial merge.
@@ -1057,6 +1046,9 @@ namespace {
   class ObjCARCOpt : public FunctionPass {
     bool Changed;
     ProvenanceAnalysis PA;
+
+    // This is used to track if a pointer is stored into an alloca.
+    DenseSet<const Value *> MultiOwnersSet;
 
     /// A flag indicating whether this optimization pass should run.
     bool Run;
@@ -1943,7 +1935,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
         BBState::ptr_iterator I = MyStates.findPtrBottomUpState(
           StripPointerCastsAndObjCCalls(SI->getValueOperand()));
         if (I != MyStates.bottom_up_ptr_end())
-          I->second.RRI.MultipleOwners = true;
+          MultiOwnersSet.insert(I->first);
       }
     }
     break;
@@ -2515,7 +2507,8 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
       assert(It != Retains.end());
       const RRInfo &NewRetainRRI = It->second;
       KnownSafeTD &= NewRetainRRI.KnownSafe;
-      MultipleOwners |= NewRetainRRI.MultipleOwners;
+      MultipleOwners =
+        MultipleOwners || MultiOwnersSet.count(GetObjCArg(NewRetain));
       for (SmallPtrSet<Instruction *, 2>::const_iterator
              LI = NewRetainRRI.Calls.begin(),
              LE = NewRetainRRI.Calls.end(); LI != LE; ++LI) {
@@ -2903,8 +2896,14 @@ bool ObjCARCOpt::OptimizeSequences(Function &F) {
   bool NestingDetected = Visit(F, BBStates, Retains, Releases);
 
   // Transform.
-  return PerformCodePlacement(BBStates, Retains, Releases, F.getParent()) &&
-         NestingDetected;
+  bool AnyPairsCompletelyEliminated = PerformCodePlacement(BBStates, Retains,
+                                                           Releases,
+                                                           F.getParent());
+
+  // Cleanup.
+  MultiOwnersSet.clear();
+
+  return AnyPairsCompletelyEliminated && NestingDetected;
 }
 
 /// Check if there is a dependent call earlier that does not have anything in

@@ -197,6 +197,103 @@ entry:
   ret void
 }
 
+; Make sure that if a store is in a different basic block we handle known safe
+; conservatively.
+
+
+; CHECK: define void @test2a(i8* %x)
+; CHECK: @objc_retain(i8* %x)
+; CHECK: @objc_retain(i8* %x)
+; CHECK: @objc_release(i8* %y)
+; CHECK: @objc_release(i8* %x)
+; CHECK: ret void
+; CHECK: }
+define void @test2a(i8* %x) {
+entry:
+  %A = alloca i8*
+  store i8* %x, i8** %A, align 8
+  %y = load i8** %A
+  br label %bb1
+
+bb1:
+  br label %bb2
+
+bb2:
+  br label %bb3
+
+bb3:
+  tail call i8* @objc_retain(i8* %x)
+  tail call i8* @objc_retain(i8* %x)
+  call void @use_alloca(i8** %A)
+  call void @objc_release(i8* %y), !clang.imprecise_release !0
+  call void @use_pointer(i8* %x)
+  call void @objc_release(i8* %x), !clang.imprecise_release !0
+  ret void
+}
+
+; CHECK: define void @test2b(i8* %x)
+; CHECK: @objc_retain(i8* %x)
+; CHECK: @objc_retain(i8* %x)
+; CHECK: @objc_release(i8* %y)
+; CHECK: @objc_release(i8* %x)
+; CHECK: ret void
+; CHECK: }
+define void @test2b(i8* %x) {
+entry:
+  %A = alloca i8*
+  %gep1 = getelementptr i8** %A, i32 0
+  store i8* %x, i8** %gep1, align 8
+  %gep2 = getelementptr i8** %A, i32 0
+  %y = load i8** %gep2
+  br label %bb1
+
+bb1:
+  br label %bb2
+
+bb2:
+  br label %bb3
+
+bb3:
+  tail call i8* @objc_retain(i8* %x)
+  tail call i8* @objc_retain(i8* %x)
+  call void @use_alloca(i8** %A)
+  call void @objc_release(i8* %y), !clang.imprecise_release !0
+  call void @use_pointer(i8* %x)
+  call void @objc_release(i8* %x), !clang.imprecise_release !0
+  ret void
+}
+
+; CHECK: define void @test2c(i8* %x)
+; CHECK: @objc_retain(i8* %x)
+; CHECK: @objc_retain(i8* %x)
+; CHECK: @objc_release(i8* %y)
+; CHECK: @objc_release(i8* %x)
+; CHECK: ret void
+; CHECK: }
+define void @test2c(i8* %x) {
+entry:
+  %A = alloca i8*, i32 3
+  %gep1 = getelementptr i8** %A, i32 2
+  store i8* %x, i8** %gep1, align 8
+  %gep2 = getelementptr i8** %A, i32 2
+  %y = load i8** %gep2
+  tail call i8* @objc_retain(i8* %x)
+  br label %bb1
+
+bb1:
+  br label %bb2
+
+bb2:
+  br label %bb3
+
+bb3:
+  tail call i8* @objc_retain(i8* %x)
+  call void @use_alloca(i8** %A)
+  call void @objc_release(i8* %y), !clang.imprecise_release !0
+  call void @use_pointer(i8* %x)
+  call void @objc_release(i8* %x), !clang.imprecise_release !0
+  ret void
+}
 
 !0 = metadata !{}
 
