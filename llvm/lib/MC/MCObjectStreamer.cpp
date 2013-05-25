@@ -103,6 +103,8 @@ void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
   assert(AddrSpace == 0 && "Address space must be 0!");
   MCDataFragment *DF = getOrCreateDataFragment();
 
+  MCLineEntry::Make(this, getCurrentSection().first);
+
   // Avoid fixups when possible.
   int64_t AbsValue;
   if (AddValueSymbols(Value)->EvaluateAsAbsolute(AbsValue, getAssembler())) {
