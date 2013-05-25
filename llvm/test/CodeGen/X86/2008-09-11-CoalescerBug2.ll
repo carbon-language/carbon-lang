@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=x86
+; RUN: llc -pre-RA-sched=source < %s -march=x86 | FileCheck %s --check-prefix=SOURCE-SCHED
 ; PR2748
 
 @g_73 = external global i32		; <i32*> [#uses=1]
@@ -6,6 +7,17 @@
 
 define i32 @func_44(i16 signext %p_46) nounwind {
 entry:
+; SOURCE-SCHED: subl
+; SOURCE-SCHED: movl
+; SOURCE-SCHED: sarl
+; SOURCE-SCHED: cmpl
+; SOURCE-SCHED: setg
+; SOURCE-SCHED: movzbl
+; SOURCE-SCHED: movb
+; SOURCE-SCHED: xorl
+; SOURCE-SCHED: subl
+; SOURCE-SCHED: testb
+; SOURCE-SCHED: jne
 	%0 = load i32* @g_5, align 4		; <i32> [#uses=1]
 	%1 = ashr i32 %0, 1		; <i32> [#uses=1]
 	%2 = icmp sgt i32 %1, 1		; <i1> [#uses=1]
