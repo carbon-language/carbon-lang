@@ -938,18 +938,12 @@ SDValue SelectionDAGBuilder::getControlRoot() {
   return Root;
 }
 
-void SelectionDAGBuilder::AssignOrderingToNode(const SDNode *Node) {
-  if (DAG.GetOrdering(Node) != 0) return; // Already has ordering.
-  DAG.AssignOrdering(Node, SDNodeOrder);
-
-  for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I)
-    AssignOrderingToNode(Node->getOperand(I).getNode());
-}
-
 void SelectionDAGBuilder::visit(const Instruction &I) {
   // Set up outgoing PHI node register values before emitting the terminator.
   if (isa<TerminatorInst>(&I))
     HandlePHINodesInSuccessorBlocks(I.getParent());
+
+  ++SDNodeOrder;
 
   CurInst = &I;
 
@@ -974,12 +968,6 @@ void SelectionDAGBuilder::visit(unsigned Opcode, const User &I) {
 #define HANDLE_INST(NUM, OPCODE, CLASS) \
     case Instruction::OPCODE: visit##OPCODE((const CLASS&)I); break;
 #include "llvm/IR/Instruction.def"
-  }
-
-  // Assign the ordering to the freshly created DAG nodes.
-  if (NodeMap.count(&I)) {
-    ++SDNodeOrder;
-    AssignOrderingToNode(getValue(&I).getNode());
   }
 }
 
@@ -3397,8 +3385,6 @@ void SelectionDAGBuilder::visitStore(const StoreInst &I) {
 
   SDValue StoreNode = DAG.getNode(ISD::TokenFactor, getCurSDLoc(),
                                   MVT::Other, &Chains[0], ChainI);
-  ++SDNodeOrder;
-  AssignOrderingToNode(StoreNode.getNode());
   DAG.setRoot(StoreNode);
 }
 
@@ -3652,12 +3638,6 @@ void SelectionDAGBuilder::visitTargetIntrinsic(const CallInst &I,
     }
 
     setValue(&I, Result);
-  } else {
-    // Assign order to result here. If the intrinsic does not produce a result,
-    // it won't be mapped to a SDNode and visit() will not assign it an order
-    // number.
-    ++SDNodeOrder;
-    AssignOrderingToNode(Result.getNode());
   }
 }
 
@@ -4525,12 +4505,6 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
       return 0;
     }
 
-    // Build an entry in DbgOrdering.  Debug info input nodes get an SDNodeOrder
-    // but do not always have a corresponding SDNode built.  The SDNodeOrder
-    // absolute, but not relative, values are different depending on whether
-    // debug info exists.
-    ++SDNodeOrder;
-
     // Check if address has undef value.
     if (isa<UndefValue>(Address) ||
         (Address->use_empty() && !isa<Argument>(Address))) {
@@ -4610,11 +4584,6 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     if (!V)
       return 0;
 
-    // Build an entry in DbgOrdering.  Debug info input nodes get an SDNodeOrder
-    // but do not always have a corresponding SDNode built.  The SDNodeOrder
-    // absolute, but not relative, values are different depending on whether
-    // debug info exists.
-    ++SDNodeOrder;
     SDDbgValue *SDV;
     if (isa<ConstantInt>(V) || isa<ConstantFP>(V) || isa<UndefValue>(V)) {
       SDV = DAG.getDbgValue(Variable, V, Offset, dl, SDNodeOrder);
@@ -5347,18 +5316,12 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
                          &Values[0], Values.size()));
   }
 
-  // Assign order to nodes here. If the call does not produce a result, it won't
-  // be mapped to a SDNode and visit() will not assign it an order number.
   if (!Result.second.getNode()) {
     // As a special case, a null chain means that a tail call has been emitted and
     // the DAG root is already updated.
     HasTailCall = true;
-    ++SDNodeOrder;
-    AssignOrderingToNode(DAG.getRoot().getNode());
   } else {
     DAG.setRoot(Result.second);
-    ++SDNodeOrder;
-    AssignOrderingToNode(Result.second.getNode());
   }
 
   if (LandingPad) {

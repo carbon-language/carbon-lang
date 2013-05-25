@@ -1692,7 +1692,7 @@ public:
   unsigned getNodeOrdering(const SUnit *SU) const {
     if (!SU->getNode()) return 0;
 
-    return scheduleDAG->DAG->GetOrdering(SU->getNode());
+    return SU->getNode()->getIROrder();
   }
 
   bool empty() const { return Queue.empty(); }

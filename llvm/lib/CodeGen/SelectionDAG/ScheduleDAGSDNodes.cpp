@@ -736,7 +736,7 @@ static void ProcessSourceNode(SDNode *N, SelectionDAG *DAG,
                            DenseMap<SDValue, unsigned> &VRBaseMap,
                     SmallVector<std::pair<unsigned, MachineInstr*>, 32> &Orders,
                            SmallSet<unsigned, 8> &Seen) {
-  unsigned Order = DAG->GetOrdering(N);
+  unsigned Order = N->getIROrder();
   if (!Order || !Seen.insert(Order)) {
     // Process any valid SDDbgValues even if node does not have any order
     // assigned.

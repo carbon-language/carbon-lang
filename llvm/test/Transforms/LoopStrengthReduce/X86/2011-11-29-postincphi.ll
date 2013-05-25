@@ -11,9 +11,9 @@ declare i1 @check() nounwind
 
 ; Check that LSR did something close to the behavior at the time of the bug.
 ; CHECK: @sqlite3DropTriggerPtr
-; CHECK: incq %rax
+; CHECK: incq %r{{[a-d]}}x
 ; CHECK: jne
-; CHECK: decq %rax
+; CHECK: decq %r{{[a-d]}}x
 ; CHECK: ret
 define i64 @sqlite3DropTriggerPtr() nounwind {
 bb:

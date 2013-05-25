@@ -3,8 +3,8 @@
 define float @test_sincos_f32(float %f) {
   %sin = call float @sinf(float %f) readnone
   %cos = call float @cosf(float %f) readnone
-; CHECK: bl cosf
 ; CHECK: bl sinf
+; CHECK: bl cosf
   %val = fadd float %sin, %cos
   ret float %val
 }
@@ -13,8 +13,8 @@ define double @test_sincos_f64(double %f) {
   %sin = call double @sin(double %f) readnone
   %cos = call double @cos(double %f) readnone
   %val = fadd double %sin, %cos
-; CHECK: bl cos
 ; CHECK: bl sin
+; CHECK: bl cos
   ret double %val
 }
 
@@ -22,8 +22,8 @@ define fp128 @test_sincos_f128(fp128 %f) {
   %sin = call fp128 @sinl(fp128 %f) readnone
   %cos = call fp128 @cosl(fp128 %f) readnone
   %val = fadd fp128 %sin, %cos
-; CHECK: bl cosl
 ; CHECK: bl sinl
+; CHECK: bl cosl
   ret fp128 %val
 }
 

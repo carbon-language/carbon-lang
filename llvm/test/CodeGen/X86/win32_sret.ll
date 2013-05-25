@@ -115,8 +115,8 @@ entry:
 
 ; Load the address of the result and put it onto stack
 ; (through %ecx in the -O0 build).
-; WIN32:      leal {{[0-9]+}}(%esp), %eax
-; WIN32:      movl %eax, (%e{{[sc][px]}})
+; WIN32:      leal {{[0-9]+}}(%esp), %e{{[a-d]}}x
+; WIN32:      movl %e{{[a-d]}}x, (%e{{([a-d]x)|(sp)}})
 
 ; The this pointer goes to ECX.
 ; WIN32-NEXT: leal {{[0-9]+}}(%esp), %ecx

@@ -2335,9 +2335,6 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       DEBUG(dbgs() << "=> "; ResHi.getNode()->dump(CurDAG); dbgs() << '\n');
     }
 
-    // Propagate ordering to the last node, for now.
-    CurDAG->AssignOrdering(InFlag.getNode(), CurDAG->GetOrdering(Node));
-
     return NULL;
   }
 

@@ -15,7 +15,7 @@ entry:
 ; THUMB-ELF: LoadGV
 ; THUMB-ELF: ldr.n r[[reg0:[0-9]+]],
 ; THUMB-ELF: ldr.n r[[reg1:[0-9]+]],
-; THUMB-ELF: ldr r[[reg0]], [r[[reg1]], r[[reg0]]]
+; THUMB-ELF: ldr r[[reg0]], [r[[reg0]], r[[reg1]]]
 ; ARM: LoadGV
 ; ARM: ldr [[reg1:r[0-9]+]],
 ; ARM: add [[reg1]], pc, [[reg1]]
@@ -26,7 +26,7 @@ entry:
 ; ARMv7-ELF: LoadGV
 ; ARMv7-ELF: ldr r[[reg2:[0-9]+]],
 ; ARMv7-ELF: ldr r[[reg3:[0-9]+]],
-; ARMv7-ELF: ldr r[[reg2]], [r[[reg3]], r[[reg2]]]
+; ARMv7-ELF: ldr r[[reg2]], [r[[reg2]], r[[reg3]]]
   %tmp = load i32* @g
   ret i32 %tmp
 }
@@ -43,7 +43,7 @@ entry:
 ; THUMB-ELF: LoadIndirectSymbol
 ; THUMB-ELF: ldr.n r[[reg3:[0-9]+]],
 ; THUMB-ELF: ldr.n r[[reg4:[0-9]+]],
-; THUMB-ELF: ldr r[[reg3]], [r[[reg4]], r[[reg3]]]
+; THUMB-ELF: ldr r[[reg3]], [r[[reg3]], r[[reg4]]]
 ; ARM: LoadIndirectSymbol
 ; ARM: ldr [[reg4:r[0-9]+]],
 ; ARM: ldr [[reg4]], [pc, [[reg4]]]
@@ -55,7 +55,7 @@ entry:
 ; ARMv7-ELF: LoadIndirectSymbol
 ; ARMv7-ELF: ldr r[[reg5:[0-9]+]],
 ; ARMv7-ELF: ldr r[[reg6:[0-9]+]],
-; ARMv7-ELF: ldr r[[reg5]], [r[[reg6]], r[[reg5]]]
+; ARMv7-ELF: ldr r[[reg5]], [r[[reg5]], r[[reg6]]]
   %tmp = load i32* @i
   ret i32 %tmp
 }

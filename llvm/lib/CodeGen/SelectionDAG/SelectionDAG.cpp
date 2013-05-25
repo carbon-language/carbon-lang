@@ -13,7 +13,6 @@
 
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "SDNodeDbgValue.h"
-#include "SDNodeOrdering.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
@@ -636,9 +635,6 @@ void SelectionDAG::DeallocateNode(SDNode *N) {
 
   NodeAllocator.Deallocate(AllNodes.remove(N));
 
-  // Remove the ordering of this node.
-  Ordering->remove(N);
-
   // If any of the SDDbgValue nodes refer to this SDNode, invalidate them.
   ArrayRef<SDDbgValue*> DbgVals = DbgInfo->getSDDbgValues(N);
   for (unsigned i = 0, e = DbgVals.size(); i != e; ++i)
@@ -876,9 +872,8 @@ SelectionDAG::SelectionDAG(const TargetMachine &tm, CodeGenOpt::Level OL)
   : TM(tm), TLI(*tm.getTargetLowering()), TSI(*tm.getSelectionDAGInfo()),
     TTI(0), OptLevel(OL), EntryNode(ISD::EntryToken, 0, DebugLoc(),
                                     getVTList(MVT::Other)),
-    Root(getEntryNode()), Ordering(0), UpdateListeners(0) {
+    Root(getEntryNode()), UpdateListeners(0) {
   AllNodes.push_back(&EntryNode);
-  Ordering = new SDNodeOrdering();
   DbgInfo = new SDDbgInfo();
 }
 
@@ -891,7 +886,6 @@ void SelectionDAG::init(MachineFunction &mf, const TargetTransformInfo *tti) {
 SelectionDAG::~SelectionDAG() {
   assert(!UpdateListeners && "Dangling registered DAGUpdateListeners");
   allnodes_clear();
-  delete Ordering;
   delete DbgInfo;
 }
 
@@ -918,7 +912,6 @@ void SelectionDAG::clear() {
   EntryNode.UseList = 0;
   AllNodes.push_back(&EntryNode);
   Root = getEntryNode();
-  Ordering->clear();
   DbgInfo->clear();
 }
 
@@ -3470,10 +3463,10 @@ static SDValue getMemsetStringVal(EVT VT, SDLoc dl, SelectionDAG &DAG,
 
 /// getMemBasePlusOffset - Returns base and offset node for the
 ///
-static SDValue getMemBasePlusOffset(SDValue Base, unsigned Offset,
+static SDValue getMemBasePlusOffset(SDValue Base, unsigned Offset, SDLoc dl,
                                       SelectionDAG &DAG) {
   EVT VT = Base.getValueType();
-  return DAG.getNode(ISD::ADD, SDLoc(Base),
+  return DAG.getNode(ISD::ADD, dl,
                      VT, Base, DAG.getConstant(Offset, VT));
 }
 
@@ -3687,7 +3680,7 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, SDLoc dl,
       Value = getMemsetStringVal(VT, dl, DAG, TLI, Str.substr(SrcOff));
       if (Value.getNode())
         Store = DAG.getStore(Chain, dl, Value,
-                             getMemBasePlusOffset(Dst, DstOff, DAG),
+                             getMemBasePlusOffset(Dst, DstOff, dl, DAG),
                              DstPtrInfo.getWithOffset(DstOff), isVol,
                              false, Align);
     }
@@ -3701,11 +3694,11 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, SDLoc dl,
       EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), VT);
       assert(NVT.bitsGE(VT));
       Value = DAG.getExtLoad(ISD::EXTLOAD, dl, NVT, Chain,
-                             getMemBasePlusOffset(Src, SrcOff, DAG),
+                             getMemBasePlusOffset(Src, SrcOff, dl, DAG),
                              SrcPtrInfo.getWithOffset(SrcOff), VT, isVol, false,
                              MinAlign(SrcAlign, SrcOff));
       Store = DAG.getTruncStore(Chain, dl, Value,
-                                getMemBasePlusOffset(Dst, DstOff, DAG),
+                                getMemBasePlusOffset(Dst, DstOff, dl, DAG),
                                 DstPtrInfo.getWithOffset(DstOff), VT, isVol,
                                 false, Align);
     }
@@ -3774,7 +3767,7 @@ static SDValue getMemmoveLoadsAndStores(SelectionDAG &DAG, SDLoc dl,
     SDValue Value, Store;
 
     Value = DAG.getLoad(VT, dl, Chain,
-                        getMemBasePlusOffset(Src, SrcOff, DAG),
+                        getMemBasePlusOffset(Src, SrcOff, dl, DAG),
                         SrcPtrInfo.getWithOffset(SrcOff), isVol,
                         false, false, SrcAlign);
     LoadValues.push_back(Value);
@@ -3790,7 +3783,7 @@ static SDValue getMemmoveLoadsAndStores(SelectionDAG &DAG, SDLoc dl,
     SDValue Value, Store;
 
     Store = DAG.getStore(Chain, dl, LoadValues[i],
-                         getMemBasePlusOffset(Dst, DstOff, DAG),
+                         getMemBasePlusOffset(Dst, DstOff, dl, DAG),
                          DstPtrInfo.getWithOffset(DstOff), isVol, false, Align);
     OutChains.push_back(Store);
     DstOff += VTSize;
@@ -3872,7 +3865,7 @@ static SDValue getMemsetStores(SelectionDAG &DAG, SDLoc dl,
     }
     assert(Value.getValueType() == VT && "Value with wrong type.");
     SDValue Store = DAG.getStore(Chain, dl, Value,
-                                 getMemBasePlusOffset(Dst, DstOff, DAG),
+                                 getMemBasePlusOffset(Dst, DstOff, dl, DAG),
                                  DstPtrInfo.getWithOffset(DstOff),
                                  isVol, false, Align);
     OutChains.push_back(Store);
@@ -5863,18 +5856,6 @@ unsigned SelectionDAG::AssignTopologicalOrder() {
          "Last node in topologic sort has users!");
   assert(DAGSize == allnodes_size() && "Node count mismatch!");
   return DAGSize;
-}
-
-/// AssignOrdering - Assign an order to the SDNode.
-void SelectionDAG::AssignOrdering(const SDNode *SD, unsigned Order) {
-  assert(SD && "Trying to assign an order to a null node!");
-  Ordering->add(SD, Order);
-}
-
-/// GetOrdering - Get the order for the SDNode.
-unsigned SelectionDAG::GetOrdering(const SDNode *SD) const {
-  assert(SD && "Trying to get the order of a null node!");
-  return Ordering->getOrder(SD);
 }
 
 /// AddDbgValue - Add a dbg_value SDNode. If SD is non-null that means the

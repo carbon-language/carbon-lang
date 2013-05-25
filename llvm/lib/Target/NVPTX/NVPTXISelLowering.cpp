@@ -1145,14 +1145,14 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
             false,
             TD->getABITypeAlignment(ObjectVT.getTypeForEVT(F->getContext())));
         if (p.getNode())
-          DAG.AssignOrdering(p.getNode(), idx + 1);
+          p.getNode()->setIROrder(idx + 1);
         InVals.push_back(p);
       } else {
         // If no ABI, just move the param symbol
         SDValue Arg = getParamSymbol(DAG, idx, ObjectVT);
         SDValue p = DAG.getNode(NVPTXISD::MoveParam, dl, ObjectVT, Arg);
         if (p.getNode())
-          DAG.AssignOrdering(p.getNode(), idx + 1);
+          p.getNode()->setIROrder(idx + 1);
         InVals.push_back(p);
       }
       continue;
@@ -1169,7 +1169,7 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
       SDValue Arg = getParamSymbol(DAG, idx, getPointerTy());
       SDValue p = DAG.getNode(NVPTXISD::MoveParam, dl, ObjectVT, Arg);
       if (p.getNode())
-        DAG.AssignOrdering(p.getNode(), idx + 1);
+        p.getNode()->setIROrder(idx + 1);
       if (isKernel)
         InVals.push_back(p);
       else {

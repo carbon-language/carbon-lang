@@ -19,8 +19,8 @@ entry:
 ; OSX_SINCOS: addss %xmm0, %xmm1
 
 ; OSX_NOOPT: test1
-; OSX_NOOPT: callq _cosf
 ; OSX_NOOPT: callq _sinf
+; OSX_NOOPT: callq _cosf
   %call = tail call float @sinf(float %x) nounwind readnone
   %call1 = tail call float @cosf(float %x) nounwind readnone
   %add = fadd float %call, %call1
@@ -39,8 +39,8 @@ entry:
 ; OSX_SINCOS: addsd %xmm1, %xmm0
 
 ; OSX_NOOPT: test2
-; OSX_NOOPT: callq _cos
 ; OSX_NOOPT: callq _sin
+; OSX_NOOPT: callq _cos
   %call = tail call double @sin(double %x) nounwind readnone
   %call1 = tail call double @cos(double %x) nounwind readnone
   %add = fadd double %call, %call1

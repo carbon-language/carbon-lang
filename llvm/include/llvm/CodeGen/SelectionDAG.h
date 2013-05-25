@@ -33,7 +33,6 @@ class AliasAnalysis;
 class MachineConstantPoolValue;
 class MachineFunction;
 class MDNode;
-class SDNodeOrdering;
 class SDDbgValue;
 class TargetLowering;
 class TargetSelectionDAGInfo;
@@ -165,10 +164,6 @@ class SelectionDAG {
   /// Allocator - Pool allocation for misc. objects that are created once per
   /// SelectionDAG.
   BumpPtrAllocator Allocator;
-
-  /// SDNodeOrdering - The ordering of the SDNodes. It roughly corresponds to
-  /// the ordering of the original LLVM instructions.
-  SDNodeOrdering *Ordering;
 
   /// DbgInfo - Tracks dbg_value information through SDISel.
   SDDbgInfo *DbgInfo;
@@ -949,12 +944,6 @@ public:
     case MVT::ppcf128: return APFloat::PPCDoubleDouble;
     }
   }
-
-  /// AssignOrdering - Assign an order to the SDNode.
-  void AssignOrdering(const SDNode *SD, unsigned Order);
-
-  /// GetOrdering - Get the order for the SDNode.
-  unsigned GetOrdering(const SDNode *SD) const;
 
   /// AddDbgValue - Add a dbg_value SDNode. If SD is non-null that means the
   /// value is produced by SD.
