@@ -540,6 +540,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setTargetDAGCombine(ISD::STORE);
   setTargetDAGCombine(ISD::BR_CC);
   setTargetDAGCombine(ISD::BSWAP);
+  setTargetDAGCombine(ISD::INTRINSIC_WO_CHAIN);
 
   // Use reciprocal estimates.
   if (TM.Options.UnsafeFPMath) {
@@ -6988,8 +6989,10 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       // cause the last vector in the sequence to be (re)loaded. Otherwise,
       // the next vector will be fetched as you might suspect was necessary.
 
-      // FIXME: We might be able to reuse the permutation generation from
+      // We might be able to reuse the permutation generation from
       // a different base address offset from this one by an aligned amount.
+      // The INTRINSIC_WO_CHAIN DAG combine will attempt to perform this
+      // optimization later.
       SDValue PermCntl = BuildIntrinsicOp(Intrinsic::ppc_altivec_lvsl, Ptr,
                                           DAG, dl, MVT::v16i8);
 
@@ -7074,6 +7077,30 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
     }
     }
     break;
+  case ISD::INTRINSIC_WO_CHAIN:
+    if (cast<ConstantSDNode>(N->getOperand(0))->getZExtValue() ==
+          Intrinsic::ppc_altivec_lvsl &&
+        N->getOperand(1)->getOpcode() == ISD::ADD) {
+      SDValue Add = N->getOperand(1);
+
+      if (DAG.MaskedValueIsZero(Add->getOperand(1),
+            APInt::getAllOnesValue(4 /* 16 byte alignment */).zext(
+              Add.getValueType().getScalarType().getSizeInBits()))) {
+        SDNode *BasePtr = Add->getOperand(0).getNode();
+        for (SDNode::use_iterator UI = BasePtr->use_begin(),
+             UE = BasePtr->use_end(); UI != UE; ++UI) {
+          if (UI->getOpcode() == ISD::INTRINSIC_WO_CHAIN &&
+              cast<ConstantSDNode>(UI->getOperand(0))->getZExtValue() ==
+                Intrinsic::ppc_altivec_lvsl) {
+            // We've found another LVSL, and this address if an aligned
+            // multiple of that one. The results will be the same, so use the
+            // one we've just found instead.
+
+            return SDValue(*UI, 0);
+          }
+        }
+      }
+    }
   case ISD::BSWAP:
     // Turn BSWAP (LOAD) -> lhbrx/lwbrx.
     if (ISD::isNON_EXTLoad(N->getOperand(0).getNode()) &&

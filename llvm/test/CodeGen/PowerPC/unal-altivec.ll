@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mcpu=g5 | FileCheck %s
+; RUN: llc < %s -mcpu=g5 | FileCheck %s -check-prefix=CHECK-PC
 target datalayout = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f128:128:128-v128:128:128-n32:64"
 target triple = "powerpc64-unknown-linux-gnu"
 
@@ -37,6 +38,11 @@ vector.body:                                      ; preds = %vector.body, %vecto
 ; CHECK-DAG: vperm [[R1:[0-9]+]], [[LD1]], [[LD2]], [[PC]]
 ; CHECK: vaddfp {{[0-9]+}}, [[R1]], [[CNST]]
 ; CHECK: blr
+
+; CHECK-PC: @foo
+; CHECK-PC: lvsl
+; CHECK-PC-NOT: lvsl
+; CHECK-PC: blr
 
 for.end:                                          ; preds = %vector.body
   ret void
