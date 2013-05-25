@@ -254,7 +254,7 @@ MSP430TargetLowering::LowerFormalArguments(SDValue Chain,
                                            bool isVarArg,
                                            const SmallVectorImpl<ISD::InputArg>
                                              &Ins,
-                                           DebugLoc dl,
+                                           SDLoc dl,
                                            SelectionDAG &DAG,
                                            SmallVectorImpl<SDValue> &InVals)
                                              const {
@@ -276,7 +276,7 @@ SDValue
 MSP430TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                 SmallVectorImpl<SDValue> &InVals) const {
   SelectionDAG &DAG                     = CLI.DAG;
-  DebugLoc &dl                          = CLI.DL;
+  SDLoc &dl                             = CLI.DL;
   SmallVector<ISD::OutputArg, 32> &Outs = CLI.Outs;
   SmallVector<SDValue, 32> &OutVals     = CLI.OutVals;
   SmallVector<ISD::InputArg, 32> &Ins   = CLI.Ins;
@@ -310,7 +310,7 @@ MSP430TargetLowering::LowerCCCArguments(SDValue Chain,
                                         bool isVarArg,
                                         const SmallVectorImpl<ISD::InputArg>
                                           &Ins,
-                                        DebugLoc dl,
+                                        SDLoc dl,
                                         SelectionDAG &DAG,
                                         SmallVectorImpl<SDValue> &InVals)
                                           const {
@@ -407,7 +407,7 @@ MSP430TargetLowering::LowerReturn(SDValue Chain,
                                   CallingConv::ID CallConv, bool isVarArg,
                                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                                   const SmallVectorImpl<SDValue> &OutVals,
-                                  DebugLoc dl, SelectionDAG &DAG) const {
+                                  SDLoc dl, SelectionDAG &DAG) const {
 
   // CCValAssign - represent the assignment of the return value to a location
   SmallVector<CCValAssign, 16> RVLocs;
@@ -463,7 +463,7 @@ MSP430TargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
                                        &Outs,
                                      const SmallVectorImpl<SDValue> &OutVals,
                                      const SmallVectorImpl<ISD::InputArg> &Ins,
-                                     DebugLoc dl, SelectionDAG &DAG,
+                                     SDLoc dl, SelectionDAG &DAG,
                                      SmallVectorImpl<SDValue> &InVals) const {
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -599,7 +599,7 @@ SDValue
 MSP430TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
                                       CallingConv::ID CallConv, bool isVarArg,
                                       const SmallVectorImpl<ISD::InputArg> &Ins,
-                                      DebugLoc dl, SelectionDAG &DAG,
+                                      SDLoc dl, SelectionDAG &DAG,
                                       SmallVectorImpl<SDValue> &InVals) const {
 
   // Assign locations to each value returned by this call.
@@ -625,7 +625,7 @@ SDValue MSP430TargetLowering::LowerShifts(SDValue Op,
   unsigned Opc = Op.getOpcode();
   SDNode* N = Op.getNode();
   EVT VT = Op.getValueType();
-  DebugLoc dl = N->getDebugLoc();
+  SDLoc dl(N);
 
   // Expand non-constant shifts to loops:
   if (!isa<ConstantSDNode>(N->getOperand(1)))
@@ -669,15 +669,15 @@ SDValue MSP430TargetLowering::LowerGlobalAddress(SDValue Op,
   int64_t Offset = cast<GlobalAddressSDNode>(Op)->getOffset();
 
   // Create the TargetGlobalAddress node, folding in the constant offset.
-  SDValue Result = DAG.getTargetGlobalAddress(GV, Op.getDebugLoc(),
+  SDValue Result = DAG.getTargetGlobalAddress(GV, SDLoc(Op),
                                               getPointerTy(), Offset);
-  return DAG.getNode(MSP430ISD::Wrapper, Op.getDebugLoc(),
+  return DAG.getNode(MSP430ISD::Wrapper, SDLoc(Op),
                      getPointerTy(), Result);
 }
 
 SDValue MSP430TargetLowering::LowerExternalSymbol(SDValue Op,
                                                   SelectionDAG &DAG) const {
-  DebugLoc dl = Op.getDebugLoc();
+  SDLoc dl(Op);
   const char *Sym = cast<ExternalSymbolSDNode>(Op)->getSymbol();
   SDValue Result = DAG.getTargetExternalSymbol(Sym, getPointerTy());
 
@@ -686,7 +686,7 @@ SDValue MSP430TargetLowering::LowerExternalSymbol(SDValue Op,
 
 SDValue MSP430TargetLowering::LowerBlockAddress(SDValue Op,
                                                 SelectionDAG &DAG) const {
-  DebugLoc dl = Op.getDebugLoc();
+  SDLoc dl(Op);
   const BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
   SDValue Result = DAG.getTargetBlockAddress(BA, getPointerTy());
 
@@ -695,7 +695,7 @@ SDValue MSP430TargetLowering::LowerBlockAddress(SDValue Op,
 
 static SDValue EmitCMP(SDValue &LHS, SDValue &RHS, SDValue &TargetCC,
                        ISD::CondCode CC,
-                       DebugLoc dl, SelectionDAG &DAG) {
+                       SDLoc dl, SelectionDAG &DAG) {
   // FIXME: Handle bittests someday
   assert(!LHS.getValueType().isFloatingPoint() && "We don't handle FP yet");
 
@@ -782,7 +782,7 @@ SDValue MSP430TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   SDValue LHS   = Op.getOperand(2);
   SDValue RHS   = Op.getOperand(3);
   SDValue Dest  = Op.getOperand(4);
-  DebugLoc dl   = Op.getDebugLoc();
+  SDLoc dl  (Op);
 
   SDValue TargetCC;
   SDValue Flag = EmitCMP(LHS, RHS, TargetCC, CC, dl, DAG);
@@ -794,7 +794,7 @@ SDValue MSP430TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
 SDValue MSP430TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   SDValue LHS   = Op.getOperand(0);
   SDValue RHS   = Op.getOperand(1);
-  DebugLoc dl   = Op.getDebugLoc();
+  SDLoc dl  (Op);
 
   // If we are doing an AND and testing against zero, then the CMP
   // will not be generated.  The AND (or BIT) will generate the condition codes,
@@ -878,7 +878,7 @@ SDValue MSP430TargetLowering::LowerSELECT_CC(SDValue Op,
   SDValue TrueV  = Op.getOperand(2);
   SDValue FalseV = Op.getOperand(3);
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
-  DebugLoc dl    = Op.getDebugLoc();
+  SDLoc dl   (Op);
 
   SDValue TargetCC;
   SDValue Flag = EmitCMP(LHS, RHS, TargetCC, CC, dl, DAG);
@@ -897,7 +897,7 @@ SDValue MSP430TargetLowering::LowerSIGN_EXTEND(SDValue Op,
                                                SelectionDAG &DAG) const {
   SDValue Val = Op.getOperand(0);
   EVT VT      = Op.getValueType();
-  DebugLoc dl = Op.getDebugLoc();
+  SDLoc dl(Op);
 
   assert(VT == MVT::i16 && "Only support i16 for now!");
 
@@ -929,7 +929,7 @@ SDValue MSP430TargetLowering::LowerRETURNADDR(SDValue Op,
   MFI->setReturnAddressIsTaken(true);
 
   unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
-  DebugLoc dl = Op.getDebugLoc();
+  SDLoc dl(Op);
 
   if (Depth > 0) {
     SDValue FrameAddr = LowerFRAMEADDR(Op, DAG);
@@ -953,7 +953,7 @@ SDValue MSP430TargetLowering::LowerFRAMEADDR(SDValue Op,
   MFI->setFrameAddressIsTaken(true);
 
   EVT VT = Op.getValueType();
-  DebugLoc dl = Op.getDebugLoc();  // FIXME probably not meaningful
+  SDLoc dl(Op);  // FIXME probably not meaningful
   unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
   SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl,
                                          MSP430::FPW, VT);
@@ -975,7 +975,7 @@ SDValue MSP430TargetLowering::LowerVASTART(SDValue Op,
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
 
   // Create a store of the frame index to the location operand
-  return DAG.getStore(Op.getOperand(0), Op.getDebugLoc(), FrameIndex,
+  return DAG.getStore(Op.getOperand(0), SDLoc(Op), FrameIndex,
                       Op.getOperand(1), MachinePointerInfo(SV),
                       false, false, 0);
 }

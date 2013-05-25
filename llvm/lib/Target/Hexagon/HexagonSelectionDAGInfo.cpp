@@ -27,7 +27,7 @@ HexagonSelectionDAGInfo::~HexagonSelectionDAGInfo() {
 
 SDValue
 HexagonSelectionDAGInfo::
-EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl, SDValue Chain,
+EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
                         SDValue Dst, SDValue Src, SDValue Size, unsigned Align,
                         bool isVolatile, bool AlwaysInline,
                         MachinePointerInfo DstPtrInfo,

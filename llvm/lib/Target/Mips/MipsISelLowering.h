@@ -336,7 +336,7 @@ namespace llvm {
     SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
                             CallingConv::ID CallConv, bool isVarArg,
                             const SmallVectorImpl<ISD::InputArg> &Ins,
-                            DebugLoc dl, SelectionDAG &DAG,
+                            SDLoc dl, SelectionDAG &DAG,
                             SmallVectorImpl<SDValue> &InVals,
                             const SDNode *CallNode, const Type *RetTy) const;
 
@@ -376,7 +376,7 @@ namespace llvm {
     /// copyByValArg - Copy argument registers which were used to pass a byval
     /// argument to the stack. Create a stack frame object for the byval
     /// argument.
-    void copyByValRegs(SDValue Chain, DebugLoc DL,
+    void copyByValRegs(SDValue Chain, SDLoc DL,
                        std::vector<SDValue> &OutChains, SelectionDAG &DAG,
                        const ISD::ArgFlagsTy &Flags,
                        SmallVectorImpl<SDValue> &InVals,
@@ -384,7 +384,7 @@ namespace llvm {
                        const MipsCC &CC, const ByValArgInfo &ByVal) const;
 
     /// passByValArg - Pass a byval argument in registers or on stack.
-    void passByValArg(SDValue Chain, DebugLoc DL,
+    void passByValArg(SDValue Chain, SDLoc DL,
                       std::deque< std::pair<unsigned, SDValue> > &RegsToPass,
                       SmallVector<SDValue, 8> &MemOpChains, SDValue StackPtr,
                       MachineFrameInfo *MFI, SelectionDAG &DAG, SDValue Arg,
@@ -395,17 +395,17 @@ namespace llvm {
     /// to the stack. Also create a stack frame object for the first variable
     /// argument.
     void writeVarArgRegs(std::vector<SDValue> &OutChains, const MipsCC &CC,
-                         SDValue Chain, DebugLoc DL, SelectionDAG &DAG) const;
+                         SDValue Chain, SDLoc DL, SelectionDAG &DAG) const;
 
     virtual SDValue
       LowerFormalArguments(SDValue Chain,
                            CallingConv::ID CallConv, bool isVarArg,
                            const SmallVectorImpl<ISD::InputArg> &Ins,
-                           DebugLoc dl, SelectionDAG &DAG,
+                           SDLoc dl, SelectionDAG &DAG,
                            SmallVectorImpl<SDValue> &InVals) const;
 
     SDValue passArgOnStack(SDValue StackPtr, unsigned Offset, SDValue Chain,
-                           SDValue Arg, DebugLoc DL, bool IsTailCall,
+                           SDValue Arg, SDLoc DL, bool IsTailCall,
                            SelectionDAG &DAG) const;
 
     virtual SDValue
@@ -423,7 +423,7 @@ namespace llvm {
                   CallingConv::ID CallConv, bool isVarArg,
                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                   const SmallVectorImpl<SDValue> &OutVals,
-                  DebugLoc dl, SelectionDAG &DAG) const;
+                  SDLoc dl, SelectionDAG &DAG) const;
 
     // Inline asm support
     ConstraintType getConstraintType(const std::string &Constraint) const;

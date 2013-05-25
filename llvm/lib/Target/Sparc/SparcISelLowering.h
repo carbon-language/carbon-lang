@@ -78,19 +78,19 @@ namespace llvm {
                            CallingConv::ID CallConv,
                            bool isVarArg,
                            const SmallVectorImpl<ISD::InputArg> &Ins,
-                           DebugLoc dl, SelectionDAG &DAG,
+                           SDLoc dl, SelectionDAG &DAG,
                            SmallVectorImpl<SDValue> &InVals) const;
     SDValue LowerFormalArguments_32(SDValue Chain,
                                     CallingConv::ID CallConv,
                                     bool isVarArg,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
-                                    DebugLoc dl, SelectionDAG &DAG,
+                                    SDLoc dl, SelectionDAG &DAG,
                                     SmallVectorImpl<SDValue> &InVals) const;
     SDValue LowerFormalArguments_64(SDValue Chain,
                                     CallingConv::ID CallConv,
                                     bool isVarArg,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
-                                    DebugLoc dl, SelectionDAG &DAG,
+                                    SDLoc dl, SelectionDAG &DAG,
                                     SmallVectorImpl<SDValue> &InVals) const;
 
     virtual SDValue
@@ -106,17 +106,17 @@ namespace llvm {
                   CallingConv::ID CallConv, bool isVarArg,
                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                   const SmallVectorImpl<SDValue> &OutVals,
-                  DebugLoc dl, SelectionDAG &DAG) const;
+                  SDLoc dl, SelectionDAG &DAG) const;
     SDValue LowerReturn_32(SDValue Chain,
                            CallingConv::ID CallConv, bool IsVarArg,
                            const SmallVectorImpl<ISD::OutputArg> &Outs,
                            const SmallVectorImpl<SDValue> &OutVals,
-                           DebugLoc DL, SelectionDAG &DAG) const;
+                           SDLoc DL, SelectionDAG &DAG) const;
     SDValue LowerReturn_64(SDValue Chain,
                            CallingConv::ID CallConv, bool IsVarArg,
                            const SmallVectorImpl<ISD::OutputArg> &Outs,
                            const SmallVectorImpl<SDValue> &OutVals,
-                           DebugLoc DL, SelectionDAG &DAG) const;
+                           SDLoc DL, SelectionDAG &DAG) const;
 
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) const;

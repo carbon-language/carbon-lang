@@ -70,7 +70,7 @@ bool TargetLowering::isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
 SDValue TargetLowering::makeLibCall(SelectionDAG &DAG,
                                     RTLIB::Libcall LC, EVT RetVT,
                                     const SDValue *Ops, unsigned NumOps,
-                                    bool isSigned, DebugLoc dl) const {
+                                    bool isSigned, SDLoc dl) const {
   TargetLowering::ArgListTy Args;
   Args.reserve(NumOps);
 
@@ -102,7 +102,7 @@ SDValue TargetLowering::makeLibCall(SelectionDAG &DAG,
 void TargetLowering::softenSetCCOperands(SelectionDAG &DAG, EVT VT,
                                          SDValue &NewLHS, SDValue &NewRHS,
                                          ISD::CondCode &CCCode,
-                                         DebugLoc dl) const {
+                                         SDLoc dl) const {
   assert((VT == MVT::f32 || VT == MVT::f64 || VT == MVT::f128)
          && "Unsupported setcc type!");
 
@@ -264,7 +264,7 @@ TargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
 /// constant and return true.
 bool TargetLowering::TargetLoweringOpt::ShrinkDemandedConstant(SDValue Op,
                                                         const APInt &Demanded) {
-  DebugLoc dl = Op.getDebugLoc();
+  SDLoc dl(Op);
 
   // FIXME: ISD::SELECT, ISD::SELECT_CC
   switch (Op.getOpcode()) {
@@ -304,7 +304,7 @@ bool
 TargetLowering::TargetLoweringOpt::ShrinkDemandedOp(SDValue Op,
                                                     unsigned BitWidth,
                                                     const APInt &Demanded,
-                                                    DebugLoc dl) {
+                                                    SDLoc dl) {
   assert(Op.getNumOperands() == 2 &&
          "ShrinkDemandedOp only supports binary operators!");
   assert(Op.getNode()->getNumValues() == 1 &&
@@ -358,7 +358,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
   assert(Op.getValueType().getScalarType().getSizeInBits() == BitWidth &&
          "Mask size mismatches value type size!");
   APInt NewMask = DemandedMask;
-  DebugLoc dl = Op.getDebugLoc();
+  SDLoc dl(Op);
 
   // Don't know anything.
   KnownZero = KnownOne = APInt(BitWidth, 0);
@@ -1068,7 +1068,7 @@ static bool ValueHasExactlyOneBitSet(SDValue Val, const SelectionDAG &DAG) {
 SDValue
 TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
                               ISD::CondCode Cond, bool foldBooleans,
-                              DAGCombinerInfo &DCI, DebugLoc dl) const {
+                              DAGCombinerInfo &DCI, SDLoc dl) const {
   SelectionDAG &DAG = DCI.DAG;
 
   // These setcc operations always fold.
@@ -1969,7 +1969,7 @@ void TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
         int64_t Offs = GA->getOffset();
         if (C) Offs += C->getZExtValue();
         Ops.push_back(DAG.getTargetGlobalAddress(GA->getGlobal(),
-                                                 C ? C->getDebugLoc() : DebugLoc(),
+                                                 C ? SDLoc(C) : SDLoc(),
                                                  Op.getValueType(), Offs));
         return;
       }
@@ -2440,7 +2440,7 @@ void TargetLowering::ComputeConstraintToUse(AsmOperandInfo &OpInfo,
 
 /// BuildExactDiv - Given an exact SDIV by a constant, create a multiplication
 /// with the multiplicative inverse of the constant.
-SDValue TargetLowering::BuildExactSDIV(SDValue Op1, SDValue Op2, DebugLoc dl,
+SDValue TargetLowering::BuildExactSDIV(SDValue Op1, SDValue Op2, SDLoc dl,
                                        SelectionDAG &DAG) const {
   ConstantSDNode *C = cast<ConstantSDNode>(Op2);
   APInt d = C->getAPIntValue();
@@ -2472,7 +2472,7 @@ SDValue TargetLowering::
 BuildSDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
           std::vector<SDNode*> *Created) const {
   EVT VT = N->getValueType(0);
-  DebugLoc dl= N->getDebugLoc();
+  SDLoc dl(N);
 
   // Check to see if we can do this.
   // FIXME: We should be more aggressive here.
@@ -2532,7 +2532,7 @@ SDValue TargetLowering::
 BuildUDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
           std::vector<SDNode*> *Created) const {
   EVT VT = N->getValueType(0);
-  DebugLoc dl = N->getDebugLoc();
+  SDLoc dl(N);
 
   // Check to see if we can do this.
   // FIXME: We should be more aggressive here.

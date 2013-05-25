@@ -34,7 +34,7 @@ public:
   ~X86SelectionDAGInfo();
 
   virtual
-  SDValue EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
+  SDValue EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
                                   SDValue Chain,
                                   SDValue Dst, SDValue Src,
                                   SDValue Size, unsigned Align,
@@ -42,7 +42,7 @@ public:
                                   MachinePointerInfo DstPtrInfo) const;
 
   virtual
-  SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
+  SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
                                   SDValue Chain,
                                   SDValue Dst, SDValue Src,
                                   SDValue Size, unsigned Align,

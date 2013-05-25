@@ -474,7 +474,7 @@ void SystemZDAGToDAGISel::getAddressOperands(const SystemZAddressingMode &AM,
     // Truncate values from i64 to i32, for shifts.
     assert(VT == MVT::i32 && Base.getValueType() == MVT::i64 &&
            "Unexpected truncation");
-    DebugLoc DL = Base.getDebugLoc();
+    SDLoc DL(Base);
     SDValue Trunc = CurDAG->getNode(ISD::TRUNCATE, DL, VT, Base);
     insertDAGNode(CurDAG, Base.getNode(), Trunc);
     Base = Trunc;
@@ -522,7 +522,7 @@ SDNode *SystemZDAGToDAGISel::splitLargeImmediate(unsigned Opcode, SDNode *Node,
                                                  SDValue Op0, uint64_t UpperVal,
                                                  uint64_t LowerVal) {
   EVT VT = Node->getValueType(0);
-  DebugLoc DL = Node->getDebugLoc();
+  SDLoc DL(Node);
   SDValue Upper = CurDAG->getConstant(UpperVal, VT);
   if (Op0.getNode())
     Upper = CurDAG->getNode(Opcode, DL, VT, Op0, Upper);

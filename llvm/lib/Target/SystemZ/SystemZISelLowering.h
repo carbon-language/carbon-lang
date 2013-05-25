@@ -147,7 +147,7 @@ public:
     LowerFormalArguments(SDValue Chain,
                          CallingConv::ID CallConv, bool isVarArg,
                          const SmallVectorImpl<ISD::InputArg> &Ins,
-                         DebugLoc DL, SelectionDAG &DAG,
+                         SDLoc DL, SelectionDAG &DAG,
                          SmallVectorImpl<SDValue> &InVals) const LLVM_OVERRIDE;
   virtual SDValue
     LowerCall(CallLoweringInfo &CLI,
@@ -158,7 +158,7 @@ public:
                 CallingConv::ID CallConv, bool IsVarArg,
                 const SmallVectorImpl<ISD::OutputArg> &Outs,
                 const SmallVectorImpl<SDValue> &OutVals,
-                DebugLoc DL, SelectionDAG &DAG) const LLVM_OVERRIDE;
+                SDLoc DL, SelectionDAG &DAG) const LLVM_OVERRIDE;
 
 private:
   const SystemZSubtarget &Subtarget;

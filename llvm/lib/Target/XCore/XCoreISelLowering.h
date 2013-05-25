@@ -115,7 +115,7 @@ namespace llvm {
                               CallingConv::ID CallConv,
                               bool isVarArg,
                               const SmallVectorImpl<ISD::InputArg> &Ins,
-                              DebugLoc dl, SelectionDAG &DAG,
+                              SDLoc dl, SelectionDAG &DAG,
                               SmallVectorImpl<SDValue> &InVals) const;
     SDValue LowerCCCCallTo(SDValue Chain, SDValue Callee,
                            CallingConv::ID CallConv, bool isVarArg,
@@ -123,17 +123,17 @@ namespace llvm {
                            const SmallVectorImpl<ISD::OutputArg> &Outs,
                            const SmallVectorImpl<SDValue> &OutVals,
                            const SmallVectorImpl<ISD::InputArg> &Ins,
-                           DebugLoc dl, SelectionDAG &DAG,
+                           SDLoc dl, SelectionDAG &DAG,
                            SmallVectorImpl<SDValue> &InVals) const;
     SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
                             CallingConv::ID CallConv, bool isVarArg,
                             const SmallVectorImpl<ISD::InputArg> &Ins,
-                            DebugLoc dl, SelectionDAG &DAG,
+                            SDLoc dl, SelectionDAG &DAG,
                             SmallVectorImpl<SDValue> &InVals) const;
     SDValue getReturnAddressFrameIndex(SelectionDAG &DAG) const;
     SDValue getGlobalAddressWrapper(SDValue GA, const GlobalValue *GV,
                                     SelectionDAG &DAG) const;
-    SDValue lowerLoadWordFromAlignedBasePlusOffset(DebugLoc DL, SDValue Chain,
+    SDValue lowerLoadWordFromAlignedBasePlusOffset(SDLoc DL, SDValue Chain,
                                                    SDValue Base, int64_t Offset,
                                                    SelectionDAG &DAG) const;
 
@@ -177,7 +177,7 @@ namespace llvm {
                            CallingConv::ID CallConv,
                            bool isVarArg,
                            const SmallVectorImpl<ISD::InputArg> &Ins,
-                           DebugLoc dl, SelectionDAG &DAG,
+                           SDLoc dl, SelectionDAG &DAG,
                            SmallVectorImpl<SDValue> &InVals) const;
 
     virtual SDValue
@@ -189,7 +189,7 @@ namespace llvm {
                   CallingConv::ID CallConv, bool isVarArg,
                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                   const SmallVectorImpl<SDValue> &OutVals,
-                  DebugLoc dl, SelectionDAG &DAG) const;
+                  SDLoc dl, SelectionDAG &DAG) const;
 
     virtual bool
       CanLowerReturn(CallingConv::ID CallConv, MachineFunction &MF,

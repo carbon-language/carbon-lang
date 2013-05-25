@@ -87,7 +87,7 @@ SDValue SITargetLowering::LowerFormalArguments(
                                       CallingConv::ID CallConv,
                                       bool isVarArg,
                                       const SmallVectorImpl<ISD::InputArg> &Ins,
-                                      DebugLoc DL, SelectionDAG &DAG,
+                                      SDLoc DL, SelectionDAG &DAG,
                                       SmallVectorImpl<SDValue> &InVals) const {
 
   const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
@@ -265,7 +265,7 @@ static SDNode *findUser(SDValue Value, unsigned Opcode) {
 SDValue SITargetLowering::LowerBRCOND(SDValue BRCOND,
                                       SelectionDAG &DAG) const {
 
-  DebugLoc DL = BRCOND.getDebugLoc();
+  SDLoc DL(BRCOND);
 
   SDNode *Intr = BRCOND.getOperand(1).getNode();
   SDValue Target = BRCOND.getOperand(2);
@@ -345,7 +345,7 @@ SDValue SITargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   SDValue Chain = Op.getOperand(0);
   SDValue Value = Op.getOperand(1);
   SDValue VirtualAddress = Op.getOperand(2);
-  DebugLoc DL = Op.getDebugLoc();
+  SDLoc DL(Op);
 
   if (StoreNode->getAddressSpace() != AMDGPUAS::GLOBAL_ADDRESS) {
     return SDValue();
@@ -371,7 +371,7 @@ SDValue SITargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
   SDValue False = Op.getOperand(3);
   SDValue CC = Op.getOperand(4);
   EVT VT = Op.getValueType();
-  DebugLoc DL = Op.getDebugLoc();
+  SDLoc DL(Op);
 
   // Possible Min/Max pattern
   SDValue MinMax = LowerMinMax(Op, DAG);
@@ -390,7 +390,7 @@ SDValue SITargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
 SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
                                             DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
-  DebugLoc DL = N->getDebugLoc();
+  SDLoc DL(N);
   EVT VT = N->getValueType(0);
 
   switch (N->getOpcode()) {
@@ -564,7 +564,7 @@ void SITargetLowering::ensureSRegLimit(SelectionDAG &DAG, SDValue &Operand,
   // This is a conservative aproach, it is possible that we can't determine
   // the correct register class and copy too often, but better save than sorry.
   SDValue RC = DAG.getTargetConstant(RegClass, MVT::i32);
-  SDNode *Node = DAG.getMachineNode(TargetOpcode::COPY_TO_REGCLASS, DebugLoc(),
+  SDNode *Node = DAG.getMachineNode(TargetOpcode::COPY_TO_REGCLASS, SDLoc(),
                                     Operand.getValueType(), Operand, RC);
   Operand = SDValue(Node, 0);
 }
@@ -701,8 +701,7 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
     Ops.push_back(Node->getOperand(i));
 
   // Create a complete new instruction
-  return DAG.getMachineNode(Desc->Opcode, Node->getDebugLoc(),
-                            Node->getVTList(), Ops);
+  return DAG.getMachineNode(Desc->Opcode, SDLoc(Node), Node->getVTList(), Ops);
 }
 
 /// \brief Helper function for adjustWritemask
@@ -756,7 +755,7 @@ void SITargetLowering::adjustWritemask(MachineSDNode *&Node,
   if (Writemask == (1U << Lane)) {
     SDValue RC = DAG.getTargetConstant(AMDGPU::VReg_32RegClassID, MVT::i32);
     SDNode *Copy = DAG.getMachineNode(TargetOpcode::COPY_TO_REGCLASS,
-                                      DebugLoc(), Users[Lane]->getValueType(0),
+                                      SDLoc(), Users[Lane]->getValueType(0),
                                       SDValue(Node, 0), RC);
     DAG.ReplaceAllUsesWith(Users[Lane], Copy);
     return;

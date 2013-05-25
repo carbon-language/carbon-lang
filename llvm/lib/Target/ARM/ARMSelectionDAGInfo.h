@@ -45,7 +45,7 @@ public:
   ~ARMSelectionDAGInfo();
 
   virtual
-  SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
+  SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
                                   SDValue Chain,
                                   SDValue Dst, SDValue Src,
                                   SDValue Size, unsigned Align,
@@ -55,7 +55,7 @@ public:
 
   // Adjust parameters for memset, see RTABI section 4.3.4
   virtual
-  SDValue EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
+  SDValue EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
                                   SDValue Chain,
                                   SDValue Op1, SDValue Op2,
                                   SDValue Op3, unsigned Align,

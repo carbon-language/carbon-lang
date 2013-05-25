@@ -102,7 +102,7 @@ public:
 
   /// Put the given constant into a pool and return a DAG which will give its
   /// address.
-  SDValue getConstantPoolItemAddress(DebugLoc DL, const Constant *CV);
+  SDValue getConstantPoolItemAddress(SDLoc DL, const Constant *CV);
 
   SDNode *TrySelectToMoveImm(SDNode *N);
   SDNode *LowerToFPLitPool(SDNode *Node);
@@ -191,7 +191,7 @@ bool AArch64DAGToDAGISel::SelectLogicalImm(SDValue N, SDValue &Imm) {
 
 SDNode *AArch64DAGToDAGISel::TrySelectToMoveImm(SDNode *Node) {
   SDNode *ResNode;
-  DebugLoc dl = Node->getDebugLoc();
+  SDLoc dl(Node);
   EVT DestType = Node->getValueType(0);
   unsigned DestWidth = DestType.getSizeInBits();
 
@@ -241,7 +241,7 @@ SDNode *AArch64DAGToDAGISel::TrySelectToMoveImm(SDNode *Node) {
 }
 
 SDValue
-AArch64DAGToDAGISel::getConstantPoolItemAddress(DebugLoc DL,
+AArch64DAGToDAGISel::getConstantPoolItemAddress(SDLoc DL,
                                                 const Constant *CV) {
   EVT PtrVT = TLI.getPointerTy();
 
@@ -281,7 +281,7 @@ AArch64DAGToDAGISel::getConstantPoolItemAddress(DebugLoc DL,
 }
 
 SDNode *AArch64DAGToDAGISel::SelectToLitPool(SDNode *Node) {
-  DebugLoc DL = Node->getDebugLoc();
+  SDLoc DL(Node);
   uint64_t UnsignedVal = cast<ConstantSDNode>(Node)->getZExtValue();
   int64_t SignedVal = cast<ConstantSDNode>(Node)->getSExtValue();
   EVT DestType = Node->getValueType(0);
@@ -323,7 +323,7 @@ SDNode *AArch64DAGToDAGISel::SelectToLitPool(SDNode *Node) {
 }
 
 SDNode *AArch64DAGToDAGISel::LowerToFPLitPool(SDNode *Node) {
-  DebugLoc DL = Node->getDebugLoc();
+  SDLoc DL(Node);
   const ConstantFP *FV = cast<ConstantFPSDNode>(Node)->getConstantFPValue();
   EVT DestType = Node->getValueType(0);
 
@@ -497,7 +497,7 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       assert((Ty == MVT::i32 || Ty == MVT::i64) && "unexpected type");
       uint16_t Register = Ty == MVT::i32 ? AArch64::WZR : AArch64::XZR;
       ResNode = CurDAG->getCopyFromReg(CurDAG->getEntryNode(),
-                                       Node->getDebugLoc(),
+                                       SDLoc(Node),
                                        Register, Ty).getNode();
     }
 

@@ -199,7 +199,7 @@ private:
   /// final size.
   SDValue SExtPromotedInteger(SDValue Op) {
     EVT OldVT = Op.getValueType();
-    DebugLoc dl = Op.getDebugLoc();
+    SDLoc dl(Op);
     Op = GetPromotedInteger(Op);
     return DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, Op.getValueType(), Op,
                        DAG.getValueType(OldVT));
@@ -209,7 +209,7 @@ private:
   /// final size.
   SDValue ZExtPromotedInteger(SDValue Op) {
     EVT OldVT = Op.getValueType();
-    DebugLoc dl = Op.getDebugLoc();
+    SDLoc dl(Op);
     Op = GetPromotedInteger(Op);
     return DAG.getZeroExtendInReg(Op, dl, OldVT.getScalarType());
   }
@@ -361,7 +361,7 @@ private:
   SDValue ExpandIntOp_ATOMIC_STORE(SDNode *N);
 
   void IntegerExpandSetCCOperands(SDValue &NewLHS, SDValue &NewRHS,
-                                  ISD::CondCode &CCCode, DebugLoc dl);
+                                  ISD::CondCode &CCCode, SDLoc dl);
 
   //===--------------------------------------------------------------------===//
   // Float to Integer Conversion Support: LegalizeFloatTypes.cpp
@@ -488,7 +488,7 @@ private:
   SDValue ExpandFloatOp_STORE(SDNode *N, unsigned OpNo);
 
   void FloatExpandSetCCOperands(SDValue &NewLHS, SDValue &NewRHS,
-                                ISD::CondCode &CCCode, DebugLoc dl);
+                                ISD::CondCode &CCCode, SDLoc dl);
 
   //===--------------------------------------------------------------------===//
   // Scalarization Support: LegalizeVectorTypes.cpp

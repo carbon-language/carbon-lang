@@ -484,7 +484,7 @@ namespace llvm {
                                          SDValue &LROpOut,
                                          SDValue &FPOpOut,
                                          bool isDarwinABI,
-                                         DebugLoc dl) const;
+                                         SDLoc dl) const;
 
     SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
@@ -505,7 +505,7 @@ namespace llvm {
     SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG,
                                       const PPCSubtarget &Subtarget) const;
     SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG, DebugLoc dl) const;
+    SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG, SDLoc dl) const;
     SDValue LowerINT_TO_FP(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFLT_ROUNDS_(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSHL_PARTS(SDValue Op, SelectionDAG &DAG) const;
@@ -520,9 +520,9 @@ namespace llvm {
     SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
                             CallingConv::ID CallConv, bool isVarArg,
                             const SmallVectorImpl<ISD::InputArg> &Ins,
-                            DebugLoc dl, SelectionDAG &DAG,
+                            SDLoc dl, SelectionDAG &DAG,
                             SmallVectorImpl<SDValue> &InVals) const;
-    SDValue FinishCall(CallingConv::ID CallConv, DebugLoc dl, bool isTailCall,
+    SDValue FinishCall(CallingConv::ID CallConv, SDLoc dl, bool isTailCall,
                        bool isVarArg,
                        SelectionDAG &DAG,
                        SmallVector<std::pair<unsigned, SDValue>, 8>
@@ -537,7 +537,7 @@ namespace llvm {
       LowerFormalArguments(SDValue Chain,
                            CallingConv::ID CallConv, bool isVarArg,
                            const SmallVectorImpl<ISD::InputArg> &Ins,
-                           DebugLoc dl, SelectionDAG &DAG,
+                           SDLoc dl, SelectionDAG &DAG,
                            SmallVectorImpl<SDValue> &InVals) const;
 
     virtual SDValue
@@ -555,11 +555,11 @@ namespace llvm {
                   CallingConv::ID CallConv, bool isVarArg,
                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                   const SmallVectorImpl<SDValue> &OutVals,
-                  DebugLoc dl, SelectionDAG &DAG) const;
+                  SDLoc dl, SelectionDAG &DAG) const;
 
     SDValue
       extendArgForPPC64(ISD::ArgFlagsTy Flags, EVT ObjectVT, SelectionDAG &DAG,
-                        SDValue ArgVal, DebugLoc dl) const;
+                        SDValue ArgVal, SDLoc dl) const;
 
     void
       setMinReservedArea(MachineFunction &MF, SelectionDAG &DAG,
@@ -570,25 +570,25 @@ namespace llvm {
       LowerFormalArguments_Darwin(SDValue Chain,
                                   CallingConv::ID CallConv, bool isVarArg,
                                   const SmallVectorImpl<ISD::InputArg> &Ins,
-                                  DebugLoc dl, SelectionDAG &DAG,
+                                  SDLoc dl, SelectionDAG &DAG,
                                   SmallVectorImpl<SDValue> &InVals) const;
     SDValue
       LowerFormalArguments_64SVR4(SDValue Chain,
                                   CallingConv::ID CallConv, bool isVarArg,
                                   const SmallVectorImpl<ISD::InputArg> &Ins,
-                                  DebugLoc dl, SelectionDAG &DAG,
+                                  SDLoc dl, SelectionDAG &DAG,
                                   SmallVectorImpl<SDValue> &InVals) const;
     SDValue
       LowerFormalArguments_32SVR4(SDValue Chain,
                                   CallingConv::ID CallConv, bool isVarArg,
                                   const SmallVectorImpl<ISD::InputArg> &Ins,
-                                  DebugLoc dl, SelectionDAG &DAG,
+                                  SDLoc dl, SelectionDAG &DAG,
                                   SmallVectorImpl<SDValue> &InVals) const;
 
     SDValue
       createMemcpyOutsideCallSeq(SDValue Arg, SDValue PtrOff,
                                  SDValue CallSeqStart, ISD::ArgFlagsTy Flags,
-                                 SelectionDAG &DAG, DebugLoc dl) const;
+                                 SelectionDAG &DAG, SDLoc dl) const;
 
     SDValue
       LowerCall_Darwin(SDValue Chain, SDValue Callee,
@@ -597,7 +597,7 @@ namespace llvm {
                        const SmallVectorImpl<ISD::OutputArg> &Outs,
                        const SmallVectorImpl<SDValue> &OutVals,
                        const SmallVectorImpl<ISD::InputArg> &Ins,
-                       DebugLoc dl, SelectionDAG &DAG,
+                       SDLoc dl, SelectionDAG &DAG,
                        SmallVectorImpl<SDValue> &InVals) const;
     SDValue
       LowerCall_64SVR4(SDValue Chain, SDValue Callee,
@@ -606,7 +606,7 @@ namespace llvm {
                        const SmallVectorImpl<ISD::OutputArg> &Outs,
                        const SmallVectorImpl<SDValue> &OutVals,
                        const SmallVectorImpl<ISD::InputArg> &Ins,
-                       DebugLoc dl, SelectionDAG &DAG,
+                       SDLoc dl, SelectionDAG &DAG,
                        SmallVectorImpl<SDValue> &InVals) const;
     SDValue
     LowerCall_32SVR4(SDValue Chain, SDValue Callee, CallingConv::ID CallConv,
@@ -614,7 +614,7 @@ namespace llvm {
                      const SmallVectorImpl<ISD::OutputArg> &Outs,
                      const SmallVectorImpl<SDValue> &OutVals,
                      const SmallVectorImpl<ISD::InputArg> &Ins,
-                     DebugLoc dl, SelectionDAG &DAG,
+                     SDLoc dl, SelectionDAG &DAG,
                      SmallVectorImpl<SDValue> &InVals) const;
 
     SDValue lowerEH_SJLJ_SETJMP(SDValue Op, SelectionDAG &DAG) const;

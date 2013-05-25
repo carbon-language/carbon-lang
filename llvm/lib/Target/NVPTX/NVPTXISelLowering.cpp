@@ -275,7 +275,7 @@ bool NVPTXTargetLowering::shouldSplitVectorElementType(EVT VT) const {
 
 SDValue
 NVPTXTargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const {
-  DebugLoc dl = Op.getDebugLoc();
+  SDLoc dl(Op);
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   Op = DAG.getTargetGlobalAddress(GV, dl, getPointerTy());
   return DAG.getNode(NVPTXISD::Wrapper, dl, getPointerTy(), Op);
@@ -435,7 +435,7 @@ std::string NVPTXTargetLowering::getPrototype(
 SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                        SmallVectorImpl<SDValue> &InVals) const {
   SelectionDAG &DAG = CLI.DAG;
-  DebugLoc &dl = CLI.DL;
+  SDLoc dl = CLI.DL;
   SmallVector<ISD::OutputArg, 32> &Outs = CLI.Outs;
   SmallVector<SDValue, 32> &OutVals = CLI.OutVals;
   SmallVector<ISD::InputArg, 32> &Ins = CLI.Ins;
@@ -810,7 +810,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 SDValue
 NVPTXTargetLowering::LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const {
   SDNode *Node = Op.getNode();
-  DebugLoc dl = Node->getDebugLoc();
+  SDLoc dl(Node);
   SmallVector<SDValue, 8> Ops;
   unsigned NumOperands = Node->getNumOperands();
   for (unsigned i = 0; i < NumOperands; ++i) {
@@ -866,7 +866,7 @@ SDValue NVPTXTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
 SDValue NVPTXTargetLowering::LowerLOADi1(SDValue Op, SelectionDAG &DAG) const {
   SDNode *Node = Op.getNode();
   LoadSDNode *LD = cast<LoadSDNode>(Node);
-  DebugLoc dl = Node->getDebugLoc();
+  SDLoc dl(Node);
   assert(LD->getExtensionType() == ISD::NON_EXTLOAD);
   assert(Node->getValueType(0) == MVT::i1 &&
          "Custom lowering for i1 load only");
@@ -896,7 +896,7 @@ SDValue
 NVPTXTargetLowering::LowerSTOREVector(SDValue Op, SelectionDAG &DAG) const {
   SDNode *N = Op.getNode();
   SDValue Val = N->getOperand(1);
-  DebugLoc DL = N->getDebugLoc();
+  SDLoc DL(N);
   EVT ValVT = Val.getValueType();
 
   if (ValVT.isVector()) {
@@ -985,7 +985,7 @@ NVPTXTargetLowering::LowerSTOREVector(SDValue Op, SelectionDAG &DAG) const {
 // st i8, addr
 SDValue NVPTXTargetLowering::LowerSTOREi1(SDValue Op, SelectionDAG &DAG) const {
   SDNode *Node = Op.getNode();
-  DebugLoc dl = Node->getDebugLoc();
+  SDLoc dl(Node);
   StoreSDNode *ST = cast<StoreSDNode>(Node);
   SDValue Tmp1 = ST->getChain();
   SDValue Tmp2 = ST->getBasePtr();
@@ -1046,7 +1046,7 @@ bool llvm::isImageOrSamplerVal(const Value *arg, const Module *context) {
 
 SDValue NVPTXTargetLowering::LowerFormalArguments(
     SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
-    const SmallVectorImpl<ISD::InputArg> &Ins, DebugLoc dl, SelectionDAG &DAG,
+    const SmallVectorImpl<ISD::InputArg> &Ins, SDLoc dl, SelectionDAG &DAG,
     SmallVectorImpl<SDValue> &InVals) const {
   MachineFunction &MF = DAG.getMachineFunction();
   const DataLayout *TD = getDataLayout();
@@ -1240,7 +1240,7 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
 SDValue NVPTXTargetLowering::LowerReturn(
     SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
     const SmallVectorImpl<ISD::OutputArg> &Outs,
-    const SmallVectorImpl<SDValue> &OutVals, DebugLoc dl,
+    const SmallVectorImpl<SDValue> &OutVals, SDLoc dl,
     SelectionDAG &DAG) const {
 
   bool isABI = (nvptxSubtarget.getSmVersion() >= 20);
@@ -1450,7 +1450,7 @@ unsigned NVPTXTargetLowering::getFunctionAlignment(const Function *) const {
 static void ReplaceLoadVector(SDNode *N, SelectionDAG &DAG,
                               SmallVectorImpl<SDValue> &Results) {
   EVT ResVT = N->getValueType(0);
-  DebugLoc DL = N->getDebugLoc();
+  SDLoc DL(N);
 
   assert(ResVT.isVector() && "Vector load must have vector type");
 
@@ -1543,7 +1543,7 @@ static void ReplaceINTRINSIC_W_CHAIN(SDNode *N, SelectionDAG &DAG,
                                      SmallVectorImpl<SDValue> &Results) {
   SDValue Chain = N->getOperand(0);
   SDValue Intrin = N->getOperand(1);
-  DebugLoc DL = N->getDebugLoc();
+  SDLoc DL(N);
 
   // Get the intrinsic ID
   unsigned IntrinNo = cast<ConstantSDNode>(Intrin.getNode())->getZExtValue();

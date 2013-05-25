@@ -110,7 +110,7 @@ namespace {
 
     /// SelectCC - Select a comparison of the specified values with the
     /// specified condition code, returning the CR# of the expression.
-    SDValue SelectCC(SDValue LHS, SDValue RHS, ISD::CondCode CC, DebugLoc dl);
+    SDValue SelectCC(SDValue LHS, SDValue RHS, ISD::CondCode CC, SDLoc dl);
 
     /// SelectAddrImm - Returns true if the address N can be represented by
     /// a base register plus a signed 16-bit displacement [r+imm].
@@ -397,7 +397,7 @@ bool PPCDAGToDAGISel::isRotateAndMask(SDNode *N, unsigned Mask,
 SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
   SDValue Op0 = N->getOperand(0);
   SDValue Op1 = N->getOperand(1);
-  DebugLoc dl = N->getDebugLoc();
+  SDLoc dl(N);
 
   APInt LKZ, LKO, RKZ, RKO;
   CurDAG->ComputeMaskedBits(Op0, LKZ, LKO);
@@ -466,7 +466,7 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
 /// SelectCC - Select a comparison of the specified values with the specified
 /// condition code, returning the CR# of the expression.
 SDValue PPCDAGToDAGISel::SelectCC(SDValue LHS, SDValue RHS,
-                                    ISD::CondCode CC, DebugLoc dl) {
+                                    ISD::CondCode CC, SDLoc dl) {
   // Always select the LHS.
   unsigned Opc;
 
@@ -710,7 +710,7 @@ static unsigned int getVCmpEQInst(MVT::SimpleValueType VecVT) {
 
 
 SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
-  DebugLoc dl = N->getDebugLoc();
+  SDLoc dl(N);
   unsigned Imm;
   ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
   EVT PtrVT = CurDAG->getTargetLoweringInfo().getPointerTy();
@@ -894,7 +894,7 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
 SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
-  DebugLoc dl = N->getDebugLoc();
+  SDLoc dl(N);
   if (N->isMachineOpcode())
     return NULL;   // Already selected.
 
@@ -1528,7 +1528,7 @@ void PPCDAGToDAGISel::PostprocessISelDAG() {
     // immediate operand, add it now.
     if (ReplaceFlags) {
       if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(ImmOpnd)) {
-        DebugLoc dl = GA->getDebugLoc();
+        SDLoc dl(GA);
         const GlobalValue *GV = GA->getGlobal();
         ImmOpnd = CurDAG->getTargetGlobalAddress(GV, dl, MVT::i64, 0, Flags);
       } else if (ConstantPoolSDNode *CP =

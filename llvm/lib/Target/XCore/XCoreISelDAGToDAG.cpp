@@ -109,7 +109,7 @@ bool XCoreDAGToDAGISel::SelectADDRspii(SDValue Addr, SDValue &Base,
 }
 
 SDNode *XCoreDAGToDAGISel::Select(SDNode *N) {
-  DebugLoc dl = N->getDebugLoc();
+  SDLoc dl(N);
   switch (N->getOpcode()) {
   default: break;
   case ISD::Constant: {
@@ -204,12 +204,12 @@ replaceInChain(SelectionDAG *CurDAG, SDValue Chain, SDValue Old, SDValue New)
   }
   if (!found)
     return SDValue();
-  return CurDAG->getNode(ISD::TokenFactor, Chain->getDebugLoc(), MVT::Other,
+  return CurDAG->getNode(ISD::TokenFactor, SDLoc(Chain), MVT::Other,
                          &Ops[0], Ops.size());
 }
 
 SDNode *XCoreDAGToDAGISel::SelectBRIND(SDNode *N) {
-  DebugLoc dl = N->getDebugLoc();
+  SDLoc dl(N);
   // (brind (int_xcore_checkevent (addr)))
   SDValue Chain = N->getOperand(0);
   SDValue Addr = N->getOperand(1);

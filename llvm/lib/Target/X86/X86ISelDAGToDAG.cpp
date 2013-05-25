@@ -236,7 +236,7 @@ namespace {
       // These are 32-bit even in 64-bit mode since RIP relative offset
       // is 32-bit.
       if (AM.GV)
-        Disp = CurDAG->getTargetGlobalAddress(AM.GV, DebugLoc(),
+        Disp = CurDAG->getTargetGlobalAddress(AM.GV, SDLoc(),
                                               MVT::i32, AM.Disp,
                                               AM.SymbolFlags);
       else if (AM.CP)
@@ -373,7 +373,7 @@ static void MoveBelowOrigChain(SelectionDAG *CurDAG, SDValue Load,
       else
         Ops.push_back(Chain.getOperand(i));
     SDValue NewChain =
-      CurDAG->getNode(ISD::TokenFactor, Load.getDebugLoc(),
+      CurDAG->getNode(ISD::TokenFactor, SDLoc(Load),
                       MVT::Other, &Ops[0], Ops.size());
     Ops.clear();
     Ops.push_back(NewChain);
@@ -524,7 +524,7 @@ void X86DAGToDAGISel::PreprocessISelDAG() {
       MemVT = SrcIsSSE ? SrcVT : DstVT;
 
     SDValue MemTmp = CurDAG->CreateStackTemporary(MemVT);
-    DebugLoc dl = N->getDebugLoc();
+    SDLoc dl(N);
 
     // FIXME: optimize the case where the src/dest is a load or store?
     SDValue Store = CurDAG->getTruncStore(CurDAG->getEntryNode(), dl,
@@ -782,7 +782,7 @@ static bool FoldMaskAndShiftToExtract(SelectionDAG &DAG, SDValue N,
     return true;
 
   EVT VT = N.getValueType();
-  DebugLoc DL = N.getDebugLoc();
+  SDLoc DL(N);
   SDValue Eight = DAG.getConstant(8, MVT::i8);
   SDValue NewMask = DAG.getConstant(0xff, VT);
   SDValue Srl = DAG.getNode(ISD::SRL, DL, VT, X, Eight);
@@ -830,7 +830,7 @@ static bool FoldMaskedShiftToScaledMask(SelectionDAG &DAG, SDValue N,
     return true;
 
   EVT VT = N.getValueType();
-  DebugLoc DL = N.getDebugLoc();
+  SDLoc DL(N);
   SDValue NewMask = DAG.getConstant(Mask >> ShiftAmt, VT);
   SDValue NewAnd = DAG.getNode(ISD::AND, DL, VT, X, NewMask);
   SDValue NewShift = DAG.getNode(ISD::SHL, DL, VT, NewAnd, Shift.getOperand(1));
@@ -932,11 +932,11 @@ static bool FoldMaskAndShiftToScale(SelectionDAG &DAG, SDValue N,
   if (ReplacingAnyExtend) {
     assert(X.getValueType() != VT);
     // We looked through an ANY_EXTEND node, insert a ZERO_EXTEND.
-    SDValue NewX = DAG.getNode(ISD::ZERO_EXTEND, X.getDebugLoc(), VT, X);
+    SDValue NewX = DAG.getNode(ISD::ZERO_EXTEND, SDLoc(X), VT, X);
     InsertDAGNode(DAG, N, NewX);
     X = NewX;
   }
-  DebugLoc DL = N.getDebugLoc();
+  SDLoc DL(N);
   SDValue NewSRLAmt = DAG.getConstant(ShiftAmt + AMShiftAmt, MVT::i8);
   SDValue NewSRL = DAG.getNode(ISD::SRL, DL, VT, X, NewSRLAmt);
   SDValue NewSHLAmt = DAG.getConstant(AMShiftAmt, MVT::i8);
@@ -960,7 +960,7 @@ static bool FoldMaskAndShiftToScale(SelectionDAG &DAG, SDValue N,
 
 bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
                                               unsigned Depth) {
-  DebugLoc dl = N.getDebugLoc();
+  SDLoc dl(N);
   DEBUG({
       dbgs() << "MatchAddress: ";
       AM.dump();
@@ -1502,7 +1502,7 @@ SDNode *X86DAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
   MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
   MemOp[0] = cast<MemSDNode>(Node)->getMemOperand();
   const SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, In2L, In2H, Chain};
-  SDNode *ResNode = CurDAG->getMachineNode(Opc, Node->getDebugLoc(),
+  SDNode *ResNode = CurDAG->getMachineNode(Opc, SDLoc(Node),
                                            MVT::i32, MVT::i32, MVT::Other, Ops);
   cast<MachineSDNode>(ResNode)->setMemRefs(MemOp, MemOp + 1);
   return ResNode;
@@ -1637,7 +1637,7 @@ static const uint16_t AtomicOpcTbl[AtomicOpcEnd][AtomicSzEnd] = {
 // + empty, the operand is not needed any more with the new op selected.
 // + non-empty, otherwise.
 static SDValue getAtomicLoadArithTargetConstant(SelectionDAG *CurDAG,
-                                                DebugLoc dl,
+                                                SDLoc dl,
                                                 enum AtomicOpc &Op, EVT NVT,
                                                 SDValue Val) {
   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Val)) {
@@ -1689,7 +1689,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadArith(SDNode *Node, EVT NVT) {
   if (Node->hasAnyUseOfValue(0))
     return 0;
 
-  DebugLoc dl = Node->getDebugLoc();
+  SDLoc dl(Node);
 
   // Optimize common patterns for __sync_or_and_fetch and similar arith
   // operations where the result is not used. This allows us to use the "lock"
@@ -1920,7 +1920,7 @@ static bool isLoadIncOrDecStore(StoreSDNode *StoreNode, unsigned Opc,
     if (ChainCheck)
       // Make a new TokenFactor with all the other input chains except
       // for the load.
-      InputChain = CurDAG->getNode(ISD::TokenFactor, Chain.getDebugLoc(),
+      InputChain = CurDAG->getNode(ISD::TokenFactor, SDLoc(Chain),
                                    MVT::Other, &ChainOps[0], ChainOps.size());
   }
   if (!ChainCheck)
@@ -1968,7 +1968,7 @@ SDNode *X86DAGToDAGISel::SelectGather(SDNode *Node, unsigned Opc) {
   SDValue Segment = CurDAG->getRegister(0, MVT::i32);
   const SDValue Ops[] = { VSrc, Base, getI8Imm(Scale->getSExtValue()), VIdx,
                           Disp, Segment, VMask, Chain};
-  SDNode *ResNode = CurDAG->getMachineNode(Opc, Node->getDebugLoc(), VTs, Ops);
+  SDNode *ResNode = CurDAG->getMachineNode(Opc, SDLoc(Node), VTs, Ops);
   // Node has 2 outputs: VDst and MVT::Other.
   // ResNode has 3 outputs: VDst, VMask_wb, and MVT::Other.
   // We replace VDst of Node with VDst of ResNode, and Other of Node with Other
@@ -1982,7 +1982,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
   EVT NVT = Node->getValueType(0);
   unsigned Opc, MOpc;
   unsigned Opcode = Node->getOpcode();
-  DebugLoc dl = Node->getDebugLoc();
+  SDLoc dl(Node);
 
   DEBUG(dbgs() << "Selecting: "; Node->dump(CurDAG); dbgs() << '\n');
 
@@ -2666,7 +2666,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     EVT LdVT = LoadNode->getMemoryVT();
     unsigned newOpc = getFusedLdStOpcode(LdVT, Opc);
     MachineSDNode *Result = CurDAG->getMachineNode(newOpc,
-                                                   Node->getDebugLoc(),
+                                                   SDLoc(Node),
                                                    MVT::i32, MVT::Other, Ops);
     Result->setMemRefs(MemOp, MemOp + 2);
 

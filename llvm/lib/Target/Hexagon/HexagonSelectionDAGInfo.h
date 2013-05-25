@@ -26,7 +26,7 @@ public:
   ~HexagonSelectionDAGInfo();
 
   virtual
-  SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
+  SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
                                   SDValue Chain,
                                   SDValue Dst, SDValue Src,
                                   SDValue Size, unsigned Align,

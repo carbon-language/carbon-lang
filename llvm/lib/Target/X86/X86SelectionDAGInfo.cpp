@@ -27,7 +27,7 @@ X86SelectionDAGInfo::~X86SelectionDAGInfo() {
 }
 
 SDValue
-X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
+X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
                                              SDValue Chain,
                                              SDValue Dst, SDValue Src,
                                              SDValue Size, unsigned Align,
@@ -175,7 +175,7 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
 }
 
 SDValue
-X86SelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
+X86SelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
                                         SDValue Chain, SDValue Dst, SDValue Src,
                                         SDValue Size, unsigned Align,
                                         bool isVolatile, bool AlwaysInline,

@@ -436,7 +436,7 @@ LowerAsmOperandForConstraint(SDValue Op, std::string &Constraint,
 // Value is a value that has been passed to us in the location described by VA
 // (and so has type VA.getLocVT()).  Convert Value to VA.getValVT(), chaining
 // any loads onto Chain.
-static SDValue convertLocVTToValVT(SelectionDAG &DAG, DebugLoc DL,
+static SDValue convertLocVTToValVT(SelectionDAG &DAG, SDLoc DL,
                                    CCValAssign &VA, SDValue Chain,
                                    SDValue Value) {
   // If the argument has been promoted from a smaller type, insert an
@@ -461,7 +461,7 @@ static SDValue convertLocVTToValVT(SelectionDAG &DAG, DebugLoc DL,
 // Value is a value of type VA.getValVT() that we need to copy into
 // the location described by VA.  Return a copy of Value converted to
 // VA.getValVT().  The caller is responsible for handling indirect values.
-static SDValue convertValVTToLocVT(SelectionDAG &DAG, DebugLoc DL,
+static SDValue convertValVTToLocVT(SelectionDAG &DAG, SDLoc DL,
                                    CCValAssign &VA, SDValue Value) {
   switch (VA.getLocInfo()) {
   case CCValAssign::SExt:
@@ -480,7 +480,7 @@ static SDValue convertValVTToLocVT(SelectionDAG &DAG, DebugLoc DL,
 SDValue SystemZTargetLowering::
 LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
                      const SmallVectorImpl<ISD::InputArg> &Ins,
-                     DebugLoc DL, SelectionDAG &DAG,
+                     SDLoc DL, SelectionDAG &DAG,
                      SmallVectorImpl<SDValue> &InVals) const {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -599,7 +599,7 @@ SDValue
 SystemZTargetLowering::LowerCall(CallLoweringInfo &CLI,
                                  SmallVectorImpl<SDValue> &InVals) const {
   SelectionDAG &DAG = CLI.DAG;
-  DebugLoc &DL = CLI.DL;
+  SDLoc &DL = CLI.DL;
   SmallVector<ISD::OutputArg, 32> &Outs = CLI.Outs;
   SmallVector<SDValue, 32> &OutVals = CLI.OutVals;
   SmallVector<ISD::InputArg, 32> &Ins = CLI.Ins;
@@ -745,7 +745,7 @@ SystemZTargetLowering::LowerReturn(SDValue Chain,
                                    CallingConv::ID CallConv, bool IsVarArg,
                                    const SmallVectorImpl<ISD::OutputArg> &Outs,
                                    const SmallVectorImpl<SDValue> &OutVals,
-                                   DebugLoc DL, SelectionDAG &DAG) const {
+                                   SDLoc DL, SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
 
   // Assign locations to each returned value.
@@ -879,7 +879,7 @@ static void adjustSubwordCmp(SelectionDAG &DAG, bool &IsUnsigned,
   ISD::LoadExtType ExtType = IsUnsigned ? ISD::ZEXTLOAD : ISD::SEXTLOAD;
   if (CmpOp0.getValueType() != MVT::i32 ||
       Load->getExtensionType() != ExtType)
-    CmpOp0 = DAG.getExtLoad(ExtType, Load->getDebugLoc(), MVT::i32,
+    CmpOp0 = DAG.getExtLoad(ExtType, SDLoc(Load), MVT::i32,
                             Load->getChain(), Load->getBasePtr(),
                             Load->getPointerInfo(), Load->getMemoryVT(),
                             Load->isVolatile(), Load->isNonTemporal(),
@@ -949,7 +949,7 @@ static SDValue emitCmp(SelectionDAG &DAG, SDValue CmpOp0, SDValue CmpOp1,
       IsUnsigned = true;
   }
 
-  DebugLoc DL = CmpOp0.getDebugLoc();
+  SDLoc DL(CmpOp0);
   return DAG.getNode((IsUnsigned ? SystemZISD::UCMP : SystemZISD::CMP),
                      DL, MVT::Glue, CmpOp0, CmpOp1);
 }
@@ -959,7 +959,7 @@ static SDValue emitCmp(SelectionDAG &DAG, SDValue CmpOp0, SDValue CmpOp1,
 // Extend extends Op0 to a GR128, and Opcode performs the GR128 operation
 // on the extended Op0 and (unextended) Op1.  Store the even register result
 // in Even and the odd register result in Odd.
-static void lowerGR128Binary(SelectionDAG &DAG, DebugLoc DL, EVT VT,
+static void lowerGR128Binary(SelectionDAG &DAG, SDLoc DL, EVT VT,
                              unsigned Extend, unsigned Opcode,
                              SDValue Op0, SDValue Op1,
                              SDValue &Even, SDValue &Odd) {
@@ -983,7 +983,7 @@ SDValue SystemZTargetLowering::lowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   SDValue CmpOp0   = Op.getOperand(2);
   SDValue CmpOp1   = Op.getOperand(3);
   SDValue Dest     = Op.getOperand(4);
-  DebugLoc DL      = Op.getDebugLoc();
+  SDLoc DL(Op);
 
   unsigned CCMask;
   SDValue Flags = emitCmp(DAG, CmpOp0, CmpOp1, CC, CCMask);
@@ -998,7 +998,7 @@ SDValue SystemZTargetLowering::lowerSELECT_CC(SDValue Op,
   SDValue TrueOp   = Op.getOperand(2);
   SDValue FalseOp  = Op.getOperand(3);
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
-  DebugLoc DL      = Op.getDebugLoc();
+  SDLoc DL(Op);
 
   unsigned CCMask;
   SDValue Flags = emitCmp(DAG, CmpOp0, CmpOp1, CC, CCMask);
@@ -1015,7 +1015,7 @@ SDValue SystemZTargetLowering::lowerSELECT_CC(SDValue Op,
 
 SDValue SystemZTargetLowering::lowerGlobalAddress(GlobalAddressSDNode *Node,
                                                   SelectionDAG &DAG) const {
-  DebugLoc DL = Node->getDebugLoc();
+  SDLoc DL(Node);
   const GlobalValue *GV = Node->getGlobal();
   int64_t Offset = Node->getOffset();
   EVT PtrVT = getPointerTy();
@@ -1054,7 +1054,7 @@ SDValue SystemZTargetLowering::lowerGlobalAddress(GlobalAddressSDNode *Node,
 
 SDValue SystemZTargetLowering::lowerGlobalTLSAddress(GlobalAddressSDNode *Node,
 						     SelectionDAG &DAG) const {
-  DebugLoc DL = Node->getDebugLoc();
+  SDLoc DL(Node);
   const GlobalValue *GV = Node->getGlobal();
   EVT PtrVT = getPointerTy();
   TLSModel::Model model = TM.getTLSModel(GV);
@@ -1093,7 +1093,7 @@ SDValue SystemZTargetLowering::lowerGlobalTLSAddress(GlobalAddressSDNode *Node,
 
 SDValue SystemZTargetLowering::lowerBlockAddress(BlockAddressSDNode *Node,
                                                  SelectionDAG &DAG) const {
-  DebugLoc DL = Node->getDebugLoc();
+  SDLoc DL(Node);
   const BlockAddress *BA = Node->getBlockAddress();
   int64_t Offset = Node->getOffset();
   EVT PtrVT = getPointerTy();
@@ -1105,7 +1105,7 @@ SDValue SystemZTargetLowering::lowerBlockAddress(BlockAddressSDNode *Node,
 
 SDValue SystemZTargetLowering::lowerJumpTable(JumpTableSDNode *JT,
                                               SelectionDAG &DAG) const {
-  DebugLoc DL = JT->getDebugLoc();
+  SDLoc DL(JT);
   EVT PtrVT = getPointerTy();
   SDValue Result = DAG.getTargetJumpTable(JT->getIndex(), PtrVT);
 
@@ -1115,7 +1115,7 @@ SDValue SystemZTargetLowering::lowerJumpTable(JumpTableSDNode *JT,
 
 SDValue SystemZTargetLowering::lowerConstantPool(ConstantPoolSDNode *CP,
                                                  SelectionDAG &DAG) const {
-  DebugLoc DL = CP->getDebugLoc();
+  SDLoc DL(CP);
   EVT PtrVT = getPointerTy();
 
   SDValue Result;
@@ -1132,7 +1132,7 @@ SDValue SystemZTargetLowering::lowerConstantPool(ConstantPoolSDNode *CP,
 
 SDValue SystemZTargetLowering::lowerBITCAST(SDValue Op,
                                             SelectionDAG &DAG) const {
-  DebugLoc DL = Op.getDebugLoc();
+  SDLoc DL(Op);
   SDValue In = Op.getOperand(0);
   EVT InVT = In.getValueType();
   EVT ResVT = Op.getValueType();
@@ -1169,7 +1169,7 @@ SDValue SystemZTargetLowering::lowerVASTART(SDValue Op,
   SDValue Chain   = Op.getOperand(0);
   SDValue Addr    = Op.getOperand(1);
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
-  DebugLoc DL     = Op.getDebugLoc();
+  SDLoc DL(Op);
 
   // The initial values of each field.
   const unsigned NumFields = 4;
@@ -1203,7 +1203,7 @@ SDValue SystemZTargetLowering::lowerVACOPY(SDValue Op,
   SDValue SrcPtr     = Op.getOperand(2);
   const Value *DstSV = cast<SrcValueSDNode>(Op.getOperand(3))->getValue();
   const Value *SrcSV = cast<SrcValueSDNode>(Op.getOperand(4))->getValue();
-  DebugLoc DL        = Op.getDebugLoc();
+  SDLoc DL(Op);
 
   return DAG.getMemcpy(Chain, DL, DstPtr, SrcPtr, DAG.getIntPtrConstant(32),
                        /*Align*/8, /*isVolatile*/false, /*AlwaysInline*/false,
@@ -1214,7 +1214,7 @@ SDValue SystemZTargetLowering::
 lowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const {
   SDValue Chain = Op.getOperand(0);
   SDValue Size  = Op.getOperand(1);
-  DebugLoc DL   = Op.getDebugLoc();
+  SDLoc DL(Op);
 
   unsigned SPReg = getStackPointerRegisterToSaveRestore();
 
@@ -1240,7 +1240,7 @@ lowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const {
 SDValue SystemZTargetLowering::lowerUMUL_LOHI(SDValue Op,
                                               SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
-  DebugLoc DL = Op.getDebugLoc();
+  SDLoc DL(Op);
   assert(!is32Bit(VT) && "Only support 64-bit UMUL_LOHI");
 
   // UMUL_LOHI64 returns the low result in the odd register and the high
@@ -1257,7 +1257,7 @@ SDValue SystemZTargetLowering::lowerSDIVREM(SDValue Op,
   SDValue Op0 = Op.getOperand(0);
   SDValue Op1 = Op.getOperand(1);
   EVT VT = Op.getValueType();
-  DebugLoc DL = Op.getDebugLoc();
+  SDLoc DL(Op);
 
   // We use DSGF for 32-bit division.
   if (is32Bit(VT)) {
@@ -1277,7 +1277,7 @@ SDValue SystemZTargetLowering::lowerSDIVREM(SDValue Op,
 SDValue SystemZTargetLowering::lowerUDIVREM(SDValue Op,
                                             SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
-  DebugLoc DL = Op.getDebugLoc();
+  SDLoc DL(Op);
 
   // DL(G) uses a double-width dividend, so we need to clear the even
   // register in the GR128 input.  The instruction returns the remainder
@@ -1342,7 +1342,7 @@ SDValue SystemZTargetLowering::lowerOR(SDValue Op, SelectionDAG &DAG) const {
   // low 32 bits by truncating Low to an i32 and inserting it directly
   // using a subreg.  The interesting cases are those where the truncation
   // can be folded.
-  DebugLoc DL = Op.getDebugLoc();
+  SDLoc DL(Op);
   SDValue Low32 = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, LowOp);
   SDValue SubReg32 = DAG.getTargetConstant(SystemZ::subreg_32bit, MVT::i64);
   SDNode *Result = DAG.getMachineNode(TargetOpcode::INSERT_SUBREG, DL,
@@ -1368,7 +1368,7 @@ SDValue SystemZTargetLowering::lowerATOMIC_LOAD(SDValue Op,
   SDValue Addr = Node->getBasePtr();
   SDValue Src2 = Node->getVal();
   MachineMemOperand *MMO = Node->getMemOperand();
-  DebugLoc DL = Node->getDebugLoc();
+  SDLoc DL(Node);
   EVT PtrVT = Addr.getValueType();
 
   // Convert atomic subtracts of constants into additions.
@@ -1442,7 +1442,7 @@ SDValue SystemZTargetLowering::lowerATOMIC_CMP_SWAP(SDValue Op,
   SDValue CmpVal = Node->getOperand(2);
   SDValue SwapVal = Node->getOperand(3);
   MachineMemOperand *MMO = Node->getMemOperand();
-  DebugLoc DL = Node->getDebugLoc();
+  SDLoc DL(Node);
   EVT PtrVT = Addr.getValueType();
 
   // Get the address of the containing word.
@@ -1474,7 +1474,7 @@ SDValue SystemZTargetLowering::lowerSTACKSAVE(SDValue Op,
                                               SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
   MF.getInfo<SystemZMachineFunctionInfo>()->setManipulatesSP(true);
-  return DAG.getCopyFromReg(Op.getOperand(0), Op.getDebugLoc(),
+  return DAG.getCopyFromReg(Op.getOperand(0), SDLoc(Op),
                             SystemZ::R15D, Op.getValueType());
 }
 
@@ -1482,7 +1482,7 @@ SDValue SystemZTargetLowering::lowerSTACKRESTORE(SDValue Op,
                                                  SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
   MF.getInfo<SystemZMachineFunctionInfo>()->setManipulatesSP(true);
-  return DAG.getCopyToReg(Op.getOperand(0), Op.getDebugLoc(),
+  return DAG.getCopyToReg(Op.getOperand(0), SDLoc(Op),
                           SystemZ::R15D, Op.getOperand(1));
 }
 

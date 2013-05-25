@@ -760,16 +760,16 @@ namespace llvm {
     SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
                             CallingConv::ID CallConv, bool isVarArg,
                             const SmallVectorImpl<ISD::InputArg> &Ins,
-                            DebugLoc dl, SelectionDAG &DAG,
+                            SDLoc dl, SelectionDAG &DAG,
                             SmallVectorImpl<SDValue> &InVals) const;
     SDValue LowerMemArgument(SDValue Chain,
                              CallingConv::ID CallConv,
                              const SmallVectorImpl<ISD::InputArg> &ArgInfo,
-                             DebugLoc dl, SelectionDAG &DAG,
+                             SDLoc dl, SelectionDAG &DAG,
                              const CCValAssign &VA,  MachineFrameInfo *MFI,
                               unsigned i) const;
     SDValue LowerMemOpCallTo(SDValue Chain, SDValue StackPtr, SDValue Arg,
-                             DebugLoc dl, SelectionDAG &DAG,
+                             SDLoc dl, SelectionDAG &DAG,
                              const CCValAssign &VA,
                              ISD::ArgFlagsTy Flags) const;
 
@@ -791,7 +791,7 @@ namespace llvm {
     bool IsCalleePop(bool isVarArg, CallingConv::ID CallConv) const;
     SDValue EmitTailCallLoadRetAddr(SelectionDAG &DAG, SDValue &OutRetAddr,
                                 SDValue Chain, bool IsTailCall, bool Is64Bit,
-                                int FPDiff, DebugLoc dl) const;
+                                int FPDiff, SDLoc dl) const;
 
     unsigned GetAlignedArgumentStackSize(unsigned StackSize,
                                          SelectionDAG &DAG) const;
@@ -800,7 +800,7 @@ namespace llvm {
                                                bool isSigned,
                                                bool isReplace) const;
 
-    SDValue LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, DebugLoc dl,
+    SDValue LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, SDLoc dl,
                                    SelectionDAG &DAG) const;
     SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const;
@@ -808,7 +808,7 @@ namespace llvm {
     SDValue LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
+    SDValue LowerGlobalAddress(const GlobalValue *GV, SDLoc dl,
                                int64_t Offset, SelectionDAG &DAG) const;
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
@@ -830,7 +830,7 @@ namespace llvm {
     SDValue LowerFNEG(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerToBT(SDValue And, ISD::CondCode CC,
-                      DebugLoc dl, SelectionDAG &DAG) const;
+                      SDLoc dl, SelectionDAG &DAG) const;
     SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG) const;
@@ -865,7 +865,7 @@ namespace llvm {
       LowerFormalArguments(SDValue Chain,
                            CallingConv::ID CallConv, bool isVarArg,
                            const SmallVectorImpl<ISD::InputArg> &Ins,
-                           DebugLoc dl, SelectionDAG &DAG,
+                           SDLoc dl, SelectionDAG &DAG,
                            SmallVectorImpl<SDValue> &InVals) const;
     virtual SDValue
       LowerCall(CallLoweringInfo &CLI,
@@ -876,7 +876,7 @@ namespace llvm {
                   CallingConv::ID CallConv, bool isVarArg,
                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                   const SmallVectorImpl<SDValue> &OutVals,
-                  DebugLoc dl, SelectionDAG &DAG) const;
+                  SDLoc dl, SelectionDAG &DAG) const;
 
     virtual bool isUsedByReturnOnly(SDNode *N, SDValue &Chain) const;
 

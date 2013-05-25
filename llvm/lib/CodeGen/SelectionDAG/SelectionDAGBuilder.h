@@ -366,7 +366,6 @@ public:
   SDValue getControlRoot();
 
   SDLoc getCurSDLoc() const {
-    assert(CurInst && "CurInst NULL");
     return SDLoc(CurInst, SDNodeOrder);
   }
 

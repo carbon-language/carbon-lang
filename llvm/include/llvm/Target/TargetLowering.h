@@ -30,7 +30,6 @@
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/Support/CallSite.h"
-#include "llvm/Support/DebugLoc.h"
 #include "llvm/Target/TargetCallingConv.h"
 #include "llvm/Target/TargetMachine.h"
 #include <climits>
@@ -1717,11 +1716,11 @@ public:
 
   void softenSetCCOperands(SelectionDAG &DAG, EVT VT,
                            SDValue &NewLHS, SDValue &NewRHS,
-                           ISD::CondCode &CCCode, DebugLoc DL) const;
+                           ISD::CondCode &CCCode, SDLoc DL) const;
 
   SDValue makeLibCall(SelectionDAG &DAG, RTLIB::Libcall LC, EVT RetVT,
                       const SDValue *Ops, unsigned NumOps,
-                      bool isSigned, DebugLoc dl) const;
+                      bool isSigned, SDLoc dl) const;
 
   //===--------------------------------------------------------------------===//
   // TargetLowering Optimization Methods
@@ -1761,7 +1760,7 @@ public:
     /// cast, but it could be generalized for targets with other types of
     /// implicit widening casts.
     bool ShrinkDemandedOp(SDValue Op, unsigned BitWidth, const APInt &Demanded,
-                          DebugLoc dl);
+                          SDLoc dl);
   };
 
   /// SimplifyDemandedBits - Look at Op.  At this point, we know that only the
@@ -1823,7 +1822,7 @@ public:
   /// and cc. If it is unable to simplify it, return a null SDValue.
   SDValue SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
                           ISD::CondCode Cond, bool foldBooleans,
-                          DAGCombinerInfo &DCI, DebugLoc dl) const;
+                          DAGCombinerInfo &DCI, SDLoc dl) const;
 
   /// isGAPlusOffset - Returns true (and the GlobalValue and the offset) if the
   /// node is a GlobalAddress + offset.
@@ -1884,7 +1883,7 @@ public:
     LowerFormalArguments(SDValue /*Chain*/, CallingConv::ID /*CallConv*/,
                          bool /*isVarArg*/,
                          const SmallVectorImpl<ISD::InputArg> &/*Ins*/,
-                         DebugLoc /*dl*/, SelectionDAG &/*DAG*/,
+                         SDLoc /*dl*/, SelectionDAG &/*DAG*/,
                          SmallVectorImpl<SDValue> &/*InVals*/) const {
     llvm_unreachable("Not Implemented");
   }
@@ -1930,7 +1929,7 @@ public:
     SDValue Callee;
     ArgListTy &Args;
     SelectionDAG &DAG;
-    DebugLoc DL;
+    SDLoc DL;
     ImmutableCallSite *CS;
     SmallVector<ISD::OutputArg, 32> Outs;
     SmallVector<SDValue, 32> OutVals;
@@ -1941,7 +1940,7 @@ public:
     /// ImmutableCallSite \p cs.
     CallLoweringInfo(SDValue chain, Type *retTy,
                      FunctionType *FTy, bool isTailCall, SDValue callee,
-                     ArgListTy &args, SelectionDAG &dag, DebugLoc dl,
+                     ArgListTy &args, SelectionDAG &dag, SDLoc dl,
                      ImmutableCallSite &cs)
     : Chain(chain), RetTy(retTy), RetSExt(cs.paramHasAttr(0, Attribute::SExt)),
       RetZExt(cs.paramHasAttr(0, Attribute::ZExt)), IsVarArg(FTy->isVarArg()),
@@ -1958,7 +1957,7 @@ public:
                      bool isVarArg, bool isInReg, unsigned numFixedArgs,
                      CallingConv::ID callConv, bool isTailCall,
                      bool doesNotReturn, bool isReturnValueUsed, SDValue callee,
-                     ArgListTy &args, SelectionDAG &dag, DebugLoc dl)
+                     ArgListTy &args, SelectionDAG &dag, SDLoc dl)
     : Chain(chain), RetTy(retTy), RetSExt(retSExt), RetZExt(retZExt),
       IsVarArg(isVarArg), IsInReg(isInReg), DoesNotReturn(doesNotReturn),
       IsReturnValueUsed(isReturnValueUsed), IsTailCall(isTailCall),
@@ -2011,7 +2010,7 @@ public:
                 bool /*isVarArg*/,
                 const SmallVectorImpl<ISD::OutputArg> &/*Outs*/,
                 const SmallVectorImpl<SDValue> &/*OutVals*/,
-                DebugLoc /*dl*/, SelectionDAG &/*DAG*/) const {
+                SDLoc /*dl*/, SelectionDAG &/*DAG*/) const {
     llvm_unreachable("Not Implemented");
   }
 
@@ -2235,7 +2234,7 @@ public:
   //===--------------------------------------------------------------------===//
   // Div utility functions
   //
-  SDValue BuildExactSDIV(SDValue Op1, SDValue Op2, DebugLoc dl,
+  SDValue BuildExactSDIV(SDValue Op1, SDValue Op2, SDLoc dl,
                          SelectionDAG &DAG) const;
   SDValue BuildSDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
                       std::vector<SDNode*> *Created) const;

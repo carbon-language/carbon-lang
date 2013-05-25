@@ -44,7 +44,7 @@ public:
   SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv,
                                bool isVarArg,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
-                               DebugLoc DL, SelectionDAG &DAG,
+                               SDLoc DL, SelectionDAG &DAG,
                                SmallVectorImpl<SDValue> &InVals) const;
 
   virtual MachineBasicBlock * EmitInstrWithCustomInserter(MachineInstr * MI,

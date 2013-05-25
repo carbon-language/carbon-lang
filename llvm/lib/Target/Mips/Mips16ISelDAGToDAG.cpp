@@ -42,7 +42,7 @@ bool Mips16DAGToDAGISel::runOnMachineFunction(MachineFunction &MF) {
 }
 /// Select multiply instructions.
 std::pair<SDNode*, SDNode*>
-Mips16DAGToDAGISel::selectMULT(SDNode *N, unsigned Opc, DebugLoc DL, EVT Ty,
+Mips16DAGToDAGISel::selectMULT(SDNode *N, unsigned Opc, SDLoc DL, EVT Ty,
                                bool HasLo, bool HasHi) {
   SDNode *Lo = 0, *Hi = 0;
   SDNode *Mul = CurDAG->getMachineNode(Opc, DL, MVT::Glue, N->getOperand(0),
@@ -235,7 +235,7 @@ bool Mips16DAGToDAGISel::selectAddr16(
 /// expanded, promoted and normal instructions
 std::pair<bool, SDNode*> Mips16DAGToDAGISel::selectNode(SDNode *Node) {
   unsigned Opcode = Node->getOpcode();
-  DebugLoc DL = Node->getDebugLoc();
+  SDLoc DL(Node);
 
   ///
   // Instruction Selection not handled by the auto-generated

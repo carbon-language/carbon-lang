@@ -696,14 +696,14 @@ protected:
     return Ret;
   }
 
-  SDNode(unsigned Opc, const DebugLoc dl, SDVTList VTs, const SDValue *Ops,
-         unsigned NumOps)
+  SDNode(unsigned Opc, unsigned Order, const DebugLoc dl, SDVTList VTs,
+         const SDValue *Ops, unsigned NumOps)
     : NodeType(Opc), OperandsNeedDelete(true), HasDebugValue(false),
       SubclassData(0), NodeId(-1),
       OperandList(NumOps ? new SDUse[NumOps] : 0),
       ValueList(VTs.VTs), UseList(NULL),
       NumOperands(NumOps), NumValues(VTs.NumVTs),
-      debugLoc(dl) {
+      debugLoc(dl), IROrder(Order) {
     for (unsigned i = 0; i != NumOps; ++i) {
       OperandList[i].setUser(this);
       OperandList[i].setInitial(Ops[i]);
@@ -713,11 +713,11 @@ protected:
 
   /// This constructor adds no operands itself; operands can be
   /// set later with InitOperands.
-  SDNode(unsigned Opc, const DebugLoc dl, SDVTList VTs)
+  SDNode(unsigned Opc, unsigned Order, const DebugLoc dl, SDVTList VTs)
     : NodeType(Opc), OperandsNeedDelete(false), HasDebugValue(false),
-      SubclassData(0), NodeId(-1), OperandList(0), ValueList(VTs.VTs),
-      UseList(NULL), NumOperands(0), NumValues(VTs.NumVTs),
-      debugLoc(dl) {}
+      SubclassData(0), NodeId(-1), OperandList(0),
+      ValueList(VTs.VTs), UseList(NULL), NumOperands(0), NumValues(VTs.NumVTs),
+      debugLoc(dl), IROrder(Order) {}
 
   /// InitOperands - Initialize the operands list of this with 1 operand.
   void InitOperands(SDUse *Ops, const SDValue &Op0) {
@@ -901,8 +901,8 @@ inline void SDUse::setNode(SDNode *N) {
 class UnarySDNode : public SDNode {
   SDUse Op;
 public:
-  UnarySDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, SDValue X)
-    : SDNode(Opc, dl, VTs) {
+  UnarySDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs, SDValue X)
+    : SDNode(Opc, Order, dl, VTs) {
     InitOperands(&Op, X);
   }
 };
@@ -912,8 +912,8 @@ public:
 class BinarySDNode : public SDNode {
   SDUse Ops[2];
 public:
-  BinarySDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, SDValue X, SDValue Y)
-    : SDNode(Opc, dl, VTs) {
+  BinarySDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs, SDValue X, SDValue Y)
+    : SDNode(Opc, Order, dl, VTs) {
     InitOperands(Ops, X, Y);
   }
 };
@@ -923,9 +923,9 @@ public:
 class TernarySDNode : public SDNode {
   SDUse Ops[3];
 public:
-  TernarySDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, SDValue X, SDValue Y,
-                SDValue Z)
-    : SDNode(Opc, dl, VTs) {
+  TernarySDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs,
+                SDValue X, SDValue Y, SDValue Z)
+    : SDNode(Opc, Order, dl, VTs) {
     InitOperands(Ops, X, Y, Z);
   }
 };
@@ -945,7 +945,7 @@ public:
 #else
   explicit HandleSDNode(SDValue X)
 #endif
-    : SDNode(ISD::HANDLENODE, DebugLoc(), getSDVTList(MVT::Other)) {
+    : SDNode(ISD::HANDLENODE, 0, DebugLoc(), getSDVTList(MVT::Other)) {
     InitOperands(&Op, X);
   }
   ~HandleSDNode();
@@ -963,10 +963,10 @@ protected:
   MachineMemOperand *MMO;
 
 public:
-  MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, EVT MemoryVT,
-            MachineMemOperand *MMO);
+  MemSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs,
+            EVT MemoryVT, MachineMemOperand *MMO);
 
-  MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, const SDValue *Ops,
+  MemSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs, const SDValue *Ops,
             unsigned NumOps, EVT MemoryVT, MachineMemOperand *MMO);
 
   bool readMem() const { return MMO->isLoad(); }
@@ -1090,27 +1090,27 @@ public:
   // Swp:    swap value
   // SrcVal: address to update as a Value (used for MemOperand)
   // Align:  alignment of memory
-  AtomicSDNode(unsigned Opc, DebugLoc dl, SDVTList VTL, EVT MemVT,
+  AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL, EVT MemVT,
                SDValue Chain, SDValue Ptr,
                SDValue Cmp, SDValue Swp, MachineMemOperand *MMO,
                AtomicOrdering Ordering, SynchronizationScope SynchScope)
-    : MemSDNode(Opc, dl, VTL, MemVT, MMO) {
+    : MemSDNode(Opc, Order, dl, VTL, MemVT, MMO) {
     InitAtomic(Ordering, SynchScope);
     InitOperands(Ops, Chain, Ptr, Cmp, Swp);
   }
-  AtomicSDNode(unsigned Opc, DebugLoc dl, SDVTList VTL, EVT MemVT,
+  AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL, EVT MemVT,
                SDValue Chain, SDValue Ptr,
                SDValue Val, MachineMemOperand *MMO,
                AtomicOrdering Ordering, SynchronizationScope SynchScope)
-    : MemSDNode(Opc, dl, VTL, MemVT, MMO) {
+    : MemSDNode(Opc, Order, dl, VTL, MemVT, MMO) {
     InitAtomic(Ordering, SynchScope);
     InitOperands(Ops, Chain, Ptr, Val);
   }
-  AtomicSDNode(unsigned Opc, DebugLoc dl, SDVTList VTL, EVT MemVT,
+  AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL, EVT MemVT,
                SDValue Chain, SDValue Ptr,
                MachineMemOperand *MMO,
                AtomicOrdering Ordering, SynchronizationScope SynchScope)
-    : MemSDNode(Opc, dl, VTL, MemVT, MMO) {
+    : MemSDNode(Opc, Order, dl, VTL, MemVT, MMO) {
     InitAtomic(Ordering, SynchScope);
     InitOperands(Ops, Chain, Ptr);
   }
@@ -1148,10 +1148,10 @@ public:
 /// with a value not less than FIRST_TARGET_MEMORY_OPCODE.
 class MemIntrinsicSDNode : public MemSDNode {
 public:
-  MemIntrinsicSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs,
+  MemIntrinsicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs,
                      const SDValue *Ops, unsigned NumOps,
                      EVT MemoryVT, MachineMemOperand *MMO)
-    : MemSDNode(Opc, dl, VTs, Ops, NumOps, MemoryVT, MMO) {
+    : MemSDNode(Opc, Order, dl, VTs, Ops, NumOps, MemoryVT, MMO) {
   }
 
   // Methods to support isa and dyn_cast
@@ -1181,9 +1181,8 @@ class ShuffleVectorSDNode : public SDNode {
   const int *Mask;
 protected:
   friend class SelectionDAG;
-  ShuffleVectorSDNode(EVT VT, DebugLoc dl, SDValue N1, SDValue N2, 
-                      const int *M)
-    : SDNode(ISD::VECTOR_SHUFFLE, dl, getSDVTList(VT)), Mask(M) {
+  ShuffleVectorSDNode(EVT VT, unsigned Order, DebugLoc dl, SDValue N1, SDValue N2, const int *M)
+    : SDNode(ISD::VECTOR_SHUFFLE, Order, dl, getSDVTList(VT)), Mask(M) {
     InitOperands(Ops, N1, N2);
   }
 public:
@@ -1219,7 +1218,7 @@ class ConstantSDNode : public SDNode {
   friend class SelectionDAG;
   ConstantSDNode(bool isTarget, const ConstantInt *val, EVT VT)
     : SDNode(isTarget ? ISD::TargetConstant : ISD::Constant,
-             DebugLoc(), getSDVTList(VT)), Value(val) {
+             0, DebugLoc(), getSDVTList(VT)), Value(val) {
   }
 public:
 
@@ -1243,7 +1242,7 @@ class ConstantFPSDNode : public SDNode {
   friend class SelectionDAG;
   ConstantFPSDNode(bool isTarget, const ConstantFP *val, EVT VT)
     : SDNode(isTarget ? ISD::TargetConstantFP : ISD::ConstantFP,
-             DebugLoc(), getSDVTList(VT)), Value(val) {
+             0, DebugLoc(), getSDVTList(VT)), Value(val) {
   }
 public:
 
@@ -1286,7 +1285,7 @@ class GlobalAddressSDNode : public SDNode {
   int64_t Offset;
   unsigned char TargetFlags;
   friend class SelectionDAG;
-  GlobalAddressSDNode(unsigned Opc, DebugLoc DL, const GlobalValue *GA, EVT VT,
+  GlobalAddressSDNode(unsigned Opc, unsigned Order, DebugLoc DL, const GlobalValue *GA, EVT VT,
                       int64_t o, unsigned char TargetFlags);
 public:
 
@@ -1309,7 +1308,7 @@ class FrameIndexSDNode : public SDNode {
   friend class SelectionDAG;
   FrameIndexSDNode(int fi, EVT VT, bool isTarg)
     : SDNode(isTarg ? ISD::TargetFrameIndex : ISD::FrameIndex,
-      DebugLoc(), getSDVTList(VT)), FI(fi) {
+      0, DebugLoc(), getSDVTList(VT)), FI(fi) {
   }
 public:
 
@@ -1327,7 +1326,7 @@ class JumpTableSDNode : public SDNode {
   friend class SelectionDAG;
   JumpTableSDNode(int jti, EVT VT, bool isTarg, unsigned char TF)
     : SDNode(isTarg ? ISD::TargetJumpTable : ISD::JumpTable,
-      DebugLoc(), getSDVTList(VT)), JTI(jti), TargetFlags(TF) {
+      0, DebugLoc(), getSDVTList(VT)), JTI(jti), TargetFlags(TF) {
   }
 public:
 
@@ -1351,16 +1350,14 @@ class ConstantPoolSDNode : public SDNode {
   friend class SelectionDAG;
   ConstantPoolSDNode(bool isTarget, const Constant *c, EVT VT, int o,
                      unsigned Align, unsigned char TF)
-    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool,
-             DebugLoc(),
+    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, 0, DebugLoc(),
              getSDVTList(VT)), Offset(o), Alignment(Align), TargetFlags(TF) {
     assert(Offset >= 0 && "Offset is too large");
     Val.ConstVal = c;
   }
   ConstantPoolSDNode(bool isTarget, MachineConstantPoolValue *v,
                      EVT VT, int o, unsigned Align, unsigned char TF)
-    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool,
-             DebugLoc(),
+    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, 0, DebugLoc(),
              getSDVTList(VT)), Offset(o), Alignment(Align), TargetFlags(TF) {
     assert(Offset >= 0 && "Offset is too large");
     Val.MachineCPVal = v;
@@ -1409,7 +1406,7 @@ class TargetIndexSDNode : public SDNode {
 public:
 
   TargetIndexSDNode(int Idx, EVT VT, int64_t Ofs, unsigned char TF)
-    : SDNode(ISD::TargetIndex, DebugLoc(), getSDVTList(VT)),
+    : SDNode(ISD::TargetIndex, 0, DebugLoc(), getSDVTList(VT)),
       TargetFlags(TF), Index(Idx), Offset(Ofs) {}
 public:
 
@@ -1429,7 +1426,7 @@ class BasicBlockSDNode : public SDNode {
   /// blocks out of order when they're jumped to, which makes it a bit
   /// harder.  Let's see if we need it first.
   explicit BasicBlockSDNode(MachineBasicBlock *mbb)
-    : SDNode(ISD::BasicBlock, DebugLoc(), getSDVTList(MVT::Other)), MBB(mbb) {
+    : SDNode(ISD::BasicBlock, 0, DebugLoc(), getSDVTList(MVT::Other)), MBB(mbb) {
   }
 public:
 
@@ -1473,7 +1470,7 @@ class SrcValueSDNode : public SDNode {
   friend class SelectionDAG;
   /// Create a SrcValue for a general value.
   explicit SrcValueSDNode(const Value *v)
-    : SDNode(ISD::SRCVALUE, DebugLoc(), getSDVTList(MVT::Other)), V(v) {}
+    : SDNode(ISD::SRCVALUE, 0, DebugLoc(), getSDVTList(MVT::Other)), V(v) {}
 
 public:
   /// getValue - return the contained Value.
@@ -1488,7 +1485,7 @@ class MDNodeSDNode : public SDNode {
   const MDNode *MD;
   friend class SelectionDAG;
   explicit MDNodeSDNode(const MDNode *md)
-  : SDNode(ISD::MDNODE_SDNODE, DebugLoc(), getSDVTList(MVT::Other)), MD(md) {}
+  : SDNode(ISD::MDNODE_SDNODE, 0, DebugLoc(), getSDVTList(MVT::Other)), MD(md) {}
 public:
   
   const MDNode *getMD() const { return MD; }
@@ -1503,7 +1500,7 @@ class RegisterSDNode : public SDNode {
   unsigned Reg;
   friend class SelectionDAG;
   RegisterSDNode(unsigned reg, EVT VT)
-    : SDNode(ISD::Register, DebugLoc(), getSDVTList(VT)), Reg(reg) {
+    : SDNode(ISD::Register, 0, DebugLoc(), getSDVTList(VT)), Reg(reg) {
   }
 public:
 
@@ -1519,7 +1516,7 @@ class RegisterMaskSDNode : public SDNode {
   const uint32_t *RegMask;
   friend class SelectionDAG;
   RegisterMaskSDNode(const uint32_t *mask)
-    : SDNode(ISD::RegisterMask, DebugLoc(), getSDVTList(MVT::Untyped)),
+    : SDNode(ISD::RegisterMask, 0, DebugLoc(), getSDVTList(MVT::Untyped)),
       RegMask(mask) {}
 public:
 
@@ -1537,7 +1534,7 @@ class BlockAddressSDNode : public SDNode {
   friend class SelectionDAG;
   BlockAddressSDNode(unsigned NodeTy, EVT VT, const BlockAddress *ba,
                      int64_t o, unsigned char Flags)
-    : SDNode(NodeTy, DebugLoc(), getSDVTList(VT)),
+    : SDNode(NodeTy, 0, DebugLoc(), getSDVTList(VT)),
              BA(ba), Offset(o), TargetFlags(Flags) {
   }
 public:
@@ -1555,8 +1552,8 @@ class EHLabelSDNode : public SDNode {
   SDUse Chain;
   MCSymbol *Label;
   friend class SelectionDAG;
-  EHLabelSDNode(DebugLoc dl, SDValue ch, MCSymbol *L)
-    : SDNode(ISD::EH_LABEL, dl, getSDVTList(MVT::Other)), Label(L) {
+  EHLabelSDNode(unsigned Order, DebugLoc dl, SDValue ch, MCSymbol *L)
+    : SDNode(ISD::EH_LABEL, Order, dl, getSDVTList(MVT::Other)), Label(L) {
     InitOperands(&Chain, ch);
   }
 public:
@@ -1574,7 +1571,7 @@ class ExternalSymbolSDNode : public SDNode {
   friend class SelectionDAG;
   ExternalSymbolSDNode(bool isTarget, const char *Sym, unsigned char TF, EVT VT)
     : SDNode(isTarget ? ISD::TargetExternalSymbol : ISD::ExternalSymbol,
-             DebugLoc(), getSDVTList(VT)), Symbol(Sym), TargetFlags(TF) {
+             0, DebugLoc(), getSDVTList(VT)), Symbol(Sym), TargetFlags(TF) {
   }
 public:
 
@@ -1591,7 +1588,7 @@ class CondCodeSDNode : public SDNode {
   ISD::CondCode Condition;
   friend class SelectionDAG;
   explicit CondCodeSDNode(ISD::CondCode Cond)
-    : SDNode(ISD::CONDCODE, DebugLoc(), getSDVTList(MVT::Other)),
+    : SDNode(ISD::CONDCODE, 0, DebugLoc(), getSDVTList(MVT::Other)),
       Condition(Cond) {
   }
 public:
@@ -1608,9 +1605,9 @@ public:
 class CvtRndSatSDNode : public SDNode {
   ISD::CvtCode CvtCode;
   friend class SelectionDAG;
-  explicit CvtRndSatSDNode(EVT VT, DebugLoc dl, const SDValue *Ops,
+  explicit CvtRndSatSDNode(EVT VT, unsigned Order, DebugLoc dl, const SDValue *Ops,
                            unsigned NumOps, ISD::CvtCode Code)
-    : SDNode(ISD::CONVERT_RNDSAT, dl, getSDVTList(VT), Ops, NumOps),
+    : SDNode(ISD::CONVERT_RNDSAT, Order, dl, getSDVTList(VT), Ops, NumOps),
       CvtCode(Code) {
     assert(NumOps == 5 && "wrong number of operations");
   }
@@ -1628,7 +1625,7 @@ class VTSDNode : public SDNode {
   EVT ValueType;
   friend class SelectionDAG;
   explicit VTSDNode(EVT VT)
-    : SDNode(ISD::VALUETYPE, DebugLoc(), getSDVTList(MVT::Other)),
+    : SDNode(ISD::VALUETYPE, 0, DebugLoc(), getSDVTList(MVT::Other)),
       ValueType(VT) {
   }
 public:
@@ -1651,10 +1648,10 @@ class LSBaseSDNode : public MemSDNode {
    */
   SDUse Ops[4];
 public:
-  LSBaseSDNode(ISD::NodeType NodeTy, DebugLoc dl, SDValue *Operands,
+  LSBaseSDNode(ISD::NodeType NodeTy, unsigned Order, DebugLoc dl, SDValue *Operands,
                unsigned numOperands, SDVTList VTs, ISD::MemIndexedMode AM,
                EVT MemVT, MachineMemOperand *MMO)
-    : MemSDNode(NodeTy, dl, VTs, MemVT, MMO) {
+    : MemSDNode(NodeTy, Order, dl, VTs, MemVT, MMO) {
     SubclassData |= AM << 2;
     assert(getAddressingMode() == AM && "MemIndexedMode encoding error!");
     InitOperands(Ops, Operands, numOperands);
@@ -1688,11 +1685,10 @@ public:
 ///
 class LoadSDNode : public LSBaseSDNode {
   friend class SelectionDAG;
-  LoadSDNode(SDValue *ChainPtrOff, DebugLoc dl, SDVTList VTs,
+  LoadSDNode(SDValue *ChainPtrOff, unsigned Order, DebugLoc dl, SDVTList VTs,
              ISD::MemIndexedMode AM, ISD::LoadExtType ETy, EVT MemVT,
              MachineMemOperand *MMO)
-    : LSBaseSDNode(ISD::LOAD, dl, ChainPtrOff, 3,
-                   VTs, AM, MemVT, MMO) {
+    : LSBaseSDNode(ISD::LOAD, Order, dl, ChainPtrOff, 3, VTs, AM, MemVT, MMO) {
     SubclassData |= (unsigned short)ETy;
     assert(getExtensionType() == ETy && "LoadExtType encoding error!");
     assert(readMem() && "Load MachineMemOperand is not a load!");
@@ -1718,10 +1714,10 @@ public:
 ///
 class StoreSDNode : public LSBaseSDNode {
   friend class SelectionDAG;
-  StoreSDNode(SDValue *ChainValuePtrOff, DebugLoc dl, SDVTList VTs,
-              ISD::MemIndexedMode AM, bool isTrunc, EVT MemVT,
+  StoreSDNode(SDValue *ChainValuePtrOff, unsigned Order, DebugLoc dl,
+              SDVTList VTs, ISD::MemIndexedMode AM, bool isTrunc, EVT MemVT,
               MachineMemOperand *MMO)
-    : LSBaseSDNode(ISD::STORE, dl, ChainValuePtrOff, 4,
+    : LSBaseSDNode(ISD::STORE, Order, dl, ChainValuePtrOff, 4,
                    VTs, AM, MemVT, MMO) {
     SubclassData |= (unsigned short)isTrunc;
     assert(isTruncatingStore() == isTrunc && "isTrunc encoding error!");
@@ -1754,8 +1750,8 @@ public:
 
 private:
   friend class SelectionDAG;
-  MachineSDNode(unsigned Opc, const DebugLoc DL, SDVTList VTs)
-    : SDNode(Opc, DL, VTs), MemRefs(0), MemRefsEnd(0) {}
+  MachineSDNode(unsigned Opc, unsigned Order, const DebugLoc DL, SDVTList VTs)
+    : SDNode(Opc, Order, DL, VTs), MemRefs(0), MemRefsEnd(0) {}
 
   /// LocalOperands - Operands for this instruction, if they fit here. If
   /// they don't, this field is unused.

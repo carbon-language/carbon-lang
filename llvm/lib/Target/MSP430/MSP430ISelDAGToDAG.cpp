@@ -263,7 +263,7 @@ bool MSP430DAGToDAGISel::SelectAddr(SDValue N,
     AM.Base.Reg;
 
   if (AM.GV)
-    Disp = CurDAG->getTargetGlobalAddress(AM.GV, N->getDebugLoc(),
+    Disp = CurDAG->getTargetGlobalAddress(AM.GV, SDLoc(N),
                                           MVT::i16, AM.Disp,
                                           0/*AM.SymbolFlags*/);
   else if (AM.CP)
@@ -345,7 +345,7 @@ SDNode *MSP430DAGToDAGISel::SelectIndexedLoad(SDNode *N) {
     return NULL;
   }
 
-   return CurDAG->getMachineNode(Opcode, N->getDebugLoc(),
+   return CurDAG->getMachineNode(Opcode, SDLoc(N),
                                  VT, MVT::i16, MVT::Other,
                                  LD->getBasePtr(), LD->getChain());
 }
@@ -382,7 +382,7 @@ SDNode *MSP430DAGToDAGISel::SelectIndexedBinOp(SDNode *Op,
 
 
 SDNode *MSP430DAGToDAGISel::Select(SDNode *Node) {
-  DebugLoc dl = Node->getDebugLoc();
+  SDLoc dl(Node);
 
   // Dump information about the Node being selected
   DEBUG(errs() << "Selecting: ");

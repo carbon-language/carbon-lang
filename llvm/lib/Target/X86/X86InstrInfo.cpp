@@ -4333,7 +4333,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   std::vector<SDValue> AddrOps;
   std::vector<SDValue> BeforeOps;
   std::vector<SDValue> AfterOps;
-  DebugLoc dl = N->getDebugLoc();
+  SDLoc dl(N);
   unsigned NumOps = N->getNumOperands();
   for (unsigned i = 0; i != NumOps-1; ++i) {
     SDValue Op = N->getOperand(i);
