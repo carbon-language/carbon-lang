@@ -55,6 +55,8 @@ public:
   /// \brief Finishes off the hash and puts the result in result.
   void final(MD5Result &result);
 
+  /// \brief Translates the bytes in \p Res to a hex string that is
+  /// deposited into \p Str. The result will be of length 32.
   static void stringifyResult(MD5Result &Res, SmallString<32> &Str);
 
 private:
