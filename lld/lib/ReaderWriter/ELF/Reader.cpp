@@ -90,7 +90,7 @@ public:
                                     static_cast<unsigned>(mb->getBufferSize()));
 
     std::size_t MaxAlignment =
-        1ULL << llvm::CountTrailingZeros_64(uintptr_t(mb->getBufferStart()));
+        1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
 
     llvm::error_code ec;
     switch (fileType) {
