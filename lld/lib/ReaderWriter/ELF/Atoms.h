@@ -95,7 +95,9 @@ public:
 
   virtual const ELFFile<ELFT> &file() const {
     return _owningFile;
-  } virtual Scope scope() const {
+  }
+
+  virtual Scope scope() const {
     if (_symbol->st_other == llvm::ELF::STV_HIDDEN)
       return scopeLinkageUnit;
     if (_symbol->getBinding() == llvm::ELF::STB_LOCAL)
@@ -512,7 +514,9 @@ public:
 
   virtual const class ELFFile<ELFT> &file() const {
     return _owningFile;
-  } virtual StringRef name() const {
+  }
+
+  virtual StringRef name() const {
     return "";
   }
 
