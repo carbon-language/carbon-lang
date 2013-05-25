@@ -2043,7 +2043,7 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   // is a serialized one referring to a file that was removed after we loaded
   // the PCH.
   if (LOffs.first.isInvalid() || ROffs.first.isInvalid())
-    return LOffs.first.isInvalid();
+    return LOffs.first.isInvalid() && !ROffs.first.isInvalid();
 
   // If the source locations are in the same file, just compare offsets.
   if (LOffs.first == ROffs.first)
