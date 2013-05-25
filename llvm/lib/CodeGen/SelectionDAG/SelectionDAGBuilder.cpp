@@ -869,7 +869,7 @@ void SelectionDAGBuilder::clear() {
   UnusedArgNodeMap.clear();
   PendingLoads.clear();
   PendingExports.clear();
-  CurDebugLoc = DebugLoc();
+  CurInst = NULL;
   HasTailCall = false;
 }
 
@@ -951,14 +951,14 @@ void SelectionDAGBuilder::visit(const Instruction &I) {
   if (isa<TerminatorInst>(&I))
     HandlePHINodesInSuccessorBlocks(I.getParent());
 
-  CurDebugLoc = I.getDebugLoc();
+  CurInst = &I;
 
   visit(I.getOpcode(), I);
 
   if (!isa<TerminatorInst>(&I) && !HasTailCall)
     CopyToExportRegsIfNeeded(&I);
 
-  CurDebugLoc = DebugLoc();
+  CurInst = NULL;
 }
 
 void SelectionDAGBuilder::visitPHI(const PHINode &) {

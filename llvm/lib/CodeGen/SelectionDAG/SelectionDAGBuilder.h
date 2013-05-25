@@ -80,8 +80,8 @@ class ZExtInst;
 /// implementation that is parameterized by a TargetLowering object.
 ///
 class SelectionDAGBuilder {
-  /// CurDebugLoc - current file + line number.  Changes as we build the DAG.
-  DebugLoc CurDebugLoc;
+  /// CurInst - The current instruction being visited
+  const Instruction *CurInst;
 
   DenseMap<const Value*, SDValue> NodeMap;
   
@@ -327,7 +327,8 @@ public:
 
   SelectionDAGBuilder(SelectionDAG &dag, FunctionLoweringInfo &funcinfo,
                       CodeGenOpt::Level ol)
-    : SDNodeOrder(0), TM(dag.getTarget()), TLI(dag.getTargetLoweringInfo()),
+    : CurInst(NULL), SDNodeOrder(0), TM(dag.getTarget()),
+      TLI(dag.getTargetLoweringInfo()),
       DAG(dag), FuncInfo(funcinfo), OptLevel(ol),
       HasTailCall(false) {
   }
@@ -364,7 +365,14 @@ public:
   ///
   SDValue getControlRoot();
 
-  DebugLoc getCurDebugLoc() const { return CurDebugLoc; }
+  SDLoc getCurSDLoc() const {
+    assert(CurInst && "CurInst NULL");
+    return SDLoc(CurInst, SDNodeOrder);
+  }
+
+  DebugLoc getCurDebugLoc() const {
+    return CurInst ? CurInst->getDebugLoc() : DebugLoc();
+  }
 
   unsigned getSDNodeOrder() const { return SDNodeOrder; }
 

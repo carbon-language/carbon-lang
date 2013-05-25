@@ -344,6 +344,13 @@ private:
   /// debugLoc - source line information.
   DebugLoc debugLoc;
 
+  // The ordering of the SDNodes. It roughly corresponds to the ordering of the
+  // original LLVM instructions.
+  // This is used for turning off scheduling, because we'll forgo
+  // the normal scheduling algorithms and output the instructions according to
+  // this ordering.
+  unsigned IROrder;
+
   /// getValueTypeList - Return a pointer to the specified value type.
   static const EVT *getValueTypeList(EVT VT);
 
@@ -411,6 +418,14 @@ public:
 
   /// setNodeId - Set unique node id.
   void setNodeId(int Id) { NodeId = Id; }
+
+  /// getIROrder - Return the node ordering.
+  ///
+  unsigned getIROrder() const { return IROrder; }
+
+  /// setIROrder - Set the node ordering.
+  ///
+  void setIROrder(unsigned Order) { IROrder = Order; }
 
   /// getDebugLoc - Return the source location info.
   const DebugLoc getDebugLoc() const { return debugLoc; }
@@ -768,6 +783,53 @@ protected:
   /// DropOperands - Release the operands and set this node to have
   /// zero operands.
   void DropOperands();
+};
+
+/// Wrapper class for IR location info (IR ordering and DebugLoc) to be passed
+/// into SDNode creation functions.
+/// When an SDNode is created from the DAGBuilder, the DebugLoc is extracted
+/// from the original Instruction, and IROrder is the ordinal position of
+/// the instruction.
+/// When an SDNode is created after the DAG is being built, both DebugLoc and
+/// the IROrder are propagated from the original SDNode.
+/// So SDLoc class provides two constructors besides the default one, one to
+/// be used by the DAGBuilder, the other to be used by others.
+class SDLoc {
+private:
+  // Ptr could be used for either Instruction* or SDNode*. It is used for
+  // Instruction* if IROrder is not -1.
+  const void *Ptr;
+  int IROrder;
+
+public:
+  SDLoc() : Ptr(NULL), IROrder(0) {}
+  SDLoc(const SDNode *N) : Ptr(N), IROrder(-1) {
+    assert(N && "null SDNode");
+  }
+  SDLoc(const SDValue V) : Ptr(V.getNode()), IROrder(-1) {
+    assert(Ptr && "null SDNode");
+  }
+  SDLoc(const Instruction *I, int Order) : Ptr(I), IROrder(Order) {
+    assert(Order >= 0 && "bad IROrder");
+  }
+  unsigned getIROrder() {
+    if (IROrder >= 0 || Ptr == NULL) {
+      return (unsigned)IROrder;
+    }
+    const SDNode *N = (const SDNode*)(Ptr);
+    return N->getIROrder();
+  }
+  DebugLoc getDebugLoc() {
+    if (Ptr == NULL) {
+      return DebugLoc();
+    }
+    if (IROrder >= 0) {
+      const Instruction *I = (const Instruction*)(Ptr);
+      return I->getDebugLoc();
+    }
+    const SDNode *N = (const SDNode*)(Ptr);
+    return N->getDebugLoc();
+  }
 };
 
 
