@@ -212,6 +212,7 @@ bool IndexingContext::isFunctionLocalDecl(const Decl *D) {
   if (const NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
     switch (ND->getFormalLinkage()) {
     case NoLinkage:
+    case VisibleNoLinkage:
     case InternalLinkage:
       return true;
     case UniqueExternalLinkage:

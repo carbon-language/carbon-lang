@@ -285,30 +285,6 @@ static const FunctionDecl *getOutermostFunctionContext(const Decl *D) {
   return Ret;
 }
 
-/// Get the linkage and visibility to be used when this type is a template
-/// argument. This is normally just the linkage and visibility of the type,
-/// but for function local types we need to check the linkage and visibility
-/// of the function.
-static LinkageInfo getLIForTemplateTypeArgument(QualType T) {
-  LinkageInfo LI = T->getLinkageAndVisibility();
-  if (LI.getLinkage() != NoLinkage)
-    return LI;
-
-  const TagType *TT = dyn_cast<TagType>(T);
-  if (!TT)
-    return LI;
-
-  const Decl *D = TT->getDecl();
-  const FunctionDecl *FD = getOutermostFunctionContext(D);
-  if (!FD)
-    return LI;
-
-  if (!FD->isInlined())
-    return LI;
-
-  return FD->getLinkageAndVisibility();
-}
-
 /// \brief Get the most restrictive linkage for the types and
 /// declarations in the given template argument list.
 ///
@@ -327,7 +303,7 @@ getLVForTemplateArgumentList(ArrayRef<TemplateArgument> args) {
       continue;
 
     case TemplateArgument::Type:
-      LV.merge(getLIForTemplateTypeArgument(arg.getAsType()));
+      LV.merge(arg.getAsType()->getLinkageAndVisibility());
       continue;
 
     case TemplateArgument::Declaration:
@@ -918,39 +894,37 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D,
 void NamedDecl::anchor() { }
 
 bool NamedDecl::isLinkageValid() const {
-  if (!HasCachedLinkage)
+  if (!hasCachedLinkage())
     return true;
 
   return getLVForDecl(this, LVForExplicitValue).getLinkage() ==
-    Linkage(CachedLinkage);
+         getCachedLinkage();
 }
 
 Linkage NamedDecl::getLinkageInternal() const {
-  if (HasCachedLinkage)
-    return Linkage(CachedLinkage);
+  if (hasCachedLinkage())
+    return getCachedLinkage();
 
   // We don't care about visibility here, so ask for the cheapest
   // possible visibility analysis.
-  CachedLinkage = getLVForDecl(this, LVForExplicitValue).getLinkage();
-  HasCachedLinkage = 1;
+  setCachedLinkage(getLVForDecl(this, LVForExplicitValue).getLinkage());
 
 #ifndef NDEBUG
   verifyLinkage();
 #endif
 
-  return Linkage(CachedLinkage);
+  return getCachedLinkage();
 }
 
 LinkageInfo NamedDecl::getLinkageAndVisibility() const {
   LVComputationKind computation =
     (usesTypeVisibility(this) ? LVForType : LVForValue);
   LinkageInfo LI = getLVForDecl(this, computation);
-  if (HasCachedLinkage) {
-    assert(Linkage(CachedLinkage) == LI.getLinkage());
+  if (hasCachedLinkage()) {
+    assert(getCachedLinkage() == LI.getLinkage());
     return LI;
   }
-  HasCachedLinkage = 1;
-  CachedLinkage = LI.getLinkage();
+  setCachedLinkage(LI.getLinkage());
 
 #ifndef NDEBUG
   verifyLinkage();
@@ -975,12 +949,12 @@ void NamedDecl::verifyLinkage() const {
     NamedDecl *T = cast<NamedDecl>(*I);
     if (T == this)
       continue;
-    if (T->HasCachedLinkage != 0) {
+    if (T->hasCachedLinkage()) {
       D = T;
       break;
     }
   }
-  assert(!D || D->CachedLinkage == CachedLinkage);
+  assert(!D || D->getCachedLinkage() == getCachedLinkage());
 }
 
 Optional<Visibility>
@@ -1093,7 +1067,17 @@ static LinkageInfo getLVForLocalDecl(const NamedDecl *D,
     }
   }
 
-  return LinkageInfo::none();
+  if (!isa<TagDecl>(D))
+    return LinkageInfo::none();
+
+  const FunctionDecl *FD = getOutermostFunctionContext(D);
+  if (!FD || !FD->isInlined())
+    return LinkageInfo::none();
+  LinkageInfo LV = FD->getLinkageAndVisibility();
+  if (LV.getLinkage() != ExternalLinkage)
+    return LinkageInfo::none();
+  return LinkageInfo(VisibleNoLinkage, LV.getVisibility(),
+                     LV.isVisibilityExplicit());
 }
 
 static LinkageInfo getLVForDecl(const NamedDecl *D,
@@ -1329,7 +1313,7 @@ bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
 }
 
 bool NamedDecl::hasLinkage() const {
-  return getLinkageInternal() != NoLinkage;
+  return getFormalLinkage() != NoLinkage;
 }
 
 NamedDecl *NamedDecl::getUnderlyingDeclImpl() {

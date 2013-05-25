@@ -1194,7 +1194,7 @@ private:
     mutable unsigned CacheValid : 1;
 
     /// \brief Linkage of this type.
-    mutable unsigned CachedLinkage : 2;
+    mutable unsigned CachedLinkage : 3;
 
     /// \brief Whether this type involves and local or unnamed types.
     mutable unsigned CachedLocalOrUnnamed : 1;

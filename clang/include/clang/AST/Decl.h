@@ -224,6 +224,8 @@ public:
     Linkage L = getLinkageInternal();
     if (L == UniqueExternalLinkage)
       return ExternalLinkage;
+    if (L == VisibleNoLinkage)
+      return NoLinkage;
     return L;
   }
 
@@ -232,7 +234,8 @@ public:
     return getFormalLinkage() == ExternalLinkage;
   }
   bool isExternallyVisible() const {
-    return getLinkageInternal() == ExternalLinkage;
+    Linkage L = getLinkageInternal();
+    return L == ExternalLinkage || L == VisibleNoLinkage;
   }
 
   /// \brief Determines the visibility of this entity.

@@ -332,6 +332,7 @@ getTypeInfoLinkage(CodeGenModule &CGM, QualType Ty) {
   
   switch (Ty->getLinkage()) {
   case NoLinkage:
+  case VisibleNoLinkage:
   case InternalLinkage:
   case UniqueExternalLinkage:
     return llvm::GlobalValue::InternalLinkage;

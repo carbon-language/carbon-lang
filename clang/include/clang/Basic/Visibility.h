@@ -49,7 +49,7 @@ inline Visibility minVisibility(Visibility L, Visibility R) {
 }
 
 class LinkageInfo {
-  uint8_t linkage_    : 2;
+  uint8_t linkage_    : 3;
   uint8_t visibility_ : 2;
   uint8_t explicit_   : 1;
 

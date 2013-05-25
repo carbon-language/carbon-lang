@@ -16,6 +16,7 @@
 
 #include "clang/AST/AttrIterator.h"
 #include "clang/AST/DeclarationName.h"
+#include "clang/Basic/Linkage.h"
 #include "clang/Basic/Specifiers.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/Support/Compiler.h"
@@ -284,15 +285,9 @@ protected:
   /// IdentifierNamespace - This specifies what IDNS_* namespace this lives in.
   unsigned IdentifierNamespace : 12;
 
-  /// \brief Whether the \c CachedLinkage field is active.
-  ///
-  /// This field is only valid for NamedDecls subclasses.
-  mutable unsigned HasCachedLinkage : 1;
-
-  /// \brief If \c HasCachedLinkage, the linkage of this declaration.
-  ///
-  /// This field is only valid for NamedDecls subclasses.
-  mutable unsigned CachedLinkage : 2;
+  /// \brief If 0, we have not computed the linkage of this declaration.
+  /// Otherwise, it is the linkage + 1.
+  mutable unsigned CacheValidAndLinkage : 3;
 
   friend class ASTDeclWriter;
   friend class ASTDeclReader;
@@ -309,7 +304,7 @@ protected:
       HasAttrs(false), Implicit(false), Used(false), Referenced(false),
       Access(AS_none), FromASTFile(0), Hidden(0),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
-      HasCachedLinkage(0)
+      CacheValidAndLinkage(0)
   {
     if (StatisticsEnabled) add(DK);
   }
@@ -319,7 +314,7 @@ protected:
       HasAttrs(false), Implicit(false), Used(false), Referenced(false),
       Access(AS_none), FromASTFile(0), Hidden(0),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
-      HasCachedLinkage(0)
+      CacheValidAndLinkage(0)
   {
     if (StatisticsEnabled) add(DK);
   }
@@ -340,6 +335,18 @@ protected:
 
   /// \brief Update a potentially out-of-date declaration.
   void updateOutOfDate(IdentifierInfo &II) const;
+
+  Linkage getCachedLinkage() const {
+    return Linkage(CacheValidAndLinkage - 1);
+  }
+
+  void setCachedLinkage(Linkage L) const {
+    CacheValidAndLinkage = L + 1;
+  }
+
+  bool hasCachedLinkage() const {
+    return CacheValidAndLinkage;
+  }
 
 public:
 

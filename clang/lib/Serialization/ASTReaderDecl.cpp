@@ -530,8 +530,7 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   FD->HasImplicitReturnZero = Record[Idx++];
   FD->IsConstexpr = Record[Idx++];
   FD->HasSkippedBody = Record[Idx++];
-  FD->HasCachedLinkage = true;
-  FD->CachedLinkage = Record[Idx++];
+  FD->setCachedLinkage(Linkage(Record[Idx++]));
   FD->EndRangeLoc = ReadSourceLocation(Record, Idx);
 
   switch ((FunctionDecl::TemplatedKind)Record[Idx++]) {
@@ -920,9 +919,8 @@ void ASTDeclReader::VisitVarDecl(VarDecl *VD) {
   VD->VarDeclBits.CXXForRangeDecl = Record[Idx++];
   VD->VarDeclBits.ARCPseudoStrong = Record[Idx++];
   VD->VarDeclBits.IsConstexpr = Record[Idx++];
-  VD->HasCachedLinkage = true;
-  VD->CachedLinkage = Record[Idx++];
-  
+  VD->setCachedLinkage(Linkage(Record[Idx++]));
+
   // Only true variables (not parameters or implicit parameters) can be merged.
   if (VD->getKind() == Decl::Var)
     mergeRedeclarable(VD, Redecl);

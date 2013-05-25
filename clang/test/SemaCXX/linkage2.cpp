@@ -1,5 +1,6 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
-// RUN: %clang_cc1 -fsyntax-only -verify -fmodules %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=gnu++11 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-c++11-extensions -Wno-local-type-template-args %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-c++11-extensions -Wno-local-type-template-args -fmodules %s
 
 namespace test1 {
   int x; // expected-note {{previous definition is here}}
@@ -65,7 +66,7 @@ namespace test6 {
   get_future();
   template <class _Rp>
   struct shared_future<_Rp&> {
-    shared_future(future<_Rp&>&& __f); // expected-warning {{rvalue references are a C++11 extension}}
+    shared_future(future<_Rp&>&& __f);
   };
   void f() {
     typedef int T;
@@ -162,5 +163,26 @@ namespace test16 {
     int bar(Foo *y) {
       return y->x;
     }
+  }
+}
+
+namespace test17 {
+  namespace {
+    struct I {
+    };
+  }
+  template <typename T1, typename T2> void foo() {}
+  template <typename T, T x> void bar() {} // expected-note {{candidate function}}
+  inline void *g() {
+    struct L {
+    };
+    // foo<L, I>'s linkage should be the merge of UniqueExternalLinkage (or
+    // InternalLinkage in c++11) and VisibleNoLinkage. The correct answer is
+    // NoLinkage in both cases. This means that using foo<L, I> as a template
+    // argument should fail.
+    return reinterpret_cast<void*>(bar<typeof(foo<L, I>), foo<L, I> >); // expected-error {{reinterpret_cast cannot resolve overloaded function 'bar' to type 'void *}}
+  }
+  void h() {
+    g();
   }
 }
