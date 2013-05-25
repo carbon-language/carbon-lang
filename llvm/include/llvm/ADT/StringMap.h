@@ -116,6 +116,7 @@ public:
 /// and data.
 template<typename ValueTy>
 class StringMapEntry : public StringMapEntryBase {
+  StringMapEntry(StringMapEntry &E) LLVM_DELETED_FUNCTION;
 public:
   ValueTy second;
 
