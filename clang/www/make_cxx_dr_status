@@ -34,6 +34,8 @@ def parse(dr):
 status_re = re.compile(r'\bdr([0-9]+): (.*)')
 status_map = {}
 for test_cpp in os.listdir(dr_test_dir):
+  if not test_cpp.endswith('.cpp'):
+    continue
   test_cpp = os.path.join(dr_test_dir, test_cpp)
   found_any = False;
   for match in re.finditer(status_re, file(test_cpp, 'r').read()):
@@ -114,9 +116,13 @@ def availability(issue):
     avail = 'N/A'
     avail_style = ' class="na"'
   elif status.startswith('sup '):
-    dup = int(status.split(' ', 1)[1])
+    dup = status.split(' ', 1)[1]
     avail = 'Superseded by %s' % dup
-    _, avail_style = availability(dup)
+    try:
+      _, avail_style = availability(int(dup))
+    except:
+      print >>sys.stderr, "issue %s marked as sup %s" % (issue, dup)
+      avail_style = ' class="none"'
   elif status.startswith('dup '):
     dup = int(status.split(' ', 1)[1])
     avail = 'Duplicate of %s' % dup

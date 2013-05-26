@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -std=c++98 %s -verify -fexceptions -pedantic-errors -Wno-bind-to-temporary-copy
-// RUN: %clang_cc1 -std=c++11 %s -verify -fexceptions -pedantic-errors
-// RUN: %clang_cc1 -std=c++1y %s -verify -fexceptions -pedantic-errors
+// RUN: %clang_cc1 -std=c++98 %s -verify -fexceptions -fcxx-exceptions -pedantic-errors -Wno-bind-to-temporary-copy
+// RUN: %clang_cc1 -std=c++11 %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
+// RUN: %clang_cc1 -std=c++1y %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
 
 namespace dr1 { // dr1: no
   namespace X { extern "C" void dr1_f(int a = 1); } // expected-note 2{{candidate}} expected-note {{conflicting}}
@@ -234,21 +234,22 @@ namespace dr23 { // dr23: yes
 
 // dr24: na
 
-namespace dr25 { // dr25: no
+namespace dr25 { // dr25: yes
   struct A {
     void f() throw(int);
   };
-  // FIXME: The initializations of g and i should be rejected.
   void (A::*f)() throw (int);
-  void (A::*g)() throw () = f;
+  void (A::*g)() throw () = f; // expected-error {{is not superset of source}}
+  void (A::*g2)() throw () = 0;
   void (A::*h)() throw (int, char) = f;
-  void (A::*i)() throw () = &A::f;
+  void (A::*i)() throw () = &A::f; // expected-error {{is not superset of source}}
+  void (A::*i2)() throw () = 0;
   void (A::*j)() throw (int, char) = &A::f;
   void x() {
-    // FIXME: The assignments to g and i should be rejected.
-    g = f;
+    // FIXME: Don't produce the second error here.
+    g2 = f; // expected-error {{is not superset}} expected-error {{incompatible}}
     h = f;
-    i = &A::f;
+    i2 = &A::f; // expected-error {{is not superset}} expected-error {{incompatible}}
     j = &A::f;
   }
 }
@@ -501,4 +502,503 @@ namespace dr50 { // dr50: yes
   X *s = const_cast<X*>(p);
   X *t = reinterpret_cast<X*>(p);
   X *u = dynamic_cast<X*>(p); // expected-error {{incomplete}}
+}
+
+namespace dr51 { // dr51: yes
+  struct A {};
+  struct B : A {};
+  struct S {
+    operator A&();
+    operator B&();
+  } s;
+  A &a = s;
+}
+
+namespace dr52 { // dr52: yes
+  struct A { int n; }; // expected-note {{here}}
+  struct B : private A {} b; // expected-note 2{{private}}
+  // FIXME: This first diagnostic is very strangely worded, and seems to be bogus.
+  int k = b.A::n; // expected-error {{'A' is a private member of 'dr52::A'}}
+  // expected-error@-1 {{cannot cast 'struct B' to its private base}}
+}
+
+namespace dr53 { // dr53: yes
+  int n = 0;
+  enum E { e } x = static_cast<E>(n);
+}
+
+namespace dr54 { // dr54: yes
+  struct A { int a; } a;
+  struct V { int v; } v;
+  struct B : private A, virtual V { int b; } b; // expected-note 6{{private here}}
+
+  A &sab = static_cast<A&>(b); // expected-error {{private base}}
+  A *spab = static_cast<A*>(&b); // expected-error {{private base}}
+  int A::*smab = static_cast<int A::*>(&B::b); // expected-error {{private base}}
+  B &sba = static_cast<B&>(a); // expected-error {{private base}}
+  B *spba = static_cast<B*>(&a); // expected-error {{private base}}
+  int B::*smba = static_cast<int B::*>(&A::a); // expected-error {{private base}}
+
+  V &svb = static_cast<V&>(b);
+  V *spvb = static_cast<V*>(&b);
+  int V::*smvb = static_cast<int V::*>(&B::b); // expected-error {{virtual base}}
+  B &sbv = static_cast<B&>(v); // expected-error {{virtual base}}
+  B *spbv = static_cast<B*>(&v); // expected-error {{virtual base}}
+  int B::*smbv = static_cast<int B::*>(&V::v); // expected-error {{virtual base}}
+
+  A &cab = (A&)(b);
+  A *cpab = (A*)(&b);
+  int A::*cmab = (int A::*)(&B::b);
+  B &cba = (B&)(a);
+  B *cpba = (B*)(&a);
+  int B::*cmba = (int B::*)(&A::a);
+
+  V &cvb = (V&)(b);
+  V *cpvb = (V*)(&b);
+  int V::*cmvb = (int V::*)(&B::b); // expected-error {{virtual base}}
+  B &cbv = (B&)(v); // expected-error {{virtual base}}
+  B *cpbv = (B*)(&v); // expected-error {{virtual base}}
+  int B::*cmbv = (int B::*)(&V::v); // expected-error {{virtual base}}
+}
+
+namespace dr55 { // dr55: yes
+  enum E { e = 5 };
+  int test[(e + 1 == 6) ? 1 : -1];
+}
+
+namespace dr56 { // dr56: yes
+  struct A {
+    typedef int T; // expected-note {{previous}}
+    typedef int T; // expected-error {{redefinition}}
+  };
+  struct B {
+    struct X;
+    typedef X X; // expected-note {{previous}}
+    typedef X X; // expected-error {{redefinition}}
+  };
+}
+
+namespace dr58 { // dr58: yes
+  // FIXME: Ideally, we should have a CodeGen test for this.
+#if __cplusplus >= 201103L
+  enum E1 { E1_0 = 0, E1_1 = 1 };
+  enum E2 { E2_0 = 0, E2_m1 = -1 };
+  struct X { E1 e1 : 1; E2 e2 : 1; };
+  static_assert(X{E1_1, E2_m1}.e1 == 1, "");
+  static_assert(X{E1_1, E2_m1}.e2 == -1, "");
+#endif
+}
+
+namespace dr59 { // dr59: yes
+  template<typename T> struct convert_to { operator T() const; };
+  struct A {}; // expected-note 2{{volatile qualifier}}
+  struct B : A {}; // expected-note 2{{volatile qualifier}}
+#if __cplusplus >= 201103L // move constructors
+  // expected-note@-3 2{{volatile qualifier}}
+  // expected-note@-3 2{{volatile qualifier}}
+#endif
+
+  A a1 = convert_to<A>();
+  A a2 = convert_to<A&>();
+  A a3 = convert_to<const A>();
+  A a4 = convert_to<const volatile A>(); // expected-error {{no viable}}
+  A a5 = convert_to<const volatile A&>(); // expected-error {{no viable}}
+
+  B b1 = convert_to<B>();
+  B b2 = convert_to<B&>();
+  B b3 = convert_to<const B>();
+  B b4 = convert_to<const volatile B>(); // expected-error {{no viable}}
+  B b5 = convert_to<const volatile B&>(); // expected-error {{no viable}}
+
+  int n1 = convert_to<int>();
+  int n2 = convert_to<int&>();
+  int n3 = convert_to<const int>();
+  int n4 = convert_to<const volatile int>();
+  int n5 = convert_to<const volatile int&>();
+}
+
+namespace dr60 { // dr60: yes
+  void f(int &);
+  int &f(...);
+  const int k = 0;
+  int &n = f(k);
+}
+
+namespace dr61 { // dr61: no
+  struct X {
+    static void f();
+  } x;
+  struct Y {
+    static void f();
+    static void f(int);
+  } y;
+  // This is (presumably) valid, because x.f does not refer to an overloaded
+  // function name.
+  void (*p)() = &x.f;
+  // FIXME: This should be rejected.
+  void (*q)() = &y.f;
+}
+
+namespace dr62 { // dr62: yes
+  struct A {
+    struct { int n; } b;
+  };
+  template<typename T> struct X {};
+  template<typename T> T get() { return get<T>(); }
+  template<typename T> int take(T) { return 0; }
+
+  X<A> x1;
+  A a = get<A>();
+
+  typedef struct { } *NoNameForLinkagePtr;
+#if __cplusplus < 201103L
+  // expected-note@-2 5{{here}}
+#endif
+  NoNameForLinkagePtr noNameForLinkagePtr;
+
+  struct Danger {
+    NoNameForLinkagePtr p;
+  };
+
+  X<NoNameForLinkagePtr> x2;
+  X<const NoNameForLinkagePtr> x3;
+  NoNameForLinkagePtr p1 = get<NoNameForLinkagePtr>();
+  NoNameForLinkagePtr p2 = get<const NoNameForLinkagePtr>();
+  int n1 = take(noNameForLinkagePtr);
+#if __cplusplus < 201103L
+  // expected-error@-6 {{uses unnamed type}}
+  // expected-error@-6 {{uses unnamed type}}
+  // expected-error@-6 {{uses unnamed type}}
+  // expected-error@-6 {{uses unnamed type}}
+  // expected-error@-6 {{uses unnamed type}}
+#endif
+
+  X<Danger> x4;
+
+  void f() {
+    struct NoLinkage {};
+    X<NoLinkage> a;
+    X<const NoLinkage> b;
+    get<NoLinkage>();
+    get<const NoLinkage>();
+    X<void (*)(NoLinkage A::*)> c;
+    X<int NoLinkage::*> d;
+#if __cplusplus < 201103L
+  // expected-error@-7 {{uses local type}}
+  // expected-error@-7 {{uses local type}}
+  // expected-error@-7 {{uses local type}}
+  // expected-error@-7 {{uses local type}}
+  // expected-error@-7 {{uses local type}}
+  // expected-error@-7 {{uses local type}}
+#endif
+  }
+}
+
+namespace dr63 { // dr63: yes
+  template<typename T> struct S { typename T::error e; };
+  extern S<int> *p;
+  void *q = p;
+}
+
+namespace dr64 { // dr64: yes
+  template<class T> void f(T);
+  template<class T> void f(T*);
+  template<> void f(int*);
+  template<> void f<int>(int*);
+  template<> void f(int);
+}
+
+// dr65: na
+
+namespace dr66 { // dr66: no
+  namespace X {
+    int f(int n); // expected-note 2{{candidate}}
+  }
+  using X::f;
+  namespace X {
+    int f(int n = 0);
+    int f(int, int);
+  }
+  // FIXME: The first two calls here should be accepted.
+  int a = f(); // expected-error {{no matching function}}
+  int b = f(1);
+  int c = f(1, 2); // expected-error {{no matching function}}
+}
+
+// dr67: na
+
+namespace dr68 { // dr68: yes
+  template<typename T> struct X {};
+  struct ::dr68::X<int> x1;
+  struct ::dr68::template X<int> x2;
+#if __cplusplus < 201103L
+  // expected-error@-2 {{'template' keyword outside of a template}}
+#endif
+  struct Y {
+    friend struct X<int>;
+    friend struct ::dr68::X<char>;
+    friend struct ::dr68::template X<double>;
+#if __cplusplus < 201103L
+  // expected-error@-2 {{'template' keyword outside of a template}}
+#endif
+  };
+  template<typename>
+  struct Z {
+    friend struct ::dr68::template X<double>;
+    friend typename ::dr68::X<double>;
+#if __cplusplus < 201103L
+  // expected-error@-2 {{C++11 extension}}
+#endif
+  };
+}
+
+namespace dr69 { // dr69: yes
+  template<typename T> static void f() {}
+  // FIXME: Should we warn here?
+  inline void g() { f<int>(); }
+  // FIXME: This should be rejected, per [temp.explicit]p11.
+  extern template void f<char>();
+#if __cplusplus < 201103L
+  // expected-error@-2 {{C++11 extension}}
+#endif
+  template<void(*)()> struct Q {};
+  Q<&f<int> > q;
+#if __cplusplus < 201103L
+  // expected-error@-2 {{internal linkage}} expected-note@-11 {{here}}
+#endif
+}
+
+namespace dr70 { // dr70: yes
+  template<int> struct A {};
+  template<int I, int J> int f(int (&)[I + J], A<I>, A<J>);
+  int arr[7];
+  int k = f(arr, A<3>(), A<4>());
+}
+
+// dr71: na
+// dr72: dup 69
+
+#if __cplusplus >= 201103L
+namespace dr73 { // dr73: no
+  // The resolution to dr73 is unworkable. Consider:
+  int a, b;
+  static_assert(&a + 1 != &b, "");
+}
+#endif
+
+namespace dr74 { // dr74: yes
+  enum E { k = 5 };
+  int (*p)[k] = new int[k][k];
+}
+
+namespace dr75 { // dr75: yes
+  struct S {
+    static int n = 0; // expected-error {{non-const}}
+  };
+}
+
+namespace dr76 { // dr76: yes
+  const volatile int n = 1;
+  int arr[n]; // expected-error +{{variable length array}}
+}
+
+namespace dr77 { // dr77: yes
+  struct A {
+    struct B {};
+    friend struct B;
+  };
+}
+
+namespace dr78 { // dr78: sup ????
+  // Under DR78, this is valid, because 'k' has static storage duration, so is
+  // zero-initialized.
+  const int k; // expected-error {{default initialization of an object of const}}
+}
+
+// dr79: na
+
+namespace dr80 { // dr80: yes
+  struct A {
+    int A;
+  };
+  struct B {
+    static int B; // expected-error {{same name as its class}}
+  };
+  struct C {
+    int C; // expected-note {{hidden by}}
+    // FIXME: These diagnostics aren't very good.
+    C(); // expected-error {{must use 'struct' tag to refer to}} expected-error {{expected member name}}
+  };
+  struct D {
+    D();
+    int D; // expected-error {{same name as its class}}
+  };
+}
+
+// dr81: na
+// dr82: dup 48
+
+namespace dr83 { // dr83: yes
+  int &f(const char*);
+  char &f(char *);
+  int &k = f("foo");
+}
+
+namespace dr84 { // dr84: yes
+  struct B;
+  struct A { operator B() const; };
+  struct C {};
+  struct B {
+    B(B&); // expected-note {{candidate}}
+    B(C);
+    operator C() const;
+  };
+  A a;
+  // Cannot use B(C) / operator C() pair to construct the B from the B temporary
+  // here.
+  B b = a; // expected-error {{no viable}}
+}
+
+namespace dr85 { // dr85: no
+  struct A {
+    struct B;
+    struct B {};
+    // FIXME: This redeclaration is invalid. Per [class.mem]p1,
+    //   "A member shall not be declared twice in the member-specification,
+    //   except that a nested class [...] can be declared then later defined"
+    // This is not that case.
+    struct B;
+  };
+}
+
+// dr86: dup 446
+
+namespace dr87 { // dr87: no
+  template<typename T> struct X {};
+  // FIXME: This is invalid.
+  X<void() throw()> x;
+  // ... but this is valid.
+  X<void(void() throw())> y;
+}
+
+namespace dr88 { // dr88: yes
+  template<typename T> struct S {
+    static const int a = 1;
+    static const int b;
+  };
+  // FIXME: This diagnostic is pretty bad.
+  template<> const int S<int>::a = 4; // expected-error {{redefinition}} expected-note {{previous}}
+  template<> const int S<int>::b = 4;
+}
+
+// dr89: na
+
+namespace dr90 { // dr90: yes
+  struct A {
+    template<typename T> friend void dr90_f(T);
+  };
+  struct B : A {
+    template<typename T> friend void dr90_g(T);
+    struct C {};
+    union D {};
+  };
+  struct E : B {};
+  struct F : B::C {};
+
+  void test() {
+    dr90_f(A());
+    dr90_f(B());
+    dr90_f(B::C()); // expected-error {{undeclared identifier}}
+    dr90_f(B::D()); // expected-error {{undeclared identifier}}
+    dr90_f(E());
+    dr90_f(F()); // expected-error {{undeclared identifier}}
+
+    dr90_g(A()); // expected-error {{undeclared identifier}}
+    dr90_g(B());
+    dr90_g(B::C());
+    dr90_g(B::D());
+    dr90_g(E());
+    dr90_g(F()); // expected-error {{undeclared identifier}}
+  }
+}
+
+namespace dr91 { // dr91: yes
+  union U { friend int f(U); };
+  int k = f(U());
+}
+
+// dr93: na
+
+namespace dr94 { // dr94: yes
+  struct A { static const int n = 5; };
+  int arr[A::n];
+}
+
+namespace dr95 { // dr95: yes
+  struct A;
+  struct B;
+  namespace N {
+    class C {
+      friend struct A;
+      friend struct B;
+      static void f(); // expected-note {{here}}
+    };
+    struct A *p; // dr95::A, not dr95::N::A.
+  }
+  A *q = N::p; // ok, same type
+  struct B { void f() { N::C::f(); } }; // expected-error {{private}}
+}
+
+namespace dr96 { // dr96: no
+  struct A {
+    void f(int);
+    template<typename T> int f(T);
+    template<typename T> struct S {};
+  } a;
+  template<template<typename> class X> struct B {};
+
+  template<typename T>
+  void test() {
+    int k1 = a.template f<int>(0);
+    // FIXME: This is ill-formed, because 'f' is not a template-id and does not
+    // name a class template.
+    // FIXME: What about alias templates?
+    int k2 = a.template f(1);
+    A::template S<int> s;
+    B<A::template S> b;
+  }
+}
+
+namespace dr97 { // dr97: yes
+  struct A {
+    static const int a = false;
+    static const int b = !a;
+  };
+}
+
+namespace dr98 { // dr98: yes
+  void test(int n) {
+    switch (n) {
+      try { // expected-note 2{{bypasses}}
+        case 0: // expected-error {{protected}}
+        x:
+          throw n;
+      } catch (...) { // expected-note 2{{bypasses}}
+        case 1: // expected-error {{protected}}
+        y:
+          throw n;
+      }
+      case 2:
+        goto x; // expected-error {{protected}}
+      case 3:
+        goto y; // expected-error {{protected}}
+    }
+  }
+}
+
+namespace dr99 { // dr99: sup 214
+  template<typename T> void f(T&);
+  template<typename T> int &f(const T&);
+  const int n = 0;
+  int &r = f(n);
 }
