@@ -206,6 +206,21 @@ Jade project is hosted as part of the Open RVC-CAL Compiler
 (`Orcc <http://orcc.sf.net>`_) and requires it to translate the RVC-CAL standard
 library of video coding tools into an LLVM assembly code.
 
+LDC - the LLVM-based D compiler
+-------------------------------
+
+`D <http://dlang.org>`_ is a language with C-like syntax and static typing. It
+pragmatically combines efficiency, control, and modeling power, with safety and
+programmer productivity. D supports powerful concepts like Compile-Time Function
+Execution (CTFE) and Template Meta-Programming, provides an innovative approach
+to concurrency and offers many classical paradigms.
+
+`LDC <http://wiki.dlang.org/LDC>`_ uses the frontend from the reference compiler
+combined with LLVM as backend to produce efficient native code. LDC targets
+x86/x86_64 systems like Linux, OS X and Windows and also Linux/PPC64. Ports to
+other architectures like ARM are underway.
+
+
 Additional Information
 ======================
 
