@@ -255,6 +255,11 @@ public:
         UndefinedAtoms._atoms.push_back(
           new (AtomStorage.Allocate<COFFUndefinedAtom>())
             COFFUndefinedAtom(*this, Name));
+      } else if (   Symb->StorageClass == llvm::COFF::IMAGE_SYM_CLASS_STATIC
+                 && Symb->Value == 0) {
+        // A symbol with IMAGE_SYM_CLASS_STATIC and zero value represents a
+        // section name. This is redundant and we can safely skip this here
+        // because the same section name is also in the section header.
       } else {
         // This is actually a defined symbol. Add it to its section's list of
         // symbols.
