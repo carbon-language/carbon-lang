@@ -1499,9 +1499,7 @@ error_code MachOWriter::writeFile(const lld::File &file, StringRef path) {
                       << "\n");
     chunk->write(buffer->getBufferStart()+chunk->fileOffset());
   }
-
   return buffer->commit();
-  return error_code::success();
 }
 
 void MachOWriter::addFiles(InputFiles &inputFiles) {
@@ -1517,4 +1515,3 @@ std::unique_ptr<Writer> createWriterMachO(const MachOTargetInfo &ti) {
 }
 
 } // namespace lld
-
