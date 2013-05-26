@@ -254,8 +254,18 @@ private:
     if (CurrentToken != NULL) {
       ScopedContextCreator ContextCreator(*this, tok::l_brace, 1);
       AnnotatedToken *Left = CurrentToken->Parent;
+
+      AnnotatedToken *Parent = Left->getPreviousNoneComment();
+      bool StartsObjCDictLiteral = Parent && Parent->is(tok::at);
+      if (StartsObjCDictLiteral) {
+        Contexts.back().ColonIsObjCDictLiteral = true;
+        Left->Type = TT_ObjCDictLiteral;
+      }
+
       while (CurrentToken != NULL) {
         if (CurrentToken->is(tok::r_brace)) {
+          if (StartsObjCDictLiteral)
+            CurrentToken->Type = TT_ObjCDictLiteral;
           Left->MatchingParen = CurrentToken;
           CurrentToken->MatchingParen = Left;
           next();
@@ -321,6 +331,8 @@ private:
       // Colons from ?: are handled in parseConditional().
       if (Tok->Parent->is(tok::r_paren) && Contexts.size() == 1) {
         Tok->Type = TT_CtorInitializerColon;
+      } else if (Contexts.back().ColonIsObjCDictLiteral) {
+        Tok->Type = TT_ObjCDictLiteral;
       } else if (Contexts.back().ColonIsObjCMethodExpr ||
                  Line.First.Type == TT_ObjCMethodSpecifier) {
         Tok->Type = TT_ObjCMethodExpr;
@@ -547,14 +559,15 @@ private:
             bool IsExpression)
         : ContextKind(ContextKind), BindingStrength(BindingStrength),
           LongestObjCSelectorName(0), ColonIsForRangeExpr(false),
-          ColonIsObjCMethodExpr(false), FirstObjCSelectorName(NULL),
-          FirstStartOfName(NULL), IsExpression(IsExpression),
-          CanBeExpression(true) {}
+          ColonIsObjCDictLiteral(false), ColonIsObjCMethodExpr(false),
+          FirstObjCSelectorName(NULL), FirstStartOfName(NULL),
+          IsExpression(IsExpression), CanBeExpression(true) {}
 
     tok::TokenKind ContextKind;
     unsigned BindingStrength;
     unsigned LongestObjCSelectorName;
     bool ColonIsForRangeExpr;
+    bool ColonIsObjCDictLiteral;
     bool ColonIsObjCMethodExpr;
     AnnotatedToken *FirstObjCSelectorName;
     AnnotatedToken *FirstStartOfName;
@@ -1158,9 +1171,11 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   const AnnotatedToken &Left = *Right.Parent;
   if (Right.Type == TT_StartOfName)
     return true;
-  if (Right.is(tok::colon) && Right.Type == TT_ObjCMethodExpr)
+  if (Right.is(tok::colon) &&
+      (Right.Type == TT_ObjCDictLiteral || Right.Type == TT_ObjCMethodExpr))
     return false;
-  if (Left.is(tok::colon) && Left.Type == TT_ObjCMethodExpr)
+  if (Left.is(tok::colon) &&
+      (Left.Type == TT_ObjCDictLiteral || Left.Type == TT_ObjCMethodExpr))
     return true;
   if (Right.Type == TT_ObjCSelectorName)
     return true;
