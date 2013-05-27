@@ -640,7 +640,10 @@ private:
       else if ((Previous.Type == TT_BinaryOperator ||
                 Previous.Type == TT_ConditionalExpr ||
                 Previous.Type == TT_CtorInitializerColon) &&
-               getPrecedence(Previous) != prec::Assignment)
+               !(getPrecedence(Previous) == prec::Assignment &&
+                 Current.FakeLParens.empty()))
+        // Always indent relative to the RHS of the expression unless this is a
+        // simple assignment without binary expression on the RHS.
         State.Stack.back().LastSpace = State.Column;
       else if (Previous.Type == TT_InheritanceColon)
         State.Stack.back().Indent = State.Column;

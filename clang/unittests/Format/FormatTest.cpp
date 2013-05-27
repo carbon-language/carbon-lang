@@ -2336,6 +2336,10 @@ TEST_F(FormatTest, BreaksAfterAssignments) {
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaaaa aaaa = aaaaaaaaaaaaaa(0).aaaa()\n"
       "    .aaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaa::aaaaaaaaaaaaaaaaaaaaa);");
+  verifyFormat("unsigned OriginalStartColumn =\n"
+               "    SourceMgr.getSpellingColumnNumber(\n"
+               "        Current.FormatTok.getStartOfNonWhitespace()) -\n"
+               "    1;");
 }
 
 TEST_F(FormatTest, AlignsAfterAssignments) {
