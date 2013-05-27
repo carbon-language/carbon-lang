@@ -1420,7 +1420,6 @@ TEST_F(FormatTest, FormatObjCTryCatch) {
 TEST_F(FormatTest, StaticInitializers) {
   verifyFormat("static SomeClass SC = { 1, 'a' };");
 
-  // FIXME: Format like enums if the static initializer does not fit on a line.
   verifyFormat(
       "static SomeClass WithALoooooooooooooooooooongName = {\n"
       "  100000000, \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"\n"
@@ -1657,13 +1656,10 @@ TEST_F(FormatTest, EmptyLinesInMacroDefinitions) {
 
 TEST_F(FormatTest, MacroDefinitionsWithIncompleteCode) {
   verifyFormat("#define A :");
-
-  // FIXME: Improve formatting of case labels in macros.
   verifyFormat("#define SOMECASES  \\\n"
                "  case 1:          \\\n"
                "  case 2\n",
                getLLVMStyleWithColumns(20));
-
   verifyFormat("#define A template <typename T>");
   verifyFormat("#define STR(x) #x\n"
                "f(STR(this_is_a_string_literal{));");
@@ -2767,8 +2763,6 @@ TEST_F(FormatTest, WrapsAtNestedNameSpecifiers) {
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa::\n"
       "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa();");
 
-  // FIXME: Look into whether we should indent 4 from the start or 4 from
-  // "bbbbb..." here instead of what we are doing now.
   verifyFormat(
       "aaaaaaaaaaaaaaa(bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb::\n"
       "                    cccccccccccccccccccccccccccccccccccccccccccccc());");
@@ -2962,7 +2956,6 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyGoogleFormat("return sizeof(int**);");
   verifyIndependentOfContext("Type **A = static_cast<Type **>(P);");
   verifyGoogleFormat("Type** A = static_cast<Type**>(P);");
-  // FIXME: The newline is wrong.
   verifyFormat("auto a = [](int **&, int ***) {};");
 
   verifyIndependentOfContext("InvalidRegions[*R] = 0;");
@@ -3074,12 +3067,10 @@ TEST_F(FormatTest, UnderstandsRvalueReferences) {
   verifyGoogleFormat("int f(int a, char&& b) {}");
   verifyGoogleFormat("void f() { int&& a = b; }");
 
-  // FIXME: These require somewhat deeper changes in template arguments
-  // formatting.
-  //  verifyIndependentOfContext("A<int &&> a;");
-  //  verifyIndependentOfContext("A<int &&, int &&> a;");
-  //  verifyGoogleFormat("A<int&&> a;");
-  //  verifyGoogleFormat("A<int&&, int&&> a;");
+  verifyIndependentOfContext("A<int &&> a;");
+  verifyIndependentOfContext("A<int &&, int &&> a;");
+  verifyGoogleFormat("A<int&&> a;");
+  verifyGoogleFormat("A<int&&, int&&> a;");
 }
 
 TEST_F(FormatTest, FormatsBinaryOperatorsPrecedingEquals) {

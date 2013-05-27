@@ -103,7 +103,8 @@ private:
       if (CurrentToken->isOneOf(tok::r_paren, tok::r_square, tok::r_brace,
                                 tok::question, tok::colon))
         return false;
-      if (CurrentToken->isOneOf(tok::pipepipe, tok::ampamp) &&
+      if (CurrentToken->Parent->isOneOf(tok::pipepipe, tok::ampamp) &&
+          CurrentToken->Parent->Type != TT_PointerOrReference &&
           Line.First.isNot(tok::kw_template))
         return false;
       updateParameterCount(Left, CurrentToken);
