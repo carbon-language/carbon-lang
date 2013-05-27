@@ -49,4 +49,49 @@ int main(int argc, char **argv) {
 
   MyType *g{new MyType};
   // CHECK: MyType *g{new MyType};
+
+  // Test for declaration lists.
+  {
+    MyType *a = new MyType(), *b = new MyType(), *c = new MyType();
+    // CHECK: auto a = new MyType(), b = new MyType(), c = new MyType();
+
+    // Non-initialized declaration should not be transformed.
+    MyType *d = new MyType(), *e;
+    // CHECK: MyType *d = new MyType(), *e;
+
+    MyType **f = new MyType*(), **g = new MyType*();
+    // CHECK: auto f = new MyType*(), g = new MyType*();
+
+    // Mismatching types in declaration lists should not be transformed.
+    MyType *h = new MyType(), **i = new MyType*();
+    // CHECK: MyType *h = new MyType(), **i = new MyType*();
+
+    // '*' shouldn't be removed in case of mismatching types with multiple
+    // declarations.
+    MyType *j = new MyType(), *k = new MyType(), **l = new MyType*();
+    // CHECK: MyType *j = new MyType(), *k = new MyType(), **l = new MyType*();
+  }
+
+  // Test for typedefs.
+  {
+    typedef int * int_p;
+
+    int_p a = new int;
+    // CHECK: auto a = new int;
+    int_p *b = new int*;
+    // CHECK: auto b = new int*;
+
+    // Test for typedefs in declarations lists.
+    int_p c = new int, d = new int;
+    // CHECK: auto c = new int, d = new int;
+
+    // Different types should not be transformed.
+    int_p e = new int, *f = new int_p;
+    // CHECK: int_p e = new int, *f = new int_p;
+
+    int_p *g = new int*, *h = new int_p;
+    // CHECK: auto g = new int*, h = new int_p;
+  }
+
+  return 0;
 }

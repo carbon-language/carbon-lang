@@ -28,6 +28,6 @@ clang::ast_matchers::StatementMatcher makeIteratorDeclMatcher();
 
 /// \brief Create a matcher that matches variable declarations that are
 /// initialized by a C++ new expression.
-clang::ast_matchers::DeclarationMatcher makeDeclWithNewMatcher();
+clang::ast_matchers::StatementMatcher makeDeclWithNewMatcher();
 
 #endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_USE_AUTO_MATCHERS_H
