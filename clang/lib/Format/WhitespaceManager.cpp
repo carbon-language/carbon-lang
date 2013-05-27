@@ -46,19 +46,6 @@ void WhitespaceManager::replaceWhitespace(const AnnotatedToken &Tok,
       true, Tok.FormatTok.WhitespaceRange,
       Spaces, StartOfTokenColumn, Newlines, "", "", Tok.FormatTok.Tok.getKind(),
       InPPDirective && !Tok.FormatTok.IsFirst));
-
-  // Align line comments if they are trailing or if they continue other
-  // trailing comments.
-  // FIXME: Pull this out and generalize so it works the same way in broken
-  // comments and unbroken comments with trailing whitespace.
-  if (Tok.isTrailingComment()) {
-    SourceLocation TokenEndLoc = Tok.FormatTok.getStartOfNonWhitespace()
-        .getLocWithOffset(Tok.FormatTok.TokenLength);
-    // Remove the comment's trailing whitespace.
-    if (Tok.FormatTok.TrailingWhiteSpaceLength != 0)
-      Replaces.insert(tooling::Replacement(
-          SourceMgr, TokenEndLoc, Tok.FormatTok.TrailingWhiteSpaceLength, ""));
-  }
 }
 
 void WhitespaceManager::addUntouchableToken(const FormatToken &Tok,
@@ -84,12 +71,6 @@ void WhitespaceManager::breakToken(const FormatToken &Tok, unsigned Offset,
       // BreakableToken and the WhitespaceManager. That would also allow us to
       // correctly store a tok::TokenKind instead of rolling our own enum.
       tok::unknown, InPPDirective && !Tok.IsFirst));
-}
-
-void WhitespaceManager::addReplacement(const SourceLocation &SourceLoc,
-                                       unsigned ReplaceChars, StringRef Text) {
-  Replaces.insert(
-      tooling::Replacement(SourceMgr, SourceLoc, ReplaceChars, Text));
 }
 
 const tooling::Replacements &WhitespaceManager::generateReplacements() {

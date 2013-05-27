@@ -28,9 +28,8 @@ namespace format {
 /// whitespace characters preceeding it.
 struct FormatToken {
   FormatToken()
-      : NewlinesBefore(0), HasUnescapedNewline(false),
-        LastNewlineOffset(0), TokenLength(0), IsFirst(false),
-        MustBreakBefore(false), TrailingWhiteSpaceLength(0) {}
+      : NewlinesBefore(0), HasUnescapedNewline(false), LastNewlineOffset(0),
+        TokenLength(0), IsFirst(false), MustBreakBefore(false) {}
 
   /// \brief The \c Token.
   Token Tok;
@@ -66,9 +65,6 @@ struct FormatToken {
   /// before the token.
   bool MustBreakBefore;
 
-  /// \brief Number of characters of trailing whitespace.
-  unsigned TrailingWhiteSpaceLength;
-
   /// \brief Returns actual token start location without leading escaped
   /// newlines and whitespace.
   ///
@@ -77,6 +73,12 @@ struct FormatToken {
   SourceLocation getStartOfNonWhitespace() const {
     return WhitespaceRange.getEnd();
   }
+
+  /// \brief The raw text of the token.
+  ///
+  /// Contains the raw token text without leading whitespace and without leading
+  /// escaped newlines.
+  StringRef TokenText;
 };
 
 /// \brief An unwrapped line is a sequence of \c Token, that we would like to

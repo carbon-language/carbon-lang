@@ -766,8 +766,8 @@ TEST_F(FormatTest, AlignsMultiLineComments) {
                    "           1.1.1. to keep the formatting.\n"
                    "   */"));
   EXPECT_EQ("/*\n"
-            " Don't try to outdent if there's not enough inentation.\n"
-            " */",
+            "Don't try to outdent if there's not enough inentation.\n"
+            "*/",
             format("  /*\n"
                    " Don't try to outdent if there's not enough inentation.\n"
                    " */"));
@@ -808,6 +808,65 @@ TEST_F(FormatTest, SplitsLongCxxComments) {
             format("// A comment before a macro definition\n"
                    "#define a b",
                    getLLVMStyleWithColumns(20)));
+
+  EXPECT_EQ("/* A comment before\n"
+            " * a macro\n"
+            " * definition */\n"
+            "#define a b",
+            format("/* A comment before a macro definition */\n"
+                   "#define a b",
+                   getLLVMStyleWithColumns(20)));
+
+  EXPECT_EQ("/* some comment\n"
+            "     *   a comment\n"
+            "* that we break\n"
+            " * another comment\n"
+            "* we have to break\n"
+            "* a left comment\n"
+            " */",
+            format("  /* some comment\n"
+                   "       *   a comment that we break\n"
+                   "   * another comment we have to break\n"
+                   "* a left comment\n"
+                   "   */",
+                   getLLVMStyleWithColumns(20)));
+
+  EXPECT_EQ("/*\n"
+            "\n"
+            "\n"
+            "    */\n",
+            format("  /*       \n"
+                   "      \n"
+                   "               \n"
+                   "      */\n"));
+}
+
+TEST_F(FormatTest, MultiLineCommentsInDefines) {
+  // FIXME: The line breaks are still suboptimal (current guess
+  // is that this is due to the token length being misused), but
+  // the comment handling is correct.
+  EXPECT_EQ("#define A(      \\\n"
+            "    x) /*       \\\n"
+            "a comment       \\\n"
+            "inside */       \\\n"
+            "  f();",
+            format("#define A(x) /* \\\n"
+                   "  a comment     \\\n"
+                   "  inside */     \\\n"
+                   "  f();",
+                   getLLVMStyleWithColumns(17)));
+  EXPECT_EQ("#define A(x) /* \\\n"
+            "        a       \\\n"
+            "        comment \\\n"
+            "        inside  \\\n"
+            "        */      \\\n"
+            "  f();",
+            format("#define A(      \\\n"
+                   "    x) /*       \\\n"
+                   "  a comment     \\\n"
+                   "  inside */     \\\n"
+                   "  f();",
+                   getLLVMStyleWithColumns(17)));
 }
 
 TEST_F(FormatTest, ParsesCommentsAdjacentToPPDirectives) {
@@ -928,7 +987,8 @@ TEST_F(FormatTest, SplitsLongLinesInComments) {
                    "    */", getLLVMStyleWithColumns(20)));
   EXPECT_EQ("{\n"
             "  if (something) /* This is a\n"
-            "long comment */\n"
+            "                    long\n"
+            "                    comment */\n"
             "    ;\n"
             "}",
             format("{\n"
@@ -4435,6 +4495,35 @@ TEST_F(FormatTest, ConfigurableUseOfTab) {
                "\t\t    parameter2); \\\n"
                "\t}",
                Tab);
+  EXPECT_EQ("/*\n"
+            "\t      a\t\tcomment\n"
+            "\t      in multiple lines\n"
+            "       */",
+            format("   /*\t \t \n"
+                   " \t \t a\t\tcomment\t \t\n"
+                   " \t \t in multiple lines\t\n"
+                   " \t  */",
+                   Tab));
+  Tab.UseTab = false;
+  // FIXME: Change this test to a different tab size than
+  // 8 once configurable.
+  EXPECT_EQ("/*\n"
+            "              a\t\tcomment\n"
+            "              in multiple lines\n"
+            "       */",
+            format("   /*\t \t \n"
+                   " \t \t a\t\tcomment\t \t\n"
+                   " \t \t in multiple lines\t\n"
+                   " \t  */",
+                   Tab));
+
+  // FIXME: This is broken, as the spelling column number we
+  // get from the SourceManager counts tab as '1'.
+  // EXPECT_EQ("/* some\n"
+  //           "   comment */",
+  //          format(" \t \t /* some\n"
+  //                 " \t \t    comment */",
+  //                 Tab));
 }
 
 TEST_F(FormatTest, LinuxBraceBreaking) {

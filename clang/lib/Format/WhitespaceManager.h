@@ -67,14 +67,6 @@ public:
   /// \brief Returns all the \c Replacements created during formatting.
   const tooling::Replacements &generateReplacements();
 
-  /// \brief Replaces \p ReplaceChars after \p SourceLoc with \p Text.
-  ///
-  /// FIXME: This is currently used to align comments outside of the \c
-  /// WhitespaceManager. Once this has been moved inside, get rid of this
-  /// method.
-  void addReplacement(const SourceLocation &SourceLoc, unsigned ReplaceChars,
-                      StringRef Text);
-
 private:
   /// \brief Represents a change before a token, a break inside a token,
   /// or the layout of an unchanged token (or whitespace within).
