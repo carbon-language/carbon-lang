@@ -120,7 +120,7 @@ public:
   // up-front.
   virtual unsigned getPosition() { return 0; }
   virtual FormatToken setPosition(unsigned Position) {
-    assert(false);
+    llvm_unreachable("Interface in transition; do not call!");
     return FormatToken();
   }
 };
