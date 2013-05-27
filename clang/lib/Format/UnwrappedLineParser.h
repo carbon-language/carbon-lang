@@ -123,7 +123,6 @@ public:
   virtual unsigned getPosition() { return 0; }
   virtual FormatToken setPosition(unsigned Position) {
     llvm_unreachable("Interface in transition; do not call!");
-    return FormatToken();
   }
 };
 
