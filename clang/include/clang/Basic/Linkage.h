@@ -66,6 +66,22 @@ enum GVALinkage {
   GVA_ExplicitTemplateInstantiation
 };
 
+inline bool isExternallyVisible(Linkage L) {
+  return L == ExternalLinkage || L == VisibleNoLinkage;
+}
+
+inline Linkage getFormalLinkage(Linkage L) {
+  if (L == UniqueExternalLinkage)
+    return ExternalLinkage;
+  if (L == VisibleNoLinkage)
+    return NoLinkage;
+  return L;
+}
+
+inline bool isExternalFormalLinkage(Linkage L) {
+  return getFormalLinkage(L) == ExternalLinkage;
+}
+
 /// \brief Compute the minimum linkage given two linkages.
 ///
 /// The linkage can be interpreted as a pair formed by the formal linkage and

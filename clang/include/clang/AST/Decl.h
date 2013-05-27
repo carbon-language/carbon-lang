@@ -221,21 +221,16 @@ public:
   /// \brief Get the linkage from a semantic point of view. Entities in
   /// anonymous namespaces are external (in c++98).
   Linkage getFormalLinkage() const {
-    Linkage L = getLinkageInternal();
-    if (L == UniqueExternalLinkage)
-      return ExternalLinkage;
-    if (L == VisibleNoLinkage)
-      return NoLinkage;
-    return L;
+    return clang::getFormalLinkage(getLinkageInternal());
   }
 
   /// \brief True if this decl has external linkage.
   bool hasExternalFormalLinkage() const {
-    return getFormalLinkage() == ExternalLinkage;
+    return isExternalFormalLinkage(getLinkageInternal());
   }
+
   bool isExternallyVisible() const {
-    Linkage L = getLinkageInternal();
-    return L == ExternalLinkage || L == VisibleNoLinkage;
+    return clang::isExternallyVisible(getLinkageInternal());
   }
 
   /// \brief Determines the visibility of this entity.
