@@ -85,7 +85,7 @@ void StackTrace::PrintStack(const uptr *addr, uptr size,
         frame_num++;
       }
     }
-    if (symbolize && addr_frames_num == 0 && SymbolizeCode) {
+    if (symbolize && addr_frames_num == 0 && &SymbolizeCode) {
       // Use our own (online) symbolizer, if necessary.
       addr_frames_num = SymbolizeCode(pc, addr_frames.data(),
                                       addr_frames.size());
