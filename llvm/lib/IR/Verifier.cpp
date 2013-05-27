@@ -463,11 +463,10 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
         Assert1(InitArray, "wrong initalizer for intrinsic global variable",
                 Init);
         for (unsigned i = 0, e = InitArray->getNumOperands(); i != e; ++i) {
-          Value *V = Init->getOperand(i)->stripPointerCasts();
-          // stripPointerCasts strips aliases, so we only need to check for
-          // variables and functions.
-          Assert1(isa<GlobalVariable>(V) || isa<Function>(V),
-                  "invalid llvm.used member", V);
+          Value *V = Init->getOperand(i)->stripPointerCastsNoFollowAliases();
+          Assert1(
+              isa<GlobalVariable>(V) || isa<Function>(V) || isa<GlobalAlias>(V),
+              "invalid llvm.used member", V);
         }
       }
     }
