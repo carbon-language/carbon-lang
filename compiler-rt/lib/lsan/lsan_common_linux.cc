@@ -114,7 +114,7 @@ void ProcessPlatformSpecificAllocationsCb::operator()(void *p) const {
 // Handle dynamically allocated TLS blocks by treating all chunks allocated from
 // ld-linux.so as reachable.
 void ProcessPlatformSpecificAllocations(InternalVector<uptr> *frontier) {
-  if (!flags()->use_tls()) return;
+  if (!flags()->use_tls) return;
   if (!linker) return;
   ForEachChunk(ProcessPlatformSpecificAllocationsCb(frontier));
 }

@@ -775,7 +775,6 @@ template void ForEachChunk<PrintLeakedCb>(PrintLeakedCb const &callback);
 template void ForEachChunk<CollectLeaksCb>(CollectLeaksCb const &callback);
 template void ForEachChunk<MarkIndirectlyLeakedCb>(
     MarkIndirectlyLeakedCb const &callback);
-template void ForEachChunk<ReportLeakedCb>(ReportLeakedCb const &callback);
 template void ForEachChunk<ClearTagCb>(ClearTagCb const &callback);
 #endif  // CAN_SANITIZE_LEAKS
 }  // namespace __lsan

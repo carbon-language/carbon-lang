@@ -28,19 +28,25 @@ Flags lsan_flags;
 static void InitializeFlags() {
   Flags *f = flags();
   // Default values.
-  f->sources = kSourceAllAligned;
   f->report_blocks = false;
   f->resolution = 0;
   f->max_leaks = 0;
   f->exitcode = 23;
+  f->use_registers = true;
+  f->use_globals = true;
+  f->use_stacks = true;
+  f->use_tls = true;
+  f->use_unaligned = false;
   f->log_pointers = false;
   f->log_threads = false;
 
   const char *options = GetEnv("LSAN_OPTIONS");
   if (options) {
-    bool aligned = true;
-    ParseFlag(options, &aligned, "aligned");
-    if (!aligned) f->sources |= kSourceUnaligned;
+    ParseFlag(options, &f->use_registers, "use_registers");
+    ParseFlag(options, &f->use_globals, "use_globals");
+    ParseFlag(options, &f->use_stacks, "use_stacks");
+    ParseFlag(options, &f->use_tls, "use_tls");
+    ParseFlag(options, &f->use_unaligned, "use_unaligned");
     ParseFlag(options, &f->report_blocks, "report_blocks");
     ParseFlag(options, &f->resolution, "resolution");
     CHECK_GE(&f->resolution, 0);
@@ -132,11 +138,11 @@ static void ProcessThreads(SuspendedThreadsList const &suspended_threads,
       sp = stack_begin;
     }
 
-    if (flags()->use_registers() && have_registers)
+    if (flags()->use_registers && have_registers)
       ScanRangeForPointers(registers_begin, registers_end, frontier,
                            "REGISTERS", kReachable);
 
-    if (flags()->use_stacks()) {
+    if (flags()->use_stacks) {
       if (flags()->log_threads)
         Report("Stack at %p-%p, SP = %p.\n", stack_begin, stack_end, sp);
       if (sp < stack_begin || sp >= stack_end) {
@@ -153,7 +159,7 @@ static void ProcessThreads(SuspendedThreadsList const &suspended_threads,
                            kReachable);
     }
 
-    if (flags()->use_tls()) {
+    if (flags()->use_tls) {
       if (flags()->log_threads) Report("TLS at %p-%p.\n", tls_begin, tls_end);
       if (cache_begin == cache_end) {
         ScanRangeForPointers(tls_begin, tls_end, frontier, "TLS", kReachable);
@@ -198,7 +204,7 @@ static void ClassifyAllChunks(SuspendedThreadsList const &suspended_threads) {
   // Holds the flood fill frontier.
   InternalVector<uptr> frontier(GetPageSizeCached());
 
-  if (flags()->use_globals())
+  if (flags()->use_globals)
     ProcessGlobalRegions(&frontier);
   ProcessThreads(suspended_threads, &frontier);
   FloodFillReachable(&frontier);
@@ -298,7 +304,7 @@ static void DoLeakCheckCallback(const SuspendedThreadsList &suspended_threads,
   }
   Printf("\n");
   Printf("=================================================================\n");
-  Report("ERROR: LeakSanitizer: detected leaks.\n");
+  Report("ERROR: LeakSanitizer: detected memory leaks\n");
   leak_report.PrintLargest(flags()->max_leaks);
   if (flags()->report_blocks)
     PrintLeaked();
@@ -318,43 +324,6 @@ void DoLeakCheck() {
     if (flags()->exitcode)
       internal__exit(flags()->exitcode);
   }
-}
-
-///// Reporting of leaked blocks' addresses (for testing). /////
-
-void ReportLeakedCb::operator()(void *p) const {
-  p = GetUserBegin(p);
-  LsanMetadata m(p);
-  if (m.allocated() && m.tag() != kReachable)
-    leaked_->push_back(p);
-}
-
-struct ReportLeakedParam {
-  InternalVector<void *> *leaked;
-  uptr sources;
-  bool success;
-};
-
-static void ReportLeakedCallback(const SuspendedThreadsList &suspended_threads,
-                                 void *arg) {
-  // Allocator must not be locked when we call GetRegionBegin().
-  UnlockAllocator();
-  ReportLeakedParam *param = reinterpret_cast<ReportLeakedParam *>(arg);
-  flags()->sources = param->sources;
-  ClassifyAllChunks(suspended_threads);
-  ForEachChunk(ReportLeakedCb(param->leaked));
-  ForEachChunk(ClearTagCb());
-  param->success = true;
-}
-
-void ReportLeaked(InternalVector<void *> *leaked, uptr sources) {
-  CHECK_EQ(0, leaked->size());
-  ReportLeakedParam param;
-  param.leaked = leaked;
-  param.success = false;
-  param.sources = sources;
-  LockAndSuspendThreads(ReportLeakedCallback, &param);
-  CHECK(param.success);
 }
 
 ///// LeakReport implementation. /////

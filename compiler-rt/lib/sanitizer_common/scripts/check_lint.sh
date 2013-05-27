@@ -31,6 +31,7 @@ TSAN_TEST_LINT_FILTER=${TSAN_RTL_LINT_FILTER},-runtime/threadsafe_fn,-runtime/in
 TSAN_LIT_TEST_LINT_FILTER=${TSAN_TEST_LINT_FILTER},-whitespace/line_length
 MSAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER}
 LSAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER}
+LSAN_LIT_TEST_LINT_FILTER=${LSAN_RTL_LINT_FILTER},-whitespace/line_length
 COMMON_RTL_INC_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int,-runtime/sizeof,-runtime/printf
 SANITIZER_INCLUDES_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int
 
@@ -79,6 +80,7 @@ ${CPPLINT} --filter=${MSAN_RTL_LINT_FILTER} ${MSAN_RTL}/*.{cc,h}
 LSAN_RTL=${COMPILER_RT}/lib/lsan
 ${CPPLINT} --filter=${LSAN_RTL_LINT_FILTER} ${LSAN_RTL}/*.{cc,h}
 ${CPPLINT} --filter=${LSAN_RTL_LINT_FILTER} ${LSAN_RTL}/tests/*.{cc,h}
+${CPPLINT} --filter=${LSAN_LIT_TEST_LINT_FILTER} ${LSAN_RTL}/lit_tests/*.{cc,h}
 
 set +e
 

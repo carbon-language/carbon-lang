@@ -35,32 +35,11 @@ enum ChunkTag {
   kReachable = 2
 };
 
-// Sources of pointers.
-// Global variables (.data and .bss).
-const uptr kSourceGlobals = 1 << 0;
-// Thread stacks.
-const uptr kSourceStacks = 1 << 1;
-// TLS and thread-specific storage.
-const uptr kSourceTLS = 1 << 2;
-// Thread registers.
-const uptr kSourceRegisters = 1 << 3;
-// Unaligned pointers.
-const uptr kSourceUnaligned = 1 << 4;
-
-// Aligned pointers everywhere.
-const uptr kSourceAllAligned =
-    kSourceGlobals | kSourceStacks | kSourceTLS | kSourceRegisters;
-
 struct Flags {
-  bool use_registers() const { return sources & kSourceRegisters; }
-  bool use_globals() const { return sources & kSourceGlobals; }
-  bool use_stacks() const { return sources & kSourceStacks; }
-  bool use_tls() const { return sources & kSourceTLS; }
   uptr pointer_alignment() const {
-    return (sources & kSourceUnaligned) ? 1 : sizeof(uptr);
+    return use_unaligned ? 1 : sizeof(uptr);
   }
 
-  uptr sources;
   // Print addresses of leaked blocks after main leak report.
   bool report_blocks;
   // Aggregate two blocks into one leak if this many stack frames match. If
@@ -70,6 +49,19 @@ struct Flags {
   int max_leaks;
   // If nonzero kill the process with this exit code upon finding leaks.
   int exitcode;
+
+  // Flags controlling the root set of reachable memory.
+  // Global variables (.data and .bss).
+  bool use_globals;
+  // Thread stacks.
+  bool use_stacks;
+  // Thread registers.
+  bool use_registers;
+  // TLS and thread-specific storage.
+  bool use_tls;
+
+  // Consider unaligned pointers valid.
+  bool use_unaligned;
 
   // Debug logging.
   bool log_pointers;
@@ -141,15 +133,6 @@ class CollectLeaksCb {
   void operator()(void *p) const;
  private:
   LeakReport *leak_report_;
-};
-
-// Dumps addresses of unreachable chunks to a vector (for testing).
-class ReportLeakedCb {
- public:
-  explicit ReportLeakedCb(InternalVector<void *> *leaked) : leaked_(leaked) {}
-  void operator()(void *p) const;
- private:
-  InternalVector<void *> *leaked_;
 };
 
 // Resets each chunk's tag to default (kDirectlyLeaked).
