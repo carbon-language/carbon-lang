@@ -1163,6 +1163,8 @@ def _debug : Flag<["--"], "debug">, Alias<g_Flag>;
 def _define_macro_EQ : Joined<["--"], "define-macro=">, Alias<D>;
 def _define_macro : Separate<["--"], "define-macro">, Alias<D>;
 def _dependencies : Flag<["--"], "dependencies">, Alias<M>;
+def _dyld_prefix_EQ : Joined<["--"], "dyld-prefix=">;
+def _dyld_prefix : Separate<["--"], "dyld-prefix">, Alias<_dyld_prefix_EQ>;
 def _encoding_EQ : Joined<["--"], "encoding=">, Alias<fencoding_EQ>;
 def _encoding : Separate<["--"], "encoding">, Alias<fencoding_EQ>;
 def _entry : Flag<["--"], "entry">, Alias<e>;
