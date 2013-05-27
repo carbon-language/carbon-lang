@@ -43,7 +43,7 @@ struct AddressInfo {
     internal_memset(this, 0, sizeof(AddressInfo));
   }
   // Deletes all strings and sets all fields to zero.
-  void Clear();
+  void Clear() SANITIZER_WEAK_ATTRIBUTE;
 
   void FillAddressAndModuleInfo(uptr addr, const char *mod_name,
                                 uptr mod_offset) {
