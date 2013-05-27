@@ -1070,7 +1070,7 @@ static LinkageInfo getLVForLocalDecl(const NamedDecl *D,
   if (!FD || !FD->isInlined())
     return LinkageInfo::none();
   LinkageInfo LV = FD->getLinkageAndVisibility();
-  if (LV.getLinkage() != ExternalLinkage)
+  if (!isExternallyVisible(LV.getLinkage()))
     return LinkageInfo::none();
   return LinkageInfo(VisibleNoLinkage, LV.getVisibility(),
                      LV.isVisibilityExplicit());
