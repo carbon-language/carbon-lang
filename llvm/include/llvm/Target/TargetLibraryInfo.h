@@ -57,6 +57,12 @@ namespace llvm {
       dunder_isoc99_sscanf,
       /// void *__memcpy_chk(void *s1, const void *s2, size_t n, size_t s1size);
       memcpy_chk,
+      /// double __sqrt_finite(double x);
+      sqrt_finite,
+      /// float __sqrt_finite(float x);
+      sqrtf_finite,
+      /// long double __sqrt_finite(long double x);
+      sqrtl_finite,
       /// char * __strdup(const char *s);
       dunder_strdup,
       /// char *__strndup(const char *s, size_t n);
@@ -677,6 +683,8 @@ public:
     case LibFunc::sin:       case LibFunc::sinf:       case LibFunc::sinl:
     case LibFunc::cos:       case LibFunc::cosf:       case LibFunc::cosl:
     case LibFunc::sqrt:      case LibFunc::sqrtf:      case LibFunc::sqrtl:
+    case LibFunc::sqrt_finite: case LibFunc::sqrtf_finite:
+                                                  case LibFunc::sqrtl_finite:
     case LibFunc::floor:     case LibFunc::floorf:     case LibFunc::floorl:
     case LibFunc::nearbyint: case LibFunc::nearbyintf: case LibFunc::nearbyintl:
     case LibFunc::ceil:      case LibFunc::ceilf:      case LibFunc::ceill:

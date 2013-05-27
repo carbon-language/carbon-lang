@@ -5562,6 +5562,9 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
       case LibFunc::sqrt:
       case LibFunc::sqrtf:
       case LibFunc::sqrtl:
+      case LibFunc::sqrt_finite:
+      case LibFunc::sqrtf_finite:
+      case LibFunc::sqrtl_finite:
         if (visitUnaryFloatCall(I, ISD::FSQRT))
           return;
         break;
