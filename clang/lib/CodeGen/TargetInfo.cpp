@@ -5125,6 +5125,97 @@ llvm::Value *HexagonABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 }
 
 
+//===----------------------------------------------------------------------===//
+// SPARC v9 ABI Implementation.
+// Based on the SPARC Compliance Definition version 2.4.1.
+//
+// Function arguments a mapped to a nominal "parameter array" and promoted to
+// registers depending on their type. Each argument occupies 8 or 16 bytes in
+// the array, structs larger than 16 bytes are passed indirectly.
+//
+// One case requires special care:
+//
+//   struct mixed {
+//     int i;
+//     float f;
+//   };
+//
+// When a struct mixed is passed by value, it only occupies 8 bytes in the
+// parameter array, but the int is passed in an integer register, and the float
+// is passed in a floating point register. This is represented as two arguments
+// with the LLVM IR inreg attribute:
+//
+//   declare void f(i32 inreg %i, float inreg %f)
+//
+// The code generator will only allocate 4 bytes from the parameter array for
+// the inreg arguments. All other arguments are allocated a multiple of 8
+// bytes.
+//
+namespace {
+class SparcV9ABIInfo : public ABIInfo {
+public:
+  SparcV9ABIInfo(CodeGenTypes &CGT) : ABIInfo(CGT) {}
+
+private:
+  ABIArgInfo classifyType(QualType RetTy, unsigned SizeLimit) const;
+  virtual void computeInfo(CGFunctionInfo &FI) const;
+  virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                 CodeGenFunction &CGF) const;
+};
+} // end anonymous namespace
+
+ABIArgInfo
+SparcV9ABIInfo::classifyType(QualType Ty, unsigned SizeLimit) const {
+  if (Ty->isVoidType())
+    return ABIArgInfo::getIgnore();
+
+  uint64_t Size = getContext().getTypeSize(Ty);
+
+  // Anything too big to fit in registers is passed with an explicit indirect
+  // pointer / sret pointer.
+  if (Size > SizeLimit)
+    return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+
+  // Treat an enum type as its underlying type.
+  if (const EnumType *EnumTy = Ty->getAs<EnumType>())
+    Ty = EnumTy->getDecl()->getIntegerType();
+
+  // Integer types smaller than a register are extended.
+  if (Size < 64 && Ty->isIntegerType())
+    return ABIArgInfo::getExtend();
+
+  // Other non-aggregates go in registers.
+  if (!isAggregateTypeForABI(Ty))
+    return ABIArgInfo::getDirect();
+
+  // This is a small aggregate type that should be passed in registers.
+  // FIXME: Compute the correct coersion type.
+  // FIXME: Ensure any float members are passed in float registers.
+  return ABIArgInfo::getDirect();
+}
+
+llvm::Value *SparcV9ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                       CodeGenFunction &CGF) const {
+  // FIXME: Implement with va_arg.
+  return 0;
+}
+
+void SparcV9ABIInfo::computeInfo(CGFunctionInfo &FI) const {
+  FI.getReturnInfo() = classifyType(FI.getReturnType(), 32 * 8);
+  for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
+       it != ie; ++it)
+    it->info = classifyType(it->type, 16 * 8);
+}
+
+namespace {
+class SparcV9TargetCodeGenInfo : public TargetCodeGenInfo {
+public:
+  SparcV9TargetCodeGenInfo(CodeGenTypes &CGT)
+    : TargetCodeGenInfo(new SparcV9ABIInfo(CGT)) {}
+};
+} // end anonymous namespace
+
+
 const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   if (TheTargetCodeGenInfo)
     return *TheTargetCodeGenInfo;
@@ -5240,5 +5331,7 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   }
   case llvm::Triple::hexagon:
     return *(TheTargetCodeGenInfo = new HexagonTargetCodeGenInfo(Types));
+  case llvm::Triple::sparcv9:
+    return *(TheTargetCodeGenInfo = new SparcV9TargetCodeGenInfo(Types));
   }
 }
