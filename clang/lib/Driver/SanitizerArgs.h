@@ -37,6 +37,7 @@ class SanitizerArgs {
     NeedsAsanRt = Address,
     NeedsTsanRt = Thread,
     NeedsMsanRt = Memory,
+    NeedsLeakDetection = Leak,
     NeedsUbsanRt = Undefined | Integer,
     NotAllowedWithTrap = Vptr,
     HasZeroBaseShadow = Thread | Memory
@@ -56,6 +57,10 @@ class SanitizerArgs {
   bool needsAsanRt() const { return Kind & NeedsAsanRt; }
   bool needsTsanRt() const { return Kind & NeedsTsanRt; }
   bool needsMsanRt() const { return Kind & NeedsMsanRt; }
+  bool needsLeakDetection() const { return Kind & NeedsLeakDetection; }
+  bool needsLsanRt() const {
+    return needsLeakDetection() && !needsAsanRt();
+  }
   bool needsUbsanRt() const {
     if (UbsanTrapOnError)
       return false;

@@ -153,3 +153,36 @@
 // RUN:   | FileCheck --check-prefix=CHECK-UBSAN-LINUX-SHARED %s
 // CHECK-UBSAN-LINUX-SHARED: "{{.*}}ld{{(.exe)?}}"
 // CHECK-UBSAN-LINUX-SHARED-NOT: libclang_rt.ubsan-i386.a"
+
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target x86_64-unknown-linux -fsanitize=leak \
+// RUN:     --sysroot=%S/Inputs/basic_linux_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-LSAN-LINUX %s
+//
+// CHECK-LSAN-LINUX: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
+// CHECK-LSAN-LINUX-NOT: "-lc"
+// CHECK-LSAN-LINUX: libclang_rt.lsan-x86_64.a"
+// CHECK-LSAN-LINUX: "-lpthread"
+// CHECK-LSAN-LINUX: "-ldl"
+
+// RUN: %clang -fsanitize=leak,undefined %s -### -o %t.o 2>&1 \
+// RUN:     -target x86_64-unknown-linux \
+// RUN:     --sysroot=%S/Inputs/basic_linux_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-LSAN-UBSAN-LINUX %s
+// CHECK-LSAN-UBSAN-LINUX: "{{.*}}ld{{(.exe)?}}"
+// CHECK-LSAN-UBSAN-LINUX-NOT: libclang_rt.san
+// CHECK-LSAN-UBSAN-LINUX: "-whole-archive" "{{.*}}libclang_rt.lsan-x86_64.a" "-no-whole-archive"
+// CHECK-LSAN-UBSAN-LINUX-NOT: libclang_rt.san
+// CHECK-LSAN-UBSAN-LINUX: "-whole-archive" "{{.*}}libclang_rt.ubsan-x86_64.a" "-no-whole-archive"
+// CHECK-LSAN-UBSAN-LINUX-NOT: libclang_rt.ubsan_cxx
+// CHECK-LSAN-UBSAN-LINUX: "-lpthread"
+// CHECK-LSAN-UBSAN-LINUX-NOT: "-lstdc++"
+
+// RUN: %clang -fsanitize=leak,address %s -### -o %t.o 2>&1 \
+// RUN:     -target x86_64-unknown-linux \
+// RUN:     --sysroot=%S/Inputs/basic_linux_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-LSAN-ASAN-LINUX %s
+// CHECK-LSAN-ASAN-LINUX: "{{.*}}ld{{(.exe)?}}"
+// CHECK-LSAN-ASAN-LINUX-NOT: libclang_rt.lsan
+// CHECK-LSAN-ASAN-LINUX: libclang_rt.asan-x86_64
+// CHECK-LSAN-ASAN-LINUX-NOT: libclang_rt.lsan

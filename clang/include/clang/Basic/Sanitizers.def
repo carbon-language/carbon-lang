@@ -54,6 +54,9 @@ SANITIZER("memory", Memory)
 // ThreadSanitizer
 SANITIZER("thread", Thread)
 
+// LeakSanitizer
+SANITIZER("leak", Leak)
+
 // UndefinedBehaviorSanitizer
 SANITIZER("alignment", Alignment)
 SANITIZER("bool", Bool)

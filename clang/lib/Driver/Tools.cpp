@@ -1587,6 +1587,7 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC, const ArgList &Args)
   bool NeedsAsan = needsAsanRt();
   bool NeedsTsan = needsTsanRt();
   bool NeedsMsan = needsMsanRt();
+  bool NeedsLsan = needsLeakDetection();
   if (NeedsAsan && NeedsTsan)
     D.Diag(diag::err_drv_argument_not_allowed_with)
       << lastArgumentForKind(D, Args, NeedsAsanRt)
@@ -1599,6 +1600,18 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC, const ArgList &Args)
     D.Diag(diag::err_drv_argument_not_allowed_with)
       << lastArgumentForKind(D, Args, NeedsTsanRt)
       << lastArgumentForKind(D, Args, NeedsMsanRt);
+  if (NeedsLsan && NeedsTsan)
+    D.Diag(diag::err_drv_argument_not_allowed_with)
+      << lastArgumentForKind(D, Args, NeedsLeakDetection)
+      << lastArgumentForKind(D, Args, NeedsTsanRt);
+  if (NeedsLsan && NeedsMsan)
+    D.Diag(diag::err_drv_argument_not_allowed_with)
+      << lastArgumentForKind(D, Args, NeedsLeakDetection)
+      << lastArgumentForKind(D, Args, NeedsMsanRt);
+  // FIXME: Currenly -fsanitize=leak is silently ignored in the presence of
+  // -fsanitize=address. Perhaps it should print an error, or perhaps
+  // -f(-no)sanitize=leak should change whether leak detection is enabled by
+  // default in ASan?
 
   // If -fsanitize contains extra features of ASan, it should also
   // explicitly contain -fsanitize=address (probably, turned off later in the
@@ -1705,9 +1718,8 @@ static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
             TC.getArchName() + "-android.so"));
     CmdArgs.insert(CmdArgs.begin(), Args.MakeArgString(LibAsan));
   } else {
-    if (!Args.hasArg(options::OPT_shared)) {
+    if (!Args.hasArg(options::OPT_shared))
       addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "asan", true);
-    }
   }
 }
 
@@ -1715,18 +1727,24 @@ static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
 /// This needs to be called before we add the C run-time (malloc, etc).
 static void addTsanRTLinux(const ToolChain &TC, const ArgList &Args,
                            ArgStringList &CmdArgs) {
-  if (!Args.hasArg(options::OPT_shared)) {
+  if (!Args.hasArg(options::OPT_shared))
     addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "tsan", true);
-  }
 }
 
 /// If MemorySanitizer is enabled, add appropriate linker flags (Linux).
 /// This needs to be called before we add the C run-time (malloc, etc).
 static void addMsanRTLinux(const ToolChain &TC, const ArgList &Args,
                            ArgStringList &CmdArgs) {
-  if (!Args.hasArg(options::OPT_shared)) {
+  if (!Args.hasArg(options::OPT_shared))
     addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "msan", true);
-  }
+}
+
+/// If LeakSanitizer is enabled, add appropriate linker flags (Linux).
+/// This needs to be called before we add the C run-time (malloc, etc).
+static void addLsanRTLinux(const ToolChain &TC, const ArgList &Args,
+                           ArgStringList &CmdArgs) {
+  if (!Args.hasArg(options::OPT_shared))
+    addSanitizerRTLinkFlagsLinux(TC, Args, CmdArgs, "lsan", true);
 }
 
 /// If UndefinedBehaviorSanitizer is enabled, add appropriate linker flags
@@ -6114,13 +6132,15 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (Sanitize.needsUbsanRt())
     addUbsanRTLinux(getToolChain(), Args, CmdArgs, D.CCCIsCXX,
                     Sanitize.needsAsanRt() || Sanitize.needsTsanRt() ||
-                    Sanitize.needsMsanRt());
+                    Sanitize.needsMsanRt() || Sanitize.needsLsanRt());
   if (Sanitize.needsAsanRt())
     addAsanRTLinux(getToolChain(), Args, CmdArgs);
   if (Sanitize.needsTsanRt())
     addTsanRTLinux(getToolChain(), Args, CmdArgs);
   if (Sanitize.needsMsanRt())
     addMsanRTLinux(getToolChain(), Args, CmdArgs);
+  if (Sanitize.needsLsanRt())
+    addLsanRTLinux(getToolChain(), Args, CmdArgs);
 
   if (D.CCCIsCXX &&
       !Args.hasArg(options::OPT_nostdlib) &&
