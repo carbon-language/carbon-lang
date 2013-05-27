@@ -102,10 +102,11 @@ class ThreadRegistry {
   // Finds a thread using the provided callback. Returns kUnknownTid if no
   // thread is found.
   u32 FindThread(FindThreadCallback cb, void *arg);
-  // Should be guarded by ThreadRegistryLock. Returns 0 if no thread
+  // Should be guarded by ThreadRegistryLock. Return 0 if no thread
   // is found.
   ThreadContextBase *FindThreadContextLocked(FindThreadCallback cb,
                                              void *arg);
+  ThreadContextBase *FindThreadContextByOsIDLocked(uptr os_id);
 
   void SetThreadName(u32 tid, const char *name);
   void DetachThread(u32 tid);

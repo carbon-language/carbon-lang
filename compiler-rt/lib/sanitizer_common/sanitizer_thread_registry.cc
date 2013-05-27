@@ -180,6 +180,17 @@ ThreadRegistry::FindThreadContextLocked(FindThreadCallback cb, void *arg) {
   return 0;
 }
 
+static bool FindThreadContextByOsIdCallback(ThreadContextBase *tctx,
+                                            void *arg) {
+  return (tctx->os_id == (uptr)arg && tctx->status != ThreadStatusInvalid &&
+      tctx->status != ThreadStatusDead);
+}
+
+ThreadContextBase *ThreadRegistry::FindThreadContextByOsIDLocked(uptr os_id) {
+  return FindThreadContextLocked(FindThreadContextByOsIdCallback,
+                                 (void *)os_id);
+}
+
 void ThreadRegistry::SetThreadName(u32 tid, const char *name) {
   BlockingMutexLock l(&mtx_);
   CHECK_LT(tid, n_contexts_);
