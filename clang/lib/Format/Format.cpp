@@ -257,6 +257,7 @@ public:
     State.ParenLevel = 0;
     State.StartOfStringLiteral = 0;
     State.StartOfLineLevel = State.ParenLevel;
+    State.LowestLevelOnLine = State.ParenLevel;
     State.IgnoreStackForComparison = false;
 
     // The first token has already been indented and thus consumed.
@@ -412,6 +413,9 @@ private:
     /// \brief The \c ParenLevel at the start of this line.
     unsigned StartOfLineLevel;
 
+    /// \brief The lowest \c ParenLevel on the current line.
+    unsigned LowestLevelOnLine;
+
     /// \brief The start column of the string literal, if we're in a string
     /// literal sequence, 0 otherwise.
     unsigned StartOfStringLiteral;
@@ -448,6 +452,8 @@ private:
         return ParenLevel < Other.ParenLevel;
       if (StartOfLineLevel != Other.StartOfLineLevel)
         return StartOfLineLevel < Other.StartOfLineLevel;
+      if (LowestLevelOnLine != Other.LowestLevelOnLine)
+        return LowestLevelOnLine < Other.LowestLevelOnLine;
       if (StartOfStringLiteral != Other.StartOfStringLiteral)
         return StartOfStringLiteral < Other.StartOfStringLiteral;
       if (IgnoreStackForComparison || Other.IgnoreStackForComparison)
@@ -556,6 +562,7 @@ private:
       if (Current.isOneOf(tok::arrow, tok::period))
         State.Stack.back().LastSpace += Current.FormatTok.TokenLength;
       State.StartOfLineLevel = State.ParenLevel;
+      State.LowestLevelOnLine = State.ParenLevel;
 
       // Any break on this level means that the parent level has been broken
       // and we need to avoid bin packing there.
@@ -752,6 +759,8 @@ private:
       State.Stack.pop_back();
       --State.ParenLevel;
     }
+    State.LowestLevelOnLine =
+        std::min(State.LowestLevelOnLine, State.ParenLevel);
 
     // Remove scopes created by fake parenthesis.
     for (unsigned i = 0, e = Current.FakeRParens; i != e; ++i) {
@@ -996,6 +1005,14 @@ private:
         Previous.Parent &&
         Previous.Parent->isOneOf(tok::l_brace, tok::l_paren, tok::comma))
       return false;
+    // This prevents breaks like:
+    //   ...
+    //   SomeParameter, OtherParameter).DoSomething(
+    //   ...
+    // As they hide "DoSomething" and are generally bad for readability.
+    if (Previous.opensScope() &&
+        State.LowestLevelOnLine < State.StartOfLineLevel)
+      return false;
     return !State.Stack.back().NoLineBreak;
   }
 
@@ -1032,16 +1049,6 @@ private:
       return true;
     if ((Current.Type == TT_CtorInitializerColon ||
          (Previous.ClosesTemplateDeclaration && State.ParenLevel == 0)))
-      return true;
-
-    // This prevents breaks like:
-    //   ...
-    //   SomeParameter, OtherParameter).DoSomething(
-    //   ...
-    // As they hide "DoSomething" and generally bad for readability.
-    if (Current.isOneOf(tok::period, tok::arrow) &&
-        getRemainingLength(State) + State.Column > getColumnLimit() &&
-        State.ParenLevel < State.StartOfLineLevel)
       return true;
 
     if (Current.Type == TT_StartOfName && Line.MightBeFunctionDecl &&
