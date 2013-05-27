@@ -355,8 +355,9 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
                                        FI != FE; ++FI) {
       static int filenum = 0;
       emitDOTFile((Twine((*FI)->getName()) + "_" +
-                   utostr(filenum++) + ".dot").str().c_str(),
+                   utostr(filenum) + ".dot").str().c_str(),
                     **FI, IP.get());
+      ++filenum;
     }
   }
 
