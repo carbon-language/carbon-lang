@@ -36,6 +36,7 @@ enum TokenType {
   TT_ImplicitStringLiteral,
   TT_InlineASMColon,
   TT_InheritanceColon,
+  TT_FunctionTypeLParen,
   TT_LineComment,
   TT_ObjCArrayLiteral,
   TT_ObjCBlockLParen,
@@ -78,9 +79,8 @@ public:
         ClosesTemplateDeclaration(false), MatchingParen(NULL),
         ParameterCount(0), TotalLength(FormatTok.TokenLength),
         UnbreakableTailLength(0), BindingStrength(0), SplitPenalty(0),
-        LongestObjCSelectorName(0), DefinesFunctionType(false), Parent(NULL),
-        FakeRParens(0), LastInChainOfCalls(false),
-        PartOfMultiVariableDeclStmt(false) {}
+        LongestObjCSelectorName(0), Parent(NULL), FakeRParens(0),
+        LastInChainOfCalls(false), PartOfMultiVariableDeclStmt(false) {}
 
   bool is(tok::TokenKind Kind) const { return FormatTok.Tok.is(Kind); }
 
@@ -170,9 +170,6 @@ public:
   /// \brief If this is the first ObjC selector name in an ObjC method
   /// definition or call, this contains the length of the longest name.
   unsigned LongestObjCSelectorName;
-
-  /// \brief \c true if this is a "(" that starts a function type definition.
-  bool DefinesFunctionType;
 
   std::vector<AnnotatedToken> Children;
   AnnotatedToken *Parent;

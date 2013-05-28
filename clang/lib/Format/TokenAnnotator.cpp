@@ -141,6 +141,7 @@ private:
       Left->Type = TT_ObjCMethodExpr;
     }
 
+    bool MightBeFunctionType = CurrentToken->is(tok::star);
     while (CurrentToken != NULL) {
       // LookForDecls is set when "if (" has been seen. Check for
       // 'identifier' '*' 'identifier' followed by not '=' -- this
@@ -158,9 +159,9 @@ private:
       }
 
       if (CurrentToken->is(tok::r_paren)) {
-        if (CurrentToken->Children.empty() ||
-            !CurrentToken->Children[0].isOneOf(tok::l_paren, tok::l_square))
-          Left->DefinesFunctionType = false;
+        if (MightBeFunctionType && !CurrentToken->Children.empty() &&
+            CurrentToken->Children[0].isOneOf(tok::l_paren, tok::l_square))
+          Left->Type = TT_FunctionTypeLParen;
         Left->MatchingParen = CurrentToken;
         CurrentToken->MatchingParen = Left;
 
@@ -179,7 +180,7 @@ private:
         return false;
       if (CurrentToken->Parent->Type == TT_PointerOrReference &&
           CurrentToken->Parent->Parent->isOneOf(tok::l_paren, tok::coloncolon))
-        Left->DefinesFunctionType = true;
+        MightBeFunctionType = true;
       updateParameterCount(Left, CurrentToken);
       if (!consumeToken())
         return false;
@@ -699,7 +700,8 @@ private:
     if (NextToken == NULL)
       return TT_Unknown;
 
-    if (PrevToken->is(tok::l_paren) && !IsExpression)
+    if (PrevToken->is(tok::coloncolon) ||
+        (PrevToken->is(tok::l_paren) && !IsExpression))
       return TT_PointerOrReference;
 
     if (PrevToken->isOneOf(tok::l_paren, tok::l_square, tok::l_brace,
@@ -1068,7 +1070,7 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return Left.FormatTok.Tok.isLiteral() ||
            ((Left.Type != TT_PointerOrReference) && Left.isNot(tok::l_paren) &&
             !Style.PointerBindsToType);
-  if (Right.DefinesFunctionType &&
+  if (Right.Type == TT_FunctionTypeLParen &&
       (Left.Type != TT_PointerOrReference || Style.PointerBindsToType))
     return true;
   if (Left.Type == TT_PointerOrReference)

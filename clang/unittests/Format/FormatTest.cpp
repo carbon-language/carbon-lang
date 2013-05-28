@@ -2820,6 +2820,7 @@ TEST_F(FormatTest, UnderstandsBinaryOperators) {
 TEST_F(FormatTest, UnderstandsPointersToMembers) {
   verifyFormat("int A::*x;");
   verifyFormat("int (S::*func)(void *);");
+  verifyFormat("void f() { int (S::*func)(void *); }");
   verifyFormat("typedef bool *(Class::*Member)() const;");
   verifyFormat("void f() {\n"
                "  (a->*f)();\n"
@@ -3124,13 +3125,11 @@ TEST_F(FormatTest, FormatsCasts) {
 TEST_F(FormatTest, FormatsFunctionTypes) {
   verifyFormat("A<bool()> a;");
   verifyFormat("A<SomeType()> a;");
-  verifyFormat("A<void(*)(int, std::string)> a;");
+  verifyFormat("A<void (*)(int, std::string)> a;");
   verifyFormat("A<void *(int)>;");
   verifyFormat("void *(*a)(int *, SomeType *);");
-
-  // FIXME: Inconsistent.
   verifyFormat("int (*func)(void *);");
-  verifyFormat("void f() { int(*func)(void *); }");
+  verifyFormat("void f() { int (*func)(void *); }");
 
   verifyGoogleFormat("A<void*(int*, SomeType*)>;");
   verifyGoogleFormat("void* (*a)(int);");
@@ -3691,8 +3690,8 @@ TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
   // protocol lists (but not for template classes):
   //verifyFormat("- (void)setDelegate:(id <Protocol>)delegate;");
 
-  verifyFormat("- (int(*)())foo:(int(*)())f;");
-  verifyGoogleFormat("- (int(*)())foo:(int(*)())foo;");
+  verifyFormat("- (int (*)())foo:(int (*)())f;");
+  verifyGoogleFormat("- (int (*)())foo:(int (*)())foo;");
 
   // If there's no return type (very rare in practice!), LLVM and Google style
   // agree.
