@@ -159,3 +159,14 @@ namespace test12 {
   }
   void *h() { return zed(); }
 }
+
+namespace test13 {
+  // CHECK-DAG: define linkonce_odr void @_ZZN6test133fooEvEN1S3barEv(
+  inline void *foo() {
+    struct S {
+      static void bar() {}
+    };
+    return (void *)S::bar;
+  }
+  void *zed() { return foo(); }
+}

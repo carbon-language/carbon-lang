@@ -789,12 +789,13 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D,
 
   LinkageInfo classLV =
     getLVForDecl(cast<RecordDecl>(D->getDeclContext()), classComputation);
-  if (!isExternalFormalLinkage(classLV.getLinkage()))
-    return LinkageInfo::none();
-
   // If the class already has unique-external linkage, we can't improve.
   if (classLV.getLinkage() == UniqueExternalLinkage)
     return LinkageInfo::uniqueExternal();
+
+  if (!isExternallyVisible(classLV.getLinkage()))
+    return LinkageInfo::none();
+
 
   // Otherwise, don't merge in classLV yet, because in certain cases
   // we need to completely ignore the visibility from it.
