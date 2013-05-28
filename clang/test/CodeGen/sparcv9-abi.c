@@ -56,3 +56,37 @@ struct large f_large(struct large x) {
   return x;
 }
 
+// A 64-bit struct fits in a register.
+struct reg {
+  int a, b;
+};
+
+// CHECK: define i64 @f_reg(i64 %x.coerce)
+struct reg f_reg(struct reg x) {
+  x.a += x.b;
+  return x;
+}
+
+// Structs with mixed int and float parts require the inreg attribute.
+struct mixed {
+  int a;
+  float b;
+};
+
+// CHECK: @f_mixed(i32 inreg %x.coerce0, float inreg %x.coerce1)
+// FIXME: The return value should also be 'inreg'.
+struct mixed f_mixed(struct mixed x) {
+  x.a += 1;
+  return x;
+}
+
+// Struct with padding.
+struct mixed2 {
+  int a;
+  double b;
+};
+
+struct mixed2 f_mixed2(struct mixed2 x) {
+  x.a += 1;
+  return x;
+}

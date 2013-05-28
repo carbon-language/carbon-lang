@@ -5161,6 +5161,117 @@ private:
   virtual void computeInfo(CGFunctionInfo &FI) const;
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
+
+  // Coercion type builder for structs passed in registers. The coercion type
+  // serves two purposes:
+  //
+  // 1. Pad structs to a multiple of 64 bits, so they are passed 'left-aligned'
+  //    in registers.
+  // 2. Expose aligned floating point elements as first-level elements, so the
+  //    code generator knows to pass them in floating point registers.
+  //
+  // We also compute the InReg flag which indicates that the struct contains
+  // aligned 32-bit floats.
+  //
+  struct CoerceBuilder {
+    llvm::LLVMContext &Context;
+    const llvm::DataLayout &DL;
+    SmallVector<llvm::Type*, 8> Elems;
+    uint64_t Size;
+    bool InReg;
+
+    CoerceBuilder(llvm::LLVMContext &c, const llvm::DataLayout &dl)
+      : Context(c), DL(dl), Size(0), InReg(false) {}
+
+    // Pad Elems with integers until Size is ToSize.
+    void pad(uint64_t ToSize) {
+      assert(ToSize >= Size && "Cannot remove elements");
+      if (ToSize == Size)
+        return;
+
+      // Finish the current 64-bit word.
+      uint64_t Aligned = llvm::RoundUpToAlignment(Size, 64);
+      if (Aligned > Size && Aligned <= ToSize) {
+        Elems.push_back(llvm::IntegerType::get(Context, Aligned - Size));
+        Size = Aligned;
+      }
+
+      // Add whole 64-bit words.
+      while (Size + 64 <= ToSize) {
+        Elems.push_back(llvm::Type::getInt64Ty(Context));
+        Size += 64;
+      }
+
+      // Final in-word padding.
+      if (Size < ToSize) {
+        Elems.push_back(llvm::IntegerType::get(Context, ToSize - Size));
+        Size = ToSize;
+      }
+    }
+
+    // Add a floating point element at Offset.
+    void addFloat(uint64_t Offset, llvm::Type *Ty, unsigned Bits) {
+      // Unaligned floats are treated as integers.
+      if (Offset % Bits)
+        return;
+      // The InReg flag is only required if there are any floats < 64 bits.
+      if (Bits < 64)
+        InReg = true;
+      pad(Offset);
+      Elems.push_back(Ty);
+      Size = Offset + Bits;
+    }
+
+    // Add a struct type to the coercion type, starting at Offset (in bits).
+    void addStruct(uint64_t Offset, llvm::StructType *StrTy) {
+      const llvm::StructLayout *Layout = DL.getStructLayout(StrTy);
+      for (unsigned i = 0, e = StrTy->getNumElements(); i != e; ++i) {
+        llvm::Type *ElemTy = StrTy->getElementType(i);
+        uint64_t ElemOffset = Offset + Layout->getElementOffsetInBits(i);
+        switch (ElemTy->getTypeID()) {
+        case llvm::Type::StructTyID:
+          addStruct(ElemOffset, cast<llvm::StructType>(ElemTy));
+          break;
+        case llvm::Type::FloatTyID:
+          addFloat(ElemOffset, ElemTy, 32);
+          break;
+        case llvm::Type::DoubleTyID:
+          addFloat(ElemOffset, ElemTy, 64);
+          break;
+        case llvm::Type::FP128TyID:
+          addFloat(ElemOffset, ElemTy, 128);
+          break;
+        case llvm::Type::PointerTyID:
+          if (ElemOffset % 64 == 0) {
+            pad(ElemOffset);
+            Elems.push_back(ElemTy);
+            Size += 64;
+          }
+          break;
+        default:
+          break;
+        }
+      }
+    }
+
+    // Check if Ty is a usable substitute for the coercion type.
+    bool isUsableType(llvm::StructType *Ty) const {
+      if (Ty->getNumElements() != Elems.size())
+        return false;
+      for (unsigned i = 0, e = Elems.size(); i != e; ++i)
+        if (Elems[i] != Ty->getElementType(i))
+          return false;
+      return true;
+    }
+
+    // Get the coercion type as a literal struct type.
+    llvm::Type *getType() const {
+      if (Elems.size() == 1)
+        return Elems.front();
+      else
+        return llvm::StructType::get(Context, Elems);
+    }
+  };
 };
 } // end anonymous namespace
 
@@ -5189,9 +5300,22 @@ SparcV9ABIInfo::classifyType(QualType Ty, unsigned SizeLimit) const {
     return ABIArgInfo::getDirect();
 
   // This is a small aggregate type that should be passed in registers.
-  // FIXME: Compute the correct coersion type.
-  // FIXME: Ensure any float members are passed in float registers.
-  return ABIArgInfo::getDirect();
+  // Build a coercion type from the LLVM struct type.
+  llvm::StructType *StrTy = dyn_cast<llvm::StructType>(CGT.ConvertType(Ty));
+  if (!StrTy)
+    return ABIArgInfo::getDirect();
+
+  CoerceBuilder CB(getVMContext(), getDataLayout());
+  CB.addStruct(0, StrTy);
+  CB.pad(llvm::RoundUpToAlignment(CB.DL.getTypeSizeInBits(StrTy), 64));
+
+  // Try to use the original type for coercion.
+  llvm::Type *CoerceTy = CB.isUsableType(StrTy) ? StrTy : CB.getType();
+
+  if (CB.InReg)
+    return ABIArgInfo::getDirectInReg(CoerceTy);
+  else
+    return ABIArgInfo::getDirect(CoerceTy);
 }
 
 llvm::Value *SparcV9ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
