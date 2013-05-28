@@ -2888,6 +2888,20 @@ APInt::tcIncrement(integerPart *dst, unsigned int parts)
   return i == parts;
 }
 
+/* Decrement a bignum in-place, return the borrow flag.  */
+integerPart
+APInt::tcDecrement(integerPart *dst, unsigned int parts) {
+  for (unsigned int i = 0; i < parts; i++) {
+    // If the current word is non-zero, then the decrement has no effect on the
+    // higher-order words of the integer and no borrow can occur. Exit early.
+    if (dst[i]--)
+      return 0;
+  }
+  // If every word was zero, then there is a borrow.
+  return 1;
+}
+
+
 /* Set the least significant BITS bits of a bignum, clear the
    rest.  */
 void

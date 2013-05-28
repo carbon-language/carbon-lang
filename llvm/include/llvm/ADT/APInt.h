@@ -1642,6 +1642,9 @@ public:
   /// Increment a bignum in-place.  Return the carry flag.
   static integerPart tcIncrement(integerPart *, unsigned int);
 
+  /// Decrement a bignum in-place.  Return the borrow flag.
+  static integerPart tcDecrement(integerPart *, unsigned int);
+
   /// Set the least significant BITS and clear the rest.
   static void tcSetLeastSignificantBits(integerPart *, unsigned int,
                                         unsigned int bits);

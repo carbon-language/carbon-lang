@@ -532,4 +532,69 @@ TEST(APIntTest, Splat) {
   EXPECT_EQ(APInt(15, 0xDB6D), APInt::getSplat(15, ValB));
 }
 
+TEST(APIntTest, tcDecrement) {
+  // Test single word decrement.
+
+  // No out borrow.
+  {
+    integerPart singleWord = ~integerPart(0) << (integerPartWidth - 1);
+    integerPart carry = APInt::tcDecrement(&singleWord, 1);
+    EXPECT_EQ(carry, integerPart(0));
+    EXPECT_EQ(singleWord, ~integerPart(0) >> 1);
+  }
+
+  // With out borrow.
+  {
+    integerPart singleWord = 0;
+    integerPart carry = APInt::tcDecrement(&singleWord, 1);
+    EXPECT_EQ(carry, integerPart(1));
+    EXPECT_EQ(singleWord, ~integerPart(0));
+  }
+
+  // Test multiword decrement.
+
+  // No across word borrow, no out borrow.
+  {
+    integerPart test[4] = {0x1, 0x1, 0x1, 0x1};
+    integerPart expected[4] = {0x0, 0x1, 0x1, 0x1};
+    APInt::tcDecrement(test, 4);
+    EXPECT_EQ(APInt::tcCompare(test, expected, 4), 0);
+  }
+
+  // 1 across word borrow, no out borrow.
+  {
+    integerPart test[4] = {0x0, 0xF, 0x1, 0x1};
+    integerPart expected[4] = {~integerPart(0), 0xE, 0x1, 0x1};
+    integerPart carry = APInt::tcDecrement(test, 4);
+    EXPECT_EQ(carry, integerPart(0));
+    EXPECT_EQ(APInt::tcCompare(test, expected, 4), 0);
+  }
+
+  // 2 across word borrow, no out borrow.
+  {
+    integerPart test[4] = {0x0, 0x0, 0xC, 0x1};
+    integerPart expected[4] = {~integerPart(0), ~integerPart(0), 0xB, 0x1};
+    integerPart carry = APInt::tcDecrement(test, 4);
+    EXPECT_EQ(carry, integerPart(0));
+    EXPECT_EQ(APInt::tcCompare(test, expected, 4), 0);
+  }
+
+  // 3 across word borrow, no out borrow.
+  {
+    integerPart test[4] = {0x0, 0x0, 0x0, 0x1};
+    integerPart expected[4] = {~integerPart(0), ~integerPart(0), ~integerPart(0), 0x0};
+    integerPart carry = APInt::tcDecrement(test, 4);
+    EXPECT_EQ(carry, integerPart(0));
+    EXPECT_EQ(APInt::tcCompare(test, expected, 4), 0);
+  }
+
+  // 3 across word borrow, with out borrow.
+  {
+    integerPart test[4] = {0x0, 0x0, 0x0, 0x0};
+    integerPart expected[4] = {~integerPart(0), ~integerPart(0), ~integerPart(0), ~integerPart(0)};
+    integerPart carry = APInt::tcDecrement(test, 4);
+    EXPECT_EQ(carry, integerPart(1));
+    EXPECT_EQ(APInt::tcCompare(test, expected, 4), 0);
+  }
+}
 }
