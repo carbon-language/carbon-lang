@@ -703,15 +703,14 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   const std::vector<CodeGenRegister*> &Regs = RegBank.getRegisters();
 
-  // The lists of sub-registers, super-registers, and overlaps all go in the
-  // same array. That allows us to share suffixes.
+  // The lists of sub-registers and super-registers go in the same array.  That
+  // allows us to share suffixes.
   typedef std::vector<const CodeGenRegister*> RegVec;
 
   // Differentially encoded lists.
   SequenceToOffsetTable<DiffVec> DiffSeqs;
   SmallVector<DiffVec, 4> SubRegLists(Regs.size());
   SmallVector<DiffVec, 4> SuperRegLists(Regs.size());
-  SmallVector<DiffVec, 4> OverlapLists(Regs.size());
   SmallVector<DiffVec, 4> RegUnitLists(Regs.size());
   SmallVector<unsigned, 4> RegUnitInitScale(Regs.size());
 
@@ -746,15 +745,6 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
     diffEncode(SuperRegLists[i], Reg->EnumValue,
                SuperRegList.begin(), SuperRegList.end());
     DiffSeqs.add(SuperRegLists[i]);
-
-    // The list of overlaps doesn't need to have any particular order, and Reg
-    // itself must be omitted.
-    DiffVec &OverlapList = OverlapLists[i];
-    CodeGenRegister::Set OSet;
-    Reg->computeOverlaps(OSet, RegBank);
-    OSet.erase(Reg);
-    diffEncode(OverlapList, Reg->EnumValue, OSet.begin(), OSet.end());
-    DiffSeqs.add(OverlapList);
 
     // Differentially encode the register unit list, seeded by register number.
     // First compute a scale factor that allows more diff-lists to be reused:
@@ -808,13 +798,12 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   OS << "extern const MCRegisterDesc " << TargetName
      << "RegDesc[] = { // Descriptors\n";
-  OS << "  { " << RegStrings.get("") << ", 0, 0, 0, 0, 0 },\n";
+  OS << "  { " << RegStrings.get("") << ", 0, 0, 0, 0 },\n";
 
   // Emit the register descriptors now.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
     const CodeGenRegister *Reg = Regs[i];
     OS << "  { " << RegStrings.get(Reg->getName()) << ", "
-       << DiffSeqs.get(OverlapLists[i]) << ", "
        << DiffSeqs.get(SubRegLists[i]) << ", "
        << DiffSeqs.get(SuperRegLists[i]) << ", "
        << SubRegIdxSeqs.get(SubRegIdxLists[i]) << ", "

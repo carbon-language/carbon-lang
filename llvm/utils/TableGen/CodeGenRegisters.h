@@ -205,9 +205,6 @@ namespace llvm {
     // Canonically ordered set.
     typedef std::set<const CodeGenRegister*, Less> Set;
 
-    // Compute the set of registers overlapping this.
-    void computeOverlaps(Set &Overlaps, const CodeGenRegBank&) const;
-
   private:
     bool SubRegsComplete;
     bool SuperRegsComplete;
