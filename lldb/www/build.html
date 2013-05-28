@@ -183,6 +183,15 @@
                 <p> If you wish to build a release version of LLDB, run configure with the <tt>--enable-optimized</tt> flag.</p>
 
                 <h2>Testing</h2>
+                <p>By default, the <tt>check-lldb</tt> target builds the 64-bit variants of the test programs with the same
+                compiler that was used to build LLDB. It is possible to customize the architecture and compiler by appending -A and
+                -C options respectively to the CMake variable <tt>LLDB_TEST_ARGS</tt>. For example, to test LLDB against 32-bit binaries
+                built with a custom version of clang, do:</p>
+                <code>
+                  <br>&gt; cmake -DLLDB_TEST_ARGS="-A i386 -C /path/to/custom/clang" -G Ninja
+                  <br>&gt; ninja check-lldb
+                </code>
+                <p>Note that multiple -A and -C flags can be specified to <tt>LLDB_TEST_ARGS</tt>.</p>
                 <p>In addition to running all the LLDB test suites with the "check-lldb" CMake target above, it is possible to
                 run individual LLDB tests. For example, to run the test cases defined in TestInferiorCrashing.py, run:</p>
                 <code>
