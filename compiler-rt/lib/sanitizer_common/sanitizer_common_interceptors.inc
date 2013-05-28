@@ -760,10 +760,11 @@ INTERCEPTOR(int, getaddrinfo, char *node, char *service,
   if (hints)
     COMMON_INTERCEPTOR_READ_RANGE(ctx, hints, sizeof(__sanitizer_addrinfo));
   int res = REAL(getaddrinfo)(node, service, hints, out);
-  if (res == 0) {
+  if (res == 0 && out) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, out, sizeof(*out));
     struct __sanitizer_addrinfo *p = *out;
     while (p) {
-      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p, sizeof(__sanitizer_addrinfo));
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p, sizeof(*p));
       if (p->ai_addr)
         COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p->ai_addr, struct_sockaddr_sz);
       if (p->ai_canonname)
