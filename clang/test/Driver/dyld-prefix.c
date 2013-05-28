@@ -1,3 +1,5 @@
+// REQUIRES: shell-preserves-root
+
 // RUN: touch %t.o
 
 // RUN: %clang -target i386-unknown-linux --dyld-prefix /foo -### %t.o 2>&1 | FileCheck --check-prefix=CHECK-32 %s
