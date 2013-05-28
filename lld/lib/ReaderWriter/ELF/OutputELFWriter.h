@@ -84,7 +84,8 @@ protected:
 
   // This is called by the write section to apply relocations
   virtual uint64_t addressOfAtom(const Atom *atom) {
-    return _atomToAddressMap[atom];
+    auto addr = _atomToAddressMap.find(atom);
+    return addr == _atomToAddressMap.end() ? 0 : addr->second;
   }
 
   // This is a hook for creating default dynamic entries
