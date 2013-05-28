@@ -4495,35 +4495,48 @@ TEST_F(FormatTest, ConfigurableUseOfTab) {
                "\t\t    parameter2); \\\n"
                "\t}",
                Tab);
-  EXPECT_EQ("/*\n"
-            "\t      a\t\tcomment\n"
-            "\t      in multiple lines\n"
-            "       */",
-            format("   /*\t \t \n"
-                   " \t \t a\t\tcomment\t \t\n"
-                   " \t \t in multiple lines\t\n"
-                   " \t  */",
-                   Tab));
-  Tab.UseTab = false;
-  // FIXME: Change this test to a different tab size than
-  // 8 once configurable.
-  EXPECT_EQ("/*\n"
-            "              a\t\tcomment\n"
-            "              in multiple lines\n"
-            "       */",
-            format("   /*\t \t \n"
-                   " \t \t a\t\tcomment\t \t\n"
-                   " \t \t in multiple lines\t\n"
-                   " \t  */",
-                   Tab));
 
-  // FIXME: This is broken, as the spelling column number we
-  // get from the SourceManager counts tab as '1'.
+
+  // FIXME: To correctly count mixed whitespace we need to
+  // also correctly count mixed whitespace in front of the comment.
+  //
+  // EXPECT_EQ("/*\n"
+  //           "\t      a\t\tcomment\n"
+  //           "\t      in multiple lines\n"
+  //           "       */",
+  //           format("   /*\t \t \n"
+  //                  " \t \t a\t\tcomment\t \t\n"
+  //                  " \t \t in multiple lines\t\n"
+  //                  " \t  */",
+  //                  Tab));
+  // Tab.UseTab = false;
+  // EXPECT_EQ("/*\n"
+  //           "              a\t\tcomment\n"
+  //           "              in multiple lines\n"
+  //           "       */",
+  //           format("   /*\t \t \n"
+  //                  " \t \t a\t\tcomment\t \t\n"
+  //                  " \t \t in multiple lines\t\n"
+  //                  " \t  */",
+  //                  Tab));
   // EXPECT_EQ("/* some\n"
   //           "   comment */",
   //          format(" \t \t /* some\n"
   //                 " \t \t    comment */",
   //                 Tab));
+
+  EXPECT_EQ("{\n"
+            "  /*\n"
+            "   * Comment\n"
+            "   */\n"
+            "  int i;\n"
+            "}",
+            format("{\n"
+                   "\t/*\n"
+                   "\t * Comment\n"
+                   "\t */\n"
+                   "\t int i;\n"
+                   "}"));
 }
 
 TEST_F(FormatTest, LinuxBraceBreaking) {
