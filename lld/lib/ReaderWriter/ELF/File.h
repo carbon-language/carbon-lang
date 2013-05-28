@@ -566,7 +566,7 @@ private:
               (rai.r_offset < symbol->st_value + content.size())))
           continue;
         bool isMips64EL = _objFile->isMips64EL();
-        Kind kind = (Kind) rai.getType(isMips64EL);
+        Reference::Kind kind = (Reference::Kind) rai.getType(isMips64EL);
         uint32_t symbolIndex = rai.getSymbol(isMips64EL);
         auto *ERef = new (_readerStorage)
             ELFReference<ELFT>(&rai, rai.r_offset - symbol->st_value, nullptr,
@@ -580,7 +580,7 @@ private:
         if ((ri.r_offset >= symbol->st_value) &&
             (ri.r_offset < symbol->st_value + content.size())) {
           bool isMips64EL = _objFile->isMips64EL();
-          Kind kind = (Kind) ri.getType(isMips64EL);
+          Reference::Kind kind = (Reference::Kind) ri.getType(isMips64EL);
           uint32_t symbolIndex = ri.getSymbol(isMips64EL);
           auto *ERef = new (_readerStorage)
               ELFReference<ELFT>(&ri, ri.r_offset - symbol->st_value, nullptr,
