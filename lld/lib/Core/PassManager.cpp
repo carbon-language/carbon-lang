@@ -17,7 +17,6 @@
 namespace lld {
 ErrorOr<void> PassManager::runOnFile(MutableFile &mf) {
   for (auto &pass : _passes) {
-    ScopedTask task(getDefaultDomain(), "Pass");
     pass->perform(mf);
   }
   return llvm::error_code::success();

@@ -11,6 +11,7 @@
 
 #include "lld/Core/LLVM.h"
 #include "lld/Core/InputFiles.h"
+#include "lld/Core/Instrumentation.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Core/Parallel.h"
 #include "lld/Core/Resolver.h"
@@ -41,6 +42,7 @@ bool Driver::link(const TargetInfo &targetInfo, raw_ostream &diagnostics) {
   }
 
   // Read inputs
+  ScopedTask readTask(getDefaultDomain(), "Read Args");
   std::vector<std::vector<std::unique_ptr<File>>> files(
       targetInfo.inputFiles().size());
   size_t index = 0;
@@ -61,6 +63,7 @@ bool Driver::link(const TargetInfo &targetInfo, raw_ostream &diagnostics) {
     ++index;
   }
   tg.sync();
+  readTask.end();
 
   if (fail)
     return true;
@@ -76,19 +79,24 @@ bool Driver::link(const TargetInfo &targetInfo, raw_ostream &diagnostics) {
   inputs.assignFileOrdinals();
 
   // Do core linking.
+  ScopedTask resolveTask(getDefaultDomain(), "Resolve");
   Resolver resolver(targetInfo, inputs);
   if (resolver.resolve()) {
     if (!targetInfo.allowRemainingUndefines())
       return true;
   }
   MutableFile &merged = resolver.resultFile();
+  resolveTask.end();
 
   // Run passes on linked atoms.
+  ScopedTask passTask(getDefaultDomain(), "Passes");
   PassManager pm;
   targetInfo.addPasses(pm);
   pm.runOnFile(merged);
+  passTask.end();
 
   // Give linked atoms to Writer to generate output file.
+  ScopedTask writeTask(getDefaultDomain(), "Write");
   if (error_code ec = targetInfo.writeFile(merged)) {
     diagnostics << "Failed to write file '" << targetInfo.outputPath() 
                 << "': " << ec.message() << "\n";

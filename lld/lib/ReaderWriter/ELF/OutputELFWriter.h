@@ -9,15 +9,15 @@
 #ifndef LLD_READER_WRITER_OUTPUT_ELF_WRITER_H
 #define LLD_READER_WRITER_OUTPUT_ELF_WRITER_H
 
+#include "lld/Core/Instrumentation.h"
+#include "lld/ReaderWriter/ELFTargetInfo.h"
 #include "lld/ReaderWriter/Writer.h"
+
+#include "llvm/ADT/StringSet.h"
 
 #include "DefaultLayout.h"
 #include "TargetLayout.h"
 #include "ExecutableAtoms.h"
-
-#include "lld/ReaderWriter/ELFTargetInfo.h"
-
-#include "llvm/ADT/StringSet.h"
 
 namespace lld {
 namespace elf {
@@ -125,6 +125,7 @@ OutputELFWriter<ELFT>::OutputELFWriter(const ELFTargetInfo &ti)
 
 template <class ELFT>
 void OutputELFWriter<ELFT>::buildChunks(const File &file) {
+  ScopedTask task(getDefaultDomain(), "buildChunks");
   for (const DefinedAtom *definedAtom : file.defined()) {
     _layout->addAtom(definedAtom);
   }
@@ -134,6 +135,7 @@ void OutputELFWriter<ELFT>::buildChunks(const File &file) {
 
 template <class ELFT>
 void OutputELFWriter<ELFT>::buildStaticSymbolTable(const File &file) {
+  ScopedTask task(getDefaultDomain(), "buildStaticSymbolTable");
   for (auto sec : _layout->sections())
     if (auto section = dyn_cast<AtomSection<ELFT>>(sec))
       for (const auto &atom : section->atoms())
@@ -146,6 +148,7 @@ void OutputELFWriter<ELFT>::buildStaticSymbolTable(const File &file) {
 
 template <class ELFT>
 void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
+  ScopedTask task(getDefaultDomain(), "buildDynamicSymbolTable");
   for (const auto sla : file.sharedLibrary()) {
     _dynamicSymbolTable->addSymbol(sla, ELF::SHN_UNDEF);
     _soNeeded.insert(sla->loadName());
@@ -169,6 +172,7 @@ void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
 
 template <class ELFT>
 void OutputELFWriter<ELFT>::buildAtomToAddressMap(const File &file) {
+  ScopedTask task(getDefaultDomain(), "buildAtomToAddressMap");
   int64_t totalAbsAtoms = _layout->absoluteAtoms().size();
   int64_t totalUndefinedAtoms = file.undefined().size();
   int64_t totalDefinedAtoms = 0;
@@ -190,6 +194,7 @@ void OutputELFWriter<ELFT>::buildAtomToAddressMap(const File &file) {
 
 template<class ELFT>
 void OutputELFWriter<ELFT>::buildSectionHeaderTable() {
+  ScopedTask task(getDefaultDomain(), "buildSectionHeaderTable");
   for (auto mergedSec : _layout->mergedSections()) {
     if (mergedSec->kind() != Chunk<ELFT>::K_ELFSection &&
         mergedSec->kind() != Chunk<ELFT>::K_AtomSection)
@@ -201,6 +206,7 @@ void OutputELFWriter<ELFT>::buildSectionHeaderTable() {
 
 template<class ELFT>
 void OutputELFWriter<ELFT>::assignSectionsWithNoSegments() {
+  ScopedTask task(getDefaultDomain(), "assignSectionsWithNoSegments");
   for (auto mergedSec : _layout->mergedSections()) {
     if (mergedSec->kind() != Chunk<ELFT>::K_ELFSection &&
         mergedSec->kind() != Chunk<ELFT>::K_AtomSection)
@@ -321,15 +327,19 @@ error_code OutputELFWriter<ELFT>::buildOutput(const File &file) {
 
 template <class ELFT>
 error_code OutputELFWriter<ELFT>::writeFile(const File &file, StringRef path) {
-
+  ScopedTask buildTask(getDefaultDomain(), "ELF Writer buildOutput");
   buildOutput(file);
+  buildTask.end();
 
   uint64_t totalSize = _shdrtab->fileOffset() + _shdrtab->fileSize();
 
   OwningPtr<FileOutputBuffer> buffer;
+  ScopedTask createOutputTask(getDefaultDomain(), "ELF Writer Create Output");
   error_code ec = FileOutputBuffer::create(path,
                                            totalSize, buffer,
                                            FileOutputBuffer::F_executable);
+  createOutputTask.end();
+
   if (ec)
     return ec;
 
@@ -362,12 +372,15 @@ error_code OutputELFWriter<ELFT>::writeFile(const File &file, StringRef path) {
   // HACK: We have to write out the header and program header here even though
   // they are a member of a segment because only sections are written in the
   // following loop.
+  ScopedTask writeTask(getDefaultDomain(), "ELF Writer write to memory");
   _Header->write(this, *buffer);
   _programHeader->write(this, *buffer);
 
   for (auto section : _layout->sections())
     section->write(this, *buffer);
+  writeTask.end();
 
+  ScopedTask commitTask(getDefaultDomain(), "ELF Writer commit to disk");
   return buffer->commit();
 }
 } // namespace elf

@@ -16,6 +16,7 @@
 #include "SectionChunks.h"
 #include "SegmentChunks.h"
 
+#include "lld/Core/Instrumentation.h"
 #include "lld/Core/STDExtras.h"
 
 #include "llvm/ADT/ArrayRef.h"
@@ -211,6 +212,7 @@ public:
   }
 
   inline void finalize() {
+    ScopedTask task(getDefaultDomain(), "Finalize layout");
     for (auto &si : _sections)
       si->finalize();
   }
@@ -544,6 +546,7 @@ DefaultLayout<ELFT>::mergeSimiliarSections() {
 }
 
 template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
+  ScopedTask task(getDefaultDomain(), "assignSectionsToSegments");
   // TODO: Do we want to give a chance for the targetHandlers
   // to sort segments in an arbitrary order ?
   // sort the sections by their order as defined by the layout

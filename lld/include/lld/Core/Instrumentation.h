@@ -15,6 +15,10 @@
 #ifndef LLD_CORE_INSTRUMENTATION_H
 #define LLD_CORE_INSTRUMENTATION_H
 
+#include "llvm/Support/Compiler.h"
+
+#include <utility>
+
 #ifdef LLD_HAS_VTUNE
 # include <ittnotify.h>
 #endif

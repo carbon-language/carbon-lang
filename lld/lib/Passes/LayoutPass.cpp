@@ -397,6 +397,7 @@ void LayoutPass::buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range) {
 
 /// Perform the actual pass
 void LayoutPass::perform(MutableFile &mergedFile) {
+  ScopedTask task(getDefaultDomain(), "LayoutPass");
   MutableFile::DefinedAtomRange atomRange = mergedFile.definedAtoms();
 
   // Build follow on tables

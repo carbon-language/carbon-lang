@@ -11,6 +11,7 @@
 #include "X86_64TargetInfo.h"
 
 #include "lld/Core/File.h"
+#include "lld/Core/Instrumentation.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/PassManager.h"
 #include "lld/ReaderWriter/Simple.h"
@@ -213,6 +214,7 @@ public:
   /// After all references are handled, the atoms created during that are all
   /// added to mf.
   virtual void perform(MutableFile &mf) {
+    ScopedTask task(getDefaultDomain(), "X86-64 GOT/PLT Pass");
     // Process all references.
     for (const auto &atom : mf.defined())
       for (const auto &ref : *atom)

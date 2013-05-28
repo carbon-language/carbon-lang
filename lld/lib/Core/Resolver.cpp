@@ -10,6 +10,7 @@
 #include "lld/Core/Atom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
+#include "lld/Core/Instrumentation.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Resolver.h"
 #include "lld/Core/SymbolTable.h"
@@ -71,6 +72,7 @@ private:
 
 // add all atoms from all initial .o files
 void Resolver::buildInitialAtomList() {
+  ScopedTask task(getDefaultDomain(), "buildInitialAtomList");
  DEBUG_WITH_TYPE("resolver", llvm::dbgs() << "Resolver initial atom list:\n");
 
   // each input files contributes initial atoms
@@ -184,6 +186,7 @@ void Resolver::addAtoms(const std::vector<const DefinedAtom*>& newAtoms) {
 // ask symbol table if any definitionUndefined atoms still exist
 // if so, keep searching libraries until no more atoms being added
 void Resolver::resolveUndefines() {
+  ScopedTask task(getDefaultDomain(), "resolveUndefines");
   const bool searchArchives =
       _targetInfo.searchArchivesToOverrideTentativeDefinitions();
   const bool searchSharedLibs =
@@ -234,6 +237,7 @@ void Resolver::resolveUndefines() {
 // switch all references to undefined or coalesced away atoms
 // to the new defined atom
 void Resolver::updateReferences() {
+  ScopedTask task(getDefaultDomain(), "updateReferences");
   for(const Atom *atom : _atoms) {
     if (const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(atom)) {
       for (const Reference *ref : *defAtom) {
@@ -267,6 +271,7 @@ void Resolver::markLive(const Atom &atom) {
 
 // remove all atoms not actually used
 void Resolver::deadStripOptimize() {
+  ScopedTask task(getDefaultDomain(), "deadStripOptimize");
   // only do this optimization with -dead_strip
   if (!_targetInfo.deadStrip())
     return;
@@ -354,6 +359,7 @@ bool Resolver::checkUndefines(bool final) {
 
 // remove from _atoms all coaleseced away atoms
 void Resolver::removeCoalescedAwayAtoms() {
+  ScopedTask task(getDefaultDomain(), "removeCoalescedAwayAtoms");
   _atoms.erase(std::remove_if(_atoms.begin(), _atoms.end(),
                               AtomCoalescedAway(_symbolTable)), _atoms.end());
 }
@@ -361,6 +367,7 @@ void Resolver::removeCoalescedAwayAtoms() {
 // check for interactions between symbols defined in this linkage unit
 // and same symbol name in linked dynamic shared libraries
 void Resolver::checkDylibSymbolCollisions() {
+  ScopedTask task(getDefaultDomain(), "checkDylibSymbolCollisions");
   for ( const Atom *atom : _atoms ) {
     const DefinedAtom* defAtom = dyn_cast<DefinedAtom>(atom);
     if (defAtom == nullptr)
@@ -420,6 +427,7 @@ MutableFile::DefinedAtomRange Resolver::MergedFile::definedAtoms() {
 
 
 void Resolver::MergedFile::addAtoms(std::vector<const Atom*>& all) {
+  ScopedTask task(getDefaultDomain(), "addAtoms");
   DEBUG_WITH_TYPE("resolver", llvm::dbgs() << "Resolver final atom list:\n");
   for ( const Atom *atom : all ) {
     DEBUG_WITH_TYPE("resolver", llvm::dbgs()

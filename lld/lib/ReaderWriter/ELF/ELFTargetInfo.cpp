@@ -96,6 +96,7 @@ bool ELFTargetInfo::isRelativeReloc(const Reference &) const { return false; }
 error_code
 ELFTargetInfo::parseFile(std::unique_ptr<MemoryBuffer> &mb,
                          std::vector<std::unique_ptr<File> > &result) const {
+  ScopedTask task(getDefaultDomain(), "parseFile");
   error_code ec = _elfReader->parseFile(mb, result);
   if (ec) {
     // Not an ELF file, check file extension to see if it might be yaml
