@@ -1504,9 +1504,14 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV, bool isScopeAbstract) {
   DIE *VariableDie = new DIE(Tag);
   DbgVariable *AbsVar = DV->getAbstractVariable();
   DIE *AbsDIE = AbsVar ? AbsVar->getDIE() : NULL;
-  if (AbsDIE)
+  if (AbsDIE) {
+    bool InSameCU = AbsDIE->getCompileUnit() == getCUDie();
     addDIEEntry(VariableDie, dwarf::DW_AT_abstract_origin,
-                            dwarf::DW_FORM_ref4, AbsDIE);
+                InSameCU ? dwarf::DW_FORM_ref4 : dwarf::DW_FORM_ref_addr,
+                AbsDIE);
+    if (!InSameCU)
+      DD->setUseRefAddr(true);
+  }
   else {
     addString(VariableDie, dwarf::DW_AT_name, Name);
     addSourceLine(VariableDie, DV->getVariable());

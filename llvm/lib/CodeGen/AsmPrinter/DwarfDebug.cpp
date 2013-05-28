@@ -190,6 +190,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
       IsDarwinGDBCompat = false;
   } else
     IsDarwinGDBCompat = DarwinGDBCompat == Enable ? true : false;
+  UseRefAddr = false;
 
   if (DwarfAccelTables == Default) {
     if (IsDarwin)
@@ -369,6 +370,8 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
     SPCU->addDIEEntry(SPDie, dwarf::DW_AT_abstract_origin,
                       InSameCU ? dwarf::DW_FORM_ref4 : dwarf::DW_FORM_ref_addr,
                       AbsSPDIE);
+    if (!InSameCU)
+      UseRefAddr = true;
     SPCU->addDie(SPDie);
   } else {
     DISubprogram SPDecl = SP.getFunctionDeclaration();
@@ -469,6 +472,17 @@ DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
   return ScopeDIE;
 }
 
+DIE *DwarfDebug::findSPDieInAllCUs(const MDNode *N) {
+  for (DenseMap<const MDNode *, CompileUnit *>::iterator CUI = CUMap.begin(),
+         CUE = CUMap.end(); CUI != CUE; ++CUI) {
+    CompileUnit *TheCU = CUI->second;
+    DIE *SPDie = TheCU->getDIE(N);
+    if (SPDie)
+      return SPDie;
+  }
+  return 0;
+}
+
 // This scope represents inlined body of a function. Construct DIE to
 // represent this concrete inlined copy of the function.
 DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
@@ -481,7 +495,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
     return NULL;
   DIScope DS(Scope->getScopeNode());
   DISubprogram InlinedSP = getDISubprogram(DS);
-  DIE *OriginDIE = TheCU->getDIE(InlinedSP);
+  DIE *OriginDIE = findSPDieInAllCUs(InlinedSP);
   if (!OriginDIE) {
     DEBUG(dbgs() << "Unable to find original DIE for an inlined subprogram.");
     return NULL;
@@ -500,8 +514,12 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
          "Invalid end label for an inlined scope!");
 
   DIE *ScopeDIE = new DIE(dwarf::DW_TAG_inlined_subroutine);
+  bool InSameCU = OriginDIE->getCompileUnit() == TheCU->getCUDie();
   TheCU->addDIEEntry(ScopeDIE, dwarf::DW_AT_abstract_origin,
-                     dwarf::DW_FORM_ref4, OriginDIE);
+                     InSameCU ? dwarf::DW_FORM_ref4 : dwarf::DW_FORM_ref_addr,
+                     OriginDIE);
+  if (!InSameCU)
+    UseRefAddr = true;
 
   if (Ranges.size() > 1) {
     // .debug_range section has not been laid out yet. Emit offset in
@@ -558,9 +576,12 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
 
   DIScope DS(Scope->getScopeNode());
   // Early return to avoid creating dangling variable|scope DIEs.
-  if (!Scope->getInlinedAt() && DS.isSubprogram() && Scope->isAbstractScope() &&
-      !TheCU->getDIE(DS))
-    return NULL;
+  DIE *AbstractSPDie = 0;
+  if (!Scope->getInlinedAt() && DS.isSubprogram() && Scope->isAbstractScope()) {
+    AbstractSPDie = findSPDieInAllCUs(DS);
+    if (!AbstractSPDie)
+      return NULL;
+  }
 
   SmallVector<DIE *, 8> Children;
   DIE *ObjectPointer = NULL;
@@ -593,7 +614,7 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
   else if (DS.isSubprogram()) {
     ProcessedSPNodes.insert(DS);
     if (Scope->isAbstractScope()) {
-      ScopeDIE = TheCU->getDIE(DS);
+      ScopeDIE = AbstractSPDie;
       // Note down abstract DIE.
       if (ScopeDIE)
         AbstractSPDies.insert(std::make_pair(DS, ScopeDIE));
@@ -1683,7 +1704,9 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
       }
     }
     if (ProcessedSPNodes.count(AScope->getScopeNode()) == 0)
-      constructScopeDIE(TheCU, AScope);
+      // Use the compile unit for the abstract scope to create scope DIEs and
+      // variable DIEs.
+      constructScopeDIE(SPMap.lookup(AScope->getScopeNode()), AScope);
   }
 
   DIE *CurFnDIE = constructScopeDIE(TheCU, FnScope);
@@ -1973,7 +1996,8 @@ void DwarfUnits::emitUnits(DwarfDebug *DD,
     Asm->OutStreamer.AddComment("Length of Compilation Unit Info");
     Asm->EmitInt32(ContentSize);
     Asm->OutStreamer.AddComment("DWARF version number");
-    Asm->EmitInt16(dwarf::DWARF_VERSION);
+    Asm->EmitInt16((DD->getUseRefAddr() && dwarf::DWARF_VERSION < 3) ?
+                   3 : dwarf::DWARF_VERSION);
     Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");
     Asm->EmitSectionOffset(Asm->GetTempSymbol(ASection->getLabelBeginName()),
                            ASectionSym);
@@ -2214,7 +2238,8 @@ void DwarfDebug::emitDebugPubnames() {
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubnames_begin", ID));
 
     Asm->OutStreamer.AddComment("DWARF Version");
-    Asm->EmitInt16(dwarf::DWARF_VERSION);
+    Asm->EmitInt16((UseRefAddr && dwarf::DWARF_VERSION < 3) ?
+                   3 : dwarf::DWARF_VERSION);
 
     Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
     Asm->EmitSectionOffset(Asm->GetTempSymbol(ISec->getLabelBeginName(), ID),
@@ -2261,7 +2286,8 @@ void DwarfDebug::emitDebugPubTypes() {
                                                   TheCU->getUniqueID()));
 
     if (Asm->isVerbose()) Asm->OutStreamer.AddComment("DWARF Version");
-    Asm->EmitInt16(dwarf::DWARF_VERSION);
+    Asm->EmitInt16((UseRefAddr && dwarf::DWARF_VERSION < 3) ?
+                   3 : dwarf::DWARF_VERSION);
 
     Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
     const MCSection *ISec = Asm->getObjFileLowering().getDwarfInfoSection();
@@ -2544,7 +2570,8 @@ void DwarfDebug::emitDebugInlineInfo() {
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_inlined_begin", 1));
 
   Asm->OutStreamer.AddComment("Dwarf Version");
-  Asm->EmitInt16(dwarf::DWARF_VERSION);
+  Asm->EmitInt16((UseRefAddr && dwarf::DWARF_VERSION < 3) ?
+                 3 : dwarf::DWARF_VERSION);
   Asm->OutStreamer.AddComment("Address Size (in bytes)");
   Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
 
