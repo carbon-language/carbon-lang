@@ -247,6 +247,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
 endif()
 
 #add_subdirectory(include)
+add_subdirectory(docs)
 add_subdirectory(scripts)
 add_subdirectory(source)
 add_subdirectory(test)

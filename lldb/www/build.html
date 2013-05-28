@@ -81,6 +81,17 @@
                 <code>&gt; yum install swig python-devel libedit-devel</code>
                 <p>On an Ubuntu system one might run:</p>
                 <code>&gt; sudo apt-get install build-essential subversion swig python-dev libedit-dev </code>
+                <p>If you wish to build the optional reference documentation, additional dependencies are required:</p>
+                <ul>
+                  <li> Graphviz (for the 'dot' tool).
+                  <li> doxygen (only if you wish to build the C++ API reference)
+                  <li> epydoc (only if you wish to build the Python API reference)
+                </ul>
+                <p>To install the prerequisites for building the documentation (on Ubuntu) do:</p>
+                <code>
+                  <br>&gt; sudo apt-get install doxygen graphviz
+                  <br>&gt; sudo pip install epydoc
+                </code>
                 <h2 >Building LLDB</h2>
                 <p>We first need to checkout the source trees into the appropriate locations.  Both
                 Clang and LLDB build as subprojects of LLVM.  This means we will be checking out
@@ -189,6 +200,10 @@
                 <code>
                   <br>&gt; python dotest.py -h
                 </code>
+                <h2>Building API reference documentation</h2>
+                <p>LLDB exposes a C++ as well as a Python API. To build the reference documentation for these two APIs, ensure you have
+                the required dependencies installed, and build the <tt>lldb-python-doc</tt> and <tt>lldb-cpp-doc</tt> CMake targets.</p>
+                <p> The output HTML reference documentation can be found in <tt>&lt;build-dir&gt;/tools/lldb/docs/</tt>.<p>
                 <h2>Additional Notes</h2>
                 <p>LLDB has a Python scripting capability and supplies its own Python module named <tt>lldb</tt>.
                 If a script is run inside the command line <tt>lldb</tt> application, the Python module
