@@ -61,7 +61,7 @@ class GoogleTest(object):
         (dirname, basename) = os.path.split(execpath)
         # Discover the tests in this executable.
         for testname in self.getGTestTests(execpath, litConfig, localConfig):
-            testPath_in_suite = path_in_suite + (basename, testname)
+            testPath_in_suite = path_in_suite + (testname, )
             yield Test.Test(testSuite, testPath_in_suite, localConfig)
 
     def getTestsInDirectory(self, testSuite, path_in_suite,
