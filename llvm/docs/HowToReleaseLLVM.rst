@@ -15,7 +15,7 @@ is the Release Manager's responsibility to ensure that a high quality build of
 LLVM is released.
 
 If you're looking for the document on how to test the release candidates and
-create the vinary packages, please refer to the :doc:`ReleaseProcess` instead.
+create the binary packages, please refer to the :doc:`ReleaseProcess` instead.
 
 .. _timeline:
 
