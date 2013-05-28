@@ -1069,7 +1069,7 @@ static LinkageInfo getLVForLocalDecl(const NamedDecl *D,
   const FunctionDecl *FD = getOutermostFunctionContext(D);
   if (!FD || !FD->isInlined())
     return LinkageInfo::none();
-  LinkageInfo LV = FD->getLinkageAndVisibility();
+  LinkageInfo LV = getLVForDecl(FD, computation);
   if (!isExternallyVisible(LV.getLinkage()))
     return LinkageInfo::none();
   return LinkageInfo(VisibleNoLinkage, LV.getVisibility(),
