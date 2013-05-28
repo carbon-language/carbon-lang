@@ -142,6 +142,17 @@ static bool isObjectSize(const Value *V, uint64_t Size,
   return ObjectSize != AliasAnalysis::UnknownSize && ObjectSize == Size;
 }
 
+/// isIdentifiedFunctionLocal - Return true if V is umabigously identified
+/// at the function-level. Different IdentifiedFunctionLocals can't alias.
+/// Further, an IdentifiedFunctionLocal can not alias with any function
+/// arguments other than itself, which is not neccessarily true for
+/// IdentifiedObjects.
+static bool isIdentifiedFunctionLocal(const Value *V)
+{
+  return isa<AllocaInst>(V) || isNoAliasCall(V) || isNoAliasArgument(V);
+}
+
+
 //===----------------------------------------------------------------------===//
 // GetElementPtr Instruction Decomposition and Analysis
 //===----------------------------------------------------------------------===//
@@ -1205,10 +1216,10 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
         (isa<Constant>(O2) && isIdentifiedObject(O1) && !isa<Constant>(O1)))
       return NoAlias;
 
-    // Arguments can't alias with local allocations or noalias calls
-    // in the same function.
-    if (((isa<Argument>(O1) && (isa<AllocaInst>(O2) || isNoAliasCall(O2))) ||
-         (isa<Argument>(O2) && (isa<AllocaInst>(O1) || isNoAliasCall(O1)))))
+    // Function arguments can't alias with things that are known to be
+    // unambigously identified at the function level.
+    if ((isa<Argument>(O1) && isIdentifiedFunctionLocal(O2)) ||
+        (isa<Argument>(O2) && isIdentifiedFunctionLocal(O1)))
       return NoAlias;
 
     // Most objects can't alias null.

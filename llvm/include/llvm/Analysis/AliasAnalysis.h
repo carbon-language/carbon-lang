@@ -584,6 +584,10 @@ struct DenseMapInfo<AliasAnalysis::Location> {
 /// function.
 bool isNoAliasCall(const Value *V);
 
+/// isNoAliasArgument - Return true if this is an argument with the noalias
+/// attribute.
+bool isNoAliasArgument(const Value *V);
+
 /// isIdentifiedObject - Return true if this pointer refers to a distinct and
 /// identifiable object.  This returns true for:
 ///    Global Variables and Functions (but not Global Aliases)

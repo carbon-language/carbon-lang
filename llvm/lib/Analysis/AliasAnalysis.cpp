@@ -537,6 +537,15 @@ bool llvm::isNoAliasCall(const Value *V) {
   return false;
 }
 
+/// isNoAliasArgument - Return true if this is an argument with the noalias
+/// attribute.
+bool llvm::isNoAliasArgument(const Value *V)
+{
+  if (const Argument *A = dyn_cast<Argument>(V))
+    return A->hasNoAliasAttr();
+  return false;
+}
+
 /// isIdentifiedObject - Return true if this pointer refers to a distinct and
 /// identifiable object.  This returns true for:
 ///    Global Variables and Functions (but not Global Aliases)
