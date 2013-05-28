@@ -11,7 +11,7 @@ Introduction
 
 This document contains information about testing the release candidates that will
 ultimately be the next LLVM release. For more information on how to manage the
-actual release, please refer to :doc:`HowToReleaseLLVM <HowToReleaseLLVM>`.
+actual release, please refer to :doc:`HowToReleaseLLVM`.
 
 Overview of the Release Process
 -------------------------------

@@ -335,6 +335,9 @@ Information about LLVM's development process.
 :doc:`HowToReleaseLLVM`
   This is a guide to preparing LLVM releases. Most developers can ignore it.
 
+:doc:`ReleaseProcess`
+  This is a validate a new release, during the release process. Most developers can ignore it.
+
 :doc:`Packaging`
    Advice on packaging LLVM into a distribution.
 
