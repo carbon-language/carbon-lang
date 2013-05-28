@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
   int *volatile p = &x;
   if (*p)
     exit(0);
-  // CHECK: WARNING: Use of uninitialized value
+  // CHECK: WARNING: MemorySanitizer: use-of-uninitialized-value
   // CHECK: {{#0 0x.* in main .*stack-origin.cc:}}[[@LINE-3]]
 
   // CHECK-ORIGINS: Uninitialized value was created by an allocation of 'x' in the stack frame of function 'main'

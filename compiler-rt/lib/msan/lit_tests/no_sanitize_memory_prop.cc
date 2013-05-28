@@ -25,7 +25,7 @@ int main(void) {
   int x;
   int * volatile p = &x;
   int y = f(*p);
-  // CHECK: WARNING: Use of uninitialized value
+  // CHECK: WARNING: MemorySanitizer: use-of-uninitialized-value
   // CHECK: {{#0 0x.* in main .*no_sanitize_memory_prop.cc:}}[[@LINE+1]]
   if (y)
     exit(0);

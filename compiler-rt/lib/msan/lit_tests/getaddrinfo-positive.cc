@@ -13,7 +13,7 @@ int main(void) {
   struct addrinfo hint;
   int res = getaddrinfo("localhost", NULL, &hint, &ai);
   // CHECK: UMR in __interceptor_getaddrinfo at offset 0 inside
-  // CHECK: WARNING: Use of uninitialized value
+  // CHECK: WARNING: MemorySanitizer: use-of-uninitialized-value
   // CHECK: #0 {{.*}} in main {{.*}}getaddrinfo-positive.cc:[[@LINE-3]]
   return 0;
 }

@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
   char *volatile x = (char*)malloc(5 * sizeof(char));
   if (*x)
     exit(0);
-  // CHECK: WARNING: Use of uninitialized value
+  // CHECK: WARNING: MemorySanitizer: use-of-uninitialized-value
   // CHECK: {{#0 0x.* in main .*heap-origin.cc:}}[[@LINE-3]]
 
   // CHECK-ORIGINS: Uninitialized value was created by a heap allocation
