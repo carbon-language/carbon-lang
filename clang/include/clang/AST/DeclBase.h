@@ -32,6 +32,7 @@ class DeclarationName;
 class DependentDiagnostic;
 class EnumDecl;
 class FunctionDecl;
+class LinkageComputer;
 class LinkageSpecDecl;
 class Module;
 class NamedDecl;
@@ -292,6 +293,7 @@ protected:
   friend class ASTDeclWriter;
   friend class ASTDeclReader;
   friend class ASTReader;
+  friend class LinkageComputer;
 
 private:
   void CheckAccessDeclContext() const;

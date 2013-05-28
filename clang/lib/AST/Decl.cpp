@@ -85,6 +85,7 @@ using namespace clang;
 // and settings from the immediate context.
 
 const unsigned IgnoreExplicitVisibilityBit = 2;
+const unsigned IgnoreAllVisibilityBit = 4;
 
 /// Kinds of LV computation.  The linkage side of the computation is
 /// always the same, but different things can change how visibility is
@@ -108,7 +109,11 @@ enum LVComputationKind {
   /// Do an LV computation for, ultimately, a non-type declaration
   /// that already has some sort of explicit visibility.  Visibility
   /// may only be restricted by the visibility of template arguments.
-  LVForExplicitValue = (LVForValue | IgnoreExplicitVisibilityBit)
+  LVForExplicitValue = (LVForValue | IgnoreExplicitVisibilityBit),
+
+  /// Do an LV computation when we only care about the linkage.
+  LVForLinkageOnly =
+      LVForValue | IgnoreExplicitVisibilityBit | IgnoreAllVisibilityBit
 };
 
 /// Does this computation kind permit us to consider additional
@@ -390,6 +395,8 @@ static bool hasDirectVisibilityAttribute(const NamedDecl *D,
   case LVForExplicitValue:
     if (D->hasAttr<VisibilityAttr>())
       return true;
+    return false;
+  case LVForLinkageOnly:
     return false;
   }
   llvm_unreachable("bad visibility computation kind");
@@ -899,59 +906,15 @@ bool NamedDecl::isLinkageValid() const {
 }
 
 Linkage NamedDecl::getLinkageInternal() const {
-  if (hasCachedLinkage())
-    return getCachedLinkage();
-
   // We don't care about visibility here, so ask for the cheapest
   // possible visibility analysis.
-  setCachedLinkage(getLVForDecl(this, LVForExplicitValue).getLinkage());
-
-#ifndef NDEBUG
-  verifyLinkage();
-#endif
-
-  return getCachedLinkage();
+  return getLVForDecl(this, LVForLinkageOnly).getLinkage();
 }
 
 LinkageInfo NamedDecl::getLinkageAndVisibility() const {
   LVComputationKind computation =
     (usesTypeVisibility(this) ? LVForType : LVForValue);
-  LinkageInfo LI = getLVForDecl(this, computation);
-  if (hasCachedLinkage()) {
-    assert(getCachedLinkage() == LI.getLinkage());
-    return LI;
-  }
-  setCachedLinkage(LI.getLinkage());
-
-#ifndef NDEBUG
-  verifyLinkage();
-#endif
-
-  return LI;
-}
-
-void NamedDecl::verifyLinkage() const {
-  // In C (because of gnu inline) and in c++ with microsoft extensions an
-  // static can follow an extern, so we can have two decls with different
-  // linkages.
-  const LangOptions &Opts = getASTContext().getLangOpts();
-  if (!Opts.CPlusPlus || Opts.MicrosoftExt)
-    return;
-
-  // We have just computed the linkage for this decl. By induction we know
-  // that all other computed linkages match, check that the one we just computed
-  // also does.
-  NamedDecl *D = NULL;
-  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
-    NamedDecl *T = cast<NamedDecl>(*I);
-    if (T == this)
-      continue;
-    if (T->hasCachedLinkage()) {
-      D = T;
-      break;
-    }
-  }
-  assert(!D || D->getCachedLinkage() == getCachedLinkage());
+  return getLVForDecl(this, computation);
 }
 
 Optional<Visibility>
@@ -1077,8 +1040,8 @@ static LinkageInfo getLVForLocalDecl(const NamedDecl *D,
                      LV.isVisibilityExplicit());
 }
 
-static LinkageInfo getLVForDecl(const NamedDecl *D,
-                                LVComputationKind computation) {
+static LinkageInfo computeLVForDecl(const NamedDecl *D,
+                                    LVComputationKind computation) {
   // Objective-C: treat all Objective-C declarations as having external
   // linkage.
   switch (D->getKind()) {
@@ -1157,6 +1120,57 @@ static LinkageInfo getLVForDecl(const NamedDecl *D,
   // C++ [basic.link]p6:
   //   Names not covered by these rules have no linkage.
   return LinkageInfo::none();
+}
+
+namespace clang {
+class LinkageComputer {
+public:
+  static LinkageInfo getLVForDecl(const NamedDecl *D,
+                                  LVComputationKind computation) {
+    if (computation == LVForLinkageOnly && D->hasCachedLinkage())
+      return LinkageInfo(D->getCachedLinkage(), DefaultVisibility, false);
+
+    LinkageInfo LV = computeLVForDecl(D, computation);
+    if (D->hasCachedLinkage())
+      assert(D->getCachedLinkage() == LV.getLinkage());
+
+    D->setCachedLinkage(LV.getLinkage());
+
+#ifndef NDEBUG
+    // In C (because of gnu inline) and in c++ with microsoft extensions an
+    // static can follow an extern, so we can have two decls with different
+    // linkages.
+    const LangOptions &Opts = D->getASTContext().getLangOpts();
+    if (!Opts.CPlusPlus || Opts.MicrosoftExt)
+      return LV;
+
+    // We have just computed the linkage for this decl. By induction we know
+    // that all other computed linkages match, check that the one we just
+    // computed
+    // also does.
+    NamedDecl *Old = NULL;
+    for (NamedDecl::redecl_iterator I = D->redecls_begin(),
+                                    E = D->redecls_end();
+         I != E; ++I) {
+      NamedDecl *T = cast<NamedDecl>(*I);
+      if (T == D)
+        continue;
+      if (T->hasCachedLinkage()) {
+        Old = T;
+        break;
+      }
+    }
+    assert(!Old || Old->getCachedLinkage() == D->getCachedLinkage());
+#endif
+
+    return LV;
+  }
+};
+}
+
+static LinkageInfo getLVForDecl(const NamedDecl *D,
+                                LVComputationKind computation) {
+  return clang::LinkageComputer::getLVForDecl(D, computation);
 }
 
 std::string NamedDecl::getQualifiedNameAsString() const {

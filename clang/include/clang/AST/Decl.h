@@ -110,7 +110,6 @@ class NamedDecl : public Decl {
 
 private:
   NamedDecl *getUnderlyingDeclImpl();
-  void verifyLinkage() const;
 
 protected:
   NamedDecl(Kind DK, DeclContext *DC, SourceLocation L, DeclarationName N)
