@@ -627,7 +627,6 @@ void UnwrappedLineParser::parseBracedList() {
 
   // FIXME: Once we have an expression parser in the UnwrappedLineParser,
   // replace this by using parseAssigmentExpression() inside.
-  bool StartOfExpression = true;
   do {
     // FIXME: When we start to support lambdas, we'll want to parse them away
     // here, otherwise our bail-out scenarios below break. The better solution
@@ -635,7 +634,6 @@ void UnwrappedLineParser::parseBracedList() {
     switch (FormatTok->Tok.getKind()) {
     case tok::l_brace:
       parseBracedList();
-      StartOfExpression = false;
       break;
     case tok::r_brace:
       nextToken();
@@ -645,11 +643,9 @@ void UnwrappedLineParser::parseBracedList() {
       return;
     case tok::comma:
       nextToken();
-      StartOfExpression = true;
       break;
     default:
       nextToken();
-      StartOfExpression = false;
       break;
     }
   } while (!eof());
