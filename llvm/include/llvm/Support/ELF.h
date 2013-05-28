@@ -1476,7 +1476,81 @@ enum {
   DT_VERDEF       = 0X6FFFFFFC, // The address of the version definition table.
   DT_VERDEFNUM    = 0X6FFFFFFD, // The number of entries in DT_VERDEF.
   DT_VERNEED      = 0X6FFFFFFE, // The address of the version Dependency table.
-  DT_VERNEEDNUM   = 0X6FFFFFFF  // The number of entries in DT_VERNEED.
+  DT_VERNEEDNUM   = 0X6FFFFFFF, // The number of entries in DT_VERNEED.
+
+  // Mips specific dynamic table entry tags.
+  DT_MIPS_RLD_VERSION   = 0x70000001, // 32 bit version number for runtime
+                                      // linker interface.
+  DT_MIPS_TIME_STAMP    = 0x70000002, // Time stamp.
+  DT_MIPS_ICHECKSUM     = 0x70000003, // Checksum of external strings
+                                      // and common sizes.
+  DT_MIPS_IVERSION      = 0x70000004, // Index of version string
+                                      // in string table.
+  DT_MIPS_FLAGS         = 0x70000005, // 32 bits of flags.
+  DT_MIPS_BASE_ADDRESS  = 0x70000006, // Base address of the segment.
+  DT_MIPS_MSYM          = 0x70000007, // Address of .msym section.
+  DT_MIPS_CONFLICT      = 0x70000008, // Address of .conflict section.
+  DT_MIPS_LIBLIST       = 0x70000009, // Address of .liblist section.
+  DT_MIPS_LOCAL_GOTNO   = 0x7000000a, // Number of local global offset
+                                      // table entries.
+  DT_MIPS_CONFLICTNO    = 0x7000000b, // Number of entries
+                                      // in the .conflict section.
+  DT_MIPS_LIBLISTNO     = 0x70000010, // Number of entries
+                                      // in the .liblist section.
+  DT_MIPS_SYMTABNO      = 0x70000011, // Number of entries
+                                      // in the .dynsym section.
+  DT_MIPS_UNREFEXTNO    = 0x70000012, // Index of first external dynamic symbol
+                                      // not referenced locally.
+  DT_MIPS_GOTSYM        = 0x70000013, // Index of first dynamic symbol
+                                      // in global offset table.
+  DT_MIPS_HIPAGENO      = 0x70000014, // Number of page table entries
+                                      // in global offset table.
+  DT_MIPS_RLD_MAP       = 0x70000016, // Address of run time loader map,
+                                      // used for debugging.
+  DT_MIPS_DELTA_CLASS       = 0x70000017, // Delta C++ class definition.
+  DT_MIPS_DELTA_CLASS_NO    = 0x70000018, // Number of entries
+                                          // in DT_MIPS_DELTA_CLASS.
+  DT_MIPS_DELTA_INSTANCE    = 0x70000019, // Delta C++ class instances.
+  DT_MIPS_DELTA_INSTANCE_NO = 0x7000001A, // Number of entries
+                                          // in DT_MIPS_DELTA_INSTANCE.
+  DT_MIPS_DELTA_RELOC       = 0x7000001B, // Delta relocations.
+  DT_MIPS_DELTA_RELOC_NO    = 0x7000001C, // Number of entries
+                                          // in DT_MIPS_DELTA_RELOC.
+  DT_MIPS_DELTA_SYM         = 0x7000001D, // Delta symbols that Delta
+                                          // relocations refer to.
+  DT_MIPS_DELTA_SYM_NO      = 0x7000001E, // Number of entries
+                                          // in DT_MIPS_DELTA_SYM.
+  DT_MIPS_DELTA_CLASSSYM    = 0x70000020, // Delta symbols that hold
+                                          // class declarations.
+  DT_MIPS_DELTA_CLASSSYM_NO = 0x70000021, // Number of entries
+                                          // in DT_MIPS_DELTA_CLASSSYM.
+  DT_MIPS_CXX_FLAGS         = 0x70000022, // Flags indicating information
+                                          // about C++ flavor.
+  DT_MIPS_PIXIE_INIT        = 0x70000023, // Pixie information.
+  DT_MIPS_SYMBOL_LIB        = 0x70000024, // Address of .MIPS.symlib
+  DT_MIPS_LOCALPAGE_GOTIDX  = 0x70000025, // The GOT index of the first PTE
+                                          // for a segment
+  DT_MIPS_LOCAL_GOTIDX      = 0x70000026, // The GOT index of the first PTE
+                                          // for a local symbol
+  DT_MIPS_HIDDEN_GOTIDX     = 0x70000027, // The GOT index of the first PTE
+                                          // for a hidden symbol
+  DT_MIPS_PROTECTED_GOTIDX  = 0x70000028, // The GOT index of the first PTE
+                                          // for a protected symbol
+  DT_MIPS_OPTIONS           = 0x70000029, // Address of `.MIPS.options'.
+  DT_MIPS_INTERFACE         = 0x7000002A, // Address of `.interface'.
+  DT_MIPS_DYNSTR_ALIGN      = 0x7000002B, // Unknown.
+  DT_MIPS_INTERFACE_SIZE    = 0x7000002C, // Size of the .interface section.
+  DT_MIPS_RLD_TEXT_RESOLVE_ADDR = 0x7000002D, // Size of rld_text_resolve
+                                              // function stored in the GOT.
+  DT_MIPS_PERF_SUFFIX       = 0x7000002E, // Default suffix of DSO to be added
+                                          // by rld on dlopen() calls.
+  DT_MIPS_COMPACT_SIZE      = 0x7000002F, // Size of compact relocation
+                                          // section (O32).
+  DT_MIPS_GP_VALUE          = 0x70000030, // GP value for auxiliary GOTs.
+  DT_MIPS_AUX_DYNAMIC       = 0x70000031, // Address of auxiliary .dynamic.
+  DT_MIPS_PLTGOT            = 0x70000032, // Address of the base of the PLTGOT.
+  DT_MIPS_RWPLT             = 0x70000034  // Points to the base
+                                          // of a writable PLT.
 };
 
 // DT_FLAGS values.
@@ -1507,6 +1581,31 @@ enum {
   DF_1_ENDFILTEE  = 0x00004000, // Filtee terminates filters search.
   DF_1_DISPRELDNE = 0x00008000, // Disp reloc applied at build time.
   DF_1_DISPRELPND = 0x00010000  // Disp reloc applied at run-time.
+};
+
+// DT_MIPS_FLAGS values.
+enum {
+  RHF_NONE                    = 0x00000000, // No flags.
+  RHF_QUICKSTART              = 0x00000001, // Uses shortcut pointers.
+  RHF_NOTPOT                  = 0x00000002, // Hash size is not a power of two.
+  RHS_NO_LIBRARY_REPLACEMENT  = 0x00000004, // Ignore LD_LIBRARY_PATH.
+  RHF_NO_MOVE                 = 0x00000008, // DSO address may not be relocated.
+  RHF_SGI_ONLY                = 0x00000010, // SGI specific features.
+  RHF_GUARANTEE_INIT          = 0x00000020, // Guarantee that .init will finish
+                                            // executing before any non-init
+                                            // code in DSO is called.
+  RHF_DELTA_C_PLUS_PLUS       = 0x00000040, // Contains Delta C++ code.
+  RHF_GUARANTEE_START_INIT    = 0x00000080, // Guarantee that .init will start
+                                            // executing before any non-init
+                                            // code in DSO is called.
+  RHF_PIXIE                   = 0x00000100, // Generated by pixie.
+  RHF_DEFAULT_DELAY_LOAD      = 0x00000200, // Delay-load DSO by default.
+  RHF_REQUICKSTART            = 0x00000400, // Object may be requickstarted
+  RHF_REQUICKSTARTED          = 0x00000800, // Object has been requickstarted
+  RHF_CORD                    = 0x00001000, // Generated by cord.
+  RHF_NO_UNRES_UNDEF          = 0x00002000, // Object contains no unresolved
+                                            // undef symbols.
+  RHF_RLD_ORDER_SAFE          = 0x00004000  // Symbol table is in a safe order.
 };
 
 // ElfXX_VerDef structure version (GNU versioning)
