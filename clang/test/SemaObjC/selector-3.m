@@ -14,7 +14,7 @@
 - (void) foo
 {
   SEL a,b,c;
-  a = @selector(b1ar);  // expected-warning {{unimplemented selector 'b1ar'}}
+  a = @selector(b1ar);  // expected-warning {{creating selector for nonexistent method 'b1ar'}}
   b = @selector(bar);
 }
 @end
@@ -25,7 +25,7 @@
 
 SEL func()
 {
-    return  @selector(length);  // expected-warning {{unimplemented selector 'length'}}
+    return  @selector(length);  // expected-warning {{creating selector for nonexistent method 'length'}}
 }
 
 // rdar://9545564
@@ -69,7 +69,7 @@ extern SEL MySelector(SEL s);
 
 @implementation INTF
 - (void) Meth {
-  if( [cnx respondsToSelector:MySelector(@selector( _setQueue: ))] ) // expected-warning {{unimplemented selector '_setQueue:'}} 
+  if( [cnx respondsToSelector:MySelector(@selector( _setQueue: ))] ) // expected-warning {{creating selector for nonexistent method '_setQueue:'}} 
   {
   }
 

@@ -18,9 +18,9 @@ void bar() {
   // FIXME: Can't verify notes in headers
   //[a f2];
 
-  (void)@selector(x); // expected-warning {{unimplemented selector}}
-  (void)@selector(y); // expected-warning {{unimplemented selector}}
-  (void)@selector(e); // expected-warning {{unimplemented selector}}
+  (void)@selector(x); // expected-warning {{creating selector for nonexistent method 'x'}}
+  (void)@selector(y); // expected-warning {{creating selector for nonexistent method 'y'}}
+  (void)@selector(e); // expected-warning {{creating selector for nonexistent method 'e'}}
 }
 
 @implementation X (Blah)
