@@ -37,7 +37,7 @@ public:
   class CompareAtoms {
   public:
     explicit CompareAtoms(const LayoutPass &pass) : _layout(pass) {}
-    bool operator()(const DefinedAtom *left, const DefinedAtom *right);
+    bool operator()(const DefinedAtom *left, const DefinedAtom *right) const;
   private:
     const LayoutPass &_layout;
   };

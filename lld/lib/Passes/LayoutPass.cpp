@@ -12,6 +12,7 @@
 
 #include "lld/Passes/LayoutPass.h"
 #include "lld/Core/Instrumentation.h"
+#include "lld/Core/Parallel.h"
 #include "llvm/Support/Debug.h"
 
 using namespace lld;
@@ -24,7 +25,7 @@ using namespace lld;
 /// e) Sorts atoms on how they appear using File Ordinality
 /// f) Sorts atoms on how they appear within the File
 bool LayoutPass::CompareAtoms::operator()(const DefinedAtom *left,
-                                          const DefinedAtom *right) {
+                                          const DefinedAtom *right) const {
   DEBUG(llvm::dbgs() << "Sorting " << left->name() << " " << right->name() << "\n");
   if (left == right)
     return false;
@@ -425,7 +426,7 @@ void LayoutPass::perform(MutableFile &mergedFile) {
   });
 
   // sort the atoms
-  std::sort(atomRange.begin(), atomRange.end(), _compareAtoms);
+  parallel_sort(atomRange.begin(), atomRange.end(), _compareAtoms);
 
   DEBUG({
     llvm::dbgs() << "sorted atoms:\n";
