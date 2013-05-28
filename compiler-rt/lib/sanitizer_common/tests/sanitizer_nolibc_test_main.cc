@@ -1,4 +1,4 @@
-//===-- sanitizer_test_main.cc --------------------------------------------===//
+//===-- sanitizer_nolibc_test_main.cc -------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,15 +8,16 @@
 //===----------------------------------------------------------------------===//
 //
 // This file is a part of ThreadSanitizer/AddressSanitizer runtime.
+// Tests for libc independence of sanitizer_common.
 //
 //===----------------------------------------------------------------------===//
-#include "gtest/gtest.h"
 
-const char *argv0;
+#include "sanitizer_common/sanitizer_libc.h"
 
-int main(int argc, char **argv) {
-  argv0 = argv[0];
-  testing::GTEST_FLAG(death_test_style) = "threadsafe";
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+// TODO(pcc): Remove these once the allocator dependency is gone.
+extern "C" void *__libc_malloc() { return 0; }
+extern "C" void __libc_free(void *p) {}
+
+extern "C" void _start() {
+  internal__exit(0);
 }
