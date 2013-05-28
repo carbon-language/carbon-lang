@@ -1878,9 +1878,8 @@ SDValue DAGTypeLegalizer::WidenVecRes_BUILD_VECTOR(SDNode *N) {
   unsigned WidenNumElts = WidenVT.getVectorNumElements();
 
   SmallVector<SDValue, 16> NewOps(N->op_begin(), N->op_end());
-  NewOps.reserve(WidenNumElts);
-  for (unsigned i = NumElts; i < WidenNumElts; ++i)
-    NewOps.push_back(DAG.getUNDEF(EltVT));
+  assert(WidenNumElts >= NumElts && "Shrinking vector instead of widening!");
+  NewOps.append(WidenNumElts - NumElts, DAG.getUNDEF(EltVT));
 
   return DAG.getNode(ISD::BUILD_VECTOR, dl, WidenVT, &NewOps[0], NewOps.size());
 }
