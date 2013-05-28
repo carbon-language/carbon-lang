@@ -1251,6 +1251,29 @@ class Base(unittest2.TestCase):
         if not module.buildDwarf(self, architecture, compiler, dictionary, clean):
             raise Exception("Don't know how to build binary with dwarf")
 
+    def getBuildFlags(self, use_cpp11=True, use_pthreads=True):
+        """ Returns a dictionary (which can be provided to build* functions above) which
+            contains OS-specific build flags.
+        """
+        cflags = ""
+        if use_cpp11:
+            cflags += "-std="
+            if "gcc" in self.getCompiler() and "4.6" in self.getCompilerVersion():
+                cflags += "c++0x"
+            else:
+                cflags += "c++11"
+        if sys.platform.startswith("darwin"):
+            cflags += " -stdlib=libc++"
+        elif "clang" in self.getCompiler():
+            cflags += " -stdlib=libstdc++"
+
+        if use_pthreads:
+            ldflags = "-lpthread"
+
+        return {'CFLAGS_EXTRAS' : cflags,
+                'LD_EXTRAS' : ldflags,
+               }
+
     def cleanup(self, dictionary=None):
         """Platform specific way to do cleanup after build."""
         if lldb.skip_build_and_cleanup:

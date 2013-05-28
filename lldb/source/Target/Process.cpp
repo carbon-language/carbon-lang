@@ -1720,7 +1720,7 @@ Process::SetPrivateState (StateType new_state)
         else
             m_private_run_lock.WriteLock();
     }
-    
+
     if (state_changed)
     {
         m_private_state.SetValueNoLock (new_state);

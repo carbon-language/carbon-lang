@@ -84,11 +84,19 @@ public:
         return m_linux_signals;
     }
 
+    //------------------------------------------------------------------
+    // ProcessPOSIX overrides
+    //------------------------------------------------------------------
+    virtual void
+    StopAllThreads(lldb::tid_t stop_tid);
+
 private:
 
     /// Linux-specific signal set.
     LinuxSignals m_linux_signals;
 
+    // Flag to avoid recursion when stopping all threads.
+    bool m_stopping_threads;
 };
 
 #endif  // liblldb_MacOSXProcess_H_

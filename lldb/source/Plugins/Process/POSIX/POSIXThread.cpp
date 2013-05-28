@@ -17,6 +17,7 @@
 // Project includes
 #include "lldb/Breakpoint/Watchpoint.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StopInfo.h"
@@ -63,15 +64,24 @@ POSIXThread::GetMonitor()
 void
 POSIXThread::RefreshStateAfterStop()
 {
+    // Invalidate all registers in our register context. We don't set "force" to
+    // true because the stop reply packet might have had some register values
+    // that were expedited and these will already be copied into the register
+    // context by the time this function gets called. The KDPRegisterContext
+    // class has been made smart enough to detect when it needs to invalidate
+    // which registers are valid by putting hooks in the register read and 
+    // register supply functions where they check the process stop ID and do
+    // the right thing.
+    //if (StateIsStoppedState(GetState())
+    {
+        const bool force = false;
+        GetRegisterContext()->InvalidateIfNeeded (force);
+    }
+    // FIXME: This should probably happen somewhere else.
+    SetResumeState(eStateRunning);
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
-    if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
-        log->Printf ("POSIXThread::%s ()", __FUNCTION__);
-
-    // Let all threads recover from stopping and do any clean up based
-    // on the previous thread state (if any).
-    ProcessSP base = GetProcess();
-    ProcessPOSIX &process = static_cast<ProcessPOSIX&>(*base);
-    process.GetThreadList().RefreshStateAfterStop();
+    if (log)
+        log->Printf ("POSIXThread::%s (tid = %" PRIi64 ") setting thread resume state to running", __FUNCTION__, GetID());
 }
 
 const char *
@@ -157,9 +167,18 @@ POSIXThread::GetUnwinder()
 void
 POSIXThread::WillResume(lldb::StateType resume_state)
 {
-	// TODO: the line below shouldn't really be done, but
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
+    if (log)
+        log->Printf ("POSIXThread::%s (tid = %" PRIi64 ") setting thread resume state to %s", __FUNCTION__, GetID(), StateAsCString(resume_state));
+    // TODO: the line below shouldn't really be done, but
     // the POSIXThread might rely on this so I will leave this in for now
     SetResumeState(resume_state);
+}
+
+void
+POSIXThread::DidStop()
+{
+    // Don't set the thread state to stopped unless we really stopped.
 }
 
 bool
@@ -170,8 +189,9 @@ POSIXThread::Resume()
     bool status;
 
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
-    if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
-        log->Printf ("POSIXThread::%s ()", __FUNCTION__);
+    if (log)
+        log->Printf ("POSIXThread::%s (), resume_state = %s", __FUNCTION__,
+                         StateAsCString(resume_state));
 
     switch (resume_state)
     {
@@ -211,10 +231,14 @@ POSIXThread::Notify(const ProcessMessage &message)
         assert(false && "Unexpected message kind!");
         break;
 
+    case ProcessMessage::eExitMessage:
+        // Nothing to be done.
+        break;
+
     case ProcessMessage::eLimboMessage:
         LimboNotify(message);
         break;
-        
+
     case ProcessMessage::eSignalMessage:
         SignalNotify(message);
         break;
@@ -318,6 +342,9 @@ POSIXThread::BreakNotify(const ProcessMessage &message)
     lldb::break_id_t bp_id = bp_site->GetID();
     assert(bp_site && bp_site->ValidForThisThread(this));
 
+    // Make this thread the selected thread
+    GetProcess()->GetThreadList().SetSelectedThreadByID(GetID());
+
     m_breakpoint = bp_site;
     SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID(*this, bp_id));
 }
@@ -408,6 +435,7 @@ POSIXThread::SignalDeliveredNotify(const ProcessMessage &message)
 void
 POSIXThread::CrashNotify(const ProcessMessage &message)
 {
+    // FIXME: Update stop reason as per bugzilla 14598
     int signo = message.GetSignal();
 
     assert(message.GetKind() == ProcessMessage::eCrashMessage);
