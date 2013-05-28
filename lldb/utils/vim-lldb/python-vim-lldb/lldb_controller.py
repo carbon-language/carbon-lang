@@ -153,11 +153,7 @@ class LLDBController(object):
       return
 
     self.ui.activate()
-
-    # attach succeeded, store pid and add some event listeners
     self.pid = self.process.GetProcessID()
-    self.process.GetBroadcaster().AddListener(self.processListener, lldb.SBProcess.eBroadcastBitStateChanged)
-    self.doContinue()
 
     print "Attached to %s (pid=%d)" % (process_name, self.pid)
 
@@ -351,6 +347,10 @@ class LLDBController(object):
             # An event is on the queue, process it here.
             self.processListener.GetNextEvent(event)
             new_state = lldb.SBProcess.GetStateFromEvent(event)
+
+            # continue if stopped after attaching
+            if old_state == lldb.eStateAttaching and new_state == lldb.eStateStopped:
+              self.process.Continue()
 
             # If needed, perform any event-specific behaviour here
             num_events_handled += 1
