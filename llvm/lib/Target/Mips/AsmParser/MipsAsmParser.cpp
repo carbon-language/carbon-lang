@@ -20,6 +20,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/ADT/APInt.h"
 
 using namespace llvm;
 
@@ -1290,8 +1291,16 @@ bool MipsAsmParser::searchSymbolAlias(
       const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Expr);
       const StringRef DefSymbol = Ref->getSymbol().getName();
       if (DefSymbol.startswith("$")) {
-        // Lookup for the register with the corresponding name.
-        int RegNum = matchRegisterName(DefSymbol.substr(1), isMips64());
+        int RegNum = -1;
+        APInt IntVal(32, -1);
+        if (!DefSymbol.substr(1).getAsInteger(10, IntVal))
+          RegNum = matchRegisterByNumber(IntVal.getZExtValue(),
+                                         isMips64()
+                                           ? Mips::CPU64RegsRegClassID
+                                           : Mips::CPURegsRegClassID);
+        else
+          // Lookup for the register with corresponding name
+          RegNum = matchRegisterName(DefSymbol.substr(1), isMips64());
         if (RegNum > -1) {
           Parser.Lex();
           MipsOperand *op = MipsOperand::CreateReg(RegNum, S,
@@ -1305,7 +1314,7 @@ bool MipsAsmParser::searchSymbolAlias(
       Parser.Lex();
       const MCConstantExpr *Const = static_cast<const MCConstantExpr*>(Expr);
       MipsOperand *op = MipsOperand::CreateImm(Const, S,
-          Parser.getTok().getLoc());
+                                               Parser.getTok().getLoc());
       Operands.push_back(op);
       return true;
     }
@@ -1741,8 +1750,22 @@ bool MipsAsmParser::parseSetAssignment() {
     return reportParseError("unexpected token in .set directive");
   Lex(); // Eat comma
 
-  if (Parser.parseExpression(Value))
-    reportParseError("expected valid expression after comma");
+  if (getLexer().is(AsmToken::Dollar)) {
+    MCSymbol *Symbol;
+    SMLoc DollarLoc = getLexer().getLoc();
+    // Consume the dollar sign, and check for a following identifier.
+    Parser.Lex();
+    // We have a '$' followed by something, make sure they are adjacent.
+    if (DollarLoc.getPointer() + 1 != getTok().getLoc().getPointer())
+      return true;
+    StringRef Res = StringRef(DollarLoc.getPointer(),
+        getTok().getEndLoc().getPointer() - DollarLoc.getPointer());
+    Symbol = getContext().GetOrCreateSymbol(Res);
+    Parser.Lex();
+    Value = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_None,
+                                    getContext());
+  } else if (Parser.parseExpression(Value))
+    return reportParseError("expected valid expression after comma");
 
   // Check if the Name already exists as a symbol.
   MCSymbol *Sym = getContext().LookupSymbol(Name);
