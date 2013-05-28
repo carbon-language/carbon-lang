@@ -502,7 +502,8 @@ private:
       } else if (Current.is(tok::lessless) &&
                  State.Stack.back().FirstLessLess != 0) {
         State.Column = State.Stack.back().FirstLessLess;
-      } else if (Current.isOneOf(tok::period, tok::arrow)) {
+      } else if (Current.isOneOf(tok::period, tok::arrow) &&
+                 Current.Type != TT_DesignatedInitializerPeriod) {
         if (State.Stack.back().CallContinuation == 0) {
           State.Column = ContinuationIndent;
           State.Stack.back().CallContinuation = State.Column;
@@ -559,7 +560,8 @@ private:
       }
 
       State.Stack.back().LastSpace = State.Column;
-      if (Current.isOneOf(tok::arrow, tok::period))
+      if (Current.isOneOf(tok::arrow, tok::period) &&
+          Current.Type != TT_DesignatedInitializerPeriod)
         State.Stack.back().LastSpace += Current.FormatTok.TokenLength;
       State.StartOfLineLevel = State.ParenLevel;
       State.LowestLevelOnLine = State.ParenLevel;
@@ -734,7 +736,9 @@ private:
       bool AvoidBinPacking;
       if (Current.is(tok::l_brace)) {
         NewIndent = Style.IndentWidth + LastSpace;
-        AvoidBinPacking = false;
+        const AnnotatedToken *NextNoComment = Current.getNextNoneComment();
+        AvoidBinPacking = NextNoComment &&
+                          NextNoComment->Type == TT_DesignatedInitializerPeriod;
       } else {
         NewIndent =
             4 + std::max(LastSpace, State.Stack.back().StartOfFunctionCall);

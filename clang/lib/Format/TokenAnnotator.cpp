@@ -685,6 +685,11 @@ private:
         default:
           break;
         }
+      } else if (Current.is(tok::period)) {
+        AnnotatedToken *PreviousNoComment= Current.getPreviousNoneComment();
+        if (PreviousNoComment &&
+            PreviousNoComment->isOneOf(tok::comma, tok::l_brace))
+          Current.Type = TT_DesignatedInitializerPeriod;
       }
     }
   }
@@ -963,6 +968,11 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   const AnnotatedToken &Left = *Tok.Parent;
   const AnnotatedToken &Right = Tok;
 
+  if (Left.is(tok::semi))
+    return 0;
+  if (Left.is(tok::comma))
+    return 1;
+
   if (Right.Type == TT_StartOfName) {
     if (Line.First.is(tok::kw_for) && Right.PartOfMultiVariableDeclStmt)
       return 3;
@@ -983,7 +993,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
       Left.Type == TT_InheritanceColon)
     return 2;
 
-  if (Right.isOneOf(tok::arrow, tok::period)) {
+  if (Right.isOneOf(tok::arrow, tok::period) &&
+      Right.Type != TT_DesignatedInitializerPeriod) {
     if (Line.Type == LT_BuilderTypeCall)
       return prec::PointerToMember;
     if (Left.isOneOf(tok::r_paren, tok::r_square) && Left.MatchingParen &&
@@ -999,11 +1010,6 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   // In for-loops, prefer breaking at ',' and ';'.
   if (Line.First.is(tok::kw_for) && Left.is(tok::equal))
     return 4;
-
-  if (Left.is(tok::semi))
-    return 0;
-  if (Left.is(tok::comma))
-    return 1;
 
   // In Objective-C method expressions, prefer breaking before "param:" over
   // breaking after it.
@@ -1087,8 +1093,6 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return Right.Type == TT_ObjCArrayLiteral;
   if (Right.is(tok::l_square) && Right.Type != TT_ObjCMethodExpr)
     return false;
-  if (Left.is(tok::period) || Right.is(tok::period))
-    return false;
   if (Left.is(tok::colon))
     return Left.Type != TT_ObjCMethodExpr;
   if (Right.is(tok::colon))
@@ -1115,6 +1119,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
       Right.is(tok::l_brace) && Right.getNextNoneComment())
     return false;
   if (Right.is(tok::ellipsis))
+    return false;
+  if (Left.is(tok::period) || Right.is(tok::period))
     return false;
   return true;
 }

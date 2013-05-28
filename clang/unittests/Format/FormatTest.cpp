@@ -1456,6 +1456,24 @@ TEST_F(FormatTest, StaticInitializers) {
                getLLVMStyleWithColumns(40));
 }
 
+TEST_F(FormatTest, DesignatedInitializers) {
+  verifyFormat("const struct A a = { .a = 1, .b = 2 };");
+  verifyFormat("const struct A a = { .aaaaaaaaaa = 1,\n"
+               "                     .bbbbbbbbbb = 2,\n"
+               "                     .cccccccccc = 3,\n"
+               "                     .dddddddddd = 4,\n"
+               "                     .eeeeeeeeee = 5 };");
+  verifyFormat("const struct Aaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaa = {\n"
+               "  .aaaaaaaaaaaaaaaaaaaaaaaaaaa = 1,\n"
+               "  .bbbbbbbbbbbbbbbbbbbbbbbbbbb = 2,\n"
+               "  .ccccccccccccccccccccccccccc = 3,\n"
+               "  .ddddddddddddddddddddddddddd = 4,\n"
+               "  .eeeeeeeeeeeeeeeeeeeeeeeeeee = 5\n"
+               "};");
+
+  verifyGoogleFormat("const struct A a = {.a = 1, .b = 2};");
+}
+
 TEST_F(FormatTest, NestedStaticInitializers) {
   verifyFormat("static A x = { { {} } };\n");
   verifyFormat("static A x = { { { init1, init2, init3, init4 },\n"
