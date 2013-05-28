@@ -50,6 +50,9 @@ INITIALIZE_PASS_BEGIN(LoopInfo, "loops", "Natural Loop Information", true, true)
 INITIALIZE_PASS_DEPENDENCY(DominatorTree)
 INITIALIZE_PASS_END(LoopInfo, "loops", "Natural Loop Information", true, true)
 
+// Loop identifier metadata name.
+static const char* LoopMDName = "llvm.loop";
+
 //===----------------------------------------------------------------------===//
 // Loop implementation
 //
@@ -234,14 +237,62 @@ bool Loop::isSafeToClone() const {
   return true;
 }
 
+MDNode *Loop::getLoopID() const {
+  MDNode *LoopID = 0;
+  if (isLoopSimplifyForm()) {
+    LoopID = getLoopLatch()->getTerminator()->getMetadata(LoopMDName);
+  } else {
+    // Go through each predecessor of the loop header and check the
+    // terminator for the metadata.
+    BasicBlock *H = getHeader();
+    for (block_iterator I = block_begin(), IE = block_end(); I != IE; ++I) {
+      TerminatorInst *TI = (*I)->getTerminator();
+      MDNode *MD = 0;
+
+      // Check if this terminator branches to the loop header.
+      for (unsigned i = 0, ie = TI->getNumSuccessors(); i != ie; ++i) {
+        if (TI->getSuccessor(i) == H) {
+          MD = TI->getMetadata(LoopMDName);
+          break;
+        }
+      }
+      if (!MD)
+        return 0;
+
+      if (!LoopID)
+        LoopID = MD;
+      else if (MD != LoopID)
+        return 0;
+    }
+  }
+  if (!LoopID || LoopID->getNumOperands() == 0 ||
+      LoopID->getOperand(0) != LoopID)
+    return 0;
+  return LoopID;
+}
+
+void Loop::setLoopID(MDNode *LoopID) const {
+  assert(LoopID && "Loop ID should not be null");
+  assert(LoopID->getNumOperands() > 0 && "Loop ID needs at least one operand");
+  assert(LoopID->getOperand(0) == LoopID && "Loop ID should refer to itself");
+
+  if (isLoopSimplifyForm()) {
+    getLoopLatch()->getTerminator()->setMetadata(LoopMDName, LoopID);
+    return;
+  }
+
+  BasicBlock *H = getHeader();
+  for (block_iterator I = block_begin(), IE = block_end(); I != IE; ++I) {
+    TerminatorInst *TI = (*I)->getTerminator();
+    for (unsigned i = 0, ie = TI->getNumSuccessors(); i != ie; ++i) {
+      if (TI->getSuccessor(i) == H)
+        TI->setMetadata(LoopMDName, LoopID);
+    }
+  }
+}
+
 bool Loop::isAnnotatedParallel() const {
-
-  BasicBlock *latch = getLoopLatch();
-  if (latch == NULL)
-    return false;
-
-  MDNode *desiredLoopIdMetadata =
-    latch->getTerminator()->getMetadata("llvm.loop.parallel");
+  MDNode *desiredLoopIdMetadata = getLoopID();
 
   if (!desiredLoopIdMetadata)
       return false;

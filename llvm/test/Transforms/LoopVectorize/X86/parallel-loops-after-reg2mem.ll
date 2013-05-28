@@ -35,7 +35,7 @@ for.body:                                         ; preds = %for.body.for.body_c
   %indvars.iv.next.reload = load i64* %indvars.iv.next.reg2mem
   %lftr.wideiv = trunc i64 %indvars.iv.next.reload to i32
   %exitcond = icmp eq i32 %lftr.wideiv, 512
-  br i1 %exitcond, label %for.end, label %for.body.for.body_crit_edge, !llvm.loop.parallel !3
+  br i1 %exitcond, label %for.end, label %for.body.for.body_crit_edge, !llvm.loop !3
 
 for.body.for.body_crit_edge:                      ; preds = %for.body
   %indvars.iv.next.reload2 = load i64* %indvars.iv.next.reg2mem

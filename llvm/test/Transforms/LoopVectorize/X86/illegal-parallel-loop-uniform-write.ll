@@ -21,7 +21,7 @@ for.end.us:                                       ; preds = %for.body3.us
   %indvars.iv.next34 = add i64 %indvars.iv33, 1
   %lftr.wideiv35 = trunc i64 %indvars.iv.next34 to i32
   %exitcond36 = icmp eq i32 %lftr.wideiv35, %m
-  br i1 %exitcond36, label %for.end15, label %for.body3.lr.ph.us, !llvm.loop.parallel !5
+  br i1 %exitcond36, label %for.end15, label %for.body3.lr.ph.us, !llvm.loop !5
 
 for.body3.us:                                     ; preds = %for.body3.us, %for.body3.lr.ph.us
   %indvars.iv29 = phi i64 [ 0, %for.body3.lr.ph.us ], [ %indvars.iv.next30, %for.body3.us ]
@@ -35,7 +35,7 @@ for.body3.us:                                     ; preds = %for.body3.us, %for.
   %indvars.iv.next30 = add i64 %indvars.iv29, 1
   %lftr.wideiv31 = trunc i64 %indvars.iv.next30 to i32
   %exitcond32 = icmp eq i32 %lftr.wideiv31, %m
-  br i1 %exitcond32, label %for.end.us, label %for.body3.us, !llvm.loop.parallel !4
+  br i1 %exitcond32, label %for.end.us, label %for.body3.us, !llvm.loop !4
 
 for.body3.lr.ph.us:                               ; preds = %for.end.us, %entry
   %indvars.iv33 = phi i64 [ %indvars.iv.next34, %for.end.us ], [ 0, %entry ]

@@ -65,7 +65,7 @@ for.body:                                         ; preds = %for.body, %entry
   store i32 %2, i32* %arrayidx2, align 4, !llvm.mem.parallel_loop_access !3
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
   %exitcond = icmp eq i32 %lftr.wideiv, 512
-  br i1 %exitcond, label %for.end, label %for.body, !llvm.loop.parallel !3
+  br i1 %exitcond, label %for.end, label %for.body, !llvm.loop !3
 
 for.end:                                          ; preds = %for.body
   ret void
@@ -98,7 +98,7 @@ for.body:                                         ; preds = %for.body, %entry
   store i32 %2, i32* %arrayidx2, align 4, !llvm.mem.parallel_loop_access !6
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
   %exitcond = icmp eq i32 %lftr.wideiv, 512
-  br i1 %exitcond, label %for.end, label %for.body, !llvm.loop.parallel !6
+  br i1 %exitcond, label %for.end, label %for.body, !llvm.loop !6
 
 for.end:                                          ; preds = %for.body
   ret void
