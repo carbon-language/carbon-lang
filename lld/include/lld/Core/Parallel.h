@@ -252,6 +252,20 @@ void parallel_sort(
 template <class T> void parallel_sort(T *start, T *end) {
   parallel_sort(start, end, std::less<T>());
 }
+
+#ifdef _MSC_VER
+// Use ppl parallel_for_each on Windows.
+template <class Iterator, class Func>
+void parallel_for_each(Iterator begin, Iterator end, Func func) {
+  concurrency::parallel_for_each(begin, end, func);
+}
+#else
+template <class Iterator, class Func>
+void parallel_for_each(Iterator begin, Iterator end, Func func) {
+  // TODO: Make this parallel.
+  std::for_each(begin, end, func);
+}
+#endif
 } // end namespace lld
 
 #endif
