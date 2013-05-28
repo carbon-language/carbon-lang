@@ -1921,6 +1921,9 @@ TEST_F(FormatTest, LineBreakingInBinaryExpressions) {
   verifyFormat("aaaaaa = aaaaaaa(aaaaaaa, // break\n"
                "                 aaaaaa) &&\n"
                "         bbbbbb && cccccc;");
+  verifyFormat("aaaaaa = aaaaaaa(aaaaaaa, // break\n"
+               "                 aaaaaa) >>\n"
+               "         bbbbbb;");
   verifyFormat("Whitespaces.addUntouchableComment(\n"
                "    SourceMgr.getSpellingColumnNumber(\n"
                "        TheLine.Last->FormatTok.Tok.getLocation()) -\n"

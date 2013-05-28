@@ -1040,6 +1040,7 @@ private:
     // If we need to break somewhere inside the LHS of a binary expression, we
     // should also break after the operator.
     if (Previous.Type == TT_BinaryOperator &&
+        Current.Type != TT_BinaryOperator && // Special case for ">>".
         !Previous.isOneOf(tok::lessless, tok::question) &&
         getPrecedence(Previous) != prec::Assignment &&
         State.Stack.back().BreakBeforeParameter)
