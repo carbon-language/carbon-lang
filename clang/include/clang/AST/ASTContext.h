@@ -470,6 +470,8 @@ public:
 
   const TargetInfo &getTargetInfo() const { return *Target; }
   
+  bool AtomicUsesUnsupportedLibcall(const AtomicExpr *E) const;
+  
   const LangOptions& getLangOpts() const { return LangOpts; }
 
   DiagnosticsEngine &getDiagnostics() const;

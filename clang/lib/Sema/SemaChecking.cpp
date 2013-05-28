@@ -908,10 +908,18 @@ ExprResult Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult,
     SubExprs.push_back(TheCall->getArg(3)); // Weak
     break;
   }
+  
+  AtomicExpr *AE = new (Context) AtomicExpr(TheCall->getCallee()->getLocStart(),
+                                            SubExprs, ResultType, Op,
+                                            TheCall->getRParenLoc());
+  
+  if ((Op == AtomicExpr::AO__c11_atomic_load ||
+       (Op == AtomicExpr::AO__c11_atomic_store)) &&
+      Context.AtomicUsesUnsupportedLibcall(AE))
+    Diag(AE->getLocStart(), diag::err_atomic_load_store_uses_lib) <<
+    ((Op == AtomicExpr::AO__c11_atomic_load) ? 0 : 1);
 
-  return Owned(new (Context) AtomicExpr(TheCall->getCallee()->getLocStart(),
-                                        SubExprs, ResultType, Op,
-                                        TheCall->getRParenLoc()));
+  return Owned(AE);
 }
 
 

@@ -5322,6 +5322,10 @@ def err_atomic_op_needs_atomic_int_or_ptr : Error<
 def err_atomic_op_bitwise_needs_atomic_int : Error<
   "first argument to bitwise atomic operation must be a pointer to "
   "%select{|atomic }0integer (%1 invalid)">;
+  
+def err_atomic_load_store_uses_lib : Error<
+  "atomic %select{load|store}0 requires runtime support that is not "
+  "available for this target">;
 
 def err_deleted_function_use : Error<"attempt to use a deleted function">;
 

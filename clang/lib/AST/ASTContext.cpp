@@ -8030,3 +8030,17 @@ unsigned ASTContext::getParameterIndex(const ParmVarDecl *D) const {
          "ParmIndices lacks entry set by ParmVarDecl");
   return I->second;
 }
+
+bool ASTContext::AtomicUsesUnsupportedLibcall(const AtomicExpr *E) const {
+  const llvm::Triple &T = getTargetInfo().getTriple();
+  if (!T.isOSDarwin())
+    return false;
+
+  QualType AtomicTy = E->getPtr()->getType()->getPointeeType();
+  CharUnits sizeChars = getTypeSizeInChars(AtomicTy);
+  uint64_t Size = sizeChars.getQuantity();
+  CharUnits alignChars = getTypeAlignInChars(AtomicTy);
+  unsigned Align = alignChars.getQuantity();
+  unsigned MaxInlineWidthInBits = getTargetInfo().getMaxAtomicInlineWidth();
+  return (Size != Align || toBits(sizeChars) > MaxInlineWidthInBits);
+}
