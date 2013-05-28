@@ -507,6 +507,53 @@ SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
   }
 }
 
+static SVal evalBinOpFieldRegionFieldRegion(const FieldRegion *LeftFR,
+                                            const FieldRegion *RightFR,
+                                            BinaryOperator::Opcode op,
+                                            QualType resultTy,
+                                            SimpleSValBuilder &SVB) {
+  // Only comparisons are meaningful here!
+  if (!BinaryOperator::isComparisonOp(op))
+    return UnknownVal();
+
+  // Next, see if the two FRs have the same super-region.
+  // FIXME: This doesn't handle casts yet, and simply stripping the casts
+  // doesn't help.
+  if (LeftFR->getSuperRegion() != RightFR->getSuperRegion())
+    return UnknownVal();
+
+  const FieldDecl *LeftFD = LeftFR->getDecl();
+  const FieldDecl *RightFD = RightFR->getDecl();
+  const RecordDecl *RD = LeftFD->getParent();
+
+  // Make sure the two FRs are from the same kind of record. Just in case!
+  // FIXME: This is probably where inheritance would be a problem.
+  if (RD != RightFD->getParent())
+    return UnknownVal();
+
+  // We know for sure that the two fields are not the same, since that
+  // would have given us the same SVal.
+  if (op == BO_EQ)
+    return SVB.makeTruthVal(false, resultTy);
+  if (op == BO_NE)
+    return SVB.makeTruthVal(true, resultTy);
+
+  // Iterate through the fields and see which one comes first.
+  // [C99 6.7.2.1.13] "Within a structure object, the non-bit-field
+  // members and the units in which bit-fields reside have addresses that
+  // increase in the order in which they are declared."
+  bool leftFirst = (op == BO_LT || op == BO_LE);
+  for (RecordDecl::field_iterator I = RD->field_begin(),
+       E = RD->field_end(); I!=E; ++I) {
+    if (*I == LeftFD)
+      return SVB.makeTruthVal(leftFirst, resultTy);
+    if (*I == RightFD)
+      return SVB.makeTruthVal(!leftFirst, resultTy);
+  }
+
+  llvm_unreachable("Fields not found in parent record's definition");
+}
+
 // FIXME: all this logic will change if/when we have MemRegion::getLocation().
 SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
                                   BinaryOperator::Opcode op,
@@ -699,14 +746,10 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
       }
     }
 
-    // FIXME: If/when there is a getAsRawOffset() for FieldRegions, this
-    // ElementRegion path and the FieldRegion path below should be unified.
-    if (const ElementRegion *LeftER = dyn_cast<ElementRegion>(LeftMR)) {
-      // First see if the right region is also an ElementRegion.
-      const ElementRegion *RightER = dyn_cast<ElementRegion>(RightMR);
-      if (!RightER)
-        return UnknownVal();
-
+    // Handle special cases for when both regions are element regions.
+    const ElementRegion *RightER = dyn_cast<ElementRegion>(RightMR);
+    const ElementRegion *LeftER = dyn_cast<ElementRegion>(LeftMR);
+    if (RightER && LeftER) {
       // Next, see if the two ERs have the same super-region and matching types.
       // FIXME: This should do something useful even if the types don't match,
       // though if both indexes are constant the RegionRawOffset path will
@@ -738,17 +781,29 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
         // evalBinOpNN expects the two indexes to already be the right type.
         return evalBinOpNN(state, op, *LeftIndex, *RightIndex, resultTy);
       }
+    }
 
-      // If the element indexes aren't comparable, see if the raw offsets are.
-      RegionRawOffset LeftOffset = LeftER->getAsArrayOffset();
-      RegionRawOffset RightOffset = RightER->getAsArrayOffset();
+    // Special handling of the FieldRegions, even with symbolic offsets.
+    const FieldRegion *RightFR = dyn_cast<FieldRegion>(RightMR);
+    const FieldRegion *LeftFR = dyn_cast<FieldRegion>(LeftMR);
+    if (RightFR && LeftFR) {
+      SVal R = evalBinOpFieldRegionFieldRegion(LeftFR, RightFR, op, resultTy,
+                                               *this);
+      if (!R.isUnknown())
+        return R;
+    }
 
-      if (LeftOffset.getRegion() != NULL &&
-          LeftOffset.getRegion() == RightOffset.getRegion()) {
-        CharUnits left = LeftOffset.getOffset();
-        CharUnits right = RightOffset.getOffset();
+    // Compare the regions using the raw offsets.
+    RegionOffset LeftOffset = LeftMR->getAsOffset();
+    RegionOffset RightOffset = RightMR->getAsOffset();
 
-        switch (op) {
+    if (LeftOffset.getRegion() != NULL &&
+        LeftOffset.getRegion() == RightOffset.getRegion() &&
+        !LeftOffset.hasSymbolicOffset() && !RightOffset.hasSymbolicOffset()) {
+      int64_t left = LeftOffset.getOffset();
+      int64_t right = RightOffset.getOffset();
+
+      switch (op) {
         default:
           return UnknownVal();
         case BO_LT:
@@ -763,60 +818,7 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
           return makeTruthVal(left == right, resultTy);
         case BO_NE:
           return makeTruthVal(left != right, resultTy);
-        }
       }
-
-      // If we get here, we have no way of comparing the ElementRegions.
-    }
-
-    // See if both regions are fields of the same structure.
-    // FIXME: This doesn't handle nesting, inheritance, or Objective-C ivars.
-    if (const FieldRegion *LeftFR = dyn_cast<FieldRegion>(LeftMR)) {
-      // Only comparisons are meaningful here!
-      if (!BinaryOperator::isComparisonOp(op))
-        return UnknownVal();
-
-      // First see if the right region is also a FieldRegion.
-      const FieldRegion *RightFR = dyn_cast<FieldRegion>(RightMR);
-      if (!RightFR)
-        return UnknownVal();
-
-      // Next, see if the two FRs have the same super-region.
-      // FIXME: This doesn't handle casts yet, and simply stripping the casts
-      // doesn't help.
-      if (LeftFR->getSuperRegion() != RightFR->getSuperRegion())
-        return UnknownVal();
-
-      const FieldDecl *LeftFD = LeftFR->getDecl();
-      const FieldDecl *RightFD = RightFR->getDecl();
-      const RecordDecl *RD = LeftFD->getParent();
-
-      // Make sure the two FRs are from the same kind of record. Just in case!
-      // FIXME: This is probably where inheritance would be a problem.
-      if (RD != RightFD->getParent())
-        return UnknownVal();
-
-      // We know for sure that the two fields are not the same, since that
-      // would have given us the same SVal.
-      if (op == BO_EQ)
-        return makeTruthVal(false, resultTy);
-      if (op == BO_NE)
-        return makeTruthVal(true, resultTy);
-
-      // Iterate through the fields and see which one comes first.
-      // [C99 6.7.2.1.13] "Within a structure object, the non-bit-field
-      // members and the units in which bit-fields reside have addresses that
-      // increase in the order in which they are declared."
-      bool leftFirst = (op == BO_LT || op == BO_LE);
-      for (RecordDecl::field_iterator I = RD->field_begin(),
-           E = RD->field_end(); I!=E; ++I) {
-        if (*I == LeftFD)
-          return makeTruthVal(leftFirst, resultTy);
-        if (*I == RightFD)
-          return makeTruthVal(!leftFirst, resultTy);
-      }
-
-      llvm_unreachable("Fields not found in parent record's definition");
     }
 
     // At this point we're not going to get a good answer, but we can try
