@@ -1077,7 +1077,7 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return Left.FormatTok->Tok.isLiteral() ||
            ((Left.Type != TT_PointerOrReference) && Left.isNot(tok::l_paren) &&
             !Style.PointerBindsToType);
-  if (Right.Type == TT_FunctionTypeLParen &&
+  if (Right.Type == TT_FunctionTypeLParen && Left.isNot(tok::l_paren) &&
       (Left.Type != TT_PointerOrReference || Style.PointerBindsToType))
     return true;
   if (Left.Type == TT_PointerOrReference)
