@@ -1,5 +1,5 @@
 ; RUN: %lli_mcjit -remote-mcjit -disable-lazy-compilation=false %s
-; XFAIL: arm, mips
+; XFAIL:  mips
 
 define i32 @main() nounwind {
 entry:

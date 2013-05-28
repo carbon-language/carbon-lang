@@ -1,5 +1,5 @@
 ; RUN: %lli_mcjit -remote-mcjit %s > /dev/null
-; XFAIL: arm, mips
+; XFAIL:  mips
 
 define double @test(double* %DP, double %Arg) {
 	%D = load double* %DP		; <double> [#uses=1]

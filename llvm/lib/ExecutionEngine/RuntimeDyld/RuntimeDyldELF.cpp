@@ -377,13 +377,14 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
   }
 }
 
-// FIXME: PR16013: this routine needs modification to handle repeated relocations.
 void RuntimeDyldELF::resolveARMRelocation(const SectionEntry &Section,
                                           uint64_t Offset,
                                           uint32_t Value,
                                           uint32_t Type,
                                           int32_t Addend) {
   // TODO: Add Thumb relocations.
+  uint32_t *Placeholder = reinterpret_cast<uint32_t*>(Section.ObjAddress +
+                                                      Offset);
   uint32_t* TargetPtr = (uint32_t*)(Section.Address + Offset);
   uint32_t FinalAddress = ((Section.LoadAddress + Offset) & 0xFFFFFFFF);
   Value += Addend;
@@ -402,42 +403,49 @@ void RuntimeDyldELF::resolveARMRelocation(const SectionEntry &Section,
 
   // Write a 32bit value to relocation address, taking into account the
   // implicit addend encoded in the target.
-  case ELF::R_ARM_TARGET1 :
-  case ELF::R_ARM_ABS32 :
-    *TargetPtr += Value;
+  case ELF::R_ARM_TARGET1:
+  case ELF::R_ARM_ABS32:
+    *TargetPtr = *Placeholder + Value;
     break;
-
   // Write first 16 bit of 32 bit value to the mov instruction.
   // Last 4 bit should be shifted.
-  case ELF::R_ARM_MOVW_ABS_NC :
+  case ELF::R_ARM_MOVW_ABS_NC:
     // We are not expecting any other addend in the relocation address.
     // Using 0x000F0FFF because MOVW has its 16 bit immediate split into 2
     // non-contiguous fields.
+    assert((*Placeholder & 0x000F0FFF) == 0);
     Value = Value & 0xFFFF;
-    *TargetPtr &= ~0x000F0FFF; // Not really right; see FIXME at top.
-    *TargetPtr |= Value & 0xFFF;
+    *TargetPtr = *Placeholder | (Value & 0xFFF);
     *TargetPtr |= ((Value >> 12) & 0xF) << 16;
     break;
-
   // Write last 16 bit of 32 bit value to the mov instruction.
   // Last 4 bit should be shifted.
-  case ELF::R_ARM_MOVT_ABS :
+  case ELF::R_ARM_MOVT_ABS:
     // We are not expecting any other addend in the relocation address.
     // Use 0x000F0FFF for the same reason as R_ARM_MOVW_ABS_NC.
+    assert((*Placeholder & 0x000F0FFF) == 0);
+
     Value = (Value >> 16) & 0xFFFF;
-    *TargetPtr &= ~0x000F0FFF; // Not really right; see FIXME at top.
-    *TargetPtr |= Value & 0xFFF;
+    *TargetPtr = *Placeholder | (Value & 0xFFF);
     *TargetPtr |= ((Value >> 12) & 0xF) << 16;
     break;
-
   // Write 24 bit relative value to the branch instruction.
   case ELF::R_ARM_PC24 :    // Fall through.
   case ELF::R_ARM_CALL :    // Fall through.
-  case ELF::R_ARM_JUMP24 :
+  case ELF::R_ARM_JUMP24: {
     int32_t RelValue = static_cast<int32_t>(Value - FinalAddress - 8);
     RelValue = (RelValue & 0x03FFFFFC) >> 2;
+    assert((*TargetPtr & 0xFFFFFF) == 0xFFFFFE);
     *TargetPtr &= 0xFF000000;
     *TargetPtr |= RelValue;
+    break;
+  }
+  case ELF::R_ARM_PRIVATE_0:
+    // This relocation is reserved by the ARM ELF ABI for internal use. We
+    // appropriate it here to act as an R_ARM_ABS32 without any addend for use
+    // in the stubs created during JIT (which can't put an addend into the
+    // original object file).
+    *TargetPtr = Value;
     break;
   }
 }
@@ -898,7 +906,7 @@ void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
       uint8_t *StubTargetAddr = createStubFunction(Section.Address +
                                                    Section.StubOffset);
       RelocationEntry RE(SectionID, StubTargetAddr - Section.Address,
-                         ELF::R_ARM_ABS32, Value.Addend);
+                         ELF::R_ARM_PRIVATE_0, Value.Addend);
       if (Value.SymbolName)
         addRelocationForSymbol(RE, Value.SymbolName);
       else

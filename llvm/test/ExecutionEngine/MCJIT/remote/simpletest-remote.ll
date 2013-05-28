@@ -1,5 +1,5 @@
 ; RUN: %lli_mcjit -remote-mcjit %s > /dev/null
-; XFAIL: arm, mips
+; XFAIL:  mips
 
 define i32 @bar() {
 	ret i32 0
