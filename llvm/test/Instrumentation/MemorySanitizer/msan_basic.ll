@@ -1,5 +1,7 @@
 ; RUN: opt < %s -msan -msan-check-access-address=0 -S | FileCheck %s
 ; RUN: opt < %s -msan -msan-check-access-address=0 -msan-track-origins=1 -S | FileCheck -check-prefix=CHECK-ORIGINS %s
+; RUN: opt < %s -msan -msan-check-access-address=1 -S | FileCheck %s -check-prefix=CHECK-AA
+
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
@@ -633,3 +635,41 @@ declare void @bar()
 ; CHECK: store {{.*}} @__msan_retval_tls
 ; CHECK-NOT: @__msan_warning
 ; CHECK: ret i32
+
+
+; Test argument shadow alignment
+
+define <2 x i64> @ArgumentShadowAlignment(i64 %a, <2 x i64> %b) sanitize_memory {
+entry:
+  ret <2 x i64> %b
+}
+
+; CHECK: @ArgumentShadowAlignment
+; CHECK: load <2 x i64>* {{.*}} @__msan_param_tls {{.*}}, align 8
+; CHECK: store <2 x i64> {{.*}} @__msan_retval_tls {{.*}}, align 8
+; CHECK: ret <2 x i64>
+
+
+; Test byval argument shadow alignment
+
+define <2 x i64> @ByValArgumentShadowLargeAlignment(<2 x i64>* byval %p) sanitize_memory {
+entry:
+  %x = load <2 x i64>* %p
+  ret <2 x i64> %x
+}
+
+; CHECK-AA: @ByValArgumentShadowLargeAlignment
+; CHECK-AA: call void @llvm.memcpy.p0i8.p0i8.i64(i8* {{.*}}, i8* {{.*}}, i64 16, i32 8, i1 false)
+; CHECK-AA: ret <2 x i64>
+
+
+define i16 @ByValArgumentShadowSmallAlignment(i16* byval %p) sanitize_memory {
+entry:
+  %x = load i16* %p
+  ret i16 %x
+}
+
+; CHECK-AA: @ByValArgumentShadowSmallAlignment
+; CHECK-AA: call void @llvm.memcpy.p0i8.p0i8.i64(i8* {{.*}}, i8* {{.*}}, i64 2, i32 2, i1 false)
+; CHECK-AA: ret i16
+
