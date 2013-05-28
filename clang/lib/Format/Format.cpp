@@ -1087,60 +1087,73 @@ private:
   unsigned Count;
 };
 
-class LexerBasedFormatTokenSource : public FormatTokenSource {
+class FormatTokenLexer {
 public:
-  LexerBasedFormatTokenSource(Lexer &Lex, SourceManager &SourceMgr)
-      : GreaterStashed(false), TrailingWhitespace(0), Lex(Lex),
+  FormatTokenLexer(Lexer &Lex, SourceManager &SourceMgr)
+      : FormatTok(NULL), GreaterStashed(false), TrailingWhitespace(0), Lex(Lex),
         SourceMgr(SourceMgr), IdentTable(Lex.getLangOpts()) {
     Lex.SetKeepWhitespaceMode(true);
   }
 
-  virtual FormatToken getNextToken() {
+  ArrayRef<FormatToken *> lex() {
+    assert(Tokens.empty());
+    do {
+      Tokens.push_back(getNextToken());
+    } while (Tokens.back()->Tok.isNot(tok::eof));
+    return Tokens;
+  }
+
+  IdentifierTable &getIdentTable() { return IdentTable; }
+
+private:
+  FormatToken *getNextToken() {
     if (GreaterStashed) {
-      FormatTok.NewlinesBefore = 0;
+      FormatTok = new (Allocator.Allocate()) FormatToken(*FormatTok);
+      FormatTok->NewlinesBefore = 0;
       SourceLocation GreaterLocation =
-          FormatTok.Tok.getLocation().getLocWithOffset(1);
-      FormatTok.WhitespaceRange = SourceRange(GreaterLocation, GreaterLocation);
+          FormatTok->Tok.getLocation().getLocWithOffset(1);
+      FormatTok->WhitespaceRange =
+          SourceRange(GreaterLocation, GreaterLocation);
       GreaterStashed = false;
       return FormatTok;
     }
 
-    FormatTok = FormatToken();
-    Lex.LexFromRawLexer(FormatTok.Tok);
-    StringRef Text = rawTokenText(FormatTok.Tok);
+    FormatTok = new (Allocator.Allocate()) FormatToken;
+    Lex.LexFromRawLexer(FormatTok->Tok);
+    StringRef Text = rawTokenText(FormatTok->Tok);
     SourceLocation WhitespaceStart =
-        FormatTok.Tok.getLocation().getLocWithOffset(-TrailingWhitespace);
+        FormatTok->Tok.getLocation().getLocWithOffset(-TrailingWhitespace);
     if (SourceMgr.getFileOffset(WhitespaceStart) == 0)
-      FormatTok.IsFirst = true;
+      FormatTok->IsFirst = true;
 
     // Consume and record whitespace until we find a significant token.
     unsigned WhitespaceLength = TrailingWhitespace;
-    while (FormatTok.Tok.is(tok::unknown)) {
+    while (FormatTok->Tok.is(tok::unknown)) {
       unsigned Newlines = Text.count('\n');
       if (Newlines > 0)
-        FormatTok.LastNewlineOffset = WhitespaceLength + Text.rfind('\n') + 1;
+        FormatTok->LastNewlineOffset = WhitespaceLength + Text.rfind('\n') + 1;
       unsigned EscapedNewlines = Text.count("\\\n");
-      FormatTok.NewlinesBefore += Newlines;
-      FormatTok.HasUnescapedNewline |= EscapedNewlines != Newlines;
-      WhitespaceLength += FormatTok.Tok.getLength();
+      FormatTok->NewlinesBefore += Newlines;
+      FormatTok->HasUnescapedNewline |= EscapedNewlines != Newlines;
+      WhitespaceLength += FormatTok->Tok.getLength();
 
-      if (FormatTok.Tok.is(tok::eof)) {
-        FormatTok.WhitespaceRange =
+      if (FormatTok->Tok.is(tok::eof)) {
+        FormatTok->WhitespaceRange =
             SourceRange(WhitespaceStart,
                         WhitespaceStart.getLocWithOffset(WhitespaceLength));
         return FormatTok;
       }
-      Lex.LexFromRawLexer(FormatTok.Tok);
-      Text = rawTokenText(FormatTok.Tok);
+      Lex.LexFromRawLexer(FormatTok->Tok);
+      Text = rawTokenText(FormatTok->Tok);
     }
 
     // Now FormatTok is the next non-whitespace token.
-    FormatTok.TokenLength = Text.size();
+    FormatTok->TokenLength = Text.size();
 
     TrailingWhitespace = 0;
-    if (FormatTok.Tok.is(tok::comment)) {
+    if (FormatTok->Tok.is(tok::comment)) {
       TrailingWhitespace = Text.size() - Text.rtrim().size();
-      FormatTok.TokenLength -= TrailingWhitespace;
+      FormatTok->TokenLength -= TrailingWhitespace;
     }
 
     // In case the token starts with escaped newlines, we want to
@@ -1151,41 +1164,40 @@ public:
     // FIXME: Add a more explicit test.
     unsigned i = 0;
     while (i + 1 < Text.size() && Text[i] == '\\' && Text[i + 1] == '\n') {
-      // FIXME: ++FormatTok.NewlinesBefore is missing...
+      // FIXME: ++FormatTok->NewlinesBefore is missing...
       WhitespaceLength += 2;
-      FormatTok.TokenLength -= 2;
+      FormatTok->TokenLength -= 2;
       i += 2;
     }
 
-    if (FormatTok.Tok.is(tok::raw_identifier)) {
+    if (FormatTok->Tok.is(tok::raw_identifier)) {
       IdentifierInfo &Info = IdentTable.get(Text);
-      FormatTok.Tok.setIdentifierInfo(&Info);
-      FormatTok.Tok.setKind(Info.getTokenID());
+      FormatTok->Tok.setIdentifierInfo(&Info);
+      FormatTok->Tok.setKind(Info.getTokenID());
     }
 
-    if (FormatTok.Tok.is(tok::greatergreater)) {
-      FormatTok.Tok.setKind(tok::greater);
-      FormatTok.TokenLength = 1;
+    if (FormatTok->Tok.is(tok::greatergreater)) {
+      FormatTok->Tok.setKind(tok::greater);
+      FormatTok->TokenLength = 1;
       GreaterStashed = true;
     }
 
-    FormatTok.WhitespaceRange = SourceRange(
+    FormatTok->WhitespaceRange = SourceRange(
         WhitespaceStart, WhitespaceStart.getLocWithOffset(WhitespaceLength));
-    FormatTok.TokenText = StringRef(
-        SourceMgr.getCharacterData(FormatTok.getStartOfNonWhitespace()),
-        FormatTok.TokenLength);
+    FormatTok->TokenText = StringRef(
+        SourceMgr.getCharacterData(FormatTok->getStartOfNonWhitespace()),
+        FormatTok->TokenLength);
     return FormatTok;
   }
 
-  IdentifierTable &getIdentTable() { return IdentTable; }
-
-private:
-  FormatToken FormatTok;
+  FormatToken *FormatTok;
   bool GreaterStashed;
   unsigned TrailingWhitespace;
   Lexer &Lex;
   SourceManager &SourceMgr;
   IdentifierTable IdentTable;
+  llvm::SpecificBumpPtrAllocator<FormatToken> Allocator;
+  SmallVector<FormatToken *, 16> Tokens;
 
   /// Returns the text of \c FormatTok.
   StringRef rawTokenText(Token &Tok) {
@@ -1204,8 +1216,9 @@ public:
   virtual ~Formatter() {}
 
   tooling::Replacements format() {
-    LexerBasedFormatTokenSource Tokens(Lex, SourceMgr);
-    UnwrappedLineParser Parser(Style, Tokens, *this);
+    FormatTokenLexer Tokens(Lex, SourceMgr);
+
+    UnwrappedLineParser Parser(Style, Tokens.lex(), *this);
     bool StructuralError = Parser.parse();
     TokenAnnotator Annotator(Style, SourceMgr, Lex,
                              Tokens.getIdentTable().get("in"));

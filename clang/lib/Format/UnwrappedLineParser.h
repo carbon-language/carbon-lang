@@ -111,24 +111,11 @@ public:
   virtual void consumeUnwrappedLine(const UnwrappedLine &Line) = 0;
 };
 
-class FormatTokenSource {
-public:
-  virtual ~FormatTokenSource() {
-  }
-  virtual FormatToken getNextToken() = 0;
-
-  // FIXME: This interface will become an implementation detail of
-  // the UnwrappedLineParser once we switch to generate all tokens
-  // up-front.
-  virtual unsigned getPosition() { return 0; }
-  virtual FormatToken setPosition(unsigned Position) {
-    llvm_unreachable("Interface in transition; do not call!");
-  }
-};
+class FormatTokenSource;
 
 class UnwrappedLineParser {
 public:
-  UnwrappedLineParser(const FormatStyle &Style, FormatTokenSource &Tokens,
+  UnwrappedLineParser(const FormatStyle &Style, ArrayRef<FormatToken *> Tokens,
                       UnwrappedLineConsumer &Callback);
 
   /// Returns true in case of a structural error.
@@ -170,7 +157,7 @@ private:
   void nextToken();
   void readToken();
   void flushComments(bool NewlineBeforeNext);
-  void pushToken(const FormatToken &Tok);
+  void pushToken(FormatToken *Tok);
   void calculateBraceTypes();
   void pushPPConditional();
 
@@ -190,8 +177,8 @@ private:
   // line as the previous token, or not. If not, they belong to the next token.
   // Since the next token might already be in a new unwrapped line, we need to
   // store the comments belonging to that token.
-  SmallVector<FormatToken, 1> CommentsBeforeNextToken;
-  FormatToken FormatTok;
+  SmallVector<FormatToken *, 1> CommentsBeforeNextToken;
+  FormatToken *FormatTok;
   bool MustBreakBeforeNextToken;
 
   // The parsed lines. Only added to through \c CurrentLines.
@@ -223,7 +210,7 @@ private:
   // FIXME: This is a temporary measure until we have reworked the ownership
   // of the format tokens. The goal is to have the actual tokens created and
   // owned outside of and handed into the UnwrappedLineParser.
-  SmallVector<FormatToken, 16> AllTokens;
+  ArrayRef<FormatToken *> AllTokens;
 
   // FIXME: Currently we cannot store attributes with tokens, as we treat
   // them as read-only; thus, we now store the brace state indexed by the
