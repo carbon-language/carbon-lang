@@ -771,6 +771,13 @@ TEST_F(FormatTest, AlignsMultiLineComments) {
             format("  /*\n"
                    " Don't try to outdent if there's not enough inentation.\n"
                    " */"));
+
+  EXPECT_EQ("int i; /* Comment with empty...\n"
+            "        *\n"
+            "        * line. */",
+            format("int i; /* Comment with empty...\n"
+                   "        *\n"
+                   "        * line. */"));
 }
 
 TEST_F(FormatTest, SplitsLongCxxComments) {

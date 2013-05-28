@@ -321,8 +321,17 @@ BreakableBlockComment::replaceWhitespaceBefore(unsigned LineIndex,
   if (LineIndex == 0)
     return;
   StringRef Prefix = Decoration;
-  if (LineIndex + 1 == Lines.size() && Lines[LineIndex].empty())
-    Prefix = "";
+  if (Lines[LineIndex].empty()) {
+    if (LineIndex + 1 == Lines.size()) {
+      // If the last line is empty, we don't need a prefix, as the */ will line
+      // up with the decoration (if it exists).
+      Prefix = "";
+    } else if (!Decoration.empty()) {
+      // For other empty lines, if we do have a decoration, adapt it to not
+      // contain a trailing whitespace.
+      Prefix = Prefix.substr(0, 1);
+    }
+  }
 
   unsigned WhitespaceOffsetInToken =
       Lines[LineIndex].data() - Tok.TokenText.data() -
