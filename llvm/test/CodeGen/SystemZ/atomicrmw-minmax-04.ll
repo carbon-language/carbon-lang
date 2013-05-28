@@ -7,9 +7,8 @@ define i64 @f1(i64 %dummy, i64 *%src, i64 %b) {
 ; CHECK: f1:
 ; CHECK: lg %r2, 0(%r3)
 ; CHECK: [[LOOP:\.[^:]*]]:
-; CHECK: cgr %r2, %r4
 ; CHECK: lgr [[NEW:%r[0-9]+]], %r2
-; CHECK: jle [[KEEP:\..*]]
+; CHECK: cgrjle %r2, %r4, [[KEEP:\..*]]
 ; CHECK: lgr [[NEW]], %r4
 ; CHECK: csg %r2, [[NEW]], 0(%r3)
 ; CHECK: jlh [[LOOP]]
@@ -23,9 +22,8 @@ define i64 @f2(i64 %dummy, i64 *%src, i64 %b) {
 ; CHECK: f2:
 ; CHECK: lg %r2, 0(%r3)
 ; CHECK: [[LOOP:\.[^:]*]]:
-; CHECK: cgr %r2, %r4
 ; CHECK: lgr [[NEW:%r[0-9]+]], %r2
-; CHECK: jhe [[KEEP:\..*]]
+; CHECK: cgrjhe %r2, %r4, [[KEEP:\..*]]
 ; CHECK: lgr [[NEW]], %r4
 ; CHECK: csg %r2, [[NEW]], 0(%r3)
 ; CHECK: jlh [[LOOP]]
@@ -131,9 +129,8 @@ define i64 @f10(i64 %dummy, i64 *%ptr) {
 ; CHECK: lghi [[LIMIT:%r[0-9]+]], 42
 ; CHECK: lg %r2, 0(%r3)
 ; CHECK: [[LOOP:\.[^:]*]]:
-; CHECK: cgr %r2, [[LIMIT]]
 ; CHECK: lgr [[NEW:%r[0-9]+]], %r2
-; CHECK: jle [[KEEP:\..*]]
+; CHECK: cgrjle %r2, [[LIMIT]], [[KEEP:\..*]]
 ; CHECK: lgr [[NEW]], [[LIMIT]]
 ; CHECK: csg %r2, [[NEW]], 0(%r3)
 ; CHECK: jlh [[LOOP]]

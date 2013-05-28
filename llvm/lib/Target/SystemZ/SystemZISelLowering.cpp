@@ -1609,6 +1609,33 @@ static MachineBasicBlock *splitBlockAfter(MachineInstr *MI,
   return NewMBB;
 }
 
+bool SystemZTargetLowering::
+convertPrevCompareToBranch(MachineBasicBlock *MBB,
+                           MachineBasicBlock::iterator MBBI,
+                           unsigned CCMask, MachineBasicBlock *Target) const {
+  MachineBasicBlock::iterator Compare = MBBI;
+  MachineBasicBlock::iterator Begin = MBB->begin();
+  do
+    {
+      if (Compare == Begin)
+        return false;
+      --Compare;
+    }
+  while (Compare->isDebugValue());
+
+  const SystemZInstrInfo *TII = TM.getInstrInfo();
+  unsigned FusedOpcode = TII->getCompareAndBranch(Compare->getOpcode());
+  if (!FusedOpcode)
+    return false;
+
+  DebugLoc DL = Compare->getDebugLoc();
+  BuildMI(*MBB, MBBI, DL, TII->get(FusedOpcode))
+    .addOperand(Compare->getOperand(0)).addOperand(Compare->getOperand(1))
+    .addImm(CCMask).addMBB(Target);
+  Compare->removeFromParent();
+  return true;
+}
+
 // Implement EmitInstrWithCustomInserter for pseudo Select* instruction MI.
 MachineBasicBlock *
 SystemZTargetLowering::emitSelect(MachineInstr *MI,
@@ -1626,13 +1653,17 @@ SystemZTargetLowering::emitSelect(MachineInstr *MI,
   MachineBasicBlock *FalseMBB = emitBlockAfter(StartMBB);
 
   //  StartMBB:
-  //   ...
-  //   TrueVal = ...
-  //   cmpTY ccX, r1, r2
-  //   jCC JoinMBB
+  //   BRC CCMask, JoinMBB
   //   # fallthrough to FalseMBB
+  //
+  // The original DAG glues comparisons to their uses, both to ensure
+  // that no CC-clobbering instructions are inserted between them, and
+  // to ensure that comparison results are not reused.  This means that
+  // this Select is the sole user of any preceding comparison instruction
+  // and that we can try to use a fused compare and branch instead.
   MBB = StartMBB;
-  BuildMI(MBB, DL, TII->get(SystemZ::BRC)).addImm(CCMask).addMBB(JoinMBB);
+  if (!convertPrevCompareToBranch(MBB, MI, CCMask, JoinMBB))
+    BuildMI(MBB, DL, TII->get(SystemZ::BRC)).addImm(CCMask).addMBB(JoinMBB);
   MBB->addSuccessor(JoinMBB);
   MBB->addSuccessor(FalseMBB);
 
@@ -1854,10 +1885,17 @@ SystemZTargetLowering::emitAtomicLoadMinMax(MachineInstr *MI,
   if (IsSubWord)
     BuildMI(MBB, DL, TII->get(SystemZ::RLL), RotatedOldVal)
       .addReg(OldVal).addReg(BitShift).addImm(0);
-  BuildMI(MBB, DL, TII->get(CompareOpcode))
-    .addReg(RotatedOldVal).addReg(Src2);
-  BuildMI(MBB, DL, TII->get(SystemZ::BRC))
-    .addImm(KeepOldMask).addMBB(UpdateMBB);
+  unsigned FusedOpcode = TII->getCompareAndBranch(CompareOpcode);
+  if (FusedOpcode)
+    BuildMI(MBB, DL, TII->get(FusedOpcode))
+      .addReg(RotatedOldVal).addReg(Src2)
+      .addImm(KeepOldMask).addMBB(UpdateMBB);
+  else {
+    BuildMI(MBB, DL, TII->get(CompareOpcode))
+      .addReg(RotatedOldVal).addReg(Src2);
+    BuildMI(MBB, DL, TII->get(SystemZ::BRC))
+      .addImm(KeepOldMask).addMBB(UpdateMBB);
+  }
   MBB->addSuccessor(UpdateMBB);
   MBB->addSuccessor(UseAltMBB);
 
@@ -1959,8 +1997,7 @@ SystemZTargetLowering::emitAtomicCmpSwapW(MachineInstr *MI,
   //                      ^^ Replace the upper 32-BitSize bits of the
   //                         comparison value with those that we loaded,
   //                         so that we can use a full word comparison.
-  //   CR %Dest, %RetryCmpVal
-  //   JNE DoneMBB
+  //   CRJNE %Dest, %RetryCmpVal, DoneMBB
   //   # Fall through to SetMBB
   MBB = LoopMBB;
   BuildMI(MBB, DL, TII->get(SystemZ::PHI), OldVal)
@@ -1976,9 +2013,9 @@ SystemZTargetLowering::emitAtomicCmpSwapW(MachineInstr *MI,
     .addReg(OldVal).addReg(BitShift).addImm(BitSize);
   BuildMI(MBB, DL, TII->get(SystemZ::RISBG32), RetryCmpVal)
     .addReg(CmpVal).addReg(Dest).addImm(32).addImm(63 - BitSize).addImm(0);
-  BuildMI(MBB, DL, TII->get(SystemZ::CR))
-    .addReg(Dest).addReg(RetryCmpVal);
-  BuildMI(MBB, DL, TII->get(SystemZ::BRC)).addImm(MaskNE).addMBB(DoneMBB);
+  BuildMI(MBB, DL, TII->get(SystemZ::CRJ))
+    .addReg(Dest).addReg(RetryCmpVal)
+    .addImm(MaskNE).addMBB(DoneMBB);
   MBB->addSuccessor(DoneMBB);
   MBB->addSuccessor(SetMBB);
 
@@ -2227,6 +2264,16 @@ EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
 
   case SystemZ::ATOMIC_CMP_SWAPW:
     return emitAtomicCmpSwapW(MI, MBB);
+  case SystemZ::BRC:
+    // The original DAG glues comparisons to their uses, both to ensure
+    // that no CC-clobbering instructions are inserted between them, and
+    // to ensure that comparison results are not reused.  This means that
+    // a BRC is the sole user of a preceding comparison and that we can
+    // try to use a fused compare and branch instead.
+    if (convertPrevCompareToBranch(MBB, MI, MI->getOperand(0).getImm(),
+                                   MI->getOperand(1).getMBB()))
+      MI->eraseFromParent();
+    return MBB;
   default:
     llvm_unreachable("Unexpected instr type to insert");
   }

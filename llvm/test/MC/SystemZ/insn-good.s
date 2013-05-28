@@ -1523,6 +1523,236 @@
 	cgr	%r15,%r0
 	cgr	%r7,%r8
 
+#CHECK: cgrj	%r0, %r0, 0, .[[LAB:L.*]]	# encoding: [0xec,0x00,A,A,0x00,0x64]
+#CHECK:  fixup A - offset: 2, value: .[[LAB]]+2, kind: FK_390_PC16DBL
+#CHECK: cgrj	%r0, %r15, 0, .[[LAB:L.*]]	# encoding: [0xec,0x0f,A,A,0x00,0x64]
+#CHECK:  fixup A - offset: 2, value: .[[LAB]]+2, kind: FK_390_PC16DBL
+#CHECK: cgrj	%r15, %r0, 0, .[[LAB:L.*]]	# encoding: [0xec,0xf0,A,A,0x00,0x64]
+#CHECK:  fixup A - offset: 2, value: .[[LAB]]+2, kind: FK_390_PC16DBL
+#CHECK: cgrj	%r7, %r8, 0, .[[LAB:L.*]]	# encoding: [0xec,0x78,A,A,0x00,0x64]
+#CHECK:  fixup A - offset: 2, value: .[[LAB]]+2, kind: FK_390_PC16DBL
+	cgrj	%r0,%r0,0,0
+	cgrj	%r0,%r15,0,0
+	cgrj	%r15,%r0,0,0
+	cgrj	%r7,%r8,0,0
+
+#CHECK: cgrj	%r1, %r2, 0, .[[LAB:L.*]]-65536	# encoding: [0xec,0x12,A,A,0x00,0x64]
+#CHECK:  fixup A - offset: 2, value: (.[[LAB]]-65536)+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 0, -0x10000
+#CHECK: cgrj	%r1, %r2, 0, .[[LAB:L.*]]-2	# encoding: [0xec,0x12,A,A,0x00,0x64]
+#CHECK:  fixup A - offset: 2, value: (.[[LAB]]-2)+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 0, -2
+#CHECK: cgrj	%r1, %r2, 0, .[[LAB:L.*]]		# encoding: [0xec,0x12,A,A,0x00,0x64]
+#CHECK:  fixup A - offset: 2, value: .[[LAB]]+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 0, 0
+#CHECK: cgrj	%r1, %r2, 0, .[[LAB:L.*]]+65534	# encoding: [0xec,0x12,A,A,0x00,0x64]
+#CHECK:  fixup A - offset: 2, value: (.[[LAB]]+65534)+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 0, 0xfffe
+
+#CHECK: cgrj	%r1, %r2, 0, foo                  # encoding: [0xec,0x12,A,A,0x00,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 0, foo
+
+#CHECK: cgrj	%r1, %r2, 1, foo                  # encoding: [0xec,0x12,A,A,0x10,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 1, foo
+
+#CHECK: cgrj	%r1, %r2, 2, foo                  # encoding: [0xec,0x12,A,A,0x20,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: cgrjh	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0x20,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: cgrjnle	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0x20,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 2, foo
+	cgrjh	%r1, %r2, foo
+	cgrjnle	%r1, %r2, foo
+
+#CHECK: cgrj	%r1, %r2, 3, foo                  # encoding: [0xec,0x12,A,A,0x30,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 3, foo
+
+#CHECK: cgrj	%r1, %r2, 4, foo                  # encoding: [0xec,0x12,A,A,0x40,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: cgrjl	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0x40,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: cgrjnhe	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0x40,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 4, foo
+	cgrjl	%r1, %r2, foo
+	cgrjnhe	%r1, %r2, foo
+
+#CHECK: cgrj	%r1, %r2, 5, foo                  # encoding: [0xec,0x12,A,A,0x50,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 5, foo
+
+#CHECK: cgrj	%r1, %r2, 6, foo                  # encoding: [0xec,0x12,A,A,0x60,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: cgrjlh	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0x60,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: cgrjne	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0x60,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 6, foo
+	cgrjlh	%r1, %r2, foo
+	cgrjne	%r1, %r2, foo
+
+#CHECK: cgrj	%r1, %r2, 7, foo                  # encoding: [0xec,0x12,A,A,0x70,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 7, foo
+
+#CHECK: cgrj	%r1, %r2, 8, foo                  # encoding: [0xec,0x12,A,A,0x80,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: cgrje	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0x80,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: cgrjnlh	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0x80,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 8, foo
+	cgrje	%r1, %r2, foo
+	cgrjnlh	%r1, %r2, foo
+
+#CHECK: cgrj	%r1, %r2, 9, foo                  # encoding: [0xec,0x12,A,A,0x90,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 9, foo
+
+#CHECK: cgrj	%r1, %r2, 10, foo                 # encoding: [0xec,0x12,A,A,0xa0,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: cgrjhe	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0xa0,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: cgrjnl	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0xa0,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 10, foo
+	cgrjhe	%r1, %r2, foo
+	cgrjnl	%r1, %r2, foo
+
+#CHECK: cgrj	%r1, %r2, 11, foo                 # encoding: [0xec,0x12,A,A,0xb0,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 11, foo
+
+#CHECK: cgrj	%r1, %r2, 12, foo                 # encoding: [0xec,0x12,A,A,0xc0,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: cgrjle	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0xc0,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: cgrjnh	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0xc0,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 12, foo
+	cgrjle	%r1, %r2, foo
+	cgrjnh	%r1, %r2, foo
+
+#CHECK: cgrj	%r1, %r2, 13, foo                 # encoding: [0xec,0x12,A,A,0xd0,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 13, foo
+
+#CHECK: cgrj	%r1, %r2, 14, foo                 # encoding: [0xec,0x12,A,A,0xe0,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 14, foo
+
+#CHECK: cgrj	%r1, %r2, 15, foo                 # encoding: [0xec,0x12,A,A,0xf0,0x64]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 15, foo
+
+#CHECK: cgrj	%r1, %r2, 0, bar+100              # encoding: [0xec,0x12,A,A,0x00,0x64]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 0, bar+100
+
+#CHECK: cgrjh	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0x20,0x64]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	cgrjh	%r1, %r2, bar+100
+
+#CHECK: cgrjnle	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0x20,0x64]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	cgrjnle	%r1, %r2, bar+100
+
+#CHECK: cgrjl	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0x40,0x64]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	cgrjl	%r1, %r2, bar+100
+
+#CHECK: cgrjnhe	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0x40,0x64]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	cgrjnhe	%r1, %r2, bar+100
+
+#CHECK: cgrjlh	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0x60,0x64]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	cgrjlh	%r1, %r2, bar+100
+
+#CHECK: cgrjne	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0x60,0x64]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	cgrjne	%r1, %r2, bar+100
+
+#CHECK: cgrje	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0x80,0x64]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	cgrje	%r1, %r2, bar+100
+
+#CHECK: cgrjnlh	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0x80,0x64]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	cgrjnlh	%r1, %r2, bar+100
+
+#CHECK: cgrjhe	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0xa0,0x64]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	cgrjhe	%r1, %r2, bar+100
+
+#CHECK: cgrjnl	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0xa0,0x64]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	cgrjnl	%r1, %r2, bar+100
+
+#CHECK: cgrjle	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0xc0,0x64]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	cgrjle	%r1, %r2, bar+100
+
+#CHECK: cgrjnh	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0xc0,0x64]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	cgrjnh	%r1, %r2, bar+100
+
+#CHECK: cgrj	%r1, %r2, 0, bar@PLT              # encoding: [0xec,0x12,A,A,0x00,0x64]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	cgrj	%r1, %r2, 0, bar@PLT
+
+#CHECK: cgrjh	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0x20,0x64]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	cgrjh	%r1, %r2, bar@PLT
+
+#CHECK: cgrjnle	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0x20,0x64]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	cgrjnle	%r1, %r2, bar@PLT
+
+#CHECK: cgrjl	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0x40,0x64]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	cgrjl	%r1, %r2, bar@PLT
+
+#CHECK: cgrjnhe	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0x40,0x64]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	cgrjnhe	%r1, %r2, bar@PLT
+
+#CHECK: cgrjlh	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0x60,0x64]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	cgrjlh	%r1, %r2, bar@PLT
+
+#CHECK: cgrjne	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0x60,0x64]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	cgrjne	%r1, %r2, bar@PLT
+
+#CHECK: cgrje	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0x80,0x64]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	cgrje	%r1, %r2, bar@PLT
+
+#CHECK: cgrjnlh	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0x80,0x64]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	cgrjnlh	%r1, %r2, bar@PLT
+
+#CHECK: cgrjhe	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0xa0,0x64]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	cgrjhe	%r1, %r2, bar@PLT
+
+#CHECK: cgrjnl	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0xa0,0x64]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	cgrjnl	%r1, %r2, bar@PLT
+
+#CHECK: cgrjle	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0xc0,0x64]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	cgrjle	%r1, %r2, bar@PLT
+
+#CHECK: cgrjnh	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0xc0,0x64]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	cgrjnh	%r1, %r2, bar@PLT
+
 #CHECK: cgrl	%r0, .[[LAB:L.*]]-4294967296 # encoding: [0xc6,0x08,A,A,A,A]
 #CHECK:  fixup A - offset: 2, value: (.[[LAB]]-4294967296)+2, kind: FK_390_PC32DBL
 	cgrl	%r0, -0x100000000
@@ -2132,6 +2362,236 @@
 	cr	%r0,%r15
 	cr	%r15,%r0
 	cr	%r7,%r8
+
+#CHECK: crj	%r0, %r0, 0, .[[LAB:L.*]]	# encoding: [0xec,0x00,A,A,0x00,0x76]
+#CHECK:  fixup A - offset: 2, value: .[[LAB]]+2, kind: FK_390_PC16DBL
+#CHECK: crj	%r0, %r15, 0, .[[LAB:L.*]]	# encoding: [0xec,0x0f,A,A,0x00,0x76]
+#CHECK:  fixup A - offset: 2, value: .[[LAB]]+2, kind: FK_390_PC16DBL
+#CHECK: crj	%r15, %r0, 0, .[[LAB:L.*]]	# encoding: [0xec,0xf0,A,A,0x00,0x76]
+#CHECK:  fixup A - offset: 2, value: .[[LAB]]+2, kind: FK_390_PC16DBL
+#CHECK: crj	%r7, %r8, 0, .[[LAB:L.*]]	# encoding: [0xec,0x78,A,A,0x00,0x76]
+#CHECK:  fixup A - offset: 2, value: .[[LAB]]+2, kind: FK_390_PC16DBL
+	crj	%r0,%r0,0,0
+	crj	%r0,%r15,0,0
+	crj	%r15,%r0,0,0
+	crj	%r7,%r8,0,0
+
+#CHECK: crj	%r1, %r2, 0, .[[LAB:L.*]]-65536	# encoding: [0xec,0x12,A,A,0x00,0x76]
+#CHECK:  fixup A - offset: 2, value: (.[[LAB]]-65536)+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 0, -0x10000
+#CHECK: crj	%r1, %r2, 0, .[[LAB:L.*]]-2	# encoding: [0xec,0x12,A,A,0x00,0x76]
+#CHECK:  fixup A - offset: 2, value: (.[[LAB]]-2)+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 0, -2
+#CHECK: crj	%r1, %r2, 0, .[[LAB:L.*]]		# encoding: [0xec,0x12,A,A,0x00,0x76]
+#CHECK:  fixup A - offset: 2, value: .[[LAB]]+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 0, 0
+#CHECK: crj	%r1, %r2, 0, .[[LAB:L.*]]+65534	# encoding: [0xec,0x12,A,A,0x00,0x76]
+#CHECK:  fixup A - offset: 2, value: (.[[LAB]]+65534)+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 0, 0xfffe
+
+#CHECK: crj	%r1, %r2, 0, foo                  # encoding: [0xec,0x12,A,A,0x00,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 0, foo
+
+#CHECK: crj	%r1, %r2, 1, foo                  # encoding: [0xec,0x12,A,A,0x10,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 1, foo
+
+#CHECK: crj	%r1, %r2, 2, foo                  # encoding: [0xec,0x12,A,A,0x20,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: crjh	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0x20,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: crjnle	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0x20,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 2, foo
+	crjh	%r1, %r2, foo
+	crjnle	%r1, %r2, foo
+
+#CHECK: crj	%r1, %r2, 3, foo                  # encoding: [0xec,0x12,A,A,0x30,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 3, foo
+
+#CHECK: crj	%r1, %r2, 4, foo                  # encoding: [0xec,0x12,A,A,0x40,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: crjl	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0x40,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: crjnhe	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0x40,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 4, foo
+	crjl	%r1, %r2, foo
+	crjnhe	%r1, %r2, foo
+
+#CHECK: crj	%r1, %r2, 5, foo                  # encoding: [0xec,0x12,A,A,0x50,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 5, foo
+
+#CHECK: crj	%r1, %r2, 6, foo                  # encoding: [0xec,0x12,A,A,0x60,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: crjlh	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0x60,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: crjne	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0x60,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 6, foo
+	crjlh	%r1, %r2, foo
+	crjne	%r1, %r2, foo
+
+#CHECK: crj	%r1, %r2, 7, foo                  # encoding: [0xec,0x12,A,A,0x70,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 7, foo
+
+#CHECK: crj	%r1, %r2, 8, foo                  # encoding: [0xec,0x12,A,A,0x80,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: crje	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0x80,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: crjnlh	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0x80,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 8, foo
+	crje	%r1, %r2, foo
+	crjnlh	%r1, %r2, foo
+
+#CHECK: crj	%r1, %r2, 9, foo                  # encoding: [0xec,0x12,A,A,0x90,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 9, foo
+
+#CHECK: crj	%r1, %r2, 10, foo                 # encoding: [0xec,0x12,A,A,0xa0,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: crjhe	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0xa0,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: crjnl	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0xa0,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 10, foo
+	crjhe	%r1, %r2, foo
+	crjnl	%r1, %r2, foo
+
+#CHECK: crj	%r1, %r2, 11, foo                 # encoding: [0xec,0x12,A,A,0xb0,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 11, foo
+
+#CHECK: crj	%r1, %r2, 12, foo                 # encoding: [0xec,0x12,A,A,0xc0,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: crjle	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0xc0,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+#CHECK: crjnh	%r1, %r2, foo                     # encoding: [0xec,0x12,A,A,0xc0,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 12, foo
+	crjle	%r1, %r2, foo
+	crjnh	%r1, %r2, foo
+
+#CHECK: crj	%r1, %r2, 13, foo                 # encoding: [0xec,0x12,A,A,0xd0,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 13, foo
+
+#CHECK: crj	%r1, %r2, 14, foo                 # encoding: [0xec,0x12,A,A,0xe0,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 14, foo
+
+#CHECK: crj	%r1, %r2, 15, foo                 # encoding: [0xec,0x12,A,A,0xf0,0x76]
+#CHECK:  fixup A - offset: 2, value: foo+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 15, foo
+
+#CHECK: crj	%r1, %r2, 0, bar+100              # encoding: [0xec,0x12,A,A,0x00,0x76]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 0, bar+100
+
+#CHECK: crjh	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0x20,0x76]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	crjh	%r1, %r2, bar+100
+
+#CHECK: crjnle	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0x20,0x76]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	crjnle	%r1, %r2, bar+100
+
+#CHECK: crjl	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0x40,0x76]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	crjl	%r1, %r2, bar+100
+
+#CHECK: crjnhe	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0x40,0x76]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	crjnhe	%r1, %r2, bar+100
+
+#CHECK: crjlh	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0x60,0x76]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	crjlh	%r1, %r2, bar+100
+
+#CHECK: crjne	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0x60,0x76]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	crjne	%r1, %r2, bar+100
+
+#CHECK: crje	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0x80,0x76]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	crje	%r1, %r2, bar+100
+
+#CHECK: crjnlh	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0x80,0x76]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	crjnlh	%r1, %r2, bar+100
+
+#CHECK: crjhe	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0xa0,0x76]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	crjhe	%r1, %r2, bar+100
+
+#CHECK: crjnl	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0xa0,0x76]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	crjnl	%r1, %r2, bar+100
+
+#CHECK: crjle	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0xc0,0x76]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	crjle	%r1, %r2, bar+100
+
+#CHECK: crjnh	%r1, %r2, bar+100                 # encoding: [0xec,0x12,A,A,0xc0,0x76]
+#CHECK:  fixup A - offset: 2, value: (bar+100)+2, kind: FK_390_PC16DBL
+	crjnh	%r1, %r2, bar+100
+
+#CHECK: crj	%r1, %r2, 0, bar@PLT              # encoding: [0xec,0x12,A,A,0x00,0x76]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	crj	%r1, %r2, 0, bar@PLT
+
+#CHECK: crjh	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0x20,0x76]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	crjh	%r1, %r2, bar@PLT
+
+#CHECK: crjnle	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0x20,0x76]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	crjnle	%r1, %r2, bar@PLT
+
+#CHECK: crjl	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0x40,0x76]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	crjl	%r1, %r2, bar@PLT
+
+#CHECK: crjnhe	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0x40,0x76]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	crjnhe	%r1, %r2, bar@PLT
+
+#CHECK: crjlh	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0x60,0x76]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	crjlh	%r1, %r2, bar@PLT
+
+#CHECK: crjne	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0x60,0x76]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	crjne	%r1, %r2, bar@PLT
+
+#CHECK: crje	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0x80,0x76]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	crje	%r1, %r2, bar@PLT
+
+#CHECK: crjnlh	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0x80,0x76]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	crjnlh	%r1, %r2, bar@PLT
+
+#CHECK: crjhe	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0xa0,0x76]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	crjhe	%r1, %r2, bar@PLT
+
+#CHECK: crjnl	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0xa0,0x76]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	crjnl	%r1, %r2, bar@PLT
+
+#CHECK: crjle	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0xc0,0x76]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	crjle	%r1, %r2, bar@PLT
+
+#CHECK: crjnh	%r1, %r2, bar@PLT                 # encoding: [0xec,0x12,A,A,0xc0,0x76]
+#CHECK:  fixup A - offset: 2, value: bar@PLT+2, kind: FK_390_PC16DBL
+	crjnh	%r1, %r2, bar@PLT
 
 #CHECK: crl	%r0, .[[LAB:L.*]]-4294967296 # encoding: [0xc6,0x0d,A,A,A,A]
 #CHECK:  fixup A - offset: 2, value: (.[[LAB]]-4294967296)+2, kind: FK_390_PC32DBL

@@ -65,8 +65,7 @@ define double @f5(double %a, double %b, i64 %i1) {
 ; Check the next value up, which must use register comparison.
 define double @f6(double %a, double %b, i64 %i1) {
 ; CHECK: f6:
-; CHECK: cgr
-; CHECK-NEXT: jl
+; CHECK: cgrjl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp slt i64 %i1, 2147483648
@@ -125,8 +124,7 @@ define double @f10(double %a, double %b, i64 %i1) {
 ; Check the next value down, which must use register comparison.
 define double @f11(double %a, double %b, i64 %i1) {
 ; CHECK: f11:
-; CHECK: cgr
-; CHECK-NEXT: jl
+; CHECK: cgrjl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp slt i64 %i1, -2147483649

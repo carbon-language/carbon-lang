@@ -42,16 +42,32 @@ namespace SystemZII {
     // @GOT (aka @GOTENT)
     MO_GOT = (1 << 0)
   };
+  // Classifies a branch.
+  enum BranchType {
+    // An instruction that branches on the current value of CC.
+    BranchNormal,
+
+    // An instruction that peforms a 32-bit signed comparison and branches
+    // on the result.
+    BranchC,
+
+    // An instruction that peforms a 64-bit signed comparison and branches
+    // on the result.
+    BranchCG
+  };
   // Information about a branch instruction.
   struct Branch {
+    // The type of the branch.
+    BranchType Type;
+
     // CCMASK_<N> is set if the branch should be taken when CC == N.
     unsigned CCMask;
 
     // The target of the branch.
     const MachineOperand *Target;
 
-    Branch(unsigned ccMask, const MachineOperand *target)
-      : CCMask(ccMask), Target(target) {}
+    Branch(BranchType type, unsigned ccMask, const MachineOperand *target)
+      : Type(type), CCMask(ccMask), Target(target) {}
   };
 }
 
@@ -124,6 +140,10 @@ public:
   // instruction (which might be Opcode itself) or 0 if no such instruction
   // exists.
   unsigned getOpcodeForOffset(unsigned Opcode, int64_t Offset) const;
+
+  // If Opcode is a COMPARE opcode for which an associated COMPARE AND
+  // BRANCH exists, return the opcode for the latter, otherwise return 0.
+  unsigned getCompareAndBranch(unsigned Opcode) const;
 
   // Emit code before MBBI in MI to move immediate value Value into
   // physical register Reg.

@@ -5,8 +5,7 @@
 ; Check register comparison.
 define double @f1(double %a, double %b, i32 %i1, i32 %i2) {
 ; CHECK: f1:
-; CHECK: cr %r2, %r3
-; CHECK-NEXT: jl
+; CHECK: crjl %r2, %r3
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp slt i32 %i1, %i2

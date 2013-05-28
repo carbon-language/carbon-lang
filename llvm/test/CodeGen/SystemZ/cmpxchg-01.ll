@@ -18,8 +18,7 @@ define i8 @f1(i8 %dummy, i8 *%src, i8 %cmp, i8 %swap) {
 ; CHECK-MAIN: [[LOOP:\.[^ ]*]]:
 ; CHECK-MAIN: rll %r2, [[OLD]], 8([[SHIFT]])
 ; CHECK-MAIN: risbg %r4, %r2, 32, 55, 0
-; CHECK-MAIN: cr %r2, %r4
-; CHECK-MAIN: jlh [[EXIT:\.[^ ]*]]
+; CHECK-MAIN: crjlh %r2, %r4, [[EXIT:\.[^ ]*]]
 ; CHECK-MAIN: risbg %r5, %r2, 32, 55, 0
 ; CHECK-MAIN: rll [[NEW:%r[0-9]+]], %r5, -8({{%r[1-9]+}})
 ; CHECK-MAIN: cs [[OLD]], [[NEW]], 0(%r3)

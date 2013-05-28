@@ -7,9 +7,8 @@ define i32 @f1(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: f1:
 ; CHECK: l %r2, 0(%r3)
 ; CHECK: [[LOOP:\.[^:]*]]:
-; CHECK: cr %r2, %r4
 ; CHECK: lr [[NEW:%r[0-9]+]], %r2
-; CHECK: jle [[KEEP:\..*]]
+; CHECK: crjle %r2, %r4, [[KEEP:\..*]]
 ; CHECK: lr [[NEW]], %r4
 ; CHECK: cs %r2, [[NEW]], 0(%r3)
 ; CHECK: jlh [[LOOP]]
@@ -23,9 +22,8 @@ define i32 @f2(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: f2:
 ; CHECK: l %r2, 0(%r3)
 ; CHECK: [[LOOP:\.[^:]*]]:
-; CHECK: cr %r2, %r4
 ; CHECK: lr [[NEW:%r[0-9]+]], %r2
-; CHECK: jhe [[KEEP:\..*]]
+; CHECK: crjhe %r2, %r4, [[KEEP:\..*]]
 ; CHECK: lr [[NEW]], %r4
 ; CHECK: cs %r2, [[NEW]], 0(%r3)
 ; CHECK: jlh [[LOOP]]
@@ -164,9 +162,8 @@ define i32 @f13(i32 %dummy, i32 *%ptr) {
 ; CHECK: lhi [[LIMIT:%r[0-9]+]], 42
 ; CHECK: l %r2, 0(%r3)
 ; CHECK: [[LOOP:\.[^:]*]]:
-; CHECK: cr %r2, [[LIMIT]]
 ; CHECK: lr [[NEW:%r[0-9]+]], %r2
-; CHECK: jle [[KEEP:\..*]]
+; CHECK: crjle %r2, [[LIMIT]], [[KEEP:\..*]]
 ; CHECK: lr [[NEW]], [[LIMIT]]
 ; CHECK: cs %r2, [[NEW]], 0(%r3)
 ; CHECK: jlh [[LOOP]]

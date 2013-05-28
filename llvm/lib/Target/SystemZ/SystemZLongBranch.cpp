@@ -151,6 +151,7 @@ namespace {
     bool mustRelaxBranch(const TerminatorInfo &Terminator, uint64_t Address);
     bool mustRelaxABranch();
     void setWorstCaseAddresses();
+    void splitCompareBranch(MachineInstr *MI, unsigned CompareOpcode);
     void relaxBranch(TerminatorInfo &Terminator);
     void relaxBranches();
 
@@ -219,6 +220,14 @@ TerminatorInfo SystemZLongBranch::describeTerminator(MachineInstr *MI) {
     case SystemZ::BRC:
       // Relaxes to BRCL, which is 2 bytes longer.
       Terminator.ExtraRelaxSize = 2;
+      break;
+    case SystemZ::CRJ:
+      // Relaxes to a CR/BRCL sequence, which is 2 bytes longer.
+      Terminator.ExtraRelaxSize = 2;
+      break;
+    case SystemZ::CGRJ:
+      // Relaxes to a CGR/BRCL sequence, which is 4 bytes longer.
+      Terminator.ExtraRelaxSize = 4;
       break;
     default:
       llvm_unreachable("Unrecognized branch instruction");
@@ -319,6 +328,23 @@ void SystemZLongBranch::setWorstCaseAddresses() {
   }
 }
 
+// Split MI into the comparison given by CompareOpcode followed
+// a BRCL on the result.
+void SystemZLongBranch::splitCompareBranch(MachineInstr *MI,
+                                           unsigned CompareOpcode) {
+  MachineBasicBlock *MBB = MI->getParent();
+  DebugLoc DL = MI->getDebugLoc();
+  BuildMI(*MBB, MI, DL, TII->get(CompareOpcode))
+    .addOperand(MI->getOperand(0))
+    .addOperand(MI->getOperand(1));
+  MachineInstr *BRCL = BuildMI(*MBB, MI, DL, TII->get(SystemZ::BRCL))
+    .addOperand(MI->getOperand(2))
+    .addOperand(MI->getOperand(3));
+  // The implicit use of CC is a killing use.
+  BRCL->getOperand(2).setIsKill();
+  MI->eraseFromParent();
+}
+
 // Relax the branch described by Terminator.
 void SystemZLongBranch::relaxBranch(TerminatorInfo &Terminator) {
   MachineInstr *Branch = Terminator.Branch;
@@ -328,6 +354,12 @@ void SystemZLongBranch::relaxBranch(TerminatorInfo &Terminator) {
     break;
   case SystemZ::BRC:
     Branch->setDesc(TII->get(SystemZ::BRCL));
+    break;
+  case SystemZ::CRJ:
+    splitCompareBranch(Branch, SystemZ::CR);
+    break;
+  case SystemZ::CGRJ:
+    splitCompareBranch(Branch, SystemZ::CGR);
     break;
   default:
     llvm_unreachable("Unrecognized branch");

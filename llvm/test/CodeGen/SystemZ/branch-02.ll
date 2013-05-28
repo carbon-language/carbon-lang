@@ -1,5 +1,6 @@
 ; Test all condition-code masks that are relevant for signed integer
-; comparisons.
+; comparisons, in cases where a separate branch is better than COMPARE
+; AND BRANCH.
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
