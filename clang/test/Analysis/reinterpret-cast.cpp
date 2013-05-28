@@ -86,3 +86,20 @@ namespace PR15345 {
     clang_analyzer_eval(p->x == 42); // expected-warning{{TRUE}}
   };
 }
+
+int trackpointer_std_addressof() {
+  int x;
+  int *p = (int*)&reinterpret_cast<const volatile char&>(x);
+  *p = 6;
+  return x; // no warning
+}
+
+void set_x1(int *&);
+void set_x2(void *&);
+int radar_13146953(void) {
+  int *x = 0, *y = 0;
+
+  set_x1(x);
+  set_x2((void *&)y);
+  return *x + *y; // no warning
+}
