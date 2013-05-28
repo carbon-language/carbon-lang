@@ -8,10 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Driver/Driver.h"
+
 #include "lld/Core/LLVM.h"
 #include "lld/Core/InputFiles.h"
-#include "lld/Core/Resolver.h"
 #include "lld/Core/PassManager.h"
+#include "lld/Core/Parallel.h"
+#include "lld/Core/Resolver.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
 
@@ -39,20 +41,33 @@ bool Driver::link(const TargetInfo &targetInfo, raw_ostream &diagnostics) {
   }
 
   // Read inputs
-  InputFiles inputs;
+  std::vector<std::vector<std::unique_ptr<File>>> files(
+      targetInfo.inputFiles().size());
+  size_t index = 0;
+  std::atomic<bool> fail(false);
+  TaskGroup tg;
   for (const auto &input : targetInfo.inputFiles()) {
-    std::vector<std::unique_ptr<File>> files;
     if (targetInfo.logInputFiles())
       llvm::outs() << input.getPath() << "\n";
-      
-    error_code ec = targetInfo.readFile(input.getPath(), files);
-    if (ec) {
-      diagnostics   << "Failed to read file: " << input.getPath() << ": "
-                    << ec.message() << "\n";
-      return true;
-    }
-    inputs.appendFiles(files);
+
+    tg.spawn([&, index] {
+      if (error_code ec = targetInfo.readFile(input.getPath(), files[index])) {
+        diagnostics << "Failed to read file: " << input.getPath()
+                    << ": " << ec.message() << "\n";
+        fail = true;
+        return;
+      }
+    });
+    ++index;
   }
+  tg.sync();
+
+  if (fail)
+    return true;
+
+  InputFiles inputs;
+  for (auto &f : files)
+    inputs.appendFiles(f);
 
   // Give target a chance to add files.
   targetInfo.addImplicitFiles(inputs);
