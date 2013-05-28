@@ -10,6 +10,7 @@
 #define LLD_READER_WRITER_OUTPUT_ELF_WRITER_H
 
 #include "lld/Core/Instrumentation.h"
+#include "lld/Core/Parallel.h"
 #include "lld/ReaderWriter/ELFTargetInfo.h"
 #include "lld/ReaderWriter/Writer.h"
 
@@ -279,6 +280,7 @@ void OutputELFWriter<ELFT>::createDefaultSections() {
 
 template <class ELFT>
 error_code OutputELFWriter<ELFT>::buildOutput(const File &file) {
+  ScopedTask buildTask(getDefaultDomain(), "ELF Writer buildOutput");
   buildChunks(file);
 
   // Create the default sections like the symbol table, string table, and the
@@ -328,9 +330,7 @@ error_code OutputELFWriter<ELFT>::buildOutput(const File &file) {
 
 template <class ELFT>
 error_code OutputELFWriter<ELFT>::writeFile(const File &file, StringRef path) {
-  ScopedTask buildTask(getDefaultDomain(), "ELF Writer buildOutput");
   buildOutput(file);
-  buildTask.end();
 
   uint64_t totalSize = _shdrtab->fileOffset() + _shdrtab->fileSize();
 
@@ -378,7 +378,7 @@ error_code OutputELFWriter<ELFT>::writeFile(const File &file, StringRef path) {
   _programHeader->write(this, *buffer);
 
   for (auto section : _layout->sections())
-    section->write(this, *buffer);
+      section->write(this, *buffer);
   writeTask.end();
 
   ScopedTask commitTask(getDefaultDomain(), "ELF Writer commit to disk");

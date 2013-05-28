@@ -16,6 +16,7 @@
 #include "Writer.h"
 
 #include "lld/Core/DefinedAtom.h"
+#include "lld/Core/Parallel.h"
 #include "lld/Core/range.h"
 
 #include "llvm/ADT/ArrayRef.h"
@@ -341,19 +342,19 @@ template <class ELFT>
 void AtomSection<ELFT>::write(ELFWriter *writer,
                               llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
-  for (auto &ai : _atoms) {
+  parallel_for_each(_atoms.begin(), _atoms.end(), [&] (AtomLayout *ai) {
     DEBUG_WITH_TYPE("Section",
                     llvm::dbgs() << "Writing atom: " << ai->_atom->name()
                                  << " | " << ai->_fileOffset << "\n");
     const DefinedAtom *definedAtom = cast<DefinedAtom>(ai->_atom);
     if ((definedAtom->contentType() == DefinedAtom::typeZeroFill) ||
         (definedAtom->contentType() == DefinedAtom::typeZeroFillFast))
-      continue;
+      return;
     // Copy raw content of atom to file buffer.
     llvm::ArrayRef<uint8_t> content = definedAtom->rawContent();
     uint64_t contentSize = content.size();
     if (contentSize == 0)
-      continue;
+      return;
     uint8_t *atomContent = chunkBuffer + ai->_fileOffset;
     std::memcpy(atomContent, content.data(), contentSize);
     const TargetRelocationHandler<ELFT> &relHandler =
@@ -361,7 +362,7 @@ void AtomSection<ELFT>::write(ELFWriter *writer,
         .getRelocationHandler();
     for (const auto ref : *definedAtom)
       relHandler.applyRelocation(*writer, buffer, *ai, *ref);
-  }
+  });
 }
 
 /// \brief A MergedSections represents a set of sections grouped by the same

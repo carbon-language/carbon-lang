@@ -12,6 +12,7 @@
 
 #include "lld/Core/File.h"
 #include "lld/Core/Instrumentation.h"
+#include "lld/Core/Parallel.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/PassManager.h"
 #include "lld/ReaderWriter/Simple.h"
