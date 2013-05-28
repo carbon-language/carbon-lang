@@ -881,7 +881,7 @@ SDValue DAGTypeLegalizer::BitConvertVectorToIntegerVector(SDValue Op) {
 
 SDValue DAGTypeLegalizer::CreateStackStoreLoad(SDValue Op,
                                                EVT DestVT) {
-  SDLoc dl(Op);;
+  SDLoc dl(Op);
   // Create the stack frame object.  Make sure it is aligned for both
   // the source and destination types.
   SDValue StackPtr = DAG.CreateStackTemporary(Op.getValueType(), DestVT);
@@ -973,7 +973,7 @@ void DAGTypeLegalizer::GetSplitDestVTs(EVT InVT, EVT &LoVT, EVT &HiVT) {
 /// high parts of the given value.
 void DAGTypeLegalizer::GetPairElements(SDValue Pair,
                                        SDValue &Lo, SDValue &Hi) {
-  SDLoc dl(Pair);;
+  SDLoc dl(Pair);
   EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), Pair.getValueType());
   Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, NVT, Pair,
                    DAG.getIntPtrConstant(0));
@@ -983,7 +983,7 @@ void DAGTypeLegalizer::GetPairElements(SDValue Pair,
 
 SDValue DAGTypeLegalizer::GetVectorElementPointer(SDValue VecPtr, EVT EltVT,
                                                   SDValue Index) {
-  SDLoc dl(Index);;
+  SDLoc dl(Index);
   // Make sure the index type is big enough to compute in.
   if (Index.getValueType().bitsGT(TLI.getPointerTy()))
     Index = DAG.getNode(ISD::TRUNCATE, dl, TLI.getPointerTy(), Index);
@@ -1001,8 +1001,8 @@ SDValue DAGTypeLegalizer::GetVectorElementPointer(SDValue VecPtr, EVT EltVT,
 /// JoinIntegers - Build an integer with low bits Lo and high bits Hi.
 SDValue DAGTypeLegalizer::JoinIntegers(SDValue Lo, SDValue Hi) {
   // Arbitrarily use dlHi for result SDLoc
-  SDLoc dlHi(Hi);;
-  SDLoc dlLo(Lo);;
+  SDLoc dlHi(Hi);
+  SDLoc dlLo(Lo);
   EVT LVT = Lo.getValueType();
   EVT HVT = Hi.getValueType();
   EVT NVT = EVT::getIntegerVT(*DAG.getContext(),
@@ -1074,7 +1074,7 @@ DAGTypeLegalizer::ExpandChainLibCall(RTLIB::Libcall LC,
 /// of the given type.  A target boolean is an integer value, not necessarily of
 /// type i1, the bits of which conform to getBooleanContents.
 SDValue DAGTypeLegalizer::PromoteTargetBoolean(SDValue Bool, EVT VT) {
-  SDLoc dl(Bool);;
+  SDLoc dl(Bool);
   ISD::NodeType ExtendCode =
     TargetLowering::getExtendForContent(TLI.getBooleanContents(VT.isVector()));
   return DAG.getNode(ExtendCode, dl, VT, Bool);
@@ -1085,7 +1085,7 @@ SDValue DAGTypeLegalizer::PromoteTargetBoolean(SDValue Bool, EVT VT) {
 void DAGTypeLegalizer::SplitInteger(SDValue Op,
                                     EVT LoVT, EVT HiVT,
                                     SDValue &Lo, SDValue &Hi) {
-  SDLoc dl(Op);;
+  SDLoc dl(Op);
   assert(LoVT.getSizeInBits() + HiVT.getSizeInBits() ==
          Op.getValueType().getSizeInBits() && "Invalid integer splitting!");
   Lo = DAG.getNode(ISD::TRUNCATE, dl, LoVT, Op);
