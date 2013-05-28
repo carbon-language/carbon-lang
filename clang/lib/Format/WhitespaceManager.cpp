@@ -42,10 +42,10 @@ void WhitespaceManager::replaceWhitespace(const AnnotatedToken &Tok,
                                           unsigned Newlines, unsigned Spaces,
                                           unsigned StartOfTokenColumn,
                                           bool InPPDirective) {
-  Changes.push_back(Change(
-      true, Tok.FormatTok.WhitespaceRange,
-      Spaces, StartOfTokenColumn, Newlines, "", "", Tok.FormatTok.Tok.getKind(),
-      InPPDirective && !Tok.FormatTok.IsFirst));
+  Changes.push_back(
+      Change(true, Tok.FormatTok->WhitespaceRange, Spaces, StartOfTokenColumn,
+             Newlines, "", "", Tok.FormatTok->Tok.getKind(),
+             InPPDirective && !Tok.FormatTok->IsFirst));
 }
 
 void WhitespaceManager::addUntouchableToken(const FormatToken &Tok,

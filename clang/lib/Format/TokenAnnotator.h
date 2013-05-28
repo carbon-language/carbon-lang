@@ -74,16 +74,16 @@ enum LineType {
 
 class AnnotatedToken {
 public:
-  explicit AnnotatedToken(const FormatToken &FormatTok)
+  explicit AnnotatedToken(FormatToken *FormatTok)
       : FormatTok(FormatTok), Type(TT_Unknown), SpacesRequiredBefore(0),
         CanBreakBefore(false), MustBreakBefore(false),
         ClosesTemplateDeclaration(false), MatchingParen(NULL),
-        ParameterCount(0), TotalLength(FormatTok.TokenLength),
+        ParameterCount(0), TotalLength(FormatTok->TokenLength),
         UnbreakableTailLength(0), BindingStrength(0), SplitPenalty(0),
         LongestObjCSelectorName(0), Parent(NULL), FakeRParens(0),
         LastInChainOfCalls(false), PartOfMultiVariableDeclStmt(false) {}
 
-  bool is(tok::TokenKind Kind) const { return FormatTok.Tok.is(Kind); }
+  bool is(tok::TokenKind Kind) const { return FormatTok->Tok.is(Kind); }
 
   bool isOneOf(tok::TokenKind K1, tok::TokenKind K2) const {
     return is(K1) || is(K2);
@@ -105,10 +105,10 @@ public:
            is(K8) || is(K9) || is(K10) || is(K11) || is(K12);
   }
 
-  bool isNot(tok::TokenKind Kind) const { return FormatTok.Tok.isNot(Kind); }
+  bool isNot(tok::TokenKind Kind) const { return FormatTok->Tok.isNot(Kind); }
 
   bool isObjCAtKeyword(tok::ObjCKeywordKind Kind) const {
-    return FormatTok.Tok.isObjCAtKeyword(Kind);
+    return FormatTok->Tok.isObjCAtKeyword(Kind);
   }
 
   bool isAccessSpecifier(bool ColonRequired = true) const {
@@ -134,7 +134,7 @@ public:
   bool isBinaryOperator() const;
   bool isTrailingComment() const;
 
-  FormatToken FormatTok;
+  FormatToken *FormatTok;
 
   TokenType Type;
 
@@ -208,8 +208,8 @@ public:
         StartsDefinition(false) {
     assert(!Line.Tokens.empty());
     AnnotatedToken *Current = &First;
-    for (std::list<FormatToken>::const_iterator I = ++Line.Tokens.begin(),
-                                                E = Line.Tokens.end();
+    for (std::list<FormatToken *>::const_iterator I = ++Line.Tokens.begin(),
+                                                  E = Line.Tokens.end();
          I != E; ++I) {
       Current->Children.push_back(AnnotatedToken(*I));
       Current->Children[0].Parent = Current;
@@ -242,7 +242,7 @@ public:
 };
 
 inline prec::Level getPrecedence(const AnnotatedToken &Tok) {
-  return getBinOpPrecedence(Tok.FormatTok.Tok.getKind(), true, true);
+  return getBinOpPrecedence(Tok.FormatTok->Tok.getKind(), true, true);
 }
 
 /// \brief Determines extra information about the tokens comprising an

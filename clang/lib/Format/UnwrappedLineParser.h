@@ -79,6 +79,11 @@ struct FormatToken {
   /// Contains the raw token text without leading whitespace and without leading
   /// escaped newlines.
   StringRef TokenText;
+
+private:
+  // Disallow copying.
+  FormatToken(const FormatToken &);
+  void operator=(const FormatToken &);
 };
 
 /// \brief An unwrapped line is a sequence of \c Token, that we would like to
@@ -93,7 +98,7 @@ struct UnwrappedLine {
 
   // FIXME: Don't use std::list here.
   /// \brief The \c Tokens comprising this \c UnwrappedLine.
-  std::list<FormatToken> Tokens;
+  std::list<FormatToken *> Tokens;
 
   /// \brief The indent level of the \c UnwrappedLine.
   unsigned Level;

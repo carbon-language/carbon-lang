@@ -22,7 +22,7 @@ namespace clang {
 namespace format {
 
 bool AnnotatedToken::isUnaryOperator() const {
-  switch (FormatTok.Tok.getKind()) {
+  switch (FormatTok->Tok.getKind()) {
   case tok::plus:
   case tok::plusplus:
   case tok::minus:
@@ -44,7 +44,7 @@ bool AnnotatedToken::isBinaryOperator() const {
 
 bool AnnotatedToken::isTrailingComment() const {
   return is(tok::comment) &&
-         (Children.empty() || Children[0].FormatTok.NewlinesBefore > 0);
+         (Children.empty() || Children[0].FormatTok->NewlinesBefore > 0);
 }
 
 AnnotatedToken *AnnotatedToken::getPreviousNoneComment() const {
@@ -203,7 +203,7 @@ private:
                                     tok::kw_return, tok::kw_throw) ||
          Parent->isUnaryOperator() || Parent->Type == TT_ObjCForIn ||
          Parent->Type == TT_CastRParen ||
-         getBinOpPrecedence(Parent->FormatTok.Tok.getKind(), true, true) >
+         getBinOpPrecedence(Parent->FormatTok->Tok.getKind(), true, true) >
              prec::Unknown);
     ScopedContextCreator ContextCreator(*this, tok::l_square, 10);
     Contexts.back().IsExpression = true;
@@ -321,7 +321,7 @@ private:
   bool consumeToken() {
     AnnotatedToken *Tok = CurrentToken;
     next();
-    switch (Tok->FormatTok.Tok.getKind()) {
+    switch (Tok->FormatTok->Tok.getKind()) {
     case tok::plus:
     case tok::minus:
       if (Tok->Parent == NULL && Line.MustBeDeclaration)
@@ -339,10 +339,10 @@ private:
                  Line.First.Type == TT_ObjCMethodSpecifier) {
         Tok->Type = TT_ObjCMethodExpr;
         Tok->Parent->Type = TT_ObjCSelectorName;
-        if (Tok->Parent->FormatTok.TokenLength >
+        if (Tok->Parent->FormatTok->TokenLength >
             Contexts.back().LongestObjCSelectorName)
           Contexts.back().LongestObjCSelectorName =
-              Tok->Parent->FormatTok.TokenLength;
+              Tok->Parent->FormatTok->TokenLength;
         if (Contexts.back().FirstObjCSelectorName == NULL)
           Contexts.back().FirstObjCSelectorName = Tok->Parent;
       } else if (Contexts.back().ColonIsForRangeExpr) {
@@ -421,7 +421,7 @@ private:
       break;
     case tok::identifier:
       if (Line.First.is(tok::kw_for) &&
-          Tok->FormatTok.Tok.getIdentifierInfo() == &Ident_in)
+          Tok->FormatTok->Tok.getIdentifierInfo() == &Ident_in)
         Tok->Type = TT_ObjCForIn;
       break;
     case tok::comma:
@@ -472,9 +472,10 @@ private:
       return;
     // Hashes in the middle of a line can lead to any strange token
     // sequence.
-    if (CurrentToken->FormatTok.Tok.getIdentifierInfo() == NULL)
+    if (CurrentToken->FormatTok->Tok.getIdentifierInfo() == NULL)
       return;
-    switch (CurrentToken->FormatTok.Tok.getIdentifierInfo()->getPPKeywordID()) {
+    switch (
+        CurrentToken->FormatTok->Tok.getIdentifierInfo()->getPPKeywordID()) {
     case tok::pp_include:
     case tok::pp_import:
       parseIncludeDirective();
@@ -630,7 +631,7 @@ private:
     if (Current.Type == TT_Unknown) {
       if (Current.Parent && Current.is(tok::identifier) &&
           ((Current.Parent->is(tok::identifier) &&
-            Current.Parent->FormatTok.Tok.getIdentifierInfo()
+            Current.Parent->FormatTok->Tok.getIdentifierInfo()
                     ->getPPKeywordID() ==
                 tok::pp_not_keyword) ||
            isSimpleTypeSpecifier(*Current.Parent) ||
@@ -651,7 +652,7 @@ private:
       } else if (Current.isBinaryOperator()) {
         Current.Type = TT_BinaryOperator;
       } else if (Current.is(tok::comment)) {
-        std::string Data(Lexer::getSpelling(Current.FormatTok.Tok, SourceMgr,
+        std::string Data(Lexer::getSpelling(Current.FormatTok->Tok, SourceMgr,
                                             Lex.getLangOpts()));
         if (StringRef(Data).startswith("//"))
           Current.Type = TT_LineComment;
@@ -673,7 +674,7 @@ private:
           // FIXME: We need to get smarter and understand more cases of casts.
           Current.Type = TT_CastRParen;
       } else if (Current.is(tok::at) && Current.Children.size()) {
-        switch (Current.Children[0].FormatTok.Tok.getObjCKeywordID()) {
+        switch (Current.Children[0].FormatTok->Tok.getObjCKeywordID()) {
         case tok::objc_interface:
         case tok::objc_implementation:
         case tok::objc_protocol:
@@ -719,9 +720,9 @@ private:
     if (NextToken->is(tok::l_square))
       return TT_PointerOrReference;
 
-    if (PrevToken->FormatTok.Tok.isLiteral() ||
+    if (PrevToken->FormatTok->Tok.isLiteral() ||
         PrevToken->isOneOf(tok::r_paren, tok::r_square) ||
-        NextToken->FormatTok.Tok.isLiteral() || NextToken->isUnaryOperator())
+        NextToken->FormatTok->Tok.isLiteral() || NextToken->isUnaryOperator())
       return TT_BinaryOperator;
 
     // It is very unlikely that we are going to find a pointer or reference type
@@ -766,7 +767,7 @@ private:
   // duplication.
   /// \brief Determine whether the token kind starts a simple-type-specifier.
   bool isSimpleTypeSpecifier(const AnnotatedToken &Tok) const {
-    switch (Tok.FormatTok.Tok.getKind()) {
+    switch (Tok.FormatTok->Tok.getKind()) {
     case tok::kw_short:
     case tok::kw_long:
     case tok::kw___int64:
@@ -894,7 +895,7 @@ void TokenAnnotator::annotate(AnnotatedLine &Line) {
     Line.Type = LT_ObjCProperty;
 
   Line.First.SpacesRequiredBefore = 1;
-  Line.First.MustBreakBefore = Line.First.FormatTok.MustBreakBefore;
+  Line.First.MustBreakBefore = Line.First.FormatTok->MustBreakBefore;
   Line.First.CanBreakBefore = Line.First.MustBreakBefore;
 }
 
@@ -909,10 +910,10 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
       Current->SpacesRequiredBefore =
           spaceRequiredBefore(Line, *Current) ? 1 : 0;
 
-    if (Current->FormatTok.MustBreakBefore) {
+    if (Current->FormatTok->MustBreakBefore) {
       Current->MustBreakBefore = true;
     } else if (Current->Type == TT_LineComment) {
-      Current->MustBreakBefore = Current->FormatTok.NewlinesBefore > 0;
+      Current->MustBreakBefore = Current->FormatTok->NewlinesBefore > 0;
     } else if (Current->Parent->isTrailingComment() ||
                (Current->is(tok::string_literal) &&
                 Current->Parent->is(tok::string_literal))) {
@@ -930,7 +931,7 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
       Current->TotalLength = Current->Parent->TotalLength + Style.ColumnLimit;
     else
       Current->TotalLength =
-          Current->Parent->TotalLength + Current->FormatTok.TokenLength +
+          Current->Parent->TotalLength + Current->FormatTok->TokenLength +
           Current->SpacesRequiredBefore;
     // FIXME: Only calculate this if CanBreakBefore is true once static
     // initializers etc. are sorted out.
@@ -957,7 +958,7 @@ void TokenAnnotator::calculateUnbreakableTailLengths(AnnotatedLine &Line) {
       UnbreakableTailLength = 0;
     } else {
       UnbreakableTailLength +=
-          Current->FormatTok.TokenLength + Current->SpacesRequiredBefore;
+          Current->FormatTok->TokenLength + Current->SpacesRequiredBefore;
     }
     Current = Current->Parent;
   }
@@ -1025,8 +1026,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
 
   if (Right.is(tok::lessless)) {
     if (Left.is(tok::string_literal)) {
-      StringRef Content = StringRef(Left.FormatTok.Tok.getLiteralData(),
-                                    Left.FormatTok.TokenLength);
+      StringRef Content = StringRef(Left.FormatTok->Tok.getLiteralData(),
+                                    Left.FormatTok->TokenLength);
       Content = Content.drop_back(1).drop_front(1).trim();
       if (Content.size() > 1 &&
           (Content.back() == ':' || Content.back() == '='))
@@ -1073,14 +1074,14 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Left.is(tok::less) || Right.isOneOf(tok::greater, tok::less))
     return false;
   if (Right.Type == TT_PointerOrReference)
-    return Left.FormatTok.Tok.isLiteral() ||
+    return Left.FormatTok->Tok.isLiteral() ||
            ((Left.Type != TT_PointerOrReference) && Left.isNot(tok::l_paren) &&
             !Style.PointerBindsToType);
   if (Right.Type == TT_FunctionTypeLParen &&
       (Left.Type != TT_PointerOrReference || Style.PointerBindsToType))
     return true;
   if (Left.Type == TT_PointerOrReference)
-    return Right.FormatTok.Tok.isLiteral() ||
+    return Right.FormatTok->Tok.isLiteral() ||
            ((Right.Type != TT_PointerOrReference) &&
             Right.isNot(tok::l_paren) && Style.PointerBindsToType &&
             Left.Parent &&
@@ -1106,7 +1107,7 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
                         tok::kw_delete, tok::semi);
   }
   if (Left.is(tok::at) &&
-      Right.FormatTok.Tok.getObjCKeywordID() != tok::objc_not_keyword)
+      Right.FormatTok->Tok.getObjCKeywordID() != tok::objc_not_keyword)
     return false;
   if (Left.is(tok::l_brace) && Right.is(tok::r_brace))
     return false; // No spaces in "{}".
@@ -1127,8 +1128,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
 
 bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
                                          const AnnotatedToken &Tok) {
-  if (Tok.FormatTok.Tok.getIdentifierInfo() &&
-      Tok.Parent->FormatTok.Tok.getIdentifierInfo())
+  if (Tok.FormatTok->Tok.getIdentifierInfo() &&
+      Tok.Parent->FormatTok->Tok.getIdentifierInfo())
     return true; // Never ever merge two identifiers.
   if (Line.Type == LT_ObjCMethodDecl) {
     if (Tok.Parent->Type == TT_ObjCMethodSpecifier)
@@ -1147,7 +1148,7 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
     return false;
   if (Tok.Type == TT_CtorInitializerColon || Tok.Type == TT_ObjCBlockLParen)
     return true;
-  if (Tok.Parent->FormatTok.Tok.is(tok::kw_operator))
+  if (Tok.Parent->FormatTok->Tok.is(tok::kw_operator))
     return false;
   if (Tok.Type == TT_OverloadedOperatorLParen)
     return false;
@@ -1244,11 +1245,11 @@ void TokenAnnotator::printDebugInfo(const AnnotatedLine &Line) {
   llvm::errs() << "AnnotatedTokens:\n";
   const AnnotatedToken *Tok = &Line.First;
   while (Tok) {
-    llvm::errs() << " M=" << Tok->MustBreakBefore
-                 << " C=" << Tok->CanBreakBefore << " T=" << Tok->Type
-                 << " S=" << Tok->SpacesRequiredBefore
-                 << " P=" << Tok->SplitPenalty
-                 << " Name=" << Tok->FormatTok.Tok.getName() << " FakeLParens=";
+    llvm::errs()
+        << " M=" << Tok->MustBreakBefore << " C=" << Tok->CanBreakBefore
+        << " T=" << Tok->Type << " S=" << Tok->SpacesRequiredBefore
+        << " P=" << Tok->SplitPenalty
+        << " Name=" << Tok->FormatTok->Tok.getName() << " FakeLParens=";
     for (unsigned i = 0, e = Tok->FakeLParens.size(); i != e; ++i)
       llvm::errs() << Tok->FakeLParens[i] << "/";
     llvm::errs() << " FakeRParens=" << Tok->FakeRParens << "\n";

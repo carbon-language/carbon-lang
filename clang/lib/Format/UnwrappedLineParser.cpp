@@ -1022,10 +1022,10 @@ void UnwrappedLineParser::addUnwrappedLine() {
   DEBUG({
     llvm::dbgs() << "Line(" << Line->Level << ")"
                  << (Line->InPPDirective ? " MACRO" : "") << ": ";
-    for (std::list<FormatToken>::iterator I = Line->Tokens.begin(),
-                                          E = Line->Tokens.end();
+    for (std::list<FormatToken *>::iterator I = Line->Tokens.begin(),
+                                            E = Line->Tokens.end();
          I != E; ++I) {
-      llvm::dbgs() << I->Tok.getName() << " ";
+      llvm::dbgs() << (*I)->Tok.getName() << " ";
 
     }
     llvm::dbgs() << "\n";
@@ -1107,9 +1107,9 @@ void UnwrappedLineParser::readToken() {
 }
 
 void UnwrappedLineParser::pushToken(FormatToken *Tok) {
-  Line->Tokens.push_back(*Tok);
+  Line->Tokens.push_back(Tok);
   if (MustBreakBeforeNextToken) {
-    Line->Tokens.back().MustBreakBefore = true;
+    Line->Tokens.back()->MustBreakBefore = true;
     MustBreakBeforeNextToken = false;
   }
 }

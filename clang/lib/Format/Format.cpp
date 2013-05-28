@@ -266,7 +266,7 @@ public:
     // If everything fits on a single line, just put it there.
     unsigned ColumnLimit = Style.ColumnLimit;
     if (NextLine && NextLine->InPPDirective &&
-        !NextLine->First.FormatTok.HasUnescapedNewline)
+        !NextLine->First.FormatTok->HasUnescapedNewline)
       ColumnLimit = getColumnLimit();
     if (Line.Last->TotalLength <= ColumnLimit - FirstIndent) {
       while (State.NextToken != NULL) {
@@ -285,7 +285,7 @@ public:
 
 private:
   void DebugTokenState(const AnnotatedToken &AnnotatedTok) {
-    const Token &Tok = AnnotatedTok.FormatTok.Tok;
+    const Token &Tok = AnnotatedTok.FormatTok->Tok;
     llvm::dbgs() << StringRef(SourceMgr.getCharacterData(Tok.getLocation()),
                               Tok.getLength());
     llvm::dbgs();
@@ -478,10 +478,11 @@ private:
       // FIXME: Is this correct?
       int WhitespaceLength =
           SourceMgr.getSpellingColumnNumber(
-              State.NextToken->FormatTok.WhitespaceRange.getEnd()) -
+              State.NextToken->FormatTok->WhitespaceRange.getEnd()) -
           SourceMgr.getSpellingColumnNumber(
-              State.NextToken->FormatTok.WhitespaceRange.getBegin());
-      State.Column += WhitespaceLength + State.NextToken->FormatTok.TokenLength;
+              State.NextToken->FormatTok->WhitespaceRange.getBegin());
+      State.Column +=
+          WhitespaceLength + State.NextToken->FormatTok->TokenLength;
       if (State.NextToken->Children.empty())
         State.NextToken = NULL;
       else
@@ -520,13 +521,13 @@ private:
                   Line.StartsDefinition)) {
         State.Column = State.Stack.back().Indent;
       } else if (Current.Type == TT_ObjCSelectorName) {
-        if (State.Stack.back().ColonPos > Current.FormatTok.TokenLength) {
+        if (State.Stack.back().ColonPos > Current.FormatTok->TokenLength) {
           State.Column =
-              State.Stack.back().ColonPos - Current.FormatTok.TokenLength;
+              State.Stack.back().ColonPos - Current.FormatTok->TokenLength;
         } else {
           State.Column = State.Stack.back().Indent;
           State.Stack.back().ColonPos =
-              State.Column + Current.FormatTok.TokenLength;
+              State.Column + Current.FormatTok->TokenLength;
         }
       } else if (Current.Type == TT_StartOfName ||
                  Previous.isOneOf(tok::coloncolon, tok::equal) ||
@@ -553,7 +554,7 @@ private:
         unsigned NewLines = 1;
         if (Current.Type == TT_LineComment)
           NewLines =
-              std::max(NewLines, std::min(Current.FormatTok.NewlinesBefore,
+              std::max(NewLines, std::min(Current.FormatTok->NewlinesBefore,
                                           Style.MaxEmptyLinesToKeep + 1));
         Whitespaces.replaceWhitespace(Current, NewLines, State.Column,
                                       State.Column, Line.InPPDirective);
@@ -562,7 +563,7 @@ private:
       State.Stack.back().LastSpace = State.Column;
       if (Current.isOneOf(tok::arrow, tok::period) &&
           Current.Type != TT_DesignatedInitializerPeriod)
-        State.Stack.back().LastSpace += Current.FormatTok.TokenLength;
+        State.Stack.back().LastSpace += Current.FormatTok->TokenLength;
       State.StartOfLineLevel = State.ParenLevel;
       State.LowestLevelOnLine = State.ParenLevel;
 
@@ -598,8 +599,8 @@ private:
         // Move over * and & if they are bound to the variable name.
         const AnnotatedToken *Tok = &Previous;
         while (Tok &&
-               State.Stack.back().VariablePos >= Tok->FormatTok.TokenLength) {
-          State.Stack.back().VariablePos -= Tok->FormatTok.TokenLength;
+               State.Stack.back().VariablePos >= Tok->FormatTok->TokenLength) {
+          State.Stack.back().VariablePos -= Tok->FormatTok->TokenLength;
           if (Tok->SpacesRequiredBefore != 0)
             break;
           Tok = Tok->Parent;
@@ -617,12 +618,12 @@ private:
       if (Current.Type == TT_ObjCSelectorName &&
           State.Stack.back().ColonPos == 0) {
         if (State.Stack.back().Indent + Current.LongestObjCSelectorName >
-            State.Column + Spaces + Current.FormatTok.TokenLength)
+            State.Column + Spaces + Current.FormatTok->TokenLength)
           State.Stack.back().ColonPos =
               State.Stack.back().Indent + Current.LongestObjCSelectorName;
         else
           State.Stack.back().ColonPos =
-              State.Column + Spaces + Current.FormatTok.TokenLength;
+              State.Column + Spaces + Current.FormatTok->TokenLength;
       }
 
       if (Previous.opensScope() && Previous.Type != TT_ObjCMethodExpr &&
@@ -674,7 +675,7 @@ private:
         Line.Type == LT_BuilderTypeCall && State.ParenLevel == 0)
       State.Stack.back().StartOfFunctionCall =
           Current.LastInChainOfCalls ? 0 : State.Column +
-                                               Current.FormatTok.TokenLength;
+                                               Current.FormatTok->TokenLength;
     if (Current.Type == TT_CtorInitializerColon) {
       // Indent 2 from the column, so:
       // SomeClass::SomeClass()
@@ -783,7 +784,7 @@ private:
       State.StartOfStringLiteral = 0;
     }
 
-    State.Column += Current.FormatTok.TokenLength;
+    State.Column += Current.FormatTok->TokenLength;
 
     if (State.NextToken->Children.empty())
       State.NextToken = NULL;
@@ -805,28 +806,30 @@ private:
                                 bool DryRun) {
     unsigned UnbreakableTailLength = Current.UnbreakableTailLength;
     llvm::OwningPtr<BreakableToken> Token;
-    unsigned StartColumn = State.Column - Current.FormatTok.TokenLength;
-    unsigned OriginalStartColumn = SourceMgr.getSpellingColumnNumber(
-        Current.FormatTok.getStartOfNonWhitespace()) - 1;
+    unsigned StartColumn = State.Column - Current.FormatTok->TokenLength;
+    unsigned OriginalStartColumn =
+        SourceMgr.getSpellingColumnNumber(
+            Current.FormatTok->getStartOfNonWhitespace()) -
+        1;
 
     if (Current.is(tok::string_literal) &&
         Current.Type != TT_ImplicitStringLiteral) {
       // Only break up default narrow strings.
       const char *LiteralData = SourceMgr.getCharacterData(
-          Current.FormatTok.getStartOfNonWhitespace());
+          Current.FormatTok->getStartOfNonWhitespace());
       if (!LiteralData || *LiteralData != '"')
         return 0;
 
-      Token.reset(new BreakableStringLiteral(Current.FormatTok, StartColumn));
+      Token.reset(new BreakableStringLiteral(*Current.FormatTok, StartColumn));
     } else if (Current.Type == TT_BlockComment) {
       BreakableBlockComment *BBC =
-          new BreakableBlockComment(Style, Current.FormatTok, StartColumn,
+          new BreakableBlockComment(Style, *Current.FormatTok, StartColumn,
                                     OriginalStartColumn, !Current.Parent);
       Token.reset(BBC);
     } else if (Current.Type == TT_LineComment &&
                (Current.Parent == NULL ||
                 Current.Parent->Type != TT_ImplicitStringLiteral)) {
-      Token.reset(new BreakableLineComment(Current.FormatTok, StartColumn));
+      Token.reset(new BreakableLineComment(*Current.FormatTok, StartColumn));
     } else {
       return 0;
     }
@@ -967,7 +970,7 @@ private:
       if (Current->NewLine) {
         llvm::dbgs()
             << "Penalty for splitting before "
-            << Current->Previous->State.NextToken->FormatTok.Tok.getName()
+            << Current->Previous->State.NextToken->FormatTok->Tok.getName()
             << ": " << Current->Previous->State.NextToken->SplitPenalty << "\n";
       }
     });
@@ -1108,12 +1111,15 @@ public:
 private:
   FormatToken *getNextToken() {
     if (GreaterStashed) {
-      FormatTok = new (Allocator.Allocate()) FormatToken(*FormatTok);
-      FormatTok->NewlinesBefore = 0;
+      // Create a synthesized second '>' token.
+      Token Greater = FormatTok->Tok;
+      FormatTok = new (Allocator.Allocate()) FormatToken;
+      FormatTok->Tok = Greater;
       SourceLocation GreaterLocation =
           FormatTok->Tok.getLocation().getLocWithOffset(1);
       FormatTok->WhitespaceRange =
           SourceRange(GreaterLocation, GreaterLocation);
+      FormatTok->TokenLength = 1;
       GreaterStashed = false;
       return FormatTok;
     }
@@ -1251,11 +1257,11 @@ public:
                                               E = AnnotatedLines.end();
          I != E; ++I) {
       const AnnotatedLine &TheLine = *I;
-      const FormatToken &FirstTok = TheLine.First.FormatTok;
+      const FormatToken *FirstTok = TheLine.First.FormatTok;
       int Offset = getIndentOffset(TheLine.First);
 
       // Check whether this line is part of a formatted preprocessor directive.
-      if (FirstTok.HasUnescapedNewline)
+      if (FirstTok->HasUnescapedNewline)
         FormatPPDirective = false;
       if (!FormatPPDirective && TheLine.InPPDirective &&
           (touchesLine(TheLine) || touchesPPDirective(I + 1, E)))
@@ -1270,25 +1276,26 @@ public:
         Indent += Offset;
       tryFitMultipleLinesInOne(Indent, I, E);
 
-      bool WasMoved = PreviousLineWasTouched && FirstTok.NewlinesBefore == 0;
+      bool WasMoved = PreviousLineWasTouched && FirstTok->NewlinesBefore == 0;
       if (TheLine.First.is(tok::eof)) {
         if (PreviousLineWasTouched) {
-          unsigned NewLines = std::min(FirstTok.NewlinesBefore, 1u);
+          unsigned NewLines = std::min(FirstTok->NewlinesBefore, 1u);
           Whitespaces.replaceWhitespace(TheLine.First, NewLines, /*Indent*/ 0,
                                         /*TargetColumn*/ 0);
         }
       } else if (TheLine.Type != LT_Invalid &&
                  (WasMoved || FormatPPDirective || touchesLine(TheLine))) {
         unsigned LevelIndent = getIndent(IndentForLevel, TheLine.Level);
-        if (FirstTok.WhitespaceRange.isValid() &&
+        if (FirstTok->WhitespaceRange.isValid() &&
             // Insert a break even if there is a structural error in case where
             // we break apart a line consisting of multiple unwrapped lines.
-            (FirstTok.NewlinesBefore == 0 || !StructuralError)) {
+            (FirstTok->NewlinesBefore == 0 || !StructuralError)) {
           formatFirstToken(TheLine.First, PreviousLineLastToken, Indent,
                            TheLine.InPPDirective);
         } else {
           Indent = LevelIndent =
-              SourceMgr.getSpellingColumnNumber(FirstTok.Tok.getLocation()) - 1;
+              SourceMgr.getSpellingColumnNumber(FirstTok->Tok.getLocation()) -
+              1;
         }
         UnwrappedLineFormatter Formatter(Style, SourceMgr, TheLine, Indent,
                                          TheLine.First, Whitespaces);
@@ -1301,9 +1308,9 @@ public:
         for (const AnnotatedToken *Tok = &TheLine.First; Tok != NULL;
              Tok = Tok->Children.empty() ? NULL : &Tok->Children[0]) {
           if (Tok == &TheLine.First &&
-              (Tok->FormatTok.NewlinesBefore > 0 || Tok->FormatTok.IsFirst)) {
+              (Tok->FormatTok->NewlinesBefore > 0 || Tok->FormatTok->IsFirst)) {
             unsigned LevelIndent = SourceMgr.getSpellingColumnNumber(
-                Tok->FormatTok.Tok.getLocation()) -
+                                       Tok->FormatTok->Tok.getLocation()) -
                                    1;
             // Remove trailing whitespace of the previous line if it was
             // touched.
@@ -1311,7 +1318,7 @@ public:
               formatFirstToken(*Tok, PreviousLineLastToken, LevelIndent,
                                TheLine.InPPDirective);
             } else {
-              Whitespaces.addUntouchableToken(Tok->FormatTok,
+              Whitespaces.addUntouchableToken(*Tok->FormatTok,
                                               TheLine.InPPDirective);
             }
 
@@ -1320,7 +1327,7 @@ public:
             if (Tok->isNot(tok::comment))
               IndentForLevel[TheLine.Level] = LevelIndent;
           } else {
-            Whitespaces.addUntouchableToken(Tok->FormatTok,
+            Whitespaces.addUntouchableToken(*Tok->FormatTok,
                                             TheLine.InPPDirective);
           }
         }
@@ -1345,11 +1352,11 @@ private:
       AnnotatedToken *Tok = &AnnotatedLines[i].First.Children[0];
       while (!Tok->Children.empty()) {
         if (Tok->Type == TT_PointerOrReference) {
-          bool SpacesBefore = Tok->FormatTok.WhitespaceRange.getBegin() !=
-                              Tok->FormatTok.WhitespaceRange.getEnd();
+          bool SpacesBefore = Tok->FormatTok->WhitespaceRange.getBegin() !=
+                              Tok->FormatTok->WhitespaceRange.getEnd();
           bool SpacesAfter =
-              Tok->Children[0].FormatTok.WhitespaceRange.getBegin() !=
-              Tok->Children[0].FormatTok.WhitespaceRange.getEnd();
+              Tok->Children[0].FormatTok->WhitespaceRange.getBegin() !=
+              Tok->Children[0].FormatTok->WhitespaceRange.getEnd();
           if (SpacesBefore && !SpacesAfter)
             ++CountBoundToVariable;
           else if (!SpacesBefore && SpacesAfter)
@@ -1358,8 +1365,8 @@ private:
 
         if (Tok->Type == TT_TemplateCloser &&
             Tok->Parent->Type == TT_TemplateCloser &&
-            Tok->FormatTok.WhitespaceRange.getBegin() ==
-                Tok->FormatTok.WhitespaceRange.getEnd())
+            Tok->FormatTok->WhitespaceRange.getBegin() ==
+                Tok->FormatTok->WhitespaceRange.getEnd())
           HasCpp03IncompatibleFormat = true;
         Tok = &Tok->Children[0];
       }
@@ -1426,8 +1433,8 @@ private:
     } else if (Style.AllowShortLoopsOnASingleLine &&
                I->First.isOneOf(tok::kw_for, tok::kw_while)) {
       tryMergeSimpleControlStatement(I, E, Limit);
-    } else if (I->InPPDirective && (I->First.FormatTok.HasUnescapedNewline ||
-                                    I->First.FormatTok.IsFirst)) {
+    } else if (I->InPPDirective && (I->First.FormatTok->HasUnescapedNewline ||
+                                    I->First.FormatTok->IsFirst)) {
       tryMergeSimplePPDirective(I, E, Limit);
     }
   }
@@ -1438,10 +1445,11 @@ private:
     if (Limit == 0)
       return;
     AnnotatedLine &Line = *I;
-    if (!(I + 1)->InPPDirective || (I + 1)->First.FormatTok.HasUnescapedNewline)
+    if (!(I + 1)->InPPDirective ||
+        (I + 1)->First.FormatTok->HasUnescapedNewline)
       return;
     if (I + 2 != E && (I + 2)->InPPDirective &&
-        !(I + 2)->First.FormatTok.HasUnescapedNewline)
+        !(I + 2)->First.FormatTok->HasUnescapedNewline)
       return;
     if (1 + (I + 1)->Last->TotalLength > Limit)
       return;
@@ -1455,7 +1463,7 @@ private:
       return;
     if ((I + 1)->InPPDirective != I->InPPDirective ||
         ((I + 1)->InPPDirective &&
-         (I + 1)->First.FormatTok.HasUnescapedNewline))
+         (I + 1)->First.FormatTok->HasUnescapedNewline))
       return;
     AnnotatedLine &Line = *I;
     if (Line.Last->isNot(tok::r_paren))
@@ -1555,8 +1563,8 @@ private:
   }
 
   bool touchesLine(const AnnotatedLine &TheLine) {
-    const FormatToken *First = &TheLine.First.FormatTok;
-    const FormatToken *Last = &TheLine.Last->FormatTok;
+    const FormatToken *First = TheLine.First.FormatTok;
+    const FormatToken *Last = TheLine.Last->FormatTok;
     CharSourceRange LineRange = CharSourceRange::getCharRange(
         First->WhitespaceRange.getBegin().getLocWithOffset(
             First->LastNewlineOffset),
@@ -1567,7 +1575,7 @@ private:
   bool touchesPPDirective(std::vector<AnnotatedLine>::iterator I,
                           std::vector<AnnotatedLine>::iterator E) {
     for (; I != E; ++I) {
-      if (I->First.FormatTok.HasUnescapedNewline)
+      if (I->First.FormatTok->HasUnescapedNewline)
         return false;
       if (touchesLine(*I))
         return true;
@@ -1576,7 +1584,7 @@ private:
   }
 
   bool touchesEmptyLineBefore(const AnnotatedLine &TheLine) {
-    const FormatToken *First = &TheLine.First.FormatTok;
+    const FormatToken *First = TheLine.First.FormatTok;
     CharSourceRange LineRange = CharSourceRange::getCharRange(
         First->WhitespaceRange.getBegin(),
         First->WhitespaceRange.getBegin().getLocWithOffset(
@@ -1594,20 +1602,20 @@ private:
   void formatFirstToken(const AnnotatedToken &RootToken,
                         const AnnotatedToken *PreviousToken, unsigned Indent,
                         bool InPPDirective) {
-    const FormatToken &Tok = RootToken.FormatTok;
+    const FormatToken *Tok = RootToken.FormatTok;
 
     unsigned Newlines =
-        std::min(Tok.NewlinesBefore, Style.MaxEmptyLinesToKeep + 1);
-    if (Newlines == 0 && !Tok.IsFirst)
+        std::min(Tok->NewlinesBefore, Style.MaxEmptyLinesToKeep + 1);
+    if (Newlines == 0 && !Tok->IsFirst)
       Newlines = 1;
 
     // Insert extra new line before access specifiers.
     if (PreviousToken && PreviousToken->isOneOf(tok::semi, tok::r_brace) &&
-        RootToken.isAccessSpecifier() && Tok.NewlinesBefore == 1)
+        RootToken.isAccessSpecifier() && Tok->NewlinesBefore == 1)
       ++Newlines;
 
     Whitespaces.replaceWhitespace(RootToken, Newlines, Indent, Indent,
-                                  InPPDirective && !Tok.HasUnescapedNewline);
+                                  InPPDirective && !Tok->HasUnescapedNewline);
   }
 
   FormatStyle Style;
