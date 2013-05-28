@@ -634,11 +634,6 @@ void UnwrappedLineParser::parseBracedList() {
     // might be to just implement a more or less complete expression parser.
     switch (FormatTok->Tok.getKind()) {
     case tok::l_brace:
-      if (!StartOfExpression) {
-        // Probably a missing closing brace. Bail out.
-        addUnwrappedLine();
-        return;
-      }
       parseBracedList();
       StartOfExpression = false;
       break;

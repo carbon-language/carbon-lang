@@ -3386,6 +3386,7 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
     verifyFormat("new vector<int>{ 1, 2, 3 };");
     verifyFormat("new int[3]{ 1, 2, 3 };");
     verifyFormat("return { arg1, arg2 };");
+    verifyFormat("return { arg1, SomeType{ parameter } };");
     verifyFormat("new T{ arg1, arg2 };");
     verifyFormat("class Class {\n"
                  "  T member = { arg1, arg2 };\n"
@@ -3402,6 +3403,7 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
     verifyFormat("new vector<int>{1, 2, 3};", NoSpaces);
     verifyFormat("new int[3]{1, 2, 3};", NoSpaces);
     verifyFormat("return {arg1, arg2};", NoSpaces);
+    verifyFormat("return {arg1, SomeType{parameter}};", NoSpaces);
     verifyFormat("new T{arg1, arg2};", NoSpaces);
     verifyFormat("class Class {\n"
                  "  T member = {arg1, arg2};\n"
@@ -4161,15 +4163,8 @@ TEST_F(FormatTest, ObjCLiterals) {
   verifyFormat("return @{ @\"one\" : @1 };");
   verifyFormat("@{ @\"one\" : @1, }");
 
-  // FIXME: Breaking in cases where we think there's a structural error
-  // showed that we're incorrectly parsing this code. We need to fix the
-  // parsing here.
-  verifyFormat("@{ @\"one\" : @\n"
-               "{ @2 : @1 }\n"
-               "}");
-  verifyFormat("@{ @\"one\" : @\n"
-               "{ @2 : @1 },\n"
-               "}");
+  verifyFormat("@{ @\"one\" : @{ @2 : @1 } }");
+  verifyFormat("@{ @\"one\" : @{ @2 : @1 }, }");
 
   verifyFormat("@{ 1 > 2 ? @\"one\" : @\"two\" : 1 > 2 ? @1 : @2 }");
   verifyFormat("[self setDict:@{}");
@@ -4458,10 +4453,8 @@ TEST_F(FormatTest, DoNotCreateUnreasonableUnwrappedLines) {
   verifyFormat("if (foo)\n"
                "  return { forgot_closing_brace();\n"
                "test();");
-  verifyFormat("int a[] = { void forgot_closing_brace()\n"
-               "{\n"
-               "  f();\n"
-               "  g();\n"
+  verifyFormat("int a[] = { void forgot_closing_brace() { f();\n"
+               "g();\n"
                "}");
 }
 
