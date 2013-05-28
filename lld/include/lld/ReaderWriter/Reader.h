@@ -55,8 +55,7 @@ typedef ErrorOr<Reader &> ReaderFunc(const LinkerInput &);
 std::unique_ptr<Reader> createReaderELF(const ELFTargetInfo &);
 std::unique_ptr<Reader> createReaderMachO(const TargetInfo &);
 std::unique_ptr<Reader> createReaderNative(const TargetInfo &);
-std::unique_ptr<Reader> createReaderPECOFF(const TargetInfo &,
-                                           std::function<ReaderFunc>);
+std::unique_ptr<Reader> createReaderPECOFF(const TargetInfo &);
 std::unique_ptr<Reader> createReaderYAML(const TargetInfo &);
 } // end namespace lld
 

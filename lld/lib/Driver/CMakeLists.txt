@@ -4,6 +4,8 @@ set(LLVM_TARGET_DEFINITIONS CoreOptions.td)
 tablegen(LLVM CoreOptions.inc -gen-opt-parser-defs)
 set(LLVM_TARGET_DEFINITIONS DarwinOptions.td)
 tablegen(LLVM DarwinOptions.inc -gen-opt-parser-defs)
+set(LLVM_TARGET_DEFINITIONS WinLinkOptions.td)
+tablegen(LLVM WinLinkOptions.inc -gen-opt-parser-defs)
 add_public_tablegen_target(DriverOptionsTableGen)
 
 add_lld_library(lldDriver
@@ -11,6 +13,7 @@ add_lld_library(lldDriver
   DarwinLdDriver.cpp
   Driver.cpp
   GnuLdDriver.cpp
+  WinLinkDriver.cpp
   UniversalDriver.cpp
   )
 

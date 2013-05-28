@@ -7,12 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "ReaderCOFF"
+
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/Core/File.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Memory.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -368,8 +371,6 @@ private:
   const TargetInfo &_targetInfo;
 };
 
-
-
 class ReaderCOFF : public Reader {
 public:
   ReaderCOFF(const TargetInfo &ti) : Reader(ti) {}
@@ -377,20 +378,26 @@ public:
   error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
                        std::vector<std::unique_ptr<File> > &result) const {
     llvm::error_code ec;
-    std::unique_ptr<File> f(new FileCOFF(_targetInfo, std::move(mb), ec));
-    if (ec) {
+    std::unique_ptr<File> file(new FileCOFF(_targetInfo, std::move(mb), ec));
+    if (ec)
       return ec;
-    }
 
-    result.push_back(std::move(f));
+    DEBUG({
+      llvm::dbgs() << "Defined atoms:\n";
+      for (const auto &atom : file->defined())
+        llvm::dbgs() << "  " << atom->name() << "\n";
+    });
+
+    result.push_back(std::move(file));
     return error_code::success();
   }
 };
+
 } // end namespace anonymous
 
 namespace lld {
-std::unique_ptr<Reader> createReaderPECOFF(const TargetInfo & ti,
-                                           std::function<ReaderFunc>) {
+std::unique_ptr<Reader> createReaderPECOFF(const TargetInfo & ti) {
   return std::unique_ptr<Reader>(new ReaderCOFF(ti));
 }
+
 }

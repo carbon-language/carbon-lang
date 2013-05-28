@@ -1,0 +1,5 @@
+# RUN: lld -flavor link -mllvm -debug-only=ReaderCOFF -- %p/Inputs/nop.obj \
+# RUN:   2>&1 | FileCheck %s
+
+CHECK: Defined atoms:
+CHECK:   _start

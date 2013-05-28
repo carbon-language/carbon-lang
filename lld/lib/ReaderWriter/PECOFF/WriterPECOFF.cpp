@@ -10,11 +10,25 @@
 #include "lld/ReaderWriter/Writer.h"
 
 #include "llvm/Support/ErrorHandling.h"
-
+#include "llvm/Support/ErrorOr.h"
 
 namespace lld {
-std::unique_ptr<Writer> createWriterPECOFF(const TargetInfo &) {
-  llvm_unreachable("PE/COFF support not implemented yet");
-  return nullptr;
+namespace pecoff {
+
+class ExecutableWriter : public Writer {
+ public:
+  ExecutableWriter(const TargetInfo &) {}
+
+  virtual error_code writeFile(const File &linkedFile, StringRef path) {
+    // TODO: implement this
+    return error_code::success();
+  }
+};
+
+} // end namespace pecoff
+
+std::unique_ptr<Writer> createWriterPECOFF(const TargetInfo &info) {
+  return std::unique_ptr<Writer>(new pecoff::ExecutableWriter(info));
 }
+
 } // end namespace lld

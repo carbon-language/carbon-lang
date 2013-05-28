@@ -9,7 +9,7 @@
 ///
 /// \file
 ///
-/// Interface for Drivers which convert command line arguments into 
+/// Interface for Drivers which convert command line arguments into
 /// TargetInfo objects, then perform the link.
 ///
 //===----------------------------------------------------------------------===//
@@ -29,6 +29,7 @@ namespace lld {
 class TargetInfo;
 class CoreTargetInfo;
 class MachOTargetInfo;
+class PECOFFTargetInfo;
 class ELFTargetInfo;
 
 /// Base class for all Drivers.
@@ -39,7 +40,7 @@ protected:
   static bool link(const TargetInfo &targetInfo,
                    raw_ostream &diagnostics = llvm::errs());
 private:
-  Driver() LLVM_DELETED_FUNCTION; 
+  Driver() LLVM_DELETED_FUNCTION;
 };
 
 
@@ -52,7 +53,7 @@ public:
                    raw_ostream &diagnostics = llvm::errs());
 
 private:
-  UniversalDriver() LLVM_DELETED_FUNCTION; 
+  UniversalDriver() LLVM_DELETED_FUNCTION;
 };
 
 
@@ -66,13 +67,13 @@ public:
 
   /// Uses gnu/binutils style ld command line options to fill in options struct.
   /// Returns true iff there was an error.
-  static std::unique_ptr<ELFTargetInfo> parse(int argc, const char *argv[], 
+  static std::unique_ptr<ELFTargetInfo> parse(int argc, const char *argv[],
                                       raw_ostream &diagnostics = llvm::errs());
-  
+
 private:
   static llvm::Triple getDefaultTarget(const char *progName);
 
-  GnuLdDriver() LLVM_DELETED_FUNCTION; 
+  GnuLdDriver() LLVM_DELETED_FUNCTION;
 };
 
 
@@ -83,13 +84,31 @@ public:
   /// Returns true iff there was an error.
   static bool linkMachO(int argc, const char *argv[],
                         raw_ostream &diagnostics = llvm::errs());
-                        
+
   /// Uses darwin style ld command line options to update targetInfo object.
   /// Returns true iff there was an error.
-  static bool parse(int argc, const char *argv[], MachOTargetInfo &info, 
+  static bool parse(int argc, const char *argv[], MachOTargetInfo &info,
                     raw_ostream &diagnostics = llvm::errs());
 private:
-  DarwinLdDriver() LLVM_DELETED_FUNCTION; 
+  DarwinLdDriver() LLVM_DELETED_FUNCTION;
+};
+
+
+/// Driver for Windows 'link.exe' command line options
+class WinLinkDriver : public Driver {
+public:
+  /// Parses command line arguments same as Windows link.exe and performs link.
+  /// Returns true iff there was an error.
+  static bool linkPECOFF(int argc, const char *argv[],
+                         raw_ostream &diagnostics = llvm::errs());
+
+  /// Uses Windows style link command line options to fill in options struct.
+  /// Returns true iff there was an error.
+  static bool parse(int argc, const char *argv[], PECOFFTargetInfo &info,
+                    raw_ostream &diagnostics = llvm::errs());
+
+private:
+  WinLinkDriver() LLVM_DELETED_FUNCTION;
 };
 
 
@@ -100,15 +119,15 @@ public:
   /// Parses command line arguments same as lld-core and performs link.
   /// Returns true iff there was an error.
   static bool link(int argc, const char *argv[],
-                        raw_ostream &diagnostics = llvm::errs());
-  
+                   raw_ostream &diagnostics = llvm::errs());
+
   /// Uses lld-core command line options to fill in options struct.
   /// Returns true iff there was an error.
-  static bool parse(int argc, const char *argv[], CoreTargetInfo &info, 
+  static bool parse(int argc, const char *argv[], CoreTargetInfo &info,
                     raw_ostream &diagnostics = llvm::errs());
 
 private:
-  CoreDriver() LLVM_DELETED_FUNCTION; 
+  CoreDriver() LLVM_DELETED_FUNCTION;
 };
 
 
