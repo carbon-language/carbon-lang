@@ -435,9 +435,11 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
   }
 
   // Check for casts from array type to another type.
-  if (originalTy->isArrayType()) {
+  if (const ArrayType *arrayT =
+                      dyn_cast<ArrayType>(originalTy.getCanonicalType())) {
     // We will always decay to a pointer.
-    val = StateMgr.ArrayToPointer(val.castAs<Loc>());
+    QualType elemTy = arrayT->getElementType();
+    val = StateMgr.ArrayToPointer(val.castAs<Loc>(), elemTy);
 
     // Are we casting from an array to a pointer?  If so just pass on
     // the decayed value.

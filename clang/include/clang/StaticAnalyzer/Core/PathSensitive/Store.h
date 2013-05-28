@@ -111,7 +111,7 @@ public:
 
   /// ArrayToPointer - Used by ExprEngine::VistCast to handle implicit
   ///  conversions between arrays and pointers.
-  virtual SVal ArrayToPointer(Loc Array) = 0;
+  virtual SVal ArrayToPointer(Loc Array, QualType ElementTy) = 0;
 
   /// Evaluates a chain of derived-to-base casts through the path specified in
   /// \p Cast.

@@ -75,6 +75,13 @@ namespace PR13440 {
     int (&x)[1];
 
     int *m() { return x; }
+
+    void testArrayToPointerDecayWithNonTypedValueRegion() {
+      int *p = x;
+      int *q = x;
+      clang_analyzer_eval(p[0] == q[0]); // expected-warning{{TRUE}}
+    }
+
   };
 
   void test() {

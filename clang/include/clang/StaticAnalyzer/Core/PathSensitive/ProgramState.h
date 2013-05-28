@@ -516,8 +516,8 @@ public:
 
 public:
 
-  SVal ArrayToPointer(Loc Array) {
-    return StoreMgr->ArrayToPointer(Array);
+  SVal ArrayToPointer(Loc Array, QualType ElementTy) {
+    return StoreMgr->ArrayToPointer(Array, ElementTy);
   }
 
   // Methods that manipulate the GDM.
