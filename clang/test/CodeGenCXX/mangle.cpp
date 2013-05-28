@@ -875,3 +875,25 @@ namespace test37 {
 
 // CHECK: define void @_Z6ASfuncPU3AS3i
 void ASfunc(__attribute__((address_space(3))) int* x) {}
+
+namespace test38 {
+  // CHECK: define linkonce_odr void @_ZN6test384funcINS_3fooUt_EEEvT_
+  typedef struct {
+    struct {
+    } a;
+  } foo;
+
+  template <typename T> void func(T) {}
+  void test() { func(foo().a); }
+}
+
+namespace test39 {
+  // CHECK: define internal void @"_ZN6test394funcINS_3$_0Ut_EEEvT_"
+  typedef struct {
+    struct {} a;
+  } *foo;
+  template<typename T> void func(T) {}
+  void test(foo x) {
+    func(x->a);
+  }
+}

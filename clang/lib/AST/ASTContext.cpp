@@ -7999,8 +7999,7 @@ size_t ASTContext::getSideTableAllocatedMemory() const {
 void ASTContext::addUnnamedTag(const TagDecl *Tag) {
   // FIXME: This mangling should be applied to function local classes too
   if (!Tag->getName().empty() || Tag->getTypedefNameForAnonDecl() ||
-      !isa<CXXRecordDecl>(Tag->getParent()) ||
-      !Tag->isExternallyVisible())
+      !isa<CXXRecordDecl>(Tag->getParent()))
     return;
 
   std::pair<llvm::DenseMap<const DeclContext *, unsigned>::iterator, bool> P =
