@@ -217,9 +217,9 @@ static void removeKillInfo(MachineInstr *MI, unsigned RegNotKilled) {
   }
 }
 
-/// isUnsafeToMoveAccross - Returns true if it is unsafe to move a copy
+/// isUnsafeToMoveAcross - Returns true if it is unsafe to move a copy
 /// instruction from \p UseReg to \p DestReg over the instruction \p I.
-static bool isUnsafeToMoveAccross(MachineInstr *I, unsigned UseReg,
+static bool isUnsafeToMoveAcross(MachineInstr *I, unsigned UseReg,
                                   unsigned DestReg,
                                   const TargetRegisterInfo *TRI) {
   return (UseReg && (I->modifiesRegister(UseReg, TRI))) ||
@@ -272,7 +272,7 @@ bool HexagonCopyToCombine::isSafeToMoveTogether(MachineInstr *I1,
       //   * reads I2's def reg
       //   * or has unmodelled side effects
       // we can't move I2 across it.
-      if (isUnsafeToMoveAccross(&*I, I2UseReg, I2DestReg, TRI)) {
+      if (isUnsafeToMoveAcross(&*I, I2UseReg, I2DestReg, TRI)) {
         isSafe = false;
         break;
       }
@@ -304,7 +304,7 @@ bool HexagonCopyToCombine::isSafeToMoveTogether(MachineInstr *I1,
       End = llvm::next(MachineBasicBlock::iterator(I2));
     IsImmUseReg = I1->getOperand(1).isImm() || I1->getOperand(1).isGlobal();
     unsigned I1UseReg = IsImmUseReg ? 0 : I1->getOperand(1).getReg();
-    // Track killed operands. If we move accross an instruction that kills our
+    // Track killed operands. If we move across an instruction that kills our
     // operand, we need to update the kill information on the moved I1. It kills
     // the operand now.
     MachineInstr *KillingInstr = 0;
@@ -327,7 +327,7 @@ bool HexagonCopyToCombine::isSafeToMoveTogether(MachineInstr *I1,
       //      to remove the %D4<imp-use,kill> operand. For now, we are
       //      conservative and disallow the move.
       // we can't move I1 across it.
-      if (isUnsafeToMoveAccross(I, I1UseReg, I1DestReg, TRI) ||
+      if (isUnsafeToMoveAcross(I, I1UseReg, I1DestReg, TRI) ||
           // Check for an aliased register kill. Bail out if we see one.
           (!I->killsRegister(I1UseReg) && I->killsRegister(I1UseReg, TRI)))
         return false;
