@@ -97,6 +97,11 @@ public:
     ///
     /// Optionally override to do per translation unit tasks.
     virtual void onStartOfTranslationUnit() {}
+
+    /// \brief Called at the end of each translation unit.
+    ///
+    /// Optionally override to do per translation unit tasks.
+    virtual void onEndOfTranslationUnit() {}
   };
 
   /// \brief Called when parsing is finished. Intended for testing only.

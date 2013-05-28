@@ -278,6 +278,15 @@ public:
     }
   }
 
+  void onEndOfTranslationUnit() {
+    for (std::vector<std::pair<const internal::DynTypedMatcher*,
+                               MatchCallback*> >::const_iterator
+             I = MatcherCallbackPairs->begin(), E = MatcherCallbackPairs->end();
+         I != E; ++I) {
+      I->second->onEndOfTranslationUnit();
+    }
+  }
+
   void set_active_ast_context(ASTContext *NewActiveASTContext) {
     ActiveASTContext = NewActiveASTContext;
   }
@@ -679,6 +688,7 @@ private:
     Visitor.set_active_ast_context(&Context);
     Visitor.onStartOfTranslationUnit();
     Visitor.TraverseDecl(Context.getTranslationUnitDecl());
+    Visitor.onEndOfTranslationUnit();
     Visitor.set_active_ast_context(NULL);
   }
 

@@ -3934,5 +3934,26 @@ TEST(MatchFinder, InterceptsStartOfTranslationUnit) {
   EXPECT_TRUE(VerifyCallback.Called);
 }
 
+class VerifyEndOfTranslationUnit : public MatchFinder::MatchCallback {
+public:
+  VerifyEndOfTranslationUnit() : Called(false) {}
+  virtual void run(const MatchFinder::MatchResult &Result) {
+    EXPECT_FALSE(Called);
+  }
+  virtual void onEndOfTranslationUnit() {
+    Called = true;
+  }
+  bool Called;
+};
+
+TEST(MatchFinder, InterceptsEndOfTranslationUnit) {
+  MatchFinder Finder;
+  VerifyEndOfTranslationUnit VerifyCallback;
+  Finder.addMatcher(decl(), &VerifyCallback);
+  OwningPtr<FrontendActionFactory> Factory(newFrontendActionFactory(&Finder));
+  ASSERT_TRUE(tooling::runToolOnCode(Factory->create(), "int x;"));
+  EXPECT_TRUE(VerifyCallback.Called);
+}
+
 } // end namespace ast_matchers
 } // end namespace clang
