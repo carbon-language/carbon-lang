@@ -42,6 +42,17 @@ namespace SystemZII {
     // @GOT (aka @GOTENT)
     MO_GOT = (1 << 0)
   };
+  // Information about a branch instruction.
+  struct Branch {
+    // CCMASK_<N> is set if the branch should be taken when CC == N.
+    unsigned CCMask;
+
+    // The target of the branch.
+    const MachineOperand *Target;
+
+    Branch(unsigned ccMask, const MachineOperand *target)
+      : CCMask(ccMask), Target(target) {}
+  };
 }
 
 class SystemZInstrInfo : public SystemZGenInstrInfo {
@@ -101,8 +112,7 @@ public:
   // values on which the instruction will branch, and set Target
   // to the operand that contains the branch target.  This target
   // can be a register or a basic block.
-  bool isBranch(const MachineInstr *MI, unsigned &Cond,
-                const MachineOperand *&Target) const;
+  SystemZII::Branch getBranchInfo(const MachineInstr *MI) const;
 
   // Get the load and store opcodes for a given register class.
   void getLoadStoreOpcodes(const TargetRegisterClass *RC,

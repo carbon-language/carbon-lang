@@ -211,22 +211,21 @@ TerminatorInfo SystemZLongBranch::describeTerminator(MachineInstr *MI) {
   TerminatorInfo Terminator;
   Terminator.Size = TII->getInstSizeInBytes(MI);
   if (MI->isConditionalBranch() || MI->isUnconditionalBranch()) {
-    Terminator.Branch = MI;
     switch (MI->getOpcode()) {
     case SystemZ::J:
       // Relaxes to JG, which is 2 bytes longer.
-      Terminator.TargetBlock = MI->getOperand(0).getMBB()->getNumber();
       Terminator.ExtraRelaxSize = 2;
       break;
     case SystemZ::BRC:
-      // Relaxes to BRCL, which is 2 bytes longer.  Operand 0 is the
-      // condition code mask.
-      Terminator.TargetBlock = MI->getOperand(1).getMBB()->getNumber();
+      // Relaxes to BRCL, which is 2 bytes longer.
       Terminator.ExtraRelaxSize = 2;
       break;
     default:
       llvm_unreachable("Unrecognized branch instruction");
     }
+    Terminator.Branch = MI;
+    Terminator.TargetBlock =
+      TII->getBranchInfo(MI).Target->getMBB()->getNumber();
   }
   return Terminator;
 }

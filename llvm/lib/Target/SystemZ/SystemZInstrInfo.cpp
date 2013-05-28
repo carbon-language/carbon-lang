@@ -124,19 +124,18 @@ bool SystemZInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 
     // A terminator that isn't a branch can't easily be handled by this
     // analysis.
-    unsigned ThisCond;
-    const MachineOperand *ThisTarget;
-    if (!isBranch(I, ThisCond, ThisTarget))
+    if (!I->isBranch())
       return true;
 
     // Can't handle indirect branches.
-    if (!ThisTarget->isMBB())
+    SystemZII::Branch Branch(getBranchInfo(I));
+    if (!Branch.Target->isMBB())
       return true;
 
-    if (ThisCond == SystemZ::CCMASK_ANY) {
+    if (Branch.CCMask == SystemZ::CCMASK_ANY) {
       // Handle unconditional branches.
       if (!AllowModify) {
-        TBB = ThisTarget->getMBB();
+        TBB = Branch.Target->getMBB();
         continue;
       }
 
@@ -148,7 +147,7 @@ bool SystemZInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       FBB = 0;
 
       // Delete the JMP if it's equivalent to a fall-through.
-      if (MBB.isLayoutSuccessor(ThisTarget->getMBB())) {
+      if (MBB.isLayoutSuccessor(Branch.Target->getMBB())) {
         TBB = 0;
         I->eraseFromParent();
         I = MBB.end();
@@ -156,7 +155,7 @@ bool SystemZInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       }
 
       // TBB is used to indicate the unconditinal destination.
-      TBB = ThisTarget->getMBB();
+      TBB = Branch.Target->getMBB();
       continue;
     }
 
@@ -164,8 +163,8 @@ bool SystemZInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
     if (Cond.empty()) {
       // FIXME: add X86-style branch swap
       FBB = TBB;
-      TBB = ThisTarget->getMBB();
-      Cond.push_back(MachineOperand::CreateImm(ThisCond));
+      TBB = Branch.Target->getMBB();
+      Cond.push_back(MachineOperand::CreateImm(Branch.CCMask));
       continue;
     }
 
@@ -175,12 +174,12 @@ bool SystemZInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 
     // Only handle the case where all conditional branches branch to the same
     // destination.
-    if (TBB != ThisTarget->getMBB())
+    if (TBB != Branch.Target->getMBB())
       return true;
 
     // If the conditions are the same, we can leave them alone.
     unsigned OldCond = Cond[0].getImm();
-    if (OldCond == ThisCond)
+    if (OldCond == Branch.CCMask)
       continue;
 
     // FIXME: Try combining conditions like X86 does.  Should be easy on Z!
@@ -198,11 +197,9 @@ unsigned SystemZInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
     --I;
     if (I->isDebugValue())
       continue;
-    unsigned Cond;
-    const MachineOperand *Target;
-    if (!isBranch(I, Cond, Target))
+    if (!I->isBranch())
       break;
-    if (!Target->isMBB())
+    if (!getBranchInfo(I).Target->isMBB())
       break;
     // Remove the branch.
     I->eraseFromParent();
@@ -358,25 +355,20 @@ uint64_t SystemZInstrInfo::getInstSizeInBytes(const MachineInstr *MI) const {
   return MI->getDesc().getSize();
 }
 
-bool SystemZInstrInfo::isBranch(const MachineInstr *MI, unsigned &Cond,
-                                const MachineOperand *&Target) const {
+SystemZII::Branch
+SystemZInstrInfo::getBranchInfo(const MachineInstr *MI) const {
   switch (MI->getOpcode()) {
   case SystemZ::BR:
   case SystemZ::J:
   case SystemZ::JG:
-    Cond = SystemZ::CCMASK_ANY;
-    Target = &MI->getOperand(0);
-    return true;
+    return SystemZII::Branch(SystemZ::CCMASK_ANY, &MI->getOperand(0));
 
   case SystemZ::BRC:
   case SystemZ::BRCL:
-    Cond = MI->getOperand(0).getImm();
-    Target = &MI->getOperand(1);
-    return true;
+    return SystemZII::Branch(MI->getOperand(0).getImm(), &MI->getOperand(1));
 
   default:
-    assert(!MI->getDesc().isBranch() && "Unknown branch opcode");
-    return false;
+    llvm_unreachable("Unrecognized branch opcode");
   }
 }
 
