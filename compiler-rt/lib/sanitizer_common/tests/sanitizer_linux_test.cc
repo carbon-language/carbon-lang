@@ -19,19 +19,12 @@
 #include "sanitizer_common/sanitizer_common.h"
 #include "gtest/gtest.h"
 
-#ifdef __x86_64__
-#include <asm/prctl.h>
-#endif
 #include <pthread.h>
 #include <sched.h>
 #include <stdlib.h>
 
 #include <algorithm>
 #include <vector>
-
-#ifdef __x86_64__
-extern "C" int arch_prctl(int code, __sanitizer::uptr *addr);
-#endif
 
 namespace __sanitizer {
 
@@ -202,23 +195,37 @@ TEST(SanitizerCommon, SetEnvTest) {
   EXPECT_EQ(0, getenv(kEnvName));
 }
 
-#ifdef __x86_64__
-// libpthread puts the thread descriptor (%fs:0x0) at the end of stack space.
-void *thread_descriptor_test_func(void *arg) {
-  uptr fs;
-  arch_prctl(ARCH_GET_FS, &fs);
+#if defined(__x86_64__) || defined(i386)
+void *thread_self_offset_test_func(void *arg) {
+  bool result =
+      *(uptr *)((char *)ThreadSelf() + ThreadSelfOffset()) == ThreadSelf();
+  return (void *)result;
+}
+
+TEST(SanitizerLinux, ThreadSelfOffset) {
+  EXPECT_TRUE((bool)thread_self_offset_test_func(0));
+  pthread_t tid;
+  void *result;
+  ASSERT_EQ(0, pthread_create(&tid, 0, thread_self_offset_test_func, 0));
+  ASSERT_EQ(0, pthread_join(tid, &result));
+  EXPECT_TRUE((bool)result);
+}
+
+// libpthread puts the thread descriptor at the end of stack space.
+void *thread_descriptor_size_test_func(void *arg) {
+  uptr descr_addr = ThreadSelf();
   pthread_attr_t attr;
   pthread_getattr_np(pthread_self(), &attr);
   void *stackaddr;
-  uptr stacksize;
+  size_t stacksize;
   pthread_attr_getstack(&attr, &stackaddr, &stacksize);
-  return (void *)((uptr)stackaddr + stacksize - fs);
+  return (void *)((uptr)stackaddr + stacksize - descr_addr);
 }
 
 TEST(SanitizerLinux, ThreadDescriptorSize) {
   pthread_t tid;
   void *result;
-  pthread_create(&tid, 0, thread_descriptor_test_func, 0);
+  ASSERT_EQ(0, pthread_create(&tid, 0, thread_descriptor_size_test_func, 0));
   ASSERT_EQ(0, pthread_join(tid, &result));
   EXPECT_EQ((uptr)result, ThreadDescriptorSize());
 }
