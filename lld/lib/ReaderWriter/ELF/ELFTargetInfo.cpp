@@ -22,7 +22,8 @@
 #include "llvm/Support/Path.h"
 
 namespace lld {
-ELFTargetInfo::ELFTargetInfo(llvm::Triple triple, std::unique_ptr<TargetHandlerBase> targetHandler)
+ELFTargetInfo::ELFTargetInfo(llvm::Triple triple,
+                             std::unique_ptr<TargetHandlerBase> targetHandler)
     : _outputFileType(elf::ET_EXEC),
       _triple(triple),
       _targetHandler(std::move(targetHandler)),
@@ -32,11 +33,10 @@ ELFTargetInfo::ELFTargetInfo(llvm::Triple triple, std::unique_ptr<TargetHandlerB
       _noInhibitExec(false),
       _mergeCommonStrings(false),
       _runLayoutPass(true),
-      _useShlibUndefines(false) {}
+      _useShlibUndefines(false),
+      _dynamicLinkerArg(false) {}
 
-bool ELFTargetInfo::is64Bits() const {
-  return getTriple().isArch64Bit();
-}
+bool ELFTargetInfo::is64Bits() const { return getTriple().isArch64Bit(); }
 
 bool ELFTargetInfo::isLittleEndian() const {
   // TODO: Do this properly. It is not defined purely by arch.

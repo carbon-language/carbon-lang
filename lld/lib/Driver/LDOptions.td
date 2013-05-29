@@ -18,8 +18,9 @@ def output : Separate<["-"], "o">,
 def relocatable : Flag<["--"], "relocatable">;
 def relocatable_r : Flag<["-"], "r">, Alias<relocatable>;
 
-def dynamic_linker : Separate<["-"], "dynamic-linker">;
-
+def dynamic_linker : Joined<["--"], "dynamic-linker=">,
+    HelpText<"Set the path to the dynamic linker">;
+def dynamic_linker_alias : Separate<["-"], "dynamic-linker">, Alias<dynamic_linker>;
 
 def m : Separate<["-"], "m">;
 def z : Separate<["-"], "z">;

@@ -81,8 +81,16 @@ public:
     return false;
   }
 
-  virtual StringRef getInterpreter() const {
+  /// \brief The path to the dynamic interpreter
+  virtual StringRef getDefaultInterpreter() const {
     return "/lib64/ld-linux-x86-64.so.2";
+  }
+
+  /// \brief The dynamic linker path set by the --dynamic-linker option
+  virtual StringRef getInterpreter() const {
+    if (_dynamicLinkerArg)
+      return _dynamicLinkerPath;
+    return getDefaultInterpreter();
   }
 
   /// \brief Does the output have dynamic sections.
@@ -106,6 +114,13 @@ public:
   void setIsStaticExecutable(bool v) { _isStaticExecutable = v; }
   void setMergeCommonStrings(bool v) { _mergeCommonStrings = v; }
   void setUseShlibUndefines(bool use) { _useShlibUndefines = use; }
+
+  /// \brief Set the dynamic linker path
+  void setInterpreter(StringRef dynamicLinker) {
+    _dynamicLinkerArg = true;
+    _dynamicLinkerPath = dynamicLinker;
+  }
+
   void appendSearchPath(StringRef dirPath) {
     _inputSearchPaths.push_back(dirPath);
   }
@@ -129,12 +144,14 @@ protected:
   bool                               _mergeCommonStrings;
   bool                               _runLayoutPass;
   bool                               _useShlibUndefines;
+  bool                               _dynamicLinkerArg;
   std::vector<StringRef>             _inputSearchPaths;
   llvm::BumpPtrAllocator             _extraStrings;
   std::unique_ptr<Reader>            _elfReader;
   std::unique_ptr<Reader>            _yamlReader;
   std::unique_ptr<Writer>            _writer;
   std::unique_ptr<Reader>            _linkerScriptReader;
+  StringRef                          _dynamicLinkerPath;
 };
 } // end namespace lld
 

@@ -193,6 +193,11 @@ GnuLdDriver::parse(int argc, const char *argv[], raw_ostream &diagnostics) {
   if (parsedArgs->getLastArg(OPT_use_shlib_undefs))
     options->setUseShlibUndefines(true);
 
+  // Handle --dynamic-linker
+  if (llvm::opt::Arg *dynamicLinker =
+          parsedArgs->getLastArg(OPT_dynamic_linker))
+    options->setInterpreter(dynamicLinker->getValue());
+
   // Handle -Lxxx
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_L),
                                ie = parsedArgs->filtered_end();
