@@ -889,13 +889,12 @@ are listed below.
       includes all of the checks listed below other than
       ``unsigned-integer-overflow``.
 
-      ``-fsanitize=undefined-trap``: This includes all sanitizers
+   -  ``-fsanitize=undefined-trap``: This includes all sanitizers
       included by ``-fsanitize=undefined``, except those that require
-      runtime support.  This group of sanitizers are generally used
-      in conjunction with the ``-fsanitize-undefined-trap-on-error``
-      flag, which causes traps to be emitted, rather than calls to
-      runtime libraries. This includes all of the checks listed below
-      other than ``unsigned-integer-overflow`` and ``vptr``.
+      runtime support. This group of sanitizers is intended to be
+      used in conjunction with the ``-fsanitize-undefined-trap-on-error``
+      flag. This includes all of the checks listed below other than
+      ``unsigned-integer-overflow`` and ``vptr``.
 
    The following more fine-grained checks are also available:
 
@@ -957,6 +956,19 @@ are listed below.
       reports pointing to the heap or stack allocation the
       uninitialized bits came from. Slows down execution by additional
       1.5x-2x.
+
+   Extra features of UndefinedBehaviorSanitizer:
+
+   -  ``-fno-sanitize-recover``: By default, after a sanitizer diagnoses
+      an issue, it will attempt to continue executing the program if there
+      is a reasonable behavior it can give to the faulting operation. This
+      option causes the program to abort instead.
+   -  ``-fsanitize-undefined-trap-on-error``: Causes traps to be emitted
+      rather than calls to runtime libraries when a problem is detected.
+      This option is intended for use in cases where the sanitizer runtime
+      cannot be used (for instance, when building libc or a kernel module).
+      This is only compatible with the sanitizers in the ``undefined-trap``
+      group.
 
    The ``-fsanitize=`` argument must also be provided when linking, in
    order to link to the appropriate runtime library. It is not possible
