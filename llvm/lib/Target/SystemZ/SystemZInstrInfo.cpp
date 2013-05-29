@@ -373,10 +373,12 @@ SystemZInstrInfo::getBranchInfo(const MachineInstr *MI) const {
     return SystemZII::Branch(SystemZII::BranchNormal,
                              MI->getOperand(0).getImm(), &MI->getOperand(1));
 
+  case SystemZ::CIJ:
   case SystemZ::CRJ:
     return SystemZII::Branch(SystemZII::BranchC, MI->getOperand(2).getImm(),
                              &MI->getOperand(3));
 
+  case SystemZ::CGIJ:
   case SystemZ::CGRJ:
     return SystemZII::Branch(SystemZII::BranchCG, MI->getOperand(2).getImm(),
                              &MI->getOperand(3));
@@ -440,12 +442,17 @@ unsigned SystemZInstrInfo::getOpcodeForOffset(unsigned Opcode,
   return 0;
 }
 
-unsigned SystemZInstrInfo::getCompareAndBranch(unsigned Opcode) const {
+unsigned SystemZInstrInfo::getCompareAndBranch(unsigned Opcode,
+                                               const MachineInstr *MI) const {
   switch (Opcode) {
   case SystemZ::CR:
     return SystemZ::CRJ;
   case SystemZ::CGR:
     return SystemZ::CGRJ;
+  case SystemZ::CHI:
+    return MI && isInt<8>(MI->getOperand(1).getImm()) ? SystemZ::CIJ : 0;
+  case SystemZ::CGHI:
+    return MI && isInt<8>(MI->getOperand(1).getImm()) ? SystemZ::CGIJ : 0;
   default:
     return 0;
   }

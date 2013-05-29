@@ -56,10 +56,6 @@ and conditional returns.
 
 --
 
-We don't use the combined COMPARE AND BRANCH instructions.
-
---
-
 We don't use the condition code results of anything except comparisons.
 
 Implementing this may need something more finely grained than the z_cmp

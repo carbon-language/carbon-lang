@@ -229,6 +229,11 @@ TerminatorInfo SystemZLongBranch::describeTerminator(MachineInstr *MI) {
       // Relaxes to a CGR/BRCL sequence, which is 4 bytes longer.
       Terminator.ExtraRelaxSize = 4;
       break;
+    case SystemZ::CIJ:
+    case SystemZ::CGIJ:
+      // Relaxes to a C(G)HI/BRCL sequence, which is 4 bytes longer.
+      Terminator.ExtraRelaxSize = 4;
+      break;
     default:
       llvm_unreachable("Unrecognized branch instruction");
     }
@@ -360,6 +365,12 @@ void SystemZLongBranch::relaxBranch(TerminatorInfo &Terminator) {
     break;
   case SystemZ::CGRJ:
     splitCompareBranch(Branch, SystemZ::CGR);
+    break;
+  case SystemZ::CIJ:
+    splitCompareBranch(Branch, SystemZ::CHI);
+    break;
+  case SystemZ::CGIJ:
+    splitCompareBranch(Branch, SystemZ::CGHI);
     break;
   default:
     llvm_unreachable("Unrecognized branch");

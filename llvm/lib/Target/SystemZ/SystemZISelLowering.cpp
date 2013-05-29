@@ -1624,7 +1624,8 @@ convertPrevCompareToBranch(MachineBasicBlock *MBB,
   while (Compare->isDebugValue());
 
   const SystemZInstrInfo *TII = TM.getInstrInfo();
-  unsigned FusedOpcode = TII->getCompareAndBranch(Compare->getOpcode());
+  unsigned FusedOpcode = TII->getCompareAndBranch(Compare->getOpcode(),
+                                                  Compare);
   if (!FusedOpcode)
     return false;
 

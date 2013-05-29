@@ -129,6 +129,24 @@ class InstRIEb<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   let Inst{7-0}   = op{7-0};
 }
 
+class InstRIEc<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
+  : InstSystemZ<6, outs, ins, asmstr, pattern> {
+  field bits<48> Inst;
+  field bits<48> SoftFail = 0;
+
+  bits<4> R1;
+  bits<8> I2;
+  bits<4> M3;
+  bits<16> RI4;
+
+  let Inst{47-40} = op{15-8};
+  let Inst{39-36} = R1;
+  let Inst{35-32} = M3;
+  let Inst{31-16} = RI4;
+  let Inst{15-8}  = I2;
+  let Inst{7-0}   = op{7-0};
+}
+
 class InstRIEf<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   : InstSystemZ<6, outs, ins, asmstr, pattern> {
   field bits<48> Inst;
