@@ -976,6 +976,24 @@ TEST(MemorySanitizer, strtold) {
   EXPECT_NOT_POISONED((S8) e);
 }
 
+TEST(MemorySanitizer, modf) {
+  double x, y;
+  x = modf(2.1, &y);
+  EXPECT_NOT_POISONED(y);
+}
+
+TEST(MemorySanitizer, modff) {
+  float x, y;
+  x = modff(2.1, &y);
+  EXPECT_NOT_POISONED(y);
+}
+
+TEST(MemorySanitizer, modfl) {
+  long double x, y;
+  x = modfl(2.1, &y);
+  EXPECT_NOT_POISONED(y);
+}
+
 TEST(MemorySanitizer, sprintf) {  // NOLINT
   char buff[10];
   break_optimization(buff);

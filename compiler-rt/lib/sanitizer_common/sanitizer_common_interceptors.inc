@@ -1008,6 +1008,42 @@ INTERCEPTOR(int, accept4, int fd, void *addr, unsigned *addrlen, int f) {
 #define INIT_ACCEPT4
 #endif
 
+#if SANITIZER_INTERCEPT_MODF
+INTERCEPTOR(double, modf, double x, double *iptr) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, modf, x, iptr);
+  double res = REAL(modf)(x, iptr);
+  if (iptr) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, iptr, sizeof(*iptr));
+  }
+  return res;
+}
+INTERCEPTOR(float, modff, float x, float *iptr) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, modff, x, iptr);
+  float res = REAL(modff)(x, iptr);
+  if (iptr) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, iptr, sizeof(*iptr));
+  }
+  return res;
+}
+INTERCEPTOR(long double, modfl, long double x, long double *iptr) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, modfl, x, iptr);
+  long double res = REAL(modfl)(x, iptr);
+  if (iptr) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, iptr, sizeof(*iptr));
+  }
+  return res;
+}
+#define INIT_MODF            \
+  INTERCEPT_FUNCTION(modf);  \
+  INTERCEPT_FUNCTION(modff); \
+  INTERCEPT_FUNCTION(modfl);
+#else
+#define INIT_MODF
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCASECMP;                         \
   INIT_STRNCASECMP;                        \
@@ -1037,4 +1073,5 @@ INTERCEPTOR(int, accept4, int fd, void *addr, unsigned *addrlen, int f) {
   INIT_GETHOSTBYNAME_R;                    \
   INIT_GETSOCKOPT;                         \
   INIT_ACCEPT;                             \
-  INIT_ACCEPT4;
+  INIT_ACCEPT4;                            \
+  INIT_MODF;
