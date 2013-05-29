@@ -1173,7 +1173,6 @@ TestPromptFormats (StackFrame *frame)
     SymbolContext sc (frame->GetSymbolContext(eSymbolContextEverything));
     ExecutionContext exe_ctx;
     frame->CalculateExecutionContext(exe_ctx);
-    const char *end = NULL;
     if (Debugger::FormatPrompt (prompt_format, &sc, &exe_ctx, &sc.line_entry.range.GetBaseAddress(), s))
     {
         printf("%s\n", s.GetData());
