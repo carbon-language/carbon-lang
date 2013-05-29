@@ -29,7 +29,6 @@ namespace __sanitizer {
   extern unsigned siginfo_t_sz;
   extern unsigned struct_itimerval_sz;
   extern unsigned pthread_t_sz;
-  extern unsigned struct_sockaddr_sz;
 
 #if !SANITIZER_ANDROID
   extern unsigned ucontext_t_sz;

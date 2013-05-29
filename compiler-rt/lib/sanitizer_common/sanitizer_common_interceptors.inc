@@ -766,7 +766,7 @@ INTERCEPTOR(int, getaddrinfo, char *node, char *service,
     while (p) {
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p, sizeof(*p));
       if (p->ai_addr)
-        COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p->ai_addr, struct_sockaddr_sz);
+        COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p->ai_addr, p->ai_addrlen);
       if (p->ai_canonname)
         COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p->ai_canonname,
                                        REAL(strlen)(p->ai_canonname) + 1);
