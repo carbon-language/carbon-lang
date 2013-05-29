@@ -147,7 +147,9 @@ class QuarantineCache {
       return 0;
     QuarantineBatch *b = list_.front();
     list_.pop_front();
-    SizeAdd(-b->size);
+    // FIXME: should probably add SizeSub method?
+    // See https://code.google.com/p/thread-sanitizer/issues/detail?id=20
+    SizeAdd(0 - b->size);
     return b;
   }
 

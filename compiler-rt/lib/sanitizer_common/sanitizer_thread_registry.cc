@@ -85,7 +85,7 @@ void ThreadContextBase::Reset() {
 
 // ThreadRegistry implementation.
 
-const u32 ThreadRegistry::kUnknownTid = -1U;
+const u32 ThreadRegistry::kUnknownTid = ~0U;
 
 ThreadRegistry::ThreadRegistry(ThreadContextFactory factory, u32 max_threads,
                                u32 thread_quarantine_size)
