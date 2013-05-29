@@ -14,10 +14,6 @@
 
 #include "sanitizer_common/sanitizer_libc.h"
 
-// TODO(pcc): Remove these once the allocator dependency is gone.
-extern "C" void *__libc_malloc() { return 0; }
-extern "C" void __libc_free(void *p) {}
-
 extern "C" void _start() {
   internal__exit(0);
 }
