@@ -669,7 +669,7 @@ TEST(MemorySanitizer, accept) {
   res = getsockname(listen_socket, (struct sockaddr *)&sai, &sz);
   ASSERT_EQ(0, res);
   ASSERT_EQ(sizeof(sai), sz);
-  
+
   int connect_socket = socket(AF_INET, SOCK_STREAM, 0);
   ASSERT_LT(0, connect_socket);
   res = fcntl(connect_socket, F_SETFL, O_NONBLOCK);
@@ -679,8 +679,14 @@ TEST(MemorySanitizer, accept) {
   ASSERT_EQ(EINPROGRESS, errno);
 
   __msan_poison(&sai, sizeof(sai));
-  int new_sock = accept(listen_socket,(struct sockaddr *)&sai, &sz);
+  int new_sock = accept(listen_socket, (struct sockaddr *)&sai, &sz);
   ASSERT_LT(0, new_sock);
+  ASSERT_EQ(sizeof(sai), sz);
+  EXPECT_NOT_POISONED(sai);
+
+  __msan_poison(&sai, sizeof(sai));
+  res = getpeername(new_sock, (struct sockaddr *)&sai, &sz);
+  ASSERT_EQ(0, res);
   ASSERT_EQ(sizeof(sai), sz);
   EXPECT_NOT_POISONED(sai);
 

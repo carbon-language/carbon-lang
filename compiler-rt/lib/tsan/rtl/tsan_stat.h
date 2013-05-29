@@ -320,6 +320,7 @@ enum StatType {
   StatInt_modf,
   StatInt_modff,
   StatInt_modfl,
+  StatInt_getpeername,
 
   // Dynamic annotations.
   StatAnnotation,

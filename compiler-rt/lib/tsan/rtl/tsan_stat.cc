@@ -325,6 +325,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_modf]                     = "  modf                            ";
   name[StatInt_modff]                    = "  modff                           ";
   name[StatInt_modfl]                    = "  modfl                           ";
+  name[StatInt_getpeername]              = "  getpeername                     ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

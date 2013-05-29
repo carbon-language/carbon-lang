@@ -1075,6 +1075,22 @@ INTERCEPTOR(SSIZE_T, recvmsg, int fd, struct __sanitizer_msghdr *msg,
 #define INIT_RECVMSG
 #endif
 
+#if SANITIZER_INTERCEPT_GETPEERNAME
+INTERCEPTOR(int, getpeername, int sockfd, void *addr, unsigned *addrlen) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getpeername, sockfd, addr, addrlen);
+  unsigned addr_sz;
+  if (addrlen) addr_sz = *addrlen;
+  int res = REAL(getpeername)(sockfd, addr, addrlen);
+  if (!res && addr && addrlen)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, addr, Min(addr_sz, *addrlen));
+  return res;
+}
+#define INIT_GETPEERNAME INTERCEPT_FUNCTION(getpeername);
+#else
+#define INIT_GETPEERNAME
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCASECMP;                         \
   INIT_STRNCASECMP;                        \
@@ -1106,4 +1122,5 @@ INTERCEPTOR(SSIZE_T, recvmsg, int fd, struct __sanitizer_msghdr *msg,
   INIT_ACCEPT;                             \
   INIT_ACCEPT4;                            \
   INIT_MODF;                               \
-  INIT_RECVMSG;
+  INIT_RECVMSG;                            \
+  INIT_GETPEERNAME;
