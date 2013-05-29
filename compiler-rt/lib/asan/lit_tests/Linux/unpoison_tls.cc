@@ -1,11 +1,7 @@
 // Test that TLS is unpoisoned on thread death.
 // REQUIRES: x86_64-supported-target,i386-supported-target
 
-// RUN: %clangxx_asan -m64 -O1 %p/SharedLibs/dlclose-test-so.cc \
-// RUN:     -fPIC -shared -o %t-so.so
 // RUN: %clangxx_asan -m64 -O1 %s -o %t && %t 2>&1
-// RUN: %clangxx_asan -m32 -O1 %p/SharedLibs/dlclose-test-so.cc \
-// RUN:     -fPIC -shared -o %t-so.so
 // RUN: %clangxx_asan -m32 -O1 %s -o %t && %t 2>&1
 
 #include <assert.h>
