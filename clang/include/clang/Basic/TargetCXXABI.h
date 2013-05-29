@@ -152,6 +152,13 @@ public:
     return isItaniumFamily();
   }
 
+  /// \brief Does this ABI use key functions?  If so, class data such as the
+  /// vtable is emitted with strong linkage by the TU containing the key
+  /// function.
+  bool hasKeyFunctions() const {
+    return isItaniumFamily();
+  }
+
   /// \brief Can an out-of-line inline function serve as a key function?
   ///
   /// This flag is only useful in ABIs where type data (for example,

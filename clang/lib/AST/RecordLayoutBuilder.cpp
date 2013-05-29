@@ -2546,6 +2546,9 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
 }
 
 const CXXMethodDecl *ASTContext::getCurrentKeyFunction(const CXXRecordDecl *RD) {
+  if (!getTargetInfo().getCXXABI().hasKeyFunctions())
+    return 0;
+
   assert(RD->getDefinition() && "Cannot get key function for forward decl!");
   RD = cast<CXXRecordDecl>(RD->getDefinition());
 

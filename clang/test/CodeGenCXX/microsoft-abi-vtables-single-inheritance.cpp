@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 %s -fno-rtti -cxx-abi microsoft -triple=i386-pc-win32 -emit-llvm -fdump-vtable-layouts -o - > %t 2>&1
 // RUN: FileCheck --check-prefix=EMITS-VTABLE %s < %t
+// RUN: FileCheck --check-prefix=NO-VTABLE %s < %t
 // RUN: FileCheck --check-prefix=CHECK-A %s < %t
 // RUN: FileCheck --check-prefix=CHECK-B %s < %t
 // RUN: FileCheck --check-prefix=CHECK-C %s < %t
@@ -13,13 +14,13 @@ struct A {
   // CHECK-A-NEXT: 0 | void A::f()
   // CHECK-A-NEXT: 1 | void A::g()
   // CHECK-A-NEXT: 2 | void A::h()
-  // EMITS-VTABLE: @"\01??_7A@@6B@" = unnamed_addr constant [3 x i8*]
   virtual void f();
   virtual void g();
   virtual void h();
   int ia;
 };
-void A::f() {}
+A a;
+// EMITS-VTABLE-DAG: @"\01??_7A@@6B@" = linkonce_odr unnamed_addr constant [3 x i8*]
 
 struct B : A {
   // CHECK-B: Vtable for 'B' (5 entries)
@@ -28,12 +29,12 @@ struct B : A {
   // CHECK-B-NEXT: 2 | void A::h()
   // CHECK-B-NEXT: 3 | void B::i()
   // CHECK-B-NEXT: 4 | void B::j()
-  // EMITS-VTABLE: @"\01??_7B@@6B@" = unnamed_addr constant [5 x i8*]
   virtual void f();  // overrides A::f()
   virtual void i();
   virtual void j();
 };
-void B::f() {}
+B b;
+// EMITS-VTABLE-DAG: @"\01??_7B@@6B@" = linkonce_odr unnamed_addr constant [5 x i8*]
 
 struct C {
   // CHECK-C: Vtable for 'C' (2 entries)
@@ -42,23 +43,24 @@ struct C {
   // CHECK-C: VTable indices for 'C' (2 entries).
   // CHECK-C-NEXT: 0 | C::~C() [scalar deleting]
   // CHECK-C-NEXT: 1 | void C::f()
-  // Never used, so doesn't emit a vtable.
   virtual ~C();
 
   virtual void f();
 };
 void C::f() {}
+// The usual Itanium-style key method does not cause vtable emission.
+// NO-VTABLE-NOT: @"\01??_7C@@6B@"
 
 struct D {
   // CHECK-D: Vtable for 'D' (2 entries)
   // CHECK-D-NEXT: 0 | void D::f()
   // CHECK-D-NEXT: 1 | D::~D() [scalar deleting]
-  // EMITS-VTABLE: @"\01??_7D@@6B@" = unnamed_addr constant [2 x i8*]
   virtual void f();
 
   virtual ~D();
 };
-void D::f() {}
+D d;
+// EMITS-VTABLE-DAG: @"\01??_7D@@6B@" = linkonce_odr unnamed_addr constant [2 x i8*]
 
 struct E : A {
   // CHECK-E: Vtable for 'E' (5 entries)
@@ -71,11 +73,13 @@ struct E : A {
   // CHECK-E-NEXT: 3 | E::~E() [scalar deleting]
   // CHECK-E-NEXT: 4 | void E::i()
 
-  // Never used, so doesn't emit a vtable.
+  // ~E would be the key method, but it isn't used, and MS ABI has no key
+  // methods.
   virtual ~E();
   virtual void i();
 };
 void E::i() {}
+// NO-VTABLE-NOT: @"\01??_7E@@6B@"
 
 struct F : A {
   // CHECK-F: Vtable for 'F' (5 entries)
@@ -87,11 +91,11 @@ struct F : A {
   // CHECK-F: VTable indices for 'F' (2 entries).
   // CHECK-F-NEXT: 3 | void F::i()
   // CHECK-F-NEXT: 4 | F::~F() [scalar deleting]
-  // EMITS-VTABLE: @"\01??_7F@@6B@" = unnamed_addr constant [5 x i8*]
   virtual void i();
   virtual ~F();
 };
-void F::i() {}
+F f;
+// EMITS-VTABLE-DAG: @"\01??_7F@@6B@" = linkonce_odr unnamed_addr constant [5 x i8*]
 
 struct G : E {
   // CHECK-G: Vtable for 'G' (6 entries)
@@ -105,9 +109,9 @@ struct G : E {
   // CHECK-G-NEXT: 0 | void G::f()
   // CHECK-G-NEXT: 3 | G::~G() [scalar deleting]
   // CHECK-G-NEXT: 5 | void G::j()
-  // Never used, so doesn't emit a vtable.
   virtual void f();  // overrides A::f()
   virtual ~G();
   virtual void j();
 };
 void G::j() {}
+// NO-VTABLE-NOT: @"\01??_7G@@6B@"
