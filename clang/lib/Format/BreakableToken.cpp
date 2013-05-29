@@ -87,8 +87,16 @@ BreakableToken::Split getCommentSplit(StringRef Text,
   StringRef::size_type SpaceOffset = Text.rfind(' ', MaxSplit);
   if (SpaceOffset == StringRef::npos ||
       // Don't break at leading whitespace.
-      Text.find_last_not_of(' ', SpaceOffset) == StringRef::npos)
-    SpaceOffset = Text.find(' ', MaxSplit);
+      Text.find_last_not_of(' ', SpaceOffset) == StringRef::npos) {
+    // Make sure that we don't break at leading whitespace that
+    // reaches past MaxSplit.
+    StringRef::size_type FirstNonWhitespace = Text.find_first_not_of(" ");
+    if (FirstNonWhitespace == StringRef::npos)
+      // If the comment is only whitespace, we cannot split.
+      return BreakableToken::Split(StringRef::npos, 0);
+    SpaceOffset =
+        Text.find(' ', std::max<unsigned>(MaxSplit, FirstNonWhitespace));
+  }
   if (SpaceOffset != StringRef::npos && SpaceOffset != 0) {
     StringRef BeforeCut = Text.substr(0, SpaceOffset).rtrim();
     StringRef AfterCut = Text.substr(SpaceOffset).ltrim();

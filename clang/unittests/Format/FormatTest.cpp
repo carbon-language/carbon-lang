@@ -3694,6 +3694,33 @@ TEST_F(FormatTest, BlockCommentsInMacros) {
                    getLLVMStyleWithColumns(20)));
 }
 
+TEST_F(FormatTest, BlockCommentsAtEndOfLine) {
+  EXPECT_EQ("a = {\n"
+            "  1111 /*    */\n"
+            "};",
+            format("a = {1111\n"
+                   "/*    */\n"
+                   "};",
+                   getLLVMStyleWithColumns(15)));
+  EXPECT_EQ("a = {\n"
+            "  1111 /*      */\n"
+            "};",
+            format("a = {1111\n"
+                   "/*      */\n"
+                   "};",
+                   getLLVMStyleWithColumns(15)));
+
+  // FIXME: The formatting is still wrong here.
+  EXPECT_EQ("a = {\n"
+            "  1111 /*      a\n"
+            "          */\n"
+            "};",
+            format("a = {1111\n"
+                   "/*      a */\n"
+                   "};",
+                   getLLVMStyleWithColumns(15)));
+}
+
 TEST_F(FormatTest, IndentLineCommentsInStartOfBlockAtEndOfFile) {
   // FIXME: This is not what we want...
   verifyFormat("{\n"
