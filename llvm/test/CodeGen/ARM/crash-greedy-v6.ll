@@ -1,5 +1,5 @@
 ; RUN: llc -disable-fp-elim -relocation-model=pic < %s
-; RUN: llc -disable-fp-elim -relocation-model=pic -pre-RA-sched=source < %s | FileCheck %s --check-prefix=SOURCE-SCHED
+; RUN: llc -disable-fp-elim -relocation-model=pic -O0 -pre-RA-sched=source < %s | FileCheck %s --check-prefix=SOURCE-SCHED
 target triple = "armv6-apple-ios"
 
 ; Reduced from 177.mesa. This test causes a live range split before an LDR_POST instruction.
@@ -12,23 +12,22 @@ for.body.lr.ph:                                   ; preds = %entry
   br label %for.body
 
 for.body:                                         ; preds = %for.body, %for.body.lr.ph
-; SOURCE-SCHED: str
-; SOURCE-SCHED: add
-; SOURCE-SCHED: sub
 ; SOURCE-SCHED: ldr
 ; SOURCE-SCHED: ldr
-; SOURCE-SCHED: str
-; SOURCE-SCHED: str
-; SOURCE-SCHED: str
-; SOURCE-SCHED: str
 ; SOURCE-SCHED: add
+; SOURCE-SCHED: ldr
 ; SOURCE-SCHED: add
+; SOURCE-SCHED: ldr
 ; SOURCE-SCHED: add
+; SOURCE-SCHED: ldr
 ; SOURCE-SCHED: add
 ; SOURCE-SCHED: str
-; SOURCE-SCHED: mov
+; SOURCE-SCHED: str
+; SOURCE-SCHED: str
+; SOURCE-SCHED: str
+; SOURCE-SCHED: ldr
 ; SOURCE-SCHED: bl
-; SOURCE-SCHED: ldr
+; SOURCE-SCHED: add
 ; SOURCE-SCHED: ldr
 ; SOURCE-SCHED: cmp
 ; SOURCE-SCHED: bne

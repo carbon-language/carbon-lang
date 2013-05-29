@@ -1151,7 +1151,8 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
   }
 
   if (!IsSibCall)
-    Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(NumBytes, true));
+    Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(NumBytes, true),
+                                 dl);
 
   SDValue StackPtr = DAG.getCopyFromReg(Chain, dl, AArch64::XSP,
                                         getPointerTy());
@@ -1282,7 +1283,7 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
   // in the correct location.
   if (IsTailCall && !IsSibCall) {
     Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NumBytes, true),
-                               DAG.getIntPtrConstant(0, true), InFlag);
+                               DAG.getIntPtrConstant(0, true), InFlag, dl);
     InFlag = Chain.getValue(1);
   }
 
@@ -1336,7 +1337,7 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
 
     Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NumBytes, true),
                                DAG.getIntPtrConstant(CalleePopBytes, true),
-                               InFlag);
+                               InFlag, dl);
     InFlag = Chain.getValue(1);
   }
 

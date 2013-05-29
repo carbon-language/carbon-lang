@@ -449,8 +449,9 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   bool isABI = (nvptxSubtarget.getSmVersion() >= 20);
 
   SDValue tempChain = Chain;
-  Chain =
-      DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(uniqueCallSite, true));
+  Chain = DAG.getCALLSEQ_START(Chain,
+                               DAG.getIntPtrConstant(uniqueCallSite, true),
+                               dl);
   SDValue InFlag = Chain.getValue(1);
 
   assert((Outs.size() == Args.size()) &&
@@ -795,7 +796,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   }
   Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(uniqueCallSite, true),
                              DAG.getIntPtrConstant(uniqueCallSite + 1, true),
-                             InFlag);
+                             InFlag, dl);
   uniqueCallSite++;
 
   // set isTailCall to false for now, until we figure out how to express

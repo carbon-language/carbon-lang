@@ -1,14 +1,26 @@
 ; RUN: llc < %s - | FileCheck %s
+;
+; FIXME: A potentially more interesting test case would be:
+; %call = @bar()
+; dbg.value j=0
+; %call2 = @bar()
+; dbg.value j=%call
+;
+; We cannot current handle the above sequence because codegenprepare
+; hoists the second dbg.value above %call2, which then appears to
+; conflict with j=0. It does this because SelectionDAG cannot handle
+; global debug values.
+
 target triple = "x86_64-apple-darwin10.0.0"
 
 ;CHECK:        ## DW_OP_constu
 ;CHECK-NEXT:  .byte	42
 define i32 @foobar() nounwind readonly noinline ssp {
 entry:
-  %call = tail call i32 @bar(), !dbg !11
   tail call void @llvm.dbg.value(metadata !8, i64 0, metadata !6), !dbg !9
-  %call2 = tail call i32 @bar(), !dbg !11
+  %call = tail call i32 @bar(), !dbg !11
   tail call void @llvm.dbg.value(metadata !{i32 %call}, i64 0, metadata !6), !dbg !11
+  %call2 = tail call i32 @bar(), !dbg !11
   %add = add nsw i32 %call2, %call, !dbg !12
   ret i32 %add, !dbg !10
 }

@@ -513,24 +513,24 @@ public:
   /// getCALLSEQ_START - Return a new CALLSEQ_START node, which always must have
   /// a glue result (to ensure it's not CSE'd).  CALLSEQ_START does not have a
   /// useful SDLoc.
-  SDValue getCALLSEQ_START(SDValue Chain, SDValue Op) {
+  SDValue getCALLSEQ_START(SDValue Chain, SDValue Op, SDLoc DL) {
     SDVTList VTs = getVTList(MVT::Other, MVT::Glue);
     SDValue Ops[] = { Chain,  Op };
-    return getNode(ISD::CALLSEQ_START, SDLoc(), VTs, Ops, 2);
+    return getNode(ISD::CALLSEQ_START, DL, VTs, Ops, 2);
   }
 
   /// getCALLSEQ_END - Return a new CALLSEQ_END node, which always must have a
   /// glue result (to ensure it's not CSE'd).  CALLSEQ_END does not have
   /// a useful SDLoc.
   SDValue getCALLSEQ_END(SDValue Chain, SDValue Op1, SDValue Op2,
-                           SDValue InGlue) {
+                           SDValue InGlue, SDLoc DL) {
     SDVTList NodeTys = getVTList(MVT::Other, MVT::Glue);
     SmallVector<SDValue, 4> Ops;
     Ops.push_back(Chain);
     Ops.push_back(Op1);
     Ops.push_back(Op2);
     Ops.push_back(InGlue);
-    return getNode(ISD::CALLSEQ_END, SDLoc(), NodeTys, &Ops[0],
+    return getNode(ISD::CALLSEQ_END, DL, NodeTys, &Ops[0],
                    (unsigned)Ops.size() - (InGlue.getNode() == 0 ? 1 : 0));
   }
 
