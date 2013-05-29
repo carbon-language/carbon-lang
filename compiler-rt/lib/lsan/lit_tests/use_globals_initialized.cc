@@ -1,4 +1,4 @@
-// Test that initialized globals are included in the root set. 
+// Test that initialized globals are included in the root set.
 // RUN: LSAN_BASE="report_blocks=1:use_stacks=0:use_registers=0"
 // RUN: %clangxx_lsan %s -o %t
 // RUN: LSAN_OPTIONS=$LSAN_BASE:"use_globals=0" %t 2>&1 | FileCheck %s

@@ -19,7 +19,7 @@
 
 namespace __sanitizer {
 
-// TODO: Check if we may use even more compact size class map for internal
+// FIXME: Check if we may use even more compact size class map for internal
 // purposes.
 typedef CompactSizeClassMap InternalSizeClassMap;
 
