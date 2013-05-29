@@ -601,6 +601,7 @@ void UnwrappedLineParser::parseStructuralElement() {
                    Text == Text.upper()) {
           // Recognize free-standing macros like Q_OBJECT.
           addUnwrappedLine();
+          return;
         }
       }
       break;

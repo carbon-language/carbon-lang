@@ -1702,6 +1702,14 @@ TEST_F(FormatTest, MacrosWithoutTrailingSemicolon) {
                    "\n"
                    "  A() {\n}\n"
                    "}  ;"));
+  EXPECT_EQ("SOME_MACRO\n"
+            "namespace {\n"
+            "void f();\n"
+            "}",
+            format("SOME_MACRO\n"
+                   "  namespace    {\n"
+                   "void   f(  );\n"
+                   "}"));
   // Only if the identifier contains at least 5 characters.
   EXPECT_EQ("HTTP f();",
             format("HTTP\nf();"));
