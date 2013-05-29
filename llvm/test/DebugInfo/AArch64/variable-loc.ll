@@ -16,21 +16,21 @@
 ;     return 0;
 ; }
 
-  ; First make sure main_arr is where we expect it: sp + 12 == x29 - 420:
+  ; First make sure main_arr is where we expect it: sp + 4 == x29 - 412:
 ; CHECK: main:
-; CHECK: sub sp, sp, #448
-; CHECK: stp x29, x30, [sp, #432]
-; CHECK: add x29, sp, #432
-; CHECK: add {{x[0-9]+}}, sp, #12
+; CHECK: sub sp, sp, #432
+; CHECK: stp x29, x30, [sp, #416]
+; CHECK: add x29, sp, #416
+; CHECK: add {{x[0-9]+}}, sp, #4
 
   ; Now check the debugging information reflects this:
 ; CHECK: DW_TAG_variable
 ; CHECK-NEXT: .word .Linfo_string7
 
-  ; Rather hard-coded, but 145 => DW_OP_fbreg and the .ascii is LEB128 encoded -420.
+  ; Rather hard-coded, but 145 => DW_OP_fbreg and the .ascii is LEB128 encoded -412.
 ; CHECK: DW_AT_location
 ; CHECK-NEXT: .byte 145
-; CHECK-NEXT: .ascii "\334|"
+; CHECK-NEXT: .ascii "\344|"
 
 ; CHECK: .Linfo_string7:
 ; CHECK-NEXT: main_arr
