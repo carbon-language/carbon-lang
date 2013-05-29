@@ -812,8 +812,7 @@ struct LoopVectorizeHints {
       for (unsigned i = 1, ie = LoopID->getNumOperands(); i < ie; ++i)
         Vals.push_back(LoopID->getOperand(i));
 
-    Twine Name = Prefix() + "width";
-    Vals.push_back(createHint(Context, Name.str(), Width));
+    Vals.push_back(createHint(Context, Twine(Prefix(), "width").str(), Width));
 
     MDNode *NewLoopID = MDNode::get(Context, Vals);
     // Set operand 0 to refer to the loop id itself.
