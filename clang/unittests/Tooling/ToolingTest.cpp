@@ -131,20 +131,26 @@ TEST(ToolInvocation, TestMapVirtualFile) {
   EXPECT_TRUE(Invocation.run());
 }
 
-struct VerifyEndCallback : public EndOfSourceFileCallback {
-  VerifyEndCallback() : Called(0), Matched(false) {}
-  virtual void run() {
-    ++Called;
+struct VerifyEndCallback : public SourceFileCallbacks {
+  VerifyEndCallback() : BeginCalled(0), EndCalled(0), Matched(false) {}
+  virtual bool BeginSource(CompilerInstance &CI,
+                           StringRef Filename) LLVM_OVERRIDE {
+    ++BeginCalled;
+    return true;
+  }
+  virtual void EndSource() {
+    ++EndCalled;
   }
   ASTConsumer *newASTConsumer() {
     return new FindTopLevelDeclConsumer(&Matched);
   }
-  unsigned Called;
+  unsigned BeginCalled;
+  unsigned EndCalled;
   bool Matched;
 };
 
 #if !defined(_WIN32)
-TEST(newFrontendActionFactory, InjectsEndOfSourceFileCallback) {
+TEST(newFrontendActionFactory, InjectsSourceFileCallbacks) {
   VerifyEndCallback EndCallback;
 
   FixedCompilationDatabase Compilations("/", std::vector<std::string>());
@@ -159,7 +165,8 @@ TEST(newFrontendActionFactory, InjectsEndOfSourceFileCallback) {
   Tool.run(newFrontendActionFactory(&EndCallback, &EndCallback));
 
   EXPECT_TRUE(EndCallback.Matched);
-  EXPECT_EQ(2u, EndCallback.Called);
+  EXPECT_EQ(2u, EndCallback.BeginCalled);
+  EXPECT_EQ(2u, EndCallback.EndCalled);
 }
 #endif
 

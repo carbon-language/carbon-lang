@@ -74,12 +74,22 @@ public:
 template <typename T>
 FrontendActionFactory *newFrontendActionFactory();
 
-/// \brief Called at the end of each source file when used with
-/// \c newFrontendActionFactory.
-class EndOfSourceFileCallback {
+/// \brief Callbacks called before and after each source file processed by a
+/// FrontendAction created by the FrontedActionFactory returned by \c
+/// newFrontendActionFactory.
+class SourceFileCallbacks {
 public:
-  virtual ~EndOfSourceFileCallback() {}
-  virtual void run() = 0;
+  virtual ~SourceFileCallbacks() {}
+
+  /// \brief Called before a source file is processed by a FrontEndAction.
+  /// \see clang::FrontendAction::BeginSourceFileAction
+  virtual bool BeginSource(CompilerInstance &CI, StringRef Filename) {
+    return true;
+  }
+
+  /// \brief Called after a source file is processed by a FrontendAction.
+  /// \see clang::FrontendAction::EndSourceFileAction
+  virtual void EndSource() {}
 };
 
 /// \brief Returns a new FrontendActionFactory for any type that provides an
@@ -95,7 +105,7 @@ public:
 ///   newFrontendActionFactory(&Factory);
 template <typename FactoryT>
 inline FrontendActionFactory *newFrontendActionFactory(
-    FactoryT *ConsumerFactory, EndOfSourceFileCallback *EndCallback = NULL);
+    FactoryT *ConsumerFactory, SourceFileCallbacks *Callbacks = NULL);
 
 /// \brief Runs (and deletes) the tool on 'Code' with the -fsyntax-only flag.
 ///
@@ -226,23 +236,23 @@ FrontendActionFactory *newFrontendActionFactory() {
 
 template <typename FactoryT>
 inline FrontendActionFactory *newFrontendActionFactory(
-    FactoryT *ConsumerFactory, EndOfSourceFileCallback *EndCallback) {
+    FactoryT *ConsumerFactory, SourceFileCallbacks *Callbacks) {
   class FrontendActionFactoryAdapter : public FrontendActionFactory {
   public:
     explicit FrontendActionFactoryAdapter(FactoryT *ConsumerFactory,
-                                          EndOfSourceFileCallback *EndCallback)
-      : ConsumerFactory(ConsumerFactory), EndCallback(EndCallback) {}
+                                          SourceFileCallbacks *Callbacks)
+      : ConsumerFactory(ConsumerFactory), Callbacks(Callbacks) {}
 
     virtual clang::FrontendAction *create() {
-      return new ConsumerFactoryAdaptor(ConsumerFactory, EndCallback);
+      return new ConsumerFactoryAdaptor(ConsumerFactory, Callbacks);
     }
 
   private:
     class ConsumerFactoryAdaptor : public clang::ASTFrontendAction {
     public:
       ConsumerFactoryAdaptor(FactoryT *ConsumerFactory,
-                             EndOfSourceFileCallback *EndCallback)
-        : ConsumerFactory(ConsumerFactory), EndCallback(EndCallback) {}
+                             SourceFileCallbacks *Callbacks)
+        : ConsumerFactory(ConsumerFactory), Callbacks(Callbacks) {}
 
       clang::ASTConsumer *CreateASTConsumer(clang::CompilerInstance &,
                                             StringRef) {
@@ -250,21 +260,29 @@ inline FrontendActionFactory *newFrontendActionFactory(
       }
 
     protected:
-      virtual void EndSourceFileAction() {
-        if (EndCallback != NULL)
-          EndCallback->run();
+      virtual bool BeginSourceFileAction(CompilerInstance &CI,
+                                         StringRef Filename) LLVM_OVERRIDE {
+        if (!clang::ASTFrontendAction::BeginSourceFileAction(CI, Filename))
+          return false;
+        if (Callbacks != NULL)
+          return Callbacks->BeginSource(CI, Filename);
+        return true;
+      }
+      virtual void EndSourceFileAction() LLVM_OVERRIDE {
+        if (Callbacks != NULL)
+          Callbacks->EndSource();
         clang::ASTFrontendAction::EndSourceFileAction();
       }
 
     private:
       FactoryT *ConsumerFactory;
-      EndOfSourceFileCallback *EndCallback;
+      SourceFileCallbacks *Callbacks;
     };
     FactoryT *ConsumerFactory;
-    EndOfSourceFileCallback *EndCallback;
+    SourceFileCallbacks *Callbacks;
   };
 
-  return new FrontendActionFactoryAdapter(ConsumerFactory, EndCallback);
+  return new FrontendActionFactoryAdapter(ConsumerFactory, Callbacks);
 }
 
 /// \brief Returns the absolute path of \c File, by prepending it with
