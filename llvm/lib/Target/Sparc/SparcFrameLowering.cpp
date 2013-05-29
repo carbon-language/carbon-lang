@@ -136,7 +136,7 @@ bool SparcFrameLowering::hasFP(const MachineFunction &MF) const {
 }
 
 
-static bool verifyLeafProcRegUse(MachineRegisterInfo *MRI)
+static bool LLVM_ATTRIBUTE_UNUSED verifyLeafProcRegUse(MachineRegisterInfo *MRI)
 {
 
   for (unsigned reg = SP::I0; reg <= SP::I7; ++reg)
