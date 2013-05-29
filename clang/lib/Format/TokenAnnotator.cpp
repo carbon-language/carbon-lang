@@ -922,6 +922,9 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
                Current->Parent->is(tok::string_literal) &&
                Current->Children[0].is(tok::string_literal)) {
       Current->MustBreakBefore = true;
+    } else if (Current->Parent->ClosesTemplateDeclaration &&
+               Style.AlwaysBreakTemplateDeclarations) {
+      Current->MustBreakBefore = true;
     } else {
       Current->MustBreakBefore = false;
     }

@@ -100,6 +100,10 @@ struct FormatStyle {
   /// \brief The number of characters to use for indentation.
   unsigned IndentWidth;
 
+  /// \brief If \c true, always break after the \c template<...> of a template
+  /// declaration.
+  bool AlwaysBreakTemplateDeclarations;
+
   /// \brief If true, \c IndentWidth consecutive spaces will be replaced with
   /// tab characters.
   bool UseTab;
@@ -128,6 +132,8 @@ struct FormatStyle {
                R.AllowAllParametersOfDeclarationOnNextLine &&
            AllowShortIfStatementsOnASingleLine ==
                R.AllowShortIfStatementsOnASingleLine &&
+           AlwaysBreakTemplateDeclarations ==
+               R.AlwaysBreakTemplateDeclarations &&
            BinPackParameters == R.BinPackParameters &&
            BreakBeforeBraces == R.BreakBeforeBraces &&
            ColumnLimit == R.ColumnLimit &&
@@ -143,8 +149,7 @@ struct FormatStyle {
            PointerBindsToType == R.PointerBindsToType &&
            SpacesBeforeTrailingComments == R.SpacesBeforeTrailingComments &&
            SpacesInBracedLists == R.SpacesInBracedLists &&
-           Standard == R.Standard &&
-           UseTab == R.UseTab;
+           Standard == R.Standard && UseTab == R.UseTab;
   }
 
 };
