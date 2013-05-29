@@ -42,7 +42,7 @@ public:
 
   /// \brief Replaces the whitespace in front of \p Tok. Only call once for
   /// each \c AnnotatedToken.
-  void replaceWhitespace(const AnnotatedToken &Tok, unsigned Newlines,
+  void replaceWhitespace(const FormatToken &Tok, unsigned Newlines,
                          unsigned Spaces, unsigned StartOfTokenColumn,
                          bool InPPDirective = false);
 
