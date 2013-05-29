@@ -373,8 +373,11 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
         Reserved.set(*AI);
 
       // XMM8, XMM9, ...
-      assert(X86::XMM15 == X86::XMM8+7);
-      for (MCRegAliasIterator AI(X86::XMM8 + n, this, true); AI.isValid(); ++AI)
+      static const uint16_t XMMReg[] = {
+        X86::XMM8,  X86::XMM9, X86::XMM10, X86::XMM11,
+        X86::XMM12, X86::XMM13, X86::XMM14, X86::XMM15
+      };
+      for (MCRegAliasIterator AI(XMMReg[n], this, true); AI.isValid(); ++AI)
         Reserved.set(*AI);
     }
   }
