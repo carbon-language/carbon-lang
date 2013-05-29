@@ -1690,6 +1690,34 @@ TEST_F(FormatTest, MacroDefinitionsWithIncompleteCode) {
                "f(STR(this_is_a_string_literal{));");
 }
 
+TEST_F(FormatTest, MacrosWithoutTrailingSemicolon) {
+  verifyFormat("SOME_TYPE_NAME abc;"); // Gated on the newline.
+  EXPECT_EQ("class A : public QObject {\n"
+            "  Q_OBJECT\n"
+            "\n"
+            "  A() {}\n"
+            "};",
+            format("class A  :  public QObject {\n"
+                   "     Q_OBJECT\n"
+                   "\n"
+                   "  A() {\n}\n"
+                   "}  ;"));
+  // Only if the identifier contains at least 5 characters.
+  EXPECT_EQ("HTTP f();",
+            format("HTTP\nf();"));
+  EXPECT_EQ("MACRO\nf();",
+            format("MACRO\nf();"));
+  // Only if everything is upper case.
+  EXPECT_EQ("class A : public QObject {\n"
+            "  Q_Object A() {}\n"
+            "};",
+            format("class A  :  public QObject {\n"
+                   "     Q_Object\n"
+                   "\n"
+                   "  A() {\n}\n"
+                   "}  ;"));
+}
+
 TEST_F(FormatTest, MacroCallsWithoutTrailingSemicolon) {
   EXPECT_EQ("INITIALIZE_PASS_BEGIN(ScopDetection, \"polly-detect\")\n"
             "INITIALIZE_AG_DEPENDENCY(AliasAnalysis)\n"

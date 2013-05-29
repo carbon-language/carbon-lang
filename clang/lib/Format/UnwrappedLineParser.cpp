@@ -581,7 +581,8 @@ void UnwrappedLineParser::parseStructuralElement() {
       // Otherwise this was a braced init list, and the structural
       // element continues.
       break;
-    case tok::identifier:
+    case tok::identifier: {
+      StringRef Text = FormatTok->TokenText;
       nextToken();
       if (Line->Tokens.size() == 1) {
         if (FormatTok->Tok.is(tok::colon)) {
@@ -596,9 +597,14 @@ void UnwrappedLineParser::parseStructuralElement() {
             addUnwrappedLine();
             return;
           }
+        } else if (FormatTok->HasUnescapedNewline && Text.size() >= 5 &&
+                   Text == Text.upper()) {
+          // Recognize free-standing macros like Q_OBJECT.
+          addUnwrappedLine();
         }
       }
       break;
+    }
     case tok::equal:
       nextToken();
       if (FormatTok->Tok.is(tok::l_brace)) {
