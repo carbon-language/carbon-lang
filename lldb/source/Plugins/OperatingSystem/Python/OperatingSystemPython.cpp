@@ -207,21 +207,6 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list,
                 PythonDictionary thread_dict(threads_list.GetItemAtIndex(i));
                 if (thread_dict)
                 {
-                    if (thread_dict.GetItemForKey("core"))
-                    {
-                        // We have some threads that are saying they are on a "core", which means
-                        // they map the threads that are gotten from the lldb_private::Process subclass
-                        // so clear the new threads list so the core threads don't show up
-                        new_thread_list.Clear();
-                        break;
-                    }
-                }
-            }
-            for (i=0; i<num_threads; ++i)
-            {
-                PythonDictionary thread_dict(threads_list.GetItemAtIndex(i));
-                if (thread_dict)
-                {
                     ThreadSP thread_sp (CreateThreadFromThreadInfo (thread_dict, core_thread_list, old_thread_list, NULL));
                     if (thread_sp)
                         new_thread_list.AddThread(thread_sp);
@@ -230,8 +215,10 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list,
         }
     }
     
+    // No new threads added from the thread info array gotten from python, just
+    // display the core threads.
     if (new_thread_list.GetSize(false) == 0)
-        new_thread_list = old_thread_list;
+        new_thread_list = core_thread_list;
 
     return new_thread_list.GetSize(false) > 0;
 }
