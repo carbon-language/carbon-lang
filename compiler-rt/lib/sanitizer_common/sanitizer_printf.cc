@@ -59,7 +59,7 @@ static int AppendUnsigned(char **buff, const char *buff_end, u64 num,
   }
   int result = 0;
   while (pos-- > 0) {
-    uptr digit = num_buffer[pos];
+    char digit = static_cast<char>(num_buffer[pos]);
     result += AppendChar(buff, buff_end, (digit < 10) ? '0' + digit
                                                       : 'a' + digit - 10);
   }

@@ -673,7 +673,7 @@ INTERCEPTOR_WINAPI(DWORD, CreateThread,
   u32 current_tid = GetCurrentTidOrInvalid();
   AsanThread *t = AsanThread::Create(start_routine, arg);
   CreateThreadContextArgs args = { t, &stack };
-  int detached = 0;  // FIXME: how can we determine it on Windows?
+  bool detached = 0;  // FIXME: how can we determine it on Windows?
   asanThreadRegistry().CreateThread(*(uptr*)t, detached, current_tid, &args);
   return REAL(CreateThread)(security, stack_size,
                             asan_thread_start, t, flags, tid);

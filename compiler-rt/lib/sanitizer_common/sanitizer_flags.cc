@@ -97,7 +97,7 @@ void ParseFlag(const char *env, int *flag, const char *name) {
   int value_length;
   if (!GetFlagValue(env, name, &value, &value_length))
     return;
-  *flag = internal_atoll(value);
+  *flag = static_cast<int>(internal_atoll(value));
 }
 
 static LowLevelAllocator allocator_for_flags;

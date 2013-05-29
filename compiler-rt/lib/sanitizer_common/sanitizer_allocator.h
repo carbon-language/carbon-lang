@@ -779,7 +779,7 @@ class SizeClassAllocator32 {
     MapUnmapCallback().OnMap(res, kRegionSize);
     stat->Add(AllocatorStatMmapped, kRegionSize);
     CHECK_EQ(0U, (res & (kRegionSize - 1)));
-    possible_regions.set(ComputeRegionId(res), class_id);
+    possible_regions.set(ComputeRegionId(res), static_cast<u8>(class_id));
     return res;
   }
 

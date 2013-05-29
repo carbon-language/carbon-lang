@@ -125,7 +125,7 @@ static void PrintLegend() {
          "application bytes):\n", (int)SHADOW_GRANULARITY);
   PrintShadowByte("  Addressable:           ", 0);
   Printf("  Partially addressable: ");
-  for (uptr i = 1; i < SHADOW_GRANULARITY; i++)
+  for (u8 i = 1; i < SHADOW_GRANULARITY; i++)
     PrintShadowByte("", i, " ");
   Printf("\n");
   PrintShadowByte("  Heap left redzone:     ", kAsanHeapLeftRedzoneMagic);
@@ -267,7 +267,7 @@ const char *ThreadNameWithParenthesis(u32 tid, char buff[],
 bool DescribeAddressIfStack(uptr addr, uptr access_size) {
   AsanThread *t = FindThreadByStackAddress(addr);
   if (!t) return false;
-  const sptr kBufSize = 4095;
+  const s64 kBufSize = 4095;
   char buf[kBufSize];
   uptr offset = 0;
   uptr frame_pc = 0;
@@ -306,13 +306,13 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size) {
   PrintStack(&alloca_stack);
   // Report the number of stack objects.
   char *p;
-  uptr n_objects = internal_simple_strtoll(frame_descr, &p, 10);
+  s64 n_objects = internal_simple_strtoll(frame_descr, &p, 10);
   CHECK_GT(n_objects, 0);
   Printf("  This frame has %zu object(s):\n", n_objects);
   // Report all objects in this frame.
-  for (uptr i = 0; i < n_objects; i++) {
-    uptr beg, size;
-    sptr len;
+  for (s64 i = 0; i < n_objects; i++) {
+    s64 beg, size;
+    s64 len;
     beg  = internal_simple_strtoll(p, &p, 10);
     size = internal_simple_strtoll(p, &p, 10);
     len  = internal_simple_strtoll(p, &p, 10);
@@ -323,9 +323,9 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size) {
     }
     p++;
     buf[0] = 0;
-    internal_strncat(buf, p, Min(kBufSize, len));
+    internal_strncat(buf, p, static_cast<uptr>(Min(kBufSize, len)));
     p += len;
-    Printf("    [%zu, %zu) '%s'\n", beg, beg + size, buf);
+    Printf("    [%lld, %lld) '%s'\n", beg, beg + size, buf);
   }
   Printf("HINT: this may be a false positive if your program uses "
              "some custom stack unwind mechanism or swapcontext\n"

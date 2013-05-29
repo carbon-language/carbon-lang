@@ -80,7 +80,7 @@ class FakeStack {
   static void OnFree(uptr ptr, uptr size, uptr real_stack);
   // Return the bottom of the maped region.
   uptr AddrIsInFakeStack(uptr addr);
-  bool StackSize() { return stack_size_; }
+  uptr StackSize() const { return stack_size_; }
 
  private:
   static const uptr kMinStackFrameSizeLog = 9;  // Min frame is 512B.

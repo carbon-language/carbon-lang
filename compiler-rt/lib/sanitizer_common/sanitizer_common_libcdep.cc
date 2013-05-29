@@ -17,7 +17,7 @@ namespace __sanitizer {
 
 bool PrintsToTty() {
   MaybeOpenReportFile();
-  return internal_isatty(report_fd);
+  return internal_isatty(report_fd) != 0;
 }
 
 }  // namespace __sanitizer
