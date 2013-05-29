@@ -1044,6 +1044,37 @@ INTERCEPTOR(long double, modfl, long double x, long double *iptr) {
 #define INIT_MODF
 #endif
 
+#if SANITIZER_INTERCEPT_RECVMSG
+static void write_msghdr(void *ctx, struct __sanitizer_msghdr *msg) {
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, msg, sizeof(*msg));
+  if (msg->msg_name)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, msg->msg_name,
+                                   REAL(strlen)((char *)msg->msg_name) + 1);
+  if (msg->msg_iov)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, msg->msg_iov, msg->msg_iovlen);
+  for (SIZE_T i = 0; i < msg->msg_iovlen; ++i)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, msg->msg_iov[i].iov_base,
+                                   msg->msg_iov[i].iov_len);
+  if (msg->msg_control)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, msg->msg_control, msg->msg_controllen);
+}
+
+INTERCEPTOR(SSIZE_T, recvmsg, int fd, struct __sanitizer_msghdr *msg,
+            int flags) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, recvmsg, fd, msg, flags);
+  SSIZE_T res = REAL(recvmsg)(fd, msg, flags);
+  if (res >= 0) {
+    if (fd >= 0) COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd);
+    if (msg) write_msghdr(ctx, msg);
+  }
+  return res;
+}
+#define INIT_RECVMSG INTERCEPT_FUNCTION(recvmsg);
+#else
+#define INIT_RECVMSG
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCASECMP;                         \
   INIT_STRNCASECMP;                        \
@@ -1074,4 +1105,5 @@ INTERCEPTOR(long double, modfl, long double x, long double *iptr) {
   INIT_GETSOCKOPT;                         \
   INIT_ACCEPT;                             \
   INIT_ACCEPT4;                            \
-  INIT_MODF;
+  INIT_MODF;                               \
+  INIT_RECVMSG;

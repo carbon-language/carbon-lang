@@ -81,22 +81,6 @@ namespace __sanitizer {
   uptr sig_ign = (uptr)SIG_IGN;
   uptr sig_dfl = (uptr)SIG_DFL;
 
-  void* __sanitizer_get_msghdr_iov_iov_base(void* msg, int idx) {
-    return ((struct msghdr *)msg)->msg_iov[idx].iov_base;
-  }
-
-  uptr __sanitizer_get_msghdr_iov_iov_len(void* msg, int idx) {
-    return ((struct msghdr *)msg)->msg_iov[idx].iov_len;
-  }
-
-  uptr __sanitizer_get_msghdr_iovlen(void* msg) {
-    return ((struct msghdr *)msg)->msg_iovlen;
-  }
-
-  uptr __sanitizer_get_socklen_t(void* socklen_ptr) {
-    return *(socklen_t*)socklen_ptr;
-  }
-
   uptr __sanitizer_get_sigaction_sa_sigaction(void *act) {
     struct sigaction *a = (struct sigaction *)act;
     // Check that sa_sigaction and sa_handler are the same.
@@ -136,6 +120,8 @@ COMPILER_CHECK(offsetof(struct __sanitizer_dl_phdr_info, dlpi_phnum) ==
                offsetof(struct dl_phdr_info, dlpi_phnum));
 #endif
 
+COMPILER_CHECK(sizeof(socklen_t) == sizeof(unsigned));
+
 COMPILER_CHECK(sizeof(struct __sanitizer_addrinfo) == sizeof(struct addrinfo));
 COMPILER_CHECK(offsetof(struct __sanitizer_addrinfo, ai_addr) ==
                offsetof(struct addrinfo, ai_addr));
@@ -151,5 +137,35 @@ COMPILER_CHECK(offsetof(struct __sanitizer_hostent, h_aliases) ==
                offsetof(struct hostent, h_aliases));
 COMPILER_CHECK(offsetof(struct __sanitizer_hostent, h_addr_list) ==
                offsetof(struct hostent, h_addr_list));
+
+COMPILER_CHECK(sizeof(struct __sanitizer_iovec) == sizeof(struct iovec));
+COMPILER_CHECK(offsetof(struct __sanitizer_iovec, iov_base) ==
+               offsetof(struct iovec, iov_base));
+COMPILER_CHECK(offsetof(struct __sanitizer_iovec, iov_len) ==
+               offsetof(struct iovec, iov_len));
+
+COMPILER_CHECK(sizeof(struct __sanitizer_msghdr) == sizeof(struct msghdr));
+COMPILER_CHECK(offsetof(struct __sanitizer_msghdr, msg_name) ==
+               offsetof(struct msghdr, msg_name));
+COMPILER_CHECK(offsetof(struct __sanitizer_msghdr, msg_namelen) ==
+               offsetof(struct msghdr, msg_namelen));
+COMPILER_CHECK(offsetof(struct __sanitizer_msghdr, msg_iov) ==
+               offsetof(struct msghdr, msg_iov));
+COMPILER_CHECK(offsetof(struct __sanitizer_msghdr, msg_iovlen) ==
+               offsetof(struct msghdr, msg_iovlen));
+COMPILER_CHECK(offsetof(struct __sanitizer_msghdr, msg_control) ==
+               offsetof(struct msghdr, msg_control));
+COMPILER_CHECK(offsetof(struct __sanitizer_msghdr, msg_controllen) ==
+               offsetof(struct msghdr, msg_controllen));
+COMPILER_CHECK(offsetof(struct __sanitizer_msghdr, msg_flags) ==
+               offsetof(struct msghdr, msg_flags));
+
+COMPILER_CHECK(sizeof(struct __sanitizer_cmsghdr) == sizeof(struct cmsghdr));
+COMPILER_CHECK(offsetof(struct __sanitizer_cmsghdr, cmsg_len) ==
+               offsetof(struct cmsghdr, cmsg_len));
+COMPILER_CHECK(offsetof(struct __sanitizer_cmsghdr, cmsg_level) ==
+               offsetof(struct cmsghdr, cmsg_level));
+COMPILER_CHECK(offsetof(struct __sanitizer_cmsghdr, cmsg_type) ==
+               offsetof(struct cmsghdr, cmsg_type));
 
 #endif  // SANITIZER_LINUX || SANITIZER_MAC

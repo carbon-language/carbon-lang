@@ -710,29 +710,17 @@ INTERCEPTOR(SSIZE_T, recv, int fd, void *buf, SIZE_T len, int flags) {
 }
 
 INTERCEPTOR(SSIZE_T, recvfrom, int fd, void *buf, SIZE_T len, int flags,
-    void *srcaddr, void *addrlen) {
+            void *srcaddr, int *addrlen) {
   ENSURE_MSAN_INITED();
   SIZE_T srcaddr_sz;
-  if (srcaddr)
-    srcaddr_sz = __sanitizer_get_socklen_t(addrlen);
+  if (srcaddr) srcaddr_sz = *addrlen;
   SSIZE_T res = REAL(recvfrom)(fd, buf, len, flags, srcaddr, addrlen);
   if (res > 0) {
     __msan_unpoison(buf, res);
     if (srcaddr) {
-      SIZE_T sz = __sanitizer_get_socklen_t(addrlen);
+      SIZE_T sz = *addrlen;
       __msan_unpoison(srcaddr, (sz < srcaddr_sz) ? sz : srcaddr_sz);
     }
-  }
-  return res;
-}
-
-INTERCEPTOR(SSIZE_T, recvmsg, int fd, struct msghdr *msg, int flags) {
-  ENSURE_MSAN_INITED();
-  SSIZE_T res = REAL(recvmsg)(fd, msg, flags);
-  if (res > 0) {
-    for (SIZE_T i = 0; i < __sanitizer_get_msghdr_iovlen(msg); ++i)
-      __msan_unpoison(__sanitizer_get_msghdr_iov_iov_base(msg, i),
-          __sanitizer_get_msghdr_iov_iov_len(msg, i));
   }
   return res;
 }
@@ -1200,7 +1188,6 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(epoll_pwait);
   INTERCEPT_FUNCTION(recv);
   INTERCEPT_FUNCTION(recvfrom);
-  INTERCEPT_FUNCTION(recvmsg);
   INTERCEPT_FUNCTION(dladdr);
   INTERCEPT_FUNCTION(dlopen);
   INTERCEPT_FUNCTION(dl_iterate_phdr);

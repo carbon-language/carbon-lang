@@ -49,10 +49,26 @@ namespace __sanitizer {
   extern unsigned struct_statfs64_sz;
 #endif // SANITIZER_LINUX && !SANITIZER_ANDROID
 
-  void* __sanitizer_get_msghdr_iov_iov_base(void* msg, int idx);
-  uptr __sanitizer_get_msghdr_iov_iov_len(void* msg, int idx);
-  uptr __sanitizer_get_msghdr_iovlen(void* msg);
-  uptr __sanitizer_get_socklen_t(void* socklen_ptr);
+  struct __sanitizer_iovec {
+    void  *iov_base;
+    uptr iov_len;
+  };
+
+  struct __sanitizer_msghdr {
+    void *msg_name;
+    unsigned msg_namelen;
+    struct __sanitizer_iovec *msg_iov;
+    uptr msg_iovlen;
+    void *msg_control;
+    uptr msg_controllen;
+    int msg_flags;
+  };
+
+  struct __sanitizer_cmsghdr {
+    uptr cmsg_len;
+    int cmsg_level;
+    int cmsg_type;
+  };
 
   // This thing depends on the platform. We are only interested in the upper
   // limit. Verified with a compiler assert in .cc.
