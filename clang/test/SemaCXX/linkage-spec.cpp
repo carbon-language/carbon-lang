@@ -114,3 +114,5 @@ namespace pr14958 {
   }
   int js::ObjectClass;
 }
+
+extern "C" void PR16167; // expected-error {{variable has incomplete type 'void'}}

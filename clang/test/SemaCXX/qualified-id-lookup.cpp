@@ -149,6 +149,6 @@ namespace PR6830 {
 }
 
 namespace pr12339 {
-  extern "C" void i;
+  extern "C" void i; // expected-error{{variable has incomplete type 'void'}}
   pr12339::FOO  // expected-error{{no type named 'FOO' in namespace 'pr12339'}}
 }  // expected-error{{expected unqualified-id}}
