@@ -44,7 +44,6 @@ class CreateDuringStepTestCase(TestBase):
         self.create_during_step_inst_test()
 
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
-    @expectedFailureLinux("llvm.org/pr16171") # step in/over don't behave in the multithreaded case
     @dwarf_test
     def test_step_over_with_dwarf(self):
         """Test thread creation during step-over handling."""
@@ -52,7 +51,6 @@ class CreateDuringStepTestCase(TestBase):
         self.create_during_step_over_test()
 
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
-    @expectedFailureLinux("llvm.org/pr16171") # step in/over don't behave in the multithreaded case
     @dwarf_test
     def test_step_in_with_dwarf(self):
         """Test thread creation during step-in handling."""
@@ -68,17 +66,17 @@ class CreateDuringStepTestCase(TestBase):
 
     def create_during_step_inst_test(self):
         """Test thread creation while using step-inst."""
-        self.create_during_step_base("thread step-inst -m all-threads")
+        self.create_during_step_base("thread step-inst -m all-threads", 'stop reason = instruction step')
 
     def create_during_step_over_test(self):
         """Test thread creation while using step-over."""
-        self.create_during_step_base("thread step-over -m all-threads")
+        self.create_during_step_base("thread step-over -m all-threads", 'stop reason = step over')
 
     def create_during_step_in_test(self):
         """Test thread creation while using step-in."""
-        self.create_during_step_base("thread step-in -m all-threads")
+        self.create_during_step_base("thread step-in -m all-threads", 'stop reason = step in')
 
-    def create_during_step_base(self, step_cmd):
+    def create_during_step_base(self, step_cmd, step_stop_reason):
         """Test thread creation while using step-in."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
@@ -140,9 +138,9 @@ class CreateDuringStepTestCase(TestBase):
         # Check to see that we increased the number of threads as expected
         self.assertTrue(num_threads == 3, 'Number of expected threads and actual threads do not match after thread exit.')
 
-        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+        self.expect("thread list", 'Process state is stopped due to step',
                 substrs = ['stopped',
-                           'top reason = instruction step int'])
+                           step_stop_reason])
 
         # Run to completion
         self.runCmd("process continue")
