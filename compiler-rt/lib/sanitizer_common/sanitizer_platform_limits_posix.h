@@ -54,6 +54,22 @@ namespace __sanitizer {
     uptr iov_len;
   };
 
+#if SANITIZER_ANDROID || SANITIZER_MAC
+  struct __sanitizer_msghdr {
+    void *msg_name;
+    unsigned msg_namelen;
+    struct __sanitizer_iovec *msg_iov;
+    unsigned msg_iovlen;
+    void *msg_control;
+    unsigned msg_controllen;
+    int msg_flags;
+  };
+  struct __sanitizer_cmsghdr {
+    unsigned cmsg_len;
+    int cmsg_level;
+    int cmsg_type;
+  };
+#else
   struct __sanitizer_msghdr {
     void *msg_name;
     unsigned msg_namelen;
@@ -63,12 +79,12 @@ namespace __sanitizer {
     uptr msg_controllen;
     int msg_flags;
   };
-
   struct __sanitizer_cmsghdr {
     uptr cmsg_len;
     int cmsg_level;
     int cmsg_type;
   };
+#endif
 
   // This thing depends on the platform. We are only interested in the upper
   // limit. Verified with a compiler assert in .cc.
