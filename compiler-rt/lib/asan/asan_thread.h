@@ -63,6 +63,8 @@ class AsanThread {
   uptr stack_top() { return stack_top_; }
   uptr stack_bottom() { return stack_bottom_; }
   uptr stack_size() { return stack_top_ - stack_bottom_; }
+  uptr tls_begin() { return tls_begin_; }
+  uptr tls_end() { return tls_end_; }
   u32 tid() { return context_->tid; }
   AsanThreadContext *context() { return context_; }
   void set_context(AsanThreadContext *context) { context_ = context; }
@@ -79,13 +81,15 @@ class AsanThread {
 
  private:
   AsanThread() {}
-  void SetThreadStackTopAndBottom();
-  void ClearShadowForThreadStack();
+  void SetThreadStackAndTls();
+  void ClearShadowForThreadStackAndTLS();
   AsanThreadContext *context_;
   thread_callback_t start_routine_;
   void *arg_;
   uptr  stack_top_;
   uptr  stack_bottom_;
+  uptr tls_begin_;
+  uptr tls_end_;
 
   FakeStack fake_stack_;
   AsanThreadLocalMallocStorage malloc_storage_;

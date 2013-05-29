@@ -547,6 +547,8 @@ void __asan_init() {
   asan_inited = 1;
   asan_init_is_running = false;
 
+  InitTlsSize();
+
   // Create main thread.
   AsanTSDInit(AsanThread::TSDDtor);
   AsanThread *main_thread = AsanThread::Create(0, 0);
