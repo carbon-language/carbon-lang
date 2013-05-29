@@ -3183,7 +3183,7 @@ void Sema::CodeCompleteModuleImport(SourceLocation ImportLoc,
         Builder.getAllocator().CopyString(Modules[I]->Name));
       Results.AddResult(Result(Builder.TakeString(),
                                CCP_Declaration, 
-                               CXCursor_NotImplemented,
+                               CXCursor_ModuleImportDecl,
                                Modules[I]->isAvailable()
                                  ? CXAvailability_Available
                                   : CXAvailability_NotAvailable));
@@ -3203,7 +3203,7 @@ void Sema::CodeCompleteModuleImport(SourceLocation ImportLoc,
           Builder.getAllocator().CopyString((*Sub)->Name));
         Results.AddResult(Result(Builder.TakeString(),
                                  CCP_Declaration, 
-                                 CXCursor_NotImplemented,
+                                 CXCursor_ModuleImportDecl,
                                  (*Sub)->isAvailable()
                                    ? CXAvailability_Available
                                    : CXAvailability_NotAvailable));
