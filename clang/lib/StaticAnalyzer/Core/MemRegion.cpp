@@ -186,7 +186,7 @@ DefinedOrUnknownSVal TypedValueRegion::getExtent(SValBuilder &svalBuilder) const
 
   if (isa<VariableArrayType>(T))
     return nonloc::SymbolVal(svalBuilder.getSymbolManager().getExtentSymbol(this));
-  if (isa<IncompleteArrayType>(T))
+  if (T->isIncompleteType())
     return UnknownVal();
 
   CharUnits size = Ctx.getTypeSizeInChars(T);

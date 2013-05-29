@@ -154,3 +154,15 @@ void test_index_below_symboloc() {
   buf[-1] = 0; // no-warning;
 }
 
+void test_incomplete_struct() {
+  extern struct incomplete incomplete;
+  int *p = (int *)&incomplete;
+  p[1] = 42; // no-warning
+}
+
+void test_extern_void() {
+  extern void v;
+  int *p = (int *)&v;
+  p[1] = 42; // no-warning
+}
+
