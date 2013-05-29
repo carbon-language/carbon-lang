@@ -467,11 +467,6 @@ namespace llvm {
 
     unsigned isOptimized() const;
 
-    /// getScopeLineNumber - Get the beginning of the scope of the
-    /// function, not necessarily where the name of the program
-    /// starts.
-    unsigned getScopeLineNumber() const { return getUnsignedField(19); }
-
     /// Verify - Verify that a subprogram descriptor is well formed.
     bool Verify() const;
 
@@ -487,6 +482,11 @@ namespace llvm {
     }
     MDNode *getVariablesNodes() const;
     DIArray getVariables() const;
+
+    /// getScopeLineNumber - Get the beginning of the scope of the
+    /// function, not necessarily where the name of the program
+    /// starts.
+    unsigned getScopeLineNumber() const { return getUnsignedField(19); }
   };
 
   /// DIGlobalVariable - This is a wrapper for a global variable.
