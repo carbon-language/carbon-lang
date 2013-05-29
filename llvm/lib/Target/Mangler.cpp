@@ -19,6 +19,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -226,7 +227,7 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
           // "Pure" variadic functions do not receive @0 suffix.
           (!FT->isVarArg() || FT->getNumParams() == 0 ||
            (FT->getNumParams() == 1 && F->hasStructRetAttr())))
-        AddFastCallStdCallSuffix(OutName, F, TD);
+        AddFastCallStdCallSuffix(OutName, F, *TM->getDataLayout());
     }
   }
 }
