@@ -13,6 +13,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/Option.h"
 
@@ -62,6 +63,15 @@ int findDoubleDash(int argc, const char *argv[]) {
   return -1;
 }
 
+// Parses -subsystem command line option.
+llvm::COFF::WindowsSubsystem strToWinSubsystem(std::string str) {
+  std::string arg(StringRef(str).lower());
+  return llvm::StringSwitch<llvm::COFF::WindowsSubsystem>(arg)
+      .Case("windows", llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI)
+      .Case("console", llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI)
+      .Default(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN);
+}
+
 } // namespace
 
 
@@ -101,12 +111,34 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     return true;
   }
 
+  // Show warning for unknown arguments
+  for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
+            ie = parsedArgs->filtered_end(); it != ie; ++it) {
+    diagnostics << "warning: ignoring unknown argument: "
+                << (*it)->getAsString(*parsedArgs) << "\n";
+  }
+
   // Copy -mllvm
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_mllvm),
                                ie = parsedArgs->filtered_end();
        it != ie; ++it) {
     info.appendLLVMOption((*it)->getValue());
   }
+
+  // Handle -subsystem
+  if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_subsystem)) {
+    llvm::COFF::WindowsSubsystem subsystem = strToWinSubsystem(arg->getValue());
+    if (subsystem == llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN) {
+      diagnostics << "error: unknown subsystem name: "
+                  << arg->getValue() << "\n";
+      return true;
+    }
+    info.setSubsystem(subsystem);
+  }
+
+  // Hanlde -out
+  if (llvm::opt::Arg *outpath = parsedArgs->getLastArg(OPT_out))
+    info.setOutputPath(outpath->getValue());
 
   // Add input files
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_INPUT),
