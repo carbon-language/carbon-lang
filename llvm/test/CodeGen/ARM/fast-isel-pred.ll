@@ -1,4 +1,5 @@
 ; RUN: llc -O0 -verify-machineinstrs -mtriple=armv7-apple-darwin < %s
+; RUN: llc -O0 -verify-machineinstrs -mtriple=armv7-linux-gnueabi < %s
 
 define i32 @main() nounwind ssp {
 entry:

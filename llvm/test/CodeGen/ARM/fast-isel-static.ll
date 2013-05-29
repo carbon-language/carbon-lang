@@ -1,5 +1,7 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=static -arm-long-calls | FileCheck -check-prefix=LONG %s
+; RUN: llc < %s -mtriple=thumbv7-linux-gnueabi -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=static -arm-long-calls | FileCheck -check-prefix=LONG %s
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=static | FileCheck -check-prefix=NORM %s
+; RUN: llc < %s -mtriple=thumbv7-linux-gnueabi -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=static | FileCheck -check-prefix=NORM %s
 
 define void @myadd(float* %sum, float* %addend) nounwind {
 entry:
