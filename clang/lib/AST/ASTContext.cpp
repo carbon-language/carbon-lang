@@ -716,8 +716,7 @@ ASTContext::ASTContext(LangOptions& LOpts, SourceManager &SM,
     ExternalSource(0), Listener(0),
     Comments(SM), CommentsLoaded(false),
     CommentCommandTraits(BumpAlloc, LOpts.CommentOpts),
-    LastSDM(0, 0),
-    UniqueBlockByRefTypeID(0)
+    LastSDM(0, 0)
 {
   if (size_reserve > 0) Types.reserve(size_reserve);
   TUDecl = TranslationUnitDecl::Create(*this);
