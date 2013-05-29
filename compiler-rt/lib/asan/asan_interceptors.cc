@@ -246,7 +246,7 @@ INTERCEPTOR(void, __cxa_throw, void *a, void *b, void *c) {
 // Since asan maps 16T of RAM, mlock is completely unfriendly to asan.
 // All functions return 0 (success).
 static void MlockIsUnsupported() {
-  static bool printed = 0;
+  static bool printed = false;
   if (printed) return;
   printed = true;
   Printf("INFO: AddressSanitizer ignores mlock/mlockall/munlock/munlockall\n");
@@ -673,7 +673,7 @@ INTERCEPTOR_WINAPI(DWORD, CreateThread,
   u32 current_tid = GetCurrentTidOrInvalid();
   AsanThread *t = AsanThread::Create(start_routine, arg);
   CreateThreadContextArgs args = { t, &stack };
-  bool detached = 0;  // FIXME: how can we determine it on Windows?
+  bool detached = false;  // FIXME: how can we determine it on Windows?
   asanThreadRegistry().CreateThread(*(uptr*)t, detached, current_tid, &args);
   return REAL(CreateThread)(security, stack_size,
                             asan_thread_start, t, flags, tid);
