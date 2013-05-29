@@ -75,10 +75,12 @@ void InitializeAllocator() {
 
 void AllocatorThreadStart(ThreadState *thr) {
   allocator()->InitCache(&thr->alloc_cache);
+  internal_allocator()->InitCache(&thr->internal_alloc_cache);
 }
 
 void AllocatorThreadFinish(ThreadState *thr) {
   allocator()->DestroyCache(&thr->alloc_cache);
+  internal_allocator()->DestroyCache(&thr->internal_alloc_cache);
 }
 
 void AllocatorPrintStats() {
@@ -194,11 +196,12 @@ void invoke_free_hook(void *ptr) {
 void *internal_alloc(MBlockType typ, uptr sz) {
   ThreadState *thr = cur_thread();
   CHECK_GT(thr->in_rtl, 0);
+  CHECK_LE(sz, InternalSizeClassMap::kMaxSize);
   if (thr->nomalloc) {
     thr->nomalloc = 0;  // CHECK calls internal_malloc().
     CHECK(0);
   }
-  return InternalAlloc(sz);
+  return InternalAlloc(sz, &thr->internal_alloc_cache);
 }
 
 void internal_free(void *p) {
@@ -208,7 +211,7 @@ void internal_free(void *p) {
     thr->nomalloc = 0;  // CHECK calls internal_malloc().
     CHECK(0);
   }
-  InternalFree(p);
+  InternalFree(p, &thr->internal_alloc_cache);
 }
 
 }  // namespace __tsan
@@ -261,5 +264,6 @@ uptr __tsan_get_allocated_size(void *p) {
 void __tsan_on_thread_idle() {
   ThreadState *thr = cur_thread();
   allocator()->SwallowCache(&thr->alloc_cache);
+  internal_allocator()->SwallowCache(&thr->internal_alloc_cache);
 }
 }  // extern "C"

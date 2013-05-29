@@ -10,6 +10,7 @@
 // This file is shared between AddressSanitizer and ThreadSanitizer
 // run-time libraries. See sanitizer_libc.h for details.
 //===----------------------------------------------------------------------===//
+#include "sanitizer_allocator_internal.h"
 #include "sanitizer_common.h"
 #include "sanitizer_libc.h"
 

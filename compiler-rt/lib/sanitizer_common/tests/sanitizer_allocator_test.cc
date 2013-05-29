@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "sanitizer_common/sanitizer_allocator.h"
+#include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "sanitizer_common/sanitizer_common.h"
 
 #include "sanitizer_test_utils.h"
@@ -65,6 +66,10 @@ TEST(SanitizerCommon, DefaultSizeClassMap) {
 
 TEST(SanitizerCommon, CompactSizeClassMap) {
   TestSizeClassMap<CompactSizeClassMap>();
+}
+
+TEST(SanitizerCommon, InternalSizeClassMap) {
+  TestSizeClassMap<InternalSizeClassMap>();
 }
 
 template <class Allocator>
@@ -609,6 +614,11 @@ TEST(Allocator, Stress) {
   for (int i = 0; i < kCount; i++) {
     InternalFree(ptrs[i]);
   }
+}
+
+TEST(Allocator, InternalAllocFailure) {
+  EXPECT_DEATH(Ident(InternalAlloc(10 << 20)),
+               "Unexpected mmap in InternalAllocator!");
 }
 
 TEST(Allocator, ScopedBuffer) {

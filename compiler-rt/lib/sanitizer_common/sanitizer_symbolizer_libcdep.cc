@@ -11,6 +11,7 @@
 // run-time libraries. See sanitizer_symbolizer.h for details.
 //===----------------------------------------------------------------------===//
 
+#include "sanitizer_allocator_internal.h"
 #include "sanitizer_common.h"
 #include "sanitizer_placement_new.h"
 #include "sanitizer_procmaps.h"

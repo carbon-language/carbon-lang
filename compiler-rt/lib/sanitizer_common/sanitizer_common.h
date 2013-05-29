@@ -59,10 +59,6 @@ void *MmapAlignedOrDie(uptr size, uptr alignment, const char *mem_type);
 bool MemoryRangeIsAvailable(uptr range_start, uptr range_end);
 void FlushUnneededShadowMemory(uptr addr, uptr size);
 
-// Internal allocator
-void *InternalAlloc(uptr size);
-void InternalFree(void *p);
-
 // InternalScopedBuffer can be used instead of large stack arrays to
 // keep frame size low.
 // FIXME: use InternalAlloc instead of MmapOrDie once

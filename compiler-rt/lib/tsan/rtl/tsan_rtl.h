@@ -27,6 +27,7 @@
 #define TSAN_RTL_H
 
 #include "sanitizer_common/sanitizer_allocator.h"
+#include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_thread_registry.h"
 #include "tsan_clock.h"
@@ -424,6 +425,7 @@ struct ThreadState {
   ThreadClock clock;
 #ifndef TSAN_GO
   AllocatorCache alloc_cache;
+  InternalAllocatorCache internal_alloc_cache;
   Vector<JmpBuf> jmp_bufs;
 #endif
   u64 stat[StatCnt];
