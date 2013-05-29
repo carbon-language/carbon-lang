@@ -985,18 +985,24 @@ struct MSanInterceptorContext {
   __msan_unpoison(ptr, size)
 #define COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, size) \
   CHECK_UNPOISONED_CTX(ctx, ptr, size);
-#define COMMON_INTERCEPTOR_ENTER(ctx, func, ...)                \
-  if (msan_init_is_running) return REAL(func)(__VA_ARGS__);     \
-  MSanInterceptorContext msan_ctx = { IsInInterceptorScope() }; \
-  ctx = (void *)&msan_ctx;                                      \
-  InterceptorScope interceptor_scope;                           \
+#define COMMON_INTERCEPTOR_ENTER(ctx, func, ...)              \
+  if (msan_init_is_running) return REAL(func)(__VA_ARGS__);   \
+  MSanInterceptorContext msan_ctx = {IsInInterceptorScope()}; \
+  ctx = (void *)&msan_ctx;                                    \
+  InterceptorScope interceptor_scope;                         \
   ENSURE_MSAN_INITED();
 #define COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd) \
   do {                                         \
   } while (false)
-#define COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd) do { } while (false)
+#define COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd) \
+  do {                                         \
+  } while (false)
+#define COMMON_INTERCEPTOR_FD_SOCKET_ACCEPT(ctx, fd, newfd) \
+  do {                                                      \
+  } while (false)
 #define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) \
-  do { } while (false)  // FIXME
+  do {                                                \
+  } while (false)  // FIXME
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 #define COMMON_SYSCALL_PRE_READ_RANGE(p, s) CHECK_UNPOISONED(p, s)

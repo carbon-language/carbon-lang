@@ -962,6 +962,52 @@ INTERCEPTOR(int, getsockopt, int sockfd, int level, int optname, void *optval,
 #define INIT_GETSOCKOPT
 #endif
 
+#if SANITIZER_INTERCEPT_ACCEPT
+INTERCEPTOR(int, accept, int fd, void *addr, unsigned *addrlen) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, accept, fd, addr, addrlen);
+  unsigned addrlen0;
+  if (addrlen) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, addrlen, sizeof(*addrlen));
+    addrlen0 = *addrlen;
+  }
+  int fd2 = REAL(accept)(fd, addr, addrlen);
+  if (fd2 >= 0) {
+    if (fd >= 0)
+      COMMON_INTERCEPTOR_FD_SOCKET_ACCEPT(ctx, fd, fd2);
+    if (addr && addrlen)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, addr, Min(*addrlen, addrlen0));
+  }
+  return fd2;
+}
+#define INIT_ACCEPT INTERCEPT_FUNCTION(accept);
+#else
+#define INIT_ACCEPT
+#endif
+
+#if SANITIZER_INTERCEPT_ACCEPT4
+INTERCEPTOR(int, accept4, int fd, void *addr, unsigned *addrlen, int f) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, accept4, fd, addr, addrlen, f);
+  unsigned addrlen0;
+  if (addrlen) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, addrlen, sizeof(*addrlen));
+    addrlen0 = *addrlen;
+  }
+  int fd2 = REAL(accept4)(fd, addr, addrlen, f);
+  if (fd2 >= 0) {
+    if (fd >= 0)
+      COMMON_INTERCEPTOR_FD_SOCKET_ACCEPT(ctx, fd, fd2);
+    if (addr && addrlen)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, addr, Min(*addrlen, addrlen0));
+  }
+  return fd2;
+}
+#define INIT_ACCEPT4 INTERCEPT_FUNCTION(accept4);
+#else
+#define INIT_ACCEPT4
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCASECMP;                         \
   INIT_STRNCASECMP;                        \
@@ -989,4 +1035,6 @@ INTERCEPTOR(int, getsockopt, int sockfd, int level, int optname, void *optval,
   INIT_GETSOCKNAME;                        \
   INIT_GETHOSTBYNAME;                      \
   INIT_GETHOSTBYNAME_R;                    \
-  INIT_GETSOCKOPT;
+  INIT_GETSOCKOPT;                         \
+  INIT_ACCEPT;                             \
+  INIT_ACCEPT4;

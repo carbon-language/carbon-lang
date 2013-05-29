@@ -651,6 +651,44 @@ TEST(MemorySanitizer, bind_getsockname) {
   close(sock);
 }
 
+TEST(MemorySanitizer, accept) {
+  int listen_socket = socket(AF_INET, SOCK_STREAM, 0);
+  ASSERT_LT(0, listen_socket);
+
+  struct sockaddr_in sai;
+  sai.sin_family = AF_INET;
+  sai.sin_port = 0;
+  sai.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  int res = bind(listen_socket, (struct sockaddr *)&sai, sizeof(sai));
+  ASSERT_EQ(0, res);
+
+  res = listen(listen_socket, 1);
+  ASSERT_EQ(0, res);
+
+  socklen_t sz = sizeof(sai);
+  res = getsockname(listen_socket, (struct sockaddr *)&sai, &sz);
+  ASSERT_EQ(0, res);
+  ASSERT_EQ(sizeof(sai), sz);
+  
+  int connect_socket = socket(AF_INET, SOCK_STREAM, 0);
+  ASSERT_LT(0, connect_socket);
+  res = fcntl(connect_socket, F_SETFL, O_NONBLOCK);
+  ASSERT_EQ(0, res);
+  res = connect(connect_socket, (struct sockaddr *)&sai, sizeof(sai));
+  ASSERT_EQ(-1, res);
+  ASSERT_EQ(EINPROGRESS, errno);
+
+  __msan_poison(&sai, sizeof(sai));
+  int new_sock = accept(listen_socket,(struct sockaddr *)&sai, &sz);
+  ASSERT_LT(0, new_sock);
+  ASSERT_EQ(sizeof(sai), sz);
+  EXPECT_NOT_POISONED(sai);
+
+  close(new_sock);
+  close(connect_socket);
+  close(listen_socket);
+}
+
 #define EXPECT_HOSTENT_NOT_POISONED(he)        \
   do {                                         \
     EXPECT_NOT_POISONED(*(he));                \

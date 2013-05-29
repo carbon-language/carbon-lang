@@ -107,16 +107,22 @@ using namespace __asan;  // NOLINT
 #define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size) \
   ASAN_WRITE_RANGE(ptr, size)
 #define COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, size) ASAN_READ_RANGE(ptr, size)
-#define COMMON_INTERCEPTOR_ENTER(ctx, func, ...)  \
-  do {                                            \
-    if (asan_init_is_running)                     \
-      return REAL(func)(__VA_ARGS__);             \
-    ctx = 0;                                      \
-    (void)ctx;                                    \
-    ENSURE_ASAN_INITED();                         \
+#define COMMON_INTERCEPTOR_ENTER(ctx, func, ...)              \
+  do {                                                        \
+    if (asan_init_is_running) return REAL(func)(__VA_ARGS__); \
+    ctx = 0;                                                  \
+    (void) ctx;                                               \
+    ENSURE_ASAN_INITED();                                     \
   } while (false)
-#define COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd) do { } while (false)
-#define COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd) do { } while (false)
+#define COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd) \
+  do {                                         \
+  } while (false)
+#define COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd) \
+  do {                                         \
+  } while (false)
+#define COMMON_INTERCEPTOR_FD_SOCKET_ACCEPT(ctx, fd, newfd) \
+  do {                                                      \
+  } while (false)
 #define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) SetThreadName(name)
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
