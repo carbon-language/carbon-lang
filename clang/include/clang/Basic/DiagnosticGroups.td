@@ -416,7 +416,9 @@ def Format2 : DiagGroup<"format=2",
 
 def TypeSafety : DiagGroup<"type-safety">;
 
-def IntToPointerCast : DiagGroup<"int-to-pointer-cast">;
+def IntToVoidPointerCast : DiagGroup<"int-to-void-pointer-cast">;
+def IntToPointerCast : DiagGroup<"int-to-pointer-cast",
+                                 [IntToVoidPointerCast]>;
 
 def Extra : DiagGroup<"extra", [
     MissingFieldInitializers,

@@ -1614,8 +1614,18 @@ static void checkIntToPointerCast(bool CStyle, SourceLocation Loc,
       && !SrcType->isBooleanType()
       && !SrcType->isEnumeralType()
       && !SrcExpr->isIntegerConstantExpr(Self.Context)
-      && Self.Context.getTypeSize(DestType) > Self.Context.getTypeSize(SrcType))
-    Self.Diag(Loc, diag::warn_int_to_pointer_cast) << SrcType << DestType;
+      && Self.Context.getTypeSize(DestType) >
+         Self.Context.getTypeSize(SrcType)) {
+    // Separate between casts to void* and non-void* pointers.
+    // Some APIs use (abuse) void* for something like a user context,
+    // and often that value is an integer even if it isn't a pointer itself.
+    // Having a separate warning flag allows users to control the warning
+    // for their workflow.
+    unsigned Diag = DestType->isVoidPointerType() ?
+                      diag::warn_int_to_void_pointer_cast
+                    : diag::warn_int_to_pointer_cast;
+    Self.Diag(Loc, Diag) << SrcType << DestType;
+  }
 }
 
 static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,

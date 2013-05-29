@@ -54,6 +54,14 @@ void testInt(Int v) {
   (void) (CDouble) v;
   (void) (VoidPtr) v; // expected-warning{{cast to 'VoidPtr' (aka 'void *') from smaller integer type 'Int' (aka 'int')}}
   (void) (CharPtr) v; // expected-warning{{cast to 'CharPtr' (aka 'char *') from smaller integer type 'Int' (aka 'int')}}
+  
+  // Test that casts to void* can be controlled separately
+  // from other -Wint-to-pointer-cast warnings.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wint-to-void-pointer-cast"
+  (void) (VoidPtr) v; // no-warning
+  (void) (CharPtr) v; // expected-warning{{cast to 'CharPtr' (aka 'char *') from smaller integer type 'Int' (aka 'int')}}
+#pragma clang diagnostic pop
 }
 
 void testLong(Long v) {
