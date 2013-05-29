@@ -833,11 +833,11 @@ private:
   void getHints(const Loop *L) {
     if (!LoopID)
       return;
-  
+
     // First operand should refer to the loop id itself.
     assert(LoopID->getNumOperands() > 0 && "requires at least one operand");
     assert(LoopID->getOperand(0) == LoopID && "invalid loop id");
-  
+
     for (unsigned i = 1, ie = LoopID->getNumOperands(); i < ie; ++i) {
       const MDString *S = 0;
       SmallVector<Value*, 4> Args;
@@ -864,7 +864,7 @@ private:
         continue;
       // Remove the prefix.
       Hint = Hint.substr(Prefix().size(), StringRef::npos);
-  
+
       if (Args.size() == 1)
         getHint(Hint, Args[0]);
     }
@@ -2029,7 +2029,7 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     Value *LoopVal = RdxPhi->getIncomingValueForBlock(Latch);
     VectorParts &Val = getVectorValue(LoopVal);
     for (unsigned part = 0; part < UF; ++part) {
-      // Make sure to add the reduction stat value only to the 
+      // Make sure to add the reduction stat value only to the
       // first unroll part.
       Value *StartVal = (part == 0) ? VectorStart : Identity;
       cast<PHINode>(VecRdxPhi[part])->addIncoming(StartVal, VecPreheader);
