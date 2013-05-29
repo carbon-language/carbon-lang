@@ -208,6 +208,11 @@ public:
                                               llvm::Value *ptr,
                                               QualType type) = 0;
 
+  virtual llvm::Value *GetVirtualBaseClassOffset(CodeGenFunction &CGF,
+                                                 llvm::Value *This,
+                                                 const CXXRecordDecl *ClassDecl,
+                                        const CXXRecordDecl *BaseClassDecl) = 0;
+
   /// Build the signature of the given constructor variant by adding
   /// any required parameters.  For convenience, ResTy has been
   /// initialized to 'void', and ArgTys has been initialized with the

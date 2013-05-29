@@ -48,6 +48,11 @@ public:
                                       llvm::Value *ptr,
                                       QualType type);
 
+  llvm::Value *GetVirtualBaseClassOffset(CodeGenFunction &CGF,
+                                         llvm::Value *This,
+                                         const CXXRecordDecl *ClassDecl,
+                                         const CXXRecordDecl *BaseClassDecl);
+
   void BuildConstructorSignature(const CXXConstructorDecl *Ctor,
                                  CXXCtorType Type,
                                  CanQualType &ResTy,
@@ -142,6 +147,22 @@ private:
   GetNullMemberPointerFields(const MemberPointerType *MPT,
                              llvm::SmallVectorImpl<llvm::Constant *> &fields);
 
+  /// \brief Finds the offset from the base of RD to the vbptr it uses, even if
+  /// it is reusing a vbptr from a non-virtual base.  RD must have morally
+  /// virtual bases.
+  CharUnits GetVBPtrOffsetFromBases(const CXXRecordDecl *RD);
+
+  /// \brief Shared code for virtual base adjustment.  Returns the offset from
+  /// the vbptr to the virtual base.  Optionally returns the address of the
+  /// vbptr itself.
+  llvm::Value *GetVBaseOffsetFromVBPtr(CodeGenFunction &CGF,
+                                       llvm::Value *Base,
+                                       llvm::Value *VBPtrOffset,
+                                       llvm::Value *VBTableOffset,
+                                       llvm::Value **VBPtr = 0);
+
+  /// \brief Performs a full virtual base adjustment.  Used to dereference
+  /// pointers to members of virtual bases.
   llvm::Value *AdjustVirtualBase(CodeGenFunction &CGF, const CXXRecordDecl *RD,
                                  llvm::Value *Base,
                                  llvm::Value *VirtualBaseAdjustmentOffset,
@@ -210,6 +231,68 @@ llvm::Value *MicrosoftCXXABI::adjustToCompleteObject(CodeGenFunction &CGF,
                                                      QualType type) {
   // FIXME: implement
   return ptr;
+}
+
+CharUnits MicrosoftCXXABI::GetVBPtrOffsetFromBases(const CXXRecordDecl *RD) {
+  assert(RD->getNumVBases());
+  CharUnits Total = CharUnits::Zero();
+  while (RD) {
+    const ASTRecordLayout &RDLayout = getContext().getASTRecordLayout(RD);
+    CharUnits VBPtrOffset = RDLayout.getVBPtrOffset();
+    // -1 is the sentinel for no vbptr.
+    if (VBPtrOffset != CharUnits::fromQuantity(-1)) {
+      Total += VBPtrOffset;
+      break;
+    }
+
+    // RD is reusing the vbptr of a non-virtual base.  Find it and continue.
+    const CXXRecordDecl *FirstNVBaseWithVBases = 0;
+    for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+         E = RD->bases_end(); I != E; ++I) {
+      const CXXRecordDecl *Base = I->getType()->getAsCXXRecordDecl();
+      if (!I->isVirtual() && Base->getNumVBases() > 0) {
+        FirstNVBaseWithVBases = Base;
+        break;
+      }
+    }
+    assert(FirstNVBaseWithVBases);
+    Total += RDLayout.getBaseClassOffset(FirstNVBaseWithVBases);
+    RD = FirstNVBaseWithVBases;
+  }
+  return Total;
+}
+
+llvm::Value *
+MicrosoftCXXABI::GetVirtualBaseClassOffset(CodeGenFunction &CGF,
+                                           llvm::Value *This,
+                                           const CXXRecordDecl *ClassDecl,
+                                           const CXXRecordDecl *BaseClassDecl) {
+  int64_t VBPtrChars = GetVBPtrOffsetFromBases(ClassDecl).getQuantity();
+  llvm::Value *VBPtrOffset = llvm::ConstantInt::get(CGM.PtrDiffTy, VBPtrChars);
+
+  // The vbtable is an array of i32 offsets.  The first entry is a self entry,
+  // and the rest are offsets from the vbptr to virtual bases.  The bases are
+  // ordered the same way our vbases are ordered: as they appear in a
+  // left-to-right depth-first search of the hierarchy.
+  unsigned VBTableIndex = 1;  // Start with one to skip the self entry.
+  for (CXXRecordDecl::base_class_const_iterator I = ClassDecl->vbases_begin(),
+       E = ClassDecl->vbases_end(); I != E; ++I) {
+    if (I->getType()->getAsCXXRecordDecl() == BaseClassDecl)
+      break;
+    VBTableIndex++;
+  }
+  assert(VBTableIndex != 1 + ClassDecl->getNumVBases() &&
+         "BaseClassDecl must be a vbase of ClassDecl");
+  CharUnits IntSize = getContext().getTypeSizeInChars(getContext().IntTy);
+  CharUnits VBTableChars = IntSize * VBTableIndex;
+  llvm::Value *VBTableOffset =
+    llvm::ConstantInt::get(CGM.IntTy, VBTableChars.getQuantity());
+
+  llvm::Value *VBPtrToNewBase =
+    GetVBaseOffsetFromVBPtr(CGF, This, VBTableOffset, VBPtrOffset);
+  VBPtrToNewBase =
+    CGF.Builder.CreateSExtOrBitCast(VBPtrToNewBase, CGM.PtrDiffTy);
+  return CGF.Builder.CreateNSWAdd(VBPtrOffset, VBPtrToNewBase);
 }
 
 bool MicrosoftCXXABI::needThisReturn(GlobalDecl GD) {
@@ -781,12 +864,33 @@ bool MicrosoftCXXABI::MemberPointerConstantIsNull(const MemberPointerType *MPT,
   return I == E;
 }
 
+llvm::Value *
+MicrosoftCXXABI::GetVBaseOffsetFromVBPtr(CodeGenFunction &CGF,
+                                         llvm::Value *This,
+                                         llvm::Value *VBTableOffset,
+                                         llvm::Value *VBPtrOffset,
+                                         llvm::Value **VBPtrOut) {
+  CGBuilderTy &Builder = CGF.Builder;
+  // Load the vbtable pointer from the vbptr in the instance.
+  This = Builder.CreateBitCast(This, CGM.Int8PtrTy);
+  llvm::Value *VBPtr =
+    Builder.CreateInBoundsGEP(This, VBPtrOffset, "vbptr");
+  if (VBPtrOut) *VBPtrOut = VBPtr;
+  VBPtr = Builder.CreateBitCast(VBPtr, CGM.Int8PtrTy->getPointerTo(0));
+  llvm::Value *VBTable = Builder.CreateLoad(VBPtr, "vbtable");
+
+  // Load an i32 offset from the vb-table.
+  llvm::Value *VBaseOffs = Builder.CreateInBoundsGEP(VBTable, VBTableOffset);
+  VBaseOffs = Builder.CreateBitCast(VBaseOffs, CGM.Int32Ty->getPointerTo(0));
+  return Builder.CreateLoad(VBaseOffs, "vbase_offs");
+}
+
 // Returns an adjusted base cast to i8*, since we do more address arithmetic on
 // it.
 llvm::Value *
 MicrosoftCXXABI::AdjustVirtualBase(CodeGenFunction &CGF,
                                    const CXXRecordDecl *RD, llvm::Value *Base,
-                                   llvm::Value *VirtualBaseAdjustmentOffset,
+                                   llvm::Value *VBTableOffset,
                                    llvm::Value *VBPtrOffset) {
   CGBuilderTy &Builder = CGF.Builder;
   Base = Builder.CreateBitCast(Base, CGM.Int8PtrTy);
@@ -803,7 +907,7 @@ MicrosoftCXXABI::AdjustVirtualBase(CodeGenFunction &CGF,
     VBaseAdjustBB = CGF.createBasicBlock("memptr.vadjust");
     SkipAdjustBB = CGF.createBasicBlock("memptr.skip_vadjust");
     llvm::Value *IsVirtual =
-      Builder.CreateICmpNE(VirtualBaseAdjustmentOffset, getZeroInt(),
+      Builder.CreateICmpNE(VBTableOffset, getZeroInt(),
                            "memptr.is_vbase");
     Builder.CreateCondBr(IsVirtual, VBaseAdjustBB, SkipAdjustBB);
     CGF.EmitBlock(VBaseAdjustBB);
@@ -812,21 +916,15 @@ MicrosoftCXXABI::AdjustVirtualBase(CodeGenFunction &CGF,
   // If we weren't given a dynamic vbptr offset, RD should be complete and we'll
   // know the vbptr offset.
   if (!VBPtrOffset) {
-    CharUnits offs = getContext().getASTRecordLayout(RD).getVBPtrOffset();
+    CharUnits offs = CharUnits::Zero();
+    if (RD->getNumVBases()) {
+      offs = GetVBPtrOffsetFromBases(RD);
+    }
     VBPtrOffset = llvm::ConstantInt::get(CGM.IntTy, offs.getQuantity());
   }
-  // Load the vbtable pointer from the vbtable offset in the instance.
-  llvm::Value *VBPtr =
-    Builder.CreateInBoundsGEP(Base, VBPtrOffset, "memptr.vbptr");
-  llvm::Value *VBTable =
-    Builder.CreateBitCast(VBPtr, CGM.Int8PtrTy->getPointerTo(0));
-  VBTable = Builder.CreateLoad(VBTable, "memptr.vbtable");
-  // Load an i32 offset from the vb-table.
+  llvm::Value *VBPtr = 0;
   llvm::Value *VBaseOffs =
-    Builder.CreateInBoundsGEP(VBTable, VirtualBaseAdjustmentOffset);
-  VBaseOffs = Builder.CreateBitCast(VBaseOffs, CGM.Int32Ty->getPointerTo(0));
-  VBaseOffs = Builder.CreateLoad(VBaseOffs, "memptr.vbase_offs");
-  // Add it to VBPtr.  GEP will sign extend the i32 value for us.
+    GetVBaseOffsetFromVBPtr(CGF, Base, VBTableOffset, VBPtrOffset, &VBPtr);
   llvm::Value *AdjustedBase = Builder.CreateInBoundsGEP(VBPtr, VBaseOffs);
 
   // Merge control flow with the case where we didn't have to adjust.

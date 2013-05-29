@@ -98,6 +98,11 @@ public:
                                       llvm::Value *ptr,
                                       QualType type);
 
+  llvm::Value *GetVirtualBaseClassOffset(CodeGenFunction &CGF,
+                                         llvm::Value *This,
+                                         const CXXRecordDecl *ClassDecl,
+                                         const CXXRecordDecl *BaseClassDecl);
+
   void BuildConstructorSignature(const CXXConstructorDecl *Ctor,
                                  CXXCtorType T,
                                  CanQualType &ResTy,
@@ -718,6 +723,27 @@ llvm::Value *ItaniumCXXABI::adjustToCompleteObject(CodeGenFunction &CGF,
   // Apply the offset.
   ptr = CGF.Builder.CreateBitCast(ptr, CGF.Int8PtrTy);
   return CGF.Builder.CreateInBoundsGEP(ptr, offset);
+}
+
+llvm::Value *
+ItaniumCXXABI::GetVirtualBaseClassOffset(CodeGenFunction &CGF,
+                                         llvm::Value *This,
+                                         const CXXRecordDecl *ClassDecl,
+                                         const CXXRecordDecl *BaseClassDecl) {
+  llvm::Value *VTablePtr = CGF.GetVTablePtr(This, CGM.Int8PtrTy);
+  CharUnits VBaseOffsetOffset =
+    CGM.getVTableContext().getVirtualBaseOffsetOffset(ClassDecl, BaseClassDecl);
+
+  llvm::Value *VBaseOffsetPtr =
+    CGF.Builder.CreateConstGEP1_64(VTablePtr, VBaseOffsetOffset.getQuantity(),
+                                   "vbase.offset.ptr");
+  VBaseOffsetPtr = CGF.Builder.CreateBitCast(VBaseOffsetPtr,
+                                             CGM.PtrDiffTy->getPointerTo());
+
+  llvm::Value *VBaseOffset =
+    CGF.Builder.CreateLoad(VBaseOffsetPtr, "vbase.offset");
+
+  return VBaseOffset;
 }
 
 /// The generic ABI passes 'this', plus a VTT if it's initializing a

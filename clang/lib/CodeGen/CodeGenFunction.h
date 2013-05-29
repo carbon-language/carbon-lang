@@ -1975,10 +1975,6 @@ public:
                                         CastExpr::path_const_iterator PathEnd,
                                         bool NullCheckValue);
 
-  llvm::Value *GetVirtualBaseClassOffset(llvm::Value *This,
-                                         const CXXRecordDecl *ClassDecl,
-                                         const CXXRecordDecl *BaseClassDecl);
-
   /// GetVTTParameter - Return the VTT parameter that should be passed to a
   /// base constructor/destructor with virtual bases.
   /// FIXME: VTTs are Itanium ABI-specific, so the definition should move
