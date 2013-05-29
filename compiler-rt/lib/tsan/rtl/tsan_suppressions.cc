@@ -152,14 +152,20 @@ uptr IsSuppressed(ReportType typ, const ReportStack *stack, Suppression **sp) {
   SuppressionType stype;
   if (typ == ReportTypeRace)
     stype = SuppressionRace;
+  else if (typ == ReportTypeVptrRace)
+    stype = SuppressionRace;
+  else if (typ == ReportTypeUseAfterFree)
+    return 0;
   else if (typ == ReportTypeThreadLeak)
     stype = SuppressionThread;
   else if (typ == ReportTypeMutexDestroyLocked)
     stype = SuppressionMutex;
   else if (typ == ReportTypeSignalUnsafe)
     stype = SuppressionSignal;
-  else
+  else if (typ == ReportTypeErrnoInSignal)
     return 0;
+  else
+    Printf("ThreadSanitizer: unknown report type %d\n", typ), Die();
   for (const ReportStack *frame = stack; frame; frame = frame->next) {
     for (Suppression *supp = g_suppressions; supp; supp = supp->next) {
       if (stype == supp->type &&
