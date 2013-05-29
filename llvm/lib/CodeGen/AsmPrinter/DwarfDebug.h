@@ -402,9 +402,6 @@ class DwarfDebug {
   // Whether or not we're emitting info for older versions of gdb on darwin.
   bool IsDarwinGDBCompat;
 
-  // Whether or not we use ref_addr in the generated DWARF.
-  unsigned UseRefAddr;
-
   // DWARF5 Experimental Options
   bool HasDwarfAccelTables;
   bool HasSplitDwarf;
@@ -604,9 +601,6 @@ private:
   /// \brief Return Label immediately following the instruction.
   MCSymbol *getLabelAfterInsn(const MachineInstr *MI);
 
-  /// \brief Search all compile units to find the SP DIE for the given MDNode.
-  DIE *findSPDieInAllCUs(const MDNode *N);
-
 public:
   //===--------------------------------------------------------------------===//
   // Main entry points.
@@ -645,9 +639,6 @@ public:
   /// \brief Returns whether or not to limit some of our debug
   /// output to the limitations of darwin gdb.
   bool useDarwinGDBCompat() { return IsDarwinGDBCompat; }
-
-  bool getUseRefAddr() { return UseRefAddr; }
-  void setUseRefAddr(bool RefAddr) { UseRefAddr = RefAddr; }
 
   // Experimental DWARF5 features.
 
