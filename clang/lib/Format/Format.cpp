@@ -949,22 +949,23 @@ private:
   }
 
   void reconstructPath(LineState &State, StateNode *Current) {
-    // FIXME: This recursive implementation limits the possible number
-    // of tokens per line if compiled into a binary with small stack space.
-    // To become more independent of stack frame limitations we would need
-    // to also change the TokenAnnotator.
-    if (Current->Previous == NULL)
-      return;
-    reconstructPath(State, Current->Previous);
-    DEBUG({
-      if (Current->NewLine) {
-        llvm::dbgs() << "Penalty for splitting before "
-                     << Current->Previous->State.NextToken->Tok.getName()
-                     << ": " << Current->Previous->State.NextToken->SplitPenalty
-                     << "\n";
-      }
-    });
-    addTokenToState(Current->NewLine, false, State);
+    std::deque<StateNode *> Path;
+    // We do not need a break before the initial token.
+    while (Current->Previous) {
+      Path.push_front(Current);
+      Current = Current->Previous;
+    }
+    for (std::deque<StateNode *>::iterator I = Path.begin(), E = Path.end();
+         I != E; ++I) {
+      DEBUG({
+        if ((*I)->NewLine) {
+          llvm::dbgs() << "Penalty for splitting before "
+                       << (*I)->Previous->State.NextToken->Tok.getName() << ": "
+                       << (*I)->Previous->State.NextToken->SplitPenalty << "\n";
+        }
+      });
+      addTokenToState((*I)->NewLine, false, State);
+    }
   }
 
   /// \brief Add the following state to the analysis queue \c Queue.
