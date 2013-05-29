@@ -48,7 +48,6 @@ struct C {
   virtual void f();
 };
 void C::f() {}
-// The usual Itanium-style key method does not cause vtable emission.
 // NO-VTABLE-NOT: @"\01??_7C@@6B@"
 
 struct D {
@@ -115,3 +114,10 @@ struct G : E {
 };
 void G::j() {}
 // NO-VTABLE-NOT: @"\01??_7G@@6B@"
+
+// Test that the usual Itanium-style key method does not emit a vtable.
+struct H {
+  virtual void f();
+};
+void H::f() {}
+// NO-VTABLE-NOT: @"\01??_7H@@6B@"
