@@ -114,7 +114,7 @@ typedef bool (*string_predicate_t)(const char *);
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
                       string_predicate_t filter);
 
-void SymbolizerPrepareForSandboxing() SANITIZER_WEAK_ATTRIBUTE;
+void SymbolizerPrepareForSandboxing();
 
 }  // namespace __sanitizer
 

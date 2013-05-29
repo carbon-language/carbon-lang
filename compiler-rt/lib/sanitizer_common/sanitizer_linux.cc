@@ -307,8 +307,7 @@ void PrepareForSandboxing() {
   // cached mappings.
   MemoryMappingLayout::CacheMemoryMappings();
   // Same for /proc/self/exe in the symbolizer.
-  if (&SymbolizerPrepareForSandboxing)
-    SymbolizerPrepareForSandboxing();
+  SymbolizerPrepareForSandboxing();
 }
 
 // ----------------- sanitizer_procmaps.h

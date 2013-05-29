@@ -14,6 +14,7 @@ set(SANITIZER_SOURCES
   sanitizer_stackdepot.cc
   sanitizer_stacktrace.cc
   sanitizer_symbolizer_itanium.cc
+  sanitizer_symbolizer_linux.cc
   sanitizer_symbolizer_mac.cc
   sanitizer_symbolizer_win.cc
   sanitizer_thread_registry.cc
