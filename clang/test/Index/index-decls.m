@@ -33,6 +33,21 @@ int test1() {
   return extfn();
 }
 
+@interface I4
+@property (assign, nonatomic) id prop;
+-(id)prop;
+-(void)setProp:(id)p;
+@end
+
+@implementation I4
+@synthesize prop = _prop;
+-(id)prop {
+  return 0;
+}
+-(void)setProp:(id)p {
+}
+@end
+
 // RUN: c-index-test -index-file %s -target x86_64-apple-macosx10.7 > %t
 // RUN: FileCheck %s -input-file=%t
 // CHECK: [indexDeclaration]: kind: objc-class | name: I | {{.*}} | loc: 1:12
@@ -54,3 +69,7 @@ int test1() {
 // CHECK: [indexEntityReference]: kind: variable | name: extvar | {{.*}} | loc: 31:3
 // CHECK: [indexDeclaration]: kind: function | name: extfn | {{.*}} | loc: 32:14
 // CHECK: [indexEntityReference]: kind: function | name: extfn | {{.*}} | loc: 33:10
+
+// CHECK: [indexDeclaration]: kind: objc-class | name: I4 | {{.*}} | loc: 36:12
+// CHECK-NOT: [indexDeclaration]: kind: objc-instance-method {{.*}} loc: 37:
+// CHECK-NOT: [indexDeclaration]: kind: objc-instance-method {{.*}} loc: 43:

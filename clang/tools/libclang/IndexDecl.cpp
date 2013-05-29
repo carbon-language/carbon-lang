@@ -22,6 +22,15 @@ public:
   explicit IndexingDeclVisitor(IndexingContext &indexCtx)
     : IndexCtx(indexCtx) { }
 
+  /// \brief Returns true if the given method has been defined explicitly by the
+  /// user.
+  static bool hasUserDefined(const ObjCMethodDecl *D,
+                             const ObjCImplDecl *Container) {
+    const ObjCMethodDecl *MD = Container->getMethod(D->getSelector(),
+                                                    D->isInstanceMethod());
+    return MD && !MD->isImplicit() && MD->isThisDeclarationADefinition();
+  }
+
   void handleDeclarator(const DeclaratorDecl *D, const NamedDecl *Parent = 0) {
     if (!Parent) Parent = D;
 
@@ -234,12 +243,14 @@ public:
     }
 
     if (ObjCMethodDecl *MD = PD->getGetterMethodDecl()) {
-      if (MD->isPropertyAccessor())
+      if (MD->isPropertyAccessor() &&
+          !hasUserDefined(MD, cast<ObjCImplDecl>(D->getDeclContext())))
         IndexCtx.handleSynthesizedObjCMethod(MD, D->getLocation(),
                                              D->getLexicalDeclContext());
     }
     if (ObjCMethodDecl *MD = PD->getSetterMethodDecl()) {
-      if (MD->isPropertyAccessor())
+      if (MD->isPropertyAccessor() &&
+          !hasUserDefined(MD, cast<ObjCImplDecl>(D->getDeclContext())))
         IndexCtx.handleSynthesizedObjCMethod(MD, D->getLocation(),
                                              D->getLexicalDeclContext());
     }
