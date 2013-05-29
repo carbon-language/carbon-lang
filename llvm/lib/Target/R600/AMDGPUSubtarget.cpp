@@ -37,7 +37,16 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS) :
   ParseSubtargetFeatures(GPU, FS);
   DevName = GPU;
   Device = AMDGPUDeviceInfo::getDeviceFromName(DevName, this, Is64bit);
-  TexVTXClauseSize = (Device->getGeneration() >= AMDGPUDeviceInfo::HD4XXX)?16:8;
+
+  // FIXME: The code in the comment below was the original code. But the
+  // condition is always true, generating a warning when compiled with
+  // gcc. Vincent Lejeune indicated in a mail to llvm-commits 2013-05-23 that he
+  // will look into this. The code 'TexVTXClauseSize = 16' is just a temporary
+  // equivalent replacement, to get rid of the compiler warning.
+
+  // TexVTXClauseSize = (Device->getGeneration() >= AMDGPUDeviceInfo::HD4XXX)?16:8;
+
+  TexVTXClauseSize = 16;
 }
 
 AMDGPUSubtarget::~AMDGPUSubtarget() {
