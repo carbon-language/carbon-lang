@@ -144,20 +144,10 @@ def D15 : Rd<30, "F30", [F30, F31]>, DwarfRegNum<[87]>;
 // register class for that. The i64 type is included here to allow i64 patterns
 // using the integer instructions.
 def IntRegs : RegisterClass<"SP", [i32, i64], 32,
-                            (add I0, I1, I2, I3, I4, I5,
-                                 G1,
-                                 G2, G3, G4, // OK for use only in
-                                             // applications, not libraries.
-                                 G5,         // OK for use in 64 bit mode.
-                                 L0, L1, L2, L3, L4, L5, L6, L7,
-                                 O0, O1, O2, O3, O4, O5, O7,
-                                 // Non-allocatable regs:
-                                 O6, // stack ptr
-                                 I6, // frame ptr
-                                 I7, // return address
-                                 G0, // constant zero
-                                 G6, G7 // reserved for kernel
-                                 )>;
+                            (add (sequence "I%u", 0, 7),
+                                 (sequence "G%u", 0, 7),
+                                 (sequence "L%u", 0, 7),
+                                 (sequence "O%u", 0, 7))>;
 
 // Register class for 64-bit mode, with a 64-bit spill slot size.
 // These are the same as the 32-bit registers, so TableGen will consider this

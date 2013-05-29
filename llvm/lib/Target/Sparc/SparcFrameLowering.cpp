@@ -26,7 +26,18 @@
 
 using namespace llvm;
 
+static cl::opt<bool>
+DisableLeafProc("disable-sparc-leaf-proc",
+                cl::init(true),
+                cl::desc("Disable Sparc leaf procedure optimization."),
+                cl::Hidden);
+
+
 void SparcFrameLowering::emitPrologue(MachineFunction &MF) const {
+  SparcMachineFunctionInfo *FuncInfo = MF.getInfo<SparcMachineFunctionInfo>();
+  if (FuncInfo->isLeafProc())
+    return;
+
   MachineBasicBlock &MBB = MF.front();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const SparcInstrInfo &TII =
@@ -97,6 +108,9 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
 void SparcFrameLowering::emitEpilogue(MachineFunction &MF,
                                   MachineBasicBlock &MBB) const {
+  SparcMachineFunctionInfo *FuncInfo = MF.getInfo<SparcMachineFunctionInfo>();
+  if (FuncInfo->isLeafProc())
+    return;
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   const SparcInstrInfo &TII =
     *static_cast<const SparcInstrInfo*>(MF.getTarget().getInstrInfo());
@@ -121,3 +135,65 @@ bool SparcFrameLowering::hasFP(const MachineFunction &MF) const {
     MFI->hasVarSizedObjects() || MFI->isFrameAddressTaken();
 }
 
+
+static bool verifyLeafProcRegUse(MachineRegisterInfo *MRI)
+{
+
+  for (unsigned reg = SP::I0; reg <= SP::I7; ++reg)
+    if (MRI->isPhysRegUsed(reg))
+      return false;
+
+  for (unsigned reg = SP::L0; reg <= SP::L7; ++reg)
+    if (MRI->isPhysRegUsed(reg))
+      return false;
+
+  return true;
+}
+
+bool SparcFrameLowering::isLeafProc(MachineFunction &MF) const
+{
+
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+  MachineFrameInfo    *MFI = MF.getFrameInfo();
+
+  return !(MFI->hasCalls()              // has calls
+           || MRI.isPhysRegUsed(SP::L0) // Too many registers needed
+           || MRI.isPhysRegUsed(SP::O6) // %SP is used
+           || hasFP(MF));               // need %FP
+}
+
+void SparcFrameLowering::remapRegsForLeafProc(MachineFunction &MF) const {
+
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+
+  //remap %i[0-7] to %o[0-7]
+  for (unsigned reg = SP::I0; reg <= SP::I7; ++reg) {
+    if (!MRI.isPhysRegUsed(reg))
+      continue;
+    unsigned mapped_reg = (reg - SP::I0 + SP::O0);
+    assert(!MRI.isPhysRegUsed(mapped_reg));
+
+    //Replace I register with O register
+    MRI.replaceRegWith(reg, mapped_reg);
+
+    //mark the reg unused.
+    MRI.setPhysRegUnused(reg);
+  }
+
+  assert(verifyLeafProcRegUse(&MRI));
+#ifdef XDEBUG
+  MF.verify(0, "After LeafProc Remapping");
+#endif
+}
+
+void SparcFrameLowering::processFunctionBeforeCalleeSavedScan
+                  (MachineFunction &MF, RegScavenger *RS) const {
+
+  if (!DisableLeafProc && isLeafProc(MF)) {
+    SparcMachineFunctionInfo *MFI = MF.getInfo<SparcMachineFunctionInfo>();
+    MFI->setLeafProc(true);
+
+    remapRegsForLeafProc(MF);
+  }
+
+}

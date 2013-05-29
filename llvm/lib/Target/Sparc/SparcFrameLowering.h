@@ -40,6 +40,15 @@ public:
 
   bool hasReservedCallFrame(const MachineFunction &MF) const;
   bool hasFP(const MachineFunction &MF) const;
+  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                            RegScavenger *RS = NULL) const;
+
+private:
+  //Remap input registers to output registers for leaf procedure.
+  void remapRegsForLeafProc(MachineFunction &MF) const;
+
+  //Returns true if MF is a leaf procedure.
+  bool isLeafProc(MachineFunction &MF) const;
 };
 
 } // End llvm namespace
