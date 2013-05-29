@@ -351,9 +351,8 @@ bool DIDescriptor::isImportedEntity() const {
 
 DIType::DIType(const MDNode *N) : DIScope(N) {
   if (!N) return;
-  if (!isBasicType() && !isDerivedType() && !isCompositeType()) {
+  if (!isType())
     DbgNode = 0;
-  }
 }
 
 unsigned DIArray::getNumElements() const {

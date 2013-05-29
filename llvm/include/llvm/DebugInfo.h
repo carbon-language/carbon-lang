@@ -285,7 +285,7 @@ namespace llvm {
       return (getFlags() & FlagStaticMember) != 0;
     }
     bool isValid() const {
-      return DbgNode && (isBasicType() || isDerivedType() || isCompositeType());
+      return DbgNode && isType();
     }
 
     /// isUnsignedDIType - Return true if type encoding is unsigned.
