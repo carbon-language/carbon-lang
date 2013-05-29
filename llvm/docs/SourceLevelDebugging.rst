@@ -169,9 +169,7 @@ provides a specification for well formed debug descriptors.
 
 Consumers of LLVM debug information expect the descriptors for program objects
 to start in a canonical format, but the descriptors can include additional
-information appended at the end that is source-language specific.  All LLVM
-debugging information is versioned, allowing backwards compatibility in the
-case that the core structures need to change in some way.  Also, all debugging
+information appended at the end that is source-language specific.  All debugging
 information objects start with a tag to indicate what type of object it is.
 The source-language is allowed to define its own objects, by using unreserved
 tag numbers.  We recommend using with tags in the range 0x1000 through 0x2000
@@ -192,10 +190,7 @@ the simple data types ``i32``, ``i1``, ``float``, ``double``, ``mdstring`` and
 ``i32`` containing a tag value identifying the content of the descriptor.
 The remaining fields are specific to the descriptor.  The values of tags are
 loosely bound to the tag values of DWARF information entries.  However, that
-does not restrict the use of the information supplied to DWARF targets.  To
-facilitate versioning of debug information, the tag is augmented with the
-current debug version (``LLVMDebugVersion = 8 << 16`` or 0x80000 or
-524288.)
+does not restrict the use of the information supplied to DWARF targets.
 
 The details of the various descriptors follow.
 
@@ -205,13 +200,10 @@ Compile unit descriptors
 .. code-block:: llvm
 
   !0 = metadata !{
-    i32,       ;; Tag = 17 + LLVMDebugVersion (DW_TAG_compile_unit)
-    i32,       ;; Unused field.
+    i32,       ;; Tag = 17 (DW_TAG_compile_unit)
+    metadata,  ;; Source directory (including trailing slash) & file pair
     i32,       ;; DWARF language identifier (ex. DW_LANG_C89)
-    metadata,  ;; Source file name
-    metadata,  ;; Source file directory (includes trailing slash)
     metadata   ;; Producer (ex. "4.0.1 LLVM (LLVM research group)")
-    i1,        ;; True if this is a main compile unit.
     i1,        ;; True if this is optimized.
     metadata,  ;; Flags
     i32        ;; Runtime version
@@ -219,18 +211,21 @@ Compile unit descriptors
     metadata   ;; List of retained types
     metadata   ;; List of subprograms
     metadata   ;; List of global variables
+    metadata   ;; List of imported entities
+    metadata   ;; Split debug filename
   }
 
 These descriptors contain a source language ID for the file (we use the DWARF
 3.0 ID numbers, such as ``DW_LANG_C89``, ``DW_LANG_C_plus_plus``,
-``DW_LANG_Cobol74``, etc), three strings describing the filename, working
-directory of the compiler, and an identifier string for the compiler that
-produced it.
+``DW_LANG_Cobol74``, etc), a reference to a metadata node containing a pair of
+strings for the source file name and the working directory, as well as an
+identifier string for the compiler that produced it.
 
 Compile unit descriptors provide the root context for objects declared in a
 specific compilation unit.  File descriptors are defined using this context.
 These descriptors are collected by a named metadata ``!llvm.dbg.cu``.  They
-keep track of subprograms, global variables and type information.
+keep track of subprograms, global variables, type information, and imported
+entities (declarations and namespaces).
 
 .. _format_files:
 
@@ -240,10 +235,8 @@ File descriptors
 .. code-block:: llvm
 
   !0 = metadata !{
-    i32,       ;; Tag = 41 + LLVMDebugVersion (DW_TAG_file_type)
-    metadata,  ;; Source file name
-    metadata,  ;; Source file directory (includes trailing slash)
-    metadata   ;; Unused
+    i32,       ;; Tag = 41 (DW_TAG_file_type)
+    metadata,  ;; Source directory (including trailing slash) & file pair
   }
 
 These descriptors contain information for a file.  Global variables and top
@@ -261,7 +254,7 @@ Global variable descriptors
 .. code-block:: llvm
 
   !1 = metadata !{
-    i32,      ;; Tag = 52 + LLVMDebugVersion (DW_TAG_variable)
+    i32,      ;; Tag = 52 (DW_TAG_variable)
     i32,      ;; Unused field.
     metadata, ;; Reference to context descriptor
     metadata, ;; Name
@@ -272,7 +265,8 @@ Global variable descriptors
     metadata, ;; Reference to type descriptor
     i1,       ;; True if the global is local to compile unit (static)
     i1,       ;; True if the global is defined in the compile unit (not extern)
-    {}*       ;; Reference to the global variable
+    {}*,      ;; Reference to the global variable
+    metadata, ;; The static member declaration, if any
   }
 
 These descriptors provide debug information about globals variables.  They
@@ -287,13 +281,12 @@ Subprogram descriptors
 .. code-block:: llvm
 
   !2 = metadata !{
-    i32,      ;; Tag = 46 + LLVMDebugVersion (DW_TAG_subprogram)
-    i32,      ;; Unused field.
+    i32,      ;; Tag = 46 (DW_TAG_subprogram)
+    metadata, ;; Source directory (including trailing slash) & file pair
     metadata, ;; Reference to context descriptor
     metadata, ;; Name
     metadata, ;; Display name (fully qualified C++ name)
     metadata, ;; MIPS linkage name (for C++)
-    metadata, ;; Reference to file where defined
     i32,      ;; Line number where defined
     metadata, ;; Reference to type descriptor
     i1,       ;; True if the global is local to compile unit (static)
@@ -321,11 +314,11 @@ Block descriptors
 .. code-block:: llvm
 
   !3 = metadata !{
-    i32,     ;; Tag = 11 + LLVMDebugVersion (DW_TAG_lexical_block)
+    i32,     ;; Tag = 11 (DW_TAG_lexical_block)
+    metadata,;; Source directory (including trailing slash) & file pair
     metadata,;; Reference to context descriptor
     i32,     ;; Line number
     i32,     ;; Column number
-    metadata,;; Reference to source file
     i32      ;; Unique ID to identify blocks from a template function
   }
 
@@ -336,9 +329,9 @@ lexical blocks at same depth.
 .. code-block:: llvm
 
   !3 = metadata !{
-    i32,     ;; Tag = 11 + LLVMDebugVersion (DW_TAG_lexical_block)
+    i32,     ;; Tag = 11 (DW_TAG_lexical_block)
+    metadata,;; Source directory (including trailing slash) & file pair
     metadata ;; Reference to the scope we're annotating with a file change
-    metadata,;; Reference to the file the scope is enclosed in.
   }
 
 This descriptor provides a wrapper around a lexical scope to handle file
@@ -352,10 +345,10 @@ Basic type descriptors
 .. code-block:: llvm
 
   !4 = metadata !{
-    i32,      ;; Tag = 36 + LLVMDebugVersion (DW_TAG_base_type)
+    i32,      ;; Tag = 36 (DW_TAG_base_type)
+    metadata,;; Source directory (including trailing slash) & file pair (may be null)
     metadata, ;; Reference to context
     metadata, ;; Name (may be "" for anonymous types)
-    metadata, ;; Reference to file where defined (may be NULL)
     i32,      ;; Line number where defined (may be 0)
     i64,      ;; Size in bits
     i64,      ;; Alignment in bits
@@ -396,9 +389,9 @@ Derived type descriptors
 
   !5 = metadata !{
     i32,      ;; Tag (see below)
+    metadata,;; Source directory (including trailing slash) & file pair (may be null)
     metadata, ;; Reference to context
     metadata, ;; Name (may be "" for anonymous types)
-    metadata, ;; Reference to file where defined (may be NULL)
     i32,      ;; Line number where defined (may be 0)
     i64,      ;; Size in bits
     i64,      ;; Alignment in bits
@@ -459,9 +452,9 @@ Composite type descriptors
 
   !6 = metadata !{
     i32,      ;; Tag (see below)
+    metadata,;; Source directory (including trailing slash) & file pair (may be null)
     metadata, ;; Reference to context
     metadata, ;; Name (may be "" for anonymous types)
-    metadata, ;; Reference to file where defined (may be NULL)
     i32,      ;; Line number where defined (may be 0)
     i64,      ;; Size in bits
     i64,      ;; Alignment in bits
@@ -470,6 +463,8 @@ Composite type descriptors
     metadata, ;; Reference to type derived from
     metadata, ;; Reference to array of member descriptors
     i32       ;; Runtime languages
+    metadata, ;; Base type containing the vtable pointer for this type
+    metadata  ;; Template parameters
   }
 
 These descriptors are used to define types that are composed of 0 or more
@@ -531,7 +526,7 @@ Subrange descriptors
 .. code-block:: llvm
 
   !42 = metadata !{
-    i32,    ;; Tag = 33 + LLVMDebugVersion (DW_TAG_subrange_type)
+    i32,    ;; Tag = 33 (DW_TAG_subrange_type)
     i64,    ;; Low value
     i64     ;; High value
   }
@@ -550,7 +545,7 @@ Enumerator descriptors
 .. code-block:: llvm
 
   !6 = metadata !{
-    i32,      ;; Tag = 40 + LLVMDebugVersion (DW_TAG_enumerator)
+    i32,      ;; Tag = 40 (DW_TAG_enumerator)
     metadata, ;; Name
     i64       ;; Value
   }
@@ -654,59 +649,85 @@ Compiled to LLVM, this function would be represented like this:
 
 .. code-block:: llvm
 
-  define void @foo() nounwind ssp {
+  define void @_Z3foov() #0 {
   entry:
-    %X = alloca i32, align 4                        ; <i32*> [#uses=4]
-    %Y = alloca i32, align 4                        ; <i32*> [#uses=4]
-    %Z = alloca i32, align 4                        ; <i32*> [#uses=3]
-    %0 = bitcast i32* %X to {}*                     ; <{}*> [#uses=1]
-    call void @llvm.dbg.declare(metadata !{i32 * %X}, metadata !0), !dbg !7
-    store i32 21, i32* %X, !dbg !8
-    %1 = bitcast i32* %Y to {}*                     ; <{}*> [#uses=1]
-    call void @llvm.dbg.declare(metadata !{i32 * %Y}, metadata !9), !dbg !10
-    store i32 22, i32* %Y, !dbg !11
-    %2 = bitcast i32* %Z to {}*                     ; <{}*> [#uses=1]
-    call void @llvm.dbg.declare(metadata !{i32 * %Z}, metadata !12), !dbg !14
-    store i32 23, i32* %Z, !dbg !15
-    %tmp = load i32* %X, !dbg !16                   ; <i32> [#uses=1]
-    %tmp1 = load i32* %Y, !dbg !16                  ; <i32> [#uses=1]
-    %add = add nsw i32 %tmp, %tmp1, !dbg !16        ; <i32> [#uses=1]
-    store i32 %add, i32* %Z, !dbg !16
-    %tmp2 = load i32* %Y, !dbg !17                  ; <i32> [#uses=1]
-    store i32 %tmp2, i32* %X, !dbg !17
-    ret void, !dbg !18
+    %X = alloca i32, align 4                        ; [#uses=3 type=i32*]
+    %Y = alloca i32, align 4                        ; [#uses=2 type=i32*]
+    %Z = alloca i32, align 4                        ; [#uses=2 type=i32*]
+    call void @llvm.dbg.declare(metadata !{i32* %X}, metadata !8), !dbg !10
+      ; [debug line = 2:7] [debug variable = X]
+    store i32 21, i32* %X, align 4, !dbg !11        ; [debug line = 2:13]
+    call void @llvm.dbg.declare(metadata !{i32* %Y}, metadata !12), !dbg !13
+      ; [debug line = 3:7] [debug variable = Y]
+    store i32 22, i32* %Y, align 4, !dbg !14        ; [debug line = 3:13]
+    call void @llvm.dbg.declare(metadata !{i32* %Z}, metadata !15), !dbg !17
+      ; [debug line = 5:9] [debug variable = Z]
+    store i32 23, i32* %Z, align 4, !dbg !18        ; [debug line = 5:15]
+    %0 = load i32* %X, align 4, !dbg !19            ; [#uses=1 type=i32] \
+      [debug line = 6:5]
+    store i32 %0, i32* %Z, align 4, !dbg !19        ; [debug line = 6:5]
+    %1 = load i32* %Y, align 4, !dbg !20            ; [#uses=1 type=i32] \
+      [debug line = 8:3]
+    store i32 %1, i32* %X, align 4, !dbg !20        ; [debug line = 8:3]
+    ret void, !dbg !21                              ; [debug line = 9:1]
   }
 
-  declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
+  ; [#uses=3]
+  ; Function Attrs: nounwind readnone
+  declare void @llvm.dbg.declare(metadata, metadata) #1
 
-  !0 = metadata !{i32 459008, metadata !1, metadata !"X",
-                  metadata !3, i32 2, metadata !6}; [ DW_TAG_auto_variable ]
-  !1 = metadata !{i32 458763, metadata !2}; [DW_TAG_lexical_block ]
-  !2 = metadata !{i32 458798, i32 0, metadata !3, metadata !"foo", metadata !"foo",
-                 metadata !"foo", metadata !3, i32 1, metadata !4,
-                 i1 false, i1 true}; [DW_TAG_subprogram ]
-  !3 = metadata !{i32 458769, i32 0, i32 12, metadata !"foo.c",
-                  metadata !"/private/tmp", metadata !"clang 1.1", i1 true,
-                  i1 false, metadata !"", i32 0}; [DW_TAG_compile_unit ]
-  !4 = metadata !{i32 458773, metadata !3, metadata !"", null, i32 0, i64 0, i64 0,
-                  i64 0, i32 0, null, metadata !5, i32 0}; [DW_TAG_subroutine_type ]
-  !5 = metadata !{null}
-  !6 = metadata !{i32 458788, metadata !3, metadata !"int", metadata !3, i32 0,
-                  i64 32, i64 32, i64 0, i32 0, i32 5}; [DW_TAG_base_type ]
-  !7 = metadata !{i32 2, i32 7, metadata !1, null}
-  !8 = metadata !{i32 2, i32 3, metadata !1, null}
-  !9 = metadata !{i32 459008, metadata !1, metadata !"Y", metadata !3, i32 3,
-                  metadata !6}; [ DW_TAG_auto_variable ]
-  !10 = metadata !{i32 3, i32 7, metadata !1, null}
-  !11 = metadata !{i32 3, i32 3, metadata !1, null}
-  !12 = metadata !{i32 459008, metadata !13, metadata !"Z", metadata !3, i32 5,
-                   metadata !6}; [ DW_TAG_auto_variable ]
-  !13 = metadata !{i32 458763, metadata !1}; [DW_TAG_lexical_block ]
-  !14 = metadata !{i32 5, i32 9, metadata !13, null}
-  !15 = metadata !{i32 5, i32 5, metadata !13, null}
-  !16 = metadata !{i32 6, i32 5, metadata !13, null}
-  !17 = metadata !{i32 8, i32 3, metadata !1, null}
-  !18 = metadata !{i32 9, i32 1, metadata !2, null}
+  attributes #0 = { optsize zeroext "less-precise-fpmad"="false"
+    "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf"="true"
+    "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false"
+    "use-soft-float"="false" }
+  attributes #1 = { nounwind readnone }
+
+  !llvm.dbg.cu = !{!0}
+  
+  !0 = metadata !{i32 786449, metadata !1, i32 12,
+                  metadata !"clang version 3.4 ", i1 false, metadata !"", i32 0,
+                  metadata !2, metadata !2, metadata !3, metadata !2,
+                  metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] \
+                    [/private/tmp/foo.c] \
+                    [DW_LANG_C]
+  !1 = metadata !{metadata !"foo.c", metadata !"/private/tmp"}
+  !2 = metadata !{i32 0}
+  !3 = metadata !{metadata !4}
+  !4 = metadata !{i32 786478, metadata !1, metadata !5, metadata !"foo",
+                  metadata !"foo", metadata !"_Z3foov", i32 1, metadata !6,
+                  i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false,
+                  void ()* @_Z3foov, null, null, metadata !2, i32 1}
+                  ; [ DW_TAG_subprogram ] [line 1] [def] [foo]
+  !5 = metadata !{i32 786473, metadata !1} ; [ DW_TAG_file_type ] \
+                    [/private/tmp/foo.c]
+  !6 = metadata !{i32 786453, i32 0, i32 0, metadata !"", i32 0, i64 0, i64 0,
+                  i64 0, i32 0, null, metadata !7, i32 0, i32 0}
+                  ; [ DW_TAG_subroutine_type ] \
+                    [line 0, size 0, align 0, offset 0] [from ]
+  !7 = metadata !{null}
+  !8 = metadata !{i32 786688, metadata !4, metadata !"X", metadata !5, i32 2, \
+                  metadata !9, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [X] \
+                    [line 2]
+  !9 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, \
+                  i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] \
+                    [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+  !10 = metadata !{i32 2, i32 7, metadata !4, null}
+  !11 = metadata !{i32 2, i32 13, metadata !4, null}
+  !12 = metadata !{i32 786688, metadata !4, metadata !"Y", metadata !5, i32 3, \
+                   metadata !9, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [Y] \
+                     [line 3]
+  !13 = metadata !{i32 3, i32 7, metadata !4, null}
+  !14 = metadata !{i32 3, i32 13, metadata !4, null}
+  !15 = metadata !{i32 786688, metadata !16, metadata !"Z", metadata !5, i32 5, \
+                   metadata !9, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [Z] \
+                     [line 5]
+  !16 = metadata !{i32 786443, metadata !1, metadata !4, i32 4, i32 3, i32 0}
+                   ; [ DW_TAG_lexical_block ] [/private/tmp/foo.c]
+  !17 = metadata !{i32 5, i32 9, metadata !16, null}
+  !18 = metadata !{i32 5, i32 15, metadata !16, null}
+  !19 = metadata !{i32 6, i32 5, metadata !16, null}
+  !20 = metadata !{i32 8, i32 3, metadata !4, null}
+  !21 = metadata !{i32 9, i32 1, metadata !4, null}
 
 This example illustrates a few important details about LLVM debugging
 information.  In particular, it shows how the ``llvm.dbg.declare`` intrinsic and
@@ -716,25 +737,26 @@ variable definitions, and the code used to implement the function.
 
 .. code-block:: llvm
 
-  call void @llvm.dbg.declare(metadata, metadata !0), !dbg !7
+  call void @llvm.dbg.declare(metadata !{i32* %X}, metadata !8), !dbg !10
+    ; [debug line = 2:7] [debug variable = X]
 
 The first intrinsic ``%llvm.dbg.declare`` encodes debugging information for the
-variable ``X``.  The metadata ``!dbg !7`` attached to the intrinsic provides
+variable ``X``.  The metadata ``!dbg !10`` attached to the intrinsic provides
 scope information for the variable ``X``.
 
 .. code-block:: llvm
 
-  !7 = metadata !{i32 2, i32 7, metadata !1, null}
-  !1 = metadata !{i32 458763, metadata !2}; [DW_TAG_lexical_block ]
-  !2 = metadata !{i32 458798, i32 0, metadata !3, metadata !"foo",
-                  metadata !"foo", metadata !"foo", metadata !3, i32 1,
-                  metadata !4, i1 false, i1 true}; [DW_TAG_subprogram ]
+  !10 = metadata !{i32 2, i32 7, metadata !4, null}
+  !4 = metadata !{i32 786478, metadata !1, metadata !5, metadata !"foo",
+                  metadata !"foo", metadata !"_Z3foov", i32 1, metadata !6,
+                  i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false,
+                  void ()* @_Z3foov, null, null, metadata !2, i32 1}
+                  ; [ DW_TAG_subprogram ] [line 1] [def] [foo]
 
-Here ``!7`` is metadata providing location information.  It has four fields:
+Here ``!10`` is metadata providing location information.  It has four fields:
 line number, column number, scope, and original scope.  The original scope
 represents inline location if this instruction is inlined inside a caller, and
-is null otherwise.  In this example, scope is encoded by ``!1``. ``!1``
-represents a lexical block inside the scope ``!2``, where ``!2`` is a
+is null otherwise.  In this example, scope is encoded by ``!4``, a
 :ref:`subprogram descriptor <format_subprograms>`.  This way the location
 information attached to the intrinsics indicates that the variable ``X`` is
 declared at line number 2 at a function level scope in function ``foo``.
@@ -743,20 +765,22 @@ Now lets take another example.
 
 .. code-block:: llvm
 
-  call void @llvm.dbg.declare(metadata, metadata !12), !dbg !14
+  call void @llvm.dbg.declare(metadata !{i32* %Z}, metadata !15), !dbg !17
+    ; [debug line = 5:9] [debug variable = Z]
 
-The second intrinsic ``%llvm.dbg.declare`` encodes debugging information for
-variable ``Z``.  The metadata ``!dbg !14`` attached to the intrinsic provides
+The third intrinsic ``%llvm.dbg.declare`` encodes debugging information for
+variable ``Z``.  The metadata ``!dbg !17`` attached to the intrinsic provides
 scope information for the variable ``Z``.
 
 .. code-block:: llvm
 
-  !13 = metadata !{i32 458763, metadata !1}; [DW_TAG_lexical_block ]
-  !14 = metadata !{i32 5, i32 9, metadata !13, null}
+  !16 = metadata !{i32 786443, metadata !1, metadata !4, i32 4, i32 3, i32 0}
+                   ; [ DW_TAG_lexical_block ] [/private/tmp/foo.c]
+  !17 = metadata !{i32 5, i32 9, metadata !16, null}
 
-Here ``!14`` indicates that ``Z`` is declared at line number 5 and
-column number 9 inside of lexical scope ``!13``.  The lexical scope itself
-resides inside of lexical scope ``!1`` described above.
+Here ``!15`` indicates that ``Z`` is declared at line number 5 and
+column number 9 inside of lexical scope ``!16``.  The lexical scope itself
+resides inside of subprogram ``!4`` described above.
 
 The scope information attached with each instruction provides a straightforward
 way to find instructions covered by a scope.
@@ -805,36 +829,44 @@ a C/C++ front-end would generate the following descriptors:
   ;;
   ;; Define the compile unit for the main source file "/Users/mine/sources/MySource.cpp".
   ;;
-  !2 = metadata !{
-    i32 524305,    ;; Tag
-    i32 0,         ;; Unused
-    i32 4,         ;; Language Id
-    metadata !"MySource.cpp",
-    metadata !"/Users/mine/sources",
-    metadata !"4.2.1 (Based on Apple Inc. build 5649) (LLVM build 00)",
-    i1 true,       ;; Main Compile Unit
-    i1 false,      ;; Optimized compile unit
-    metadata !"",  ;; Compiler flags
-    i32 0}         ;; Runtime version
+  !0 = metadata !{
+    i32 786449,   ;; Tag
+    metadata !1,  ;; File/directory name
+    i32 4,        ;; Language Id
+    metadata !"clang version 3.4 ",
+    i1 false,     ;; Optimized compile unit
+    metadata !"", ;; Compiler flags
+    i32 0,        ;; Runtime version
+    metadata !2,  ;; Enumeration types
+    metadata !2,  ;; Retained types
+    metadata !3,  ;; Subprograms
+    metadata !2,  ;; Global variables
+    metadata !2,  ;; Imported entities (declarations and namespaces)
+    metadata !""  ;; Split debug filename
+  }
 
   ;;
   ;; Define the file for the file "/Users/mine/sources/MySource.cpp".
   ;;
   !1 = metadata !{
-    i32 524329,    ;; Tag
     metadata !"MySource.cpp",
-    metadata !"/Users/mine/sources",
-    metadata !2    ;; Compile unit
+    metadata !"/Users/mine/sources"
+  }
+  !5 = metadata !{
+    i32 786473, ;; Tag
+    metadata !1
   }
 
   ;;
   ;; Define the file for the file "/Users/mine/sources/Myheader.h"
   ;;
-  !3 = metadata !{
-    i32 524329,    ;; Tag
-    metadata !"Myheader.h"
+  !14 = metadata !{
+    i32 786473, ;; Tag
+    metadata !15
+  }
+  !15 = metadata !{
+    metadata !"./MyHeader.h",
     metadata !"/Users/mine/sources",
-    metadata !2    ;; Compile unit
   }
 
   ...
@@ -890,7 +922,9 @@ a C/C++ front-end would generate the following descriptors:
     metadata !1,                      ;; Enum Types
     metadata !1,                      ;; Retained Types
     metadata !1,                      ;; Subprograms
-    metadata !3                       ;; Global Variables
+    metadata !3,                      ;; Global Variables
+    metadata !1,                      ;; Imported entities
+    "",                               ;; Split debug filename
   } ; [ DW_TAG_compile_unit ]
 
   ;; The Array of Global Variables
@@ -898,14 +932,10 @@ a C/C++ front-end would generate the following descriptors:
     metadata !4
   }
 
-  !4 = metadata !{
-    metadata !5
-  }
-
   ;;
   ;; Define the global variable itself.
   ;;
-  !5 = metadata !{
+  !4 = metadata !{
     i32 786484,                        ;; Tag
     i32 0,                             ;; Unused
     null,                              ;; Unused
@@ -917,17 +947,20 @@ a C/C++ front-end would generate the following descriptors:
     metadata !7,                       ;; Type
     i32 0,                             ;; IsLocalToUnit
     i32 1,                             ;; IsDefinition
-    i32* @MyGlobal                     ;; LLVM-IR Value
+    i32* @MyGlobal,                    ;; LLVM-IR Value
+    null                               ;; Static member declaration
   } ; [ DW_TAG_variable ]
 
   ;;
   ;; Define the file
   ;;
-  !6 = metadata !{
-    i32 786473,                        ;; Tag
+  !5 = metadata !{
     metadata !"foo.cpp",               ;; File
     metadata !"/Volumes/Data/tmp",     ;; Directory
-    null                               ;; Unused
+  }
+  !6 = metadata !{
+    i32 786473,                        ;; Tag
+    metadata !5                        ;; Unused
   } ; [ DW_TAG_file_type ]
 
   ;;
@@ -936,8 +969,8 @@ a C/C++ front-end would generate the following descriptors:
   !7 = metadata !{
     i32 786468,                         ;; Tag
     null,                               ;; Unused
-    metadata !"int",                    ;; Name
     null,                               ;; Unused
+    metadata !"int",                    ;; Name
     i32 0,                              ;; Line
     i64 32,                             ;; Size in Bits
     i64 32,                             ;; Align in Bits
@@ -962,18 +995,15 @@ a C/C++ front-end would generate the following descriptors:
 .. code-block:: llvm
 
   ;;
-  ;; Define the anchor for subprograms.  Note that the second field of the
-  ;; anchor is 46, which is the same as the tag for subprograms
-  ;; (46 = DW_TAG_subprogram.)
+  ;; Define the anchor for subprograms.
   ;;
   !6 = metadata !{
-    i32 524334,        ;; Tag
-    i32 0,             ;; Unused
+    i32 786484,        ;; Tag
+    metadata !1,       ;; File
     metadata !1,       ;; Context
     metadata !"main",  ;; Name
     metadata !"main",  ;; Display name
     metadata !"main",  ;; Linkage name
-    metadata !1,       ;; File
     i32 1,             ;; Line number
     metadata !4,       ;; Type
     i1 false,          ;; Is local
@@ -984,7 +1014,9 @@ a C/C++ front-end would generate the following descriptors:
     i32 0,             ;; Flags
     i1 false,          ;; True if this function is optimized
     Function *,        ;; Pointer to llvm::Function
-    null               ;; Function template parameters
+    null,              ;; Function template parameters
+    null,              ;; List of function variables (emitted when optimizing)
+    1                  ;; Line number of the opening '{' of the function
   }
   ;;
   ;; Define the subprogram itself.
@@ -1004,10 +1036,10 @@ bool
 .. code-block:: llvm
 
   !2 = metadata !{
-    i32 524324,        ;; Tag
-    metadata !1,       ;; Context
+    i32 786468,        ;; Tag
+    null,              ;; File
+    null,              ;; Context
     metadata !"bool",  ;; Name
-    metadata !1,       ;; File
     i32 0,             ;; Line number
     i64 8,             ;; Size in Bits
     i64 8,             ;; Align in Bits
@@ -1022,10 +1054,10 @@ char
 .. code-block:: llvm
 
   !2 = metadata !{
-    i32 524324,        ;; Tag
-    metadata !1,       ;; Context
+    i32 786468,        ;; Tag
+    null,              ;; File
+    null,              ;; Context
     metadata !"char",  ;; Name
-    metadata !1,       ;; File
     i32 0,             ;; Line number
     i64 8,             ;; Size in Bits
     i64 8,             ;; Align in Bits
@@ -1040,10 +1072,10 @@ unsigned char
 .. code-block:: llvm
 
   !2 = metadata !{
-    i32 524324,        ;; Tag
-    metadata !1,       ;; Context
+    i32 786468,        ;; Tag
+    null,              ;; File
+    null,              ;; Context
     metadata !"unsigned char",
-    metadata !1,       ;; File
     i32 0,             ;; Line number
     i64 8,             ;; Size in Bits
     i64 8,             ;; Align in Bits
@@ -1058,10 +1090,10 @@ short
 .. code-block:: llvm
 
   !2 = metadata !{
-    i32 524324,        ;; Tag
-    metadata !1,       ;; Context
+    i32 786468,        ;; Tag
+    null,              ;; File
+    null,              ;; Context
     metadata !"short int",
-    metadata !1,       ;; File
     i32 0,             ;; Line number
     i64 16,            ;; Size in Bits
     i64 16,            ;; Align in Bits
@@ -1076,10 +1108,10 @@ unsigned short
 .. code-block:: llvm
 
   !2 = metadata !{
-    i32 524324,        ;; Tag
-    metadata !1,       ;; Context
+    i32 786468,        ;; Tag
+    null,              ;; File
+    null,              ;; Context
     metadata !"short unsigned int",
-    metadata !1,       ;; File
     i32 0,             ;; Line number
     i64 16,            ;; Size in Bits
     i64 16,            ;; Align in Bits
@@ -1094,10 +1126,10 @@ int
 .. code-block:: llvm
 
   !2 = metadata !{
-    i32 524324,        ;; Tag
-    metadata !1,       ;; Context
+    i32 786468,        ;; Tag
+    null,              ;; File
+    null,              ;; Context
     metadata !"int",   ;; Name
-    metadata !1,       ;; File
     i32 0,             ;; Line number
     i64 32,            ;; Size in Bits
     i64 32,            ;; Align in Bits
@@ -1112,10 +1144,10 @@ unsigned int
 .. code-block:: llvm
 
   !2 = metadata !{
-    i32 524324,        ;; Tag
-    metadata !1,       ;; Context
+    i32 786468,        ;; Tag
+    null,              ;; File
+    null,              ;; Context
     metadata !"unsigned int",
-    metadata !1,       ;; File
     i32 0,             ;; Line number
     i64 32,            ;; Size in Bits
     i64 32,            ;; Align in Bits
@@ -1130,10 +1162,10 @@ long long
 .. code-block:: llvm
 
   !2 = metadata !{
-    i32 524324,        ;; Tag
-    metadata !1,       ;; Context
+    i32 786468,        ;; Tag
+    null,              ;; File
+    null,              ;; Context
     metadata !"long long int",
-    metadata !1,       ;; File
     i32 0,             ;; Line number
     i64 64,            ;; Size in Bits
     i64 64,            ;; Align in Bits
@@ -1148,10 +1180,10 @@ unsigned long long
 .. code-block:: llvm
 
   !2 = metadata !{
-    i32 524324,        ;; Tag
-    metadata !1,       ;; Context
+    i32 786468,        ;; Tag
+    null,              ;; File
+    null,              ;; Context
     metadata !"long long unsigned int",
-    metadata !1,       ;; File
     i32 0,             ;; Line number
     i64 64,            ;; Size in Bits
     i64 64,            ;; Align in Bits
@@ -1166,10 +1198,10 @@ float
 .. code-block:: llvm
 
   !2 = metadata !{
-    i32 524324,        ;; Tag
-    metadata !1,       ;; Context
+    i32 786468,        ;; Tag
+    null,              ;; File
+    null,              ;; Context
     metadata !"float",
-    metadata !1,       ;; File
     i32 0,             ;; Line number
     i64 32,            ;; Size in Bits
     i64 32,            ;; Align in Bits
@@ -1184,10 +1216,10 @@ double
 .. code-block:: llvm
 
   !2 = metadata !{
-    i32 524324,        ;; Tag
-    metadata !1,       ;; Context
+    i32 786468,        ;; Tag
+    null,              ;; File
+    null,              ;; Context
     metadata !"double",;; Name
-    metadata !1,       ;; File
     i32 0,             ;; Line number
     i64 64,            ;; Size in Bits
     i64 64,            ;; Align in Bits
@@ -1213,10 +1245,10 @@ a C/C++ front-end would generate the following descriptors:
   ;; Define the typedef "IntPtr".
   ;;
   !2 = metadata !{
-    i32 524310,          ;; Tag
+    i32 786454,          ;; Tag
+    metadata !3,         ;; File
     metadata !1,         ;; Context
     metadata !"IntPtr",  ;; Name
-    metadata !3,         ;; File
     i32 0,               ;; Line number
     i64 0,               ;; Size in bits
     i64 0,               ;; Align in bits
@@ -1228,10 +1260,10 @@ a C/C++ front-end would generate the following descriptors:
   ;; Define the pointer type.
   ;;
   !4 = metadata !{
-    i32 524303,          ;; Tag
-    metadata !1,         ;; Context
+    i32 786447,          ;; Tag
+    null,                ;; File
+    null,                ;; Context
     metadata !"",        ;; Name
-    metadata !1,         ;; File
     i32 0,               ;; Line number
     i64 64,              ;; Size in bits
     i64 64,              ;; Align in bits
@@ -1243,13 +1275,13 @@ a C/C++ front-end would generate the following descriptors:
   ;; Define the const type.
   ;;
   !5 = metadata !{
-    i32 524326,          ;; Tag
-    metadata !1,         ;; Context
+    i32 786470,          ;; Tag
+    null,                ;; File
+    null,                ;; Context
     metadata !"",        ;; Name
-    metadata !1,         ;; File
     i32 0,               ;; Line number
-    i64 32,              ;; Size in bits
-    i64 32,              ;; Align in bits
+    i64 0,               ;; Size in bits
+    i64 0,               ;; Align in bits
     i64 0,               ;; Offset in bits
     i32 0,               ;; Flags
     metadata !6          ;; Derived From type
@@ -1258,16 +1290,16 @@ a C/C++ front-end would generate the following descriptors:
   ;; Define the int type.
   ;;
   !6 = metadata !{
-    i32 524324,          ;; Tag
-    metadata !1,         ;; Context
+    i32 786468,          ;; Tag
+    null,                ;; File
+    null,                ;; Context
     metadata !"int",     ;; Name
-    metadata !1,         ;; File
     i32 0,               ;; Line number
     i64 32,              ;; Size in bits
     i64 32,              ;; Align in bits
     i64 0,               ;; Offset in bits
     i32 0,               ;; Flags
-    5                    ;; Encoding
+    i32 5                ;; Encoding
   }
 
 C/C++ struct/union types
@@ -1291,10 +1323,10 @@ a C/C++ front-end would generate the following descriptors:
   ;; Define basic type for unsigned int.
   ;;
   !5 = metadata !{
-    i32 524324,        ;; Tag
-    metadata !1,       ;; Context
+    i32 786468,        ;; Tag
+    null,              ;; File
+    null,              ;; Context
     metadata !"unsigned int",
-    metadata !1,       ;; File
     i32 0,             ;; Line number
     i64 32,            ;; Size in Bits
     i64 32,            ;; Align in Bits
@@ -1306,10 +1338,10 @@ a C/C++ front-end would generate the following descriptors:
   ;; Define composite type for struct Color.
   ;;
   !2 = metadata !{
-    i32 524307,        ;; Tag
-    metadata !1,       ;; Context
-    metadata !"Color", ;; Name
+    i32 786451,        ;; Tag
     metadata !1,       ;; Compile unit
+    null,              ;; Context
+    metadata !"Color", ;; Name
     i32 1,             ;; Line number
     i64 96,            ;; Size in bits
     i64 32,            ;; Align in bits
@@ -1317,17 +1349,19 @@ a C/C++ front-end would generate the following descriptors:
     i32 0,             ;; Flags
     null,              ;; Derived From
     metadata !3,       ;; Elements
-    i32 0              ;; Runtime Language
+    i32 0,             ;; Runtime Language
+    null,              ;; Base type containing the vtable pointer for this type
+    null               ;; Template parameters
   }
 
   ;;
   ;; Define the Red field.
   ;;
   !4 = metadata !{
-    i32 524301,        ;; Tag
+    i32 786445,        ;; Tag
+    metadata !1,       ;; File
     metadata !1,       ;; Context
     metadata !"Red",   ;; Name
-    metadata !1,       ;; File
     i32 2,             ;; Line number
     i64 32,            ;; Size in bits
     i64 32,            ;; Align in bits
@@ -1340,10 +1374,10 @@ a C/C++ front-end would generate the following descriptors:
   ;; Define the Green field.
   ;;
   !6 = metadata !{
-    i32 524301,        ;; Tag
+    i32 786445,        ;; Tag
+    metadata !1,       ;; File
     metadata !1,       ;; Context
     metadata !"Green", ;; Name
-    metadata !1,       ;; File
     i32 3,             ;; Line number
     i64 32,            ;; Size in bits
     i64 32,            ;; Align in bits
@@ -1356,10 +1390,10 @@ a C/C++ front-end would generate the following descriptors:
   ;; Define the Blue field.
   ;;
   !7 = metadata !{
-    i32 524301,        ;; Tag
+    i32 786445,        ;; Tag
+    metadata !1,       ;; File
     metadata !1,       ;; Context
     metadata !"Blue",  ;; Name
-    metadata !1,       ;; File
     i32 4,             ;; Line number
     i64 32,            ;; Size in bits
     i64 32,            ;; Align in bits
@@ -1394,10 +1428,10 @@ a C/C++ front-end would generate the following descriptors:
   ;; Define composite type for enum Trees
   ;;
   !2 = metadata !{
-    i32 524292,        ;; Tag
+    i32 786436,        ;; Tag
+    metadata !1,       ;; File
     metadata !1,       ;; Context
     metadata !"Trees", ;; Name
-    metadata !1,       ;; File
     i32 1,             ;; Line number
     i64 32,            ;; Size in bits
     i64 32,            ;; Align in bits
@@ -1416,17 +1450,17 @@ a C/C++ front-end would generate the following descriptors:
   ;;
   ;; Define Spruce enumerator.
   ;;
-  !4 = metadata !{i32 524328, metadata !"Spruce", i64 100}
+  !4 = metadata !{i32 786472, metadata !"Spruce", i64 100}
 
   ;;
   ;; Define Oak enumerator.
   ;;
-  !5 = metadata !{i32 524328, metadata !"Oak", i64 200}
+  !5 = metadata !{i32 786472, metadata !"Oak", i64 200}
 
   ;;
   ;; Define Maple enumerator.
   ;;
-  !6 = metadata !{i32 524328, metadata !"Maple", i64 300}
+  !6 = metadata !{i32 786472, metadata !"Maple", i64 300}
 
 Debugging information format
 ============================
