@@ -170,3 +170,17 @@ namespace test13 {
   }
   void *zed() { return foo(); }
 }
+
+namespace test14 {
+  // CHECK-DAG: define linkonce_odr void @_ZN6test143fooIZNS_1fEvE1S_8E3barILPS1_0EEEvv(
+  template <typename T> struct foo {
+    template <T *P> static void bar() {}
+    static void *g() { return (void *)bar<nullptr>; }
+  };
+  inline void *f() {
+    struct S {
+    };
+    return foo<S>::g();
+  }
+  void h() { f(); }
+}
