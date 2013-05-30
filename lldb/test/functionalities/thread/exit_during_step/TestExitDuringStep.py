@@ -18,14 +18,44 @@ class ExitDuringStepTestCase(TestBase):
     def test_with_dsym(self):
         """Test thread exit during step handling."""
         self.buildDsym(dictionary=self.getBuildFlags())
-        self.exit_during_step_test()
+        self.exit_during_step_inst_test()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
+    @dsym_test
+    def test_step_over_with_dsym(self):
+        """Test thread exit during step-over handling."""
+        self.buildDsym(dictionary=self.getBuildFlags())
+        self.exit_during_step_over_test()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
+    @dsym_test
+    def test_step_in_with_dsym(self):
+        """Test thread exit during step-in handling."""
+        self.buildDsym(dictionary=self.getBuildFlags())
+        self.exit_during_step_in_test()
 
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
     @dwarf_test
     def test_with_dwarf(self):
         """Test thread exit during step handling."""
         self.buildDwarf(dictionary=self.getBuildFlags())
-        self.exit_during_step_test()
+        self.exit_during_step_inst_test()
+
+    @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
+    @dwarf_test
+    def test_step_over_with_dwarf(self):
+        """Test thread exit during step-over handling."""
+        self.buildDwarf(dictionary=self.getBuildFlags())
+        self.exit_during_step_over_test()
+
+    @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
+    @dwarf_test
+    def test_step_in_with_dwarf(self):
+        """Test thread exit during step-in handling."""
+        self.buildDwarf(dictionary=self.getBuildFlags())
+        self.exit_during_step_in_test()
 
     def setUp(self):
         # Call super's setUp().
@@ -34,7 +64,19 @@ class ExitDuringStepTestCase(TestBase):
         self.breakpoint = line_number('main.cpp', '// Set breakpoint here')
         self.continuepoint = line_number('main.cpp', '// Continue from here')
 
-    def exit_during_step_test(self):
+    def exit_during_step_inst_test(self):
+        """Test thread exit while using step-inst."""
+        self.exit_during_step_base("thread step-inst -m all-threads", 'stop reason = instruction step')
+
+    def exit_during_step_over_test(self):
+        """Test thread exit while using step-over."""
+        self.exit_during_step_base("thread step-over -m all-threads", 'stop reason = step over')
+
+    def exit_during_step_in_test(self):
+        """Test thread exit while using step-in."""
+        self.exit_during_step_base("thread step-in -m all-threads", 'stop reason = step in')
+
+    def exit_during_step_base(self, step_cmd, step_stop_reason):
         """Test thread exit during step handling."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
@@ -80,7 +122,7 @@ class ExitDuringStepTestCase(TestBase):
         stepping_frame = stepping_thread.GetFrameAtIndex(0)
         self.assertTrue(current_line == stepping_frame.GetLineEntry().GetLine(), "Starting line for stepping doesn't match breakpoint line.")
         while current_line != self.continuepoint:
-            self.runCmd("thread step-inst -m all-threads")
+            self.runCmd(step_cmd)
 
             if stepping_thread != process.GetSelectedThread():
                 process.SetSelectedThread(stepping_thread)
@@ -99,6 +141,10 @@ class ExitDuringStepTestCase(TestBase):
 
         # Check to see that we reduced the number of threads as expected
         self.assertTrue(num_threads == 2, 'Number of expected threads and actual threads do not match after thread exit.')
+
+        self.expect("thread list", 'Process state is stopped due to step',
+                substrs = ['stopped',
+                           step_stop_reason])
 
         # Run to completion
         self.runCmd("continue")
