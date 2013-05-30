@@ -234,7 +234,6 @@ private:
   bool WillNotOverflowSignedAdd(Value *LHS, Value *RHS);
   Value *EmitGEPOffset(User *GEP);
   Instruction *scalarizePHI(ExtractElementInst &EI, PHINode *PN);
-  Value *EvaluateInDifferentElementOrder(Value *V, ArrayRef<int> Mask);
 
 public:
   // InsertNewInstBefore - insert an instruction New before instruction Old
