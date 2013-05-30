@@ -23,7 +23,8 @@
 /// C++11's nullptr keyword where possible.
 class UseNullptrTransform : public Transform {
 public:
-  UseNullptrTransform() : Transform("UseNullptr") {}
+  UseNullptrTransform(bool EnableTiming)
+      : Transform("UseNullptr", EnableTiming) {}
 
   /// \see Transform::run().
   virtual int apply(const FileContentsByPath &InputStates,

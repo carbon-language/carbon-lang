@@ -28,10 +28,10 @@ class Option;
 } // namespace llvm
 class Transform;
 
-typedef Transform *(*TransformCreator)();
+typedef Transform *(*TransformCreator)(bool);
 template <typename T>
-Transform *ConstructTransform() {
-  return new T();
+Transform *ConstructTransform(bool EnableTiming) {
+  return new T(EnableTiming);
 }
 
 /// \brief Class encapsulating the creation of command line bool options
@@ -55,7 +55,7 @@ public:
   /// \brief Instantiate all transforms that were selected on the command line.
   ///
   /// Call *after* parsing options.
-  void createSelectedTransforms();
+  void createSelectedTransforms(bool EnableTiming);
 
   /// \brief Return an iterator to the start of a container of instantiated
   /// transforms.

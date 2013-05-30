@@ -35,11 +35,11 @@ void Transforms::registerTransform(llvm::StringRef OptName,
       new cl::opt<bool>(OptName.data(), cl::desc(Description.data())), Creator));
 }
 
-void Transforms::createSelectedTransforms() {
+void Transforms::createSelectedTransforms(bool EnableTiming) {
   for (OptionVec::iterator I = Options.begin(),
        E = Options.end(); I != E; ++I) {
     if (*I->first) {
-      ChosenTransforms.push_back(I->second());
+      ChosenTransforms.push_back(I->second(EnableTiming));
     }
   }
 }

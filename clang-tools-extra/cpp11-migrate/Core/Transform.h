@@ -17,6 +17,8 @@
 
 #include <string>
 #include <vector>
+#include "clang/Tooling/Tooling.h"
+#include "llvm/Support/Timer.h"
 
 // For RewriterContainer
 #include "clang/Rewrite/Core/Rewriter.h"
@@ -104,9 +106,23 @@ private:
 };
 
 /// \brief Abstract base class for all C++11 migration transforms.
-class Transform {
+///
+/// Per-source performance timing is handled by the callbacks
+/// handleBeginSource() and handleEndSource() if timing is enabled. See
+/// clang::tooling::newFrontendActionFactory() for how to register
+/// a Transform object for callbacks.
+class Transform : public clang::tooling::SourceFileCallbacks {
 public:
-  Transform(llvm::StringRef Name) : Name(Name) {
+  /// \brief Constructor
+  /// \param Name Name of the transform for human-readable purposes (e.g. -help
+  /// text)
+  /// \param EnableTiming Enable the timing of the duration between calls to
+  /// handleBeginSource() and handleEndSource(). When a Transform object is
+  /// registered for FrontendAction source file callbacks, this behaviour can
+  /// be used to time the application of a MatchFinder by subclasses. Durations
+  /// are automatically stored in a TimingVec.
+  Transform(llvm::StringRef Name, bool EnableTiming)
+      : Name(Name), EnableTiming(EnableTiming) {
     Reset();
   }
 
@@ -156,7 +172,31 @@ public:
     DeferredChanges = 0;
   }
 
+  /// \brief Callback for notification of the start of processing of a source
+  /// file by a FrontendAction. Starts a performance timer if timing was
+  /// enabled.
+  virtual bool handleBeginSource(clang::CompilerInstance &CI,
+                                 llvm::StringRef Filename) LLVM_OVERRIDE;
+
+  /// \brief Callback for notification of the end of processing of a source
+  /// file by a FrontendAction. Stops a performance timer if timing was enabled
+  /// and records the elapsed time. For a given source, handleBeginSource() and
+  /// handleEndSource() are expected to be called in pairs.
+  virtual void handleEndSource() LLVM_OVERRIDE;
+
+  /// \brief Performance timing data is stored as a vector of pairs. Pairs are
+  /// formed of:
+  /// \li Name of source file.
+  /// \li Elapsed time.
+  typedef std::vector<std::pair<std::string, llvm::TimeRecord> > TimingVec;
+
+  /// \brief Return an iterator to the start of collected timing data.
+  TimingVec::const_iterator timing_begin() const { return Timings.begin(); }
+  /// \brief Return an iterator to the start of collected timing data.
+  TimingVec::const_iterator timing_end() const { return Timings.end(); }
+
 protected:
+
   void setAcceptedChanges(unsigned Changes) {
     AcceptedChanges = Changes;
   }
@@ -169,6 +209,8 @@ protected:
 
 private:
   const std::string Name;
+  bool EnableTiming;
+  TimingVec Timings;
   unsigned AcceptedChanges;
   unsigned RejectedChanges;
   unsigned DeferredChanges;

@@ -47,7 +47,8 @@ int UseNullptrTransform::apply(const FileContentsByPath &InputStates,
 
   Finder.addMatcher(makeCastSequenceMatcher(), &Fixer);
 
-  if (int result = UseNullptrTool.run(newFrontendActionFactory(&Finder))) {
+  if (int result = UseNullptrTool.run(
+          newFrontendActionFactory(&Finder, /*Callbacks=*/ this))) {
     llvm::errs() << "Error encountered during translation.\n";
     return result;
   }

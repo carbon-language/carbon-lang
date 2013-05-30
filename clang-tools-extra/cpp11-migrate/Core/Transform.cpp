@@ -35,3 +35,19 @@ void collectResults(clang::Rewriter &Rewrite,
     Results[Entry->getName()] = ResultBuf;
   }
 }
+
+bool Transform::handleBeginSource(CompilerInstance &CI, StringRef Filename) {
+  if (!EnableTiming)
+    return true;
+
+  Timings.push_back(std::make_pair(Filename.str(), llvm::TimeRecord()));
+  Timings.back().second -= llvm::TimeRecord::getCurrentTime(true);
+  return true;
+}
+
+void Transform::handleEndSource() {
+  if (!EnableTiming)
+    return;
+
+  Timings.back().second += llvm::TimeRecord::getCurrentTime(false);
+}

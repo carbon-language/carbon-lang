@@ -64,7 +64,8 @@ int LoopConvertTransform::apply(const FileContentsByPath &InputStates,
                                   MaxRisk, LFK_PseudoArray);
   Finder.addMatcher(makePseudoArrayLoopMatcher(), &PseudoarrrayLoopFixer);
 
-  if (int result = LoopTool.run(newFrontendActionFactory(&Finder))) {
+  if (int result = LoopTool.run(
+          newFrontendActionFactory(&Finder, /*Callbacks=*/ this))) {
     llvm::errs() << "Error encountered during translation.\n";
     return result;
   }

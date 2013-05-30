@@ -23,7 +23,8 @@
 /// for-loops where possible.
 class LoopConvertTransform : public Transform {
 public:
-  LoopConvertTransform() : Transform("LoopConvert") {}
+  LoopConvertTransform(bool EnableTiming)
+      : Transform("LoopConvert", EnableTiming) {}
 
   /// \see Transform::run().
   virtual int apply(const FileContentsByPath &InputStates,

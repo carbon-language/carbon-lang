@@ -45,7 +45,8 @@ int AddOverrideTransform::apply(const FileContentsByPath &InputStates,
 
   Finder.addMatcher(makeCandidateForOverrideAttrMatcher(), &Fixer);
 
-  if (int result = AddOverrideTool.run(newFrontendActionFactory(&Finder))) {
+  if (int result = AddOverrideTool.run(
+          newFrontendActionFactory(&Finder, /*Callbacks=*/ this))) {
     llvm::errs() << "Error encountered during translation.\n";
     return result;
   }

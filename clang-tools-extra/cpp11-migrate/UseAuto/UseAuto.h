@@ -29,7 +29,7 @@
 /// p2 are not handled by this transform.
 class UseAutoTransform : public Transform {
 public:
-  UseAutoTransform() : Transform("UseAuto") {}
+  UseAutoTransform(bool EnableTiming) : Transform("UseAuto", EnableTiming) {}
 
   /// \see Transform::run().
   virtual int apply(const FileContentsByPath &InputStates,

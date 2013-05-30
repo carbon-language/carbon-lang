@@ -24,7 +24,8 @@
 /// member functions overriding base class virtual functions.
 class AddOverrideTransform : public Transform {
 public:
-  AddOverrideTransform() : Transform("AddOverride") {}
+  AddOverrideTransform(bool EnableTiming)
+      : Transform("AddOverride", EnableTiming) {}
 
   /// \see Transform::run().
   virtual int apply(const FileContentsByPath &InputStates,

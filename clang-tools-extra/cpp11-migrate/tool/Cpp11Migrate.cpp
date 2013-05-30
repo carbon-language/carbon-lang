@@ -99,7 +99,7 @@ int main(int argc, const char **argv) {
   // This causes options to be parsed.
   CommonOptionsParser OptionsParser(argc, argv);
 
-  TransformManager.createSelectedTransforms();
+  TransformManager.createSelectedTransforms(/*EnableTiming=*/false);
 
   if (TransformManager.begin() == TransformManager.end()) {
     llvm::errs() << "No selected transforms\n";

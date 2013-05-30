@@ -43,7 +43,8 @@ int UseAutoTransform::apply(const FileContentsByPath &InputStates,
   Finder.addMatcher(makeIteratorDeclMatcher(), &ReplaceIterators);
   Finder.addMatcher(makeDeclWithNewMatcher(), &ReplaceNew);
 
-  if (int Result = UseAutoTool.run(newFrontendActionFactory(&Finder))) {
+  if (int Result = UseAutoTool.run(
+          newFrontendActionFactory(&Finder, /*Callbacks=*/ this))) {
     llvm::errs() << "Error encountered during translation.\n";
     return Result;
   }
