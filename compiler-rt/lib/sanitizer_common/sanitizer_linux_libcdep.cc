@@ -193,7 +193,7 @@ uptr GetTlsSize() {
   return g_tls_size;
 }
 
-#if defined(__x86_64__) || defined(i386)
+#if defined(__x86_64__) || defined(__i386__)
 // sizeof(struct thread) from glibc.
 const uptr kThreadDescriptorSize = FIRST_32_SECOND_64(1216, 2304);
 
@@ -217,12 +217,12 @@ uptr ThreadSelf() {
 #endif
   return descr_addr;
 }
-#endif  // defined(__x86_64__) || defined(i386)
+#endif  // defined(__x86_64__) || defined(__i386__)
 
 void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
                           uptr *tls_addr, uptr *tls_size) {
 #ifndef SANITIZER_GO
-#if defined(__x86_64__) || defined(i386)
+#if defined(__x86_64__) || defined(__i386__)
   *tls_addr = ThreadSelf();
   *tls_size = GetTlsSize();
   *tls_addr -= *tls_size;
