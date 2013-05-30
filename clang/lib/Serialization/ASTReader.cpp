@@ -6993,9 +6993,16 @@ ASTReader::ReadCXXCtorInitializers(ModuleFile &F, const RecordData &Record,
                                                MemberOrEllipsisLoc, LParenLoc,
                                                Init, RParenLoc);
       } else {
-        BOMInit = CXXCtorInitializer::Create(Context, Member, MemberOrEllipsisLoc,
-                                             LParenLoc, Init, RParenLoc,
-                                             Indices.data(), Indices.size());
+        if (IndirectMember) {
+          assert(Indices.empty() && "Indirect field improperly initialized");
+          BOMInit = new (Context) CXXCtorInitializer(Context, IndirectMember,
+                                                     MemberOrEllipsisLoc, LParenLoc,
+                                                     Init, RParenLoc);
+        } else {
+          BOMInit = CXXCtorInitializer::Create(Context, Member, MemberOrEllipsisLoc,
+                                               LParenLoc, Init, RParenLoc,
+                                               Indices.data(), Indices.size());
+        }
       }
 
       if (IsWritten)
