@@ -708,9 +708,8 @@ TEST(SanitizerCommon, LargeMmapAllocatorIteration) {
   char *allocated[kNumAllocs];
   static const uptr size = 40;
   // Allocate some.
-  for (uptr i = 0; i < kNumAllocs; i++) {
+  for (uptr i = 0; i < kNumAllocs; i++)
     allocated[i] = (char *)a.Allocate(&stats, size, 1);
-  }
 
   std::set<void *> reported_chunks;
   IterationTestCallback callback(&reported_chunks);
@@ -722,7 +721,45 @@ TEST(SanitizerCommon, LargeMmapAllocatorIteration) {
     // Don't use EXPECT_NE. Reporting the first mismatch is enough.
     ASSERT_NE(reported_chunks.find(allocated[i]), reported_chunks.end());
   }
+  for (uptr i = 0; i < kNumAllocs; i++)
+    a.Deallocate(&stats, allocated[i]);
 }
+
+TEST(SanitizerCommon, LargeMmapAllocatorBlockBegin) {
+  LargeMmapAllocator<> a;
+  a.Init();
+  AllocatorStats stats;
+  stats.Init();
+
+  static const uptr kNumAllocs = 1024;
+  static const uptr kNumExpectedFalseLookups = 10000000;
+  char *allocated[kNumAllocs];
+  static const uptr size = 4096;
+  // Allocate some.
+  for (uptr i = 0; i < kNumAllocs; i++) {
+    allocated[i] = (char *)a.Allocate(&stats, size, 1);
+  }
+
+  for (uptr i = 0; i < kNumAllocs  * kNumAllocs; i++) {
+    // if ((i & (i - 1)) == 0) fprintf(stderr, "[%zd]\n", i);
+    char *p1 = allocated[i % kNumAllocs];
+    EXPECT_EQ(p1, a.GetBlockBeginFastSingleThreaded(p1));
+    EXPECT_EQ(p1, a.GetBlockBeginFastSingleThreaded(p1 + size / 2));
+    EXPECT_EQ(p1, a.GetBlockBeginFastSingleThreaded(p1 + size - 1));
+    EXPECT_EQ(p1, a.GetBlockBeginFastSingleThreaded(p1 - 100));
+  }
+
+  for (uptr i = 0; i < kNumExpectedFalseLookups; i++) {
+    void *p = reinterpret_cast<void *>(i % 1024);
+    EXPECT_EQ((void *)0, a.GetBlockBeginFastSingleThreaded(p));
+    p = reinterpret_cast<void *>(~0L - (i % 1024));
+    EXPECT_EQ((void *)0, a.GetBlockBeginFastSingleThreaded(p));
+  }
+
+  for (uptr i = 0; i < kNumAllocs; i++)
+    a.Deallocate(&stats, allocated[i]);
+}
+
 
 #if SANITIZER_WORDSIZE == 64
 // Regression test for out-of-memory condition in PopulateFreeList().

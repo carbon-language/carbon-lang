@@ -50,7 +50,8 @@ ALWAYS_INLINE void FastPoisonShadowPartialRightRedzone(
     } else if (i >= size) {
       *shadow = (SHADOW_GRANULARITY == 128) ? 0xff : value;  // unaddressable
     } else {
-      *shadow = static_cast<u8>(size - i);  // first size-i bytes are addressable
+      // first size-i bytes are addressable
+      *shadow = static_cast<u8>(size - i);
     }
   }
 }

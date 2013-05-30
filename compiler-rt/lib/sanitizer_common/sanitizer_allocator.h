@@ -961,6 +961,7 @@ class LargeMmapAllocator {
     {
       SpinMutexLock l(&mutex_);
       uptr idx = n_chunks_++;
+      chunks_sorted_ = false;
       CHECK_LT(idx, kMaxNumChunks);
       h->chunk_idx = idx;
       chunks_[idx] = h;
@@ -984,6 +985,7 @@ class LargeMmapAllocator {
       chunks_[idx] = chunks_[n_chunks_ - 1];
       chunks_[idx]->chunk_idx = idx;
       n_chunks_--;
+      chunks_sorted_ = false;
       stats.n_frees++;
       stats.currently_allocated -= h->map_size;
       stat->Add(AllocatorStatFreed, h->map_size);
@@ -1041,6 +1043,49 @@ class LargeMmapAllocator {
     return GetUser(h);
   }
 
+  // This function does the same as GetBlockBegin, but much faster.
+  // It may be called only in a single-threaded context, e.g. when all other
+  // threads are suspended or joined.
+  void *GetBlockBeginFastSingleThreaded(void *ptr) {
+    uptr p = reinterpret_cast<uptr>(ptr);
+    uptr n = n_chunks_;
+    if (!n) return 0;
+    if (!chunks_sorted_) {
+      // Do one-time sort. chunks_sorted_ is reset in Allocate/Deallocate.
+      SortArray(reinterpret_cast<uptr*>(chunks_), n);
+      for (uptr i = 0; i < n; i++)
+        chunks_[i]->chunk_idx = i;
+      chunks_sorted_ = true;
+      min_mmap_ = reinterpret_cast<uptr>(chunks_[0]);
+      max_mmap_ = reinterpret_cast<uptr>(chunks_[n - 1]) +
+          chunks_[n - 1]->map_size;
+    }
+    if (p < min_mmap_ || p >= max_mmap_)
+      return 0;
+    uptr beg = 0, end = n - 1;
+    // This loop is a log(n) lower_bound. It does not check for the exact match
+    // to avoid expensive cache-thrashing loads.
+    while (end - beg >= 2) {
+      uptr mid = (beg + end) / 2;  // Invariant: mid >= beg + 1
+      if (p < reinterpret_cast<uptr>(chunks_[mid]))
+        end = mid - 1;  // We are not interested in chunks_[mid].
+      else
+        beg = mid;  // chunks_[mid] may still be what we want.
+    }
+
+    if (beg < end) {
+      CHECK_EQ(beg + 1, end);
+      // There are 2 chunks left, choose one.
+      if (p >= reinterpret_cast<uptr>(chunks_[end]))
+        beg = end;
+    }
+
+    Header *h = chunks_[beg];
+    if (h->map_beg + h->map_size <= p || p < h->map_beg)
+      return 0;
+    return GetUser(h);
+  }
+
   void PrintStats() {
     Printf("Stats: LargeMmapAllocator: allocated %zd times, "
            "remains %zd (%zd K) max %zd M; by size logs: ",
@@ -1083,13 +1128,13 @@ class LargeMmapAllocator {
   };
 
   Header *GetHeader(uptr p) {
-    CHECK_EQ(p % page_size_, 0);
+    CHECK(IsAligned(p, page_size_));
     return reinterpret_cast<Header*>(p - page_size_);
   }
   Header *GetHeader(void *p) { return GetHeader(reinterpret_cast<uptr>(p)); }
 
   void *GetUser(Header *h) {
-    CHECK_EQ((uptr)h % page_size_, 0);
+    CHECK(IsAligned((uptr)h, page_size_));
     return reinterpret_cast<void*>(reinterpret_cast<uptr>(h) + page_size_);
   }
 
@@ -1100,6 +1145,8 @@ class LargeMmapAllocator {
   uptr page_size_;
   Header *chunks_[kMaxNumChunks];
   uptr n_chunks_;
+  uptr min_mmap_, max_mmap_;
+  bool chunks_sorted_;
   struct Stats {
     uptr n_allocs, n_frees, currently_allocated, max_allocated, by_size_log[64];
   } stats;
