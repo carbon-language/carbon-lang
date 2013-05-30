@@ -333,3 +333,8 @@ void TestSP9() {
   c3.g(); // Overloaded incdec op operand
   c3.h(); // Overloaded unary op operand
 }
+
+union u {
+  int *i1;
+  int &i2;  // expected-warning {{union member 'i2' has reference type 'int &', which is a Microsoft extension}}
+};

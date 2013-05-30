@@ -1179,6 +1179,9 @@ def ext_static_data_member_in_union : ExtWarn<
 def warn_cxx98_compat_static_data_member_in_union : Warning<
   "static data member %0 in union is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
+def ext_union_member_of_reference_type : ExtWarn<
+  "union member %0 has reference type %1, which is a Microsoft extension">,
+  InGroup<Microsoft>;
 def err_union_member_of_reference_type : Error<
   "union member %0 has reference type %1">;
 def ext_anonymous_struct_union_qualified : Extension<

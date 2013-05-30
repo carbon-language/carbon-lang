@@ -10684,11 +10684,15 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
       }
 
       // C++ [class.union]p1: If a union contains a member of reference type,
-      // the program is ill-formed.
+      // the program is ill-formed, except when compiling with MSVC extensions
+      // enabled.
       if (EltTy->isReferenceType()) {
-        Diag(NewFD->getLocation(), diag::err_union_member_of_reference_type)
+        Diag(NewFD->getLocation(), getLangOpts().MicrosoftExt ?
+                                    diag::ext_union_member_of_reference_type :
+                                    diag::err_union_member_of_reference_type)
           << NewFD->getDeclName() << EltTy;
-        NewFD->setInvalidDecl();
+        if (!getLangOpts().MicrosoftExt)
+          NewFD->setInvalidDecl();
       }
     }
   }
