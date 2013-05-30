@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core -analyzer-store=region -fblocks -analyzer-opt-analyze-nested-blocks -verify %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core -analyzer-store=region -fblocks -analyzer-opt-analyze-nested-blocks -verify -x objective-c++ %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from Mac OS X headers:
@@ -13,6 +14,10 @@ void dispatch_async(dispatch_queue_t queue, dispatch_block_t block);
 __attribute__((visibility("default"))) __attribute__((__malloc__)) __attribute__((__warn_unused_result__)) __attribute__((__nothrow__)) dispatch_queue_t dispatch_queue_create(const char *label, dispatch_queue_attr_t attr);
 typedef long dispatch_once_t;
 void dispatch_once(dispatch_once_t *predicate, dispatch_block_t block);
+dispatch_queue_t
+dispatch_queue_create(const char *label, dispatch_queue_attr_t attr);
+
+
 typedef signed char BOOL;
 typedef unsigned long NSUInteger;
 typedef struct _NSZone NSZone;
@@ -56,8 +61,8 @@ void test1(NSString *format, ...) {
   do {
     if (__builtin_expect(*(&pred), ~0l) != ~0l)
       dispatch_once(&pred, ^{
-        logQueue = dispatch_queue_create("com.mycompany.myproduct.asl", ((void*)0));
-        client = asl_open(((void*)0), "com.mycompany.myproduct", 0);
+        logQueue = dispatch_queue_create("com.mycompany.myproduct.asl", 0);
+        client = asl_open(((char*)0), "com.mycompany.myproduct", 0);
       });
   } while (0);
 
@@ -65,7 +70,7 @@ void test1(NSString *format, ...) {
   __builtin_va_start(args, format);
 
   NSString *str = [[NSString alloc] initWithFormat:format arguments:args];
-  dispatch_async(logQueue, ^{ asl_log(client, ((void*)0), 4, "%s", [str UTF8String]); });
+  dispatch_async(logQueue, ^{ asl_log(client, ((aslmsg)0), 4, "%s", [str UTF8String]); });
   [str release];
 
   __builtin_va_end(args);
@@ -123,3 +128,21 @@ void testMessaging() {
   });
 }
 @end
+
+void testReturnVariousSignatures() {
+  (void)^int(){
+    return 42;
+  }();
+
+  (void)^int{
+    return 42;
+  }();
+
+  (void)^(){
+    return 42;
+  }();
+
+  (void)^{
+    return 42;
+  }();
+}
