@@ -16,8 +16,6 @@ import sys
 
 llvm_symbolizer = None
 symbolizers = {}
-filetypes = {}
-vmaddrs = {}
 DEBUG = False
 demangle = False;
 
@@ -146,7 +144,6 @@ class DarwinSymbolizer(Symbolizer):
       self.arch = 'x86_64'
     else:
       self.arch = 'i386'
-    self.vmaddr = None
     self.pipe = None
 
   def write_addr_to_pipe(self, offset):
