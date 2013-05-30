@@ -451,9 +451,6 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::MOVZX32rr16,     X86::MOVZX32rm16,         0 },
     { X86::MOVZX32_NOREXrr8, X86::MOVZX32_NOREXrm8,   0 },
     { X86::MOVZX32rr8,      X86::MOVZX32rm8,          0 },
-    { X86::MOVZX64rr16,     X86::MOVZX64rm16,         0 },
-    { X86::MOVZX64rr32,     X86::MOVZX64rm32,         0 },
-    { X86::MOVZX64rr8,      X86::MOVZX64rm8,          0 },
     { X86::PABSBrr128,      X86::PABSBrm128,          TB_ALIGN_16 },
     { X86::PABSDrr128,      X86::PABSDrm128,          TB_ALIGN_16 },
     { X86::PABSWrr128,      X86::PABSWrm128,          TB_ALIGN_16 },
@@ -1381,7 +1378,6 @@ X86InstrInfo::isCoalescableExtInstr(const MachineInstr &MI,
   case X86::MOVSX32rr8:
   case X86::MOVZX32rr8:
   case X86::MOVSX64rr8:
-  case X86::MOVZX64rr8:
     if (!TM.getSubtarget<X86Subtarget>().is64Bit())
       // It's not always legal to reference the low 8-bit of the larger
       // register in 32-bit mode.
@@ -1389,9 +1385,7 @@ X86InstrInfo::isCoalescableExtInstr(const MachineInstr &MI,
   case X86::MOVSX32rr16:
   case X86::MOVZX32rr16:
   case X86::MOVSX64rr16:
-  case X86::MOVZX64rr16:
-  case X86::MOVSX64rr32:
-  case X86::MOVZX64rr32: {
+  case X86::MOVSX64rr32: {
     if (MI.getOperand(0).getSubReg() || MI.getOperand(1).getSubReg())
       // Be conservative.
       return false;
@@ -1404,17 +1398,14 @@ X86InstrInfo::isCoalescableExtInstr(const MachineInstr &MI,
     case X86::MOVSX32rr8:
     case X86::MOVZX32rr8:
     case X86::MOVSX64rr8:
-    case X86::MOVZX64rr8:
       SubIdx = X86::sub_8bit;
       break;
     case X86::MOVSX32rr16:
     case X86::MOVZX32rr16:
     case X86::MOVSX64rr16:
-    case X86::MOVZX64rr16:
       SubIdx = X86::sub_16bit;
       break;
     case X86::MOVSX64rr32:
-    case X86::MOVZX64rr32:
       SubIdx = X86::sub_32bit;
       break;
     }

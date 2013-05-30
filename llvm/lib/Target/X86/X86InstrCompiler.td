@@ -1119,7 +1119,8 @@ defm : CMOVmr<X86_COND_NO, CMOVO16rm , CMOVO32rm , CMOVO64rm>;
 def : Pat<(zextloadi8i1  addr:$src), (MOV8rm     addr:$src)>;
 def : Pat<(zextloadi16i1 addr:$src), (MOVZX16rm8 addr:$src)>;
 def : Pat<(zextloadi32i1 addr:$src), (MOVZX32rm8 addr:$src)>;
-def : Pat<(zextloadi64i1 addr:$src), (MOVZX64rm8 addr:$src)>;
+def : Pat<(zextloadi64i1 addr:$src),
+          (SUBREG_TO_REG (i64 0), (MOVZX32rm8 addr:$src), sub_32bit)>;
 
 // extload bool -> extload byte
 // When extloading from 16-bit and smaller memory locations into 64-bit
@@ -1133,14 +1134,16 @@ def : Pat<(extloadi16i8 addr:$src),  (MOVZX16rm8  addr:$src)>;
 def : Pat<(extloadi32i8 addr:$src),  (MOVZX32rm8  addr:$src)>;
 def : Pat<(extloadi32i16 addr:$src), (MOVZX32rm16 addr:$src)>;
 
-def : Pat<(extloadi64i1 addr:$src),  (MOVZX64rm8  addr:$src)>;
-def : Pat<(extloadi64i8 addr:$src),  (MOVZX64rm8  addr:$src)>;
-def : Pat<(extloadi64i16 addr:$src), (MOVZX64rm16 addr:$src)>;
 // For other extloads, use subregs, since the high contents of the register are
 // defined after an extload.
+def : Pat<(extloadi64i1 addr:$src),
+          (SUBREG_TO_REG (i64 0), (MOVZX32rm8 addr:$src), sub_32bit)>;
+def : Pat<(extloadi64i8 addr:$src),
+          (SUBREG_TO_REG (i64 0), (MOVZX32rm8 addr:$src), sub_32bit)>;
+def : Pat<(extloadi64i16 addr:$src),
+          (SUBREG_TO_REG (i64 0), (MOVZX32rm16 addr:$src), sub_32bit)>;
 def : Pat<(extloadi64i32 addr:$src),
-          (SUBREG_TO_REG (i64 0), (MOV32rm addr:$src),
-                         sub_32bit)>;
+          (SUBREG_TO_REG (i64 0), (MOV32rm addr:$src), sub_32bit)>;
 
 // anyext. Define these to do an explicit zero-extend to
 // avoid partial-register updates.
@@ -1152,8 +1155,10 @@ def : Pat<(i32 (anyext GR8 :$src)), (MOVZX32rr8  GR8 :$src)>;
 def : Pat<(i32 (anyext GR16:$src)),
           (INSERT_SUBREG (i32 (IMPLICIT_DEF)), GR16:$src, sub_16bit)>;
 
-def : Pat<(i64 (anyext GR8 :$src)), (MOVZX64rr8  GR8  :$src)>;
-def : Pat<(i64 (anyext GR16:$src)), (MOVZX64rr16 GR16 :$src)>;
+def : Pat<(i64 (anyext GR8 :$src)),
+          (SUBREG_TO_REG (i64 0), (MOVZX32rr8  GR8  :$src), sub_32bit)>;
+def : Pat<(i64 (anyext GR16:$src)),
+          (SUBREG_TO_REG (i64 0), (MOVZX32rr16 GR16 :$src), sub_32bit)>;
 def : Pat<(i64 (anyext GR32:$src)),
           (SUBREG_TO_REG (i64 0), GR32:$src, sub_32bit)>;
 
@@ -1318,13 +1323,19 @@ def : Pat<(and GR16:$src1, 0xff),
 
 // r & (2^32-1) ==> movz
 def : Pat<(and GR64:$src, 0x00000000FFFFFFFF),
-          (MOVZX64rr32 (EXTRACT_SUBREG GR64:$src, sub_32bit))>;
+          (SUBREG_TO_REG (i64 0),
+                         (MOV32rr (EXTRACT_SUBREG GR64:$src, sub_32bit)),
+                         sub_32bit)>;
 // r & (2^16-1) ==> movz
 def : Pat<(and GR64:$src, 0xffff),
-          (MOVZX64rr16 (i16 (EXTRACT_SUBREG GR64:$src, sub_16bit)))>;
+          (SUBREG_TO_REG (i64 0),
+                      (MOVZX32rr16 (i16 (EXTRACT_SUBREG GR64:$src, sub_16bit))),
+                      sub_32bit)>;
 // r & (2^8-1) ==> movz
 def : Pat<(and GR64:$src, 0xff),
-          (MOVZX64rr8 (i8 (EXTRACT_SUBREG GR64:$src, sub_8bit)))>;
+          (SUBREG_TO_REG (i64 0),
+                         (MOVZX32rr8 (i8 (EXTRACT_SUBREG GR64:$src, sub_8bit))),
+                         sub_32bit)>;
 // r & (2^8-1) ==> movz
 def : Pat<(and GR32:$src1, 0xff),
            (MOVZX32rr8 (EXTRACT_SUBREG GR32:$src1, sub_8bit))>,

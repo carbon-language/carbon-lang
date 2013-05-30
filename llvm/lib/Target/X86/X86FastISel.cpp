@@ -1005,10 +1005,6 @@ bool X86FastISel::X86SelectCmp(const Instruction *I) {
 }
 
 bool X86FastISel::X86SelectZExt(const Instruction *I) {
-  // Handle zero-extension from i1 to i8, which is common.
-  if (!I->getOperand(0)->getType()->isIntegerTy(1))
-    return false;
-
   EVT DstVT = TLI.getValueType(I->getType());
   if (!TLI.isTypeLegal(DstVT))
     return false;
@@ -1017,12 +1013,37 @@ bool X86FastISel::X86SelectZExt(const Instruction *I) {
   if (ResultReg == 0)
     return false;
 
-  // Set the high bits to zero.
-  ResultReg = FastEmitZExtFromI1(MVT::i8, ResultReg, /*TODO: Kill=*/false);
-  if (ResultReg == 0)
-    return false;
+  // Handle zero-extension from i1 to i8, which is common.
+  MVT SrcVT = TLI.getValueType(I->getOperand(0)->getType()).getSimpleVT();
+  if (SrcVT.SimpleTy == MVT::i1) {
+    // Set the high bits to zero.
+    ResultReg = FastEmitZExtFromI1(MVT::i8, ResultReg, /*TODO: Kill=*/false);
+    SrcVT = MVT::i8;
 
-  if (DstVT != MVT::i8) {
+    if (ResultReg == 0)
+      return false;
+  }
+
+  if (DstVT == MVT::i64) {
+    // Handle extension to 64-bits via sub-register shenanigans.
+    unsigned MovInst;
+
+    switch (SrcVT.SimpleTy) {
+    case MVT::i8:  MovInst = X86::MOVZX32rr8;  break;
+    case MVT::i16: MovInst = X86::MOVZX32rr16; break;
+    case MVT::i32: MovInst = X86::MOV32rr;     break;
+    default: llvm_unreachable("Unexpected zext to i64 source type");
+    }
+
+    unsigned Result32 = createResultReg(&X86::GR32RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(MovInst), Result32)
+      .addReg(ResultReg);
+
+    ResultReg = createResultReg(&X86::GR64RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::SUBREG_TO_REG),
+            ResultReg)
+      .addImm(0).addReg(Result32).addImm(X86::sub_32bit);
+  } else if (DstVT != MVT::i8) {
     ResultReg = FastEmit_r(MVT::i8, DstVT.getSimpleVT(), ISD::ZERO_EXTEND,
                            ResultReg, /*Kill=*/true);
     if (ResultReg == 0)
