@@ -22,9 +22,50 @@ namespace clang {
   return static_cast<ImplClass*>(this)-> \
            Visit##CLASS(static_cast<const CLASS*>(T))
 
+/// \brief An operation on a type.
+///
+/// \tparam ImpClass Class implementing the operation. Must be inherited from
+///         TypeVisitor.
+/// \tparam RetTy %Type of result produced by the operation.
+///
+/// The class implements polymorphic operation on an object of type derived
+/// from Type. The operation is performed by calling method Visit. It then
+/// dispatches the call to function \c VisitFooType, if actual argument type
+/// is \c FooType.
+///
+/// The class implements static polymorphism using Curiously Recurring
+/// Template Pattern. It is designed to be a base class for some concrete
+/// class:
+///
+/// \code
+///     class SomeVisitor : public TypeVisitor<SomeVisitor,sometype) { ... };
+///     ...
+///     Type *atype = ...
+///     ...
+///     SomeVisitor avisitor;
+///     sometype result = avisitor.Visit(atype);
+/// \endcode
+///
+/// Actual treatment is made by methods of the derived class, TypeVisitor only
+/// dispatches call to the appropriate method. If the implementation class
+/// \c ImpClass provides specific action for some type, say
+/// \c ConstantArrayType, it should define method
+/// <tt>VisitConstantArrayType(const ConstantArrayType*)</tt>. Otherwise
+/// \c TypeVisitor dispatches call to the method that handles parent type. In
+/// this example handlers are tried in the sequence:
+///
+/// \li <tt>ImpClass::VisitConstantArrayType(const ConstantArrayType*)</tt>
+/// \li <tt>ImpClass::VisitArrayType(const ArrayType*)</tt>
+/// \li <tt>ImpClass::VisitType(const Type*)</tt>
+/// \li <tt>TypeVisitor::VisitType(const Type*)</tt>
+///
+/// The first function of this sequence that is defined will handle object of
+/// type \c ConstantArrayType.
 template<typename ImplClass, typename RetTy=void>
 class TypeVisitor {
 public:
+
+  /// \brief Performs the operation associated with this visitor object.
   RetTy Visit(const Type *T) {
     // Top switch stmt: dispatch to VisitFooType for each FooType.
     switch (T->getTypeClass()) {
@@ -42,7 +83,8 @@ public:
 }
 #include "clang/AST/TypeNodes.def"
 
-  // Base case, ignore it. :)
+  /// \brief Method called if \c ImpClass doesn't provide specific handler
+  /// for some type class.
   RetTy VisitType(const Type*) { return RetTy(); }
 };
 
