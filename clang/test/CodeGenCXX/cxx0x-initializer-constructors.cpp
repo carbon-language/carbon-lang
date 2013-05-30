@@ -35,3 +35,19 @@ void fn4() {
   // CHECK: call void @_ZN1SC1Eidd(%struct.S* %{{.+}}, i32 1, double 2.000000e+00, double 3.000000e+00)
   // CHECK: call void @_ZN1SC1Eidd(%struct.S* %{{.+}}, i32 4, double 5.000000e+00, double 6.000000e+00)
 }
+
+namespace TreeTransformBracedInit {
+  struct S {};
+  struct T { T(const S &); T(const T&); ~T(); };
+  void x(const T &);
+  template<typename> void foo(const S &s) {
+    // Instantiation of this expression used to lose the CXXBindTemporaryExpr
+    // node and thus not destroy the temporary.
+    x({s});
+  }
+  template void foo<void>(const S&);
+  // CHECK: define {{.*}} void @_ZN23TreeTransformBracedInit3fooIvEEvRKNS_1SE(
+  // CHECK: call void @_ZN23TreeTransformBracedInit1TC1ERKNS_1SE(
+  // CHECK-NEXT: call void @_ZN23TreeTransformBracedInit1xERKNS_1TE(
+  // CHECK-NEXT: call void @_ZN23TreeTransformBracedInit1TD1Ev(
+}
