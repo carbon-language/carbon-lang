@@ -16,6 +16,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/Option.h"
+#include "llvm/Support/PathV2.h"
 
 #include "lld/Driver/Driver.h"
 #include "lld/ReaderWriter/PECOFFTargetInfo.h"
@@ -70,6 +71,21 @@ llvm::COFF::WindowsSubsystem strToWinSubsystem(std::string str) {
       .Case("windows", llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI)
       .Case("console", llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI)
       .Default(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN);
+}
+
+// Add ".obj" extension if the given path name has no file extension.
+StringRef canonicalizeInputFileName(StringRef path) {
+  if (llvm::sys::path::extension(path).empty())
+    return path.str() + ".obj";
+  return path;
+}
+
+// Replace a file extension with ".exe". If the given file has no
+// extension, just add ".exe".
+StringRef getDefaultOutputFileName(StringRef path) {
+  StringRef ext = llvm::sys::path::extension(path);
+  StringRef filename = ext.empty() ? path : path.drop_back(ext.size());
+  return filename.str() + ".exe";
 }
 
 } // namespace
@@ -141,16 +157,26 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     info.setOutputPath(outpath->getValue());
 
   // Add input files
+  std::vector<StringRef> inputPaths;
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_INPUT),
                                ie = parsedArgs->filtered_end();
        it != ie; ++it) {
-    info.appendInputFile((*it)->getValue());
+    inputPaths.push_back((*it)->getValue());
   }
 
   // Arguments after "--" are also input files
   if (doubleDashPosition > 0)
     for (int i = doubleDashPosition + 1; i < argc; ++i)
-      info.appendInputFile(argv[i]);
+      inputPaths.push_back(argv[i]);
+
+  // Add ".obj" extension for those who have no file extension.
+  for (const StringRef &path : inputPaths)
+    info.appendInputFile(canonicalizeInputFileName(path));
+
+  // If -out option was not specified, the default output file name is
+  // constructed by replacing an extension with ".exe".
+  if (info.outputPath().empty() && !inputPaths.empty())
+    info.setOutputPath(getDefaultOutputFileName(inputPaths[0]));
 
   // Validate the combination of options used.
   return info.validate(diagnostics);
