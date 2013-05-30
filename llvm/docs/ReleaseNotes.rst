@@ -155,6 +155,44 @@ is restricted to GNU/Linux (GNU triplet s390x-linux-gnu) and requires
 z10 or greater.
 
 
+Sub-project Status Update
+============================================
+
+In addition to the core LLVM 3.3 distribution of production-quality compiler
+infrastructure, the LLVM project includes sub-projects that use the LLVM core
+and share the same distribution license.  This section provides updates on
+these sub-projects.
+
+
+LLDB: Low Level Debugger
+------------------------
+
+`LLDB <http://lldb.llvm.org/>`_ is a ground-up implementation of a command-line
+debugger, as well as a debugger API that can be used from scripts and other
+applications. LLDB uses the following components of the LLVM core distribution
+to support the latest language features and target support:
+
+- the Clang parser for high-quality parsing of C, C++ and Objective C
+- the LLVM disassembler
+- the LLVM JIT compiler (MCJIT) for expression evaluation
+
+The `3.3 release <http://llvm.org/apt/>`_ has the following notable changes.
+
+Linux Features:
+
+- Support for watchpoints
+- vim integration for lldb commands and program status using a `vim plug-in <http://llvm.org/svn/llvm-project/lldb/trunk/utils/vim-lldb/README>`_
+- Improved register support including vector registers
+- Builds with cmake/ninja/auto-tools/clang 3.3/gcc 4.6
+
+Linux Improvements:
+
+- Debugging multi-threaded programs
+- Debugging i386 programs
+- Process list, attach and fork
+- Expression evaluation
+
+
 External Open Source Projects Using LLVM 3.3
 ============================================
 
