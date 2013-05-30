@@ -1776,7 +1776,7 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
             }
 
             if (str) {
-              PathDiagnosticLocation L(TermCond, SM, PDB.LC);
+              PathDiagnosticLocation L(TermCond ? TermCond : Term, SM, PDB.LC);
               PathDiagnosticEventPiece *PE =
                 new PathDiagnosticEventPiece(L, str);
               PE->setPrunable(true);
@@ -2252,7 +2252,10 @@ static void adjustBranchEdges(PathPieces &pieces, LocationContextMap &LCM,
     const Stmt *S = Dst;
     while (const Stmt *Parent = getStmtParent(S, PM)) {
       if (const ForStmt *FS = dyn_cast<ForStmt>(Parent)) {
-        if (FS->getCond()->IgnoreParens() == S)
+        const Stmt *Cond = FS->getCond();
+        if (!Cond)
+          Cond = FS;
+        if (Cond == S)
           Branch = FS;
         break;
       }
@@ -2267,7 +2270,7 @@ static void adjustBranchEdges(PathPieces &pieces, LocationContextMap &LCM,
         break;
       }
       if (const ObjCForCollectionStmt *OFS =
-          dyn_cast<ObjCForCollectionStmt>(Parent)) {
+            dyn_cast<ObjCForCollectionStmt>(Parent)) {
         if (OFS->getElement() == S)
           Branch = OFS;
         break;
