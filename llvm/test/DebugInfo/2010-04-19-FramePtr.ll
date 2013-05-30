@@ -1,4 +1,4 @@
-; RUN: llc -fast-isel=false -asm-verbose -O0 -o %t < %s 
+; RUN: llc -asm-verbose -O0 -o %t < %s 
 ; RUN: grep DW_AT_APPLE_omit_frame_ptr %t
 ; RUN: llc -disable-fp-elim -asm-verbose -O0 -o %t < %s 
 ; RUN: grep -v DW_AT_APPLE_omit_frame_ptr %t
