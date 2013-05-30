@@ -15,10 +15,10 @@
 #ifndef LLVM_MC_MCOBJECTSYMBOLIZER_H
 #define LLVM_MC_MCOBJECTSYMBOLIZER_H
 
-#include "llvm/ADT/IntervalMap.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/MC/MCSymbolizer.h"
 #include "llvm/Object/ObjectFile.h"
+#include <vector>
 
 namespace llvm {
 
@@ -33,12 +33,8 @@ protected:
   const object::ObjectFile *Obj;
 
   typedef DenseMap<uint64_t, object::RelocationRef> AddrToRelocMap;
-  // FIXME: Working around a missing SectionRef operator!= by storing
-  // DataRefImpl.p instead of SectionRef. Feel free to improve!
-  typedef IntervalMap<uint64_t, uintptr_t> AddrToSectionMap;
-
-  AddrToSectionMap::Allocator AddrToSectionAllocator;
-  AddrToSectionMap AddrToSection;
+  typedef std::vector<object::SectionRef> SortedSectionList;
+  SortedSectionList SortedSections;
 
   // Map a load address to the first relocation that applies there. As far as I
   // know, if there are several relocations at the exact same address, they are
@@ -47,6 +43,11 @@ protected:
   // relocation (referencing the minuend symbol) is followed by an UNSIGNED
   // relocation (referencing the subtrahend symbol).
   AddrToRelocMap AddrToReloc;
+
+  // Helpers around SortedSections.
+  SortedSectionList::const_iterator findSectionContaining(uint64_t Addr) const;
+  void insertSection(object::SectionRef Section);
+
 
   MCObjectSymbolizer(MCContext &Ctx, OwningPtr<MCRelocationInfo> &RelInfo,
                      const object::ObjectFile *Obj);

@@ -17,6 +17,7 @@
 #include "llvm/Object/MachO.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
 
 using namespace llvm;
 using namespace object;
@@ -40,15 +41,16 @@ public:
         return;
     }
     uint64_t Addr = Value;
-    AddrToSectionMap::const_iterator SI = AddrToSection.find(Addr);
-    if (SI.valid()) {
-      DataRefImpl DRI; DRI.p = *SI;
-      SectionRef S(DRI, Obj);
+    SortedSectionList::const_iterator SI = findSectionContaining(Addr);
+    errs() << " looking for sec " << Addr << "\n";
+    if (SI != SortedSections.end()) {
+      const SectionRef &S = *SI;
       StringRef Name; S.getName(Name);
+      uint64_t SAddr; S.getAddress(SAddr);
       if (Name == "__cstring") {
         StringRef Contents;
         S.getContents(Contents);
-        Contents = Contents.substr(Addr - SI.start());
+        Contents = Contents.substr(Addr - SAddr);
         cStream << " ## literal pool for: "
                 << Contents.substr(0, Contents.find_first_of(0));
       }
@@ -62,9 +64,7 @@ public:
 MCObjectSymbolizer::MCObjectSymbolizer(MCContext &Ctx,
                                        OwningPtr<MCRelocationInfo> &RelInfo,
                                        const ObjectFile *Obj)
-    : MCSymbolizer(Ctx, RelInfo), Obj(Obj),
-      AddrToSectionAllocator(), AddrToSection(AddrToSectionAllocator),
-      AddrToReloc() {
+    : MCSymbolizer(Ctx, RelInfo), Obj(Obj), SortedSections(), AddrToReloc() {
   error_code ec;
   for (section_iterator SI = Obj->begin_sections(),
                         SE = Obj->end_sections();
@@ -81,8 +81,7 @@ MCObjectSymbolizer::MCObjectSymbolizer(MCContext &Ctx,
     bool RequiredForExec; RelSecI->isRequiredForExecution(RequiredForExec);
     if (RequiredForExec == false || Size == 0)
       continue;
-    AddrToSection.insert(StartAddr, StartAddr + Size - 1,
-                         SI->getRawDataRefImpl().p);
+    insertSection(*SI);
     for (relocation_iterator RI = SI->begin_relocations(),
                              RE = SI->end_relocations();
                              RI != RE;
@@ -176,4 +175,41 @@ MCObjectSymbolizer::createObjectSymbolizer(MCContext &Ctx,
     return new MCMachObjectSymbolizer(Ctx, RelInfo, MachOOF);
   }
   return new MCObjectSymbolizer(Ctx, RelInfo, Obj);
+}
+
+// SortedSections implementation.
+
+static bool SectionStartsBefore(const SectionRef &S, uint64_t Addr) {
+  uint64_t SAddr; S.getAddress(SAddr);
+  return SAddr < Addr;
+}
+
+MCObjectSymbolizer::SortedSectionList::const_iterator
+MCObjectSymbolizer::findSectionContaining(uint64_t Addr) const {
+  SortedSectionList::const_iterator
+    EndIt = SortedSections.end(),
+    It = std::lower_bound(SortedSections.begin(), EndIt,
+                          Addr, SectionStartsBefore);
+  if (It == EndIt)
+    return It;
+  uint64_t SAddr; It->getAddress(SAddr);
+  uint64_t SSize; It->getSize(SSize);
+  if (Addr >= SAddr + SSize)
+    return EndIt;
+  return It;
+}
+
+void MCObjectSymbolizer::insertSection(SectionRef Sec) {
+  uint64_t SAddr; Sec.getAddress(SAddr);
+  uint64_t SSize; Sec.getSize(SSize);
+  SortedSectionList::iterator It = std::lower_bound(SortedSections.begin(),
+                                                    SortedSections.end(),
+                                                    SAddr,
+                                                    SectionStartsBefore);
+  if (It != SortedSections.end()) {
+    uint64_t FoundSAddr; It->getAddress(FoundSAddr);
+    if (FoundSAddr < SAddr + SSize)
+      llvm_unreachable("Inserting overlapping sections");
+  }
+  SortedSections.insert(It, Sec);
 }
