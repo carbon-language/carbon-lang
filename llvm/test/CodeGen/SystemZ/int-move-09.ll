@@ -8,6 +8,12 @@
 @gdst16 = global i16 2
 @gdst32 = global i32 2
 @gdst64 = global i64 2
+@gsrc16u = global i16 1, align 1, section "foo"
+@gsrc32u = global i32 1, align 2, section "foo"
+@gsrc64u = global i64 1, align 4, section "foo"
+@gdst16u = global i16 2, align 1, section "foo"
+@gdst32u = global i32 2, align 2, section "foo"
+@gdst64u = global i64 2, align 4, section "foo"
 
 ; Check sign-extending loads from i16.
 define i64 @f1() {
@@ -77,5 +83,84 @@ define void @f7() {
 ; CHECK: br %r14
   %val = load i64 *@gsrc64
   store i64 %val, i64 *@gdst64
+  ret void
+}
+
+; Repeat f1 with an unaligned variable.
+define i64 @f8() {
+; CHECK: f8:
+; CHECK: lgrl [[REG:%r[0-5]]], gsrc16u@GOT
+; CHECK: lgh %r2, 0([[REG]])
+; CHECK: br %r14
+  %val = load i16 *@gsrc16u, align 1
+  %ext = sext i16 %val to i64
+  ret i64 %ext
+}
+
+; Repeat f2 with an unaligned variable.
+define i64 @f9() {
+; CHECK: f9:
+; CHECK: lgrl [[REG:%r[0-5]]], gsrc16u@GOT
+; CHECK: llgh %r2, 0([[REG]])
+; CHECK: br %r14
+  %val = load i16 *@gsrc16u, align 1
+  %ext = zext i16 %val to i64
+  ret i64 %ext
+}
+
+; Repeat f3 with an unaligned variable.
+define i64 @f10() {
+; CHECK: f10:
+; CHECK: larl [[REG:%r[0-5]]], gsrc32u
+; CHECK: lgf %r2, 0([[REG]])
+; CHECK: br %r14
+  %val = load i32 *@gsrc32u, align 2
+  %ext = sext i32 %val to i64
+  ret i64 %ext
+}
+
+; Repeat f4 with an unaligned variable.
+define i64 @f11() {
+; CHECK: f11:
+; CHECK: larl [[REG:%r[0-5]]], gsrc32u
+; CHECK: llgf %r2, 0([[REG]])
+; CHECK: br %r14
+  %val = load i32 *@gsrc32u, align 2
+  %ext = zext i32 %val to i64
+  ret i64 %ext
+}
+
+; Repeat f5 with an unaligned variable.
+define void @f12(i64 %val) {
+; CHECK: f12:
+; CHECK: lgrl [[REG:%r[0-5]]], gdst16u@GOT
+; CHECK: sth %r2, 0([[REG]])
+; CHECK: br %r14
+  %half = trunc i64 %val to i16
+  store i16 %half, i16 *@gdst16u, align 1
+  ret void
+}
+
+; Repeat f6 with an unaligned variable.
+define void @f13(i64 %val) {
+; CHECK: f13:
+; CHECK: larl [[REG:%r[0-5]]], gdst32u
+; CHECK: st %r2, 0([[REG]])
+; CHECK: br %r14
+  %word = trunc i64 %val to i32
+  store i32 %word, i32 *@gdst32u, align 2
+  ret void
+}
+
+; Repeat f7 with unaligned variables.
+define void @f14() {
+; CHECK: f14:
+; CHECK: larl [[REG:%r[0-5]]], gsrc64u
+; CHECK: lg [[VAL:%r[0-5]]], 0([[REG]])
+; CHECK: larl [[REG:%r[0-5]]], gdst64u
+; CHECK: stg [[VAL]], 0([[REG]])
+; CHECK: br %r14
+  %val = load i64 *@gsrc64u, align 4
+  store i64 %val, i64 *@gdst64u, align 4
   ret void
 }

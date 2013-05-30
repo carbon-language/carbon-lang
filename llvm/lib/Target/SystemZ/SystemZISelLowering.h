@@ -125,6 +125,7 @@ public:
     return true;
   }
   virtual bool isFPImmLegal(const APFloat &Imm, EVT VT) const;
+  virtual bool allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const;
   virtual const char *getTargetNodeName(unsigned Opcode) const LLVM_OVERRIDE;
   virtual std::pair<unsigned, const TargetRegisterClass *>
     getRegForInlineAsmConstraint(const std::string &Constraint,

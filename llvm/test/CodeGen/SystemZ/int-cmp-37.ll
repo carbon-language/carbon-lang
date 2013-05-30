@@ -4,6 +4,7 @@
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
 @g = global i16 1
+@h = global i16 1, align 1, section "foo"
 
 ; Check unsigned comparison.
 define i32 @f1(i32 %src1) {
@@ -71,6 +72,27 @@ entry:
   %val = load i16 *@g
   %src2 = zext i16 %val to i32
   %cond = icmp ne i32 %src1, %src2
+  br i1 %cond, label %exit, label %mulb
+mulb:
+  %mul = mul i32 %src1, %src1
+  br label %exit
+exit:
+  %res = phi i32 [ %src1, %entry ], [ %mul, %mulb ]
+  ret i32 %res
+}
+
+; Repeat f1 with an unaligned address.
+define i32 @f5(i32 %src1) {
+; CHECK: f5:
+; CHECK: lgrl [[REG:%r[0-5]]], h@GOT
+; CHECK: llh [[VAL:%r[0-5]]], 0([[REG]])
+; CHECK: clr %r2, [[VAL]]
+; CHECK-NEXT: jl
+; CHECK: br %r14
+entry:
+  %val = load i16 *@h, align 1
+  %src2 = zext i16 %val to i32
+  %cond = icmp ult i32 %src1, %src2
   br i1 %cond, label %exit, label %mulb
 mulb:
   %mul = mul i32 %src1, %src1
