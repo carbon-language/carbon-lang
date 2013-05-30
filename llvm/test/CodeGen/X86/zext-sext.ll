@@ -1,7 +1,8 @@
-; XFAIL: *
-; ...should pass. See PR12324: misched bringup
 ; RUN: llc < %s -march=x86-64 | FileCheck %s
 ; <rdar://problem/8006248>
+
+; This randomly started passing after an unrelated change, if it fails again it
+; might be worth looking at PR12324: misched bringup.
 
 @llvm.used = appending global [1 x i8*] [i8* bitcast (void ([40 x i16]*, i32*, i16**, i64*)* @func to i8*)], section "llvm.metadata"
 

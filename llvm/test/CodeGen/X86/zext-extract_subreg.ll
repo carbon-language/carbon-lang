@@ -14,7 +14,7 @@ if.end:                                           ; preds = %if.end.i
 ; CHECK: movl (%{{.*}}), [[REG:%[a-z]+]]
 ; CHECK-NOT: movl [[REG]], [[REG]]
 ; CHECK-NEXT: testl [[REG]], [[REG]]
-; CHECK-NEXT: xorb
+; CHECK-NEXT: xorl
   %tmp138 = select i1 undef, i32 0, i32 %tmp7.i
   %tmp867 = zext i32 %tmp138 to i64
   br label %while.cond

@@ -2363,27 +2363,24 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     }
 
     unsigned LoReg, HiReg, ClrReg;
-    unsigned ClrOpcode, SExtOpcode;
+    unsigned SExtOpcode;
     switch (NVT.getSimpleVT().SimpleTy) {
     default: llvm_unreachable("Unsupported VT!");
     case MVT::i8:
       LoReg = X86::AL;  ClrReg = HiReg = X86::AH;
-      ClrOpcode  = 0;
       SExtOpcode = X86::CBW;
       break;
     case MVT::i16:
       LoReg = X86::AX;  HiReg = X86::DX;
-      ClrOpcode  = X86::MOV16r0; ClrReg = X86::DX;
+      ClrReg = X86::DX;
       SExtOpcode = X86::CWD;
       break;
     case MVT::i32:
       LoReg = X86::EAX; ClrReg = HiReg = X86::EDX;
-      ClrOpcode  = X86::MOV32r0;
       SExtOpcode = X86::CDQ;
       break;
     case MVT::i64:
       LoReg = X86::RAX; ClrReg = HiReg = X86::RDX;
-      ClrOpcode  = X86::MOV64r0;
       SExtOpcode = X86::CQO;
       break;
     }
@@ -2421,8 +2418,29 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
           SDValue(CurDAG->getMachineNode(SExtOpcode, dl, MVT::Glue, InFlag),0);
       } else {
         // Zero out the high part, effectively zero extending the input.
-        SDValue ClrNode =
-          SDValue(CurDAG->getMachineNode(ClrOpcode, dl, NVT), 0);
+        SDValue ClrNode = SDValue(CurDAG->getMachineNode(X86::MOV32r0, dl, NVT), 0);       
+        switch (NVT.getSimpleVT().SimpleTy) {
+        case MVT::i16:
+          ClrNode =
+              SDValue(CurDAG->getMachineNode(
+                          TargetOpcode::EXTRACT_SUBREG, dl, MVT::i16, ClrNode,
+                          CurDAG->getTargetConstant(X86::sub_16bit, MVT::i32)),
+                      0);
+          break;
+        case MVT::i32:
+          break;
+        case MVT::i64:
+          ClrNode =
+              SDValue(CurDAG->getMachineNode(
+                          TargetOpcode::SUBREG_TO_REG, dl, MVT::i64,
+                          CurDAG->getTargetConstant(0, MVT::i64), ClrNode,
+                          CurDAG->getTargetConstant(X86::sub_32bit, MVT::i32)),
+                      0);
+          break;
+        default:
+          llvm_unreachable("Unexpected division source");
+        }
+
         InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, ClrReg,
                                       ClrNode, InFlag).getValue(1);
       }

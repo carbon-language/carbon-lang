@@ -118,7 +118,7 @@ altret:
 ; CHECK-NEXT:   ucomiss %xmm{{[0-2]}}, %xmm{{[0-2]}}
 ; CHECK-NEXT:   jbe .LBB2_2
 ; CHECK-NEXT: .LBB2_4:
-; CHECK-NEXT:   xorb %al, %al
+; CHECK-NEXT:   xorl %eax, %eax
 ; CHECK-NEXT:   ret
 ; CHECK-NEXT: .LBB2_2:
 ; CHECK-NEXT:   movb $1, %al
@@ -161,7 +161,7 @@ bb30:
 ; CHE:        jmp .LBB3_11
 ; CHE-NEXT: .LBB3_9:
 ; CHE-NEXT:   movq 8(%rax), %rax
-; CHE-NEXT:   xorb %dl, %dl
+; CHE-NEXT:   xorl %edx, %edx
 ; CHE-NEXT:   movb 16(%rax), %al
 ; CHE-NEXT:   cmpb $16, %al
 ; CHE-NEXT:   je .LBB3_11

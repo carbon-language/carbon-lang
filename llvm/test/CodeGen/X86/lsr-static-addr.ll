@@ -10,8 +10,9 @@
 ; CHECK-NEXT: movsd
 ; CHECK-NEXT: incq %rax
 
-; ATOM: movsd .LCPI0_0(%rip), %xmm0
+
 ; ATOM: xorl  %eax, %eax
+; ATOM: movsd .LCPI0_0(%rip), %xmm0
 ; ATOM: align
 ; ATOM-NEXT: BB0_2:
 ; ATOM-NEXT: movsd A(,%rax,8)

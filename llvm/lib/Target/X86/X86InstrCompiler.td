@@ -216,39 +216,21 @@ def MORESTACK_RET_RESTORE_R10 : I<0, Pseudo, (outs), (ins),
 // Alias Instructions
 //===----------------------------------------------------------------------===//
 
-// Alias instructions that map movr0 to xor.
+// Alias instruction mapping movr0 to xor.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
 // FIXME: Set encoding to pseudo.
 let Defs = [EFLAGS], isReMaterializable = 1, isAsCheapAsAMove = 1,
-    isCodeGenOnly = 1 in {
-def MOV8r0   : I<0x30, MRMInitReg, (outs GR8 :$dst), (ins), "",
-                 [(set GR8:$dst, 0)], IIC_ALU_NONMEM>, Sched<[WriteZero]>;
-
-// We want to rewrite MOV16r0 in terms of MOV32r0, because it's a smaller
-// encoding and avoids a partial-register update sometimes, but doing so
-// at isel time interferes with rematerialization in the current register
-// allocator. For now, this is rewritten when the instruction is lowered
-// to an MCInst.
-def MOV16r0   : I<0x31, MRMInitReg, (outs GR16:$dst), (ins),
-                 "",
-                 [(set GR16:$dst, 0)], IIC_ALU_NONMEM>, OpSize,
-                 Sched<[WriteZero]>;
-
-// FIXME: Set encoding to pseudo.
+    isCodeGenOnly = 1 in
 def MOV32r0  : I<0x31, MRMInitReg, (outs GR32:$dst), (ins), "",
                  [(set GR32:$dst, 0)], IIC_ALU_NONMEM>, Sched<[WriteZero]>;
-}
 
-// We want to rewrite MOV64r0 in terms of MOV32r0, because it's sometimes a
-// smaller encoding, but doing so at isel time interferes with rematerialization
-// in the current register allocator. For now, this is rewritten when the
-// instruction is lowered to an MCInst.
-// FIXME: AddedComplexity gives this a higher priority than MOV64ri32. Remove
-// when we have a better way to specify isel priority.
-let Defs = [EFLAGS], isCodeGenOnly=1,
-    AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1 in
-def MOV64r0   : I<0x31, MRMInitReg, (outs GR64:$dst), (ins), "",
-                 [(set GR64:$dst, 0)], IIC_ALU_NONMEM>, Sched<[WriteZero]>;
+// Other widths can also make use of the 32-bit xor, which may have a smaller
+// encoding and avoid partial register updates.
+def : Pat<(i8 0), (EXTRACT_SUBREG (MOV32r0), sub_8bit)>;
+def : Pat<(i16 0), (EXTRACT_SUBREG (MOV32r0), sub_16bit)>;
+def : Pat<(i64 0), (SUBREG_TO_REG (i64 0), (MOV32r0), sub_32bit)> {
+  let AddedComplexity = 20;
+}
 
 // Materialize i64 constant where top 32-bits are zero. This could theoretically
 // use MOV32ri with a SUBREG_TO_REG to represent the zero-extension, however

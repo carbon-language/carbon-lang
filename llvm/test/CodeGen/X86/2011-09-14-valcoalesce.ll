@@ -14,22 +14,47 @@
 ; Prior to fixing PR10920 401.bzip miscompile, the coalescer would
 ; consider vreg1 and vreg27 to be copies of the same value. It would
 ; then remove one of the critical edge copes, which cannot safely be removed.
-;
+
+; There are two obvious ways the register-allocator could go here, either
+; reusing the pre-addition register later, or the post-addition one. Currently,
+; it does the latter, so we check:
+
 ; CHECK: # %while.body85.i
 ; CHECK-NOT: # %
 ; CHECK-NOT: add
 ; CHECK: movl %[[POSTR:e[abcdxi]+]], %[[PRER:e[abcdxi]+]]
 ; CHECK: addl %{{.*}}, %[[POSTR]]
 ; CHECK: # %while.end.i
-; CHECK: movl %[[POSTR]], %[[USER:e[abcdxi]+]]
+; CHECK-NOT: movl %[[POSTR]]
 ; CHECK: # %land.lhs.true.i
-; CHECK: movl %[[POSTR]], %[[USER]]
+; CHECK-NOT: movl %[[POSTR]]
 ; CHECK: # %land.lhs.true103.i
-; CHECK: movl %[[POSTR]], %[[USER]]
+; CHECK-NOT: movl %[[POSTR]]
 ; CHECK: # %if.then108.i
-; [[PRER] live out, so nothing on this path should define it.
-; CHECK-NOT: , %[[PRER]]
+; CHECK: movl %[[PRER]], %[[POSTR]]
 ; CHECK: # %if.end117.i
+;   and use it for fprintf:
+; CHECK: movl %[[POSTR]], 12(%esp)
+
+
+; If it ever reverts to reusing the pre-addition register then we should
+; *probably* check this instead (it certainly worked last time):
+
+; CHECKALT: # %while.body85.i
+; CHECKALT-NOT: # %
+; CHECKALT-NOT: add
+; CHECKALT: movl %[[POSTR:e[abcdxi]+]], %[[PRER:e[abcdxi]+]]
+; CHECKALT: addl %{{.*}}, %[[POSTR]]
+; CHECKALT: # %while.end.i
+; CHECKALT: movl %[[POSTR]], %[[USER:e[abcdxi]+]]
+; CHECKALT: # %land.lhs.true.i
+; CHECKALT: movl %[[POSTR]], %[[USER]]
+; CHECKALT: # %land.lhs.true103.i
+; CHECKALT: movl %[[POSTR]], %[[USER]]
+; CHECKALT: # %if.then108.i
+; [[PRER] live out, so nothing on this path should define it.
+; CHECKALT-NOT: , %[[PRER]]
+; CHECKALT: # %if.end117.i
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128-n8:16:32"
 

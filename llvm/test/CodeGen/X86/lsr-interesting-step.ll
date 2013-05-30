@@ -5,7 +5,7 @@
 
 ; CHECK:      BB0_3:
 ; CHECK-NEXT:   movb    $0, flags(%rdx)
-; CHECK-NEXT:   addq    %rcx, %rdx
+; CHECK-NEXT:   addq    %rax, %rdx
 ; CHECK-NEXT:   cmpq    $8192, %rdx
 ; CHECK-NEXT:   jl
 

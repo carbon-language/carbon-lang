@@ -279,7 +279,7 @@ entry:
 ; 32: jmp {{_?}}bar5
 
 ; 64: t17:
-; 64: xorb %al, %al
+; 64: xorl %eax, %eax
 ; 64: jmp {{_?}}bar5
   tail call void (...)* @bar5() nounwind
   ret void
@@ -295,7 +295,7 @@ entry:
 ; 32: fstp %st(0)
 
 ; 64: t18:
-; 64: xorb %al, %al
+; 64: xorl %eax, %eax
 ; 64: jmp {{_?}}bar6
   %0 = tail call double (...)* @bar6() nounwind
   ret void

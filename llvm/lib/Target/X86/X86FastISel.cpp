@@ -1294,8 +1294,8 @@ bool X86FastISel::X86SelectDivRem(const Instruction *I) {
     { &X86::GR16RegClass, X86::AX,  X86::DX, {
         { X86::IDIV16r, X86::CWD,     Copy,            X86::AX,  S }, // SDiv
         { X86::IDIV16r, X86::CWD,     Copy,            X86::DX,  S }, // SRem
-        { X86::DIV16r,  X86::MOV16r0, Copy,            X86::AX,  U }, // UDiv
-        { X86::DIV16r,  X86::MOV16r0, Copy,            X86::DX,  U }, // URem
+        { X86::DIV16r,  X86::MOV32r0, Copy,            X86::AX,  U }, // UDiv
+        { X86::DIV16r,  X86::MOV32r0, Copy,            X86::DX,  U }, // URem
       }
     }, // i16
     { &X86::GR32RegClass, X86::EAX, X86::EDX, {
@@ -1308,8 +1308,8 @@ bool X86FastISel::X86SelectDivRem(const Instruction *I) {
     { &X86::GR64RegClass, X86::RAX, X86::RDX, {
         { X86::IDIV64r, X86::CQO,     Copy,            X86::RAX, S }, // SDiv
         { X86::IDIV64r, X86::CQO,     Copy,            X86::RDX, S }, // SRem
-        { X86::DIV64r,  X86::MOV64r0, Copy,            X86::RAX, U }, // UDiv
-        { X86::DIV64r,  X86::MOV64r0, Copy,            X86::RDX, U }, // URem
+        { X86::DIV64r,  X86::MOV32r0, Copy,            X86::RAX, U }, // UDiv
+        { X86::DIV64r,  X86::MOV32r0, Copy,            X86::RDX, U }, // URem
       }
     }, // i64
   };
@@ -1355,9 +1355,28 @@ bool X86FastISel::X86SelectDivRem(const Instruction *I) {
     if (OpEntry.IsOpSigned)
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
               TII.get(OpEntry.OpSignExtend));
-    else
+    else {
+      unsigned Zero32 = createResultReg(&X86::GR32RegClass);
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-              TII.get(OpEntry.OpSignExtend), TypeEntry.HighInReg);
+              TII.get(X86::MOV32r0), Zero32);
+
+      // Copy the zero into the appropriate sub/super/identical physical
+      // register. Unfortunately the operations needed are not uniform enough to
+      // fit neatly into the table above.
+      if (VT.SimpleTy == MVT::i16) {
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                TII.get(TargetOpcode::COPY), TypeEntry.HighInReg)
+          .addReg(Zero32, 0, X86::sub_16bit);
+      } else if (VT.SimpleTy == MVT::i32) {
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                TII.get(TargetOpcode::COPY), TypeEntry.HighInReg)
+            .addReg(Zero32);
+      } else if (VT.SimpleTy == MVT::i64) {
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                TII.get(TargetOpcode::SUBREG_TO_REG), TypeEntry.HighInReg)
+            .addImm(0).addReg(Zero32).addImm(X86::sub_32bit);
+      }
+    }
   }
   // Generate the DIV/IDIV instruction.
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
