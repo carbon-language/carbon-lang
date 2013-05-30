@@ -19,6 +19,7 @@
 using namespace llvm;
 
 namespace {
+/// \brief Tests an arbitrary set of bytes passed as \p Input.
 void TestMD5Sum(ArrayRef<unsigned char> Input, StringRef Final) {
   MD5 Hash;
   Hash.update(Input);
@@ -38,5 +39,13 @@ TEST(MD5Test, MD5) {
                  (const unsigned char *)"abcdefghijklmnopqrstuvwxyz",
                  (size_t) 26),
              "c3fcd3d76192e4007dfb496cca67e13b");
+  TestMD5Sum(ArrayRef<unsigned char>((const unsigned char *)"\0", (size_t) 1),
+             "93b885adfe0da089cdf634904fd59f71");
+  TestMD5Sum(ArrayRef<unsigned char>((const unsigned char *)"a\0", (size_t) 2),
+             "4144e195f46de78a3623da7364d04f11");
+  TestMD5Sum(ArrayRef<unsigned char>(
+                 (const unsigned char *)"abcdefghijklmnopqrstuvwxyz\0",
+                 (size_t) 27),
+             "81948d1f1554f58cd1a56ebb01f808cb");
 }
 }
