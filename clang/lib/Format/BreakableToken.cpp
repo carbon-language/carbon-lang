@@ -337,6 +337,11 @@ BreakableBlockComment::replaceWhitespaceBefore(unsigned LineIndex,
       // contain a trailing whitespace.
       Prefix = Prefix.substr(0, 1);
     }
+  } else {
+    if (StartOfLineColumn[LineIndex] == 1) {
+      // This lines starts immediately after the decorating *.
+      Prefix = Prefix.substr(0, 1);
+    }
   }
 
   unsigned WhitespaceOffsetInToken =
