@@ -3,7 +3,7 @@
 ; Check that the appropriate relocations were created.
 
 ; CHECK: Relocations [
-; CHECK:   Section (1) .text {
+; CHECK:   Section (2) .rel.text {
 ; CHECK:     R_MIPS_TLS_LDM
 ; CHECK:     R_MIPS_TLS_DTPREL_HI16
 ; CHECK:     R_MIPS_TLS_DTPREL_LO16

@@ -27,7 +27,7 @@ entry:
 ;; The relocations in .rela.text are the 'number64' load using a
 ;; R_PPC64_TOC16_DS against the .toc and the 'sin' external function
 ;; address using a R_PPC64_REL24
-;; CHECK:        Section ({{[0-9]+}}) .text {
+;; CHECK:        Section ({{[0-9]+}}) .rela.text {
 ;; CHECK-NEXT:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_DS .toc
 ;; CHECK-NEXT:     0x{{[0-9,A-F]+}} R_PPC64_REL24    sin
 ;; CHECK-NEXT:   }
@@ -37,12 +37,12 @@ entry:
 ;    address itself);
 ;; 2. And a R_PPC64_TOC against no symbol (the linker will replace for the
 ;;    module's TOC base).
-;; CHECK:        Section ({{[0-9]+}}) .opd {
+;; CHECK:        Section ({{[0-9]+}}) .rela.opd {
 ;; CHECK-NEXT:     0x{{[0-9,A-F]+}} R_PPC64_ADDR64 .text 0x0
 ;; CHECK-NEXT:     0x{{[0-9,A-F]+}} R_PPC64_TOC - 0x0
 
 ;; Finally the TOC creates the relocation for the 'number64'.
-;; CHECK:        Section ({{[0-9]+}}) .toc {
+;; CHECK:        Section ({{[0-9]+}}) .rela.toc {
 ;; CHECK-NEXT:     0x{{[0-9,A-F]+}} R_PPC64_ADDR64 number64 0x0
 ;; CHECK-NEXT:   }
 

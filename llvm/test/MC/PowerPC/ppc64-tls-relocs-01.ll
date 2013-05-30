@@ -13,7 +13,7 @@ entry:
 ;; Check for a pair of R_PPC64_TPREL16_HA / R_PPC64_TPREL16_LO relocs
 ;; against the thread-local symbol 't'.
 ;; CHECK:      Relocations [
-;; CHECK:        Section ({{[0-9]+}}) .text {
+;; CHECK:        Section ({{[0-9]+}}) .rela.text {
 ;; CHECK-NEXT:     0x{{[0-9,A-F]+}} R_PPC64_TPREL16_HA t
 ;; CHECK-NEXT:     0x{{[0-9,A-F]+}} R_PPC64_TPREL16_LO t
 ;; CHECK-NEXT:   }

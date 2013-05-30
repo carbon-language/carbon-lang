@@ -24,7 +24,6 @@ entry:
 ; STATIC-NEXT:   AddressAlignment: 8
 ; STATIC-NEXT:   EntrySize: 
 ; STATIC-NEXT:   Relocations [
-; STATIC-NEXT:     0x1C R_PPC64_REL32 .text 0x0
 ; STATIC-NEXT:   ]
 ; STATIC-NEXT:   SectionData (
 ; STATIC-NEXT:     0000: 00000010 00000000 017A5200 01784101
@@ -45,7 +44,9 @@ entry:
 ; STATIC-NEXT:   Info:
 ; STATIC-NEXT:   AddressAlignment: 8
 ; STATIC-NEXT:   EntrySize: 24
-
+; STATIC-NEXT:   Relocations [
+; STATIC-NEXT:     0x1C R_PPC64_REL32 .text 0x0
+; STATIC-NEXT:   ]
 
 ; PIC:      Section {
 ; PIC:        Name: .eh_frame
@@ -61,7 +62,6 @@ entry:
 ; PIC-NEXT:   AddressAlignment: 8
 ; PIC-NEXT:   EntrySize: 0
 ; PIC-NEXT:   Relocations [
-; PIC-NEXT:     0x1C R_PPC64_REL32 .text 0x0
 ; PIC-NEXT:   ]
 ; PIC-NEXT:   SectionData (
 ; PIC-NEXT:     0000: 00000010 00000000 017A5200 01784101
@@ -82,3 +82,6 @@ entry:
 ; PIC-NEXT:   Info:
 ; PIC-NEXT:   AddressAlignment: 8
 ; PIC-NEXT:   EntrySize: 24
+; PIC-NEXT:   Relocations [
+; PIC-NEXT:     0x1C R_PPC64_REL32 .text 0x0
+; PIC-NEXT:   ]

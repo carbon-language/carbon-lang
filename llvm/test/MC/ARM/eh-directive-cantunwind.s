@@ -37,9 +37,6 @@ func1:
 @-------------------------------------------------------------------------------
 @ CHECK:   Section {
 @ CHECK:     Name: .ARM.exidx
-@ CHECK:     Relocations [
-@ CHECK:       0x0 R_ARM_PREL31 .text 0x0
-@ CHECK:     ]
 @-------------------------------------------------------------------------------
 @ The first word should be the offset to .text.
 @ The second word should be EXIDX_CANTUNWIND (01000000).
@@ -49,3 +46,6 @@ func1:
 @ CHECK:     )
 @ CHECK:   }
 @ CHECK: ]
+@ CHECK:     Relocations [
+@ CHECK:       0x0 R_ARM_PREL31 .text 0x0
+@ CHECK:     ]

@@ -65,14 +65,14 @@ func2:
 @-------------------------------------------------------------------------------
 @ CHECK:   Section {
 @ CHECK:     Name: .ARM.extab.TEST1
-@ CHECK:     Relocations [
-@ CHECK:       0x0 R_ARM_PREL31 __gxx_personality_v0 0x0
-@ CHECK:       0x8 R_ARM_PREL31 __gxx_personality_v0 0x0
-@ CHECK:     ]
 @ CHECK:     SectionData (
 @ CHECK:       0000: 00000000 B0B0B000 00000000 B0B0B000  |................|
 @ CHECK:     )
 @ CHECK:   }
+@ CHECK:     Relocations [
+@ CHECK:       0x0 R_ARM_PREL31 __gxx_personality_v0 0x0
+@ CHECK:       0x8 R_ARM_PREL31 __gxx_personality_v0 0x0
+@ CHECK:     ]
 
 
 @-------------------------------------------------------------------------------
@@ -81,6 +81,15 @@ func2:
 @ CHECK:   Section {
 @ CHECK:     Name: .ARM.exidx.TEST1
 @ CHECK:     Link: 4
+@-------------------------------------------------------------------------------
+@ The first word should be the offset to .TEST1.
+@ The second word should be the offset to .ARM.extab.TEST1
+@-------------------------------------------------------------------------------
+@ CHECK:     SectionData (
+@ CHECK:       0000: 00000000 00000000 04000000 08000000  |................|
+@ CHECK:     )
+@ CHECK:   }
+@ CHECK: ]
 @-------------------------------------------------------------------------------
 @ The first word of each entry should be relocated to .TEST1 section.
 @ The second word of each entry should be relocated to
@@ -92,16 +101,6 @@ func2:
 @ CHECK:       0x8 R_ARM_PREL31 .TEST1 0x0
 @ CHECK:       0xC R_ARM_PREL31 .ARM.extab.TEST1 0x0
 @ CHECK:     ]
-@-------------------------------------------------------------------------------
-@ The first word should be the offset to .TEST1.
-@ The second word should be the offset to .ARM.extab.TEST1
-@-------------------------------------------------------------------------------
-@ CHECK:     SectionData (
-@ CHECK:       0000: 00000000 00000000 04000000 08000000  |................|
-@ CHECK:     )
-@ CHECK:   }
-@ CHECK: ]
-
 
 
 @-------------------------------------------------------------------------------

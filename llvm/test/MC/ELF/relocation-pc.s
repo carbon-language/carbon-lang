@@ -9,8 +9,6 @@
 // CHECK:          Index: 1
 // CHECK-NEXT:     Name: .text
 // CHECK:          Relocations [
-// CHECK-NEXT:       0x1 R_X86_64_PC8 - 0x0
-// CHECK-NEXT:       0x3 R_X86_64_PC32 - 0x0
 // CHECK-NEXT:     ]
 // CHECK-NEXT:   }
 
@@ -28,5 +26,7 @@
 // CHECK-NEXT:     AddressAlignment: 8
 // CHECK-NEXT:     EntrySize: 24
 // CHECK-NEXT:     Relocations [
+// CHECK-NEXT:       0x1 R_X86_64_PC8 - 0x0
+// CHECK-NEXT:       0x3 R_X86_64_PC32 - 0x0
 // CHECK-NEXT:     ]
 // CHECK-NEXT:   }

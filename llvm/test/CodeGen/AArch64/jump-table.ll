@@ -54,13 +54,13 @@ lbl4:
 ; First make sure we get a page/lo12 pair in .text to pick up the jump-table
 
 ; CHECK-ELF:      Relocations [
-; CHECK-ELF:        Section ({{[0-9]+}}) .text {
+; CHECK-ELF:        Section ({{[0-9]+}}) .rela.text {
 ; CHECK-ELF-NEXT:     0x{{[0-9,A-F]+}} R_AARCH64_ADR_PREL_PG_HI21 .rodata
 ; CHECK-ELF-NEXT:     0x{{[0-9,A-F]+}} R_AARCH64_ADD_ABS_LO12_NC .rodata
 ; CHECK-ELF:        }
 
 ; Also check the targets in .rodata are relocated
-; CHECK-ELF:        Section ({{[0-9]+}}) .rodata {
+; CHECK-ELF:        Section ({{[0-9]+}}) .rela.rodata {
 ; CHECK-ELF-NEXT:     0x{{[0-9,A-F]+}} R_AARCH64_ABS64 .text
 ; CHECK-ELF:        }
 ; CHECK-ELF:      ]

@@ -28,24 +28,23 @@ func1:
 @ CHECK: }
 @ CHECK: Section {
 @ CHECK:   Name: .ARM.extab.TEST1
-@ CHECK:   Relocations [
-@ CHECK:     0x0 R_ARM_PREL31 __gxx_personality_v0 0x0
-@ CHECK:   ]
 @ CHECK:   SectionData (
 @ CHECK:     0000: 00000000 B0B0B000                    |........|
 @ CHECK:   )
 @ CHECK: }
+@ CHECK:   Relocations [
+@ CHECK:     0x0 R_ARM_PREL31 __gxx_personality_v0 0x0
+@ CHECK:   ]
 @ CHECK: Section {
 @ CHECK:   Name: .ARM.exidx.TEST1
-@ CHECK:   Relocations [
-@ CHECK:     0x0 R_ARM_PREL31 .TEST1 0x0
-@ CHECK:     0x4 R_ARM_PREL31 .ARM.extab.TEST1 0x0
-@ CHECK:   ]
 @ CHECK:   SectionData (
 @ CHECK:     0000: 00000000 00000000                    |........|
 @ CHECK:   )
 @ CHECK: }
-
+@ CHECK:   Relocations [
+@ CHECK:     0x0 R_ARM_PREL31 .TEST1 0x0
+@ CHECK:     0x4 R_ARM_PREL31 .ARM.extab.TEST1 0x0
+@ CHECK:   ]
 
 
 @-------------------------------------------------------------------------------
@@ -71,20 +70,20 @@ func2:
 @ CHECK: }
 @ CHECK: Section {
 @ CHECK:   Name: .ARM.extab.TEST2
-@ CHECK:   Relocations [
-@ CHECK:     0x0 R_ARM_PREL31 __gxx_personality_v0 0x0
-@ CHECK:   ]
 @ CHECK:   SectionData (
 @ CHECK:     0000: 00000000 B0B0B000                    |........|
 @ CHECK:   )
 @ CHECK: }
+@ CHECK:   Relocations [
+@ CHECK:     0x0 R_ARM_PREL31 __gxx_personality_v0 0x0
+@ CHECK:   ]
 @ CHECK: Section {
 @ CHECK:   Name: .ARM.exidx.TEST2
-@ CHECK:   Relocations [
-@ CHECK:     0x0 R_ARM_PREL31 .TEST2 0x0
-@ CHECK:     0x4 R_ARM_PREL31 .ARM.extab.TEST2 0x0
-@ CHECK:   ]
 @ CHECK:   SectionData (
 @ CHECK:     0000: 00000000 00000000                    |........|
 @ CHECK:   )
 @ CHECK: }
+@ CHECK:   Relocations [
+@ CHECK:     0x0 R_ARM_PREL31 .TEST2 0x0
+@ CHECK:     0x4 R_ARM_PREL31 .ARM.extab.TEST2 0x0
+@ CHECK:   ]

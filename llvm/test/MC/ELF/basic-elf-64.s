@@ -45,7 +45,7 @@ main:                                   # @main
 // CHECK:     Name: .rela.text
 
 // CHECK: Relocations [
-// CHECK:   Section (1) .text {
+// CHECK:   Section (2) .rela.text {
 // CHECK:     0x5  R_X86_64_32   .rodata.str1.1 0x0
 // CHECK:     0xA  R_X86_64_PC32 puts           0xFFFFFFFFFFFFFFFC
 // CHECK:     0xF  R_X86_64_32   .rodata.str1.1 0x6

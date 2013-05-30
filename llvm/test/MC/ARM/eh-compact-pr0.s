@@ -50,15 +50,6 @@ func2:
 @ CHECK:   Section {
 @ CHECK:     Name: .ARM.exidx.TEST1
 @-------------------------------------------------------------------------------
-@ The first word should be relocated to .TEST1 section.  Besides, there is
-@ another relocation entry for __aeabi_unwind_cpp_pr0, so that the linker
-@ will keep __aeabi_unwind_cpp_pr0.
-@-------------------------------------------------------------------------------
-@ CHECK:     Relocations [
-@ CHECK:       0x0 R_ARM_PREL31 .TEST1 0x0
-@ CHECK:       0x0 R_ARM_NONE __aeabi_unwind_cpp_pr0 0x0
-@ CHECK:     ]
-@-------------------------------------------------------------------------------
 @ 0x80   = Compact model 0, personality routine: __aeabi_unwind_cpp_pr0
 @ 0x9B   = $sp can be found in $r11
 @ 0x8480 = pop {r11, r14}
@@ -67,6 +58,15 @@ func2:
 @ CHECK:       0000: 00000000 80849B80                    |........|
 @ CHECK:     )
 @ CHECK:   }
+@-------------------------------------------------------------------------------
+@ The first word should be relocated to .TEST1 section.  Besides, there is
+@ another relocation entry for __aeabi_unwind_cpp_pr0, so that the linker
+@ will keep __aeabi_unwind_cpp_pr0.
+@-------------------------------------------------------------------------------
+@ CHECK:     Relocations [
+@ CHECK:       0x0 R_ARM_PREL31 .TEST1 0x0
+@ CHECK:       0x0 R_ARM_NONE __aeabi_unwind_cpp_pr0 0x0
+@ CHECK:     ]
 
 
 @-------------------------------------------------------------------------------
@@ -84,15 +84,6 @@ func2:
 @ CHECK:   Section {
 @ CHECK:     Name: .ARM.exidx.TEST2
 @-------------------------------------------------------------------------------
-@ The first word should be relocated to .TEST2 section.  Besides, there is
-@ another relocation entry for __aeabi_unwind_cpp_pr0, so that the linker
-@ will keep __aeabi_unwind_cpp_pr0.
-@-------------------------------------------------------------------------------
-@ CHECK:     Relocations [
-@ CHECK:       0x0 R_ARM_PREL31 .TEST2 0x0
-@ CHECK:       0x0 R_ARM_NONE __aeabi_unwind_cpp_pr0 0x0
-@ CHECK:     ]
-@-------------------------------------------------------------------------------
 @ 0x80   = Compact model 0, personality routine: __aeabi_unwind_cpp_pr0
 @ 0x8480 = pop {r11, r14}
 @ 0xB0   = finish
@@ -102,3 +93,12 @@ func2:
 @ CHECK:     )
 @ CHECK:   }
 @ CHECK: ]
+@-------------------------------------------------------------------------------
+@ The first word should be relocated to .TEST2 section.  Besides, there is
+@ another relocation entry for __aeabi_unwind_cpp_pr0, so that the linker
+@ will keep __aeabi_unwind_cpp_pr0.
+@-------------------------------------------------------------------------------
+@ CHECK:     Relocations [
+@ CHECK:       0x0 R_ARM_PREL31 .TEST2 0x0
+@ CHECK:       0x0 R_ARM_NONE __aeabi_unwind_cpp_pr0 0x0
+@ CHECK:     ]

@@ -40,7 +40,7 @@ define void @address() {
 ; OBJ: }
 
 ; OBJ: Relocations [
-; OBJ:   Section (1) .text {
+; OBJ:   Section (2) .rela.text {
 ; OBJ:     0x{{[0-9,A-F]+}} R_AARCH64_ADR_PREL_PG_HI21   var8
 ; OBJ:     0x{{[0-9,A-F]+}} R_AARCH64_LDST8_ABS_LO12_NC  var8
 ; OBJ:     0x{{[0-9,A-F]+}} R_AARCH64_ADR_PREL_PG_HI21   var16

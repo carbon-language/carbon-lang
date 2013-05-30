@@ -22,7 +22,7 @@ COFF-NEXT:   }
 COFF-NEXT: ]
 
 ELF:      Relocations [
-ELF-NEXT:   Section (1) .text {
+ELF-NEXT:   Section (2) .rel.text {
 ELF-NEXT:     0xC R_386_GOTPC _GLOBAL_OFFSET_TABLE_ 0x0
 ELF-NEXT:     0x12 R_386_GOTOFF .L.str 0x0
 ELF-NEXT:     0x1A R_386_PLT32 puts 0x0

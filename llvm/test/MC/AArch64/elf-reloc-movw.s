@@ -23,7 +23,7 @@
         movn x19, #:abs_g2_s:some_label
 
 // OBJ:      Relocations [
-// OBJ-NEXT:   Section (1) .text {
+// OBJ-NEXT:   Section (2) .rela.text {
 // OBJ-NEXT:     0x0  R_AARCH64_MOVW_UABS_G0    some_label 0x0
 // OBJ-NEXT:     0x4  R_AARCH64_MOVW_UABS_G0_NC some_label 0x0
 // OBJ-NEXT:     0x8  R_AARCH64_MOVW_UABS_G1    some_label 0x0

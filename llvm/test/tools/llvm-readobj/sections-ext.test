@@ -108,10 +108,6 @@ ELF-NEXT:     Info: 0
 ELF-NEXT:     AddressAlignment: 16
 ELF-NEXT:     EntrySize: 0
 ELF-NEXT:     Relocations [
-ELF-NEXT:       0xC R_386_GOTPC _GLOBAL_OFFSET_TABLE_ 0x0
-ELF-NEXT:       0x12 R_386_GOTOFF .L.str 0x0
-ELF-NEXT:       0x1A R_386_PLT32 puts 0x0
-ELF-NEXT:       0x1F R_386_PLT32 SomeOtherFunction 0x0
 ELF-NEXT:     ]
 ELF-NEXT:     Symbols [
 ELF-NEXT:       Symbol {
@@ -137,6 +133,32 @@ ELF-NEXT:     SectionData (
 ELF-NEXT:       0000: 5383EC08 E8000000 005B81C3 03000000  |S........[......|
 ELF-NEXT:       0010: 8D830000 00008904 24E8FCFF FFFFE8FC  |........$.......|
 ELF-NEXT:       0020: FFFFFF31 C083C408 5BC3               |...1....[.|
+ELF-NEXT:     )
+ELF-NEXT:   }
+ELF-NEXT:   Section {
+ELF-NEXT:     Index: 2
+ELF-NEXT:     Name: .rel.text (1)
+ELF-NEXT:     Type: SHT_REL (0x9)
+ELF-NEXT:     Flags [ (0x0)
+ELF-NEXT:     ]
+ELF-NEXT:     Address: 0x0
+ELF-NEXT:     Offset: 0x360
+ELF-NEXT:     Size: 32
+ELF-NEXT:     Link: 8
+ELF-NEXT:     Info: 1
+ELF-NEXT:     AddressAlignment: 4
+ELF-NEXT:     EntrySize: 8
+ELF-NEXT:     Relocations [
+ELF-NEXT:       0xC R_386_GOTPC _GLOBAL_OFFSET_TABLE_ 0x0
+ELF-NEXT:       0x12 R_386_GOTOFF .L.str 0x0
+ELF-NEXT:       0x1A R_386_PLT32 puts 0x0
+ELF-NEXT:       0x1F R_386_PLT32 SomeOtherFunction 0x0
+ELF-NEXT:     ]
+ELF-NEXT:     Symbols [
+ELF-NEXT:     ]
+ELF-NEXT:     SectionData (
+ELF-NEXT:       0000: 0C000000 0A0A0000 12000000 09020000  |................|
+ELF-NEXT:       0010: 1A000000 040B0000 1F000000 04090000  |................|
 ELF-NEXT:     )
 ELF-NEXT:   }
 

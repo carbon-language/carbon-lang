@@ -7,7 +7,7 @@ L: movq $(L + 2147483648),%rax
 
 
 // CHECK:      Relocations [
-// CHECK-NEXT:   Section ({{[0-9]+}}) .text {
+// CHECK-NEXT:   Section ({{[0-9]+}}) .rela.text {
 // CHECK-NEXT:     0x3 R_X86_64_32S {{[^ ]+}} 0x80000000
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]

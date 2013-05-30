@@ -4,7 +4,7 @@
         b.eq somewhere
 
 // OBJ:      Relocations [
-// OBJ-NEXT:   Section (1) .text {
+// OBJ-NEXT:   Section (2) .rela.text {
 // OBJ-NEXT:     0x0 R_AARCH64_CONDBR19 somewhere 0x0
 // OBJ-NEXT:   }
 // OBJ-NEXT: ]

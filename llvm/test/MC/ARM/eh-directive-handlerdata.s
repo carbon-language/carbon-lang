@@ -35,6 +35,10 @@ func1:
 
 @ CHECK:Section {
 @ CHECK:  Name: .ARM.exidx.TEST1
+@ CHECK:  SectionData (
+@ CHECK:    0000: 00000000 00000000                    |........|
+@ CHECK:  )
+@ CHECK:}
 @-------------------------------------------------------------------------------
 @ We should see a relocation entry to __aeabi_unwind_cpp_pr0, so that the
 @ linker can keep __aeabi_unwind_cpp_pr0.
@@ -44,11 +48,6 @@ func1:
 @ CHECK:    0x0 R_ARM_NONE __aeabi_unwind_cpp_pr0 0x0
 @ CHECK:    0x4 R_ARM_PREL31 .ARM.extab.TEST1 0x0
 @ CHECK:  ]
-@ CHECK:  SectionData (
-@ CHECK:    0000: 00000000 00000000                    |........|
-@ CHECK:  )
-@ CHECK:}
-
 
 
 
@@ -93,6 +92,10 @@ func2:
 
 @ CHECK:Section {
 @ CHECK:  Name: .ARM.exidx.TEST2
+@ CHECK:  SectionData (
+@ CHECK:    0000: 00000000 00000000                    |........|
+@ CHECK:  )
+@ CHECK:}
 @-------------------------------------------------------------------------------
 @ We should see a relocation entry to __aeabi_unwind_cpp_pr0, so that the
 @ linker can keep __aeabi_unwind_cpp_pr0.
@@ -102,7 +105,3 @@ func2:
 @ CHECK:    0x0 R_ARM_NONE __aeabi_unwind_cpp_pr1 0x0
 @ CHECK:    0x4 R_ARM_PREL31 .ARM.extab.TEST2 0x0
 @ CHECK:  ]
-@ CHECK:  SectionData (
-@ CHECK:    0000: 00000000 00000000                    |........|
-@ CHECK:  )
-@ CHECK:}

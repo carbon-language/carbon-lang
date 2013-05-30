@@ -45,14 +45,6 @@ func2:
 @-------------------------------------------------------------------------------
 @ CHECK:   Section {
 @ CHECK:     Name: .ARM.exidx
-@-------------------------------------------------------------------------------
-@ The first word of each entry should be relocated to .text section.
-@-------------------------------------------------------------------------------
-@ CHECK:     Relocations [
-@ CHECK:       0x0 R_ARM_PREL31 .text 0x0
-@ CHECK:       0x0 R_ARM_NONE __aeabi_unwind_cpp_pr0 0x0
-@ CHECK:       0x8 R_ARM_PREL31 .text 0x0
-@ CHECK:     ]
 @ CHECK:     SectionData (
 @-------------------------------------------------------------------------------
 @ The first word should be the offset to .text.  The second word should be
@@ -64,6 +56,14 @@ func2:
 @ CHECK:   }
 @ CHECK: ]
 
+@-------------------------------------------------------------------------------
+@ The first word of each entry should be relocated to .text section.
+@-------------------------------------------------------------------------------
+@ CHECK:     Relocations [
+@ CHECK:       0x0 R_ARM_PREL31 .text 0x0
+@ CHECK:       0x0 R_ARM_NONE __aeabi_unwind_cpp_pr0 0x0
+@ CHECK:       0x8 R_ARM_PREL31 .text 0x0
+@ CHECK:     ]
 
 
 @-------------------------------------------------------------------------------

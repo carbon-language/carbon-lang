@@ -582,7 +582,6 @@ protected:
 private:
   typedef SmallVector<const Elf_Shdr *, 2> Sections_t;
   typedef DenseMap<unsigned, unsigned> IndexMap_t;
-  typedef DenseMap<const Elf_Shdr*, SmallVector<uint32_t, 1> > RelocMap_t;
 
   const Elf_Ehdr *Header;
   const Elf_Shdr *SectionHeaderTable;
@@ -634,13 +633,9 @@ private:
   void LoadVersionNeeds(const Elf_Shdr *ec) const;
   void LoadVersionMap() const;
 
-  /// @brief Map sections to an array of relocation sections that reference
-  ///        them sorted by section index.
-  RelocMap_t SectionRelocMap;
-
   /// @brief Get the relocation section that contains \a Rel.
   const Elf_Shdr *getRelSection(DataRefImpl Rel) const {
-    return getSection(Rel.w.b);
+    return getSection(Rel.d.a);
   }
 
 public:
@@ -712,6 +707,7 @@ protected:
                                            bool &Result) const;
   virtual relocation_iterator getSectionRelBegin(DataRefImpl Sec) const;
   virtual relocation_iterator getSectionRelEnd(DataRefImpl Sec) const;
+  virtual section_iterator getRelocatedSection(DataRefImpl Sec) const;
 
   virtual error_code getRelocationNext(DataRefImpl Rel,
                                        RelocationRef &Res) const;
@@ -1458,13 +1454,9 @@ template<class ELFT>
 relocation_iterator
 ELFObjectFile<ELFT>::getSectionRelBegin(DataRefImpl Sec) const {
   DataRefImpl RelData;
-  const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
-  typename RelocMap_t::const_iterator ittr = SectionRelocMap.find(sec);
-  if (sec != 0 && ittr != SectionRelocMap.end()) {
-    RelData.w.a = getSection(ittr->second[0])->sh_info;
-    RelData.w.b = ittr->second[0];
-    RelData.w.c = 0;
-  }
+  uintptr_t SHT = reinterpret_cast<uintptr_t>(SectionHeaderTable);
+  RelData.d.a = (Sec.p - SHT) / Header->e_shentsize;
+  RelData.d.b = 0;
   return relocation_iterator(RelocationRef(RelData, this));
 }
 
@@ -1472,44 +1464,41 @@ template<class ELFT>
 relocation_iterator
 ELFObjectFile<ELFT>::getSectionRelEnd(DataRefImpl Sec) const {
   DataRefImpl RelData;
-  const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
-  typename RelocMap_t::const_iterator ittr = SectionRelocMap.find(sec);
-  if (sec != 0 && ittr != SectionRelocMap.end()) {
-    // Get the index of the last relocation section for this section.
-    std::size_t relocsecindex = ittr->second[ittr->second.size() - 1];
-    const Elf_Shdr *relocsec = getSection(relocsecindex);
-    RelData.w.a = relocsec->sh_info;
-    RelData.w.b = relocsecindex;
-    RelData.w.c = relocsec->sh_size / relocsec->sh_entsize;
-  }
+  uintptr_t SHT = reinterpret_cast<uintptr_t>(SectionHeaderTable);
+  const Elf_Shdr *S = reinterpret_cast<const Elf_Shdr *>(Sec.p);
+  RelData.d.a = (Sec.p - SHT) / Header->e_shentsize;
+  if (S->sh_type != ELF::SHT_RELA && S->sh_type != ELF::SHT_REL)
+    RelData.d.b = 0;
+  else
+    RelData.d.b = S->sh_size / S->sh_entsize;
+
   return relocation_iterator(RelocationRef(RelData, this));
+}
+
+template <class ELFT>
+section_iterator
+ELFObjectFile<ELFT>::getRelocatedSection(DataRefImpl Sec) const {
+  if (Header->e_type != ELF::ET_REL)
+    return end_sections();
+
+  const Elf_Shdr *S = reinterpret_cast<const Elf_Shdr *>(Sec.p);
+  unsigned sh_type = S->sh_type;
+  if (sh_type != ELF::SHT_RELA && sh_type != ELF::SHT_REL)
+    return end_sections();
+
+  unsigned SecIndex = S->sh_info;
+  assert(SecIndex != 0);
+  const Elf_Shdr *R = getSection(S->sh_info);
+  DataRefImpl D;
+  D.p = reinterpret_cast<uintptr_t>(R);
+  return section_iterator(SectionRef(D, this));
 }
 
 // Relocations
 template<class ELFT>
 error_code ELFObjectFile<ELFT>::getRelocationNext(DataRefImpl Rel,
                                                   RelocationRef &Result) const {
-  ++Rel.w.c;
-  const Elf_Shdr *relocsec = getSection(Rel.w.b);
-  if (Rel.w.c >= (relocsec->sh_size / relocsec->sh_entsize)) {
-    // We have reached the end of the relocations for this section. See if there
-    // is another relocation section.
-    typename RelocMap_t::mapped_type relocseclist =
-      SectionRelocMap.lookup(getSection(Rel.w.a));
-
-    // Do a binary search for the current reloc section index (which must be
-    // present). Then get the next one.
-    typename RelocMap_t::mapped_type::const_iterator loc =
-      std::lower_bound(relocseclist.begin(), relocseclist.end(), Rel.w.b);
-    ++loc;
-
-    // If there is no next one, don't do anything. The ++Rel.w.c above sets Rel
-    // to the end iterator.
-    if (loc != relocseclist.end()) {
-      Rel.w.b = *loc;
-      Rel.w.a = 0;
-    }
-  }
+  ++Rel.d.b;
   Result = RelocationRef(Rel, this);
   return object_error::success;
 }
@@ -1518,7 +1507,7 @@ template<class ELFT>
 error_code ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel,
                                                     SymbolRef &Result) const {
   uint32_t symbolIdx;
-  const Elf_Shdr *sec = getSection(Rel.w.b);
+  const Elf_Shdr *sec = getRelSection(Rel);
   switch (sec->sh_type) {
     default :
       report_fatal_error("Invalid section type in Rel!");
@@ -1561,7 +1550,7 @@ error_code ELFObjectFile<ELFT>::getRelocationOffset(DataRefImpl Rel,
 
 template<class ELFT>
 uint64_t ELFObjectFile<ELFT>::getROffset(DataRefImpl Rel) const {
-  const Elf_Shdr *sec = getSection(Rel.w.b);
+  const Elf_Shdr *sec = getRelSection(Rel);
   switch (sec->sh_type) {
   default:
     report_fatal_error("Invalid section type in Rel!");
@@ -1575,7 +1564,7 @@ uint64_t ELFObjectFile<ELFT>::getROffset(DataRefImpl Rel) const {
 template<class ELFT>
 error_code ELFObjectFile<ELFT>::getRelocationType(DataRefImpl Rel,
                                                   uint64_t &Result) const {
-  const Elf_Shdr *sec = getSection(Rel.w.b);
+  const Elf_Shdr *sec = getRelSection(Rel);
   switch (sec->sh_type) {
     default :
       report_fatal_error("Invalid section type in Rel!");
@@ -2192,7 +2181,7 @@ StringRef ELFObjectFile<ELFT>::getRelocationTypeName(uint32_t Type) const {
 template<class ELFT>
 error_code ELFObjectFile<ELFT>::getRelocationTypeName(
     DataRefImpl Rel, SmallVectorImpl<char> &Result) const {
-  const Elf_Shdr *sec = getSection(Rel.w.b);
+  const Elf_Shdr *sec = getRelSection(Rel);
   uint32_t type;
   switch (sec->sh_type) {
     default :
@@ -2234,7 +2223,7 @@ error_code ELFObjectFile<ELFT>::getRelocationTypeName(
 template<class ELFT>
 error_code ELFObjectFile<ELFT>::getRelocationAddend(
     DataRefImpl Rel, int64_t &Result) const {
-  const Elf_Shdr *sec = getSection(Rel.w.b);
+  const Elf_Shdr *sec = getRelSection(Rel);
   switch (sec->sh_type) {
     default :
       report_fatal_error("Invalid section type in Rel!");
@@ -2252,7 +2241,7 @@ error_code ELFObjectFile<ELFT>::getRelocationAddend(
 template<class ELFT>
 error_code ELFObjectFile<ELFT>::getRelocationValueString(
     DataRefImpl Rel, SmallVectorImpl<char> &Result) const {
-  const Elf_Shdr *sec = getSection(Rel.w.b);
+  const Elf_Shdr *sec = getRelSection(Rel);
   uint8_t type;
   StringRef res;
   int64_t addend = 0;
@@ -2402,10 +2391,8 @@ ELFObjectFile<ELFT>::ELFObjectFile(MemoryBuffer *Object, error_code &ec)
       break;
     }
     case ELF::SHT_REL:
-    case ELF::SHT_RELA: {
-      SectionRelocMap[getSection(sh->sh_info)].push_back(i);
+    case ELF::SHT_RELA:
       break;
-    }
     case ELF::SHT_DYNAMIC: {
       if (dot_dynamic_sec != NULL)
         // FIXME: Proper error handling.
@@ -2436,12 +2423,6 @@ ELFObjectFile<ELFT>::ELFObjectFile(MemoryBuffer *Object, error_code &ec)
     }
     }
     ++sh;
-  }
-
-  // Sort section relocation lists by index.
-  for (typename RelocMap_t::iterator i = SectionRelocMap.begin(),
-                                     e = SectionRelocMap.end(); i != e; ++i) {
-    std::sort(i->second.begin(), i->second.end());
   }
 
   // Get string table sections.
@@ -2795,13 +2776,13 @@ ELFObjectFile<ELFT>::getSymbol(DataRefImpl Symb) const {
 template<class ELFT>
 const typename ELFObjectFile<ELFT>::Elf_Rel *
 ELFObjectFile<ELFT>::getRel(DataRefImpl Rel) const {
-  return getEntry<Elf_Rel>(Rel.w.b, Rel.w.c);
+  return getEntry<Elf_Rel>(Rel.d.a, Rel.d.b);
 }
 
 template<class ELFT>
 const typename ELFObjectFile<ELFT>::Elf_Rela *
 ELFObjectFile<ELFT>::getRela(DataRefImpl Rela) const {
-  return getEntry<Elf_Rela>(Rela.w.b, Rela.w.c);
+  return getEntry<Elf_Rela>(Rela.d.a, Rela.d.b);
 }
 
 template<class ELFT>

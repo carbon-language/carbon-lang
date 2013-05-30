@@ -2,7 +2,15 @@ RUN: llvm-readobj -r -expand-relocs %p/Inputs/hello-world.elf-x86-64 \
 RUN:   | FileCheck %s
 
 // CHECK:     Relocations [
-// CHECK:       Section (11) .plt {
+// CHECK-NEXT:  Section (8) .rela.dyn {
+// CHECK-NEXT:    Relocation {
+// CHECK-NEXT:      Offset: 0x4018D8
+// CHECK-NEXT:      Type: R_X86_64_GLOB_DAT (6)
+// CHECK-NEXT:      Symbol: __gmon_start__
+// CHECK-NEXT:      Addend: 0x0
+// CHECK-NEXT:    }
+// CHECK-NEXT:  }
+// CHECK-NEXT:  Section (9) .rela.plt {
 // CHECK-NEXT:    Relocation {
 // CHECK-NEXT:      Offset: 0x4018F8
 // CHECK-NEXT:      Type: R_X86_64_JUMP_SLOT (7)

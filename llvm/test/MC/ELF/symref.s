@@ -22,7 +22,7 @@ defined3:
 global1:
 
 // CHECK:      Relocations [
-// CHECK-NEXT:   Section (1) .text {
+// CHECK-NEXT:   Section (2) .rela.text {
 // CHECK-NEXT:     0x0 R_X86_64_32 .text 0x0
 // CHECK-NEXT:     0x4 R_X86_64_32 bar2@zed 0x0
 // CHECK-NEXT:     0x8 R_X86_64_32 .text 0x0

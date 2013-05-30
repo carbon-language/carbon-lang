@@ -32,9 +32,26 @@ defined3:
 // CHECK-NEXT:     AddressAlignment: 4
 // CHECK-NEXT:     EntrySize: 0
 // CHECK-NEXT:     Relocations [
+// CHECK-NEXT:     ]
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Section {
+// CHECK-NEXT:     Index: 2
+// CHECK-NEXT:     Name: .rela.text (1)
+// CHECK-NEXT:     Type: SHT_RELA (0x4)
+// CHECK-NEXT:     Flags [ (0x0)
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Address: 0x0
+// CHECK-NEXT:     Offset: 0x320
+// CHECK-NEXT:     Size: 24
+// CHECK-NEXT:     Link: 6
+// CHECK-NEXT:     Info: 1
+// CHECK-NEXT:     AddressAlignment: 8
+// CHECK-NEXT:     EntrySize: 24
+// CHECK-NEXT:     Relocations [
 // CHECK-NEXT:       0x0 R_X86_64_32 .text 0x0
 // CHECK-NEXT:     ]
 // CHECK-NEXT:   }
+
 
 // Symbol 2 is section 1
 // CHECK:        Symbol {

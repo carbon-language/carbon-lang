@@ -8,7 +8,7 @@
         ldr x0, [x5, #:got_lo12:some_label]
 
 // OBJ:      Relocations [
-// OBJ-NEXT:   Section (1) .text {
+// OBJ-NEXT:   Section (2) .rela.text {
 // OBJ-NEXT:     0x0 R_AARCH64_ADR_PREL_LO21    some_label 0x0
 // OBJ-NEXT:     0x4 R_AARCH64_ADR_PREL_PG_HI21 some_label 0x0
 // OBJ-NEXT:     0x8 R_AARCH64_ADR_GOT_PAGE     some_label 0x0

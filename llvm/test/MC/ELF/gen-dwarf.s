@@ -15,11 +15,11 @@ foo:
     .size foo, .-foo
 
 // CHECK:      Relocations [
-// CHECK:        Section ({{[^ ]+}}) .debug_info {
+// CHECK:        Section ({{[^ ]+}}) .rel.debug_info {
 // CHECK-NEXT:     0x6 R_386_32 .debug_abbrev 0x0
 // CHECK-NEXT:     0xC R_386_32 .debug_line 0x0
 // CHECK:        }
-// CHECK-NEXT:   Section ({{[^ ]+}}) .debug_aranges {
+// CHECK-NEXT:   Section ({{[^ ]+}}) .rel.debug_aranges {
 // CHECK-NEXT:     0x6 R_386_32 .debug_info 0x0
 // CHECK-NEXT:     0x10 R_386_32 .text 0x0
 // CHECK-NEXT:   }

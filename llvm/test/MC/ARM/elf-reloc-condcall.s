@@ -8,7 +8,7 @@
         b some_label
 
 // OBJ:      Relocations [
-// OBJ-NEXT:   Section (1) .text {
+// OBJ-NEXT:   Section (2) .rel.text {
 // OBJ-NEXT:     0x0  R_ARM_JUMP24 some_label 0x0
 // OBJ-NEXT:     0x4  R_ARM_CALL   some_label 0x0
 // OBJ-NEXT:     0x8  R_ARM_CALL   some_label 0x0

@@ -29,7 +29,7 @@ entry:
 ; CHECK: ]
 
 ; CHECK:      Relocations [
-; CHECK-NEXT:   Section (1) .text {
+; CHECK-NEXT:   Section (2) .rel.text {
 ; CHECK-NEXT:     0x8 R_ARM_THM_CALL foo 0x0
 ; CHECK-NEXT:   }
 ; CHECK-NEXT: ]

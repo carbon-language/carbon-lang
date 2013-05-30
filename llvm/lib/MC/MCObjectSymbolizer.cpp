@@ -71,10 +71,14 @@ MCObjectSymbolizer::MCObjectSymbolizer(MCContext &Ctx,
                         SI != SE;
                         SI.increment(ec)) {
     if (ec) break;
-    uint64_t StartAddr; SI->getAddress(StartAddr);
-    uint64_t Size; SI->getSize(Size);
-    StringRef SecName; SI->getName(SecName);
-    bool RequiredForExec; SI->isRequiredForExecution(RequiredForExec);
+
+    section_iterator RelSecI = SI->getRelocatedSection();
+    if (RelSecI == Obj->end_sections())
+      continue;
+
+    uint64_t StartAddr; RelSecI->getAddress(StartAddr);
+    uint64_t Size; RelSecI->getSize(Size);
+    bool RequiredForExec; RelSecI->isRequiredForExecution(RequiredForExec);
     if (RequiredForExec == false || Size == 0)
       continue;
     AddrToSection.insert(StartAddr, StartAddr + Size - 1,

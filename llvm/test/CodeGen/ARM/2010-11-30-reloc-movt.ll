@@ -11,15 +11,15 @@ entry:
   ret i32 %0
 ; OBJ:        Section {
 ; OBJ:          Name: .text
+; OBJ:          SectionData (
+; OBJ-NEXT:       0000: 00482DE9 000000E3 000040E3 FEFFFFEB
+; OBJ-NEXT:       0010: 0088BDE8
+; OBJ-NEXT:     )
 ; OBJ:          Relocations [
 ; OBJ-NEXT:       0x4 R_ARM_MOVW_ABS_NC a
 ; OBJ-NEXT:       0x8 R_ARM_MOVT_ABS
 ; OBJ-NEXT:       0xC R_ARM_CALL foo
 ; OBJ-NEXT:     ]
-; OBJ-NEXT:     SectionData (
-; OBJ-NEXT:       0000: 00482DE9 000000E3 000040E3 FEFFFFEB
-; OBJ-NEXT:       0010: 0088BDE8
-; OBJ-NEXT:     )
 
 }
 

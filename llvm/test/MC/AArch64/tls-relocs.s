@@ -17,7 +17,7 @@
 // CHECK-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g2:var, kind: fixup_a64_movw_dtprel_g2
 
 // CHECK-ELF:      Relocations [
-// CHECK-ELF-NEXT:   Section (1) .text {
+// CHECK-ELF-NEXT:   Section (2) .rela.text {
 // CHECK-ELF-NEXT:     0x0 R_AARCH64_TLSLD_MOVW_DTPREL_G2 [[VARSYM:[^ ]+]]
 // CHECK-ELF-NEXT:     0x4 R_AARCH64_TLSLD_MOVW_DTPREL_G2 [[VARSYM]]
 // CHECK-ELF-NEXT:     0x8 R_AARCH64_TLSLD_MOVW_DTPREL_G2 [[VARSYM]]

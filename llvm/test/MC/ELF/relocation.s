@@ -21,7 +21,7 @@ bar:
 
 
 // CHECK:        Section {
-// CHECK:          Name: .text
+// CHECK:          Name: .rela.text
 // CHECK:          Relocations [
 // CHECK-NEXT:       0x1 R_X86_64_32        .text
 // CHECK-NEXT:       0x8 R_X86_64_32S       .text

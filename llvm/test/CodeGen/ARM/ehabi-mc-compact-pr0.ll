@@ -44,6 +44,6 @@ declare void @_Z15throw_exceptionv()
 ; CHECK-FP-ELIM-NEXT: 0000 00000000 b0808480
 ; CHECK-FP-ELIM-NOT: section .ARM.extab
 
-; CHECK-RELOC: RELOCATION RECORDS FOR [.ARM.exidx]
+; CHECK-RELOC: RELOCATION RECORDS FOR [.rel.ARM.exidx]
 ; CHECK-RELOC-NEXT: 0 R_ARM_PREL31 .text
 ; CHECK-RELOC-NEXT: 0 R_ARM_NONE __aeabi_unwind_cpp_pr0

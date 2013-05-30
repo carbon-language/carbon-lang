@@ -5,7 +5,7 @@
         tbnz w3, #15, somewhere
 
 // OBJ:      Relocations [
-// OBJ-NEXT:   Section (1) .text {
+// OBJ-NEXT:   Section (2) .rela.text {
 // OBJ-NEXT:     0x0  R_AARCH64_TSTBR14 somewhere 0x0
 // OBJ-NEXT:     0x4  R_AARCH64_TSTBR14 somewhere 0x0
 // OBJ-NEXT:   }

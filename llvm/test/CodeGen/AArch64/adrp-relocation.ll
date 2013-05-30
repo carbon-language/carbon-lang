@@ -20,7 +20,7 @@ entry:
 ; object file's .text section gets relocated in memory.
 
 ; CHECK:      Relocations [
-; CHECK-NEXT:   Section (1) .text {
+; CHECK-NEXT:   Section (2) .rela.text {
 ; CHECK-NEXT:     0x10 R_AARCH64_ADR_PREL_PG_HI21 testfn 0x0
 ; CHECK-NEXT:     0x14 R_AARCH64_ADD_ABS_LO12_NC testfn 0x0
 ; CHECK-NEXT:   }

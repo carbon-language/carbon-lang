@@ -20,7 +20,7 @@ entry:
 ; accessing function-scoped variable si.
 ;
 ; CHECK: Relocations [
-; CHECK:   Section (1) .text {
+; CHECK:   Section (2) .rela.text {
 ; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_HA [[SYM2:[^ ]+]]
 ; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_LO [[SYM2]]
 ; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_LO [[SYM2]]

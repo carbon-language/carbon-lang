@@ -18,7 +18,7 @@ foo2:
     .quad    bar2
 
 // CHECK:      Relocations [
-// CHECK-NEXT:   Section ({{[0-9]+}}) zed {
+// CHECK-NEXT:   Section ({{[0-9]+}}) .relazed {
 // CHECK-NEXT:     0x1 R_X86_64_PLT32 bar 0xFFFFFFFFFFFFFFFC
 // CHECK-NEXT:     0x5 R_X86_64_64 bar2 0x0
 // CHECK-NEXT:   }

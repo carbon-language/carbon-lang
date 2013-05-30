@@ -11,7 +11,7 @@ define i32 @check_extern() {
 }
 
 ; CHECK: Relocations [
-; CHECK:   Section (1) .text {
+; CHECK:   Section (2) .rela.text {
 ; CHECK:     0x{{[0-9,A-F]+}} R_AARCH64_CALL26 memcpy
 ; CHECK:   }
 ; CHECK: ]

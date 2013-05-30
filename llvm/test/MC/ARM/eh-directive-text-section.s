@@ -61,16 +61,6 @@ func1:
 @ CHECK:     Link: 1
 
 @-------------------------------------------------------------------------------
-@ The first word should be relocated to the code address in .text section.
-@ Besides, since this function is using compact model 0, thus we have to
-@ add an relocation to __aeabi_unwind_cpp_pr0.
-@-------------------------------------------------------------------------------
-@ CHECK:     Relocations [
-@ CHECK:       0x0 R_ARM_PREL31 .text 0x0
-@ CHECK:       0x0 R_ARM_NONE __aeabi_unwind_cpp_pr0 0x0
-@ CHECK:     ]
-
-@-------------------------------------------------------------------------------
 @ The first word should be the offset to .text.  The second word should be
 @ 0xB0B0B080, which means compact model 0 is used (0x80) and the rest of the
 @ word is filled with FINISH opcode (0xB0).
@@ -80,3 +70,13 @@ func1:
 @ CHECK:     )
 @ CHECK:   }
 @ CHECK: ]
+
+@-------------------------------------------------------------------------------
+@ The first word should be relocated to the code address in .text section.
+@ Besides, since this function is using compact model 0, thus we have to
+@ add an relocation to __aeabi_unwind_cpp_pr0.
+@-------------------------------------------------------------------------------
+@ CHECK:     Relocations [
+@ CHECK:       0x0 R_ARM_PREL31 .text 0x0
+@ CHECK:       0x0 R_ARM_NONE __aeabi_unwind_cpp_pr0 0x0
+@ CHECK:     ]

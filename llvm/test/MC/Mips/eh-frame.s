@@ -19,7 +19,7 @@ func:
 	.cfi_startproc
 	.cfi_endproc
 
-// MIPS32: RELOCATION RECORDS FOR [.eh_frame]:
+// MIPS32: RELOCATION RECORDS FOR [.rel.eh_frame]:
 // MIPS32-NEXT: R_MIPS_32
 // MIPS32: Contents of section .eh_frame:
 // MIPS32-NEXT: 0000
@@ -55,7 +55,7 @@ func:
 // MIPS32: 0b
 // FIXME: The instructions are different from the ones produces by gas.
 
-// MIPS32EL: RELOCATION RECORDS FOR [.eh_frame]:
+// MIPS32EL: RELOCATION RECORDS FOR [.rel.eh_frame]:
 // MIPS32EL-NEXT: R_MIPS_32
 // MIPS32EL: Contents of section .eh_frame:
 // MIPS32EL-NEXT: 0000
@@ -91,7 +91,7 @@ func:
 // MIPS32EL: 0b
 // FIXME: The instructions are different from the ones produces by gas.
 
-// MIPS64: RELOCATION RECORDS FOR [.eh_frame]:
+// MIPS64: RELOCATION RECORDS FOR [.rela.eh_frame]:
 // MIPS64-NEXT: R_MIPS_64
 // MIPS64: Contents of section .eh_frame:
 // MIPS64-NEXT: 0000
@@ -129,7 +129,7 @@ func:
 // FIXME: The instructions are different from the ones produces by gas.
 
 
-// MIPS64EL: RELOCATION RECORDS FOR [.eh_frame]:
+// MIPS64EL: RELOCATION RECORDS FOR [.rela.eh_frame]:
 // MIPS64EL-NEXT: R_MIPS_64
 // MIPS64EL: Contents of section .eh_frame:
 // MIPS64EL-NEXT: 0000

@@ -29,7 +29,6 @@ f:
 // CHECK-NEXT:     AddressAlignment: 8
 // CHECK-NEXT:     EntrySize: 0
 // CHECK-NEXT:     Relocations [
-// CHECK-NEXT:       0x20 R_X86_64_PC32 .text 0x0
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     SectionData (
 // CHECK-NEXT:       0000: 14000000 00000000 017A5200 01781001
@@ -52,5 +51,6 @@ f:
 // CHECK-NEXT:     AddressAlignment: 8
 // CHECK-NEXT:     EntrySize: 24
 // CHECK-NEXT:     Relocations [
+// CHECK-NEXT:       0x20 R_X86_64_PC32 .text 0x0
 // CHECK-NEXT:     ]
 // CHECK:        }

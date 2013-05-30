@@ -31,7 +31,7 @@ return:
 
 ; R_MIPS_GPREL32/R_MIPS_64/R_MIPS_NONE
 ; CHECK:      Relocations [
-; CHECK:        Section ({{[a-z0-9]+}}) .rodata {
+; CHECK:        Section ({{[a-z0-9]+}}) .rela.rodata {
 ; CHECK-NEXT:     0x{{[0-9,A-F]+}} R_MIPS_GPREL32/R_MIPS_64/R_MIPS_NONE
 ; CHECK-NEXT:     0x{{[0-9,A-F]+}} R_MIPS_GPREL32/R_MIPS_64/R_MIPS_NONE
 ; CHECK-NEXT:     0x{{[0-9,A-F]+}} R_MIPS_GPREL32/R_MIPS_64/R_MIPS_NONE

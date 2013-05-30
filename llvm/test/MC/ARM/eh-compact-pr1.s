@@ -56,6 +56,11 @@ func1:
 @-------------------------------------------------------------------------------
 @ CHECK:   Section {
 @ CHECK:     Name: .ARM.exidx.TEST1
+@ CHECK:     SectionData (
+@ CHECK:       0000: 00000000 00000000                    |........|
+@ CHECK:     )
+@ CHECK:   }
+@ CHECK: ]
 @-------------------------------------------------------------------------------
 @ The first word should be relocated to .TEST1 section, and the second word
 @ should be relocated to .ARM.extab.TEST1 section.  Besides, there is
@@ -67,8 +72,3 @@ func1:
 @ CHECK:       0x0 R_ARM_NONE __aeabi_unwind_cpp_pr1 0x0
 @ CHECK:       0x4 R_ARM_PREL31 .ARM.extab.TEST1 0x0
 @ CHECK:     ]
-@ CHECK:     SectionData (
-@ CHECK:       0000: 00000000 00000000                    |........|
-@ CHECK:     )
-@ CHECK:   }
-@ CHECK: ]
