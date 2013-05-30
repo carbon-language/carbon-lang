@@ -2669,6 +2669,11 @@ public:
                                     warn, /*instance*/false);
   }
 
+  /// DiagnoseMismatchedMethodsInGlobalPool - This routine goes through list of
+  /// methods in global pool and issues diagnostic on identical selectors which
+  /// have mismathched types.
+  void DiagnoseMismatchedMethodsInGlobalPool();
+  
   /// LookupImplementedMethodInGlobalPool - Returns the method which has an
   /// implementation.
   ObjCMethodDecl *LookupImplementedMethodInGlobalPool(Selector Sel);
