@@ -241,11 +241,9 @@ BreakableBlockComment::BreakableBlockComment(const FormatStyle &Style,
       Lines[i] = Lines[i].substr(Offset);
       LeadingWhitespace[i] += Offset;
     }
-    // Exclude empty lines from the calculation of the left-most column.
-    if (Lines[i].empty())
-      continue;
     IndentAtLineBreak = std::min<int>(IndentAtLineBreak, StartOfLineColumn[i]);
   }
+  IndentAtLineBreak = std::max<unsigned>(IndentAtLineBreak, Decoration.size());
   DEBUG({
     for (size_t i = 0; i < Lines.size(); ++i) {
       llvm::dbgs() << i << " |" << Lines[i] << "| " << LeadingWhitespace[i]
