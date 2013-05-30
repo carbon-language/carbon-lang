@@ -133,12 +133,12 @@ TEST(ToolInvocation, TestMapVirtualFile) {
 
 struct VerifyEndCallback : public SourceFileCallbacks {
   VerifyEndCallback() : BeginCalled(0), EndCalled(0), Matched(false) {}
-  virtual bool BeginSource(CompilerInstance &CI,
-                           StringRef Filename) LLVM_OVERRIDE {
+  virtual bool handleBeginSource(CompilerInstance &CI,
+                                 StringRef Filename) LLVM_OVERRIDE {
     ++BeginCalled;
     return true;
   }
-  virtual void EndSource() {
+  virtual void handleEndSource() {
     ++EndCalled;
   }
   ASTConsumer *newASTConsumer() {

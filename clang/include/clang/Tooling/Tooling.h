@@ -83,13 +83,13 @@ public:
 
   /// \brief Called before a source file is processed by a FrontEndAction.
   /// \see clang::FrontendAction::BeginSourceFileAction
-  virtual bool BeginSource(CompilerInstance &CI, StringRef Filename) {
+  virtual bool handleBeginSource(CompilerInstance &CI, StringRef Filename) {
     return true;
   }
 
   /// \brief Called after a source file is processed by a FrontendAction.
   /// \see clang::FrontendAction::EndSourceFileAction
-  virtual void EndSource() {}
+  virtual void handleEndSource() {}
 };
 
 /// \brief Returns a new FrontendActionFactory for any type that provides an
@@ -265,12 +265,12 @@ inline FrontendActionFactory *newFrontendActionFactory(
         if (!clang::ASTFrontendAction::BeginSourceFileAction(CI, Filename))
           return false;
         if (Callbacks != NULL)
-          return Callbacks->BeginSource(CI, Filename);
+          return Callbacks->handleBeginSource(CI, Filename);
         return true;
       }
       virtual void EndSourceFileAction() LLVM_OVERRIDE {
         if (Callbacks != NULL)
-          Callbacks->EndSource();
+          Callbacks->handleEndSource();
         clang::ASTFrontendAction::EndSourceFileAction();
       }
 
