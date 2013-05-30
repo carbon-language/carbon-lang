@@ -42,7 +42,6 @@ public:
     }
     uint64_t Addr = Value;
     SortedSectionList::const_iterator SI = findSectionContaining(Addr);
-    errs() << " looking for sec " << Addr << "\n";
     if (SI != SortedSections.end()) {
       const SectionRef &S = *SI;
       StringRef Name; S.getName(Name);
