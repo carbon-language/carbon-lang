@@ -762,6 +762,7 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
     return false;
   // Only support subregister destinations when the def is read-undef.
   MachineOperand &DstOperand = CopyMI->getOperand(0);
+  unsigned CopyDstReg = DstOperand.getReg();
   if (DstOperand.getSubReg() && !DstOperand.isUndef())
     return false;
 
@@ -837,12 +838,12 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
       NewMI->getOperand(0).setSubReg(
           TRI->composeSubRegIndices(SrcIdx, DefMI->getOperand(0).getSubReg()));
     }
-  } else if (NewMI->getOperand(0).getReg() != DstReg) {
+  } else if (NewMI->getOperand(0).getReg() != CopyDstReg) {
     // The New instruction may be defining a sub-register of what's actually
     // been asked for. If so it must implicitly define the whole thing.
     assert(TargetRegisterInfo::isPhysicalRegister(DstReg) &&
            "Only expect virtual or physical registers in remat");
-    NewMI->addOperand(MachineOperand::CreateReg(DstReg,
+    NewMI->addOperand(MachineOperand::CreateReg(CopyDstReg,
                                                 true  /*IsDef*/,
                                                 true  /*IsImp*/,
                                                 false /*IsKill*/));
