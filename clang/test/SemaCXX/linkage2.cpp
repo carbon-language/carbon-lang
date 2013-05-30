@@ -186,3 +186,18 @@ namespace test17 {
     g();
   }
 }
+
+namespace test18 {
+  template <typename T> struct foo {
+    template <T *P> static void f() {}
+    static void *g() { return (void *)f<&x>; }
+    static T x;
+  };
+  template <typename T> T foo<T>::x;
+  inline void *f() {
+    struct S {
+    };
+    return foo<S>::g();
+  }
+  void *h() { return f(); }
+}

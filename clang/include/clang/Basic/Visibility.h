@@ -89,6 +89,20 @@ public:
     mergeLinkage(other.getLinkage());
   }
 
+  void mergeExternalVisibility(Linkage L) {
+    Linkage ThisL = getLinkage();
+    if (!isExternallyVisible(L)) {
+      if (ThisL == VisibleNoLinkage)
+        ThisL = NoLinkage;
+      else if (ThisL == ExternalLinkage)
+        ThisL = UniqueExternalLinkage;
+    }
+    setLinkage(ThisL);
+  }
+  void mergeExternalVisibility(LinkageInfo Other) {
+    mergeExternalVisibility(Other.getLinkage());
+  }
+
   /// Merge in the visibility 'newVis'.
   void mergeVisibility(Visibility newVis, bool newExplicit) {
     Visibility oldVis = getVisibility();

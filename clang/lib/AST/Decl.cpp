@@ -471,7 +471,9 @@ static void mergeTemplateLV(LinkageInfo &LV,
   // instantiation with a visibility attribute.
   const TemplateArgumentList &templateArgs = spec->getTemplateArgs();
   LinkageInfo argsLV = getLVForTemplateArgumentList(templateArgs, computation);
-  LV.mergeMaybeWithVisibility(argsLV, considerVisibility);
+  if (considerVisibility)
+    LV.mergeVisibility(argsLV);
+  LV.mergeExternalVisibility(argsLV);
 }
 
 static bool useInlineVisibilityHidden(const NamedDecl *D) {
@@ -863,8 +865,9 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D,
     // Modify the variable's linkage by its type, but ignore the
     // type's visibility unless it's a definition.
     LinkageInfo typeLV = getLVForType(*VD->getType(), computation);
-    LV.mergeMaybeWithVisibility(typeLV,
-                 !LV.isVisibilityExplicit() && !classLV.isVisibilityExplicit());
+    if (!LV.isVisibilityExplicit() && !classLV.isVisibilityExplicit())
+      LV.mergeVisibility(typeLV);
+    LV.mergeExternalVisibility(typeLV);
 
     if (isExplicitMemberSpecialization(VD)) {
       explicitSpecSuppressor = VD;
