@@ -66,7 +66,18 @@ TEST_F(ParserTest, Basic) {
   EXPECT_EQ("c.obj", inputFiles[2].getPath());
 }
 
-TEST_F(ParserTest, NoFileEXtension) {
+TEST_F(ParserTest, WindowsStyleOption) {
+  parse("/subsystem:console", "/out:a.exe", "a.obj", nullptr);
+
+  EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI, info.getSubsystem());
+  EXPECT_EQ("a.exe", info.outputPath());
+
+  const std::vector<LinkerInput> &inputFiles = info.inputFiles();
+  EXPECT_EQ((size_t)1, inputFiles.size());
+  EXPECT_EQ("a.obj", inputFiles[0].getPath());
+}
+
+TEST_F(ParserTest, NoFileExtension) {
   parse("foo", "bar", nullptr);
 
   EXPECT_EQ("foo.exe", info.outputPath());
