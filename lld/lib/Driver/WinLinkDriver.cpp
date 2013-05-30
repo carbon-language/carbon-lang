@@ -74,18 +74,19 @@ llvm::COFF::WindowsSubsystem strToWinSubsystem(std::string str) {
 }
 
 // Add ".obj" extension if the given path name has no file extension.
-StringRef canonicalizeInputFileName(StringRef path) {
+std::string canonicalizeInputFileName(std::string path) {
   if (llvm::sys::path::extension(path).empty())
-    return path.str() + ".obj";
+    return path.append(".obj");
   return path;
 }
 
 // Replace a file extension with ".exe". If the given file has no
 // extension, just add ".exe".
-StringRef getDefaultOutputFileName(StringRef path) {
+std::string getDefaultOutputFileName(std::string path) {
   StringRef ext = llvm::sys::path::extension(path);
-  StringRef filename = ext.empty() ? path : path.drop_back(ext.size());
-  return filename.str() + ".exe";
+  if (!ext.empty())
+    path.erase(path.size() - ext.size());
+  return path.append(".exe");
 }
 
 } // namespace
