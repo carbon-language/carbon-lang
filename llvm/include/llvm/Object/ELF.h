@@ -1486,8 +1486,7 @@ ELFObjectFile<ELFT>::getRelocatedSection(DataRefImpl Sec) const {
   if (sh_type != ELF::SHT_RELA && sh_type != ELF::SHT_REL)
     return end_sections();
 
-  unsigned SecIndex = S->sh_info;
-  assert(SecIndex != 0);
+  assert(S->sh_info != 0);
   const Elf_Shdr *R = getSection(S->sh_info);
   DataRefImpl D;
   D.p = reinterpret_cast<uintptr_t>(R);
