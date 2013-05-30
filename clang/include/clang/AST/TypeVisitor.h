@@ -24,7 +24,7 @@ namespace clang {
 
 /// \brief An operation on a type.
 ///
-/// \tparam ImpClass Class implementing the operation. Must be inherited from
+/// \tparam ImplClass Class implementing the operation. Must be inherited from
 ///         TypeVisitor.
 /// \tparam RetTy %Type of result produced by the operation.
 ///
@@ -48,15 +48,15 @@ namespace clang {
 ///
 /// Actual treatment is made by methods of the derived class, TypeVisitor only
 /// dispatches call to the appropriate method. If the implementation class
-/// \c ImpClass provides specific action for some type, say
+/// \c ImplClass provides specific action for some type, say
 /// \c ConstantArrayType, it should define method
 /// <tt>VisitConstantArrayType(const ConstantArrayType*)</tt>. Otherwise
 /// \c TypeVisitor dispatches call to the method that handles parent type. In
 /// this example handlers are tried in the sequence:
 ///
-/// \li <tt>ImpClass::VisitConstantArrayType(const ConstantArrayType*)</tt>
-/// \li <tt>ImpClass::VisitArrayType(const ArrayType*)</tt>
-/// \li <tt>ImpClass::VisitType(const Type*)</tt>
+/// \li <tt>ImplClass::VisitConstantArrayType(const ConstantArrayType*)</tt>
+/// \li <tt>ImplClass::VisitArrayType(const ArrayType*)</tt>
+/// \li <tt>ImplClass::VisitType(const Type*)</tt>
 /// \li <tt>TypeVisitor::VisitType(const Type*)</tt>
 ///
 /// The first function of this sequence that is defined will handle object of
