@@ -283,7 +283,7 @@ executed, two important global variables are predefined:
  discover and run tests in the test suite.  Generally this will be a builtin test
  format available from the *lit.formats* module.
 
- **test_src_root** The filesystem path to the test suite root.  For out-of-dir
+ **test_source_root** The filesystem path to the test suite root.  For out-of-dir
  builds this is the directory that will be scanned for tests.
 
  **test_exec_root** For out-of-dir builds, the path to the test suite root inside
@@ -320,7 +320,7 @@ TEST DISCOVERY
 ~~~~~~~~~~~~~~
 
 Once test suites are located, :program:`lit` recursively traverses the source
-directory (following *test_src_root*) looking for tests.  When :program:`lit`
+directory (following *test_source_root*) looking for tests.  When :program:`lit`
 enters a sub-directory, it first checks to see if a nested test suite is
 defined in that directory.  If so, it loads that test suite recursively,
 otherwise it instantiates a local test config for the directory (see
