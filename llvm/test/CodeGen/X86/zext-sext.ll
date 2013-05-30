@@ -33,9 +33,9 @@ entry:
   %tmp11 = sext i32 %tmp4 to i64
   %tmp12 = add i64 %tmp11, 5089792279245435153
 
-; CHECK:      addl	$2138875574, %e[[REGISTER_zext:[a-z]+]]
-; CHECK-NEXT: movslq	%e[[REGISTER_zext]], [[REGISTER_tmp:%[a-z]+]]
-; CHECK:      movq	[[REGISTER_tmp]], [[REGISTER_sext:%[a-z]+]]
+; CHECK:      addl	$2138875574, %e[[REGISTER_zext:[a-z0-9]+]]
+; CHECK-NEXT: movslq	%e[[REGISTER_zext]], [[REGISTER_tmp:%r[a-z0-9]+]]
+; CHECK:      movq	[[REGISTER_tmp]], [[REGISTER_sext:%r[a-z0-9]+]]
 ; CHECK-NEXT: subq	%r[[REGISTER_zext]], [[REGISTER_sext]]
 
   %tmp13 = sub i64 %tmp12, 2138875574
