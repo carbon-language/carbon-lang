@@ -153,3 +153,15 @@ define <8 x i8> @test12a(<8 x i8> %tmp6, <8 x i8> %tmp2) nounwind {
   ret <8 x i8> %tmp3
 }
 
+define <2 x i8> @test13(i8 %x1, i8 %x2) {
+; CHECK: @test13
+; CHECK-NEXT: insertelement {{.*}} undef, i8 %x1, i32 1
+; CHECK-NEXT: insertelement {{.*}} i8 %x2, i32 0
+; CHECK-NEXT: add {{.*}} <i8 7, i8 5>
+; CHECK-NEXT: ret
+  %A = insertelement <2 x i8> undef, i8 %x1, i32 0
+  %B = insertelement <2 x i8> %A, i8 %x2, i32 1
+  %C = add <2 x i8> %B, <i8 5, i8 7>
+  %D = shufflevector <2 x i8> %C, <2 x i8> undef, <2 x i32> <i32 1, i32 0>
+  ret <2 x i8> %D
+}
