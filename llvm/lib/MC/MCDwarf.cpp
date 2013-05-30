@@ -1438,8 +1438,7 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
                                bool UsingCFI,
                                bool IsEH) {
   MCContext &Context = Streamer.getContext();
-  MCObjectFileInfo *MOFI =
-    const_cast<MCObjectFileInfo*>(Context.getObjectFileInfo());
+  const MCObjectFileInfo *MOFI = Context.getObjectFileInfo();
   FrameEmitterImpl Emitter(UsingCFI, IsEH);
   ArrayRef<MCDwarfFrameInfo> FrameArray = Streamer.getFrameInfos();
 
@@ -1458,8 +1457,9 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
     }
   }
 
-  const MCSection &Section = IsEH ? *MOFI->getEHFrameSection() :
-                                    *MOFI->getDwarfFrameSection();
+  const MCSection &Section =
+    IsEH ? *const_cast<MCObjectFileInfo*>(MOFI)->getEHFrameSection() :
+           *MOFI->getDwarfFrameSection();
   Streamer.SwitchSection(&Section);
   MCSymbol *SectionStart = Context.CreateTempSymbol();
   Streamer.EmitLabel(SectionStart);
