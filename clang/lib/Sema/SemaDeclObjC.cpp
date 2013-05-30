@@ -2310,7 +2310,7 @@ void Sema::DiagnoseMismatchedMethodsInGlobalPool() {
     // first, instance methods
     ObjCMethodList &InstMethList = b->second.first;
     HelperToDiagnoseMismatchedMethodsInGlobalPool(*this, InstMethList);
-    // second, instance methods
+    // second, class methods
     ObjCMethodList &ClsMethList = b->second.second;
     HelperToDiagnoseMismatchedMethodsInGlobalPool(*this, ClsMethList);
   }
