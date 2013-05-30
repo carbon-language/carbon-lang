@@ -343,7 +343,6 @@ struct Elf_Rel_Base<ELFType<TargetEndianness, MaxAlign, true>, false> {
     // by a 32 bit big endian number.
     return (t << 32) | ((t >> 8) & 0xff000000) | ((t >> 24) & 0x00ff0000) |
       ((t >> 40) & 0x0000ff00) | ((t >> 56) & 0x000000ff);
-    return r_info;
   }
   void setRInfo(uint64_t R) {
     // FIXME: Add mips64el support.
