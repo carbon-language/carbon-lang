@@ -316,6 +316,7 @@ void BreakableBlockComment::insertBreak(unsigned LineIndex, unsigned TailOffset,
   unsigned BreakOffsetInToken =
       Text.data() - Tok.TokenText.data() + Split.first;
   unsigned CharsToRemove = Split.second;
+  assert(IndentAtLineBreak >= Decoration.size());
   Whitespaces.breakToken(Tok, BreakOffsetInToken, CharsToRemove, "", Prefix,
                          InPPDirective, IndentAtLineBreak - Decoration.size());
 }
@@ -347,6 +348,7 @@ BreakableBlockComment::replaceWhitespaceBefore(unsigned LineIndex,
   unsigned WhitespaceOffsetInToken =
       Lines[LineIndex].data() - Tok.TokenText.data() -
       LeadingWhitespace[LineIndex];
+  assert(StartOfLineColumn[LineIndex] >= Prefix.size());
   Whitespaces.breakToken(
       Tok, WhitespaceOffsetInToken, LeadingWhitespace[LineIndex], "", Prefix,
       InPPDirective, StartOfLineColumn[LineIndex] - Prefix.size());
