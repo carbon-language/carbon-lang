@@ -83,7 +83,7 @@ def formatRange(r, style):
 def main():
   parser = argparse.ArgumentParser(description=
                                    'Reformat changed lines in diff')
-  parser.add_argument('-p', default=1,
+  parser.add_argument('-p', default=0,
                       help='strip the smallest prefix containing P slashes')
   parser.add_argument('-style',
                       help='formatting style to apply (LLVM, Google, Chromium)')
