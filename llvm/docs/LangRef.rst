@@ -2911,7 +2911,7 @@ The '``llvm.used``' Global Variable
 -----------------------------------
 
 The ``@llvm.used`` global is an array which has
- :ref:`appending linkage <linkage_appending>`. This array contains a list of
+:ref:`appending linkage <linkage_appending>`. This array contains a list of
 pointers to global variables, functions and aliases which may optionally have a
 pointer cast formed of bitcast or getelementptr. For example, a legal
 use of it is:
