@@ -2680,8 +2680,10 @@ determined automatically.
 '``llvm.vectorizer.width``' Metadata
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This metadata forces the loop vectorizer to widen scalar values to a vector
-width of ``N`` rather than computing the width using a cost model.
+This metadata sets the target width of the vectorizer to ``N``. Without
+this metadata, the vectorizer will choose a width automatically.
+Regardless of this metadata, the vectorizer will only vectorize loops if
+it believes it is valid to do so.
 
 The first operand is the string ``llvm.vectorizer.width`` and the second
 operand is an integer specifying the width. For example:
