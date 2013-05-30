@@ -627,23 +627,29 @@ ObjCMethodDecl *ObjCMethodDecl::getNextRedeclaration() {
 
   Decl *CtxD = cast<Decl>(getDeclContext());
 
-  if (ObjCInterfaceDecl *IFD = dyn_cast<ObjCInterfaceDecl>(CtxD)) {
-    if (ObjCImplementationDecl *ImplD = Ctx.getObjCImplementation(IFD))
-      Redecl = ImplD->getMethod(getSelector(), isInstanceMethod());
+  if (!CtxD->isInvalidDecl()) {
+    if (ObjCInterfaceDecl *IFD = dyn_cast<ObjCInterfaceDecl>(CtxD)) {
+      if (ObjCImplementationDecl *ImplD = Ctx.getObjCImplementation(IFD))
+        if (!ImplD->isInvalidDecl())
+          Redecl = ImplD->getMethod(getSelector(), isInstanceMethod());
 
-  } else if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(CtxD)) {
-    if (ObjCCategoryImplDecl *ImplD = Ctx.getObjCImplementation(CD))
-      Redecl = ImplD->getMethod(getSelector(), isInstanceMethod());
+    } else if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(CtxD)) {
+      if (ObjCCategoryImplDecl *ImplD = Ctx.getObjCImplementation(CD))
+        if (!ImplD->isInvalidDecl())
+          Redecl = ImplD->getMethod(getSelector(), isInstanceMethod());
 
-  } else if (ObjCImplementationDecl *ImplD =
-               dyn_cast<ObjCImplementationDecl>(CtxD)) {
-    if (ObjCInterfaceDecl *IFD = ImplD->getClassInterface())
-      Redecl = IFD->getMethod(getSelector(), isInstanceMethod());
+    } else if (ObjCImplementationDecl *ImplD =
+                 dyn_cast<ObjCImplementationDecl>(CtxD)) {
+      if (ObjCInterfaceDecl *IFD = ImplD->getClassInterface())
+        if (!IFD->isInvalidDecl())
+          Redecl = IFD->getMethod(getSelector(), isInstanceMethod());
 
-  } else if (ObjCCategoryImplDecl *CImplD =
-               dyn_cast<ObjCCategoryImplDecl>(CtxD)) {
-    if (ObjCCategoryDecl *CatD = CImplD->getCategoryDecl())
-      Redecl = CatD->getMethod(getSelector(), isInstanceMethod());
+    } else if (ObjCCategoryImplDecl *CImplD =
+                 dyn_cast<ObjCCategoryImplDecl>(CtxD)) {
+      if (ObjCCategoryDecl *CatD = CImplD->getCategoryDecl())
+        if (!CatD->isInvalidDecl())
+          Redecl = CatD->getMethod(getSelector(), isInstanceMethod());
+    }
   }
 
   if (!Redecl && isRedeclaration()) {

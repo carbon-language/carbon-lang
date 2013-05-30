@@ -935,6 +935,7 @@ Decl *Sema::ActOnStartCategoryImplementation(
         << CatName;
       Diag(CatIDecl->getImplementation()->getLocation(),
            diag::note_previous_definition);
+      CDecl->setInvalidDecl();
     } else {
       CatIDecl->setImplementation(CDecl);
       // Warn on implementating category of deprecated class under 
@@ -1056,6 +1057,7 @@ Decl *Sema::ActOnStartClassImplementation(
     Diag(ClassLoc, diag::err_dup_implementation_class) << ClassName;
     Diag(IDecl->getImplementation()->getLocation(),
          diag::note_previous_definition);
+    IMPDecl->setInvalidDecl();
   } else { // add it to the list.
     IDecl->setImplementation(IMPDecl);
     PushOnScopeChains(IMPDecl, TUScope);
