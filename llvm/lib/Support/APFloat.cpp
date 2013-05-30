@@ -685,6 +685,67 @@ APFloat::isDenormal() const {
 }
 
 bool
+APFloat::isSmallest() const {
+  // The smallest number by magnitude in our format will be the smallest
+  // denormal, i.e. the floating point normal with exponent being minimum
+  // exponent and significand bitwise equal to 1 (i.e. with MSB equal to 0).
+  return isNormal() && exponent == semantics->minExponent &&
+    significandMSB() == 0;
+}
+
+bool APFloat::isSignificandAllOnes() const {
+  // Test if the significand excluding the integral bit is all ones. This allows
+  // us to test for binade boundaries.
+  const integerPart *Parts = significandParts();
+  const unsigned PartCount = partCount();
+  for (unsigned i = 0; i < PartCount - 1; i++)
+    if (~Parts[i])
+      return false;
+
+  // Set the unused high bits to all ones when we compare.
+  const unsigned NumHighBits =
+    PartCount*integerPartWidth - semantics->precision + 1;
+  assert(NumHighBits <= integerPartWidth && "Can not have more high bits to "
+         "fill than integerPartWidth");
+  const integerPart HighBitFill =
+    ~integerPart(0) << (integerPartWidth - NumHighBits);
+  if (~(Parts[PartCount - 1] | HighBitFill))
+    return false;
+
+  return true;
+}
+
+bool APFloat::isSignificandAllZeros() const {
+  // Test if the significand excluding the integral bit is all zeros. This
+  // allows us to test for binade boundaries.
+  const integerPart *Parts = significandParts();
+  const unsigned PartCount = partCount();
+
+  for (unsigned i = 0; i < PartCount - 1; i++)
+    if (Parts[i])
+      return false;
+
+  const unsigned NumHighBits =
+    PartCount*integerPartWidth - semantics->precision + 1;
+  assert(NumHighBits <= integerPartWidth && "Can not have more high bits to "
+         "clear than integerPartWidth");
+  const integerPart HighBitMask = ~integerPart(0) >> NumHighBits;
+
+  if (Parts[PartCount - 1] & HighBitMask)
+    return false;
+
+  return true;
+}
+
+bool
+APFloat::isLargest() const {
+  // The largest number by magnitude in our format will be the floating point
+  // number with maximum exponent and with significand that is all ones.
+  return isNormal() && exponent == semantics->maxExponent
+    && isSignificandAllOnes();
+}
+
+bool
 APFloat::bitwiseIsEqual(const APFloat &rhs) const {
   if (this == &rhs)
     return true;
@@ -3236,42 +3297,60 @@ APFloat::getAllOnesValue(unsigned BitWidth, bool isIEEE)
   }
 }
 
-APFloat APFloat::getLargest(const fltSemantics &Sem, bool Negative) {
-  APFloat Val(Sem, fcNormal, Negative);
-
+/// Make this number the largest magnitude normal number in the given
+/// semantics.
+void APFloat::makeLargest(bool Negative) {
   // We want (in interchange format):
   //   sign = {Negative}
   //   exponent = 1..10
   //   significand = 1..1
+  category = fcNormal;
+  sign = Negative;
+  exponent = semantics->maxExponent;
 
-  Val.exponent = Sem.maxExponent; // unbiased
+  // Use memset to set all but the highest integerPart to all ones.
+  integerPart *significand = significandParts();
+  unsigned PartCount = partCount();
+  memset(significand, 0xFF, sizeof(integerPart)*(PartCount - 1));
 
-  // 1-initialize all bits....
-  Val.zeroSignificand();
-  integerPart *significand = Val.significandParts();
-  unsigned N = partCountForBits(Sem.precision);
-  for (unsigned i = 0; i != N; ++i)
-    significand[i] = ~((integerPart) 0);
-
-  // ...and then clear the top bits for internal consistency.
-  if (Sem.precision % integerPartWidth != 0)
-    significand[N-1] &=
-      (((integerPart) 1) << (Sem.precision % integerPartWidth)) - 1;
-
-  return Val;
+  // Set the high integerPart especially setting all unused top bits for
+  // internal consistency.
+  const unsigned NumUnusedHighBits =
+    PartCount*integerPartWidth - semantics->precision;
+  significand[PartCount - 1] = ~integerPart(0) >> NumUnusedHighBits;
 }
 
-APFloat APFloat::getSmallest(const fltSemantics &Sem, bool Negative) {
-  APFloat Val(Sem, fcNormal, Negative);
-
+/// Make this number the smallest magnitude denormal number in the given
+/// semantics.
+void APFloat::makeSmallest(bool Negative) {
   // We want (in interchange format):
   //   sign = {Negative}
   //   exponent = 0..0
   //   significand = 0..01
+  category = fcNormal;
+  sign = Negative;
+  exponent = semantics->minExponent;
+  APInt::tcSet(significandParts(), 1, partCount());
+}
 
-  Val.exponent = Sem.minExponent; // unbiased
-  Val.zeroSignificand();
-  Val.significandParts()[0] = 1;
+
+APFloat APFloat::getLargest(const fltSemantics &Sem, bool Negative) {
+  // We want (in interchange format):
+  //   sign = {Negative}
+  //   exponent = 1..10
+  //   significand = 1..1
+  APFloat Val(Sem, uninitialized);
+  Val.makeLargest(Negative);
+  return Val;
+}
+
+APFloat APFloat::getSmallest(const fltSemantics &Sem, bool Negative) {
+  // We want (in interchange format):
+  //   sign = {Negative}
+  //   exponent = 0..0
+  //   significand = 0..01
+  APFloat Val(Sem, uninitialized);
+  Val.makeSmallest(Negative);
   return Val;
 }
 
@@ -3614,4 +3693,133 @@ bool APFloat::getExactInverse(APFloat *inv) const {
     *inv = reciprocal;
 
   return true;
+}
+
+bool APFloat::isSignaling() const {
+  if (!isNaN())
+    return false;
+
+  // IEEE-754R 2008 6.2.1: A signaling NaN bit string should be encoded with the
+  // first bit of the trailing significand being 0.
+  return !APInt::tcExtractBit(significandParts(), semantics->precision - 2);
+}
+
+/// IEEE-754R 2008 5.3.1: nextUp/nextDown.
+///
+/// *NOTE* since nextDown(x) = -nextUp(-x), we only implement nextUp with
+/// appropriate sign switching before/after the computation.
+APFloat::opStatus APFloat::next(bool nextDown) {
+  // If we are performing nextDown, swap sign so we have -x.
+  if (nextDown)
+    changeSign();
+
+  // Compute nextUp(x)
+  opStatus result = opOK;
+
+  // Handle each float category separately.
+  switch (category) {
+  case fcInfinity:
+    // nextUp(+inf) = +inf
+    if (!isNegative())
+      break;
+    // nextUp(-inf) = -getLargest()
+    makeLargest(true);
+    break;
+  case fcNaN:
+    // IEEE-754R 2008 6.2 Par 2: nextUp(sNaN) = qNaN. Set Invalid flag.
+    // IEEE-754R 2008 6.2: nextUp(qNaN) = qNaN. Must be identity so we do not
+    //                     change the payload.
+    if (isSignaling()) {
+      result = opInvalidOp;
+      // For consistency, propogate the sign of the sNaN to the qNaN.
+      makeNaN(false, isNegative(), 0);
+    }
+    break;
+  case fcZero:
+    // nextUp(pm 0) = +getSmallest()
+    makeSmallest(false);
+    break;
+  case fcNormal:
+    // nextUp(-getSmallest()) = -0
+    if (isSmallest() && isNegative()) {
+      APInt::tcSet(significandParts(), 0, partCount());
+      category = fcZero;
+      exponent = 0;
+      break;
+    }
+
+    // nextUp(getLargest()) == INFINITY
+    if (isLargest() && !isNegative()) {
+      APInt::tcSet(significandParts(), 0, partCount());
+      category = fcInfinity;
+      exponent = semantics->maxExponent + 1;
+      break;
+    }
+
+    // nextUp(normal) == normal + inc.
+    if (isNegative()) {
+      // If we are negative, we need to decrement the significand.
+
+      // We only cross a binade boundary that requires adjusting the exponent
+      // if:
+      //   1. exponent != semantics->minExponent. This implies we are not in the
+      //   smallest binade or are dealing with denormals.
+      //   2. Our significand excluding the integral bit is all zeros.
+      bool WillCrossBinadeBoundary =
+        exponent != semantics->minExponent && isSignificandAllZeros();
+
+      // Decrement the significand.
+      //
+      // We always do this since:
+      //   1. If we are dealing with a non binade decrement, by definition we
+      //   just decrement the significand.
+      //   2. If we are dealing with a normal -> normal binade decrement, since
+      //   we have an explicit integral bit the fact that all bits but the
+      //   integral bit are zero implies that subtracting one will yield a
+      //   significand with 0 integral bit and 1 in all other spots. Thus we
+      //   must just adjust the exponent and set the integral bit to 1.
+      //   3. If we are dealing with a normal -> denormal binade decrement,
+      //   since we set the integral bit to 0 when we represent denormals, we
+      //   just decrement the significand.
+      integerPart *Parts = significandParts();
+      APInt::tcDecrement(Parts, partCount());
+
+      if (WillCrossBinadeBoundary) {
+        // Our result is a normal number. Do the following:
+        // 1. Set the integral bit to 1.
+        // 2. Decrement the exponent.
+        APInt::tcSetBit(Parts, semantics->precision - 1);
+        exponent--;
+      }
+    } else {
+      // If we are positive, we need to increment the significand.
+
+      // We only cross a binade boundary that requires adjusting the exponent if
+      // the input is not a denormal and all of said input's significand bits
+      // are set. If all of said conditions are true: clear the significand, set
+      // the integral bit to 1, and increment the exponent. If we have a
+      // denormal always increment since moving denormals and the numbers in the
+      // smallest normal binade have the same exponent in our representation.
+      bool WillCrossBinadeBoundary = !isDenormal() && isSignificandAllOnes();
+
+      if (WillCrossBinadeBoundary) {
+        integerPart *Parts = significandParts();
+        APInt::tcSet(Parts, 0, partCount());
+        APInt::tcSetBit(Parts, semantics->precision - 1);
+        assert(exponent != semantics->maxExponent &&
+               "We can not increment an exponent beyond the maxExponent allowed"
+               " by the given floating point semantics.");
+        exponent++;
+      } else {
+        incrementSignificand();
+      }
+    }
+    break;
+  }
+
+  // If we are performing nextDown, swap sign so we have -nextUp(-x)
+  if (nextDown)
+    changeSign();
+
+  return result;
 }

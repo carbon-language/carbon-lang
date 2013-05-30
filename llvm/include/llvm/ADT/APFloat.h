@@ -81,6 +81,11 @@
     although not really meaningful, and preserved in non-conversion
     operations.  The exponent is implicitly all 1 bits.
 
+    APFloat does not provide any exception handling beyond default exception
+    handling. We represent Signaling NaNs via IEEE-754R 2008 6.2.1 should clause
+    by encoding Signaling NaNs with the first bit of its trailing significand as
+    0.
+
     TODO
     ====
 
@@ -273,6 +278,8 @@ public:
   opStatus mod(const APFloat &, roundingMode);
   opStatus fusedMultiplyAdd(const APFloat &, const APFloat &, roundingMode);
   opStatus roundToIntegral(roundingMode);
+  /// IEEE-754R 5.3.1: nextUp/nextDown.
+  opStatus next(bool nextDown);
 
   /* Sign operations.  */
   void changeSign();
@@ -325,6 +332,8 @@ public:
   bool isPosZero() const { return isZero() && !isNegative(); }
   bool isNegZero() const { return isZero() && isNegative(); }
   bool isDenormal() const;
+  /// IEEE-754R 5.7.2: isSignaling. Returns true if this is a signaling NaN.
+  bool isSignaling() const;
 
   APFloat &operator=(const APFloat &);
 
@@ -386,6 +395,10 @@ private:
   unsigned int significandLSB() const;
   unsigned int significandMSB() const;
   void zeroSignificand();
+  /// Return true if the significand excluding the integral bit is all ones.
+  bool isSignificandAllOnes() const;
+  /// Return true if the significand excluding the integral bit is all zeros.
+  bool isSignificandAllZeros() const;
 
   /* Arithmetic on special values.  */
   opStatus addOrSubtractSpecials(const APFloat &, bool subtract);
@@ -393,10 +406,26 @@ private:
   opStatus multiplySpecials(const APFloat &);
   opStatus modSpecials(const APFloat &);
 
-  /* Miscellany.  */
+  /* Set to special values. */
+  void makeLargest(bool Neg = false);
+  void makeSmallest(bool Neg = false);
+  void makeNaN(bool SNaN = false, bool Neg = false, const APInt *fill = 0);
   static APFloat makeNaN(const fltSemantics &Sem, bool SNaN, bool Negative,
                          const APInt *fill);
-  void makeNaN(bool SNaN = false, bool Neg = false, const APInt *fill = 0);
+
+  /// \name Special value queries only useful internally to APFloat
+  /// @{
+
+  /// Returns true if and only if the number has the smallest possible non-zero
+  /// magnitude in the current semantics.
+  bool isSmallest() const;
+  /// Returns true if and only if the number has the largest possible finite
+  /// magnitude in the current semantics.
+  bool isLargest() const;
+
+  /// @}
+
+  /* Miscellany.  */
   opStatus normalize(roundingMode, lostFraction);
   opStatus addOrSubtract(const APFloat &, roundingMode, bool subtract);
   cmpResult compareAbsoluteValue(const APFloat &) const;

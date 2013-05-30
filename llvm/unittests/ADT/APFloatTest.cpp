@@ -33,6 +33,426 @@ static std::string convertToString(double d, unsigned Prec, unsigned Pad) {
 
 namespace {
 
+TEST(APFloatTest, isSignaling) {
+  // We test qNaN, -qNaN, +sNaN, -sNaN with and without payloads. *NOTE* The
+  // positive/negative distinction is included only since the getQNaN/getSNaN
+  // API provides the option.
+  APInt payload = APInt::getOneBitSet(4, 2);
+  EXPECT_FALSE(APFloat::getQNaN(APFloat::IEEEsingle, false).isSignaling());
+  EXPECT_FALSE(APFloat::getQNaN(APFloat::IEEEsingle, true).isSignaling());
+  EXPECT_FALSE(APFloat::getQNaN(APFloat::IEEEsingle, false, &payload).isSignaling());
+  EXPECT_FALSE(APFloat::getQNaN(APFloat::IEEEsingle, true, &payload).isSignaling());
+  EXPECT_TRUE(APFloat::getSNaN(APFloat::IEEEsingle, false).isSignaling());
+  EXPECT_TRUE(APFloat::getSNaN(APFloat::IEEEsingle, true).isSignaling());
+  EXPECT_TRUE(APFloat::getSNaN(APFloat::IEEEsingle, false, &payload).isSignaling());
+  EXPECT_TRUE(APFloat::getSNaN(APFloat::IEEEsingle, true, &payload).isSignaling());
+}
+
+TEST(APFloatTest, next) {
+
+  APFloat test(APFloat::IEEEquad, APFloat::uninitialized);
+  APFloat expected(APFloat::IEEEquad, APFloat::uninitialized);
+
+  // 1. Test Special Cases Values.
+  //
+  // Test all special values for nextUp and nextDown perscribed by IEEE-754R
+  // 2008. These are:
+  //   1.  +inf
+  //   2.  -inf
+  //   3.  getLargest()
+  //   4.  -getLargest()
+  //   5.  getSmallest()
+  //   6.  -getSmallest()
+  //   7.  qNaN
+  //   8.  sNaN
+  //   9.  +0
+  //   10. -0
+
+  // nextUp(+inf) = +inf.
+  test = APFloat::getInf(APFloat::IEEEquad, false);
+  expected = APFloat::getInf(APFloat::IEEEquad, false);
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(test.isInfinity());
+  EXPECT_TRUE(!test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(+inf) = -nextUp(-inf) = -(-getLargest()) = getLargest()
+  test = APFloat::getInf(APFloat::IEEEquad, false);
+  expected = APFloat::getLargest(APFloat::IEEEquad, false);
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(!test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextUp(-inf) = -getLargest()
+  test = APFloat::getInf(APFloat::IEEEquad, true);
+  expected = APFloat::getLargest(APFloat::IEEEquad, true);
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(-inf) = -nextUp(+inf) = -(+inf) = -inf.
+  test = APFloat::getInf(APFloat::IEEEquad, true);
+  expected = APFloat::getInf(APFloat::IEEEquad, true);
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(test.isInfinity() && test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextUp(getLargest()) = +inf
+  test = APFloat::getLargest(APFloat::IEEEquad, false);
+  expected = APFloat::getInf(APFloat::IEEEquad, false);
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(test.isInfinity() && !test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(getLargest()) = -nextUp(-getLargest())
+  //                        = -(-getLargest() + inc)
+  //                        = getLargest() - inc.
+  test = APFloat::getLargest(APFloat::IEEEquad, false);
+  expected = APFloat(APFloat::IEEEquad,
+                     "0x1.fffffffffffffffffffffffffffep+16383");
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(!test.isInfinity() && !test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextUp(-getLargest()) = -getLargest() + inc.
+  test = APFloat::getLargest(APFloat::IEEEquad, true);
+  expected = APFloat(APFloat::IEEEquad,
+                     "-0x1.fffffffffffffffffffffffffffep+16383");
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(-getLargest()) = -nextUp(getLargest()) = -(inf) = -inf.
+  test = APFloat::getLargest(APFloat::IEEEquad, true);
+  expected = APFloat::getInf(APFloat::IEEEquad, true);
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(test.isInfinity() && test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextUp(getSmallest()) = getSmallest() + inc.
+  test = APFloat(APFloat::IEEEquad, "0x0.0000000000000000000000000001p-16382");
+  expected = APFloat(APFloat::IEEEquad,
+                     "0x0.0000000000000000000000000002p-16382");
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(getSmallest()) = -nextUp(-getSmallest()) = -(-0) = +0.
+  test = APFloat(APFloat::IEEEquad, "0x0.0000000000000000000000000001p-16382");
+  expected = APFloat::getZero(APFloat::IEEEquad, false);
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(test.isZero() && !test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextUp(-getSmallest()) = -0.
+  test = APFloat(APFloat::IEEEquad, "-0x0.0000000000000000000000000001p-16382");
+  expected = APFloat::getZero(APFloat::IEEEquad, true);
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(test.isZero() && test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(-getSmallest()) = -nextUp(getSmallest()) = -getSmallest() - inc.
+  test = APFloat(APFloat::IEEEquad, "-0x0.0000000000000000000000000001p-16382");
+  expected = APFloat(APFloat::IEEEquad,
+                     "-0x0.0000000000000000000000000002p-16382");
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextUp(qNaN) = qNaN
+  test = APFloat::getQNaN(APFloat::IEEEquad, false);
+  expected = APFloat::getQNaN(APFloat::IEEEquad, false);
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(qNaN) = qNaN
+  test = APFloat::getQNaN(APFloat::IEEEquad, false);
+  expected = APFloat::getQNaN(APFloat::IEEEquad, false);
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextUp(sNaN) = qNaN
+  test = APFloat::getSNaN(APFloat::IEEEquad, false);
+  expected = APFloat::getQNaN(APFloat::IEEEquad, false);
+  EXPECT_EQ(test.next(false), APFloat::opInvalidOp);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(sNaN) = qNaN
+  test = APFloat::getSNaN(APFloat::IEEEquad, false);
+  expected = APFloat::getQNaN(APFloat::IEEEquad, false);
+  EXPECT_EQ(test.next(true), APFloat::opInvalidOp);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextUp(+0) = +getSmallest()
+  test = APFloat::getZero(APFloat::IEEEquad, false);
+  expected = APFloat::getSmallest(APFloat::IEEEquad, false);
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(+0) = -nextUp(-0) = -getSmallest()
+  test = APFloat::getZero(APFloat::IEEEquad, false);
+  expected = APFloat::getSmallest(APFloat::IEEEquad, true);
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextUp(-0) = +getSmallest()
+  test = APFloat::getZero(APFloat::IEEEquad, true);
+  expected = APFloat::getSmallest(APFloat::IEEEquad, false);
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(-0) = -nextUp(0) = -getSmallest()
+  test = APFloat::getZero(APFloat::IEEEquad, true);
+  expected = APFloat::getSmallest(APFloat::IEEEquad, true);
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // 2. Binade Boundary Tests.
+
+  // 2a. Test denormal <-> normal binade boundaries.
+  //     * nextUp(+Largest Denormal) -> +Smallest Normal.
+  //     * nextDown(-Largest Denormal) -> -Smallest Normal.
+  //     * nextUp(-Smallest Normal) -> -Largest Denormal.
+  //     * nextDown(+Smallest Normal) -> +Largest Denormal.
+
+  // nextUp(+Largest Denormal) -> +Smallest Normal.
+  test = APFloat(APFloat::IEEEquad, "0x0.ffffffffffffffffffffffffffffp-16382");
+  expected = APFloat(APFloat::IEEEquad,
+                     "0x1.0000000000000000000000000000p-16382");
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_FALSE(test.isDenormal());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(-Largest Denormal) -> -Smallest Normal.
+  test = APFloat(APFloat::IEEEquad,
+                 "-0x0.ffffffffffffffffffffffffffffp-16382");
+  expected = APFloat(APFloat::IEEEquad,
+                     "-0x1.0000000000000000000000000000p-16382");
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_FALSE(test.isDenormal());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextUp(-Smallest Normal) -> -LargestDenormal.
+  test = APFloat(APFloat::IEEEquad,
+                 "-0x1.0000000000000000000000000000p-16382");
+  expected = APFloat(APFloat::IEEEquad,
+                     "-0x0.ffffffffffffffffffffffffffffp-16382");
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(test.isDenormal());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(+Smallest Normal) -> +Largest Denormal.
+  test = APFloat(APFloat::IEEEquad,
+                 "+0x1.0000000000000000000000000000p-16382");
+  expected = APFloat(APFloat::IEEEquad,
+                     "+0x0.ffffffffffffffffffffffffffffp-16382");
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(test.isDenormal());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // 2b. Test normal <-> normal binade boundaries.
+  //     * nextUp(-Normal Binade Boundary) -> -Normal Binade Boundary + 1.
+  //     * nextDown(+Normal Binade Boundary) -> +Normal Binade Boundary - 1.
+  //     * nextUp(+Normal Binade Boundary - 1) -> +Normal Binade Boundary.
+  //     * nextDown(-Normal Binade Boundary + 1) -> -Normal Binade Boundary.
+
+  // nextUp(-Normal Binade Boundary) -> -Normal Binade Boundary + 1.
+  test = APFloat(APFloat::IEEEquad, "-0x1p+1");
+  expected = APFloat(APFloat::IEEEquad,
+                     "-0x1.ffffffffffffffffffffffffffffp+0");
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(+Normal Binade Boundary) -> +Normal Binade Boundary - 1.
+  test = APFloat(APFloat::IEEEquad, "0x1p+1");
+  expected = APFloat(APFloat::IEEEquad, "0x1.ffffffffffffffffffffffffffffp+0");
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextUp(+Normal Binade Boundary - 1) -> +Normal Binade Boundary.
+  test = APFloat(APFloat::IEEEquad, "0x1.ffffffffffffffffffffffffffffp+0");
+  expected = APFloat(APFloat::IEEEquad, "0x1p+1");
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(-Normal Binade Boundary + 1) -> -Normal Binade Boundary.
+  test = APFloat(APFloat::IEEEquad, "-0x1.ffffffffffffffffffffffffffffp+0");
+  expected = APFloat(APFloat::IEEEquad, "-0x1p+1");
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // 2c. Test using next at binade boundaries with a direction away from the
+  // binade boundary. Away from denormal <-> normal boundaries.
+  //
+  // This is to make sure that even though we are at a binade boundary, since
+  // we are rounding away, we do not trigger the binade boundary code. Thus we
+  // test:
+  //   * nextUp(-Largest Denormal) -> -Largest Denormal + inc.
+  //   * nextDown(+Largest Denormal) -> +Largest Denormal - inc.
+  //   * nextUp(+Smallest Normal) -> +Smallest Normal + inc.
+  //   * nextDown(-Smallest Normal) -> -Smallest Normal - inc.
+
+  // nextUp(-Largest Denormal) -> -Largest Denormal + inc.
+  test = APFloat(APFloat::IEEEquad, "-0x0.ffffffffffffffffffffffffffffp-16382");
+  expected = APFloat(APFloat::IEEEquad,
+                     "-0x0.fffffffffffffffffffffffffffep-16382");
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(test.isDenormal());
+  EXPECT_TRUE(test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(+Largest Denormal) -> +Largest Denormal - inc.
+  test = APFloat(APFloat::IEEEquad, "0x0.ffffffffffffffffffffffffffffp-16382");
+  expected = APFloat(APFloat::IEEEquad,
+                     "0x0.fffffffffffffffffffffffffffep-16382");
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(test.isDenormal());
+  EXPECT_TRUE(!test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextUp(+Smallest Normal) -> +Smallest Normal + inc.
+  test = APFloat(APFloat::IEEEquad, "0x1.0000000000000000000000000000p-16382");
+  expected = APFloat(APFloat::IEEEquad,
+                     "0x1.0000000000000000000000000001p-16382");
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(!test.isDenormal());
+  EXPECT_TRUE(!test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(-Smallest Normal) -> -Smallest Normal - inc.
+  test = APFloat(APFloat::IEEEquad, "-0x1.0000000000000000000000000000p-16382");
+  expected = APFloat(APFloat::IEEEquad,
+                     "-0x1.0000000000000000000000000001p-16382");
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(!test.isDenormal());
+  EXPECT_TRUE(test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // 2d. Test values which cause our exponent to go to min exponent. This
+  // is to ensure that guards in the code to check for min exponent
+  // trigger properly.
+  //     * nextUp(-0x1p-16381) -> -0x1.ffffffffffffffffffffffffffffp-16382
+  //     * nextDown(-0x1.ffffffffffffffffffffffffffffp-16382) ->
+  //         -0x1p-16381
+  //     * nextUp(0x1.ffffffffffffffffffffffffffffp-16382) -> 0x1p-16382
+  //     * nextDown(0x1p-16382) -> 0x1.ffffffffffffffffffffffffffffp-16382
+
+  // nextUp(-0x1p-16381) -> -0x1.ffffffffffffffffffffffffffffp-16382
+  test = APFloat(APFloat::IEEEquad, "-0x1p-16381");
+  expected = APFloat(APFloat::IEEEquad,
+                     "-0x1.ffffffffffffffffffffffffffffp-16382");
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(-0x1.ffffffffffffffffffffffffffffp-16382) ->
+  //         -0x1p-16381
+  test = APFloat(APFloat::IEEEquad, "-0x1.ffffffffffffffffffffffffffffp-16382");
+  expected = APFloat(APFloat::IEEEquad, "-0x1p-16381");
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextUp(0x1.ffffffffffffffffffffffffffffp-16382) -> 0x1p-16381
+  test = APFloat(APFloat::IEEEquad, "0x1.ffffffffffffffffffffffffffffp-16382");
+  expected = APFloat(APFloat::IEEEquad, "0x1p-16381");
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(0x1p-16381) -> 0x1.ffffffffffffffffffffffffffffp-16382
+  test = APFloat(APFloat::IEEEquad, "0x1p-16381");
+  expected = APFloat(APFloat::IEEEquad,
+                     "0x1.ffffffffffffffffffffffffffffp-16382");
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // 3. Now we test both denormal/normal computation which will not cause us
+  // to go across binade boundaries. Specifically we test:
+  //   * nextUp(+Denormal) -> +Denormal.
+  //   * nextDown(+Denormal) -> +Denormal.
+  //   * nextUp(-Denormal) -> -Denormal.
+  //   * nextDown(-Denormal) -> -Denormal.
+  //   * nextUp(+Normal) -> +Normal.
+  //   * nextDown(+Normal) -> +Normal.
+  //   * nextUp(-Normal) -> -Normal.
+  //   * nextDown(-Normal) -> -Normal.
+
+  // nextUp(+Denormal) -> +Denormal.
+  test = APFloat(APFloat::IEEEquad,
+                 "0x0.ffffffffffffffffffffffff000cp-16382");
+  expected = APFloat(APFloat::IEEEquad,
+                 "0x0.ffffffffffffffffffffffff000dp-16382");
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(test.isDenormal());
+  EXPECT_TRUE(!test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(+Denormal) -> +Denormal.
+  test = APFloat(APFloat::IEEEquad,
+                 "0x0.ffffffffffffffffffffffff000cp-16382");
+  expected = APFloat(APFloat::IEEEquad,
+                 "0x0.ffffffffffffffffffffffff000bp-16382");
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(test.isDenormal());
+  EXPECT_TRUE(!test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextUp(-Denormal) -> -Denormal.
+  test = APFloat(APFloat::IEEEquad,
+                 "-0x0.ffffffffffffffffffffffff000cp-16382");
+  expected = APFloat(APFloat::IEEEquad,
+                 "-0x0.ffffffffffffffffffffffff000bp-16382");
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(test.isDenormal());
+  EXPECT_TRUE(test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(-Denormal) -> -Denormal
+  test = APFloat(APFloat::IEEEquad,
+                 "-0x0.ffffffffffffffffffffffff000cp-16382");
+  expected = APFloat(APFloat::IEEEquad,
+                 "-0x0.ffffffffffffffffffffffff000dp-16382");
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(test.isDenormal());
+  EXPECT_TRUE(test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextUp(+Normal) -> +Normal.
+  test = APFloat(APFloat::IEEEquad,
+                 "0x1.ffffffffffffffffffffffff000cp-16000");
+  expected = APFloat(APFloat::IEEEquad,
+                 "0x1.ffffffffffffffffffffffff000dp-16000");
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(!test.isDenormal());
+  EXPECT_TRUE(!test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(+Normal) -> +Normal.
+  test = APFloat(APFloat::IEEEquad,
+                 "0x1.ffffffffffffffffffffffff000cp-16000");
+  expected = APFloat(APFloat::IEEEquad,
+                 "0x1.ffffffffffffffffffffffff000bp-16000");
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(!test.isDenormal());
+  EXPECT_TRUE(!test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextUp(-Normal) -> -Normal.
+  test = APFloat(APFloat::IEEEquad,
+                 "-0x1.ffffffffffffffffffffffff000cp-16000");
+  expected = APFloat(APFloat::IEEEquad,
+                 "-0x1.ffffffffffffffffffffffff000bp-16000");
+  EXPECT_EQ(test.next(false), APFloat::opOK);
+  EXPECT_TRUE(!test.isDenormal());
+  EXPECT_TRUE(test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+
+  // nextDown(-Normal) -> -Normal.
+  test = APFloat(APFloat::IEEEquad,
+                 "-0x1.ffffffffffffffffffffffff000cp-16000");
+  expected = APFloat(APFloat::IEEEquad,
+                 "-0x1.ffffffffffffffffffffffff000dp-16000");
+  EXPECT_EQ(test.next(true), APFloat::opOK);
+  EXPECT_TRUE(!test.isDenormal());
+  EXPECT_TRUE(test.isNegative());
+  EXPECT_TRUE(test.bitwiseIsEqual(expected));
+}
+
 TEST(APFloatTest, FMA) {
   APFloat::roundingMode rdmd = APFloat::rmNearestTiesToEven;
 
