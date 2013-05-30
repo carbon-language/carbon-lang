@@ -1,5 +1,5 @@
 # This implements the "diagnose-unwind" command, usually installed in the debug session like
-#   script import lldb.macosx
+#   command script import lldb.diagnose
 # it is used when lldb's backtrace fails -- it collects and prints information about the stack frames,
 # and tries an alternate unwind algorithm, that will help to understand why lldb's unwind algorithm did
 # not succeed.
