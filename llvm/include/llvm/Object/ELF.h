@@ -53,8 +53,8 @@ inline std::pair<unsigned char, unsigned char>
 getElfArchType(MemoryBuffer *Object) {
   if (Object->getBufferSize() < ELF::EI_NIDENT)
     return std::make_pair((uint8_t)ELF::ELFCLASSNONE,(uint8_t)ELF::ELFDATANONE);
-  return std::make_pair( (uint8_t)Object->getBufferStart()[ELF::EI_CLASS]
-                       , (uint8_t)Object->getBufferStart()[ELF::EI_DATA]);
+  return std::make_pair((uint8_t) Object->getBufferStart()[ELF::EI_CLASS],
+                        (uint8_t) Object->getBufferStart()[ELF::EI_DATA]);
 }
 
 // Templates to choose Elf_Addr and Elf_Off depending on is64Bits.
@@ -316,8 +316,8 @@ struct Elf_Rel_Base;
 template<endianness TargetEndianness, std::size_t MaxAlign>
 struct Elf_Rel_Base<ELFType<TargetEndianness, MaxAlign, false>, false> {
   LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, false)
-  Elf_Addr      r_offset; // Location (file byte offset, or program virtual addr)
-  Elf_Word      r_info;  // Symbol table index and type of relocation to apply
+  Elf_Addr r_offset;     // Location (file byte offset, or program virtual addr)
+  Elf_Word r_info;       // Symbol table index and type of relocation to apply
 
   uint32_t getRInfo(bool isMips64EL) const {
     assert(!isMips64EL);
@@ -331,15 +331,15 @@ struct Elf_Rel_Base<ELFType<TargetEndianness, MaxAlign, false>, false> {
 template<endianness TargetEndianness, std::size_t MaxAlign>
 struct Elf_Rel_Base<ELFType<TargetEndianness, MaxAlign, true>, false> {
   LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, true)
-  Elf_Addr      r_offset; // Location (file byte offset, or program virtual addr)
-  Elf_Xword     r_info;   // Symbol table index and type of relocation to apply
+  Elf_Addr  r_offset; // Location (file byte offset, or program virtual addr)
+  Elf_Xword r_info;   // Symbol table index and type of relocation to apply
 
   uint64_t getRInfo(bool isMips64EL) const {
     uint64_t t = r_info;
     if (!isMips64EL)
       return t;
-    // Mip64 little endian has a "special" encoding of r_info. Instead of one
-    // 64 bit little endian number, it is a little ending 32 bit number followed
+    // Mips64 little endian has a "special" encoding of r_info. Instead of one
+    // 64 bit little endian number, it is a little endian 32 bit number followed
     // by a 32 bit big endian number.
     return (t << 32) | ((t >> 8) & 0xff000000) | ((t >> 24) & 0x00ff0000) |
       ((t >> 40) & 0x0000ff00) | ((t >> 56) & 0x000000ff);
@@ -353,9 +353,9 @@ struct Elf_Rel_Base<ELFType<TargetEndianness, MaxAlign, true>, false> {
 template<endianness TargetEndianness, std::size_t MaxAlign>
 struct Elf_Rel_Base<ELFType<TargetEndianness, MaxAlign, false>, true> {
   LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, false)
-  Elf_Addr      r_offset; // Location (file byte offset, or program virtual addr)
-  Elf_Word      r_info;   // Symbol table index and type of relocation to apply
-  Elf_Sword     r_addend; // Compute value for relocatable field by adding this
+  Elf_Addr  r_offset; // Location (file byte offset, or program virtual addr)
+  Elf_Word  r_info;   // Symbol table index and type of relocation to apply
+  Elf_Sword r_addend; // Compute value for relocatable field by adding this
 
   uint32_t getRInfo(bool isMips64EL) const {
     assert(!isMips64EL);
@@ -369,13 +369,13 @@ struct Elf_Rel_Base<ELFType<TargetEndianness, MaxAlign, false>, true> {
 template<endianness TargetEndianness, std::size_t MaxAlign>
 struct Elf_Rel_Base<ELFType<TargetEndianness, MaxAlign, true>, true> {
   LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, true)
-  Elf_Addr      r_offset; // Location (file byte offset, or program virtual addr)
-  Elf_Xword     r_info;   // Symbol table index and type of relocation to apply
-  Elf_Sxword    r_addend; // Compute value for relocatable field by adding this.
+  Elf_Addr   r_offset; // Location (file byte offset, or program virtual addr)
+  Elf_Xword  r_info;   // Symbol table index and type of relocation to apply
+  Elf_Sxword r_addend; // Compute value for relocatable field by adding this.
 
   uint64_t getRInfo(bool isMips64EL) const {
-    // Mip64 little endian has a "special" encoding of r_info. Instead of one
-    // 64 bit little endian number, it is a little ending 32 bit number followed
+    // Mips64 little endian has a "special" encoding of r_info. Instead of one
+    // 64 bit little endian number, it is a little endian 32 bit number followed
     // by a 32 bit big endian number.
     uint64_t t = r_info;
     if (!isMips64EL)
@@ -657,7 +657,7 @@ public:
   void VerifyStrTab(const Elf_Shdr *sh) const;
 
 protected:
-  const Elf_Sym  *getSymbol(DataRefImpl Symb) const; // FIXME: Should be private?
+  const Elf_Sym *getSymbol(DataRefImpl Symb) const; // FIXME: Should be private?
   void            validateSymbol(DataRefImpl Symb) const;
   StringRef       getRelocationTypeName(uint32_t Type) const;
 
@@ -681,7 +681,8 @@ protected:
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const;
   virtual error_code getSymbolFlags(DataRefImpl Symb, uint32_t &Res) const;
-  virtual error_code getSymbolType(DataRefImpl Symb, SymbolRef::Type &Res) const;
+  virtual error_code getSymbolType(DataRefImpl Symb,
+                                   SymbolRef::Type &Res) const;
   virtual error_code getSymbolSection(DataRefImpl Symb,
                                       section_iterator &Res) const;
   virtual error_code getSymbolValue(DataRefImpl Symb, uint64_t &Val) const;
@@ -1520,7 +1521,8 @@ error_code ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel,
     }
   }
   DataRefImpl SymbolData;
-  IndexMap_t::const_iterator it = SymbolTableSectionsIndexMap.find(sec->sh_link);
+  IndexMap_t::const_iterator it =
+      SymbolTableSectionsIndexMap.find(sec->sh_link);
   if (it == SymbolTableSectionsIndexMap.end())
     report_fatal_error("Relocation symbol table not found!");
   SymbolData.d.a = symbolIdx;
