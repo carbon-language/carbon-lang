@@ -1,10 +1,12 @@
 // RUN: %clang_cc1 -triple i686-pc-win32 -fms-compatibility %s -emit-llvm -o - | FileCheck %s
 
+#include <stddef.h>
+
 struct arbitrary_t {} arbitrary;
-void *operator new(unsigned int size, arbitrary_t);
+void *operator new(size_t size, arbitrary_t);
 
 struct arbitrary2_t {} arbitrary2;
-void *operator new[](unsigned int size, arbitrary2_t);
+void *operator new[](size_t size, arbitrary2_t);
 
 namespace PR13164 {
   void f() {
@@ -15,7 +17,7 @@ namespace PR13164 {
   }
 
   struct S {
-    void *operator new[](unsigned int size, arbitrary_t);
+    void *operator new[](size_t size, arbitrary_t);
   };
 
   void g() {
@@ -26,7 +28,7 @@ namespace PR13164 {
   }
 
   struct T {
-    void *operator new(unsigned int size, arbitrary2_t);
+    void *operator new(size_t size, arbitrary2_t);
   };
 
   void h() {
