@@ -1794,10 +1794,10 @@ DwarfUnits::computeSizeAndOffset(DIE *Die, unsigned Offset) {
 // Compute the size and offset of all the DIEs.
 void DwarfUnits::computeSizeAndOffsets() {
   // Offset from the beginning of debug info section.
-  unsigned AccuOffset = 0;
+  unsigned SecOffset = 0;
   for (SmallVectorImpl<CompileUnit *>::iterator I = CUs.begin(),
          E = CUs.end(); I != E; ++I) {
-    (*I)->setDebugInfoOffset(AccuOffset);
+    (*I)->setDebugInfoOffset(SecOffset);
     unsigned Offset =
       sizeof(int32_t) + // Length of Compilation Unit Info
       sizeof(int16_t) + // DWARF version number
@@ -1805,7 +1805,7 @@ void DwarfUnits::computeSizeAndOffsets() {
       sizeof(int8_t);   // Pointer Size (in bytes)
 
     unsigned EndOffset = computeSizeAndOffset((*I)->getCUDie(), Offset);
-    AccuOffset += EndOffset;
+    SecOffset += EndOffset;
   }
 }
 
