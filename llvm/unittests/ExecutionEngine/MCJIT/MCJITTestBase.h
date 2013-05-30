@@ -193,7 +193,6 @@ protected:
   CodeModel::Model CodeModel;
   StringRef MArch;
   SmallVector<std::string, 1> MAttrs;
-  OwningPtr<TargetMachine> TM;
   OwningPtr<ExecutionEngine> TheJIT;
   IRBuilder<> Builder;
   RTDyldMemoryManager *MM;
