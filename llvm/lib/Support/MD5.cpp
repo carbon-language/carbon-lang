@@ -183,7 +183,7 @@ MD5::MD5()
     : a(0x67452301), b(0xefcdab89), c(0x98badcfe), d(0x10325476), hi(0), lo(0) {
 }
 
-/// Incrementally add the bytes in Data to the hash.
+/// Incrementally add the bytes in \p Data to the hash.
 void MD5::update(ArrayRef<uint8_t> Data) {
   MD5_u32plus saved_lo;
   unsigned long used, free;
