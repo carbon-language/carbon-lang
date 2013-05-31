@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Object/COFFYaml.h"
+#include "llvm/Object/COFFYAML.h"
 
 #define ECase(X) IO.enumCase(Value, #X, COFF::X);
 namespace llvm {
