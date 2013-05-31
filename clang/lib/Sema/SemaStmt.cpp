@@ -1220,75 +1220,75 @@ namespace {
     llvm::SmallPtrSet<VarDecl*, 8> &Decls;
     SmallVector<SourceRange, 10> &Ranges;
     bool Simple;
-public:
-  typedef EvaluatedExprVisitor<DeclExtractor> Inherited;
+  public:
+    typedef EvaluatedExprVisitor<DeclExtractor> Inherited;
 
-  DeclExtractor(Sema &S, llvm::SmallPtrSet<VarDecl*, 8> &Decls,
-                SmallVector<SourceRange, 10> &Ranges) :
-      Inherited(S.Context),
-      Decls(Decls),
-      Ranges(Ranges),
-      Simple(true) {}
+    DeclExtractor(Sema &S, llvm::SmallPtrSet<VarDecl*, 8> &Decls,
+                  SmallVector<SourceRange, 10> &Ranges) :
+        Inherited(S.Context),
+        Decls(Decls),
+        Ranges(Ranges),
+        Simple(true) {}
 
-  bool isSimple() { return Simple; }
+    bool isSimple() { return Simple; }
 
-  // Replaces the method in EvaluatedExprVisitor.
-  void VisitMemberExpr(MemberExpr* E) {
-    Simple = false;
-  }
-
-  // Any Stmt not whitelisted will cause the condition to be marked complex.
-  void VisitStmt(Stmt *S) {
-    Simple = false;
-  }
-
-  void VisitBinaryOperator(BinaryOperator *E) {
-    Visit(E->getLHS());
-    Visit(E->getRHS());
-  }
-
-  void VisitCastExpr(CastExpr *E) {
-    Visit(E->getSubExpr());
-  }
-
-  void VisitUnaryOperator(UnaryOperator *E) {
-    // Skip checking conditionals with derefernces.
-    if (E->getOpcode() == UO_Deref)
+    // Replaces the method in EvaluatedExprVisitor.
+    void VisitMemberExpr(MemberExpr* E) {
       Simple = false;
-    else
+    }
+
+    // Any Stmt not whitelisted will cause the condition to be marked complex.
+    void VisitStmt(Stmt *S) {
+      Simple = false;
+    }
+
+    void VisitBinaryOperator(BinaryOperator *E) {
+      Visit(E->getLHS());
+      Visit(E->getRHS());
+    }
+
+    void VisitCastExpr(CastExpr *E) {
       Visit(E->getSubExpr());
-  }
+    }
 
-  void VisitConditionalOperator(ConditionalOperator *E) {
-    Visit(E->getCond());
-    Visit(E->getTrueExpr());
-    Visit(E->getFalseExpr());
-  }
+    void VisitUnaryOperator(UnaryOperator *E) {
+      // Skip checking conditionals with derefernces.
+      if (E->getOpcode() == UO_Deref)
+        Simple = false;
+      else
+        Visit(E->getSubExpr());
+    }
 
-  void VisitParenExpr(ParenExpr *E) {
-    Visit(E->getSubExpr());
-  }
+    void VisitConditionalOperator(ConditionalOperator *E) {
+      Visit(E->getCond());
+      Visit(E->getTrueExpr());
+      Visit(E->getFalseExpr());
+    }
 
-  void VisitBinaryConditionalOperator(BinaryConditionalOperator *E) {
-    Visit(E->getOpaqueValue()->getSourceExpr());
-    Visit(E->getFalseExpr());
-  }
+    void VisitParenExpr(ParenExpr *E) {
+      Visit(E->getSubExpr());
+    }
 
-  void VisitIntegerLiteral(IntegerLiteral *E) { }
-  void VisitFloatingLiteral(FloatingLiteral *E) { }
-  void VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E) { }
-  void VisitCharacterLiteral(CharacterLiteral *E) { }
-  void VisitGNUNullExpr(GNUNullExpr *E) { }
-  void VisitImaginaryLiteral(ImaginaryLiteral *E) { }
+    void VisitBinaryConditionalOperator(BinaryConditionalOperator *E) {
+      Visit(E->getOpaqueValue()->getSourceExpr());
+      Visit(E->getFalseExpr());
+    }
 
-  void VisitDeclRefExpr(DeclRefExpr *E) {
-    VarDecl *VD = dyn_cast<VarDecl>(E->getDecl());
-    if (!VD) return;
+    void VisitIntegerLiteral(IntegerLiteral *E) { }
+    void VisitFloatingLiteral(FloatingLiteral *E) { }
+    void VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E) { }
+    void VisitCharacterLiteral(CharacterLiteral *E) { }
+    void VisitGNUNullExpr(GNUNullExpr *E) { }
+    void VisitImaginaryLiteral(ImaginaryLiteral *E) { }
 
-    Ranges.push_back(E->getSourceRange());
+    void VisitDeclRefExpr(DeclRefExpr *E) {
+      VarDecl *VD = dyn_cast<VarDecl>(E->getDecl());
+      if (!VD) return;
 
-    Decls.insert(VD);
-  }
+      Ranges.push_back(E->getSourceRange());
+
+      Decls.insert(VD);
+    }
 
   }; // end class DeclExtractor
 
@@ -1298,66 +1298,67 @@ public:
     llvm::SmallPtrSet<VarDecl*, 8> &Decls;
     bool FoundDecl;
 
-public:
-  typedef EvaluatedExprVisitor<DeclMatcher> Inherited;
+  public:
+    typedef EvaluatedExprVisitor<DeclMatcher> Inherited;
 
-  DeclMatcher(Sema &S, llvm::SmallPtrSet<VarDecl*, 8> &Decls, Stmt *Statement) :
-      Inherited(S.Context), Decls(Decls), FoundDecl(false) {
-    if (!Statement) return;
+    DeclMatcher(Sema &S, llvm::SmallPtrSet<VarDecl*, 8> &Decls,
+                Stmt *Statement) :
+        Inherited(S.Context), Decls(Decls), FoundDecl(false) {
+      if (!Statement) return;
 
-    Visit(Statement);
-  }
-
-  void VisitReturnStmt(ReturnStmt *S) {
-    FoundDecl = true;
-  }
-
-  void VisitBreakStmt(BreakStmt *S) {
-    FoundDecl = true;
-  }
-
-  void VisitGotoStmt(GotoStmt *S) {
-    FoundDecl = true;
-  }
-
-  void VisitCastExpr(CastExpr *E) {
-    if (E->getCastKind() == CK_LValueToRValue)
-      CheckLValueToRValueCast(E->getSubExpr());
-    else
-      Visit(E->getSubExpr());
-  }
-
-  void CheckLValueToRValueCast(Expr *E) {
-    E = E->IgnoreParenImpCasts();
-
-    if (isa<DeclRefExpr>(E)) {
-      return;
+      Visit(Statement);
     }
 
-    if (ConditionalOperator *CO = dyn_cast<ConditionalOperator>(E)) {
-      Visit(CO->getCond());
-      CheckLValueToRValueCast(CO->getTrueExpr());
-      CheckLValueToRValueCast(CO->getFalseExpr());
-      return;
+    void VisitReturnStmt(ReturnStmt *S) {
+      FoundDecl = true;
     }
 
-    if (BinaryConditionalOperator *BCO =
-            dyn_cast<BinaryConditionalOperator>(E)) {
-      CheckLValueToRValueCast(BCO->getOpaqueValue()->getSourceExpr());
-      CheckLValueToRValueCast(BCO->getFalseExpr());
-      return;
+    void VisitBreakStmt(BreakStmt *S) {
+      FoundDecl = true;
     }
 
-    Visit(E);
-  }
+    void VisitGotoStmt(GotoStmt *S) {
+      FoundDecl = true;
+    }
 
-  void VisitDeclRefExpr(DeclRefExpr *E) {
-    if (VarDecl *VD = dyn_cast<VarDecl>(E->getDecl()))
-      if (Decls.count(VD))
-        FoundDecl = true;
-  }
+    void VisitCastExpr(CastExpr *E) {
+      if (E->getCastKind() == CK_LValueToRValue)
+        CheckLValueToRValueCast(E->getSubExpr());
+      else
+        Visit(E->getSubExpr());
+    }
 
-  bool FoundDeclInUse() { return FoundDecl; }
+    void CheckLValueToRValueCast(Expr *E) {
+      E = E->IgnoreParenImpCasts();
+
+      if (isa<DeclRefExpr>(E)) {
+        return;
+      }
+
+      if (ConditionalOperator *CO = dyn_cast<ConditionalOperator>(E)) {
+        Visit(CO->getCond());
+        CheckLValueToRValueCast(CO->getTrueExpr());
+        CheckLValueToRValueCast(CO->getFalseExpr());
+        return;
+      }
+
+      if (BinaryConditionalOperator *BCO =
+              dyn_cast<BinaryConditionalOperator>(E)) {
+        CheckLValueToRValueCast(BCO->getOpaqueValue()->getSourceExpr());
+        CheckLValueToRValueCast(BCO->getFalseExpr());
+        return;
+      }
+
+      Visit(E);
+    }
+
+    void VisitDeclRefExpr(DeclRefExpr *E) {
+      if (VarDecl *VD = dyn_cast<VarDecl>(E->getDecl()))
+        if (Decls.count(VD))
+          FoundDecl = true;
+    }
+
+    bool FoundDeclInUse() { return FoundDecl; }
 
   };  // end class DeclMatcher
 
