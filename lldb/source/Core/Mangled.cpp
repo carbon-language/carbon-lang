@@ -30,6 +30,7 @@
 #include "lldb/Core/Timer.h"
 #include <ctype.h>
 #include <string.h>
+#include <cstdlib>
 
 using namespace lldb_private;
 
