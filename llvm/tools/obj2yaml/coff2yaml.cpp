@@ -13,8 +13,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/YAMLTraits.h"
 
-#include <list>
-
 using namespace llvm;
 
 namespace {
@@ -25,8 +23,6 @@ class COFFDumper {
   void dumpHeader(const object::coff_file_header *Header);
   void dumpSections(unsigned numSections);
   void dumpSymbols(unsigned numSymbols);
-  StringRef getHexString(ArrayRef<uint8_t> Data);
-  std::list<std::string> Strings;
 
 public:
   COFFDumper(const object::COFFObjectFile &Obj);
@@ -68,7 +64,7 @@ void COFFDumper::dumpSections(unsigned NumSections) {
 
     ArrayRef<uint8_t> sectionData;
     Obj.getSectionContents(Sect, sectionData);
-    Sec.SectionData = getHexString(sectionData);
+    Sec.SectionData = COFFYAML::BinaryRef(sectionData);
 
     std::vector<COFF::relocation> Relocations;
     for (object::relocation_iterator rIter = iter->begin_relocations();
@@ -100,21 +96,9 @@ void COFFDumper::dumpSymbols(unsigned NumSymbols) {
     Sym.Header.Value = Symbol->Value;
     Sym.Header.SectionNumber = Symbol->SectionNumber;
     Sym.Header.NumberOfAuxSymbols = Symbol->NumberOfAuxSymbols;
-    Sym.AuxiliaryData = getHexString(Obj.getSymbolAuxData(Symbol));
+    Sym.AuxiliaryData = COFFYAML::BinaryRef(Obj.getSymbolAuxData(Symbol));
     Symbols.push_back(Sym);
   }
-}
-
-StringRef COFFDumper::getHexString(ArrayRef<uint8_t> Data) {
-  std::string S;
-  for (ArrayRef<uint8_t>::iterator I = Data.begin(), E = Data.end(); I != E;
-       ++I) {
-    uint8_t Byte = *I;
-    S.push_back(hexdigit(Byte >> 4));
-    S.push_back(hexdigit(Byte & 0xf));
-  }
-  Strings.push_back(S);
-  return Strings.back();
 }
 
 COFFYAML::Object &COFFDumper::getYAMLObj() {

@@ -139,8 +139,9 @@ static bool layoutCOFF(COFFParser &CP) {
   for (std::vector<COFFYAML::Section>::iterator i = CP.Obj.Sections.begin(),
                                                 e = CP.Obj.Sections.end();
                                                 i != e; ++i) {
-    if (!i->SectionData.empty()) {
-      i->Header.SizeOfRawData = i->SectionData.size()/2;
+    StringRef SecData = i->SectionData.getHex();
+    if (!SecData.empty()) {
+      i->Header.SizeOfRawData = SecData.size()/2;
       i->Header.PointerToRawData = CurrentSectionDataOffset;
       CurrentSectionDataOffset += i->Header.SizeOfRawData;
       if (!i->Relocations.empty()) {
@@ -163,7 +164,7 @@ static bool layoutCOFF(COFFParser &CP) {
   for (std::vector<COFFYAML::Symbol>::iterator i = CP.Obj.Symbols.begin(),
                                                e = CP.Obj.Symbols.end();
                                                i != e; ++i) {
-    unsigned AuxBytes = i->AuxiliaryData.size() / 2;
+    unsigned AuxBytes = i->AuxiliaryData.getHex().size() / 2;
     if (AuxBytes % COFF::SymbolSize != 0) {
       errs() << "AuxiliaryData size not a multiple of symbol size!\n";
       return false;
@@ -248,8 +249,9 @@ bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
   for (std::vector<COFFYAML::Section>::iterator i = CP.Obj.Sections.begin(),
                                                 e = CP.Obj.Sections.end();
                                                 i != e; ++i) {
-    if (!i->SectionData.empty()) {
-      if (!writeHexData(i->SectionData, OS)) {
+    StringRef SecData = i->SectionData.getHex();
+    if (!SecData.empty()) {
+      if (!writeHexData(SecData, OS)) {
         errs() << "SectionData must be a collection of pairs of hex bytes";
         return false;
       }
@@ -273,8 +275,9 @@ bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
        << binary_le(i->Header.Type)
        << binary_le(i->Header.StorageClass)
        << binary_le(i->Header.NumberOfAuxSymbols);
-    if (!i->AuxiliaryData.empty()) {
-      if (!writeHexData(i->AuxiliaryData, OS)) {
+    StringRef Data = i->AuxiliaryData.getHex();
+    if (!Data.empty()) {
+      if (!writeHexData(Data, OS)) {
         errs() << "AuxiliaryData must be a collection of pairs of hex bytes";
         return false;
       }
