@@ -338,12 +338,15 @@ public:
   /// otherwise.
   unsigned getSubRegIndex(unsigned RegNo, unsigned SubRegNo) const;
 
-  /// \brief Get the bit range covered by a given sub-register index.
-  /// In some cases, for instance non-contiguous synthesized indices,
-  /// there is no meaningful bit range to get, so return true if \p Offset
-  /// and \p Size were set.
-  bool getSubRegIdxCoveredBits(unsigned Idx,
-                               unsigned &Offset, unsigned &Size) const;
+  /// \brief Get the size of the bit range covered by a sub-register index.
+  /// If the index isn't continuous, return the sum of the sizes of its parts.
+  /// If the index is used to access subregisters of different sizes, return -1.
+  unsigned getSubRegIdxSize(unsigned Idx) const;
+
+  /// \brief Get the offset of the bit range covered by a sub-register index.
+  /// If an Offset doesn't make sense (the index isn't continuous, or is used to
+  /// access sub-registers at different offsets), return -1.
+  unsigned getSubRegIdxOffset(unsigned Idx) const;
 
   /// \brief Return the human-readable symbolic target-specific name for the
   /// specified physical register.

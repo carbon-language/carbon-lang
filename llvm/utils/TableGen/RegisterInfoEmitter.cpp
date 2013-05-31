@@ -798,8 +798,8 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   for (ArrayRef<CodeGenSubRegIndex*>::const_iterator
          SRI = SubRegIndices.begin(), SRE = SubRegIndices.end();
          SRI != SRE; ++SRI) {
-    OS << "  { " << (*SRI)->getOffset() << ", "
-                 << (*SRI)->getSize()
+    OS << "  { " << (*SRI)->Offset << ", "
+                 << (*SRI)->Size
        << " },\t// " << (*SRI)->getName() << "\n";
   }
   OS << "};\n\n";

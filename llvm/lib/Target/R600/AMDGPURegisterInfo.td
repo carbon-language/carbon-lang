@@ -14,7 +14,8 @@
 let Namespace = "AMDGPU" in {
 
 foreach Index = 0-15 in {
-  def sub#Index : SubRegIndex;
+  // Indices are used in a variety of ways here, so don't set a size/offset.
+  def sub#Index : SubRegIndex<-1, -1>;
 }
 
 def INDIRECT_BASE_ADDR : Register <"INDIRECT_BASE_ADDR">;

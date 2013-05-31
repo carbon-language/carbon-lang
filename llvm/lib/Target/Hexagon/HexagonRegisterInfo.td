@@ -57,8 +57,8 @@ let Namespace = "Hexagon" in {
     let Aliases = [R];
   }
 
-  def subreg_loreg  : SubRegIndex;
-  def subreg_hireg  : SubRegIndex;
+  def subreg_loreg  : SubRegIndex<32>;
+  def subreg_hireg  : SubRegIndex<32, 32>;
 
   // Integer registers.
   def R0 : Ri< 0, "r0">, DwarfRegNum<[0]>;

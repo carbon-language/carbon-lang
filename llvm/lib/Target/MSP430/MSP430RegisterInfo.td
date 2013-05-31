@@ -43,7 +43,7 @@ def R13B : MSP430Reg<13, "r13">;
 def R14B : MSP430Reg<14, "r14">;
 def R15B : MSP430Reg<15, "r15">;
 
-def subreg_8bit : SubRegIndex { let Namespace = "MSP430"; }
+def subreg_8bit : SubRegIndex<8> { let Namespace = "MSP430"; }
 
 let SubRegIndices = [subreg_8bit] in {
 def PCW  : MSP430RegWithSubregs<0,  "r0",  [PCB]>;

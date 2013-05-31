@@ -11,11 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 let Namespace = "PPC" in {
-def sub_lt : SubRegIndex;
-def sub_gt : SubRegIndex;
-def sub_eq : SubRegIndex;
-def sub_un : SubRegIndex;
-def sub_32 : SubRegIndex;
+def sub_lt : SubRegIndex<1>;
+def sub_gt : SubRegIndex<1, 1>;
+def sub_eq : SubRegIndex<1, 2>;
+def sub_un : SubRegIndex<1, 3>;
+def sub_32 : SubRegIndex<32>;
 }
 
 

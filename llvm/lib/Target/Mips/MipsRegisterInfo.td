@@ -11,16 +11,16 @@
 //  Declarations that describe the MIPS register file
 //===----------------------------------------------------------------------===//
 let Namespace = "Mips" in {
-def sub_fpeven : SubRegIndex;
-def sub_fpodd  : SubRegIndex;
-def sub_32     : SubRegIndex;
-def sub_lo     : SubRegIndex;
-def sub_hi     : SubRegIndex;
-def sub_dsp16_19 : SubRegIndex;
-def sub_dsp20    : SubRegIndex;
-def sub_dsp21    : SubRegIndex;
-def sub_dsp22    : SubRegIndex;
-def sub_dsp23    : SubRegIndex;
+def sub_fpeven : SubRegIndex<32>;
+def sub_fpodd  : SubRegIndex<32, 32>;
+def sub_32     : SubRegIndex<32>;
+def sub_lo     : SubRegIndex<32>;
+def sub_hi     : SubRegIndex<32, 32>;
+def sub_dsp16_19 : SubRegIndex<4, 16>;
+def sub_dsp20    : SubRegIndex<1, 20>;
+def sub_dsp21    : SubRegIndex<1, 21>;
+def sub_dsp22    : SubRegIndex<1, 22>;
+def sub_dsp23    : SubRegIndex<1, 23>;
 }
 
 class Unallocatable {

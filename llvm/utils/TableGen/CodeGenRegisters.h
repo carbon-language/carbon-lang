@@ -37,10 +37,10 @@ namespace llvm {
     Record *const TheDef;
     std::string Name;
     std::string Namespace;
-    uint16_t Size;
-    uint16_t Offset;
 
   public:
+    uint16_t Size;
+    uint16_t Offset;
     const unsigned EnumValue;
     unsigned LaneMask;
 
@@ -54,8 +54,6 @@ namespace llvm {
     const std::string &getName() const { return Name; }
     const std::string &getNamespace() const { return Namespace; }
     std::string getQualifiedName() const;
-    uint16_t getSize() const { return Size; }
-    uint16_t getOffset() const { return Offset; }
 
     // Order CodeGenSubRegIndex pointers by EnumValue.
     struct Less {

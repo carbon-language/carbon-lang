@@ -1092,11 +1092,24 @@ getConcatSubRegIndex(const SmallVector<CodeGenSubRegIndex*, 8> &Parts) {
 
   // None exists, synthesize one.
   std::string Name = Parts.front()->getName();
+  // Determine whether all parts are contiguous.
+  bool isContinuous = true;
+  unsigned Size = Parts.front()->Size;
+  unsigned LastOffset = Parts.front()->Offset;
+  unsigned LastSize = Parts.front()->Size;
   for (unsigned i = 1, e = Parts.size(); i != e; ++i) {
     Name += '_';
     Name += Parts[i]->getName();
+    Size += Parts[i]->Size;
+    if (Parts[i]->Offset != (LastOffset + LastSize))
+      isContinuous = false;
+    LastOffset = Parts[i]->Offset;
+    LastSize = Parts[i]->Size;
   }
-  return Idx = createSubRegIndex(Name, Parts.front()->getNamespace());
+  Idx = createSubRegIndex(Name, Parts.front()->getNamespace());
+  Idx->Size = Size;
+  Idx->Offset = isContinuous ? Parts.front()->Offset : -1;
+  return Idx;
 }
 
 void CodeGenRegBank::computeComposites() {

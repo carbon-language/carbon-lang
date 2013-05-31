@@ -12,15 +12,15 @@
 //===----------------------------------------------------------------------===//
 
 let Namespace = "AArch64" in {
-def sub_128 : SubRegIndex;
-def sub_64 : SubRegIndex;
-def sub_32 : SubRegIndex;
-def sub_16 : SubRegIndex;
-def sub_8  : SubRegIndex;
+def sub_128 : SubRegIndex<128>;
+def sub_64 : SubRegIndex<64>;
+def sub_32 : SubRegIndex<32>;
+def sub_16 : SubRegIndex<16>;
+def sub_8  : SubRegIndex<8>;
 
 // The VPR registers are handled as sub-registers of FPR equivalents, but
 // they're really the same thing. We give this concept a special index.
-def sub_alias : SubRegIndex;
+def sub_alias : SubRegIndex<128>;
 }
 
 // Registers are identified with 5-bit ID numbers.
