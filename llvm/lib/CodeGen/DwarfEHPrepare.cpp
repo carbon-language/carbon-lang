@@ -106,18 +106,15 @@ Value *DwarfEHPrepare::GetExceptionObject(ResumeInst *RI) {
 /// InsertUnwindResumeCalls - Convert the ResumeInsts that are still present
 /// into calls to the appropriate _Unwind_Resume function.
 bool DwarfEHPrepare::InsertUnwindResumeCalls(Function &Fn) {
-  bool UsesNewEH = false;
   SmallVector<ResumeInst*, 16> Resumes;
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
     TerminatorInst *TI = I->getTerminator();
     if (ResumeInst *RI = dyn_cast<ResumeInst>(TI))
       Resumes.push_back(RI);
-    else if (InvokeInst *II = dyn_cast<InvokeInst>(TI))
-      UsesNewEH = II->getUnwindDest()->isLandingPad();
   }
 
   if (Resumes.empty())
-    return UsesNewEH;
+    return false;
 
   // Find the rewind function if we didn't already.
   if (!RewindFunction) {
