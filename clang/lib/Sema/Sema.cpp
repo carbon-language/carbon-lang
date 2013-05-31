@@ -824,6 +824,8 @@ FunctionDecl *Sema::getCurFunctionDecl() {
 
 ObjCMethodDecl *Sema::getCurMethodDecl() {
   DeclContext *DC = getFunctionLevelDeclContext();
+  while (isa<RecordDecl>(DC))
+    DC = DC->getParent();
   return dyn_cast<ObjCMethodDecl>(DC);
 }
 

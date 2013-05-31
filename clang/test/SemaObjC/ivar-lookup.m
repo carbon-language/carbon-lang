@@ -80,3 +80,34 @@ extern struct foo x;
   int IVAR; // expected-error {{instance variable is already declared}}
 }
 @end
+
+// PR5984
+// rdar://14037151
+@interface Radar14037151 {
+  int myStatus;
+}
+- (int) test;
+@end
+
+@implementation Radar14037151
+- (int) test
+{
+  myStatus = 1;     // works
+   __typeof(myStatus) __in;  // works.
+  union U {
+    __typeof(myStatus) __in;  // fails.
+  };
+  struct S {
+    __typeof(myStatus) __in;  // fails.
+    struct S1 {
+      __typeof(myStatus) __in;  // fails.
+      struct S {
+        __typeof(myStatus) __in;  // fails.
+      };
+    };
+  };
+
+  return 0;
+}
+@end
+
