@@ -1,4 +1,4 @@
-//===- lld/unittest/WinLinkDriverTest.cpp ---------------------------------===//
+//===- lld/unittest/GnuLdDriverTest.cpp -----------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief Windows link.exe driver tests.
+/// \brief GNU ld driver tests.
 ///
 //===----------------------------------------------------------------------===//
 
