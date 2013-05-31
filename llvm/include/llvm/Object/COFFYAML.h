@@ -40,21 +40,21 @@ namespace COFFYAML {
   /// string. Using this avoid having to allocate temporary strings.
   /// FIXME: not COFF specific.
   class BinaryRef {
-    ArrayRef<uint8_t> BinaryData;
-    StringRef HexData;
+    ArrayRef<uint8_t> Data;
     bool isBinary;
   public:
-    BinaryRef(ArrayRef<uint8_t> BinaryData)
-        : BinaryData(BinaryData), isBinary(true) {}
-    BinaryRef(StringRef HexData) : HexData(HexData), isBinary(false) {}
+    BinaryRef(ArrayRef<uint8_t> Data) : Data(Data), isBinary(true) {}
+    BinaryRef(StringRef Data)
+        : Data(reinterpret_cast<const uint8_t *>(Data.data()), Data.size()),
+          isBinary(false) {}
     BinaryRef() : isBinary(false) {}
     StringRef getHex() const {
       assert(!isBinary);
-      return HexData;
+      return StringRef(reinterpret_cast<const char*>(Data.data()), Data.size());
     }
     ArrayRef<uint8_t> getBinary() const {
       assert(isBinary);
-      return BinaryData;
+      return Data;
     }
   };
 
