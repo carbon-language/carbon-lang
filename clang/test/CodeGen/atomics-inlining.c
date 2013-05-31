@@ -24,26 +24,26 @@ void test1(void) {
   (void)__atomic_load(&ll1, &ll2, memory_order_seq_cst);
 
 // PPC32: define void @test1
-// PPC32: load atomic i8* @c1 seq_cst
-// PPC32: load atomic i16* @s1 seq_cst
-// PPC32: load atomic i32* @i1 seq_cst
+// PPC32: = load atomic i8* @c1 seq_cst
+// PPC32: = load atomic i16* @s1 seq_cst
+// PPC32: = load atomic i32* @i1 seq_cst
 // PPC32: call void @__atomic_load(i32 8, i8* bitcast (i64* @ll1 to i8*)
 
 // PPC64: define void @test1
-// PPC64: load atomic i8* @c1 seq_cst
-// PPC64: load atomic i16* @s1 seq_cst
-// PPC64: load atomic i32* @i1 seq_cst
-// PPC64: load atomic i64* @ll1 seq_cst
+// PPC64: = load atomic i8* @c1 seq_cst
+// PPC64: = load atomic i16* @s1 seq_cst
+// PPC64: = load atomic i32* @i1 seq_cst
+// PPC64: = load atomic i64* @ll1 seq_cst
 
 // MIPS32: define void @test1
-// MIPS32: load atomic i8* @c1 seq_cst
-// MIPS32: load atomic i16* @s1 seq_cst
-// MIPS32: load atomic i32* @i1 seq_cst
+// MIPS32: = load atomic i8* @c1 seq_cst
+// MIPS32: = load atomic i16* @s1 seq_cst
+// MIPS32: = load atomic i32* @i1 seq_cst
 // MIPS32: call void @__atomic_load(i32 8, i8* bitcast (i64* @ll1 to i8*)
 
 // MIPS64: define void @test1
-// MIPS64: load atomic i8* @c1 seq_cst
-// MIPS64: load atomic i16* @s1 seq_cst
-// MIPS64: load atomic i32* @i1 seq_cst
-// MIPS64: load atomic i64* @ll1 seq_cst
+// MIPS64: = load atomic i8* @c1 seq_cst
+// MIPS64: = load atomic i16* @s1 seq_cst
+// MIPS64: = load atomic i32* @i1 seq_cst
+// MIPS64: = load atomic i64* @ll1 seq_cst
 }
