@@ -436,9 +436,7 @@ void NVPTXAsmPrinter::EmitFunctionEntryLabel() {
 }
 
 void NVPTXAsmPrinter::EmitFunctionBodyStart() {
-  const TargetRegisterInfo &TRI = *TM.getRegisterInfo();
-  unsigned numRegClasses = TRI.getNumRegClasses();
-  VRidGlobal2LocalMap = new std::map<unsigned, unsigned>[numRegClasses + 1];
+  VRegMapping.clear();
   OutStreamer.EmitRawText(StringRef("{\n"));
   setAndEmitFunctionVirtualRegisters(*MF);
 
@@ -450,7 +448,7 @@ void NVPTXAsmPrinter::EmitFunctionBodyStart() {
 
 void NVPTXAsmPrinter::EmitFunctionBodyEnd() {
   OutStreamer.EmitRawText(StringRef("}\n"));
-  delete[] VRidGlobal2LocalMap;
+  VRegMapping.clear();
 }
 
 void NVPTXAsmPrinter::emitKernelFunctionDirectives(const Function &F,
@@ -507,9 +505,8 @@ void NVPTXAsmPrinter::emitKernelFunctionDirectives(const Function &F,
 void NVPTXAsmPrinter::getVirtualRegisterName(unsigned vr, bool isVec,
                                              raw_ostream &O) {
   const TargetRegisterClass *RC = MRI->getRegClass(vr);
-  unsigned id = RC->getID();
 
-  std::map<unsigned, unsigned> &regmap = VRidGlobal2LocalMap[id];
+  DenseMap<unsigned, unsigned> &regmap = VRegMapping[RC];
   unsigned mapped_vr = regmap[vr];
 
   if (!isVec) {
@@ -1709,48 +1706,36 @@ void NVPTXAsmPrinter::setAndEmitFunctionVirtualRegisters(
   for (unsigned i = 0; i < numVRs; i++) {
     unsigned int vr = TRI->index2VirtReg(i);
     const TargetRegisterClass *RC = MRI->getRegClass(vr);
-    std::map<unsigned, unsigned> &regmap = VRidGlobal2LocalMap[RC->getID()];
+    DenseMap<unsigned, unsigned> &regmap = VRegMapping[RC];
     int n = regmap.size();
     regmap.insert(std::make_pair(vr, n + 1));
   }
 
   // Emit register declarations
   // @TODO: Extract out the real register usage
-  O << "\t.reg .pred %p<" << NVPTXNumRegisters << ">;\n";
-  O << "\t.reg .s16 %rc<" << NVPTXNumRegisters << ">;\n";
-  O << "\t.reg .s16 %rs<" << NVPTXNumRegisters << ">;\n";
-  O << "\t.reg .s32 %r<" << NVPTXNumRegisters << ">;\n";
-  O << "\t.reg .s64 %rl<" << NVPTXNumRegisters << ">;\n";
-  O << "\t.reg .f32 %f<" << NVPTXNumRegisters << ">;\n";
-  O << "\t.reg .f64 %fl<" << NVPTXNumRegisters << ">;\n";
+  // O << "\t.reg .pred %p<" << NVPTXNumRegisters << ">;\n";
+  // O << "\t.reg .s16 %rc<" << NVPTXNumRegisters << ">;\n";
+  // O << "\t.reg .s16 %rs<" << NVPTXNumRegisters << ">;\n";
+  // O << "\t.reg .s32 %r<" << NVPTXNumRegisters << ">;\n";
+  // O << "\t.reg .s64 %rl<" << NVPTXNumRegisters << ">;\n";
+  // O << "\t.reg .f32 %f<" << NVPTXNumRegisters << ">;\n";
+  // O << "\t.reg .f64 %fl<" << NVPTXNumRegisters << ">;\n";
 
   // Emit declaration of the virtual registers or 'physical' registers for
   // each register class
-  //for (unsigned i=0; i< numRegClasses; i++) {
-  //    std::map<unsigned, unsigned> &regmap = VRidGlobal2LocalMap[i];
-  //    const TargetRegisterClass *RC = TRI->getRegClass(i);
-  //    std::string rcname = getNVPTXRegClassName(RC);
-  //    std::string rcStr = getNVPTXRegClassStr(RC);
-  //    //int n = regmap.size();
-  //    if (!isNVPTXVectorRegClass(RC)) {
-  //      O << "\t.reg " << rcname << " \t" << rcStr << "<"
-  //        << NVPTXNumRegisters << ">;\n";
-  //    }
+  for (unsigned i=0; i< TRI->getNumRegClasses(); i++) {
+    const TargetRegisterClass *RC = TRI->getRegClass(i);
+    DenseMap<unsigned, unsigned> &regmap = VRegMapping[RC];
+    std::string rcname = getNVPTXRegClassName(RC);
+    std::string rcStr = getNVPTXRegClassStr(RC);
+    int n = regmap.size();
 
-  // Only declare those registers that may be used. And do not emit vector
-  // registers as
-  // they are all elementized to scalar registers.
-  //if (n && !isNVPTXVectorRegClass(RC)) {
-  //    if (RegAllocNilUsed) {
-  //        O << "\t.reg " << rcname << " \t" << rcStr << "<" << (n+1)
-  //          << ">;\n";
-  //    }
-  //    else {
-  //        O << "\t.reg " << rcname << " \t" << StrToUpper(rcStr)
-  //          << "<" << 32 << ">;\n";
-  //    }
-  //}
-  //}
+    // Only declare those registers that may be used.
+    if (n) {
+       O << "\t.reg " << rcname << " \t" << rcStr << "<" << (n+1)
+         << ">;\n";
+    }
+  }
 
   OutStreamer.EmitRawText(O.str());
 }

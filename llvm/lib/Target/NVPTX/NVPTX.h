@@ -27,6 +27,7 @@
 namespace llvm {
 class NVPTXTargetMachine;
 class FunctionPass;
+class MachineFunctionPass;
 class formatted_raw_ostream;
 
 namespace NVPTXCC {
@@ -66,6 +67,7 @@ FunctionPass *createNVPTXReMatBlockPass(NVPTXTargetMachine &);
 ModulePass *createGenericToNVVMPass();
 ModulePass *createNVVMReflectPass();
 ModulePass *createNVVMReflectPass(const StringMap<int>& Mapping);
+MachineFunctionPass *createNVPTXPrologEpilogPass();
 
 bool isImageOrSamplerVal(const Value *, const Module *);
 

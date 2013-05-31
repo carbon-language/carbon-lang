@@ -2,14 +2,14 @@
 ; RUN: llc < %s -march=nvptx64 -mcpu=sm_20 | FileCheck %s
 
 define ptx_device float @test_fabsf(float %f) {
-; CHECK: abs.f32 %f0, %f0;
+; CHECK: abs.f32 %f{{[0-9]+}}, %f{{[0-9]+}};
 ; CHECK: ret;
 	%x = call float @llvm.fabs.f32(float %f)
 	ret float %x
 }
 
 define ptx_device double @test_fabs(double %d) {
-; CHECK: abs.f64 %fl0, %fl0;
+; CHECK: abs.f64 %fl{{[0-9]+}}, %fl{{[0-9]+}};
 ; CHECK: ret;
 	%x = call double @llvm.fabs.f64(double %d)
 	ret double %x

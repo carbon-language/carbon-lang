@@ -243,7 +243,9 @@ private:
   // The contents are specific for each
   // MachineFunction. But the size of the
   // array is not.
-  std::map<unsigned, unsigned> *VRidGlobal2LocalMap;
+  typedef DenseMap<unsigned, unsigned> VRegMap;
+  typedef DenseMap<const TargetRegisterClass *, VRegMap> VRegRCMap;
+  VRegRCMap VRegMapping;
   // cache the subtarget here.
   const NVPTXSubtarget &nvptxSubtarget;
   // Build the map between type name and ID based on module's type
@@ -281,7 +283,6 @@ public:
       : AsmPrinter(TM, Streamer),
         nvptxSubtarget(TM.getSubtarget<NVPTXSubtarget>()) {
     CurrentBankselLabelInBasicBlock = "";
-    VRidGlobal2LocalMap = NULL;
     reader = NULL;
   }
 

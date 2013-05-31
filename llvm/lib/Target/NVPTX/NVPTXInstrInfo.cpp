@@ -32,36 +32,36 @@ NVPTXInstrInfo::NVPTXInstrInfo(NVPTXTargetMachine &tm)
 void NVPTXInstrInfo::copyPhysReg(
     MachineBasicBlock &MBB, MachineBasicBlock::iterator I, DebugLoc DL,
     unsigned DestReg, unsigned SrcReg, bool KillSrc) const {
-  if (NVPTX::Int32RegsRegClass.contains(DestReg) &&
-      NVPTX::Int32RegsRegClass.contains(SrcReg))
+  const MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+  const TargetRegisterClass *DestRC = MRI.getRegClass(DestReg);
+  const TargetRegisterClass *SrcRC = MRI.getRegClass(SrcReg);
+
+  if (DestRC != SrcRC)
+    report_fatal_error("Attempted to created cross-class register copy");
+
+  if (DestRC == &NVPTX::Int32RegsRegClass)
     BuildMI(MBB, I, DL, get(NVPTX::IMOV32rr), DestReg)
-        .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (NVPTX::Int8RegsRegClass.contains(DestReg) &&
-           NVPTX::Int8RegsRegClass.contains(SrcReg))
-    BuildMI(MBB, I, DL, get(NVPTX::IMOV8rr), DestReg)
-        .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (NVPTX::Int1RegsRegClass.contains(DestReg) &&
-           NVPTX::Int1RegsRegClass.contains(SrcReg))
+      .addReg(SrcReg, getKillRegState(KillSrc));
+  else if (DestRC == &NVPTX::Int1RegsRegClass)
     BuildMI(MBB, I, DL, get(NVPTX::IMOV1rr), DestReg)
-        .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (NVPTX::Float32RegsRegClass.contains(DestReg) &&
-           NVPTX::Float32RegsRegClass.contains(SrcReg))
+      .addReg(SrcReg, getKillRegState(KillSrc));
+  else if (DestRC == &NVPTX::Float32RegsRegClass)
     BuildMI(MBB, I, DL, get(NVPTX::FMOV32rr), DestReg)
-        .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (NVPTX::Int16RegsRegClass.contains(DestReg) &&
-           NVPTX::Int16RegsRegClass.contains(SrcReg))
+      .addReg(SrcReg, getKillRegState(KillSrc));
+  else if (DestRC == &NVPTX::Int16RegsRegClass)
     BuildMI(MBB, I, DL, get(NVPTX::IMOV16rr), DestReg)
-        .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (NVPTX::Int64RegsRegClass.contains(DestReg) &&
-           NVPTX::Int64RegsRegClass.contains(SrcReg))
+      .addReg(SrcReg, getKillRegState(KillSrc));
+  else if (DestRC == &NVPTX::Int8RegsRegClass)
+    BuildMI(MBB, I, DL, get(NVPTX::IMOV8rr), DestReg)
+      .addReg(SrcReg, getKillRegState(KillSrc));
+  else if (DestRC == &NVPTX::Int64RegsRegClass)
     BuildMI(MBB, I, DL, get(NVPTX::IMOV64rr), DestReg)
-        .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (NVPTX::Float64RegsRegClass.contains(DestReg) &&
-           NVPTX::Float64RegsRegClass.contains(SrcReg))
+      .addReg(SrcReg, getKillRegState(KillSrc));
+  else if (DestRC == &NVPTX::Float64RegsRegClass)
     BuildMI(MBB, I, DL, get(NVPTX::FMOV64rr), DestReg)
-        .addReg(SrcReg, getKillRegState(KillSrc));
+      .addReg(SrcReg, getKillRegState(KillSrc));
   else {
-    llvm_unreachable("Don't know how to copy a register");
+    llvm_unreachable("Bad register copy");
   }
 }
 
