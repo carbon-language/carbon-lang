@@ -105,66 +105,64 @@ namespace __sanitizer {
   }
 }  // namespace __sanitizer
 
+#define CHECK_TYPE_SIZE(TYPE) \
+  COMPILER_CHECK(sizeof(__sanitizer_##TYPE) == sizeof(TYPE))
+
+#define CHECK_SIZE_AND_OFFSET(CLASS, MEMBER)                       \
+  COMPILER_CHECK(sizeof(((__sanitizer_##CLASS *) NULL)->MEMBER) == \
+                 sizeof(((CLASS *) NULL)->MEMBER));                \
+  COMPILER_CHECK(offsetof(__sanitizer_##CLASS, MEMBER) ==          \
+                 offsetof(CLASS, MEMBER))
+
 COMPILER_CHECK(sizeof(__sanitizer_pthread_attr_t) >= sizeof(pthread_attr_t));
 COMPILER_CHECK(sizeof(__sanitizer::struct_sigaction_max_sz) >=
                    sizeof(__sanitizer::struct_sigaction_sz));
-#if SANITIZER_LINUX
-COMPILER_CHECK(offsetof(struct __sanitizer_dl_phdr_info, dlpi_addr) ==
-               offsetof(struct dl_phdr_info, dlpi_addr));
-COMPILER_CHECK(offsetof(struct __sanitizer_dl_phdr_info, dlpi_name) ==
-               offsetof(struct dl_phdr_info, dlpi_name));
-COMPILER_CHECK(offsetof(struct __sanitizer_dl_phdr_info, dlpi_phdr) ==
-               offsetof(struct dl_phdr_info, dlpi_phdr));
-COMPILER_CHECK(offsetof(struct __sanitizer_dl_phdr_info, dlpi_phnum) ==
-               offsetof(struct dl_phdr_info, dlpi_phnum));
-#endif
 
 COMPILER_CHECK(sizeof(socklen_t) == sizeof(unsigned));
 
-COMPILER_CHECK(sizeof(struct __sanitizer_addrinfo) == sizeof(struct addrinfo));
-COMPILER_CHECK(offsetof(struct __sanitizer_addrinfo, ai_addr) ==
-               offsetof(struct addrinfo, ai_addr));
-COMPILER_CHECK(offsetof(struct __sanitizer_addrinfo, ai_canonname) ==
-               offsetof(struct addrinfo, ai_canonname));
-COMPILER_CHECK(offsetof(struct __sanitizer_addrinfo, ai_next) ==
-               offsetof(struct addrinfo, ai_next));
+#if SANITIZER_LINUX
+// There are more undocumented fields in dl_phdr_info that we are not interested
+// in.
+COMPILER_CHECK(sizeof(__sanitizer_dl_phdr_info) <= sizeof(dl_phdr_info));
+CHECK_SIZE_AND_OFFSET(dl_phdr_info, dlpi_addr);
+CHECK_SIZE_AND_OFFSET(dl_phdr_info, dlpi_name);
+CHECK_SIZE_AND_OFFSET(dl_phdr_info, dlpi_phdr);
+CHECK_SIZE_AND_OFFSET(dl_phdr_info, dlpi_phnum);
+#endif
 
-COMPILER_CHECK(sizeof(struct __sanitizer_hostent) == sizeof(struct hostent));
-COMPILER_CHECK(offsetof(struct __sanitizer_hostent, h_name) ==
-               offsetof(struct hostent, h_name));
-COMPILER_CHECK(offsetof(struct __sanitizer_hostent, h_aliases) ==
-               offsetof(struct hostent, h_aliases));
-COMPILER_CHECK(offsetof(struct __sanitizer_hostent, h_addr_list) ==
-               offsetof(struct hostent, h_addr_list));
+CHECK_TYPE_SIZE(addrinfo);
+CHECK_SIZE_AND_OFFSET(addrinfo, ai_flags);
+CHECK_SIZE_AND_OFFSET(addrinfo, ai_family);
+CHECK_SIZE_AND_OFFSET(addrinfo, ai_socktype);
+CHECK_SIZE_AND_OFFSET(addrinfo, ai_protocol);
+CHECK_SIZE_AND_OFFSET(addrinfo, ai_protocol);
+CHECK_SIZE_AND_OFFSET(addrinfo, ai_addrlen);
+CHECK_SIZE_AND_OFFSET(addrinfo, ai_canonname);
+CHECK_SIZE_AND_OFFSET(addrinfo, ai_addr);
 
-COMPILER_CHECK(sizeof(struct __sanitizer_iovec) == sizeof(struct iovec));
-COMPILER_CHECK(offsetof(struct __sanitizer_iovec, iov_base) ==
-               offsetof(struct iovec, iov_base));
-COMPILER_CHECK(offsetof(struct __sanitizer_iovec, iov_len) ==
-               offsetof(struct iovec, iov_len));
+CHECK_TYPE_SIZE(hostent);
+CHECK_SIZE_AND_OFFSET(hostent, h_name);
+CHECK_SIZE_AND_OFFSET(hostent, h_aliases);
+CHECK_SIZE_AND_OFFSET(hostent, h_addrtype);
+CHECK_SIZE_AND_OFFSET(hostent, h_length);
+CHECK_SIZE_AND_OFFSET(hostent, h_addr_list);
 
-COMPILER_CHECK(sizeof(struct __sanitizer_msghdr) == sizeof(struct msghdr));
-COMPILER_CHECK(offsetof(struct __sanitizer_msghdr, msg_name) ==
-               offsetof(struct msghdr, msg_name));
-COMPILER_CHECK(offsetof(struct __sanitizer_msghdr, msg_namelen) ==
-               offsetof(struct msghdr, msg_namelen));
-COMPILER_CHECK(offsetof(struct __sanitizer_msghdr, msg_iov) ==
-               offsetof(struct msghdr, msg_iov));
-COMPILER_CHECK(offsetof(struct __sanitizer_msghdr, msg_iovlen) ==
-               offsetof(struct msghdr, msg_iovlen));
-COMPILER_CHECK(offsetof(struct __sanitizer_msghdr, msg_control) ==
-               offsetof(struct msghdr, msg_control));
-COMPILER_CHECK(offsetof(struct __sanitizer_msghdr, msg_controllen) ==
-               offsetof(struct msghdr, msg_controllen));
-COMPILER_CHECK(offsetof(struct __sanitizer_msghdr, msg_flags) ==
-               offsetof(struct msghdr, msg_flags));
+CHECK_TYPE_SIZE(iovec);
+CHECK_SIZE_AND_OFFSET(iovec, iov_base);
+CHECK_SIZE_AND_OFFSET(iovec, iov_len);
 
-COMPILER_CHECK(sizeof(struct __sanitizer_cmsghdr) == sizeof(struct cmsghdr));
-COMPILER_CHECK(offsetof(struct __sanitizer_cmsghdr, cmsg_len) ==
-               offsetof(struct cmsghdr, cmsg_len));
-COMPILER_CHECK(offsetof(struct __sanitizer_cmsghdr, cmsg_level) ==
-               offsetof(struct cmsghdr, cmsg_level));
-COMPILER_CHECK(offsetof(struct __sanitizer_cmsghdr, cmsg_type) ==
-               offsetof(struct cmsghdr, cmsg_type));
+CHECK_TYPE_SIZE(msghdr);
+CHECK_SIZE_AND_OFFSET(msghdr, msg_name);
+CHECK_SIZE_AND_OFFSET(msghdr, msg_namelen);
+CHECK_SIZE_AND_OFFSET(msghdr, msg_iov);
+CHECK_SIZE_AND_OFFSET(msghdr, msg_iovlen);
+CHECK_SIZE_AND_OFFSET(msghdr, msg_control);
+CHECK_SIZE_AND_OFFSET(msghdr, msg_controllen);
+CHECK_SIZE_AND_OFFSET(msghdr, msg_flags);
+
+CHECK_TYPE_SIZE(cmsghdr);
+CHECK_SIZE_AND_OFFSET(cmsghdr, cmsg_len);
+CHECK_SIZE_AND_OFFSET(cmsghdr, cmsg_level);
+CHECK_SIZE_AND_OFFSET(cmsghdr, cmsg_type);
 
 #endif  // SANITIZER_LINUX || SANITIZER_MAC

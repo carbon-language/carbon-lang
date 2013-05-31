@@ -126,7 +126,7 @@ namespace __sanitizer {
     char *ai_canonname;
     void *ai_addr;
 #else // LINUX
-    uptr ai_addrlen;
+    unsigned ai_addrlen;
     void *ai_addr;
     char *ai_canonname;
 #endif
