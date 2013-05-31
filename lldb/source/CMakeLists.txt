@@ -7,6 +7,13 @@ include_directories(
   )
 endif ()
 
+if ( CMAKE_SYSTEM_NAME MATCHES "FreeBSD" )
+include_directories(
+  Plugins/Process/FreeBSD
+  Plugins/Process/POSIX
+  )
+endif ()
+
 add_subdirectory(API)
 add_subdirectory(Breakpoint)
 add_subdirectory(Commands)
