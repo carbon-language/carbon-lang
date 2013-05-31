@@ -1013,7 +1013,7 @@ LoopVectorizationLegality::RuntimePointerCheck::insert(ScalarEvolution *SE,
   const SCEV *Sc = SE->getSCEV(Ptr);
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Sc);
   assert(AR && "Invalid addrec expression");
-  const SCEV *Ex = SE->getExitCount(Lp, Lp->getLoopLatch());
+  const SCEV *Ex = SE->getBackedgeTakenCount(Lp);
   const SCEV *ScEnd = AR->evaluateAtIteration(Ex, *SE);
   Pointers.push_back(Ptr);
   Starts.push_back(AR->getStart());
@@ -1456,7 +1456,7 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   Type *IdxTy = Legal->getWidestInductionType();
 
   // Find the loop boundaries.
-  const SCEV *ExitCount = SE->getExitCount(OrigLoop, OrigLoop->getLoopLatch());
+  const SCEV *ExitCount = SE->getBackedgeTakenCount(OrigLoop);
   assert(ExitCount != SE->getCouldNotCompute() && "Invalid loop count");
 
   // Get the total trip count from the count by adding 1.
@@ -2584,7 +2584,7 @@ bool LoopVectorizationLegality::canVectorize() {
         TheLoop->getHeader()->getName() << "\n");
 
   // ScalarEvolution needs to be able to find the exit count.
-  const SCEV *ExitCount = SE->getExitCount(TheLoop, Latch);
+  const SCEV *ExitCount = SE->getBackedgeTakenCount(TheLoop);
   if (ExitCount == SE->getCouldNotCompute()) {
     DEBUG(dbgs() << "LV: SCEV could not compute the loop exit count.\n");
     return false;
