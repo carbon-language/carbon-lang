@@ -1274,6 +1274,43 @@ TEST(APFloatTest, getSmallestNormalized) {
   EXPECT_TRUE(test.bitwiseIsEqual(expected));  
 }
 
+TEST(APFloatTest, getZero) {
+  struct {
+    const fltSemantics *semantics;
+    const bool sign;
+    const unsigned long long bitPattern[2];
+    const unsigned bitPatternLength;
+  } GetZeroTest[] = {
+    { &APFloat::IEEEhalf, false, {0, 0}, 1},
+    { &APFloat::IEEEhalf, true, {0x8000, 0}, 1},
+    { &APFloat::IEEEsingle, false, {0, 0}, 1},
+    { &APFloat::IEEEsingle, true, {0x80000000, 0}, 1},
+    { &APFloat::IEEEdouble, false, {0, 0}, 1},
+    { &APFloat::IEEEdouble, true, {0x8000000000000000, 0}, 1},
+    { &APFloat::IEEEquad, false, {0, 0}, 2},
+    { &APFloat::IEEEquad, true, {0, 0x8000000000000000}, 2},
+    { &APFloat::PPCDoubleDouble, false, {0, 0}, 2},
+    { &APFloat::PPCDoubleDouble, true, {0x8000000000000000, 0}, 2},
+    { &APFloat::x87DoubleExtended, false, {0, 0}, 2},
+    { &APFloat::x87DoubleExtended, true, {0, 0x8000}, 2},
+  };
+  const unsigned NumGetZeroTests = 12;
+  for (unsigned i = 0; i < NumGetZeroTests; ++i) {
+    APFloat test = APFloat::getZero(*GetZeroTest[i].semantics,
+				    GetZeroTest[i].sign);
+    const char *pattern = GetZeroTest[i].sign? "-0x0p+0" : "0x0p+0";
+    APFloat expected = APFloat(*GetZeroTest[i].semantics,
+			       pattern);
+    EXPECT_TRUE(test.isZero());
+    EXPECT_TRUE(GetZeroTest[i].sign? test.isNegative() : !test.isNegative());
+    EXPECT_TRUE(test.bitwiseIsEqual(expected));
+    for (unsigned j = 0, je = GetZeroTest[i].bitPatternLength; j < je; ++j) {
+      EXPECT_EQ(GetZeroTest[i].bitPattern[j],
+		test.bitcastToAPInt().getRawData()[j]);
+    }
+  }
+}
+
 TEST(APFloatTest, convert) {
   bool losesInfo;
   APFloat test(APFloat::IEEEdouble, "1.0");
