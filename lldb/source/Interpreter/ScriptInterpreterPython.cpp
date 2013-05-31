@@ -2672,7 +2672,10 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
 
         // now actually do the import
         command_stream.Clear();
-        command_stream.Printf("import %s",basename.c_str());
+        if (was_imported)
+            command_stream.Printf("reload(%s)",basename.c_str());
+        else
+            command_stream.Printf("import %s",basename.c_str());
         bool import_retval = ExecuteMultipleLines(command_stream.GetData(), ScriptInterpreter::ExecuteScriptOptions().SetEnableIO(false).SetSetLLDBGlobals(false).SetMaskoutErrors(false));
         PyObject* py_error = PyErr_Occurred(); // per Python docs: "you do not need to Py_DECREF()" the return of this function
         
