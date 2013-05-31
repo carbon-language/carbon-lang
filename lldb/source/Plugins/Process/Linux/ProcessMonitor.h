@@ -175,7 +175,7 @@ public:
     BringProcessIntoLimbo();
 
     lldb_private::Error
-    Detach();
+    Detach(lldb::tid_t tid);
 
     /// Stops the requested thread and waits for the stop signal.
     bool
@@ -261,6 +261,9 @@ private:
 
     static bool
     Attach(AttachArgs *args);
+
+    static bool
+    SetDefaultPtraceOpts(const lldb::pid_t);
 
     static void
     ServeOperation(OperationArgs *args);

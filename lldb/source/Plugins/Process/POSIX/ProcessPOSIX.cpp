@@ -329,7 +329,14 @@ ProcessPOSIX::DoDetach(bool keep_stopped)
         return error;
     }
 
-    error = m_monitor->Detach();
+    uint32_t thread_count = m_thread_list.GetSize(false);
+    for (uint32_t i = 0; i < thread_count; ++i)
+    {
+        POSIXThread *thread = static_cast<POSIXThread*>(
+            m_thread_list.GetThreadAtIndex(i, false).get());
+        error = m_monitor->Detach(thread->GetID());
+    }
+
     if (error.Success())
         SetPrivateState(eStateDetached);
 
@@ -393,7 +400,7 @@ ProcessPOSIX::SendMessage(const ProcessMessage &message)
             if (m_exit_now)
             {
                 SetPrivateState(eStateExited);
-                m_monitor->Detach();
+                m_monitor->Detach(GetID());
             }
             else
             {

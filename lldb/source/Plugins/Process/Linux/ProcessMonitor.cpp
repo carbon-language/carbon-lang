@@ -857,22 +857,20 @@ KillOperation::Execute(ProcessMonitor *monitor)
 class DetachOperation : public Operation
 {
 public:
-    DetachOperation(Error &result) : m_error(result) { }
+    DetachOperation(lldb::tid_t tid, Error &result) : m_tid(tid), m_error(result) { }
 
     void Execute(ProcessMonitor *monitor);
 
 private:
+    lldb::tid_t m_tid;
     Error &m_error;
 };
 
 void
 DetachOperation::Execute(ProcessMonitor *monitor)
 {
-    lldb::pid_t pid = monitor->GetPID();
-
-    if (ptrace(PT_DETACH, pid, NULL, 0) < 0)
+    if (ptrace(PT_DETACH, m_tid, NULL, 0) < 0)
         m_error.SetErrorToErrno();
-
 }
 
 ProcessMonitor::OperationArgs::OperationArgs(ProcessMonitor *monitor)
@@ -1098,7 +1096,6 @@ ProcessMonitor::Launch(LaunchArgs *args)
     const size_t err_len = 1024;
     char err_str[err_len];
     lldb::pid_t pid;
-    long ptrace_opts = 0;
 
     lldb::ThreadSP inferior;
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
@@ -1214,20 +1211,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
     assert(WIFSTOPPED(status) && wpid == pid &&
            "Could not sync with inferior process.");
 
-    // Have the child raise an event on exit.  This is used to keep the child in
-    // limbo until it is destroyed.
-    ptrace_opts |= PTRACE_O_TRACEEXIT;
-
-    // Have the tracer trace threads which spawn in the inferior process.
-    // TODO: if we want to support tracing the inferiors' child, add the
-    // appropriate ptrace flags here (PTRACE_O_TRACEFORK, PTRACE_O_TRACEVFORK)
-    ptrace_opts |= PTRACE_O_TRACECLONE;
-
-    // Have the tracer notify us before execve returns
-    // (needed to disable legacy SIGTRAP generation)
-    ptrace_opts |= PTRACE_O_TRACEEXEC;
-
-    if (PTRACE(PTRACE_SETOPTIONS, pid, NULL, (void*)ptrace_opts, 0) < 0)
+    if (!SetDefaultPtraceOpts(pid))
     {
         args->m_error.SetErrorToErrno();
         goto FINISH;
@@ -1308,6 +1292,9 @@ ProcessMonitor::Attach(AttachArgs *args)
     lldb::ThreadSP inferior;
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
 
+    // Use a map to keep track of the threads which we have attached/need to attach.
+    Host::TidMap tids_to_attach;
+
     if (pid <= 1)
     {
         args->m_error.SetErrorToGenericError();
@@ -1315,33 +1302,103 @@ ProcessMonitor::Attach(AttachArgs *args)
         goto FINISH;
     }
 
-    // Attach to the requested process.
-    if (PTRACE(PTRACE_ATTACH, pid, NULL, NULL, 0) < 0)
+    while (Host::FindProcessThreads(pid, tids_to_attach))
     {
-        args->m_error.SetErrorToErrno();
-        goto FINISH;
+        for (Host::TidMap::iterator it = tids_to_attach.begin();
+             it != tids_to_attach.end(); ++it)
+        {
+            if (it->second == false)
+            {
+                lldb::tid_t tid = it->first;
+
+                // Attach to the requested process.
+                // An attach will cause the thread to stop with a SIGSTOP.
+                if (PTRACE(PTRACE_ATTACH, tid, NULL, NULL, 0) < 0)
+                {
+                    // No such thread. The thread may have exited.
+                    // More error handling may be needed.
+                    if (errno == ESRCH)
+                    {
+                        tids_to_attach.erase(it);
+                        continue;
+                    }
+                    else
+                    {
+                        args->m_error.SetErrorToErrno();
+                        goto FINISH;
+                    }
+                }
+
+                int status;
+                // Need to use __WALL otherwise we receive an error with errno=ECHLD
+                // At this point we should have a thread stopped if waitpid succeeds.
+                if ((status = waitpid(tid, NULL, __WALL)) < 0)
+                {
+                    // No such thread. The thread may have exited.
+                    // More error handling may be needed.
+                    if (errno == ESRCH)
+                    {
+                        tids_to_attach.erase(it);
+                        continue;
+                    }
+                    else
+                    {
+                        args->m_error.SetErrorToErrno();
+                        goto FINISH;
+                    }
+                }
+
+                if (!SetDefaultPtraceOpts(tid))
+                {
+                    args->m_error.SetErrorToErrno();
+                    goto FINISH;
+                }
+
+                // Update the process thread list with the attached thread.
+                inferior.reset(new POSIXThread(process, tid));
+                if (log)
+                    log->Printf ("ProcessMonitor::%s() adding tid = %" PRIu64, __FUNCTION__, tid);
+                process.GetThreadList().AddThread(inferior);
+                it->second = true;
+            }
+        }
     }
 
-    int status;
-    if ((status = waitpid(pid, NULL, 0)) < 0)
+    if (tids_to_attach.size() > 0)
     {
-        args->m_error.SetErrorToErrno();
-        goto FINISH;
+        monitor->m_pid = pid;
+        // Let our process instance know the thread has stopped.
+        process.SendMessage(ProcessMessage::Trace(pid));
     }
-
-    monitor->m_pid = pid;
-
-    // Update the process thread list with the attached thread.
-    inferior.reset(new POSIXThread(process, pid));
-    if (log)
-        log->Printf ("ProcessMonitor::%s() adding tid = %" PRIu64, __FUNCTION__, pid);
-    process.GetThreadList().AddThread(inferior);
-
-    // Let our process instance know the thread has stopped.
-    process.SendMessage(ProcessMessage::Trace(pid));
+    else
+    {
+        args->m_error.SetErrorToGenericError();
+        args->m_error.SetErrorString("No such process.");
+    }
 
  FINISH:
     return args->m_error.Success();
+}
+
+bool
+ProcessMonitor::SetDefaultPtraceOpts(lldb::pid_t pid)
+{
+    long ptrace_opts = 0;
+
+    // Have the child raise an event on exit.  This is used to keep the child in
+    // limbo until it is destroyed.
+    ptrace_opts |= PTRACE_O_TRACEEXIT;
+
+    // Have the tracer trace threads which spawn in the inferior process.
+    // TODO: if we want to support tracing the inferiors' child, add the
+    // appropriate ptrace flags here (PTRACE_O_TRACEFORK, PTRACE_O_TRACEVFORK)
+    ptrace_opts |= PTRACE_O_TRACECLONE;
+
+    // Have the tracer notify us before execve returns
+    // (needed to disable legacy SIGTRAP generation)
+    ptrace_opts |= PTRACE_O_TRACEEXEC;
+
+    return PTRACE(PTRACE_SETOPTIONS, pid, NULL, (void*)ptrace_opts, 0) >= 0;
 }
 
 bool
@@ -2047,11 +2104,12 @@ ProcessMonitor::GetEventMessage(lldb::tid_t tid, unsigned long *message)
 }
 
 lldb_private::Error
-ProcessMonitor::Detach()
+ProcessMonitor::Detach(lldb::tid_t tid)
 {
     lldb_private::Error error;
-    if (m_pid != LLDB_INVALID_PROCESS_ID) {
-        DetachOperation op(error);
+    if (tid != LLDB_INVALID_THREAD_ID)
+    {
+        DetachOperation op(tid, error);
         DoOperation(&op);
     }
     return error;

@@ -1238,6 +1238,14 @@ Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 }
 #endif
 
+#if !defined(__linux__)
+bool
+Host::FindProcessThreads (const lldb::pid_t pid, TidMap &tids_to_attach)
+{
+    return false;
+}
+#endif
+
 lldb::TargetSP
 Host::GetDummyTarget (lldb_private::Debugger &debugger)
 {

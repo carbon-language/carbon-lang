@@ -295,6 +295,37 @@ Host::FindProcesses (const ProcessInstanceInfoMatch &match_info, ProcessInstance
     return process_infos.GetSize();
 }
 
+bool
+Host::FindProcessThreads (const lldb::pid_t pid, TidMap &tids_to_attach)
+{
+    bool tids_changed = false;
+    static const char procdir[] = "/proc/";
+    static const char taskdir[] = "/task/";
+    std::string process_task_dir = procdir + std::to_string(pid) + taskdir;
+    DIR *dirproc = opendir (process_task_dir.c_str());
+
+    if (dirproc)
+    {
+        struct dirent *direntry = NULL;
+        while ((direntry = readdir (dirproc)) != NULL)
+        {
+            if (direntry->d_type != DT_DIR || !IsDirNumeric (direntry->d_name))
+                continue;
+
+            lldb::tid_t tid = atoi(direntry->d_name);
+            TidMap::iterator it = tids_to_attach.find(tid);
+            if (it == tids_to_attach.end())
+            {
+                tids_to_attach.insert(TidPair(tid, false));
+                tids_changed = true;
+            }
+        }
+        closedir (dirproc);
+    }
+
+    return tids_changed;
+}
+
 static bool
 GetELFProcessCPUType (const char *exe_path, ProcessInstanceInfo &process_info)
 {
