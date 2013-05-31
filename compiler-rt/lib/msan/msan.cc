@@ -61,8 +61,7 @@ static THREADLOCAL struct {
 static THREADLOCAL bool is_in_symbolizer;
 static THREADLOCAL bool is_in_loader;
 
-SANITIZER_WEAK_ATTRIBUTE
-extern "C" const int __msan_track_origins;
+extern "C" SANITIZER_WEAK_ATTRIBUTE const int __msan_track_origins;
 
 int __msan_get_track_origins() {
   return &__msan_track_origins ? __msan_track_origins : 0;
