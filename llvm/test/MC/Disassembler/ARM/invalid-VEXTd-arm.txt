@@ -1,0 +1,5 @@
+# RUN: llvm-mc --disassemble %s -triple=armv7 2>&1 | grep "invalid instruction encoding"
+
+# invalid imm4 value (0b1xxx)
+# A8.8.316: if Q == '0' && imm4<3> == '1' then UNDEFINED;
+0x8f 0xf9 0xf7 0xf2

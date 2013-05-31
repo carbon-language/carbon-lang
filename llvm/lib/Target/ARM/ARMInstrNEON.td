@@ -5509,8 +5509,9 @@ class VEXTd<string OpcodeStr, string Dt, ValueType Ty, Operand immTy>
         IIC_VEXTD, OpcodeStr, Dt, "$Vd, $Vn, $Vm, $index", "",
         [(set DPR:$Vd, (Ty (NEONvext (Ty DPR:$Vn),
                                      (Ty DPR:$Vm), imm:$index)))]> {
-  bits<4> index;
-  let Inst{11-8} = index{3-0};
+  bits<3> index;
+  let Inst{11} = 0b0;
+  let Inst{10-8} = index{2-0};
 }
 
 class VEXTq<string OpcodeStr, string Dt, ValueType Ty, Operand immTy>
@@ -5525,14 +5526,14 @@ class VEXTq<string OpcodeStr, string Dt, ValueType Ty, Operand immTy>
 }
 
 def VEXTd8  : VEXTd<"vext", "8",  v8i8, imm0_7> {
-  let Inst{11-8} = index{3-0};
+  let Inst{10-8} = index{2-0};
 }
 def VEXTd16 : VEXTd<"vext", "16", v4i16, imm0_3> {
-  let Inst{11-9} = index{2-0};
+  let Inst{10-9} = index{1-0};
   let Inst{8}    = 0b0;
 }
 def VEXTd32 : VEXTd<"vext", "32", v2i32, imm0_1> {
-  let Inst{11-10} = index{1-0};
+  let Inst{10}     = index{0};
   let Inst{9-8}    = 0b00;
 }
 def : Pat<(v2f32 (NEONvext (v2f32 DPR:$Vn),
