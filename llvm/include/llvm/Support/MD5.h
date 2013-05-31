@@ -49,8 +49,11 @@ public:
 
   MD5();
 
-  /// \brief Updates the hash for arguments provided.
+  /// \brief Updates the hash for the byte stream provided.
   void update(ArrayRef<uint8_t> Data);
+
+  /// \brief Updates the hash for the StringRef provided.
+  void update(StringRef Str);
 
   /// \brief Finishes off the hash and puts the result in result.
   void final(MD5Result &result);

@@ -219,6 +219,14 @@ void MD5::update(ArrayRef<uint8_t> Data) {
   memcpy(buffer, Ptr, Size);
 }
 
+/// Add the bytes in the StringRef \p Str to the hash.
+// Note that this isn't a string and so this won't include any trailing NULL
+// bytes.
+void MD5::update(StringRef Str) {
+  ArrayRef<uint8_t> SVal((const uint8_t *)Str.data(), Str.size());
+  update(SVal);
+}
+
 /// \brief Finish the hash and place the resulting hash into \p result.
 /// \param result is assumed to be a minimum of 16-bytes in size.
 void MD5::final(MD5Result &result) {
