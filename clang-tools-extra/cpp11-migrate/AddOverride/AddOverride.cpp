@@ -16,14 +16,20 @@
 #include "AddOverride.h"
 #include "AddOverrideActions.h"
 #include "AddOverrideMatchers.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Tooling.h"
+#include "llvm/Support/CommandLine.h"
 
 using clang::ast_matchers::MatchFinder;
 using namespace clang::tooling;
 using namespace clang;
+
+static llvm::cl::opt<bool> DetectMacros(
+    "override-macros",
+    llvm::cl::desc("Detect and use macros that expand to the 'override' keyword."));
 
 int AddOverrideTransform::apply(const FileContentsByPath &InputStates,
                                 RiskLevel MaxRisk,
@@ -41,7 +47,10 @@ int AddOverrideTransform::apply(const FileContentsByPath &InputStates,
   unsigned AcceptedChanges = 0;
 
   MatchFinder Finder;
-  AddOverrideFixer Fixer(AddOverrideTool.getReplacements(), AcceptedChanges);
+  AddOverrideFixer Fixer(AddOverrideTool.getReplacements(), AcceptedChanges,
+                         DetectMacros);
+  // Make Fixer available to handleBeginSource().
+  this->Fixer = &Fixer;
 
   Finder.addMatcher(makeCandidateForOverrideAttrMatcher(), &Fixer);
 
@@ -61,4 +70,11 @@ int AddOverrideTransform::apply(const FileContentsByPath &InputStates,
   setAcceptedChanges(AcceptedChanges);
 
   return 0;
+}
+
+bool AddOverrideTransform::handleBeginSource(clang::CompilerInstance &CI,
+                                             llvm::StringRef Filename) {
+  assert(Fixer != NULL && "Fixer must be set");
+  Fixer->setPreprocessor(CI.getPreprocessor());
+  return Transform::handleBeginSource(CI, Filename);
 }

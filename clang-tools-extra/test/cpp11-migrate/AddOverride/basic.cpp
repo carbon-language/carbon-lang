@@ -1,9 +1,11 @@
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
 // RUN: cpp11-migrate -add-override %t.cpp -- -I %S -std=c++11
 // RUN: FileCheck -input-file=%t.cpp %s
+// RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
+// RUN: cpp11-migrate -add-override -override-macros %t.cpp -- -I %S -std=c++11
+// RUN: FileCheck --check-prefix=MACRO --input-file=%t.cpp %s
 
-class A {
-public:
+struct A {
   virtual ~A();
   // CHECK: virtual ~A();
   void f();
@@ -14,81 +16,76 @@ public:
 };
 
 // Test that override isn't added to non-virtual functions.
-class B : public A {
-public:
+struct B : public A {
   void f();
-  // CHECK: class B
-  // CHECK: void f();
+  // CHECK: struct B
+  // CHECK-NEXT: void f();
 };
 
 // Test that override is added to functions that override virtual functions.
-class C : public A {
-public:
+struct C : public A {
   void h() const;
-  // CHECK: class C
-  // CHECK: void h() const override;
+  // CHECK: struct C
+  // CHECK-NEXT: void h() const override;
+  // MACRO: struct C
+  // MACRO-NEXT: void h() const override;
 };
 
 // Test that override isn't add to functions that overload but not override.
-class D : public A {
-public:
+struct D : public A {
   void h();
-  // CHECK: class D
-  // CHECK: void h();
+  // CHECK: struct D
+  // CHECK-NEXT: void h();
 };
 
 // Test that override isn't added again to functions that already have it.
-class E : public A {
-public:
+struct E : public A {
   void h() const override;
-  // CHECK: class E
-  // CHECK: void h() const override;
+  // CHECK: struct E
+  // CHECK-NEXT: void h() const override;
+  // MACRO: struct E
+  // MACRO-NEXT: void h() const override;
 };
 
 // Test that override isn't added to the destructor.
-class F : public A {
-public:
+struct F : public A {
   virtual ~F();
-  // CHECK: class F
-  // CHECK: virtual ~F();
+  // CHECK: struct F
+  // CHECK-NEXT: virtual ~F();
 };
 
 // Test that override is placed before any end of line comments.
-class G : public A {
-public:
+struct G : public A {
   void h() const; // comment
   void i() // comment
   {}
-  // CHECK: class G
-  // CHECK: void h() const override; // comment
-  // CHECK: void i() override // comment
+  // CHECK: struct G
+  // CHECK-NEXT: void h() const override; // comment
+  // CHECK-NEXT: void i() override // comment
   // CHECK-NEXT: {}
 };
 
 // Test that override is placed correctly if there is an inline body.
-class H : public A {
-public:
+struct H : public A {
   void h() const { }
-  // CHECK: class H
-  // CHECK: void h() const override { }
+  // CHECK: struct H
+  // CHECK-NEXT: void h() const override { }
 };
 
 // Test that override is placed correctly if there is a body on the next line.
-class I : public A {
-public:
+struct I : public A {
   void h() const
   { }
-  // CHECK: class I
-  // CHECK: void h() const override
-  // CHECK: { }
+  // CHECK: struct I
+  // CHECK-NEXT: void h() const override
+  // CHECK-NEXT: { }
 };
 
 // Test that override is placed correctly if there is a body outside the class.
-class J : public A {
-public:
+struct J : public A {
   void h() const;
-  // CHECK: class J
-  // CHECK: void h() const override;
+  // CHECK: struct J
+  // CHECK-NEXT: void h() const override;
 };
 
 void J::h() const {
@@ -96,21 +93,32 @@ void J::h() const {
 }
 
 // Test that override is placed correctly if there is a trailing return type.
-class K : public A {
-public:
+struct K : public A {
   auto h() const -> void;
-  // CHECK: class K
-  // CHECK: auto h() const -> void override;
+  // CHECK: struct K
+  // CHECK-NEXT: auto h() const -> void override;
 };
 
-// Test that override isn't added if it is already specified via a macro.
-class L : public A {
-public:
 #define LLVM_OVERRIDE override
+
+// Test that override isn't added if it is already specified via a macro.
+struct L : public A {
   void h() const LLVM_OVERRIDE;
-  // CHECK: class L
-  // CHECK: void h() const LLVM_OVERRIDE;
+  // CHECK: struct L
+  // CHECK-NEXT: void h() const LLVM_OVERRIDE;
+  // MACRO: struct L
+  // MACRO-NEXT: void h() const LLVM_OVERRIDE;
 };
+
+template <typename T>
+struct M : public A {
+  virtual void i();
+  // CHECK: struct M
+  // CHECK-NEXT: virtual void i() override;
+  // MACRO: struct M
+  // MACRO-NEXT: virtual void i() LLVM_OVERRIDE;
+};
+M<int> b;
 
 // Test that override isn't added at the wrong place for "pure overrides"
 struct APure {
@@ -137,16 +145,17 @@ struct Base2 {};
 template<typename T> struct Derived : T {
   void f(); // adding 'override' here will break instantiation of Derived<Base2>
   // CHECK: struct Derived
-  // CHECK: void f();
+  // CHECK-NEXT: void f();
 };
 Derived<Base1> d1;
 Derived<Base2> d2;
 
-template <typename T>
-class M : public A {
-public:
-  virtual void i();
-  // CHECK: class M : public A {
-  // CHECK: virtual void i() override;
+#undef LLVM_OVERRIDE
+
+struct N : public A {
+  void h() const;
+  // CHECK: struct N
+  // CHECK-NEXT: void h() const override;
+  // MACRO: struct N
+  // MACRO-NEXT: void h() const override;
 };
-M<int> b;

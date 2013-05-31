@@ -24,15 +24,20 @@
 class AddOverrideFixer : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
   AddOverrideFixer(clang::tooling::Replacements &Replace,
-                   unsigned &AcceptedChanges) :
-    Replace(Replace), AcceptedChanges(AcceptedChanges) {}
+                   unsigned &AcceptedChanges, bool DetectMacros)
+      : Replace(Replace), AcceptedChanges(AcceptedChanges),
+        DetectMacros(DetectMacros) {}
 
   /// \brief Entry point to the callback called when matches are made.
   virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &Result);
 
+  void setPreprocessor(clang::Preprocessor &PP) { this->PP = &PP; }
+
 private:
+  clang::Preprocessor *PP;
   clang::tooling::Replacements &Replace;
   unsigned &AcceptedChanges;
+  bool DetectMacros;
 };
 
 #endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_ADD_OVERRIDE_ACTIONS_H

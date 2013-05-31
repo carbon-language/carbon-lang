@@ -21,6 +21,7 @@
 #include "clang/AST/Attr.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Lex/Lexer.h"
+#include "clang/Lex/Preprocessor.h"
 
 using namespace clang::ast_matchers;
 using namespace clang::tooling;
@@ -85,6 +86,15 @@ void AddOverrideFixer::run(const MatchFinder::MatchResult &Result) {
     StartLoc = SM.getSpellingLoc(M->getLocEnd());
     StartLoc = Lexer::getLocForEndOfToken(StartLoc, 0, SM, LangOptions());
   }
-  Replace.insert(tooling::Replacement(SM, StartLoc, 0, " override"));
+
+  std::string ReplacementText = " override";
+  if (DetectMacros) {
+    assert(PP != 0 && "No access to Preprocessor object for macro detection");
+    clang::TokenValue Tokens[] = { PP->getIdentifierInfo("override") };
+    llvm::StringRef MacroName = PP->getLastMacroWithSpelling(StartLoc, Tokens);
+    if (!MacroName.empty())
+      ReplacementText = (" " + MacroName).str();
+  }
+  Replace.insert(tooling::Replacement(SM, StartLoc, 0, ReplacementText));
   ++AcceptedChanges;
 }

@@ -20,6 +20,8 @@
 #include "Core/Transform.h"
 #include "llvm/Support/Compiler.h"
 
+class AddOverrideFixer;
+
 /// \brief Subclass of Transform that adds the C++11 override keyword to
 /// member functions overriding base class virtual functions.
 class AddOverrideTransform : public Transform {
@@ -33,6 +35,12 @@ public:
                     const clang::tooling::CompilationDatabase &Database,
                     const std::vector<std::string> &SourcePaths,
                     FileContentsByPath &ResultStates) LLVM_OVERRIDE;
+
+  virtual bool handleBeginSource(clang::CompilerInstance &CI,
+                                 llvm::StringRef Filename) LLVM_OVERRIDE;
+
+private:
+  AddOverrideFixer *Fixer;
 };
 
 #endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_ADD_OVERRIDE_H
