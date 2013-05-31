@@ -2227,8 +2227,13 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
   return hasChanges;
 }
 
-static void adjustBranchEdges(PathPieces &pieces, LocationContextMap &LCM,
-                            SourceManager &SM) {
+/// \brief Split edges incident on a branch condition into two edges.
+///
+/// The first edge is incident on the branch statement, the second on the
+/// condition.
+static void splitBranchConditionEdges(PathPieces &pieces,
+                                      LocationContextMap &LCM,
+                                      SourceManager &SM) {
   // Retrieve the parent map for this path.
   const LocationContext *LC = LCM[&pieces];
   ParentMap &PM = LC->getParentMap();
@@ -2237,7 +2242,7 @@ static void adjustBranchEdges(PathPieces &pieces, LocationContextMap &LCM,
        Prev = I, ++I) {
     // Adjust edges in subpaths.
     if (PathDiagnosticCallPiece *Call = dyn_cast<PathDiagnosticCallPiece>(*I)) {
-      adjustBranchEdges(Call->path, LCM, SM);
+      splitBranchConditionEdges(Call->path, LCM, SM);
       continue;
     }
 
@@ -3023,7 +3028,7 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
 
         // Adjust edges into loop conditions to make them more uniform
         // and aesthetically pleasing.
-        adjustBranchEdges(PD.getMutablePieces(), LCM, SM);
+        splitBranchConditionEdges(PD.getMutablePieces(), LCM, SM);
       }
     }
 
