@@ -32,12 +32,14 @@ CodeGenSubRegIndex::CodeGenSubRegIndex(Record *R, unsigned Enum)
   Name = R->getName();
   if (R->getValue("Namespace"))
     Namespace = R->getValueAsString("Namespace");
+  Size = R->getValueAsInt("Size");
+  Offset = R->getValueAsInt("Offset");
 }
 
 CodeGenSubRegIndex::CodeGenSubRegIndex(StringRef N, StringRef Nspace,
                                        unsigned Enum)
-  : TheDef(0), Name(N), Namespace(Nspace), EnumValue(Enum),
-    LaneMask(0), AllSuperRegsCovered(true) {
+  : TheDef(0), Name(N), Namespace(Nspace), Size(-1), Offset(-1),
+    EnumValue(Enum), LaneMask(0), AllSuperRegsCovered(true) {
 }
 
 std::string CodeGenSubRegIndex::getQualifiedName() const {
@@ -69,7 +71,7 @@ void CodeGenSubRegIndex::updateComponents(CodeGenRegBank &RegBank) {
   if (!Parts.empty()) {
     if (Parts.size() < 2)
       PrintFatalError(TheDef->getLoc(),
-                    "CoveredBySubRegs must have two or more entries");
+                      "CoveredBySubRegs must have two or more entries");
     SmallVector<CodeGenSubRegIndex*, 8> IdxParts;
     for (unsigned i = 0, e = Parts.size(); i != e; ++i)
       IdxParts.push_back(RegBank.getSubRegIdx(Parts[i]));

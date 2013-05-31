@@ -37,6 +37,8 @@ namespace llvm {
     Record *const TheDef;
     std::string Name;
     std::string Namespace;
+    uint16_t Size;
+    uint16_t Offset;
 
   public:
     const unsigned EnumValue;
@@ -52,6 +54,8 @@ namespace llvm {
     const std::string &getName() const { return Name; }
     const std::string &getNamespace() const { return Namespace; }
     std::string getQualifiedName() const;
+    uint16_t getSize() const { return Size; }
+    uint16_t getOffset() const { return Offset; }
 
     // Order CodeGenSubRegIndex pointers by EnumValue.
     struct Less {
@@ -79,6 +83,15 @@ namespace llvm {
       assert(A && B);
       std::pair<CompMap::iterator, bool> Ins =
         Composed.insert(std::make_pair(A, B));
+      // Synthetic subreg indices that aren't contiguous (for instance ARM
+      // register tuples) don't have a bit range, so it's OK to let
+      // B->Offset == -1. For the other cases, accumulate the offset and set
+      // the size here. Only do so if there is no offset yet though.
+      if ((Offset != (uint16_t)-1 && A->Offset != (uint16_t)-1) &&
+          (B->Offset == (uint16_t)-1)) {
+        B->Offset = Offset + A->Offset;
+        B->Size = A->Size;
+      }
       return (Ins.second || Ins.first->second == B) ? 0 : Ins.first->second;
     }
 

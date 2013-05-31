@@ -21,11 +21,11 @@ class X86Reg<string n, bits<16> Enc, list<Register> subregs = []> : Register<n> 
 
 // Subregister indices.
 let Namespace = "X86" in {
-  def sub_8bit    : SubRegIndex;
-  def sub_8bit_hi : SubRegIndex;
-  def sub_16bit   : SubRegIndex;
-  def sub_32bit   : SubRegIndex;
-  def sub_xmm     : SubRegIndex;
+  def sub_8bit    : SubRegIndex<8>;
+  def sub_8bit_hi : SubRegIndex<8, 8>;
+  def sub_16bit   : SubRegIndex<16>;
+  def sub_32bit   : SubRegIndex<32>;
+  def sub_xmm     : SubRegIndex<64>;
 }
 
 //===----------------------------------------------------------------------===//

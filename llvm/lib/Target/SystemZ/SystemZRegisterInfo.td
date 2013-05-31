@@ -24,7 +24,7 @@ let Namespace = "SystemZ" in {
 def subreg_32bit  : SubRegIndex; // could also be known as "subreg_high32"
 def subreg_high   : SubRegIndex;
 def subreg_low    : SubRegIndex;
-def subreg_low32  : SubRegIndex<[subreg_low, subreg_32bit]>;
+def subreg_low32  : ComposedSubRegIndex<subreg_low, subreg_32bit>;
 }
 
 // Define a register class that contains values of type TYPE and an

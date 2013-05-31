@@ -27,31 +27,31 @@ class ARMFReg<bits<16> Enc, string n> : Register<n> {
 
 // Subregister indices.
 let Namespace = "ARM" in {
-def qqsub_0 : SubRegIndex;
-def qqsub_1 : SubRegIndex;
+def qqsub_0 : SubRegIndex<256>;
+def qqsub_1 : SubRegIndex<256, 256>;
 
 // Note: Code depends on these having consecutive numbers.
-def qsub_0 : SubRegIndex;
-def qsub_1 : SubRegIndex;
-def qsub_2 : SubRegIndex<[qqsub_1, qsub_0]>;
-def qsub_3 : SubRegIndex<[qqsub_1, qsub_1]>;
+def qsub_0 : SubRegIndex<128>;
+def qsub_1 : SubRegIndex<128, 128>;
+def qsub_2 : ComposedSubRegIndex<qqsub_1, qsub_0>;
+def qsub_3 : ComposedSubRegIndex<qqsub_1, qsub_1>;
 
-def dsub_0 : SubRegIndex;
-def dsub_1 : SubRegIndex;
-def dsub_2 : SubRegIndex<[qsub_1, dsub_0]>;
-def dsub_3 : SubRegIndex<[qsub_1, dsub_1]>;
-def dsub_4 : SubRegIndex<[qsub_2, dsub_0]>;
-def dsub_5 : SubRegIndex<[qsub_2, dsub_1]>;
-def dsub_6 : SubRegIndex<[qsub_3, dsub_0]>;
-def dsub_7 : SubRegIndex<[qsub_3, dsub_1]>;
+def dsub_0 : SubRegIndex<64>;
+def dsub_1 : SubRegIndex<64, 64>;
+def dsub_2 : ComposedSubRegIndex<qsub_1, dsub_0>;
+def dsub_3 : ComposedSubRegIndex<qsub_1, dsub_1>;
+def dsub_4 : ComposedSubRegIndex<qsub_2, dsub_0>;
+def dsub_5 : ComposedSubRegIndex<qsub_2, dsub_1>;
+def dsub_6 : ComposedSubRegIndex<qsub_3, dsub_0>;
+def dsub_7 : ComposedSubRegIndex<qsub_3, dsub_1>;
 
-def ssub_0  : SubRegIndex;
-def ssub_1  : SubRegIndex;
-def ssub_2  : SubRegIndex<[dsub_1, ssub_0]>;
-def ssub_3  : SubRegIndex<[dsub_1, ssub_1]>;
+def ssub_0  : SubRegIndex<32>;
+def ssub_1  : SubRegIndex<32, 32>;
+def ssub_2  : ComposedSubRegIndex<dsub_1, ssub_0>;
+def ssub_3  : ComposedSubRegIndex<dsub_1, ssub_1>;
 
-def gsub_0  : SubRegIndex;
-def gsub_1  : SubRegIndex;
+def gsub_0  : SubRegIndex<32>;
+def gsub_1  : SubRegIndex<32, 32>;
 // Let TableGen synthesize the remaining 12 ssub_* indices.
 // We don't need to name them.
 }

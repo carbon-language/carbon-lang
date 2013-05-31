@@ -22,12 +22,19 @@ include "llvm/IR/Intrinsics.td"
 class RegisterClass; // Forward def
 
 // SubRegIndex - Use instances of SubRegIndex to identify subregisters.
-class SubRegIndex<list<SubRegIndex> comps = []> {
+class SubRegIndex<int size = -1, int offset = 0> {
   string Namespace = "";
+
+  // Size - Size (in bits) of the sub-registers represented by this index.
+  int Size = size;
+
+  // Offset - Offset of the first bit that is part of this sub-register index.
+  int Offset = offset;
 
   // ComposedOf - A list of two SubRegIndex instances, [A, B].
   // This indicates that this SubRegIndex is the result of composing A and B.
-  list<SubRegIndex> ComposedOf = comps;
+  // See ComposedSubRegIndex.
+  list<SubRegIndex> ComposedOf = [];
 
   // CoveringSubRegIndices - A list of two or more sub-register indexes that
   // cover this sub-register.
@@ -46,6 +53,14 @@ class SubRegIndex<list<SubRegIndex> comps = []> {
   // the synthetic index dsub_1_dsub_2 unless some SubRegIndex is defined with
   // CoveringSubRegIndices = [dsub_1, dsub_2].
   list<SubRegIndex> CoveringSubRegIndices = [];
+}
+
+// ComposedSubRegIndex - A sub-register that is the result of composing A and B.
+// Offset is set to the sum of A and B's Offsets. Size is set to B's Size.
+class ComposedSubRegIndex<SubRegIndex A, SubRegIndex B>
+  : SubRegIndex<B.Size, -1> {
+  // See SubRegIndex.
+  let ComposedOf = [A, B];
 }
 
 // RegAltNameIndex - The alternate name set to use for register operands of

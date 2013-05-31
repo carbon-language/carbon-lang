@@ -46,6 +46,19 @@ unsigned MCRegisterInfo::getSubRegIndex(unsigned Reg, unsigned SubReg) const {
   return 0;
 }
 
+bool MCRegisterInfo::getSubRegIdxCoveredBits(unsigned Idx, unsigned &Offset,
+                                             unsigned &Size) const {
+  assert(Idx && Idx < getNumSubRegIndices() &&
+         "This is not a subregister index");
+  // Get a pointer to the corresponding SubRegIdxRanges struct.
+  const SubRegCoveredBits *Bits = &SubRegIdxRanges[Idx];
+  if (Bits->Offset == (uint16_t)-1 || Bits->Size == (uint16_t)-1)
+    return false;
+  Offset = Bits->Offset;
+  Size = Bits->Size;
+  return true;
+}
+
 int MCRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
   const DwarfLLVMRegPair *M = isEH ? EHL2DwarfRegs : L2DwarfRegs;
   unsigned Size = isEH ? EHL2DwarfRegsSize : L2DwarfRegsSize;

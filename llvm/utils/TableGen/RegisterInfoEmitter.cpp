@@ -703,6 +703,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   const std::vector<CodeGenRegister*> &Regs = RegBank.getRegisters();
 
+  ArrayRef<CodeGenSubRegIndex*> SubRegIndices = RegBank.getSubRegIndices();
   // The lists of sub-registers and super-registers go in the same array.  That
   // allows us to share suffixes.
   typedef std::vector<const CodeGenRegister*> RegVec;
@@ -788,6 +789,19 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   // Emit the table of sub-register indexes.
   OS << "extern const uint16_t " << TargetName << "SubRegIdxLists[] = {\n";
   SubRegIdxSeqs.emit(OS, printSubRegIndex);
+  OS << "};\n\n";
+
+  // Emit the table of sub-register index sizes.
+  OS << "extern const MCRegisterInfo::SubRegCoveredBits "
+     << TargetName << "SubRegIdxRanges[] = {\n";
+  OS << "  { " << (uint16_t)-1 << ", " << (uint16_t)-1 << " },\n";
+  for (ArrayRef<CodeGenSubRegIndex*>::const_iterator
+         SRI = SubRegIndices.begin(), SRE = SubRegIndices.end();
+         SRI != SRE; ++SRI) {
+    OS << "  { " << (*SRI)->getOffset() << ", "
+                 << (*SRI)->getSize()
+       << " },\t// " << (*SRI)->getName() << "\n";
+  }
   OS << "};\n\n";
 
   // Emit the string table.
@@ -886,8 +900,6 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   OS << "};\n\n";
 
-  ArrayRef<CodeGenSubRegIndex*> SubRegIndices = RegBank.getSubRegIndices();
-
   EmitRegMappingTables(OS, Regs, false);
 
   // Emit Reg encoding table
@@ -920,6 +932,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
      << TargetName << "RegStrings, "
      << TargetName << "SubRegIdxLists, "
      << (SubRegIndices.size() + 1) << ",\n"
+     << TargetName << "SubRegIdxRanges, "
      << "  " << TargetName << "RegEncodingTable);\n\n";
 
   EmitRegMapping(OS, Regs, false);
@@ -1251,6 +1264,8 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "extern const char " << TargetName << "RegStrings[];\n";
   OS << "extern const uint16_t " << TargetName << "RegUnitRoots[][2];\n";
   OS << "extern const uint16_t " << TargetName << "SubRegIdxLists[];\n";
+  OS << "extern const MCRegisterInfo::SubRegCoveredBits "
+     << TargetName << "SubRegIdxRanges[];\n";
   OS << "extern const uint16_t " << TargetName << "RegEncodingTable[];\n";
 
   EmitRegMappingTables(OS, Regs, true);
@@ -1271,6 +1286,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
      << "                     " << TargetName << "RegStrings,\n"
      << "                     " << TargetName << "SubRegIdxLists,\n"
      << "                     " << SubRegIndices.size() + 1 << ",\n"
+     << "                     " << TargetName << "SubRegIdxRanges,\n"
      << "                     " << TargetName << "RegEncodingTable);\n\n";
 
   EmitRegMapping(OS, Regs, true);
