@@ -1745,9 +1745,13 @@ Lforward:
 @ SETEND
 @------------------------------------------------------------------------------
         setend be
+        setend BE
         setend le
+        setend LE
 
 @ CHECK: setend	be                      @ encoding: [0x00,0x02,0x01,0xf1]
+@ CHECK: setend	be                      @ encoding: [0x00,0x02,0x01,0xf1]
+@ CHECK: setend	le                      @ encoding: [0x00,0x00,0x01,0xf1]
 @ CHECK: setend	le                      @ encoding: [0x00,0x00,0x01,0xf1]
 
 

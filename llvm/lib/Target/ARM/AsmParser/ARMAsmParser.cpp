@@ -3624,7 +3624,7 @@ parseSetEndImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     Error(S, "'be' or 'le' operand expected");
     return MatchOperand_ParseFail;
   }
-  int Val = StringSwitch<int>(Tok.getString())
+  int Val = StringSwitch<int>(Tok.getString().lower())
     .Case("be", 1)
     .Case("le", 0)
     .Default(-1);
