@@ -1139,6 +1139,18 @@ public:
   /// TODO: Handle pre/postinc as well.
   virtual bool isLegalAddressingMode(const AddrMode &AM, Type *Ty) const;
 
+  /// \brief Return the cost of the scaling factor used in the addressing
+  /// mode represented by AM for this target, for a load/store
+  /// of the specified type.
+  /// If the AM is supported, the return value must be >= 0.
+  /// If the AM is not supported, it returns a negative value.
+  /// TODO: Handle pre/postinc as well.
+  virtual int getScalingFactorCost(const AddrMode &AM, Type *Ty) const {
+    // Default: assume that any scaling factor used in a legal AM is free.
+    if (isLegalAddressingMode(AM, Ty)) return 0;
+    return -1;
+  }
+
   /// isLegalICmpImmediate - Return true if the specified immediate is legal
   /// icmp immediate, that is the target has icmp instructions which can compare
   /// a register against the immediate without having to materialize the
