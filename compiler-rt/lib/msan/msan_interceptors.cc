@@ -28,7 +28,12 @@
 // ACHTUNG! No other system header includes in this file.
 // Ideally, we should get rid of stdarg.h as well.
 
+SANITIZER_WEAK_ATTRIBUTE
 extern "C" const int __msan_keep_going;
+
+int __msan_get_keep_going() {
+  return &__msan_keep_going ? __msan_keep_going : 0;
+}
 
 using namespace __msan;
 
@@ -63,7 +68,7 @@ bool IsInInterceptorScope() {
              offset, x, n);                                                   \
       __msan::PrintWarningWithOrigin(pc, bp,                                  \
                                      __msan_get_origin((char *) x + offset)); \
-      if (!__msan_keep_going) {                                               \
+      if (!__msan_get_keep_going()) {                                         \
         Printf("Exiting\n");                                                  \
         Die();                                                                \
       }                                                                       \
