@@ -305,8 +305,8 @@ Enter your Python command(s). Type 'DONE' to end.
 > <strong>print '[%i] %s' % (counter, name)</strong>
 > <font color=green># Disable the current breakpoint location so it doesn't get hit again</font>
 > <strong>bp_loc.SetEnabled(False)</strong>
-> <font color=green># How continue the process</font>
-> <strong>frame.GetThread().GetProcess().Continue()</strong>
+> <font color=green># No need to stop here</font>
+> <strong>return False</strong>
 > <strong>DONE</strong>
 </tt></pre></code>
             <p>The <b>breakpoint command add</b> command above attaches a python script to breakpoint 1.
@@ -391,7 +391,8 @@ Enter your Python command(s). Type 'DONE' to end.
         </tr>
         </table>
         <p>As a convenience, you can treat the result object as a Python file object, and say
-        print >>result, "my command does lots of cool stuff". SBCommandReturnObject and SBStream
+        <code><pre><tt>print >>result, "my command does lots of cool stuff"</tt></pre></code>
+        SBCommandReturnObject and SBStream
         both support this file-like behavior by providing write() and flush() calls at the Python layer.</p>
         <p>One other handy convenience when defining lldb command-line commands is the command
           <b>command script import</b> which will import a module specified by file path - so you
