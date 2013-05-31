@@ -1479,20 +1479,21 @@ private:
     AnnotatedLine &Line = *I;
     if (Line.First->isOneOf(tok::kw_if, tok::kw_while, tok::kw_do, tok::r_brace,
                             tok::kw_else, tok::kw_try, tok::kw_catch,
-                            tok::kw_for, tok::kw_namespace,
+                            tok::kw_for,
                             // This gets rid of all ObjC @ keywords and methods.
                             tok::at, tok::minus, tok::plus))
       return;
 
     FormatToken *Tok = (I + 1)->First;
-    if (Tok->getNextNoneComment() == NULL && Tok->is(tok::r_brace) &&
-        !Tok->MustBreakBefore) {
+    if (Tok->is(tok::r_brace) && !Tok->MustBreakBefore &&
+        (Tok->getNextNoneComment() == NULL ||
+         Tok->getNextNoneComment()->is(tok::semi))) {
       // We merge empty blocks even if the line exceeds the column limit.
       Tok->SpacesRequiredBefore = 0;
       Tok->CanBreakBefore = true;
       join(Line, *(I + 1));
       I += 1;
-    } else if (Limit != 0) {
+    } else if (Limit != 0 && Line.First->isNot(tok::kw_namespace)) {
       // Check that we still have three lines and they fit into the limit.
       if (I + 2 == E || (I + 2)->Type == LT_Invalid ||
           !nextTwoLinesFitInto(I, Limit))
