@@ -31,10 +31,12 @@ namespace clang {
   class LangOptions;
   
   enum LanguageID {
-    C_LANG = 0x1,     // builtin for c only.
-    CXX_LANG = 0x2,   // builtin for cplusplus only.
-    OBJC_LANG = 0x4,  // builtin for objective-c and objective-c++
-    ALL_LANGUAGES = (C_LANG|CXX_LANG|OBJC_LANG) //builtin is for all languages.
+    GNU_LANG = 0x1,  // builtin requires GNU mode.
+    C_LANG = 0x2,    // builtin for c only.
+    CXX_LANG = 0x4,  // builtin for cplusplus only.
+    OBJC_LANG = 0x8, // builtin for objective-c and objective-c++
+    ALL_LANGUAGES = C_LANG | CXX_LANG | OBJC_LANG, // builtin for all languages.
+    ALL_GNU_LANGUAGES = ALL_LANGUAGES | GNU_LANG   // builtin requires GNU mode.
   };
   
 namespace Builtin {

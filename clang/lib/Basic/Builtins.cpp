@@ -51,11 +51,10 @@ void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
                                           const LangOptions& LangOpts) {
   // Step #1: mark all target-independent builtins with their ID's.
   for (unsigned i = Builtin::NotBuiltin+1; i != Builtin::FirstTSBuiltin; ++i)
-    if (!LangOpts.NoBuiltin || !strchr(BuiltinInfo[i].Attributes, 'f')) {
-      if (LangOpts.ObjC1 || 
-          BuiltinInfo[i].builtin_lang != clang::OBJC_LANG)
-        Table.get(BuiltinInfo[i].Name).setBuiltinID(i);
-    }
+    if ((!LangOpts.NoBuiltin || !strchr(BuiltinInfo[i].Attributes, 'f')) &&
+        (LangOpts.GNUMode || !(BuiltinInfo[i].builtin_lang & GNU_LANG)) &&
+        (LangOpts.ObjC1 || BuiltinInfo[i].builtin_lang != OBJC_LANG))
+      Table.get(BuiltinInfo[i].Name).setBuiltinID(i);
 
   // Step #2: Register target-specific builtins.
   for (unsigned i = 0, e = NumTSRecords; i != e; ++i)

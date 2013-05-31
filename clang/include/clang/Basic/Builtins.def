@@ -718,48 +718,47 @@ LIBBUILTIN(vscanf, "icC*Ra",      "fS:0:", "stdio.h", ALL_LANGUAGES)
 LIBBUILTIN(vfscanf, "iP*RcC*Ra",  "fS:1:", "stdio.h", ALL_LANGUAGES)
 LIBBUILTIN(vsscanf, "icC*RcC*Ra", "fS:1:", "stdio.h", ALL_LANGUAGES)
 // C99
+#undef setjmp
+LIBBUILTIN(setjmp, "iJ",          "fj",    "setjmp.h", ALL_LANGUAGES)
 LIBBUILTIN(longjmp, "vJi",        "fr",    "setjmp.h", ALL_LANGUAGES)
 
-// Non-C library functions
-// FIXME: Non-C-standard stuff shouldn't be builtins in non-GNU mode!
-LIBBUILTIN(alloca, "v*z",         "f",     "stdlib.h", ALL_LANGUAGES)
+// Non-C library functions, active in GNU mode only.
+LIBBUILTIN(alloca, "v*z",         "f",     "stdlib.h", ALL_GNU_LANGUAGES)
 // POSIX string.h
-LIBBUILTIN(stpcpy, "c*c*cC*",     "f",     "string.h", ALL_LANGUAGES)
-LIBBUILTIN(stpncpy, "c*c*cC*z",   "f",     "string.h", ALL_LANGUAGES)
-LIBBUILTIN(strdup, "c*cC*",       "f",     "string.h", ALL_LANGUAGES)
-LIBBUILTIN(strndup, "c*cC*z",     "f",     "string.h", ALL_LANGUAGES)
+LIBBUILTIN(stpcpy, "c*c*cC*",     "f",     "string.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(stpncpy, "c*c*cC*z",   "f",     "string.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(strdup, "c*cC*",       "f",     "string.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(strndup, "c*cC*z",     "f",     "string.h", ALL_GNU_LANGUAGES)
 // POSIX strings.h
-LIBBUILTIN(index, "c*cC*i",       "f",     "strings.h", ALL_LANGUAGES)
-LIBBUILTIN(rindex, "c*cC*i",      "f",     "strings.h", ALL_LANGUAGES)
-LIBBUILTIN(bzero, "vv*z",         "f",     "strings.h", ALL_LANGUAGES)
+LIBBUILTIN(index, "c*cC*i",       "f",     "strings.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(rindex, "c*cC*i",      "f",     "strings.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(bzero, "vv*z",         "f",     "strings.h", ALL_GNU_LANGUAGES)
 // In some systems str[n]casejmp is a macro that expands to _str[n]icmp.
 // We undefine then here to avoid wrong name.
 #undef strcasecmp
 #undef strncasecmp
-LIBBUILTIN(strcasecmp, "icC*cC*", "f",     "strings.h", ALL_LANGUAGES)
-LIBBUILTIN(strncasecmp, "icC*cC*z", "f",   "strings.h", ALL_LANGUAGES)
+LIBBUILTIN(strcasecmp, "icC*cC*", "f",     "strings.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(strncasecmp, "icC*cC*z", "f",   "strings.h", ALL_GNU_LANGUAGES)
 // POSIX unistd.h
-LIBBUILTIN(_exit, "vi",           "fr",    "unistd.h", ALL_LANGUAGES)
-LIBBUILTIN(vfork, "p",            "fj",    "unistd.h", ALL_LANGUAGES)
+LIBBUILTIN(_exit, "vi",           "fr",    "unistd.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(vfork, "p",            "fj",    "unistd.h", ALL_GNU_LANGUAGES)
 // POSIX setjmp.h
 
 // In some systems setjmp is a macro that expands to _setjmp. We undefine
 // it here to avoid having two identical LIBBUILTIN entries.
-#undef setjmp
-LIBBUILTIN(_setjmp, "iJ",         "fj",   "setjmp.h", ALL_LANGUAGES)
-LIBBUILTIN(__sigsetjmp, "iSJi",   "fj",   "setjmp.h", ALL_LANGUAGES)
-LIBBUILTIN(setjmp, "iJ",          "fj",   "setjmp.h", ALL_LANGUAGES)
-LIBBUILTIN(sigsetjmp, "iSJi",     "fj",   "setjmp.h", ALL_LANGUAGES)
-LIBBUILTIN(setjmp_syscall, "iJ",  "fj",   "setjmp.h", ALL_LANGUAGES)
-LIBBUILTIN(savectx, "iJ",         "fj",   "setjmp.h", ALL_LANGUAGES)
-LIBBUILTIN(qsetjmp, "iJ",         "fj",   "setjmp.h", ALL_LANGUAGES)
-LIBBUILTIN(getcontext, "iK*",     "fj",   "setjmp.h", ALL_LANGUAGES)
+LIBBUILTIN(_setjmp, "iJ",         "fj",   "setjmp.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(__sigsetjmp, "iSJi",   "fj",   "setjmp.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(sigsetjmp, "iSJi",     "fj",   "setjmp.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(setjmp_syscall, "iJ",  "fj",   "setjmp.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(savectx, "iJ",         "fj",   "setjmp.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(qsetjmp, "iJ",         "fj",   "setjmp.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(getcontext, "iK*",     "fj",   "setjmp.h", ALL_GNU_LANGUAGES)
 
-LIBBUILTIN(_longjmp, "vJi",       "fr",    "setjmp.h", ALL_LANGUAGES)
-LIBBUILTIN(siglongjmp, "vSJi",    "fr",    "setjmp.h", ALL_LANGUAGES)
+LIBBUILTIN(_longjmp, "vJi",       "fr",    "setjmp.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(siglongjmp, "vSJi",    "fr",    "setjmp.h", ALL_GNU_LANGUAGES)
 // non-standard but very common
-LIBBUILTIN(strlcpy, "zc*cC*z",    "f",     "string.h", ALL_LANGUAGES)
-LIBBUILTIN(strlcat, "zc*cC*z",    "f",     "string.h", ALL_LANGUAGES)
+LIBBUILTIN(strlcpy, "zc*cC*z",    "f",     "string.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(strlcat, "zc*cC*z",    "f",     "string.h", ALL_GNU_LANGUAGES)
 //   id objc_msgSend(id, SEL, ...)
 LIBBUILTIN(objc_msgSend, "GGH.",   "f",     "objc/message.h", OBJC_LANG)
 // long double objc_msgSend_fpret(id self, SEL op, ...) 
