@@ -208,6 +208,9 @@ def runScanBuild(Dir, SBOutputDir, PBuildLogFile):
     SBOptions += "-plist-html -o " + SBOutputDir + " "
     SBOptions += "-enable-checker " + Checkers + " "  
     SBOptions += "--keep-empty "
+    # Always use ccc-analyze to ensure that we can locate the failures 
+    # directory.
+    SBOptions += "--override-compiler "
     try:
         SBCommandFile = open(BuildScriptPath, "r")
         SBPrefix = "scan-build " + SBOptions + " "
