@@ -366,11 +366,13 @@ bool MemorySanitizer::doInitialization(Module &M) {
   appendToGlobalCtors(M, cast<Function>(M.getOrInsertFunction(
                       "__msan_init", IRB.getVoidTy(), NULL)), 0);
 
-  new GlobalVariable(M, IRB.getInt32Ty(), true, GlobalValue::WeakODRLinkage,
-                     IRB.getInt32(TrackOrigins), "__msan_track_origins");
+  if (TrackOrigins)
+    new GlobalVariable(M, IRB.getInt32Ty(), true, GlobalValue::WeakODRLinkage,
+                       IRB.getInt32(TrackOrigins), "__msan_track_origins");
 
-  new GlobalVariable(M, IRB.getInt32Ty(), true, GlobalValue::WeakODRLinkage,
-                     IRB.getInt32(ClKeepGoing), "__msan_keep_going");
+  if (ClKeepGoing)
+    new GlobalVariable(M, IRB.getInt32Ty(), true, GlobalValue::WeakODRLinkage,
+                       IRB.getInt32(ClKeepGoing), "__msan_keep_going");
 
   return true;
 }

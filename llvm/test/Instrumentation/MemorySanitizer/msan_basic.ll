@@ -10,8 +10,9 @@ target triple = "x86_64-unknown-linux-gnu"
 
 ; Check the presence and the linkage type of __msan_track_origins and
 ; other interface symbols.
-; CHECK: @__msan_track_origins = weak_odr constant i32 0
-; CHECK: @__msan_keep_going = weak_odr constant i32 0
+; CHECK-NOT: @__msan_track_origins
+; CHECK-ORIGINS: @__msan_track_origins = weak_odr constant i32 1
+; CHECK-NOT: @__msan_keep_going = weak_odr constant i32 0
 ; CHECK: @__msan_retval_tls = external thread_local(initialexec) global [{{.*}}]
 ; CHECK: @__msan_retval_origin_tls = external thread_local(initialexec) global i32
 ; CHECK: @__msan_param_tls = external thread_local(initialexec) global [{{.*}}]
