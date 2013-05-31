@@ -41,6 +41,8 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_EQ("a.obj", inputFiles[0]);
   EXPECT_EQ("b.obj", inputFiles[1]);
   EXPECT_EQ("c.obj", inputFiles[2]);
+  EXPECT_EQ(6, info->getMinOSVersion().majorVersion);
+  EXPECT_EQ(0, info->getMinOSVersion().minorVersion);
 }
 
 TEST_F(WinLinkParserTest, WindowsStyleOption) {
@@ -64,6 +66,20 @@ TEST_F(WinLinkParserTest, NonStandardFileExtension) {
   EXPECT_EQ("foo.exe", info->outputPath());
   EXPECT_EQ(1, (int)inputFiles.size());
   EXPECT_EQ("foo.o", inputFiles[0]);
+}
+
+TEST_F(WinLinkParserTest, MinMajorOSVersion) {
+  parse("link.exe", "-subsystem", "windows,3", "foo.o", nullptr);
+  EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI, info->getSubsystem());
+  EXPECT_EQ(3, info->getMinOSVersion().majorVersion);
+  EXPECT_EQ(0, info->getMinOSVersion().minorVersion);
+}
+
+TEST_F(WinLinkParserTest, MinMajorMinorOSVersion) {
+  parse("link.exe", "-subsystem", "windows,3.1", "foo.o", nullptr);
+  EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI, info->getSubsystem());
+  EXPECT_EQ(3, info->getMinOSVersion().majorVersion);
+  EXPECT_EQ(1, info->getMinOSVersion().minorVersion);
 }
 
 }  // end anonymous namespace

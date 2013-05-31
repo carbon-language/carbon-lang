@@ -21,7 +21,9 @@ namespace lld {
 
 class PECOFFTargetInfo : public TargetInfo {
 public:
-  PECOFFTargetInfo() : _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN) {}
+  PECOFFTargetInfo()
+      : _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN),
+        _minOSVersion(6, 0) {}
 
   virtual error_code parseFile(
       std::unique_ptr<MemoryBuffer> &mb,
@@ -43,8 +45,23 @@ public:
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 
+  struct OSVersion {
+    OSVersion(int v1, int v2) : majorVersion(v1), minorVersion(v2) {}
+    int majorVersion;
+    int minorVersion;
+  };
+
+  void setMinOSVersion(const OSVersion &version) {
+    _minOSVersion = version;
+  }
+
+  OSVersion getMinOSVersion() const {
+    return _minOSVersion;
+  }
+
 private:
   llvm::COFF::WindowsSubsystem _subsystem;
+  OSVersion _minOSVersion;
 
   mutable std::unique_ptr<Reader> _reader;
   mutable std::unique_ptr<Writer> _writer;

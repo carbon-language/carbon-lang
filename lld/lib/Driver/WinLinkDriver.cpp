@@ -13,6 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#include <cstdlib>
+
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/Option.h"
@@ -64,13 +66,64 @@ int findDoubleDash(int argc, const char *argv[]) {
   return -1;
 }
 
-// Parses -subsystem command line option.
-llvm::COFF::WindowsSubsystem strToWinSubsystem(std::string str) {
-  std::string arg(StringRef(str).lower());
+// Returns subsystem type for the given string.
+llvm::COFF::WindowsSubsystem stringToWinSubsystem(StringRef str) {
+  std::string arg(str.lower());
   return llvm::StringSwitch<llvm::COFF::WindowsSubsystem>(arg)
       .Case("windows", llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI)
       .Case("console", llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI)
       .Default(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN);
+}
+
+
+// Displays error message if the given version does not match with
+// /^\d+$/.
+bool checkOSVersion(StringRef version, const char *errorMessage,
+                    raw_ostream &diagnostics) {
+  if (version.str().find_first_not_of("0123456789") != std::string::npos
+      || version.empty()) {
+    diagnostics << "error: " << errorMessage << version << "\n";
+    return false;
+  }
+  return true;
+}
+
+bool parseMinOSVersion(PECOFFTargetInfo &info, StringRef &osVersion,
+                       raw_ostream &diagnostics) {
+  StringRef majorVersion, minorVersion;
+  llvm::tie(majorVersion, minorVersion) = osVersion.split('.');
+  if (minorVersion.empty())
+    minorVersion = "0";
+  if (!checkOSVersion(majorVersion, "invalid OS major version: ", diagnostics))
+    return false;
+  if (!checkOSVersion(minorVersion, "invalid OS minor version: ", diagnostics))
+    return false;
+  PECOFFTargetInfo::OSVersion minOSVersion(atoi(majorVersion.str().c_str()),
+                                           atoi(minorVersion.str().c_str()));
+  info.setMinOSVersion(minOSVersion);
+  return true;
+}
+
+// Parse -subsystem command line option. The form of -subsystem is
+// "subsystem_name[,majorOSVersion[,minorOSVersion]]".
+bool parseSubsystemOption(PECOFFTargetInfo &info, std::string arg,
+                          raw_ostream &diagnostics) {
+  StringRef subsystemStr, osVersionStr;
+  llvm::tie(subsystemStr, osVersionStr) = StringRef(arg).split(',');
+
+  // Parse optional OS version if exists.
+  if (!osVersionStr.empty())
+    if (!parseMinOSVersion(info, osVersionStr, diagnostics))
+      return false;
+
+  // Parse subsystem name.
+  llvm::COFF::WindowsSubsystem subsystem = stringToWinSubsystem(subsystemStr);
+  if (subsystem == llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN) {
+    diagnostics << "error: unknown subsystem name: " << subsystemStr << "\n";
+    return false;
+  }
+  info.setSubsystem(subsystem);
+  return true;
 }
 
 // Add ".obj" extension if the given path name has no file extension.
@@ -143,15 +196,9 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   }
 
   // Handle -subsystem
-  if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_subsystem)) {
-    llvm::COFF::WindowsSubsystem subsystem = strToWinSubsystem(arg->getValue());
-    if (subsystem == llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN) {
-      diagnostics << "error: unknown subsystem name: "
-                  << arg->getValue() << "\n";
+  if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_subsystem))
+    if (!parseSubsystemOption(info, arg->getValue(), diagnostics))
       return true;
-    }
-    info.setSubsystem(subsystem);
-  }
 
   // Hanlde -out
   if (llvm::opt::Arg *outpath = parsedArgs->getLastArg(OPT_out))
