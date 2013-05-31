@@ -528,9 +528,8 @@ static void *Reallocate(void *old_ptr, uptr new_size, StackTrace *stack) {
   return new_ptr;
 }
 
-static AsanChunk *GetAsanChunkByAddr(uptr p) {
-  void *ptr = reinterpret_cast<void *>(p);
-  uptr alloc_beg = reinterpret_cast<uptr>(allocator.GetBlockBegin(ptr));
+// Assumes alloc_beg == allocator.GetBlockBegin(alloc_beg).
+static AsanChunk *GetAsanChunk(void *alloc_beg) {
   if (!alloc_beg) return 0;
   uptr *memalign_magic = reinterpret_cast<uptr *>(alloc_beg);
   if (memalign_magic[0] == kMemalignMagic) {
@@ -538,13 +537,13 @@ static AsanChunk *GetAsanChunkByAddr(uptr p) {
     CHECK(m->from_memalign);
     return m;
   }
-  if (!allocator.FromPrimary(ptr)) {
-    uptr *meta = reinterpret_cast<uptr *>(
-        allocator.GetMetaData(reinterpret_cast<void *>(alloc_beg)));
+  if (!allocator.FromPrimary(alloc_beg)) {
+    uptr *meta = reinterpret_cast<uptr *>(allocator.GetMetaData(alloc_beg));
     AsanChunk *m = reinterpret_cast<AsanChunk *>(meta[1]);
     return m;
   }
-  uptr actual_size = allocator.GetActuallyAllocatedSize(ptr);
+  uptr actual_size =
+      allocator.GetActuallyAllocatedSize(alloc_beg);
   CHECK_LE(actual_size, SizeClassMap::kMaxSize);
   // We know the actually allocted size, but we don't know the redzone size.
   // Just try all possible redzone sizes.
@@ -554,9 +553,21 @@ static AsanChunk *GetAsanChunkByAddr(uptr p) {
     if (ComputeRZLog(max_possible_size) != rz_log)
       continue;
     return reinterpret_cast<AsanChunk *>(
-        alloc_beg + rz_size - kChunkHeaderSize);
+        reinterpret_cast<uptr>(alloc_beg) + rz_size - kChunkHeaderSize);
   }
   return 0;
+}
+
+static AsanChunk *GetAsanChunkByAddr(uptr p) {
+  void *alloc_beg = allocator.GetBlockBegin(reinterpret_cast<void *>(p));
+  return GetAsanChunk(alloc_beg);
+}
+
+// Allocator must be locked when this function is called.
+static AsanChunk *GetAsanChunkByAddrFastLocked(uptr p) {
+  void *alloc_beg =
+      allocator.GetBlockBeginFastLocked(reinterpret_cast<void *>(p));
+  return GetAsanChunk(alloc_beg);
 }
 
 static uptr AllocationSize(uptr p) {
@@ -721,7 +732,7 @@ void GetAllocatorGlobalRange(uptr *begin, uptr *end) {
 
 void *PointsIntoChunk(void* p) {
   uptr addr = reinterpret_cast<uptr>(p);
-  __asan::AsanChunk *m = __asan::GetAsanChunkByAddr(addr);
+  __asan::AsanChunk *m = __asan::GetAsanChunkByAddrFastLocked(addr);
   if (!m) return 0;
   uptr chunk = m->Beg();
   if ((m->chunk_state == __asan::CHUNK_ALLOCATED) && m->AddrIsInside(addr))
@@ -730,7 +741,8 @@ void *PointsIntoChunk(void* p) {
 }
 
 void *GetUserBegin(void *p) {
-  __asan::AsanChunk *m = __asan::GetAsanChunkByAddr(reinterpret_cast<uptr>(p));
+  __asan::AsanChunk *m =
+      __asan::GetAsanChunkByAddrFastLocked(reinterpret_cast<uptr>(p));
   CHECK(m);
   return reinterpret_cast<void *>(m->Beg());
 }

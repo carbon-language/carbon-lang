@@ -133,8 +133,7 @@ void GetAllocatorGlobalRange(uptr *begin, uptr *end) {
 }
 
 void *PointsIntoChunk(void* p) {
-  if (!allocator.PointerIsMine(p)) return 0;
-  void *chunk = allocator.GetBlockBegin(p);
+  void *chunk = allocator.GetBlockBeginFastLocked(p);
   if (!chunk) return 0;
   // LargeMmapAllocator considers pointers to the meta-region of a chunk to be
   // valid, but we don't want that.

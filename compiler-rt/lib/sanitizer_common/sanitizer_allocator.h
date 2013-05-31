@@ -1043,10 +1043,9 @@ class LargeMmapAllocator {
     return GetUser(h);
   }
 
-  // This function does the same as GetBlockBegin, but much faster.
-  // It may be called only in a single-threaded context, e.g. when all other
-  // threads are suspended or joined.
-  void *GetBlockBeginFastSingleThreaded(void *ptr) {
+  // This function does the same as GetBlockBegin, but is much faster.
+  // Must be called with the allocator locked.
+  void *GetBlockBeginFastLocked(void *ptr) {
     uptr p = reinterpret_cast<uptr>(ptr);
     uptr n = n_chunks_;
     if (!n) return 0;
@@ -1236,6 +1235,14 @@ class CombinedAllocator {
     if (primary_.PointerIsMine(p))
       return primary_.GetBlockBegin(p);
     return secondary_.GetBlockBegin(p);
+  }
+
+  // This function does the same as GetBlockBegin, but is much faster.
+  // Must be called with the allocator locked.
+  void *GetBlockBeginFastLocked(void *p) {
+    if (primary_.PointerIsMine(p))
+      return primary_.GetBlockBegin(p);
+    return secondary_.GetBlockBeginFastLocked(p);
   }
 
   uptr GetActuallyAllocatedSize(void *p) {

@@ -236,7 +236,7 @@ static void LockAndSuspendThreads(StopTheWorldCallback callback, void *arg) {
   LockThreadRegistry();
   LockAllocator();
   StopTheWorld(callback, arg);
-  // Allocator must be unlocked by the callback.
+  UnlockAllocator();
   UnlockThreadRegistry();
 }
 
@@ -293,8 +293,6 @@ static void DoLeakCheckCallback(const SuspendedThreadsList &suspended_threads,
                                 void *arg) {
   LeakCheckResult *result = reinterpret_cast<LeakCheckResult *>(arg);
   CHECK_EQ(*result, kFatalError);
-  // Allocator must not be locked when we call GetRegionBegin().
-  UnlockAllocator();
   ClassifyAllChunks(suspended_threads);
   LeakReport leak_report;
   CollectLeaks(&leak_report);
