@@ -4315,6 +4315,7 @@ ValueObject::GetDynamicValueType ()
     }
     return lldb::eNoDynamicValues;
 }
+
 lldb::Format
 ValueObject::GetFormat () const
 {
