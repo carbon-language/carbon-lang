@@ -1270,7 +1270,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
 
     unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
       : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
-    if (Opcode == X86::MOV32ri64)
+    if (Opcode == X86::MOV64ri64i32)
       rt = X86::reloc_absolute_word;  // FIXME: add X86II flag?
     // This should not occur on Darwin for relocatable objects.
     if (Opcode == X86::MOV64ri)

@@ -6629,8 +6629,8 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: bam02:
-; LINUX-64-PIC: 	movl	$262144, %eax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	$262144, %eax
 ; LINUX-64-PIC-NEXT: 	addq	([[RCX]]), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -6655,20 +6655,20 @@ entry:
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bam02:
-; DARWIN-64-STATIC: 	movl	$262144, %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	$262144, %eax
 ; DARWIN-64-STATIC-NEXT: 	addq	([[RCX]]), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _bam02:
-; DARWIN-64-DYNAMIC: 	movl	$262144, %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	$262144, %eax
 ; DARWIN-64-DYNAMIC-NEXT: 	addq	([[RCX]]), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _bam02:
-; DARWIN-64-PIC: 	movl	$262144, %eax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	$262144, %eax
 ; DARWIN-64-PIC-NEXT: 	addq	([[RCX]]), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
@@ -6791,8 +6791,8 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: bam05:
-; LINUX-64-PIC: 	movl	$262144, %eax
-; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	$262144, %eax
 ; LINUX-64-PIC-NEXT: 	addq	([[RCX]]), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 

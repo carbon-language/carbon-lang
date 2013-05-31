@@ -200,7 +200,6 @@ namespace {
     bool SelectAddr(SDNode *Parent, SDValue N, SDValue &Base,
                     SDValue &Scale, SDValue &Index, SDValue &Disp,
                     SDValue &Segment);
-    bool SelectMOV64Imm32(SDValue N, SDValue &Imm);
     bool SelectLEAAddr(SDValue N, SDValue &Base,
                        SDValue &Scale, SDValue &Index, SDValue &Disp,
                        SDValue &Segment);
@@ -1380,33 +1379,6 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDNode *Root,
   return false;
 }
 
-
-bool X86DAGToDAGISel::SelectMOV64Imm32(SDValue N, SDValue &Imm) {
-  if (const ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N)) {
-    uint64_t ImmVal = CN->getZExtValue();
-    if ((uint32_t)ImmVal != (uint64_t)ImmVal)
-      return false;
-
-    Imm = CurDAG->getTargetConstant(ImmVal, MVT::i64);
-    return true;
-  }
-
-  // In static codegen with small code model, we can get the address of a label
-  // into a register with 'movl'. TableGen has already made sure we're looking
-  // at a label of some kind.
-  assert(N->getOpcode() == X86ISD::Wrapper && "Unexpected node type for MOV32ri64");
-  N = N.getOperand(0);
-
-  if (N->getOpcode() != ISD::TargetConstantPool &&
-      N->getOpcode() != ISD::TargetJumpTable &&
-      N->getOpcode() != ISD::TargetGlobalAddress &&
-      N->getOpcode() != ISD::TargetExternalSymbol &&
-      N->getOpcode() != ISD::TargetBlockAddress)
-    return false;
-
-  Imm = N;
-  return TM.getCodeModel() == CodeModel::Small;
-}
 
 /// SelectLEAAddr - it calls SelectAddr and determines if the maximal addressing
 /// mode it matches can be cost effectively emitted as an LEA instruction.
