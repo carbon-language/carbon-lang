@@ -105,7 +105,7 @@ bool parseMinOSVersion(PECOFFTargetInfo &info, StringRef &osVersion,
 }
 
 // Parse -subsystem command line option. The form of -subsystem is
-// "subsystem_name[,majorOSVersion[,minorOSVersion]]".
+// "subsystem_name[,majorOSVersion[.minorOSVersion]]".
 bool parseSubsystemOption(PECOFFTargetInfo &info, std::string arg,
                           raw_ostream &diagnostics) {
   StringRef subsystemStr, osVersionStr;
