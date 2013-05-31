@@ -7,6 +7,7 @@ config.llvm_obj_root = "@LLVM_BINARY_DIR@"
 config.llvm_tools_dir = "@LLVM_TOOLS_DIR@"
 config.clang = "@LLVM_BINARY_DIR@/bin/clang"
 config.compiler_rt_arch = "@COMPILER_RT_SUPPORTED_ARCH@"
+config.lsan_lit_src_root = "@LSAN_LIT_SOURCE_DIR@"
 
 # LLVM tools dir can be passed in lit parameters, so try to
 # apply substitution.
@@ -17,4 +18,4 @@ except KeyError,e:
   lit.fatal("unable to find %r parameter, use '--param=%s=VALUE'" % (key, key))
 
 # Let the main config do the real work.
-lit.load_config(config, "@CMAKE_CURRENT_SOURCE_DIR@/lit.cfg")
+lit.load_config(config, "@LSAN_LIT_SOURCE_DIR@/LsanConfig/lit.cfg")
