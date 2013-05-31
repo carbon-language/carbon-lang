@@ -109,6 +109,7 @@ public:
   virtual bool addPreRegAlloc();
   virtual bool addPostRegAlloc();
 
+  virtual FunctionPass *createTargetRegisterAllocator(bool) LLVM_OVERRIDE;
   virtual void addFastRegAlloc(FunctionPass *RegAllocPass);
   virtual void addOptimizedRegAlloc(FunctionPass *RegAllocPass);
 };
@@ -147,12 +148,16 @@ bool NVPTXPassConfig::addPostRegAlloc() {
   return false;
 }
 
+FunctionPass *NVPTXPassConfig::createTargetRegisterAllocator(bool) {
+  return 0; // No reg alloc
+}
+
 void NVPTXPassConfig::addFastRegAlloc(FunctionPass *RegAllocPass) {
-  // No reg alloc
+  assert(!RegAllocPass && "NVPTX uses no regalloc!");
   addPass(&StrongPHIEliminationID);
 }
 
 void NVPTXPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
-  // No reg alloc
+  assert(!RegAllocPass && "NVPTX uses no regalloc!");
   addPass(&StrongPHIEliminationID);
 }
