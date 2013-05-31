@@ -45,6 +45,7 @@ public:
     else
       Line.MustBeDeclaration = true;
   }
+
 private:
   UnwrappedLine &Line;
   std::vector<bool> &Stack;
@@ -81,9 +82,7 @@ public:
     return Token;
   }
 
-  virtual unsigned getPosition() {
-    return PreviousTokenSource->getPosition();
-  }
+  virtual unsigned getPosition() { return PreviousTokenSource->getPosition(); }
 
   virtual FormatToken *setPosition(unsigned Position) {
     Token = PreviousTokenSource->setPosition(Position);
@@ -279,7 +278,7 @@ void UnwrappedLineParser::calculateBraceTypes() {
     case tok::kw_for:
     case tok::kw_switch:
     case tok::kw_try:
-      if (!LBraceStack.empty()) 
+      if (!LBraceStack.empty())
         LBraces[LBraceStack.back()] = BS_Block;
       break;
     default:
@@ -386,9 +385,7 @@ void UnwrappedLineParser::parsePPElse() {
   parsePPUnknown();
 }
 
-void UnwrappedLineParser::parsePPElIf() {
-  parsePPElse();
-}
+void UnwrappedLineParser::parsePPElIf() { parsePPElse(); }
 
 void UnwrappedLineParser::parsePPEndIf() {
   if (!PPStack.empty())
@@ -700,15 +697,21 @@ void UnwrappedLineParser::parseParens() {
     case tok::r_paren:
       nextToken();
       return;
+    case tok::r_brace:
+      // A "}" inside parenthesis is an error if there wasn't a matching "{".
+      return;
     case tok::l_brace: {
       if (!tryToParseBracedList()) {
         nextToken();
-        ScopedLineState LineState(*this);
-        ScopedDeclarationState DeclarationState(*Line, DeclarationScopeStack,
-                                                /*MustBeDeclaration=*/ false);
-        Line->Level += 1;
-        parseLevel(/*HasOpeningBrace=*/ true);
-        Line->Level -= 1;
+        {
+          ScopedLineState LineState(*this);
+          ScopedDeclarationState DeclarationState(*Line, DeclarationScopeStack,
+                                                  /*MustBeDeclaration=*/ false);
+          Line->Level += 1;
+          parseLevel(/*HasOpeningBrace=*/ true);
+          Line->Level -= 1;
+        }
+        nextToken();
       }
       break;
     }

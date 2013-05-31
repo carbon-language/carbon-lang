@@ -1901,6 +1901,19 @@ TEST_F(FormatTest, LayoutBlockInsideParens) {
             "  int i;\n"
             "});",
             format(" functionCall ( {int i;} );"));
+
+  // FIXME: This is bad, find a better and more generic solution.
+  EXPECT_EQ("functionCall({\n"
+            "  int i;\n"
+            "},\n"
+            "             aaaa, bbbb, cccc);",
+            format(" functionCall ( {int i;},  aaaa,   bbbb, cccc);"));
+  verifyFormat(
+      "Aaa({\n"
+      "  int i;\n"
+      "},\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,\n"
+      "                                     ccccccccccccccccc));");
 }
 
 TEST_F(FormatTest, LayoutBlockInsideStatement) {
@@ -3387,7 +3400,9 @@ TEST_F(FormatTest, IncorrectCodeMissingParens) {
 
 TEST_F(FormatTest, DoesNotTouchUnwrappedLinesWithErrors) {
   verifyFormat("namespace {\n"
-               "class Foo {  Foo  ( }; }  // comment");
+               "class Foo {  Foo  (\n"
+               "};\n"
+               "} // comment");
 }
 
 TEST_F(FormatTest, IncorrectCodeErrorDetection) {
@@ -3458,16 +3473,6 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
                  "  T member = {arg1, arg2};\n"
                  "};",
                  NoSpaces);
-}
-
-TEST_F(FormatTest, LayoutTokensFollowingBlockInParentheses) {
-  // FIXME: This is bad, find a better and more generic solution.
-  verifyFormat(
-      "Aaa({\n"
-      "  int i;\n"
-      "},\n"
-      "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,\n"
-      "                                     ccccccccccccccccc));");
 }
 
 TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {
