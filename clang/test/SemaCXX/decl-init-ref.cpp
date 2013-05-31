@@ -26,4 +26,7 @@ int main() {
 }
 
 struct PR6139 { A (&x)[1]; };
-PR6139 x = {{A()}}; // expected-error{{non-const lvalue reference to type 'A [1]' cannot bind to a temporary of type 'A'}}
+PR6139 x = {{A()}}; // expected-error{{non-const lvalue reference to type 'A [1]' cannot bind to an initializer list temporary}}
+
+struct PR6139b { A (&x)[1]; };
+PR6139b y = {A()}; // expected-error{{non-const lvalue reference to type 'A [1]' cannot bind to a temporary of type 'A'}}

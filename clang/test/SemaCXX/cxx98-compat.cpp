@@ -73,7 +73,7 @@ int InitList(int i = {}) { // expected-warning {{generalized initializer lists a
   Ctor c2 = { 3.0, 4l }; // expected-warning {{constructor call from initializer list is incompatible with C++98}}
   InitListCtor ilc = { true, false }; // expected-warning {{initialization of initializer_list object is incompatible with C++98}}
   const int &r = { 0 }; // expected-warning {{reference initialized from initializer list is incompatible with C++98}}
-  struct { int a; const int &r; } rr = { 0, {{0}} }; // expected-warning {{reference initialized from initializer list is incompatible with C++98}}
+  struct { int a; const int &r; } rr = { 0, {0} }; // expected-warning {{reference initialized from initializer list is incompatible with C++98}}
   return { 0 }; // expected-warning {{generalized initializer lists are incompatible with C++98}}
 }
 struct DelayedDefaultArgumentParseInitList {

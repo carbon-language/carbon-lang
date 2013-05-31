@@ -821,6 +821,11 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
                                           InitListExpr *StructuredList,
                                           unsigned &StructuredIndex) {
   Expr *expr = IList->getInit(Index);
+
+  if (ElemType->isReferenceType())
+    return CheckReferenceType(Entity, IList, ElemType, Index,
+                              StructuredList, StructuredIndex);
+
   if (InitListExpr *SubInitList = dyn_cast<InitListExpr>(expr)) {
     if (!ElemType->isRecordType() || ElemType->isAggregateType()) {
       unsigned newIndex = 0;
@@ -840,13 +845,9 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
     // C++ initialization is handled later.
   }
 
-  if (ElemType->isScalarType()) {
+  if (ElemType->isScalarType())
     return CheckScalarType(Entity, IList, ElemType, Index,
                            StructuredList, StructuredIndex);
-  } else if (ElemType->isReferenceType()) {
-    return CheckReferenceType(Entity, IList, ElemType, Index,
-                              StructuredList, StructuredIndex);
-  }
 
   if (const ArrayType *arrayType = SemaRef.Context.getAsArrayType(ElemType)) {
     // arrayType can be incomplete if we're initializing a flexible
