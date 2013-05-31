@@ -34,9 +34,10 @@ protected:
 
 TEST_F(WinLinkParserTest, Basic) {
   parse("link.exe", "-subsystem", "console", "-out", "a.exe",
-        "a.obj", "b.obj", "c.obj", nullptr);
+        "-entry", "_start", "a.obj", "b.obj", "c.obj", nullptr);
   EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI, info->getSubsystem());
   EXPECT_EQ("a.exe", info->outputPath());
+  EXPECT_EQ("_start", info->entrySymbolName());
   EXPECT_EQ(3, (int)inputFiles.size());
   EXPECT_EQ("a.obj", inputFiles[0]);
   EXPECT_EQ("b.obj", inputFiles[1]);

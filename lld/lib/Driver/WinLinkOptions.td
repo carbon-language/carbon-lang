@@ -13,5 +13,9 @@ def subsystem : Separate<["-", "/"], "subsystem">,
     HelpText<"Specify subsystem">;
 def subsystem_c: Joined<["-", "/"], "subsystem:">, Alias<subsystem>;
 
+def entry : Separate<["-", "/"], "entry">,
+    HelpText<"Name of entry point symbol">;
+def entry_c: Joined<["-", "/"], "entry:">, Alias<entry>;
+
 def help : Flag<["-", "/"], "help">;
 def help_q : Flag<["-", "/"], "?">, Alias<help>;

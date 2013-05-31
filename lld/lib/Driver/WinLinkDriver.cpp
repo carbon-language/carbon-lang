@@ -200,6 +200,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     if (!parseSubsystemOption(info, arg->getValue(), diagnostics))
       return true;
 
+  // Handle -entry
+  if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_entry))
+    info.setEntrySymbolName(arg->getValue());
+
   // Hanlde -out
   if (llvm::opt::Arg *outpath = parsedArgs->getLastArg(OPT_out))
     info.setOutputPath(outpath->getValue());
