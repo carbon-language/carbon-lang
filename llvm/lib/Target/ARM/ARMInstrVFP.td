@@ -224,7 +224,36 @@ defm : VFPDTAnyInstAlias<"vpop${p}", "$r",
 defm : VFPDTAnyInstAlias<"vpop${p}", "$r",
                          (VLDMDIA_UPD SP, pred:$p, dpr_reglist:$r)>;
 
-// FLDMX, FSTMX - mixing S/D registers for pre-armv6 cores
+// FLDMX, FSTMX - Load and store multiple unknown precision registers for
+// pre-armv6 cores.
+// These instruction are deprecated so we don't want them to get selected.
+multiclass vfp_ldstx_mult<string asm, bit L_bit> {
+  // Unknown precision
+  def XIA :
+    AXXI4<(outs), (ins GPR:$Rn, pred:$p, dpr_reglist:$regs, variable_ops),
+          IndexModeNone, !strconcat(asm, "iax${p}\t$Rn, $regs"), "", []> {
+    let Inst{24-23} = 0b01;       // Increment After
+    let Inst{21}    = 0;          // No writeback
+    let Inst{20}    = L_bit;
+  }
+  def XIA_UPD :
+    AXXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, dpr_reglist:$regs, variable_ops),
+          IndexModeUpd, !strconcat(asm, "iax${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+    let Inst{24-23} = 0b01;         // Increment After
+    let Inst{21}    = 1;            // Writeback
+    let Inst{20}    = L_bit;
+  }
+  def XDB_UPD :
+    AXXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, dpr_reglist:$regs, variable_ops),
+          IndexModeUpd, !strconcat(asm, "dbx${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+    let Inst{24-23} = 0b10;         // Decrement Before
+    let Inst{21}    = 1;
+    let Inst{20}    = L_bit;
+  }
+}
+
+defm FLDM : vfp_ldstx_mult<"fldm", 1>;
+defm FSTM : vfp_ldstx_mult<"fstm", 0>;
 
 //===----------------------------------------------------------------------===//
 // FP Binary Operations.

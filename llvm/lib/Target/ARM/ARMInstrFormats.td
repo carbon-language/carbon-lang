@@ -1389,7 +1389,6 @@ class ADI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
   let Inst{15-12} = Dd{3-0};
   let Inst{7-0}   = addr{7-0};    // imm8
 
-  // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-24} = opcod1;
   let Inst{21-20} = opcod2;
   let Inst{11-9}  = 0b101;
@@ -1415,7 +1414,6 @@ class ASI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
   let Inst{15-12} = Sd{4-1};
   let Inst{7-0}   = addr{7-0};    // imm8
 
-  // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-24} = opcod1;
   let Inst{21-20} = opcod2;
   let Inst{11-9}  = 0b101;
@@ -1437,6 +1435,28 @@ class PseudoVFPLdStM<dag oops, dag iops, InstrItinClass itin, string cstr,
 }
 
 // Load / store multiple
+
+// Unknown precision
+class AXXI4<dag oops, dag iops, IndexMode im,
+            string asm, string cstr, list<dag> pattern>
+  : VFPXI<oops, iops, AddrMode4, 4, im,
+          VFPLdStFrm, NoItinerary, asm, cstr, pattern> {
+  // Instruction operands.
+  bits<4>  Rn;
+  bits<13> regs;
+
+  // Encode instruction operands.
+  let Inst{19-16} = Rn;
+  let Inst{22}    = 0;
+  let Inst{15-12} = regs{11-8};
+  let Inst{7-1}   = regs{7-1};
+
+  let Inst{27-25} = 0b110;
+  let Inst{11-8}  = 0b1011;
+  let Inst{0}     = 1;
+}
+
+// Double precision
 class AXDI4<dag oops, dag iops, IndexMode im, InstrItinClass itin,
             string asm, string cstr, list<dag> pattern>
   : VFPXI<oops, iops, AddrMode4, 4, im,
@@ -1449,14 +1469,15 @@ class AXDI4<dag oops, dag iops, IndexMode im, InstrItinClass itin,
   let Inst{19-16} = Rn;
   let Inst{22}    = regs{12};
   let Inst{15-12} = regs{11-8};
-  let Inst{7-0}   = regs{7-0};
+  let Inst{7-1}   = regs{7-1};
 
-  // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-25} = 0b110;
   let Inst{11-9}  = 0b101;
   let Inst{8}     = 1;          // Double precision
+  let Inst{0}     = 0;
 }
 
+// Single Precision
 class AXSI4<dag oops, dag iops, IndexMode im, InstrItinClass itin,
             string asm, string cstr, list<dag> pattern>
   : VFPXI<oops, iops, AddrMode4, 4, im,
@@ -1471,7 +1492,6 @@ class AXSI4<dag oops, dag iops, IndexMode im, InstrItinClass itin,
   let Inst{15-12} = regs{12-9};
   let Inst{7-0}   = regs{7-0};
 
-  // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-25} = 0b110;
   let Inst{11-9}  = 0b101;
   let Inst{8}     = 0;          // Single precision

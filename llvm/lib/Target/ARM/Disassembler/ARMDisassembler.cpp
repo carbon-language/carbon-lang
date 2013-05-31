@@ -1150,6 +1150,13 @@ static DecodeStatus DecodeSPRRegListOperand(MCInst &Inst, unsigned Val,
   unsigned Vd = fieldFromInstruction(Val, 8, 5);
   unsigned regs = fieldFromInstruction(Val, 0, 8);
 
+  // In case of unpredictable encoding, tweak the operands.
+  if (regs == 0 || (Vd + regs) > 32) {
+    regs = Vd + regs > 32 ? 32 - Vd : regs;
+    regs = std::max( 1u, regs);
+    S = MCDisassembler::SoftFail;
+  }
+
   if (!Check(S, DecodeSPRRegisterClass(Inst, Vd, Address, Decoder)))
     return MCDisassembler::Fail;
   for (unsigned i = 0; i < (regs - 1); ++i) {
@@ -1165,9 +1172,15 @@ static DecodeStatus DecodeDPRRegListOperand(MCInst &Inst, unsigned Val,
   DecodeStatus S = MCDisassembler::Success;
 
   unsigned Vd = fieldFromInstruction(Val, 8, 5);
-  unsigned regs = fieldFromInstruction(Val, 0, 8);
+  unsigned regs = fieldFromInstruction(Val, 1, 7);
 
-  regs = regs >> 1;
+  // In case of unpredictable encoding, tweak the operands.
+  if (regs == 0 || regs > 16 || (Vd + regs) > 32) {
+    regs = Vd + regs > 32 ? 32 - Vd : regs;
+    regs = std::max( 1u, regs);
+    regs = std::min(16u, regs);
+    S = MCDisassembler::SoftFail;
+  }
 
   if (!Check(S, DecodeDPRRegisterClass(Inst, Vd, Address, Decoder)))
       return MCDisassembler::Fail;
