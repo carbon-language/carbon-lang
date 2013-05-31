@@ -1230,6 +1230,7 @@ protected:
                                              // as an independent ValueObjectConstResult, which isn't managed by us.
 
     lldb::Format                m_format;
+    lldb::Format                m_last_format;
     uint32_t                    m_last_format_mgr_revision;
     lldb::TypeSummaryImplSP     m_type_summary_sp;
     lldb::TypeFormatImplSP      m_type_format_sp;
