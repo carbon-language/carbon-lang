@@ -757,6 +757,11 @@ public:
 
   /// \brief Parse expressions with the given operatore precedence.
   void parse(int Precedence = 0) {
+    // Conditional expressions need to be parsed separately for proper nesting.
+    if (Precedence == prec::Conditional + 1) {
+      parseConditionalExpr();
+      return;
+    }
     if (Precedence > prec::PointerToMember || Current == NULL)
       return;
 
@@ -786,11 +791,8 @@ public:
       // found, insert fake parenthesis and return.
       if (Current == NULL || Current->closesScope() ||
           (CurrentPrecedence != 0 && CurrentPrecedence < Precedence)) {
-        if (OperatorFound) {
-          Start->FakeLParens.push_back(prec::Level(Precedence - 1));
-          if (Current)
-            ++Current->Previous->FakeRParens;
-        }
+        if (OperatorFound)
+          addFakeParenthesis(Start, prec::Level(Precedence - 1));
         return;
       }
 
@@ -812,6 +814,26 @@ public:
   }
 
 private:
+  void addFakeParenthesis(FormatToken *Start, prec::Level Precedence) {
+    Start->FakeLParens.push_back(Precedence);
+    if (Current)
+      ++Current->Previous->FakeRParens;
+  }
+
+  void parseConditionalExpr() {
+    FormatToken *Start = Current;
+    parse(prec::LogicalOr + 1);
+    if (!Current || !Current->is(tok::question))
+      return;
+    next();
+    parse(prec::LogicalOr + 1);
+    if (!Current || Current->Type != TT_ConditionalExpr)
+      return;
+    next();
+    parseConditionalExpr();
+    addFakeParenthesis(Start, prec::Conditional);
+  }
+
   void next() {
     if (Current != NULL)
       Current = Current->Next;

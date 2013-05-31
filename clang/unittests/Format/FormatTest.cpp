@@ -2551,6 +2551,16 @@ TEST_F(FormatTest, BreaksConditionalExpressions) {
       "                              : TheLine * 2,\n"
       "           TheLine.InPPDirective, PreviousEndOfLineColumn);",
       getLLVMStyleWithColumns(70));
+  verifyFormat("bool aaaaaa = aaaaaaaaaaaaa //\n"
+               "                  ? aaaaaaaaaaaaaaa\n"
+               "                  : bbbbbbbbbbbbbbb //\n"
+               "                        ? ccccccccccccccc\n"
+               "                        : ddddddddddddddd;");
+  verifyFormat("bool aaaaaa = aaaaaaaaaaaaa //\n"
+               "                  ? aaaaaaaaaaaaaaa\n"
+               "                  : (bbbbbbbbbbbbbbb //\n"
+               "                         ? ccccccccccccccc\n"
+               "                         : ddddddddddddddd);");
 
   FormatStyle NoBinPacking = getLLVMStyle();
   NoBinPacking.BinPackParameters = false;
