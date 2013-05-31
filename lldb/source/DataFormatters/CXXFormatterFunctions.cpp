@@ -902,7 +902,7 @@ lldb_private::formatters::NSDataSummaryProvider (ValueObject& valobj, Stream& st
     stream.Printf("%s%" PRIu64 " byte%s%s",
                   (needs_at ? "@\"" : ""),
                   value,
-                  (value > 1 ? "s" : ""),
+                  (value != 1 ? "s" : ""),
                   (needs_at ? "\"" : ""));
     
     return true;
