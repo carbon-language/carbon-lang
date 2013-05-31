@@ -328,7 +328,10 @@ class SymbolizationLoop(object):
 
   def process_stdin(self):
     self.frame_no = 0
-    for line in sys.stdin:
+    while True:
+      line = sys.stdin.readline()
+      if not line:
+        break
       self.current_line = line.rstrip()
       #0 0x7f6e35cf2e45  (/blah/foo.so+0x11fe45)
       stack_trace_line_format = (
