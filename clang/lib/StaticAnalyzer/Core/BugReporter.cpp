@@ -2287,6 +2287,13 @@ static void splitBranchConditionEdges(PathPieces &pieces,
           Branch = OFS;
         break;
       }
+      if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(Parent)) {
+        if (BO->isLogicalOp()) {
+          if (BO->getLHS()->IgnoreParens() == S)
+            Branch = BO;
+          break;
+        }
+      }
 
       S = Parent;
     }
@@ -2303,34 +2310,31 @@ static void splitBranchConditionEdges(PathPieces &pieces,
 
     // Now look at the previous edge.  We want to know if this was in the same
     // "level" as the for statement.
-    const Stmt *SrcParent = getStmtParent(Src, PM);
     const Stmt *BranchParent = getStmtParent(Branch, PM);
-    if (SrcParent && SrcParent == BranchParent) {
-      PathDiagnosticLocation L(Branch, SM, LC);
-      bool needsEdge = true;
+    PathDiagnosticLocation L(Branch, SM, LC);
+    bool needsEdge = true;
 
-      if (Prev != E) {
-        if (PathDiagnosticControlFlowPiece *P =
-            dyn_cast<PathDiagnosticControlFlowPiece>(*Prev)) {
-          const Stmt *PrevSrc = getLocStmt(P->getStartLocation());
-          if (PrevSrc) {
-            const Stmt *PrevSrcParent = getStmtParent(PrevSrc, PM);
-            if (PrevSrcParent == BranchParent) {
-              P->setEndLocation(L);
-              needsEdge = false;
-            }
+    if (Prev != E) {
+      if (PathDiagnosticControlFlowPiece *P =
+          dyn_cast<PathDiagnosticControlFlowPiece>(*Prev)) {
+        const Stmt *PrevSrc = getLocStmt(P->getStartLocation());
+        if (PrevSrc) {
+          const Stmt *PrevSrcParent = getStmtParent(PrevSrc, PM);
+          if (PrevSrcParent == BranchParent) {
+            P->setEndLocation(L);
+            needsEdge = false;
           }
         }
       }
-
-      if (needsEdge) {
-        PathDiagnosticControlFlowPiece *P =
-          new PathDiagnosticControlFlowPiece(PieceI->getStartLocation(), L);
-        pieces.insert(I, P);
-      }
-
-      PieceI->setStartLocation(L);
     }
+
+    if (needsEdge) {
+      PathDiagnosticControlFlowPiece *P =
+        new PathDiagnosticControlFlowPiece(PieceI->getStartLocation(), L);
+      pieces.insert(I, P);
+    }
+
+    PieceI->setStartLocation(L);
   }
 }
 
