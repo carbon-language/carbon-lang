@@ -743,17 +743,17 @@ TEST(SanitizerCommon, LargeMmapAllocatorBlockBegin) {
   for (uptr i = 0; i < kNumAllocs  * kNumAllocs; i++) {
     // if ((i & (i - 1)) == 0) fprintf(stderr, "[%zd]\n", i);
     char *p1 = allocated[i % kNumAllocs];
-    EXPECT_EQ(p1, a.GetBlockBeginFastSingleThreaded(p1));
-    EXPECT_EQ(p1, a.GetBlockBeginFastSingleThreaded(p1 + size / 2));
-    EXPECT_EQ(p1, a.GetBlockBeginFastSingleThreaded(p1 + size - 1));
-    EXPECT_EQ(p1, a.GetBlockBeginFastSingleThreaded(p1 - 100));
+    EXPECT_EQ(p1, a.GetBlockBeginFastLocked(p1));
+    EXPECT_EQ(p1, a.GetBlockBeginFastLocked(p1 + size / 2));
+    EXPECT_EQ(p1, a.GetBlockBeginFastLocked(p1 + size - 1));
+    EXPECT_EQ(p1, a.GetBlockBeginFastLocked(p1 - 100));
   }
 
   for (uptr i = 0; i < kNumExpectedFalseLookups; i++) {
     void *p = reinterpret_cast<void *>(i % 1024);
-    EXPECT_EQ((void *)0, a.GetBlockBeginFastSingleThreaded(p));
+    EXPECT_EQ((void *)0, a.GetBlockBeginFastLocked(p));
     p = reinterpret_cast<void *>(~0L - (i % 1024));
-    EXPECT_EQ((void *)0, a.GetBlockBeginFastSingleThreaded(p));
+    EXPECT_EQ((void *)0, a.GetBlockBeginFastLocked(p));
   }
 
   for (uptr i = 0; i < kNumAllocs; i++)
