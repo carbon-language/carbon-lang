@@ -151,7 +151,11 @@ public:
         
         if (constant)
         {
-            if (const ConstantInt *constant_int = dyn_cast<ConstantInt>(constant))
+            if (isa<ConstantPointerNull>(constant))
+            {
+                return AssignToMatchType(scalar, 0, value->getType());
+            }
+            else if (const ConstantInt *constant_int = dyn_cast<ConstantInt>(constant))
             {                
                 return AssignToMatchType(scalar, constant_int->getLimitedValue(), value->getType());
             }
