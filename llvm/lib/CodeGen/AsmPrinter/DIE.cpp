@@ -178,7 +178,7 @@ void DIE::dump() {
 void DIEValue::anchor() { }
 
 #ifndef NDEBUG
-void DIEValue::dump() {
+void DIEValue::dump() const {
   print(dbgs());
 }
 #endif
@@ -244,7 +244,7 @@ unsigned DIEInteger::SizeOf(AsmPrinter *AP, unsigned Form) const {
 }
 
 #ifndef NDEBUG
-void DIEInteger::print(raw_ostream &O) {
+void DIEInteger::print(raw_ostream &O) const {
   O << "Int: " << (int64_t)Integer << "  0x";
   O.write_hex(Integer);
 }
@@ -270,7 +270,7 @@ unsigned DIELabel::SizeOf(AsmPrinter *AP, unsigned Form) const {
 }
 
 #ifndef NDEBUG
-void DIELabel::print(raw_ostream &O) {
+void DIELabel::print(raw_ostream &O) const {
   O << "Lbl: " << Label->getName();
 }
 #endif
@@ -294,7 +294,7 @@ unsigned DIEDelta::SizeOf(AsmPrinter *AP, unsigned Form) const {
 }
 
 #ifndef NDEBUG
-void DIEDelta::print(raw_ostream &O) {
+void DIEDelta::print(raw_ostream &O) const {
   O << "Del: " << LabelHi->getName() << "-" << LabelLo->getName();
 }
 #endif
@@ -310,7 +310,7 @@ void DIEEntry::EmitValue(AsmPrinter *AP, unsigned Form) const {
 }
 
 #ifndef NDEBUG
-void DIEEntry::print(raw_ostream &O) {
+void DIEEntry::print(raw_ostream &O) const {
   O << format("Die: 0x%lx", (long)(intptr_t)Entry);
 }
 #endif
@@ -360,7 +360,7 @@ unsigned DIEBlock::SizeOf(AsmPrinter *AP, unsigned Form) const {
 }
 
 #ifndef NDEBUG
-void DIEBlock::print(raw_ostream &O) {
+void DIEBlock::print(raw_ostream &O) const {
   O << "Blk: ";
   DIE::print(O, 5);
 }

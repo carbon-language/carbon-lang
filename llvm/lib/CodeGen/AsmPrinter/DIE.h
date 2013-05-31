@@ -217,8 +217,8 @@ namespace llvm {
     virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const = 0;
 
 #ifndef NDEBUG
-    virtual void print(raw_ostream &O) = 0;
-    void dump();
+    virtual void print(raw_ostream &O) const = 0;
+    void dump() const;
 #endif
   };
 
@@ -260,7 +260,7 @@ namespace llvm {
     static bool classof(const DIEValue *I) { return I->getType() == isInteger; }
 
 #ifndef NDEBUG
-    virtual void print(raw_ostream &O);
+    virtual void print(raw_ostream &O) const;
 #endif
   };
 
@@ -288,7 +288,7 @@ namespace llvm {
     static bool classof(const DIEValue *L) { return L->getType() == isLabel; }
 
 #ifndef NDEBUG
-    virtual void print(raw_ostream &O);
+    virtual void print(raw_ostream &O) const;
 #endif
   };
 
@@ -314,7 +314,7 @@ namespace llvm {
     static bool classof(const DIEValue *D) { return D->getType() == isDelta; }
 
 #ifndef NDEBUG
-    virtual void print(raw_ostream &O);
+    virtual void print(raw_ostream &O) const;
 #endif
   };
 
@@ -345,7 +345,7 @@ namespace llvm {
     static bool classof(const DIEValue *E) { return E->getType() == isEntry; }
 
 #ifndef NDEBUG
-    virtual void print(raw_ostream &O);
+    virtual void print(raw_ostream &O) const;
 #endif
   };
 
@@ -384,7 +384,7 @@ namespace llvm {
     static bool classof(const DIEValue *E) { return E->getType() == isBlock; }
 
 #ifndef NDEBUG
-    virtual void print(raw_ostream &O);
+    virtual void print(raw_ostream &O) const;
 #endif
   };
 
