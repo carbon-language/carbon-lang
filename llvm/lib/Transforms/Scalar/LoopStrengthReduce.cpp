@@ -774,6 +774,13 @@ DeleteTriviallyDeadInstructions(SmallVectorImpl<WeakVH> &DeadInsts) {
 }
 
 namespace {
+class LSRUse;
+}
+// Check if it is legal to fold 2 base registers.
+static bool isLegal2RegAMUse(const TargetTransformInfo &TTI, const LSRUse &LU,
+                             const Formula &F);
+
+namespace {
 
 /// Cost - This class is used to measure and compare candidate formulae.
 class Cost {
@@ -810,12 +817,14 @@ public:
     return NumRegs == ~0u;
   }
 
-  void RateFormula(const Formula &F,
+  void RateFormula(const TargetTransformInfo &TTI,
+                   const Formula &F,
                    SmallPtrSet<const SCEV *, 16> &Regs,
                    const DenseSet<const SCEV *> &VisitedRegs,
                    const Loop *L,
                    const SmallVectorImpl<int64_t> &Offsets,
                    ScalarEvolution &SE, DominatorTree &DT,
+                   const LSRUse &LU,
                    SmallPtrSet<const SCEV *, 16> *LoserRegs = 0);
 
   void print(raw_ostream &OS) const;
@@ -900,12 +909,14 @@ void Cost::RatePrimaryRegister(const SCEV *Reg,
   }
 }
 
-void Cost::RateFormula(const Formula &F,
+void Cost::RateFormula(const TargetTransformInfo &TTI,
+                       const Formula &F,
                        SmallPtrSet<const SCEV *, 16> &Regs,
                        const DenseSet<const SCEV *> &VisitedRegs,
                        const Loop *L,
                        const SmallVectorImpl<int64_t> &Offsets,
                        ScalarEvolution &SE, DominatorTree &DT,
+                       const LSRUse &LU,
                        SmallPtrSet<const SCEV *, 16> *LoserRegs) {
   // Tally up the registers.
   if (const SCEV *ScaledReg = F.ScaledReg) {
@@ -932,7 +943,9 @@ void Cost::RateFormula(const Formula &F,
   // Determine how many (unfolded) adds we'll need inside the loop.
   size_t NumBaseParts = F.BaseRegs.size() + (F.UnfoldedOffset != 0);
   if (NumBaseParts > 1)
-    NumBaseAdds += NumBaseParts - 1;
+    // Do not count the base and a possible second register if the target
+    // allows to fold 2 registers.
+    NumBaseAdds += NumBaseParts - (1 + isLegal2RegAMUse(TTI, LU, F));
 
   // Tally up the non-zero immediates.
   for (SmallVectorImpl<int64_t>::const_iterator I = Offsets.begin(),
@@ -1358,6 +1371,30 @@ static bool isLegalUse(const TargetTransformInfo &TTI, int64_t MinOffset,
   return isLegalUse(TTI, MinOffset, MaxOffset, Kind, AccessTy, F.BaseGV,
                     F.BaseOffset, F.HasBaseReg, F.Scale);
 }
+
+static bool isLegal2RegAMUse(const TargetTransformInfo &TTI, const LSRUse &LU,
+                             const Formula &F) {
+  // If F is used as an Addressing Mode, it may fold one Base plus one
+  // scaled register. If the scaled register is nil, do as if another
+  // element of the base regs is a 1-scaled register.
+  // This is possible if BaseRegs has at least 2 registers.
+
+  // If this is not an address calculation, this is not an addressing mode
+  // use.
+  if (LU.Kind !=  LSRUse::Address)
+    return false;
+
+  // F is already scaled.
+  if (F.Scale != 0)
+    return false;
+
+  // We need to keep one register for the base and one to scale.
+  if (F.BaseRegs.size() < 2)
+    return false;
+
+  return isLegalUse(TTI, LU.MinOffset, LU.MaxOffset, LU.Kind, LU.AccessTy,
+                    F.BaseGV, F.BaseOffset, F.HasBaseReg, 1);
+ }
 
 static bool isAlwaysFoldable(const TargetTransformInfo &TTI,
                              LSRUse::KindType Kind, Type *AccessTy,
@@ -3690,7 +3727,7 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
       // the corresponding bad register from the Regs set.
       Cost CostF;
       Regs.clear();
-      CostF.RateFormula(F, Regs, VisitedRegs, L, LU.Offsets, SE, DT,
+      CostF.RateFormula(TTI, F, Regs, VisitedRegs, L, LU.Offsets, SE, DT, LU,
                         &LoserRegs);
       if (CostF.isLoser()) {
         // During initial formula generation, undesirable formulae are generated
@@ -3726,7 +3763,8 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
 
         Cost CostBest;
         Regs.clear();
-        CostBest.RateFormula(Best, Regs, VisitedRegs, L, LU.Offsets, SE, DT);
+        CostBest.RateFormula(TTI, Best, Regs, VisitedRegs, L, LU.Offsets, SE,
+                             DT, LU);
         if (CostF < CostBest)
           std::swap(F, Best);
         DEBUG(dbgs() << "  Filtering out formula "; F.print(dbgs());
@@ -4079,7 +4117,8 @@ void LSRInstance::SolveRecurse(SmallVectorImpl<const Formula *> &Solution,
     // the current best, prune the search at that point.
     NewCost = CurCost;
     NewRegs = CurRegs;
-    NewCost.RateFormula(F, NewRegs, VisitedRegs, L, LU.Offsets, SE, DT);
+    NewCost.RateFormula(TTI, F, NewRegs, VisitedRegs, L, LU.Offsets, SE, DT,
+                        LU);
     if (NewCost < SolutionCost) {
       Workspace.push_back(&F);
       if (Workspace.size() != Uses.size()) {
