@@ -1890,6 +1890,12 @@ bool MallocChecker::doesNotFreeMemOrInteresting(const CallEvent *Call,
       return false;
     }
 
+    // We should escape on call to 'init'. This is especially relevant to the
+    // receiver, as the corresponding symbol is usually not referenced after
+    // the call.
+    if (Msg->getMethodFamily() == OMF_init)
+      return false;
+
     // Otherwise, assume that the method does not free memory.
     // Most framework methods do not free memory.
     return true;

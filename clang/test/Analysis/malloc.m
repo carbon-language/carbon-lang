@@ -35,3 +35,13 @@ void rdar10579586(char x);
 }
 @end
 
+@interface JKArray : NSObject {
+  id * objects;
+}
+@end
+
+void _JKArrayCreate() {
+  JKArray *array = (JKArray *)malloc(12);
+  array = [array init];
+  free(array); // no-warning
+}
