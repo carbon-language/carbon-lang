@@ -1073,7 +1073,14 @@ MipsTargetLowering::emitAtomicBinaryPartword(MachineInstr *MI,
   BuildMI(BB, DL, TII->get(Mips::AND), AlignedAddr)
     .addReg(Ptr).addReg(MaskLSB2);
   BuildMI(BB, DL, TII->get(Mips::ANDi), PtrLSB2).addReg(Ptr).addImm(3);
-  BuildMI(BB, DL, TII->get(Mips::SLL), ShiftAmt).addReg(PtrLSB2).addImm(3);
+  if (Subtarget->isLittle()) {
+    BuildMI(BB, DL, TII->get(Mips::SLL), ShiftAmt).addReg(PtrLSB2).addImm(3);
+  } else {
+    unsigned Off = RegInfo.createVirtualRegister(RC);
+    BuildMI(BB, DL, TII->get(Mips::XORi), Off)
+      .addReg(PtrLSB2).addImm((Size == 1) ? 3 : 2);
+    BuildMI(BB, DL, TII->get(Mips::SLL), ShiftAmt).addReg(Off).addImm(3);
+  }
   BuildMI(BB, DL, TII->get(Mips::ORi), MaskUpper)
     .addReg(Mips::ZERO).addImm(MaskImm);
   BuildMI(BB, DL, TII->get(Mips::SLLV), Mask)
@@ -1316,7 +1323,14 @@ MipsTargetLowering::emitAtomicCmpSwapPartword(MachineInstr *MI,
   BuildMI(BB, DL, TII->get(Mips::AND), AlignedAddr)
     .addReg(Ptr).addReg(MaskLSB2);
   BuildMI(BB, DL, TII->get(Mips::ANDi), PtrLSB2).addReg(Ptr).addImm(3);
-  BuildMI(BB, DL, TII->get(Mips::SLL), ShiftAmt).addReg(PtrLSB2).addImm(3);
+  if (Subtarget->isLittle()) {
+    BuildMI(BB, DL, TII->get(Mips::SLL), ShiftAmt).addReg(PtrLSB2).addImm(3);
+  } else {
+    unsigned Off = RegInfo.createVirtualRegister(RC);
+    BuildMI(BB, DL, TII->get(Mips::XORi), Off)
+      .addReg(PtrLSB2).addImm((Size == 1) ? 3 : 2);
+    BuildMI(BB, DL, TII->get(Mips::SLL), ShiftAmt).addReg(Off).addImm(3);
+  }
   BuildMI(BB, DL, TII->get(Mips::ORi), MaskUpper)
     .addReg(Mips::ZERO).addImm(MaskImm);
   BuildMI(BB, DL, TII->get(Mips::SLLV), Mask)
