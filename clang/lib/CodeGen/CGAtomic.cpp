@@ -15,6 +15,7 @@
 #include "CGCall.h"
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Operator.h"
@@ -317,6 +318,22 @@ EmitValToTemp(CodeGenFunction &CGF, Expr *E) {
   return DeclPtr;
 }
 
+static void
+AddDirectArgument(CodeGenFunction &CGF, CallArgList &Args,
+                       bool UseOptimizedLibcall, llvm::Value *Val,
+                       QualType ValTy) {
+  if (UseOptimizedLibcall) {
+    // Load value and pass it to the function directly.
+    unsigned Align = CGF.getContext().getTypeAlignInChars(ValTy).getQuantity();
+    Val = CGF.EmitLoadOfScalar(Val, false, Align, ValTy);
+    Args.add(RValue::get(Val), ValTy);
+  } else {
+    // Non-optimized functions always take a reference.
+    Args.add(RValue::get(CGF.EmitCastToVoidPtr(Val)),
+                         CGF.getContext().VoidPtrTy);
+  }
+}
+
 RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
   QualType AtomicTy = E->getPtr()->getType()->getPointeeType();
   QualType MemTy = AtomicTy;
@@ -424,66 +441,136 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
 
   // Use a library call.  See: http://gcc.gnu.org/wiki/Atomic/GCCMM/LIbrary .
   if (UseLibcall) {
+    bool UseOptimizedLibcall = false;
+    switch (E->getOp()) {
+    case AtomicExpr::AO__c11_atomic_fetch_add:
+    case AtomicExpr::AO__atomic_fetch_add:
+    case AtomicExpr::AO__c11_atomic_fetch_and:
+    case AtomicExpr::AO__atomic_fetch_and:
+    case AtomicExpr::AO__c11_atomic_fetch_or:
+    case AtomicExpr::AO__atomic_fetch_or:
+    case AtomicExpr::AO__c11_atomic_fetch_sub:
+    case AtomicExpr::AO__atomic_fetch_sub:
+    case AtomicExpr::AO__c11_atomic_fetch_xor:
+    case AtomicExpr::AO__atomic_fetch_xor:
+      // For these, only library calls for certain sizes exist.
+      UseOptimizedLibcall = true;
+      break;
+    default:
+      // Only use optimized library calls for sizes for which they exist.
+      if (Size == 1 || Size == 2 || Size == 4 || Size == 8)
+        UseOptimizedLibcall = true;
+      break;
+    }
 
-    SmallVector<QualType, 5> Params;
     CallArgList Args;
-    // Size is always the first parameter
-    Args.add(RValue::get(llvm::ConstantInt::get(SizeTy, Size)),
-             getContext().getSizeType());
-    // Atomic address is always the second parameter
+    if (!UseOptimizedLibcall) {
+      // For non-optimized library calls, the size is the first parameter
+      Args.add(RValue::get(llvm::ConstantInt::get(SizeTy, Size)),
+               getContext().getSizeType());
+    }
+    // Atomic address is the first or second parameter
     Args.add(RValue::get(EmitCastToVoidPtr(Ptr)),
              getContext().VoidPtrTy);
 
-    const char* LibCallName;
-    QualType RetTy = getContext().VoidTy;
+    std::string LibCallName;
+    QualType RetTy;
+    bool HaveRetTy = false;
     switch (E->getOp()) {
     // There is only one libcall for compare an exchange, because there is no
     // optimisation benefit possible from a libcall version of a weak compare
     // and exchange.
-    // bool __atomic_compare_exchange(size_t size, void *obj, void *expected,
+    // bool __atomic_compare_exchange(size_t size, void *mem, void *expected,
     //                                void *desired, int success, int failure)
+    // bool __atomic_compare_exchange_N(T *mem, T *expected, T desired,
+    //                                  int success, int failure)
     case AtomicExpr::AO__c11_atomic_compare_exchange_weak:
     case AtomicExpr::AO__c11_atomic_compare_exchange_strong:
     case AtomicExpr::AO__atomic_compare_exchange:
     case AtomicExpr::AO__atomic_compare_exchange_n:
       LibCallName = "__atomic_compare_exchange";
       RetTy = getContext().BoolTy;
+      HaveRetTy = true;
       Args.add(RValue::get(EmitCastToVoidPtr(Val1)),
                getContext().VoidPtrTy);
-      Args.add(RValue::get(EmitCastToVoidPtr(Val2)),
-               getContext().VoidPtrTy);
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val2, MemTy);
       Args.add(RValue::get(Order),
                getContext().IntTy);
       Order = OrderFail;
       break;
     // void __atomic_exchange(size_t size, void *mem, void *val, void *return,
     //                        int order)
+    // T __atomic_exchange_N(T *mem, T val, int order)
     case AtomicExpr::AO__c11_atomic_exchange:
     case AtomicExpr::AO__atomic_exchange_n:
     case AtomicExpr::AO__atomic_exchange:
       LibCallName = "__atomic_exchange";
-      Args.add(RValue::get(EmitCastToVoidPtr(Val1)),
-               getContext().VoidPtrTy);
-      Args.add(RValue::get(EmitCastToVoidPtr(Dest)),
-               getContext().VoidPtrTy);
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy);
       break;
     // void __atomic_store(size_t size, void *mem, void *val, int order)
+    // void __atomic_store_N(T *mem, T val, int order)
     case AtomicExpr::AO__c11_atomic_store:
     case AtomicExpr::AO__atomic_store:
     case AtomicExpr::AO__atomic_store_n:
       LibCallName = "__atomic_store";
-      Args.add(RValue::get(EmitCastToVoidPtr(Val1)),
-               getContext().VoidPtrTy);
+      RetTy = getContext().VoidTy;
+      HaveRetTy = true;
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy);
       break;
     // void __atomic_load(size_t size, void *mem, void *return, int order)
+    // T __atomic_load_N(T *mem, int order)
     case AtomicExpr::AO__c11_atomic_load:
     case AtomicExpr::AO__atomic_load:
     case AtomicExpr::AO__atomic_load_n:
       LibCallName = "__atomic_load";
-      Args.add(RValue::get(EmitCastToVoidPtr(Dest)),
-               getContext().VoidPtrTy);
+      break;
+    // T __atomic_fetch_add_N(T *mem, T val, int order)
+    case AtomicExpr::AO__c11_atomic_fetch_add:
+    case AtomicExpr::AO__atomic_fetch_add:
+      LibCallName = "__atomic_fetch_add";
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy);
+      break;
+    // T __atomic_fetch_and_N(T *mem, T val, int order)
+    case AtomicExpr::AO__c11_atomic_fetch_and:
+    case AtomicExpr::AO__atomic_fetch_and:
+      LibCallName = "__atomic_fetch_and";
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy);
+      break;
+    // T __atomic_fetch_or_N(T *mem, T val, int order)
+    case AtomicExpr::AO__c11_atomic_fetch_or:
+    case AtomicExpr::AO__atomic_fetch_or:
+      LibCallName = "__atomic_fetch_or";
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy);
+      break;
+    // T __atomic_fetch_sub_N(T *mem, T val, int order)
+    case AtomicExpr::AO__c11_atomic_fetch_sub:
+    case AtomicExpr::AO__atomic_fetch_sub:
+      LibCallName = "__atomic_fetch_sub";
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy);
+      break;
+    // T __atomic_fetch_xor_N(T *mem, T val, int order)
+    case AtomicExpr::AO__c11_atomic_fetch_xor:
+    case AtomicExpr::AO__atomic_fetch_xor:
+      LibCallName = "__atomic_fetch_xor";
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy);
       break;
     default: return EmitUnsupportedRValue(E, "atomic library call");
+    }
+
+    // Optimized functions have the size in their name.
+    if (UseOptimizedLibcall)
+      LibCallName += "_" + llvm::utostr(Size);
+    // By default, assume we return a value of the atomic type.
+    if (!HaveRetTy) {
+      if (UseOptimizedLibcall) {
+        // Value is returned directly.
+        RetTy = MemTy;
+      } else {
+        // Value is returned through parameter before the order.
+        RetTy = getContext().VoidTy;
+        Args.add(RValue::get(EmitCastToVoidPtr(Dest)),
+                 getContext().VoidPtrTy);
+      }
     }
     // order is always the last parameter
     Args.add(RValue::get(Order),
@@ -495,7 +582,7 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
     llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FuncInfo);
     llvm::Constant *Func = CGM.CreateRuntimeFunction(FTy, LibCallName);
     RValue Res = EmitCall(FuncInfo, Func, ReturnValueSlot(), Args);
-    if (E->isCmpXChg())
+    if (!RetTy->isVoidType())
       return Res;
     if (E->getType()->isVoidType())
       return RValue::get(0);
