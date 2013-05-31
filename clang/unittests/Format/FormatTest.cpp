@@ -3173,10 +3173,24 @@ TEST_F(FormatTest, FormatsCasts) {
   verifyFormat("Type *A = (Type *)P;");
   verifyFormat("Type *A = (vector<Type *, int *>)P;");
   verifyFormat("int a = (int)(2.0f);");
+  verifyFormat("int a = (int)2.0f;");
+  verifyFormat("x[(int32)y];");
+  verifyFormat("x = (int32)y;");
+  verifyFormat("#define AA(X) sizeof(((X *)NULL)->a)");
+  verifyFormat("int a = (int)*b;");
+  verifyFormat("int a = (int)2.0f;");
+  verifyFormat("int a = (int)~0;");
+  verifyFormat("int a = (int)++a;");
+  verifyFormat("int a = (int)sizeof(int);");
+  verifyFormat("int a = (int)+2;");
+  verifyFormat("my_int a = (my_int)2.0f;");
+  verifyFormat("my_int a = (my_int)sizeof(int);");
 
-  // FIXME: These also need to be identified.
-  verifyFormat("int a = (int) 2.0f;");
-  verifyFormat("int a = (int) * b;");
+  // FIXME: Without type knowledge, this can still fall apart miserably.
+  verifyFormat("void f() { my_int a = (my_int) * b; }");
+  verifyFormat("my_int a = (my_int) ~0;");
+  verifyFormat("my_int a = (my_int)++ a;");
+  verifyFormat("my_int a = (my_int) + 2;");
 
   // These are not casts.
   verifyFormat("void f(int *) {}");
