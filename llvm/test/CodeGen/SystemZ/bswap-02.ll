@@ -85,3 +85,15 @@ define i32 @f7(i64 %src, i64 %index) {
   %swapped = call i32 @llvm.bswap.i32(i32 %a)
   ret i32 %swapped
 }
+
+; Check that volatile accesses do not use LRV, which might access the
+; storage multple times.
+define i32 @f8(i32 *%src) {
+; CHECK: f8:
+; CHECK: l [[REG:%r[0-5]]], 0(%r2)
+; CHECK: lrvr %r2, [[REG]]
+; CHECK: br %r14
+  %a = load volatile i32 *%src
+  %swapped = call i32 @llvm.bswap.i32(i32 %a)
+  ret i32 %swapped
+}

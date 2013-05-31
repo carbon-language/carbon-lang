@@ -85,3 +85,15 @@ define i64 @f7(i64 %src, i64 %index) {
   %swapped = call i64 @llvm.bswap.i64(i64 %a)
   ret i64 %swapped
 }
+
+; Check that volatile accesses do not use LRVG, which might access the
+; storage multple times.
+define i64 @f8(i64 *%src) {
+; CHECK: f8:
+; CHECK: lg [[REG:%r[0-5]]], 0(%r2)
+; CHECK: lrvgr %r2, [[REG]]
+; CHECK: br %r14
+  %a = load volatile i64 *%src
+  %swapped = call i64 @llvm.bswap.i64(i64 %a)
+  ret i64 %swapped
+}

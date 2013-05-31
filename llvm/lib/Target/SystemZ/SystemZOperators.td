@@ -142,6 +142,23 @@ def aligned_store         : AlignedStore<store>;
 def aligned_truncstorei16 : AlignedStore<truncstorei16>;
 def aligned_truncstorei32 : AlignedStore<truncstorei32>;
 
+// Non-volatile loads.  Used for instructions that might access the storage
+// location multiple times.
+class NonvolatileLoad<SDPatternOperator load>
+  : PatFrag<(ops node:$addr), (load node:$addr), [{
+  LoadSDNode *Load = cast<LoadSDNode>(N);
+  return !Load->isVolatile();
+}]>;
+def nonvolatile_load : NonvolatileLoad<load>;
+
+// Non-volatile stores.
+class NonvolatileStore<SDPatternOperator store>
+  : PatFrag<(ops node:$src, node:$addr), (store node:$src, node:$addr), [{
+  StoreSDNode *Store = cast<StoreSDNode>(N);
+  return !Store->isVolatile();
+}]>;
+def nonvolatile_store : NonvolatileStore<store>;
+
 // Insertions.
 def inserti8 : PatFrag<(ops node:$src1, node:$src2),
                        (or (and node:$src1, -256), node:$src2)>;
@@ -186,11 +203,11 @@ def fnabs : PatFrag<(ops node:$ptr), (fneg (fabs node:$ptr))>;
 
 // Create a unary operator that loads from memory and then performs
 // the given operation on it.
-class loadu<SDPatternOperator operator>
+class loadu<SDPatternOperator operator, SDPatternOperator load = load>
   : PatFrag<(ops node:$addr), (operator (load node:$addr))>;
 
 // Create a store operator that performs the given unary operation
 // on the value before storing it.
-class storeu<SDPatternOperator operator>
+class storeu<SDPatternOperator operator, SDPatternOperator store = store>
   : PatFrag<(ops node:$value, node:$addr),
             (store (operator node:$value), node:$addr)>;

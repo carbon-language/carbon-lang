@@ -5,21 +5,21 @@
 declare i64 @llvm.bswap.i64(i64 %a)
 
 ; Check STRVG with no displacement.
-define void @f1(i64 *%src, i64 %a) {
+define void @f1(i64 *%dst, i64 %a) {
 ; CHECK: f1:
 ; CHECK: strvg %r3, 0(%r2)
 ; CHECK: br %r14
   %swapped = call i64 @llvm.bswap.i64(i64 %a)
-  store i64 %swapped, i64 *%src
+  store i64 %swapped, i64 *%dst
   ret void
 }
 
 ; Check the high end of the aligned STRVG range.
-define void @f2(i64 *%src, i64 %a) {
+define void @f2(i64 *%dst, i64 %a) {
 ; CHECK: f2:
 ; CHECK: strvg %r3, 524280(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 65535
+  %ptr = getelementptr i64 *%dst, i64 65535
   %swapped = call i64 @llvm.bswap.i64(i64 %a)
   store i64 %swapped, i64 *%ptr
   ret void
@@ -27,34 +27,34 @@ define void @f2(i64 *%src, i64 %a) {
 
 ; Check the next doubleword up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
-define void @f3(i64 *%src, i64 %a) {
+define void @f3(i64 *%dst, i64 %a) {
 ; CHECK: f3:
 ; CHECK: agfi %r2, 524288
 ; CHECK: strvg %r3, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 65536
+  %ptr = getelementptr i64 *%dst, i64 65536
   %swapped = call i64 @llvm.bswap.i64(i64 %a)
   store i64 %swapped, i64 *%ptr
   ret void
 }
 
 ; Check the high end of the negative aligned STRVG range.
-define void @f4(i64 *%src, i64 %a) {
+define void @f4(i64 *%dst, i64 %a) {
 ; CHECK: f4:
 ; CHECK: strvg %r3, -8(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 -1
+  %ptr = getelementptr i64 *%dst, i64 -1
   %swapped = call i64 @llvm.bswap.i64(i64 %a)
   store i64 %swapped, i64 *%ptr
   ret void
 }
 
 ; Check the low end of the STRVG range.
-define void @f5(i64 *%src, i64 %a) {
+define void @f5(i64 *%dst, i64 %a) {
 ; CHECK: f5:
 ; CHECK: strvg %r3, -524288(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 -65536
+  %ptr = getelementptr i64 *%dst, i64 -65536
   %swapped = call i64 @llvm.bswap.i64(i64 %a)
   store i64 %swapped, i64 *%ptr
   ret void
@@ -62,12 +62,12 @@ define void @f5(i64 *%src, i64 %a) {
 
 ; Check the next doubleword down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
-define void @f6(i64 *%src, i64 %a) {
+define void @f6(i64 *%dst, i64 %a) {
 ; CHECK: f6:
 ; CHECK: agfi %r2, -524296
 ; CHECK: strvg %r3, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 -65537
+  %ptr = getelementptr i64 *%dst, i64 -65537
   %swapped = call i64 @llvm.bswap.i64(i64 %a)
   store i64 %swapped, i64 *%ptr
   ret void
@@ -83,5 +83,17 @@ define void @f7(i64 %src, i64 %index, i64 %a) {
   %ptr = inttoptr i64 %add2 to i64 *
   %swapped = call i64 @llvm.bswap.i64(i64 %a)
   store i64 %swapped, i64 *%ptr
+  ret void
+}
+
+; Check that volatile stores do not use STRVG, which might access the
+; storage multple times.
+define void @f8(i64 *%dst, i64 %a) {
+; CHECK: f8:
+; CHECK: lrvgr [[REG:%r[0-5]]], %r3
+; CHECK: stg [[REG]], 0(%r2)
+; CHECK: br %r14
+  %swapped = call i64 @llvm.bswap.i64(i64 %a)
+  store volatile i64 %swapped, i64 *%dst
   ret void
 }

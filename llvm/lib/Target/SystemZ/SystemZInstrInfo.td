@@ -382,13 +382,14 @@ let neverHasSideEffects = 1 in {
   def LRVGR : UnaryRRE<"lrvgr", 0xB90F, bswap, GR64, GR64>;
 }
 
-// Byte-swapping loads.
-def LRV  : UnaryRXY<"lrv",  0xE31E, loadu<bswap>, GR32>;
-def LRVG : UnaryRXY<"lrvg", 0xE30F, loadu<bswap>, GR64>;
+// Byte-swapping loads.  Unlike normal loads, these instructions are
+// allowed to access storage more than once.
+def LRV  : UnaryRXY<"lrv",  0xE31E, loadu<bswap, nonvolatile_load>, GR32>;
+def LRVG : UnaryRXY<"lrvg", 0xE30F, loadu<bswap, nonvolatile_load>, GR64>;
 
-// Byte-swapping stores.
-def STRV  : StoreRXY<"strv",  0xE33E, storeu<bswap>, GR32>;
-def STRVG : StoreRXY<"strvg", 0xE32F, storeu<bswap>, GR64>;
+// Likewise byte-swapping stores.
+def STRV  : StoreRXY<"strv",  0xE33E, storeu<bswap, nonvolatile_store>, GR32>;
+def STRVG : StoreRXY<"strvg", 0xE32F, storeu<bswap, nonvolatile_store>, GR64>;
 
 //===----------------------------------------------------------------------===//
 // Load address instructions
