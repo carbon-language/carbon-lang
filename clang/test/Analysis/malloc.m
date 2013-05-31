@@ -35,13 +35,18 @@ void rdar10579586(char x);
 }
 @end
 
-@interface JKArray : NSObject {
+@interface MyArray : NSObject {
   id * objects;
 }
 @end
 
-void _JKArrayCreate() {
-  JKArray *array = (JKArray *)malloc(12);
+void _ArrayCreate() {
+  MyArray *array = (MyArray *)malloc(12);
   array = [array init];
   free(array); // no-warning
+}
+
+void testNSDataTruePositiveLeak() {
+  char *b = (char *)malloc(12);
+  NSData *d = [[NSData alloc] initWithBytes: b length: 12]; // expected-warning {{Potential leak of memory pointed to by 'b'}}
 }
