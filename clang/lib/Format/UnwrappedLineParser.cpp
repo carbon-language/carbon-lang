@@ -264,8 +264,8 @@ void UnwrappedLineParser::calculateBraceTypes() {
           // Thus, if the parent is a braced init list, we consider all
           // brace blocks inside it braced init list. That works good enough
           // for now, but we will need to fix it to correctly handle lambdas.
-          if (NextTok->Tok.is(tok::comma) || NextTok->Tok.is(tok::semi) ||
-              NextTok->Tok.is(tok::r_paren) || NextTok->Tok.is(tok::l_brace))
+          if (NextTok->isOneOf(tok::comma, tok::semi, tok::r_paren,
+                               tok::l_brace, tok::colon))
             LBraces[LBraceStack.back()] = BS_BracedInit;
           else
             LBraces[LBraceStack.back()] = BS_Block;

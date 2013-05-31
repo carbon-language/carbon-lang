@@ -3437,6 +3437,11 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
     verifyFormat("class Class {\n"
                  "  T member = { arg1, arg2 };\n"
                  "};");
+    verifyFormat(
+        "foo = aaaaaaaaaaa ? vector<int>{ aaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+        "                                 aaaaaaaaaaaaaaaaaaaa, aaaaa }\n"
+        "                  : vector<int>{ bbbbbbbbbbbbbbbbbbbbbbbbbbb,\n"
+        "                                 bbbbbbbbbbbbbbbbbbbb, bbbbb };");
 
     FormatStyle NoSpaces = getLLVMStyle();
     NoSpaces.SpacesInBracedLists = false;
