@@ -896,6 +896,9 @@ sub SetEnv {
   }
 }
 
+# The flag corresponding to the --override-compiler command line option.
+my $OverrideCompiler = 0; 
+
 sub RunXcodebuild {
   my $Args = shift;
   my $IgnoreErrors = shift;
@@ -927,6 +930,12 @@ sub RunXcodebuild {
     }
   }
   close(DETECT_XCODE);
+  
+  # If --override-compiler is explicitely requested, resort to the old 
+  # behavior regardless of Xcode version.
+  if ($OverrideCompiler) {
+    $oldBehavior = 1;
+  }
   
   if ($oldBehavior == 0) {
     my $OutputDir = $Options->{"OUTPUT_DIR"};
@@ -1143,6 +1152,10 @@ ADVANCED OPTIONS:
 
    Don't remove the build results directory even if no issues were reported.
 
+ --override-compiler 
+   Always resort to the ccc-analyzer even when better interposition methods 
+   are available.
+   
 CONTROLLING CHECKERS:
 
  A default group of checkers are always run unless explicitly disabled.
@@ -1504,6 +1517,12 @@ while (@ARGV) {
   if ($arg eq "--keep-empty") {
     shift @ARGV;
     $KeepEmpty = 1;
+    next;
+  }
+
+  if ($arg eq "--override-compiler") {
+    shift @ARGV;
+    $OverrideCompiler = 1;
     next;
   }
   
