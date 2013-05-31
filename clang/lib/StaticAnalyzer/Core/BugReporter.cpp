@@ -1582,6 +1582,9 @@ static const Stmt *getTerminatorCondition(const CFGBlock *B) {
   return S;
 }
 
+static const char *StrEnteringLoop = "Entering loop body";
+static const char *StrLoopBodyZero = "Loop body executed 0 times";
+
 static bool
 GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
                                          PathDiagnosticBuilder &PDB,
@@ -1775,11 +1778,11 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
 
             if (isJumpToFalseBranch(&*BE)) {
               if (!IsInLoopBody) {
-                str = "Loop body executed 0 times";
+                str = StrLoopBodyZero;
               }
             }
             else {
-              str = "Entering loop body";
+              str = StrEnteringLoop;
             }
 
             if (str) {
@@ -2335,6 +2338,92 @@ static void splitBranchConditionEdges(PathPieces &pieces,
     }
 
     PieceI->setStartLocation(L);
+  }
+}
+
+/// \brief Move edges from a branch condition to a branch target
+///        when the condition is simple.
+///
+/// This is the dual of splitBranchConditionEdges.  That function creates
+/// edges this may destroy, but they work together to create a more
+/// aesthetically set of edges around branches.  After the call to
+/// splitBranchConditionEdges, we may have (1) an edge to the branch,
+/// (2) an edge from the branch to the branch condition, and (3) an edge from
+/// the branch condition to the branch target.  We keep (1), but may wish
+/// to remove (2) and move the source of (3) to the branch if the branch
+/// condition is simple.
+///
+static void simplifySimpleBranches(PathPieces &pieces) {
+
+
+  for (PathPieces::iterator I = pieces.begin(), E = pieces.end(); I != E; ++I) {
+    // Adjust edges in subpaths.
+    if (PathDiagnosticCallPiece *Call = dyn_cast<PathDiagnosticCallPiece>(*I)) {
+      simplifySimpleBranches(Call->path);
+      continue;
+    }
+
+    PathDiagnosticControlFlowPiece *PieceI =
+      dyn_cast<PathDiagnosticControlFlowPiece>(*I);
+
+    if (!PieceI)
+      continue;
+
+    const Stmt *s1Start = getLocStmt(PieceI->getStartLocation());
+    const Stmt *s1End   = getLocStmt(PieceI->getEndLocation());
+
+    if (!s1Start || !s1End)
+      continue;
+
+    PathPieces::iterator NextI = I; ++NextI;
+    if (NextI == E)
+      break;
+
+    PathDiagnosticControlFlowPiece *PieceNextI = 0;
+
+    while (true) {
+      if (NextI == E)
+        break;
+
+      PathDiagnosticEventPiece *EV = dyn_cast<PathDiagnosticEventPiece>(*NextI);
+      if (EV) {
+        StringRef S = EV->getString();
+        if (S == StrEnteringLoop || S == StrLoopBodyZero) {
+          ++NextI;
+          continue;
+        }
+        break;
+      }
+
+      PieceNextI = dyn_cast<PathDiagnosticControlFlowPiece>(*NextI);
+      break;
+    }
+
+    if (!PieceNextI)
+      continue;
+
+    const Stmt *s2Start = getLocStmt(PieceNextI->getStartLocation());
+    const Stmt *s2End   = getLocStmt(PieceNextI->getEndLocation());
+
+    if (!s2Start || !s2End || s1End != s2Start)
+      continue;
+
+    // We only perform this transformation for specific branch kinds.
+    // We do want to do this for do..while, for example.
+    if (!(isa<ForStmt>(s1Start) || isa<WhileStmt>(s1Start) ||
+          isa<IfStmt>(s1Start) || isa<ObjCForCollectionStmt>(s1Start)))
+      continue;
+
+    // Is s1End the branch condition?
+    if (!isConditionForTerminator(s1Start, s1End))
+      continue;
+
+    // Perform the hoisting by eliminating (2) and changing the start
+    // location of (3).
+    PathDiagnosticLocation L = PieceI->getStartLocation();
+    pieces.erase(I);
+    I = NextI;
+    PieceNextI->setStartLocation(L);
   }
 }
 
@@ -3033,6 +3122,10 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
         // Adjust edges into loop conditions to make them more uniform
         // and aesthetically pleasing.
         splitBranchConditionEdges(PD.getMutablePieces(), LCM, SM);
+
+        // Hoist edges originating from branch conditions to branches
+        // for simple branches.
+        simplifySimpleBranches(PD.getMutablePieces());
       }
     }
 
