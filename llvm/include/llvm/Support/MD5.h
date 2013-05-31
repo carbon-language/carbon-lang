@@ -41,16 +41,16 @@ class MD5 {
 
   MD5_u32plus a, b, c, d;
   MD5_u32plus hi, lo;
-  unsigned char buffer[64];
+  uint8_t buffer[64];
   MD5_u32plus block[16];
 
 public:
-  typedef unsigned char MD5Result[16];
+  typedef uint8_t MD5Result[16];
 
   MD5();
 
   /// \brief Updates the hash for arguments provided.
-  void update(ArrayRef<unsigned char> Data);
+  void update(ArrayRef<uint8_t> Data);
 
   /// \brief Finishes off the hash and puts the result in result.
   void final(MD5Result &result);
@@ -60,7 +60,7 @@ public:
   static void stringifyResult(MD5Result &Res, SmallString<32> &Str);
 
 private:
-  const unsigned char *body(ArrayRef<unsigned char> Data);
+  const uint8_t *body(ArrayRef<uint8_t> Data);
 };
 
 }

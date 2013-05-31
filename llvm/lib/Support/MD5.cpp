@@ -72,8 +72,8 @@ namespace llvm {
 
 /// \brief This processes one or more 64-byte data blocks, but does NOT update
 ///the bit counters.  There are no alignment requirements.
-const unsigned char *MD5::body(ArrayRef<unsigned char> Data) {
-  const unsigned char *ptr;
+const uint8_t *MD5::body(ArrayRef<uint8_t> Data) {
+  const uint8_t *ptr;
   MD5_u32plus a, b, c, d;
   MD5_u32plus saved_a, saved_b, saved_c, saved_d;
   unsigned long Size = Data.size();
@@ -184,10 +184,10 @@ MD5::MD5()
 }
 
 /// Incrementally add \p size of \p data to the hash.
-void MD5::update(ArrayRef<unsigned char> Data) {
+void MD5::update(ArrayRef<uint8_t> Data) {
   MD5_u32plus saved_lo;
   unsigned long used, free;
-  const unsigned char *Ptr = Data.data();
+  const uint8_t *Ptr = Data.data();
   unsigned long Size = Data.size();
 
   saved_lo = lo;
@@ -208,11 +208,11 @@ void MD5::update(ArrayRef<unsigned char> Data) {
     memcpy(&buffer[used], Ptr, free);
     Ptr = Ptr + free;
     Size -= free;
-    body(ArrayRef<unsigned char>(buffer, 64));
+    body(ArrayRef<uint8_t>(buffer, 64));
   }
 
   if (Size >= 64) {
-    Ptr = body(ArrayRef<unsigned char>(Ptr, Size & ~(unsigned long) 0x3f));
+    Ptr = body(ArrayRef<uint8_t>(Ptr, Size & ~(unsigned long) 0x3f));
     Size &= 0x3f;
   }
 
@@ -232,7 +232,7 @@ void MD5::final(MD5Result &result) {
 
   if (free < 8) {
     memset(&buffer[used], 0, free);
-    body(ArrayRef<unsigned char>(buffer, 64));
+    body(ArrayRef<uint8_t>(buffer, 64));
     used = 0;
     free = 64;
   }
@@ -249,7 +249,7 @@ void MD5::final(MD5Result &result) {
   buffer[62] = hi >> 16;
   buffer[63] = hi >> 24;
 
-  body(ArrayRef<unsigned char>(buffer, 64));
+  body(ArrayRef<uint8_t>(buffer, 64));
 
   result[0] = a;
   result[1] = a >> 8;
