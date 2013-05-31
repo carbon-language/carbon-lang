@@ -116,3 +116,4 @@ namespace pr14958 {
 }
 
 extern "C" void PR16167; // expected-error {{variable has incomplete type 'void'}}
+extern void PR16167_0; // expected-error {{variable has incomplete type 'void'}}
