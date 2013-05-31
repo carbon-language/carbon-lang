@@ -40,10 +40,8 @@ namespace COFFYAML {
   /// string. Using this avoid having to allocate temporary strings.
   /// FIXME: not COFF specific.
   class BinaryRef {
-    union {
-      ArrayRef<uint8_t> BinaryData;
-      StringRef HexData;
-    };
+    ArrayRef<uint8_t> BinaryData;
+    StringRef HexData;
     bool isBinary;
   public:
     BinaryRef(ArrayRef<uint8_t> BinaryData)
