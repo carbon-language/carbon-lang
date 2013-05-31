@@ -320,8 +320,7 @@ EmitValToTemp(CodeGenFunction &CGF, Expr *E) {
 
 static void
 AddDirectArgument(CodeGenFunction &CGF, CallArgList &Args,
-                       bool UseOptimizedLibcall, llvm::Value *Val,
-                       QualType ValTy) {
+                  bool UseOptimizedLibcall, llvm::Value *Val, QualType ValTy) {
   if (UseOptimizedLibcall) {
     // Load value and pass it to the function directly.
     unsigned Align = CGF.getContext().getTypeAlignInChars(ValTy).getQuantity();
