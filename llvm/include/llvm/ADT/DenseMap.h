@@ -222,11 +222,11 @@ public:
     if (LookupBucketFor(Key, TheBucket))
       return *TheBucket;
 
-    return *InsertIntoBucket(Key, ValueT(), TheBucket);
+    return *InsertIntoBucket(std::move(Key), ValueT(), TheBucket);
   }
 
   ValueT &operator[](KeyT &&Key) {
-    return FindAndConstruct(Key).second;
+    return FindAndConstruct(std::move(Key)).second;
   }
 #endif
 
