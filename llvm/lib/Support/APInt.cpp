@@ -2304,24 +2304,7 @@ namespace {
   static unsigned int
   partMSB(integerPart value)
   {
-    unsigned int n, msb;
-
-    if (value == 0)
-      return -1U;
-
-    n = integerPartWidth / 2;
-
-    msb = 0;
-    do {
-      if (value >> n) {
-        value >>= n;
-        msb += n;
-      }
-
-      n >>= 1;
-    } while (n);
-
-    return msb;
+    return findLastSet(value, ZB_Max);
   }
 
   /* Returns the bit number of the least significant set bit of a
@@ -2329,24 +2312,7 @@ namespace {
   static unsigned int
   partLSB(integerPart value)
   {
-    unsigned int n, lsb;
-
-    if (value == 0)
-      return -1U;
-
-    lsb = integerPartWidth - 1;
-    n = integerPartWidth / 2;
-
-    do {
-      if (value << n) {
-        value <<= n;
-        lsb -= n;
-      }
-
-      n >>= 1;
-    } while (n);
-
-    return lsb;
+    return findFirstSet(value, ZB_Max);
   }
 }
 
