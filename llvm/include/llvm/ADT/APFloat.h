@@ -203,9 +203,16 @@ public:
   /// \name Convenience "constructors"
   /// @{
 
+  /// Factory for Positive and Negative Zero.
+  ///
+  /// \param Negative True iff the number should be negative.
   static APFloat getZero(const fltSemantics &Sem, bool Negative = false) {
     return APFloat(Sem, fcZero, Negative);
   }
+
+  /// Factory for Positive and Negative Infinity.
+  ///
+  /// \param Negative True iff the number should be negative.
   static APFloat getInf(const fltSemantics &Sem, bool Negative = false) {
     return APFloat(Sem, fcInfinity, Negative);
   }
