@@ -6,7 +6,7 @@ define i32 @test1(i32 %x) nounwind {
         %tmp2 = add i32 %tmp1, 7
         ret i32 %tmp2
 ; CHECK: test1:
-; CHECK:    leal 7(,%r[[A0:di|cx]],8), %eax
+; CHECK:    leal 7(,[[A0:%rdi|%rcx]],8), %eax
 }
 
 
@@ -28,9 +28,8 @@ bb.nph:
 bb2:
 	ret i32 %x_offs
 ; CHECK: test2:
-; CHECK: movl %e[[A0]], %eax
-; CHECK: addl $-5, %eax
+; CHECK:	leal	-5([[A0]]), %eax
 ; CHECK:	andl	$-4, %eax
 ; CHECK:	negl	%eax
-; CHECK:	leal	-4(%r[[A0]],%rax), %eax
+; CHECK:	leal	-4([[A0]],%rax), %eax
 }
