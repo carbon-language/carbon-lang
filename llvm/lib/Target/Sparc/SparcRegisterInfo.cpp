@@ -91,7 +91,14 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                    MI.getOperand(FIOperandNum + 1).getImm() +
                    Subtarget.getStackPointerBias();
   SparcMachineFunctionInfo *FuncInfo = MF.getInfo<SparcMachineFunctionInfo>();
-  unsigned FramePtr = (FuncInfo->isLeafProc()) ? SP::O6 : SP::I6;
+  unsigned FramePtr = SP::I6;
+  if (FuncInfo->isLeafProc()) {
+    //Use %sp and adjust offset if needed.
+    FramePtr = SP::O6;
+    int stackSize = MF.getFrameInfo()->getStackSize();
+    Offset += (stackSize) ? Subtarget.getAdjustedFrameSize(stackSize) : 0 ;
+  }
+
   // Replace frame index with a frame pointer reference.
   if (Offset >= -4096 && Offset <= 4095) {
     // If the offset is small enough to fit in the immediate field, directly

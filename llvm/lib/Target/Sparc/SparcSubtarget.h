@@ -58,6 +58,12 @@ public:
   int64_t getStackPointerBias() const {
     return is64Bit() ? 2047 : 0;
   }
+
+  /// Given a actual stack size as determined by FrameInfo, this function
+  /// returns adjusted framesize which includes space for register window
+  /// spills and arguments.
+  int getAdjustedFrameSize(int stackSize) const;
+
 };
 
 } // end namespace llvm

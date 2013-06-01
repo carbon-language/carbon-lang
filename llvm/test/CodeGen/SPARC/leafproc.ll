@@ -55,3 +55,26 @@ entry:
   %6 = add nsw i32 %5, %h
   ret i32 %6
 }
+
+; CHECK:      leaf_proc_with_local_array:
+; CHECK:      add %sp, -104, %sp
+; CHECK:      or %g0, 1, [[R1:%[go][0-7]]]
+; CHECK:      st [[R1]], [%sp+96]
+; CHECK:      or %g0, 2, [[R2:%[go][0-7]]]
+; CHECK:      st [[R2]], [%sp+100]
+; CHECK:      ld {{.+}}, %o0
+; CHECK:      jmp %o7+8
+; CHECK-NEXT: add %sp, 104, %sp
+
+define i32 @leaf_proc_with_local_array(i32 %a, i32 %b, i32 %c) {
+entry:
+  %array = alloca [2 x i32], align 4
+  %0 = sub nsw i32 %b, %c
+  %1 = getelementptr inbounds [2 x i32]* %array, i32 0, i32 0
+  store i32 1, i32* %1, align 4
+  %2 = getelementptr inbounds [2 x i32]* %array, i32 0, i32 1
+  store i32 2, i32* %2, align 4
+  %3 = getelementptr inbounds [2 x i32]* %array, i32 0, i32 %a
+  %4 = load i32* %3, align 4
+  ret i32 %4
+}
