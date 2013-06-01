@@ -17,7 +17,6 @@
 #ifndef LLVM_ADT_APFLOAT_H
 #define LLVM_ADT_APFLOAT_H
 
-// APInt contains static functions implementing bignum arithmetic.
 #include "llvm/ADT/APInt.h"
 
 namespace llvm {
@@ -139,6 +138,8 @@ public:
   /// A Pseudo fltsemantic used to construct APFloats that cannot conflict with
   /// anything real.
   static const fltSemantics Bogus;
+
+  /// @}
 
   static unsigned int semanticsPrecision(const fltSemantics &);
 
