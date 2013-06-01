@@ -483,8 +483,8 @@ ConstantInt *ConstantInt::get(LLVMContext &Context, const APInt &V) {
   // Get the corresponding integer type for the bit width of the value.
   IntegerType *ITy = IntegerType::get(Context, V.getBitWidth());
   // get an existing value or the insertion position
-  DenseMapAPIntKeyInfo::KeyTy Key(V, ITy);
-  ConstantInt *&Slot = Context.pImpl->IntConstants[Key]; 
+  LLVMContextImpl *pImpl = Context.pImpl;
+  ConstantInt *&Slot = pImpl->IntConstants[DenseMapAPIntKeyInfo::KeyTy(V, ITy)];
   if (!Slot) Slot = new ConstantInt(ITy, V);
   return Slot;
 }
@@ -608,11 +608,9 @@ Constant *ConstantFP::getZeroValueForNegation(Type *Ty) {
 
 // ConstantFP accessors.
 ConstantFP* ConstantFP::get(LLVMContext &Context, const APFloat& V) {
-  DenseMapAPFloatKeyInfo::KeyTy Key(V);
-
   LLVMContextImpl* pImpl = Context.pImpl;
 
-  ConstantFP *&Slot = pImpl->FPConstants[Key];
+  ConstantFP *&Slot = pImpl->FPConstants[DenseMapAPFloatKeyInfo::KeyTy(V)];
 
   if (!Slot) {
     Type *Ty;
