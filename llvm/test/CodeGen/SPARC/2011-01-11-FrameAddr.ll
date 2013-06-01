@@ -2,6 +2,9 @@
 ;RUN: llc -march=sparc -mattr=v9 < %s | FileCheck %s -check-prefix=V9
 ;RUN: llc -march=sparc -regalloc=basic < %s | FileCheck %s -check-prefix=V8
 ;RUN: llc -march=sparc -regalloc=basic -mattr=v9 < %s | FileCheck %s -check-prefix=V9
+;RUN: llc -march=sparc -disable-sparc-leaf-proc=0 < %s | FileCheck %s -check-prefix=V8LEAF
+;RUN: llc -march=sparc -disable-sparc-leaf-proc=0 -mattr=v9 < %s | FileCheck %s -check-prefix=V9LEAF
+
 
 define i8* @frameaddr() nounwind readnone {
 entry:
@@ -42,6 +45,13 @@ entry:
 
 ;V9: retaddr
 ;V9: or %g0, %i7, {{.+}}
+
+;V8LEAF: retaddr:
+;V8LEAF: or %g0, %o7, %o0
+
+;V9LEAF: retaddr:
+;V9LEAF: or %g0, %o7, %o0
+
   %0 = tail call i8* @llvm.returnaddress(i32 0)
   ret i8* %0
 }
@@ -59,6 +69,19 @@ entry:
 ;V9: ld [%fp+56], {{.+}}
 ;V9: ld [{{.+}}+56], {{.+}}
 ;V9: ld [{{.+}}+60], {{.+}}
+
+;V8LEAF: retaddr2
+;V8LEAF: ta 3
+;V8LEAF: ld [%fp+56], %[[R:[goli][0-7]]]
+;V8LEAF: ld [%[[R]]+56], %[[R1:[goli][0-7]]]
+;V8LEAF: ld [%[[R1]]+60], {{.+}}
+
+;V9LEAF: retaddr2
+;V9LEAF: flushw
+;V9LEAF: ld [%fp+56], %[[R:[goli][0-7]]]
+;V9LEAF: ld [%[[R]]+56], %[[R1:[goli][0-7]]]
+;V9LEAF: ld [%[[R1]]+60], {{.+}}
+
   %0 = tail call i8* @llvm.returnaddress(i32 3)
   ret i8* %0
 }

@@ -1613,6 +1613,9 @@ static SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG,
   MachineFunction &MF = DAG.getMachineFunction();
   SparcMachineFunctionInfo *FuncInfo = MF.getInfo<SparcMachineFunctionInfo>();
 
+  //Need frame address to find the address of VarArgsFrameIndex
+  MF.getFrameInfo()->setFrameAddressIsTaken(true);
+
   // vastart just stores the address of the VarArgsFrameIndex slot into the
   // memory location argument.
   SDLoc DL(Op);
@@ -1719,6 +1722,9 @@ static SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) {
   if (depth == 0)
     RetAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, RetReg, VT);
   else {
+    //Need frame address to find return address of the caller
+    MFI->setFrameAddressIsTaken(true);
+
     // flush first to make sure the windowed registers' values are in stack
     SDValue Chain = getFLUSHW(Op, DAG);
     RetAddr = DAG.getCopyFromReg(Chain, dl, SP::I6, VT);
