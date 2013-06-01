@@ -204,6 +204,9 @@ namespace {
     bool SelectLEAAddr(SDValue N, SDValue &Base,
                        SDValue &Scale, SDValue &Index, SDValue &Disp,
                        SDValue &Segment);
+    bool SelectLEA64_32Addr(SDValue N, SDValue &Base,
+                            SDValue &Scale, SDValue &Index, SDValue &Disp,
+                            SDValue &Segment);
     bool SelectTLSADDRAddr(SDValue N, SDValue &Base,
                            SDValue &Scale, SDValue &Index, SDValue &Disp,
                            SDValue &Segment);
@@ -1394,7 +1397,8 @@ bool X86DAGToDAGISel::SelectMOV64Imm32(SDValue N, SDValue &Imm) {
   // In static codegen with small code model, we can get the address of a label
   // into a register with 'movl'. TableGen has already made sure we're looking
   // at a label of some kind.
-  assert(N->getOpcode() == X86ISD::Wrapper && "Unexpected node type for MOV32ri64");
+  assert(N->getOpcode() == X86ISD::Wrapper &&
+         "Unexpected node type for MOV32ri64");
   N = N.getOperand(0);
 
   if (N->getOpcode() != ISD::TargetConstantPool &&
@@ -1406,6 +1410,43 @@ bool X86DAGToDAGISel::SelectMOV64Imm32(SDValue N, SDValue &Imm) {
 
   Imm = N;
   return TM.getCodeModel() == CodeModel::Small;
+}
+
+bool X86DAGToDAGISel::SelectLEA64_32Addr(SDValue N, SDValue &Base,
+                                         SDValue &Scale, SDValue &Index,
+                                         SDValue &Disp, SDValue &Segment) {
+  if (!SelectLEAAddr(N, Base, Scale, Index, Disp, Segment))
+    return false;
+
+  SDLoc DL(N);
+  RegisterSDNode *RN = dyn_cast<RegisterSDNode>(Base);
+  if (RN && RN->getReg() == 0)
+    Base = CurDAG->getRegister(0, MVT::i64);
+  else if (Base.getValueType() == MVT::i32) {
+    // Base could already be %rip, particularly in the x32 ABI.
+    Base = SDValue(CurDAG->getMachineNode(
+                       TargetOpcode::SUBREG_TO_REG, DL, MVT::i64,
+                       CurDAG->getTargetConstant(0, MVT::i64),
+                       Base,
+                       CurDAG->getTargetConstant(X86::sub_32bit, MVT::i32)),
+                   0);
+  }
+
+  RN = dyn_cast<RegisterSDNode>(Index);
+  if (RN && RN->getReg() == 0)
+    Index = CurDAG->getRegister(0, MVT::i64);
+  else {
+    assert(Index.getValueType() == MVT::i32 &&
+           "Expect to be extending 32-bit registers for use in LEA");
+    Index = SDValue(CurDAG->getMachineNode(
+                        TargetOpcode::SUBREG_TO_REG, DL, MVT::i64,
+                        CurDAG->getTargetConstant(0, MVT::i64),
+                        Index,
+                        CurDAG->getTargetConstant(X86::sub_32bit, MVT::i32)),
+                    0);
+  }
+
+  return true;
 }
 
 /// SelectLEAAddr - it calls SelectAddr and determines if the maximal addressing
