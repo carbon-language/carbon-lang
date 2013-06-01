@@ -281,7 +281,7 @@ static Value *GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
   return BI->getCondition();
 }
 
-/// ComputeSpeculuationCost - Compute an abstract "cost" of speculating the
+/// ComputeSpeculationCost - Compute an abstract "cost" of speculating the
 /// given instruction, which is assumed to be safe to speculate. 1 means
 /// cheap, 2 means less cheap, and UINT_MAX means prohibitively expensive.
 static unsigned ComputeSpeculationCost(const User *I) {
