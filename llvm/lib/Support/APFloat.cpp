@@ -3683,7 +3683,7 @@ bool APFloat::getExactInverse(APFloat *inv) const {
 
   // Avoid multiplication with a denormal, it is not safe on all platforms and
   // may be slower than a normal division.
-  if (reciprocal.significandMSB() + 1 < reciprocal.semantics->precision)
+  if (reciprocal.isDenormal())
     return false;
 
   assert(reciprocal.category == fcNormal &&
