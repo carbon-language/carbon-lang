@@ -1133,16 +1133,6 @@ DIE *CompileUnit::getOrCreateNameSpace(DINameSpace NS) {
   return NDie;
 }
 
-/// getRealLinkageName - If special LLVM prefix that is used to inform the asm
-/// printer to not emit usual symbol prefix before the symbol name is used then
-/// return linkage name after skipping this special LLVM prefix.
-static StringRef getRealLinkageName(StringRef LinkageName) {
-  char One = '\1';
-  if (LinkageName.startswith(StringRef(&One, 1)))
-    return LinkageName.substr(1);
-  return LinkageName;
-}
-
 /// getOrCreateSubprogramDIE - Create new DIE using SP.
 DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   DIE *SPDie = getDIE(SP);
@@ -1175,7 +1165,7 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   StringRef LinkageName = SP.getLinkageName();
   if (!LinkageName.empty() && DD->useDarwinGDBCompat())
     addString(SPDie, dwarf::DW_AT_MIPS_linkage_name,
-              getRealLinkageName(LinkageName));
+              GlobalValue::getRealLinkageName(LinkageName));
 
   // If this DIE is going to refer declaration info using AT_specification
   // then there is no need to add other attributes.
@@ -1190,7 +1180,7 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   // Add the linkage name if we have one.
   if (!LinkageName.empty() && !DD->useDarwinGDBCompat())
     addString(SPDie, dwarf::DW_AT_MIPS_linkage_name,
-              getRealLinkageName(LinkageName));
+              GlobalValue::getRealLinkageName(LinkageName));
 
   // Constructors and operators for anonymous aggregates do not have names.
   if (!SP.getName().empty())
@@ -1367,12 +1357,12 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
       // TAG_variable.
       addString(IsStaticMember && VariableSpecDIE ?
                 VariableSpecDIE : VariableDIE, dwarf::DW_AT_MIPS_linkage_name,
-                getRealLinkageName(LinkageName));
+                GlobalValue::getRealLinkageName(LinkageName));
       // In compatibility mode with older gdbs we put the linkage name on both
       // the TAG_variable DIE and on the TAG_member DIE.
       if (IsStaticMember && VariableSpecDIE && DD->useDarwinGDBCompat())
         addString(VariableDIE, dwarf::DW_AT_MIPS_linkage_name,
-                  getRealLinkageName(LinkageName));
+                  GlobalValue::getRealLinkageName(LinkageName));
     }
   } else if (const ConstantInt *CI =
              dyn_cast_or_null<ConstantInt>(GV.getConstant())) {

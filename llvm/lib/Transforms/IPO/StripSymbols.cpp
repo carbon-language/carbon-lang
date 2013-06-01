@@ -332,16 +332,6 @@ bool StripDebugDeclare::runOnModule(Module &M) {
   return true;
 }
 
-/// getRealLinkageName - If special LLVM prefix that is used to inform the asm 
-/// printer to not emit usual symbol prefix before the symbol name is used then
-/// return linkage name after skipping this special LLVM prefix.
-static StringRef getRealLinkageName(StringRef LinkageName) {
-  char One = '\1';
-  if (LinkageName.startswith(StringRef(&One, 1)))
-    return LinkageName.substr(1);
-  return LinkageName;
-}
-
 bool StripDeadDebugInfo::runOnModule(Module &M) {
   bool Changed = false;
 
@@ -401,9 +391,8 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
         StringRef FName = DISubprogram(*I).getLinkageName();
         if (FName.empty())
           FName = DISubprogram(*I).getName();
-        if (NamedMDNode *LVNMD = 
-            M.getNamedMetadata(Twine("llvm.dbg.lv.", 
-                                     getRealLinkageName(FName)))) 
+        if (NamedMDNode *LVNMD = M.getNamedMetadata(
+                "llvm.dbg.lv." + Function::getRealLinkageName(FName)))
           LVNMD->eraseFromParent();
       }
     }

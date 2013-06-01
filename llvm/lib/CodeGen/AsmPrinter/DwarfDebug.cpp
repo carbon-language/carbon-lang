@@ -279,16 +279,6 @@ void DwarfUnits::assignAbbrevNumber(DIEAbbrev &Abbrev) {
   }
 }
 
-// If special LLVM prefix that is used to inform the asm
-// printer to not emit usual symbol prefix before the symbol name is used then
-// return linkage name after skipping this special LLVM prefix.
-static StringRef getRealLinkageName(StringRef LinkageName) {
-  char One = '\1';
-  if (LinkageName.startswith(StringRef(&One, 1)))
-    return LinkageName.substr(1);
-  return LinkageName;
-}
-
 static bool isObjCClass(StringRef Name) {
   return Name.startswith("+") || Name.startswith("-");
 }
@@ -2564,9 +2554,9 @@ void DwarfDebug::emitDebugInlineInfo() {
       Asm->EmitSectionOffset(InfoHolder.getStringPoolEntry(Name),
                              DwarfStrSectionSym);
     else
-      Asm->EmitSectionOffset(InfoHolder
-                             .getStringPoolEntry(getRealLinkageName(LName)),
-                             DwarfStrSectionSym);
+      Asm->EmitSectionOffset(
+          InfoHolder.getStringPoolEntry(Function::getRealLinkageName(LName)),
+          DwarfStrSectionSym);
 
     Asm->OutStreamer.AddComment("Function name");
     Asm->EmitSectionOffset(InfoHolder.getStringPoolEntry(Name),

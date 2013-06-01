@@ -764,12 +764,20 @@ DIArray DICompileUnit::getImportedEntities() const {
   return DIArray();
 }
 
-/// fixupObjcLikeName - Replace contains special characters used
+/// fixupSubprogramName - Replace contains special characters used
 /// in a typical Objective-C names with '.' in a given string.
-static void fixupObjcLikeName(StringRef Str, SmallVectorImpl<char> &Out) {
+static void fixupSubprogramName(DISubprogram Fn, SmallVectorImpl<char> &Out) {
+  StringRef FName =
+      Fn.getFunction() ? Fn.getFunction()->getName() : Fn.getName();
+  FName = Function::getRealLinkageName(FName);
+
+  StringRef Prefix("llvm.dbg.lv.");
+  Out.reserve(FName.size() + Prefix.size());
+  Out.append(Prefix.begin(), Prefix.end());
+
   bool isObjCLike = false;
-  for (size_t i = 0, e = Str.size(); i < e; ++i) {
-    char C = Str[i];
+  for (size_t i = 0, e = FName.size(); i < e; ++i) {
+    char C = FName[i];
     if (C == '[')
       isObjCLike = true;
 
@@ -784,33 +792,16 @@ static void fixupObjcLikeName(StringRef Str, SmallVectorImpl<char> &Out) {
 /// getFnSpecificMDNode - Return a NameMDNode, if available, that is
 /// suitable to hold function specific information.
 NamedMDNode *llvm::getFnSpecificMDNode(const Module &M, DISubprogram Fn) {
-  SmallString<32> Name = StringRef("llvm.dbg.lv.");
-  StringRef FName = "fn";
-  if (Fn.getFunction())
-    FName = Fn.getFunction()->getName();
-  else
-    FName = Fn.getName();
-  char One = '\1';
-  if (FName.startswith(StringRef(&One, 1)))
-    FName = FName.substr(1);
-  fixupObjcLikeName(FName, Name);
+  SmallString<32> Name;
+  fixupSubprogramName(Fn, Name);
   return M.getNamedMetadata(Name.str());
 }
 
 /// getOrInsertFnSpecificMDNode - Return a NameMDNode that is suitable
 /// to hold function specific information.
 NamedMDNode *llvm::getOrInsertFnSpecificMDNode(Module &M, DISubprogram Fn) {
-  SmallString<32> Name = StringRef("llvm.dbg.lv.");
-  StringRef FName = "fn";
-  if (Fn.getFunction())
-    FName = Fn.getFunction()->getName();
-  else
-    FName = Fn.getName();
-  char One = '\1';
-  if (FName.startswith(StringRef(&One, 1)))
-    FName = FName.substr(1);
-  fixupObjcLikeName(FName, Name);
-
+  SmallString<32> Name;
+  fixupSubprogramName(Fn, Name);
   return M.getOrInsertNamedMetadata(Name.str());
 }
 
