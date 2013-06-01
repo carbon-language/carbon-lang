@@ -53,8 +53,15 @@ private:
       if (CurrentToken->isOneOf(tok::r_paren, tok::r_square, tok::r_brace,
                                 tok::question, tok::colon))
         return false;
+      // If a && or || is found and interpreted as a binary operator, this set
+      // of angles is like part of something like "a < b && c > d". If the
+      // angles are inside an expression, the ||/&& might also be a binary
+      // operator that was misinterpreted because we are parsing template
+      // parameters.
+      // FIXME: This is getting out of hand, write a decent parser.
       if (CurrentToken->Previous->isOneOf(tok::pipepipe, tok::ampamp) &&
-          CurrentToken->Previous->Type != TT_PointerOrReference &&
+          (CurrentToken->Previous->Type == TT_BinaryOperator ||
+           Contexts[Contexts.size() - 2].IsExpression) &&
           Line.First->isNot(tok::kw_template))
         return false;
       updateParameterCount(Left, CurrentToken);

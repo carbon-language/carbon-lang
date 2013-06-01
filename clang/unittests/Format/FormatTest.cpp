@@ -2893,6 +2893,13 @@ TEST_F(FormatTest, UnderstandsTemplateParameters) {
 
   verifyFormat("f<int>();");
   verifyFormat("template <typename T> void f() {}");
+
+  // Not template parameters.
+  verifyFormat("return a < b && c > d;");
+  verifyFormat("void f() {\n"
+               "  while (a < b && c > d) {\n"
+               "  }\n"
+               "}");
 }
 
 TEST_F(FormatTest, UnderstandsBinaryOperators) {
