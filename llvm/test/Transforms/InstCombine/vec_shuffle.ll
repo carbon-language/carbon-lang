@@ -174,3 +174,14 @@ define <2 x i8> @test13b(i8 %x) {
   %B = shufflevector <2 x i8> %A, <2 x i8> undef, <2 x i32> <i32 undef, i32 0>
   ret <2 x i8> %B
 }
+
+define <2 x i8> @test13c(i8 %x1, i8 %x2) {
+; CHECK: @test13c
+; CHECK-NEXT: insertelement <2 x i8> {{.*}}, i32 0
+; CHECK-NEXT: insertelement <2 x i8> {{.*}}, i32 1
+; CHECK-NEXT: ret
+  %A = insertelement <4 x i8> undef, i8 %x1, i32 0
+  %B = insertelement <4 x i8> %A, i8 %x2, i32 2
+  %C = shufflevector <4 x i8> %B, <4 x i8> undef, <2 x i32> <i32 0, i32 2>
+  ret <2 x i8> %C
+}

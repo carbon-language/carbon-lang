@@ -497,7 +497,7 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
 /// Return true if we can evaluate the specified expression tree if the vector
 /// elements were shuffled in a different order.
 static bool CanEvaluateShuffled(Value *V, ArrayRef<int> Mask,
-                                unsigned Depth = 100) {
+                                unsigned Depth = 5) {
   // We can always reorder the elements of a constant.
   if (isa<Constant>(V))
     return true;
@@ -718,19 +718,21 @@ InstCombiner::EvaluateInDifferentElementOrder(Value *V, ArrayRef<int> Mask) {
     }
     case Instruction::InsertElement: {
       int Element = cast<ConstantInt>(I->getOperand(2))->getLimitedValue();
-      if (Element < 0 || Element >= (int)Mask.size()) {
-        // Such instructions are valid and exhibit undefined behaviour.
-        return UndefValue::get(I->getType());
-      }
 
       // The insertelement was inserting at Element. Figure out which element
       // that becomes after shuffling. The answer is guaranteed to be unique
       // by CanEvaluateShuffled.
+      bool Found = false;
       int Index = 0;
-      for (int e = Mask.size(); Index != e; ++Index)
-        if (Mask[Index] == Element)
+      for (int e = Mask.size(); Index != e; ++Index) {
+        if (Mask[Index] == Element) {
+          Found = true;
           break;
+        }
+      }
 
+      if (!Found)
+        return UndefValue::get(I->getType());
       Value *V = EvaluateInDifferentElementOrder(I->getOperand(0), Mask);
       return InsertElementInst::Create(V, I->getOperand(1),
                                        Builder->getInt32(Index), "", I);
