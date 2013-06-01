@@ -1280,19 +1280,19 @@ TEST(APFloatTest, getZero) {
     const bool sign;
     const unsigned long long bitPattern[2];
     const unsigned bitPatternLength;
-  } GetZeroTest[] = {
+  } const GetZeroTest[] = {
     { &APFloat::IEEEhalf, false, {0, 0}, 1},
-    { &APFloat::IEEEhalf, true, {0x8000, 0}, 1},
+    { &APFloat::IEEEhalf, true, {0x8000ULL, 0}, 1},
     { &APFloat::IEEEsingle, false, {0, 0}, 1},
-    { &APFloat::IEEEsingle, true, {0x80000000, 0}, 1},
+    { &APFloat::IEEEsingle, true, {0x80000000ULL, 0}, 1},
     { &APFloat::IEEEdouble, false, {0, 0}, 1},
-    { &APFloat::IEEEdouble, true, {0x8000000000000000, 0}, 1},
+    { &APFloat::IEEEdouble, true, {0x8000000000000000ULL, 0}, 1},
     { &APFloat::IEEEquad, false, {0, 0}, 2},
-    { &APFloat::IEEEquad, true, {0, 0x8000000000000000}, 2},
+    { &APFloat::IEEEquad, true, {0, 0x8000000000000000ULL}, 2},
     { &APFloat::PPCDoubleDouble, false, {0, 0}, 2},
-    { &APFloat::PPCDoubleDouble, true, {0x8000000000000000, 0}, 2},
+    { &APFloat::PPCDoubleDouble, true, {0x8000000000000000ULL, 0}, 2},
     { &APFloat::x87DoubleExtended, false, {0, 0}, 2},
-    { &APFloat::x87DoubleExtended, true, {0, 0x8000}, 2},
+    { &APFloat::x87DoubleExtended, true, {0, 0x8000ULL}, 2},
   };
   const unsigned NumGetZeroTests = 12;
   for (unsigned i = 0; i < NumGetZeroTests; ++i) {
