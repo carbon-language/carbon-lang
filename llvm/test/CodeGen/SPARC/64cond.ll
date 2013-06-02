@@ -36,7 +36,7 @@ if.end:
 ; CHECK: selecti32_xcc
 ; CHECK: subcc %i0, %i1
 ; CHECK: movg %xcc, %i2, %i3
-; CHECK: or %g0, %i3, %i0
+; CHECK: restore %g0, %i3, %o0
 define i32 @selecti32_xcc(i64 %x, i64 %y, i32 %a, i32 %b) {
 entry:
   %tobool = icmp sgt i64 %x, %y
@@ -47,7 +47,7 @@ entry:
 ; CHECK: selecti64_xcc
 ; CHECK: subcc %i0, %i1
 ; CHECK: movg %xcc, %i2, %i3
-; CHECK: or %g0, %i3, %i0
+; CHECK: restore %g0, %i3, %o0
 define i64 @selecti64_xcc(i64 %x, i64 %y, i64 %a, i64 %b) {
 entry:
   %tobool = icmp sgt i64 %x, %y
@@ -58,7 +58,7 @@ entry:
 ; CHECK: selecti64_icc
 ; CHECK: subcc %i0, %i1
 ; CHECK: movg %icc, %i2, %i3
-; CHECK: or %g0, %i3, %i0
+; CHECK: restore %g0, %i3, %o0
 define i64 @selecti64_icc(i32 %x, i32 %y, i64 %a, i64 %b) {
 entry:
   %tobool = icmp sgt i32 %x, %y
@@ -69,7 +69,7 @@ entry:
 ; CHECK: selecti64_fcc
 ; CHECK: fcmps %f1, %f3
 ; CHECK: movul %fcc0, %i2, %i3
-; CHECK: or %g0, %i3, %i0
+; CHECK: restore %g0, %i3, %o0
 define i64 @selecti64_fcc(float %x, float %y, i64 %a, i64 %b) {
 entry:
   %tobool = fcmp ult float %x, %y

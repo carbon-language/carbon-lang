@@ -1,13 +1,22 @@
-; RUN: llc < %s -march=sparcv9 -disable-sparc-leaf-proc | FileCheck %s
+; RUN: llc < %s -march=sparcv9 -disable-sparc-delay-filler -disable-sparc-leaf-proc | FileCheck %s
+; RUN: llc < %s -march=sparcv9  | FileCheck %s -check-prefix=OPT
 
 ; CHECK: ret2:
 ; CHECK: or %g0, %i1, %i0
+
+; OPT: ret2:
+; OPT: jmp %o7+8
+; OPT: or %g0, %o1, %o0
 define i64 @ret2(i64 %a, i64 %b) {
   ret i64 %b
 }
 
 ; CHECK: shl_imm
 ; CHECK: sllx %i0, 7, %i0
+
+; OPT: shl_imm:
+; OPT: jmp %o7+8
+; OPT: sllx %o0, 7, %o0
 define i64 @shl_imm(i64 %a) {
   %x = shl i64 %a, 7
   ret i64 %x
@@ -15,6 +24,10 @@ define i64 @shl_imm(i64 %a) {
 
 ; CHECK: sra_reg
 ; CHECK: srax %i0, %i1, %i0
+
+; OPT: sra_reg:
+; OPT: jmp %o7+8
+; OPT: srax %o0, %o1, %o0
 define i64 @sra_reg(i64 %a, i64 %b) {
   %x = ashr i64 %a, %b
   ret i64 %x
@@ -27,12 +40,20 @@ define i64 @sra_reg(i64 %a, i64 %b) {
 ;
 ; CHECK: ret_imm0
 ; CHECK: or %g0, 0, %i0
+
+; OPT: ret_imm0
+; OPT: jmp %o7+8
+; OPT: or %g0, 0, %o0
 define i64 @ret_imm0() {
   ret i64 0
 }
 
 ; CHECK: ret_simm13
 ; CHECK: or %g0, -4096, %i0
+
+; OPT:   ret_simm13
+; OPT:   jmp %o7+8
+; OPT:   or %g0, -4096, %o0
 define i64 @ret_simm13() {
   ret i64 -4096
 }
@@ -41,13 +62,23 @@ define i64 @ret_simm13() {
 ; CHECK: sethi 4, %i0
 ; CHECK-NOT: or
 ; CHECK: restore
+
+; OPT:  ret_sethi
+; OPT:  jmp %o7+8
+; OPT:  sethi 4, %o0
 define i64 @ret_sethi() {
   ret i64 4096
 }
 
-; CHECK: ret_sethi
+; CHECK: ret_sethi_or
 ; CHECK: sethi 4, [[R:%[goli][0-7]]]
 ; CHECK: or [[R]], 1, %i0
+
+; OPT: ret_sethi_or
+; OPT: sethi 4, [[R:%[go][0-7]]]
+; OPT: jmp %o7+8
+; OPT: or [[R]], 1, %o0
+
 define i64 @ret_sethi_or() {
   ret i64 4097
 }
@@ -55,6 +86,12 @@ define i64 @ret_sethi_or() {
 ; CHECK: ret_nimm33
 ; CHECK: sethi 4, [[R:%[goli][0-7]]]
 ; CHECK: xor [[R]], -4, %i0
+
+; OPT: ret_nimm33
+; OPT: sethi 4, [[R:%[go][0-7]]]
+; OPT: jmp %o7+8
+; OPT: xor [[R]], -4, %o0
+
 define i64 @ret_nimm33() {
   ret i64 -4100
 }

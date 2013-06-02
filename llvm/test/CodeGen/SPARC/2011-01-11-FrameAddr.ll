@@ -7,10 +7,14 @@
 define i8* @frameaddr() nounwind readnone {
 entry:
 ;V8: frameaddr
-;V8: or %g0, %fp, {{.+}}
+;V8: save %sp, -96, %sp
+;V8: jmp %i7+8
+;V8: restore %g0, %fp, %o0
 
 ;V9: frameaddr
-;V9: or %g0, %fp, {{.+}}
+;V9: save %sp, -96, %sp
+;V9: jmp %i7+8
+;V9: restore %g0, %fp, %o0
   %0 = tail call i8* @llvm.frameaddress(i32 0)
   ret i8* %0
 }
