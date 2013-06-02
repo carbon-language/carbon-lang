@@ -4020,20 +4020,23 @@ struct IntRange {
     if (const ComplexType *CT = dyn_cast<ComplexType>(T))
       T = CT->getElementType().getTypePtr();
 
-    // For enum types, use the known bit width of the enumerators.
     if (const EnumType *ET = dyn_cast<EnumType>(T)) {
-      EnumDecl *Enum = ET->getDecl();
-      if (!Enum->isCompleteDefinition())
-        return IntRange(C.getIntWidth(QualType(T, 0)), false);
+      if (C.getLangOpts().CPlusPlus) {
+        // For enum types, use the known bit width of the enumerators.
+        EnumDecl *Enum = ET->getDecl();
+        if (!Enum->isCompleteDefinition())
+          return IntRange(C.getIntWidth(QualType(T, 0)), false);
 
-      unsigned NumPositive = Enum->getNumPositiveBits();
-      unsigned NumNegative = Enum->getNumNegativeBits();
+        unsigned NumPositive = Enum->getNumPositiveBits();
+        unsigned NumNegative = Enum->getNumNegativeBits();
 
-      if (NumNegative == 0)
-        return IntRange(NumPositive, true/*NonNegative*/);
-      else
-        return IntRange(std::max(NumPositive + 1, NumNegative),
-                        false/*NonNegative*/);
+        if (NumNegative == 0)
+          return IntRange(NumPositive, true/*NonNegative*/);
+        else
+          return IntRange(std::max(NumPositive + 1, NumNegative),
+              false/*NonNegative*/);
+      } else
+        T = C.getCanonicalType(ET->getDecl()->getIntegerType().getTypePtr());
     }
 
     const BuiltinType *BT = cast<BuiltinType>(T);
