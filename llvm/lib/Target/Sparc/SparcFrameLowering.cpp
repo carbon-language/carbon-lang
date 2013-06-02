@@ -28,7 +28,7 @@ using namespace llvm;
 
 static cl::opt<bool>
 DisableLeafProc("disable-sparc-leaf-proc",
-                cl::init(true),
+                cl::init(false),
                 cl::desc("Disable Sparc leaf procedure optimization."),
                 cl::Hidden);
 

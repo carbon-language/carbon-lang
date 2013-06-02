@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=sparc64-pc-openbsd | FileCheck %s
+; RUN: llc < %s -mtriple=sparc64-pc-openbsd -disable-sparc-leaf-proc | FileCheck %s
 ; Testing 64-bit conditionals. The sparc64 triple is an alias for sparcv9.
 
 ; CHECK: cmpri

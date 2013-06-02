@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=sparcv9 | FileCheck %s
+; RUN: llc < %s -march=sparcv9 -disable-sparc-leaf-proc | FileCheck %s
 
 ; CHECK: ret2:
 ; CHECK: or %g0, %i1, %i0

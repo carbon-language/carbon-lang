@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=sparcv9 -disable-sparc-delay-filler | FileCheck %s
+; RUN: llc < %s -march=sparcv9 -disable-sparc-delay-filler -disable-sparc-leaf-proc | FileCheck %s
 
 ; CHECK: intarg
 ; The save/restore frame is not strictly necessary here, but we would need to

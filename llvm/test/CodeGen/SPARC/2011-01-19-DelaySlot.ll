@@ -48,7 +48,7 @@ bb:                                               ; preds = %entry, %bb
 bb5:                                              ; preds = %bb, %entry
   %a_addr.1.lcssa = phi i32 [ %a, %entry ], [ %a_addr.0, %bb ]
 ;CHECK:      jmp
-;CHECK-NEXT: restore
+;CHECK-NOT: restore
   ret i32 %a_addr.1.lcssa
 }
 

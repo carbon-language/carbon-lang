@@ -2,8 +2,6 @@
 ;RUN: llc -march=sparc -mattr=v9 < %s | FileCheck %s -check-prefix=V9
 ;RUN: llc -march=sparc -regalloc=basic < %s | FileCheck %s -check-prefix=V8
 ;RUN: llc -march=sparc -regalloc=basic -mattr=v9 < %s | FileCheck %s -check-prefix=V9
-;RUN: llc -march=sparc -disable-sparc-leaf-proc=0 < %s | FileCheck %s -check-prefix=V8LEAF
-;RUN: llc -march=sparc -disable-sparc-leaf-proc=0 -mattr=v9 < %s | FileCheck %s -check-prefix=V9LEAF
 
 
 define i8* @frameaddr() nounwind readnone {
@@ -41,16 +39,10 @@ declare i8* @llvm.frameaddress(i32) nounwind readnone
 define i8* @retaddr() nounwind readnone {
 entry:
 ;V8: retaddr
-;V8: or %g0, %i7, {{.+}}
+;V8: or %g0, %o7, {{.+}}
 
 ;V9: retaddr
-;V9: or %g0, %i7, {{.+}}
-
-;V8LEAF: retaddr:
-;V8LEAF: or %g0, %o7, %o0
-
-;V9LEAF: retaddr:
-;V9LEAF: or %g0, %o7, %o0
+;V9: or %g0, %o7, {{.+}}
 
   %0 = tail call i8* @llvm.returnaddress(i32 0)
   ret i8* %0

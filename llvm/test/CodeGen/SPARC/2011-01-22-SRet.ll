@@ -5,8 +5,8 @@
 define weak void @make_foo(%struct.foo_t* noalias sret %agg.result, i32 %a, i32 %b, i32 %c) nounwind {
 entry:
 ;CHECK: make_foo
-;CHECK: ld [%fp+64], {{.+}}
-;CHECK: jmp %i7+12
+;CHECK: ld [%sp+64], {{.+}}
+;CHECK: jmp %o7+12
   %0 = getelementptr inbounds %struct.foo_t* %agg.result, i32 0, i32 0
   store i32 %a, i32* %0, align 4
   %1 = getelementptr inbounds %struct.foo_t* %agg.result, i32 0, i32 1
