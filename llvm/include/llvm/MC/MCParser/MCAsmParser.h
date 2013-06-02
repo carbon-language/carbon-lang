@@ -47,7 +47,7 @@ public:
     }
   } InlineAsmIdentifierInfo;
 
-  virtual ~MCAsmParserSemaCallback(); 
+  virtual ~MCAsmParserSemaCallback();
   virtual void *LookupInlineAsmIdentifier(StringRef &LineBuf,
                                           InlineAsmIdentifierInfo &Info,
                                           bool IsUnevaluatedContext) = 0;
