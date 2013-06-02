@@ -43,3 +43,27 @@ int test5(bool x, bool y, int z) {
 //
 // end:
 // CHECK: ret i32
+
+int test6(bool x, bool y, int z) {
+  return (x ? throw 1 : y) ? z : (throw 2);
+}
+// CHECK: define i32 @_Z5test6bbi(
+// CHECK: br i1
+//
+// x.true:
+// CHECK: call void @__cxa_throw(
+// CHECK-NEXT: unreachable
+//
+// x.false:
+// CHECK: br i1
+//
+// y.true:
+// CHECK: load i32*
+// CHECK: br label
+//
+// y.false:
+// CHECK: call void @__cxa_throw(
+// CHECK-NEXT: unreachable
+//
+// end:
+// CHECK: ret i32

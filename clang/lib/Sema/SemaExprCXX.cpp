@@ -4273,8 +4273,8 @@ QualType Sema::CXXCheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
     //   ... and one of the following shall hold:
     //   -- The second or the third operand (but not both) is a throw-
     //      expression; the result is of the type of the other and is a prvalue.
-    bool LThrow = isa<CXXThrowExpr>(LHS.get());
-    bool RThrow = isa<CXXThrowExpr>(RHS.get());
+    bool LThrow = isa<CXXThrowExpr>(LHS.get()->IgnoreParenCasts());
+    bool RThrow = isa<CXXThrowExpr>(RHS.get()->IgnoreParenCasts());
     if (LThrow && !RThrow)
       return RTy;
     if (RThrow && !LThrow)

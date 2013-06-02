@@ -81,6 +81,8 @@ void test()
   i1 ? test() : test();
   i1 = i1 ? throw 0 : 0;
   i1 = i1 ? 0 : throw 0;
+  i1 = i1 ? (throw 0) : 0;
+  i1 = i1 ? 0 : (throw 0);
   i1 ? 0 : test(); // expected-error {{right operand to ? is void, but left operand is of type 'int'}}
   i1 ? test() : 0; // expected-error {{left operand to ? is void, but right operand is of type 'int'}}
   (i1 ? throw 0 : i1) = 0; // expected-error {{expression is not assignable}}
