@@ -46,7 +46,7 @@ namespace test_complex_int {
   void test() {
     constexpr _Complex int x = 500;
     takeABlock(^{ takeItByValue(x); });
-    // CHECK:      store i32 500,
+    // CHECK:      store { i32, i32 } { i32 500, i32 0 },
 
     // CHECK:      store i32 500,
     // CHECK-NEXT: store i32 0,

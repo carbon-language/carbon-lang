@@ -330,6 +330,10 @@ namespace PR13273 {
   extern const S s {};
 }
 
+// CHECK: @_ZZN12LocalVarInit3aggEvE1a = internal constant {{.*}} i32 101
+// CHECK: @_ZZN12LocalVarInit4ctorEvE1a = internal constant {{.*}} i32 102
+// CHECK: @_ZZN12LocalVarInit8mutable_EvE1a = private unnamed_addr constant {{.*}} i32 103
+
 // Constant initialization tests go before this point,
 // dynamic initialization tests go after.
 
@@ -355,6 +359,40 @@ namespace PR13273 {
 // CHECK: call {{.*}}cxa_atexit{{.*}}@_ZN19NonLiteralConstexpr14NonTrivialDtorD1Ev
 // CHECK-NOT: }
 // CHECK: call {{.*}}cxa_atexit{{.*}}@_ZN19NonLiteralConstexpr4BothD1Ev
+
+// PR12848: Don't emit dynamic initializers for local constexpr variables.
+namespace LocalVarInit {
+  constexpr int f(int n) { return n; }
+  struct Agg { int k; };
+  struct Ctor { constexpr Ctor(int n) : k(n) {} int k; };
+  struct Mutable { constexpr Mutable(int n) : k(n) {} mutable int k; };
+
+  // CHECK: define {{.*}} @_ZN12LocalVarInit6scalarEv
+  // CHECK-NOT: call
+  // CHECK: store i32 100,
+  // CHECK-NOT: call
+  // CHECK: ret i32 100
+  int scalar() { constexpr int a = { f(100) }; return a; }
+
+  // CHECK: define {{.*}} @_ZN12LocalVarInit3aggEv
+  // CHECK-NOT: call
+  // CHECK: ret i32 101
+  int agg() { constexpr Agg a = { f(101) }; return a.k; }
+
+  // CHECK: define {{.*}} @_ZN12LocalVarInit4ctorEv
+  // CHECK-NOT: call
+  // CHECK: ret i32 102
+  int ctor() { constexpr Ctor a = { f(102) }; return a.k; }
+
+  // CHECK: define {{.*}} @_ZN12LocalVarInit8mutable_Ev
+  // CHECK-NOT: call
+  // CHECK: call {{.*}}memcpy{{.*}} @_ZZN12LocalVarInit8mutable_EvE1a
+  // CHECK-NOT: call
+  // Can't fold return value due to 'mutable'.
+  // CHECK-NOT: ret i32 103
+  // CHECK: }
+  int mutable_() { constexpr Mutable a = { f(103) }; return a.k; }
+}
 
 namespace CrossFuncLabelDiff {
   // Make sure we refuse to constant-fold the variable b.
