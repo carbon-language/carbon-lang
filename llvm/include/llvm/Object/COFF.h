@@ -24,6 +24,29 @@ namespace llvm {
 
 namespace object {
 
+/// The DOS compatible header at the front of all PE/COFF executables.
+struct dos_header {
+  support::ulittle16_t Magic;
+  support::ulittle16_t UsedBytesInTheLastPage;
+  support::ulittle16_t FileSizeInPages;
+  support::ulittle16_t NumberOfRelocationItems;
+  support::ulittle16_t HeaderSizeInParagraphs;
+  support::ulittle16_t MinimumExtraParagraphs;
+  support::ulittle16_t MaximumExtraParagraphs;
+  support::ulittle16_t InitialRelativeSS;
+  support::ulittle16_t InitialSP;
+  support::ulittle16_t Checksum;
+  support::ulittle16_t InitialIP;
+  support::ulittle16_t InitialRelativeCS;
+  support::ulittle16_t AddressOfRelocationTable;
+  support::ulittle16_t OverlayNumber;
+  support::ulittle16_t Reserved[4];
+  support::ulittle16_t OEMid;
+  support::ulittle16_t OEMinfo;
+  support::ulittle16_t Reserved2[10];
+  support::ulittle32_t AddressOfNewExeHeader;
+};
+
 struct coff_file_header {
   support::ulittle16_t Machine;
   support::ulittle16_t NumberOfSections;
@@ -32,6 +55,83 @@ struct coff_file_header {
   support::ulittle32_t NumberOfSymbols;
   support::ulittle16_t SizeOfOptionalHeader;
   support::ulittle16_t Characteristics;
+};
+
+/// The 32-bit PE header that usually immediately follows the DOS header.
+struct pe32_header {
+  support::ulittle32_t Signature;
+  coff_file_header COFFHeader;
+  support::ulittle16_t Magic;
+  uint8_t  MajorLinkerVersion;
+  uint8_t  MinorLinkerVersion;
+  support::ulittle32_t SizeOfCode;
+  support::ulittle32_t SizeOfInitializedData;
+  support::ulittle32_t SizeOfUninitializedData;
+  support::ulittle32_t AddressOfEntryPoint;
+  support::ulittle32_t BaseOfCode;
+  support::ulittle32_t BaseOfData;
+  support::ulittle32_t ImageBase;
+  support::ulittle32_t SectionAlignment;
+  support::ulittle32_t FileAlignment;
+  support::ulittle16_t MajorOperatingSystemVersion;
+  support::ulittle16_t MinorOperatingSystemVersion;
+  support::ulittle16_t MajorImageVersion;
+  support::ulittle16_t MinorImageVersion;
+  support::ulittle16_t MajorSubsystemVersion;
+  support::ulittle16_t MinorSubsystemVersion;
+  support::ulittle32_t Win32VersionValue;
+  support::ulittle32_t SizeOfImage;
+  support::ulittle32_t SizeOfHeaders;
+  support::ulittle32_t CheckSum;
+  support::ulittle16_t Subsystem;
+  support::ulittle16_t DLLCharacteristics;
+  support::ulittle32_t SizeOfStackReserve;
+  support::ulittle32_t SizeOfStackCommit;
+  support::ulittle32_t SizeOfHeapReserve;
+  support::ulittle32_t SizeOfHeapCommit;
+  support::ulittle32_t LoaderFlags;
+  support::ulittle32_t NumberOfRvaAndSize;
+};
+
+/// The 64-bit PE header that usually immediately follows the DOS header.
+struct pe32plus_header {
+  support::ulittle32_t Signature;
+  coff_file_header COFFHeader;
+  support::ulittle16_t Magic;
+  uint8_t  MajorLinkerVersion;
+  uint8_t  MinorLinkerVersion;
+  support::ulittle32_t SizeOfCode;
+  support::ulittle32_t SizeOfInitializedData;
+  support::ulittle32_t SizeOfUninitializedData;
+  support::ulittle32_t AddressOfEntryPoint;
+  support::ulittle32_t BaseOfCode;
+  support::ulittle32_t BaseOfData;
+  support::ulittle64_t ImageBase;
+  support::ulittle32_t SectionAlignment;
+  support::ulittle32_t FileAlignment;
+  support::ulittle16_t MajorOperatingSystemVersion;
+  support::ulittle16_t MinorOperatingSystemVersion;
+  support::ulittle16_t MajorImageVersion;
+  support::ulittle16_t MinorImageVersion;
+  support::ulittle16_t MajorSubsystemVersion;
+  support::ulittle16_t MinorSubsystemVersion;
+  support::ulittle32_t Win32VersionValue;
+  support::ulittle32_t SizeOfImage;
+  support::ulittle32_t SizeOfHeaders;
+  support::ulittle32_t CheckSum;
+  support::ulittle16_t Subsystem;
+  support::ulittle16_t DLLCharacteristics;
+  support::ulittle64_t SizeOfStackReserve;
+  support::ulittle64_t SizeOfStackCommit;
+  support::ulittle64_t SizeOfHeapReserve;
+  support::ulittle64_t SizeOfHeapCommit;
+  support::ulittle32_t LoaderFlags;
+  support::ulittle32_t NumberOfRvaAndSize;
+};
+
+struct data_directory {
+  support::ulittle32_t RelativeVirtualAddress;
+  support::ulittle32_t Size;
 };
 
 struct coff_symbol {
@@ -171,7 +271,7 @@ public:
   const coff_section *getCOFFSection(section_iterator &It) const;
   const coff_symbol *getCOFFSymbol(symbol_iterator &It) const;
   const coff_relocation *getCOFFRelocation(relocation_iterator &It) const;
-  
+
   virtual uint8_t getBytesInAddress() const;
   virtual StringRef getFileFormatName() const;
   virtual unsigned getArch() const;
