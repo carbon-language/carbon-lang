@@ -350,42 +350,39 @@ PathDiagnosticBuilder::ExecutionContinues(llvm::raw_string_ostream &os,
   return Loc;
 }
 
-static bool IsNested(const Stmt *S, ParentMap &PM) {
+static const Stmt *getEnclosingParent(const Stmt *S, const ParentMap &PM) {
   if (isa<Expr>(S) && PM.isConsumedExpr(cast<Expr>(S)))
-    return true;
+    return PM.getParentIgnoreParens(S);
 
   const Stmt *Parent = PM.getParentIgnoreParens(S);
+  if (!Parent)
+    return 0;
 
-  if (Parent)
-    switch (Parent->getStmtClass()) {
-      case Stmt::ForStmtClass:
-      case Stmt::DoStmtClass:
-      case Stmt::WhileStmtClass:
-        return true;
-      default:
-        break;
-    }
+  switch (Parent->getStmtClass()) {
+  case Stmt::ForStmtClass:
+  case Stmt::DoStmtClass:
+  case Stmt::WhileStmtClass:
+  case Stmt::ObjCForCollectionStmtClass:
+    return Parent;
+  default:
+    break;
+  }
 
-  return false;
+  return 0;
 }
 
-PathDiagnosticLocation
-PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
-  assert(S && "Null Stmt *passed to getEnclosingStmtLocation");
-  ParentMap &P = getParentMap();
-  SourceManager &SMgr = getSourceManager();
+static PathDiagnosticLocation
+getEnclosingStmtLocation(const Stmt *S, SourceManager &SMgr, const ParentMap &P,
+                         const LocationContext *LC) {
+  if (!S)
+    return PathDiagnosticLocation();
 
-  while (IsNested(S, P)) {
-    const Stmt *Parent = P.getParentIgnoreParens(S);
-
-    if (!Parent)
-      break;
-
+  while (const Stmt *Parent = getEnclosingParent(S, P)) {
     switch (Parent->getStmtClass()) {
       case Stmt::BinaryOperatorClass: {
         const BinaryOperator *B = cast<BinaryOperator>(Parent);
         if (B->isLogicalOp())
-          return PathDiagnosticLocation(S, SMgr, LC);
+          return PathDiagnosticLocation(Parent, SMgr, LC);
         break;
       }
       case Stmt::CompoundStmtClass:
@@ -433,31 +430,13 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
 
   assert(S && "Cannot have null Stmt for PathDiagnosticLocation");
 
-  // Special case: DeclStmts can appear in for statement declarations, in which
-  //  case the ForStmt is the context.
-  if (isa<DeclStmt>(S)) {
-    if (const Stmt *Parent = P.getParent(S)) {
-      switch (Parent->getStmtClass()) {
-        case Stmt::ForStmtClass:
-        case Stmt::ObjCForCollectionStmtClass:
-          return PathDiagnosticLocation(Parent, SMgr, LC);
-        default:
-          break;
-      }
-    }
-  }
-  else if (isa<BinaryOperator>(S)) {
-    // Special case: the binary operator represents the initialization
-    // code in a for statement (this can happen when the variable being
-    // initialized is an old variable.
-    if (const ForStmt *FS =
-          dyn_cast_or_null<ForStmt>(P.getParentIgnoreParens(S))) {
-      if (FS->getInit() == S)
-        return PathDiagnosticLocation(FS, SMgr, LC);
-    }
-  }
-
   return PathDiagnosticLocation(S, SMgr, LC);
+}
+
+PathDiagnosticLocation
+PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
+  assert(S && "Null Stmt passed to getEnclosingStmtLocation");
+  return ::getEnclosingStmtLocation(S, getSourceManager(), getParentMap(), LC);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1837,7 +1816,7 @@ static const Stmt *getLocStmt(PathDiagnosticLocation L) {
   return L.asStmt();
 }
 
-static const Stmt *getStmtParent(const Stmt *S, ParentMap &PM) {
+static const Stmt *getStmtParent(const Stmt *S, const ParentMap &PM) {
   if (!S)
     return 0;
 
@@ -1956,6 +1935,149 @@ void PathPieces::dump() const {
     }
 
     llvm::errs() << "\n";
+  }
+}
+
+/// Adds synthetic edges from top-level statements to their subexpressions.
+///
+/// This avoids a "swoosh" effect, where an edge from a top-level statement A
+/// points to a sub-expression B.1 that's not at the start of B. In these cases,
+/// we'd like to see an edge from A to B, then another one from B to B.1.
+static void addContextEdges(PathPieces &pieces, SourceManager &SM,
+                            const ParentMap &PM, const LocationContext *LCtx) {
+  PathPieces::iterator Prev = pieces.end();
+  for (PathPieces::iterator I = pieces.begin(), E = Prev; I != E;
+       Prev = I, ++I) {
+    PathDiagnosticControlFlowPiece *Piece =
+      dyn_cast<PathDiagnosticControlFlowPiece>(*I);
+
+    if (!Piece)
+      continue;
+
+    PathDiagnosticLocation SrcLoc = Piece->getStartLocation();
+    const Stmt *Src = getLocStmt(SrcLoc);
+    PathDiagnosticLocation SrcContext =
+      getEnclosingStmtLocation(Src, SM, PM, LCtx);
+
+    // Repeatedly split the edge as necessary.
+    // This is important for nested logical expressions (||, &&, ?:) where we
+    // want to show all the levels of context.
+    while (true) {
+      const Stmt *Dst = getLocStmt(Piece->getEndLocation());
+
+      // We are looking at an edge. Is the destination within a larger
+      // expression?
+      PathDiagnosticLocation DstContext =
+        getEnclosingStmtLocation(Dst, SM, PM, LCtx);
+      if (!DstContext.isValid() || DstContext.asStmt() == Dst)
+        break;
+
+      // If the source is in the same context, we're already good.
+      if (SrcContext == DstContext)
+        break;
+
+      // Update the subexpression node to point to the context edge.
+      Piece->setStartLocation(DstContext);
+
+      // Try to extend the previous edge if it's at the same level as the source
+      // context.
+      if (Prev != E) {
+        PathDiagnosticControlFlowPiece *PrevPiece =
+          dyn_cast<PathDiagnosticControlFlowPiece>(*Prev);
+
+        if (PrevPiece) {
+          if (const Stmt *PrevSrc = getLocStmt(PrevPiece->getStartLocation())) {
+            const Stmt *PrevSrcParent = getStmtParent(PrevSrc, PM);
+            if (PrevSrcParent == getStmtParent(getLocStmt(DstContext), PM)) {
+              PrevPiece->setEndLocation(DstContext);
+              break;
+            }
+          }
+        }
+      }
+
+      // Otherwise, split the current edge into a context edge and a
+      // subexpression edge. Note that the context statement may itself have
+      // context.
+      Piece = new PathDiagnosticControlFlowPiece(SrcLoc, DstContext);
+      I = pieces.insert(I, Piece);
+    }
+  }
+}
+
+/// \brief Move edges from a branch condition to a branch target
+///        when the condition is simple.
+///
+/// This restructures some of the work of addContextEdges.  That function
+/// creates edges this may destroy, but they work together to create a more
+/// aesthetically set of edges around branches.  After the call to
+/// addContextEdges, we may have (1) an edge to the branch, (2) an edge from
+/// the branch to the branch condition, and (3) an edge from the branch
+/// condition to the branch target.  We keep (1), but may wish to remove (2)
+/// and move the source of (3) to the branch if the branch condition is simple.
+///
+static void simplifySimpleBranches(PathPieces &pieces) {
+  for (PathPieces::iterator I = pieces.begin(), E = pieces.end(); I != E; ++I) {
+
+    PathDiagnosticControlFlowPiece *PieceI =
+      dyn_cast<PathDiagnosticControlFlowPiece>(*I);
+
+    if (!PieceI)
+      continue;
+
+    const Stmt *s1Start = getLocStmt(PieceI->getStartLocation());
+    const Stmt *s1End   = getLocStmt(PieceI->getEndLocation());
+
+    if (!s1Start || !s1End)
+      continue;
+
+    PathPieces::iterator NextI = I; ++NextI;
+    if (NextI == E)
+      break;
+
+    PathDiagnosticControlFlowPiece *PieceNextI = 0;
+
+    while (true) {
+      if (NextI == E)
+        break;
+
+      PathDiagnosticEventPiece *EV = dyn_cast<PathDiagnosticEventPiece>(*NextI);
+      if (EV) {
+        StringRef S = EV->getString();
+        if (S == StrEnteringLoop || S == StrLoopBodyZero) {
+          ++NextI;
+          continue;
+        }
+        break;
+      }
+
+      PieceNextI = dyn_cast<PathDiagnosticControlFlowPiece>(*NextI);
+      break;
+    }
+
+    if (!PieceNextI)
+      continue;
+
+    const Stmt *s2Start = getLocStmt(PieceNextI->getStartLocation());
+    const Stmt *s2End   = getLocStmt(PieceNextI->getEndLocation());
+
+    if (!s2Start || !s2End || s1End != s2Start)
+      continue;
+
+    // We only perform this transformation for specific branch kinds.
+    // We don't want to do this for do..while, for example.
+    if (!(isa<ForStmt>(s1Start) || isa<WhileStmt>(s1Start) ||
+          isa<IfStmt>(s1Start) || isa<ObjCForCollectionStmt>(s1Start)))
+      continue;
+
+    // Is s1End the branch condition?
+    if (!isConditionForTerminator(s1Start, s1End))
+      continue;
+
+    // Perform the hoisting by eliminating (2) and changing the start
+    // location of (3).
+    PieceNextI->setStartLocation(PieceI->getStartLocation());
+    I = pieces.erase(I);
   }
 }
 
@@ -2206,6 +2328,12 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
   }
 
   if (!hasChanges) {
+    // Adjust edges into subexpressions to make them more uniform
+    // and aesthetically pleasing.
+    addContextEdges(path, SM, PM, LC);
+    // Hoist edges originating from branch conditions to branches
+    // for simple branches.
+    simplifySimpleBranches(path);
     // Remove any puny edges left over after primary optimization pass.
     removePunyEdges(path, SM, PM);
     // Remove identical events.
@@ -2213,203 +2341,6 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
   }
 
   return hasChanges;
-}
-
-/// \brief Split edges incident on a branch condition into two edges.
-///
-/// The first edge is incident on the branch statement, the second on the
-/// condition.
-static void splitBranchConditionEdges(PathPieces &pieces,
-                                      LocationContextMap &LCM,
-                                      SourceManager &SM) {
-  // Retrieve the parent map for this path.
-  const LocationContext *LC = LCM[&pieces];
-  ParentMap &PM = LC->getParentMap();
-  PathPieces::iterator Prev = pieces.end();
-  for (PathPieces::iterator I = pieces.begin(), E = pieces.end(); I != E;
-       Prev = I, ++I) {
-    // Adjust edges in subpaths.
-    if (PathDiagnosticCallPiece *Call = dyn_cast<PathDiagnosticCallPiece>(*I)) {
-      splitBranchConditionEdges(Call->path, LCM, SM);
-      continue;
-    }
-
-    PathDiagnosticControlFlowPiece *PieceI =
-      dyn_cast<PathDiagnosticControlFlowPiece>(*I);
-
-    if (!PieceI)
-      continue;
-
-    // We are looking at two edges.  Is the second one incident
-    // on an expression (or subexpression) of a branch condition.
-    const Stmt *Dst = getLocStmt(PieceI->getEndLocation());
-    const Stmt *Src = getLocStmt(PieceI->getStartLocation());
-
-    if (!Dst || !Src)
-      continue;
-
-    const Stmt *Branch = 0;
-    const Stmt *S = Dst;
-    while (const Stmt *Parent = getStmtParent(S, PM)) {
-      if (const ForStmt *FS = dyn_cast<ForStmt>(Parent)) {
-        const Stmt *Cond = FS->getCond();
-        if (!Cond)
-          Cond = FS;
-        if (Cond == S)
-          Branch = FS;
-        break;
-      }
-      if (const WhileStmt *WS = dyn_cast<WhileStmt>(Parent)) {
-        if (WS->getCond()->IgnoreParens() == S)
-          Branch = WS;
-        break;
-      }
-      if (const IfStmt *IS = dyn_cast<IfStmt>(Parent)) {
-        if (IS->getCond()->IgnoreParens() == S)
-          Branch = IS;
-        break;
-      }
-      if (const ObjCForCollectionStmt *OFS =
-            dyn_cast<ObjCForCollectionStmt>(Parent)) {
-        if (OFS->getElement() == S)
-          Branch = OFS;
-        break;
-      }
-      if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(Parent)) {
-        if (BO->isLogicalOp()) {
-          if (BO->getLHS()->IgnoreParens() == S)
-            Branch = BO;
-          break;
-        }
-      }
-
-      S = Parent;
-    }
-
-    // If 'Branch' is non-null we have found a match where we have an edge
-    // incident on the condition of a if/for/while statement.
-    if (!Branch)
-      continue;
-
-    // If the current source of the edge is the if/for/while, then there is
-    // nothing left to be done.
-    if (Src == Branch)
-      continue;
-
-    // Now look at the previous edge.  We want to know if this was in the same
-    // "level" as the for statement.
-    const Stmt *BranchParent = getStmtParent(Branch, PM);
-    PathDiagnosticLocation L(Branch, SM, LC);
-    bool needsEdge = true;
-
-    if (Prev != E) {
-      if (PathDiagnosticControlFlowPiece *P =
-          dyn_cast<PathDiagnosticControlFlowPiece>(*Prev)) {
-        const Stmt *PrevSrc = getLocStmt(P->getStartLocation());
-        if (PrevSrc) {
-          const Stmt *PrevSrcParent = getStmtParent(PrevSrc, PM);
-          if (PrevSrcParent == BranchParent) {
-            P->setEndLocation(L);
-            needsEdge = false;
-          }
-        }
-      }
-    }
-
-    if (needsEdge) {
-      PathDiagnosticControlFlowPiece *P =
-        new PathDiagnosticControlFlowPiece(PieceI->getStartLocation(), L);
-      pieces.insert(I, P);
-    }
-
-    PieceI->setStartLocation(L);
-  }
-}
-
-/// \brief Move edges from a branch condition to a branch target
-///        when the condition is simple.
-///
-/// This is the dual of splitBranchConditionEdges.  That function creates
-/// edges this may destroy, but they work together to create a more
-/// aesthetically set of edges around branches.  After the call to
-/// splitBranchConditionEdges, we may have (1) an edge to the branch,
-/// (2) an edge from the branch to the branch condition, and (3) an edge from
-/// the branch condition to the branch target.  We keep (1), but may wish
-/// to remove (2) and move the source of (3) to the branch if the branch
-/// condition is simple.
-///
-static void simplifySimpleBranches(PathPieces &pieces) {
-
-
-  for (PathPieces::iterator I = pieces.begin(), E = pieces.end(); I != E; ++I) {
-    // Adjust edges in subpaths.
-    if (PathDiagnosticCallPiece *Call = dyn_cast<PathDiagnosticCallPiece>(*I)) {
-      simplifySimpleBranches(Call->path);
-      continue;
-    }
-
-    PathDiagnosticControlFlowPiece *PieceI =
-      dyn_cast<PathDiagnosticControlFlowPiece>(*I);
-
-    if (!PieceI)
-      continue;
-
-    const Stmt *s1Start = getLocStmt(PieceI->getStartLocation());
-    const Stmt *s1End   = getLocStmt(PieceI->getEndLocation());
-
-    if (!s1Start || !s1End)
-      continue;
-
-    PathPieces::iterator NextI = I; ++NextI;
-    if (NextI == E)
-      break;
-
-    PathDiagnosticControlFlowPiece *PieceNextI = 0;
-
-    while (true) {
-      if (NextI == E)
-        break;
-
-      PathDiagnosticEventPiece *EV = dyn_cast<PathDiagnosticEventPiece>(*NextI);
-      if (EV) {
-        StringRef S = EV->getString();
-        if (S == StrEnteringLoop || S == StrLoopBodyZero) {
-          ++NextI;
-          continue;
-        }
-        break;
-      }
-
-      PieceNextI = dyn_cast<PathDiagnosticControlFlowPiece>(*NextI);
-      break;
-    }
-
-    if (!PieceNextI)
-      continue;
-
-    const Stmt *s2Start = getLocStmt(PieceNextI->getStartLocation());
-    const Stmt *s2End   = getLocStmt(PieceNextI->getEndLocation());
-
-    if (!s2Start || !s2End || s1End != s2Start)
-      continue;
-
-    // We only perform this transformation for specific branch kinds.
-    // We do want to do this for do..while, for example.
-    if (!(isa<ForStmt>(s1Start) || isa<WhileStmt>(s1Start) ||
-          isa<IfStmt>(s1Start) || isa<ObjCForCollectionStmt>(s1Start)))
-      continue;
-
-    // Is s1End the branch condition?
-    if (!isConditionForTerminator(s1Start, s1End))
-      continue;
-
-    // Perform the hoisting by eliminating (2) and changing the start
-    // location of (3).
-    PathDiagnosticLocation L = PieceI->getStartLocation();
-    pieces.erase(I);
-    I = NextI;
-    PieceNextI->setStartLocation(L);
-  }
 }
 
 /// Drop the very first edge in a path, which should be a function entry edge.
@@ -3120,14 +3051,6 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
         // necessary information.
         OptimizedCallsSet OCS;
         while (optimizeEdges(PD.getMutablePieces(), SM, OCS, LCM)) {}
-
-        // Adjust edges into loop conditions to make them more uniform
-        // and aesthetically pleasing.
-        splitBranchConditionEdges(PD.getMutablePieces(), LCM, SM);
-
-        // Hoist edges originating from branch conditions to branches
-        // for simple branches.
-        simplifySimpleBranches(PD.getMutablePieces());
 
         // Drop the very first function-entry edge. It's not really necessary
         // for top-level functions.
