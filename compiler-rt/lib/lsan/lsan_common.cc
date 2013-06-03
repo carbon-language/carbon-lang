@@ -78,8 +78,8 @@ static inline bool CanBeAHeapPointer(uptr p) {
 
 // Scan the memory range, looking for byte patterns that point into allocator
 // chunks. Mark those chunks with tag and add them to the frontier.
-// There are two usage modes for this function: finding non-leaked chunks
-// (tag = kReachable) and finding indirectly leaked chunks
+// There are two usage modes for this function: finding reachable or suppressed
+// chunks (tag = kReachable or kSuppressed) and finding indirectly leaked chunks
 // (tag = kIndirectlyLeaked). In the second case, there's no flood fill,
 // so frontier = 0.
 void ScanRangeForPointers(uptr begin, uptr end, InternalVector<uptr> *frontier,
@@ -93,12 +93,12 @@ void ScanRangeForPointers(uptr begin, uptr end, InternalVector<uptr> *frontier,
   for (; pp + sizeof(uptr) <= end; pp += alignment) {
     void *p = *reinterpret_cast<void**>(pp);
     if (!CanBeAHeapPointer(reinterpret_cast<uptr>(p))) continue;
-    // FIXME: PointsIntoChunk is SLOW because GetBlockBegin() in
-    // LargeMmapAllocator involves a lock and a linear search.
     void *chunk = PointsIntoChunk(p);
     if (!chunk) continue;
     LsanMetadata m(chunk);
+    // Reachable beats suppressed beats leaked.
     if (m.tag() == kReachable) continue;
+    if (m.tag() == kSuppressed && tag != kReachable) continue;
     m.set_tag(tag);
     if (flags()->log_pointers)
       Report("%p: found %p pointing into chunk %p-%p of size %llu.\n", pp, p,
@@ -178,13 +178,13 @@ static void ProcessThreads(SuspendedThreadsList const &suspended_threads,
   }
 }
 
-static void FloodFillReachable(InternalVector<uptr> *frontier) {
+static void FloodFillTag(InternalVector<uptr> *frontier, ChunkTag tag) {
   while (frontier->size()) {
     uptr next_chunk = frontier->back();
     frontier->pop_back();
     LsanMetadata m(reinterpret_cast<void *>(next_chunk));
     ScanRangeForPointers(next_chunk, next_chunk + m.requested_size(), frontier,
-                         "HEAP", kReachable);
+                         "HEAP", tag);
   }
 }
 
@@ -199,6 +199,13 @@ void MarkIndirectlyLeakedCb::operator()(void *p) const {
   }
 }
 
+void CollectSuppressedCb::operator()(void *p) const {
+  p = GetUserBegin(p);
+  LsanMetadata m(p);
+  if (m.allocated() && m.tag() == kSuppressed)
+    frontier_->push_back(reinterpret_cast<uptr>(p));
+}
+
 // Set the appropriate tag on each chunk.
 static void ClassifyAllChunks(SuspendedThreadsList const &suspended_threads) {
   // Holds the flood fill frontier.
@@ -207,21 +214,24 @@ static void ClassifyAllChunks(SuspendedThreadsList const &suspended_threads) {
   if (flags()->use_globals)
     ProcessGlobalRegions(&frontier);
   ProcessThreads(suspended_threads, &frontier);
-  FloodFillReachable(&frontier);
+  FloodFillTag(&frontier, kReachable);
+  // The check here is relatively expensive, so we do this in a separate flood
+  // fill. That way we can skip the check for chunks that are reachable
+  // otherwise.
   ProcessPlatformSpecificAllocations(&frontier);
-  FloodFillReachable(&frontier);
+  FloodFillTag(&frontier, kReachable);
 
-  // Now all reachable chunks are marked. Iterate over leaked chunks and mark
-  // those that are reachable from other leaked chunks.
   if (flags()->log_pointers)
-    Report("Now scanning leaked blocks for pointers.\n");
-  ForEachChunk(MarkIndirectlyLeakedCb());
-}
+    Report("Scanning suppressed blocks.\n");
+  CHECK_EQ(0, frontier.size());
+  ForEachChunk(CollectSuppressedCb(&frontier));
+  FloodFillTag(&frontier, kSuppressed);
 
-void ClearTagCb::operator()(void *p) const {
-  p = GetUserBegin(p);
-  LsanMetadata m(p);
-  m.set_tag(kDirectlyLeaked);
+  // Iterate over leaked chunks and mark those that are reachable from other
+  // leaked chunks.
+  if (flags()->log_pointers)
+    Report("Scanning leaked blocks.\n");
+  ForEachChunk(MarkIndirectlyLeakedCb());
 }
 
 static void PrintStackTraceById(u32 stack_trace_id) {
@@ -232,21 +242,11 @@ static void PrintStackTraceById(u32 stack_trace_id) {
                          common_flags()->strip_path_prefix, 0);
 }
 
-static void LockAndSuspendThreads(StopTheWorldCallback callback, void *arg) {
-  LockThreadRegistry();
-  LockAllocator();
-  StopTheWorld(callback, arg);
-  UnlockAllocator();
-  UnlockThreadRegistry();
-}
-
-///// Normal leak checking. /////
-
 void CollectLeaksCb::operator()(void *p) const {
   p = GetUserBegin(p);
   LsanMetadata m(p);
   if (!m.allocated()) return;
-  if (m.tag() != kReachable) {
+  if (m.tag() == kDirectlyLeaked || m.tag() == kIndirectlyLeaked) {
     uptr resolution = flags()->resolution;
     if (resolution > 0) {
       uptr size = 0;
@@ -268,8 +268,7 @@ void PrintLeakedCb::operator()(void *p) const {
   p = GetUserBegin(p);
   LsanMetadata m(p);
   if (!m.allocated()) return;
-  if (m.tag() != kReachable) {
-    CHECK(m.tag() == kDirectlyLeaked || m.tag() == kIndirectlyLeaked);
+  if (m.tag() == kDirectlyLeaked || m.tag() == kIndirectlyLeaked) {
     Printf("%s leaked %llu byte block at %p\n",
            m.tag() == kDirectlyLeaked ? "Directly" : "Indirectly",
            m.requested_size(), p);
@@ -308,13 +307,19 @@ static void DoLeakCheckCallback(const SuspendedThreadsList &suspended_threads,
     PrintLeaked();
   leak_report.PrintSummary();
   Printf("\n");
-  ForEachChunk(ClearTagCb());
   *result = kLeaksFound;
 }
 
 void DoLeakCheck() {
+  static bool already_done;
   LeakCheckResult result = kFatalError;
-  LockAndSuspendThreads(DoLeakCheckCallback, &result);
+  LockThreadRegistry();
+  LockAllocator();
+  CHECK(!already_done);
+  already_done = true;
+  StopTheWorld(DoLeakCheckCallback, &result);
+  UnlockAllocator();
+  UnlockThreadRegistry();
   if (result == kFatalError) {
     Report("LeakSanitizer has encountered a fatal error.\n");
     Die();
@@ -387,5 +392,6 @@ void LeakReport::PrintSummary() {
   Printf("SUMMARY: LeakSanitizer: %llu byte(s) leaked in %llu allocation(s).\n",
          bytes, allocations);
 }
+
 }  // namespace __lsan
 #endif  // CAN_SANITIZE_LEAKS

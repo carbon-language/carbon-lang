@@ -108,6 +108,7 @@ void AsanThread::Destroy() {
 
 void AsanThread::Init() {
   SetThreadStackAndTls();
+  lsan_disabled_ = 0;
   CHECK(AddrIsInMem(stack_bottom_));
   CHECK(AddrIsInMem(stack_top_ - 1));
   ClearShadowForThreadStackAndTLS();

@@ -44,6 +44,8 @@ typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
 
 static Allocator allocator;
 static THREADLOCAL AllocatorCache cache;
+// All allocations made while this is > 0 will be treated as non-leaks.
+static THREADLOCAL uptr lsan_disabled;
 
 void InitializeAllocator() {
   allocator.Init();
@@ -61,6 +63,7 @@ static void RegisterAllocation(const StackTrace &stack, void *p, uptr size) {
   if (!p) return;
   ChunkMetadata *m = Metadata(p);
   CHECK(m);
+  m->tag = lsan_disabled ? kSuppressed : kDirectlyLeaked;
   m->stack_trace_id = StackDepotPut(stack.trace, stack.size);
   m->requested_size = size;
   atomic_store((atomic_uint8_t*)m, 1, memory_order_relaxed);
@@ -185,5 +188,21 @@ template void ForEachChunk<PrintLeakedCb>(PrintLeakedCb const &callback);
 template void ForEachChunk<CollectLeaksCb>(CollectLeaksCb const &callback);
 template void ForEachChunk<MarkIndirectlyLeakedCb>(
     MarkIndirectlyLeakedCb const &callback);
-template void ForEachChunk<ClearTagCb>(ClearTagCb const &callback);
+template void ForEachChunk<CollectSuppressedCb>(
+    CollectSuppressedCb const &callback);
 }  // namespace __lsan
+
+extern "C" {
+void __lsan_disable() {
+  __lsan::lsan_disabled++;
+}
+
+void __lsan_enable() {
+  if (!__lsan::lsan_disabled) {
+    Report("Unmatched call to __lsan_enable().\n");
+    Die();
+  }
+  __lsan::lsan_disabled--;
+}
+}  // extern "C"
+

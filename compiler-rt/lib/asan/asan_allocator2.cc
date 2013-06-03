@@ -422,6 +422,8 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
     uptr fill_size = Min(size, (uptr)fl.max_malloc_fill_size);
     REAL(memset)(res, fl.malloc_fill_byte, fill_size);
   }
+  m->lsan_tag =
+      t->lsan_disabled() ? __lsan::kSuppressed : __lsan::kDirectlyLeaked;
   // Must be the last mutation of metadata in this function.
   atomic_store((atomic_uint8_t *)m, CHUNK_ALLOCATED, memory_order_release);
   ASAN_MALLOC_HOOK(res, size);
@@ -787,9 +789,26 @@ template void ForEachChunk<PrintLeakedCb>(PrintLeakedCb const &callback);
 template void ForEachChunk<CollectLeaksCb>(CollectLeaksCb const &callback);
 template void ForEachChunk<MarkIndirectlyLeakedCb>(
     MarkIndirectlyLeakedCb const &callback);
-template void ForEachChunk<ClearTagCb>(ClearTagCb const &callback);
+template void ForEachChunk<CollectSuppressedCb>(
+    CollectSuppressedCb const &callback);
 #endif  // CAN_SANITIZE_LEAKS
 }  // namespace __lsan
+
+extern "C" {
+void __lsan_disable() {
+  __asan_init();
+  __asan::AsanThread *t = __asan::GetCurrentThread();
+  CHECK(t);
+  t->disable_lsan();
+}
+
+void __lsan_enable() {
+  __asan_init();
+  __asan::AsanThread *t = __asan::GetCurrentThread();
+  CHECK(t);
+  t->enable_lsan();
+}
+}  // extern "C"
 
 // ---------------------- Interface ---------------- {{{1
 using namespace __asan;  // NOLINT
