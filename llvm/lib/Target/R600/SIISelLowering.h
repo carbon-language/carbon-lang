@@ -24,6 +24,8 @@ class SITargetLowering : public AMDGPUTargetLowering {
   const SIInstrInfo * TII;
   const TargetRegisterInfo * TRI;
 
+  SDValue LowerParameter(SelectionDAG &DAG, EVT VT, SDLoc DL,
+                         SDValue Chain, unsigned Offset) const;
   SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSIGN_EXTEND(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG) const;
@@ -59,6 +61,8 @@ public:
                                              SDNode *Node) const;
 
   int32_t analyzeImmediate(const SDNode *N) const;
+  SDValue CreateLiveInRegister(SelectionDAG &DAG, const TargetRegisterClass *RC,
+                               unsigned Reg, EVT VT) const;
 };
 
 } // End namespace llvm

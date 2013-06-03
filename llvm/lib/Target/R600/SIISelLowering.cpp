@@ -76,11 +76,30 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::SIGN_EXTEND, MVT::i64, Custom);
 
+  setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
+
   setTargetDAGCombine(ISD::SELECT_CC);
 
   setTargetDAGCombine(ISD::SETCC);
 
   setSchedulingPreference(Sched::RegPressure);
+}
+
+SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT,
+                                         SDLoc DL, SDValue Chain,
+                                         unsigned Offset) const {
+  MachineRegisterInfo &MRI = DAG.getMachineFunction().getRegInfo();
+  PointerType *PtrTy = PointerType::get(VT.getTypeForEVT(*DAG.getContext()),
+                                            AMDGPUAS::CONSTANT_ADDRESS);
+  EVT ArgVT = MVT::getIntegerVT(VT.getSizeInBits());
+  SDValue BasePtr =  DAG.getCopyFromReg(Chain, DL,
+                           MRI.getLiveInVirtReg(AMDGPU::SGPR0_SGPR1), MVT::i64);
+  SDValue Ptr = DAG.getNode(ISD::ADD, DL, MVT::i64, BasePtr,
+                                             DAG.getConstant(Offset, MVT::i64));
+  return DAG.getExtLoad(ISD::ZEXTLOAD, DL, VT, Chain, Ptr,
+                            MachinePointerInfo(UndefValue::get(PtrTy)),
+                            VT, false, false, ArgVT.getSizeInBits() >> 3);
+
 }
 
 SDValue SITargetLowering::LowerFormalArguments(
@@ -153,12 +172,11 @@ SDValue SITargetLowering::LowerFormalArguments(
     CCInfo.AllocateReg(AMDGPU::VGPR1);
   }
 
-  unsigned ArgReg = 0;
   // The pointer to the list of arguments is stored in SGPR0, SGPR1
   if (Info->ShaderType == ShaderType::COMPUTE) {
     CCInfo.AllocateReg(AMDGPU::SGPR0);
     CCInfo.AllocateReg(AMDGPU::SGPR1);
-    ArgReg = MF.addLiveIn(AMDGPU::SGPR0_SGPR1, &AMDGPU::SReg_64RegClass);
+    MF.addLiveIn(AMDGPU::SGPR0_SGPR1, &AMDGPU::SReg_64RegClass);
   }
 
   AnalyzeFormalArguments(CCInfo, Splits);
@@ -175,17 +193,10 @@ SDValue SITargetLowering::LowerFormalArguments(
     EVT VT = VA.getLocVT();
 
     if (VA.isMemLoc()) {
-      assert(ArgReg);
-      PointerType *PtrTy = PointerType::get(VT.getTypeForEVT(*DAG.getContext()),
-                                            AMDGPUAS::CONSTANT_ADDRESS);
-      EVT ArgVT = MVT::getIntegerVT(VT.getSizeInBits());
-      SDValue BasePtr =  DAG.getCopyFromReg(DAG.getRoot(), DL,
-                                            ArgReg, MVT::i64);
-      SDValue Ptr = DAG.getNode(ISD::ADD, DL, MVT::i64, BasePtr,
-                               DAG.getConstant(VA.getLocMemOffset(), MVT::i64));
-      SDValue Arg = DAG.getExtLoad(ISD::ZEXTLOAD, DL, VT, DAG.getRoot(), Ptr,
-                                MachinePointerInfo(UndefValue::get(PtrTy)),
-                                VA.getValVT(), false, false, ArgVT.getSizeInBits() >> 3);
+      // The first 36 bytes of the input buffer contains information about
+      // thread group and global sizes.
+      SDValue Arg = LowerParameter(DAG, VT, DL, DAG.getRoot(),
+                                   36 + VA.getLocMemOffset());
       InVals.push_back(Arg);
       continue;
     }
@@ -293,6 +304,54 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
   case ISD::SIGN_EXTEND: return LowerSIGN_EXTEND(Op, DAG);
+  case ISD::INTRINSIC_WO_CHAIN: {
+    unsigned IntrinsicID =
+                         cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+    EVT VT = Op.getValueType();
+    SDLoc DL(Op);
+    //XXX: Hardcoded we only use two to store the pointer to the parameters.
+    unsigned NumUserSGPRs = 2;
+    switch (IntrinsicID) {
+    default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
+    case Intrinsic::r600_read_ngroups_x:
+      return LowerParameter(DAG, VT, DL, DAG.getEntryNode(), 0);
+    case Intrinsic::r600_read_ngroups_y:
+      return LowerParameter(DAG, VT, DL, DAG.getEntryNode(), 4);
+    case Intrinsic::r600_read_ngroups_z:
+      return LowerParameter(DAG, VT, DL, DAG.getEntryNode(), 8);
+    case Intrinsic::r600_read_global_size_x:
+      return LowerParameter(DAG, VT, DL, DAG.getEntryNode(), 12);
+    case Intrinsic::r600_read_global_size_y:
+      return LowerParameter(DAG, VT, DL, DAG.getEntryNode(), 16);
+    case Intrinsic::r600_read_global_size_z:
+      return LowerParameter(DAG, VT, DL, DAG.getEntryNode(), 20);
+    case Intrinsic::r600_read_local_size_x:
+      return LowerParameter(DAG, VT, DL, DAG.getEntryNode(), 24);
+    case Intrinsic::r600_read_local_size_y:
+      return LowerParameter(DAG, VT, DL, DAG.getEntryNode(), 28);
+    case Intrinsic::r600_read_local_size_z:
+      return LowerParameter(DAG, VT, DL, DAG.getEntryNode(), 32);
+    case Intrinsic::r600_read_tgid_x:
+      return CreateLiveInRegister(DAG, &AMDGPU::SReg_32RegClass,
+                     AMDGPU::SReg_32RegClass.getRegister(NumUserSGPRs + 0), VT);
+    case Intrinsic::r600_read_tgid_y:
+      return CreateLiveInRegister(DAG, &AMDGPU::SReg_32RegClass,
+                     AMDGPU::SReg_32RegClass.getRegister(NumUserSGPRs + 1), VT);
+    case Intrinsic::r600_read_tgid_z:
+      return CreateLiveInRegister(DAG, &AMDGPU::SReg_32RegClass,
+                     AMDGPU::SReg_32RegClass.getRegister(NumUserSGPRs + 2), VT);
+    case Intrinsic::r600_read_tidig_x:
+      return CreateLiveInRegister(DAG, &AMDGPU::VReg_32RegClass,
+                                  AMDGPU::VGPR0, VT);
+    case Intrinsic::r600_read_tidig_y:
+      return CreateLiveInRegister(DAG, &AMDGPU::VReg_32RegClass,
+                                  AMDGPU::VGPR1, VT);
+    case Intrinsic::r600_read_tidig_z:
+      return CreateLiveInRegister(DAG, &AMDGPU::VReg_32RegClass,
+                                  AMDGPU::VGPR2, VT);
+
+    }
+  }
   }
   return SDValue();
 }
@@ -932,4 +991,13 @@ MachineSDNode *SITargetLowering::AdjustRegClass(MachineSDNode *N,
     return DAG.getMachineNode(NewOpcode, DL, N->getVTList(), Ops);
   }
   }
+}
+
+SDValue SITargetLowering::CreateLiveInRegister(SelectionDAG &DAG,
+                                               const TargetRegisterClass *RC,
+                                               unsigned Reg, EVT VT) const {
+  SDValue VReg = AMDGPUTargetLowering::CreateLiveInRegister(DAG, RC, Reg, VT);
+
+  return DAG.getCopyFromReg(DAG.getEntryNode(), SDLoc(DAG.getEntryNode()),
+                            cast<RegisterSDNode>(VReg)->getReg(), VT);
 }

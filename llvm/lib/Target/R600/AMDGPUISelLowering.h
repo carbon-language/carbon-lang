@@ -33,8 +33,9 @@ protected:
   /// MachineFunction.
   ///
   /// \returns a RegisterSDNode representing Reg.
-  SDValue CreateLiveInRegister(SelectionDAG &DAG, const TargetRegisterClass *RC,
-                                                  unsigned Reg, EVT VT) const;
+  virtual SDValue CreateLiveInRegister(SelectionDAG &DAG,
+                                       const TargetRegisterClass *RC,
+                                       unsigned Reg, EVT VT) const;
 
   bool isHWTrueValue(SDValue Op) const;
   bool isHWFalseValue(SDValue Op) const;
