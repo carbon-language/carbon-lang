@@ -778,21 +778,26 @@ namespace Temporaries {
 struct S {
   constexpr S() {}
   constexpr int f() const;
+  constexpr int g() const;
 };
 struct T : S {
   constexpr T(int n) : S(), n(n) {}
   int n;
 };
 constexpr int S::f() const {
-  // 'this' must be the postfix-expression in a class member access expression,
-  // so we can't just use
-  //   return static_cast<T*>(this)->n;
-  return this->*(int(S::*))&T::n;
+  return static_cast<const T*>(this)->n; // expected-note {{cannot cast}}
+}
+constexpr int S::g() const {
+  // FIXME: Better diagnostic for this.
+  return this->*(int(S::*))&T::n; // expected-note {{subexpression}}
 }
 // The T temporary is implicitly cast to an S subobject, but we can recover the
 // T full-object via a base-to-derived cast, or a derived-to-base-casted member
 // pointer.
+static_assert(S().f(), ""); // expected-error {{constant expression}} expected-note {{in call to '&Temporaries::S()->f()'}}
+static_assert(S().g(), ""); // expected-error {{constant expression}} expected-note {{in call to '&Temporaries::S()->g()'}}
 static_assert(T(3).f() == 3, "");
+static_assert(T(4).g() == 4, "");
 
 constexpr int f(const S &s) {
   return static_cast<const T&>(s).n;

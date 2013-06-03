@@ -63,7 +63,25 @@ namespace {
     if (!B) return QualType();
     if (const ValueDecl *D = B.dyn_cast<const ValueDecl*>())
       return D->getType();
-    return B.get<const Expr*>()->getType();
+
+    const Expr *Base = B.get<const Expr*>();
+
+    // For a materialized temporary, the type of the temporary we materialized
+    // may not be the type of the expression.
+    if (const MaterializeTemporaryExpr *MTE =
+            dyn_cast<MaterializeTemporaryExpr>(Base)) {
+      SmallVector<const Expr *, 2> CommaLHSs;
+      SmallVector<SubobjectAdjustment, 2> Adjustments;
+      const Expr *Temp = MTE->GetTemporaryExpr();
+      const Expr *Inner = Temp->skipRValueSubobjectAdjustments(CommaLHSs,
+                                                               Adjustments);
+      // Keep any cv-qualifiers from the reference if we generated a temporary
+      // for it.
+      if (Inner != Temp)
+        return Inner->getType();
+    }
+
+    return Base->getType();
   }
 
   /// Get an LValue path entry, which is known to not be an array index, as a
@@ -625,31 +643,7 @@ CallStackFrame::~CallStackFrame() {
   Info.CurrentCall = Caller;
 }
 
-/// Produce a string describing the given constexpr call.
-static void describeCall(CallStackFrame *Frame, raw_ostream &Out) {
-  unsigned ArgIndex = 0;
-  bool IsMemberCall = isa<CXXMethodDecl>(Frame->Callee) &&
-                      !isa<CXXConstructorDecl>(Frame->Callee) &&
-                      cast<CXXMethodDecl>(Frame->Callee)->isInstance();
-
-  if (!IsMemberCall)
-    Out << *Frame->Callee << '(';
-
-  for (FunctionDecl::param_const_iterator I = Frame->Callee->param_begin(),
-       E = Frame->Callee->param_end(); I != E; ++I, ++ArgIndex) {
-    if (ArgIndex > (unsigned)IsMemberCall)
-      Out << ", ";
-
-    const ParmVarDecl *Param = *I;
-    const APValue &Arg = Frame->Arguments[ArgIndex];
-    Arg.printPretty(Out, Frame->Info.Ctx, Param->getType());
-
-    if (ArgIndex == 0 && IsMemberCall)
-      Out << "->" << *Frame->Callee << '(';
-  }
-
-  Out << ')';
-}
+static void describeCall(CallStackFrame *Frame, raw_ostream &Out);
 
 void EvalInfo::addCallStack(unsigned Limit) {
   // Determine which calls to skip, if any.
@@ -920,6 +914,42 @@ static bool EvaluateAtomic(const Expr *E, APValue &Result, EvalInfo &Info);
 //===----------------------------------------------------------------------===//
 // Misc utilities
 //===----------------------------------------------------------------------===//
+
+/// Produce a string describing the given constexpr call.
+static void describeCall(CallStackFrame *Frame, raw_ostream &Out) {
+  unsigned ArgIndex = 0;
+  bool IsMemberCall = isa<CXXMethodDecl>(Frame->Callee) &&
+                      !isa<CXXConstructorDecl>(Frame->Callee) &&
+                      cast<CXXMethodDecl>(Frame->Callee)->isInstance();
+
+  if (!IsMemberCall)
+    Out << *Frame->Callee << '(';
+
+  if (Frame->This && IsMemberCall) {
+    APValue Val;
+    Frame->This->moveInto(Val);
+    Val.printPretty(Out, Frame->Info.Ctx,
+                    Frame->This->Designator.MostDerivedType);
+    // FIXME: Add parens around Val if needed.
+    Out << "->" << *Frame->Callee << '(';
+    IsMemberCall = false;
+  }
+
+  for (FunctionDecl::param_const_iterator I = Frame->Callee->param_begin(),
+       E = Frame->Callee->param_end(); I != E; ++I, ++ArgIndex) {
+    if (ArgIndex > (unsigned)IsMemberCall)
+      Out << ", ";
+
+    const ParmVarDecl *Param = *I;
+    const APValue &Arg = Frame->Arguments[ArgIndex];
+    Arg.printPretty(Out, Frame->Info.Ctx, Param->getType());
+
+    if (ArgIndex == 0 && IsMemberCall)
+      Out << "->" << *Frame->Callee << '(';
+  }
+
+  Out << ')';
+}
 
 /// Evaluate an expression to see if it had side-effects, and discard its
 /// result.
@@ -1541,6 +1571,19 @@ static bool HandleLValueBase(EvalInfo &Info, const Expr *E, LValue &Obj,
   return true;
 }
 
+static bool HandleLValueBasePath(EvalInfo &Info, const CastExpr *E,
+                                 QualType Type, LValue &Result) {
+  for (CastExpr::path_const_iterator PathI = E->path_begin(),
+                                     PathE = E->path_end();
+       PathI != PathE; ++PathI) {
+    if (!HandleLValueBase(Info, E, Result, Type->getAsCXXRecordDecl(),
+                          *PathI))
+      return false;
+    Type = (*PathI)->getType();
+  }
+  return true;
+}
+
 /// Update LVal to refer to the given field, which must be a member of the type
 /// currently described by LVal.
 static bool HandleLValueMember(EvalInfo &Info, const Expr *E, LValue &LVal,
@@ -2152,7 +2195,7 @@ CompleteObject findCompleteObject(EvalInfo &Info, const Expr *E, AccessKinds AK,
 
   // Compute value storage location and type of base object.
   APValue *BaseVal = 0;
-  QualType BaseType;
+  QualType BaseType = getType(LVal.Base);
 
   if (const ValueDecl *D = LVal.Base.dyn_cast<const ValueDecl*>()) {
     // In C++98, const, non-volatile integers initialized with ICEs are ICEs.
@@ -2173,7 +2216,6 @@ CompleteObject findCompleteObject(EvalInfo &Info, const Expr *E, AccessKinds AK,
     }
 
     // Accesses of volatile-qualified objects are not allowed.
-    BaseType = VD->getType();
     if (BaseType.isVolatileQualified()) {
       if (Info.getLangOpts().CPlusPlus) {
         Info.Diag(E, diag::note_constexpr_access_volatile_obj, 1)
@@ -2241,7 +2283,6 @@ CompleteObject findCompleteObject(EvalInfo &Info, const Expr *E, AccessKinds AK,
       return CompleteObject();
     }
 
-    BaseType = Base->getType();
     BaseVal = &Frame->Temporaries[Base];
 
     // Volatile temporary objects cannot be accessed in constant expressions.
@@ -2630,54 +2671,53 @@ static bool EvaluateObjectArgument(EvalInfo &Info, const Expr *Object,
 /// lvalue referring to the result.
 ///
 /// \param Info - Information about the ongoing evaluation.
-/// \param BO - The member pointer access operation.
-/// \param LV - Filled in with a reference to the resulting object.
+/// \param LV - An lvalue referring to the base of the member pointer.
+/// \param RHS - The member pointer expression.
 /// \param IncludeMember - Specifies whether the member itself is included in
 ///        the resulting LValue subobject designator. This is not possible when
 ///        creating a bound member function.
 /// \return The field or method declaration to which the member pointer refers,
 ///         or 0 if evaluation fails.
 static const ValueDecl *HandleMemberPointerAccess(EvalInfo &Info,
-                                                  const BinaryOperator *BO,
+                                                  QualType LVType,
                                                   LValue &LV,
+                                                  const Expr *RHS,
                                                   bool IncludeMember = true) {
-  assert(BO->getOpcode() == BO_PtrMemD || BO->getOpcode() == BO_PtrMemI);
-
-  bool EvalObjOK = EvaluateObjectArgument(Info, BO->getLHS(), LV);
-  if (!EvalObjOK && !Info.keepEvaluatingAfterFailure())
-    return 0;
-
   MemberPtr MemPtr;
-  if (!EvaluateMemberPointer(BO->getRHS(), MemPtr, Info))
+  if (!EvaluateMemberPointer(RHS, MemPtr, Info))
     return 0;
 
   // C++11 [expr.mptr.oper]p6: If the second operand is the null pointer to
   // member value, the behavior is undefined.
-  if (!MemPtr.getDecl())
+  if (!MemPtr.getDecl()) {
+    // FIXME: Specific diagnostic.
+    Info.Diag(RHS);
     return 0;
-
-  if (!EvalObjOK)
-    return 0;
+  }
 
   if (MemPtr.isDerivedMember()) {
     // This is a member of some derived class. Truncate LV appropriately.
     // The end of the derived-to-base path for the base object must match the
     // derived-to-base path for the member pointer.
     if (LV.Designator.MostDerivedPathLength + MemPtr.Path.size() >
-        LV.Designator.Entries.size())
+        LV.Designator.Entries.size()) {
+      Info.Diag(RHS);
       return 0;
+    }
     unsigned PathLengthToMember =
         LV.Designator.Entries.size() - MemPtr.Path.size();
     for (unsigned I = 0, N = MemPtr.Path.size(); I != N; ++I) {
       const CXXRecordDecl *LVDecl = getAsBaseClass(
           LV.Designator.Entries[PathLengthToMember + I]);
       const CXXRecordDecl *MPDecl = MemPtr.Path[I];
-      if (LVDecl->getCanonicalDecl() != MPDecl->getCanonicalDecl())
+      if (LVDecl->getCanonicalDecl() != MPDecl->getCanonicalDecl()) {
+        Info.Diag(RHS);
         return 0;
+      }
     }
 
     // Truncate the lvalue to the appropriate derived class.
-    if (!CastToDerivedClass(Info, BO, LV, MemPtr.getContainingRecord(),
+    if (!CastToDerivedClass(Info, RHS, LV, MemPtr.getContainingRecord(),
                             PathLengthToMember))
       return 0;
   } else if (!MemPtr.Path.empty()) {
@@ -2686,7 +2726,6 @@ static const ValueDecl *HandleMemberPointerAccess(EvalInfo &Info,
                                   MemPtr.Path.size() + IncludeMember);
 
     // Walk down to the appropriate base class.
-    QualType LVType = BO->getLHS()->getType();
     if (const PointerType *PT = LVType->getAs<PointerType>())
       LVType = PT->getPointeeType();
     const CXXRecordDecl *RD = LVType->getAsCXXRecordDecl();
@@ -2694,23 +2733,24 @@ static const ValueDecl *HandleMemberPointerAccess(EvalInfo &Info,
     // The first class in the path is that of the lvalue.
     for (unsigned I = 1, N = MemPtr.Path.size(); I != N; ++I) {
       const CXXRecordDecl *Base = MemPtr.Path[N - I - 1];
-      if (!HandleLValueDirectBase(Info, BO, LV, RD, Base))
+      if (!HandleLValueDirectBase(Info, RHS, LV, RD, Base))
         return 0;
       RD = Base;
     }
     // Finally cast to the class containing the member.
-    if (!HandleLValueDirectBase(Info, BO, LV, RD, MemPtr.getContainingRecord()))
+    if (!HandleLValueDirectBase(Info, RHS, LV, RD,
+                                MemPtr.getContainingRecord()))
       return 0;
   }
 
   // Add the member. Note that we cannot build bound member functions here.
   if (IncludeMember) {
     if (const FieldDecl *FD = dyn_cast<FieldDecl>(MemPtr.getDecl())) {
-      if (!HandleLValueMember(Info, BO, LV, FD))
+      if (!HandleLValueMember(Info, RHS, LV, FD))
         return 0;
     } else if (const IndirectFieldDecl *IFD =
                  dyn_cast<IndirectFieldDecl>(MemPtr.getDecl())) {
-      if (!HandleLValueIndirectMember(Info, BO, LV, IFD))
+      if (!HandleLValueIndirectMember(Info, RHS, LV, IFD))
         return 0;
     } else {
       llvm_unreachable("can't construct reference to bound member function");
@@ -2718,6 +2758,24 @@ static const ValueDecl *HandleMemberPointerAccess(EvalInfo &Info,
   }
 
   return MemPtr.getDecl();
+}
+
+static const ValueDecl *HandleMemberPointerAccess(EvalInfo &Info,
+                                                  const BinaryOperator *BO,
+                                                  LValue &LV,
+                                                  bool IncludeMember = true) {
+  assert(BO->getOpcode() == BO_PtrMemD || BO->getOpcode() == BO_PtrMemI);
+
+  if (!EvaluateObjectArgument(Info, BO->getLHS(), LV)) {
+    if (Info.keepEvaluatingAfterFailure()) {
+      MemberPtr MemPtr;
+      EvaluateMemberPointer(BO->getRHS(), MemPtr, Info);
+    }
+    return 0;
+  }
+
+  return HandleMemberPointerAccess(Info, BO->getLHS()->getType(), LV,
+                                   BO->getRHS(), IncludeMember);
 }
 
 /// HandleBaseToDerivedCast - Apply the given base-to-derived cast operation on
@@ -3842,24 +3900,14 @@ public:
       return ExprEvaluatorBaseTy::VisitCastExpr(E);
 
     case CK_DerivedToBase:
-    case CK_UncheckedDerivedToBase: {
+    case CK_UncheckedDerivedToBase:
       if (!this->Visit(E->getSubExpr()))
         return false;
 
       // Now figure out the necessary offset to add to the base LV to get from
       // the derived class to the base class.
-      QualType Type = E->getSubExpr()->getType();
-
-      for (CastExpr::path_const_iterator PathI = E->path_begin(),
-           PathE = E->path_end(); PathI != PathE; ++PathI) {
-        if (!HandleLValueBase(this->Info, E, Result, Type->getAsCXXRecordDecl(),
-                              *PathI))
-          return false;
-        Type = (*PathI)->getType();
-      }
-
-      return true;
-    }
+      return HandleLValueBasePath(this->Info, E, E->getSubExpr()->getType(),
+                                  Result);
     }
   }
 };
@@ -3888,8 +3936,10 @@ public:
 //  * BlockExpr
 //  * CallExpr for a MakeStringConstant builtin
 // - Locals and temporaries
+//  * MaterializeTemporaryExpr
 //  * Any Expr, with a CallIndex indicating the function in which the temporary
-//    was evaluated.
+//    was evaluated, for cases where the MaterializeTemporaryExpr is missing
+//    from the AST (FIXME).
 // plus an offset in bytes.
 //===----------------------------------------------------------------------===//
 namespace {
@@ -3984,12 +4034,51 @@ bool LValueExprEvaluator::VisitVarDecl(const Expr *E, const VarDecl *VD) {
 
 bool LValueExprEvaluator::VisitMaterializeTemporaryExpr(
     const MaterializeTemporaryExpr *E) {
-  if (E->getType()->isRecordType())
-    return EvaluateTemporary(E->GetTemporaryExpr(), Result, Info);
+  // Walk through the expression to find the materialized temporary itself.
+  SmallVector<const Expr *, 2> CommaLHSs;
+  SmallVector<SubobjectAdjustment, 2> Adjustments;
+  const Expr *Inner = E->GetTemporaryExpr()->
+      skipRValueSubobjectAdjustments(CommaLHSs, Adjustments);
 
+  // If we passed any comma operators, evaluate their LHSs.
+  for (unsigned I = 0, N = CommaLHSs.size(); I != N; ++I)
+    if (!EvaluateIgnoredValue(Info, CommaLHSs[I]))
+      return false;
+
+  // Materialize the temporary itself.
+  APValue *Value = &Info.CurrentCall->Temporaries[E];
   Result.set(E, Info.CurrentCall->Index);
-  return EvaluateInPlace(Info.CurrentCall->Temporaries[E], Info,
-                         Result, E->GetTemporaryExpr());
+  if (!EvaluateInPlace(*Value, Info, Result, Inner))
+    return false;
+
+  // Adjust our lvalue to refer to the desired subobject.
+  QualType Type = Inner->getType();
+  for (unsigned I = Adjustments.size(); I != 0; /**/) {
+    --I;
+    switch (Adjustments[I].Kind) {
+    case SubobjectAdjustment::DerivedToBaseAdjustment:
+      if (!HandleLValueBasePath(Info, Adjustments[I].DerivedToBase.BasePath,
+                                Type, Result))
+        return false;
+      Type = Adjustments[I].DerivedToBase.BasePath->getType();
+      break;
+
+    case SubobjectAdjustment::FieldAdjustment:
+      if (!HandleLValueMember(Info, E, Result, Adjustments[I].Field))
+        return false;
+      Type = Adjustments[I].Field->getType();
+      break;
+
+    case SubobjectAdjustment::MemberPointerAdjustment:
+      if (!HandleMemberPointerAccess(this->Info, Type, Result,
+                                     Adjustments[I].Ptr.RHS))
+        return false;
+      Type = Adjustments[I].Ptr.MPT->getPointeeType();
+      break;
+    }
+  }
+
+  return true;
 }
 
 bool
@@ -4167,6 +4256,9 @@ public:
     return Error(E);
   }
   bool VisitCXXThisExpr(const CXXThisExpr *E) {
+    // Can't look at 'this' when checking a potential constant expression.
+    if (Info.CheckingPotentialConstantExpression)
+      return false;
     if (!Info.CurrentCall->This)
       return Error(E);
     Result = *Info.CurrentCall->This;
@@ -4240,7 +4332,7 @@ bool PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
     return true;
 
   case CK_DerivedToBase:
-  case CK_UncheckedDerivedToBase: {
+  case CK_UncheckedDerivedToBase:
     if (!EvaluatePointer(E->getSubExpr(), Result, Info))
       return false;
     if (!Result.Base && Result.Offset.isZero())
@@ -4248,19 +4340,9 @@ bool PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
 
     // Now figure out the necessary offset to add to the base LV to get from
     // the derived class to the base class.
-    QualType Type =
-        E->getSubExpr()->getType()->castAs<PointerType>()->getPointeeType();
-
-    for (CastExpr::path_const_iterator PathI = E->path_begin(),
-         PathE = E->path_end(); PathI != PathE; ++PathI) {
-      if (!HandleLValueBase(Info, E, Result, Type->getAsCXXRecordDecl(),
-                            *PathI))
-        return false;
-      Type = (*PathI)->getType();
-    }
-
-    return true;
-  }
+    return HandleLValueBasePath(Info, E, E->getSubExpr()->getType()->
+                                  castAs<PointerType>()->getPointeeType(),
+                                Result);
 
   case CK_BaseToDerived:
     if (!Visit(E->getSubExpr()))

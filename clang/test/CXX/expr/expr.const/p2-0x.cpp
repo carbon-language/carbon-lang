@@ -481,17 +481,19 @@ namespace UnspecifiedRelations {
   public:
     constexpr A() : a(0), b(0) {}
     int a;
-    constexpr bool cmp() const { return &a < &b; } // expected-error {{constexpr function never produces a constant expression}} expected-note {{comparison of address of fields 'a' and 'b' of 'A' with differing access specifiers (public vs private) has unspecified value}}
+    constexpr bool cmp() const { return &a < &b; } // expected-note {{comparison of address of fields 'a' and 'b' of 'A' with differing access specifiers (public vs private) has unspecified value}}
   private:
     int b;
   };
+  static_assert(A().cmp(), ""); // expected-error {{constant expression}} expected-note {{in call}}
   class B {
   public:
     A a;
-    constexpr bool cmp() const { return &a.a < &b.a; } // expected-error {{constexpr function never produces a constant expression}} expected-note {{comparison of address of fields 'a' and 'b' of 'B' with differing access specifiers (public vs protected) has unspecified value}}
+    constexpr bool cmp() const { return &a.a < &b.a; } // expected-note {{comparison of address of fields 'a' and 'b' of 'B' with differing access specifiers (public vs protected) has unspecified value}}
   protected:
     A b;
   };
+  static_assert(B().cmp(), ""); // expected-error {{constant expression}} expected-note {{in call}}
 
   // If two pointers point to different base sub-objects of the same object, or
   // one points to a base subobject and the other points to a member, the result
