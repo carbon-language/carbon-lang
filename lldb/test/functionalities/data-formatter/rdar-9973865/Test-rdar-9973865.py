@@ -23,8 +23,6 @@ class Radar9973865DataFormatterTestCase(TestBase):
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
-        if "clang" in self.getCompiler() and "3.4" in self.getCompilerVersion():
-            self.skipTest("llvm.org/pr16191")
 
         self.buildDwarf()
         self.data_formatter_commands()
