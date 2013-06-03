@@ -820,12 +820,7 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
     if (isRHSID) return ReplaceInstUsesWith(SVI, RHS);
   }
 
-  if (isa<UndefValue>(RHS) &&
-      // This isn't necessary for correctness, but the comment block below
-      // claims that there are cases where folding two shuffles into one would
-      // cause worse codegen on some targets.
-      !isa<ShuffleVectorInst>(LHS) &&
-      CanEvaluateShuffled(LHS, Mask)) {
+  if (isa<UndefValue>(RHS) && CanEvaluateShuffled(LHS, Mask)) {
     Value *V = EvaluateInDifferentElementOrder(LHS, Mask);
     return ReplaceInstUsesWith(SVI, V);
   }
