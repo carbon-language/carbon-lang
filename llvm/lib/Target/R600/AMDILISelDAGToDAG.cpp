@@ -18,6 +18,7 @@
 #include "R600InstrInfo.h"
 #include "SIISelLowering.h"
 #include "llvm/ADT/ValueMap.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
@@ -649,18 +650,45 @@ bool AMDGPUDAGToDAGISel::SelectADDRIndirect(SDValue Addr, SDValue &Base,
 
 void AMDGPUDAGToDAGISel::PostprocessISelDAG() {
 
+  if (Subtarget.device()->getGeneration() < AMDGPUDeviceInfo::HD7XXX) {
+    return;
+  }
+
   // Go over all selected nodes and try to fold them a bit more
   const AMDGPUTargetLowering& Lowering = ((const AMDGPUTargetLowering&)TLI);
   for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
        E = CurDAG->allnodes_end(); I != E; ++I) {
 
-    MachineSDNode *Node = dyn_cast<MachineSDNode>(I);
-    if (!Node)
+    SDNode *Node = I;
+    switch (Node->getOpcode()) {
+    // Fix the register class in copy to CopyToReg nodes - ISel will always
+    // use SReg classes for 64-bit copies, but this is not always what we want.
+    case ISD::CopyToReg: {
+      unsigned Reg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
+      SDValue Val = Node->getOperand(2);
+      const TargetRegisterClass *RC = RegInfo->getRegClass(Reg);
+      if (RC != &AMDGPU::SReg_64RegClass) {
+        continue;
+      }
+
+      if (!Val.getNode()->isMachineOpcode()) {
+        continue;
+      }
+
+      const MCInstrDesc Desc = TM.getInstrInfo()->get(Val.getNode()->getMachineOpcode());
+      const TargetRegisterInfo *TRI = TM.getRegisterInfo();
+      RegInfo->setRegClass(Reg, TRI->getRegClass(Desc.OpInfo[0].RegClass));
+      continue;
+    }
+    }
+
+    MachineSDNode *MachineNode = dyn_cast<MachineSDNode>(I);
+    if (!MachineNode)
       continue;
 
-    SDNode *ResNode = Lowering.PostISelFolding(Node, *CurDAG);
-    if (ResNode != Node)
+    SDNode *ResNode = Lowering.PostISelFolding(MachineNode, *CurDAG);
+    if (ResNode != Node) {
       ReplaceUses(Node, ResNode);
+    }
   }
 }
-
