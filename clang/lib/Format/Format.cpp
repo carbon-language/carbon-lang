@@ -1040,6 +1040,7 @@ private:
     // should also break after the operator.
     if (Previous.Type == TT_BinaryOperator &&
         Current.Type != TT_BinaryOperator && // Special case for ">>".
+        !Current.isTrailingComment() &&
         !Previous.isOneOf(tok::lessless, tok::question) &&
         Previous.getPrecedence() != prec::Assignment &&
         State.Stack.back().BreakBeforeParameter)

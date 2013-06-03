@@ -1991,6 +1991,10 @@ TEST_F(FormatTest, LineBreakingInBinaryExpressions) {
                "        TheLine.Last->FormatTok.Tok.getLocation()) -\n"
                "    1);");
 
+  verifyFormat("if ((aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ||\n"
+               "     bbbbbbbbbbbbbbbbbb) && // aaaaaaaaaaaaaaaa\n"
+               "    cccccc) {\n}");
+
   FormatStyle OnePerLine = getLLVMStyle();
   OnePerLine.BinPackParameters = false;
   verifyFormat(
