@@ -54,7 +54,7 @@ private:
                                 tok::question, tok::colon))
         return false;
       // If a && or || is found and interpreted as a binary operator, this set
-      // of angles is like part of something like "a < b && c > d". If the
+      // of angles is likely part of something like "a < b && c > d". If the
       // angles are inside an expression, the ||/&& might also be a binary
       // operator that was misinterpreted because we are parsing template
       // parameters.

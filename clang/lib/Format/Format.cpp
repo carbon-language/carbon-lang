@@ -1592,6 +1592,11 @@ private:
                         bool InPPDirective) {
     unsigned Newlines =
         std::min(RootToken.NewlinesBefore, Style.MaxEmptyLinesToKeep + 1);
+    // Remove empty lines before "}" where applicable.
+    if (RootToken.is(tok::r_brace) &&
+        (!RootToken.Next ||
+         (RootToken.Next->is(tok::semi) && !RootToken.Next->Next)))
+      Newlines = std::min(Newlines, 1u);
     if (Newlines == 0 && !RootToken.IsFirst)
       Newlines = 1;
 
