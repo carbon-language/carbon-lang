@@ -25,6 +25,8 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/IR/Function.h"
 
+const uint64_t RSRC_DATA_FORMAT = 0xf00000000000LL;
+
 using namespace llvm;
 
 SITargetLowering::SITargetLowering(TargetMachine &TM) :
@@ -71,9 +73,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
 
   setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
-
-  setOperationAction(ISD::STORE, MVT::i32, Custom);
-  setOperationAction(ISD::STORE, MVT::i64, Custom);
 
   setTargetDAGCombine(ISD::SELECT_CC);
 
@@ -214,10 +213,38 @@ SDValue SITargetLowering::LowerFormalArguments(
 MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     MachineInstr * MI, MachineBasicBlock * BB) const {
 
+  MachineBasicBlock::iterator I = *MI;
+
   switch (MI->getOpcode()) {
   default:
     return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
   case AMDGPU::BRANCH: return BB;
+  case AMDGPU::SI_ADDR64_RSRC: {
+    MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
+    unsigned SuperReg = MI->getOperand(0).getReg();
+    unsigned SubRegLo = MRI.createVirtualRegister(&AMDGPU::SReg_64RegClass);
+    unsigned SubRegHi = MRI.createVirtualRegister(&AMDGPU::SReg_64RegClass);
+    unsigned SubRegHiHi = MRI.createVirtualRegister(&AMDGPU::SReg_32RegClass);
+    unsigned SubRegHiLo = MRI.createVirtualRegister(&AMDGPU::SReg_32RegClass);
+    BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::S_MOV_B64), SubRegLo)
+            .addOperand(MI->getOperand(1));
+    BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::S_MOV_B32), SubRegHiLo)
+            .addImm(0);
+    BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::S_MOV_B32), SubRegHiHi)
+            .addImm(RSRC_DATA_FORMAT >> 32);
+    BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::REG_SEQUENCE), SubRegHi)
+            .addReg(SubRegHiLo)
+            .addImm(AMDGPU::sub0)
+            .addReg(SubRegHiHi)
+            .addImm(AMDGPU::sub1);
+    BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::REG_SEQUENCE), SuperReg)
+            .addReg(SubRegLo)
+            .addImm(AMDGPU::sub0_sub1)
+            .addReg(SubRegHi)
+            .addImm(AMDGPU::sub2_sub3);
+    MI->eraseFromParent();
+    break;
+  }
   }
   return BB;
 }
@@ -239,7 +266,6 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
-  case ISD::STORE: return LowerSTORE(Op, DAG);
   }
   return SDValue();
 }
@@ -336,32 +362,6 @@ SDValue SITargetLowering::LowerBRCOND(SDValue BRCOND,
     Intr->getOperand(0));
 
   return Chain;
-}
-
-const uint64_t RSRC_DATA_FORMAT = 0xf00000000000LL;
-
-SDValue SITargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
-  StoreSDNode *StoreNode = cast<StoreSDNode>(Op);
-  SDValue Chain = Op.getOperand(0);
-  SDValue Value = Op.getOperand(1);
-  SDValue VirtualAddress = Op.getOperand(2);
-  SDLoc DL(Op);
-
-  if (StoreNode->getAddressSpace() != AMDGPUAS::GLOBAL_ADDRESS) {
-    return SDValue();
-  }
-
-  SDValue Zero = DAG.getConstant(0, MVT::i64);
-  SDValue Format = DAG.getConstant(RSRC_DATA_FORMAT, MVT::i64);
-  SDValue SrcSrc = DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i128, Zero, Format);
-
-  SDValue Ops[2];
-  Ops[0] = DAG.getNode(AMDGPUISD::BUFFER_STORE, DL, MVT::Other, Chain,
-                       Value, SrcSrc, VirtualAddress);
-  Ops[1] = Chain;
-
-  return DAG.getMergeValues(Ops, 2, DL);
-
 }
 
 SDValue SITargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {

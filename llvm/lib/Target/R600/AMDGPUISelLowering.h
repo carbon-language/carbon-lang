@@ -115,7 +115,6 @@ enum {
   RET_FLAG,
   BRANCH_COND,
   // End AMDIL ISD Opcodes
-  BUFFER_STORE,
   DWORDADDR,
   FRACT,
   FMAX,

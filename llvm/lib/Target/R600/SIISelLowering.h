@@ -24,7 +24,6 @@ class SITargetLowering : public AMDGPUTargetLowering {
   const SIInstrInfo * TII;
   const TargetRegisterInfo * TRI;
 
-  SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG) const;
 

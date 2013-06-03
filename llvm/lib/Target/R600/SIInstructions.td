@@ -416,7 +416,10 @@ def BUFFER_STORE_DWORD : MUBUF_Store_Helper <
 def BUFFER_STORE_DWORDX2 : MUBUF_Store_Helper <
   0x0000001d, "BUFFER_STORE_DWORDX2", VReg_64, i64
 >;
-//def BUFFER_STORE_DWORDX4 : MUBUF_DWORDX4 <0x0000001e, "BUFFER_STORE_DWORDX4", []>;
+
+def BUFFER_STORE_DWORDX4 : MUBUF_Store_Helper <
+  0x0000001e, "BUFFER_STORE_DWORDX4", VReg_128, v4i32
+>;
 //def BUFFER_ATOMIC_SWAP : MUBUF_ <0x00000030, "BUFFER_ATOMIC_SWAP", []>;
 //def BUFFER_ATOMIC_CMPSWAP : MUBUF_ <0x00000031, "BUFFER_ATOMIC_CMPSWAP", []>;
 //def BUFFER_ATOMIC_ADD : MUBUF_ <0x00000032, "BUFFER_ATOMIC_ADD", []>;
@@ -1200,6 +1203,19 @@ def SI_INDIRECT_DST_V16 : SI_INDIRECT_DST<VReg_512>;
 
 } // Uses = [EXEC,VCC,M0], Defs = [EXEC,VCC,M0]
 
+// This psuedo instruction takes a pointer as input and outputs a resource
+// constant that can be used with the ADDR64 MUBUF instructions.
+
+let usesCustomInserter = 1 in {
+
+def SI_ADDR64_RSRC : InstSI <
+  (outs SReg_128:$srsrc),
+  (ins SReg_64:$ptr),
+  "", []
+>;
+
+} // end usesCustomInserter
+
 } // end IsCodeGenOnly, isPseudo
 
 def : Pat<
@@ -1590,6 +1606,27 @@ defm : SMRD_Pattern <S_LOAD_DWORD_IMM, S_LOAD_DWORD_SGPR, i32>;
 defm : SMRD_Pattern <S_LOAD_DWORDX2_IMM, S_LOAD_DWORDX2_SGPR, i64>;
 defm : SMRD_Pattern <S_LOAD_DWORDX4_IMM, S_LOAD_DWORDX4_SGPR, v16i8>;
 defm : SMRD_Pattern <S_LOAD_DWORDX8_IMM, S_LOAD_DWORDX8_SGPR, v32i8>;
+
+//===----------------------------------------------------------------------===//
+// MUBUF Patterns
+//===----------------------------------------------------------------------===//
+
+multiclass MUBUFStore_Pattern <MUBUF Instr, ValueType vt> {
+
+  def : Pat <
+    (global_store vt:$value, i64:$ptr),
+    (Instr $value, (SI_ADDR64_RSRC (i64 0)), $ptr, 0)
+  >;
+
+  def : Pat <
+    (global_store vt:$value, (add i64:$ptr, i64:$offset)),
+    (Instr $value, (SI_ADDR64_RSRC $ptr), $offset, 0)
+   >;
+}
+
+defm : MUBUFStore_Pattern <BUFFER_STORE_DWORD, i32>;
+defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX2, i64>;
+defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX4, v4i32>;
 
 /********** ====================== **********/
 /**********   Indirect adressing   **********/
