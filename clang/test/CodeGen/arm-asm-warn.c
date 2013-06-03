@@ -12,6 +12,7 @@ void t1(int x, char y) {
                    : "+r" (x),
                      "+r" (y)
                    :);
+  __asm__ volatile("ldrb %0, [%1]" : "=r" (y) : "r" (x)); // no warning
 }
 
 // <rdar://problem/12284092>
