@@ -2092,6 +2092,54 @@ static void simplifySimpleBranches(PathPieces &pieces) {
   }
 }
 
+static void removeContextCycles(PathPieces &Path, ParentMap &PM) {
+  for (PathPieces::iterator I = Path.begin(), E = Path.end(); I != E; ) {
+    // Pattern match the current piece and its successor.
+    PathDiagnosticControlFlowPiece *PieceI =
+      dyn_cast<PathDiagnosticControlFlowPiece>(*I);
+
+    if (!PieceI) {
+      ++I;
+      continue;
+    }
+
+    const Stmt *s1Start = getLocStmt(PieceI->getStartLocation());
+    const Stmt *s1End   = getLocStmt(PieceI->getEndLocation());
+
+    PathPieces::iterator NextI = I; ++NextI;
+    if (NextI == E)
+      break;
+
+    PathDiagnosticControlFlowPiece *PieceNextI =
+      dyn_cast<PathDiagnosticControlFlowPiece>(*NextI);
+
+    if (!PieceNextI) {
+      if (isa<PathDiagnosticEventPiece>(*NextI)) {
+        ++NextI;
+        if (NextI == E)
+          break;
+        PieceNextI = dyn_cast<PathDiagnosticControlFlowPiece>(*NextI);
+      }
+
+      if (!PieceNextI) {
+        ++I;
+        continue;
+      }
+    }
+
+    const Stmt *s2Start = getLocStmt(PieceNextI->getStartLocation());
+    const Stmt *s2End   = getLocStmt(PieceNextI->getEndLocation());
+
+    if (s1Start && s2Start && s1Start == s2End && s2Start == s1End) {
+      Path.erase(I);
+      I = Path.erase(NextI);
+      continue;
+    }
+
+    ++I;
+  }
+}
+
 /// \brief Return true if X is contained by Y.
 static bool lexicalContains(ParentMap &PM,
                             const Stmt *X,
@@ -2342,6 +2390,8 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
     // Adjust edges into subexpressions to make them more uniform
     // and aesthetically pleasing.
     addContextEdges(path, SM, PM, LC);
+    // Remove "cyclical" edges that include one or more context edges.
+    removeContextCycles(path, PM);
     // Hoist edges originating from branch conditions to branches
     // for simple branches.
     simplifySimpleBranches(path);
