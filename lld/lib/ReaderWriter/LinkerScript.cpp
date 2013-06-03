@@ -18,30 +18,20 @@ namespace lld {
 namespace script {
 void Token::dump(llvm::raw_ostream &os) const {
   switch (_kind) {
-  case Token::eof:
-    os << "eof: ";
+#define CASE(name)                              \
+  case Token::name:                             \
+    os << #name ": ";                           \
     break;
-  case Token::identifier:
-    os << "identifier: ";
-    break;
-  case Token::kw_as_needed:
-    os << "kw_as_needed: ";
-    break;
-  case Token::kw_group:
-    os << "kw_group: ";
-    break;
-  case Token::kw_output_format:
-    os << "kw_output_format: ";
-    break;
-  case Token::l_paren:
-    os << "l_paren: ";
-    break;
-  case Token::r_paren:
-    os << "r_paren: ";
-    break;
-  case Token::unknown:
-    os << "unknown: ";
-    break;
+  CASE(eof)
+  CASE(identifier)
+  CASE(kw_as_needed)
+  CASE(kw_entry)
+  CASE(kw_group)
+  CASE(kw_output_format)
+  CASE(l_paren)
+  CASE(r_paren)
+  CASE(unknown)
+#undef CASE
   }
   os << _range << "\n";
 }
@@ -120,6 +110,7 @@ void Lexer::lex(Token &tok) {
       .Case("OUTPUT_FORMAT", Token::kw_output_format)
       .Case("GROUP", Token::kw_group)
       .Case("AS_NEEDED", Token::kw_as_needed)
+      .Case("ENTRY", Token::kw_entry)
       .Default(Token::identifier);
     tok = Token(word, kind);
     _buffer = _buffer.drop_front(end);
@@ -191,6 +182,13 @@ LinkerScript *Parser::parse() {
     case Token::kw_as_needed:
       // Not allowed at top level.
       return nullptr;
+    case Token::kw_entry: {
+      Entry *entry = parseEntry();
+      if (!entry)
+        return nullptr;
+      _script._commands.push_back(entry);
+      break;
+    }
     default:
       // Unexpected.
       return nullptr;
@@ -200,6 +198,7 @@ LinkerScript *Parser::parse() {
   return nullptr;
 }
 
+// Parse OUTPUT_FORMAT(ident)
 OutputFormat *Parser::parseOutputFormat() {
   assert(_tok._kind == Token::kw_output_format && "Expected OUTPUT_FORMAT!");
   consumeToken();
@@ -207,7 +206,7 @@ OutputFormat *Parser::parseOutputFormat() {
     return nullptr;
 
   if (_tok._kind != Token::identifier) {
-    error(_tok, "Expected identifer in OUTPUT_FORMAT.");
+    error(_tok, "Expected identifier in OUTPUT_FORMAT.");
     return nullptr;
   }
 
@@ -220,6 +219,7 @@ OutputFormat *Parser::parseOutputFormat() {
   return ret;
 }
 
+// Parse GROUP(file ...)
 Group *Parser::parseGroup() {
   assert(_tok._kind == Token::kw_group && "Expected GROUP!");
   consumeToken();
@@ -251,6 +251,7 @@ Group *Parser::parseGroup() {
   return ret;
 }
 
+// Parse AS_NEEDED(file ...)
 bool Parser::parseAsNeeded(std::vector<Path> &paths) {
   assert(_tok._kind == Token::kw_as_needed && "Expected AS_NEEDED!");
   consumeToken();
@@ -266,5 +267,23 @@ bool Parser::parseAsNeeded(std::vector<Path> &paths) {
     return false;
   return true;
 }
+
+// Parse ENTRY(ident)
+Entry *Parser::parseEntry() {
+  assert(_tok._kind == Token::kw_entry && "Expected ENTRY!");
+  consumeToken();
+  if (!expectAndConsume(Token::l_paren, "expected ("))
+    return nullptr;
+  if (_tok._kind != Token::identifier) {
+    error(_tok, "expected identifier in ENTRY");
+    return nullptr;
+  }
+  StringRef entryName(_tok._range);
+  consumeToken();
+  if (!expectAndConsume(Token::r_paren, "expected )"))
+    return nullptr;
+  return new (_alloc) Entry(entryName);
+}
+
 } // end namespace script
 } // end namespace lld

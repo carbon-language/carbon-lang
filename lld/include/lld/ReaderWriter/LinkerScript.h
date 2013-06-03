@@ -35,6 +35,7 @@ public:
     identifier,
     l_paren,
     r_paren,
+    kw_entry,
     kw_group,
     kw_output_format,
     kw_as_needed
@@ -75,6 +76,7 @@ private:
 class Command {
 public:
   enum class Kind {
+    Entry,
     OutputFormat,
     Group,
   };
@@ -154,6 +156,27 @@ private:
   std::vector<Path> _paths;
 };
 
+class Entry : public Command {
+public:
+  explicit Entry(StringRef entryName) :
+      Command(Kind::Entry), _entryName(entryName) { }
+
+  static bool classof(const Command *c) {
+    return c->getKind() == Kind::Entry;
+  }
+
+  virtual void dump(llvm::raw_ostream &os) const {
+    os << "ENTRY(" << _entryName << ")\n";
+  }
+
+  const StringRef getEntryName() const {
+    return _entryName;
+  }
+
+private:
+  StringRef _entryName;
+};
+
 class LinkerScript {
 public:
   void dump(llvm::raw_ostream &os) const {
@@ -189,10 +212,9 @@ private:
   }
 
   OutputFormat *parseOutputFormat();
-
   Group *parseGroup();
-
   bool parseAsNeeded(std::vector<Path> &paths);
+  Entry *parseEntry();
 
 private:
   llvm::BumpPtrAllocator _alloc;
