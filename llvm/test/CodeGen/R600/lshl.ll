@@ -1,6 +1,6 @@
 ;RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
 
-;CHECK: V_LSHLREV_B32_e32 VGPR0, 1, VGPR0
+;CHECK: V_LSHL_B32_e64 VGPR{{[0-9]+}}, {{[SV]GPR[0-9]+}}, 1
 
 define void @test(i32 %p) {
    %i = mul i32 %p, 2

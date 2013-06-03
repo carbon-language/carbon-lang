@@ -1,6 +1,6 @@
 ;RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
 
-;CHECK: V_LSHRREV_B32_e32 VGPR0, 1, VGPR0
+;CHECK: V_LSHR_B32_e64 {{VGPR[0-9]+}}, {{[SV]GPR[0-9]+}}, 1
 
 define void @test(i32 %p) {
    %i = udiv i32 %p, 2

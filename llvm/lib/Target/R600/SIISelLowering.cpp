@@ -121,7 +121,7 @@ SDValue SITargetLowering::LowerFormalArguments(
     }
 
     // Second split vertices into their elements
-    if (Arg.VT.isVector()) {
+    if (Info->ShaderType != ShaderType::COMPUTE && Arg.VT.isVector()) {
       ISD::InputArg NewArg = Arg;
       NewArg.Flags.setSplit();
       NewArg.VT = Arg.VT.getVectorElementType();
@@ -153,6 +153,14 @@ SDValue SITargetLowering::LowerFormalArguments(
     CCInfo.AllocateReg(AMDGPU::VGPR1);
   }
 
+  unsigned ArgReg = 0;
+  // The pointer to the list of arguments is stored in SGPR0, SGPR1
+  if (Info->ShaderType == ShaderType::COMPUTE) {
+    CCInfo.AllocateReg(AMDGPU::SGPR0);
+    CCInfo.AllocateReg(AMDGPU::SGPR1);
+    ArgReg = MF.addLiveIn(AMDGPU::SGPR0_SGPR1, &AMDGPU::SReg_64RegClass);
+  }
+
   AnalyzeFormalArguments(CCInfo, Splits);
 
   for (unsigned i = 0, e = Ins.size(), ArgIdx = 0; i != e; ++i) {
@@ -164,10 +172,26 @@ SDValue SITargetLowering::LowerFormalArguments(
     }
 
     CCValAssign &VA = ArgLocs[ArgIdx++];
+    EVT VT = VA.getLocVT();
+
+    if (VA.isMemLoc()) {
+      assert(ArgReg);
+      PointerType *PtrTy = PointerType::get(VT.getTypeForEVT(*DAG.getContext()),
+                                            AMDGPUAS::CONSTANT_ADDRESS);
+      EVT ArgVT = MVT::getIntegerVT(VT.getSizeInBits());
+      SDValue BasePtr =  DAG.getCopyFromReg(DAG.getRoot(), DL,
+                                            ArgReg, MVT::i64);
+      SDValue Ptr = DAG.getNode(ISD::ADD, DL, MVT::i64, BasePtr,
+                               DAG.getConstant(VA.getLocMemOffset(), MVT::i64));
+      SDValue Arg = DAG.getExtLoad(ISD::ZEXTLOAD, DL, VT, DAG.getRoot(), Ptr,
+                                MachinePointerInfo(UndefValue::get(PtrTy)),
+                                VA.getValVT(), false, false, ArgVT.getSizeInBits() >> 3);
+      InVals.push_back(Arg);
+      continue;
+    }
     assert(VA.isRegLoc() && "Parameter must be in a register!");
 
     unsigned Reg = VA.getLocReg();
-    MVT VT = VA.getLocVT();
 
     if (VT == MVT::i64) {
       // For now assume it is a pointer

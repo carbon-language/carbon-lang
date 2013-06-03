@@ -1,6 +1,6 @@
 ;RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
 
-;CHECK: V_CMP_O_F32_e64 SGPR0_SGPR1, VGPR0, VGPR0, 0, 0, 0, 0
+;CHECK: V_CMP_O_F32_e64 SGPR0_SGPR1, {{[SV]GPR[0-9]+, [SV]GPR[0-9]+}}, 0, 0, 0, 0
 
 define void @main(float %p) {
 main_body:

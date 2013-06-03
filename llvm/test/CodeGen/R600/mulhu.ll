@@ -1,7 +1,7 @@
 ;RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
 
-;CHECK: V_MOV_B32_e32 VGPR1, -1431655765
-;CHECK-NEXT: V_MUL_HI_U32 VGPR0, VGPR0, VGPR1, 0, 0, 0, 0, 0
+;CHECK: V_MOV_B32_e32 VGPR{{[0-9]+}}, -1431655765
+;CHECK: V_MUL_HI_U32 VGPR0, {{[SV]GPR[0-9]+}}, {{VGPR[0-9]+}}
 ;CHECK-NEXT: V_LSHRREV_B32_e32 VGPR0, 1, VGPR0
 
 define void @test(i32 %p) {
