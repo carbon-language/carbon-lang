@@ -732,10 +732,12 @@ ASTContext::~ASTContext() {
   // FIXME: Is this the ideal solution?
   ReleaseDeclContextMaps();
 
-  // Call all of the deallocation functions.
-  for (unsigned I = 0, N = Deallocations.size(); I != N; ++I)
-    Deallocations[I].first(Deallocations[I].second);
-  
+  // Call all of the deallocation functions on all of their targets.
+  for (DeallocationMap::const_iterator I = Deallocations.begin(),
+           E = Deallocations.end(); I != E; ++I)
+    for (unsigned J = 0, N = I->second.size(); J != N; ++J)
+      (I->first)((I->second)[J]);
+
   // ASTRecordLayout objects in ASTRecordLayouts must always be destroyed
   // because they can contain DenseMaps.
   for (llvm::DenseMap<const ObjCContainerDecl*,
@@ -759,7 +761,7 @@ ASTContext::~ASTContext() {
 }
 
 void ASTContext::AddDeallocation(void (*Callback)(void*), void *Data) {
-  Deallocations.push_back(std::make_pair(Callback, Data));
+  Deallocations[Callback].push_back(Data);
 }
 
 void

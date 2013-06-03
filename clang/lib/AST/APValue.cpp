@@ -212,6 +212,39 @@ void APValue::DestroyDataAndMakeUninit() {
   Kind = Uninitialized;
 }
 
+bool APValue::needsCleanup() const {
+  switch (getKind()) {
+  case Uninitialized:
+  case AddrLabelDiff:
+    return false;
+  case Struct:
+  case Union:
+  case Array:
+  case Vector:
+    return true;
+  case Int:
+    return getInt().needsCleanup();
+  case Float:
+    return getFloat().needsCleanup();
+  case ComplexFloat:
+    assert(getComplexFloatImag().needsCleanup() ==
+               getComplexFloatReal().needsCleanup() &&
+           "In _Complex float types, real and imaginary values always have the "
+           "same size.");
+    return getComplexFloatReal().needsCleanup();
+  case ComplexInt:
+    assert(getComplexIntImag().needsCleanup() ==
+               getComplexIntReal().needsCleanup() &&
+           "In _Complex int types, real and imaginary values must have the "
+           "same size.");
+    return getComplexIntReal().needsCleanup();
+  case LValue:
+    return reinterpret_cast<const LV *>(Data)->hasPathPtr();
+  case MemberPointer:
+    return reinterpret_cast<const MemberPointerData *>(Data)->hasPathPtr();
+  }
+}
+
 void APValue::swap(APValue &RHS) {
   std::swap(Kind, RHS.Kind);
   char TmpData[MaxSize];

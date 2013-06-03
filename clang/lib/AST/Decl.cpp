@@ -1827,6 +1827,10 @@ EvaluatedStmt *VarDecl::ensureEvaluatedStmt() const {
   EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>();
   if (!Eval) {
     Stmt *S = Init.get<Stmt *>();
+    // Note: EvaluatedStmt contains an APValue, which usually holds
+    // resources not allocated from the ASTContext.  We need to do some
+    // work to avoid leaking those, but we do so in VarDecl::evaluateValue
+    // where we can detect whether there's anything to clean up or not.
     Eval = new (getASTContext()) EvaluatedStmt;
     Eval->Value = S;
     Init = Eval;
@@ -1838,6 +1842,13 @@ APValue *VarDecl::evaluateValue() const {
   SmallVector<PartialDiagnosticAt, 8> Notes;
   return evaluateValue(Notes);
 }
+
+namespace {
+// Destroy an APValue that was allocated in an ASTContext.
+void DestroyAPValue(void* UntypedValue) {
+  static_cast<APValue*>(UntypedValue)->~APValue();
+}
+} // namespace
 
 APValue *VarDecl::evaluateValue(
     SmallVectorImpl<PartialDiagnosticAt> &Notes) const {
@@ -1864,9 +1875,13 @@ APValue *VarDecl::evaluateValue(
   bool Result = Init->EvaluateAsInitializer(Eval->Evaluated, getASTContext(),
                                             this, Notes);
 
-  // Ensure the result is an uninitialized APValue if evaluation fails.
+  // Ensure the computed APValue is cleaned up later if evaluation succeeded,
+  // or that it's empty (so that there's nothing to clean up) if evaluation
+  // failed.
   if (!Result)
     Eval->Evaluated = APValue();
+  else if (Eval->Evaluated.needsCleanup())
+    getASTContext().AddDeallocation(DestroyAPValue, &Eval->Evaluated);
 
   Eval->IsEvaluating = false;
   Eval->WasEvaluated = true;
