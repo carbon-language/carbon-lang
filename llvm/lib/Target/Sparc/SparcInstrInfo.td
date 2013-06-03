@@ -516,6 +516,20 @@ let isBarrier = 1 in
                       "ba $dst",
                       [(br bb:$dst)]>;
 
+//Indirect Branch
+let isTerminator = 1, isBarrier = 1,
+     hasDelaySlot = 1, isBranch =1,
+     isIndirectBranch = 1 in {
+  def BINDrr  : F3_1<2, 0b111000,
+                   (outs), (ins MEMrr:$ptr),
+                   "jmp $ptr",
+                   [(brind ADDRrr:$ptr)]>;
+  def BINDri  : F3_2<2, 0b111000,
+                   (outs), (ins MEMri:$ptr),
+                   "jmp $ptr",
+                   [(brind ADDRri:$ptr)]>;
+}
+
 // FIXME: the encoding for the JIT should look at the condition field.
 let Uses = [ICC] in
   def BCOND : BranchSP<0, (ins brtarget:$dst, CCOp:$cc),
@@ -793,9 +807,15 @@ def : Pat<(SPlo tglobaladdr:$in), (ORri (i32 G0), tglobaladdr:$in)>;
 def : Pat<(SPhi tconstpool:$in), (SETHIi tconstpool:$in)>;
 def : Pat<(SPlo tconstpool:$in), (ORri (i32 G0), tconstpool:$in)>;
 
+// Blockaddress
+def : Pat<(SPhi tblockaddress:$in), (SETHIi tblockaddress:$in)>;
+def : Pat<(SPlo tblockaddress:$in), (ORri (i32 G0), tblockaddress:$in)>;
+
 // Add reg, lo.  This is used when taking the addr of a global/constpool entry.
 def : Pat<(add iPTR:$r, (SPlo tglobaladdr:$in)), (ADDri $r, tglobaladdr:$in)>;
 def : Pat<(add iPTR:$r, (SPlo tconstpool:$in)),  (ADDri $r, tconstpool:$in)>;
+def : Pat<(add iPTR:$r, (SPlo tblockaddress:$in)),
+                        (ADDri $r, tblockaddress:$in)>;
 
 // Calls: 
 def : Pat<(call tglobaladdr:$dst),

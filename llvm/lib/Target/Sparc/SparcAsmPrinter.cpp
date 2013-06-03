@@ -120,6 +120,9 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
   case MachineOperand::MO_GlobalAddress:
     O << *Mang->getSymbol(MO.getGlobal());
     break;
+  case MachineOperand::MO_BlockAddress:
+    O <<  GetBlockAddressSymbol(MO.getBlockAddress())->getName();
+    break;
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();
     break;

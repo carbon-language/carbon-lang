@@ -1258,6 +1258,7 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::GlobalAddress, getPointerTy(), Custom);
   setOperationAction(ISD::GlobalTLSAddress, getPointerTy(), Custom);
   setOperationAction(ISD::ConstantPool, getPointerTy(), Custom);
+  setOperationAction(ISD::BlockAddress, getPointerTy(), Custom);
 
   // Sparc doesn't have sext_inreg, replace them with shl/sra
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);
@@ -1460,6 +1461,12 @@ SDValue SparcTargetLowering::withTargetFlags(SDValue Op, unsigned TF,
                                      CP->getAlignment(),
                                      CP->getOffset(), TF);
 
+  if (const BlockAddressSDNode *BA = dyn_cast<BlockAddressSDNode>(Op))
+    return DAG.getTargetBlockAddress(BA->getBlockAddress(),
+                                     Op.getValueType(),
+                                     0,
+                                     TF);
+
   if (const ExternalSymbolSDNode *ES = dyn_cast<ExternalSymbolSDNode>(Op))
     return DAG.getTargetExternalSymbol(ES->getSymbol(),
                                        ES->getValueType(0), TF);
@@ -1526,6 +1533,11 @@ SDValue SparcTargetLowering::LowerGlobalAddress(SDValue Op,
 }
 
 SDValue SparcTargetLowering::LowerConstantPool(SDValue Op,
+                                               SelectionDAG &DAG) const {
+  return makeAddress(Op, DAG);
+}
+
+SDValue SparcTargetLowering::LowerBlockAddress(SDValue Op,
                                                SelectionDAG &DAG) const {
   return makeAddress(Op, DAG);
 }
@@ -1752,6 +1764,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::GlobalTLSAddress:
     llvm_unreachable("TLS not implemented for Sparc.");
   case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
+  case ISD::BlockAddress:       return LowerBlockAddress(Op, DAG);
   case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
   case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG);
