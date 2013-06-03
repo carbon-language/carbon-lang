@@ -1820,6 +1820,14 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
     }
   }
 
+  // Add an edge to the start of the function.
+  // We'll prune it out later, but it helps make diagnostics more uniform.
+  const StackFrameContext *CalleeLC = PDB.LC->getCurrentStackFrame();
+  const Decl *D = CalleeLC->getDecl();
+  addEdgeToPath(PD.getActivePath(), PrevLoc,
+                PathDiagnosticLocation::createBegin(D, SM),
+                CalleeLC);
+
   return report->isValid();
 }
 
@@ -2057,12 +2065,8 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
   const LocationContext *LC = LCM[&path];
   assert(LC);
   ParentMap &PM = LC->getParentMap();
-  bool isFirst = true;
 
   for (PathPieces::iterator I = path.begin(), E = path.end(); I != E; ) {
-    bool wasFirst = isFirst;
-    isFirst = false;
-
     // Optimize subpaths.
     if (PathDiagnosticCallPiece *CallI = dyn_cast<PathDiagnosticCallPiece>(*I)){
       // Record the fact that a call has been optimized so we only do the
@@ -2088,25 +2092,6 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
     const Stmt *s1End   = getLocStmt(PieceI->getEndLocation());
     const Stmt *level1 = getStmtParent(s1Start, PM);
     const Stmt *level2 = getStmtParent(s1End, PM);
-
-    if (wasFirst) {
-      // If the first edge (in isolation) is just a transition from
-      // an expression to a parent expression then eliminate that edge.
-      if (level1 && level2 && level2 == PM.getParent(level1)) {
-        path.erase(I);
-        // Since we are erasing the current edge at the start of the
-        // path, just return now so we start analyzing the start of the path
-        // again.
-        return true;
-      }
-
-      // If the first edge (in isolation) is a transition from the
-      // initialization or increment in a for loop then remove it.
-      if (level1 && isIncrementOrInitInForLoop(s1Start, level1)) {
-        path.erase(I);
-        return true;
-      }
-    }
 
     PathPieces::iterator NextI = I; ++NextI;
     if (NextI == E)
@@ -2426,6 +2411,23 @@ static void simplifySimpleBranches(PathPieces &pieces) {
     PieceNextI->setStartLocation(L);
   }
 }
+
+/// Drop the very first edge in a path, which should be a function entry edge.
+static void dropFunctionEntryEdge(PathPieces &Path,
+                                  LocationContextMap &LCM,
+                                  SourceManager &SM) {
+#ifndef NDEBUG
+  const Decl *D = LCM[&Path]->getDecl();
+  PathDiagnosticLocation EntryLoc =
+    PathDiagnosticLocation::createBegin(D, SM);
+  const PathDiagnosticControlFlowPiece *FirstEdge =
+    cast<PathDiagnosticControlFlowPiece>(Path.front());
+  assert(FirstEdge->getStartLocation() == EntryLoc && "not an entry edge");
+#endif
+
+  Path.pop_front();
+}
+
 
 //===----------------------------------------------------------------------===//
 // Methods for BugType and subclasses.
@@ -3126,6 +3128,10 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
         // Hoist edges originating from branch conditions to branches
         // for simple branches.
         simplifySimpleBranches(PD.getMutablePieces());
+
+        // Drop the very first function-entry edge. It's not really necessary
+        // for top-level functions.
+        dropFunctionEntryEdge(PD.getMutablePieces(), LCM, SM);
       }
     }
 
