@@ -152,7 +152,7 @@ public:
 
         if (log)
         {
-            log->Printf("EntityPersistentVariable::Materialize [process_address = 0x%llx, m_name = %s, m_flags = 0x%hx]",
+            log->Printf("EntityPersistentVariable::Materialize [process_address = 0x%" PRIx64 ", m_name = %s, m_flags = 0x%hx]",
                         (uint64_t)process_address,
                         m_persistent_variable_sp->GetName().AsCString(),
                         m_persistent_variable_sp->m_flags);
@@ -196,7 +196,7 @@ public:
         
         if (log)
         {
-            log->Printf("EntityPersistentVariable::Dematerialize [process_address = 0x%llx, m_name = %s, m_flags = 0x%hx]",
+            log->Printf("EntityPersistentVariable::Dematerialize [process_address = 0x%" PRIx64 ", m_name = %s, m_flags = 0x%hx]",
                         (uint64_t)process_address,
                         m_persistent_variable_sp->GetName().AsCString(),
                         m_persistent_variable_sp->m_flags);
@@ -318,7 +318,7 @@ public:
         
         Error err;
         
-        dump_stream.Printf("0x%llx: EntityPersistentVariable (%s)\n", (unsigned long long)process_address + m_offset, m_persistent_variable_sp->GetName().AsCString());
+        dump_stream.Printf("0x%" PRIx64 ": EntityPersistentVariable (%s)\n", process_address + m_offset, m_persistent_variable_sp->GetName().AsCString());
         
         {
             dump_stream.Printf("Pointer:\n");
@@ -415,7 +415,7 @@ public:
         
         if (log)
         {
-            log->Printf("EntityVariable::Materialize [process_address = 0x%llx, m_variable_sp = %s]",
+            log->Printf("EntityVariable::Materialize [process_address = 0x%" PRIx64 ", m_variable_sp = %s]",
                         (uint64_t)process_address,
                         m_variable_sp->GetName().AsCString());
         }
@@ -536,7 +536,7 @@ public:
 
         if (log)
         {
-            log->Printf("EntityVariable::Dematerialize [process_address = 0x%llx, m_variable_sp = %s]",
+            log->Printf("EntityVariable::Dematerialize [process_address = 0x%" PRIx64 ", m_variable_sp = %s]",
                         (uint64_t)process_address,
                         m_variable_sp->GetName().AsCString());
         }
@@ -597,7 +597,7 @@ public:
     {
         StreamString dump_stream;
         
-        dump_stream.Printf("0x%llx: EntityVariable\n", (unsigned long long)process_address + m_offset);
+        dump_stream.Printf("0x%" PRIx64 ": EntityVariable\n", process_address + m_offset);
         
         Error err;
                 
@@ -854,7 +854,7 @@ public:
     {
         StreamString dump_stream;
                 
-        dump_stream.Printf("0x%llx: EntityResultVariable\n", (unsigned long long)process_address + m_offset);
+        dump_stream.Printf("0x%" PRIx64 ": EntityResultVariable\n", process_address + m_offset);
         
         Error err;
         
@@ -971,7 +971,7 @@ public:
 
         if (log)
         {
-            log->Printf("EntitySymbol::Materialize [process_address = 0x%llx, m_symbol = %s]",
+            log->Printf("EntitySymbol::Materialize [process_address = 0x%" PRIx64 ", m_symbol = %s]",
                         (uint64_t)process_address,
                         m_symbol.GetName().AsCString());
         }
@@ -1014,7 +1014,7 @@ public:
 
         if (log)
         {
-            log->Printf("EntitySymbol::Dematerialize [process_address = 0x%llx, m_symbol = %s]",
+            log->Printf("EntitySymbol::Dematerialize [process_address = 0x%" PRIx64 ", m_symbol = %s]",
                         (uint64_t)process_address,
                         m_symbol.GetName().AsCString());
         }
@@ -1028,7 +1028,7 @@ public:
         
         Error err;
         
-        dump_stream.Printf("0x%llx: EntitySymbol (%s)\n", (unsigned long long)process_address + m_offset, m_symbol.GetName().AsCString());
+        dump_stream.Printf("0x%" PRIx64 ": EntitySymbol (%s)\n", process_address + m_offset, m_symbol.GetName().AsCString());
         
         {
             dump_stream.Printf("Pointer:\n");
@@ -1089,7 +1089,7 @@ public:
         
         if (log)
         {
-            log->Printf("EntityRegister::Materialize [process_address = 0x%llx, m_register_info = %s]",
+            log->Printf("EntityRegister::Materialize [process_address = 0x%" PRIx64 ", m_register_info = %s]",
                         (uint64_t)process_address,
                         m_register_info.name);
         }
@@ -1142,7 +1142,7 @@ public:
         
         if (log)
         {
-            log->Printf("EntityRegister::Dematerialize [process_address = 0x%llx, m_register_info = %s]",
+            log->Printf("EntityRegister::Dematerialize [process_address = 0x%" PRIx64 ", m_register_info = %s]",
                         (uint64_t)process_address,
                         m_register_info.name);
         }
@@ -1182,7 +1182,7 @@ public:
         
         Error err;
         
-        dump_stream.Printf("0x%llx: EntityRegister (%s)\n", (unsigned long long)process_address + m_offset, m_register_info.name);
+        dump_stream.Printf("0x%" PRIx64 ": EntityRegister (%s)\n", process_address + m_offset, m_register_info.name);
         
         {
             dump_stream.Printf("Value:\n");
@@ -1275,7 +1275,7 @@ Materializer::Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb:
     
     if (Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS))
     {
-        log->Printf("Materializer::Materialize (frame_sp = %p, process_address = 0x%llx) materialized:", frame_sp.get(), process_address);
+        log->Printf("Materializer::Materialize (frame_sp = %p, process_address = 0x%" PRIx64 ") materialized:", frame_sp.get(), process_address);
         for (EntityUP &entity_up : m_entities)
             entity_up->DumpToLog(map, process_address, log);
     }
@@ -1307,7 +1307,7 @@ Materializer::Dematerializer::Dematerialize (Error &error, lldb::ClangExpression
     {
         if (Log *log =lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS))
         {
-            log->Printf("Materializer::Dematerialize (frame_sp = %p, process_address = 0x%llx) about to dematerialize:", frame_sp.get(), m_process_address);
+            log->Printf("Materializer::Dematerialize (frame_sp = %p, process_address = 0x%" PRIx64 ") about to dematerialize:", frame_sp.get(), m_process_address);
             for (EntityUP &entity_up : m_materializer->m_entities)
                 entity_up->DumpToLog(*m_map, m_process_address, log);
         }

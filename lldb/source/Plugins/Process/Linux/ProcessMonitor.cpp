@@ -1562,7 +1562,7 @@ ProcessMonitor::MonitorSignal(ProcessMonitor *monitor,
     if (info->si_code == SI_TKILL || info->si_code == SI_USER)
     {
         if (log)
-            log->Printf ("ProcessMonitor::%s() received signal %s with code %s, pid = %" PRIu64,
+            log->Printf ("ProcessMonitor::%s() received signal %s with code %s, pid = %d",
                             __FUNCTION__,
                             monitor->m_process->GetUnixSignals().GetSignalAsCString (signo),
                             (info->si_code == SI_TKILL ? "SI_TKILL" : "SI_USER"),
@@ -1667,7 +1667,7 @@ ProcessMonitor::StopThread(lldb::tid_t tid)
 
         // Handle events from other threads
         if (log)
-            log->Printf ("ProcessMonitor::%s(bp) handling event, tid == %d", __FUNCTION__, wait_pid);
+            log->Printf ("ProcessMonitor::%s(bp) handling event, tid == %" PRIu64, __FUNCTION__, wait_pid);
 
         ProcessMessage message;
         if (info.si_signo == SIGTRAP)

@@ -360,7 +360,7 @@ IRMemoryMap::Malloc (size_t size, uint8_t alignment, uint32_t permissions, Alloc
             break;
         }
         
-        log->Printf("IRMemoryMap::Malloc (%llu, 0x%llx, 0x%llx, %s) -> 0x%llx",
+        log->Printf("IRMemoryMap::Malloc (%" PRIu64 ", 0x%" PRIx64 ", 0x%" PRIx64 ", %s) -> 0x%" PRIx64,
                     (uint64_t)allocation_size,
                     (uint64_t)alignment,
                     (uint64_t)permissions,
@@ -433,7 +433,7 @@ IRMemoryMap::Free (lldb::addr_t process_address, Error &error)
     
     if (lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS))
     {        
-        log->Printf("IRMemoryMap::Free (0x%llx) freed [0x%llx..0x%llx)",
+        log->Printf("IRMemoryMap::Free (0x%" PRIx64 ") freed [0x%" PRIx64 "..0x%" PRIx64 ")",
                     (uint64_t)process_address,
                     iter->second.m_process_start,
                     iter->second.m_process_start + iter->second.m_size);
@@ -514,7 +514,7 @@ IRMemoryMap::WriteMemory (lldb::addr_t process_address, const uint8_t *bytes, si
     
     if (lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS))
     {        
-        log->Printf("IRMemoryMap::WriteMemory (0x%llx, 0x%llx, 0x%lld) went to [0x%llx..0x%llx)",
+        log->Printf("IRMemoryMap::WriteMemory (0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRId64 ") went to [0x%" PRIx64 "..0x%" PRIx64 ")",
                     (uint64_t)process_address,
                     (uint64_t)bytes,
                     (uint64_t)size,
@@ -647,7 +647,7 @@ IRMemoryMap::ReadMemory (uint8_t *bytes, lldb::addr_t process_address, size_t si
     
     if (lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS))
     {
-        log->Printf("IRMemoryMap::ReadMemory (0x%llx, 0x%llx, 0x%lld) came from [0x%llx..0x%llx)",
+        log->Printf("IRMemoryMap::ReadMemory (0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRId64 ") came from [0x%" PRIx64 "..0x%" PRIx64 ")",
                     (uint64_t)process_address,
                     (uint64_t)bytes,
                     (uint64_t)size,
@@ -677,7 +677,7 @@ IRMemoryMap::ReadScalarFromMemory (Scalar &scalar, lldb::addr_t process_address,
         {
         default:
             error.SetErrorToGenericError();
-            error.SetErrorStringWithFormat("Couldn't read scalar: unsupported size %lld", (unsigned long long)size);
+            error.SetErrorStringWithFormat("Couldn't read scalar: unsupported size %" PRId64, size);
             return;
         case 1: scalar = extractor.GetU8(&offset);  break;
         case 2: scalar = extractor.GetU16(&offset); break;
@@ -721,7 +721,7 @@ IRMemoryMap::GetMemoryData (DataExtractor &extractor, lldb::addr_t process_addre
         if (iter == m_allocations.end())
         {
             error.SetErrorToGenericError();
-            error.SetErrorStringWithFormat("Couldn't find an allocation containing [0x%llx..0x%llx)", (unsigned long long)process_address, (unsigned long long)(process_address + size));
+            error.SetErrorStringWithFormat("Couldn't find an allocation containing [0x%" PRIx64 "..0x%" PRIx64 ")", process_address, process_address + size);
             return;
         }
         

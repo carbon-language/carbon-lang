@@ -786,8 +786,8 @@ IRInterpreter::Interpret (llvm::Module &module,
                 if (log)
                 {
                     log->Printf("Interpreted an AllocaInst");
-                    log->Printf("  R : 0x%llx", R);
-                    log->Printf("  P : 0x%llx", P);
+                    log->Printf("  R : 0x%" PRIx64, R);
+                    log->Printf("  P : 0x%" PRIx64, P);
                 }
             }
                 break;
@@ -1211,9 +1211,9 @@ IRInterpreter::Interpret (llvm::Module &module,
                 if (log)
                 {
                     log->Printf("Interpreted a LoadInst");
-                    log->Printf("  P : 0x%llx", P);
-                    log->Printf("  R : 0x%llx", R);
-                    log->Printf("  D : 0x%llx", D);
+                    log->Printf("  P : 0x%" PRIx64, P);
+                    log->Printf("  R : 0x%" PRIx64, R);
+                    log->Printf("  D : 0x%" PRIx64, D);
                 }
             }
                 break;
@@ -1311,9 +1311,9 @@ IRInterpreter::Interpret (llvm::Module &module,
                 if (log)
                 {
                     log->Printf("Interpreted a StoreInst");
-                    log->Printf("  D : 0x%llx", D);
-                    log->Printf("  P : 0x%llx", P);
-                    log->Printf("  R : 0x%llx", R);
+                    log->Printf("  D : 0x%" PRIx64, D);
+                    log->Printf("  P : 0x%" PRIx64, P);
+                    log->Printf("  R : 0x%" PRIx64, R);
                 }
             }
                 break;

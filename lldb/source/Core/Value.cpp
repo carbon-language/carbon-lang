@@ -339,10 +339,6 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
     Address file_so_addr;
     switch (m_value_type)
     {
-    default:
-        error.SetErrorStringWithFormat("invalid value type %i", m_value_type);
-        break;
-            
     case eValueTypeVector:
         if (m_context_type == eContextTypeClangType && ast_context)
         {

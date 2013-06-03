@@ -15,13 +15,14 @@
 
 #else
 
-#include <stdio.h>
-
 #if defined (__APPLE__)
 #include <Python/Python.h>
 #else
 #include <Python.h>
 #endif
+
+#include <stdio.h>
+
 #include "lldb/Core/Stream.h"
 #include "lldb/Host/File.h"
 #include "lldb/Interpreter/PythonDataObjects.h"

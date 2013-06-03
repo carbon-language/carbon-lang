@@ -444,7 +444,7 @@ Thread::SetStopInfo (const lldb::StopInfoSP &stop_info_sp)
         m_stop_info_stop_id = UINT32_MAX;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
     if (log)
-        log->Printf("%p: tid = 0x%llx: stop info = %s (stop_id = %u)\n", this, GetID(), stop_info_sp ? stop_info_sp->GetDescription() : "<NULL>", m_stop_info_stop_id);
+        log->Printf("%p: tid = 0x%" PRIx64 ": stop info = %s (stop_id = %u)\n", this, GetID(), stop_info_sp ? stop_info_sp->GetDescription() : "<NULL>", m_stop_info_stop_id);
 }
 
 void
