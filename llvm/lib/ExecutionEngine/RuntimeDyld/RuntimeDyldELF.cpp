@@ -529,9 +529,13 @@ void RuntimeDyldELF::findOPDEntrySection(ObjectImage &Obj,
   error_code err;
   for (section_iterator si = Obj.begin_sections(),
      se = Obj.end_sections(); si != se; si.increment(err)) {
-    StringRef SectionName;
-    check(si->getName(SectionName));
-    if (SectionName != ".opd")
+    section_iterator RelSecI = si->getRelocatedSection();
+    if (RelSecI == Obj.end_sections())
+      continue;
+
+    StringRef RelSectionName;
+    check(RelSecI->getName(RelSectionName));
+    if (RelSectionName != ".opd")
       continue;
 
     for (relocation_iterator i = si->begin_relocations(),
