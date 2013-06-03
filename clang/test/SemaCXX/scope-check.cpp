@@ -276,6 +276,27 @@ namespace test15 {
 }
 
 namespace test16 {
+  struct S { int n; };
+  int f() {
+    goto x; // expected-error {{goto into protected scope}}
+    const S &s = S(); // expected-note {{jump bypasses variable initialization}}
+x:  return s.n;
+  }
+}
+
+#if __cplusplus >= 201103L
+namespace test17 {
+  struct S { int get(); private: int n; };
+  int f() {
+    goto x; // expected-error {{goto into protected scope}}
+    S s = {}; // expected-note {{jump bypasses variable initialization}}
+x:  return s.get();
+  }
+}
+#endif
+
+// This test must be last, because the error prohibits further jump diagnostics.
+namespace testInvalid {
 Invalid inv; // expected-error {{unknown type name}}
 // Make sure this doesn't assert.
 void fn()

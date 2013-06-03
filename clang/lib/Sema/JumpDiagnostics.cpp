@@ -172,10 +172,6 @@ static ScopePair GetDiagForGotoScopeDecl(ASTContext &Context, const Decl *D) {
       if (EWC)
         Init = EWC->getSubExpr();
 
-      // FIXME: Why are we looking through reference initialization?
-      //        This causes us to incorrectly accept invalid code such as:
-      //   struct S { int n; };
-      //   int f() { goto x; S &&s = S(); x: return x.n; }
       const MaterializeTemporaryExpr *M = NULL;
       Init = Init->findMaterializedTemporary(M);
 
@@ -184,7 +180,7 @@ static ScopePair GetDiagForGotoScopeDecl(ASTContext &Context, const Decl *D) {
       Init = Init->skipRValueSubobjectAdjustments(CommaLHSs, Adjustments);
 
       QualType QT = Init->getType();
-      if (QT.isNull() || !CommaLHSs.empty())
+      if (QT.isNull())
         return ScopePair(diag::note_protected_by_variable_init, 0);
 
       const Type *T = QT.getTypePtr();
@@ -203,7 +199,11 @@ static ScopePair GetDiagForGotoScopeDecl(ASTContext &Context, const Decl *D) {
 
       if (const CXXConstructExpr *cce = dyn_cast<CXXConstructExpr>(Init)) {
         const CXXConstructorDecl *ctor = cce->getConstructor();
-        if (ctor->isTrivial() && ctor->isDefaultConstructor()) {
+        // For a variable declared without an initializer, we will have
+        // call-style initialization and the initializer will be the
+        // CXXConstructExpr with no intervening nodes.
+        if (ctor->isTrivial() && ctor->isDefaultConstructor() &&
+            VD->getInit() == Init && VD->getInitStyle() == VarDecl::CallInit) {
           if (OutDiag)
             InDiag = diag::note_protected_by_variable_nontriv_destructor;
           else if (!Record->isPOD())
