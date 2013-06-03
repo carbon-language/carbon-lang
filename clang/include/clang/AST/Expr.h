@@ -760,10 +760,10 @@ public:
 
   /// Walk outwards from an expression we want to bind a reference to and
   /// find the expression whose lifetime needs to be extended. Record
-  /// the adjustments needed along the path.
-  const Expr *
-  skipRValueSubobjectAdjustments(
-                       SmallVectorImpl<SubobjectAdjustment> &Adjustments) const;
+  /// the LHSs of comma expressions and adjustments needed along the path.
+  const Expr *skipRValueSubobjectAdjustments(
+      SmallVectorImpl<const Expr *> &CommaLHS,
+      SmallVectorImpl<SubobjectAdjustment> &Adjustments) const;
 
   /// Skip irrelevant expressions to find what should be materialize for
   /// binding with a reference.

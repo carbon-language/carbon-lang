@@ -295,8 +295,13 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
     return ReferenceTemporary;
   }
 
+  SmallVector<const Expr *, 2> CommaLHSs;
   SmallVector<SubobjectAdjustment, 2> Adjustments;
-  E = E->skipRValueSubobjectAdjustments(Adjustments);
+  E = E->skipRValueSubobjectAdjustments(CommaLHSs, Adjustments);
+
+  for (unsigned I = 0, N = CommaLHSs.size(); I != N; ++I)
+    CGF.EmitIgnoredExpr(CommaLHSs[I]);
+
   if (const OpaqueValueExpr *opaque = dyn_cast<OpaqueValueExpr>(E))
     if (opaque->getType()->isRecordType())
       return CGF.EmitOpaqueValueLValue(opaque).getAddress();
@@ -331,6 +336,10 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
   }
 
   RValue RV = CGF.EmitAnyExpr(E, AggSlot);
+
+  // FIXME: This is wrong. We need to register the destructor for the temporary
+  // now, *before* we perform the adjustments, because in the case of a
+  // pointer-to-member adjustment, the adjustment might throw.
 
   // Check if need to perform derived-to-base casts and/or field accesses, to
   // get from the temporary object we created (and, potentially, for which we

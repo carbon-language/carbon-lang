@@ -172,14 +172,19 @@ static ScopePair GetDiagForGotoScopeDecl(ASTContext &Context, const Decl *D) {
       if (EWC)
         Init = EWC->getSubExpr();
 
+      // FIXME: Why are we looking through reference initialization?
+      //        This causes us to incorrectly accept invalid code such as:
+      //   struct S { int n; };
+      //   int f() { goto x; S &&s = S(); x: return x.n; }
       const MaterializeTemporaryExpr *M = NULL;
       Init = Init->findMaterializedTemporary(M);
 
+      SmallVector<const Expr *, 2> CommaLHSs;
       SmallVector<SubobjectAdjustment, 2> Adjustments;
-      Init = Init->skipRValueSubobjectAdjustments(Adjustments);
+      Init = Init->skipRValueSubobjectAdjustments(CommaLHSs, Adjustments);
 
       QualType QT = Init->getType();
-      if (QT.isNull())
+      if (QT.isNull() || !CommaLHSs.empty())
         return ScopePair(diag::note_protected_by_variable_init, 0);
 
       const Type *T = QT.getTypePtr();

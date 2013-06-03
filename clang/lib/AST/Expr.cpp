@@ -50,9 +50,9 @@ const CXXRecordDecl *Expr::getBestDynamicClassType() const {
   return cast<CXXRecordDecl>(D);
 }
 
-const Expr *
-Expr::skipRValueSubobjectAdjustments(
-                     SmallVectorImpl<SubobjectAdjustment> &Adjustments) const  {
+const Expr *Expr::skipRValueSubobjectAdjustments(
+    SmallVectorImpl<const Expr *> &CommaLHSs,
+    SmallVectorImpl<SubobjectAdjustment> &Adjustments) const {
   const Expr *E = this;
   while (true) {
     E = E->IgnoreParens();
@@ -88,6 +88,11 @@ Expr::skipRValueSubobjectAdjustments(
         const MemberPointerType *MPT =
           BO->getRHS()->getType()->getAs<MemberPointerType>();
         Adjustments.push_back(SubobjectAdjustment(MPT, BO->getRHS()));
+        continue;
+      } else if (BO->getOpcode() == BO_Comma) {
+        CommaLHSs.push_back(BO->getLHS());
+        E = BO->getRHS();
+        continue;
       }
     }
 
