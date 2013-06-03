@@ -578,13 +578,13 @@ def isR600toCayman : Predicate<
 
 def INTERP_PAIR_XY :  AMDGPUShaderInst <
   (outs R600_TReg32_X:$dst0, R600_TReg32_Y:$dst1),
-  (ins i32imm:$src0, R600_Reg32:$src1, R600_Reg32:$src2),
+  (ins i32imm:$src0, R600_TReg32_Y:$src1, R600_TReg32_X:$src2),
   "INTERP_PAIR_XY $src0 $src1 $src2 : $dst0 dst1",
   []>;
 
 def INTERP_PAIR_ZW :  AMDGPUShaderInst <
   (outs R600_TReg32_Z:$dst0, R600_TReg32_W:$dst1),
-  (ins i32imm:$src0, R600_Reg32:$src1, R600_Reg32:$src2),
+  (ins i32imm:$src0, R600_TReg32_Y:$src1, R600_TReg32_X:$src2),
   "INTERP_PAIR_ZW $src0 $src1 $src2 : $dst0 dst1",
   []>;
 
