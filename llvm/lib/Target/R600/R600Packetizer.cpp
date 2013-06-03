@@ -80,9 +80,7 @@ private:
       if (TII->isTransOnly(BI))
         continue;
       int OperandIdx = TII->getOperandIdx(BI->getOpcode(), R600Operands::WRITE);
-      if (OperandIdx < 0)
-        continue;
-      if (BI->getOperand(OperandIdx).getImm() == 0)
+      if (OperandIdx > -1 && BI->getOperand(OperandIdx).getImm() == 0)
         continue;
       unsigned Dst = BI->getOperand(0).getReg();
       if (BI->getOpcode() == AMDGPU::DOT4_r600 ||
