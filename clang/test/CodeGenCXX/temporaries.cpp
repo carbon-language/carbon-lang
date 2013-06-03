@@ -609,10 +609,10 @@ namespace Bitfield {
   struct S { int a : 5; ~S(); };
 
   // Do not lifetime extend the S() temporary here.
-  // CHECK: alloca
-  // CHECK: call {{.*}}memset
-  // CHECK: store i32 {{.*}}, i32* @_ZGRN8Bitfield1rE, align 4
+  // CHECK: alloca
+  // CHECK: call {{.*}}memset
+  // CHECK: store i32 {{.*}}, i32* @_ZGRN8Bitfield1rE, align 4
   // CHECK: call void @_ZN8Bitfield1SD1
-  // CHECK: store i32* @_ZGRN8Bitfield1rE, i32** @_ZN8Bitfield1rE, align 8
+  // CHECK: store i32* @_ZGRN8Bitfield1rE, i32** @_ZN8Bitfield1rE, align 8
   int &&r = S().a;
 }
