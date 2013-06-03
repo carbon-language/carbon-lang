@@ -74,6 +74,8 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
 
+  setOperationAction(ISD::SIGN_EXTEND, MVT::i64, Custom);
+
   setTargetDAGCombine(ISD::SELECT_CC);
 
   setTargetDAGCombine(ISD::SETCC);
@@ -266,6 +268,7 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
+  case ISD::SIGN_EXTEND: return LowerSIGN_EXTEND(Op, DAG);
   }
   return SDValue();
 }
@@ -381,6 +384,21 @@ SDValue SITargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
 
   SDValue Cond = DAG.getNode(ISD::SETCC, DL, MVT::i1, LHS, RHS, CC);
   return DAG.getNode(ISD::SELECT, DL, VT, Cond, True, False);
+}
+
+SDValue SITargetLowering::LowerSIGN_EXTEND(SDValue Op,
+                                           SelectionDAG &DAG) const {
+  EVT VT = Op.getValueType();
+  SDLoc DL(Op);
+
+  if (VT != MVT::i64) {
+    return SDValue();
+  }
+
+  SDValue Hi = DAG.getNode(ISD::SRA, DL, MVT::i32, Op.getOperand(0),
+                                                 DAG.getConstant(31, MVT::i32));
+
+  return DAG.getNode(ISD::BUILD_PAIR, DL, VT, Op.getOperand(0), Hi);
 }
 
 //===----------------------------------------------------------------------===//
