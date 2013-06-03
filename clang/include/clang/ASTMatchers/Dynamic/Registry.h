@@ -52,6 +52,18 @@ public:
                                            ArrayRef<ParserValue> Args,
                                            Diagnostics *Error);
 
+  /// \brief Construct a matcher from the registry and bind it.
+  ///
+  /// Similar the \c constructMatcher() above, but it then tries to bind the
+  /// matcher to the specified \c BindID.
+  /// If the matcher is not bindable, it sets an error in \c Error and returns
+  /// \c NULL.
+  static DynTypedMatcher *constructBoundMatcher(StringRef MatcherName,
+                                                const SourceRange &NameRange,
+                                                StringRef BindID,
+                                                ArrayRef<ParserValue> Args,
+                                                Diagnostics *Error);
+
 private:
   Registry() LLVM_DELETED_FUNCTION;
 };

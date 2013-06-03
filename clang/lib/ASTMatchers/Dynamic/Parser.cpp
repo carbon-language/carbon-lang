@@ -32,11 +32,15 @@ struct Parser::TokenInfo {
     TK_OpenParen = 1,
     TK_CloseParen = 2,
     TK_Comma = 3,
-    TK_Literal = 4,
-    TK_Ident = 5,
-    TK_InvalidChar = 6,
-    TK_Error = 7
+    TK_Period = 4,
+    TK_Literal = 5,
+    TK_Ident = 6,
+    TK_InvalidChar = 7,
+    TK_Error = 8
   };
+
+  /// \brief Some known identifiers.
+  static const char* const ID_Bind;
 
   TokenInfo() : Text(), Kind(TK_Eof), Range(), Value() {}
 
@@ -45,6 +49,8 @@ struct Parser::TokenInfo {
   SourceRange Range;
   VariantValue Value;
 };
+
+const char* const Parser::TokenInfo::ID_Bind = "bind";
 
 /// \brief Simple tokenizer for the parser.
 class Parser::CodeTokenizer {
@@ -81,6 +87,11 @@ private:
     switch (Code[0]) {
     case ',':
       Result.Kind = TokenInfo::TK_Comma;
+      Result.Text = Code.substr(0, 1);
+      Code = Code.drop_front();
+      break;
+    case '.':
+      Result.Kind = TokenInfo::TK_Period;
       Result.Text = Code.substr(0, 1);
       Code = Code.drop_front();
       break;
@@ -234,11 +245,43 @@ bool Parser::parseMatcherExpressionImpl(VariantValue *Value) {
     return false;
   }
 
+  std::string BindID;
+  if (Tokenizer->peekNextToken().Kind == TokenInfo::TK_Period) {
+    // Parse .bind("foo")
+    Tokenizer->consumeNextToken();  // consume the period.
+    const TokenInfo BindToken = Tokenizer->consumeNextToken();
+    const TokenInfo OpenToken = Tokenizer->consumeNextToken();
+    const TokenInfo IDToken = Tokenizer->consumeNextToken();
+    const TokenInfo CloseToken = Tokenizer->consumeNextToken();
+
+    // TODO: We could use different error codes for each/some to be more
+    //       explicit about the syntax error.
+    if (BindToken.Kind != TokenInfo::TK_Ident ||
+        BindToken.Text != TokenInfo::ID_Bind) {
+      Error->pushErrorFrame(BindToken.Range, Error->ET_ParserMalformedBindExpr);
+      return false;
+    }
+    if (OpenToken.Kind != TokenInfo::TK_OpenParen) {
+      Error->pushErrorFrame(OpenToken.Range, Error->ET_ParserMalformedBindExpr);
+      return false;
+    }
+    if (IDToken.Kind != TokenInfo::TK_Literal || !IDToken.Value.isString()) {
+      Error->pushErrorFrame(IDToken.Range, Error->ET_ParserMalformedBindExpr);
+      return false;
+    }
+    if (CloseToken.Kind != TokenInfo::TK_CloseParen) {
+      Error->pushErrorFrame(CloseToken.Range,
+                            Error->ET_ParserMalformedBindExpr);
+      return false;
+    }
+    BindID = IDToken.Value.getString();
+  }
+
   // Merge the start and end infos.
   SourceRange MatcherRange = NameToken.Range;
   MatcherRange.End = EndToken.Range.End;
-  DynTypedMatcher *Result =
-      S->actOnMatcherExpression(NameToken.Text, MatcherRange, Args, Error);
+  DynTypedMatcher *Result = S->actOnMatcherExpression(
+      NameToken.Text, MatcherRange, BindID, Args, Error);
   if (Result == NULL) {
     Error->pushErrorFrame(NameToken.Range, Error->ET_ParserMatcherFailure)
         << NameToken.Text;
@@ -271,6 +314,7 @@ bool Parser::parseExpressionImpl(VariantValue *Value) {
   case TokenInfo::TK_OpenParen:
   case TokenInfo::TK_CloseParen:
   case TokenInfo::TK_Comma:
+  case TokenInfo::TK_Period:
   case TokenInfo::TK_InvalidChar:
     const TokenInfo Token = Tokenizer->consumeNextToken();
     Error->pushErrorFrame(Token.Range, Error->ET_ParserInvalidToken)
@@ -290,9 +334,15 @@ public:
   virtual ~RegistrySema() {}
   DynTypedMatcher *actOnMatcherExpression(StringRef MatcherName,
                                           const SourceRange &NameRange,
+                                          StringRef BindID,
                                           ArrayRef<ParserValue> Args,
                                           Diagnostics *Error) {
-    return Registry::constructMatcher(MatcherName, NameRange, Args, Error);
+    if (BindID.empty()) {
+      return Registry::constructMatcher(MatcherName, NameRange, Args, Error);
+    } else {
+      return Registry::constructBoundMatcher(MatcherName, NameRange, BindID,
+                                             Args, Error);
+    }
   }
 };
 
@@ -305,7 +355,13 @@ bool Parser::parseExpression(StringRef Code, VariantValue *Value,
 bool Parser::parseExpression(StringRef Code, Sema *S,
                              VariantValue *Value, Diagnostics *Error) {
   CodeTokenizer Tokenizer(Code, Error);
-  return Parser(&Tokenizer, S, Error).parseExpressionImpl(Value);
+  if (!Parser(&Tokenizer, S, Error).parseExpressionImpl(Value)) return false;
+  if (Tokenizer.peekNextToken().Kind != TokenInfo::TK_Eof) {
+    Error->pushErrorFrame(Tokenizer.peekNextToken().Range,
+                          Error->ET_ParserTrailingCode);
+    return false;
+  }
+  return true;
 }
 
 DynTypedMatcher *Parser::parseMatcherExpression(StringRef Code,

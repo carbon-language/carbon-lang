@@ -232,7 +232,7 @@ private:
 /// on the actual node, or return false if it is not convertible.
 class DynTypedMatcher {
 public:
-  virtual ~DynTypedMatcher() {}
+  virtual ~DynTypedMatcher();
 
   /// \brief Returns true if the matcher matches the given \c DynNode.
   virtual bool matches(const ast_type_traits::DynTypedNode DynNode,
@@ -244,6 +244,11 @@ public:
 
   /// \brief Returns a unique ID for the matcher.
   virtual uint64_t getID() const = 0;
+
+  /// \brief Bind the specified \p ID to the matcher.
+  /// \return A new matcher with the \p ID bound to it if this matcher supports
+  ///   binding. Otherwise, returns NULL. Returns NULL by default.
+  virtual DynTypedMatcher* tryBind(StringRef ID) const;
 };
 
 /// \brief Wrapper of a MatcherInterface<T> *that allows copying.
@@ -805,6 +810,16 @@ public:
   /// bind the matched node on a match.
   Matcher<T> bind(StringRef ID) const {
     return Matcher<T>(new IdMatcher<T>(ID, *this));
+  }
+
+  /// \brief Makes a copy of this matcher object.
+  virtual BindableMatcher<T>* clone() const {
+    return new BindableMatcher<T>(*this);
+  }
+
+  /// \brief Bind the specified \c ID to the matcher.
+  virtual Matcher<T>* tryBind(StringRef ID) const {
+    return new Matcher<T>(bind(ID));
   }
 };
 

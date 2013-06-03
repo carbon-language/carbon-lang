@@ -24,6 +24,8 @@ namespace {
 class DummyDynTypedMatcher : public DynTypedMatcher {
 public:
   DummyDynTypedMatcher(uint64_t ID) : ID(ID) {}
+  DummyDynTypedMatcher(uint64_t ID, StringRef BoundID)
+      : ID(ID), BoundID(BoundID) {}
 
   typedef ast_matchers::internal::ASTMatchFinder ASTMatchFinder;
   typedef ast_matchers::internal::BoundNodesTreeBuilder BoundNodesTreeBuilder;
@@ -35,14 +37,21 @@ public:
 
   /// \brief Makes a copy of this matcher object.
   virtual DynTypedMatcher *clone() const {
-    return new DummyDynTypedMatcher(ID);
+    return new DummyDynTypedMatcher(*this);
   }
 
   /// \brief Returns a unique ID for the matcher.
   virtual uint64_t getID() const { return ID; }
 
+  virtual DynTypedMatcher* tryBind(StringRef BoundID) const {
+    return new DummyDynTypedMatcher(ID, BoundID);
+  }
+
+  StringRef boundID() const { return BoundID; }
+
 private:
   uint64_t ID;
+  std::string BoundID;
 };
 
 class MockSema : public Parser::Sema {
@@ -65,17 +74,20 @@ public:
 
   DynTypedMatcher *actOnMatcherExpression(StringRef MatcherName,
                                           const SourceRange &NameRange,
+                                          StringRef BindID,
                                           ArrayRef<ParserValue> Args,
                                           Diagnostics *Error) {
-    MatcherInfo ToStore = { MatcherName, NameRange, Args };
+    MatcherInfo ToStore = { MatcherName, NameRange, Args, BindID };
     Matchers.push_back(ToStore);
-    return new DummyDynTypedMatcher(ExpectedMatchers[MatcherName]);
+    DummyDynTypedMatcher Matcher(ExpectedMatchers[MatcherName]);
+    return Matcher.tryBind(BindID);
   }
 
   struct MatcherInfo {
     StringRef MatcherName;
     SourceRange NameRange;
     std::vector<ParserValue> Args;
+    std::string BoundID;
   };
 
   std::vector<std::string> Errors;
@@ -110,13 +122,15 @@ TEST(ParserTest, ParseMatcher) {
   const uint64_t ExpectedFoo = Sema.expectMatcher("Foo");
   const uint64_t ExpectedBar = Sema.expectMatcher("Bar");
   const uint64_t ExpectedBaz = Sema.expectMatcher("Baz");
-  Sema.parse(" Foo ( Bar (), Baz( \n \"B A,Z\") )  ");
+  Sema.parse(" Foo ( Bar (), Baz( \n \"B A,Z\") ) .bind( \"Yo!\") ");
   for (size_t i = 0, e = Sema.Errors.size(); i != e; ++i) {
     EXPECT_EQ("", Sema.Errors[i]);
   }
 
   EXPECT_EQ(1ULL, Sema.Values.size());
   EXPECT_EQ(ExpectedFoo, Sema.Values[0].getMatcher().getID());
+  EXPECT_EQ("Yo!", static_cast<const DummyDynTypedMatcher &>(
+                       Sema.Values[0].getMatcher()).boundID());
 
   EXPECT_EQ(3ULL, Sema.Matchers.size());
   const MockSema::MatcherInfo Bar = Sema.Matchers[0];
@@ -136,6 +150,7 @@ TEST(ParserTest, ParseMatcher) {
   EXPECT_EQ(2ULL, Foo.Args.size());
   EXPECT_EQ(ExpectedBar, Foo.Args[0].Value.getMatcher().getID());
   EXPECT_EQ(ExpectedBaz, Foo.Args[1].Value.getMatcher().getID());
+  EXPECT_EQ("Yo!", Foo.BoundID);
 }
 
 using ast_matchers::internal::Matcher;
@@ -186,6 +201,18 @@ TEST(ParserTest, Errors) {
   EXPECT_EQ("1:1: Error parsing argument 1 for matcher Foo.\n"
             "1:5: Invalid token <(> found when looking for a value.",
             ParseWithError("Foo(("));
+  EXPECT_EQ("1:7: Expected end of code.", ParseWithError("expr()a"));
+  EXPECT_EQ("1:11: Malformed bind() expression.",
+            ParseWithError("isArrow().biind"));
+  EXPECT_EQ("1:15: Malformed bind() expression.",
+            ParseWithError("isArrow().bind"));
+  EXPECT_EQ("1:16: Malformed bind() expression.",
+            ParseWithError("isArrow().bind(foo"));
+  EXPECT_EQ("1:21: Malformed bind() expression.",
+            ParseWithError("isArrow().bind(\"foo\""));
+  EXPECT_EQ("1:1: Error building matcher isArrow.\n"
+            "1:1: Matcher does not support binding.",
+            ParseWithError("isArrow().bind(\"foo\")"));
 }
 
 }  // end anonymous namespace

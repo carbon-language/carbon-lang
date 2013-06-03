@@ -20,7 +20,8 @@
 /// Grammar for the expressions supported:
 /// <Expression>        := <StringLiteral> | <MatcherExpression>
 /// <StringLiteral>     := "quoted string"
-/// <MatcherExpression> := <MatcherName>(<ArgumentList>)
+/// <MatcherExpression> := <MatcherName>(<ArgumentList>) |
+///                        <MatcherName>(<ArgumentList>).bind(<StringLiteral>)
 /// <MatcherName>       := [a-zA-Z]+
 /// <ArgumentList>      := <Expression> | <Expression>,<ArgumentList>
 /// \endcode
@@ -66,15 +67,18 @@ public:
     /// \param NameRange The location of the name in the matcher source.
     ///   Useful for error reporting.
     ///
+    /// \param BindID The ID to use to bind the matcher, or a null \c StringRef
+    ///   if no ID is specified.
+    ///
     /// \param Args The argument list for the matcher.
     ///
     /// \return The matcher object constructed by the processor, or NULL
     ///   if an error occurred. In that case, \c Error will contain a
     ///   description of the error.
     ///   The caller takes ownership of the DynTypedMatcher object returned.
-    virtual DynTypedMatcher *
-    actOnMatcherExpression(StringRef MatcherName, const SourceRange &NameRange,
-                           ArrayRef<ParserValue> Args, Diagnostics *Error) = 0;
+    virtual DynTypedMatcher *actOnMatcherExpression(
+        StringRef MatcherName, const SourceRange &NameRange, StringRef BindID,
+        ArrayRef<ParserValue> Args, Diagnostics *Error) = 0;
   };
 
   /// \brief Parse a matcher expression, creating matchers from the registry.

@@ -82,6 +82,10 @@ BoundNodesTree BoundNodesTreeBuilder::build() const {
   return BoundNodesTree(Bindings, RecursiveBindings);
 }
 
+DynTypedMatcher::~DynTypedMatcher() {}
+
+DynTypedMatcher *DynTypedMatcher::tryBind(StringRef ID) const { return NULL; }
+
 } // end namespace internal
 } // end namespace ast_matchers
 } // end namespace clang

@@ -148,6 +148,23 @@ DynTypedMatcher *Registry::constructMatcher(StringRef MatcherName,
   return it->second->run(NameRange, Args, Error);
 }
 
+// static
+DynTypedMatcher *Registry::constructBoundMatcher(StringRef MatcherName,
+                                                 const SourceRange &NameRange,
+                                                 StringRef BindID,
+                                                 ArrayRef<ParserValue> Args,
+                                                 Diagnostics *Error) {
+  OwningPtr<DynTypedMatcher> Out(
+      constructMatcher(MatcherName, NameRange, Args, Error));
+  if (!Out) return NULL;
+  DynTypedMatcher *Bound = Out->tryBind(BindID);
+  if (!Bound) {
+    Error->pushErrorFrame(NameRange, Error->ET_RegistryNotBindable);
+    return NULL;
+  }
+  return Bound;
+}
+
 }  // namespace dynamic
 }  // namespace ast_matchers
 }  // namespace clang

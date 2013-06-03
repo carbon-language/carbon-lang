@@ -57,6 +57,7 @@ class Diagnostics {
     ET_RegistryNotFound = 1,
     ET_RegistryWrongArgCount = 2,
     ET_RegistryWrongArgType = 3,
+    ET_RegistryNotBindable = 4,
 
     ET_ParserStringError = 100,
     ET_ParserMatcherArgFailure = 101,
@@ -66,7 +67,9 @@ class Diagnostics {
     ET_ParserNoComma = 105,
     ET_ParserNoCode = 106,
     ET_ParserNotAMatcher = 107,
-    ET_ParserInvalidToken = 108
+    ET_ParserInvalidToken = 108,
+    ET_ParserMalformedBindExpr = 109,
+    ET_ParserTrailingCode = 110
   };
 
   /// \brief Helper stream class.
