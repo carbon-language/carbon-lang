@@ -103,8 +103,12 @@ void reportExecutionTimes(
   P.createDirectoryOnDisk(true);
 
   // Get PID and current time.
-  llvm::sys::self_process *SP = llvm::sys::process::get_self();
-  unsigned Pid = SP->get_id();
+  // FIXME: id_type on Windows is NOT a process id despite the function name.
+  // Need to call GetProcessId() providing it what get_id() returns. For now
+  // disabling PID-based file names until this is fixed properly.
+  //llvm::sys::self_process *SP = llvm::sys::process::get_self();
+  //id_type Pid = SP->get_id();
+  unsigned Pid = 0;
   llvm::TimeRecord T = llvm::TimeRecord::getCurrentTime();
 
   std::string FileName;
