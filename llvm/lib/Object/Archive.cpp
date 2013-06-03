@@ -132,8 +132,11 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
   // COFF archive format
   //  First member : /
   //  Second member : / (provides a directory of symbols)
-  //  Third member : // contains the string table, this is present even if the
-  //                    string table is empty
+  //  Third member : // (may exist, if it exists, contains the string table)
+  //  Note: Microsoft PE/COFF Spec 8.3 says that the third member is present
+  //  even if the string table is empty. However, lib.exe does not in fact
+  //  seem to create the third member if there's no member whose filename
+  //  exceeds 15 characters. So the third member is optional.
   if (name == "/") {
     SymbolTable = i;
     StringTable = e;
@@ -150,14 +153,17 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
       Format = K_GNU;
       StringTable = i;
       ++i;
-    } else  { 
+    } else {
       Format = K_COFF;
       if (i != e) {
         SymbolTable = i;
         ++i;
       }
       if (i != e) {
-        StringTable = i;
+        if ((ec = i->getName(name)))
+          return;
+        if (name == "//")
+          StringTable = i;
       }
     }
   } else if (name == "__.SYMDEF") {
