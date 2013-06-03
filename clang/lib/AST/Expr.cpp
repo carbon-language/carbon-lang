@@ -76,9 +76,11 @@ const Expr *Expr::skipRValueSubobjectAdjustments(
       if (!ME->isArrow() && ME->getBase()->isRValue()) {
         assert(ME->getBase()->getType()->isRecordType());
         if (FieldDecl *Field = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
-          E = ME->getBase();
-          Adjustments.push_back(SubobjectAdjustment(Field));
-          continue;
+          if (!Field->isBitField()) {
+            E = ME->getBase();
+            Adjustments.push_back(SubobjectAdjustment(Field));
+            continue;
+          }
         }
       }
     } else if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
