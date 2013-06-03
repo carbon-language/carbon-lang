@@ -243,6 +243,7 @@ bool APValue::needsCleanup() const {
   case MemberPointer:
     return reinterpret_cast<const MemberPointerData *>(Data)->hasPathPtr();
   }
+  llvm_unreachable("Unknown APValue kind!");
 }
 
 void APValue::swap(APValue &RHS) {
