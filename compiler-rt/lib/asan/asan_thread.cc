@@ -39,7 +39,8 @@ void AsanThreadContext::OnFinished() {
   thread = 0;
 }
 
-static char thread_registry_placeholder[sizeof(ThreadRegistry)];
+// MIPS requires aligned address
+static char thread_registry_placeholder[sizeof(ThreadRegistry)] ALIGNED(16);
 static ThreadRegistry *asan_thread_registry;
 
 static ThreadContextBase *GetAsanThreadContext(u32 tid) {

@@ -89,6 +89,11 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   stk_ptr = (uptr *) *sp;
   *bp = stk_ptr[15];
 # endif
+# elif defined(__mips__)
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = ucontext->uc_mcontext.gregs[31];
+  *bp = ucontext->uc_mcontext.gregs[30];
+  *sp = ucontext->uc_mcontext.gregs[29];
 #else
 # error "Unsupported arch"
 #endif

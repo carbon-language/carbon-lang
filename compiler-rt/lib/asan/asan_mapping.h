@@ -49,6 +49,13 @@
 // || `[0x24000000, 0x27ffffff]` || ShadowGap  ||
 // || `[0x20000000, 0x23ffffff]` || LowShadow  ||
 // || `[0x00000000, 0x1fffffff]` || LowMem     ||
+//
+// Default Linux/MIPS mapping:
+// || `[0x2aaa8000, 0xffffffff]` || HighMem    ||
+// || `[0x0fffd000, 0x2aaa7fff]` || HighShadow ||
+// || `[0x0bffd000, 0x0fffcfff]` || ShadowGap  ||
+// || `[0x0aaa8000, 0x0bffcfff]` || LowShadow  ||
+// || `[0x00000000, 0x0aaa7fff]` || LowMem     ||
 
 #if ASAN_FLEXIBLE_MAPPING_AND_OFFSET == 1
 extern SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_mapping_scale;
@@ -62,7 +69,11 @@ extern SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_mapping_offset;
 # else
 #  define SHADOW_SCALE (3)
 #  if SANITIZER_WORDSIZE == 32
-#   define SHADOW_OFFSET (1 << 29)
+#   if defined(__mips__)
+#     define SHADOW_OFFSET 0x0aaa8000
+#   else
+#     define SHADOW_OFFSET (1 << 29)
+#   endif
 #  else
 #   if defined(__powerpc64__)
 #    define SHADOW_OFFSET (1ULL << 41)

@@ -21,7 +21,8 @@ static const uptr kStackTraceMax = 256;
 
 #if SANITIZER_LINUX && (defined(__arm__) || \
     defined(__powerpc__) || defined(__powerpc64__) || \
-    defined(__sparc__))
+    defined(__sparc__) || \
+    defined(__mips__))
 #define SANITIZER_CAN_FAST_UNWIND 0
 #else
 #define SANITIZER_CAN_FAST_UNWIND 1

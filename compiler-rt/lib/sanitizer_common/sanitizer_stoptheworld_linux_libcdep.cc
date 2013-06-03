@@ -373,6 +373,10 @@ typedef user_regs_struct regs_struct;
 typedef pt_regs regs_struct;
 #define REG_SP gpr[PT_R1]
 
+#elif defined(__mips__)
+typedef struct user regs_struct;
+#define REG_SP regs[EF_REG29]
+
 #else
 #error "Unsupported architecture"
 #endif // SANITIZER_ANDROID && defined(__arm__)
