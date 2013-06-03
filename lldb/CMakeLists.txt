@@ -175,7 +175,7 @@ macro(add_lldb_library name)
   #endif()
 
   if(LLDB_USED_LIBS)
-    if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    if (CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
       target_link_libraries(${name} -Wl,--start-group ${LLDB_USED_LIBS} -Wl,--end-group)
     else()
       target_link_libraries(${name} ${LLDB_USED_LIBS})
