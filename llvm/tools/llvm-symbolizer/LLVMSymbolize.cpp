@@ -200,8 +200,8 @@ static bool getObjectEndianness(const ObjectFile *Obj, bool &IsLittleEndian) {
 
 static ObjectFile *getObjectFile(const std::string &Path) {
   OwningPtr<MemoryBuffer> Buff;
-  if (error_code ec = MemoryBuffer::getFile(Path, Buff))
-    error(ec);
+  if (error(MemoryBuffer::getFile(Path, Buff)))
+    return 0;
   return ObjectFile::createObjectFile(Buff.take());
 }
 
