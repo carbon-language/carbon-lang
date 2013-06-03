@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=r600 | FileCheck %s
 
 ;CHECK: DOT4 * T{{[0-9]\.W}} (MASKED)
-;CHECK: CNDGE T{{[0-9].[XYZW]}}, PV.x
+;CHECK: CNDGE T{{[0-9].[XYZW]}}, PV.X
 
 define void @main() #0 {
 main_body:

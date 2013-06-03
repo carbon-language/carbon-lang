@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
 ; CHECK: @fsub_f32
-; CHECK: ADD * T{{[0-9]+\.[XYZW], PV\.[xyzw], -PV\.[xyzw]}}
+; CHECK: ADD * T{{[0-9]+\.[XYZW], PV\.[XYZW], -PV\.[XYZW]}}
 
 define void @fsub_f32() {
    %r0 = call float @llvm.R600.load.input(i32 0)
