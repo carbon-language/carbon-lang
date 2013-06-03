@@ -399,7 +399,7 @@ defm BUFFER_LOAD_FORMAT_XYZW : MUBUF_Load_Helper <0x00000003, "BUFFER_LOAD_FORMA
 //def BUFFER_STORE_FORMAT_XY : MUBUF_ <0x00000005, "BUFFER_STORE_FORMAT_XY", []>;
 //def BUFFER_STORE_FORMAT_XYZ : MUBUF_ <0x00000006, "BUFFER_STORE_FORMAT_XYZ", []>;
 //def BUFFER_STORE_FORMAT_XYZW : MUBUF_ <0x00000007, "BUFFER_STORE_FORMAT_XYZW", []>;
-//def BUFFER_LOAD_UBYTE : MUBUF_ <0x00000008, "BUFFER_LOAD_UBYTE", []>;
+defm BUFFER_LOAD_UBYTE : MUBUF_Load_Helper <0x00000008, "BUFFER_LOAD_UBYTE", VReg_32>;
 //def BUFFER_LOAD_SBYTE : MUBUF_ <0x00000009, "BUFFER_LOAD_SBYTE", []>;
 //def BUFFER_LOAD_USHORT : MUBUF_ <0x0000000a, "BUFFER_LOAD_USHORT", []>;
 //def BUFFER_LOAD_SSHORT : MUBUF_ <0x0000000b, "BUFFER_LOAD_SSHORT", []>;
@@ -1610,6 +1610,34 @@ defm : SMRD_Pattern <S_LOAD_DWORDX8_IMM, S_LOAD_DWORDX8_SGPR, v32i8>;
 //===----------------------------------------------------------------------===//
 // MUBUF Patterns
 //===----------------------------------------------------------------------===//
+
+multiclass MUBUFLoad_Pattern <MUBUF Instr_ADDR64, ValueType vt,
+                              PatFrag global_ld, PatFrag constant_ld> {
+  def : Pat <
+    (vt (global_ld (add i64:$ptr, (i64 IMM12bit:$offset)))),
+    (Instr_ADDR64 (SI_ADDR64_RSRC (i64 0)), $ptr, (as_i16imm $offset))
+  >;
+
+  def : Pat <
+    (vt (global_ld i64:$ptr)),
+    (Instr_ADDR64 (SI_ADDR64_RSRC (i64 0)), $ptr, 0)
+  >;
+
+  def : Pat <
+     (vt (global_ld (add i64:$ptr, i64:$offset))),
+     (Instr_ADDR64 (SI_ADDR64_RSRC $ptr), $offset, 0)
+  >;
+
+  def : Pat <
+     (vt (constant_ld (add i64:$ptr, i64:$offset))),
+     (Instr_ADDR64 (SI_ADDR64_RSRC $ptr), $offset, 0)
+  >;
+}
+
+defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORD_ADDR64, i32,
+                          global_load, constant_load>;
+defm : MUBUFLoad_Pattern <BUFFER_LOAD_UBYTE_ADDR64, i32,
+                          zextloadi8_global, zextloadi8_constant>;
 
 multiclass MUBUFStore_Pattern <MUBUF Instr, ValueType vt> {
 

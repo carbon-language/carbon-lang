@@ -35,9 +35,12 @@ def IMM8bitDWORD : ImmLeaf <
   }]>
 >;
 
-def IMM12bit : ImmLeaf <
-  i16,
-  [{return isUInt<12>(Imm);}]
+def as_i16imm : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(N->getSExtValue(), MVT::i16);
+}]>;
+
+def IMM12bit : PatLeaf <(imm),
+  [{return isUInt<12>(N->getZExtValue());}]
 >;
 
 class InlineImm <ValueType vt> : PatLeaf <(vt imm), [{
