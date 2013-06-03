@@ -523,10 +523,20 @@ bool SITargetLowering::fitsRegClass(SelectionDAG &DAG, const SDValue &Op,
   if (MachineSDNode *MN = dyn_cast<MachineSDNode>(Node)) {
     const MCInstrDesc &Desc = TII->get(MN->getMachineOpcode());
     int OpClassID = Desc.OpInfo[Op.getResNo()].RegClass;
-    if (OpClassID == -1)
-      OpClass = getRegClassFor(Op.getSimpleValueType());
-    else
+    if (OpClassID == -1) {
+      switch (MN->getMachineOpcode()) {
+      case AMDGPU::REG_SEQUENCE:
+        // Operand 0 is the register class id for REG_SEQUENCE instructions.
+        OpClass = TRI->getRegClass(
+                       cast<ConstantSDNode>(MN->getOperand(0))->getZExtValue());
+        break;
+      default:
+        OpClass = getRegClassFor(Op.getSimpleValueType());
+        break;
+      }
+    } else {
       OpClass = TRI->getRegClass(OpClassID);
+    }
 
   } else if (Node->getOpcode() == ISD::CopyFromReg) {
     RegisterSDNode *Reg = cast<RegisterSDNode>(Node->getOperand(1).getNode());
