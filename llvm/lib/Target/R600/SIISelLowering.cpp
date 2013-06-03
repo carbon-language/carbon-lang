@@ -809,6 +809,7 @@ void SITargetLowering::adjustWritemask(MachineSDNode *&Node,
 /// \brief Fold the instructions after slecting them
 SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
                                           SelectionDAG &DAG) const {
+  Node = AdjustRegClass(Node, DAG);
 
   if (AMDGPU::isMIMG(Node->getMachineOpcode()) != -1)
     adjustWritemask(Node, DAG);
@@ -839,4 +840,54 @@ void SITargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
 
   MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
   MRI.setRegClass(VReg, RC);
+}
+
+MachineSDNode *SITargetLowering::AdjustRegClass(MachineSDNode *N,
+                                                SelectionDAG &DAG) const {
+
+  SDLoc DL(N);
+  unsigned NewOpcode = N->getMachineOpcode();
+
+  switch (N->getMachineOpcode()) {
+  default: return N;
+  case AMDGPU::REG_SEQUENCE: {
+    // MVT::i128 only use SGPRs, so i128 REG_SEQUENCEs don't need to be
+    // rewritten.
+    if (N->getValueType(0) == MVT::i128) {
+      return N;
+    }
+    const SDValue Ops[] = {
+      DAG.getTargetConstant(AMDGPU::VReg_64RegClassID, MVT::i32),
+      N->getOperand(1) , N->getOperand(2),
+      N->getOperand(3), N->getOperand(4)
+    };
+    return DAG.getMachineNode(AMDGPU::REG_SEQUENCE, DL, MVT::i64, Ops);
+  }
+
+  case AMDGPU::S_LOAD_DWORD_IMM:
+    NewOpcode = AMDGPU::BUFFER_LOAD_DWORD_ADDR64;
+    // Fall-through
+  case AMDGPU::S_LOAD_DWORDX2_SGPR:
+    if (NewOpcode == N->getMachineOpcode()) {
+      NewOpcode = AMDGPU::BUFFER_LOAD_DWORDX2_ADDR64;
+    }
+    // Fall-through
+  case AMDGPU::S_LOAD_DWORDX4_IMM:
+  case AMDGPU::S_LOAD_DWORDX4_SGPR: {
+    if (NewOpcode == N->getMachineOpcode()) {
+      NewOpcode = AMDGPU::BUFFER_LOAD_DWORDX4_ADDR64;
+    }
+    if (fitsRegClass(DAG, N->getOperand(0), AMDGPU::SReg_64RegClassID)) {
+      return N;
+    }
+    ConstantSDNode *Offset = cast<ConstantSDNode>(N->getOperand(1));
+    SDValue Ops[] = {
+      SDValue(DAG.getMachineNode(AMDGPU::SI_ADDR64_RSRC, DL, MVT::i128,
+                                 DAG.getConstant(0, MVT::i64)), 0),
+      N->getOperand(0),
+      DAG.getConstant(Offset->getSExtValue() << 2, MVT::i32)
+    };
+    return DAG.getMachineNode(NewOpcode, DL, N->getVTList(), Ops);
+  }
+  }
 }

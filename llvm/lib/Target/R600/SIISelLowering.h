@@ -36,6 +36,7 @@ class SITargetLowering : public AMDGPUTargetLowering {
 
   SDNode *foldOperands(MachineSDNode *N, SelectionDAG &DAG) const;
   void adjustWritemask(MachineSDNode *&N, SelectionDAG &DAG) const;
+  MachineSDNode *AdjustRegClass(MachineSDNode *N, SelectionDAG &DAG) const;
 
 public:
   SITargetLowering(TargetMachine &tm);
