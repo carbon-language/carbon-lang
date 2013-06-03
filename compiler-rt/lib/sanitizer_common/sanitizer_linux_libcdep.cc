@@ -195,7 +195,13 @@ uptr GetTlsSize() {
 
 #if defined(__x86_64__) || defined(__i386__)
 // sizeof(struct thread) from glibc.
+// There has been a report of this being different on glibc 2.11. We don't know
+// when this change happened, so 2.12 is a conservative estimate.
+#if __GNUC_PREREQ(2, 12)
 const uptr kThreadDescriptorSize = FIRST_32_SECOND_64(1216, 2304);
+#else
+const uptr kThreadDescriptorSize = FIRST_32_SECOND_64(1168, 2304);
+#endif
 
 uptr ThreadDescriptorSize() {
   return kThreadDescriptorSize;
