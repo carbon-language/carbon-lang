@@ -373,7 +373,7 @@ static const Stmt *getEnclosingParent(const Stmt *S, const ParentMap &PM) {
 
 static PathDiagnosticLocation
 getEnclosingStmtLocation(const Stmt *S, SourceManager &SMgr, const ParentMap &P,
-                         const LocationContext *LC) {
+                         const LocationContext *LC, bool allowNestedContexts) {
   if (!S)
     return PathDiagnosticLocation();
 
@@ -382,7 +382,7 @@ getEnclosingStmtLocation(const Stmt *S, SourceManager &SMgr, const ParentMap &P,
       case Stmt::BinaryOperatorClass: {
         const BinaryOperator *B = cast<BinaryOperator>(Parent);
         if (B->isLogicalOp())
-          return PathDiagnosticLocation(Parent, SMgr, LC);
+          return PathDiagnosticLocation(allowNestedContexts ? B : S, SMgr, LC);
         break;
       }
       case Stmt::CompoundStmtClass:
@@ -391,7 +391,7 @@ getEnclosingStmtLocation(const Stmt *S, SourceManager &SMgr, const ParentMap &P,
       case Stmt::ChooseExprClass:
         // Similar to '?' if we are referring to condition, just have the edge
         // point to the entire choose expression.
-        if (cast<ChooseExpr>(Parent)->getCond() == S)
+        if (allowNestedContexts || cast<ChooseExpr>(Parent)->getCond() == S)
           return PathDiagnosticLocation(Parent, SMgr, LC);
         else
           return PathDiagnosticLocation(S, SMgr, LC);
@@ -399,7 +399,8 @@ getEnclosingStmtLocation(const Stmt *S, SourceManager &SMgr, const ParentMap &P,
       case Stmt::ConditionalOperatorClass:
         // For '?', if we are referring to condition, just have the edge point
         // to the entire '?' expression.
-        if (cast<AbstractConditionalOperator>(Parent)->getCond() == S)
+        if (allowNestedContexts ||
+            cast<AbstractConditionalOperator>(Parent)->getCond() == S)
           return PathDiagnosticLocation(Parent, SMgr, LC);
         else
           return PathDiagnosticLocation(S, SMgr, LC);
@@ -436,7 +437,8 @@ getEnclosingStmtLocation(const Stmt *S, SourceManager &SMgr, const ParentMap &P,
 PathDiagnosticLocation
 PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
   assert(S && "Null Stmt passed to getEnclosingStmtLocation");
-  return ::getEnclosingStmtLocation(S, getSourceManager(), getParentMap(), LC);
+  return ::getEnclosingStmtLocation(S, getSourceManager(), getParentMap(), LC,
+                                    /*allowNestedContexts=*/false);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1956,8 +1958,16 @@ static void addContextEdges(PathPieces &pieces, SourceManager &SM,
 
     PathDiagnosticLocation SrcLoc = Piece->getStartLocation();
     const Stmt *Src = getLocStmt(SrcLoc);
-    PathDiagnosticLocation SrcContext =
-      getEnclosingStmtLocation(Src, SM, PM, LCtx);
+    SmallVector<PathDiagnosticLocation, 4> SrcContexts;
+
+    PathDiagnosticLocation NextSrcContext =
+      getEnclosingStmtLocation(Src, SM, PM, LCtx, /*allowNested=*/true);
+    const Stmt *InnerStmt = Src;
+    while (NextSrcContext.isValid() && NextSrcContext.asStmt() != InnerStmt) {
+      SrcContexts.push_back(NextSrcContext);
+      InnerStmt = NextSrcContext.asStmt();
+      NextSrcContext = getEnclosingStmtLocation(InnerStmt, SM, PM, LCtx, true);
+    }
 
     // Repeatedly split the edge as necessary.
     // This is important for nested logical expressions (||, &&, ?:) where we
@@ -1968,12 +1978,13 @@ static void addContextEdges(PathPieces &pieces, SourceManager &SM,
       // We are looking at an edge. Is the destination within a larger
       // expression?
       PathDiagnosticLocation DstContext =
-        getEnclosingStmtLocation(Dst, SM, PM, LCtx);
+        getEnclosingStmtLocation(Dst, SM, PM, LCtx, /*allowNested=*/true);
       if (!DstContext.isValid() || DstContext.asStmt() == Dst)
         break;
 
       // If the source is in the same context, we're already good.
-      if (SrcContext == DstContext)
+      if (std::find(SrcContexts.begin(), SrcContexts.end(), DstContext) !=
+          SrcContexts.end())
         break;
 
       // Update the subexpression node to point to the context edge.
