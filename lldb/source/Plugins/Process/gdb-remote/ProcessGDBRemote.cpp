@@ -1954,7 +1954,7 @@ ProcessGDBRemote::DoReadMemory (addr_t addr, void *buf, size_t size, Error &erro
     }
     else
     {
-        error.SetErrorStringWithFormat("failed to sent packet: '%s'", packet);
+        error.SetErrorStringWithFormat("failed to send packet: '%s'", packet);
     }
     return 0;
 }
@@ -1990,7 +1990,7 @@ ProcessGDBRemote::DoWriteMemory (addr_t addr, const void *buf, size_t size, Erro
     }
     else
     {
-        error.SetErrorStringWithFormat("failed to sent packet: '%s'", packet.GetString().c_str());
+        error.SetErrorStringWithFormat("failed to send packet: '%s'", packet.GetString().c_str());
     }
     return 0;
 }
