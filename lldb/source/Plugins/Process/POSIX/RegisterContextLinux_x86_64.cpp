@@ -102,7 +102,7 @@ RegisterContextLinux_x86_64::RegisterContextLinux_x86_64(Thread &thread, uint32_
 RegisterContextLinux_x86_64::~RegisterContextLinux_x86_64()
 {
     if (m_register_infos)
-        delete m_register_infos;
+        delete [] m_register_infos;
     m_register_infos = nullptr;
 }
 
