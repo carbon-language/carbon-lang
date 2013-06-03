@@ -46,6 +46,20 @@ POSIXThread::POSIXThread(Process &process, lldb::tid_t tid)
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
     if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
         log->Printf ("POSIXThread::%s (tid = %" PRIi64 ")", __FUNCTION__, tid);
+
+    // Set the current watchpoints for this thread.
+    Target &target = GetProcess()->GetTarget();
+    const WatchpointList &wp_list = target.GetWatchpointList();
+    size_t wp_size = wp_list.GetSize();
+
+    for (uint32_t wp_idx = 0; wp_idx < wp_size; wp_idx++)
+    {
+        lldb::WatchpointSP wp = wp_list.GetByIndex(wp_idx);
+        if (wp.get() && wp->IsEnabled())
+        {
+            assert(EnableHardwareWatchpoint(wp.get()));
+        }
+    }
 }
 
 POSIXThread::~POSIXThread()
@@ -272,27 +286,21 @@ POSIXThread::Notify(const ProcessMessage &message)
 bool
 POSIXThread::EnableHardwareWatchpoint(Watchpoint *wp)
 {
-    bool result = false;
+    bool wp_set = false;
     if (wp)
     {
         addr_t wp_addr = wp->GetLoadAddress();
         size_t wp_size = wp->GetByteSize();
         bool wp_read = wp->WatchpointRead();
         bool wp_write = wp->WatchpointWrite();
-        uint32_t wp_hw_index;
-        lldb::RegisterContextSP reg_ctx_sp = GetRegisterContext();
-        if (reg_ctx_sp.get())
-        {
-            wp_hw_index = reg_ctx_sp->SetHardwareWatchpoint(wp_addr, wp_size,
-                                                            wp_read, wp_write);
-            if (wp_hw_index != LLDB_INVALID_INDEX32)
-            {
-                wp->SetHardwareIndex(wp_hw_index);
-                result = true;
-            }
-        }
+        uint32_t wp_hw_index = wp->GetHardwareIndex();
+        RegisterContextPOSIX* reg_ctx = GetRegisterContextPOSIX();
+        if (reg_ctx)
+            wp_set = reg_ctx->SetHardwareWatchpointWithIndex(wp_addr, wp_size,
+                                                             wp_read, wp_write,
+                                                             wp_hw_index);
     }
-    return result;
+    return wp_set;
 }
 
 bool
@@ -303,11 +311,7 @@ POSIXThread::DisableHardwareWatchpoint(Watchpoint *wp)
     {
         lldb::RegisterContextSP reg_ctx_sp = GetRegisterContext();
         if (reg_ctx_sp.get())
-        {
             result = reg_ctx_sp->ClearHardwareWatchpoint(wp->GetHardwareIndex());
-            if (result == true)
-                wp->SetHardwareIndex(LLDB_INVALID_INDEX32);
-        }
     }
     return result;
 }
@@ -319,6 +323,27 @@ POSIXThread::NumSupportedHardwareWatchpoints()
     if (reg_ctx_sp.get())
         return reg_ctx_sp->NumSupportedHardwareWatchpoints();
     return 0;
+}
+
+uint32_t
+POSIXThread::FindVacantWatchpointIndex()
+{
+    uint32_t hw_index = LLDB_INVALID_INDEX32;
+    uint32_t num_hw_wps = NumSupportedHardwareWatchpoints();
+    uint32_t wp_idx;
+    RegisterContextPOSIX* reg_ctx = GetRegisterContextPOSIX();
+    if (reg_ctx)
+    {
+        for (wp_idx = 0; wp_idx < num_hw_wps; wp_idx++)
+        {
+            if (reg_ctx->IsWatchpointVacant(wp_idx))
+            {
+                hw_index = wp_idx;
+                break;
+            }
+        }
+    }
+    return hw_index;
 }
 
 void

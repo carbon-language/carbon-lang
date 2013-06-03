@@ -654,31 +654,44 @@ ProcessPOSIX::EnableWatchpoint(Watchpoint *wp, bool notify)
             return error;
         }
 
-        bool wp_enabled = true;
-        uint32_t thread_count = m_thread_list.GetSize(false);
-        for (uint32_t i = 0; i < thread_count; ++i)
+        // Try to find a vacant watchpoint slot in the inferiors' main thread
+        uint32_t wp_hw_index = LLDB_INVALID_INDEX32;
+        POSIXThread *thread = static_cast<POSIXThread*>(
+                               m_thread_list.GetThreadAtIndex(0, false).get());
+
+        if (thread)
+            wp_hw_index = thread->FindVacantWatchpointIndex();
+
+        if (wp_hw_index == LLDB_INVALID_INDEX32)
         {
-            POSIXThread *thread = static_cast<POSIXThread*>(
-                                  m_thread_list.GetThreadAtIndex(i, false).get());
-            if (thread)
-                wp_enabled &= thread->EnableHardwareWatchpoint(wp);
-            else
-            {
-                wp_enabled = false;
-                break;
-            }
-        }
-        if (wp_enabled)
-        {
-            wp->SetEnabled(true, notify);
-            return error;
+            error.SetErrorString("Setting hardware watchpoint failed.");
         }
         else
         {
-            // Watchpoint enabling failed on at least one
-            // of the threads so roll back all of them
-            DisableWatchpoint(wp, false);
-            error.SetErrorString("Setting hardware watchpoint failed");
+            wp->SetHardwareIndex(wp_hw_index);
+            bool wp_enabled = true;
+            uint32_t thread_count = m_thread_list.GetSize(false);
+            for (uint32_t i = 0; i < thread_count; ++i)
+            {
+                thread = static_cast<POSIXThread*>(
+                         m_thread_list.GetThreadAtIndex(i, false).get());
+                if (thread)
+                    wp_enabled &= thread->EnableHardwareWatchpoint(wp);
+                else
+                    wp_enabled = false;
+            }
+            if (wp_enabled)
+            {
+                wp->SetEnabled(true, notify);
+                return error;
+            }
+            else
+            {
+                // Watchpoint enabling failed on at least one
+                // of the threads so roll back all of them
+                DisableWatchpoint(wp, false);
+                error.SetErrorString("Setting hardware watchpoint failed");
+            }
         }
     }
     else
@@ -724,6 +737,7 @@ ProcessPOSIX::DisableWatchpoint(Watchpoint *wp, bool notify)
             }
             if (wp_disabled)
             {
+                wp->SetHardwareIndex(LLDB_INVALID_INDEX32);
                 wp->SetEnabled(false, notify);
                 return error;
             }

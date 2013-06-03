@@ -82,6 +82,8 @@ public:
 
     uint32_t NumSupportedHardwareWatchpoints();
 
+    uint32_t FindVacantWatchpointIndex();
+
 private:
     RegisterContextPOSIX *
     GetRegisterContextPOSIX ()
