@@ -700,6 +700,22 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
   for (unsigned i = NumOps - NumDefs, e = Node->getNumOperands(); i < e; ++i)
     Ops.push_back(Node->getOperand(i));
 
+  // Nodes that have a glue result are not CSE'd by getMachineNode(), so in
+  // this case a brand new node is always be created, even if the operands
+  // are the same as before.  So, manually check if anything has been changed.
+  if (Desc->Opcode == Opcode) {
+    bool Changed = false;
+    for (unsigned i = 0, e = Node->getNumOperands(); i < e; ++i) {
+      if (Ops[i].getNode() != Node->getOperand(i).getNode()) {
+        Changed = true;
+        break;
+      }
+    }
+    if (!Changed) {
+      return Node;
+    }
+  }
+
   // Create a complete new instruction
   return DAG.getMachineNode(Desc->Opcode, SDLoc(Node), Node->getVTList(), Ops);
 }
