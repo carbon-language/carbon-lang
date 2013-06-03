@@ -293,7 +293,7 @@ public:
 
   /// \brief Destructor.
   ~APInt() {
-    if (!isSingleWord())
+    if (needsCleanup())
       delete[] pVal;
   }
 
@@ -302,6 +302,9 @@ public:
   /// This is useful for object deserialization (pair this with the static
   ///  method Read).
   explicit APInt() : BitWidth(1) {}
+
+  /// \brief Returns whether this instance allocated memory.
+  bool needsCleanup() const { return !isSingleWord(); }
 
   /// Used to insert APInt objects, or objects that contain APInt objects, into
   ///  FoldingSets.

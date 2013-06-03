@@ -201,6 +201,9 @@ public:
 
   /// @}
 
+  /// \brief Returns whether this instance allocated memory.
+  bool needsCleanup() const { return partCount() > 1; }
+
   /// \name Convenience "constructors"
   /// @{
 

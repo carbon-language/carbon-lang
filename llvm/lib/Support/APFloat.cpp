@@ -580,7 +580,7 @@ APFloat::initialize(const fltSemantics *ourSemantics)
 void
 APFloat::freeSignificand()
 {
-  if (partCount() > 1)
+  if (needsCleanup())
     delete [] significand.parts;
 }
 
