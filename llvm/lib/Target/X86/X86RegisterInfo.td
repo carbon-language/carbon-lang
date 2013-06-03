@@ -25,7 +25,7 @@ let Namespace = "X86" in {
   def sub_8bit_hi : SubRegIndex<8, 8>;
   def sub_16bit   : SubRegIndex<16>;
   def sub_32bit   : SubRegIndex<32>;
-  def sub_xmm     : SubRegIndex<64>;
+  def sub_xmm     : SubRegIndex<128>;
 }
 
 //===----------------------------------------------------------------------===//
