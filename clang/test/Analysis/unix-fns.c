@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,unix.API,osx.API %s -analyzer-store=region -analyzer-output=plist -analyzer-eagerly-assume -analyzer-config faux-bodies=true -fblocks -verify -o %t.plist
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,unix.API,osx.API %s -analyzer-store=region -analyzer-output=plist -analyzer-eagerly-assume -analyzer-config faux-bodies=true -analyzer-config path-diagnostics-alternate=false -fblocks -verify -o %t.plist
 // RUN: FileCheck --input-file=%t.plist %s
 
 struct _opaque_pthread_once_t {

@@ -3076,7 +3076,7 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
 
   if (ActiveScheme == PathDiagnosticConsumer::Extensive) {
     AnalyzerOptions &options = getAnalyzerOptions();
-    if (options.getBooleanOption("path-diagnostics-alternate", false)) {
+    if (options.getBooleanOption("path-diagnostics-alternate", true)) {
       ActiveScheme = PathDiagnosticConsumer::AlternateExtensive;
     }
   }

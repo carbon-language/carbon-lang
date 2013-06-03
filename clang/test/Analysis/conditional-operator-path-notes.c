@@ -1,5 +1,5 @@
 // RUN: %clang --analyze %s -Xanalyzer -analyzer-output=text -Xclang -verify
-// RUN: %clang --analyze %s -o %t
+// RUN: %clang --analyze %s -Xanalyzer -analyzer-config -Xanalyzer path-diagnostics-alternate=false -o %t
 // RUN: FileCheck --input-file=%t %s
 
 void testCondOp(int *p) {
