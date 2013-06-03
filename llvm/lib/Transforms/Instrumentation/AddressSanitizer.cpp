@@ -39,6 +39,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -55,6 +56,7 @@ static const uint64_t kDefaultShadowOffset32 = 1ULL << 29;
 static const uint64_t kDefaultShadowOffset64 = 1ULL << 44;
 static const uint64_t kDefaultShort64bitShadowOffset = 0x7FFF8000;  // < 2G.
 static const uint64_t kPPC64_ShadowOffset64 = 1ULL << 41;
+static const uint64_t kMIPS32_ShadowOffset32 = 0x0aaa8000;
 
 static const size_t kMaxStackMallocSize = 1 << 16;  // 64K
 static const uintptr_t kCurrentStackFrameMagic = 0x41B58AB3;
@@ -207,6 +209,8 @@ static ShadowMapping getShadowMapping(const Module &M, int LongSize,
   bool IsMacOSX = TargetTriple.getOS() == llvm::Triple::MacOSX;
   bool IsPPC64 = TargetTriple.getArch() == llvm::Triple::ppc64;
   bool IsX86_64 = TargetTriple.getArch() == llvm::Triple::x86_64;
+  bool IsMIPS32 = TargetTriple.getArch() == llvm::Triple::mips ||
+                  TargetTriple.getArch() == llvm::Triple::mipsel;
 
   ShadowMapping Mapping;
 
@@ -216,7 +220,8 @@ static ShadowMapping getShadowMapping(const Module &M, int LongSize,
   Mapping.OrShadowOffset = !IsPPC64 && !ClShort64BitOffset;
 
   Mapping.Offset = (IsAndroid || ZeroBaseShadow) ? 0 :
-      (LongSize == 32 ? kDefaultShadowOffset32 :
+      (LongSize == 32 ?
+       (IsMIPS32 ? kMIPS32_ShadowOffset32 : kDefaultShadowOffset32) :
        IsPPC64 ? kPPC64_ShadowOffset64 : kDefaultShadowOffset64);
   if (!ZeroBaseShadow && ClShort64BitOffset && IsX86_64 && !IsMacOSX) {
     assert(LongSize == 64);
@@ -1269,6 +1274,10 @@ void FunctionStackPoisoner::poisonRedZones(
                                         RedzoneSize(),
                                         1ULL << Mapping.Scale,
                                         kAsanStackPartialRedzoneMagic);
+        Poison =
+            ASan.TD->isLittleEndian()
+                ? support::endian::byte_swap<uint32_t, support::little>(Poison)
+                : support::endian::byte_swap<uint32_t, support::big>(Poison);
       }
       Value *PartialPoison = ConstantInt::get(RZTy, Poison);
       IRB.CreateStore(PartialPoison, IRB.CreateIntToPtr(Ptr, RZPtrTy));
