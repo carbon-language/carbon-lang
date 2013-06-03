@@ -2092,7 +2092,64 @@ static void simplifySimpleBranches(PathPieces &pieces) {
   }
 }
 
-static void removeContextCycles(PathPieces &Path, ParentMap &PM) {
+/// Returns the number of bytes in the given SourceRange.
+///
+/// If the locations in the range are not on the same line, returns None.
+///
+/// Note that this does not do a precise user-visible character or column count.
+static Optional<size_t> getLengthOnSingleLine(SourceManager &SM,
+                                              SourceRange Range) {
+  SourceRange ExpansionRange(SM.getExpansionLoc(Range.getBegin()),
+                             SM.getExpansionRange(Range.getEnd()).second);
+
+  FileID FID = SM.getFileID(ExpansionRange.getBegin());
+  if (FID != SM.getFileID(ExpansionRange.getEnd()))
+    return None;
+
+  bool Invalid;
+  const llvm::MemoryBuffer *Buffer = SM.getBuffer(FID, &Invalid);
+  if (Invalid)
+    return None;
+
+  unsigned BeginOffset = SM.getFileOffset(ExpansionRange.getBegin());
+  unsigned EndOffset = SM.getFileOffset(ExpansionRange.getEnd());
+  StringRef Snippet = Buffer->getBuffer().slice(BeginOffset, EndOffset);
+
+  // We're searching the raw bytes of the buffer here, which might include
+  // escaped newlines and such. That's okay; we're trying to decide whether the
+  // SourceRange is covering a large or small amount of space in the user's
+  // editor.
+  if (Snippet.find_first_of("\r\n") != StringRef::npos)
+    return None;
+
+  // This isn't Unicode-aware, but it doesn't need to be.
+  return Snippet.size();
+}
+
+/// \sa getLengthOnSingleLine(SourceManager, SourceRange)
+static Optional<size_t> getLengthOnSingleLine(SourceManager &SM,
+                                              const Stmt *S) {
+  return getLengthOnSingleLine(SM, S->getSourceRange());
+}
+
+/// Eliminate two-edge cycles created by addContextEdges().
+///
+/// Once all the context edges are in place, there are plenty of cases where
+/// there's a single edge from a top-level statement to a subexpression,
+/// followed by a single path note, and then a reverse edge to get back out to
+/// the top level. If the statement is simple enough, the subexpression edges
+/// just add noise and make it harder to understand what's going on.
+///
+/// This function only removes edges in pairs, because removing only one edge
+/// might leave other edges dangling.
+///
+/// This will not remove edges in more complicated situations:
+/// - if there is more than one "hop" leading to or from a subexpression.
+/// - if there is an inlined call between the edges instead of a single event.
+/// - if the whole statement is large enough that having subexpression arrows
+///   might be helpful.
+static void removeContextCycles(PathPieces &Path, SourceManager &SM,
+                                ParentMap &PM) {
   for (PathPieces::iterator I = Path.begin(), E = Path.end(); I != E; ) {
     // Pattern match the current piece and its successor.
     PathDiagnosticControlFlowPiece *PieceI =
@@ -2131,9 +2188,16 @@ static void removeContextCycles(PathPieces &Path, ParentMap &PM) {
     const Stmt *s2End   = getLocStmt(PieceNextI->getEndLocation());
 
     if (s1Start && s2Start && s1Start == s2End && s2Start == s1End) {
-      Path.erase(I);
-      I = Path.erase(NextI);
-      continue;
+      const size_t MAX_SHORT_LINE_LENGTH = 80;
+      Optional<size_t> s1Length = getLengthOnSingleLine(SM, s1Start);
+      if (s1Length && *s1Length <= MAX_SHORT_LINE_LENGTH) {
+        Optional<size_t> s2Length = getLengthOnSingleLine(SM, s2Start);
+        if (s2Length && *s2Length <= MAX_SHORT_LINE_LENGTH) {
+          Path.erase(I);
+          I = Path.erase(NextI);
+          continue;
+        }
+      }
     }
 
     ++I;
@@ -2183,30 +2247,26 @@ static void removePunyEdges(PathPieces &path,
     if (isConditionForTerminator(end, endParent))
       continue;
 
-    bool Invalid = false;
-    FullSourceLoc StartL(start->getLocStart(), SM);
-    FullSourceLoc EndL(end->getLocStart(), SM);
+    SourceLocation FirstLoc = start->getLocStart();
+    SourceLocation SecondLoc = end->getLocStart();
 
-    unsigned startLine = StartL.getSpellingLineNumber(&Invalid);
-    if (Invalid)
+    if (!SM.isFromSameFile(FirstLoc, SecondLoc))
+      continue;
+    if (SM.isBeforeInTranslationUnit(SecondLoc, FirstLoc))
+      std::swap(SecondLoc, FirstLoc);
+
+    SourceRange EdgeRange(FirstLoc, SecondLoc);
+    Optional<size_t> ByteWidth = getLengthOnSingleLine(SM, EdgeRange);
+
+    // If the statements are on different lines, continue.
+    if (!ByteWidth)
       continue;
 
-    unsigned endLine = EndL.getSpellingLineNumber(&Invalid);
-    if (Invalid)
-      continue;
-
-    if (startLine != endLine)
-      continue;
-
-    unsigned startCol = StartL.getSpellingColumnNumber(&Invalid);
-    if (Invalid)
-      continue;
-
-    unsigned endCol = EndL.getSpellingColumnNumber(&Invalid);
-    if (Invalid)
-      continue;
-
-    if (abs((int)startCol - (int)endCol) <= 2) {
+    const size_t MAX_PUNY_EDGE_LENGTH = 2;
+    if (*ByteWidth <= MAX_PUNY_EDGE_LENGTH) {
+      // FIXME: There are enough /bytes/ between the endpoints of the edge, but
+      // there might not be enough /columns/. A proper user-visible column count
+      // is probably too expensive, though.
       I = path.erase(I);
       erased = true;
       continue;
@@ -2391,7 +2451,7 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
     // and aesthetically pleasing.
     addContextEdges(path, SM, PM, LC);
     // Remove "cyclical" edges that include one or more context edges.
-    removeContextCycles(path, PM);
+    removeContextCycles(path, SM, PM);
     // Hoist edges originating from branch conditions to branches
     // for simple branches.
     simplifySimpleBranches(path);
