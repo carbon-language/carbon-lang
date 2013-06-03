@@ -1639,19 +1639,11 @@ CFGBlock *CFGBuilder::VisitDeclStmt(DeclStmt *DS) {
 /// DeclStmts and initializers in them.
 CFGBlock *CFGBuilder::VisitDeclSubExpr(DeclStmt *DS) {
   assert(DS->isSingleDecl() && "Can handle single declarations only.");
-  Decl *D = DS->getSingleDecl();
- 
-  if (isa<StaticAssertDecl>(D)) {
-    // static_asserts aren't added to the CFG because they do not impact
-    // runtime semantics.
-    return Block;
-  }
-  
   VarDecl *VD = dyn_cast<VarDecl>(DS->getSingleDecl());
 
   if (!VD) {
-    autoCreateBlock();
-    appendStmt(Block, DS);
+    // Of everything that can be declared in a DeclStmt, only VarDecls impact
+    // runtime semantics.
     return Block;
   }
 

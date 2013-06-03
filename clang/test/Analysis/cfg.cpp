@@ -1,5 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -analyze -analyzer-checker=debug.DumpCFG %s 2>&1 | FileCheck %s
-// Check the wrapping behavior when dumping the CFG.
+// RUN: %clang_cc1 -analyze -analyzer-checker=debug.DumpCFG -std=c++11 %s 2>&1 | FileCheck %s
 
 // CHECK: ENTRY
 // CHECK-NEXT: Succs (1): B1
@@ -11,7 +10,7 @@
 // CHECK-NEXT: Preds (21): B2 B3 B4 B5 B6 B7 B8 B9
 // CHECK-NEXT: B10 B11 B12 B13 B14 B15 B16 B17 B18 B19
 // CHECK-NEXT: B20 B21 B1
-void test(int i) {
+void checkWrap(int i) {
   switch(i) {
     case 0: break;
     case 1: break;
@@ -34,4 +33,36 @@ void test(int i) {
     case 18: break;
     case 19: break;
   }
+}
+
+// CHECK: ENTRY
+// CHECK-NEXT: Succs (1): B1
+// CHECK: [B1]
+// CHECK-NEXT:   1: int i;
+// CHECK-NEXT:   2: int j;
+// CHECK-NEXT:   3: 1
+// CHECK-NEXT:   4: int k = 1;
+// CHECK-NEXT:   5: int l;
+// CHECK-NEXT:   6: 2
+// CHECK-NEXT:   7: int m = 2;
+// CHECK-NEXT: CXXConstructExpr
+// CHECK-NEXT:   9: struct standalone myStandalone;
+// CHECK-NEXT: CXXConstructExpr
+// CHECK-NEXT:  11: struct <anonymous struct at {{.*}}> myAnon;
+// CHECK-NEXT: CXXConstructExpr
+// CHECK-NEXT:  13: struct named myNamed;
+// CHECK-NEXT:   Preds (1): B2
+// CHECK-NEXT:   Succs (1): B0
+void checkDeclStmts() {
+  int i, j;
+  int k = 1, l, m = 2;
+
+  struct standalone { int x, y; };
+  struct standalone myStandalone;
+
+  struct { int x, y; } myAnon;
+
+  struct named { int x, y; } myNamed;
+
+  static_assert(1, "abc");
 }
