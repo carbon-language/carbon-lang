@@ -262,3 +262,18 @@ define double @bitcast_f64_i64(i64 %x) {
   %y = bitcast i64 %x to double
   ret double %y
 }
+
+; CHECK: store_zero:
+; CHECK: stx %g0, [%i0]
+; CHECK: stx %g0, [%i1+8]
+
+; OPT:  store_zero:
+; OPT:  stx %g0, [%o0]
+; OPT:  stx %g0, [%o1+8]
+define i64 @store_zero(i64* nocapture %a, i64* nocapture %b) {
+entry:
+  store i64 0, i64* %a, align 8
+  %0 = getelementptr inbounds i64* %b, i32 1
+  store i64 0, i64* %0, align 8
+  ret i64 0
+}
