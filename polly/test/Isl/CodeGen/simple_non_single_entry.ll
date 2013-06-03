@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -polly-codegen-isl -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-codegen-isl -S < %s | FileCheck %s -check-prefix=CHECK-CODE
+; RUN: opt %loadPolly -polly-detect-scops-in-regions-without-loops -polly-codegen-isl -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-scops-in-regions-without-loops -polly-codegen-isl -S < %s | FileCheck %s -check-prefix=CHECK-CODE
 
 ; void f(long A[], long N) {
 ;   long i;

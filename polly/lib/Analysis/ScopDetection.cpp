@@ -73,6 +73,11 @@ DetectScopsWithoutLoops("polly-detect-scops-in-functions-without-loops",
                         cl::desc("Detect scops in functions without loops"),
                         cl::Hidden, cl::init(false), cl::cat(PollyCategory));
 
+static cl::opt<bool>
+DetectRegionsWithoutLoops("polly-detect-scops-in-regions-without-loops",
+                          cl::desc("Detect scops in regions without loops"),
+                          cl::Hidden, cl::init(false), cl::cat(PollyCategory));
+
 static cl::opt<std::string>
 OnlyFunction("polly-only-func", cl::desc("Only run on a single function"),
              cl::value_desc("function-name"), cl::ValueRequired, cl::init(""),
@@ -466,8 +471,20 @@ Region *ScopDetection::expandRegion(Region &R) {
 
   return LastValidRegion;
 }
+static bool regionWithoutLoops(Region &R, LoopInfo *LI) {
+  for (Region::block_iterator I = R.block_begin(), E = R.block_end(); I != E;
+       ++I)
+    if (R.contains(LI->getLoopFor(*I)))
+      return false;
+
+  return true;
+}
 
 void ScopDetection::findScops(Region &R) {
+
+  if (!DetectRegionsWithoutLoops && regionWithoutLoops(R, LI))
+    return;
+
   DetectionContext Context(R, *AA, false /*verifying*/);
 
   LastFailure = "";

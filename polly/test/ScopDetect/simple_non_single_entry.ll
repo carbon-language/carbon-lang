@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -polly-detect -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect -polly-codegen-scev -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-scops-in-regions-without-loops -polly-detect -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-scops-in-regions-without-loops -polly-detect -polly-codegen-scev -analyze < %s | FileCheck %s
 
 ; void f(long A[], long N) {
 ;   long i;
