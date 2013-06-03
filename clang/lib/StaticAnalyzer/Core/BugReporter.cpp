@@ -2092,7 +2092,7 @@ static void simplifySimpleBranches(PathPieces &pieces) {
   }
 }
 
-/// Returns the number of bytes in the given SourceRange.
+/// Returns the number of bytes in the given (character-based) SourceRange.
 ///
 /// If the locations in the range are not on the same line, returns None.
 ///
@@ -2412,6 +2412,21 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
                  lexicalContains(PM, s2Start, s2End) &&
                  !lexicalContains(PM, s1End, s1Start)) {
           removeEdge = true;
+        }
+        // Trim edges from a subexpression back to the top level if the
+        // subexpression is on a different line.
+        //
+        // A.1 -> A -> B
+        // becomes
+        // A.1 -> B
+        //
+        // These edges just look ugly and don't usually add anything.
+        else if (s1Start && s2End &&
+                 lexicalContains(PM, s1Start, s1End)) {
+          SourceRange EdgeRange(PieceI->getEndLocation().asLocation(),
+                                PieceI->getStartLocation().asLocation());
+          if (!getLengthOnSingleLine(SM, EdgeRange).hasValue())
+            removeEdge = true;
         }
       }
 
