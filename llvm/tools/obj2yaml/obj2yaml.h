@@ -13,21 +13,9 @@
 #ifndef LLVM_TOOLS_OBJ2YAML_H
 #define LLVM_TOOLS_OBJ2YAML_H
 
-#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
-
-namespace objyaml {  // routines for writing YAML
-// Write a hex stream:
-//    <Prefix> !hex: "<hex digits>" #|<ASCII chars>\n
-  llvm::raw_ostream &writeHexStream
-    (llvm::raw_ostream &Out, const llvm::ArrayRef<uint8_t> arr);
-
-// Writes a number in hex; prefix it by 0x if it is >= 10
-  llvm::raw_ostream &writeHexNumber
-    (llvm::raw_ostream &Out, unsigned long long N);
-}
 
 llvm::error_code coff2yaml(llvm::raw_ostream &Out, llvm::MemoryBuffer *TheObj);
 

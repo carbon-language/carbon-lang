@@ -18,38 +18,6 @@
 
 using namespace llvm;
 
-namespace objyaml {  // generic yaml-writing specific routines
-
-unsigned char printable(unsigned char Ch) {
-  return Ch >= ' ' && Ch <= '~' ? Ch : '.';
-}
-
-raw_ostream &writeHexStream(raw_ostream &Out, const ArrayRef<uint8_t> arr) {
-  const char *hex = "0123456789ABCDEF";
-  Out << " !hex \"";
-
-  typedef ArrayRef<uint8_t>::const_iterator iter_t;
-  const iter_t end = arr.end();
-  for (iter_t iter = arr.begin(); iter != end; ++iter)
-    Out << hex[(*iter >> 4) & 0x0F] << hex[(*iter & 0x0F)];
-
-  Out << "\" # |";
-  for (iter_t iter = arr.begin(); iter != end; ++iter)
-    Out << printable(*iter);
-  Out << "|\n";
-
-  return Out;
-}
-
-raw_ostream &writeHexNumber(raw_ostream &Out, unsigned long long N) {
-  if (N >= 10)
-    Out << "0x";
-  Out.write_hex(N);
-  return Out;
-}
-
-} // end namespace yaml
-
 namespace {
 enum ObjectFileType {
   coff
