@@ -396,7 +396,8 @@ namespace rdar9136502 {
   };
 
   void f(X x, Y y) {
-    y << x.i; // expected-error{{reference to non-static member function must be called}}
+    y << x
+      .i; // expected-error{{reference to non-static member function must be called}}
   }
 }
 

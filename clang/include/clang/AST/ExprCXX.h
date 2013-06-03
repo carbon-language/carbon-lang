@@ -3387,6 +3387,10 @@ public:
   // expression refers to.
   SourceLocation getMemberLoc() const { return getNameLoc(); }
 
+  // \brief Return the preferred location (the member name) for the arrow when
+  // diagnosing a problem with this expression.
+  SourceLocation getExprLoc() const LLVM_READONLY { return getMemberLoc(); }
+
   SourceLocation getLocStart() const LLVM_READONLY {
     if (!isImplicitAccess())
       return Base->getLocStart();
