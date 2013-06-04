@@ -1554,10 +1554,130 @@ let SchedModel = SwiftModel in {
   def : WriteRes<WriteBrL, [SwiftUnitP1]> { let Latency = 2; }
   def : WriteRes<WriteBrTbl, [SwiftUnitP1, SwiftUnitP2]> { let Latency = 0; }
 
+  // 4.2.27 Not issued
+  def : InstRW<[], (instregex "t2IT", "IT", "NOP")>;
+
+  // 4.2.28 Advanced SIMD, Integer, 2 cycle
+  def : InstRW<[SwiftWriteP0TwoCycle],
+        (instregex "VADDv", "VSUBv", "VNEG(s|f|v)", "VADDL", "VSUBL",
+                   "VADDW", "VSUBW", "VHADD", "VHSUB", "VRHADD", "VPADDi",
+                   "VPADDL", "VAND", "VBIC", "VEOR", "VORN", "VORR", "VTST",
+                   "VSHL", "VSHR(s|u)", "VSHLL", "VQSHL", "VQSHLU", "VBIF",
+                   "VBIT", "VBSL", "VSLI", "VSRI", "VCLS", "VCLZ", "VCNT")>;
+
+  def : InstRW<[SwiftWriteP1TwoCycle],
+        (instregex "VEXT", "VREV16", "VREV32", "VREV64")>;
+
+  // 4.2.29 Advanced SIMD, Integer, 4 cycle
+  // 4.2.30 Advanced SIMD, Integer with Accumulate
+  def : InstRW<[SwiftWriteP0FourCycle],
+        (instregex "VABA", "VABAL", "VPADAL", "VRSRA", "VSRA", "VACGE", "VACGT",
+        "VACLE", "VACLT", "VCEQ", "VCGE", "VCGT", "VCLE", "VCLT", "VRSHL",
+        "VQRSHL", "VRSHR(u|s)", "VABS(f|v)", "VQABS", "VQNEG", "VQADD",
+        "VQSUB")>;
+  def : InstRW<[SwiftWriteP1FourCycle],
+        (instregex "VRECPE", "VRSQRTE")>;
+
+  // 4.2.31 Advanced SIMD, Add and Shift with Narrow
+  def : InstRW<[SwiftWriteP0P1FourCycle],
+        (instregex "VADDHN", "VSUBHN", "VSHRN")>;
+  def : InstRW<[SwiftWriteP0P1SixCycle],
+        (instregex "VRADDHN", "VRSUBHN", "VRSHRN", "VQSHRN", "VQSHRUN",
+                   "VQRSHRN", "VQRSHRUN")>;
+
+  // 4.2.32 Advanced SIMD, Vector Table Lookup
+  foreach Num = 1-4 in {
+    def SwiftWrite#Num#xP1TwoCycle : WriteSequence<[SwiftWriteP1TwoCycle], Num>;
+  }
+  def : InstRW<[SwiftWrite1xP1TwoCycle],
+        (instregex "VTB(L|X)1")>;
+  def : InstRW<[SwiftWrite2xP1TwoCycle],
+        (instregex "VTB(L|X)2")>;
+  def : InstRW<[SwiftWrite3xP1TwoCycle],
+        (instregex "VTB(L|X)3")>;
+  def : InstRW<[SwiftWrite4xP1TwoCycle],
+        (instregex "VTB(L|X)4")>;
+
+  // 4.2.33 Advanced SIMD, Transpose
+  def : InstRW<[SwiftWriteP1FourCycle, SwiftWriteP1FourCycle,
+                SwiftWriteP1TwoCycle/*RsrcOnly*/, SchedReadAdvance<2>],
+        (instregex "VSWP", "VTRN", "VUZP", "VZIP")>;
+
+  // 4.2.34 Advanced SIMD and VFP, Floating Point
+  def : InstRW<[SwiftWriteP0TwoCycle], (instregex "VABS(S|D)$", "VNEG(S|D)$")>;
+  def : InstRW<[SwiftWriteP0FourCycle],
+        (instregex "VCMP(D|S|ZD|ZS)$", "VCMPE(D|S|ZD|ZS)")>;
+  def : InstRW<[SwiftWriteP0FourCycle],
+        (instregex "VADD(S|f)", "VSUB(S|f)", "VABD", "VPADDf", "VMAX", "VMIN", "VPMAX",
+                   "VPMIN")>;
+  def : InstRW<[SwiftWriteP0SixCycle], (instregex "VADDD$", "VSUBD$")>;
+  def : InstRW<[SwiftWriteP1EightCycle], (instregex "VRECPS", "VRSQRTS")>;
+
+  // 4.2.35 Advanced SIMD and VFP, Multiply
+  def : InstRW<[SwiftWriteP1FourCycle],
+        (instregex "VMUL(S|v|p|f|s)", "VNMULS", "VQDMULH", "VQRDMULH",
+                   "VMULL", "VQDMULL")>;
+  def : InstRW<[SwiftWriteP1SixCycle],
+        (instregex "VMULD", "VNMULD")>;
+  def : InstRW<[SwiftWriteP1FourCycle],
+        (instregex "VMLA", "VMLS", "VNMLA", "VNMLS", "VFMA(S|D)", "VFMS(S|D)",
+        "VFNMA", "VFNMS", "VMLAL", "VMLSL","VQDMLAL", "VQDMLSL")>;
+  def : InstRW<[SwiftWriteP1EightCycle], (instregex "VFMAfd", "VFMSfd")>;
+  def : InstRW<[SwiftWriteP1TwelveCyc], (instregex "VFMAfq", "VFMSfq")>;
+
   // 4.2.36 Advanced SIMD and VFP, Convert
   def : InstRW<[SwiftWriteP1FourCycle], (instregex "VCVT", "V(S|U)IT", "VTO(S|U)")>;
   // Fixpoint conversions.
   def : WriteRes<WriteCvtFP, [SwiftUnitP1]> { let Latency = 4; }
+
+  // 4.2.37 Advanced SIMD and VFP, Move
+  def : InstRW<[SwiftWriteP0TwoCycle],
+        (instregex "VMOVv", "VMOV(S|D)$", "VMOV(S|D)cc",
+                   "VMVNv", "VMVN(d|q)", "VMVN(S|D)cc",
+                   "FCONST(D|S)")>;
+  def : InstRW<[SwiftWriteP1TwoCycle], (instregex "VMOVN", "VMOVL")>;
+  def : InstRW<[WriteSequence<[SwiftWriteP0FourCycle, SwiftWriteP1TwoCycle]>],
+        (instregex "VQMOVN")>;
+  def : InstRW<[SwiftWriteP1TwoCycle], (instregex "VDUPLN", "VDUPf")>;
+  def : InstRW<[WriteSequence<[SwiftWriteP2FourCycle, SwiftWriteP1TwoCycle]>],
+        (instregex "VDUP(8|16|32)")>;
+  def : InstRW<[SwiftWriteP2ThreeCycle], (instregex "VMOVRS$")>;
+  def : InstRW<[WriteSequence<[SwiftWriteP2FourCycle, SwiftWriteP0TwoCycle]>],
+        (instregex "VMOVSR$", "VSETLN")>;
+  def : InstRW<[SwiftWriteP2ThreeCycle, SwiftWriteP2FourCycle],
+        (instregex "VMOVRR(D|S)$")>;
+  def : InstRW<[SwiftWriteP2FourCycle], (instregex "VMOVDRR$")>;
+  def : InstRW<[WriteSequence<[SwiftWriteP2FourCycle, SwiftWriteP1TwoCycle]>,
+                WriteSequence<[SwiftWrite1Cycle, SwiftWriteP2FourCycle,
+                               SwiftWriteP1TwoCycle]>],
+                (instregex "VMOVSRR$")>;
+  def : InstRW<[WriteSequence<[SwiftWriteP1TwoCycle, SwiftWriteP2ThreeCycle]>],
+        (instregex "VGETLN(u|i)")>;
+  def : InstRW<[WriteSequence<[SwiftWriteP1TwoCycle, SwiftWriteP2ThreeCycle,
+                               SwiftWriteP01OneCycle]>],
+        (instregex "VGETLNs")>;
+
+  // 4.2.38 Advanced SIMD and VFP, Move FPSCR
+  // Serializing instructions.
+  def SwiftWaitP0For15Cy : SchedWriteRes<[SwiftUnitP0]> {
+    let Latency = 15;
+    let ResourceCycles = [15];
+  }
+  def SwiftWaitP1For15Cy : SchedWriteRes<[SwiftUnitP1]> {
+    let Latency = 15;
+    let ResourceCycles = [15];
+  }
+  def SwiftWaitP2For15Cy : SchedWriteRes<[SwiftUnitP2]> {
+    let Latency = 15;
+    let ResourceCycles = [15];
+  }
+  def : InstRW<[SwiftWaitP0For15Cy, SwiftWaitP1For15Cy, SwiftWaitP2For15Cy],
+        (instregex "VMRS")>;
+  def : InstRW<[SwiftWaitP0For15Cy, SwiftWaitP1For15Cy, SwiftWaitP2For15Cy],
+        (instregex "VMSR")>;
+  // Not serializing.
+  def : InstRW<[SwiftWriteP0TwoCycle], (instregex "FMSTAT")>;
+
   // Preload.
   def : WriteRes<WritePreLd, [SwiftUnitP2]> { let Latency = 0;
     let ResourceCycles = [0];
