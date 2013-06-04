@@ -49,7 +49,10 @@ public:
 
 private:
   inline SDValue getSmallIPtrImm(unsigned Imm);
+  bool FoldOperand(SDValue &Src, SDValue &Sel, SDValue &Neg, SDValue &Abs,
+                   const R600InstrInfo *TII, std::vector<unsigned> Cst);
   bool FoldOperands(unsigned, const R600InstrInfo *, std::vector<SDValue> &);
+  bool FoldDotOperands(unsigned, const R600InstrInfo *, std::vector<SDValue> &);
 
   // Complex pattern selectors
   bool SelectADDRParam(SDValue Addr, SDValue& R1, SDValue& R2);
@@ -318,6 +321,20 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX) {
     const R600InstrInfo *TII =
         static_cast<const R600InstrInfo*>(TM.getInstrInfo());
+    if (Result && Result->isMachineOpcode() && Result->getMachineOpcode() == AMDGPU::DOT_4) {
+      bool IsModified = false;
+      do {
+        std::vector<SDValue> Ops;
+        for(SDNode::op_iterator I = Result->op_begin(), E = Result->op_end();
+            I != E; ++I)
+          Ops.push_back(*I);
+        IsModified = FoldDotOperands(Result->getMachineOpcode(), TII, Ops);
+        if (IsModified) {
+          Result = CurDAG->UpdateNodeOperands(Result, Ops.data(), Ops.size());
+        }
+      } while (IsModified);
+      
+    }
     if (Result && Result->isMachineOpcode() &&
         !(TII->get(Result->getMachineOpcode()).TSFlags & R600_InstFlag::VECTOR)
         && TII->isALUInstr(Result->getMachineOpcode())) {
@@ -360,6 +377,43 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   return Result;
 }
 
+bool AMDGPUDAGToDAGISel::FoldOperand(SDValue &Src, SDValue &Sel, SDValue &Neg,
+                                     SDValue &Abs, const R600InstrInfo *TII,
+                                     std::vector<unsigned> Consts) {
+  switch (Src.getOpcode()) {
+  case AMDGPUISD::CONST_ADDRESS: {
+    SDValue CstOffset;
+    if (Src.getValueType().isVector() ||
+        !SelectGlobalValueConstantOffset(Src.getOperand(0), CstOffset))
+      return false;
+
+    ConstantSDNode *Cst = dyn_cast<ConstantSDNode>(CstOffset);
+    Consts.push_back(Cst->getZExtValue());
+    if (!TII->fitsConstReadLimitations(Consts))
+      return false;
+
+    Src = CurDAG->getRegister(AMDGPU::ALU_CONST, MVT::f32);
+    Sel = CstOffset;
+    return true;
+    }
+  case ISD::FNEG:
+    Src = Src.getOperand(0);
+    Neg = CurDAG->getTargetConstant(1, MVT::i32);
+    return true;
+  case ISD::FABS:
+    if (!Abs.getNode())
+      return false;
+    Src = Src.getOperand(0);
+    Abs = CurDAG->getTargetConstant(1, MVT::i32);
+    return true;
+  case ISD::BITCAST:
+    Src = Src.getOperand(0);
+    return true;
+  default:
+    return false;
+  }
+}
+
 bool AMDGPUDAGToDAGISel::FoldOperands(unsigned Opcode,
     const R600InstrInfo *TII, std::vector<SDValue> &Ops) {
   int OperandIdx[] = {
@@ -383,58 +437,100 @@ bool AMDGPUDAGToDAGISel::FoldOperands(unsigned Opcode,
     -1
   };
 
+  // Gather constants values
+  std::vector<unsigned> Consts;
+  for (unsigned j = 0; j < 3; j++) {
+    int SrcIdx = OperandIdx[j];
+    if (SrcIdx < 0)
+      break;
+    if (RegisterSDNode *Reg = dyn_cast<RegisterSDNode>(Ops[SrcIdx - 1])) {
+      if (Reg->getReg() == AMDGPU::ALU_CONST) {
+        ConstantSDNode *Cst = dyn_cast<ConstantSDNode>(Ops[SelIdx[j] - 1]);
+        Consts.push_back(Cst->getZExtValue());
+      }
+    }
+  }
+
   for (unsigned i = 0; i < 3; i++) {
     if (OperandIdx[i] < 0)
       return false;
-    SDValue Operand = Ops[OperandIdx[i] - 1];
-    switch (Operand.getOpcode()) {
-    case AMDGPUISD::CONST_ADDRESS: {
-      SDValue CstOffset;
-      if (Operand.getValueType().isVector() ||
-          !SelectGlobalValueConstantOffset(Operand.getOperand(0), CstOffset))
-        break;
+    SDValue &Src = Ops[OperandIdx[i] - 1];
+    SDValue &Sel = Ops[SelIdx[i] - 1];
+    SDValue &Neg = Ops[NegIdx[i] - 1];
+    SDValue FakeAbs;
+    SDValue &Abs = (AbsIdx[i] > -1) ? Ops[AbsIdx[i] - 1] : FakeAbs;
+    if (FoldOperand(Src, Sel, Neg, Abs, TII, Consts))
+      return true;
+  }
+  return false;
+}
 
-      // Gather others constants values
-      std::vector<unsigned> Consts;
-      for (unsigned j = 0; j < 3; j++) {
-        int SrcIdx = OperandIdx[j];
-        if (SrcIdx < 0)
-          break;
-        if (RegisterSDNode *Reg = dyn_cast<RegisterSDNode>(Ops[SrcIdx - 1])) {
-          if (Reg->getReg() == AMDGPU::ALU_CONST) {
-            ConstantSDNode *Cst = dyn_cast<ConstantSDNode>(Ops[SelIdx[j] - 1]);
-            Consts.push_back(Cst->getZExtValue());
-          }
-        }
-      }
+bool AMDGPUDAGToDAGISel::FoldDotOperands(unsigned Opcode,
+    const R600InstrInfo *TII, std::vector<SDValue> &Ops) {
+  int OperandIdx[] = {
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_X),
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_Y),
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_Z),
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_W),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_X),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_Y),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_Z),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_W)
+  };
+  int SelIdx[] = {
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_SEL_X),
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_SEL_Y),
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_SEL_Z),
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_SEL_W),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_SEL_X),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_SEL_Y),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_SEL_Z),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_SEL_W)
+  };
+  int NegIdx[] = {
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_NEG_X),
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_NEG_Y),
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_NEG_Z),
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_NEG_W),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_NEG_X),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_NEG_Y),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_NEG_Z),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_NEG_W)
+  };
+  int AbsIdx[] = {
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_ABS_X),
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_ABS_Y),
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_ABS_Z),
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_ABS_W),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_ABS_X),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_ABS_Y),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_ABS_Z),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_ABS_W)
+  };
 
-      ConstantSDNode *Cst = dyn_cast<ConstantSDNode>(CstOffset);
-      Consts.push_back(Cst->getZExtValue());
-      if (!TII->fitsConstReadLimitations(Consts))
-        break;
-
-      Ops[OperandIdx[i] - 1] = CurDAG->getRegister(AMDGPU::ALU_CONST, MVT::f32);
-      Ops[SelIdx[i] - 1] = CstOffset;
-      return true;
-      }
-    case ISD::FNEG:
-      if (NegIdx[i] < 0)
-        break;
-      Ops[OperandIdx[i] - 1] = Operand.getOperand(0);
-      Ops[NegIdx[i] - 1] = CurDAG->getTargetConstant(1, MVT::i32);
-      return true;
-    case ISD::FABS:
-      if (AbsIdx[i] < 0)
-        break;
-      Ops[OperandIdx[i] - 1] = Operand.getOperand(0);
-      Ops[AbsIdx[i] - 1] = CurDAG->getTargetConstant(1, MVT::i32);
-      return true;
-    case ISD::BITCAST:
-      Ops[OperandIdx[i] - 1] = Operand.getOperand(0);
-      return true;
-    default:
+  // Gather constants values
+  std::vector<unsigned> Consts;
+  for (unsigned j = 0; j < 8; j++) {
+    int SrcIdx = OperandIdx[j];
+    if (SrcIdx < 0)
       break;
+    if (RegisterSDNode *Reg = dyn_cast<RegisterSDNode>(Ops[SrcIdx - 1])) {
+      if (Reg->getReg() == AMDGPU::ALU_CONST) {
+        ConstantSDNode *Cst = dyn_cast<ConstantSDNode>(Ops[SelIdx[j] - 1]);
+        Consts.push_back(Cst->getZExtValue());
+      }
     }
+  }
+
+  for (unsigned i = 0; i < 8; i++) {
+    if (OperandIdx[i] < 0)
+      return false;
+    SDValue &Src = Ops[OperandIdx[i] - 1];
+    SDValue &Sel = Ops[SelIdx[i] - 1];
+    SDValue &Neg = Ops[NegIdx[i] - 1];
+    SDValue &Abs = Ops[AbsIdx[i] - 1];
+    if (FoldOperand(Src, Sel, Neg, Abs, TII, Consts))
+      return true;
   }
   return false;
 }

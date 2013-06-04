@@ -108,7 +108,8 @@ private:
     std::vector<std::pair<unsigned, unsigned> > UsedKCache;
     const SmallVector<std::pair<MachineOperand *, int64_t>, 3> &Consts =
         TII->getSrcs(MI);
-    assert(TII->isALUInstr(MI->getOpcode()) && "Can't assign Const");
+    assert((TII->isALUInstr(MI->getOpcode()) ||
+        MI->getOpcode() == AMDGPU::DOT_4) && "Can't assign Const");
     for (unsigned i = 0, n = Consts.size(); i < n; ++i) {
       if (Consts[i].first->getReg() != AMDGPU::ALU_CONST)
         continue;
@@ -181,6 +182,9 @@ private:
         break;
       }
       if (TII->isALUInstr(I->getOpcode()) &&
+          !SubstituteKCacheBank(I, KCacheBanks))
+        break;
+      if (I->getOpcode() == AMDGPU::DOT_4 &&
           !SubstituteKCacheBank(I, KCacheBanks))
         break;
       AluInstCount += OccupiedDwords(I);

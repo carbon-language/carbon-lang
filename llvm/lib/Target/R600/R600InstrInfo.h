@@ -212,11 +212,13 @@ namespace llvm {
   ///
   /// \returns -1 if the Instruction does not contain the specified \p Op.
   int getOperandIdx(const MachineInstr &MI, R600Operands::Ops Op) const;
+  int getOperandIdx(const MachineInstr &MI, R600Operands::VecOps Op) const;
 
   /// \brief Get the index of \p Op for the given Opcode.
   ///
   /// \returns -1 if the Instruction does not contain the specified \p Op.
   int getOperandIdx(unsigned Opcode, R600Operands::Ops Op) const;
+  int getOperandIdx(unsigned Opcode, R600Operands::VecOps Op) const;
 
   /// \brief Helper function for setting instruction flag values.
   void setImmOperand(MachineInstr *MI, R600Operands::Ops Op, int64_t Imm) const;

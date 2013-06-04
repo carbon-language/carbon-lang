@@ -214,7 +214,9 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
               .getReg();
           (void) Src0;
           (void) Src1;
-          assert(TRI.getHWRegChan(Src0) == TRI.getHWRegChan(Src1));
+          if ((TRI.getEncodingValue(Src0) & 0xff) < 127 &&
+              (TRI.getEncodingValue(Src1) & 0xff) < 127)
+            assert(TRI.getHWRegChan(Src0) == TRI.getHWRegChan(Src1));
         }
         MI.eraseFromParent();
         continue;

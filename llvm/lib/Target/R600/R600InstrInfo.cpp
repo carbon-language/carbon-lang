@@ -169,6 +169,31 @@ SmallVector<std::pair<MachineOperand *, int64_t>, 3>
 R600InstrInfo::getSrcs(MachineInstr *MI) const {
   SmallVector<std::pair<MachineOperand *, int64_t>, 3> Result;
 
+  if (MI->getOpcode() == AMDGPU::DOT_4) {
+    static const R600Operands::VecOps OpTable[8][2] = {
+      {R600Operands::SRC0_X, R600Operands::SRC0_SEL_X},
+      {R600Operands::SRC0_Y, R600Operands::SRC0_SEL_Y},
+      {R600Operands::SRC0_Z, R600Operands::SRC0_SEL_Z},
+      {R600Operands::SRC0_W, R600Operands::SRC0_SEL_W},
+      {R600Operands::SRC1_X, R600Operands::SRC1_SEL_X},
+      {R600Operands::SRC1_Y, R600Operands::SRC1_SEL_Y},
+      {R600Operands::SRC1_Z, R600Operands::SRC1_SEL_Z},
+      {R600Operands::SRC1_W, R600Operands::SRC1_SEL_W},
+    };
+
+    for (unsigned j = 0; j < 8; j++) {
+      MachineOperand &MO = MI->getOperand(OpTable[j][0] + 1);
+      unsigned Reg = MO.getReg();
+      if (Reg == AMDGPU::ALU_CONST) {
+        unsigned Sel = MI->getOperand(OpTable[j][1] + 1).getImm();
+        Result.push_back(std::pair<MachineOperand *, int64_t>(&MO, Sel));
+        continue;
+      }
+      
+    }
+    return Result;
+  }
+
   static const R600Operands::Ops OpTable[3][2] = {
     {R600Operands::SRC0, R600Operands::SRC0_SEL},
     {R600Operands::SRC1, R600Operands::SRC1_SEL},
@@ -967,6 +992,11 @@ int R600InstrInfo::getOperandIdx(const MachineInstr &MI,
   return getOperandIdx(MI.getOpcode(), Op);
 }
 
+int R600InstrInfo::getOperandIdx(const MachineInstr &MI,
+                                 R600Operands::VecOps Op) const {
+  return getOperandIdx(MI.getOpcode(), Op);
+}
+
 int R600InstrInfo::getOperandIdx(unsigned Opcode,
                                  R600Operands::Ops Op) const {
   unsigned TargetFlags = get(Opcode).TSFlags;
@@ -995,6 +1025,11 @@ int R600InstrInfo::getOperandIdx(unsigned Opcode,
   }
 
   return R600Operands::ALUOpTable[OpTableIdx][Op];
+}
+
+int R600InstrInfo::getOperandIdx(unsigned Opcode,
+                                 R600Operands::VecOps Op) const {
+  return Op + 1;
 }
 
 void R600InstrInfo::setImmOperand(MachineInstr *MI, R600Operands::Ops Op,
