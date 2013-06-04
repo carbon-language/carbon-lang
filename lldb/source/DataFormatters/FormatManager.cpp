@@ -685,6 +685,8 @@ FormatManager::LoadSystemFormatters()
     
     sys_category_sp->GetSummaryNavigator()->Add(ConstString("char *"), string_format);
     sys_category_sp->GetSummaryNavigator()->Add(ConstString("const char *"), string_format);
+    sys_category_sp->GetSummaryNavigator()->Add(ConstString("unsigned char *"), string_format);
+    sys_category_sp->GetSummaryNavigator()->Add(ConstString("const unsigned char *"), string_format);
     sys_category_sp->GetRegexSummaryNavigator()->Add(any_size_char_arr, string_array_format);
     
     lldb::TypeSummaryImplSP ostype_summary(new StringSummaryFormat(TypeSummaryImpl::Flags().SetCascades(false)
