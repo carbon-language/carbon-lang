@@ -21,7 +21,6 @@ class BreakpointAfterJoinTestCase(TestBase):
         self.breakpoint_after_join_test()
 
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
-    @skipIfLinux # Fails intermittently, llvm.org/pr16170"
     @dwarf_test
     def test_with_dwarf(self):
         """Test breakpoint handling after a thread join."""
