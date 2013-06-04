@@ -298,7 +298,7 @@ ThreadPlanCallFunction::DoTakedown (bool success)
             log->Printf ("ThreadPlanCallFunction(%p): DoTakedown called for thread 0x%4.4" PRIx64 ", m_valid: %d complete: %d.\n", this, m_thread.GetID(), m_valid, IsPlanComplete());
         m_takedown_done = true;
         m_stop_address = m_thread.GetStackFrameAtIndex(0)->GetRegisterContext()->GetPC();
-        m_real_stop_info_sp = GetPrivateStopReason();
+        m_real_stop_info_sp = GetPrivateStopInfo ();
         m_thread.RestoreRegisterStateFromCheckpoint(m_stored_thread_state);
         SetPlanComplete(success);
         ClearBreakpoints();
@@ -365,7 +365,7 @@ bool
 ThreadPlanCallFunction::DoPlanExplainsStop (Event *event_ptr)
 {    
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP|LIBLLDB_LOG_PROCESS));
-    m_real_stop_info_sp = GetPrivateStopReason();
+    m_real_stop_info_sp = GetPrivateStopInfo ();
     
     // If our subplan knows why we stopped, even if it's done (which would forward the question to us)
     // we answer yes.
@@ -584,7 +584,7 @@ ThreadPlanCallFunction::ClearBreakpoints ()
 bool
 ThreadPlanCallFunction::BreakpointsExplainStop()
 {
-    StopInfoSP stop_info_sp = GetPrivateStopReason();
+    StopInfoSP stop_info_sp = GetPrivateStopInfo ();
     
     if ((m_cxx_language_runtime &&
             m_cxx_language_runtime->ExceptionBreakpointsExplainStop(stop_info_sp))
