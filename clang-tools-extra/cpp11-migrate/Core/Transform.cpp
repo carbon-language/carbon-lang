@@ -51,3 +51,7 @@ void Transform::handleEndSource() {
 
   Timings.back().second += llvm::TimeRecord::getCurrentTime(false);
 }
+
+void Transform::addTiming(llvm::StringRef Label, llvm::TimeRecord Duration) {
+  Timings.push_back(std::make_pair(Label.str(), Duration));
+}

@@ -17,6 +17,7 @@
 
 #include "Core/Transforms.h"
 #include "Core/Transform.h"
+#include "Core/PerfSupport.h"
 #include "LoopConvert/LoopConvert.h"
 #include "UseNullptr/UseNullptr.h"
 #include "UseAuto/UseAuto.h"
@@ -24,10 +25,7 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
-#include "llvm/Support/Format.h"
-#include "llvm/Support/Process.h"
 #include "llvm/Support/Signals.h"
-#include "llvm/Support/Timer.h"
 
 namespace cl = llvm::cl;
 using namespace clang::tooling;
@@ -55,8 +53,8 @@ SummaryMode("summary", cl::desc("Print transform summary"),
 
 const char NoTiming[] = "no_timing";
 static cl::opt<std::string> TimingDirectoryName(
-    "report-times", cl::desc("Capture performance data and output to specified "
-                             "directory. Default ./migrate_perf"),
+    "perf", cl::desc("Capture performance data and output to specified "
+                     "directory. Default: ./migrate_perf"),
     cl::init(NoTiming), cl::ValueOptional, cl::value_desc("directory name"));
 
 // TODO: Remove cl::Hidden when functionality for acknowledging include/exclude
@@ -87,64 +85,6 @@ class EndSyntaxArgumentsAdjuster : public ArgumentsAdjuster {
   }
 };
 
-struct ExecutionTime {
-  std::string TimerId;
-  float Time;
-  ExecutionTime(const std::string &TimerId, float Time)
-      : TimerId(TimerId), Time(Time) {}
-};
-
-// Save execution times to a json formatted file.
-void reportExecutionTimes(
-    const llvm::StringRef DirectoryName,
-    const std::map<std::string, std::vector<ExecutionTime> > &TimingResults) {
-  // Create directory path if it doesn't exist
-  llvm::sys::Path P(DirectoryName);
-  P.createDirectoryOnDisk(true);
-
-  // Get PID and current time.
-  // FIXME: id_type on Windows is NOT a process id despite the function name.
-  // Need to call GetProcessId() providing it what get_id() returns. For now
-  // disabling PID-based file names until this is fixed properly.
-  //llvm::sys::self_process *SP = llvm::sys::process::get_self();
-  //id_type Pid = SP->get_id();
-  unsigned Pid = 0;
-  llvm::TimeRecord T = llvm::TimeRecord::getCurrentTime();
-
-  std::string FileName;
-  llvm::raw_string_ostream SS(FileName);
-  SS << P.str() << "/" << static_cast<int>(T.getWallTime()) << Pid << ".json";
-
-
-  std::string ErrorInfo;
-  llvm::raw_fd_ostream FileStream(SS.str().c_str(), ErrorInfo);
-  FileStream << "{\n";
-  FileStream << "  \"Sources\" : [\n";
-  for (std::map<std::string, std::vector<ExecutionTime> >::const_iterator
-           I = TimingResults.begin(),
-           E = TimingResults.end();
-       I != E; ++I) {
-    FileStream << "    {\n";
-    FileStream << "      \"Source \" : \"" << I->first << "\",\n";
-    FileStream << "      \"Data\" : [\n";
-    for (std::vector<ExecutionTime>::const_iterator IE = I->second.begin(),
-                                                    EE = I->second.end();
-         IE != EE; ++IE) {
-      FileStream << "        {\n";
-      FileStream << "          \"TimerId\" : \"" << (*IE).TimerId << "\",\n";
-      FileStream << "          \"Time\" : " << llvm::format("%6.2f", (*IE).Time)
-                 << "\n";
-
-      FileStream << "        },\n";
-
-    }
-    FileStream << "      ]\n";
-    FileStream << "    },\n";
-  }
-  FileStream << "  ]\n";
-  FileStream << "}";
-}
-
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   Transforms TransformManager;
@@ -169,8 +109,6 @@ int main(int argc, const char **argv) {
   // Since ExecutionTimeDirectoryName could be an empty string we compare
   // against the default value when the command line option is not specified.
   bool EnableTiming = (TimingDirectoryName != NoTiming);
-  std::map<std::string, std::vector<ExecutionTime> > TimingResults;
-
   TransformManager.createSelectedTransforms(EnableTiming);
 
   if (TransformManager.begin() == TransformManager.end()) {
@@ -180,6 +118,8 @@ int main(int argc, const char **argv) {
 
   FileContentsByPath FileStates1, FileStates2,
       *InputFileStates = &FileStates1, *OutputFileStates = &FileStates2;
+
+  SourcePerfData PerfData;
 
   // Apply transforms.
   for (Transforms::const_iterator I = TransformManager.begin(),
@@ -192,6 +132,10 @@ int main(int argc, const char **argv) {
       // FIXME: Improve ClangTool to not abort if just one file fails.
       return 1;
     }
+
+    if (EnableTiming)
+      collectSourcePerfData(**I, PerfData);
+
     if (SummaryMode) {
       llvm::outs() << "Transform: " << (*I)->getName()
                    << " - Accepted: "
@@ -240,12 +184,12 @@ int main(int argc, const char **argv) {
   }
 
   // Report execution times.
-  if (EnableTiming && TimingResults.size() > 0) {
+  if (EnableTiming && !PerfData.empty()) {
     std::string DirectoryName = TimingDirectoryName;
     // Use default directory name.
-    if (DirectoryName == "")
+    if (DirectoryName.empty())
       DirectoryName = "./migrate_perf";
-    reportExecutionTimes(DirectoryName, TimingResults);
+    writePerfDataJSON(DirectoryName, PerfData);
   }
 
   return 0;

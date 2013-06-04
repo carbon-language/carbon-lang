@@ -207,6 +207,13 @@ protected:
     DeferredChanges = Changes;
   }
 
+  /// \brief Allows subclasses to manually add performance timer data.
+  ///
+  /// \p Label should probably include the source file name somehow as the
+  /// duration info is simply added to the vector of timing data which holds
+  /// data for all sources processed by this transform.
+  void addTiming(llvm::StringRef Label, llvm::TimeRecord Duration);
+
 private:
   const std::string Name;
   bool EnableTiming;
