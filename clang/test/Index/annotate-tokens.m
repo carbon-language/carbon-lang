@@ -142,6 +142,17 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 }
 @end
 
+@interface MyClass
+  @property int classProperty;
+@end
+@interface MyClass (abc)
+  @property int categoryProperty;
+@end
+@interface MyClass ()
+  @property int extensionProperty;
+@end
+
+
 // RUN: c-index-test -test-annotate-tokens=%s:1:1:118:1 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck %s
 // CHECK: Punctuation: "@" [1:1 - 1:2] ObjCInterfaceDecl=Foo:1:12
 // CHECK: Keyword: "interface" [1:2 - 1:11] ObjCInterfaceDecl=Foo:1:12
@@ -574,3 +585,14 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK-WITH-WEAK: Identifier: "foo" [141:15 - 141:18] ObjCIvarDecl=foo:141:15 (Definition)
 // CHECK-WITH-WEAK: Punctuation: ";" [141:18 - 141:19] ObjCInterfaceDecl=rdar9535717:140:12
 // CHECK-WITH-WEAK: Punctuation: "}" [142:1 - 142:2] ObjCInterfaceDecl=rdar9535717:140:12
+
+// RUN: c-index-test -test-annotate-tokens=%s:145:1:153:1 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' -target x86_64-apple-macosx10.7.0 | FileCheck -check-prefix=CHECK-PROP %s
+// CHECK-PROP: Keyword: "property" [146:4 - 146:12] ObjCPropertyDecl=classProperty:146:17
+// CHECK-PROP: Keyword: "int" [146:13 - 146:16] ObjCPropertyDecl=classProperty:146:17
+// CHECK-PROP: Identifier: "classProperty" [146:17 - 146:30] ObjCPropertyDecl=classProperty:146:17
+// CHECK-PROP: Keyword: "property" [149:4 - 149:12] ObjCPropertyDecl=categoryProperty:149:17
+// CHECK-PROP: Keyword: "int" [149:13 - 149:16] ObjCPropertyDecl=categoryProperty:149:17
+// CHECK-PROP: Identifier: "categoryProperty" [149:17 - 149:33] ObjCPropertyDecl=categoryProperty:149:17
+// CHECK-PROP: Keyword: "property" [152:4 - 152:12] ObjCPropertyDecl=extensionProperty:152:17
+// CHECK-PROP: Keyword: "int" [152:13 - 152:16] ObjCPropertyDecl=extensionProperty:152:17
+// CHECK-PROP: Identifier: "extensionProperty" [152:17 - 152:34] ObjCPropertyDecl=extensionProperty:152:17

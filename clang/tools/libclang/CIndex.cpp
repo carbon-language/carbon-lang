@@ -5179,6 +5179,11 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
           HasContextSensitiveKeywords = true;
     }
   }
+
+  // Don't override a property annotation with its getter/setter method.
+  if (cursor.kind == CXCursor_ObjCInstanceMethodDecl &&
+      parent.kind == CXCursor_ObjCPropertyDecl)
+    return CXChildVisit_Continue;
   
   if (clang_isPreprocessing(cursor.kind)) {    
     // Items in the preprocessing record are kept separate from items in
