@@ -346,22 +346,57 @@ public:
   unsigned int convertToHexString(char *dst, unsigned int hexDigits,
                                   bool upperCase, roundingMode) const;
 
+  /// \name IEEE-754R 5.7.2 General operations.
+  /// @{
+
+  /// IEEE-754R isSignMinus: Returns true if and only if the current value is
+  /// negative.
+  ///
+  /// This applies to zeros and NaNs as well.
+  bool isNegative() const { return sign; }
+
+  /// IEEE-754R isNormal: Returns true if and only if the current value is normal.
+  ///
+  /// This implies that the current value of the float is not zero, subnormal,
+  /// infinite, or NaN following the definition of normality from IEEE-754R.
+  ///
+  /// The current implementation of isNormal() differs from this by treating
+  /// subnormal values as normal values.
+  bool isIEEENormal() const { return !isDenormal() && isNormal(); }
+
+  /// Returns true if and only if the current value is zero, subnormal, or
+  /// normal.
+  ///
+  /// This means that the value is not infinite or NaN.
+  bool isFinite() const { return !isNaN() && !isInfinity(); }
+
+  /// Returns true if and only if the float is plus or minus zero.
+  bool isZero() const { return category == fcZero; }
+
+  /// IEEE-754R isSubnormal(): Returns true if and only if the float is a
+  /// denormal.
+  bool isDenormal() const;
+
+  /// IEEE-754R isInfinite(): Returns true if and only if the float is infinity.
+  bool isInfinity() const { return category == fcInfinity; }
+
+  /// Returns true if and only if the float is a quiet or signaling NaN.
+  bool isNaN() const { return category == fcNaN; }
+
+  /// Returns true if and only if the float is a signaling NaN.
+  bool isSignaling() const;
+
+  /// @}
+
   /// \name Simple Queries
   /// @{
 
   fltCategory getCategory() const { return category; }
   const fltSemantics &getSemantics() const { return *semantics; }
-  bool isZero() const { return category == fcZero; }
   bool isNonZero() const { return category != fcZero; }
   bool isNormal() const { return category == fcNormal; }
-  bool isNaN() const { return category == fcNaN; }
-  bool isInfinity() const { return category == fcInfinity; }
-  bool isNegative() const { return sign; }
   bool isPosZero() const { return isZero() && !isNegative(); }
   bool isNegZero() const { return isZero() && isNegative(); }
-  bool isDenormal() const;
-  /// IEEE-754R 5.7.2: isSignaling. Returns true if this is a signaling NaN.
-  bool isSignaling() const;
 
   /// @}
 

@@ -1397,4 +1397,65 @@ TEST(APFloatTest, PPCDoubleDouble) {
   EXPECT_EQ(0x0000000000000000ull, test.bitcastToAPInt().getRawData()[1]);
 #endif
 }
+
+TEST(APFloatTest, isNegative) {
+  APFloat t(APFloat::IEEEsingle, "0x1p+0");
+  EXPECT_FALSE(t.isNegative());
+  t = APFloat(APFloat::IEEEsingle, "-0x1p+0");
+  EXPECT_TRUE(t.isNegative());
+  
+  EXPECT_FALSE(APFloat::getInf(APFloat::IEEEsingle, false).isNegative());
+  EXPECT_TRUE(APFloat::getInf(APFloat::IEEEsingle, true).isNegative());
+  
+  EXPECT_FALSE(APFloat::getZero(APFloat::IEEEsingle, false).isNegative());
+  EXPECT_TRUE(APFloat::getZero(APFloat::IEEEsingle, true).isNegative());
+
+  EXPECT_FALSE(APFloat::getNaN(APFloat::IEEEsingle, false).isNegative());
+  EXPECT_TRUE(APFloat::getNaN(APFloat::IEEEsingle, true).isNegative());
+
+  EXPECT_FALSE(APFloat::getSNaN(APFloat::IEEEsingle, false).isNegative());
+  EXPECT_TRUE(APFloat::getSNaN(APFloat::IEEEsingle, true).isNegative());
+}
+
+TEST(APFloatTest, isIEEENormal) {
+  APFloat t(APFloat::IEEEsingle, "0x1p+0");
+  EXPECT_TRUE(t.isIEEENormal());
+  
+  EXPECT_FALSE(APFloat::getInf(APFloat::IEEEsingle, false).isIEEENormal());
+  EXPECT_FALSE(APFloat::getZero(APFloat::IEEEsingle, false).isIEEENormal());
+  EXPECT_FALSE(APFloat::getNaN(APFloat::IEEEsingle, false).isIEEENormal());
+  EXPECT_FALSE(APFloat::getSNaN(APFloat::IEEEsingle, false).isIEEENormal());  
+  EXPECT_FALSE(APFloat(APFloat::IEEEsingle, "0x1p-159").isIEEENormal());
+}
+
+TEST(APFloatTest, isFinite) {
+  APFloat t(APFloat::IEEEsingle, "0x1p+0");
+  EXPECT_TRUE(t.isFinite());  
+  EXPECT_FALSE(APFloat::getInf(APFloat::IEEEsingle, false).isFinite());
+  EXPECT_TRUE(APFloat::getZero(APFloat::IEEEsingle, false).isFinite());
+  EXPECT_FALSE(APFloat::getNaN(APFloat::IEEEsingle, false).isFinite());
+  EXPECT_FALSE(APFloat::getSNaN(APFloat::IEEEsingle, false).isFinite());  
+  EXPECT_TRUE(APFloat(APFloat::IEEEsingle, "0x1p-159").isFinite());  
+}
+
+TEST(APFloatTest, isInfinity) {
+  APFloat t(APFloat::IEEEsingle, "0x1p+0");
+  EXPECT_FALSE(t.isInfinity());
+  EXPECT_TRUE(APFloat::getInf(APFloat::IEEEsingle, false).isInfinity());
+  EXPECT_FALSE(APFloat::getZero(APFloat::IEEEsingle, false).isInfinity());
+  EXPECT_FALSE(APFloat::getNaN(APFloat::IEEEsingle, false).isInfinity());
+  EXPECT_FALSE(APFloat::getSNaN(APFloat::IEEEsingle, false).isInfinity());  
+  EXPECT_FALSE(APFloat(APFloat::IEEEsingle, "0x1p-159").isInfinity());
+}
+
+TEST(APFloatTest, isNaN) {
+  APFloat t(APFloat::IEEEsingle, "0x1p+0");
+  EXPECT_FALSE(t.isNaN());  
+  EXPECT_FALSE(APFloat::getInf(APFloat::IEEEsingle, false).isNaN());
+  EXPECT_FALSE(APFloat::getZero(APFloat::IEEEsingle, false).isNaN());
+  EXPECT_TRUE(APFloat::getNaN(APFloat::IEEEsingle, false).isNaN());
+  EXPECT_TRUE(APFloat::getSNaN(APFloat::IEEEsingle, false).isNaN());  
+  EXPECT_FALSE(APFloat(APFloat::IEEEsingle, "0x1p-159").isNaN());
+}
+
 }
