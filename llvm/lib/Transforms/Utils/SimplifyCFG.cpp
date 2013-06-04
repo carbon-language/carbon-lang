@@ -1537,18 +1537,23 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB) {
     Value *OrigV = PN->getIncomingValueForBlock(BB);
     Value *ThenV = PN->getIncomingValueForBlock(ThenBB);
 
+    // FIXME: Try to remove some of the duplication with HoistThenElseCodeToIf.
     // Skip PHIs which are trivial.
     if (ThenV == OrigV)
       continue;
 
     HaveRewritablePHIs = true;
-    ConstantExpr *CE = dyn_cast<ConstantExpr>(ThenV);
-    if (!CE)
+    ConstantExpr *OrigCE = dyn_cast<ConstantExpr>(OrigV);
+    ConstantExpr *ThenCE = dyn_cast<ConstantExpr>(ThenV);
+    if (!OrigCE && !ThenCE)
       continue; // Known safe and cheap.
 
-    if (!isSafeToSpeculativelyExecute(CE))
+    if ((ThenCE && !isSafeToSpeculativelyExecute(ThenCE)) ||
+        (OrigCE && !isSafeToSpeculativelyExecute(OrigCE)))
       return false;
-    if (ComputeSpeculationCost(CE) > PHINodeFoldingThreshold)
+    unsigned OrigCost = OrigCE ? ComputeSpeculationCost(OrigCE) : 0;
+    unsigned ThenCost = ThenCE ? ComputeSpeculationCost(ThenCE) : 0;
+    if (OrigCost + ThenCost > 2 * PHINodeFoldingThreshold)
       return false;
 
     // Account for the cost of an unfolded ConstantExpr which could end up
