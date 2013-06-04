@@ -2493,4 +2493,11 @@ def : SchedAlias<ReadALUsr, A9ReadALU>;
 def : SchedAlias<WriteCMP, A9WriteALU>;
 def : SchedAlias<WriteCMPsi, A9WriteALU>;
 def : SchedAlias<WriteCMPsr, A9WriteALU>;
+def : WriteRes<WriteDiv, []> { let Latency = 0; }
+
+def : WriteRes<WriteBr, [A9UnitB]>;
+def : WriteRes<WriteBrL, [A9UnitB]>;
+def : WriteRes<WriteBrTbl, [A9UnitB]>;
+def : WriteRes<WritePreLd, []>;
+def : SchedAlias<WriteCvtFP, A9WriteF>;
 } // SchedModel = CortexA9Model
