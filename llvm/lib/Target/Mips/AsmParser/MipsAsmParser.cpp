@@ -1460,7 +1460,7 @@ MCSymbolRefExpr::VariantKind MipsAsmParser::getVariantKind(StringRef Symbol) {
 
   return VK;
 }
-
+// Converts condition string to immediate operand value.
 static int ConvertCcString(StringRef CondString) {
   int CC = StringSwitch<unsigned>(CondString)
     .Case(".f",    0)
