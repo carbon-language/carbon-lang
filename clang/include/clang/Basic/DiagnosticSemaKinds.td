@@ -5496,8 +5496,8 @@ let CategoryName = "Inline Assembly Issue" in {
     "accepted due to -fheinous-gnu-extensions, but clang may remove support "
     "for this in the future">;
   def warn_asm_mismatched_size_modifier : Warning<
-    "the value is truncated when put into register, "
-    "use a modifier to specify the size">,
+    "value size does not match register size specified by the constraint "
+    "and modifier">,
     InGroup<ASMOperandWidths>;
 }
 
