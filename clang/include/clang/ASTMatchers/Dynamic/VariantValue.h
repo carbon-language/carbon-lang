@@ -37,6 +37,7 @@ using ast_matchers::internal::DynTypedMatcher;
 /// copy/assignment.
 ///
 /// Supported types:
+///  - \c unsigned
 ///  - \c std::string
 ///  - \c DynTypedMatcher, and any \c Matcher<T>
 class VariantValue {
@@ -48,8 +49,14 @@ public:
   VariantValue &operator=(const VariantValue &Other);
 
   /// \brief Specific constructors for each supported type.
+  VariantValue(unsigned Unsigned);
   VariantValue(const std::string &String);
   VariantValue(const DynTypedMatcher &Matcher);
+
+  /// \brief Unsigned value functions.
+  bool isUnsigned() const;
+  unsigned getUnsigned() const;
+  void setUnsigned(unsigned Unsigned);
 
   /// \brief String value functions.
   bool isString() const;
@@ -104,12 +111,14 @@ private:
   /// \brief All supported value types.
   enum ValueType {
     VT_Nothing,
+    VT_Unsigned,
     VT_String,
     VT_Matcher
   };
 
   /// \brief All supported value types.
   union AllValues {
+    unsigned Unsigned;
     std::string *String;
     DynTypedMatcher *Matcher;
   };

@@ -69,7 +69,8 @@ class Diagnostics {
     ET_ParserNotAMatcher = 107,
     ET_ParserInvalidToken = 108,
     ET_ParserMalformedBindExpr = 109,
-    ET_ParserTrailingCode = 110
+    ET_ParserTrailingCode = 110,
+    ET_ParserUnsignedError = 111
   };
 
   /// \brief Helper stream class.

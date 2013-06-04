@@ -55,7 +55,13 @@ template <class T> struct ArgTypeTraits<ast_matchers::internal::Matcher<T> > {
   static ast_matchers::internal::Matcher<T> get(const VariantValue &Value) {
     return Value.getTypedMatcher<T>();
   }
+};
 
+template <> struct ArgTypeTraits<unsigned> {
+  static bool is(const VariantValue &Value) { return Value.isUnsigned(); }
+  static unsigned get(const VariantValue &Value) {
+    return Value.getUnsigned();
+  }
 };
 
 /// \brief Generic MatcherCreate interface.
@@ -116,15 +122,6 @@ createMarshallerCallback(MarshallerType Marshaller, FuncType Func,
     return NULL;                                                               \
   }
 
-/// \brief Metafunction to normalize argument types.
-///
-/// We need to remove the const& out of the function parameters to be able to
-/// find values on VariantValue.
-template <typename T>
-struct remove_const_ref :
-    public llvm::remove_const<typename llvm::remove_reference<T>::type> {
-};
-
 /// \brief 0-arg marshaller function.
 template <typename ReturnType>
 DynTypedMatcher *matcherMarshall0(ReturnType (*Func)(), StringRef MatcherName,
@@ -136,16 +133,29 @@ DynTypedMatcher *matcherMarshall0(ReturnType (*Func)(), StringRef MatcherName,
 }
 
 /// \brief 1-arg marshaller function.
-template <typename ReturnType, typename InArgType1>
-DynTypedMatcher *matcherMarshall1(ReturnType (*Func)(InArgType1),
+template <typename ReturnType, typename ArgType1>
+DynTypedMatcher *matcherMarshall1(ReturnType (*Func)(ArgType1),
                                   StringRef MatcherName,
                                   const SourceRange &NameRange,
                                   ArrayRef<ParserValue> Args,
                                   Diagnostics *Error) {
-  typedef typename remove_const_ref<InArgType1>::type ArgType1;
   CHECK_ARG_COUNT(1);
   CHECK_ARG_TYPE(0, ArgType1);
   return Func(ArgTypeTraits<ArgType1>::get(Args[0].Value)).clone();
+}
+
+/// \brief 2-arg marshaller function.
+template <typename ReturnType, typename ArgType1, typename ArgType2>
+DynTypedMatcher *matcherMarshall2(ReturnType (*Func)(ArgType1, ArgType2),
+                                  StringRef MatcherName,
+                                  const SourceRange &NameRange,
+                                  ArrayRef<ParserValue> Args,
+                                  Diagnostics *Error) {
+  CHECK_ARG_COUNT(2);
+  CHECK_ARG_TYPE(0, ArgType1);
+  CHECK_ARG_TYPE(1, ArgType2);
+  return Func(ArgTypeTraits<ArgType1>::get(Args[0].Value),
+              ArgTypeTraits<ArgType2>::get(Args[1].Value)).clone();
 }
 
 /// \brief Variadic marshaller function.
@@ -195,6 +205,15 @@ MatcherCreateCallback *makeMatcherAutoMarshall(ReturnType (*Func)(ArgType1),
                                                StringRef MatcherName) {
   return createMarshallerCallback(matcherMarshall1<ReturnType, ArgType1>, Func,
                                   MatcherName);
+}
+
+/// \brief 2-arg overload
+template <typename ReturnType, typename ArgType1, typename ArgType2>
+MatcherCreateCallback *makeMatcherAutoMarshall(ReturnType (*Func)(ArgType1,
+                                                                  ArgType2),
+                                               StringRef MatcherName) {
+  return createMarshallerCallback(
+      matcherMarshall2<ReturnType, ArgType1, ArgType2>, Func, MatcherName);
 }
 
 /// \brief Variadic overload.

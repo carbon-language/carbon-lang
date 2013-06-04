@@ -96,6 +96,21 @@ public:
   llvm::StringMap<uint64_t> ExpectedMatchers;
 };
 
+TEST(ParserTest, ParseUnsigned) {
+  MockSema Sema;
+  Sema.parse("0");
+  Sema.parse("123");
+  Sema.parse("0x1f");
+  Sema.parse("12345678901");
+  Sema.parse("1a1");
+  EXPECT_EQ(5U, Sema.Values.size());
+  EXPECT_EQ(0U, Sema.Values[0].getUnsigned());
+  EXPECT_EQ(123U, Sema.Values[1].getUnsigned());
+  EXPECT_EQ(31U, Sema.Values[2].getUnsigned());
+  EXPECT_EQ("1:1: Error parsing unsigned token: <12345678901>", Sema.Errors[3]);
+  EXPECT_EQ("1:1: Error parsing unsigned token: <1a1>", Sema.Errors[4]);
+}
+
 TEST(ParserTest, ParseString) {
   MockSema Sema;
   Sema.parse("\"Foo\"");
@@ -122,7 +137,7 @@ TEST(ParserTest, ParseMatcher) {
   const uint64_t ExpectedFoo = Sema.expectMatcher("Foo");
   const uint64_t ExpectedBar = Sema.expectMatcher("Bar");
   const uint64_t ExpectedBaz = Sema.expectMatcher("Baz");
-  Sema.parse(" Foo ( Bar (), Baz( \n \"B A,Z\") ) .bind( \"Yo!\") ");
+  Sema.parse(" Foo ( Bar ( 17), Baz( \n \"B A,Z\") ) .bind( \"Yo!\") ");
   for (size_t i = 0, e = Sema.Errors.size(); i != e; ++i) {
     EXPECT_EQ("", Sema.Errors[i]);
   }
@@ -135,12 +150,13 @@ TEST(ParserTest, ParseMatcher) {
   EXPECT_EQ(3ULL, Sema.Matchers.size());
   const MockSema::MatcherInfo Bar = Sema.Matchers[0];
   EXPECT_EQ("Bar", Bar.MatcherName);
-  EXPECT_TRUE(matchesRange(Bar.NameRange, 1, 1, 8, 14));
-  EXPECT_EQ(0ULL, Bar.Args.size());
+  EXPECT_TRUE(matchesRange(Bar.NameRange, 1, 1, 8, 17));
+  EXPECT_EQ(1ULL, Bar.Args.size());
+  EXPECT_EQ(17U, Bar.Args[0].Value.getUnsigned());
 
   const MockSema::MatcherInfo Baz = Sema.Matchers[1];
   EXPECT_EQ("Baz", Baz.MatcherName);
-  EXPECT_TRUE(matchesRange(Baz.NameRange, 1, 2, 16, 10));
+  EXPECT_TRUE(matchesRange(Baz.NameRange, 1, 2, 19, 10));
   EXPECT_EQ(1ULL, Baz.Args.size());
   EXPECT_EQ("B A,Z", Baz.Args[0].Value.getString());
 
@@ -160,6 +176,11 @@ TEST(ParserTest, FullParserTest) {
       "hasInitializer(binaryOperator(hasLHS(integerLiteral())))", NULL));
   EXPECT_TRUE(matchesDynamic("int x = 1 + false;", *Matcher));
   EXPECT_FALSE(matchesDynamic("int x = true + 1;", *Matcher));
+
+  Matcher.reset(
+      Parser::parseMatcherExpression("hasParameter(1, hasName(\"x\"))", NULL));
+  EXPECT_TRUE(matchesDynamic("void f(int a, int x);", *Matcher));
+  EXPECT_FALSE(matchesDynamic("void f(int x, int a);", *Matcher));
 
   Diagnostics Error;
   EXPECT_TRUE(Parser::parseMatcherExpression(

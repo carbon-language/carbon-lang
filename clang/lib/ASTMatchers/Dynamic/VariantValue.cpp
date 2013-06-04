@@ -22,12 +22,16 @@ VariantValue::VariantValue(const VariantValue &Other) : Type(VT_Nothing) {
   *this = Other;
 }
 
-VariantValue::VariantValue(const DynTypedMatcher &Matcher) : Type(VT_Nothing) {
-  setMatcher(Matcher);
+VariantValue::VariantValue(unsigned Unsigned) : Type(VT_Nothing) {
+  setUnsigned(Unsigned);
 }
 
 VariantValue::VariantValue(const std::string &String) : Type(VT_Nothing) {
   setString(String);
+}
+
+VariantValue::VariantValue(const DynTypedMatcher &Matcher) : Type(VT_Nothing) {
+  setMatcher(Matcher);
 }
 
 VariantValue::~VariantValue() { reset(); }
@@ -36,6 +40,9 @@ VariantValue &VariantValue::operator=(const VariantValue &Other) {
   if (this == &Other) return *this;
   reset();
   switch (Other.Type) {
+  case VT_Unsigned:
+    setUnsigned(Other.getUnsigned());
+    break;
   case VT_String:
     setString(Other.getString());
     break;
@@ -58,10 +65,26 @@ void VariantValue::reset() {
     delete Value.Matcher;
     break;
   // Cases that do nothing.
+  case VT_Unsigned:
   case VT_Nothing:
     break;
   }
   Type = VT_Nothing;
+}
+
+bool VariantValue::isUnsigned() const {
+  return Type == VT_Unsigned;
+}
+
+unsigned VariantValue::getUnsigned() const {
+  assert(isUnsigned());
+  return Value.Unsigned;
+}
+
+void VariantValue::setUnsigned(unsigned NewValue) {
+  reset();
+  Type = VT_Unsigned;
+  Value.Unsigned = NewValue;
 }
 
 bool VariantValue::isString() const {

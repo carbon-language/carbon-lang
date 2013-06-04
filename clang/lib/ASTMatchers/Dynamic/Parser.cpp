@@ -112,6 +112,12 @@ private:
       consumeStringLiteral(&Result);
       break;
 
+    case '0': case '1': case '2': case '3': case '4':
+    case '5': case '6': case '7': case '8': case '9':
+      // Parse an unsigned literal.
+      consumeUnsignedLiteral(&Result);
+      break;
+
     default:
       if (isAlphanumeric(Code[0])) {
         // Parse an identifier
@@ -131,6 +137,35 @@ private:
 
     Result.Range.End = currentLocation();
     return Result;
+  }
+
+  /// \brief Consume an unsigned literal.
+  void consumeUnsignedLiteral(TokenInfo *Result) {
+    unsigned Length = 1;
+    if (Code.size() > 1) {
+      // Consume the 'x' or 'b' radix modifier, if present.
+      switch (toLowercase(Code[1])) {
+      case 'x': case 'b': Length = 2;
+      }
+    }
+    while (Length < Code.size() && isHexDigit(Code[Length]))
+      ++Length;
+
+    Result->Text = Code.substr(0, Length);
+    Code = Code.drop_front(Length);
+
+    unsigned Value;
+    if (!Result->Text.getAsInteger(0, Value)) {
+      Result->Kind = TokenInfo::TK_Literal;
+      Result->Value = Value;
+    } else {
+      SourceRange Range;
+      Range.Start = Result->Range.Start;
+      Range.End = currentLocation();
+      Error->pushErrorFrame(Range, Error->ET_ParserUnsignedError)
+          << Result->Text;
+      Result->Kind = TokenInfo::TK_Error;
+    }
   }
 
   /// \brief Consume a string literal.

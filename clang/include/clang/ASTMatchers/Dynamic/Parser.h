@@ -18,8 +18,10 @@
 ///
 /// \code
 /// Grammar for the expressions supported:
-/// <Expression>        := <StringLiteral> | <MatcherExpression>
+/// <Expression>        := <Literal> | <MatcherExpression>
+/// <Literal>           := <StringLiteral> | <Unsigned>
 /// <StringLiteral>     := "quoted string"
+/// <Unsigned>          := [0-9]+
 /// <MatcherExpression> := <MatcherName>(<ArgumentList>) |
 ///                        <MatcherName>(<ArgumentList>).bind(<StringLiteral>)
 /// <MatcherName>       := [a-zA-Z]+

@@ -63,6 +63,10 @@ TEST(RegistryTest, ConstructWithSimpleArgs) {
       constructMatcher("hasName", std::string("X"), NULL));
   EXPECT_TRUE(matchesDynamic("class X {};", *Value));
   EXPECT_FALSE(matchesDynamic("int x;", *Value));
+
+  Value.reset(constructMatcher("parameterCountIs", 2, NULL));
+  EXPECT_TRUE(matchesDynamic("void foo(int,int);", *Value));
+  EXPECT_FALSE(matchesDynamic("void foo(int);", *Value));
 }
 
 TEST(RegistryTest, ConstructWithMatcherArgs) {
@@ -82,6 +86,11 @@ TEST(RegistryTest, ConstructWithMatcherArgs) {
   code = "int y(); int i = y();";
   EXPECT_TRUE(matchesDynamic(code, *HasInitializerSimple));
   EXPECT_TRUE(matchesDynamic(code, *HasInitializerComplex));
+
+  OwningPtr<DynTypedMatcher> HasParameter(
+      constructMatcher("hasParameter", 1, hasName("x"), NULL));
+  EXPECT_TRUE(matchesDynamic("void f(int a, int x);", *HasParameter));
+  EXPECT_FALSE(matchesDynamic("void f(int x, int a);", *HasParameter));
 }
 
 TEST(RegistryTest, Errors) {
