@@ -395,7 +395,7 @@ def tADDspr : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, GPR:$Rm), IIC_iALUr,
 // Indirect branches
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   def tBX : TI<(outs), (ins GPR:$Rm, pred:$p), IIC_Br, "bx${p}\t$Rm", []>,
-            T1Special<{1,1,0,?}> {
+            T1Special<{1,1,0,?}>, Sched<[WriteBr]> {
     // A6.2.3 & A8.6.25
     bits<4> Rm;
     let Inst{6-3} = Rm;
@@ -406,12 +406,12 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
 
 let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
   def tBX_RET : tPseudoExpand<(outs), (ins pred:$p), 2, IIC_Br,
-                   [(ARMretflag)], (tBX LR, pred:$p)>;
+                   [(ARMretflag)], (tBX LR, pred:$p)>, Sched<[WriteBr]>;
 
   // Alternative return instruction used by vararg functions.
   def tBX_RET_vararg : tPseudoExpand<(outs), (ins tGPR:$Rm, pred:$p),
                    2, IIC_Br, [],
-                   (tBX GPR:$Rm, pred:$p)>;
+                   (tBX GPR:$Rm, pred:$p)>, Sched<[WriteBr]>;
 }
 
 // All calls clobber the non-callee saved registers. SP is marked as a use to
@@ -424,7 +424,7 @@ let isCall = 1,
                   (outs), (ins pred:$p, t_bltarget:$func), IIC_Br,
                   "bl${p}\t$func",
                   [(ARMtcall tglobaladdr:$func)]>,
-             Requires<[IsThumb]> {
+             Requires<[IsThumb]>, Sched<[WriteBrL]> {
     bits<24> func;
     let Inst{26} = func{23};
     let Inst{25-16} = func{20-11};
@@ -438,7 +438,7 @@ let isCall = 1,
                  (outs), (ins pred:$p, t_blxtarget:$func), IIC_Br,
                    "blx${p}\t$func",
                    [(ARMcall tglobaladdr:$func)]>,
-              Requires<[IsThumb, HasV5T]> {
+              Requires<[IsThumb, HasV5T]>, Sched<[WriteBrL]> {
     bits<24> func;
     let Inst{26} = func{23};
     let Inst{25-16} = func{20-11};
@@ -453,7 +453,7 @@ let isCall = 1,
                   "blx${p}\t$func",
                   [(ARMtcall GPR:$func)]>,
               Requires<[IsThumb, HasV5T]>,
-              T1Special<{1,1,1,?}> { // A6.2.3 & A8.6.24;
+              T1Special<{1,1,1,?}>, Sched<[WriteBrL]> { // A6.2.3 & A8.6.24;
     bits<4> func;
     let Inst{6-3} = func;
     let Inst{2-0} = 0b000;
@@ -463,14 +463,14 @@ let isCall = 1,
   def tBX_CALL : tPseudoInst<(outs), (ins tGPR:$func),
                   4, IIC_Br,
                   [(ARMcall_nolink tGPR:$func)]>,
-            Requires<[IsThumb, IsThumb1Only]>;
+            Requires<[IsThumb, IsThumb1Only]>, Sched<[WriteBr]>;
 }
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
   let isPredicable = 1 in
   def tB   : T1pI<(outs), (ins t_brtarget:$target), IIC_Br,
                  "b", "\t$target", [(br bb:$target)]>,
-             T1Encoding<{1,1,1,0,0,?}> {
+             T1Encoding<{1,1,1,0,0,?}>, Sched<[WriteBr]> {
     bits<11> target;
     let Inst{10-0} = target;
   }
@@ -480,12 +480,14 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
   // the clobber of LR.
   let Defs = [LR] in
   def tBfar : tPseudoExpand<(outs), (ins t_bltarget:$target, pred:$p),
-                          4, IIC_Br, [], (tBL pred:$p, t_bltarget:$target)>;
+                          4, IIC_Br, [], (tBL pred:$p, t_bltarget:$target)>,
+                          Sched<[WriteBrTbl]>;
 
   def tBR_JTr : tPseudoInst<(outs),
                       (ins tGPR:$target, i32imm:$jt, i32imm:$id),
                       0, IIC_Br,
-                      [(ARMbrjt tGPR:$target, tjumptable:$jt, imm:$id)]> {
+                      [(ARMbrjt tGPR:$target, tjumptable:$jt, imm:$id)]>,
+                      Sched<[WriteBrTbl]> {
     list<Predicate> Predicates = [IsThumb, IsThumb1Only];
   }
 }
@@ -496,7 +498,7 @@ let isBranch = 1, isTerminator = 1 in
   def tBcc : T1I<(outs), (ins t_bcctarget:$target, pred:$p), IIC_Br,
                  "b${p}\t$target",
                  [/*(ARMbrcond bb:$target, imm:$cc)*/]>,
-             T1BranchCond<{1,1,0,1}> {
+             T1BranchCond<{1,1,0,1}>, Sched<[WriteBr]> {
   bits<4> p;
   bits<8> target;
   let Inst{11-8} = p;
@@ -510,7 +512,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
     def tTAILJMPr : tPseudoExpand<(outs), (ins tcGPR:$dst),
                      4, IIC_Br, [],
                      (tBX GPR:$dst, (ops 14, zero_reg))>,
-                     Requires<[IsThumb]>;
+                     Requires<[IsThumb]>, Sched<[WriteBr]>;
   }
   // tTAILJMPd: IOS version uses a Thumb2 branch (no Thumb1 tail calls
   // on IOS), so it's in ARMInstrThumb2.td.
@@ -520,7 +522,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
                    (ins t_brtarget:$dst, pred:$p),
                    4, IIC_Br, [],
                    (tB t_brtarget:$dst, pred:$p)>,
-                 Requires<[IsThumb, IsNotIOS]>;
+                 Requires<[IsThumb, IsNotIOS]>, Sched<[WriteBr]>;
   }
 }
 
@@ -530,7 +532,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
 // If Inst{11-8} == 0b1111 then SEE SVC
 let isCall = 1, Uses = [SP] in
 def tSVC : T1pI<(outs), (ins imm0_255:$imm), IIC_Br,
-                "svc", "\t$imm", []>, Encoding16 {
+                "svc", "\t$imm", []>, Encoding16, Sched<[WriteBr]> {
   bits<8> imm;
   let Inst{15-12} = 0b1101;
   let Inst{11-8}  = 0b1111;
@@ -540,7 +542,7 @@ def tSVC : T1pI<(outs), (ins imm0_255:$imm), IIC_Br,
 // The assembler uses 0xDEFE for a trap instruction.
 let isBarrier = 1, isTerminator = 1 in
 def tTRAP : TI<(outs), (ins), IIC_Br,
-               "trap", [(trap)]>, Encoding16 {
+               "trap", [(trap)]>, Encoding16, Sched<[WriteBr]> {
   let Inst = 0xdefe;
 }
 
@@ -1230,7 +1232,8 @@ def tLEApcrelJT : tPseudoInst<(outs tGPR:$Rd),
 // complete with fixup for the aeabi_read_tp function.
 let isCall = 1, Defs = [R0, R12, LR, CPSR], Uses = [SP] in
 def tTPsoft : tPseudoInst<(outs), (ins), 4, IIC_Br,
-                          [(set R0, ARMthread_pointer)]>;
+                          [(set R0, ARMthread_pointer)]>,
+                          Sched<[WriteBr]>;
 
 //===----------------------------------------------------------------------===//
 // SJLJ Exception handling intrinsics
@@ -1396,13 +1399,13 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1 in
 def tPOP_RET : tPseudoExpand<(outs), (ins pred:$p, reglist:$regs, variable_ops),
                            2, IIC_iPop_Br, [],
-                           (tPOP pred:$p, reglist:$regs)>;
+                           (tPOP pred:$p, reglist:$regs)>, Sched<[WriteBrL]>;
 
 // Indirect branch using "mov pc, $Rm"
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   def tBRIND : tPseudoExpand<(outs), (ins GPR:$Rm, pred:$p),
                   2, IIC_Br, [(brind GPR:$Rm)],
-                  (tMOVr PC, GPR:$Rm, pred:$p)>;
+                  (tMOVr PC, GPR:$Rm, pred:$p)>, Sched<[WriteBr]>;
 }
 
 
