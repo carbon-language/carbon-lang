@@ -677,7 +677,7 @@ IRMemoryMap::ReadScalarFromMemory (Scalar &scalar, lldb::addr_t process_address,
         {
         default:
             error.SetErrorToGenericError();
-            error.SetErrorStringWithFormat("Couldn't read scalar: unsupported size %" PRId64, size);
+            error.SetErrorStringWithFormat("Couldn't read scalar: unsupported size %" PRIu64, (uint64_t)size);
             return;
         case 1: scalar = extractor.GetU8(&offset);  break;
         case 2: scalar = extractor.GetU16(&offset); break;
