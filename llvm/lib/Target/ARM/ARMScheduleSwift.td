@@ -2042,6 +2042,22 @@ let SchedModel = SwiftModel in {
         (instregex "VST4LN(d|q)(8|16|32)_UPD",
                    "VST4LN(d|q)(8|16|32)Pseudo_UPD")>;
 
+  // 4.2.44 VFP, Divide and Square Root
+  def SwiftDiv17 : SchedWriteRes<[SwiftUnitP0, SwiftUnitDiv]> {
+    let NumMicroOps = 1;
+    let Latency = 17;
+    let ResourceCycles = [1, 15];
+  }
+  def SwiftDiv32 : SchedWriteRes<[SwiftUnitP0, SwiftUnitDiv]> {
+    let NumMicroOps = 1;
+    let Latency = 32;
+    let ResourceCycles = [1, 30];
+  }
+  def : InstRW<[SwiftDiv17], (instregex "VDIVS", "VSQRTS")>;
+  def : InstRW<[SwiftDiv32], (instregex "VDIVD", "VSQRTD")>;
+
+  // Not specified.
+  def : InstRW<[SwiftWriteP01OneCycle2x], (instregex "ABS")>;
   // Preload.
   def : WriteRes<WritePreLd, [SwiftUnitP2]> { let Latency = 0;
     let ResourceCycles = [0];
