@@ -532,7 +532,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
         // and varies predictably *inside* the loop.  Evaluate the value it
         // contains when the loop exits, if possible.
         const SCEV *ExitValue = SE->getSCEVAtScope(Inst, L->getParentLoop());
-        if (!SE->isLoopInvariant(ExitValue, L))
+        if (!SE->isLoopInvariant(ExitValue, L) || !isSafeToExpand(ExitValue))
           continue;
 
         // Computing the value outside of the loop brings no benefit if :
