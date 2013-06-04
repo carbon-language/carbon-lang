@@ -753,6 +753,7 @@ initializeFunctionInfo(const std::vector<MachineInstr*> &CPEMIs) {
             Scale = 4;
             break;
 
+          case ARM::LDRBi12:
           case ARM::LDRi12:
           case ARM::LDRcp:
           case ARM::t2LDRpci:
