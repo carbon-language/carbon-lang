@@ -991,6 +991,28 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
     Cond.clear();
     MachineBasicBlock *TBB = 0, *FBB = 0; // For AnalyzeBranch.
     if (!TII->AnalyzeBranch(*PrevBB, TBB, FBB, Cond)) {
+      // The "PrevBB" is not yet updated to reflect current code layout, so,
+      //   o. it may fall-through to a block without explict "goto" instruction
+      //      before layout, and no longer fall-through it after layout; or 
+      //   o. just opposite.
+      // 
+      // AnalyzeBranch() may return erroneous value for FBB when these two
+      // situations take place. For the first scenario FBB is mistakenly set
+      // NULL; for the 2nd scenario, the FBB, which is expected to be NULL,
+      // is mistakenly pointing to "*BI".
+      //
+      bool needUpdateBr = true;
+      if (!Cond.empty() && (!FBB || FBB == *BI)) {
+        PrevBB->updateTerminator();
+        needUpdateBr = false;
+        Cond.clear();
+        TBB = FBB = 0;
+        if (TII->AnalyzeBranch(*PrevBB, TBB, FBB, Cond)) {
+          // FIXME: This should never take place.
+          TBB = FBB = 0;
+        }
+      }
+
       // If PrevBB has a two-way branch, try to re-order the branches
       // such that we branch to the successor with higher weight first.
       if (TBB && !Cond.empty() && FBB &&
@@ -1003,8 +1025,10 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
         DebugLoc dl;  // FIXME: this is nowhere
         TII->RemoveBranch(*PrevBB);
         TII->InsertBranch(*PrevBB, FBB, TBB, Cond, dl);
+        needUpdateBr = true;
       }
-      PrevBB->updateTerminator();
+      if (needUpdateBr)
+        PrevBB->updateTerminator();
     }
   }
 
