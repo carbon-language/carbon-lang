@@ -3,7 +3,9 @@
 ; RUN: llc < %s -march=thumb -mcpu=cortex-m3 -mattr=+thumb2 \
 ; RUN:    | FileCheck %s -check-prefix=CHECK-THUMBV7M
 ; RUN: llc < %s -march=thumb -mcpu=swift \
-; RUN:    | FileCheck %s -check-prefix=CHECK-SWIFT-T2
+; RUN:    | FileCheck %s -check-prefix=CHECK-HWDIV
+; RUN: llc < %s -march=thumb -mcpu=cortex-r5 \
+; RUN:    | FileCheck %s -check-prefix=CHECK-HWDIV
 
 define i32 @f1(i32 %a, i32 %b) {
 entry:
@@ -11,8 +13,8 @@ entry:
 ; CHECK-THUMB: __divsi3
 ; CHECK-THUMBV7M: f1
 ; CHECK-THUMBV7M: sdiv
-; CHECK-SWIFT-T2: f1
-; CHECK-SWIFT-T2: sdiv
+; CHECK-HWDIV: f1
+; CHECK-HWDIV: sdiv
         %tmp1 = sdiv i32 %a, %b         ; <i32> [#uses=1]
         ret i32 %tmp1
 }
@@ -23,8 +25,8 @@ entry:
 ; CHECK-THUMB: __udivsi3
 ; CHECK-THUMBV7M: f2
 ; CHECK-THUMBV7M: udiv
-; CHECK-SWIFT-T2: f2
-; CHECK-SWIFT-T2: udiv
+; CHECK-HWDIV: f2
+; CHECK-HWDIV: udiv
         %tmp1 = udiv i32 %a, %b         ; <i32> [#uses=1]
         ret i32 %tmp1
 }
@@ -35,8 +37,8 @@ entry:
 ; CHECK-THUMB: __modsi3
 ; CHECK-THUMBV7M: f3
 ; CHECK-THUMBV7M: sdiv
-; CHECK-SWIFT-T2: f3
-; CHECK-SWIFT-T2: sdiv
+; CHECK-HWDIV: f3
+; CHECK-HWDIV: sdiv
         %tmp1 = srem i32 %a, %b         ; <i32> [#uses=1]
         ret i32 %tmp1
 }
@@ -47,8 +49,8 @@ entry:
 ; CHECK-THUMB: __umodsi3
 ; CHECK-THUMBV7M: f4
 ; CHECK-THUMBV7M: udiv
-; CHECK-SWIFT-T2: f4
-; CHECK-SWIFT-T2: udiv
+; CHECK-HWDIV: f4
+; CHECK-HWDIV: udiv
         %tmp1 = urem i32 %a, %b         ; <i32> [#uses=1]
         ret i32 %tmp1
 }

@@ -177,7 +177,8 @@ def ProcA15      : SubtargetFeature<"a15", "ARMProcFamily", "CortexA15",
                                     FeatureTrustZone]>;
 def ProcR5      : SubtargetFeature<"r5", "ARMProcFamily", "CortexR5",
                                    "Cortex-R5 ARM processors",
-                                   [FeatureSlowFPBrcc, FeatureHWDivARM,
+                                   [FeatureSlowFPBrcc,
+                                    FeatureHWDiv, FeatureHWDivARM,
                                     FeatureHasSlowFPVMLx,
                                     FeatureAvoidPartialCPSR,
                                     FeatureT2XtPk]>;
