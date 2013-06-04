@@ -233,6 +233,18 @@ llvm::Value *MicrosoftCXXABI::adjustToCompleteObject(CodeGenFunction &CGF,
   return ptr;
 }
 
+/// \brief Finds the first non-virtual base of RD that has virtual bases.  If RD
+/// doesn't have a vbptr, it will reuse the vbptr of the returned class.
+static const CXXRecordDecl *FindFirstNVBaseWithVBases(const CXXRecordDecl *RD) {
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    const CXXRecordDecl *Base = I->getType()->getAsCXXRecordDecl();
+    if (!I->isVirtual() && Base->getNumVBases() > 0)
+      return Base;
+  }
+  llvm_unreachable("RD must have an nv base with vbases");
+}
+
 CharUnits MicrosoftCXXABI::GetVBPtrOffsetFromBases(const CXXRecordDecl *RD) {
   assert(RD->getNumVBases());
   CharUnits Total = CharUnits::Zero();
@@ -244,22 +256,28 @@ CharUnits MicrosoftCXXABI::GetVBPtrOffsetFromBases(const CXXRecordDecl *RD) {
       Total += VBPtrOffset;
       break;
     }
-
-    // RD is reusing the vbptr of a non-virtual base.  Find it and continue.
-    const CXXRecordDecl *FirstNVBaseWithVBases = 0;
-    for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-         E = RD->bases_end(); I != E; ++I) {
-      const CXXRecordDecl *Base = I->getType()->getAsCXXRecordDecl();
-      if (!I->isVirtual() && Base->getNumVBases() > 0) {
-        FirstNVBaseWithVBases = Base;
-        break;
-      }
-    }
-    assert(FirstNVBaseWithVBases);
-    Total += RDLayout.getBaseClassOffset(FirstNVBaseWithVBases);
-    RD = FirstNVBaseWithVBases;
+    RD = FindFirstNVBaseWithVBases(RD);
+    Total += RDLayout.getBaseClassOffset(RD);
   }
   return Total;
+}
+
+/// \brief Computes the index of BaseClassDecl in the vbtable of ClassDecl.
+/// BaseClassDecl must be a morally virtual base of ClassDecl.  The vbtable is
+/// an array of i32 offsets.  The first entry is a self entry, and the rest are
+/// offsets from the vbptr to virtual bases.  The bases are ordered the same way
+/// our vbases are ordered: as they appear in a left-to-right depth-first search
+/// of the hierarchy.
+static unsigned GetVBTableIndex(const CXXRecordDecl *ClassDecl,
+                                const CXXRecordDecl *BaseClassDecl) {
+  unsigned VBTableIndex = 1;  // Start with one to skip the self entry.
+  for (CXXRecordDecl::base_class_const_iterator I = ClassDecl->vbases_begin(),
+       E = ClassDecl->vbases_end(); I != E; ++I) {
+    if (I->getType()->getAsCXXRecordDecl() == BaseClassDecl)
+      return VBTableIndex;
+    VBTableIndex++;
+  }
+  llvm_unreachable("BaseClassDecl must be a vbase of ClassDecl");
 }
 
 llvm::Value *
@@ -269,22 +287,8 @@ MicrosoftCXXABI::GetVirtualBaseClassOffset(CodeGenFunction &CGF,
                                            const CXXRecordDecl *BaseClassDecl) {
   int64_t VBPtrChars = GetVBPtrOffsetFromBases(ClassDecl).getQuantity();
   llvm::Value *VBPtrOffset = llvm::ConstantInt::get(CGM.PtrDiffTy, VBPtrChars);
-
-  // The vbtable is an array of i32 offsets.  The first entry is a self entry,
-  // and the rest are offsets from the vbptr to virtual bases.  The bases are
-  // ordered the same way our vbases are ordered: as they appear in a
-  // left-to-right depth-first search of the hierarchy.
-  unsigned VBTableIndex = 1;  // Start with one to skip the self entry.
-  for (CXXRecordDecl::base_class_const_iterator I = ClassDecl->vbases_begin(),
-       E = ClassDecl->vbases_end(); I != E; ++I) {
-    if (I->getType()->getAsCXXRecordDecl() == BaseClassDecl)
-      break;
-    VBTableIndex++;
-  }
-  assert(VBTableIndex != 1 + ClassDecl->getNumVBases() &&
-         "BaseClassDecl must be a vbase of ClassDecl");
   CharUnits IntSize = getContext().getTypeSizeInChars(getContext().IntTy);
-  CharUnits VBTableChars = IntSize * VBTableIndex;
+  CharUnits VBTableChars = IntSize * GetVBTableIndex(ClassDecl, BaseClassDecl);
   llvm::Value *VBTableOffset =
     llvm::ConstantInt::get(CGM.IntTy, VBTableChars.getQuantity());
 
