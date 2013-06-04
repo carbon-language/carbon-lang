@@ -1049,8 +1049,12 @@ static LinkageInfo getLVForLocalDecl(const NamedDecl *D,
     return LinkageInfo::none();
 
   const FunctionDecl *FD = getOutermostFunctionContext(D);
-  if (!FD || !FD->isInlined())
+  if (!FD)
     return LinkageInfo::none();
+
+  if (!FD->isInlined() && FD->getTemplateSpecializationKind() == TSK_Undeclared)
+    return LinkageInfo::none();
+
   LinkageInfo LV = getLVForDecl(FD, computation);
   if (!isExternallyVisible(LV.getLinkage()))
     return LinkageInfo::none();
