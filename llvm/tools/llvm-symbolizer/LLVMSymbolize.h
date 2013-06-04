@@ -84,7 +84,7 @@ private:
     uint64_t Addr;
     uint64_t AddrEnd;
     friend bool operator<(const SymbolDesc &s1, const SymbolDesc &s2) {
-      return s1.AddrEnd <= s2.Addr;
+      return s1.Addr < s2.Addr;
     }
   };
   typedef std::map<SymbolDesc, StringRef> SymbolMapTy;

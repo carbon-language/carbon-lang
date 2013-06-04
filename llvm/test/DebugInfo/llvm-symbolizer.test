@@ -1,4 +1,5 @@
 RUN: echo "%p/Inputs/dwarfdump-test.elf-x86-64 0x400559" > %t.input
+RUN: echo "%p/Inputs/dwarfdump-test.elf-x86-64 0x400436" >> %t.input
 RUN: echo "%p/Inputs/dwarfdump-test4.elf-x86-64 0x62c" >> %t.input
 RUN: echo "%p/Inputs/dwarfdump-inl-test.elf-x86-64 0x710" >> %t.input
 RUN: echo "\"%p/Inputs/dwarfdump-test3.elf-x86-64 space\" 0x633" >> %t.input
@@ -10,8 +11,12 @@ REQUIRES: shell
 
 CHECK:       main
 CHECK-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test.cc:16
+
+CHECK:      _start
+
 CHECK:      _Z1cv
 CHECK-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test4-part1.cc:2
+
 CHECK:      inlined_h
 CHECK-NEXT: dwarfdump-inl-test.h:2
 CHECK-NEXT: inlined_g
