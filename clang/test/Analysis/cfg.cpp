@@ -66,3 +66,19 @@ void checkDeclStmts() {
 
   static_assert(1, "abc");
 }
+
+// CHECK: ENTRY
+// CHECK-NEXT: Succs (1): B1
+// CHECK: [B1]
+// CHECK-NEXT:   1: e
+// CHECK-NEXT:   2: [B1.1] (ImplicitCastExpr, LValueToRValue, enum EmptyE)
+// CHECK-NEXT:   3: [B1.2] (ImplicitCastExpr, IntegralCast, int)
+// CHECK-NEXT:   T: switch [B1.3]
+// CHECK-NEXT:   Preds (1): B2
+// CHECK-NEXT:   Succs (1): B0
+// CHECK: [B0 (EXIT)]
+// CHECK-NEXT:   Preds (1): B1
+enum EmptyE {};
+void F(EmptyE e) {
+  switch (e) {}
+}
