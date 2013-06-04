@@ -216,7 +216,7 @@ ProcessMachCore::DoLoadCore ()
     
     if (core_objfile->GetNumThreadContexts() == 0)
     {
-        error.SetErrorString ("core file doesn't contain any recognized thread contexts");
+        error.SetErrorString ("core file doesn't contain any LC_THREAD load commands, or the LC_THREAD architecture is not supported in this lldb");
         return error;
     }
 
