@@ -45,11 +45,11 @@ extern "C" void __register_frame(void*);
 
 static const char *processFDE(const char *Entry) {
   const char *P = Entry;
-  uint32_t Length = *((uint32_t*)P);
+  uint32_t Length = *((const uint32_t *)P);
   P += 4;
-  uint32_t Offset = *((uint32_t*)P);
+  uint32_t Offset = *((const uint32_t *)P);
   if (Offset != 0)
-    __register_frame((void*)Entry);
+    __register_frame(const_cast<char *>(Entry));
   return P + Length;
 }
 #endif
