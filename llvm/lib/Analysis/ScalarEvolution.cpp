@@ -3947,7 +3947,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
 /// depends on a NSW assumption, and we would only fall back to a conservative
 /// trip count in that case.
 unsigned ScalarEvolution::
-getSmallConstantTripCount(Loop *L, BasicBlock */*ExitingBlock*/) {
+getSmallConstantTripCount(Loop *L, BasicBlock * /*ExitingBlock*/) {
   const SCEVConstant *ExitCount =
     dyn_cast<SCEVConstant>(getBackedgeTakenCount(L));
   if (!ExitCount)
@@ -3976,7 +3976,7 @@ getSmallConstantTripCount(Loop *L, BasicBlock */*ExitingBlock*/) {
 /// As explained in the comments for getSmallConstantTripCount, this assumes
 /// that control exits the loop via ExitingBlock.
 unsigned ScalarEvolution::
-getSmallConstantTripMultiple(Loop *L, BasicBlock */*ExitingBlock*/) {
+getSmallConstantTripMultiple(Loop *L, BasicBlock * /*ExitingBlock*/) {
   const SCEV *ExitCount = getBackedgeTakenCount(L);
   if (ExitCount == getCouldNotCompute())
     return 1;
