@@ -353,7 +353,7 @@ had the following bit flags defined:
       flagsRound  = 8
     };
 
-    LLVM_YAML_UNIQUE_TYPE(MyFlags, uint32_t)
+    LLVM_YAML_STRONG_TYPEDEF(uint32_t, MyFlags)
     
 To support reading and writing of MyFlags, you specialize ScalarBitSetTraits<>
 on MyFlags and provide the bit values and their names.   
