@@ -159,7 +159,7 @@ struct f
   int tt;
 };
 
-// CHECK: @g10 = constant [14 x i8] c"{f=i[0{?=}]i}\00"
+// CHECK: @g10 = constant [14 x i8] c"{f=i[4{?=}]i}\00"
 const char g10[] = @encode(struct f);
 
 // rdar://9622422
