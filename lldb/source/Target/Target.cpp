@@ -1145,18 +1145,21 @@ Target::ModulesDidLoad (ModuleList &module_list)
 void
 Target::SymbolsDidLoad (ModuleList &module_list)
 {
-    if (module_list.GetSize() == 0)
-        return;
-    if (m_process_sp)
+    if (module_list.GetSize())
     {
-        LanguageRuntime* runtime = m_process_sp->GetLanguageRuntime(lldb::eLanguageTypeObjC);
-        if (runtime)
+        if (m_process_sp)
         {
-            ObjCLanguageRuntime *objc_runtime = (ObjCLanguageRuntime*)runtime;
-            objc_runtime->SymbolsDidLoad(module_list);
+            LanguageRuntime* runtime = m_process_sp->GetLanguageRuntime(lldb::eLanguageTypeObjC);
+            if (runtime)
+            {
+                ObjCLanguageRuntime *objc_runtime = (ObjCLanguageRuntime*)runtime;
+                objc_runtime->SymbolsDidLoad(module_list);
+            }
         }
+        
+        m_breakpoint_list.UpdateBreakpoints (module_list, true);
+        BroadcastEvent(eBroadcastBitSymbolsLoaded, NULL);
     }
-    BroadcastEvent(eBroadcastBitSymbolsLoaded, NULL);
 }
 
 void
