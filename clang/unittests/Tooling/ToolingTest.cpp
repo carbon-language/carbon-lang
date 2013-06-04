@@ -193,5 +193,46 @@ TEST(runToolOnCode, TestSkipFunctionBody) {
                              "int skipMeNot() { an_error_here }"));
 }
 
+struct CheckSyntaxOnlyAdjuster: public ArgumentsAdjuster {
+  bool &Found;
+  bool &Ran;
+
+  CheckSyntaxOnlyAdjuster(bool &Found, bool &Ran) : Found(Found), Ran(Ran) { }
+
+  virtual CommandLineArguments
+  Adjust(const CommandLineArguments &Args) LLVM_OVERRIDE {
+    Ran = true;
+    for (unsigned I = 0, E = Args.size(); I != E; ++I) {
+      if (Args[I] == "-fsyntax-only") {
+        Found = true;
+        break;
+      }
+    }
+    return Args;
+  }
+};
+
+TEST(ClangToolTest, ArgumentAdjusters) {
+  FixedCompilationDatabase Compilations("/", std::vector<std::string>());
+
+  ClangTool Tool(Compilations, std::vector<std::string>(1, "/a.cc"));
+  Tool.mapVirtualFile("/a.cc", "void a() {}");
+
+  bool Found = false;
+  bool Ran = false;
+  Tool.appendArgumentsAdjuster(new CheckSyntaxOnlyAdjuster(Found, Ran));
+  Tool.run(newFrontendActionFactory<SyntaxOnlyAction>());
+  EXPECT_TRUE(Ran);
+  EXPECT_TRUE(Found);
+
+  Ran = Found = false;
+  Tool.clearArgumentsAdjusters();
+  Tool.appendArgumentsAdjuster(new CheckSyntaxOnlyAdjuster(Found, Ran));
+  Tool.appendArgumentsAdjuster(new ClangSyntaxOnlyAdjuster());
+  Tool.run(newFrontendActionFactory<SyntaxOnlyAction>());
+  EXPECT_TRUE(Ran);
+  EXPECT_FALSE(Found);
+}
+
 } // end namespace tooling
 } // end namespace clang
