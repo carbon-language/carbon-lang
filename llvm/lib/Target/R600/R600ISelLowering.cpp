@@ -1210,6 +1210,99 @@ EVT R600TargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
    return VT.changeVectorElementTypeToInteger();
 }
 
+SDValue CompactSwizzlableVector(SelectionDAG &DAG, SDValue VectorEntry,
+                                DenseMap<unsigned, unsigned> &RemapSwizzle) {
+  assert(VectorEntry.getOpcode() == ISD::BUILD_VECTOR);
+  assert(RemapSwizzle.empty());
+  SDValue NewBldVec[4] = {
+      VectorEntry.getOperand(0),
+      VectorEntry.getOperand(1),
+      VectorEntry.getOperand(2),
+      VectorEntry.getOperand(3)
+  };
+
+  for (unsigned i = 0; i < 4; i++) {
+    if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(NewBldVec[i])) {
+      if (C->isZero()) {
+        RemapSwizzle[i] = 4; // SEL_0
+        NewBldVec[i] = DAG.getUNDEF(MVT::f32);
+      } else if (C->isExactlyValue(1.0)) {
+        RemapSwizzle[i] = 5; // SEL_1
+        NewBldVec[i] = DAG.getUNDEF(MVT::f32);
+      }
+    }
+
+    if (NewBldVec[i].getOpcode() == ISD::UNDEF)
+      continue;
+    for (unsigned j = 0; j < i; j++) {
+      if (NewBldVec[i] == NewBldVec[j]) {
+        NewBldVec[i] = DAG.getUNDEF(NewBldVec[i].getValueType());
+        RemapSwizzle[i] = j;
+        break;
+      }
+    }
+  }
+
+  return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(VectorEntry),
+      VectorEntry.getValueType(), NewBldVec, 4);
+}
+
+SDValue ReorganizeVector(SelectionDAG &DAG, SDValue VectorEntry,
+                         DenseMap<unsigned, unsigned> &RemapSwizzle) {
+  assert(VectorEntry.getOpcode() == ISD::BUILD_VECTOR);
+  assert(RemapSwizzle.empty());
+  SDValue NewBldVec[4] = {
+      VectorEntry.getOperand(0),
+      VectorEntry.getOperand(1),
+      VectorEntry.getOperand(2),
+      VectorEntry.getOperand(3)
+  };
+  bool isUnmovable[4] = { false, false, false, false };
+
+  for (unsigned i = 0; i < 4; i++) {
+    if (NewBldVec[i].getOpcode() == ISD::EXTRACT_VECTOR_ELT) {
+      unsigned Idx = dyn_cast<ConstantSDNode>(NewBldVec[i].getOperand(1))
+          ->getZExtValue();
+      if (!isUnmovable[Idx]) {
+        // Swap i and Idx
+        std::swap(NewBldVec[Idx], NewBldVec[i]);
+        RemapSwizzle[Idx] = i;
+        RemapSwizzle[i] = Idx;
+      }
+      isUnmovable[Idx] = true;
+    }
+  }
+
+  return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(VectorEntry),
+      VectorEntry.getValueType(), NewBldVec, 4);
+}
+
+
+SDValue R600TargetLowering::OptimizeSwizzle(SDValue BuildVector,
+SDValue Swz[4], SelectionDAG &DAG) const {
+  assert(BuildVector.getOpcode() == ISD::BUILD_VECTOR);
+  // Old -> New swizzle values
+  DenseMap<unsigned, unsigned> SwizzleRemap;
+
+  BuildVector = CompactSwizzlableVector(DAG, BuildVector, SwizzleRemap);
+  for (unsigned i = 0; i < 4; i++) {
+    unsigned Idx = dyn_cast<ConstantSDNode>(Swz[i])->getZExtValue();
+    if (SwizzleRemap.find(Idx) != SwizzleRemap.end())
+      Swz[i] = DAG.getConstant(SwizzleRemap[Idx], MVT::i32);
+  }
+
+  SwizzleRemap.clear();
+  BuildVector = ReorganizeVector(DAG, BuildVector, SwizzleRemap);
+  for (unsigned i = 0; i < 4; i++) {
+    unsigned Idx = dyn_cast<ConstantSDNode>(Swz[i])->getZExtValue();
+    if (SwizzleRemap.find(Idx) != SwizzleRemap.end())
+      Swz[i] = DAG.getConstant(SwizzleRemap[Idx], MVT::i32);
+  }
+
+  return BuildVector;
+}
+
+
 //===----------------------------------------------------------------------===//
 // Custom DAG Optimizations
 //===----------------------------------------------------------------------===//
@@ -1319,12 +1412,7 @@ SDValue R600TargetLowering::PerformDAGCombine(SDNode *N,
     SDValue Arg = N->getOperand(1);
     if (Arg.getOpcode() != ISD::BUILD_VECTOR)
       break;
-    SDValue NewBldVec[4] = {
-        DAG.getUNDEF(MVT::f32),
-        DAG.getUNDEF(MVT::f32),
-        DAG.getUNDEF(MVT::f32),
-        DAG.getUNDEF(MVT::f32)
-      };
+
     SDValue NewArgs[8] = {
       N->getOperand(0), // Chain
       SDValue(),
@@ -1335,22 +1423,39 @@ SDValue R600TargetLowering::PerformDAGCombine(SDNode *N,
       N->getOperand(6), // SWZ_Z
       N->getOperand(7) // SWZ_W
     };
-    for (unsigned i = 0; i < Arg.getNumOperands(); i++) {
-      if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(Arg.getOperand(i))) {
-        if (C->isZero()) {
-          NewArgs[4 + i] = DAG.getConstant(4, MVT::i32); // SEL_0
-        } else if (C->isExactlyValue(1.0)) {
-          NewArgs[4 + i] = DAG.getConstant(5, MVT::i32); // SEL_0
-        } else {
-          NewBldVec[i] = Arg.getOperand(i);
-        }
-      } else {
-        NewBldVec[i] = Arg.getOperand(i);
-      }
-    }
     SDLoc DL(N);
-    NewArgs[1] = DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v4f32, NewBldVec, 4);
+    NewArgs[1] = OptimizeSwizzle(N->getOperand(1), &NewArgs[4], DAG);
     return DAG.getNode(AMDGPUISD::EXPORT, DL, N->getVTList(), NewArgs, 8);
+  }
+  case AMDGPUISD::TEXTURE_FETCH: {
+    SDValue Arg = N->getOperand(1);
+    if (Arg.getOpcode() != ISD::BUILD_VECTOR)
+      break;
+
+    SDValue NewArgs[19] = {
+      N->getOperand(0),
+      N->getOperand(1),
+      N->getOperand(2),
+      N->getOperand(3),
+      N->getOperand(4),
+      N->getOperand(5),
+      N->getOperand(6),
+      N->getOperand(7),
+      N->getOperand(8),
+      N->getOperand(9),
+      N->getOperand(10),
+      N->getOperand(11),
+      N->getOperand(12),
+      N->getOperand(13),
+      N->getOperand(14),
+      N->getOperand(15),
+      N->getOperand(16),
+      N->getOperand(17),
+      N->getOperand(18),
+    };
+    NewArgs[1] = OptimizeSwizzle(N->getOperand(1), &NewArgs[2], DAG);
+    return DAG.getNode(AMDGPUISD::TEXTURE_FETCH, SDLoc(N), N->getVTList(),
+        NewArgs, 19);
   }
   }
   return SDValue();
