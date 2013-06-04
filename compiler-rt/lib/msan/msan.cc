@@ -459,29 +459,29 @@ u32 __msan_get_umr_origin() {
   return __msan_origin_tls;
 }
 
-u16 __sanitizer_unaligned_load16(const void *p) {
-  __msan_retval_tls[0] = *(u16 *)MEM_TO_SHADOW((uptr)p);
-  return *(u16 *)p;
+u16 __sanitizer_unaligned_load16(const uu16 *p) {
+  __msan_retval_tls[0] = *(uu16 *)MEM_TO_SHADOW((uptr)p);
+  return *p;
 }
-u32 __sanitizer_unaligned_load32(const void *p) {
-  __msan_retval_tls[0] = *(u32 *)MEM_TO_SHADOW((uptr)p);
-  return *(u32 *)p;
+u32 __sanitizer_unaligned_load32(const uu32 *p) {
+  __msan_retval_tls[0] = *(uu32 *)MEM_TO_SHADOW((uptr)p);
+  return *p;
 }
-u64 __sanitizer_unaligned_load64(const void *p) {
-  __msan_retval_tls[0] = *(u64 *)MEM_TO_SHADOW((uptr)p);
-  return *(u64 *)p;
+u64 __sanitizer_unaligned_load64(const uu64 *p) {
+  __msan_retval_tls[0] = *(uu64 *)MEM_TO_SHADOW((uptr)p);
+  return *p;
 }
-void __sanitizer_unaligned_store16(void *p, u16 x) {
-  *(u16 *)MEM_TO_SHADOW((uptr)p) = __msan_param_tls[1];
-  *(u16 *)p = x;
+void __sanitizer_unaligned_store16(uu16 *p, u16 x) {
+  *(uu16 *)MEM_TO_SHADOW((uptr)p) = __msan_param_tls[1];
+  *p = x;
 }
-void __sanitizer_unaligned_store32(void *p, u32 x) {
-  *(u32 *)MEM_TO_SHADOW((uptr)p) = __msan_param_tls[1];
-  *(u32 *)p = x;
+void __sanitizer_unaligned_store32(uu32 *p, u32 x) {
+  *(uu32 *)MEM_TO_SHADOW((uptr)p) = __msan_param_tls[1];
+  *p = x;
 }
-void __sanitizer_unaligned_store64(void *p, u64 x) {
-  *(u64 *)MEM_TO_SHADOW((uptr)p) = __msan_param_tls[1];
-  *(u64 *)p = x;
+void __sanitizer_unaligned_store64(uu64 *p, u64 x) {
+  *(uu64 *)MEM_TO_SHADOW((uptr)p) = __msan_param_tls[1];
+  *p = x;
 }
 
 #if !SANITIZER_SUPPORTS_WEAK_HOOKS

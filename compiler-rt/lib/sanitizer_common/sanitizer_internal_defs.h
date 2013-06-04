@@ -68,6 +68,14 @@ typedef signed   int s32;
 typedef signed   long long s64;  // NOLINT
 typedef int fd_t;
 
+// Unaligned versions.
+typedef __attribute__((aligned(1))) u16 uu16;
+typedef __attribute__((aligned(1))) u32 uu32;
+typedef __attribute__((aligned(1))) u64 uu64;
+typedef __attribute__((aligned(1))) s16 us16;
+typedef __attribute__((aligned(1))) s32 us32;
+typedef __attribute__((aligned(1))) s64 us64;
+
 // WARNING: OFF_T may be different from OS type off_t, depending on the value of
 // _FILE_OFFSET_BITS. This definition of OFF_T matches the ABI of system calls
 // like pread and mmap, as opposed to pread64 and mmap64.

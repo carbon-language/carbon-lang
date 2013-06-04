@@ -183,37 +183,37 @@ uptr __asan_region_is_poisoned(uptr beg, uptr size) {
 
 
 extern "C" SANITIZER_INTERFACE_ATTRIBUTE
-u16 __sanitizer_unaligned_load16(const u16 *p) {
+u16 __sanitizer_unaligned_load16(const uu16 *p) {
   CHECK_SMALL_REGION(p, sizeof(*p), false);
   return *p;
 }
 
 extern "C" SANITIZER_INTERFACE_ATTRIBUTE
-u32 __sanitizer_unaligned_load32(const u32 *p) {
+u32 __sanitizer_unaligned_load32(const uu32 *p) {
   CHECK_SMALL_REGION(p, sizeof(*p), false);
   return *p;
 }
 
 extern "C" SANITIZER_INTERFACE_ATTRIBUTE
-u64 __sanitizer_unaligned_load64(const u64 *p) {
+u64 __sanitizer_unaligned_load64(const uu64 *p) {
   CHECK_SMALL_REGION(p, sizeof(*p), false);
   return *p;
 }
 
 extern "C" SANITIZER_INTERFACE_ATTRIBUTE
-void __sanitizer_unaligned_store16(u16 *p, u16 x) {
+void __sanitizer_unaligned_store16(uu16 *p, u16 x) {
   CHECK_SMALL_REGION(p, sizeof(*p), true);
   *p = x;
 }
 
 extern "C" SANITIZER_INTERFACE_ATTRIBUTE
-void __sanitizer_unaligned_store32(u32 *p, u32 x) {
+void __sanitizer_unaligned_store32(uu32 *p, u32 x) {
   CHECK_SMALL_REGION(p, sizeof(*p), true);
   *p = x;
 }
 
 extern "C" SANITIZER_INTERFACE_ATTRIBUTE
-void __sanitizer_unaligned_store64(u64 *p, u64 x) {
+void __sanitizer_unaligned_store64(uu64 *p, u64 x) {
   CHECK_SMALL_REGION(p, sizeof(*p), true);
   *p = x;
 }

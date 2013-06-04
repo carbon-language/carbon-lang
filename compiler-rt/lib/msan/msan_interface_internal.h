@@ -125,22 +125,22 @@ void __msan_allocated_memory(const void* data, uptr size);
 void __msan_unpoison_param(uptr n);
 
 SANITIZER_INTERFACE_ATTRIBUTE
-u16 __sanitizer_unaligned_load16(const void *p);
+u16 __sanitizer_unaligned_load16(const uu16 *p);
 
 SANITIZER_INTERFACE_ATTRIBUTE
-u32 __sanitizer_unaligned_load32(const void *p);
+u32 __sanitizer_unaligned_load32(const uu32 *p);
 
 SANITIZER_INTERFACE_ATTRIBUTE
-u64 __sanitizer_unaligned_load64(const void *p);
+u64 __sanitizer_unaligned_load64(const uu64 *p);
 
 SANITIZER_INTERFACE_ATTRIBUTE
-void __sanitizer_unaligned_store16(void *p, u16 x);
+void __sanitizer_unaligned_store16(uu16 *p, u16 x);
 
 SANITIZER_INTERFACE_ATTRIBUTE
-void __sanitizer_unaligned_store32(void *p, u32 x);
+void __sanitizer_unaligned_store32(uu32 *p, u32 x);
 
 SANITIZER_INTERFACE_ATTRIBUTE
-void __sanitizer_unaligned_store64(void *p, u64 x);
+void __sanitizer_unaligned_store64(uu64 *p, u64 x);
 }  // extern "C"
 
 #endif  // MSAN_INTERFACE_INTERNAL_H
