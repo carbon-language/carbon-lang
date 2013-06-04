@@ -353,7 +353,7 @@ Value *AMDGPUStructurizeCFG::buildCondition(BranchInst *Term, unsigned Idx,
   if (Term->isConditional()) {
     Cond = Term->getCondition();
 
-    if (Idx != Invert)
+    if (Idx != (unsigned)Invert)
       Cond = invert(Cond);
   }
   return Cond;
