@@ -227,14 +227,24 @@ TEST(AddressSanitizer, BitFieldNegativeTest) {
   delete Ident(x);
 }
 
+static size_t kOOMAllocationSize =
+  SANITIZER_WORDSIZE == 64 ? (size_t)(1ULL << 48) : (0xf0000000);
+
 TEST(AddressSanitizer, OutOfMemoryTest) {
-  size_t size = SANITIZER_WORDSIZE == 64 ? (size_t)(1ULL << 48) : (0xf0000000);
-  EXPECT_EQ(0, realloc(0, size));
+  EXPECT_EQ(0, realloc(0, kOOMAllocationSize));
   EXPECT_EQ(0, realloc(0, ~Ident(0)));
-  EXPECT_EQ(0, malloc(size));
+  EXPECT_EQ(0, malloc(kOOMAllocationSize));
   EXPECT_EQ(0, malloc(~Ident(0)));
-  EXPECT_EQ(0, calloc(1, size));
+  EXPECT_EQ(0, calloc(1, kOOMAllocationSize));
   EXPECT_EQ(0, calloc(1, ~Ident(0)));
+}
+
+TEST(AddressSanitizer, BadReallocTest) {
+  int *a = (int*)Ident(malloc(100));
+  a[0] = 42;
+  EXPECT_EQ(0, realloc(a, kOOMAllocationSize));
+  EXPECT_EQ(42, a[0]);
+  free(a);
 }
 
 #if ASAN_NEEDS_SEGV

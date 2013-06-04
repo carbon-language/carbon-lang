@@ -452,12 +452,6 @@ static void QuarantineChunk(AsanChunk *m, void *ptr,
                             StackTrace *stack, AllocType alloc_type) {
   CHECK_EQ(m->chunk_state, CHUNK_QUARANTINE);
 
-  // FIXME: if the free hook produces an ASan report (e.g. due to a bug),
-  // printing the report may crash as the AsanChunk free-related fields have not
-  // been updated yet. We might need to introduce yet another chunk state to
-  // handle this correctly, but don't want to yet.
-  ASAN_FREE_HOOK(ptr);
-
   if (m->alloc_type != alloc_type && flags()->alloc_dealloc_mismatch)
     ReportAllocTypeMismatch((uptr)ptr, stack,
                             (AllocType)m->alloc_type, (AllocType)alloc_type);
@@ -502,6 +496,7 @@ static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
 
   uptr chunk_beg = p - kChunkHeaderSize;
   AsanChunk *m = reinterpret_cast<AsanChunk *>(chunk_beg);
+  ASAN_FREE_HOOK(ptr);
   // Must mark the chunk as quarantined before any changes to its metadata.
   AtomicallySetQuarantineFlag(m, ptr, stack);
   QuarantineChunk(m, ptr, stack, alloc_type);
@@ -517,17 +512,14 @@ static void *Reallocate(void *old_ptr, uptr new_size, StackTrace *stack) {
   thread_stats.reallocs++;
   thread_stats.realloced += new_size;
 
-  // Must mark the chunk as quarantined before any changes to its metadata.
-  // This also ensures that other threads can't deallocate it in the meantime.
-  AtomicallySetQuarantineFlag(m, old_ptr, stack);
-
-  uptr old_size = m->UsedSize();
-  uptr memcpy_size = Min(new_size, old_size);
   void *new_ptr = Allocate(new_size, 8, stack, FROM_MALLOC, true);
   if (new_ptr) {
     CHECK_NE(REAL(memcpy), (void*)0);
+    uptr memcpy_size = Min(new_size, m->UsedSize());
+    // If realloc() races with free(), we may start copying freed memory.
+    // However, we will report racy double-free later anyway.
     REAL(memcpy)(new_ptr, old_ptr, memcpy_size);
-    QuarantineChunk(m, old_ptr, stack, FROM_MALLOC);
+    Deallocate(old_ptr, stack, FROM_MALLOC);
   }
   return new_ptr;
 }
