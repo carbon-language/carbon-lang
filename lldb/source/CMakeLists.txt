@@ -92,6 +92,15 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Linux" )
     )
 endif ()
 
+# FreeBSD-only libraries
+if ( CMAKE_SYSTEM_NAME MATCHES "FreeBSD" )
+  list(APPEND LLDB_USED_LIBS
+    lldbHostFreeBSD
+    lldbPluginProcessFreeBSD
+    lldbPluginProcessPOSIX
+    )
+endif ()
+
 # Darwin-only libraries
 if ( CMAKE_SYSTEM_NAME MATCHES "Darwin" )
   set(LLDB_VERS_GENERATED_FILE ${LLDB_BINARY_DIR}/source/LLDB_vers.c)

@@ -246,6 +246,11 @@ if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
   ${DEBUG_SYMBOLS_LIBRARY})
 endif()
 
+# On FreeBSD, link libexecinfo because libc is missing  backtrace()
+if (CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+  list(APPEND system_libs execinfo)
+endif()
+
 #add_subdirectory(include)
 add_subdirectory(docs)
 add_subdirectory(scripts)
