@@ -4152,6 +4152,8 @@ bool ARMBaseInstrInfo::hasNOP() const {
 }
 
 bool ARMBaseInstrInfo::isSwiftFastImmShift(const MachineInstr *MI) const {
+  if (MI->getNumOperands() < 4)
+    return true;
   unsigned ShOpVal = MI->getOperand(3).getImm();
   unsigned ShImm = ARM_AM::getSORegOffset(ShOpVal);
   // Swift supports faster shifts for: lsl 2, lsl 1, and lsr 1.
