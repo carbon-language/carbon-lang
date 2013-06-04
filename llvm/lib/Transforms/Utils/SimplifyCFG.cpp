@@ -3658,7 +3658,7 @@ bool SwitchLookupTable::WouldFitInRegister(const DataLayout *TD,
 }
 
 /// ShouldBuildLookupTable - Determine whether a lookup table should be built
-/// for this switch, based on the number of caes, size of the table and the
+/// for this switch, based on the number of cases, size of the table and the
 /// types of the results.
 static bool ShouldBuildLookupTable(SwitchInst *SI,
                                    uint64_t TableSize,
