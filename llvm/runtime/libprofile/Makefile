@@ -35,8 +35,7 @@ ifeq ($(HOST_OS),Darwin)
     endif
     # Extra options to override libtool defaults.
     LLVMLibsOptions    := $(LLVMLibsOptions)  \
-                         -Wl,-dead_strip \
-                         -Wl,-seg1addr -Wl,0xE0000000 
+                         -Wl,-dead_strip
 
     # Mac OS X 10.4 and earlier tools do not allow a second -install_name on
     # command line.

@@ -51,8 +51,7 @@ ifeq ($(HOST_OS),Darwin)
     LLVMLibsOptions    := $(LLVMLibsOptions) -all_load
     # extra options to override libtool defaults 
     LLVMLibsOptions    := $(LLVMLibsOptions)  \
-                         -Wl,-dead_strip \
-                         -Wl,-seg1addr -Wl,0xE0000000 
+                         -Wl,-dead_strip
 
     # Mac OS X 10.4 and earlier tools do not allow a second -install_name on command line
     DARWIN_VERS := $(shell echo $(TARGET_TRIPLE) | sed 's/.*darwin\([0-9]*\).*/\1/')
