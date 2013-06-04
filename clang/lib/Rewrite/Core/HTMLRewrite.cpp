@@ -361,7 +361,7 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, const Preprocessor &PP) {
   const SourceManager &SM = PP.getSourceManager();
   const llvm::MemoryBuffer *FromFile = SM.getBuffer(FID);
   Lexer L(FID, FromFile, SM, PP.getLangOpts());
-  const char *BufferStart = L.getBufferStart();
+  const char *BufferStart = L.getBuffer().data();
 
   // Inform the preprocessor that we want to retain comments as tokens, so we
   // can highlight them.

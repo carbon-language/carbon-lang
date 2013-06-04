@@ -202,7 +202,10 @@ public:
   /// lexer has nothing to reset to.
   void resetExtendedTokenMode();
 
-  const char *getBufferStart() const { return BufferStart; }
+  /// Gets source code buffer.
+  StringRef getBuffer() const {
+    return StringRef(BufferStart, BufferEnd - BufferStart);
+  }
 
   /// ReadToEndOfLine - Read the rest of the current preprocessor line as an
   /// uninterpreted string.  This switches the lexer out of directive mode.
