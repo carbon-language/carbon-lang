@@ -85,8 +85,8 @@ struct S {
 
 namespace PR10939 {
   struct X {
-    int method(int);
-    int method(float); 
+    int method(int); // expected-note{{possible target for call}}
+    int method(float); // expected-note{{possible target for call}}
   };
 
   template<typename T> T g(T);

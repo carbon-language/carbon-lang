@@ -57,11 +57,12 @@ struct B
 
 struct C {
   C &getC() {
-    return makeAC; // expected-error{{reference to non-static member function must be called}}
+    return makeAC; // expected-error-re{{reference to non-static member function must be called$}}
   }
 
-  C &makeAC();
-  const C &makeAC() const;
+  // FIXME: filter by const so we can unambiguously suggest '()' & point to just the one candidate, probably
+  C &makeAC(); // expected-note{{possible target for call}}
+  const C &makeAC() const; // expected-note{{possible target for call}}
 
   static void f(); // expected-note{{candidate function}}
   static void f(int); // expected-note{{candidate function}}

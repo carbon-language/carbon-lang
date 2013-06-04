@@ -189,12 +189,12 @@ struct Class : BaseClass
     static int& NestedFuncTemplate() { return variable; }  // expected-note{{possible target for call}}
 
     template <class T>
-    int& NestedMemfunTemplate() { return variable; }
+    int& NestedMemfunTemplate() { return variable; } // expected-note{{possible target for call}}
 
     int operator*() const;
 
     template <class T>
-    int operator+(T) const;
+    int operator+(T) const; // expected-note{{possible target for call}}
 
     int NonstaticMemberFunction();
     static int StaticMemberFunction();

@@ -125,7 +125,7 @@ int main()
 
 namespace member_pointers {
   struct S {
-    template <typename T> bool f(T) { return false; }
+    template <typename T> bool f(T) { return false; } // expected-note 4 {{possible target for call}}
     template <typename T> static bool g(T) { return false; }
 
     template <typename T> bool h(T) { return false; }  // expected-note 3 {{possible target for call}}

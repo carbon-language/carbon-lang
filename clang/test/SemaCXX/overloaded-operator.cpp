@@ -387,8 +387,8 @@ void test_lookup_through_using() {
 
 namespace rdar9136502 {
   struct X {
-    int i();
-    int i(int);
+    int i(); // expected-note{{possible target for call}}
+    int i(int); // expected-note{{possible target for call}}
   };
 
   struct Y {
@@ -397,7 +397,7 @@ namespace rdar9136502 {
 
   void f(X x, Y y) {
     y << x
-      .i; // expected-error{{reference to non-static member function must be called}}
+      .i; // expected-error{{reference to non-static member function must be called; did you mean to call it with no arguments?}}
   }
 }
 

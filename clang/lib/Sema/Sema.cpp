@@ -1148,10 +1148,20 @@ bool Sema::isExprCallable(const Expr &E, QualType &ZeroArgCallReturnTy,
   ZeroArgCallReturnTy = QualType();
   OverloadSet.clear();
 
+  const OverloadExpr *Overloads = NULL;
   if (E.getType() == Context.OverloadTy) {
     OverloadExpr::FindResult FR = OverloadExpr::find(const_cast<Expr*>(&E));
-    const OverloadExpr *Overloads = FR.Expression;
 
+    // Ignore overloads that are pointer-to-member constants.
+    if (FR.HasFormOfMemberPointer)
+      return false;
+
+    Overloads = FR.Expression;
+  } else if (E.getType() == Context.BoundMemberTy) {
+    Overloads = dyn_cast<UnresolvedMemberExpr>(E.IgnoreParens());
+  }
+  if (Overloads) {
+    bool Ambiguous = false;
     for (OverloadExpr::decls_iterator it = Overloads->decls_begin(),
          DeclsEnd = Overloads->decls_end(); it != DeclsEnd; ++it) {
       OverloadSet.addDecl(*it);
@@ -1160,16 +1170,17 @@ bool Sema::isExprCallable(const Expr &E, QualType &ZeroArgCallReturnTy,
       // arguments.
       if (const FunctionDecl *OverloadDecl
             = dyn_cast<FunctionDecl>((*it)->getUnderlyingDecl())) {
-        if (OverloadDecl->getMinRequiredArguments() == 0)
-          ZeroArgCallReturnTy = OverloadDecl->getResultType();
+        if (OverloadDecl->getMinRequiredArguments() == 0) {
+          if (!ZeroArgCallReturnTy.isNull() && !Ambiguous) {
+            ZeroArgCallReturnTy = QualType();
+            Ambiguous = true;
+          } else
+            ZeroArgCallReturnTy = OverloadDecl->getResultType();
+        }
       }
     }
 
-    // Ignore overloads that are pointer-to-member constants.
-    if (FR.HasFormOfMemberPointer)
-      return false;
-
-    return true;
+    return !Ambiguous;
   }
 
   if (const DeclRefExpr *DeclRef = dyn_cast<DeclRefExpr>(E.IgnoreParens())) {

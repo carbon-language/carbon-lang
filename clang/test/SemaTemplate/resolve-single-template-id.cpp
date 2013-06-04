@@ -74,7 +74,7 @@ int main()
 }
 
 struct rdar9108698 {
-  template<typename> void f();
+  template<typename> void f(); // expected-note{{possible target for call}}
 };
 
 void test_rdar9108698(rdar9108698 x) {
