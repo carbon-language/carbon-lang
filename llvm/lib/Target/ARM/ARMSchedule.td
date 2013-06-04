@@ -69,21 +69,6 @@ def WriteCMP : SchedWrite;
 def WriteCMPsi : SchedWrite;
 def WriteCMPsr : SchedWrite;
 
-// Division.
-def WriteDiv : SchedWrite;
-
-// Loads.
-def WriteLd : SchedWrite;
-def WritePreLd : SchedWrite;
-
-// Branches.
-def WriteBr : SchedWrite;
-def WriteBrL : SchedWrite;
-def WriteBrTbl : SchedWrite;
-
-// Fixpoint conversions.
-def WriteCvtFP : SchedWrite;
-
 // Define TII for use in SchedVariant Predicates.
 def : PredicateProlog<[{
   const ARMBaseInstrInfo *TII =

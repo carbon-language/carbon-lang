@@ -1340,11 +1340,11 @@ void SubtargetEmitter::EmitSchedModelHelpers(std::string ClassName,
         for (std::vector<CodeGenSchedTransition>::const_iterator
                TI = SC.Transitions.begin(), TE = SC.Transitions.end();
              TI != TE; ++TI) {
+          OS << "      if (";
           if (*PI != 0 && !std::count(TI->ProcIndices.begin(),
                                       TI->ProcIndices.end(), *PI)) {
               continue;
           }
-          OS << "      if (";
           for (RecIter RI = TI->PredTerm.begin(), RE = TI->PredTerm.end();
                RI != RE; ++RI) {
             if (RI != TI->PredTerm.begin())

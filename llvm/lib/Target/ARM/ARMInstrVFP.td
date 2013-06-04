@@ -870,8 +870,7 @@ let Constraints = "$a = $dst" in {
 class AVConv1XInsS_Encode<bits<5> op1, bits<2> op2, bits<4> op3, bits<4> op4,
                           bit op5, dag oops, dag iops, InstrItinClass itin,
                           string opc, string asm, list<dag> pattern>
-  : AVConv1XI<op1, op2, op3, op4, op5, oops, iops, itin, opc, asm, pattern>,
-  Sched<[WriteCvtFP]> {
+  : AVConv1XI<op1, op2, op3, op4, op5, oops, iops, itin, opc, asm, pattern> {
   bits<5> dst;
   // if dp_operation then UInt(D:Vd) else UInt(Vd:D);
   let Inst{22} = dst{0};
@@ -882,8 +881,7 @@ class AVConv1XInsS_Encode<bits<5> op1, bits<2> op2, bits<4> op3, bits<4> op4,
 class AVConv1XInsD_Encode<bits<5> op1, bits<2> op2, bits<4> op3, bits<4> op4,
                           bit op5, dag oops, dag iops, InstrItinClass itin,
                           string opc, string asm, list<dag> pattern>
-  : AVConv1XI<op1, op2, op3, op4, op5, oops, iops, itin, opc, asm, pattern>,
-    Sched<[WriteCvtFP]> {
+  : AVConv1XI<op1, op2, op3, op4, op5, oops, iops, itin, opc, asm, pattern> {
   bits<5> dst;
   // if dp_operation then UInt(D:Vd) else UInt(Vd:D);
   let Inst{22} = dst{4};

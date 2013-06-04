@@ -2275,10 +2275,10 @@ def A9Read4 : SchedReadAdvance<3>;
 // This table follows the ARM Cortex-A9 Technical Reference Manuals,
 // mostly in order.
 
-def :ItinRW<[WriteALU], [IIC_iMOVi,IIC_iMOVr,IIC_iMOVsi,
+def :ItinRW<[A9WriteI], [IIC_iMOVi,IIC_iMOVr,IIC_iMOVsi,
                          IIC_iMVNi,IIC_iMVNsi,
                          IIC_iCMOVi,IIC_iCMOVr,IIC_iCMOVsi]>;
-def :ItinRW<[WriteALU, A9ReadALU],[IIC_iMVNr]>;
+def :ItinRW<[A9WriteI,A9ReadALU],[IIC_iMVNr]>;
 def :ItinRW<[A9WriteIsr], [IIC_iMOVsr,IIC_iMVNsr,IIC_iCMOVsr]>;
 
 def :ItinRW<[A9WriteI2],   [IIC_iMOVix2,IIC_iCMOVix2]>;
@@ -2487,58 +2487,10 @@ def : SchedAlias<WriteALUsr, A9WriteALUsr>;
 def : SchedAlias<WriteALUSsr, A9WriteALUsr>;
 def : SchedAlias<ReadALU, A9ReadALU>;
 def : SchedAlias<ReadALUsr, A9ReadALU>;
-def : InstRW< [WriteALU],
-      (instregex "ANDri", "ORRri", "EORri", "BICri", "ANDrr", "ORRrr", "EORrr",
-                 "BICrr")>;
-def : InstRW< [WriteALUsi], (instregex "ANDrsi", "ORRrsi", "EORrsi", "BICrsi")>;
-def : InstRW< [WriteALUsr], (instregex "ANDrsr", "ORRrsr", "EORrsr", "BICrsr")>;
-
+// FIXME: need to special case AND, ORR, EOR, BIC because they don't read
+// advance. But our instrinfo claims it does.
 
 def : SchedAlias<WriteCMP, A9WriteALU>;
 def : SchedAlias<WriteCMPsi, A9WriteALU>;
 def : SchedAlias<WriteCMPsr, A9WriteALU>;
-
-def : InstRW< [A9WriteIsr], (instregex "MOVsr", "MOVsi", "MVNsr", "MOVCCsi",
-                                       "MOVCCsr")>;
-def : InstRW< [WriteALU, A9ReadALU], (instregex "MVNr")>;
-def : InstRW< [A9WriteI2], (instregex "MOVCCi32imm", "MOVi32imm",
-                                      "MOV_ga_dyn")>;
-def : InstRW< [A9WriteI2pc], (instregex "MOV_ga_pcrel")>;
-def : InstRW< [A9WriteI2ld], (instregex "MOV_ga_pcrel_ldr")>;
-
-def : InstRW< [WriteALU], (instregex "SEL")>;
-
-def : InstRW< [WriteALUsi], (instregex "BFC", "BFI", "UBFX", "SBFX")>;
-
-def : InstRW< [A9WriteM],
-      (instregex "MUL", "MULv5", "SMMUL", "SMMULR", "MLA", "MLAv5", "MLS",
-      "SMMLA", "SMMLAR", "SMMLS", "SMMLSR")>;
-def : InstRW< [A9WriteM, A9WriteMHi],
-      (instregex "SMULL", "SMULLv5", "UMULL", "UMULLv5", "SMLAL$", "UMLAL",
-      "UMAAL", "SMLALv5", "UMLALv5", "UMAALv5", "SMLALBB", "SMLALBT", "SMLALTB",
-      "SMLALTT")>;
-// FIXME: These instructions used to have NoItinerary. Just copied the one from above.
-def : InstRW< [A9WriteM, A9WriteMHi],
-      (instregex "SMLAD", "SMLADX", "SMLALD", "SMLALDX", "SMLSD", "SMLSDX",
-      "SMLSLD", "SMLLDX", "SMUAD", "SMUADX", "SMUSD", "SMUSDX")>;
-
-def : InstRW<[A9WriteM16, A9WriteM16Hi],
-      (instregex "SMULBB", "SMULBT", "SMULTB", "SMULTT", "SMULWB", "SMULWT")>;
-def : InstRW<[A9WriteM16, A9WriteM16Hi],
-      (instregex "SMLABB", "SMLABT", "SMLATB", "SMLATT", "SMLAWB", "SMLAWT")>;
-
-def : InstRW<[A9WriteL], (instregex "LDRi12", "PICLDR$")>;
-def : InstRW<[A9WriteLsi], (instregex "LDRrs")>;
-def : InstRW<[A9WriteLb],
-      (instregex "LDRBi12", "PICLDRH", "PICLDRB", "PICLDRSH", "PICLDRSB",
-      "LDRH", "LDRSH", "LDRSB")>;
-def : InstRW<[A9WriteLbsi], (instregex "LDRrs")>;
-
-def : WriteRes<WriteDiv, []> { let Latency = 0; }
-
-def : WriteRes<WriteBr, [A9UnitB]>;
-def : WriteRes<WriteBrL, [A9UnitB]>;
-def : WriteRes<WriteBrTbl, [A9UnitB]>;
-def : WriteRes<WritePreLd, []>;
-def : SchedAlias<WriteCvtFP, A9WriteF>;
 } // SchedModel = CortexA9Model
