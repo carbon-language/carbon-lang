@@ -361,19 +361,9 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
       case SubobjectAdjustment::FieldAdjustment: {
         LValue LV = CGF.MakeAddrLValue(Object, E->getType());
         LV = CGF.EmitLValueForField(LV, Adjustment.Field);
-        if (LV.isSimple()) {
-          Object = LV.getAddress();
-          break;
-        }
-        
-        // For non-simple lvalues, we actually have to create a copy of
-        // the object we're binding to.
-        QualType T = Adjustment.Field->getType().getNonReferenceType()
-                                                .getUnqualifiedType();
-        Object = CreateReferenceTemporary(CGF, T, InitializedDecl);
-        LValue TempLV = CGF.MakeAddrLValue(Object,
-                                           Adjustment.Field->getType());
-        CGF.EmitStoreThroughLValue(CGF.EmitLoadOfLValue(LV), TempLV);
+        assert(LV.isSimple() &&
+               "materialized temporary field is not a simple lvalue");
+        Object = LV.getAddress();
         break;
       }
 

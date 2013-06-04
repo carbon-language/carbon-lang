@@ -616,3 +616,25 @@ namespace Bitfield {
   // CHECK: store i32* @_ZGRN8Bitfield1rE, i32** @_ZN8Bitfield1rE, align 8
   int &&r = S().a;
 }
+
+namespace Vector {
+  typedef __attribute__((vector_size(16))) int vi4a;
+  typedef __attribute__((ext_vector_type(4))) int vi4b;
+  struct S {
+    vi4a v;
+    vi4b w;
+  };
+  // CHECK: alloca
+  // CHECK: extractelement
+  // CHECK: store i32 {{.*}}, i32* @_ZGRN6Vector1rE,
+  // CHECK: store i32* @_ZGRN6Vector1rE, i32** @_ZN6Vector1rE,
+  int &&r = S().v[1];
+
+  // CHECK: alloca
+  // CHECK: extractelement
+  // CHECK: store i32 {{.*}}, i32* @_ZGRN6Vector1sE,
+  // CHECK: store i32* @_ZGRN6Vector1sE, i32** @_ZN6Vector1sE,
+  int &&s = S().w[1];
+  // FIXME PR16204: The following code leads to an assertion in Sema.
+  //int &&s = S().w.y;
+}
