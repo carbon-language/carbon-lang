@@ -1678,6 +1678,370 @@ let SchedModel = SwiftModel in {
   // Not serializing.
   def : InstRW<[SwiftWriteP0TwoCycle], (instregex "FMSTAT")>;
 
+  // 4.2.39 Advanced SIMD and VFP, Load Single Element
+  def : InstRW<[SwiftWriteLM4Cy], (instregex "VLDRD$", "VLDRS$")>;
+
+  // 4.2.40 Advanced SIMD and VFP, Store Single Element
+  def : InstRW<[SwiftWriteLM4Cy], (instregex "VSTRD$", "VSTRS$")>;
+
+  // 4.2.41 Advanced SIMD and VFP, Load Multiple
+  // 4.2.42 Advanced SIMD and VFP, Store Multiple
+
+  // Resource requirement for permuting, just reserves the resources.
+  foreach Num = 1-28 in {
+    def SwiftVLDMPerm#Num : SchedWriteRes<[SwiftUnitP1]> {
+      let Latency = 0;
+      let NumMicroOps = Num;
+      let ResourceCycles = [Num];
+    }
+  }
+
+  // Pre RA pseudos - load/store to a Q register as a D register pair.
+  def : InstRW<[SwiftWriteLM4Cy], (instregex "VLDMQIA$", "VSTMQIA$")>;
+
+  // Post RA not modelled accurately. We assume that register use of width 64
+  // bit maps to a D register, 128 maps to a Q register. Not all different kinds
+  // are accurately represented.
+  def SwiftWriteVLDM : SchedWriteVariant<[
+    // Load of one S register.
+    SchedVar<SwiftLMAddr1Pred, [SwiftWriteLM4Cy]>,
+    // Load of one D register.
+    SchedVar<SwiftLMAddr2Pred, [SwiftWriteLM4Cy, SwiftWriteLM4CyNo]>,
+    // Load of 3 S register.
+    SchedVar<SwiftLMAddr3Pred, [SwiftWriteLM9Cy, SwiftWriteLM10Cy,
+                                SwiftWriteLM13CyNo, SwiftWriteP01OneCycle,
+                                SwiftVLDMPerm3]>,
+    // Load of a Q register (not neccessarily true). We should not be mapping to
+    // 4 S registers, either.
+    SchedVar<SwiftLMAddr4Pred, [SwiftWriteLM4Cy, SwiftWriteLM4CyNo,
+                                SwiftWriteLM4CyNo, SwiftWriteLM4CyNo]>,
+    // Load of 5 S registers.
+    SchedVar<SwiftLMAddr5Pred, [SwiftWriteLM9Cy, SwiftWriteLM10Cy,
+                                SwiftWriteLM13CyNo, SwiftWriteLM14CyNo,
+                                SwiftWriteLM17CyNo,  SwiftWriteP01OneCycle,
+                                SwiftVLDMPerm5]>,
+    // Load of 3 D registers. (Must also be able to handle s register list -
+    // though, not accurate)
+    SchedVar<SwiftLMAddr6Pred, [SwiftWriteLM7Cy, SwiftWriteLM8Cy,
+                                SwiftWriteLM10Cy, SwiftWriteLM14CyNo,
+                                SwiftWriteLM14CyNo, SwiftWriteLM14CyNo,
+                                SwiftWriteP01OneCycle, SwiftVLDMPerm5]>,
+    // Load of 7 S registers.
+    SchedVar<SwiftLMAddr7Pred, [SwiftWriteLM9Cy, SwiftWriteLM10Cy,
+                                SwiftWriteLM13Cy, SwiftWriteLM14CyNo,
+                                SwiftWriteLM17CyNo, SwiftWriteLM18CyNo,
+                                SwiftWriteLM21CyNo, SwiftWriteP01OneCycle,
+                                SwiftVLDMPerm7]>,
+    // Load of two Q registers.
+    SchedVar<SwiftLMAddr8Pred, [SwiftWriteLM7Cy, SwiftWriteLM8Cy,
+                                SwiftWriteLM13Cy, SwiftWriteLM13CyNo,
+                                SwiftWriteLM13CyNo, SwiftWriteLM13CyNo,
+                                SwiftWriteLM13CyNo, SwiftWriteLM13CyNo,
+                                SwiftWriteP01OneCycle,  SwiftVLDMPerm2]>,
+    // Load of 9 S registers.
+    SchedVar<SwiftLMAddr9Pred, [SwiftWriteLM9Cy, SwiftWriteLM10Cy,
+                                SwiftWriteLM13Cy, SwiftWriteLM14CyNo,
+                                SwiftWriteLM17CyNo, SwiftWriteLM18CyNo,
+                                SwiftWriteLM21CyNo, SwiftWriteLM22CyNo,
+                                SwiftWriteLM25CyNo, SwiftWriteP01OneCycle,
+                                SwiftVLDMPerm9]>,
+    // Load of 5 D registers.
+    SchedVar<SwiftLMAddr10Pred,[SwiftWriteLM7Cy, SwiftWriteLM8Cy,
+                                SwiftWriteLM10Cy, SwiftWriteLM14Cy,
+                                SwiftWriteLM14CyNo, SwiftWriteLM14CyNo,
+                                SwiftWriteLM14CyNo, SwiftWriteLM14CyNo,
+                                SwiftWriteLM14CyNo,  SwiftWriteLM14CyNo,
+                                SwiftWriteP01OneCycle, SwiftVLDMPerm5]>,
+    // Inaccurate: reuse describtion from 9 S registers.
+    SchedVar<SwiftLMAddr11Pred,[SwiftWriteLM9Cy, SwiftWriteLM10Cy,
+                                SwiftWriteLM13Cy, SwiftWriteLM14CyNo,
+                                SwiftWriteLM17CyNo, SwiftWriteLM18CyNo,
+                                SwiftWriteLM21CyNo, SwiftWriteLM22CyNo,
+                                SwiftWriteLM21CyNo, SwiftWriteLM22CyNo,
+                                SwiftWriteLM25CyNo, SwiftWriteP01OneCycle,
+                                SwiftVLDMPerm9]>,
+    // Load of three Q registers.
+    SchedVar<SwiftLMAddr12Pred,[SwiftWriteLM7Cy, SwiftWriteLM8Cy,
+                                SwiftWriteLM11Cy, SwiftWriteLM11Cy,
+                                SwiftWriteLM11CyNo, SwiftWriteLM11CyNo,
+                                SwiftWriteLM11CyNo, SwiftWriteLM11CyNo,
+                                SwiftWriteLM11CyNo, SwiftWriteLM11CyNo,
+                                SwiftWriteLM11CyNo, SwiftWriteLM11CyNo,
+                                SwiftWriteP01OneCycle, SwiftVLDMPerm3]>,
+    // Inaccurate: reuse describtion from 9 S registers.
+    SchedVar<SwiftLMAddr13Pred, [SwiftWriteLM9Cy, SwiftWriteLM10Cy,
+                                SwiftWriteLM13Cy, SwiftWriteLM14CyNo,
+                                SwiftWriteLM17CyNo, SwiftWriteLM18CyNo,
+                                SwiftWriteLM21CyNo, SwiftWriteLM22CyNo,
+                                SwiftWriteLM21CyNo, SwiftWriteLM22CyNo,
+                                SwiftWriteLM21CyNo, SwiftWriteLM22CyNo,
+                                SwiftWriteLM25CyNo, SwiftWriteP01OneCycle,
+                                SwiftVLDMPerm9]>,
+    // Load of 7 D registers inaccurate.
+    SchedVar<SwiftLMAddr14Pred,[SwiftWriteLM7Cy, SwiftWriteLM8Cy,
+                                SwiftWriteLM10Cy, SwiftWriteLM14Cy,
+                                SwiftWriteLM14Cy, SwiftWriteLM14CyNo,
+                                SwiftWriteLM14CyNo, SwiftWriteLM14CyNo,
+                                SwiftWriteLM14CyNo,  SwiftWriteLM14CyNo,
+                                SwiftWriteLM14CyNo,  SwiftWriteLM14CyNo,
+                                SwiftWriteP01OneCycle, SwiftVLDMPerm7]>,
+    SchedVar<SwiftLMAddr15Pred,[SwiftWriteLM9Cy, SwiftWriteLM10Cy,
+                                SwiftWriteLM13Cy, SwiftWriteLM14Cy,
+                                SwiftWriteLM17Cy, SwiftWriteLM18CyNo,
+                                SwiftWriteLM21CyNo, SwiftWriteLM22CyNo,
+                                SwiftWriteLM21CyNo, SwiftWriteLM22CyNo,
+                                SwiftWriteLM21CyNo, SwiftWriteLM22CyNo,
+                                SwiftWriteLM21CyNo, SwiftWriteLM22CyNo,
+                                SwiftWriteLM25CyNo, SwiftWriteP01OneCycle,
+                                SwiftVLDMPerm9]>,
+    // Load of 4 Q registers.
+    SchedVar<SwiftLMAddr16Pred,[SwiftWriteLM7Cy, SwiftWriteLM10Cy,
+                                SwiftWriteLM11Cy, SwiftWriteLM14Cy,
+                                SwiftWriteLM15Cy, SwiftWriteLM18CyNo,
+                                SwiftWriteLM19CyNo, SwiftWriteLM22CyNo,
+                                SwiftWriteLM19CyNo, SwiftWriteLM22CyNo,
+                                SwiftWriteLM19CyNo, SwiftWriteLM22CyNo,
+                                SwiftWriteLM19CyNo, SwiftWriteLM22CyNo,
+                                SwiftWriteLM19CyNo, SwiftWriteLM22CyNo,
+                                SwiftWriteP01OneCycle, SwiftVLDMPerm4]>,
+    // Unknow number of registers, just use resources for two registers.
+    SchedVar<NoSchedPred,      [SwiftWriteLM7Cy, SwiftWriteLM8Cy,
+                                SwiftWriteLM13Cy, SwiftWriteLM13CyNo,
+                                SwiftWriteLM13CyNo, SwiftWriteLM13CyNo,
+                                SwiftWriteLM13CyNo, SwiftWriteLM13CyNo,
+                                SwiftWriteLM13CyNo, SwiftWriteLM13CyNo,
+                                SwiftWriteLM13CyNo, SwiftWriteLM13CyNo,
+                                SwiftWriteLM13CyNo, SwiftWriteLM13CyNo,
+                                SwiftWriteLM13CyNo, SwiftWriteLM13CyNo,
+                                SwiftWriteLM13CyNo, SwiftWriteLM13CyNo,
+                                SwiftWriteLM13CyNo, SwiftWriteLM13CyNo,
+                                SwiftWriteLM13CyNo, SwiftWriteLM13CyNo,
+                                SwiftWriteLM13CyNo, SwiftWriteLM13CyNo,
+                                SwiftWriteLM13CyNo, SwiftWriteLM13CyNo,
+                                SwiftWriteLM13CyNo, SwiftWriteLM13CyNo,
+                                SwiftWriteLM13CyNo, SwiftWriteLM13CyNo,
+                                SwiftWriteLM13CyNo, SwiftWriteLM13CyNo,
+                                SwiftWriteP01OneCycle,  SwiftVLDMPerm2]>
+  ]> { let Variadic = 1; }
+
+  def : InstRW<[SwiftWriteVLDM], (instregex "VLDM[SD](IA|DB)$")>;
+
+  def : InstRW<[SwiftWriteP01OneCycle2x, SwiftWriteVLDM],
+        (instregex "VLDM[SD](IA|DB)_UPD$")>;
+
+  def SwiftWriteVSTM : SchedWriteVariant<[
+    // One S register.
+    SchedVar<SwiftLMAddr1Pred, [SwiftWriteSTM1]>,
+    // One D register.
+    SchedVar<SwiftLMAddr2Pred, [SwiftWriteSTM1]>,
+    // Three S registers.
+    SchedVar<SwiftLMAddr3Pred, [SwiftWriteSTM4]>,
+    // Assume one Q register.
+    SchedVar<SwiftLMAddr4Pred, [SwiftWriteSTM1]>,
+    SchedVar<SwiftLMAddr5Pred, [SwiftWriteSTM6]>,
+    // Assume three D registers.
+    SchedVar<SwiftLMAddr6Pred, [SwiftWriteSTM4]>,
+    SchedVar<SwiftLMAddr7Pred, [SwiftWriteSTM8]>,
+    // Assume two Q registers.
+    SchedVar<SwiftLMAddr8Pred, [SwiftWriteSTM3]>,
+    SchedVar<SwiftLMAddr9Pred, [SwiftWriteSTM10]>,
+    // Assume 5 D registers.
+    SchedVar<SwiftLMAddr10Pred, [SwiftWriteSTM6]>,
+    SchedVar<SwiftLMAddr11Pred, [SwiftWriteSTM12]>,
+    // Asume three Q registers.
+    SchedVar<SwiftLMAddr12Pred, [SwiftWriteSTM4]>,
+    SchedVar<SwiftLMAddr13Pred, [SwiftWriteSTM14]>,
+    // Assume 7 D registers.
+    SchedVar<SwiftLMAddr14Pred, [SwiftWriteSTM8]>,
+    SchedVar<SwiftLMAddr15Pred, [SwiftWriteSTM16]>,
+    // Assume four Q registers.
+    SchedVar<SwiftLMAddr16Pred, [SwiftWriteSTM5]>,
+    // Asumme two Q registers.
+    SchedVar<NoSchedPred, [SwiftWriteSTM3]>
+  ]> { let Variadic = 1; }
+
+  def : InstRW<[SwiftWriteVSTM], (instregex "VSTM[SD](IA|DB)$")>;
+
+  def : InstRW<[SwiftWriteP01OneCycle2x, SwiftWriteVSTM],
+        (instregex "VSTM[SD](IA|DB)_UPD")>;
+
+  // 4.2.43 Advanced SIMD, Element or Structure Load and Store
+  def SwiftWrite2xP2FourCy : SchedWriteRes<[SwiftUnitP2]> {
+      let Latency = 4;
+      let ResourceCycles = [2];
+  }
+  def SwiftWrite3xP2FourCy : SchedWriteRes<[SwiftUnitP2]> {
+      let Latency = 4;
+      let ResourceCycles = [3];
+  }
+  foreach Num = 1-2 in {
+    def SwiftExt#Num#xP0 : SchedWriteRes<[SwiftUnitP0]> {
+      let Latency = 0;
+      let NumMicroOps = Num;
+      let ResourceCycles = [Num];
+    }
+  }
+  // VLDx
+  // Multiple structures.
+  // Single element structure loads.
+  // We assume aligned.
+  // Single/two register.
+  def : InstRW<[SwiftWriteLM4Cy], (instregex "VLD1(d|q)(8|16|32|64)$")>;
+  def : InstRW<[SwiftWriteLM4Cy, SwiftWriteP01OneCycle],
+        (instregex "VLD1(d|q)(8|16|32|64)wb")>;
+  // Three register.
+  def : InstRW<[SwiftWrite3xP2FourCy],
+        (instregex "VLD1(d|q)(8|16|32|64)T$", "VLD1d64TPseudo")>;
+  def : InstRW<[SwiftWrite3xP2FourCy, SwiftWriteP01OneCycle],
+        (instregex "VLD1(d|q)(8|16|32|64)Twb")>;
+  /// Four Register.
+  def : InstRW<[SwiftWrite2xP2FourCy],
+        (instregex "VLD1(d|q)(8|16|32|64)Q$", "VLD1d64QPseudo")>;
+  def : InstRW<[SwiftWrite2xP2FourCy, SwiftWriteP01OneCycle],
+        (instregex "VLD1(d|q)(8|16|32|64)Qwb")>;
+  // Two element structure loads.
+  // Two/four register.
+  def : InstRW<[SwiftWriteLM9Cy, SwiftExt2xP0, SwiftVLDMPerm2],
+        (instregex "VLD2(d|q|b)(8|16|32)$", "VLD2q(8|16|32)Pseudo$")>;
+  def : InstRW<[SwiftWriteLM9Cy, SwiftWriteP01OneCycle, SwiftExt2xP0,
+                SwiftVLDMPerm2],
+        (instregex "VLD2(d|q|b)(8|16|32)wb", "VLD2q(8|16|32)PseudoWB")>;
+  // Three element structure.
+  def : InstRW<[SwiftWriteLM9Cy, SwiftWriteLM9CyNo, SwiftWriteLM9CyNo,
+                SwiftVLDMPerm3, SwiftWrite3xP2FourCy],
+        (instregex "VLD3(d|q)(8|16|32)$")>;
+  def : InstRW<[SwiftWriteLM9Cy, SwiftVLDMPerm3, SwiftWrite3xP2FourCy],
+        (instregex "VLD3(d|q)(8|16|32)(oddP|P)seudo$")>;
+
+  def : InstRW<[SwiftWriteLM9Cy, SwiftWriteLM9CyNo, SwiftWriteLM9CyNo,
+                SwiftWriteP01OneCycle, SwiftVLDMPerm3, SwiftWrite3xP2FourCy],
+        (instregex "VLD3(d|q)(8|16|32)_UPD$")>;
+  def : InstRW<[SwiftWriteLM9Cy, SwiftWriteP01OneCycle, SwiftVLDMPerm3,
+                SwiftWrite3xP2FourCy],
+        (instregex "VLD3(d|q)(8|16|32)(oddP|P)seudo_UPD")>;
+  // Four element structure loads.
+  def : InstRW<[SwiftWriteLM11Cy, SwiftWriteLM11Cy, SwiftWriteLM11Cy,
+                SwiftWriteLM11Cy, SwiftExt2xP0, SwiftVLDMPerm4,
+                SwiftWrite3xP2FourCy],
+        (instregex "VLD4(d|q)(8|16|32)$")>;
+  def : InstRW<[SwiftWriteLM11Cy,  SwiftExt2xP0, SwiftVLDMPerm4,
+                SwiftWrite3xP2FourCy],
+        (instregex "VLD4(d|q)(8|16|32)(oddP|P)seudo$")>;
+  def : InstRW<[SwiftWriteLM11Cy, SwiftWriteLM11Cy, SwiftWriteLM11Cy,
+                SwiftWriteLM11Cy, SwiftWriteP01OneCycle, SwiftExt2xP0,
+                SwiftVLDMPerm4, SwiftWrite3xP2FourCy],
+        (instregex "VLD4(d|q)(8|16|32)_UPD")>;
+  def : InstRW<[SwiftWriteLM11Cy, SwiftWriteP01OneCycle, SwiftExt2xP0,
+                SwiftVLDMPerm4, SwiftWrite3xP2FourCy],
+        (instregex  "VLD4(d|q)(8|16|32)(oddP|P)seudo_UPD")>;
+
+  // Single all/lane loads.
+  // One element structure.
+  def : InstRW<[SwiftWriteLM6Cy, SwiftVLDMPerm2],
+        (instregex "VLD1(LN|DUP)(d|q)(8|16|32)$", "VLD1(LN|DUP)(d|q)(8|16|32)Pseudo$")>;
+  def : InstRW<[SwiftWriteLM6Cy, SwiftWriteP01OneCycle, SwiftVLDMPerm2],
+        (instregex "VLD1(LN|DUP)(d|q)(8|16|32)(wb|_UPD)",
+                  "VLD1LNq(8|16|32)Pseudo_UPD")>;
+  // Two element structure.
+  def : InstRW<[SwiftWriteLM6Cy, SwiftWriteLM6Cy, SwiftExt1xP0, SwiftVLDMPerm2],
+        (instregex "VLD2(DUP|LN)(d|q)(8|16|32|8x2|16x2|32x2)$",
+                   "VLD2LN(d|q)(8|16|32)Pseudo$")>;
+  def : InstRW<[SwiftWriteLM6Cy, SwiftWriteLM6Cy, SwiftWriteP01OneCycle,
+                SwiftExt1xP0, SwiftVLDMPerm2],
+        (instregex "VLD2LN(d|q)(8|16|32)_UPD$")>;
+  def : InstRW<[SwiftWriteLM6Cy, SwiftWriteP01OneCycle, SwiftWriteLM6Cy,
+                SwiftExt1xP0, SwiftVLDMPerm2],
+        (instregex "VLD2DUPd(8|16|32|8x2|16x2|32x2)wb")>;
+  def : InstRW<[SwiftWriteLM6Cy, SwiftWriteP01OneCycle, SwiftWriteLM6Cy,
+                SwiftExt1xP0, SwiftVLDMPerm2],
+        (instregex "VLD2LN(d|q)(8|16|32)Pseudo_UPD")>;
+  // Three element structure.
+  def : InstRW<[SwiftWriteLM7Cy, SwiftWriteLM8Cy, SwiftWriteLM8Cy, SwiftExt1xP0,
+                SwiftVLDMPerm3],
+        (instregex "VLD3(DUP|LN)(d|q)(8|16|32)$",
+                   "VLD3(LN|DUP)(d|q)(8|16|32)Pseudo$")>;
+  def : InstRW<[SwiftWriteLM7Cy, SwiftWriteLM8Cy, SwiftWriteLM8Cy,
+                SwiftWriteP01OneCycle, SwiftExt1xP0, SwiftVLDMPerm3],
+        (instregex "VLD3(LN|DUP)(d|q)(8|16|32)_UPD")>;
+  def : InstRW<[SwiftWriteLM7Cy, SwiftWriteP01OneCycle, SwiftWriteLM8Cy,
+                SwiftWriteLM8Cy, SwiftExt1xP0, SwiftVLDMPerm3],
+        (instregex "VLD3(LN|DUP)(d|q)(8|16|32)Pseudo_UPD")>;
+  // Four element struture.
+  def : InstRW<[SwiftWriteLM8Cy, SwiftWriteLM9Cy, SwiftWriteLM10CyNo,
+                SwiftWriteLM10CyNo, SwiftExt1xP0, SwiftVLDMPerm5],
+        (instregex "VLD4(LN|DUP)(d|q)(8|16|32)$",
+                   "VLD4(LN|DUP)(d|q)(8|16|32)Pseudo$")>;
+  def : InstRW<[SwiftWriteLM8Cy, SwiftWriteLM9Cy, SwiftWriteLM10CyNo,
+                SwiftWriteLM10CyNo, SwiftWriteP01OneCycle, SwiftExt1xP0,
+                SwiftVLDMPerm5],
+        (instregex "VLD4(DUP|LN)(d|q)(8|16|32)_UPD")>;
+  def : InstRW<[SwiftWriteLM8Cy, SwiftWriteP01OneCycle, SwiftWriteLM9Cy,
+                SwiftWriteLM10CyNo, SwiftWriteLM10CyNo, SwiftExt1xP0,
+                SwiftVLDMPerm5],
+        (instregex "VLD4(DUP|LN)(d|q)(8|16|32)Pseudo_UPD")>;
+  // VSTx
+  // Multiple structures.
+  // Single element structure store.
+  def : InstRW<[SwiftWrite1xP2], (instregex "VST1d(8|16|32|64)$")>;
+  def : InstRW<[SwiftWrite2xP2], (instregex "VST1q(8|16|32|64)$")>;
+  def : InstRW<[SwiftWriteP01OneCycle, SwiftWrite1xP2],
+        (instregex "VST1d(8|16|32|64)wb")>;
+  def : InstRW<[SwiftWriteP01OneCycle, SwiftWrite2xP2],
+        (instregex "VST1q(8|16|32|64)wb")>;
+  def : InstRW<[SwiftWrite3xP2],
+        (instregex "VST1d(8|16|32|64)T$", "VST1d64TPseudo$")>;
+  def : InstRW<[SwiftWriteP01OneCycle, SwiftWrite3xP2],
+        (instregex "VST1d(8|16|32|64)Twb", "VST1d64TPseudoWB")>;
+  def : InstRW<[SwiftWrite4xP2],
+        (instregex "VST1d(8|16|32|64)(Q|QPseudo)$")>;
+  def : InstRW<[SwiftWriteP01OneCycle, SwiftWrite4xP2],
+        (instregex "VST1d(8|16|32|64)(Qwb|QPseudoWB)")>;
+  // Two element structure store.
+  def : InstRW<[SwiftWrite1xP2, SwiftVLDMPerm1],
+        (instregex "VST2(d|b)(8|16|32)$")>;
+  def : InstRW<[SwiftWriteP01OneCycle, SwiftWrite1xP2, SwiftVLDMPerm1],
+        (instregex "VST2(b|d)(8|16|32)wb")>;
+  def : InstRW<[SwiftWrite2xP2, SwiftVLDMPerm2],
+        (instregex "VST2q(8|16|32)$", "VST2q(8|16|32)Pseudo$")>;
+  def : InstRW<[SwiftWrite2xP2, SwiftVLDMPerm2],
+        (instregex "VST2q(8|16|32)wb", "VST2q(8|16|32)PseudoWB")>;
+  // Three element structure store.
+  def : InstRW<[SwiftWrite4xP2, SwiftVLDMPerm2],
+        (instregex "VST3(d|q)(8|16|32)$", "VST3(d|q)(8|16|32)(oddP|P)seudo$")>;
+  def : InstRW<[SwiftWriteP01OneCycle, SwiftWrite4xP2, SwiftVLDMPerm2],
+        (instregex "VST3(d|q)(8|16|32)_UPD",
+                   "VST3(d|q)(8|16|32)(oddP|P)seudo_UPD$")>;
+  // Four element structure store.
+  def : InstRW<[SwiftWrite4xP2, SwiftVLDMPerm2],
+        (instregex "VST4(d|q)(8|16|32)$", "VST4(d|q)(8|16|32)(oddP|P)seudo$")>;
+  def : InstRW<[SwiftWriteP01OneCycle, SwiftWrite4xP2, SwiftVLDMPerm4],
+        (instregex "VST4(d|q)(8|16|32)_UPD",
+                   "VST4(d|q)(8|16|32)(oddP|P)seudo_UPD$")>;
+  // Single/all lane store.
+  // One element structure.
+  def : InstRW<[SwiftWrite1xP2, SwiftVLDMPerm1],
+        (instregex "VST1LNd(8|16|32)$", "VST1LNq(8|16|32)Pseudo$")>;
+  def : InstRW<[SwiftWriteP01OneCycle, SwiftWrite1xP2, SwiftVLDMPerm1],
+        (instregex "VST1LNd(8|16|32)_UPD", "VST1LNq(8|16|32)Pseudo_UPD")>;
+  // Two element structure.
+  def : InstRW<[SwiftWrite1xP2, SwiftVLDMPerm2],
+        (instregex "VST2LN(d|q)(8|16|32)$", "VST2LN(d|q)(8|16|32)Pseudo$")>;
+  def : InstRW<[SwiftWriteP01OneCycle, SwiftWrite1xP2, SwiftVLDMPerm2],
+        (instregex "VST2LN(d|q)(8|16|32)_UPD",
+                   "VST2LN(d|q)(8|16|32)Pseudo_UPD")>;
+  // Three element structure.
+  def : InstRW<[SwiftWrite4xP2, SwiftVLDMPerm2],
+        (instregex "VST3LN(d|q)(8|16|32)$", "VST3LN(d|q)(8|16|32)Pseudo$")>;
+  def : InstRW<[SwiftWriteP01OneCycle, SwiftWrite4xP2, SwiftVLDMPerm2],
+        (instregex "VST3LN(d|q)(8|16|32)_UPD",
+                   "VST3LN(d|q)(8|16|32)Pseudo_UPD")>;
+  // Four element structure.
+  def : InstRW<[SwiftWrite2xP2, SwiftVLDMPerm2],
+        (instregex "VST4LN(d|q)(8|16|32)$", "VST4LN(d|q)(8|16|32)Pseudo$")>;
+  def : InstRW<[SwiftWriteP01OneCycle, SwiftWrite2xP2, SwiftVLDMPerm2],
+        (instregex "VST4LN(d|q)(8|16|32)_UPD",
+                   "VST4LN(d|q)(8|16|32)Pseudo_UPD")>;
+
   // Preload.
   def : WriteRes<WritePreLd, [SwiftUnitP2]> { let Latency = 0;
     let ResourceCycles = [0];
