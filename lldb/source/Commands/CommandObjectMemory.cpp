@@ -44,7 +44,7 @@ g_option_table[] =
     { LLDB_OPT_SET_3, true , "type"         ,'t', required_argument, NULL, 0, eArgTypeNone          ,"The name of a type to view memory as."}, 
     { LLDB_OPT_SET_1|
       LLDB_OPT_SET_2|
-      LLDB_OPT_SET_3, false, "force"        ,'r', no_argument,       NULL, 0, eArgTypeNone          ,"Necessary if reading over 1024 bytes of memory."},
+      LLDB_OPT_SET_3, false, "force"        ,'r', no_argument,       NULL, 0, eArgTypeNone          ,"Necessary if reading over target.max-memory-read-size bytes."},
 };
 
 
@@ -119,6 +119,7 @@ public:
         m_num_per_line.Clear();
         m_output_as_binary = false;
         m_view_as_type.Clear();
+        m_force = false;
     }
     
     Error
@@ -642,14 +643,15 @@ protected:
             item_count = total_byte_size / item_byte_size;
         }
         
-        if (total_byte_size > 1024 && !m_memory_options.m_force)
+        uint32_t max_unforced_size = target->GetMaximumMemReadSize();
+        
+        if (total_byte_size > max_unforced_size && !m_memory_options.m_force)
         {
-            result.AppendErrorWithFormat("Normally, \'memory read\' will not read over 1Kbyte of data.\n");
-            result.AppendErrorWithFormat("Please use --force to override this restriction.\n");
+            result.AppendErrorWithFormat("Normally, \'memory read\' will not read over %" PRIu32 " bytes of data.\n",max_unforced_size);
+            result.AppendErrorWithFormat("Please use --force to override this restriction just once.\n");
+            result.AppendErrorWithFormat("or set target.max-memory-read-size if you will often need a larger limit.\n");
             return false;
         }
-        
-        
         
         DataBufferSP data_sp;
         size_t bytes_read = 0;

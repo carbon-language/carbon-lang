@@ -127,6 +127,9 @@ public:
     
     uint32_t
     GetMaximumSizeOfStringSummary() const;
+
+    uint32_t
+    GetMaximumMemReadSize () const;
     
     FileSpec
     GetStandardInputPath () const;
