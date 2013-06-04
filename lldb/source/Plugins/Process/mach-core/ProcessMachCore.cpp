@@ -213,6 +213,13 @@ ProcessMachCore::DoLoadCore ()
         error.SetErrorString ("invalid core object file");   
         return error;
     }
+    
+    if (core_objfile->GetNumThreadContexts() == 0)
+    {
+        error.SetErrorString ("core file doesn't contain any recognized thread contexts");
+        return error;
+    }
+
     SectionList *section_list = core_objfile->GetSectionList();
     if (section_list == NULL)
     {
