@@ -1780,7 +1780,8 @@ multiclass APreLoad<bits<1> read, bits<1> data, string opc> {
 
   def i12 : AXI<(outs), (ins addrmode_imm12:$addr), MiscFrm, IIC_Preload,
                 !strconcat(opc, "\t$addr"),
-                [(ARMPreload addrmode_imm12:$addr, (i32 read), (i32 data))]> {
+                [(ARMPreload addrmode_imm12:$addr, (i32 read), (i32 data))]>,
+                Sched<[WritePreLd]> {
     bits<4> Rt;
     bits<17> addr;
     let Inst{31-26} = 0b111101;
@@ -1796,7 +1797,8 @@ multiclass APreLoad<bits<1> read, bits<1> data, string opc> {
 
   def rs : AXI<(outs), (ins ldst_so_reg:$shift), MiscFrm, IIC_Preload,
                !strconcat(opc, "\t$shift"),
-               [(ARMPreload ldst_so_reg:$shift, (i32 read), (i32 data))]> {
+               [(ARMPreload ldst_so_reg:$shift, (i32 read), (i32 data))]>,
+               Sched<[WritePreLd]> {
     bits<17> shift;
     let Inst{31-26} = 0b111101;
     let Inst{25} = 1; // 1 for register form
