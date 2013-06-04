@@ -310,7 +310,7 @@ def tCPS : T1I<(outs), (ins imod_op:$imod, iflags_op:$iflags),
 let isNotDuplicable = 1, isCodeGenOnly = 1 in
 def tPICADD : TIt<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp), IIC_iALUr, "",
                   [(set GPR:$dst, (ARMpic_add GPR:$lhs, imm:$cp))]>,
-              T1Special<{0,0,?,?}> {
+              T1Special<{0,0,?,?}>, Sched<[WriteALU]> {
   // A8.6.6
   bits<3> dst;
   let Inst{6-3} = 0b1111; // Rm = pc
@@ -323,7 +323,7 @@ def tPICADD : TIt<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp), IIC_iALUr, "",
 // probably because the instruction can be moved around.
 def tADDrSPi : T1pI<(outs tGPR:$dst), (ins GPRsp:$sp, t_imm0_1020s4:$imm),
                     IIC_iALUi, "add", "\t$dst, $sp, $imm", []>,
-               T1Encoding<{1,0,1,0,1,?}> {
+               T1Encoding<{1,0,1,0,1,?}>, Sched<[WriteALU]> {
   // A6.2 & A8.6.8
   bits<3> dst;
   bits<8> imm;
@@ -335,7 +335,7 @@ def tADDrSPi : T1pI<(outs tGPR:$dst), (ins GPRsp:$sp, t_imm0_1020s4:$imm),
 // ADD sp, sp, #<imm7>
 def tADDspi : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, t_imm0_508s4:$imm),
                      IIC_iALUi, "add", "\t$Rdn, $imm", []>,
-              T1Misc<{0,0,0,0,0,?,?}> {
+              T1Misc<{0,0,0,0,0,?,?}>, Sched<[WriteALU]> {
   // A6.2.5 & A8.6.8
   bits<7> imm;
   let Inst{6-0} = imm;
@@ -346,7 +346,7 @@ def tADDspi : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, t_imm0_508s4:$imm),
 // FIXME: The encoding and the ASM string don't match up.
 def tSUBspi : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, t_imm0_508s4:$imm),
                     IIC_iALUi, "sub", "\t$Rdn, $imm", []>,
-              T1Misc<{0,0,0,0,1,?,?}> {
+              T1Misc<{0,0,0,0,1,?,?}>, Sched<[WriteALU]> {
   // A6.2.5 & A8.6.214
   bits<7> imm;
   let Inst{6-0} = imm;
@@ -367,7 +367,7 @@ def : tInstAlias<"sub${p} sp, sp, $imm",
 // ADD <Rm>, sp
 def tADDrSP : T1pI<(outs GPR:$Rdn), (ins GPRsp:$sp, GPR:$Rn), IIC_iALUr,
                    "add", "\t$Rdn, $sp, $Rn", []>,
-              T1Special<{0,0,?,?}> {
+              T1Special<{0,0,?,?}>, Sched<[WriteALU]> {
   // A8.6.9 Encoding T1
   bits<4> Rdn;
   let Inst{7}   = Rdn{3};
@@ -379,7 +379,7 @@ def tADDrSP : T1pI<(outs GPR:$Rdn), (ins GPRsp:$sp, GPR:$Rn), IIC_iALUr,
 // ADD sp, <Rm>
 def tADDspr : T1pIt<(outs GPRsp:$Rdn), (ins GPRsp:$Rn, GPR:$Rm), IIC_iALUr,
                   "add", "\t$Rdn, $Rm", []>,
-              T1Special<{0,0,?,?}> {
+              T1Special<{0,0,?,?}>, Sched<[WriteALU]> {
   // A8.6.9 Encoding T2
   bits<4> Rm;
   let Inst{7} = 1;
@@ -833,14 +833,15 @@ let isCommutable = 1, Uses = [CPSR] in
 def tADC :                      // A8.6.2
   T1sItDPEncode<0b0101, (outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm), IIC_iALUr,
                 "adc", "\t$Rdn, $Rm",
-                [(set tGPR:$Rdn, (adde tGPR:$Rn, tGPR:$Rm))]>;
+                [(set tGPR:$Rdn, (adde tGPR:$Rn, tGPR:$Rm))]>, Sched<[WriteALU]>;
 
 // Add immediate
 def tADDi3 :                    // A8.6.4 T1
   T1sIGenEncodeImm<0b01110, (outs tGPR:$Rd), (ins tGPR:$Rm, imm0_7:$imm3),
                    IIC_iALUi,
                    "add", "\t$Rd, $Rm, $imm3",
-                   [(set tGPR:$Rd, (add tGPR:$Rm, imm0_7:$imm3))]> {
+                   [(set tGPR:$Rd, (add tGPR:$Rm, imm0_7:$imm3))]>,
+                   Sched<[WriteALU]> {
   bits<3> imm3;
   let Inst{8-6} = imm3;
 }
@@ -849,7 +850,8 @@ def tADDi8 :                    // A8.6.4 T2
   T1sItGenEncodeImm<{1,1,0,?,?}, (outs tGPR:$Rdn),
                     (ins tGPR:$Rn, imm0_255:$imm8), IIC_iALUi,
                     "add", "\t$Rdn, $imm8",
-                    [(set tGPR:$Rdn, (add tGPR:$Rn, imm8_255:$imm8))]>;
+                    [(set tGPR:$Rdn, (add tGPR:$Rn, imm8_255:$imm8))]>,
+                    Sched<[WriteALU]>;
 
 // Add register
 let isCommutable = 1 in
@@ -857,12 +859,12 @@ def tADDrr :                    // A8.6.6 T1
   T1sIGenEncode<0b01100, (outs tGPR:$Rd), (ins tGPR:$Rn, tGPR:$Rm),
                 IIC_iALUr,
                 "add", "\t$Rd, $Rn, $Rm",
-                [(set tGPR:$Rd, (add tGPR:$Rn, tGPR:$Rm))]>;
+                [(set tGPR:$Rd, (add tGPR:$Rn, tGPR:$Rm))]>, Sched<[WriteALU]>;
 
 let neverHasSideEffects = 1 in
 def tADDhirr : T1pIt<(outs GPR:$Rdn), (ins GPR:$Rn, GPR:$Rm), IIC_iALUr,
                      "add", "\t$Rdn, $Rm", []>,
-               T1Special<{0,0,?,?}> {
+               T1Special<{0,0,?,?}>, Sched<[WriteALU]> {
   // A8.6.6 T2
   bits<4> Rdn;
   bits<4> Rm;
@@ -877,14 +879,15 @@ def tAND :                      // A8.6.12
   T1sItDPEncode<0b0000, (outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm),
                 IIC_iBITr,
                 "and", "\t$Rdn, $Rm",
-                [(set tGPR:$Rdn, (and tGPR:$Rn, tGPR:$Rm))]>;
+                [(set tGPR:$Rdn, (and tGPR:$Rn, tGPR:$Rm))]>, Sched<[WriteALU]>;
 
 // ASR immediate
 def tASRri :                    // A8.6.14
   T1sIGenEncodeImm<{0,1,0,?,?}, (outs tGPR:$Rd), (ins tGPR:$Rm, imm_sr:$imm5),
                    IIC_iMOVsi,
                    "asr", "\t$Rd, $Rm, $imm5",
-                   [(set tGPR:$Rd, (sra tGPR:$Rm, (i32 imm_sr:$imm5)))]> {
+                   [(set tGPR:$Rd, (sra tGPR:$Rm, (i32 imm_sr:$imm5)))]>,
+                   Sched<[WriteALU]> {
   bits<5> imm5;
   let Inst{10-6} = imm5;
 }
@@ -894,14 +897,15 @@ def tASRrr :                    // A8.6.15
   T1sItDPEncode<0b0100, (outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm),
                 IIC_iMOVsr,
                 "asr", "\t$Rdn, $Rm",
-                [(set tGPR:$Rdn, (sra tGPR:$Rn, tGPR:$Rm))]>;
+                [(set tGPR:$Rdn, (sra tGPR:$Rn, tGPR:$Rm))]>, Sched<[WriteALU]>;
 
 // BIC register
 def tBIC :                      // A8.6.20
   T1sItDPEncode<0b1110, (outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm),
                 IIC_iBITr,
                 "bic", "\t$Rdn, $Rm",
-                [(set tGPR:$Rdn, (and tGPR:$Rn, (not tGPR:$Rm)))]>;
+                [(set tGPR:$Rdn, (and tGPR:$Rn, (not tGPR:$Rm)))]>,
+                Sched<[WriteALU]>;
 
 // CMN register
 let isCompare = 1, Defs = [CPSR] in {
@@ -917,7 +921,7 @@ def tCMNz :                     // A8.6.33
   T1pIDPEncode<0b1011, (outs), (ins tGPR:$Rn, tGPR:$Rm),
                IIC_iCMPr,
                "cmn", "\t$Rn, $Rm",
-               [(ARMcmpZ tGPR:$Rn, (ineg tGPR:$Rm))]>;
+               [(ARMcmpZ tGPR:$Rn, (ineg tGPR:$Rm))]>, Sched<[WriteCMP]>;
 
 } // isCompare = 1, Defs = [CPSR]
 
@@ -926,7 +930,7 @@ let isCompare = 1, Defs = [CPSR] in {
 def tCMPi8 : T1pI<(outs), (ins tGPR:$Rn, imm0_255:$imm8), IIC_iCMPi,
                   "cmp", "\t$Rn, $imm8",
                   [(ARMcmp tGPR:$Rn, imm0_255:$imm8)]>,
-             T1General<{1,0,1,?,?}> {
+             T1General<{1,0,1,?,?}>, Sched<[WriteCMP]> {
   // A8.6.35
   bits<3> Rn;
   bits<8> imm8;
@@ -939,11 +943,11 @@ def tCMPr :                     // A8.6.36 T1
   T1pIDPEncode<0b1010, (outs), (ins tGPR:$Rn, tGPR:$Rm),
                IIC_iCMPr,
                "cmp", "\t$Rn, $Rm",
-               [(ARMcmp tGPR:$Rn, tGPR:$Rm)]>;
+               [(ARMcmp tGPR:$Rn, tGPR:$Rm)]>, Sched<[WriteCMP]>;
 
 def tCMPhir : T1pI<(outs), (ins GPR:$Rn, GPR:$Rm), IIC_iCMPr,
                    "cmp", "\t$Rn, $Rm", []>,
-              T1Special<{0,1,?,?}> {
+              T1Special<{0,1,?,?}>, Sched<[WriteCMP]> {
   // A8.6.36 T2
   bits<4> Rm;
   bits<4> Rn;
@@ -960,14 +964,15 @@ def tEOR :                      // A8.6.45
   T1sItDPEncode<0b0001, (outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm),
                 IIC_iBITr,
                 "eor", "\t$Rdn, $Rm",
-                [(set tGPR:$Rdn, (xor tGPR:$Rn, tGPR:$Rm))]>;
+                [(set tGPR:$Rdn, (xor tGPR:$Rn, tGPR:$Rm))]>, Sched<[WriteALU]>;
 
 // LSL immediate
 def tLSLri :                    // A8.6.88
   T1sIGenEncodeImm<{0,0,0,?,?}, (outs tGPR:$Rd), (ins tGPR:$Rm, imm0_31:$imm5),
                    IIC_iMOVsi,
                    "lsl", "\t$Rd, $Rm, $imm5",
-                   [(set tGPR:$Rd, (shl tGPR:$Rm, (i32 imm:$imm5)))]> {
+                   [(set tGPR:$Rd, (shl tGPR:$Rm, (i32 imm:$imm5)))]>,
+                   Sched<[WriteALU]> {
   bits<5> imm5;
   let Inst{10-6} = imm5;
 }
@@ -977,14 +982,15 @@ def tLSLrr :                    // A8.6.89
   T1sItDPEncode<0b0010, (outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm),
                 IIC_iMOVsr,
                 "lsl", "\t$Rdn, $Rm",
-                [(set tGPR:$Rdn, (shl tGPR:$Rn, tGPR:$Rm))]>;
+                [(set tGPR:$Rdn, (shl tGPR:$Rn, tGPR:$Rm))]>, Sched<[WriteALU]>;
 
 // LSR immediate
 def tLSRri :                    // A8.6.90
   T1sIGenEncodeImm<{0,0,1,?,?}, (outs tGPR:$Rd), (ins tGPR:$Rm, imm_sr:$imm5),
                    IIC_iMOVsi,
                    "lsr", "\t$Rd, $Rm, $imm5",
-                   [(set tGPR:$Rd, (srl tGPR:$Rm, (i32 imm_sr:$imm5)))]> {
+                   [(set tGPR:$Rd, (srl tGPR:$Rm, (i32 imm_sr:$imm5)))]>,
+                   Sched<[WriteALU]> {
   bits<5> imm5;
   let Inst{10-6} = imm5;
 }
@@ -994,14 +1000,14 @@ def tLSRrr :                    // A8.6.91
   T1sItDPEncode<0b0011, (outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm),
                 IIC_iMOVsr,
                 "lsr", "\t$Rdn, $Rm",
-                [(set tGPR:$Rdn, (srl tGPR:$Rn, tGPR:$Rm))]>;
+                [(set tGPR:$Rdn, (srl tGPR:$Rn, tGPR:$Rm))]>, Sched<[WriteALU]>;
 
 // Move register
 let isMoveImm = 1 in
 def tMOVi8 : T1sI<(outs tGPR:$Rd), (ins imm0_255:$imm8), IIC_iMOVi,
                   "mov", "\t$Rd, $imm8",
                   [(set tGPR:$Rd, imm0_255:$imm8)]>,
-             T1General<{1,0,0,?,?}> {
+             T1General<{1,0,0,?,?}>, Sched<[WriteALU]> {
   // A8.6.96
   bits<3> Rd;
   bits<8> imm8;
@@ -1019,7 +1025,7 @@ let neverHasSideEffects = 1 in {
 def tMOVr : Thumb1pI<(outs GPR:$Rd), (ins GPR:$Rm), AddrModeNone,
                       2, IIC_iMOVr,
                       "mov", "\t$Rd, $Rm", "", []>,
-                  T1Special<{1,0,?,?}> {
+                  T1Special<{1,0,?,?}>, Sched<[WriteALU]> {
   // A8.6.97
   bits<4> Rd;
   bits<4> Rm;
@@ -1029,7 +1035,7 @@ def tMOVr : Thumb1pI<(outs GPR:$Rd), (ins GPR:$Rm), AddrModeNone,
 }
 let Defs = [CPSR] in
 def tMOVSr      : T1I<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iMOVr,
-                      "movs\t$Rd, $Rm", []>, Encoding16 {
+                      "movs\t$Rd, $Rm", []>, Encoding16, Sched<[WriteALU]> {
   // A8.6.97
   bits<3> Rd;
   bits<3> Rm;
@@ -1060,7 +1066,7 @@ def :tInstAlias<"mul${s}${p} $Rdm, $Rn", (tMUL tGPR:$Rdm, s_cc_out:$s, tGPR:$Rn,
 def tMVN :                      // A8.6.107
   T1sIDPEncode<0b1111, (outs tGPR:$Rd), (ins tGPR:$Rn), IIC_iMVNr,
                "mvn", "\t$Rd, $Rn",
-               [(set tGPR:$Rd, (not tGPR:$Rn))]>;
+               [(set tGPR:$Rd, (not tGPR:$Rn))]>, Sched<[WriteALU]>;
 
 // Bitwise or register
 let isCommutable = 1 in
@@ -1068,7 +1074,7 @@ def tORR :                      // A8.6.114
   T1sItDPEncode<0b1100, (outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm),
                 IIC_iBITr,
                 "orr", "\t$Rdn, $Rm",
-                [(set tGPR:$Rdn, (or tGPR:$Rn, tGPR:$Rm))]>;
+                [(set tGPR:$Rdn, (or tGPR:$Rn, tGPR:$Rm))]>, Sched<[WriteALU]>;
 
 // Swaps
 def tREV :                      // A8.6.134
@@ -1076,35 +1082,36 @@ def tREV :                      // A8.6.134
                  IIC_iUNAr,
                  "rev", "\t$Rd, $Rm",
                  [(set tGPR:$Rd, (bswap tGPR:$Rm))]>,
-                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
+                 Requires<[IsThumb, IsThumb1Only, HasV6]>, Sched<[WriteALU]>;
 
 def tREV16 :                    // A8.6.135
   T1pIMiscEncode<{1,0,1,0,0,1,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
                  IIC_iUNAr,
                  "rev16", "\t$Rd, $Rm",
              [(set tGPR:$Rd, (rotr (bswap tGPR:$Rm), (i32 16)))]>,
-                Requires<[IsThumb, IsThumb1Only, HasV6]>;
+                Requires<[IsThumb, IsThumb1Only, HasV6]>, Sched<[WriteALU]>;
 
 def tREVSH :                    // A8.6.136
   T1pIMiscEncode<{1,0,1,0,1,1,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
                  IIC_iUNAr,
                  "revsh", "\t$Rd, $Rm",
                  [(set tGPR:$Rd, (sra (bswap tGPR:$Rm), (i32 16)))]>,
-                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
+                 Requires<[IsThumb, IsThumb1Only, HasV6]>, Sched<[WriteALU]>;
 
 // Rotate right register
 def tROR :                      // A8.6.139
   T1sItDPEncode<0b0111, (outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm),
                 IIC_iMOVsr,
                 "ror", "\t$Rdn, $Rm",
-                [(set tGPR:$Rdn, (rotr tGPR:$Rn, tGPR:$Rm))]>;
+                [(set tGPR:$Rdn, (rotr tGPR:$Rn, tGPR:$Rm))]>,
+                Sched<[WriteALU]>;
 
 // Negate register
 def tRSB :                      // A8.6.141
   T1sIDPEncode<0b1001, (outs tGPR:$Rd), (ins tGPR:$Rn),
                IIC_iALUi,
                "rsb", "\t$Rd, $Rn, #0",
-               [(set tGPR:$Rd, (ineg tGPR:$Rn))]>;
+               [(set tGPR:$Rd, (ineg tGPR:$Rn))]>, Sched<[WriteALU]>;
 
 // Subtract with carry register
 let Uses = [CPSR] in
@@ -1112,14 +1119,16 @@ def tSBC :                      // A8.6.151
   T1sItDPEncode<0b0110, (outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm),
                 IIC_iALUr,
                 "sbc", "\t$Rdn, $Rm",
-                [(set tGPR:$Rdn, (sube tGPR:$Rn, tGPR:$Rm))]>;
+                [(set tGPR:$Rdn, (sube tGPR:$Rn, tGPR:$Rm))]>,
+                Sched<[WriteALU]>;
 
 // Subtract immediate
 def tSUBi3 :                    // A8.6.210 T1
   T1sIGenEncodeImm<0b01111, (outs tGPR:$Rd), (ins tGPR:$Rm, imm0_7:$imm3),
                    IIC_iALUi,
                    "sub", "\t$Rd, $Rm, $imm3",
-                   [(set tGPR:$Rd, (add tGPR:$Rm, imm0_7_neg:$imm3))]> {
+                   [(set tGPR:$Rd, (add tGPR:$Rm, imm0_7_neg:$imm3))]>,
+                   Sched<[WriteALU]> {
   bits<3> imm3;
   let Inst{8-6} = imm3;
 }
@@ -1128,14 +1137,16 @@ def tSUBi8 :                    // A8.6.210 T2
   T1sItGenEncodeImm<{1,1,1,?,?}, (outs tGPR:$Rdn),
                     (ins tGPR:$Rn, imm0_255:$imm8), IIC_iALUi,
                     "sub", "\t$Rdn, $imm8",
-                    [(set tGPR:$Rdn, (add tGPR:$Rn, imm8_255_neg:$imm8))]>;
+                    [(set tGPR:$Rdn, (add tGPR:$Rn, imm8_255_neg:$imm8))]>,
+                    Sched<[WriteALU]>;
 
 // Subtract register
 def tSUBrr :                    // A8.6.212
   T1sIGenEncode<0b01101, (outs tGPR:$Rd), (ins tGPR:$Rn, tGPR:$Rm),
                 IIC_iALUr,
                 "sub", "\t$Rd, $Rn, $Rm",
-                [(set tGPR:$Rd, (sub tGPR:$Rn, tGPR:$Rm))]>;
+                [(set tGPR:$Rd, (sub tGPR:$Rn, tGPR:$Rm))]>,
+                Sched<[WriteALU]>;
 
 // Sign-extend byte
 def tSXTB :                     // A8.6.222
@@ -1143,7 +1154,8 @@ def tSXTB :                     // A8.6.222
                  IIC_iUNAr,
                  "sxtb", "\t$Rd, $Rm",
                  [(set tGPR:$Rd, (sext_inreg tGPR:$Rm, i8))]>,
-                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
+                 Requires<[IsThumb, IsThumb1Only, HasV6]>,
+                 Sched<[WriteALU]>;
 
 // Sign-extend short
 def tSXTH :                     // A8.6.224
@@ -1151,14 +1163,16 @@ def tSXTH :                     // A8.6.224
                  IIC_iUNAr,
                  "sxth", "\t$Rd, $Rm",
                  [(set tGPR:$Rd, (sext_inreg tGPR:$Rm, i16))]>,
-                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
+                 Requires<[IsThumb, IsThumb1Only, HasV6]>,
+                 Sched<[WriteALU]>;
 
 // Test
 let isCompare = 1, isCommutable = 1, Defs = [CPSR] in
 def tTST :                      // A8.6.230
   T1pIDPEncode<0b1000, (outs), (ins tGPR:$Rn, tGPR:$Rm), IIC_iTSTr,
                "tst", "\t$Rn, $Rm",
-               [(ARMcmpZ (and_su tGPR:$Rn, tGPR:$Rm), 0)]>;
+               [(ARMcmpZ (and_su tGPR:$Rn, tGPR:$Rm), 0)]>,
+               Sched<[WriteALU]>;
 
 // Zero-extend byte
 def tUXTB :                     // A8.6.262
@@ -1166,7 +1180,8 @@ def tUXTB :                     // A8.6.262
                  IIC_iUNAr,
                  "uxtb", "\t$Rd, $Rm",
                  [(set tGPR:$Rd, (and tGPR:$Rm, 0xFF))]>,
-                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
+                 Requires<[IsThumb, IsThumb1Only, HasV6]>,
+                 Sched<[WriteALU]>;
 
 // Zero-extend short
 def tUXTH :                     // A8.6.264
@@ -1174,7 +1189,7 @@ def tUXTH :                     // A8.6.264
                  IIC_iUNAr,
                  "uxth", "\t$Rd, $Rm",
                  [(set tGPR:$Rd, (and tGPR:$Rm, 0xFFFF))]>,
-                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
+                 Requires<[IsThumb, IsThumb1Only, HasV6]>, Sched<[WriteALU]>;
 
 // Conditional move tMOVCCr - Used to implement the Thumb SELECT_CC operation.
 // Expanded after instruction selection into a branch sequence.
@@ -1189,7 +1204,7 @@ let usesCustomInserter = 1 in  // Expanded after instruction selection.
 
 def tADR : T1I<(outs tGPR:$Rd), (ins t_adrlabel:$addr, pred:$p),
                IIC_iALUi, "adr{$p}\t$Rd, $addr", []>,
-               T1Encoding<{1,0,1,0,0,?}> {
+               T1Encoding<{1,0,1,0,0,?}>, Sched<[WriteALU]> {
   bits<3> Rd;
   bits<8> addr;
   let Inst{10-8} = Rd;
@@ -1199,12 +1214,12 @@ def tADR : T1I<(outs tGPR:$Rd), (ins t_adrlabel:$addr, pred:$p),
 
 let neverHasSideEffects = 1, isReMaterializable = 1 in
 def tLEApcrel   : tPseudoInst<(outs tGPR:$Rd), (ins i32imm:$label, pred:$p),
-                              2, IIC_iALUi, []>;
+                              2, IIC_iALUi, []>, Sched<[WriteALU]>;
 
 let hasSideEffects = 1 in
 def tLEApcrelJT : tPseudoInst<(outs tGPR:$Rd),
                               (ins i32imm:$label, nohash_imm:$id, pred:$p),
-                              2, IIC_iALUi, []>;
+                              2, IIC_iALUi, []>, Sched<[WriteALU]>;
 
 //===----------------------------------------------------------------------===//
 // TLS Instructions
