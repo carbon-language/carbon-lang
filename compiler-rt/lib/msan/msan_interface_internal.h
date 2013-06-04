@@ -120,9 +120,27 @@ void __msan_partial_poison(const void* data, void* shadow, uptr size);
 // Memory will be marked uninitialized, with origin at the call site.
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_allocated_memory(const void* data, uptr size);
-}  // extern "C"
 
 // Unpoison first n function arguments.
 void __msan_unpoison_param(uptr n);
+
+SANITIZER_INTERFACE_ATTRIBUTE
+u16 __sanitizer_unaligned_load16(const void *p);
+
+SANITIZER_INTERFACE_ATTRIBUTE
+u32 __sanitizer_unaligned_load32(const void *p);
+
+SANITIZER_INTERFACE_ATTRIBUTE
+u64 __sanitizer_unaligned_load64(const void *p);
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void __sanitizer_unaligned_store16(void *p, u16 x);
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void __sanitizer_unaligned_store32(void *p, u32 x);
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void __sanitizer_unaligned_store64(void *p, u64 x);
+}  // extern "C"
 
 #endif  // MSAN_INTERFACE_INTERNAL_H
