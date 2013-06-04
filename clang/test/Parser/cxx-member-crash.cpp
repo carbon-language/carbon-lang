@@ -2,7 +2,7 @@
 
 // <rdar://problem/9221993>
 
-// We only care to chek whether the compiler crashes; the actual
+// We only care to check whether the compiler crashes; the actual
 // diagnostics are uninteresting.
 // CHECK: 8 errors generated.
 template<class _CharT>     struct char_traits;
