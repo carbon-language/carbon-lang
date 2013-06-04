@@ -89,9 +89,9 @@ def calltarget : Operand<i32>;
 let PrintMethod = "printCCOperand" in
   def CCOp : Operand<i32>;
 
-def SDTSPcmpfcc : 
+def SDTSPcmpfcc :
 SDTypeProfile<0, 2, [SDTCisFP<0>, SDTCisSameAs<0, 1>]>;
-def SDTSPbrcc : 
+def SDTSPbrcc :
 SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>, SDTCisVT<1, i32>]>;
 def SDTSPselectcc :
 SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, SDTCisVT<3, i32>]>;
@@ -186,7 +186,7 @@ def FCC_O   : FCC_VAL<29>;  // Ordered
 
 /// F3_12 multiclass - Define a normal F3_1/F3_2 pattern in one shot.
 multiclass F3_12<string OpcStr, bits<6> Op3Val, SDNode OpNode> {
-  def rr  : F3_1<2, Op3Val, 
+  def rr  : F3_1<2, Op3Val,
                  (outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
                  !strconcat(OpcStr, " $b, $c, $dst"),
                  [(set i32:$dst, (OpNode i32:$b, i32:$c))]>;
@@ -199,7 +199,7 @@ multiclass F3_12<string OpcStr, bits<6> Op3Val, SDNode OpNode> {
 /// F3_12np multiclass - Define a normal F3_1/F3_2 pattern in one shot, with no
 /// pattern.
 multiclass F3_12np<string OpcStr, bits<6> Op3Val> {
-  def rr  : F3_1<2, Op3Val, 
+  def rr  : F3_1<2, Op3Val,
                  (outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
                  !strconcat(OpcStr, " $b, $c, $dst"), []>;
   def ri  : F3_2<2, Op3Val,
@@ -243,7 +243,7 @@ let hasSideEffects = 1, mayStore = 1 in {
 def UNIMP : F2_1<0b000, (outs), (ins i32imm:$val),
                 "unimp $val", []>;
 
-// FpMOVD/FpNEGD/FpABSD - These are lowered to single-precision ops by the 
+// FpMOVD/FpNEGD/FpABSD - These are lowered to single-precision ops by the
 // fpmover pass.
 let Predicates = [HasNoV9] in {  // Only emit these in V8 mode.
   def FpMOVD : Pseudo<(outs DFPRegs:$dst), (ins DFPRegs:$src),
@@ -259,8 +259,8 @@ let Predicates = [HasNoV9] in {  // Only emit these in V8 mode.
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded after
 // instruction selection into a branch sequence.  This has to handle all
 // permutations of selection between i32/f32/f64 on ICC and FCC.
-  // Expanded after instruction selection.
-let Uses = [ICC], usesCustomInserter = 1 in { 
+// Expanded after instruction selection.
+let Uses = [ICC], usesCustomInserter = 1 in {
   def SELECT_CC_Int_ICC
    : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, IntRegs:$F, i32imm:$Cond),
             "; SELECT_CC_Int_ICC PSEUDO!",
@@ -465,7 +465,7 @@ def LEA_ADDri   : F3_2<2, 0b000000,
                    "add ${addr:arith}, $dst",
                    [(set iPTR:$dst, ADDRri:$addr)]>;
 
-let Defs = [ICC] in                   
+let Defs = [ICC] in
   defm ADDCC  : F3_12<"addcc", 0b010000, addc>;
 
 let Uses = [ICC] in
@@ -473,14 +473,14 @@ let Uses = [ICC] in
 
 // Section B.15 - Subtract Instructions, p. 110
 defm SUB    : F3_12  <"sub"  , 0b000100, sub>;
-let Uses = [ICC] in 
+let Uses = [ICC] in
   defm SUBX   : F3_12  <"subx" , 0b001100, sube>;
 
-let Defs = [ICC] in 
+let Defs = [ICC] in
   defm SUBCC  : F3_12  <"subcc", 0b010100, SPcmpicc>;
 
 let Uses = [ICC], Defs = [ICC] in
-  def SUBXCCrr: F3_1<2, 0b011100, 
+  def SUBXCCrr: F3_1<2, 0b011100,
                 (outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
                 "subxcc $b, $c, $dst", []>;
 
@@ -516,7 +516,7 @@ let isBarrier = 1 in
                       "ba $dst",
                       [(br bb:$dst)]>;
 
-//Indirect Branch
+// Indirect branch instructions.
 let isTerminator = 1, isBarrier = 1,
      hasDelaySlot = 1, isBranch =1,
      isIndirectBranch = 1 in {
@@ -567,7 +567,7 @@ let Uses = [O6],
     let op = 1;
     let Inst{29-0} = disp;
   }
-  
+
   // indirect calls
   def JMPLrr : F3_1<2, 0b111000,
                     (outs), (ins MEMrr:$ptr, variable_ops),
@@ -580,7 +580,7 @@ let Uses = [O6],
 }
 
 // Section B.28 - Read State Register Instructions
-let Uses = [Y] in 
+let Uses = [Y] in
   def RDY : F3_1<2, 0b101000,
                  (outs IntRegs:$dst), (ins),
                  "rd %y, $dst", []>;
@@ -599,7 +599,7 @@ def FITOS : F3_3<2, 0b110100, 0b011000100,
                  (outs FPRegs:$dst), (ins FPRegs:$src),
                  "fitos $src, $dst",
                  [(set FPRegs:$dst, (SPitof FPRegs:$src))]>;
-def FITOD : F3_3<2, 0b110100, 0b011001000, 
+def FITOD : F3_3<2, 0b110100, 0b011001000,
                  (outs DFPRegs:$dst), (ins FPRegs:$src),
                  "fitod $src, $dst",
                  [(set DFPRegs:$dst, (SPitof FPRegs:$src))]>;
@@ -615,7 +615,7 @@ def FDTOI : F3_3<2, 0b110100, 0b011010010,
                  [(set FPRegs:$dst, (SPftoi DFPRegs:$src))]>;
 
 // Convert between Floating-point Formats Instructions, p. 143
-def FSTOD : F3_3<2, 0b110100, 0b011001001, 
+def FSTOD : F3_3<2, 0b110100, 0b011001001,
                  (outs DFPRegs:$dst), (ins FPRegs:$src),
                  "fstod $src, $dst",
                  [(set f64:$dst, (fextend f32:$src))]>;
@@ -628,22 +628,22 @@ def FDTOS : F3_3<2, 0b110100, 0b011000110,
 def FMOVS : F3_3<2, 0b110100, 0b000000001,
                  (outs FPRegs:$dst), (ins FPRegs:$src),
                  "fmovs $src, $dst", []>;
-def FNEGS : F3_3<2, 0b110100, 0b000000101, 
+def FNEGS : F3_3<2, 0b110100, 0b000000101,
                  (outs FPRegs:$dst), (ins FPRegs:$src),
                  "fnegs $src, $dst",
                  [(set f32:$dst, (fneg f32:$src))]>;
-def FABSS : F3_3<2, 0b110100, 0b000001001, 
+def FABSS : F3_3<2, 0b110100, 0b000001001,
                  (outs FPRegs:$dst), (ins FPRegs:$src),
                  "fabss $src, $dst",
                  [(set f32:$dst, (fabs f32:$src))]>;
 
 
 // Floating-point Square Root Instructions, p.145
-def FSQRTS : F3_3<2, 0b110100, 0b000101001, 
+def FSQRTS : F3_3<2, 0b110100, 0b000101001,
                   (outs FPRegs:$dst), (ins FPRegs:$src),
                   "fsqrts $src, $dst",
                   [(set f32:$dst, (fsqrt f32:$src))]>;
-def FSQRTD : F3_3<2, 0b110100, 0b000101010, 
+def FSQRTD : F3_3<2, 0b110100, 0b000101010,
                   (outs DFPRegs:$dst), (ins DFPRegs:$src),
                   "fsqrtd $src, $dst",
                   [(set f64:$dst, (fsqrt f64:$src))]>;
@@ -766,11 +766,11 @@ let Predicates = [HasV9] in {
   def FMOVD : F3_3<2, 0b110100, 0b000000010,
                    (outs DFPRegs:$dst), (ins DFPRegs:$src),
                    "fmovd $src, $dst", []>;
-  def FNEGD : F3_3<2, 0b110100, 0b000000110, 
+  def FNEGD : F3_3<2, 0b110100, 0b000000110,
                    (outs DFPRegs:$dst), (ins DFPRegs:$src),
                    "fnegd $src, $dst",
                    [(set f64:$dst, (fneg f64:$src))]>;
-  def FABSD : F3_3<2, 0b110100, 0b000001010, 
+  def FABSD : F3_3<2, 0b110100, 0b000001010,
                    (outs DFPRegs:$dst), (ins DFPRegs:$src),
                    "fabsd $src, $dst",
                    [(set f64:$dst, (fabs f64:$src))]>;
@@ -778,7 +778,7 @@ let Predicates = [HasV9] in {
 
 // POPCrr - This does a ctpop of a 64-bit register.  As such, we have to clear
 // the top 32-bits before using it.  To do this clearing, we use a SLLri X,0.
-def POPCrr : F3_1<2, 0b101110, 
+def POPCrr : F3_1<2, 0b101110,
                   (outs IntRegs:$dst), (ins IntRegs:$src),
                   "popc $src, $dst", []>, Requires<[HasV9]>;
 def : Pat<(ctpop i32:$src),
@@ -817,7 +817,7 @@ def : Pat<(add iPTR:$r, (SPlo tconstpool:$in)),  (ADDri $r, tconstpool:$in)>;
 def : Pat<(add iPTR:$r, (SPlo tblockaddress:$in)),
                         (ADDri $r, tblockaddress:$in)>;
 
-// Calls: 
+// Calls:
 def : Pat<(call tglobaladdr:$dst),
           (CALL tglobaladdr:$dst)>;
 def : Pat<(call texternalsym:$dst),

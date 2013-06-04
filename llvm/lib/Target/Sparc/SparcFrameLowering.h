@@ -44,10 +44,10 @@ public:
                                             RegScavenger *RS = NULL) const;
 
 private:
-  //Remap input registers to output registers for leaf procedure.
+  // Remap input registers to output registers for leaf procedure.
   void remapRegsForLeafProc(MachineFunction &MF) const;
 
-  //Returns true if MF is a leaf procedure.
+  // Returns true if MF is a leaf procedure.
   bool isLeafProc(MachineFunction &MF) const;
 };
 

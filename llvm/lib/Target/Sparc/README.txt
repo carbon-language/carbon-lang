@@ -38,7 +38,7 @@ t1:
 
 1) should be replaced with a brz in V9 mode.
 
-* Same as above, but emit conditional move on register zero (p192) in V9 
+* Same as above, but emit conditional move on register zero (p192) in V9
   mode.  Testcase:
 
 int %t1(int %a, int %b) {
@@ -47,12 +47,12 @@ int %t1(int %a, int %b) {
         ret int %D
 }
 
-* Emit MULX/[SU]DIVX instructions in V9 mode instead of fiddling 
+* Emit MULX/[SU]DIVX instructions in V9 mode instead of fiddling
   with the Y register, if they are faster.
 
 * Codegen bswap(load)/store(bswap) -> load/store ASI
 
-* Implement frame pointer elimination, e.g. eliminate save/restore for 
+* Implement frame pointer elimination, e.g. eliminate save/restore for
   leaf fns.
 * Fill delay slots
 

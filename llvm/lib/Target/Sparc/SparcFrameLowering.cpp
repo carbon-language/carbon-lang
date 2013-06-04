@@ -130,7 +130,7 @@ void SparcFrameLowering::emitEpilogue(MachineFunction &MF,
 }
 
 bool SparcFrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
-  //Reserve call frame if there are no variable sized objects on the stack
+  // Reserve call frame if there are no variable sized objects on the stack.
   return !MF.getFrameInfo()->hasVarSizedObjects();
 }
 
@@ -174,17 +174,17 @@ void SparcFrameLowering::remapRegsForLeafProc(MachineFunction &MF) const {
 
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
-  //remap %i[0-7] to %o[0-7]
+  // Remap %i[0-7] to %o[0-7].
   for (unsigned reg = SP::I0; reg <= SP::I7; ++reg) {
     if (!MRI.isPhysRegUsed(reg))
       continue;
     unsigned mapped_reg = (reg - SP::I0 + SP::O0);
     assert(!MRI.isPhysRegUsed(mapped_reg));
 
-    //Replace I register with O register
+    // Replace I register with O register.
     MRI.replaceRegWith(reg, mapped_reg);
 
-    //mark the reg unused.
+    // Mark the reg unused.
     MRI.setPhysRegUnused(reg);
   }
 

@@ -7,14 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-class InstSP<dag outs, dag ins, string asmstr, list<dag> pattern> : Instruction {
+class InstSP<dag outs, dag ins, string asmstr, list<dag> pattern>
+          : Instruction {
   field bits<32> Inst;
 
   let Namespace = "SP";
 
   bits<2> op;
   let Inst{31-30} = op;               // Top two bits are the 'op' field
-  
+
   dag OutOperandList = outs;
   dag InOperandList = ins;
   let AsmString   = asmstr;
@@ -46,7 +47,7 @@ class F2_1<bits<3> op2Val, dag outs, dag ins, string asmstr, list<dag> pattern>
   let Inst{29-25} = rd;
 }
 
-class F2_2<bits<4> condVal, bits<3> op2Val, dag outs, dag ins, string asmstr, 
+class F2_2<bits<4> condVal, bits<3> op2Val, dag outs, dag ins, string asmstr,
            list<dag> pattern> : F2<outs, ins, asmstr, pattern> {
   bits<4>   cond;
   bit       annul = 0;     // currently unused
@@ -88,7 +89,7 @@ class F3_1<bits<2> opVal, bits<6> op3val, dag outs, dag ins,
   let Inst{4-0}  = rs2;
 }
 
-class F3_2<bits<2> opVal, bits<6> op3val, dag outs, dag ins, 
+class F3_2<bits<2> opVal, bits<6> op3val, dag outs, dag ins,
            string asmstr, list<dag> pattern> : F3<outs, ins, asmstr, pattern> {
   bits<13> simm13;
 

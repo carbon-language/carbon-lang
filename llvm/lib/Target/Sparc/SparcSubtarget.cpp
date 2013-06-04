@@ -31,7 +31,7 @@ SparcSubtarget::SparcSubtarget(const std::string &TT, const std::string &CPU,
   V8DeprecatedInsts(false),
   IsVIS(false),
   Is64Bit(is64Bit) {
-  
+
   // Determine default and user specified characteristics
   std::string CPUName = CPU;
   if (CPUName.empty()) {

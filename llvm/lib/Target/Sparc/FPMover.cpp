@@ -33,9 +33,9 @@ namespace {
     /// layout, etc.
     ///
     TargetMachine &TM;
-    
+
     static char ID;
-    explicit FPMover(TargetMachine &tm) 
+    explicit FPMover(TargetMachine &tm)
       : MachineFunctionPass(ID), TM(tm) { }
 
     virtual const char *getPassName() const {
@@ -97,7 +97,7 @@ bool FPMover::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
         ++NoopFpDs;
         continue;
       }
-      
+
       unsigned EvenSrcReg = 0, OddSrcReg = 0, EvenDestReg = 0, OddDestReg = 0;
       getDoubleRegPair(DestDReg, EvenDestReg, OddDestReg);
       getDoubleRegPair(SrcDReg, EvenSrcReg, OddSrcReg);
@@ -111,7 +111,7 @@ bool FPMover::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
         MI->setDesc(TII->get(SP::FABSS));
       else
         llvm_unreachable("Unknown opcode!");
-        
+
       MI->getOperand(0).setReg(EvenDestReg);
       MI->getOperand(1).setReg(EvenSrcReg);
       DEBUG(errs() << "FPMover: the modified instr is: " << *MI);
@@ -132,7 +132,7 @@ bool FPMover::runOnMachineFunction(MachineFunction &F) {
   // emitted.  Avoid a scan of the instructions to improve compile time.
   if (TM.getSubtarget<SparcSubtarget>().isV9())
     return false;
-  
+
   bool Changed = false;
   for (MachineFunction::iterator FI = F.begin(), FE = F.end();
        FI != FE; ++FI)

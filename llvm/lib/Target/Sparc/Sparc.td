@@ -19,7 +19,7 @@ include "llvm/Target/Target.td"
 //===----------------------------------------------------------------------===//
 // SPARC Subtarget features.
 //
- 
+
 def FeatureV9
   : SubtargetFeature<"v9", "IsV9", "true",
                      "Enable SPARC-V9 instructions">;

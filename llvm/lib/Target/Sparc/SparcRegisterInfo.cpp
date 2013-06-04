@@ -50,13 +50,13 @@ BitVector SparcRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   // FIXME: G1 reserved for now for large imm generation by frame code.
   Reserved.set(SP::G1);
 
-  //G1-G4 can be used in applications.
+  // G1-G4 can be used in applications.
   if (ReserveAppRegisters) {
     Reserved.set(SP::G2);
     Reserved.set(SP::G3);
     Reserved.set(SP::G4);
   }
-  //G5 is not reserved in 64 bit mode.
+  // G5 is not reserved in 64 bit mode.
   if (!Subtarget.is64Bit())
     Reserved.set(SP::G5);
 
@@ -93,7 +93,7 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   SparcMachineFunctionInfo *FuncInfo = MF.getInfo<SparcMachineFunctionInfo>();
   unsigned FramePtr = SP::I6;
   if (FuncInfo->isLeafProc()) {
-    //Use %sp and adjust offset if needed.
+    // Use %sp and adjust offset if needed.
     FramePtr = SP::O6;
     int stackSize = MF.getFrameInfo()->getStackSize();
     Offset += (stackSize) ? Subtarget.getAdjustedFrameSize(stackSize) : 0 ;
@@ -106,7 +106,7 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     MI.getOperand(FIOperandNum).ChangeToRegister(FramePtr, false);
     MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
   } else {
-    // Otherwise, emit a G1 = SETHI %hi(offset).  FIXME: it would be better to 
+    // Otherwise, emit a G1 = SETHI %hi(offset).  FIXME: it would be better to
     // scavenge a register here instead of reserving G1 all of the time.
     unsigned OffHi = (unsigned)Offset >> 10U;
     BuildMI(*MI.getParent(), II, dl, TII.get(SP::SETHIi), SP::G1).addImm(OffHi);

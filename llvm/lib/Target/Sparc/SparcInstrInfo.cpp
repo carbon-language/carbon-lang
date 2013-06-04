@@ -141,15 +141,15 @@ bool SparcInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
     if (I->isDebugValue())
       continue;
 
-    //When we see a non-terminator, we are done
+    // When we see a non-terminator, we are done.
     if (!isUnpredicatedTerminator(I))
       break;
 
-    //Terminator is not a branch
+    // Terminator is not a branch.
     if (!I->isBranch())
       return true;
 
-    //Handle Unconditional branches
+    // Handle Unconditional branches.
     if (I->getOpcode() == SP::BA) {
       UnCondBrIter = I;
 
@@ -178,7 +178,7 @@ bool SparcInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 
     unsigned Opcode = I->getOpcode();
     if (Opcode != SP::BCOND && Opcode != SP::FBCOND)
-      return true; //Unknown Opcode
+      return true; // Unknown Opcode.
 
     SPCC::CondCodes BranchCode = (SPCC::CondCodes)I->getOperand(1).getImm();
 
@@ -187,7 +187,7 @@ bool SparcInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       if (AllowModify && UnCondBrIter != MBB.end() &&
           MBB.isLayoutSuccessor(TargetBB)) {
 
-        //Transform the code
+        // Transform the code
         //
         //    brCC L1
         //    ba L2
@@ -221,8 +221,8 @@ bool SparcInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       Cond.push_back(MachineOperand::CreateImm(BranchCode));
       continue;
     }
-    //FIXME: Handle subsequent conditional branches
-    //For now, we can't handle multiple conditional branches
+    // FIXME: Handle subsequent conditional branches.
+    // For now, we can't handle multiple conditional branches.
     return true;
   }
   return false;
@@ -243,7 +243,7 @@ SparcInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
     return 1;
   }
 
-  //Conditional branch
+  // Conditional branch
   unsigned CC = Cond[0].getImm();
 
   if (IsIntegerCC(CC))

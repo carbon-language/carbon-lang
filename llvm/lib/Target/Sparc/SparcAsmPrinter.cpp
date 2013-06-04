@@ -60,7 +60,7 @@ namespace {
                                raw_ostream &O);
 
     bool printGetPCX(const MachineInstr *MI, unsigned OpNo, raw_ostream &OS);
-    
+
     virtual bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB)
                        const;
 
@@ -167,7 +167,7 @@ bool SparcAsmPrinter::printGetPCX(const MachineInstr *MI, unsigned opNum,
   case MachineOperand::MO_Register:
     assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
            "Operand is not a physical register ");
-    assert(MO.getReg() != SP::O7 && 
+    assert(MO.getReg() != SP::O7 &&
            "%o7 is assigned as destination for getpcx!");
     operand = "%" + StringRef(getRegisterName(MO.getReg())).lower();
     break;
@@ -180,15 +180,15 @@ bool SparcAsmPrinter::printGetPCX(const MachineInstr *MI, unsigned opNum,
   O << "\tcall\t.LLGETPC" << mfNum << '_' << bbNum << '\n' ;
 
   O << "\t  sethi\t"
-    << "%hi(_GLOBAL_OFFSET_TABLE_+(.-.LLGETPCH" << mfNum << '_' << bbNum 
+    << "%hi(_GLOBAL_OFFSET_TABLE_+(.-.LLGETPCH" << mfNum << '_' << bbNum
     << ")), "  << operand << '\n' ;
 
   O << ".LLGETPC" << mfNum << '_' << bbNum << ":\n" ;
-  O << "\tor\t" << operand  
+  O << "\tor\t" << operand
     << ", %lo(_GLOBAL_OFFSET_TABLE_+(.-.LLGETPCH" << mfNum << '_' << bbNum
     << ")), " << operand << '\n';
-  O << "\tadd\t" << operand << ", %o7, " << operand << '\n'; 
-  
+  O << "\tadd\t" << operand << ", %o7, " << operand << '\n';
+
   return true;
 }
 
@@ -246,19 +246,19 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
   // then nothing falls through to it.
   if (MBB->isLandingPad() || MBB->pred_empty())
     return false;
-  
+
   // If there isn't exactly one predecessor, it can't be a fall through.
   MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(), PI2 = PI;
   ++PI2;
   if (PI2 != MBB->pred_end())
     return false;
-  
+
   // The predecessor has to be immediately before this block.
   const MachineBasicBlock *Pred = *PI;
-  
+
   if (!Pred->isLayoutSuccessor(MBB))
     return false;
-  
+
   // Check if the last terminator is an unconditional branch.
   MachineBasicBlock::const_iterator I = Pred->end();
   while (I != Pred->begin() && !(--I)->isTerminator())
@@ -276,7 +276,7 @@ getDebugValueLocation(const MachineInstr *MI) const {
 }
 
 // Force static initialization.
-extern "C" void LLVMInitializeSparcAsmPrinter() { 
+extern "C" void LLVMInitializeSparcAsmPrinter() {
   RegisterAsmPrinter<SparcAsmPrinter> X(TheSparcTarget);
   RegisterAsmPrinter<SparcAsmPrinter> Y(TheSparcV9Target);
 }
