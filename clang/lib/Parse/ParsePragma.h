@@ -124,6 +124,16 @@ private:
   Sema &Actions;
 };
 
+class PragmaDetectMismatchHandler : public PragmaHandler {
+public:
+  PragmaDetectMismatchHandler(Sema &Actions)
+    : PragmaHandler("detect_mismatch"), Actions(Actions) {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+private:
+  Sema &Actions;
+};
+
 }  // end namespace clang
 
 #endif

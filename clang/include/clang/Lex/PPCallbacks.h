@@ -160,6 +160,13 @@ public:
                              const std::string &Str) {
   }
 
+  /// \brief Callback invoked when a \#pragma detect_mismatch directive is
+  /// read.
+  virtual void PragmaDetectMismatch(SourceLocation Loc,
+                                    const std::string &Name,
+                                    const std::string &Value) {
+  }
+
   /// \brief Callback invoked when a \#pragma clang __debug directive is read.
   /// \param Loc The location of the debug directive.
   /// \param DebugType The identifier following __debug.
@@ -350,6 +357,13 @@ public:
                              const std::string &Str) {
     First->PragmaComment(Loc, Kind, Str);
     Second->PragmaComment(Loc, Kind, Str);
+  }
+
+  virtual void PragmaDetectMismatch(SourceLocation Loc,
+                                    const std::string &Name,
+                                    const std::string &Value) {
+    First->PragmaDetectMismatch(Loc, Name, Value);
+    Second->PragmaDetectMismatch(Loc, Name, Value);
   }
 
   virtual void PragmaMessage(SourceLocation Loc, StringRef Namespace,

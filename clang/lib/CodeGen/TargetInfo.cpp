@@ -1287,6 +1287,12 @@ public:
     Opt = "/DEFAULTLIB:";
     Opt += qualifyWindowsLibrary(Lib);
   }
+
+  void getDetectMismatchOption(llvm::StringRef Name,
+                               llvm::StringRef Value,
+                               llvm::SmallString<32> &Opt) const {
+    Opt = "/FAILIFMISMATCH:\"" + Name.str() + "=" + Value.str() + "\"";
+  }
 };
 
 class WinX86_64TargetCodeGenInfo : public TargetCodeGenInfo {
@@ -1312,6 +1318,12 @@ public:
                                  llvm::SmallString<24> &Opt) const {
     Opt = "/DEFAULTLIB:";
     Opt += qualifyWindowsLibrary(Lib);
+  }
+
+  void getDetectMismatchOption(llvm::StringRef Name,
+                               llvm::StringRef Value,
+                               llvm::SmallString<32> &Opt) const {
+    Opt = "/FAILIFMISMATCH:\"" + Name.str() + "=" + Value.str() + "\"";
   }
 };
 

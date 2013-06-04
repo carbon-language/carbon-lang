@@ -121,6 +121,11 @@ namespace {
       Builder->AppendLinkerOptions(Opts);
     }
 
+    virtual void HandleDetectMismatch(llvm::StringRef Name,
+                                      llvm::StringRef Value) {
+      Builder->AddDetectMismatch(Name, Value);
+    }
+
     virtual void HandleDependentLibrary(llvm::StringRef Lib) {
       Builder->AddDependentLib(Lib);
     }

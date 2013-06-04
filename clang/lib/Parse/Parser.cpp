@@ -105,6 +105,8 @@ Parser::Parser(Preprocessor &pp, Sema &actions, bool skipFunctionBodies)
   if (getLangOpts().MicrosoftExt) {
     MSCommentHandler.reset(new PragmaCommentHandler(actions));
     PP.AddPragmaHandler(MSCommentHandler.get());
+    MSDetectMismatchHandler.reset(new PragmaDetectMismatchHandler(actions));
+    PP.AddPragmaHandler(MSDetectMismatchHandler.get());
   }
 
   CommentSemaHandler.reset(new ActionCommentHandler(actions));
@@ -444,6 +446,8 @@ Parser::~Parser() {
   if (getLangOpts().MicrosoftExt) {
     PP.RemovePragmaHandler(MSCommentHandler.get());
     MSCommentHandler.reset();
+    PP.RemovePragmaHandler(MSDetectMismatchHandler.get());
+    MSDetectMismatchHandler.reset();
   }
 
   PP.RemovePragmaHandler("STDC", FPContractHandler.get());

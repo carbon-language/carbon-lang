@@ -773,6 +773,13 @@ void CodeGenModule::AppendLinkerOptions(StringRef Opts) {
   LinkerOptionsMetadata.push_back(llvm::MDNode::get(getLLVMContext(), MDOpts));
 }
 
+void CodeGenModule::AddDetectMismatch(StringRef Name, StringRef Value) {
+  llvm::SmallString<32> Opt;
+  getTargetCodeGenInfo().getDetectMismatchOption(Name, Value, Opt);
+  llvm::Value *MDOpts = llvm::MDString::get(getLLVMContext(), Opt);
+  LinkerOptionsMetadata.push_back(llvm::MDNode::get(getLLVMContext(), MDOpts));
+}
+
 void CodeGenModule::AddDependentLib(StringRef Lib) {
   llvm::SmallString<24> Opt;
   getTargetCodeGenInfo().getDependentLibraryOption(Lib, Opt);

@@ -283,6 +283,12 @@ void Sema::ActOnPragmaMSComment(PragmaMSCommentKind Kind, llvm::StringRef Arg) {
   llvm_unreachable("invalid pragma comment kind");
 }
 
+void Sema::ActOnPragmaDetectMismatch(llvm::StringRef Name,
+                                     llvm::StringRef Value) {
+  // FIXME: Serialize this.
+  Consumer.HandleDetectMismatch(Name, Value);
+}
+
 void Sema::ActOnPragmaUnused(const Token &IdTok, Scope *curScope,
                              SourceLocation PragmaLoc) {
 

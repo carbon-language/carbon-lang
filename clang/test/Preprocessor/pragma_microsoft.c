@@ -18,6 +18,11 @@
 
 #pragma comment(user, "foo\abar\nbaz\tsome	thing")
 
+#pragma detect_mismatch("test", "1")
+#pragma detect_mismatch()  // expected-error {{expected string literal in pragma detect_mismatch}}
+#pragma detect_mismatch("test") // expected-error {{pragma detect_mismatch is malformed; it requires two comma-separated string literals}}
+#pragma detect_mismatch("test", 1) // expected-error {{expected string literal in pragma detect_mismatch}}
+#pragma detect_mismatch("test", BAR)
 
 // __pragma
 

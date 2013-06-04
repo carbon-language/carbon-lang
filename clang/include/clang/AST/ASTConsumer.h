@@ -92,6 +92,12 @@ public:
   /// only exists to support Microsoft's #pragma comment(linker, "/foo").
   virtual void HandleLinkerOptionPragma(llvm::StringRef Opts) {}
 
+  /// \brief Handle a pragma that emits a mismatch identifier and value to the
+  /// object file for the linker to work with.  Currently, this only exists to
+  /// support Microsoft's #pragma detect_mismatch.
+  virtual void HandleDetectMismatch(llvm::StringRef Name,
+                                    llvm::StringRef Value) {}
+
   /// \brief Handle a dependent library created by a pragma in the source.
   /// Currently this only exists to support Microsoft's
   /// #pragma comment(lib, "/foo").

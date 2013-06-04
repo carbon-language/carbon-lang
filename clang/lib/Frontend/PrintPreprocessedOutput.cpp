@@ -140,6 +140,9 @@ public:
   virtual void PragmaCaptured(SourceLocation Loc, StringRef Str);
   virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind,
                              const std::string &Str);
+  virtual void PragmaDetectMismatch(SourceLocation Loc,
+                                    const std::string &Name,
+                                    const std::string &Value);
   virtual void PragmaMessage(SourceLocation Loc, StringRef Namespace,
                              PragmaMessageKind Kind, StringRef Str);
   virtual void PragmaDebug(SourceLocation Loc, StringRef DebugType);
@@ -382,16 +385,8 @@ void PrintPPOutputPPCallbacks::MacroUndefined(const Token &MacroNameTok,
   setEmittedDirectiveOnThisLine();
 }
 
-void PrintPPOutputPPCallbacks::PragmaComment(SourceLocation Loc,
-                                             const IdentifierInfo *Kind,
+static void outputPrintable(llvm::raw_ostream& OS,
                                              const std::string &Str) {
-  startNewLineIfNeeded();
-  MoveToLine(Loc);
-  OS << "#pragma comment(" << Kind->getName();
-
-  if (!Str.empty()) {
-    OS << ", \"";
-
     for (unsigned i = 0, e = Str.size(); i != e; ++i) {
       unsigned char Char = Str[i];
       if (isPrintable(Char) && Char != '\\' && Char != '"')
@@ -402,10 +397,35 @@ void PrintPPOutputPPCallbacks::PragmaComment(SourceLocation Loc,
            << (char)('0'+ ((Char >> 3) & 7))
            << (char)('0'+ ((Char >> 0) & 7));
     }
+}
+
+void PrintPPOutputPPCallbacks::PragmaComment(SourceLocation Loc,
+                                             const IdentifierInfo *Kind,
+                                             const std::string &Str) {
+  startNewLineIfNeeded();
+  MoveToLine(Loc);
+  OS << "#pragma comment(" << Kind->getName();
+
+  if (!Str.empty()) {
+    OS << ", \"";
+    outputPrintable(OS, Str);
     OS << '"';
   }
 
   OS << ')';
+  setEmittedDirectiveOnThisLine();
+}
+
+void PrintPPOutputPPCallbacks::PragmaDetectMismatch(SourceLocation Loc,
+                                                    const std::string &Name,
+                                                    const std::string &Value) {
+  startNewLineIfNeeded();
+  MoveToLine(Loc);
+  OS << "#pragma detect_mismatch(\"" << Name << '"';
+  outputPrintable(OS, Name);
+  OS << "\", \"";
+  outputPrintable(OS, Value);
+  OS << "\")";
   setEmittedDirectiveOnThisLine();
 }
 
@@ -430,16 +450,7 @@ void PrintPPOutputPPCallbacks::PragmaMessage(SourceLocation Loc,
       break;
   }
 
-  for (unsigned i = 0, e = Str.size(); i != e; ++i) {
-    unsigned char Char = Str[i];
-    if (isPrintable(Char) && Char != '\\' && Char != '"')
-      OS << (char)Char;
-    else  // Output anything hard as an octal escape.
-      OS << '\\'
-         << (char)('0'+ ((Char >> 6) & 7))
-         << (char)('0'+ ((Char >> 3) & 7))
-         << (char)('0'+ ((Char >> 0) & 7));
-  }
+  outputPrintable(OS, Str);
   OS << '"';
   if (Kind == PMK_Message)
     OS << ')';

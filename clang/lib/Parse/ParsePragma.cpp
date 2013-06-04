@@ -794,6 +794,63 @@ PragmaOpenMPHandler::HandlePragma(Preprocessor &PP,
                       /*DisableMacroExpansion=*/true, /*OwnsTokens=*/true);
 }
 
+/// \brief Handle the Microsoft \#pragma detect_mismatch extension.
+///
+/// The syntax is:
+/// \code
+///   #pragma detect_mismatch("name", "value")
+/// \endcode
+/// Where 'name' and 'value' are quoted strings.  The values are embedded in
+/// the object file and passed along to the linker.  If the linker detects a
+/// mismatch in the object file's values for the given name, a LNK2038 error
+/// is emitted.  See MSDN for more details.
+void PragmaDetectMismatchHandler::HandlePragma(Preprocessor &PP,
+                                               PragmaIntroducerKind Introducer,
+                                               Token &Tok) {
+  SourceLocation CommentLoc = Tok.getLocation();
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::l_paren)) {
+    PP.Diag(CommentLoc, diag::err_expected_lparen);
+    return;
+  }
+
+  // Read the name to embed, which must be a string literal.
+  std::string NameString;
+  if (!PP.LexStringLiteral(Tok, NameString,
+                           "pragma detect_mismatch",
+                           /*MacroExpansion=*/true))
+    return;
+
+  // Read the comma followed by a second string literal.
+  std::string ValueString;
+  if (Tok.isNot(tok::comma)) {
+    PP.Diag(Tok.getLocation(), diag::err_pragma_detect_mismatch_malformed);
+    return;
+  }
+
+  if (!PP.LexStringLiteral(Tok, ValueString, "pragma detect_mismatch",
+                           /*MacroExpansion=*/true))
+    return;
+
+  if (Tok.isNot(tok::r_paren)) {
+    PP.Diag(Tok.getLocation(), diag::err_expected_rparen);
+    return;
+  }
+  PP.Lex(Tok);  // Eat the r_paren.
+
+  if (Tok.isNot(tok::eod)) {
+    PP.Diag(Tok.getLocation(), diag::err_pragma_detect_mismatch_malformed);
+    return;
+  }
+
+  // If the pragma is lexically sound, notify any interested PPCallbacks.
+  if (PP.getPPCallbacks())
+    PP.getPPCallbacks()->PragmaDetectMismatch(CommentLoc, NameString,
+                                              ValueString);
+
+  Actions.ActOnPragmaDetectMismatch(NameString, ValueString);
+}
+
 /// \brief Handle the microsoft \#pragma comment extension.
 ///
 /// The syntax is:

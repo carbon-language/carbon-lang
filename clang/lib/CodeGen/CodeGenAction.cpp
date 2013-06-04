@@ -183,6 +183,11 @@ namespace clang {
       Gen->HandleLinkerOptionPragma(Opts);
     }
 
+    virtual void HandleDetectMismatch(llvm::StringRef Name,
+                                      llvm::StringRef Value) {
+      Gen->HandleDetectMismatch(Name, Value);
+    }
+
     virtual void HandleDependentLibrary(llvm::StringRef Opts) {
       Gen->HandleDependentLibrary(Opts);
     }
