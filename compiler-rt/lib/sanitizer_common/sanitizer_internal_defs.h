@@ -132,6 +132,8 @@ using namespace __sanitizer;  // NOLINT
 #else  // _MSC_VER
 # define ALWAYS_INLINE inline __attribute__((always_inline))
 # define ALIAS(x) __attribute__((alias(x)))
+// Please only use the ALIGNED macro before the type.
+// Using ALIGNED after the variable declaration is not portable!
 # define ALIGNED(x) __attribute__((aligned(x)))
 # define FORMAT(f, a)  __attribute__((format(printf, f, a)))
 # define NOINLINE __attribute__((noinline))
