@@ -2570,22 +2570,6 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
   if (!Ty)
     return;
 
-  if (llvm::Argument *Arg = dyn_cast<llvm::Argument>(Storage)) {
-    // If Storage is an aggregate returned as 'sret' then let debugger know
-    // about this.
-    if (Arg->hasStructRetAttr())
-      Ty = DBuilder.createReferenceType(llvm::dwarf::DW_TAG_reference_type, Ty);
-    else if (CXXRecordDecl *Record = VD->getType()->getAsCXXRecordDecl()) {
-      // If an aggregate variable has non trivial destructor or non trivial copy
-      // constructor than it is pass indirectly. Let debug info know about this
-      // by using reference of the aggregate type as a argument type.
-      if (Record->hasNonTrivialCopyConstructor() ||
-          !Record->hasTrivialDestructor())
-        Ty = DBuilder.createReferenceType(llvm::dwarf::DW_TAG_reference_type,
-                                          Ty);
-    }
-  }
-
   // Get location information.
   unsigned Line = getLineNumber(VD->getLocation());
   unsigned Column = getColumnNumber(VD->getLocation());
