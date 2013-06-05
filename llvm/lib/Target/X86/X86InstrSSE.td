@@ -8372,7 +8372,9 @@ multiclass avx2_gather<bits<8> opc, string OpcodeStr, RegisterClass RC256,
             []>, VEX_4VOp3, VEX_L;
 }
 
-let mayLoad = 1, Constraints = "$src1 = $dst, $mask = $mask_wb" in {
+let mayLoad = 1, Constraints
+  = "@earlyclobber $dst,@earlyclobber $mask_wb, $src1 = $dst, $mask = $mask_wb"
+  in {
   defm VGATHERDPD : avx2_gather<0x92, "vgatherdpd", VR256, vx64mem, vx64mem>, VEX_W;
   defm VGATHERQPD : avx2_gather<0x93, "vgatherqpd", VR256, vx64mem, vy64mem>, VEX_W;
   defm VGATHERDPS : avx2_gather<0x92, "vgatherdps", VR256, vx32mem, vy32mem>;

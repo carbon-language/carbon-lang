@@ -2041,6 +2041,8 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     case Intrinsic::x86_avx2_gather_d_d_256:
     case Intrinsic::x86_avx2_gather_q_d:
     case Intrinsic::x86_avx2_gather_q_d_256: {
+      if (!Subtarget->hasAVX2())
+        break;
       unsigned Opc;
       switch (IntNo) {
       default: llvm_unreachable("Impossible intrinsic");
