@@ -61,6 +61,11 @@ public:
   /// \brief Write the contents (regardless of whether it is binary or a
   /// hex string) as binary to the given raw_ostream.
   void writeAsBinary(raw_ostream &OS) const;
+  /// \brief Write the contents (regardless of whether it is binary or a
+  /// hex string) as hex to the given raw_ostream.
+  ///
+  /// For example, a possible output could be `DEADBEEFCAFEBABE`.
+  void writeAsHex(raw_ostream &OS) const;
 };
 
 }

@@ -20,13 +20,7 @@ using namespace object::yaml;
 
 void yaml::ScalarTraits<object::yaml::BinaryRef>::output(
     const object::yaml::BinaryRef &Val, void *, llvm::raw_ostream &Out) {
-  ArrayRef<uint8_t> Data = Val.getBinary();
-  for (ArrayRef<uint8_t>::iterator I = Data.begin(), E = Data.end(); I != E;
-       ++I) {
-    uint8_t Byte = *I;
-    Out << hexdigit(Byte >> 4);
-    Out << hexdigit(Byte & 0xf);
-  }
+  Val.writeAsHex(Out);
 }
 
 // Can't find this anywhere else in the codebase (clang has one, but it has
@@ -59,5 +53,18 @@ void BinaryRef::writeAsBinary(raw_ostream &OS) const {
     uint8_t Byte;
     StringRef((const char *)&Data[I],  2).getAsInteger(16, Byte);
     OS.write(Byte);
+  }
+}
+
+void BinaryRef::writeAsHex(raw_ostream &OS) const {
+  if (DataIsHexString) {
+    OS.write((const char *)Data.data(), Data.size());
+    return;
+  }
+  for (ArrayRef<uint8_t>::iterator I = Data.begin(), E = Data.end(); I != E;
+       ++I) {
+    uint8_t Byte = *I;
+    OS << hexdigit(Byte >> 4);
+    OS << hexdigit(Byte & 0xf);
   }
 }
