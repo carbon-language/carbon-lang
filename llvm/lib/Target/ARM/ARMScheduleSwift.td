@@ -1096,9 +1096,27 @@ let SchedModel = SwiftModel in {
   def SwiftUnitDiv : ProcResource<1>;
 
   // Generic resource requirements.
+  def SwiftWriteP0OneCycle : SchedWriteRes<[SwiftUnitP0]>;
+  def SwiftWriteP0TwoCycle : SchedWriteRes<[SwiftUnitP0]> { let Latency = 2; }
+  def SwiftWriteP0FourCycle : SchedWriteRes<[SwiftUnitP0]> { let Latency = 4; }
+  def SwiftWriteP0SixCycle : SchedWriteRes<[SwiftUnitP0]> { let Latency = 6; }
+  def SwiftWriteP0P1FourCycle : SchedWriteRes<[SwiftUnitP0, SwiftUnitP1]> {
+    let Latency = 4;
+  }
+  def SwiftWriteP0P1SixCycle : SchedWriteRes<[SwiftUnitP0, SwiftUnitP1]> {
+    let Latency = 6;
+  }
+  def SwiftWriteP01OneCycle : SchedWriteRes<[SwiftUnitP01]>;
+  def SwiftWriteP1TwoCycle : SchedWriteRes<[SwiftUnitP1]> { let Latency = 2; }
+  def SwiftWriteP1FourCycle : SchedWriteRes<[SwiftUnitP1]> { let Latency = 4; }
+  def SwiftWriteP1SixCycle : SchedWriteRes<[SwiftUnitP1]> { let Latency = 6; }
+  def SwiftWriteP1EightCycle : SchedWriteRes<[SwiftUnitP1]> { let Latency = 8; }
+  def SwiftWriteP1TwelveCyc : SchedWriteRes<[SwiftUnitP1]> { let Latency = 12; }
+  def SwiftWriteP01OneCycle2x : WriteSequence<[SwiftWriteP01OneCycle], 2>;
+  def SwiftWriteP01OneCycle3x : WriteSequence<[SwiftWriteP01OneCycle], 3>;
   def SwiftWriteP01TwoCycle : SchedWriteRes<[SwiftUnitP01]> { let Latency = 2; }
-  def SwiftWriteP01ThreeCycleTwoUops :
-    SchedWriteRes<[SwiftUnitP01, SwiftUnitP01]> {
+  def SwiftWriteP01ThreeCycleTwoUops : SchedWriteRes<[SwiftUnitP01,
+                                                      SwiftUnitP01]> {
     let Latency = 3;
     let NumMicroOps = 2;
   }
@@ -1107,7 +1125,23 @@ let SchedModel = SwiftModel in {
     let NumMicroOps = 3;
     let ResourceCycles = [3];
   }
-
+  // Plain load without writeback.
+  def SwiftWriteP2ThreeCycle : SchedWriteRes<[SwiftUnitP2]> {
+    let Latency = 3;
+  }
+  def SwiftWriteP2FourCycle : SchedWriteRes<[SwiftUnitP2]> {
+    let Latency = 4;
+  }
+  // A store does not write to a register.
+  def SwiftWriteP2 : SchedWriteRes<[SwiftUnitP2]> {
+    let Latency = 0;
+  }
+  foreach Num = 1-4 in {
+    def SwiftWrite#Num#xP2 : WriteSequence<[SwiftWriteP2], Num>;
+  }
+  def SwiftWriteP01OneCycle2x_load : WriteSequence<[SwiftWriteP01OneCycle,
+                                                    SwiftWriteP01OneCycle,
+                                                    SwiftWriteP2ThreeCycle]>;
   // 4.2.4 Arithmetic and Logical.
   // ALU operation register shifted by immediate variant.
   def SwiftWriteALUsi : SchedWriteVariant<[
@@ -1137,8 +1171,32 @@ let SchedModel = SwiftModel in {
   def : ReadAdvance<ReadALU, 0>;
   def : SchedAlias<ReadALUsr, SwiftReadAdvanceALUsr>;
 
+
+  def SwiftChooseShiftKindP01OneOrTwoCycle : SchedWriteVariant<[
+    SchedVar<IsFastImmShiftSwiftPred, [SwiftWriteP01OneCycle]>,
+    SchedVar<NoSchedPred,             [SwiftWriteP01TwoCycle]>
+  ]>;
+
   // 4.2.5 Integer comparison
   def : WriteRes<WriteCMP, [SwiftUnitP01]>;
-  def : WriteRes<WriteCMPsi, [SwiftUnitP01]>;
-  def : WriteRes<WriteCMPsr, [SwiftUnitP01]>;
+  def : SchedAlias<WriteCMPsi, SwiftChooseShiftKindP01OneOrTwoCycle>;
+  def : SchedAlias<WriteCMPsr, SwiftWriteP01TwoCycle>;
+  // 4.2.18 Integer Divide
+  def : WriteRes<WriteDiv, [SwiftUnitDiv]>; // Workaround.
+  def : InstRW < [WriteDiv],
+        (instregex "SDIV", "UDIV", "t2SDIV", "t2UDIV")>;
+  // 4.2.26 Branch
+  def : WriteRes<WriteBr, [SwiftUnitP1]> { let Latency = 0; }
+  def : WriteRes<WriteBrL, [SwiftUnitP1]> { let Latency = 2; }
+  def : WriteRes<WriteBrTbl, [SwiftUnitP1, SwiftUnitP2]> { let Latency = 0; }
+
+  // 4.2.36 Advanced SIMD and VFP, Convert
+  def : InstRW<[SwiftWriteP1FourCycle], (instregex "VCVT", "V(S|U)IT", "VTO(S|U)")>;
+  // Fixpoint conversions.
+  def : WriteRes<WriteCvtFP, [SwiftUnitP1]> { let Latency = 4; }
+  // Preload.
+  def : WriteRes<WritePreLd, [SwiftUnitP2]> { let Latency = 0;
+    let ResourceCycles = [0];
+  }
+
 }
