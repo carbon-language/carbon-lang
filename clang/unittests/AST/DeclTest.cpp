@@ -27,6 +27,7 @@ TEST(Decl, CleansUpAPValues) {
   // allocate memory. This test only fails if run under valgrind with full leak
   // checking enabled.
   std::vector<std::string> Args(1, "-std=c++11");
+  Args.push_back("-fno-ms-extensions");
   ASSERT_TRUE(runToolOnCodeWithArgs(
       Factory->create(),
       "struct X { int a; }; constexpr X x = { 42 };"
