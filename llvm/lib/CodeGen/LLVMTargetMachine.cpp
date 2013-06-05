@@ -68,7 +68,7 @@ void LLVMTargetMachine::initAsmInfo() {
   // and if the old one gets included then MCAsmInfo will be NULL and
   // we'll crash later.
   // Provide the user with a useful error message about what's wrong.
-  assert(AsmInfo && "MCAsmInfo not initialized."
+  assert(AsmInfo && "MCAsmInfo not initialized. "
          "Make sure you include the correct TargetSelect.h"
          "and that InitializeAllTargetMCs() is being invoked!");
 }
