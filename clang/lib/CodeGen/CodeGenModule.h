@@ -307,7 +307,8 @@ class CodeGenModule : public CodeGenTypeCache {
   llvm::StringMap<llvm::GlobalVariable*> ConstantStringMap;
   llvm::DenseMap<const Decl*, llvm::Constant *> StaticLocalDeclMap;
   llvm::DenseMap<const Decl*, llvm::GlobalVariable*> StaticLocalDeclGuardMap;
-  
+  llvm::DenseMap<const Expr*, llvm::Constant *> MaterializedGlobalTemporaryMap;
+
   llvm::DenseMap<QualType, llvm::Constant *> AtomicSetterHelperFnMap;
   llvm::DenseMap<QualType, llvm::Constant *> AtomicGetterHelperFnMap;
 
@@ -731,7 +732,12 @@ public:
   /// GetAddrOfConstantCompoundLiteral - Returns a pointer to a constant global
   /// variable for the given file-scope compound literal expression.
   llvm::Constant *GetAddrOfConstantCompoundLiteral(const CompoundLiteralExpr*E);
-  
+
+  /// \brief Returns a pointer to a global variable representing a temporary
+  /// with static or thread storage duration.
+  llvm::Constant *GetAddrOfGlobalTemporary(const MaterializeTemporaryExpr *E,
+                                           const Expr *Inner);
+
   /// \brief Retrieve the record type that describes the state of an
   /// Objective-C fast enumeration loop (for..in).
   QualType getObjCFastEnumerationStateType();

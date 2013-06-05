@@ -17,4 +17,13 @@ B b;
 
 // CHECK: @b = global {{.*}} i32 1, {{.*}} { i32 2 }, {{.*}} { i32 3 }, {{.*}} { i32 4 }
 // CHECK-NOT: _ZN1BC
-// CHECK: __cxa_atexit
+
+namespace ModifyStaticTemporary {
+  struct A { int &&temporary; int x; };
+  constexpr int f(int &r) { r *= 9; return r - 12; }
+  A a = { 6, f(a.temporary) };
+  // CHECK: @_ZGRN21ModifyStaticTemporary1aE = private global i32 54
+  // CHECK: @_ZN21ModifyStaticTemporary1aE = global {{.*}} i32* @_ZGRN21ModifyStaticTemporary1aE, i32 42
+}
+
+// CHECK: __cxa_atexit({{.*}} @_ZN1BD1Ev {{.*}} @b

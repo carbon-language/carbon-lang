@@ -339,6 +339,30 @@ static_assert(!same(4, 4), "");
 static_assert(same(n, n), "");
 static_assert(sameTemporary(9), "");
 
+struct A { int &&r; };
+struct B { A &&a1; A &&a2; };
+
+constexpr B b1 { { 1 }, { 2 } }; // expected-note {{temporary created here}}
+static_assert(&b1.a1 != &b1.a2, "");
+static_assert(&b1.a1.r != &b1.a2.r, ""); // expected-error {{constant expression}} expected-note {{outside the expression that created the temporary}}
+
+constexpr B &&b2 { { 3 }, { 4 } }; // expected-note {{temporary created here}}
+static_assert(&b1 != &b2, "");
+static_assert(&b1.a1 != &b2.a1, ""); // expected-error {{constant expression}} expected-note {{outside the expression that created the temporary}}
+
+constexpr thread_local B b3 { { 1 }, { 2 } }; // expected-error {{constant expression}} expected-note {{reference to temporary}} expected-note {{here}}
+void foo() {
+  constexpr static B b1 { { 1 }, { 2 } }; // ok
+  constexpr thread_local B b2 { { 1 }, { 2 } }; // expected-error {{constant expression}} expected-note {{reference to temporary}} expected-note {{here}}
+  constexpr B b3 { { 1 }, { 2 } }; // expected-error {{constant expression}} expected-note {{reference to temporary}} expected-note {{here}}
+}
+
+constexpr B &&b4 = ((1, 2), 3, 4, B { {10}, {{20}} }); // expected-warning 4{{unused}}
+static_assert(&b4 != &b2, "");
+
+// Proposed DR: copy-elision doesn't trigger lifetime extension.
+constexpr B b5 = B{ {0}, {0} }; // expected-error {{constant expression}} expected-note {{reference to temporary}} expected-note {{here}}
+
 }
 
 constexpr int strcmp_ce(const char *p, const char *q) {
@@ -572,7 +596,7 @@ struct E {
   constexpr E() : p(&p) {}
   void *p;
 };
-constexpr const E &e1 = E(); // expected-error {{constant expression}} expected-note {{reference to temporary is not a constant expression}} expected-note {{temporary created here}}
+constexpr const E &e1 = E();
 // This is a constant expression if we elide the copy constructor call, and
 // is not a constant expression if we don't! But we do, so it is.
 constexpr E e2 = E();
@@ -1282,8 +1306,23 @@ struct Wrap {
 constexpr const Wrap &g(const Wrap &w) { return w; }
 constexpr int k2 = g({0}).value; // ok
 
-constexpr const int &i = 0; // expected-error {{constant expression}} expected-note {{temporary}} expected-note 2{{here}}
-constexpr const int j = i; // expected-error {{constant expression}} expected-note {{initializer of 'i' is not a constant expression}}
+// The temporary here has static storage duration, so we can bind a constexpr
+// reference to it.
+constexpr const int &i = 1;
+constexpr const int j = i;
+static_assert(j == 1, "");
+
+// The temporary here is not const, so it can't be read outside the expression
+// in which it was created (per the C++14 rules, which we use to avoid a C++11
+// defect).
+constexpr int &&k = 1; // expected-note {{temporary created here}}
+constexpr const int l = k; // expected-error {{constant expression}} expected-note {{read of temporary}}
+
+void f() {
+  // The temporary here has automatic storage duration, so we can't bind a
+  // constexpr reference to it.
+  constexpr const int &i = 1; // expected-error {{constant expression}} expected-note 2{{temporary}}
+}
 
 }
 

@@ -1576,6 +1576,7 @@ void ASTStmtReader::VisitFunctionParmPackExpr(FunctionParmPackExpr *E) {
 void ASTStmtReader::VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr *E) {
   VisitExpr(E);
   E->Temporary = Reader.ReadSubExpr();
+  E->ExtendingDecl = ReadDeclAs<ValueDecl>(Record, Idx);
 }
 
 void ASTStmtReader::VisitOpaqueValueExpr(OpaqueValueExpr *E) {

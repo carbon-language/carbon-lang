@@ -274,6 +274,7 @@ namespace  {
     void VisitCXXFunctionalCastExpr(const CXXFunctionalCastExpr *Node);
     void VisitCXXConstructExpr(const CXXConstructExpr *Node);
     void VisitCXXBindTemporaryExpr(const CXXBindTemporaryExpr *Node);
+    void VisitMaterializeTemporaryExpr(const MaterializeTemporaryExpr *Node);
     void VisitExprWithCleanups(const ExprWithCleanups *Node);
     void VisitUnresolvedLookupExpr(const UnresolvedLookupExpr *Node);
     void dumpCXXTemporary(const CXXTemporary *Temporary);
@@ -1680,6 +1681,15 @@ void ASTDumper::VisitCXXBindTemporaryExpr(const CXXBindTemporaryExpr *Node) {
   VisitExpr(Node);
   OS << " ";
   dumpCXXTemporary(Node->getTemporary());
+}
+
+void
+ASTDumper::VisitMaterializeTemporaryExpr(const MaterializeTemporaryExpr *Node) {
+  VisitExpr(Node);
+  if (const ValueDecl *VD = Node->getExtendingDecl()) {
+    OS << " extended by ";
+    dumpBareDeclRef(VD);
+  }
 }
 
 void ASTDumper::VisitExprWithCleanups(const ExprWithCleanups *Node) {

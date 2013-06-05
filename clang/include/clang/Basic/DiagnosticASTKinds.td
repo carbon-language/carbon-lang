@@ -117,6 +117,10 @@ def note_constexpr_access_inactive_union_member : Note<
   "%select{read of|assignment to|increment of|decrement of}0 "
   "member %1 of union with %select{active member %3|no active member}2 "
   "is not allowed in a constant expression">;
+def note_constexpr_access_static_temporary : Note<
+  "%select{read of|assignment to|increment of|decrement of}0 temporary "
+  "is not allowed in a constant expression outside the expression that "
+  "created the temporary">;
 def note_constexpr_modify_global : Note<
   "a constant expression cannot modify an object that is visible outside "
   "that expression">;

@@ -284,4 +284,7 @@ namespace dtors {
   void f() {
     std::initializer_list<S>{ S(), S() };
   }
+  void g() {
+    auto x = std::initializer_list<S>{ S(), S() };
+  }
 }

@@ -3824,30 +3824,60 @@ public:
 /// binds to the temporary. \c MaterializeTemporaryExprs are always glvalues
 /// (either an lvalue or an xvalue, depending on the kind of reference binding
 /// to it), maintaining the invariant that references always bind to glvalues.
+///
+/// Reference binding and copy-elision can both extend the lifetime of a
+/// temporary. When either happens, the expression will also track the
+/// declaration which is responsible for the lifetime extension.
 class MaterializeTemporaryExpr : public Expr {
+public:
   /// \brief The temporary-generating expression whose value will be
   /// materialized.
   Stmt *Temporary;
+
+  /// \brief The declaration which lifetime-extended this reference, if any.
+  /// Either a VarDecl, or (for a ctor-initializer) a FieldDecl.
+  const ValueDecl *ExtendingDecl;
 
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 
 public:
   MaterializeTemporaryExpr(QualType T, Expr *Temporary,
-                           bool BoundToLvalueReference)
+                           bool BoundToLvalueReference,
+                           const ValueDecl *ExtendedBy)
     : Expr(MaterializeTemporaryExprClass, T,
            BoundToLvalueReference? VK_LValue : VK_XValue, OK_Ordinary,
            Temporary->isTypeDependent(), Temporary->isValueDependent(),
            Temporary->isInstantiationDependent(),
            Temporary->containsUnexpandedParameterPack()),
-      Temporary(Temporary) { }
+      Temporary(Temporary), ExtendingDecl(ExtendedBy) {
+  }
 
   MaterializeTemporaryExpr(EmptyShell Empty)
     : Expr(MaterializeTemporaryExprClass, Empty) { }
 
   /// \brief Retrieve the temporary-generating subexpression whose value will
   /// be materialized into a glvalue.
-  Expr *GetTemporaryExpr() const { return reinterpret_cast<Expr *>(Temporary); }
+  Expr *GetTemporaryExpr() const { return static_cast<Expr *>(Temporary); }
+
+  /// \brief Retrieve the storage duration for the materialized temporary.
+  StorageDuration getStorageDuration() const {
+    if (!ExtendingDecl)
+      return SD_FullExpression;
+    // FIXME: This is not necessarily correct for a temporary materialized
+    // within a default initializer.
+    if (isa<FieldDecl>(ExtendingDecl))
+      return SD_Automatic;
+    return cast<VarDecl>(ExtendingDecl)->getStorageDuration();
+  }
+
+  /// \brief Get the declaration which triggered the lifetime-extension of this
+  /// temporary, if any.
+  const ValueDecl *getExtendingDecl() const { return ExtendingDecl; }
+
+  void setExtendingDecl(const ValueDecl *ExtendedBy) {
+    ExtendingDecl = ExtendedBy;
+  }
 
   /// \brief Determine whether this materialized temporary is bound to an
   /// lvalue reference; otherwise, it's bound to an rvalue reference.

@@ -811,7 +811,7 @@ public:
   bool hasLocalStorage() const {
     if (getStorageClass() == SC_None)
       // Second check is for C++11 [dcl.stc]p4.
-      return !isFileVarDecl() && getTSCSpec() != TSCS_thread_local;
+      return !isFileVarDecl() && getTSCSpec() == TSCS_unspecified;
 
     // Return true for:  Auto, Register.
     // Return false for: Extern, Static, PrivateExtern, OpenCLWorkGroupLocal.
@@ -839,6 +839,12 @@ public:
   ///  have local storage.  This includs all global variables as well
   ///  as static variables declared within a function.
   bool hasGlobalStorage() const { return !hasLocalStorage(); }
+
+  /// \brief Get the storage duration of this variable, per C++ [basid.stc].
+  StorageDuration getStorageDuration() const {
+    return hasLocalStorage() ? SD_Automatic :
+           getTSCSpec() ? SD_Thread : SD_Static;
+  }
 
   /// Compute the language linkage.
   LanguageLinkage getLanguageLinkage() const;

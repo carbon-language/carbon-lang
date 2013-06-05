@@ -289,7 +289,7 @@ protected:
     /// \brief The number of arguments to this type trait.
     unsigned NumArgs : 32 - 8 - 1 - NumExprBits;
   };
-  
+
   union {
     // FIXME: this is wasteful on 64-bit platforms.
     void *Aligner;

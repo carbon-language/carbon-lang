@@ -2502,6 +2502,46 @@ bool InitializedEntity::allowsNRVO() const {
   return false;
 }
 
+unsigned InitializedEntity::dumpImpl(raw_ostream &OS) const {
+  unsigned Depth = getParent() ? getParent()->dumpImpl(OS) : 0;
+  for (unsigned I = 0; I != Depth; ++I)
+    OS << "`-";
+
+  switch (getKind()) {
+  case EK_Variable: OS << "Variable"; break;
+  case EK_Parameter: OS << "Parameter"; break;
+  case EK_Result: OS << "Result"; break;
+  case EK_Exception: OS << "Exception"; break;
+  case EK_Member: OS << "Member"; break;
+  case EK_New: OS << "New"; break;
+  case EK_Temporary: OS << "Temporary"; break;
+  case EK_CompoundLiteralInit: OS << "CompoundLiteral";break;
+  case EK_Base: OS << "Base"; break;
+  case EK_Delegating: OS << "Delegating"; break;
+  case EK_ArrayElement: OS << "ArrayElement " << Index; break;
+  case EK_VectorElement: OS << "VectorElement " << Index; break;
+  case EK_ComplexElement: OS << "ComplexElement " << Index; break;
+  case EK_BlockElement: OS << "Block"; break;
+  case EK_LambdaCapture:
+    OS << "LambdaCapture ";
+    getCapturedVar()->printName(OS);
+    break;
+  }
+
+  if (Decl *D = getDecl()) {
+    OS << " ";
+    cast<NamedDecl>(D)->printQualifiedName(OS);
+  }
+
+  OS << " '" << getType().getAsString() << "'\n";
+
+  return Depth + 1;
+}
+
+void InitializedEntity::dump() const {
+  dumpImpl(llvm::errs());
+}
+
 //===----------------------------------------------------------------------===//
 // Initialization sequence
 //===----------------------------------------------------------------------===//
@@ -5089,6 +5129,143 @@ InitializedEntityOutlivesFullExpression(const InitializedEntity &Entity) {
   llvm_unreachable("unknown entity kind");
 }
 
+/// Determine the declaration which an initialized entity ultimately refers to,
+/// for the purpose of lifetime-extending a temporary bound to a reference in
+/// the initialization of \p Entity.
+static const ValueDecl *
+getDeclForTemporaryLifetimeExtension(const InitializedEntity &Entity,
+                                     const ValueDecl *FallbackDecl = 0) {
+  // C++11 [class.temporary]p5:
+  switch (Entity.getKind()) {
+  case InitializedEntity::EK_Variable:
+    //   The temporary [...] persists for the lifetime of the reference
+    return Entity.getDecl();
+
+  case InitializedEntity::EK_Member:
+    // For subobjects, we look at the complete object.
+    if (Entity.getParent())
+      return getDeclForTemporaryLifetimeExtension(*Entity.getParent(),
+                                                  Entity.getDecl());
+
+    //   except:
+    //   -- A temporary bound to a reference member in a constructor's
+    //      ctor-initializer persists until the constructor exits.
+    return Entity.getDecl();
+
+  case InitializedEntity::EK_Parameter:
+    //   -- A temporary bound to a reference parameter in a function call
+    //      persists until the completion of the full-expression containing
+    //      the call.
+  case InitializedEntity::EK_Result:
+    //   -- The lifetime of a temporary bound to the returned value in a
+    //      function return statement is not extended; the temporary is
+    //      destroyed at the end of the full-expression in the return statement.
+  case InitializedEntity::EK_New:
+    //   -- A temporary bound to a reference in a new-initializer persists
+    //      until the completion of the full-expression containing the
+    //      new-initializer.
+    return 0;
+
+  case InitializedEntity::EK_Temporary:
+  case InitializedEntity::EK_CompoundLiteralInit:
+    // We don't yet know the storage duration of the surrounding temporary.
+    // Assume it's got full-expression duration for now, it will patch up our
+    // storage duration if that's not correct.
+    return 0;
+
+  case InitializedEntity::EK_ArrayElement:
+    // For subobjects, we look at the complete object.
+    return getDeclForTemporaryLifetimeExtension(*Entity.getParent(),
+                                                FallbackDecl);
+
+  case InitializedEntity::EK_Base:
+  case InitializedEntity::EK_Delegating:
+    // We can reach this case for aggregate initialization in a constructor:
+    //   struct A { int &&r; };
+    //   struct B : A { B() : A{0} {} };
+    // In this case, use the innermost field decl as the context.
+    return FallbackDecl;
+
+  case InitializedEntity::EK_BlockElement:
+  case InitializedEntity::EK_LambdaCapture:
+  case InitializedEntity::EK_Exception:
+  case InitializedEntity::EK_VectorElement:
+  case InitializedEntity::EK_ComplexElement:
+    llvm_unreachable("should not materialize a temporary to initialize this");
+  }
+}
+
+static void performLifetimeExtension(Expr *Init, const ValueDecl *ExtendingD);
+
+/// Update a glvalue expression that is used as the initializer of a reference
+/// to note that its lifetime is extended.
+static void performReferenceExtension(Expr *Init, const ValueDecl *ExtendingD) {
+  if (InitListExpr *ILE = dyn_cast<InitListExpr>(Init)) {
+    if (ILE->getNumInits() == 1 && ILE->isGLValue()) {
+      // This is just redundant braces around an initializer. Step over it.
+      Init = ILE->getInit(0);
+    }
+  }
+
+  if (MaterializeTemporaryExpr *ME = dyn_cast<MaterializeTemporaryExpr>(Init)) {
+    // Update the storage duration of the materialized temporary.
+    // FIXME: Rebuild the expression instead of mutating it.
+    ME->setExtendingDecl(ExtendingD);
+    performLifetimeExtension(ME->GetTemporaryExpr(), ExtendingD);
+  }
+}
+
+/// Update a prvalue expression that is going to be materialized as a
+/// lifetime-extended temporary.
+static void performLifetimeExtension(Expr *Init, const ValueDecl *ExtendingD) {
+  // Dig out the expression which constructs the extended temporary.
+  SmallVector<const Expr *, 2> CommaLHSs;
+  SmallVector<SubobjectAdjustment, 2> Adjustments;
+  Init = const_cast<Expr *>(
+      Init->skipRValueSubobjectAdjustments(CommaLHSs, Adjustments));
+
+  if (InitListExpr *ILE = dyn_cast<InitListExpr>(Init)) {
+    if (ILE->initializesStdInitializerList()) {
+      // FIXME: If this is an InitListExpr which creates a std::initializer_list
+      //        object, we also need to lifetime-extend the underlying array
+      //        itself. Fix the representation to explicitly materialize an
+      //        array temporary so we can model this properly.
+      for (unsigned I = 0, N = ILE->getNumInits(); I != N; ++I)
+        performLifetimeExtension(ILE->getInit(I), ExtendingD);
+      return;
+    }
+
+    CXXRecordDecl *RD = Init->getType()->getAsCXXRecordDecl();
+    if (RD) {
+      assert(RD->isAggregate() && "aggregate init on non-aggregate");
+
+      // If we lifetime-extend a braced initializer which is initializing an
+      // aggregate, and that aggregate contains reference members which are
+      // bound to temporaries, those temporaries are also lifetime-extended.
+      if (RD->isUnion() && ILE->getInitializedFieldInUnion() &&
+          ILE->getInitializedFieldInUnion()->getType()->isReferenceType())
+        performReferenceExtension(ILE->getInit(0), ExtendingD);
+      else {
+        unsigned Index = 0;
+        for (RecordDecl::field_iterator I = RD->field_begin(),
+                                        E = RD->field_end();
+             I != E; ++I) {
+          if (I->isUnnamedBitfield())
+            continue;
+          if (I->getType()->isReferenceType())
+            performReferenceExtension(ILE->getInit(Index), ExtendingD);
+          else if (isa<InitListExpr>(ILE->getInit(Index)))
+            // This may be either aggregate-initialization of a member or
+            // initialization of a std::initializer_list object. Either way,
+            // we should recursively lifetime-extend that initializer.
+            performLifetimeExtension(ILE->getInit(Index), ExtendingD);
+          ++Index;
+        }
+      }
+    }
+  }
+}
+
 ExprResult
 InitializationSequence::Perform(Sema &S,
                                 const InitializedEntity &Entity,
@@ -5326,7 +5503,7 @@ InitializationSequence::Perform(Sema &S,
 
       break;
 
-    case SK_BindReferenceToTemporary:
+    case SK_BindReferenceToTemporary: {
       // Make sure the "temporary" is actually an rvalue.
       assert(CurInit.get()->isRValue() && "not a temporary");
 
@@ -5334,11 +5511,17 @@ InitializationSequence::Perform(Sema &S,
       if (S.CheckExceptionSpecCompatibility(CurInit.get(), DestType))
         return ExprError();
 
+      // Maybe lifetime-extend the temporary's subobjects to match the
+      // entity's lifetime.
+      const ValueDecl *ExtendingDecl =
+          getDeclForTemporaryLifetimeExtension(Entity);
+      if (ExtendingDecl)
+        performLifetimeExtension(CurInit.get(), ExtendingDecl);
+
       // Materialize the temporary into memory.
       CurInit = new (S.Context) MaterializeTemporaryExpr(
-                                         Entity.getType().getNonReferenceType(),
-                                                         CurInit.get(),
-                                     Entity.getType()->isLValueReferenceType());
+          Entity.getType().getNonReferenceType(), CurInit.get(),
+          Entity.getType()->isLValueReferenceType(), ExtendingDecl);
 
       // If we're binding to an Objective-C object that has lifetime, we
       // need cleanups.
@@ -5347,6 +5530,7 @@ InitializationSequence::Perform(Sema &S,
         S.ExprNeedsCleanups = true;
             
       break;
+    }
 
     case SK_ExtraneousCopyToTemporary:
       CurInit = CopyObject(S, Step->Type, Entity, CurInit,

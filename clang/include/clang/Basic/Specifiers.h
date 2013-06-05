@@ -212,6 +212,14 @@ namespace clang {
     CC_IntelOclBicc // __attribute__((intel_ocl_bicc))
   };
 
+  /// \brief The storage duration for an object (per C++ [basic.stc]).
+  enum StorageDuration {
+    SD_FullExpression, ///< Full-expression storage duration (for temporaries).
+    SD_Automatic,      ///< Automatic storage duration (most local variables).
+    SD_Thread,         ///< Thread storage duration.
+    SD_Static,         ///< Static storage duration.
+    SD_Dynamic         ///< Dynamic storage duration.
+  };
 } // end namespace clang
 
 #endif // LLVM_CLANG_BASIC_SPECIFIERS_H

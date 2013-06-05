@@ -384,6 +384,13 @@ public:
     assert(getKind() == EK_LambdaCapture && "Not a lambda capture!");
     return SourceLocation::getFromRawEncoding(Capture.Location);
   }
+
+  /// Dump a representation of the initialized entity to standard error,
+  /// for debugging purposes.
+  void dump() const;
+
+private:
+  unsigned dumpImpl(raw_ostream &OS) const;
 };
   
 /// \brief Describes the kind of initialization being performed, along with 

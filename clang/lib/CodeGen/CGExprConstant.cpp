@@ -1003,6 +1003,15 @@ public:
     case Expr::CXXUuidofExprClass: {
       return CGM.GetAddrOfUuidDescriptor(cast<CXXUuidofExpr>(E));
     }
+    case Expr::MaterializeTemporaryExprClass: {
+      MaterializeTemporaryExpr *MTE = cast<MaterializeTemporaryExpr>(E);
+      assert(MTE->getStorageDuration() == SD_Static);
+      SmallVector<const Expr *, 2> CommaLHSs;
+      SmallVector<SubobjectAdjustment, 2> Adjustments;
+      const Expr *Inner = MTE->GetTemporaryExpr()
+          ->skipRValueSubobjectAdjustments(CommaLHSs, Adjustments);
+      return CGM.GetAddrOfGlobalTemporary(MTE, Inner);
+    }
     }
 
     return 0;

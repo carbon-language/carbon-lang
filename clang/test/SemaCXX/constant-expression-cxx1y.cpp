@@ -715,3 +715,13 @@ namespace deduced_return_type {
   static_assert(f() == 0, "");
   static_assert(g(true), "");
 }
+
+namespace modify_temporary_during_construction {
+  struct A { int &&temporary; int x; int y; };
+  constexpr int f(int &r) { r *= 9; return r - 12; }
+  // FIXME: The 'uninitialized' warning here is bogus.
+  constexpr A a = { 6, f(a.temporary), a.temporary }; // expected-warning {{uninitialized}} expected-note {{temporary created here}}
+  static_assert(a.x == 42, "");
+  static_assert(a.y == 54, "");
+  constexpr int k = a.temporary++; // expected-error {{constant expression}} expected-note {{outside the expression that created the temporary}}
+}

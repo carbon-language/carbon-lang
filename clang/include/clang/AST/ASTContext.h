@@ -55,6 +55,7 @@ namespace clang {
   class ExternalASTSource;
   class ASTMutationListener;
   class IdentifierTable;
+  class MaterializeTemporaryExpr;
   class SelectorTable;
   class TargetInfo;
   class CXXABI;
@@ -162,6 +163,11 @@ class ASTContext : public RefCountedBase<ASTContext> {
   /// template patterns.
   llvm::DenseMap<const FunctionDecl*, FunctionDecl*>
     ClassScopeSpecializationPattern;
+
+  /// \brief Mapping from materialized temporaries with static storage duration
+  /// that appear in constant initializers to their evaluated values.
+  llvm::DenseMap<const MaterializeTemporaryExpr*, APValue>
+    MaterializedTemporaryValues;
 
   /// \brief Representation of a "canonical" template template parameter that
   /// is used in canonical template names.
@@ -2117,7 +2123,12 @@ public:
   /// \brief Used by ParmVarDecl to retrieve on the side the
   /// index of the parameter when it exceeds the size of the normal bitfield.
   unsigned getParameterIndex(const ParmVarDecl *D) const;
-  
+
+  /// \brief Get the storage for the constant value of a materialized temporary
+  /// of static storage duration.
+  APValue *getMaterializedTemporaryValue(const MaterializeTemporaryExpr *E,
+                                         bool MayCreate);
+
   //===--------------------------------------------------------------------===//
   //                    Statistics
   //===--------------------------------------------------------------------===//

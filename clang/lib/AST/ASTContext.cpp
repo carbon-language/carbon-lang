@@ -8029,6 +8029,19 @@ unsigned ASTContext::getParameterIndex(const ParmVarDecl *D) const {
   return I->second;
 }
 
+APValue *
+ASTContext::getMaterializedTemporaryValue(const MaterializeTemporaryExpr *E,
+                                          bool MayCreate) {
+  assert(E && E->getStorageDuration() == SD_Static &&
+         "don't need to cache the computed value for this temporary");
+  if (MayCreate)
+    return &MaterializedTemporaryValues[E];
+
+  llvm::DenseMap<const MaterializeTemporaryExpr *, APValue>::iterator I =
+      MaterializedTemporaryValues.find(E);
+  return I == MaterializedTemporaryValues.end() ? 0 : &I->second;
+}
+
 bool ASTContext::AtomicUsesUnsupportedLibcall(const AtomicExpr *E) const {
   const llvm::Triple &T = getTargetInfo().getTriple();
   if (!T.isOSDarwin())
