@@ -780,23 +780,28 @@ void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
 
   // Obtain the symbol name which is referenced in the relocation
   StringRef TargetName;
-  Symbol->getName(TargetName);
+  if (Symbol != Obj.end_symbols())
+    Symbol->getName(TargetName);
   DEBUG(dbgs() << "\t\tRelType: " << RelType
                << " Addend: " << Addend
                << " TargetName: " << TargetName
                << "\n");
   RelocationValueRef Value;
   // First search for the symbol in the local symbol table
-  SymbolTableMap::const_iterator lsi = Symbols.find(TargetName.data());
-  SymbolRef::Type SymType;
-  Symbol->getType(SymType);
+  SymbolTableMap::const_iterator lsi = Symbols.end();
+  SymbolRef::Type SymType = SymbolRef::ST_Unknown;
+  if (Symbol != Obj.end_symbols()) {
+    lsi = Symbols.find(TargetName.data());
+    Symbol->getType(SymType);
+  }
   if (lsi != Symbols.end()) {
     Value.SectionID = lsi->second.first;
     Value.Addend = lsi->second.second + Addend;
   } else {
     // Search for the symbol in the global symbol table
-    SymbolTableMap::const_iterator gsi =
-        GlobalSymbolTable.find(TargetName.data());
+    SymbolTableMap::const_iterator gsi = GlobalSymbolTable.end();
+    if (Symbol != Obj.end_symbols())
+      gsi = GlobalSymbolTable.find(TargetName.data());
     if (gsi != GlobalSymbolTable.end()) {
       Value.SectionID = gsi->second.first;
       Value.Addend = gsi->second.second + Addend;
