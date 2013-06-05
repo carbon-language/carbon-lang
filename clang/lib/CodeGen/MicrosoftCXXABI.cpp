@@ -661,12 +661,8 @@ MicrosoftCXXABI::EmitFullMemberPointer(llvm::Constant *FirstField,
       CGM.IntTy, NonVirtualBaseAdjustment.getQuantity()));
 
   if (hasVBPtrOffsetField(Inheritance)) {
-    // FIXME: We actually need to search non-virtual bases for vbptrs.
-    int64_t VBPtrOffset =
-      getContext().getASTRecordLayout(RD).getVBPtrOffset().getQuantity();
-    if (VBPtrOffset == -1)
-      VBPtrOffset = 0;
-    fields.push_back(llvm::ConstantInt::get(CGM.IntTy, VBPtrOffset));
+    fields.push_back(llvm::ConstantInt::get(
+      CGM.IntTy, GetVBPtrOffsetFromBases(RD).getQuantity()));
   }
 
   // The rest of the fields are adjusted by conversions to a more derived class.

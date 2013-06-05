@@ -68,7 +68,7 @@ void (Virtual ::*v_f_memptr)();
 // CHECK: @"\01?v_f_memptr@@3P8Virtual@@AEXXZA" = global { i8*, i32, i32 } zeroinitializer, align 4
 
 // We can define Unspecified after locking in the inheritance model.
-struct Unspecified : Virtual {
+struct Unspecified : Multiple, Virtual {
   void foo();
   int u;
 };
@@ -86,7 +86,7 @@ void (Unspecified::*u_f_mp)() = &Unspecified::foo;
 // CHECK: @"\01?v_f_mp@Const@@3P8Virtual@@AEXXZA" =
 // CHECK:   global { i8*, i32, i32 } { i8* bitcast ({{.*}} @"\01?foo@Virtual@@QAEXXZ" to i8*), i32 0, i32 0 }, align 4
 // CHECK: @"\01?u_f_mp@Const@@3P8Unspecified@@AEXXZA" =
-// CHECK:   global { i8*, i32, i32, i32 } { i8* bitcast ({{.*}} @"\01?foo@Unspecified@@QAEXXZ" to i8*), i32 0, i32 0, i32 0 }, align 4
+// CHECK:   global { i8*, i32, i32, i32 } { i8* bitcast ({{.*}} @"\01?foo@Unspecified@@QAEXXZ" to i8*), i32 0, i32 12, i32 0 }, align 4
 }
 
 namespace CastParam {
@@ -156,7 +156,7 @@ void EmitNonVirtualMemberPointers() {
 // CHECK:     { i8* bitcast (void (%{{.*}}*)* @"\01?foo@Virtual@@QAEXXZ" to i8*), i32 0, i32 0 },
 // CHECK:     { i8*, i32, i32 }* %{{.*}}, align 4
 // CHECK:   store { i8*, i32, i32, i32 }
-// CHECK:     { i8* bitcast (void (%{{.*}}*)* @"\01?foo@Unspecified@@QAEXXZ" to i8*), i32 0, i32 0, i32 0 },
+// CHECK:     { i8* bitcast (void (%{{.*}}*)* @"\01?foo@Unspecified@@QAEXXZ" to i8*), i32 0, i32 12, i32 0 },
 // CHECK:     { i8*, i32, i32, i32 }* %{{.*}}, align 4
 // CHECK:   store { i8*, i32, i32, i32 }
 // CHECK:     { i8* bitcast (void (%{{.*}}*)* @"\01?foo@UnspecWithVBPtr@@QAEXXZ" to i8*),
