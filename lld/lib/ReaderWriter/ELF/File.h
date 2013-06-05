@@ -279,7 +279,7 @@ public:
     llvm::object::symbol_iterator it(_objFile->begin_symbols());
     llvm::object::symbol_iterator ie(_objFile->end_symbols());
 
-    for (; it != ie; it.increment(EC)) {
+    for (it.increment(EC); it != ie; it.increment(EC)) {
       if (EC)
         return true;
 
