@@ -43,6 +43,13 @@ public:
     assert(isBinary);
     return Data;
   }
+  /// \brief The number of bytes that are represented by this BinaryRef.
+  /// This is the number of bytes that writeAsBinary() will write.
+  ArrayRef<uint8_t>::size_type binary_size() const {
+    if (!isBinary)
+      return Data.size() / 2;
+    return Data.size();
+  }
   bool operator==(const BinaryRef &Ref) {
     // Special case for default constructed BinaryRef.
     if (Ref.Data.empty() && Data.empty())

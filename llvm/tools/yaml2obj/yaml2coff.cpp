@@ -129,9 +129,8 @@ static bool layoutCOFF(COFFParser &CP) {
   for (std::vector<COFFYAML::Section>::iterator i = CP.Obj.Sections.begin(),
                                                 e = CP.Obj.Sections.end();
                                                 i != e; ++i) {
-    StringRef SecData = i->SectionData.getHex();
-    if (!SecData.empty()) {
-      i->Header.SizeOfRawData = SecData.size()/2;
+    if (i->SectionData.binary_size() > 0) {
+      i->Header.SizeOfRawData = i->SectionData.binary_size();
       i->Header.PointerToRawData = CurrentSectionDataOffset;
       CurrentSectionDataOffset += i->Header.SizeOfRawData;
       if (!i->Relocations.empty()) {
@@ -154,7 +153,7 @@ static bool layoutCOFF(COFFParser &CP) {
   for (std::vector<COFFYAML::Symbol>::iterator i = CP.Obj.Symbols.begin(),
                                                e = CP.Obj.Symbols.end();
                                                i != e; ++i) {
-    unsigned AuxBytes = i->AuxiliaryData.getHex().size() / 2;
+    unsigned AuxBytes = i->AuxiliaryData.binary_size();
     if (AuxBytes % COFF::SymbolSize != 0) {
       errs() << "AuxiliaryData size not a multiple of symbol size!\n";
       return false;
