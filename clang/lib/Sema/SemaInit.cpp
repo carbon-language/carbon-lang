@@ -5193,6 +5193,7 @@ getDeclForTemporaryLifetimeExtension(const InitializedEntity &Entity,
   case InitializedEntity::EK_ComplexElement:
     llvm_unreachable("should not materialize a temporary to initialize this");
   }
+  llvm_unreachable("unknown entity kind");
 }
 
 static void performLifetimeExtension(Expr *Init, const ValueDecl *ExtendingD);
