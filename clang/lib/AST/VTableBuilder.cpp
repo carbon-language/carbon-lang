@@ -2280,21 +2280,6 @@ VTableContext::~VTableContext() {
   llvm::DeleteContainerSeconds(VTableLayouts);
 }
 
-static void 
-CollectPrimaryBases(const CXXRecordDecl *RD, ASTContext &Context,
-                    VTableBuilder::PrimaryBasesSetVectorTy &PrimaryBases) {
-  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-  const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
-
-  if (!PrimaryBase)
-    return;
-
-  CollectPrimaryBases(PrimaryBase, Context, PrimaryBases);
-
-  if (!PrimaryBases.insert(PrimaryBase))
-    llvm_unreachable("Found a duplicate primary base!");
-}
-
 uint64_t VTableContext::getMethodVTableIndex(GlobalDecl GD) {
   MethodVTableIndicesTy::iterator I = MethodVTableIndices.find(GD);
   if (I != MethodVTableIndices.end())
