@@ -43,12 +43,12 @@ public:
       return Data.size() / 2;
     return Data.size();
   }
-  bool operator==(const BinaryRef &Ref) {
+  bool operator==(const BinaryRef &RHS) {
     // Special case for default constructed BinaryRef.
-    if (Ref.Data.empty() && Data.empty())
+    if (RHS.Data.empty() && Data.empty())
       return true;
 
-    return Ref.DataIsHexString == DataIsHexString && Ref.Data == Data;
+    return RHS.DataIsHexString == DataIsHexString && RHS.Data == Data;
   }
   /// \brief Write the contents (regardless of whether it is binary or a
   /// hex string) as binary to the given raw_ostream.
