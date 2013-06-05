@@ -85,7 +85,33 @@ struct mixed2 {
   double b;
 };
 
+// CHECK: define { i64, double } @f_mixed2(i64 %x.coerce0, double %x.coerce1)
+// CHECK: store i64 %x.coerce0
+// CHECK: store double %x.coerce1
 struct mixed2 f_mixed2(struct mixed2 x) {
   x.a += 1;
   return x;
+}
+
+// Struct with single element and padding in passed in the high bits of a
+// register.
+struct tiny {
+  char a;
+};
+
+// CHECK: define i64 @f_tiny(i64 %x.coerce)
+// CHECK: %[[HB:[^ ]+]] = lshr i64 %x.coerce, 56
+// CHECK: = trunc i64 %[[HB]] to i8
+struct tiny f_tiny(struct tiny x) {
+  x.a += 1;
+  return x;
+}
+
+// CHECK: define void @call_tiny()
+// CHECK: %[[XV:[^ ]+]] = zext i8 %{{[^ ]+}} to i64
+// CHECK: %[[HB:[^ ]+]] = shl i64 %[[XV]], 56
+// CHECK: = call i64 @f_tiny(i64 %[[HB]])
+void call_tiny() {
+  struct tiny x = { 1 };
+  f_tiny(x);
 }

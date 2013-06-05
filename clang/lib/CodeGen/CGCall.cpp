@@ -642,6 +642,10 @@ EnterStructPointerForCoercedAccess(llvm::Value *SrcPtr,
 /// CoerceIntOrPtrToIntOrPtr - Convert a value Val to the specific Ty where both
 /// are either integers or pointers.  This does a truncation of the value if it
 /// is too large or a zero extension if it is too small.
+///
+/// This behaves as if the value were coerced through memory, so on big-endian
+/// targets the high bits are preserved in a truncation, while little-endian
+/// targets preserve the low bits.
 static llvm::Value *CoerceIntOrPtrToIntOrPtr(llvm::Value *Val,
                                              llvm::Type *Ty,
                                              CodeGenFunction &CGF) {
@@ -661,8 +665,25 @@ static llvm::Value *CoerceIntOrPtrToIntOrPtr(llvm::Value *Val,
   if (isa<llvm::PointerType>(DestIntTy))
     DestIntTy = CGF.IntPtrTy;
 
-  if (Val->getType() != DestIntTy)
-    Val = CGF.Builder.CreateIntCast(Val, DestIntTy, false, "coerce.val.ii");
+  if (Val->getType() != DestIntTy) {
+    const llvm::DataLayout &DL = CGF.CGM.getDataLayout();
+    if (DL.isBigEndian()) {
+      // Preserve the high bits on big-endian targets.
+      // That is what memory coercion does.
+      uint64_t SrcSize = DL.getTypeAllocSizeInBits(Val->getType());
+      uint64_t DstSize = DL.getTypeAllocSizeInBits(DestIntTy);
+      if (SrcSize > DstSize) {
+        Val = CGF.Builder.CreateLShr(Val, SrcSize - DstSize, "coerce.highbits");
+        Val = CGF.Builder.CreateTrunc(Val, DestIntTy, "coerce.val.ii");
+      } else {
+        Val = CGF.Builder.CreateZExt(Val, DestIntTy, "coerce.val.ii");
+        Val = CGF.Builder.CreateShl(Val, DstSize - SrcSize, "coerce.highbits");
+      }
+    } else {
+      // Little-endian targets preserve the low bits. No shifts required.
+      Val = CGF.Builder.CreateIntCast(Val, DestIntTy, false, "coerce.val.ii");
+    }
+  }
 
   if (isa<llvm::PointerType>(Ty))
     Val = CGF.Builder.CreateIntToPtr(Val, Ty, "coerce.val.ip");
