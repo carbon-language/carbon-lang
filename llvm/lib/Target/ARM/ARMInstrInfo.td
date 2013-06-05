@@ -5233,7 +5233,7 @@ def RORi : ARMAsmPseudo<"ror${s}${p} $Rd, $Rm, $imm",
                              cc_out:$s)>;
 }
 def RRXi : ARMAsmPseudo<"rrx${s}${p} $Rd, $Rm",
-                        (ins GPRnopc:$Rd, GPRnopc:$Rm, pred:$p, cc_out:$s)>;
+                        (ins GPR:$Rd, GPR:$Rm, pred:$p, cc_out:$s)>;
 let TwoOperandAliasConstraint = "$Rn = $Rd" in {
 def ASRr : ARMAsmPseudo<"asr${s}${p} $Rd, $Rn, $Rm",
                         (ins GPRnopc:$Rd, GPRnopc:$Rn, GPRnopc:$Rm, pred:$p,

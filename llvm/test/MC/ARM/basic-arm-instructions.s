@@ -1645,6 +1645,30 @@ Lforward:
 @ CHECK: rsc	r6, r6, r7, ror r9      @ encoding: [0x77,0x69,0xe6,0xe0]
 
 @------------------------------------------------------------------------------
+@ RRX/RRXS
+@------------------------------------------------------------------------------
+
+         rrx r0, r1
+	 rrx sp, pc
+	 rrx pc, lr
+	 rrx lr, sp
+
+@ CHECK: rrx	r0, r1                  @ encoding: [0x61,0x00,0xa0,0xe1]
+@ CHECK: rrx	sp, pc                  @ encoding: [0x6f,0xd0,0xa0,0xe1]
+@ CHECK: rrx	pc, lr                  @ encoding: [0x6e,0xf0,0xa0,0xe1]
+@ CHECK: rrx	lr, sp                  @ encoding: [0x6d,0xe0,0xa0,0xe1]
+
+         rrxs r0, r1
+	 rrxs sp, pc
+	 rrxs pc, lr
+	 rrxs lr, sp
+
+@CHECK: rrxs	r0, r1                  @ encoding: [0x61,0x00,0xb0,0xe1]
+@CHECK: rrxs	sp, pc                  @ encoding: [0x6f,0xd0,0xb0,0xe1]
+@CHECK: rrxs	pc, lr                  @ encoding: [0x6e,0xf0,0xb0,0xe1]
+@CHECK: rrxs	lr, sp                  @ encoding: [0x6d,0xe0,0xb0,0xe1]
+
+@ ------------------------------------------------------------------------------
 @ SADD16/SADD8
 @------------------------------------------------------------------------------
         sadd16 r1, r2, r3
