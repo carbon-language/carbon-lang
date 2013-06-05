@@ -70,6 +70,11 @@ static cl::opt<bool> FixWhatYouCan(
     "fix-what-you-can",
     cl::desc(Options->getOptionHelpText(options::OPT_fix_what_you_can)));
 
+static cl::list<std::string> ArgsAfter("extra-arg",
+    cl::desc("Additional argument to append to the compiler command line"));
+static cl::list<std::string> ArgsBefore("extra-arg-before",
+    cl::desc("Additional argument to prepend to the compiler command line"));
+
 namespace {
 
 // FIXME: Move FixItRewriteInPlace from lib/Rewrite/Frontend/FrontendActions.cpp
@@ -123,6 +128,35 @@ public:
   }
 };
 
+class InsertAdjuster: public clang::tooling::ArgumentsAdjuster {
+public:
+  enum Position { BEGIN, END };
+
+  InsertAdjuster(const CommandLineArguments &Extra, Position Pos)
+    : Extra(Extra), Pos(Pos) {
+  }
+
+  virtual CommandLineArguments
+  Adjust(const CommandLineArguments &Args) LLVM_OVERRIDE {
+    CommandLineArguments Return(Args);
+
+    CommandLineArguments::iterator I;
+    if (Pos == END) {
+      I = Return.end();
+    } else {
+      I = Return.begin();
+      ++I; // To leave the program name in place
+    }
+
+    Return.insert(I, Extra.begin(), Extra.end());
+    return Return;
+  }
+
+private:
+  const CommandLineArguments Extra;
+  const Position Pos;
+};
+
 } // namespace
 
 // Anonymous namespace here causes problems with gcc <= 4.4 on MacOS 10.6.
@@ -147,6 +181,12 @@ int main(int argc, const char **argv) {
   CommonOptionsParser OptionsParser(argc, argv);
   ClangTool Tool(OptionsParser.getCompilations(),
                  OptionsParser.getSourcePathList());
+
+  if (ArgsAfter.size() > 0)
+    Tool.appendArgumentsAdjuster(new InsertAdjuster(ArgsAfter, InsertAdjuster::END));
+  if (ArgsBefore.size() > 0)
+    Tool.appendArgumentsAdjuster(new InsertAdjuster(ArgsBefore, InsertAdjuster::BEGIN));
+
   if (Fixit)
     return Tool.run(newFrontendActionFactory<FixItAction>());
   clang_check::ClangCheckActionFactory Factory;
