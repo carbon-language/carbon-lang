@@ -286,6 +286,10 @@ private:
     VTableLayoutMapTy;
   VTableLayoutMapTy VTableLayouts;
 
+  /// NumVirtualFunctionPointers - Contains the number of virtual function
+  /// pointers in the vtable for a given record decl.
+  llvm::DenseMap<const CXXRecordDecl *, uint64_t> NumVirtualFunctionPointers;
+
   typedef std::pair<const CXXRecordDecl *,
                     const CXXRecordDecl *> ClassPairTy;
 
@@ -300,6 +304,8 @@ private:
 
   /// Thunks - Contains all thunks that a given method decl will need.
   ThunksMapTy Thunks;
+
+  void ComputeMethodVTableIndices(const CXXRecordDecl *RD);
 
   /// ComputeVTableRelatedInformation - Compute and store all vtable related
   /// information (vtable layout, vbase offset offsets, thunks etc) for the
@@ -345,6 +351,10 @@ public:
 
     return &I->second;
   }
+
+  /// getNumVirtualFunctionPointers - Return the number of virtual function
+  /// pointers in the vtable for a given record decl.
+  uint64_t getNumVirtualFunctionPointers(const CXXRecordDecl *RD);
 
   /// getMethodVTableIndex - Return the index (relative to the vtable address
   /// point) where the function pointer for the given virtual function is
