@@ -816,7 +816,8 @@ MachineInstrBuilder R600InstrInfo::buildIndirectWrite(MachineBasicBlock *MBB,
 
   MachineInstrBuilder Mov = buildDefaultInstruction(*MBB, I, AMDGPU::MOV,
                                       AddrReg, ValueReg)
-                                      .addReg(AMDGPU::AR_X, RegState::Implicit);
+                                      .addReg(AMDGPU::AR_X,
+                                           RegState::Implicit | RegState::Kill);
   setImmOperand(Mov, R600Operands::DST_REL, 1);
   return Mov;
 }
@@ -833,7 +834,8 @@ MachineInstrBuilder R600InstrInfo::buildIndirectRead(MachineBasicBlock *MBB,
   MachineInstrBuilder Mov = buildDefaultInstruction(*MBB, I, AMDGPU::MOV,
                                       ValueReg,
                                       AddrReg)
-                                      .addReg(AMDGPU::AR_X, RegState::Implicit);
+                                      .addReg(AMDGPU::AR_X,
+                                           RegState::Implicit | RegState::Kill);
   setImmOperand(Mov, R600Operands::SRC0_REL, 1);
 
   return Mov;

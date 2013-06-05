@@ -52,6 +52,8 @@ class R600SchedStrategy : public MachineSchedStrategy {
 
   std::vector<SUnit *> Available[IDLast], Pending[IDLast];
   std::vector<SUnit *> AvailableAlus[AluLast];
+  std::vector<SUnit *> UnscheduledARDefs;
+  std::vector<SUnit *> UnscheduledARUses;
 
   InstKind CurInstKind;
   int CurEmitted;
