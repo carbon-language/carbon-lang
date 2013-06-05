@@ -710,16 +710,35 @@ void CodeGenSchedModels::createInstRWClass(Record *InstRWDef) {
     ArrayRef<Record*> InstDefs = ClassInstrs[CIdx].second;
     // If the all instrs in the current class are accounted for, then leave
     // them mapped to their old class.
-    if (OldSCIdx && SchedClasses[OldSCIdx].InstRWs.size() == InstDefs.size()) {
-      assert(SchedClasses[OldSCIdx].ProcIndices[0] == 0 &&
-             "expected a generic SchedClass");
-      continue;
+    if (OldSCIdx) {
+      const RecVec &RWDefs = SchedClasses[OldSCIdx].InstRWs;
+      if (!RWDefs.empty()) {
+        const RecVec *OrigInstDefs = Sets.expand(RWDefs[0]);
+        unsigned OrigNumInstrs = 0;
+        for (RecIter I = OrigInstDefs->begin(), E = OrigInstDefs->end();
+             I != E; ++I) {
+          if (InstrClassMap[*I] == OldSCIdx)
+            ++OrigNumInstrs;
+        }
+        if (OrigNumInstrs == InstDefs.size()) {
+          assert(SchedClasses[OldSCIdx].ProcIndices[0] == 0 &&
+                 "expected a generic SchedClass");
+          DEBUG(dbgs() << "InstRW: Reuse SC " << OldSCIdx << ":"
+                << SchedClasses[OldSCIdx].Name << " on "
+                << InstRWDef->getValueAsDef("SchedModel")->getName() << "\n");
+          SchedClasses[OldSCIdx].InstRWs.push_back(InstRWDef);
+          continue;
+        }
+      }
     }
     unsigned SCIdx = SchedClasses.size();
     SchedClasses.resize(SCIdx+1);
     CodeGenSchedClass &SC = SchedClasses.back();
     SC.Index = SCIdx;
     SC.Name = createSchedClassName(InstDefs);
+    DEBUG(dbgs() << "InstRW: New SC " << SCIdx << ":" << SC.Name << " on "
+          << InstRWDef->getValueAsDef("SchedModel")->getName() << "\n");
+
     // Preserve ItinDef and Writes/Reads for processors without an InstRW entry.
     SC.ItinClassDef = SchedClasses[OldSCIdx].ItinClassDef;
     SC.Writes = SchedClasses[OldSCIdx].Writes;
