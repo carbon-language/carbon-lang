@@ -8,11 +8,9 @@ RUN:   %p/Inputs/ifunc.x86-64 %p/Inputs/ifunc.cpp.x86-64 \
 RUN: | FileCheck %s --check-prefix=PLT
 
 RUN: lld -flavor gnu -target x86_64-linux -o %t %p/Inputs/ifunc.x86-64 \
-RUN:   -e main -static %p/Inputs/ifunc.cpp.x86-64 \
-RUN: && llvm-objdump -d -s %t| FileCheck %s --check-prefix=BIN
-#REMOVE THE BELOW LINE WHEN llvm-readobj adds functionality to print 
-#Dynamic relocations 
-#llvm-readobj -r %t | FileCheck %s --check-prefix=RELATIVEADDEND
+RUN:   -e main -static %p/Inputs/ifunc.cpp.x86-64
+RUN: llvm-objdump -d -s %t| FileCheck %s --check-prefix=BIN
+RUN: llvm-readobj -r %t | FileCheck %s --check-prefix=RELATIVEADDEND
 
 PLT: defined-atoms:
 
@@ -54,3 +52,9 @@ CHECK: type: resolver
 BIN: {{[0-9a-f]+}}: ff 25 {{[0-9a-f]+}} {{[0-9a-f]+}} 00 00 jmpq *{{[0-9]+}}(%rip)
 BIN: .got.plt:
 BIN-NEXT: {{[0-9a-f]+}} 00000000 00000000
+
+RELATIVEADDEND:      Relocations [
+RELATIVEADDEND-NEXT:   Section (1) .rela.plt {
+RELATIVEADDEND-NEXT:     0x401000 R_X86_64_IRELATIVE - 0x4000E0
+RELATIVEADDEND-NEXT:   }
+RELATIVEADDEND-NEXT: ]
