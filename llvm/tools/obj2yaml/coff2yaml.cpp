@@ -64,7 +64,7 @@ void COFFDumper::dumpSections(unsigned NumSections) {
 
     ArrayRef<uint8_t> sectionData;
     Obj.getSectionContents(Sect, sectionData);
-    Sec.SectionData = COFFYAML::BinaryRef(sectionData);
+    Sec.SectionData = object::yaml::BinaryRef(sectionData);
 
     std::vector<COFF::relocation> Relocations;
     for (object::relocation_iterator rIter = iter->begin_relocations();
@@ -96,7 +96,7 @@ void COFFDumper::dumpSymbols(unsigned NumSymbols) {
     Sym.Header.Value = Symbol->Value;
     Sym.Header.SectionNumber = Symbol->SectionNumber;
     Sym.Header.NumberOfAuxSymbols = Symbol->NumberOfAuxSymbols;
-    Sym.AuxiliaryData = COFFYAML::BinaryRef(Obj.getSymbolAuxData(Symbol));
+    Sym.AuxiliaryData = object::yaml::BinaryRef(Obj.getSymbolAuxData(Symbol));
     Symbols.push_back(Sym);
   }
 }

@@ -8,4 +8,5 @@ add_llvm_library(LLVMObject
   MachOObjectFile.cpp
   Object.cpp
   ObjectFile.cpp
+  YAML.cpp
   )
