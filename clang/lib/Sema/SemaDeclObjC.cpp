@@ -2272,6 +2272,57 @@ ObjCMethodDecl *Sema::LookupImplementedMethodInGlobalPool(Selector Sel) {
 }
 
 static void
+HelperSelectorsForTypoCorrection(
+                      SmallVectorImpl<const ObjCMethodDecl *> &BestMethod,
+                      StringRef Typo, const ObjCMethodDecl * Method) {
+  const unsigned MaxEditDistance = 1;
+  unsigned BestEditDistance = MaxEditDistance + 1;
+  StringRef MethodName = Method->getSelector().getAsString();
+  
+  unsigned MinPossibleEditDistance = abs((int)MethodName.size() - (int)Typo.size());
+  if (MinPossibleEditDistance > 0 &&
+      Typo.size() / MinPossibleEditDistance < 1)
+    return;
+  unsigned EditDistance = Typo.edit_distance(MethodName, true, MaxEditDistance);
+  if (EditDistance > MaxEditDistance)
+    return;
+  if (EditDistance == BestEditDistance)
+    BestMethod.push_back(Method);
+  else if (EditDistance < BestEditDistance) {
+    BestMethod.clear();
+    BestMethod.push_back(Method);
+    BestEditDistance = EditDistance;
+  }
+}
+
+const ObjCMethodDecl *
+Sema::SelectorsForTypoCorrection(Selector Sel) {
+  unsigned NumArgs = Sel.getNumArgs();
+  SmallVector<const ObjCMethodDecl *, 8> Methods;
+  
+  for (GlobalMethodPool::iterator b = MethodPool.begin(),
+       e = MethodPool.end(); b != e; b++) {
+    // instance methods
+    for (ObjCMethodList *M = &b->second.first; M; M=M->getNext())
+      if (M->Method &&
+          (M->Method->getSelector().getNumArgs() == NumArgs))
+        Methods.push_back(M->Method);
+    // class methods
+    for (ObjCMethodList *M = &b->second.second; M; M=M->getNext())
+      if (M->Method &&
+          (M->Method->getSelector().getNumArgs() == NumArgs))
+        Methods.push_back(M->Method);
+  }
+  
+  SmallVector<const ObjCMethodDecl *, 8> SelectedMethods;
+  for (unsigned i = 0, e = Methods.size(); i < e; i++) {
+    HelperSelectorsForTypoCorrection(SelectedMethods,
+                                     Sel.getAsString(), Methods[i]);
+  }
+  return (SelectedMethods.size() == 1) ? SelectedMethods[0] : NULL;
+}
+
+static void
 HelperToDiagnoseMismatchedMethodsInGlobalPool(Sema &S,
                                               ObjCMethodList &MethList) {
   ObjCMethodList *M = &MethList;

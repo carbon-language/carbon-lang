@@ -968,8 +968,18 @@ ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
   if (!Method)
     Method = LookupFactoryMethodInGlobalPool(Sel,
                                           SourceRange(LParenLoc, RParenLoc));
-  if (!Method)
-    Diag(SelLoc, diag::warn_undeclared_selector) << Sel;
+  if (!Method) {
+    if (const ObjCMethodDecl *OM = SelectorsForTypoCorrection(Sel)) {
+      Selector MatchedSel = OM->getSelector();
+      SourceRange SelectorRange(LParenLoc.getLocWithOffset(1),
+                                RParenLoc.getLocWithOffset(-1));
+      Diag(SelLoc, diag::warn_undeclared_selector_with_typo)
+        << Sel << MatchedSel
+        << FixItHint::CreateReplacement(SelectorRange, MatchedSel.getAsString());
+      
+    } else
+        Diag(SelLoc, diag::warn_undeclared_selector) << Sel;
+  }
   
   if (!Method ||
       Method->getImplementationControl() != ObjCMethodDecl::Optional) {

@@ -2669,6 +2669,8 @@ public:
                                     warn, /*instance*/false);
   }
 
+  const ObjCMethodDecl *SelectorsForTypoCorrection(Selector Sel);
+  
   /// DiagnoseMismatchedMethodsInGlobalPool - This routine goes through list of
   /// methods in global pool and issues diagnostic on identical selectors which
   /// have mismathched types.

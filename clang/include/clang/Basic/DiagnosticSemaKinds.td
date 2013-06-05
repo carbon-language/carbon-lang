@@ -811,6 +811,9 @@ def error_dealloc_bad_result_type : Error<
   "instead of %0">;
 def warn_undeclared_selector : Warning<
   "undeclared selector %0">, InGroup<UndeclaredSelector>, DefaultIgnore;
+def warn_undeclared_selector_with_typo : Warning<
+  "undeclared selector %0; did you mean %1?">,
+  InGroup<UndeclaredSelector>, DefaultIgnore;
 def warn_implicit_atomic_property : Warning<
   "property is assumed atomic by default">, InGroup<ImplicitAtomic>, DefaultIgnore;
 def note_auto_readonly_iboutlet_fixup_suggest : Note<
