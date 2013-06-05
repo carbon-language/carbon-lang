@@ -195,21 +195,6 @@ binary_le_impl<value_type> binary_le(value_type V) {
   return binary_le_impl<value_type>(V);
 }
 
-static bool writeHexData(StringRef Data, raw_ostream &OS) {
-  unsigned Size = Data.size();
-  if (Size % 2)
-    return false;
-
-  for (unsigned I = 0; I != Size; I += 2) {
-    uint8_t Byte;
-    if (Data.substr(I,  2).getAsInteger(16, Byte))
-      return false;
-    OS.write(Byte);
-  }
-
-  return true;
-}
-
 bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
   OS << binary_le(CP.Obj.Header.Machine)
      << binary_le(CP.Obj.Header.NumberOfSections)
@@ -239,13 +224,7 @@ bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
   for (std::vector<COFFYAML::Section>::iterator i = CP.Obj.Sections.begin(),
                                                 e = CP.Obj.Sections.end();
                                                 i != e; ++i) {
-    StringRef SecData = i->SectionData.getHex();
-    if (!SecData.empty()) {
-      if (!writeHexData(SecData, OS)) {
-        errs() << "SectionData must be a collection of pairs of hex bytes";
-        return false;
-      }
-    }
+    i->SectionData.writeAsBinary(OS);
     for (unsigned I2 = 0, E2 = i->Relocations.size(); I2 != E2; ++I2) {
       const COFF::relocation &R = i->Relocations[I2];
       OS << binary_le(R.VirtualAddress)
@@ -265,13 +244,7 @@ bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
        << binary_le(i->Header.Type)
        << binary_le(i->Header.StorageClass)
        << binary_le(i->Header.NumberOfAuxSymbols);
-    StringRef Data = i->AuxiliaryData.getHex();
-    if (!Data.empty()) {
-      if (!writeHexData(Data, OS)) {
-        errs() << "AuxiliaryData must be a collection of pairs of hex bytes";
-        return false;
-      }
-    }
+    i->AuxiliaryData.writeAsBinary(OS);
   }
 
   // Output string table.

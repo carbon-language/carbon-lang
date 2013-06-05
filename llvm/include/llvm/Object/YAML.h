@@ -48,6 +48,9 @@ public:
 
     return Ref.isBinary == isBinary && Ref.Data == Data;
   }
+  /// \brief Write the contents (regardless of whether it is binary or a
+  /// hex string) as binary to the given raw_ostream.
+  void writeAsBinary(raw_ostream &OS) const;
 };
 
 }
