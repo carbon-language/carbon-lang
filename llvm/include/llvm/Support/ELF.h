@@ -310,7 +310,8 @@ enum {
   ELFOSABI_NONE = 0,          // UNIX System V ABI
   ELFOSABI_HPUX = 1,          // HP-UX operating system
   ELFOSABI_NETBSD = 2,        // NetBSD
-  ELFOSABI_LINUX = 3,         // GNU/Linux
+  ELFOSABI_GNU = 3,           // GNU/Linux
+  ELFOSABI_LINUX = 3,         // Historical alias for ELFOSABI_GNU.
   ELFOSABI_HURD = 4,          // GNU/Hurd
   ELFOSABI_SOLARIS = 6,       // Solaris
   ELFOSABI_AIX = 7,           // AIX
