@@ -4946,6 +4946,10 @@ TEST_F(FormatTest, SplitsUTF8BlockComments) {
             " * 九 十\n"
             " */",
             format("/* 一二三 四五六七 八  九 十 */", getLLVMStyleWithColumns(6)));
+  EXPECT_EQ("/* 𝓣𝓮𝓼𝓽 𝔣𝔬𝔲𝔯\n"
+            " * 𝕓𝕪𝕥𝕖\n"
+            " * 𝖀𝕿𝕱-𝟠 */",
+            format("/* 𝓣𝓮𝓼𝓽 𝔣𝔬𝔲𝔯 𝕓𝕪𝕥𝕖 𝖀𝕿𝕱-𝟠 */", getLLVMStyleWithColumns(12)));
 }
 
 } // end namespace tooling
