@@ -8,9 +8,9 @@ import lldb
 from lldbtest import *
 import lldbutil
 
-class LibcxxMapDataFormatterTestCase(TestBase):
+class LibcxxMultiMapDataFormatterTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "data-formatter", "data-formatter-stl", "libcxx", "map")
+    mydir = os.path.join("functionalities", "data-formatter", "data-formatter-stl", "libcxx", "multimap")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
