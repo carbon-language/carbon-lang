@@ -98,6 +98,12 @@ bool CoreDriver::parse(int argc, const char *argv[],
                  << (*it)->getAsString(*parsedArgs) << "\n";
   }
   
+  // Copy mllvm
+  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_mllvm),
+                               ie = parsedArgs->filtered_end();
+       it != ie; ++it) {
+    info.appendLLVMOption((*it)->getValue());
+  }
   
   // Handle -e xxx
   if (llvm::opt::Arg *entry = parsedArgs->getLastArg(OPT_entry))
@@ -155,4 +161,3 @@ bool CoreDriver::parse(int argc, const char *argv[],
 }
 
 } // namespace lld
-
