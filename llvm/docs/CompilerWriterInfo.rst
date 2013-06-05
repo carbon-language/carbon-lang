@@ -103,6 +103,8 @@ Other relevant lists
 ABI
 ===
 
+* `System V Application Binary Interface <http://www.sco.com/developers/gabi/latest/contents.html>`_
+
 Linux
 -----
 
