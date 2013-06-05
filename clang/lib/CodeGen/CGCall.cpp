@@ -1054,8 +1054,11 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       RetAttrs.addAttribute(llvm::Attribute::SExt);
     else if (RetTy->hasUnsignedIntegerRepresentation())
       RetAttrs.addAttribute(llvm::Attribute::ZExt);
-    break;
+    // FALL THROUGH
   case ABIArgInfo::Direct:
+    if (RetAI.getInReg())
+      RetAttrs.addAttribute(llvm::Attribute::InReg);
+    break;
   case ABIArgInfo::Ignore:
     break;
 

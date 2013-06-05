@@ -73,8 +73,7 @@ struct mixed {
   float b;
 };
 
-// CHECK: @f_mixed(i32 inreg %x.coerce0, float inreg %x.coerce1)
-// FIXME: The return value should also be 'inreg'.
+// CHECK: define inreg %struct.mixed @f_mixed(i32 inreg %x.coerce0, float inreg %x.coerce1)
 struct mixed f_mixed(struct mixed x) {
   x.a += 1;
   return x;
