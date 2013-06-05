@@ -108,14 +108,14 @@ class CGDebugInfo {
   unsigned Checksum(const ObjCInterfaceDecl *InterfaceDecl);
   llvm::DIType CreateType(const BuiltinType *Ty);
   llvm::DIType CreateType(const ComplexType *Ty);
-  llvm::DIType CreateQualifiedType(QualType Ty, llvm::DIFile F);
-  llvm::DIType CreateType(const TypedefType *Ty, llvm::DIFile F);
+  llvm::DIType CreateQualifiedType(QualType Ty, llvm::DIFile F, bool Declaration);
+  llvm::DIType CreateType(const TypedefType *Ty, llvm::DIFile F, bool Declaration);
   llvm::DIType CreateType(const ObjCObjectPointerType *Ty,
                           llvm::DIFile F);
   llvm::DIType CreateType(const PointerType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const BlockPointerType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const FunctionType *Ty, llvm::DIFile F);
-  llvm::DIType CreateType(const RecordType *Ty);
+  llvm::DIType CreateType(const RecordType *Ty, bool Declaration);
   llvm::DIType CreateLimitedType(const RecordType *Ty);
   llvm::DIType CreateType(const ObjCInterfaceType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const ObjCObjectType *Ty, llvm::DIFile F);
@@ -326,14 +326,14 @@ private:
 
   /// getOrCreateType - Get the type from the cache or create a new type if
   /// necessary.
-  llvm::DIType getOrCreateType(QualType Ty, llvm::DIFile F);
+  llvm::DIType getOrCreateType(QualType Ty, llvm::DIFile F, bool Declaration = false);
 
   /// getOrCreateLimitedType - Get the type from the cache or create a new
   /// partial type if necessary.
   llvm::DIType getOrCreateLimitedType(QualType Ty, llvm::DIFile F);
 
   /// CreateTypeNode - Create type metadata for a source language type.
-  llvm::DIType CreateTypeNode(QualType Ty, llvm::DIFile F);
+  llvm::DIType CreateTypeNode(QualType Ty, llvm::DIFile F, bool Declaration);
 
   /// getObjCInterfaceDecl - return the underlying ObjCInterfaceDecl
   /// if Ty is an ObjCInterface or a pointer to one.

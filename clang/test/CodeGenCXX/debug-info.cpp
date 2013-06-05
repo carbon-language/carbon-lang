@@ -76,3 +76,27 @@ incomplete (*x)[3];
 // CHECK: [[INCARRAY]] = {{.*}}metadata [[INCTYPE:![0-9]*]], metadata {{![0-9]*}}, i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 0, align 0, offset 0] [from incomplete]
 // CHECK: [[INCTYPE]] = {{.*}} ; [ DW_TAG_structure_type ] [incomplete]{{.*}} [fwd]
 }
+
+namespace pr16214 {
+struct a {
+  int i;
+};
+
+typedef a at;
+
+struct b {
+};
+
+typedef b bt;
+
+void func() {
+  at a_inst;
+  bt *b_ptr_inst;
+  const bt *b_cnst_ptr_inst;
+}
+
+// CHECK: metadata [[A_MEM:![0-9]*]], i32 0, null, null} ; [ DW_TAG_structure_type ] [a]
+// CHECK: [[A_MEM]] = metadata !{metadata [[A_I:![0-9]*]], metadata !{{[0-9]*}}}
+// CHECK: [[A_I]] = {{.*}} ; [ DW_TAG_member ] [i] {{.*}} [from int]
+// CHECK: ; [ DW_TAG_structure_type ] [b] {{.*}}[fwd]
+}

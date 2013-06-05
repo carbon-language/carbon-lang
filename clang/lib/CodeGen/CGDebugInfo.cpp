@@ -501,7 +501,7 @@ llvm::DIType CGDebugInfo::CreateType(const ComplexType *Ty) {
 
 /// CreateCVRType - Get the qualified type from the cache or create
 /// a new one if necessary.
-llvm::DIType CGDebugInfo::CreateQualifiedType(QualType Ty, llvm::DIFile Unit) {
+llvm::DIType CGDebugInfo::CreateQualifiedType(QualType Ty, llvm::DIFile Unit, bool Declaration) {
   QualifierCollector Qc;
   const Type *T = Qc.strip(Ty);
 
@@ -527,7 +527,7 @@ llvm::DIType CGDebugInfo::CreateQualifiedType(QualType Ty, llvm::DIFile Unit) {
     return getOrCreateType(QualType(T, 0), Unit);
   }
 
-  llvm::DIType FromTy = getOrCreateType(Qc.apply(CGM.getContext(), T), Unit);
+  llvm::DIType FromTy = getOrCreateType(Qc.apply(CGM.getContext(), T), Unit, Declaration);
 
   // No need to fill in the Name, Line, Size, Alignment, Offset in case of
   // CVR derived types.
@@ -613,27 +613,7 @@ llvm::DIType CGDebugInfo::getOrCreateTypeDeclaration(QualType PointeeTy,
                                                      llvm::DIFile Unit) {
   if (DebugKind > CodeGenOptions::LimitedDebugInfo)
     return getOrCreateType(PointeeTy, Unit);
-
-  // Limit debug info for the pointee type.
-
-  // If we have an existing type, use that, it's still smaller than creating
-  // a new type.
-  llvm::DIType Ty = getTypeOrNull(PointeeTy);
-  if (Ty.Verify()) return Ty;
-
-  // Handle qualifiers.
-  if (PointeeTy.hasLocalQualifiers())
-    return CreateQualifiedType(PointeeTy, Unit);
-
-  if (const RecordType *RTy = dyn_cast<RecordType>(PointeeTy)) {
-    RecordDecl *RD = RTy->getDecl();
-    llvm::DIDescriptor FDContext =
-      getContextDescriptor(cast<Decl>(RD->getDeclContext()));
-    llvm::DIType RetTy = createRecordFwdDecl(RD, FDContext);
-    TypeCache[QualType(RTy, 0).getAsOpaquePtr()] = RetTy;
-    return RetTy;
-  }
-  return getOrCreateType(PointeeTy, Unit);
+  return getOrCreateType(PointeeTy, Unit, true);
 }
 
 llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
@@ -730,11 +710,12 @@ llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
   return BlockLiteralGeneric;
 }
 
-llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty, llvm::DIFile Unit) {
+llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty, llvm::DIFile Unit,
+                                     bool Declaration) {
   // Typedefs are derived from some other type.  If we have a typedef of a
   // typedef, make sure to emit the whole chain.
   llvm::DIType Src =
-      getOrCreateTypeDeclaration(Ty->getDecl()->getUnderlyingType(), Unit);
+      getOrCreateType(Ty->getDecl()->getUnderlyingType(), Unit, Declaration);
   if (!Src.Verify())
     return llvm::DIType();
   // We don't set size information, but do specify where the typedef was
@@ -1394,8 +1375,15 @@ llvm::DIType CGDebugInfo::getOrCreateInterfaceType(QualType D,
 }
 
 /// CreateType - get structure or union type.
-llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
+llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty, bool Declaration) {
   RecordDecl *RD = Ty->getDecl();
+  if (Declaration) {
+    llvm::DIDescriptor FDContext =
+      getContextDescriptor(cast<Decl>(RD->getDeclContext()));
+    llvm::DIType RetTy = createRecordFwdDecl(RD, FDContext);
+    TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RetTy;
+    return RetTy;
+  }
 
   // Get overall information about the record type for the debug info.
   llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
@@ -1908,7 +1896,7 @@ llvm::Value *CGDebugInfo::getCachedInterfaceTypeOrNull(QualType Ty) {
 
 /// getOrCreateType - Get the type from the cache or create a new
 /// one if necessary.
-llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
+llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit, bool Declaration) {
   if (Ty.isNull())
     return llvm::DIType();
 
@@ -1921,7 +1909,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
     return T;
 
   // Otherwise create the type.
-  llvm::DIType Res = CreateTypeNode(Ty, Unit);
+  llvm::DIType Res = CreateTypeNode(Ty, Unit, Declaration);
   void* TyPtr = Ty.getAsOpaquePtr();
 
   // And update the type cache.
@@ -1981,10 +1969,10 @@ ObjCInterfaceDecl *CGDebugInfo::getObjCInterfaceDecl(QualType Ty) {
 }
 
 /// CreateTypeNode - Create a new debug type node.
-llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile Unit) {
+llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile Unit, bool Declaration) {
   // Handle qualifiers, which recursively handles what they refer to.
   if (Ty.hasLocalQualifiers())
-    return CreateQualifiedType(Ty, Unit);
+    return CreateQualifiedType(Ty, Unit, Declaration);
 
   const char *Diag = 0;
 
@@ -2015,9 +2003,9 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile Unit) {
   case Type::BlockPointer:
     return CreateType(cast<BlockPointerType>(Ty), Unit);
   case Type::Typedef:
-    return CreateType(cast<TypedefType>(Ty), Unit);
+    return CreateType(cast<TypedefType>(Ty), Unit, Declaration);
   case Type::Record:
-    return CreateType(cast<RecordType>(Ty));
+    return CreateType(cast<RecordType>(Ty), Declaration);
   case Type::Enum:
     return CreateEnumType(cast<EnumType>(Ty)->getDecl());
   case Type::FunctionProto:
@@ -2174,7 +2162,7 @@ llvm::DIType CGDebugInfo::CreateLimitedTypeNode(QualType Ty,llvm::DIFile Unit) {
   case Type::Record:
     return CreateLimitedType(cast<RecordType>(Ty));
   default:
-    return CreateTypeNode(Ty, Unit);
+    return CreateTypeNode(Ty, Unit, false);
   }
 }
 
