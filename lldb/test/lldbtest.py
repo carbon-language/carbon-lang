@@ -34,6 +34,7 @@ $
 import os, sys, traceback
 import os.path
 import re
+import signal
 from subprocess import *
 import StringIO
 import time
@@ -820,6 +821,9 @@ class Base(unittest2.TestCase):
         # List of spawned subproces.Popen objects
         self.subprocesses = []
 
+        # List of forked process PIDs
+        self.forkedProcessPids = []
+
         # Create a string buffer to record the session info, to be dumped into a
         # test case specific file if test failure is encountered.
         self.session = StringIO.StringIO()
@@ -886,6 +890,10 @@ class Base(unittest2.TestCase):
                 p.terminate()
             del p
         del self.subprocesses[:]
+        # Ensure any forked processes are cleaned up
+        for pid in self.forkedProcessPids:
+            if os.path.exists("/proc/" + str(pid)):
+                os.kill(pid, signal.SIGTERM)
 
     def spawnSubprocess(self, executable, args=[]):
         """ Creates a subprocess.Popen object with the specified executable and arguments,
@@ -903,6 +911,29 @@ class Base(unittest2.TestCase):
                      stdin = PIPE)
         self.subprocesses.append(proc)
         return proc
+
+    def forkSubprocess(self, executable, args=[]):
+        """ Fork a subprocess with its own group ID.
+            NOTE: if using this function, ensure you also call:
+
+              self.addTearDownHook(self.cleanupSubprocesses)
+
+            otherwise the test suite will leak processes.
+        """
+        child_pid = os.fork()
+        if child_pid == 0:
+            # If more I/O support is required, this can be beefed up.
+            fd = os.open(os.devnull, os.O_RDWR)
+            os.dup2(fd, 0)
+            os.dup2(fd, 1)
+            os.dup2(fd, 2)
+            # This call causes the child to have its of group ID
+            os.setpgid(0,0)
+            os.execvp(executable, [executable] + args)
+        # Give the child time to get through the execvp() call
+        time.sleep(0.1)
+        self.forkedProcessPids.append(child_pid)
+        return child_pid
 
     def HideStdout(self):
         """Hide output to stdout from the user.
