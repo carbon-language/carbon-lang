@@ -787,6 +787,8 @@ public:
   typedef llvm::DenseMap<BaseSubobject, uint64_t> 
     AddressPointsMapTy;
 
+  typedef llvm::DenseMap<GlobalDecl, int64_t> MethodVTableIndicesTy;
+
 private:
   /// VTables - Global vtable information.
   VTableContext &VTables;
@@ -859,7 +861,11 @@ private:
   /// MethodInfoMap - The information for all methods in the vtable we're
   /// currently building.
   MethodInfoMapTy MethodInfoMap;
-  
+
+  /// MethodVTableIndices - Contains the index (relative to the vtable address
+  /// point) where the function pointer for a virtual function is stored.
+  MethodVTableIndicesTy MethodVTableIndices;
+
   typedef llvm::DenseMap<uint64_t, ThunkInfo> VTableThunksMapTy;
   
   /// VTableThunks - The thunks by vtable index in the vtable currently being 
@@ -1020,6 +1026,14 @@ public:
 
   const AddressPointsMapTy &getAddressPoints() const {
     return AddressPoints;
+  }
+
+  MethodVTableIndicesTy::const_iterator vtable_indices_begin() const {
+    return MethodVTableIndices.begin();
+  }
+
+  MethodVTableIndicesTy::const_iterator vtable_indices_end() const {
+    return MethodVTableIndices.end();
   }
 
   /// getNumVTableComponents - Return the number of components in the vtable
@@ -1437,6 +1451,15 @@ VTableBuilder::AddMethods(BaseSubobject Base, CharUnits BaseOffsetInLayoutClass,
                           const CXXRecordDecl *FirstBaseInPrimaryBaseChain,
                           CharUnits FirstBaseOffsetInLayoutClass,
                           PrimaryBasesSetVectorTy &PrimaryBases) {
+  // Itanium C++ ABI 2.5.2:
+  //   The order of the virtual function pointers in a virtual table is the
+  //   order of declaration of the corresponding member functions in the class.
+  //
+  //   There is an entry for any virtual function declared in a class,
+  //   whether it is a new function or overrides a base class function,
+  //   unless it overrides a function from the primary base, and conversion
+  //   between their return types does not require an adjustment.
+
   const CXXRecordDecl *RD = Base.getBase();
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
@@ -1473,6 +1496,11 @@ VTableBuilder::AddMethods(BaseSubobject Base, CharUnits BaseOffsetInLayoutClass,
     if (!PrimaryBases.insert(PrimaryBase))
       llvm_unreachable("Found a duplicate primary base!");
   }
+
+  const CXXDestructorDecl *ImplicitVirtualDtor = 0;
+
+  typedef llvm::SmallVector<const CXXMethodDecl *, 8> NewVirtualFunctionsTy;
+  NewVirtualFunctionsTy NewVirtualFunctions;
 
   // Now go through all virtual member functions and add them.
   for (CXXRecordDecl::method_iterator I = RD->method_begin(),
@@ -1539,6 +1567,33 @@ VTableBuilder::AddMethods(BaseSubobject Base, CharUnits BaseOffsetInLayoutClass,
       }
     }
 
+    if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
+      if (MD->isImplicit()) {
+        // Itanium C++ ABI 2.5.2:
+        //   If a class has an implicitly-defined virtual destructor,
+        //   its entries come after the declared virtual function pointers.
+
+        assert(!ImplicitVirtualDtor &&
+               "Did already see an implicit virtual dtor!");
+        ImplicitVirtualDtor = DD;
+        continue;
+      }
+    }
+
+    NewVirtualFunctions.push_back(MD);
+  }
+
+  if (ImplicitVirtualDtor)
+    NewVirtualFunctions.push_back(ImplicitVirtualDtor);
+
+  for (NewVirtualFunctionsTy::const_iterator I = NewVirtualFunctions.begin(),
+       E = NewVirtualFunctions.end(); I != E; ++I) {
+    const CXXMethodDecl *MD = *I;
+
+    // Get the final overrider.
+    FinalOverriders::OverriderInfo Overrider =
+      Overriders.getOverrider(MD, Base.getBaseOffset());
+
     // Insert the method info for this method.
     MethodInfo MethodInfo(Base.getBaseOffset(), BaseOffsetInLayoutClass,
                           Components.size());
@@ -1555,7 +1610,7 @@ VTableBuilder::AddMethods(BaseSubobject Base, CharUnits BaseOffsetInLayoutClass,
       Components.push_back(VTableComponent::MakeUnusedFunction(OverriderMD));
       continue;
     }
-    
+
     // Check if this overrider needs a return adjustment.
     // We don't want to do this for pure virtual member functions.
     BaseOffset ReturnAdjustmentOffset;
@@ -1640,11 +1695,34 @@ VTableBuilder::LayoutPrimaryAndSecondaryVTables(BaseSubobject Base,
              Base.getBase(), OffsetInLayoutClass, 
              PrimaryBases);
 
+  const CXXRecordDecl *RD = Base.getBase();
+  if (RD == MostDerivedClass) {
+    assert(MethodVTableIndices.empty());
+    for (MethodInfoMapTy::const_iterator I = MethodInfoMap.begin(),
+         E = MethodInfoMap.end(); I != E; ++I) {
+      const CXXMethodDecl *MD = I->first;
+      const MethodInfo &MI = I->second;
+      if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
+        // FIXME: Should probably add a layer of abstraction for vtable generation.
+        if (!isMicrosoftABI()) {
+          MethodVTableIndices[GlobalDecl(DD, Dtor_Complete)]
+              = MI.VTableIndex - AddressPoint;
+          MethodVTableIndices[GlobalDecl(DD, Dtor_Deleting)]
+              = MI.VTableIndex + 1 - AddressPoint;
+        } else {
+          MethodVTableIndices[GlobalDecl(DD, Dtor_Deleting)]
+              = MI.VTableIndex - AddressPoint;
+        }
+      } else {
+        MethodVTableIndices[MD] = MI.VTableIndex - AddressPoint;
+      }
+    }
+  }
+
   // Compute 'this' pointer adjustments.
   ComputeThisAdjustments();
 
   // Add all address points.
-  const CXXRecordDecl *RD = Base.getBase();
   while (true) {
     AddressPoints.insert(std::make_pair(
       BaseSubobject(RD, OffsetInLayoutClass),
@@ -2136,16 +2214,19 @@ void VTableBuilder::dumpLayout(raw_ostream& Out) {
     if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
       // FIXME: Should add a layer of abstraction for vtable generation.
       if (!isMicrosoftABI()) {
-        IndicesMap[VTables.getMethodVTableIndex(GlobalDecl(DD, Dtor_Complete))]
-          = MethodName + " [complete]";
-        IndicesMap[VTables.getMethodVTableIndex(GlobalDecl(DD, Dtor_Deleting))]
-          = MethodName + " [deleting]";
+        GlobalDecl GD(DD, Dtor_Complete);
+        assert(MethodVTableIndices.count(GD));
+        uint64_t VTableIndex = MethodVTableIndices[GD];
+        IndicesMap[VTableIndex] = MethodName + " [complete]";
+        IndicesMap[VTableIndex + 1] = MethodName + " [deleting]";
       } else {
-        IndicesMap[VTables.getMethodVTableIndex(GlobalDecl(DD, Dtor_Deleting))]
-          = MethodName + " [scalar deleting]";
+        GlobalDecl GD(DD, Dtor_Deleting);
+        assert(MethodVTableIndices.count(GD));
+        IndicesMap[MethodVTableIndices[GD]] = MethodName + " [scalar deleting]";
       }
     } else {
-      IndicesMap[VTables.getMethodVTableIndex(MD)] = MethodName;
+      assert(MethodVTableIndices.count(MD));
+      IndicesMap[MethodVTableIndices[MD]] = MethodName;
     }
   }
 
@@ -2160,7 +2241,7 @@ void VTableBuilder::dumpLayout(raw_ostream& Out) {
       uint64_t VTableIndex = I->first;
       const std::string &MethodName = I->second;
 
-      Out << llvm::format(" %4" PRIu64 " | ", VTableIndex) << MethodName
+      Out << llvm::format("%4" PRIu64 " | ", VTableIndex) << MethodName
           << '\n';
     }
   }
@@ -2199,153 +2280,6 @@ VTableContext::~VTableContext() {
   llvm::DeleteContainerSeconds(VTableLayouts);
 }
 
-static void 
-CollectPrimaryBases(const CXXRecordDecl *RD, ASTContext &Context,
-                    VTableBuilder::PrimaryBasesSetVectorTy &PrimaryBases) {
-  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-  const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
-
-  if (!PrimaryBase)
-    return;
-
-  CollectPrimaryBases(PrimaryBase, Context, PrimaryBases);
-
-  if (!PrimaryBases.insert(PrimaryBase))
-    llvm_unreachable("Found a duplicate primary base!");
-}
-
-void VTableContext::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {
-  
-  // Itanium C++ ABI 2.5.2:
-  //   The order of the virtual function pointers in a virtual table is the 
-  //   order of declaration of the corresponding member functions in the class.
-  //
-  //   There is an entry for any virtual function declared in a class, 
-  //   whether it is a new function or overrides a base class function, 
-  //   unless it overrides a function from the primary base, and conversion
-  //   between their return types does not require an adjustment. 
-
-  int64_t CurrentIndex = 0;
-  
-  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-  const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
-  
-  if (PrimaryBase) {
-    assert(PrimaryBase->isCompleteDefinition() && 
-           "Should have the definition decl of the primary base!");
-
-    // Since the record decl shares its vtable pointer with the primary base
-    // we need to start counting at the end of the primary base's vtable.
-    CurrentIndex = getNumVirtualFunctionPointers(PrimaryBase);
-  }
-
-  // Collect all the primary bases, so we can check whether methods override
-  // a method from the base.
-  VTableBuilder::PrimaryBasesSetVectorTy PrimaryBases;
-  CollectPrimaryBases(RD, Context, PrimaryBases);
-
-  const CXXDestructorDecl *ImplicitVirtualDtor = 0;
-  
-  for (CXXRecordDecl::method_iterator i = RD->method_begin(),
-       e = RD->method_end(); i != e; ++i) {
-    const CXXMethodDecl *MD = *i;
-
-    // We only want virtual methods.
-    if (!MD->isVirtual())
-      continue;
-
-    // Check if this method overrides a method in the primary base.
-    if (const CXXMethodDecl *OverriddenMD = 
-          FindNearestOverriddenMethod(MD, PrimaryBases)) {
-      // Check if converting from the return type of the method to the 
-      // return type of the overridden method requires conversion.
-      if (ComputeReturnAdjustmentBaseOffset(Context, MD, 
-                                            OverriddenMD).isEmpty()) {
-        // This index is shared between the index in the vtable of the primary
-        // base class.
-        if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
-          const CXXDestructorDecl *OverriddenDD = 
-            cast<CXXDestructorDecl>(OverriddenMD);
-
-          if (!isMicrosoftABI()) {
-            // Add both the complete and deleting entries.
-            MethodVTableIndices[GlobalDecl(DD, Dtor_Complete)] =
-              getMethodVTableIndex(GlobalDecl(OverriddenDD, Dtor_Complete));
-            MethodVTableIndices[GlobalDecl(DD, Dtor_Deleting)] =
-              getMethodVTableIndex(GlobalDecl(OverriddenDD, Dtor_Deleting));
-          } else {
-            // Add the scalar deleting destructor.
-            MethodVTableIndices[GlobalDecl(DD, Dtor_Deleting)] =
-              getMethodVTableIndex(GlobalDecl(OverriddenDD, Dtor_Deleting));
-          }
-        } else {
-          MethodVTableIndices[MD] = getMethodVTableIndex(OverriddenMD);
-        }
-        
-        // We don't need to add an entry for this method.
-        continue;
-      }
-    }
-    
-    if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
-      if (MD->isImplicit()) {
-        assert(!ImplicitVirtualDtor && 
-               "Did already see an implicit virtual dtor!");
-        ImplicitVirtualDtor = DD;
-        continue;
-      } 
-
-      if (!isMicrosoftABI()) {
-        // Add the complete dtor.
-        MethodVTableIndices[GlobalDecl(DD, Dtor_Complete)] = CurrentIndex++;
-
-        // Add the deleting dtor.
-        MethodVTableIndices[GlobalDecl(DD, Dtor_Deleting)] = CurrentIndex++;
-      } else {
-        // Add the scalar deleting dtor.
-        MethodVTableIndices[GlobalDecl(DD, Dtor_Deleting)] = CurrentIndex++;
-      }
-    } else {
-      // Add the entry.
-      MethodVTableIndices[MD] = CurrentIndex++;
-    }
-  }
-
-  if (ImplicitVirtualDtor) {
-    // Itanium C++ ABI 2.5.2:
-    //   If a class has an implicitly-defined virtual destructor, 
-    //   its entries come after the declared virtual function pointers.
-
-    if (isMicrosoftABI()) {
-      ErrorUnsupported("implicit virtual destructor in the Microsoft ABI",
-                       ImplicitVirtualDtor->getLocation());
-    }
-
-    // Add the complete dtor.
-    MethodVTableIndices[GlobalDecl(ImplicitVirtualDtor, Dtor_Complete)] = 
-      CurrentIndex++;
-    
-    // Add the deleting dtor.
-    MethodVTableIndices[GlobalDecl(ImplicitVirtualDtor, Dtor_Deleting)] = 
-      CurrentIndex++;
-  }
-  
-  NumVirtualFunctionPointers[RD] = CurrentIndex;
-}
-
-uint64_t VTableContext::getNumVirtualFunctionPointers(const CXXRecordDecl *RD) {
-  llvm::DenseMap<const CXXRecordDecl *, uint64_t>::iterator I = 
-    NumVirtualFunctionPointers.find(RD);
-  if (I != NumVirtualFunctionPointers.end())
-    return I->second;
-
-  ComputeMethodVTableIndices(RD);
-
-  I = NumVirtualFunctionPointers.find(RD);
-  assert(I != NumVirtualFunctionPointers.end() && "Did not find entry!");
-  return I->second;
-}
-      
 uint64_t VTableContext::getMethodVTableIndex(GlobalDecl GD) {
   MethodVTableIndicesTy::iterator I = MethodVTableIndices.find(GD);
   if (I != MethodVTableIndices.end())
@@ -2353,7 +2287,7 @@ uint64_t VTableContext::getMethodVTableIndex(GlobalDecl GD) {
   
   const CXXRecordDecl *RD = cast<CXXMethodDecl>(GD.getDecl())->getParent();
 
-  ComputeMethodVTableIndices(RD);
+  ComputeVTableRelatedInformation(RD);
 
   I = MethodVTableIndices.find(GD);
   assert(I != MethodVTableIndices.end() && "Did not find index!");
@@ -2414,6 +2348,9 @@ void VTableContext::ComputeVTableRelatedInformation(const CXXRecordDecl *RD) {
   VTableBuilder Builder(*this, RD, CharUnits::Zero(), 
                         /*MostDerivedClassIsVirtual=*/0, RD);
   Entry = CreateVTableLayout(Builder);
+
+  MethodVTableIndices.insert(Builder.vtable_indices_begin(),
+                             Builder.vtable_indices_end());
 
   // Add the known thunks.
   Thunks.insert(Builder.thunks_begin(), Builder.thunks_end());
