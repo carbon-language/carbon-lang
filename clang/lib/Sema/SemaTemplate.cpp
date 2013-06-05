@@ -5300,6 +5300,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   } else if (TUK != TUK_Friend) {
     Diag(KWLoc, diag::err_template_spec_needs_header)
       << FixItHint::CreateInsertion(KWLoc, "template<> ");
+    TemplateKWLoc = KWLoc;
     isExplicitSpecialization = true;
   }
 
