@@ -36,14 +36,6 @@ public:
       : Data(reinterpret_cast<const uint8_t *>(Data.data()), Data.size()),
         DataIsHexString(true) {}
   BinaryRef() : DataIsHexString(true) {}
-  StringRef getHex() const {
-    assert(DataIsHexString);
-    return StringRef(reinterpret_cast<const char *>(Data.data()), Data.size());
-  }
-  ArrayRef<uint8_t> getBinary() const {
-    assert(!DataIsHexString);
-    return Data;
-  }
   /// \brief The number of bytes that are represented by this BinaryRef.
   /// This is the number of bytes that writeAsBinary() will write.
   ArrayRef<uint8_t>::size_type binary_size() const {
