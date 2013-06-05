@@ -36,6 +36,25 @@ using namespace llvm;
 static cl::opt<std::string>
   Input(cl::Positional, cl::desc("<input>"), cl::init("-"));
 
+// TODO: The "right" way to tell what kind of object file a given YAML file
+// corresponds to is to look at YAML "tags" (e.g. `!Foo`). Then, different
+// tags (`!ELF`, `!COFF`, etc.) would be used to discriminate between them.
+// Interpreting the tags is needed eventually for when writing test cases,
+// so that we can e.g. have `!Archive` contain a sequence of `!ELF`, and
+// just Do The Right Thing. However, interpreting these tags and acting on
+// them appropriately requires some work in the YAML parser and the YAMLIO
+// library.
+enum YAMLObjectFormat {
+  YOF_COFF
+};
+
+cl::opt<YAMLObjectFormat> Format(
+  "format",
+  cl::desc("Interpret input as this type of object file"),
+  cl::values(
+    clEnumValN(YOF_COFF, "coff", "COFF object file format"),
+  clEnumValEnd));
+
 /// This parses a yaml stream that represents a COFF object file.
 /// See docs/yaml2obj for the yaml scheema.
 struct COFFParser {
@@ -289,16 +308,7 @@ bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
   return true;
 }
 
-int main(int argc, char **argv) {
-  cl::ParseCommandLineOptions(argc, argv);
-  sys::PrintStackTraceOnErrorSignal();
-  PrettyStackTraceProgram X(argc, argv);
-  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
-
-  OwningPtr<MemoryBuffer> Buf;
-  if (MemoryBuffer::getFileOrSTDIN(Input, Buf))
-    return 1;
-
+static int yaml2coff(llvm::raw_ostream &Out, llvm::MemoryBuffer *Buf) {
   yaml::Input YIn(Buf->getBuffer());
   COFFYAML::Object Doc;
   YIn >> Doc;
@@ -317,8 +327,26 @@ int main(int argc, char **argv) {
     errs() << "yaml2obj: Failed to layout COFF file!\n";
     return 1;
   }
-  if (!writeCOFF(CP, outs())) {
+  if (!writeCOFF(CP, Out)) {
     errs() << "yaml2obj: Failed to write COFF file!\n";
+    return 1;
+  }
+  return 0;
+}
+
+int main(int argc, char **argv) {
+  cl::ParseCommandLineOptions(argc, argv);
+  sys::PrintStackTraceOnErrorSignal();
+  PrettyStackTraceProgram X(argc, argv);
+  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+
+  OwningPtr<MemoryBuffer> Buf;
+  if (MemoryBuffer::getFileOrSTDIN(Input, Buf))
+    return 1;
+  if (Format == YOF_COFF) {
+    return yaml2coff(outs(), Buf.get());
+  } else {
+    errs() << "Not yet implemented\n";
     return 1;
   }
 }
