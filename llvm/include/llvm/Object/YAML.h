@@ -24,6 +24,8 @@ namespace yaml {
 /// In an object file this is just a binary blob. In an yaml file it is an hex
 /// string. Using this avoid having to allocate temporary strings.
 class BinaryRef {
+  /// \brief Either raw binary data, or a string of hex bytes (must always
+  /// be an even number of characters).
   ArrayRef<uint8_t> Data;
   bool isBinary;
 
