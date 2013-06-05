@@ -680,6 +680,17 @@ void SITargetLowering::ensureSRegLimit(SelectionDAG &DAG, SDValue &Operand,
   Operand = SDValue(Node, 0);
 }
 
+/// \returns true if \p Node's operands are different from the SDValue list
+/// \p Ops
+static bool isNodeChanged(const SDNode *Node, const std::vector<SDValue> &Ops) {
+  for (unsigned i = 0, e = Node->getNumOperands(); i < e; ++i) {
+    if (Ops[i].getNode() != Node->getOperand(i).getNode()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /// \brief Try to fold the Nodes operands into the Node
 SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
                                        SelectionDAG &DAG) const {
@@ -814,17 +825,8 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
   // Nodes that have a glue result are not CSE'd by getMachineNode(), so in
   // this case a brand new node is always be created, even if the operands
   // are the same as before.  So, manually check if anything has been changed.
-  if (Desc->Opcode == Opcode) {
-    bool Changed = false;
-    for (unsigned i = 0, e = Node->getNumOperands(); i < e; ++i) {
-      if (Ops[i].getNode() != Node->getOperand(i).getNode()) {
-        Changed = true;
-        break;
-      }
-    }
-    if (!Changed) {
-      return Node;
-    }
+  if (Desc->Opcode == Opcode && !isNodeChanged(Node, Ops)) {
+    return Node;
   }
 
   // Create a complete new instruction
