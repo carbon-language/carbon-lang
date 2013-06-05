@@ -17,6 +17,7 @@
 #ifndef LLVM_CLANG_FORMAT_BREAKABLETOKEN_H
 #define LLVM_CLANG_FORMAT_BREAKABLETOKEN_H
 
+#include "Encoding.h"
 #include "TokenAnnotator.h"
 #include "WhitespaceManager.h"
 #include <utility>
@@ -65,9 +66,11 @@ public:
                                        WhitespaceManager &Whitespaces) {}
 
 protected:
-  BreakableToken(const FormatToken &Tok) : Tok(Tok) {}
+  BreakableToken(const FormatToken &Tok, encoding::Encoding Encoding)
+      : Tok(Tok), Encoding(Encoding) {}
 
   const FormatToken &Tok;
+  encoding::Encoding Encoding;
 };
 
 /// \brief Base class for single line tokens that can be broken.
@@ -83,7 +86,8 @@ public:
 
 protected:
   BreakableSingleLineToken(const FormatToken &Tok, unsigned StartColumn,
-                           StringRef Prefix, StringRef Postfix);
+                           StringRef Prefix, StringRef Postfix,
+                           encoding::Encoding Encoding);
 
   // The column in which the token starts.
   unsigned StartColumn;
@@ -101,7 +105,8 @@ public:
   ///
   /// \p StartColumn specifies the column in which the token will start
   /// after formatting.
-  BreakableStringLiteral(const FormatToken &Tok, unsigned StartColumn);
+  BreakableStringLiteral(const FormatToken &Tok, unsigned StartColumn,
+                         encoding::Encoding Encoding);
 
   virtual Split getSplit(unsigned LineIndex, unsigned TailOffset,
                          unsigned ColumnLimit) const;
@@ -113,7 +118,8 @@ public:
   ///
   /// \p StartColumn specifies the column in which the comment will start
   /// after formatting.
-  BreakableLineComment(const FormatToken &Token, unsigned StartColumn);
+  BreakableLineComment(const FormatToken &Token, unsigned StartColumn,
+                       encoding::Encoding Encoding);
 
   virtual Split getSplit(unsigned LineIndex, unsigned TailOffset,
                          unsigned ColumnLimit) const;
@@ -129,7 +135,7 @@ public:
   /// If the comment starts a line after formatting, set \p FirstInLine to true.
   BreakableBlockComment(const FormatStyle &Style, const FormatToken &Token,
                         unsigned StartColumn, unsigned OriginaStartColumn,
-                        bool FirstInLine);
+                        bool FirstInLine, encoding::Encoding Encoding);
 
   virtual unsigned getLineCount() const;
   virtual unsigned getLineLengthAfterSplit(unsigned LineIndex,

@@ -61,11 +61,12 @@ enum TokenType {
 struct FormatToken {
   FormatToken()
       : NewlinesBefore(0), HasUnescapedNewline(false), LastNewlineOffset(0),
-        TokenLength(0), IsFirst(false), MustBreakBefore(false),
-        Type(TT_Unknown), SpacesRequiredBefore(0), CanBreakBefore(false),
-        ClosesTemplateDeclaration(false), ParameterCount(0), TotalLength(0),
-        UnbreakableTailLength(0), BindingStrength(0), SplitPenalty(0),
-        LongestObjCSelectorName(0), FakeRParens(0), LastInChainOfCalls(false),
+        ByteCount(0), CodePointCount(0), IsFirst(false),
+        MustBreakBefore(false), Type(TT_Unknown), SpacesRequiredBefore(0),
+        CanBreakBefore(false), ClosesTemplateDeclaration(false),
+        ParameterCount(0), TotalLength(0), UnbreakableTailLength(0),
+        BindingStrength(0), SplitPenalty(0), LongestObjCSelectorName(0),
+        FakeRParens(0), LastInChainOfCalls(false),
         PartOfMultiVariableDeclStmt(false), MatchingParen(NULL), Previous(NULL),
         Next(NULL) {}
 
@@ -89,10 +90,14 @@ struct FormatToken {
   /// whitespace (relative to \c WhiteSpaceStart). 0 if there is no '\n'.
   unsigned LastNewlineOffset;
 
-  /// \brief The length of the non-whitespace parts of the token. This is
-  /// necessary because we need to handle escaped newlines that are stored
+  /// \brief The number of bytes of the non-whitespace parts of the token. This
+  /// is necessary because we need to handle escaped newlines that are stored
   /// with the token.
-  unsigned TokenLength;
+  unsigned ByteCount;
+
+  /// \brief The length of the non-whitespace parts of the token in CodePoints.
+  /// We need this to correctly measure number of columns a token spans.
+  unsigned CodePointCount;
 
   /// \brief Indicates that this is the first token.
   bool IsFirst;

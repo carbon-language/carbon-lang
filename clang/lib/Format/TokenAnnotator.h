@@ -21,7 +21,6 @@
 #include <string>
 
 namespace clang {
-class Lexer;
 class SourceManager;
 
 namespace format {
@@ -71,10 +70,8 @@ public:
 /// \c UnwrappedLine.
 class TokenAnnotator {
 public:
-  TokenAnnotator(const FormatStyle &Style, SourceManager &SourceMgr, Lexer &Lex,
-                 IdentifierInfo &Ident_in)
-      : Style(Style), SourceMgr(SourceMgr), Lex(Lex), Ident_in(Ident_in) {
-  }
+  TokenAnnotator(const FormatStyle &Style, IdentifierInfo &Ident_in)
+      : Style(Style), Ident_in(Ident_in) {}
 
   void annotate(AnnotatedLine &Line);
   void calculateFormattingInformation(AnnotatedLine &Line);
@@ -95,8 +92,6 @@ private:
   void calculateUnbreakableTailLengths(AnnotatedLine &Line);
 
   const FormatStyle &Style;
-  SourceManager &SourceMgr;
-  Lexer &Lex;
 
   // Contextual keywords:
   IdentifierInfo &Ident_in;
