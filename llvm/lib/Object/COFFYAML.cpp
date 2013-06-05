@@ -255,8 +255,9 @@ void MappingTraits<COFFYAML::Symbol>::mapping(IO &IO, COFFYAML::Symbol &S) {
   IO.mapRequired("SimpleType", S.SimpleType);
   IO.mapRequired("ComplexType", S.ComplexType);
   IO.mapRequired("StorageClass", NS->StorageClass);
-  IO.mapOptional("NumberOfAuxSymbols", S.Header.NumberOfAuxSymbols);
-  IO.mapOptional("AuxiliaryData", S.AuxiliaryData);
+  IO.mapOptional("NumberOfAuxSymbols", S.Header.NumberOfAuxSymbols,
+                 (uint8_t) 0);
+  IO.mapOptional("AuxiliaryData", S.AuxiliaryData, object::yaml::BinaryRef());
 }
 
 void MappingTraits<COFFYAML::Section>::mapping(IO &IO, COFFYAML::Section &Sec) {

@@ -41,6 +41,13 @@ public:
     assert(isBinary);
     return Data;
   }
+  bool operator==(const BinaryRef &Ref) {
+    // Special case for default constructed BinaryRef.
+    if (Ref.Data.empty() && Data.empty())
+      return true;
+
+    return Ref.isBinary == isBinary && Ref.Data == Data;
+  }
 };
 
 }
