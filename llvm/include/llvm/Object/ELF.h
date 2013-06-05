@@ -580,19 +580,14 @@ protected:
   bool isDyldELFObject;
 
 private:
-  typedef SmallVector<const Elf_Shdr *, 2> Sections_t;
-  typedef DenseMap<unsigned, unsigned> IndexMap_t;
-
   const Elf_Ehdr *Header;
   const Elf_Shdr *SectionHeaderTable;
   const Elf_Shdr *dot_shstrtab_sec; // Section header string table.
   const Elf_Shdr *dot_strtab_sec;   // Symbol header string table.
   const Elf_Shdr *dot_dynstr_sec;   // Dynamic symbol string table.
 
-  // SymbolTableSections[0] always points to the dynamic string table section
-  // header, or NULL if there is no dynamic string table.
-  Sections_t SymbolTableSections;
-  IndexMap_t SymbolTableSectionsIndexMap;
+  int SymbolTableIndex;
+  int DynamicSymbolTableIndex;
   DenseMap<const Elf_Sym*, ELF::Elf64_Word> ExtendedSymbolTable;
 
   const Elf_Shdr *dot_dynamic_sec;       // .dynamic
@@ -641,7 +636,7 @@ private:
 public:
   bool            isRelocationHasAddend(DataRefImpl Rel) const;
   template<typename T>
-  const T        *getEntry(uint16_t Section, uint32_t Entry) const;
+  const T        *getEntry(uint32_t Section, uint32_t Entry) const;
   template<typename T>
   const T        *getEntry(const Elf_Shdr *Section, uint32_t Entry) const;
   const Elf_Shdr *getSection(DataRefImpl index) const;
@@ -746,7 +741,7 @@ public:
   virtual library_iterator end_libraries_needed() const;
 
   const Elf_Shdr *getDynamicSymbolTableSectionHeader() const {
-    return SymbolTableSections[0];
+    return getSection(DynamicSymbolTableIndex);
   }
 
   const Elf_Shdr *getDynamicStringTableSectionHeader() const {
@@ -759,7 +754,7 @@ public:
   Elf_Dyn_iterator end_dynamic_table(bool NULLEnd = false) const;
 
   Elf_Sym_iterator begin_elf_dynamic_symbols() const {
-    const Elf_Shdr *DynSymtab = SymbolTableSections[0];
+    const Elf_Shdr *DynSymtab = getDynamicSymbolTableSectionHeader();
     if (DynSymtab)
       return Elf_Sym_iterator(DynSymtab->sh_entsize,
                               (const char *)base() + DynSymtab->sh_offset);
@@ -767,7 +762,7 @@ public:
   }
 
   Elf_Sym_iterator end_elf_dynamic_symbols() const {
-    const Elf_Shdr *DynSymtab = SymbolTableSections[0];
+    const Elf_Shdr *DynSymtab = getDynamicSymbolTableSectionHeader();
     if (DynSymtab)
       return Elf_Sym_iterator(DynSymtab->sh_entsize, (const char *)base() +
                               DynSymtab->sh_offset + DynSymtab->sh_size);
@@ -903,7 +898,8 @@ void ELFObjectFile<ELFT>::LoadVersionNeeds(const Elf_Shdr *sec) const {
 template<class ELFT>
 void ELFObjectFile<ELFT>::LoadVersionMap() const {
   // If there is no dynamic symtab or version table, there is nothing to do.
-  if (SymbolTableSections[0] == NULL || dot_gnu_version_sec == NULL)
+  if (getDynamicStringTableSectionHeader() == NULL ||
+      dot_gnu_version_sec == NULL)
     return;
 
   // Has the VersionMap already been loaded?
@@ -926,7 +922,7 @@ template<class ELFT>
 void ELFObjectFile<ELFT>::validateSymbol(DataRefImpl Symb) const {
 #ifndef NDEBUG
   const Elf_Sym  *symb = getSymbol(Symb);
-  const Elf_Shdr *SymbolTableSection = SymbolTableSections[Symb.d.b];
+  const Elf_Shdr *SymbolTableSection = getSection(Symb.d.b);
   // FIXME: We really need to do proper error handling in the case of an invalid
   //        input file. Because we don't use exceptions, I think we'll just pass
   //        an error object around.
@@ -946,25 +942,7 @@ template<class ELFT>
 error_code ELFObjectFile<ELFT>::getSymbolNext(DataRefImpl Symb,
                                               SymbolRef &Result) const {
   validateSymbol(Symb);
-  const Elf_Shdr *SymbolTableSection = SymbolTableSections[Symb.d.b];
-
   ++Symb.d.a;
-  // Check to see if we are at the end of this symbol table.
-  if (Symb.d.a >= SymbolTableSection->getEntityCount()) {
-    // We are at the end. If there are other symbol tables, jump to them.
-    // If the symbol table is .dynsym, we are iterating dynamic symbols,
-    // and there is only one table of these.
-    if (Symb.d.b != 0) {
-      ++Symb.d.b;
-      Symb.d.a = 1; // The 0th symbol in ELF is fake.
-    }
-    // Otherwise return the terminator.
-    if (Symb.d.b == 0 || Symb.d.b >= SymbolTableSections.size()) {
-      Symb.d.a = std::numeric_limits<uint32_t>::max();
-      Symb.d.b = std::numeric_limits<uint32_t>::max();
-    }
-  }
-
   Result = SymbolRef(Symb, this);
   return object_error::success;
 }
@@ -974,7 +952,7 @@ error_code ELFObjectFile<ELFT>::getSymbolName(DataRefImpl Symb,
                                               StringRef &Result) const {
   validateSymbol(Symb);
   const Elf_Sym *symb = getSymbol(Symb);
-  return getSymbolName(SymbolTableSections[Symb.d.b], symb, Result);
+  return getSymbolName(getSection(Symb.d.b), symb, Result);
 }
 
 template<class ELFT>
@@ -984,8 +962,7 @@ error_code ELFObjectFile<ELFT>::getSymbolVersion(SymbolRef SymRef,
   DataRefImpl Symb = SymRef.getRawDataRefImpl();
   validateSymbol(Symb);
   const Elf_Sym *symb = getSymbol(Symb);
-  return getSymbolVersion(SymbolTableSections[Symb.d.b], symb,
-                          Version, IsDefault);
+  return getSymbolVersion(getSection(Symb.d.b), symb, Version, IsDefault);
 }
 
 template<class ELFT>
@@ -1030,7 +1007,7 @@ const typename ELFObjectFile<ELFT>::Elf_Sym *
 ELFObjectFile<ELFT>::getElfSymbol(uint32_t index) const {
   DataRefImpl SymbolData;
   SymbolData.d.a = index;
-  SymbolData.d.b = 1;
+  SymbolData.d.b = SymbolTableIndex;
   return getSymbol(SymbolData);
 }
 
@@ -1523,12 +1500,8 @@ ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel) const {
     return end_symbols();
 
   DataRefImpl SymbolData;
-  IndexMap_t::const_iterator it =
-      SymbolTableSectionsIndexMap.find(sec->sh_link);
-  if (it == SymbolTableSectionsIndexMap.end())
-    report_fatal_error("Relocation symbol table not found!");
   SymbolData.d.a = symbolIdx;
-  SymbolData.d.b = it->second;
+  SymbolData.d.b = sec->sh_link;
   return symbol_iterator(SymbolRef(SymbolData, this));
 }
 
@@ -2367,8 +2340,8 @@ ELFObjectFile<ELFT>::ELFObjectFile(MemoryBuffer *Object, error_code &ec)
   const Elf_Shdr* SymbolTableSectionHeaderIndex = 0;
   const Elf_Shdr* sh = SectionHeaderTable;
 
-  // Reserve SymbolTableSections[0] for .dynsym
-  SymbolTableSections.push_back(NULL);
+  SymbolTableIndex = -1;
+  DynamicSymbolTableIndex = -1;
 
   for (uint64_t i = 0, e = getNumSections(); i != e; ++i) {
     switch (sh->sh_type) {
@@ -2380,16 +2353,16 @@ ELFObjectFile<ELFT>::ELFObjectFile(MemoryBuffer *Object, error_code &ec)
       break;
     }
     case ELF::SHT_SYMTAB: {
-      SymbolTableSectionsIndexMap[i] = SymbolTableSections.size();
-      SymbolTableSections.push_back(sh);
+      if (SymbolTableIndex != -1)
+        report_fatal_error("More than one SHT_SYMTAB!");
+      SymbolTableIndex = i;
       break;
     }
     case ELF::SHT_DYNSYM: {
-      if (SymbolTableSections[0] != NULL)
+      if (DynamicSymbolTableIndex != -1)
         // FIXME: Proper error handling.
-        report_fatal_error("More than one .dynsym!");
-      SymbolTableSectionsIndexMap[i] = 0;
-      SymbolTableSections[0] = sh;
+        report_fatal_error("More than one SHT_DYNSYM!");
+      DynamicSymbolTableIndex = i;
       break;
     }
     case ELF::SHT_REL:
@@ -2476,8 +2449,7 @@ ELFObjectFile<ELFT>::ELFObjectFile(MemoryBuffer *Object, error_code &ec)
 // Get the symbol table index in the symtab section given a symbol
 template<class ELFT>
 uint64_t ELFObjectFile<ELFT>::getSymbolIndex(const Elf_Sym *Sym) const {
-  assert(SymbolTableSections.size() == 1 && "Only one symbol table supported!");
-  const Elf_Shdr *SymTab = *SymbolTableSections.begin();
+  const Elf_Shdr *SymTab = getSection(SymbolTableIndex);
   uintptr_t SymLoc = uintptr_t(Sym);
   uintptr_t SymTabLoc = uintptr_t(base() + SymTab->sh_offset);
   assert(SymLoc > SymTabLoc && "Symbol not in symbol table!");
@@ -2490,12 +2462,12 @@ uint64_t ELFObjectFile<ELFT>::getSymbolIndex(const Elf_Sym *Sym) const {
 template<class ELFT>
 symbol_iterator ELFObjectFile<ELFT>::begin_symbols() const {
   DataRefImpl SymbolData;
-  if (SymbolTableSections.size() <= 1) {
-    SymbolData.d.a = std::numeric_limits<uint32_t>::max();
-    SymbolData.d.b = std::numeric_limits<uint32_t>::max();
+  if (SymbolTableIndex == -1) {
+    SymbolData.d.a = 0;
+    SymbolData.d.b = 0;
   } else {
     SymbolData.d.a = 1; // The 0th symbol in ELF is fake.
-    SymbolData.d.b = 1; // The 0th table is .dynsym
+    SymbolData.d.b = SymbolTableIndex;
   }
   return symbol_iterator(SymbolRef(SymbolData, this));
 }
@@ -2503,20 +2475,26 @@ symbol_iterator ELFObjectFile<ELFT>::begin_symbols() const {
 template<class ELFT>
 symbol_iterator ELFObjectFile<ELFT>::end_symbols() const {
   DataRefImpl SymbolData;
-  SymbolData.d.a = std::numeric_limits<uint32_t>::max();
-  SymbolData.d.b = std::numeric_limits<uint32_t>::max();
+  if (SymbolTableIndex == -1) {
+    SymbolData.d.a = 0;
+    SymbolData.d.b = 0;
+  } else {
+    const Elf_Shdr *SymbolTableSection = getSection(SymbolTableIndex);
+    SymbolData.d.a = SymbolTableSection->getEntityCount();
+    SymbolData.d.b = SymbolTableIndex;
+  }
   return symbol_iterator(SymbolRef(SymbolData, this));
 }
 
 template<class ELFT>
 symbol_iterator ELFObjectFile<ELFT>::begin_dynamic_symbols() const {
   DataRefImpl SymbolData;
-  if (SymbolTableSections[0] == NULL) {
-    SymbolData.d.a = std::numeric_limits<uint32_t>::max();
-    SymbolData.d.b = std::numeric_limits<uint32_t>::max();
+  if (DynamicSymbolTableIndex == -1) {
+    SymbolData.d.a = 0;
+    SymbolData.d.b = 0;
   } else {
     SymbolData.d.a = 1; // The 0th symbol in ELF is fake.
-    SymbolData.d.b = 0; // The 0th table is .dynsym
+    SymbolData.d.b = DynamicSymbolTableIndex;
   }
   return symbol_iterator(SymbolRef(SymbolData, this));
 }
@@ -2524,8 +2502,14 @@ symbol_iterator ELFObjectFile<ELFT>::begin_dynamic_symbols() const {
 template<class ELFT>
 symbol_iterator ELFObjectFile<ELFT>::end_dynamic_symbols() const {
   DataRefImpl SymbolData;
-  SymbolData.d.a = std::numeric_limits<uint32_t>::max();
-  SymbolData.d.b = std::numeric_limits<uint32_t>::max();
+  if (DynamicSymbolTableIndex == -1) {
+    SymbolData.d.a = 0;
+    SymbolData.d.b = 0;
+  } else {
+    const Elf_Shdr *SymbolTableSection = getSection(DynamicSymbolTableIndex);
+    SymbolData.d.a = SymbolTableSection->getEntityCount();
+    SymbolData.d.b = DynamicSymbolTableIndex;
+  }
   return symbol_iterator(SymbolRef(SymbolData, this));
 }
 
@@ -2755,7 +2739,7 @@ ELFObjectFile<ELFT>::getStringTableIndex() const {
 template<class ELFT>
 template<typename T>
 inline const T *
-ELFObjectFile<ELFT>::getEntry(uint16_t Section, uint32_t Entry) const {
+ELFObjectFile<ELFT>::getEntry(uint32_t Section, uint32_t Entry) const {
   return getEntry<T>(getSection(Section), Entry);
 }
 
@@ -2772,7 +2756,7 @@ ELFObjectFile<ELFT>::getEntry(const Elf_Shdr * Section, uint32_t Entry) const {
 template<class ELFT>
 const typename ELFObjectFile<ELFT>::Elf_Sym *
 ELFObjectFile<ELFT>::getSymbol(DataRefImpl Symb) const {
-  return getEntry<Elf_Sym>(SymbolTableSections[Symb.d.b], Symb.d.a);
+  return getEntry<Elf_Sym>(Symb.d.b, Symb.d.a);
 }
 
 template<class ELFT>
@@ -2840,7 +2824,8 @@ error_code ELFObjectFile<ELFT>::getSymbolName(const Elf_Shdr *section,
     return object_error::success;
   }
 
-  if (section == SymbolTableSections[0]) {
+  if (DynamicSymbolTableIndex != -1 &&
+      section == getSection(DynamicSymbolTableIndex)) {
     // Symbol is in .dynsym, use .dynstr string table
     Result = getString(dot_dynstr_sec, symb->st_name);
   } else {
@@ -2863,7 +2848,7 @@ error_code ELFObjectFile<ELFT>::getSymbolVersion(const Elf_Shdr *section,
                                                  StringRef &Version,
                                                  bool &IsDefault) const {
   // Handle non-dynamic symbols.
-  if (section != SymbolTableSections[0]) {
+  if (section != getSection(DynamicSymbolTableIndex)) {
     // Non-dynamic symbols can have versions in their names
     // A name of the form 'foo@V1' indicates version 'V1', non-default.
     // A name of the form 'foo@@V2' indicates version 'V2', default version.
