@@ -106,8 +106,7 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
 
   // The alias will use the linkage of the referrent.  If we can't
   // support aliases with that linkage, fail.
-  llvm::GlobalValue::LinkageTypes Linkage
-    = getFunctionLinkage(cast<FunctionDecl>(AliasDecl.getDecl()));
+  llvm::GlobalValue::LinkageTypes Linkage = getFunctionLinkage(AliasDecl);
 
   switch (Linkage) {
   // We can definitely emit aliases to definitions with external linkage.
@@ -132,7 +131,7 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   }
 
   llvm::GlobalValue::LinkageTypes TargetLinkage
-    = getFunctionLinkage(cast<FunctionDecl>(TargetDecl.getDecl()));
+    = getFunctionLinkage(TargetDecl);
 
   if (llvm::GlobalValue::isWeakForLinker(TargetLinkage))
     return true;
@@ -203,7 +202,7 @@ void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *ctor,
 
   llvm::Function *fn =
     cast<llvm::Function>(GetAddrOfCXXConstructor(ctor, ctorType, &fnInfo));
-  setFunctionLinkage(ctor, fn);
+  setFunctionLinkage(GlobalDecl(ctor, ctorType), fn);
 
   CodeGenFunction(*this).GenerateCode(GlobalDecl(ctor, ctorType), fn, fnInfo);
 
@@ -267,7 +266,7 @@ void CodeGenModule::EmitCXXDestructor(const CXXDestructorDecl *dtor,
 
   llvm::Function *fn =
     cast<llvm::Function>(GetAddrOfCXXDestructor(dtor, dtorType, &fnInfo));
-  setFunctionLinkage(dtor, fn);
+  setFunctionLinkage(GlobalDecl(dtor, dtorType), fn);
 
   CodeGenFunction(*this).GenerateCode(GlobalDecl(dtor, dtorType), fn, fnInfo);
 

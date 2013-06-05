@@ -379,7 +379,7 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
   FinishFunction();
 
   // Set the right linkage.
-  CGM.setFunctionLinkage(MD, Fn);
+  CGM.setFunctionLinkage(GD, Fn);
   
   // Set the right visibility.
   setThunkVisibility(CGM, MD, Thunk, Fn);
@@ -437,7 +437,7 @@ void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk,
            "Function should have available_externally linkage!");
 
     // Change the linkage.
-    CGM.setFunctionLinkage(cast<CXXMethodDecl>(GD.getDecl()), ThunkFn);
+    CGM.setFunctionLinkage(GD, ThunkFn);
     return;
   }
 

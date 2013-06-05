@@ -386,7 +386,7 @@ class CodeGenModule : public CodeGenTypeCache {
   void createCUDARuntime();
 
   bool isTriviallyRecursive(const FunctionDecl *F);
-  bool shouldEmitFunction(const FunctionDecl *F);
+  bool shouldEmitFunction(GlobalDecl GD);
 
   /// @name Cache for Blocks Runtime Globals
   /// @{
@@ -924,11 +924,10 @@ public:
   /// \brief Appends a dependent lib to the "Linker Options" metadata value.
   void AddDependentLib(StringRef Lib);
 
-  llvm::GlobalVariable::LinkageTypes
-  getFunctionLinkage(const FunctionDecl *FD);
+  llvm::GlobalVariable::LinkageTypes getFunctionLinkage(GlobalDecl GD);
 
-  void setFunctionLinkage(const FunctionDecl *FD, llvm::GlobalValue *V) {
-    V->setLinkage(getFunctionLinkage(FD));
+  void setFunctionLinkage(GlobalDecl GD, llvm::GlobalValue *V) {
+    V->setLinkage(getFunctionLinkage(GD));
   }
 
   /// getVTableLinkage - Return the appropriate linkage for the vtable, VTT,
