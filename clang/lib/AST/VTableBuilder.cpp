@@ -147,8 +147,6 @@ public:
   
 };
 
-#define DUMP_OVERRIDERS 0
-
 FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass,
                                  CharUnits MostDerivedClassOffset,
                                  const CXXRecordDecl *LayoutClass)
@@ -418,7 +416,7 @@ void FinalOverriders::dump(raw_ostream &Out, BaseSubobject Base,
 
     Out << "  " << MD->getQualifiedNameAsString() << " - (";
     Out << Overrider.Method->getQualifiedNameAsString();
-    Out << ", " << ", " << Overrider.Offset.getQuantity() << ')';
+    Out << ", " << Overrider.Offset.getQuantity() << ')';
 
     BaseOffset Offset;
     if (!Overrider.Method->isPure())
