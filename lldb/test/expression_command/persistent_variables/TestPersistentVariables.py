@@ -47,6 +47,9 @@ class PersistentVariablesTestCase(TestBase):
         self.expect("expression $4 > (int)31",
             startstr = "(bool) $5 = false")
 
+        self.expect("expression (long)$4",
+            startstr = "(long) $6 = -2")
+
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()
