@@ -2466,7 +2466,7 @@ symbol_iterator ELFObjectFile<ELFT>::begin_symbols() const {
     SymbolData.d.a = 0;
     SymbolData.d.b = 0;
   } else {
-    SymbolData.d.a = 1; // The 0th symbol in ELF is fake.
+    SymbolData.d.a = 0;
     SymbolData.d.b = SymbolTableIndex;
   }
   return symbol_iterator(SymbolRef(SymbolData, this));
@@ -2493,7 +2493,7 @@ symbol_iterator ELFObjectFile<ELFT>::begin_dynamic_symbols() const {
     SymbolData.d.a = 0;
     SymbolData.d.b = 0;
   } else {
-    SymbolData.d.a = 1; // The 0th symbol in ELF is fake.
+    SymbolData.d.a = 0;
     SymbolData.d.b = DynamicSymbolTableIndex;
   }
   return symbol_iterator(SymbolRef(SymbolData, this));
