@@ -44,6 +44,7 @@
 // RUN: FileCheck --check-prefix=CHECK-43 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-44 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-45 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-46 %s < %t
 
 // For now, just verify this doesn't crash.
 namespace test0 {
