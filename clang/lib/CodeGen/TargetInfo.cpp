@@ -5332,8 +5332,52 @@ SparcV9ABIInfo::classifyType(QualType Ty, unsigned SizeLimit) const {
 
 llvm::Value *SparcV9ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                        CodeGenFunction &CGF) const {
-  // FIXME: Implement with va_arg.
-  return 0;
+  ABIArgInfo AI = classifyType(Ty, 16 * 8);
+  llvm::Type *ArgTy = CGT.ConvertType(Ty);
+  if (AI.canHaveCoerceToType() && !AI.getCoerceToType())
+    AI.setCoerceToType(ArgTy);
+
+  llvm::Type *BPP = CGF.Int8PtrPtrTy;
+  CGBuilderTy &Builder = CGF.Builder;
+  llvm::Value *VAListAddrAsBPP = Builder.CreateBitCast(VAListAddr, BPP, "ap");
+  llvm::Value *Addr = Builder.CreateLoad(VAListAddrAsBPP, "ap.cur");
+  llvm::Type *ArgPtrTy = llvm::PointerType::getUnqual(ArgTy);
+  llvm::Value *ArgAddr;
+  unsigned Stride;
+
+  switch (AI.getKind()) {
+  case ABIArgInfo::Expand:
+    llvm_unreachable("Unsupported ABI kind for va_arg");
+
+  case ABIArgInfo::Extend:
+    Stride = 8;
+    ArgAddr = Builder
+      .CreateConstGEP1_32(Addr, 8 - getDataLayout().getTypeAllocSize(ArgTy),
+                          "extend");
+    break;
+
+  case ABIArgInfo::Direct:
+    Stride = getDataLayout().getTypeAllocSize(AI.getCoerceToType());
+    ArgAddr = Addr;
+    break;
+
+  case ABIArgInfo::Indirect:
+    Stride = 8;
+    ArgAddr = Builder.CreateBitCast(Addr,
+                                    llvm::PointerType::getUnqual(ArgPtrTy),
+                                    "indirect");
+    ArgAddr = Builder.CreateLoad(ArgAddr, "indirect.arg");
+    break;
+
+  case ABIArgInfo::Ignore:
+    return llvm::UndefValue::get(ArgPtrTy);
+  }
+
+  // Update VAList.
+  Addr = Builder.CreateConstGEP1_32(Addr, Stride, "ap.next");
+  Builder.CreateStore(Addr, VAListAddrAsBPP);
+
+  return Builder.CreatePointerCast(ArgAddr, ArgPtrTy, "arg.addr");
 }
 
 void SparcV9ABIInfo::computeInfo(CGFunctionInfo &FI) const {

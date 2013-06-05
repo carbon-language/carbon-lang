@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -triple sparcv9-unknown-linux -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple sparcv9-unknown-unknown -emit-llvm %s -o - | FileCheck %s
+#include <stdarg.h>
 
 // CHECK: define void @f_void()
 void f_void(void) {}
@@ -114,4 +115,67 @@ struct tiny f_tiny(struct tiny x) {
 void call_tiny() {
   struct tiny x = { 1 };
   f_tiny(x);
+}
+
+// CHECK: define signext i32 @f_variable(i8* %f, ...)
+// CHECK: %ap = alloca i8*
+// CHECK: call void @llvm.va_start
+//
+int f_variable(char *f, ...) {
+  int s = 0;
+  char c;
+  va_list ap;
+  va_start(ap, f);
+  while ((c = *f++)) switch (c) {
+
+// CHECK: %[[CUR:[^ ]+]] = load i8** %ap
+// CHECK-DAG: %[[NXT:[^ ]+]] = getelementptr i8* %[[CUR]], i32 8
+// CHECK-DAG: store i8* %[[NXT]], i8** %ap
+// CHECK-DAG: %[[EXT:[^ ]+]] = getelementptr i8* %[[CUR]], i32 4
+// CHECK-DAG: %[[ADR:[^ ]+]] = bitcast i8* %[[EXT]] to i32*
+// CHECK-DAG: load i32* %[[ADR]]
+// CHECK: br
+  case 'i':
+    s += va_arg(ap, int);
+    break;
+
+// CHECK: %[[CUR:[^ ]+]] = load i8** %ap
+// CHECK-DAG: %[[NXT:[^ ]+]] = getelementptr i8* %[[CUR]], i32 8
+// CHECK-DAG: store i8* %[[NXT]], i8** %ap
+// CHECK-DAG: %[[ADR:[^ ]+]] = bitcast i8* %[[CUR]] to i64*
+// CHECK-DAG: load i64* %[[ADR]]
+// CHECK: br
+  case 'l':
+    s += va_arg(ap, long);
+    break;
+
+// CHECK: %[[CUR:[^ ]+]] = load i8** %ap
+// CHECK-DAG: %[[NXT:[^ ]+]] = getelementptr i8* %[[CUR]], i32 8
+// CHECK-DAG: store i8* %[[NXT]], i8** %ap
+// CHECK-DAG: %[[ADR:[^ ]+]] = bitcast i8* %[[CUR]] to %struct.tiny*
+// CHECK: br
+  case 't':
+    s += va_arg(ap, struct tiny).a;
+    break;
+
+// CHECK: %[[CUR:[^ ]+]] = load i8** %ap
+// CHECK-DAG: %[[NXT:[^ ]+]] = getelementptr i8* %[[CUR]], i32 16
+// CHECK-DAG: store i8* %[[NXT]], i8** %ap
+// CHECK-DAG: %[[ADR:[^ ]+]] = bitcast i8* %[[CUR]] to %struct.small*
+// CHECK: br
+  case 's':
+    s += *va_arg(ap, struct small).a;
+    break;
+
+// CHECK: %[[CUR:[^ ]+]] = load i8** %ap
+// CHECK-DAG: %[[NXT:[^ ]+]] = getelementptr i8* %[[CUR]], i32 8
+// CHECK-DAG: store i8* %[[NXT]], i8** %ap
+// CHECK-DAG: %[[IND:[^ ]+]] = bitcast i8* %[[CUR]] to %struct.medium**
+// CHECK-DAG: %[[ADR:[^ ]+]] = load %struct.medium** %[[IND]]
+// CHECK: br
+  case 'm':
+    s += *va_arg(ap, struct medium).a;
+    break;
+  }
+  return s;
 }
