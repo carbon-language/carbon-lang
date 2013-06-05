@@ -571,7 +571,6 @@ void ELFDumper<ELFT>::printRelocation(section_iterator Sec,
   SmallString<32> RelocName;
   int64_t Addend;
   StringRef SymbolName;
-  SymbolRef Symbol;
   if (Obj->getElfHeader()->e_type == ELF::ET_REL){
     if (error(RelI->getOffset(Offset))) return;
   } else {
@@ -580,8 +579,9 @@ void ELFDumper<ELFT>::printRelocation(section_iterator Sec,
   if (error(RelI->getType(RelocType))) return;
   if (error(RelI->getTypeName(RelocName))) return;
   if (error(getELFRelocationAddend(*RelI, Addend))) return;
-  if (error(RelI->getSymbol(Symbol))) return;
-  if (error(Symbol.getName(SymbolName))) return;
+  symbol_iterator Symbol = RelI->getSymbol();
+  if (Symbol != Obj->end_symbols() && error(Symbol->getName(SymbolName)))
+    return;
 
   if (opts::ExpandRelocs) {
     DictScope Group(W, "Relocation");

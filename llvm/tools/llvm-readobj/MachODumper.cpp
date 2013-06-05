@@ -341,12 +341,11 @@ void MachODumper::printRelocation(const MachOObjectFile *Obj,
   uint64_t Offset;
   SmallString<32> RelocName;
   StringRef SymbolName;
-  SymbolRef Symbol;
   if (error(RelI->getOffset(Offset))) return;
   if (error(RelI->getTypeName(RelocName))) return;
-  if (error(RelI->getSymbol(Symbol))) return;
-  if (symbol_iterator(Symbol) != Obj->end_symbols() &&
-      error(Symbol.getName(SymbolName)))
+  symbol_iterator Symbol = RelI->getSymbol();
+  if (Symbol != Obj->end_symbols() &&
+      error(Symbol->getName(SymbolName)))
     return;
 
   DataRefImpl DR = RelI->getRawDataRefImpl();

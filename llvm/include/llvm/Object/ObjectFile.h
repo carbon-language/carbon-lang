@@ -85,6 +85,7 @@ inline bool operator<(const DataRefImpl &a, const DataRefImpl &b) {
 }
 
 class SymbolRef;
+typedef content_iterator<SymbolRef> symbol_iterator;
 
 /// RelocationRef - This is a value type class that represents a single
 /// relocation in the list of relocations in the object file.
@@ -103,7 +104,7 @@ public:
 
   error_code getAddress(uint64_t &Result) const;
   error_code getOffset(uint64_t &Result) const;
-  error_code getSymbol(SymbolRef &Result) const;
+  symbol_iterator getSymbol() const;
   error_code getType(uint64_t &Result) const;
 
   /// @brief Indicates whether this relocation should hidden when listing
@@ -236,7 +237,6 @@ public:
 
   DataRefImpl getRawDataRefImpl() const;
 };
-typedef content_iterator<SymbolRef> symbol_iterator;
 
 /// LibraryRef - This is a value type class that represents a single library in
 /// the list of libraries needed by a shared or dynamic object.
@@ -334,8 +334,7 @@ protected:
                                           uint64_t &Res) const =0;
   virtual error_code getRelocationOffset(DataRefImpl Rel,
                                          uint64_t &Res) const =0;
-  virtual error_code getRelocationSymbol(DataRefImpl Rel,
-                                         SymbolRef &Res) const = 0;
+  virtual symbol_iterator getRelocationSymbol(DataRefImpl Rel) const = 0;
   virtual error_code getRelocationType(DataRefImpl Rel,
                                        uint64_t &Res) const = 0;
   virtual error_code getRelocationTypeName(DataRefImpl Rel,
@@ -566,8 +565,8 @@ inline error_code RelocationRef::getOffset(uint64_t &Result) const {
   return OwningObject->getRelocationOffset(RelocationPimpl, Result);
 }
 
-inline error_code RelocationRef::getSymbol(SymbolRef &Result) const {
-  return OwningObject->getRelocationSymbol(RelocationPimpl, Result);
+inline symbol_iterator RelocationRef::getSymbol() const {
+  return OwningObject->getRelocationSymbol(RelocationPimpl);
 }
 
 inline error_code RelocationRef::getType(uint64_t &Result) const {

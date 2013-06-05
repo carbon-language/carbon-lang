@@ -250,10 +250,9 @@ static void DisassembleInputMachO2(StringRef Filename,
       Sections[SectIdx].getAddress(SectionAddress);
       RelocOffset -= SectionAddress;
 
-      SymbolRef RelocSym;
-      RI->getSymbol(RelocSym);
+      symbol_iterator RelocSym = RI->getSymbol();
 
-      Relocs.push_back(std::make_pair(RelocOffset, RelocSym));
+      Relocs.push_back(std::make_pair(RelocOffset, *RelocSym));
     }
     array_pod_sort(Relocs.begin(), Relocs.end());
 

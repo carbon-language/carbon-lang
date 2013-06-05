@@ -28,10 +28,10 @@ public:
     const MachOObjectFile *Obj = cast<MachOObjectFile>(Rel.getObjectFile());
 
     uint64_t RelType; Rel.getType(RelType);
-    SymbolRef SymRef; Rel.getSymbol(SymRef);
+    symbol_iterator SymI = Rel.getSymbol();
 
-    StringRef SymName; SymRef.getName(SymName);
-    uint64_t  SymAddr; SymRef.getAddress(SymAddr);
+    StringRef SymName; SymI->getName(SymName);
+    uint64_t  SymAddr; SymI->getAddress(SymAddr);
 
     RelocationEntry RE = Obj->getRelocation(Rel.getRawDataRefImpl());
     bool isPCRel = Obj->getAnyRelocationPCRel(RE);
@@ -86,12 +86,11 @@ public:
 
         const MCExpr *LHS = MCSymbolRefExpr::Create(Sym, Ctx);
 
-        SymbolRef RSymRef;
-        RelNext.getSymbol(RSymRef);
+        symbol_iterator RSymI = RelNext.getSymbol();
         uint64_t RSymAddr;
-        RSymRef.getAddress(RSymAddr);
+        RSymI->getAddress(RSymAddr);
         StringRef RSymName;
-        RSymRef.getName(RSymName);
+        RSymI->getName(RSymName);
 
         MCSymbol *RSym = Ctx.GetOrCreateSymbol(RSymName);
         if (RSym->isVariable() == false)

@@ -243,8 +243,7 @@ protected:
                                           uint64_t &Res) const;
   virtual error_code getRelocationOffset(DataRefImpl Rel,
                                          uint64_t &Res) const;
-  virtual error_code getRelocationSymbol(DataRefImpl Rel,
-                                         SymbolRef &Res) const;
+  virtual symbol_iterator getRelocationSymbol(DataRefImpl Rel) const;
   virtual error_code getRelocationType(DataRefImpl Rel,
                                        uint64_t &Res) const;
   virtual error_code getRelocationTypeName(DataRefImpl Rel,

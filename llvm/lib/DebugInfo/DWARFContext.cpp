@@ -595,9 +595,8 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
         uint64_t SymAddr = 0;
         // ELF relocations may need the symbol address
         if (Obj->isELF()) {
-          object::SymbolRef Sym;
-          reloc_i->getSymbol(Sym);
-          Sym.getAddress(SymAddr);
+          object::symbol_iterator Sym = reloc_i->getSymbol();
+          Sym->getAddress(SymAddr);
         }
 
         object::RelocVisitor V(Obj->getFileFormatName());

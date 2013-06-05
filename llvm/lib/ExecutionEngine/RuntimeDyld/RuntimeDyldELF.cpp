@@ -551,9 +551,8 @@ void RuntimeDyldELF::findOPDEntrySection(ObjectImage &Obj,
         continue;
       }
 
-      SymbolRef TargetSymbol;
       uint64_t TargetSymbolOffset;
-      check(i->getSymbol(TargetSymbol));
+      symbol_iterator TargetSymbol = i->getSymbol();
       check(i->getOffset(TargetSymbolOffset));
       int64_t Addend;
       check(getELFRelocationAddend(*i, Addend));
@@ -576,7 +575,7 @@ void RuntimeDyldELF::findOPDEntrySection(ObjectImage &Obj,
         continue;
 
       section_iterator tsi(Obj.end_sections());
-      check(TargetSymbol.getSection(tsi));
+      check(TargetSymbol->getSection(tsi));
       Rel.SectionID = findOrEmitSection(Obj, (*tsi), true, LocalSections);
       Rel.Addend = (intptr_t)Addend;
       return;
@@ -777,12 +776,11 @@ void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
   Check(RelI.getType(RelType));
   int64_t Addend;
   Check(getELFRelocationAddend(RelI, Addend));
-  SymbolRef Symbol;
-  Check(RelI.getSymbol(Symbol));
+  symbol_iterator Symbol = RelI.getSymbol();
 
   // Obtain the symbol name which is referenced in the relocation
   StringRef TargetName;
-  Symbol.getName(TargetName);
+  Symbol->getName(TargetName);
   DEBUG(dbgs() << "\t\tRelType: " << RelType
                << " Addend: " << Addend
                << " TargetName: " << TargetName
@@ -791,7 +789,7 @@ void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
   // First search for the symbol in the local symbol table
   SymbolTableMap::const_iterator lsi = Symbols.find(TargetName.data());
   SymbolRef::Type SymType;
-  Symbol.getType(SymType);
+  Symbol->getType(SymType);
   if (lsi != Symbols.end()) {
     Value.SectionID = lsi->second.first;
     Value.Addend = lsi->second.second + Addend;
@@ -809,7 +807,7 @@ void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
           // and can be changed by another developers. Maybe best way is add
           // a new symbol type ST_Section to SymbolRef and use it.
           section_iterator si(Obj.end_sections());
-          Symbol.getSection(si);
+          Symbol->getSection(si);
           if (si == Obj.end_sections())
             llvm_unreachable("Symbol section not found, bad object file format!");
           DEBUG(dbgs() << "\t\tThis is section symbol\n");

@@ -201,8 +201,7 @@ static error_code resolveSymbol(const std::vector<RelocationRef> &Rels,
       return EC;
 
     if (Ofs == Offset) {
-      if (error_code EC = RelI->getSymbol(Sym))
-        return EC;
+      Sym = *RelI->getSymbol();
       return readobj_error::success;
     }
   }
@@ -670,14 +669,13 @@ void COFFDumper::printRelocation(section_iterator SecI,
   uint64_t Offset;
   uint64_t RelocType;
   SmallString<32> RelocName;
-  SymbolRef Symbol;
   StringRef SymbolName;
   StringRef Contents;
   if (error(RelI->getOffset(Offset))) return;
   if (error(RelI->getType(RelocType))) return;
   if (error(RelI->getTypeName(RelocName))) return;
-  if (error(RelI->getSymbol(Symbol))) return;
-  if (error(Symbol.getName(SymbolName))) return;
+  symbol_iterator Symbol = RelI->getSymbol();
+  if (error(Symbol->getName(SymbolName))) return;
   if (error(SecI->getContents(Contents))) return;
 
   if (opts::ExpandRelocs) {

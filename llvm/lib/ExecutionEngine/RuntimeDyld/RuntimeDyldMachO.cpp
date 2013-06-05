@@ -302,10 +302,9 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
 
   if (isExtern) {
     // Obtain the symbol name which is referenced in the relocation
-    SymbolRef Symbol;
-    RelI.getSymbol(Symbol);
+    symbol_iterator Symbol = RelI.getSymbol();
     StringRef TargetName;
-    Symbol.getName(TargetName);
+    Symbol->getName(TargetName);
     // First search for the symbol in the local symbol table
     SymbolTableMap::const_iterator lsi = Symbols.find(TargetName.data());
     if (lsi != Symbols.end()) {

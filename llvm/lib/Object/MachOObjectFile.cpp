@@ -869,15 +869,13 @@ error_code MachOObjectFile::getRelocationOffset(DataRefImpl Rel,
   return object_error::success;
 }
 
-error_code
-MachOObjectFile::getRelocationSymbol(DataRefImpl Rel, SymbolRef &Res) const {
+symbol_iterator
+MachOObjectFile::getRelocationSymbol(DataRefImpl Rel) const {
   macho::RelocationEntry RE = getRelocation(Rel);
   uint32_t SymbolIdx = getPlainRelocationSymbolNum(RE);
   bool isExtern = getPlainRelocationExternal(RE);
-  if (!isExtern) {
-    Res = *end_symbols();
-    return object_error::success;
-  }
+  if (!isExtern)
+    return end_symbols();
 
   macho::SymtabLoadCommand S = getSymtabLoadCommand();
   unsigned SymbolTableEntrySize = is64Bit() ?
@@ -886,8 +884,7 @@ MachOObjectFile::getRelocationSymbol(DataRefImpl Rel, SymbolRef &Res) const {
   uint64_t Offset = S.SymbolTableOffset + SymbolIdx * SymbolTableEntrySize;
   DataRefImpl Sym;
   Sym.p = reinterpret_cast<uintptr_t>(getPtr(this, Offset));
-  Res = SymbolRef(Sym, this);
-  return object_error::success;
+  return symbol_iterator(SymbolRef(Sym, this));
 }
 
 error_code MachOObjectFile::getRelocationType(DataRefImpl Rel,

@@ -27,11 +27,11 @@ public:
 
   const MCExpr *createExprForRelocation(RelocationRef Rel) {
     uint64_t RelType; Rel.getType(RelType);
-    SymbolRef SymRef; Rel.getSymbol(SymRef);
+    symbol_iterator SymI = Rel.getSymbol();
 
-    StringRef SymName; SymRef.getName(SymName);
-    uint64_t  SymAddr; SymRef.getAddress(SymAddr);
-    uint64_t  SymSize; SymRef.getSize(SymSize);
+    StringRef SymName; SymI->getName(SymName);
+    uint64_t  SymAddr; SymI->getAddress(SymAddr);
+    uint64_t  SymSize; SymI->getSize(SymSize);
     int64_t  Addend;  getELFRelocationAddend(Rel, Addend);
 
     MCSymbol *Sym = Ctx.GetOrCreateSymbol(SymName);

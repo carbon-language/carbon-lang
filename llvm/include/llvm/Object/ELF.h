@@ -716,8 +716,7 @@ protected:
                                           uint64_t &Res) const;
   virtual error_code getRelocationOffset(DataRefImpl Rel,
                                          uint64_t &Res) const;
-  virtual error_code getRelocationSymbol(DataRefImpl Rel,
-                                         SymbolRef &Res) const;
+  virtual symbol_iterator getRelocationSymbol(DataRefImpl Rel) const;
   virtual error_code getRelocationType(DataRefImpl Rel,
                                        uint64_t &Res) const;
   virtual error_code getRelocationTypeName(DataRefImpl Rel,
@@ -1503,9 +1502,9 @@ error_code ELFObjectFile<ELFT>::getRelocationNext(DataRefImpl Rel,
   return object_error::success;
 }
 
-template<class ELFT>
-error_code ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel,
-                                                    SymbolRef &Result) const {
+template <class ELFT>
+symbol_iterator
+ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel) const {
   uint32_t symbolIdx;
   const Elf_Shdr *sec = getRelSection(Rel);
   switch (sec->sh_type) {
@@ -1520,6 +1519,9 @@ error_code ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel,
       break;
     }
   }
+  if (!symbolIdx)
+    return end_symbols();
+
   DataRefImpl SymbolData;
   IndexMap_t::const_iterator it =
       SymbolTableSectionsIndexMap.find(sec->sh_link);
@@ -1527,8 +1529,7 @@ error_code ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel,
     report_fatal_error("Relocation symbol table not found!");
   SymbolData.d.a = symbolIdx;
   SymbolData.d.b = it->second;
-  Result = SymbolRef(SymbolData, this);
-  return object_error::success;
+  return symbol_iterator(SymbolRef(SymbolData, this));
 }
 
 template<class ELFT>

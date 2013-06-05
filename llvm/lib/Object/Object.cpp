@@ -219,10 +219,7 @@ uint64_t LLVMGetRelocationOffset(LLVMRelocationIteratorRef RI) {
 }
 
 LLVMSymbolIteratorRef LLVMGetRelocationSymbol(LLVMRelocationIteratorRef RI) {
-  SymbolRef ret;
-  if (error_code ec = (*unwrap(RI))->getSymbol(ret))
-    report_fatal_error(ec.message());
-
+  symbol_iterator ret = (*unwrap(RI))->getSymbol();
   return wrap(new symbol_iterator(ret));
 }
 
