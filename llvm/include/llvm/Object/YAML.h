@@ -27,26 +27,27 @@ class BinaryRef {
   /// \brief Either raw binary data, or a string of hex bytes (must always
   /// be an even number of characters).
   ArrayRef<uint8_t> Data;
-  bool isBinary;
+  /// \brief Discriminator between the two states of the `Data` member.
+  bool DataIsHexString;
 
 public:
-  BinaryRef(ArrayRef<uint8_t> Data) : Data(Data), isBinary(true) {}
+  BinaryRef(ArrayRef<uint8_t> Data) : Data(Data), DataIsHexString(false) {}
   BinaryRef(StringRef Data)
       : Data(reinterpret_cast<const uint8_t *>(Data.data()), Data.size()),
-        isBinary(false) {}
-  BinaryRef() : isBinary(false) {}
+        DataIsHexString(true) {}
+  BinaryRef() : DataIsHexString(true) {}
   StringRef getHex() const {
-    assert(!isBinary);
+    assert(DataIsHexString);
     return StringRef(reinterpret_cast<const char *>(Data.data()), Data.size());
   }
   ArrayRef<uint8_t> getBinary() const {
-    assert(isBinary);
+    assert(!DataIsHexString);
     return Data;
   }
   /// \brief The number of bytes that are represented by this BinaryRef.
   /// This is the number of bytes that writeAsBinary() will write.
   ArrayRef<uint8_t>::size_type binary_size() const {
-    if (!isBinary)
+    if (DataIsHexString)
       return Data.size() / 2;
     return Data.size();
   }
@@ -55,7 +56,7 @@ public:
     if (Ref.Data.empty() && Data.empty())
       return true;
 
-    return Ref.isBinary == isBinary && Ref.Data == Data;
+    return Ref.DataIsHexString == DataIsHexString && Ref.Data == Data;
   }
   /// \brief Write the contents (regardless of whether it is binary or a
   /// hex string) as binary to the given raw_ostream.
