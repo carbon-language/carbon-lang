@@ -41,7 +41,6 @@ add_llvm_target(R600CodeGen
   R600ISelLowering.cpp
   R600MachineFunctionInfo.cpp
   R600MachineScheduler.cpp
-  R600OptimizeVectorRegisters.cpp
   R600Packetizer.cpp
   R600RegisterInfo.cpp
   R600TextureIntrinsicsReplacer.cpp

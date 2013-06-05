@@ -130,11 +130,6 @@ bool AMDGPUPassConfig::addInstSelector() {
 
 bool AMDGPUPassConfig::addPreRegAlloc() {
   addPass(createAMDGPUConvertToISAPass(*TM));
-  const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
-  
-  if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX) {
-    addPass(createR600VectorRegMerger(*TM));
-  }
   return false;
 }
 
