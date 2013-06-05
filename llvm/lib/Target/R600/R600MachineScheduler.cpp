@@ -71,6 +71,10 @@ SUnit* R600SchedStrategy::pickNode(bool &IsTopNode) {
       (!AllowSwitchFromAlu && CurInstKind == IDAlu))) {
     // try to pick ALU
     SU = pickAlu();
+    if (!SU && !PhysicalRegCopy.empty()) {
+      SU = PhysicalRegCopy.front();
+      PhysicalRegCopy.erase(PhysicalRegCopy.begin());
+    }
     if (SU) {
       if (CurEmitted >= InstKindLimit[IDAlu])
         CurEmitted = 0;
@@ -118,7 +122,22 @@ SUnit* R600SchedStrategy::pickNode(bool &IsTopNode) {
   return SU;
 }
 
+bool IsUnScheduled(const SUnit *SU) {
+  return SU->isScheduled;
+}
+
+static
+void Filter(std::vector<SUnit *> &List) {
+  List.erase(std::remove_if(List.begin(), List.end(), IsUnScheduled), List.end());
+}
+
 void R600SchedStrategy::schedNode(SUnit *SU, bool IsTopNode) {
+  if (IsTopNode) {
+    for (unsigned i = 0; i < AluLast; i++) {
+      Filter(Available[i]);
+      Filter(Pending[i]);
+    }
+  }
 
   if (NextInstKind != CurInstKind) {
     DEBUG(dbgs() << "Instruction Type Switch\n");
@@ -157,13 +176,24 @@ void R600SchedStrategy::schedNode(SUnit *SU, bool IsTopNode) {
   }
 }
 
+static bool
+isPhysicalRegCopy(MachineInstr *MI) {
+  if (MI->getOpcode() != AMDGPU::COPY)
+    return false;
+
+  return !TargetRegisterInfo::isVirtualRegister(MI->getOperand(1).getReg());
+}
+
 void R600SchedStrategy::releaseTopNode(SUnit *SU) {
   DEBUG(dbgs() << "Top Releasing ";SU->dump(DAG););
-
 }
 
 void R600SchedStrategy::releaseBottomNode(SUnit *SU) {
   DEBUG(dbgs() << "Bottom Releasing ";SU->dump(DAG););
+  if (isPhysicalRegCopy(SU->getInstr())) {
+    PhysicalRegCopy.push_back(SU);
+    return;
+  }
 
   int IK = getInstKind(SU);
 

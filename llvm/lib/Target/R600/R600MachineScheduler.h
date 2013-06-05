@@ -54,6 +54,7 @@ class R600SchedStrategy : public MachineSchedStrategy {
   std::vector<SUnit *> AvailableAlus[AluLast];
   std::vector<SUnit *> UnscheduledARDefs;
   std::vector<SUnit *> UnscheduledARUses;
+  std::vector<SUnit *> PhysicalRegCopy;
 
   InstKind CurInstKind;
   int CurEmitted;
