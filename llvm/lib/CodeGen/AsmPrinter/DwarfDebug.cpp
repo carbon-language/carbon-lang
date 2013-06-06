@@ -1645,8 +1645,9 @@ void DwarfDebug::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
       if (CurNum == 0)
         break;
       // A later indexed parameter has been found, insert immediately before it.
-      if (CurNum < ArgNum)
+      if (CurNum > ArgNum)
         break;
+      ++I;
     }
     Vars.insert(I, Var);
     return;
