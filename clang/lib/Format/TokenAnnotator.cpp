@@ -773,7 +773,11 @@ private:
 /// operator precedence.
 class ExpressionParser {
 public:
-  ExpressionParser(AnnotatedLine &Line) : Current(Line.First) {}
+  ExpressionParser(AnnotatedLine &Line) : Current(Line.First) {
+    // Skip leading "}", e.g. in "} else if (...) {".
+    if (Current->is(tok::r_brace))
+      next();
+  }
 
   /// \brief Parse expressions with the given operatore precedence.
   void parse(int Precedence = 0) {
