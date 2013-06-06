@@ -751,7 +751,7 @@ void AMDGPUDAGToDAGISel::PostprocessISelDAG() {
   }
 
   // Go over all selected nodes and try to fold them a bit more
-  const AMDGPUTargetLowering& Lowering = ((const AMDGPUTargetLowering&)TLI);
+  const AMDGPUTargetLowering& Lowering = (*(const AMDGPUTargetLowering*)TLI);
   for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
        E = CurDAG->allnodes_end(); I != E; ++I) {
 
