@@ -360,4 +360,3 @@ bool R600VectorRegMerger::runOnMachineFunction(MachineFunction &Fn) {
 llvm::FunctionPass *llvm::createR600VectorRegMerger(TargetMachine &tm) {
   return new R600VectorRegMerger(tm);
 }
-
