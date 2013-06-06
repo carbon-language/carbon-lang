@@ -167,8 +167,14 @@ void pointer_to_integral_type_conv(char* ptr) {
    short sh = (short)ptr;
    ch = (char)ptr;
    sh = (short)ptr;
-} 
 
+   // These are valid C++.
+   bool b = (bool)ptr;
+   b = static_cast<bool>(ptr);
+
+   // This is bad.
+   b = reinterpret_cast<bool>(ptr); // expected-error {{cast from pointer to smaller type 'bool' loses information}}
+}
 
 namespace friend_as_a_forward_decl {
 

@@ -76,6 +76,9 @@ void pointer_to_integral_type_conv(char* ptr) {
    short sh = (short)ptr;
    ch = (char)ptr;
    sh = (short)ptr;
+
+   // This is valid ISO C.
+   _Bool b = (_Bool)ptr;
 }
 
 
