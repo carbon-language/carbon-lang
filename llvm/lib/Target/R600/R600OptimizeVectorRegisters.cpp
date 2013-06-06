@@ -198,6 +198,7 @@ MachineInstr *R600VectorRegMerger::RebuildVector(
         UpdatedUndef.erase(RemoveIt);
     }
     DEBUG(dbgs() << "    ->"; Tmp->dump(););
+    (void)Tmp;
     SrcVec = DstReg;
   }
   Pos = BuildMI(MBB, Pos, DL, TII->get(AMDGPU::COPY), Reg)
