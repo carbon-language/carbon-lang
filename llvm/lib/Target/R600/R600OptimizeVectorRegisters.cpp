@@ -179,7 +179,7 @@ MachineInstr *R600VectorRegMerger::RebuildVector(
     unsigned DstReg = MRI->createVirtualRegister(&AMDGPU::R600_Reg128RegClass);
     unsigned SubReg = (*It).first;
     unsigned Swizzle = (*It).second;
-    unsigned Chan;
+    unsigned Chan = 0xDEADBEEF;
     for (unsigned j = 0, je = RemapChan.size(); j < je; j++) {
       if (RemapChan[j].first == Swizzle) {
         Chan = RemapChan[j].second;
