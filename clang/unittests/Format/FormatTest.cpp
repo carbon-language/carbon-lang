@@ -3246,6 +3246,7 @@ TEST_F(FormatTest, FormatsCasts) {
   verifyFormat("int a = (int)+2;");
   verifyFormat("my_int a = (my_int)2.0f;");
   verifyFormat("my_int a = (my_int)sizeof(int);");
+  verifyFormat("return (my_int)aaa;");
 
   // FIXME: Without type knowledge, this can still fall apart miserably.
   verifyFormat("void f() { my_int a = (my_int) * b; }");
@@ -3271,6 +3272,8 @@ TEST_F(FormatTest, FormatsCasts) {
   verifyFormat("void f(int i = (kA * kB) & kMask) {}");
   verifyFormat("int a = sizeof(int) * b;");
   verifyFormat("int a = alignof(int) * b;");
+  verifyFormat("template <> void f<int>(int i) SOME_ANNOTATION;");
+  verifyFormat("f(\"%\" SOME_MACRO(ll) \"d\");");
 
   // These are not casts, but at some point were confused with casts.
   verifyFormat("virtual void foo(int *) override;");

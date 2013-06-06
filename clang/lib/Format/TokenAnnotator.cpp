@@ -626,12 +626,15 @@ private:
             Contexts.back().IsExpression)
           IsCast = true;
         if (Current.Next &&
+            Current.Next->isNot(tok::string_literal) &&
             (Current.Next->Tok.isLiteral() ||
              Current.Next->isOneOf(tok::kw_sizeof, tok::kw_alignof)))
           IsCast = true;
         // If there is an identifier after the (), it is likely a cast, unless
         // there is also an identifier before the ().
-        if (LeftOfParens && LeftOfParens->Tok.getIdentifierInfo() == NULL &&
+        if (LeftOfParens && (LeftOfParens->Tok.getIdentifierInfo() == NULL ||
+                             LeftOfParens->is(tok::kw_return)) &&
+            LeftOfParens->Type != TT_TemplateCloser &&
             LeftOfParens->Type != TT_ObjCMethodExpr && Current.Next &&
             (Current.Next->is(tok::identifier)))
           IsCast = true;
