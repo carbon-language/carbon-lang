@@ -1886,60 +1886,6 @@ static bool isIncrementOrInitInForLoop(const Stmt *S, const Stmt *FL) {
 typedef llvm::DenseSet<const PathDiagnosticCallPiece *>
         OptimizedCallsSet;
 
-void PathPieces::dump() const {
-  unsigned index = 0;
-  for (PathPieces::const_iterator I = begin(), E = end(); I != E; ++I ) {
-    llvm::errs() << "[" << index++ << "]";
-
-    switch ((*I)->getKind()) {
-    case PathDiagnosticPiece::Call:
-      llvm::errs() << "  CALL\n--------------\n";
-
-      if (const Stmt *SLoc = getLocStmt((*I)->getLocation())) {
-        SLoc->dump();
-      } else {
-        const PathDiagnosticCallPiece *Call = cast<PathDiagnosticCallPiece>(*I);
-        if (const NamedDecl *ND = dyn_cast<NamedDecl>(Call->getCallee()))
-          llvm::errs() << *ND << "\n";
-      }
-      break;
-    case PathDiagnosticPiece::Event:
-      llvm::errs() << "  EVENT\n--------------\n";
-      llvm::errs() << (*I)->getString() << "\n";
-      if (const Stmt *SLoc = getLocStmt((*I)->getLocation())) {
-        llvm::errs() << " ---- at ----\n";
-        SLoc->dump();
-      }
-      break;
-    case PathDiagnosticPiece::Macro:
-      llvm::errs() << "  MACRO\n--------------\n";
-      // FIXME: print which macro is being invoked.
-      break;
-    case PathDiagnosticPiece::ControlFlow: {
-      const PathDiagnosticControlFlowPiece *CP =
-        cast<PathDiagnosticControlFlowPiece>(*I);
-      llvm::errs() << "  CONTROL\n--------------\n";
-
-      if (const Stmt *s1Start = getLocStmt(CP->getStartLocation()))
-        s1Start->dump();
-      else
-        llvm::errs() << "NULL\n";
-
-      llvm::errs() << " ---- to ----\n";
-
-      if (const Stmt *s1End = getLocStmt(CP->getEndLocation()))
-        s1End->dump();
-      else
-        llvm::errs() << "NULL\n";
-
-      break;
-    }
-    }
-
-    llvm::errs() << "\n";
-  }
-}
-
 /// Adds synthetic edges from top-level statements to their subexpressions.
 ///
 /// This avoids a "swoosh" effect, where an edge from a top-level statement A
@@ -3447,4 +3393,79 @@ BugType *BugReporter::getBugTypeForName(StringRef name,
     entry.setValue(BT);
   }
   return BT;
+}
+
+
+void PathPieces::dump() const {
+  unsigned index = 0;
+  for (PathPieces::const_iterator I = begin(), E = end(); I != E; ++I) {
+    llvm::errs() << "[" << index++ << "]  ";
+    (*I)->dump();
+    llvm::errs() << "\n";
+  }
+}
+
+void PathDiagnosticCallPiece::dump() const {
+  llvm::errs() << "CALL\n--------------\n";
+
+  if (const Stmt *SLoc = getLocStmt(getLocation()))
+    SLoc->dump();
+  else if (const NamedDecl *ND = dyn_cast<NamedDecl>(getCallee()))
+    llvm::errs() << *ND << "\n";
+  else
+    getLocation().dump();
+}
+
+void PathDiagnosticEventPiece::dump() const {
+  llvm::errs() << "EVENT\n--------------\n";
+  llvm::errs() << getString() << "\n";
+  llvm::errs() << " ---- at ----\n";
+  getLocation().dump();
+}
+
+void PathDiagnosticControlFlowPiece::dump() const {
+  llvm::errs() << "CONTROL\n--------------\n";
+  getStartLocation().dump();
+  llvm::errs() << " ---- to ----\n";
+  getEndLocation().dump();
+}
+
+void PathDiagnosticMacroPiece::dump() const {
+  llvm::errs() << "MACRO\n--------------\n";
+  // FIXME: Print which macro is being invoked.
+}
+
+void PathDiagnosticLocation::dump() const {
+  if (!isValid()) {
+    llvm::errs() << "<INVALID>\n";
+    return;
+  }
+
+  switch (K) {
+  case RangeK:
+    // FIXME: actually print the range.
+    llvm::errs() << "<range>\n";
+    break;
+  case SingleLocK:
+    asLocation().dump();
+    llvm::errs() << "\n";
+    break;
+  case StmtK:
+    if (S)
+      S->dump();
+    else
+      llvm::errs() << "<NULL STMT>\n";
+    break;
+  case DeclK:
+    if (const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(D))
+      llvm::errs() << *ND << "\n";
+    else if (isa<BlockDecl>(D))
+      // FIXME: Make this nicer.
+      llvm::errs() << "<block>\n";
+    else if (D)
+      llvm::errs() << "<unknown decl>\n";
+    else
+      llvm::errs() << "<NULL DECL>\n";
+    break;
+  }
 }
