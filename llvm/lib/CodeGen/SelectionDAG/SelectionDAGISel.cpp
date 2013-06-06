@@ -278,7 +278,7 @@ void TargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
 SelectionDAGISel::SelectionDAGISel(const TargetMachine &tm,
                                    CodeGenOpt::Level OL) :
   MachineFunctionPass(ID), TM(tm), TLI(*tm.getTargetLowering()),
-  FuncInfo(new FunctionLoweringInfo(TLI)),
+  FuncInfo(new FunctionLoweringInfo(TM)),
   CurDAG(new SelectionDAG(tm, OL)),
   SDB(new SelectionDAGBuilder(*CurDAG, *FuncInfo, OL)),
   GFI(),
