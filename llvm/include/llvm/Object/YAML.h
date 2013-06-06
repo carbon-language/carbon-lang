@@ -21,8 +21,46 @@ namespace llvm {
 namespace object {
 namespace yaml {
 
-/// In an object file this is just a binary blob. In an yaml file it is an hex
-/// string. Using this avoid having to allocate temporary strings.
+/// \brief Specialized YAMLIO scalar type for representing a binary blob.
+///
+/// A typical use case would be to represent the content of a section in a
+/// binary file.
+/// This class has custom YAMLIO traits for convenient reading and writing.
+/// It renders as a string of hex digits in a YAML file.
+/// For example, it might render as `DEADBEEFCAFEBABE` (YAML does not
+/// require the quotation marks, so for simplicity when outputting they are
+/// omitted).
+/// When reading, any string whose content is an even number of hex digits
+/// will be accepted.
+/// For example, all of the following are acceptable:
+/// `DEADBEEF`, `"DeADbEeF"`, `"\x44EADBEEF"` (Note: '\x44' == 'D')
+///
+/// A significant advantage of using this class is that it never allocates
+/// temporary strings or buffers for any of its functionality.
+///
+/// Example:
+///
+/// The YAML mapping:
+/// \code
+/// Foo: DEADBEEFCAFEBABE
+/// \endcode
+///
+/// Could be modeled in YAMLIO by the struct:
+/// \code
+/// struct FooHolder {
+///   BinaryRef Foo;
+/// };
+/// namespace llvm {
+/// namespace yaml {
+/// template <>
+/// struct MappingTraits<FooHolder> {
+///   static void mapping(IO &IO, FooHolder &FH) {
+///     IO.mapRequired("Foo", FH.Foo);
+///   }
+/// };
+/// } // end namespace yaml
+/// } // end namespace llvm
+/// \endcode
 class BinaryRef {
   /// \brief Either raw binary data, or a string of hex bytes (must always
   /// be an even number of characters).
