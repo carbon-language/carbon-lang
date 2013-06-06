@@ -84,6 +84,9 @@ def WriteBrTbl : SchedWrite;
 // Fixpoint conversions.
 def WriteCvtFP : SchedWrite;
 
+// Noop.
+def WriteNoop : SchedWrite;
+
 // Define TII for use in SchedVariant Predicates.
 def : PredicateProlog<[{
   const ARMBaseInstrInfo *TII =

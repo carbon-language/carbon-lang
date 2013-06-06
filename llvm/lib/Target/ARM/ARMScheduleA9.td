@@ -2541,4 +2541,5 @@ def : WriteRes<WriteBrL, [A9UnitB]>;
 def : WriteRes<WriteBrTbl, [A9UnitB]>;
 def : WriteRes<WritePreLd, []>;
 def : SchedAlias<WriteCvtFP, A9WriteF>;
+def : WriteRes<WriteNoop, []> { let Latency = 0; let NumMicroOps = 0; }
 } // SchedModel = CortexA9Model
