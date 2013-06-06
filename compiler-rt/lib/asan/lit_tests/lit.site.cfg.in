@@ -9,6 +9,7 @@ config.compiler_rt_src_root = "@COMPILER_RT_SOURCE_DIR@"
 config.llvm_tools_dir = "@LLVM_TOOLS_DIR@"
 config.clang = "@LLVM_BINARY_DIR@/bin/clang"
 config.compiler_rt_arch = "@COMPILER_RT_SUPPORTED_ARCH@"
+config.asan_source_dir = "@ASAN_SOURCE_DIR@"
 
 # LLVM tools dir can be passed in lit parameters, so try to
 # apply substitution.
