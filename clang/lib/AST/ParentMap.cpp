@@ -110,6 +110,13 @@ void ParentMap::addStmt(Stmt* S) {
   }
 }
 
+void ParentMap::setParent(const Stmt *S, const Stmt *Parent) {
+  assert(S);
+  assert(Parent);
+  MapTy *M = reinterpret_cast<MapTy *>(Impl);
+  M->insert(std::make_pair(const_cast<Stmt *>(S), const_cast<Stmt *>(Parent)));
+}
+
 Stmt* ParentMap::getParent(Stmt* S) const {
   MapTy* M = (MapTy*) Impl;
   MapTy::iterator I = M->find(S);

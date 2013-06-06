@@ -1627,6 +1627,7 @@ CFGBlock *CFGBuilder::VisitDeclStmt(DeclStmt *DS) {
     Decl *D = *I;
     void *Mem = cfg->getAllocator().Allocate(sizeof(DeclStmt), A);
     DeclStmt *DSNew = new (Mem) DeclStmt(DG, D->getLocation(), GetEndLoc(D));
+    cfg->addSyntheticDeclStmt(DSNew, DS);
 
     // Append the fake DeclStmt to block.
     B = VisitDeclSubExpr(DSNew);
@@ -3951,6 +3952,10 @@ Stmt *CFGBlock::getTerminatorCondition() {
 
   switch (Terminator->getStmtClass()) {
     default:
+      break;
+
+    case Stmt::CXXForRangeStmtClass:
+      E = cast<CXXForRangeStmt>(Terminator)->getCond();
       break;
 
     case Stmt::ForStmtClass:

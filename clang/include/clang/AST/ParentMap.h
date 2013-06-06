@@ -29,6 +29,11 @@ public:
   /// visited and updated or inserted but not the parents of S.
   void addStmt(Stmt* S);
 
+  /// Manually sets the parent of \p S to \p Parent.
+  ///
+  /// If \p S is already in the map, this method will update the mapping.
+  void setParent(const Stmt *S, const Stmt *Parent);
+
   Stmt *getParent(Stmt*) const;
   Stmt *getParentIgnoreParens(Stmt *) const;
   Stmt *getParentIgnoreParenCasts(Stmt *) const;

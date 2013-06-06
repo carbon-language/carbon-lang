@@ -745,6 +745,35 @@ public:
     TryDispatchBlocks.push_back(block);
   }
 
+  /// Records a synthetic DeclStmt and the DeclStmt it was constructed from.
+  ///
+  /// The CFG uses synthetic DeclStmts when a single AST DeclStmt contains
+  /// multiple decls.
+  void addSyntheticDeclStmt(const DeclStmt *Synthetic,
+                            const DeclStmt *Source) {
+    assert(Synthetic->isSingleDecl() && "Can handle single declarations only");
+    assert(Synthetic != Source && "Don't include original DeclStmts in map");
+    assert(!SyntheticDeclStmts.count(Synthetic) && "Already in map");
+    SyntheticDeclStmts[Synthetic] = Source;
+  }
+
+  typedef llvm::DenseMap<const DeclStmt *, const DeclStmt *>::const_iterator
+    synthetic_stmt_iterator;
+
+  /// Iterates over synthetic DeclStmts in the CFG.
+  ///
+  /// Each element is a (synthetic statement, source statement) pair.
+  ///
+  /// \sa addSyntheticDeclStmt
+  synthetic_stmt_iterator synthetic_stmt_begin() const {
+    return SyntheticDeclStmts.begin();
+  }
+
+  /// \sa synthetic_stmt_begin
+  synthetic_stmt_iterator synthetic_stmt_end() const {
+    return SyntheticDeclStmts.end();
+  }
+
   //===--------------------------------------------------------------------===//
   // Member templates useful for various batch operations over CFGs.
   //===--------------------------------------------------------------------===//
@@ -810,6 +839,9 @@ private:
   /// This is the collection of such blocks present in the CFG.
   std::vector<const CFGBlock *> TryDispatchBlocks;
 
+  /// Collects DeclStmts synthesized for this CFG and maps each one back to its
+  /// source DeclStmt.
+  llvm::DenseMap<const DeclStmt *, const DeclStmt *> SyntheticDeclStmts;
 };
 } // end namespace clang
 

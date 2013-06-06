@@ -157,6 +157,19 @@ AnalysisDeclContext::getBlockForRegisteredExpression(const Stmt *stmt) {
   return itr->second;
 }
 
+/// Add each synthetic statement in the CFG to the parent map, using the
+/// source statement's parent.
+static void addParentsForSyntheticStmts(const CFG *TheCFG, ParentMap &PM) {
+  if (!TheCFG)
+    return;
+
+  for (CFG::synthetic_stmt_iterator I = TheCFG->synthetic_stmt_begin(),
+                                    E = TheCFG->synthetic_stmt_end();
+       I != E; ++I) {
+    PM.setParent(I->first, PM.getParent(I->second));
+  }
+}
+
 CFG *AnalysisDeclContext::getCFG() {
   if (!cfgBuildOptions.PruneTriviallyFalseEdges)
     return getUnoptimizedCFG();
@@ -167,6 +180,9 @@ CFG *AnalysisDeclContext::getCFG() {
     // Even when the cfg is not successfully built, we don't
     // want to try building it again.
     builtCFG = true;
+
+    if (PM)
+      addParentsForSyntheticStmts(cfg.get(), *PM);
   }
   return cfg.get();
 }
@@ -180,6 +196,9 @@ CFG *AnalysisDeclContext::getUnoptimizedCFG() {
     // Even when the cfg is not successfully built, we don't
     // want to try building it again.
     builtCompleteCFG = true;
+
+    if (PM)
+      addParentsForSyntheticStmts(completeCFG.get(), *PM);
   }
   return completeCFG.get();
 }
@@ -222,6 +241,10 @@ ParentMap &AnalysisDeclContext::getParentMap() {
         PM->addStmt((*I)->getInit());
       }
     }
+    if (builtCFG)
+      addParentsForSyntheticStmts(getCFG(), *PM);
+    if (builtCompleteCFG)
+      addParentsForSyntheticStmts(getUnoptimizedCFG(), *PM);
   }
   return *PM;
 }
