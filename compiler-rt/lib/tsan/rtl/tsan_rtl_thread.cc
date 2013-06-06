@@ -374,25 +374,4 @@ void MemoryAccessRange(ThreadState *thr, uptr pc, uptr addr,
   }
 }
 
-void MemoryAccessRangeStep(ThreadState *thr, uptr pc, uptr addr,
-    uptr size, uptr step, bool is_write) {
-  if (size == 0)
-    return;
-  FastState fast_state = thr->fast_state;
-  if (fast_state.GetIgnoreBit())
-    return;
-  StatInc(thr, StatMopRange);
-  fast_state.IncrementEpoch();
-  thr->fast_state = fast_state;
-  TraceAddEvent(thr, fast_state, EventTypeMop, pc);
-
-  for (uptr addr_end = addr + size; addr < addr_end; addr += step) {
-    u64 *shadow_mem = (u64*)MemToShadow(addr);
-    Shadow cur(fast_state);
-    cur.SetWrite(is_write);
-    cur.SetAddr0AndSizeLog(addr & (kShadowCell - 1), kSizeLog1);
-    MemoryAccessImpl(thr, addr, kSizeLog1, is_write, false,
-        shadow_mem, cur);
-  }
-}
 }  // namespace __tsan
