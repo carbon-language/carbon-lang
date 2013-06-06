@@ -2277,7 +2277,7 @@ HelperSelectorsForTypoCorrection(
                       StringRef Typo, const ObjCMethodDecl * Method) {
   const unsigned MaxEditDistance = 1;
   unsigned BestEditDistance = MaxEditDistance + 1;
-  StringRef MethodName = Method->getSelector().getAsString();
+  std::string MethodName = Method->getSelector().getAsString();
   
   unsigned MinPossibleEditDistance = abs((int)MethodName.size() - (int)Typo.size());
   if (MinPossibleEditDistance > 0 &&
