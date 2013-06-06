@@ -522,6 +522,12 @@ LaunchInNewTerminalWithAppleScript (const char *exe_path, ProcessLaunchInfo &lau
     const char *working_dir = launch_info.GetWorkingDirectory();
     if (working_dir)
         command.Printf(" --working-dir '%s'", working_dir);
+    else
+    {
+        char cwd[PATH_MAX];
+        if (getcwd(cwd, PATH_MAX))
+            command.Printf(" --working-dir '%s'", cwd);
+    }
     
     if (launch_info.GetFlags().Test (eLaunchFlagDisableASLR))
         command.PutCString(" --disable-aslr");
