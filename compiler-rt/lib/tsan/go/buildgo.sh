@@ -42,6 +42,7 @@ elif [ "`uname -a | grep Darwin`" != "" ]; then
 		../rtl/tsan_platform_mac.cc
 		../../sanitizer_common/sanitizer_posix.cc
 		../../sanitizer_common/sanitizer_mac.cc
+		../../sanitizer_common/sanitizer_posix_libcdep.cc
 	"
 elif [ "`uname -a | grep MINGW`" != "" ]; then
 	SUFFIX="windows_amd64"

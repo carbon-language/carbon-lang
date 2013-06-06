@@ -343,6 +343,10 @@ void BlockingMutex::CheckLocked() {
   CHECK_EQ((uptr)pthread_self(), owner_);
 }
 
+u64 NanoTime() {
+  return 0;
+}
+
 uptr GetTlsSize() {
   return 0;
 }
