@@ -1233,10 +1233,10 @@ TEST(AddressSanitizer, pthread_getschedparam) {
   struct sched_param param;
   EXPECT_DEATH(
       pthread_getschedparam(pthread_self(), &policy, Ident(&param) + 2),
-      "AddressSanitizer: stack-buffer-overflow");
+      "AddressSanitizer: stack-buffer-.*flow");
   EXPECT_DEATH(
       pthread_getschedparam(pthread_self(), Ident(&policy) - 1, &param),
-      "AddressSanitizer: stack-buffer-overflow");
+      "AddressSanitizer: stack-buffer-.*flow");
   int res = pthread_getschedparam(pthread_self(), &policy, &param);
   ASSERT_EQ(0, res);
 }
