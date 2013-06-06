@@ -248,7 +248,7 @@ static void adjustCallLocations(PathPieces &Pieces,
 /// We might have pieces with invalid locations as a result of inlining Body
 /// Farm generated functions.
 static void removePiecesWithInvalidLocations(PathPieces &Pieces) {
-  for (PathPieces::iterator I = Pieces.begin(), E = Pieces.end(); I != E; ++I) {
+  for (PathPieces::iterator I = Pieces.begin(), E = Pieces.end(); I != E;) {
     if (PathDiagnosticCallPiece *C = dyn_cast<PathDiagnosticCallPiece>(*I))
       removePiecesWithInvalidLocations(C->path);
 
@@ -257,10 +257,10 @@ static void removePiecesWithInvalidLocations(PathPieces &Pieces) {
 
     if (!(*I)->getLocation().isValid() ||
         !(*I)->getLocation().asLocation().isValid()) {
-      Pieces.erase(I);
+      I = Pieces.erase(I);
       continue;
     }
-    
+    I++;
   }
 }
 
