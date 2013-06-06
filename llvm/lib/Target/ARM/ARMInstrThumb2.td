@@ -1539,7 +1539,8 @@ multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
 
   def i12 : T2Ii12<(outs), (ins t2addrmode_imm12:$addr), IIC_Preload, opc,
                 "\t$addr",
-              [(ARMPreload t2addrmode_imm12:$addr, (i32 write), (i32 instr))]> {
+              [(ARMPreload t2addrmode_imm12:$addr, (i32 write), (i32 instr))]>,
+              Sched<[WritePreLd]> {
     let Inst{31-25} = 0b1111100;
     let Inst{24} = instr;
     let Inst{22} = 0;
@@ -1556,7 +1557,8 @@ multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
 
   def i8 : T2Ii8<(outs), (ins t2addrmode_negimm8:$addr), IIC_Preload, opc,
                 "\t$addr",
-            [(ARMPreload t2addrmode_negimm8:$addr, (i32 write), (i32 instr))]> {
+            [(ARMPreload t2addrmode_negimm8:$addr, (i32 write), (i32 instr))]>,
+            Sched<[WritePreLd]> {
     let Inst{31-25} = 0b1111100;
     let Inst{24} = instr;
     let Inst{23} = 0; // U = 0
@@ -1573,7 +1575,8 @@ multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
 
   def s : T2Iso<(outs), (ins t2addrmode_so_reg:$addr), IIC_Preload, opc,
                "\t$addr",
-             [(ARMPreload t2addrmode_so_reg:$addr, (i32 write), (i32 instr))]> {
+             [(ARMPreload t2addrmode_so_reg:$addr, (i32 write), (i32 instr))]>,
+             Sched<[WritePreLd]> {
     let Inst{31-25} = 0b1111100;
     let Inst{24} = instr;
     let Inst{23} = 0; // add = TRUE for T1
