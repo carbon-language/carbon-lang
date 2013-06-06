@@ -292,7 +292,7 @@ DumpDataInCodeDataCommand(const MachOObjectFile &Obj,
          << "  ('datasize', " << LLC.DataSize << ")\n"
          << "  ('_data_regions', [\n";
 
-  unsigned NumRegions = LLC.DataSize / 8;
+  unsigned NumRegions = LLC.DataSize / sizeof(macho::DataInCodeTableEntry);
   for (unsigned i = 0; i < NumRegions; ++i) {
     macho::DataInCodeTableEntry DICE =
       Obj.getDataInCodeTableEntry(LLC.DataOffset, i);

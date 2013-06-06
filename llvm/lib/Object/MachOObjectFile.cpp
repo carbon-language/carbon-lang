@@ -414,7 +414,7 @@ MachOObjectFile::MachOObjectFile(MemoryBuffer *Object,
                                  bool IsLittleEndian, bool Is64bits,
                                  error_code &ec)
     : ObjectFile(getMachOType(IsLittleEndian, Is64bits), Object),
-      SymtabLoadCmd(NULL), DysymtabLoadCmd(NULL) {
+      SymtabLoadCmd(NULL), DysymtabLoadCmd(NULL), DataInCodeLoadCmd(NULL) {
   uint32_t LoadCommandCount = this->getHeader().NumLoadCommands;
   macho::LoadCommandType SegmentLoadType = is64Bit() ?
     macho::LCT_Segment64 : macho::LCT_Segment;
@@ -427,6 +427,9 @@ MachOObjectFile::MachOObjectFile(MemoryBuffer *Object,
     } else if (Load.C.Type == macho::LCT_Dysymtab) {
       assert(!DysymtabLoadCmd && "Multiple dynamic symbol tables");
       DysymtabLoadCmd = Load.Ptr;
+    } else if (Load.C.Type == macho::LCT_DataInCode) {
+      assert(!DataInCodeLoadCmd && "Multiple data in code tables");
+      DataInCodeLoadCmd = Load.Ptr;
     } else if (Load.C.Type == SegmentLoadType) {
       uint32_t NumSections = getSegmentLoadCommandNumSections(this, Load);
       for (unsigned J = 0; J < NumSections; ++J) {
@@ -1328,6 +1331,27 @@ relocation_iterator MachOObjectFile::getSectionRelEnd(unsigned Index) const {
   return getSectionRelEnd(DRI);
 }
 
+dice_iterator MachOObjectFile::begin_dices() const {
+  DataRefImpl DRI;
+  if (!DataInCodeLoadCmd)
+    return dice_iterator(DiceRef(DRI, this));
+
+  macho::LinkeditDataLoadCommand DicLC = getDataInCodeLoadCommand();
+  DRI.p = reinterpret_cast<uintptr_t>(getPtr(this, DicLC.DataOffset));
+  return dice_iterator(DiceRef(DRI, this));
+}
+
+dice_iterator MachOObjectFile::end_dices() const {
+  DataRefImpl DRI;
+  if (!DataInCodeLoadCmd)
+    return dice_iterator(DiceRef(DRI, this));
+
+  macho::LinkeditDataLoadCommand DicLC = getDataInCodeLoadCommand();
+  unsigned Offset = DicLC.DataOffset + DicLC.DataSize;
+  DRI.p = reinterpret_cast<uintptr_t>(getPtr(this, Offset));
+  return dice_iterator(DiceRef(DRI, this));
+}
+
 StringRef
 MachOObjectFile::getSectionFinalSegmentName(DataRefImpl Sec) const {
   ArrayRef<char> Raw = getSectionRawFinalSegmentName(Sec);
@@ -1492,6 +1516,12 @@ MachOObjectFile::getRelocation(DataRefImpl Rel) const {
   return getStruct<macho::RelocationEntry>(this, P);
 }
 
+macho::DataInCodeTableEntry
+MachOObjectFile::getDice(DataRefImpl Rel) const {
+  const char *P = reinterpret_cast<const char *>(Rel.p);
+  return getStruct<macho::DataInCodeTableEntry>(this, P);
+}
+
 macho::Header MachOObjectFile::getHeader() const {
   return getStruct<macho::Header>(this, getPtr(this, 0));
 }
@@ -1522,6 +1552,20 @@ macho::SymtabLoadCommand MachOObjectFile::getSymtabLoadCommand() const {
 
 macho::DysymtabLoadCommand MachOObjectFile::getDysymtabLoadCommand() const {
   return getStruct<macho::DysymtabLoadCommand>(this, DysymtabLoadCmd);
+}
+
+macho::LinkeditDataLoadCommand
+MachOObjectFile::getDataInCodeLoadCommand() const {
+  if (DataInCodeLoadCmd)
+    return getStruct<macho::LinkeditDataLoadCommand>(this, DataInCodeLoadCmd);
+
+  // If there is no DataInCodeLoadCmd return a load command with zero'ed fields.
+  macho::LinkeditDataLoadCommand Cmd;
+  Cmd.Type = macho::LCT_DataInCode;
+  Cmd.Size = macho::LinkeditLoadCommandSize;
+  Cmd.DataOffset = 0;
+  Cmd.DataSize = 0;
+  return Cmd;
 }
 
 StringRef MachOObjectFile::getStringTableData() const {

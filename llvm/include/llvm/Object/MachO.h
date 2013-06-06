@@ -25,6 +25,31 @@
 namespace llvm {
 namespace object {
 
+/// DiceRef - This is a value type class that represents a single
+/// data in code entry in the table in a Mach-O object file.
+class DiceRef {
+  DataRefImpl DicePimpl;
+  const ObjectFile *OwningObject;
+
+public:
+  DiceRef() : OwningObject(NULL) { }
+
+  DiceRef(DataRefImpl DiceP, const ObjectFile *Owner);
+
+  bool operator==(const DiceRef &Other) const;
+  bool operator<(const DiceRef &Other) const;
+
+  error_code getNext(DiceRef &Result) const;
+
+  error_code getOffset(uint32_t &Result) const;
+  error_code getLength(uint16_t &Result) const;
+  error_code getKind(uint16_t &Result) const;
+
+  DataRefImpl getRawDataRefImpl() const;
+  const ObjectFile *getObjectFile() const;
+};
+typedef content_iterator<DiceRef> dice_iterator;
+
 class MachOObjectFile : public ObjectFile {
 public:
   struct LoadCommandInfo {
@@ -108,6 +133,9 @@ public:
   relocation_iterator getSectionRelBegin(unsigned Index) const;
   relocation_iterator getSectionRelEnd(unsigned Index) const;
 
+  dice_iterator begin_dices() const;
+  dice_iterator end_dices() const;
+
   // In a MachO file, sections have a segment name. This is used in the .o
   // files. They have a single segment, but this field specifies which segment
   // a section should be put in in the final object.
@@ -152,6 +180,7 @@ public:
   getLinkerOptionsLoadCommand(const LoadCommandInfo &L) const;
 
   macho::RelocationEntry getRelocation(DataRefImpl Rel) const;
+  macho::DataInCodeTableEntry getDice(DataRefImpl Rel) const;
   macho::Header getHeader() const;
   macho::Header64Ext getHeader64Ext() const;
   macho::IndirectSymbolTableEntry
@@ -161,6 +190,7 @@ public:
                                                       unsigned Index) const;
   macho::SymtabLoadCommand getSymtabLoadCommand() const;
   macho::DysymtabLoadCommand getDysymtabLoadCommand() const;
+  macho::LinkeditDataLoadCommand getDataInCodeLoadCommand() const;
 
   StringRef getStringTableData() const;
   bool is64Bit() const;
@@ -175,7 +205,65 @@ private:
   SectionList Sections;
   const char *SymtabLoadCmd;
   const char *DysymtabLoadCmd;
+  const char *DataInCodeLoadCmd;
 };
+
+/// DiceRef
+inline DiceRef::DiceRef(DataRefImpl DiceP, const ObjectFile *Owner)
+  : DicePimpl(DiceP) , OwningObject(Owner) {}
+
+inline bool DiceRef::operator==(const DiceRef &Other) const {
+  return DicePimpl == Other.DicePimpl;
+}
+
+inline bool DiceRef::operator<(const DiceRef &Other) const {
+  return DicePimpl < Other.DicePimpl;
+}
+
+inline error_code DiceRef::getNext(DiceRef &Result) const {
+  DataRefImpl Rel = DicePimpl;
+  const macho::DataInCodeTableEntry *P =
+    reinterpret_cast<const macho::DataInCodeTableEntry *>(Rel.p);
+  Rel.p = reinterpret_cast<uintptr_t>(P + 1);
+  Result = DiceRef(Rel, OwningObject);
+  return object_error::success;
+}
+
+// Since a Mach-O data in code reference, a DiceRef, can only be created when
+// the OwningObject ObjectFile is a MachOObjectFile a static_cast<> is used for
+// the methods that get the values of the fields of the reference.
+
+inline error_code DiceRef::getOffset(uint32_t &Result) const {
+  const MachOObjectFile *MachOOF =
+    static_cast<const MachOObjectFile *>(OwningObject);
+  macho::DataInCodeTableEntry Dice = MachOOF->getDice(DicePimpl);
+  Result = Dice.Offset;
+  return object_error::success;
+}
+
+inline error_code DiceRef::getLength(uint16_t &Result) const {
+  const MachOObjectFile *MachOOF =
+    static_cast<const MachOObjectFile *>(OwningObject);
+  macho::DataInCodeTableEntry Dice = MachOOF->getDice(DicePimpl);
+  Result = Dice.Length;
+  return object_error::success;
+}
+
+inline error_code DiceRef::getKind(uint16_t &Result) const {
+  const MachOObjectFile *MachOOF =
+    static_cast<const MachOObjectFile *>(OwningObject);
+  macho::DataInCodeTableEntry Dice = MachOOF->getDice(DicePimpl);
+  Result = Dice.Kind;
+  return object_error::success;
+}
+
+inline DataRefImpl DiceRef::getRawDataRefImpl() const {
+  return DicePimpl;
+}
+
+inline const ObjectFile *DiceRef::getObjectFile() const {
+  return OwningObject;
+}
 
 }
 }
