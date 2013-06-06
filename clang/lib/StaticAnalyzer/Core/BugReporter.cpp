@@ -2480,17 +2480,23 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
 }
 
 /// Drop the very first edge in a path, which should be a function entry edge.
+///
+/// If the first edge is not a function entry edge (say, because the first
+/// statement had an invalid source location), this function does nothing.
+// FIXME: We should just generate invalid edges anyway and have the optimizer
+// deal with them.
 static void dropFunctionEntryEdge(PathPieces &Path,
                                   LocationContextMap &LCM,
                                   SourceManager &SM) {
-#ifndef NDEBUG
-  const Decl *D = LCM[&Path]->getDecl();
-  PathDiagnosticLocation EntryLoc =
-    PathDiagnosticLocation::createBegin(D, SM);
   const PathDiagnosticControlFlowPiece *FirstEdge =
-    cast<PathDiagnosticControlFlowPiece>(Path.front());
-  assert(FirstEdge->getStartLocation() == EntryLoc && "not an entry edge");
-#endif
+    dyn_cast<PathDiagnosticControlFlowPiece>(Path.front());
+  if (!FirstEdge)
+    return;
+
+  const Decl *D = LCM[&Path]->getDecl();
+  PathDiagnosticLocation EntryLoc = PathDiagnosticLocation::createBegin(D, SM);
+  if (FirstEdge->getStartLocation() != EntryLoc)
+    return;
 
   Path.pop_front();
 }
