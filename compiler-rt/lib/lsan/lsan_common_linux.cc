@@ -96,8 +96,9 @@ static uptr GetCallerPC(u32 stack_id) {
   uptr size = 0;
   const uptr *trace = StackDepotGet(stack_id, &size);
   // The top frame is our malloc/calloc/etc. The next frame is the caller.
-  CHECK_GE(size, 2);
-  return trace[1];
+  if (size >= 2)
+    return trace[1];
+  return 0;
 }
 
 void ProcessPlatformSpecificAllocationsCb::operator()(void *p) const {

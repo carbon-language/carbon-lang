@@ -99,7 +99,7 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
   // Always unwind fast on Mac.
   (void)fast;
 #else
-  if (!fast || (stack_top == stack_bottom))
+  if (!fast)
     return stack->SlowUnwindStack(pc, max_s);
 #endif  // SANITIZER_MAC
   stack->size = 0;
