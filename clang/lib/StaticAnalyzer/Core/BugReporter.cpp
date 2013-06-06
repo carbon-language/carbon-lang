@@ -162,13 +162,6 @@ static bool removeUnneededCalls(PathPieces &pieces, BugReport *R,
     IntrusiveRefCntPtr<PathDiagnosticPiece> piece(pieces.front());
     pieces.pop_front();
     
-    // Throw away pieces with invalid locations. Note that we can't throw away
-    // calls just yet because they might have something interesting inside them.
-    // If so, their locations will be adjusted as necessary later.
-    if (piece->getKind() != PathDiagnosticPiece::Call &&
-        piece->getLocation().asLocation().isInvalid())
-      continue;
-
     switch (piece->getKind()) {
       case PathDiagnosticPiece::Call: {
         PathDiagnosticCallPiece *call = cast<PathDiagnosticCallPiece>(piece);
@@ -218,8 +211,7 @@ static bool hasImplicitBody(const Decl *D) {
 }
 
 /// Recursively scan through a path and make sure that all call pieces have
-/// valid locations. Note that all other pieces with invalid locations should
-/// have already been pruned out.
+/// valid locations. 
 static void adjustCallLocations(PathPieces &Pieces,
                                 PathDiagnosticLocation *LastCallLocation = 0) {
   for (PathPieces::iterator I = Pieces.begin(), E = Pieces.end(); I != E; ++I) {
@@ -249,6 +241,26 @@ static void adjustCallLocations(PathPieces &Pieces,
 
     assert(ThisCallLocation && "Outermost call has an invalid location");
     adjustCallLocations(Call->path, ThisCallLocation);
+  }
+}
+
+/// Remove all pieces with invalid locations as these cannot be serialized.
+/// We might have pieces with invalid locations as a result of inlining Body
+/// Farm generated functions.
+static void removePiecesWithInvalidLocations(PathPieces &Pieces) {
+  for (PathPieces::iterator I = Pieces.begin(), E = Pieces.end(); I != E; ++I) {
+    if (PathDiagnosticCallPiece *C = dyn_cast<PathDiagnosticCallPiece>(*I))
+      removePiecesWithInvalidLocations(C->path);
+
+    if (PathDiagnosticMacroPiece *M = dyn_cast<PathDiagnosticMacroPiece>(*I))
+      removePiecesWithInvalidLocations(M->subPieces);
+
+    if (!(*I)->getLocation().isValid() ||
+        !(*I)->getLocation().asLocation().isValid()) {
+      Pieces.erase(I);
+      continue;
+    }
+    
   }
 }
 
@@ -3151,7 +3163,10 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
         (void)stillHasNotes;
       }
 
+      // Redirect all call pieces to have valid locations.
       adjustCallLocations(PD.getMutablePieces());
+
+      removePiecesWithInvalidLocations(PD.getMutablePieces());
 
       if (ActiveScheme == PathDiagnosticConsumer::AlternateExtensive) {
         SourceManager &SM = getSourceManager();
