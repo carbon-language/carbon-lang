@@ -21,6 +21,18 @@ enum Test2 test2(enum Test2 *t) {
   return 10; // expected-warning {{integer constant not in range of enumerated type 'enum Test2'}}
 }
 
+// PR15069
+typedef enum
+{
+  a = 0
+} T;
+
+void f()
+{
+  T x = a;
+  x += 1; // expected-warning {{integer constant not in range of enumerated type}}
+}
+
 int main() {
   CCTestEnum test = 1; // expected-warning {{integer constant not in range of enumerated type 'CCTestEnum'}}
   test = 600; // expected-warning {{integer constant not in range of enumerated type 'CCTestEnum'}}

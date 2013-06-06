@@ -6073,7 +6073,7 @@ def warn_unreachable_default : Warning<
   InGroup<CoveredSwitchDefault>, DefaultIgnore;
 def warn_not_in_enum : Warning<"case value not in enumerated type %0">,
   InGroup<Switch>;
-def warn_not_in_enum_assignement : Warning<"integer constant not in range "
+def warn_not_in_enum_assignment : Warning<"integer constant not in range "
   "of enumerated type %0">, InGroup<DiagGroup<"assign-enum">>, DefaultIgnore;
 def err_typecheck_statement_requires_scalar : Error<
   "statement requires expression of scalar type (%0 invalid)">;
