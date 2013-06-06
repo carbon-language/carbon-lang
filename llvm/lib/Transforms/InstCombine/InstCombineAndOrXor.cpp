@@ -173,14 +173,14 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
       // Adding a one to a single bit bit-field should be turned into an XOR
       // of the bit.  First thing to check is to see if this AND is with a
       // single bit constant.
-      const APInt &AndRHSV = cast<ConstantInt>(AndRHS)->getValue();
+      const APInt &AndRHSV = AndRHS->getValue();
 
       // If there is only one bit set.
       if (AndRHSV.isPowerOf2()) {
         // Ok, at this point, we know that we are masking the result of the
         // ADD down to exactly one bit.  If the constant we are adding has
         // no bits set below this bit, then we can eliminate the ADD.
-        const APInt& AddRHS = cast<ConstantInt>(OpRHS)->getValue();
+        const APInt& AddRHS = OpRHS->getValue();
 
         // Check to see if any bits below the one bit set in AndRHSV are set.
         if ((AddRHS & (AndRHSV-1)) == 0) {
