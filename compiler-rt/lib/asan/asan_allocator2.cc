@@ -432,17 +432,20 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
   return res;
 }
 
+static void ReportInvalidFree(void *ptr, u8 chunk_state, StackTrace *stack) {
+  if (chunk_state == CHUNK_QUARANTINE)
+    ReportDoubleFree((uptr)ptr, stack);
+  else
+    ReportFreeNotMalloced((uptr)ptr, stack);
+}
+
 static void AtomicallySetQuarantineFlag(AsanChunk *m,
                                         void *ptr, StackTrace *stack) {
   u8 old_chunk_state = CHUNK_ALLOCATED;
   // Flip the chunk_state atomically to avoid race on double-free.
   if (!atomic_compare_exchange_strong((atomic_uint8_t*)m, &old_chunk_state,
-                                      CHUNK_QUARANTINE, memory_order_acquire)) {
-    if (old_chunk_state == CHUNK_QUARANTINE)
-      ReportDoubleFree((uptr)ptr, stack);
-    else
-      ReportFreeNotMalloced((uptr)ptr, stack);
-  }
+                                      CHUNK_QUARANTINE, memory_order_acquire))
+    ReportInvalidFree(ptr, old_chunk_state, stack);
   CHECK_EQ(CHUNK_ALLOCATED, old_chunk_state);
 }
 
@@ -514,6 +517,9 @@ static void *Reallocate(void *old_ptr, uptr new_size, StackTrace *stack) {
 
   void *new_ptr = Allocate(new_size, 8, stack, FROM_MALLOC, true);
   if (new_ptr) {
+    u8 chunk_state = m->chunk_state;
+    if (chunk_state != CHUNK_ALLOCATED)
+      ReportInvalidFree(old_ptr, chunk_state, stack);
     CHECK_NE(REAL(memcpy), (void*)0);
     uptr memcpy_size = Min(new_size, m->UsedSize());
     // If realloc() races with free(), we may start copying freed memory.
