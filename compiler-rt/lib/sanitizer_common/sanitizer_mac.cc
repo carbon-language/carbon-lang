@@ -356,12 +356,19 @@ void InitTlsSize() {
 
 void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
                           uptr *tls_addr, uptr *tls_size) {
+#ifndef SANITIZER_GO
   uptr stack_top, stack_bottom;
   GetThreadStackTopAndBottom(main, &stack_top, &stack_bottom);
   *stk_addr = stack_bottom;
   *stk_size = stack_top - stack_bottom;
   *tls_addr = 0;
   *tls_size = 0;
+#else
+  *stk_addr = 0;
+  *stk_size = 0;
+  *tls_addr = 0;
+  *tls_size = 0;
+#endif
 }
 
 }  // namespace __sanitizer
