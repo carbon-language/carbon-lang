@@ -259,7 +259,7 @@ bool MSP430DAGToDAGISel::SelectAddr(SDValue N,
   }
 
   Base  = (AM.BaseType == MSP430ISelAddressMode::FrameIndexBase) ?
-    CurDAG->getTargetFrameIndex(AM.Base.FrameIndex, TLI.getPointerTy()) :
+    CurDAG->getTargetFrameIndex(AM.Base.FrameIndex, TLI->getPointerTy()) :
     AM.Base.Reg;
 
   if (AM.GV)

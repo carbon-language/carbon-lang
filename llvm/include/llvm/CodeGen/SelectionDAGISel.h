@@ -43,7 +43,7 @@ namespace llvm {
 class SelectionDAGISel : public MachineFunctionPass {
 public:
   const TargetMachine &TM;
-  const TargetLowering &TLI;
+  const TargetLowering *TLI;
   const TargetLibraryInfo *LibInfo;
   const TargetTransformInfo *TTI;
   FunctionLoweringInfo *FuncInfo;
@@ -60,7 +60,7 @@ public:
                             CodeGenOpt::Level OL = CodeGenOpt::Default);
   virtual ~SelectionDAGISel();
 
-  const TargetLowering &getTargetLowering() { return TLI; }
+  const TargetLowering *getTargetLowering() { return TLI; }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 

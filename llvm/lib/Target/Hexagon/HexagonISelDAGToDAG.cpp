@@ -396,7 +396,7 @@ SDNode *HexagonDAGToDAGISel::SelectBaseOffsetLoad(LoadSDNode *LD, SDLoc dl) {
     EVT LoadedVT = LD->getMemoryVT();
     int64_t Offset = cast<GlobalAddressSDNode>(Base)->getOffset();
     if (Offset != 0 && OffsetFitsS11(LoadedVT, Offset)) {
-      MVT PointerTy = TLI.getPointerTy();
+      MVT PointerTy = TLI->getPointerTy();
       const GlobalValue* GV =
         cast<GlobalAddressSDNode>(Base)->getGlobal();
       SDValue TargAddr =
@@ -769,7 +769,7 @@ SDNode *HexagonDAGToDAGISel::SelectBaseOffsetStore(StoreSDNode *ST,
       EVT StoredVT = ST->getMemoryVT();
       int64_t Offset = cast<GlobalAddressSDNode>(Base)->getOffset();
       if (Offset != 0 && OffsetFitsS11(StoredVT, Offset)) {
-        MVT PointerTy = TLI.getPointerTy();
+        MVT PointerTy = TLI->getPointerTy();
         const GlobalValue* GV =
           cast<GlobalAddressSDNode>(Base)->getGlobal();
         SDValue TargAddr =

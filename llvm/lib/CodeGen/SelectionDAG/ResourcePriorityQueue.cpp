@@ -42,11 +42,11 @@ static cl::opt<signed> RegPressureThreshold(
 
 ResourcePriorityQueue::ResourcePriorityQueue(SelectionDAGISel *IS) :
   Picker(this),
-  InstrItins(IS->getTargetLowering().getTargetMachine().getInstrItineraryData())
+ InstrItins(IS->getTargetLowering()->getTargetMachine().getInstrItineraryData())
 {
-   TII = IS->getTargetLowering().getTargetMachine().getInstrInfo();
-   TRI = IS->getTargetLowering().getTargetMachine().getRegisterInfo();
-   TLI = &IS->getTargetLowering();
+   TII = IS->getTargetLowering()->getTargetMachine().getInstrInfo();
+   TRI = IS->getTargetLowering()->getTargetMachine().getRegisterInfo();
+   TLI = IS->getTargetLowering();
 
    const TargetMachine &tm = (*IS->MF).getTarget();
    ResourcesModel = tm.getInstrInfo()->CreateTargetScheduleState(&tm,NULL);

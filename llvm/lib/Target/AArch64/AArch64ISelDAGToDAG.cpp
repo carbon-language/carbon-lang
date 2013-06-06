@@ -243,12 +243,12 @@ SDNode *AArch64DAGToDAGISel::TrySelectToMoveImm(SDNode *Node) {
 SDValue
 AArch64DAGToDAGISel::getConstantPoolItemAddress(SDLoc DL,
                                                 const Constant *CV) {
-  EVT PtrVT = TLI.getPointerTy();
+  EVT PtrVT = TLI->getPointerTy();
 
-  switch (TLI.getTargetMachine().getCodeModel()) {
+  switch (TLI->getTargetMachine().getCodeModel()) {
   case CodeModel::Small: {
     unsigned Alignment =
-        TLI.getDataLayout()->getABITypeAlignment(CV->getType());
+        TLI->getDataLayout()->getABITypeAlignment(CV->getType());
     return CurDAG->getNode(
         AArch64ISD::WrapperSmall, DL, PtrVT,
         CurDAG->getTargetConstantPool(CV, PtrVT, 0, 0, AArch64II::MO_NO_FLAG),
@@ -312,7 +312,7 @@ SDNode *AArch64DAGToDAGISel::SelectToLitPool(SDNode *Node) {
                                                   MemType.getSizeInBits()),
                                   UnsignedVal);
   SDValue PoolAddr = getConstantPoolItemAddress(DL, CV);
-  unsigned Alignment = TLI.getDataLayout()->getABITypeAlignment(CV->getType());
+  unsigned Alignment = TLI->getDataLayout()->getABITypeAlignment(CV->getType());
 
   return CurDAG->getExtLoad(Extension, DL, DestType, CurDAG->getEntryNode(),
                             PoolAddr,
@@ -327,7 +327,7 @@ SDNode *AArch64DAGToDAGISel::LowerToFPLitPool(SDNode *Node) {
   const ConstantFP *FV = cast<ConstantFPSDNode>(Node)->getConstantFPValue();
   EVT DestType = Node->getValueType(0);
 
-  unsigned Alignment = TLI.getDataLayout()->getABITypeAlignment(FV->getType());
+  unsigned Alignment = TLI->getDataLayout()->getABITypeAlignment(FV->getType());
   SDValue PoolAddr = getConstantPoolItemAddress(DL, FV);
 
   return CurDAG->getLoad(DestType, DL, CurDAG->getEntryNode(), PoolAddr,
@@ -473,7 +473,7 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
                         AArch64::ATOMIC_CMP_SWAP_I64);
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(Node)->getIndex();
-    EVT PtrTy = TLI.getPointerTy();
+    EVT PtrTy = TLI->getPointerTy();
     SDValue TFI = CurDAG->getTargetFrameIndex(FI, PtrTy);
     return CurDAG->SelectNodeTo(Node, AArch64::ADDxxi_lsl0_s, PtrTy,
                                 TFI, CurDAG->getTargetConstant(0, PtrTy));
