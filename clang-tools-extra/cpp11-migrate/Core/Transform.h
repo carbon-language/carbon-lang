@@ -111,6 +111,15 @@ struct TransformOptions {
   /// \brief Enable the use of performance timers.
   bool EnableTiming;
 
+  /// \brief Allow changes to headers included from the main source file.
+  /// Transform sub-classes should use ModifiableHeaders to determine which
+  /// headers are modifiable and which are not.
+  bool EnableHeaderModifications;
+
+  /// \brief Contains information on which headers are safe to transform and
+  /// which aren't.
+  IncludeExcludeInfo ModifiableHeaders;
+
   /// \brief Maximum allowed level of risk.
   RiskLevel MaxRiskLevel;
 };
