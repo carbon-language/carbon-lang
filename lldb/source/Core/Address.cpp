@@ -1003,16 +1003,16 @@ lldb_private::operator> (const Address& lhs, const Address& rhs)
 bool
 lldb_private::operator== (const Address& a, const Address& rhs)
 {
-    return  a.GetSection() == rhs.GetSection() &&
-            a.GetOffset()  == rhs.GetOffset();
+    return  a.GetOffset()  == rhs.GetOffset() &&
+            a.GetSection() == rhs.GetSection();
 }
 // The operator != checks for exact inequality only (differing section, or
 // different offset)
 bool
 lldb_private::operator!= (const Address& a, const Address& rhs)
 {
-    return  a.GetSection() != rhs.GetSection() ||
-            a.GetOffset()  != rhs.GetOffset();
+    return  a.GetOffset()  != rhs.GetOffset() ||
+            a.GetSection() != rhs.GetSection();
 }
 
 AddressClass
