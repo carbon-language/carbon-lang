@@ -23,7 +23,8 @@ extern "C" {
   // be treated as non-leaks. Disable/enable pairs can be nested.
   void __lsan_disable();
   void __lsan_enable();
-
+  // The heap object into which p points will be treated as a non-leak.
+  void __lsan_ignore_object(const void *p);
 #ifdef __cplusplus
 }  // extern "C"
 

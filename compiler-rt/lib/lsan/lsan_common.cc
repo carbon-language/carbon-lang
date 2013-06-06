@@ -23,6 +23,9 @@
 #if CAN_SANITIZE_LEAKS
 namespace __lsan {
 
+// This mutex is used to prevent races between DoLeakCheck and SuppressObject.
+BlockingMutex global_mutex(LINKER_INITIALIZED);
+
 Flags lsan_flags;
 
 static void InitializeFlags() {
@@ -37,6 +40,7 @@ static void InitializeFlags() {
   f->use_stacks = true;
   f->use_tls = true;
   f->use_unaligned = false;
+  f->verbosity = 0;
   f->log_pointers = false;
   f->log_threads = false;
 
@@ -52,6 +56,7 @@ static void InitializeFlags() {
     CHECK_GE(&f->resolution, 0);
     ParseFlag(options, &f->max_leaks, "max_leaks");
     CHECK_GE(&f->max_leaks, 0);
+    ParseFlag(options, &f->verbosity, "verbosity");
     ParseFlag(options, &f->log_pointers, "log_pointers");
     ParseFlag(options, &f->log_threads, "log_threads");
     ParseFlag(options, &f->exitcode, "exitcode");
@@ -311,12 +316,13 @@ static void DoLeakCheckCallback(const SuspendedThreadsList &suspended_threads,
 }
 
 void DoLeakCheck() {
+  BlockingMutexLock l(&global_mutex);
   static bool already_done;
+  CHECK(!already_done);
+  already_done = true;
   LeakCheckResult result = kFatalError;
   LockThreadRegistry();
   LockAllocator();
-  CHECK(!already_done);
-  already_done = true;
   StopTheWorld(DoLeakCheckCallback, &result);
   UnlockAllocator();
   UnlockThreadRegistry();
@@ -394,4 +400,22 @@ void LeakReport::PrintSummary() {
 }
 
 }  // namespace __lsan
+
+using namespace __lsan;  // NOLINT
+
+extern "C" {
+void __lsan_ignore_object(const void *p) {
+  // Cannot use PointsIntoChunk or LsanMetadata here, since the allocator is not
+  // locked.
+  BlockingMutexLock l(&global_mutex);
+  IgnoreObjectResult res = IgnoreObjectLocked(p);
+  if (res == kIgnoreObjectInvalid && flags()->verbosity >= 1)
+    Report("__lsan_ignore_object(): no heap object found at %p", p);
+  if (res == kIgnoreObjectAlreadyIgnored && flags()->verbosity >= 1)
+    Report("__lsan_ignore_object(): "
+           "heap object at %p is already being ignored\n", p);
+  if (res == kIgnoreObjectSuccess && flags()->verbosity >= 2)
+    Report("__lsan_ignore_object(): ignoring heap object at %p\n", p);
+}
+}  // extern "C"
 #endif  // CAN_SANITIZE_LEAKS

@@ -792,6 +792,20 @@ template void ForEachChunk<MarkIndirectlyLeakedCb>(
 template void ForEachChunk<CollectSuppressedCb>(
     CollectSuppressedCb const &callback);
 #endif  // CAN_SANITIZE_LEAKS
+
+IgnoreObjectResult IgnoreObjectLocked(const void *p) {
+  uptr addr = reinterpret_cast<uptr>(p);
+  __asan::AsanChunk *m = __asan::GetAsanChunkByAddr(addr);
+  if (!m) return kIgnoreObjectInvalid;
+  if ((m->chunk_state == __asan::CHUNK_ALLOCATED) && m->AddrIsInside(addr)) {
+    if (m->lsan_tag == kSuppressed)
+      return kIgnoreObjectAlreadyIgnored;
+    m->lsan_tag = __lsan::kSuppressed;
+    return kIgnoreObjectSuccess;
+  } else {
+    return kIgnoreObjectInvalid;
+  }
+}
 }  // namespace __lsan
 
 extern "C" {

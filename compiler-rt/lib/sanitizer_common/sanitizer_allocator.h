@@ -344,15 +344,15 @@ class SizeClassAllocator64 {
     region->n_freed += b->count;
   }
 
-  static bool PointerIsMine(void *p) {
+  static bool PointerIsMine(const void *p) {
     return reinterpret_cast<uptr>(p) / kSpaceSize == kSpaceBeg / kSpaceSize;
   }
 
-  static uptr GetSizeClass(void *p) {
+  static uptr GetSizeClass(const void *p) {
     return (reinterpret_cast<uptr>(p) / kRegionSize) % kNumClassesRounded;
   }
 
-  void *GetBlockBegin(void *p) {
+  void *GetBlockBegin(const void *p) {
     uptr class_id = GetSizeClass(p);
     uptr size = SizeClassMap::Size(class_id);
     if (!size) return 0;
@@ -671,15 +671,15 @@ class SizeClassAllocator32 {
     sci->free_list.push_front(b);
   }
 
-  bool PointerIsMine(void *p) {
+  bool PointerIsMine(const void *p) {
     return GetSizeClass(p) != 0;
   }
 
-  uptr GetSizeClass(void *p) {
+  uptr GetSizeClass(const void *p) {
     return possible_regions[ComputeRegionId(reinterpret_cast<uptr>(p))];
   }
 
-  void *GetBlockBegin(void *p) {
+  void *GetBlockBegin(const void *p) {
     CHECK(PointerIsMine(p));
     uptr mem = reinterpret_cast<uptr>(p);
     uptr beg = ComputeRegionBeg(mem);
@@ -1006,7 +1006,7 @@ class LargeMmapAllocator {
     return res;
   }
 
-  bool PointerIsMine(void *p) {
+  bool PointerIsMine(const void *p) {
     return GetBlockBegin(p) != 0;
   }
 
@@ -1021,7 +1021,7 @@ class LargeMmapAllocator {
     return GetHeader(p) + 1;
   }
 
-  void *GetBlockBegin(void *ptr) {
+  void *GetBlockBegin(const void *ptr) {
     uptr p = reinterpret_cast<uptr>(ptr);
     SpinMutexLock l(&mutex_);
     uptr nearest_chunk = 0;
@@ -1231,7 +1231,7 @@ class CombinedAllocator {
     return secondary_.GetMetaData(p);
   }
 
-  void *GetBlockBegin(void *p) {
+  void *GetBlockBegin(const void *p) {
     if (primary_.PointerIsMine(p))
       return primary_.GetBlockBegin(p);
     return secondary_.GetBlockBegin(p);

@@ -64,6 +64,9 @@ struct Flags {
   // Consider unaligned pointers valid.
   bool use_unaligned;
 
+  // User-visible verbosity.
+  int verbosity;
+
   // Debug logging.
   bool log_pointers;
   bool log_threads;
@@ -153,6 +156,12 @@ class CollectSuppressedCb {
   InternalVector<uptr> *frontier_;
 };
 
+enum IgnoreObjectResult {
+  kIgnoreObjectSuccess,
+  kIgnoreObjectAlreadyIgnored,
+  kIgnoreObjectInvalid
+};
+
 // The following must be implemented in the parent tool.
 
 template<typename Callable> void ForEachChunk(Callable const &callback);
@@ -172,6 +181,8 @@ bool GetThreadRangesLocked(uptr os_id, uptr *stack_begin, uptr *stack_end,
 void *PointsIntoChunk(void *p);
 // Return address of user-visible chunk contained in this allocator chunk.
 void *GetUserBegin(void *p);
+// Helper for __lsan_ignore_object().
+IgnoreObjectResult IgnoreObjectLocked(const void *p);
 // Wrapper for chunk metadata operations.
 class LsanMetadata {
  public:

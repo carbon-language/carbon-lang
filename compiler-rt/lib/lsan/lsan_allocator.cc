@@ -190,6 +190,21 @@ template void ForEachChunk<MarkIndirectlyLeakedCb>(
     MarkIndirectlyLeakedCb const &callback);
 template void ForEachChunk<CollectSuppressedCb>(
     CollectSuppressedCb const &callback);
+
+IgnoreObjectResult IgnoreObjectLocked(const void *p) {
+  void *chunk = allocator.GetBlockBegin(p);
+  if (!chunk || p < chunk) return kIgnoreObjectInvalid;
+  ChunkMetadata *m = Metadata(chunk);
+  CHECK(m);
+  if (m->allocated && (uptr)p < (uptr)chunk + m->requested_size) {
+    if (m->tag == kSuppressed)
+      return kIgnoreObjectAlreadyIgnored;
+    m->tag = kSuppressed;
+    return kIgnoreObjectSuccess;
+  } else {
+    return kIgnoreObjectInvalid;
+  }
+}
 }  // namespace __lsan
 
 extern "C" {
