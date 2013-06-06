@@ -363,6 +363,16 @@ static_assert(&b4 != &b2, "");
 // Proposed DR: copy-elision doesn't trigger lifetime extension.
 constexpr B b5 = B{ {0}, {0} }; // expected-error {{constant expression}} expected-note {{reference to temporary}} expected-note {{here}}
 
+namespace NestedNonStatic {
+  // Proposed DR: for a reference constant expression to refer to a static
+  // storage duration temporary, that temporary must itself be initialized
+  // by a constant expression (a core constant expression is not enough).
+  struct A { int &&r; };
+  struct B { A &&a; };
+  constexpr B a = { A{0} }; // ok
+  constexpr B b = { A(A{0}) }; // expected-error {{constant expression}} expected-note {{reference to temporary}} expected-note {{here}}
+}
+
 }
 
 constexpr int strcmp_ce(const char *p, const char *q) {

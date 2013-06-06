@@ -4099,12 +4099,17 @@ bool LValueExprEvaluator::VisitMaterializeTemporaryExpr(
     Result.set(E, Info.CurrentCall->Index);
   }
 
+  QualType Type = Inner->getType();
+
   // Materialize the temporary itself.
-  if (!EvaluateInPlace(*Value, Info, Result, Inner))
+  if (!EvaluateInPlace(*Value, Info, Result, Inner) ||
+      (E->getStorageDuration() == SD_Static &&
+       !CheckConstantExpression(Info, E->getExprLoc(), Type, *Value))) {
+    *Value = APValue();
     return false;
+  }
 
   // Adjust our lvalue to refer to the desired subobject.
-  QualType Type = Inner->getType();
   for (unsigned I = Adjustments.size(); I != 0; /**/) {
     --I;
     switch (Adjustments[I].Kind) {
