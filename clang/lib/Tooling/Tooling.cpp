@@ -236,8 +236,9 @@ void ToolInvocation::addFileMappingsTo(SourceManager &Sources) {
 
 ClangTool::ClangTool(const CompilationDatabase &Compilations,
                      ArrayRef<std::string> SourcePaths)
-    : Files((FileSystemOptions())),
-      ArgsAdjusters(1, new ClangSyntaxOnlyAdjuster()) {
+    : Files((FileSystemOptions())) {
+  ArgsAdjusters.push_back(new ClangStripOutputAdjuster());
+  ArgsAdjusters.push_back(new ClangSyntaxOnlyAdjuster());
   for (unsigned I = 0, E = SourcePaths.size(); I != E; ++I) {
     SmallString<1024> File(getAbsolutePath(SourcePaths[I]));
 

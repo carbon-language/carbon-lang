@@ -37,6 +37,23 @@ ClangSyntaxOnlyAdjuster::Adjust(const CommandLineArguments &Args) {
   return AdjustedArgs;
 }
 
+CommandLineArguments
+ClangStripOutputAdjuster::Adjust(const CommandLineArguments &Args) {
+  CommandLineArguments AdjustedArgs;
+  for (size_t i = 0, e = Args.size(); i < e; ++i) {
+    StringRef Arg = Args[i];
+    if(!Arg.startswith("-o"))
+      AdjustedArgs.push_back(Args[i]);
+
+    if(Arg == "-o") {
+      // Output is specified as -o foo. Skip the next argument also.
+      ++i;
+    }
+    // Else, the output is specified as -ofoo. Just do nothing.
+  }
+  return AdjustedArgs;
+}
+
 } // end namespace tooling
 } // end namespace clang
 

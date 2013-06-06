@@ -52,6 +52,12 @@ class ClangSyntaxOnlyAdjuster : public ArgumentsAdjuster {
   virtual CommandLineArguments Adjust(const CommandLineArguments &Args);
 };
 
+/// \brief An argument adjuster which removes output-related command line
+/// arguments.
+class ClangStripOutputAdjuster : public ArgumentsAdjuster {
+  virtual CommandLineArguments Adjust(const CommandLineArguments &Args);
+};
+
 } // end namespace tooling
 } // end namespace clang
 

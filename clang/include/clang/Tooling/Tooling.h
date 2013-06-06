@@ -233,7 +233,7 @@ class ClangTool {
   // Contains a list of pairs (<file name>, <file content>).
   std::vector< std::pair<StringRef, StringRef> > MappedFileContents;
 
-  SmallVector<ArgumentsAdjuster *, 1> ArgsAdjusters;
+  SmallVector<ArgumentsAdjuster *, 2> ArgsAdjusters;
 };
 
 template <typename T>
