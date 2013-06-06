@@ -172,7 +172,7 @@ public:
                 return false;
             
             lldb::offset_t offset = 0;
-            if (value_size <= 8)
+            if (value_size == 1 || value_size == 2 || value_size == 4 || value_size == 8)
             {
                 uint64_t u64value = value_extractor.GetMaxU64(&offset, value_size);
                 return AssignToMatchType(scalar, u64value, value->getType());
