@@ -381,7 +381,7 @@ def expectedFailureGcc(bugnumber=None, compiler_version=["=", None]):
             try:
                 bugnumber(*args, **kwargs)
             except Exception:
-                if "gcc" in test_compiler and self.expectedVersion(compiler_version):
+                if "gcc" in test_compiler and self.expectedCompilerVersion(compiler_version):
                     raise case._ExpectedFailure(sys.exc_info(),None)
                 else:
                     raise
@@ -398,7 +398,7 @@ def expectedFailureGcc(bugnumber=None, compiler_version=["=", None]):
                 try:
                     func(*args, **kwargs)
                 except Exception:
-                    if "gcc" in test_compiler and self.expectedVersion(compiler_version):
+                    if "gcc" in test_compiler and self.expectedCompilerVersion(compiler_version):
                         raise case._ExpectedFailure(sys.exc_info(),bugnumber)
                     else:
                         raise
@@ -1182,8 +1182,12 @@ class Base(unittest2.TestCase):
                 version = m.group(1)
         return version
 
-    def expectedVersion(self, compiler_version):
-        """Determines if compiler_version matches the current tool chain."""
+    def expectedCompilerVersion(self, compiler_version):
+        """Returns True iff compiler_version[1] matches the current compiler version.
+           Use compiler_version[0] to specify the operator used to determine if a match has occurred.
+           Any operator other than the following defaults to an equality test:
+             '>', '>=', "=>", '<', '<=', '=<', '!=', "!" or 'not'
+        """
         if (compiler_version == None):
             return True
         operator = str(compiler_version[0])
@@ -1204,9 +1208,15 @@ class Base(unittest2.TestCase):
         return str(version) in str(self.getCompilerVersion())
 
     def expectedCompiler(self, compilers):
+        """Returns True iff any element of compilers is a sub-string of the current compiler."""
         if (compilers == None):
             return True
-        return self.getCompiler() in compilers
+
+        for compiler in compilers:
+            if compiler in self.getCompiler():
+                return True
+
+        return False
 
     def getRunOptions(self):
         """Command line option for -A and -C to run this test again, called from
