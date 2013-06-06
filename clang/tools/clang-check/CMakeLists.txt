@@ -14,6 +14,7 @@ target_link_libraries(clang-check
   clangTooling
   clangBasic
   clangRewriteFrontend
+  clangStaticAnalyzerFrontend
   )
 
 install(TARGETS clang-check
