@@ -46,7 +46,8 @@ BreakpointLocation::BreakpointLocation
     m_address (addr),
     m_owner (owner),
     m_options_ap (),
-    m_bp_site_sp ()
+    m_bp_site_sp (),
+    m_condition_mutex ()
 {
     SetThreadID (tid);
     m_being_created = false;
@@ -249,6 +250,8 @@ bool
 BreakpointLocation::ConditionSaysStop (ExecutionContext &exe_ctx, Error &error)
 {
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+ 
+    Mutex::Locker evaluation_locker(m_condition_mutex);
     
     size_t condition_hash;
     const char *condition_text = GetConditionText(&condition_hash);
