@@ -30,13 +30,63 @@
    this function is called to wait for an incoming connection.
    This function blocks while waiting for that connection.  */
 
+bool
+ResolveIPV4HostName (const char *hostname, in_addr_t &addr)
+{
+    if (hostname == NULL ||
+        hostname[0] == '\0' ||
+        strcmp(hostname, "localhost") == 0 ||
+        strcmp(hostname, "127.0.0.1") == 0)
+    {
+        addr = htonl (INADDR_LOOPBACK);
+        return true;
+    }
+    else if (strcmp(hostname, "*") == 0)
+    {
+        addr = htonl (INADDR_ANY);
+        return true;
+    }
+    else
+    {
+        // See if an IP address was specified as numbers
+        int inet_pton_result = ::inet_pton (AF_INET, hostname, &addr);
+
+        if (inet_pton_result == 1)
+            return true;
+        
+        struct hostent *host_entry = gethostbyname (hostname);
+        if (host_entry)
+        {
+            std::string ip_str (::inet_ntoa (*(struct in_addr *)*host_entry->h_addr_list));
+            inet_pton_result = ::inet_pton (AF_INET, ip_str.c_str(), &addr);
+            if (inet_pton_result == 1)
+                return true;
+        }
+    }
+    return false;
+}
+
 rnb_err_t
-RNBSocket::Listen (in_port_t port, PortBoundCallback callback, const void *callback_baton, bool localhost_only)
+RNBSocket::Listen (const char *listen_host, in_port_t port, PortBoundCallback callback, const void *callback_baton)
 {
     //DNBLogThreadedIf(LOG_RNB_COMM, "%8u RNBSocket::%s called", (uint32_t)m_timer.ElapsedMicroSeconds(true), __FUNCTION__);
     // Disconnect without saving errno
     Disconnect (false);
 
+    // Now figure out the hostname that will be attaching and palce it into
+    struct sockaddr_in listen_addr;
+    ::memset (&listen_addr, 0, sizeof listen_addr);
+    listen_addr.sin_len = sizeof listen_addr;
+    listen_addr.sin_family = AF_INET;
+    listen_addr.sin_port = htons (port);
+    listen_addr.sin_addr.s_addr = INADDR_ANY;
+    
+    if (!ResolveIPV4HostName(listen_host, listen_addr.sin_addr.s_addr))
+    {
+        DNBLogThreaded("error: failed to resolve connecting host '%s'", listen_host);
+        return rnb_err;
+    }
+    
     DNBError err;
     int listen_fd = ::socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (listen_fd == -1)
@@ -56,15 +106,7 @@ RNBSocket::Listen (in_port_t port, PortBoundCallback callback, const void *callb
     sa.sin_len = sizeof sa;
     sa.sin_family = AF_INET;
     sa.sin_port = htons (port);
-    if (localhost_only)
-    {
-        sa.sin_addr.s_addr = htonl (INADDR_LOOPBACK);
-    }
-    else
-    {
-        sa.sin_addr.s_addr = htonl (INADDR_ANY);
-    }
-
+    sa.sin_addr.s_addr = INADDR_ANY; // Let incoming connections bind to any host network interface (this is NOT who can connect to us)
     int error = ::bind (listen_fd, (struct sockaddr *) &sa, sizeof(sa));
     if (error == -1)
         err.SetError(errno, DNBError::POSIX);
@@ -92,7 +134,7 @@ RNBSocket::Listen (in_port_t port, PortBoundCallback callback, const void *callb
         }
     }
 
-    error = ::listen (listen_fd, 1);
+    error = ::listen (listen_fd, 5);
     if (error == -1)
         err.SetError(errno, DNBError::POSIX);
 
@@ -105,12 +147,52 @@ RNBSocket::Listen (in_port_t port, PortBoundCallback callback, const void *callb
         return rnb_err;
     }
 
-    m_fd = ::accept (listen_fd, NULL, 0);
-    if (m_fd == -1)
-        err.SetError(errno, DNBError::POSIX);
+    struct sockaddr_in accept_addr;
+    ::memset (&accept_addr, 0, sizeof accept_addr);
+    accept_addr.sin_len = sizeof accept_addr;
 
-    if (err.Fail() || DNBLogCheckLogBit(LOG_RNB_COMM))
-        err.LogThreaded("::accept ( socket = %i, address = NULL, address_len = 0 )", listen_fd);
+    bool accept_connection = false;
+
+    // Loop until we are happy with our connection
+    while (!accept_connection)
+    {
+        socklen_t accept_addr_len = sizeof accept_addr;
+        m_fd = ::accept (listen_fd, (struct sockaddr *)&accept_addr, &accept_addr_len);
+
+        if (m_fd == -1)
+            err.SetError(errno, DNBError::POSIX);
+        
+        if (err.Fail() || DNBLogCheckLogBit(LOG_RNB_COMM))
+            err.LogThreaded("::accept ( socket = %i, address = %p, address_len = %u )", listen_fd, &accept_addr, accept_addr_len);
+
+        if (err.Fail())
+            break;
+
+        if (listen_addr.sin_addr.s_addr == INADDR_ANY)
+            accept_connection = true;
+        else
+        {
+            if (accept_addr_len == listen_addr.sin_len &&
+                accept_addr.sin_addr.s_addr == listen_addr.sin_addr.s_addr)
+            {
+                accept_connection = true;
+            }
+            else
+            {
+                ::close (m_fd);
+                m_fd = -1;
+                const uint8_t *accept_ip = (const uint8_t *)&accept_addr.sin_addr.s_addr;
+                const uint8_t *listen_ip = (const uint8_t *)&listen_addr.sin_addr.s_addr;
+                ::fprintf (stderr,
+                           "error: rejecting incoming connection from %u.%u.%u.%u (expecting %u.%u.%u.%u)\n",
+                           accept_ip[0], accept_ip[1], accept_ip[2], accept_ip[3],
+                           listen_ip[0], listen_ip[1], listen_ip[2], listen_ip[3]);
+                DNBLogThreaded ("error: rejecting connection from %u.%u.%u.%u (expecting %u.%u.%u.%u)",
+                                accept_ip[0], accept_ip[1], accept_ip[2], accept_ip[3],
+                                listen_ip[0], listen_ip[1], listen_ip[2], listen_ip[3]);
+            }
+        }
+    }
 
     ClosePort (listen_fd, false);
 
@@ -145,24 +227,11 @@ RNBSocket::Connect (const char *host, uint16_t port)
     sa.sin_family = AF_INET;
     sa.sin_port = htons (port);
     
-    if (host == NULL)
-        host = "localhost";
-
-    int inet_pton_result = ::inet_pton (AF_INET, host, &sa.sin_addr);
-    
-    if (inet_pton_result <= 0)
+    if (!ResolveIPV4HostName(host, sa.sin_addr.s_addr))
     {
-        struct hostent *host_entry = gethostbyname (host);
-        if (host_entry)
-        {
-            std::string host_str (::inet_ntoa (*(struct in_addr *)*host_entry->h_addr_list));
-            inet_pton_result = ::inet_pton (AF_INET, host_str.c_str(), &sa.sin_addr);
-            if (inet_pton_result <= 0)
-            {
-                Disconnect (false);
-                return rnb_err;
-            }
-        }
+        DNBLogThreaded("error: failed to resolve host '%s'", host);
+        Disconnect (false);
+        return rnb_err;
     }
     
     if (-1 == ::connect (m_fd, (const struct sockaddr *)&sa, sizeof(sa)))

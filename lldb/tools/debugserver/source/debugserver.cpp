@@ -685,13 +685,13 @@ PortWasBoundCallback (const void *baton, in_port_t port)
 }
 
 static int
-StartListening (RNBRemote *remote, int listen_port, const char *unix_socket_name, bool localhost_only)
+StartListening (RNBRemote *remote, const char *listen_host, int listen_port, const char *unix_socket_name)
 {
     if (!remote->Comm().IsConnected())
     {
         if (listen_port != 0)
-            RNBLogSTDOUT ("Listening to port %i...\n", listen_port);
-        if (remote->Comm().Listen(listen_port, PortWasBoundCallback, unix_socket_name, localhost_only) != rnb_success)
+            RNBLogSTDOUT ("Listening to port %i for a connection from %s...\n", listen_port, listen_host ? listen_host : "localhost");
+        if (remote->Comm().Listen(listen_host, listen_port, PortWasBoundCallback, unix_socket_name) != rnb_success)
         {
             RNBLogSTDERR ("Failed to get connection from a remote gdb process.\n");
             return 0;
@@ -787,7 +787,6 @@ static struct option g_long_options[] =
     { "working-dir",        required_argument,  NULL,               'W' },  // The working directory that the inferior process should have (only if debugserver launches the process)
     { "platform",           required_argument,  NULL,               'p' },  // Put this executable into a remote platform mode
     { "unix-socket",        required_argument,  NULL,               'u' },  // If we need to handshake with our parent process, an option will be passed down that specifies a unix socket name to use
-    { "open-connection",    no_argument,        NULL,               'H' },  // If debugserver is listening to a TCP port, allow connections from any host (as opposed to just "localhost" connections)
     { NULL,                 0,                  NULL,               0   }
 };
 
@@ -843,7 +842,6 @@ main (int argc, char *argv[])
     useconds_t waitfor_interval = 1000;     // Time in usecs between process lists polls when waiting for a process by name, default 1 msec.
     useconds_t waitfor_duration = 0;        // Time in seconds to wait for a process by name, 0 means wait forever.
     bool no_stdio = false;
-    bool localhost_only = true;
 
 #if !defined (DNBLOG_ENABLED)
     compile_options += "(no-logging) ";
@@ -1083,10 +1081,6 @@ main (int argc, char *argv[])
             case 'u':
                 unix_socket_name.assign (optarg);
                 break;
-
-            case 'H':
-                localhost_only = false;
-                break;
         }
     }
     
@@ -1156,6 +1150,7 @@ main (int argc, char *argv[])
                   compile_options.c_str(),
                   RNB_ARCH);
 
+    std::string listen_host;
     int listen_port = INT32_MAX;
     char str[PATH_MAX];
     str[0] = '\0';
@@ -1172,16 +1167,27 @@ main (int argc, char *argv[])
         int items_scanned = ::sscanf (argv[0], "%[^:]:%i", str, &listen_port);
         if (items_scanned == 2)
         {
-            DNBLogDebug("host = '%s'  port = %i", str, listen_port);
-        }
-        else if (argv[0][0] == '/')
-        {
-            listen_port = INT32_MAX;
-            strncpy(str, argv[0], sizeof(str));
+            listen_host = str;
+            DNBLogDebug("host = '%s'  port = %i", listen_host.c_str(), listen_port);
         }
         else
         {
-            show_usage_and_exit (2);
+            // No hostname means "localhost"
+            int items_scanned = ::sscanf (argv[0], "%i", &listen_port);
+            if (items_scanned == 1)
+            {
+                listen_host = "localhost";
+                DNBLogDebug("host = '%s'  port = %i", listen_host.c_str(), listen_port);
+            }
+            else if (argv[0][0] == '/')
+            {
+                listen_port = INT32_MAX;
+                strncpy(str, argv[0], sizeof(str));
+            }
+            else
+            {
+                show_usage_and_exit (2);
+            }
         }
 
         // We just used the 'host:port' or the '/path/file' arg...
@@ -1292,7 +1298,7 @@ main (int argc, char *argv[])
 #endif
                 if (listen_port != INT32_MAX)
                 {
-                    if (!StartListening (remote, listen_port, unix_socket_name.c_str(), localhost_only))
+                    if (!StartListening (remote, listen_host.c_str(), listen_port, unix_socket_name.c_str()))
                         mode = eRNBRunLoopModeExit;
                 }
                 else if (str[0] == '/')
@@ -1405,7 +1411,7 @@ main (int argc, char *argv[])
                 {
                     if (listen_port != INT32_MAX)
                     {
-                        if (!StartListening (remote, listen_port, unix_socket_name.c_str(), localhost_only))
+                        if (!StartListening (remote, listen_host.c_str(), listen_port, unix_socket_name.c_str()))
                             mode = eRNBRunLoopModeExit;
                     }
                     else if (str[0] == '/')
@@ -1430,7 +1436,7 @@ main (int argc, char *argv[])
                     {
                         if (listen_port != INT32_MAX)
                         {
-                            if (!StartListening (remote, listen_port, unix_socket_name.c_str(), localhost_only))
+                            if (!StartListening (remote, listen_host.c_str(), listen_port, unix_socket_name.c_str()))
                                 mode = eRNBRunLoopModeExit;
                         }
                         else if (str[0] == '/')
@@ -1457,7 +1463,7 @@ main (int argc, char *argv[])
             case eRNBRunLoopModePlatformMode:
                 if (listen_port != INT32_MAX)
                 {
-                    if (!StartListening (remote, listen_port, unix_socket_name.c_str(), localhost_only))
+                    if (!StartListening (remote, listen_host.c_str(), listen_port, unix_socket_name.c_str()))
                         mode = eRNBRunLoopModeExit;
                 }
                 else if (str[0] == '/')

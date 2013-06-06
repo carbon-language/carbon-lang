@@ -43,7 +43,10 @@ public:
         Disconnect (false);
     }
 
-    rnb_err_t Listen (in_port_t port, PortBoundCallback callback, const void *callback_baton, bool localhost_only);
+    rnb_err_t Listen (const char *listen_host,
+                      in_port_t port,
+                      PortBoundCallback callback,
+                      const void *callback_baton);
     rnb_err_t Connect (const char *host, uint16_t port);
 
     rnb_err_t useFD(int fd);
