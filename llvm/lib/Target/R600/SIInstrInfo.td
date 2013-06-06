@@ -44,7 +44,7 @@ def IMM12bit : PatLeaf <(imm),
 >;
 
 class InlineImm <ValueType vt> : PatLeaf <(vt imm), [{
-  return ((const SITargetLowering &)TLI).analyzeImmediate(N) == 0;
+  return (*(const SITargetLowering *)TLI).analyzeImmediate(N) == 0;
 }]>;
 
 //===----------------------------------------------------------------------===//
