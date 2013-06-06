@@ -4884,6 +4884,9 @@ TEST_F(FormatTest, WorksFor8bitEncodings) {
                    getLLVMStyleWithColumns(12)));
 }
 
+// FIXME: Encode Cyrillic and CJK characters below to appease MS compilers.
+#if !defined(_MSC_VER)
+
 TEST_F(FormatTest, CountsUTF8CharactersProperly) {
   verifyFormat("\"Однажды в студёную зимнюю пору...\"",
                getLLVMStyleWithColumns(35));
@@ -4951,6 +4954,8 @@ TEST_F(FormatTest, SplitsUTF8BlockComments) {
             " * 𝖀𝕿𝕱-𝟠 */",
             format("/* 𝓣𝓮𝓼𝓽 𝔣𝔬𝔲𝔯 𝕓𝕪𝕥𝕖 𝖀𝕿𝕱-𝟠 */", getLLVMStyleWithColumns(12)));
 }
+
+#endif
 
 } // end namespace tooling
 } // end namespace clang
