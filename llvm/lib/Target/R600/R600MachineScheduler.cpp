@@ -122,23 +122,7 @@ SUnit* R600SchedStrategy::pickNode(bool &IsTopNode) {
   return SU;
 }
 
-bool IsUnScheduled(const SUnit *SU) {
-  return SU->isScheduled;
-}
-
-static
-void Filter(std::vector<SUnit *> &List) {
-  List.erase(std::remove_if(List.begin(), List.end(), IsUnScheduled), List.end());
-}
-
 void R600SchedStrategy::schedNode(SUnit *SU, bool IsTopNode) {
-  if (IsTopNode) {
-    for (unsigned i = 0; i < AluLast; i++) {
-      Filter(Available[i]);
-      Filter(Pending[i]);
-    }
-  }
-
   if (NextInstKind != CurInstKind) {
     DEBUG(dbgs() << "Instruction Type Switch\n");
     if (NextInstKind != IDAlu)
