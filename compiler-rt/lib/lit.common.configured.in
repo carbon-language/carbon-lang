@@ -3,7 +3,9 @@
 
 # Generic config options for all compiler-rt lit tests.
 config.target_triple = "@TARGET_TRIPLE@"
+config.host_arch = "@HOST_ARCH@"
 config.host_os = "@HOST_OS@"
+config.llvm_build_mode = "@LLVM_BUILD_MODE@"
 config.llvm_src_root = "@LLVM_SOURCE_DIR@"
 config.llvm_obj_root = "@LLVM_BINARY_DIR@"
 config.compiler_rt_src_root = "@COMPILER_RT_SOURCE_DIR@"
