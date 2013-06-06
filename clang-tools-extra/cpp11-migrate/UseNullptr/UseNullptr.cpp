@@ -26,7 +26,6 @@ using namespace clang::tooling;
 using namespace clang;
 
 int UseNullptrTransform::apply(const FileContentsByPath &InputStates,
-                               RiskLevel MaxRisk,
                                const CompilationDatabase &Database,
                                const std::vector<std::string> &SourcePaths,
                                FileContentsByPath &ResultStates) {
@@ -43,7 +42,7 @@ int UseNullptrTransform::apply(const FileContentsByPath &InputStates,
   MatchFinder Finder;
   NullptrFixer Fixer(UseNullptrTool.getReplacements(),
                      AcceptedChanges,
-                     MaxRisk);
+                     Options().MaxRiskLevel);
 
   Finder.addMatcher(makeCastSequenceMatcher(), &Fixer);
 

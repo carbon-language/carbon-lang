@@ -30,7 +30,9 @@
 namespace cl = llvm::cl;
 using namespace clang::tooling;
 
-static cl::opt<RiskLevel> MaxRiskLevel(
+TransformOptions GlobalOptions;
+
+static cl::opt<RiskLevel, /*ExternalStorage=*/true> MaxRiskLevel(
     "risk", cl::desc("Select a maximum risk level:"),
     cl::values(clEnumValN(RL_Safe, "safe", "Only safe transformations"),
                clEnumValN(RL_Reasonable, "reasonable",
@@ -40,6 +42,7 @@ static cl::opt<RiskLevel> MaxRiskLevel(
                           "Enable transformations that are likely to "
                           "change semantics"),
                clEnumValEnd),
+    cl::location(GlobalOptions.MaxRiskLevel),
     cl::init(RL_Reasonable));
 
 static cl::opt<bool> FinalSyntaxCheck(
@@ -108,8 +111,9 @@ int main(int argc, const char **argv) {
 
   // Since ExecutionTimeDirectoryName could be an empty string we compare
   // against the default value when the command line option is not specified.
-  bool EnableTiming = (TimingDirectoryName != NoTiming);
-  TransformManager.createSelectedTransforms(EnableTiming);
+  GlobalOptions.EnableTiming = (TimingDirectoryName != NoTiming);
+
+  TransformManager.createSelectedTransforms(GlobalOptions);
 
   if (TransformManager.begin() == TransformManager.end()) {
     llvm::errs() << "No selected transforms\n";
@@ -125,15 +129,14 @@ int main(int argc, const char **argv) {
   for (Transforms::const_iterator I = TransformManager.begin(),
                                   E = TransformManager.end();
        I != E; ++I) {
-    if ((*I)->apply(*InputFileStates, MaxRiskLevel,
-                    OptionsParser.getCompilations(),
+    if ((*I)->apply(*InputFileStates, OptionsParser.getCompilations(),
                     OptionsParser.getSourcePathList(), *OutputFileStates) !=
         0) {
       // FIXME: Improve ClangTool to not abort if just one file fails.
       return 1;
     }
 
-    if (EnableTiming)
+    if (GlobalOptions.EnableTiming)
       collectSourcePerfData(**I, PerfData);
 
     if (SummaryMode) {
@@ -184,7 +187,7 @@ int main(int argc, const char **argv) {
   }
 
   // Report execution times.
-  if (EnableTiming && !PerfData.empty()) {
+  if (GlobalOptions.EnableTiming && !PerfData.empty()) {
     std::string DirectoryName = TimingDirectoryName;
     // Use default directory name.
     if (DirectoryName.empty())

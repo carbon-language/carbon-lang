@@ -17,6 +17,7 @@
 
 #include <string>
 #include <vector>
+#include "IncludeExcludeInfo.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Support/Timer.h"
 
@@ -105,24 +106,32 @@ private:
   clang::Rewriter Rewrite;
 };
 
+/// \brief Container for global options affecting all transforms.
+struct TransformOptions {
+  /// \brief Enable the use of performance timers.
+  bool EnableTiming;
+
+  /// \brief Maximum allowed level of risk.
+  RiskLevel MaxRiskLevel;
+};
+
 /// \brief Abstract base class for all C++11 migration transforms.
 ///
 /// Per-source performance timing is handled by the callbacks
 /// handleBeginSource() and handleEndSource() if timing is enabled. See
-/// clang::tooling::newFrontendActionFactory() for how to register
-/// a Transform object for callbacks.
+/// clang::tooling::newFrontendActionFactory() for how to register a Transform
+/// object for callbacks. When a Transform object is registered for
+/// FrontendAction source file callbacks, this behaviour can be used to time
+/// the application of a MatchFinder by subclasses. Durations are automatically
+/// stored in a TimingVec.
 class Transform : public clang::tooling::SourceFileCallbacks {
 public:
   /// \brief Constructor
   /// \param Name Name of the transform for human-readable purposes (e.g. -help
   /// text)
-  /// \param EnableTiming Enable the timing of the duration between calls to
-  /// handleBeginSource() and handleEndSource(). When a Transform object is
-  /// registered for FrontendAction source file callbacks, this behaviour can
-  /// be used to time the application of a MatchFinder by subclasses. Durations
-  /// are automatically stored in a TimingVec.
-  Transform(llvm::StringRef Name, bool EnableTiming)
-      : Name(Name), EnableTiming(EnableTiming) {
+  /// \param Options Collection of options that affect all transforms.
+  Transform(llvm::StringRef Name, const TransformOptions &Options)
+      : Name(Name), GlobalOptions(Options) {
     Reset();
   }
 
@@ -136,7 +145,6 @@ public:
   /// Upon return, \p ResultStates shall contain the result of performing this
   /// transform on the files listed in \p SourcePaths.
   virtual int apply(const FileContentsByPath &InputStates,
-                    RiskLevel MaxRiskLevel,
                     const clang::tooling::CompilationDatabase &Database,
                     const std::vector<std::string> &SourcePaths,
                     FileContentsByPath &ResultStates) = 0;
@@ -214,9 +222,11 @@ protected:
   /// data for all sources processed by this transform.
   void addTiming(llvm::StringRef Label, llvm::TimeRecord Duration);
 
+  const TransformOptions &Options() { return GlobalOptions; }
+
 private:
   const std::string Name;
-  bool EnableTiming;
+  const TransformOptions &GlobalOptions;
   TimingVec Timings;
   unsigned AcceptedChanges;
   unsigned RejectedChanges;

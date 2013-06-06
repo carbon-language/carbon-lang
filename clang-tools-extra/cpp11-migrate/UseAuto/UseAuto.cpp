@@ -21,7 +21,6 @@ using namespace clang;
 using namespace clang::tooling;
 
 int UseAutoTransform::apply(const FileContentsByPath &InputStates,
-                            RiskLevel MaxRisk,
                             const clang::tooling::CompilationDatabase &Database,
                             const std::vector<std::string> &SourcePaths,
                             FileContentsByPath &ResultStates) {
@@ -36,9 +35,9 @@ int UseAutoTransform::apply(const FileContentsByPath &InputStates,
 
   MatchFinder Finder;
   IteratorReplacer ReplaceIterators(UseAutoTool.getReplacements(),
-                                    AcceptedChanges, MaxRisk);
+                                    AcceptedChanges, Options().MaxRiskLevel);
   NewReplacer ReplaceNew(UseAutoTool.getReplacements(), AcceptedChanges,
-                         MaxRisk);
+                         Options().MaxRiskLevel);
 
   Finder.addMatcher(makeIteratorDeclMatcher(), &ReplaceIterators);
   Finder.addMatcher(makeDeclWithNewMatcher(), &ReplaceNew);

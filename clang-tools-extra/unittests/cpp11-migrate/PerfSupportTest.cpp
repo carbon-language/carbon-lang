@@ -6,10 +6,10 @@ using namespace clang;
 
 class TransformA : public Transform {
 public:
-  TransformA()
-      : Transform("TransformA", false) {}
+  TransformA(const TransformOptions &Options)
+      : Transform("TransformA", Options) {}
 
-  virtual int apply(const FileContentsByPath &, RiskLevel,
+  virtual int apply(const FileContentsByPath &,
                     const tooling::CompilationDatabase &,
                     const std::vector<std::string> &, FileContentsByPath &) {
     return 0;
@@ -22,10 +22,10 @@ public:
 
 class TransformB : public Transform {
 public:
-  TransformB()
-      : Transform("TransformB", false) {}
+  TransformB(const TransformOptions &Options)
+      : Transform("TransformB", Options) {}
 
-  virtual int apply(const FileContentsByPath &, RiskLevel,
+  virtual int apply(const FileContentsByPath &,
                     const tooling::CompilationDatabase &,
                     const std::vector<std::string> &, FileContentsByPath &) {
     return 0;
@@ -46,8 +46,9 @@ struct ExpectedResults {
 };
 
 TEST(PerfSupport, collectSourcePerfData) {
-  TransformA A;
-  TransformB B;
+  TransformOptions Options;
+  TransformA A(Options);
+  TransformB B(Options);
   
   // The actual durations don't matter. Below only their relative ordering is
   // tested to ensure times, labels, and sources all stay together properly.

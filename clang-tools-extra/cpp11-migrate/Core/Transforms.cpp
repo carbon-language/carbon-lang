@@ -32,14 +32,16 @@ void Transforms::registerTransform(llvm::StringRef OptName,
                                    llvm::StringRef Description,
                                    TransformCreator Creator) {
   Options.push_back(OptionVec::value_type(
-      new cl::opt<bool>(OptName.data(), cl::desc(Description.data())), Creator));
+      new cl::opt<bool>(OptName.data(), cl::desc(Description.data())),
+      Creator));
 }
 
-void Transforms::createSelectedTransforms(bool EnableTiming) {
+void
+Transforms::createSelectedTransforms(const TransformOptions &GlobalOptions) {
   for (OptionVec::iterator I = Options.begin(),
        E = Options.end(); I != E; ++I) {
     if (*I->first) {
-      ChosenTransforms.push_back(I->second(EnableTiming));
+      ChosenTransforms.push_back(I->second(GlobalOptions));
     }
   }
 }

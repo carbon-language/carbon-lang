@@ -26,7 +26,6 @@ using namespace clang::tooling;
 using namespace clang;
 
 int LoopConvertTransform::apply(const FileContentsByPath &InputStates,
-                                RiskLevel MaxRisk,
                                 const CompilationDatabase &Database,
                                 const std::vector<std::string> &SourcePaths,
                                 FileContentsByPath &ResultStates) {
@@ -49,19 +48,19 @@ int LoopConvertTransform::apply(const FileContentsByPath &InputStates,
   LoopFixer ArrayLoopFixer(&ParentFinder, &LoopTool.getReplacements(),
                            &GeneratedDecls, &ReplacedVars, &AcceptedChanges,
                            &DeferredChanges, &RejectedChanges,
-                           MaxRisk, LFK_Array);
+                           Options().MaxRiskLevel, LFK_Array);
   Finder.addMatcher(makeArrayLoopMatcher(), &ArrayLoopFixer);
   LoopFixer IteratorLoopFixer(&ParentFinder, &LoopTool.getReplacements(),
                               &GeneratedDecls, &ReplacedVars,
                               &AcceptedChanges, &DeferredChanges,
                               &RejectedChanges,
-                              MaxRisk, LFK_Iterator);
+                              Options().MaxRiskLevel, LFK_Iterator);
   Finder.addMatcher(makeIteratorLoopMatcher(), &IteratorLoopFixer);
   LoopFixer PseudoarrrayLoopFixer(&ParentFinder, &LoopTool.getReplacements(),
                                   &GeneratedDecls, &ReplacedVars,
                                   &AcceptedChanges, &DeferredChanges,
                                   &RejectedChanges,
-                                  MaxRisk, LFK_PseudoArray);
+                                  Options().MaxRiskLevel, LFK_PseudoArray);
   Finder.addMatcher(makePseudoArrayLoopMatcher(), &PseudoarrrayLoopFixer);
 
   if (int result = LoopTool.run(

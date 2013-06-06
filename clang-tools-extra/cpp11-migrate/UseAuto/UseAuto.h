@@ -29,11 +29,10 @@
 /// p2 are not handled by this transform.
 class UseAutoTransform : public Transform {
 public:
-  UseAutoTransform(bool EnableTiming) : Transform("UseAuto", EnableTiming) {}
+  UseAutoTransform(const TransformOptions &Options) : Transform("UseAuto", Options) {}
 
   /// \see Transform::run().
   virtual int apply(const FileContentsByPath &InputStates,
-                    RiskLevel MaxRiskLEvel,
                     const clang::tooling::CompilationDatabase &Database,
                     const std::vector<std::string> &SourcePaths,
                     FileContentsByPath &ResultStates) LLVM_OVERRIDE;

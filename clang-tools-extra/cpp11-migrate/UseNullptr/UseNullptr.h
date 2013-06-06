@@ -23,12 +23,11 @@
 /// C++11's nullptr keyword where possible.
 class UseNullptrTransform : public Transform {
 public:
-  UseNullptrTransform(bool EnableTiming)
-      : Transform("UseNullptr", EnableTiming) {}
+  UseNullptrTransform(const TransformOptions &Options)
+      : Transform("UseNullptr", Options) {}
 
   /// \see Transform::run().
   virtual int apply(const FileContentsByPath &InputStates,
-                    RiskLevel MaxRiskLEvel,
                     const clang::tooling::CompilationDatabase &Database,
                     const std::vector<std::string> &SourcePaths,
                     FileContentsByPath &ResultStates) LLVM_OVERRIDE;

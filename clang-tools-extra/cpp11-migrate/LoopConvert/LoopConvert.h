@@ -23,12 +23,11 @@
 /// for-loops where possible.
 class LoopConvertTransform : public Transform {
 public:
-  LoopConvertTransform(bool EnableTiming)
-      : Transform("LoopConvert", EnableTiming) {}
+  LoopConvertTransform(const TransformOptions &Options)
+      : Transform("LoopConvert", Options) {}
 
   /// \see Transform::run().
   virtual int apply(const FileContentsByPath &InputStates,
-                    RiskLevel MaxRiskLevel,
                     const clang::tooling::CompilationDatabase &Database,
                     const std::vector<std::string> &SourcePaths,
                     FileContentsByPath &ResultStates) LLVM_OVERRIDE;

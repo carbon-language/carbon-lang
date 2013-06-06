@@ -9,11 +9,10 @@ using namespace clang;
 
 class DummyTransform : public Transform {
 public:
-  DummyTransform(llvm::StringRef Name, bool EnableTiming)
-      : Transform(Name, EnableTiming) {}
+  DummyTransform(llvm::StringRef Name, const TransformOptions &Options)
+      : Transform(Name, Options) {}
 
   virtual int apply(const FileContentsByPath &,
-                    RiskLevel ,
                     const tooling::CompilationDatabase &,
                     const std::vector<std::string> &,
                     FileContentsByPath &) { return 0; }
@@ -30,7 +29,9 @@ public:
 };
 
 TEST(Transform, Interface) {
-  DummyTransform T("my_transform", /*EnableTiming=*/false);
+  TransformOptions Options;
+  DummyTransform T("my_transform", Options);
+
   ASSERT_EQ("my_transform", T.getName());
   ASSERT_EQ(0u, T.getAcceptedChanges());
   ASSERT_EQ(0u, T.getRejectedChanges());
@@ -87,7 +88,9 @@ struct ConsumerFactory {
 };
 
 TEST(Transform, Timings) {
-  DummyTransform T("timing_transform", /*EnableTiming=*/true);
+  TransformOptions Options;
+  Options.EnableTiming = true;
+  DummyTransform T("timing_transform", Options);
 
   // All the path stuff is to make the test work independently of OS.
 

@@ -32,7 +32,6 @@ static llvm::cl::opt<bool> DetectMacros(
     llvm::cl::desc("Detect and use macros that expand to the 'override' keyword."));
 
 int AddOverrideTransform::apply(const FileContentsByPath &InputStates,
-                                RiskLevel MaxRisk,
                                 const CompilationDatabase &Database,
                                 const std::vector<std::string> &SourcePaths,
                                 FileContentsByPath &ResultStates) {

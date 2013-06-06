@@ -37,7 +37,7 @@ void collectResults(clang::Rewriter &Rewrite,
 }
 
 bool Transform::handleBeginSource(CompilerInstance &CI, StringRef Filename) {
-  if (!EnableTiming)
+  if (!Options().EnableTiming)
     return true;
 
   Timings.push_back(std::make_pair(Filename.str(), llvm::TimeRecord()));
@@ -46,7 +46,7 @@ bool Transform::handleBeginSource(CompilerInstance &CI, StringRef Filename) {
 }
 
 void Transform::handleEndSource() {
-  if (!EnableTiming)
+  if (!Options().EnableTiming)
     return;
 
   Timings.back().second += llvm::TimeRecord::getCurrentTime(false);

@@ -26,12 +26,11 @@ class AddOverrideFixer;
 /// member functions overriding base class virtual functions.
 class AddOverrideTransform : public Transform {
 public:
-  AddOverrideTransform(bool EnableTiming)
-      : Transform("AddOverride", EnableTiming) {}
+  AddOverrideTransform(const TransformOptions &Options)
+      : Transform("AddOverride", Options) {}
 
   /// \see Transform::run().
   virtual int apply(const FileContentsByPath &InputStates,
-                    RiskLevel MaxRiskLEvel,
                     const clang::tooling::CompilationDatabase &Database,
                     const std::vector<std::string> &SourcePaths,
                     FileContentsByPath &ResultStates) LLVM_OVERRIDE;
