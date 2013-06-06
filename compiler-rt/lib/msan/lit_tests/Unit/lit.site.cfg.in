@@ -4,8 +4,10 @@
 # Load common config for all compiler-rt unit tests.
 lit.load_config(config, "@COMPILER_RT_BINARY_DIR@/lib/lit.common.unit.configured")
 
-# Tool-specific config options.
-config.msan_binary_dir = "@MSAN_BINARY_DIR@"
+# Setup config name.
+config.name = 'MemorySanitizer-Unit'
 
-# Load tool-specific config that would do the real work.
-lit.load_config(config, "@MSAN_SOURCE_DIR@/lit_tests/Unit/lit.cfg")
+# Setup test source and exec root. For unit tests, we define
+# it as build directory with MSan unit tests.
+config.test_exec_root = "@MSAN_BINARY_DIR@/tests"
+config.test_source_root = config.test_exec_root

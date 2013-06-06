@@ -4,8 +4,9 @@
 # Load common config for all compiler-rt unit tests.
 lit.load_config(config, "@COMPILER_RT_BINARY_DIR@/lib/lit.common.unit.configured")
 
-# Tool-specific config options.
-config.lsan_binary_dir = "@LSAN_BINARY_DIR@"
-
-# Load tool-specific config that would do the real work.
-lit.load_config(config, "@LSAN_SOURCE_DIR@/lit_tests/Unit/lit.cfg")
+# Setup config name.
+config.name = 'LeakSanitizer-Unit'
+# Setup test source and exec root. For unit tests, we define
+# it as build directory with LSan unit tests.
+config.test_exec_root = "@LSAN_BINARY_DIR@/tests"
+config.test_source_root = config.test_exec_root
