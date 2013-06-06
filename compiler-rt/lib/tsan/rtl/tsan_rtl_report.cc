@@ -95,8 +95,9 @@ static void StackStripMain(ReportStack *stack) {
     DPrintf("Bottom stack frame of stack %zx is missed\n", stack->pc);
   }
 #else
-  if (last && 0 == internal_strcmp(last, "schedunlock"))
-    last_frame2->next = 0;
+  // The last frame always point into runtime (gosched0, goexit0, runtime.main).
+  last_frame2->next = 0;
+  (void)last;
 #endif
 }
 
