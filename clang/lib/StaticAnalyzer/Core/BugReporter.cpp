@@ -1543,9 +1543,9 @@ static void addEdgeToPath(PathPieces &path,
     return;
   }
 
-  // FIXME: ignore intra-macro edges for now.
-  if (NewLoc.asLocation().getExpansionLoc() ==
-      PrevLoc.asLocation().getExpansionLoc())
+  // Ignore self-edges, which occur when there are multiple nodes at the same
+  // statement.
+  if (NewLoc.asStmt() && NewLoc.asStmt() == PrevLoc.asStmt())
     return;
 
   path.push_front(new PathDiagnosticControlFlowPiece(NewLoc,
@@ -3168,9 +3168,6 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
 
     // Finally, prune the diagnostic path of uninteresting stuff.
     if (!PD.path.empty()) {
-      // Remove messages that are basically the same.
-      removeRedundantMsgs(PD.getMutablePieces());
-
       if (R->shouldPrunePath() && getAnalyzerOptions().shouldPrunePaths()) {
         bool stillHasNotes = removeUnneededCalls(PD.getMutablePieces(), R, LCM);
         assert(stillHasNotes);
@@ -3192,6 +3189,10 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
         // for top-level functions.
         dropFunctionEntryEdge(PD.getMutablePieces(), LCM, SM);
       }
+
+      // Remove messages that are basically the same.
+      // We have to do this after edge optimization in the Extensive mode.
+      removeRedundantMsgs(PD.getMutablePieces());
     }
 
     // We found a report and didn't suppress it.
