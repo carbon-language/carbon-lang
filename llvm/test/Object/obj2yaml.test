@@ -13,15 +13,15 @@ COFF-I386-NEXT:    SectionData:  83EC0CC744240800000000C7042400000000E800000000E
 
 COFF-I386:    Relocations:
 COFF-I386-NEXT:      - VirtualAddress: 14
-COFF-I386-NEXT:        SymbolTableIndex: 5
+COFF-I386-NEXT:        SymbolName: L_.str
 COFF-I386-NEXT:        Type: IMAGE_REL_I386_DIR32
 
 COFF-I386:           - VirtualAddress: 19
-COFF-I386-NEXT:        SymbolTableIndex: 6
+COFF-I386-NEXT:        SymbolName: _puts
 COFF-I386-NEXT:        Type: IMAGE_REL_I386_REL32
 
 COFF-I386:           - VirtualAddress: 24
-COFF-I386-NEXT:        SymbolTableIndex: 7
+COFF-I386-NEXT:        SymbolName: _SomeOtherFunction
 COFF-I386-NEXT:        Type: IMAGE_REL_I386_REL32
 
 COFF-I386:       - Name: .data
@@ -88,15 +88,15 @@ COFF-X86-64-NEXT:     SectionData: 4883EC28C744242400000000488D0D00000000E800000
 
 COFF-X86-64:     Relocations:
 COFF-X86-64-NEXT:       - VirtualAddress: 15
-COFF-X86-64-NEXT:         SymbolTableIndex: 5
+COFF-X86-64-NEXT:         SymbolName: L.str
 COFF-X86-64-NEXT:         Type: IMAGE_REL_AMD64_REL32
 
 COFF-X86-64:            - VirtualAddress: 20
-COFF-X86-64-NEXT:         SymbolTableIndex: 6
+COFF-X86-64-NEXT:         SymbolName: puts
 COFF-X86-64-NEXT:         Type: IMAGE_REL_AMD64_REL32
 
 COFF-X86-64:            - VirtualAddress: 25
-COFF-X86-64-NEXT:         SymbolTableIndex: 7
+COFF-X86-64-NEXT:         SymbolName: SomeOtherFunction
 COFF-X86-64-NEXT:         Type: IMAGE_REL_AMD64_REL32
 
 COFF-X86-64:        - Name: .data

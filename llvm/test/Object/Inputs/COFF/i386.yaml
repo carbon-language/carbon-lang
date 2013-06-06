@@ -12,17 +12,17 @@ sections:
     Relocations:
       - !Relocation
         VirtualAddress: 0xe
-        SymbolTableIndex: 5
+        SymbolName: L_.str
         Type: IMAGE_REL_I386_DIR32
 
       - !Relocation
         VirtualAddress: 0x13
-        SymbolTableIndex: 6
+        SymbolName: _puts
         Type: IMAGE_REL_I386_REL32
 
       - !Relocation
         VirtualAddress: 0x18
-        SymbolTableIndex: 7
+        SymbolName: _SomeOtherFunction
         Type: IMAGE_REL_I386_REL32
 
   - !Section

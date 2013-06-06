@@ -11,17 +11,17 @@ sections:
     Relocations:
       - !Relocation
         VirtualAddress: 0xf
-        SymbolTableIndex: 5
+        SymbolName: L.str
         Type: IMAGE_REL_AMD64_REL32
 
       - !Relocation
         VirtualAddress: 0x14
-        SymbolTableIndex: 6
+        SymbolName: puts
         Type: IMAGE_REL_AMD64_REL32
 
       - !Relocation
         VirtualAddress: 0x19
-        SymbolTableIndex: 7
+        SymbolName: SomeOtherFunction
         Type: IMAGE_REL_AMD64_REL32
 
   - !Section

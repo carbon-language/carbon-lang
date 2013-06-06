@@ -229,11 +229,12 @@ struct NType {
 
 }
 
-void MappingTraits<COFF::relocation>::mapping(IO &IO, COFF::relocation &Rel) {
+void MappingTraits<COFFYAML::Relocation>::mapping(IO &IO,
+                                                  COFFYAML::Relocation &Rel) {
   MappingNormalization<NType, uint16_t> NT(IO, Rel.Type);
 
   IO.mapRequired("VirtualAddress", Rel.VirtualAddress);
-  IO.mapRequired("SymbolTableIndex", Rel.SymbolTableIndex);
+  IO.mapRequired("SymbolName", Rel.SymbolName);
   IO.mapRequired("Type", NT->Type);
 }
 

@@ -66,13 +66,15 @@ void COFFDumper::dumpSections(unsigned NumSections) {
     Obj.getSectionContents(Sect, sectionData);
     Sec.SectionData = object::yaml::BinaryRef(sectionData);
 
-    std::vector<COFF::relocation> Relocations;
+    std::vector<COFFYAML::Relocation> Relocations;
     for (object::relocation_iterator rIter = iter->begin_relocations();
                        rIter != iter->end_relocations(); rIter.increment(ec)) {
       const object::coff_relocation *reloc = Obj.getCOFFRelocation(rIter);
-      COFF::relocation Rel;
+      COFFYAML::Relocation Rel;
+      object::symbol_iterator Sym = rIter->getSymbol();
+      StringRef Name;
+      Sym->getName(Rel.SymbolName);
       Rel.VirtualAddress = reloc->VirtualAddress;
-      Rel.SymbolTableIndex = reloc->SymbolTableIndex;
       Rel.Type = reloc->Type;
       Relocations.push_back(Rel);
     }

@@ -219,15 +219,25 @@ bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
        << binary_le(i->Header.Characteristics);
   }
 
+  unsigned CurSymbol = 0;
+  StringMap<unsigned> SymbolTableIndexMap;
+  for (std::vector<COFFYAML::Symbol>::iterator I = CP.Obj.Symbols.begin(),
+                                               E = CP.Obj.Symbols.end();
+       I != E; ++I) {
+    SymbolTableIndexMap[I->Name] = CurSymbol;
+    CurSymbol += 1 + I->Header.NumberOfAuxSymbols;
+  }
+
   // Output section data.
   for (std::vector<COFFYAML::Section>::iterator i = CP.Obj.Sections.begin(),
                                                 e = CP.Obj.Sections.end();
                                                 i != e; ++i) {
     i->SectionData.writeAsBinary(OS);
     for (unsigned I2 = 0, E2 = i->Relocations.size(); I2 != E2; ++I2) {
-      const COFF::relocation &R = i->Relocations[I2];
+      const COFFYAML::Relocation &R = i->Relocations[I2];
+      uint32_t SymbolTableIndex = SymbolTableIndexMap[R.SymbolName];
       OS << binary_le(R.VirtualAddress)
-         << binary_le(R.SymbolTableIndex)
+         << binary_le(SymbolTableIndex)
          << binary_le(R.Type);
     }
   }
