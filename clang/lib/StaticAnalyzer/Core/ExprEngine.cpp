@@ -1730,7 +1730,7 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
     // We special case rvalue of array type because the analyzer cannot reason
     // about it, since we expect all regions to be wrapped in Locs. So we will
     // treat these as lvalues assuming that they will decay to pointers as soon
-    // as they are used. Below
+    // as they are used.
     if (!M->isGLValue()) {
       assert(M->getType()->isArrayType());
       const ImplicitCastExpr *PE =
