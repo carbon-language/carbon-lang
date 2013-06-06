@@ -809,6 +809,7 @@ IgnoreObjectResult IgnoreObjectLocked(const void *p) {
 }  // namespace __lsan
 
 extern "C" {
+SANITIZER_INTERFACE_ATTRIBUTE
 void __lsan_disable() {
   __asan_init();
   __asan::AsanThread *t = __asan::GetCurrentThread();
@@ -816,6 +817,7 @@ void __lsan_disable() {
   t->disable_lsan();
 }
 
+SANITIZER_INTERFACE_ATTRIBUTE
 void __lsan_enable() {
   __asan_init();
   __asan::AsanThread *t = __asan::GetCurrentThread();

@@ -404,6 +404,7 @@ void LeakReport::PrintSummary() {
 using namespace __lsan;  // NOLINT
 
 extern "C" {
+SANITIZER_INTERFACE_ATTRIBUTE
 void __lsan_ignore_object(const void *p) {
   // Cannot use PointsIntoChunk or LsanMetadata here, since the allocator is not
   // locked.

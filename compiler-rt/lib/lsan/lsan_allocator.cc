@@ -208,10 +208,12 @@ IgnoreObjectResult IgnoreObjectLocked(const void *p) {
 }  // namespace __lsan
 
 extern "C" {
+SANITIZER_INTERFACE_ATTRIBUTE
 void __lsan_disable() {
   __lsan::lsan_disabled++;
 }
 
+SANITIZER_INTERFACE_ATTRIBUTE
 void __lsan_enable() {
   if (!__lsan::lsan_disabled) {
     Report("Unmatched call to __lsan_enable().\n");
