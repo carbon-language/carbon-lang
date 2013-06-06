@@ -1198,7 +1198,7 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
       Left.Previous->is(tok::kw___attribute))
     return false;
 
-  if (Right.Type == TT_LineComment)
+  if (Right.isTrailingComment())
     // We rely on MustBreakBefore being set correctly here as we should not
     // change the "binding" behavior of a comment.
     return false;
