@@ -1173,8 +1173,8 @@ pushVariant(const TransVariant &VInfo, bool IsRead) {
     // Make N-1 copies of this transition's last sequence.
     for (unsigned i = 1, e = SelectedRWs.size(); i != e; ++i) {
       // Create a temporary copy the vector could reallocate.
-      SmallVector<unsigned, 4> Tmp = RWSequences[OperIdx];
-      RWSequences.push_back(Tmp);
+      RWSequences.reserve(RWSequences.size() + 1);
+      RWSequences.push_back(RWSequences[OperIdx]);
     }
     // Push each of the N elements of the SelectedRWs onto a copy of the last
     // sequence (split the current operand into N operands).
