@@ -349,8 +349,8 @@ namespace llvm {
     /// @param AlignInBits  Alignment.
     /// @param Ty           Element type.
     /// @param Subscripts   Subscripts.
-    DIType createVectorType(uint64_t Size, uint64_t AlignInBits,
-                            DIType Ty, DIArray Subscripts);
+    DICompositeType createVectorType(uint64_t Size, uint64_t AlignInBits,
+                                     DIType Ty, DIArray Subscripts);
 
     /// createEnumerationType - Create debugging information entry for an
     /// enumeration.

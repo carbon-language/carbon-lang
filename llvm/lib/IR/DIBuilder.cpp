@@ -712,8 +712,8 @@ DICompositeType DIBuilder::createArrayType(uint64_t Size, uint64_t AlignInBits,
 }
 
 /// createVectorType - Create debugging information entry for a vector.
-DIType DIBuilder::createVectorType(uint64_t Size, uint64_t AlignInBits,
-                                   DIType Ty, DIArray Subscripts) {
+DICompositeType DIBuilder::createVectorType(uint64_t Size, uint64_t AlignInBits,
+                                            DIType Ty, DIArray Subscripts) {
 
   // A vector is an array type with the FlagVector flag applied.
   Value *Elts[] = {
@@ -731,7 +731,7 @@ DIType DIBuilder::createVectorType(uint64_t Size, uint64_t AlignInBits,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
     Constant::getNullValue(Type::getInt32Ty(VMContext))
   };
-  return DIType(MDNode::get(VMContext, Elts));
+  return DICompositeType(MDNode::get(VMContext, Elts));
 }
 
 /// createArtificialType - Create a new DIType with "artificial" flag set.
