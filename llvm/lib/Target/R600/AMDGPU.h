@@ -11,7 +11,7 @@
 #ifndef AMDGPU_H
 #define AMDGPU_H
 
-#include "AMDGPUTargetMachine.h"
+#include "AMDILDeviceInfo.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetMachine.h"
 

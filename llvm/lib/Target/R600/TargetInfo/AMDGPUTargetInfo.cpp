@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AMDGPU.h"
+#include "AMDGPUTargetMachine.h"
 #include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
