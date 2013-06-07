@@ -1585,18 +1585,21 @@ void ASTReader::installPCHMacroDirectives(IdentifierInfo *II,
 /// \brief For the given macro definitions, check if they are both in system
 /// modules.
 static bool areDefinedInSystemModules(MacroInfo *PrevMI, MacroInfo *NewMI,
-                                       Module *NewOwner, ASTReader &Reader) {
+                                      Module *NewOwner, ASTReader &Reader) {
   assert(PrevMI && NewMI);
-  if (!NewOwner)
-    return false;
   Module *PrevOwner = 0;
   if (SubmoduleID PrevModID = PrevMI->getOwningModuleID())
     PrevOwner = Reader.getSubmodule(PrevModID);
-  if (!PrevOwner)
+  SourceManager &SrcMgr = Reader.getSourceManager();
+  bool PrevInSystem
+    = PrevOwner? PrevOwner->IsSystem
+               : SrcMgr.isInSystemHeader(PrevMI->getDefinitionLoc());
+  bool NewInSystem
+    = NewOwner? NewOwner->IsSystem
+              : SrcMgr.isInSystemHeader(NewMI->getDefinitionLoc());
+  if (PrevOwner && PrevOwner == NewOwner)
     return false;
-  if (PrevOwner == NewOwner)
-    return false;
-  return PrevOwner->IsSystem && NewOwner->IsSystem;
+  return PrevInSystem && NewInSystem;
 }
 
 void ASTReader::installImportedMacro(IdentifierInfo *II, MacroDirective *MD,
