@@ -3418,9 +3418,11 @@ namespace {
         TemplateSpecializationTypeLoc NamedTL = ElabTL.getNamedTypeLoc()
             .castAs<TemplateSpecializationTypeLoc>();
         TL.copy(NamedTL);
-      }
-      else
+      } else {
         TL.copy(OldTL.castAs<TemplateSpecializationTypeLoc>());
+        assert(TL.getRAngleLoc() == OldTL.castAs<TemplateSpecializationTypeLoc>().getRAngleLoc());
+      }
+        
     }
     void VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL) {
       assert(DS.getTypeSpecType() == DeclSpec::TST_typeofExpr);

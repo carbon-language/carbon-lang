@@ -159,7 +159,7 @@ class TemplateAngleBracketLocRangeVerifier : public RangeVerifier<TypeLoc> {
 protected:
   virtual SourceRange getRange(const TypeLoc &Node) {
     TemplateSpecializationTypeLoc T =
-        Node.castAs<TemplateSpecializationTypeLoc>();
+        Node.getUnqualifiedLoc().castAs<TemplateSpecializationTypeLoc>();
     assert(!T.isNull());
     return SourceRange(T.getLAngleLoc(), T.getRAngleLoc());
   }
