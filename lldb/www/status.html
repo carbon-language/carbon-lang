@@ -7,36 +7,35 @@
 </head>
 
 <body>
-    <div class="www_title">
-      The <strong>LLDB</strong> Debugger
-    </div>
-    
+	<div class="www_title">
+		The <strong>LLDB</strong> Debugger
+	</div>
+	
 <div id="container">
 	<div id="content">
-        <!--#include virtual="sidebar.incl"-->
-        
+		<!--#include virtual="sidebar.incl"-->
+
 		<div id="middle">
 			<div class="post">
 				<h1 class ="postheader">Mac OS X Status</h1>
 				<div class="postcontent">
 
-				   <p>LLDB has matured a lot in the last year and can be used for
-				      C, C++ and Objective C development for x86_64, i386 and ARM debugging.
-				      The entire public API is exposed though a framework on Mac OS X which
-				      is used by Xcode, the lldb command line tool, and can also be used by
-				      Python. The entire public API is exposed through script bridging which
-				      allows LLDB to use an embedded Python script interpreter, as well as 
-				      having a Python module named "lldb" which can be used from Python
-				      on the command line. This allows debug sessions to be scripted. It also
-				      allows powerful debugging actions to be created and attached to a variety
-				      of debugging workflows.</p>
+					<p>LLDB has matured a lot in the last year and can be used for
+					C, C++ and Objective C development for x86_64, i386 and ARM debugging.
+					The entire public API is exposed though a framework on Mac OS X which
+					is used by Xcode, the lldb command line tool, and can also be used by
+					Python. The entire public API is exposed through script bridging which
+					allows LLDB to use an embedded Python script interpreter, as well as 
+					having a Python module named "lldb" which can be used from Python
+					on the command line. This allows debug sessions to be scripted. It also
+					allows powerful debugging actions to be created and attached to a variety
+					of debugging workflows.</p>
 				</div>
 				<h1 class ="postheader">Linux Status</h1>
 				<div class="postcontent">
-					<p> LLDB is improving on Linux. While the debugserver is not ported
-					(to enable remote debugging) and debugging of multi-threaded programs is in its infancy, most
-					of the functionality, including the Python API and the command line tool,
-					is working on the x86_64 architecture, and partially working with i386.
+					<p> LLDB is improving on Linux. While the debugserver has not been ported
+					(to enable remote debugging) Linux is nearing feature completeness with Darwin
+					to debug x86_64 programs, and is partially working with i386 programs.
 					FreeBSD is untested. ARM architectures on Linux are untested.
 					For more details, see the Features by OS section below.
 				</div>
@@ -123,7 +122,7 @@
 											<li>fork
 										</ul>
 									</td>
-									<td>OK</td>
+									<td>OK (some bugs with continue)</td>
 									<td>OK</td>
 								</tr>
 								<tr>
@@ -156,7 +155,7 @@
 								</tr>
 								<tr>
 									<td>Thread inspection and stepping</td>
-									<td>OK for single thread (no multi-threaded support)</td>
+									<td>OK</td>
 									<td>OK</td>
 								</tr>
 								<tr>
