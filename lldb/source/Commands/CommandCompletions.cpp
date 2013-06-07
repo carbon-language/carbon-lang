@@ -599,7 +599,17 @@ CommandCompletions::SourceFileCompleter::DoCompletion (SearchFilter *filter)
 static bool
 regex_chars (const char comp)
 {
-    if (comp == '[' || comp == ']' || comp == '(' || comp == ')')
+    if (comp == '[' || comp == ']' ||
+        comp == '(' || comp == ')' ||
+        comp == '{' || comp == '}' ||
+        comp == '+' ||
+        comp == '.' ||
+        comp == '*' ||
+        comp == '|' ||
+        comp == '^' ||
+        comp == '$' ||
+        comp == '\\' ||
+        comp == '?')
         return true;
     else
         return false;
@@ -614,16 +624,22 @@ CommandCompletions::SymbolCompleter::SymbolCompleter
 ) :
     CommandCompletions::Completer (interpreter, completion_str, match_start_point, max_return_elements, matches)
 {
-    std::string regex_str ("^");
-    regex_str.append(completion_str);
-    regex_str.append(".*");
-    std::string::iterator pos;
-
-    pos = find_if(regex_str.begin(), regex_str.end(), regex_chars);
-    while (pos < regex_str.end()) {
+    std::string regex_str;
+    if (completion_str && completion_str[0])
+    {
+        regex_str.append("^");
+        regex_str.append(completion_str);
+    }
+    else
+    {
+        // Match anything since the completion string is empty
+        regex_str.append(".");
+    }
+    std::string::iterator pos = find_if(regex_str.begin() + 1, regex_str.end(), regex_chars);
+    while (pos < regex_str.end())
+    {
         pos = regex_str.insert(pos, '\\');
-        pos += 2;
-        pos = find_if(pos, regex_str.end(), regex_chars);
+        pos = find_if(pos + 2, regex_str.end(), regex_chars);
     }
     m_regex.Compile(regex_str.c_str());
 }
