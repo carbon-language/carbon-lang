@@ -338,6 +338,13 @@ bool PPCCTRLoops::mightUseCTR(const Triple &TT, BasicBlock *BB) {
             CI->getDestTy()->getScalarType()->isIntegerTy(64))
           ))
         return true;
+    } else if (TT.isArch32Bit() &&
+               J->getType()->getScalarType()->isIntegerTy(64) &&
+               (J->getOpcode() == Instruction::UDiv ||
+                J->getOpcode() == Instruction::SDiv ||
+                J->getOpcode() == Instruction::URem ||
+                J->getOpcode() == Instruction::SRem)) {
+      return true;
     } else if (isa<IndirectBrInst>(J) || isa<InvokeInst>(J)) {
       // On PowerPC, indirect jumps use the counter register.
       return true;
