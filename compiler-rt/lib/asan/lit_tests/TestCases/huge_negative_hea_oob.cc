@@ -1,5 +1,5 @@
-// RUN: %clangxx_asan -m64  %s -o %t && %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -m64 -O %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O %s -o %t && %t 2>&1 | FileCheck %s
 // Check that we can find huge buffer overflows to the left.
 #include <stdlib.h>
 #include <string.h>

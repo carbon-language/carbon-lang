@@ -2,7 +2,7 @@
 // If you're changing this file, please also change
 // ../Linux/interface_symbols.c
 
-// RUN: %clang -fsanitize=address -dead_strip -O2 %s -o %t.exe
+// RUN: %clang_asan -dead_strip -O2 %s -o %t.exe
 // RUN: rm -f %t.symbols %t.interface
 
 // RUN: nm -g `otool -L %t.exe | grep "asan_osx_dynamic.dylib" | \

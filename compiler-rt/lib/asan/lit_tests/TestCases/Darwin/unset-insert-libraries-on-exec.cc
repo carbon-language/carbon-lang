@@ -1,8 +1,8 @@
 // Make sure ASan removes the runtime library from DYLD_INSERT_LIBRARIES before
 // executing other programs.
 
-// RUN: %clangxx_asan -m64 %s -o %t
-// RUN: %clangxx -m64 %p/../SharedLibs/darwin-dummy-shared-lib-so.cc \
+// RUN: %clangxx_asan %s -o %t
+// RUN: %clangxx %p/../SharedLibs/darwin-dummy-shared-lib-so.cc \
 // RUN:     -dynamiclib -o darwin-dummy-shared-lib-so.dylib
 
 // Make sure DYLD_INSERT_LIBRARIES doesn't contain the runtime library before

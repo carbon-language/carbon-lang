@@ -1,12 +1,7 @@
 // Check that we can store lots of stack frames if asked to.
 
-// RUN: %clangxx_asan -m64 -O0 %s -o %t 2>&1
-// RUN: ASAN_OPTIONS=malloc_context_size=120:redzone=512 %t 2>&1 | \
-// RUN: %symbolize | FileCheck %s
-
-// RUN: %clangxx_asan -m32 -O0 %s -o %t 2>&1
-// RUN: ASAN_OPTIONS=malloc_context_size=120:redzone=512 %t 2>&1 | \
-// RUN: %symbolize | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -o %t 2>&1
+// RUN: ASAN_OPTIONS=malloc_context_size=120:redzone=512 %t 2>&1 | %symbolize | FileCheck %s
 #include <stdlib.h>
 #include <stdio.h>
 

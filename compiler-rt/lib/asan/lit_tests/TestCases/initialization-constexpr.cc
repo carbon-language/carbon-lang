@@ -4,28 +4,16 @@
 // constructor implies that it was initialized during constant initialization,
 // not dynamic initialization).
 
-// RUN: %clangxx_asan -m64 -O0 %s %p/Helpers/initialization-constexpr-extra.cc\
+// RUN: %clangxx_asan -O0 %s %p/Helpers/initialization-constexpr-extra.cc\
 // RUN:   --std=c++11 -fsanitize=init-order -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
-// RUN: %clangxx_asan -m64 -O1 %s %p/Helpers/initialization-constexpr-extra.cc\
+// RUN: %clangxx_asan -O1 %s %p/Helpers/initialization-constexpr-extra.cc\
 // RUN:   --std=c++11 -fsanitize=init-order -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
-// RUN: %clangxx_asan -m64 -O2 %s %p/Helpers/initialization-constexpr-extra.cc\
+// RUN: %clangxx_asan -O2 %s %p/Helpers/initialization-constexpr-extra.cc\
 // RUN:   --std=c++11 -fsanitize=init-order -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
-// RUN: %clangxx_asan -m64 -O3 %s %p/Helpers/initialization-constexpr-extra.cc\
-// RUN:   --std=c++11 -fsanitize=init-order -o %t
-// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
-// RUN: %clangxx_asan -m32 -O0 %s %p/Helpers/initialization-constexpr-extra.cc\
-// RUN:   --std=c++11 -fsanitize=init-order -o %t
-// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
-// RUN: %clangxx_asan -m32 -O1 %s %p/Helpers/initialization-constexpr-extra.cc\
-// RUN:   --std=c++11 -fsanitize=init-order -o %t
-// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
-// RUN: %clangxx_asan -m32 -O2 %s %p/Helpers/initialization-constexpr-extra.cc\
-// RUN:   --std=c++11 -fsanitize=init-order -o %t
-// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
-// RUN: %clangxx_asan -m32 -O3 %s %p/Helpers/initialization-constexpr-extra.cc\
+// RUN: %clangxx_asan -O3 %s %p/Helpers/initialization-constexpr-extra.cc\
 // RUN:   --std=c++11 -fsanitize=init-order -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
 

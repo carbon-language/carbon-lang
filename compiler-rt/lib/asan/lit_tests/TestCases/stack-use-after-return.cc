@@ -1,19 +1,11 @@
 // XFAIL: *
-// RUN: %clangxx_asan -fsanitize=use-after-return -m64 -O0 %s -o %t && \
+// RUN: %clangxx_asan -fsanitize=use-after-return -O0 %s -o %t && \
 // RUN:   %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -fsanitize=use-after-return -m64 -O1 %s -o %t && \
+// RUN: %clangxx_asan -fsanitize=use-after-return -O1 %s -o %t && \
 // RUN:   %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -fsanitize=use-after-return -m64 -O2 %s -o %t && \
+// RUN: %clangxx_asan -fsanitize=use-after-return -O2 %s -o %t && \
 // RUN:   %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -fsanitize=use-after-return -m64 -O3 %s -o %t && \
-// RUN:   %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -fsanitize=use-after-return -m32 -O0 %s -o %t && \
-// RUN:   %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -fsanitize=use-after-return -m32 -O1 %s -o %t && \
-// RUN:   %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -fsanitize=use-after-return -m32 -O2 %s -o %t && \
-// RUN:   %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -fsanitize=use-after-return -m32 -O3 %s -o %t && \
+// RUN: %clangxx_asan -fsanitize=use-after-return -O3 %s -o %t && \
 // RUN:   %t 2>&1 | %symbolize | FileCheck %s
 
 #include <stdio.h>

@@ -6,6 +6,7 @@ lit.load_config(config, "@COMPILER_RT_BINARY_DIR@/lib/lit.common.configured")
 
 # Tool-specific config options.
 config.asan_source_dir = "@ASAN_SOURCE_DIR@"
+config.bits = "64"
 
 # Load tool-specific config that would do the real work.
 lit.load_config(config, "@ASAN_SOURCE_DIR@/lit_tests/lit.cfg")

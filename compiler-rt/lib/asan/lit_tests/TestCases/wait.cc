@@ -1,37 +1,23 @@
-// RUN: %clangxx_asan -DWAIT -m64 -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT -m64 -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT -m32 -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT -m32 -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAIT -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAIT -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
 
-// RUN: %clangxx_asan -DWAITPID -m64 -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAITPID -m64 -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAITPID -m32 -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAITPID -m32 -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAITPID -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAITPID -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
 
-// RUN: %clangxx_asan -DWAITID -m64 -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAITID -m64 -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAITID -m32 -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAITID -m32 -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAITID -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAITID -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
 
-// RUN: %clangxx_asan -DWAIT3 -m64 -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT3 -m64 -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT3 -m32 -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT3 -m32 -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAIT3 -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAIT3 -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
 
-// RUN: %clangxx_asan -DWAIT4 -m64 -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT4 -m64 -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT4 -m32 -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT4 -m32 -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAIT4 -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAIT4 -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
 
-// RUN: %clangxx_asan -DWAIT3_RUSAGE -m64 -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT3_RUSAGE -m64 -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT3_RUSAGE -m32 -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT3_RUSAGE -m32 -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAIT3_RUSAGE -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAIT3_RUSAGE -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
 
-// RUN: %clangxx_asan -DWAIT4_RUSAGE -m64 -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT4_RUSAGE -m64 -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT4_RUSAGE -m32 -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT4_RUSAGE -m32 -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAIT4_RUSAGE -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAIT4_RUSAGE -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
 
 
 #include <assert.h>

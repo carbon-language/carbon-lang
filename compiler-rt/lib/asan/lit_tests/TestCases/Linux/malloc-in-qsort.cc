@@ -1,4 +1,4 @@
-// RUN: %clangxx_asan -m64 -O2 %s -o %t
+// RUN: %clangxx_asan -O2 %s -o %t
 // RUN: ASAN_OPTIONS=fast_unwind_on_malloc=1 %t 2>&1 | %symbolize | FileCheck %s --check-prefix=CHECK-FAST
 // RUN: ASAN_OPTIONS=fast_unwind_on_malloc=0 %t 2>&1 | %symbolize | FileCheck %s --check-prefix=CHECK-SLOW
 

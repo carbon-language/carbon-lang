@@ -1,14 +1,10 @@
 // Regression test for:
 // http://code.google.com/p/address-sanitizer/issues/detail?id=37
 
-// RUN: %clangxx_asan -m64 -O0 %s -o %t && %t | FileCheck %s
-// RUN: %clangxx_asan -m64 -O1 %s -o %t && %t | FileCheck %s
-// RUN: %clangxx_asan -m64 -O2 %s -o %t && %t | FileCheck %s
-// RUN: %clangxx_asan -m64 -O3 %s -o %t && %t | FileCheck %s
-// RUN: %clangxx_asan -m32 -O0 %s -o %t && %t | FileCheck %s
-// RUN: %clangxx_asan -m32 -O1 %s -o %t && %t | FileCheck %s
-// RUN: %clangxx_asan -m32 -O2 %s -o %t && %t | FileCheck %s
-// RUN: %clangxx_asan -m32 -O3 %s -o %t && %t | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -o %t && %t | FileCheck %s
+// RUN: %clangxx_asan -O1 %s -o %t && %t | FileCheck %s
+// RUN: %clangxx_asan -O2 %s -o %t && %t | FileCheck %s
+// RUN: %clangxx_asan -O3 %s -o %t && %t | FileCheck %s
 
 #include <stdio.h>
 #include <sched.h>

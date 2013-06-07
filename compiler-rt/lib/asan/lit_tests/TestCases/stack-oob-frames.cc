@@ -1,4 +1,4 @@
-// RUN: %clangxx_asan -m64 -O1 %s -o %t
+// RUN: %clangxx_asan -O1 %s -o %t
 // RUN: %t 0 2>&1 | %symbolize | FileCheck %s --check-prefix=CHECK0
 // RUN: %t 1 2>&1 | %symbolize | FileCheck %s --check-prefix=CHECK1
 // RUN: %t 2 2>&1 | %symbolize | FileCheck %s --check-prefix=CHECK2

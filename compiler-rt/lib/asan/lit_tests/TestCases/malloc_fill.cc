@@ -1,5 +1,5 @@
 // Check that we fill malloc-ed memory correctly.
-// RUN: %clangxx_asan -m64 %s -o %t
+// RUN: %clangxx_asan %s -o %t
 // RUN: %t | FileCheck %s
 // RUN: ASAN_OPTIONS=max_malloc_fill_size=10:malloc_fill_byte=8 %t | FileCheck %s --check-prefix=CHECK-10-8
 // RUN: ASAN_OPTIONS=max_malloc_fill_size=20:malloc_fill_byte=171 %t | FileCheck %s --check-prefix=CHECK-20-ab

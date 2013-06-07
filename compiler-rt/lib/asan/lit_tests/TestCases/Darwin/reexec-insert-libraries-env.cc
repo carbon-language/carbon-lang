@@ -2,8 +2,8 @@
 // This is a regression test for
 // https://code.google.com/p/address-sanitizer/issues/detail?id=159
 
-// RUN: %clangxx_asan -m64 %s -o %t
-// RUN: %clangxx -m64 %p/../SharedLibs/darwin-dummy-shared-lib-so.cc \
+// RUN: %clangxx_asan %s -o %t
+// RUN: %clangxx %p/../SharedLibs/darwin-dummy-shared-lib-so.cc \
 // RUN:     -dynamiclib -o darwin-dummy-shared-lib-so.dylib
 
 // FIXME: the following command line may hang in the case of a regression.

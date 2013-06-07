@@ -1,4 +1,4 @@
-// RUN: %clangxx_asan -m64 -O0 -fsanitize=use-after-scope %s -o %t && \
+// RUN: %clangxx_asan -O0 -fsanitize=use-after-scope %s -o %t && \
 // RUN:     %t 2>&1 | %symbolize | FileCheck %s
 //
 // Lifetime for temporaries is not emitted yet.

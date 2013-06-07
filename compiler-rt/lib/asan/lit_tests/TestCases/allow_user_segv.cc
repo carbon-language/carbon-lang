@@ -1,10 +1,8 @@
 // Regression test for
 // https://code.google.com/p/address-sanitizer/issues/detail?id=180
 
-// RUN: %clangxx_asan -m64 -O0 %s -o %t && ASAN_OPTIONS=allow_user_segv_handler=true %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -m64 -O2 %s -o %t && ASAN_OPTIONS=allow_user_segv_handler=true %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -m32 -O0 %s -o %t && ASAN_OPTIONS=allow_user_segv_handler=true %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -m32 -O2 %s -o %t && ASAN_OPTIONS=allow_user_segv_handler=true %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -o %t && ASAN_OPTIONS=allow_user_segv_handler=true %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O2 %s -o %t && ASAN_OPTIONS=allow_user_segv_handler=true %t 2>&1 | FileCheck %s
 
 #include <signal.h>
 #include <stdio.h>

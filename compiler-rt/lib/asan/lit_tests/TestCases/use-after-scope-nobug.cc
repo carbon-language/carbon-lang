@@ -1,5 +1,4 @@
-// RUN: %clangxx_asan -m64 -O0 -fsanitize=use-after-scope %s -o %t && \
-// RUN:     %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -O0 -fsanitize=use-after-scope %s -o %t && %t
 
 #include <stdio.h>
 
@@ -11,6 +10,5 @@ int main() {
     p = &x;
   }
   printf("PASSED\n");
-  // CHECK: PASSED
   return 0;
 }

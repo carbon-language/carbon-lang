@@ -1,13 +1,13 @@
 // Regression test for
 // https://code.google.com/p/address-sanitizer/issues/detail?id=178
 
-// RUN: %clangxx_asan -m64 -O0 %p/SharedLibs/init-order-dlopen-so.cc \
+// RUN: %clangxx_asan -O0 %p/SharedLibs/init-order-dlopen-so.cc \
 // RUN:     -fPIC -shared -o %t-so.so
 // If the linker doesn't support --export-dynamic (which is ELF-specific),
 // try to link without that option.
 // FIXME: find a better solution.
-// RUN: %clangxx_asan -m64 -O0 %s -o %t -Wl,--export-dynamic || \
-// RUN:     %clangxx_asan -m64 -O0 %s -o %t
+// RUN: %clangxx_asan -O0 %s -o %t -Wl,--export-dynamic || \
+// RUN:     %clangxx_asan -O0 %s -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true:strict_init_order=true %t 2>&1 | FileCheck %s
 #include <dlfcn.h>
 #include <pthread.h>

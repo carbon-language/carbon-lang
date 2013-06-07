@@ -3,10 +3,10 @@
 // independently on order in which we list source files (if we specify
 // strict init-order checking).
 
-// RUN: %clangxx_asan -m64 -O0 %s %p/../Helpers/initialization-bug-extra.cc -o %t
+// RUN: %clangxx_asan -O0 %s %p/../Helpers/initialization-bug-extra.cc -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true:strict_init_order=true %t 2>&1 \
 // RUN:    | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -m64 -O0 %p/../Helpers/initialization-bug-extra.cc %s -o %t
+// RUN: %clangxx_asan -O0 %p/../Helpers/initialization-bug-extra.cc %s -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true:strict_init_order=true %t 2>&1 \
 // RUN:    | %symbolize | FileCheck %s
 

@@ -1,7 +1,5 @@
-// RUN: %clangxx_asan -m64 -O0 %s -o %t && %t %p 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -m64 -O3 %s -o %t && %t %p 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -m32 -O0 %s -o %t && %t %p 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -m32 -O3 %s -o %t && %t %p 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -o %t && %t %p 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O3 %s -o %t && %t %p 2>&1 | FileCheck %s
 
 #include <assert.h>
 #include <glob.h>
