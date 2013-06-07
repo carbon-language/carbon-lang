@@ -95,10 +95,6 @@ public:
   /// \brief Returns the size of type source info data block for the given type.
   static unsigned getFullDataSizeForType(QualType Ty);
 
-  /// \brief Returns the alignment of type source info data block for
-  /// the given type.
-  static unsigned getLocalAlignmentForType(QualType Ty);
-
   /// \brief Get the type for which this source info wrapper provides
   /// information.
   QualType getType() const {
@@ -233,11 +229,7 @@ public:
   }
 
   UnqualTypeLoc getUnqualifiedLoc() const {
-    unsigned align =
-        TypeLoc::getLocalAlignmentForType(QualType(getTypePtr(), 0));
-    uintptr_t dataInt = reinterpret_cast<uintptr_t>(Data);
-    dataInt = llvm::RoundUpToAlignment(dataInt, align);
-    return UnqualTypeLoc(getTypePtr(), reinterpret_cast<void*>(dataInt));
+    return UnqualTypeLoc(getTypePtr(), Data);
   }
 
   /// Initializes the local data of this type source info block to
@@ -258,11 +250,10 @@ public:
     return 0;
   }
 
-  /// \brief Returns the alignment of the type source info data block that is
-  /// specific to this type.
-  unsigned getLocalDataAlignment() const {
-    // We don't preserve any location information.
-    return 1;
+  /// \brief Returns the size of the type source info data block.
+  unsigned getFullDataSize() const {
+    return getLocalDataSize() +
+      getFullDataSizeForType(getType().getLocalUnqualifiedType());
   }
 
 private:
@@ -288,6 +279,9 @@ inline UnqualTypeLoc TypeLoc::getUnqualifiedLoc() const {
 ///   location type
 /// \tparam LocalData the structure type of local location data for
 ///   this type
+///
+/// sizeof(LocalData) needs to be a multiple of sizeof(void*) or
+/// else the world will end.
 ///
 /// TypeLocs with non-constant amounts of local data should override
 /// getExtraLocalDataSize(); getExtraLocalData() will then point to
@@ -323,16 +317,12 @@ class ConcreteTypeLoc : public Base {
   }
 
 public:
-  unsigned getLocalDataAlignment() const {
-    return std::max(llvm::alignOf<LocalData>(),
-                    asDerived()->getExtraLocalDataAlignment());
-  }
   unsigned getLocalDataSize() const {
-    unsigned size = sizeof(LocalData);
-    unsigned extraAlign = asDerived()->getExtraLocalDataAlignment();
-    size = llvm::RoundUpToAlignment(size, extraAlign);
-    size += asDerived()->getExtraLocalDataSize();
-    return size;
+    return sizeof(LocalData) + asDerived()->getExtraLocalDataSize();
+  }
+  // Give a default implementation that's useful for leaf types.
+  unsigned getFullDataSize() const {
+    return asDerived()->getLocalDataSize() + getInnerTypeSize();
   }
 
   TypeLoc getNextTypeLoc() const {
@@ -348,10 +338,6 @@ protected:
     return 0;
   }
 
-  unsigned getExtraLocalDataAlignment() const {
-    return 1;
-  }
-
   LocalData *getLocalData() const {
     return static_cast<LocalData*>(Base::Data);
   }
@@ -360,17 +346,11 @@ protected:
   /// local data that can't be captured in the Info (e.g. because it's
   /// of variable size).
   void *getExtraLocalData() const {
-    unsigned size = sizeof(LocalData);
-    unsigned extraAlign = asDerived()->getExtraLocalDataAlignment();
-    size = llvm::RoundUpToAlignment(size, extraAlign);
-    return reinterpret_cast<char*>(Base::Data) + size;
+    return getLocalData() + 1;
   }
 
   void *getNonLocalData() const {
-    uintptr_t data = reinterpret_cast<uintptr_t>(Base::Data);
-    data += asDerived()->getLocalDataSize();
-    data = llvm::RoundUpToAlignment(data, getNextTypeAlign());
-    return reinterpret_cast<void*>(data);
+    return static_cast<char*>(Base::Data) + asDerived()->getLocalDataSize();
   }
 
   struct HasNoInnerType {};
@@ -391,18 +371,6 @@ private:
 
   unsigned getInnerTypeSize(QualType _) const {
     return getInnerTypeLoc().getFullDataSize();
-  }
-
-  unsigned getNextTypeAlign() const {
-    return getNextTypeAlign(asDerived()->getInnerType());
-  }
-
-  unsigned getNextTypeAlign(HasNoInnerType _) const {
-    return 1;
-  }
-
-  unsigned getNextTypeAlign(QualType T) const {
-    return TypeLoc::getLocalAlignmentForType(T);
   }
 
   TypeLoc getNextTypeLoc(HasNoInnerType _) const {
@@ -449,8 +417,7 @@ class TypeSpecTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc,
                                                Type,
                                                TypeSpecLocInfo> {
 public:
-  enum { LocalDataSize = sizeof(TypeSpecLocInfo),
-         LocalDataAlignment = llvm::AlignOf<TypeSpecLocInfo>::Alignment };
+  enum { LocalDataSize = sizeof(TypeSpecLocInfo) };
 
   SourceLocation getNameLoc() const {
     return this->getLocalData()->NameLoc;
@@ -481,6 +448,8 @@ class BuiltinTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc,
                                               BuiltinType,
                                               BuiltinLocInfo> {
 public:
+  enum { LocalDataSize = sizeof(BuiltinLocInfo) };
+
   SourceLocation getBuiltinLoc() const {
     return getLocalData()->BuiltinLoc;
   }
@@ -507,10 +476,6 @@ public:
 
   unsigned getExtraLocalDataSize() const {
     return needsExtraLocalData() ? sizeof(WrittenBuiltinSpecs) : 0;
-  }
-
-  unsigned getExtraLocalDataAlignment() const {
-    return needsExtraLocalData() ? llvm::alignOf<WrittenBuiltinSpecs>() : 1;
   }
 
   SourceRange getLocalSourceRange() const {
@@ -875,10 +840,6 @@ public:
     return this->getNumProtocols() * sizeof(SourceLocation);
   }
 
-  unsigned getExtraLocalDataAlignment() const {
-    return llvm::alignOf<SourceLocation>();
-  }
-
   QualType getInnerType() const {
     return getTypePtr()->getBaseType();
   }
@@ -1205,10 +1166,6 @@ public:
     return getNumArgs() * sizeof(ParmVarDecl*);
   }
 
-  unsigned getExtraLocalDataAlignment() const {
-    return llvm::alignOf<ParmVarDecl*>();
-  }
-
   QualType getInnerType() const { return getTypePtr()->getResultType(); }
 };
 
@@ -1398,10 +1355,6 @@ public:
 
   unsigned getExtraLocalDataSize() const {
     return getNumArgs() * sizeof(TemplateArgumentLocInfo);
-  }
-
-  unsigned getExtraLocalDataAlignment() const {
-    return llvm::alignOf<TemplateArgumentLocInfo>();
   }
 
 private:
@@ -1806,10 +1759,6 @@ public:
 
   unsigned getExtraLocalDataSize() const {
     return getNumArgs() * sizeof(TemplateArgumentLocInfo);
-  }
-
-  unsigned getExtraLocalDataAlignment() const {
-    return llvm::alignOf<TemplateArgumentLocInfo>();
   }
 
 private:

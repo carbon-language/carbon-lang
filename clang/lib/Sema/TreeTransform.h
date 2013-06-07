@@ -3427,7 +3427,7 @@ TreeTransform<Derived>::TransformQualifiedType(TypeLocBuilder &TLB,
       } else {
         // Otherwise, complain about the addition of a qualifier to an
         // already-qualified type.
-        SourceRange R = T.getUnqualifiedLoc().getSourceRange();
+        SourceRange R = TLB.getTemporaryTypeLoc(Result).getSourceRange();
         SemaRef.Diag(R.getBegin(), diag::err_attr_objc_ownership_redundant)
           << Result << R;
 

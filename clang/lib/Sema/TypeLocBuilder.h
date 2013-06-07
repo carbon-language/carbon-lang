@@ -39,19 +39,14 @@ class TypeLocBuilder {
 #endif
     
   /// The inline buffer.
-  enum { BufferMaxAlignment = llvm::AlignOf<void*>::Alignment };
-  llvm::AlignedCharArray<BufferMaxAlignment, InlineCapacity> InlineBuffer;
-  unsigned NumBytesAtAlign4, NumBytesAtAlign8;
+  char InlineBuffer[InlineCapacity];
 
  public:
   TypeLocBuilder()
-    : Buffer(InlineBuffer.buffer), Capacity(InlineCapacity),
-      Index(InlineCapacity), NumBytesAtAlign4(0), NumBytesAtAlign8(0)
-  {
-  }
+    : Buffer(InlineBuffer), Capacity(InlineCapacity), Index(InlineCapacity) {}
 
   ~TypeLocBuilder() {
-    if (Buffer != InlineBuffer.buffer)
+    if (Buffer != InlineBuffer)
       delete[] Buffer;
   }
 
@@ -64,14 +59,23 @@ class TypeLocBuilder {
 
   /// Pushes a copy of the given TypeLoc onto this builder.  The builder
   /// must be empty for this to work.
-  void pushFullCopy(TypeLoc L);
+  void pushFullCopy(TypeLoc L) {
+    size_t Size = L.getFullDataSize();
+    TypeLoc Copy = pushFullUninitializedImpl(L.getType(), Size);
+    memcpy(Copy.getOpaqueData(), L.getOpaqueData(), Size);
+  }
+
+  /// Pushes uninitialized space for the given type.  The builder must
+  /// be empty.
+  TypeLoc pushFullUninitialized(QualType T) {
+    return pushFullUninitializedImpl(T, TypeLoc::getFullDataSizeForType(T));
+  }
 
   /// Pushes space for a typespec TypeLoc.  Invalidates any TypeLocs
   /// previously retrieved from this builder.
   TypeSpecTypeLoc pushTypeSpec(QualType T) {
     size_t LocalSize = TypeSpecTypeLoc::LocalDataSize;
-    unsigned LocalAlign = TypeSpecTypeLoc::LocalDataAlignment;
-    return pushImpl(T, LocalSize, LocalAlign).castAs<TypeSpecTypeLoc>();
+    return pushImpl(T, LocalSize).castAs<TypeSpecTypeLoc>();
   }
 
   /// Resets this builder to the newly-initialized state.
@@ -80,7 +84,6 @@ class TypeLocBuilder {
     LastTy = QualType();
 #endif
     Index = Capacity;
-    NumBytesAtAlign4 = NumBytesAtAlign8 = 0;
   }  
 
   /// \brief Tell the TypeLocBuilder that the type it is storing has been
@@ -94,10 +97,8 @@ class TypeLocBuilder {
   /// Pushes space for a new TypeLoc of the given type.  Invalidates
   /// any TypeLocs previously retrieved from this builder.
   template <class TyLocType> TyLocType push(QualType T) {
-    TyLocType Loc = TypeLoc(T, 0).castAs<TyLocType>();
-    size_t LocalSize = Loc.getLocalDataSize();
-    unsigned LocalAlign = Loc.getLocalDataAlignment();
-    return pushImpl(T, LocalSize, LocalAlign).castAs<TyLocType>();
+    size_t LocalSize = TypeLoc(T, 0).castAs<TyLocType>().getLocalDataSize();
+    return pushImpl(T, LocalSize).castAs<TyLocType>();
   }
 
   /// Creates a TypeSourceInfo for the given type.
@@ -126,12 +127,61 @@ class TypeLocBuilder {
   }
 
 private:
+  TypeLoc pushImpl(QualType T, size_t LocalSize) {
+#ifndef NDEBUG
+    QualType TLast = TypeLoc(T, 0).getNextTypeLoc().getType();
+    assert(TLast == LastTy &&
+           "mismatch between last type and new type's inner type");
+    LastTy = T;
+#endif
 
-  TypeLoc pushImpl(QualType T, size_t LocalSize, unsigned LocalAlignment);
+    // If we need to grow, grow by a factor of 2.
+    if (LocalSize > Index) {
+      size_t RequiredCapacity = Capacity + (LocalSize - Index);
+      size_t NewCapacity = Capacity * 2;
+      while (RequiredCapacity > NewCapacity)
+        NewCapacity *= 2;
+      grow(NewCapacity);
+    }
+
+    Index -= LocalSize;
+
+    return getTemporaryTypeLoc(T);
+  }
 
   /// Grow to the given capacity.
-  void grow(size_t NewCapacity);
+  void grow(size_t NewCapacity) {
+    assert(NewCapacity > Capacity);
 
+    // Allocate the new buffer and copy the old data into it.
+    char *NewBuffer = new char[NewCapacity];
+    unsigned NewIndex = Index + NewCapacity - Capacity;
+    memcpy(&NewBuffer[NewIndex],
+           &Buffer[Index],
+           Capacity - Index);
+
+    if (Buffer != InlineBuffer)
+      delete[] Buffer;
+
+    Buffer = NewBuffer;
+    Capacity = NewCapacity;
+    Index = NewIndex;
+  }
+
+  TypeLoc pushFullUninitializedImpl(QualType T, size_t Size) {
+#ifndef NDEBUG
+    assert(LastTy.isNull() && "pushing full on non-empty TypeLocBuilder");
+    LastTy = T;
+#endif
+    assert(Index == Capacity && "pushing full on non-empty TypeLocBuilder");
+
+    reserve(Size);
+    Index -= Size;
+
+    return getTemporaryTypeLoc(T);
+  }
+
+public:
   /// \brief Retrieve a temporary TypeLoc that refers into this \c TypeLocBuilder
   /// object.
   ///
