@@ -112,11 +112,10 @@ BreakableToken::Split getStringSplit(StringRef Text,
 
 unsigned BreakableSingleLineToken::getLineCount() const { return 1; }
 
-unsigned
-BreakableSingleLineToken::getLineLengthAfterSplit(unsigned LineIndex,
-                                                  unsigned TailOffset) const {
+unsigned BreakableSingleLineToken::getLineLengthAfterSplit(
+    unsigned LineIndex, unsigned Offset, StringRef::size_type Length) const {
   return StartColumn + Prefix.size() + Postfix.size() +
-         encoding::getCodePointCount(Line.substr(TailOffset), Encoding);
+         encoding::getCodePointCount(Line.substr(Offset, Length), Encoding);
 }
 
 void BreakableSingleLineToken::insertBreak(unsigned LineIndex,
@@ -268,11 +267,10 @@ void BreakableBlockComment::adjustWhitespace(const FormatStyle &Style,
 
 unsigned BreakableBlockComment::getLineCount() const { return Lines.size(); }
 
-unsigned
-BreakableBlockComment::getLineLengthAfterSplit(unsigned LineIndex,
-                                               unsigned TailOffset) const {
-  return getContentStartColumn(LineIndex, TailOffset) +
-         encoding::getCodePointCount(Lines[LineIndex].substr(TailOffset),
+unsigned BreakableBlockComment::getLineLengthAfterSplit(
+    unsigned LineIndex, unsigned Offset, StringRef::size_type Length) const {
+  return getContentStartColumn(LineIndex, Offset) +
+         encoding::getCodePointCount(Lines[LineIndex].substr(Offset, Length),
                                      Encoding) +
          // The last line gets a "*/" postfix.
          (LineIndex + 1 == Lines.size() ? 2 : 0);

@@ -96,6 +96,8 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
     IO.mapOptional("MaxEmptyLinesToKeep", Style.MaxEmptyLinesToKeep);
     IO.mapOptional("ObjCSpaceBeforeProtocolList",
                    Style.ObjCSpaceBeforeProtocolList);
+    IO.mapOptional("PenaltyBreakComment", Style.PenaltyBreakComment);
+    IO.mapOptional("PenaltyBreakString", Style.PenaltyBreakString);
     IO.mapOptional("PenaltyExcessCharacter", Style.PenaltyExcessCharacter);
     IO.mapOptional("PenaltyReturnTypeOnItsOwnLine",
                    Style.PenaltyReturnTypeOnItsOwnLine);
@@ -130,6 +132,8 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.IndentCaseLabels = false;
   LLVMStyle.MaxEmptyLinesToKeep = 1;
   LLVMStyle.ObjCSpaceBeforeProtocolList = true;
+  LLVMStyle.PenaltyBreakComment = 45;
+  LLVMStyle.PenaltyBreakString = 1000;
   LLVMStyle.PenaltyExcessCharacter = 1000000;
   LLVMStyle.PenaltyReturnTypeOnItsOwnLine = 75;
   LLVMStyle.PointerBindsToType = false;
@@ -157,6 +161,8 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.IndentCaseLabels = true;
   GoogleStyle.MaxEmptyLinesToKeep = 1;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
+  GoogleStyle.PenaltyBreakComment = 45;
+  GoogleStyle.PenaltyBreakString = 1000;
   GoogleStyle.PenaltyExcessCharacter = 1000000;
   GoogleStyle.PenaltyReturnTypeOnItsOwnLine = 200;
   GoogleStyle.PointerBindsToType = true;
@@ -840,8 +846,8 @@ private:
                                        Whitespaces);
       }
       unsigned TailOffset = 0;
-      unsigned RemainingTokenColumns =
-          Token->getLineLengthAfterSplit(LineIndex, TailOffset);
+      unsigned RemainingTokenColumns = Token->getLineLengthAfterSplit(
+          LineIndex, TailOffset, StringRef::npos);
       while (RemainingTokenColumns > RemainingSpace) {
         BreakableToken::Split Split =
             Token->getSplit(LineIndex, TailOffset, getColumnLimit());
@@ -849,15 +855,23 @@ private:
           break;
         assert(Split.first != 0);
         unsigned NewRemainingTokenColumns = Token->getLineLengthAfterSplit(
-            LineIndex, TailOffset + Split.first + Split.second);
+            LineIndex, TailOffset + Split.first + Split.second,
+            StringRef::npos);
         assert(NewRemainingTokenColumns < RemainingTokenColumns);
         if (!DryRun) {
           Token->insertBreak(LineIndex, TailOffset, Split, Line.InPPDirective,
                              Whitespaces);
         }
+        Penalty += Current.is(tok::string_literal) ? Style.PenaltyBreakString
+                                                   : Style.PenaltyBreakComment;
+        unsigned ColumnsUsed =
+            Token->getLineLengthAfterSplit(LineIndex, TailOffset, Split.first);
+        if (ColumnsUsed > getColumnLimit()) {
+          Penalty +=
+              Style.PenaltyExcessCharacter * (ColumnsUsed - getColumnLimit());
+        }
         TailOffset += Split.first + Split.second;
         RemainingTokenColumns = NewRemainingTokenColumns;
-        Penalty += Style.PenaltyExcessCharacter;
         BreakInserted = true;
       }
       PositionAfterLastLineInToken = RemainingTokenColumns;

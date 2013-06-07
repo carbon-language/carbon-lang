@@ -33,11 +33,17 @@ struct FormatStyle {
   /// \brief The column limit.
   unsigned ColumnLimit;
 
-  /// \brief The penalty for each character outside of the column limit.
-  unsigned PenaltyExcessCharacter;
-
   /// \brief The maximum number of consecutive empty lines to keep.
   unsigned MaxEmptyLinesToKeep;
+
+  /// \brief The penalty for each line break introduced inside a comment.
+  unsigned PenaltyBreakComment;
+
+  /// \brief The penalty for each line break introduced inside a string literal.
+  unsigned PenaltyBreakString;
+
+  /// \brief The penalty for each character outside of the column limit.
+  unsigned PenaltyExcessCharacter;
 
   /// \brief Set whether & and * bind to the type as opposed to the variable.
   bool PointerBindsToType;
@@ -144,6 +150,8 @@ struct FormatStyle {
            IndentWidth == R.IndentWidth &&
            MaxEmptyLinesToKeep == R.MaxEmptyLinesToKeep &&
            ObjCSpaceBeforeProtocolList == R.ObjCSpaceBeforeProtocolList &&
+           PenaltyBreakString == R.PenaltyBreakString &&
+           PenaltyBreakComment == R.PenaltyBreakComment &&
            PenaltyExcessCharacter == R.PenaltyExcessCharacter &&
            PenaltyReturnTypeOnItsOwnLine == R.PenaltyReturnTypeOnItsOwnLine &&
            PointerBindsToType == R.PointerBindsToType &&

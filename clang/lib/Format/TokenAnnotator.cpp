@@ -103,13 +103,16 @@ private:
       // '*' has to be a binary operator but determineStarAmpUsage() will
       // categorize it as an unary operator, so set the right type here.
       if (LookForDecls && CurrentToken->Next) {
-        FormatToken *Prev = CurrentToken->Previous;
-        FormatToken *Next = CurrentToken->Next;
-        if (Prev->Previous->is(tok::identifier) &&
-            Prev->isOneOf(tok::star, tok::amp, tok::ampamp) &&
-            CurrentToken->is(tok::identifier) && Next->isNot(tok::equal)) {
-          Prev->Type = TT_BinaryOperator;
-          LookForDecls = false;
+        FormatToken *Prev = CurrentToken->getPreviousNoneComment();
+        if (Prev) {
+          FormatToken *PrevPrev = Prev->getPreviousNoneComment();
+          FormatToken *Next = CurrentToken->Next;
+          if (PrevPrev && PrevPrev->is(tok::identifier) &&
+              Prev->isOneOf(tok::star, tok::amp, tok::ampamp) &&
+              CurrentToken->is(tok::identifier) && Next->isNot(tok::equal)) {
+            Prev->Type = TT_BinaryOperator;
+            LookForDecls = false;
+          }
         }
       }
 

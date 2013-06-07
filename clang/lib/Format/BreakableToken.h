@@ -33,7 +33,7 @@ struct FormatStyle;
 /// strategy into the class, instead of controlling it from the outside.
 class BreakableToken {
 public:
-  // Contains starting character index and length of split.
+  /// \brief Contains starting character index and length of split.
   typedef std::pair<StringRef::size_type, unsigned> Split;
 
   virtual ~BreakableToken() {}
@@ -41,13 +41,15 @@ public:
   /// \brief Returns the number of lines in this token in the original code.
   virtual unsigned getLineCount() const = 0;
 
-  /// \brief Returns the rest of the length of the line at \p LineIndex,
-  /// when broken at \p TailOffset.
+  /// \brief Returns the number of columns required to format the piece of line
+  /// at \p LineIndex, from byte offset \p Offset with length \p Length.
   ///
-  /// Note that previous breaks are not taken into account. \p TailOffset
-  /// is always specified from the start of the (original) line.
-  virtual unsigned getLineLengthAfterSplit(unsigned LineIndex,
-                                           unsigned TailOffset) const = 0;
+  /// Note that previous breaks are not taken into account. \p Offset is always
+  /// specified from the start of the (original) line.
+  /// \p Length can be set to StringRef::npos, which means "to the end of line".
+  virtual unsigned
+      getLineLengthAfterSplit(unsigned LineIndex, unsigned Offset,
+                              StringRef::size_type Length) const = 0;
 
   /// \brief Returns a range (offset, length) at which to break the line at
   /// \p LineIndex, if previously broken at \p TailOffset. If possible, do not
@@ -80,7 +82,8 @@ class BreakableSingleLineToken : public BreakableToken {
 public:
   virtual unsigned getLineCount() const;
   virtual unsigned getLineLengthAfterSplit(unsigned LineIndex,
-                                           unsigned TailOffset) const;
+                                           unsigned TailOffset,
+                                           StringRef::size_type Length) const;
   virtual void insertBreak(unsigned LineIndex, unsigned TailOffset, Split Split,
                            bool InPPDirective, WhitespaceManager &Whitespaces);
 
@@ -139,7 +142,8 @@ public:
 
   virtual unsigned getLineCount() const;
   virtual unsigned getLineLengthAfterSplit(unsigned LineIndex,
-                                           unsigned TailOffset) const;
+                                           unsigned TailOffset,
+                                           StringRef::size_type Length) const;
   virtual Split getSplit(unsigned LineIndex, unsigned TailOffset,
                          unsigned ColumnLimit) const;
   virtual void insertBreak(unsigned LineIndex, unsigned TailOffset, Split Split,
