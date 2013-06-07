@@ -45,10 +45,6 @@ class X86FastISel : public FastISel {
   /// make the right decision when generating code for different targets.
   const X86Subtarget *Subtarget;
 
-  /// RegInfo - X86 register info.
-  ///
-  const X86RegisterInfo *RegInfo;
-
   /// X86ScalarSSEf32, X86ScalarSSEf64 - Select between SSE or x87
   /// floating point ops.
   /// When SSE is available, use it for f32 operations.
@@ -63,7 +59,6 @@ public:
     Subtarget = &TM.getSubtarget<X86Subtarget>();
     X86ScalarSSEf64 = Subtarget->hasSSE2();
     X86ScalarSSEf32 = Subtarget->hasSSE1();
-    RegInfo = static_cast<const X86RegisterInfo*>(TM.getRegisterInfo());
   }
 
   virtual bool TargetSelectInstruction(const Instruction *I);
@@ -2025,6 +2020,8 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
     } else {
       unsigned LocMemOffset = VA.getLocMemOffset();
       X86AddressMode AM;
+      const X86RegisterInfo *RegInfo = static_cast<const X86RegisterInfo*>(
+          getTargetMachine()->getRegisterInfo());
       AM.Base.Reg = RegInfo->getStackRegister();
       AM.Disp = LocMemOffset;
       const Value *ArgVal = ArgVals[VA.getValNo()];

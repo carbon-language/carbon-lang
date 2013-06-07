@@ -734,7 +734,6 @@ namespace llvm {
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
     /// make the right decision when generating code for different targets.
     const X86Subtarget *Subtarget;
-    const X86RegisterInfo *RegInfo;
     const DataLayout *TD;
 
     /// Used to store the TargetOptions so that we don't waste time resetting

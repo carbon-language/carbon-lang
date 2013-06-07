@@ -135,8 +135,8 @@ FunctionPass *llvm::createX86FixupLEAs() {
 
 bool FixupLEAPass::runOnMachineFunction(MachineFunction &Func) {
   MF = &Func;
-  TII = Func.getTarget().getInstrInfo();
   TM = &MF->getTarget();
+  TII = TM->getInstrInfo();
 
   DEBUG(dbgs() << "Start X86FixupLEAs\n";);
   // Process all basic blocks.

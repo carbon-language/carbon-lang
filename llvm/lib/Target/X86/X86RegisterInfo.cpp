@@ -54,15 +54,14 @@ static cl::opt<bool>
 EnableBasePointer("x86-use-base-pointer", cl::Hidden, cl::init(true),
           cl::desc("Enable use of a base pointer for complex stack frames"));
 
-X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
-                                 const TargetInstrInfo &tii)
+X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm)
   : X86GenRegisterInfo((tm.getSubtarget<X86Subtarget>().is64Bit()
                          ? X86::RIP : X86::EIP),
                        X86_MC::getDwarfRegFlavour(tm.getTargetTriple(), false),
                        X86_MC::getDwarfRegFlavour(tm.getTargetTriple(), true),
                        (tm.getSubtarget<X86Subtarget>().is64Bit()
                          ? X86::RIP : X86::EIP)),
-                       TM(tm), TII(tii) {
+                       TM(tm) {
   X86_MC::InitLLVM2SEHRegisterMapping(this);
 
   // Cache some information.
