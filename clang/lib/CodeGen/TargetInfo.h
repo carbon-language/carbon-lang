@@ -111,8 +111,13 @@ namespace clang {
       return Address;
     }
 
+    /// Corrects the low-level LLVM type for a given constraint and "usual"
+    /// type.
+    ///
+    /// \returns A pointer to a new LLVM type, possibly the same as the original
+    /// on success; 0 on failure.
     virtual llvm::Type* adjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
-                                            StringRef Constraint, 
+                                            StringRef Constraint,
                                             llvm::Type* Ty) const {
       return Ty;
     }

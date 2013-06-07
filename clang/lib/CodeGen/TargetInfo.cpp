@@ -503,8 +503,16 @@ bool IsX86_MMXType(llvm::Type *IRType) {
 static llvm::Type* X86AdjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
                                           StringRef Constraint,
                                           llvm::Type* Ty) {
-  if ((Constraint == "y" || Constraint == "&y") && Ty->isVectorTy())
+  if ((Constraint == "y" || Constraint == "&y") && Ty->isVectorTy()) {
+    if (cast<llvm::VectorType>(Ty)->getBitWidth() != 64) {
+      // Invalid MMX constraint
+      return 0;
+    }
+
     return llvm::Type::getX86_MMXTy(CGF.getLLVMContext());
+  }
+
+  // No operation needed
   return Ty;
 }
 
