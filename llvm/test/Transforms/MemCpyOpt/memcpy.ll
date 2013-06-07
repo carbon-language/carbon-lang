@@ -168,6 +168,45 @@ entry:
   ret void
 }
 
+; rdar://14073661.
+; Test10 triggered assertion when the compiler try to get the size of the
+; opaque type of *x, where the x is the formal argument with attribute 'sret'.
+
+%opaque = type opaque
+declare void @foo(i32* noalias nocapture)
+
+define void @test10(%opaque* noalias nocapture sret %x, i32 %y) {
+  %a = alloca i32, align 4
+  store i32 %y, i32* %a
+  call void @foo(i32* noalias nocapture %a)
+  %c = load i32* %a
+  %d = bitcast %opaque* %x to i32*
+  store i32 %c, i32* %d
+  ret void
+}
+
+; Test11 is similar to test10 except that the instruction "store i32 %y, i32* %a"
+; before the call-site is deleted. MemCopyOpt is able to optimize this snippet into
+;
+;  %x1 = bitcast %opaque* %x to i32*
+;  call void @foo(i32* noalias nocapture %x1)
+;  ret void
+; 
+
+define void @test11(%opaque* noalias nocapture sret %x, i32 %y) {
+; CHECK: test11
+; CHECK: %x1 = bitcast %opaque* %x to i32*
+; CHECK: call void @foo(i32* noalias nocapture %x1)
+; CHECK: ret void
+
+  %a = alloca i32, align 4
+  call void @foo(i32* noalias nocapture %a)
+  %c = load i32* %a
+  %d = bitcast %opaque* %x to i32*
+  store i32 %c, i32* %d
+  ret void
+}
+
 declare void @f1(%struct.big* sret)
 declare void @f2(%struct.big*)
 
