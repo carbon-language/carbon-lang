@@ -224,7 +224,7 @@ bool AMDGPUIndirectAddressingPass::runOnMachineFunction(MachineFunction &MF) {
             unsigned LiveAddress = RegisterAddressMap[Reg];
             // Chain the live-ins
             if (LiveAddressRegisterMap.find(LiveAddress) !=
-                                                     RegisterAddressMap.end()) {
+                LiveAddressRegisterMap.end()) {
               MI.addOperand(MachineOperand::CreateReg(
                                   LiveAddressRegisterMap[LiveAddress],
                                   false, // isDef
