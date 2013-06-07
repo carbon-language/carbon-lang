@@ -1808,7 +1808,10 @@ void SourceManager::computeMacroArgsCache(MacroArgsMap *&CachePtr,
       return;
     }
 
-    const SrcMgr::SLocEntry &Entry = getSLocEntryByID(ID);
+    bool Invalid = false;
+    const SrcMgr::SLocEntry &Entry = getSLocEntryByID(ID, &Invalid);
+    if (Invalid)
+      return;
     if (Entry.isFile()) {
       SourceLocation IncludeLoc = Entry.getFile().getIncludeLoc();
       if (IncludeLoc.isInvalid())

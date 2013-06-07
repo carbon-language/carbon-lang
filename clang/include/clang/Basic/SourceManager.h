@@ -1483,7 +1483,7 @@ public:
       if (Invalid) *Invalid = true;
       return LocalSLocEntryTable[0];
     }
-    return getSLocEntryByID(FID.ID);
+    return getSLocEntryByID(FID.ID, Invalid);
   }
 
   unsigned getNextLocalOffset() const { return NextLocalOffset; }
@@ -1547,11 +1547,11 @@ private:
   const SrcMgr::SLocEntry &loadSLocEntry(unsigned Index, bool *Invalid) const;
 
   /// \brief Get the entry with the given unwrapped FileID.
-  const SrcMgr::SLocEntry &getSLocEntryByID(int ID) const {
+  const SrcMgr::SLocEntry &getSLocEntryByID(int ID, bool *Invalid = 0) const {
     assert(ID != -1 && "Using FileID sentinel value");
     if (ID < 0)
-      return getLoadedSLocEntryByID(ID);
-    return getLocalSLocEntry(static_cast<unsigned>(ID));
+      return getLoadedSLocEntryByID(ID, Invalid);
+    return getLocalSLocEntry(static_cast<unsigned>(ID), Invalid);
   }
 
   const SrcMgr::SLocEntry &getLoadedSLocEntryByID(int ID,
