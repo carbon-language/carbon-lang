@@ -1,0 +1,3 @@
+RUN: lld -flavor gnu -shared -o test.so %p/Inputs/stripped-empty.x86_64
+
+test that we handle files without a symbol table.
