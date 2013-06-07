@@ -33,6 +33,8 @@ struct CommonFlags {
   bool fast_unwind_on_fatal;
   // Use fast (frame-pointer-based) unwinder on malloc/free (if available).
   bool fast_unwind_on_malloc;
+  // Intercept and handle ioctl requests.
+  bool handle_ioctl;
   // Max number of stack frames kept for each allocation/deallocation.
   int malloc_context_size;
 };

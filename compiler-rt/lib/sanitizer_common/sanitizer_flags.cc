@@ -27,6 +27,7 @@ void ParseCommonFlagsFromString(const char *str) {
   ParseFlag(str, &f->fast_unwind_on_fatal, "fast_unwind_on_fatal");
   ParseFlag(str, &f->fast_unwind_on_malloc, "fast_unwind_on_malloc");
   ParseFlag(str, &f->symbolize, "symbolize");
+  ParseFlag(str, &f->handle_ioctl, "handle_ioctl");
 }
 
 static bool GetFlagValue(const char *env, const char *name,

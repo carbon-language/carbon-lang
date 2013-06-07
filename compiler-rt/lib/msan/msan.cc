@@ -137,6 +137,7 @@ static void InitializeFlags(Flags *f, const char *options) {
   cf->fast_unwind_on_fatal = false;
   cf->fast_unwind_on_malloc = true;
   cf->malloc_context_size = 20;
+  cf->handle_ioctl = true;
 
   internal_memset(f, 0, sizeof(*f));
   f->poison_heap_with_zeroes = false;

@@ -429,6 +429,10 @@ SCANF_INTERCEPTOR_IMPL(__isoc99_sscanf, __isoc99_vsscanf, str, format)
 #define INIT_SCANF
 #endif
 
+
+#include "sanitizer_common_interceptors_ioctl.inc"
+
+
 #if SANITIZER_INTERCEPT_GETPWNAM_AND_FRIENDS
 INTERCEPTOR(void *, getpwnam, const char *name) {
   void *ctx;
@@ -1123,4 +1127,5 @@ INTERCEPTOR(int, getpeername, int sockfd, void *addr, unsigned *addrlen) {
   INIT_ACCEPT4;                            \
   INIT_MODF;                               \
   INIT_RECVMSG;                            \
-  INIT_GETPEERNAME;
+  INIT_GETPEERNAME;                        \
+  INIT_IOCTL;

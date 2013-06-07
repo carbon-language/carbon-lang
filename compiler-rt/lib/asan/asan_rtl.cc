@@ -136,6 +136,7 @@ void InitializeFlags(Flags *f, const char *env) {
   cf->fast_unwind_on_fatal = false;
   cf->fast_unwind_on_malloc = true;
   cf->strip_path_prefix = "";
+  cf->handle_ioctl = false;
 
   internal_memset(f, 0, sizeof(*f));
   f->quarantine_size = (ASAN_LOW_MEMORY) ? 1UL << 26 : 1UL << 28;
