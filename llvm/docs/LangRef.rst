@@ -387,6 +387,8 @@ More calling conventions can be added/defined on an as-needed basis, to
 support Pascal conventions or any other well-known target-independent
 convention.
 
+.. _visibilitystyles:
+
 Visibility Styles
 -----------------
 
@@ -411,6 +413,8 @@ styles:
     placed in the dynamic symbol table, but that references within the
     defining module will bind to the local symbol. That is, the symbol
     cannot be overridden by another module.
+
+.. _namedtypes:
 
 Named Types
 -----------
@@ -595,6 +599,8 @@ Syntax::
            <ResultType> @<FunctionName> ([argument list])
            [fn Attrs] [section "name"] [align N]
            [gc] { ... }
+
+.. _langref_aliases:
 
 Aliases
 -------
@@ -969,6 +975,8 @@ two digit hex code for the number.
 
 The inline asm code is simply printed to the machine code .s file when
 assembly code is generated.
+
+.. _langref_datalayout:
 
 Data Layout
 -----------
