@@ -198,9 +198,13 @@ MachineInstr *R600VectorRegMerger::RebuildVector(
         .addReg(SubReg)
         .addImm(Chan);
     UpdatedRegToChan[SubReg] = Chan;
-    UpdatedUndef.erase(
-        std::remove(UpdatedUndef.begin(), UpdatedUndef.end(), Chan),
-        UpdatedUndef.end());
+    std::vector<unsigned>::iterator ChanPos =
+        std::find(UpdatedUndef.begin(), UpdatedUndef.end(), Chan);
+    if (ChanPos != UpdatedUndef.end())
+      UpdatedUndef.erase(ChanPos);
+    assert(std::find(UpdatedUndef.begin(), UpdatedUndef.end(), Chan) ==
+               UpdatedUndef.end() &&
+           "UpdatedUndef shouldn't contain Chan more than once!");
     DEBUG(dbgs() << "    ->"; Tmp->dump(););
     (void)Tmp;
     SrcVec = DstReg;
