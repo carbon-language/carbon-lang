@@ -39,7 +39,7 @@ private:
 public:
   AMDGPUIndirectAddressingPass(TargetMachine &tm) :
     MachineFunctionPass(ID),
-    TII(static_cast<const AMDGPUInstrInfo*>(tm.getInstrInfo()))
+    TII(0)
     { }
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
@@ -58,6 +58,8 @@ FunctionPass *llvm::createAMDGPUIndirectAddressingPass(TargetMachine &tm) {
 
 bool AMDGPUIndirectAddressingPass::runOnMachineFunction(MachineFunction &MF) {
   MachineRegisterInfo &MRI = MF.getRegInfo();
+
+  TII = static_cast<const AMDGPUInstrInfo*>(MF.getTarget().getInstrInfo());
 
   int IndirectBegin = TII->getIndirectIndexBegin(MF);
   int IndirectEnd = TII->getIndirectIndexEnd(MF);

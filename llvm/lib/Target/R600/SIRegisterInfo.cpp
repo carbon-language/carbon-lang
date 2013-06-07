@@ -18,11 +18,9 @@
 
 using namespace llvm;
 
-SIRegisterInfo::SIRegisterInfo(AMDGPUTargetMachine &tm,
-    const TargetInstrInfo &tii)
-: AMDGPURegisterInfo(tm, tii),
-  TM(tm),
-  TII(tii)
+SIRegisterInfo::SIRegisterInfo(AMDGPUTargetMachine &tm)
+: AMDGPURegisterInfo(tm),
+  TM(tm)
   { }
 
 BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {

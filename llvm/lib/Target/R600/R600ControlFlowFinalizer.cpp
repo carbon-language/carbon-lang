@@ -49,7 +49,7 @@ private:
 
   static char ID;
   const R600InstrInfo *TII;
-  const R600RegisterInfo &TRI;
+  const R600RegisterInfo *TRI;
   unsigned MaxFetchInst;
   const AMDGPUSubtarget &ST;
 
@@ -122,8 +122,8 @@ private:
         if (AMDGPU::R600_Reg128RegClass.contains(Reg))
           DstMI = Reg;
         else
-          DstMI = TRI.getMatchingSuperReg(Reg,
-              TRI.getSubRegFromChannel(TRI.getHWRegChan(Reg)),
+          DstMI = TRI->getMatchingSuperReg(Reg,
+              TRI->getSubRegFromChannel(TRI->getHWRegChan(Reg)),
               &AMDGPU::R600_Reg128RegClass);
       }
       if (MO.isUse()) {
@@ -131,8 +131,8 @@ private:
         if (AMDGPU::R600_Reg128RegClass.contains(Reg))
           SrcMI = Reg;
         else
-          SrcMI = TRI.getMatchingSuperReg(Reg,
-              TRI.getSubRegFromChannel(TRI.getHWRegChan(Reg)),
+          SrcMI = TRI->getMatchingSuperReg(Reg,
+              TRI->getSubRegFromChannel(TRI->getHWRegChan(Reg)),
               &AMDGPU::R600_Reg128RegClass);
       }
     }
@@ -318,14 +318,16 @@ private:
 
 public:
   R600ControlFlowFinalizer(TargetMachine &tm) : MachineFunctionPass(ID),
-    TII (static_cast<const R600InstrInfo *>(tm.getInstrInfo())),
-    TRI(TII->getRegisterInfo()),
+    TII (0), TRI(0),
     ST(tm.getSubtarget<AMDGPUSubtarget>()) {
       const AMDGPUSubtarget &ST = tm.getSubtarget<AMDGPUSubtarget>();
       MaxFetchInst = ST.getTexVTXClauseSize();
   }
 
   virtual bool runOnMachineFunction(MachineFunction &MF) {
+    TII=static_cast<const R600InstrInfo *>(MF.getTarget().getInstrInfo());
+    TRI=static_cast<const R600RegisterInfo *>(MF.getTarget().getRegisterInfo());
+
     unsigned MaxStack = 0;
     unsigned CurrentStack = 0;
     bool HasPush = false;

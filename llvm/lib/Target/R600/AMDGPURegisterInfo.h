@@ -30,10 +30,9 @@ class TargetInstrInfo;
 
 struct AMDGPURegisterInfo : public AMDGPUGenRegisterInfo {
   TargetMachine &TM;
-  const TargetInstrInfo &TII;
   static const uint16_t CalleeSavedReg;
 
-  AMDGPURegisterInfo(TargetMachine &tm, const TargetInstrInfo &tii);
+  AMDGPURegisterInfo(TargetMachine &tm);
 
   virtual BitVector getReservedRegs(const MachineFunction &MF) const {
     assert(!"Unimplemented");  return BitVector();

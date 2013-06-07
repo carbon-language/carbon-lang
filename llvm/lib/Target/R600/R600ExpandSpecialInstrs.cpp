@@ -38,7 +38,7 @@ private:
 
 public:
   R600ExpandSpecialInstrsPass(TargetMachine &tm) : MachineFunctionPass(ID),
-    TII (static_cast<const R600InstrInfo *>(tm.getInstrInfo())) { }
+    TII(0) { }
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
 
@@ -56,6 +56,7 @@ FunctionPass *llvm::createR600ExpandSpecialInstrsPass(TargetMachine &TM) {
 }
 
 bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
+  TII = static_cast<const R600InstrInfo *>(MF.getTarget().getInstrInfo());
 
   const R600RegisterInfo &TRI = TII->getRegisterInfo();
 

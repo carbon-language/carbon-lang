@@ -30,9 +30,7 @@ const uint64_t RSRC_DATA_FORMAT = 0xf00000000000LL;
 using namespace llvm;
 
 SITargetLowering::SITargetLowering(TargetMachine &TM) :
-    AMDGPUTargetLowering(TM),
-    TII(static_cast<const SIInstrInfo*>(TM.getInstrInfo())),
-    TRI(TM.getRegisterInfo()) {
+    AMDGPUTargetLowering(TM) {
 
   addRegisterClass(MVT::i1, &AMDGPU::SReg_64RegClass);
   addRegisterClass(MVT::i64, &AMDGPU::SReg_64RegClass);
@@ -257,6 +255,8 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
   case AMDGPU::BRANCH: return BB;
   case AMDGPU::SI_ADDR64_RSRC: {
+    const SIInstrInfo *TII =
+      static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
     MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
     unsigned SuperReg = MI->getOperand(0).getReg();
     unsigned SubRegLo = MRI.createVirtualRegister(&AMDGPU::SReg_64RegClass);
@@ -582,6 +582,8 @@ bool SITargetLowering::foldImm(SDValue &Operand, int32_t &Immediate,
                                bool &ScalarSlotUsed) const {
 
   MachineSDNode *Mov = dyn_cast<MachineSDNode>(Operand);
+  const SIInstrInfo *TII =
+    static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
   if (Mov == 0 || !TII->isMov(Mov->getMachineOpcode()))
     return false;
 
@@ -621,7 +623,10 @@ bool SITargetLowering::fitsRegClass(SelectionDAG &DAG, const SDValue &Op,
   SDNode *Node = Op.getNode();
 
   const TargetRegisterClass *OpClass;
+  const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
   if (MachineSDNode *MN = dyn_cast<MachineSDNode>(Node)) {
+    const SIInstrInfo *TII =
+      static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
     const MCInstrDesc &Desc = TII->get(MN->getMachineOpcode());
     int OpClassID = Desc.OpInfo[Op.getResNo()].RegClass;
     if (OpClassID == -1) {
@@ -697,6 +702,8 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
 
   // Original encoding (either e32 or e64)
   int Opcode = Node->getMachineOpcode();
+  const SIInstrInfo *TII =
+    static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
   const MCInstrDesc *Desc = &TII->get(Opcode);
 
   unsigned NumDefs = Desc->getNumDefs();

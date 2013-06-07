@@ -30,7 +30,7 @@ using namespace llvm;
 
 R600InstrInfo::R600InstrInfo(AMDGPUTargetMachine &tm)
   : AMDGPUInstrInfo(tm),
-    RI(tm, *this),
+    RI(tm),
     ST(tm.getSubtarget<AMDGPUSubtarget>())
   { }
 

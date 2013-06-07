@@ -47,7 +47,7 @@ class SIInsertWaits : public MachineFunctionPass {
 private:
   static char ID;
   const SIInstrInfo *TII;
-  const SIRegisterInfo &TRI;
+  const SIRegisterInfo *TRI;
   const MachineRegisterInfo *MRI;
 
   /// \brief Constant hardware limits
@@ -97,8 +97,8 @@ private:
 public:
   SIInsertWaits(TargetMachine &tm) :
     MachineFunctionPass(ID),
-    TII(static_cast<const SIInstrInfo*>(tm.getInstrInfo())),
-    TRI(TII->getRegisterInfo()) { }
+    TII(0),
+    TRI(0) { }
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
 
@@ -137,7 +137,7 @@ Counters SIInsertWaits::getHwCounts(MachineInstr &MI) {
     assert(Op.isReg() && "First LGKM operand must be a register!");
 
     unsigned Reg = Op.getReg();
-    unsigned Size = TRI.getMinimalPhysRegClass(Reg)->getSize();
+    unsigned Size = TRI->getMinimalPhysRegClass(Reg)->getSize();
     Result.Named.LGKM = Size > 4 ? 2 : 1;
 
   } else {
@@ -182,12 +182,12 @@ RegInterval SIInsertWaits::getRegInterval(MachineOperand &Op) {
     return std::make_pair(0, 0);
 
   unsigned Reg = Op.getReg();
-  unsigned Size = TRI.getMinimalPhysRegClass(Reg)->getSize();
+  unsigned Size = TRI->getMinimalPhysRegClass(Reg)->getSize();
 
   assert(Size >= 4);
 
   RegInterval Result;
-  Result.first = TRI.getEncodingValue(Reg);
+  Result.first = TRI->getEncodingValue(Reg);
   Result.second = Result.first + Size / 4;
 
   return Result;
@@ -328,8 +328,10 @@ Counters SIInsertWaits::handleOperands(MachineInstr &MI) {
 }
 
 bool SIInsertWaits::runOnMachineFunction(MachineFunction &MF) {
-
   bool Changes = false;
+
+  TII = static_cast<const SIInstrInfo*>(MF.getTarget().getInstrInfo());
+  TRI = static_cast<const SIRegisterInfo*>(MF.getTarget().getRegisterInfo());
 
   MRI = &MF.getRegInfo();
 

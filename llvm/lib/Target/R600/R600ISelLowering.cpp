@@ -26,8 +26,7 @@
 using namespace llvm;
 
 R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
-    AMDGPUTargetLowering(TM),
-    TII(static_cast<const R600InstrInfo*>(TM.getInstrInfo())) {
+    AMDGPUTargetLowering(TM) {
   addRegisterClass(MVT::v4f32, &AMDGPU::R600_Reg128RegClass);
   addRegisterClass(MVT::f32, &AMDGPU::R600_Reg32RegClass);
   addRegisterClass(MVT::v4i32, &AMDGPU::R600_Reg128RegClass);
@@ -117,6 +116,8 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
   MachineFunction * MF = BB->getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
   MachineBasicBlock::iterator I = *MI;
+  const R600InstrInfo *TII =
+    static_cast<const R600InstrInfo*>(MF->getTarget().getInstrInfo());
 
   switch (MI->getOpcode()) {
   default: return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
@@ -536,6 +537,9 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
       int ijb = cast<ConstantSDNode>(Op.getOperand(2))->getSExtValue();
       MachineSDNode *interp;
       if (ijb < 0) {
+        const MachineFunction &MF = DAG.getMachineFunction();
+        const R600InstrInfo *TII =
+          static_cast<const R600InstrInfo*>(MF.getTarget().getInstrInfo());
         interp = DAG.getMachineNode(AMDGPU::INTERP_VEC_LOAD, DL,
             MVT::v4f32, DAG.getTargetConstant(slot / 4 , MVT::i32));
         return DAG.getTargetExtractSubreg(

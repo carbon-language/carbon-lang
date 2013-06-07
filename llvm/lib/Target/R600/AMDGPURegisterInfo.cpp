@@ -17,11 +17,9 @@
 
 using namespace llvm;
 
-AMDGPURegisterInfo::AMDGPURegisterInfo(TargetMachine &tm,
-    const TargetInstrInfo &tii)
+AMDGPURegisterInfo::AMDGPURegisterInfo(TargetMachine &tm)
 : AMDGPUGenRegisterInfo(0),
-  TM(tm),
-  TII(tii)
+  TM(tm)
   { }
 
 //===----------------------------------------------------------------------===//

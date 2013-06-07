@@ -205,9 +205,11 @@ private:
 
 public:
   R600EmitClauseMarkersPass(TargetMachine &tm) : MachineFunctionPass(ID),
-    TII (static_cast<const R600InstrInfo *>(tm.getInstrInfo())) { }
+    TII(0) { }
 
   virtual bool runOnMachineFunction(MachineFunction &MF) {
+    TII = static_cast<const R600InstrInfo *>(MF.getTarget().getInstrInfo());
+
     for (MachineFunction::iterator BB = MF.begin(), BB_E = MF.end();
                                                     BB != BB_E; ++BB) {
       MachineBasicBlock &MBB = *BB;

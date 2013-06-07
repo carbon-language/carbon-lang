@@ -21,14 +21,12 @@
 namespace llvm {
 
 class R600TargetMachine;
-class TargetInstrInfo;
 
 struct R600RegisterInfo : public AMDGPURegisterInfo {
   AMDGPUTargetMachine &TM;
-  const TargetInstrInfo &TII;
   RegClassWeight RCW;
 
-  R600RegisterInfo(AMDGPUTargetMachine &tm, const TargetInstrInfo &tii);
+  R600RegisterInfo(AMDGPUTargetMachine &tm);
 
   virtual BitVector getReservedRegs(const MachineFunction &MF) const;
 

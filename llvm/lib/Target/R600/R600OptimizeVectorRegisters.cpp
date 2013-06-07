@@ -104,7 +104,7 @@ private:
 public:
   static char ID;
   R600VectorRegMerger(TargetMachine &tm) : MachineFunctionPass(ID),
-  TII (static_cast<const R600InstrInfo *>(tm.getInstrInfo())) { }
+  TII(0) { }
 
   void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesCFG();
@@ -314,6 +314,7 @@ void R600VectorRegMerger::trackRSI(const RegSeqInfo &RSI) {
 }
 
 bool R600VectorRegMerger::runOnMachineFunction(MachineFunction &Fn) {
+  TII = static_cast<const R600InstrInfo *>(Fn.getTarget().getInstrInfo());
   MRI = &(Fn.getRegInfo());
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
        MBB != MBBe; ++MBB) {

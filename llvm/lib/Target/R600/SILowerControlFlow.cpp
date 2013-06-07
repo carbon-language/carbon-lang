@@ -91,8 +91,7 @@ private:
 
 public:
   SILowerControlFlowPass(TargetMachine &tm) :
-    MachineFunctionPass(ID), TRI(tm.getRegisterInfo()),
-    TII(tm.getInstrInfo()) { }
+    MachineFunctionPass(ID), TRI(0), TII(0) { }
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
 
@@ -408,6 +407,8 @@ void SILowerControlFlowPass::IndirectDst(MachineInstr &MI) {
 }
 
 bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
+  TII = MF.getTarget().getInstrInfo();
+  TRI = MF.getTarget().getRegisterInfo();
 
   bool HaveKill = false;
   bool NeedWQM = false;

@@ -21,13 +21,11 @@
 namespace llvm {
 
 class AMDGPUTargetMachine;
-class TargetInstrInfo;
 
 struct SIRegisterInfo : public AMDGPURegisterInfo {
   AMDGPUTargetMachine &TM;
-  const TargetInstrInfo &TII;
 
-  SIRegisterInfo(AMDGPUTargetMachine &tm, const TargetInstrInfo &tii);
+  SIRegisterInfo(AMDGPUTargetMachine &tm);
 
   virtual BitVector getReservedRegs(const MachineFunction &MF) const;
 
