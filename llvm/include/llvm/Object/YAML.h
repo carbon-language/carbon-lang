@@ -62,6 +62,7 @@ namespace yaml {
 /// } // end namespace llvm
 /// \endcode
 class BinaryRef {
+  friend bool operator==(const BinaryRef &LHS, const BinaryRef &RHS);
   /// \brief Either raw binary data, or a string of hex bytes (must always
   /// be an even number of characters).
   ArrayRef<uint8_t> Data;
@@ -81,13 +82,6 @@ public:
       return Data.size() / 2;
     return Data.size();
   }
-  bool operator==(const BinaryRef &RHS) {
-    // Special case for default constructed BinaryRef.
-    if (RHS.Data.empty() && Data.empty())
-      return true;
-
-    return RHS.DataIsHexString == DataIsHexString && RHS.Data == Data;
-  }
   /// \brief Write the contents (regardless of whether it is binary or a
   /// hex string) as binary to the given raw_ostream.
   void writeAsBinary(raw_ostream &OS) const;
@@ -97,6 +91,14 @@ public:
   /// For example, a possible output could be `DEADBEEFCAFEBABE`.
   void writeAsHex(raw_ostream &OS) const;
 };
+
+inline bool operator==(const BinaryRef &LHS, const BinaryRef &RHS) {
+  // Special case for default constructed BinaryRef.
+  if (LHS.Data.empty() && RHS.Data.empty())
+    return true;
+
+  return LHS.DataIsHexString == RHS.DataIsHexString && LHS.Data == RHS.Data;
+}
 
 }
 }
