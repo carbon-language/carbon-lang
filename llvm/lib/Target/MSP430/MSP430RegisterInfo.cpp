@@ -32,9 +32,8 @@
 using namespace llvm;
 
 // FIXME: Provide proper call frame setup / destroy opcodes.
-MSP430RegisterInfo::MSP430RegisterInfo(MSP430TargetMachine &tm,
-                                       const TargetInstrInfo &tii)
-  : MSP430GenRegisterInfo(MSP430::PCW), TM(tm), TII(tii) {
+MSP430RegisterInfo::MSP430RegisterInfo(MSP430TargetMachine &tm)
+  : MSP430GenRegisterInfo(MSP430::PCW), TM(tm) {
   StackAlign = TM.getFrameLowering()->getStackAlignment();
 }
 
@@ -132,6 +131,7 @@ MSP430RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // This is actually "load effective address" of the stack slot
     // instruction. We have only two-address instructions, thus we need to
     // expand it into mov + add
+    const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
 
     MI.setDesc(TII.get(MSP430::MOV16rr));
     MI.getOperand(FIOperandNum).ChangeToRegister(BasePtr, false);
