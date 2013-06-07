@@ -94,3 +94,11 @@ namespace DR1608 {
     auto f() -> decltype((*this)[0]); // expected-error {{cannot be overloaded}}
   };
 }
+
+namespace PR16273 {
+  struct A {
+    template <int N> void f();
+    auto g()->decltype(this->f<0>());
+  };
+}
+

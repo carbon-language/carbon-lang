@@ -256,7 +256,8 @@ void Sema::LookupTemplateName(LookupResult &Found,
     assert(!SS.isSet() && "ObjectType and scope specifier cannot coexist");
     LookupCtx = computeDeclContext(ObjectType);
     isDependent = ObjectType->isDependentType();
-    assert((isDependent || !ObjectType->isIncompleteType()) &&
+    assert((isDependent || !ObjectType->isIncompleteType() ||
+            ObjectType->castAs<TagType>()->isBeingDefined()) &&
            "Caller should have completed object type");
     
     // Template names cannot appear inside an Objective-C class or object type.
