@@ -744,8 +744,14 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
                 m_gdb_comm.SetConnection (conn_ap.release());
                 break;
             }
+            else if (error.WasInterrupted())
+            {
+                // If we were interrupted, don't keep retrying.
+                break;
+            }
+            
             retry_count++;
-
+            
             if (retry_count >= max_retry_count)
                 break;
 

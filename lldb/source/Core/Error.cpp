@@ -387,3 +387,13 @@ Error::Success() const
 {
     return m_code == 0;
 }
+
+bool
+Error::WasInterrupted() const
+{
+    if (m_type == eErrorTypePOSIX && m_code == EINTR)
+        return true;
+    else
+        return false;
+}
+
