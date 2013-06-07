@@ -118,6 +118,7 @@ ifeq (1,$(USE_LIBSTDCPP))
 	# Clang requires an extra flag: -stdlib=libstdc++
 	ifneq (,$(findstring clang,$(CC)))
 		CFLAGS += -stdlib=libstdc++
+		CXXFLAGS += -stdlib=libstdc++
 		LDFLAGS += -stdlib=libstdc++
 	endif
 endif
