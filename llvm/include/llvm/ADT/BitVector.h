@@ -138,16 +138,15 @@ public:
 
   /// all - Returns true if all bits are set.
   bool all() const {
-    if (empty())
-      return true;
-
-    for (unsigned i = 0; i < NumBitWords(size()) - 1; ++i)
+    for (unsigned i = 0; i < Size / BITWORD_SIZE; ++i)
       if (Bits[i] != ~0UL)
         return false;
 
-    // For the last word check that the lower bits are ones. The unused bits are
-    // always zero.
-    return Bits[NumBitWords(size()) - 1] == ~(~0UL << (Size % BITWORD_SIZE));
+    // If bits remain check that they are ones. The unused bits are always zero.
+    if (unsigned Remainder = Size % BITWORD_SIZE)
+      return Bits[Size / BITWORD_SIZE] == (1UL << Remainder) - 1;
+
+    return true;
   }
 
   /// none - Returns true if none of the bits are set.

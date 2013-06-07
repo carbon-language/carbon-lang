@@ -149,6 +149,22 @@ TYPED_TEST(BitVectorTest, TrivialOperation) {
   EXPECT_FALSE(Vec.none());
   EXPECT_FALSE(Vec.empty());
 
+  Vec.resize(64);
+  EXPECT_EQ(64U, Vec.count());
+  EXPECT_EQ(64U, Vec.size());
+  EXPECT_TRUE(Vec.any());
+  EXPECT_TRUE(Vec.all());
+  EXPECT_FALSE(Vec.none());
+  EXPECT_FALSE(Vec.empty());
+
+  Vec.flip();
+  EXPECT_EQ(0U, Vec.count());
+  EXPECT_EQ(64U, Vec.size());
+  EXPECT_FALSE(Vec.any());
+  EXPECT_FALSE(Vec.all());
+  EXPECT_TRUE(Vec.none());
+  EXPECT_FALSE(Vec.empty());
+
   Inv = TypeParam().flip();
   EXPECT_EQ(0U, Inv.count());
   EXPECT_EQ(0U, Inv.size());
