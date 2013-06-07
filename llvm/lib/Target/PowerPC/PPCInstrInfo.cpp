@@ -74,8 +74,7 @@ ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetPostRAHazardRecognizer(
   // Most subtargets use a PPC970 recognizer.
   if (Directive != PPC::DIR_440 && Directive != PPC::DIR_A2 &&
       Directive != PPC::DIR_E500mc && Directive != PPC::DIR_E5500) {
-    const TargetInstrInfo *TII = TM.getInstrInfo();
-    assert(TII && "No InstrInfo?");
+    assert(TM.getInstrInfo() && "No InstrInfo?");
 
     return new PPCHazardRecognizer970(TM);
   }
