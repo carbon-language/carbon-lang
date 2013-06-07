@@ -2,6 +2,7 @@
 ; RUN: llc -mtriple=x86_64-pc-linux-gnu < %s -o - | FileCheck --check-prefix=LINUX-X64 %s
 ; RUN: llc -code-model=kernel -mtriple=x86_64-pc-linux-gnu < %s -o - | FileCheck --check-prefix=LINUX-KERNEL-X64 %s
 ; RUN: llc -mtriple=x86_64-apple-darwin < %s -o - | FileCheck --check-prefix=DARWIN-X64 %s
+; RUN: llc -mtriple=amd64-pc-openbsd < %s -o - | FileCheck --check-prefix=OPENBSD-AMD64 %s
 
 %struct.foo = type { [16 x i8] }
 %struct.foo.0 = type { [4 x i8] }
@@ -69,6 +70,10 @@ entry:
 ; DARWIN-X64: test1b:
 ; DARWIN-X64: mov{{l|q}} ___stack_chk_guard
 ; DARWIN-X64: callq ___stack_chk_fail
+
+; OPENBSD-AMD64: test1b:
+; OPENBSD-AMD64: movq __guard_local(%rip)
+; OPENBSD-AMD64: callq __stack_smash_handler
   %a.addr = alloca i8*, align 8
   %buf = alloca [16 x i8], align 16
   store i8* %a, i8** %a.addr, align 8

@@ -25,6 +25,8 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/GlobalValue.h"
+#include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
@@ -41,7 +43,8 @@ namespace {
   class StackProtector : public FunctionPass {
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// target type sizes.
-    const TargetLoweringBase *TLI;
+    const TargetLoweringBase *const TLI;
+    const Triple Trip;
 
     Function *F;
     Module *M;
@@ -84,7 +87,8 @@ namespace {
       initializeStackProtectorPass(*PassRegistry::getPassRegistry());
     }
     StackProtector(const TargetLoweringBase *tli)
-      : FunctionPass(ID), TLI(tli) {
+        : FunctionPass(ID), TLI(tli),
+          Trip(tli->getTargetMachine().getTargetTriple()) {
       initializeStackProtectorPass(*PassRegistry::getPassRegistry());
     }
 
@@ -128,8 +132,6 @@ bool StackProtector::ContainsProtectableArray(Type *Ty, bool Strong,
       return true;
     const TargetMachine &TM = TLI->getTargetMachine();
     if (!AT->getElementType()->isIntegerTy(8)) {
-      Triple Trip(TM.getTargetTriple());
-
       // If we're on a non-Darwin platform or we're inside of a structure, don't
       // add stack protectors unless the array is a character array.
       if (InStruct || !Trip.isOSDarwin())
@@ -283,6 +285,10 @@ bool StackProtector::InsertStackProtectors() {
 
         StackGuardVar = ConstantExpr::getIntToPtr(OffsetVal,
                                       PointerType::get(PtrTy, AddressSpace));
+      } else if (Trip.getOS() == llvm::Triple::OpenBSD) {
+        StackGuardVar = M->getOrInsertGlobal("__guard_local", PtrTy);
+        cast<GlobalValue>(StackGuardVar)
+            ->setVisibility(GlobalValue::HiddenVisibility);
       } else {
         StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", PtrTy);
       }
@@ -359,12 +365,31 @@ bool StackProtector::InsertStackProtectors() {
 /// CreateFailBB - Create a basic block to jump to when the stack protector
 /// check fails.
 BasicBlock *StackProtector::CreateFailBB() {
-  BasicBlock *FailBB = BasicBlock::Create(F->getContext(),
-                                          "CallStackCheckFailBlk", F);
-  Constant *StackChkFail =
-    M->getOrInsertFunction("__stack_chk_fail",
-                           Type::getVoidTy(F->getContext()), NULL);
-  CallInst::Create(StackChkFail, "", FailBB);
-  new UnreachableInst(F->getContext(), FailBB);
+  LLVMContext &Context = F->getContext();
+  BasicBlock *FailBB = BasicBlock::Create(Context, "CallStackCheckFailBlk", F);
+  if (Trip.getOS() == llvm::Triple::OpenBSD) {
+    Constant *StackChkFail = M->getOrInsertFunction(
+        "__stack_smash_handler", Type::getVoidTy(Context),
+        Type::getInt8PtrTy(Context), NULL);
+
+    Constant *NameStr = ConstantDataArray::getString(Context, F->getName());
+    Constant *FuncName =
+        new GlobalVariable(*M, NameStr->getType(), true,
+                           GlobalVariable::PrivateLinkage, NameStr, "SSH");
+
+    SmallVector<Constant *, 2> IdxList;
+    IdxList.push_back(ConstantInt::get(Type::getInt8Ty(Context), 0));
+    IdxList.push_back(ConstantInt::get(Type::getInt8Ty(Context), 0));
+
+    SmallVector<Value *, 1> Args;
+    Args.push_back(ConstantExpr::getGetElementPtr(FuncName, IdxList));
+
+    CallInst::Create(StackChkFail, Args, "", FailBB);
+  } else {
+    Constant *StackChkFail = M->getOrInsertFunction(
+        "__stack_chk_fail", Type::getVoidTy(Context), NULL);
+    CallInst::Create(StackChkFail, "", FailBB);
+  }
+  new UnreachableInst(Context, FailBB);
   return FailBB;
 }
