@@ -74,7 +74,6 @@ static inline bool isARMArea3Register(unsigned Reg, bool isIOS) {
 
 class ARMBaseRegisterInfo : public ARMGenRegisterInfo {
 protected:
-  const ARMBaseInstrInfo &TII;
   const ARMSubtarget &STI;
 
   /// FramePtr - ARM physical register used as frame ptr.
@@ -86,8 +85,7 @@ protected:
   unsigned BasePtr;
 
   // Can be only subclassed.
-  explicit ARMBaseRegisterInfo(const ARMBaseInstrInfo &tii,
-                               const ARMSubtarget &STI);
+  explicit ARMBaseRegisterInfo(const ARMSubtarget &STI);
 
   // Return the opcode that implements 'Op', or 0 if no opcode
   unsigned getOpcode(int Op) const;

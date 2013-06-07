@@ -46,7 +46,7 @@ public:
                                               MachineBasicBlock::iterator &MBBI,
                                               LiveVariables *LV) const;
 
-  virtual const ARMBaseRegisterInfo &getRegisterInfo() const =0;
+  virtual const ARMBaseRegisterInfo &getRegisterInfo() const = 0;
   const ARMSubtarget &getSubtarget() const { return Subtarget; }
 
   ScheduleHazardRecognizer *

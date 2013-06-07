@@ -19,13 +19,13 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {
-  class ARMSubtarget;
-  class ARMBaseInstrInfo;
+
+class ARMSubtarget;
 
 struct ARMRegisterInfo : public ARMBaseRegisterInfo {
   virtual void anchor();
 public:
-  ARMRegisterInfo(const ARMBaseInstrInfo &tii, const ARMSubtarget &STI);
+  ARMRegisterInfo(const ARMSubtarget &STI);
 };
 
 } // end namespace llvm

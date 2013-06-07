@@ -20,12 +20,12 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {
-  class ARMSubtarget;
-  class ARMBaseInstrInfo;
+
+class ARMSubtarget;
 
 struct Thumb2RegisterInfo : public ARMBaseRegisterInfo {
 public:
-  Thumb2RegisterInfo(const ARMBaseInstrInfo &tii, const ARMSubtarget &STI);
+  Thumb2RegisterInfo(const ARMSubtarget &STI);
 
   /// emitLoadConstPool - Emits a load from constpool to materialize the
   /// specified immediate.

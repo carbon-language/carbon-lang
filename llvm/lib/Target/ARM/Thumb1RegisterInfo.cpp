@@ -40,9 +40,8 @@ extern cl::opt<bool> ReuseFrameIndexVals;
 
 using namespace llvm;
 
-Thumb1RegisterInfo::Thumb1RegisterInfo(const ARMBaseInstrInfo &tii,
-                                       const ARMSubtarget &sti)
-  : ARMBaseRegisterInfo(tii, sti) {
+Thumb1RegisterInfo::Thumb1RegisterInfo(const ARMSubtarget &sti)
+  : ARMBaseRegisterInfo(sti) {
 }
 
 const TargetRegisterClass*
@@ -70,6 +69,7 @@ Thumb1RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
                                       ARMCC::CondCodes Pred, unsigned PredReg,
                                       unsigned MIFlags) const {
   MachineFunction &MF = *MBB.getParent();
+  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
   MachineConstantPool *ConstantPool = MF.getConstantPool();
   const Constant *C = ConstantInt::get(
           Type::getInt32Ty(MBB.getParent()->getFunction()->getContext()), Val);
@@ -488,6 +488,9 @@ void
 Thumb1RegisterInfo::resolveFrameIndex(MachineBasicBlock::iterator I,
                                       unsigned BaseReg, int64_t Offset) const {
   MachineInstr &MI = *I;
+  const ARMBaseInstrInfo &TII =
+    *static_cast<const ARMBaseInstrInfo*>(
+      MI.getParent()->getParent()->getTarget().getInstrInfo());
   int Off = Offset; // ARM doesn't need the general 64-bit offsets
   unsigned i = 0;
 
@@ -513,6 +516,7 @@ Thumb1RegisterInfo::saveScavengerRegister(MachineBasicBlock &MBB,
   // off the frame pointer (if, for example, there are alloca() calls in
   // the function, the offset will be negative. Use R12 instead since that's
   // a call clobbered register that we know won't be used in Thumb1 mode.
+  const TargetInstrInfo &TII = *MBB.getParent()->getTarget().getInstrInfo();
   DebugLoc DL;
   AddDefaultPred(BuildMI(MBB, I, DL, TII.get(ARM::tMOVr))
     .addReg(ARM::R12, RegState::Define)
@@ -558,6 +562,8 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
+  const ARMBaseInstrInfo &TII =
+    *static_cast<const ARMBaseInstrInfo*>(MF.getTarget().getInstrInfo());
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   DebugLoc dl = MI.getDebugLoc();
   MachineInstrBuilder MIB(*MBB.getParent(), &MI);
