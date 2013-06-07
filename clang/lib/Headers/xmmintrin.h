@@ -983,11 +983,9 @@ do { \
 #define _m_ _mm_
 #define _m_ _mm_
 
-#if !__has_feature(modules)
 /* Ugly hack for backwards-compatibility (compatible with gcc) */
 #ifdef __SSE2__
 #include <emmintrin.h>
-#endif
 #endif
 
 #endif /* __SSE__ */
