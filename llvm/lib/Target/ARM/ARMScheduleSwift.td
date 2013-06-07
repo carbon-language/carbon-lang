@@ -1338,7 +1338,7 @@ let SchedModel = SwiftModel in {
   }
   // 4.2.18 Integer Divide
   def : WriteRes<WriteDiv, [SwiftUnitDiv]>; // Workaround.
-  def : InstRW < [WriteDiv],
+  def : InstRW <[SwiftDiv],
         (instregex "SDIV", "UDIV", "t2SDIV", "t2UDIV")>;
 
   // 4.2.19 Integer Load Single Element
