@@ -69,6 +69,7 @@
 #endif // SANITIZER_LINUX && !SANITIZER_ANDROID
 
 #if SANITIZER_ANDROID
+#include <linux/kd.h>
 #include <linux/mtio.h>
 #endif
 

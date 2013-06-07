@@ -85,8 +85,11 @@ static void ioctl_table_fill() {
   _(0x00008932, READ, struct_ifreq_sz);          // SIOCDELMULTI
   _(0x00008940, NONE, 0);                        // SIOCADDRTOLD
   _(0x00008941, NONE, 0);                        // SIOCDELRTOLD
+
+#if (SANITIZER_LINUX && !SANITIZER_ANDROID) || SANITIZER_MAC
   _(0x000089E0, WRITE, struct_sioc_vif_req_sz);  // SIOCGETVIFCNT
   _(0x000089E1, WRITE, struct_sioc_sg_req_sz);   // SIOCGETSGCNT
+#endif
 
 #if SANITIZER_LINUX
   _(0x00000000, NONE, 0);                               // FDCLRPRM

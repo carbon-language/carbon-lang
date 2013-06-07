@@ -432,9 +432,6 @@ SCANF_INTERCEPTOR_IMPL(__isoc99_sscanf, __isoc99_vsscanf, str, format)
 
 #if SANITIZER_INTERCEPT_IOCTL
 #include "sanitizer_common_interceptors_ioctl.inc"
-#define INIT_IOCTL \
-  ioctl_init();    \
-  INTERCEPT_FUNCTION(ioctl);
 INTERCEPTOR(int, ioctl, int d, unsigned request, void *arg) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, ioctl, d, request, arg);
@@ -458,6 +455,9 @@ INTERCEPTOR(int, ioctl, int d, unsigned request, void *arg) {
     ioctl_common_post(ctx, desc, res, d, request, arg);
   return res;
 }
+#define INIT_IOCTL \
+  ioctl_init();    \
+  INTERCEPT_FUNCTION(ioctl);
 #else
 #define INIT_IOCTL
 #endif
