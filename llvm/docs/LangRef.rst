@@ -1367,6 +1367,8 @@ transformation. A strong type system makes it easier to read the
 generated code and enables novel analyses and transformations that are
 not feasible to perform on normal three address code representations.
 
+.. _typeclassifications:
+
 Type Classifications
 --------------------
 
@@ -1880,6 +1882,8 @@ followed by 4 hexadecimal digits. All hexadecimal formats are big-endian
 
 There are no constants of type x86mmx.
 
+.. _complexconstants:
+
 Complex Constants
 -----------------
 
@@ -2201,6 +2205,8 @@ instruction.
 Finally, some targets may provide defined semantics when using the value
 as the operand to an inline assembly, but that is target specific.
 
+.. _constantexprs:
+
 Constant Expressions
 --------------------
 
@@ -2304,6 +2310,8 @@ The following is the syntax for constant expressions:
 
 Other Values
 ============
+
+.. _inlineasmexprs:
 
 Inline Assembler Expressions
 ----------------------------
@@ -2906,6 +2914,8 @@ Each individual option is required to be either a valid option for the target's
 linker, or an option that is reserved by the target specific assembly writer or
 object file emitter. No other aspect of these options is defined by the IR.
 
+.. _intrinsicglobalvariables:
+
 Intrinsic Global Variables
 ==========================
 
@@ -2914,6 +2924,8 @@ affect code generation or other IR semantics. These are documented here.
 All globals of this sort should have a section specified as
 "``llvm.metadata``". This section and all globals that start with
 "``llvm.``" are reserved for use by LLVM.
+
+.. _gv_llvmused:
 
 The '``llvm.used``' Global Variable
 -----------------------------------
@@ -2946,6 +2958,8 @@ On some targets, the code generator must emit a directive to the
 assembler or object file to prevent the assembler and linker from
 molesting the symbol.
 
+.. _gv_llvmcompilerused:
+
 The '``llvm.compiler.used``' Global Variable
 --------------------------------------------
 
@@ -2957,6 +2971,8 @@ by ``@llvm.used``.
 
 This is a rare construct that should only be used in rare circumstances,
 and should not be exposed to source languages.
+
+.. _gv_llvmglobalctors:
 
 The '``llvm.global_ctors``' Global Variable
 -------------------------------------------
@@ -2971,6 +2987,8 @@ functions and associated priorities. The functions referenced by this
 array will be called in ascending order of priority (i.e. lowest first)
 when the module is loaded. The order of functions with the same priority
 is not defined.
+
+.. _llvmglobaldtors:
 
 The '``llvm.global_dtors``' Global Variable
 -------------------------------------------
