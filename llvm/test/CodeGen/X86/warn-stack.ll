@@ -1,4 +1,4 @@
-; RUN: llc -march x86 -warn-stack-size=80 < %s 2>&1 >/dev/null | FileCheck %s
+; RUN: llc -mtriple x86_64-apple-10.8.0 -warn-stack-size=80 < %s 2>&1 >/dev/null | FileCheck %s
 ; Check the internal option that warns when the stack size exceeds the
 ; given amount.
 ; <rdar://13987214>
@@ -12,7 +12,7 @@ entry:
   ret void
 }
 
-; CHECK: warning: Stack size limit exceeded (92) in warn.
+; CHECK: warning: Stack size limit exceeded (88) in warn.
 define void @warn() nounwind ssp {
 entry:
   %buffer = alloca [80 x i8], align 1
