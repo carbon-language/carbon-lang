@@ -19,6 +19,7 @@ class ELFTargetInfo;
 class File;
 class InputFiles;
 class MachOTargetInfo;
+class PECOFFTargetInfo;
 class TargetInfo;
 
 /// \brief The Writer is an abstract class for writing object files, shared
@@ -44,7 +45,7 @@ protected:
 std::unique_ptr<Writer> createWriterELF(const ELFTargetInfo &);
 std::unique_ptr<Writer> createWriterMachO(const MachOTargetInfo &);
 std::unique_ptr<Writer> createWriterNative(const TargetInfo &);
-std::unique_ptr<Writer> createWriterPECOFF(const TargetInfo &);
+std::unique_ptr<Writer> createWriterPECOFF(const PECOFFTargetInfo &);
 std::unique_ptr<Writer> createWriterYAML(const TargetInfo &);
 } // end namespace lld
 

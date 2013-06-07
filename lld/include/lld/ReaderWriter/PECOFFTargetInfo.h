@@ -38,7 +38,7 @@ public:
     _subsystem = subsystem;
   }
 
-  llvm::COFF::WindowsSubsystem getSubsystem() {
+  llvm::COFF::WindowsSubsystem getSubsystem() const {
     return _subsystem;
   }
 
