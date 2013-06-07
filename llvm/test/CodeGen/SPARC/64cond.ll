@@ -2,7 +2,7 @@
 ; Testing 64-bit conditionals. The sparc64 triple is an alias for sparcv9.
 
 ; CHECK: cmpri
-; CHECK: subcc %i1, 1
+; CHECK: cmp %i1, 1
 ; CHECK: bpe %xcc,
 define void @cmpri(i64* %p, i64 %x) {
 entry:
@@ -18,7 +18,7 @@ if.end:
 }
 
 ; CHECK: cmprr
-; CHECK: subcc %i1, %i2
+; CHECK: cmp %i1, %i2
 ; CHECK: bpgu %xcc,
 define void @cmprr(i64* %p, i64 %x, i64 %y) {
 entry:
@@ -34,7 +34,7 @@ if.end:
 }
 
 ; CHECK: selecti32_xcc
-; CHECK: subcc %i0, %i1
+; CHECK: cmp %i0, %i1
 ; CHECK: movg %xcc, %i2, %i3
 ; CHECK: restore %g0, %i3, %o0
 define i32 @selecti32_xcc(i64 %x, i64 %y, i32 %a, i32 %b) {
@@ -45,7 +45,7 @@ entry:
 }
 
 ; CHECK: selecti64_xcc
-; CHECK: subcc %i0, %i1
+; CHECK: cmp %i0, %i1
 ; CHECK: movg %xcc, %i2, %i3
 ; CHECK: restore %g0, %i3, %o0
 define i64 @selecti64_xcc(i64 %x, i64 %y, i64 %a, i64 %b) {
@@ -56,7 +56,7 @@ entry:
 }
 
 ; CHECK: selecti64_icc
-; CHECK: subcc %i0, %i1
+; CHECK: cmp %i0, %i1
 ; CHECK: movg %icc, %i2, %i3
 ; CHECK: restore %g0, %i3, %o0
 define i64 @selecti64_icc(i32 %x, i32 %y, i64 %a, i64 %b) {
@@ -78,7 +78,7 @@ entry:
 }
 
 ; CHECK: selectf32_xcc
-; CHECK: subcc %i0, %i1
+; CHECK: cmp %i0, %i1
 ; CHECK: fmovsg %xcc, %f5, %f7
 ; CHECK: fmovs %f7, %f1
 define float @selectf32_xcc(i64 %x, i64 %y, float %a, float %b) {
@@ -89,7 +89,7 @@ entry:
 }
 
 ; CHECK: selectf64_xcc
-; CHECK: subcc %i0, %i1
+; CHECK: cmp %i0, %i1
 ; CHECK: fmovdg %xcc, %f4, %f6
 ; CHECK: fmovd %f6, %f0
 define double @selectf64_xcc(i64 %x, i64 %y, double %a, double %b) {
@@ -101,7 +101,7 @@ entry:
 
 ; The MOVXCC instruction can't use %g0 for its tied operand.
 ; CHECK: select_consti64_xcc
-; CHECK: subcc
+; CHECK: cmp
 ; CHECK: movg %xcc, 123, %i0
 define i64 @select_consti64_xcc(i64 %x, i64 %y) {
 entry:

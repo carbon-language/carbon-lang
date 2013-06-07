@@ -21,10 +21,10 @@ entry:
 define i32 @test_select_int_icc(i32 %a, i32 %b, i32 %c) nounwind readnone noinline {
 entry:
 ; V8: test_select_int_icc
-; V8: subcc
+; V8: cmp
 ; V8: {{be|bne}}
 ; V9: test_select_int_icc
-; V9: subcc
+; V9: cmp
 ; V9-NOT: {{be|bne}}
 ; V9: mov{{e|ne}} %icc
   %0 = icmp eq i32 %a, 0
@@ -36,10 +36,10 @@ entry:
 define float @test_select_fp_icc(i32 %a, float %f1, float %f2) nounwind readnone noinline {
 entry:
 ; V8: test_select_fp_icc
-; V8: subcc
+; V8: cmp
 ; V8: {{be|bne}}
 ; V9: test_select_fp_icc
-; V9: subcc
+; V9: cmp
 ; V9-NOT: {{be|bne}}
 ; V9: fmovs{{e|ne}} %icc
   %0 = icmp eq i32 %a, 0
@@ -50,10 +50,10 @@ entry:
 define double @test_select_dfp_icc(i32 %a, double %f1, double %f2) nounwind readnone noinline {
 entry:
 ; V8: test_select_dfp_icc
-; V8: subcc
+; V8: cmp
 ; V8: {{be|bne}}
 ; V9: test_select_dfp_icc
-; V9: subcc
+; V9: cmp
 ; V9-NOT: {{be|bne}}
 ; V9: fmovd{{e|ne}} %icc
   %0 = icmp eq i32 %a, 0

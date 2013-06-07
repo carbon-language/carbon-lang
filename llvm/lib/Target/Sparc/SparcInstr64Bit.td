@@ -160,7 +160,7 @@ def : Pat<(sube i64:$a, i64:$b), (SUBXrr $a, $b)>;
 def : Pat<(addc i64:$a, i64:$b), (ADDCCrr $a, $b)>;
 def : Pat<(subc i64:$a, i64:$b), (SUBCCrr $a, $b)>;
 
-def : Pat<(SPcmpicc i64:$a, i64:$b), (SUBCCrr $a, $b)>;
+def : Pat<(SPcmpicc i64:$a, i64:$b), (CMPrr $a, $b)>;
 
 // Register-immediate instructions.
 
@@ -171,7 +171,7 @@ def : Pat<(xor i64:$a, (i64 simm13:$b)), (XORri $a, (as_i32imm $b))>;
 def : Pat<(add i64:$a, (i64 simm13:$b)), (ADDri $a, (as_i32imm $b))>;
 def : Pat<(sub i64:$a, (i64 simm13:$b)), (SUBri $a, (as_i32imm $b))>;
 
-def : Pat<(SPcmpicc i64:$a, (i64 simm13:$b)), (SUBCCri $a, (as_i32imm $b))>;
+def : Pat<(SPcmpicc i64:$a, (i64 simm13:$b)), (CMPri $a, (as_i32imm $b))>;
 
 } // Predicates = [Is64Bit]
 

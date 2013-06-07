@@ -89,6 +89,8 @@ def calltarget : Operand<i32>;
 let PrintMethod = "printCCOperand" in
   def CCOp : Operand<i32>;
 
+def SDTSPcmpicc :
+SDTypeProfile<0, 2, [SDTCisInt<0>, SDTCisSameAs<0, 1>]>;
 def SDTSPcmpfcc :
 SDTypeProfile<0, 2, [SDTCisFP<0>, SDTCisSameAs<0, 1>]>;
 def SDTSPbrcc :
@@ -100,7 +102,7 @@ SDTypeProfile<1, 1, [SDTCisVT<0, f32>, SDTCisFP<1>]>;
 def SDTSPITOF :
 SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisVT<1, f32>]>;
 
-def SPcmpicc : SDNode<"SPISD::CMPICC", SDTIntBinOp, [SDNPOutGlue]>;
+def SPcmpicc : SDNode<"SPISD::CMPICC", SDTSPcmpicc, [SDNPOutGlue]>;
 def SPcmpfcc : SDNode<"SPISD::CMPFCC", SDTSPcmpfcc, [SDNPOutGlue]>;
 def SPbricc : SDNode<"SPISD::BRICC", SDTSPbrcc, [SDNPHasChain, SDNPInGlue]>;
 def SPbrxcc : SDNode<"SPISD::BRXCC", SDTSPbrcc, [SDNPHasChain, SDNPInGlue]>;
@@ -476,8 +478,18 @@ defm SUB    : F3_12  <"sub"  , 0b000100, sub>;
 let Uses = [ICC] in
   defm SUBX   : F3_12  <"subx" , 0b001100, sube>;
 
-let Defs = [ICC] in
-  defm SUBCC  : F3_12  <"subcc", 0b010100, SPcmpicc>;
+let Defs = [ICC] in {
+  defm SUBCC  : F3_12  <"subcc", 0b010100, subc>;
+
+  def CMPrr   : F3_1<2, 0b010100,
+                     (outs), (ins IntRegs:$b, IntRegs:$c),
+                     "cmp $b, $c",
+                     [(SPcmpicc i32:$b, i32:$c)]>;
+  def CMPri   : F3_1<2, 0b010100,
+                     (outs), (ins IntRegs:$b, i32imm:$c),
+                     "cmp $b, $c",
+                     [(SPcmpicc i32:$b, (i32 simm13:$c))]>;
+}
 
 let Uses = [ICC], Defs = [ICC] in
   def SUBXCCrr: F3_1<2, 0b011100,
@@ -795,11 +807,6 @@ def : Pat<(i32 simm13:$val),
 def : Pat<(i32 imm:$val),
           (ORri (SETHIi (HI22 imm:$val)), (LO10 imm:$val))>;
 
-// subc
-def : Pat<(subc i32:$b, i32:$c),
-          (SUBCCrr $b, $c)>;
-def : Pat<(subc i32:$b, simm13:$val),
-          (SUBCCri $b, imm:$val)>;
 
 // Global addresses, constant pool entries
 def : Pat<(SPhi tglobaladdr:$in), (SETHIi tglobaladdr:$in)>;

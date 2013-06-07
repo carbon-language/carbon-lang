@@ -40,7 +40,7 @@ bb:                                               ; preds = %entry, %bb
   %a_addr.0 = add i32 %.pn, %a_addr.18
   %3 = add nsw i32 %1, 1
   %exitcond = icmp eq i32 %3, %b
-;CHECK:      subcc
+;CHECK:      cmp
 ;CHECK:      bne
 ;CHECK-NOT:  nop
   br i1 %exitcond, label %bb5, label %bb
@@ -57,7 +57,7 @@ entry:
 ;CHECK:      test_inlineasm
 ;CHECK:      sethi
 ;CHECK:      !NO_APP
-;CHECK-NEXT: subcc
+;CHECK-NEXT: cmp
 ;CHECK-NEXT: bg
 ;CHECK-NEXT: nop
   tail call void asm sideeffect "sethi 0, %g0", ""() nounwind
