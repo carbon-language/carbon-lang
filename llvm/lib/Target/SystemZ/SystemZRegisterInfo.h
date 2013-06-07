@@ -35,10 +35,9 @@ class SystemZInstrInfo;
 struct SystemZRegisterInfo : public SystemZGenRegisterInfo {
 private:
   SystemZTargetMachine &TM;
-  const SystemZInstrInfo &TII;
 
 public:
-  SystemZRegisterInfo(SystemZTargetMachine &tm, const SystemZInstrInfo &tii);
+  SystemZRegisterInfo(SystemZTargetMachine &tm);
 
   // Override TargetRegisterInfo.h.
   virtual bool requiresRegisterScavenging(const MachineFunction &MF) const

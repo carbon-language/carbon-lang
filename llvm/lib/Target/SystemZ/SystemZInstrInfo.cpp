@@ -23,7 +23,7 @@ using namespace llvm;
 
 SystemZInstrInfo::SystemZInstrInfo(SystemZTargetMachine &tm)
   : SystemZGenInstrInfo(SystemZ::ADJCALLSTACKDOWN, SystemZ::ADJCALLSTACKUP),
-    RI(tm, *this) {
+    RI(tm) {
 }
 
 // MI is a 128-bit load or store.  Split it into two 64-bit loads or stores,

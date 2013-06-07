@@ -17,9 +17,8 @@
 
 using namespace llvm;
 
-SystemZRegisterInfo::SystemZRegisterInfo(SystemZTargetMachine &tm,
-                                         const SystemZInstrInfo &tii)
-  : SystemZGenRegisterInfo(SystemZ::R14D), TM(tm), TII(tii) {}
+SystemZRegisterInfo::SystemZRegisterInfo(SystemZTargetMachine &tm)
+  : SystemZGenRegisterInfo(SystemZ::R14D), TM(tm) {}
 
 const uint16_t*
 SystemZRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
@@ -61,6 +60,8 @@ SystemZRegisterInfo::saveScavengerRegister(MachineBasicBlock &MBB,
 					   const TargetRegisterClass *RC,
 					   unsigned Reg) const {
   MachineFunction &MF = *MBB.getParent();
+  const SystemZInstrInfo &TII =
+    *static_cast<const SystemZInstrInfo*>(TM.getInstrInfo());
   const SystemZFrameLowering *TFI =
     static_cast<const SystemZFrameLowering *>(TM.getFrameLowering());
   unsigned Base = getFrameRegister(MF);
@@ -86,6 +87,8 @@ SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
 
   MachineBasicBlock &MBB = *MI->getParent();
   MachineFunction &MF = *MBB.getParent();
+  const SystemZInstrInfo &TII =
+    *static_cast<const SystemZInstrInfo*>(TM.getInstrInfo());
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
   DebugLoc DL = MI->getDebugLoc();
 

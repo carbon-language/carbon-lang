@@ -133,8 +133,7 @@ namespace {
   public:
     static char ID;
     SystemZLongBranch(const SystemZTargetMachine &tm)
-      : MachineFunctionPass(ID),
-        TII(static_cast<const SystemZInstrInfo *>(tm.getInstrInfo())) {}
+      : MachineFunctionPass(ID), TII(0) {}
 
     virtual const char *getPassName() const {
       return "SystemZ Long Branch";
@@ -402,6 +401,7 @@ void SystemZLongBranch::relaxBranches() {
 }
 
 bool SystemZLongBranch::runOnMachineFunction(MachineFunction &F) {
+  TII = static_cast<const SystemZInstrInfo *>(F.getTarget().getInstrInfo());
   MF = &F;
   uint64_t Size = initMBBInfo();
   if (Size <= MaxForwardRange || !mustRelaxABranch())
