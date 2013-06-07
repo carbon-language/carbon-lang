@@ -49,12 +49,12 @@ entry:
 define i32 @icmp_i8_unsigned(i8 %a, i8 %b) nounwind {
 entry:
 ; ARM: icmp_i8_unsigned
-; ARM: uxtb r0, r0
-; ARM: uxtb r1, r1
+; ARM: and r0, r0, #255
+; ARM: and r1, r1, #255
 ; ARM: cmp r0, r1
 ; THUMB: icmp_i8_unsigned
-; THUMB: uxtb r0, r0
-; THUMB: uxtb r1, r1
+; THUMB: and r0, r0, #255
+; THUMB: and r1, r1, #255
 ; THUMB: cmp r0, r1
   %cmp = icmp ugt i8 %a, %b
   %conv2 = zext i1 %cmp to i32

@@ -80,12 +80,12 @@ bb1:
 
 ; THUMB: and
 ; THUMB: strb
-; THUMB: uxtb
+; THUMB: and{{.*}}, #255
 ; THUMB: strh
 ; THUMB: uxth
 ; ARM: and
 ; ARM: strb
-; ARM: uxtb
+; ARM: and{{.*}}, #255
 ; ARM: strh
 ; ARM: uxth
 
@@ -121,13 +121,13 @@ bb3:
 
 ; THUMB: ldrb
 ; THUMB: ldrh
-; THUMB: uxtb
+; THUMB: and{{.*}}, #255
 ; THUMB: sxth
 ; THUMB: add
 ; THUMB: sub
 ; ARM: ldrb
 ; ARM: ldrh
-; ARM: uxtb
+; ARM: and{{.*}}, #255
 ; ARM: sxth
 ; ARM: add
 ; ARM: sub

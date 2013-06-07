@@ -17,7 +17,7 @@ define void @t1() nounwind ssp {
 ; ARM: add r0, r0, #5
 ; ARM: movw r1, #64
 ; ARM: movw r2, #10
-; ARM: uxtb r1, r1
+; ARM: and r1, r1, #255
 ; ARM: bl {{_?}}memset
 ; ARM-LONG: t1
 ; ARM-LONG: movw r3, :lower16:L_memset$non_lazy_ptr
@@ -32,7 +32,7 @@ define void @t1() nounwind ssp {
 ; THUMB: movt r1, #0
 ; THUMB: movs r2, #10
 ; THUMB: movt r2, #0
-; THUMB: uxtb r1, r1
+; THUMB: and r1, r1, #255
 ; THUMB: bl {{_?}}memset
 ; THUMB-LONG: t1
 ; THUMB-LONG: movw r3, :lower16:L_memset$non_lazy_ptr

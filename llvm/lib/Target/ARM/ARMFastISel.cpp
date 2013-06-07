@@ -41,6 +41,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
@@ -1985,7 +1986,7 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
       case CCValAssign::ZExt: {
         MVT DestVT = VA.getLocVT();
         Arg = ARMEmitIntExt(ArgVT, Arg, DestVT, /*isZExt*/true);
-        assert (Arg != 0 && "Failed to emit a sext");
+        assert (Arg != 0 && "Failed to emit a zext");
         ArgVT = DestVT;
         break;
       }
@@ -2602,47 +2603,111 @@ unsigned ARMFastISel::ARMEmitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
                                     bool isZExt) {
   if (DestVT != MVT::i32 && DestVT != MVT::i16 && DestVT != MVT::i8)
     return 0;
-
-  unsigned Opc;
-  bool isBoolZext = false;
-  const TargetRegisterClass *RC;
-  switch (SrcVT.SimpleTy) {
-  default: return 0;
-  case MVT::i16:
-    if (!Subtarget->hasV6Ops()) return 0;
-    RC = isThumb2 ? &ARM::rGPRRegClass : &ARM::GPRnopcRegClass;
-    if (isZExt)
-      Opc = isThumb2 ? ARM::t2UXTH : ARM::UXTH;
-    else
-      Opc = isThumb2 ? ARM::t2SXTH : ARM::SXTH;
-    break;
-  case MVT::i8:
-    if (!Subtarget->hasV6Ops()) return 0;
-    RC = isThumb2 ? &ARM::rGPRRegClass : &ARM::GPRnopcRegClass;
-    if (isZExt)
-      Opc = isThumb2 ? ARM::t2UXTB : ARM::UXTB;
-    else
-      Opc = isThumb2 ? ARM::t2SXTB : ARM::SXTB;
-    break;
-  case MVT::i1:
-    if (isZExt) {
-      RC = isThumb2 ? &ARM::rGPRRegClass : &ARM::GPRRegClass;
-      Opc = isThumb2 ? ARM::t2ANDri : ARM::ANDri;
-      isBoolZext = true;
-      break;
-    }
+  if (SrcVT != MVT::i16 && SrcVT != MVT::i8 && SrcVT != MVT::i1)
     return 0;
+
+  // Table of which combinations can be emitted as a single instruction,
+  // and which will require two.
+  static const uint8_t isSingleInstrTbl[3][2][2][2] = {
+    //            ARM                     Thumb
+    //           !hasV6Ops  hasV6Ops     !hasV6Ops  hasV6Ops
+    //    ext:     s  z      s  z          s  z      s  z
+    /*  1 */ { { { 0, 1 }, { 0, 1 } }, { { 0, 0 }, { 0, 1 } } },
+    /*  8 */ { { { 0, 1 }, { 1, 1 } }, { { 0, 0 }, { 1, 1 } } },
+    /* 16 */ { { { 0, 0 }, { 1, 1 } }, { { 0, 0 }, { 1, 1 } } }
+  };
+
+  // Target registers for:
+  //  - For ARM can never be PC.
+  //  - For 16-bit Thumb are restricted to lower 8 registers.
+  //  - For 32-bit Thumb are restricted to non-SP and non-PC.
+  static const TargetRegisterClass *RCTbl[2][2] = {
+    // Instructions: Two                     Single
+    /* ARM      */ { &ARM::GPRnopcRegClass, &ARM::GPRnopcRegClass },
+    /* Thumb    */ { &ARM::tGPRRegClass,    &ARM::rGPRRegClass    }
+  };
+
+  // Table governing the instruction(s) to be emitted.
+  static const struct {
+    // First entry for each of the following is sext, second zext.
+    uint16_t Opc[2];
+    uint8_t Imm[2];   // All instructions have either a shift or a mask.
+    uint8_t hasS[2];  // Some instructions have an S bit, always set it to 0.
+  } OpcTbl[2][2][3] = {
+    { // Two instructions (first is left shift, second is in this table).
+      { // ARM
+        /*  1 */ { { ARM::ASRi,   ARM::LSRi    }, {  31,  31 }, { 1, 1 } },
+        /*  8 */ { { ARM::ASRi,   ARM::LSRi    }, {  24,  24 }, { 1, 1 } },
+        /* 16 */ { { ARM::ASRi,   ARM::LSRi    }, {  16,  16 }, { 1, 1 } }
+      },
+      { // Thumb
+        /*  1 */ { { ARM::tASRri, ARM::tLSRri  }, {  31,  31 }, { 0, 0 } },
+        /*  8 */ { { ARM::tASRri, ARM::tLSRri  }, {  24,  24 }, { 0, 0 } },
+        /* 16 */ { { ARM::tASRri, ARM::tLSRri  }, {  16,  16 }, { 0, 0 } }
+      }
+    },
+    { // Single instruction.
+      { // ARM
+        /*  1 */ { { ARM::KILL,   ARM::ANDri   }, {   0,   1 }, { 0, 1 } },
+        /*  8 */ { { ARM::SXTB,   ARM::ANDri   }, {   0, 255 }, { 0, 1 } },
+        /* 16 */ { { ARM::SXTH,   ARM::UXTH    }, {   0,   0 }, { 0, 0 } }
+      },
+      { // Thumb
+        /*  1 */ { { ARM::KILL,   ARM::t2ANDri }, {   0,   1 }, { 0, 1 } },
+        /*  8 */ { { ARM::t2SXTB, ARM::t2ANDri }, {   0, 255 }, { 0, 1 } },
+        /* 16 */ { { ARM::t2SXTH, ARM::t2UXTH  }, {   0,   0 }, { 0, 0 } }
+      }
+    }
+  };
+
+  unsigned SrcBits = SrcVT.getSizeInBits();
+  unsigned DestBits = DestVT.getSizeInBits();
+  assert((SrcBits < DestBits) && "can only extend to larger types");
+  assert((DestBits == 32 || DestBits == 16 || DestBits == 8) &&
+         "other sizes unimplemented");
+  assert((SrcBits == 16 || SrcBits == 8 || SrcBits == 1) &&
+         "other sizes unimplemented");
+
+  bool hasV6Ops = Subtarget->hasV6Ops();
+  unsigned Bitness = countTrailingZeros(SrcBits) >> 1;  // {1,8,16}=>{0,1,2}
+  assert((Bitness < 3) && "sanity-check table bounds");
+
+  bool isSingleInstr = isSingleInstrTbl[Bitness][isThumb2][hasV6Ops][isZExt];
+  const TargetRegisterClass *RC = RCTbl[isThumb2][isSingleInstr];
+  unsigned Opc = OpcTbl[isSingleInstr][isThumb2][Bitness].Opc[isZExt];
+  assert(ARM::KILL != Opc && "Invalid table entry");
+  unsigned Imm = OpcTbl[isSingleInstr][isThumb2][Bitness].Imm[isZExt];
+  unsigned hasS = OpcTbl[isSingleInstr][isThumb2][Bitness].hasS[isZExt];
+
+  // 16-bit Thumb instructions always set CPSR (unless they're in an IT block).
+  bool setsCPSR = &ARM::tGPRRegClass == RC;
+  unsigned LSLOpc = isThumb2 ? ARM::tLSLri : ARM::LSLi;
+  unsigned ResultReg;
+
+  // Either one or two instructions are emitted.
+  // They're always of the form:
+  //   dst = in OP imm
+  // CPSR is set only by 16-bit Thumb instructions.
+  // Predicate, if any, is AL.
+  // S bit, if available, is always 0.
+  // When two are emitted the first's result will feed as the second's input,
+  // that value is then dead.
+  unsigned NumInstrsEmitted = isSingleInstr ? 1 : 2;
+  for (unsigned Instr = 0; Instr != NumInstrsEmitted; ++Instr) {
+    ResultReg = createResultReg(RC);
+    unsigned Opcode = ((0 == Instr) && !isSingleInstr) ? LSLOpc : Opc;
+    bool isKill = 1 == Instr;
+    MachineInstrBuilder MIB = BuildMI(
+        *FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opcode), ResultReg);
+    if (setsCPSR)
+      MIB.addReg(ARM::CPSR, RegState::Define);
+    AddDefaultPred(MIB.addReg(SrcReg, isKill * RegState::Kill).addImm(Imm));
+    if (hasS)
+      AddDefaultCC(MIB);
+    // Second instruction consumes the first's result.
+    SrcReg = ResultReg;
   }
 
-  unsigned ResultReg = createResultReg(RC);
-  MachineInstrBuilder MIB;
-  MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), ResultReg)
-        .addReg(SrcReg);
-  if (isBoolZext)
-    MIB.addImm(1);
-  else
-    MIB.addImm(0);
-  AddOptionalDefs(MIB);
   return ResultReg;
 }
 

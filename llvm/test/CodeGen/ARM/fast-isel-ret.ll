@@ -26,7 +26,7 @@ entry:
 define zeroext i8 @ret3(i8 signext %a) nounwind uwtable ssp {
 entry:
 ; CHECK: ret3
-; CHECK: uxtb r0, r0
+; CHECK: and r0, r0, #255
 ; CHECK: bx lr
   ret i8 %a
 }

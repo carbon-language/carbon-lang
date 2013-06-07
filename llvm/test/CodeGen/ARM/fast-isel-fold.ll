@@ -8,9 +8,11 @@ define void @t1() nounwind uwtable ssp {
 ; ARM: t1
 ; ARM: ldrb
 ; ARM-NOT: uxtb
+; ARM-NOT: and{{.*}}, #255
 ; THUMB: t1
 ; THUMB: ldrb
 ; THUMB-NOT: uxtb
+; THUMB-NOT: and{{.*}}, #255
   %1 = load i8* @a, align 1
   call void @foo1(i8 zeroext %1)
   ret void
@@ -35,9 +37,11 @@ define i32 @t3() nounwind uwtable ssp {
 ; ARM: t3
 ; ARM: ldrb
 ; ARM-NOT: uxtb
+; ARM-NOT: and{{.*}}, #255
 ; THUMB: t3
 ; THUMB: ldrb
 ; THUMB-NOT: uxtb
+; THUMB-NOT: and{{.*}}, #255
   %1 = load i8* @a, align 1
   %2 = zext i8 %1 to i32
   ret i32 %2
