@@ -66,7 +66,7 @@ static void ioctl_table_fill() {
   _(0x00008903, WRITE, sizeof(int));             // FIOGETOWN
   _(0x00008904, WRITE, sizeof(int));             // SIOCGPGRP
   _(0x00008905, WRITE, sizeof(int));             // SIOCATMAR
-  _(0x00008912, WRITE, struct_ifconf_sz);        // SIOCGIFCONF
+  _(0x00008912, CUSTOM, 0);                      // SIOCGIFCONF
   _(0x00008913, WRITE, struct_ifreq_sz);         // SIOCGIFFLAGS
   _(0x00008914, READ, struct_ifreq_sz);          // SIOCSIFFLAGS
   _(0x00008915, WRITE, struct_ifreq_sz);         // SIOCGIFADDR
@@ -502,7 +502,13 @@ static void ioctl_common_pre(void *ctx, const ioctl_desc *desc, int d,
     COMMON_INTERCEPTOR_READ_RANGE(ctx, arg, desc->size);
   if (desc->type != ioctl_desc::CUSTOM)
     return;
-  // FIXME: add some ioctls of "CUSTOM" type and handle them here.
+  switch (request) {
+    case 0x00008912: {  // SIOCGIFCONF
+      struct __sanitizer_ifconf *ifc = (__sanitizer_ifconf *)arg;
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, &ifc->ifc_len, sizeof(ifc->ifc_len));
+      break;
+    }
+  }
   return;
 }
 
@@ -514,5 +520,12 @@ static void ioctl_common_post(void *ctx, const ioctl_desc *desc, int res, int d,
   }
   if (desc->type != ioctl_desc::CUSTOM)
     return;
-  return; // FIXME
+  switch (request) {
+    case 0x00008912: {  // SIOCGIFCONF
+      struct __sanitizer_ifconf *ifc = (__sanitizer_ifconf *)arg;
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ifc->ifc_ifcu.ifcu_req, ifc->ifc_len);
+      break;
+    }
+  }
+  return;
 }

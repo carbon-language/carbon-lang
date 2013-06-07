@@ -149,8 +149,14 @@ namespace __sanitizer {
   };
 
   // ioctl arguments
+  struct __sanitizer_ifconf {
+    int ifc_len;
+    union {
+      void *ifcu_req;
+    } ifc_ifcu;
+  };
+
   extern unsigned struct_arpreq_sz;
-  extern unsigned struct_ifconf_sz;
   extern unsigned struct_ifreq_sz;
   extern unsigned struct_termios_sz;
   extern unsigned struct_winsize_sz;
