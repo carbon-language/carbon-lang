@@ -670,13 +670,20 @@ namespace {
     void MergePred(const BBState &Other);
     void MergeSucc(const BBState &Other);
 
-    /// Return the number of possible unique paths from an entry to an exit
+    /// Compute the number of possible unique paths from an entry to an exit
     /// which pass through this block. This is only valid after both the
     /// top-down and bottom-up traversals are complete.
-    unsigned GetAllPathCount() const {
+    ///
+    /// Returns true if overflow occured. Returns false if overflow did not
+    /// occur.
+    bool GetAllPathCountWithOverflow(unsigned &PathCount) const {
       assert(TopDownPathCount != 0);
       assert(BottomUpPathCount != 0);
-      return TopDownPathCount * BottomUpPathCount;
+      unsigned long long Product =
+        (unsigned long long)TopDownPathCount*BottomUpPathCount;
+      PathCount = Product;
+      // Overflow occured if any of the upper bits of Product are set.
+      return Product >> 32;
     }
 
     // Specialized CFG utilities.
@@ -2543,8 +2550,14 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
         const RRInfo &NewRetainReleaseRRI = Jt->second;
         assert(NewRetainReleaseRRI.Calls.count(NewRetain));
         if (ReleasesToMove.Calls.insert(NewRetainRelease)) {
-          OldDelta -=
-            BBStates[NewRetainRelease->getParent()].GetAllPathCount();
+
+          // If we overflow when we compute the path count, don't remove/move
+          // anything.
+          const BBState &NRRBBState = BBStates[NewRetainRelease->getParent()];
+          unsigned PathCount;
+          if (NRRBBState.GetAllPathCountWithOverflow(PathCount))
+            return false;
+          OldDelta -= PathCount;
 
           // Merge the ReleaseMetadata and IsTailCallRelease values.
           if (FirstRelease) {
@@ -2569,8 +2582,14 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
                    RE = NewRetainReleaseRRI.ReverseInsertPts.end();
                  RI != RE; ++RI) {
               Instruction *RIP = *RI;
-              if (ReleasesToMove.ReverseInsertPts.insert(RIP))
-                NewDelta -= BBStates[RIP->getParent()].GetAllPathCount();
+              if (ReleasesToMove.ReverseInsertPts.insert(RIP)) {
+                // If we overflow when we compute the path count, don't
+                // remove/move anything.
+                const BBState &RIPBBState = BBStates[RIP->getParent()];
+                if (RIPBBState.GetAllPathCountWithOverflow(PathCount))
+                  return false;
+                NewDelta -= PathCount;
+              }
             }
           NewReleases.push_back(NewRetainRelease);
         }
@@ -2600,8 +2619,13 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
         const RRInfo &NewReleaseRetainRRI = Jt->second;
         assert(NewReleaseRetainRRI.Calls.count(NewRelease));
         if (RetainsToMove.Calls.insert(NewReleaseRetain)) {
-          unsigned PathCount =
-            BBStates[NewReleaseRetain->getParent()].GetAllPathCount();
+
+          // If we overflow when we compute the path count, don't remove/move
+          // anything.
+          const BBState &NRRBBState = BBStates[NewReleaseRetain->getParent()];
+          unsigned PathCount;
+          if (NRRBBState.GetAllPathCountWithOverflow(PathCount))
+            return false;
           OldDelta += PathCount;
           OldCount += PathCount;
 
@@ -2613,7 +2637,11 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
                  RI != RE; ++RI) {
               Instruction *RIP = *RI;
               if (RetainsToMove.ReverseInsertPts.insert(RIP)) {
-                PathCount = BBStates[RIP->getParent()].GetAllPathCount();
+                // If we overflow when we compute the path count, don't
+                // remove/move anything.
+                const BBState &RIPBBState = BBStates[RIP->getParent()];
+                if (RIPBBState.GetAllPathCountWithOverflow(PathCount))
+                  return false;
                 NewDelta += PathCount;
                 NewCount += PathCount;
               }
