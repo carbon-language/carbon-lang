@@ -667,7 +667,9 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
         "Can be repeated multiple times to make one breakpoint for multiple symbols." },
 
     { LLDB_OPT_SET_9, true, "source-pattern-regexp", 'p', required_argument, NULL, 0, eArgTypeRegularExpression,
-        "Set the breakpoint specifying a regular expression to match a pattern in the source text in a given source file." },
+        "Set the breakpoint by specifying a regular expression which is matched against the source text in a source file or files "
+        "specified with the -f option.  The -f option can be specified more than once.  "
+        "If no source files are specified, uses the current \"default source file\"" },
 
     { LLDB_OPT_SET_10, true, "language-exception", 'E', required_argument, NULL, 0, eArgTypeLanguage,
         "Set the breakpoint on exceptions thrown by the specified language (without options, on throw but not catch.)" },

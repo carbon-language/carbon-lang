@@ -688,7 +688,20 @@ SearchFilterByModuleListAndCU::CompUnitPasses (FileSpec &fileSpec)
 bool
 SearchFilterByModuleListAndCU::CompUnitPasses (CompileUnit &compUnit)
 {
-    return m_cu_spec_list.FindFileIndex(0, compUnit, false) != UINT32_MAX;
+    bool in_cu_list = m_cu_spec_list.FindFileIndex(0, compUnit, false) != UINT32_MAX;
+    if (in_cu_list)
+    {
+        ModuleSP module_sp(compUnit.GetModule());
+        if (module_sp)
+        {
+            bool module_passes = SearchFilterByModuleList::ModulePasses(module_sp);
+            return module_passes;
+        }
+        else
+            return true;
+    }
+    else
+        return false;
 }
 
 void
