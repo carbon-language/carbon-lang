@@ -155,5 +155,24 @@ TEST(InitListExpr, VectorLiteralInitListParens) {
                   "constant int2 i2 = (int2)(1, 2);", initListExpr(), Lang_OpenCL));
 }
 
+class TemplateAngleBracketLocRangeVerifier : public RangeVerifier<TypeLoc> {
+protected:
+  virtual SourceRange getRange(const TypeLoc &Node) {
+    TemplateSpecializationTypeLoc T =
+        Node.castAs<TemplateSpecializationTypeLoc>();
+    assert(!T.isNull());
+    return SourceRange(T.getLAngleLoc(), T.getRAngleLoc());
+  }
+};
+
+TEST(TemplateSpecializationTypeLoc, AngleBracketLocations) {
+  TemplateAngleBracketLocRangeVerifier Verifier;
+  Verifier.expectRange(2, 8, 2, 10);
+  EXPECT_TRUE(Verifier.match(
+      "template<typename T> struct A {}; struct B{}; void f(\n"
+      "const A<B>&);",
+      loc(templateSpecializationType())));
+}
+
 } // end namespace ast_matchers
 } // end namespace clang
