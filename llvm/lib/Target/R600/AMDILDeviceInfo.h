@@ -71,7 +71,8 @@ namespace llvm {
     /// These have to be in order with the older generations
     /// having the lower number enumerations.
     enum Generation {
-      HD4XXX = 0, ///< 7XX based devices.
+      HD3XXX = 0, ///< 6XX based devices.
+      HD4XXX, ///< 7XX based devices.
       HD5XXX, ///< Evergreen based devices.
       HD6XXX, ///< NI/Evergreen+ based devices.
       HD7XXX, ///< Southern Islands based devices.

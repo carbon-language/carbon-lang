@@ -75,7 +75,16 @@ def FeatureVertexCache : SubtargetFeature<"HasVertexCache",
         "true",
         "Specify use of dedicated vertex cache.">;
 
+class SubtargetFeatureFetchLimit <string Value> :
+                          SubtargetFeature <"fetch"#Value,
+        "TexVTXClauseSize",
+        Value,
+        "Limit the maximum number of fetches in a clause to "#Value>;
 
+def FeatureFetchLimit8 : SubtargetFeatureFetchLimit <"8">;
+def FeatureFetchLimit16 : SubtargetFeatureFetchLimit <"16">;
+
+//===----------------------------------------------------------------------===//
 
 def AMDGPUInstrInfo : InstrInfo {
   let guessInstructionProperties = 1;
