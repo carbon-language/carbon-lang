@@ -648,22 +648,22 @@ namespace llvm {
     StringRef getObjCPropertySetterName() const {
       return getStringField(5);
     }
-    bool isReadOnlyObjCProperty() {
+    bool isReadOnlyObjCProperty() const {
       return (getUnsignedField(6) & dwarf::DW_APPLE_PROPERTY_readonly) != 0;
     }
-    bool isReadWriteObjCProperty() {
+    bool isReadWriteObjCProperty() const {
       return (getUnsignedField(6) & dwarf::DW_APPLE_PROPERTY_readwrite) != 0;
     }
-    bool isAssignObjCProperty() {
+    bool isAssignObjCProperty() const {
       return (getUnsignedField(6) & dwarf::DW_APPLE_PROPERTY_assign) != 0;
     }
-    bool isRetainObjCProperty() {
+    bool isRetainObjCProperty() const {
       return (getUnsignedField(6) & dwarf::DW_APPLE_PROPERTY_retain) != 0;
     }
-    bool isCopyObjCProperty() {
+    bool isCopyObjCProperty() const {
       return (getUnsignedField(6) & dwarf::DW_APPLE_PROPERTY_copy) != 0;
     }
-    bool isNonAtomicObjCProperty() {
+    bool isNonAtomicObjCProperty() const {
       return (getUnsignedField(6) & dwarf::DW_APPLE_PROPERTY_nonatomic) != 0;
     }
 
