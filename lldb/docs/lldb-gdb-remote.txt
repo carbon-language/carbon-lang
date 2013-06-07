@@ -699,6 +699,26 @@ The lack of 'permissions:' indicates that none of read/write/execute are valid
 for this region.
 
 //----------------------------------------------------------------------
+// Detach and stay stopped:
+//
+// We extended the "D" packet to specify that the monitor should keep the
+// target suspended on detach.  The normal behavior is to resume execution
+// on detach.  We will send:
+//
+//  qSupportsDetachAndStayStopped:
+//
+// to query whether the monitor supports the extended detach, and if it does,
+// when we want the monitor to detach but not resume the target, we will
+// send:
+// 
+//   D1
+//
+// In any case, if we want the normal detach behavior we will just send:
+//
+//   D
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
 // Stop reply packet extensions
 //
 // BRIEF
