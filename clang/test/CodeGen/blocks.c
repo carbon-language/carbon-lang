@@ -66,3 +66,15 @@ void f5(void) {
   // CHECK: alloca <{ i8*, i32, i32, i8*, {{%.*}}*, [12 x i8], [[F5:%.*]] }>, align 16
   f5_helper(^(struct F5 *slot) { *slot = value; });
 }
+
+// rdar://14085217
+void (^b)() = ^{};
+int main() {
+   (b?: ^{})();
+}
+// CHECK: [[ZERO:%.*]] = load void (...)** @b
+// CHECK-NEXT: [[TB:%.*]] = icmp ne void (...)* [[ZERO]], null
+// CHECK-NEXT: br i1 [[TB]], label [[CT:%.*]], label [[CF:%.*]]
+// CHECK: [[ONE:%.*]] = bitcast void (...)* [[ZERO]] to void ()*
+// CHECK-NEXT:   br label [[CE:%.*]]
+
