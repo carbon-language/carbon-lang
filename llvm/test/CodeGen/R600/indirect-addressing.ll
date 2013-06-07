@@ -30,3 +30,36 @@ entry:
   store i32 %3, i32 addrspace(1)* %arrayidx13
   ret void
 }
+
+; This test checks that the stack offset is calculated correctly for structs.
+; All register loads/stores should be optimized away, so there shouldn't be
+; any MOVA instructions.
+;
+; XXX: This generated code has unnecessary MOVs, we should be able to optimize
+; this.
+
+; CHECK: @multiple_structs
+; CHECK-NOT: MOVA_INT
+
+%struct.point = type { i32, i32 }
+
+define void @multiple_structs(i32 addrspace(1)* %out) {
+entry:
+  %a = alloca %struct.point
+  %b = alloca %struct.point
+  %a.x.ptr = getelementptr %struct.point* %a, i32 0, i32 0
+  %a.y.ptr = getelementptr %struct.point* %a, i32 0, i32 1
+  %b.x.ptr = getelementptr %struct.point* %b, i32 0, i32 0
+  %b.y.ptr = getelementptr %struct.point* %b, i32 0, i32 1
+  store i32 0, i32* %a.x.ptr
+  store i32 1, i32* %a.y.ptr
+  store i32 2, i32* %b.x.ptr
+  store i32 3, i32* %b.y.ptr
+  %a.indirect.ptr = getelementptr %struct.point* %a, i32 0, i32 0
+  %b.indirect.ptr = getelementptr %struct.point* %b, i32 0, i32 0
+  %a.indirect = load i32* %a.indirect.ptr
+  %b.indirect = load i32* %b.indirect.ptr
+  %0 = add i32 %a.indirect, %b.indirect
+  store i32 %0, i32 addrspace(1)* %out
+  ret void
+}

@@ -78,27 +78,8 @@ int AMDGPUFrameLowering::getFrameIndexOffset(const MachineFunction &MF,
   int UpperBound = FI == -1 ? MFI->getNumObjects() : FI;
 
   for (int i = MFI->getObjectIndexBegin(); i < UpperBound; ++i) {
-    const AllocaInst *Alloca = MFI->getObjectAllocation(i);
-    unsigned ArrayElements;
-    const Type *AllocaType = Alloca->getAllocatedType();
-    const Type *ElementType;
-
-    if (AllocaType->isArrayTy()) {
-      ArrayElements = AllocaType->getArrayNumElements();
-      ElementType = AllocaType->getArrayElementType();
-    } else {
-      ArrayElements = 1;
-      ElementType = AllocaType;
-    }
-
-    unsigned VectorElements;
-    if (ElementType->isVectorTy()) {
-      VectorElements = ElementType->getVectorNumElements();
-    } else {
-      VectorElements = 1;
-    }
-
-    Offset += (VectorElements / getStackWidth(MF)) * ArrayElements;
+    unsigned Size = MFI->getObjectSize(i);
+    Offset += (Size / (getStackWidth(MF) * 4));
   }
   return Offset;
 }
