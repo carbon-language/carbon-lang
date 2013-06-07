@@ -21,11 +21,8 @@ namespace llvm {
 class MipsSEInstrInfo;
 
 class MipsSERegisterInfo : public MipsRegisterInfo {
-  const MipsSEInstrInfo &TII;
-
 public:
-  MipsSERegisterInfo(const MipsSubtarget &Subtarget,
-                     const MipsSEInstrInfo &TII);
+  MipsSERegisterInfo(const MipsSubtarget &Subtarget);
 
   bool requiresRegisterScavenging(const MachineFunction &MF) const;
 

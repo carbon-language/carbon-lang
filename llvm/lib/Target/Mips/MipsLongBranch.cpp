@@ -65,7 +65,6 @@ namespace {
     static char ID;
     MipsLongBranch(TargetMachine &tm)
       : MachineFunctionPass(ID), TM(tm),
-        TII(static_cast<const MipsInstrInfo*>(tm.getInstrInfo())),
         IsPIC(TM.getRelocationModel() == Reloc::PIC_),
         ABI(TM.getSubtarget<MipsSubtarget>().getTargetABI()),
         LongBranchSeqSize(!IsPIC ? 2 : (ABI == MipsSubtarget::N64 ? 13 : 9)) {}
@@ -85,7 +84,6 @@ namespace {
     void expandToLongBranch(MBBInfo &Info);
 
     const TargetMachine &TM;
-    const MipsInstrInfo *TII;
     MachineFunction *MF;
     SmallVector<MBBInfo, 16> MBBInfos;
     bool IsPIC;
@@ -172,6 +170,8 @@ void MipsLongBranch::initMBBInfo() {
   MBBInfos.clear();
   MBBInfos.resize(MF->size());
 
+  const MipsInstrInfo *TII =
+    static_cast<const MipsInstrInfo*>(TM.getInstrInfo());
   for (unsigned I = 0, E = MBBInfos.size(); I < E; ++I) {
     MachineBasicBlock *MBB = MF->getBlockNumbered(I);
 
@@ -217,6 +217,8 @@ int64_t MipsLongBranch::computeOffset(const MachineInstr *Br) {
 // MachineBasicBlock operand MBBOpnd.
 void MipsLongBranch::replaceBranch(MachineBasicBlock &MBB, Iter Br,
                                    DebugLoc DL, MachineBasicBlock *MBBOpnd) {
+  const MipsInstrInfo *TII =
+    static_cast<const MipsInstrInfo*>(TM.getInstrInfo());
   unsigned NewOpc = TII->getOppositeBranchOpc(Br->getOpcode());
   const MCInstrDesc &NewDesc = TII->get(NewOpc);
 
@@ -246,6 +248,9 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
   const BasicBlock *BB = MBB->getBasicBlock();
   MachineFunction::iterator FallThroughMBB = ++MachineFunction::iterator(MBB);
   MachineBasicBlock *LongBrMBB = MF->CreateMachineBasicBlock(BB);
+
+  const MipsInstrInfo *TII =
+    static_cast<const MipsInstrInfo*>(TM.getInstrInfo());
 
   MF->insert(FallThroughMBB, LongBrMBB);
   MBB->removeSuccessor(TgtMBB);
@@ -399,6 +404,9 @@ static void emitGPDisp(MachineFunction &F, const MipsInstrInfo *TII) {
 }
 
 bool MipsLongBranch::runOnMachineFunction(MachineFunction &F) {
+  const MipsInstrInfo *TII =
+    static_cast<const MipsInstrInfo*>(TM.getInstrInfo());
+
   if (TM.getSubtarget<MipsSubtarget>().inMips16Mode())
     return false;
   if ((TM.getRelocationModel() == Reloc::PIC_) &&

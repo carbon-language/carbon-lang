@@ -177,7 +177,7 @@ namespace {
   class Filler : public MachineFunctionPass {
   public:
     Filler(TargetMachine &tm)
-      : MachineFunctionPass(ID), TM(tm), TII(tm.getInstrInfo()) { }
+      : MachineFunctionPass(ID), TM(tm) { }
 
     virtual const char *getPassName() const {
       return "Mips Delay Slot Filler";
@@ -243,7 +243,6 @@ namespace {
     bool terminateSearch(const MachineInstr &Candidate) const;
 
     TargetMachine &TM;
-    const TargetInstrInfo *TII;
 
     static char ID;
   };
@@ -514,6 +513,8 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
     }
 
     // Bundle the NOP to the instruction with the delay slot.
+    const MipsInstrInfo *TII =
+      static_cast<const MipsInstrInfo*>(TM.getInstrInfo());
     BuildMI(MBB, llvm::next(I), I->getDebugLoc(), TII->get(Mips::NOP));
     MIBundleBuilder(MBB, I, llvm::next(llvm::next(I)));
   }

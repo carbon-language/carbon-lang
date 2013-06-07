@@ -37,7 +37,7 @@ static cl::opt<bool> NeverUseSaveRestore(
 
 Mips16InstrInfo::Mips16InstrInfo(MipsTargetMachine &tm)
   : MipsInstrInfo(tm, Mips::BimmX16),
-    RI(*tm.getSubtargetImpl(), *this) {}
+    RI(*tm.getSubtargetImpl()) {}
 
 const MipsRegisterInfo &Mips16InstrInfo::getRegisterInfo() const {
   return RI;

@@ -32,7 +32,7 @@ static cl::opt<bool> NoDPLoadStore("mno-ldc1-sdc1", cl::init(false),
 MipsSEInstrInfo::MipsSEInstrInfo(MipsTargetMachine &tm)
   : MipsInstrInfo(tm,
                   tm.getRelocationModel() == Reloc::PIC_ ? Mips::B : Mips::J),
-    RI(*tm.getSubtargetImpl(), *this),
+    RI(*tm.getSubtargetImpl()),
     IsN64(tm.getSubtarget<MipsSubtarget>().isABI_N64()) {}
 
 const MipsRegisterInfo &MipsSEInstrInfo::getRegisterInfo() const {

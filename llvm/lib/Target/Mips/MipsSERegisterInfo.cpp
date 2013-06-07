@@ -40,9 +40,8 @@
 
 using namespace llvm;
 
-MipsSERegisterInfo::MipsSERegisterInfo(const MipsSubtarget &ST,
-                                       const MipsSEInstrInfo &I)
-  : MipsRegisterInfo(ST), TII(I) {}
+MipsSERegisterInfo::MipsSERegisterInfo(const MipsSubtarget &ST)
+  : MipsRegisterInfo(ST) {}
 
 bool MipsSERegisterInfo::
 requiresRegisterScavenging(const MachineFunction &MF) const {
@@ -119,7 +118,9 @@ void MipsSERegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
     DebugLoc DL = II->getDebugLoc();
     unsigned ADDu = Subtarget.isABI_N64() ? Mips::DADDu : Mips::ADDu;
     unsigned NewImm;
-
+    const MipsSEInstrInfo &TII =
+      *static_cast<const MipsSEInstrInfo*>(
+        MBB.getParent()->getTarget().getInstrInfo());
     unsigned Reg = TII.loadImmediate(Offset, MBB, II, DL, &NewImm);
     BuildMI(MBB, II, DL, TII.get(ADDu), Reg).addReg(FrameReg)
       .addReg(Reg, RegState::Kill);

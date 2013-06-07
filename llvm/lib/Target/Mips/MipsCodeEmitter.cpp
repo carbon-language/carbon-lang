@@ -65,8 +65,7 @@ class MipsCodeEmitter : public MachineFunctionPass {
 
 public:
   MipsCodeEmitter(TargetMachine &tm, JITCodeEmitter &mce)
-    : MachineFunctionPass(ID), JTI(0),
-      II((const MipsInstrInfo *) tm.getInstrInfo()), TD(tm.getDataLayout()),
+    : MachineFunctionPass(ID), JTI(0), II(0), TD(0),
       TM(tm), MCE(mce), MCPEs(0), MJTEs(0),
       IsPIC(TM.getRelocationModel() == Reloc::PIC_) {}
 
