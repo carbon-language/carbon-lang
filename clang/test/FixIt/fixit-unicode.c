@@ -34,3 +34,23 @@ void test2() {
 
 // CHECK-MACHINE: fix-it:"{{.*}}fixit-unicode.c":{[[@LINE-9]]:16-[[@LINE-9]]:18}:"%ld"
 }
+
+void test3() {
+  int กssss = 42;
+  int a = กsss; // expected-error{{use of undeclared identifier 'กsss'; did you mean 'กssss'?}}
+// CHECK: {{^          \^}}
+// CHECK: {{^          [^ ]+ssss}}
+// CHECK-MACHINE: fix-it:"{{.*}}":{[[@LINE-3]]:11-[[@LINE-3]]:17}:"\340\270\201ssss"
+
+  int ssกss = 42;
+  int b = ssกs; // expected-error{{use of undeclared identifier 'ssกs'; did you mean 'ssกss'?}}
+// CHECK: {{^          \^}}
+// CHECK: {{^          ss.+ss}}
+// CHECK-MACHINE: fix-it:"{{.*}}":{[[@LINE-3]]:11-[[@LINE-3]]:17}:"ss\340\270\201ss"
+
+  int sssssssssก = 42;
+  int c = sssssssss; // expected-error{{use of undeclared identifier 'sssssssss'; did you mean 'sssssssssก'?}}
+// CHECK: {{^          \^}}
+// CHECK: {{^          sssssssss.+}}
+// CHECK-MACHINE: fix-it:"{{.*}}":{[[@LINE-3]]:11-[[@LINE-3]]:20}:"sssssssss\340\270\201"
+}
