@@ -198,11 +198,9 @@ MachineInstr *R600VectorRegMerger::RebuildVector(
         .addReg(SubReg)
         .addImm(Chan);
     UpdatedRegToChan[SubReg] = Chan;
-    for (std::vector<unsigned>::iterator RemoveIt = UpdatedUndef.begin(),
-        RemoveE = UpdatedUndef.end(); RemoveIt != RemoveE; ++ RemoveIt) {
-      if (*RemoveIt == Chan)
-        UpdatedUndef.erase(RemoveIt);
-    }
+    UpdatedUndef.erase(
+        std::remove(UpdatedUndef.begin(), UpdatedUndef.end(), Chan),
+        UpdatedUndef.end());
     DEBUG(dbgs() << "    ->"; Tmp->dump(););
     (void)Tmp;
     SrcVec = DstReg;
