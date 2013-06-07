@@ -45,13 +45,20 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.convenience_registers()
 
-    @skipIfLinux # Expression evaluation fails after attach by pid
     def test_convenience_registers_with_process_attach(self):
         """Test convenience registers after a 'process attach'."""
         if not self.getArchitecture() in ['x86_64']:
             self.skipTest("This test requires x86_64 as the architecture for the inferior")
         self.buildDefault()
-        self.convenience_registers_with_process_attach()
+        self.convenience_registers_with_process_attach(test_16bit_regs=False)
+
+    @expectedFailureLinux("llvm.org/pr14600") # Linux doesn't support 16-bit convenience registers
+    def test_convenience_registers_16bit_with_process_attach(self):
+        """Test convenience registers after a 'process attach'."""
+        if not self.getArchitecture() in ['x86_64']:
+            self.skipTest("This test requires x86_64 as the architecture for the inferior")
+        self.buildDefault()
+        self.convenience_registers_with_process_attach(test_16bit_regs=True)
 
     def common_setup(self):
         exe = os.path.join(os.getcwd(), "a.out")
@@ -220,18 +227,23 @@ class RegisterCommandsTestCase(TestBase):
         self.expect("register read rax 0x1234567887654321",
             substrs = ['0x1234567887654321'])
 
-    def convenience_registers_with_process_attach(self):
+    def convenience_registers_with_process_attach(self, test_16bit_regs):
         """Test convenience registers after a 'process attach'."""
         exe = self.lldbHere
-        
+
         # Spawn a new process
-        proc = self.spawnSubprocess(exe, [self.lldbOption])
+        pid = 0
+        if sys.platform.startswith('linux'):
+            pid = self.forkSubprocess(exe, [self.lldbOption])
+        else:
+            proc = self.spawnSubprocess(exe, [self.lldbOption])
+            pid = proc.pid
         self.addTearDownHook(self.cleanupSubprocesses)
 
         if self.TraceOn():
-            print "pid of spawned process: %d" % proc.pid
+            print "pid of spawned process: %d" % pid
 
-        self.runCmd("process attach -p %d" % proc.pid)
+        self.runCmd("process attach -p %d" % pid)
 
         # Check that "register read eax" works.
         self.runCmd("register read eax")
@@ -240,8 +252,9 @@ class RegisterCommandsTestCase(TestBase):
             self.expect("expr -- ($rax & 0xffffffff) == $eax",
                 substrs = ['true'])
 
-        self.expect("expr -- $ax == (($ah << 8) | $al)",
-            substrs = ['true'])
+        if test_16bit_regs:
+            self.expect("expr -- $ax == (($ah << 8) | $al)",
+                substrs = ['true'])
 
 if __name__ == '__main__':
     import atexit
