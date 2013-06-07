@@ -41,12 +41,30 @@ SourceRange TypeLoc::getLocalSourceRangeImpl(TypeLoc TL) {
 }
 
 namespace {
+  class TypeAligner : public TypeLocVisitor<TypeAligner, unsigned> {
+  public:
+#define ABSTRACT_TYPELOC(CLASS, PARENT)
+#define TYPELOC(CLASS, PARENT) \
+    unsigned Visit##CLASS##TypeLoc(CLASS##TypeLoc TyLoc) { \
+      return TyLoc.getLocalDataAlignment(); \
+    }
+#include "clang/AST/TypeLocNodes.def"
+  };
+}
+
+/// \brief Returns the alignment of the type source info data block.
+unsigned TypeLoc::getLocalAlignmentForType(QualType Ty) {
+  if (Ty.isNull()) return 1;
+  return TypeAligner().Visit(TypeLoc(Ty, 0));
+}
+
+namespace {
   class TypeSizer : public TypeLocVisitor<TypeSizer, unsigned> {
   public:
 #define ABSTRACT_TYPELOC(CLASS, PARENT)
 #define TYPELOC(CLASS, PARENT) \
     unsigned Visit##CLASS##TypeLoc(CLASS##TypeLoc TyLoc) { \
-      return TyLoc.getFullDataSize(); \
+      return TyLoc.getLocalDataSize(); \
     }
 #include "clang/AST/TypeLocNodes.def"
   };
@@ -54,8 +72,18 @@ namespace {
 
 /// \brief Returns the size of the type source info data block.
 unsigned TypeLoc::getFullDataSizeForType(QualType Ty) {
-  if (Ty.isNull()) return 0;
-  return TypeSizer().Visit(TypeLoc(Ty, 0));
+  unsigned Total = 0;
+  TypeLoc TyLoc(Ty, 0);
+  unsigned MaxAlign = 1;
+  while (!TyLoc.isNull()) {
+    unsigned Align = getLocalAlignmentForType(TyLoc.getType());
+    MaxAlign = std::max(Align, MaxAlign);
+    Total = llvm::RoundUpToAlignment(Total, Align);
+    Total += TypeSizer().Visit(TyLoc);
+    TyLoc = TyLoc.getNextTypeLoc();
+  }
+  Total = llvm::RoundUpToAlignment(Total, MaxAlign);
+  return Total;
 }
 
 namespace {
