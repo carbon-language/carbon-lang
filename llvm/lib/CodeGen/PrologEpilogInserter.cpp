@@ -35,7 +35,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -46,11 +45,6 @@ using namespace llvm;
 
 char PEI::ID = 0;
 char &llvm::PrologEpilogCodeInserterID = PEI::ID;
-
-static cl::opt<uint64_t>
-WarnStackSize("warn-stack-size", cl::Hidden,
-              cl::desc("Warn for stack size bigger than the given"
-                       " number"));
 
 INITIALIZE_PASS_BEGIN(PEI, "prologepilog",
                 "Prologue/Epilogue Insertion", false, false)
@@ -133,13 +127,6 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
 
   // Clear any vregs created by virtual scavenging.
   Fn.getRegInfo().clearVirtRegs();
-
-  // Warn on stack size when we exceeds the given limit.
-  MachineFrameInfo *MFI = Fn.getFrameInfo();
-  if (WarnStackSize.getNumOccurrences() > 0 &&
-      WarnStackSize < MFI->getStackSize())
-    errs() << "warning: Stack size limit exceeded (" << MFI->getStackSize()
-           << ") in " << Fn.getName()  << ".\n";
 
   delete RS;
   clearAllSets();
