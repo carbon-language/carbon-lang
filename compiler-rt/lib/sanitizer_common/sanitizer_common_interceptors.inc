@@ -430,7 +430,37 @@ SCANF_INTERCEPTOR_IMPL(__isoc99_sscanf, __isoc99_vsscanf, str, format)
 #endif
 
 
+#if SANITIZER_INTERCEPT_IOCTL
 #include "sanitizer_common_interceptors_ioctl.inc"
+#define INIT_IOCTL \
+  ioctl_init();    \
+  INTERCEPT_FUNCTION(ioctl);
+INTERCEPTOR(int, ioctl, int d, unsigned request, void *arg) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, ioctl, d, request, arg);
+
+  CHECK(ioctl_initialized);
+
+  // Note: TSan does not use common flags, and they are zero-initialized.
+  // This effectively disables ioctl handling in TSan.
+  if (!common_flags()->handle_ioctl)
+    return REAL(ioctl)(d, request, arg);
+
+  const ioctl_desc *desc = ioctl_lookup(request);
+  if (!desc)
+    Printf("WARNING: unknown ioctl %x\n", request);
+
+  if (desc)
+    ioctl_common_pre(ctx, desc, d, request, arg);
+  int res = REAL(ioctl)(d, request, arg);
+  // FIXME: some ioctls have different return values for success and failure.
+  if (desc && res != -1)
+    ioctl_common_post(ctx, desc, res, d, request, arg);
+  return res;
+}
+#else
+#define INIT_IOCTL
+#endif
 
 
 #if SANITIZER_INTERCEPT_GETPWNAM_AND_FRIENDS
