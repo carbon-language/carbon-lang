@@ -164,10 +164,8 @@ unsigned getReassignedChan(
     const std::vector<std::pair<unsigned, unsigned> > &RemapChan,
     unsigned Chan) {
   for (unsigned j = 0, je = RemapChan.size(); j < je; j++) {
-    if (RemapChan[j].first == Chan) {
+    if (RemapChan[j].first == Chan)
       return RemapChan[j].second;
-      break;
-    }
   }
   llvm_unreachable("Chan wasn't reassigned");
 }
