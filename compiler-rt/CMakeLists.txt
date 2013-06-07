@@ -171,7 +171,7 @@ endif()
 # Architectures supported by Sanitizer runtimes. Specific sanitizers may
 # support only subset of these (e.g. TSan works on x86_64 only).
 filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
-  x86_64 i386 powerpc64 powerpc)
+  x86_64 i386 powerpc64)
 
 # Add the public header's directory to the includes for all of compiler-rt.
 include_directories(include)
