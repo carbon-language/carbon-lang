@@ -335,8 +335,6 @@ namespace llvm {
 
   class PPCTargetLowering : public TargetLowering {
     const PPCSubtarget &PPCSubTarget;
-    const PPCRegisterInfo *PPCRegInfo;
-    const PPCInstrInfo *PPCII;
 
   public:
     explicit PPCTargetLowering(PPCTargetMachine &TM);

@@ -71,8 +71,8 @@ void PPCScoreboardHazardRecognizer::Reset() {
 //   3. Handling of the esoteric cases in "Resource-based Instruction Grouping".
 //
 
-PPCHazardRecognizer970::PPCHazardRecognizer970(const TargetInstrInfo &tii)
-  : TII(tii) {
+PPCHazardRecognizer970::PPCHazardRecognizer970(const TargetMachine &TM)
+  : TM(TM) {
   EndDispatchGroup();
 }
 
@@ -91,7 +91,7 @@ PPCHazardRecognizer970::GetInstrType(unsigned Opcode,
                                      bool &isFirst, bool &isSingle,
                                      bool &isCracked,
                                      bool &isLoad, bool &isStore) {
-  const MCInstrDesc &MCID = TII.get(Opcode);
+  const MCInstrDesc &MCID = TM.getInstrInfo()->get(Opcode);
 
   isLoad  = MCID.mayLoad();
   isStore = MCID.mayStore();

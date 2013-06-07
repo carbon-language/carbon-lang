@@ -74,8 +74,6 @@ static TargetLoweringObjectFile *CreateTLOF(const PPCTargetMachine &TM) {
 PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   : TargetLowering(TM, CreateTLOF(TM)), PPCSubTarget(*TM.getSubtargetImpl()) {
   const PPCSubtarget *Subtarget = &TM.getSubtarget<PPCSubtarget>();
-  PPCRegInfo = TM.getRegisterInfo();
-  PPCII = TM.getInstrInfo();
 
   setPow2DivIsCheap();
 
@@ -6072,7 +6070,9 @@ PPCTargetLowering::emitEHSjLjSetJmp(MachineInstr *MI,
 
   // Setup
   MIB = BuildMI(*thisMBB, MI, DL, TII->get(PPC::BCLalways)).addMBB(mainMBB);
-  MIB.addRegMask(PPCRegInfo->getNoPreservedMask());
+  const PPCRegisterInfo *TRI =
+    static_cast<const PPCRegisterInfo*>(getTargetMachine().getRegisterInfo());
+  MIB.addRegMask(TRI->getNoPreservedMask());
 
   BuildMI(*thisMBB, MI, DL, TII->get(PPC::LI), restoreDstReg).addImm(1);
 
@@ -6235,8 +6235,10 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     Cond.push_back(MI->getOperand(1));
 
     DebugLoc dl = MI->getDebugLoc();
-    PPCII->insertSelect(*BB, MI, dl, MI->getOperand(0).getReg(), Cond,
-                        MI->getOperand(2).getReg(), MI->getOperand(3).getReg());
+    const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+    TII->insertSelect(*BB, MI, dl, MI->getOperand(0).getReg(),
+                      Cond, MI->getOperand(2).getReg(),
+                      MI->getOperand(3).getReg());
   } else if (MI->getOpcode() == PPC::SELECT_CC_I4 ||
              MI->getOpcode() == PPC::SELECT_CC_I8 ||
              MI->getOpcode() == PPC::SELECT_CC_F4 ||

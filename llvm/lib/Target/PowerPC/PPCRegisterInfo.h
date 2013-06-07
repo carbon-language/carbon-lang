@@ -29,9 +29,8 @@ class Type;
 class PPCRegisterInfo : public PPCGenRegisterInfo {
   DenseMap<unsigned, unsigned> ImmToIdxMap;
   const PPCSubtarget &Subtarget;
-  const TargetInstrInfo &TII;
 public:
-  PPCRegisterInfo(const PPCSubtarget &SubTarget, const TargetInstrInfo &tii);
+  PPCRegisterInfo(const PPCSubtarget &SubTarget);
   
   /// getPointerRegClass - Return the register class to use to hold pointers.
   /// This is used for addressing modes.
