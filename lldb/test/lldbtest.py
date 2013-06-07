@@ -924,7 +924,6 @@ class Base(unittest2.TestCase):
         if child_pid == 0:
             # If more I/O support is required, this can be beefed up.
             fd = os.open(os.devnull, os.O_RDWR)
-            os.dup2(fd, 0)
             os.dup2(fd, 1)
             os.dup2(fd, 2)
             # This call causes the child to have its of group ID
