@@ -1131,7 +1131,7 @@ private:
           FormatTok->Tok.getLocation().getLocWithOffset(1);
       FormatTok->WhitespaceRange =
           SourceRange(GreaterLocation, GreaterLocation);
-      FormatTok->ByteCount = 1;
+      FormatTok->TokenText = ">";
       FormatTok->CodePointCount = 1;
       GreaterStashed = false;
       return FormatTok;
@@ -1151,28 +1151,13 @@ private:
       unsigned Newlines = Text.count('\n');
       if (Newlines > 0)
         FormatTok->LastNewlineOffset = WhitespaceLength + Text.rfind('\n') + 1;
-      unsigned EscapedNewlines = Text.count("\\\n");
       FormatTok->NewlinesBefore += Newlines;
+      unsigned EscapedNewlines = Text.count("\\\n");
       FormatTok->HasUnescapedNewline |= EscapedNewlines != Newlines;
       WhitespaceLength += FormatTok->Tok.getLength();
 
-      if (FormatTok->Tok.is(tok::eof)) {
-        FormatTok->WhitespaceRange =
-            SourceRange(WhitespaceStart,
-                        WhitespaceStart.getLocWithOffset(WhitespaceLength));
-        return FormatTok;
-      }
       Lex.LexFromRawLexer(FormatTok->Tok);
       Text = rawTokenText(FormatTok->Tok);
-    }
-
-    // Now FormatTok is the next non-whitespace token.
-    FormatTok->ByteCount = Text.size();
-
-    TrailingWhitespace = 0;
-    if (FormatTok->Tok.is(tok::comment)) {
-      TrailingWhitespace = Text.size() - Text.rtrim().size();
-      FormatTok->ByteCount -= TrailingWhitespace;
     }
 
     // In case the token starts with escaped newlines, we want to
@@ -1181,35 +1166,33 @@ private:
     // FIXME: What do we want to do with other escaped spaces, and escaped
     // spaces or newlines in the middle of tokens?
     // FIXME: Add a more explicit test.
-    unsigned i = 0;
-    while (i + 1 < Text.size() && Text[i] == '\\' && Text[i + 1] == '\n') {
+    while (Text.size() > 1 && Text[0] == '\\' && Text[1] == '\n') {
       // FIXME: ++FormatTok->NewlinesBefore is missing...
       WhitespaceLength += 2;
-      FormatTok->ByteCount -= 2;
-      i += 2;
+      Text = Text.substr(2);
     }
 
-    if (FormatTok->Tok.is(tok::raw_identifier)) {
+    TrailingWhitespace = 0;
+    if (FormatTok->Tok.is(tok::comment)) {
+      StringRef UntrimmedText = Text;
+      Text = Text.rtrim();
+      TrailingWhitespace = UntrimmedText.size() - Text.size();
+    } else if (FormatTok->Tok.is(tok::raw_identifier)) {
       IdentifierInfo &Info = IdentTable.get(Text);
       FormatTok->Tok.setIdentifierInfo(&Info);
       FormatTok->Tok.setKind(Info.getTokenID());
-    }
-
-    if (FormatTok->Tok.is(tok::greatergreater)) {
+    } else if (FormatTok->Tok.is(tok::greatergreater)) {
       FormatTok->Tok.setKind(tok::greater);
-      FormatTok->ByteCount = 1;
+      Text = Text.substr(0, 1);
       GreaterStashed = true;
     }
 
-    unsigned EncodingExtraBytes =
-        Text.size() - encoding::getCodePointCount(Text, Encoding);
-    FormatTok->CodePointCount = FormatTok->ByteCount - EncodingExtraBytes;
+    // Now FormatTok is the next non-whitespace token.
+    FormatTok->TokenText = Text;
+    FormatTok->CodePointCount = encoding::getCodePointCount(Text, Encoding);
 
     FormatTok->WhitespaceRange = SourceRange(
         WhitespaceStart, WhitespaceStart.getLocWithOffset(WhitespaceLength));
-    FormatTok->TokenText = StringRef(
-        SourceMgr.getCharacterData(FormatTok->getStartOfNonWhitespace()),
-        FormatTok->ByteCount);
     return FormatTok;
   }
 
@@ -1587,7 +1570,7 @@ private:
     CharSourceRange LineRange = CharSourceRange::getCharRange(
         First->WhitespaceRange.getBegin().getLocWithOffset(
             First->LastNewlineOffset),
-        Last->Tok.getLocation().getLocWithOffset(Last->ByteCount - 1));
+        Last->Tok.getLocation().getLocWithOffset(Last->TokenText.size() - 1));
     return touchesRanges(LineRange);
   }
 

@@ -1935,10 +1935,11 @@ TEST_F(FormatTest, FormatUnbalancedStructuralElements) {
             format("#define A } }\nint i;", getLLVMStyleWithColumns(11)));
 }
 
-TEST_F(FormatTest, EscapedNewlineAtStartOfTokenInMacroDefinition) {
+TEST_F(FormatTest, EscapedNewlineAtStartOfToken) {
   EXPECT_EQ(
       "#define A \\\n  int i;  \\\n  int j;",
       format("#define A \\\nint i;\\\n  int j;", getLLVMStyleWithColumns(11)));
+  EXPECT_EQ("template <class T> f();", format("\\\ntemplate <class T> f();"));
 }
 
 TEST_F(FormatTest, CalculateSpaceOnConsecutiveLinesInMacro) {
