@@ -667,3 +667,9 @@
 // RUN:   | FileCheck --check-prefix=CHECK-NOCRTFASTMATH %s
 // CHECK-CRTFASTMATH: usr/lib/gcc/x86_64-unknown-linux/4.6.0/crtfastmath.o
 // CHECK-NOCRTFASTMATH-NOT: crtfastmath.o
+
+// Check that we link in gcrt1.o when compiling with -pg
+// RUN: %clang -pg -target x86_64-unknown-linux -### %s \
+// RUN:        --sysroot=%S/Inputs/basic_linux_tree 2>& 1 \
+// RUN:   | FileCheck --check-prefix=CHECK-PG %s
+// CHECK-PG: gcrt1.o

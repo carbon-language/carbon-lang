@@ -6076,7 +6076,9 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
     if (!isAndroid) {
       const char *crt1 = NULL;
       if (!Args.hasArg(options::OPT_shared)){
-        if (IsPIE)
+        if (Args.hasArg(options::OPT_pg))
+          crt1 = "gcrt1.o";
+        else if (IsPIE)
           crt1 = "Scrt1.o";
         else
           crt1 = "crt1.o";
