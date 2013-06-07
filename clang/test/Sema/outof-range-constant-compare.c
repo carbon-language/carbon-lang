@@ -147,11 +147,3 @@ int main()
 
     return 1;
 }
-
-typedef enum {
-    alpha=0, bravo, charlie, delta, echo
-} named_t;
-
-static int bar(named_t foo) {
-    return foo > 42;
-}
