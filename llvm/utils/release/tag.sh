@@ -107,4 +107,4 @@ else
     tag_release_candidate
 fi
 
-exit 1
+exit 0
