@@ -110,7 +110,7 @@ private:
   }
 
   bool isCompatibleWithClause(const MachineInstr *MI,
-  std::set<unsigned> &DstRegs, std::set<unsigned> &SrcRegs) const {
+      std::set<unsigned> &DstRegs) const {
     unsigned DstMI, SrcMI;
     for (MachineInstr::const_mop_iterator I = MI->operands_begin(),
         E = MI->operands_end(); I != E; ++I) {
@@ -136,9 +136,7 @@ private:
               &AMDGPU::R600_Reg128RegClass);
       }
     }
-    if ((DstRegs.find(SrcMI) == DstRegs.end()) &&
-        (SrcRegs.find(DstMI) == SrcRegs.end())) {
-      SrcRegs.insert(SrcMI);
+    if ((DstRegs.find(SrcMI) == DstRegs.end())) {
       DstRegs.insert(DstMI);
       return true;
     } else
@@ -152,7 +150,7 @@ private:
     std::vector<MachineInstr *> ClauseContent;
     unsigned AluInstCount = 0;
     bool IsTex = TII->usesTextureCache(ClauseHead);
-    std::set<unsigned> DstRegs, SrcRegs;
+    std::set<unsigned> DstRegs;
     for (MachineBasicBlock::iterator E = MBB.end(); I != E; ++I) {
       if (IsTrivialInst(I))
         continue;
@@ -161,7 +159,7 @@ private:
       if ((IsTex && !TII->usesTextureCache(I)) ||
           (!IsTex && !TII->usesVertexCache(I)))
         break;
-      if (!isCompatibleWithClause(I, DstRegs, SrcRegs))
+      if (!isCompatibleWithClause(I, DstRegs))
         break;
       AluInstCount ++;
       ClauseContent.push_back(I);
