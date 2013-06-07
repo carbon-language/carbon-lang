@@ -41,7 +41,7 @@ using namespace llvm;
 
 XCoreInstrInfo::XCoreInstrInfo()
   : XCoreGenInstrInfo(XCore::ADJCALLSTACKDOWN, XCore::ADJCALLSTACKUP),
-    RI(*this) {
+    RI() {
 }
 
 static bool isZeroImm(const MachineOperand &op) {

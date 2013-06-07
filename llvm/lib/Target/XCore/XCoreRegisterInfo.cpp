@@ -37,8 +37,8 @@
 
 using namespace llvm;
 
-XCoreRegisterInfo::XCoreRegisterInfo(const TargetInstrInfo &tii)
-  : XCoreGenRegisterInfo(XCore::LR), TII(tii) {
+XCoreRegisterInfo::XCoreRegisterInfo()
+  : XCoreGenRegisterInfo(XCore::LR) {
 }
 
 // helper functions
@@ -112,6 +112,7 @@ XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int FrameIndex = FrameOp.getIndex();
 
   MachineFunction &MF = *MI.getParent()->getParent();
+  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
   int StackSize = MF.getFrameInfo()->getStackSize();
@@ -249,6 +250,7 @@ loadConstant(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     report_fatal_error("loadConstant value too big " + Twine(Value));
   }
   int Opcode = isImmU6(Value) ? XCore::LDC_ru6 : XCore::LDC_lru6;
+  const TargetInstrInfo &TII = *MBB.getParent()->getTarget().getInstrInfo();
   BuildMI(MBB, I, dl, TII.get(Opcode), DstReg).addImm(Value);
 }
 
