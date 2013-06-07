@@ -105,7 +105,6 @@ struct pe32plus_header {
   support::ulittle32_t SizeOfUninitializedData;
   support::ulittle32_t AddressOfEntryPoint;
   support::ulittle32_t BaseOfCode;
-  support::ulittle32_t BaseOfData;
   support::ulittle64_t ImageBase;
   support::ulittle32_t SectionAlignment;
   support::ulittle32_t FileAlignment;
