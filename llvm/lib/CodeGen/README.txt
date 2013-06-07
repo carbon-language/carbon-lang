@@ -21,7 +21,7 @@ can be:
 and then "merge" mul and mov:
 
         mul r4, r4, lr
-        str lr, [sp, #+52]
+        str r4, [sp, #+52]
         ldr lr, [r1, #+32]
         sxth r3, r3
         mla r4, r3, lr, r4
