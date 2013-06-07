@@ -60,6 +60,9 @@ class R600SchedStrategy : public MachineSchedStrategy {
   int CurEmitted;
   InstKind NextInstKind;
 
+  unsigned AluInstCount;
+  unsigned FetchInstCount;
+
   int InstKindLimit[IDLast];
 
   int OccupedSlotsMask;
@@ -85,7 +88,7 @@ private:
   bool regBelongsToClass(unsigned Reg, const TargetRegisterClass *RC) const;
   AluKind getAluKind(SUnit *SU) const;
   void LoadAlu();
-  bool isAvailablesAluEmpty() const;
+  unsigned AvailablesAluCount() const;
   SUnit *AttemptFillSlot (unsigned Slot);
   void PrepareNextSlot();
   SUnit *PopInst(std::vector<SUnit*> &Q);
