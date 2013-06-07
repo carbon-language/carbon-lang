@@ -22,8 +22,8 @@ def InterpSlot : Operand<i32> {
   let PrintMethod = "printInterpSlot";
 }
 
-def isSI : Predicate<"Subtarget.device()"
-                            "->getGeneration() == AMDGPUDeviceInfo::HD7XXX">;
+def isSI : Predicate<"Subtarget.getGeneration() "
+                      "== AMDGPUSubtarget::SOUTHERN_ISLANDS">;
 
 let Predicates = [isSI] in {
 

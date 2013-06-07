@@ -63,7 +63,7 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
                                               ELF::SHT_PROGBITS, 0,
                                               SectionKind::getReadOnly());
   OutStreamer.SwitchSection(ConfigSection);
-  if (STM.device()->getGeneration() > AMDGPUDeviceInfo::HD6XXX) {
+  if (STM.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS) {
     EmitProgramInfoSI(MF);
   } else {
     EmitProgramInfoR600(MF);
@@ -105,7 +105,7 @@ void AMDGPUAsmPrinter::EmitProgramInfoR600(MachineFunction &MF) {
   }
 
   unsigned RsrcReg;
-  if (STM.device()->getGeneration() >= AMDGPUDeviceInfo::HD5XXX) {
+  if (STM.getGeneration() >= AMDGPUSubtarget::EVERGREEN) {
     // Evergreen / Northern Islands
     switch (MFI->ShaderType) {
     default: // Fall through

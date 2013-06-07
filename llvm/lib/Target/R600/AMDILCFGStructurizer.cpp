@@ -11,8 +11,8 @@
 #define DEBUGME 0
 #define DEBUG_TYPE "structcfg"
 
+#include "AMDGPU.h"
 #include "AMDGPUInstrInfo.h"
-#include "AMDIL.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -28,8 +28,11 @@
 #include "llvm/CodeGen/MachinePostDominators.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
+
+#define DEFAULT_VEC_SLOTS 8
 
 // TODO: move-begin.
 

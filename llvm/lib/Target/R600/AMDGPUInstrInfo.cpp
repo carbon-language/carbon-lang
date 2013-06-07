@@ -16,7 +16,6 @@
 #include "AMDGPUInstrInfo.h"
 #include "AMDGPURegisterInfo.h"
 #include "AMDGPUTargetMachine.h"
-#include "AMDIL.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"

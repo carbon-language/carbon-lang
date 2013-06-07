@@ -14,7 +14,6 @@
 #include "AMDGPUInstrInfo.h"
 #include "AMDGPUISelLowering.h" // For AMDGPUISD
 #include "AMDGPURegisterInfo.h"
-#include "AMDILDevices.h"
 #include "R600InstrInfo.h"
 #include "SIISelLowering.h"
 #include "llvm/ADT/ValueMap.h"
@@ -168,7 +167,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   default: break;
   case ISD::BUILD_VECTOR: {
     const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
-    if (ST.device()->getGeneration() > AMDGPUDeviceInfo::HD6XXX) {
+    if (ST.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS) {
       break;
     }
     // BUILD_VECTOR is usually lowered into an IMPLICIT_DEF + 4 INSERT_SUBREG
@@ -198,7 +197,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   case ISD::BUILD_PAIR: {
     SDValue RC, SubReg0, SubReg1;
     const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
-    if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX) {
+    if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
       break;
     }
     if (N->getValueType(0) == MVT::i128) {
@@ -223,7 +222,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
     // XXX: Custom immediate lowering not implemented yet.  Instead we use
     // pseudo instructions defined in SIInstructions.td
-    if (ST.device()->getGeneration() > AMDGPUDeviceInfo::HD6XXX) {
+    if (ST.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS) {
       break;
     }
     const R600InstrInfo *TII = static_cast<const R600InstrInfo*>(TM.getInstrInfo());
@@ -318,7 +317,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   // Fold operands of selected node
 
   const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
-  if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX) {
+  if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
     const R600InstrInfo *TII =
         static_cast<const R600InstrInfo*>(TM.getInstrInfo());
     if (Result && Result->isMachineOpcode() && Result->getMachineOpcode() == AMDGPU::DOT_4) {
@@ -746,7 +745,7 @@ bool AMDGPUDAGToDAGISel::SelectADDRIndirect(SDValue Addr, SDValue &Base,
 
 void AMDGPUDAGToDAGISel::PostprocessISelDAG() {
 
-  if (Subtarget.device()->getGeneration() < AMDGPUDeviceInfo::HD7XXX) {
+  if (Subtarget.getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS) {
     return;
   }
 

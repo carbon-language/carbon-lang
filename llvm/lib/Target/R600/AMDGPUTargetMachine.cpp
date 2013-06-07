@@ -58,12 +58,12 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, StringRef TT,
   LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OptLevel),
   Subtarget(TT, CPU, FS),
   Layout(Subtarget.getDataLayout()),
-  FrameLowering(TargetFrameLowering::StackGrowsUp,
-      Subtarget.device()->getStackAlignment(), 0),
+  FrameLowering(TargetFrameLowering::StackGrowsUp, 16 // Stack Alignment
+                                                 , 0),
   IntrinsicInfo(this),
   InstrItins(&Subtarget.getInstrItineraryData()) {
   // TLInfo uses InstrInfo so it must be initialized after.
-  if (Subtarget.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX) {
+  if (Subtarget.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
     InstrInfo.reset(new R600InstrInfo(*this));
     TLInfo.reset(new R600TargetLowering(*this));
   } else {
@@ -82,7 +82,7 @@ public:
   AMDGPUPassConfig(AMDGPUTargetMachine *TM, PassManagerBase &PM)
     : TargetPassConfig(TM, PM) {
     const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
-    if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX) {
+    if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
       enablePass(&MachineSchedulerID);
       MachineSchedRegistry::setDefault(createR600MachineScheduler);
     }
@@ -108,7 +108,7 @@ TargetPassConfig *AMDGPUTargetMachine::createPassConfig(PassManagerBase &PM) {
 bool
 AMDGPUPassConfig::addPreISel() {
   const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
-  if (ST.device()->getGeneration() > AMDGPUDeviceInfo::HD6XXX) {
+  if (ST.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS) {
     addPass(createAMDGPUStructurizeCFGPass());
     addPass(createSIAnnotateControlFlowPass());
   } else {
@@ -121,7 +121,7 @@ bool AMDGPUPassConfig::addInstSelector() {
   addPass(createAMDGPUISelDag(getAMDGPUTargetMachine()));
 
   const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
-  if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX) {
+  if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
     // This callbacks this pass uses are not implemented yet on SI.
     addPass(createAMDGPUIndirectAddressingPass(*TM));
   }
@@ -131,8 +131,8 @@ bool AMDGPUPassConfig::addInstSelector() {
 bool AMDGPUPassConfig::addPreRegAlloc() {
   addPass(createAMDGPUConvertToISAPass(*TM));
   const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
-  
-  if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX) {
+
+  if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
     addPass(createR600VectorRegMerger(*TM));
   }
   return false;
@@ -141,7 +141,7 @@ bool AMDGPUPassConfig::addPreRegAlloc() {
 bool AMDGPUPassConfig::addPostRegAlloc() {
   const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
 
-  if (ST.device()->getGeneration() > AMDGPUDeviceInfo::HD6XXX) {
+  if (ST.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS) {
     addPass(createSIInsertWaits(*TM));
   }
   return false;
@@ -155,7 +155,7 @@ bool AMDGPUPassConfig::addPreSched2() {
 
 bool AMDGPUPassConfig::addPreEmitPass() {
   const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
-  if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX) {
+  if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
     addPass(createAMDGPUCFGPreparationPass(*TM));
     addPass(createAMDGPUCFGStructurizerPass(*TM));
     addPass(createR600EmitClauseMarkers(*TM));

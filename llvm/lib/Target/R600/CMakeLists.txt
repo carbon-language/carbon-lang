@@ -12,16 +12,10 @@ tablegen(LLVM AMDGPUGenAsmWriter.inc -gen-asm-writer)
 add_public_tablegen_target(AMDGPUCommonTableGen)
 
 add_llvm_target(R600CodeGen
-  AMDIL7XXDevice.cpp
   AMDILCFGStructurizer.cpp
-  AMDILDevice.cpp
-  AMDILDeviceInfo.cpp
-  AMDILEvergreenDevice.cpp
   AMDILIntrinsicInfo.cpp
   AMDILISelDAGToDAG.cpp
   AMDILISelLowering.cpp
-  AMDILNIDevice.cpp
-  AMDILSIDevice.cpp
   AMDGPUAsmPrinter.cpp
   AMDGPUFrameLowering.cpp
   AMDGPUIndirectAddressing.cpp

@@ -47,6 +47,6 @@ def CC_SI_Kernel : CallingConv<[
 def CC_AMDGPU : CallingConv<[
   CCIf<"State.getMachineFunction().getInfo<SIMachineFunctionInfo>()->"#
        "ShaderType == ShaderType::COMPUTE", CCDelegateTo<CC_SI_Kernel>>,
-  CCIf<"State.getTarget().getSubtarget<AMDGPUSubtarget>().device()"#
-       "->getGeneration() == AMDGPUDeviceInfo::HD7XXX", CCDelegateTo<CC_SI>>
+  CCIf<"State.getTarget().getSubtarget<AMDGPUSubtarget>()"#
+       ".getGeneration() == AMDGPUSubtarget::SOUTHERN_ISLANDS", CCDelegateTo<CC_SI>>
 ]>;

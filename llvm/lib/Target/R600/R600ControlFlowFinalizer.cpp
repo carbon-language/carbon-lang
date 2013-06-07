@@ -65,7 +65,7 @@ private:
 
   const MCInstrDesc &getHWInstrDesc(ControlFlowInstruction CFI) const {
     unsigned Opcode = 0;
-    bool isEg = (ST.device()->getGeneration() >= AMDGPUDeviceInfo::HD5XXX);
+    bool isEg = (ST.getGeneration() >= AMDGPUSubtarget::EVERGREEN);
     switch (CFI) {
     case CF_TC:
       Opcode = isEg ? AMDGPU::CF_TC_EG : AMDGPU::CF_TC_R600;
@@ -98,7 +98,7 @@ private:
       Opcode = isEg ? AMDGPU::POP_EG : AMDGPU::POP_R600;
       break;
     case CF_END:
-      if (ST.device()->getDeviceFlag() == OCL_DEVICE_CAYMAN) {
+      if (ST.hasCaymanISA()) {
         Opcode = AMDGPU::CF_END_CM;
         break;
       }
@@ -301,17 +301,19 @@ private:
   }
 
   unsigned getHWStackSize(unsigned StackSubEntry, bool hasPush) const {
-    switch (ST.device()->getGeneration()) {
-    case AMDGPUDeviceInfo::HD4XXX:
+    switch (ST.getGeneration()) {
+    case AMDGPUSubtarget::R600:
+    case AMDGPUSubtarget::R700:
       if (hasPush)
         StackSubEntry += 2;
       break;
-    case AMDGPUDeviceInfo::HD5XXX:
+    case AMDGPUSubtarget::EVERGREEN:
       if (hasPush)
         StackSubEntry ++;
-    case AMDGPUDeviceInfo::HD6XXX:
+    case AMDGPUSubtarget::NORTHERN_ISLANDS:
       StackSubEntry += 2;
       break;
+    default: llvm_unreachable("Not a VLIW4/VLIW5 GPU");
     }
     return (StackSubEntry + 3)/4; // Need ceil value of StackSubEntry/4
   }

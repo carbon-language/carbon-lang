@@ -14,7 +14,6 @@
 
 #include "SIISelLowering.h"
 #include "AMDGPU.h"
-#include "AMDIL.h"
 #include "AMDILIntrinsicInfo.h"
 #include "SIInstrInfo.h"
 #include "SIMachineFunctionInfo.h"

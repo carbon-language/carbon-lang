@@ -38,6 +38,7 @@ void R600SchedStrategy::initialize(ScheduleDAGMI *dag) {
 
   const AMDGPUSubtarget &ST = DAG->TM.getSubtarget<AMDGPUSubtarget>();
   InstKindLimit[IDFetch] = ST.getTexVTXClauseSize();
+
 }
 
 void R600SchedStrategy::MoveUnits(std::vector<SUnit *> &QSrc,

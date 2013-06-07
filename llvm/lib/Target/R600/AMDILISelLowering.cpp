@@ -15,7 +15,6 @@
 #include "AMDGPUISelLowering.h"
 #include "AMDGPURegisterInfo.h"
 #include "AMDGPUSubtarget.h"
-#include "AMDILDevices.h"
 #include "AMDILIntrinsicInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -156,21 +155,19 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
     setOperationAction(ISD::SELECT_CC, VT, Expand);
 
   }
-  if (STM.device()->isSupported(AMDGPUDeviceInfo::LongOps)) {
-    setOperationAction(ISD::MULHU, MVT::i64, Expand);
-    setOperationAction(ISD::MULHU, MVT::v2i64, Expand);
-    setOperationAction(ISD::MULHS, MVT::i64, Expand);
-    setOperationAction(ISD::MULHS, MVT::v2i64, Expand);
-    setOperationAction(ISD::ADD, MVT::v2i64, Expand);
-    setOperationAction(ISD::SREM, MVT::v2i64, Expand);
-    setOperationAction(ISD::Constant          , MVT::i64  , Legal);
-    setOperationAction(ISD::SDIV, MVT::v2i64, Expand);
-    setOperationAction(ISD::TRUNCATE, MVT::v2i64, Expand);
-    setOperationAction(ISD::SIGN_EXTEND, MVT::v2i64, Expand);
-    setOperationAction(ISD::ZERO_EXTEND, MVT::v2i64, Expand);
-    setOperationAction(ISD::ANY_EXTEND, MVT::v2i64, Expand);
-  }
-  if (STM.device()->isSupported(AMDGPUDeviceInfo::DoubleOps)) {
+  setOperationAction(ISD::MULHU, MVT::i64, Expand);
+  setOperationAction(ISD::MULHU, MVT::v2i64, Expand);
+  setOperationAction(ISD::MULHS, MVT::i64, Expand);
+  setOperationAction(ISD::MULHS, MVT::v2i64, Expand);
+  setOperationAction(ISD::ADD, MVT::v2i64, Expand);
+  setOperationAction(ISD::SREM, MVT::v2i64, Expand);
+  setOperationAction(ISD::Constant          , MVT::i64  , Legal);
+  setOperationAction(ISD::SDIV, MVT::v2i64, Expand);
+  setOperationAction(ISD::TRUNCATE, MVT::v2i64, Expand);
+  setOperationAction(ISD::SIGN_EXTEND, MVT::v2i64, Expand);
+  setOperationAction(ISD::ZERO_EXTEND, MVT::v2i64, Expand);
+  setOperationAction(ISD::ANY_EXTEND, MVT::v2i64, Expand);
+  if (STM.hasHWFP64()) {
     // we support loading/storing v2f64 but not operations on the type
     setOperationAction(ISD::FADD, MVT::v2f64, Expand);
     setOperationAction(ISD::FSUB, MVT::v2f64, Expand);

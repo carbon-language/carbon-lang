@@ -14,7 +14,6 @@
 
 #include "AMDILIntrinsicInfo.h"
 #include "AMDGPUSubtarget.h"
-#include "AMDIL.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"

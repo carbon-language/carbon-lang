@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPUSubtarget.h"
+#include <stdio.h>
 
 using namespace llvm;
 
@@ -25,8 +26,6 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS) :
   AMDGPUGenSubtargetInfo(TT, CPU, FS), DumpCode(false) {
     InstrItins = getInstrItineraryForCPU(CPU);
 
-  memset(CapsOverride, 0, sizeof(*CapsOverride)
-      * AMDGPUDeviceInfo::MaxNumberCapabilities);
   // Default card
   StringRef GPU = CPU;
   Is64bit = false;
@@ -35,21 +34,13 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS) :
   DefaultSize[2] = 1;
   HasVertexCache = false;
   TexVTXClauseSize = 0;
+  Gen = AMDGPUSubtarget::R600;
+  FP64 = false;
+  CaymanISA = false;
   ParseSubtargetFeatures(GPU, FS);
   DevName = GPU;
-  Device = AMDGPUDeviceInfo::getDeviceFromName(DevName, this, Is64bit);
 }
 
-AMDGPUSubtarget::~AMDGPUSubtarget() {
-  delete Device;
-}
-
-bool
-AMDGPUSubtarget::isOverride(AMDGPUDeviceInfo::Caps caps) const {
-  assert(caps < AMDGPUDeviceInfo::MaxNumberCapabilities &&
-      "Caps index is out of bounds!");
-  return CapsOverride[caps];
-}
 bool
 AMDGPUSubtarget::is64bit() const  {
   return Is64bit;
@@ -61,6 +52,18 @@ AMDGPUSubtarget::hasVertexCache() const {
 short
 AMDGPUSubtarget::getTexVTXClauseSize() const {
   return TexVTXClauseSize;
+}
+enum AMDGPUSubtarget::Generation
+AMDGPUSubtarget::getGeneration() const {
+  return Gen;
+}
+bool
+AMDGPUSubtarget::hasHWFP64() const {
+  return FP64;
+}
+bool
+AMDGPUSubtarget::hasCaymanISA() const {
+  return CaymanISA;
 }
 bool
 AMDGPUSubtarget::isTargetELF() const {
@@ -77,21 +80,28 @@ AMDGPUSubtarget::getDefaultSize(uint32_t dim) const {
 
 std::string
 AMDGPUSubtarget::getDataLayout() const {
-    if (!Device) {
-        return std::string("e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16"
-                "-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f80:32:32"
-                "-v16:16:16-v24:32:32-v32:32:32-v48:64:64-v64:64:64"
-                "-v96:128:128-v128:128:128-v192:256:256-v256:256:256"
-                "-v512:512:512-v1024:1024:1024-v2048:2048:2048-a0:0:64");
-    }
-    return Device->getDataLayout();
+  std::string DataLayout = std::string(
+   "e"
+   "-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32"
+   "-v16:16:16-v24:32:32-v32:32:32-v48:64:64-v64:64:64-v96:128:128-v128:128:128"
+   "-v192:256:256-v256:256:256-v512:512:512-v1024:1024:1024-v2048:2048:2048"
+   "-n32:64"
+  );
+
+  if (hasHWFP64()) {
+    DataLayout.append("-f64:64:64");
+  }
+
+  if (is64bit()) {
+    DataLayout.append("-p:64:64:64");
+  } else {
+    DataLayout.append("-p:32:32:32");
+  }
+
+  return DataLayout;
 }
 
 std::string
 AMDGPUSubtarget::getDeviceName() const {
   return DevName;
-}
-const AMDGPUDevice *
-AMDGPUSubtarget::device() const {
-  return Device;
 }

@@ -10,41 +10,41 @@
 class Proc<string Name, ProcessorItineraries itin, list<SubtargetFeature> Features>
 : Processor<Name, itin, Features>;
 def : Proc<"",           R600_VLIW5_Itin,
-    [FeatureR600ALUInst, FeatureVertexCache, FeatureFetchLimit8]>;
+    [FeatureR600, FeatureVertexCache]>;
 def : Proc<"r600",       R600_VLIW5_Itin,
-    [FeatureR600ALUInst , FeatureVertexCache, FeatureFetchLimit8]>;
+    [FeatureR600 , FeatureVertexCache]>;
 def : Proc<"rs880",      R600_VLIW5_Itin,
-    [FeatureR600ALUInst, FeatureFetchLimit8]>;
+    [FeatureR600]>;
 def : Proc<"rv670",      R600_VLIW5_Itin,
-    [FeatureR600ALUInst, FeatureFP64, FeatureVertexCache, FeatureFetchLimit8]>;
+    [FeatureR600, FeatureFP64, FeatureVertexCache]>;
 def : Proc<"rv710",      R600_VLIW5_Itin,
-    [FeatureVertexCache, FeatureFetchLimit16]>;
+    [FeatureR700, FeatureVertexCache]>;
 def : Proc<"rv730",      R600_VLIW5_Itin,
-    [FeatureVertexCache, FeatureFetchLimit16]>;
+    [FeatureR700, FeatureVertexCache]>;
 def : Proc<"rv770",      R600_VLIW5_Itin,
-    [FeatureFP64, FeatureVertexCache, FeatureFetchLimit16]>;
+    [FeatureR700, FeatureFP64, FeatureVertexCache]>;
 def : Proc<"cedar",      R600_VLIW5_Itin,
-    [FeatureByteAddress, FeatureImages, FeatureVertexCache, FeatureFetchLimit16]>;
+    [FeatureEvergreen, FeatureVertexCache]>;
 def : Proc<"redwood",    R600_VLIW5_Itin,
-    [FeatureByteAddress, FeatureImages, FeatureVertexCache, FeatureFetchLimit16]>;
+    [FeatureEvergreen, FeatureVertexCache]>;
 def : Proc<"sumo",       R600_VLIW5_Itin,
-    [FeatureByteAddress, FeatureImages, FeatureFetchLimit16]>;
+    [FeatureEvergreen]>;
 def : Proc<"juniper",    R600_VLIW5_Itin,
-    [FeatureByteAddress, FeatureImages, FeatureVertexCache, FeatureFetchLimit16]>;
+    [FeatureEvergreen, FeatureVertexCache]>;
 def : Proc<"cypress",    R600_VLIW5_Itin,
-    [FeatureByteAddress, FeatureImages, FeatureFP64, FeatureVertexCache, FeatureFetchLimit16]>;
+    [FeatureEvergreen, FeatureFP64, FeatureVertexCache]>;
 def : Proc<"barts",      R600_VLIW5_Itin,
-    [FeatureByteAddress, FeatureImages, FeatureVertexCache, FeatureFetchLimit16]>;
+    [FeatureNorthernIslands, FeatureVertexCache]>;
 def : Proc<"turks",      R600_VLIW5_Itin,
-    [FeatureByteAddress, FeatureImages, FeatureVertexCache, FeatureFetchLimit16]>;
+    [FeatureNorthernIslands, FeatureVertexCache]>;
 def : Proc<"caicos",     R600_VLIW5_Itin,
-    [FeatureByteAddress, FeatureImages, FeatureFetchLimit16]>;
+    [FeatureNorthernIslands]>;
 def : Proc<"cayman",     R600_VLIW4_Itin,
-    [FeatureByteAddress, FeatureImages, FeatureFP64, FeatureFetchLimit16]>;
+    [FeatureNorthernIslands, FeatureFP64, FeatureCaymanISA]>;
 
-def : Proc<"SI",         SI_Itin, [Feature64BitPtr, FeatureFP64]>;
-def : Proc<"tahiti",     SI_Itin, [Feature64BitPtr, FeatureFP64]>;
-def : Proc<"pitcairn",   SI_Itin, [Feature64BitPtr, FeatureFP64]>;
-def : Proc<"verde",      SI_Itin, [Feature64BitPtr, FeatureFP64]>;
-def : Proc<"oland",      SI_Itin, [Feature64BitPtr, FeatureFP64]>;
-def : Proc<"hainan",     SI_Itin, [Feature64BitPtr, FeatureFP64]>;
+def : Proc<"SI",         SI_Itin, [FeatureSouthernIslands]>;
+def : Proc<"tahiti",     SI_Itin, [FeatureSouthernIslands]>;
+def : Proc<"pitcairn",   SI_Itin, [FeatureSouthernIslands]>;
+def : Proc<"verde",      SI_Itin, [FeatureSouthernIslands]>;
+def : Proc<"oland",      SI_Itin, [FeatureSouthernIslands]>;
+def : Proc<"hainan",     SI_Itin, [FeatureSouthernIslands]>;

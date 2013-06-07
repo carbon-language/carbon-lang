@@ -14,7 +14,7 @@
 
 #ifndef AMDGPUSUBTARGET_H
 #define AMDGPUSUBTARGET_H
-#include "AMDILDevice.h"
+#include "AMDGPU.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
@@ -27,9 +27,16 @@
 namespace llvm {
 
 class AMDGPUSubtarget : public AMDGPUGenSubtargetInfo {
+public:
+  enum Generation {
+    R600 = 0,
+    R700,
+    EVERGREEN,
+    NORTHERN_ISLANDS,
+    SOUTHERN_ISLANDS
+  };
+
 private:
-  bool CapsOverride[AMDGPUDeviceInfo::MaxNumberCapabilities];
-  const AMDGPUDevice *Device;
   size_t DefaultSize[3];
   std::string DevName;
   bool Is64bit;
@@ -38,24 +45,27 @@ private:
   bool R600ALUInst;
   bool HasVertexCache;
   short TexVTXClauseSize;
+  enum Generation Gen;
+  bool FP64;
+  bool CaymanISA;
 
   InstrItineraryData InstrItins;
 
 public:
   AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS);
-  virtual ~AMDGPUSubtarget();
 
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
   virtual void ParseSubtargetFeatures(StringRef CPU, StringRef FS);
 
-  bool isOverride(AMDGPUDeviceInfo::Caps) const;
   bool is64bit() const;
   bool hasVertexCache() const;
   short getTexVTXClauseSize() const;
+  enum Generation getGeneration() const;
+  bool hasHWFP64() const;
+  bool hasCaymanISA() const;
 
   // Helper functions to simplify if statements
   bool isTargetELF() const;
-  const AMDGPUDevice* device() const;
   std::string getDataLayout() const;
   std::string getDeviceName() const;
   virtual size_t getDefaultSize(uint32_t dim) const;

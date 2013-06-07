@@ -551,26 +551,21 @@ def load_param : LoadParamFrag<load>;
 def load_param_zexti8 : LoadParamFrag<zextloadi8>;
 def load_param_zexti16 : LoadParamFrag<zextloadi16>;
 
-def isR600 : Predicate<"Subtarget.device()"
-                            "->getGeneration() == AMDGPUDeviceInfo::HD4XXX">;
-def isR700 : Predicate<"Subtarget.device()"
-                            "->getGeneration() == AMDGPUDeviceInfo::HD4XXX &&"
-                            "Subtarget.device()->getDeviceFlag()"
-                            ">= OCL_DEVICE_RV710">;
+def isR600 : Predicate<"Subtarget.getGeneration() <= AMDGPUSubtarget::R700">;
+def isR700 : Predicate<"Subtarget.getGeneration() == AMDGPUSubtarget::R700">;
 def isEG : Predicate<
-  "Subtarget.device()->getGeneration() >= AMDGPUDeviceInfo::HD5XXX && "
-  "Subtarget.device()->getGeneration() < AMDGPUDeviceInfo::HD7XXX && "
-  "Subtarget.device()->getDeviceFlag() != OCL_DEVICE_CAYMAN">;
+  "Subtarget.getGeneration() >= AMDGPUSubtarget::EVERGREEN && "
+  "Subtarget.getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS && "
+  "!Subtarget.hasCaymanISA()">;
 
-def isCayman : Predicate<"Subtarget.device()"
-                            "->getDeviceFlag() == OCL_DEVICE_CAYMAN">;
-def isEGorCayman : Predicate<"Subtarget.device()"
-                            "->getGeneration() == AMDGPUDeviceInfo::HD5XXX"
-                            "|| Subtarget.device()->getGeneration() =="
-                            "AMDGPUDeviceInfo::HD6XXX">;
+def isCayman : Predicate<"Subtarget.hasCaymanISA()">;
+def isEGorCayman : Predicate<"Subtarget.getGeneration() == "
+                             "AMDGPUSubtarget::EVERGREEN"
+                            "|| Subtarget.getGeneration() =="
+                            "AMDGPUSubtarget::NORTHERN_ISLANDS">;
 
 def isR600toCayman : Predicate<
-                     "Subtarget.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX">;
+                     "Subtarget.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS">;
 
 //===----------------------------------------------------------------------===//
 // R600 SDNodes

@@ -941,7 +941,7 @@ MachineInstr *R600InstrInfo::buildSlotOfVectorInstruction(
   assert (MI->getOpcode() == AMDGPU::DOT_4 && "Not Implemented");
   unsigned Opcode;
   const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
-  if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD4XXX)
+  if (ST.getGeneration() <= AMDGPUSubtarget::R700)
     Opcode = AMDGPU::DOT4_r600;
   else
     Opcode = AMDGPU::DOT4_eg;
