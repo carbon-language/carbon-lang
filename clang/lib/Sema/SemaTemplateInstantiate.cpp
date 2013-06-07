@@ -2080,6 +2080,14 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
        E = LateAttrs.end(); I != E; ++I) {
     assert(CurrentInstantiationScope == Instantiator.getStartingScope());
     CurrentInstantiationScope = I->Scope;
+
+    // Allow 'this' within late-parsed attributes.
+    NamedDecl *ND = dyn_cast<NamedDecl>(I->NewDecl);
+    CXXRecordDecl *ThisContext =
+        dyn_cast_or_null<CXXRecordDecl>(ND->getDeclContext());
+    CXXThisScopeRAII ThisScope(*this, ThisContext, /*TypeQuals*/0,
+                               ND && ND->isCXXInstanceMember());
+
     Attr *NewAttr =
       instantiateTemplateAttribute(I->TmplAttr, Context, *this, TemplateArgs);
     I->NewDecl->addAttr(NewAttr);

@@ -142,6 +142,13 @@ void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
         Saved = CurrentInstantiationScope->cloneScopes(OuterMostScope);
       LateAttrs->push_back(LateInstantiatedAttribute(TmplAttr, Saved, New));
     } else {
+      // Allow 'this' within late-parsed attributes.
+      NamedDecl *ND = dyn_cast<NamedDecl>(New);
+      CXXRecordDecl *ThisContext =
+          dyn_cast_or_null<CXXRecordDecl>(ND->getDeclContext());
+      CXXThisScopeRAII ThisScope(*this, ThisContext, /*TypeQuals*/0,
+                                 ND && ND->isCXXInstanceMember());
+
       Attr *NewAttr = sema::instantiateTemplateAttribute(TmplAttr, Context,
                                                          *this, TemplateArgs);
       if (NewAttr)
@@ -2449,7 +2456,7 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
   CXXRecordDecl *ThisContext = 0;
   unsigned ThisTypeQuals = 0;
   if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
-    ThisContext = Method->getParent();
+    ThisContext = cast<CXXRecordDecl>(Owner);
     ThisTypeQuals = Method->getTypeQualifiers();
   }
   
@@ -2585,8 +2592,7 @@ static void InstantiateExceptionSpec(Sema &SemaRef, FunctionDecl *New,
 
       bool Expand = false;
       bool RetainExpansion = false;
-      Optional<unsigned> NumExpansions
-                                        = PackExpansion->getNumExpansions();
+      Optional<unsigned> NumExpansions = PackExpansion->getNumExpansions();
       if (SemaRef.CheckParameterPacksForExpansion(New->getLocation(),
                                                   SourceRange(),
                                                   Unexpanded,

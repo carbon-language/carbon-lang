@@ -30,16 +30,44 @@ struct C {
   float &f(T*) const noexcept;
 
   T* ptr;
-  auto g1() noexcept(noexcept(f(ptr))) -> decltype(f((*this).ptr));
+  auto g1() noexcept(noexcept(f(ptr))) -> decltype(f(ptr));
   auto g2() const noexcept(noexcept(f(((this))->ptr))) -> decltype(f(ptr));
+  auto g3() noexcept(noexcept(f(this->ptr))) -> decltype(f((*this).ptr));
+  auto g4() const noexcept(noexcept(f(((this))->ptr))) -> decltype(f(this->ptr));
+  auto g5() noexcept(noexcept(this->f(ptr))) -> decltype(this->f(ptr));
+  auto g6() const noexcept(noexcept(this->f(((this))->ptr))) -> decltype(this->f(ptr));
+  auto g7() noexcept(noexcept(this->f(this->ptr))) -> decltype(this->f((*this).ptr));
+  auto g8() const noexcept(noexcept(this->f(((this))->ptr))) -> decltype(this->f(this->ptr));
 };
 
 void test_C(C<int> ci) {
-  int *p = 0;
   int &ir = ci.g1();
   float &fr = ci.g2();
+  int &ir2 = ci.g3();
+  float &fr2 = ci.g4();
+  int &ir3 = ci.g5();
+  float &fr3 = ci.g6();
+  int &ir4 = ci.g7();
+  float &fr4 = ci.g8();
   static_assert(!noexcept(ci.g1()), "exception-specification failure");
   static_assert(noexcept(ci.g2()), "exception-specification failure");
+  static_assert(!noexcept(ci.g3()), "exception-specification failure");
+  static_assert(noexcept(ci.g4()), "exception-specification failure");
+  static_assert(!noexcept(ci.g5()), "exception-specification failure");
+  static_assert(noexcept(ci.g6()), "exception-specification failure");
+  static_assert(!noexcept(ci.g7()), "exception-specification failure");
+  static_assert(noexcept(ci.g8()), "exception-specification failure");
+}
+
+namespace PR14263 {
+  template<typename T> struct X {
+    void f();
+    T f() const;
+
+    auto g()       -> decltype(this->f()) { return f(); }
+    auto g() const -> decltype(this->f()) { return f(); }
+  };
+  template struct X<int>;
 }
 
 namespace PR10036 {

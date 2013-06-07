@@ -1063,9 +1063,8 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
     RecordDecl *RD = dyn_cast_or_null<RecordDecl>(D->getDeclContext());
 
     // Allow 'this' within late-parsed attributes.
-    Sema::CXXThisScopeRAII ThisScope(Actions, RD,
-                                     /*TypeQuals=*/0,
-                                     ND && RD && ND->isCXXInstanceMember());
+    Sema::CXXThisScopeRAII ThisScope(Actions, RD, /*TypeQuals=*/0,
+                                     ND && ND->isCXXInstanceMember());
 
     if (LA.Decls.size() == 1) {
       // If the Decl is templatized, add template parameters to scope.
