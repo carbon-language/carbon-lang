@@ -1947,13 +1947,19 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit, bool D
   return Res;
 }
 
-/// Currently the checksum merely consists of the number of ivars.
+/// Currently the checksum of an interface includes the number of
+/// ivars and property accessors.
 unsigned CGDebugInfo::Checksum(const ObjCInterfaceDecl
-                               *InterfaceDecl) {
-  unsigned IvarNo = 0;
-  for (const ObjCIvarDecl *Ivar = InterfaceDecl->all_declared_ivar_begin();
-       Ivar != 0; Ivar = Ivar->getNextIvar()) ++IvarNo;
-  return IvarNo;
+                               *ID) {
+  // The assumption is that the number of ivars and property accessors
+  // can only increase monotonically, so it is safe to just use the
+  // sum of these as a checksum.
+  unsigned Sum = 0;
+  for (const ObjCIvarDecl *Ivar = ID->all_declared_ivar_begin();
+       Ivar != 0; Ivar = Ivar->getNextIvar())
+    ++Sum;
+
+  return Sum;
 }
 
 ObjCInterfaceDecl *CGDebugInfo::getObjCInterfaceDecl(QualType Ty) {
