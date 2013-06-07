@@ -34,9 +34,8 @@ static cl::opt<bool>
 ReserveAppRegisters("sparc-reserve-app-registers", cl::Hidden, cl::init(false),
                     cl::desc("Reserve application registers (%g2-%g4)"));
 
-SparcRegisterInfo::SparcRegisterInfo(SparcSubtarget &st,
-                                     const TargetInstrInfo &tii)
-  : SparcGenRegisterInfo(SP::I7), Subtarget(st), TII(tii) {
+SparcRegisterInfo::SparcRegisterInfo(SparcSubtarget &st)
+  : SparcGenRegisterInfo(SP::I7), Subtarget(st) {
 }
 
 const uint16_t* SparcRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
@@ -108,6 +107,7 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   } else {
     // Otherwise, emit a G1 = SETHI %hi(offset).  FIXME: it would be better to
     // scavenge a register here instead of reserving G1 all of the time.
+    const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
     unsigned OffHi = (unsigned)Offset >> 10U;
     BuildMI(*MI.getParent(), II, dl, TII.get(SP::SETHIi), SP::G1).addImm(OffHi);
     // Emit G1 = G1 + I6

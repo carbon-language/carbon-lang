@@ -29,7 +29,7 @@ using namespace llvm;
 
 SparcInstrInfo::SparcInstrInfo(SparcSubtarget &ST)
   : SparcGenInstrInfo(SP::ADJCALLSTACKDOWN, SP::ADJCALLSTACKUP),
-    RI(ST, *this), Subtarget(ST) {
+    RI(ST), Subtarget(ST) {
 }
 
 /// isLoadFromStackSlot - If the specified machine instruction is a direct

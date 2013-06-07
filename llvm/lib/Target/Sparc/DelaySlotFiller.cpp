@@ -39,11 +39,10 @@ namespace {
     /// layout, etc.
     ///
     TargetMachine &TM;
-    const TargetInstrInfo *TII;
 
     static char ID;
     Filler(TargetMachine &tm)
-      : MachineFunctionPass(ID), TM(tm), TII(tm.getInstrInfo()) { }
+      : MachineFunctionPass(ID), TM(tm) { }
 
     virtual const char *getPassName() const {
       return "SPARC Delay Slot Filler";
@@ -127,6 +126,7 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
     ++FilledSlots;
     Changed = true;
 
+    const TargetInstrInfo *TII = TM.getInstrInfo();
     if (D == MBB.end())
       BuildMI(MBB, I, MI->getDebugLoc(), TII->get(SP::NOP));
     else
@@ -166,7 +166,7 @@ Filler::findDelayInstr(MachineBasicBlock &MBB,
     if (J->getOpcode() == SP::RESTORErr
         || J->getOpcode() == SP::RESTOREri) {
       // change retl to ret.
-      slot->setDesc(TII->get(SP::RET));
+      slot->setDesc(TM.getInstrInfo()->get(SP::RET));
       return J;
     }
   }
@@ -475,6 +475,8 @@ bool Filler::tryCombineRestoreWithPrevInst(MachineBasicBlock &MBB,
   // It cannot combine with a delay filler.
   if (isDelayFiller(MBB, PrevInst))
     return false;
+
+  const TargetInstrInfo *TII = TM.getInstrInfo();
 
   switch (PrevInst->getOpcode()) {
   default: break;
