@@ -1451,6 +1451,36 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCObjectType *Ty,
   return getOrCreateType(Ty->getBaseType(), Unit);
 }
 
+
+/// \return true if Getter has the default name for the property PD.
+static bool hasDefaultGetterName(const ObjCPropertyDecl *PD,
+                                 const ObjCMethodDecl *Getter) {
+  assert(PD);
+  if (!Getter)
+    return true;
+
+  assert(Getter->getDeclName().isObjCZeroArgSelector());
+  return PD->getName() ==
+    Getter->getDeclName().getObjCSelector().getNameForSlot(0);
+}
+
+/// \return true if Setter has the default name for the property PD.
+static bool hasDefaultSetterName(const ObjCPropertyDecl *PD,
+                                 const ObjCMethodDecl *Setter) {
+  assert(PD);
+  if (!Setter)
+    return true;
+
+  assert(Setter->getDeclName().isObjCOneArgSelector());
+  // Construct a setter name like SelectorTable::constructSetterName()
+  // does, but without entering it into the table.
+  SmallString<100> DefaultName("set");
+  DefaultName += PD->getName();
+  DefaultName[3] = toUppercase(DefaultName[3]);
+  return DefaultName ==
+    Setter->getDeclName().getObjCSelector().getNameForSlot(0);
+}
+
 /// CreateType - get objective-c interface type.
 llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
                                      llvm::DIFile Unit) {
@@ -1524,9 +1554,9 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     llvm::MDNode *PropertyNode =
       DBuilder.createObjCProperty(PD->getName(),
                                   PUnit, PLine,
-                                  (Getter && Getter->isImplicit()) ? "" :
+                                  hasDefaultGetterName(PD, Getter) ? "" :
                                   getSelectorName(PD->getGetterName()),
-                                  (Setter && Setter->isImplicit()) ? "" :
+                                  hasDefaultSetterName(PD, Setter) ? "" :
                                   getSelectorName(PD->getSetterName()),
                                   PD->getPropertyAttributes(),
                                   getOrCreateType(PD->getType(), PUnit));
@@ -1598,9 +1628,9 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
           PropertyNode =
             DBuilder.createObjCProperty(PD->getName(),
                                         PUnit, PLine,
-                                        (Getter && Getter->isImplicit()) ? "" :
+                                        hasDefaultGetterName(PD, Getter) ? "" :
                                         getSelectorName(PD->getGetterName()),
-                                        (Setter && Setter->isImplicit()) ? "" :
+                                        hasDefaultSetterName(PD, Setter) ? "" :
                                         getSelectorName(PD->getSetterName()),
                                         PD->getPropertyAttributes(),
                                         getOrCreateType(PD->getType(), PUnit));
