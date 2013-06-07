@@ -19,6 +19,7 @@
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/TokenKinds.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
@@ -725,13 +726,19 @@ public:
   /// \brief Return the total amount of memory allocated for managing selectors.
   size_t getTotalMemory() const;
 
-  /// \brief Return the setter name for the given identifier.
+  /// \brief Return the default setter name for the given identifier.
   ///
   /// This is "set" + \p Name where the initial character of \p Name
   /// has been capitalized.
-  static Selector constructSetterName(IdentifierTable &Idents,
-                                      SelectorTable &SelTable,
-                                      const IdentifierInfo *Name);
+  static SmallString<100> constructSetterName(StringRef Name);
+
+  /// \brief Return the default setter selector for the given identifier.
+  ///
+  /// This is "set" + \p Name where the initial character of \p Name
+  /// has been capitalized.
+  static Selector constructSetterSelector(IdentifierTable &Idents,
+                                          SelectorTable &SelTable,
+                                          const IdentifierInfo *Name);
 };
 
 /// DeclarationNameExtra - Common base of the MultiKeywordSelector,

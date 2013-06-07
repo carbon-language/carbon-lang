@@ -1552,8 +1552,8 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
   // If we found a getter then this may be a valid dot-reference, we
   // will look for the matching setter, in case it is needed.
   Selector SetterSel =
-    SelectorTable::constructSetterName(PP.getIdentifierTable(),
-                                       PP.getSelectorTable(), Member);
+    SelectorTable::constructSetterSelector(PP.getIdentifierTable(),
+                                           PP.getSelectorTable(), Member);
   ObjCMethodDecl *Setter = IFace->lookupInstanceMethod(SetterSel);
       
   // May be founf in property's qualified list.
@@ -1699,8 +1699,9 @@ ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
 
   // Look for the matching setter, in case it is needed.
   Selector SetterSel =
-    SelectorTable::constructSetterName(PP.getIdentifierTable(),
-                                       PP.getSelectorTable(), &propertyName);
+    SelectorTable::constructSetterSelector(PP.getIdentifierTable(),
+                                           PP.getSelectorTable(),
+                                           &propertyName);
 
   ObjCMethodDecl *Setter = IFace->lookupClassMethod(SetterSel);
   if (!Setter) {

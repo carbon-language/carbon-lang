@@ -1472,12 +1472,7 @@ static bool hasDefaultSetterName(const ObjCPropertyDecl *PD,
     return true;
 
   assert(Setter->getDeclName().isObjCOneArgSelector());
-  // Construct a setter name like SelectorTable::constructSetterName()
-  // does, but without entering it into the table.
-  SmallString<100> DefaultName("set");
-  DefaultName += PD->getName();
-  DefaultName[3] = toUppercase(DefaultName[3]);
-  return DefaultName ==
+  return SelectorTable::constructSetterName(PD->getName()) ==
     Setter->getDeclName().getObjCSelector().getNameForSlot(0);
 }
 

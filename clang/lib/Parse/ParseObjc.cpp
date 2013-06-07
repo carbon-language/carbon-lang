@@ -348,9 +348,10 @@ public:
     if (SetterName)
       SetterSel = P.PP.getSelectorTable().getSelector(1, &SetterName);
     else
-      SetterSel = SelectorTable::constructSetterName(P.PP.getIdentifierTable(),
-                                                     P.PP.getSelectorTable(),
-                                                     FD.D.getIdentifier());
+      SetterSel =
+        SelectorTable::constructSetterSelector(P.PP.getIdentifierTable(),
+                                               P.PP.getSelectorTable(),
+                                               FD.D.getIdentifier());
     bool isOverridingProperty = false;
     Decl *Property =
       P.Actions.ActOnProperty(P.getCurScope(), AtLoc, LParenLoc,

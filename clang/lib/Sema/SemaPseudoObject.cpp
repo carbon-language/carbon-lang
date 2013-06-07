@@ -575,9 +575,9 @@ bool ObjCPropertyOpBuilder::findSetter(bool warn) {
         RefExpr->getImplicitPropertyGetter()->getSelector()
           .getIdentifierInfoForSlot(0);
       SetterSelector =
-        SelectorTable::constructSetterName(S.PP.getIdentifierTable(),
-                                           S.PP.getSelectorTable(),
-                                           getterName);
+        SelectorTable::constructSetterSelector(S.PP.getIdentifierTable(),
+                                               S.PP.getSelectorTable(),
+                                               getterName);
       return false;
     }
   }

@@ -13,11 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/IdentifierTable.h"
-#include "clang/Basic/CharInfo.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/CharInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdio>
@@ -464,15 +463,20 @@ static SelectorTableImpl &getSelectorTableImpl(void *P) {
   return *static_cast<SelectorTableImpl*>(P);
 }
 
-/*static*/ Selector
-SelectorTable::constructSetterName(IdentifierTable &Idents,
-                                   SelectorTable &SelTable,
-                                   const IdentifierInfo *Name) {
-  SmallString<100> SelectorName;
-  SelectorName = "set";
-  SelectorName += Name->getName();
+/*static*/ SmallString<100>
+SelectorTable::constructSetterName(StringRef Name) {
+  SmallString<100> SelectorName("set");
+  SelectorName += Name;
   SelectorName[3] = toUppercase(SelectorName[3]);
-  IdentifierInfo *SetterName = &Idents.get(SelectorName);
+  return SelectorName;
+}
+
+/*static*/ Selector
+SelectorTable::constructSetterSelector(IdentifierTable &Idents,
+                                       SelectorTable &SelTable,
+                                       const IdentifierInfo *Name) {
+  IdentifierInfo *SetterName =
+    &Idents.get(constructSetterName(Name->getName()));
   return SelTable.getUnarySelector(SetterName);
 }
 

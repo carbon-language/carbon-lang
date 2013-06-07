@@ -1362,8 +1362,9 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
           if (DiagnoseUseOfDecl(OMD, MemberLoc))
             return ExprError();
           Selector SetterSel =
-            SelectorTable::constructSetterName(PP.getIdentifierTable(),
-                                               PP.getSelectorTable(), Member);
+            SelectorTable::constructSetterSelector(PP.getIdentifierTable(),
+                                                   PP.getSelectorTable(),
+                                                   Member);
           ObjCMethodDecl *SMD = 0;
           if (Decl *SDecl = FindGetterSetterNameDecl(OPT, /*Property id*/0, 
                                                      SetterSel, Context))
@@ -1410,8 +1411,9 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
       // If we found a getter then this may be a valid dot-reference, we
       // will look for the matching setter, in case it is needed.
       Selector SetterSel =
-        SelectorTable::constructSetterName(PP.getIdentifierTable(),
-                                           PP.getSelectorTable(), Member);
+        SelectorTable::constructSetterSelector(PP.getIdentifierTable(),
+                                               PP.getSelectorTable(),
+                                               Member);
       ObjCMethodDecl *Setter = IFace->lookupClassMethod(SetterSel);
       if (!Setter) {
         // If this reference is in an @implementation, also check for 'private'
