@@ -129,3 +129,28 @@ __attribute ((objc_requires_property_definitions)) // expected-error {{objc_requ
 @synthesize six;
 @end
 
+// rdar://14094682
+// no warning in this test
+@interface ISAChallenge : NSObject {
+}
+
+@property (assign, readonly) int failureCount;
+@end
+
+@interface ISSAChallenge : ISAChallenge {
+    int _failureCount;
+}
+@property (assign, readwrite) int failureCount;
+@end
+
+@implementation ISAChallenge
+- (int)failureCount {
+    return 0;
+}
+@end
+
+@implementation ISSAChallenge
+
+@synthesize failureCount = _failureCount;
+@end
+
