@@ -10,8 +10,12 @@
 
 #define DEBUG_TYPE "LayoutPass"
 
+#include <set>
+
 #include "lld/Passes/LayoutPass.h"
 #include "lld/Core/Instrumentation.h"
+
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
 
 using namespace lld;
@@ -395,6 +399,116 @@ void LayoutPass::buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range) {
   }
 }
 
+// Helper functions to check follow-on graph.
+#ifndef NDEBUG
+namespace {
+typedef llvm::DenseMap<const DefinedAtom *, const DefinedAtom *> AtomToAtomT;
+
+std::string atomToDebugString(const Atom *atom) {
+  const DefinedAtom *definedAtom = llvm::dyn_cast<DefinedAtom>(atom);
+  std::string str;
+  llvm::raw_string_ostream s(str);
+  if (definedAtom->name().empty())
+    s << "<anonymous " << definedAtom << ">";
+  else
+    s << definedAtom->name();
+  s << " in ";
+  if (definedAtom->customSectionName().empty())
+    s << "<anonymous>";
+  else
+    s << definedAtom->customSectionName();
+  s.flush();
+  return str;
+}
+
+void showCycleDetectedError(AtomToAtomT &followOnNexts,
+                            const DefinedAtom *atom) {
+  const DefinedAtom *start = atom;
+  llvm::dbgs() << "There's a cycle in a follow-on chain!\n";
+  do {
+    llvm::dbgs() << "  " << atomToDebugString(atom) << "\n";
+    for (const Reference *ref : *atom) {
+      llvm::dbgs() << "    " << ref->kindToString()
+                   << ": " << atomToDebugString(ref->target()) << "\n";
+    }
+    atom = followOnNexts[atom];
+  } while (atom != start);
+  llvm_unreachable("Cycle detected");
+}
+
+/// Exit if there's a cycle in a followon chain reachable from the
+/// given root atom. Uses the tortoise and hare algorithm to detect a
+/// cycle.
+void checkNoCycleInFollowonChain(AtomToAtomT &followOnNexts,
+                                 const DefinedAtom *root) {
+  const DefinedAtom *tortoise = root;
+  const DefinedAtom *hare = followOnNexts[root];
+  while (true) {
+    if (!tortoise || !hare)
+      return;
+    if (tortoise == hare)
+      showCycleDetectedError(followOnNexts, tortoise);
+    tortoise = followOnNexts[tortoise];
+    hare = followOnNexts[followOnNexts[hare]];
+  }
+}
+
+void checkReachabilityFromRoot(AtomToAtomT &followOnRoots,
+                               const DefinedAtom *atom) {
+  if (!atom) return;
+  auto i = followOnRoots.find(atom);
+  if (i == followOnRoots.end()) {
+    Twine msg(Twine("Atom <") + atomToDebugString(atom)
+              + "> has no follow-on root!");
+    llvm_unreachable(msg.str().c_str());
+  }
+  const DefinedAtom *ap = i->second;
+  while (true) {
+    const DefinedAtom *next = followOnRoots[ap];
+    if (!next) {
+      Twine msg(Twine("Atom <" + atomToDebugString(atom)
+                      + "> is not reachable from its root!"));
+      llvm_unreachable(msg.str().c_str());
+    }
+    if (next == ap)
+      return;
+    ap = next;
+  }
+}
+
+void printDefinedAtoms(const MutableFile::DefinedAtomRange &atomRange) {
+  for (const DefinedAtom *atom : atomRange) {
+    llvm::dbgs() << "  file=" << atom->file().path()
+                 << ", name=" << atom->name()
+                 << ", size=" << atom->size()
+                 << ", type=" << atom->contentType()
+                 << ", ordinal=" << atom->ordinal()
+                 << "\n";
+  }
+}
+} // end anonymous namespace
+
+/// Verify that the followon chain is sane. Should not be called in
+/// release binary.
+void LayoutPass::checkFollowonChain(MutableFile::DefinedAtomRange &range) {
+  ScopedTask task(getDefaultDomain(), "LayoutPass::checkFollowonChain");
+
+  // Verify that there's no cycle in follow-on chain.
+  std::set<const DefinedAtom *> roots;
+  for (const auto &ai : _followOnRoots)
+    roots.insert(ai.second);
+  for (const DefinedAtom *root : roots)
+    checkNoCycleInFollowonChain(_followOnNexts, root);
+
+  // Verify that all the atoms in followOnNexts have references to
+  // their roots.
+  for (const auto &ai : _followOnNexts) {
+    checkReachabilityFromRoot(_followOnRoots, ai.first);
+    checkReachabilityFromRoot(_followOnRoots, ai.second);
+  }
+}
+#endif  // #ifndef NDEBUG
+
 /// Perform the actual pass
 void LayoutPass::perform(MutableFile &mergedFile) {
   ScopedTask task(getDefaultDomain(), "LayoutPass");
@@ -409,19 +523,15 @@ void LayoutPass::perform(MutableFile &mergedFile) {
   // Build preceded by tables
   buildPrecededByTable(atomRange);
 
+  // Check the structure of followon graph if running in debug mode.
+  DEBUG(checkFollowonChain(atomRange));
+
   // Build override maps
   buildOrdinalOverrideMap(atomRange);
 
   DEBUG({
     llvm::dbgs() << "unsorted atoms:\n";
-    for (const DefinedAtom *atom : atomRange) {
-      llvm::dbgs() << "  file=" << atom->file().path()
-                   << ", name=" << atom->name()
-                   << ", size=" << atom->size()
-                   << ", type=" << atom->contentType()
-                   << ", ordinal=" << atom->ordinal()
-                   << "\n";
-    }
+    printDefinedAtoms(atomRange);
   });
 
   // sort the atoms
@@ -429,14 +539,6 @@ void LayoutPass::perform(MutableFile &mergedFile) {
 
   DEBUG({
     llvm::dbgs() << "sorted atoms:\n";
-    for (const DefinedAtom *atom : atomRange) {
-      llvm::dbgs() << "  file=" << atom->file().path()
-                   << ", name=" << atom->name()
-                   << ", size=" << atom->size()
-                   << ", type=" << atom->contentType()
-                   << ", ordinal=" << atom->ordinal()
-                   << "\n";
-    }
+    printDefinedAtoms(atomRange);
   });
-
 }

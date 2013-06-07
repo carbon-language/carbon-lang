@@ -1,0 +1,20 @@
+# RUN: lld -core --add-pass layout -mllvm -debug-only=LayoutPass %s 2>&1 \
+# RUN:   | FileCheck %s -check-prefix=CHECK
+
+---
+defined-atoms:
+  - name:            fn
+    scope:           global
+    references:
+      - kind:            layout-before
+        offset:          0
+        target:          fn
+      - kind:            in-group
+        offset:          0
+        target:          fn
+...
+
+# CHECK: There's a cycle in a follow-on chain!
+# CHECK:   fn
+# CHECK:     layout-before: fn
+# CHECK:     in-group: fn
