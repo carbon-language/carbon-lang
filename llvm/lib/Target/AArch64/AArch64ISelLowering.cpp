@@ -39,12 +39,8 @@ static TargetLoweringObjectFile *createTLOF(AArch64TargetMachine &TM) {
   llvm_unreachable("unknown subtarget type");
 }
 
-
 AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
-  : TargetLowering(TM, createTLOF(TM)),
-    Subtarget(&TM.getSubtarget<AArch64Subtarget>()),
-    RegInfo(TM.getRegisterInfo()),
-    Itins(TM.getInstrItineraryData()) {
+  : TargetLowering(TM, createTLOF(TM)), Itins(TM.getInstrItineraryData()) {
 
   // SIMD compares set the entire lane's bits to 1
   setBooleanVectorContents(ZeroOrNegativeOneBooleanContent);
@@ -1928,7 +1924,7 @@ AArch64TargetLowering::LowerGlobalAddressELFSmall(SDValue Op,
   }
 
   unsigned char HiFixup, LoFixup;
-  bool UseGOT = Subtarget->GVIsIndirectSymbol(GV, RelocM);
+  bool UseGOT = getSubtarget()->GVIsIndirectSymbol(GV, RelocM);
 
   if (UseGOT) {
     HiFixup = AArch64II::MO_GOT;
@@ -2024,7 +2020,7 @@ SDValue AArch64TargetLowering::LowerTLSDescCall(SDValue SymAddr,
 SDValue
 AArch64TargetLowering::LowerGlobalTLSAddress(SDValue Op,
                                              SelectionDAG &DAG) const {
-  assert(Subtarget->isTargetELF() &&
+  assert(getSubtarget()->isTargetELF() &&
          "TLS not implemented for non-ELF targets");
   assert(getTargetMachine().getCodeModel() == CodeModel::Small
          && "TLS only supported in small memory model");
@@ -2799,7 +2795,7 @@ AArch64TargetLowering::PerformDAGCombine(SDNode *N,
   switch (N->getOpcode()) {
   default: break;
   case ISD::AND: return PerformANDCombine(N, DCI);
-  case ISD::OR: return PerformORCombine(N, DCI, Subtarget);
+  case ISD::OR: return PerformORCombine(N, DCI, getSubtarget());
   case ISD::SRA: return PerformSRACombine(N, DCI);
   }
   return SDValue();

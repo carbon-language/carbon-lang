@@ -247,9 +247,11 @@ public:
   std::pair<unsigned, const TargetRegisterClass*>
   getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const;
 private:
-  const AArch64Subtarget *Subtarget;
-  const TargetRegisterInfo *RegInfo;
   const InstrItineraryData *Itins;
+
+  const AArch64Subtarget *getSubtarget() const {
+    return &getTargetMachine().getSubtarget<AArch64Subtarget>();
+  }
 };
 } // namespace llvm
 

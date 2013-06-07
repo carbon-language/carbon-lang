@@ -29,9 +29,8 @@
 
 using namespace llvm;
 
-AArch64RegisterInfo::AArch64RegisterInfo(const AArch64InstrInfo &tii,
-                                         const AArch64Subtarget &sti)
-  : AArch64GenRegisterInfo(AArch64::X30), TII(tii) {
+AArch64RegisterInfo::AArch64RegisterInfo()
+  : AArch64GenRegisterInfo(AArch64::X30) {
 }
 
 const uint16_t *
@@ -122,6 +121,8 @@ AArch64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MBBI,
     return;
   }
 
+  const AArch64InstrInfo &TII =
+    *static_cast<const AArch64InstrInfo*>(MF.getTarget().getInstrInfo());
   int MinOffset, MaxOffset, OffsetScale;
   if (MI.getOpcode() == AArch64::ADDxxi_lsl0_s) {
     MinOffset = 0;
