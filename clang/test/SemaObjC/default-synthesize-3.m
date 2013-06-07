@@ -111,3 +111,21 @@ __attribute ((objc_requires_property_definitions)) // expected-error {{objc_requ
 
 @implementation S
 @end
+
+// rdar://14085456
+// No warning must be issued in this test.
+@interface ParentObject
+@end
+
+@protocol TestObject 
+@property (readonly) int six;
+@end
+
+@interface TestObject : ParentObject <TestObject>
+@property int six;
+@end
+
+@implementation TestObject
+@synthesize six;
+@end
+

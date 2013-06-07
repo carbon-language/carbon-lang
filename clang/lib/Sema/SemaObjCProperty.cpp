@@ -1673,16 +1673,6 @@ void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
     if (Prop->isInvalidDecl() ||
         Prop->getPropertyImplementation() == ObjCPropertyDecl::Optional)
       continue;
-    if (ObjCPropertyImplDecl *PID =
-          IMPDecl->FindPropertyImplIvarDecl(Prop->getIdentifier())) {
-      if (PID->getPropertyDecl() != Prop) {
-        Diag(Prop->getLocation(), diag::warn_no_autosynthesis_shared_ivar_property)
-          << Prop->getIdentifier()->getName();
-        if (!PID->getLocation().isInvalid())
-          Diag(PID->getLocation(), diag::note_property_synthesize);
-      }
-      continue;
-    }
     // Property may have been synthesized by user.
     if (IMPDecl->FindPropertyImplDecl(Prop->getIdentifier()))
       continue;
@@ -1691,6 +1681,16 @@ void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
         continue;
       if (IMPDecl->getInstanceMethod(Prop->getSetterName()))
         continue;
+    }
+    if (ObjCPropertyImplDecl *PID =
+        IMPDecl->FindPropertyImplIvarDecl(Prop->getIdentifier())) {
+      if (PID->getPropertyDecl() != Prop) {
+        Diag(Prop->getLocation(), diag::warn_no_autosynthesis_shared_ivar_property)
+        << Prop->getIdentifier()->getName();
+        if (!PID->getLocation().isInvalid())
+          Diag(PID->getLocation(), diag::note_property_synthesize);
+      }
+      continue;
     }
     if (isa<ObjCProtocolDecl>(Prop->getDeclContext())) {
       // We won't auto-synthesize properties declared in protocols.
