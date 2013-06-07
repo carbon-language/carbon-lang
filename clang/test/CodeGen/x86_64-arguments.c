@@ -392,3 +392,13 @@ void test50(double d, double e) {
 // CHECK:      [[T0:%.*]] = load double*
 // CHECK-NEXT: [[T1:%.*]] = load double*
 // CHECK-NEXT: call void (double, double, ...)* bitcast (void (...)* @test50_helper to void (double, double, ...)*)(double [[T0]], double [[T1]])
+
+struct test51_s { __uint128_t intval; };
+void test51(struct test51_s *s, __builtin_va_list argList) {
+    *s = __builtin_va_arg(argList, struct test51_s);
+}
+
+// CHECK: define void @test51
+// CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* {{.*}}, i8* {{.*}}, i64 16, i32 8, i1 false)
+// CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* {{.*}}, i8* {{.*}}, i64 16, i32 16, i1 false)
+// CHECK-NEXT: ret void
