@@ -48,7 +48,6 @@ class Hexagon_CCState {
   CallingConv::ID CallingConv;
   bool IsVarArg;
   const TargetMachine &TM;
-  const TargetRegisterInfo &TRI;
   SmallVector<CCValAssign, 16> &Locs;
   LLVMContext &Context;
 

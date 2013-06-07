@@ -50,15 +50,13 @@ class HexagonDAGToDAGISel : public SelectionDAGISel {
 
   // Keep a reference to HexagonTargetMachine.
   const HexagonTargetMachine& TM;
-  const HexagonInstrInfo *TII;
   DenseMap<const GlobalValue *, unsigned> GlobalAddressUseCountMap;
 public:
   explicit HexagonDAGToDAGISel(const HexagonTargetMachine &targetmachine,
                                CodeGenOpt::Level OptLevel)
     : SelectionDAGISel(targetmachine, OptLevel),
       Subtarget(targetmachine.getSubtarget<HexagonSubtarget>()),
-      TM(targetmachine),
-      TII(static_cast<const HexagonInstrInfo*>(TM.getInstrInfo())) {
+      TM(targetmachine) {
     initializeHexagonDAGToDAGISelPass(*PassRegistry::getPassRegistry());
   }
   bool hasNumUsesBelowThresGA(SDNode *N) const;
@@ -444,6 +442,9 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoadSignExtend64(LoadSDNode *LD,
   SDValue N1 = LD->getOperand(1);
   SDValue CPTmpN1_0;
   SDValue CPTmpN1_1;
+
+  const HexagonInstrInfo *TII =
+    static_cast<const HexagonInstrInfo*>(TM.getInstrInfo());
   if (SelectADDRriS11_2(N1, CPTmpN1_0, CPTmpN1_1) &&
       N1.getNode()->getValueType(0) == MVT::i32) {
     if (TII->isValidAutoIncImm(LoadedVT, Val)) {
@@ -508,6 +509,9 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoadZeroExtend64(LoadSDNode *LD,
   SDValue N1 = LD->getOperand(1);
   SDValue CPTmpN1_0;
   SDValue CPTmpN1_1;
+
+  const HexagonInstrInfo *TII =
+    static_cast<const HexagonInstrInfo*>(TM.getInstrInfo());
   if (SelectADDRriS11_2(N1, CPTmpN1_0, CPTmpN1_1) &&
       N1.getNode()->getValueType(0) == MVT::i32) {
     if (TII->isValidAutoIncImm(LoadedVT, Val)) {
@@ -586,6 +590,8 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoad(LoadSDNode *LD, SDLoc dl) {
   bool zextval = (LD->getExtensionType() == ISD::ZEXTLOAD);
 
   // Figure out the opcode.
+  const HexagonInstrInfo *TII =
+    static_cast<const HexagonInstrInfo*>(TM.getInstrInfo());
   if (LoadedVT == MVT::i64) {
     if (TII->isValidAutoIncImm(LoadedVT, Val))
       Opcode = Hexagon::POST_LDrid;
@@ -694,6 +700,8 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedStore(StoreSDNode *ST, SDLoc dl) {
 
   // Offset value must be within representable range
   // and must have correct alignment properties.
+  const HexagonInstrInfo *TII =
+    static_cast<const HexagonInstrInfo*>(TM.getInstrInfo());
   if (TII->isValidAutoIncImm(StoredVT, Val)) {
     SDValue Ops[] = {Base, CurDAG->getTargetConstant(Val, MVT::i32), Value,
                      Chain};
@@ -1207,6 +1215,8 @@ SDNode *HexagonDAGToDAGISel::SelectIntrinsicWOChain(SDNode *N) {
 
   // We are concerned with only those intrinsics that have predicate registers
   // as at least one of the operands.
+  const HexagonInstrInfo *TII =
+    static_cast<const HexagonInstrInfo*>(TM.getInstrInfo());
   if (IntrinsicWithPred) {
     SmallVector<SDValue, 8> Ops;
     const MCInstrDesc &MCID = TII->get(IntrinsicWithPred);

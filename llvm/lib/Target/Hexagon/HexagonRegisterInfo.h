@@ -44,9 +44,8 @@ class Type;
 
 struct HexagonRegisterInfo : public HexagonGenRegisterInfo {
   HexagonSubtarget &Subtarget;
-  const HexagonInstrInfo &TII;
 
-  HexagonRegisterInfo(HexagonSubtarget &st, const HexagonInstrInfo &tii);
+  HexagonRegisterInfo(HexagonSubtarget &st);
 
   /// Code Generation virtual methods...
   const uint16_t *getCalleeSavedRegs(const MachineFunction *MF = 0) const;

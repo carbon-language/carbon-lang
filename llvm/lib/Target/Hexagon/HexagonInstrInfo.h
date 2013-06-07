@@ -27,7 +27,7 @@ namespace llvm {
 
 class HexagonInstrInfo : public HexagonGenInstrInfo {
   const HexagonRegisterInfo RI;
-  const HexagonSubtarget& Subtarget;
+  const HexagonSubtarget &Subtarget;
   typedef unsigned Opcode_t;
 
 public:

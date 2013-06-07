@@ -195,7 +195,6 @@ void VLIWMachineScheduler::schedule() {
 void ConvergingVLIWScheduler::initialize(ScheduleDAGMI *dag) {
   DAG = static_cast<VLIWMachineScheduler*>(dag);
   SchedModel = DAG->getSchedModel();
-  TRI = DAG->TRI;
 
   Top.init(DAG, SchedModel);
   Bot.init(DAG, SchedModel);
@@ -409,7 +408,7 @@ void ConvergingVLIWScheduler::traceCandidate(const char *Label,
                                              SUnit *SU, PressureElement P) {
   dbgs() << Label << " " << Q.getName() << " ";
   if (P.isValid())
-    dbgs() << TRI->getRegPressureSetName(P.PSetID) << ":" << P.UnitIncrease
+    dbgs() << DAG->TRI->getRegPressureSetName(P.PSetID) << ":" << P.UnitIncrease
            << " ";
   else
     dbgs() << "     ";
