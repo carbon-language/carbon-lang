@@ -3,7 +3,7 @@
 
 ; CHECK: cmpri
 ; CHECK: cmp %i1, 1
-; CHECK: bpe %xcc,
+; CHECK: be %xcc,
 define void @cmpri(i64* %p, i64 %x) {
 entry:
   %tobool = icmp eq i64 %x, 1
@@ -19,7 +19,7 @@ if.end:
 
 ; CHECK: cmprr
 ; CHECK: cmp %i1, %i2
-; CHECK: bpgu %xcc,
+; CHECK: bgu %xcc,
 define void @cmprr(i64* %p, i64 %x, i64 %y) {
 entry:
   %tobool = icmp ugt i64 %x, %y

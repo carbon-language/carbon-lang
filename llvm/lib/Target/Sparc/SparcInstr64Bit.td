@@ -308,7 +308,7 @@ let Predicates = [Is64Bit] in {
 
 let Uses = [ICC] in
 def BPXCC : BranchSP<0, (ins brtarget:$dst, CCOp:$cc),
-                     "bp$cc %xcc, $dst",
+                     "b$cc %xcc, $dst",
                      [(SPbrxcc bb:$dst, imm:$cc)]>;
 
 // Conditional moves on %xcc.
