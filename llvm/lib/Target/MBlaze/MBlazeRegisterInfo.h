@@ -37,10 +37,8 @@ namespace MBlaze {
 
 struct MBlazeRegisterInfo : public MBlazeGenRegisterInfo {
   const MBlazeSubtarget &Subtarget;
-  const TargetInstrInfo &TII;
 
-  MBlazeRegisterInfo(const MBlazeSubtarget &Subtarget,
-                     const TargetInstrInfo &tii);
+  MBlazeRegisterInfo(const MBlazeSubtarget &Subtarget);
 
   /// Get PIC indirect call register
   static unsigned getPICCallReg();

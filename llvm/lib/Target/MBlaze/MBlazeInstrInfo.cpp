@@ -29,7 +29,7 @@ using namespace llvm;
 
 MBlazeInstrInfo::MBlazeInstrInfo(MBlazeTargetMachine &tm)
   : MBlazeGenInstrInfo(MBlaze::ADJCALLSTACKDOWN, MBlaze::ADJCALLSTACKUP),
-    TM(tm), RI(*TM.getSubtargetImpl(), *this) {}
+    TM(tm), RI(*TM.getSubtargetImpl()) {}
 
 static bool isZeroImm(const MachineOperand &op) {
   return op.isImm() && op.getImm() == 0;

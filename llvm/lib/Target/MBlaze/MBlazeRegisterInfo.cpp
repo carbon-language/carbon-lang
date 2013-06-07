@@ -42,8 +42,8 @@
 using namespace llvm;
 
 MBlazeRegisterInfo::
-MBlazeRegisterInfo(const MBlazeSubtarget &ST, const TargetInstrInfo &tii)
-  : MBlazeGenRegisterInfo(MBlaze::R15), Subtarget(ST), TII(tii) {}
+MBlazeRegisterInfo(const MBlazeSubtarget &ST)
+  : MBlazeGenRegisterInfo(MBlaze::R15), Subtarget(ST) {}
 
 unsigned MBlazeRegisterInfo::getPICCallReg() {
   return MBlaze::R20;

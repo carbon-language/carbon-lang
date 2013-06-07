@@ -37,13 +37,11 @@ static cl::opt<bool> MBDisableDelaySlotFiller(
 
 namespace {
   struct Filler : public MachineFunctionPass {
-
     TargetMachine &TM;
-    const TargetInstrInfo *TII;
 
     static char ID;
     Filler(TargetMachine &tm)
-      : MachineFunctionPass(ID), TM(tm), TII(tm.getInstrInfo()) { }
+      : MachineFunctionPass(ID), TM(tm) { }
 
     virtual const char *getPassName() const {
       return "MBlaze Delay Slot Filler";
@@ -239,7 +237,7 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
       Changed = true;
 
       if (D == MBB.end())
-        BuildMI(MBB, ++J, I->getDebugLoc(), TII->get(MBlaze::NOP));
+        BuildMI(MBB, ++J, I->getDebugLoc(),TM.getInstrInfo()->get(MBlaze::NOP));
       else
         MBB.splice(++J, &MBB, D);
     }
