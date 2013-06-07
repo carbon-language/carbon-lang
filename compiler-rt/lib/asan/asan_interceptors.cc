@@ -657,10 +657,15 @@ INTERCEPTOR(int, __cxa_atexit, void (*func)(void *), void *arg,
 }
 #endif  // ASAN_INTERCEPT___CXA_ATEXIT
 
+#if !SANITIZER_MAC
 #define ASAN_INTERCEPT_FUNC(name) do { \
       if (!INTERCEPT_FUNCTION(name) && flags()->verbosity > 0) \
         Report("AddressSanitizer: failed to intercept '" #name "'\n"); \
     } while (0)
+#else
+// OS X interceptors don't need to be initialized with INTERCEPT_FUNCTION.
+#define ASAN_INTERCEPT_FUNC(name)
+#endif  // SANITIZER_MAC
 
 #if SANITIZER_WINDOWS
 INTERCEPTOR_WINAPI(DWORD, CreateThread,
@@ -693,9 +698,6 @@ void InitializeAsanInterceptors() {
   static bool was_called_once;
   CHECK(was_called_once == false);
   was_called_once = true;
-#if SANITIZER_MAC
-  return;
-#else
   SANITIZER_COMMON_INTERCEPTORS_INIT;
 
   // Intercept mem* functions.
@@ -780,7 +782,6 @@ void InitializeAsanInterceptors() {
   if (flags()->verbosity > 0) {
     Report("AddressSanitizer: libc interceptors initialized\n");
   }
-#endif  // SANITIZER_MAC
 }
 
 }  // namespace __asan
