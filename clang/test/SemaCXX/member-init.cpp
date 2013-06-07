@@ -89,3 +89,14 @@ namespace PR14838 {
     const function &r; // expected-note {{reference member declared here}}
   } af;
 }
+
+namespace rdar14084171 {
+  struct Point { // expected-note 3 {{candidate constructor}}
+    double x;
+    double y;
+  };
+  struct Sprite {
+    Point location = Point(0,0); // expected-error {{no matching constructor for initialization of 'rdar14084171::Point'}}
+  };
+  void f(Sprite& x) { x = x; }
+}

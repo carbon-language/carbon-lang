@@ -8931,7 +8931,12 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
        Field != FieldEnd; ++Field) {
     if (Field->isUnnamedBitfield())
       continue;
-    
+
+    if (Field->isInvalidDecl()) {
+      Invalid = true;
+      continue;
+    }
+
     // Check for members of reference type; we can't copy those.
     if (Field->getType()->isReferenceType()) {
       Diag(ClassDecl->getLocation(), diag::err_uninitialized_member_for_assign)
@@ -9385,6 +9390,11 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
        Field != FieldEnd; ++Field) {
     if (Field->isUnnamedBitfield())
       continue;
+
+    if (Field->isInvalidDecl()) {
+      Invalid = true;
+      continue;
+    }
 
     // Check for members of reference type; we can't move those.
     if (Field->getType()->isReferenceType()) {
