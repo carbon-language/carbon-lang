@@ -64,7 +64,8 @@ ModuleInfo::ModuleInfo(ObjectFile *Obj, DIContext *DICtx)
         SymbolAddress == UnknownAddressOrSize)
       continue;
     uint64_t SymbolSize;
-    // Getting symbol size is linear for Mach-O files, so avoid it.
+    // Getting symbol size is linear for Mach-O files, so assume that symbol
+    // occupies the memory range up to the following symbol.
     if (isa<MachOObjectFile>(Obj))
       SymbolSize = 0;
     else if (error(si->getSize(SymbolSize)) ||
@@ -76,7 +77,7 @@ ModuleInfo::ModuleInfo(ObjectFile *Obj, DIContext *DICtx)
     // FIXME: If a function has alias, there are two entries in symbol table
     // with same address size. Make sure we choose the correct one.
     SymbolMapTy &M = SymbolType == SymbolRef::ST_Function ? Functions : Objects;
-    SymbolDesc SD = { SymbolAddress, SymbolAddress + SymbolSize };
+    SymbolDesc SD = { SymbolAddress, SymbolSize };
     M.insert(std::make_pair(SD, SymbolName));
   }
 }
@@ -89,14 +90,14 @@ bool ModuleInfo::getNameFromSymbolTable(SymbolRef::Type Type, uint64_t Address,
     return false;
   SymbolDesc SD = { Address, Address };
   SymbolMapTy::const_iterator it = M.upper_bound(SD);
+  if (it == M.begin())
+    return false;
   --it;
-  // Assume that symbols with zero size are large enough.
-  if (it->first.Addr < it->first.AddrEnd &&
-      it->first.AddrEnd <= Address)
+  if (it->first.Size != 0 && it->first.Addr + it->first.Size <= Address)
     return false;
   Name = it->second.str();
   Addr = it->first.Addr;
-  Size = it->first.AddrEnd - it->first.Addr;
+  Size = it->first.Size;
   return true;
 }
 
