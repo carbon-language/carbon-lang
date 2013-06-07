@@ -26,20 +26,6 @@ class StdListDataFormatterTestCase(TestBase):
         self.buildDwarf()
         self.data_formatter_commands()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    @dsym_test
-    def test_with_dsym_and_run_command(self):
-        """Test data formatter commands."""
-        self.buildDsym()
-        self.data_formatter_commands_after_steps()
-
-    @dwarf_test
-    @expectedFailureLinux # llvm.org/pr15301 Multiple LLDB steps do not all complete synchronously. 
-    def test_with_dwarf_and_run_command_after_steps(self):
-        """Test data formatter commands with multiple steps."""
-        self.buildDwarf()
-        self.data_formatter_commands_after_steps()
-
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -74,36 +60,35 @@ class StdListDataFormatterTestCase(TestBase):
         self.addTearDownHook(cleanup)
 
         self.runCmd("frame variable numbers_list --show-types")
-        #self.runCmd("type synth add std::int_list std::string_list int_list string_list -l StdListSynthProvider")
-        self.runCmd("type summary add std::int_list std::string_list int_list string_list --summary-string \"list has ${svar%#} items\" -e")
+
         self.runCmd("type format add -f hex int")
 
         self.expect("frame variable numbers_list --raw", matching=False,
-                    substrs = ['list has 0 items',
+                    substrs = ['size=0',
                                '{}'])
         self.expect("frame variable &numbers_list._M_impl._M_node --raw", matching=False,
-                    substrs = ['list has 0 items',
+                    substrs = ['size=0',
                                '{}'])
 
         self.expect("frame variable numbers_list",
-                    substrs = ['list has 0 items',
+                    substrs = ['size=0',
                                '{}'])
 
         self.expect("p numbers_list",
-                    substrs = ['list has 0 items',
+                    substrs = ['size=0',
                                '{}'])
 
         self.runCmd("n")
 
         self.expect("frame variable numbers_list",
-                    substrs = ['list has 1 items',
+                    substrs = ['size=1',
                                '[0] = ',
                                '0x12345678'])
 
         self.runCmd("n");self.runCmd("n");self.runCmd("n");
 
         self.expect("frame variable numbers_list",
-                    substrs = ['list has 4 items',
+                    substrs = ['size=4',
                                '[0] = ',
                                '0x12345678',
                                '[1] =',
@@ -116,7 +101,7 @@ class StdListDataFormatterTestCase(TestBase):
         self.runCmd("n");self.runCmd("n");
 
         self.expect("frame variable numbers_list",
-                    substrs = ['list has 6 items',
+                    substrs = ['size=6',
                                '[0] = ',
                                '0x12345678',
                                '0x11223344',
@@ -128,7 +113,7 @@ class StdListDataFormatterTestCase(TestBase):
                                '0x0cab0cab'])
 
         self.expect("p numbers_list",
-                    substrs = ['list has 6 items',
+                    substrs = ['size=6',
                                '[0] = ',
                                '0x12345678',
                                '0x11223344',
@@ -155,13 +140,13 @@ class StdListDataFormatterTestCase(TestBase):
         self.runCmd("n")
             
         self.expect("frame variable numbers_list",
-                    substrs = ['list has 0 items',
+                    substrs = ['size=0',
                                '{}'])
 
         self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");
             
         self.expect("frame variable numbers_list",
-                    substrs = ['list has 4 items',
+                    substrs = ['size=4',
                                '[0] = ', '1',
                                '[1] = ', '2',
                                '[2] = ', '3',
@@ -172,7 +157,7 @@ class StdListDataFormatterTestCase(TestBase):
         self.runCmd("n")
             
         self.expect("frame variable text_list",
-            substrs = ['list has 0 items',
+            substrs = ['size=0',
                        '{}'])
         
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.final_line, num_expected_locations=-1)
@@ -185,14 +170,14 @@ class StdListDataFormatterTestCase(TestBase):
                        'stop reason = breakpoint'])
 
         self.expect("frame variable text_list",
-                    substrs = ['list has 4 items',
+                    substrs = ['size=4',
                                '[0]', 'goofy',
                                '[1]', 'is',
                                '[2]', 'smart',
                                '[3]', '!!!'])
 
         self.expect("p text_list",
-                    substrs = ['list has 4 items',
+                    substrs = ['size=4',
                                '\"goofy\"',
                                '\"is\"',
                                '\"smart\"',
@@ -210,46 +195,6 @@ class StdListDataFormatterTestCase(TestBase):
 
         # check that MightHaveChildren() gets it right
         self.assertTrue(self.frame().FindVariable("text_list").MightHaveChildren(), "text_list.MightHaveChildren() says False for non empty!")
-
-    def data_formatter_commands_after_steps(self):
-        """Test that that file and class static variables display correctly after multiple step instructions."""
-        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
-
-        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.optional_line, num_expected_locations=-1)
-
-        self.runCmd("run", RUN_SUCCEEDED)
-
-        # The stop reason of the thread should be breakpoint.
-        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ['stopped',
-                       'stop reason = breakpoint'])
-
-        self.expect("frame variable text_list",
-            substrs = ['{}'])
-       
-        # Verify that steps in rapid succession are processed prior to inspecting text_list.
-        self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");
-
-        self.expect("frame variable text_list",
-                    substrs = ['list has 4 items',
-                               '[0]', 'goofy',
-                               '[1]', 'is',
-                               '[2]', 'smart',
-                               '[3]', '!!!'])
-
-        self.expect("p text_list",
-                    substrs = ['list has 4 items',
-                               '\"goofy\"',
-                               '\"is\"',
-                               '\"smart\"',
-                               '\"!!!\"'])
-        
-        # check access-by-index
-        self.expect("frame variable text_list[0]",
-                    substrs = ['goofy']);
-        self.expect("frame variable text_list[3]",
-                    substrs = ['!!!']);
-        
 
 if __name__ == '__main__':
     import atexit
