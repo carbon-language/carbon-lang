@@ -4470,11 +4470,13 @@ static DecodeStatus DecodeVCVTD(MCInst &Inst, unsigned Insn,
   Vm |= (fieldFromInstruction(Insn, 5, 1) << 4);
   unsigned imm = fieldFromInstruction(Insn, 16, 6);
   unsigned cmode = fieldFromInstruction(Insn, 8, 4);
+  unsigned op = fieldFromInstruction(Insn, 5, 1);
 
   DecodeStatus S = MCDisassembler::Success;
 
   // VMOVv2f32 is ambiguous with these decodings.
   if (!(imm & 0x38) && cmode == 0xF) {
+    if (op == 1) return MCDisassembler::Fail;
     Inst.setOpcode(ARM::VMOVv2f32);
     return DecodeNEONModImmInstruction(Inst, Insn, Address, Decoder);
   }
@@ -4498,11 +4500,13 @@ static DecodeStatus DecodeVCVTQ(MCInst &Inst, unsigned Insn,
   Vm |= (fieldFromInstruction(Insn, 5, 1) << 4);
   unsigned imm = fieldFromInstruction(Insn, 16, 6);
   unsigned cmode = fieldFromInstruction(Insn, 8, 4);
+  unsigned op = fieldFromInstruction(Insn, 5, 1);
 
   DecodeStatus S = MCDisassembler::Success;
 
   // VMOVv4f32 is ambiguous with these decodings.
   if (!(imm & 0x38) && cmode == 0xF) {
+    if (op == 1) return MCDisassembler::Fail;
     Inst.setOpcode(ARM::VMOVv4f32);
     return DecodeNEONModImmInstruction(Inst, Insn, Address, Decoder);
   }
