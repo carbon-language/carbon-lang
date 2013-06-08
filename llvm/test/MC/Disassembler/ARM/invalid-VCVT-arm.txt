@@ -1,0 +1,8 @@
+# A8.8.307: VCVT (between floating-point and fixed-point, AdvSIMD)
+# imm6=0b0xxxxx -> UNDEFINED
+
+# RUN: echo "0x1e 0xcf 0x92 0xf3" | llvm-mc -disassemble -triple armv7 2>&1 | FileCheck %s
+
+# RUN: echo "0x3e 0xcf 0x92 0xf3" | llvm-mc -disassemble -triple armv7 2>&1 | FileCheck %s
+
+# CHECK: invalid instruction encoding

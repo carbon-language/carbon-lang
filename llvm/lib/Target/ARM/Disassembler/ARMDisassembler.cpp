@@ -4441,7 +4441,7 @@ static DecodeStatus DecodeVCVTD(MCInst &Inst, unsigned Insn,
     return DecodeNEONModImmInstruction(Inst, Insn, Address, Decoder);
   }
 
-  if (!(imm & 0x20)) Check(S, MCDisassembler::SoftFail);
+  if (!(imm & 0x20)) return MCDisassembler::Fail;
 
   if (!Check(S, DecodeDPRRegisterClass(Inst, Vd, Address, Decoder)))
     return MCDisassembler::Fail;
@@ -4469,7 +4469,7 @@ static DecodeStatus DecodeVCVTQ(MCInst &Inst, unsigned Insn,
     return DecodeNEONModImmInstruction(Inst, Insn, Address, Decoder);
   }
 
-  if (!(imm & 0x20)) Check(S, MCDisassembler::SoftFail);
+  if (!(imm & 0x20)) return MCDisassembler::Fail;
 
   if (!Check(S, DecodeQPRRegisterClass(Inst, Vd, Address, Decoder)))
     return MCDisassembler::Fail;
