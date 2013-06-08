@@ -226,7 +226,8 @@ void emptyInit() {struct {} x[] = {6};} //expected-warning{{empty struct is a GN
 // expected-error{{initializer for aggregate with no elements}}
 
 void noNamedInit() {
-  struct {int:5;} x[] = {6}; //expected-error{{initializer for aggregate with no elements}}
+  struct {int:5;} x[] = {6}; //expected-error{{initializer for aggregate with no elements}} \
+// expected-warning {{struct without named members is a GNU extension}}
 }
 struct {int a; int:5;} noNamedImplicit[] = {1,2,3};
 int noNamedImplicitCheck[sizeof(noNamedImplicit) == 3 * sizeof(*noNamedImplicit) ? 1 : -1];

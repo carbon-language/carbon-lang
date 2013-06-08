@@ -5464,6 +5464,15 @@ def err_expected_ident_or_lparen : Error<"expected identifier or '('">;
 
 def err_typecheck_cond_incompatible_operands_null : Error<
   "non-pointer operand type %0 incompatible with %select{NULL|nullptr}1">;
+def ext_empty_struct_union : Extension<
+  "empty %select{struct|union}0 is a GNU extension">, InGroup<GNU>;
+def ext_no_named_members_in_struct_union : Extension<
+  "%select{struct|union}0 without named members is a GNU extension">, InGroup<GNU>;
+def warn_empty_struct_union_compat : Warning<"empty %select{struct|union}0 "
+  "has size 0 in C, size 1 in C++">, InGroup<CXXCompat>, DefaultIgnore;
+def warn_zero_size_struct_union_compat : Warning<"%select{struct|union}0 "
+  "with only bit-fields of width 0 has size 0 in C, size 1 in C++">,
+  InGroup<CXXCompat>, DefaultIgnore;
 } // End of general sema category.
 
 // inline asm.
