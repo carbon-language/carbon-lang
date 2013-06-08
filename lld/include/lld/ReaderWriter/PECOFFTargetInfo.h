@@ -25,6 +25,8 @@ public:
   PECOFFTargetInfo()
       : _stackReserve(1024 * 1024),
         _stackCommit(4096),
+        _heapReserve(1024 * 1024),
+        _heapCommit(4096),
         _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN),
         _minOSVersion(6, 0) {}
 
@@ -44,10 +46,14 @@ public:
   virtual void addPasses(PassManager &pm) const {}
 
   void setStackReserve(uint64_t size) { _stackReserve = size; }
-  uint64_t getStackReserve() const { return _stackReserve; }
-
   void setStackCommit(uint64_t size) { _stackCommit = size; }
+  uint64_t getStackReserve() const { return _stackReserve; }
   uint64_t getStackCommit() const { return _stackCommit; }
+
+  void setHeapReserve(uint64_t size) { _heapReserve = size; }
+  void setHeapCommit(uint64_t size) { _heapCommit = size; }
+  uint64_t getHeapReserve() const { return _heapReserve; }
+  uint64_t getHeapCommit() const { return _heapCommit; }
 
   void setSubsystem(llvm::COFF::WindowsSubsystem ss) { _subsystem = ss; }
   llvm::COFF::WindowsSubsystem getSubsystem() const { return _subsystem; }
@@ -68,6 +74,8 @@ public:
 private:
   uint64_t _stackReserve;
   uint64_t _stackCommit;
+  uint64_t _heapReserve;
+  uint64_t _heapCommit;
   llvm::COFF::WindowsSubsystem _subsystem;
   OSVersion _minOSVersion;
 

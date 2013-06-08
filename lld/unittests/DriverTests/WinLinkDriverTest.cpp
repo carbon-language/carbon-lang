@@ -96,4 +96,16 @@ TEST_F(WinLinkParserTest, StackReserveAndCommit) {
   EXPECT_EQ(16384, info->getStackReserve());
   EXPECT_EQ(8192, info->getStackCommit());
 }
+
+TEST_F(WinLinkParserTest, HeapReserve) {
+  parse("link.exe", "-heap", "8192", nullptr);
+  EXPECT_EQ(8192, info->getHeapReserve());
+  EXPECT_EQ(4096, info->getHeapCommit());
+}
+
+TEST_F(WinLinkParserTest, HeapReserveAndCommit) {
+  parse("link.exe", "-heap", "16384,8192", nullptr);
+  EXPECT_EQ(16384, info->getHeapReserve());
+  EXPECT_EQ(8192, info->getHeapCommit());
+}
 }  // end anonymous namespace

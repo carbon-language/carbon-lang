@@ -157,8 +157,8 @@ public:
 
     _peHeader.SizeOfStackReserve = targetInfo.getStackReserve();
     _peHeader.SizeOfStackCommit = targetInfo.getStackCommit();
-    _peHeader.SizeOfHeapReserve = 0x100000;
-    _peHeader.SizeOfHeapCommit = 0x1000;
+    _peHeader.SizeOfHeapReserve = targetInfo.getHeapReserve();
+    _peHeader.SizeOfHeapCommit = targetInfo.getHeapCommit();
 
     // The number of data directory entries. We always have 16 entries.
     _peHeader.NumberOfRvaAndSize = 16;

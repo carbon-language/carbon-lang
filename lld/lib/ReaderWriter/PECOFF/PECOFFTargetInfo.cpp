@@ -30,6 +30,13 @@ bool PECOFFTargetInfo::validate(raw_ostream &diagnostics) {
     return true;
   }
 
+  if (_heapReserve < _heapCommit) {
+    diagnostics << "Invalid heap size: reserve size must be equal to or "
+                << "greater than commit size, but got "
+                << _heapCommit << " and " << _heapReserve << ".\n";
+    return true;
+  }
+
   _reader = createReaderPECOFF(*this);
   _writer = createWriterPECOFF(*this);
   return false;

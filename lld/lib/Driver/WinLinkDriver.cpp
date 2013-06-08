@@ -78,20 +78,44 @@ bool checkNumber(StringRef version, const char *errorMessage,
   return true;
 }
 
-// Parse -stack command line option. The form of the option is
-// "-stack:stackReserveSize[,stackCommitSize]".
+// Parse an argument for -stack or -heap. The expected string is
+// "reserveSize[,stackCommitSize]".
+bool parseMemoryOption(const StringRef &arg, raw_ostream &diagnostics,
+                       uint64_t &reserve, uint64_t &commit) {
+  StringRef reserveStr, commitStr;
+  llvm::tie(reserveStr, commitStr) = arg.split(',');
+  if (!checkNumber(reserveStr, "invalid stack size: ", diagnostics))
+    return false;
+  reserve = atoi(reserveStr.str().c_str());
+  if (!commitStr.empty()) {
+    if (!checkNumber(commitStr, "invalid stack size: ", diagnostics))
+      return false;
+    commit = atoi(commitStr.str().c_str());
+  }
+  return true;
+}
+
+// Parse -stack command line option
 bool parseStackOption(PECOFFTargetInfo &info, const StringRef &arg,
                       raw_ostream &diagnostics) {
-  StringRef reserve, commit;
-  llvm::tie(reserve, commit) = arg.split(',');
-  if (!checkNumber(reserve, "invalid stack size: ", diagnostics))
+  uint64_t reserve;
+  uint64_t commit = info.getStackCommit();
+  if (!parseMemoryOption(arg, diagnostics, reserve, commit))
     return false;
-  info.setStackReserve(atoi(reserve.str().c_str()));
-  if (!commit.empty()) {
-    if (!checkNumber(commit, "invalid stack size: ", diagnostics))
-      return false;
-    info.setStackCommit(atoi(commit.str().c_str()));
-  }
+  info.setStackReserve(reserve);
+  info.setStackCommit(commit);
+  return true;
+}
+
+// Parse -heap command line option.
+bool parseHeapOption(PECOFFTargetInfo &info, const StringRef &arg,
+                     raw_ostream &diagnostics) {
+  uint64_t reserve;
+  uint64_t commit = info.getHeapCommit();
+  if (!parseMemoryOption(arg, diagnostics, reserve, commit))
+    return false;
+  info.setHeapReserve(reserve);
+  info.setHeapCommit(commit);
   return true;
 }
 
@@ -214,6 +238,11 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   // Handle -stack
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_stack))
     if (!parseStackOption(info, arg->getValue(), diagnostics))
+      return true;
+
+  // Handle -heap
+  if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_heap))
+    if (!parseHeapOption(info, arg->getValue(), diagnostics))
       return true;
 
   // Handle -subsystem

@@ -13,6 +13,10 @@ def stack : Separate<["-", "/"], "stack">,
     HelpText<"Size of the stack">;
 def stack_c: Joined<["-", "/"], "stack:">, Alias<stack>;
 
+def heap : Separate<["-", "/"], "heap">,
+    HelpText<"Size of the heap">;
+def heap_c: Joined<["-", "/"], "heap:">, Alias<heap>;
+
 def subsystem : Separate<["-", "/"], "subsystem">,
     HelpText<"Specify subsystem">;
 def subsystem_c: Joined<["-", "/"], "subsystem:">, Alias<subsystem>;
