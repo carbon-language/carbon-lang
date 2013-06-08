@@ -626,10 +626,14 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
       return false;
 
     Type *StructTy = cast<PointerType>(A->getType())->getElementType();
-    // If StructTy is an opaque type, it should have at least <cpyLen> bytes,
-    // as implified by the copy-instruction.
-    uint64_t destSize = StructTy->isSized() ?
-                        TD->getTypeAllocSize(StructTy) : cpyLen;
+    if (!StructTy->isSized()) {
+      // The call may never return and hence the copy-instruction may never
+      // be executed, and therefore it's not safe to say "the destination
+      // has at least <cpyLen> bytes, as implied by the copy-instruction",
+      return false;
+    }
+
+    uint64_t destSize = TD->getTypeAllocSize(StructTy);
     if (destSize < srcSize)
       return false;
   } else {
