@@ -1562,7 +1562,7 @@ static void addEdgeToPath(PathPieces &path,
     return;
 
   SourceLocation NewLocL = NewLoc.asLocation();
-  if (NewLocL.isInvalid() || NewLocL.isMacroID())
+  if (NewLocL.isInvalid())
     return;
 
   if (!PrevLoc.isValid() || !PrevLoc.asLocation().isValid()) {
