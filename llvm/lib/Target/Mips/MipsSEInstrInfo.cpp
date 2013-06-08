@@ -254,19 +254,19 @@ bool MipsSEInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
     expandRetRA(MBB, MI, Mips::RET);
     break;
   case Mips::PseudoCVT_S_W:
-    expandCvtFPInt(MBB, MI, Mips::CVT_S_W, Mips::MTC1, false, false, false);
+    expandCvtFPInt(MBB, MI, Mips::CVT_S_W, Mips::MTC1, false);
     break;
   case Mips::PseudoCVT_D32_W:
-    expandCvtFPInt(MBB, MI, Mips::CVT_D32_W, Mips::MTC1, true, false, false);
+    expandCvtFPInt(MBB, MI, Mips::CVT_D32_W, Mips::MTC1, false);
     break;
   case Mips::PseudoCVT_S_L:
-    expandCvtFPInt(MBB, MI, Mips::CVT_S_L, Mips::DMTC1, false, true, true);
+    expandCvtFPInt(MBB, MI, Mips::CVT_S_L, Mips::DMTC1, true);
     break;
   case Mips::PseudoCVT_D64_W:
-    expandCvtFPInt(MBB, MI, Mips::CVT_D64_W, Mips::MTC1, true, false, true);
+    expandCvtFPInt(MBB, MI, Mips::CVT_D64_W, Mips::MTC1, true);
     break;
   case Mips::PseudoCVT_D64_L:
-    expandCvtFPInt(MBB, MI, Mips::CVT_D64_L, Mips::DMTC1, false, false, true);
+    expandCvtFPInt(MBB, MI, Mips::CVT_D64_L, Mips::DMTC1, true);
     break;
   case Mips::BuildPairF64:
     expandBuildPairF64(MBB, MI);
@@ -389,10 +389,19 @@ void MipsSEInstrInfo::expandRetRA(MachineBasicBlock &MBB,
   BuildMI(MBB, I, I->getDebugLoc(), get(Opc)).addReg(Mips::RA);
 }
 
+std::pair<bool, bool> MipsSEInstrInfo::compareOpndSize(unsigned Opc) const {
+  const MCInstrDesc &Desc = get(Opc);
+  assert(Desc.NumOperands == 2 && "Unary instruction expected.");
+  const MipsRegisterInfo &RI = getRegisterInfo();
+  unsigned DstRegSize = RI.getRegClass(Desc.OpInfo[0].RegClass)->getSize();
+  unsigned SrcRegSize = RI.getRegClass(Desc.OpInfo[1].RegClass)->getSize();
+
+  return std::make_pair(DstRegSize > SrcRegSize, DstRegSize < SrcRegSize);
+}
+
 void MipsSEInstrInfo::expandCvtFPInt(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I,
                                      unsigned CvtOpc, unsigned MovOpc,
-                                     bool DstIsLarger, bool SrcIsLarger,
                                      bool IsI64) const {
   const MCInstrDesc &CvtDesc = get(CvtOpc), &MovDesc = get(MovOpc);
   const MachineOperand &Dst = I->getOperand(0), &Src = I->getOperand(1);
@@ -400,6 +409,9 @@ void MipsSEInstrInfo::expandCvtFPInt(MachineBasicBlock &MBB,
   unsigned KillSrc =  getKillRegState(Src.isKill());
   DebugLoc DL = I->getDebugLoc();
   unsigned SubIdx = (IsI64 ? Mips::sub_32 : Mips::sub_fpeven);
+  bool DstIsLarger, SrcIsLarger;
+
+  tie(DstIsLarger, SrcIsLarger) = compareOpndSize(CvtOpc);
 
   if (DstIsLarger)
     TmpReg = getRegisterInfo().getSubReg(DstReg, SubIdx);

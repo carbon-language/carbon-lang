@@ -84,6 +84,8 @@ private:
   void expandRetRA(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                    unsigned Opc) const;
 
+  std::pair<bool, bool> compareOpndSize(unsigned Opc) const;
+
   /// Expand pseudo Int-to-FP conversion instructions.
   ///
   /// For example, the following pseudo instruction
@@ -95,8 +97,7 @@ private:
   /// We do this expansion post-RA to avoid inserting a floating point copy
   /// instruction between MTC1 and CVT_D32_W.
   void expandCvtFPInt(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-                      unsigned CvtOpc, unsigned MovOpc, bool DstIsLarger,
-                      bool SrcIsLarger, bool IsI64) const;
+                      unsigned CvtOpc, unsigned MovOpc, bool IsI64) const;
 
   void expandExtractElementF64(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator I) const;
