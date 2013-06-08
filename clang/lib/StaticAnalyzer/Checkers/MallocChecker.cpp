@@ -282,14 +282,14 @@ private:
   /// Check if the function is known free memory, or if it is
   /// "interesting" and should be modeled explicitly.
   ///
-  /// \param EscapingSymbol A function might not free memory in general, but
-  ///   could be known to free a particular symbol. In this case, false is
+  /// \param [out] EscapingSymbol A function might not free memory in general, 
+  ///   but could be known to free a particular symbol. In this case, false is
   ///   returned and the single escaping symbol is returned through the out
   ///   parameter.
   ///
   /// We assume that pointers do not escape through calls to system functions
   /// not handled by this checker.
-  bool mayFreeAnyEscapedMemoryOrIsModelledExplicitely(const CallEvent *Call,
+  bool mayFreeAnyEscapedMemoryOrIsModeledExplicitly(const CallEvent *Call,
                                    ProgramStateRef State,
                                    SymbolRef &EscapingSymbol) const;
 
@@ -1848,12 +1848,13 @@ ProgramStateRef MallocChecker::evalAssume(ProgramStateRef state,
   return state;
 }
 
-bool MallocChecker::mayFreeAnyEscapedMemoryOrIsModelledExplicitely(
+bool MallocChecker::mayFreeAnyEscapedMemoryOrIsModeledExplicitly(
                                               const CallEvent *Call,
                                               ProgramStateRef State,
                                               SymbolRef &EscapingSymbol) const {
   assert(Call);
-
+  EscapingSymbol = 0;
+  
   // For now, assume that any C++ call can free memory.
   // TODO: If we want to be more optimistic here, we'll need to make sure that
   // regions escape to C++ containers. They seem to do that even now, but for
@@ -2030,8 +2031,8 @@ ProgramStateRef MallocChecker::checkPointerEscapeAux(ProgramStateRef State,
   // call later, keep tracking the top level arguments.
   SymbolRef EscapingSymbol = 0;
   if (Kind == PSK_DirectEscapeOnCall &&
-      !mayFreeAnyEscapedMemoryOrIsModelledExplicitely(Call, State,
-                                                      EscapingSymbol) &&
+      !mayFreeAnyEscapedMemoryOrIsModeledExplicitly(Call, State,
+                                                    EscapingSymbol) &&
       !EscapingSymbol) {
     return State;
   }
