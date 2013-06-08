@@ -71,27 +71,6 @@ template <class T> struct Outer {
 };
 
 template void
-    Outer<int>::outer_mem(int, char); //expected-note{{in instantiation of}}
+Outer<int>::outer_mem(int, char); //expected-note{{in instantiation of}}
 
-}
-
-namespace more_nested_local_templates {
-
-int test() {
-  struct Local {
-    template <class U> void foo(U u) {
-      struct Inner {
-        template <class A> auto operator()(A a, U u2)->U { return u2; }
-        ;
-      };
-      Inner GL;
-      GL('a', u);
-      GL(3.14, u);
-    }
-  };
-  Local l;
-  l.foo("nmabc");
-  return 0;
-}
-int t = test();
 }
