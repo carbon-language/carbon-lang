@@ -117,7 +117,7 @@ public:
   llvm::MDNode *getTBAAStructTagInfo(QualType BaseQType,
                                      llvm::MDNode *AccessNode, uint64_t Offset);
 
-  /// Get the sclar tag MDNode for a given scalar type.
+  /// Get the scalar tag MDNode for a given scalar type.
   llvm::MDNode *getTBAAScalarTagInfo(llvm::MDNode *AccessNode);
 };
 
