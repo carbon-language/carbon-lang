@@ -359,6 +359,8 @@ static DecodeStatus DecodeThumbAddSPReg(MCInst &Inst, uint16_t Insn,
                                 uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeThumbCPS(MCInst &Inst, uint16_t Insn,
                                 uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeQADDInstruction(MCInst &Inst, unsigned Insn,
+                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeThumbBLXOffset(MCInst &Inst, unsigned Insn,
                                 uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeT2AddrModeImm12(MCInst &Inst, unsigned Val,
@@ -1733,6 +1735,29 @@ static DecodeStatus DecodeRFEInstruction(MCInst &Inst, unsigned Insn,
   return S;
 }
 
+static DecodeStatus DecodeQADDInstruction(MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+
+  unsigned Rd = fieldFromInstruction(Insn, 12, 4);
+  unsigned Rm = fieldFromInstruction(Insn, 0, 4);
+  unsigned Rn = fieldFromInstruction(Insn, 16, 4);
+  unsigned pred = fieldFromInstruction(Insn, 28, 4);
+
+  if (pred == 0xF)
+    return DecodeCPSInstruction(Inst, Insn, Address, Decoder);
+
+  if (!Check(S, DecodeGPRnopcRegisterClass(Inst, Rd, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodeGPRnopcRegisterClass(Inst, Rm, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodeGPRnopcRegisterClass(Inst, Rn, Address, Decoder)))
+    return MCDisassembler::Fail;
+  if (!Check(S, DecodePredicateOperand(Inst, pred, Address, Decoder)))
+    return MCDisassembler::Fail;
+  return S;
+}
+
 static DecodeStatus DecodeMemMultipleWritebackInstruction(MCInst &Inst,
                                   unsigned Insn,
                                   uint64_t Address, const void *Decoder) {
@@ -1826,6 +1851,13 @@ static DecodeStatus DecodeCPSInstruction(MCInst &Inst, unsigned Insn,
   unsigned mode = fieldFromInstruction(Insn, 0, 5);
 
   DecodeStatus S = MCDisassembler::Success;
+
+  // This decoder is called from multiple location that do not check
+  // the full encoding is valid before they do.
+  if (fieldFromInstruction(Insn, 5, 1) != 0 ||
+      fieldFromInstruction(Insn, 16, 1) != 0 ||
+      fieldFromInstruction(Insn, 20, 8) != 0x10)
+    return MCDisassembler::Fail;
 
   // imod == '01' --> UNPREDICTABLE
   // NOTE: Even though this is technically UNPREDICTABLE, we choose to

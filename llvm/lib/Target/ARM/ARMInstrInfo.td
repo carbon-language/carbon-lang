@@ -3279,9 +3279,11 @@ class AAI<bits<8> op27_20, bits<8> op11_4, string opc,
 
 // Saturating add/subtract
 
+let DecoderMethod = "DecodeQADDInstruction" in
 def QADD    : AAI<0b00010000, 0b00000101, "qadd",
                   [(set GPRnopc:$Rd, (int_arm_qadd GPRnopc:$Rm, GPRnopc:$Rn))],
                   (ins GPRnopc:$Rm, GPRnopc:$Rn), "\t$Rd, $Rm, $Rn">;
+
 def QSUB    : AAI<0b00010010, 0b00000101, "qsub",
                   [(set GPRnopc:$Rd, (int_arm_qsub GPRnopc:$Rm, GPRnopc:$Rn))],
                   (ins GPRnopc:$Rm, GPRnopc:$Rn), "\t$Rd, $Rm, $Rn">;
