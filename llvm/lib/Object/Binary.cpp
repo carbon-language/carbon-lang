@@ -45,8 +45,6 @@ error_code object::createBinary(MemoryBuffer *Source,
   OwningPtr<MemoryBuffer> scopedSource(Source);
   if (!Source)
     return make_error_code(errc::invalid_argument);
-  if (Source->getBufferSize() < 64)
-    return object_error::invalid_file_type;
   sys::LLVMFileType type = sys::IdentifyFileType(Source->getBufferStart(),
                                 static_cast<unsigned>(Source->getBufferSize()));
   error_code ec;
