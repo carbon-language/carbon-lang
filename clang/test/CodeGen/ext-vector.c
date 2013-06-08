@@ -286,3 +286,8 @@ int4 test15(uint4 V0) {
   V = V || V;
   return V;
 }
+
+// CHECK: @test16
+void test16(float2 a, float2 b) {
+  float2 t0 = (a + b) / 2;
+} 
