@@ -1263,12 +1263,14 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
       Actions.ActOnReenterTemplateScope(getCurScope(), MD);
       ++CurTemplateDepthTracker;
     } else if (CXXRecordDecl *MD = dyn_cast_or_null<CXXRecordDecl>(*II)) {
-      bool ManageScope = MD->getDescribedClassTemplate() != 0;
+      bool IsClassTemplate = MD->getDescribedClassTemplate() != 0;
       TemplateParamScopeStack.push_back(
-          new ParseScope(this, Scope::TemplateParamScope, ManageScope));
+          new ParseScope(this, Scope::TemplateParamScope, 
+                        /*ManageScope*/IsClassTemplate));
       Actions.ActOnReenterTemplateScope(getCurScope(),
                                         MD->getDescribedClassTemplate());
-      ++CurTemplateDepthTracker;
+      if (IsClassTemplate) 
+        ++CurTemplateDepthTracker;
     }
     TemplateParamScopeStack.push_back(new ParseScope(this, Scope::DeclScope));
     Actions.PushDeclContext(Actions.getCurScope(), *II);
