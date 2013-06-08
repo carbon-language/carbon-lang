@@ -2662,6 +2662,7 @@ unsigned ARMFastISel::ARMEmitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
 
   unsigned SrcBits = SrcVT.getSizeInBits();
   unsigned DestBits = DestVT.getSizeInBits();
+  (void) DestBits;
   assert((SrcBits < DestBits) && "can only extend to larger types");
   assert((DestBits == 32 || DestBits == 16 || DestBits == 8) &&
          "other sizes unimplemented");
