@@ -50,13 +50,13 @@ protected:
 public:
   /// \brief Operating system specific type to identify a process.
   ///
-  /// Note that the windows one is defined to 'void *' as this is the
-  /// documented type for HANDLE on windows, and we don't want to pull in the
+  /// Note that the windows one is defined to 'unsigned long' as this is the
+  /// documented type for DWORD on windows, and we don't want to pull in the
   /// Windows headers here.
 #if defined(LLVM_ON_UNIX)
   typedef pid_t id_type;
 #elif defined(LLVM_ON_WIN32)
-  typedef void *id_type; // Must match the type of HANDLE.
+  typedef unsigned long id_type; // Must match the type of DWORD.
 #else
 #error Unsupported operating system.
 #endif

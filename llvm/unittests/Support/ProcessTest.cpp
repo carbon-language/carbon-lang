@@ -26,7 +26,7 @@ TEST(ProcessTest, SelfProcess) {
 #if defined(LLVM_ON_UNIX)
   EXPECT_EQ(getpid(), process::get_self()->get_id());
 #elif defined(LLVM_ON_WIN32)
-  EXPECT_EQ(GetCurrentProcess(), process::get_self()->get_id());
+  EXPECT_EQ(GetCurrentProcessId(), process::get_self()->get_id());
 #endif
 
   EXPECT_LT(1u, process::get_self()->page_size());
