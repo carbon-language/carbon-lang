@@ -1768,6 +1768,7 @@ static DecodeStatus DecodeMemMultipleWritebackInstruction(MCInst &Inst,
   unsigned reglist = fieldFromInstruction(Insn, 0, 16);
 
   if (pred == 0xF) {
+    // Ambiguous with RFE and SRS
     switch (Inst.getOpcode()) {
       case ARM::LDMDA:
         Inst.setOpcode(ARM::RFEDA);
@@ -1818,11 +1819,16 @@ static DecodeStatus DecodeMemMultipleWritebackInstruction(MCInst &Inst,
         Inst.setOpcode(ARM::SRSIB_UPD);
         break;
       default:
-        if (!Check(S, MCDisassembler::Fail)) return MCDisassembler::Fail;
+        return MCDisassembler::Fail;
     }
 
     // For stores (which become SRS's, the only operand is the mode.
     if (fieldFromInstruction(Insn, 20, 1) == 0) {
+      // Check SRS encoding constraints
+      if (!(fieldFromInstruction(Insn, 22, 1) == 1 &&
+            fieldFromInstruction(Insn, 20, 1) == 0))
+        return MCDisassembler::Fail;
+
       Inst.addOperand(
           MCOperand::CreateImm(fieldFromInstruction(Insn, 0, 4)));
       return S;
