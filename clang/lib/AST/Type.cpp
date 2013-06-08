@@ -1781,8 +1781,10 @@ bool TypeOfExprType::isSugared() const {
 }
 
 QualType TypeOfExprType::desugar() const {
-  if (isSugared())
-    return getUnderlyingExpr()->getType();
+  if (isSugared()) {
+    Expr *E = getUnderlyingExpr();
+    return E->getType();
+  }
   
   return QualType(this, 0);
 }

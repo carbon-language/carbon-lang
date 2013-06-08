@@ -4142,6 +4142,21 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) const {
 }
 
 QualType ASTContext::getAdjustedParameterType(QualType T) const {
+  // In ARC, infer a lifetime qualifier for appropriate parameter types.
+  if (getLangOpts().ObjCAutoRefCount &&
+      T.getObjCLifetime() == Qualifiers::OCL_None &&
+      T->isObjCLifetimeType()) {
+    // Special cases for arrays:
+    //   - if it's const, use __unsafe_unretained
+    //   - otherwise, it's an error
+    Qualifiers::ObjCLifetime lifetime;
+    if (T->isArrayType())
+      lifetime = Qualifiers::OCL_ExplicitNone;
+    else
+      lifetime = T->getObjCARCImplicitLifetime();
+    T = getLifetimeQualifiedType(T, lifetime);
+  }
+
   // C99 6.7.5.3p7:
   //   A declaration of a parameter as "array of type" shall be
   //   adjusted to "qualified pointer to type", where the type

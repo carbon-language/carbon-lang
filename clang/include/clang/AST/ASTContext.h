@@ -1465,7 +1465,7 @@ public:
   ///
   /// \pre Neither type.ObjCLifetime() nor \p lifetime may be \c OCL_None.
   QualType getLifetimeQualifiedType(QualType type,
-                                    Qualifiers::ObjCLifetime lifetime) {
+                                    Qualifiers::ObjCLifetime lifetime) const {
     assert(type.getObjCLifetime() == Qualifiers::OCL_None);
     assert(lifetime != Qualifiers::OCL_None);
 

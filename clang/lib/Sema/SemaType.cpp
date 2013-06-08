@@ -1674,7 +1674,7 @@ QualType Sema::BuildFunctionType(QualType T,
   bool Invalid = false;
   for (unsigned Idx = 0, Cnt = ParamTypes.size(); Idx < Cnt; ++Idx) {
     // FIXME: Loc is too inprecise here, should use proper locations for args.
-    QualType ParamType = Context.getAdjustedParameterType(ParamTypes[Idx]);
+    QualType ParamType = ParamTypes[Idx];
     if (ParamType->isVoidType()) {
       Diag(Loc, diag::err_param_with_void_type);
       Invalid = true;
@@ -2798,12 +2798,10 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
 
         for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
           ParmVarDecl *Param = cast<ParmVarDecl>(FTI.ArgInfo[i].Param);
-          QualType ArgTy = Param->getType();
+          // Get the type as written.  It will be adjusted later in
+          // ActOnFunctionDeclarator().
+          QualType ArgTy = Param->getTypeSourceInfo()->getType();
           assert(!ArgTy.isNull() && "Couldn't parse type?");
-
-          // Adjust the parameter type.
-          assert((ArgTy == Context.getAdjustedParameterType(ArgTy)) &&
-                 "Unadjusted type?");
 
           // Look for 'void'.  void is allowed only as a single argument to a
           // function with no other parameters (C99 6.7.5.3p10).  We record
