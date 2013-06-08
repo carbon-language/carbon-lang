@@ -14,6 +14,7 @@
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
 
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -59,12 +60,20 @@ public:
     return _minOSVersion;
   }
 
+  StringRef allocateString(const StringRef &ref) {
+    char *x = _extraStrings.Allocate<char>(ref.size() + 1);
+    memcpy(x, ref.data(), ref.size());
+    x[ref.size()] = '\0';
+    return x;
+  }
+
 private:
   llvm::COFF::WindowsSubsystem _subsystem;
   OSVersion _minOSVersion;
 
   mutable std::unique_ptr<Reader> _reader;
   mutable std::unique_ptr<Writer> _writer;
+  llvm::BumpPtrAllocator _extraStrings;
 };
 
 } // end namespace lld
