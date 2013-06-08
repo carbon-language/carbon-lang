@@ -419,6 +419,11 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   // unequal to 0.  The condition must be a scalar type.
   RunCleanupsScope ConditionScope(*this);
 
+  // Also open a debugger-visible lexical scope for the condition.
+  CGDebugInfo *DI = getDebugInfo();
+  if (DI)
+    DI->EmitLexicalBlockStart(Builder, S.getSourceRange().getBegin());
+
   if (S.getConditionVariable())
     EmitAutoVarDecl(*S.getConditionVariable());
 
@@ -439,6 +444,8 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
         RunCleanupsScope ExecutedScope(*this);
         EmitStmt(Executed);
       }
+      if (DI)
+        DI->EmitLexicalBlockEnd(Builder, S.getSourceRange().getEnd());
       return;
     }
   }
@@ -475,6 +482,9 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
       Builder.SetCurrentDebugLocation(llvm::DebugLoc());
     EmitBranch(ContBlock);
   }
+
+  if (DI)
+    DI->EmitLexicalBlockEnd(Builder, S.getSourceRange().getEnd());
 
   // Emit the continuation block for code after the if.
   EmitBlock(ContBlock, true);
