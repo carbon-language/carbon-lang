@@ -3149,8 +3149,7 @@ static void TryReferenceListInitialization(Sema &S,
                                            const InitializedEntity &Entity,
                                            const InitializationKind &Kind,
                                            InitListExpr *InitList,
-                                           InitializationSequence &Sequence)
-{
+                                           InitializationSequence &Sequence) {
   // First, catch C++03 where this isn't possible.
   if (!S.getLangOpts().CPlusPlus11) {
     Sequence.SetFailed(InitializationSequence::FK_ReferenceBindingToInitList);
@@ -5216,7 +5215,7 @@ static void performLifetimeExtension(Expr *Init, const ValueDecl *ExtendingD) {
       Init->skipRValueSubobjectAdjustments(CommaLHSs, Adjustments));
 
   if (InitListExpr *ILE = dyn_cast<InitListExpr>(Init)) {
-    if (ILE->initializesStdInitializerList()) {
+    if (ILE->initializesStdInitializerList() || ILE->getType()->isArrayType()) {
       // FIXME: If this is an InitListExpr which creates a std::initializer_list
       //        object, we also need to lifetime-extend the underlying array
       //        itself. Fix the representation to explicitly materialize an
@@ -5226,7 +5225,7 @@ static void performLifetimeExtension(Expr *Init, const ValueDecl *ExtendingD) {
       return;
     }
 
-    CXXRecordDecl *RD = Init->getType()->getAsCXXRecordDecl();
+    CXXRecordDecl *RD = ILE->getType()->getAsCXXRecordDecl();
     if (RD) {
       assert(RD->isAggregate() && "aggregate init on non-aggregate");
 

@@ -373,6 +373,12 @@ namespace NestedNonStatic {
   constexpr B b = { A(A{0}) }; // expected-error {{constant expression}} expected-note {{reference to temporary}} expected-note {{here}}
 }
 
+namespace FakeInitList {
+  struct init_list_3_ints { const int (&x)[3]; };
+  struct init_list_2_init_list_3_ints { const init_list_3_ints (&x)[2]; };
+  constexpr init_list_2_init_list_3_ints ils = { { { { 1, 2, 3 } }, { { 4, 5, 6 } } } };
+}
+
 }
 
 constexpr int strcmp_ce(const char *p, const char *q) {

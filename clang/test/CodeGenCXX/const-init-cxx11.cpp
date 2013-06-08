@@ -368,6 +368,17 @@ namespace PR13273 {
   extern const S s {};
 }
 
+namespace ArrayTemporary {
+  struct A { const int (&x)[3]; };
+  struct B { const A (&x)[2]; };
+  // CHECK: @[[A1:_ZGRN14ArrayTemporary1bE.*]] = private constant [3 x i32] [i32 1, i32 2, i32 3]
+  // CHECK: @[[A2:_ZGRN14ArrayTemporary1bE.*]] = private constant [3 x i32] [i32 4, i32 5, i32 6]
+  // CHECK: @[[ARR:_ZGRN14ArrayTemporary1bE.*]] = private constant [2 x {{.*}}] [{{.*}} { [3 x i32]* @[[A1]] }, {{.*}} { [3 x i32]* @[[A2]] }]
+  // CHECK: @[[B:_ZGRN14ArrayTemporary1bE.*]] = private global {{.*}} { [2 x {{.*}}]* @[[ARR]] }
+  // CHECK: @_ZN14ArrayTemporary1bE = constant {{.*}}* @[[B]]
+  B &&b = { { { { 1, 2, 3 } }, { { 4, 5, 6 } } } };
+}
+
 namespace UnemittedTemporaryDecl {
   constexpr int &&ref = 0;
   extern constexpr int &ref2 = ref;
