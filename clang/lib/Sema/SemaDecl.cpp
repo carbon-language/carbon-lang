@@ -5897,40 +5897,23 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       << DeclSpec::getSpecifierName(TSCS);
 
   // Do not allow returning a objc interface by-value.
-  bool NeedsAdjustment = false;
-  const FunctionType *FT = R->castAs<FunctionType>();
-  QualType ResultTy = FT->getResultType();
-  if (ResultTy->isObjCObjectType()) {
+  if (R->getAs<FunctionType>()->getResultType()->isObjCObjectType()) {
     Diag(D.getIdentifierLoc(),
-         diag::err_object_cannot_be_passed_returned_by_value) << 0 << ResultTy
-        << FixItHint::CreateInsertion(D.getIdentifierLoc(), "*");
-    ResultTy = Context.getObjCObjectPointerType(ResultTy);
-    NeedsAdjustment = true;
-  }
+         diag::err_object_cannot_be_passed_returned_by_value) << 0
+    << R->getAs<FunctionType>()->getResultType()
+    << FixItHint::CreateInsertion(D.getIdentifierLoc(), "*");
 
-  // Adjust parameter types from the type as written.
-  SmallVector<QualType, 16> AdjustedParms;
-  const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FT);
-  if (FPT) {
-    for (FunctionProtoType::arg_type_iterator I = FPT->arg_type_begin(),
-         E = FPT->arg_type_end(); I != E; ++I) {
-      AdjustedParms.push_back(Context.getAdjustedParameterType(*I));
-      if (AdjustedParms.back() != *I)
-        NeedsAdjustment = true;
-    }
-  }
-
-  // Skip the type recreation if it isn't needed, for performance and to avoid
-  // prematurely desugaring things like typedefs and __typeofs.
-  if (NeedsAdjustment) {
-    if (FPT) {
+    QualType T = R->getAs<FunctionType>()->getResultType();
+    T = Context.getObjCObjectPointerType(T);
+    if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(R)) {
       FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
-      R = Context.getFunctionType(ResultTy, AdjustedParms, EPI);
-    } else {
-      assert(isa<FunctionNoProtoType>(FT));
-      FunctionType::ExtInfo EI = FT->getExtInfo();
-      R = Context.getFunctionNoProtoType(ResultTy, EI);
+      R = Context.getFunctionType(T,
+                                  ArrayRef<QualType>(FPT->arg_type_begin(),
+                                                     FPT->getNumArgs()),
+                                  EPI);
     }
+    else if (isa<FunctionNoProtoType>(R))
+      R = Context.getFunctionNoProtoType(T);
   }
 
   bool isFriend = false;
@@ -8515,15 +8498,27 @@ ParmVarDecl *Sema::CheckParameter(DeclContext *DC, SourceLocation StartLoc,
                                   SourceLocation NameLoc, IdentifierInfo *Name,
                                   QualType T, TypeSourceInfo *TSInfo,
                                   VarDecl::StorageClass StorageClass) {
-  // Diagnose non-const parameter arrays of ARC types.
+  // In ARC, infer a lifetime qualifier for appropriate parameter types.
   if (getLangOpts().ObjCAutoRefCount &&
       T.getObjCLifetime() == Qualifiers::OCL_None &&
-      T->isObjCLifetimeType() &&
-      T->isArrayType() &&
-      !T.isConstQualified()) {
-    DelayedDiagnostics.add(
-        sema::DelayedDiagnostic::makeForbiddenType(
+      T->isObjCLifetimeType()) {
+
+    Qualifiers::ObjCLifetime lifetime;
+
+    // Special cases for arrays:
+    //   - if it's const, use __unsafe_unretained
+    //   - otherwise, it's an error
+    if (T->isArrayType()) {
+      if (!T.isConstQualified()) {
+        DelayedDiagnostics.add(
+            sema::DelayedDiagnostic::makeForbiddenType(
             NameLoc, diag::err_arc_array_param_no_ownership, T, false));
+      }
+      lifetime = Qualifiers::OCL_ExplicitNone;
+    } else {
+      lifetime = T->getObjCARCImplicitLifetime();
+    }
+    T = Context.getLifetimeQualifiedType(T, lifetime);
   }
 
   ParmVarDecl *New = ParmVarDecl::Create(Context, DC, StartLoc, NameLoc, Name,

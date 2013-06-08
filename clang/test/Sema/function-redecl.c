@@ -115,11 +115,6 @@ void i0 (unsigned short a0);
 extern __typeof (i0) i1;
 extern __typeof (i1) i1;
 
-// Try __typeof with a parameter that needs adjustment.
-void j0 (int a0[1], ...);
-extern __typeof (j0) j1;
-extern __typeof (j1) j1;
-
 typedef int a();
 typedef int a2(int*);
 a x;
