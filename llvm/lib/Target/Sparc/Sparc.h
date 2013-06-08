@@ -26,7 +26,6 @@ namespace llvm {
 
   FunctionPass *createSparcISelDag(SparcTargetMachine &TM);
   FunctionPass *createSparcDelaySlotFillerPass(TargetMachine &TM);
-  FunctionPass *createSparcFPMoverPass(TargetMachine &TM);
 
 } // end namespace llvm;
 

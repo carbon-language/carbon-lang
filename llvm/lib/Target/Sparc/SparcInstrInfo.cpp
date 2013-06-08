@@ -289,10 +289,28 @@ void SparcInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   else if (SP::FPRegsRegClass.contains(DestReg, SrcReg))
     BuildMI(MBB, I, DL, get(SP::FMOVS), DestReg)
       .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (SP::DFPRegsRegClass.contains(DestReg, SrcReg))
-    BuildMI(MBB, I, DL, get(Subtarget.isV9() ? SP::FMOVD : SP::FpMOVD), DestReg)
-      .addReg(SrcReg, getKillRegState(KillSrc));
-  else
+  else if (SP::DFPRegsRegClass.contains(DestReg, SrcReg)) {
+    if (Subtarget.isV9()) {
+      BuildMI(MBB, I, DL, get(SP::FMOVD), DestReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+    } else {
+      // Use two FMOVS instructions.
+      const TargetRegisterInfo *TRI = &getRegisterInfo();
+      MachineInstr *MovMI = 0;
+      unsigned subRegIdx[] = {SP::sub_even, SP::sub_odd};
+      for (unsigned i = 0; i != 2; ++i) {
+        unsigned Dst = TRI->getSubReg(DestReg, subRegIdx[i]);
+        unsigned Src = TRI->getSubReg(SrcReg,  subRegIdx[i]);
+        assert(Dst && Src && "Bad sub-register");
+
+        MovMI = BuildMI(MBB, I, DL, get(SP::FMOVS), Dst).addReg(Src);
+      }
+      // Add implicit super-register defs and kills to the last MovMI.
+      MovMI->addRegisterDefined(DestReg, TRI);
+      if (KillSrc)
+        MovMI->addRegisterKilled(SrcReg, TRI);
+    }
+  } else
     llvm_unreachable("Impossible reg-to-reg copy");
 }
 

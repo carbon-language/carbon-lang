@@ -245,19 +245,6 @@ let hasSideEffects = 1, mayStore = 1 in {
 def UNIMP : F2_1<0b000, (outs), (ins i32imm:$val),
                 "unimp $val", []>;
 
-// FpMOVD/FpNEGD/FpABSD - These are lowered to single-precision ops by the
-// fpmover pass.
-let Predicates = [HasNoV9] in {  // Only emit these in V8 mode.
-  def FpMOVD : Pseudo<(outs DFPRegs:$dst), (ins DFPRegs:$src),
-                      "!FpMOVD $src, $dst", []>;
-  def FpNEGD : Pseudo<(outs DFPRegs:$dst), (ins DFPRegs:$src),
-                      "!FpNEGD $src, $dst",
-                      [(set f64:$dst, (fneg f64:$src))]>;
-  def FpABSD : Pseudo<(outs DFPRegs:$dst), (ins DFPRegs:$src),
-                      "!FpABSD $src, $dst",
-                      [(set f64:$dst, (fabs f64:$src))]>;
-}
-
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded after
 // instruction selection into a branch sequence.  This has to handle all
 // permutations of selection between i32/f32/f64 on ICC and FCC.
