@@ -66,6 +66,35 @@ int findDoubleDash(int argc, const char *argv[]) {
   return -1;
 }
 
+// Displays error message if the given version does not match with
+// /^\d+$/.
+bool checkNumber(StringRef version, const char *errorMessage,
+                 raw_ostream &diagnostics) {
+  if (version.str().find_first_not_of("0123456789") != std::string::npos
+      || version.empty()) {
+    diagnostics << "error: " << errorMessage << version << "\n";
+    return false;
+  }
+  return true;
+}
+
+// Parse -stack command line option. The form of the option is
+// "-stack:stackReserveSize[,stackCommitSize]".
+bool parseStackOption(PECOFFTargetInfo &info, const StringRef &arg,
+                      raw_ostream &diagnostics) {
+  StringRef reserve, commit;
+  llvm::tie(reserve, commit) = arg.split(',');
+  if (!checkNumber(reserve, "invalid stack size: ", diagnostics))
+    return false;
+  info.setStackReserve(atoi(reserve.str().c_str()));
+  if (!commit.empty()) {
+    if (!checkNumber(commit, "invalid stack size: ", diagnostics))
+      return false;
+    info.setStackCommit(atoi(commit.str().c_str()));
+  }
+  return true;
+}
+
 // Returns subsystem type for the given string.
 llvm::COFF::WindowsSubsystem stringToWinSubsystem(StringRef str) {
   std::string arg(str.lower());
@@ -75,28 +104,15 @@ llvm::COFF::WindowsSubsystem stringToWinSubsystem(StringRef str) {
       .Default(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN);
 }
 
-
-// Displays error message if the given version does not match with
-// /^\d+$/.
-bool checkOSVersion(StringRef version, const char *errorMessage,
-                    raw_ostream &diagnostics) {
-  if (version.str().find_first_not_of("0123456789") != std::string::npos
-      || version.empty()) {
-    diagnostics << "error: " << errorMessage << version << "\n";
-    return false;
-  }
-  return true;
-}
-
-bool parseMinOSVersion(PECOFFTargetInfo &info, StringRef &osVersion,
+bool parseMinOSVersion(PECOFFTargetInfo &info, const StringRef &osVersion,
                        raw_ostream &diagnostics) {
   StringRef majorVersion, minorVersion;
   llvm::tie(majorVersion, minorVersion) = osVersion.split('.');
   if (minorVersion.empty())
     minorVersion = "0";
-  if (!checkOSVersion(majorVersion, "invalid OS major version: ", diagnostics))
+  if (!checkNumber(majorVersion, "invalid OS major version: ", diagnostics))
     return false;
-  if (!checkOSVersion(minorVersion, "invalid OS minor version: ", diagnostics))
+  if (!checkNumber(minorVersion, "invalid OS minor version: ", diagnostics))
     return false;
   PECOFFTargetInfo::OSVersion minOSVersion(atoi(majorVersion.str().c_str()),
                                            atoi(minorVersion.str().c_str()));
@@ -194,6 +210,11 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
        it != ie; ++it) {
     info.appendLLVMOption((*it)->getValue());
   }
+
+  // Handle -stack
+  if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_stack))
+    if (!parseStackOption(info, arg->getValue(), diagnostics))
+      return true;
 
   // Handle -subsystem
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_subsystem))

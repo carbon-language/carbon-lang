@@ -155,8 +155,8 @@ public:
         | llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NX_COMPAT
         | llvm::COFF::IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE;
 
-    _peHeader.SizeOfStackReserve = 0x100000;
-    _peHeader.SizeOfStackCommit = 0x1000;
+    _peHeader.SizeOfStackReserve = targetInfo.getStackReserve();
+    _peHeader.SizeOfStackCommit = targetInfo.getStackCommit();
     _peHeader.SizeOfHeapReserve = 0x100000;
     _peHeader.SizeOfHeapCommit = 0x1000;
 

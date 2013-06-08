@@ -9,6 +9,10 @@ def out : Separate<["-", "/"], "out">,
     HelpText<"Path to file to write output">;
 def out_c : Joined<["-", "/"], "out:">, Alias<out>;
 
+def stack : Separate<["-", "/"], "stack">,
+    HelpText<"Size of the stack">;
+def stack_c: Joined<["-", "/"], "stack:">, Alias<stack>;
+
 def subsystem : Separate<["-", "/"], "subsystem">,
     HelpText<"Specify subsystem">;
 def subsystem_c: Joined<["-", "/"], "subsystem:">, Alias<subsystem>;

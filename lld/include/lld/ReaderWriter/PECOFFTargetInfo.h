@@ -23,8 +23,16 @@ namespace lld {
 class PECOFFTargetInfo : public TargetInfo {
 public:
   PECOFFTargetInfo()
-      : _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN),
+      : _stackReserve(1024 * 1024),
+        _stackCommit(4096),
+        _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN),
         _minOSVersion(6, 0) {}
+
+  struct OSVersion {
+    OSVersion(int v1, int v2) : majorVersion(v1), minorVersion(v2) {}
+    int majorVersion;
+    int minorVersion;
+  };
 
   virtual error_code parseFile(
       std::unique_ptr<MemoryBuffer> &mb,
@@ -35,30 +43,20 @@ public:
 
   virtual void addPasses(PassManager &pm) const {}
 
-  void setSubsystem(llvm::COFF::WindowsSubsystem subsystem) {
-    _subsystem = subsystem;
-  }
+  void setStackReserve(uint64_t size) { _stackReserve = size; }
+  uint64_t getStackReserve() const { return _stackReserve; }
 
-  llvm::COFF::WindowsSubsystem getSubsystem() const {
-    return _subsystem;
-  }
+  void setStackCommit(uint64_t size) { _stackCommit = size; }
+  uint64_t getStackCommit() const { return _stackCommit; }
+
+  void setSubsystem(llvm::COFF::WindowsSubsystem ss) { _subsystem = ss; }
+  llvm::COFF::WindowsSubsystem getSubsystem() const { return _subsystem; }
+
+  void setMinOSVersion(const OSVersion &version) { _minOSVersion = version; }
+  OSVersion getMinOSVersion() const { return _minOSVersion; }
 
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
-
-  struct OSVersion {
-    OSVersion(int v1, int v2) : majorVersion(v1), minorVersion(v2) {}
-    int majorVersion;
-    int minorVersion;
-  };
-
-  void setMinOSVersion(const OSVersion &version) {
-    _minOSVersion = version;
-  }
-
-  OSVersion getMinOSVersion() const {
-    return _minOSVersion;
-  }
 
   StringRef allocateString(const StringRef &ref) {
     char *x = _extraStrings.Allocate<char>(ref.size() + 1);
@@ -68,6 +66,8 @@ public:
   }
 
 private:
+  uint64_t _stackReserve;
+  uint64_t _stackCommit;
   llvm::COFF::WindowsSubsystem _subsystem;
   OSVersion _minOSVersion;
 

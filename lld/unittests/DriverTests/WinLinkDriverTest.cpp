@@ -44,6 +44,8 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_EQ("c.obj", inputFiles[2]);
   EXPECT_EQ(6, info->getMinOSVersion().majorVersion);
   EXPECT_EQ(0, info->getMinOSVersion().minorVersion);
+  EXPECT_EQ(1024 * 1024, info->getStackReserve());
+  EXPECT_EQ(4096, info->getStackCommit());
 }
 
 TEST_F(WinLinkParserTest, WindowsStyleOption) {
@@ -83,4 +85,15 @@ TEST_F(WinLinkParserTest, MinMajorMinorOSVersion) {
   EXPECT_EQ(1, info->getMinOSVersion().minorVersion);
 }
 
+TEST_F(WinLinkParserTest, StackReserve) {
+  parse("link.exe", "-stack", "8192", nullptr);
+  EXPECT_EQ(8192, info->getStackReserve());
+  EXPECT_EQ(4096, info->getStackCommit());
+}
+
+TEST_F(WinLinkParserTest, StackReserveAndCommit) {
+  parse("link.exe", "-stack", "16384,8192", nullptr);
+  EXPECT_EQ(16384, info->getStackReserve());
+  EXPECT_EQ(8192, info->getStackCommit());
+}
 }  // end anonymous namespace
