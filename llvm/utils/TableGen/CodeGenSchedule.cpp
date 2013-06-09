@@ -890,9 +890,9 @@ void CodeGenSchedModels::inferFromItinClass(Record *ItinClassDef,
 
 /// Infer classes from per-processor InstReadWrite definitions.
 void CodeGenSchedModels::inferFromInstRWs(unsigned SCIdx) {
-  const RecVec &RWDefs = SchedClasses[SCIdx].InstRWs;
-  for (RecIter RWI = RWDefs.begin(), RWE = RWDefs.end(); RWI != RWE; ++RWI) {
-    const RecVec *InstDefs = Sets.expand(*RWI);
+  for (unsigned I = 0, E = SchedClasses[SCIdx].InstRWs.size(); I != E; ++I) {
+    Record *Rec = SchedClasses[SCIdx].InstRWs[I];
+    const RecVec *InstDefs = Sets.expand(Rec);
     RecIter II = InstDefs->begin(), IE = InstDefs->end();
     for (; II != IE; ++II) {
       if (InstrClassMap[*II] == SCIdx)
@@ -903,10 +903,10 @@ void CodeGenSchedModels::inferFromInstRWs(unsigned SCIdx) {
     if (II == IE)
       continue;
     IdxVec Writes, Reads;
-    findRWs((*RWI)->getValueAsListOfDefs("OperandReadWrites"), Writes, Reads);
-    unsigned PIdx = getProcModel((*RWI)->getValueAsDef("SchedModel")).Index;
+    findRWs(Rec->getValueAsListOfDefs("OperandReadWrites"), Writes, Reads);
+    unsigned PIdx = getProcModel(Rec->getValueAsDef("SchedModel")).Index;
     IdxVec ProcIndices(1, PIdx);
-    inferFromRW(Writes, Reads, SCIdx, ProcIndices);
+    inferFromRW(Writes, Reads, SCIdx, ProcIndices); // May mutate SchedClasses.
   }
 }
 
