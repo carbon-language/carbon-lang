@@ -64,7 +64,7 @@ namespace llvm {
                                            MachineBasicBlock *BB) const;
 
     MachineBasicBlock *emitFEXT_T8I8I16_ins(
-      unsigned BtOpc, unsigned CmpiOpc, unsigned CmpiXOpc,
+      unsigned BtOpc, unsigned CmpiOpc, unsigned CmpiXOpc, bool ImmSigned,
       MachineInstr *MI,  MachineBasicBlock *BB) const;
 
     MachineBasicBlock *emitFEXT_CCRX16_ins(

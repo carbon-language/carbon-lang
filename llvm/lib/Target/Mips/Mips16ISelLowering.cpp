@@ -131,17 +131,17 @@ Mips16TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     // altogether.
     return emitFEXT_T8I816_ins(Mips::BtnezX16, Mips::SltuRxRy16, MI, BB);
   case Mips::BteqzT8CmpiX16: return emitFEXT_T8I8I16_ins(
-    Mips::BteqzX16, Mips::CmpiRxImm16, Mips::CmpiRxImmX16, MI, BB);
+    Mips::BteqzX16, Mips::CmpiRxImm16, Mips::CmpiRxImmX16, false, MI, BB);
   case Mips::BteqzT8SltiX16: return emitFEXT_T8I8I16_ins(
-    Mips::BteqzX16, Mips::SltiRxImm16, Mips::SltiRxImmX16, MI, BB);
+    Mips::BteqzX16, Mips::SltiRxImm16, Mips::SltiRxImmX16, true, MI, BB);
   case Mips::BteqzT8SltiuX16: return emitFEXT_T8I8I16_ins(
-    Mips::BteqzX16, Mips::SltiuRxImm16, Mips::SltiuRxImmX16, MI, BB);
+    Mips::BteqzX16, Mips::SltiuRxImm16, Mips::SltiuRxImmX16, false, MI, BB);
   case Mips::BtnezT8CmpiX16: return emitFEXT_T8I8I16_ins(
-    Mips::BtnezX16, Mips::CmpiRxImm16, Mips::CmpiRxImmX16, MI, BB);
+    Mips::BtnezX16, Mips::CmpiRxImm16, Mips::CmpiRxImmX16, false, MI, BB);
   case Mips::BtnezT8SltiX16: return emitFEXT_T8I8I16_ins(
-    Mips::BtnezX16, Mips::SltiRxImm16, Mips::SltiRxImmX16, MI, BB);
+    Mips::BtnezX16, Mips::SltiRxImm16, Mips::SltiRxImmX16, true, MI, BB);
   case Mips::BtnezT8SltiuX16: return emitFEXT_T8I8I16_ins(
-    Mips::BtnezX16, Mips::SltiuRxImm16, Mips::SltiuRxImmX16, MI, BB);
+    Mips::BtnezX16, Mips::SltiuRxImm16, Mips::SltiuRxImmX16, false, MI, BB);
     break;
   case Mips::SltCCRxRy16:
     return emitFEXT_CCRX16_ins(Mips::SltRxRy16, MI, BB);
@@ -629,7 +629,7 @@ MachineBasicBlock
 }
 
 MachineBasicBlock *Mips16TargetLowering::emitFEXT_T8I8I16_ins(
-  unsigned BtOpc, unsigned CmpiOpc, unsigned CmpiXOpc,
+  unsigned BtOpc, unsigned CmpiOpc, unsigned CmpiXOpc, bool ImmSigned,
   MachineInstr *MI,  MachineBasicBlock *BB) const {
   if (DontExpandCondPseudos16)
     return BB;
@@ -640,7 +640,8 @@ MachineBasicBlock *Mips16TargetLowering::emitFEXT_T8I8I16_ins(
   unsigned CmpOpc;
   if (isUInt<8>(imm))
     CmpOpc = CmpiOpc;
-  else if (isUInt<16>(imm))
+  else if ((!ImmSigned && isUInt<16>(imm)) ||
+           (ImmSigned && isInt<16>(imm)))
     CmpOpc = CmpiXOpc;
   else
     llvm_unreachable("immediate field not usable");
