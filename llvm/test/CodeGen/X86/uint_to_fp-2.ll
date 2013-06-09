@@ -4,7 +4,7 @@
 define float @test1(i32 %x) nounwind readnone {
 ; CHECK: test1
 ; CHECK: movd
-; CHECK: orpd
+; CHECK: orps
 ; CHECK: subsd
 ; CHECK: cvtsd2ss
 ; CHECK: movss

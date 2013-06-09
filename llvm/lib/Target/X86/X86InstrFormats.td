@@ -353,7 +353,7 @@ class PIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
 //   PSI   - SSE1 instructions with TB prefix.
 //   PSIi8 - SSE1 instructions with ImmT == Imm8 and TB prefix.
 //   VSSI  - SSE1 instructions with XS prefix in AVX form.
-//   VPSI  - SSE1 instructions with TB prefix in AVX form.
+//   VPSI  - SSE1 instructions with TB prefix in AVX form, packed single.
 
 class SSI<bits<8> o, Format F, dag outs, dag ins, string asm,
           list<dag> pattern, InstrItinClass itin = NoItinerary>
@@ -384,10 +384,13 @@ class VPSI<bits<8> o, Format F, dag outs, dag ins, string asm,
 //   SDIi8  - SSE2 instructions with ImmT == Imm8 and XD prefix.
 //   S2SI   - SSE2 instructions with XS prefix.
 //   SSDIi8 - SSE2 instructions with ImmT == Imm8 and XS prefix.
-//   PDI    - SSE2 instructions with TB and OpSize prefixes.
+//   PDI    - SSE2 instructions with TB and OpSize prefixes, packed double domain.
 //   PDIi8  - SSE2 instructions with ImmT == Imm8 and TB and OpSize prefixes.
-//   VSDI   - SSE2 instructions with XD prefix in AVX form.
-//   VPDI   - SSE2 instructions with TB and OpSize prefixes in AVX form.
+//   VSDI   - SSE2 scalar instructions with XD prefix in AVX form.
+//   VPDI   - SSE2 vector instructions with TB and OpSize prefixes in AVX form,
+//                 packed double domain.
+//   VS2I   - SSE2 scalar instructions with TB and OpSize prefixes in AVX form.
+//   S2I    - SSE2 scalar instructions with TB and OpSize prefixes.
 //   MMXSDIi8  - SSE2 instructions with ImmT == Imm8 and XD prefix as well as
 //               MMX operands.
 //   MMXSSDIi8 - SSE2 instructions with ImmT == Imm8 and XS prefix as well as
@@ -425,6 +428,14 @@ class VPDI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, !strconcat("v", asm), pattern, itin, SSEPackedDouble>, TB,
         OpSize, Requires<[HasAVX]>;
+class VS2I<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag> pattern, InstrItinClass itin = NoItinerary>
+      : I<o, F, outs, ins, !strconcat("v", asm), pattern, itin>, TB,
+        OpSize, Requires<[HasAVX]>;
+class S2I<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag> pattern, InstrItinClass itin = NoItinerary>
+      : I<o, F, outs, ins, asm, pattern, itin>, TB,
+        OpSize, Requires<[UseSSE2]>;
 class MMXSDIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
                list<dag> pattern, InstrItinClass itin = NoItinerary>
       : Ii8<o, F, outs, ins, asm, pattern, itin>, XD, Requires<[HasSSE2]>;
@@ -629,6 +640,12 @@ class RPDI<bits<8> o, Format F, dag outs, dag ins, string asm,
 class VRPDI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary>
       : VPDI<o, F, outs, ins, asm, pattern, itin>, VEX_W;
+class RS2I<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag> pattern, InstrItinClass itin = NoItinerary>
+      : S2I<o, F, outs, ins, asm, pattern, itin>, REX_W;
+class VRS2I<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag> pattern, InstrItinClass itin = NoItinerary>
+      : VS2I<o, F, outs, ins, asm, pattern, itin>, VEX_W;
 
 // MMX Instruction templates
 //

@@ -9,8 +9,8 @@
 ; SSE: movaps  %xmm0, (%rsp)
 ; SSE: callq   killcommon
 
-; AVX: vmovapd    compl+128(%rip), %xmm0
-; AVX: vmovapd  %xmm0, (%rsp)
+; AVX: vmovaps    compl+128(%rip), %xmm0
+; AVX: vmovaps  %xmm0, (%rsp)
 ; AVX: callq   killcommon
 
 @compl = linkonce global [20 x i64] zeroinitializer, align 64 ; <[20 x i64]*> [#uses=1]
