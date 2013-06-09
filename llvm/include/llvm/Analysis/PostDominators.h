@@ -74,6 +74,11 @@ struct PostDominatorTree : public FunctionPass {
     return DT->findNearestCommonDominator(A, B);
   }
 
+  inline const BasicBlock *findNearestCommonDominator(const BasicBlock *A,
+                                                      const BasicBlock *B) {
+    return DT->findNearestCommonDominator(A, B);
+  }
+
   virtual void releaseMemory() {
     DT->releaseMemory();
   }
