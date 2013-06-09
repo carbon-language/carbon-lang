@@ -343,8 +343,9 @@ bool DAE::RemoveDeadArgumentsFromCallers(Function &Fn)
   if (Fn.isDeclaration() || Fn.mayBeOverridden())
     return false;
 
-  // Functions with local linkage should already have been handled.
-  if (Fn.hasLocalLinkage())
+  // Functions with local linkage should already have been handled, except the
+  // fragile (variadic) ones which we can improve here.
+  if (Fn.hasLocalLinkage() && !Fn.getFunctionType()->isVarArg())
     return false;
 
   if (Fn.use_empty())
@@ -604,9 +605,20 @@ void DAE::SurveyFunction(const Function &F) {
   UseVector MaybeLiveArgUses;
   for (Function::const_arg_iterator AI = F.arg_begin(),
        E = F.arg_end(); AI != E; ++AI, ++i) {
-    // See what the effect of this use is (recording any uses that cause
-    // MaybeLive in MaybeLiveArgUses).
-    Liveness Result = SurveyUses(AI, MaybeLiveArgUses);
+    Liveness Result;
+    if (F.getFunctionType()->isVarArg()) {
+      // Variadic functions will already have a va_arg function expanded inside
+      // them, making them potentially very sensitive to ABI changes resulting
+      // from removing arguments entirely, so don't. For example AArch64 handles
+      // register and stack HFAs very differently, and this is reflected in the
+      // IR which has already been generated.
+      Result = Live;
+    } else {
+      // See what the effect of this use is (recording any uses that cause
+      // MaybeLive in MaybeLiveArgUses). 
+      Result = SurveyUses(AI, MaybeLiveArgUses);
+    }
+
     // Mark the result.
     MarkValue(CreateArg(&F, i), Result, MaybeLiveArgUses);
     // Clear the vector again for the next iteration.
