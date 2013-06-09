@@ -17,12 +17,9 @@
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
-
-namespace llvm {
-  class Value;
-  class BasicBlock;
-  class BranchInst;
-}
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Value.h"
+#include "llvm/IR/Instructions.h"
 
 namespace clang {
 namespace CodeGen {

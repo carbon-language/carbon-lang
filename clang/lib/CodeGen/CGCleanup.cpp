@@ -17,8 +17,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "CodeGenFunction.h"
 #include "CGCleanup.h"
+#include "CodeGenFunction.h"
 
 using namespace clang;
 using namespace CodeGen;
