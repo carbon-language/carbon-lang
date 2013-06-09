@@ -60,7 +60,7 @@ declare void @_ZSt9terminatev()
 
 ; CHECK: section .test_section
 ; CHECK: section .ARM.extab.test_section
-; CHECK-NEXT: 0000 00000000 c9409b01 b0818484
+; CHECK-NEXT: 0000 00000000 c94a9b01 b0818484
 ; CHECK: section .ARM.exidx.test_section
 ; CHECK-NEXT: 0000 00000000 00000000
 

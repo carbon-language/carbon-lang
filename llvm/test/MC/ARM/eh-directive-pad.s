@@ -121,7 +121,7 @@ func3b:
 @ CHECK: Section {
 @ CHECK:   Name: .ARM.extab.TEST3
 @ CHECK:   SectionData (
-@ CHECK:     0000: 00000000 B0003F00 00000000 B03F3F00  |......?......??.|
+@ CHECK:     0000: 00000000 B03F0000 00000000 B03F3F00  |.....?.......??.|
 @ CHECK:   )
 @ CHECK: }
 
@@ -220,7 +220,7 @@ func5c:
 @ CHECK: Section {
 @ CHECK:   Name: .ARM.extab.TEST5
 @ CHECK:   SectionData (
-@ CHECK:     0000: 00000000 B0B04000 00000000 B0407F00  |......@......@..|
-@ CHECK:     0010: 00000000 407F7F00                    |....@...|
+@ CHECK:     0000: 00000000 B0B04000 00000000 B07F4000  |......@.......@.|
+@ CHECK:     0010: 00000000 7F7F4000                    |......@.|
 @ CHECK:   )
 @ CHECK: }

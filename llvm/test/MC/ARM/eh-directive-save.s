@@ -296,3 +296,48 @@ func4e:
 @ CHECK:     0020: 00000000 B00E8400                    |........|
 @ CHECK:   )
 @ CHECK: }
+
+
+
+@-------------------------------------------------------------------------------
+@ TEST5
+@-------------------------------------------------------------------------------
+	.section	.TEST5
+	.globl	func5a
+	.align	2
+	.type	func5a,%function
+	.fnstart
+func5a:
+	.save	{r0, r1, r2, r3, r4, r5, r6}
+	push	{r0, r1, r2, r3, r4, r5, r6}
+	pop	{r0, r1, r2, r3, r4, r5, r6}
+	bx	lr
+	.personality __gxx_personality_v0
+	.handlerdata
+	.fnend
+
+	.globl	func5b
+	.align	2
+	.type	func5b,%function
+	.fnstart
+func5b:
+	.save	{r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r14}
+	push	{r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r14}
+	pop	{r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r14}
+	bx	lr
+	.personality __gxx_personality_v0
+	.handlerdata
+	.fnend
+
+@-------------------------------------------------------------------------------
+@ Check the order of unwind opcode to pop registers.
+@ 0xB10F "pop {r0-r3}" should be emitted before 0xA2 "pop {r4-r6}".
+@ 0xB10F "pop {r0-r3}" should be emitted before 0x85FF "pop {r4-r12, r14}".
+@-------------------------------------------------------------------------------
+@ CHECK: Section {
+@ CHECK:   Name: .ARM.extab.TEST5
+@ CHECK:   SectionData (
+@ CHECK:     0000: 00000000 A20FB100 00000000 850FB101  |................|
+@ CHECK:     0010: B0B0B0FF                             |....|
+@ CHECK:   )
+@ CHECK: }

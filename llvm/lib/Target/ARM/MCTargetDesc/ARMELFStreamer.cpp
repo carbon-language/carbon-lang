@@ -203,7 +203,7 @@ private:
   void Reset();
 
   void EmitPersonalityFixup(StringRef Name);
-  void CollectUnwindOpcodes();
+  void FlushPendingOffset();
   void FlushUnwindOpcodes(bool AllowCompactModel0);
 
   void SwitchToEHSection(const char *Prefix, unsigned Type, unsigned Flags,
@@ -221,13 +221,14 @@ private:
   MCSymbol *ExTab;
   MCSymbol *FnStart;
   const MCSymbol *Personality;
-  uint32_t VFPRegSave; // Register mask for {d31-d0}
-  uint32_t RegSave; // Register mask for {r15-r0}
-  int64_t SPOffset;
-  uint16_t FPReg;
-  int64_t FPOffset;
+  unsigned PersonalityIndex;
+  unsigned FPReg; // Frame pointer register
+  int64_t FPOffset; // Offset: (final frame pointer) - (initial $sp)
+  int64_t SPOffset; // Offset: (final $sp) - (initial $sp)
+  int64_t PendingOffset; // Offset: (final $sp) - (emitted $sp)
   bool UsedFP;
   bool CantUnwind;
+  SmallVector<uint8_t, 64> Opcodes;
   UnwindOpcodeAssembler UnwindOpAsm;
 };
 } // end anonymous namespace
@@ -280,19 +281,18 @@ inline void ARMELFStreamer::SwitchToExIdxSection(const MCSymbol &FnStart) {
 }
 
 void ARMELFStreamer::Reset() {
-  const MCRegisterInfo &MRI = getContext().getRegisterInfo();
-
   ExTab = NULL;
   FnStart = NULL;
   Personality = NULL;
-  VFPRegSave = 0;
-  RegSave = 0;
-  FPReg = MRI.getEncodingValue(ARM::SP);
+  PersonalityIndex = NUM_PERSONALITY_INDEX;
+  FPReg = ARM::SP;
   FPOffset = 0;
   SPOffset = 0;
+  PendingOffset = 0;
   UsedFP = false;
   CantUnwind = false;
 
+  Opcodes.clear();
   UnwindOpAsm.Reset();
 }
 
@@ -312,18 +312,6 @@ void ARMELFStreamer::EmitPersonalityFixup(StringRef Name) {
                     MCFixup::getKindForSize(4, false)));
 }
 
-void ARMELFStreamer::CollectUnwindOpcodes() {
-  if (UsedFP) {
-    UnwindOpAsm.EmitSetFP(FPReg);
-    UnwindOpAsm.EmitSPOffset(-FPOffset);
-  } else {
-    UnwindOpAsm.EmitSPOffset(SPOffset);
-  }
-  UnwindOpAsm.EmitVFPRegSave(VFPRegSave);
-  UnwindOpAsm.EmitRegSave(RegSave);
-  UnwindOpAsm.Finalize();
-}
-
 void ARMELFStreamer::EmitFnStart() {
   assert(FnStart == 0);
   FnStart = getContext().CreateTempSymbol();
@@ -340,7 +328,6 @@ void ARMELFStreamer::EmitFnEnd() {
   // Emit the exception index table entry
   SwitchToExIdxSection(*FnStart);
 
-  unsigned PersonalityIndex = UnwindOpAsm.getPersonalityIndex();
   if (PersonalityIndex < NUM_PERSONALITY_INDEX)
     EmitPersonalityFixup(GetAEABIUnwindPersonalityName(PersonalityIndex));
 
@@ -366,9 +353,10 @@ void ARMELFStreamer::EmitFnEnd() {
     // opcodes should always be 4 bytes.
     assert(PersonalityIndex == AEABI_UNWIND_CPP_PR0 &&
            "Compact model must use __aeabi_cpp_unwind_pr0 as personality");
-    assert(UnwindOpAsm.size() == 4u &&
+    assert(Opcodes.size() == 4u &&
            "Unwind opcode size for __aeabi_cpp_unwind_pr0 must be equal to 4");
-    EmitBytes(UnwindOpAsm.data(), 0);
+    EmitBytes(StringRef(reinterpret_cast<const char*>(Opcodes.data()),
+                        Opcodes.size()), 0);
   }
 
   // Switch to the section containing FnStart
@@ -382,15 +370,31 @@ void ARMELFStreamer::EmitCantUnwind() {
   CantUnwind = true;
 }
 
+void ARMELFStreamer::FlushPendingOffset() {
+  if (PendingOffset != 0) {
+    UnwindOpAsm.EmitSPOffset(-PendingOffset);
+    PendingOffset = 0;
+  }
+}
+
 void ARMELFStreamer::FlushUnwindOpcodes(bool AllowCompactModel0) {
-  // Collect and finalize the unwind opcodes
-  CollectUnwindOpcodes();
+  // Emit the unwind opcode to restore $sp.
+  if (UsedFP) {
+    const MCRegisterInfo &MRI = getContext().getRegisterInfo();
+    int64_t LastRegSaveSPOffset = SPOffset - PendingOffset;
+    UnwindOpAsm.EmitSPOffset(LastRegSaveSPOffset - FPOffset);
+    UnwindOpAsm.EmitSetSP(MRI.getEncodingValue(FPReg));
+  } else {
+    FlushPendingOffset();
+  }
+
+  // Finalize the unwind opcode sequence
+  UnwindOpAsm.Finalize(PersonalityIndex, Opcodes);
 
   // For compact model 0, we have to emit the unwind opcodes in the .ARM.exidx
   // section.  Thus, we don't have to create an entry in the .ARM.extab
   // section.
-  if (AllowCompactModel0 &&
-      UnwindOpAsm.getPersonalityIndex() == AEABI_UNWIND_CPP_PR0)
+  if (AllowCompactModel0 && PersonalityIndex == AEABI_UNWIND_CPP_PR0)
     return;
 
   // Switch to .ARM.extab section.
@@ -412,7 +416,8 @@ void ARMELFStreamer::FlushUnwindOpcodes(bool AllowCompactModel0) {
   }
 
   // Emit unwind opcodes
-  EmitBytes(UnwindOpAsm.data(), 0);
+  EmitBytes(StringRef(reinterpret_cast<const char *>(Opcodes.data()),
+                      Opcodes.size()), 0);
 }
 
 void ARMELFStreamer::EmitHandlerData() {
@@ -427,42 +432,55 @@ void ARMELFStreamer::EmitPersonality(const MCSymbol *Per) {
 void ARMELFStreamer::EmitSetFP(unsigned NewFPReg,
                                unsigned NewSPReg,
                                int64_t Offset) {
-  assert(SPOffset == 0 &&
-         "Current implementation assumes .setfp precedes .pad");
-
-  const MCRegisterInfo &MRI = getContext().getRegisterInfo();
-
-  uint16_t NewFPRegEncVal = MRI.getEncodingValue(NewFPReg);
-#ifndef NDEBUG
-  uint16_t NewSPRegEncVal = MRI.getEncodingValue(NewSPReg);
-#endif
-
-  assert((NewSPReg == ARM::SP || NewSPRegEncVal == FPReg) &&
+  assert((NewSPReg == ARM::SP || NewSPReg == FPReg) &&
          "the operand of .setfp directive should be either $sp or $fp");
 
   UsedFP = true;
-  FPReg = NewFPRegEncVal;
-  FPOffset = Offset;
+  FPReg = NewFPReg;
+
+  if (NewSPReg == ARM::SP)
+    FPOffset = SPOffset + Offset;
+  else
+    FPOffset += Offset;
 }
 
 void ARMELFStreamer::EmitPad(int64_t Offset) {
-  SPOffset += Offset;
+  // Track the change of the $sp offset
+  SPOffset -= Offset;
+
+  // To squash multiple .pad directives, we should delay the unwind opcode
+  // until the .save, .vsave, .handlerdata, or .fnend directives.
+  PendingOffset -= Offset;
 }
 
 void ARMELFStreamer::EmitRegSave(const SmallVectorImpl<unsigned> &RegList,
                                  bool IsVector) {
+  // Collect the registers in the register list
+  unsigned Count = 0;
+  uint32_t Mask = 0;
   const MCRegisterInfo &MRI = getContext().getRegisterInfo();
-
-#ifndef NDEBUG
-  unsigned Max = IsVector ? 32 : 16;
-#endif
-  uint32_t &RegMask = IsVector ? VFPRegSave : RegSave;
-
   for (size_t i = 0; i < RegList.size(); ++i) {
     unsigned Reg = MRI.getEncodingValue(RegList[i]);
-    assert(Reg < Max && "Register encoded value out of range");
-    RegMask |= 1u << Reg;
+    assert(Reg < (IsVector ? 32 : 16) && "Register out of range");
+    unsigned Bit = (1u << Reg);
+    if ((Mask & Bit) == 0) {
+      Mask |= Bit;
+      ++Count;
+    }
   }
+
+  // Track the change the $sp offset: For the .save directive, the
+  // corresponding push instruction will decrease the $sp by (4 * Count).
+  // For the .vsave directive, the corresponding vpush instruction will
+  // decrease $sp by (8 * Count).
+  SPOffset -= Count * (IsVector ? 8 : 4);
+
+  // Emit the opcode
+  FlushPendingOffset();
+  if (IsVector)
+    UnwindOpAsm.EmitVFPRegSave(Mask);
+  else
+    UnwindOpAsm.EmitRegSave(Mask);
 }
 
 namespace llvm {
