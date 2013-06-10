@@ -157,11 +157,12 @@ lldb_private::formatters::CFBitVectorSummaryProvider (ValueObject& valobj, Strea
         num_bytes = 1024;
     DataBufferSP buffer_sp(new DataBufferHeap(num_bytes,0));
     num_bytes = process_sp->ReadMemory(data_ptr, buffer_sp->GetBytes(), num_bytes, error);
-    if (error.Fail())
+    if (error.Fail() || num_bytes == 0)
         return false;
+    uint8_t *bytes = buffer_sp->GetBytes();
     for (int byte_idx = 0; byte_idx < num_bytes-1; byte_idx++)
     {
-        uint8_t byte = buffer_sp->GetBytes()[byte_idx];
+        uint8_t byte = bytes[byte_idx];
         bool bit0 = (byte & 1) == 1;
         bool bit1 = (byte & 2) == 2;
         bool bit2 = (byte & 4) == 4;
@@ -183,7 +184,7 @@ lldb_private::formatters::CFBitVectorSummaryProvider (ValueObject& valobj, Strea
     }
     {
         // print the last byte ensuring we do not print spurious bits
-        uint8_t byte = buffer_sp->GetBytes()[num_bytes-1];
+        uint8_t byte = bytes[num_bytes-1];
         bool bit0 = (byte & 1) == 1;
         bool bit1 = (byte & 2) == 2;
         bool bit2 = (byte & 4) == 4;
