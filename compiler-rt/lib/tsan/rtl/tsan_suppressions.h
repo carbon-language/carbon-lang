@@ -19,6 +19,7 @@ namespace __tsan {
 
 // Exposed for testing.
 enum SuppressionType {
+  SuppressionNone,
   SuppressionRace,
   SuppressionMutex,
   SuppressionThread,
@@ -36,6 +37,7 @@ void InitializeSuppressions();
 void FinalizeSuppressions();
 void PrintMatchedSuppressions();
 uptr IsSuppressed(ReportType typ, const ReportStack *stack, Suppression **sp);
+uptr IsSuppressed(ReportType typ, const ReportLocation *loc, Suppression **sp);
 Suppression *SuppressionParse(Suppression *head, const char* supp);
 bool SuppressionMatch(char *templ, const char *str);
 
