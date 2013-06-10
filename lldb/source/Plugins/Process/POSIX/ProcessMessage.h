@@ -164,7 +164,7 @@ public:
     }
 
     static const char *
-    GetCrashReasonString(CrashReason reason);
+    GetCrashReasonString(CrashReason reason, lldb::addr_t fault_addr);
 
     const char *
     PrintCrashReason() const;

@@ -237,7 +237,8 @@ POSIXThread::Notify(const ProcessMessage &message)
 {
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
     if (log)
-        log->Printf ("POSIXThread::%s () message kind = '%s'", __FUNCTION__, message.PrintKind());
+        log->Printf ("POSIXThread::%s () message kind = '%s' for tid %" PRIu64,
+                     __FUNCTION__, message.PrintKind(), GetID());
 
     switch (message.GetKind())
     {
@@ -467,9 +468,12 @@ POSIXThread::CrashNotify(const ProcessMessage &message)
 
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
     if (log)
-        log->Printf ("POSIXThread::%s () signo = %i, reason = '%s'", __FUNCTION__, signo, message.PrintCrashReason());
+        log->Printf ("POSIXThread::%s () signo = %i, reason = '%s'",
+                     __FUNCTION__, signo, message.PrintCrashReason());
 
-    SetStopInfo (lldb::StopInfoSP(new POSIXCrashStopInfo(*this, signo, message.GetCrashReason())));
+    SetStopInfo (lldb::StopInfoSP(new POSIXCrashStopInfo(*this, signo,
+                                                         message.GetCrashReason(),
+                                                         message.GetFaultAddress())));
     SetResumeSignal(signo);
 }
 

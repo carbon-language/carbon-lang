@@ -9,12 +9,25 @@
 
 #include "ProcessMessage.h"
 
+#include <sstream>
+
 using namespace lldb_private;
 
-const char *
-ProcessMessage::GetCrashReasonString(CrashReason reason)
+namespace {
+
+inline void AppendFaultAddr(std::string& str, lldb::addr_t addr)
 {
-    const char *str = NULL;
+    std::stringstream ss;
+    ss << " (fault address: 0x" << std::hex << addr << ")";
+    str += ss.str();
+}
+
+}
+
+const char *
+ProcessMessage::GetCrashReasonString(CrashReason reason, lldb::addr_t fault_addr)
+{
+    static std::string str;
 
     switch (reason)
     {
@@ -24,9 +37,11 @@ ProcessMessage::GetCrashReasonString(CrashReason reason)
 
     case eInvalidAddress:
         str = "invalid address";
+        AppendFaultAddr(str, fault_addr);
         break;
     case ePrivilegedAddress:
         str = "address access protected";
+        AppendFaultAddr(str, fault_addr);
         break;
     case eIllegalOpcode:
         str = "illegal instruction";
@@ -87,7 +102,7 @@ ProcessMessage::GetCrashReasonString(CrashReason reason)
         break;
     }
 
-    return str;
+    return str.c_str();
 }
 
 const char *

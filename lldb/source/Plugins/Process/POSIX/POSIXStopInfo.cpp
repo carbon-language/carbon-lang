@@ -56,7 +56,7 @@ POSIXCrashStopInfo::GetStopReason() const
 const char *
 POSIXCrashStopInfo::GetDescription()
 {
-    return ProcessMessage::GetCrashReasonString(m_crash_reason);
+    return ProcessMessage::GetCrashReasonString(m_crash_reason, m_fault_addr);
 }
 
 //===----------------------------------------------------------------------===//
