@@ -279,6 +279,8 @@ static DecodeStatus DecodeCoprocessor(MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeMemBarrierOption(MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeInstSyncBarrierOption(MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeMSRMask(MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeDoubleRegLoad(MCInst &Inst, unsigned Insn,
@@ -3546,6 +3548,15 @@ static DecodeStatus DecodeThumbBLTargetOperand(MCInst &Inst, unsigned Val,
 
 static DecodeStatus DecodeMemBarrierOption(MCInst &Inst, unsigned Val,
                                    uint64_t Address, const void *Decoder) {
+  if (Val & ~0xf)
+    return MCDisassembler::Fail;
+
+  Inst.addOperand(MCOperand::CreateImm(Val));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeInstSyncBarrierOption(MCInst &Inst, unsigned Val,
+                                        uint64_t Address, const void *Decoder) {
   if (Val & ~0xf)
     return MCDisassembler::Fail;
 

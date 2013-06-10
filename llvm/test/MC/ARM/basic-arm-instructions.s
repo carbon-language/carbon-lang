@@ -778,9 +778,13 @@ Lforward:
 @------------------------------------------------------------------------------
         isb sy
         isb
+        isb #15
+        isb #1
 
 @ CHECK: isb sy                         @ encoding: [0x6f,0xf0,0x7f,0xf5]
 @ CHECK: isb sy                         @ encoding: [0x6f,0xf0,0x7f,0xf5]
+@ CHECK: isb sy                         @ encoding: [0x6f,0xf0,0x7f,0xf5]
+@ CHECK: isb #0x1                       @ encoding: [0x61,0xf0,0x7f,0xf5]
 
 
 @------------------------------------------------------------------------------

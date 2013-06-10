@@ -674,6 +674,12 @@ void ARMInstPrinter::printMemBOption(const MCInst *MI, unsigned OpNum,
   O << ARM_MB::MemBOptToString(val);
 }
 
+void ARMInstPrinter::printInstSyncBOption(const MCInst *MI, unsigned OpNum,
+                                          raw_ostream &O) {
+  unsigned val = MI->getOperand(OpNum).getImm();
+  O << ARM_ISB::InstSyncBOptToString(val);
+}
+
 void ARMInstPrinter::printShiftImmOperand(const MCInst *MI, unsigned OpNum,
                                           raw_ostream &O) {
   unsigned ShiftOp = MI->getOperand(OpNum).getImm();

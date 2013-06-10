@@ -371,3 +371,8 @@
 @ CHECK-ERRORS: error: invalid operand for instruction
 @ CHECK-ERRORS:         msr foo, #0
 @ CHECK-ERRORS:             ^
+
+        isb #-1
+        isb #16
+@ CHECK-ERRORS: error: immediate value out of range
+@ CHECK-ERRORS: error: immediate value out of range

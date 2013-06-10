@@ -42,3 +42,8 @@
 @ CHECK-ERRORS: error: invalid operand for instruction
 @ CHECK-ERRORS: error: immediate operand must be in the range [0,15]
 @ CHECK-ERRORS: error: immediate operand must be in the range [0,15]
+
+        isb  #-1
+        isb  #16
+@ CHECK-ERRORS: error: immediate value out of range
+@ CHECK-ERRORS: error: immediate value out of range

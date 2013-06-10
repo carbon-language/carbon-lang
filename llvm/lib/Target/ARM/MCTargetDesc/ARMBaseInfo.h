@@ -161,6 +161,49 @@ namespace ARM_MB {
   }
 } // namespace ARM_MB
 
+namespace ARM_ISB {
+  enum InstSyncBOpt {
+    RESERVED_0 = 0,
+    RESERVED_1 = 1,
+    RESERVED_2 = 2,
+    RESERVED_3 = 3,
+    RESERVED_4 = 4,
+    RESERVED_5 = 5,
+    RESERVED_6 = 6,
+    RESERVED_7 = 7,
+    RESERVED_8 = 8,
+    RESERVED_9 = 9,
+    RESERVED_10 = 10,
+    RESERVED_11 = 11,
+    RESERVED_12 = 12,
+    RESERVED_13 = 13,
+    RESERVED_14 = 14,
+    SY = 15
+  };
+
+  inline static const char *InstSyncBOptToString(unsigned val) {
+    switch (val) {
+      default: llvm_unreachable("Unkown memory operation");
+      case RESERVED_0:  return "#0x0";
+      case RESERVED_1:  return "#0x1";
+      case RESERVED_2:  return "#0x2";
+      case RESERVED_3:  return "#0x3";
+      case RESERVED_4:  return "#0x4";
+      case RESERVED_5:  return "#0x5";
+      case RESERVED_6:  return "#0x6";
+      case RESERVED_7:  return "#0x7";
+      case RESERVED_8:  return "#0x8";
+      case RESERVED_9:  return "#0x9";
+      case RESERVED_10: return "#0xa";
+      case RESERVED_11: return "#0xb";
+      case RESERVED_12: return "#0xc";
+      case RESERVED_13: return "#0xd";
+      case RESERVED_14: return "#0xe";
+      case SY:          return "sy";
+    }
+  }
+} // namespace ARM_ISB
+
 /// isARMLowRegister - Returns true if the register is a low register (r0-r7).
 ///
 static inline bool isARMLowRegister(unsigned Reg) {

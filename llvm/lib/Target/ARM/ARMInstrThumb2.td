@@ -3109,7 +3109,7 @@ def t2DSB : AInoP<(outs), (ins memb_opt:$opt), ThumbFrm, NoItinerary,
   let Inst{3-0} = opt;
 }
 
-def t2ISB : AInoP<(outs), (ins memb_opt:$opt), ThumbFrm, NoItinerary,
+def t2ISB : AInoP<(outs), (ins instsyncb_opt:$opt), ThumbFrm, NoItinerary,
                   "isb", "\t$opt",
                   []>, Requires<[IsThumb, HasDB]> {
   bits<4> opt;

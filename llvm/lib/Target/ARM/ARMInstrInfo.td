@@ -4213,6 +4213,16 @@ def memb_opt : Operand<i32> {
   let DecoderMethod = "DecodeMemBarrierOption";
 }
 
+def InstSyncBarrierOptOperand : AsmOperandClass {
+  let Name = "InstSyncBarrierOpt";
+  let ParserMethod = "parseInstSyncBarrierOptOperand";
+}
+def instsyncb_opt : Operand<i32> {
+  let PrintMethod = "printInstSyncBOption";
+  let ParserMatchClass = InstSyncBarrierOptOperand;
+  let DecoderMethod = "DecodeInstSyncBarrierOption";
+}
+
 // memory barriers protect the atomic sequences
 let hasSideEffects = 1 in {
 def DMB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
@@ -4233,7 +4243,7 @@ def DSB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
 }
 
 // ISB has only full system option
-def ISB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
+def ISB : AInoP<(outs), (ins instsyncb_opt:$opt), MiscFrm, NoItinerary,
                 "isb", "\t$opt", []>,
                 Requires<[IsARM, HasDB]> {
   bits<4> opt;

@@ -571,9 +571,13 @@ _func:
 @------------------------------------------------------------------------------
         isb sy
         isb
+        isb #15
+        isb #1
 
 @ CHECK: isb	sy                      @ encoding: [0xbf,0xf3,0x6f,0x8f]
 @ CHECK: isb	sy                      @ encoding: [0xbf,0xf3,0x6f,0x8f]
+@ CHECK: isb	sy                      @ encoding: [0xbf,0xf3,0x6f,0x8f]
+@ CHECK: isb	#0x1                    @ encoding: [0xbf,0xf3,0x61,0x8f]
 
 
 @------------------------------------------------------------------------------
