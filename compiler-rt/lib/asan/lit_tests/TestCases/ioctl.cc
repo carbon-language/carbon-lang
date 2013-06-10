@@ -4,6 +4,9 @@
 // RUN: %clangxx_asan -O0 -g %s -o %t && %t
 // RUN: %clangxx_asan -O3 -g %s -o %t && %t
 
+// See https://code.google.com/p/address-sanitizer/issues/detail?id=195
+// XFAIL: darwin
+
 #include <assert.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>

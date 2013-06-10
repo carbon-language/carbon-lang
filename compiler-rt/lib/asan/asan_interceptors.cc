@@ -176,7 +176,7 @@ INTERCEPTOR(int, sigaction, int signum, const struct sigaction *act,
 #elif SANITIZER_POSIX
 // We need to have defined REAL(sigaction) on posix systems.
 DEFINE_REAL(int, sigaction, int signum, const struct sigaction *act,
-    struct sigaction *oldact);
+    struct sigaction *oldact)
 #endif  // ASAN_INTERCEPT_SIGNAL_AND_SIGACTION
 
 #if ASAN_INTERCEPT_SWAPCONTEXT
@@ -381,7 +381,7 @@ INTERCEPTOR(char*, index, const char *string, int c)
 DECLARE_REAL(char*, index, const char *string, int c)
 OVERRIDE_FUNCTION(index, strchr);
 #  else
-DEFINE_REAL(char*, index, const char *string, int c);
+DEFINE_REAL(char*, index, const char *string, int c)
 #  endif
 # endif
 #endif  // ASAN_INTERCEPT_INDEX
