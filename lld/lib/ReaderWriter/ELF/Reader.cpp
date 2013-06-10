@@ -86,8 +86,7 @@ public:
                        std::vector<std::unique_ptr<File> > &result) const {
     using llvm::object::ELFType;
     llvm::sys::LLVMFileType fileType =
-        llvm::sys::IdentifyFileType(mb->getBufferStart(),
-                                    static_cast<unsigned>(mb->getBufferSize()));
+        llvm::sys::identifyFileType(mb->getBuffer());
 
     std::size_t MaxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
