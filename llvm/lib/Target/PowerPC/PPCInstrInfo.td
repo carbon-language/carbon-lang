@@ -2154,6 +2154,8 @@ class PPCAsmPseudo<string asm, dag iops>
   let isPseudo = 1;
 }
 
+def : InstAlias<"sc", (SC 0)>;
+
 def : InstAlias<"mr $rA, $rB", (OR8 g8rc:$rA, g8rc:$rB, g8rc:$rB)>;
 
 def SLWI : PPCAsmPseudo<"slwi $rA, $rS, $n",
