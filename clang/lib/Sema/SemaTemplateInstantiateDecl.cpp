@@ -2842,7 +2842,6 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   if (Function->isInvalidDecl() || Function->isDefined())
     return;
 
-
   // Never instantiate an explicit specialization except if it is a class scope
   // explicit specialization.
   if (Function->getTemplateSpecializationKind() == TSK_ExplicitSpecialization &&

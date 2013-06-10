@@ -5121,6 +5121,130 @@ bool Sema::ICEConvertDiagnoser::match(QualType T) {
                                  : T->isIntegralOrUnscopedEnumerationType();
 }
 
+static ExprResult
+diagnoseAmbiguousConversion(Sema &SemaRef, SourceLocation Loc, Expr *From,
+                            Sema::ContextualImplicitConverter &Converter,
+                            QualType T, UnresolvedSetImpl &ViableConversions) {
+
+  if (Converter.Suppress)
+    return ExprError();
+
+  Converter.diagnoseAmbiguous(SemaRef, Loc, T) << From->getSourceRange();
+  for (unsigned I = 0, N = ViableConversions.size(); I != N; ++I) {
+    CXXConversionDecl *Conv =
+        cast<CXXConversionDecl>(ViableConversions[I]->getUnderlyingDecl());
+    QualType ConvTy = Conv->getConversionType().getNonReferenceType();
+    Converter.noteAmbiguous(SemaRef, Conv, ConvTy);
+  }
+  return SemaRef.Owned(From);
+}
+
+static bool
+diagnoseNoViableConversion(Sema &SemaRef, SourceLocation Loc, Expr *&From,
+                           Sema::ContextualImplicitConverter &Converter,
+                           QualType T, bool HadMultipleCandidates,
+                           UnresolvedSetImpl &ExplicitConversions) {
+  if (ExplicitConversions.size() == 1 && !Converter.Suppress) {
+    DeclAccessPair Found = ExplicitConversions[0];
+    CXXConversionDecl *Conversion =
+        cast<CXXConversionDecl>(Found->getUnderlyingDecl());
+
+    // The user probably meant to invoke the given explicit
+    // conversion; use it.
+    QualType ConvTy = Conversion->getConversionType().getNonReferenceType();
+    std::string TypeStr;
+    ConvTy.getAsStringInternal(TypeStr, SemaRef.getPrintingPolicy());
+
+    Converter.diagnoseExplicitConv(SemaRef, Loc, T, ConvTy)
+        << FixItHint::CreateInsertion(From->getLocStart(),
+                                      "static_cast<" + TypeStr + ">(")
+        << FixItHint::CreateInsertion(
+               SemaRef.PP.getLocForEndOfToken(From->getLocEnd()), ")");
+    Converter.noteExplicitConv(SemaRef, Conversion, ConvTy);
+
+    // If we aren't in a SFINAE context, build a call to the
+    // explicit conversion function.
+    if (SemaRef.isSFINAEContext())
+      return true;
+
+    SemaRef.CheckMemberOperatorAccess(From->getExprLoc(), From, 0, Found);
+    ExprResult Result = SemaRef.BuildCXXMemberCallExpr(From, Found, Conversion,
+                                                       HadMultipleCandidates);
+    if (Result.isInvalid())
+      return true;
+    // Record usage of conversion in an implicit cast.
+    From = ImplicitCastExpr::Create(SemaRef.Context, Result.get()->getType(),
+                                    CK_UserDefinedConversion, Result.get(), 0,
+                                    Result.get()->getValueKind());
+  }
+  return false;
+}
+
+static bool recordConversion(Sema &SemaRef, SourceLocation Loc, Expr *&From,
+                             Sema::ContextualImplicitConverter &Converter,
+                             QualType T, bool HadMultipleCandidates,
+                             DeclAccessPair &Found) {
+  CXXConversionDecl *Conversion =
+      cast<CXXConversionDecl>(Found->getUnderlyingDecl());
+  SemaRef.CheckMemberOperatorAccess(From->getExprLoc(), From, 0, Found);
+
+  QualType ToType = Conversion->getConversionType().getNonReferenceType();
+  if (!Converter.SuppressConversion) {
+    if (SemaRef.isSFINAEContext())
+      return true;
+
+    Converter.diagnoseConversion(SemaRef, Loc, T, ToType)
+        << From->getSourceRange();
+  }
+
+  ExprResult Result = SemaRef.BuildCXXMemberCallExpr(From, Found, Conversion,
+                                                     HadMultipleCandidates);
+  if (Result.isInvalid())
+    return true;
+  // Record usage of conversion in an implicit cast.
+  From = ImplicitCastExpr::Create(SemaRef.Context, Result.get()->getType(),
+                                  CK_UserDefinedConversion, Result.get(), 0,
+                                  Result.get()->getValueKind());
+  return false;
+}
+
+static ExprResult finishContextualImplicitConversion(
+    Sema &SemaRef, SourceLocation Loc, Expr *From,
+    Sema::ContextualImplicitConverter &Converter) {
+  if (!Converter.match(From->getType()) && !Converter.Suppress)
+    Converter.diagnoseNoMatch(SemaRef, Loc, From->getType())
+        << From->getSourceRange();
+
+  return SemaRef.DefaultLvalueConversion(From);
+}
+
+static void
+collectViableConversionCandidates(Sema &SemaRef, Expr *From, QualType ToType,
+                                  UnresolvedSetImpl &ViableConversions,
+                                  OverloadCandidateSet &CandidateSet) {
+  for (unsigned I = 0, N = ViableConversions.size(); I != N; ++I) {
+    DeclAccessPair FoundDecl = ViableConversions[I];
+    NamedDecl *D = FoundDecl.getDecl();
+    CXXRecordDecl *ActingContext = cast<CXXRecordDecl>(D->getDeclContext());
+    if (isa<UsingShadowDecl>(D))
+      D = cast<UsingShadowDecl>(D)->getTargetDecl();
+
+    CXXConversionDecl *Conv;
+    FunctionTemplateDecl *ConvTemplate;
+    if ((ConvTemplate = dyn_cast<FunctionTemplateDecl>(D)))
+      Conv = cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
+    else
+      Conv = cast<CXXConversionDecl>(D);
+
+    if (ConvTemplate)
+      SemaRef.AddTemplateConversionCandidate(
+          ConvTemplate, FoundDecl, ActingContext, From, ToType, CandidateSet);
+    else
+      SemaRef.AddConversionCandidate(Conv, FoundDecl, ActingContext, From,
+                                     ToType, CandidateSet);
+  }
+}
+
 /// \brief Attempt to convert the given expression to a type which is accepted
 /// by the given converter.
 ///
@@ -5148,7 +5272,8 @@ ExprResult Sema::PerformContextualImplicitConversion(
   // Process placeholders immediately.
   if (From->hasPlaceholderType()) {
     ExprResult result = CheckPlaceholderExpr(From);
-    if (result.isInvalid()) return result;
+    if (result.isInvalid())
+      return result;
     From = result.take();
   }
 
@@ -5185,119 +5310,142 @@ ExprResult Sema::PerformContextualImplicitConversion(
     return Owned(From);
 
   // Look for a conversion to an integral or enumeration type.
-  UnresolvedSet<4> ViableConversions;
+  UnresolvedSet<4>
+      ViableConversions; // These are *potentially* viable in C++1y.
   UnresolvedSet<4> ExplicitConversions;
   std::pair<CXXRecordDecl::conversion_iterator,
-            CXXRecordDecl::conversion_iterator> Conversions
-    = cast<CXXRecordDecl>(RecordTy->getDecl())->getVisibleConversionFunctions();
+            CXXRecordDecl::conversion_iterator> Conversions =
+      cast<CXXRecordDecl>(RecordTy->getDecl())->getVisibleConversionFunctions();
 
-  bool HadMultipleCandidates
-    = (std::distance(Conversions.first, Conversions.second) > 1);
+  bool HadMultipleCandidates =
+      (std::distance(Conversions.first, Conversions.second) > 1);
 
-  for (CXXRecordDecl::conversion_iterator
-         I = Conversions.first, E = Conversions.second; I != E; ++I) {
-    if (CXXConversionDecl *Conversion
-          = dyn_cast<CXXConversionDecl>((*I)->getUnderlyingDecl())) {
-      if (Converter.match(
-              Conversion->getConversionType().getNonReferenceType())) {
-        if (Conversion->isExplicit())
+  // To check that there is only one target type, in C++1y:
+  QualType ToType;
+  bool HasUniqueTargetType = true;
+
+  // Collect explicit or viable (potentially in C++1y) conversions.
+  for (CXXRecordDecl::conversion_iterator I = Conversions.first,
+                                          E = Conversions.second;
+       I != E; ++I) {
+    NamedDecl *D = (*I)->getUnderlyingDecl();
+    CXXConversionDecl *Conversion;
+    FunctionTemplateDecl *ConvTemplate = dyn_cast<FunctionTemplateDecl>(D);
+    if (ConvTemplate) {
+      if (getLangOpts().CPlusPlus1y)
+        Conversion = cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
+      else
+        continue; // C++11 does not consider conversion operator templates(?).
+    } else
+      Conversion = cast<CXXConversionDecl>(D);
+
+    assert((!ConvTemplate || getLangOpts().CPlusPlus1y) &&
+           "Conversion operator templates are considered potentially "
+           "viable in C++1y");
+
+    QualType CurToType = Conversion->getConversionType().getNonReferenceType();
+    if (Converter.match(CurToType) || ConvTemplate) {
+
+      if (Conversion->isExplicit()) {
+        // FIXME: For C++1y, do we need this restriction?
+        // cf. diagnoseNoViableConversion()
+        if (!ConvTemplate)
           ExplicitConversions.addDecl(I.getDecl(), I.getAccess());
-        else
-          ViableConversions.addDecl(I.getDecl(), I.getAccess());
+      } else {
+        if (!ConvTemplate && getLangOpts().CPlusPlus1y) {
+          if (ToType.isNull())
+            ToType = CurToType.getUnqualifiedType();
+          else if (HasUniqueTargetType &&
+                   (CurToType.getUnqualifiedType() != ToType))
+            HasUniqueTargetType = false;
+        }
+        ViableConversions.addDecl(I.getDecl(), I.getAccess());
       }
     }
   }
 
-  // FIXME: Implement the C++11 rules!
-  switch (ViableConversions.size()) {
-  case 0:
-    if (ExplicitConversions.size() == 1 && !Converter.Suppress) {
-      DeclAccessPair Found = ExplicitConversions[0];
-      CXXConversionDecl *Conversion
-        = cast<CXXConversionDecl>(Found->getUnderlyingDecl());
+  if (getLangOpts().CPlusPlus1y) {
+    // C++1y [conv]p6:
+    // ... An expression e of class type E appearing in such a context
+    // is said to be contextually implicitly converted to a specified
+    // type T and is well-formed if and only if e can be implicitly
+    // converted to a type T that is determined as follows: E is searched
+    // for conversion functions whose return type is cv T or reference
+    // to cv T such that T is allowed by the context. There shall be
+    // exactly one such T.
 
-      // The user probably meant to invoke the given explicit
-      // conversion; use it.
-      QualType ConvTy
-        = Conversion->getConversionType().getNonReferenceType();
-      std::string TypeStr;
-      ConvTy.getAsStringInternal(TypeStr, getPrintingPolicy());
-
-      Converter.diagnoseExplicitConv(*this, Loc, T, ConvTy)
-        << FixItHint::CreateInsertion(From->getLocStart(),
-                                      "static_cast<" + TypeStr + ">(")
-        << FixItHint::CreateInsertion(PP.getLocForEndOfToken(From->getLocEnd()),
-                                      ")");
-      Converter.noteExplicitConv(*this, Conversion, ConvTy);
-
-      // If we aren't in a SFINAE context, build a call to the
-      // explicit conversion function.
-      if (isSFINAEContext())
+    // If no unique T is found:
+    if (ToType.isNull()) {
+      if (diagnoseNoViableConversion(*this, Loc, From, Converter, T,
+                                     HadMultipleCandidates,
+                                     ExplicitConversions))
         return ExprError();
-
-      CheckMemberOperatorAccess(From->getExprLoc(), From, 0, Found);
-      ExprResult Result = BuildCXXMemberCallExpr(From, Found, Conversion,
-                                                 HadMultipleCandidates);
-      if (Result.isInvalid())
-        return ExprError();
-      // Record usage of conversion in an implicit cast.
-      From = ImplicitCastExpr::Create(Context, Result.get()->getType(),
-                                      CK_UserDefinedConversion,
-                                      Result.get(), 0,
-                                      Result.get()->getValueKind());
+      return finishContextualImplicitConversion(*this, Loc, From, Converter);
     }
 
-    // We'll complain below about a non-integral condition type.
-    break;
+    // If more than one unique Ts are found:
+    if (!HasUniqueTargetType)
+      return diagnoseAmbiguousConversion(*this, Loc, From, Converter, T,
+                                         ViableConversions);
 
-  case 1: {
-    // Apply this conversion.
-    DeclAccessPair Found = ViableConversions[0];
-    CheckMemberOperatorAccess(From->getExprLoc(), From, 0, Found);
+    // If one unique T is found:
+    // First, build a candidate set from the previously recorded
+    // potentially viable conversions.
+    OverloadCandidateSet CandidateSet(Loc);
+    collectViableConversionCandidates(*this, From, ToType, ViableConversions,
+                                      CandidateSet);
 
-    CXXConversionDecl *Conversion
-      = cast<CXXConversionDecl>(Found->getUnderlyingDecl());
-    QualType ConvTy
-      = Conversion->getConversionType().getNonReferenceType();
-    if (!Converter.SuppressConversion) {
-      if (isSFINAEContext())
+    // Then, perform overload resolution over the candidate set.
+    OverloadCandidateSet::iterator Best;
+    switch (CandidateSet.BestViableFunction(*this, Loc, Best)) {
+    case OR_Success: {
+      // Apply this conversion.
+      DeclAccessPair Found =
+          DeclAccessPair::make(Best->Function, Best->FoundDecl.getAccess());
+      if (recordConversion(*this, Loc, From, Converter, T,
+                           HadMultipleCandidates, Found))
+        return ExprError();
+      break;
+    }
+    case OR_Ambiguous:
+      return diagnoseAmbiguousConversion(*this, Loc, From, Converter, T,
+                                         ViableConversions);
+    case OR_No_Viable_Function:
+      if (diagnoseNoViableConversion(*this, Loc, From, Converter, T,
+                                     HadMultipleCandidates,
+                                     ExplicitConversions))
+        return ExprError();
+    // fall through 'OR_Deleted' case.
+    case OR_Deleted:
+      // We'll complain below about a non-integral condition type.
+      break;
+    }
+  } else {
+    switch (ViableConversions.size()) {
+    case 0: {
+      if (diagnoseNoViableConversion(*this, Loc, From, Converter, T,
+                                     HadMultipleCandidates,
+                                     ExplicitConversions))
         return ExprError();
 
-      Converter.diagnoseConversion(*this, Loc, T, ConvTy)
-        << From->getSourceRange();
+      // We'll complain below about a non-integral condition type.
+      break;
     }
-
-    ExprResult Result = BuildCXXMemberCallExpr(From, Found, Conversion,
-                                               HadMultipleCandidates);
-    if (Result.isInvalid())
-      return ExprError();
-    // Record usage of conversion in an implicit cast.
-    From = ImplicitCastExpr::Create(Context, Result.get()->getType(),
-                                    CK_UserDefinedConversion,
-                                    Result.get(), 0,
-                                    Result.get()->getValueKind());
-    break;
+    case 1: {
+      // Apply this conversion.
+      DeclAccessPair Found = ViableConversions[0];
+      if (recordConversion(*this, Loc, From, Converter, T,
+                           HadMultipleCandidates, Found))
+        return ExprError();
+      break;
+    }
+    default:
+      return diagnoseAmbiguousConversion(*this, Loc, From, Converter, T,
+                                         ViableConversions);
+    }
   }
 
-  default:
-    if (Converter.Suppress)
-      return ExprError();
-
-    Converter.diagnoseAmbiguous(*this, Loc, T) << From->getSourceRange();
-    for (unsigned I = 0, N = ViableConversions.size(); I != N; ++I) {
-      CXXConversionDecl *Conv
-        = cast<CXXConversionDecl>(ViableConversions[I]->getUnderlyingDecl());
-      QualType ConvTy = Conv->getConversionType().getNonReferenceType();
-      Converter.noteAmbiguous(*this, Conv, ConvTy);
-    }
-    return Owned(From);
-  }
-
-  if (!Converter.match(From->getType()) && !Converter.Suppress)
-    Converter.diagnoseNoMatch(*this, Loc, From->getType())
-      << From->getSourceRange();
-
-  return DefaultLvalueConversion(From);
+  return finishContextualImplicitConversion(*this, Loc, From, Converter);
 }
 
 /// AddOverloadCandidate - Adds the given function to the set of
