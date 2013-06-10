@@ -674,6 +674,7 @@ int asan_posix_memalign(void **memptr, uptr alignment, uptr size,
   return 0;
 }
 
+SANITIZER_INTERFACE_ATTRIBUTE
 uptr asan_malloc_usable_size(void *ptr, StackTrace *stack) {
   CHECK(stack);
   if (ptr == 0) return 0;
