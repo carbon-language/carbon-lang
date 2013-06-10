@@ -146,14 +146,15 @@ static uptr ComputeRZLog(uptr user_requested_size) {
 // ChunkBase consists of ChunkHeader and other bytes that overlap with user
 // memory.
 
-// If a memory chunk is allocated by memalign and we had to increase the
-// allocation size to achieve the proper alignment, then we store this magic
+// If the left redzone is greater than the ChunkHeader size we store a magic
 // value in the first uptr word of the memory block and store the address of
 // ChunkBase in the next uptr.
-// M B ? ? ? L L L L L L  H H U U U U U U
-//   M -- magic value kMemalignMagic
+// M B L L L L L L L L L  H H U U U U U U
+//   |                    ^
+//   ---------------------|
+//   M -- magic value kAllocBegMagic
 //   B -- address of ChunkHeader pointing to the first 'H'
-static const uptr kMemalignMagic = 0xCC6E96B9;
+static const uptr kAllocBegMagic = 0xCC6E96B9;
 
 struct ChunkHeader {
   // 1-st 8 bytes.
@@ -276,10 +277,10 @@ struct QuarantineCallback {
                  RoundUpTo(m->UsedSize(), SHADOW_GRANULARITY),
                  kAsanHeapLeftRedzoneMagic);
     void *p = reinterpret_cast<void *>(m->AllocBeg());
-    if (m->from_memalign) {
-      uptr *memalign_magic = reinterpret_cast<uptr *>(p);
-      CHECK_EQ(memalign_magic[0], kMemalignMagic);
-      CHECK_EQ(memalign_magic[1], reinterpret_cast<uptr>(m));
+    if (p != m) {
+      uptr *alloc_magic = reinterpret_cast<uptr *>(p);
+      CHECK_EQ(alloc_magic[0], kAllocBegMagic);
+      CHECK_EQ(alloc_magic[1], reinterpret_cast<uptr>(m));
     }
 
     // Statistics.
@@ -355,8 +356,6 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
     allocated = allocator.Allocate(cache, needed_size, 8, false);
   }
   uptr alloc_beg = reinterpret_cast<uptr>(allocated);
-  // Clear the first allocated word (an old kMemalignMagic may still be there).
-  reinterpret_cast<uptr *>(alloc_beg)[0] = 0;
   uptr alloc_end = alloc_beg + needed_size;
   uptr beg_plus_redzone = alloc_beg + rz_size;
   uptr user_beg = beg_plus_redzone;
@@ -373,11 +372,10 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
   CHECK_EQ(alloc_tid, m->alloc_tid);  // Does alloc_tid fit into the bitfield?
   m->free_tid = kInvalidTid;
   m->from_memalign = user_beg != beg_plus_redzone;
-  if (m->from_memalign) {
-    CHECK_LE(beg_plus_redzone + 2 * sizeof(uptr), user_beg);
-    uptr *memalign_magic = reinterpret_cast<uptr *>(alloc_beg);
-    memalign_magic[0] = kMemalignMagic;
-    memalign_magic[1] = chunk_beg;
+  if (alloc_beg != chunk_beg) {
+    CHECK_LE(alloc_beg+ 2 * sizeof(uptr), chunk_beg);
+    reinterpret_cast<uptr *>(alloc_beg)[0] = kAllocBegMagic;
+    reinterpret_cast<uptr *>(alloc_beg)[1] = chunk_beg;
   }
   if (using_primary_allocator) {
     CHECK(size);
@@ -533,31 +531,15 @@ static void *Reallocate(void *old_ptr, uptr new_size, StackTrace *stack) {
 // Assumes alloc_beg == allocator.GetBlockBegin(alloc_beg).
 static AsanChunk *GetAsanChunk(void *alloc_beg) {
   if (!alloc_beg) return 0;
-  uptr *memalign_magic = reinterpret_cast<uptr *>(alloc_beg);
-  if (memalign_magic[0] == kMemalignMagic) {
-    AsanChunk *m = reinterpret_cast<AsanChunk *>(memalign_magic[1]);
-    CHECK(m->from_memalign);
-    return m;
-  }
   if (!allocator.FromPrimary(alloc_beg)) {
     uptr *meta = reinterpret_cast<uptr *>(allocator.GetMetaData(alloc_beg));
     AsanChunk *m = reinterpret_cast<AsanChunk *>(meta[1]);
     return m;
   }
-  uptr actual_size =
-      allocator.GetActuallyAllocatedSize(alloc_beg);
-  CHECK_LE(actual_size, SizeClassMap::kMaxSize);
-  // We know the actually allocted size, but we don't know the redzone size.
-  // Just try all possible redzone sizes.
-  for (u32 rz_log = 0; rz_log < 8; rz_log++) {
-    u32 rz_size = RZLog2Size(rz_log);
-    uptr max_possible_size = actual_size - rz_size;
-    if (ComputeRZLog(max_possible_size) != rz_log)
-      continue;
-    return reinterpret_cast<AsanChunk *>(
-        reinterpret_cast<uptr>(alloc_beg) + rz_size - kChunkHeaderSize);
-  }
-  return 0;
+  uptr *alloc_magic = reinterpret_cast<uptr *>(alloc_beg);
+  if (alloc_magic[0] == kAllocBegMagic)
+    return reinterpret_cast<AsanChunk *>(alloc_magic[1]);
+  return reinterpret_cast<AsanChunk *>(alloc_beg);
 }
 
 static AsanChunk *GetAsanChunkByAddr(uptr p) {

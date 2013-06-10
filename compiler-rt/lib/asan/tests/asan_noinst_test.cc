@@ -66,6 +66,7 @@ static void MallocStress(size_t n) {
       size_t alignment = 1 << (my_rand_r(&seed) % 10 + 1);
       char *ptr = (char*)__asan::asan_memalign(alignment, size,
                                                &stack2, __asan::FROM_MALLOC);
+      EXPECT_EQ(size, __asan::asan_malloc_usable_size(ptr, &stack2));
       vec.push_back(ptr);
       ptr[0] = 0;
       ptr[size-1] = 0;

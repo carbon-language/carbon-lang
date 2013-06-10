@@ -179,8 +179,8 @@ static void ioctl_table_fill() {
   _(0x00005315, READ, struct_cdrom_msf_sz);             // CDROMREADCOOKED
   _(0x00005316, READ, struct_cdrom_msf_sz);             // CDROMSEEK
   // Conflicting request id.
-  // _(0x00005382, NONE, 0);                               // CDROMAUDIOBUFSIZ
-  // _(0x00005382, WRITE, 2 * sizeof(int));                // SCSI_IOCTL_GET_IDLUN
+  // _(0x00005382, NONE, 0);                      // CDROMAUDIOBUFSIZ
+  // _(0x00005382, WRITE, 2 * sizeof(int));       // SCSI_IOCTL_GET_IDLUN
   _(0x00005383, NONE, 0);                         // SCSI_IOCTL_TAGGED_ENABLE
   _(0x00005384, NONE, 0);                         // SCSI_IOCTL_TAGGED_DISABLE
   _(0x00005385, READ, sizeof(int));               // SCSI_IOCTL_PROBE_HOST
