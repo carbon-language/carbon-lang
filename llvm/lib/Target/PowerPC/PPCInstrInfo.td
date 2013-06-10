@@ -2168,12 +2168,23 @@ def SRDI : PPCAsmPseudo<"srdi $rA, $rS, $n",
 multiclass BranchExtendedMnemonic<string name, int bibo> {
   def : InstAlias<"b"#name#" $cc, $dst",
                   (BCC bibo, crrc:$cc, condbrtarget:$dst)>;
+  def : InstAlias<"b"#name#" $dst",
+                  (BCC bibo, CR0, condbrtarget:$dst)>;
+
   def : InstAlias<"b"#name#"lr $cc",
                   (BCLR bibo, crrc:$cc)>;
+  def : InstAlias<"b"#name#"lr",
+                  (BCLR bibo, CR0)>;
+
   def : InstAlias<"b"#name#"ctr $cc",
                   (BCCTR bibo, crrc:$cc)>;
+  def : InstAlias<"b"#name#"ctr",
+                  (BCCTR bibo, CR0)>;
+
   def : InstAlias<"b"#name#"ctrl $cc",
                   (BCCTRL bibo, crrc:$cc)>;
+  def : InstAlias<"b"#name#"ctrl",
+                  (BCCTRL bibo, CR0)>;
 }
 defm : BranchExtendedMnemonic<"lt", 12>;
 defm : BranchExtendedMnemonic<"gt", 44>;
