@@ -2165,55 +2165,26 @@ def SLDI : PPCAsmPseudo<"sldi $rA, $rS, $n",
 def SRDI : PPCAsmPseudo<"srdi $rA, $rS, $n",
                         (ins g8rc:$rA, g8rc:$rS, u6imm:$n)>;
 
-def : InstAlias<"blt $cc, $dst", (BCC 12, crrc:$cc, condbrtarget:$dst)>;
-def : InstAlias<"bgt $cc, $dst", (BCC 44, crrc:$cc, condbrtarget:$dst)>;
-def : InstAlias<"beq $cc, $dst", (BCC 76, crrc:$cc, condbrtarget:$dst)>;
-def : InstAlias<"bun $cc, $dst", (BCC 108, crrc:$cc, condbrtarget:$dst)>;
-def : InstAlias<"bso $cc, $dst", (BCC 108, crrc:$cc, condbrtarget:$dst)>;
-def : InstAlias<"bge $cc, $dst", (BCC 4, crrc:$cc, condbrtarget:$dst)>;
-def : InstAlias<"bnl $cc, $dst", (BCC 4, crrc:$cc, condbrtarget:$dst)>;
-def : InstAlias<"ble $cc, $dst", (BCC 36, crrc:$cc, condbrtarget:$dst)>;
-def : InstAlias<"bng $cc, $dst", (BCC 36, crrc:$cc, condbrtarget:$dst)>;
-def : InstAlias<"bne $cc, $dst", (BCC 68, crrc:$cc, condbrtarget:$dst)>;
-def : InstAlias<"bnu $cc, $dst", (BCC 100, crrc:$cc, condbrtarget:$dst)>;
-def : InstAlias<"bns $cc, $dst", (BCC 100, crrc:$cc, condbrtarget:$dst)>;
-
-def : InstAlias<"bltlr $cc", (BCLR 12, crrc:$cc)>;
-def : InstAlias<"bgtlr $cc", (BCLR 44, crrc:$cc)>;
-def : InstAlias<"beqlr $cc", (BCLR 76, crrc:$cc)>;
-def : InstAlias<"bunlr $cc", (BCLR 108, crrc:$cc)>;
-def : InstAlias<"bsolr $cc", (BCLR 108, crrc:$cc)>;
-def : InstAlias<"bgelr $cc", (BCLR 4, crrc:$cc)>;
-def : InstAlias<"bnllr $cc", (BCLR 4, crrc:$cc)>;
-def : InstAlias<"blelr $cc", (BCLR 36, crrc:$cc)>;
-def : InstAlias<"bnglr $cc", (BCLR 36, crrc:$cc)>;
-def : InstAlias<"bnelr $cc", (BCLR 68, crrc:$cc)>;
-def : InstAlias<"bnulr $cc", (BCLR 100, crrc:$cc)>;
-def : InstAlias<"bnslr $cc", (BCLR 100, crrc:$cc)>;
-
-def : InstAlias<"bltctr $cc", (BCCTR 12, crrc:$cc)>;
-def : InstAlias<"bgtctr $cc", (BCCTR 44, crrc:$cc)>;
-def : InstAlias<"beqctr $cc", (BCCTR 76, crrc:$cc)>;
-def : InstAlias<"bunctr $cc", (BCCTR 108, crrc:$cc)>;
-def : InstAlias<"bsoctr $cc", (BCCTR 108, crrc:$cc)>;
-def : InstAlias<"bgectr $cc", (BCCTR 4, crrc:$cc)>;
-def : InstAlias<"bnlctr $cc", (BCCTR 4, crrc:$cc)>;
-def : InstAlias<"blectr $cc", (BCCTR 36, crrc:$cc)>;
-def : InstAlias<"bngctr $cc", (BCCTR 36, crrc:$cc)>;
-def : InstAlias<"bnectr $cc", (BCCTR 68, crrc:$cc)>;
-def : InstAlias<"bnuctr $cc", (BCCTR 100, crrc:$cc)>;
-def : InstAlias<"bnsctr $cc", (BCCTR 100, crrc:$cc)>;
-
-def : InstAlias<"bltctrl $cc", (BCCTRL 12, crrc:$cc)>;
-def : InstAlias<"bgtctrl $cc", (BCCTRL 44, crrc:$cc)>;
-def : InstAlias<"beqctrl $cc", (BCCTRL 76, crrc:$cc)>;
-def : InstAlias<"bunctrl $cc", (BCCTRL 108, crrc:$cc)>;
-def : InstAlias<"bsoctrl $cc", (BCCTRL 108, crrc:$cc)>;
-def : InstAlias<"bgectrl $cc", (BCCTRL 4, crrc:$cc)>;
-def : InstAlias<"bnlctrl $cc", (BCCTRL 4, crrc:$cc)>;
-def : InstAlias<"blectrl $cc", (BCCTRL 36, crrc:$cc)>;
-def : InstAlias<"bngctrl $cc", (BCCTRL 36, crrc:$cc)>;
-def : InstAlias<"bnectrl $cc", (BCCTRL 68, crrc:$cc)>;
-def : InstAlias<"bnuctrl $cc", (BCCTRL 100, crrc:$cc)>;
-def : InstAlias<"bnsctrl $cc", (BCCTRL 100, crrc:$cc)>;
+multiclass BranchExtendedMnemonic<string name, int bibo> {
+  def : InstAlias<"b"#name#" $cc, $dst",
+                  (BCC bibo, crrc:$cc, condbrtarget:$dst)>;
+  def : InstAlias<"b"#name#"lr $cc",
+                  (BCLR bibo, crrc:$cc)>;
+  def : InstAlias<"b"#name#"ctr $cc",
+                  (BCCTR bibo, crrc:$cc)>;
+  def : InstAlias<"b"#name#"ctrl $cc",
+                  (BCCTRL bibo, crrc:$cc)>;
+}
+defm : BranchExtendedMnemonic<"lt", 12>;
+defm : BranchExtendedMnemonic<"gt", 44>;
+defm : BranchExtendedMnemonic<"eq", 76>;
+defm : BranchExtendedMnemonic<"un", 108>;
+defm : BranchExtendedMnemonic<"so", 108>;
+defm : BranchExtendedMnemonic<"ge", 4>;
+defm : BranchExtendedMnemonic<"nl", 4>;
+defm : BranchExtendedMnemonic<"le", 36>;
+defm : BranchExtendedMnemonic<"ng", 36>;
+defm : BranchExtendedMnemonic<"ne", 68>;
+defm : BranchExtendedMnemonic<"nu", 100>;
+defm : BranchExtendedMnemonic<"ns", 100>;
 
