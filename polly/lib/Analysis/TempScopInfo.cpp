@@ -73,41 +73,40 @@ void TempScop::printDetail(llvm::raw_ostream &OS, ScalarEvolution *SE,
                            LoopInfo *LI, const Region *CurR,
                            unsigned ind) const {}
 
+IRAccess TempScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R) {
+  unsigned Size;
+  enum IRAccess::TypeKind Type;
+
+  if (LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
+    Size = TD->getTypeStoreSize(Load->getType());
+    Type = IRAccess::READ;
+  } else {
+    StoreInst *Store = cast<StoreInst>(Inst);
+    Size = TD->getTypeStoreSize(Store->getValueOperand()->getType());
+    Type = IRAccess::WRITE;
+  }
+
+  const SCEV *AccessFunction =
+      SE->getSCEVAtScope(getPointerOperand(*Inst), L);
+  const SCEVUnknown *BasePointer =
+      dyn_cast<SCEVUnknown>(SE->getPointerBase(AccessFunction));
+
+  assert(BasePointer && "Could not find base pointer");
+  AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
+
+  bool IsAffine = isAffineExpr(R, AccessFunction, *SE, BasePointer->getValue());
+
+  return IRAccess(Type, BasePointer->getValue(), AccessFunction, Size, IsAffine);
+}
+
 void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB) {
   AccFuncSetType Functions;
   Loop *L = LI->getLoopFor(&BB);
 
   for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I) {
-    Instruction &Inst = *I;
-    if (isa<LoadInst>(&Inst) || isa<StoreInst>(&Inst)) {
-      unsigned Size;
-      enum IRAccess::TypeKind Type;
-
-      if (LoadInst *Load = dyn_cast<LoadInst>(&Inst)) {
-        Size = TD->getTypeStoreSize(Load->getType());
-        Type = IRAccess::READ;
-      } else {
-        StoreInst *Store = cast<StoreInst>(&Inst);
-        Size = TD->getTypeStoreSize(Store->getValueOperand()->getType());
-        Type = IRAccess::WRITE;
-      }
-
-      const SCEV *AccessFunction =
-          SE->getSCEVAtScope(getPointerOperand(Inst), L);
-      const SCEVUnknown *BasePointer =
-          dyn_cast<SCEVUnknown>(SE->getPointerBase(AccessFunction));
-
-      assert(BasePointer && "Could not find base pointer");
-      AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
-
-      bool IsAffine =
-          isAffineExpr(&R, AccessFunction, *SE, BasePointer->getValue());
-
-      Functions.push_back(
-          std::make_pair(IRAccess(Type, BasePointer->getValue(), AccessFunction,
-                                  Size, IsAffine),
-                         &Inst));
-    }
+    Instruction *Inst = I;
+    if (isa<LoadInst>(Inst) || isa<StoreInst>(Inst))
+      Functions.push_back(std::make_pair(buildIRAccess(Inst, L, &R), Inst));
   }
 
   if (Functions.empty())

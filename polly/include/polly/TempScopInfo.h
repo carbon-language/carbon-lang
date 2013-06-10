@@ -264,6 +264,16 @@ class TempScopInfo : public FunctionPass {
   // of Scop.
   TempScop *buildTempScop(Region &R);
 
+  /// @brief Build an instance of IRAccess from the Load/Store instruction.
+  ///
+  /// @param Inst The Load/Store instruction that access the memory
+  /// @param L    The parent loop of the instruction
+  /// @param R    The region on which we are going to build a TempScop
+  ///
+  /// @return     The IRAccess to describe the access function of the
+  ///             instruction.
+  IRAccess buildIRAccess(Instruction *Inst, Loop *L, Region *R);
+
   void buildAccessFunctions(Region &RefRegion, BasicBlock &BB);
 
   void buildLoopBounds(TempScop &Scop);
