@@ -213,6 +213,12 @@ private:
 };
 
 class FileCOFF : public File {
+private:
+  typedef std::vector<const llvm::object::coff_symbol*> SymbolVector;
+  typedef std::map<const llvm::object::coff_section*,
+                   std::vector<const llvm::object::coff_symbol*>>
+      SectionToSymbolVectorMap;
+
 public:
   FileCOFF(const TargetInfo &ti, std::unique_ptr<llvm::MemoryBuffer> MB,
            llvm::error_code &EC)
@@ -229,117 +235,20 @@ public:
     }
     Bin.take();
 
-    const llvm::object::coff_file_header *Header = nullptr;
-    if ((EC = Obj->getHeader(Header)))
-      return;
-
     // Assign each symbol to the section it's in. If it does not belong to a
     // section, create an atom for it now.
-    std::map< const llvm::object::coff_section*
-            , std::vector<const llvm::object::coff_symbol*>> SectionSymbols;
+    SectionToSymbolVectorMap definedSymbols;
+    if ((EC = readSymbolTable(definedSymbols)))
+      return;
 
-    for (uint32_t i = 0, e = Header->NumberOfSymbols; i != e; ++i) {
-      const llvm::object::coff_symbol *Symb;
-      if ((EC = Obj->getSymbol(i, Symb)))
+    // Atomize defined symbols. This is a separate pass from readSymbolTable()
+    // because in order to create an atom for a symbol we need to the adjacent
+    // symbols.
+    for (auto &i : definedSymbols) {
+      const llvm::object::coff_section *section = i.first;
+      std::vector<const llvm::object::coff_symbol*> &symbols = i.second;
+      if ((EC = AtomizeDefinedSymbols(section, symbols)))
         return;
-      llvm::StringRef Name;
-      if ((EC = Obj->getSymbolName(Symb, Name)))
-        return;
-      int16_t SectionIndex = Symb->SectionNumber;
-      assert(SectionIndex != llvm::COFF::IMAGE_SYM_DEBUG &&
-        "Cannot atomize IMAGE_SYM_DEBUG!");
-      if (SectionIndex == llvm::COFF::IMAGE_SYM_ABSOLUTE) {
-        // Create an absolute atom.
-        AbsoluteAtoms._atoms.push_back(
-          new (AtomStorage.Allocate<COFFAbsoluteAtom>())
-            COFFAbsoluteAtom(*this, Name, Symb->Value));
-      } else if (SectionIndex == llvm::COFF::IMAGE_SYM_UNDEFINED) {
-        // Create an undefined atom.
-        UndefinedAtoms._atoms.push_back(
-          new (AtomStorage.Allocate<COFFUndefinedAtom>())
-            COFFUndefinedAtom(*this, Name));
-      } else if (   Symb->StorageClass == llvm::COFF::IMAGE_SYM_CLASS_STATIC
-                 && Symb->Value == 0) {
-        // A symbol with IMAGE_SYM_CLASS_STATIC and zero value represents a
-        // section name. This is redundant and we can safely skip this here
-        // because the same section name is also in the section header.
-      } else {
-        // This is actually a defined symbol. Add it to its section's list of
-        // symbols.
-        uint8_t SC = Symb->StorageClass;
-        // If Symb->Value actually means section offset.
-        if (   SC == llvm::COFF::IMAGE_SYM_CLASS_EXTERNAL
-            || SC == llvm::COFF::IMAGE_SYM_CLASS_STATIC
-            || SC == llvm::COFF::IMAGE_SYM_CLASS_FUNCTION) {
-          const llvm::object::coff_section *Sec;
-          if ((EC = Obj->getSection(SectionIndex, Sec)))
-            return;
-          assert(Sec && "SectionIndex > 0, Sec must be non-null!");
-          SectionSymbols[Sec].push_back(Symb);
-        } else {
-          llvm::errs() << "Unable to create atom for: " << Name << "\n";
-          EC = llvm::object::object_error::parse_failed;
-          return;
-        }
-      }
-      // Skip aux symbols.
-      i += Symb->NumberOfAuxSymbols;
-    }
-
-    // For each section, sort its symbols by address, then create a defined atom
-    // for each range.
-    for (auto &i : SectionSymbols) {
-      auto &Symbs = i.second;
-      // Sort symbols by position.
-      std::stable_sort(Symbs.begin(), Symbs.end(),
-        // For some reason MSVC fails to allow the lambda in this context with a
-        // "illegal use of local type in type instantiation". MSVC is clearly
-        // wrong here. Force a conversion to function pointer to work around.
-        static_cast<bool(*)(const coff_symbol*, const coff_symbol*)>(
-          [](const coff_symbol *A, const coff_symbol *B) -> bool {
-        return A->Value < B->Value;
-      }));
-
-      if (Symbs.empty()) {
-        // Create an atom for the entire section.
-        llvm::ArrayRef<uint8_t> Data;
-        DefinedAtoms._atoms.push_back(
-          new (AtomStorage.Allocate<COFFDefinedAtom>())
-            COFFDefinedAtom(*this, "", nullptr, i.first, Data));
-        continue;
-      }
-
-      llvm::ArrayRef<uint8_t> SecData;
-      if ((EC = Obj->getSectionContents(i.first, SecData)))
-        return;
-
-      // Create an unnamed atom if the first atom isn't at the start of the
-      // section.
-      if (Symbs[0]->Value != 0) {
-        uint64_t Size = Symbs[0]->Value;
-        llvm::ArrayRef<uint8_t> Data(SecData.data(), Size);
-        DefinedAtoms._atoms.push_back(
-          new (AtomStorage.Allocate<COFFDefinedAtom>())
-            COFFDefinedAtom(*this, "", nullptr, i.first, Data));
-      }
-
-      for (auto si = Symbs.begin(), se = Symbs.end(); si != se; ++si) {
-        // if this is the last symbol, take up the remaining data.
-        llvm::ArrayRef<uint8_t> Data;
-        if (si + 1 == se) {
-          Data = llvm::ArrayRef<uint8_t>( SecData.data() + (*si)->Value
-                                        , SecData.end());
-        } else {
-          Data = llvm::ArrayRef<uint8_t>( SecData.data() + (*si)->Value
-                                        , (*(si + 1))->Value - (*si)->Value);
-        }
-        llvm::StringRef Name;
-        if ((EC = Obj->getSymbolName(*si, Name)))
-          return;
-        DefinedAtoms._atoms.push_back(
-          new (AtomStorage.Allocate<COFFDefinedAtom>())
-            COFFDefinedAtom(*this, Name, *si, i.first, Data));
-      }
     }
   }
 
@@ -362,6 +271,118 @@ public:
   virtual const TargetInfo &getTargetInfo() const { return _targetInfo; }
 
 private:
+  /// Iterate over symbol table to process all symbols. Absolute or undefined
+  /// symbols are atomized in this method. Defined symbols are not atomized
+  /// but added to DefinedSymbols for further processing.
+  error_code readSymbolTable(SectionToSymbolVectorMap &definedSymbols) {
+    const llvm::object::coff_file_header *Header = nullptr;
+    if (error_code ec = Obj->getHeader(Header))
+      return ec;
+
+    for (uint32_t i = 0, e = Header->NumberOfSymbols; i != e; ++i) {
+      const llvm::object::coff_symbol *Symb;
+      if (error_code ec = Obj->getSymbol(i, Symb))
+        return ec;
+      llvm::StringRef Name;
+      if (error_code ec = Obj->getSymbolName(Symb, Name))
+        return ec;
+      int16_t SectionIndex = Symb->SectionNumber;
+      assert(SectionIndex != llvm::COFF::IMAGE_SYM_DEBUG &&
+             "Cannot atomize IMAGE_SYM_DEBUG!");
+      // Skip aux symbols.
+      i += Symb->NumberOfAuxSymbols;
+      if (SectionIndex == llvm::COFF::IMAGE_SYM_ABSOLUTE) {
+        // Create an absolute atom.
+        AbsoluteAtoms._atoms.push_back(
+          new (AtomStorage.Allocate<COFFAbsoluteAtom>())
+            COFFAbsoluteAtom(*this, Name, Symb->Value));
+        continue;
+      }
+      if (SectionIndex == llvm::COFF::IMAGE_SYM_UNDEFINED) {
+        // Create an undefined atom.
+        UndefinedAtoms._atoms.push_back(
+          new (AtomStorage.Allocate<COFFUndefinedAtom>())
+            COFFUndefinedAtom(*this, Name));
+        continue;
+      }
+      // A symbol with IMAGE_SYM_CLASS_STATIC and zero value represents a
+      // section name. This is redundant and we can safely skip such a symbol
+      // because the same section name is also in the section header.
+      if (Symb->StorageClass != llvm::COFF::IMAGE_SYM_CLASS_STATIC
+          || Symb->Value != 0) {
+        // This is actually a defined symbol. Add it to its section's list of
+        // symbols.
+        uint8_t SC = Symb->StorageClass;
+        if (SC != llvm::COFF::IMAGE_SYM_CLASS_EXTERNAL
+            && SC != llvm::COFF::IMAGE_SYM_CLASS_STATIC
+            && SC != llvm::COFF::IMAGE_SYM_CLASS_FUNCTION) {
+          llvm::errs() << "Unable to create atom for: " << Name << "\n";
+          return llvm::object::object_error::parse_failed;
+        }
+        const llvm::object::coff_section *Sec;
+        if (error_code ec = Obj->getSection(SectionIndex, Sec))
+          return ec;
+        assert(Sec && "SectionIndex > 0, Sec must be non-null!");
+        definedSymbols[Sec].push_back(Symb);
+      }
+    }
+    return error_code::success();
+  }
+
+  /// Atomize defined symbols.
+  error_code AtomizeDefinedSymbols(
+      const llvm::object::coff_section *section,
+      std::vector<const llvm::object::coff_symbol*> &symbols) {
+    // Sort symbols by position.
+    std::stable_sort(symbols.begin(), symbols.end(),
+      // For some reason MSVC fails to allow the lambda in this context with a
+      // "illegal use of local type in type instantiation". MSVC is clearly
+      // wrong here. Force a conversion to function pointer to work around.
+      static_cast<bool(*)(const coff_symbol*, const coff_symbol*)>(
+        [](const coff_symbol *A, const coff_symbol *B) -> bool {
+      return A->Value < B->Value;
+    }));
+
+    if (symbols.empty()) {
+      // Create an atom for the entire section.
+      llvm::ArrayRef<uint8_t> Data;
+      DefinedAtoms._atoms.push_back(
+        new (AtomStorage.Allocate<COFFDefinedAtom>())
+          COFFDefinedAtom(*this, "", nullptr, section, Data));
+      return error_code::success();
+    }
+
+    llvm::ArrayRef<uint8_t> SecData;
+    if (error_code ec = Obj->getSectionContents(section, SecData))
+      return ec;
+
+    // Create an unnamed atom if the first atom isn't at the start of the
+    // section.
+    if (symbols[0]->Value != 0) {
+      uint64_t Size = symbols[0]->Value;
+      llvm::ArrayRef<uint8_t> Data(SecData.data(), Size);
+      DefinedAtoms._atoms.push_back(
+        new (AtomStorage.Allocate<COFFDefinedAtom>())
+          COFFDefinedAtom(*this, "", nullptr, section, Data));
+    }
+
+    for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
+      const uint8_t *start = SecData.data() + (*si)->Value;
+      // if this is the last symbol, take up the remaining data.
+      const uint8_t *end = (si + 1 == se)
+          ? start + SecData.size()
+          : SecData.data() + (*(si + 1))->Value;
+      llvm::ArrayRef<uint8_t> Data(start, end);
+      llvm::StringRef Name;
+      if (error_code ec = Obj->getSymbolName(*si, Name))
+        return ec;
+      DefinedAtoms._atoms.push_back(
+        new (AtomStorage.Allocate<COFFDefinedAtom>())
+          COFFDefinedAtom(*this, Name, *si, section, Data));
+    }
+    return error_code::success();
+  }
+
   std::unique_ptr<const llvm::object::COFFObjectFile> Obj;
   atom_collection_vector<DefinedAtom> DefinedAtoms;
   atom_collection_vector<UndefinedAtom>     UndefinedAtoms;
