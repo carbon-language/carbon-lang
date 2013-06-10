@@ -35,15 +35,15 @@ public:
     /// __attribute__((weak_import)).
     /// On linux this is generated using a function prototype with
     ///  __attribute__((weak)).
+    /// On Windows this feature is not supported.
     canBeNullAtRuntime,
-
 
     /// This symbol can be missing at build time.
     /// That is, the static linker will not error if a definition for
     /// this symbol is not found at build time. Instead, the linker
     /// will build an executable that lets the dynamic loader find the
     /// symbol at runtime.
-    /// This feature is not supported on Darwin.
+    /// This feature is not supported on Darwin nor Windows.
     /// On linux this is generated using a function prototype with
     ///  __attribute__((weak)).
     canBeNullAtBuildtime
