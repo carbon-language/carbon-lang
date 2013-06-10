@@ -6,7 +6,6 @@ include_directories(..)
 include_directories(../..)
 
 # Instrumented libcxx sources and build flags.
-set(MSAN_LIBCXX_PATH ${LLVM_MAIN_SRC_DIR}/projects/libcxx)
 file(GLOB MSAN_LIBCXX_SOURCES ${MSAN_LIBCXX_PATH}/src/*.cpp)
 set(MSAN_LIBCXX_CFLAGS
   -I${MSAN_LIBCXX_PATH}/include
@@ -165,7 +164,7 @@ macro(add_msan_tests_for_arch arch)
                 ${MSAN_INST_LIBCXX} ${MSANDR_TEST_SO})
 endmacro()
 
-if(COMPILER_RT_CAN_EXECUTE_TESTS AND EXISTS ${MSAN_LIBCXX_PATH}/)
+if(COMPILER_RT_CAN_EXECUTE_TESTS AND MSAN_CAN_INSTRUMENT_LIBCXX)
   if(CAN_TARGET_x86_64)
     add_msan_tests_for_arch(x86_64)
   endif()

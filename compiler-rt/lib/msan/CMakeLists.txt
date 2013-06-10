@@ -32,6 +32,14 @@ endif()
 
 add_compiler_rt_resource_file(msan_blacklist msan_blacklist.txt)
 
+# We should only build MSan unit tests if we can build instrumented libcxx.
+set(MSAN_LIBCXX_PATH ${LLVM_MAIN_SRC_DIR}/projects/libcxx)
+if(EXISTS ${MSAN_LIBCXX_PATH}/)
+  set(MSAN_CAN_INSTRUMENT_LIBCXX TRUE)
+else()
+  set(MSAN_CAN_INSTRUMENT_LIBCXX FALSE)
+endif()
+
 if(LLVM_INCLUDE_TESTS)
   add_subdirectory(tests)
 endif()
