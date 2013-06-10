@@ -40,6 +40,10 @@ if [ "$1" == "" ]; then
       echo TEST $c is not supported
       continue
     fi
+    if [ "`grep "TSAN_OPTIONS" $c`" ]; then
+      echo SKIPPING $c -- requires TSAN_OPTIONS
+      continue
+    fi
     COMPILER=$CXX
     case $c in
       *.c) COMPILER=$CC
