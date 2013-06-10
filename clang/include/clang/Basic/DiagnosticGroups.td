@@ -136,6 +136,7 @@ def FourByteMultiChar : DiagGroup<"four-char-constants">;
 def GlobalConstructors : DiagGroup<"global-constructors">;
 def BitwiseOpParentheses: DiagGroup<"bitwise-op-parentheses">;
 def LogicalOpParentheses: DiagGroup<"logical-op-parentheses">;
+def LogicalNotParentheses: DiagGroup<"logical-not-parentheses">;
 def ShiftOpParentheses: DiagGroup<"shift-op-parentheses">;
 def OverloadedShiftOpParentheses: DiagGroup<"overloaded-shift-op-parentheses">;
 def DanglingElse: DiagGroup<"dangling-else">;
@@ -368,6 +369,7 @@ def DuplicateArgDecl : DiagGroup<"duplicate-method-arg">;
 def ParenthesesOnEquality : DiagGroup<"parentheses-equality">;
 def Parentheses : DiagGroup<"parentheses",
                             [LogicalOpParentheses,
+                             LogicalNotParentheses,
                              BitwiseOpParentheses,
                              ShiftOpParentheses,
                              OverloadedShiftOpParentheses,

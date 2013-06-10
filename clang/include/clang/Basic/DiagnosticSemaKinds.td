@@ -4435,6 +4435,14 @@ def warn_null_in_comparison_operation : Warning<
   "%select{(%1 and NULL)|(NULL and %1)}0">,
   InGroup<NullArithmetic>;
 
+def warn_logical_not_on_lhs_of_comparison : Warning<
+  "logical not is only applied to the left hand side of this comparison">,
+  InGroup<LogicalNotParentheses>;
+def note_logical_not_fix : Note<
+  "add parentheses after the '!' to evaluate the comparison first">;
+def note_logical_not_silence_with_parens : Note<
+  "add parentheses around left hand side expression to silence this warning">;
+
 def err_invalid_this_use : Error<
   "invalid use of 'this' outside of a non-static member function">;
 def err_this_static_member_func : Error<
