@@ -463,15 +463,15 @@ static SelectorTableImpl &getSelectorTableImpl(void *P) {
   return *static_cast<SelectorTableImpl*>(P);
 }
 
-/*static*/ SmallString<100>
+SmallString<64>
 SelectorTable::constructSetterName(StringRef Name) {
-  SmallString<100> SelectorName("set");
-  SelectorName += Name;
-  SelectorName[3] = toUppercase(SelectorName[3]);
-  return SelectorName;
+  SmallString<64> SetterName("set");
+  SetterName += Name;
+  SetterName[3] = toUppercase(SetterName[3]);
+  return SetterName;
 }
 
-/*static*/ Selector
+Selector
 SelectorTable::constructSetterSelector(IdentifierTable &Idents,
                                        SelectorTable &SelTable,
                                        const IdentifierInfo *Name) {

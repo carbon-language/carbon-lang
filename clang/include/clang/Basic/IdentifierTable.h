@@ -730,7 +730,7 @@ public:
   ///
   /// This is "set" + \p Name where the initial character of \p Name
   /// has been capitalized.
-  static SmallString<100> constructSetterName(StringRef Name);
+  static SmallString<64> constructSetterName(StringRef Name);
 
   /// \brief Return the default setter selector for the given identifier.
   ///
