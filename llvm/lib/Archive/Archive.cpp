@@ -129,7 +129,7 @@ bool ArchiveMember::replaceWith(const sys::Path& newFile, std::string* ErrMsg) {
   }
 
   // Determine what kind of file it is.
-  switch (sys::IdentifyFileType(signature,4)) {
+  switch (sys::identifyFileType(StringRef(signature, 4))) {
     case sys::Bitcode_FileType:
       flags |= BitcodeFlag;
       break;

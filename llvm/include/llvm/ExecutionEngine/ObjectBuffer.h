@@ -44,6 +44,7 @@ public:
 
   const char *getBufferStart() const { return Buffer->getBufferStart(); }
   size_t getBufferSize() const { return Buffer->getBufferSize(); }
+  StringRef getBuffer() const { return Buffer->getBuffer(); }
 
 protected:
   // The memory contained in an ObjectBuffer

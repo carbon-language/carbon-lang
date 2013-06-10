@@ -501,9 +501,7 @@ RuntimeDyld::~RuntimeDyld() {
 
 ObjectImage *RuntimeDyld::loadObject(ObjectBuffer *InputBuffer) {
   if (!Dyld) {
-    sys::LLVMFileType type = sys::IdentifyFileType(
-            InputBuffer->getBufferStart(),
-            static_cast<unsigned>(InputBuffer->getBufferSize()));
+    sys::LLVMFileType type = sys::identifyFileType(InputBuffer->getBuffer());
     switch (type) {
       case sys::ELF_Relocatable_FileType:
       case sys::ELF_Executable_FileType:

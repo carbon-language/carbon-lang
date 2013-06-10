@@ -40,8 +40,7 @@ section_iterator ObjectFile::getRelocatedSection(DataRefImpl Sec) const {
 ObjectFile *ObjectFile::createObjectFile(MemoryBuffer *Object) {
   if (!Object || Object->getBufferSize() < 64)
     return 0;
-  sys::LLVMFileType type = sys::IdentifyFileType(Object->getBufferStart(),
-                                static_cast<unsigned>(Object->getBufferSize()));
+  sys::LLVMFileType type = sys::identifyFileType(Object->getBuffer());
   switch (type) {
     case sys::Unknown_FileType:
       return 0;

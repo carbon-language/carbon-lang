@@ -38,9 +38,9 @@ bool Path::operator<(const Path& that) const {
 }
 
 LLVMFileType
-sys::identifyFileType(const char *Magic, unsigned Length) {
-  assert(Magic && "Invalid magic number string");
-  assert(Length >=4 && "Invalid magic number length");
+sys::identifyFileType(StringRef Magic) {
+  unsigned Length = Magic.size();
+  assert(Length >= 4 && "Invalid magic number length");
   switch ((unsigned char)Magic[0]) {
     case 0xDE:  // 0x0B17C0DE = BC wraper
       if (Magic[1] == (char)0xC0 && Magic[2] == (char)0x17 &&
@@ -53,7 +53,7 @@ sys::identifyFileType(const char *Magic, unsigned Length) {
       break;
     case '!':
       if (Length >= 8)
-        if (memcmp(Magic,"!<arch>\n",8) == 0)
+        if (memcmp(Magic.data(),"!<arch>\n",8) == 0)
           return Archive_FileType;
       break;
 
@@ -136,9 +136,9 @@ sys::identifyFileType(const char *Magic, unsigned Length) {
     case 0x4d: // Possible MS-DOS stub on Windows PE file
       if (Magic[1] == 0x5a) {
         uint32_t off =
-            *reinterpret_cast<const ulittle32_t *>(Magic + 0x3c);
+            *reinterpret_cast<const ulittle32_t *>(Magic.data() + 0x3c);
         // PE/COFF file, either EXE or DLL.
-        if (off < Length && memcmp(Magic + off, "PE\0\0",4) == 0)
+        if (off < Length && memcmp(Magic.data() + off, "PE\0\0",4) == 0)
           return COFF_FileType;
       }
       break;

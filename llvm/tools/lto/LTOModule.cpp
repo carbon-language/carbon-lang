@@ -163,7 +163,7 @@ LTOModule::LTOModule(llvm::Module *m, llvm::TargetMachine *t)
 /// isBitcodeFile - Returns 'true' if the file (or memory contents) is LLVM
 /// bitcode.
 bool LTOModule::isBitcodeFile(const void *mem, size_t length) {
-  return llvm::sys::IdentifyFileType((const char*)mem, length)
+  return llvm::sys::identifyFileType(StringRef((const char*)mem, length))
     == llvm::sys::Bitcode_FileType;
 }
 

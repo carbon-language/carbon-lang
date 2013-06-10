@@ -725,9 +725,9 @@ namespace sys {
 
   /// This utility function allows any memory block to be examined in order
   /// to determine its file type.
-  LLVMFileType identifyFileType(const char *Magic, unsigned Length);
+  LLVMFileType identifyFileType(StringRef Magic);
   inline LLVMFileType IdentifyFileType(const char *Magic, unsigned Length) {
-    return identifyFileType(Magic, Length);
+    return identifyFileType(StringRef(Magic, Length));
   }
 
   /// This function can be used to copy the file specified by Src to the
