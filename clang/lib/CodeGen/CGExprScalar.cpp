@@ -1442,8 +1442,12 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
 
 Value *ScalarExprEmitter::VisitStmtExpr(const StmtExpr *E) {
   CodeGenFunction::StmtExprEvaluation eval(CGF);
-  return CGF.EmitCompoundStmt(*E->getSubStmt(), !E->getType()->isVoidType())
-    .getScalarVal();
+  llvm::Value *RetAlloca = CGF.EmitCompoundStmt(*E->getSubStmt(),
+                                                !E->getType()->isVoidType());
+  if (!RetAlloca)
+    return 0;
+  return CGF.EmitLoadOfScalar(CGF.MakeAddrLValue(RetAlloca, E->getType()));
+
 }
 
 //===----------------------------------------------------------------------===//

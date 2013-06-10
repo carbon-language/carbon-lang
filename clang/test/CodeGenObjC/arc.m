@@ -1115,11 +1115,14 @@ id test52(void) {
 
 // CHECK:    define i8* @test52()
 // CHECK:      [[X:%.*]] = alloca i32
+// CHECK-NEXT: [[TMPALLOCA:%.*]] = alloca i8*
 // CHECK-NEXT: store i32 5, i32* [[X]],
 // CHECK-NEXT: [[T0:%.*]] = load i32* [[X]],
 // CHECK-NEXT: [[T1:%.*]] = call i8* @test52_helper(i32 [[T0]])
-// CHECK-NEXT: [[T2:%.*]] = tail call i8* @objc_autoreleaseReturnValue(i8* [[T1]])
-// CHECK-NEXT: ret i8* [[T2]]
+// CHECK-NEXT: store i8* [[T1]], i8** [[TMPALLOCA]]
+// CHECK-NEXT: [[T2:%.*]] = load i8** [[TMPALLOCA]]
+// CHECK-NEXT: [[T3:%.*]] = tail call i8* @objc_autoreleaseReturnValue(i8* [[T2]])
+// CHECK-NEXT: ret i8* [[T3]]
 }
 
 // rdar://problem/9400644
@@ -1130,14 +1133,17 @@ void test53(void) {
 // CHECK:    define void @test53()
 // CHECK:      [[X:%.*]] = alloca i8*,
 // CHECK-NEXT: [[Y:%.*]] = alloca i8*,
+// CHECK-NEXT: [[TMPALLOCA:%.*]] = alloca i8*,
 // CHECK-NEXT: [[T0:%.*]] = call i8* @test53_helper()
 // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T0]])
 // CHECK-NEXT: store i8* [[T1]], i8** [[Y]],
 // CHECK-NEXT: [[T0:%.*]] = load i8** [[Y]],
 // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retain(i8* [[T0]])
+// CHECK-NEXT: store i8* [[T1]], i8** [[TMPALLOCA]]
 // CHECK-NEXT: [[T2:%.*]] = load i8** [[Y]]
 // CHECK-NEXT: call void @objc_release(i8* [[T2]])
-// CHECK-NEXT: store i8* [[T1]], i8** [[X]],
+// CHECK-NEXT: [[T3:%.*]] = load i8** [[TMPALLOCA]]
+// CHECK-NEXT: store i8* [[T3]], i8** [[X]],
 // CHECK-NEXT: load i8** [[X]],
 // CHECK-NEXT: [[T0:%.*]] = load i8** [[X]]
 // CHECK-NEXT: call void @objc_release(i8* [[T0]])

@@ -196,8 +196,8 @@ bool CodeGenFunction::EmitSimpleStmt(const Stmt *S) {
 /// EmitCompoundStmt - Emit a compound statement {..} node.  If GetLast is true,
 /// this captures the expression result of the last sub-statement and returns it
 /// (for use by the statement expression extension).
-RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
-                                         AggValueSlot AggSlot) {
+llvm::Value* CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
+                                               AggValueSlot AggSlot) {
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),S.getLBracLoc(),
                              "LLVM IR generation of compound statement ('{}')");
 
@@ -207,17 +207,17 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
   return EmitCompoundStmtWithoutScope(S, GetLast, AggSlot);
 }
 
-RValue CodeGenFunction::EmitCompoundStmtWithoutScope(const CompoundStmt &S, bool GetLast,
-                                         AggValueSlot AggSlot) {
+llvm::Value*
+CodeGenFunction::EmitCompoundStmtWithoutScope(const CompoundStmt &S,
+                                              bool GetLast,
+                                              AggValueSlot AggSlot) {
 
   for (CompoundStmt::const_body_iterator I = S.body_begin(),
        E = S.body_end()-GetLast; I != E; ++I)
     EmitStmt(*I);
 
-  RValue RV;
-  if (!GetLast)
-    RV = RValue::get(0);
-  else {
+  llvm::Value *RetAlloca = 0;
+  if (GetLast) {
     // We have to special case labels here.  They are statements, but when put
     // at the end of a statement expression, they yield the value of their
     // subexpression.  Handle this by walking through all labels we encounter,
@@ -230,10 +230,21 @@ RValue CodeGenFunction::EmitCompoundStmtWithoutScope(const CompoundStmt &S, bool
 
     EnsureInsertPoint();
 
-    RV = EmitAnyExpr(cast<Expr>(LastStmt), AggSlot);
+    QualType ExprTy = cast<Expr>(LastStmt)->getType();
+    if (hasAggregateEvaluationKind(ExprTy)) {
+      EmitAggExpr(cast<Expr>(LastStmt), AggSlot);
+    } else {
+      // We can't return an RValue here because there might be cleanups at
+      // the end of the StmtExpr.  Because of that, we have to emit the result
+      // here into a temporary alloca.
+      RetAlloca = CreateMemTemp(ExprTy);
+      EmitAnyExprToMem(cast<Expr>(LastStmt), RetAlloca, Qualifiers(),
+                       /*IsInit*/false);
+    }
+      
   }
 
-  return RV;
+  return RetAlloca;
 }
 
 void CodeGenFunction::SimplifyForwardingBlocks(llvm::BasicBlock *BB) {

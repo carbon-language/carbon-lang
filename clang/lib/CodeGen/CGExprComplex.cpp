@@ -358,7 +358,9 @@ ComplexPairTy ComplexExprEmitter::VisitCallExpr(const CallExpr *E) {
 
 ComplexPairTy ComplexExprEmitter::VisitStmtExpr(const StmtExpr *E) {
   CodeGenFunction::StmtExprEvaluation eval(CGF);
-  return CGF.EmitCompoundStmt(*E->getSubStmt(), true).getComplexVal();
+  llvm::Value *RetAlloca = CGF.EmitCompoundStmt(*E->getSubStmt(), true);
+  assert(RetAlloca && "Expected complex return value");
+  return EmitLoadOfLValue(CGF.MakeAddrLValue(RetAlloca, E->getType()));
 }
 
 /// EmitComplexToComplexCast - Emit a cast from complex value Val to DestType.

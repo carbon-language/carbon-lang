@@ -73,3 +73,10 @@ int* foo5() {
   return (({ a; }));
 }
 
+// <rdar://problem/14074868>
+// Make sure this doesn't crash.
+int foo5(bool b) {
+  int y = 0;
+  y = ({ A a(1); if (b) goto G; a.i; });
+  G: return y;
+}
