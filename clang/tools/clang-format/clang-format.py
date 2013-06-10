@@ -19,6 +19,7 @@
 
 import json
 import subprocess
+import sys
 import vim
 
 # Change this to the full path if clang-format is not on the path.
@@ -39,11 +40,18 @@ offset = int(vim.eval('line2byte(' +
 length = int(vim.eval('line2byte(' +
                       str(vim.current.range.end + 2) + ')')) - offset - 2
 
+# Avoid flashing an ugly, ugly cmd prompt on Windows when invoking clang-format.
+startupinfo = None
+if sys.platform.startswith('win32'):
+  startupinfo = subprocess.STARTUPINFO()
+  startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+  startupinfo.wShowWindow = subprocess.SW_HIDE
+
 # Call formatter.
 p = subprocess.Popen([binary, '-offset', str(offset), '-length', str(length),
                       '-style', style, '-cursor', str(cursor)],
                      stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                     stdin=subprocess.PIPE)
+                     stdin=subprocess.PIPE, startupinfo=startupinfo)
 stdout, stderr = p.communicate(input=text)
 
 # If successful, replace buffer contents.
