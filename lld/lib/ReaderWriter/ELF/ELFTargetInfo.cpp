@@ -98,16 +98,19 @@ ELFTargetInfo::parseFile(std::unique_ptr<MemoryBuffer> &mb,
                          std::vector<std::unique_ptr<File> > &result) const {
   ScopedTask task(getDefaultDomain(), "parseFile");
   error_code ec = _elfReader->parseFile(mb, result);
-  if (ec) {
-    // Not an ELF file, check file extension to see if it might be yaml
-    StringRef path = mb->getBufferIdentifier();
-    if (path.endswith(".objtxt"))
-      ec = _yamlReader->parseFile(mb, result);
-    if (ec)
-      // Not a yaml file, assume it is a linkerscript
-      ec = _linkerScriptReader->parseFile(mb, result);
+  if (!ec)
+    return ec;
+
+  // Not an ELF file, check file extension to see if it might be yaml
+  StringRef path = mb->getBufferIdentifier();
+  if (path.endswith(".objtxt")) {
+    ec = _yamlReader->parseFile(mb, result);
+    if (!ec)
+      return ec;
   }
-  return ec;
+
+  // Not a yaml file, assume it is a linkerscript
+  return _linkerScriptReader->parseFile(mb, result);
 }
 
 Writer &ELFTargetInfo::writer() const {
