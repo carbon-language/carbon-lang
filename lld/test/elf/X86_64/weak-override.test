@@ -22,12 +22,12 @@ WEAKATOMSORDER:    scope:           global
 WEAKATOMSORDER:    content:         [ 55, 48, 89, E5, BF, 00, 00, 00, 00, E8, 00, 00, 
 WEAKATOMSORDER:                       00, 00, 5D, C3 ]
 WEAKATOMSORDER:    references:      
-WEAKATOMSORDER:      - kind:            layout-after
-WEAKATOMSORDER:        offset:          0
-WEAKATOMSORDER:        target:          main
 WEAKATOMSORDER:      - kind:            layout-before
 WEAKATOMSORDER:        offset:          0
 WEAKATOMSORDER:        target:          fn
+WEAKATOMSORDER:      - kind:            layout-after
+WEAKATOMSORDER:        offset:          0
+WEAKATOMSORDER:        target:          main
 WEAKATOMSORDER:  - name:            main
 WEAKATOMSORDER:    scope:           global
 WEAKATOMSORDER:    content:         [ 55, 48, 89, E5, B8, 00, 00, 00, 00, E8, 00, 00, 
