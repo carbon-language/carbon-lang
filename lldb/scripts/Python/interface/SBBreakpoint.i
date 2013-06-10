@@ -209,6 +209,26 @@ public:
     
     static uint32_t
     GetNumBreakpointLocationsFromEvent (const lldb::SBEvent &event_sp);
+    
+    %pythoncode %{
+        
+        __swig_getmethods__["id"] = GetID
+        if _newclass: id = property(GetID, None, doc='''A read only property that returns the ID of this breakpoint.''')
+            
+        __swig_getmethods__["enabled"] = IsEnabled
+        __swig_setmethods__["enabled"] = SetEnabled
+        if _newclass: enabled = property(IsEnabled, SetEnabled, doc='''A read/write property that configures whether this breakpoint is enabled or not.''')
+
+        __swig_getmethods__["one_shot"] = IsOneShot
+        __swig_setmethods__["one_shot"] = SetOneShot
+        if _newclass: one_shot = property(IsOneShot, SetOneShot, doc='''A read/write property that configures whether this breakpoint is one-shot (deleted when hit) or not.''')
+            
+        __swig_getmethods__["num_locations"] = GetNumLocations
+        if _newclass: num_locations = property(GetNumLocations, None, doc='''A read only property that returns the count of locations of this breakpoint.''')
+
+    %}
+
+    
 };
 
 } // namespace lldb
