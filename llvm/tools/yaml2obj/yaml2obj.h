@@ -17,5 +17,6 @@ namespace llvm {
   class MemoryBuffer;
 }
 int yaml2coff(llvm::raw_ostream &Out, llvm::MemoryBuffer *Buf);
+int yaml2elf(llvm::raw_ostream &Out, llvm::MemoryBuffer *Buf);
 
 #endif

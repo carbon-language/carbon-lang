@@ -1,0 +1,6 @@
+!ELF
+Header: !Header
+  Class: ELFCLASS32
+  Data: ELFDATA2LSB
+  Type: ET_EXEC
+  Machine: EM_386

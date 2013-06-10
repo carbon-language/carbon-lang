@@ -4,6 +4,7 @@ add_llvm_library(LLVMObject
   COFFObjectFile.cpp
   COFFYAML.cpp
   ELFObjectFile.cpp
+  ELFYAML.cpp
   Error.cpp
   MachOObjectFile.cpp
   Object.cpp

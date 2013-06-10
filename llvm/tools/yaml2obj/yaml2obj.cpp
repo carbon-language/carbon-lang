@@ -38,7 +38,8 @@ static cl::opt<std::string>
 // them appropriately requires some work in the YAML parser and the YAMLIO
 // library.
 enum YAMLObjectFormat {
-  YOF_COFF
+  YOF_COFF,
+  YOF_ELF
 };
 
 cl::opt<YAMLObjectFormat> Format(
@@ -46,6 +47,7 @@ cl::opt<YAMLObjectFormat> Format(
   cl::desc("Interpret input as this type of object file"),
   cl::values(
     clEnumValN(YOF_COFF, "coff", "COFF object file format"),
+    clEnumValN(YOF_ELF, "elf", "ELF object file format"),
   clEnumValEnd));
 
 
@@ -60,6 +62,8 @@ int main(int argc, char **argv) {
     return 1;
   if (Format == YOF_COFF) {
     return yaml2coff(outs(), Buf.get());
+  } else if (Format == YOF_ELF) {
+    return yaml2elf(outs(), Buf.get());
   } else {
     errs() << "Not yet implemented\n";
     return 1;

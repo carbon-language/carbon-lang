@@ -1,0 +1,6 @@
+!ELF
+Header: !Header
+  Class: ELFCLASS64
+  Data: ELFDATA2LSB
+  Type: ET_EXEC
+  Machine: EM_X86_64
