@@ -202,6 +202,10 @@ u64 NanoTime() {
   return 0;
 }
 
+u64 NanoTime() {
+  return 0;
+}
+
 void Abort() {
   abort();
   _exit(-1);  // abort is not NORETURN on Windows.
@@ -345,12 +349,19 @@ void InitTlsSize() {
 
 void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
                           uptr *tls_addr, uptr *tls_size) {
+#ifdef SANITIZER_GO
+  *stk_addr = 0;
+  *stk_size = 0;
+  *tls_addr = 0;
+  *tls_size = 0;
+#else
   uptr stack_top, stack_bottom;
   GetThreadStackTopAndBottom(main, &stack_top, &stack_bottom);
   *stk_addr = stack_bottom;
   *stk_size = stack_top - stack_bottom;
   *tls_addr = 0;
   *tls_size = 0;
+#endif
 }
 
 void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
