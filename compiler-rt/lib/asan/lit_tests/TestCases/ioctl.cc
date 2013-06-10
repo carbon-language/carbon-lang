@@ -1,8 +1,8 @@
-// RUN: %clangxx_asan -m64 -O0 -g %s -o %t && ASAN_OPTIONS=handle_ioctl=1 %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -m64 -O3 -g %s -o %t && ASAN_OPTIONS=handle_ioctl=1 %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -O0 -g %s -o %t && ASAN_OPTIONS=handle_ioctl=1 %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -O3 -g %s -o %t && ASAN_OPTIONS=handle_ioctl=1 %t 2>&1 | %symbolize | FileCheck %s
 
-// RUN: %clangxx_asan -m64 -O0 -g %s -o %t && %t
-// RUN: %clangxx_asan -m64 -O3 -g %s -o %t && %t
+// RUN: %clangxx_asan -O0 -g %s -o %t && %t
+// RUN: %clangxx_asan -O3 -g %s -o %t && %t
 
 #include <assert.h>
 #include <stdlib.h>
