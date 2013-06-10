@@ -86,12 +86,6 @@ namespace llvm {
       Data.push_back(DIEAbbrevData(Attribute, Form));
     }
 
-    /// AddFirstAttribute - Adds a set of attribute information to the front
-    /// of the abbreviation.
-    void AddFirstAttribute(uint16_t Attribute, uint16_t Form) {
-      Data.insert(Data.begin(), DIEAbbrevData(Attribute, Form));
-    }
-
     /// Profile - Used to gather unique data for the abbreviation folding set.
     ///
     void Profile(FoldingSetNodeID &ID) const;
