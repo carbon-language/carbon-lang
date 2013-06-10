@@ -891,6 +891,7 @@ void CodeGenSchedModels::inferFromItinClass(Record *ItinClassDef,
 /// Infer classes from per-processor InstReadWrite definitions.
 void CodeGenSchedModels::inferFromInstRWs(unsigned SCIdx) {
   for (unsigned I = 0, E = SchedClasses[SCIdx].InstRWs.size(); I != E; ++I) {
+    assert(SchedClasses[SCIdx].InstRWs.size() == E && "InstrRWs was mutated!");
     Record *Rec = SchedClasses[SCIdx].InstRWs[I];
     const RecVec *InstDefs = Sets.expand(Rec);
     RecIter II = InstDefs->begin(), IE = InstDefs->end();
