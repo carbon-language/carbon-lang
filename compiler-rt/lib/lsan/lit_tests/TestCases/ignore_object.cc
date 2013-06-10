@@ -26,5 +26,5 @@ int main() {
   return 0;
 }
 // CHECK: Test alloc: [[ADDR:.*]].
-// CHECK: ignoring heap object at [[ADDR]] 
+// CHECK: ignoring heap object at [[ADDR]]
 // CHECK: SUMMARY: LeakSanitizer: 1337 byte(s) leaked in 1 allocation(s)

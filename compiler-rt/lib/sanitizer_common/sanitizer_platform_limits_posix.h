@@ -219,7 +219,7 @@ namespace __sanitizer {
   extern unsigned struct_unimapdesc_sz;
   extern unsigned struct_unimapinit_sz;
 #endif
-  
+
 #if !SANITIZER_ANDROID
   extern unsigned struct_sioc_sg_req_sz;
   extern unsigned struct_sioc_vif_req_sz;

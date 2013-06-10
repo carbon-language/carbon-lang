@@ -207,14 +207,15 @@ namespace __sanitizer {
   unsigned struct_ppp_stats_sz = sizeof(struct ppp_stats);
   unsigned struct_scc_modem_sz = sizeof(struct scc_modem);
   unsigned struct_scc_stat_sz = sizeof(struct scc_stat);
-  unsigned struct_serial_multiport_struct_sz = sizeof(struct serial_multiport_struct);
+  unsigned struct_serial_multiport_struct_sz
+      = sizeof(struct serial_multiport_struct);
   unsigned struct_serial_struct_sz = sizeof(struct serial_struct);
   unsigned struct_sockaddr_ax25_sz = sizeof(struct sockaddr_ax25);
   unsigned struct_unimapdesc_sz = sizeof(struct unimapdesc);
   unsigned struct_unimapinit_sz = sizeof(struct unimapinit);
 #endif
 
-#if !SANITIZER_ANDROID  
+#if !SANITIZER_ANDROID
   unsigned struct_sioc_sg_req_sz = sizeof(struct sioc_sg_req);
   unsigned struct_sioc_vif_req_sz = sizeof(struct sioc_vif_req);
 #endif
