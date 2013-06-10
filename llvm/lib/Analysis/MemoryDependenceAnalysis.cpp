@@ -1,4 +1,4 @@
-//===- MemoryDependenceAnalysis.cpp - Mem Deps Implementation  --*- C++ -*-===//
+//===- MemoryDependenceAnalysis.cpp - Mem Deps Implementation -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
