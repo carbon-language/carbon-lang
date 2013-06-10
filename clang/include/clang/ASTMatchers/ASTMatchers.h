@@ -1682,12 +1682,19 @@ unless(const M &InnerMatcher) {
     internal::NotMatcher, M>(InnerMatcher);
 }
 
-/// \brief Matches a type if the declaration of the type matches the given
-/// matcher.
+/// \brief Matches a node if the declaration associated with that node
+/// matches the given matcher.
 ///
-/// In addition to being usable as Matcher<TypedefType>, also usable as
-/// Matcher<T> for any T supporting the getDecl() member function. e.g. various
-/// subtypes of clang::Type.
+/// The associated declaration is:
+/// - for type nodes, the declaration of the underlying type
+/// - for CallExpr, the declaration of the callee
+/// - for MemberExpr, the declaration of the referenced member
+/// - for CXXConstructExpr, the declaration of the constructor
+///
+/// Also usable as Matcher<T> for any T supporting the getDecl() member
+/// function. e.g. various subtypes of clang::Type and various expressions.
+/// FIXME: Add all node types for which this is matcher is usable due to
+/// getDecl().
 ///
 /// Usable as: Matcher<QualType>, Matcher<CallExpr>, Matcher<CXXConstructExpr>,
 ///   Matcher<MemberExpr>, Matcher<TypedefType>,
