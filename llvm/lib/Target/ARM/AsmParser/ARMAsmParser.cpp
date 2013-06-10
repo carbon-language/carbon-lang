@@ -3091,7 +3091,7 @@ parseVectorLane(VectorLaneTy &LaneKind, unsigned &Index, SMLoc &EndLoc) {
     // There's an optional '#' token here. Normally there wouldn't be, but
     // inline assemble puts one in, and it's friendly to accept that.
     if (Parser.getTok().is(AsmToken::Hash))
-      Parser.Lex(); // Eat the '#'
+      Parser.Lex(); // Eat '#' or '$'.
 
     const MCExpr *LaneIndex;
     SMLoc Loc = Parser.getTok().getLoc();
@@ -3409,7 +3409,7 @@ parseMemBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
              Tok.is(AsmToken::Dollar) ||
              Tok.is(AsmToken::Integer)) {
     if (Parser.getTok().isNot(AsmToken::Integer))
-      Parser.Lex(); // Eat the '#'.
+      Parser.Lex(); // Eat '#' or '$'.
     SMLoc Loc = Parser.getTok().getLoc();
 
     const MCExpr *MemBarrierID;
@@ -3458,7 +3458,7 @@ parseInstSyncBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
              Tok.is(AsmToken::Dollar) ||
              Tok.is(AsmToken::Integer)) {
     if (Parser.getTok().isNot(AsmToken::Integer))
-      Parser.Lex(); // Eat the '#'.
+      Parser.Lex(); // Eat '#' or '$'.
     SMLoc Loc = Parser.getTok().getLoc();
 
     const MCExpr *ISBarrierID;
@@ -3981,7 +3981,7 @@ parseAM3Offset(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // Do immediates first, as we always parse those if we have a '#'.
   if (Parser.getTok().is(AsmToken::Hash) ||
       Parser.getTok().is(AsmToken::Dollar)) {
-    Parser.Lex(); // Eat the '#'.
+    Parser.Lex(); // Eat '#' or '$'.
     // Explicitly look for a '-', as we need to encode negative zero
     // differently.
     bool isNegative = Parser.getTok().is(AsmToken::Minus);
@@ -4460,7 +4460,7 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       Parser.getTok().is(AsmToken::Dollar) ||
       Parser.getTok().is(AsmToken::Integer)) {
     if (Parser.getTok().isNot(AsmToken::Integer))
-      Parser.Lex(); // Eat the '#'.
+      Parser.Lex(); // Eat '#' or '$'.
     E = Parser.getTok().getLoc();
 
     bool isNegative = getParser().getTok().is(AsmToken::Minus);
@@ -4642,7 +4642,7 @@ parseFPImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
                            TyOp->getToken() != ".f64"))
     return MatchOperand_NoMatch;
 
-  Parser.Lex(); // Eat the '#'.
+  Parser.Lex(); // Eat '#' or '$'.
 
   // Handle negation, as that still comes through as a separate token.
   bool isNegative = false;
