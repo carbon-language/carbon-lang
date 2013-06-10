@@ -1143,9 +1143,7 @@ static QualType adjustFunctionTypeForInstantiation(ASTContext &Context,
   FunctionProtoType::ExtProtoInfo NewEPI = NewFunc->getExtProtoInfo();
   NewEPI.ExtInfo = OrigFunc->getExtInfo();
   return Context.getFunctionType(NewFunc->getResultType(),
-                                 ArrayRef<QualType>(NewFunc->arg_type_begin(),
-                                                    NewFunc->getNumArgs()),
-                                 NewEPI);
+                                 NewFunc->getArgTypes(), NewEPI);
 }
 
 /// Normal class members are of more specific types and therefore
@@ -2680,9 +2678,7 @@ static void InstantiateExceptionSpec(Sema &SemaRef, FunctionDecl *New,
   EPI.NoexceptExpr = NoexceptExpr;
 
   New->setType(SemaRef.Context.getFunctionType(NewProto->getResultType(),
-                                  ArrayRef<QualType>(NewProto->arg_type_begin(),
-                                                     NewProto->getNumArgs()),
-                                               EPI));
+                                               NewProto->getArgTypes(), EPI));
 }
 
 void Sema::InstantiateExceptionSpec(SourceLocation PointOfInstantiation,
@@ -2699,9 +2695,7 @@ void Sema::InstantiateExceptionSpec(SourceLocation PointOfInstantiation,
     FunctionProtoType::ExtProtoInfo EPI = Proto->getExtProtoInfo();
     EPI.ExceptionSpecType = EST_None;
     Decl->setType(Context.getFunctionType(Proto->getResultType(),
-                                    ArrayRef<QualType>(Proto->arg_type_begin(),
-                                                       Proto->getNumArgs()),
-                                          EPI));
+                                          Proto->getArgTypes(), EPI));
     return;
   }
 
@@ -2780,10 +2774,8 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
       EPI.ExceptionSpecType = NewEST;
       EPI.ExceptionSpecDecl = New;
       EPI.ExceptionSpecTemplate = ExceptionSpecTemplate;
-      New->setType(SemaRef.Context.getFunctionType(NewProto->getResultType(),
-                                  ArrayRef<QualType>(NewProto->arg_type_begin(),
-                                                     NewProto->getNumArgs()),
-                                                   EPI));
+      New->setType(SemaRef.Context.getFunctionType(
+          NewProto->getResultType(), NewProto->getArgTypes(), EPI));
     } else {
       ::InstantiateExceptionSpec(SemaRef, New, Proto, TemplateArgs);
     }

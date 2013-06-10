@@ -3034,9 +3034,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       EPI.TypeQuals = 0;
       EPI.RefQualifier = RQ_None;
 
-      T = Context.getFunctionType(FnTy->getResultType(),
-                                  ArrayRef<QualType>(FnTy->arg_type_begin(),
-                                                     FnTy->getNumArgs()),
+      T = Context.getFunctionType(FnTy->getResultType(), FnTy->getArgTypes(),
                                   EPI);
       // Rebuild any parens around the identifier in the function type.
       for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {

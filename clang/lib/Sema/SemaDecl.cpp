@@ -5907,10 +5907,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     T = Context.getObjCObjectPointerType(T);
     if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(R)) {
       FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
-      R = Context.getFunctionType(T,
-                                  ArrayRef<QualType>(FPT->arg_type_begin(),
-                                                     FPT->getNumArgs()),
-                                  EPI);
+      R = Context.getFunctionType(T, FPT->getArgTypes(), EPI);
     }
     else if (isa<FunctionNoProtoType>(R))
       R = Context.getFunctionNoProtoType(T);
@@ -6209,9 +6206,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
       EPI.ExceptionSpecType = EST_BasicNoexcept;
       NewFD->setType(Context.getFunctionType(FPT->getResultType(),
-                                      ArrayRef<QualType>(FPT->arg_type_begin(),
-                                                         FPT->getNumArgs()),
-                                             EPI));
+                                             FPT->getArgTypes(), EPI));
     }
   }
 
@@ -6804,9 +6799,7 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
       FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
       EPI.TypeQuals |= Qualifiers::Const;
       MD->setType(Context.getFunctionType(FPT->getResultType(),
-                                      ArrayRef<QualType>(FPT->arg_type_begin(),
-                                                         FPT->getNumArgs()),
-                                          EPI));
+                                          FPT->getArgTypes(), EPI));
 
       // Warn that we did this, if we're not performing template instantiation.
       // In that case, we'll have warned already when the template was defined.

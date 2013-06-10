@@ -203,11 +203,8 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
       Old->isExternC()) {
     FunctionProtoType::ExtProtoInfo EPI = NewProto->getExtProtoInfo();
     EPI.ExceptionSpecType = EST_DynamicNone;
-    QualType NewType =
-      Context.getFunctionType(NewProto->getResultType(),
-                              ArrayRef<QualType>(NewProto->arg_type_begin(),
-                                                 NewProto->getNumArgs()),
-                              EPI);
+    QualType NewType = Context.getFunctionType(NewProto->getResultType(),
+                                               NewProto->getArgTypes(), EPI);
     New->setType(NewType);
     return false;
   }
@@ -228,11 +225,8 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
 
     // Update the type of the function with the appropriate exception
     // specification.
-    QualType NewType =
-      Context.getFunctionType(NewProto->getResultType(),
-                              ArrayRef<QualType>(NewProto->arg_type_begin(),
-                                                 NewProto->getNumArgs()),
-                              EPI);
+    QualType NewType = Context.getFunctionType(NewProto->getResultType(),
+                                               NewProto->getArgTypes(), EPI);
     New->setType(NewType);
 
     // If exceptions are disabled, suppress the warning about missing

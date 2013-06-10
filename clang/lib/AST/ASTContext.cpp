@@ -2074,10 +2074,7 @@ const FunctionType *ASTContext::adjustFunctionType(const FunctionType *T,
     const FunctionProtoType *FPT = cast<FunctionProtoType>(T);
     FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
     EPI.ExtInfo = Info;
-    Result = getFunctionType(FPT->getResultType(),
-                             ArrayRef<QualType>(FPT->arg_type_begin(),
-                                                FPT->getNumArgs()),
-                             EPI);
+    Result = getFunctionType(FPT->getResultType(), FPT->getArgTypes(), EPI);
   }
 
   return cast<FunctionType>(Result.getTypePtr());
@@ -7039,10 +7036,7 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
 
     FunctionProtoType::ExtProtoInfo EPI = proto->getExtProtoInfo();
     EPI.ExtInfo = einfo;
-    return getFunctionType(retType,
-                           ArrayRef<QualType>(proto->arg_type_begin(),
-                                              proto->getNumArgs()),
-                           EPI);
+    return getFunctionType(retType, proto->getArgTypes(), EPI);
   }
 
   if (allLTypes) return lhs;
@@ -7390,11 +7384,8 @@ QualType ASTContext::mergeObjCGCQualifiers(QualType LHS, QualType RHS) {
       if (const FunctionProtoType *FPT = cast<FunctionProtoType>(F)) {
         FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
         EPI.ExtInfo = getFunctionExtInfo(LHS);
-        QualType ResultType
-          = getFunctionType(OldReturnType,
-                            ArrayRef<QualType>(FPT->arg_type_begin(),
-                                               FPT->getNumArgs()),
-                            EPI);
+        QualType ResultType =
+            getFunctionType(OldReturnType, FPT->getArgTypes(), EPI);
         return ResultType;
       }
     }

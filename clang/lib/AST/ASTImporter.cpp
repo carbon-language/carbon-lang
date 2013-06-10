@@ -2664,10 +2664,7 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
         FromEPI.NoexceptExpr) {
       FunctionProtoType::ExtProtoInfo DefaultEPI;
       FromTy = Importer.getFromContext().getFunctionType(
-                            FromFPT->getResultType(),
-                            ArrayRef<QualType>(FromFPT->arg_type_begin(),
-                                               FromFPT->getNumArgs()),
-                            DefaultEPI);
+          FromFPT->getResultType(), FromFPT->getArgTypes(), DefaultEPI);
       usedDifferentExceptionSpec = true;
     }
   }
