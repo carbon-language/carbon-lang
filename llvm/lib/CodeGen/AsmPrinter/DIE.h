@@ -26,7 +26,7 @@ namespace llvm {
   class raw_ostream;
 
   //===--------------------------------------------------------------------===//
-  /// DIEAbbrevData - Dwarf abbreviation data, describes the one attribute of a
+  /// DIEAbbrevData - Dwarf abbreviation data, describes one attribute of a
   /// Dwarf abbreviation.
   class DIEAbbrevData {
     /// Attribute - Dwarf attribute code.
