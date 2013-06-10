@@ -193,7 +193,7 @@ struct file_magic {
     macho_executable,         ///< Mach-O Executable
     macho_fixed_virtual_memory_shared_lib, ///< Mach-O Shared Lib, FVM
     macho_core,               ///< Mach-O Core File
-    macho_preload_executabl,  ///< Mach-O Preloaded Executable
+    macho_preload_executable, ///< Mach-O Preloaded Executable
     macho_dynamically_linked_shared_lib, ///< Mach-O dynlinked shared lib
     macho_dynamic_linker,     ///< The Mach-O dynamic linker
     macho_bundle,             ///< Mach-O Bundle file

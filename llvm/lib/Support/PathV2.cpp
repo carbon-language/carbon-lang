@@ -838,7 +838,7 @@ file_magic identify_magic(StringRef magic) {
         case 2: return file_magic::macho_executable;
         case 3: return file_magic::macho_fixed_virtual_memory_shared_lib;
         case 4: return file_magic::macho_core;
-        case 5: return file_magic::macho_preload_executabl;
+        case 5: return file_magic::macho_preload_executable;
         case 6: return file_magic::macho_dynamically_linked_shared_lib;
         case 7: return file_magic::macho_dynamic_linker;
         case 8: return file_magic::macho_bundle;
