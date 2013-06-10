@@ -1,4 +1,4 @@
-@ RUN: llvm-mc -triple=arm-linux-gnueabi -filetype=obj < %s | llvm-objdump -t - | FileCheck %s
+@ RUN: llvm-mc -triple=armv7-linux-gnueabi -filetype=obj < %s | llvm-objdump -t - | FileCheck %s
 
     .text
 @ $a at 0x0000

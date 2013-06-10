@@ -1,5 +1,5 @@
 @@ test st_value bit 0 of thumb function
-@ RUN: llvm-mc %s -triple=arm-freebsd-eabi -filetype=obj -o - | \
+@ RUN: llvm-mc %s -triple=armv4t-freebsd-eabi -filetype=obj -o - | \
 @ RUN: llvm-readobj -r  | FileCheck %s
 
 

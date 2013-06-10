@@ -152,12 +152,19 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool isThumbTwo() const {
     return isThumb() && (STI.getFeatureBits() & ARM::FeatureThumb2);
   }
+  bool hasThumb() const {
+    return STI.getFeatureBits() & ARM::HasV4TOps;
+  }
   bool hasV6Ops() const {
     return STI.getFeatureBits() & ARM::HasV6Ops;
   }
   bool hasV7Ops() const {
     return STI.getFeatureBits() & ARM::HasV7Ops;
   }
+  bool hasARM() const {
+    return !(STI.getFeatureBits() & ARM::FeatureNoARM);
+  }
+
   void SwitchMode() {
     unsigned FB = ComputeAvailableFeatures(STI.ToggleFeature(ARM::ModeThumb));
     setAvailableFeatures(FB);
@@ -7816,6 +7823,9 @@ bool ARMAsmParser::parseDirectiveThumb(SMLoc L) {
     return Error(L, "unexpected token in directive");
   Parser.Lex();
 
+  if (!hasThumb())
+    return Error(L, "target does not support Thumb mode");
+
   if (!isThumb())
     SwitchMode();
   getParser().getStreamer().EmitAssemblerFlag(MCAF_Code16);
@@ -7828,6 +7838,9 @@ bool ARMAsmParser::parseDirectiveARM(SMLoc L) {
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return Error(L, "unexpected token in directive");
   Parser.Lex();
+
+  if (!hasARM())
+    return Error(L, "target does not support ARM mode");
 
   if (isThumb())
     SwitchMode();
@@ -7918,10 +7931,16 @@ bool ARMAsmParser::parseDirectiveCode(SMLoc L) {
   Parser.Lex();
 
   if (Val == 16) {
+    if (!hasThumb())
+      return Error(L, "target does not support Thumb mode");
+
     if (!isThumb())
       SwitchMode();
     getParser().getStreamer().EmitAssemblerFlag(MCAF_Code16);
   } else {
+    if (!hasARM())
+      return Error(L, "target does not support ARM mode");
+
     if (isThumb())
       SwitchMode();
     getParser().getStreamer().EmitAssemblerFlag(MCAF_Code32);

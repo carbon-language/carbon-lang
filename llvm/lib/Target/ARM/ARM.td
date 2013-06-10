@@ -38,7 +38,8 @@ def FeatureNEON : SubtargetFeature<"neon", "HasNEON", "true",
 def FeatureThumb2 : SubtargetFeature<"thumb2", "HasThumb2", "true",
                                      "Enable Thumb2 instructions">;
 def FeatureNoARM  : SubtargetFeature<"noarm", "NoARM", "true",
-                                     "Does not support ARM mode execution">;
+                                     "Does not support ARM mode execution",
+                                     [ModeThumb]>;
 def FeatureFP16   : SubtargetFeature<"fp16", "HasFP16", "true",
                                      "Enable half-precision floating point">;
 def FeatureVFP4   : SubtargetFeature<"vfp4", "HasVFPv4", "true",
