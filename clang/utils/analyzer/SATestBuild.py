@@ -413,8 +413,10 @@ def runCmpResults(Dir):
     RefList = glob.glob(RefDir + "/*") 
     NewList = glob.glob(NewDir + "/*")
     
-    # Log folders are also located in the results dir, so ignore them. 
-    RefList.remove(os.path.join(RefDir, LogFolderName))
+    # Log folders are also located in the results dir, so ignore them.
+    RefLogDir = os.path.join(RefDir, LogFolderName)
+    if RefLogDir in RefList:
+        RefList.remove(RefLogDir)
     NewList.remove(os.path.join(NewDir, LogFolderName))
     
     if len(RefList) == 0 or len(NewList) == 0:
