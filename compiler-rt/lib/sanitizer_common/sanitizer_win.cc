@@ -124,7 +124,7 @@ void *MapFileToMemory(const char *file_name, uptr *buff_size) {
 }
 
 static const int kMaxEnvNameLength = 128;
-static const int kMaxEnvValueLength = 32767;
+static const DWORD kMaxEnvValueLength = 32767;
 
 namespace {
 
@@ -196,6 +196,10 @@ void SleepForSeconds(int seconds) {
 
 void SleepForMillis(int millis) {
   Sleep(millis);
+}
+
+u64 NanoTime() {
+  return 0;
 }
 
 void Abort() {

@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#if SANITIZER_WINDOWS
+#if SANITIZER_WINDOWS && !defined(va_copy)
 # define va_copy(dst, src) ((dst) = (src))
 #endif
 
