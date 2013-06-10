@@ -5370,8 +5370,8 @@ ExprResult Sema::PerformContextualImplicitConversion(
     // is said to be contextually implicitly converted to a specified
     // type T and is well-formed if and only if e can be implicitly
     // converted to a type T that is determined as follows: E is searched
-    // for conversion functions whose return type is cv T or reference
-    // to cv T such that T is allowed by the context. There shall be
+    // for conversion functions whose return type is cv T or reference to
+    // cv T such that T is allowed by the context. There shall be
     // exactly one such T.
 
     // If no unique T is found:
