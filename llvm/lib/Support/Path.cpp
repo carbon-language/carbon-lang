@@ -38,32 +38,32 @@ bool Path::operator<(const Path& that) const {
 }
 
 LLVMFileType
-sys::IdentifyFileType(const char *magic, unsigned length) {
-  assert(magic && "Invalid magic number string");
-  assert(length >=4 && "Invalid magic number length");
-  switch ((unsigned char)magic[0]) {
+sys::identifyFileType(const char *Magic, unsigned Length) {
+  assert(Magic && "Invalid magic number string");
+  assert(Length >=4 && "Invalid magic number length");
+  switch ((unsigned char)Magic[0]) {
     case 0xDE:  // 0x0B17C0DE = BC wraper
-      if (magic[1] == (char)0xC0 && magic[2] == (char)0x17 &&
-          magic[3] == (char)0x0B)
+      if (Magic[1] == (char)0xC0 && Magic[2] == (char)0x17 &&
+          Magic[3] == (char)0x0B)
         return Bitcode_FileType;
       break;
     case 'B':
-      if (magic[1] == 'C' && magic[2] == (char)0xC0 && magic[3] == (char)0xDE)
+      if (Magic[1] == 'C' && Magic[2] == (char)0xC0 && Magic[3] == (char)0xDE)
         return Bitcode_FileType;
       break;
     case '!':
-      if (length >= 8)
-        if (memcmp(magic,"!<arch>\n",8) == 0)
+      if (Length >= 8)
+        if (memcmp(Magic,"!<arch>\n",8) == 0)
           return Archive_FileType;
       break;
 
     case '\177':
-      if (magic[1] == 'E' && magic[2] == 'L' && magic[3] == 'F') {
-        bool Data2MSB = magic[5] == 2;
+      if (Magic[1] == 'E' && Magic[2] == 'L' && Magic[3] == 'F') {
+        bool Data2MSB = Magic[5] == 2;
         unsigned high = Data2MSB ? 16 : 17;
         unsigned low  = Data2MSB ? 17 : 16;
-        if (length >= 18 && magic[high] == 0)
-          switch (magic[low]) {
+        if (Length >= 18 && Magic[high] == 0)
+          switch (Magic[low]) {
             default: break;
             case 1: return ELF_Relocatable_FileType;
             case 2: return ELF_Executable_FileType;
@@ -74,11 +74,11 @@ sys::IdentifyFileType(const char *magic, unsigned length) {
       break;
 
     case 0xCA:
-      if (magic[1] == char(0xFE) && magic[2] == char(0xBA) &&
-          magic[3] == char(0xBE)) {
+      if (Magic[1] == char(0xFE) && Magic[2] == char(0xBA) &&
+          Magic[3] == char(0xBE)) {
         // This is complicated by an overlap with Java class files.
         // See the Mach-O section in /usr/share/file/magic for details.
-        if (length >= 8 && magic[7] < 43)
+        if (Length >= 8 && Magic[7] < 43)
           // FIXME: Universal Binary of any type.
           return Mach_O_DynamicallyLinkedSharedLib_FileType;
       }
@@ -91,16 +91,16 @@ sys::IdentifyFileType(const char *magic, unsigned length) {
     case 0xCE:
     case 0xCF: {
       uint16_t type = 0;
-      if (magic[0] == char(0xFE) && magic[1] == char(0xED) &&
-          magic[2] == char(0xFA) &&
-          (magic[3] == char(0xCE) || magic[3] == char(0xCF))) {
+      if (Magic[0] == char(0xFE) && Magic[1] == char(0xED) &&
+          Magic[2] == char(0xFA) &&
+          (Magic[3] == char(0xCE) || Magic[3] == char(0xCF))) {
         /* Native endian */
-        if (length >= 16) type = magic[14] << 8 | magic[15];
-      } else if ((magic[0] == char(0xCE) || magic[0] == char(0xCF)) &&
-                 magic[1] == char(0xFA) && magic[2] == char(0xED) &&
-                 magic[3] == char(0xFE)) {
+        if (Length >= 16) type = Magic[14] << 8 | Magic[15];
+      } else if ((Magic[0] == char(0xCE) || Magic[0] == char(0xCF)) &&
+                 Magic[1] == char(0xFA) && Magic[2] == char(0xED) &&
+                 Magic[3] == char(0xFE)) {
         /* Reverse endian */
-        if (length >= 14) type = magic[13] << 8 | magic[12];
+        if (Length >= 14) type = Magic[13] << 8 | Magic[12];
       }
       switch (type) {
         default: break;
@@ -123,26 +123,27 @@ sys::IdentifyFileType(const char *magic, unsigned length) {
     case 0x66: // MPS R4000 Windows
     case 0x50: // mc68K
     case 0x4c: // 80386 Windows
-      if (magic[1] == 0x01)
+      if (Magic[1] == 0x01)
         return COFF_FileType;
 
     case 0x90: // PA-RISC Windows
     case 0x68: // mc68K Windows
-      if (magic[1] == 0x02)
+      if (Magic[1] == 0x02)
         return COFF_FileType;
       break;
 
     case 0x4d: // Possible MS-DOS stub on Windows PE file
-      if (magic[1] == 0x5a) {
-        uint32_t off = *reinterpret_cast<const ulittle32_t *>(magic + 0x3c);
+      if (Magic[1] == 0x5a) {
+        uint32_t off =
+            *reinterpret_cast<const ulittle32_t *>(Magic + 0x3c);
         // PE/COFF file, either EXE or DLL.
-        if (off < length && memcmp(magic + off, "PE\0\0",4) == 0)
+        if (off < Length && memcmp(Magic + off, "PE\0\0",4) == 0)
           return COFF_FileType;
       }
       break;
 
     case 0x64: // x86-64 Windows.
-      if (magic[1] == char(0x86))
+      if (Magic[1] == char(0x86))
         return COFF_FileType;
       break;
 
