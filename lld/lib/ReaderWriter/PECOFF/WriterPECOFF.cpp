@@ -136,11 +136,14 @@ public:
     // Sections in an executable file on disk should be sector-aligned (512 byte).
     _peHeader.FileAlignment = 512;
 
-    // [FIXME] Windows 5.1 is Windows XP.
-    _peHeader.MajorOperatingSystemVersion = 5;
-    _peHeader.MinorOperatingSystemVersion = 1;
-    _peHeader.MajorSubsystemVersion = 5;
-    _peHeader.MinorSubsystemVersion = 1;
+    // The required Windows version number. This is the internal version and
+    // shouldn't be confused with product name. Windows 7 is version 6.1 and
+    // Windows 8 is 6.2, for example.
+    PECOFFTargetInfo::OSVersion minOSVersion = targetInfo.getMinOSVersion();
+    _peHeader.MajorOperatingSystemVersion = minOSVersion.majorVersion;
+    _peHeader.MinorOperatingSystemVersion = minOSVersion.minorVersion;
+    _peHeader.MajorSubsystemVersion = minOSVersion.majorVersion;
+    _peHeader.MinorSubsystemVersion = minOSVersion.minorVersion;
 
     // [FIXME] The size of the image when loaded into memory
     _peHeader.SizeOfImage = 0x2000;
