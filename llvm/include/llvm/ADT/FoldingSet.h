@@ -352,7 +352,8 @@ template<class T> class FoldingSetBucketIterator;
 template<typename T>
 inline bool
 DefaultFoldingSetTrait<T>::Equals(T &X, const FoldingSetNodeID &ID,
-                                  unsigned IDHash, FoldingSetNodeID &TempID) {
+                                  unsigned /*IDHash*/,
+                                  FoldingSetNodeID &TempID) {
   FoldingSetTrait<T>::Profile(X, TempID);
   return TempID == ID;
 }
@@ -366,7 +367,7 @@ template<typename T, typename Ctx>
 inline bool
 DefaultContextualFoldingSetTrait<T, Ctx>::Equals(T &X,
                                                  const FoldingSetNodeID &ID,
-                                                 unsigned IDHash,
+                                                 unsigned /*IDHash*/,
                                                  FoldingSetNodeID &TempID,
                                                  Ctx Context) {
   ContextualFoldingSetTrait<T, Ctx>::Profile(X, TempID, Context);

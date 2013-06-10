@@ -252,8 +252,8 @@ public:
                                    formatted_raw_ostream &,
                                    CodeGenFileType,
                                    bool /*DisableVerify*/ = true,
-                                   AnalysisID StartAfter = 0,
-                                   AnalysisID StopAfter = 0) {
+                                   AnalysisID /*StartAfter*/ = 0,
+                                   AnalysisID /*StopAfter*/ = 0) {
     return true;
   }
 

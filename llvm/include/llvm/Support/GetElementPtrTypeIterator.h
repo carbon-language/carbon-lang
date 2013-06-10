@@ -105,7 +105,7 @@ namespace llvm {
 
   template<typename T>
   inline generic_gep_type_iterator<const T *>
-  gep_type_end(Type *Op0, ArrayRef<T> A) {
+  gep_type_end(Type * /*Op0*/, ArrayRef<T> A) {
     return generic_gep_type_iterator<const T *>::end(A.end());
   }
 } // end namespace llvm

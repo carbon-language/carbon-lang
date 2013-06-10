@@ -148,7 +148,7 @@ public:
   // Return the pointer type for the given address space, defaults to
   // the pointer type from the data layout.
   // FIXME: The default needs to be removed once all the code is updated.
-  virtual MVT getPointerTy(uint32_t AS = 0) const { return PointerTy; }
+  virtual MVT getPointerTy(uint32_t /*AS*/ = 0) const { return PointerTy; }
   virtual MVT getScalarShiftAmountTy(EVT LHSTy) const;
 
   EVT getShiftAmountTy(EVT LHSTy) const;
@@ -157,12 +157,14 @@ public:
   /// this target.
   bool isSelectExpensive() const { return SelectIsExpensive; }
 
-  virtual bool isSelectSupported(SelectSupportKind kind) const { return true; }
+  virtual bool isSelectSupported(SelectSupportKind /*kind*/) const {
+    return true;
+  }
 
   /// shouldSplitVectorElementType - Return true if a vector of the given type
   /// should be split (TypeSplitVector) instead of promoted
   /// (TypePromoteInteger) during type legalization.
-  virtual bool shouldSplitVectorElementType(EVT VT) const { return false; }
+  virtual bool shouldSplitVectorElementType(EVT /*VT*/) const { return false; }
 
   /// isIntDivCheap() - Return true if integer divide is usually cheaper than
   /// a sequence of several shifts, adds, and multiplies for this target.
@@ -694,7 +696,7 @@ public:
   /// replacements don't generate code that causes an alignment error  (trap) on
   /// the target machine.
   /// @brief Determine if the target supports unaligned memory accesses.
-  virtual bool allowsUnalignedMemoryAccesses(EVT, bool *Fast = 0) const {
+  virtual bool allowsUnalignedMemoryAccesses(EVT, bool * /*Fast*/ = 0) const {
     return false;
   }
 
@@ -724,9 +726,7 @@ public:
   /// targets without SSE2 f64 load / store are done with fldl / fstpl which
   /// also does type conversion. Note the specified type doesn't have to be
   /// legal as the hook is used before type legalization.
-  virtual bool isSafeMemOpType(MVT VT) const {
-    return true;
-  }
+  virtual bool isSafeMemOpType(MVT /*VT*/) const { return true; }
 
   /// usesUnderscoreSetJmp - Determine if we should use _setjmp or setjmp
   /// to implement llvm.setjmp.
@@ -1110,9 +1110,9 @@ public:
   /// much computation as possible to be done in the address mode for that
   /// operand.  This hook lets targets also pass back when this should be done
   /// on intrinsics which load/store.
-  virtual bool GetAddrModeArguments(IntrinsicInst *I,
-                                    SmallVectorImpl<Value*> &Ops,
-                                    Type *&AccessTy) const {
+  virtual bool GetAddrModeArguments(IntrinsicInst * /*I*/,
+                                    SmallVectorImpl<Value*> &/*Ops*/,
+                                    Type *&/*AccessTy*/) const {
     return false;
   }
 
@@ -2031,7 +2031,7 @@ public:
   /// tail call.
   /// This is used to determine whether it is possible
   /// to codegen a libcall as tail call at legalization time.
-  virtual bool isUsedByReturnOnly(SDNode *, SDValue &Chain) const {
+  virtual bool isUsedByReturnOnly(SDNode *, SDValue &/*Chain*/) const {
     return false;
   }
 
