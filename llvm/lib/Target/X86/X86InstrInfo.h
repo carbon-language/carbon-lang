@@ -192,6 +192,19 @@ public:
                      const MachineInstr *Orig,
                      const TargetRegisterInfo &TRI) const;
 
+  /// Given an operand within a MachineInstr, insert preceding code to put it
+  /// into the right format for a particular kind of LEA instruction. This may
+  /// involve using an appropriate super-register instead (with an implicit use
+  /// of the original) or creating a new virtual register and inserting COPY
+  /// instructions to get the data into the right class.
+  ///
+  /// Reference parameters are set to indicate how caller should add this
+  /// operand to the LEA instruction.
+  bool classifyLEAReg(MachineInstr *MI, const MachineOperand &Src,
+                      unsigned LEAOpcode, bool AllowSP,
+                      unsigned &NewSrc, bool &isKill,
+                      bool &isUndef, MachineOperand &ImplicitOp) const;
+
   /// convertToThreeAddress - This method must be implemented by targets that
   /// set the M_CONVERTIBLE_TO_3_ADDR flag.  When this flag is set, the target
   /// may be able to convert a two-address instruction into a true

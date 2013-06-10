@@ -52,13 +52,14 @@ entry:
   ]
 
 sw.bb:                                            ; preds = %entry, %entry, %entry
+; CHECK: %sw.bb
+; CHECK: imull
   %mul = mul nsw i32 %test_case, 3
   %mul20 = mul nsw i32 %mul, %scale
   br i1 undef, label %if.end34, label %sw.bb307
 
 if.end34:                                         ; preds = %sw.bb
 ; CHECK: %if.end34
-; CHECK: imull
 ; CHECK: leal
 ; CHECK-NOT: imull
   tail call void (...)* @printf(i32 %test_case, i32 %mul20) nounwind

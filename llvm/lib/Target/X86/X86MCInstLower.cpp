@@ -225,20 +225,6 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
 }
 
 
-
-static void lower_lea64_32mem(MCInst *MI, unsigned OpNo) {
-  // Convert registers in the addr mode according to subreg64.
-  for (unsigned i = 0; i != 4; ++i) {
-    if (!MI->getOperand(OpNo+i).isReg()) continue;
-
-    unsigned Reg = MI->getOperand(OpNo+i).getReg();
-    // LEAs can use RIP-relative addressing, and RIP has no sub/super register.
-    if (Reg == 0 || Reg == X86::RIP) continue;
-
-    MI->getOperand(OpNo+i).setReg(getX86SubSuperRegister(Reg, MVT::i64));
-  }
-}
-
 /// LowerUnaryToTwoAddr - R = setb   -> R = sbb R, R
 static void LowerUnaryToTwoAddr(MCInst &OutMI, unsigned NewOpc) {
   OutMI.setOpcode(NewOpc);
@@ -364,9 +350,7 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   // Handle a few special cases to eliminate operand modifiers.
 ReSimplify:
   switch (OutMI.getOpcode()) {
-  case X86::LEA64_32r: // Handle 'subreg rewriting' for the lea64_32mem operand.
-    lower_lea64_32mem(&OutMI, 1);
-    // FALL THROUGH.
+  case X86::LEA64_32r:
   case X86::LEA64r:
   case X86::LEA16r:
   case X86::LEA32r:

@@ -30,10 +30,10 @@ land.lhs.true:
   %cmp4 = icmp eq i32 %call3, 10
   br i1 %cmp4, label %do.body.preheader, label %if.then
 
-; %shl.i should be sinked all the way down to do.body.preheader, but not into the loop.
+; %add16.i should be sinked all the way down to do.body.preheader, but not into the loop.
 ; CHECK: do.body.preheader
 ; CHECK-NOT: do.body
-; CHECK: shll	$12
+; CHECK: leal ([[SRC:%r[a-z0-9]+]],[[SRC]],8)
 
 do.body.preheader:
   %xor29.i = xor i32 %shr27.i, %add25.i
