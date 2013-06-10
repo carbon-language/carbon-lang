@@ -202,10 +202,6 @@ u64 NanoTime() {
   return 0;
 }
 
-u64 NanoTime() {
-  return 0;
-}
-
 void Abort() {
   abort();
   _exit(-1);  // abort is not NORETURN on Windows.
