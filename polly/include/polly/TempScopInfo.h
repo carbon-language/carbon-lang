@@ -39,8 +39,11 @@ public:
 
   // The type of the scev affine function
   enum TypeKind {
-    READ,
-    WRITE
+    READ = 0x1,
+    WRITE = 0x2,
+    SCALAR = 0x4,
+    SCALARREAD = SCALAR | READ,
+    SCALARWRITE = SCALAR | WRITE
   };
 
 private:
@@ -64,9 +67,11 @@ public:
 
   bool isAffine() const { return IsAffine; }
 
-  bool isRead() const { return Type == READ; }
+  bool isRead() const { return Type & READ; }
 
-  bool isWrite() const { return Type == WRITE; }
+  bool isWrite() const { return Type & WRITE; }
+
+  bool isScalar() const { return Type & SCALAR; }
 };
 
 class Comparison {
@@ -237,8 +242,12 @@ class TempScopInfo : public FunctionPass {
   // And also Remember the constrains for BBs
   BBCondMapType BBConds;
 
-  // Access function of bbs.
+  // Access function of statements (currently BasicBlocks) .
   AccFuncMapType AccFuncMap;
+
+  // Pre-created zero for the scalar accesses, with it we do not need create a
+  // zero scev every time when we need it.
+  const SCEV *ZeroOffset;
 
   // Mapping regions to the corresponding Scop in current function.
   TempScopMapType TempScops;
@@ -273,6 +282,13 @@ class TempScopInfo : public FunctionPass {
   /// @return     The IRAccess to describe the access function of the
   ///             instruction.
   IRAccess buildIRAccess(Instruction *Inst, Loop *L, Region *R);
+
+  /// @brief Analyze and extract the cross-BB scalar dependences (or,
+  ///        dataflow dependencies) of an instruction.
+  ///
+  /// @param Inst The instruction to be analyzed
+  /// @param R    The SCoP region
+  void buildScalarDependences(Instruction *Inst, Region *R);
 
   void buildAccessFunctions(Region &RefRegion, BasicBlock &BB);
 
