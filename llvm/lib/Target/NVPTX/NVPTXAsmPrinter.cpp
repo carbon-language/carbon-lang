@@ -1224,7 +1224,6 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
     // Ptx allows variable initilization only for constant and global state
     // spaces.
     if (((PTy->getAddressSpace() == llvm::ADDRESS_SPACE_GLOBAL) ||
-         (PTy->getAddressSpace() == llvm::ADDRESS_SPACE_CONST_NOT_GEN) ||
          (PTy->getAddressSpace() == llvm::ADDRESS_SPACE_CONST)) &&
         GVar->hasInitializer()) {
       const Constant *Initializer = GVar->getInitializer();
@@ -1248,7 +1247,6 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
       // Ptx allows variable initilization only for constant and
       // global state spaces.
       if (((PTy->getAddressSpace() == llvm::ADDRESS_SPACE_GLOBAL) ||
-           (PTy->getAddressSpace() == llvm::ADDRESS_SPACE_CONST_NOT_GEN) ||
            (PTy->getAddressSpace() == llvm::ADDRESS_SPACE_CONST)) &&
           GVar->hasInitializer()) {
         const Constant *Initializer = GVar->getInitializer();
@@ -1319,14 +1317,6 @@ void NVPTXAsmPrinter::emitPTXAddressSpace(unsigned int AddressSpace,
     O << "global";
     break;
   case llvm::ADDRESS_SPACE_CONST:
-    // This logic should be consistent with that in
-    // getCodeAddrSpace() (NVPTXISelDATToDAT.cpp)
-    if (nvptxSubtarget.hasGenericLdSt())
-      O << "global";
-    else
-      O << "const";
-    break;
-  case llvm::ADDRESS_SPACE_CONST_NOT_GEN:
     O << "const";
     break;
   case llvm::ADDRESS_SPACE_SHARED:
@@ -1566,14 +1556,13 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
             default:
               O << ".ptr ";
               break;
-            case llvm::ADDRESS_SPACE_CONST_NOT_GEN:
+            case llvm::ADDRESS_SPACE_CONST:
               O << ".ptr .const ";
               break;
             case llvm::ADDRESS_SPACE_SHARED:
               O << ".ptr .shared ";
               break;
             case llvm::ADDRESS_SPACE_GLOBAL:
-            case llvm::ADDRESS_SPACE_CONST:
               O << ".ptr .global ";
               break;
             }

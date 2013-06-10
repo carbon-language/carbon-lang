@@ -127,38 +127,22 @@ SDNode *NVPTXDAGToDAGISel::Select(SDNode *N) {
 static unsigned int getCodeAddrSpace(MemSDNode *N,
                                      const NVPTXSubtarget &Subtarget) {
   const Value *Src = N->getSrcValue();
+
   if (!Src)
-    return NVPTX::PTXLdStInstCode::LOCAL;
+    return NVPTX::PTXLdStInstCode::GENERIC;
 
   if (const PointerType *PT = dyn_cast<PointerType>(Src->getType())) {
     switch (PT->getAddressSpace()) {
-    case llvm::ADDRESS_SPACE_LOCAL:
-      return NVPTX::PTXLdStInstCode::LOCAL;
-    case llvm::ADDRESS_SPACE_GLOBAL:
-      return NVPTX::PTXLdStInstCode::GLOBAL;
-    case llvm::ADDRESS_SPACE_SHARED:
-      return NVPTX::PTXLdStInstCode::SHARED;
-    case llvm::ADDRESS_SPACE_CONST_NOT_GEN:
-      return NVPTX::PTXLdStInstCode::CONSTANT;
-    case llvm::ADDRESS_SPACE_GENERIC:
-      return NVPTX::PTXLdStInstCode::GENERIC;
-    case llvm::ADDRESS_SPACE_PARAM:
-      return NVPTX::PTXLdStInstCode::PARAM;
-    case llvm::ADDRESS_SPACE_CONST:
-      // If the arch supports generic address space, translate it to GLOBAL
-      // for correctness.
-      // If the arch does not support generic address space, then the arch
-      // does not really support ADDRESS_SPACE_CONST, translate it to
-      // to CONSTANT for better performance.
-      if (Subtarget.hasGenericLdSt())
-        return NVPTX::PTXLdStInstCode::GLOBAL;
-      else
-        return NVPTX::PTXLdStInstCode::CONSTANT;
-    default:
-      break;
+    case llvm::ADDRESS_SPACE_LOCAL: return NVPTX::PTXLdStInstCode::LOCAL;
+    case llvm::ADDRESS_SPACE_GLOBAL: return NVPTX::PTXLdStInstCode::GLOBAL;
+    case llvm::ADDRESS_SPACE_SHARED: return NVPTX::PTXLdStInstCode::SHARED;
+    case llvm::ADDRESS_SPACE_GENERIC: return NVPTX::PTXLdStInstCode::GENERIC;
+    case llvm::ADDRESS_SPACE_PARAM: return NVPTX::PTXLdStInstCode::PARAM;
+    case llvm::ADDRESS_SPACE_CONST: return NVPTX::PTXLdStInstCode::CONSTANT;
+    default: break;
     }
   }
-  return NVPTX::PTXLdStInstCode::LOCAL;
+  return NVPTX::PTXLdStInstCode::GENERIC;
 }
 
 SDNode *NVPTXDAGToDAGISel::SelectLoad(SDNode *N) {

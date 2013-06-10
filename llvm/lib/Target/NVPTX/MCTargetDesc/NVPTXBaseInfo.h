@@ -22,7 +22,6 @@ namespace llvm {
 enum AddressSpace {
   ADDRESS_SPACE_GENERIC = 0,
   ADDRESS_SPACE_GLOBAL = 1,
-  ADDRESS_SPACE_CONST_NOT_GEN = 2, // Not part of generic space
   ADDRESS_SPACE_SHARED = 3,
   ADDRESS_SPACE_CONST = 4,
   ADDRESS_SPACE_LOCAL = 5,
