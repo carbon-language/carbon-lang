@@ -271,23 +271,6 @@ Path::GetSystemLibraryPaths(std::vector<sys::Path>& Paths) {
   Paths.push_back(sys::Path(buff));
 }
 
-void
-Path::GetBitcodeLibraryPaths(std::vector<sys::Path>& Paths) {
-  char * env_var = getenv("LLVM_LIB_SEARCH_PATH");
-  if (env_var != 0) {
-    getPathList(env_var,Paths);
-  }
-#ifdef LLVM_LIBDIR
-  {
-    Path tmpPath;
-    if (tmpPath.set(LLVM_LIBDIR))
-      if (tmpPath.canRead())
-        Paths.push_back(tmpPath);
-  }
-#endif
-  GetSystemLibraryPaths(Paths);
-}
-
 Path
 Path::GetUserHomeDirectory() {
   char buff[MAX_PATH];
