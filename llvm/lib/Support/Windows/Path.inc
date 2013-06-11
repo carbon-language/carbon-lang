@@ -257,22 +257,6 @@ StringRef Path::getDirname() const {
 }
 
 StringRef
-Path::getBasename() const {
-  // Find the last slash
-  size_t slash = path.rfind('/');
-  if (slash == std::string::npos)
-    slash = 0;
-  else
-    slash++;
-
-  size_t dot = path.rfind('.');
-  if (dot == std::string::npos || dot < slash)
-    return StringRef(path).substr(slash);
-  else
-    return StringRef(path).substr(slash, dot - slash);
-}
-
-StringRef
 Path::getSuffix() const {
   // Find the last slash
   size_t slash = path.rfind('/');
