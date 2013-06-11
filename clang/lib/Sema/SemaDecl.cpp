@@ -9886,7 +9886,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         }
 
         // C++11 [class.mem]p1:
-        //   A member shall not be declared twice in the member-speciﬁcation,
+        //   A member shall not be declared twice in the member-specification,
         //   except that a nested class or member class template can be declared
         //   and then later defined.
         if (TUK == TUK_Declaration && PrevDecl->isCXXClassMember() &&
