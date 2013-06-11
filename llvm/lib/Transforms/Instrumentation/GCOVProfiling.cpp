@@ -34,7 +34,7 @@
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/InstIterator.h"
-#include "llvm/Support/PathV2.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include <string>

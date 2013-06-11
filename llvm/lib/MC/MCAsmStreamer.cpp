@@ -29,7 +29,7 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/PathV2.h"
+#include "llvm/Support/Path.h"
 #include <cctype>
 using namespace llvm;
 
