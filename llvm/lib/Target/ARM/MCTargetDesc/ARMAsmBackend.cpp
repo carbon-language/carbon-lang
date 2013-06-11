@@ -419,7 +419,7 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
      uint32_t J2Bit = (I2Bit ^ 0x1) ^ signBit;
      uint32_t imm10Bits = (offset & 0x1FF800) >> 11;
      uint32_t imm11Bits = (offset & 0x000007FF);
- 
+
      uint32_t Binary = 0;
      uint32_t firstHalf = (((uint16_t)signBit << 10) | (uint16_t)imm10Bits);
      uint32_t secondHalf = (((uint16_t)J1Bit << 13) | ((uint16_t)J2Bit << 11) |
@@ -434,8 +434,8 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
      // four (see fixup_arm_thumb_cp). The 32-bit immediate value is encoded as
      //   imm32 = SignExtend(S:I1:I2:imm10H:imm10L:00)
      // where I1 = NOT(J1 ^ S) and I2 = NOT(J2 ^ S).
-     // The value is encoded into disjoint bit positions in the destination 
-     // opcode. x = unchanged, I = immediate value bit, S = sign extension bit, 
+     // The value is encoded into disjoint bit positions in the destination
+     // opcode. x = unchanged, I = immediate value bit, S = sign extension bit,
      // J = either J1 or J2 bit, 0 = zero.
      //
      //   BLX: xxxxxSIIIIIIIIII xxJxJIIIIIIIIII0
@@ -450,10 +450,10 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
      uint32_t J2Bit = (I2Bit ^ 0x1) ^ signBit;
      uint32_t imm10HBits = (offset & 0xFFC00) >> 10;
      uint32_t imm10LBits = (offset & 0x3FF);
- 
+
      uint32_t Binary = 0;
      uint32_t firstHalf = (((uint16_t)signBit << 10) | (uint16_t)imm10HBits);
-     uint32_t secondHalf = (((uint16_t)J1Bit << 13) | ((uint16_t)J2Bit << 11) | 
+     uint32_t secondHalf = (((uint16_t)J1Bit << 13) | ((uint16_t)J2Bit << 11) |
                            ((uint16_t)imm10LBits) << 1);
      Binary |= secondHalf << 16;
      Binary |= firstHalf;
