@@ -389,12 +389,14 @@ void MipsSEInstrInfo::expandRetRA(MachineBasicBlock &MBB,
   BuildMI(MBB, I, I->getDebugLoc(), get(Opc)).addReg(Mips::RA);
 }
 
-std::pair<bool, bool> MipsSEInstrInfo::compareOpndSize(unsigned Opc) const {
+std::pair<bool, bool>
+MipsSEInstrInfo::compareOpndSize(unsigned Opc,
+                                 const MachineFunction &MF) const {
   const MCInstrDesc &Desc = get(Opc);
   assert(Desc.NumOperands == 2 && "Unary instruction expected.");
-  const MipsRegisterInfo &RI = getRegisterInfo();
-  unsigned DstRegSize = RI.getRegClass(Desc.OpInfo[0].RegClass)->getSize();
-  unsigned SrcRegSize = RI.getRegClass(Desc.OpInfo[1].RegClass)->getSize();
+  const MipsRegisterInfo *RI = &getRegisterInfo();
+  unsigned DstRegSize = getRegClass(Desc, 0, RI, MF)->getSize();
+  unsigned SrcRegSize = getRegClass(Desc, 1, RI, MF)->getSize();
 
   return std::make_pair(DstRegSize > SrcRegSize, DstRegSize < SrcRegSize);
 }
@@ -411,7 +413,7 @@ void MipsSEInstrInfo::expandCvtFPInt(MachineBasicBlock &MBB,
   unsigned SubIdx = (IsI64 ? Mips::sub_32 : Mips::sub_fpeven);
   bool DstIsLarger, SrcIsLarger;
 
-  tie(DstIsLarger, SrcIsLarger) = compareOpndSize(CvtOpc);
+  tie(DstIsLarger, SrcIsLarger) = compareOpndSize(CvtOpc, *MBB.getParent());
 
   if (DstIsLarger)
     TmpReg = getRegisterInfo().getSubReg(DstReg, SubIdx);

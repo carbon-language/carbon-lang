@@ -84,7 +84,8 @@ private:
   void expandRetRA(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                    unsigned Opc) const;
 
-  std::pair<bool, bool> compareOpndSize(unsigned Opc) const;
+  std::pair<bool, bool> compareOpndSize(unsigned Opc,
+                                        const MachineFunction &MF) const;
 
   /// Expand pseudo Int-to-FP conversion instructions.
   ///
