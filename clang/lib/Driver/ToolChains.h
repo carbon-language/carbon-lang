@@ -17,6 +17,8 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Compiler.h"
 
+#include <vector>
+
 namespace clang {
 namespace driver {
 namespace toolchains {
