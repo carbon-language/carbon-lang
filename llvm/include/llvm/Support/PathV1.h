@@ -92,15 +92,6 @@ namespace sys {
     /// @name Constructors
     /// @{
     public:
-      /// Construct a path to the root directory of the file system. The root
-      /// directory is a top level directory above which there are no more
-      /// directories. For example, on UNIX, the root directory is /. On Windows
-      /// it is file:///. Other operating systems may have different notions of
-      /// what the root directory is or none at all. In that case, a consistent
-      /// default root directory will be used.
-      LLVM_ATTRIBUTE_DEPRECATED(static Path GetRootDirectory(),
-        LLVM_PATH_DEPRECATED_MSG(NOTHING));
-
       /// Construct a path to a unique temporary directory that is created in
       /// a "standard" place for the operating system. The directory is
       /// guaranteed to be created on exit from this function. If the directory

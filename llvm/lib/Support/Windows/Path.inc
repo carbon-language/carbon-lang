@@ -233,14 +233,6 @@ Path::GetTemporaryDirectory(std::string* ErrMsg) {
   return *TempDirectory;
 }
 
-// FIXME: the following set of functions don't map to Windows very well.
-Path
-Path::GetRootDirectory() {
-  // This is the only notion that that Windows has of a root directory. Nothing
-  // is here except for drives.
-  return Path("file:///");
-}
-
 Path
 Path::GetCurrentDirectory() {
   char pathname[MAX_PATH];

@@ -125,13 +125,6 @@ Path::isAbsolute() const {
 }
 
 Path
-Path::GetRootDirectory() {
-  Path result;
-  result.set("/");
-  return result;
-}
-
-Path
 Path::GetTemporaryDirectory(std::string *ErrMsg) {
 #if defined(HAVE_MKDTEMP)
   // The best way is with mkdtemp but that's not available on many systems,
