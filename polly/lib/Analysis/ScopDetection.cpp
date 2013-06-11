@@ -390,9 +390,6 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
 
 bool ScopDetection::isValidBasicBlock(BasicBlock &BB,
                                       DetectionContext &Context) const {
-  if (!isValidCFG(BB, Context))
-    return false;
-
   // Check all instructions, except the terminator instruction.
   for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I)
     if (!isValidInstruction(*I, Context))
@@ -539,6 +536,11 @@ void ScopDetection::findScops(Region &R) {
 
 bool ScopDetection::allBlocksValid(DetectionContext &Context) const {
   Region &R = Context.CurRegion;
+
+  for (Region::block_iterator I = R.block_begin(), E = R.block_end(); I != E;
+       ++I)
+    if (!isValidCFG(**I, Context))
+      return false;
 
   for (Region::block_iterator I = R.block_begin(), E = R.block_end(); I != E;
        ++I)
