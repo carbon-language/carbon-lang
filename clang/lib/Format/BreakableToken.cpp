@@ -16,6 +16,7 @@
 #define DEBUG_TYPE "format-token-breaker"
 
 #include "BreakableToken.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Format/Format.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
@@ -118,15 +119,6 @@ unsigned BreakableSingleLineToken::getLineLengthAfterSplit(
          encoding::getCodePointCount(Line.substr(Offset, Length), Encoding);
 }
 
-void BreakableSingleLineToken::insertBreak(unsigned LineIndex,
-                                           unsigned TailOffset, Split Split,
-                                           bool InPPDirective,
-                                           WhitespaceManager &Whitespaces) {
-  Whitespaces.breakToken(Tok, Prefix.size() + TailOffset + Split.first,
-                         Split.second, Postfix, Prefix, InPPDirective,
-                         StartColumn);
-}
-
 BreakableSingleLineToken::BreakableSingleLineToken(const FormatToken &Tok,
                                                    unsigned StartColumn,
                                                    StringRef Prefix,
@@ -151,6 +143,15 @@ BreakableStringLiteral::getSplit(unsigned LineIndex, unsigned TailOffset,
                         Encoding);
 }
 
+void BreakableStringLiteral::insertBreak(unsigned LineIndex,
+                                         unsigned TailOffset, Split Split,
+                                         bool InPPDirective,
+                                         WhitespaceManager &Whitespaces) {
+  Whitespaces.replaceWhitespaceInToken(
+      Tok, Prefix.size() + TailOffset + Split.first, Split.second, Postfix,
+      Prefix, InPPDirective, 1, StartColumn);
+}
+
 static StringRef getLineCommentPrefix(StringRef Comment) {
   const char *KnownPrefixes[] = { "/// ", "///", "// ", "//" };
   for (size_t i = 0, e = llvm::array_lengthof(KnownPrefixes); i != e; ++i)
@@ -164,13 +165,40 @@ BreakableLineComment::BreakableLineComment(const FormatToken &Token,
                                            encoding::Encoding Encoding)
     : BreakableSingleLineToken(Token, StartColumn,
                                getLineCommentPrefix(Token.TokenText), "",
-                               Encoding) {}
+                               Encoding) {
+  OriginalPrefix = Prefix;
+  if (Token.TokenText.size() > Prefix.size() &&
+      isAlphanumeric(Token.TokenText[Prefix.size()])) {
+    if (Prefix == "//")
+      Prefix = "// ";
+    else if (Prefix == "///")
+      Prefix = "/// ";
+  }
+}
 
 BreakableToken::Split
 BreakableLineComment::getSplit(unsigned LineIndex, unsigned TailOffset,
                                unsigned ColumnLimit) const {
   return getCommentSplit(Line.substr(TailOffset), StartColumn + Prefix.size(),
                          ColumnLimit, Encoding);
+}
+
+void BreakableLineComment::insertBreak(unsigned LineIndex, unsigned TailOffset,
+                                       Split Split, bool InPPDirective,
+                                       WhitespaceManager &Whitespaces) {
+  Whitespaces.replaceWhitespaceInToken(
+      Tok, OriginalPrefix.size() + TailOffset + Split.first, Split.second,
+      Postfix, Prefix, InPPDirective, 1, StartColumn);
+}
+
+void
+BreakableLineComment::replaceWhitespaceBefore(unsigned LineIndex,
+                                              unsigned InPPDirective,
+                                              WhitespaceManager &Whitespaces) {
+  if (OriginalPrefix != Prefix) {
+    Whitespaces.replaceWhitespaceInToken(Tok, OriginalPrefix.size(), 0, "", "",
+                                         false, 0, 1);
+  }
 }
 
 BreakableBlockComment::BreakableBlockComment(
@@ -299,8 +327,9 @@ void BreakableBlockComment::insertBreak(unsigned LineIndex, unsigned TailOffset,
       Text.data() - Tok.TokenText.data() + Split.first;
   unsigned CharsToRemove = Split.second;
   assert(IndentAtLineBreak >= Decoration.size());
-  Whitespaces.breakToken(Tok, BreakOffsetInToken, CharsToRemove, "", Prefix,
-                         InPPDirective, IndentAtLineBreak - Decoration.size());
+  Whitespaces.replaceWhitespaceInToken(Tok, BreakOffsetInToken, CharsToRemove,
+                                       "", Prefix, InPPDirective, 1,
+                                       IndentAtLineBreak - Decoration.size());
 }
 
 void
@@ -331,9 +360,9 @@ BreakableBlockComment::replaceWhitespaceBefore(unsigned LineIndex,
       Lines[LineIndex].data() - Tok.TokenText.data() -
       LeadingWhitespace[LineIndex];
   assert(StartOfLineColumn[LineIndex] >= Prefix.size());
-  Whitespaces.breakToken(
+  Whitespaces.replaceWhitespaceInToken(
       Tok, WhitespaceOffsetInToken, LeadingWhitespace[LineIndex], "", Prefix,
-      InPPDirective, StartOfLineColumn[LineIndex] - Prefix.size());
+      InPPDirective, 1, StartOfLineColumn[LineIndex] - Prefix.size());
 }
 
 unsigned

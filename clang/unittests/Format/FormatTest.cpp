@@ -860,10 +860,15 @@ TEST_F(FormatTest, SplitsLongCxxComments) {
   EXPECT_EQ("//    Don't_touch_leading_whitespace",
             format("//    Don't_touch_leading_whitespace",
                    getLLVMStyleWithColumns(20)));
-  EXPECT_EQ(
-      "//Don't add leading\n"
-      "//whitespace",
-      format("//Don't add leading whitespace", getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("// Add leading\n"
+            "// whitespace",
+            format("//Add leading whitespace", getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("// whitespace", format("//whitespace", getLLVMStyle()));
+  EXPECT_EQ("// Even if it makes the line exceed the column\n"
+            "// limit",
+            format("//Even if it makes the line exceed the column limit",
+                   getLLVMStyleWithColumns(51)));
+  EXPECT_EQ("//--But not here", format("//--But not here", getLLVMStyle()));
   EXPECT_EQ("// A comment before\n"
             "// a macro\n"
             "// definition\n"

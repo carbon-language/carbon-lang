@@ -84,8 +84,6 @@ public:
   virtual unsigned getLineLengthAfterSplit(unsigned LineIndex,
                                            unsigned TailOffset,
                                            StringRef::size_type Length) const;
-  virtual void insertBreak(unsigned LineIndex, unsigned TailOffset, Split Split,
-                           bool InPPDirective, WhitespaceManager &Whitespaces);
 
 protected:
   BreakableSingleLineToken(const FormatToken &Tok, unsigned StartColumn,
@@ -113,6 +111,9 @@ public:
 
   virtual Split getSplit(unsigned LineIndex, unsigned TailOffset,
                          unsigned ColumnLimit) const;
+  virtual void insertBreak(unsigned LineIndex, unsigned TailOffset, Split Split,
+                           bool InPPDirective,
+                           WhitespaceManager &Whitespaces);
 };
 
 class BreakableLineComment : public BreakableSingleLineToken {
@@ -126,6 +127,15 @@ public:
 
   virtual Split getSplit(unsigned LineIndex, unsigned TailOffset,
                          unsigned ColumnLimit) const;
+  virtual void insertBreak(unsigned LineIndex, unsigned TailOffset, Split Split,
+                           bool InPPDirective, WhitespaceManager &Whitespaces);
+  virtual void replaceWhitespaceBefore(unsigned LineIndex,
+                                       unsigned InPPDirective,
+                                       WhitespaceManager &Whitespaces);
+
+private:
+  // The prefix without an additional space if one was added.
+  StringRef OriginalPrefix;
 };
 
 class BreakableBlockComment : public BreakableToken {
