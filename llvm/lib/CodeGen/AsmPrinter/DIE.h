@@ -274,7 +274,7 @@ namespace llvm {
 
     /// getValue - Get MCSymbol.
     ///
-    const MCSymbol *getValue()       const { return Label; }
+    const MCSymbol *getValue() const { return Label; }
 
     /// SizeOf - Determine size of label value in bytes.
     ///
