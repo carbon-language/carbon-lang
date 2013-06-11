@@ -457,7 +457,7 @@ public:
     return BumpAlloc;
   }
 
-  void *Allocate(unsigned Size, unsigned Align = 8) const {
+  void *Allocate(size_t Size, unsigned Align = 8) const {
     return BumpAlloc.Allocate(Size, Align);
   }
   void Deallocate(void *Ptr) const { }
