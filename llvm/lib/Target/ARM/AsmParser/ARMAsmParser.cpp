@@ -994,7 +994,7 @@ public:
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Val = CE->getValue();
-    return Val > -4096 && Val < 4096;
+    return (Val == INT32_MIN) || (Val > -4096 && Val < 4096);
   }
   bool isAddrMode3() const {
     // If we have an immediate that's not a constant, treat it as a label

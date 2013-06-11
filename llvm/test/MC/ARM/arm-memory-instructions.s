@@ -16,12 +16,14 @@ _func:
         ldr r2, [r4, #4095]!
         ldr r1, [r2], #30
         ldr r3, [r1], #-30
+        ldr r9, [r2], #-0
 
 @ CHECK: ldr	r5, [r7]                @ encoding: [0x00,0x50,0x97,0xe5]
 @ CHECK: ldr	r6, [r3, #63]           @ encoding: [0x3f,0x60,0x93,0xe5]
 @ CHECK: ldr	r2, [r4, #4095]!        @ encoding: [0xff,0x2f,0xb4,0xe5]
 @ CHECK: ldr	r1, [r2], #30           @ encoding: [0x1e,0x10,0x92,0xe4]
 @ CHECK: ldr	r3, [r1], #-30          @ encoding: [0x1e,0x30,0x11,0xe4]
+@ CHECK: ldr	r9, [r2], #-0           @ encoding: [0x00,0x90,0x12,0xe4]
 
 @------------------------------------------------------------------------------
 @ FIXME: LDR (literal)
@@ -308,13 +310,14 @@ Lbaz: .quad 0
         str r3, [r5, #40]!
         str r9, [sp], #4095
         str r1, [r7], #-128
+        str r1, [r0], #-0
 
 @ CHECK: str	r8, [r12]               @ encoding: [0x00,0x80,0x8c,0xe5]
 @ CHECK: str	r7, [r1, #12]           @ encoding: [0x0c,0x70,0x81,0xe5]
 @ CHECK: str	r3, [r5, #40]!          @ encoding: [0x28,0x30,0xa5,0xe5]
 @ CHECK: str	r9, [sp], #4095         @ encoding: [0xff,0x9f,0x8d,0xe4]
 @ CHECK: str	r1, [r7], #-128         @ encoding: [0x80,0x10,0x07,0xe4]
-
+@ CHECK: str	r1, [r0], #-0           @ encoding: [0x00,0x10,0x00,0xe4]
 
 @------------------------------------------------------------------------------
 @ FIXME: STR (literal)
