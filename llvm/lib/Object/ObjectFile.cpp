@@ -44,6 +44,8 @@ ObjectFile *ObjectFile::createObjectFile(MemoryBuffer *Object) {
   sys::fs::file_magic Type = sys::fs::identify_magic(Object->getBuffer());
   switch (Type) {
   case sys::fs::file_magic::unknown:
+  case sys::fs::file_magic::bitcode:
+  case sys::fs::file_magic::archive:
     return 0;
   case sys::fs::file_magic::elf_relocatable:
   case sys::fs::file_magic::elf_executable:

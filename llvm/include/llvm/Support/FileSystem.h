@@ -181,7 +181,7 @@ public:
 /// file_magic - An "enum class" enumeration of file types based on magic (the first
 ///         N bytes of the file).
 struct file_magic {
-  enum _ {
+  enum Impl {
     unknown = 0,              ///< Unrecognized file
     bitcode,                  ///< Bitcode file
     archive,                  ///< ar style archive file
@@ -204,16 +204,15 @@ struct file_magic {
   };
 
   bool is_object() const {
-    return v_ == unknown ? false : true;
+    return V == unknown ? false : true;
   }
 
-  file_magic() : v_(unknown) {}
-  file_magic(_ v) : v_(v) {}
-  explicit file_magic(int v) : v_(_(v)) {}
-  operator int() const {return v_;}
+  file_magic() : V(unknown) {}
+  file_magic(Impl V) : V(V) {}
+  operator Impl() const { return V; }
 
 private:
-  int v_;
+  Impl V;
 };
 
 /// @}
