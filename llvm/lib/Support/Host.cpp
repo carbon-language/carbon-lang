@@ -570,41 +570,31 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
   SmallVector<StringRef, 32> Lines;
   Str.split(Lines, "\n");
 
-  // Look for the CPU implementer line.
-  StringRef Implementer;
+  SmallVector<StringRef, 32> CPUFeatures;
+
+  // Look for the CPU features.
   for (unsigned I = 0, E = Lines.size(); I != E; ++I)
-    if (Lines[I].startswith("CPU implementer"))
-      Implementer = Lines[I].substr(15).ltrim("\t :");
-
-  if (Implementer == "0x41") { // ARM Ltd.
-    SmallVector<StringRef, 32> CPUFeatures;
-
-    // Look for the CPU features.
-    for (unsigned I = 0, E = Lines.size(); I != E; ++I)
-      if (Lines[I].startswith("Features")) {
-        Lines[I].split(CPUFeatures, " ");
-        break;
-      }
-
-    for (unsigned I = 0, E = CPUFeatures.size(); I != E; ++I) {
-      StringRef LLVMFeatureStr = StringSwitch<StringRef>(CPUFeatures[I])
-        .Case("half", "fp16")
-        .Case("neon", "neon")
-        .Case("vfpv3", "vfp3")
-        .Case("vfpv3d16", "d16")
-        .Case("vfpv4", "vfp4")
-        .Case("idiva", "hwdiv-arm")
-        .Case("idivt", "hwdiv")
-        .Default("");
-
-      if (LLVMFeatureStr != "")
-        Features.GetOrCreateValue(LLVMFeatureStr).setValue(true);
+    if (Lines[I].startswith("Features")) {
+      Lines[I].split(CPUFeatures, " ");
+      break;
     }
 
-    return true;
+  for (unsigned I = 0, E = CPUFeatures.size(); I != E; ++I) {
+    StringRef LLVMFeatureStr = StringSwitch<StringRef>(CPUFeatures[I])
+      .Case("half", "fp16")
+      .Case("neon", "neon")
+      .Case("vfpv3", "vfp3")
+      .Case("vfpv3d16", "d16")
+      .Case("vfpv4", "vfp4")
+      .Case("idiva", "hwdiv-arm")
+      .Case("idivt", "hwdiv")
+      .Default("");
+
+    if (LLVMFeatureStr != "")
+      Features.GetOrCreateValue(LLVMFeatureStr).setValue(true);
   }
 
-  return false;
+  return true;
 }
 #else
 bool sys::getHostCPUFeatures(StringMap<bool> &Features){
