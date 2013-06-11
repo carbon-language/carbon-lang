@@ -39,7 +39,7 @@ LLVM_YAML_STRONG_TYPEDEF(uint8_t, ELF_ELFDATA)
 
 // For now, hardcode 64 bits everywhere that 32 or 64 would be needed
 // since 64-bit can hold 32-bit values too.
-struct Header {
+struct FileHeader {
   ELF_ELFCLASS Class;
   ELF_ELFDATA Data;
   ELF_ET Type;
@@ -47,7 +47,7 @@ struct Header {
   llvm::yaml::Hex64 Entry;
 };
 struct Object {
-  Header Header;
+  FileHeader Header;
 };
 
 } // end namespace ELFYAML
@@ -77,8 +77,8 @@ struct ScalarEnumerationTraits<ELFYAML::ELF_ELFDATA> {
 };
 
 template <>
-struct MappingTraits<ELFYAML::Header> {
-  static void mapping(IO &IO, ELFYAML::Header &Header);
+struct MappingTraits<ELFYAML::FileHeader> {
+  static void mapping(IO &IO, ELFYAML::FileHeader &FileHdr);
 };
 
 template <>

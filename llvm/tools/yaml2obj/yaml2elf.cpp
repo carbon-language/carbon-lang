@@ -24,7 +24,7 @@ using namespace llvm;
 
 template <class ELFT>
 static void writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
-  const ELFYAML::Header &Hdr = Doc.Header;
+  const ELFYAML::FileHeader &Hdr = Doc.Header;
   using namespace llvm::ELF;
   using namespace llvm::object;
   typename ELFObjectFile<ELFT>::Elf_Ehdr Header;

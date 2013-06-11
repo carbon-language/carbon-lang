@@ -212,16 +212,16 @@ void ScalarEnumerationTraits<ELFYAML::ELF_ELFDATA>::enumeration(
 #undef ECase
 }
 
-void MappingTraits<ELFYAML::Header>::mapping(IO &IO, ELFYAML::Header &Header) {
-  IO.mapRequired("Class", Header.Class);
-  IO.mapRequired("Data", Header.Data);
-  IO.mapRequired("Type", Header.Type);
-  IO.mapRequired("Machine", Header.Machine);
-  IO.mapOptional("Entry", Header.Entry, Hex64(0));
+void MappingTraits<ELFYAML::FileHeader>::mapping(IO &IO, ELFYAML::FileHeader &FileHdr) {
+  IO.mapRequired("Class", FileHdr.Class);
+  IO.mapRequired("Data", FileHdr.Data);
+  IO.mapRequired("Type", FileHdr.Type);
+  IO.mapRequired("Machine", FileHdr.Machine);
+  IO.mapOptional("Entry", FileHdr.Entry, Hex64(0));
 }
 
 void MappingTraits<ELFYAML::Object>::mapping(IO &IO, ELFYAML::Object &Object) {
-  IO.mapRequired("Header", Object.Header);
+  IO.mapRequired("FileHeader", Object.Header);
 }
 
 } // end namespace yaml
