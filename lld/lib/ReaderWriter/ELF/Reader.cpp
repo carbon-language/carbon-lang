@@ -85,15 +85,15 @@ public:
   error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
                        std::vector<std::unique_ptr<File> > &result) const {
     using llvm::object::ELFType;
-    llvm::sys::LLVMFileType fileType =
-        llvm::sys::identifyFileType(mb->getBuffer());
+    llvm::sys::fs::file_magic FileType =
+        llvm::sys::fs::identify_magic(mb->getBuffer());
 
     std::size_t MaxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
 
     llvm::error_code ec;
-    switch (fileType) {
-    case llvm::sys::ELF_Relocatable_FileType: {
+    switch (FileType) {
+    case llvm::sys::fs::file_magic::elf_relocatable: {
       std::unique_ptr<File> f(createELF<ELFFileCreateELFTraits>(
           getElfArchType(&*mb), MaxAlignment, _elfTargetInfo, std::move(mb),
           ec));
@@ -102,7 +102,7 @@ public:
       result.push_back(std::move(f));
       break;
     }
-    case llvm::sys::ELF_SharedObject_FileType: {
+    case llvm::sys::fs::file_magic::elf_shared_object: {
       auto f = createELF<DynamicFileCreateELFTraits>(
           getElfArchType(&*mb), MaxAlignment, _elfTargetInfo, std::move(mb));
       if (!f)
@@ -110,7 +110,7 @@ public:
       result.push_back(std::move(*f));
       break;
     }
-    case llvm::sys::Archive_FileType:
+    case llvm::sys::fs::file_magic::archive:
       ec = _readerArchive.parseFile(mb, result);
       break;
     default:
