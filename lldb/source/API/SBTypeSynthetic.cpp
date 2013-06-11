@@ -116,15 +116,15 @@ SBTypeSynthetic::SetOptions (uint32_t value)
 
 bool
 SBTypeSynthetic::GetDescription (lldb::SBStream &description, 
-                               lldb::DescriptionLevel description_level)
+                                 lldb::DescriptionLevel description_level)
 {
-    if (!CopyOnWrite_Impl())
-        return false;
-    else {
+    if (m_opaque_sp)
+    {
         description.Printf("%s\n",
                            m_opaque_sp->GetDescription().c_str());
         return true;
     }
+    return false;
 }
 
 lldb::SBTypeSynthetic &
