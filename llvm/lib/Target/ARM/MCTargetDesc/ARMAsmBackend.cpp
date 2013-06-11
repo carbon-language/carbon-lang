@@ -680,8 +680,11 @@ MCAsmBackend *llvm::createARMAsmBackend(const Target &T, StringRef TT, StringRef
     return new DarwinARMAsmBackend(T, TT, CS);
   }
 
+#if 0
+  // FIXME: Introduce yet another checker but assert(0).
   if (TheTriple.isOSBinFormatCOFF())
-    llvm_unreachable("Windows not supported on ARM");
+    assert(0 && "Windows not supported on ARM");
+#endif
 
   uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(Triple(TT).getOS());
   return new ELFARMAsmBackend(T, TT, OSABI);
