@@ -1360,11 +1360,11 @@ bool X86FastISel::X86SelectDivRem(const Instruction *I) {
       // fit neatly into the table above.
       if (VT.SimpleTy == MVT::i16) {
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                TII.get(TargetOpcode::COPY), TypeEntry.HighInReg)
+                TII.get(Copy), TypeEntry.HighInReg)
           .addReg(Zero32, 0, X86::sub_16bit);
       } else if (VT.SimpleTy == MVT::i32) {
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                TII.get(TargetOpcode::COPY), TypeEntry.HighInReg)
+                TII.get(Copy), TypeEntry.HighInReg)
             .addReg(Zero32);
       } else if (VT.SimpleTy == MVT::i64) {
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
