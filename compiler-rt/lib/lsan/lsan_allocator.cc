@@ -63,7 +63,7 @@ static void RegisterAllocation(const StackTrace &stack, void *p, uptr size) {
   if (!p) return;
   ChunkMetadata *m = Metadata(p);
   CHECK(m);
-  m->tag = lsan_disabled ? kSuppressed : kDirectlyLeaked;
+  m->tag = lsan_disabled ? kIgnored : kDirectlyLeaked;
   m->stack_trace_id = StackDepotPut(stack.trace, stack.size);
   m->requested_size = size;
   atomic_store((atomic_uint8_t*)m, 1, memory_order_relaxed);
@@ -197,9 +197,9 @@ IgnoreObjectResult IgnoreObjectLocked(const void *p) {
   ChunkMetadata *m = Metadata(chunk);
   CHECK(m);
   if (m->allocated && (uptr)p < (uptr)chunk + m->requested_size) {
-    if (m->tag == kSuppressed)
+    if (m->tag == kIgnored)
       return kIgnoreObjectAlreadyIgnored;
-    m->tag = kSuppressed;
+    m->tag = kIgnored;
     return kIgnoreObjectSuccess;
   } else {
     return kIgnoreObjectInvalid;

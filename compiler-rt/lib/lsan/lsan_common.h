@@ -33,7 +33,7 @@ enum ChunkTag {
   kDirectlyLeaked = 0,  // default
   kIndirectlyLeaked = 1,
   kReachable = 2,
-  kSuppressed = 3
+  kIgnored = 3
 };
 
 struct Flags {
@@ -41,9 +41,9 @@ struct Flags {
     return use_unaligned ? 1 : sizeof(uptr);
   }
 
-  // Print addresses of leaked blocks after main leak report.
-  bool report_blocks;
-  // Aggregate two blocks into one leak if this many stack frames match. If
+  // Print addresses of leaked objects after main leak report.
+  bool report_objects;
+  // Aggregate two objects into one leak if this many stack frames match. If
   // zero, the entire stack trace must match.
   int resolution;
   // The number of leaks reported.
@@ -146,7 +146,7 @@ class MarkIndirectlyLeakedCb {
   void operator()(void *p) const;
 };
 
-// Finds all chunk marked as kSuppressed and adds their addresses to frontier.
+// Finds all chunk marked as kIgnored and adds their addresses to frontier.
 class CollectSuppressedCb {
  public:
   explicit CollectSuppressedCb(InternalVector<uptr> *frontier)

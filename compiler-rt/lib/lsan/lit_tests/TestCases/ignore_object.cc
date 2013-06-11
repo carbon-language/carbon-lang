@@ -1,5 +1,5 @@
 // Test for __lsan_ignore_object().
-// RUN: LSAN_BASE="report_blocks=1:use_registers=0:use_stacks=0:use_globals=0:use_tls=0:verbosity=2"
+// RUN: LSAN_BASE="report_objects=1:use_registers=0:use_stacks=0:use_globals=0:use_tls=0:verbosity=2"
 // RUN: %clangxx_lsan -I %p/../../../../include %s -o %t
 // RUN: LSAN_OPTIONS=$LSAN_BASE %t 2>&1 | FileCheck %s
 
@@ -15,11 +15,11 @@ int main() {
     __lsan::ScopedDisabler d;
     malloc(1);
   }
-  // Explicitly ignored block.
+  // Explicitly ignored object.
   void **p = new void *;
-  // Transitively ignored block.
+  // Transitively ignored object.
   *p = malloc(666);
-  // Non-ignored block.
+  // Non-ignored object.
   volatile void *q = malloc(1337);
   fprintf(stderr, "Test alloc: %p.\n", p);
   __lsan_ignore_object(p);

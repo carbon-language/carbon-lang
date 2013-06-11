@@ -1,5 +1,5 @@
 // Test that out-of-scope local variables are ignored by LSan.
-// RUN: LSAN_BASE="report_blocks=1:use_registers=0:use_stacks=1"
+// RUN: LSAN_BASE="report_objects=1:use_registers=0:use_stacks=1"
 // RUN: %clangxx_lsan %s -o %t
 // RUN: LSAN_OPTIONS=$LSAN_BASE %t 2>&1 | FileCheck %s
 // RUN: LSAN_OPTIONS=$LSAN_BASE":exitcode=0" %t 2>&1 | FileCheck --check-prefix=CHECK-sanity %s
@@ -37,6 +37,6 @@ void ConfirmPointerHasSurvived() {
 // CHECK: Test alloc: [[ADDR:.*]].
 // CHECK-sanity: Test alloc: [[ADDR:.*]].
 // CHECK: LeakSanitizer: detected memory leaks
-// CHECK: Directly leaked 1337 byte block at [[ADDR]]
+// CHECK: Directly leaked 1337 byte object at [[ADDR]]
 // CHECK: SUMMARY: LeakSanitizer:
 // CHECK-sanity: Value after LSan: [[ADDR]].

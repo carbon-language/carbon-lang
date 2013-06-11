@@ -1,5 +1,5 @@
 // Test that LargeMmapAllocator's chunks aren't reachable via some internal data structure.
-// RUN: LSAN_BASE="report_blocks=1:use_stacks=0:use_registers=0"
+// RUN: LSAN_BASE="report_objects=1:use_stacks=0:use_registers=0"
 // RUN: %clangxx_lsan %s -o %t
 // RUN: LSAN_OPTIONS=$LSAN_BASE %t 2>&1 | FileCheck %s
 
@@ -14,5 +14,5 @@ int main() {
 }
 // CHECK: Test alloc: [[ADDR:.*]].
 // CHECK: LeakSanitizer: detected memory leaks
-// CHECK: Directly leaked 33554432 byte block at [[ADDR]]
+// CHECK: Directly leaked 33554432 byte object at [[ADDR]]
 // CHECK: SUMMARY: LeakSanitizer:

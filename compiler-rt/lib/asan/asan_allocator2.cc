@@ -421,7 +421,7 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
     REAL(memset)(res, fl.malloc_fill_byte, fill_size);
   }
   if (t && t->lsan_disabled())
-    m->lsan_tag = __lsan::kSuppressed;
+    m->lsan_tag = __lsan::kIgnored;
   else
     m->lsan_tag = __lsan::kDirectlyLeaked;
   // Must be the last mutation of metadata in this function.
@@ -781,9 +781,9 @@ IgnoreObjectResult IgnoreObjectLocked(const void *p) {
   __asan::AsanChunk *m = __asan::GetAsanChunkByAddr(addr);
   if (!m) return kIgnoreObjectInvalid;
   if ((m->chunk_state == __asan::CHUNK_ALLOCATED) && m->AddrIsInside(addr)) {
-    if (m->lsan_tag == kSuppressed)
+    if (m->lsan_tag == kIgnored)
       return kIgnoreObjectAlreadyIgnored;
-    m->lsan_tag = __lsan::kSuppressed;
+    m->lsan_tag = __lsan::kIgnored;
     return kIgnoreObjectSuccess;
   } else {
     return kIgnoreObjectInvalid;
