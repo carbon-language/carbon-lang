@@ -14,8 +14,8 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Path.h"
 #include "llvm/Support/system_error.h"
 
 using namespace llvm;
@@ -40,31 +40,32 @@ section_iterator ObjectFile::getRelocatedSection(DataRefImpl Sec) const {
 ObjectFile *ObjectFile::createObjectFile(MemoryBuffer *Object) {
   if (!Object || Object->getBufferSize() < 64)
     return 0;
-  sys::LLVMFileType type = sys::identifyFileType(Object->getBuffer());
-  switch (type) {
-    case sys::Unknown_FileType:
-      return 0;
-    case sys::ELF_Relocatable_FileType:
-    case sys::ELF_Executable_FileType:
-    case sys::ELF_SharedObject_FileType:
-    case sys::ELF_Core_FileType:
-      return createELFObjectFile(Object);
-    case sys::Mach_O_Object_FileType:
-    case sys::Mach_O_Executable_FileType:
-    case sys::Mach_O_FixedVirtualMemorySharedLib_FileType:
-    case sys::Mach_O_Core_FileType:
-    case sys::Mach_O_PreloadExecutable_FileType:
-    case sys::Mach_O_DynamicallyLinkedSharedLib_FileType:
-    case sys::Mach_O_DynamicLinker_FileType:
-    case sys::Mach_O_Bundle_FileType:
-    case sys::Mach_O_DynamicallyLinkedSharedLibStub_FileType:
-    case sys::Mach_O_DSYMCompanion_FileType:
-      return createMachOObjectFile(Object);
-    case sys::COFF_FileType:
-      return createCOFFObjectFile(Object);
-    default:
-      llvm_unreachable("Unexpected Object File Type");
+
+  sys::fs::file_magic Type = sys::fs::identify_magic(Object->getBuffer());
+  switch (Type) {
+  case sys::fs::file_magic::unknown:
+    return 0;
+  case sys::fs::file_magic::elf_relocatable:
+  case sys::fs::file_magic::elf_executable:
+  case sys::fs::file_magic::elf_shared_object:
+  case sys::fs::file_magic::elf_core:
+    return createELFObjectFile(Object);
+  case sys::fs::file_magic::macho_object:
+  case sys::fs::file_magic::macho_executable:
+  case sys::fs::file_magic::macho_fixed_virtual_memory_shared_lib:
+  case sys::fs::file_magic::macho_core:
+  case sys::fs::file_magic::macho_preload_executable:
+  case sys::fs::file_magic::macho_dynamically_linked_shared_lib:
+  case sys::fs::file_magic::macho_dynamic_linker:
+  case sys::fs::file_magic::macho_bundle:
+  case sys::fs::file_magic::macho_dynamically_linked_shared_lib_stub:
+  case sys::fs::file_magic::macho_dsym_companion:
+    return createMachOObjectFile(Object);
+  case sys::fs::file_magic::coff_object:
+  case sys::fs::file_magic::pecoff_executable:
+    return createCOFFObjectFile(Object);
   }
+  llvm_unreachable("Unexpected Object File Type");
 }
 
 ObjectFile *ObjectFile::createObjectFile(StringRef ObjectPath) {
