@@ -1331,6 +1331,10 @@ let Uses = [FPSCR] in {
                               "vmrs", "\t$Rt, mvfr0", []>;
   def VMRS_MVFR1 : MovFromVFP<0b0110 /* mvfr1 */, (outs GPR:$Rt), (ins),
                               "vmrs", "\t$Rt, mvfr1", []>;
+  def VMRS_FPINST : MovFromVFP<0b1001 /* fpinst */, (outs GPR:$Rt), (ins),
+                              "vmrs", "\t$Rt, fpinst", []>;
+  def VMRS_FPINST2 : MovFromVFP<0b1010 /* fpinst2 */, (outs GPR:$Rt), (ins),
+                                "vmrs", "\t$Rt, fpinst2", []>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1364,6 +1368,11 @@ let Defs = [FPSCR] in {
   // System level GPR -> FPSID
   def VMSR_FPSID : MovToVFP<0b0000 /* fpsid */, (outs), (ins GPR:$src),
                       "vmsr", "\tfpsid, $src", []>;
+
+  def VMSR_FPINST : MovToVFP<0b1001 /* fpinst */, (outs), (ins GPR:$src),
+                              "vmsr", "\tfpinst, $src", []>;
+  def VMSR_FPINST2 : MovToVFP<0b1010 /* fpinst2 */, (outs), (ins GPR:$src),
+                                "vmsr", "\tfpinst2, $src", []>;
 }
 
 //===----------------------------------------------------------------------===//

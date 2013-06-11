@@ -157,6 +157,10 @@
         vmrs  r0, fpexc
 @ CHECK: vmrs  r0, fpsid             @ encoding: [0x10,0x0a,0xf0,0xee]
         vmrs  r0, fpsid
+@ CHECK: vmrs	r1, fpinst           @ encoding: [0x10,0x1a,0xf9,0xee]
+        vmrs r1, fpinst
+@ CHECK: vmrs	r8, fpinst2          @ encoding: [0x10,0x8a,0xfa,0xee]
+        vmrs r8, fpinst2
 
 @ CHECK: vmsr fpscr, r0              @ encoding: [0x10,0x0a,0xe1,0xee]
         vmsr    fpscr, r0
@@ -164,6 +168,10 @@
         vmsr  fpexc, r0
 @ CHECK: vmsr  fpsid, r0             @ encoding: [0x10,0x0a,0xe0,0xee]
         vmsr  fpsid, r0
+@ CHECK: vmsr	fpinst, r3           @ encoding: [0x10,0x3a,0xe9,0xee]
+        vmsr fpinst, r3	
+@ CHECK: vmsr	fpinst2, r4          @ encoding: [0x10,0x4a,0xea,0xee]
+        vmsr fpinst2, r4
 
         vmov.f64        d16, #3.000000e+00
         vmov.f32        s0, #3.000000e+00

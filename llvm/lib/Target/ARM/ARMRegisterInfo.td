@@ -171,10 +171,12 @@ def FPSCR_NZCV : ARMReg<3,  "fpscr_nzcv"> {
 def ITSTATE    : ARMReg<4, "itstate">;
 
 // Special Registers - only available in privileged mode.
-def FPSID   : ARMReg<0, "fpsid">;
-def MVFR1   : ARMReg<6, "mvfr1">;
-def MVFR0   : ARMReg<7, "mvfr0">;
-def FPEXC   : ARMReg<8, "fpexc">;
+def FPSID   : ARMReg<0,  "fpsid">;
+def MVFR1   : ARMReg<6,  "mvfr1">;
+def MVFR0   : ARMReg<7,  "mvfr0">;
+def FPEXC   : ARMReg<8,  "fpexc">;
+def FPINST  : ARMReg<9,  "fpinst">;
+def FPINST2 : ARMReg<10, "fpinst2">;
 
 // Register classes.
 //
