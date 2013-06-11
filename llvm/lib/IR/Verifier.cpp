@@ -467,6 +467,7 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
           Assert1(
               isa<GlobalVariable>(V) || isa<Function>(V) || isa<GlobalAlias>(V),
               "invalid llvm.used member", V);
+          Assert1(V->hasName(), "members of llvm.used must be named", V);
         }
       }
     }

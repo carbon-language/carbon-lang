@@ -2932,8 +2932,8 @@ The '``llvm.used``' Global Variable
 
 The ``@llvm.used`` global is an array which has
 :ref:`appending linkage <linkage_appending>`. This array contains a list of
-pointers to global variables, functions and aliases which may optionally have a
-pointer cast formed of bitcast or getelementptr. For example, a legal
+pointers to named global variables, functions and aliases which may optionally
+have a pointer cast formed of bitcast or getelementptr. For example, a legal
 use of it is:
 
 .. code-block:: llvm
@@ -2948,11 +2948,11 @@ use of it is:
 
 If a symbol appears in the ``@llvm.used`` list, then the compiler, assembler,
 and linker are required to treat the symbol as if there is a reference to the
-symbol that it cannot see. For example, if a variable has internal linkage and
-no references other than that from the ``@llvm.used`` list, it cannot be
-deleted. This is commonly used to represent references from inline asms and
-other things the compiler cannot "see", and corresponds to
-"``attribute((used))``" in GNU C.
+symbol that it cannot see (which is why they have to be named). For example, if
+a variable has internal linkage and no references other than that from the
+``@llvm.used`` list, it cannot be deleted. This is commonly used to represent
+references from inline asms and other things the compiler cannot "see", and
+corresponds to "``attribute((used))``" in GNU C.
 
 On some targets, the code generator must emit a directive to the
 assembler or object file to prevent the assembler and linker from
