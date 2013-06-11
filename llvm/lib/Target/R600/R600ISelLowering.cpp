@@ -1214,8 +1214,9 @@ EVT R600TargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
    return VT.changeVectorElementTypeToInteger();
 }
 
-SDValue CompactSwizzlableVector(SelectionDAG &DAG, SDValue VectorEntry,
-                                DenseMap<unsigned, unsigned> &RemapSwizzle) {
+static SDValue
+CompactSwizzlableVector(SelectionDAG &DAG, SDValue VectorEntry,
+                        DenseMap<unsigned, unsigned> &RemapSwizzle) {
   assert(VectorEntry.getOpcode() == ISD::BUILD_VECTOR);
   assert(RemapSwizzle.empty());
   SDValue NewBldVec[4] = {
@@ -1251,8 +1252,8 @@ SDValue CompactSwizzlableVector(SelectionDAG &DAG, SDValue VectorEntry,
       VectorEntry.getValueType(), NewBldVec, 4);
 }
 
-SDValue ReorganizeVector(SelectionDAG &DAG, SDValue VectorEntry,
-                         DenseMap<unsigned, unsigned> &RemapSwizzle) {
+static SDValue ReorganizeVector(SelectionDAG &DAG, SDValue VectorEntry,
+                                DenseMap<unsigned, unsigned> &RemapSwizzle) {
   assert(VectorEntry.getOpcode() == ISD::BUILD_VECTOR);
   assert(RemapSwizzle.empty());
   SDValue NewBldVec[4] = {
