@@ -45,7 +45,13 @@ ResolvePythonName(const char* name,
             return NULL;
     }
 
-    if (!PyDict_Check(pmodule))
+    if (PyType_Check(pmodule))
+    {
+        main_dict = ((PyTypeObject*)pmodule)->tp_dict;
+        if (!main_dict)
+            return NULL;
+    }
+    else if (!PyDict_Check(pmodule))
     {
         main_dict = PyModule_GetDict (pmodule);
         if (!main_dict)
