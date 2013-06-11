@@ -28,6 +28,7 @@
 
 (defun clang-format-buffer ()
   "Use clang-format to format the current buffer."
+  (interactive)
   (clang-format (point-min) (point-max)))
 
 (defun clang-format (begin end)
