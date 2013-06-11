@@ -81,7 +81,7 @@ class NamedSummariesDataFormatterTestCase(TestBase):
 
         self.expect("frame variable second --summary AllUseIt",
             substrs = ['AllUseIt: x=65',
-                       'y=43.21'])
+                       'y=43.25'])
 
         self.expect("frame variable third --summary AllUseIt",
             substrs = ['AllUseIt: x=96',

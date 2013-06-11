@@ -6682,6 +6682,24 @@ ClangASTContext::ConvertStringToFloatValue (ASTContext *ast, clang_type_t clang_
     return 0;
 }
 
+lldb::clang_type_t
+ClangASTContext::GetFloatTypeFromBitSize (clang::ASTContext *ast,
+                                          size_t bit_size)
+{
+    if (ast)
+    {
+        if (bit_size == ast->getTypeSize(ast->FloatTy))
+            return ast->FloatTy.getAsOpaquePtr();
+        else if (bit_size == ast->getTypeSize(ast->DoubleTy))
+            return ast->DoubleTy.getAsOpaquePtr();
+        else if (bit_size == ast->getTypeSize(ast->LongDoubleTy))
+            return ast->LongDoubleTy.getAsOpaquePtr();
+        else if (bit_size == ast->getTypeSize(ast->HalfTy))
+            return ast->HalfTy.getAsOpaquePtr();
+    }
+    return NULL;
+}
+
 unsigned
 ClangASTContext::GetTypeQualifiers(clang_type_t clang_type)
 {
@@ -6704,7 +6722,7 @@ ClangASTContext::GetCompleteType (clang::ASTContext *ast, lldb::clang_type_t cla
 
 bool
 ClangASTContext::GetCompleteType (clang_type_t clang_type)
-{   
+{
     return ClangASTContext::GetCompleteType (getASTContext(), clang_type);
 }
 

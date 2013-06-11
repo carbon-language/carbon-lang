@@ -283,29 +283,29 @@ class SmartArrayDataFormatterTestCase(TestBase):
         
         self.expect("frame variable flarr",
                     substrs = ['flarr = arr =',
-                               '{78.5},{77.4},{78},{76.1},{76.7},{76.8},{77}'])
+                               '{78.5},{77.25},{78},{76.125},{76.75},{76.875},{77}'])
         
         self.expect("frame variable other.flarr",
                     substrs = ['flarr = arr = ',
-                               '{25.5},{25.7},{25.9},{26.4},{27.1},{27.3},{26.9}'])
+                               '{25.5},{25.25},{25.125},{26.75},{27.375},{27.5},{26.125}'])
         
 # printing full array as an array
         self.runCmd("type summary add --summary-string \"arr = ${var%float32[]}\" \"float [7]\"")
         
         self.expect("frame variable flarr",
                     substrs = ['flarr = arr =',
-                               '78.5,77.4,78,76.1,76.7,76.8,77'])
+                               '78.5,77.25,78,76.125,76.75,76.875,77'])
         
         self.expect("frame variable other.flarr",
                     substrs = ['flarr = arr =',
-                               '25.5,25.7,25.9,26.4,27.1,27.3,26.9'])
+                               '25.5,25.25,25.125,26.75,27.375,27.5,26.125'])
 
 # using array smart summary strings for pointers should make no sense
         self.runCmd("type summary add --summary-string \"arr = ${var%float32[]}\" \"float *\"")
         self.runCmd("type summary add --summary-string \"arr = ${var%int32_t[]}\" \"int *\"")
 
         self.expect("frame variable flptr", matching=False,
-                    substrs = ['78.5,77.4,78,76.1,76.7,76.8,77'])
+                    substrs = ['78.5,77.25,78,76.125,76.75,76.875,77'])
         
         self.expect("frame variable intptr", matching=False,
                     substrs = ['1,1,2,3,5'])
@@ -316,11 +316,11 @@ class SmartArrayDataFormatterTestCase(TestBase):
 
         self.expect("frame variable flarr",
                     substrs = ['flarr = arr =',
-                               '00 00 9d 42,cd cc 9a 42,00 00 9c 42,33 33 98 42,66 66 99 42,9a 99 99 42,00 00 9a 42'])
+                               '00 00 9d 42,00 80 9a 42,00 00 9c 42,00 40 98 42,00 80 99 42,00 c0 99 42,00 00 9a 42'])
         
         self.expect("frame variable other.flarr",
                     substrs = ['flarr = arr =',
-                               '00 00 cc 41,9a 99 cd 41,33 33 cf 41,33 33 d3 41,cd cc d8 41,66 66 da 41,33 33 d7 41'])
+                               '00 00 cc 41,00 00 ca 41,00 00 c9 41,00 00 d6 41,00 00 db 41,00 00 dc 41,00 00 d1 41'])
 
         self.expect("frame variable intarr",
                     substrs = ['intarr = arr =',
@@ -335,13 +335,11 @@ class SmartArrayDataFormatterTestCase(TestBase):
             
         self.expect("frame variable flarr",
                     substrs = ['flarr = arr =',
-                               '...B,cd cc 9a 42',
-                               'ff.B,9a 99 99 42'])
+                               '00 00 9d 42             ...B,00 80 9a 42             ...B,00 00 9c 42             ...B,00 40 98 42             .@.B,00 80 99 42             ...B,00 c0 99 42             ...B,00 00 9a 42             ...B'])
         
         self.expect("frame variable other.flarr",
                     substrs = ['flarr = arr =',
-                               '...A,33 33 cf 41',
-                               '33.A,cd cc d8 41'])
+                               '00 00 cc 41             ...A,00 00 ca 41             ...A,00 00 c9 41             ...A,00 00 d6 41             ...A,00 00 db 41             ...A,00 00 dc 41             ...A,00 00 d1 41             ...A'])
         
         self.expect("frame variable intarr",
                     substrs = ['intarr = arr =',

@@ -36,12 +36,12 @@ struct SomeOtherData
         intarr[4] = 5;
         
         flarr[0] = 25.5;
-        flarr[1] = 25.7;
-        flarr[2] = 25.9;
-        flarr[3] = 26.4;
-        flarr[4] = 27.1;
-        flarr[5] = 27.3;
-        flarr[6] = 26.9;
+        flarr[1] = 25.25;
+        flarr[2] = 25.125;
+        flarr[3] = 26.75;
+        flarr[4] = 27.375;
+        flarr[5] = 27.5;
+        flarr[6] = 26.125;
     }
 };
 
@@ -51,7 +51,7 @@ int main (int argc, const char * argv[])
     char *strptr = NULL;
     strptr = "Hello world!";
     int intarr[5] = {1,1,2,3,5};
-    float flarr[7] = {78.5,77.4,78.0,76.1,76.7,76.8,77.0};
+    float flarr[7] = {78.5,77.25,78.0,76.125,76.75,76.875,77.0};
     
     SomeData data;
     

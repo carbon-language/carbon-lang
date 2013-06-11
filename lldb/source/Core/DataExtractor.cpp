@@ -15,10 +15,14 @@
 #include <sstream>
 #include <string>
 
+#include "clang/AST/ASTContext.h"
+
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/MathExtras.h"
+
 
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
@@ -30,6 +34,7 @@
 #include "lldb/Core/UUID.h"
 #include "lldb/Core/dwarf.h"
 #include "lldb/Host/Endian.h"
+#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/Target.h"
@@ -1234,8 +1239,8 @@ DataExtractor::Skip_LEB128 (offset_t *offset_ptr) const
     return bytes_consumed;
 }
 
-static lldb::offset_t
-DumpAPInt (Stream *s, const DataExtractor &data, lldb::offset_t offset, lldb::offset_t byte_size, bool is_signed, unsigned radix)
+static bool
+GetAPInt (const DataExtractor &data, lldb::offset_t *offset_ptr, lldb::offset_t byte_size, llvm::APInt &result)
 {
     llvm::SmallVector<uint64_t, 2> uint64_array;
     lldb::offset_t bytes_left = byte_size;
@@ -1247,20 +1252,22 @@ DumpAPInt (Stream *s, const DataExtractor &data, lldb::offset_t offset, lldb::of
         {
             if (bytes_left >= 8)
             {
-                u64 = data.GetU64(&offset);
+                u64 = data.GetU64(offset_ptr);
                 bytes_left -= 8;
             }
             else
             {
-                u64 = data.GetMaxU64(&offset, (uint32_t)bytes_left);
+                u64 = data.GetMaxU64(offset_ptr, (uint32_t)bytes_left);
                 bytes_left = 0;
-            }                        
+            }
             uint64_array.push_back(u64);
         }
+        result = llvm::APInt(byte_size * 8, llvm::ArrayRef<uint64_t>(uint64_array));
+        return true;
     }
     else if (byte_order == lldb::eByteOrderBig)
     {
-        lldb::offset_t be_offset = offset + byte_size;
+        lldb::offset_t be_offset = *offset_ptr + byte_size;
         lldb::offset_t temp_offset;
         while (bytes_left > 0)
         {
@@ -1277,28 +1284,36 @@ DumpAPInt (Stream *s, const DataExtractor &data, lldb::offset_t offset, lldb::of
                 temp_offset = be_offset;
                 u64 = data.GetMaxU64(&temp_offset, (uint32_t)bytes_left);
                 bytes_left = 0;
-            }                        
+            }
             uint64_array.push_back(u64);
         }
+        *offset_ptr += byte_size;
+        result = llvm::APInt(byte_size * 8, llvm::ArrayRef<uint64_t>(uint64_array));
+        return true;
     }
-    else
-        return offset;
+    return false;
+}
 
-    llvm::APInt apint (byte_size * 8, llvm::ArrayRef<uint64_t>(uint64_array));
- 
-    std::string apint_str(apint.toString(radix, is_signed));
-    switch (radix)
+static lldb::offset_t
+DumpAPInt (Stream *s, const DataExtractor &data, lldb::offset_t offset, lldb::offset_t byte_size, bool is_signed, unsigned radix)
+{
+    llvm::APInt apint;
+    if (GetAPInt (data, &offset, byte_size, apint))
     {
-        case 2:
-            s->Write ("0b", 2);
-            break;
-        case 8:
-            s->Write ("0", 1);
-            break;
-        case 10:
-            break;
+        std::string apint_str(apint.toString(radix, is_signed));
+        switch (radix)
+        {
+            case 2:
+                s->Write ("0b", 2);
+                break;
+            case 8:
+                s->Write ("0", 1);
+                break;
+            case 10:
+                break;
+        }
+        s->Write(apint_str.c_str(), apint_str.size());
     }
-    s->Write(apint_str.c_str(), apint_str.size());
     return offset;
 }
 
@@ -1702,39 +1717,117 @@ DataExtractor::Dump (Stream *s,
 
         case eFormatFloat:
             {
-                std::ostringstream ss;
-                if (item_byte_size == sizeof(float) || item_byte_size == 2)
+                TargetSP target_sp;
+                bool used_apfloat = false;
+                if (exe_scope)
+                    target_sp = exe_scope->CalculateTarget();
+                if (target_sp)
                 {
-                    float f;
-                    if (item_byte_size == 2)
+                    ClangASTContext *clang_ast = target_sp->GetScratchClangASTContext();
+                    if (clang_ast)
                     {
-                        uint16_t half = this->GetU16(&offset);
-                        f = half2float(half);
+                        clang::ASTContext *ast = clang_ast->getASTContext();
+                        if (ast)
+                        {
+                            llvm::SmallVector<char, 256> sv;
+                            // Show full precision when printing float values
+                            const unsigned format_precision = 0;
+                            const unsigned format_max_padding = 100;
+                            size_t item_bit_size = item_byte_size * 8;
+                            
+                            if (item_bit_size == ast->getTypeSize(ast->FloatTy))
+                            {
+                                llvm::APInt apint(item_bit_size, this->GetMaxU64(&offset, item_byte_size));
+                                llvm::APFloat apfloat (ast->getFloatTypeSemantics(ast->FloatTy), apint);
+                                apfloat.toString(sv, format_precision, format_max_padding);
+                            }
+                            else if (item_bit_size == ast->getTypeSize(ast->DoubleTy))
+                            {
+                                llvm::APInt apint;
+                                if (GetAPInt (*this, &offset, item_byte_size, apint))
+                                {
+                                    llvm::APFloat apfloat (ast->getFloatTypeSemantics(ast->DoubleTy), apint);
+                                    apfloat.toString(sv, format_precision, format_max_padding);
+                                }
+                            }
+                            else if (item_bit_size == ast->getTypeSize(ast->LongDoubleTy))
+                            {
+                                llvm::APInt apint;
+                                switch (target_sp->GetArchitecture().GetCore())
+                                {
+                                    case ArchSpec::eCore_x86_32_i386:
+                                    case ArchSpec::eCore_x86_32_i486:
+                                    case ArchSpec::eCore_x86_32_i486sx:
+                                    case ArchSpec::eCore_x86_64_x86_64:
+                                        // clang will assert when contructing the apfloat if we use a 16 byte integer value
+                                        if (GetAPInt (*this, &offset, 10, apint))
+                                        {
+                                            llvm::APFloat apfloat (ast->getFloatTypeSemantics(ast->LongDoubleTy), apint);
+                                            apfloat.toString(sv, format_precision, format_max_padding);
+                                        }
+                                        break;
+                                        
+                                    default:
+                                        if (GetAPInt (*this, &offset, item_byte_size, apint))
+                                        {
+                                            llvm::APFloat apfloat (ast->getFloatTypeSemantics(ast->LongDoubleTy), apint);
+                                            apfloat.toString(sv, format_precision, format_max_padding);
+                                        }
+                                        break;
+                                }
+                            }
+                            else if (item_bit_size == ast->getTypeSize(ast->HalfTy))
+                            {
+                                llvm::APInt apint(item_bit_size, this->GetU16(&offset));
+                                llvm::APFloat apfloat (ast->getFloatTypeSemantics(ast->HalfTy), apint);
+                                apfloat.toString(sv, format_precision, format_max_padding);
+                            }
+
+                            if (!sv.empty())
+                            {
+                                s->Printf("%*.*s", (int)sv.size(), (int)sv.size(), sv.data());
+                                used_apfloat = true;
+                            }
+                        }
+                    }
+                }
+                
+                if (!used_apfloat)
+                {
+                    std::ostringstream ss;
+                    if (item_byte_size == sizeof(float) || item_byte_size == 2)
+                    {
+                        float f;
+                        if (item_byte_size == 2)
+                        {
+                            uint16_t half = this->GetU16(&offset);
+                            f = half2float(half);
+                        }
+                        else
+                        {
+                            f = GetFloat (&offset);
+                        }
+                        ss.precision(std::numeric_limits<float>::digits10);
+                        ss << f;
+                    } 
+                    else if (item_byte_size == sizeof(double))
+                    {
+                        ss.precision(std::numeric_limits<double>::digits10);
+                        ss << GetDouble(&offset);
+                    }
+                    else if (item_byte_size == sizeof(long double))
+                    {
+                        ss.precision(std::numeric_limits<long double>::digits10);
+                        ss << GetLongDouble(&offset);
                     }
                     else
                     {
-                        f = GetFloat (&offset);
+                        s->Printf("error: unsupported byte size (%zu) for float format", item_byte_size);
+                        return offset;
                     }
-                    ss.precision(std::numeric_limits<float>::digits10);
-                    ss << f;
-                } 
-                else if (item_byte_size == sizeof(double))
-                {
-                    ss.precision(std::numeric_limits<double>::digits10);
-                    ss << GetDouble(&offset);
+                    ss.flush();
+                    s->Printf("%s", ss.str().c_str());
                 }
-                else if (item_byte_size == sizeof(long double))
-                {
-                    ss.precision(std::numeric_limits<long double>::digits10);
-                    ss << GetLongDouble(&offset);
-                }
-                else
-                {
-                    s->Printf("error: unsupported byte size (%zu) for float format", item_byte_size);
-                    return offset;
-                }
-                ss.flush();
-                s->Printf("%s", ss.str().c_str());
             }
             break;
 

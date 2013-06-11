@@ -1003,7 +1003,16 @@ public:
                                const char *s, 
                                uint8_t *dst, 
                                size_t dst_size);
-    
+
+    lldb::clang_type_t
+    GetFloatTypeFromBitSize (size_t bit_size)
+    {
+        return GetFloatTypeFromBitSize (getASTContext(), bit_size);
+    }
+
+    static lldb::clang_type_t
+    GetFloatTypeFromBitSize (clang::ASTContext *ast,
+                             size_t bit_size);
     //------------------------------------------------------------------
     // Qualifiers
     //------------------------------------------------------------------
