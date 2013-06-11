@@ -521,17 +521,31 @@ protected:
                                                type_list);
             }
             
-            if (type_list.GetSize() == 0)
+            if (type_list.GetSize() == 0 && lookup_type_name.GetCString() && *lookup_type_name.GetCString() == '$')
             {
-                result.AppendErrorWithFormat ("unable to find any types that match the raw type '%s' for full type '%s'\n", 
-                                              lookup_type_name.GetCString(), 
-                                              view_as_type_cstr);
-                result.SetStatus(eReturnStatusFailed);
-                return false;
+                clang::TypeDecl *tdecl = target->GetPersistentVariables().GetPersistentType(ConstString(lookup_type_name));
+                if (tdecl)
+                {
+                    clang_ast_type.SetClangType(&tdecl->getASTContext(),(lldb::clang_type_t)tdecl->getTypeForDecl());
+                }
             }
             
-            TypeSP type_sp (type_list.GetTypeAtIndex(0));
-            clang_ast_type.SetClangType (type_sp->GetClangAST(), type_sp->GetClangFullType());
+            if (clang_ast_type.IsValid() == false)
+            {
+                if (type_list.GetSize() == 0)
+                {
+                    result.AppendErrorWithFormat ("unable to find any types that match the raw type '%s' for full type '%s'\n",
+                                                  lookup_type_name.GetCString(),
+                                                  view_as_type_cstr);
+                    result.SetStatus(eReturnStatusFailed);
+                    return false;
+                }
+                else
+                {
+                    TypeSP type_sp (type_list.GetTypeAtIndex(0));
+                    clang_ast_type.SetClangType (type_sp->GetClangAST(), type_sp->GetClangFullType());
+                }
+            }
             
             while (pointer_count > 0)
             {
