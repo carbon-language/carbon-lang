@@ -49,9 +49,6 @@
 /* Installation directory for .info files */
 #undef LLVM_INFODIR
 
-/* Installation directory for libraries */
-#undef LLVM_LIBDIR
-
 /* Installation directory for man pages */
 #undef LLVM_MANDIR
 
