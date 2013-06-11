@@ -354,7 +354,6 @@ namespace rdar12629723 {
     struct A : public B {  // expected-note{{'rdar12629723::X::A' declared here}}
       virtual void foo() { }
     };
-    struct B;
 
     struct D : T::foo { };
     struct E : D { };

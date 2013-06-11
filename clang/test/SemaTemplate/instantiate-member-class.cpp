@@ -91,12 +91,10 @@ namespace test2 {
       typedef int X;
     };
     typename Foo::X x;
-    class Foo;
   };
   template class B<int>;
 
   template <typename T> class C {
-    class Foo;
     class Foo;
   };
   template <typename T> class C<T>::Foo {

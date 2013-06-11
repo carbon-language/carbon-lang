@@ -862,15 +862,31 @@ namespace dr84 { // dr84: yes
   B b = a; // expected-error {{no viable}}
 }
 
-namespace dr85 { // dr85: no
+namespace dr85 { // dr85: yes
   struct A {
     struct B;
-    struct B {};
-    // FIXME: This redeclaration is invalid. Per [class.mem]p1,
-    //   "A member shall not be declared twice in the member-specification,
-    //   except that a nested class [...] can be declared then later defined"
-    // This is not that case.
-    struct B;
+    struct B {}; // expected-note{{previous declaration is here}}
+    struct B; // expected-error{{class member cannot be redeclared}}
+
+    union U;
+    union U {}; // expected-note{{previous declaration is here}}
+    union U; // expected-error{{class member cannot be redeclared}}
+
+#if __cplusplus >= 201103L
+    enum E1 : int;
+    enum E1 : int { e1 }; // expected-note{{previous declaration is here}}
+    enum E1 : int; // expected-error{{class member cannot be redeclared}}
+
+    enum class E2;
+    enum class E2 { e2 }; // expected-note{{previous declaration is here}}
+    enum class E2; // expected-error{{class member cannot be redeclared}}
+#endif
+  };
+
+  template <typename T>
+  struct C {
+    struct B {}; // expected-note{{previous declaration is here}}
+    struct B; // expected-error{{class member cannot be redeclared}}
   };
 }
 

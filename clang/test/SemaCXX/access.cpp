@@ -26,9 +26,11 @@ private:
 namespace test1 {
   class A {
   private:
-    class X; // expected-note {{previously declared 'private' here}}
+    class X; // expected-note {{previously declared 'private' here}} \
+             // expected-note {{previous declaration is here}}
   public:
-    class X; // expected-error {{'X' redeclared with 'public' access}}
+    class X; // expected-error {{'X' redeclared with 'public' access}} \
+             // expected-warning {{class member cannot be redeclared}}
     class X {};
   };
 }

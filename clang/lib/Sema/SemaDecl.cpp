@@ -9885,6 +9885,16 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
             return TUK == TUK_Declaration ? PrevTagDecl : 0;
         }
 
+        // C++11 [class.mem]p1:
+        //   A member shall not be declared twice in the member-speciﬁcation,
+        //   except that a nested class or member class template can be declared
+        //   and then later defined.
+        if (TUK == TUK_Declaration && PrevDecl->isCXXClassMember() &&
+            S->isDeclScope(PrevDecl)) {
+          Diag(NameLoc, diag::ext_member_redeclared);
+          Diag(PrevTagDecl->getLocation(), diag::note_previous_declaration);
+        }
+
         if (!Invalid) {
           // If this is a use, just return the declaration we found.
 
