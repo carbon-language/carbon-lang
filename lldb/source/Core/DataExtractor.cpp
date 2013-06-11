@@ -1302,6 +1302,22 @@ DumpAPInt (Stream *s, const DataExtractor &data, lldb::offset_t offset, lldb::of
     return offset;
 }
 
+static float half2float (uint16_t half)
+{
+    union{ float       f; uint32_t    u;}u;
+    int32_t v = (int16_t) half;
+    
+    if( 0 == (v & 0x7c00))
+    {
+        u.u = v & 0x80007FFFU;
+        return u.f * 0x1.0p125f;
+    }
+    
+    v <<= 13;
+    u.u = v | 0x70000000U;
+    return u.f * 0x1.0p-112f;
+}
+
 lldb::offset_t
 DataExtractor::Dump (Stream *s,
                      offset_t start_offset,
@@ -1712,6 +1728,24 @@ DataExtractor::Dump (Stream *s,
             }
             break;
 
+        case eFormatHalfFloat:
+            {
+                std::ostringstream ss;
+                if (item_byte_size == 2)
+                {
+                    uint16_t half = this->GetU16(&offset);
+                    float half_converted = half2float(half);
+                    ss << half_converted;
+                }
+                else
+                {
+                    s->Printf("error: unsupported byte size (%zu) for half-float format", item_byte_size);
+                    return offset;
+                }
+                ss.flush();
+                s->Printf("%s", ss.str().c_str());
+            }
+            break;
         case eFormatUnicode16:
             s->Printf("U+%4.4x", GetU16 (&offset));
             break;

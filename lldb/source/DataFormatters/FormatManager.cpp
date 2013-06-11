@@ -72,6 +72,7 @@ g_format_infos[] =
     { eFormatCharArray      , 'a'   , "character array"     },
     { eFormatAddressInfo    , 'A'   , "address"             },
     { eFormatHexFloat       , '\0'  , "hex float"           },
+    { eFormatHalfFloat      , '\0'  , "half float"          },
     { eFormatInstruction    , 'i'   , "instruction"         },
     { eFormatVoid           , 'v'   , "void"                }
 };
