@@ -1074,7 +1074,7 @@ different `tools`_.
   This directory holds the source code for the LLVM assembly language parser
   library.
 
-``llvm/lib/BitCode/``
+``llvm/lib/Bitcode/``
 
   This directory holds code for reading and write LLVM bitcode.
 
