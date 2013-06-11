@@ -768,32 +768,32 @@ error_code has_magic(const Twine &path, const Twine &magic, bool &result) {
 }
 
 /// @brief Identify the magic in magic.
-file_magic identify_magic(StringRef magic) {
-  if (magic.size() < 4)
+  file_magic identify_magic(StringRef Magic) {
+  if (Magic.size() < 4)
     return file_magic::unknown;
-  switch ((unsigned char)magic[0]) {
+  switch ((unsigned char)Magic[0]) {
     case 0xDE:  // 0x0B17C0DE = BC wraper
-      if (magic[1] == (char)0xC0 && magic[2] == (char)0x17 &&
-          magic[3] == (char)0x0B)
+      if (Magic[1] == (char)0xC0 && Magic[2] == (char)0x17 &&
+          Magic[3] == (char)0x0B)
         return file_magic::bitcode;
       break;
     case 'B':
-      if (magic[1] == 'C' && magic[2] == (char)0xC0 && magic[3] == (char)0xDE)
+      if (Magic[1] == 'C' && Magic[2] == (char)0xC0 && Magic[3] == (char)0xDE)
         return file_magic::bitcode;
       break;
     case '!':
-      if (magic.size() >= 8)
-        if (memcmp(magic.data(),"!<arch>\n",8) == 0)
+      if (Magic.size() >= 8)
+        if (memcmp(Magic.data(),"!<arch>\n",8) == 0)
           return file_magic::archive;
       break;
 
     case '\177':
-      if (magic[1] == 'E' && magic[2] == 'L' && magic[3] == 'F') {
-        bool Data2MSB = magic[5] == 2;
+      if (Magic[1] == 'E' && Magic[2] == 'L' && Magic[3] == 'F') {
+        bool Data2MSB = Magic[5] == 2;
         unsigned high = Data2MSB ? 16 : 17;
         unsigned low  = Data2MSB ? 17 : 16;
-        if (magic.size() >= 18 && magic[high] == 0)
-          switch (magic[low]) {
+        if (Magic.size() >= 18 && Magic[high] == 0)
+          switch (Magic[low]) {
             default: break;
             case 1: return file_magic::elf_relocatable;
             case 2: return file_magic::elf_executable;
@@ -804,11 +804,11 @@ file_magic identify_magic(StringRef magic) {
       break;
 
     case 0xCA:
-      if (magic[1] == char(0xFE) && magic[2] == char(0xBA) &&
-          magic[3] == char(0xBE)) {
+      if (Magic[1] == char(0xFE) && Magic[2] == char(0xBA) &&
+          Magic[3] == char(0xBE)) {
         // This is complicated by an overlap with Java class files.
         // See the Mach-O section in /usr/share/file/magic for details.
-        if (magic.size() >= 8 && magic[7] < 43)
+        if (Magic.size() >= 8 && Magic[7] < 43)
           // FIXME: Universal Binary of any type.
           return file_magic::macho_dynamically_linked_shared_lib;
       }
@@ -821,16 +821,16 @@ file_magic identify_magic(StringRef magic) {
     case 0xCE:
     case 0xCF: {
       uint16_t type = 0;
-      if (magic[0] == char(0xFE) && magic[1] == char(0xED) &&
-          magic[2] == char(0xFA) &&
-          (magic[3] == char(0xCE) || magic[3] == char(0xCF))) {
+      if (Magic[0] == char(0xFE) && Magic[1] == char(0xED) &&
+          Magic[2] == char(0xFA) &&
+          (Magic[3] == char(0xCE) || Magic[3] == char(0xCF))) {
         /* Native endian */
-        if (magic.size() >= 16) type = magic[14] << 8 | magic[15];
-      } else if ((magic[0] == char(0xCE) || magic[0] == char(0xCF)) &&
-                 magic[1] == char(0xFA) && magic[2] == char(0xED) &&
-                 magic[3] == char(0xFE)) {
+        if (Magic.size() >= 16) type = Magic[14] << 8 | Magic[15];
+      } else if ((Magic[0] == char(0xCE) || Magic[0] == char(0xCF)) &&
+                 Magic[1] == char(0xFA) && Magic[2] == char(0xED) &&
+                 Magic[3] == char(0xFE)) {
         /* Reverse endian */
-        if (magic.size() >= 14) type = magic[13] << 8 | magic[12];
+        if (Magic.size() >= 14) type = Magic[13] << 8 | Magic[12];
       }
       switch (type) {
         default: break;
@@ -853,27 +853,27 @@ file_magic identify_magic(StringRef magic) {
     case 0x66: // MPS R4000 Windows
     case 0x50: // mc68K
     case 0x4c: // 80386 Windows
-      if (magic[1] == 0x01)
+      if (Magic[1] == 0x01)
         return file_magic::coff_object;
 
     case 0x90: // PA-RISC Windows
     case 0x68: // mc68K Windows
-      if (magic[1] == 0x02)
+      if (Magic[1] == 0x02)
         return file_magic::coff_object;
       break;
 
     case 0x4d: // Possible MS-DOS stub on Windows PE file
-      if (magic[1] == 0x5a) {
+      if (Magic[1] == 0x5a) {
         uint32_t off =
-          *reinterpret_cast<const support::ulittle32_t*>(magic.data() + 0x3c);
+          *reinterpret_cast<const support::ulittle32_t*>(Magic.data() + 0x3c);
         // PE/COFF file, either EXE or DLL.
-        if (off < magic.size() && memcmp(magic.data() + off, "PE\0\0",4) == 0)
+        if (off < Magic.size() && memcmp(Magic.data() + off, "PE\0\0",4) == 0)
           return file_magic::pecoff_executable;
       }
       break;
 
     case 0x64: // x86-64 Windows.
-      if (magic[1] == char(0x86))
+      if (Magic[1] == char(0x86))
         return file_magic::coff_object;
       break;
 
