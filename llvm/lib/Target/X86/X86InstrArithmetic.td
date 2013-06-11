@@ -294,7 +294,7 @@ def IMUL64rmi8 : RIi8<0x6B, MRMSrcMem,                      // GR64 = [mem64]*I8
 // unsigned division/remainder
 let hasSideEffects = 1 in { // so that we don't speculatively execute
 let SchedRW = [WriteIDiv] in {
-let Defs = [AL,EFLAGS,AX], Uses = [AX] in
+let Defs = [AL,AH,EFLAGS], Uses = [AX] in
 def DIV8r  : I<0xF6, MRM6r, (outs),  (ins GR8:$src),    // AX/r8 = AL,AH
                "div{b}\t$src", [], IIC_DIV8_REG>;
 let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
@@ -310,7 +310,7 @@ def DIV64r : RI<0xF7, MRM6r, (outs), (ins GR64:$src),
 } // SchedRW
 
 let mayLoad = 1 in {
-let Defs = [AL,EFLAGS,AX], Uses = [AX] in
+let Defs = [AL,AH,EFLAGS], Uses = [AX] in
 def DIV8m  : I<0xF6, MRM6m, (outs), (ins i8mem:$src),   // AX/[mem8] = AL,AH
                "div{b}\t$src", [], IIC_DIV8_MEM>,
              SchedLoadReg<WriteIDivLd>;
@@ -331,7 +331,7 @@ def DIV64m : RI<0xF7, MRM6m, (outs), (ins i64mem:$src),
 
 // Signed division/remainder.
 let SchedRW = [WriteIDiv] in {
-let Defs = [AL,EFLAGS,AX], Uses = [AX] in
+let Defs = [AL,AH,EFLAGS], Uses = [AX] in
 def IDIV8r : I<0xF6, MRM7r, (outs),  (ins GR8:$src),    // AX/r8 = AL,AH
                "idiv{b}\t$src", [], IIC_IDIV8>;
 let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
@@ -347,7 +347,7 @@ def IDIV64r: RI<0xF7, MRM7r, (outs), (ins GR64:$src),
 } // SchedRW
 
 let mayLoad = 1 in {
-let Defs = [AL,EFLAGS,AX], Uses = [AX] in
+let Defs = [AL,AH,EFLAGS], Uses = [AX] in
 def IDIV8m : I<0xF6, MRM7m, (outs), (ins i8mem:$src),   // AX/[mem8] = AL,AH
                "idiv{b}\t$src", [], IIC_IDIV8>,
              SchedLoadReg<WriteIDivLd>;
