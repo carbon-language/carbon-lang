@@ -26,7 +26,7 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS AND NOT APPLE AND NOT ANDROID)
     list(APPEND LSAN_TEST_DEPS clang_rt.asan-${arch})
   endforeach()
   if(LLVM_INCLUDE_TESTS)
-    list(APPEND LSAN_TEST_DEPS LsanTests)
+    list(APPEND LSAN_TEST_DEPS LsanUnitTests)
   endif()
   add_lit_testsuite(check-lsan "Running the LeakSanitizer tests"
     ${CMAKE_CURRENT_BINARY_DIR}/LsanConfig

@@ -15,3 +15,8 @@
 TEST(LeakSanitizer, EmptyTest) {
   // Empty test to suppress LIT warnings about lack of tests.
 }
+
+int main(int argc, char **argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}
