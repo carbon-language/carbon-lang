@@ -27,7 +27,7 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
-#include "llvm/Support/PathV2.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include <stdlib.h>
 #if defined(LLVM_ON_UNIX)

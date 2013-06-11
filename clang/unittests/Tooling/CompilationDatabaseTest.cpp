@@ -14,7 +14,7 @@
 #include "clang/Tooling/FileMatchTrie.h"
 #include "clang/Tooling/JSONCompilationDatabase.h"
 #include "clang/Tooling/Tooling.h"
-#include "llvm/Support/PathV2.h"
+#include "llvm/Support/Path.h"
 #include "gtest/gtest.h"
 
 namespace clang {
