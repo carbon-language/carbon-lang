@@ -68,10 +68,6 @@ Path::isObjectFile() const {
   return true;
 }
 
-StringRef Path::GetDLLSuffix() {
-  return &(LTDL_SHLIB_EXT[1]);
-}
-
 void
 Path::appendSuffix(StringRef suffix) {
   if (!suffix.empty()) {

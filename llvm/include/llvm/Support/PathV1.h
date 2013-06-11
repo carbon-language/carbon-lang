@@ -113,14 +113,6 @@ namespace sys {
       /// @brief Return the executable file suffix.
       static StringRef GetEXESuffix();
 
-      /// Return the suffix commonly used on file names that contain a shared
-      /// object, shared archive, or dynamic link library. Such files are
-      /// linked at runtime into a process and their code images are shared
-      /// between processes.
-      /// @returns The dynamic link library suffix for the current platform.
-      /// @brief Return the dynamic link library suffix.
-      static StringRef GetDLLSuffix();
-
       /// GetMainExecutable - Return the path to the main executable, given the
       /// value of argv[0] from program startup and the address of main itself.
       /// In extremis, this function may fail and return an empty path.
