@@ -28,7 +28,7 @@ namespace llvm {
   FunctionPass *createMipsJITCodeEmitterPass(MipsTargetMachine &TM,
                                              JITCodeEmitter &JCE);
   FunctionPass *createMipsConstantIslandPass(MipsTargetMachine &tm);
-
+  FunctionPass *createMipsOptimizeMathLibCalls(MipsTargetMachine &TM);
 } // end namespace llvm;
 
 #endif
