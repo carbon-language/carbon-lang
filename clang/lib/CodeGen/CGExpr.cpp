@@ -315,6 +315,7 @@ createReferenceTemporary(CodeGenFunction &CGF,
   case SD_Dynamic:
     llvm_unreachable("temporary can't have dynamic storage duration");
   }
+  llvm_unreachable("unknown storage duration");
 }
 
 static llvm::Value *
