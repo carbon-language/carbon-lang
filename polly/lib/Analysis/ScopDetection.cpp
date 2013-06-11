@@ -138,6 +138,7 @@ STATISTIC(ValidRegion, "Number of regions that a valid part of Scop");
 
 BADSCOP_STAT(CFG, "CFG too complex");
 BADSCOP_STAT(IndVar, "Non canonical induction variable in loop");
+BADSCOP_STAT(IndEdge, "Found invalid region entering edges");
 BADSCOP_STAT(LoopBound, "Loop bounds can not be computed");
 BADSCOP_STAT(FuncCall, "Function call with side effects appeared");
 BADSCOP_STAT(AffFunc, "Expression not affine");
@@ -549,9 +550,21 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
   }
 
   if (!R.getEnteringBlock()) {
-    Loop *L = LI->getLoopFor(R.getEntry());
-    if (L && !L->isLoopSimplifyForm())
-      INVALID(SimpleLoop, "Loop not in simplify form is invalid!");
+    BasicBlock *entry = R.getEntry();
+    Loop *L = LI->getLoopFor(entry);
+
+    if (L) {
+      if (!L->isLoopSimplifyForm())
+        INVALID(SimpleLoop, "Loop not in simplify form is invalid!");
+
+      for (pred_iterator PI = pred_begin(entry), PE = pred_end(entry); PI != PE;
+           ++PI) {
+        // Region entering edges come from the same loop but outside the region
+        // are not allowed.
+        if (L->contains(*PI) && !R.contains(*PI))
+          INVALID(IndEdge, "Region has invalid entering edges!");
+      }
+    }
   }
 
   // SCoP cannot contain the entry block of the function, because we need
