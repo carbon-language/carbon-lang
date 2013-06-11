@@ -427,28 +427,6 @@ Path::canExecute() const {
   return true;
 }
 
-StringRef
-Path::getLast() const {
-  // Find the last slash
-  size_t pos = path.rfind('/');
-
-  // Handle the corner cases
-  if (pos == std::string::npos)
-    return path;
-
-  // If the last character is a slash
-  if (pos == path.length()-1) {
-    // Find the second to last slash
-    size_t pos2 = path.rfind('/', pos-1);
-    if (pos2 == std::string::npos)
-      return StringRef(path).substr(0,pos);
-    else
-      return StringRef(path).substr(pos2+1,pos-pos2-1);
-  }
-  // Return everything after the last slash
-  return StringRef(path).substr(pos+1);
-}
-
 const FileStatus *
 PathWithStatus::getFileStatus(bool update, std::string *ErrStr) const {
   if (!fsIsValid || update) {

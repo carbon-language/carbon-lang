@@ -343,23 +343,6 @@ Path::isRegularFile() const {
   return res;
 }
 
-StringRef
-Path::getLast() const {
-  // Find the last slash
-  size_t pos = path.rfind('/');
-
-  // Handle the corner cases
-  if (pos == std::string::npos)
-    return path;
-
-  // If the last character is a slash, we have a root directory
-  if (pos == path.length()-1)
-    return path;
-
-  // Return everything after the last slash
-  return StringRef(path).substr(pos+1);
-}
-
 const FileStatus *
 PathWithStatus::getFileStatus(bool update, std::string *ErrStr) const {
   if (!fsIsValid || update) {

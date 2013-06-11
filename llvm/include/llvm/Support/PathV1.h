@@ -200,16 +200,6 @@ namespace sys {
       /// @brief Determines if the path name is empty (invalid).
       bool isEmpty() const { return path.empty(); }
 
-       /// This function returns the last component of the path name. The last
-      /// component is the file or directory name occurring after the last
-      /// directory separator. If no directory separator is present, the entire
-      /// path name is returned (i.e. same as toString).
-      /// @returns StringRef containing the last component of the path name.
-      /// @brief Returns the last component of the path name.
-      LLVM_ATTRIBUTE_DEPRECATED(
-        StringRef getLast() const,
-        LLVM_PATH_DEPRECATED_MSG(path::filename));
-
       /// This function strips off the path and suffix of the file or directory
       /// name and returns just the basename. For example /a/foo.bar would cause
       /// this function to return "foo".
