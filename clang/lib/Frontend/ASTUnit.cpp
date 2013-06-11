@@ -1634,8 +1634,8 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   Act->EndSourceFile();
 
   if (!Act->hasEmittedPreamblePCH()) {
-    // There were errors parsing the preamble, so no precompiled header was
-    // generated. Forget that we even tried.
+    // The preamble PCH failed (e.g. there was a module loading fatal error),
+    // so no precompiled header was generated. Forget that we even tried.
     // FIXME: Should we leave a note for ourselves to try again?
     llvm::sys::Path(FrontendOpts.OutputFile).eraseFromDisk();
     Preamble.clear();
