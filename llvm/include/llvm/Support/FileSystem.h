@@ -533,7 +533,7 @@ file_magic identify_magic(StringRef magic);
 /// @brief Get and identify \a path's type based on its content.
 ///
 /// @param path Input path.
-/// @param result Set to the type of file, or LLVMFileType::Unknown_FileType.
+/// @param result Set to the type of file, or file_magic::unknown.
 /// @returns errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
 error_code identify_magic(const Twine &path, file_magic &result);
