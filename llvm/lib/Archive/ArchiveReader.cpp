@@ -17,6 +17,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <cstdio>
 #include <cstdlib>
@@ -205,14 +206,11 @@ Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
   }
 
   // Determine if this is a bitcode file
-  switch (sys::identifyFileType(StringRef(At, 4))) {
-    case sys::Bitcode_FileType:
-      flags |= ArchiveMember::BitcodeFlag;
-      break;
-    default:
-      flags &= ~ArchiveMember::BitcodeFlag;
-      break;
-  }
+  if (sys::fs::identify_magic(StringRef(At, 4)) ==
+      sys::fs::file_magic::bitcode)
+    flags |= ArchiveMember::BitcodeFlag;
+  else
+    flags &= ~ArchiveMember::BitcodeFlag;
 
   // Instantiate the ArchiveMember to be filled
   ArchiveMember* member = new ArchiveMember(this);
