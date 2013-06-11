@@ -52,6 +52,36 @@ struct ds ds7 = {
   .b = 3
 };
 
+
+// <rdar://problem/10465114>
+struct overwrite_string_struct1 {
+  __typeof(L"foo"[0]) L[6];
+  int M;
+} overwrite_string1[] = { { { L"foo" }, 1 }, [0].L[2] = L'x'};
+// CHECK: [6 x i32] [i32 102, i32 111, i32 120, i32 0, i32 0, i32 0], i32 1
+struct overwrite_string_struct2 {
+  char L[6];
+  int M;
+} overwrite_string2[] = { { { "foo" }, 1 }, [0].L[2] = 'x'};
+// CHECK: [6 x i8] c"fox\00\00\00", i32 1
+struct overwrite_string_struct3 {
+  char L[3];
+  int M;
+} overwrite_string3[] = { { { "foo" }, 1 }, [0].L[2] = 'x'};
+// CHECK: [3 x i8] c"fox", i32 1
+struct overwrite_string_struct4 {
+  char L[3];
+  int M;
+} overwrite_string4[] = { { { "foobar" }, 1 }, [0].L[2] = 'x'};
+// CHECK: [3 x i8] c"fox", i32 1
+struct overwrite_string_struct5 {
+  char L[6];
+  int M;
+} overwrite_string5[] = { { { "foo" }, 1 }, [0].L[4] = 'y'};
+// CHECK: [6 x i8] c"foo\00y\00", i32 1
+
+
+
 void test1(int argc, char **argv)
 {
   // CHECK: internal global %struct.foo { i8* null, i32 1024 }

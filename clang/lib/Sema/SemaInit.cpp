@@ -2075,6 +2075,64 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
     DesignatedEndIndex.setIsUnsigned(true);
   }
 
+  if (!VerifyOnly && StructuredList->isStringLiteralInit()) {
+    // We're modifying a string literal init; we have to decompose the string
+    // so we can modify the individual characters.
+    ASTContext &Context = SemaRef.Context;
+    Expr *SubExpr = StructuredList->getInit(0)->IgnoreParens();
+
+    // Compute the character type
+    QualType CharTy = AT->getElementType();
+
+    // Compute the type of the integer literals.
+    QualType PromotedCharTy = CharTy;
+    if (CharTy->isPromotableIntegerType())
+      PromotedCharTy = Context.getPromotedIntegerType(CharTy);
+    unsigned PromotedCharTyWidth = Context.getTypeSize(PromotedCharTy);
+
+    if (StringLiteral *SL = dyn_cast<StringLiteral>(SubExpr)) {
+      // Get the length of the string.
+      uint64_t StrLen = SL->getLength();
+      if (cast<ConstantArrayType>(AT)->getSize().ult(StrLen))
+        StrLen = cast<ConstantArrayType>(AT)->getSize().getZExtValue();
+      StructuredList->resizeInits(Context, StrLen);
+
+      // Build a literal for each character in the string, and put them into
+      // the init list.
+      for (unsigned i = 0, e = StrLen; i != e; ++i) {
+        llvm::APInt CodeUnit(PromotedCharTyWidth, SL->getCodeUnit(i));
+        Expr *Init = new (Context) IntegerLiteral(
+            Context, CodeUnit, PromotedCharTy, SourceLocation());
+        if (CharTy != PromotedCharTy)
+          Init = ImplicitCastExpr::Create(Context, CharTy, CK_IntegralCast,
+                                          Init, 0, VK_RValue);
+        StructuredList->updateInit(Context, i, Init);
+      }
+    } else {
+      ObjCEncodeExpr *E = cast<ObjCEncodeExpr>(SubExpr);
+      std::string Str;
+      Context.getObjCEncodingForType(E->getEncodedType(), Str);
+
+      // Get the length of the string.
+      uint64_t StrLen = Str.size();
+      if (cast<ConstantArrayType>(AT)->getSize().ult(StrLen))
+        StrLen = cast<ConstantArrayType>(AT)->getSize().getZExtValue();
+      StructuredList->resizeInits(Context, StrLen);
+
+      // Build a literal for each character in the string, and put them into
+      // the init list.
+      for (unsigned i = 0, e = StrLen; i != e; ++i) {
+        llvm::APInt CodeUnit(PromotedCharTyWidth, Str[i]);
+        Expr *Init = new (Context) IntegerLiteral(
+            Context, CodeUnit, PromotedCharTy, SourceLocation());
+        if (CharTy != PromotedCharTy)
+          Init = ImplicitCastExpr::Create(Context, CharTy, CK_IntegralCast,
+                                          Init, 0, VK_RValue);
+        StructuredList->updateInit(Context, i, Init);
+      }
+    }
+  }
+
   // Make sure that our non-designated initializer list has space
   // for a subobject corresponding to this array element.
   if (!VerifyOnly &&
