@@ -2,16 +2,21 @@
 
 @c = global i8 42
 
-@llvm.used = appending global [3 x i8*] [i8* bitcast (void ()* @fa to i8*), i8* bitcast (void ()* @f to i8*), i8* @ca], section "llvm.metadata"
-; CHECK: @llvm.used = appending global [3 x i8*] [i8* bitcast (void ()* @fa to i8*), i8* bitcast (void ()* @f to i8*), i8* @ca], section "llvm.metadata"
+@i = internal global i8 42
+; CHECK: @ia = internal global i8 42
+@ia = alias internal i8* @i
 
-@llvm.compiler_used = appending global [2 x i8*] [i8* bitcast (void ()* @fa to i8*), i8* bitcast (void ()* @fa3 to i8*)], section "llvm.metadata"
+@llvm.used = appending global [3 x i8*] [i8* bitcast (void ()* @fa to i8*), i8* bitcast (void ()* @f to i8*), i8* @ca], section "llvm.metadata"
+; CHECK-DAG: @llvm.used = appending global [3 x i8*] [i8* bitcast (void ()* @fa to i8*), i8* bitcast (void ()* @f to i8*), i8* @ca], section "llvm.metadata"
+
+@llvm.compiler_used = appending global [4 x i8*] [i8* bitcast (void ()* @fa3 to i8*), i8* bitcast (void ()* @fa to i8*), i8* @ia, i8* @i], section "llvm.metadata"
+; CHECK-DAG: @llvm.compiler_used = appending global [2 x i8*] [i8* bitcast (void ()* @fa3 to i8*), i8* @ia], section "llvm.metadata"
 
 @sameAsUsed = global [3 x i8*] [i8* bitcast (void ()* @fa to i8*), i8* bitcast (void ()* @f to i8*), i8* @ca]
-; CHECK: @sameAsUsed = global [3 x i8*] [i8* bitcast (void ()* @f to i8*), i8* bitcast (void ()* @f to i8*), i8* @c]
+; CHECK-DAG: @sameAsUsed = global [3 x i8*] [i8* bitcast (void ()* @f to i8*), i8* bitcast (void ()* @f to i8*), i8* @c]
 
 @other = global i32* bitcast (void ()* @fa to i32*)
-; CHECK: @other = global i32* bitcast (void ()* @f to i32*)
+; CHECK-DAG: @other = global i32* bitcast (void ()* @f to i32*)
 
 @fa = alias internal void ()* @f
 ; CHECK: @fa = alias internal void ()* @f
