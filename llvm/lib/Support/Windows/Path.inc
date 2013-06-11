@@ -241,36 +241,6 @@ Path::GetRootDirectory() {
   return Path("file:///");
 }
 
-void
-Path::GetSystemLibraryPaths(std::vector<sys::Path>& Paths) {
-  char buff[MAX_PATH];
-  // Generic form of C:\Windows\System32
-  HRESULT res =  SHGetFolderPathA(NULL,
-                                  CSIDL_FLAG_CREATE | CSIDL_SYSTEM,
-                                  NULL,
-                                  SHGFP_TYPE_CURRENT,
-                                  buff);
-  if (res != S_OK) {
-    assert(0 && "Failed to get system directory");
-    return;
-  }
-  Paths.push_back(sys::Path(buff));
-
-  // Reset buff.
-  buff[0] = 0;
-  // Generic form of C:\Windows
-  res =  SHGetFolderPathA(NULL,
-                          CSIDL_FLAG_CREATE | CSIDL_WINDOWS,
-                          NULL,
-                          SHGFP_TYPE_CURRENT,
-                          buff);
-  if (res != S_OK) {
-    assert(0 && "Failed to get windows directory");
-    return;
-  }
-  Paths.push_back(sys::Path(buff));
-}
-
 Path
 Path::GetUserHomeDirectory() {
   char buff[MAX_PATH];

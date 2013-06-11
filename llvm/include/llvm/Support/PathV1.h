@@ -111,11 +111,6 @@ namespace sys {
       /// directory.
       static Path GetTemporaryDirectory(std::string* ErrMsg = 0);
 
-      /// Construct a vector of sys::Path that contains the "standard" system
-      /// library paths suitable for linking into programs.
-      /// @brief Construct a path to the system library directory
-      static void GetSystemLibraryPaths(std::vector<sys::Path>& Paths);
-
       /// Construct a path to the current user's home directory. The
       /// implementation must use an operating system specific mechanism for
       /// determining the user's home directory. For example, the environment

@@ -207,21 +207,6 @@ Path::GetTemporaryDirectory(std::string *ErrMsg) {
 #endif
 }
 
-void
-Path::GetSystemLibraryPaths(std::vector<sys::Path>& Paths) {
-#ifdef LTDL_SHLIBPATH_VAR
-  char* env_var = getenv(LTDL_SHLIBPATH_VAR);
-  if (env_var != 0) {
-    getPathList(env_var,Paths);
-  }
-#endif
-  // FIXME: Should this look at LD_LIBRARY_PATH too?
-  Paths.push_back(sys::Path("/usr/local/lib/"));
-  Paths.push_back(sys::Path("/usr/X11R6/lib/"));
-  Paths.push_back(sys::Path("/usr/lib/"));
-  Paths.push_back(sys::Path("/lib/"));
-}
-
 Path
 Path::GetUserHomeDirectory() {
   const char* home = getenv("HOME");
