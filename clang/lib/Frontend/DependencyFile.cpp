@@ -22,6 +22,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;

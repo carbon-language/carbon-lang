@@ -18,6 +18,7 @@
 #include "clang-c/Index.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/PathV1.h"
 #include <vector>
 
 namespace llvm {

@@ -14,6 +14,7 @@
 #include "clang/Driver/Util.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/PathV1.h"
 
 namespace clang {
 namespace driver {
