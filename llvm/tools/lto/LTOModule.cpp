@@ -29,6 +29,7 @@
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Host.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/SourceMgr.h"
@@ -163,8 +164,8 @@ LTOModule::LTOModule(llvm::Module *m, llvm::TargetMachine *t)
 /// isBitcodeFile - Returns 'true' if the file (or memory contents) is LLVM
 /// bitcode.
 bool LTOModule::isBitcodeFile(const void *mem, size_t length) {
-  return llvm::sys::identifyFileType(StringRef((const char*)mem, length))
-    == llvm::sys::Bitcode_FileType;
+  return sys::fs::identify_magic(StringRef((const char *)mem, length)) ==
+         sys::fs::file_magic::bitcode;
 }
 
 bool LTOModule::isBitcodeFile(const char *path) {
