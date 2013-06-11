@@ -1629,9 +1629,6 @@
 0xc0 0xf9 0x4f 0x1b
 # CHECK: vst4.32	{d17[0], d19[0], d21[0], d23[0]}, [r0]
 
-0x63 0xf9 0x37 0xc9
-# CHECK: vld2.8	{d28, d30}, [r3:256], r7
-
 # rdar://10798451
 0xe7 0xf9 0x32 0x1d
 # CHECK vld2.8	{d17[], d19[]}, [r7:16], r2

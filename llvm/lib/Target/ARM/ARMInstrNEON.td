@@ -626,7 +626,7 @@ class VLD1D<bits<4> op7_4, string Dt>
           "vld1", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{4} = Rn{4};
-  let DecoderMethod = "DecodeVLDInstruction";
+  let DecoderMethod = "DecodeVLDST1Instruction";
 }
 class VLD1Q<bits<4> op7_4, string Dt>
   : NLdSt<0,0b10,0b1010,op7_4, (outs VecListDPair:$Vd),
@@ -634,7 +634,7 @@ class VLD1Q<bits<4> op7_4, string Dt>
           "vld1", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
-  let DecoderMethod = "DecodeVLDInstruction";
+  let DecoderMethod = "DecodeVLDST1Instruction";
 }
 
 def  VLD1d8   : VLD1D<{0,0,0,?}, "8">;
@@ -655,7 +655,7 @@ multiclass VLD1DWB<bits<4> op7_4, string Dt> {
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
     let Inst{4} = Rn{4};
-    let DecoderMethod = "DecodeVLDInstruction";
+    let DecoderMethod = "DecodeVLDST1Instruction";
     let AsmMatchConverter = "cvtVLDwbFixed";
   }
   def _register : NLdSt<0,0b10,0b0111,op7_4, (outs VecListOneD:$Vd, GPR:$wb),
@@ -663,7 +663,7 @@ multiclass VLD1DWB<bits<4> op7_4, string Dt> {
                         "vld1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{4} = Rn{4};
-    let DecoderMethod = "DecodeVLDInstruction";
+    let DecoderMethod = "DecodeVLDST1Instruction";
     let AsmMatchConverter = "cvtVLDwbRegister";
   }
 }
@@ -674,7 +674,7 @@ multiclass VLD1QWB<bits<4> op7_4, string Dt> {
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
     let Inst{5-4} = Rn{5-4};
-    let DecoderMethod = "DecodeVLDInstruction";
+    let DecoderMethod = "DecodeVLDST1Instruction";
     let AsmMatchConverter = "cvtVLDwbFixed";
   }
   def _register : NLdSt<0,0b10,0b1010,op7_4, (outs VecListDPair:$Vd, GPR:$wb),
@@ -682,7 +682,7 @@ multiclass VLD1QWB<bits<4> op7_4, string Dt> {
                         "vld1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{5-4} = Rn{5-4};
-    let DecoderMethod = "DecodeVLDInstruction";
+    let DecoderMethod = "DecodeVLDST1Instruction";
     let AsmMatchConverter = "cvtVLDwbRegister";
   }
 }
@@ -703,7 +703,7 @@ class VLD1D3<bits<4> op7_4, string Dt>
           "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{4} = Rn{4};
-  let DecoderMethod = "DecodeVLDInstruction";
+  let DecoderMethod = "DecodeVLDST1Instruction";
 }
 multiclass VLD1D3WB<bits<4> op7_4, string Dt> {
   def _fixed : NLdSt<0,0b10,0b0110, op7_4, (outs VecListThreeD:$Vd, GPR:$wb),
@@ -712,7 +712,7 @@ multiclass VLD1D3WB<bits<4> op7_4, string Dt> {
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
     let Inst{4} = Rn{4};
-    let DecoderMethod = "DecodeVLDInstruction";
+    let DecoderMethod = "DecodeVLDST1Instruction";
     let AsmMatchConverter = "cvtVLDwbFixed";
   }
   def _register : NLdSt<0,0b10,0b0110,op7_4, (outs VecListThreeD:$Vd, GPR:$wb),
@@ -720,7 +720,7 @@ multiclass VLD1D3WB<bits<4> op7_4, string Dt> {
                         "vld1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{4} = Rn{4};
-    let DecoderMethod = "DecodeVLDInstruction";
+    let DecoderMethod = "DecodeVLDST1Instruction";
     let AsmMatchConverter = "cvtVLDwbRegister";
   }
 }
@@ -744,7 +744,7 @@ class VLD1D4<bits<4> op7_4, string Dt>
           "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
-  let DecoderMethod = "DecodeVLDInstruction";
+  let DecoderMethod = "DecodeVLDST1Instruction";
 }
 multiclass VLD1D4WB<bits<4> op7_4, string Dt> {
   def _fixed : NLdSt<0,0b10,0b0010, op7_4, (outs VecListFourD:$Vd, GPR:$wb),
@@ -753,7 +753,7 @@ multiclass VLD1D4WB<bits<4> op7_4, string Dt> {
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
     let Inst{5-4} = Rn{5-4};
-    let DecoderMethod = "DecodeVLDInstruction";
+    let DecoderMethod = "DecodeVLDST1Instruction";
     let AsmMatchConverter = "cvtVLDwbFixed";
   }
   def _register : NLdSt<0,0b10,0b0010,op7_4, (outs VecListFourD:$Vd, GPR:$wb),
@@ -761,7 +761,7 @@ multiclass VLD1D4WB<bits<4> op7_4, string Dt> {
                         "vld1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{5-4} = Rn{5-4};
-    let DecoderMethod = "DecodeVLDInstruction";
+    let DecoderMethod = "DecodeVLDST1Instruction";
     let AsmMatchConverter = "cvtVLDwbRegister";
   }
 }
@@ -786,7 +786,7 @@ class VLD2<bits<4> op11_8, bits<4> op7_4, string Dt, RegisterOperand VdTy,
           "vld2", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
-  let DecoderMethod = "DecodeVLDInstruction";
+  let DecoderMethod = "DecodeVLDST2Instruction";
 }
 
 def  VLD2d8   : VLD2<0b1000, {0,0,?,?}, "8", VecListDPair, IIC_VLD2>;
@@ -810,7 +810,7 @@ multiclass VLD2WB<bits<4> op11_8, bits<4> op7_4, string Dt,
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
     let Inst{5-4} = Rn{5-4};
-    let DecoderMethod = "DecodeVLDInstruction";
+    let DecoderMethod = "DecodeVLDST2Instruction";
     let AsmMatchConverter = "cvtVLDwbFixed";
   }
   def _register : NLdSt<0, 0b10, op11_8, op7_4, (outs VdTy:$Vd, GPR:$wb),
@@ -818,7 +818,7 @@ multiclass VLD2WB<bits<4> op11_8, bits<4> op7_4, string Dt,
                         "vld2", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{5-4} = Rn{5-4};
-    let DecoderMethod = "DecodeVLDInstruction";
+    let DecoderMethod = "DecodeVLDST2Instruction";
     let AsmMatchConverter = "cvtVLDwbRegister";
   }
 }
@@ -853,7 +853,7 @@ class VLD3D<bits<4> op11_8, bits<4> op7_4, string Dt>
           "vld3", Dt, "\\{$Vd, $dst2, $dst3\\}, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{4} = Rn{4};
-  let DecoderMethod = "DecodeVLDInstruction";
+  let DecoderMethod = "DecodeVLDST3Instruction";
 }
 
 def  VLD3d8   : VLD3D<0b0100, {0,0,0,?}, "8">;
@@ -872,7 +872,7 @@ class VLD3DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
           "vld3", Dt, "\\{$Vd, $dst2, $dst3\\}, $Rn$Rm",
           "$Rn.addr = $wb", []> {
   let Inst{4} = Rn{4};
-  let DecoderMethod = "DecodeVLDInstruction";
+  let DecoderMethod = "DecodeVLDST3Instruction";
 }
 
 def VLD3d8_UPD  : VLD3DWB<0b0100, {0,0,0,?}, "8">;
@@ -912,7 +912,7 @@ class VLD4D<bits<4> op11_8, bits<4> op7_4, string Dt>
           "vld4", Dt, "\\{$Vd, $dst2, $dst3, $dst4\\}, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
-  let DecoderMethod = "DecodeVLDInstruction";
+  let DecoderMethod = "DecodeVLDST4Instruction";
 }
 
 def  VLD4d8   : VLD4D<0b0000, {0,0,?,?}, "8">;
@@ -931,7 +931,7 @@ class VLD4DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
           "vld4", Dt, "\\{$Vd, $dst2, $dst3, $dst4\\}, $Rn$Rm",
           "$Rn.addr = $wb", []> {
   let Inst{5-4} = Rn{5-4};
-  let DecoderMethod = "DecodeVLDInstruction";
+  let DecoderMethod = "DecodeVLDST4Instruction";
 }
 
 def VLD4d8_UPD  : VLD4DWB<0b0000, {0,0,?,?}, "8">;
@@ -1580,14 +1580,14 @@ class VST1D<bits<4> op7_4, string Dt>
           IIC_VST1, "vst1", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{4} = Rn{4};
-  let DecoderMethod = "DecodeVST1Instruction";
+  let DecoderMethod = "DecodeVLDST1Instruction";
 }
 class VST1Q<bits<4> op7_4, string Dt>
   : NLdSt<0,0b00,0b1010,op7_4, (outs), (ins addrmode6:$Rn, VecListDPair:$Vd),
           IIC_VST1x2, "vst1", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
-  let DecoderMethod = "DecodeVST1Instruction";
+  let DecoderMethod = "DecodeVLDST1Instruction";
 }
 
 def  VST1d8   : VST1D<{0,0,0,?}, "8">;
@@ -1608,7 +1608,7 @@ multiclass VST1DWB<bits<4> op7_4, string Dt> {
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
     let Inst{4} = Rn{4};
-    let DecoderMethod = "DecodeVST1Instruction";
+    let DecoderMethod = "DecodeVLDST1Instruction";
     let AsmMatchConverter = "cvtVSTwbFixed";
   }
   def _register : NLdSt<0,0b00,0b0111,op7_4, (outs GPR:$wb),
@@ -1617,7 +1617,7 @@ multiclass VST1DWB<bits<4> op7_4, string Dt> {
                         "vst1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{4} = Rn{4};
-    let DecoderMethod = "DecodeVST1Instruction";
+    let DecoderMethod = "DecodeVLDST1Instruction";
     let AsmMatchConverter = "cvtVSTwbRegister";
   }
 }
@@ -1628,7 +1628,7 @@ multiclass VST1QWB<bits<4> op7_4, string Dt> {
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
     let Inst{5-4} = Rn{5-4};
-    let DecoderMethod = "DecodeVST1Instruction";
+    let DecoderMethod = "DecodeVLDST1Instruction";
     let AsmMatchConverter = "cvtVSTwbFixed";
   }
   def _register : NLdSt<0,0b00,0b1010,op7_4, (outs GPR:$wb),
@@ -1637,7 +1637,7 @@ multiclass VST1QWB<bits<4> op7_4, string Dt> {
                         "vst1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{5-4} = Rn{5-4};
-    let DecoderMethod = "DecodeVST1Instruction";
+    let DecoderMethod = "DecodeVLDST1Instruction";
     let AsmMatchConverter = "cvtVSTwbRegister";
   }
 }
@@ -1659,7 +1659,7 @@ class VST1D3<bits<4> op7_4, string Dt>
           IIC_VST1x3, "vst1", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{4} = Rn{4};
-  let DecoderMethod = "DecodeVST1Instruction";
+  let DecoderMethod = "DecodeVLDST1Instruction";
 }
 multiclass VST1D3WB<bits<4> op7_4, string Dt> {
   def _fixed : NLdSt<0,0b00,0b0110,op7_4, (outs GPR:$wb),
@@ -1668,7 +1668,7 @@ multiclass VST1D3WB<bits<4> op7_4, string Dt> {
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
     let Inst{5-4} = Rn{5-4};
-    let DecoderMethod = "DecodeVST1Instruction";
+    let DecoderMethod = "DecodeVLDST1Instruction";
     let AsmMatchConverter = "cvtVSTwbFixed";
   }
   def _register : NLdSt<0,0b00,0b0110,op7_4, (outs GPR:$wb),
@@ -1677,7 +1677,7 @@ multiclass VST1D3WB<bits<4> op7_4, string Dt> {
                         "vst1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{5-4} = Rn{5-4};
-    let DecoderMethod = "DecodeVST1Instruction";
+    let DecoderMethod = "DecodeVLDST1Instruction";
     let AsmMatchConverter = "cvtVSTwbRegister";
   }
 }
@@ -1704,7 +1704,7 @@ class VST1D4<bits<4> op7_4, string Dt>
           []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
-  let DecoderMethod = "DecodeVST1Instruction";
+  let DecoderMethod = "DecodeVLDST1Instruction";
 }
 multiclass VST1D4WB<bits<4> op7_4, string Dt> {
   def _fixed : NLdSt<0,0b00,0b0010,op7_4, (outs GPR:$wb),
@@ -1713,7 +1713,7 @@ multiclass VST1D4WB<bits<4> op7_4, string Dt> {
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
     let Inst{5-4} = Rn{5-4};
-    let DecoderMethod = "DecodeVST1Instruction";
+    let DecoderMethod = "DecodeVLDST1Instruction";
     let AsmMatchConverter = "cvtVSTwbFixed";
   }
   def _register : NLdSt<0,0b00,0b0010,op7_4, (outs GPR:$wb),
@@ -1722,7 +1722,7 @@ multiclass VST1D4WB<bits<4> op7_4, string Dt> {
                         "vst1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{5-4} = Rn{5-4};
-    let DecoderMethod = "DecodeVST1Instruction";
+    let DecoderMethod = "DecodeVLDST1Instruction";
     let AsmMatchConverter = "cvtVSTwbRegister";
   }
 }
@@ -1748,7 +1748,7 @@ class VST2<bits<4> op11_8, bits<4> op7_4, string Dt, RegisterOperand VdTy,
           itin, "vst2", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
-  let DecoderMethod = "DecodeVST2Instruction";
+  let DecoderMethod = "DecodeVLDST2Instruction";
 }
 
 def  VST2d8   : VST2<0b1000, {0,0,?,?}, "8",  VecListDPair, IIC_VST2>;
@@ -1772,7 +1772,7 @@ multiclass VST2DWB<bits<4> op11_8, bits<4> op7_4, string Dt,
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
     let Inst{5-4} = Rn{5-4};
-    let DecoderMethod = "DecodeVST2Instruction";
+    let DecoderMethod = "DecodeVLDST2Instruction";
     let AsmMatchConverter = "cvtVSTwbFixed";
   }
   def _register : NLdSt<0, 0b00, op11_8, op7_4, (outs GPR:$wb),
@@ -1780,7 +1780,7 @@ multiclass VST2DWB<bits<4> op11_8, bits<4> op7_4, string Dt,
                         "vst2", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{5-4} = Rn{5-4};
-    let DecoderMethod = "DecodeVST2Instruction";
+    let DecoderMethod = "DecodeVLDST2Instruction";
     let AsmMatchConverter = "cvtVSTwbRegister";
   }
 }
@@ -1791,7 +1791,7 @@ multiclass VST2QWB<bits<4> op7_4, string Dt> {
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
     let Inst{5-4} = Rn{5-4};
-    let DecoderMethod = "DecodeVST2Instruction";
+    let DecoderMethod = "DecodeVLDST2Instruction";
     let AsmMatchConverter = "cvtVSTwbFixed";
   }
   def _register : NLdSt<0, 0b00, 0b0011, op7_4, (outs GPR:$wb),
@@ -1800,7 +1800,7 @@ multiclass VST2QWB<bits<4> op7_4, string Dt> {
                         "vst2", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{5-4} = Rn{5-4};
-    let DecoderMethod = "DecodeVST2Instruction";
+    let DecoderMethod = "DecodeVLDST2Instruction";
     let AsmMatchConverter = "cvtVSTwbRegister";
   }
 }
@@ -1835,7 +1835,7 @@ class VST3D<bits<4> op11_8, bits<4> op7_4, string Dt>
           "vst3", Dt, "\\{$Vd, $src2, $src3\\}, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{4} = Rn{4};
-  let DecoderMethod = "DecodeVST3Instruction";
+  let DecoderMethod = "DecodeVLDST3Instruction";
 }
 
 def  VST3d8   : VST3D<0b0100, {0,0,0,?}, "8">;
@@ -1854,7 +1854,7 @@ class VST3DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
           "vst3", Dt, "\\{$Vd, $src2, $src3\\}, $Rn$Rm",
           "$Rn.addr = $wb", []> {
   let Inst{4} = Rn{4};
-  let DecoderMethod = "DecodeVST3Instruction";
+  let DecoderMethod = "DecodeVLDST3Instruction";
 }
 
 def VST3d8_UPD  : VST3DWB<0b0100, {0,0,0,?}, "8">;
@@ -1894,7 +1894,7 @@ class VST4D<bits<4> op11_8, bits<4> op7_4, string Dt>
           "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
-  let DecoderMethod = "DecodeVST4Instruction";
+  let DecoderMethod = "DecodeVLDST4Instruction";
 }
 
 def  VST4d8   : VST4D<0b0000, {0,0,?,?}, "8">;
@@ -1913,7 +1913,7 @@ class VST4DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
            "vst4", Dt, "\\{$Vd, $src2, $src3, $src4\\}, $Rn$Rm",
           "$Rn.addr = $wb", []> {
   let Inst{5-4} = Rn{5-4};
-  let DecoderMethod = "DecodeVST4Instruction";
+  let DecoderMethod = "DecodeVLDST4Instruction";
 }
 
 def VST4d8_UPD  : VST4DWB<0b0000, {0,0,?,?}, "8">;
