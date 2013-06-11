@@ -966,16 +966,37 @@ public:
   }
 };
 
+class PrecompilePreambleAction : public ASTFrontendAction {
+  ASTUnit &Unit;
+  bool HasEmittedPreamblePCH;
+
+public:
+  explicit PrecompilePreambleAction(ASTUnit &Unit)
+      : Unit(Unit), HasEmittedPreamblePCH(false) {}
+
+  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                         StringRef InFile);
+  bool hasEmittedPreamblePCH() const { return HasEmittedPreamblePCH; }
+  void setHasEmittedPreamblePCH() { HasEmittedPreamblePCH = true; }
+  virtual bool shouldEraseOutputFiles() { return !hasEmittedPreamblePCH(); }
+
+  virtual bool hasCodeCompletionSupport() const { return false; }
+  virtual bool hasASTFileSupport() const { return false; }
+  virtual TranslationUnitKind getTranslationUnitKind() { return TU_Prefix; }
+};
+
 class PrecompilePreambleConsumer : public PCHGenerator {
   ASTUnit &Unit;
-  unsigned &Hash;                                   
+  unsigned &Hash;
   std::vector<Decl *> TopLevelDecls;
-                                     
+  PrecompilePreambleAction *Action;
+
 public:
-  PrecompilePreambleConsumer(ASTUnit &Unit, const Preprocessor &PP, 
-                             StringRef isysroot, raw_ostream *Out)
+  PrecompilePreambleConsumer(ASTUnit &Unit, PrecompilePreambleAction *Action,
+                             const Preprocessor &PP, StringRef isysroot,
+                             raw_ostream *Out)
     : PCHGenerator(PP, "", 0, isysroot, Out, /*AllowASTWithErrors=*/true),
-      Unit(Unit), Hash(Unit.getCurrentTopLevelHashValue()) {
+      Unit(Unit), Hash(Unit.getCurrentTopLevelHashValue()), Action(Action) {
     Hash = 0;
   }
 
@@ -1004,48 +1025,30 @@ public:
       for (unsigned I = 0, N = TopLevelDecls.size(); I != N; ++I)
         Unit.addTopLevelDeclFromPreamble(
                                       getWriter().getDeclID(TopLevelDecls[I]));
+
+      Action->setHasEmittedPreamblePCH();
     }
   }
 };
 
-class PrecompilePreambleAction : public ASTFrontendAction {
-  ASTUnit &Unit;
-  PrecompilePreambleConsumer *PreambleConsumer;
+}
 
-public:
-  explicit PrecompilePreambleAction(ASTUnit &Unit)
-    : Unit(Unit), PreambleConsumer(0) {}
+ASTConsumer *PrecompilePreambleAction::CreateASTConsumer(CompilerInstance &CI,
+                                                         StringRef InFile) {
+  std::string Sysroot;
+  std::string OutputFile;
+  raw_ostream *OS = 0;
+  if (GeneratePCHAction::ComputeASTConsumerArguments(CI, InFile, Sysroot,
+                                                     OutputFile, OS))
+    return 0;
 
-  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                         StringRef InFile) {
-    std::string Sysroot;
-    std::string OutputFile;
-    raw_ostream *OS = 0;
-    if (GeneratePCHAction::ComputeASTConsumerArguments(CI, InFile, Sysroot,
-                                                       OutputFile,
-                                                       OS))
-      return 0;
-    
-    if (!CI.getFrontendOpts().RelocatablePCH)
-      Sysroot.clear();
+  if (!CI.getFrontendOpts().RelocatablePCH)
+    Sysroot.clear();
 
-    CI.getPreprocessor().addPPCallbacks(
-     new MacroDefinitionTrackerPPCallbacks(Unit.getCurrentTopLevelHashValue()));
-    PreambleConsumer = new PrecompilePreambleConsumer(Unit,CI.getPreprocessor(),
-                                                      Sysroot, OS);
-    return PreambleConsumer;
-  }
-
-  bool hasEmittedPreamblePCH() const {
-    return PreambleConsumer && PreambleConsumer->hasEmittedPCH();
-  }
-  virtual bool shouldEraseOutputFiles() { return !hasEmittedPreamblePCH(); }
-
-  virtual bool hasCodeCompletionSupport() const { return false; }
-  virtual bool hasASTFileSupport() const { return false; }
-  virtual TranslationUnitKind getTranslationUnitKind() { return TU_Prefix; }
-};
-
+  CI.getPreprocessor().addPPCallbacks(new MacroDefinitionTrackerPPCallbacks(
+      Unit.getCurrentTopLevelHashValue()));
+  return new PrecompilePreambleConsumer(Unit, this, CI.getPreprocessor(),
+                                        Sysroot, OS);
 }
 
 static bool isNonDriverDiag(const StoredDiagnostic &StoredDiag) {
