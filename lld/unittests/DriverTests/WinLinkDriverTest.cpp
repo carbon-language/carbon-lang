@@ -46,6 +46,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_EQ(0, info->getMinOSVersion().minorVersion);
   EXPECT_EQ(1024 * 1024, info->getStackReserve());
   EXPECT_EQ(4096, info->getStackCommit());
+  EXPECT_FALSE(info->allowRemainingUndefines());
 }
 
 TEST_F(WinLinkParserTest, WindowsStyleOption) {
@@ -108,4 +109,10 @@ TEST_F(WinLinkParserTest, HeapReserveAndCommit) {
   EXPECT_EQ(16384, info->getHeapReserve());
   EXPECT_EQ(8192, info->getHeapCommit());
 }
+
+TEST_F(WinLinkParserTest, Force) {
+  parse("link.exe", "-force", nullptr);
+  EXPECT_TRUE(info->allowRemainingUndefines());
+}
+
 }  // end anonymous namespace

@@ -25,5 +25,8 @@ def entry : Separate<["-", "/"], "entry">,
     HelpText<"Name of entry point symbol">;
 def entry_c: Joined<["-", "/"], "entry:">, Alias<entry>;
 
+def force : Flag<["-", "/"], "force">,
+    HelpText<"Allow undefined symbols when creating executables">;
+
 def help : Flag<["-", "/"], "help">;
 def help_q : Flag<["-", "/"], "?">, Alias<help>;
