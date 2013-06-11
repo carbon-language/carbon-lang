@@ -75,13 +75,15 @@ g_properties[] =
 {
     { "expand-regex-aliases", OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true, regular expression alias commands will show the expanded command that will be executed. This can be used to debug new regular expression alias commands." },
     { "prompt-on-quit", OptionValue::eTypeBoolean, true, true, NULL, NULL, "If true, LLDB will prompt you before quitting if there are any live processes being debugged. If false, LLDB will quit without asking in any case." },
+    { "stop-command-source-on-error", OptionValue::eTypeBoolean, true, true, NULL, NULL, "If true, LLDB will stop running a 'command source' script upon encountering an error." },
     { NULL                  , OptionValue::eTypeInvalid, true, 0    , NULL, NULL, NULL }
 };
 
 enum
 {
     ePropertyExpandRegexAliases = 0,
-    ePropertyPromptOnQuit = 1
+    ePropertyPromptOnQuit = 1,
+    ePropertyStopCmdSourceOnError = 2
 };
 
 ConstString &
@@ -129,6 +131,13 @@ bool
 CommandInterpreter::GetPromptOnQuit () const
 {
     const uint32_t idx = ePropertyPromptOnQuit;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+}
+
+bool
+CommandInterpreter::GetStopCmdSourceOnError () const
+{
+    const uint32_t idx = ePropertyStopCmdSourceOnError;
     return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
 }
 

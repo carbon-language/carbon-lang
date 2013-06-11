@@ -25,6 +25,7 @@
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandObjectRegexCommand.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Interpreter/OptionValueBoolean.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Interpreter/ScriptInterpreterPython.h"
@@ -225,7 +226,8 @@ protected:
     public:
 
         CommandOptions (CommandInterpreter &interpreter) :
-            Options (interpreter)
+            Options (interpreter),
+            m_stop_on_error (true)
         {
         }
 
@@ -242,7 +244,7 @@ protected:
             switch (short_option)
             {
                 case 'e':
-                    m_stop_on_error = Args::StringToBoolean(option_arg, true, &success);
+                    m_stop_on_error.SetCurrentValue(Args::StringToBoolean(option_arg, true, &success));
                     if (!success)
                         error.SetErrorStringWithFormat("invalid value for stop-on-error: %s", option_arg);
                     break;
@@ -262,7 +264,7 @@ protected:
         void
         OptionParsingStarting ()
         {
-            m_stop_on_error = true;
+            m_stop_on_error.Clear();
             m_stop_on_continue = true;
         }
 
@@ -278,7 +280,7 @@ protected:
 
         // Instance variables to hold the values for command options.
 
-        bool m_stop_on_error;
+        OptionValueBoolean m_stop_on_error;
         bool m_stop_on_continue;
     };
     
@@ -296,11 +298,12 @@ protected:
             ExecutionContext *exe_ctx = NULL;  // Just use the default context.
             bool echo_commands    = true;
             bool print_results    = true;
+            bool stop_on_error = m_options.m_stop_on_error.OptionWasSet() ? (bool)m_options.m_stop_on_error : m_interpreter.GetStopCmdSourceOnError();
 
-            m_interpreter.HandleCommandsFromFile (cmd_file, 
+            m_interpreter.HandleCommandsFromFile (cmd_file,
                                                   exe_ctx, 
                                                   m_options.m_stop_on_continue, 
-                                                  m_options.m_stop_on_error, 
+                                                  stop_on_error, 
                                                   echo_commands, 
                                                   print_results,
                                                   eLazyBoolCalculate,

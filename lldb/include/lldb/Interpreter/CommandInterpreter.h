@@ -440,6 +440,9 @@ public:
     bool
     GetPromptOnQuit () const;
 
+    bool
+    GetStopCmdSourceOnError () const;
+    
 protected:
     friend class Debugger;
 
