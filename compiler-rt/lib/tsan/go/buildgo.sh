@@ -64,7 +64,7 @@ for F in $SRCS; do
 	cat $F >> gotsan.cc
 done
 
-FLAGS=" -I../rtl -I../.. -I../../sanitizer_common -I../../../include -m64 -Wall -Werror -fno-exceptions -fno-rtti -DTSAN_GO -DSANITIZER_GO -DTSAN_SHADOW_COUNT=4 $OSCFLAGS"
+FLAGS=" -I../rtl -I../.. -I../../sanitizer_common -I../../../include -m64 -Wall -Werror -Wno-maybe-uninitialized -fno-exceptions -fno-rtti -DTSAN_GO -DSANITIZER_GO -DTSAN_SHADOW_COUNT=4 $OSCFLAGS"
 if [ "$DEBUG" == "" ]; then
 	FLAGS+=" -DTSAN_DEBUG=0 -O3 -fomit-frame-pointer"
 else
