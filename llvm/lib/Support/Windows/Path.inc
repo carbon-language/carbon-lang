@@ -251,11 +251,6 @@ Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
 
 // FIXME: the above set of functions don't map to Windows very well.
 
-
-StringRef Path::getDirname() const {
-  return getDirnameCharSep(path, "/");
-}
-
 StringRef
 Path::getSuffix() const {
   // Find the last slash

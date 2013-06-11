@@ -319,10 +319,6 @@ Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
 }
 
 
-StringRef Path::getDirname() const {
-  return getDirnameCharSep(path, "/");
-}
-
 StringRef
 Path::getSuffix() const {
   // Find the last slash

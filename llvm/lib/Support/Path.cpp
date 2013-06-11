@@ -91,46 +91,6 @@ bool Path::hasMagicNumber(StringRef Magic) const {
   return false;
 }
 
-static StringRef getDirnameCharSep(StringRef path, const char *Sep) {
-  assert(Sep[0] != '\0' && Sep[1] == '\0' &&
-         "Sep must be a 1-character string literal.");
-  if (path.empty())
-    return ".";
-
-  // If the path is all slashes, return a single slash.
-  // Otherwise, remove all trailing slashes.
-
-  signed pos = static_cast<signed>(path.size()) - 1;
-
-  while (pos >= 0 && path[pos] == Sep[0])
-    --pos;
-
-  if (pos < 0)
-    return path[0] == Sep[0] ? Sep : ".";
-
-  // Any slashes left?
-  signed i = 0;
-
-  while (i < pos && path[i] != Sep[0])
-    ++i;
-
-  if (i == pos) // No slashes?  Return "."
-    return ".";
-
-  // There is at least one slash left.  Remove all trailing non-slashes.
-  while (pos >= 0 && path[pos] != Sep[0])
-    --pos;
-
-  // Remove any trailing slashes.
-  while (pos >= 0 && path[pos] == Sep[0])
-    --pos;
-
-  if (pos < 0)
-    return path[0] == Sep[0] ? Sep : ".";
-
-  return path.substr(0, pos+1);
-}
-
 // Include the truly platform-specific parts of this class.
 #if defined(LLVM_ON_UNIX)
 #include "Unix/Path.inc"
