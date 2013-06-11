@@ -68,23 +68,6 @@ Path::isObjectFile() const {
   return true;
 }
 
-Path
-Path::FindLibrary(std::string& name) {
-  std::vector<sys::Path> LibPaths;
-  GetSystemLibraryPaths(LibPaths);
-  for (unsigned i = 0; i < LibPaths.size(); ++i) {
-    sys::Path FullPath(LibPaths[i]);
-    FullPath.appendComponent("lib" + name + LTDL_SHLIB_EXT);
-    if (FullPath.isDynamicLibrary())
-      return FullPath;
-    FullPath.eraseSuffix();
-    FullPath.appendSuffix("a");
-    if (FullPath.isArchive())
-      return FullPath;
-  }
-  return sys::Path();
-}
-
 StringRef Path::GetDLLSuffix() {
   return &(LTDL_SHLIB_EXT[1]);
 }
