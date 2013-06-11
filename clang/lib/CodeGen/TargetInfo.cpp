@@ -2516,7 +2516,6 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     uint64_t TySize = SizeAlign.first.getQuantity();
     unsigned TyAlign = SizeAlign.second.getQuantity();
     if (TyAlign > 8) {
-      RegAddr = CGF.Builder.CreateGEP(RegAddr, gp_offset);
       llvm::Value *Tmp = CGF.CreateMemTemp(Ty);
       CGF.Builder.CreateMemCpy(Tmp, RegAddr, TySize, 8, false);
       RegAddr = Tmp;
