@@ -2022,7 +2022,16 @@ void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
       cast<CastExpr>(E)->getCastKind() == CK_LValueToRValue) {
     LValue L = EmitLValue(cast<CastExpr>(E)->getSubExpr());
     assert(L.isSimple());
-    args.add(L.asAggregateRValue(), type, /*NeedsCopy*/true);
+    if (L.getAlignment() >= getContext().getTypeAlignInChars(type)) {
+      args.add(L.asAggregateRValue(), type, /*NeedsCopy*/true);
+    } else {
+      // We can't represent a misaligned lvalue in the CallArgList, so copy
+      // to an aligned temporary now.
+      llvm::Value *tmp = CreateMemTemp(type);
+      EmitAggregateCopy(tmp, L.getAddress(), type, L.isVolatile(),
+                        L.getAlignment());
+      args.add(RValue::getAggregate(tmp), type);
+    }
     return;
   }
 
