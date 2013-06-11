@@ -508,7 +508,7 @@ class CursorKind(object):
     @staticmethod
     def from_id(id):
         if id >= len(CursorKind._kinds) or CursorKind._kinds[id] is None:
-            raise ValueError,'Unknown cursor kind'
+            raise ValueError,'Unknown cursor kind %d' % id
         return CursorKind._kinds[id]
 
     @staticmethod
@@ -721,9 +721,13 @@ CursorKind.MEMBER_REF = CursorKind(47)
 # A reference to a labeled statement.
 CursorKind.LABEL_REF = CursorKind(48)
 
-# A reference toa a set of overloaded functions or function templates
+# A reference to a set of overloaded functions or function templates
 # that has not yet been resolved to a specific function or function template.
 CursorKind.OVERLOADED_DECL_REF = CursorKind(49)
+
+# A reference to a variable that occurs in some non-expression 
+# context, e.g., a C++ lambda capture list.
+CursorKind.VARIABLE_REF = CursorKind(50)
 
 ###
 # Invalid/Error Kinds
@@ -908,6 +912,26 @@ CursorKind.PACK_EXPANSION_EXPR = CursorKind(142)
 # pack.
 CursorKind.SIZE_OF_PACK_EXPR = CursorKind(143)
 
+# Represents a C++ lambda expression that produces a local function
+# object.
+# 
+#  \code
+#  void abssort(float *x, unsigned N) {
+#    std::sort(x, x + N,
+#              [](float a, float b) {
+#                return std::abs(a) < std::abs(b);
+#              });
+#  }
+#  \endcode
+CursorKind.LAMBDA_EXPR = CursorKind(144)
+  
+# Objective-c Boolean Literal.
+CursorKind.OBJ_BOOL_LITERAL_EXPR = CursorKind(145)
+
+# Represents the "self" expression in a ObjC method.
+CursorKind.OBJ_SELF_EXPR = CursorKind(146)
+
+
 # A statement whose specific kind is not exposed via this interface.
 #
 # Unexposed statements have the same operations as any other kind of statement;
@@ -999,6 +1023,9 @@ CursorKind.SEH_EXCEPT_STMT = CursorKind(227)
 # Windows Structured Exception Handling's finally statement.
 CursorKind.SEH_FINALLY_STMT = CursorKind(228)
 
+# A MS inline assembly statement extension.
+CursorKind.MS_ASM_STMT = CursorKind(229)
+
 # The null statement.
 CursorKind.NULL_STMT = CursorKind(230)
 
@@ -1035,6 +1062,12 @@ CursorKind.PREPROCESSING_DIRECTIVE = CursorKind(500)
 CursorKind.MACRO_DEFINITION = CursorKind(501)
 CursorKind.MACRO_INSTANTIATION = CursorKind(502)
 CursorKind.INCLUSION_DIRECTIVE = CursorKind(503)
+
+###
+# Extra declaration
+
+# A module import declaration.
+CursorKind.MODULE_IMPORT_DECL = CursorKind(600)
 
 ### Cursors ###
 
@@ -1918,7 +1951,7 @@ class Index(ClangObject):
 
     def read(self, path):
         """Load a TranslationUnit from the given AST file."""
-        return TranslationUnit.from_ast(path, self)
+        return TranslationUnit.from_ast_file(path, self)
 
     def parse(self, path, args=None, unsaved_files=None, options = 0):
         """Load the translation unit from the given source code file by running

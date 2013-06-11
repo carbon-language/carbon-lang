@@ -4,8 +4,15 @@ def test_name():
     assert CursorKind.UNEXPOSED_DECL.name is 'UNEXPOSED_DECL'
 
 def test_get_all_kinds():
-    assert CursorKind.UNEXPOSED_DECL in CursorKind.get_all_kinds()
-    assert CursorKind.TRANSLATION_UNIT in CursorKind.get_all_kinds()
+    kinds = CursorKind.get_all_kinds()
+    assert CursorKind.UNEXPOSED_DECL in kinds
+    assert CursorKind.TRANSLATION_UNIT in kinds
+    assert CursorKind.VARIABLE_REF in kinds
+    assert CursorKind.LAMBDA_EXPR in kinds
+    assert CursorKind.OBJ_BOOL_LITERAL_EXPR in kinds
+    assert CursorKind.OBJ_SELF_EXPR in kinds
+    assert CursorKind.MS_ASM_STMT in kinds
+    assert CursorKind.MODULE_IMPORT_DECL in kinds
 
 def test_kind_groups():
     """Check that every kind classifies to exactly one group."""
