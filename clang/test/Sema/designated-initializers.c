@@ -277,3 +277,19 @@ struct ds ds2 = { { {
     .a = 0,
     .b = 1 // expected-error{{field designator 'b' does not refer to any field}}
 } } };
+
+// Check initializer override warnings overriding a character in a string
+struct overwrite_string_struct {
+  char L[6];
+  int M;
+} overwrite_string[] = {
+  { { "foo" }, 1 }, // expected-note {{previous initialization is here}}
+  [0].L[2] = 'x' // expected-warning{{initializer overrides prior initialization of this subobject}}
+};
+struct overwrite_string_struct2 {
+  char L[6];
+  int M;
+} overwrite_string2[] = {
+    { { "foo" }, 1 },
+    [0].L[4] = 'x' // no-warning
+  };

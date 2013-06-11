@@ -2102,7 +2102,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
       for (unsigned i = 0, e = StrLen; i != e; ++i) {
         llvm::APInt CodeUnit(PromotedCharTyWidth, SL->getCodeUnit(i));
         Expr *Init = new (Context) IntegerLiteral(
-            Context, CodeUnit, PromotedCharTy, SourceLocation());
+            Context, CodeUnit, PromotedCharTy, SubExpr->getExprLoc());
         if (CharTy != PromotedCharTy)
           Init = ImplicitCastExpr::Create(Context, CharTy, CK_IntegralCast,
                                           Init, 0, VK_RValue);
@@ -2124,7 +2124,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
       for (unsigned i = 0, e = StrLen; i != e; ++i) {
         llvm::APInt CodeUnit(PromotedCharTyWidth, Str[i]);
         Expr *Init = new (Context) IntegerLiteral(
-            Context, CodeUnit, PromotedCharTy, SourceLocation());
+            Context, CodeUnit, PromotedCharTy, SubExpr->getExprLoc());
         if (CharTy != PromotedCharTy)
           Init = ImplicitCastExpr::Create(Context, CharTy, CK_IntegralCast,
                                           Init, 0, VK_RValue);
