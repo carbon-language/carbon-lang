@@ -9397,24 +9397,6 @@ _ACEOF
 fi
 
 
-{ echo "$as_me:$LINENO: checking which variable specifies run-time library path" >&5
-echo $ECHO_N "checking which variable specifies run-time library path... $ECHO_C" >&6; }
-if test "${libltdl_cv_shlibpath_var+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  libltdl_cv_shlibpath_var="$shlibpath_var"
-fi
-{ echo "$as_me:$LINENO: result: $libltdl_cv_shlibpath_var" >&5
-echo "${ECHO_T}$libltdl_cv_shlibpath_var" >&6; }
-if test -n "$libltdl_cv_shlibpath_var"; then
-
-cat >>confdefs.h <<_ACEOF
-#define LTDL_SHLIBPATH_VAR "$libltdl_cv_shlibpath_var"
-_ACEOF
-
-fi
-
-
 { echo "$as_me:$LINENO: checking for the default library search path" >&5
 echo $ECHO_N "checking for the default library search path... $ECHO_C" >&6; }
 if test "${libltdl_cv_sys_search_path+set}" = set; then
@@ -10536,7 +10518,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10539 "configure"
+#line 10521 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11098,7 +11080,6 @@ _ACEOF
 
 fi
 done
-
 
 
 

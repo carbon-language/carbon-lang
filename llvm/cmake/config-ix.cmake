@@ -416,7 +416,6 @@ endif( MINGW )
 
 if( MSVC )
   set(error_t int)
-  set(LTDL_SHLIBPATH_VAR "PATH")
   set(LTDL_SYSSEARCHPATH "")
   set(LTDL_DLOPEN_DEPLIBS 1)
   set(SHLIBEXT ".lib")
@@ -427,7 +426,6 @@ if( MSVC )
   set(stricmp "_stricmp")
   set(strdup "_strdup")
 else( MSVC )
-  set(LTDL_SHLIBPATH_VAR "LD_LIBRARY_PATH")
   set(LTDL_SYSSEARCHPATH "") # TODO
   set(LTDL_DLOPEN_DEPLIBS 0)  # TODO
 endif( MSVC )
