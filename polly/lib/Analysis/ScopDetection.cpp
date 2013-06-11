@@ -395,10 +395,6 @@ bool ScopDetection::isValidBasicBlock(BasicBlock &BB,
     if (!isValidInstruction(*I, Context))
       return false;
 
-  Loop *L = LI->getLoopFor(&BB);
-  if (L && L->getHeader() == &BB && !isValidLoop(L, Context))
-    return false;
-
   return true;
 }
 
@@ -536,6 +532,13 @@ void ScopDetection::findScops(Region &R) {
 
 bool ScopDetection::allBlocksValid(DetectionContext &Context) const {
   Region &R = Context.CurRegion;
+
+  for (Region::block_iterator I = R.block_begin(), E = R.block_end(); I != E;
+       ++I) {
+    Loop *L = LI->getLoopFor(*I);
+    if (L && L->getHeader() == *I && !isValidLoop(L, Context))
+      return false;
+  }
 
   for (Region::block_iterator I = R.block_begin(), E = R.block_end(); I != E;
        ++I)
