@@ -539,7 +539,7 @@ ScriptInterpreterPython::~ScriptInterpreterPython ()
         Locker locker(this,
                       ScriptInterpreterPython::Locker::AcquireLock,
                       ScriptInterpreterPython::Locker::FreeLock);
-        Py_DECREF ((PyObject*)m_new_sysout);
+        Py_XDECREF ((PyObject*)m_new_sysout);
     }
 }
 
@@ -788,10 +788,10 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
                                 PythonInputReaderManager py_input(options.GetEnableIO() ? this : NULL);
                                 pvalue = PyObject_CallObject (pfunc, pargs);
                             }
-                            Py_DECREF (pargs);
+                            Py_XDECREF (pargs);
                             if (pvalue != NULL)
                             {
-                                Py_DECREF (pvalue);
+                                Py_XDECREF (pvalue);
                                 success = true;
                             }
                             else if (options.GetMaskoutErrors() && PyErr_Occurred ())
@@ -1059,7 +1059,7 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
 
         if (locals != NULL
             && should_decrement_locals)
-            Py_DECREF (locals);
+            Py_XDECREF (locals);
 
         if (py_return != NULL)
         {
@@ -1150,7 +1150,7 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
                     break;
                 }
             }
-            Py_DECREF (py_return);
+            Py_XDECREF (py_return);
             if (success)
                 ret_success = true;
             else
@@ -1223,10 +1223,10 @@ ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string, const Exec
                 if (py_return != NULL)
                 {
                     success = true;
-                    Py_DECREF (py_return);
+                    Py_XDECREF (py_return);
                 }
                 if (locals && should_decrement_locals)
-                    Py_DECREF (locals);
+                    Py_XDECREF (locals);
             }
         }
     }

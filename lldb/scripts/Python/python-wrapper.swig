@@ -153,7 +153,7 @@ LLDBSwigPythonBreakpointCallbackFunction
                 PyTuple_SetItem (pargs, 1, Bp_Loc_PyObj); // This "steals" a reference to Bp_Loc_PyObj
                 PyTuple_SetItem (pargs, 2, session_dict); // This "steals" a reference to session_dict
                 pvalue = PyObject_CallObject (pfunc, pargs);
-                Py_DECREF (pargs);
+                Py_XDECREF (pargs);
                 
                 if (pvalue != NULL)
                 {
@@ -161,7 +161,7 @@ LLDBSwigPythonBreakpointCallbackFunction
                     // actually returned False - anything else, just stop
                     if (pvalue == Py_False)
                         stop_at_breakpoint = false;
-                    Py_DECREF (pvalue);
+                    Py_XDECREF (pvalue);
                 }
                 else if (PyErr_Occurred ())
                 {
@@ -236,11 +236,11 @@ LLDBSwigPythonWatchpointCallbackFunction
                 PyTuple_SetItem (pargs, 1, Wp_PyObj);     // This "steals" a reference to Wp_PyObj
                 PyTuple_SetItem (pargs, 2, session_dict); // This "steals" a reference to session_dict
                 pvalue = PyObject_CallObject (pfunc, pargs);
-                Py_DECREF (pargs);
+                Py_XDECREF (pargs);
                 
                 if (pvalue != NULL)
                 {
-                    Py_DECREF (pvalue);
+                    Py_XDECREF (pvalue);
                 }
                 else if (PyErr_Occurred ())
                 {
@@ -322,7 +322,7 @@ LLDBSwigPythonCallTypeScript
             return false;
         
         pvalue = PyObject_CallObject (pfunc, pargs);
-        Py_DECREF (pargs);
+        Py_XDECREF (pargs);
         
         if (pvalue != NULL && pvalue != Py_None)
         {
@@ -398,7 +398,7 @@ LLDBSwigPythonCreateSyntheticProvider
 
                 pvalue = PyObject_CallObject(pfunc, argList);
 
-                Py_DECREF(argList);
+                Py_XDECREF(argList);
 
                 if (pvalue != NULL)
                 {
@@ -570,7 +570,7 @@ LLDBSwigPython_GetChildAtIndex
 
     if (SWIG_ConvertPtr(py_return, (void**)&sbvalue_ptr, SWIGTYPE_p_lldb__SBValue, 0) == -1)
     {
-        Py_DECREF(py_return);
+        Py_XDECREF(py_return);
         return NULL;
     }
     
@@ -605,7 +605,7 @@ LLDBSwigPython_GetIndexOfChildWithName
         return UINT32_MAX;
     }
     long retval = PyInt_AsLong(py_return);
-    Py_DECREF(py_return);
+    Py_XDECREF(py_return);
     if (retval >= 0)
         return (uint32_t)retval;
     if (PyErr_Occurred())
@@ -752,7 +752,7 @@ LLDBSwigPythonCallCommand
                 PyTuple_SetItem (pargs, 2, CmdRetObj_PyObj);  // This "steals" a reference to CmdRetObj_PyObj
                 PyTuple_SetItem (pargs, 3, session_dict); // This "steals" a reference to session_dict
                 pvalue = PyObject_CallObject (pfunc, pargs);
-                Py_DECREF (pargs);
+                Py_XDECREF (pargs);
                 
                 if (pvalue != NULL)
                 {
@@ -768,7 +768,7 @@ LLDBSwigPythonCallCommand
                             err_msg.assign(PyString_AsString(pvalue));
                         retval = false;
                     }
-                    Py_DECREF (pvalue);
+                    Py_XDECREF (pvalue);
                 }
                 else if (PyErr_Occurred ())
                 {
@@ -852,7 +852,7 @@ LLDBSWIGPythonCreateOSPlugin
 
                 pvalue = PyObject_CallObject(pfunc, argList);
 
-                Py_DECREF(argList);
+                Py_XDECREF(argList);
 
                 if (pvalue != NULL)
                 {
@@ -953,7 +953,7 @@ LLDBSwigPythonCallModuleInit
                 PyTuple_SetItem (pargs, 0, DebuggerObj_PyObj);  // This "steals" a reference to DebuggerObj_PyObj
                 PyTuple_SetItem (pargs, 1, session_dict); // This "steals" a reference to session_dict
                 pvalue = PyObject_CallObject (pfunc, pargs);
-                Py_DECREF (pargs);
+                Py_XDECREF (pargs);
                 
                 if (PyErr_Occurred ())
                 {
@@ -1022,10 +1022,10 @@ LLDBSwigPythonCallSBInputReaderCallback(void *baton,
     
         PyObject *tuple = PyTuple_Pack(3, py_InputReader, py_Notification, py_Bytes);
         PyObject *res = PyObject_Call(reinterpret_cast<PyObject*>(baton), tuple, NULL);
-        Py_DECREF(tuple);
-        Py_DECREF(py_InputReader);
-        Py_DECREF(py_Notification);
-        Py_DECREF(py_Bytes);
+        Py_XDECREF(tuple);
+        Py_XDECREF(py_InputReader);
+        Py_XDECREF(py_Notification);
+        Py_XDECREF(py_Bytes);
     
         if (res == NULL) {
           PyObject *exc = PyErr_Occurred();
@@ -1041,7 +1041,7 @@ LLDBSwigPythonCallSBInputReaderCallback(void *baton,
         if (res != Py_None)
           result = static_cast<size_t>(PyInt_AsSsize_t(res));
     
-        Py_DECREF(res);
+        Py_XDECREF(res);
         SWIG_PYTHON_THREAD_END_BLOCK;
         return result;
     }
