@@ -30,6 +30,9 @@
 namespace llvm {
 namespace COFF {
 
+  // The PE signature bytes that follows the DOS stub header.
+  static const char PEMagic[] = { 'P', 'E', '\0', '\0' };
+
   // Sizes in bytes of various things in the COFF format.
   enum {
     HeaderSize     = 20,
@@ -448,8 +451,6 @@ namespace COFF {
   };
 
   struct PEHeader {
-    uint32_t Signature;
-    header COFFHeader;
     uint16_t Magic;
     uint8_t  MajorLinkerVersion;
     uint8_t  MinorLinkerVersion;

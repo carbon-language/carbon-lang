@@ -57,10 +57,8 @@ struct coff_file_header {
   support::ulittle16_t Characteristics;
 };
 
-/// The 32-bit PE header that usually immediately follows the DOS header.
+/// The 32-bit PE header that follows the COFF header.
 struct pe32_header {
-  support::ulittle32_t Signature;
-  coff_file_header COFFHeader;
   support::ulittle16_t Magic;
   uint8_t  MajorLinkerVersion;
   uint8_t  MinorLinkerVersion;
@@ -93,10 +91,8 @@ struct pe32_header {
   support::ulittle32_t NumberOfRvaAndSize;
 };
 
-/// The 64-bit PE header that usually immediately follows the DOS header.
+/// The 64-bit PE header that follows the COFF header.
 struct pe32plus_header {
-  support::ulittle32_t Signature;
-  coff_file_header COFFHeader;
   support::ulittle16_t Magic;
   uint8_t  MajorLinkerVersion;
   uint8_t  MinorLinkerVersion;
