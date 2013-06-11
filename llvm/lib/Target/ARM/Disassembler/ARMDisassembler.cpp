@@ -165,6 +165,8 @@ static DecodeStatus DecodetcGPRRegisterClass(MCInst &Inst, unsigned RegNo,
                                    uint64_t Address, const void *Decoder);
 static DecodeStatus DecoderGPRRegisterClass(MCInst &Inst, unsigned RegNo,
                                    uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeGPRPairRegisterClass(MCInst &Inst, unsigned RegNo,
+                                   uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeSPRRegisterClass(MCInst &Inst, unsigned RegNo,
                                    uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeDPRRegisterClass(MCInst &Inst, unsigned RegNo,
@@ -852,6 +854,26 @@ static DecodeStatus DecodetGPRRegisterClass(MCInst &Inst, unsigned RegNo,
   if (RegNo > 7)
     return MCDisassembler::Fail;
   return DecodeGPRRegisterClass(Inst, RegNo, Address, Decoder);
+}
+
+static const uint16_t GPRPairDecoderTable[] = {
+  ARM::R0_R1, ARM::R2_R3,   ARM::R4_R5,  ARM::R6_R7,
+  ARM::R8_R9, ARM::R10_R11, ARM::R12_SP
+};
+
+static DecodeStatus DecodeGPRPairRegisterClass(MCInst &Inst, unsigned RegNo,
+                                   uint64_t Address, const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+
+  if (RegNo > 13)
+    return MCDisassembler::Fail;
+
+  if ((RegNo & 1) || RegNo == 0xe)
+     S = MCDisassembler::SoftFail;
+
+  unsigned RegisterPair = GPRPairDecoderTable[RegNo/2];
+  Inst.addOperand(MCOperand::CreateReg(RegisterPair));
+  return S;
 }
 
 static DecodeStatus DecodetcGPRRegisterClass(MCInst &Inst, unsigned RegNo,
@@ -3579,11 +3601,10 @@ static DecodeStatus DecodeDoubleRegLoad(MCInst &Inst, unsigned Insn,
   unsigned Rn = fieldFromInstruction(Insn, 16, 4);
   unsigned pred = fieldFromInstruction(Insn, 28, 4);
 
-  if ((Rt & 1) || Rt == 0xE || Rn == 0xF) return MCDisassembler::Fail;
+  if (Rn == 0xF)
+    S = MCDisassembler::SoftFail;
 
-  if (!Check(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)))
-    return MCDisassembler::Fail;
-  if (!Check(S, DecodeGPRRegisterClass(Inst, Rt+1, Address, Decoder)))
+  if (!Check(S, DecodeGPRPairRegisterClass(Inst, Rt, Address, Decoder)))
     return MCDisassembler::Fail;
   if (!Check(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)))
     return MCDisassembler::Fail;
@@ -3592,7 +3613,6 @@ static DecodeStatus DecodeDoubleRegLoad(MCInst &Inst, unsigned Insn,
 
   return S;
 }
-
 
 static DecodeStatus DecodeDoubleRegStore(MCInst &Inst, unsigned Insn,
                                          uint64_t Address, const void *Decoder){
@@ -3606,12 +3626,10 @@ static DecodeStatus DecodeDoubleRegStore(MCInst &Inst, unsigned Insn,
   if (!Check(S, DecodeGPRnopcRegisterClass(Inst, Rd, Address, Decoder)))
     return MCDisassembler::Fail;
 
-  if ((Rt & 1) || Rt == 0xE || Rn == 0xF) return MCDisassembler::Fail;
-  if (Rd == Rn || Rd == Rt || Rd == Rt+1) return MCDisassembler::Fail;
+  if (Rn == 0xF || Rd == Rn || Rd == Rt || Rd == Rt+1)
+    S = MCDisassembler::SoftFail;
 
-  if (!Check(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)))
-    return MCDisassembler::Fail;
-  if (!Check(S, DecodeGPRRegisterClass(Inst, Rt+1, Address, Decoder)))
+  if (!Check(S, DecodeGPRPairRegisterClass(Inst, Rt, Address, Decoder)))
     return MCDisassembler::Fail;
   if (!Check(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)))
     return MCDisassembler::Fail;
