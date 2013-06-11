@@ -344,6 +344,9 @@ private:
 CoreTargetInfo::CoreTargetInfo() {
 }
 
+bool CoreTargetInfo::validateImpl(raw_ostream &diagnostics) {
+  return false;
+}
 
 void CoreTargetInfo::addPasses(PassManager &pm) const {
   for (StringRef name : _passNames) {

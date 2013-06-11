@@ -26,6 +26,11 @@ TargetInfo::TargetInfo()
 
 TargetInfo::~TargetInfo() {}
 
+bool TargetInfo::validate(raw_ostream &diagnostics) {
+  _yamlReader = createReaderYAML(*this);
+  return validateImpl(diagnostics);
+}
+
 error_code TargetInfo::readFile(StringRef path,
                         std::vector<std::unique_ptr<File>> &result) const {
   OwningPtr<llvm::MemoryBuffer> opmb;

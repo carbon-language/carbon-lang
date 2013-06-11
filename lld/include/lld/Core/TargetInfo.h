@@ -243,7 +243,7 @@ public:
   /// is written to the supplied stream.
   ///
   /// \returns true if there is an error with the current settings.
-  virtual bool validate(raw_ostream &diagnostics) = 0;
+  bool validate(raw_ostream &diagnostics);
 
 
   /// @}
@@ -339,6 +339,11 @@ protected:
   std::vector<StringRef>   _deadStripRoots;
   std::vector<LinkerInput> _inputFiles;
   std::vector<const char*> _llvmOptions;
+  std::unique_ptr<Reader>  _yamlReader;
+
+ private:
+  /// Validate the subclass bits. Only called by validate.
+  virtual bool validateImpl(raw_ostream &diagnostics) = 0;
 };
 } // end namespace lld
 

@@ -181,7 +181,7 @@ bool MachOTargetInfo::addUnixThreadLoadCommand() const {
   }
 }
 
-bool MachOTargetInfo::validate(raw_ostream &diagnostics) {
+bool MachOTargetInfo::validateImpl(raw_ostream &diagnostics) {
   if ((_outputFileType == mach_o::MH_EXECUTE) && _entrySymbolName.empty()) {
     if (_outputFileTypeStatic) {
       _entrySymbolName = "start";
@@ -217,8 +217,6 @@ error_code MachOTargetInfo::parseFile(std::unique_ptr<MemoryBuffer> &mb,
 //    _machoReader = createReaderMachO(*this);
 //  error_code ec = _machoReader->parseFile(mb,result);
 //  if (ec) {
-    if (!_yamlReader)
-      _yamlReader = createReaderYAML(*this);
     return _yamlReader->parseFile(mb, result);
 //  }
 

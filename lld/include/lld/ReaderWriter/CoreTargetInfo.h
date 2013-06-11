@@ -22,10 +22,7 @@ class CoreTargetInfo : public TargetInfo {
 public:
   CoreTargetInfo(); 
 
-  virtual bool validate(raw_ostream &diagnostics) {
-    return false;
-  }
-   
+  virtual bool validateImpl(raw_ostream &diagnostics);
   virtual void addPasses(PassManager &pm) const;
   virtual ErrorOr<Reference::Kind>    relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;

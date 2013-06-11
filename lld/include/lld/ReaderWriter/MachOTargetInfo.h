@@ -30,8 +30,8 @@ public:
   virtual void addPasses(PassManager &pm) const;
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
-  virtual bool validate(raw_ostream &diagnostics);
-  
+  virtual bool validateImpl(raw_ostream &diagnostics);
+
   virtual error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
                         std::vector<std::unique_ptr<File>> &result) const;
 
@@ -97,7 +97,6 @@ private:
   uint64_t        _pageZeroSize;
   mutable std::unique_ptr<mach_o::KindHandler>  _kindHandler;
   mutable std::unique_ptr<Reader>               _machoReader;
-  mutable std::unique_ptr<Reader>               _yamlReader;
   mutable std::unique_ptr<Writer>               _writer;
 };
 

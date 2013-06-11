@@ -22,7 +22,7 @@ error_code PECOFFTargetInfo::parseFile(
   return _reader->parseFile(mb, result);
 }
 
-bool PECOFFTargetInfo::validate(raw_ostream &diagnostics) {
+bool PECOFFTargetInfo::validateImpl(raw_ostream &diagnostics) {
   if (_stackReserve < _stackCommit) {
     diagnostics << "Invalid stack size: reserve size must be equal to or "
                 << "greater than commit size, but got "

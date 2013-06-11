@@ -62,7 +62,7 @@ public:
                                    const Reference &) const {
     return false;
   }
-  virtual bool validate(raw_ostream &diagnostics);
+  virtual bool validateImpl(raw_ostream &diagnostics);
 
 
   virtual error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
@@ -148,7 +148,6 @@ protected:
   std::vector<StringRef>             _inputSearchPaths;
   llvm::BumpPtrAllocator             _extraStrings;
   std::unique_ptr<Reader>            _elfReader;
-  std::unique_ptr<Reader>            _yamlReader;
   std::unique_ptr<Writer>            _writer;
   std::unique_ptr<Reader>            _linkerScriptReader;
   StringRef                          _dynamicLinkerPath;

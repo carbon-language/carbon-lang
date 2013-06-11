@@ -41,7 +41,7 @@ public:
       std::vector<std::unique_ptr<File>> &result) const;
 
   virtual Writer &writer() const;
-  virtual bool validate(raw_ostream &diagnostics);
+  virtual bool validateImpl(raw_ostream &diagnostics);
 
   virtual void addPasses(PassManager &pm) const {}
 

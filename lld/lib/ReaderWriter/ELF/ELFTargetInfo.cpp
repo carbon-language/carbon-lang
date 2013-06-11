@@ -63,7 +63,7 @@ uint16_t ELFTargetInfo::getOutputMachine() const {
   }
 }
 
-bool ELFTargetInfo::validate(raw_ostream &diagnostics) {
+bool ELFTargetInfo::validateImpl(raw_ostream &diagnostics) {
   if (_outputFileType == elf::ET_EXEC &&
       _entrySymbolName.empty()) {
     _entrySymbolName = "_start";
@@ -75,7 +75,6 @@ bool ELFTargetInfo::validate(raw_ostream &diagnostics) {
   }
 
   _elfReader = createReaderELF(*this);
-  _yamlReader = createReaderYAML(*this);
   _linkerScriptReader.reset(new ReaderLinkerScript(*this));
   _writer = _outputYAML ? createWriterYAML(*this) : createWriterELF(*this);
   return false;
