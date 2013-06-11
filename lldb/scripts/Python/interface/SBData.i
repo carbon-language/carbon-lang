@@ -160,6 +160,46 @@ public:
             def all(self):
                 return self[0:len(self)]
         
+        @classmethod
+        def CreateDataFromInt (cls, value, size = None, target = None, ptr_size = None, endian = None):
+            import sys
+            lldbmodule = sys.modules[cls.__module__]
+            lldbdict = lldbmodule.__dict__
+            if 'target' in lldbdict:
+                lldbtarget = lldbdict['target']
+            else:
+                lldbtarget = None
+            if target == None and lldbtarget != None and lldbtarget.IsValid():
+                target = lldbtarget
+            if ptr_size == None:
+                if target and target.IsValid():
+                    ptr_size = target.addr_size
+                else:
+                    ptr_size = 8
+            if endian == None:
+                if target and target.IsValid():
+                    endian = target.byte_order
+                else:
+                    endian = lldbdict['eByteOrderLittle']
+            if size == None:
+                if value > 2147483647:
+                    size = 8
+                elif value < -2147483648:
+                    size = 8
+                elif value > 4294967295:
+                    size = 8
+                else:
+                    size = 4
+            if size == 4:
+                if value < 0:
+                    return SBData().CreateDataFromSInt32Array(endian, ptr_size, [value])
+                return SBData().CreateDataFromUInt32Array(endian, ptr_size, [value])
+            if size == 8:
+                if value < 0:
+                    return SBData().CreateDataFromSInt64Array(endian, ptr_size, [value])
+                return SBData().CreateDataFromUInt64Array(endian, ptr_size, [value])
+            return None
+
         def _make_helper(self, sbdata, getfunc, itemsize):
             return self.read_data_helper(sbdata, getfunc, itemsize)
             
