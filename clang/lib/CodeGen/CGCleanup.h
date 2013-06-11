@@ -374,11 +374,6 @@ public:
     return new (Buffer) T(N, a0, a1, a2);
   }
 
-  void pushCopyOfCleanup(CleanupKind Kind, const void *Cleanup, size_t Size) {
-    void *Buffer = pushCleanup(Kind, Size);
-    std::memcpy(Buffer, Cleanup, Size);
-  }
-
   /// Pops a cleanup scope off the stack.  This is private to CGCleanup.cpp.
   void popCleanup();
 

@@ -241,18 +241,6 @@ public:
   llvm::DenseMap<const VarDecl *, llvm::Value *> NRVOFlags;
 
   EHScopeStack EHStack;
-  llvm::SmallVector<char, 256> LifetimeExtendedCleanupStack;
-
-  /// Header for data within LifetimeExtendedCleanupStack.
-  struct LifetimeExtendedCleanupHeader {
-    /// The size of the following cleanup object.
-    size_t Size : 29;
-    /// The kind of cleanup to push: a value from the CleanupKind enumeration.
-    unsigned Kind : 3;
-
-    size_t getSize() const { return Size; }
-    CleanupKind getKind() const { return static_cast<CleanupKind>(Kind); }
-  };
 
   /// i32s containing the indexes of the cleanup destinations.
   llvm::AllocaInst *NormalCleanupDest;
@@ -388,23 +376,6 @@ public:
     initFullExprCleanup();
   }
 
-  /// \brief Queue a cleanup to be pushed after finishing the current
-  /// full-expression.
-  template <class T, class A0, class A1, class A2, class A3>
-  void pushCleanupAfterFullExpr(CleanupKind Kind, A0 a0, A1 a1, A2 a2, A3 a3) {
-    assert(!isInConditionalBranch() && "can't defer conditional cleanup");
-
-    LifetimeExtendedCleanupHeader Header = { sizeof(T), Kind };
-
-    size_t OldSize = LifetimeExtendedCleanupStack.size();
-    LifetimeExtendedCleanupStack.resize(
-        LifetimeExtendedCleanupStack.size() + sizeof(Header) + Header.Size);
-
-    char *Buffer = &LifetimeExtendedCleanupStack[OldSize];
-    new (Buffer) LifetimeExtendedCleanupHeader(Header);
-    new (Buffer + sizeof(Header)) T(a0, a1, a2, a3);
-  }
-
   /// Set up the last cleaup that was pushed as a conditional
   /// full-expression cleanup.
   void initFullExprCleanup();
@@ -450,7 +421,6 @@ public:
   /// will be executed once the scope is exited.
   class RunCleanupsScope {
     EHScopeStack::stable_iterator CleanupStackDepth;
-    size_t LifetimeExtendedCleanupStackSize;
     bool OldDidCallStackSave;
   protected:
     bool PerformCleanup;
@@ -468,8 +438,6 @@ public:
       : PerformCleanup(true), CGF(CGF)
     {
       CleanupStackDepth = CGF.EHStack.stable_begin();
-      LifetimeExtendedCleanupStackSize =
-          CGF.LifetimeExtendedCleanupStack.size();
       OldDidCallStackSave = CGF.DidCallStackSave;
       CGF.DidCallStackSave = false;
     }
@@ -479,8 +447,7 @@ public:
     ~RunCleanupsScope() {
       if (PerformCleanup) {
         CGF.DidCallStackSave = OldDidCallStackSave;
-        CGF.PopCleanupBlocks(CleanupStackDepth,
-                             LifetimeExtendedCleanupStackSize);
+        CGF.PopCleanupBlocks(CleanupStackDepth);
       }
     }
 
@@ -494,8 +461,7 @@ public:
     void ForceCleanup() {
       assert(PerformCleanup && "Already forced cleanup");
       CGF.DidCallStackSave = OldDidCallStackSave;
-      CGF.PopCleanupBlocks(CleanupStackDepth,
-                           LifetimeExtendedCleanupStackSize);
+      CGF.PopCleanupBlocks(CleanupStackDepth);
       PerformCleanup = false;
     }
   };
@@ -547,15 +513,9 @@ public:
   };
 
 
-  /// \brief Takes the old cleanup stack size and emits the cleanup blocks
-  /// that have been added.
+  /// PopCleanupBlocks - Takes the old cleanup stack size and emits
+  /// the cleanup blocks that have been added.
   void PopCleanupBlocks(EHScopeStack::stable_iterator OldCleanupStackSize);
-
-  /// \brief Takes the old cleanup stack size and emits the cleanup blocks
-  /// that have been added, then adds all lifetime-extended cleanups from
-  /// the given position to the stack.
-  void PopCleanupBlocks(EHScopeStack::stable_iterator OldCleanupStackSize,
-                        size_t OldLifetimeExtendedStackSize);
 
   void ResolveBranchFixups(llvm::BasicBlock *Target);
 
@@ -1028,9 +988,6 @@ public:
                      llvm::Value *addr, QualType type);
   void pushDestroy(CleanupKind kind, llvm::Value *addr, QualType type,
                    Destroyer *destroyer, bool useEHCleanupForArray);
-  void pushLifetimeExtendedDestroy(CleanupKind kind, llvm::Value *addr,
-                                   QualType type, Destroyer *destroyer,
-                                   bool useEHCleanupForArray);
   void emitDestroy(llvm::Value *addr, QualType type, Destroyer *destroyer,
                    bool useEHCleanupForArray);
   llvm::Function *generateDestroyHelper(llvm::Constant *addr,
