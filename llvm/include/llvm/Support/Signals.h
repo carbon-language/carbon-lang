@@ -16,6 +16,7 @@
 #define LLVM_SUPPORT_SIGNALS_H
 
 #include "llvm/Support/Path.h"
+#include "llvm/Support/PathV1.h"
 #include <cstdio>
 
 namespace llvm {

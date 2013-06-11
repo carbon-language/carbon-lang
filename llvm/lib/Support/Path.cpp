@@ -15,6 +15,7 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/PathV1.h"
 #include <cassert>
 #include <cstring>
 #include <ostream>

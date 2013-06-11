@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/PathV1.h"
 
 namespace llvm {
 class error_code;
