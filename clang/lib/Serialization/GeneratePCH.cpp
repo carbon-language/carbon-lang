@@ -28,22 +28,29 @@ PCHGenerator::PCHGenerator(const Preprocessor &PP,
                            StringRef OutputFile,
                            clang::Module *Module,
                            StringRef isysroot,
-                           raw_ostream *OS)
+                           raw_ostream *OS, bool AllowASTWithErrors)
   : PP(PP), OutputFile(OutputFile), Module(Module), 
     isysroot(isysroot.str()), Out(OS), 
-    SemaPtr(0), Stream(Buffer), Writer(Stream) {
+    SemaPtr(0), Stream(Buffer), Writer(Stream),
+    AllowASTWithErrors(AllowASTWithErrors),
+    HasEmittedPCH(false) {
 }
 
 PCHGenerator::~PCHGenerator() {
 }
 
 void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
-  if (PP.getDiagnostics().hasErrorOccurred())
+  // Don't create a PCH if there were fatal failures during module loading.
+  if (PP.getModuleLoader().HadFatalFailure)
+    return;
+
+  bool hasErrors = PP.getDiagnostics().hasErrorOccurred();
+  if (hasErrors && !AllowASTWithErrors)
     return;
   
   // Emit the PCH file
   assert(SemaPtr && "No Sema?");
-  Writer.WriteAST(*SemaPtr, OutputFile, Module, isysroot);
+  Writer.WriteAST(*SemaPtr, OutputFile, Module, isysroot, hasErrors);
 
   // Write the generated bitstream to "Out".
   Out->write((char *)&Buffer.front(), Buffer.size());
@@ -53,6 +60,8 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
 
   // Free up some memory, in case the process is kept alive.
   Buffer.clear();
+
+  HasEmittedPCH = true;
 }
 
 ASTMutationListener *PCHGenerator::GetASTMutationListener() {

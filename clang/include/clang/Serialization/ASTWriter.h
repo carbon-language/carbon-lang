@@ -747,6 +747,8 @@ class PCHGenerator : public SemaConsumer {
   SmallVector<char, 128> Buffer;
   llvm::BitstreamWriter Stream;
   ASTWriter Writer;
+  bool AllowASTWithErrors;
+  bool HasEmittedPCH;
 
 protected:
   ASTWriter &getWriter() { return Writer; }
@@ -755,12 +757,15 @@ protected:
 public:
   PCHGenerator(const Preprocessor &PP, StringRef OutputFile,
                clang::Module *Module,
-               StringRef isysroot, raw_ostream *Out);
+               StringRef isysroot, raw_ostream *Out,
+               bool AllowASTWithErrors = false);
   ~PCHGenerator();
   virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
   virtual void HandleTranslationUnit(ASTContext &Ctx);
   virtual ASTMutationListener *GetASTMutationListener();
   virtual ASTDeserializationListener *GetASTDeserializationListener();
+
+  bool hasEmittedPCH() const { return HasEmittedPCH; }
 };
 
 } // end namespace clang

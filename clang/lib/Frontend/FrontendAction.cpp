@@ -429,9 +429,9 @@ void FrontendAction::EndSourceFile() {
     llvm::errs() << "\n";
   }
 
-  // Cleanup the output streams, and erase the output files if we encountered
-  // an error.
-  CI.clearOutputFiles(/*EraseFiles=*/CI.getDiagnostics().hasErrorOccurred());
+  // Cleanup the output streams, and erase the output files if instructed by the
+  // FrontendAction.
+  CI.clearOutputFiles(/*EraseFiles=*/shouldEraseOutputFiles());
 
   if (isCurrentFileAST()) {
     CI.takeSema();
@@ -443,6 +443,10 @@ void FrontendAction::EndSourceFile() {
 
   setCompilerInstance(0);
   setCurrentInput(FrontendInputFile());
+}
+
+bool FrontendAction::shouldEraseOutputFiles() {
+  return getCompilerInstance().getDiagnostics().hasErrorOccurred();
 }
 
 //===----------------------------------------------------------------------===//

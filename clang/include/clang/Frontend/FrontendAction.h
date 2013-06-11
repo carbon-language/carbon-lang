@@ -94,6 +94,14 @@ protected:
   /// BeginSourceFileAction (and BeginSourceFile).
   virtual void EndSourceFileAction() {}
 
+  /// \brief Callback at the end of processing a single input, to determine
+  /// if the output files should be erased or not.
+  ///
+  /// By default it returns true if a compiler error occurred.
+  /// This is guaranteed to only be called following a successful call to
+  /// BeginSourceFileAction (and BeginSourceFile).
+  virtual bool shouldEraseOutputFiles();
+
   /// @}
 
 public:

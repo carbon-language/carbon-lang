@@ -974,8 +974,8 @@ class PrecompilePreambleConsumer : public PCHGenerator {
 public:
   PrecompilePreambleConsumer(ASTUnit &Unit, const Preprocessor &PP, 
                              StringRef isysroot, raw_ostream *Out)
-    : PCHGenerator(PP, "", 0, isysroot, Out), Unit(Unit),
-      Hash(Unit.getCurrentTopLevelHashValue()) {
+    : PCHGenerator(PP, "", 0, isysroot, Out, /*AllowASTWithErrors=*/true),
+      Unit(Unit), Hash(Unit.getCurrentTopLevelHashValue()) {
     Hash = 0;
   }
 
@@ -996,7 +996,7 @@ public:
 
   virtual void HandleTranslationUnit(ASTContext &Ctx) {
     PCHGenerator::HandleTranslationUnit(Ctx);
-    if (!Unit.getDiagnostics().hasErrorOccurred()) {
+    if (hasEmittedPCH()) {
       // Translate the top-level declarations we captured during
       // parsing into declaration IDs in the precompiled
       // preamble. This will allow us to deserialize those top-level
@@ -1010,9 +1010,11 @@ public:
 
 class PrecompilePreambleAction : public ASTFrontendAction {
   ASTUnit &Unit;
+  PrecompilePreambleConsumer *PreambleConsumer;
 
 public:
-  explicit PrecompilePreambleAction(ASTUnit &Unit) : Unit(Unit) {}
+  explicit PrecompilePreambleAction(ASTUnit &Unit)
+    : Unit(Unit), PreambleConsumer(0) {}
 
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          StringRef InFile) {
@@ -1029,9 +1031,15 @@ public:
 
     CI.getPreprocessor().addPPCallbacks(
      new MacroDefinitionTrackerPPCallbacks(Unit.getCurrentTopLevelHashValue()));
-    return new PrecompilePreambleConsumer(Unit, CI.getPreprocessor(), Sysroot, 
-                                          OS);
+    PreambleConsumer = new PrecompilePreambleConsumer(Unit,CI.getPreprocessor(),
+                                                      Sysroot, OS);
+    return PreambleConsumer;
   }
+
+  bool hasEmittedPreamblePCH() const {
+    return PreambleConsumer && PreambleConsumer->hasEmittedPCH();
+  }
+  virtual bool shouldEraseOutputFiles() { return !hasEmittedPreamblePCH(); }
 
   virtual bool hasCodeCompletionSupport() const { return false; }
   virtual bool hasASTFileSupport() const { return false; }
@@ -1622,7 +1630,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   Act->Execute();
   Act->EndSourceFile();
 
-  if (Diagnostics->hasErrorOccurred()) {
+  if (!Act->hasEmittedPreamblePCH()) {
     // There were errors parsing the preamble, so no precompiled header was
     // generated. Forget that we even tried.
     // FIXME: Should we leave a note for ourselves to try again?
