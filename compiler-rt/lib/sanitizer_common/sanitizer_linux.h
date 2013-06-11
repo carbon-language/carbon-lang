@@ -62,8 +62,6 @@ uptr ThreadSelfOffset();
 // information).
 bool LibraryNameIs(const char *full_name, const char *base_name);
 
-static const uptr kMaxPathLength = 512;
-
 // Read the name of the current binary from /proc/self/exe.
 uptr ReadBinaryName(/*out*/char *buf, uptr buf_len);
 

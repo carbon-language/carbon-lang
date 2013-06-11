@@ -33,6 +33,8 @@ const uptr kCacheLineSize = 128;
 const uptr kCacheLineSize = 64;
 #endif
 
+const uptr kMaxPathLength = 512;
+
 extern const char *SanitizerToolName;  // Can be changed by the tool.
 extern uptr SanitizerVerbosity;
 

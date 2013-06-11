@@ -80,6 +80,8 @@ const char *Demangle(const char *Name);
 // with external symbolizer via pipes.
 bool InitializeExternalSymbolizer(const char *path_to_symbolizer);
 
+const int kSymbolizerStartupTimeMillis = 10;
+
 class LoadedModule {
  public:
   LoadedModule(const char *module_name, uptr base_address);

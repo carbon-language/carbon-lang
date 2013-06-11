@@ -18,8 +18,7 @@ set(SANITIZER_SOURCES
   sanitizer_symbolizer_mac.cc
   sanitizer_symbolizer_win.cc
   sanitizer_thread_registry.cc
-  sanitizer_win.cc
-  )
+  sanitizer_win.cc)
 
 set(SANITIZER_LIBCDEP_SOURCES
   sanitizer_common_libcdep.cc
@@ -28,7 +27,7 @@ set(SANITIZER_LIBCDEP_SOURCES
   sanitizer_stoptheworld_linux_libcdep.cc
   sanitizer_symbolizer_libcdep.cc
   sanitizer_symbolizer_linux_libcdep.cc
-  )
+  sanitizer_symbolizer_posix_libcdep.cc)
 
 # Explicitly list all sanitizer_common headers. Not all of these are
 # included in sanitizer_common source files, but we need to depend on
@@ -58,8 +57,7 @@ set(SANITIZER_HEADERS
   sanitizer_stackdepot.h
   sanitizer_stacktrace.h
   sanitizer_symbolizer.h
-  sanitizer_thread_registry.h
-  )
+  sanitizer_thread_registry.h)
 
 set(SANITIZER_CFLAGS
   ${SANITIZER_COMMON_CFLAGS}

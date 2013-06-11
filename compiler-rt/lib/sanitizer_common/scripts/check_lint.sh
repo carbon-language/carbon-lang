@@ -62,8 +62,7 @@ ${CPPLINT} --filter=${ASAN_RTL_LINT_FILTER} ${INTERCEPTION}/*.{cc,h}
 ASAN_RTL=${COMPILER_RT}/lib/asan
 ${CPPLINT} --filter=${ASAN_RTL_LINT_FILTER} ${ASAN_RTL}/*.{cc,h}
 ${CPPLINT} --filter=${ASAN_TEST_LINT_FILTER} ${ASAN_RTL}/tests/*.{cc,h}
-${CPPLINT} --filter=${ASAN_LIT_TEST_LINT_FILTER} ${ASAN_RTL}/lit_tests/*.cc \
-                                             ${ASAN_RTL}/lit_tests/*/*.cc \
+${CPPLINT} --filter=${ASAN_LIT_TEST_LINT_FILTER} ${ASAN_RTL}/lit_tests/*/*.cc \
 
 # TSan
 TSAN_RTL=${COMPILER_RT}/lib/tsan
@@ -80,8 +79,7 @@ ${CPPLINT} --filter=${MSAN_RTL_LINT_FILTER} ${MSAN_RTL}/*.{cc,h}
 LSAN_RTL=${COMPILER_RT}/lib/lsan
 ${CPPLINT} --filter=${LSAN_RTL_LINT_FILTER} ${LSAN_RTL}/*.{cc,h}
 ${CPPLINT} --filter=${LSAN_RTL_LINT_FILTER} ${LSAN_RTL}/tests/*.{cc,h}
-${CPPLINT} --filter=${LSAN_LIT_TEST_LINT_FILTER} ${LSAN_RTL}/lit_tests/*.{cc,h} \
-                                             ${LSAN_RTL}/lit_tests/*/*.cc
+${CPPLINT} --filter=${LSAN_LIT_TEST_LINT_FILTER} ${LSAN_RTL}/lit_tests/*/*.cc
 
 set +e
 

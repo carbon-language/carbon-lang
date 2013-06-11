@@ -536,6 +536,12 @@ void __asan_init() {
   }
 
   InstallSignalHandlers();
+
+  AsanTSDInit(AsanThread::TSDDtor);
+  // Allocator should be initialized before starting external symbolizer, as
+  // fork() on Mac locks the allocator.
+  InitializeAllocator();
+
   // Start symbolizer process if necessary.
   const char* external_symbolizer = common_flags()->external_symbolizer_path;
   if (common_flags()->symbolize && external_symbolizer &&
@@ -551,7 +557,6 @@ void __asan_init() {
   InitTlsSize();
 
   // Create main thread.
-  AsanTSDInit(AsanThread::TSDDtor);
   AsanThread *main_thread = AsanThread::Create(0, 0);
   CreateThreadContextArgs create_main_args = { main_thread, 0 };
   u32 main_tid = asanThreadRegistry().CreateThread(
@@ -560,8 +565,6 @@ void __asan_init() {
   SetCurrentThread(main_thread);
   main_thread->ThreadStart(internal_getpid());
   force_interface_symbols();  // no-op.
-
-  InitializeAllocator();
 
 #if CAN_SANITIZE_LEAKS
   __lsan::InitCommonLsan();
