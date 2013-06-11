@@ -1,6 +1,7 @@
 #include "Core/IncludeExcludeInfo.h"
 #include "gtest/gtest.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/PathV1.h"
 #include <fstream>
 
 TEST(IncludeExcludeTest, ParseString) {
