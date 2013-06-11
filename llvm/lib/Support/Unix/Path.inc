@@ -208,16 +208,6 @@ Path::GetTemporaryDirectory(std::string *ErrMsg) {
 }
 
 Path
-Path::GetUserHomeDirectory() {
-  const char* home = getenv("HOME");
-  Path result;
-  if (home && result.set(home))
-    return result;
-  result.set("/");
-  return result;
-}
-
-Path
 Path::GetCurrentDirectory() {
   char pathname[MAXPATHLEN];
   if (!getcwd(pathname, MAXPATHLEN)) {

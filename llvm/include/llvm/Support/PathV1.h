@@ -111,15 +111,6 @@ namespace sys {
       /// directory.
       static Path GetTemporaryDirectory(std::string* ErrMsg = 0);
 
-      /// Construct a path to the current user's home directory. The
-      /// implementation must use an operating system specific mechanism for
-      /// determining the user's home directory. For example, the environment
-      /// variable "HOME" could be used on Unix. If a given operating system
-      /// does not have the concept of a user's home directory, this static
-      /// constructor must provide the same result as GetRootDirectory.
-      /// @brief Construct a path to the current user's "home" directory
-      static Path GetUserHomeDirectory();
-
       /// Construct a path to the current directory for the current process.
       /// @returns The current working directory.
       /// @brief Returns the current working directory.
