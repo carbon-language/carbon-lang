@@ -18,7 +18,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/Option.h"
-#include "llvm/Support/PathV2.h"
+#include "llvm/Support/Path.h"
 
 #include "lld/Driver/Driver.h"
 #include "lld/ReaderWriter/PECOFFTargetInfo.h"
