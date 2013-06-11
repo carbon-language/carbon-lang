@@ -26,7 +26,7 @@ template<typename T> struct X {
   static T f() { T::error; } // expected-error {{has no members}}
   static T f(bool);
 };
-void (*p)() = &X<void>().f; // expected-note {{instantiation of}}
+void (*p)() = &X<void>::f; // expected-note {{instantiation of}}
 
 namespace PR13098 {
   struct A {

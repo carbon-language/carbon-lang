@@ -627,7 +627,7 @@ namespace dr60 { // dr60: yes
   int &n = f(k);
 }
 
-namespace dr61 { // dr61: no
+namespace dr61 { // dr61: yes
   struct X {
     static void f();
   } x;
@@ -638,8 +638,7 @@ namespace dr61 { // dr61: no
   // This is (presumably) valid, because x.f does not refer to an overloaded
   // function name.
   void (*p)() = &x.f;
-  // FIXME: This should be rejected.
-  void (*q)() = &y.f;
+  void (*q)() = &y.f; // expected-error {{cannot create a non-constant pointer to member function}}
 }
 
 namespace dr62 { // dr62: yes

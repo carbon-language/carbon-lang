@@ -38,6 +38,8 @@ namespace test2 {
   };
 
   void A::test() {
-    int (A::*ptr)(int) = &(A::foo); // expected-error {{can't form member pointer of type 'int (test2::A::*)(int)' without '&' and class name}}
+    // FIXME: The error message in this case is less than clear, we can do
+    // better.
+    int (A::*ptr)(int) = &(A::foo); // expected-error {{cannot create a non-constant pointer to member function}}
   }
 }

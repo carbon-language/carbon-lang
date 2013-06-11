@@ -8356,7 +8356,15 @@ static QualType CheckAddressOfOperand(Sema &S, ExprResult &OrigOp,
           << OrigOp.get()->getSourceRange();
         return QualType();
       }
-                  
+
+      OverloadExpr *Ovl = cast<OverloadExpr>(OrigOp.get()->IgnoreParens());
+      if (isa<UnresolvedMemberExpr>(Ovl))
+        if (!S.ResolveSingleFunctionTemplateSpecialization(Ovl)) {
+          S.Diag(OpLoc, diag::err_invalid_form_pointer_member_function)
+            << OrigOp.get()->getSourceRange();
+          return QualType();
+        }
+
       return S.Context.OverloadTy;
     }
 
