@@ -788,11 +788,12 @@ error_code has_magic(const Twine &path, const Twine &magic, bool &result) {
       break;
 
     case '\177':
-      if (Magic[1] == 'E' && Magic[2] == 'L' && Magic[3] == 'F') {
+      if (Magic.size() >= 18 && Magic[1] == 'E' && Magic[2] == 'L' &&
+          Magic[3] == 'F') {
         bool Data2MSB = Magic[5] == 2;
         unsigned high = Data2MSB ? 16 : 17;
         unsigned low  = Data2MSB ? 17 : 16;
-        if (Magic.size() >= 18 && Magic[high] == 0)
+        if (Magic[high] == 0)
           switch (Magic[low]) {
             default: break;
             case 1: return file_magic::elf_relocatable;
