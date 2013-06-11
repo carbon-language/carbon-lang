@@ -1703,10 +1703,20 @@ DataExtractor::Dump (Stream *s,
         case eFormatFloat:
             {
                 std::ostringstream ss;
-                if (item_byte_size == sizeof(float))
+                if (item_byte_size == sizeof(float) || item_byte_size == 2)
                 {
+                    float f;
+                    if (item_byte_size == 2)
+                    {
+                        uint16_t half = this->GetU16(&offset);
+                        f = half2float(half);
+                    }
+                    else
+                    {
+                        f = GetFloat (&offset);
+                    }
                     ss.precision(std::numeric_limits<float>::digits10);
-                    ss << GetFloat(&offset);
+                    ss << f;
                 } 
                 else if (item_byte_size == sizeof(double))
                 {
@@ -1728,24 +1738,6 @@ DataExtractor::Dump (Stream *s,
             }
             break;
 
-        case eFormatHalfFloat:
-            {
-                std::ostringstream ss;
-                if (item_byte_size == 2)
-                {
-                    uint16_t half = this->GetU16(&offset);
-                    float half_converted = half2float(half);
-                    ss << half_converted;
-                }
-                else
-                {
-                    s->Printf("error: unsupported byte size (%zu) for half-float format", item_byte_size);
-                    return offset;
-                }
-                ss.flush();
-                s->Printf("%s", ss.str().c_str());
-            }
-            break;
         case eFormatUnicode16:
             s->Printf("U+%4.4x", GetU16 (&offset));
             break;

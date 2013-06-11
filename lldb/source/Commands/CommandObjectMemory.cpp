@@ -180,15 +180,12 @@ public:
             case eFormatUnicode32:
             case eFormatUnsigned:
             case eFormatHexFloat:
-            case eFormatHalfFloat:
                 if (!byte_size_option_set)
                     byte_size_value = 4;
                 if (!num_per_line_option_set)
                     m_num_per_line = 1;
                 if (!count_option_set)
                     format_options.GetCountValue() = 8;
-                if (format_options.GetFormat() == eFormatFloat && byte_size_option_set && byte_size_value == 2)
-                    format_options.GetFormatValue().SetCurrentValue(eFormatHalfFloat);
                 break;
             
             case eFormatBytes:
@@ -1173,7 +1170,6 @@ protected:
             case eFormatComplexInteger:
             case eFormatAddressInfo:
             case eFormatHexFloat:
-            case eFormatHalfFloat:
             case eFormatInstruction:
             case eFormatVoid:
                 result.AppendError("unsupported format for writing memory");
