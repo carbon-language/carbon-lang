@@ -539,11 +539,11 @@ def ObjCCocoaAPI : DiagGroup<"objc-cocoa-api", [
   ]>;
 
 def ObjCStringComparison : DiagGroup<"objc-string-compare">;
-def ObjCLiteralMissingAtSign : DiagGroup<"objc-literal-missing-atsign">;
 def ObjCLiteralComparison : DiagGroup<"objc-literal-compare", [
-    ObjCStringComparison,
-    ObjCLiteralMissingAtSign
+    ObjCStringComparison
   ]>;
+
+def ObjCLiteralMissingAtSign : DiagGroup<"objc-literal-missing-atsign">;
 
 // Inline ASM warnings.
 def ASMOperandWidths : DiagGroup<"asm-operand-widths">;
