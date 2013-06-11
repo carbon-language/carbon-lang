@@ -5,6 +5,9 @@
 @ RUN: llvm-mc -show-encoding -triple=armv7m < %s | FileCheck %s --check-prefix=CHECK-THUMB-ONLY
 @ RUN: llvm-mc -show-encoding -triple=armv6m < %s | FileCheck %s --check-prefix=CHECK-THUMB-ONLY
 
+@ FIXME: Could we avoid XFAIL to specify triple above?
+@ XFAIL: cygwin,mingw32,win32
+
         @ Make sure the architecture chosen by LLVM defaults to a compatible
         @ ARM/Thumb mode.
         movs r0, r0

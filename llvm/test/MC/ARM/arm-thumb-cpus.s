@@ -5,6 +5,9 @@
 @ RUN: llvm-mc -show-encoding -triple=armv7m < %s 2>&1 | FileCheck %s --check-prefix=CHECK-THUMB-ONLY
 @ RUN: llvm-mc -show-encoding -triple=armv6m < %s 2>&1 | FileCheck %s --check-prefix=CHECK-THUMB-ONLY
 
+@ FIXME: Could we avoid XFAIL to specify triple above?
+@ XFAIL: cygwin,mingw32,win32
+
         @ Make sure correct diagnostics are given for CPUs without support for
         @ one or other of the execution states.
         .thumb
