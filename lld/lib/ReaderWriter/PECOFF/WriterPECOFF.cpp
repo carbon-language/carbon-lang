@@ -99,19 +99,19 @@ class PEHeaderChunk : public Chunk {
 public:
   PEHeaderChunk(const PECOFFTargetInfo &targetInfo) : Chunk() {
     // Set the size of the chunk and initialize the header with null bytes.
-    _size = sizeof(_peHeader);
+    _size = sizeof(llvm::COFF::PEMagic) + sizeof(_coffHeader)
+        + sizeof(_peHeader);
+    std::memset(&_coffHeader, 0, sizeof(_coffHeader));
     std::memset(&_peHeader, 0, sizeof(_peHeader));
 
-    // Set PE/COFF header fields
-    _peHeader.Signature = 'P' | ('E' << 8);
-    _peHeader.COFFHeader.Machine = llvm::COFF::IMAGE_FILE_MACHINE_I386;
 
-    _peHeader.COFFHeader.NumberOfSections = 1;  // [FIXME]
-    _peHeader.COFFHeader.TimeDateStamp = time(NULL);
+    _coffHeader.Machine = llvm::COFF::IMAGE_FILE_MACHINE_I386;
+    _coffHeader.NumberOfSections = 1;  // [FIXME]
+    _coffHeader.TimeDateStamp = time(NULL);
 
     // The size of PE header including optional data directory is always 224.
-    _peHeader.COFFHeader.SizeOfOptionalHeader = 224;
-    _peHeader.COFFHeader.Characteristics = llvm::COFF::IMAGE_FILE_32BIT_MACHINE
+    _coffHeader.SizeOfOptionalHeader = 224;
+    _coffHeader.Characteristics = llvm::COFF::IMAGE_FILE_32BIT_MACHINE
         | llvm::COFF::IMAGE_FILE_EXECUTABLE_IMAGE;
 
     // 0x10b indicates a normal executable. For PE32+ it should be 0x20b.
@@ -168,6 +168,10 @@ public:
   }
 
   virtual void write(uint8_t *fileBuffer) {
+    std::memcpy(fileBuffer, llvm::COFF::PEMagic, sizeof(llvm::COFF::PEMagic));
+    fileBuffer += sizeof(llvm::COFF::PEMagic);
+    std::memcpy(fileBuffer, &_coffHeader, sizeof(_coffHeader));
+    fileBuffer += sizeof(_coffHeader);
     std::memcpy(fileBuffer, &_peHeader, sizeof(_peHeader));
   }
 
@@ -176,6 +180,7 @@ public:
   }
 
 private:
+  llvm::object::coff_file_header _coffHeader;
   llvm::object::pe32_header _peHeader;
 };
 
