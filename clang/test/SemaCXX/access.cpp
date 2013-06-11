@@ -108,3 +108,31 @@ namespace PR15209 {
     }
   }
 }
+
+namespace PR7434 {
+  namespace comment0 {
+    template <typename T> struct X;
+    namespace N {
+    class Y {
+      template<typename T> friend struct X;
+      int t; // expected-note {{here}}
+    };
+    }
+    template<typename T> struct X {
+      X() { (void)N::Y().t; } // expected-error {{private}}
+    };
+    X<char> x;
+  }
+  namespace comment2 {
+    struct X;
+    namespace N {
+    class Y {
+      friend struct X;
+      int t; // expected-note {{here}}
+    };
+    }
+    struct X {
+      X() { (void)N::Y().t; } // expected-error {{private}}
+    };
+  }
+}
