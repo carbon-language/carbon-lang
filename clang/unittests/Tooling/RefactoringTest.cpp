@@ -26,6 +26,7 @@
 #include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/PathV1.h"
 #include "gtest/gtest.h"
 
 namespace clang {
