@@ -32,7 +32,6 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
@@ -170,7 +169,10 @@ bool LTOModule::isBitcodeFile(const void *mem, size_t length) {
 }
 
 bool LTOModule::isBitcodeFile(const char *path) {
-  return llvm::sys::Path(path).isBitcodeFile();
+  sys::fs::file_magic type;
+  if (sys::fs::identify_magic(path, type))
+    return false;
+  return type == sys::fs::file_magic::bitcode;
 }
 
 /// isBitcodeFileForTarget - Returns 'true' if the file (or memory contents) is

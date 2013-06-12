@@ -226,13 +226,6 @@ namespace sys {
       /// @brief Determine if the path references an archive file.
       bool isArchive() const;
 
-      /// This function determines if the path name in the object references an
-      /// LLVM Bitcode file by looking at its magic number.
-      /// @returns true if the file starts with the magic number for LLVM
-      /// bitcode files.
-      /// @brief Determine if the path references a bitcode file.
-      bool isBitcodeFile() const;
-
       /// This function determines if the path name in the object references a
       /// native Dynamic Library (shared library, shared object) by looking at
       /// the file's magic number. The Path object must reference a file, not a

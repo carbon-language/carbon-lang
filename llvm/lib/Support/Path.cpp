@@ -77,14 +77,6 @@ Path::appendSuffix(StringRef suffix) {
   }
 }
 
-bool
-Path::isBitcodeFile() const {
-  fs::file_magic type;
-  if (fs::identify_magic(str(), type))
-    return false;
-  return type == fs::file_magic::bitcode;
-}
-
 // Include the truly platform-specific parts of this class.
 #if defined(LLVM_ON_UNIX)
 #include "Unix/Path.inc"
