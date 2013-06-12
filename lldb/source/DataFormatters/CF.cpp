@@ -229,10 +229,7 @@ lldb_private::formatters::CFBitVectorSummaryProvider (ValueObject& valobj, Strea
             count -= 1;
         }
         if (count)
-        {
             stream.Printf("%c",bit0 ? '1' : '0');
-            count -= 1;
-        }
     }
     return true;
 }
