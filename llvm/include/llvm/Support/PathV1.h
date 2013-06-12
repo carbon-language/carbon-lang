@@ -458,17 +458,6 @@ namespace sys {
         std::string* ErrMsg = 0 ///< Optional place to put error messages.
       );
 
-      /// This method attempts to create a file in the file system with the same
-      /// name as the Path object. The intermediate directories must all exist
-      /// at the time this method is called. Use createDirectoriesOnDisk to
-      /// accomplish that. The created file will be empty upon return from this
-      /// function.
-      /// @returns true if the file could not be created, false otherwise.
-      /// @brief Create the file this Path refers to.
-      bool createFileOnDisk(
-        std::string* ErrMsg = 0 ///< Optional place to put error messages.
-      );
-
       /// This is like createFile except that it creates a temporary file. A
       /// unique temporary file name is generated based on the contents of
       /// \p this before the call. The new name is assigned to \p this and the

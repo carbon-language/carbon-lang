@@ -560,18 +560,6 @@ Path::createDirectoryOnDisk(bool create_parents, std::string* ErrMsg) {
 }
 
 bool
-Path::createFileOnDisk(std::string* ErrMsg) {
-  // Create the file
-  HANDLE h = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW,
-                        FILE_ATTRIBUTE_NORMAL, NULL);
-  if (h == INVALID_HANDLE_VALUE)
-    return MakeErrMsg(ErrMsg, path + ": Can't create file: ");
-
-  CloseHandle(h);
-  return false;
-}
-
-bool
 Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
   WIN32_FILE_ATTRIBUTE_DATA fi;
   if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
