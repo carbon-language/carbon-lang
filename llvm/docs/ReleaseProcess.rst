@@ -52,28 +52,19 @@ The scripts are in the ``utils/release`` directory.
 test-release.sh
 ---------------
 
-This script will configure and compile LLVM+Clang (+ most add-ons, like ``compiler-rt``,
+This script will check-out, configure and compile LLVM+Clang (+ most add-ons, like ``compiler-rt``,
 ``libcxx`` and ``clang-extra-tools``) in three stages, and will test the final stage.
-It'll have installed the final binaries on the Phase3/Release+Asserts directory, and
+It'll have installed the final binaries on the Phase3/Releasei(+Asserts) directory, and
 that's the one you should use for the test-suite and other external tests.
 
-Tip: For some reason, the script bails on ARM because of path mismatch on configure.
-The solution was to add a symlink inside the rc1 directory to the llvm.src directory::
+To run the script on a specific release candidate run::
 
-   mkdir rc1
-   cd rc1
-   ln -s ../../llvm.src
-   cd ..
-
-To run the script, you must be on the source directory and pass the right options, for example::
-
-   ./utils/release/test-release.sh \
-                      -release 3.3 \
-                      -rc 1 \
-                      -no-checkout \
-                      -no-64bit \
-                      -test-asserts \
-                      -no-compare-files
+   ./test-release.sh \
+        -release 3.3 \
+        -rc 1 \
+        -no-64bit \
+        -test-asserts \
+        -no-compare-files
 
 Each system will require different options. For instance, x86_64 will obviously not need
 ``-no-64bit`` while 32-bit systems will, or the script will fail.
@@ -82,10 +73,13 @@ The important flags to get right are:
 
 * On the pre-release, you should change ``-rc 1`` to ``-final``. On RC2, change it to ``-rc 2`` and so on.
 
-* On both previous release and candidates you must pass ``-no-checkout`` or it'll get the SVN trunk.
+* On non-release testing, you can use ``-final`` in conjunction with ``-no-checkout``, but you'll have to
+  create the ``final`` directory by hand and link the correct source dir to ``final/llvm.src``.
 
-* You need ``-test-asserts``, or it won't create a "Release+Asserts" directory, which is needed for
-  release testing and benchmarking.
+* For release candidates, you need ``-test-asserts``, or it won't create a "Release+Asserts" directory,
+  which is needed for release testing and benchmarking. This will take twice as long.
+
+* On the final candidate you just need Release builds, and that's the binary directory you'll have to pack.
 
 This script builds three phases of Clang+LLVM twice each (Release and Release+Asserts), so use
 screen or nohup to avoid headaches, since it'll take a long time.
@@ -108,6 +102,9 @@ Test Suite
 
 Follow the `LNT Quick Start Guide <http://llvm.org/docs/lnt/quickstart.html>`__ link on how to set-up the test-suite
 
+The binary location you'll have to use for testing is inside the ``rcN/Phase3/Release+Asserts/llvmCore-REL-RC.install``.
+Link that directory to an easier location and run the test-suite.
+
 An example on the run command line, assuming you created a link from the correct
 install directory to ``~/devel/llvm/install``::
 
@@ -118,6 +115,15 @@ install directory to ``~/devel/llvm/install``::
        --test-suite ~/devel/llvm/test/test-suite \
        --cc ~/devel/llvm/install/bin/clang \
        --cxx ~/devel/llvm/install/bin/clang++
+
+It should have no new regressions, compared to the previous release or release candidate. You don't need to fix
+all the bugs in the test-suite, since they're not necessarily meant to pass on all architectures all the time. This is
+due to the nature of the result checking, which relies on direct comparison, and most of the time, the failures are
+related to bad output checking, rather than bad code generation.
+
+If the errors are in LLVM itself, please report every single regression found as blocker, and all the other bugs
+as important, but not necessarily blocking the release to proceed. They can be set as "known failures" and to be
+fix on a future date.
 
 .. _pre-release-process:
 
@@ -139,7 +145,7 @@ You should:
 
 * Once all three stages are done, it'll test the final stage.
 
-* Using the ``Phase3/Release+Asserts/llvmObj-MAJ.MIN-rcN.install`` base, run the test-suite.
+* Using the ``Phase3/Release+Asserts/llvmCore-MAJ.MIN-final.install`` base, run the test-suite.
 
 If the final phase's ``make check-all`` failed, it's a good idea to also test the
 intermediate stages by going on the obj directory and running ``make check-all`` to find
@@ -172,6 +178,12 @@ You should:
 Once the release manages announces that the latest candidate is the good one, you
 have to pack the ``Release`` (no Asserts) install directory on ``Phase3`` and that
 will be the official binary.
+
+* Rename (or link) ``clang+llvm-REL-ARCH-ENV`` to the .install directory
+
+* Tar that into the same name with ``.tar.gz`` extensioan from outside the directory
+
+* Make it available for the release manager to download
 
 .. _bug-reporting:
 
