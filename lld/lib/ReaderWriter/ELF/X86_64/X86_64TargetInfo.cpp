@@ -140,7 +140,7 @@ protected:
   }
 
   /// \brief Create a GOT entry for the TP offset of a TLS atom.
-  const GOTAtom *getGOTTPOFF(const DefinedAtom *atom) {
+  const GOTAtom *getGOTTPOFF(const Atom *atom) {
     auto got = _gotMap.find(atom);
     if (got == _gotMap.end()) {
       auto g = new (_file._alloc) X86_64GOTAtom(_file, ".got");
@@ -159,8 +159,7 @@ protected:
   /// \brief Create a TPOFF64 GOT entry and change the relocation to a PC32 to
   /// the GOT.
   void handleGOTTPOFF(const Reference &ref) {
-    auto target = dyn_cast_or_null<const DefinedAtom>(ref.target());
-    const_cast<Reference &>(ref).setTarget(getGOTTPOFF(target));
+    const_cast<Reference &>(ref).setTarget(getGOTTPOFF(ref.target()));
     const_cast<Reference &>(ref).setKind(R_X86_64_PC32);
   }
 
