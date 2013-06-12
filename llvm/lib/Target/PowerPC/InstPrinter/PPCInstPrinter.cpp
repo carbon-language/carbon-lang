@@ -90,7 +90,6 @@ void PPCInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNo,
 
   if (StringRef(Modifier) == "cc") {
     switch ((PPC::Predicate)Code) {
-    default: llvm_unreachable("Bad predicate!");
     case PPC::PRED_LT: O << "lt"; return;
     case PPC::PRED_LE: O << "le"; return;
     case PPC::PRED_EQ: O << "eq"; return;
