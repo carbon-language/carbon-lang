@@ -32,8 +32,7 @@ namespace PPC {
     PRED_GT     = (1 << 5) | 12,
     PRED_NE     = (2 << 5) |  4,
     PRED_UN     = (3 << 5) | 12,
-    PRED_NU     = (3 << 5) |  4,
-    PRED_BAD    = 0
+    PRED_NU     = (3 << 5) |  4
   };
   
   /// Invert the specified predicate.  != -> ==, < -> >=.
