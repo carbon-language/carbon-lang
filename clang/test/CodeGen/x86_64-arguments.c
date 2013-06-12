@@ -411,3 +411,26 @@ void test51(struct test51_s *s, __builtin_va_list argList) {
 // CHECK-NEXT: add i32 {{.*}}, 16
 // CHECK-NEXT: store i32 {{.*}}, i32* {{.*}}
 // CHECK-NEXT: br label
+
+void test52_helper(int, ...);
+__m256 x52;
+void test52() {
+  test52_helper(0, x52, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0i);
+}
+// AVX: @test52_helper(i32 0, <8 x float> {{%[a-zA-Z0-9]+}}, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double {{%[a-zA-Z0-9]+}}, double {{%[a-zA-Z0-9]+}})
+
+void test53(__m256 *m, __builtin_va_list argList) {
+  *m = __builtin_va_arg(argList, __m256);
+}
+// AVX: define void @test53
+// AVX-NOT: br i1
+// AVX: ret void
+
+void test54_helper(__m256, ...);
+__m256 x54;
+void test54() {
+  test54_helper(x54, x54, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0i);
+  test54_helper(x54, x54, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0i);
+}
+// AVX: @test54_helper(<8 x float> {{%[a-zA-Z0-9]+}}, <8 x float> {{%[a-zA-Z0-9]+}}, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double {{%[a-zA-Z0-9]+}}, double {{%[a-zA-Z0-9]+}})
+// AVX: @test54_helper(<8 x float> {{%[a-zA-Z0-9]+}}, <8 x float> {{%[a-zA-Z0-9]+}}, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, { double, double }* byval align 8 {{%[a-zA-Z0-9]+}})
