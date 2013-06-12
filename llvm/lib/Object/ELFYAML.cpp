@@ -212,7 +212,8 @@ void ScalarEnumerationTraits<ELFYAML::ELF_ELFDATA>::enumeration(
 #undef ECase
 }
 
-void MappingTraits<ELFYAML::FileHeader>::mapping(IO &IO, ELFYAML::FileHeader &FileHdr) {
+void MappingTraits<ELFYAML::FileHeader>::mapping(IO &IO,
+                                                 ELFYAML::FileHeader &FileHdr) {
   IO.mapRequired("Class", FileHdr.Class);
   IO.mapRequired("Data", FileHdr.Data);
   IO.mapRequired("Type", FileHdr.Type);
