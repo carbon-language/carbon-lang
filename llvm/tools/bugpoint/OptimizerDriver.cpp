@@ -148,7 +148,7 @@ bool BugDriver::runPasses(Module *Program,
     return 1;
   }
 
-  sys::Path tool = sys::Program::FindProgramByName("opt");
+  sys::Path tool = sys::FindProgramByName("opt");
   if (tool.empty()) {
     errs() << "Cannot find `opt' in PATH!\n";
     return 1;
@@ -196,7 +196,7 @@ bool BugDriver::runPasses(Module *Program,
 
   sys::Path prog;
   if (UseValgrind)
-    prog = sys::Program::FindProgramByName("valgrind");
+    prog = sys::FindProgramByName("valgrind");
   else
     prog = tool;
 
@@ -204,9 +204,9 @@ bool BugDriver::runPasses(Module *Program,
   sys::Path Nowhere;
   const sys::Path *Redirects[3] = {0, &Nowhere, &Nowhere};
 
-  int result = sys::Program::ExecuteAndWait(prog, Args.data(), 0,
-                                            (SilencePasses ? Redirects : 0),
-                                            Timeout, MemoryLimit, &ErrMsg);
+  int result =
+      sys::ExecuteAndWait(prog, Args.data(), 0, (SilencePasses ? Redirects : 0),
+                          Timeout, MemoryLimit, &ErrMsg);
 
   // If we are supposed to delete the bitcode file or if the passes crashed,
   // remove it now.  This may fail if the file was never created, but that's ok.

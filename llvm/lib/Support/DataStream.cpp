@@ -66,7 +66,7 @@ public:
   error_code OpenFile(const std::string &Filename) {
     if (Filename == "-") {
       Fd = 0;
-      sys::Program::ChangeStdinToBinary();
+      sys::ChangeStdinToBinary();
       return error_code::success();
     }
   

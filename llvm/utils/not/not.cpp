@@ -13,11 +13,10 @@
 using namespace llvm;
 
 int main(int argc, const char **argv) {
-  sys::Path Program = sys::Program::FindProgramByName(argv[1]);
+  sys::Path Program = sys::FindProgramByName(argv[1]);
 
   std::string ErrMsg;
-  int Result = sys::Program::ExecuteAndWait(Program, argv + 1, 0, 0, 0, 0,
-                                            &ErrMsg);
+  int Result = sys::ExecuteAndWait(Program, argv + 1, 0, 0, 0, 0, &ErrMsg);
   if (Result < 0) {
     errs() << "Error: " << ErrMsg << "\n";
     return 1;

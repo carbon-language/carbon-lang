@@ -75,9 +75,8 @@ static int RunProgramWithTimeout(const sys::Path &ProgramPath,
   }
 #endif
 
-  return
-    sys::Program::ExecuteAndWait(ProgramPath, Args, 0, redirects,
-                                 NumSeconds, MemoryLimit, ErrMsg);
+  return sys::ExecuteAndWait(ProgramPath, Args, 0, redirects, NumSeconds,
+                             MemoryLimit, ErrMsg);
 }
 
 /// RunProgramRemotelyWithTimeout - This function runs the given program
@@ -108,8 +107,8 @@ static int RunProgramRemotelyWithTimeout(const sys::Path &RemoteClientPath,
 #endif
 
   // Run the program remotely with the remote client
-  int ReturnCode = sys::Program::ExecuteAndWait(RemoteClientPath, Args,
-                                 0, redirects, NumSeconds, MemoryLimit);
+  int ReturnCode = sys::ExecuteAndWait(RemoteClientPath, Args, 0, redirects,
+                                       NumSeconds, MemoryLimit);
 
   // Has the remote client fail?
   if (255 == ReturnCode) {
@@ -398,7 +397,7 @@ static void lexCommand(std::string &Message, const std::string &CommandLine,
     pos = CommandLine.find_first_of(delimiters, lastPos);
   }
 
-  CmdPath = sys::Program::FindProgramByName(Command).str();
+  CmdPath = sys::FindProgramByName(Command).str();
   if (CmdPath.empty()) {
     Message =
       std::string("Cannot find '") + Command +
@@ -875,7 +874,7 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
 GCC *GCC::create(std::string &Message,
                  const std::string &GCCBinary,
                  const std::vector<std::string> *Args) {
-  sys::Path GCCPath = sys::Program::FindProgramByName(GCCBinary);
+  sys::Path GCCPath = sys::FindProgramByName(GCCBinary);
   if (GCCPath.isEmpty()) {
     Message = "Cannot find `"+ GCCBinary +"' in PATH!\n";
     return 0;
@@ -883,7 +882,7 @@ GCC *GCC::create(std::string &Message,
 
   sys::Path RemoteClientPath;
   if (!RemoteClient.empty())
-    RemoteClientPath = sys::Program::FindProgramByName(RemoteClient);
+    RemoteClientPath = sys::FindProgramByName(RemoteClient);
 
   Message = "Found gcc: " + GCCPath.str() + "\n";
   return new GCC(GCCPath, RemoteClientPath, Args);

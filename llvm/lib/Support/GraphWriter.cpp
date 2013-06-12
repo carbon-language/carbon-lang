@@ -69,7 +69,7 @@ static bool LLVM_ATTRIBUTE_UNUSED
 ExecGraphViewer(const sys::Path &ExecPath, std::vector<const char*> &args,
                 const sys::Path &Filename, bool wait, std::string &ErrMsg) {
   if (wait) {
-    if (sys::Program::ExecuteAndWait(ExecPath, &args[0],0,0,0,0,&ErrMsg)) {
+    if (sys::ExecuteAndWait(ExecPath, &args[0],0,0,0,0,&ErrMsg)) {
       errs() << "Error: " << ErrMsg << "\n";
       return false;
     }
@@ -77,7 +77,7 @@ ExecGraphViewer(const sys::Path &ExecPath, std::vector<const char*> &args,
     errs() << " done. \n";
   }
   else {
-    sys::Program::ExecuteNoWait(ExecPath, &args[0],0,0,0,&ErrMsg);
+    sys::ExecuteNoWait(ExecPath, &args[0],0,0,0,&ErrMsg);
     errs() << "Remember to erase graph file: " << Filename.str() << "\n";
   }
   return true;

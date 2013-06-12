@@ -79,9 +79,9 @@ TEST(ProgramTest, CreateProcessTrailingSlash) {
   Path nul("/dev/null");
 #endif
   const Path *redirects[] = { &nul, &nul, 0 };
-  int rc = Program::ExecuteAndWait(my_exe, argv, &envp[0], redirects,
-                                   /*secondsToWait=*/10, /*memoryLimit=*/0,
-                                   &error, &ExecutionFailed);
+  int rc =
+      ExecuteAndWait(my_exe, argv, &envp[0], redirects, /*secondsToWait=*/ 10,
+                     /*memoryLimit=*/ 0, &error, &ExecutionFailed);
   EXPECT_FALSE(ExecutionFailed) << error;
   EXPECT_EQ(0, rc);
 }

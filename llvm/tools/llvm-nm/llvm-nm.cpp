@@ -425,7 +425,7 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "llvm symbol table dumper\n");
 
   // llvm-nm only reads binary files.
-  if (error(sys::Program::ChangeStdinToBinary()))
+  if (error(sys::ChangeStdinToBinary()))
     return 1;
 
   ToolName = argv[0];

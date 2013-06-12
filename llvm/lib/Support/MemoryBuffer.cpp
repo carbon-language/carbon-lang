@@ -419,7 +419,7 @@ error_code MemoryBuffer::getSTDIN(OwningPtr<MemoryBuffer> &result) {
   //
   // FIXME: That isn't necessarily true, we should try to mmap stdin and
   // fallback if it fails.
-  sys::Program::ChangeStdinToBinary();
+  sys::ChangeStdinToBinary();
 
   return getMemoryBufferForStream(0, "<stdin>", result);
 }

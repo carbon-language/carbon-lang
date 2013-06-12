@@ -442,7 +442,7 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
     // If user requested binary then put stdout into binary mode if
     // possible.
     if (Flags & F_Binary)
-      sys::Program::ChangeStdoutToBinary();
+      sys::ChangeStdoutToBinary();
     // Close stdout when we're done, to detect any output errors.
     ShouldClose = true;
     return;
