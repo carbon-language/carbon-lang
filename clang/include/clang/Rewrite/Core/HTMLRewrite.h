@@ -57,7 +57,7 @@ namespace html {
   ///  in 's' are not interpreted as HTML tags.  Unlike the version of
   ///  EscapeText that rewrites a file, this version by default replaces tabs
   ///  with spaces.
-  std::string EscapeText(const std::string& s,
+  std::string EscapeText(StringRef s,
                          bool EscapeSpaces = false, bool ReplaceTabs = false);
 
   void AddLineNumbers(Rewriter& R, FileID FID);

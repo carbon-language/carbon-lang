@@ -164,8 +164,7 @@ void html::EscapeText(Rewriter &R, FileID FID,
   }
 }
 
-std::string html::EscapeText(const std::string& s, bool EscapeSpaces,
-                             bool ReplaceTabs) {
+std::string html::EscapeText(StringRef s, bool EscapeSpaces, bool ReplaceTabs) {
 
   unsigned len = s.size();
   std::string Str;
