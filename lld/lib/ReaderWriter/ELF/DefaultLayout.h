@@ -581,7 +581,12 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
         int64_t lookupSectionFlag = msi->flags();
         if (!(lookupSectionFlag & llvm::ELF::SHF_WRITE))
           lookupSectionFlag &= ~llvm::ELF::SHF_EXECINSTR;
+
+        // Merge string sections into Data segment itself
         lookupSectionFlag &= ~(llvm::ELF::SHF_STRINGS | llvm::ELF::SHF_MERGE);
+
+        // Merge the TLS section into the DATA segment itself
+        lookupSectionFlag &= ~(llvm::ELF::SHF_TLS);
 
         Segment<ELFT> *segment;
         // We need a seperate segment for sections that dont have

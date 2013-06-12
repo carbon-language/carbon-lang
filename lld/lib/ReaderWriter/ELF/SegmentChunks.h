@@ -30,6 +30,9 @@
 
 namespace lld {
 namespace elf {
+
+template <typename ELFT> class DefaultLayout;
+
 /// \brief A segment can be divided into segment slices
 ///        depending on how the segments can be split
 template<class ELFT>
@@ -496,8 +499,13 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t &addr) {
       }
       if (isTLSSegment)
         tlsStartAddr += section->memSize();
-      addr += section->memSize();
-      section->setMemSize(addr - section->virtualAddr());
+      section->setMemSize(addr + section->memSize() - section->virtualAddr());
+      // TBSS section is special that it doesnot contribute to memory of any
+      // segment, If we see a tbss section, dont add memory size to addr
+      // The fileOffset is automatically taken care of since TBSS section does
+      // not endup using file size
+      if (section->order() != DefaultLayout<ELFT>::ORDER_TBSS)
+        addr += section->memSize();
     }
     slice->setMemSize(addr - slice->virtualAddr());
   }
