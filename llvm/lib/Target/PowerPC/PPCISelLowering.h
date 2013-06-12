@@ -20,6 +20,7 @@
 #include "PPCRegisterInfo.h"
 #include "PPCSubtarget.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
@@ -621,6 +622,23 @@ namespace llvm {
     SDValue DAGCombineFastRecip(SDValue Op, DAGCombinerInfo &DCI) const;
     SDValue DAGCombineFastRecipFSQRT(SDValue Op, DAGCombinerInfo &DCI) const;
   };
+
+  bool CC_PPC32_SVR4_Custom_Dummy(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
+                                  CCValAssign::LocInfo &LocInfo,
+                                  ISD::ArgFlagsTy &ArgFlags,
+                                  CCState &State);
+
+  bool CC_PPC32_SVR4_Custom_AlignArgRegs(unsigned &ValNo, MVT &ValVT,
+                                         MVT &LocVT,
+                                         CCValAssign::LocInfo &LocInfo,
+                                         ISD::ArgFlagsTy &ArgFlags,
+                                         CCState &State);
+
+  bool CC_PPC32_SVR4_Custom_AlignFPArgRegs(unsigned &ValNo, MVT &ValVT,
+                                           MVT &LocVT,
+                                           CCValAssign::LocInfo &LocInfo,
+                                           ISD::ArgFlagsTy &ArgFlags,
+                                           CCState &State);
 }
 
 #endif   // LLVM_TARGET_POWERPC_PPC32ISELLOWERING_H

@@ -37,21 +37,6 @@
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
-static bool CC_PPC32_SVR4_Custom_Dummy(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
-                                       CCValAssign::LocInfo &LocInfo,
-                                       ISD::ArgFlagsTy &ArgFlags,
-                                       CCState &State);
-static bool CC_PPC32_SVR4_Custom_AlignArgRegs(unsigned &ValNo, MVT &ValVT,
-                                              MVT &LocVT,
-                                              CCValAssign::LocInfo &LocInfo,
-                                              ISD::ArgFlagsTy &ArgFlags,
-                                              CCState &State);
-static bool CC_PPC32_SVR4_Custom_AlignFPArgRegs(unsigned &ValNo, MVT &ValVT,
-                                                MVT &LocVT,
-                                                CCValAssign::LocInfo &LocInfo,
-                                                ISD::ArgFlagsTy &ArgFlags,
-                                                CCState &State);
-
 static cl::opt<bool> DisablePPCPreinc("disable-ppc-preinc",
 cl::desc("disable preincrement load/store generation on PPC"), cl::Hidden);
 
@@ -1769,18 +1754,18 @@ SDValue PPCTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG,
 
 #include "PPCGenCallingConv.inc"
 
-static bool CC_PPC32_SVR4_Custom_Dummy(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
-                                       CCValAssign::LocInfo &LocInfo,
-                                       ISD::ArgFlagsTy &ArgFlags,
-                                       CCState &State) {
+bool llvm::CC_PPC32_SVR4_Custom_Dummy(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
+                                      CCValAssign::LocInfo &LocInfo,
+                                      ISD::ArgFlagsTy &ArgFlags,
+                                      CCState &State) {
   return true;
 }
 
-static bool CC_PPC32_SVR4_Custom_AlignArgRegs(unsigned &ValNo, MVT &ValVT,
-                                              MVT &LocVT,
-                                              CCValAssign::LocInfo &LocInfo,
-                                              ISD::ArgFlagsTy &ArgFlags,
-                                              CCState &State) {
+bool llvm::CC_PPC32_SVR4_Custom_AlignArgRegs(unsigned &ValNo, MVT &ValVT,
+                                             MVT &LocVT,
+                                             CCValAssign::LocInfo &LocInfo,
+                                             ISD::ArgFlagsTy &ArgFlags,
+                                             CCState &State) {
   static const uint16_t ArgRegs[] = {
     PPC::R3, PPC::R4, PPC::R5, PPC::R6,
     PPC::R7, PPC::R8, PPC::R9, PPC::R10,
@@ -1803,11 +1788,11 @@ static bool CC_PPC32_SVR4_Custom_AlignArgRegs(unsigned &ValNo, MVT &ValVT,
   return false;
 }
 
-static bool CC_PPC32_SVR4_Custom_AlignFPArgRegs(unsigned &ValNo, MVT &ValVT,
-                                                MVT &LocVT,
-                                                CCValAssign::LocInfo &LocInfo,
-                                                ISD::ArgFlagsTy &ArgFlags,
-                                                CCState &State) {
+bool llvm::CC_PPC32_SVR4_Custom_AlignFPArgRegs(unsigned &ValNo, MVT &ValVT,
+                                               MVT &LocVT,
+                                               CCValAssign::LocInfo &LocInfo,
+                                               ISD::ArgFlagsTy &ArgFlags,
+                                               CCState &State) {
   static const uint16_t ArgRegs[] = {
     PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
     PPC::F8
