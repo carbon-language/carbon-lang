@@ -150,24 +150,6 @@ void Path::makeAbsolute() {
   }
 }
 
-bool
-Path::isAbsolute(const char *NameStart, unsigned NameLen) {
-  assert(NameStart);
-  // FIXME: This does not handle correctly an absolute path starting from
-  // a drive letter or in UNC format.
-  switch (NameLen) {
-  case 0:
-    return false;
-  case 1:
-  case 2:
-    return NameStart[0] == '/';
-  default:
-    return
-      (NameStart[0] == '/' || (NameStart[1] == ':' && NameStart[2] == '/')) ||
-      (NameStart[0] == '\\' || (NameStart[1] == ':' && NameStart[2] == '\\'));
-  }
-}
-
 static Path *TempDirectory;
 
 Path

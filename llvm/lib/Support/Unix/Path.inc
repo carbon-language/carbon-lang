@@ -109,14 +109,6 @@ Path::isValid() const {
   return !path.empty();
 }
 
-bool
-Path::isAbsolute(const char *NameStart, unsigned NameLen) {
-  assert(NameStart);
-  if (NameLen == 0)
-    return false;
-  return NameStart[0] == '/';
-}
-
 Path
 Path::GetTemporaryDirectory(std::string *ErrMsg) {
 #if defined(HAVE_MKDTEMP)

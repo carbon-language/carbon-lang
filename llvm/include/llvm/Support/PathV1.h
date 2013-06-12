@@ -219,13 +219,6 @@ namespace sys {
     /// @name Disk Accessors
     /// @{
     public:
-      /// This function determines if the path name is absolute, as opposed to
-      /// relative.
-      /// @brief Determine if the path is absolute.
-      LLVM_ATTRIBUTE_DEPRECATED(
-        static bool isAbsolute(const char *NameStart, unsigned NameLen),
-        LLVM_PATH_DEPRECATED_MSG(path::is_absolute));
-
       /// This function opens the file associated with the path name provided by
       /// the Path object and reads its magic number. If the magic number at the
       /// start of the file matches \p magic, true is returned. In all other
