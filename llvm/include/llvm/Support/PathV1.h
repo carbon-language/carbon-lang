@@ -223,13 +223,6 @@ namespace sys {
       /// relative.
       /// @brief Determine if the path is absolute.
       LLVM_ATTRIBUTE_DEPRECATED(
-        bool isAbsolute() const,
-        LLVM_PATH_DEPRECATED_MSG(path::is_absolute));
-
-      /// This function determines if the path name is absolute, as opposed to
-      /// relative.
-      /// @brief Determine if the path is absolute.
-      LLVM_ATTRIBUTE_DEPRECATED(
         static bool isAbsolute(const char *NameStart, unsigned NameLen),
         LLVM_PATH_DEPRECATED_MSG(path::is_absolute));
 

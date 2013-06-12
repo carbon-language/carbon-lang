@@ -168,21 +168,6 @@ Path::isAbsolute(const char *NameStart, unsigned NameLen) {
   }
 }
 
-bool
-Path::isAbsolute() const {
-  // FIXME: This does not handle correctly an absolute path starting from
-  // a drive letter or in UNC format.
-  switch (path.length()) {
-    case 0:
-      return false;
-    case 1:
-    case 2:
-      return path[0] == '/';
-    default:
-      return path[0] == '/' || (path[1] == ':' && path[2] == '/');
-  }
-}
-
 static Path *TempDirectory;
 
 Path
