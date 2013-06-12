@@ -28,22 +28,27 @@ template <typename ELFT> class TargetAtomHandler;
 
 /// \brief Relocation References: Defined Atoms may contain references that will
 /// need to be patched before the executable is written.
+///
+/// Construction of ELFReferences is two pass process. ELFReferences are
+/// instantiated while we are iterating over symbol tables to atomize
+/// symbols. At that time we only know the index of relocation target symbol
+/// (not target atom) about a relocation, so we store the index to
+/// ELFREference. In the second pass, ELFReferences are revisited to update
+/// target atoms by target symbol indexes.
 template <class ELFT> class ELFReference LLVM_FINAL : public Reference {
   typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
   typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
 public:
 
-  ELFReference(const Elf_Rela *rela, uint64_t offset, const Atom *target,
-               Kind kind, uint32_t symbol)
-      : _target(target), _targetSymbolIndex(symbol),
-        _offsetInAtom(offset), _addend(rela->r_addend) {
+  ELFReference(const Elf_Rela *rela, uint64_t off, Kind kind, uint32_t idx)
+      : _target(nullptr), _targetSymbolIndex(idx),
+        _offsetInAtom(off), _addend(rela->r_addend) {
     _kind = kind;
   }
 
-  ELFReference(const Elf_Rel *rel, uint64_t offset, const Atom *target,
-               Kind kind, uint32_t symbol)
-      : _target(target), _targetSymbolIndex(symbol),
-        _offsetInAtom(offset), _addend(0) {
+  ELFReference(const Elf_Rel *rel, uint64_t off, Kind kind, uint32_t idx)
+      : _target(nullptr), _targetSymbolIndex(idx),
+        _offsetInAtom(off), _addend(0) {
     _kind = kind;
   }
 

@@ -513,7 +513,7 @@ private:
         Reference::Kind kind = (Reference::Kind) rai.getType(isMips64EL);
         uint32_t symbolIndex = rai.getSymbol(isMips64EL);
         auto *ERef = new (_readerStorage)
-            ELFReference<ELFT>(&rai, rai.r_offset - symbol->st_value, nullptr,
+            ELFReference<ELFT>(&rai, rai.r_offset - symbol->st_value,
                                kind, symbolIndex);
         _references.push_back(ERef);
       }
@@ -530,7 +530,7 @@ private:
         Reference::Kind kind = (Reference::Kind) ri.getType(isMips64EL);
         uint32_t symbolIndex = ri.getSymbol(isMips64EL);
         auto *ERef = new (_readerStorage)
-            ELFReference<ELFT>(&ri, ri.r_offset - symbol->st_value, nullptr,
+            ELFReference<ELFT>(&ri, ri.r_offset - symbol->st_value,
                                kind, symbolIndex);
         // Read the addend from the section contents
         // TODO : We should move the way lld reads relocations totally from
