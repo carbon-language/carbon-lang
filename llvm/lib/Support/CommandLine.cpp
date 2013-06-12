@@ -29,7 +29,6 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 #include <cerrno>
@@ -513,27 +512,16 @@ static void ExpandResponseFiles(unsigned argc, const char*const* argv,
     const char *arg = argv[i];
 
     if (arg[0] == '@') {
-      sys::PathWithStatus respFile(++arg);
+      // TODO: we should also support recursive loading of response files,
+      // since this is how gcc behaves. (From their man page: "The file may
+      // itself contain additional @file options; any such options will be
+      // processed recursively.")
 
-      // Check that the response file is not empty (mmap'ing empty
-      // files can be problematic).
-      const sys::FileStatus *FileStat = respFile.getFileStatus();
-      if (FileStat && FileStat->getSize() != 0) {
-
-        // If we could open the file, parse its contents, otherwise
-        // pass the @file option verbatim.
-
-        // TODO: we should also support recursive loading of response files,
-        // since this is how gcc behaves. (From their man page: "The file may
-        // itself contain additional @file options; any such options will be
-        // processed recursively.")
-
-        // Mmap the response file into memory.
-        OwningPtr<MemoryBuffer> respFilePtr;
-        if (!MemoryBuffer::getFile(respFile.c_str(), respFilePtr)) {
-          ParseCStringVector(newArgv, respFilePtr->getBufferStart());
-          continue;
-        }
+      // Mmap the response file into memory.
+      OwningPtr<MemoryBuffer> respFilePtr;
+      if (!MemoryBuffer::getFile(arg + 1, respFilePtr)) {
+        ParseCStringVector(newArgv, respFilePtr->getBufferStart());
+        continue;
       }
     }
     newArgv.push_back(strdup(arg));
