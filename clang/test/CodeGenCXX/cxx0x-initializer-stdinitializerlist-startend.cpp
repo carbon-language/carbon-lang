@@ -32,8 +32,8 @@ namespace std {
   };
 }
 
-// CHECK: @_ZL25globalInitList1__initlist = internal global [3 x i32] [i32 1, i32 2, i32 3]
-// CHECK: @globalInitList1 = global {{[^ ]+}} { i32* getelementptr inbounds ([3 x i32]* @_ZL25globalInitList1__initlist, {{[^)]*}}), i32*
+// CHECK: @_ZGR15globalInitList1 = private constant [3 x i32] [i32 1, i32 2, i32 3]
+// CHECK: @globalInitList1 = global {{[^ ]+}} { i32* getelementptr inbounds ([3 x i32]* @_ZGR15globalInitList1, {{[^)]*}}), i32*
 std::initializer_list<int> globalInitList1 = {1, 2, 3};
 
 void fn1(int i) {

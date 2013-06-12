@@ -838,8 +838,6 @@ static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const Expr *Init,
                               AggValueSlot::DoesNotNeedGCBarriers,
                               AggValueSlot::IsNotAliased);
     CGF.EmitAggExpr(Init, Slot);
-
-    CGF.MaybeEmitStdInitializerListCleanup(NewPtr, Init);
     return;
   }
   }

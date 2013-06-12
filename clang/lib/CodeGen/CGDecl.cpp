@@ -1187,7 +1187,6 @@ void CodeGenFunction::EmitExprAsInit(const Expr *init,
                                          AggValueSlot::DoesNotNeedGCBarriers,
                                               AggValueSlot::IsNotAliased));
     }
-    MaybeEmitStdInitializerListCleanup(lvalue.getAddress(), init);
     return;
   }
   llvm_unreachable("bad evaluation kind");

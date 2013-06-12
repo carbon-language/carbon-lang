@@ -3794,13 +3794,6 @@ public:
     InitListExprBits.HadArrayRangeDesignator = ARD;
   }
 
-  bool initializesStdInitializerList() const {
-    return InitListExprBits.InitializesStdInitializerList != 0;
-  }
-  void setInitializesStdInitializerList(bool ISIL = true) {
-    InitListExprBits.InitializesStdInitializerList = ISIL;
-  }
-
   SourceLocation getLocStart() const LLVM_READONLY;
   SourceLocation getLocEnd() const LLVM_READONLY;
 

@@ -723,7 +723,6 @@ void ASTStmtReader::VisitInitListExpr(InitListExpr *E) {
   } else
     E->ArrayFillerOrUnionFieldInit = ReadDeclAs<FieldDecl>(Record, Idx);
   E->sawArrayRangeDesignator(Record[Idx++]);
-  E->setInitializesStdInitializerList(Record[Idx++]);
   unsigned NumInits = Record[Idx++];
   E->reserveInits(Reader.getContext(), NumInits);
   if (isArrayFiller) {
@@ -1225,6 +1224,12 @@ void ASTStmtReader::VisitLambdaExpr(LambdaExpr *E) {
     for (unsigned I = 0; I != NumArrayIndexVars; ++I)
       ArrayIndexVars[I] = ReadDeclAs<VarDecl>(Record, Idx);
   }
+}
+
+void
+ASTStmtReader::VisitCXXStdInitializerListExpr(CXXStdInitializerListExpr *E) {
+  VisitExpr(E);
+  E->SubExpr = Reader.ReadSubExpr();
 }
 
 void ASTStmtReader::VisitCXXNamedCastExpr(CXXNamedCastExpr *E) {
@@ -2159,6 +2164,10 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case EXPR_USER_DEFINED_LITERAL:
       S = new (Context) UserDefinedLiteral(Context, Empty);
+      break;
+
+    case EXPR_CXX_STD_INITIALIZER_LIST:
+      S = new (Context) CXXStdInitializerListExpr(Empty);
       break;
 
     case EXPR_CXX_BOOL_LITERAL:

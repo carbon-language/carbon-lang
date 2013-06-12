@@ -1534,6 +1534,10 @@ void StmtPrinter::VisitCXXConstructExpr(CXXConstructExpr *E) {
     OS << " }";
 }
 
+void StmtPrinter::VisitCXXStdInitializerListExpr(CXXStdInitializerListExpr *E) {
+  PrintExpr(E->getSubExpr());
+}
+
 void StmtPrinter::VisitExprWithCleanups(ExprWithCleanups *E) {
   // Just forward to the sub expression.
   PrintExpr(E->getSubExpr());

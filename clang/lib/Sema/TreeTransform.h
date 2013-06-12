@@ -2639,6 +2639,10 @@ ExprResult TreeTransform<Derived>::TransformInitializer(Expr *Init,
   if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Init))
     Init = ICE->getSubExprAsWritten();
 
+  if (CXXStdInitializerListExpr *ILE =
+          dyn_cast<CXXStdInitializerListExpr>(Init))
+    return TransformInitializer(ILE->getSubExpr(), CXXDirectInit);
+
   // If this is not a direct-initializer, we only need to reconstruct
   // InitListExprs. Other forms of copy-initialization will be a no-op if
   // the initializer is already the right type.
@@ -8545,6 +8549,13 @@ ExprResult
 TreeTransform<Derived>::TransformMaterializeTemporaryExpr(
                                                   MaterializeTemporaryExpr *E) {
   return getDerived().TransformExpr(E->GetTemporaryExpr());
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformCXXStdInitializerListExpr(
+    CXXStdInitializerListExpr *E) {
+  return getDerived().TransformExpr(E->getSubExpr());
 }
 
 template<typename Derived>

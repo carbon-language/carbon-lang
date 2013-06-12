@@ -240,15 +240,6 @@ pushTemporaryCleanup(CodeGenFunction &CGF, const MaterializeTemporaryExpr *M,
     }
   }
 
-  if (const InitListExpr *ILE = dyn_cast<InitListExpr>(E)) {
-    if (ILE->initializesStdInitializerList()) {
-      // FIXME: This is wrong if the temporary has static or thread storage
-      // duration.
-      CGF.EmitStdInitializerListCleanup(ReferenceTemporary, ILE);
-      return;
-    }
-  }
-
   CXXDestructorDecl *ReferenceTemporaryDtor = 0;
   if (const RecordType *RT =
           E->getType()->getBaseElementTypeUnsafe()->getAs<RecordType>()) {

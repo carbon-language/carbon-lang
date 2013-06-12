@@ -91,7 +91,6 @@ public:
 
   void EmitMoveFromReturnSlot(const Expr *E, RValue Src);
 
-  void EmitStdInitializerList(llvm::Value *DestPtr, InitListExpr *InitList);
   void EmitArrayInit(llvm::Value *DestPtr, llvm::ArrayType *AType,
                      QualType elementType, InitListExpr *E);
 
@@ -177,6 +176,7 @@ public:
   void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E);
   void VisitCXXConstructExpr(const CXXConstructExpr *E);
   void VisitLambdaExpr(LambdaExpr *E);
+  void VisitCXXStdInitializerListExpr(CXXStdInitializerListExpr *E);
   void VisitExprWithCleanups(ExprWithCleanups *E);
   void VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
   void VisitCXXTypeidExpr(CXXTypeidExpr *E) { EmitAggLoadOfLValue(E); }
@@ -345,89 +345,70 @@ void AggExprEmitter::EmitCopy(QualType type, const AggValueSlot &dest,
                         std::min(dest.getAlignment(), src.getAlignment()));
 }
 
-static QualType GetStdInitializerListElementType(QualType T) {
-  // Just assume that this is really std::initializer_list.
-  ClassTemplateSpecializationDecl *specialization =
-      cast<ClassTemplateSpecializationDecl>(T->castAs<RecordType>()->getDecl());
-  return specialization->getTemplateArgs()[0].getAsType();
-}
-
-/// \brief Prepare cleanup for the temporary array.
-static void EmitStdInitializerListCleanup(CodeGenFunction &CGF,
-                                          QualType arrayType,
-                                          llvm::Value *addr,
-                                          const InitListExpr *initList) {
-  QualType::DestructionKind dtorKind = arrayType.isDestructedType();
-  if (!dtorKind)
-    return; // Type doesn't need destroying.
-  if (dtorKind != QualType::DK_cxx_destructor) {
-    CGF.ErrorUnsupported(initList, "ObjC ARC type in initializer_list");
-    return;
-  }
-
-  CodeGenFunction::Destroyer *destroyer = CGF.getDestroyer(dtorKind);
-  CGF.pushDestroy(NormalAndEHCleanup, addr, arrayType, destroyer,
-                  /*EHCleanup=*/true);
-}
-
 /// \brief Emit the initializer for a std::initializer_list initialized with a
 /// real initializer list.
-void AggExprEmitter::EmitStdInitializerList(llvm::Value *destPtr,
-                                            InitListExpr *initList) {
-  // We emit an array containing the elements, then have the init list point
-  // at the array.
-  ASTContext &ctx = CGF.getContext();
-  unsigned numInits = initList->getNumInits();
-  QualType element = GetStdInitializerListElementType(initList->getType());
-  llvm::APInt size(ctx.getTypeSize(ctx.getSizeType()), numInits);
-  QualType array = ctx.getConstantArrayType(element, size, ArrayType::Normal,0);
-  llvm::Type *LTy = CGF.ConvertTypeForMem(array);
-  llvm::AllocaInst *alloc = CGF.CreateTempAlloca(LTy);
-  alloc->setAlignment(ctx.getTypeAlignInChars(array).getQuantity());
-  alloc->setName(".initlist.");
+void
+AggExprEmitter::VisitCXXStdInitializerListExpr(CXXStdInitializerListExpr *E) {
+  // Emit an array containing the elements.  The array is externally destructed
+  // if the std::initializer_list object is.
+  ASTContext &Ctx = CGF.getContext();
+  LValue Array = CGF.EmitLValue(E->getSubExpr());
+  assert(Array.isSimple() && "initializer_list array not a simple lvalue");
+  llvm::Value *ArrayPtr = Array.getAddress();
 
-  EmitArrayInit(alloc, cast<llvm::ArrayType>(LTy), element, initList);
+  const ConstantArrayType *ArrayType =
+      Ctx.getAsConstantArrayType(E->getSubExpr()->getType());
+  assert(ArrayType && "std::initializer_list constructed from non-array");
 
-  // FIXME: The diagnostics are somewhat out of place here.
-  RecordDecl *record = initList->getType()->castAs<RecordType>()->getDecl();
-  RecordDecl::field_iterator field = record->field_begin();
-  if (field == record->field_end()) {
-    CGF.ErrorUnsupported(initList, "weird std::initializer_list");
+  // FIXME: Perform the checks on the field types in SemaInit.
+  RecordDecl *Record = E->getType()->castAs<RecordType>()->getDecl();
+  RecordDecl::field_iterator Field = Record->field_begin();
+  if (Field == Record->field_end()) {
+    CGF.ErrorUnsupported(E, "weird std::initializer_list");
     return;
   }
-
-  QualType elementPtr = ctx.getPointerType(element.withConst());
 
   // Start pointer.
-  if (!ctx.hasSameType(field->getType(), elementPtr)) {
-    CGF.ErrorUnsupported(initList, "weird std::initializer_list");
+  if (!Field->getType()->isPointerType() ||
+      !Ctx.hasSameType(Field->getType()->getPointeeType(),
+                       ArrayType->getElementType())) {
+    CGF.ErrorUnsupported(E, "weird std::initializer_list");
     return;
   }
-  LValue DestLV = CGF.MakeNaturalAlignAddrLValue(destPtr, initList->getType());
-  LValue start = CGF.EmitLValueForFieldInitialization(DestLV, *field);
-  llvm::Value *arrayStart = Builder.CreateStructGEP(alloc, 0, "arraystart");
-  CGF.EmitStoreThroughLValue(RValue::get(arrayStart), start);
-  ++field;
 
-  if (field == record->field_end()) {
-    CGF.ErrorUnsupported(initList, "weird std::initializer_list");
+  AggValueSlot Dest = EnsureSlot(E->getType());
+  LValue DestLV = CGF.MakeAddrLValue(Dest.getAddr(), E->getType(),
+                                     Dest.getAlignment());
+  LValue Start = CGF.EmitLValueForFieldInitialization(DestLV, *Field);
+  llvm::Value *Zero = llvm::ConstantInt::get(CGF.PtrDiffTy, 0);
+  llvm::Value *IdxStart[] = { Zero, Zero };
+  llvm::Value *ArrayStart =
+      Builder.CreateInBoundsGEP(ArrayPtr, IdxStart, "arraystart");
+  CGF.EmitStoreThroughLValue(RValue::get(ArrayStart), Start);
+  ++Field;
+
+  if (Field == Record->field_end()) {
+    CGF.ErrorUnsupported(E, "weird std::initializer_list");
     return;
   }
-  LValue endOrLength = CGF.EmitLValueForFieldInitialization(DestLV, *field);
-  if (ctx.hasSameType(field->getType(), elementPtr)) {
+
+  llvm::Value *Size = Builder.getInt(ArrayType->getSize());
+  LValue EndOrLength = CGF.EmitLValueForFieldInitialization(DestLV, *Field);
+  if (Field->getType()->isPointerType() &&
+      Ctx.hasSameType(Field->getType()->getPointeeType(),
+                      ArrayType->getElementType())) {
     // End pointer.
-    llvm::Value *arrayEnd = Builder.CreateStructGEP(alloc,numInits, "arrayend");
-    CGF.EmitStoreThroughLValue(RValue::get(arrayEnd), endOrLength);
-  } else if(ctx.hasSameType(field->getType(), ctx.getSizeType())) {
+    llvm::Value *IdxEnd[] = { Zero, Size };
+    llvm::Value *ArrayEnd =
+        Builder.CreateInBoundsGEP(ArrayPtr, IdxEnd, "arrayend");
+    CGF.EmitStoreThroughLValue(RValue::get(ArrayEnd), EndOrLength);
+  } else if (Ctx.hasSameType(Field->getType(), Ctx.getSizeType())) {
     // Length.
-    CGF.EmitStoreThroughLValue(RValue::get(Builder.getInt(size)), endOrLength);
+    CGF.EmitStoreThroughLValue(RValue::get(Size), EndOrLength);
   } else {
-    CGF.ErrorUnsupported(initList, "weird std::initializer_list");
+    CGF.ErrorUnsupported(E, "weird std::initializer_list");
     return;
   }
-
-  if (!Dest.isExternallyDestructed())
-    EmitStdInitializerListCleanup(CGF, array, alloc, initList);
 }
 
 /// \brief Emit initialization of an array from an initializer list.
@@ -490,15 +471,8 @@ void AggExprEmitter::EmitArrayInit(llvm::Value *DestPtr, llvm::ArrayType *AType,
       if (endOfInit) Builder.CreateStore(element, endOfInit);
     }
 
-    // If these are nested std::initializer_list inits, do them directly,
-    // because they are conceptually the same "location".
-    InitListExpr *initList = dyn_cast<InitListExpr>(E->getInit(i));
-    if (initList && initList->initializesStdInitializerList()) {
-      EmitStdInitializerList(element, initList);
-    } else {
-      LValue elementLV = CGF.MakeAddrLValue(element, elementType);
-      EmitInitializationToLValue(E->getInit(i), elementLV);
-    }
+    LValue elementLV = CGF.MakeAddrLValue(element, elementType);
+    EmitInitializationToLValue(E->getInit(i), elementLV);
   }
 
   // Check whether there's a non-trivial array-fill expression.
@@ -1161,11 +1135,6 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
   AggValueSlot Dest = EnsureSlot(E->getType());
 
-  if (E->initializesStdInitializerList()) {
-    EmitStdInitializerList(Dest.getAddr(), E);
-    return;
-  }
-
   LValue DestLV = CGF.MakeAddrLValue(Dest.getAddr(), E->getType(),
                                      Dest.getAlignment());
 
@@ -1545,59 +1514,4 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
                                               TypeInfo.first.getQuantity()),
                        alignment.getQuantity(), isVolatile,
                        /*TBAATag=*/0, TBAAStructTag);
-}
-
-void CodeGenFunction::MaybeEmitStdInitializerListCleanup(llvm::Value *loc,
-                                                         const Expr *init) {
-  const ExprWithCleanups *cleanups = dyn_cast<ExprWithCleanups>(init);
-  if (cleanups)
-    init = cleanups->getSubExpr();
-
-  if (isa<InitListExpr>(init) &&
-      cast<InitListExpr>(init)->initializesStdInitializerList()) {
-    // We initialized this std::initializer_list with an initializer list.
-    // A backing array was created. Push a cleanup for it.
-    EmitStdInitializerListCleanup(loc, cast<InitListExpr>(init));
-  }
-}
-
-static void EmitRecursiveStdInitializerListCleanup(CodeGenFunction &CGF,
-                                                   llvm::Value *arrayStart,
-                                                   const InitListExpr *init) {
-  // Check if there are any recursive cleanups to do, i.e. if we have
-  //   std::initializer_list<std::initializer_list<obj>> list = {{obj()}};
-  // then we need to destroy the inner array as well.
-  for (unsigned i = 0, e = init->getNumInits(); i != e; ++i) {
-    const InitListExpr *subInit = dyn_cast<InitListExpr>(init->getInit(i));
-    if (!subInit || !subInit->initializesStdInitializerList())
-      continue;
-
-    // This one needs to be destroyed. Get the address of the std::init_list.
-    llvm::Value *offset = llvm::ConstantInt::get(CGF.SizeTy, i);
-    llvm::Value *loc = CGF.Builder.CreateInBoundsGEP(arrayStart, offset,
-                                                 "std.initlist");
-    CGF.EmitStdInitializerListCleanup(loc, subInit);
-  }
-}
-
-void CodeGenFunction::EmitStdInitializerListCleanup(llvm::Value *loc,
-                                                    const InitListExpr *init) {
-  ASTContext &ctx = getContext();
-  QualType element = GetStdInitializerListElementType(init->getType());
-  unsigned numInits = init->getNumInits();
-  llvm::APInt size(ctx.getTypeSize(ctx.getSizeType()), numInits);
-  QualType array =ctx.getConstantArrayType(element, size, ArrayType::Normal, 0);
-  QualType arrayPtr = ctx.getPointerType(array);
-  llvm::Type *arrayPtrType = ConvertType(arrayPtr);
-
-  // lvalue is the location of a std::initializer_list, which as its first
-  // element has a pointer to the array we want to destroy.
-  llvm::Value *startPointer = Builder.CreateStructGEP(loc, 0, "startPointer");
-  llvm::Value *startAddress = Builder.CreateLoad(startPointer, "startAddress");
-
-  ::EmitRecursiveStdInitializerListCleanup(*this, startAddress, init);
-
-  llvm::Value *arrayAddress =
-      Builder.CreateBitCast(startAddress, arrayPtrType, "arrayAddress");
-  ::EmitStdInitializerListCleanup(*this, array, arrayAddress, init);
 }

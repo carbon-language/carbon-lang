@@ -433,52 +433,45 @@ static void EmitAggMemberInitializer(CodeGenFunction &CGF,
                                      unsigned Index) {
   if (Index == ArrayIndexes.size()) {
     LValue LV = LHS;
-    { // Scope for Cleanups.
-      CodeGenFunction::RunCleanupsScope Cleanups(CGF);
 
-      if (ArrayIndexVar) {
-        // If we have an array index variable, load it and use it as an offset.
-        // Then, increment the value.
-        llvm::Value *Dest = LHS.getAddress();
-        llvm::Value *ArrayIndex = CGF.Builder.CreateLoad(ArrayIndexVar);
-        Dest = CGF.Builder.CreateInBoundsGEP(Dest, ArrayIndex, "destaddress");
-        llvm::Value *Next = llvm::ConstantInt::get(ArrayIndex->getType(), 1);
-        Next = CGF.Builder.CreateAdd(ArrayIndex, Next, "inc");
-        CGF.Builder.CreateStore(Next, ArrayIndexVar);    
+    if (ArrayIndexVar) {
+      // If we have an array index variable, load it and use it as an offset.
+      // Then, increment the value.
+      llvm::Value *Dest = LHS.getAddress();
+      llvm::Value *ArrayIndex = CGF.Builder.CreateLoad(ArrayIndexVar);
+      Dest = CGF.Builder.CreateInBoundsGEP(Dest, ArrayIndex, "destaddress");
+      llvm::Value *Next = llvm::ConstantInt::get(ArrayIndex->getType(), 1);
+      Next = CGF.Builder.CreateAdd(ArrayIndex, Next, "inc");
+      CGF.Builder.CreateStore(Next, ArrayIndexVar);
 
-        // Update the LValue.
-        LV.setAddress(Dest);
-        CharUnits Align = CGF.getContext().getTypeAlignInChars(T);
-        LV.setAlignment(std::min(Align, LV.getAlignment()));
-      }
-
-      switch (CGF.getEvaluationKind(T)) {
-      case TEK_Scalar:
-        CGF.EmitScalarInit(Init, /*decl*/ 0, LV, false);
-        break;
-      case TEK_Complex:
-        CGF.EmitComplexExprIntoLValue(Init, LV, /*isInit*/ true);
-        break;
-      case TEK_Aggregate: {
-        AggValueSlot Slot =
-          AggValueSlot::forLValue(LV,
-                                  AggValueSlot::IsDestructed,
-                                  AggValueSlot::DoesNotNeedGCBarriers,
-                                  AggValueSlot::IsNotAliased);
-
-        CGF.EmitAggExpr(Init, Slot);
-        break;
-      }
-      }
+      // Update the LValue.
+      LV.setAddress(Dest);
+      CharUnits Align = CGF.getContext().getTypeAlignInChars(T);
+      LV.setAlignment(std::min(Align, LV.getAlignment()));
     }
 
-    // Now, outside of the initializer cleanup scope, destroy the backing array
-    // for a std::initializer_list member.
-    CGF.MaybeEmitStdInitializerListCleanup(LV.getAddress(), Init);
+    switch (CGF.getEvaluationKind(T)) {
+    case TEK_Scalar:
+      CGF.EmitScalarInit(Init, /*decl*/ 0, LV, false);
+      break;
+    case TEK_Complex:
+      CGF.EmitComplexExprIntoLValue(Init, LV, /*isInit*/ true);
+      break;
+    case TEK_Aggregate: {
+      AggValueSlot Slot =
+        AggValueSlot::forLValue(LV,
+                                AggValueSlot::IsDestructed,
+                                AggValueSlot::DoesNotNeedGCBarriers,
+                                AggValueSlot::IsNotAliased);
+
+      CGF.EmitAggExpr(Init, Slot);
+      break;
+    }
+    }
 
     return;
   }
-  
+
   const ConstantArrayType *Array = CGF.getContext().getAsConstantArrayType(T);
   assert(Array && "Array initialization without the array type?");
   llvm::Value *IndexVar
@@ -512,16 +505,12 @@ static void EmitAggMemberInitializer(CodeGenFunction &CGF,
 
   CGF.EmitBlock(ForBody);
   llvm::BasicBlock *ContinueBlock = CGF.createBasicBlock("for.inc");
-  
-  {
-    CodeGenFunction::RunCleanupsScope Cleanups(CGF);
-    
-    // Inside the loop body recurse to emit the inner loop or, eventually, the
-    // constructor call.
-    EmitAggMemberInitializer(CGF, LHS, Init, ArrayIndexVar,
-                             Array->getElementType(), ArrayIndexes, Index + 1);
-  }
-  
+
+  // Inside the loop body recurse to emit the inner loop or, eventually, the
+  // constructor call.
+  EmitAggMemberInitializer(CGF, LHS, Init, ArrayIndexVar,
+                           Array->getElementType(), ArrayIndexes, Index + 1);
+
   CGF.EmitBlock(ContinueBlock);
 
   // Emit the increment of the loop counter.
@@ -726,7 +715,7 @@ void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
   if (IsTryBody)
     EnterCXXTryStmt(*cast<CXXTryStmt>(Body), true);
 
-  EHScopeStack::stable_iterator CleanupDepth = EHStack.stable_begin();
+  RunCleanupsScope RunCleanups(*this);
 
   // TODO: in restricted cases, we can emit the vbase initializers of
   // a complete ctor and then delegate to the base ctor.
@@ -745,7 +734,7 @@ void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
   // initializers, which includes (along the exceptional path) the
   // destructors for those members and bases that were fully
   // constructed.
-  PopCleanupBlocks(CleanupDepth);
+  RunCleanups.ForceCleanup();
 
   if (IsTryBody)
     ExitCXXTryStmt(*cast<CXXTryStmt>(Body), true);

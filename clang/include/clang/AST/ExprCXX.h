@@ -474,6 +474,45 @@ public:
   child_range children() { return child_range(); }
 };
 
+/// \brief Implicit construction of a std::initializer_list<T> object from an
+/// array temporary within list-initialization (C++11 [dcl.init.list]p5).
+class CXXStdInitializerListExpr : public Expr {
+  Stmt *SubExpr;
+
+  CXXStdInitializerListExpr(EmptyShell Empty)
+    : Expr(CXXStdInitializerListExprClass, Empty), SubExpr(0) {}
+
+public:
+  CXXStdInitializerListExpr(QualType Ty, Expr *SubExpr)
+    : Expr(CXXStdInitializerListExprClass, Ty, VK_RValue, OK_Ordinary,
+           Ty->isDependentType(), SubExpr->isValueDependent(),
+           SubExpr->isInstantiationDependent(),
+           SubExpr->containsUnexpandedParameterPack()),
+      SubExpr(SubExpr) {}
+
+  Expr *getSubExpr() { return static_cast<Expr*>(SubExpr); }
+  const Expr *getSubExpr() const { return static_cast<const Expr*>(SubExpr); }
+
+  SourceLocation getLocStart() const LLVM_READONLY {
+    return SubExpr->getLocStart();
+  }
+  SourceLocation getLocEnd() const LLVM_READONLY {
+    return SubExpr->getLocEnd();
+  }
+  SourceRange getSourceRange() const LLVM_READONLY {
+    return SubExpr->getSourceRange();
+  }
+
+  static bool classof(const Stmt *S) {
+    return S->getStmtClass() == CXXStdInitializerListExprClass;
+  }
+
+  child_range children() { return child_range(&SubExpr, &SubExpr + 1); }
+
+  friend class ASTReader;
+  friend class ASTStmtReader;
+};
+
 /// CXXTypeidExpr - A C++ @c typeid expression (C++ [expr.typeid]), which gets
 /// the type_info that corresponds to the supplied type, or the (possibly
 /// dynamic) type of the supplied expression.

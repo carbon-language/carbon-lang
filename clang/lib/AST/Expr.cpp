@@ -1789,7 +1789,6 @@ InitListExpr::InitListExpr(ASTContext &C, SourceLocation lbraceloc,
     LBraceLoc(lbraceloc), RBraceLoc(rbraceloc), AltForm(0, true)
 {
   sawArrayRangeDesignator(false);
-  setInitializesStdInitializerList(false);
   for (unsigned I = 0; I != initExprs.size(); ++I) {
     if (initExprs[I]->isTypeDependent())
       ExprBits.TypeDependent = true;
@@ -2836,6 +2835,7 @@ bool Expr::HasSideEffects(const ASTContext &Ctx) const {
   case DesignatedInitExprClass:
   case ParenListExprClass:
   case CXXPseudoDestructorExprClass:
+  case CXXStdInitializerListExprClass:
   case SubstNonTypeTemplateParmExprClass:
   case MaterializeTemporaryExprClass:
   case ShuffleVectorExprClass:

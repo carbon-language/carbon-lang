@@ -110,6 +110,7 @@ def CXXThrowExpr : DStmt<Expr>;
 def CXXDefaultArgExpr : DStmt<Expr>;
 def CXXDefaultInitExpr : DStmt<Expr>;
 def CXXScalarValueInitExpr : DStmt<Expr>;
+def CXXStdInitializerListExpr : DStmt<Expr>;
 def CXXNewExpr : DStmt<Expr>;
 def CXXDeleteExpr : DStmt<Expr>;
 def CXXPseudoDestructorExpr : DStmt<Expr>;

@@ -2153,10 +2153,6 @@ Sema::ActOnCXXInClassMemberInitializer(Decl *D, SourceLocation InitLoc,
 
   ExprResult Init = InitExpr;
   if (!FD->getType()->isDependentType() && !InitExpr->isTypeDependent()) {
-    if (isa<InitListExpr>(InitExpr) && isStdInitializerList(FD->getType(), 0)) {
-      Diag(FD->getLocation(), diag::warn_dangling_std_initializer_list)
-        << /*at end of ctor*/1 << InitExpr->getSourceRange();
-    }
     InitializedEntity Entity = InitializedEntity::InitializeMember(FD);
     InitializationKind Kind = FD->getInClassInitStyle() == ICIS_ListInit
         ? InitializationKind::CreateDirectList(InitExpr->getLocStart())
@@ -2550,11 +2546,6 @@ Sema::BuildMemberInitializer(ValueDecl *Member, Expr *Init,
     if (isa<InitListExpr>(Init)) {
       InitList = true;
       Args = Init;
-
-      if (isStdInitializerList(Member->getType(), 0)) {
-        Diag(IdLoc, diag::warn_dangling_std_initializer_list)
-            << /*at end of ctor*/1 << InitRange;
-      }
     }
 
     // Initialize the member.

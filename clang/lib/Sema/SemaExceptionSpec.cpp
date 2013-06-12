@@ -1006,6 +1006,7 @@ CanThrowResult Sema::canThrow(const Expr *E) {
   case Expr::CompoundLiteralExprClass:
   case Expr::CXXConstCastExprClass:
   case Expr::CXXReinterpretCastExprClass:
+  case Expr::CXXStdInitializerListExprClass:
   case Expr::DesignatedInitExprClass:
   case Expr::ExprWithCleanupsClass:
   case Expr::ExtVectorElementExprClass:

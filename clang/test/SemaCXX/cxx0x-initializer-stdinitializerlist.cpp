@@ -144,7 +144,7 @@ namespace PR12119 {
   template<typename T> void g(std::initializer_list<std::initializer_list<T>>);
 
   void foo() {
-    f({0, {1}});
+    f({0, {1}}); // expected-warning{{braces around scalar initializer}}
     g({{0, 1}, {2, 3}});
     std::initializer_list<int> il = {1, 2};
     g({il, {2, 3}});

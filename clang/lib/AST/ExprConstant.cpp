@@ -4576,6 +4576,7 @@ namespace {
     bool VisitCastExpr(const CastExpr *E);
     bool VisitInitListExpr(const InitListExpr *E);
     bool VisitCXXConstructExpr(const CXXConstructExpr *E);
+    bool VisitCXXStdInitializerListExpr(const CXXStdInitializerListExpr *E);
   };
 }
 
@@ -4691,10 +4692,6 @@ bool RecordExprEvaluator::VisitCastExpr(const CastExpr *E) {
 }
 
 bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
-  // Cannot constant-evaluate std::initializer_list inits.
-  if (E->initializesStdInitializerList())
-    return false;
-
   const RecordDecl *RD = E->getType()->castAs<RecordType>()->getDecl();
   if (RD->isInvalidDecl()) return false;
   const ASTRecordLayout &Layout = Info.Ctx.getASTRecordLayout(RD);
@@ -4808,6 +4805,58 @@ bool RecordExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
   return HandleConstructorCall(E->getExprLoc(), This, Args,
                                cast<CXXConstructorDecl>(Definition), Info,
                                Result);
+}
+
+bool RecordExprEvaluator::VisitCXXStdInitializerListExpr(
+    const CXXStdInitializerListExpr *E) {
+  const ConstantArrayType *ArrayType =
+      Info.Ctx.getAsConstantArrayType(E->getSubExpr()->getType());
+
+  LValue Array;
+  if (!EvaluateLValue(E->getSubExpr(), Array, Info))
+    return false;
+
+  // Get a pointer to the first element of the array.
+  Array.addArray(Info, E, ArrayType);
+
+  // FIXME: Perform the checks on the field types in SemaInit.
+  RecordDecl *Record = E->getType()->castAs<RecordType>()->getDecl();
+  RecordDecl::field_iterator Field = Record->field_begin();
+  if (Field == Record->field_end())
+    return Error(E);
+
+  // Start pointer.
+  if (!Field->getType()->isPointerType() ||
+      !Info.Ctx.hasSameType(Field->getType()->getPointeeType(),
+                            ArrayType->getElementType()))
+    return Error(E);
+
+  // FIXME: What if the initializer_list type has base classes, etc?
+  Result = APValue(APValue::UninitStruct(), 0, 2);
+  Array.moveInto(Result.getStructField(0));
+
+  if (++Field == Record->field_end())
+    return Error(E);
+
+  if (Field->getType()->isPointerType() &&
+      Info.Ctx.hasSameType(Field->getType()->getPointeeType(),
+                           ArrayType->getElementType())) {
+    // End pointer.
+    if (!HandleLValueArrayAdjustment(Info, E, Array,
+                                     ArrayType->getElementType(),
+                                     ArrayType->getSize().getZExtValue()))
+      return false;
+    Array.moveInto(Result.getStructField(1));
+  } else if (Info.Ctx.hasSameType(Field->getType(), Info.Ctx.getSizeType()))
+    // Length.
+    Result.getStructField(1) = APValue(APSInt(ArrayType->getSize()));
+  else
+    return Error(E);
+
+  if (++Field != Record->field_end())
+    return Error(E);
+
+  return true;
 }
 
 static bool EvaluateRecord(const Expr *E, const LValue &This,
@@ -7762,6 +7811,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::UnresolvedLookupExprClass:
   case Expr::DependentScopeDeclRefExprClass:
   case Expr::CXXConstructExprClass:
+  case Expr::CXXStdInitializerListExprClass:
   case Expr::CXXBindTemporaryExprClass:
   case Expr::ExprWithCleanupsClass:
   case Expr::CXXTemporaryObjectExprClass:

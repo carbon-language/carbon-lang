@@ -1631,10 +1631,6 @@ public:
   llvm::Value *EmitDynamicCast(llvm::Value *V, const CXXDynamicCastExpr *DCE);
   llvm::Value* EmitCXXUuidofExpr(const CXXUuidofExpr *E);
 
-  void MaybeEmitStdInitializerListCleanup(llvm::Value *loc, const Expr *init);
-  void EmitStdInitializerListCleanup(llvm::Value *loc,
-                                     const InitListExpr *init);
-
   /// \brief Situations in which we might emit a check for the suitability of a
   ///        pointer or glvalue.
   enum TypeCheckKind {

@@ -266,10 +266,6 @@ protected:
     /// Whether this initializer list originally had a GNU array-range
     /// designator in it. This is a temporary marker used by CodeGen.
     unsigned HadArrayRangeDesignator : 1;
-
-    /// Whether this initializer list initializes a std::initializer_list
-    /// object.
-    unsigned InitializesStdInitializerList : 1;
   };
 
   class TypeTraitExprBitfields {
