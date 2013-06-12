@@ -318,23 +318,6 @@ Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
   return Path();
 }
 
-
-StringRef
-Path::getSuffix() const {
-  // Find the last slash
-  std::string::size_type slash = path.rfind('/');
-  if (slash == std::string::npos)
-    slash = 0;
-  else
-    slash++;
-
-  std::string::size_type dot = path.rfind('.');
-  if (dot == std::string::npos || dot < slash)
-    return StringRef();
-  else
-    return StringRef(path).substr(dot + 1);
-}
-
 bool Path::getMagicNumber(std::string &Magic, unsigned len) const {
   assert(len < 1024 && "Request for magic string too long");
   char Buf[1025];

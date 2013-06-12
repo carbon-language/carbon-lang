@@ -200,14 +200,7 @@ namespace sys {
       /// @brief Determines if the path name is empty (invalid).
       bool isEmpty() const { return path.empty(); }
 
-      /// This function strips off the path and basename(up to and
-      /// including the last dot) of the file or directory name and
-      /// returns just the suffix. For example /a/foo.bar would cause
-      /// this function to return "bar".
-      /// @returns StringRef containing the suffix of the path
-      /// @brief Get the suffix of the path
-      LLVM_ATTRIBUTE_DEPRECATED(StringRef getSuffix() const,
-        LLVM_PATH_DEPRECATED_MSG(path::extension));
+
 
       /// Obtain a 'C' string for the path name.
       /// @returns a 'C' string containing the path name.
