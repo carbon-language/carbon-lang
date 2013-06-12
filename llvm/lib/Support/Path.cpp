@@ -85,13 +85,6 @@ Path::isBitcodeFile() const {
   return type == fs::file_magic::bitcode;
 }
 
-bool Path::hasMagicNumber(StringRef Magic) const {
-  std::string actualMagic;
-  if (getMagicNumber(actualMagic, static_cast<unsigned>(Magic.size())))
-    return Magic == actualMagic;
-  return false;
-}
-
 // Include the truly platform-specific parts of this class.
 #if defined(LLVM_ON_UNIX)
 #include "Unix/Path.inc"
