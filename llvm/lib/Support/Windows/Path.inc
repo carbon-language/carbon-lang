@@ -788,16 +788,5 @@ Path::createTemporaryFileOnDisk(bool reuse_current, std::string* ErrMsg) {
   CloseHandle(h);
   return false;
 }
-
-/// MapInFilePages - Not yet implemented on win32.
-const char *Path::MapInFilePages(int FD, size_t FileSize, off_t Offset) {
-  return 0;
-}
-
-/// MapInFilePages - Not yet implemented on win32.
-void Path::UnMapFilePages(const char *Base, size_t FileSize) {
-  assert(0 && "NOT IMPLEMENTED");
-}
-
 }
 }

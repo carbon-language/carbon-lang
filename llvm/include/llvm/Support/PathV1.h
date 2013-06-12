@@ -495,29 +495,6 @@ namespace sys {
       bool eraseFromDisk(bool destroy_contents = false,
                          std::string *Err = 0) const;
 
-
-      /// MapInFilePages - This is a low level system API to map in the file
-      /// that is currently opened as FD into the current processes' address
-      /// space for read only access.  This function may return null on failure
-      /// or if the system cannot provide the following constraints:
-      ///  1) The pages must be valid after the FD is closed, until
-      ///     UnMapFilePages is called.
-      ///  2) Any padding after the end of the file must be zero filled, if
-      ///     present.
-      ///  3) The pages must be contiguous.
-      ///
-      /// This API is not intended for general use, clients should use
-      /// MemoryBuffer::getFile instead.
-      static const char *MapInFilePages(int FD, size_t FileSize,
-                                        off_t Offset);
-
-      /// UnMapFilePages - Free pages mapped into the current process by
-      /// MapInFilePages.
-      ///
-      /// This API is not intended for general use, clients should use
-      /// MemoryBuffer::getFile instead.
-      static void UnMapFilePages(const char *Base, size_t FileSize);
-
     /// @}
     /// @name Data
     /// @{

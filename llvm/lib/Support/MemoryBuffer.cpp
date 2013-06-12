@@ -33,8 +33,7 @@
 #include <unistd.h>
 #else
 #include <io.h>
-// Simplistic definitinos of these macros to allow files to be read with
-// MapInFilePages.
+// Simplistic definitinos of these macros for use in getOpenFile.
 #ifndef S_ISREG
 #define S_ISREG(x) (1)
 #endif
