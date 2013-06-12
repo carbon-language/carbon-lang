@@ -2018,10 +2018,7 @@ void CStringChecker::checkDeadSymbols(SymbolReaper &SR,
 
 #define REGISTER_CHECKER(name) \
 void ento::register##name(CheckerManager &mgr) {\
-  static CStringChecker *TheChecker = 0; \
-  if (TheChecker == 0) \
-    TheChecker = mgr.registerChecker<CStringChecker>(); \
-  TheChecker->Filter.Check##name = true; \
+  mgr.registerChecker<CStringChecker>()->Filter.Check##name = true; \
 }
 
 REGISTER_CHECKER(CStringNullArg)
