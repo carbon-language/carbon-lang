@@ -32,8 +32,7 @@ void test3() {
   double Gr = __real g1;
 
   cf += D;
-  // FIXME: Currently unsupported!
-  //D += cf;
+  D += cf;
   cf /= g1;
   g1 = g1 + D;
   g1 = D + g1;
@@ -51,8 +50,7 @@ void test3int() {
   i = __real ci1;
 
   cs += i;
-  // FIXME: Currently unsupported!
-  //D += cf;
+  D += cf;
   cs /= ci1;
   ci1 = ci1 + i;
   ci1 = i + ci1;

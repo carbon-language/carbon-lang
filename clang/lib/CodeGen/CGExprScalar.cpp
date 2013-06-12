@@ -1931,15 +1931,8 @@ LValue ScalarExprEmitter::EmitCompoundAssignLValue(
   QualType LHSTy = E->getLHS()->getType();
   BinOpInfo OpInfo;
   
-  if (E->getComputationResultType()->isAnyComplexType()) {
-    // This needs to go through the complex expression emitter, but it's a tad
-    // complicated to do that... I'm leaving it out for now.  (Note that we do
-    // actually need the imaginary part of the RHS for multiplication and
-    // division.)
-    CGF.ErrorUnsupported(E, "complex compound assignment");
-    Result = llvm::UndefValue::get(CGF.ConvertType(E->getType()));
-    return LValue();
-  }
+  if (E->getComputationResultType()->isAnyComplexType())
+    return CGF.EmitScalarCompooundAssignWithComplex(E, Result);
   
   // Emit the RHS first.  __block variables need to have the rhs evaluated
   // first, plus this should improve codegen a little.

@@ -313,3 +313,15 @@ void test1() {
   (void) x;
   return x;
 }
+
+// CHECK: define i32 @test2()
+int test2() {
+  // CHECK: load volatile i32*
+  // CHECK-NEXT: load volatile i32*
+  // CHECK-NEXT: load volatile i32*
+  // CHECK-NEXT: add i32
+  // CHECK-NEXT: add i32
+  // CHECK-NEXT: store volatile i32
+  // CHECK-NEXT: ret i32
+  return i += ci;
+}
