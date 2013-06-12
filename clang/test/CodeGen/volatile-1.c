@@ -314,7 +314,7 @@ void test1() {
   return x;
 }
 
-// CHECK: define i32 @test2()
+// CHECK: define {{.*}} @test2()
 int test2() {
   // CHECK: load volatile i32*
   // CHECK-NEXT: load volatile i32*
