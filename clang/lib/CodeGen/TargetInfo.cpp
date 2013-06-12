@@ -2360,7 +2360,8 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
        it != ie; ++it) {
     bool isNamedArg = true;
     if (isVariadic)
-      isNamedArg = (it - FI.arg_begin()) < numRequiredArgs;
+      isNamedArg = (it - FI.arg_begin()) < 
+                    static_cast<signed>(numRequiredArgs);
 
     unsigned neededInt, neededSSE;
     it->info = classifyArgumentType(it->type, freeIntRegs, neededInt,
