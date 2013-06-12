@@ -350,8 +350,6 @@ struct cat {
 struct GenericOptionValue {
   virtual ~GenericOptionValue() {}
   virtual bool compare(const GenericOptionValue &V) const = 0;
-private:
-  virtual void anchor();
 };
 
 template<class DataType> struct OptionValue;
