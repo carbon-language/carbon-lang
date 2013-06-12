@@ -3,7 +3,7 @@
 RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/externtls.x86-64 -static  \
 RUN: -emit-yaml --noinhibit-exec | FileCheck %s -check-prefix=CHECKGOT
 
-CHECKGOT:  - name:            __got_tls_extern_tls
+           - name:            __got_tls_extern_tls
 CHECKGOT:    type:            got
 CHECKGOT:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
 CHECKGOT:    alignment:       2^3
