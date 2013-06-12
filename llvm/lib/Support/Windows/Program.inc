@@ -32,21 +32,8 @@ namespace {
 namespace llvm {
 using namespace sys;
 
-Program::Program() : Data_(0) {}
-
-Program::~Program() {
-  if (Data_) {
-    Win32ProcessInfo* wpi = reinterpret_cast<Win32ProcessInfo*>(Data_);
-    CloseHandle(wpi->hProcess);
-    delete wpi;
-    Data_ = 0;
-  }
-}
-
 // This function just uses the PATH environment variable to find the program.
-Path
-Program::FindProgramByName(const std::string& progName) {
-
+Path sys::FindProgramByName(const std::string& progName) {
   // Check some degenerate cases
   if (progName.length() == 0) // no program
     return Path();
@@ -181,19 +168,20 @@ static unsigned int ArgLenWithQuotes(const char *Str) {
   return len;
 }
 
+}
 
-bool
-Program::Execute(const Path& path,
-                 const char** args,
-                 const char** envp,
-                 const Path** redirects,
-                 unsigned memoryLimit,
-                 std::string* ErrMsg) {
-  if (Data_) {
-    Win32ProcessInfo* wpi = reinterpret_cast<Win32ProcessInfo*>(Data_);
+static bool Execute(Void *&Data,
+                    const Path& path,
+                    const char** args,
+                    const char** envp,
+                    const Path** redirects,
+                    unsigned memoryLimit,
+                    std::string* ErrMsg) {
+  if (Data) {
+    Win32ProcessInfo* wpi = reinterpret_cast<Win32ProcessInfo*>(Data);
     CloseHandle(wpi->hProcess);
     delete wpi;
-    Data_ = 0;
+    Data = 0;
   }
 
   if (!path.canExecute()) {
@@ -336,7 +324,7 @@ Program::Execute(const Path& path,
   Win32ProcessInfo* wpi = new Win32ProcessInfo;
   wpi->hProcess = pi.hProcess;
   wpi->dwProcessId = pi.dwProcessId;
-  Data_ = wpi;
+  Data = wpi;
 
   // Make sure these get closed no matter what.
   ScopedCommonHandle hThread(pi.hThread);
@@ -369,16 +357,15 @@ Program::Execute(const Path& path,
   return true;
 }
 
-int
-Program::Wait(const Path &path,
-              unsigned secondsToWait,
-              std::string* ErrMsg) {
-  if (Data_ == 0) {
+static int WaitAux(void *&Data, const Path &path,
+                   unsigned secondsToWait,
+                   std::string* ErrMsg) {
+  if (Data == 0) {
     MakeErrMsg(ErrMsg, "Process not started!");
     return -1;
   }
 
-  Win32ProcessInfo* wpi = reinterpret_cast<Win32ProcessInfo*>(Data_);
+  Win32ProcessInfo* wpi = reinterpret_cast<Win32ProcessInfo*>(Data);
   HANDLE hProcess = wpi->hProcess;
 
   // Wait for the process to terminate.
@@ -420,21 +407,35 @@ Program::Wait(const Path &path,
   return 1;
 }
 
-error_code Program::ChangeStdinToBinary(){
+static int Wait(void *&Data, const Path &path,
+                unsigned secondsToWait,
+                std::string* ErrMsg) {
+  int Ret = WaitAux(Data, path, secondsToWait, ErrMsg);
+
+  Win32ProcessInfo* wpi = reinterpret_cast<Win32ProcessInfo*>(Data);
+  CloseHandle(wpi->hProcess);
+  delete wpi;
+  Data = 0;
+
+  return Ret;
+}
+
+namespace llvm {
+error_code ChangeStdinToBinary(){
   int result = _setmode( _fileno(stdin), _O_BINARY );
   if (result == -1)
     return error_code(errno, generic_category());
   return make_error_code(errc::success);
 }
 
-error_code Program::ChangeStdoutToBinary(){
+error_code ChangeStdoutToBinary(){
   int result = _setmode( _fileno(stdout), _O_BINARY );
   if (result == -1)
     return error_code(errno, generic_category());
   return make_error_code(errc::success);
 }
 
-error_code Program::ChangeStderrToBinary(){
+error_code ChangeStderrToBinary(){
   int result = _setmode( _fileno(stderr), _O_BINARY );
   if (result == -1)
     return error_code(errno, generic_category());
