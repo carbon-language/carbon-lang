@@ -35,7 +35,7 @@ int e = V<int>::m;
 
 // CHECK: @_ZZ8tls_dtorvE1u = internal thread_local global
 // CHECK: @_ZGVZ8tls_dtorvE1u = internal thread_local global i8 0
-// CHECK: @_ZGRZ8tls_dtorvE1u = internal thread_local global
+// CHECK: @_ZGRZ8tls_dtorvE1u = private thread_local global
 
 // CHECK: @_ZGVN1VIiE1mE = weak_odr thread_local global i64 0
 

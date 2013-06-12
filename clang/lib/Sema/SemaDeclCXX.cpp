@@ -2579,6 +2579,8 @@ Sema::BuildMemberInitializer(ValueDecl *Member, Expr *Init,
     if (MemberInit.isInvalid())
       return true;
 
+    CheckForDanglingReferenceOrPointer(*this, Member, MemberInit.get(), IdLoc);
+
     // C++11 [class.base.init]p7:
     //   The initialization of each base and member constitutes a
     //   full-expression.
@@ -2587,7 +2589,6 @@ Sema::BuildMemberInitializer(ValueDecl *Member, Expr *Init,
       return true;
 
     Init = MemberInit.get();
-    CheckForDanglingReferenceOrPointer(*this, Member, Init, IdLoc);
   }
 
   if (DirectMember) {

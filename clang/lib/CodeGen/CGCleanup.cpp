@@ -387,6 +387,33 @@ void CodeGenFunction::PopCleanupBlocks(EHScopeStack::stable_iterator Old) {
   }
 }
 
+/// Pops cleanup blocks until the given savepoint is reached, then add the
+/// cleanups from the given savepoint in the lifetime-extended cleanups stack.
+void
+CodeGenFunction::PopCleanupBlocks(EHScopeStack::stable_iterator Old,
+                                  size_t OldLifetimeExtendedSize) {
+  PopCleanupBlocks(Old);
+
+  // Move our deferred cleanups onto the EH stack.
+  for (size_t I = OldLifetimeExtendedSize,
+              E = LifetimeExtendedCleanupStack.size(); I != E; /**/) {
+    // Alignment should be guaranteed by the vptrs in the individual cleanups.
+    assert((I % llvm::alignOf<LifetimeExtendedCleanupHeader>() == 0) &&
+           "misaligned cleanup stack entry");
+
+    LifetimeExtendedCleanupHeader &Header =
+        reinterpret_cast<LifetimeExtendedCleanupHeader&>(
+            LifetimeExtendedCleanupStack[I]);
+    I += sizeof(Header);
+
+    EHStack.pushCopyOfCleanup(Header.getKind(),
+                              &LifetimeExtendedCleanupStack[I],
+                              Header.getSize());
+    I += Header.getSize();
+  }
+  LifetimeExtendedCleanupStack.resize(OldLifetimeExtendedSize);
+}
+
 static llvm::BasicBlock *CreateNormalEntry(CodeGenFunction &CGF,
                                            EHCleanupScope &Scope) {
   assert(Scope.isNormalCleanup());

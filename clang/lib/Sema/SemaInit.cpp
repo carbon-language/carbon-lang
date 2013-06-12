@@ -5272,6 +5272,9 @@ static void performLifetimeExtension(Expr *Init, const ValueDecl *ExtendingD) {
   Init = const_cast<Expr *>(
       Init->skipRValueSubobjectAdjustments(CommaLHSs, Adjustments));
 
+  if (CXXBindTemporaryExpr *BTE = dyn_cast<CXXBindTemporaryExpr>(Init))
+    Init = BTE->getSubExpr();
+
   if (InitListExpr *ILE = dyn_cast<InitListExpr>(Init)) {
     if (ILE->initializesStdInitializerList() || ILE->getType()->isArrayType()) {
       // FIXME: If this is an InitListExpr which creates a std::initializer_list
@@ -5567,16 +5570,21 @@ InitializationSequence::Perform(Sema &S,
         performLifetimeExtension(CurInit.get(), ExtendingDecl);
 
       // Materialize the temporary into memory.
-      CurInit = new (S.Context) MaterializeTemporaryExpr(
+      MaterializeTemporaryExpr *MTE = new (S.Context) MaterializeTemporaryExpr(
           Entity.getType().getNonReferenceType(), CurInit.get(),
           Entity.getType()->isLValueReferenceType(), ExtendingDecl);
 
       // If we're binding to an Objective-C object that has lifetime, we
-      // need cleanups.
-      if (S.getLangOpts().ObjCAutoRefCount &&
-          CurInit.get()->getType()->isObjCLifetimeType())
+      // need cleanups. Likewise if we're extending this temporary to automatic
+      // storage duration -- we need to register its cleanup during the
+      // full-expression's cleanups.
+      if ((S.getLangOpts().ObjCAutoRefCount &&
+           MTE->getType()->isObjCLifetimeType()) ||
+          (MTE->getStorageDuration() == SD_Automatic &&
+           MTE->getType().isDestructedType()))
         S.ExprNeedsCleanups = true;
-            
+
+      CurInit = S.Owned(MTE);
       break;
     }
 
