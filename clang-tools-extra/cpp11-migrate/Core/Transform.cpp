@@ -74,6 +74,24 @@ private:
 
 } // namespace
 
+RewriterContainer::RewriterContainer(clang::FileManager &Files,
+                                     const FileContentsByPath &InputStates)
+    : DiagOpts(new clang::DiagnosticOptions()),
+      DiagnosticPrinter(llvm::errs(), DiagOpts.getPtr()),
+      Diagnostics(llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs>(
+                      new clang::DiagnosticIDs()),
+                  DiagOpts.getPtr(), &DiagnosticPrinter, false),
+      Sources(Diagnostics, Files), Rewrite(Sources, DefaultLangOptions) {
+
+  // Overwrite source manager's file contents with data from InputStates
+  for (FileContentsByPath::const_iterator I = InputStates.begin(),
+                                          E = InputStates.end();
+       I != E; ++I) {
+    Sources.overrideFileContents(Files.getFile(I->first),
+                                 llvm::MemoryBuffer::getMemBuffer(I->second));
+  }
+}
+
 void collectResults(clang::Rewriter &Rewrite,
                     const FileContentsByPath &InputStates,
                     FileContentsByPath &Results) {
