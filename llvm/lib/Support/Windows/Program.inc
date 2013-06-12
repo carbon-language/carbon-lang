@@ -421,21 +421,21 @@ static int Wait(void *&Data, const Path &path,
 }
 
 namespace llvm {
-error_code ChangeStdinToBinary(){
+error_code sys::ChangeStdinToBinary(){
   int result = _setmode( _fileno(stdin), _O_BINARY );
   if (result == -1)
     return error_code(errno, generic_category());
   return make_error_code(errc::success);
 }
 
-error_code ChangeStdoutToBinary(){
+error_code sys::ChangeStdoutToBinary(){
   int result = _setmode( _fileno(stdout), _O_BINARY );
   if (result == -1)
     return error_code(errno, generic_category());
   return make_error_code(errc::success);
 }
 
-error_code ChangeStderrToBinary(){
+error_code sys::ChangeStderrToBinary(){
   int result = _setmode( _fileno(stderr), _O_BINARY );
   if (result == -1)
     return error_code(errno, generic_category());
