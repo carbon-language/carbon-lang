@@ -63,6 +63,10 @@ class SharedLibTestCase(TestBase):
 
     def expr(self):
         """Test that types work when defined in a shared library and forward-declared in the main executable"""
+
+        if "clang" in self.getCompiler() and "3.4" in self.getCompilerVersion():
+            self.skipTest("llvm.org/pr16214 -- clang emits partial DWARF for structures referenced via typedef")
+
 	self.common_setup()
 
         # This should display correctly.

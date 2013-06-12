@@ -124,6 +124,8 @@ class AnonymousTestCase(TestBase):
             substrs = ["= 2"])
 
     def expr_parent(self):
+        if "clang" in self.getCompiler() and "3.4" in self.getCompilerVersion():
+            self.skipTest("llvm.org/pr16214 -- clang emits partial DWARF for structures referenced via typedef")
         self.common_setup(self.line2)
 
         # These should display correctly.
