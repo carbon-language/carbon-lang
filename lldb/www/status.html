@@ -7,29 +7,29 @@
 </head>
 
 <body>
-	<div class="www_title">
-		The <strong>LLDB</strong> Debugger
-	</div>
-	
+    <div class="www_title">
+      The <strong>LLDB</strong> Debugger
+    </div>
+    
 <div id="container">
 	<div id="content">
-		<!--#include virtual="sidebar.incl"-->
-
+        <!--#include virtual="sidebar.incl"-->
+        
 		<div id="middle">
 			<div class="post">
 				<h1 class ="postheader">Mac OS X Status</h1>
 				<div class="postcontent">
 
-					<p>LLDB has matured a lot in the last year and can be used for
-					C, C++ and Objective C development for x86_64, i386 and ARM debugging.
-					The entire public API is exposed though a framework on Mac OS X which
-					is used by Xcode, the lldb command line tool, and can also be used by
-					Python. The entire public API is exposed through script bridging which
-					allows LLDB to use an embedded Python script interpreter, as well as 
-					having a Python module named "lldb" which can be used from Python
-					on the command line. This allows debug sessions to be scripted. It also
-					allows powerful debugging actions to be created and attached to a variety
-					of debugging workflows.</p>
+				   <p>LLDB has matured a lot in the last year and can be used for
+				      C, C++ and Objective C development for x86_64, i386 and ARM debugging.
+				      The entire public API is exposed though a framework on Mac OS X which
+				      is used by Xcode, the lldb command line tool, and can also be used by
+				      Python. The entire public API is exposed through script bridging which
+				      allows LLDB to use an embedded Python script interpreter, as well as 
+				      having a Python module named "lldb" which can be used from Python
+				      on the command line. This allows debug sessions to be scripted. It also
+				      allows powerful debugging actions to be created and attached to a variety
+				      of debugging workflows.</p>
 				</div>
 				<h1 class ="postheader">Linux Status</h1>
 				<div class="postcontent">
@@ -83,6 +83,11 @@
 									<td>OK</td>
 								</tr>
 								<tr>
+									<td>Core file debugging</td>
+									<td>Not implemented</td>
+									<td>OK</td>
+								</tr>
+								<tr>
 									<td>Debugserver (remote debugging)</td>
 									<td>Not ported</td>
 									<td>OK</td>
@@ -116,13 +121,15 @@
 								<tr>
 									<td>Process control
 										<ul>
-											<li>launch
 											<li>attach
 											<li>continue
+											<li>exec, execve...
 											<li>fork
+											<li>launch
+											<li>status
 										</ul>
 									</td>
-									<td>OK (some bugs with continue)</td>
+									<td>OK (except exec*)</td>
 									<td>OK</td>
 								</tr>
 								<tr>
