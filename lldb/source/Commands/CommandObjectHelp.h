@@ -108,7 +108,7 @@ protected:
     virtual bool
     DoExecute (Args& command,
              CommandReturnObject &result);
-
+    
 private:
     CommandOptions m_options;
     

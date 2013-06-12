@@ -47,7 +47,7 @@ public:
                     const lldb::CommandObjectSP& command_obj);
 
     virtual void
-    GenerateHelpText (CommandReturnObject &result);
+    GenerateHelpText (Stream &output_stream);
 
     virtual lldb::CommandObjectSP
     GetSubcommandSP (const char *sub_cmd, StringList *matches = NULL);

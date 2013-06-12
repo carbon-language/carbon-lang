@@ -160,10 +160,11 @@ public:
     {
     }
 
+    void
+    GenerateHelpText (CommandReturnObject &result);
+
     virtual void
-    GenerateHelpText (CommandReturnObject &result)
-    {
-    }
+    GenerateHelpText (Stream &result);
 
     // this is needed in order to allow the SBCommand class to
     // transparently try and load subcommands - it will fail on

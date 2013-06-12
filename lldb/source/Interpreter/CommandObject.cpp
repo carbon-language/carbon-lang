@@ -903,6 +903,83 @@ ExprPathHelpTextCallback()
 }
 
 void
+CommandObject::GenerateHelpText (CommandReturnObject &result)
+{
+    GenerateHelpText(result.GetOutputStream());
+    
+    result.SetStatus (eReturnStatusSuccessFinishNoResult);
+}
+
+void
+CommandObject::GenerateHelpText (Stream &output_strm)
+{
+    CommandInterpreter& interpreter = GetCommandInterpreter();
+    if (GetOptions() != NULL)
+    {
+        if (WantsRawCommandString())
+        {
+            std::string help_text (GetHelp());
+            help_text.append ("  This command takes 'raw' input (no need to quote stuff).");
+            interpreter.OutputFormattedHelpText (output_strm, "", "", help_text.c_str(), 1);
+        }
+        else
+            interpreter.OutputFormattedHelpText (output_strm, "", "", GetHelp(), 1);
+        output_strm.Printf ("\nSyntax: %s\n", GetSyntax());
+        GetOptions()->GenerateOptionUsage (output_strm, this);
+        const char *long_help = GetHelpLong();
+        if ((long_help != NULL)
+            && (strlen (long_help) > 0))
+            output_strm.Printf ("\n%s", long_help);
+        if (WantsRawCommandString() && !WantsCompletion())
+        {
+            // Emit the message about using ' -- ' between the end of the command options and the raw input
+            // conditionally, i.e., only if the command object does not want completion.
+            interpreter.OutputFormattedHelpText (output_strm, "", "",
+                                                 "\nIMPORTANT NOTE:  Because this command takes 'raw' input, if you use any command options"
+                                                 " you must use ' -- ' between the end of the command options and the beginning of the raw input.", 1);
+        }
+        else if (GetNumArgumentEntries() > 0
+                 && GetOptions()
+                 && GetOptions()->NumCommandOptions() > 0)
+        {
+            // Also emit a warning about using "--" in case you are using a command that takes options and arguments.
+            interpreter.OutputFormattedHelpText (output_strm, "", "",
+                                                 "\nThis command takes options and free-form arguments.  If your arguments resemble"
+                                                 " option specifiers (i.e., they start with a - or --), you must use ' -- ' between"
+                                                 " the end of the command options and the beginning of the arguments.", 1);
+        }
+    }
+    else if (IsMultiwordObject())
+    {
+        if (WantsRawCommandString())
+        {
+            std::string help_text (GetHelp());
+            help_text.append ("  This command takes 'raw' input (no need to quote stuff).");
+            interpreter.OutputFormattedHelpText (output_strm, "", "", help_text.c_str(), 1);
+        }
+        else
+            interpreter.OutputFormattedHelpText (output_strm, "", "", GetHelp(), 1);
+        GenerateHelpText (output_strm);
+    }
+    else
+    {
+        const char *long_help = GetHelpLong();
+        if ((long_help != NULL)
+            && (strlen (long_help) > 0))
+            output_strm.Printf ("%s", long_help);
+        else if (WantsRawCommandString())
+        {
+            std::string help_text (GetHelp());
+            help_text.append ("  This command takes 'raw' input (no need to quote stuff).");
+            interpreter.OutputFormattedHelpText (output_strm, "", "", help_text.c_str(), 1);
+        }
+        else
+            interpreter.OutputFormattedHelpText (output_strm, "", "", GetHelp(), 1);
+        output_strm.Printf ("\nSyntax: %s\n", GetSyntax());
+    }
+}
+
+void
 CommandObject::AddIDsArgumentData(CommandArgumentEntry &arg, CommandArgumentType ID, CommandArgumentType IDRange)
 {
     CommandArgumentData id_arg;

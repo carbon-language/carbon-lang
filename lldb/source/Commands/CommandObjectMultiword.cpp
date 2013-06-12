@@ -115,7 +115,7 @@ CommandObjectMultiword::Execute(const char *args_string, CommandReturnObject &re
     const size_t argc = args.GetArgumentCount();
     if (argc == 0)
     {
-        GenerateHelpText (result);
+        this->CommandObject::GenerateHelpText (result);
     }
     else
     {
@@ -125,7 +125,7 @@ CommandObjectMultiword::Execute(const char *args_string, CommandReturnObject &re
         {
             if (::strcasecmp (sub_command, "help") == 0)
             {
-                GenerateHelpText (result);
+                this->CommandObject::GenerateHelpText (result);
             }
             else if (!m_subcommand_dict.empty())
             {
@@ -181,12 +181,11 @@ CommandObjectMultiword::Execute(const char *args_string, CommandReturnObject &re
 }
 
 void
-CommandObjectMultiword::GenerateHelpText (CommandReturnObject &result)
+CommandObjectMultiword::GenerateHelpText (Stream &output_stream)
 {
     // First time through here, generate the help text for the object and
     // push it to the return result object as well
 
-    Stream &output_stream = result.GetOutputStream();
     output_stream.PutCString ("The following subcommands are supported:\n\n");
 
     CommandMap::iterator pos;
@@ -203,14 +202,14 @@ CommandObjectMultiword::GenerateHelpText (CommandReturnObject &result)
         {
             std::string help_text (pos->second->GetHelp());
             help_text.append ("  This command takes 'raw' input (no need to quote stuff).");
-            m_interpreter.OutputFormattedHelpText (result.GetOutputStream(),
+            m_interpreter.OutputFormattedHelpText (output_stream,
                                                    indented_command.c_str(),
                                                    "--",
                                                    help_text.c_str(),
                                                    max_len);
         }
         else
-            m_interpreter.OutputFormattedHelpText (result.GetOutputStream(), 
+            m_interpreter.OutputFormattedHelpText (output_stream, 
                                                    indented_command.c_str(),
                                                    "--", 
                                                    pos->second->GetHelp(), 
@@ -218,8 +217,6 @@ CommandObjectMultiword::GenerateHelpText (CommandReturnObject &result)
     }
 
     output_stream.PutCString ("\nFor more help on any particular subcommand, type 'help <command> <subcommand>'.\n");
-
-    result.SetStatus (eReturnStatusSuccessFinishNoResult);
 }
 
 int
