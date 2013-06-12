@@ -1,4 +1,4 @@
-# RUN: lld -flavor link -out %t1 -- %p/Inputs/nop.obj \
+# RUN: lld -flavor link -out %t1 -subsystem console,3.11 -- %p/Inputs/nop.obj \
 # RUN:   && llvm-readobj -file-headers %t1 | FileCheck -check-prefix=FILE %s
 
 FILE: Format: COFF-i386
@@ -15,6 +15,38 @@ FILE:   Characteristics [ (0x102)
 FILE:     IMAGE_FILE_32BIT_MACHINE (0x100)
 FILE:     IMAGE_FILE_EXECUTABLE_IMAGE (0x2)
 FILE:   ]
+FILE: }
+FILE: ImageOptionalHeader {
+FILE:   MajorLinkerVersion: 0
+FILE:   MinorLinkerVersion: 0
+FILE:   SizeOfCode: 512
+FILE:   SizeOfInitializedData: 0
+FILE:   SizeOfUninitializedData: 0
+FILE:   AddressOfEntryPoint: 0x1000
+FILE:   BaseOfCode: 0x1000
+FILE:   BaseOfData: 0x2000
+FILE:   ImageBase: 0x400000
+FILE:   SectionAlignment: 4096
+FILE:   FileAlignment: 512
+FILE:   MajorOperatingSystemVersion: 3
+FILE:   MinorOperatingSystemVersion: 11
+FILE:   MajorImageVersion: 0
+FILE:   MinorImageVersion: 0
+FILE:   MajorSubsystemVersion: 3
+FILE:   MinorSubsystemVersion: 11
+FILE:   SizeOfImage: 8192
+FILE:   SizeOfHeaders: 512
+FILE:   Subsystem: IMAGE_SUBSYSTEM_WINDOWS_CUI (0x3)
+FILE:   Subsystem [ (0x8140)
+FILE:     IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE (0x40)
+FILE:     IMAGE_DLL_CHARACTERISTICS_NX_COMPAT (0x100)
+FILE:     IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE (0x8000)
+FILE:   ]
+FILE:   SizeOfStackReserve: 1048576
+FILE:   SizeOfStackCommit: 4096
+FILE:   SizeOfHeapReserve: 1048576
+FILE:   SizeOfHeapCommit: 4096
+FILE:   NumberOfRvaAndSize: 16
 FILE: }
 
 # RUN: lld -flavor link -out %t1 -- %p/Inputs/nop.obj \
