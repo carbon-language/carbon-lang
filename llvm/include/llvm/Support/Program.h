@@ -17,6 +17,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PathV1.h"
+#include "llvm/Support/system_error.h"
 
 namespace llvm {
 class error_code;
@@ -142,6 +143,24 @@ namespace sys {
     /// @}
 
   };
+
+  inline int ExecuteAndWait(const Path &path, const char **args,
+                            const char **env = 0,
+                            const sys::Path **redirects = 0,
+                            unsigned secondsToWait = 0,
+                            unsigned memoryLimit = 0, std::string *ErrMsg = 0,
+                            bool *ExecutionFailed = 0) {
+    return Program::ExecuteAndWait(path, args, env, redirects, secondsToWait,
+                                   memoryLimit, ErrMsg, ExecutionFailed);
+  }
+
+  inline Path FindProgramByName(const std::string& name) {
+    return Program::FindProgramByName(name);
+  }
+
+  inline error_code ChangeStdoutToBinary() {
+    return Program::ChangeStdoutToBinary();
+  }
 
   // Return true if the given arguments fit within system-specific
   // argument length limits.
