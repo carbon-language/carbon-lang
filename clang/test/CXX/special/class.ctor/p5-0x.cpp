@@ -43,7 +43,7 @@ class NotDeleted2a { int &a = n; };
 NotDeleted2a nd2a;
 class NotDeleted2b { int &a = error; }; // expected-error {{undeclared identifier}}
 NotDeleted2b nd2b;
-class NotDeleted2c { int &&a = 0; };
+class NotDeleted2c { int &&a = 0; }; // expected-warning {{binding reference member 'a' to a temporary}} expected-note {{here}}
 NotDeleted2c nd2c;
 
 // - any non-variant non-static data member of const qualified type (or array

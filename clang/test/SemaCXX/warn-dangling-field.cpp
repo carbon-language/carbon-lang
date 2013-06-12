@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wdangling-field -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wdangling-field -verify -std=c++11 %s
 
 struct X {
   X(int);
@@ -35,3 +35,17 @@ template <typename T> struct S4 {
 
 template struct S4<int>; // no warning from this instantiation
 template struct S4<int&>; // expected-note {{in instantiation}}
+
+struct S5 {
+  const X &x; // expected-note {{here}}
+};
+S5 s5 = { 0 }; // ok, lifetime-extended
+
+struct S6 {
+  S5 s5; // expected-note {{here}}
+  S6() : s5 { 0 } {} // expected-warning {{binding reference subobject of member 's5' to a temporary}}
+};
+
+struct S7 : S5 {
+  S7() : S5 { 0 } {} // expected-warning {{binding reference member 'x' to a temporary}}
+};

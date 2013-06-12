@@ -2461,6 +2461,7 @@ InitializedEntity InitializedEntity::InitializeBase(ASTContext &Context,
 {
   InitializedEntity Result;
   Result.Kind = EK_Base;
+  Result.Parent = 0;
   Result.Base = reinterpret_cast<uintptr_t>(Base);
   if (IsInheritedVirtualBase)
     Result.Base |= 0x01;
@@ -2553,6 +2554,7 @@ bool InitializedEntity::allowsNRVO() const {
 }
 
 unsigned InitializedEntity::dumpImpl(raw_ostream &OS) const {
+  assert(getParent() != this);
   unsigned Depth = getParent() ? getParent()->dumpImpl(OS) : 0;
   for (unsigned I = 0; I != Depth; ++I)
     OS << "`-";
@@ -5566,8 +5568,32 @@ InitializationSequence::Perform(Sema &S,
       // entity's lifetime.
       const ValueDecl *ExtendingDecl =
           getDeclForTemporaryLifetimeExtension(Entity);
-      if (ExtendingDecl)
+      if (ExtendingDecl) {
         performLifetimeExtension(CurInit.get(), ExtendingDecl);
+
+        // Warn if a field lifetime-extends a temporary.
+        if (isa<FieldDecl>(ExtendingDecl)) {
+          bool IsSubobjectMember = false;
+          for (const InitializedEntity *Ent = Entity.getParent(); Ent;
+               Ent = Ent->getParent()) {
+            if (Ent->getKind() != InitializedEntity::EK_Base) {
+              IsSubobjectMember = true;
+              break;
+            }
+          }
+          S.Diag(CurInit.get()->getExprLoc(),
+                 diag::warn_bind_ref_member_to_temporary)
+            << ExtendingDecl << CurInit.get()->getSourceRange()
+            << IsSubobjectMember;
+          if (IsSubobjectMember)
+            S.Diag(ExtendingDecl->getLocation(),
+                   diag::note_ref_subobject_of_member_declared_here);
+          else
+            S.Diag(ExtendingDecl->getLocation(),
+                   diag::note_ref_or_ptr_member_declared_here)
+              << /*IsPointer*/false;
+        }
+      }
 
       // Materialize the temporary into memory.
       MaterializeTemporaryExpr *MTE = new (S.Context) MaterializeTemporaryExpr(

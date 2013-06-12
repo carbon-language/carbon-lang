@@ -116,6 +116,7 @@ HasNoAccessDtorBase HNADBb(HNADBa); // expected-error{{implicitly-deleted copy c
 // -- a non-static data member of rvalue reference type
 struct RValue {
   int && ri = 1; // expected-note{{copy constructor of 'RValue' is implicitly deleted because field 'ri' is of rvalue reference type 'int &&'}}
+  // expected-warning@-1{{binding reference member 'ri' to a temporary}} expected-note@-1 {{here}}
 };
 RValue RVa;
 RValue RVb(RVa); // expected-error{{call to implicitly-deleted copy constructor}}

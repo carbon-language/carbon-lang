@@ -2479,15 +2479,7 @@ static void CheckForDanglingReferenceOrPointer(Sema &S, ValueDecl *Member,
     }
   }
 
-  if (isa<MaterializeTemporaryExpr>(Init->IgnoreParens())) {
-    // Taking the address of a temporary will be diagnosed as a hard error.
-    if (IsPointer)
-      return;
-
-    S.Diag(Init->getExprLoc(), diag::warn_bind_ref_member_to_temporary)
-      << Member << Init->getSourceRange();
-  } else if (const DeclRefExpr *DRE
-               = dyn_cast<DeclRefExpr>(Init->IgnoreParens())) {
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Init->IgnoreParens())) {
     // We only warn when referring to a non-reference parameter declaration.
     const ParmVarDecl *Parameter = dyn_cast<ParmVarDecl>(DRE->getDecl());
     if (!Parameter || Parameter->getType()->isReferenceType())
