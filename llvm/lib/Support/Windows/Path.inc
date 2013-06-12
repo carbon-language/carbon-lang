@@ -590,31 +590,6 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
   }
 }
 
-bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
-  assert(len < 1024 && "Request for magic string too long");
-  char* buf = reinterpret_cast<char*>(alloca(len));
-
-  HANDLE h = CreateFile(path.c_str(),
-                        GENERIC_READ,
-                        FILE_SHARE_READ,
-                        NULL,
-                        OPEN_EXISTING,
-                        FILE_ATTRIBUTE_NORMAL,
-                        NULL);
-  if (h == INVALID_HANDLE_VALUE)
-    return false;
-
-  DWORD nRead = 0;
-  BOOL ret = ReadFile(h, buf, len, &nRead, NULL);
-  CloseHandle(h);
-
-  if (!ret || nRead != len)
-    return false;
-
-  Magic = std::string(buf, len);
-  return true;
-}
-
 bool
 Path::renamePathOnDisk(const Path& newName, std::string* ErrMsg) {
   if (!MoveFileEx(path.c_str(), newName.c_str(), MOVEFILE_REPLACE_EXISTING))

@@ -303,20 +303,6 @@ Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
   return Path();
 }
 
-bool Path::getMagicNumber(std::string &Magic, unsigned len) const {
-  assert(len < 1024 && "Request for magic string too long");
-  char Buf[1025];
-  int fd = ::open(path.c_str(), O_RDONLY);
-  if (fd < 0)
-    return false;
-  ssize_t bytes_read = ::read(fd, Buf, len);
-  ::close(fd);
-  if (ssize_t(len) != bytes_read)
-    return false;
-  Magic.assign(Buf, len);
-  return true;
-}
-
 bool
 Path::exists() const {
   return 0 == access(path.c_str(), F_OK );

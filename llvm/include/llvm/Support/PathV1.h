@@ -219,14 +219,6 @@ namespace sys {
     /// @name Disk Accessors
     /// @{
     public:
-      /// This function retrieves the first \p len bytes of the file associated
-      /// with \p this. These bytes are returned as the "magic number" in the
-      /// \p Magic parameter.
-      /// @returns true if the Path is a file and the magic number is retrieved,
-      /// false otherwise.
-      /// @brief Get the file's magic number.
-      bool getMagicNumber(std::string& Magic, unsigned len) const;
-
       /// This function determines if the path name in the object references an
       /// archive file by looking at its magic number.
       /// @returns true if the file starts with the magic number for an archive
