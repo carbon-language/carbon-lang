@@ -459,12 +459,6 @@ bool Path::makeWriteableOnDisk(std::string* ErrMsg) {
   return false;
 }
 
-bool Path::makeExecutableOnDisk(std::string* ErrMsg) {
-  if (!AddPermissionBits(*this, 0111))
-    return MakeErrMsg(ErrMsg, path + ": can't make file executable");
-  return false;
-}
-
 bool
 Path::getDirectoryContents(std::set<Path>& result, std::string* ErrMsg) const {
   DIR* direntries = ::opendir(path.c_str());

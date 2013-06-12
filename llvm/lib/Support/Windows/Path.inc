@@ -379,11 +379,6 @@ bool Path::makeWriteableOnDisk(std::string* ErrMsg) {
   return false;
 }
 
-bool Path::makeExecutableOnDisk(std::string* ErrMsg) {
-  // All files are executable on Windows (ignoring security attributes).
-  return false;
-}
-
 bool
 Path::getDirectoryContents(std::set<Path>& result, std::string* ErrMsg) const {
   WIN32_FILE_ATTRIBUTE_DATA fi;

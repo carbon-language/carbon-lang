@@ -434,12 +434,6 @@ namespace sys {
       /// @brief Make the file writable;
       bool makeWriteableOnDisk(std::string* ErrMsg = 0);
 
-      /// This method attempts to make the file referenced by the Path object
-      /// available for execution so that the canExecute() method will return
-      /// true.
-      /// @brief Make the file readable;
-      bool makeExecutableOnDisk(std::string* ErrMsg = 0);
-
       /// This method allows the last modified time stamp and permission bits
       /// to be set on the disk object referenced by the Path.
       /// @throws std::string if an error occurs.
