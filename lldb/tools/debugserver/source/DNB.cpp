@@ -901,227 +901,44 @@ DNBProcessResetEvents (nub_process_t pid, nub_event_t event_mask)
 }
 
 // Breakpoints
-nub_break_t
+nub_bool_t
 DNBBreakpointSet (nub_process_t pid, nub_addr_t addr, nub_size_t size, nub_bool_t hardware)
 {
     MachProcessSP procSP;
     if (GetProcessSP (pid, procSP))
-    {
-        return procSP->CreateBreakpoint(addr, size, hardware, THREAD_NULL);
-    }
-    return INVALID_NUB_BREAK_ID;
-}
-
-nub_bool_t
-DNBBreakpointClear (nub_process_t pid, nub_break_t breakID)
-{
-    if (NUB_BREAK_ID_IS_VALID(breakID))
-    {
-        MachProcessSP procSP;
-        if (GetProcessSP (pid, procSP))
-        {
-            return procSP->DisableBreakpoint(breakID, true);
-        }
-    }
-    return false; // Failed
-}
-
-nub_ssize_t
-DNBBreakpointGetHitCount (nub_process_t pid, nub_break_t breakID)
-{
-    if (NUB_BREAK_ID_IS_VALID(breakID))
-    {
-        MachProcessSP procSP;
-        if (GetProcessSP (pid, procSP))
-        {
-            DNBBreakpoint *bp = procSP->Breakpoints().FindByID(breakID);
-            if (bp)
-                return bp->GetHitCount();
-        }
-    }
-    return 0;
-}
-
-nub_ssize_t
-DNBBreakpointGetIgnoreCount (nub_process_t pid, nub_break_t breakID)
-{
-    if (NUB_BREAK_ID_IS_VALID(breakID))
-    {
-        MachProcessSP procSP;
-        if (GetProcessSP (pid, procSP))
-        {
-            DNBBreakpoint *bp = procSP->Breakpoints().FindByID(breakID);
-            if (bp)
-                return bp->GetIgnoreCount();
-        }
-    }
-    return 0;
-}
-
-nub_bool_t
-DNBBreakpointSetIgnoreCount (nub_process_t pid, nub_break_t breakID, nub_size_t ignore_count)
-{
-    if (NUB_BREAK_ID_IS_VALID(breakID))
-    {
-        MachProcessSP procSP;
-        if (GetProcessSP (pid, procSP))
-        {
-            DNBBreakpoint *bp = procSP->Breakpoints().FindByID(breakID);
-            if (bp)
-            {
-                bp->SetIgnoreCount(ignore_count);
-                return true;
-            }
-        }
-    }
+        return procSP->CreateBreakpoint(addr, size, hardware) != NULL;
     return false;
 }
 
-// Set the callback function for a given breakpoint. The callback function will
-// get called as soon as the breakpoint is hit. The function will be called
-// with the process ID, thread ID, breakpoint ID and the baton, and can return
-//
 nub_bool_t
-DNBBreakpointSetCallback (nub_process_t pid, nub_break_t breakID, DNBCallbackBreakpointHit callback, void *baton)
-{
-    if (NUB_BREAK_ID_IS_VALID(breakID))
-    {
-        MachProcessSP procSP;
-        if (GetProcessSP (pid, procSP))
-        {
-            DNBBreakpoint *bp = procSP->Breakpoints().FindByID(breakID);
-            if (bp)
-            {
-                bp->SetCallback(callback, baton);
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-//----------------------------------------------------------------------
-// Dump the breakpoints stats for process PID for a breakpoint by ID.
-//----------------------------------------------------------------------
-void
-DNBBreakpointPrint (nub_process_t pid, nub_break_t breakID)
+DNBBreakpointClear (nub_process_t pid, nub_addr_t addr)
 {
     MachProcessSP procSP;
     if (GetProcessSP (pid, procSP))
-        procSP->DumpBreakpoint(breakID);
+        return procSP->DisableBreakpoint(addr, true);
+    return false; // Failed
 }
+
 
 //----------------------------------------------------------------------
 // Watchpoints
 //----------------------------------------------------------------------
-nub_watch_t
+nub_bool_t
 DNBWatchpointSet (nub_process_t pid, nub_addr_t addr, nub_size_t size, uint32_t watch_flags, nub_bool_t hardware)
 {
     MachProcessSP procSP;
     if (GetProcessSP (pid, procSP))
-    {
-        return procSP->CreateWatchpoint(addr, size, watch_flags, hardware, THREAD_NULL);
-    }
-    return INVALID_NUB_WATCH_ID;
-}
-
-nub_bool_t
-DNBWatchpointClear (nub_process_t pid, nub_watch_t watchID)
-{
-    if (NUB_WATCH_ID_IS_VALID(watchID))
-    {
-        MachProcessSP procSP;
-        if (GetProcessSP (pid, procSP))
-        {
-            return procSP->DisableWatchpoint(watchID, true);
-        }
-    }
-    return false; // Failed
-}
-
-nub_ssize_t
-DNBWatchpointGetHitCount (nub_process_t pid, nub_watch_t watchID)
-{
-    if (NUB_WATCH_ID_IS_VALID(watchID))
-    {
-        MachProcessSP procSP;
-        if (GetProcessSP (pid, procSP))
-        {
-            DNBBreakpoint *bp = procSP->Watchpoints().FindByID(watchID);
-            if (bp)
-                return bp->GetHitCount();
-        }
-    }
-    return 0;
-}
-
-nub_ssize_t
-DNBWatchpointGetIgnoreCount (nub_process_t pid, nub_watch_t watchID)
-{
-    if (NUB_WATCH_ID_IS_VALID(watchID))
-    {
-        MachProcessSP procSP;
-        if (GetProcessSP (pid, procSP))
-        {
-            DNBBreakpoint *bp = procSP->Watchpoints().FindByID(watchID);
-            if (bp)
-                return bp->GetIgnoreCount();
-        }
-    }
-    return 0;
-}
-
-nub_bool_t
-DNBWatchpointSetIgnoreCount (nub_process_t pid, nub_watch_t watchID, nub_size_t ignore_count)
-{
-    if (NUB_WATCH_ID_IS_VALID(watchID))
-    {
-        MachProcessSP procSP;
-        if (GetProcessSP (pid, procSP))
-        {
-            DNBBreakpoint *bp = procSP->Watchpoints().FindByID(watchID);
-            if (bp)
-            {
-                bp->SetIgnoreCount(ignore_count);
-                return true;
-            }
-        }
-    }
+        return procSP->CreateWatchpoint(addr, size, watch_flags, hardware) != NULL;
     return false;
 }
 
-// Set the callback function for a given watchpoint. The callback function will
-// get called as soon as the watchpoint is hit. The function will be called
-// with the process ID, thread ID, watchpoint ID and the baton, and can return
-//
 nub_bool_t
-DNBWatchpointSetCallback (nub_process_t pid, nub_watch_t watchID, DNBCallbackBreakpointHit callback, void *baton)
-{
-    if (NUB_WATCH_ID_IS_VALID(watchID))
-    {
-        MachProcessSP procSP;
-        if (GetProcessSP (pid, procSP))
-        {
-            DNBBreakpoint *bp = procSP->Watchpoints().FindByID(watchID);
-            if (bp)
-            {
-                bp->SetCallback(callback, baton);
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-//----------------------------------------------------------------------
-// Dump the watchpoints stats for process PID for a watchpoint by ID.
-//----------------------------------------------------------------------
-void
-DNBWatchpointPrint (nub_process_t pid, nub_watch_t watchID)
+DNBWatchpointClear (nub_process_t pid, nub_addr_t addr)
 {
     MachProcessSP procSP;
     if (GetProcessSP (pid, procSP))
-        procSP->DumpWatchpoint(watchID);
+        return procSP->DisableWatchpoint(addr, true);
+    return false; // Failed
 }
 
 //----------------------------------------------------------------------

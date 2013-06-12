@@ -121,24 +121,14 @@ const char *    DNBThreadGetInfo                (nub_process_t pid, nub_thread_t
 //----------------------------------------------------------------------
 // Breakpoint functions
 //----------------------------------------------------------------------
-nub_break_t     DNBBreakpointSet                (nub_process_t pid, nub_addr_t addr, nub_size_t size, nub_bool_t hardware) DNB_EXPORT;
-nub_bool_t      DNBBreakpointClear              (nub_process_t pid, nub_break_t breakID) DNB_EXPORT;
-nub_ssize_t     DNBBreakpointGetHitCount        (nub_process_t pid, nub_break_t breakID) DNB_EXPORT;
-nub_ssize_t     DNBBreakpointGetIgnoreCount     (nub_process_t pid, nub_break_t breakID) DNB_EXPORT;
-nub_bool_t      DNBBreakpointSetIgnoreCount     (nub_process_t pid, nub_break_t breakID, nub_size_t ignore_count) DNB_EXPORT;
-nub_bool_t      DNBBreakpointSetCallback        (nub_process_t pid, nub_break_t breakID, DNBCallbackBreakpointHit callback, void *baton) DNB_EXPORT;
-void            DNBBreakpointPrint              (nub_process_t pid, nub_break_t breakID) DNB_EXPORT;
+nub_bool_t      DNBBreakpointSet                (nub_process_t pid, nub_addr_t addr, nub_size_t size, nub_bool_t hardware) DNB_EXPORT;
+nub_bool_t      DNBBreakpointClear              (nub_process_t pid, nub_addr_t addr) DNB_EXPORT;
 
 //----------------------------------------------------------------------
 // Watchpoint functions
 //----------------------------------------------------------------------
-nub_watch_t     DNBWatchpointSet                (nub_process_t pid, nub_addr_t addr, nub_size_t size, uint32_t watch_flags, nub_bool_t hardware) DNB_EXPORT;
-nub_bool_t      DNBWatchpointClear              (nub_process_t pid, nub_watch_t watchID) DNB_EXPORT;
-nub_ssize_t     DNBWatchpointGetHitCount        (nub_process_t pid, nub_watch_t watchID) DNB_EXPORT;
-nub_ssize_t     DNBWatchpointGetIgnoreCount     (nub_process_t pid, nub_watch_t watchID) DNB_EXPORT;
-nub_bool_t      DNBWatchpointSetIgnoreCount     (nub_process_t pid, nub_watch_t watchID, nub_size_t ignore_count) DNB_EXPORT;
-nub_bool_t      DNBWatchpointSetCallback        (nub_process_t pid, nub_watch_t watchID, DNBCallbackBreakpointHit callback, void *baton) DNB_EXPORT;
-void            DNBWatchpointPrint              (nub_process_t pid, nub_watch_t watchID) DNB_EXPORT;
+nub_bool_t      DNBWatchpointSet                (nub_process_t pid, nub_addr_t addr, nub_size_t size, uint32_t watch_flags, nub_bool_t hardware) DNB_EXPORT;
+nub_bool_t      DNBWatchpointClear              (nub_process_t pid, nub_addr_t addr) DNB_EXPORT;
 uint32_t        DNBWatchpointGetNumSupportedHWP (nub_process_t pid) DNB_EXPORT; 
 
 const DNBRegisterSetInfo *

@@ -647,8 +647,8 @@ DNBArchImplI386::NotifyException(MachException::Data& exc)
                 // Check for a breakpoint at one byte prior to the current PC value
                 // since the PC will be just past the trap.
 
-                nub_break_t breakID = m_thread->Process()->Breakpoints().FindIDByAddress(pc);
-                if (NUB_BREAK_ID_IS_VALID(breakID))
+                DNBBreakpoint *bp = m_thread->Process()->Breakpoints().FindByAddress(pc);
+                if (bp)
                 {
                     // Backup the PC for i386 since the trap was taken and the PC
                     // is at the address following the single byte trap instruction.

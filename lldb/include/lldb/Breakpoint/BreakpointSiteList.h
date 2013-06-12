@@ -16,6 +16,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Breakpoint/BreakpointSite.h"
+#include "lldb/Host/Mutex.h"
 
 namespace lldb_private {
 
@@ -130,31 +131,8 @@ public:
     bool
     BreakpointSiteContainsBreakpoint (lldb::break_id_t bp_site_id, lldb::break_id_t bp_id);
 
-    //------------------------------------------------------------------
-    /// Returns a shared pointer to the breakpoint site with index \a i.
-    ///
-    /// @param[in] i
-    ///   The breakpoint site index to seek for.
-    ///
-    /// @result
-    ///   A shared pointer to the breakpoint site.  May contain a NULL pointer if the
-    ///   breakpoint doesn't exist.
-    //------------------------------------------------------------------
-    lldb::BreakpointSiteSP
-    GetByIndex (uint32_t i);
-
-    //------------------------------------------------------------------
-    /// Returns a shared pointer to the breakpoint site with index \a i - const version.
-    ///
-    /// @param[in] i
-    ///   The breakpoint site index to seek for.
-    ///
-    /// @result
-    ///   A shared pointer to the breakpoint site.  May contain a NULL pointer if the
-    ///   breakpoint doesn't exist.
-    //------------------------------------------------------------------
-    const lldb::BreakpointSiteSP
-    GetByIndex (uint32_t i) const;
+    void
+    ForEach (std::function <void(BreakpointSite *)> const &callback);
 
     //------------------------------------------------------------------
     /// Removes the breakpoint site given by \b breakID from this list.
@@ -179,9 +157,6 @@ public:
     //------------------------------------------------------------------
     bool
     RemoveByAddress (lldb::addr_t addr);
-
-    void
-    SetEnabledForAll(const bool enable, const lldb::break_id_t except_id = LLDB_INVALID_BREAK_ID);
     
     bool
     FindInRange (lldb::addr_t lower_bound, lldb::addr_t upper_bound, BreakpointSiteList &bp_site_list) const;
@@ -211,8 +186,18 @@ public:
     ///   The number of elements.
     //------------------------------------------------------------------
     size_t
-    GetSize() const { return m_bp_site_list.size(); }
+    GetSize() const
+    {
+        Mutex::Locker locker(m_mutex);
+        return m_bp_site_list.size();
+    }
 
+    bool
+    IsEmpty() const
+    {
+        Mutex::Locker locker(m_mutex);
+        return m_bp_site_list.empty();
+    }
 protected:
     typedef std::map<lldb::addr_t, lldb::BreakpointSiteSP> collection;
 
@@ -222,13 +207,7 @@ protected:
     collection::const_iterator
     GetIDConstIterator(lldb::break_id_t breakID) const;
 
-    // This function exposes the m_bp_site_list.  I use the in Process because there
-    // are places there where you want to iterate over the list, and it is less efficient
-    // to do it by index.  FIXME: Find a better way to do this.
-
-    const collection *
-    GetMap ();
-
+    mutable Mutex m_mutex;
     collection m_bp_site_list;  // The breakpoint site list.
 };
 

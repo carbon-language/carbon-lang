@@ -499,9 +499,9 @@ MachThreadList::EnableHardwareBreakpoint (const DNBBreakpoint* bp) const
 {
     if (bp != NULL)
     {
-        MachThreadSP thread_sp (GetThreadByID (bp->ThreadID()));
-        if (thread_sp)
-            return thread_sp->EnableHardwareBreakpoint(bp);
+        const uint32_t num_threads = m_threads.size();
+        for (uint32_t idx = 0; idx < num_threads; ++idx)
+            m_threads[idx]->EnableHardwareBreakpoint(bp);
     }
     return INVALID_NUB_HW_INDEX;
 }
@@ -511,9 +511,9 @@ MachThreadList::DisableHardwareBreakpoint (const DNBBreakpoint* bp) const
 {
     if (bp != NULL)
     {
-        MachThreadSP thread_sp (GetThreadByID (bp->ThreadID()));
-        if (thread_sp)
-            return thread_sp->DisableHardwareBreakpoint(bp);
+        const uint32_t num_threads = m_threads.size();
+        for (uint32_t idx = 0; idx < num_threads; ++idx)
+            m_threads[idx]->DisableHardwareBreakpoint(bp);
     }
     return false;
 }

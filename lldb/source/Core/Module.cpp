@@ -704,15 +704,50 @@ Module::FindFunctions (const RegularExpression& regex,
                 const size_t num_matches = symbol_indexes.size();
                 if (num_matches)
                 {
-                    const bool merge_symbol_into_function = true;
                     SymbolContext sc(this);
-                    for (size_t i=0; i<num_matches; i++)
+                    const size_t end_functions_added_index = sc_list.GetSize();
+                    size_t num_functions_added_to_sc_list = end_functions_added_index - start_size;
+                    if (num_functions_added_to_sc_list == 0)
                     {
-                        sc.symbol = symtab->SymbolAtIndex(symbol_indexes[i]);
-                        SymbolType sym_type = sc.symbol->GetType();
-                        if (sc.symbol && (sym_type == eSymbolTypeCode ||
-                                          sym_type == eSymbolTypeResolver))
-                            sc_list.AppendIfUnique (sc, merge_symbol_into_function);
+                        // No functions were added, just symbols, so we can just append them
+                        for (size_t i=0; i<num_matches; ++i)
+                        {
+                            sc.symbol = symtab->SymbolAtIndex(symbol_indexes[i]);
+                            SymbolType sym_type = sc.symbol->GetType();
+                            if (sc.symbol && (sym_type == eSymbolTypeCode ||
+                                              sym_type == eSymbolTypeResolver))
+                                sc_list.Append(sc);
+                        }
+                    }
+                    else
+                    {
+                        typedef std::map<lldb::addr_t, uint32_t> FileAddrToIndexMap;
+                        FileAddrToIndexMap file_addr_to_index;
+                        for (size_t i=start_size; i<end_functions_added_index; ++i)
+                        {
+                            const SymbolContext &sc = sc_list[i];
+                            if (sc.block)
+                                continue;
+                            file_addr_to_index[sc.function->GetAddressRange().GetBaseAddress().GetFileAddress()] = i;
+                        }
+
+                        FileAddrToIndexMap::const_iterator end = file_addr_to_index.end();
+                        // Functions were added so we need to merge symbols into any
+                        // existing function symbol contexts
+                        for (size_t i=start_size; i<num_matches; ++i)
+                        {
+                            sc.symbol = symtab->SymbolAtIndex(symbol_indexes[i]);
+                            SymbolType sym_type = sc.symbol->GetType();
+                            if (sc.symbol && (sym_type == eSymbolTypeCode ||
+                                              sym_type == eSymbolTypeResolver))
+                            {
+                                FileAddrToIndexMap::const_iterator pos = file_addr_to_index.find(sc.symbol->GetAddress().GetFileAddress());
+                                if (pos == end)
+                                    sc_list.Append(sc);
+                                else
+                                    sc_list[pos->second].symbol = sc.symbol;
+                            }
+                        }
                     }
                 }
             }

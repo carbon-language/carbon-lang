@@ -114,22 +114,20 @@ public:
     //----------------------------------------------------------------------
     // Breakpoint functions
     //----------------------------------------------------------------------
-    nub_break_t             CreateBreakpoint (nub_addr_t addr, nub_size_t length, bool hardware, thread_t thread);
-    bool                    DisableBreakpoint (nub_break_t breakID, bool remove);
-    nub_size_t              DisableAllBreakpoints (bool remove);
-    bool                    EnableBreakpoint (nub_break_t breakID);
-    void                    DumpBreakpoint(nub_break_t breakID) const;
+    DNBBreakpoint *         CreateBreakpoint (nub_addr_t addr, nub_size_t length, bool hardware);
+    bool                    DisableBreakpoint (nub_addr_t addr, bool remove);
+    void                    DisableAllBreakpoints (bool remove);
+    bool                    EnableBreakpoint (nub_addr_t addr);
     DNBBreakpointList&      Breakpoints() { return m_breakpoints; }
     const DNBBreakpointList& Breakpoints() const { return m_breakpoints; }
 
     //----------------------------------------------------------------------
     // Watchpoint functions
     //----------------------------------------------------------------------
-    nub_watch_t             CreateWatchpoint (nub_addr_t addr, nub_size_t length, uint32_t watch_type, bool hardware, thread_t thread);
-    bool                    DisableWatchpoint (nub_watch_t watchID, bool remove);
-    nub_size_t              DisableAllWatchpoints (bool remove);
-    bool                    EnableWatchpoint (nub_watch_t watchID);
-    void                    DumpWatchpoint(nub_watch_t watchID) const;
+    DNBBreakpoint *         CreateWatchpoint (nub_addr_t addr, nub_size_t length, uint32_t watch_type, bool hardware);
+    bool                    DisableWatchpoint (nub_addr_t addr, bool remove);
+    void                    DisableAllWatchpoints (bool remove);
+    bool                    EnableWatchpoint (nub_addr_t addr);
     uint32_t                GetNumSupportedHardwareWatchpoints () const;
     DNBBreakpointList&      Watchpoints() { return m_watchpoints; }
     const DNBBreakpointList& Watchpoints() const { return m_watchpoints; }
@@ -263,7 +261,6 @@ private:
     void                    Clear ();
     void                    ReplyToAllExceptions ();
     void                    PrivateResume ();
-    nub_size_t              RemoveTrapsFromBuffer (nub_addr_t addr, nub_size_t size, uint8_t *buf) const;
 
     uint32_t                Flags () const { return m_flags; }
     nub_state_t             DoSIGSTOP (bool clear_bps_and_wps, bool allow_running, uint32_t *thread_idx_ptr);

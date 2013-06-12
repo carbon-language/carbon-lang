@@ -442,6 +442,11 @@ public:
     AppendIfUnique (const SymbolContext& sc, 
                     bool merge_symbol_into_function);
 
+    bool
+    MergeSymbolContextIntoFunctionContext (const SymbolContext& symbol_sc,
+                                           uint32_t start_idx = 0,
+                                           uint32_t stop_idx = UINT32_MAX);
+
     uint32_t
     AppendIfUnique (const SymbolContextList& sc_list, 
                     bool merge_symbol_into_function);
@@ -484,6 +489,30 @@ public:
     //------------------------------------------------------------------
     bool
     GetContextAtIndex(size_t idx, SymbolContext& sc) const;
+
+    //------------------------------------------------------------------
+    /// Direct reference accessor for a symbol context at index \a idx.
+    ///
+    /// The index \a idx must be a valid index, no error checking will
+    /// be done to ensure that it is valid.
+    ///
+    /// @param[in] idx
+    ///     The zero based index into the symbol context list.
+    ///
+    /// @return
+    ///     A const reference to the symbol context to fill in.
+    //------------------------------------------------------------------
+    SymbolContext&
+    operator [] (size_t idx)
+    {
+        return m_symbol_contexts[idx];
+    }
+    
+    const SymbolContext&
+    operator [] (size_t idx) const
+    {
+        return m_symbol_contexts[idx];
+    }
 
     //------------------------------------------------------------------
     /// Get accessor for the last symbol context in the list.

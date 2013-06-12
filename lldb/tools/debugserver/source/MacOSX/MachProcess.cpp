@@ -557,29 +557,6 @@ MachProcess::Detach()
     return true;
 }
 
-nub_size_t
-MachProcess::RemoveTrapsFromBuffer (nub_addr_t addr, nub_size_t size, uint8_t *buf) const
-{
-    nub_size_t bytes_removed = 0;
-    const DNBBreakpoint *bp;
-    nub_addr_t intersect_addr;
-    nub_size_t intersect_size;
-    nub_size_t opcode_offset;
-    nub_size_t idx;
-    for (idx = 0; (bp = m_breakpoints.GetByIndex(idx)) != NULL; ++idx)
-    {
-        if (bp->IntersectsRange(addr, size, &intersect_addr, &intersect_size, &opcode_offset))
-        {
-            assert(addr <= intersect_addr && intersect_addr < addr + size);
-            assert(addr < intersect_addr + intersect_size && intersect_addr + intersect_size <= addr + size);
-            assert(opcode_offset + intersect_size <= bp->ByteSize());
-            nub_size_t buf_offset = intersect_addr - addr;
-            ::memcpy(buf + buf_offset, bp->SavedOpcodeBytes() + opcode_offset, intersect_size);
-        }
-    }
-    return bytes_removed;
-}
-
 //----------------------------------------------------------------------
 // ReadMemory from the MachProcess level will always remove any software
 // breakpoints from the memory buffer before returning. If you wish to
@@ -599,7 +576,7 @@ MachProcess::ReadMemory (nub_addr_t addr, nub_size_t size, void *buf)
     // Then place any opcodes that fall into this range back into the buffer
     // before we return this to callers.
     if (bytes_read > 0)
-        RemoveTrapsFromBuffer (addr, size, (uint8_t *)buf);
+        m_breakpoints.RemoveTrapsFromBuffer (addr, bytes_read, buf);
     return bytes_read;
 }
 
@@ -619,38 +596,28 @@ MachProcess::WriteMemory (nub_addr_t addr, nub_size_t size, const void *buf)
     // (enabled software breakpoints) any software traps (breakpoints) that we
     // may have placed in our tasks memory.
 
-    std::map<nub_addr_t, DNBBreakpoint *> addr_to_bp_map;
-    DNBBreakpoint *bp;
-    nub_size_t idx;
-    for (idx = 0; (bp = m_breakpoints.GetByIndex(idx)) != NULL; ++idx)
-    {
-        if (bp->IntersectsRange(addr, size, NULL, NULL, NULL))
-            addr_to_bp_map[bp->Address()] = bp;
-    }
-
-    // If we don't have any software breakpoints that are in this buffer, then
-    // we can just write memory and be done with it.
-    if (addr_to_bp_map.empty())
+    std::vector<DNBBreakpoint *> bps;
+    
+    const size_t num_bps = m_breakpoints.FindBreakpointsThatOverlapRange(addr, size, bps);
+    if (num_bps == 0)
         return m_task.WriteMemory(addr, size, buf);
-
-    // If we make it here, we have some breakpoints that overlap and we need
-    // to work around them.
 
     nub_size_t bytes_written = 0;
     nub_addr_t intersect_addr;
     nub_size_t intersect_size;
     nub_size_t opcode_offset;
     const uint8_t *ubuf = (const uint8_t *)buf;
-    std::map<nub_addr_t, DNBBreakpoint *>::iterator pos, end = addr_to_bp_map.end();
-    for (pos = addr_to_bp_map.begin(); pos != end; ++pos)
-    {
-        bp = pos->second;
 
-        assert(bp->IntersectsRange(addr, size, &intersect_addr, &intersect_size, &opcode_offset));
+    for (size_t i=0; i<num_bps; ++i)
+    {
+        DNBBreakpoint *bp = bps[i];
+
+        const bool intersects = bp->IntersectsRange(addr, size, &intersect_addr, &intersect_size, &opcode_offset);
+        assert(intersects);
         assert(addr <= intersect_addr && intersect_addr < addr + size);
         assert(addr < intersect_addr + intersect_size && intersect_addr + intersect_size <= addr + size);
         assert(opcode_offset + intersect_size <= bp->ByteSize());
-
+        
         // Check for bytes before this breakpoint
         const nub_addr_t curr_addr = addr + bytes_written;
         if (intersect_addr > curr_addr)
@@ -668,17 +635,17 @@ MachProcess::WriteMemory (nub_addr_t addr, nub_size_t size, const void *buf)
                 break;
             }
         }
-
+        
         // Now write any bytes that would cover up any software breakpoints
         // directly into the breakpoint opcode buffer
         ::memcpy(bp->SavedOpcodeBytes() + opcode_offset, ubuf + bytes_written, intersect_size);
         bytes_written += intersect_size;
     }
-
+    
     // Write any remaining bytes after the last breakpoint if we have any left
     if (bytes_written < size)
         bytes_written += m_task.WriteMemory(addr + bytes_written, size - bytes_written, ubuf + bytes_written);
-
+    
     return bytes_written;
 }
 
@@ -743,110 +710,105 @@ MachProcess::PrivateResume ()
     m_task.Resume();
 }
 
-nub_break_t
-MachProcess::CreateBreakpoint(nub_addr_t addr, nub_size_t length, bool hardware, thread_t tid)
+DNBBreakpoint *
+MachProcess::CreateBreakpoint(nub_addr_t addr, nub_size_t length, bool hardware)
 {
-    DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::CreateBreakpoint ( addr = 0x%8.8llx, length = %llu, hardware = %i, tid = 0x%4.4x )", (uint64_t)addr, (uint64_t)length, hardware, tid);
-    if (hardware && tid == INVALID_NUB_THREAD)
-        tid = GetCurrentThread();
+    DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::CreateBreakpoint ( addr = 0x%8.8llx, length = %llu, hardware = %i)", (uint64_t)addr, (uint64_t)length, hardware);
 
-    DNBBreakpoint bp(addr, length, tid, hardware);
-    nub_break_t breakID = m_breakpoints.Add(bp);
-    if (EnableBreakpoint(breakID))
-    {
-        DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::CreateBreakpoint ( addr = 0x%8.8llx, length = %llu, tid = 0x%4.4x ) => %u", (uint64_t)addr, (uint64_t)length, tid, breakID);
-        return breakID;
-    }
+    DNBBreakpoint *bp = m_breakpoints.FindByAddress(addr);
+    if (bp)
+        bp->Retain();
     else
+        bp =  m_breakpoints.Add(addr, length, hardware);
+
+    if (EnableBreakpoint(addr))
     {
-        m_breakpoints.Remove(breakID);
+        DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::CreateBreakpoint ( addr = 0x%8.8llx, length = %llu) => %p", (uint64_t)addr, (uint64_t)length, bp);
+        return bp;
+    }
+    else if (bp->Release() == 0)
+    {
+        m_breakpoints.Remove(addr);
     }
     // We failed to enable the breakpoint
-    return INVALID_NUB_BREAK_ID;
+    return NULL;
 }
 
-nub_watch_t
-MachProcess::CreateWatchpoint(nub_addr_t addr, nub_size_t length, uint32_t watch_flags, bool hardware, thread_t tid)
+DNBBreakpoint *
+MachProcess::CreateWatchpoint(nub_addr_t addr, nub_size_t length, uint32_t watch_flags, bool hardware)
 {
-    DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::CreateWatchpoint ( addr = 0x%8.8llx, length = %llu, flags = 0x%8.8x, hardware = %i, tid = 0x%4.4x )", (uint64_t)addr, (uint64_t)length, watch_flags, hardware, tid);
-    if (hardware && tid == INVALID_NUB_THREAD)
-        tid = GetCurrentThread();
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::CreateWatchpoint ( addr = 0x%8.8llx, length = %llu, flags = 0x%8.8x, hardware = %i)", (uint64_t)addr, (uint64_t)length, watch_flags, hardware);
 
-    DNBBreakpoint watch(addr, length, tid, hardware);
-    watch.SetIsWatchpoint(watch_flags);
+    DNBBreakpoint *wp = m_watchpoints.FindByAddress(addr);
+    // since the Z packets only send an address, we can only have one watchpoint at
+    // an address. If there is already one, we must refuse to create another watchpoint
+    if (wp)
+        return NULL;
+    
+    wp = m_watchpoints.Add(addr, length, hardware);
+    wp->SetIsWatchpoint(watch_flags);
 
-    nub_watch_t watchID = m_watchpoints.Add(watch);
-    if (EnableWatchpoint(watchID))
+    if (EnableWatchpoint(addr))
     {
-        DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::CreateWatchpoint ( addr = 0x%8.8llx, length = %llu, tid = 0x%x) => %u", (uint64_t)addr, (uint64_t)length, tid, watchID);
-        return watchID;
+        DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::CreateWatchpoint ( addr = 0x%8.8llx, length = %llu) => %p", (uint64_t)addr, (uint64_t)length, wp);
+        return wp;
     }
     else
     {
-        DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::CreateWatchpoint ( addr = 0x%8.8llx, length = %llu, tid = 0x%x) => FAILED (%u)", (uint64_t)addr, (uint64_t)length, tid, watchID);
-        m_watchpoints.Remove(watchID);
+        DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::CreateWatchpoint ( addr = 0x%8.8llx, length = %llu) => FAILED", (uint64_t)addr, (uint64_t)length);
+        m_watchpoints.Remove(addr);
     }
     // We failed to enable the watchpoint
-    return INVALID_NUB_BREAK_ID;
+    return NULL;
 }
 
-nub_size_t
-MachProcess::DisableAllBreakpoints(bool remove)
+void
+MachProcess::DisableAllBreakpoints (bool remove)
 {
     DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::%s (remove = %d )", __FUNCTION__, remove);
-    DNBBreakpoint *bp;
-    nub_size_t disabled_count = 0;
-    nub_size_t idx = 0;
-    while ((bp = m_breakpoints.GetByIndex(idx)) != NULL)
-    {
-        bool success = DisableBreakpoint(bp->GetID(), remove);
-
-        if (success)
-            disabled_count++;
-        // If we failed to disable the breakpoint or we aren't removing the breakpoint
-        // increment the breakpoint index. Otherwise DisableBreakpoint will have removed
-        // the breakpoint at this index and we don't need to change it.
-        if ((success == false) || (remove == false))
-            idx++;
-    }
-    return disabled_count;
+    
+    m_breakpoints.DisableAllBreakpoints (this);
+    
+    if (remove)
+        m_breakpoints.RemoveDisabled();
 }
 
-nub_size_t
+void
 MachProcess::DisableAllWatchpoints(bool remove)
 {
     DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::%s (remove = %d )", __FUNCTION__, remove);
-    DNBBreakpoint *wp;
-    nub_size_t disabled_count = 0;
-    nub_size_t idx = 0;
-    while ((wp = m_watchpoints.GetByIndex(idx)) != NULL)
-    {
-        bool success = DisableWatchpoint(wp->GetID(), remove);
-
-        if (success)
-            disabled_count++;
-        // If we failed to disable the watchpoint or we aren't removing the watchpoint
-        // increment the watchpoint index. Otherwise DisableWatchpoint will have removed
-        // the watchpoint at this index and we don't need to change it.
-        if ((success == false) || (remove == false))
-            idx++;
-    }
-    return disabled_count;
+    
+    m_watchpoints.DisableAllWatchpoints(this);
+    
+    if (remove)
+        m_watchpoints.RemoveDisabled();
 }
 
 bool
-MachProcess::DisableBreakpoint(nub_break_t breakID, bool remove)
+MachProcess::DisableBreakpoint(nub_addr_t addr, bool remove)
 {
-    DNBBreakpoint *bp = m_breakpoints.FindByID (breakID);
+    DNBBreakpoint *bp = m_breakpoints.FindByAddress(addr);
     if (bp)
     {
         // After "exec" we might end up with a bunch of breakpoints that were disabled
         // manually, just ignore them
         if (!bp->IsEnabled())
+        {
+            // Breakpoint might have been disabled by an exec
+            if (remove && bp->Release() == 0)
+            {
+                m_thread_list.NotifyBreakpointChanged(bp);
+                m_breakpoints.Remove(addr);
+            }
+            return true;
+        }
+
+        // We have multiple references to this breakpoint, decrement the ref count
+        // and if it isn't zero, then return true;
+        if (remove && bp->Release() > 0)
             return true;
 
-        nub_addr_t addr = bp->Address();
-        DNBLogThreadedIf(LOG_BREAKPOINTS | LOG_VERBOSE, "MachProcess::DisableBreakpoint ( breakID = %d, remove = %d ) addr = 0x%8.8llx", breakID, remove, (uint64_t)addr);
+        DNBLogThreadedIf(LOG_BREAKPOINTS | LOG_VERBOSE, "MachProcess::DisableBreakpoint ( addr = 0x%8.8llx, remove = %d )", (uint64_t)addr, remove);
 
         if (bp->IsHardware())
         {
@@ -859,9 +821,9 @@ MachProcess::DisableBreakpoint(nub_break_t breakID, bool remove)
                 if (remove)
                 {
                     m_thread_list.NotifyBreakpointChanged(bp);
-                    m_breakpoints.Remove(breakID);
+                    m_breakpoints.Remove(addr);
                 }
-                DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::DisableBreakpoint ( breakID = %d, remove = %d ) addr = 0x%8.8llx (hardware) => success", breakID, remove, (uint64_t)addr);
+                DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::DisableBreakpoint ( addr = 0x%8.8llx, remove = %d ) (hardware) => success", (uint64_t)addr, remove);
                 return true;
             }
 
@@ -895,19 +857,19 @@ MachProcess::DisableBreakpoint(nub_break_t breakID, bool remove)
                         }
                         else
                         {
-                            DNBLogError("MachProcess::DisableBreakpoint ( breakID = %d, remove = %d ) addr = 0x%8.8llx memory write failed when restoring original opcode", breakID, remove, (uint64_t)addr);
+                            DNBLogError("MachProcess::DisableBreakpoint ( addr = 0x%8.8llx, remove = %d ) memory write failed when restoring original opcode", addr, remove);
                         }
                     }
                     else
                     {
-                        DNBLogWarning("MachProcess::DisableBreakpoint ( breakID = %d, remove = %d ) addr = 0x%8.8llx expected a breakpoint opcode but didn't find one.", breakID, remove, (uint64_t)addr);
+                        DNBLogWarning("MachProcess::DisableBreakpoint ( addr = 0x%8.8llx, remove = %d ) expected a breakpoint opcode but didn't find one.", addr, remove);
                         // Set verify to true and so we can check if the original opcode has already been restored
                         verify = true;
                     }
                 }
                 else
                 {
-                    DNBLogThreadedIf(LOG_BREAKPOINTS | LOG_VERBOSE, "MachProcess::DisableBreakpoint ( breakID = %d, remove = %d ) addr = 0x%8.8llx is not enabled", breakID, remove, (uint64_t)addr);
+                    DNBLogThreadedIf(LOG_BREAKPOINTS | LOG_VERBOSE, "MachProcess::DisableBreakpoint ( addr = 0x%8.8llx, remove = %d ) is not enabled", addr, remove);
                     // Set verify to true and so we can check if the original opcode is there
                     verify = true;
                 }
@@ -924,20 +886,20 @@ MachProcess::DisableBreakpoint(nub_break_t breakID, bool remove)
                             // SUCCESS
                             bp->SetEnabled(false);
                             // Let the thread list know that a breakpoint has been modified
-                            if (remove)
+                            if (remove && bp->Release() == 0)
                             {
                                 m_thread_list.NotifyBreakpointChanged(bp);
-                                m_breakpoints.Remove(breakID);
+                                m_breakpoints.Remove(addr);
                             }
-                            DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::DisableBreakpoint ( breakID = %d, remove = %d ) addr = 0x%8.8llx => success", breakID, remove, (uint64_t)addr);
+                            DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::DisableBreakpoint ( addr = 0x%8.8llx, remove = %d ) => success", (uint64_t)addr, remove);
                             return true;
                         }
                         else
                         {
                             if (break_op_found)
-                                DNBLogError("MachProcess::DisableBreakpoint ( breakID = %d, remove = %d ) addr = 0x%8.8llx: failed to restore original opcode", breakID, remove, (uint64_t)addr);
+                                DNBLogError("MachProcess::DisableBreakpoint ( addr = 0x%8.8llx, remove = %d ) : failed to restore original opcode", (uint64_t)addr, remove);
                             else
-                                DNBLogError("MachProcess::DisableBreakpoint ( breakID = %d, remove = %d ) addr = 0x%8.8llx: opcode changed", breakID, remove, (uint64_t)addr);
+                                DNBLogError("MachProcess::DisableBreakpoint ( addr = 0x%8.8llx, remove = %d ) : opcode changed", (uint64_t)addr, remove);
                         }
                     }
                     else
@@ -954,20 +916,24 @@ MachProcess::DisableBreakpoint(nub_break_t breakID, bool remove)
     }
     else
     {
-        DNBLogError("MachProcess::DisableBreakpoint ( breakID = %d, remove = %d ) invalid breakpoint ID", breakID, remove);
+        DNBLogError("MachProcess::DisableBreakpoint ( addr = 0x%8.8llx, remove = %d ) invalid breakpoint address", (uint64_t)addr, remove);
     }
     return false;
 }
 
 bool
-MachProcess::DisableWatchpoint(nub_watch_t watchID, bool remove)
+MachProcess::DisableWatchpoint(nub_addr_t addr, bool remove)
 {
-    DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::%s(watchID = %d, remove = %d)", __FUNCTION__, watchID, remove);
-    DNBBreakpoint *wp = m_watchpoints.FindByID (watchID);
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::%s(addr = 0x%8.8llx, remove = %d)", __FUNCTION__, (uint64_t)addr, remove);
+    DNBBreakpoint *wp = m_watchpoints.FindByAddress(addr);
     if (wp)
     {
+        // If we have multiple references to a watchpoint, removing the watchpoint shouldn't clear it
+        if (remove && wp->Release() > 0)
+            return true;
+
         nub_addr_t addr = wp->Address();
-        DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::DisableWatchpoint ( watchID = %d, remove = %d ) addr = 0x%8.8llx", watchID, remove, (uint64_t)addr);
+        DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::DisableWatchpoint ( addr = 0x%8.8llx, remove = %d )", (uint64_t)addr, remove);
 
         if (wp->IsHardware())
         {
@@ -977,8 +943,8 @@ MachProcess::DisableWatchpoint(nub_watch_t watchID, bool remove)
             {
                 wp->SetEnabled(false);
                 if (remove)
-                    m_watchpoints.Remove(watchID);
-                DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::Disablewatchpoint ( watchID = %d, remove = %d ) addr = 0x%8.8llx (hardware) => success", watchID, remove, (uint64_t)addr);
+                    m_watchpoints.Remove(addr);
+                DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::Disablewatchpoint ( addr = 0x%8.8llx, remove = %d ) (hardware) => success", (uint64_t)addr, remove);
                 return true;
             }
         }
@@ -987,49 +953,11 @@ MachProcess::DisableWatchpoint(nub_watch_t watchID, bool remove)
     }
     else
     {
-        DNBLogError("MachProcess::DisableWatchpoint ( watchID = %d, remove = %d ) invalid watchpoint ID", watchID, remove);
+        DNBLogError("MachProcess::DisableWatchpoint ( addr = 0x%8.8llx, remove = %d ) invalid watchpoint ID", (uint64_t)addr, remove);
     }
     return false;
 }
 
-
-void
-MachProcess::DumpBreakpoint(nub_break_t breakID) const
-{
-    DNBLogThreaded("MachProcess::DumpBreakpoint(breakID = %d)", breakID);
-
-    if (NUB_BREAK_ID_IS_VALID(breakID))
-    {
-        const DNBBreakpoint *bp = m_breakpoints.FindByID(breakID);
-        if (bp)
-            bp->Dump();
-        else
-            DNBLog("MachProcess::DumpBreakpoint(breakID = %d): invalid breakID", breakID);
-    }
-    else
-    {
-        m_breakpoints.Dump();
-    }
-}
-
-void
-MachProcess::DumpWatchpoint(nub_watch_t watchID) const
-{
-    DNBLogThreaded("MachProcess::DumpWatchpoint(watchID = %d)", watchID);
-
-    if (NUB_BREAK_ID_IS_VALID(watchID))
-    {
-        const DNBBreakpoint *wp = m_watchpoints.FindByID(watchID);
-        if (wp)
-            wp->Dump();
-        else
-            DNBLog("MachProcess::DumpWatchpoint(watchID = %d): invalid watchID", watchID);
-    }
-    else
-    {
-        m_watchpoints.Dump();
-    }
-}
 
 uint32_t
 MachProcess::GetNumSupportedHardwareWatchpoints () const
@@ -1038,16 +966,15 @@ MachProcess::GetNumSupportedHardwareWatchpoints () const
 }
 
 bool
-MachProcess::EnableBreakpoint(nub_break_t breakID)
+MachProcess::EnableBreakpoint(nub_addr_t addr)
 {
-    DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::EnableBreakpoint ( breakID = %d )", breakID);
-    DNBBreakpoint *bp = m_breakpoints.FindByID (breakID);
+    DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::EnableBreakpoint ( addr = 0x%8.8llx )", (uint64_t)addr);
+    DNBBreakpoint *bp = m_breakpoints.FindByAddress(addr);
     if (bp)
     {
-        nub_addr_t addr = bp->Address();
         if (bp->IsEnabled())
         {
-            DNBLogWarning("MachProcess::EnableBreakpoint ( breakID = %d ) addr = 0x%8.8llx: breakpoint already enabled.", breakID, (uint64_t)addr);
+            DNBLogWarning("MachProcess::EnableBreakpoint ( addr = 0x%8.8llx ): breakpoint already enabled.", (uint64_t)addr);
             return true;
         }
         else
@@ -1081,32 +1008,32 @@ MachProcess::EnableBreakpoint(nub_break_t breakID)
                                 bp->SetEnabled(true);
                                 // Let the thread list know that a breakpoint has been modified
                                 m_thread_list.NotifyBreakpointChanged(bp);
-                                DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::EnableBreakpoint ( breakID = %d ) addr = 0x%8.8llx: SUCCESS.", breakID, (uint64_t)addr);
+                                DNBLogThreadedIf(LOG_BREAKPOINTS, "MachProcess::EnableBreakpoint ( addr = 0x%8.8llx ) : SUCCESS.", (uint64_t)addr);
                                 return true;
                             }
                             else
                             {
-                                DNBLogError("MachProcess::EnableBreakpoint ( breakID = %d ) addr = 0x%8.8llx: breakpoint opcode verification failed.", breakID, (uint64_t)addr);
+                                DNBLogError("MachProcess::EnableBreakpoint ( addr = 0x%8.8llx ): breakpoint opcode verification failed.", (uint64_t)addr);
                             }
                         }
                         else
                         {
-                            DNBLogError("MachProcess::EnableBreakpoint ( breakID = %d ) addr = 0x%8.8llx: unable to read memory to verify breakpoint opcode.", breakID, (uint64_t)addr);
+                            DNBLogError("MachProcess::EnableBreakpoint ( addr = 0x%8.8llx ): unable to read memory to verify breakpoint opcode.", (uint64_t)addr);
                         }
                     }
                     else
                     {
-                        DNBLogError("MachProcess::EnableBreakpoint ( breakID = %d ) addr = 0x%8.8llx: unable to write breakpoint opcode to memory.", breakID, (uint64_t)addr);
+                        DNBLogError("MachProcess::EnableBreakpoint ( addr = 0x%8.8llx ): unable to write breakpoint opcode to memory.", (uint64_t)addr);
                     }
                 }
                 else
                 {
-                    DNBLogError("MachProcess::EnableBreakpoint ( breakID = %d ) addr = 0x%8.8llx: unable to read memory at breakpoint address.", breakID, (uint64_t)addr);
+                    DNBLogError("MachProcess::EnableBreakpoint ( addr = 0x%8.8llx ): unable to read memory at breakpoint address.", (uint64_t)addr);
                 }
             }
             else
             {
-                DNBLogError("MachProcess::EnableBreakpoint ( breakID = %d ) no software breakpoint opcode for current architecture.", breakID);
+                DNBLogError("MachProcess::EnableBreakpoint ( addr = 0x%8.8llx ) no software breakpoint opcode for current architecture.", (uint64_t)addr);
             }
         }
     }
@@ -1114,16 +1041,16 @@ MachProcess::EnableBreakpoint(nub_break_t breakID)
 }
 
 bool
-MachProcess::EnableWatchpoint(nub_watch_t watchID)
+MachProcess::EnableWatchpoint(nub_addr_t addr)
 {
-    DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::EnableWatchpoint(watchID = %d)", watchID);
-    DNBBreakpoint *wp = m_watchpoints.FindByID (watchID);
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "MachProcess::EnableWatchpoint(addr = 0x%8.8llx)", (uint64_t)addr);
+    DNBBreakpoint *wp = m_watchpoints.FindByAddress(addr);
     if (wp)
     {
         nub_addr_t addr = wp->Address();
         if (wp->IsEnabled())
         {
-            DNBLogWarning("MachProcess::EnableWatchpoint(watchID = %d) addr = 0x%8.8llx: watchpoint already enabled.", watchID, (uint64_t)addr);
+            DNBLogWarning("MachProcess::EnableWatchpoint(addr = 0x%8.8llx): watchpoint already enabled.", (uint64_t)addr);
             return true;
         }
         else

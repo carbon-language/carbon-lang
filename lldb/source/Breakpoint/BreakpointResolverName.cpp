@@ -188,7 +188,7 @@ BreakpointResolverName::SearchCallback
 )
 {
     SymbolContextList func_list;
-    SymbolContextList sym_list;
+    //SymbolContextList sym_list;
     
     uint32_t i;
     bool new_location;
@@ -203,11 +203,10 @@ BreakpointResolverName::SearchCallback
             log->Warning ("Class/method function specification not supported yet.\n");
         return Searcher::eCallbackReturnStop;
     }
-    
-    const bool include_symbols = false;
+    bool filter_by_cu = (filter.GetFilterRequiredItems() & eSymbolContextCompUnit) != 0;
+    const bool include_symbols = filter_by_cu == false;
     const bool include_inlines = true;
     const bool append = true;
-    bool filter_by_cu = (filter.GetFilterRequiredItems() & eSymbolContextCompUnit) != 0;
 
     switch (m_match_type)
     {
@@ -228,26 +227,14 @@ BreakpointResolverName::SearchCallback
 
                     if (start_func_idx < end_func_idx)
                         lookup.Prune (func_list, start_func_idx);
-                    // If the search filter specifies a Compilation Unit, then we don't need to bother to look in plain
-                    // symbols, since all the ones from a set compilation unit will have been found above already.
-                    else if (!filter_by_cu)
-                    {
-                        const size_t start_symbol_idx = sym_list.GetSize();
-                        context.module_sp->FindFunctionSymbols (lookup.lookup_name, lookup.name_type_mask, sym_list);
-                        const size_t end_symbol_idx = sym_list.GetSize();
-                        if (start_symbol_idx < end_symbol_idx)
-                            lookup.Prune (func_list, start_symbol_idx);
-                    }
                 }
             }
             break;
         case Breakpoint::Regexp:
             if (context.module_sp)
             {
-                if (!filter_by_cu)
-                    context.module_sp->FindSymbolsMatchingRegExAndType (m_regex, eSymbolTypeCode, sym_list);
-                context.module_sp->FindFunctions (m_regex, 
-                                                  include_symbols,
+                context.module_sp->FindFunctions (m_regex,
+                                                  !filter_by_cu, // include symbols only if we aren't filterning by CU
                                                   include_inlines, 
                                                   append, 
                                                   func_list);
@@ -283,33 +270,6 @@ BreakpointResolverName::SearchCallback
     {
         for (i = 0; i < func_list.GetSize(); i++)
         {
-            if (func_list.GetContextAtIndex(i, sc) == false)
-                continue;
-            
-            if (sc.function == NULL)
-                continue;
-            uint32_t j = 0;
-            while (j < sym_list.GetSize())
-            {
-                SymbolContext symbol_sc;
-                if (sym_list.GetContextAtIndex(j, symbol_sc))
-                {
-                    if (symbol_sc.symbol && symbol_sc.symbol->ValueIsAddress())
-                    {
-                        if (sc.function->GetAddressRange().GetBaseAddress() == symbol_sc.symbol->GetAddress())
-                        {
-                            sym_list.RemoveContextAtIndex(j);
-                            continue;   // Don't increment j
-                        }
-                    }
-                }
-                
-                j++;
-            }
-        }
-        
-        for (i = 0; i < func_list.GetSize(); i++)
-        {
             if (func_list.GetContextAtIndex(i, sc))
             {
                 if (sc.block && sc.block->GetInlinedFunctionInfo())
@@ -320,14 +280,21 @@ BreakpointResolverName::SearchCallback
                 else if (sc.function)
                 {
                     break_addr = sc.function->GetAddressRange().GetBaseAddress();
-                    if (m_skip_prologue)
+                    if (m_skip_prologue && break_addr.IsValid())
                     {
-                        if (break_addr.IsValid())
-                        {
-                            const uint32_t prologue_byte_size = sc.function->GetPrologueByteSize();
-                            if (prologue_byte_size)
-                                break_addr.SetOffset(break_addr.GetOffset() + prologue_byte_size);
-                        }
+                        const uint32_t prologue_byte_size = sc.function->GetPrologueByteSize();
+                        if (prologue_byte_size)
+                            break_addr.SetOffset(break_addr.GetOffset() + prologue_byte_size);
+                    }
+                }
+                else if (sc.symbol)
+                {
+                    break_addr = sc.symbol->GetAddress();
+                    if (m_skip_prologue && break_addr.IsValid())
+                    {
+                        const uint32_t prologue_byte_size = sc.symbol->GetPrologueByteSize();
+                        if (prologue_byte_size)
+                            break_addr.SetOffset(break_addr.GetOffset() + prologue_byte_size);
                     }
                 }
                 
@@ -351,35 +318,6 @@ BreakpointResolverName::SearchCallback
         }
     }
     
-    for (i = 0; i < sym_list.GetSize(); i++)
-    {
-        if (sym_list.GetContextAtIndex(i, sc))
-        {
-            if (sc.symbol && sc.symbol->ValueIsAddress())
-            {
-                break_addr = sc.symbol->GetAddress();
-                
-                if (m_skip_prologue)
-                {
-                    const uint32_t prologue_byte_size = sc.symbol->GetPrologueByteSize();
-                    if (prologue_byte_size)
-                        break_addr.SetOffset(break_addr.GetOffset() + prologue_byte_size);
-                }
-                
-                if (filter.AddressPasses(break_addr))
-                {
-                    BreakpointLocationSP bp_loc_sp (m_breakpoint->AddLocation(break_addr, &new_location));
-                    if (bp_loc_sp && new_location && !m_breakpoint->IsInternal())
-                    {
-                        StreamString s;
-                        bp_loc_sp->GetDescription(&s, lldb::eDescriptionLevelVerbose);
-                        if (log) 
-                            log->Printf ("Added location: %s\n", s.GetData());
-                    }
-                }
-            }
-        }
-    }
     return Searcher::eCallbackReturnContinue;
 }
 

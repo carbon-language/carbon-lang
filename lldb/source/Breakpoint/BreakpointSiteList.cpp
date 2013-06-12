@@ -20,6 +20,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 BreakpointSiteList::BreakpointSiteList() :
+    m_mutex (Mutex::eMutexTypeRecursive),
     m_bp_site_list()
 {
 }
@@ -35,6 +36,7 @@ lldb::break_id_t
 BreakpointSiteList::Add(const BreakpointSiteSP &bp)
 {
     lldb::addr_t bp_site_load_addr = bp->GetLoadAddress();
+    Mutex::Locker locker(m_mutex);
     collection::iterator iter = m_bp_site_list.find (bp_site_load_addr);
 
     if (iter == m_bp_site_list.end())
@@ -79,6 +81,7 @@ BreakpointSiteList::FindIDByAddress (lldb::addr_t addr)
 bool
 BreakpointSiteList::Remove (lldb::break_id_t break_id)
 {
+    Mutex::Locker locker(m_mutex);
     collection::iterator pos = GetIDIterator(break_id);    // Predicate
     if (pos != m_bp_site_list.end())
     {
@@ -91,6 +94,7 @@ BreakpointSiteList::Remove (lldb::break_id_t break_id)
 bool
 BreakpointSiteList::RemoveByAddress (lldb::addr_t address)
 {
+    Mutex::Locker locker(m_mutex);
     collection::iterator pos =  m_bp_site_list.find(address);
     if (pos != m_bp_site_list.end())
     {
@@ -120,6 +124,7 @@ private:
 BreakpointSiteList::collection::iterator
 BreakpointSiteList::GetIDIterator (lldb::break_id_t break_id)
 {
+    Mutex::Locker locker(m_mutex);
     return std::find_if(m_bp_site_list.begin(), m_bp_site_list.end(),   // Search full range
                         BreakpointSiteIDMatches(break_id));             // Predicate
 }
@@ -127,6 +132,7 @@ BreakpointSiteList::GetIDIterator (lldb::break_id_t break_id)
 BreakpointSiteList::collection::const_iterator
 BreakpointSiteList::GetIDConstIterator (lldb::break_id_t break_id) const
 {
+    Mutex::Locker locker(m_mutex);
     return std::find_if(m_bp_site_list.begin(), m_bp_site_list.end(),   // Search full range
                         BreakpointSiteIDMatches(break_id));             // Predicate
 }
@@ -134,6 +140,7 @@ BreakpointSiteList::GetIDConstIterator (lldb::break_id_t break_id) const
 BreakpointSiteSP
 BreakpointSiteList::FindByID (lldb::break_id_t break_id)
 {
+    Mutex::Locker locker(m_mutex);
     BreakpointSiteSP stop_sp;
     collection::iterator pos = GetIDIterator(break_id);
     if (pos != m_bp_site_list.end())
@@ -145,6 +152,7 @@ BreakpointSiteList::FindByID (lldb::break_id_t break_id)
 const BreakpointSiteSP
 BreakpointSiteList::FindByID (lldb::break_id_t break_id) const
 {
+    Mutex::Locker locker(m_mutex);
     BreakpointSiteSP stop_sp;
     collection::const_iterator pos = GetIDConstIterator(break_id);
     if (pos != m_bp_site_list.end())
@@ -157,7 +165,7 @@ BreakpointSiteSP
 BreakpointSiteList::FindByAddress (lldb::addr_t addr)
 {
     BreakpointSiteSP found_sp;
-
+    Mutex::Locker locker(m_mutex);
     collection::iterator iter =  m_bp_site_list.find(addr);
     if (iter != m_bp_site_list.end())
         found_sp = iter->second;
@@ -167,6 +175,7 @@ BreakpointSiteList::FindByAddress (lldb::addr_t addr)
 bool
 BreakpointSiteList::BreakpointSiteContainsBreakpoint (lldb::break_id_t bp_site_id, lldb::break_id_t bp_id)
 {
+    Mutex::Locker locker(m_mutex);
     collection::const_iterator pos = GetIDConstIterator(bp_site_id);
     if (pos != m_bp_site_list.end())
         return pos->second->IsBreakpointAtThisSite (bp_id);
@@ -188,44 +197,21 @@ BreakpointSiteList::Dump (Stream *s) const
     s->IndentLess();
 }
 
-
-BreakpointSiteSP
-BreakpointSiteList::GetByIndex (uint32_t i)
+void
+BreakpointSiteList::ForEach (std::function <void(BreakpointSite *)> const &callback)
 {
-    BreakpointSiteSP stop_sp;
-    collection::iterator end = m_bp_site_list.end();
-    collection::iterator pos;
-    uint32_t curr_i = 0;
-    for (pos = m_bp_site_list.begin(), curr_i = 0; pos != end; ++pos, ++curr_i)
-    {
-        if (curr_i == i)
-            stop_sp = pos->second;
-    }
-    return stop_sp;
-}
-
-const BreakpointSiteSP
-BreakpointSiteList::GetByIndex (uint32_t i) const
-{
-    BreakpointSiteSP stop_sp;
-    collection::const_iterator end = m_bp_site_list.end();
-    collection::const_iterator pos;
-    uint32_t curr_i = 0;
-    for (pos = m_bp_site_list.begin(), curr_i = 0; pos != end; ++pos, ++curr_i)
-    {
-        if (curr_i == i)
-            stop_sp = pos->second;
-    }
-    return stop_sp;
+    Mutex::Locker locker(m_mutex);
+    for (auto pair : m_bp_site_list)
+        callback (pair.second.get());
 }
 
 bool
 BreakpointSiteList::FindInRange (lldb::addr_t lower_bound, lldb::addr_t upper_bound, BreakpointSiteList &bp_site_list) const
 {
-        
     if (lower_bound > upper_bound)
         return false;
     
+    Mutex::Locker locker(m_mutex);
     collection::const_iterator lower, upper, pos;
     lower = m_bp_site_list.lower_bound(lower_bound);
     if (lower == m_bp_site_list.end()
@@ -251,25 +237,4 @@ BreakpointSiteList::FindInRange (lldb::addr_t lower_bound, lldb::addr_t upper_bo
         bp_site_list.Add ((*pos).second);
     }
     return true;
-}
-
-
-void
-BreakpointSiteList::SetEnabledForAll (const bool enabled, const lldb::break_id_t except_id)
-{
-    collection::iterator end = m_bp_site_list.end();
-    collection::iterator pos;
-    for (pos = m_bp_site_list.begin(); pos != end; ++pos)
-    {
-        if (except_id != LLDB_INVALID_BREAK_ID && except_id != pos->second->GetID())
-            pos->second->SetEnabled (enabled);
-        else
-            pos->second->SetEnabled (!enabled);
-    }
-}
-
-const BreakpointSiteList::collection *
-BreakpointSiteList::GetMap ()
-{
-    return &m_bp_site_list;
 }
