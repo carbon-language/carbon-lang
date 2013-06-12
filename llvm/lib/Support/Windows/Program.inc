@@ -170,7 +170,7 @@ static unsigned int ArgLenWithQuotes(const char *Str) {
 
 }
 
-static bool Execute(Void *&Data,
+static bool Execute(void *&Data,
                     const Path& path,
                     const char** args,
                     const char** envp,
