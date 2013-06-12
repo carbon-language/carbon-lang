@@ -16,7 +16,7 @@
 /// executable file. Currently it can only output ".text" section; other
 /// sections including the symbol table are silently ignored.
 ///
-/// This writer currently supports 32 bit PE/COFF only.
+/// This writer currently supports 32 bit PE/COFF for x86 processor only.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -43,6 +43,14 @@ namespace lld {
 namespace pecoff {
 
 namespace {
+
+// Page size of x86 processor. Some data needs to be aligned at page boundary
+// when loaded into memory.
+const int PAGE_SIZE = 4096;
+
+// Disk sector size. Some data needs to be aligned at disk sector boundary in
+// file.
+const int SECTOR_SIZE = 512;
 
 /// A Chunk is an abstrace contiguous range in an output file.
 class Chunk {
@@ -131,10 +139,10 @@ public:
 
     // Sections should be page-aligned when loaded into memory, which is 4KB on
     // x86.
-    _peHeader.SectionAlignment = 4096;
+    _peHeader.SectionAlignment = PAGE_SIZE;
 
     // Sections in an executable file on disk should be sector-aligned (512 byte).
-    _peHeader.FileAlignment = 512;
+    _peHeader.FileAlignment = SECTOR_SIZE;
 
     // The required Windows version number. This is the internal version and
     // shouldn't be confused with product name. Windows 7 is version 6.1 and
@@ -289,7 +297,7 @@ public:
   TextSectionChunk(const File &linkedFile)
       : SectionChunk(createSectionHeader()) {
     // The text section should be aligned to disk sector.
-    _align = 512;
+    _align = SECTOR_SIZE;
 
     // Extract executable atoms from the linked file and append them to this
     // section.
