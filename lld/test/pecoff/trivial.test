@@ -1,3 +1,7 @@
+# Checks functionality of PECOFF writer. "nop.obj" is an object that has only
+# text section. Other data, including data sections, relocations, symbol
+# tables are not present in nop.obj.
+#
 # RUN: lld -flavor link -out %t1 -subsystem console,3.11 -- %p/Inputs/nop.obj \
 # RUN:   && llvm-readobj -file-headers %t1 | FileCheck -check-prefix=FILE %s
 
