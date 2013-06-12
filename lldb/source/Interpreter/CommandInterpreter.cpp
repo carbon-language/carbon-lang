@@ -1698,8 +1698,10 @@ CommandInterpreter::HandleCommand (const char *command_line,
             if (!suffix.empty())
             {
 
-                result.AppendErrorWithFormat ("multi-word commands ('%s') can't have shorthand suffixes: '%s'\n", 
-                                              next_word.c_str(),
+                result.AppendErrorWithFormat ("command '%s' did not recognize '%s%s%s' as valid (subcommand might be invalid).\n",
+                                              cmd_obj->GetCommandName(),
+                                              next_word.empty() ? "" : next_word.c_str(),
+                                              next_word.empty() ? " -- " : " ",
                                               suffix.c_str());
                 result.SetStatus (eReturnStatusFailed);
                 return false;
