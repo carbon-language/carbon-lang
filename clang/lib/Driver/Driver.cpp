@@ -1599,12 +1599,11 @@ std::string Driver::GetProgramPath(const char *Name,
   }
 
   // If all else failed, search the path.
-  llvm::sys::Path
-      P(llvm::sys::Program::FindProgramByName(TargetSpecificExecutable));
+  llvm::sys::Path P(llvm::sys::FindProgramByName(TargetSpecificExecutable));
   if (!P.empty())
     return P.str();
 
-  P = llvm::sys::Path(llvm::sys::Program::FindProgramByName(Name));
+  P = llvm::sys::Path(llvm::sys::FindProgramByName(Name));
   if (!P.empty())
     return P.str();
 
