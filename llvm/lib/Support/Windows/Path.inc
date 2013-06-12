@@ -21,7 +21,6 @@
 #include <malloc.h>
 
 // We need to undo a macro defined in Windows.h, otherwise we won't compile:
-#undef CopyFile
 #undef GetCurrentDirectory
 
 // Windows happily accepts either forward or backward slashes, though any path
@@ -727,16 +726,6 @@ Path::setStatusInfoOnDisk(const FileStatus &si, std::string *ErrMsg) const {
     }
   }
 
-  return false;
-}
-
-bool
-CopyFile(const sys::Path &Dest, const sys::Path &Src, std::string* ErrMsg) {
-  // Can't use CopyFile macro defined in Windows.h because it would mess up the
-  // above line.  We use the expansion it would have in a non-UNICODE build.
-  if (!::CopyFileA(Src.c_str(), Dest.c_str(), false))
-    return MakeErrMsg(ErrMsg, "Can't copy '" + Src.str() +
-               "' to '" + Dest.str() + "': ");
   return false;
 }
 

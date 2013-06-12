@@ -592,12 +592,6 @@ namespace sys {
     /// @}
   };
 
-  /// This function can be used to copy the file specified by Src to the
-  /// file specified by Dest. If an error occurs, Dest is removed.
-  /// @returns true if an error occurs, false otherwise
-  /// @brief Copy one file to another.
-  bool CopyFile(const Path& Dest, const Path& Src, std::string* ErrMsg);
-
   /// This is the OS-specific path separator: a colon on Unix or a semicolon
   /// on Windows.
   extern const char PathSeparator;

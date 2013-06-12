@@ -667,53 +667,6 @@ Path::setStatusInfoOnDisk(const FileStatus &si, std::string *ErrStr) const {
 }
 
 bool
-sys::CopyFile(const sys::Path &Dest, const sys::Path &Src, std::string* ErrMsg){
-  int inFile = -1;
-  int outFile = -1;
-  inFile = ::open(Src.c_str(), O_RDONLY);
-  if (inFile == -1)
-    return MakeErrMsg(ErrMsg, Src.str() +
-      ": can't open source file to copy");
-
-  outFile = ::open(Dest.c_str(), O_WRONLY|O_CREAT, 0666);
-  if (outFile == -1) {
-    ::close(inFile);
-    return MakeErrMsg(ErrMsg, Dest.str() +
-      ": can't create destination file for copy");
-  }
-
-  char Buffer[16*1024];
-  while (ssize_t Amt = ::read(inFile, Buffer, 16*1024)) {
-    if (Amt == -1) {
-      if (errno != EINTR && errno != EAGAIN) {
-        ::close(inFile);
-        ::close(outFile);
-        return MakeErrMsg(ErrMsg, Src.str()+": can't read source file");
-      }
-    } else {
-      char *BufPtr = Buffer;
-      while (Amt) {
-        ssize_t AmtWritten = ::write(outFile, BufPtr, Amt);
-        if (AmtWritten == -1) {
-          if (errno != EINTR && errno != EAGAIN) {
-            ::close(inFile);
-            ::close(outFile);
-            return MakeErrMsg(ErrMsg, Dest.str() +
-              ": can't write destination file");
-          }
-        } else {
-          Amt -= AmtWritten;
-          BufPtr += AmtWritten;
-        }
-      }
-    }
-  }
-  ::close(inFile);
-  ::close(outFile);
-  return false;
-}
-
-bool
 Path::makeUnique(bool reuse_current, std::string* ErrMsg) {
   bool Exists;
   if (reuse_current && (fs::exists(path, Exists) || !Exists))
