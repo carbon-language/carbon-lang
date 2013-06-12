@@ -149,7 +149,7 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
   assert(PerformInit && "cannot have constant initializer which needs "
          "destruction for reference");
   unsigned Alignment = getContext().getDeclAlign(&D).getQuantity();
-  RValue RV = EmitReferenceBindingToExpr(Init, &D);
+  RValue RV = EmitReferenceBindingToExpr(Init);
   EmitStoreOfScalar(RV.getScalarVal(), DeclPtr, false, Alignment, T);
 }
 

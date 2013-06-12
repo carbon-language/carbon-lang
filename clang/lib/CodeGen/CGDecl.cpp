@@ -1160,7 +1160,7 @@ void CodeGenFunction::EmitExprAsInit(const Expr *init,
   QualType type = D->getType();
 
   if (type->isReferenceType()) {
-    RValue rvalue = EmitReferenceBindingToExpr(init, D);
+    RValue rvalue = EmitReferenceBindingToExpr(init);
     if (capturedByInit)
       drillIntoBlockVariable(*this, lvalue, cast<VarDecl>(D));
     EmitStoreThroughLValue(rvalue, lvalue, true);

@@ -1062,7 +1062,7 @@ AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {
   } else if (isa<ImplicitValueInitExpr>(E) || isa<CXXScalarValueInitExpr>(E)) {
     return EmitNullInitializationToLValue(LV);
   } else if (type->isReferenceType()) {
-    RValue RV = CGF.EmitReferenceBindingToExpr(E, /*InitializedDecl=*/0);
+    RValue RV = CGF.EmitReferenceBindingToExpr(E);
     return CGF.EmitStoreThroughLValue(RV, LV);
   }
   

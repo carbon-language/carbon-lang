@@ -2238,10 +2238,8 @@ public:
   void EmitObjCAutoreleasePoolCleanup(llvm::Value *Ptr);
   void EmitObjCMRRAutoreleasePoolPop(llvm::Value *Ptr); 
 
-  /// EmitReferenceBindingToExpr - Emits a reference binding to the passed in
-  /// expression. Will emit a temporary variable if E is not an LValue.
-  RValue EmitReferenceBindingToExpr(const Expr* E,
-                                    const NamedDecl *InitializedDecl);
+  /// \brief Emits a reference binding to the passed in expression.
+  RValue EmitReferenceBindingToExpr(const Expr *E);
 
   //===--------------------------------------------------------------------===//
   //                           Expression Emission

@@ -309,40 +309,22 @@ createReferenceTemporary(CodeGenFunction &CGF,
   llvm_unreachable("unknown storage duration");
 }
 
-static llvm::Value *
-emitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
-                            const NamedDecl *InitializedDecl) {
-  if (const ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(E)) {
-    CGF.enterFullExpression(EWC);
-    CodeGenFunction::RunCleanupsScope Scope(CGF);
-    return emitExprForReferenceBinding(CGF, EWC->getSubExpr(), InitializedDecl);
-  }
+LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
+                                           const MaterializeTemporaryExpr *M) {
+  const Expr *E = M->GetTemporaryExpr();
 
-  const MaterializeTemporaryExpr *M = 0;
-  E = E->findMaterializedTemporary(M);
-
-  if (E->isGLValue()) {
-    // Emit the expression as an lvalue.
-    LValue LV = CGF.EmitLValue(E);
-    assert(LV.isSimple());
-    return LV.getAddress();
-  }
-
-  assert(M && "prvalue reference initializer but not a materialized temporary");
-
-  if (CGF.getLangOpts().ObjCAutoRefCount &&
+  if (getLangOpts().ObjCAutoRefCount &&
       M->getType()->isObjCLifetimeType() &&
       M->getType().getObjCLifetime() != Qualifiers::OCL_None &&
       M->getType().getObjCLifetime() != Qualifiers::OCL_ExplicitNone) {
     // FIXME: Fold this into the general case below.
-    llvm::Value *Object = createReferenceTemporary(CGF, M, E);
-    LValue RefTempDst = CGF.MakeAddrLValue(Object, M->getType());
+    llvm::Value *Object = createReferenceTemporary(*this, M, E);
+    LValue RefTempDst = MakeAddrLValue(Object, M->getType());
 
-    CGF.EmitScalarInit(E, dyn_cast_or_null<ValueDecl>(InitializedDecl),
-                       RefTempDst, false);
+    EmitScalarInit(E, M->getExtendingDecl(), RefTempDst, false);
 
-    pushTemporaryCleanup(CGF, M, E, Object);
-    return Object;
+    pushTemporaryCleanup(*this, M, E, Object);
+    return RefTempDst;
   }
 
   SmallVector<const Expr *, 2> CommaLHSs;
@@ -350,19 +332,19 @@ emitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
   E = E->skipRValueSubobjectAdjustments(CommaLHSs, Adjustments);
 
   for (unsigned I = 0, N = CommaLHSs.size(); I != N; ++I)
-    CGF.EmitIgnoredExpr(CommaLHSs[I]);
+    EmitIgnoredExpr(CommaLHSs[I]);
 
   if (const OpaqueValueExpr *opaque = dyn_cast<OpaqueValueExpr>(E)) {
     if (opaque->getType()->isRecordType()) {
       assert(Adjustments.empty());
-      return CGF.EmitOpaqueValueLValue(opaque).getAddress();
+      return EmitOpaqueValueLValue(opaque);
     }
   }
 
   // Create and initialize the reference temporary.
-  llvm::Value *Object = createReferenceTemporary(CGF, M, E);
-  CGF.EmitAnyExprToMem(E, Object, Qualifiers(), /*IsInit*/true);
-  pushTemporaryCleanup(CGF, M, E, Object);
+  llvm::Value *Object = createReferenceTemporary(*this, M, E);
+  EmitAnyExprToMem(E, Object, Qualifiers(), /*IsInit*/true);
+  pushTemporaryCleanup(*this, M, E, Object);
 
   // Perform derived-to-base casts and/or field accesses, to get from the
   // temporary object we created (and, potentially, for which we extended
@@ -372,16 +354,15 @@ emitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
     switch (Adjustment.Kind) {
     case SubobjectAdjustment::DerivedToBaseAdjustment:
       Object =
-          CGF.GetAddressOfBaseClass(Object,
-                                    Adjustment.DerivedToBase.DerivedClass,
-                          Adjustment.DerivedToBase.BasePath->path_begin(),
-                          Adjustment.DerivedToBase.BasePath->path_end(),
-                                    /*NullCheckValue=*/false);
+          GetAddressOfBaseClass(Object, Adjustment.DerivedToBase.DerivedClass,
+                                Adjustment.DerivedToBase.BasePath->path_begin(),
+                                Adjustment.DerivedToBase.BasePath->path_end(),
+                                /*NullCheckValue=*/ false);
       break;
 
     case SubobjectAdjustment::FieldAdjustment: {
-      LValue LV = CGF.MakeAddrLValue(Object, E->getType());
-      LV = CGF.EmitLValueForField(LV, Adjustment.Field);
+      LValue LV = MakeAddrLValue(Object, E->getType());
+      LV = EmitLValueForField(LV, Adjustment.Field);
       assert(LV.isSimple() &&
              "materialized temporary field is not a simple lvalue");
       Object = LV.getAddress();
@@ -389,21 +370,23 @@ emitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
     }
 
     case SubobjectAdjustment::MemberPointerAdjustment: {
-      llvm::Value *Ptr = CGF.EmitScalarExpr(Adjustment.Ptr.RHS);
-      Object = CGF.CGM.getCXXABI().EmitMemberDataPointerAddress(
-                    CGF, Object, Ptr, Adjustment.Ptr.MPT);
+      llvm::Value *Ptr = EmitScalarExpr(Adjustment.Ptr.RHS);
+      Object = CGM.getCXXABI().EmitMemberDataPointerAddress(
+                    *this, Object, Ptr, Adjustment.Ptr.MPT);
       break;
     }
     }
   }
 
-  return Object;
+  return MakeAddrLValue(Object, M->getType());
 }
 
 RValue
-CodeGenFunction::EmitReferenceBindingToExpr(const Expr *E,
-                                            const NamedDecl *InitializedDecl) {
-  llvm::Value *Value = emitExprForReferenceBinding(*this, E, InitializedDecl);
+CodeGenFunction::EmitReferenceBindingToExpr(const Expr *E) {
+  // Emit the expression as an lvalue.
+  LValue LV = EmitLValue(E);
+  assert(LV.isSimple());
+  llvm::Value *Value = LV.getAddress();
 
   if (SanitizePerformTypeCheck && !E->getType()->isFunctionType()) {
     // C++11 [dcl.ref]p5 (as amended by core issue 453):
@@ -2829,12 +2812,6 @@ LValue CodeGenFunction::EmitNullInitializationLValue(
 LValue CodeGenFunction::EmitOpaqueValueLValue(const OpaqueValueExpr *e) {
   assert(OpaqueValueMappingData::shouldBindAsLValue(e));
   return getOpaqueLValueMapping(e);
-}
-
-LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
-                                           const MaterializeTemporaryExpr *E) {
-  RValue RV = EmitReferenceBindingToExpr(E, /*InitializedDecl=*/0);
-  return MakeAddrLValue(RV.getScalarVal(), E->getType());
 }
 
 RValue CodeGenFunction::EmitRValueForField(LValue LV,
