@@ -1,19 +1,27 @@
-; RUN: opt < %s -globalopt -S > %t
-; RUN: cat %t | grep foo1 | count 1
-; RUN: cat %t | grep foo2 | count 4
-; RUN: cat %t | grep bar1 | count 1
-; RUN: cat %t | grep bar2 | count 4
+; RUN: opt < %s -globalopt -S | FileCheck %s
 
 @foo1 = alias void ()* @foo2
+; CHECK: @foo1 = alias void ()* @foo2
+
 @foo2 = alias weak void()* @bar1
+; CHECK: @foo2 = alias weak void ()* @bar2
+
 @bar1  = alias void ()* @bar2
+; CHECK: @bar1 = alias void ()* @bar2
 
 declare void @bar2()
+; CHECK: declare void @bar2()
 
 define void @baz() {
 entry:
-        call void @foo1()
-        call void @foo2()
-        call void @bar1()
-        ret void
+         call void @foo1()
+; CHECK: call void @foo2()
+
+         call void @foo2()
+; CHECK: call void @foo2()
+
+         call void @bar1()
+; CHECK: call void @bar2()
+
+         ret void
 }
