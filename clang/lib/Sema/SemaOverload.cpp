@@ -9766,6 +9766,19 @@ void Sema::AddOverloadedCallCandidates(UnresolvedLookupExpr *ULE,
                                          CandidateSet, PartialOverloading);
 }
 
+/// Determine whether a declaration with the specified name could be moved into
+/// a different namespace.
+static bool canBeDeclaredInNamespace(const DeclarationName &Name) {
+  switch (Name.getCXXOverloadedOperator()) {
+  case OO_New: case OO_Array_New:
+  case OO_Delete: case OO_Array_Delete:
+    return false;
+
+  default:
+    return true;
+  }
+}
+
 /// Attempt to recover from an ill-formed use of a non-dependent name in a
 /// template, where the non-dependent name was declared after the template
 /// was defined. This is common in code written for a compilers which do not
@@ -9818,22 +9831,24 @@ DiagnoseTwoPhaseLookup(Sema &SemaRef, SourceLocation FnLoc,
                                                  AssociatedNamespaces,
                                                  AssociatedClasses);
       Sema::AssociatedNamespaceSet SuggestedNamespaces;
-      DeclContext *Std = SemaRef.getStdNamespace();
-      for (Sema::AssociatedNamespaceSet::iterator
-             it = AssociatedNamespaces.begin(),
-             end = AssociatedNamespaces.end(); it != end; ++it) {
-        // Never suggest declaring a function within namespace 'std'.
-        if (Std && Std->Encloses(*it))
-          continue;
-        
-        // Never suggest declaring a function within a namespace with a reserved
-        // name, like __gnu_cxx.
-        NamespaceDecl *NS = dyn_cast<NamespaceDecl>(*it);
-        if (NS &&
-            NS->getQualifiedNameAsString().find("__") != std::string::npos)
-          continue;
+      if (canBeDeclaredInNamespace(R.getLookupName())) {
+        DeclContext *Std = SemaRef.getStdNamespace();
+        for (Sema::AssociatedNamespaceSet::iterator
+               it = AssociatedNamespaces.begin(),
+               end = AssociatedNamespaces.end(); it != end; ++it) {
+          // Never suggest declaring a function within namespace 'std'.
+          if (Std && Std->Encloses(*it))
+            continue;
 
-        SuggestedNamespaces.insert(*it);
+          // Never suggest declaring a function within a namespace with a
+          // reserved name, like __gnu_cxx.
+          NamespaceDecl *NS = dyn_cast<NamespaceDecl>(*it);
+          if (NS &&
+              NS->getQualifiedNameAsString().find("__") != std::string::npos)
+            continue;
+
+          SuggestedNamespaces.insert(*it);
+        }
       }
 
       SemaRef.Diag(R.getNameLoc(), diag::err_not_found_by_two_phase_lookup)
