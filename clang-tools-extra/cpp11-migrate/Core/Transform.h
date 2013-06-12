@@ -49,6 +49,9 @@ namespace clang {
 namespace tooling {
 class CompilationDatabase;
 } // namespace tooling
+namespace ast_matchers {
+class MatchFinder;
+} // namespace ast_matchers
 } // namespace clang
 
 /// \brief The key is the path of a file, which is mapped to a
@@ -232,6 +235,13 @@ protected:
   void addTiming(llvm::StringRef Label, llvm::TimeRecord Duration);
 
   const TransformOptions &Options() { return GlobalOptions; }
+
+  /// \brief Subclasses call this function to create a FrontendActionFactory to
+  /// pass to ClangTool. The factory returned by this function is responsible
+  /// for overriding source file contents with results of previous transforms.
+  clang::tooling::FrontendActionFactory *
+      createActionFactory(clang::ast_matchers::MatchFinder &Finder,
+                          const FileContentsByPath &InputStates);
 
 private:
   const std::string Name;

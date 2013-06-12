@@ -31,12 +31,6 @@ int LoopConvertTransform::apply(const FileContentsByPath &InputStates,
                                 FileContentsByPath &ResultStates) {
   RefactoringTool LoopTool(Database, SourcePaths);
 
-  for (FileContentsByPath::const_iterator I = InputStates.begin(),
-       E = InputStates.end();
-       I != E; ++I) {
-    LoopTool.mapVirtualFile(I->first, I->second);
-  }
-
   StmtAncestorASTVisitor ParentFinder;
   StmtGeneratedVarNameMap GeneratedDecls;
   ReplacedVarsMap ReplacedVars;
@@ -63,8 +57,7 @@ int LoopConvertTransform::apply(const FileContentsByPath &InputStates,
                                   Options().MaxRiskLevel, LFK_PseudoArray);
   Finder.addMatcher(makePseudoArrayLoopMatcher(), &PseudoarrrayLoopFixer);
 
-  if (int result = LoopTool.run(
-          newFrontendActionFactory(&Finder, /*Callbacks=*/ this))) {
+  if (int result = LoopTool.run(createActionFactory(Finder, InputStates))) {
     llvm::errs() << "Error encountered during translation.\n";
     return result;
   }

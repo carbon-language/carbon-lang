@@ -37,12 +37,6 @@ int AddOverrideTransform::apply(const FileContentsByPath &InputStates,
                                 FileContentsByPath &ResultStates) {
   RefactoringTool AddOverrideTool(Database, SourcePaths);
 
-  for (FileContentsByPath::const_iterator I = InputStates.begin(),
-       E = InputStates.end();
-       I != E; ++I) {
-    AddOverrideTool.mapVirtualFile(I->first, I->second);
-  }
-
   unsigned AcceptedChanges = 0;
 
   MatchFinder Finder;
@@ -53,8 +47,8 @@ int AddOverrideTransform::apply(const FileContentsByPath &InputStates,
 
   Finder.addMatcher(makeCandidateForOverrideAttrMatcher(), &Fixer);
 
-  if (int result = AddOverrideTool.run(
-          newFrontendActionFactory(&Finder, /*Callbacks=*/ this))) {
+  if (int result =
+          AddOverrideTool.run(createActionFactory(Finder, InputStates))) {
     llvm::errs() << "Error encountered during translation.\n";
     return result;
   }

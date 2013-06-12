@@ -1,10 +1,78 @@
 #include "Core/Transform.h"
+#include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
+
+namespace {
+
+using namespace tooling;
+using namespace ast_matchers;
+
+/// \brief Custom FrontendActionFactory to produce FrontendActions that handle
+/// overriding source file contents before parsing.
+///
+/// The nested class FactoryAdaptor overrides BeginSourceFileAction to override
+/// source file contents before parsing happens. Both Begin and
+/// EndSourceFileAction call corresponding callbacks provided by
+/// SourceFileCallbacks.
+class ActionFactory : public clang::tooling::FrontendActionFactory {
+public:
+  ActionFactory(MatchFinder &Finder, const FileContentsByPath &Overrides,
+                SourceFileCallbacks &Callbacks)
+  : Finder(Finder), Overrides(Overrides), Callbacks(Callbacks) {}
+
+  virtual FrontendAction *create() LLVM_OVERRIDE {
+    return new FactoryAdaptor(Finder, Overrides, Callbacks);
+  }
+
+private:
+  class FactoryAdaptor : public ASTFrontendAction {
+  public:
+    FactoryAdaptor(MatchFinder &Finder, const FileContentsByPath &Overrides,
+                  SourceFileCallbacks &Callbacks)
+        : Finder(Finder), Overrides(Overrides), Callbacks(Callbacks) {}
+
+    ASTConsumer *CreateASTConsumer(CompilerInstance &, StringRef) {
+      return Finder.newASTConsumer();
+    }
+
+    virtual bool BeginSourceFileAction(CompilerInstance &CI,
+                                       StringRef Filename) LLVM_OVERRIDE {
+      if (!ASTFrontendAction::BeginSourceFileAction(CI, Filename))
+        return false;
+
+      FileContentsByPath::const_iterator I = Overrides.find(Filename.str());
+      if (I != Overrides.end())
+        // If an override exists, use it.
+        CI.getSourceManager()
+            .overrideFileContents(CI.getFileManager().getFile(I->first),
+                                  llvm::MemoryBuffer::getMemBuffer(I->second));
+
+      return Callbacks.handleBeginSource(CI, Filename);
+    }
+
+    virtual void EndSourceFileAction() LLVM_OVERRIDE {
+      Callbacks.handleEndSource();
+      return ASTFrontendAction::EndSourceFileAction();
+    }
+
+  private:
+    MatchFinder &Finder;
+    const FileContentsByPath &Overrides;
+    SourceFileCallbacks &Callbacks;
+  };
+
+  MatchFinder &Finder;
+  const FileContentsByPath &Overrides;
+  SourceFileCallbacks &Callbacks;
+};
+
+} // namespace
 
 void collectResults(clang::Rewriter &Rewrite,
                     const FileContentsByPath &InputStates,
@@ -54,4 +122,10 @@ void Transform::handleEndSource() {
 
 void Transform::addTiming(llvm::StringRef Label, llvm::TimeRecord Duration) {
   Timings.push_back(std::make_pair(Label.str(), Duration));
+}
+
+FrontendActionFactory *
+Transform::createActionFactory(MatchFinder &Finder,
+                               const FileContentsByPath &InputStates) {
+  return new ActionFactory(Finder, InputStates, *this);
 }

@@ -26,11 +26,6 @@ int UseAutoTransform::apply(const FileContentsByPath &InputStates,
                             FileContentsByPath &ResultStates) {
   RefactoringTool UseAutoTool(Database, SourcePaths);
 
-  for (FileContentsByPath::const_iterator I = InputStates.begin(),
-                                          E = InputStates.end();
-       I != E; ++I)
-    UseAutoTool.mapVirtualFile(I->first, I->second);
-
   unsigned AcceptedChanges = 0;
 
   MatchFinder Finder;
@@ -42,8 +37,7 @@ int UseAutoTransform::apply(const FileContentsByPath &InputStates,
   Finder.addMatcher(makeIteratorDeclMatcher(), &ReplaceIterators);
   Finder.addMatcher(makeDeclWithNewMatcher(), &ReplaceNew);
 
-  if (int Result = UseAutoTool.run(
-          newFrontendActionFactory(&Finder, /*Callbacks=*/ this))) {
+  if (int Result = UseAutoTool.run(createActionFactory(Finder, InputStates))) {
     llvm::errs() << "Error encountered during translation.\n";
     return Result;
   }
