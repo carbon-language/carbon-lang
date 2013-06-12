@@ -262,6 +262,31 @@ static const EnumEntry<COFF::Characteristics> ImageFileCharacteristics[] = {
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_FILE_BYTES_REVERSED_HI      )
 };
 
+static const EnumEntry<COFF::WindowsSubsystem> PEWindowsSubsystem[] = {
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SUBSYSTEM_UNKNOWN                ),
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SUBSYSTEM_NATIVE                 ),
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SUBSYSTEM_WINDOWS_GUI            ),
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SUBSYSTEM_WINDOWS_CUI            ),
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SUBSYSTEM_POSIX_CUI              ),
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SUBSYSTEM_WINDOWS_CE_GUI         ),
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SUBSYSTEM_EFI_APPLICATION        ),
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER),
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER     ),
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SUBSYSTEM_EFI_ROM                ),
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SUBSYSTEM_XBOX                   ),
+};
+
+static const EnumEntry<COFF::DLLCharacteristics> PEDLLCharacteristics[] = {
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE         ),
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_DLL_CHARACTERISTICS_FORCE_INTEGRITY      ),
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_DLL_CHARACTERISTICS_NX_COMPAT            ),
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_DLL_CHARACTERISTICS_NO_ISOLATION         ),
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_DLL_CHARACTERISTICS_NO_SEH               ),
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_DLL_CHARACTERISTICS_NO_BIND              ),
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_DLL_CHARACTERISTICS_WDM_DRIVER           ),
+  LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE),
+};
+
 static const EnumEntry<COFF::SectionCharacteristics>
 ImageSectionCharacteristics[] = {
   LLVM_READOBJ_ENUM_ENT(COFF, IMAGE_SCN_TYPE_NO_PAD           ),
@@ -536,25 +561,66 @@ void COFFDumper::cacheRelocations() {
 }
 
 void COFFDumper::printFileHeaders() {
-  const coff_file_header *Header = 0;
-  if (error(Obj->getHeader(Header)))
+  // Print COFF header
+  const coff_file_header *COFFHeader = 0;
+  if (error(Obj->getCOFFHeader(COFFHeader)))
     return;
 
-  time_t TDS = Header->TimeDateStamp;
+  time_t TDS = COFFHeader->TimeDateStamp;
   char FormattedTime[20] = { };
   strftime(FormattedTime, 20, "%Y-%m-%d %H:%M:%S", gmtime(&TDS));
 
   {
     DictScope D(W, "ImageFileHeader");
-    W.printEnum  ("Machine", Header->Machine,
+    W.printEnum  ("Machine", COFFHeader->Machine,
                     makeArrayRef(ImageFileMachineType));
-    W.printNumber("SectionCount", Header->NumberOfSections);
-    W.printHex   ("TimeDateStamp", FormattedTime, Header->TimeDateStamp);
-    W.printHex   ("PointerToSymbolTable", Header->PointerToSymbolTable);
-    W.printNumber("SymbolCount", Header->NumberOfSymbols);
-    W.printNumber("OptionalHeaderSize", Header->SizeOfOptionalHeader);
-    W.printFlags ("Characteristics", Header->Characteristics,
+    W.printNumber("SectionCount", COFFHeader->NumberOfSections);
+    W.printHex   ("TimeDateStamp", FormattedTime, COFFHeader->TimeDateStamp);
+    W.printHex   ("PointerToSymbolTable", COFFHeader->PointerToSymbolTable);
+    W.printNumber("SymbolCount", COFFHeader->NumberOfSymbols);
+    W.printNumber("OptionalHeaderSize", COFFHeader->SizeOfOptionalHeader);
+    W.printFlags ("Characteristics", COFFHeader->Characteristics,
                     makeArrayRef(ImageFileCharacteristics));
+  }
+
+  // Print PE header. This header does not exist if this is an object file and
+  // not an executable.
+  const pe32_header *PEHeader = 0;
+  if (error(Obj->getPE32Header(PEHeader)))
+    return;
+
+  if (PEHeader) {
+    DictScope D(W, "ImageOptionalHeader");
+    W.printNumber("MajorLinkerVersion", PEHeader->MajorLinkerVersion);
+    W.printNumber("MinorLinkerVersion", PEHeader->MinorLinkerVersion);
+    W.printNumber("SizeOfCode", PEHeader->SizeOfCode);
+    W.printNumber("SizeOfInitializedData", PEHeader->SizeOfInitializedData);
+    W.printNumber("SizeOfUninitializedData", PEHeader->SizeOfUninitializedData);
+    W.printHex   ("AddressOfEntryPoint", PEHeader->AddressOfEntryPoint);
+    W.printHex   ("BaseOfCode", PEHeader->BaseOfCode);
+    W.printHex   ("BaseOfData", PEHeader->BaseOfData);
+    W.printHex   ("ImageBase", PEHeader->ImageBase);
+    W.printNumber("SectionAlignment", PEHeader->SectionAlignment);
+    W.printNumber("FileAlignment", PEHeader->FileAlignment);
+    W.printNumber("MajorOperatingSystemVersion",
+                  PEHeader->MajorOperatingSystemVersion);
+    W.printNumber("MinorOperatingSystemVersion",
+                  PEHeader->MinorOperatingSystemVersion);
+    W.printNumber("MajorImageVersion", PEHeader->MajorImageVersion);
+    W.printNumber("MinorImageVersion", PEHeader->MinorImageVersion);
+    W.printNumber("MajorSubsystemVersion", PEHeader->MajorSubsystemVersion);
+    W.printNumber("MinorSubsystemVersion", PEHeader->MinorSubsystemVersion);
+    W.printNumber("SizeOfImage", PEHeader->SizeOfImage);
+    W.printNumber("SizeOfHeaders", PEHeader->SizeOfHeaders);
+    W.printEnum  ("Subsystem", PEHeader->Subsystem,
+                    makeArrayRef(PEWindowsSubsystem));
+    W.printFlags ("Subsystem", PEHeader->DLLCharacteristics,
+                    makeArrayRef(PEDLLCharacteristics));
+    W.printNumber("SizeOfStackReserve", PEHeader->SizeOfStackReserve);
+    W.printNumber("SizeOfStackCommit", PEHeader->SizeOfStackCommit);
+    W.printNumber("SizeOfHeapReserve", PEHeader->SizeOfHeapReserve);
+    W.printNumber("SizeOfHeapCommit", PEHeader->SizeOfHeapCommit);
+    W.printNumber("NumberOfRvaAndSize", PEHeader->NumberOfRvaAndSize);
   }
 }
 
@@ -834,7 +900,7 @@ void COFFDumper::printSymbol(symbol_iterator SymI) {
 
 void COFFDumper::printUnwindInfo() {
   const coff_file_header *Header;
-  if (error(Obj->getHeader(Header)))
+  if (error(Obj->getCOFFHeader(Header)))
     return;
 
   ListScope D(W, "UnwindInformation");

@@ -38,7 +38,7 @@ static void check(error_code ec) {
 
 COFFDumper::COFFDumper(const object::COFFObjectFile &Obj) : Obj(Obj) {
   const object::coff_file_header *Header;
-  check(Obj.getHeader(Header));
+  check(Obj.getCOFFHeader(Header));
   dumpHeader(Header);
   dumpSections(Header->NumberOfSections);
   dumpSymbols(Header->NumberOfSymbols);

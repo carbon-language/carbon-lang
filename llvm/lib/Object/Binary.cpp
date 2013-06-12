@@ -84,8 +84,10 @@ error_code object::createBinary(MemoryBuffer *Source,
     }
     case sys::fs::file_magic::coff_object:
     case sys::fs::file_magic::pecoff_executable: {
-      OwningPtr<Binary> ret(new COFFObjectFile(scopedSource.take(), ec));
-      if (ec) return ec;
+      OwningPtr<Binary> ret(
+          ObjectFile::createCOFFObjectFile(scopedSource.take()));
+      if (!ret)
+        return object_error::invalid_file_type;
       Result.swap(ret);
       return object_error::success;
     }

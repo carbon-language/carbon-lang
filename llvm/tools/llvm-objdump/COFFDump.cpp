@@ -229,7 +229,7 @@ static void printCOFFSymbolAddress(llvm::raw_ostream &Out,
 
 void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
   const coff_file_header *Header;
-  if (error(Obj->getHeader(Header))) return;
+  if (error(Obj->getCOFFHeader(Header))) return;
 
   if (Header->Machine != COFF::IMAGE_FILE_MACHINE_AMD64) {
     errs() << "Unsupported image machine type "

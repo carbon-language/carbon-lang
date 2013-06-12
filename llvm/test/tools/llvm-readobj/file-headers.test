@@ -2,6 +2,8 @@ RUN: llvm-readobj -h %p/Inputs/trivial.obj.coff-i386 \
 RUN:   | FileCheck %s -check-prefix COFF32
 RUN: llvm-readobj -h %p/Inputs/trivial.obj.coff-x86-64 \
 RUN:   | FileCheck %s -check-prefix COFF64
+RUN: llvm-readobj -h %p/Inputs/trivial.exe.coff-i386 \
+RUN:   | FileCheck %s -check-prefix PE32
 RUN: llvm-readobj -h %p/Inputs/trivial.obj.elf-i386 \
 RUN:   | FileCheck %s -check-prefix ELF32
 RUN: llvm-readobj -h %p/Inputs/trivial.obj.elf-x86-64 \
@@ -98,3 +100,52 @@ ELF64-NEXT:   SectionHeaderEntrySize: 64
 ELF64-NEXT:   SectionHeaderCount: 10
 ELF64-NEXT:   StringTableSectionIndex: 7
 ELF64-NEXT: }
+
+PE32:      File: {{(.*[/\\])?}}trivial.exe.coff-i386
+PE32-NEXT: Format: COFF-i386
+PE32-NEXT: Arch: i386
+PE32-NEXT: AddressSize: 32bit
+PE32-NEXT: ImageFileHeader {
+PE32-NEXT:   Machine: IMAGE_FILE_MACHINE_I386 (0x14C)
+PE32-NEXT:   SectionCount: 1
+PE32-NEXT:   TimeDateStamp: 2013-05-24 21:24:34 (0x519FDA92)
+PE32-NEXT:   PointerToSymbolTable: 0x0
+PE32-NEXT:   SymbolCount: 0
+PE32-NEXT:   OptionalHeaderSize: 224
+PE32-NEXT:   Characteristics [ (0x102)
+PE32-NEXT:     IMAGE_FILE_32BIT_MACHINE (0x100)
+PE32-NEXT:     IMAGE_FILE_EXECUTABLE_IMAGE (0x2)
+PE32-NEXT:   ]
+PE32-NEXT: }
+PE32-NEXT: ImageOptionalHeader {
+PE32-NEXT:   MajorLinkerVersion: 10
+PE32-NEXT:   MinorLinkerVersion: 0
+PE32-NEXT:   SizeOfCode: 512
+PE32-NEXT:   SizeOfInitializedData: 0
+PE32-NEXT:   SizeOfUninitializedData: 0
+PE32-NEXT:   AddressOfEntryPoint: 0x1000
+PE32-NEXT:   BaseOfCode: 0x1000
+PE32-NEXT:   BaseOfData: 0x2000
+PE32-NEXT:   ImageBase: 0x400000
+PE32-NEXT:   SectionAlignment: 4096
+PE32-NEXT:   FileAlignment: 512
+PE32-NEXT:   MajorOperatingSystemVersion: 5
+PE32-NEXT:   MinorOperatingSystemVersion: 1
+PE32-NEXT:   MajorImageVersion: 0
+PE32-NEXT:   MinorImageVersion: 0
+PE32-NEXT:   MajorSubsystemVersion: 5
+PE32-NEXT:   MinorSubsystemVersion: 1
+PE32-NEXT:   SizeOfImage: 8192
+PE32-NEXT:   SizeOfHeaders: 512
+PE32-NEXT:   Subsystem: IMAGE_SUBSYSTEM_WINDOWS_GUI (0x2)
+PE32-NEXT:   Subsystem [ (0x8140)
+PE32-NEXT:     IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE (0x40)
+PE32-NEXT:     IMAGE_DLL_CHARACTERISTICS_NX_COMPAT (0x100)
+PE32-NEXT:     IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE (0x8000)
+PE32-NEXT:   ]
+PE32-NEXT:   SizeOfStackReserve: 1048576
+PE32-NEXT:   SizeOfStackCommit: 4096
+PE32-NEXT:   SizeOfHeapReserve: 1048576
+PE32-NEXT:   SizeOfHeapCommit: 4096
+PE32-NEXT:   NumberOfRvaAndSize: 16
+PE32-NEXT: }
