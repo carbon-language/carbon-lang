@@ -904,6 +904,7 @@ bool MCAssembler::relaxLEB(MCAsmLayout &Layout, MCLEBFragment &LF) {
 
 bool MCAssembler::relaxDwarfLineAddr(MCAsmLayout &Layout,
                                      MCDwarfLineAddrFragment &DF) {
+  MCContext &Context = Layout.getAssembler().getContext();
   int64_t AddrDelta = 0;
   uint64_t OldSize = DF.getContents().size();
   bool IsAbs = DF.getAddrDelta().EvaluateAsAbsolute(AddrDelta, Layout);
@@ -914,13 +915,14 @@ bool MCAssembler::relaxDwarfLineAddr(MCAsmLayout &Layout,
   SmallString<8> &Data = DF.getContents();
   Data.clear();
   raw_svector_ostream OSE(Data);
-  MCDwarfLineAddr::Encode(LineDelta, AddrDelta, OSE);
+  MCDwarfLineAddr::Encode(Context, LineDelta, AddrDelta, OSE);
   OSE.flush();
   return OldSize != Data.size();
 }
 
 bool MCAssembler::relaxDwarfCallFrameFragment(MCAsmLayout &Layout,
                                               MCDwarfCallFrameFragment &DF) {
+  MCContext &Context = Layout.getAssembler().getContext();
   int64_t AddrDelta = 0;
   uint64_t OldSize = DF.getContents().size();
   bool IsAbs = DF.getAddrDelta().EvaluateAsAbsolute(AddrDelta, Layout);
@@ -929,7 +931,7 @@ bool MCAssembler::relaxDwarfCallFrameFragment(MCAsmLayout &Layout,
   SmallString<8> &Data = DF.getContents();
   Data.clear();
   raw_svector_ostream OSE(Data);
-  MCDwarfFrameEmitter::EncodeAdvanceLoc(AddrDelta, OSE);
+  MCDwarfFrameEmitter::EncodeAdvanceLoc(Context, AddrDelta, OSE);
   OSE.flush();
   return OldSize != Data.size();
 }

@@ -24,7 +24,6 @@
 
 namespace llvm {
   class MCContext;
-  class MCObjectWriter;
   class MCSection;
   class MCStreamer;
   class MCSymbol;
@@ -229,15 +228,12 @@ namespace llvm {
   class MCDwarfLineAddr {
   public:
     /// Utility function to encode a Dwarf pair of LineDelta and AddrDeltas.
-    static void Encode(int64_t LineDelta, uint64_t AddrDelta, raw_ostream &OS);
+    static void Encode(MCContext &Context, int64_t LineDelta,
+                       uint64_t AddrDelta, raw_ostream &OS);
 
     /// Utility function to emit the encoding to a streamer.
     static void Emit(MCStreamer *MCOS,
                      int64_t LineDelta,uint64_t AddrDelta);
-
-    /// Utility function to write the encoding to an object writer.
-    static void Write(MCObjectWriter *OW,
-                      int64_t LineDelta, uint64_t AddrDelta);
   };
 
   class MCGenDwarfInfo {
@@ -418,7 +414,8 @@ namespace llvm {
     static void Emit(MCStreamer &streamer, bool usingCFI,
                      bool isEH);
     static void EmitAdvanceLoc(MCStreamer &Streamer, uint64_t AddrDelta);
-    static void EncodeAdvanceLoc(uint64_t AddrDelta, raw_ostream &OS);
+    static void EncodeAdvanceLoc(MCContext &Context, uint64_t AddrDelta,
+                                 raw_ostream &OS);
   };
 } // end namespace llvm
 

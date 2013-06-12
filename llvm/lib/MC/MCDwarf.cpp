@@ -16,7 +16,6 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectFileInfo.h"
-#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
@@ -47,20 +46,15 @@ using namespace llvm;
 // Range of line offsets in a special line info. opcode.
 #define DWARF2_LINE_RANGE               14
 
-// Define the architecture-dependent minimum instruction length (in bytes).
-// This value should be rather too small than too big.
-#define DWARF2_LINE_MIN_INSN_LENGTH     1
-
-// Note: when DWARF2_LINE_MIN_INSN_LENGTH == 1 which is the current setting,
-// this routine is a nop and will be optimized away.
-static inline uint64_t ScaleAddrDelta(uint64_t AddrDelta) {
-  if (DWARF2_LINE_MIN_INSN_LENGTH == 1)
+static inline uint64_t ScaleAddrDelta(MCContext &Context, uint64_t AddrDelta) {
+  unsigned MinInsnLength = Context.getAsmInfo().getMinInstAlignment();
+  if (MinInsnLength == 1)
     return AddrDelta;
-  if (AddrDelta % DWARF2_LINE_MIN_INSN_LENGTH != 0) {
+  if (AddrDelta % MinInsnLength != 0) {
     // TODO: report this error, but really only once.
     ;
   }
-  return AddrDelta / DWARF2_LINE_MIN_INSN_LENGTH;
+  return AddrDelta / MinInsnLength;
 }
 
 //
@@ -277,7 +271,7 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS, unsigned CUID) {
                                            (4 + 2 + 4)), 4, 0);
 
   // Parameters of the state machine, are next.
-  MCOS->EmitIntValue(DWARF2_LINE_MIN_INSN_LENGTH, 1);
+  MCOS->EmitIntValue(context.getAsmInfo().getMinInstAlignment(), 1);
   MCOS->EmitIntValue(DWARF2_LINE_DEFAULT_IS_STMT, 1);
   MCOS->EmitIntValue(DWARF2_LINE_BASE, 1);
   MCOS->EmitIntValue(DWARF2_LINE_RANGE, 1);
@@ -357,32 +351,24 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS, unsigned CUID) {
   return LineStartSym;
 }
 
-/// Utility function to write the encoding to an object writer.
-void MCDwarfLineAddr::Write(MCObjectWriter *OW, int64_t LineDelta,
-                            uint64_t AddrDelta) {
-  SmallString<256> Tmp;
-  raw_svector_ostream OS(Tmp);
-  MCDwarfLineAddr::Encode(LineDelta, AddrDelta, OS);
-  OW->WriteBytes(OS.str());
-}
-
 /// Utility function to emit the encoding to a streamer.
 void MCDwarfLineAddr::Emit(MCStreamer *MCOS, int64_t LineDelta,
                            uint64_t AddrDelta) {
+  MCContext &Context = MCOS->getContext();
   SmallString<256> Tmp;
   raw_svector_ostream OS(Tmp);
-  MCDwarfLineAddr::Encode(LineDelta, AddrDelta, OS);
+  MCDwarfLineAddr::Encode(Context, LineDelta, AddrDelta, OS);
   MCOS->EmitBytes(OS.str());
 }
 
 /// Utility function to encode a Dwarf pair of LineDelta and AddrDeltas.
-void MCDwarfLineAddr::Encode(int64_t LineDelta, uint64_t AddrDelta,
-                             raw_ostream &OS) {
+void MCDwarfLineAddr::Encode(MCContext &Context, int64_t LineDelta,
+                             uint64_t AddrDelta, raw_ostream &OS) {
   uint64_t Temp, Opcode;
   bool NeedCopy = false;
 
   // Scale the address delta by the minimum instruction length.
-  AddrDelta = ScaleAddrDelta(AddrDelta);
+  AddrDelta = ScaleAddrDelta(Context, AddrDelta);
 
   // A LineDelta of INT64_MAX is a signal that this is actually a
   // DW_LNE_end_sequence. We cannot use special opcodes here, since we want the
@@ -1256,7 +1242,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
 
   // Code Alignment Factor
   if (verboseAsm) streamer.AddComment("CIE Code Alignment Factor");
-  streamer.EmitULEB128IntValue(1);
+  streamer.EmitULEB128IntValue(context.getAsmInfo().getMinInstAlignment());
 
   // Data Alignment Factor
   if (verboseAsm) streamer.AddComment("CIE Data Alignment Factor");
@@ -1493,15 +1479,19 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
 
 void MCDwarfFrameEmitter::EmitAdvanceLoc(MCStreamer &Streamer,
                                          uint64_t AddrDelta) {
+  MCContext &Context = Streamer.getContext();
   SmallString<256> Tmp;
   raw_svector_ostream OS(Tmp);
-  MCDwarfFrameEmitter::EncodeAdvanceLoc(AddrDelta, OS);
+  MCDwarfFrameEmitter::EncodeAdvanceLoc(Context, AddrDelta, OS);
   Streamer.EmitBytes(OS.str());
 }
 
-void MCDwarfFrameEmitter::EncodeAdvanceLoc(uint64_t AddrDelta,
+void MCDwarfFrameEmitter::EncodeAdvanceLoc(MCContext &Context,
+                                           uint64_t AddrDelta,
                                            raw_ostream &OS) {
-  // FIXME: Assumes the code alignment factor is 1.
+  // Scale the address delta by the minimum instruction length.
+  AddrDelta = ScaleAddrDelta(Context, AddrDelta);
+
   if (AddrDelta == 0) {
   } else if (isUIntN(6, AddrDelta)) {
     uint8_t Opcode = dwarf::DW_CFA_advance_loc | AddrDelta;

@@ -34,6 +34,7 @@ MCAsmInfo::MCAsmInfo() {
   HasStaticCtorDtorReferenceInStaticMode = false;
   LinkerRequiresNonEmptyDwarfLines = false;
   MaxInstLength = 4;
+  MinInstAlignment = 1;
   PCSymbol = "$";
   SeparatorString = ";";
   CommentColumn = 40;
