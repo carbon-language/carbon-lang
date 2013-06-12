@@ -244,8 +244,29 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
           CurPPLexer->MIOpt.GetControllingMacroAtEndOfFile()) {
       // Okay, this has a controlling macro, remember in HeaderFileInfo.
       if (const FileEntry *FE =
-            SourceMgr.getFileEntryForID(CurPPLexer->getFileID()))
+            SourceMgr.getFileEntryForID(CurPPLexer->getFileID())) {
         HeaderInfo.SetFileControllingMacro(FE, ControllingMacro);
+        if (const IdentifierInfo *DefinedMacro =
+              CurPPLexer->MIOpt.GetDefinedMacro()) {
+          if (!ControllingMacro->hasMacroDefinition() &&
+              DefinedMacro != ControllingMacro &&
+              HeaderInfo.FirstTimeLexingFile(FE)) {
+            // Emit a warning for a bad header guard.
+            Diag(CurPPLexer->MIOpt.GetMacroLocation(),
+                 diag::warn_header_guard)
+                << CurPPLexer->MIOpt.GetMacroLocation()
+                << ControllingMacro;
+            Diag(CurPPLexer->MIOpt.GetDefinedLocation(),
+                 diag::note_header_guard)
+                << CurPPLexer->MIOpt.GetDefinedLocation()
+                << DefinedMacro
+                << ControllingMacro
+                << FixItHint::CreateReplacement(
+                       CurPPLexer->MIOpt.GetDefinedLocation(),
+                       ControllingMacro->getName());
+          }
+        }
+      }
     }
   }
 

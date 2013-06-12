@@ -1444,7 +1444,7 @@ private:
   void HandleMicrosoftImportDirective(Token &Tok);
 
   // Macro handling.
-  void HandleDefineDirective(Token &Tok);
+  void HandleDefineDirective(Token &Tok, bool ImmediatelyAfterTopLevelIfndef);
   void HandleUndefDirective(Token &Tok);
 
   // Conditional Inclusion.

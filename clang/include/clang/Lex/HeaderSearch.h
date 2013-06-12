@@ -425,6 +425,11 @@ public:
     getFileInfo(File).ControllingMacro = ControllingMacro;
   }
 
+  /// \brief Return true if this is the first time encountering this header.
+  bool FirstTimeLexingFile(const FileEntry *File) {
+    return getFileInfo(File).NumIncludes == 1;
+  }
+
   /// \brief Determine whether this file is intended to be safe from
   /// multiple inclusions, e.g., it has \#pragma once or a controlling
   /// macro.

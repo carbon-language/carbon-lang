@@ -585,5 +585,10 @@ def warn_forgotten_module_header : Warning<
   InGroup<IncompleteModule>, DefaultIgnore;
 def err_expected_id_building_module : Error<
   "expected a module name in '__building_module' expression">;
-  
+
+def warn_header_guard : Warning<
+  "%0 is used as a header guard here, followed by #define of a different macro">,
+  InGroup<DiagGroup<"header-guard">>;
+def note_header_guard : Note<
+  "%0 is defined here; did you mean %1?">;  
 }

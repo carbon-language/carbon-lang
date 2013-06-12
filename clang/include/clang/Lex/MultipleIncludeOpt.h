@@ -15,6 +15,8 @@
 #ifndef LLVM_CLANG_MULTIPLEINCLUDEOPT_H
 #define LLVM_CLANG_MULTIPLEINCLUDEOPT_H
 
+#include "clang/Basic/SourceLocation.h"
+
 namespace clang {
 class IdentifierInfo;
 
@@ -32,6 +34,11 @@ class MultipleIncludeOpt {
   /// \#endif can be easily detected.
   bool ReadAnyTokens;
 
+  /// ImmediatelyAfterTopLevelIfndef - This is true when the only tokens
+  /// processed in the file so far is an #ifndef and an identifier.  Used in
+  /// the detection of header guards in a file.
+  bool ImmediatelyAfterTopLevelIfndef;
+
   /// ReadAnyTokens - This is set to false when a file is first opened and true
   /// any time a token is returned to the client or a (non-multiple-include)
   /// directive is parsed.  When the final #endif is parsed this is reset back
@@ -42,11 +49,36 @@ class MultipleIncludeOpt {
   /// TheMacro - The controlling macro for a file, if valid.
   ///
   const IdentifierInfo *TheMacro;
+
+  /// DefinedMacro - The macro defined right after TheMacro, if any.
+  const IdentifierInfo *DefinedMacro;
+
+  SourceLocation MacroLoc;
+  SourceLocation DefinedLoc;
 public:
   MultipleIncludeOpt() {
     ReadAnyTokens = false;
+    ImmediatelyAfterTopLevelIfndef = false;
     DidMacroExpansion = false;
     TheMacro = 0;
+    DefinedMacro = 0;
+  }
+
+  SourceLocation GetMacroLocation() const {
+    return MacroLoc;
+  }
+
+  SourceLocation GetDefinedLocation() const {
+    return DefinedLoc;
+  }
+
+  void resetImmediatelyAfterTopLevelIfndef() {
+    ImmediatelyAfterTopLevelIfndef = false;
+  }
+
+  void SetDefinedMacro(IdentifierInfo *M, SourceLocation Loc) {
+    DefinedMacro = M;
+    DefinedLoc = Loc;
   }
 
   /// Invalidate - Permanently mark this file as not being suitable for the
@@ -55,6 +87,8 @@ public:
     // If we have read tokens but have no controlling macro, the state-machine
     // below can never "accept".
     ReadAnyTokens = true;
+    ImmediatelyAfterTopLevelIfndef = false;
+    DefinedMacro = 0;
     TheMacro = 0;
   }
 
@@ -63,8 +97,17 @@ public:
   /// the "ifndef x" would count as reading tokens.
   bool getHasReadAnyTokensVal() const { return ReadAnyTokens; }
 
+  /// getImmediatelyAfterTopLevelIfndef - returns true if the last directive
+  /// was an #ifndef at the beginning of the file.
+  bool getImmediatelyAfterTopLevelIfndef() const {
+    return ImmediatelyAfterTopLevelIfndef;
+  }
+
   // If a token is read, remember that we have seen a side-effect in this file.
-  void ReadToken() { ReadAnyTokens = true; }
+  void ReadToken() {
+    ReadAnyTokens = true;
+    ImmediatelyAfterTopLevelIfndef = false;
+  }
 
   /// ExpandedMacro - When a macro is expanded with this lexer as the current
   /// buffer, this method is called to disable the MIOpt if needed.
@@ -77,7 +120,7 @@ public:
   /// ensures that this is only called if there are no tokens read before the
   /// \#ifndef.  The caller is required to do this, because reading the \#if
   /// line obviously reads in in tokens.
-  void EnterTopLevelIFNDEF(const IdentifierInfo *M) {
+  void EnterTopLevelIfndef(const IdentifierInfo *M, SourceLocation Loc) {
     // If the macro is already set, this is after the top-level #endif.
     if (TheMacro)
       return Invalidate();
@@ -91,7 +134,9 @@ public:
 
     // Remember that we're in the #if and that we have the macro.
     ReadAnyTokens = true;
+    ImmediatelyAfterTopLevelIfndef = true;
     TheMacro = M;
+    MacroLoc = Loc;
   }
 
   /// \brief Invoked when a top level conditional (except \#ifndef) is found.
@@ -111,6 +156,7 @@ public:
     // At this point, we haven't "read any tokens" but we do have a controlling
     // macro.
     ReadAnyTokens = false;
+    ImmediatelyAfterTopLevelIfndef = false;
   }
 
   /// \brief Once the entire file has been lexed, if there is a controlling
@@ -121,6 +167,12 @@ public:
     if (!ReadAnyTokens)
       return TheMacro;
     return 0;
+  }
+
+  /// \brief If the ControllingMacro is followed by a macro definition, return
+  /// the macro that was defined.
+  const IdentifierInfo *GetDefinedMacro() const {
+    return DefinedMacro;
   }
 };
 
