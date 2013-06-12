@@ -1181,11 +1181,20 @@ TEST_F(FormatTest, CommentsInStaticInitializers) {
                    "     // Comment after empty line\n"
                    "      b\n"
                    "}"));
-  EXPECT_EQ("S s = { a, b };", format("S s = {\n"
-                                      "  a,\n"
-                                      "\n"
-                                      "  b\n"
-                                      "};"));
+  EXPECT_EQ("S s = {\n"
+            "  /* Some comment */\n"
+            "  a,\n"
+            "\n"
+            "  /* Comment after empty line */\n"
+            "  b\n"
+            "}",
+            format("S s =    {\n"
+                   "      /* Some comment */\n"
+                   "  a,\n"
+                   "  \n"
+                   "     /* Comment after empty line */\n"
+                   "      b\n"
+                   "}"));
   verifyFormat("const uint8_t aaaaaaaaaaaaaaaaaaaaaa[0] = {\n"
                "  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // comment\n"
                "  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // comment\n"
@@ -1530,6 +1539,11 @@ TEST_F(FormatTest, StaticInitializers) {
   verifyFormat("static int LooooooooooooooooooooooooongVariable[1] = {\n"
                "  100000000000000000000000\n"
                "};");
+  EXPECT_EQ("S s = { a, b };", format("S s = {\n"
+                                      "  a,\n"
+                                      "\n"
+                                      "  b\n"
+                                      "};"));
 
   // FIXME: This would fit into the column limit if we'd fit "{ {" on the first
   // line. However, the formatting looks a bit off and this probably doesn't
@@ -3855,15 +3869,13 @@ TEST_F(FormatTest, BlockCommentsAtEndOfLine) {
   EXPECT_EQ("a = {\n"
             "  1111 /*    */\n"
             "};",
-            format("a = {1111\n"
-                   "/*    */\n"
+            format("a = {1111 /*    */\n"
                    "};",
                    getLLVMStyleWithColumns(15)));
   EXPECT_EQ("a = {\n"
             "  1111 /*      */\n"
             "};",
-            format("a = {1111\n"
-                   "/*      */\n"
+            format("a = {1111 /*      */\n"
                    "};",
                    getLLVMStyleWithColumns(15)));
 
@@ -3872,8 +3884,7 @@ TEST_F(FormatTest, BlockCommentsAtEndOfLine) {
             "  1111 /*      a\n"
             "          */\n"
             "};",
-            format("a = {1111\n"
-                   "/*      a */\n"
+            format("a = {1111 /*      a */\n"
                    "};",
                    getLLVMStyleWithColumns(15)));
 }

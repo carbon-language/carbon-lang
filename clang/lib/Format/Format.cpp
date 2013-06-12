@@ -556,7 +556,7 @@ private:
 
       if (!DryRun) {
         unsigned NewLines = 1;
-        if (Current.Type == TT_LineComment)
+        if (Current.is(tok::comment))
           NewLines = std::max(
               NewLines,
               std::min(Current.NewlinesBefore, Style.MaxEmptyLinesToKeep + 1));

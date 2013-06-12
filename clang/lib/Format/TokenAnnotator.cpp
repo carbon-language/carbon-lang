@@ -902,7 +902,7 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
           spaceRequiredBefore(Line, *Current) ? 1 : 0;
 
     if (Current->MustBreakBefore) {
-    } else if (Current->Type == TT_LineComment) {
+    } else if (Current->is(tok::comment)) {
       Current->MustBreakBefore = Current->NewlinesBefore > 0;
     } else if (Current->Previous->isTrailingComment() ||
                (Current->is(tok::string_literal) &&
