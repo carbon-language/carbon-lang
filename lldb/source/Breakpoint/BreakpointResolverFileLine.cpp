@@ -235,7 +235,7 @@ BreakpointResolverFileLine::GetDepth()
 void
 BreakpointResolverFileLine::GetDescription (Stream *s)
 {
-    s->Printf ("file ='%s', line = %u", m_file_spec.GetFilename().AsCString(), m_line_number);
+    s->Printf ("file = '%s', line = %u", m_file_spec.GetPath().c_str(), m_line_number);
 }
 
 void
