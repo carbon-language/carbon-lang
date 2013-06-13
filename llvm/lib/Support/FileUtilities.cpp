@@ -17,6 +17,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 #include <cctype>
@@ -171,10 +172,13 @@ static bool CompareNumbers(const char *&F1P, const char *&F2P,
 /// error occurs, allowing the caller to distinguish between a failed diff and a
 /// file system error.
 ///
-int llvm::DiffFilesWithTolerance(const sys::PathWithStatus &FileA,
-                                 const sys::PathWithStatus &FileB,
+int llvm::DiffFilesWithTolerance(StringRef NameA,
+                                 StringRef NameB,
                                  double AbsTol, double RelTol,
                                  std::string *Error) {
+  sys::PathWithStatus FileA(NameA);
+  sys::PathWithStatus FileB(NameB);
+
   const sys::FileStatus *FileAStat = FileA.getFileStatus(false, Error);
   if (!FileAStat)
     return 2;

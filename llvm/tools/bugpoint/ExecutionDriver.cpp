@@ -446,8 +446,8 @@ bool BugDriver::diffProgram(const Module *Program,
 
   std::string Error;
   bool FilesDifferent = false;
-  if (int Diff = DiffFilesWithTolerance(sys::Path(ReferenceOutputFile),
-                                        sys::Path(Output.str()),
+  if (int Diff = DiffFilesWithTolerance(ReferenceOutputFile,
+                                        Output.str(),
                                         AbsTolerance, RelTolerance, &Error)) {
     if (Diff == 2) {
       errs() << "While diffing output: " << Error << '\n';
