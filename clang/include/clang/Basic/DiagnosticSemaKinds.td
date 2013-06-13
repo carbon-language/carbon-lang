@@ -294,6 +294,11 @@ def warn_exception_spec_deprecated : Warning<
   "dynamic exception specifications are deprecated">,
   InGroup<Deprecated>, DefaultIgnore;
 def note_exception_spec_deprecated : Note<"use '%0' instead">;
+def warn_deprecated_copy_operation : Warning<
+  "definition of implicit copy %select{constructor|assignment operator}1 "
+  "for %0 is deprecated because it has a user-declared "
+  "%select{copy %select{assignment operator|constructor}1|destructor}2">,
+  InGroup<Deprecated>, DefaultIgnore;
 
 def warn_global_constructor : Warning<
   "declaration requires a global constructor">,

@@ -8808,6 +8808,58 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   return CopyAssignment;
 }
 
+/// Diagnose an implicit copy operation for a class which is odr-used, but
+/// which is deprecated because the class has a user-declared copy constructor,
+/// copy assignment operator, or destructor.
+static void diagnoseDeprecatedCopyOperation(Sema &S, CXXMethodDecl *CopyOp,
+                                            SourceLocation UseLoc) {
+  assert(CopyOp->isImplicit());
+
+  CXXRecordDecl *RD = CopyOp->getParent();
+  CXXMethodDecl *UserDeclaredOperation = 0;
+
+  // In Microsoft mode, assignment operations don't affect constructors and
+  // vice versa.
+  if (RD->hasUserDeclaredDestructor()) {
+    UserDeclaredOperation = RD->getDestructor();
+  } else if (!isa<CXXConstructorDecl>(CopyOp) &&
+             RD->hasUserDeclaredCopyConstructor() &&
+             !S.getLangOpts().MicrosoftMode) {
+    // Find any user-declared copy constructor.
+    for (CXXRecordDecl::ctor_iterator I = RD->ctor_begin(),
+                                      E = RD->ctor_end(); I != E; ++I) {
+      if (I->isCopyConstructor()) {
+        UserDeclaredOperation = *I;
+        break;
+      }
+    }
+    assert(UserDeclaredOperation);
+  } else if (isa<CXXConstructorDecl>(CopyOp) &&
+             RD->hasUserDeclaredCopyAssignment() &&
+             !S.getLangOpts().MicrosoftMode) {
+    // Find any user-declared move assignment operator.
+    for (CXXRecordDecl::method_iterator I = RD->method_begin(),
+                                        E = RD->method_end(); I != E; ++I) {
+      if (I->isCopyAssignmentOperator()) {
+        UserDeclaredOperation = *I;
+        break;
+      }
+    }
+    assert(UserDeclaredOperation);
+  }
+
+  if (UserDeclaredOperation) {
+    S.Diag(UserDeclaredOperation->getLocation(),
+         diag::warn_deprecated_copy_operation)
+      << RD << /*copy assignment*/!isa<CXXConstructorDecl>(CopyOp)
+      << /*destructor*/isa<CXXDestructorDecl>(UserDeclaredOperation);
+    S.Diag(UseLoc, diag::note_member_synthesized_at)
+      << (isa<CXXConstructorDecl>(CopyOp) ? Sema::CXXCopyConstructor
+                                          : Sema::CXXCopyAssignment)
+      << RD;
+  }
+}
+
 void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
                                         CXXMethodDecl *CopyAssignOperator) {
   assert((CopyAssignOperator->isDefaulted() && 
@@ -8823,7 +8875,14 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     CopyAssignOperator->setInvalidDecl();
     return;
   }
-  
+
+  // C++11 [class.copy]p18:
+  //   The [definition of an implicitly declared copy assignment operator] is
+  //   deprecated if the class has a user-declared copy constructor or a
+  //   user-declared destructor.
+  if (getLangOpts().CPlusPlus11 && CopyAssignOperator->isImplicit())
+    diagnoseDeprecatedCopyOperation(*this, CopyAssignOperator, CurrentLocation);
+
   CopyAssignOperator->setUsed();
 
   SynthesizedFunctionScope Scope(*this, CopyAssignOperator);
@@ -9630,6 +9689,13 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
 
   CXXRecordDecl *ClassDecl = CopyConstructor->getParent();
   assert(ClassDecl && "DefineImplicitCopyConstructor - invalid constructor");
+
+  // C++11 [class.copy]p7:
+  //   The [definition of an implicitly declared copy constructro] is
+  //   deprecated if the class has a user-declared copy assignment operator
+  //   or a user-declared destructor.
+  if (getLangOpts().CPlusPlus11 && CopyConstructor->isImplicit())
+    diagnoseDeprecatedCopyOperation(*this, CopyConstructor, CurrentLocation);
 
   SynthesizedFunctionScope Scope(*this, CopyConstructor);
   DiagnosticErrorTrap Trap(Diags);
