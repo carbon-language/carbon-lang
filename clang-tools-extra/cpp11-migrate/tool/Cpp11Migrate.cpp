@@ -179,6 +179,19 @@ int main(int argc, const char **argv) {
     llvm::raw_fd_ostream FileStream(I->first.c_str(), ErrorInfo,
                                     llvm::raw_fd_ostream::F_Binary);
     FileStream << I->second.MainFileOverride;
+
+    // FIXME: The Migrator shouldn't be responsible for writing headers
+    // to disk. Instead, it should write replacement info and another tool
+    // should take all replacement info for a header from possibly many other
+    // migration processes and merge it into a final form. For now, the 
+    // updated header is written to disk for testing purposes.
+    for (HeaderOverrides::const_iterator HeaderI = I->second.Headers.begin(),
+                                         HeaderE = I->second.Headers.end();
+         HeaderI != HeaderE; ++HeaderI) {
+      llvm::raw_fd_ostream HeaderStream(I->first.c_str(), ErrorInfo,
+                                        llvm::raw_fd_ostream::F_Binary);
+      HeaderStream << HeaderI->second.FileOverride;
+    }
   }
 
   // Report execution times.

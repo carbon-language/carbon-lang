@@ -24,6 +24,14 @@ class SourceManager;
 class FileManager;
 } // namespace clang
 
+/// \brief Container for storing override information for a single headers.
+struct HeaderOverride {
+  std::string FileName;
+  std::string FileOverride;
+};
+
+/// \brief Container mapping header file names to override information.
+typedef std::map<std::string, HeaderOverride> HeaderOverrides;
 
 /// \brief Container storing the file content overrides for a source file.
 struct SourceOverrides {
@@ -36,6 +44,7 @@ struct SourceOverrides {
 
   std::string MainFileName;
   std::string MainFileOverride;
+  HeaderOverrides Headers;
 };
 
 /// \brief Maps source file names to content override information.
