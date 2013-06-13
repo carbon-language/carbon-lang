@@ -18,7 +18,6 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include <set>
 
 using namespace llvm;
 
@@ -30,8 +29,53 @@ static cl::opt<bool> DontExpandCondPseudos16(
   cl::Hidden);
 
 namespace {
-  std::set<const char*, MipsTargetLowering::LTStr> NoHelperNeeded;
+struct Mips16Libcall {
+  RTLIB::Libcall Libcall;
+  const char *Name;
+
+  bool operator<(const Mips16Libcall &RHS) const {
+    return std::strcmp(Name, RHS.Name) < 0;
+  }
+};
 }
+
+// Libcalls for which no helper is generated. Sorted by name for binary search.
+static const Mips16Libcall HardFloatLibCalls[] = {
+  { RTLIB::ADD_F64, "__mips16_adddf3" },
+  { RTLIB::ADD_F32, "__mips16_addsf3" },
+  { RTLIB::DIV_F64, "__mips16_divdf3" },
+  { RTLIB::DIV_F32, "__mips16_divsf3" },
+  { RTLIB::OEQ_F64, "__mips16_eqdf2" },
+  { RTLIB::OEQ_F32, "__mips16_eqsf2" },
+  { RTLIB::FPEXT_F32_F64, "__mips16_extendsfdf2" },
+  { RTLIB::FPTOSINT_F64_I32, "__mips16_fix_truncdfsi" },
+  { RTLIB::FPTOSINT_F32_I32, "__mips16_fix_truncsfsi" },
+  { RTLIB::SINTTOFP_I32_F64, "__mips16_floatsidf" },
+  { RTLIB::SINTTOFP_I32_F32, "__mips16_floatsisf" },
+  { RTLIB::UINTTOFP_I32_F64, "__mips16_floatunsidf" },
+  { RTLIB::UINTTOFP_I32_F32, "__mips16_floatunsisf" },
+  { RTLIB::OGE_F64, "__mips16_gedf2" },
+  { RTLIB::OGE_F32, "__mips16_gesf2" },
+  { RTLIB::OGT_F64, "__mips16_gtdf2" },
+  { RTLIB::OGT_F32, "__mips16_gtsf2" },
+  { RTLIB::OLE_F64, "__mips16_ledf2" },
+  { RTLIB::OLE_F32, "__mips16_lesf2" },
+  { RTLIB::OLT_F64, "__mips16_ltdf2" },
+  { RTLIB::OLT_F32, "__mips16_ltsf2" },
+  { RTLIB::MUL_F64, "__mips16_muldf3" },
+  { RTLIB::MUL_F32, "__mips16_mulsf3" },
+  { RTLIB::UNE_F64, "__mips16_nedf2" },
+  { RTLIB::UNE_F32, "__mips16_nesf2" },
+  { RTLIB::UNKNOWN_LIBCALL, "__mips16_ret_dc" }, // No associated libcall.
+  { RTLIB::UNKNOWN_LIBCALL, "__mips16_ret_df" }, // No associated libcall.
+  { RTLIB::UNKNOWN_LIBCALL, "__mips16_ret_sc" }, // No associated libcall.
+  { RTLIB::UNKNOWN_LIBCALL, "__mips16_ret_sf" }, // No associated libcall.
+  { RTLIB::SUB_F64, "__mips16_subdf3" },
+  { RTLIB::SUB_F32, "__mips16_subsf3" },
+  { RTLIB::FPROUND_F64_F32, "__mips16_truncdfsf2" },
+  { RTLIB::UO_F64, "__mips16_unorddf2" },
+  { RTLIB::UO_F32, "__mips16_unordsf2" }
+};
 
 Mips16TargetLowering::Mips16TargetLowering(MipsTargetMachine &TM)
   : MipsTargetLowering(TM) {
@@ -46,13 +90,9 @@ Mips16TargetLowering::Mips16TargetLowering(MipsTargetMachine &TM)
   // Set up the register classes
   addRegisterClass(MVT::i32, &Mips::CPU16RegsRegClass);
 
-  if (Subtarget->inMips16HardFloat()) {
+  if (Subtarget->inMips16HardFloat())
     setMips16HardFloatLibCalls();
-    NoHelperNeeded.insert("__mips16_ret_sf");
-    NoHelperNeeded.insert("__mips16_ret_df");
-    NoHelperNeeded.insert("__mips16_ret_sc");
-    NoHelperNeeded.insert("__mips16_ret_dc");
-  }
+
   setOperationAction(ISD::ATOMIC_FENCE,       MVT::Other, Expand);
   setOperationAction(ISD::ATOMIC_CMP_SWAP,    MVT::i32,   Expand);
   setOperationAction(ISD::ATOMIC_SWAP,        MVT::i32,   Expand);
@@ -166,47 +206,17 @@ isEligibleForTailCallOptimization(const MipsCC &MipsCCInfo,
   return false;
 }
 
-void Mips16TargetLowering::setMips16LibcallName
-  (RTLIB::Libcall L, const char *Name) {
-  setLibcallName(L, Name);
-  NoHelperNeeded.insert(Name);
-}
-
 void Mips16TargetLowering::setMips16HardFloatLibCalls() {
-  setMips16LibcallName(RTLIB::ADD_F32, "__mips16_addsf3");
-  setMips16LibcallName(RTLIB::ADD_F64, "__mips16_adddf3");
-  setMips16LibcallName(RTLIB::SUB_F32, "__mips16_subsf3");
-  setMips16LibcallName(RTLIB::SUB_F64, "__mips16_subdf3");
-  setMips16LibcallName(RTLIB::MUL_F32, "__mips16_mulsf3");
-  setMips16LibcallName(RTLIB::MUL_F64, "__mips16_muldf3");
-  setMips16LibcallName(RTLIB::DIV_F32, "__mips16_divsf3");
-  setMips16LibcallName(RTLIB::DIV_F64, "__mips16_divdf3");
-  setMips16LibcallName(RTLIB::FPEXT_F32_F64, "__mips16_extendsfdf2");
-  setMips16LibcallName(RTLIB::FPROUND_F64_F32, "__mips16_truncdfsf2");
-  setMips16LibcallName(RTLIB::FPTOSINT_F32_I32, "__mips16_fix_truncsfsi");
-  setMips16LibcallName(RTLIB::FPTOSINT_F64_I32, "__mips16_fix_truncdfsi");
-  setMips16LibcallName(RTLIB::SINTTOFP_I32_F32, "__mips16_floatsisf");
-  setMips16LibcallName(RTLIB::SINTTOFP_I32_F64, "__mips16_floatsidf");
-  setMips16LibcallName(RTLIB::UINTTOFP_I32_F32, "__mips16_floatunsisf");
-  setMips16LibcallName(RTLIB::UINTTOFP_I32_F64, "__mips16_floatunsidf");
-  setMips16LibcallName(RTLIB::OEQ_F32, "__mips16_eqsf2");
-  setMips16LibcallName(RTLIB::OEQ_F64, "__mips16_eqdf2");
-  setMips16LibcallName(RTLIB::UNE_F32, "__mips16_nesf2");
-  setMips16LibcallName(RTLIB::UNE_F64, "__mips16_nedf2");
-  setMips16LibcallName(RTLIB::OGE_F32, "__mips16_gesf2");
-  setMips16LibcallName(RTLIB::OGE_F64, "__mips16_gedf2");
-  setMips16LibcallName(RTLIB::OLT_F32, "__mips16_ltsf2");
-  setMips16LibcallName(RTLIB::OLT_F64, "__mips16_ltdf2");
-  setMips16LibcallName(RTLIB::OLE_F32, "__mips16_lesf2");
-  setMips16LibcallName(RTLIB::OLE_F64, "__mips16_ledf2");
-  setMips16LibcallName(RTLIB::OGT_F32, "__mips16_gtsf2");
-  setMips16LibcallName(RTLIB::OGT_F64, "__mips16_gtdf2");
-  setMips16LibcallName(RTLIB::UO_F32, "__mips16_unordsf2");
-  setMips16LibcallName(RTLIB::UO_F64, "__mips16_unorddf2");
-  setMips16LibcallName(RTLIB::O_F32, "__mips16_unordsf2");
-  setMips16LibcallName(RTLIB::O_F64, "__mips16_unorddf2");
-}
+  for (unsigned I = 0; I != array_lengthof(HardFloatLibCalls); ++I) {
+    assert((I == 0 || HardFloatLibCalls[I - 1] < HardFloatLibCalls[I]) &&
+           "Array not sorted!");
+    if (HardFloatLibCalls[I].Libcall != RTLIB::UNKNOWN_LIBCALL)
+      setLibcallName(HardFloatLibCalls[I].Libcall, HardFloatLibCalls[I].Name);
+  }
 
+  setLibcallName(RTLIB::O_F64, "__mips16_unorddf2");
+  setLibcallName(RTLIB::O_F32, "__mips16_unordsf2");
+}
 
 //
 // The Mips16 hard float is a crazy quilt inherited from gcc. I have a much
@@ -383,16 +393,19 @@ getOpndList(SmallVectorImpl<SDValue> &Ops,
     //
     bool LookupHelper = true;
     if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(CLI.Callee)) {
-      if (NoHelperNeeded.find(S->getSymbol()) != NoHelperNeeded.end()) {
+      Mips16Libcall Find = { RTLIB::UNKNOWN_LIBCALL, S->getSymbol() };
+
+      if (std::binary_search(HardFloatLibCalls, array_endof(HardFloatLibCalls),
+                             Find))
         LookupHelper = false;
-      }
-    }
-    else if (GlobalAddressSDNode *G = 
-             dyn_cast<GlobalAddressSDNode>(CLI.Callee)) {
-      if (NoHelperNeeded.find(G->getGlobal()->getName().data()) != 
-                              NoHelperNeeded.end()) {
+    } else if (GlobalAddressSDNode *G =
+                   dyn_cast<GlobalAddressSDNode>(CLI.Callee)) {
+      Mips16Libcall Find = { RTLIB::UNKNOWN_LIBCALL,
+                             G->getGlobal()->getName().data() };
+
+      if (std::binary_search(HardFloatLibCalls, array_endof(HardFloatLibCalls),
+                             Find))
         LookupHelper = false;
-      }
     }
     if (LookupHelper) Mips16HelperFunction =
       getMips16HelperFunction(CLI.RetTy, CLI.Args, NeedMips16Helper);

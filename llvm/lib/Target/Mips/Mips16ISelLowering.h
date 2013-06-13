@@ -32,8 +32,6 @@ namespace llvm {
                                       unsigned NextStackOffset,
                                       const MipsFunctionInfo& FI) const;
 
-    void setMips16LibcallName(RTLIB::Libcall, const char *Name);
-
     void setMips16HardFloatLibCalls();
 
     unsigned int
