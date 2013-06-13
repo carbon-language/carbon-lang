@@ -80,6 +80,11 @@ namespace sys {
       ///< program.
       bool *ExecutionFailed = 0);
 
+  int ExecuteAndWait(StringRef path, const char **args, const char **env = 0,
+                     const StringRef **redirects = 0,
+                     unsigned secondsToWait = 0, unsigned memoryLimit = 0,
+                     std::string *ErrMsg = 0, bool *ExecutionFailed = 0);
+
   /// Similar to ExecuteAndWait, but return immediately.
   void ExecuteNoWait(const Path &path, const char **args, const char **env = 0,
                      const sys::Path **redirects = 0, unsigned memoryLimit = 0,

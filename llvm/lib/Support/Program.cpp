@@ -29,6 +29,29 @@ static bool Execute(void **Data, const Path &path, const char **args,
 static int Wait(void *&Data, const Path &path, unsigned secondsToWait,
                 std::string *ErrMsg);
 
+int sys::ExecuteAndWait(StringRef path, const char **args, const char **env,
+                        const StringRef **redirects, unsigned secondsToWait,
+                        unsigned memoryLimit, std::string *ErrMsg,
+                        bool *ExecutionFailed) {
+  Path P(path);
+  if (!redirects)
+    return ExecuteAndWait(P, args, env, 0, secondsToWait, memoryLimit, ErrMsg,
+                          ExecutionFailed);
+  Path IO[3];
+  const Path *IOP[3];
+  for (int I = 0; I < 3; ++I) {
+    if (redirects[I]) {
+      IO[I] = *redirects[I];
+      IOP[I] = &IO[I];
+    } else {
+      IOP[I] = 0;
+   }
+  }
+
+  return ExecuteAndWait(P, args, env, IOP, secondsToWait, memoryLimit, ErrMsg,
+                        ExecutionFailed);
+}
+
 int sys::ExecuteAndWait(const Path &path, const char **args, const char **envp,
                         const Path **redirects, unsigned secondsToWait,
                         unsigned memoryLimit, std::string *ErrMsg,
