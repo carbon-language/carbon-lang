@@ -26,7 +26,6 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/Support/DOTGraphTraits.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
 #include <vector>
@@ -51,13 +50,8 @@ namespace GraphProgram {
    };
 }
 
-void DisplayGraph(const sys::Path& Filename, bool wait=true, GraphProgram::Name program = GraphProgram::DOT);
-
-inline void DisplayGraph(StringRef Filename, bool wait = true,
-                         GraphProgram::Name program = GraphProgram::DOT) {
-  sys::Path P(Filename);
-  DisplayGraph(P, wait, program);
-}
+void DisplayGraph(StringRef Filename, bool wait = true,
+                  GraphProgram::Name program = GraphProgram::DOT);
 
 template<typename GraphType>
 class GraphWriter {
@@ -325,22 +319,13 @@ raw_ostream &WriteGraph(raw_ostream &O, const GraphType &G,
   return O;
 }
 
-template<typename GraphType>
-sys::Path WriteGraph(const GraphType &G, const Twine &Name,
-                     bool ShortNames = false, const Twine &Title = "") {
-  std::string ErrMsg;
-  sys::Path Filename = sys::Path::GetTemporaryDirectory(&ErrMsg);
-  if (Filename.isEmpty()) {
-    errs() << "Error: " << ErrMsg << "\n";
-    return Filename;
-  }
-  Filename.appendComponent((Name + ".dot").str());
-  if (Filename.makeUnique(true,&ErrMsg)) {
-    errs() << "Error: " << ErrMsg << "\n";
-    return sys::Path();
-  }
+std::string createGraphFilename(const Twine &Name);
 
-  errs() << "Writing '" << Filename.str() << "'... ";
+template <typename GraphType>
+std::string WriteGraph(const GraphType &G, const Twine &Name,
+                       bool ShortNames = false, const Twine &Title = "") {
+  std::string Filename = createGraphFilename(Name);
+  errs() << "Writing '" << Filename << "'... ";
 
   std::string ErrorInfo;
   raw_fd_ostream O(Filename.c_str(), ErrorInfo);
@@ -349,8 +334,8 @@ sys::Path WriteGraph(const GraphType &G, const Twine &Name,
     llvm::WriteGraph(O, G, ShortNames, Title);
     errs() << " done. \n";
   } else {
-    errs() << "error opening file '" << Filename.str() << "' for writing!\n";
-    Filename.clear();
+    errs() << "error opening file '" << Filename << "' for writing!\n";
+    return "";
   }
 
   return Filename;
@@ -363,9 +348,9 @@ template<typename GraphType>
 void ViewGraph(const GraphType &G, const Twine &Name,
                bool ShortNames = false, const Twine &Title = "",
                GraphProgram::Name Program = GraphProgram::DOT) {
-  sys::Path Filename = llvm::WriteGraph(G, Name, ShortNames, Title);
+  std::string Filename = llvm::WriteGraph(G, Name, ShortNames, Title);
 
-  if (Filename.isEmpty())
+  if (Filename.empty())
     return;
 
   DisplayGraph(Filename, true, Program);
