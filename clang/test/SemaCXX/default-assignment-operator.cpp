@@ -1,12 +1,12 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-class Base { // expected-error {{cannot define the implicit default assignment operator for 'Base', because non-static reference member 'ref' can't use default assignment operator}} \
+class Base { // expected-error {{cannot define the implicit copy assignment operator for 'Base', because non-static reference member 'ref' can't use copy assignment operator}} \
   // expected-warning{{class 'Base' does not declare any constructor to initialize its non-modifiable members}}
   int &ref;  // expected-note {{declared here}} \
   // expected-note{{reference member 'ref' will never be initialized}}
 };
 
-class X  : Base {  // // expected-error {{cannot define the implicit default assignment operator for 'X', because non-static const member 'cint' can't use default assignment operator}} \
+class X  : Base {  // // expected-error {{cannot define the implicit copy assignment operator for 'X', because non-static const member 'cint' can't use copy assignment operator}} \
 // expected-note{{assignment operator for 'Base' first required here}}
 public: 
   X();
@@ -73,7 +73,7 @@ void i() {
 
 // Test5
 
-class E1 { // expected-error{{cannot define the implicit default assignment operator for 'E1', because non-static const member 'a' can't use default assignment operator}}
+class E1 { // expected-error{{cannot define the implicit copy assignment operator for 'E1', because non-static const member 'a' can't use copy assignment operator}}
 
 public:
   const int a; // expected-note{{declared here}}
@@ -101,7 +101,7 @@ namespace ProtectedCheck {
     X x;
   };
 
-  void f(Z z) { z = z; }  // expected-note{{implicit default copy assignment operator}}
+  void f(Z z) { z = z; }  // expected-note{{implicit copy assignment operator}}
 
 }
 

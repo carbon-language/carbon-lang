@@ -12,7 +12,7 @@ struct X : T { }; // expected-error 2{{private destructor}}
 struct Z; // expected-note{{forward declaration}}
 
 @interface A {
-  X<Y> x; // expected-note{{implicit default destructor}}
+  X<Y> x; // expected-note{{implicit destructor}}
   Y y; // expected-error{{private destructor}}
 }
 @end

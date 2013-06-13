@@ -1138,7 +1138,7 @@ def note_bitfield_decl : Note<"bit-field is declared here">;
 def note_previous_decl : Note<"%0 declared here">;
 def note_implicit_param_decl : Note<"%0 is an implicit parameter">;
 def note_member_synthesized_at : Note<
-  "implicit default %select{constructor|copy constructor|move constructor|copy "
+  "implicit %select{default constructor|copy constructor|move constructor|copy "
   "assignment operator|move assignment operator|destructor}0 for %1 first "
   "required here">;
 def note_inhctor_synthesized_at : Note<
@@ -2407,8 +2407,8 @@ def err_param_default_argument_member_template_redecl : Error<
   "of a %select{class template|class template partial specialization|nested "
   "class in a template}0">;
 def err_uninitialized_member_for_assign : Error<
-  "cannot define the implicit default assignment operator for %0, because "
-  "non-static %select{reference|const}1 member %2 can't use default "
+  "cannot define the implicit copy assignment operator for %0, because "
+  "non-static %select{reference|const}1 member %2 can't use copy "
   "assignment operator">;
 def err_uninitialized_member_in_ctor : Error<
   "%select{|implicit default |inheriting }0constructor for %1 must explicitly "

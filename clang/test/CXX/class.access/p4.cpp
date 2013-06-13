@@ -151,7 +151,7 @@ namespace test3 {
     virtual Base3
   {}; 
   Derived3 d3; // expected-note {{implicit default constructor}}\
-               // expected-note{{implicit default destructor}}}
+               // expected-note{{implicit destructor}}}
 }
 
 // Conversion functions.
@@ -207,13 +207,13 @@ namespace test5 {
   class Test1 { A a; }; // expected-error {{private member}}
   void test1() {
     Test1 a; 
-    a = Test1(); // expected-note{{implicit default copy}}
+    a = Test1(); // expected-note{{implicit copy}}
   }
 
   class Test2 : A {}; // expected-error {{private member}}
   void test2() {
     Test2 a;
-    a = Test2(); // expected-note{{implicit default copy}}
+    a = Test2(); // expected-note{{implicit copy}}
   }
 }
 
@@ -226,12 +226,12 @@ namespace test6 {
 
   class Test1 { A a; }; // expected-error {{field of type 'test6::A' has private copy constructor}}
   void test1(const Test1 &t) {
-    Test1 a = t; // expected-note{{implicit default copy}}
+    Test1 a = t; // expected-note{{implicit copy}}
   }
 
   class Test2 : A {}; // expected-error {{base class 'test6::A' has private copy constructor}}
   void test2(const Test2 &t) {
-    Test2 a = t; // expected-note{{implicit default copy}}
+    Test2 a = t; // expected-note{{implicit copy}}
   }
 }
 

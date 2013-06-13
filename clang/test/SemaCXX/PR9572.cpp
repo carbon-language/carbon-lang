@@ -7,7 +7,7 @@ struct Foo : public Base { // expected-error {{base class 'Base' has private des
   Foo();
 };
 struct Bar : public Foo {
-  Bar() { } // expected-note {{implicit default destructor for 'Foo' first required here}}
+  Bar() { } // expected-note {{implicit destructor for 'Foo' first required here}}
 };
 struct Baz {
   Foo f;

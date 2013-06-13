@@ -64,7 +64,7 @@ namespace dr7 { // dr7: yes
   class B : virtual private A {}; // expected-note 2 {{declared private here}}
   class C : public B {} c; // expected-error 2 {{inherited virtual base class 'dr7::A' has private destructor}} \
                            // expected-note {{implicit default constructor for 'dr7::C' first required here}} \
-                           // expected-note {{implicit default destructor for 'dr7::C' first required here}}
+                           // expected-note {{implicit destructor for 'dr7::C' first required here}}
   class VeryDerivedC : public B, virtual public A {} vdc;
 
   class X { ~X(); }; // expected-note {{here}}

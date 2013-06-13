@@ -72,7 +72,7 @@ namespace PR7114 {
   int f() { return B<int>::value; }
 
   void test_typeid(B<float>::Inner bfi) {
-    (void)typeid(bfi); // expected-note{{implicit default destructor}}
+    (void)typeid(bfi); // expected-note{{implicit destructor}}
   }
 
   template<typename T>

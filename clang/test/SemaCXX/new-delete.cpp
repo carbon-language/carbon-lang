@@ -209,7 +209,7 @@ struct X11 : X10 { // expected-error {{no suitable member 'operator delete' in '
 };
 
 void f() {
-  X11 x11; // expected-note {{implicit default destructor for 'X11' first required here}}
+  X11 x11; // expected-note {{implicit destructor for 'X11' first required here}}
 }
 
 struct X12 {
@@ -394,7 +394,7 @@ namespace ArrayNewNeedsDtor {
   struct A { A(); private: ~A(); }; // expected-note {{declared private here}}
   struct B { B(); A a; }; // expected-error {{field of type 'ArrayNewNeedsDtor::A' has private destructor}}
   B *test9() {
-    return new B[5]; // expected-note {{implicit default destructor for 'ArrayNewNeedsDtor::B' first required here}}
+    return new B[5]; // expected-note {{implicit destructor for 'ArrayNewNeedsDtor::B' first required here}}
   }
 }
 
