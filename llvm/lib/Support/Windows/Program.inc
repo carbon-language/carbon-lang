@@ -33,17 +33,17 @@ namespace llvm {
 using namespace sys;
 
 // This function just uses the PATH environment variable to find the program.
-Path sys::FindProgramByName(const std::string& progName) {
+std::string sys::FindProgramByName(const std::string &progName) {
   // Check some degenerate cases
   if (progName.length() == 0) // no program
-    return Path();
+    return "";
   Path temp;
   if (!temp.set(progName)) // invalid name
-    return Path();
+    return "";
   // Return paths with slashes verbatim.
   if (progName.find('\\') != std::string::npos ||
       progName.find('/') != std::string::npos)
-    return temp;
+    return temp.str();
 
   // At this point, the file name is valid and does not contain slashes.
   // Let Windows search for it.
@@ -54,11 +54,11 @@ Path sys::FindProgramByName(const std::string& progName) {
 
   // See if it wasn't found.
   if (len == 0)
-    return Path();
+    return "";
 
   // See if we got the entire path.
   if (len < MAX_PATH)
-    return Path(buffer);
+    return std::string(buffer);
 
   // Buffer was too small; grow and retry.
   while (true) {
@@ -68,9 +68,9 @@ Path sys::FindProgramByName(const std::string& progName) {
     // It is unlikely the search failed, but it's always possible some file
     // was added or removed since the last search, so be paranoid...
     if (len2 == 0)
-      return Path();
+      return "";
     else if (len2 <= len)
-      return Path(b);
+      return std::string(b);
 
     len = len2;
   }

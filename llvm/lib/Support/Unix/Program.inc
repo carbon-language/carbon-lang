@@ -48,19 +48,19 @@ namespace llvm {
 using namespace sys;
 
 // This function just uses the PATH environment variable to find the program.
-Path
+std::string
 sys::FindProgramByName(const std::string& progName) {
 
   // Check some degenerate cases
   if (progName.length() == 0) // no program
-    return Path();
+    return "";
   Path temp;
   if (!temp.set(progName)) // invalid name
-    return Path();
+    return "";
   // Use the given path verbatim if it contains any slashes; this matches
   // the behavior of sh(1) and friends.
   if (progName.find('/') != std::string::npos)
-    return temp;
+    return temp.str();
 
   // At this point, the file name is valid and does not contain slashes. Search
   // for it through the directories specified in the PATH environment variable.
@@ -68,7 +68,7 @@ sys::FindProgramByName(const std::string& progName) {
   // Get the path. If its empty, we can't do anything to find it.
   const char *PathStr = getenv("PATH");
   if (PathStr == 0)
-    return Path();
+    return "";
 
   // Now we have a colon separated list of directories to search; try them.
   size_t PathLen = strlen(PathStr);
@@ -81,7 +81,7 @@ sys::FindProgramByName(const std::string& progName) {
     if (FilePath.set(std::string(PathStr,Colon))) {
       FilePath.appendComponent(progName);
       if (FilePath.canExecute())
-        return FilePath;                    // Found the executable!
+        return FilePath.str();                    // Found the executable!
     }
 
     // Nope it wasn't in this directory, check the next path in the list!
@@ -94,7 +94,7 @@ sys::FindProgramByName(const std::string& progName) {
       PathLen--;
     }
   }
-  return Path();
+  return "";
 }
 
 static bool RedirectIO(const Path *Path, int FD, std::string* ErrMsg) {

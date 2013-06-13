@@ -29,7 +29,7 @@ namespace sys {
   /// @returns A Path object initialized to the path of the program or a
   /// Path object that is empty (invalid) if the program could not be found.
   /// @brief Construct a Program by finding it by name.
-  Path FindProgramByName(const std::string& name);
+  std::string FindProgramByName(const std::string& name);
 
   // These functions change the specified standard stream (stdin, stdout, or
   // stderr) to binary mode. They return errc::success if the specified stream

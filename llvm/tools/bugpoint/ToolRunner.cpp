@@ -400,7 +400,7 @@ static void lexCommand(std::string &Message, const std::string &CommandLine,
     pos = CommandLine.find_first_of(delimiters, lastPos);
   }
 
-  CmdPath = sys::FindProgramByName(Command).str();
+  CmdPath = sys::FindProgramByName(Command);
   if (CmdPath.empty()) {
     Message =
       std::string("Cannot find '") + Command +
@@ -875,16 +875,16 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
 GCC *GCC::create(std::string &Message,
                  const std::string &GCCBinary,
                  const std::vector<std::string> *Args) {
-  sys::Path GCCPath = sys::FindProgramByName(GCCBinary);
-  if (GCCPath.isEmpty()) {
+  std::string GCCPath = sys::FindProgramByName(GCCBinary);
+  if (GCCPath.empty()) {
     Message = "Cannot find `"+ GCCBinary +"' in PATH!\n";
     return 0;
   }
 
-  sys::Path RemoteClientPath;
+  std::string RemoteClientPath;
   if (!RemoteClient.empty())
     RemoteClientPath = sys::FindProgramByName(RemoteClient);
 
-  Message = "Found gcc: " + GCCPath.str() + "\n";
-  return new GCC(GCCPath.str(), RemoteClientPath.str(), Args);
+  Message = "Found gcc: " + GCCPath + "\n";
+  return new GCC(GCCPath, RemoteClientPath, Args);
 }

@@ -148,7 +148,7 @@ bool BugDriver::runPasses(Module *Program,
     return 1;
   }
 
-  sys::Path tool = sys::FindProgramByName("opt");
+  std::string tool = sys::FindProgramByName("opt");
   if (tool.empty()) {
     errs() << "Cannot find `opt' in PATH!\n";
     return 1;
@@ -159,14 +159,13 @@ bool BugDriver::runPasses(Module *Program,
 
   // setup the child process' arguments
   SmallVector<const char*, 8> Args;
-  std::string Opt = tool.str();
   if (UseValgrind) {
     Args.push_back("valgrind");
     Args.push_back("--error-exitcode=1");
     Args.push_back("-q");
     Args.push_back(tool.c_str());
   } else
-    Args.push_back(Opt.c_str());
+    Args.push_back(tool.c_str());
 
   Args.push_back("-o");
   Args.push_back(OutputFilename.c_str());
