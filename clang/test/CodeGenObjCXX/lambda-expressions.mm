@@ -60,6 +60,15 @@ void take_block(void (^block)()) { block(); }
 }
 @end
 
-// ARC: attributes [[NUW]] = { nounwind{{.*}} }
+typedef int (^fptr)();
+template<typename T> struct StaticMembers {
+  static fptr f;
+};
+template<typename T>
+fptr StaticMembers<T>::f = [] { auto f = []{return 5;}; return fptr(f); }();
+template fptr StaticMembers<float>::f;
+// ARC: define linkonce_odr i32 ()* @_ZZNK13StaticMembersIfE1fMUlvE_clEvENKUlvE_cvU13block_pointerFivEEv
 
+
+// ARC: attributes [[NUW]] = { nounwind{{.*}} }
 // MRC: attributes [[NUW]] = { nounwind{{.*}} }

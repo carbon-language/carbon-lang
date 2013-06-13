@@ -900,7 +900,7 @@ static void addBlockPointerConversion(Sema &S,
                                 DeclarationNameInfo(Name, Loc, NameLoc),
                                 ConvTy, 
                                 S.Context.getTrivialTypeSourceInfo(ConvTy, Loc),
-                                /*isInline=*/false, /*isExplicit=*/false,
+                                /*isInline=*/true, /*isExplicit=*/false,
                                 /*isConstexpr=*/false, 
                                 CallOperator->getBody()->getLocEnd());
   Conversion->setAccess(AS_public);
