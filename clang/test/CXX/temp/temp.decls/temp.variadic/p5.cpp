@@ -410,3 +410,14 @@ namespace WorkingPaperExample {
     f(h(args ...) + args ...);
   }
 }
+
+namespace PR16303 {
+  template<int> struct A { A(int); };
+  template<int...N> struct B {
+    template<int...M> struct C : A<N>... {
+      C() : A<N>(M)... {} // expected-error{{pack expansion contains parameter packs 'N' and 'M' that have different lengths (2 vs. 3)}} expected-error{{pack expansion contains parameter packs 'N' and 'M' that have different lengths (4 vs. 3)}}
+    };
+  };
+  B<1,2>::C<4,5,6> c1; // expected-note{{in instantiation of}}
+  B<1,2,3,4>::C<4,5,6> c2; // expected-note{{in instantiation of}}
+}
