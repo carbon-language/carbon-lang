@@ -10,7 +10,20 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#if defined(__APPLE__)
 #include <LLDB/LLDB.h>
+#else
+#include "LLDB/SBBlock.h"
+#include "LLDB/SBCompileUnit.h"
+#include "LLDB/SBDebugger.h"
+#include "LLDB/SBFunction.h"
+#include "LLDB/SBModule.h"
+#include "LLDB/SBStream.h"
+#include "LLDB/SBSymbol.h"
+#include "LLDB/SBTarget.h"
+#include "LLDB/SBThread.h"
+#include "LLDB/SBProcess.h"
+#endif
 
 using namespace lldb;
 

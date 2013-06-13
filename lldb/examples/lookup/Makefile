@@ -1,11 +1,15 @@
 LEVEL = ../../test/make
 
 CXX_SOURCES := main.cpp
+EXE := lldb-lookup
+USE_LIBCPP := 1
 
 MY_OS = $(shell uname -s)
+
 ifeq "$(MY_OS)" "Darwin"
-    LD_EXTRAS ?= -framework LLDB
-	FRAMEWORK_INCLUDES=-F/Volumes/data/lldb/svn/trunk/build/Debug
+    LLDB_BUILD_DIR ?= /Applications/Xcode.app/Contents/SharedFrameworks
+    LD_EXTRAS ?= -framework LLDB -Wl,-rpath,"$(LLDB_BUILD_DIR)"
+    FRAMEWORK_INCLUDES=-F"$(LLDB_BUILD_DIR)"
 else
     LD_EXTRAS ?= $(LLDB_BUILD_DIR)/_lldb.so
 endif
