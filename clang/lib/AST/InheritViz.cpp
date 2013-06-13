@@ -159,7 +159,7 @@ void CXXRecordDecl::viewInheritance(ASTContext& Context) const {
     O.close();
 
     // Display the graph
-    DisplayGraph(Filename);
+    DisplayGraph(Filename.str());
   } else {
     llvm::errs() << "error opening file for writing!\n";
   }
