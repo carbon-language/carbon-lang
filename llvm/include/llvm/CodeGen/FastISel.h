@@ -26,7 +26,6 @@ class ConstantFP;
 class FunctionLoweringInfo;
 class Instruction;
 class LoadInst;
-class MachineBasicBlock;
 class MachineConstantPool;
 class MachineFunction;
 class MachineInstr;
