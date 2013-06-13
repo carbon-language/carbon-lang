@@ -305,8 +305,8 @@ namespace dtors {
 
   // CHECK: define void @_ZN5dtors1fEv(
   void f() {
-    // CHECK: call void @_ZN5dtors1SC1Ev(%"struct.dtors::S"* %arrayinit.begin)
-    // CHECK: call void @_ZN5dtors1SC1Ev(%"struct.dtors::S"* %arrayinit.element)
+    // CHECK: call void @_ZN5dtors1SC1Ev(
+    // CHECK: call void @_ZN5dtors1SC1Ev(
     std::initializer_list<S>{ S(), S() };
 
     // Destruction loop for underlying array.
@@ -322,8 +322,8 @@ namespace dtors {
 
   // CHECK: define void @_ZN5dtors1gEv(
   void g() {
-    // CHECK: call void @_ZN5dtors1SC1Ev(%"struct.dtors::S"* %arrayinit.begin)
-    // CHECK: call void @_ZN5dtors1SC1Ev(%"struct.dtors::S"* %arrayinit.element)
+    // CHECK: call void @_ZN5dtors1SC1Ev(
+    // CHECK: call void @_ZN5dtors1SC1Ev(
     auto x = std::initializer_list<S>{ S(), S() };
 
     // Destruction loop for underlying array.
@@ -339,8 +339,8 @@ namespace dtors {
 
   // CHECK: define void @_ZN5dtors1hEv(
   void h() {
-    // CHECK: call void @_ZN5dtors1SC1Ev(%"struct.dtors::S"* %arrayinit.begin)
-    // CHECK: call void @_ZN5dtors1SC1Ev(%"struct.dtors::S"* %arrayinit.element)
+    // CHECK: call void @_ZN5dtors1SC1Ev(
+    // CHECK: call void @_ZN5dtors1SC1Ev(
     std::initializer_list<S> x = { S(), S() };
 
     // CHECK-NOT: call void @_ZN5dtors1SD1Ev(
