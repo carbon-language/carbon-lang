@@ -53,6 +53,7 @@ struct Section {
   StringRef Name;
   ELF_SHT Type;
   ELF_SHF Flags;
+  llvm::yaml::Hex64 Address;
 };
 struct Object {
   FileHeader Header;

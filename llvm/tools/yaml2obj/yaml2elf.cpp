@@ -132,7 +132,7 @@ static void writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
     SHeader.sh_name = StrTab.addString(Sec.Name);
     SHeader.sh_type = Sec.Type;
     SHeader.sh_flags = Sec.Flags;
-    SHeader.sh_addr = 0;
+    SHeader.sh_addr = Sec.Address;
     SHeader.sh_offset = 0;
     SHeader.sh_size = 0;
     SHeader.sh_link = 0;

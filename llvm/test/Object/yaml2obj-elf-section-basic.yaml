@@ -9,6 +9,7 @@ Sections:
   - Name: .text
     Type: SHT_PROGBITS
     Flags: [ SHF_ALLOC, SHF_EXECINSTR ]
+    Address: 0xDEADBEEF
 
 # CHECK:        Section {
 # CHECK:          Index: 0
@@ -21,3 +22,4 @@ Sections:
 # CHECK-NEXT:       SHF_ALLOC (0x2)
 # CHECK-NEXT:       SHF_EXECINSTR (0x4)
 # CHECK-NEXT:     ]
+# CHECK-NEXT:     Address: 0xDEADBEEF
