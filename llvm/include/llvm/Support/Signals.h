@@ -31,6 +31,10 @@ namespace sys {
   /// @brief Remove a file if a fatal signal occurs.
   bool RemoveFileOnSignal(const Path &Filename, std::string* ErrMsg = 0);
 
+  inline bool RemoveFileOnSignal(StringRef Filename, std::string* ErrMsg = 0) {
+    return RemoveFileOnSignal(sys::Path(Filename), ErrMsg);
+  }
+
   /// This function removes a file from the list of files to be removed on
   /// signal delivery.
   void DontRemoveFileOnSignal(const Path &Filename);
