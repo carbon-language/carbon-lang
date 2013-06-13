@@ -263,8 +263,10 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   // to pass in a smaller number of arguments into the new function.
   //
   std::vector<Value*> Args;
-  while (!Fn.use_empty()) {
-    CallSite CS(Fn.use_back());
+  for (Value::use_iterator I = Fn.use_begin(), E = Fn.use_end(); I != E; ) {
+    CallSite CS(*I++);
+    if (!CS)
+      continue;
     Instruction *Call = CS.getInstruction();
 
     // Pass all the same arguments.
@@ -330,6 +332,11 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   if (DI != FunctionDIs.end())
     DI->second.replaceFunction(NF);
 
+  // Fix up any BlockAddresses that refer to the function.
+  Fn.replaceAllUsesWith(ConstantExpr::getBitCast(NF, Fn.getType()));
+  // Delete the bitcast that we just created, so that NF does not
+  // appear to be address-taken.
+  NF->removeDeadConstantUsers();
   // Finally, nuke the old function.
   Fn.eraseFromParent();
   return true;
