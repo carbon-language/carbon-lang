@@ -130,6 +130,13 @@ public:
     return strchr(GetRecord(ID).Attributes, 'f') != 0;
   }
 
+  /// \brief Determines whether this builtin is a predefined compiler-rt/libgcc
+  /// function, such as "__clear_cache", where we know the signature a
+  /// priori.
+  bool isPredefinedRuntimeFunction(unsigned ID) const {
+    return strchr(GetRecord(ID).Attributes, 'i') != 0;
+  }
+
   /// \brief Determines whether this builtin has custom typechecking.
   bool hasCustomTypechecking(unsigned ID) const {
     return strchr(GetRecord(ID).Attributes, 't') != 0;
