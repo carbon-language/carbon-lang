@@ -38,7 +38,7 @@ class CIndexer {
   bool DisplayDiagnostics;
   unsigned Options; // CXGlobalOptFlags.
 
-  llvm::sys::Path ResourcesPath;
+  std::string ResourcesPath;
 
 public:
  CIndexer() : OnlyLocalDecls(false), DisplayDiagnostics(false),
@@ -63,7 +63,7 @@ public:
   }
 
   /// \brief Get the path of the clang resource files.
-  std::string getClangResourcesPath();
+  const std::string &getClangResourcesPath();
 };
 
   /**

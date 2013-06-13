@@ -43,11 +43,13 @@
 
 using namespace clang;
 
-std::string CIndexer::getClangResourcesPath() {
+const std::string &CIndexer::getClangResourcesPath() {
   // Did we already compute the path?
   if (!ResourcesPath.empty())
-    return ResourcesPath.str();
-  
+    return ResourcesPath;
+
+  SmallString<128> LibClangPath;
+
   // Find the location where this library lives (libclang.dylib).
 #ifdef LLVM_ON_WIN32
   MEMORY_BASIC_INFORMATION mbi;
@@ -66,26 +68,22 @@ std::string CIndexer::getClangResourcesPath() {
 #endif
 #endif
 
-  llvm::sys::Path LibClangPath(path);
-  LibClangPath.eraseComponent();
+  LibClangPath += llvm::sys::path::parent_path(path);
 #else
   // This silly cast below avoids a C++ warning.
   Dl_info info;
   if (dladdr((void *)(uintptr_t)clang_createTranslationUnit, &info) == 0)
     llvm_unreachable("Call to dladdr() failed");
-  
-  llvm::sys::Path LibClangPath(info.dli_fname);
-  
+
   // We now have the CIndex directory, locate clang relative to it.
-  LibClangPath.eraseComponent();
+  LibClangPath += llvm::sys::path::parent_path(info.dli_fname);
 #endif
-  
-  LibClangPath.appendComponent("clang");
-  LibClangPath.appendComponent(CLANG_VERSION_STRING);
+
+  llvm::sys::path::append(LibClangPath, "clang", CLANG_VERSION_STRING);
 
   // Cache our result.
-  ResourcesPath = LibClangPath;
-  return LibClangPath.str();
+  ResourcesPath = LibClangPath.str();
+  return ResourcesPath;
 }
 
 static llvm::sys::Path GetTemporaryPath() {
