@@ -3024,7 +3024,7 @@ bool Expr::hasNonTrivialCall(ASTContext &Ctx) {
 Expr::NullPointerConstantKind
 Expr::isNullPointerConstant(ASTContext &Ctx,
                             NullPointerConstantValueDependence NPC) const {
-  if (isValueDependent()) {
+  if (isValueDependent() && !Ctx.getLangOpts().CPlusPlus11) {
     switch (NPC) {
     case NPC_NeverValueDependent:
       llvm_unreachable("Unexpected value dependent expression!");
@@ -3085,7 +3085,8 @@ Expr::isNullPointerConstant(ASTContext &Ctx,
     return NPCK_CXX11_nullptr;
 
   if (const RecordType *UT = getType()->getAsUnionType())
-    if (UT && UT->getDecl()->hasAttr<TransparentUnionAttr>())
+    if (!Ctx.getLangOpts().CPlusPlus11 &&
+        UT && UT->getDecl()->hasAttr<TransparentUnionAttr>())
       if (const CompoundLiteralExpr *CLE = dyn_cast<CompoundLiteralExpr>(this)){
         const Expr *InitExpr = CLE->getInitializer();
         if (const InitListExpr *ILE = dyn_cast<InitListExpr>(InitExpr))
@@ -3096,14 +3097,14 @@ Expr::isNullPointerConstant(ASTContext &Ctx,
       (Ctx.getLangOpts().CPlusPlus && getType()->isEnumeralType()))
     return NPCK_NotNull;
 
-  // If we have an integer constant expression, we need to *evaluate* it and
-  // test for the value 0. Don't use the C++11 constant expression semantics
-  // for this, for now; once the dust settles on core issue 903, we might only
-  // allow a literal 0 here in C++11 mode.
   if (Ctx.getLangOpts().CPlusPlus11) {
-    if (!isCXX98IntegralConstantExpr(Ctx))
-      return NPCK_NotNull;
+    // C++11 [conv.ptr]p1: A null pointer constant is an integer literal with
+    // value zero or a prvalue of type std::nullptr_t.
+    const IntegerLiteral *Lit = dyn_cast<IntegerLiteral>(this);
+    return (Lit && !Lit->getValue()) ? NPCK_ZeroLiteral : NPCK_NotNull;
   } else {
+    // If we have an integer constant expression, we need to *evaluate* it and
+    // test for the value 0.
     if (!isIntegerConstantExpr(Ctx))
       return NPCK_NotNull;
   }

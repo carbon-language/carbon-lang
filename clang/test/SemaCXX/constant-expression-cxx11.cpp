@@ -769,15 +769,22 @@ static_assert(&ok2 == pok2, "");
 static_assert((Base2*)(Derived*)(Base*)pb1 == pok2, "");
 static_assert((Derived*)(Base*)pb1 == (Derived*)pok2, "");
 
-constexpr Base *nullB = 42 - 6 * 7; // expected-warning {{expression which evaluates to zero treated as a null pointer constant of type 'Class::Base *const'}}
+// Core issue 903: we do not perform constant evaluation when checking for a
+// null pointer in C++11. Just check for an integer literal with value 0.
+constexpr Base *nullB = 42 - 6 * 7; // expected-error {{cannot initialize a variable of type 'Class::Base *const' with an rvalue of type 'int'}}
+constexpr Base *nullB1 = 0;
 static_assert((Bottom*)nullB == 0, "");
 static_assert((Derived*)nullB == 0, "");
 static_assert((void*)(Bottom*)nullB == (void*)(Derived*)nullB, "");
-Base * nullB2 = '\0'; // expected-warning {{expression which evaluates to zero treated as a null pointer constant of type 'Class::Base *'}}
-Base * nullB3 = (0);
-// We suppress the warning in unevaluated contexts to workaround some gtest
-// behavior. Once this becomes an error this isn't a problem anymore.
-static_assert(nullB == (1 - 1), "");
+Base *nullB2 = '\0'; // expected-error {{cannot initialize a variable of type 'Class::Base *' with an rvalue of type 'char'}}
+Base *nullB3 = (0);
+Base *nullB4 = false; // expected-error {{cannot initialize a variable of type 'Class::Base *' with an rvalue of type 'bool'}}
+Base *nullB5 = ((0ULL));
+Base *nullB6 = 0.; // expected-error {{cannot initialize a variable of type 'Class::Base *' with an rvalue of type 'double'}}
+enum Null { kNull };
+Base *nullB7 = kNull; // expected-error {{cannot initialize a variable of type 'Class::Base *' with an rvalue of type 'Class::Null'}}
+static_assert(nullB1 == (1 - 1), ""); // expected-error {{comparison between pointer and integer}}
+
 
 
 namespace ConversionOperators {

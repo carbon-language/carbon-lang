@@ -109,27 +109,30 @@ namespace PR12031 {
   }
 }
 
-namespace NullPtr {
+namespace Array {
   int &f(int *p);
   char &f(...);
   void g() {
-    int n = 0;
+    int n = -1;
     [=] {
-      char &k = f(n); // not a null pointer constant
+      int arr[n]; // VLA
     } ();
 
-    const int m = 0;
-    [=] {
-      int &k = f(m); // expected-warning{{expression which evaluates to zero treated as a null pointer constant of type 'int *'}}
+    const int m = -1;
+    [] {
+      int arr[m]; // expected-error{{negative size}}
     } ();
 
-    [=] () -> bool {
-      int &k = f(m); // expected-warning{{expression which evaluates to zero treated as a null pointer constant of type 'int *'}}
-      return &m == 0;
+    [&] {
+      int arr[m]; // expected-error{{negative size}}
+    } ();
+
+    [=] {
+      int arr[m]; // expected-error{{negative size}}
     } ();
 
     [m] {
-      int &k = f(m); // expected-warning{{expression which evaluates to zero treated as a null pointer constant of type 'int *'}}
+      int arr[m]; // expected-error{{negative size}}
     } ();
   }
 }
