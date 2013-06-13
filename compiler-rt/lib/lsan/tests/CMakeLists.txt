@@ -15,7 +15,7 @@ set(LSAN_TESTS_CFLAGS
   -I${LSAN_SRC_DIR})
 
 set(LSAN_TEST_LINK_FLAGS_COMMON
-  -lstdc++ -ldl -lpthread)
+  -lstdc++ -ldl -lpthread -lm)
 
 add_custom_target(LsanUnitTests)
 set_target_properties(LsanUnitTests PROPERTIES
