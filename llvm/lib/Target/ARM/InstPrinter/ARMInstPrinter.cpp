@@ -1148,7 +1148,9 @@ void ARMInstPrinter::printT2AddrModeImm8OffsetOperand(const MCInst *MI,
   const MCOperand &MO1 = MI->getOperand(OpNum);
   int32_t OffImm = (int32_t)MO1.getImm();
   O << ", " << markup("<imm:");
-  if (OffImm < 0)
+  if (OffImm == INT32_MIN)
+    O << "#-0";
+  else if (OffImm < 0)
     O << "#-" << -OffImm;
   else
     O << "#" << OffImm;
