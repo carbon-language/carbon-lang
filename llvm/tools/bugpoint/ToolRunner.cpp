@@ -121,7 +121,8 @@ static int RunProgramRemotelyWithTimeout(StringRef RemoteClientPath,
     OS << "\n";
 
     // The error message is in the output file, let's print it out from there.
-    std::ifstream ErrorFile(StdOutFile);
+    std::string StdOutFileName = StdOutFile.str();
+    std::ifstream ErrorFile(StdOutFileName.c_str());
     if (ErrorFile) {
       std::copy(std::istreambuf_iterator<char>(ErrorFile),
                 std::istreambuf_iterator<char>(),
