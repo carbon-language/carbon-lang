@@ -53,6 +53,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Support/TargetSelect.h"
 
 #if defined(__FreeBSD__)
