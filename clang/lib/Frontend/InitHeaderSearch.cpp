@@ -26,7 +26,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
@@ -245,8 +244,8 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
   if (HSOpts.UseBuiltinIncludes) {
     // Ignore the sys root, we *always* look for clang headers relative to
     // supplied path.
-    llvm::sys::Path P(HSOpts.ResourceDir);
-    P.appendComponent("include");
+    SmallString<128> P = StringRef(HSOpts.ResourceDir);
+    llvm::sys::path::append(P, "include");
     AddUnmappedPath(P.str(), ExternCSystem, false);
   }
 
@@ -313,15 +312,20 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     break;
   case llvm::Triple::MinGW32: { 
       // mingw-w64 crt include paths
-      llvm::sys::Path P(HSOpts.ResourceDir);
-      P.appendComponent("../../../i686-w64-mingw32/include"); // <sysroot>/i686-w64-mingw32/include
+      // <sysroot>/i686-w64-mingw32/include
+      SmallString<128> P = StringRef(HSOpts.ResourceDir);
+      llvm::sys::path::append(P, "../../../i686-w64-mingw32/include");
       AddPath(P.str(), System, false);
-      P = llvm::sys::Path(HSOpts.ResourceDir);
-      P.appendComponent("../../../x86_64-w64-mingw32/include"); // <sysroot>/x86_64-w64-mingw32/include
+
+      // <sysroot>/x86_64-w64-mingw32/include
+      P.resize(HSOpts.ResourceDir.size());
+      llvm::sys::path::append(P, "../../../x86_64-w64-mingw32/include");
       AddPath(P.str(), System, false);
+
       // mingw.org crt include paths
-      P = llvm::sys::Path(HSOpts.ResourceDir);
-      P.appendComponent("../../../include"); // <sysroot>/include
+      // <sysroot>/include
+      P.resize(HSOpts.ResourceDir.size());
+      llvm::sys::path::append(P, "../../../include");
       AddPath(P.str(), System, false);
       AddPath("/mingw/include", System, false);
 #if defined(_WIN32)
@@ -470,14 +474,14 @@ void InitHeaderSearch::AddDefaultIncludePaths(const LangOptions &Lang,
       if (triple.isOSDarwin()) {
         // On Darwin, libc++ may be installed alongside the compiler in
         // lib/c++/v1.
-        llvm::sys::Path P(HSOpts.ResourceDir);
-        if (!P.isEmpty()) {
-          P.eraseComponent();  // Remove version from foo/lib/clang/version
-          P.eraseComponent();  // Remove clang from foo/lib/clang
+        if (!HSOpts.ResourceDir.empty()) {
+          // Remove version from foo/lib/clang/version
+          StringRef NoVer = llvm::sys::path::parent_path(HSOpts.ResourceDir);
+          // Remove clang from foo/lib/clang
+          SmallString<128> P = llvm::sys::path::parent_path(NoVer);
           
           // Get foo/lib/c++/v1
-          P.appendComponent("c++");
-          P.appendComponent("v1");
+          llvm::sys::path::append(P, "c++", "v1");
           AddUnmappedPath(P.str(), CXXSystem, false);
         }
       }
@@ -687,8 +691,8 @@ void clang::ApplyHeaderSearchOptions(HeaderSearch &HS,
 
   if (HSOpts.UseBuiltinIncludes) {
     // Set up the builtin include directory in the module map.
-    llvm::sys::Path P(HSOpts.ResourceDir);
-    P.appendComponent("include");
+    SmallString<128> P = StringRef(HSOpts.ResourceDir);
+    llvm::sys::path::append(P, "include");
     if (const DirectoryEntry *Dir = HS.getFileMgr().getDirectory(P.str()))
       HS.getModuleMap().setBuiltinIncludeDir(Dir);
   }

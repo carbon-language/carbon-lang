@@ -21,8 +21,8 @@
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
@@ -166,7 +166,8 @@ static void PrintFilename(raw_ostream &OS, StringRef Filename) {
 
 void DependencyFileCallback::OutputDependencyFile() {
   if (SeenMissingHeader) {
-    llvm::sys::Path(OutputFile).eraseFromDisk();
+    bool existed;
+    llvm::sys::fs::remove(OutputFile, existed);
     return;
   }
 
