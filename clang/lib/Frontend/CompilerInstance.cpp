@@ -560,7 +560,7 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
 
   // Make sure the out stream file gets removed if we crash.
   if (RemoveFileOnSignal)
-    llvm::sys::RemoveFileOnSignal(llvm::sys::Path(OSFile));
+    llvm::sys::RemoveFileOnSignal(OSFile);
 
   if (ResultPathName)
     *ResultPathName = OutFile;

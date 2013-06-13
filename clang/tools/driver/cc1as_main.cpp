@@ -245,7 +245,7 @@ static formatted_raw_ostream *GetOutputStream(AssemblerInvocation &Opts,
   // Make sure that the Out file gets unlinked from the disk if we get a
   // SIGINT.
   if (Opts.OutputPath != "-")
-    sys::RemoveFileOnSignal(sys::Path(Opts.OutputPath));
+    sys::RemoveFileOnSignal(Opts.OutputPath);
 
   std::string Error;
   raw_fd_ostream *Out =
