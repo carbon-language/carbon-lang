@@ -160,10 +160,6 @@ const Option OptTable::getOption(OptSpecifier Opt) const {
   return Option(&getInfo(id), this);
 }
 
-bool OptTable::isOptionHelpHidden(OptSpecifier id) const {
-  return getInfo(id).Flags & HelpHidden;
-}
-
 static bool isInput(const llvm::StringSet<> &Prefixes, StringRef Arg) {
   if (Arg == "-")
     return true;
@@ -346,8 +342,16 @@ static const char *getOptionHelpGroup(const OptTable &Opts, OptSpecifier Id) {
   return getOptionHelpGroup(Opts, GroupID);
 }
 
-void OptTable::PrintHelp(raw_ostream &OS, const char *Name,
-                         const char *Title, bool ShowHidden) const {
+void OptTable::PrintHelp(raw_ostream &OS, const char *Name, const char *Title,
+                         bool ShowHidden) const {
+  PrintHelp(OS, Name, Title, /*Include*/ 0, /*Exclude*/
+            (ShowHidden ? 0 : HelpHidden));
+}
+
+
+void OptTable::PrintHelp(raw_ostream &OS, const char *Name, const char *Title,
+                         unsigned FlagsToInclude,
+                         unsigned FlagsToExclude) const {
   OS << "OVERVIEW: " << Title << "\n";
   OS << '\n';
   OS << "USAGE: " << Name << " [options] <inputs>\n";
@@ -366,7 +370,10 @@ void OptTable::PrintHelp(raw_ostream &OS, const char *Name,
     if (getOptionKind(Id) == Option::GroupClass)
       continue;
 
-    if (!ShowHidden && isOptionHelpHidden(Id))
+    unsigned Flags = getInfo(Id).Flags;
+    if (FlagsToInclude && !(Flags & FlagsToInclude))
+      continue;
+    if (Flags & FlagsToExclude)
       continue;
 
     if (const char *Text = getOptionHelpText(Id)) {

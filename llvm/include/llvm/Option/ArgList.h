@@ -222,8 +222,17 @@ public:
   /// negation are present, the last one wins.
   bool hasFlag(OptSpecifier Pos, OptSpecifier Neg, bool Default=true) const;
 
+  /// hasFlag - Given an option \p Pos, an alias \p PosAlias and its negative
+  /// form \p Neg, return true if the option or its alias is present, false if
+  /// the negation is present, and \p Default if none of the options are
+  /// given. If multiple options are present, the last one wins.
+  bool hasFlag(OptSpecifier Pos, OptSpecifier PosAlias, OptSpecifier Neg,
+               bool Default = true) const;
+
   /// AddLastArg - Render only the last argument match \p Id0, if present.
   void AddLastArg(ArgStringList &Output, OptSpecifier Id0) const;
+  void AddLastArg(ArgStringList &Output, OptSpecifier Id0,
+                  OptSpecifier Id1) const;
 
   /// AddAllArgs - Render all arguments matching the given ids.
   void AddAllArgs(ArgStringList &Output, OptSpecifier Id0,

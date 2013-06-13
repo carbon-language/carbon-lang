@@ -206,6 +206,13 @@ bool ArgList::hasFlag(OptSpecifier Pos, OptSpecifier Neg, bool Default) const {
   return Default;
 }
 
+bool ArgList::hasFlag(OptSpecifier Pos, OptSpecifier PosAlias, OptSpecifier Neg,
+                      bool Default) const {
+  if (Arg *A = getLastArg(Pos, PosAlias, Neg))
+    return A->getOption().matches(Pos) || A->getOption().matches(PosAlias);
+  return Default;
+}
+
 StringRef ArgList::getLastArgValue(OptSpecifier Id,
                                          StringRef Default) const {
   if (Arg *A = getLastArg(Id))
@@ -221,6 +228,14 @@ std::vector<std::string> ArgList::getAllArgValues(OptSpecifier Id) const {
 
 void ArgList::AddLastArg(ArgStringList &Output, OptSpecifier Id) const {
   if (Arg *A = getLastArg(Id)) {
+    A->claim();
+    A->render(*this, Output);
+  }
+}
+
+void ArgList::AddLastArg(ArgStringList &Output, OptSpecifier Id0,
+                         OptSpecifier Id1) const {
+  if (Arg *A = getLastArg(Id0, Id1)) {
     A->claim();
     A->render(*this, Output);
   }
