@@ -38,10 +38,10 @@ class LLC;
 // GCC abstraction
 //
 class GCC {
-  sys::Path GCCPath;                // The path to the gcc executable.
-  sys::Path RemoteClientPath;       // The path to the rsh / ssh executable.
+  std::string GCCPath;                // The path to the gcc executable.
+  std::string RemoteClientPath;       // The path to the rsh / ssh executable.
   std::vector<std::string> gccArgs; // GCC-specific arguments.
-  GCC(const sys::Path &gccPath, const sys::Path &RemotePath,
+  GCC(StringRef gccPath, StringRef RemotePath,
       const std::vector<std::string> *GCCArgs)
     : GCCPath(gccPath), RemoteClientPath(RemotePath) {
     if (GCCArgs) gccArgs = *GCCArgs;

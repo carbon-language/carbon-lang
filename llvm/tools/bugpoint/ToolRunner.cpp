@@ -714,8 +714,8 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
           errs() << " " << GCCArgs[i];
         errs() << "\n";
         );
-  if (RunProgramWithTimeout(GCCPath.str(), &GCCArgs[0], "", "", "")) {
-    *Error = ProcessFailure(GCCPath.str(), &GCCArgs[0]);
+  if (RunProgramWithTimeout(GCCPath, &GCCArgs[0], "", "", "")) {
+    *Error = ProcessFailure(GCCPath, &GCCArgs[0]);
     return -1;
   }
 
@@ -725,7 +725,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   // ProgramArgs is used.
   std::string Exec;
 
-  if (RemoteClientPath.isEmpty())
+  if (RemoteClientPath.empty())
     ProgramArgs.push_back(OutputBinary.c_str());
   else {
     ProgramArgs.push_back(RemoteClientPath.c_str());
@@ -767,7 +767,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 
   FileRemover OutputBinaryRemover(OutputBinary.str(), !SaveTemps);
 
-  if (RemoteClientPath.isEmpty()) {
+  if (RemoteClientPath.empty()) {
     DEBUG(errs() << "<run locally>");
     int ExitCode = RunProgramWithTimeout(OutputBinary.str(), &ProgramArgs[0],
                                          InputFile, OutputFile, OutputFile,
@@ -783,7 +783,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
     return ExitCode;
   } else {
     outs() << "<run remotely>"; outs().flush();
-    return RunProgramRemotelyWithTimeout(RemoteClientPath.str(),
+    return RunProgramRemotelyWithTimeout(RemoteClientPath,
         &ProgramArgs[0], InputFile, OutputFile,
         OutputFile, Timeout, MemoryLimit);
   }
@@ -863,8 +863,8 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
           errs() << " " << GCCArgs[i];
         errs() << "\n";
         );
-  if (RunProgramWithTimeout(GCCPath.str(), &GCCArgs[0], "", "", "")) {
-    Error = ProcessFailure(GCCPath.str(), &GCCArgs[0]);
+  if (RunProgramWithTimeout(GCCPath, &GCCArgs[0], "", "", "")) {
+    Error = ProcessFailure(GCCPath, &GCCArgs[0]);
     return 1;
   }
   return 0;
@@ -886,5 +886,5 @@ GCC *GCC::create(std::string &Message,
     RemoteClientPath = sys::FindProgramByName(RemoteClient);
 
   Message = "Found gcc: " + GCCPath.str() + "\n";
-  return new GCC(GCCPath, RemoteClientPath, Args);
+  return new GCC(GCCPath.str(), RemoteClientPath.str(), Args);
 }
