@@ -1,4 +1,4 @@
-; RUN: llc -mcpu=pwr7 -O0 < %s | FileCheck %s
+; RUN: llc -mcpu=pwr7 -O0 -fast-isel=false < %s | FileCheck %s
 
 ; Verify internal alignment of long double in a struct.  The double
 ; argument comes in in GPR3; GPR4 is skipped; GPRs 5 and 6 contain

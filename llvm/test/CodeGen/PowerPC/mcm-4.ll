@@ -1,5 +1,5 @@
-; RUN: llc -mcpu=pwr7 -O0 -code-model=medium <%s | FileCheck -check-prefix=MEDIUM %s
-; RUN: llc -mcpu=pwr7 -O0 -code-model=large <%s | FileCheck -check-prefix=LARGE %s
+; RUN: llc -mcpu=pwr7 -O0 -code-model=medium -fast-isel=false <%s | FileCheck -check-prefix=MEDIUM %s
+; RUN: llc -mcpu=pwr7 -O0 -code-model=large -fast-isel=false <%s | FileCheck -check-prefix=LARGE %s
 
 ; Test correct code generation for medium and large code model
 ; for loading a value from the constant pool (TOC-relative).

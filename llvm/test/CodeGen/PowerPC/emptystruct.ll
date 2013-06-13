@@ -1,4 +1,4 @@
-; RUN: llc -mcpu=pwr7 -O0 < %s | FileCheck %s
+; RUN: llc -mcpu=pwr7 -O0 -fast-isel=false < %s | FileCheck %s
 
 ; This tests correct handling of empty aggregate parameters and return values.
 ; An empty parameter passed by value does not consume a protocol register or
@@ -27,7 +27,6 @@ entry:
 
 ; CHECK: callee:
 ; CHECK: std 4,
-; CHECK: std 3,
 ; CHECK-NOT: std 5,
 ; CHECK-NOT: std 6,
 ; CHECK: blr
@@ -45,7 +44,6 @@ entry:
 
 ; CHECK: caller:
 ; CHECK: addi 4,
-; CHECK: std 3,
 ; CHECK-NOT: std 5,
 ; CHECK-NOT: std 6,
 ; CHECK: bl callee

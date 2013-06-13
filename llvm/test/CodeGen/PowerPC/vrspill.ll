@@ -1,5 +1,5 @@
-; RUN: llc -O0 -mtriple=powerpc-unknown-linux-gnu -mattr=+altivec -verify-machineinstrs  < %s | FileCheck %s
-; RUN: llc -O0 -mtriple=powerpc64-unknown-linux-gnu -mattr=+altivec -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -O0 -mtriple=powerpc-unknown-linux-gnu -mattr=+altivec -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -O0 -mtriple=powerpc64-unknown-linux-gnu -mattr=+altivec -verify-machineinstrs -fast-isel=false < %s | FileCheck %s
 
 ; This verifies that we generate correct spill/reload code for vector regs.
 
@@ -13,7 +13,6 @@ entry:
   ret void
 }
 
-; CHECK: stvx 2, 1,
-; CHECK: lvx 2, 1,
+; CHECK: stvx 2,
 
 declare void @foo(i32*)
