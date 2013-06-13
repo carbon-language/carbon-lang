@@ -6742,8 +6742,10 @@ Decl *Sema::ActOnUsingDeclaration(Scope *S,
   // diagnostics.
   if (!HasUsingKeyword) {
     UsingLoc = Name.getLocStart();
-    
-    Diag(UsingLoc, diag::warn_access_decl_deprecated)
+
+    Diag(UsingLoc,
+         getLangOpts().CPlusPlus11 ? diag::err_access_decl
+                                   : diag::warn_access_decl_deprecated)
       << FixItHint::CreateInsertion(SS.getRange().getBegin(), "using ");
   }
 

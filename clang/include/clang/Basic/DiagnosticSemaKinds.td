@@ -287,6 +287,9 @@ def note_using_decl : Note<"%select{|previous }0using declaration">;
 def warn_access_decl_deprecated : Warning<
   "access declarations are deprecated; use using declarations instead">,
   InGroup<Deprecated>;
+def err_access_decl : Error<
+  "ISO C++11 does not allow access declarations; "
+  "use using declarations instead">;
 def warn_exception_spec_deprecated : Warning<
   "dynamic exception specifications are deprecated">,
   InGroup<Deprecated>, DefaultIgnore;

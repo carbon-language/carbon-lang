@@ -26,6 +26,10 @@ void stuff() {
 
 struct S { int n; };
 struct T : private S {
-  // FIXME: This is ill-formed in C++11.
-  S::n; // expected-warning {{access declarations are deprecated; use using declarations instead}}
+  S::n;
+#if __cplusplus < 201103L
+  // expected-warning@-2 {{access declarations are deprecated; use using declarations instead}}
+#else
+  // expected-error@-4 {{ISO C++11 does not allow access declarations; use using declarations instead}}
+#endif
 };
