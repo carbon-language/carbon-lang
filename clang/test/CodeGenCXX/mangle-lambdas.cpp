@@ -106,6 +106,7 @@ struct StaticMembers {
   static T x;
   static T y;
   static T z;
+  static int (*f)();
 };
 
 template<typename T> int accept_lambda(T);
@@ -118,6 +119,9 @@ T StaticMembers<T>::y = []{return 3;}();
 
 template<typename T>
 T StaticMembers<T>::z = accept_lambda([]{return 4;});
+
+template<typename T>
+int (*StaticMembers<T>::f)() = []{return 5;};
 
 // CHECK: define internal void @__cxx_global_var_init()
 // CHECK: call i32 @_ZNK13StaticMembersIfE1xMUlvE_clEv
@@ -140,7 +144,12 @@ template float StaticMembers<float>::y;
 // CHECK: declare i32 @_Z13accept_lambdaIN13StaticMembersIfE1zMUlvE_EEiT_()
 template float StaticMembers<float>::z;
 
-// CHECK: define internal void @__cxx_global_var_init3
+// CHECK: define internal void @__cxx_global_var_init3()
+// CHECK: call {{.*}} @_ZNK13StaticMembersIfE1fMUlvE_cvPFivEEv
+// CHECK: define linkonce_odr i32 ()* @_ZNK13StaticMembersIfE1fMUlvE_cvPFivEEv
+template int (*StaticMembers<float>::f)();
+
+// CHECK: define internal void @__cxx_global_var_init4
 // CHECK: call i32 @"_ZNK13StaticMembersIdE3$_2clEv"
 // CHECK: define internal i32 @"_ZNK13StaticMembersIdE3$_2clEv"
 // CHECK: ret i32 42
