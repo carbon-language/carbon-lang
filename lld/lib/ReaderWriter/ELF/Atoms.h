@@ -439,12 +439,6 @@ public:
     }
   }
 
-  // Many non ARM architectures use ELF file format This not really a place to
-  // put a architecture specific method in an atom. A better approach is needed.
-  virtual bool isThumb() const {
-    return false;
-  }
-
   // FIXME: Not Sure if ELF supports alias atoms. Find out more.
   virtual bool isAlias() const {
     return false;

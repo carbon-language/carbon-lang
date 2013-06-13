@@ -94,10 +94,6 @@ public:
      return (DefinedAtom::ContentPermissions)(attributes().permissions);
   }
 
-  virtual bool isThumb() const {
-     return false; //(attributes().thumb != 0);
-  }
-
   virtual bool isAlias() const {
      return (attributes().alias != 0);
   }

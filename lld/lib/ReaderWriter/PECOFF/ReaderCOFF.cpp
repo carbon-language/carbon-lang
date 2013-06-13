@@ -176,10 +176,6 @@ public:
     return perm___;
   }
 
-  virtual bool isThumb() const {
-    return false;
-  }
-
   virtual bool isAlias() const {
     return false;
   }

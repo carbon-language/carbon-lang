@@ -128,8 +128,6 @@ public:
     return DefinedAtom::deadStripNormal;
   }
 
-  virtual bool isThumb() const { return false; }
-
   virtual bool isAlias() const { return false; }
 
   virtual DefinedAtom::reference_iterator begin() const {

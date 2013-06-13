@@ -933,7 +933,6 @@ struct MappingTraits<const lld::DefinedAtom*> {
     virtual SectionPosition    sectionPosition() const{return _sectionPosition;}
     virtual DeadStripKind      deadStrip() const     { return _deadStrip;  }
     virtual ContentPermissions permissions() const   { return _permissions; }
-    virtual bool               isThumb() const       { return false; }
     virtual bool               isAlias() const       { return false; }
     ArrayRef<uint8_t>          rawContent() const    {
       return ArrayRef<uint8_t>(

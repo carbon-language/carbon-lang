@@ -441,7 +441,6 @@ private:
                           = atom.sectionChoice() << 4 | atom.sectionPosition();
     attrs.deadStrip         = atom.deadStrip();
     attrs.permissions       = atom.permissions();
-    //attrs.thumb             = atom.isThumb();
     attrs.alias             = atom.isAlias();
   }
 

@@ -84,10 +84,6 @@ public:
     return DefinedAtom::permR_X;
   }
 
-  virtual bool isThumb() const {
-    return false;
-  }
-
   virtual bool isAlias() const {
     return false;
   }
@@ -178,10 +174,6 @@ public:
 
   virtual ContentPermissions permissions() const  {
     return DefinedAtom::permRW_;
-  }
-
-  virtual bool isThumb() const {
-    return false;
   }
 
   virtual bool isAlias() const {

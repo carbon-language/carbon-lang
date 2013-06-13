@@ -253,11 +253,6 @@ public:
   /// is R__.
   virtual ContentPermissions permissions() const;
 
-  /// \brief only applicable to ARM code. Tells the linker if the code uses
-  /// thumb or arm instructions.  The linker needs to know this to set the low
-  /// bit of pointers to thumb functions.
-  virtual bool isThumb() const = 0;
-
   /// \brief means this is a zero size atom that exists to provide an alternate
   /// name for another atom.  Alias atoms must have a special Reference to the
   /// atom they alias which the layout engine recognizes and forces the alias
