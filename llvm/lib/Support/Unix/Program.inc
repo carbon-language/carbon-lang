@@ -178,7 +178,7 @@ static void SetMemoryLimits (unsigned size)
 
 }
 
-static bool Execute(void *&Data, const Path &path, const char **args,
+static bool Execute(void **Data, const Path &path, const char **args,
                     const char **envp, const Path **redirects,
                     unsigned memoryLimit, std::string *ErrMsg) {
   // If this OS has posix_spawn and there is no memory limit being implied, use
@@ -228,7 +228,8 @@ static bool Execute(void *&Data, const Path &path, const char **args,
     if (Err)
      return !MakeErrMsg(ErrMsg, "posix_spawn failed", Err);
 
-    Data = reinterpret_cast<void*>(PID);
+    if (Data)
+      *Data = reinterpret_cast<void*>(PID);
     return true;
   }
 #endif
@@ -290,7 +291,8 @@ static bool Execute(void *&Data, const Path &path, const char **args,
       break;
   }
 
-  Data = reinterpret_cast<void*>(child);
+  if (Data)
+    *Data = reinterpret_cast<void*>(child);
 
   return true;
 }
@@ -299,11 +301,7 @@ static int Wait(void *&Data, const sys::Path &path, unsigned secondsToWait,
                 std::string *ErrMsg) {
 #ifdef HAVE_SYS_WAIT_H
   struct sigaction Act, Old;
-
-  if (Data == 0) {
-    MakeErrMsg(ErrMsg, "Process not started!");
-    return -1;
-  }
+  assert(Data && "invalid pid to wait on, process not started?");
 
   // Install a timeout handler.  The handler itself does nothing, but the simple
   // fact of having a handler at all causes the wait below to return with EINTR,

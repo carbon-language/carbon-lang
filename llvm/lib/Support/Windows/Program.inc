@@ -170,20 +170,13 @@ static unsigned int ArgLenWithQuotes(const char *Str) {
 
 }
 
-static bool Execute(void *&Data,
+static bool Execute(void **Data,
                     const Path& path,
                     const char** args,
                     const char** envp,
                     const Path** redirects,
                     unsigned memoryLimit,
                     std::string* ErrMsg) {
-  if (Data) {
-    Win32ProcessInfo* wpi = reinterpret_cast<Win32ProcessInfo*>(Data);
-    CloseHandle(wpi->hProcess);
-    delete wpi;
-    Data = 0;
-  }
-
   if (!path.canExecute()) {
     if (ErrMsg)
       *ErrMsg = "program not executable";
@@ -321,10 +314,12 @@ static bool Execute(void *&Data,
                path.str() + "'");
     return false;
   }
-  Win32ProcessInfo* wpi = new Win32ProcessInfo;
-  wpi->hProcess = pi.hProcess;
-  wpi->dwProcessId = pi.dwProcessId;
-  Data = wpi;
+  if (Data) {
+    Win32ProcessInfo* wpi = new Win32ProcessInfo;
+    wpi->hProcess = pi.hProcess;
+    wpi->dwProcessId = pi.dwProcessId;
+    *Data = wpi;
+  }
 
   // Make sure these get closed no matter what.
   ScopedCommonHandle hThread(pi.hThread);
@@ -354,21 +349,17 @@ static bool Execute(void *&Data,
     }
   }
 
+  // Don't leak the handle if the caller doesn't want it.
+  if (!Data)
+    CloseHandle(pi.hProcess);
+
   return true;
 }
 
-static int WaitAux(void *&Data, const Path &path,
-                   unsigned secondsToWait,
-                   std::string* ErrMsg) {
-  if (Data == 0) {
-    MakeErrMsg(ErrMsg, "Process not started!");
-    return -1;
-  }
-
-  Win32ProcessInfo* wpi = reinterpret_cast<Win32ProcessInfo*>(Data);
-  HANDLE hProcess = wpi->hProcess;
-
+static int WaitAux(Win32ProcessInfo *wpi, const Path &path,
+                   unsigned secondsToWait, std::string *ErrMsg) {
   // Wait for the process to terminate.
+  HANDLE hProcess = wpi->hProcess;
   DWORD millisecondsToWait = INFINITE;
   if (secondsToWait > 0)
     millisecondsToWait = secondsToWait * 1000;
@@ -407,12 +398,11 @@ static int WaitAux(void *&Data, const Path &path,
   return 1;
 }
 
-static int Wait(void *&Data, const Path &path,
-                unsigned secondsToWait,
-                std::string* ErrMsg) {
-  int Ret = WaitAux(Data, path, secondsToWait, ErrMsg);
+static int Wait(void *&Data, const Path &path, unsigned secondsToWait,
+                std::string *ErrMsg) {
+  Win32ProcessInfo *wpi = reinterpret_cast<Win32ProcessInfo *>(Data);
+  int Ret = WaitAux(wpi, path, secondsToWait, ErrMsg);
 
-  Win32ProcessInfo* wpi = reinterpret_cast<Win32ProcessInfo*>(Data);
   CloseHandle(wpi->hProcess);
   delete wpi;
   Data = 0;
