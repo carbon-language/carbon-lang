@@ -2104,7 +2104,7 @@ DecodeT2BInstruction(MCInst &Inst, unsigned Insn,
   unsigned imm10 = fieldFromInstruction(Insn, 16, 10);
   unsigned imm11 = fieldFromInstruction(Insn, 0, 11);
   unsigned tmp = (S << 23) | (I1 << 22) | (I2 << 21) | (imm10 << 11) | imm11;
-  int imm32 = SignExtend32<24>(tmp << 1);
+  int imm32 = SignExtend32<25>(tmp << 1);
   if (!tryAddingSymbolicOperand(Address, Address + imm32 + 4,
                                 true, 4, Inst, Decoder))
     Inst.addOperand(MCOperand::CreateImm(imm32));
