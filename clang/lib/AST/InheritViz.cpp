@@ -18,6 +18,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/TypeOrdering.h"
 #include "llvm/Support/GraphWriter.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
 
