@@ -510,7 +510,11 @@ void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
 
 llvm::GlobalValue::LinkageTypes
 CodeGenModule::getFunctionLinkage(GlobalDecl GD) {
-  const FunctionDecl *D = cast<FunctionDecl>(GD.getDecl());
+  return getFunctionLinkage(cast<FunctionDecl>(GD.getDecl()));
+}
+
+llvm::GlobalValue::LinkageTypes
+CodeGenModule::getFunctionLinkage(const FunctionDecl *D) {
   GVALinkage Linkage = getContext().GetGVALinkageForFunction(D);
 
   if (Linkage == GVA_Internal)

@@ -5,6 +5,7 @@
 // RUN: FileCheck %s -input-file=%t -check-prefix=CHECK-4
 // RUN: FileCheck %s -input-file=%t -check-prefix=CHECK-5
 // RUN: FileCheck %s -input-file=%t -check-prefix=CHECK-6
+// RUN: FileCheck %s -input-file=%t -check-prefix=CHECK-7
 
 struct Foo {
   int x;
@@ -171,4 +172,18 @@ void test_capture_lambda() {
   // CHECK-6: call void @__captured_stmt
   // CHECK-6-NEXT: ret void
   template_capture_lambda<int>();
+}
+
+inline int test_captured_linkage() {
+  // CHECK-7: @_ZN21test_captured_linkage1iE = linkonce_odr global i32 0
+  int j;
+  #pragma clang __debug captured
+  {
+    static int i = 0;
+    j = ++i;
+  }
+  return j;
+}
+void call_test_captured_linkage() {
+  test_captured_linkage();
 }

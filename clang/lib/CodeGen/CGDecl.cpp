@@ -129,9 +129,27 @@ void CodeGenFunction::EmitVarDecl(const VarDecl &D) {
     // uniqued.  We can't do this in C, though, because there's no
     // standard way to agree on which variables are the same (i.e.
     // there's no mangling).
-    if (getLangOpts().CPlusPlus)
-      if (llvm::GlobalValue::isWeakForLinker(CurFn->getLinkage()))
-        Linkage = CurFn->getLinkage();
+    if (getLangOpts().CPlusPlus) {
+      const Decl *D = CurCodeDecl;
+      while (true) {
+        if (isa<BlockDecl>(D)) {
+          // FIXME: Handle this case properly!  (Should be similar to the
+          // way we handle lambdas in computeLVForDecl in Decl.cpp.)
+          break;
+        } else if (isa<CapturedDecl>(D)) {
+          D = cast<Decl>(cast<CapturedDecl>(D)->getParent());
+        } else {
+          break;
+        }
+      }
+      // FIXME: Do we really only care about FunctionDecls here?
+      if (D && isa<FunctionDecl>(D)) {
+        llvm::GlobalValue::LinkageTypes ParentLinkage =
+            CGM.getFunctionLinkage(cast<FunctionDecl>(D));
+        if (llvm::GlobalValue::isWeakForLinker(ParentLinkage))
+          Linkage = ParentLinkage;
+      }
+    }
 
     return EmitStaticVarDecl(D, Linkage);
   }
