@@ -132,3 +132,8 @@ namespace NonStaticConstexpr {
     }
   };
 }
+
+int RegisterVariable() {
+  register int n; // expected-warning {{'register' storage class specifier is deprecated}}
+  return n;
+}

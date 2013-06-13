@@ -287,6 +287,10 @@ def note_using_decl : Note<"%select{|previous }0using declaration">;
 def warn_access_decl_deprecated : Warning<
   "access declarations are deprecated; use using declarations instead">,
   InGroup<Deprecated>;
+def warn_exception_spec_deprecated : Warning<
+  "dynamic exception specifications are deprecated">,
+  InGroup<Deprecated>, DefaultIgnore;
+def note_exception_spec_deprecated : Note<"use '%0' instead">;
 
 def warn_global_constructor : Warning<
   "declaration requires a global constructor">,

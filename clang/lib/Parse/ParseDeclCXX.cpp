@@ -2893,6 +2893,16 @@ Parser::tryParseExceptionSpecification(
   return Result;
 }
 
+static void diagnoseDynamicExceptionSpecification(
+    Parser &P, const SourceRange &Range, bool IsNoexcept) {
+  if (P.getLangOpts().CPlusPlus11) {
+    const char *Replacement = IsNoexcept ? "noexcept" : "noexcept(false)";
+    P.Diag(Range.getBegin(), diag::warn_exception_spec_deprecated) << Range;
+    P.Diag(Range.getBegin(), diag::note_exception_spec_deprecated)
+      << Replacement << FixItHint::CreateReplacement(Range, Replacement);
+  }
+}
+
 /// ParseDynamicExceptionSpecification - Parse a C++
 /// dynamic-exception-specification (C++ [except.spec]).
 ///
@@ -2926,6 +2936,7 @@ ExceptionSpecificationType Parser::ParseDynamicExceptionSpecification(
       Diag(EllipsisLoc, diag::ext_ellipsis_exception_spec);
     T.consumeClose();
     SpecificationRange.setEnd(T.getCloseLocation());
+    diagnoseDynamicExceptionSpecification(*this, SpecificationRange, false);
     return EST_MSAny;
   }
 
@@ -2957,6 +2968,8 @@ ExceptionSpecificationType Parser::ParseDynamicExceptionSpecification(
 
   T.consumeClose();
   SpecificationRange.setEnd(T.getCloseLocation());
+  diagnoseDynamicExceptionSpecification(*this, SpecificationRange,
+                                        Exceptions.empty());
   return Exceptions.empty() ? EST_DynamicNone : EST_Dynamic;
 }
 

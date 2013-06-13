@@ -2771,6 +2771,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                            PrevSpec, DiagID);
       break;
     case tok::kw_register:
+      if (getLangOpts().CPlusPlus11)
+        Diag(Tok, diag::warn_deprecated_register)
+          << FixItHint::CreateRemoval(Tok.getLocation());
       isInvalid = DS.SetStorageClassSpec(Actions, DeclSpec::SCS_register, Loc,
                                          PrevSpec, DiagID);
       break;

@@ -12,7 +12,7 @@ struct align_member {
 };
 
 void f(alignas(1) char c) { // expected-error {{'alignas' attribute cannot be applied to a function parameter}}
-  alignas(1) register char k; // expected-error {{'alignas' attribute cannot be applied to a variable with 'register' storage class}}
+  alignas(1) register char k; // expected-error {{'alignas' attribute cannot be applied to a variable with 'register' storage class}} expected-warning {{deprecated}}
   try {
   } catch (alignas(4) int n) { // expected-error {{'alignas' attribute cannot be applied to a 'catch' variable}}
   }
