@@ -33,6 +33,7 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
@@ -164,7 +165,7 @@ bool LTOCodeGenerator::compile_to_file(const char** name, std::string& errMsg) {
     uniqueObjPath.eraseFromDisk();
     return true;
   }
-  sys::RemoveFileOnSignal(uniqueObjPath);
+  sys::RemoveFileOnSignal(uniqueObjPath.str());
 
   // generate object file
   bool genResult = false;

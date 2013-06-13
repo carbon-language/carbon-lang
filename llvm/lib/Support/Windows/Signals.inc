@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/PathV1.h"
+
 #include "Windows.h"
 #include <algorithm>
 #include <stdio.h>
@@ -158,7 +160,7 @@ static BOOL WINAPI LLVMConsoleCtrlHandler(DWORD dwCtrlType);
 // InterruptFunction - The function to call if ctrl-c is pressed.
 static void (*InterruptFunction)() = 0;
 
-static std::vector<llvm::sys::Path> *FilesToRemove = NULL;
+static std::vector<std::string> *FilesToRemove = NULL;
 static std::vector<std::pair<void(*)(void*), void*> > *CallBacksToRun = 0;
 static bool RegisteredUnhandledExceptionFilter = false;
 static bool CleanupExecuted = false;
@@ -276,7 +278,7 @@ static void RegisterHandler() {
 }
 
 // RemoveFileOnSignal - The public API
-bool sys::RemoveFileOnSignal(const sys::Path &Filename, std::string* ErrMsg) {
+bool sys::RemoveFileOnSignal(StringRef Filename, std::string* ErrMsg) {
   RegisterHandler();
 
   if (CleanupExecuted) {
@@ -286,7 +288,7 @@ bool sys::RemoveFileOnSignal(const sys::Path &Filename, std::string* ErrMsg) {
   }
 
   if (FilesToRemove == NULL)
-    FilesToRemove = new std::vector<sys::Path>;
+    FilesToRemove = new std::vector<std::string>;
 
   FilesToRemove->push_back(Filename);
 
@@ -295,14 +297,14 @@ bool sys::RemoveFileOnSignal(const sys::Path &Filename, std::string* ErrMsg) {
 }
 
 // DontRemoveFileOnSignal - The public API
-void sys::DontRemoveFileOnSignal(const sys::Path &Filename) {
+void sys::DontRemoveFileOnSignal(StringRef Filename) {
   if (FilesToRemove == NULL)
     return;
 
   RegisterHandler();
 
   FilesToRemove->push_back(Filename);
-  std::vector<sys::Path>::reverse_iterator I =
+  std::vector<std::string>::reverse_iterator I =
   std::find(FilesToRemove->rbegin(), FilesToRemove->rend(), Filename);
   if (I != FilesToRemove->rend())
     FilesToRemove->erase(I.base()-1);
@@ -352,7 +354,7 @@ static void Cleanup() {
 
   if (FilesToRemove != NULL)
     while (!FilesToRemove->empty()) {
-      FilesToRemove->back().eraseFromDisk();
+      sys::Path(FilesToRemove->back()).eraseFromDisk();
       FilesToRemove->pop_back();
     }
 

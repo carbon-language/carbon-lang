@@ -26,6 +26,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Transforms/IPO.h"
@@ -371,7 +372,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
     EmitProgressBitcode(M, "basicblockextractfail", true);
     return 0;
   }
-  sys::RemoveFileOnSignal(uniqueFilename);
+  sys::RemoveFileOnSignal(uniqueFilename.str());
 
   std::string ErrorInfo;
   tool_output_file BlocksToNotExtractFile(uniqueFilename.c_str(), ErrorInfo);

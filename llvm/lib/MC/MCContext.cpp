@@ -22,6 +22,7 @@
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/SourceMgr.h"
 using namespace llvm;

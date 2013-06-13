@@ -211,11 +211,11 @@ void llvm::sys::SetInterruptFunction(void (*IF)()) {
 }
 
 // RemoveFileOnSignal - The public API
-bool llvm::sys::RemoveFileOnSignal(const sys::Path &Filename,
+bool llvm::sys::RemoveFileOnSignal(StringRef Filename,
                                    std::string* ErrMsg) {
   SignalsMutex.acquire();
   std::string *OldPtr = FilesToRemove.empty() ? 0 : &FilesToRemove[0];
-  FilesToRemove.push_back(Filename.str());
+  FilesToRemove.push_back(Filename);
 
   // We want to call 'c_str()' on every std::string in this vector so that if
   // the underlying implementation requires a re-allocation, it happens here
@@ -235,10 +235,10 @@ bool llvm::sys::RemoveFileOnSignal(const sys::Path &Filename,
 }
 
 // DontRemoveFileOnSignal - The public API
-void llvm::sys::DontRemoveFileOnSignal(const sys::Path &Filename) {
+void llvm::sys::DontRemoveFileOnSignal(StringRef Filename) {
   SignalsMutex.acquire();
   std::vector<std::string>::reverse_iterator RI =
-    std::find(FilesToRemove.rbegin(), FilesToRemove.rend(), Filename.str());
+    std::find(FilesToRemove.rbegin(), FilesToRemove.rend(), Filename);
   std::vector<std::string>::iterator I = FilesToRemove.end();
   if (RI != FilesToRemove.rend())
     I = FilesToRemove.erase(RI.base()-1);

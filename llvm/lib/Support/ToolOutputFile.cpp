@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ToolOutputFile.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Signals.h"
 using namespace llvm;
 
@@ -19,7 +20,7 @@ tool_output_file::CleanupInstaller::CleanupInstaller(const char *filename)
   : Filename(filename), Keep(false) {
   // Arrange for the file to be deleted if the process is killed.
   if (Filename != "-")
-    sys::RemoveFileOnSignal(sys::Path(Filename));
+    sys::RemoveFileOnSignal(Filename);
 }
 
 tool_output_file::CleanupInstaller::~CleanupInstaller() {
@@ -30,7 +31,7 @@ tool_output_file::CleanupInstaller::~CleanupInstaller() {
   // Ok, the file is successfully written and closed, or deleted. There's no
   // further need to clean it up on signals.
   if (Filename != "-")
-    sys::DontRemoveFileOnSignal(sys::Path(Filename));
+    sys::DontRemoveFileOnSignal(Filename);
 }
 
 tool_output_file::tool_output_file(const char *filename, std::string &ErrorInfo,

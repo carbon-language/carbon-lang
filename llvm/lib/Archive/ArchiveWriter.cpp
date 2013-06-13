@@ -366,7 +366,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames,
     return true;
 
   // Make sure the temporary gets removed if we crash
-  sys::RemoveFileOnSignal(TmpArchive);
+  sys::RemoveFileOnSignal(TmpArchive.str());
 
   // Create archive file for output.
   std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
@@ -427,7 +427,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames,
     // mmapped data
     if (FinalFilePath.createTemporaryFileOnDisk(ErrMsg))
       return true;
-    sys::RemoveFileOnSignal(FinalFilePath);
+    sys::RemoveFileOnSignal(FinalFilePath.str());
 
     std::ofstream FinalFile(FinalFilePath.c_str(), io_mode);
     if (!FinalFile.is_open() || FinalFile.bad()) {
