@@ -106,7 +106,7 @@ void llvm::DisplayGraph(StringRef FilenameRef, bool wait,
   wait &= !ViewBackground;
   std::string ErrMsg;
 #if HAVE_GRAPHVIZ
-  sys::Path Graphviz(LLVM_PATH_GRAPHVIZ);
+  std::string Graphviz(LLVM_PATH_GRAPHVIZ);
 
   std::vector<const char*> args;
   args.push_back(Graphviz.c_str());
@@ -133,7 +133,7 @@ void llvm::DisplayGraph(StringRef FilenameRef, bool wait,
   args.push_back(0);
 
   errs() << "Running 'xdot.py' program... ";
-  if (!ExecGraphViewer(sys::Path(LLVM_PATH_XDOT_PY), args, Filename, wait, ErrMsg))
+  if (!ExecGraphViewer(LLVM_PATH_XDOT_PY, args, Filename, wait, ErrMsg))
     return;
 
 #elif (HAVE_GV && (HAVE_DOT || HAVE_FDP || HAVE_NEATO || \
@@ -209,7 +209,7 @@ void llvm::DisplayGraph(StringRef FilenameRef, bool wait,
     return;
 
 #elif HAVE_DOTTY
-  sys::Path dotty(LLVM_PATH_DOTTY);
+  std::string dotty(LLVM_PATH_DOTTY);
 
   std::vector<const char*> args;
   args.push_back(dotty.c_str());
