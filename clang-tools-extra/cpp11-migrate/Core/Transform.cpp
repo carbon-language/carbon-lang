@@ -1,7 +1,5 @@
 #include "Core/Transform.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
-#include "clang/Basic/FileManager.h"
-#include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "llvm/Support/raw_ostream.h"
@@ -22,7 +20,7 @@ using namespace ast_matchers;
 /// SourceFileCallbacks.
 class ActionFactory : public clang::tooling::FrontendActionFactory {
 public:
-  ActionFactory(MatchFinder &Finder, const FileContentsByPath &Overrides,
+  ActionFactory(MatchFinder &Finder, const FileOverrides &Overrides,
                 SourceFileCallbacks &Callbacks)
   : Finder(Finder), Overrides(Overrides), Callbacks(Callbacks) {}
 
@@ -33,7 +31,7 @@ public:
 private:
   class FactoryAdaptor : public ASTFrontendAction {
   public:
-    FactoryAdaptor(MatchFinder &Finder, const FileContentsByPath &Overrides,
+    FactoryAdaptor(MatchFinder &Finder, const FileOverrides &Overrides,
                   SourceFileCallbacks &Callbacks)
         : Finder(Finder), Overrides(Overrides), Callbacks(Callbacks) {}
 
@@ -46,12 +44,10 @@ private:
       if (!ASTFrontendAction::BeginSourceFileAction(CI, Filename))
         return false;
 
-      FileContentsByPath::const_iterator I = Overrides.find(Filename.str());
-      if (I != Overrides.end())
-        // If an override exists, use it.
-        CI.getSourceManager()
-            .overrideFileContents(CI.getFileManager().getFile(I->first),
-                                  llvm::MemoryBuffer::getMemBuffer(I->second));
+      FileOverrides::const_iterator I = Overrides.find(Filename.str());
+      if (I != Overrides.end()) {
+        I->second.applyOverrides(CI.getSourceManager(), CI.getFileManager());
+      }
 
       return Callbacks.handleBeginSource(CI, Filename);
     }
@@ -63,38 +59,34 @@ private:
 
   private:
     MatchFinder &Finder;
-    const FileContentsByPath &Overrides;
+    const FileOverrides &Overrides;
     SourceFileCallbacks &Callbacks;
   };
 
   MatchFinder &Finder;
-  const FileContentsByPath &Overrides;
+  const FileOverrides &Overrides;
   SourceFileCallbacks &Callbacks;
 };
 
 } // namespace
 
 RewriterContainer::RewriterContainer(clang::FileManager &Files,
-                                     const FileContentsByPath &InputStates)
+                                     const FileOverrides &InputStates)
     : DiagOpts(new clang::DiagnosticOptions()),
       DiagnosticPrinter(llvm::errs(), DiagOpts.getPtr()),
       Diagnostics(llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs>(
                       new clang::DiagnosticIDs()),
                   DiagOpts.getPtr(), &DiagnosticPrinter, false),
       Sources(Diagnostics, Files), Rewrite(Sources, DefaultLangOptions) {
-
-  // Overwrite source manager's file contents with data from InputStates
-  for (FileContentsByPath::const_iterator I = InputStates.begin(),
-                                          E = InputStates.end();
-       I != E; ++I) {
-    Sources.overrideFileContents(Files.getFile(I->first),
-                                 llvm::MemoryBuffer::getMemBuffer(I->second));
-  }
+  for (FileOverrides::const_iterator I = InputStates.begin(),
+                                       E = InputStates.end();
+       I != E; ++I)
+    I->second.applyOverrides(Sources, Files);
 }
 
 void collectResults(clang::Rewriter &Rewrite,
-                    const FileContentsByPath &InputStates,
-                    FileContentsByPath &Results) {
+                    const FileOverrides &InputStates,
+                    FileOverrides &Results) {
   // Copy the contents of InputStates to be modified.
   Results = InputStates;
 
@@ -105,6 +97,12 @@ void collectResults(clang::Rewriter &Rewrite,
     assert(Entry != 0 && "Expected a FileEntry");
     assert(Entry->getName() != 0 &&
            "Unexpected NULL return from FileEntry::getName()");
+
+    FileOverrides::iterator OverrideI = Results.find(Entry->getName());
+    if (OverrideI == Results.end()) {
+      OverrideI = Results.insert(FileOverrides::value_type(
+          Entry->getName(), Entry->getName())).first;
+    }
 
     std::string ResultBuf;
 
@@ -118,7 +116,7 @@ void collectResults(clang::Rewriter &Rewrite,
     // FIXME: Use move semantics to avoid copies of the buffer contents if
     // benchmarking shows the copies are expensive, especially for large source
     // files.
-    Results[Entry->getName()] = ResultBuf;
+    OverrideI->second.MainFileOverride = ResultBuf;
   }
 }
 
@@ -144,6 +142,6 @@ void Transform::addTiming(llvm::StringRef Label, llvm::TimeRecord Duration) {
 
 FrontendActionFactory *
 Transform::createActionFactory(MatchFinder &Finder,
-                               const FileContentsByPath &InputStates) {
+                               const FileOverrides &InputStates) {
   return new ActionFactory(Finder, InputStates, *this);
 }

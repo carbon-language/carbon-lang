@@ -15,6 +15,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#include "Core/SyntaxCheck.h"
 #include "Core/Transforms.h"
 #include "Core/Transform.h"
 #include "Core/PerfSupport.h"
@@ -88,15 +89,6 @@ static cl::opt<bool, /*ExternalStorage=*/true> EnableHeaderModifications(
     cl::location(GlobalOptions.EnableHeaderModifications),
     cl::init(false));
 
-class EndSyntaxArgumentsAdjuster : public ArgumentsAdjuster {
-  CommandLineArguments Adjust(const CommandLineArguments &Args) {
-    CommandLineArguments AdjustedArgs = Args;
-    AdjustedArgs.push_back("-fsyntax-only");
-    AdjustedArgs.push_back("-std=c++11");
-    return AdjustedArgs;
-  }
-};
-
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   Transforms TransformManager;
@@ -138,7 +130,7 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
-  FileContentsByPath FileStates1, FileStates2,
+  FileOverrides FileStates1, FileStates2,
       *InputFileStates = &FileStates1, *OutputFileStates = &FileStates2;
 
   SourcePerfData PerfData;
@@ -173,35 +165,20 @@ int main(int argc, const char **argv) {
     OutputFileStates->clear();
   }
 
-  // Final state of files is pointed at by InputFileStates.
-
-  if (FinalSyntaxCheck) {
-    ClangTool EndSyntaxTool(OptionsParser.getCompilations(),
-                            OptionsParser.getSourcePathList());
-
-    // Add c++11 support to clang.
-    EndSyntaxTool.setArgumentsAdjuster(new EndSyntaxArgumentsAdjuster);
-
-    for (FileContentsByPath::const_iterator I = InputFileStates->begin(),
-                                            E = InputFileStates->end();
-         I != E; ++I) {
-      EndSyntaxTool.mapVirtualFile(I->first, I->second);
-    }
-
-    if (EndSyntaxTool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>())
-        != 0) {
+  if (FinalSyntaxCheck)
+    // Final state of files is pointed at by InputFileStates.
+    if (!doSyntaxCheck(OptionsParser.getCompilations(),
+                       OptionsParser.getSourcePathList(), *InputFileStates))
       return 1;
-    }
-  }
 
   // Write results to file.
-  for (FileContentsByPath::const_iterator I = InputFileStates->begin(),
-                                          E = InputFileStates->end();
+  for (FileOverrides::const_iterator I = InputFileStates->begin(),
+                                     E = InputFileStates->end();
        I != E; ++I) {
     std::string ErrorInfo;
     llvm::raw_fd_ostream FileStream(I->first.c_str(), ErrorInfo,
                                     llvm::raw_fd_ostream::F_Binary);
-    FileStream << I->second;
+    FileStream << I->second.MainFileOverride;
   }
 
   // Report execution times.

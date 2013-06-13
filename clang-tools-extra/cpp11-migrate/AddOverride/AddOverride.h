@@ -30,10 +30,10 @@ public:
       : Transform("AddOverride", Options) {}
 
   /// \see Transform::run().
-  virtual int apply(const FileContentsByPath &InputStates,
+  virtual int apply(const FileOverrides &InputStates,
                     const clang::tooling::CompilationDatabase &Database,
                     const std::vector<std::string> &SourcePaths,
-                    FileContentsByPath &ResultStates) LLVM_OVERRIDE;
+                    FileOverrides &ResultStates) LLVM_OVERRIDE;
 
   virtual bool handleBeginSource(clang::CompilerInstance &CI,
                                  llvm::StringRef Filename) LLVM_OVERRIDE;

@@ -25,10 +25,10 @@ using clang::ast_matchers::MatchFinder;
 using namespace clang::tooling;
 using namespace clang;
 
-int UseNullptrTransform::apply(const FileContentsByPath &InputStates,
+int UseNullptrTransform::apply(const FileOverrides &InputStates,
                                const CompilationDatabase &Database,
                                const std::vector<std::string> &SourcePaths,
-                               FileContentsByPath &ResultStates) {
+                               FileOverrides &ResultStates) {
   RefactoringTool UseNullptrTool(Database, SourcePaths);
 
   unsigned AcceptedChanges = 0;

@@ -20,10 +20,10 @@ using clang::ast_matchers::MatchFinder;
 using namespace clang;
 using namespace clang::tooling;
 
-int UseAutoTransform::apply(const FileContentsByPath &InputStates,
+int UseAutoTransform::apply(const FileOverrides &InputStates,
                             const clang::tooling::CompilationDatabase &Database,
                             const std::vector<std::string> &SourcePaths,
-                            FileContentsByPath &ResultStates) {
+                            FileOverrides &ResultStates) {
   RefactoringTool UseAutoTool(Database, SourcePaths);
 
   unsigned AcceptedChanges = 0;

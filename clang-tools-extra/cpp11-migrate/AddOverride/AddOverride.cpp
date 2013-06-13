@@ -29,12 +29,13 @@ using namespace clang;
 
 static llvm::cl::opt<bool> DetectMacros(
     "override-macros",
-    llvm::cl::desc("Detect and use macros that expand to the 'override' keyword."));
+    llvm::cl::desc(
+        "Detect and use macros that expand to the 'override' keyword."));
 
-int AddOverrideTransform::apply(const FileContentsByPath &InputStates,
+int AddOverrideTransform::apply(const FileOverrides &InputStates,
                                 const CompilationDatabase &Database,
                                 const std::vector<std::string> &SourcePaths,
-                                FileContentsByPath &ResultStates) {
+                                FileOverrides &ResultStates) {
   RefactoringTool AddOverrideTool(Database, SourcePaths);
 
   unsigned AcceptedChanges = 0;

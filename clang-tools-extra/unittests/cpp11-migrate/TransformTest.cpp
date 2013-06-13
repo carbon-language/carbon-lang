@@ -13,10 +13,10 @@ public:
   DummyTransform(llvm::StringRef Name, const TransformOptions &Options)
       : Transform(Name, Options) {}
 
-  virtual int apply(const FileContentsByPath &,
+  virtual int apply(const FileOverrides &,
                     const tooling::CompilationDatabase &,
                     const std::vector<std::string> &,
-                    FileContentsByPath &) { return 0; }
+                    FileOverrides &) { return 0; }
 
   void setAcceptedChanges(unsigned Changes) {
     Transform::setAcceptedChanges(Changes);

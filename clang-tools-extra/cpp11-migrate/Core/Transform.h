@@ -17,7 +17,9 @@
 
 #include <string>
 #include <vector>
-#include "IncludeExcludeInfo.h"
+#include "Core/IncludeExcludeInfo.h"
+#include "Core/FileOverrides.h"
+#include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Support/Timer.h"
 
@@ -54,9 +56,6 @@ class MatchFinder;
 } // namespace ast_matchers
 } // namespace clang
 
-/// \brief The key is the path of a file, which is mapped to a
-/// buffer with the possibly modified contents of that file.
-typedef std::map<std::string, std::string> FileContentsByPath;
 
 /// \brief In \p Results place copies of the buffers resulting from applying
 /// all rewrites represented by \p Rewrite.
@@ -64,8 +63,8 @@ typedef std::map<std::string, std::string> FileContentsByPath;
 /// \p Results is made up of pairs {filename, buffer contents}. Pairs are
 /// simply appended to \p Results.
 void collectResults(clang::Rewriter &Rewrite,
-                    const FileContentsByPath &InputStates,
-                    FileContentsByPath &Results);
+                    const FileOverrides &InputStates,
+                    FileOverrides &Results);
 
 /// \brief Class for containing a Rewriter instance and all of
 /// its lifetime dependencies.
@@ -80,7 +79,7 @@ void collectResults(clang::Rewriter &Rewrite,
 class RewriterContainer {
 public:
   RewriterContainer(clang::FileManager &Files,
-                    const FileContentsByPath &InputStates);
+                    const FileOverrides &InputStates);
 
   clang::Rewriter &getRewriter() { return Rewrite; }
 
@@ -140,10 +139,10 @@ public:
   /// SourcePaths and should take precedence over content of files on disk.
   /// Upon return, \p ResultStates shall contain the result of performing this
   /// transform on the files listed in \p SourcePaths.
-  virtual int apply(const FileContentsByPath &InputStates,
+  virtual int apply(const FileOverrides &InputStates,
                     const clang::tooling::CompilationDatabase &Database,
                     const std::vector<std::string> &SourcePaths,
-                    FileContentsByPath &ResultStates) = 0;
+                    FileOverrides &ResultStates) = 0;
 
   /// \brief Query if changes were made during the last call to apply().
   bool getChangesMade() const { return AcceptedChanges > 0; }
@@ -225,7 +224,7 @@ protected:
   /// for overriding source file contents with results of previous transforms.
   clang::tooling::FrontendActionFactory *
       createActionFactory(clang::ast_matchers::MatchFinder &Finder,
-                          const FileContentsByPath &InputStates);
+                          const FileOverrides &InputStates);
 
 private:
   const std::string Name;
