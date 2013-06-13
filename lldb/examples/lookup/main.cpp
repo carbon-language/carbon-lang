@@ -27,7 +27,6 @@
 #endif
 
 #include <string>
-#include <vector>
 
 using namespace lldb;
 
