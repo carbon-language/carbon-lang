@@ -354,7 +354,7 @@ static void Cleanup() {
 
   if (FilesToRemove != NULL)
     while (!FilesToRemove->empty()) {
-      sys::Path(FilesToRemove->back()).eraseFromDisk();
+      llvm::sys::Path(FilesToRemove->back()).eraseFromDisk();
       FilesToRemove->pop_back();
     }
 
