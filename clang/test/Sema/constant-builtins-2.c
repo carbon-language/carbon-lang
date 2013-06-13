@@ -48,6 +48,13 @@ char classify_denorm2 [__builtin_fpclassify(-1, -1, -1, +1, -1, -1e-308)];
 char classify_zero    [__builtin_fpclassify(-1, -1, -1, -1, +1, 0.0)];
 char classify_neg_zero[__builtin_fpclassify(-1, -1, -1, -1, +1, -0.0)];
 
+char isinf_sign_noninf1[__builtin_isinf_sign(-0.0) == 0 ? 1 : -1];
+char isinf_sign_noninf2[__builtin_isinf_sign(1e307) == 0 ? 1 : -1];
+char isinf_sign_noninf3[__builtin_isinf_sign(__builtin_nan("")) == 0 ? 1 : -1];
+char isinf_sign_noninf4[__builtin_isinf_sign(-436.) == 0 ? 1 : -1];
+char isinf_sign_inf    [__builtin_isinf_sign(__builtin_inf()) == 1 ? 1 : -1];
+char isinf_sign_neg_inf[__builtin_isinf_sign(-__builtin_inf()) == -1 ? 1 : -1];
+
 //double       g19 = __builtin_powi(2.0, 4);
 //float        g20 = __builtin_powif(2.0f, 4);
 //long double  g21 = __builtin_powil(2.0L, 4);

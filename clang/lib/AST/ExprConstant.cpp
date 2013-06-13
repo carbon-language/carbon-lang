@@ -5761,7 +5761,7 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
 
   case Builtin::BI__builtin_isinf_sign: {
     APFloat Val(0.0);
-    return EvaluateFloat(E->getArg(5), Val, Info) &&
+    return EvaluateFloat(E->getArg(0), Val, Info) &&
            Success(Val.isInfinity() ? (Val.isNegative() ? -1 : 1) : 0, E);
   }
 
