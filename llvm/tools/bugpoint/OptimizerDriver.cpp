@@ -200,12 +200,12 @@ bool BugDriver::runPasses(Module *Program,
     prog = tool;
 
   // Redirect stdout and stderr to nowhere if SilencePasses is given
-  sys::Path Nowhere;
-  const sys::Path *Redirects[3] = {0, &Nowhere, &Nowhere};
+  StringRef Nowhere;
+  const StringRef *Redirects[3] = {0, &Nowhere, &Nowhere};
 
-  int result =
-      sys::ExecuteAndWait(prog, Args.data(), 0, (SilencePasses ? Redirects : 0),
-                          Timeout, MemoryLimit, &ErrMsg);
+  int result = sys::ExecuteAndWait(prog.str(), Args.data(), 0,
+                                   (SilencePasses ? Redirects : 0), Timeout,
+                                   MemoryLimit, &ErrMsg);
 
   // If we are supposed to delete the bitcode file or if the passes crashed,
   // remove it now.  This may fail if the file was never created, but that's ok.

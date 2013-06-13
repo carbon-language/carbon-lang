@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/system_error.h"
 
 namespace llvm {
@@ -48,21 +47,20 @@ namespace sys {
   /// -1 indicates failure to execute
   /// -2 indicates a crash during execution or timeout
   int ExecuteAndWait(
-      const Path &path, ///< sys::Path object providing the path of the
-      ///< program to be executed. It is presumed this is the result of
-      ///< the FindProgramByName method.
+      StringRef Program, ///< Path of the program to be executed. It is
+      /// presumed this is the result of the FindProgramByName method.
       const char **args, ///< A vector of strings that are passed to the
       ///< program.  The first element should be the name of the program.
       ///< The list *must* be terminated by a null char* entry.
       const char **env = 0, ///< An optional vector of strings to use for
       ///< the program's environment. If not provided, the current program's
       ///< environment will be used.
-      const sys::Path **redirects = 0, ///< An optional array of pointers to
-      ///< Paths. If the array is null, no redirection is done. The array
-      ///< should have a size of at least three. If the pointer in the array
-      ///< are not null, then the inferior process's stdin(0), stdout(1),
-      ///< and stderr(2) will be redirected to the corresponding Paths.
-      ///< When an empty Path is passed in, the corresponding file
+      const StringRef **redirects = 0, ///< An optional array of pointers to
+      ///< paths. If the array is null, no redirection is done. The array
+      ///< should have a size of at least three. The inferior process's
+      ///< stdin(0), stdout(1), and stderr(2) will be redirected to the
+      ///< corresponding paths.
+      ///< When an empty path is passed in, the corresponding file
       ///< descriptor will be disconnected (ie, /dev/null'd) in a portable
       ///< way.
       unsigned secondsToWait = 0, ///< If non-zero, this specifies the amount
@@ -80,14 +78,9 @@ namespace sys {
       ///< program.
       bool *ExecutionFailed = 0);
 
-  int ExecuteAndWait(StringRef path, const char **args, const char **env = 0,
-                     const StringRef **redirects = 0,
-                     unsigned secondsToWait = 0, unsigned memoryLimit = 0,
-                     std::string *ErrMsg = 0, bool *ExecutionFailed = 0);
-
   /// Similar to ExecuteAndWait, but return immediately.
-  void ExecuteNoWait(const Path &path, const char **args, const char **env = 0,
-                     const sys::Path **redirects = 0, unsigned memoryLimit = 0,
+  void ExecuteNoWait(StringRef Program, const char **args, const char **env = 0,
+                     const StringRef **redirects = 0, unsigned memoryLimit = 0,
                      std::string *ErrMsg = 0);
 
   // Return true if the given arguments fit within system-specific

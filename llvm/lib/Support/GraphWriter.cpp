@@ -16,6 +16,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Program.h"
 using namespace llvm;
 
@@ -85,7 +86,7 @@ static bool LLVM_ATTRIBUTE_UNUSED
 ExecGraphViewer(StringRef ExecPath, std::vector<const char*> &args,
                 StringRef Filename, bool wait, std::string &ErrMsg) {
   if (wait) {
-    if (sys::ExecuteAndWait(sys::Path(ExecPath), &args[0],0,0,0,0,&ErrMsg)) {
+    if (sys::ExecuteAndWait(ExecPath, &args[0],0,0,0,0,&ErrMsg)) {
       errs() << "Error: " << ErrMsg << "\n";
       return false;
     }
@@ -94,7 +95,7 @@ ExecGraphViewer(StringRef ExecPath, std::vector<const char*> &args,
     errs() << " done. \n";
   }
   else {
-    sys::ExecuteNoWait(sys::Path(ExecPath), &args[0],0,0,0,&ErrMsg);
+    sys::ExecuteNoWait(ExecPath, &args[0],0,0,0,&ErrMsg);
     errs() << "Remember to erase graph file: " << Filename.str() << "\n";
   }
   return true;

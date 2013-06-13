@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Program.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/system_error.h"
 using namespace llvm;
@@ -29,46 +30,50 @@ static bool Execute(void **Data, const Path &path, const char **args,
 static int Wait(void *&Data, const Path &path, unsigned secondsToWait,
                 std::string *ErrMsg);
 
-int sys::ExecuteAndWait(StringRef path, const char **args, const char **env,
-                        const StringRef **redirects, unsigned secondsToWait,
-                        unsigned memoryLimit, std::string *ErrMsg,
-                        bool *ExecutionFailed) {
-  Path P(path);
-  if (!redirects)
-    return ExecuteAndWait(P, args, env, 0, secondsToWait, memoryLimit, ErrMsg,
-                          ExecutionFailed);
+
+static bool Execute(void **Data, StringRef Program, const char **args,
+                    const char **env, const StringRef **Redirects,
+                    unsigned memoryLimit, std::string *ErrMsg) {
+  Path P(Program);
+  if (!Redirects)
+    return Execute(Data, P, args, env, 0, memoryLimit, ErrMsg);
   Path IO[3];
   const Path *IOP[3];
   for (int I = 0; I < 3; ++I) {
-    if (redirects[I]) {
-      IO[I] = *redirects[I];
+    if (Redirects[I]) {
+      IO[I] = *Redirects[I];
       IOP[I] = &IO[I];
     } else {
       IOP[I] = 0;
-   }
+    }
   }
 
-  return ExecuteAndWait(P, args, env, IOP, secondsToWait, memoryLimit, ErrMsg,
-                        ExecutionFailed);
+  return Execute(Data, P, args, env, IOP, memoryLimit, ErrMsg);
 }
 
-int sys::ExecuteAndWait(const Path &path, const char **args, const char **envp,
-                        const Path **redirects, unsigned secondsToWait,
+static int Wait(void *&Data, StringRef Program, unsigned secondsToWait,
+                std::string *ErrMsg) {
+  Path P(Program);
+  return Wait(Data, P, secondsToWait, ErrMsg);
+}
+
+int sys::ExecuteAndWait(StringRef Program, const char **args, const char **envp,
+                        const StringRef **redirects, unsigned secondsToWait,
                         unsigned memoryLimit, std::string *ErrMsg,
                         bool *ExecutionFailed) {
   void *Data = 0;
-  if (Execute(&Data, path, args, envp, redirects, memoryLimit, ErrMsg)) {
+  if (Execute(&Data, Program, args, envp, redirects, memoryLimit, ErrMsg)) {
     if (ExecutionFailed) *ExecutionFailed = false;
-    return Wait(Data, path, secondsToWait, ErrMsg);
+    return Wait(Data, Program, secondsToWait, ErrMsg);
   }
   if (ExecutionFailed) *ExecutionFailed = true;
   return -1;
 }
 
-void sys::ExecuteNoWait(const Path &path, const char **args, const char **envp,
-                        const Path **redirects, unsigned memoryLimit,
+void sys::ExecuteNoWait(StringRef Program, const char **args, const char **envp,
+                        const StringRef **redirects, unsigned memoryLimit,
                         std::string *ErrMsg) {
-  Execute(/*Data*/ 0, path, args, envp, redirects, memoryLimit, ErrMsg);
+  Execute(/*Data*/ 0, Program, args, envp, redirects, memoryLimit, ErrMsg);
 }
 
 // Include the platform-specific parts of this class.
