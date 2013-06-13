@@ -5867,10 +5867,7 @@ public:
 
       case PriorTemplateArgumentSubstitution:
       case DefaultTemplateArgumentChecking:
-        if (X.Template != Y.Template)
-          return false;
-
-        // Fall through
+        return X.Template == Y.Template && X.TemplateArgs == Y.TemplateArgs;
 
       case DefaultTemplateArgumentInstantiation:
       case ExplicitTemplateArgumentSubstitution:
