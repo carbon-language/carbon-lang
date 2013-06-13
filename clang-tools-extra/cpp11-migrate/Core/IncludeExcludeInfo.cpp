@@ -103,11 +103,11 @@ error_code IncludeExcludeInfo::readListFromFile(StringRef IncludeListFile,
   return error_code::success();
 }
 
-bool IncludeExcludeInfo::isFileIncluded(StringRef FilePath) {
+bool IncludeExcludeInfo::isFileIncluded(StringRef FilePath) const {
   bool InIncludeList = false;
 
-  for (std::vector<std::string>::iterator I = IncludeList.begin(),
-                                          E = IncludeList.end();
+  for (std::vector<std::string>::const_iterator I = IncludeList.begin(),
+                                                E = IncludeList.end();
        I != E; ++I)
     if ((InIncludeList = fileHasPathPrefix(FilePath, *I)))
       break;
@@ -116,8 +116,8 @@ bool IncludeExcludeInfo::isFileIncluded(StringRef FilePath) {
   if (!InIncludeList)
     return false;
 
-  for (std::vector<std::string>::iterator I = ExcludeList.begin(),
-                                          E = ExcludeList.end();
+  for (std::vector<std::string>::const_iterator I = ExcludeList.begin(),
+                                                E = ExcludeList.end();
        I != E; ++I)
     if (fileHasPathPrefix(FilePath, *I))
       return false;
