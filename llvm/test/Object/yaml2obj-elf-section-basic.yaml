@@ -1,0 +1,23 @@
+# RUN: yaml2obj -format=elf %s | llvm-readobj -sections - | FileCheck %s
+!ELF
+FileHeader:
+  Class: ELFCLASS64
+  Data: ELFDATA2LSB
+  Type: ET_REL
+  Machine: EM_X86_64
+Sections:
+  - Name: .text
+    Type: SHT_PROGBITS
+    Flags: [ SHF_ALLOC, SHF_EXECINSTR ]
+
+# CHECK:        Section {
+# CHECK:          Index: 0
+# CHECK:          Type: SHT_NULL (0x0)
+#
+# CHECK:        Section {
+# CHECK:          Name: .text
+# CHECK:          Type: SHT_PROGBITS (0x1)
+# CHECK-NEXT:     Flags [ (0x6)
+# CHECK-NEXT:       SHF_ALLOC (0x2)
+# CHECK-NEXT:       SHF_EXECINSTR (0x4)
+# CHECK-NEXT:     ]

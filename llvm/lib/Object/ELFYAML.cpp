@@ -212,6 +212,45 @@ void ScalarEnumerationTraits<ELFYAML::ELF_ELFDATA>::enumeration(
 #undef ECase
 }
 
+void ScalarEnumerationTraits<ELFYAML::ELF_SHT>::enumeration(
+    IO &IO, ELFYAML::ELF_SHT &Value) {
+#define ECase(X) IO.enumCase(Value, #X, ELF::X);
+  ECase(SHT_NULL)
+  ECase(SHT_PROGBITS)
+  ECase(SHT_SYMTAB)
+  ECase(SHT_STRTAB)
+  ECase(SHT_RELA)
+  ECase(SHT_HASH)
+  ECase(SHT_DYNAMIC)
+  ECase(SHT_NOTE)
+  ECase(SHT_NOBITS)
+  ECase(SHT_REL)
+  ECase(SHT_SHLIB)
+  ECase(SHT_DYNSYM)
+  ECase(SHT_INIT_ARRAY)
+  ECase(SHT_FINI_ARRAY)
+  ECase(SHT_PREINIT_ARRAY)
+  ECase(SHT_GROUP)
+  ECase(SHT_SYMTAB_SHNDX)
+#undef ECase
+}
+
+void ScalarBitSetTraits<ELFYAML::ELF_SHF>::bitset(IO &IO,
+                                                  ELFYAML::ELF_SHF &Value) {
+#define BCase(X) IO.bitSetCase(Value, #X, ELF::X);
+  BCase(SHF_WRITE)
+  BCase(SHF_ALLOC)
+  BCase(SHF_EXECINSTR)
+  BCase(SHF_MERGE)
+  BCase(SHF_STRINGS)
+  BCase(SHF_INFO_LINK)
+  BCase(SHF_LINK_ORDER)
+  BCase(SHF_OS_NONCONFORMING)
+  BCase(SHF_GROUP)
+  BCase(SHF_TLS)
+#undef BCase
+}
+
 void MappingTraits<ELFYAML::FileHeader>::mapping(IO &IO,
                                                  ELFYAML::FileHeader &FileHdr) {
   IO.mapRequired("Class", FileHdr.Class);
@@ -221,8 +260,16 @@ void MappingTraits<ELFYAML::FileHeader>::mapping(IO &IO,
   IO.mapOptional("Entry", FileHdr.Entry, Hex64(0));
 }
 
+void MappingTraits<ELFYAML::Section>::mapping(IO &IO,
+                                              ELFYAML::Section &Section) {
+  IO.mapOptional("Name", Section.Name, StringRef());
+  IO.mapRequired("Type", Section.Type);
+  IO.mapOptional("Flags", Section.Flags, ELFYAML::ELF_SHF(0));
+}
+
 void MappingTraits<ELFYAML::Object>::mapping(IO &IO, ELFYAML::Object &Object) {
   IO.mapRequired("FileHeader", Object.Header);
+  IO.mapOptional("Sections", Object.Sections);
 }
 
 } // end namespace yaml

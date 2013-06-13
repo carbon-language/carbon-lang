@@ -36,6 +36,9 @@ LLVM_YAML_STRONG_TYPEDEF(uint16_t, ELF_ET)
 LLVM_YAML_STRONG_TYPEDEF(uint32_t, ELF_EM)
 LLVM_YAML_STRONG_TYPEDEF(uint8_t, ELF_ELFCLASS)
 LLVM_YAML_STRONG_TYPEDEF(uint8_t, ELF_ELFDATA)
+LLVM_YAML_STRONG_TYPEDEF(uint32_t, ELF_SHT)
+// Just use 64, since it can hold 32-bit values too.
+LLVM_YAML_STRONG_TYPEDEF(uint64_t, ELF_SHF)
 
 // For now, hardcode 64 bits everywhere that 32 or 64 would be needed
 // since 64-bit can hold 32-bit values too.
@@ -46,12 +49,20 @@ struct FileHeader {
   ELF_EM Machine;
   llvm::yaml::Hex64 Entry;
 };
+struct Section {
+  StringRef Name;
+  ELF_SHT Type;
+  ELF_SHF Flags;
+};
 struct Object {
   FileHeader Header;
+  std::vector<Section> Sections;
 };
 
 } // end namespace ELFYAML
 } // end namespace llvm
+
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::ELFYAML::Section)
 
 namespace llvm {
 namespace yaml {
@@ -77,8 +88,23 @@ struct ScalarEnumerationTraits<ELFYAML::ELF_ELFDATA> {
 };
 
 template <>
+struct ScalarEnumerationTraits<ELFYAML::ELF_SHT> {
+  static void enumeration(IO &IO, ELFYAML::ELF_SHT &Value);
+};
+
+template <>
+struct ScalarBitSetTraits<ELFYAML::ELF_SHF> {
+  static void bitset(IO &IO, ELFYAML::ELF_SHF &Value);
+};
+
+template <>
 struct MappingTraits<ELFYAML::FileHeader> {
   static void mapping(IO &IO, ELFYAML::FileHeader &FileHdr);
+};
+
+template <>
+struct MappingTraits<ELFYAML::Section> {
+  static void mapping(IO &IO, ELFYAML::Section &Section);
 };
 
 template <>
