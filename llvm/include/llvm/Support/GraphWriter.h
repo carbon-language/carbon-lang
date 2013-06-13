@@ -53,6 +53,12 @@ namespace GraphProgram {
 
 void DisplayGraph(const sys::Path& Filename, bool wait=true, GraphProgram::Name program = GraphProgram::DOT);
 
+inline void DisplayGraph(StringRef Filename, bool wait = true,
+                         GraphProgram::Name program = GraphProgram::DOT) {
+  sys::Path P(Filename);
+  DisplayGraph(P, wait, program);
+}
+
 template<typename GraphType>
 class GraphWriter {
   raw_ostream &O;
