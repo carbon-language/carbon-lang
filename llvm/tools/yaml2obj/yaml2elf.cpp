@@ -61,6 +61,21 @@ public:
   }
 };
 
+// This class is used to build up a contiguous binary blob while keeping
+// track of an offset in the output (which notionally begins at
+// `InitialOffset`).
+class ContiguousBlobAccumulator {
+  const uint64_t InitialOffset;
+  raw_svector_ostream OS;
+
+public:
+  ContiguousBlobAccumulator(uint64_t InitialOffset_, SmallVectorImpl<char> &Buf)
+      : InitialOffset(InitialOffset_), OS(Buf) {}
+  raw_ostream &getOS() { return OS; }
+  uint64_t currentOffset() const { return InitialOffset + OS.tell(); }
+  void writeBlobToStream(raw_ostream &Out) { Out << OS.str(); }
+};
+
 template <class T>
 static size_t vectorDataSize(const std::vector<T> &Vec) {
   return Vec.size() * sizeof(T);
@@ -124,6 +139,12 @@ static void writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   Header.e_shstrndx = Sections.size();
 
   StringTableBuilder StrTab;
+  SmallVector<char, 128> Buf;
+  // XXX: This offset is tightly coupled with the order that we write
+  // things to `OS`.
+  const size_t SectionContentBeginOffset =
+      Header.e_ehsize + Header.e_shentsize * Header.e_shnum;
+  ContiguousBlobAccumulator CBA(SectionContentBeginOffset, Buf);
   std::vector<Elf_Shdr> SHeaders;
   for (unsigned i = 0, e = Sections.size(); i != e; ++i) {
     const ELFYAML::Section &Sec = Sections[i];
@@ -133,8 +154,11 @@ static void writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
     SHeader.sh_type = Sec.Type;
     SHeader.sh_flags = Sec.Flags;
     SHeader.sh_addr = Sec.Address;
-    SHeader.sh_offset = 0;
-    SHeader.sh_size = 0;
+
+    SHeader.sh_offset = CBA.currentOffset();
+    SHeader.sh_size = Sec.Content.binary_size();
+    Sec.Content.writeAsBinary(CBA.getOS());
+
     SHeader.sh_link = 0;
     SHeader.sh_info = 0;
     SHeader.sh_addralign = 1;
@@ -149,8 +173,9 @@ static void writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   StrTabSHeader.sh_type = SHT_STRTAB;
   StrTabSHeader.sh_flags = 0;
   StrTabSHeader.sh_addr = 0;
-  StrTabSHeader.sh_offset = Header.e_ehsize + Header.e_shentsize * Header.e_shnum;
+  StrTabSHeader.sh_offset = CBA.currentOffset();
   StrTabSHeader.sh_size = StrTab.size();
+  StrTab.writeToStream(CBA.getOS());
   StrTabSHeader.sh_link = 0;
   StrTabSHeader.sh_info = 0;
   StrTabSHeader.sh_addralign = 1;
@@ -159,7 +184,7 @@ static void writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   OS.write((const char *)&Header, sizeof(Header));
   writeVectorData(OS, SHeaders);
   OS.write((const char *)&StrTabSHeader, sizeof(StrTabSHeader));
-  StrTab.writeToStream(OS);
+  CBA.writeBlobToStream(OS);
 }
 
 int yaml2elf(llvm::raw_ostream &Out, llvm::MemoryBuffer *Buf) {

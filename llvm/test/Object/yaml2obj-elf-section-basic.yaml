@@ -1,4 +1,4 @@
-# RUN: yaml2obj -format=elf %s | llvm-readobj -sections - | FileCheck %s
+# RUN: yaml2obj -format=elf %s | llvm-readobj -sections -section-data - | FileCheck %s
 !ELF
 FileHeader:
   Class: ELFCLASS64
@@ -10,6 +10,7 @@ Sections:
     Type: SHT_PROGBITS
     Flags: [ SHF_ALLOC, SHF_EXECINSTR ]
     Address: 0xDEADBEEF
+    Content: EBFE
 
 # CHECK:        Section {
 # CHECK:          Index: 0
@@ -23,3 +24,7 @@ Sections:
 # CHECK-NEXT:       SHF_EXECINSTR (0x4)
 # CHECK-NEXT:     ]
 # CHECK-NEXT:     Address: 0xDEADBEEF
+# CHECK:          Size: 2
+# CHECK:          SectionData (
+# CHECK-NEXT:       0000: EBFE
+# CHECK-NEXT:     )
