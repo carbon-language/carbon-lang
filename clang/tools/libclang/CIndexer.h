@@ -18,7 +18,6 @@
 #include "clang-c/Index.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 #include <vector>
 
 namespace llvm {
@@ -65,17 +64,6 @@ public:
   /// \brief Get the path of the clang resource files.
   const std::string &getClangResourcesPath();
 };
-
-  /**
-   * \brief Given a set of "unsaved" files, create temporary files and 
-   * construct the clang -cc1 argument list needed to perform the remapping.
-   *
-   * \returns true if an error occurred.
-   */
-  bool RemapFiles(unsigned num_unsaved_files,
-                  struct CXUnsavedFile *unsaved_files,
-                  std::vector<std::string> &RemapArgs,
-                  std::vector<llvm::sys::Path> &TemporaryFiles);
 
   /// \brief Return the current size to request for "safety".
   unsigned GetSafetyThreadStackSize();
