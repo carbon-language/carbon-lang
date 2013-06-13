@@ -33,7 +33,7 @@ int sys::ExecuteAndWait(const Path &path, const char **args, const char **envp,
                         const Path **redirects, unsigned secondsToWait,
                         unsigned memoryLimit, std::string *ErrMsg,
                         bool *ExecutionFailed) {
-  void *Data;
+  void *Data = 0;
   if (Execute(Data, path, args, envp, redirects, memoryLimit, ErrMsg)) {
     if (ExecutionFailed) *ExecutionFailed = false;
     return Wait(Data, path, secondsToWait, ErrMsg);
@@ -45,7 +45,7 @@ int sys::ExecuteAndWait(const Path &path, const char **args, const char **envp,
 void sys::ExecuteNoWait(const Path &path, const char **args, const char **envp,
                         const Path **redirects, unsigned memoryLimit,
                         std::string *ErrMsg) {
-  void *Data;
+  void *Data = 0;
   Execute(Data, path, args, envp, redirects, memoryLimit, ErrMsg);
 }
 
