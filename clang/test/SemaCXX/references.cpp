@@ -137,3 +137,10 @@ namespace PR8608 {
 
 // The following crashed trying to recursively evaluate the LValue.
 const int &do_not_crash = do_not_crash; // expected-warning{{reference 'do_not_crash' is not yet bound to a value when used within its own initialization}}
+
+namespace ExplicitRefInit {
+  // This is invalid: we can't copy-initialize an 'A' temporary using an
+  // explicit constructor.
+  struct A { explicit A(int); };
+  const A &a(0); // expected-error {{reference to type 'const ExplicitRefInit::A' could not bind to an rvalue of type 'int'}}
+}

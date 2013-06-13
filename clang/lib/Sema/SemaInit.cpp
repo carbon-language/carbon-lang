@@ -3792,19 +3792,17 @@ static void TryReferenceInitializationCore(Sema &S,
 
   //      - Otherwise, a temporary of type "cv1 T1" is created and initialized
   //        from the initializer expression using the rules for a non-reference
-  //        copy initialization (8.5). The reference is then bound to the
+  //        copy-initialization (8.5). The reference is then bound to the
   //        temporary. [...]
-
-  // Determine whether we are allowed to call explicit constructors or
-  // explicit conversion operators.
-  bool AllowExplicit = Kind.AllowExplicit();
 
   InitializedEntity TempEntity = InitializedEntity::InitializeTemporary(cv1T1);
 
+  // FIXME: Why do we use an implicit conversion here rather than trying
+  // copy-initialization?
   ImplicitConversionSequence ICS
     = S.TryImplicitConversion(Initializer, TempEntity.getType(),
-                              /*SuppressUserConversions*/ false,
-                              AllowExplicit,
+                              /*SuppressUserConversions=*/false,
+                              /*AllowExplicit=*/false,
                               /*FIXME:InOverloadResolution=*/false,
                               /*CStyle=*/Kind.isCStyleOrFunctionalCast(),
                               /*AllowObjCWritebackConversion=*/false);
