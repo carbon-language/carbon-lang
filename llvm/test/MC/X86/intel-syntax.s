@@ -325,3 +325,32 @@ _main:
 // CHECK: outb %al, $4
     out 4, al
     ret
+
+// CHECK: cmovbl %ebx, %eax
+    cmovc eax, ebx
+// CHECK: cmovel %ebx, %eax
+    cmovz eax, ebx
+// CHECK: cmovbel %ebx, %eax
+    cmovna eax, ebx
+// CHECK: cmovael %ebx, %eax
+    cmovnb eax, ebx
+// CHECK: cmovael %ebx, %eax
+    cmovnc eax, ebx
+// CHECK: cmovlel %ebx, %eax
+    cmovng eax, ebx
+// CHECK: cmovgel %ebx, %eax
+    cmovnl eax, ebx
+// CHECK: cmovnel %ebx, %eax
+    cmovnz eax, ebx
+// CHECK: cmovpl %ebx, %eax
+    cmovpe eax, ebx
+// CHECK: cmovnpl %ebx, %eax
+    cmovpo eax, ebx
+// CHECK: cmovbl %ebx, %eax
+    cmovnae eax, ebx
+// CHECK: cmoval %ebx, %eax
+    cmovnbe eax, ebx
+// CHECK: cmovll %ebx, %eax
+    cmovnge eax, ebx
+// CHECK: cmovgl %ebx, %eax
+    cmovnle eax, ebx
