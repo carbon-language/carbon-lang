@@ -100,8 +100,9 @@ ExecGraphViewer(StringRef ExecPath, std::vector<const char*> &args,
   return true;
 }
 
-void llvm::DisplayGraph(StringRef Filename, bool wait,
+void llvm::DisplayGraph(StringRef FilenameRef, bool wait,
                         GraphProgram::Name program) {
+  std::string Filename = FilenameRef;
   wait &= !ViewBackground;
   std::string ErrMsg;
 #if HAVE_GRAPHVIZ
@@ -182,12 +183,11 @@ void llvm::DisplayGraph(StringRef Filename, bool wait,
 #endif
 
   std::vector<const char*> args;
-  std::string FilenameStr = Filename;
   args.push_back(prog.c_str());
   args.push_back("-Tps");
   args.push_back("-Nfontname=Courier");
   args.push_back("-Gsize=7.5,10");
-  args.push_back(FilenameStr.c_str());
+  args.push_back(Filename.c_str());
   args.push_back("-o");
   args.push_back(PSFilename.c_str());
   args.push_back(0);
