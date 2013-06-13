@@ -54,6 +54,9 @@ public:
     GetName ();
 
     lldb::SBSection
+    GetParent();
+
+    lldb::SBSection
     FindSubSection (const char *sect_name);
 
     size_t

@@ -33,7 +33,10 @@ public:
 
     const char *
     GetName ();
-    
+
+    lldb::SBSection
+    GetParent();
+
     lldb::SBSection
     FindSubSection (const char *sect_name);
 
@@ -77,6 +80,7 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
     
+
 private:
 
     friend class SBAddress;

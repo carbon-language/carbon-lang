@@ -69,6 +69,20 @@ SBSection::GetName ()
     return NULL;
 }
 
+lldb::SBSection
+SBSection::GetParent()
+{
+    lldb::SBSection sb_section;
+    SectionSP section_sp (GetSP());
+    if (section_sp)
+    {
+        SectionSP parent_section_sp (section_sp->GetParent());
+        if (parent_section_sp)
+            sb_section.SetSP(parent_section_sp);
+    }
+    return sb_section;    
+}
+
 
 lldb::SBSection
 SBSection::FindSubSection (const char *sect_name)
