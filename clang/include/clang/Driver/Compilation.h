@@ -63,7 +63,7 @@ class Compilation {
   ArgStringMap FailureResultFiles;
 
   /// Redirection for stdout, stderr, etc.
-  const llvm::sys::Path **Redirects;
+  const StringRef **Redirects;
 
 public:
   Compilation(const Driver &D, const ToolChain &DefaultToolChain,

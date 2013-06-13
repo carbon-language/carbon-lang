@@ -32,6 +32,7 @@
 #include "llvm/Support/Atomic.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"

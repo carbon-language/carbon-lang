@@ -41,6 +41,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
@@ -775,8 +776,7 @@ UbigraphViz::~UbigraphViz() {
   args.push_back(Filename.c_str());
   args.push_back(0);
 
-  if (llvm::sys::ExecuteAndWait(llvm::sys::Path(Ubiviz), &args[0], 0, 0, 0, 0,
-                                &ErrMsg)) {
+  if (llvm::sys::ExecuteAndWait(Ubiviz, &args[0], 0, 0, 0, 0, &ErrMsg)) {
     llvm::errs() << "Error viewing graph: " << ErrMsg << "\n";
   }
 

@@ -291,7 +291,7 @@ int Compilation::ExecuteCommand(const Command &C,
 
   std::string Error;
   bool ExecutionFailed;
-  int Res = llvm::sys::ExecuteAndWait(Prog, Argv, /*env*/ 0, Redirects,
+  int Res = llvm::sys::ExecuteAndWait(Prog.str(), Argv, /*env*/ 0, Redirects,
                                       /*secondsToWait*/ 0, /*memoryLimit*/ 0,
                                       &Error, &ExecutionFailed);
   if (!Error.empty()) {
@@ -368,9 +368,10 @@ void Compilation::initCompilationForDiagnostics() {
   TranslatedArgs->ClaimAllArgs();
 
   // Redirect stdout/stderr to /dev/null.
-  Redirects = new const llvm::sys::Path*[3]();
-  Redirects[1] = new const llvm::sys::Path();
-  Redirects[2] = new const llvm::sys::Path();
+  Redirects = new const StringRef*[3]();
+  Redirects[0] = 0;
+  Redirects[1] = new const StringRef();
+  Redirects[2] = new const StringRef();
 }
 
 StringRef Compilation::getSysRoot() const {
