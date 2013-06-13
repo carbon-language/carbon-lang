@@ -766,7 +766,8 @@ void AMDGPUDAGToDAGISel::PostprocessISelDAG() {
         continue;
       }
 
-      if (!Val.getNode()->isMachineOpcode()) {
+      if (!Val.getNode()->isMachineOpcode() ||
+          Val.getNode()->getMachineOpcode() == AMDGPU::IMPLICIT_DEF) {
         continue;
       }
 
