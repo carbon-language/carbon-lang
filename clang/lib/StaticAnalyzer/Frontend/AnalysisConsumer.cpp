@@ -769,13 +769,14 @@ UbigraphViz::~UbigraphViz() {
   Out.reset(0);
   llvm::errs() << "Running 'ubiviz' program... ";
   std::string ErrMsg;
-  llvm::sys::Path Ubiviz = llvm::sys::FindProgramByName("ubiviz");
+  std::string Ubiviz = llvm::sys::FindProgramByName("ubiviz");
   std::vector<const char*> args;
   args.push_back(Ubiviz.c_str());
   args.push_back(Filename.c_str());
   args.push_back(0);
 
-  if (llvm::sys::ExecuteAndWait(Ubiviz, &args[0],0,0,0,0,&ErrMsg)) {
+  if (llvm::sys::ExecuteAndWait(llvm::sys::Path(Ubiviz), &args[0], 0, 0, 0, 0,
+                                &ErrMsg)) {
     llvm::errs() << "Error viewing graph: " << ErrMsg << "\n";
   }
 

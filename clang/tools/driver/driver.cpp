@@ -434,10 +434,10 @@ int main(int argc_, const char **argv_) {
 
     // Do a PATH lookup, if there are no directory components.
     if (llvm::sys::path::filename(InstalledPath) == InstalledPath) {
-      llvm::sys::Path Tmp = llvm::sys::FindProgramByName(
+      std::string Tmp = llvm::sys::FindProgramByName(
         llvm::sys::path::filename(InstalledPath.str()));
       if (!Tmp.empty())
-        InstalledPath = Tmp.str();
+        InstalledPath = Tmp;
     }
     llvm::sys::fs::make_absolute(InstalledPath);
     InstalledPath = llvm::sys::path::parent_path(InstalledPath);
