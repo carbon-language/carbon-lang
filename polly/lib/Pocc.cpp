@@ -94,8 +94,6 @@ bool Pocc::runTransform(Scop &S) {
   fclose(F);
 
   // Execute pocc
-  sys::Program program;
-
   sys::Path pocc = sys::Program::FindProgramByName("pocc");
 
   arguments.push_back("pocc");
@@ -130,7 +128,7 @@ bool Pocc::runTransform(Scop &S) {
   redirect.push_back(&plutoStdout);
   redirect.push_back(&plutoStderr);
 
-  program.ExecuteAndWait(pocc, &arguments[0], 0,
+  sys::Program::ExecuteAndWait(pocc, &arguments[0], 0,
                          (sys::Path const **)&redirect[0]);
 
   // Read the created scop file
