@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // Math stuff
 
@@ -40,6 +40,33 @@ long double  g18 = __builtin_copysignl(1.0L, -1.0L);
 //double       g19 = __builtin_powi(2.0, 4);
 //float        g20 = __builtin_powif(2.0f, 4);
 //long double  g21 = __builtin_powil(2.0L, 4);
+
+#define BITSIZE(x) (sizeof(x) * 8)
+char g22[__builtin_clz(1) == BITSIZE(int) - 1 ? 1 : -1];
+char g23[__builtin_clz(7) == BITSIZE(int) - 3 ? 1 : -1];
+char g24[__builtin_clz(1 << (BITSIZE(int) - 1)) == 0 ? 1 : -1];
+int g25 = __builtin_clz(0); // expected-error {{not a compile-time constant}}
+char g26[__builtin_clzl(0xFL) == BITSIZE(long) - 4 ? 1 : -1];
+char g27[__builtin_clzll(0xFFLL) == BITSIZE(long long) - 8 ? 1 : -1];
+
+char g28[__builtin_ctz(1) == 0 ? 1 : -1];
+char g29[__builtin_ctz(8) == 3 ? 1 : -1];
+char g30[__builtin_ctz(1 << (BITSIZE(int) - 1)) == BITSIZE(int) - 1 ? 1 : -1];
+int g31 = __builtin_ctz(0); // expected-error {{not a compile-time constant}}
+char g32[__builtin_ctzl(0x10L) == 4 ? 1 : -1];
+char g33[__builtin_ctzll(0x100LL) == 8 ? 1 : -1];
+
+char g34[__builtin_popcount(0) == 0 ? 1 : -1];
+char g35[__builtin_popcount(0xF0F0) == 8 ? 1 : -1];
+char g36[__builtin_popcount(~0) == BITSIZE(int) ? 1 : -1];
+char g37[__builtin_popcount(~0L) == BITSIZE(int) ? 1 : -1];
+char g38[__builtin_popcountl(0L) == 0 ? 1 : -1];
+char g39[__builtin_popcountl(0xF0F0L) == 8 ? 1 : -1];
+char g40[__builtin_popcountl(~0L) == BITSIZE(long) ? 1 : -1];
+char g41[__builtin_popcountll(0LL) == 0 ? 1 : -1];
+char g42[__builtin_popcountll(0xF0F0LL) == 8 ? 1 : -1];
+char g43[__builtin_popcountll(~0LL) == BITSIZE(long long) ? 1 : -1];
+#undef BITSIZE
 
 // GCC misc stuff
 
