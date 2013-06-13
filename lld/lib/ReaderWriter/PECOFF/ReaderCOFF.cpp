@@ -231,10 +231,10 @@ public:
     }
     Bin.take();
 
-    // Assign each symbol to the section it's in. If it does not belong to a
-    // section, create an atom for it now.
+    // Assign each symbol to the section it's in.
     SectionToSymbolVectorMap definedSymbols;
-    if ((EC = readSymbolTable(definedSymbols)))
+    if ((EC = readSymbolTable(AbsoluteAtoms._atoms, UndefinedAtoms._atoms,
+                              definedSymbols)))
       return;
 
     // Atomize defined symbols. This is a separate pass from readSymbolTable()
@@ -269,8 +269,11 @@ public:
 private:
   /// Iterate over symbol table to process all symbols. Absolute or undefined
   /// symbols are atomized in this method. Defined symbols are not atomized
-  /// but added to DefinedSymbols for further processing.
-  error_code readSymbolTable(SectionToSymbolVectorMap &definedSymbols) {
+  /// but added to DefinedSymbols as is for further processing. Note that this
+  /// function is const, so it will not mutate objects other than arguments.
+  error_code readSymbolTable(std::vector<const AbsoluteAtom*> &absoluteAtoms,
+                             std::vector<const UndefinedAtom*> &undefinedAtoms,
+                             SectionToSymbolVectorMap &definedSymbols) const {
     const llvm::object::coff_file_header *Header = nullptr;
     if (error_code ec = Obj->getHeader(Header))
       return ec;
@@ -289,15 +292,13 @@ private:
       i += Symb->NumberOfAuxSymbols;
       if (SectionIndex == llvm::COFF::IMAGE_SYM_ABSOLUTE) {
         // Create an absolute atom.
-        AbsoluteAtoms._atoms.push_back(
-          new (AtomStorage.Allocate<COFFAbsoluteAtom>())
+        absoluteAtoms.push_back(new (AtomStorage.Allocate<COFFAbsoluteAtom>())
             COFFAbsoluteAtom(*this, Name, Symb->Value));
         continue;
       }
       if (SectionIndex == llvm::COFF::IMAGE_SYM_UNDEFINED) {
         // Create an undefined atom.
-        UndefinedAtoms._atoms.push_back(
-          new (AtomStorage.Allocate<COFFUndefinedAtom>())
+        undefinedAtoms.push_back(new (AtomStorage.Allocate<COFFUndefinedAtom>())
             COFFUndefinedAtom(*this, Name));
         continue;
       }
@@ -384,7 +385,7 @@ private:
   atom_collection_vector<UndefinedAtom>     UndefinedAtoms;
   atom_collection_vector<SharedLibraryAtom> SharedLibraryAtoms;
   atom_collection_vector<AbsoluteAtom> AbsoluteAtoms;
-  llvm::BumpPtrAllocator AtomStorage;
+  mutable llvm::BumpPtrAllocator AtomStorage;
   const TargetInfo &_targetInfo;
 };
 
