@@ -194,9 +194,6 @@ LambdaScopeInfo *Sema::enterLambdaScope(CXXMethodDecl *CallOperator,
       if (RequireCompleteType(CallOperator->getLocStart(), LSI->ReturnType,
                               diag::err_lambda_incomplete_result)) {
         // Do nothing.
-      } else if (LSI->ReturnType->isObjCObjectOrInterfaceType()) {
-        Diag(CallOperator->getLocStart(), diag::err_lambda_objc_object_result)
-          << LSI->ReturnType;
       }
     }
   } else {

@@ -8986,15 +8986,6 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
   QualType exprResultType =
       getDerived().TransformType(exprFunctionType->getResultType());
 
-  // Don't allow returning a objc interface by value.
-  if (exprResultType->isObjCObjectType()) {
-    getSema().Diag(E->getCaretLocation(),
-                   diag::err_object_cannot_be_passed_returned_by_value)
-      << 0 << exprResultType;
-    getSema().ActOnBlockError(E->getCaretLocation(), /*Scope=*/0);
-    return ExprError();
-  }
-
   QualType functionType =
     getDerived().RebuildFunctionProtoType(exprResultType, paramTypes,
                                           exprFunctionType->getExtProtoInfo());

@@ -3009,14 +3009,9 @@ Decl *Sema::ActOnMethodDeclaration(
   if (ReturnType) {
     resultDeclType = GetTypeFromParser(ReturnType, &ResultTInfo);
 
-    // Methods cannot return interface types. All ObjC objects are
-    // passed by reference.
-    if (resultDeclType->isObjCObjectType()) {
-      Diag(MethodLoc, diag::err_object_cannot_be_passed_returned_by_value)
-        << 0 << resultDeclType;
+    if (CheckFunctionReturnType(resultDeclType, MethodLoc))
       return 0;
-    }    
-    
+
     HasRelatedResultType = (resultDeclType == Context.getObjCInstanceType());
   } else { // get the type for "id".
     resultDeclType = Context.getObjCIdType();
@@ -3099,14 +3094,8 @@ Decl *Sema::ActOnMethodDeclaration(
     else
       // Perform the default array/function conversions (C99 6.7.5.3p[7,8]).
       ArgType = Context.getAdjustedParameterType(ArgType);
-    if (ArgType->isObjCObjectType()) {
-      Diag(Param->getLocation(),
-           diag::err_object_cannot_be_passed_returned_by_value)
-      << 1 << ArgType;
-      Param->setInvalidDecl();
-    }
+
     Param->setDeclContext(ObjCMethod);
-    
     Params.push_back(Param);
   }
   

@@ -4,5 +4,5 @@
 @end
 
 void test_result_type() {
-  auto l1 = [] () -> A { }; // expected-error{{non-pointer Objective-C class type 'A' in lambda expression result}}
+  auto l1 = [] () -> A { }; // expected-error{{interface type 'A' cannot be returned by value; did you forget * in 'A'?}}
 }

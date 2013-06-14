@@ -1003,6 +1003,8 @@ public:
   QualType BuildExtVectorType(QualType T, Expr *ArraySize,
                               SourceLocation AttrLoc);
 
+  bool CheckFunctionReturnType(QualType T, SourceLocation Loc);
+
   /// \brief Build a function type.
   ///
   /// This routine checks the function type according to C++ rules and

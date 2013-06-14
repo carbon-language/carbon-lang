@@ -33,6 +33,8 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "TypeLocBuilder.h"
+
 using namespace clang;
 
 /// isOmittedBlockReturnType - Return true if this declarator is missing a
@@ -1654,24 +1656,38 @@ QualType Sema::BuildExtVectorType(QualType T, Expr *ArraySize,
   return Context.getDependentSizedExtVectorType(T, ArraySize, AttrLoc);
 }
 
-QualType Sema::BuildFunctionType(QualType T,
-                                 llvm::MutableArrayRef<QualType> ParamTypes,
-                                 SourceLocation Loc, DeclarationName Entity,
-                                 const FunctionProtoType::ExtProtoInfo &EPI) {
+bool Sema::CheckFunctionReturnType(QualType T, SourceLocation Loc) {
   if (T->isArrayType() || T->isFunctionType()) {
     Diag(Loc, diag::err_func_returning_array_function)
       << T->isFunctionType() << T;
-    return QualType();
+    return true;
   }
 
   // Functions cannot return half FP.
   if (T->isHalfType()) {
     Diag(Loc, diag::err_parameters_retval_cannot_have_fp16_type) << 1 <<
       FixItHint::CreateInsertion(Loc, "*");
-    return QualType();
+    return true;
   }
 
+  // Methods cannot return interface types. All ObjC objects are
+  // passed by reference.
+  if (T->isObjCObjectType()) {
+    Diag(Loc, diag::err_object_cannot_be_passed_returned_by_value) << 0 << T;
+    return 0;
+  }
+
+  return false;
+}
+
+QualType Sema::BuildFunctionType(QualType T,
+                                 llvm::MutableArrayRef<QualType> ParamTypes,
+                                 SourceLocation Loc, DeclarationName Entity,
+                                 const FunctionProtoType::ExtProtoInfo &EPI) {
   bool Invalid = false;
+
+  Invalid |= CheckFunctionReturnType(T, Loc);
+
   for (unsigned Idx = 0, Cnt = ParamTypes.size(); Idx < Cnt; ++Idx) {
     // FIXME: Loc is too inprecise here, should use proper locations for args.
     QualType ParamType = Context.getAdjustedParameterType(ParamTypes[Idx]);
@@ -2680,6 +2696,33 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
             diag::err_parameters_retval_cannot_have_fp16_type) << 1;
           D.setInvalidType(true);
         }
+      }
+
+      // Methods cannot return interface types. All ObjC objects are
+      // passed by reference.
+      if (T->isObjCObjectType()) {
+        SourceLocation DiagLoc, FixitLoc;
+        if (TInfo) {
+          DiagLoc = TInfo->getTypeLoc().getLocStart();
+          FixitLoc = S.PP.getLocForEndOfToken(TInfo->getTypeLoc().getLocEnd());
+        } else {
+          DiagLoc = D.getDeclSpec().getTypeSpecTypeLoc();
+          FixitLoc = S.PP.getLocForEndOfToken(D.getDeclSpec().getLocEnd());
+        }
+        S.Diag(DiagLoc, diag::err_object_cannot_be_passed_returned_by_value)
+          << 0 << T
+          << FixItHint::CreateInsertion(FixitLoc, "*");
+
+        T = Context.getObjCObjectPointerType(T);
+        if (TInfo) {
+          TypeLocBuilder TLB;
+          TLB.pushFullCopy(TInfo->getTypeLoc());
+          ObjCObjectPointerTypeLoc TLoc = TLB.push<ObjCObjectPointerTypeLoc>(T);
+          TLoc.setStarLoc(FixitLoc);
+          TInfo = TLB.getTypeSourceInfo(Context, T);
+        }
+
+        D.setInvalidType(true);
       }
 
       // cv-qualifiers on return types are pointless except when the type is a

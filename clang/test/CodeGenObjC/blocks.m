@@ -7,7 +7,7 @@ struct S {
 
 
 @interface T
-  - (int)foo: (T (^)(T*)) x;
+  - (int)foo: (T* (^)(T*)) x;
 @end
 
 void foo(T *P) {
