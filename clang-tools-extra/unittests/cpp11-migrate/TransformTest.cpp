@@ -2,6 +2,7 @@
 #include "Core/Transform.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DeclGroup.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PathV1.h"
@@ -98,22 +99,24 @@ TEST(Transform, Timings) {
   // The directory used is not important since the path gets mapped to a virtual
   // file anyway. What is important is that we have an absolute path with which
   // to use with mapVirtualFile().
-  llvm::sys::Path FileA = llvm::sys::Path::GetCurrentDirectory();
-  std::string CurrentDir = FileA.str();
-  FileA.appendComponent("a.cc");
-  std::string FileAName = FileA.str();
-  llvm::sys::Path FileB = llvm::sys::Path::GetCurrentDirectory();
-  FileB.appendComponent("b.cc");
-  std::string FileBName = FileB.str();
+  SmallString<128> CurrentDir;
+  llvm::error_code EC = llvm::sys::fs::current_path(CurrentDir);
+  EXPECT_FALSE(EC);
 
-  tooling::FixedCompilationDatabase Compilations(CurrentDir, std::vector<std::string>());
+  SmallString<128> FileA = CurrentDir;
+  llvm::sys::path::append(FileA, "a.cc");
+
+  SmallString<128> FileB = CurrentDir;
+  llvm::sys::path::append(FileB, "b.cc");
+
+  tooling::FixedCompilationDatabase Compilations(CurrentDir.str(), std::vector<std::string>());
   std::vector<std::string> Sources;
-  Sources.push_back(FileAName);
-  Sources.push_back(FileBName);
+  Sources.push_back(FileA.str());
+  Sources.push_back(FileB.str());
   tooling::ClangTool Tool(Compilations, Sources);
 
-  Tool.mapVirtualFile(FileAName, "void a() {}");
-  Tool.mapVirtualFile(FileBName, "void b() {}");
+  Tool.mapVirtualFile(FileA, "void a() {}");
+  Tool.mapVirtualFile(FileB, "void b() {}");
 
   ConsumerFactory Factory;
   Tool.run(newFrontendActionFactory(&Factory, &T));
@@ -125,13 +128,13 @@ TEST(Transform, Timings) {
   // The success of the test shouldn't depend on the order of iteration through
   // timers.
   llvm::sys::Path FirstFile(I->first);
-  if (FileA == FirstFile) {
+  if (FileA == FirstFile.str()) {
     ++I;
-    EXPECT_EQ(FileB, llvm::sys::Path(I->first));
+    EXPECT_EQ(FileB, llvm::sys::Path(I->first).str());
     EXPECT_GT(I->second.getProcessTime(), 0.0);
-  } else if (FileB == FirstFile) {
+  } else if (FileB == FirstFile.str()) {
     ++I;
-    EXPECT_EQ(FileA, llvm::sys::Path(I->first));
+    EXPECT_EQ(FileA, llvm::sys::Path(I->first).str());
     EXPECT_GT(I->second.getProcessTime(), 0.0);
   } else {
     FAIL() << "Unexpected file name " << I->first << " in timing data.";
