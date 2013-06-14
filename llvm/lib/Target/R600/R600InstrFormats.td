@@ -390,3 +390,48 @@ class CF_ALU_WORD1 {
   let Word1{30} = WHOLE_QUAD_MODE;
   let Word1{31} = BARRIER;
 }
+
+class CF_ALLOC_EXPORT_WORD0_RAT {
+  field bits<32> Word0;
+
+  bits<4> rat_id;
+  bits<6> rat_inst;
+  bits<2> rim;
+  bits<2> type;
+  bits<7> rw_gpr;
+  bits<1> rw_rel;
+  bits<7> index_gpr;
+  bits<2> elem_size;
+
+  let Word0{3-0}   = rat_id;
+  let Word0{9-4}   = rat_inst;
+  let Word0{10}    = 0; // Reserved
+  let Word0{12-11} = rim;
+  let Word0{14-13} = type;
+  let Word0{21-15} = rw_gpr;
+  let Word0{22}    = rw_rel;
+  let Word0{29-23} = index_gpr;
+  let Word0{31-30} = elem_size;
+}
+
+class CF_ALLOC_EXPORT_WORD1_BUF {
+  field bits<32> Word1;
+
+  bits<12> array_size;
+  bits<4>  comp_mask;
+  bits<4>  burst_count;
+  bits<1>  vpm;
+  bits<1>  eop;
+  bits<8>  cf_inst;
+  bits<1>  mark;
+  bits<1>  barrier;
+
+  let Word1{11-0} = array_size;
+  let Word1{15-12} = comp_mask;
+  let Word1{19-16} = burst_count;
+  let Word1{20}    = vpm;
+  let Word1{21}    = eop;
+  let Word1{29-22} = cf_inst;
+  let Word1{30}    = mark;
+  let Word1{31}    = barrier;
+}

@@ -235,45 +235,18 @@ def TEX_SHADOW_ARRAY : PatLeaf<
   }]
 >;
 
-class EG_CF_RAT <bits <8> cf_inst, bits <6> rat_inst, bits<4> rat_id, dag outs,
+class EG_CF_RAT <bits <8> cfinst, bits <6> ratinst, bits<4> ratid, dag outs,
                  dag ins, string asm, list<dag> pattern> :
-    InstR600ISA <outs, ins, asm, pattern> {
-  bits<7>  RW_GPR;
-  bits<7>  INDEX_GPR;
+    InstR600ISA <outs, ins, asm, pattern>,
+    CF_ALLOC_EXPORT_WORD0_RAT, CF_ALLOC_EXPORT_WORD1_BUF  {
 
-  bits<2>  RIM;
-  bits<2>  TYPE;
-  bits<1>  RW_REL;
-  bits<2>  ELEM_SIZE;
+  let cf_inst = cfinst;
+  let rat_inst = ratinst;
+  let rat_id = ratid;
 
-  bits<12> ARRAY_SIZE;
-  bits<4>  COMP_MASK;
-  bits<4>  BURST_COUNT;
-  bits<1>  VPM;
-  bits<1>  eop;
-  bits<1>  MARK;
-  bits<1>  BARRIER;
+  let Inst{31-0} = Word0;
+  let Inst{63-32} = Word1;
 
-  // CF_ALLOC_EXPORT_WORD0_RAT
-  let Inst{3-0}   = rat_id;
-  let Inst{9-4}   = rat_inst;
-  let Inst{10}    = 0; // Reserved
-  let Inst{12-11} = RIM;
-  let Inst{14-13} = TYPE;
-  let Inst{21-15} = RW_GPR;
-  let Inst{22}    = RW_REL;
-  let Inst{29-23} = INDEX_GPR;
-  let Inst{31-30} = ELEM_SIZE;
-
-  // CF_ALLOC_EXPORT_WORD1_BUF
-  let Inst{43-32} = ARRAY_SIZE;
-  let Inst{47-44} = COMP_MASK;
-  let Inst{51-48} = BURST_COUNT;
-  let Inst{52}    = VPM;
-  let Inst{53}    = eop;
-  let Inst{61-54} = cf_inst;
-  let Inst{62}    = MARK;
-  let Inst{63}    = BARRIER;
 }
 
 class LoadParamFrag <PatFrag load_type> : PatFrag <
@@ -1396,21 +1369,21 @@ let hasSideEffects = 1 in {
 //===----------------------------------------------------------------------===//
 let usesCustomInserter = 1 in {
 
-class RAT_WRITE_CACHELESS_eg <dag ins, bits<4> comp_mask, string name,
+class RAT_WRITE_CACHELESS_eg <dag ins, bits<4> mask, string name,
                               list<dag> pattern>
     : EG_CF_RAT <0x57, 0x2, 0, (outs), ins, name, pattern> {
-  let RIM         = 0;
+  let rim         = 0;
   // XXX: Have a separate instruction for non-indexed writes.
-  let TYPE        = 1;
-  let RW_REL      = 0;
-  let ELEM_SIZE   = 0;
+  let type        = 1;
+  let rw_rel      = 0;
+  let elem_size   = 0;
 
-  let ARRAY_SIZE  = 0;
-  let COMP_MASK   = comp_mask;
-  let BURST_COUNT = 0;
-  let VPM         = 0;
-  let MARK        = 0;
-  let BARRIER     = 1;
+  let array_size  = 0;
+  let comp_mask   = mask;
+  let burst_count = 0;
+  let vpm         = 0;
+  let mark        = 0;
+  let barrier     = 1;
 }
 
 } // End usesCustomInserter = 1
