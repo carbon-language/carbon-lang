@@ -514,7 +514,7 @@ bool OutputReport(Context *ctx,
     suppress_pc = IsSuppressed(rep->typ, suppress_loc, &supp);
   if (suppress_pc != 0) {
     FiredSuppression s = {srep.GetReport()->typ, suppress_pc, supp};
-    ctx->fired_suppressions.PushBack(s);
+    ctx->fired_suppressions.push_back(s);
   }
   if (OnReport(rep, suppress_pc != 0))
     return false;
@@ -526,7 +526,7 @@ bool OutputReport(Context *ctx,
 bool IsFiredSuppression(Context *ctx,
                         const ScopedReport &srep,
                         const StackTrace &trace) {
-  for (uptr k = 0; k < ctx->fired_suppressions.Size(); k++) {
+  for (uptr k = 0; k < ctx->fired_suppressions.size(); k++) {
     if (ctx->fired_suppressions[k].type != srep.GetReport()->typ)
       continue;
     for (uptr j = 0; j < trace.Size(); j++) {
@@ -544,7 +544,7 @@ bool IsFiredSuppression(Context *ctx,
 static bool IsFiredSuppression(Context *ctx,
                                const ScopedReport &srep,
                                uptr addr) {
-  for (uptr k = 0; k < ctx->fired_suppressions.Size(); k++) {
+  for (uptr k = 0; k < ctx->fired_suppressions.size(); k++) {
     if (ctx->fired_suppressions[k].type != srep.GetReport()->typ)
       continue;
     FiredSuppression *s = &ctx->fired_suppressions[k];
@@ -589,7 +589,7 @@ static bool IsJavaNonsense(const ReportDesc *rep) {
           && frame->module == 0)) {
         if (frame) {
           FiredSuppression supp = {rep->typ, frame->pc, 0};
-          CTX()->fired_suppressions.PushBack(supp);
+          CTX()->fired_suppressions.push_back(supp);
         }
         return true;
       }

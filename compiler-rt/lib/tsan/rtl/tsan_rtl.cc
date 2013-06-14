@@ -74,7 +74,7 @@ Context::Context()
       CreateThreadContext, kMaxTid, kThreadQuarantineSize))
   , racy_stacks(MBlockRacyStacks)
   , racy_addresses(MBlockRacyAddresses)
-  , fired_suppressions(MBlockRacyAddresses) {
+  , fired_suppressions(8) {
 }
 
 // The objects are allocated in TLS, so one may rely on zero-initialization.

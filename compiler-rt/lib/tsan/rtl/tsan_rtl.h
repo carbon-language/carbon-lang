@@ -533,7 +533,8 @@ struct Context {
 
   Vector<RacyStacks> racy_stacks;
   Vector<RacyAddress> racy_addresses;
-  Vector<FiredSuppression> fired_suppressions;
+  // Number of fired suppressions may be large enough.
+  InternalMmapVector<FiredSuppression> fired_suppressions;
 
   Flags flags;
 
