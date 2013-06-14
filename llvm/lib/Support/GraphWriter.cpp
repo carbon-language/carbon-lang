@@ -16,7 +16,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Program.h"
 using namespace llvm;
 
@@ -138,9 +137,7 @@ void llvm::DisplayGraph(StringRef FilenameRef, bool wait,
 
 #elif (HAVE_GV && (HAVE_DOT || HAVE_FDP || HAVE_NEATO || \
                    HAVE_TWOPI || HAVE_CIRCO))
-  sys::Path PSFilename = sys::Path(Filename);
-  PSFilename.appendSuffix("ps");
-
+  std::string PSFilename = Filename + ".ps";
   std::string prog;
 
   // Set default grapher
@@ -205,7 +202,7 @@ void llvm::DisplayGraph(StringRef FilenameRef, bool wait,
   args.push_back(0);
 
   ErrMsg.clear();
-  if (!ExecGraphViewer(gv, args, PSFilename.str(), wait, ErrMsg))
+  if (!ExecGraphViewer(gv, args, PSFilename, wait, ErrMsg))
     return;
 
 #elif HAVE_DOTTY
