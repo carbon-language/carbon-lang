@@ -843,6 +843,7 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
     // been asked for. If so it must implicitly define the whole thing.
     assert(TargetRegisterInfo::isPhysicalRegister(DstReg) &&
            "Only expect virtual or physical registers in remat");
+    NewMI->getOperand(0).setIsDead(true);
     NewMI->addOperand(MachineOperand::CreateReg(CopyDstReg,
                                                 true  /*IsDef*/,
                                                 true  /*IsImp*/,
