@@ -100,13 +100,15 @@ class LeakReport {
   InternalMmapVector<Leak> leaks_;
 };
 
+typedef InternalMmapVector<uptr> Frontier;
+
 // Platform-specific functions.
 void InitializePlatformSpecificModules();
-void ProcessGlobalRegions(InternalMmapVector<uptr> *frontier);
-void ProcessPlatformSpecificAllocations(InternalMmapVector<uptr> *frontier);
+void ProcessGlobalRegions(Frontier *frontier);
+void ProcessPlatformSpecificAllocations(Frontier *frontier);
 
 void ScanRangeForPointers(uptr begin, uptr end,
-                          InternalMmapVector<uptr> *frontier,
+                          Frontier *frontier,
                           const char *region_type, ChunkTag tag);
 
 // Callables for iterating over chunks. Those classes are used as template
@@ -118,11 +120,11 @@ void ScanRangeForPointers(uptr begin, uptr end,
 class ProcessPlatformSpecificAllocationsCb {
  public:
   explicit ProcessPlatformSpecificAllocationsCb(
-      InternalMmapVector<uptr> *frontier)
+      Frontier *frontier)
       : frontier_(frontier) {}
   void operator()(void *p) const;
  private:
-  InternalMmapVector<uptr> *frontier_;
+  Frontier *frontier_;
 };
 
 // Prints addresses of unreachable chunks.
@@ -151,11 +153,11 @@ class MarkIndirectlyLeakedCb {
 // Finds all chunk marked as kIgnored and adds their addresses to frontier.
 class CollectSuppressedCb {
  public:
-  explicit CollectSuppressedCb(InternalMmapVector<uptr> *frontier)
+  explicit CollectSuppressedCb(Frontier *frontier)
       : frontier_(frontier) {}
   void operator()(void *p) const;
  private:
-  InternalMmapVector<uptr> *frontier_;
+  Frontier *frontier_;
 };
 
 enum IgnoreObjectResult {
