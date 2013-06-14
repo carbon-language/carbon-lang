@@ -79,7 +79,8 @@ endif
 include $(LLDB_LEVEL)/../../Makefile.config
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter codegen \
-                   instrumentation ipo irreader selectiondag jit mc mcjit linker
+                   instrumentation ipo irreader selectiondag jit mc mcjit \
+                   linker option
 
 ifeq ($(HOST_OS),Darwin)
   USEDLIBS += lldbHostMacOSX.a \
