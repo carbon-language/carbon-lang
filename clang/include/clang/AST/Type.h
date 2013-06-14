@@ -4204,11 +4204,11 @@ public:
 ///
 /// 'C<P>' is an ObjCObjectType with base C and protocol list [P].
 ///
-/// 'id' is a TypedefType which is sugar for an ObjCPointerType whose
+/// 'id' is a TypedefType which is sugar for an ObjCObjectPointerType whose
 /// pointee is an ObjCObjectType with base BuiltinType::ObjCIdType
 /// and no protocols.
 ///
-/// 'id<P>' is an ObjCPointerType whose pointee is an ObjCObjecType
+/// 'id<P>' is an ObjCObjectPointerType whose pointee is an ObjCObjectType
 /// with base BuiltinType::ObjCIdType and protocol list [P].  Eventually
 /// this should get its own sugar class to better represent the source.
 class ObjCObjectType : public Type {
@@ -4246,7 +4246,7 @@ public:
   /// getBaseType - Gets the base type of this object type.  This is
   /// always (possibly sugar for) one of:
   ///  - the 'id' builtin type (as opposed to the 'id' type visible to the
-  ///    user, which is a typedef for an ObjCPointerType)
+  ///    user, which is a typedef for an ObjCObjectPointerType)
   ///  - the 'Class' builtin type (same caveat)
   ///  - an ObjCObjectType (currently always an ObjCInterfaceType)
   QualType getBaseType() const { return BaseType; }
