@@ -235,14 +235,26 @@ def TEX_SHADOW_ARRAY : PatLeaf<
   }]
 >;
 
-class EG_CF_RAT <bits <8> cfinst, bits <6> ratinst, bits<4> ratid, dag outs,
+class EG_CF_RAT <bits <8> cfinst, bits <6> ratinst, bits<4> mask, dag outs,
                  dag ins, string asm, list<dag> pattern> :
     InstR600ISA <outs, ins, asm, pattern>,
     CF_ALLOC_EXPORT_WORD0_RAT, CF_ALLOC_EXPORT_WORD1_BUF  {
 
-  let cf_inst = cfinst;
+  let rat_id = 0;
   let rat_inst = ratinst;
-  let rat_id = ratid;
+  let rim         = 0;
+  // XXX: Have a separate instruction for non-indexed writes.
+  let type        = 1;
+  let rw_rel      = 0;
+  let elem_size   = 0;
+
+  let array_size  = 0;
+  let comp_mask   = mask;
+  let burst_count = 0;
+  let vpm         = 0;
+  let cf_inst = cfinst;
+  let mark        = 0;
+  let barrier     = 1;
 
   let Inst{31-0} = Word0;
   let Inst{63-32} = Word1;
@@ -1210,6 +1222,33 @@ def : POW_Common <LOG_IEEE_eg, EXP_IEEE_eg, MUL>;
 def : SIN_PAT <SIN_eg>;
 def : COS_PAT <COS_eg>;
 def : Pat<(fsqrt f32:$src), (MUL $src, (RECIPSQRT_CLAMPED_eg $src))>;
+
+//===----------------------------------------------------------------------===//
+// Memory read/write instructions
+//===----------------------------------------------------------------------===//
+let usesCustomInserter = 1 in {
+
+class RAT_WRITE_CACHELESS_eg <dag ins, bits<4> mask, string name,
+                              list<dag> pattern>
+    : EG_CF_RAT <0x57, 0x2, mask, (outs), ins, name, pattern> {
+}
+
+} // End usesCustomInserter = 1
+
+// 32-bit store
+def RAT_WRITE_CACHELESS_32_eg : RAT_WRITE_CACHELESS_eg <
+  (ins R600_TReg32_X:$rw_gpr, R600_TReg32_X:$index_gpr, InstFlag:$eop),
+  0x1, "RAT_WRITE_CACHELESS_32_eg $rw_gpr, $index_gpr, $eop",
+  [(global_store i32:$rw_gpr, i32:$index_gpr)]
+>;
+
+//128-bit store
+def RAT_WRITE_CACHELESS_128_eg : RAT_WRITE_CACHELESS_eg <
+  (ins R600_Reg128:$rw_gpr, R600_TReg32_X:$index_gpr, InstFlag:$eop),
+  0xf, "RAT_WRITE_CACHELESS_128 $rw_gpr.XYZW, $index_gpr, $eop",
+  [(global_store v4i32:$rw_gpr, i32:$index_gpr)]
+>;
+
 } // End Predicates = [isEG]
 
 //===----------------------------------------------------------------------===//
@@ -1367,40 +1406,6 @@ let hasSideEffects = 1 in {
 //===----------------------------------------------------------------------===//
 // Memory read/write instructions
 //===----------------------------------------------------------------------===//
-let usesCustomInserter = 1 in {
-
-class RAT_WRITE_CACHELESS_eg <dag ins, bits<4> mask, string name,
-                              list<dag> pattern>
-    : EG_CF_RAT <0x57, 0x2, 0, (outs), ins, name, pattern> {
-  let rim         = 0;
-  // XXX: Have a separate instruction for non-indexed writes.
-  let type        = 1;
-  let rw_rel      = 0;
-  let elem_size   = 0;
-
-  let array_size  = 0;
-  let comp_mask   = mask;
-  let burst_count = 0;
-  let vpm         = 0;
-  let mark        = 0;
-  let barrier     = 1;
-}
-
-} // End usesCustomInserter = 1
-
-// 32-bit store
-def RAT_WRITE_CACHELESS_32_eg : RAT_WRITE_CACHELESS_eg <
-  (ins R600_TReg32_X:$rw_gpr, R600_TReg32_X:$index_gpr, InstFlag:$eop),
-  0x1, "RAT_WRITE_CACHELESS_32_eg $rw_gpr, $index_gpr, $eop",
-  [(global_store i32:$rw_gpr, i32:$index_gpr)]
->;
-
-//128-bit store
-def RAT_WRITE_CACHELESS_128_eg : RAT_WRITE_CACHELESS_eg <
-  (ins R600_Reg128:$rw_gpr, R600_TReg32_X:$index_gpr, InstFlag:$eop),
-  0xf, "RAT_WRITE_CACHELESS_128 $rw_gpr.XYZW, $index_gpr, $eop",
-  [(global_store v4i32:$rw_gpr, i32:$index_gpr)]
->;
 
 class VTX_READ_eg <string name, bits<8> buffer_id, dag outs, list<dag> pattern>
     : InstR600ISA <outs, (ins MEMxi:$ptr), name, pattern>,
@@ -1575,6 +1580,10 @@ def CONSTANT_LOAD_eg : VTX_READ_32_eg <1,
 
 defm R600_ : RegisterLoadStore <R600_Reg32, FRAMEri, ADDRIndirect>;
 
+//===----------------------------------------------------------------------===//
+// Cayman Instructions
+//===----------------------------------------------------------------------===//
+
 let Predicates = [isCayman] in {
 
 let isVector = 1 in {
@@ -1615,6 +1624,16 @@ def : Pat <
   }
 
 def : Pat<(fsqrt f32:$src), (MUL R600_Reg32:$src, (RECIPSQRT_CLAMPED_cm $src))>;
+
+
+def RAT_STORE_DWORD_cm : EG_CF_RAT <
+  0x57, 0x14, 0x1, (outs),
+  (ins R600_TReg32_X:$rw_gpr, R600_TReg32_X:$index_gpr),
+  "EXPORT_RAT_INST_STORE_DWORD $rw_gpr, $index_gpr",
+  [(global_store i32:$rw_gpr, i32:$index_gpr)]
+> {
+  let eop = 0; // This bit is not used on Cayman.
+}
 
 } // End isCayman
 
