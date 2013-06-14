@@ -30,3 +30,6 @@ add_dependencies(cpp11-migrate
 target_link_libraries(cpp11-migrate
   migrateCore
   )
+
+install(TARGETS cpp11-migrate
+  RUNTIME DESTINATION bin)
