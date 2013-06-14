@@ -171,14 +171,6 @@ class ScopDetection : public FunctionPass {
   /// @return True if the instruction is valid, false otherwise.
   bool isValidInstruction(Instruction &Inst, DetectionContext &Context) const;
 
-  /// @brief Check if the BB can be part of a Scop.
-  ///
-  /// @param BB The basic block to check.
-  /// @param Context The context of scop detection.
-  ///
-  /// @return True if the basic block is valid, false otherwise.
-  bool isValidBasicBlock(BasicBlock &BB, DetectionContext &Context) const;
-
   /// @brief Check if the control flow in a basic block is valid.
   ///
   /// @param BB The BB to check the control flow.

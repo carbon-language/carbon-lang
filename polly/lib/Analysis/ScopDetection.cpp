@@ -360,16 +360,6 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
   INVALID(Other, "Unknown instruction: " << Inst);
 }
 
-bool ScopDetection::isValidBasicBlock(BasicBlock &BB,
-                                      DetectionContext &Context) const {
-  // Check all instructions, except the terminator instruction.
-  for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I)
-    if (!isValidInstruction(*I, Context))
-      return false;
-
-  return true;
-}
-
 bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
   if (!SCEVCodegen) {
     // If code generation is not in scev based mode, we need to ensure that
@@ -517,10 +507,12 @@ bool ScopDetection::allBlocksValid(DetectionContext &Context) const {
     if (!isValidCFG(**I, Context))
       return false;
 
-  for (Region::block_iterator I = R.block_begin(), E = R.block_end(); I != E;
-       ++I)
-    if (!isValidBasicBlock(**I, Context))
-      return false;
+  for (Region::block_iterator BI = R.block_begin(), E = R.block_end(); BI != E;
+       ++BI)
+    for (BasicBlock::iterator I = (*BI)->begin(), E = --(*BI)->end(); I != E;
+         ++I)
+      if (!isValidInstruction(*I, Context))
+        return false;
 
   return true;
 }
