@@ -1,6 +1,6 @@
 // Test for ScopedDisabler.
 // RUN: LSAN_BASE="report_objects=1:use_registers=0:use_stacks=0:use_globals=0:use_tls=0"
-// RUN: %clangxx_lsan -I %p/../../../../include %s -o %t
+// RUN: %clangxx_lsan %s -o %t
 // RUN: LSAN_OPTIONS=$LSAN_BASE %t 2>&1 | FileCheck %s
 
 #include <stdio.h>

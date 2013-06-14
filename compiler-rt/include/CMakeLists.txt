@@ -2,6 +2,7 @@ set(SANITIZER_HEADERS
   sanitizer/asan_interface.h
   sanitizer/common_interface_defs.h
   sanitizer/linux_syscall_hooks.h
+  sanitizer/lsan_interface.h
   sanitizer/msan_interface.h)
 
 set(output_dir ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/include)
