@@ -344,7 +344,7 @@ void SectionHeaderTableChunk::addSection(SectionChunk *chunk) {
   _sections.push_back(chunk);
 }
 
-size_t SectionHeaderTableChunk::size() const {
+uint64_t SectionHeaderTableChunk::size() const {
   return _sections.size() * sizeof(llvm::object::coff_section);
 }
 
