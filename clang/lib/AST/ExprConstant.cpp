@@ -4093,6 +4093,7 @@ bool LValueExprEvaluator::VisitMaterializeTemporaryExpr(
   APValue *Value;
   if (E->getStorageDuration() == SD_Static) {
     Value = Info.Ctx.getMaterializedTemporaryValue(E, true);
+    *Value = APValue();
     Result.set(E);
   } else {
     Value = &Info.CurrentCall->Temporaries[E];

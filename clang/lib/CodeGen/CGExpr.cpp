@@ -321,6 +321,13 @@ LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
     llvm::Value *Object = createReferenceTemporary(*this, M, E);
     LValue RefTempDst = MakeAddrLValue(Object, M->getType());
 
+    if (llvm::GlobalVariable *Var = dyn_cast<llvm::GlobalVariable>(Object)) {
+      // We should not have emitted the initializer for this temporary as a
+      // constant.
+      assert(!Var->hasInitializer());
+      Var->setInitializer(CGM.EmitNullConstant(E->getType()));
+    }
+
     EmitScalarInit(E, M->getExtendingDecl(), RefTempDst, false);
 
     pushTemporaryCleanup(*this, M, E, Object);
@@ -343,7 +350,16 @@ LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
 
   // Create and initialize the reference temporary.
   llvm::Value *Object = createReferenceTemporary(*this, M, E);
-  EmitAnyExprToMem(E, Object, Qualifiers(), /*IsInit*/true);
+  if (llvm::GlobalVariable *Var = dyn_cast<llvm::GlobalVariable>(Object)) {
+    // If the temporary is a global and has a constant initializer, we may
+    // have already initialized it.
+    if (!Var->hasInitializer()) {
+      Var->setInitializer(CGM.EmitNullConstant(E->getType()));
+      EmitAnyExprToMem(E, Object, Qualifiers(), /*IsInit*/true);
+    }
+  } else {
+    EmitAnyExprToMem(E, Object, Qualifiers(), /*IsInit*/true);
+  }
   pushTemporaryCleanup(*this, M, E, Object);
 
   // Perform derived-to-base casts and/or field accesses, to get from the

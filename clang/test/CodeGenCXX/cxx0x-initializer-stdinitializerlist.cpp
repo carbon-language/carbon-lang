@@ -57,21 +57,26 @@ namespace thread_local_global_array {
   // objects aren't really a problem).
   //
   // CHECK: @_ZN25thread_local_global_array1xE = thread_local global
-  // CHECK: @_ZGRN25thread_local_global_array1xE = private thread_local global [4 x i32]
+  // CHECK: @_ZGRN25thread_local_global_array1xE = private thread_local constant [4 x i32] [i32 1, i32 2, i32 3, i32 4]
   std::initializer_list<int> thread_local x = { 1, 2, 3, 4 };
 }
 
 // CHECK: @globalInitList2 = global %{{[^ ]+}} zeroinitializer
 // CHECK: @_ZGR15globalInitList2 = private global [2 x %[[WITHARG:[^ ]*]]] zeroinitializer
+
+// CHECK: @_ZN15partly_constant1kE = global i32 0, align 4
+// CHECK: @_ZN15partly_constant2ilE = global {{.*}} null, align 8
+// CHECK: @[[PARTLY_CONSTANT_OUTER:_ZGRN15partly_constant2ilE.*]] = private global {{.*}} zeroinitializer, align 8
+// CHECK: @[[PARTLY_CONSTANT_INNER:_ZGRN15partly_constant2ilE.*]] = private global [3 x {{.*}}] zeroinitializer, align 8
+// CHECK: @[[PARTLY_CONSTANT_FIRST:_ZGRN15partly_constant2ilE.*]] = private constant [3 x i32] [i32 1, i32 2, i32 3], align 4
+// CHECK: @[[PARTLY_CONSTANT_SECOND:_ZGRN15partly_constant2ilE.*]] = private global [2 x i32] zeroinitializer, align 4
+// CHECK: @[[PARTLY_CONSTANT_THIRD:_ZGRN15partly_constant2ilE.*]] = private constant [4 x i32] [i32 5, i32 6, i32 7, i32 8], align 4
+
 // CHECK: appending global
 
 
 // thread_local initializer:
 // CHECK: define internal void
-// CHECK: store i32 1, i32* getelementptr inbounds ([4 x i32]* @_ZGRN25thread_local_global_array1xE, i64 0, i64 0)
-// CHECK: store i32 2, i32* getelementptr inbounds ([4 x i32]* @_ZGRN25thread_local_global_array1xE, i64 0, i64 1)
-// CHECK: store i32 3, i32* getelementptr inbounds ([4 x i32]* @_ZGRN25thread_local_global_array1xE, i64 0, i64 2)
-// CHECK: store i32 4, i32* getelementptr inbounds ([4 x i32]* @_ZGRN25thread_local_global_array1xE, i64 0, i64 3)
 // CHECK: store i32* getelementptr inbounds ([4 x i32]* @_ZGRN25thread_local_global_array1xE, i64 0, i64 0),
 // CHECK:       i32** getelementptr inbounds ({{.*}}* @_ZN25thread_local_global_array1xE, i32 0, i32 0), align 8
 // CHECK: store i64 4, i64* getelementptr inbounds ({{.*}}* @_ZN25thread_local_global_array1xE, i32 0, i32 1), align 8
@@ -353,4 +358,40 @@ namespace dtors {
     // CHECK: call void @_ZN5dtors1SD1Ev(
     // CHECK: br i1
   }
+}
+
+namespace partly_constant {
+  int k;
+  std::initializer_list<std::initializer_list<int>> &&il = { { 1, 2, 3 }, { 4, k }, { 5, 6, 7, 8 } };
+  // First init list.
+  // CHECK-NOT: @[[PARTLY_CONSTANT_FIRST]],
+  // CHECK: store i32* getelementptr inbounds ({{.*}}* @[[PARTLY_CONSTANT_FIRST]], i64 0, i64 0),
+  // CHECK:       i32** getelementptr inbounds ({{.*}}* @[[PARTLY_CONSTANT_INNER]], i64 0, i64 0, i32 0)
+  // CHECK: store i64 3, i64* getelementptr inbounds ({{.*}}* @[[PARTLY_CONSTANT_INNER]], i64 0, i64 0, i32 1)
+  // CHECK-NOT: @[[PARTLY_CONSTANT_FIRST]],
+  //
+  // Second init list array (non-constant).
+  // CHECK: store i32 4, i32* getelementptr inbounds ({{.*}}* @[[PARTLY_CONSTANT_SECOND]], i64 0, i64 0)
+  // CHECK: load i32* @_ZN15partly_constant1kE
+  // CHECK: store i32 {{.*}}, i32* getelementptr inbounds ({{.*}}* @[[PARTLY_CONSTANT_SECOND]], i64 0, i64 1)
+  //
+  // Second init list.
+  // CHECK: store i32* getelementptr inbounds ({{.*}}* @[[PARTLY_CONSTANT_SECOND]], i64 0, i64 0),
+  // CHECK:       i32** getelementptr inbounds ({{.*}}* @[[PARTLY_CONSTANT_INNER]], i64 0, i64 1, i32 0)
+  // CHECK: store i64 2, i64* getelementptr inbounds ({{.*}}* @[[PARTLY_CONSTANT_INNER]], i64 0, i64 1, i32 1)
+  //
+  // Third init list.
+  // CHECK-NOT: @[[PARTLY_CONSTANT_THIRD]],
+  // CHECK: store i32* getelementptr inbounds ({{.*}}* @[[PARTLY_CONSTANT_THIRD]], i64 0, i64 0),
+  // CHECK:       i32** getelementptr inbounds ({{.*}}* @[[PARTLY_CONSTANT_INNER]], i64 0, i64 2, i32 0)
+  // CHECK: store i64 4, i64* getelementptr inbounds ({{.*}}* @_ZGRN15partly_constant2ilE4, i64 0, i64 2, i32 1)
+  // CHECK-NOT: @[[PARTLY_CONSTANT_THIRD]],
+  //
+  // Outer init list.
+  // CHECK: store {{.*}}* getelementptr inbounds ({{.*}}* @[[PARTLY_CONSTANT_INNER]], i64 0, i64 0),
+  // CHECK:       {{.*}}** getelementptr inbounds ({{.*}}* @[[PARTLY_CONSTANT_OUTER]], i32 0, i32 0)
+  // CHECK: store i64 3, i64* getelementptr inbounds ({{.*}}* @[[PARTLY_CONSTANT_OUTER]], i32 0, i32 1)
+  //
+  // 'il' reference.
+  // CHECK: store {{.*}}* @[[PARTLY_CONSTANT_OUTER]], {{.*}}** @_ZN15partly_constant2ilE, align 8
 }

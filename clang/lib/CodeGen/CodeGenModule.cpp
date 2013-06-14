@@ -2615,15 +2615,16 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantCString(const std::string &Str,
 }
 
 llvm::Constant *CodeGenModule::GetAddrOfGlobalTemporary(
-    const MaterializeTemporaryExpr *E, const Expr *Inner) {
+    const MaterializeTemporaryExpr *E, const Expr *Init) {
   assert((E->getStorageDuration() == SD_Static ||
           E->getStorageDuration() == SD_Thread) && "not a global temporary");
   const VarDecl *VD = cast<VarDecl>(E->getExtendingDecl());
 
   // If we're not materializing a subobject of the temporary, keep the
   // cv-qualifiers from the type of the MaterializeTemporaryExpr.
-  if (Inner == E->GetTemporaryExpr())
-    Inner = E;
+  QualType MaterializedType = Init->getType();
+  if (Init == E->GetTemporaryExpr())
+    MaterializedType = E->getType();
 
   llvm::Constant *&Slot = MaterializedGlobalTemporaryMap[E];
   if (Slot)
@@ -2637,34 +2638,44 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalTemporary(
   getCXXABI().getMangleContext().mangleReferenceTemporary(VD, Out);
   Out.flush();
 
-  llvm::Constant *InitialValue = 0;
   APValue *Value = 0;
   if (E->getStorageDuration() == SD_Static) {
-    // We might have a constant initializer for this temporary.
+    // We might have a cached constant initializer for this temporary. Note
+    // that this might have a different value from the value computed by
+    // evaluating the initializer if the surrounding constant expression
+    // modifies the temporary.
     Value = getContext().getMaterializedTemporaryValue(E, false);
     if (Value && Value->isUninit())
       Value = 0;
   }
 
-  bool Constant;
+  // Try evaluating it now, it might have a constant initializer.
+  Expr::EvalResult EvalResult;
+  if (!Value && Init->EvaluateAsRValue(EvalResult, getContext()) &&
+      !EvalResult.hasSideEffects())
+    Value = &EvalResult.Val;
+
+  llvm::Constant *InitialValue = 0;
+  bool Constant = false;
+  llvm::Type *Type;
   if (Value) {
     // The temporary has a constant initializer, use it.
-    InitialValue = EmitConstantValue(*Value, Inner->getType(), 0);
-    Constant = isTypeConstant(Inner->getType(), /*ExcludeCtor*/Value);
+    InitialValue = EmitConstantValue(*Value, MaterializedType, 0);
+    Constant = isTypeConstant(MaterializedType, /*ExcludeCtor*/Value);
+    Type = InitialValue->getType();
   } else {
-    // No constant initializer, the initialization will be provided when we
+    // No initializer, the initialization will be provided when we
     // initialize the declaration which performed lifetime extension.
-    InitialValue = EmitNullConstant(Inner->getType());
-    Constant = false;
+    Type = getTypes().ConvertTypeForMem(MaterializedType);
   }
 
   // Create a global variable for this lifetime-extended temporary.
   llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(getModule(), InitialValue->getType(), Constant,
-                             llvm::GlobalValue::PrivateLinkage, InitialValue,
-                             Name.c_str());
+    new llvm::GlobalVariable(getModule(), Type, Constant,
+                             llvm::GlobalValue::PrivateLinkage,
+                             InitialValue, Name.c_str());
   GV->setAlignment(
-      getContext().getTypeAlignInChars(Inner->getType()).getQuantity());
+      getContext().getTypeAlignInChars(MaterializedType).getQuantity());
   if (VD->getTLSKind())
     setTLSMode(GV, *VD);
   Slot = GV;
