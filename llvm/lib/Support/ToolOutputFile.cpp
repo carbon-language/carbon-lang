@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ToolOutputFile.h"
-#include "llvm/Support/PathV1.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Signals.h"
 using namespace llvm;
 
@@ -25,8 +25,10 @@ tool_output_file::CleanupInstaller::CleanupInstaller(const char *filename)
 
 tool_output_file::CleanupInstaller::~CleanupInstaller() {
   // Delete the file if the client hasn't told us not to.
-  if (!Keep && Filename != "-")
-    sys::Path(Filename).eraseFromDisk();
+  if (!Keep && Filename != "-") {
+    bool Existed;
+    sys::fs::remove(Filename, Existed);
+  }
 
   // Ok, the file is successfully written and closed, or deleted. There's no
   // further need to clean it up on signals.
