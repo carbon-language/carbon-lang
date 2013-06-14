@@ -17,8 +17,6 @@
 #ifndef liblldb_Platform_Config_h_
 #define liblldb_Platform_Config_h_
 
-#define LLDB_CONFIG_SUPPORTS_SETLINEBUFFERED 1
-
 #define LLDB_CONFIG_TERMIOS_SUPPORTED 1
 
 #define LLDB_CONFIG_TILDE_RESOLVES_TO_USER 1
