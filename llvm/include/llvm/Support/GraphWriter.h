@@ -319,24 +319,22 @@ raw_ostream &WriteGraph(raw_ostream &O, const GraphType &G,
   return O;
 }
 
-std::string createGraphFilename(const Twine &Name);
+std::string createGraphFilename(const Twine &Name, int &FD);
 
 template <typename GraphType>
 std::string WriteGraph(const GraphType &G, const Twine &Name,
                        bool ShortNames = false, const Twine &Title = "") {
-  std::string Filename = createGraphFilename(Name);
-  errs() << "Writing '" << Filename << "'... ";
+  int FD;
+  std::string Filename = createGraphFilename(Name, FD);
+  raw_fd_ostream O(FD, /*shouldClose=*/ true);
 
-  std::string ErrorInfo;
-  raw_fd_ostream O(Filename.c_str(), ErrorInfo);
-
-  if (ErrorInfo.empty()) {
-    llvm::WriteGraph(O, G, ShortNames, Title);
-    errs() << " done. \n";
-  } else {
+  if (FD == -1) {
     errs() << "error opening file '" << Filename << "' for writing!\n";
     return "";
   }
+
+  llvm::WriteGraph(O, G, ShortNames, Title);
+  errs() << " done. \n";
 
   return Filename;
 }

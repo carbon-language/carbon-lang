@@ -66,18 +66,17 @@ StringRef llvm::DOT::getColorString(unsigned ColorNumber) {
   return Colors[ColorNumber % NumColors];
 }
 
-std::string llvm::createGraphFilename(const Twine &Name) {
-  std::string ErrMsg;
-  sys::Path Filename = sys::Path::GetTemporaryDirectory(&ErrMsg);
-  if (Filename.isEmpty()) {
-    errs() << "Error: " << ErrMsg << "\n";
+std::string llvm::createGraphFilename(const Twine &Name, int &FD) {
+  FD = -1;
+  SmallString<128> Filename;
+  error_code EC = sys::fs::unique_file(Twine(Name) + "-%%%%%%%.dot",
+                                       FD, Filename);
+  if (EC) {
+    errs() << "Error: " << EC.message() << "\n";
     return "";
   }
-  Filename.appendComponent((Name + ".dot").str());
-  if (Filename.makeUnique(true,&ErrMsg)) {
-    errs() << "Error: " << ErrMsg << "\n";
-    return "";
-  }
+
+  errs() << "Writing '" << Filename << "'... ";
   return Filename.str();
 }
 
