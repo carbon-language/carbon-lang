@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/PathV1.h"
+#include "llvm/Support/FileSystem.h"
 
 #include "Windows.h"
 #include <algorithm>
@@ -354,7 +354,8 @@ static void Cleanup() {
 
   if (FilesToRemove != NULL)
     while (!FilesToRemove->empty()) {
-      llvm::sys::Path(FilesToRemove->back()).eraseFromDisk();
+      bool Existed;
+      llvm::sys::fs::remove(FilesToRemove->back(), Existed);
       FilesToRemove->pop_back();
     }
 
