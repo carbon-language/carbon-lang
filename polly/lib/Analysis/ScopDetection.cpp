@@ -266,8 +266,8 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
 
   AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
 
-  if (!isAffineExpr(&Context.CurRegion, AccessFunction, *SE, BaseValue) &&
-      !AllowNonAffine)
+  if (!AllowNonAffine && !isAffineExpr(&Context.CurRegion, AccessFunction, *SE,
+                                       BaseValue))
     INVALID(AffFunc, "Non affine access function: " << *AccessFunction);
 
   // FIXME: Alias Analysis thinks IntToPtrInst aliases with alloca instructions
