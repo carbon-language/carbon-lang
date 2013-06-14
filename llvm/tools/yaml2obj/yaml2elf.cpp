@@ -161,7 +161,7 @@ static void writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
 
     SHeader.sh_link = 0;
     SHeader.sh_info = 0;
-    SHeader.sh_addralign = 1;
+    SHeader.sh_addralign = Sec.AddressAlign;
     SHeader.sh_entsize = 0;
     SHeaders.push_back(SHeader);
   }

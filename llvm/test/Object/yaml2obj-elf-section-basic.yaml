@@ -9,8 +9,9 @@ Sections:
   - Name: .text
     Type: SHT_PROGBITS
     Flags: [ SHF_ALLOC, SHF_EXECINSTR ]
-    Address: 0xDEADBEEF
+    Address: 0xCAFEBABE
     Content: EBFE
+    AddressAlign: 2
 
 # CHECK:        Section {
 # CHECK:          Index: 0
@@ -23,8 +24,9 @@ Sections:
 # CHECK-NEXT:       SHF_ALLOC (0x2)
 # CHECK-NEXT:       SHF_EXECINSTR (0x4)
 # CHECK-NEXT:     ]
-# CHECK-NEXT:     Address: 0xDEADBEEF
+# CHECK-NEXT:     Address: 0xCAFEBABE
 # CHECK:          Size: 2
+# CHECK:          AddressAlignment: 2
 # CHECK:          SectionData (
 # CHECK-NEXT:       0000: EBFE
 # CHECK-NEXT:     )

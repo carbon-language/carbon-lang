@@ -55,6 +55,7 @@ struct Section {
   ELF_SHF Flags;
   llvm::yaml::Hex64 Address;
   object::yaml::BinaryRef Content;
+  llvm::yaml::Hex64 AddressAlign;
 };
 struct Object {
   FileHeader Header;
