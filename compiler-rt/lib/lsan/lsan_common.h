@@ -77,7 +77,7 @@ inline Flags *flags() { return &lsan_flags; }
 
 void InitCommonLsan();
 // Testing interface. Find leaked chunks and dump their addresses to vector.
-void ReportLeaked(InternalVector<void *> *leaked, uptr sources);
+void ReportLeaked(InternalMmapVector<void *> *leaked, uptr sources);
 // Normal leak check. Find leaks and print a report according to flags.
 void DoLeakCheck();
 
@@ -97,15 +97,16 @@ class LeakReport {
   void PrintSummary();
   bool IsEmpty() { return leaks_.size() == 0; }
  private:
-  InternalVector<Leak> leaks_;
+  InternalMmapVector<Leak> leaks_;
 };
 
 // Platform-specific functions.
 void InitializePlatformSpecificModules();
-void ProcessGlobalRegions(InternalVector<uptr> *frontier);
-void ProcessPlatformSpecificAllocations(InternalVector<uptr> *frontier);
+void ProcessGlobalRegions(InternalMmapVector<uptr> *frontier);
+void ProcessPlatformSpecificAllocations(InternalMmapVector<uptr> *frontier);
 
-void ScanRangeForPointers(uptr begin, uptr end, InternalVector<uptr> *frontier,
+void ScanRangeForPointers(uptr begin, uptr end,
+                          InternalMmapVector<uptr> *frontier,
                           const char *region_type, ChunkTag tag);
 
 // Callables for iterating over chunks. Those classes are used as template
@@ -116,11 +117,12 @@ void ScanRangeForPointers(uptr begin, uptr end, InternalVector<uptr> *frontier,
 // as reachable and adds them to the frontier.
 class ProcessPlatformSpecificAllocationsCb {
  public:
-  explicit ProcessPlatformSpecificAllocationsCb(InternalVector<uptr> *frontier)
+  explicit ProcessPlatformSpecificAllocationsCb(
+      InternalMmapVector<uptr> *frontier)
       : frontier_(frontier) {}
   void operator()(void *p) const;
  private:
-  InternalVector<uptr> *frontier_;
+  InternalMmapVector<uptr> *frontier_;
 };
 
 // Prints addresses of unreachable chunks.
@@ -149,11 +151,11 @@ class MarkIndirectlyLeakedCb {
 // Finds all chunk marked as kIgnored and adds their addresses to frontier.
 class CollectSuppressedCb {
  public:
-  explicit CollectSuppressedCb(InternalVector<uptr> *frontier)
+  explicit CollectSuppressedCb(InternalMmapVector<uptr> *frontier)
       : frontier_(frontier) {}
   void operator()(void *p) const;
  private:
-  InternalVector<uptr> *frontier_;
+  InternalMmapVector<uptr> *frontier_;
 };
 
 enum IgnoreObjectResult {

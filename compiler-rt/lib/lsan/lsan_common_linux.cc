@@ -53,8 +53,8 @@ void InitializePlatformSpecificModules() {
 
 static int ProcessGlobalRegionsCallback(struct dl_phdr_info *info, size_t size,
                                         void *data) {
-  InternalVector<uptr> *frontier =
-      reinterpret_cast<InternalVector<uptr> *>(data);
+  InternalMmapVector<uptr> *frontier =
+      reinterpret_cast<InternalMmapVector<uptr> *>(data);
   for (uptr j = 0; j < info->dlpi_phnum; j++) {
     const ElfW(Phdr) *phdr = &(info->dlpi_phdr[j]);
     // We're looking for .data and .bss sections, which reside in writeable,
@@ -83,7 +83,7 @@ static int ProcessGlobalRegionsCallback(struct dl_phdr_info *info, size_t size,
 }
 
 // Scan global variables for heap pointers.
-void ProcessGlobalRegions(InternalVector<uptr> *frontier) {
+void ProcessGlobalRegions(InternalMmapVector<uptr> *frontier) {
   // FIXME: dl_iterate_phdr acquires a linker lock, so we run a risk of
   // deadlocking by running this under StopTheWorld. However, the lock is
   // reentrant, so we should be able to fix this by acquiring the lock before
@@ -114,7 +114,7 @@ void ProcessPlatformSpecificAllocationsCb::operator()(void *p) const {
 
 // Handle dynamically allocated TLS blocks by treating all chunks allocated from
 // ld-linux.so as reachable.
-void ProcessPlatformSpecificAllocations(InternalVector<uptr> *frontier) {
+void ProcessPlatformSpecificAllocations(InternalMmapVector<uptr> *frontier) {
   if (!flags()->use_tls) return;
   if (!linker) return;
   ForEachChunk(ProcessPlatformSpecificAllocationsCb(frontier));

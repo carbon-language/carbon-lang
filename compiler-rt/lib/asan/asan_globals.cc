@@ -41,7 +41,7 @@ struct DynInitGlobal {
   Global g;
   bool initialized;
 };
-typedef InternalVector<DynInitGlobal> VectorOfGlobals;
+typedef InternalMmapVector<DynInitGlobal> VectorOfGlobals;
 // Lazy-initialized and never deleted.
 static VectorOfGlobals *dynamic_init_globals;
 

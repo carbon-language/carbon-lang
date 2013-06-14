@@ -46,7 +46,7 @@ class SuspendedThreadsList {
   }
 
  private:
-  InternalVector<SuspendedThreadID> thread_ids_;
+  InternalMmapVector<SuspendedThreadID> thread_ids_;
 
   // Prohibit copy and assign.
   SuspendedThreadsList(const SuspendedThreadsList&);

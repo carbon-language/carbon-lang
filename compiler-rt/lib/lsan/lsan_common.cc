@@ -87,7 +87,8 @@ static inline bool CanBeAHeapPointer(uptr p) {
 // chunks (tag = kReachable or kIgnored) and finding indirectly leaked chunks
 // (tag = kIndirectlyLeaked). In the second case, there's no flood fill,
 // so frontier = 0.
-void ScanRangeForPointers(uptr begin, uptr end, InternalVector<uptr> *frontier,
+void ScanRangeForPointers(uptr begin, uptr end,
+                          InternalMmapVector<uptr> *frontier,
                           const char *region_type, ChunkTag tag) {
   const uptr alignment = flags()->pointer_alignment();
   if (flags()->log_pointers)
@@ -116,7 +117,7 @@ void ScanRangeForPointers(uptr begin, uptr end, InternalVector<uptr> *frontier,
 
 // Scan thread data (stacks and TLS) for heap pointers.
 static void ProcessThreads(SuspendedThreadsList const &suspended_threads,
-                           InternalVector<uptr> *frontier) {
+                           InternalMmapVector<uptr> *frontier) {
   InternalScopedBuffer<uptr> registers(SuspendedThreadsList::RegisterCount());
   uptr registers_begin = reinterpret_cast<uptr>(registers.data());
   uptr registers_end = registers_begin + registers.size();
@@ -183,7 +184,7 @@ static void ProcessThreads(SuspendedThreadsList const &suspended_threads,
   }
 }
 
-static void FloodFillTag(InternalVector<uptr> *frontier, ChunkTag tag) {
+static void FloodFillTag(InternalMmapVector<uptr> *frontier, ChunkTag tag) {
   while (frontier->size()) {
     uptr next_chunk = frontier->back();
     frontier->pop_back();
@@ -214,7 +215,7 @@ void CollectSuppressedCb::operator()(void *p) const {
 // Set the appropriate tag on each chunk.
 static void ClassifyAllChunks(SuspendedThreadsList const &suspended_threads) {
   // Holds the flood fill frontier.
-  InternalVector<uptr> frontier(GetPageSizeCached());
+  InternalMmapVector<uptr> frontier(GetPageSizeCached());
 
   if (flags()->use_globals)
     ProcessGlobalRegions(&frontier);

@@ -97,8 +97,8 @@ TEST(SanitizerCommon, SanitizerSetThreadName) {
 }
 #endif
 
-TEST(SanitizerCommon, InternalVector) {
-  InternalVector<uptr> vector(1);
+TEST(SanitizerCommon, InternalMmapVector) {
+  InternalMmapVector<uptr> vector(1);
   for (uptr i = 0; i < 100; i++) {
     EXPECT_EQ(i, vector.size());
     vector.push_back(i);
