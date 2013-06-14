@@ -33,8 +33,7 @@ void polly::MPZ_from_APInt(mpz_t v, const APInt apint, bool is_signed) {
   const uint64_t *rawdata = abs.getRawData();
   unsigned numWords = abs.getNumWords();
 
-  // TODO: Check if this is true for all platforms.
-  mpz_import(v, numWords, 1, sizeof(uint64_t), 0, 0, rawdata);
+  mpz_import(v, numWords, -1, sizeof(uint64_t), 0, 0, rawdata);
 
   if (is_signed && apint.isNegative())
     mpz_neg(v, v);
@@ -44,7 +43,7 @@ APInt polly::APInt_from_MPZ(const mpz_t mpz) {
   uint64_t *p = NULL;
   size_t sz;
 
-  p = (uint64_t *)mpz_export(p, &sz, 1, sizeof(uint64_t), 0, 0, mpz);
+  p = (uint64_t *)mpz_export(p, &sz, -1, sizeof(uint64_t), 0, 0, mpz);
 
   if (p) {
     APInt A((unsigned) mpz_sizeinbase(mpz, 2), (unsigned) sz, p);
