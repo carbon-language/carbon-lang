@@ -274,16 +274,17 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_VSELECT(SDNode *N) {
         break;
     }
   }
-  return DAG.getNode(ISD::SELECT, SDLoc(N),
-                     LHS.getValueType(), Cond, LHS,
-                     GetScalarizedVector(N->getOperand(2)));
+
+  return DAG.getSelect(SDLoc(N),
+                       LHS.getValueType(), Cond, LHS,
+                       GetScalarizedVector(N->getOperand(2)));
 }
 
 SDValue DAGTypeLegalizer::ScalarizeVecRes_SELECT(SDNode *N) {
   SDValue LHS = GetScalarizedVector(N->getOperand(1));
-  return DAG.getNode(ISD::SELECT, SDLoc(N),
-                     LHS.getValueType(), N->getOperand(0), LHS,
-                     GetScalarizedVector(N->getOperand(2)));
+  return DAG.getSelect(SDLoc(N),
+                       LHS.getValueType(), N->getOperand(0), LHS,
+                       GetScalarizedVector(N->getOperand(2)));
 }
 
 SDValue DAGTypeLegalizer::ScalarizeVecRes_SELECT_CC(SDNode *N) {

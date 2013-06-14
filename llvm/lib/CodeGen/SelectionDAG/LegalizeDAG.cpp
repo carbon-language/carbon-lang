@@ -1553,9 +1553,9 @@ SDValue SelectionDAGLegalize::ExpandFCOPYSIGN(SDNode* Node) {
   SDValue AbsVal = DAG.getNode(ISD::FABS, dl, Tmp1.getValueType(), Tmp1);
   // Select between the nabs and abs value based on the sign bit of
   // the input.
-  return DAG.getNode(ISD::SELECT, dl, AbsVal.getValueType(), SignBit,
-                     DAG.getNode(ISD::FNEG, dl, AbsVal.getValueType(), AbsVal),
-                     AbsVal);
+  return DAG.getSelect(dl, AbsVal.getValueType(), SignBit,
+                       DAG.getNode(ISD::FNEG, dl, AbsVal.getValueType(), AbsVal),
+                       AbsVal);
 }
 
 void SelectionDAGLegalize::ExpandDYNAMIC_STACKALLOC(SDNode* Node,
@@ -2335,7 +2335,7 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
       //pseudo-op, or, even better, for whole-function isel.
       SDValue SignBitTest = DAG.getSetCC(dl, getSetCCResultType(MVT::i64),
         Op0, DAG.getConstant(0, MVT::i64), ISD::SETLT);
-      return DAG.getNode(ISD::SELECT, dl, MVT::f32, SignBitTest, Slow, Fast);
+      return DAG.getSelect(dl, MVT::f32, SignBitTest, Slow, Fast);
     }
 
     // Otherwise, implement the fully general conversion.
@@ -2348,11 +2348,11 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
          DAG.getConstant(UINT64_C(0x7ff), MVT::i64));
     SDValue Ne = DAG.getSetCC(dl, getSetCCResultType(MVT::i64),
                    And2, DAG.getConstant(UINT64_C(0), MVT::i64), ISD::SETNE);
-    SDValue Sel = DAG.getNode(ISD::SELECT, dl, MVT::i64, Ne, Or, Op0);
+    SDValue Sel = DAG.getSelect(dl, MVT::i64, Ne, Or, Op0);
     SDValue Ge = DAG.getSetCC(dl, getSetCCResultType(MVT::i64),
                    Op0, DAG.getConstant(UINT64_C(0x0020000000000000), MVT::i64),
                    ISD::SETUGE);
-    SDValue Sel2 = DAG.getNode(ISD::SELECT, dl, MVT::i64, Ge, Sel, Op0);
+    SDValue Sel2 = DAG.getSelect(dl, MVT::i64, Ge, Sel, Op0);
     EVT SHVT = TLI.getShiftAmountTy(Sel2.getValueType());
 
     SDValue Sh = DAG.getNode(ISD::SRL, dl, MVT::i64, Sel2,
@@ -2375,7 +2375,7 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
                                  Op0, DAG.getConstant(0, Op0.getValueType()),
                                  ISD::SETLT);
   SDValue Zero = DAG.getIntPtrConstant(0), Four = DAG.getIntPtrConstant(4);
-  SDValue CstOffset = DAG.getNode(ISD::SELECT, dl, Zero.getValueType(),
+  SDValue CstOffset = DAG.getSelect(dl, Zero.getValueType(),
                                     SignSet, Four, Zero);
 
   // If the sign bit of the integer is set, the large number will be treated
@@ -2928,7 +2928,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
                                     Node->getOperand(0), Tmp1));
     False = DAG.getNode(ISD::XOR, dl, NVT, False,
                         DAG.getConstant(x, NVT));
-    Tmp1 = DAG.getNode(ISD::SELECT, dl, NVT, Tmp2, True, False);
+    Tmp1 = DAG.getSelect(dl, NVT, Tmp2, True, False);
     Results.push_back(Tmp1);
     break;
   }
@@ -3140,7 +3140,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     Tmp2 = DAG.getSetCC(dl, getSetCCResultType(Tmp1.getValueType()),
                         Tmp1, Tmp2, ISD::SETUGT);
     Tmp3 = DAG.getNode(ISD::FNEG, dl, VT, Tmp1);
-    Tmp1 = DAG.getNode(ISD::SELECT, dl, VT, Tmp2, Tmp1, Tmp3);
+    Tmp1 = DAG.getSelect(dl, VT, Tmp2, Tmp1, Tmp3);
     Results.push_back(Tmp1);
     break;
   }
@@ -3762,8 +3762,8 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
       Tmp2 = DAG.getSetCC(dl, getSetCCResultType(NVT),
                           Tmp1, DAG.getConstant(NVT.getSizeInBits(), NVT),
                           ISD::SETEQ);
-      Tmp1 = DAG.getNode(ISD::SELECT, dl, NVT, Tmp2,
-                          DAG.getConstant(OVT.getSizeInBits(), NVT), Tmp1);
+      Tmp1 = DAG.getSelect(dl, NVT, Tmp2,
+                           DAG.getConstant(OVT.getSizeInBits(), NVT), Tmp1);
     } else if (Node->getOpcode() == ISD::CTLZ ||
                Node->getOpcode() == ISD::CTLZ_ZERO_UNDEF) {
       // Tmp1 = Tmp1 - (sizeinbits(NVT) - sizeinbits(Old VT))
@@ -3858,7 +3858,7 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
     Tmp2 = DAG.getNode(ExtOp, dl, NVT, Node->getOperand(1));
     Tmp3 = DAG.getNode(ExtOp, dl, NVT, Node->getOperand(2));
     // Perform the larger operation, then round down.
-    Tmp1 = DAG.getNode(ISD::SELECT, dl, NVT, Tmp1, Tmp2, Tmp3);
+    Tmp1 = DAG.getSelect(dl, NVT, Tmp1, Tmp2, Tmp3);
     if (TruncOp != ISD::FP_ROUND)
       Tmp1 = DAG.getNode(TruncOp, dl, Node->getValueType(0), Tmp1);
     else

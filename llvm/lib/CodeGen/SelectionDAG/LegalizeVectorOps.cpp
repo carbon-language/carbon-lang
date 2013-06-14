@@ -605,7 +605,7 @@ SDValue VectorLegalizer::ExpandSELECT(SDValue Op) {
   // What is the size of each element in the vector mask.
   EVT BitTy = MaskTy.getScalarType();
 
-  Mask = DAG.getNode(ISD::SELECT, DL, BitTy, Mask,
+  Mask = DAG.getSelect(DL, BitTy, Mask,
           DAG.getConstant(APInt::getAllOnesValue(BitTy.getSizeInBits()), BitTy),
           DAG.getConstant(0, BitTy));
 
@@ -761,10 +761,10 @@ SDValue VectorLegalizer::UnrollVSETCC(SDValue Op) {
     Ops[i] = DAG.getNode(ISD::SETCC, dl,
                          TLI.getSetCCResultType(*DAG.getContext(), TmpEltVT),
                          LHSElem, RHSElem, CC);
-    Ops[i] = DAG.getNode(ISD::SELECT, dl, EltVT, Ops[i],
-                         DAG.getConstant(APInt::getAllOnesValue
-                                         (EltVT.getSizeInBits()), EltVT),
-                         DAG.getConstant(0, EltVT));
+    Ops[i] = DAG.getSelect(dl, EltVT, Ops[i],
+                           DAG.getConstant(APInt::getAllOnesValue
+                                           (EltVT.getSizeInBits()), EltVT),
+                           DAG.getConstant(0, EltVT));
   }
   return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Ops[0], NumElems);
 }

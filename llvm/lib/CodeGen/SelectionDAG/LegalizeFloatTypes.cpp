@@ -526,8 +526,8 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_LOAD(SDNode *N) {
 SDValue DAGTypeLegalizer::SoftenFloatRes_SELECT(SDNode *N) {
   SDValue LHS = GetSoftenedFloat(N->getOperand(1));
   SDValue RHS = GetSoftenedFloat(N->getOperand(2));
-  return DAG.getNode(ISD::SELECT, SDLoc(N),
-                     LHS.getValueType(), N->getOperand(0),LHS,RHS);
+  return DAG.getSelect(SDLoc(N),
+                       LHS.getValueType(), N->getOperand(0), LHS, RHS);
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_SELECT_CC(SDNode *N) {
@@ -855,9 +855,9 @@ void DAGTypeLegalizer::ExpandFloatRes_FABS(SDNode *N, SDValue &Lo,
   GetExpandedFloat(N->getOperand(0), Lo, Tmp);
   Hi = DAG.getNode(ISD::FABS, dl, Tmp.getValueType(), Tmp);
   // Lo = Hi==fabs(Hi) ? Lo : -Lo;
-  Lo = DAG.getNode(ISD::SELECT_CC, dl, Lo.getValueType(), Tmp, Hi, Lo,
+  Lo = DAG.getSelectCC(dl, Tmp, Hi, Lo,
                    DAG.getNode(ISD::FNEG, dl, Lo.getValueType(), Lo),
-                   DAG.getCondCode(ISD::SETEQ));
+                   ISD::SETEQ);
 }
 
 void DAGTypeLegalizer::ExpandFloatRes_FADD(SDNode *N, SDValue &Lo,
@@ -1216,8 +1216,8 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
                    DAG.getConstantFP(APFloat(APFloat::PPCDoubleDouble,
                                              APInt(128, Parts)),
                                      MVT::ppcf128));
-  Lo = DAG.getNode(ISD::SELECT_CC, dl, VT, Src, DAG.getConstant(0, SrcVT),
-                   Lo, Hi, DAG.getCondCode(ISD::SETLT));
+  Lo = DAG.getSelectCC(dl, Src, DAG.getConstant(0, SrcVT),
+                       Lo, Hi, ISD::SETLT);
   GetPairElements(Lo, Lo, Hi);
 }
 
@@ -1370,17 +1370,17 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_FP_TO_UINT(SDNode *N) {
     SDValue Tmp = DAG.getConstantFP(APF, MVT::ppcf128);
     //  X>=2^31 ? (int)(X-2^31)+0x80000000 : (int)X
     // FIXME: generated code sucks.
-    return DAG.getNode(ISD::SELECT_CC, dl, MVT::i32, N->getOperand(0), Tmp,
-                       DAG.getNode(ISD::ADD, dl, MVT::i32,
-                                   DAG.getNode(ISD::FP_TO_SINT, dl, MVT::i32,
-                                               DAG.getNode(ISD::FSUB, dl,
-                                                           MVT::ppcf128,
-                                                           N->getOperand(0),
-                                                           Tmp)),
-                                   DAG.getConstant(0x80000000, MVT::i32)),
-                       DAG.getNode(ISD::FP_TO_SINT, dl,
-                                   MVT::i32, N->getOperand(0)),
-                       DAG.getCondCode(ISD::SETGE));
+    return DAG.getSelectCC(dl, N->getOperand(0), Tmp,
+                           DAG.getNode(ISD::ADD, dl, MVT::i32,
+                                       DAG.getNode(ISD::FP_TO_SINT, dl, MVT::i32,
+                                                   DAG.getNode(ISD::FSUB, dl,
+                                                               MVT::ppcf128,
+                                                               N->getOperand(0),
+                                                               Tmp)),
+                                       DAG.getConstant(0x80000000, MVT::i32)),
+                           DAG.getNode(ISD::FP_TO_SINT, dl,
+                                       MVT::i32, N->getOperand(0)),
+                           ISD::SETGE);
   }
 
   RTLIB::Libcall LC = RTLIB::getFPTOUINT(N->getOperand(0).getValueType(), RVT);
