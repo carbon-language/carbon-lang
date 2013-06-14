@@ -26,7 +26,7 @@ For example:
   };
 
 Using Expands-to-Override Macros
---------------------------------
+================================
 
 Like LLVM's ``LLVM_OVERRIDE``, several projects have macros that conditionally
 expand to the ``override`` keyword when compiling with C++11 features enabled.
@@ -37,7 +37,7 @@ Migrator to enable this behavior.
 
 
 Known Limitations
------------------
+=================
 * This transform will not insert the override keyword if a method is
   pure. At the moment it's not possible to track down the pure
   specifier location.

@@ -131,7 +131,7 @@ following conditions are satisfied:
   deduced as``std::initializer_list``.
 
 Known Limitations
------------------
+=================
 * If the initializer is an explicit conversion constructor, the transform will
   not replace the type specifier even though it would be safe to do so.
 * User-defined iterators are not handled at this time.

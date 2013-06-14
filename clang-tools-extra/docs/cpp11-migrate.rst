@@ -18,7 +18,7 @@ C++98 and C++03 code to use features of the new C++11 standard where
 appropriate.
 
 Getting Started
----------------
+===============
 
 To build from source:
 
@@ -70,7 +70,7 @@ unless ``-final-syntax-check`` is enabled.
 .. _Clang Tools Documentation: http://clang.llvm.org/docs/ClangTools.html
 
 Getting Involved
-----------------
+================
 
 If you find a bug
 
@@ -101,7 +101,7 @@ be completed.
 .. _transforms:
 
 Transformations
----------------
+===============
 
 The Migrator is a collection of independent transforms which can be
 independently enabled. The transforms currently implemented are:

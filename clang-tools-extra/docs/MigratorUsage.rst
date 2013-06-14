@@ -10,7 +10,7 @@ relative to the current directory.
 At least one transform must be enabled.
 
 General Command Line Options
-----------------------------
+============================
 
 .. option:: -help
 
@@ -88,7 +88,7 @@ General Command Line Options
   replacements.
 
 Transform-Specific Command Line Options
----------------------------------------
+=======================================
 
 .. option:: -loop-convert
 
