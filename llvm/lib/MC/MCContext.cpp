@@ -21,8 +21,8 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/SourceMgr.h"
 using namespace llvm;
@@ -38,10 +38,12 @@ MCContext::MCContext(const MCAsmInfo &mai, const MCRegisterInfo &mri,
   SrcMgr(mgr), MAI(mai), MRI(mri), MOFI(mofi),
   Allocator(), Symbols(Allocator), UsedNames(Allocator),
   NextUniqueID(0),
-  CompilationDir(llvm::sys::Path::GetCurrentDirectory().str()),
   CurrentDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0), 
   DwarfLocSeen(false), GenDwarfForAssembly(false), GenDwarfFileNumber(0),
   AllowTemporaryLabels(true), DwarfCompileUnitID(0), AutoReset(DoAutoReset) {
+
+  error_code EC = llvm::sys::fs::current_path(CompilationDir);
+  assert(!EC && "Could not determine the current directory");
 
   MachOUniquingMap = 0;
   ELFUniquingMap = 0;

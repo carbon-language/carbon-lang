@@ -102,11 +102,6 @@ namespace sys {
       /// directory.
       static Path GetTemporaryDirectory(std::string* ErrMsg = 0);
 
-      /// Construct a path to the current directory for the current process.
-      /// @returns The current working directory.
-      /// @brief Returns the current working directory.
-      static Path GetCurrentDirectory();
-
       /// Return the suffix commonly used on file names that contain an
       /// executable.
       /// @returns The executable file suffix for the current platform.
