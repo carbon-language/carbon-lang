@@ -1,6 +1,6 @@
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
 // RUN: grep -Ev "// *[A-Z-]+:" %S/Inputs/basic.h > %T/basic.h
-// RUN: cpp11-migrate -use-nullptr %t.cpp -- -I %S
+// RUN: cpp11-migrate -use-nullptr %t.cpp -- -std=c++98 -I %S
 // RUN: FileCheck -input-file=%t.cpp %s
 // RUN: FileCheck -input-file=%T/basic.h %S/Inputs/basic.h
 
