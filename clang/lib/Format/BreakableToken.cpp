@@ -119,13 +119,11 @@ unsigned BreakableSingleLineToken::getLineLengthAfterSplit(
          encoding::getCodePointCount(Line.substr(Offset, Length), Encoding);
 }
 
-BreakableSingleLineToken::BreakableSingleLineToken(const FormatToken &Tok,
-                                                   unsigned StartColumn,
-                                                   StringRef Prefix,
-                                                   StringRef Postfix,
-                                                   encoding::Encoding Encoding)
-    : BreakableToken(Tok, Encoding), StartColumn(StartColumn), Prefix(Prefix),
-      Postfix(Postfix) {
+BreakableSingleLineToken::BreakableSingleLineToken(
+    const FormatToken &Tok, unsigned StartColumn, StringRef Prefix,
+    StringRef Postfix, bool InPPDirective, encoding::Encoding Encoding)
+    : BreakableToken(Tok, InPPDirective, Encoding), StartColumn(StartColumn),
+      Prefix(Prefix), Postfix(Postfix) {
   assert(Tok.TokenText.startswith(Prefix) && Tok.TokenText.endswith(Postfix));
   Line = Tok.TokenText.substr(
       Prefix.size(), Tok.TokenText.size() - Prefix.size() - Postfix.size());
@@ -133,8 +131,10 @@ BreakableSingleLineToken::BreakableSingleLineToken(const FormatToken &Tok,
 
 BreakableStringLiteral::BreakableStringLiteral(const FormatToken &Tok,
                                                unsigned StartColumn,
+                                               bool InPPDirective,
                                                encoding::Encoding Encoding)
-    : BreakableSingleLineToken(Tok, StartColumn, "\"", "\"", Encoding) {}
+    : BreakableSingleLineToken(Tok, StartColumn, "\"", "\"", InPPDirective,
+                               Encoding) {}
 
 BreakableToken::Split
 BreakableStringLiteral::getSplit(unsigned LineIndex, unsigned TailOffset,
@@ -145,7 +145,6 @@ BreakableStringLiteral::getSplit(unsigned LineIndex, unsigned TailOffset,
 
 void BreakableStringLiteral::insertBreak(unsigned LineIndex,
                                          unsigned TailOffset, Split Split,
-                                         bool InPPDirective,
                                          WhitespaceManager &Whitespaces) {
   Whitespaces.replaceWhitespaceInToken(
       Tok, Prefix.size() + TailOffset + Split.first, Split.second, Postfix,
@@ -162,10 +161,11 @@ static StringRef getLineCommentPrefix(StringRef Comment) {
 
 BreakableLineComment::BreakableLineComment(const FormatToken &Token,
                                            unsigned StartColumn,
+                                           bool InPPDirective,
                                            encoding::Encoding Encoding)
     : BreakableSingleLineToken(Token, StartColumn,
                                getLineCommentPrefix(Token.TokenText), "",
-                               Encoding) {
+                               InPPDirective, Encoding) {
   OriginalPrefix = Prefix;
   if (Token.TokenText.size() > Prefix.size() &&
       isAlphanumeric(Token.TokenText[Prefix.size()])) {
@@ -184,7 +184,7 @@ BreakableLineComment::getSplit(unsigned LineIndex, unsigned TailOffset,
 }
 
 void BreakableLineComment::insertBreak(unsigned LineIndex, unsigned TailOffset,
-                                       Split Split, bool InPPDirective,
+                                       Split Split,
                                        WhitespaceManager &Whitespaces) {
   Whitespaces.replaceWhitespaceInToken(
       Tok, OriginalPrefix.size() + TailOffset + Split.first, Split.second,
@@ -193,7 +193,6 @@ void BreakableLineComment::insertBreak(unsigned LineIndex, unsigned TailOffset,
 
 void
 BreakableLineComment::replaceWhitespaceBefore(unsigned LineIndex,
-                                              unsigned InPPDirective,
                                               WhitespaceManager &Whitespaces) {
   if (OriginalPrefix != Prefix) {
     Whitespaces.replaceWhitespaceInToken(Tok, OriginalPrefix.size(), 0, "", "",
@@ -203,8 +202,9 @@ BreakableLineComment::replaceWhitespaceBefore(unsigned LineIndex,
 
 BreakableBlockComment::BreakableBlockComment(
     const FormatStyle &Style, const FormatToken &Token, unsigned StartColumn,
-    unsigned OriginalStartColumn, bool FirstInLine, encoding::Encoding Encoding)
-    : BreakableToken(Token, Encoding) {
+    unsigned OriginalStartColumn, bool FirstInLine, bool InPPDirective,
+    encoding::Encoding Encoding)
+    : BreakableToken(Token, InPPDirective, Encoding) {
   StringRef TokenText(Token.TokenText);
   assert(TokenText.startswith("/*") && TokenText.endswith("*/"));
   TokenText.substr(2, TokenText.size() - 4).split(Lines, "\n");
@@ -264,8 +264,18 @@ BreakableBlockComment::BreakableBlockComment(
 void BreakableBlockComment::adjustWhitespace(const FormatStyle &Style,
                                              unsigned LineIndex,
                                              int IndentDelta) {
+  // When in a preprocessor directive, the trailing backslash in a block comment
+  // is not needed, but can serve a purpose of uniformity with necessary escaped
+  // newlines outside the comment. In this case we remove it here before
+  // trimming the trailing whitespace. The backslash will be re-added later when
+  // inserting a line break.
+  size_t EndOfPreviousLine = Lines[LineIndex - 1].size();
+  if (InPPDirective && Lines[LineIndex - 1].endswith("\\"))
+    --EndOfPreviousLine;
+
   // Calculate the end of the non-whitespace text in the previous line.
-  size_t EndOfPreviousLine = Lines[LineIndex - 1].find_last_not_of(" \\\t");
+  EndOfPreviousLine =
+      Lines[LineIndex - 1].find_last_not_of(" \t", EndOfPreviousLine);
   if (EndOfPreviousLine == StringRef::npos)
     EndOfPreviousLine = 0;
   else
@@ -313,7 +323,7 @@ BreakableBlockComment::getSplit(unsigned LineIndex, unsigned TailOffset,
 }
 
 void BreakableBlockComment::insertBreak(unsigned LineIndex, unsigned TailOffset,
-                                        Split Split, bool InPPDirective,
+                                        Split Split,
                                         WhitespaceManager &Whitespaces) {
   StringRef Text = Lines[LineIndex].substr(TailOffset);
   StringRef Prefix = Decoration;
@@ -334,7 +344,6 @@ void BreakableBlockComment::insertBreak(unsigned LineIndex, unsigned TailOffset,
 
 void
 BreakableBlockComment::replaceWhitespaceBefore(unsigned LineIndex,
-                                               unsigned InPPDirective,
                                                WhitespaceManager &Whitespaces) {
   if (LineIndex == 0)
     return;

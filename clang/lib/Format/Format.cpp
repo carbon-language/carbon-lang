@@ -804,7 +804,6 @@ private:
   /// cover the cost of the additional line breaks.
   unsigned breakProtrudingToken(const FormatToken &Current, LineState &State,
                                 bool DryRun) {
-    unsigned UnbreakableTailLength = Current.UnbreakableTailLength;
     llvm::OwningPtr<BreakableToken> Token;
     unsigned StartColumn = State.Column - Current.CodePointCount;
     unsigned OriginalStartColumn =
@@ -814,37 +813,34 @@ private:
     if (Current.is(tok::string_literal) &&
         Current.Type != TT_ImplicitStringLiteral) {
       // Only break up default narrow strings.
-      const char *LiteralData =
-          SourceMgr.getCharacterData(Current.getStartOfNonWhitespace());
-      if (!LiteralData || *LiteralData != '"')
+      if (!Current.TokenText.startswith("\""))
         return 0;
 
-      Token.reset(new BreakableStringLiteral(Current, StartColumn, Encoding));
+      Token.reset(new BreakableStringLiteral(Current, StartColumn,
+                                             Line.InPPDirective, Encoding));
     } else if (Current.Type == TT_BlockComment) {
-      BreakableBlockComment *BBC = new BreakableBlockComment(
+      Token.reset(new BreakableBlockComment(
           Style, Current, StartColumn, OriginalStartColumn, !Current.Previous,
-          Encoding);
-      Token.reset(BBC);
+          Line.InPPDirective, Encoding));
     } else if (Current.Type == TT_LineComment &&
                (Current.Previous == NULL ||
                 Current.Previous->Type != TT_ImplicitStringLiteral)) {
-      Token.reset(new BreakableLineComment(Current, StartColumn, Encoding));
+      Token.reset(new BreakableLineComment(Current, StartColumn,
+                                           Line.InPPDirective, Encoding));
     } else {
       return 0;
     }
-    if (UnbreakableTailLength >= getColumnLimit())
+    if (Current.UnbreakableTailLength >= getColumnLimit())
       return 0;
-    unsigned RemainingSpace = getColumnLimit() - UnbreakableTailLength;
+    unsigned RemainingSpace = getColumnLimit() - Current.UnbreakableTailLength;
 
     bool BreakInserted = false;
     unsigned Penalty = 0;
     unsigned PositionAfterLastLineInToken = 0;
     for (unsigned LineIndex = 0, EndIndex = Token->getLineCount();
          LineIndex != EndIndex; ++LineIndex) {
-      if (!DryRun) {
-        Token->replaceWhitespaceBefore(LineIndex, Line.InPPDirective,
-                                       Whitespaces);
-      }
+      if (!DryRun)
+        Token->replaceWhitespaceBefore(LineIndex, Whitespaces);
       unsigned TailOffset = 0;
       unsigned RemainingTokenColumns = Token->getLineLengthAfterSplit(
           LineIndex, TailOffset, StringRef::npos);
@@ -858,10 +854,8 @@ private:
             LineIndex, TailOffset + Split.first + Split.second,
             StringRef::npos);
         assert(NewRemainingTokenColumns < RemainingTokenColumns);
-        if (!DryRun) {
-          Token->insertBreak(LineIndex, TailOffset, Split, Line.InPPDirective,
-                             Whitespaces);
-        }
+        if (!DryRun)
+          Token->insertBreak(LineIndex, TailOffset, Split, Whitespaces);
         Penalty += Current.is(tok::string_literal) ? Style.PenaltyBreakString
                                                    : Style.PenaltyBreakComment;
         unsigned ColumnsUsed =

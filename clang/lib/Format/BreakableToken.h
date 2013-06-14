@@ -59,20 +59,20 @@ public:
 
   /// \brief Emits the previously retrieved \p Split via \p Whitespaces.
   virtual void insertBreak(unsigned LineIndex, unsigned TailOffset, Split Split,
-                           bool InPPDirective,
                            WhitespaceManager &Whitespaces) = 0;
 
   /// \brief Replaces the whitespace between \p LineIndex-1 and \p LineIndex.
   virtual void replaceWhitespaceBefore(unsigned LineIndex,
-                                       unsigned InPPDirective,
                                        WhitespaceManager &Whitespaces) {}
 
 protected:
-  BreakableToken(const FormatToken &Tok, encoding::Encoding Encoding)
-      : Tok(Tok), Encoding(Encoding) {}
+  BreakableToken(const FormatToken &Tok, bool InPPDirective,
+                 encoding::Encoding Encoding)
+      : Tok(Tok), InPPDirective(InPPDirective), Encoding(Encoding) {}
 
   const FormatToken &Tok;
-  encoding::Encoding Encoding;
+  const bool InPPDirective;
+  const encoding::Encoding Encoding;
 };
 
 /// \brief Base class for single line tokens that can be broken.
@@ -88,7 +88,7 @@ public:
 protected:
   BreakableSingleLineToken(const FormatToken &Tok, unsigned StartColumn,
                            StringRef Prefix, StringRef Postfix,
-                           encoding::Encoding Encoding);
+                           bool InPPDirective, encoding::Encoding Encoding);
 
   // The column in which the token starts.
   unsigned StartColumn;
@@ -107,12 +107,11 @@ public:
   /// \p StartColumn specifies the column in which the token will start
   /// after formatting.
   BreakableStringLiteral(const FormatToken &Tok, unsigned StartColumn,
-                         encoding::Encoding Encoding);
+                         bool InPPDirective, encoding::Encoding Encoding);
 
   virtual Split getSplit(unsigned LineIndex, unsigned TailOffset,
                          unsigned ColumnLimit) const;
   virtual void insertBreak(unsigned LineIndex, unsigned TailOffset, Split Split,
-                           bool InPPDirective,
                            WhitespaceManager &Whitespaces);
 };
 
@@ -123,14 +122,13 @@ public:
   /// \p StartColumn specifies the column in which the comment will start
   /// after formatting.
   BreakableLineComment(const FormatToken &Token, unsigned StartColumn,
-                       encoding::Encoding Encoding);
+                       bool InPPDirective, encoding::Encoding Encoding);
 
   virtual Split getSplit(unsigned LineIndex, unsigned TailOffset,
                          unsigned ColumnLimit) const;
   virtual void insertBreak(unsigned LineIndex, unsigned TailOffset, Split Split,
-                           bool InPPDirective, WhitespaceManager &Whitespaces);
+                           WhitespaceManager &Whitespaces);
   virtual void replaceWhitespaceBefore(unsigned LineIndex,
-                                       unsigned InPPDirective,
                                        WhitespaceManager &Whitespaces);
 
 private:
@@ -148,7 +146,8 @@ public:
   /// If the comment starts a line after formatting, set \p FirstInLine to true.
   BreakableBlockComment(const FormatStyle &Style, const FormatToken &Token,
                         unsigned StartColumn, unsigned OriginaStartColumn,
-                        bool FirstInLine, encoding::Encoding Encoding);
+                        bool FirstInLine, bool InPPDirective,
+                        encoding::Encoding Encoding);
 
   virtual unsigned getLineCount() const;
   virtual unsigned getLineLengthAfterSplit(unsigned LineIndex,
@@ -157,9 +156,8 @@ public:
   virtual Split getSplit(unsigned LineIndex, unsigned TailOffset,
                          unsigned ColumnLimit) const;
   virtual void insertBreak(unsigned LineIndex, unsigned TailOffset, Split Split,
-                           bool InPPDirective, WhitespaceManager &Whitespaces);
+                           WhitespaceManager &Whitespaces);
   virtual void replaceWhitespaceBefore(unsigned LineIndex,
-                                       unsigned InPPDirective,
                                        WhitespaceManager &Whitespaces);
 
 private:

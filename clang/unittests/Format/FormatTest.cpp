@@ -1961,6 +1961,10 @@ TEST_F(FormatTest, EscapedNewlineAtStartOfToken) {
   EXPECT_EQ("template <class T> f();", format("\\\ntemplate <class T> f();"));
 }
 
+TEST_F(FormatTest, NoEscapedNewlineHandlingInBlockComments) {
+  EXPECT_EQ("/* \\  \\  \\\n*/", format("\\\n/* \\  \\  \\\n*/"));
+}
+
 TEST_F(FormatTest, CalculateSpaceOnConsecutiveLinesInMacro) {
   verifyFormat("#define A \\\n"
                "  int v(  \\\n"
@@ -4603,6 +4607,19 @@ TEST_F(FormatTest, BreakStringLiterals) {
       "  \"text \" \\\n"
       "  \"other\";",
       format("#define A \"some text other\";", AlignLeft));
+}
+
+TEST_F(FormatTest, SkipsUnknownStringLiterals) {
+  EXPECT_EQ("u8\"unsupported literal\";",
+            format("u8\"unsupported literal\";", getLLVMStyleWithColumns(15)));
+  EXPECT_EQ("u\"unsupported literal\";",
+            format("u\"unsupported literal\";", getLLVMStyleWithColumns(15)));
+  EXPECT_EQ("U\"unsupported literal\";",
+            format("U\"unsupported literal\";", getLLVMStyleWithColumns(15)));
+  EXPECT_EQ("L\"unsupported literal\";",
+            format("L\"unsupported literal\";", getLLVMStyleWithColumns(15)));
+  EXPECT_EQ("R\"x(raw literal)x\";",
+            format("R\"x(raw literal)x\";", getLLVMStyleWithColumns(15)));
 }
 
 TEST_F(FormatTest, BreakStringLiteralsBeforeUnbreakableTokenSequence) {
