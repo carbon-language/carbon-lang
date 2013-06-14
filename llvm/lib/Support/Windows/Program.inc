@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Windows.h"
+#include "llvm/Support/FileSystem.h"
 #include <cstdio>
 #include <fcntl.h>
 #include <io.h>
@@ -37,13 +38,11 @@ std::string sys::FindProgramByName(const std::string &progName) {
   // Check some degenerate cases
   if (progName.length() == 0) // no program
     return "";
-  Path temp;
-  if (!temp.set(progName)) // invalid name
-    return "";
+  std::string temp = progName;
   // Return paths with slashes verbatim.
   if (progName.find('\\') != std::string::npos ||
       progName.find('/') != std::string::npos)
-    return temp.str();
+    return temp;
 
   // At this point, the file name is valid and does not contain slashes.
   // Let Windows search for it.
@@ -76,7 +75,7 @@ std::string sys::FindProgramByName(const std::string &progName) {
   }
 }
 
-static HANDLE RedirectIO(const Path *path, int fd, std::string* ErrMsg) {
+static HANDLE RedirectIO(const StringRef *path, int fd, std::string* ErrMsg) {
   HANDLE h;
   if (path == 0) {
     DuplicateHandle(GetCurrentProcess(), (HANDLE)_get_osfhandle(fd),
@@ -85,19 +84,19 @@ static HANDLE RedirectIO(const Path *path, int fd, std::string* ErrMsg) {
     return h;
   }
 
-  const char *fname;
-  if (path->isEmpty())
+  std::string fname;
+  if (path->empty())
     fname = "NUL";
   else
-    fname = path->c_str();
+    fname = *path;
 
   SECURITY_ATTRIBUTES sa;
   sa.nLength = sizeof(sa);
   sa.lpSecurityDescriptor = 0;
   sa.bInheritHandle = TRUE;
 
-  h = CreateFile(fname, fd ? GENERIC_WRITE : GENERIC_READ, FILE_SHARE_READ,
-                 &sa, fd == 0 ? OPEN_EXISTING : CREATE_ALWAYS,
+  h = CreateFile(fname.c_str(), fd ? GENERIC_WRITE : GENERIC_READ,
+                 FILE_SHARE_READ, &sa, fd == 0 ? OPEN_EXISTING : CREATE_ALWAYS,
                  FILE_ATTRIBUTE_NORMAL, NULL);
   if (h == INVALID_HANDLE_VALUE) {
     MakeErrMsg(ErrMsg, std::string(fname) + ": Can't open file for " +
@@ -171,13 +170,13 @@ static unsigned int ArgLenWithQuotes(const char *Str) {
 }
 
 static bool Execute(void **Data,
-                    const Path& path,
+                    StringRef Program,
                     const char** args,
                     const char** envp,
-                    const Path** redirects,
+                    const StringRef** redirects,
                     unsigned memoryLimit,
                     std::string* ErrMsg) {
-  if (!path.canExecute()) {
+  if (!sys::fs::can_execute(Program)) {
     if (ErrMsg)
       *ErrMsg = "program not executable";
     return false;
@@ -297,7 +296,8 @@ static bool Execute(void **Data,
 
   fflush(stdout);
   fflush(stderr);
-  BOOL rc = CreateProcess(path.c_str(), command, NULL, NULL, TRUE, 0,
+  std::string ProgramStr = Program;
+  BOOL rc = CreateProcess(ProgramStr.c_str(), command, NULL, NULL, TRUE, 0,
                           envblock, NULL, &si, &pi);
   DWORD err = GetLastError();
 
@@ -311,7 +311,7 @@ static bool Execute(void **Data,
   if (!rc) {
     SetLastError(err);
     MakeErrMsg(ErrMsg, std::string("Couldn't execute program '") +
-               path.str() + "'");
+               ProgramStr + "'");
     return false;
   }
   if (Data) {
@@ -398,7 +398,7 @@ static int WaitAux(Win32ProcessInfo *wpi, unsigned secondsToWait,
   return 1;
 }
 
-static int Wait(void *&Data, const Path &path, unsigned secondsToWait,
+static int Wait(void *&Data, StringRef Program, unsigned secondsToWait,
                 std::string *ErrMsg) {
   Win32ProcessInfo *wpi = reinterpret_cast<Win32ProcessInfo *>(Data);
   int Ret = WaitAux(wpi, secondsToWait, ErrMsg);

@@ -342,6 +342,12 @@ inline bool exists(const Twine &path) {
   return !exists(path, result) && result;
 }
 
+/// @brief Can we execute this file?
+///
+/// @param Path Input path.
+/// @returns True if we can execute it, false otherwise.
+bool can_execute(const Twine &Path);
+
 /// @brief Do file_status's represent the same thing?
 ///
 /// @param A Input file_status.

@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Program.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/system_error.h"
 using namespace llvm;
@@ -23,39 +22,12 @@ using namespace sys;
 //===          independent code.
 //===----------------------------------------------------------------------===//
 
-static bool Execute(void **Data, const Path &path, const char **args,
-                    const char **env, const sys::Path **redirects,
-                    unsigned memoryLimit, std::string *ErrMsg);
-
-static int Wait(void *&Data, const Path &path, unsigned secondsToWait,
-                std::string *ErrMsg);
-
-
 static bool Execute(void **Data, StringRef Program, const char **args,
                     const char **env, const StringRef **Redirects,
-                    unsigned memoryLimit, std::string *ErrMsg) {
-  Path P(Program);
-  if (!Redirects)
-    return Execute(Data, P, args, env, 0, memoryLimit, ErrMsg);
-  Path IO[3];
-  const Path *IOP[3];
-  for (int I = 0; I < 3; ++I) {
-    if (Redirects[I]) {
-      IO[I] = *Redirects[I];
-      IOP[I] = &IO[I];
-    } else {
-      IOP[I] = 0;
-    }
-  }
-
-  return Execute(Data, P, args, env, IOP, memoryLimit, ErrMsg);
-}
+                    unsigned memoryLimit, std::string *ErrMsg);
 
 static int Wait(void *&Data, StringRef Program, unsigned secondsToWait,
-                std::string *ErrMsg) {
-  Path P(Program);
-  return Wait(Data, P, secondsToWait, ErrMsg);
-}
+                std::string *ErrMsg);
 
 int sys::ExecuteAndWait(StringRef Program, const char **args, const char **envp,
                         const StringRef **redirects, unsigned secondsToWait,

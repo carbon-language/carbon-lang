@@ -54,13 +54,11 @@ sys::FindProgramByName(const std::string& progName) {
   // Check some degenerate cases
   if (progName.length() == 0) // no program
     return "";
-  Path temp;
-  if (!temp.set(progName)) // invalid name
-    return "";
+  std::string temp = progName;
   // Use the given path verbatim if it contains any slashes; this matches
   // the behavior of sh(1) and friends.
   if (progName.find('/') != std::string::npos)
-    return temp.str();
+    return temp;
 
   // At this point, the file name is valid and does not contain slashes. Search
   // for it through the directories specified in the PATH environment variable.
@@ -77,12 +75,10 @@ sys::FindProgramByName(const std::string& progName) {
     const char *Colon = std::find(PathStr, PathStr+PathLen, ':');
 
     // Check to see if this first directory contains the executable...
-    Path FilePath;
-    if (FilePath.set(std::string(PathStr,Colon))) {
-      FilePath.appendComponent(progName);
-      if (FilePath.canExecute())
-        return FilePath.str();                    // Found the executable!
-    }
+    SmallString<128> FilePath(PathStr,Colon);
+    sys::path::append(FilePath, progName);
+    if (sys::fs::can_execute(Twine(FilePath)))
+      return FilePath.str();                    // Found the executable!
 
     // Nope it wasn't in this directory, check the next path in the list!
     PathLen -= Colon-PathStr;
@@ -97,20 +93,20 @@ sys::FindProgramByName(const std::string& progName) {
   return "";
 }
 
-static bool RedirectIO(const Path *Path, int FD, std::string* ErrMsg) {
+static bool RedirectIO(const StringRef *Path, int FD, std::string* ErrMsg) {
   if (Path == 0) // Noop
     return false;
-  const char *File;
-  if (Path->isEmpty())
+  std::string File;
+  if (Path->empty())
     // Redirect empty paths to /dev/null
     File = "/dev/null";
   else
-    File = Path->c_str();
+    File = *Path;
 
   // Open the file
-  int InFD = open(File, FD == 0 ? O_RDONLY : O_WRONLY|O_CREAT, 0666);
+  int InFD = open(File.c_str(), FD == 0 ? O_RDONLY : O_WRONLY|O_CREAT, 0666);
   if (InFD == -1) {
-    MakeErrMsg(ErrMsg, "Cannot open file '" + std::string(File) + "' for "
+    MakeErrMsg(ErrMsg, "Cannot open file '" + File + "' for "
               + (FD == 0 ? "input" : "output"));
     return true;
   }
@@ -126,19 +122,20 @@ static bool RedirectIO(const Path *Path, int FD, std::string* ErrMsg) {
 }
 
 #ifdef HAVE_POSIX_SPAWN
-static bool RedirectIO_PS(const Path *Path, int FD, std::string *ErrMsg,
+static bool RedirectIO_PS(const StringRef *Path, int FD, std::string *ErrMsg,
                           posix_spawn_file_actions_t *FileActions) {
   if (Path == 0) // Noop
     return false;
-  const char *File;
-  if (Path->isEmpty())
+  std::string File;
+  if (Path->empty())
     // Redirect empty paths to /dev/null
     File = "/dev/null";
   else
-    File = Path->c_str();
+    File = *Path;
 
-  if (int Err = posix_spawn_file_actions_addopen(FileActions, FD,
-                            File, FD == 0 ? O_RDONLY : O_WRONLY|O_CREAT, 0666))
+  if (int Err = posix_spawn_file_actions_addopen(
+          FileActions, FD, File.c_str(),
+          FD == 0 ? O_RDONLY : O_WRONLY | O_CREAT, 0666))
     return MakeErrMsg(ErrMsg, "Cannot dup2", Err);
   return false;
 }
@@ -178,8 +175,8 @@ static void SetMemoryLimits (unsigned size)
 
 }
 
-static bool Execute(void **Data, const Path &path, const char **args,
-                    const char **envp, const Path **redirects,
+static bool Execute(void **Data, StringRef Program, const char **args,
+                    const char **envp, const StringRef **redirects,
                     unsigned memoryLimit, std::string *ErrMsg) {
   // If this OS has posix_spawn and there is no memory limit being implied, use
   // posix_spawn.  It is more efficient than fork/exec.
@@ -219,7 +216,7 @@ static bool Execute(void **Data, const Path &path, const char **args,
     // Explicitly initialized to prevent what appears to be a valgrind false
     // positive.
     pid_t PID = 0;
-    int Err = posix_spawn(&PID, path.c_str(), FileActions, /*attrp*/0,
+    int Err = posix_spawn(&PID, Program.str().c_str(), FileActions, /*attrp*/0,
                           const_cast<char **>(args), const_cast<char **>(envp));
 
     if (FileActions)
@@ -270,12 +267,13 @@ static bool Execute(void **Data, const Path &path, const char **args,
       }
 
       // Execute!
+      std::string PathStr = Program;
       if (envp != 0)
-        execve(path.c_str(),
+        execve(PathStr.c_str(),
                const_cast<char **>(args),
                const_cast<char **>(envp));
       else
-        execv(path.c_str(),
+        execv(PathStr.c_str(),
               const_cast<char **>(args));
       // If the execve() failed, we should exit. Follow Unix protocol and
       // return 127 if the executable was not found, and 126 otherwise.
@@ -297,7 +295,7 @@ static bool Execute(void **Data, const Path &path, const char **args,
   return true;
 }
 
-static int Wait(void *&Data, const sys::Path &path, unsigned secondsToWait,
+static int Wait(void *&Data, StringRef Program, unsigned secondsToWait,
                 std::string *ErrMsg) {
 #ifdef HAVE_SYS_WAIT_H
   struct sigaction Act, Old;
@@ -356,7 +354,7 @@ static int Wait(void *&Data, const sys::Path &path, unsigned secondsToWait,
     // itself apparently does not), check to see if the failure was due to some
     // reason other than the file not existing, and return 126 in this case.
     bool Exists;
-    if (result == 127 && !llvm::sys::fs::exists(path.str(), Exists) && Exists)
+    if (result == 127 && !llvm::sys::fs::exists(Program, Exists) && Exists)
       result = 126;
 #endif
     if (result == 127) {
