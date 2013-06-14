@@ -189,13 +189,14 @@ multiclass sse12_cvt_pint<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
 multiclass sse12_cvt_pint_3addr<bits<8> opc, RegisterClass SrcRC,
                     RegisterClass DstRC, Intrinsic Int, X86MemOperand x86memop,
                     PatFrag ld_frag, string asm, Domain d> {
-  def irr : PI<opc, MRMSrcReg, (outs DstRC:$dst),(ins DstRC:$src1, SrcRC:$src2),
-              asm, [(set DstRC:$dst, (Int DstRC:$src1, SrcRC:$src2))], 
-              NoItinerary, d>;
-  def irm : PI<opc, MRMSrcMem, (outs DstRC:$dst),
-                   (ins DstRC:$src1, x86memop:$src2), asm,
-              [(set DstRC:$dst, (Int DstRC:$src1, (ld_frag addr:$src2)))], 
-              NoItinerary, d>;
+  def irr : MMXPI<opc, MRMSrcReg, (outs DstRC:$dst),
+                  (ins DstRC:$src1, SrcRC:$src2), asm,
+                  [(set DstRC:$dst, (Int DstRC:$src1, SrcRC:$src2))],
+                  NoItinerary, d>;
+  def irm : MMXPI<opc, MRMSrcMem, (outs DstRC:$dst),
+                  (ins DstRC:$src1, x86memop:$src2), asm,
+                  [(set DstRC:$dst, (Int DstRC:$src1, (ld_frag addr:$src2)))],
+                  NoItinerary, d>;
 }
 
 //===----------------------------------------------------------------------===//
