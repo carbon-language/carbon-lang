@@ -113,8 +113,6 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
     memcpy(hdr.name,ARFILE_SVR4_SYMTAB_NAME,16);
   } else if (mbr.isBSD4SymbolTable()) {
     memcpy(hdr.name,ARFILE_BSD4_SYMTAB_NAME,16);
-  } else if (mbr.isLLVMSymbolTable()) {
-    memcpy(hdr.name,ARFILE_LLVM_SYMTAB_NAME,16);
   } else if (TruncateNames) {
     const char* nm = mbrPath.c_str();
     unsigned len = mbrPath.length();
@@ -289,61 +287,6 @@ Archive::writeMember(
   return false;
 }
 
-// Write out the LLVM symbol table as an archive member to the file.
-void
-Archive::writeSymbolTable(std::ofstream& ARFile) {
-
-  // Construct the symbol table's header
-  ArchiveMemberHeader Hdr;
-  Hdr.init();
-  memcpy(Hdr.name,ARFILE_LLVM_SYMTAB_NAME,16);
-  uint64_t secondsSinceEpoch = sys::TimeValue::now().toEpochTime();
-  char buffer[32];
-  sprintf(buffer, "%-8o", 0644);
-  memcpy(Hdr.mode,buffer,8);
-  sprintf(buffer, "%-6u", sys::Process::GetCurrentUserId());
-  memcpy(Hdr.uid,buffer,6);
-  sprintf(buffer, "%-6u", sys::Process::GetCurrentGroupId());
-  memcpy(Hdr.gid,buffer,6);
-  sprintf(buffer,"%-12u", unsigned(secondsSinceEpoch));
-  memcpy(Hdr.date,buffer,12);
-  sprintf(buffer,"%-10u",symTabSize);
-  memcpy(Hdr.size,buffer,10);
-
-  // Write the header
-  ARFile.write((char*)&Hdr, sizeof(Hdr));
-
-#ifndef NDEBUG
-  // Save the starting position of the symbol tables data content.
-  unsigned startpos = ARFile.tellp();
-#endif
-
-  // Write out the symbols sequentially
-  for ( Archive::SymTabType::iterator I = symTab.begin(), E = symTab.end();
-        I != E; ++I)
-  {
-    // Write out the file index
-    writeInteger(I->second, ARFile);
-    // Write out the length of the symbol
-    writeInteger(I->first.length(), ARFile);
-    // Write out the symbol
-    ARFile.write(I->first.data(), I->first.length());
-  }
-
-#ifndef NDEBUG
-  // Now that we're done with the symbol table, get the ending file position
-  unsigned endpos = ARFile.tellp();
-#endif
-
-  // Make sure that the amount we wrote is what we pre-computed. This is
-  // critical for file integrity purposes.
-  assert(endpos - startpos == symTabSize && "Invalid symTabSize computation");
-
-  // Make sure the symbol table is even sized
-  if (symTabSize % 2 != 0 )
-    ARFile << ARFILE_PAD;
-}
-
 // Write the entire archive to the file specified when the archive was created.
 // This writes to a temporary file first. Options are for creating a symbol
 // table, flattening the file names (no directories, 15 chars max) and
@@ -452,9 +395,6 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames,
         return true;
       }
     }
-
-    // Put out the LLVM symbol table now.
-    writeSymbolTable(FinalFile);
 
     // Copy the temporary file contents being sure to skip the file's magic
     // number.

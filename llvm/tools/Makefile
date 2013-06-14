@@ -28,7 +28,7 @@ OPTIONAL_DIRS := lldb
 # in parallel builds.  Please retain this ordering.
 DIRS := llvm-config
 PARALLEL_DIRS := opt llvm-as llvm-dis \
-                 llc llvm-ranlib llvm-ar llvm-nm \
+                 llc llvm-ar llvm-nm \
                  llvm-prof llvm-link \
                  lli llvm-extract llvm-mc \
                  bugpoint llvm-bcanalyzer \

@@ -24,8 +24,7 @@ static const char *Magic = "!<arch>\n";
 static bool isInternalMember(const ArchiveMemberHeader &amh) {
   static const char *const internals[] = {
     "/",
-    "//",
-    "#_LLVM_SYM_TAB_#"
+    "//"
   };
 
   StringRef name = amh.getName();

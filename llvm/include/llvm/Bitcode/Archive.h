@@ -50,11 +50,10 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
     enum Flags {
       SVR4SymbolTableFlag = 1,     ///< Member is a SVR4 symbol table
       BSD4SymbolTableFlag = 2,     ///< Member is a BSD4 symbol table
-      LLVMSymbolTableFlag = 4,     ///< Member is an LLVM symbol table
-      BitcodeFlag         = 8,     ///< Member is bitcode
-      HasPathFlag         = 16,    ///< Member has a full or partial path
-      HasLongFilenameFlag = 32,    ///< Member uses the long filename syntax
-      StringTableFlag     = 64     ///< Member is an ar(1) format string table
+      BitcodeFlag         = 4,     ///< Member is bitcode
+      HasPathFlag         = 8,     ///< Member has a full or partial path
+      HasLongFilenameFlag = 16,    ///< Member uses the long filename syntax
+      StringTableFlag     = 32     ///< Member is an ar(1) format string table
     };
 
   /// @}
@@ -116,10 +115,6 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
     /// @returns true iff the member is a BSD4.4 (non-LLVM) symbol table
     /// @brief Determine if this member is a BSD4.4 symbol table.
     bool isBSD4SymbolTable() const { return flags&BSD4SymbolTableFlag; }
-
-    /// @returns true iff the archive member is the LLVM symbol table
-    /// @brief Determine if this member is the LLVM symbol table.
-    bool isLLVMSymbolTable() const { return flags&LLVMSymbolTableFlag; }
 
     /// @returns true iff the archive member is the ar(1) string table
     /// @brief Determine if this member is the ar(1) string table.
@@ -445,13 +440,6 @@ class Archive {
     /// into memory.
     explicit Archive(const sys::Path& filename, LLVMContext& C);
 
-    /// @param data The symbol table data to be parsed
-    /// @param len  The length of the symbol table data
-    /// @param error Set to address of a std::string to get error messages
-    /// @returns false on error
-    /// @brief Parse the symbol table at \p data.
-    bool parseSymbolTable(const void* data,unsigned len,std::string* error);
-
     /// @returns A fully populated ArchiveMember or 0 if an error occurred.
     /// @brief Parse the header of a member starting at \p At
     ArchiveMember* parseMemberHeader(
@@ -474,9 +462,6 @@ class Archive {
     /// @returns false on error
     /// @brief Load just the symbol table.
     bool loadSymbolTable(std::string* ErrMessage);
-
-    /// @brief Write the symbol table to an ofstream.
-    void writeSymbolTable(std::ofstream& ARFile);
 
     /// Writes one ArchiveMember to an ofstream. If an error occurs, returns
     /// false, otherwise true. If an error occurs and error is non-null then

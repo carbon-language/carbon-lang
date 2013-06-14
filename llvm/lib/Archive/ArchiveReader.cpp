@@ -37,37 +37,6 @@ static inline unsigned readInteger(const char*&At, const char*End) {
   return Result;
 }
 
-// Completely parse the Archive's symbol table and populate symTab member var.
-bool
-Archive::parseSymbolTable(const void* data, unsigned size, std::string* error) {
-  const char* At = (const char*) data;
-  const char* End = At + size;
-  while (At < End) {
-    unsigned offset = readInteger(At, End);
-    if (At == End) {
-      if (error)
-        *error = "Ran out of data reading vbr_uint for symtab offset!";
-      return false;
-    }
-    unsigned length = readInteger(At, End);
-    if (At == End) {
-      if (error)
-        *error = "Ran out of data reading vbr_uint for symtab length!";
-      return false;
-    }
-    if (At + length > End) {
-      if (error)
-        *error = "Malformed symbol table: length not consistent with size";
-      return false;
-    }
-    // we don't care if it can't be inserted (duplicate entry)
-    symTab.insert(std::make_pair(std::string(At, length), offset));
-    At += length;
-  }
-  symTabSize = size;
-  return true;
-}
-
 // This member parses an ArchiveMemberHeader that is presumed to be pointed to
 // by At. The At pointer is updated to the byte just after the header, which
 // can be variable in size.
@@ -108,10 +77,8 @@ Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
   // for long file names. This library doesn't generate either of those but
   // it will accept them. If the name starts with #1/ and the remainder is
   // digits, then those digits specify the length of the name that is
-  // stored immediately following the header. The special name
-  // __LLVM_SYM_TAB__ identifies the symbol table for LLVM bitcode.
-  // Anything else is a regular, short filename that is terminated with
-  // a '/' and blanks.
+  // stored immediately following the header. Anything else is a regular, short
+  // filename that is terminated with a '/' and blanks.
 
   std::string pathname;
   switch (Hdr->name[0]) {
@@ -129,16 +96,6 @@ Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
             *error = "invalid long filename";
           return 0;
         }
-      } else if (Hdr->name[1] == '_' &&
-                 (0 == memcmp(Hdr->name, ARFILE_LLVM_SYMTAB_NAME, 16))) {
-        // The member is using a long file name (>15 chars) format.
-        // This format is standard for 4.4BSD and Mac OSX operating
-        // systems. LLVM uses it similarly. In this format, the
-        // remainder of the name field (after #1/) specifies the
-        // length of the file name which occupy the first bytes of
-        // the member's data. The pathname already has the #1/ stripped.
-        pathname.assign(ARFILE_LLVM_SYMTAB_NAME);
-        flags |= ArchiveMember::LLVMSymbolTableFlag;
       }
       break;
     case '/':
@@ -259,7 +216,6 @@ Archive::loadArchive(std::string* error) {
 
   At += 8;  // Skip the magic string.
 
-  bool seenSymbolTable = false;
   bool foundFirstFile = false;
   while (At < End) {
     // parse the member header
@@ -291,21 +247,6 @@ Archive::loadArchive(std::string* error) {
       if ((intptr_t(At) & 1) == 1)
         At++;
       delete mbr;
-    } else if (mbr->isLLVMSymbolTable()) {
-      // This is the LLVM symbol table for the archive. If we've seen it
-      // already, its an error. Otherwise, parse the symbol table and move on.
-      if (seenSymbolTable) {
-        if (error)
-          *error = "invalid archive: multiple symbol tables";
-        return false;
-      }
-      if (!parseSymbolTable(mbr->getData(), mbr->getSize(), error))
-        return false;
-      seenSymbolTable = true;
-      At += mbr->getSize();
-      if ((intptr_t(At) & 1) == 1)
-        At++;
-      delete mbr; // We don't need this member in the list of members.
     } else {
       // This is just a regular file. If its the first one, save its offset.
       // Otherwise just push it on the list and move on to the next file.
@@ -412,26 +353,11 @@ Archive::loadSymbolTable(std::string* ErrorMsg) {
     }
   }
 
-  // See if its the symbol table
-  if (mbr->isLLVMSymbolTable()) {
-    if (!parseSymbolTable(mbr->getData(), mbr->getSize(), ErrorMsg)) {
-      delete mbr;
-      return false;
-    }
-
-    At += mbr->getSize();
-    if ((intptr_t(At) & 1) == 1)
-      At++;
-    delete mbr;
-    // Can't be any more symtab headers so just advance
-    FirstFile = At;
-  } else {
-    // There's no symbol table in the file. We have to rebuild it from scratch
-    // because the intent of this method is to get the symbol table loaded so
-    // it can be searched efficiently.
-    // Add the member to the members list
-    members.push_back(mbr);
-  }
+  // There's no symbol table in the file. We have to rebuild it from scratch
+  // because the intent of this method is to get the symbol table loaded so
+  // it can be searched efficiently.
+  // Add the member to the members list
+  members.push_back(mbr);
 
   firstFileOffset = FirstFile - base;
   return true;

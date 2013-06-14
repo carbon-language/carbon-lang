@@ -283,8 +283,7 @@ The modifiers below may be applied to any operation.
  This modifier requests that an archive index (or symbol table) be added to the
  archive. This is the default mode of operation. The symbol table will contain
  all the externally visible functions and global variables defined by all the
- bitcode files in the archive. Using this modifier is more efficient that using
- llvm-ranlib|llvm-ranlib which also creates the symbol table.
+ bitcode files in the archive.
 
 
 
@@ -401,14 +400,6 @@ fmag - char[2]
  utility in identifying archive files that have been corrupted.
 
 
-
-The LLVM symbol table has the special name "#_LLVM_SYM_TAB_#". It is presumed
-that no regular archive member file will want this name. The LLVM symbol table
-is simply composed of a sequence of triplets: byte offset, length of symbol,
-and the symbol itself. Symbols are not null or newline terminated. Here are
-the details on each of these items:
-
-
 offset - vbr encoded 32-bit integer
 
  The offset item provides the offset into the archive file where the bitcode
@@ -455,4 +446,4 @@ SEE ALSO
 --------
 
 
-llvm-ranlib|llvm-ranlib, ar(1)
+ar(1)

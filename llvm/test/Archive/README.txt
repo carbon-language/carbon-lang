@@ -1,7 +1,7 @@
 test/Regression/Archive
 =======================
 
-This directory contains various tests of llvm-ar and llvm-ranlib to ensure 
+This directory contains various tests of llvm-ar and to ensure
 compatibility reading other ar(1) formats. It also provides a basic
 functionality test for these tools.
 

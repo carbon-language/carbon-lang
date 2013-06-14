@@ -376,7 +376,7 @@ bool doPrint(std::string* ErrMsg) {
         const char* data = reinterpret_cast<const char*>(I->getData());
 
         // Skip things that don't make sense to print
-        if (I->isLLVMSymbolTable() || I->isSVR4SymbolTable() ||
+        if (I->isSVR4SymbolTable() ||
             I->isBSD4SymbolTable() || (!DontSkipBitcode && I->isBitcode()))
           continue;
 

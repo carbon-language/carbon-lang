@@ -16,7 +16,7 @@
 ;===------------------------------------------------------------------------===;
 
 [common]
-subdirectories = bugpoint llc lli llvm-ar llvm-as llvm-bcanalyzer llvm-cov llvm-diff llvm-dis llvm-dwarfdump llvm-extract llvm-jitlistener llvm-link llvm-mc llvm-nm llvm-objdump llvm-prof llvm-ranlib llvm-rtdyld llvm-size macho-dump opt llvm-mcmarkup
+subdirectories = bugpoint llc lli llvm-ar llvm-as llvm-bcanalyzer llvm-cov llvm-diff llvm-dis llvm-dwarfdump llvm-extract llvm-jitlistener llvm-link llvm-mc llvm-nm llvm-objdump llvm-prof llvm-rtdyld llvm-size macho-dump opt llvm-mcmarkup
 
 [component_0]
 type = Group

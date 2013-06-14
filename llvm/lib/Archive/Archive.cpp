@@ -90,12 +90,6 @@ bool ArchiveMember::replaceWith(const sys::Path& newFile, std::string* ErrMsg) {
   else
     flags &= ~BSD4SymbolTableFlag;
 
-  // LLVM symbol tables have a very specific name
-  if (path.str() == ARFILE_LLVM_SYMTAB_NAME)
-    flags |= LLVMSymbolTableFlag;
-  else
-    flags &= ~LLVMSymbolTableFlag;
-
   // String table name
   if (path.str() == ARFILE_STRTAB_NAME)
     flags |= StringTableFlag;
