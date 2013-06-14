@@ -322,7 +322,7 @@ namespace LValueToRValue {
   //   constant expression;
   constexpr volatile S f() { return S(); }
   static_assert(f().i, ""); // ok! there's no lvalue-to-rvalue conversion here!
-  static_assert(((volatile const S&&)(S)0).i, ""); // expected-error {{constant expression}}
+  static_assert(((volatile const S&&)(S)0).i, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type}}
 }
 
 // DR1312: The proposed wording for this defect has issues, so we ignore this

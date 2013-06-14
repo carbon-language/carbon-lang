@@ -6,14 +6,26 @@
 
 unsigned int f(int);
 
+struct X {};
+
 template<typename T> T& lvalue();
 template<typename T> T&& xvalue();
 template<typename T> T prvalue();
 
-void test_classification(const int *ptr) {
-  int *ptr0 = const_cast<int *&&>(ptr);
-  int *ptr1 = const_cast<int *&&>(xvalue<const int*>());
-  int *ptr2 = const_cast<int *&&>(prvalue<const int*>());
+void test_classification(const int *ptr, X x) {
+  int *&&ptr0 = const_cast<int *&&>(ptr);
+  int *&&ptr1 = const_cast<int *&&>(xvalue<const int*>());
+  int *&&ptr2 = const_cast<int *&&>(prvalue<const int*>()); // expected-error {{const_cast from rvalue to reference type 'int *&&'}}
+  X &&ptr3 = const_cast<X&&>(x);
+  X &&ptr4 = const_cast<X&&>(xvalue<X>());
+  X &&ptr5 = const_cast<X&&>(prvalue<X>());
+
+  int *&ptr6 = const_cast<int *&>(ptr);
+  int *&ptr7 = const_cast<int *&>(xvalue<const int*>()); // expected-error {{const_cast from rvalue to reference type 'int *&'}}
+  int *&ptr8 = const_cast<int *&>(prvalue<const int*>()); // expected-error {{const_cast from rvalue to reference type 'int *&'}}
+  X &ptr9 = const_cast<X&>(x);
+  X &ptrA = const_cast<X&>(xvalue<X>()); // expected-error {{const_cast from rvalue to reference type 'X &'}}
+  X &ptrB = const_cast<X&>(prvalue<X>()); // expected-error {{const_cast from rvalue to reference type 'X &'}}
 }
 
 struct A {

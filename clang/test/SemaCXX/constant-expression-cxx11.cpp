@@ -79,6 +79,11 @@ constexpr int **n6 = const_cast<int**>(&n3);
 constexpr int n7 = **n5;
 constexpr int n8 = **n6;
 
+// const_cast from prvalue to xvalue.
+struct A { int n; };
+constexpr int n9 = (const_cast<A&&>(A{123})).n;
+static_assert(n9 == 123, "");
+
 }
 
 namespace TemplateArgumentConversion {
