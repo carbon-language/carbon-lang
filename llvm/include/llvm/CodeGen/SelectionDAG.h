@@ -609,7 +609,21 @@ public:
       "Cannot compare scalars to vectors");
     assert(LHS.getValueType().isVector() == VT.isVector() &&
       "Cannot compare scalars to vectors");
+    assert(Cond != ISD::SETCC_INVALID &&
+        "Cannot create a setCC of an invalid node.");
     return getNode(ISD::SETCC, DL, VT, LHS, RHS, getCondCode(Cond));
+  }
+
+  // getSelect - Helper function to make it easier to build Select's if you just
+  // have operands and don't want to check for vector.
+  SDValue getSelect(SDLoc DL, EVT VT, SDValue Cond,
+                    SDValue LHS, SDValue RHS) {
+    assert(LHS.getValueType() == RHS.getValueType() &&
+           "Cannot use select on differing types");
+    assert(VT.isVector() == LHS.getValueType().isVector() &&
+           "Cannot mix vectors and scalars");
+    return getNode(Cond.getValueType().isVector() ? ISD::VSELECT : ISD::SELECT, DL, VT,
+                   Cond, LHS, RHS);
   }
 
   /// getSelectCC - Helper function to make it easier to build SelectCC's if you
