@@ -185,6 +185,17 @@ Path::GetTemporaryDirectory(std::string *ErrMsg) {
 #endif
 }
 
+Path
+Path::GetCurrentDirectory() {
+  char pathname[MAXPATHLEN];
+  if (!getcwd(pathname, MAXPATHLEN)) {
+    assert(false && "Could not query current working directory.");
+    return Path();
+  }
+
+  return Path(pathname);
+}
+
 #if defined(__FreeBSD__) || defined (__NetBSD__) || defined(__Bitrig__) || \
     defined(__OpenBSD__) || defined(__minix) || defined(__FreeBSD_kernel__) || \
     defined(__linux__) || defined(__CYGWIN__)

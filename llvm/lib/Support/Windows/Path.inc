@@ -20,6 +20,9 @@
 #include <cstdio>
 #include <malloc.h>
 
+// We need to undo a macro defined in Windows.h, otherwise we won't compile:
+#undef GetCurrentDirectory
+
 // Windows happily accepts either forward or backward slashes, though any path
 // returned by a Win32 API will have backward slashes.  As LLVM code basically
 // assumes forward slashes are used, backward slashs are converted where they
@@ -194,6 +197,13 @@ Path::GetTemporaryDirectory(std::string* ErrMsg) {
   result.createDirectoryOnDisk(false);
   TempDirectory = new Path(result);
   return *TempDirectory;
+}
+
+Path
+Path::GetCurrentDirectory() {
+  char pathname[MAX_PATH];
+  ::GetCurrentDirectoryA(MAX_PATH,pathname);
+  return Path(pathname);
 }
 
 /// GetMainExecutable - Return the path to the main executable, given the
