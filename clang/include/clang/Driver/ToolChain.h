@@ -19,15 +19,23 @@
 #include "llvm/Support/Path.h"
 #include <string>
 
+namespace llvm {
+namespace opt {
+  class ArgList;
+  class DerivedArgList;
+  class InputArgList;
+}
+}
+
 namespace clang {
   class ObjCRuntime;
 
 namespace driver {
-  class ArgList;
+  // FIXME: Remove this using directive and qualify class usage below.
+  using namespace llvm::opt;
+
   class Compilation;
-  class DerivedArgList;
   class Driver;
-  class InputArgList;
   class JobAction;
   class Tool;
 

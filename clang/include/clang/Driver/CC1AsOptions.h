@@ -10,9 +10,17 @@
 #ifndef CLANG_DRIVER_CC1ASOPTIONS_H
 #define CLANG_DRIVER_CC1ASOPTIONS_H
 
+namespace llvm {
+namespace opt {
+  class OptTable;
+}
+}
+
 namespace clang {
 namespace driver {
-  class OptTable;
+  // FIXME: Remove this using directive and qualify class usage below.
+  using namespace llvm::opt;
+
 
 namespace cc1asoptions {
   enum ID {

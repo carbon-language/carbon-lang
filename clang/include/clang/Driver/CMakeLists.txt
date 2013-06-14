@@ -1,7 +1,7 @@
-clang_tablegen(Options.inc -gen-opt-parser-defs
-  SOURCE Options.td
-  TARGET ClangDriverOptions)
+set(LLVM_TARGET_DEFINITIONS Options.td)
+tablegen(CLANG Options.inc -gen-opt-parser-defs)
+add_public_tablegen_target(ClangDriverOptions)
 
-clang_tablegen(CC1AsOptions.inc -gen-opt-parser-defs
-  SOURCE CC1AsOptions.td
-  TARGET ClangCC1AsOptions)
+set(LLVM_TARGET_DEFINITIONS CC1AsOptions.td)
+tablegen(CLANG CC1AsOptions.inc -gen-opt-parser-defs)
+add_public_tablegen_target(ClangCC1AsOptions)

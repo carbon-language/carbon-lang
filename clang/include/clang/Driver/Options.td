@@ -12,7 +12,35 @@
 //===----------------------------------------------------------------------===//
 
 // Include the common option parsing interfaces.
-include "OptParser.td"
+include "llvm/Option/OptParser.td"
+
+/////////
+// Flags
+
+// DriverOption - The option is a "driver" option, and should not be forwarded
+// to gcc.
+def DriverOption : OptionFlag;
+
+// LinkerInput - The option is a linker input.
+def LinkerInput : OptionFlag;
+
+// NoArgumentUnused - Don't report argument unused warnings for this option; this
+// is useful for options like -static or -dynamic which a user may always end up
+// passing, even if the platform defaults to (or only supports) that option.
+def NoArgumentUnused : OptionFlag;
+
+// Unsupported - The option is unsupported, and the driver will reject command
+// lines that use it.
+def Unsupported : OptionFlag;
+
+// NoForward - The option should not be implicitly forwarded to other tools.
+def NoForward : OptionFlag;
+
+// CC1Option - This option should be accepted by clang -cc1.
+def CC1Option : OptionFlag;
+
+// NoDriverOption - This option should not be accepted by the driver.
+def NoDriverOption : OptionFlag;
 
 /////////
 // Groups

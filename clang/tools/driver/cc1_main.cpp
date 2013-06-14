@@ -13,10 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Driver/Arg.h"
-#include "clang/Driver/ArgList.h"
+#include "llvm/Option/Arg.h"
 #include "clang/Driver/DriverDiagnostic.h"
-#include "clang/Driver/OptTable.h"
 #include "clang/Driver/Options.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
@@ -26,6 +24,8 @@
 #include "clang/FrontendTool/Utils.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/LinkAllPasses.h"
+#include "llvm/Option/ArgList.h"
+#include "llvm/Option/OptTable.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Signals.h"
@@ -34,6 +34,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <cstdio>
 using namespace clang;
+using namespace llvm::opt;
 
 //===----------------------------------------------------------------------===//
 // Main driver

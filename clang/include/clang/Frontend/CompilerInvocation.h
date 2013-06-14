@@ -29,13 +29,20 @@
 #include <string>
 #include <vector>
 
+namespace llvm {
+namespace opt {
+class ArgList;
+}
+}
+
 namespace clang {
 
 class CompilerInvocation;
 class DiagnosticsEngine;
 
 namespace driver {
-class ArgList;
+  // FIXME: Remove this using directive and qualify class usage below.
+  using namespace llvm::opt;
 }
 
 /// \brief Fill out Opts based on the options given in Args.

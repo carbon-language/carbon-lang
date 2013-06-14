@@ -17,10 +17,15 @@
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Option/OptSpecifier.h"
 
 namespace llvm {
 class raw_fd_ostream;
 class Triple;
+
+namespace opt {
+class ArgList;
+}
 }
 
 namespace clang {
@@ -104,6 +109,18 @@ createInvocationFromCommandLine(ArrayRef<const char *> Args,
                             IntrusiveRefCntPtr<DiagnosticsEngine> Diags =
                                 IntrusiveRefCntPtr<DiagnosticsEngine>());
 
-}  // end namespace clang
+/// Return the value of the last argument as an integer, or a default. If Diags
+/// is non-null, emits an error if the argument is given, but non-integral.
+int getLastArgIntValue(const llvm::opt::ArgList &Args,
+                       llvm::opt::OptSpecifier Id, int Default,
+                       DiagnosticsEngine *Diags = 0);
+
+inline int getLastArgIntValue(const llvm::opt::ArgList &Args,
+                              llvm::opt::OptSpecifier Id, int Default,
+                              DiagnosticsEngine &Diags) {
+  return getLastArgIntValue(Args, Id, Default, &Diags);
+}
+
+} // end namespace clang
 
 #endif

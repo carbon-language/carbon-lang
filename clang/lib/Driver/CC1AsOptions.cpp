@@ -8,11 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/CC1AsOptions.h"
-#include "clang/Driver/OptTable.h"
-#include "clang/Driver/Option.h"
+#include "llvm/Option/OptTable.h"
+#include "llvm/Option/Option.h"
 using namespace clang;
 using namespace clang::driver;
-using namespace clang::driver::options;
+using namespace llvm::opt;
 using namespace clang::driver::cc1asoptions;
 
 #define PREFIX(NAME, VALUE) const char *const NAME[] = VALUE;

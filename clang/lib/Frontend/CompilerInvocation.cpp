@@ -11,13 +11,11 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/Version.h"
-#include "clang/Driver/Arg.h"
-#include "clang/Driver/ArgList.h"
 #include "clang/Driver/DriverDiagnostic.h"
-#include "clang/Driver/OptTable.h"
-#include "clang/Driver/Option.h"
 #include "clang/Driver/Options.h"
+#include "clang/Driver/Util.h"
 #include "clang/Frontend/LangStandard.h"
+#include "clang/Frontend/Utils.h"
 #include "clang/Lex/HeaderSearchOptions.h"
 #include "clang/Serialization/ASTReader.h"
 #include "llvm/ADT/Hashing.h"
@@ -26,6 +24,10 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Option/Arg.h"
+#include "llvm/Option/ArgList.h"
+#include "llvm/Option/OptTable.h"
+#include "llvm/Option/Option.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
@@ -58,6 +60,7 @@ CompilerInvocationBase::CompilerInvocationBase(const CompilerInvocationBase &X)
 
 using namespace clang::driver;
 using namespace clang::driver::options;
+using namespace llvm::opt;
 
 //
 
@@ -80,7 +83,7 @@ static unsigned getOptimizationLevel(ArgList &Args, InputKind IK,
     if (S == "s" || S == "z" || S.empty())
       return 2;
 
-    return Args.getLastArgIntValue(OPT_O, DefaultOpt, Diags);
+    return getLastArgIntValue(Args, OPT_O, DefaultOpt, Diags);
   }
 
   return DefaultOpt;
@@ -223,11 +226,12 @@ static bool ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   Opts.AnalyzeSpecificFunction = Args.getLastArgValue(OPT_analyze_function);
   Opts.UnoptimizedCFG = Args.hasArg(OPT_analysis_UnoptimizedCFG);
   Opts.TrimGraph = Args.hasArg(OPT_trim_egraph);
-  Opts.maxBlockVisitOnPath = Args.getLastArgIntValue(OPT_analyzer_max_loop, 4, Diags);
+  Opts.maxBlockVisitOnPath =
+      getLastArgIntValue(Args, OPT_analyzer_max_loop, 4, Diags);
   Opts.PrintStats = Args.hasArg(OPT_analyzer_stats);
   Opts.InlineMaxStackDepth =
-    Args.getLastArgIntValue(OPT_analyzer_inline_max_stack_depth,
-                            Opts.InlineMaxStackDepth, Diags);
+      getLastArgIntValue(Args, OPT_analyzer_inline_max_stack_depth,
+                         Opts.InlineMaxStackDepth, Diags);
 
   Opts.CheckersControlList.clear();
   for (arg_iterator it = Args.filtered_begin(OPT_analyzer_checker,
@@ -362,7 +366,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
                        Args.hasArg(OPT_cl_fast_relaxed_math));
   Opts.NoZeroInitializedInBSS = Args.hasArg(OPT_mno_zero_initialized_in_bss);
   Opts.BackendOptions = Args.getAllArgValues(OPT_backend_option);
-  Opts.NumRegisterParameters = Args.getLastArgIntValue(OPT_mregparm, 0, Diags);
+  Opts.NumRegisterParameters = getLastArgIntValue(Args, OPT_mregparm, 0, Diags);
   Opts.NoGlobalMerge = Args.hasArg(OPT_mno_global_merge);
   Opts.NoExecStack = Args.hasArg(OPT_mno_exec_stack);
   Opts.EnableSegmentedStacks = Args.hasArg(OPT_split_stacks);
@@ -421,7 +425,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.SanitizeUndefinedTrapOnError =
     Args.hasArg(OPT_fsanitize_undefined_trap_on_error);
   Opts.SSPBufferSize =
-    Args.getLastArgIntValue(OPT_stack_protector_buffer_size, 8, Diags);
+      getLastArgIntValue(Args, OPT_stack_protector_buffer_size, 8, Diags);
   Opts.StackRealignment = Args.hasArg(OPT_mstackrealign);
   if (Arg *A = Args.getLastArg(OPT_mstack_alignment)) {
     StringRef Val = A->getValue();
@@ -570,19 +574,17 @@ bool clang::ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   Opts.VerifyDiagnostics = Args.hasArg(OPT_verify);
   Opts.ElideType = !Args.hasArg(OPT_fno_elide_type);
   Opts.ShowTemplateTree = Args.hasArg(OPT_fdiagnostics_show_template_tree);
-  Opts.ErrorLimit = Args.getLastArgIntValue(OPT_ferror_limit, 0, Diags);
-  Opts.MacroBacktraceLimit
-    = Args.getLastArgIntValue(OPT_fmacro_backtrace_limit,
+  Opts.ErrorLimit = getLastArgIntValue(Args, OPT_ferror_limit, 0, Diags);
+  Opts.MacroBacktraceLimit =
+      getLastArgIntValue(Args, OPT_fmacro_backtrace_limit,
                          DiagnosticOptions::DefaultMacroBacktraceLimit, Diags);
-  Opts.TemplateBacktraceLimit
-    = Args.getLastArgIntValue(OPT_ftemplate_backtrace_limit,
-                         DiagnosticOptions::DefaultTemplateBacktraceLimit,
-                         Diags);
-  Opts.ConstexprBacktraceLimit
-    = Args.getLastArgIntValue(OPT_fconstexpr_backtrace_limit,
-                         DiagnosticOptions::DefaultConstexprBacktraceLimit,
-                         Diags);
-  Opts.TabStop = Args.getLastArgIntValue(OPT_ftabstop,
+  Opts.TemplateBacktraceLimit = getLastArgIntValue(
+      Args, OPT_ftemplate_backtrace_limit,
+      DiagnosticOptions::DefaultTemplateBacktraceLimit, Diags);
+  Opts.ConstexprBacktraceLimit = getLastArgIntValue(
+      Args, OPT_fconstexpr_backtrace_limit,
+      DiagnosticOptions::DefaultConstexprBacktraceLimit, Diags);
+  Opts.TabStop = getLastArgIntValue(Args, OPT_ftabstop,
                                     DiagnosticOptions::DefaultTabStop, Diags);
   if (Opts.TabStop == 0 || Opts.TabStop > DiagnosticOptions::MaxTabStop) {
     Opts.TabStop = DiagnosticOptions::DefaultTabStop;
@@ -590,7 +592,7 @@ bool clang::ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
       Diags->Report(diag::warn_ignoring_ftabstop_value)
       << Opts.TabStop << DiagnosticOptions::DefaultTabStop;
   }
-  Opts.MessageLength = Args.getLastArgIntValue(OPT_fmessage_length, 0, Diags);
+  Opts.MessageLength = getLastArgIntValue(Args, OPT_fmessage_length, 0, Diags);
   addWarningArgs(Args, Opts.Warnings);
 
   return Success;
@@ -845,12 +847,13 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   Opts.ResourceDir = Args.getLastArgValue(OPT_resource_dir);
   Opts.ModuleCachePath = Args.getLastArgValue(OPT_fmodules_cache_path);
   Opts.DisableModuleHash = Args.hasArg(OPT_fdisable_module_hash);
-  Opts.ModuleCachePruneInterval
-    = Args.getLastArgIntValue(OPT_fmodules_prune_interval, 7*24*60*60);
-  Opts.ModuleCachePruneAfter
-    = Args.getLastArgIntValue(OPT_fmodules_prune_after, 31*24*60*60);
+  Opts.ModuleCachePruneInterval =
+      getLastArgIntValue(Args, OPT_fmodules_prune_interval, 7 * 24 * 60 * 60);
+  Opts.ModuleCachePruneAfter =
+      getLastArgIntValue(Args, OPT_fmodules_prune_after, 31 * 24 * 60 * 60);
   for (arg_iterator it = Args.filtered_begin(OPT_fmodules_ignore_macro),
-       ie = Args.filtered_end(); it != ie; ++it) {
+                    ie = Args.filtered_end();
+       it != ie; ++it) {
     StringRef MacroDef = (*it)->getValue();
     Opts.ModulesIgnoreMacros.insert(MacroDef.split('=').first);
   }
@@ -1219,7 +1222,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     = Args.hasArg(OPT_fms_extensions) || Args.hasArg(OPT_fms_compatibility);
   Opts.MicrosoftMode = Args.hasArg(OPT_fms_compatibility);
   Opts.AsmBlocks = Args.hasArg(OPT_fasm_blocks) || Opts.MicrosoftExt;
-  Opts.MSCVersion = Args.getLastArgIntValue(OPT_fmsc_version, 0, Diags);
+  Opts.MSCVersion = getLastArgIntValue(Args, OPT_fmsc_version, 0, Diags);
   Opts.Borland = Args.hasArg(OPT_fborland_extensions);
   Opts.WritableStrings = Args.hasArg(OPT_fwritable_strings);
   Opts.ConstStrings = Args.hasFlag(OPT_fconst_strings, OPT_fno_const_strings,
@@ -1249,16 +1252,16 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.AccessControl = !Args.hasArg(OPT_fno_access_control);
   Opts.ElideConstructors = !Args.hasArg(OPT_fno_elide_constructors);
   Opts.MathErrno = Args.hasArg(OPT_fmath_errno);
-  Opts.InstantiationDepth = Args.getLastArgIntValue(OPT_ftemplate_depth, 256,
-                                                    Diags);
-  Opts.ConstexprCallDepth = Args.getLastArgIntValue(OPT_fconstexpr_depth, 512,
-                                                    Diags);
-  Opts.ConstexprStepLimit = Args.getLastArgIntValue(OPT_fconstexpr_steps,
-                                                    1048576, Diags);
-  Opts.BracketDepth = Args.getLastArgIntValue(OPT_fbracket_depth, 256, Diags);
+  Opts.InstantiationDepth =
+      getLastArgIntValue(Args, OPT_ftemplate_depth, 256, Diags);
+  Opts.ConstexprCallDepth =
+      getLastArgIntValue(Args, OPT_fconstexpr_depth, 512, Diags);
+  Opts.ConstexprStepLimit =
+      getLastArgIntValue(Args, OPT_fconstexpr_steps, 1048576, Diags);
+  Opts.BracketDepth = getLastArgIntValue(Args, OPT_fbracket_depth, 256, Diags);
   Opts.DelayedTemplateParsing = Args.hasArg(OPT_fdelayed_template_parsing);
-  Opts.NumLargeByValueCopy = Args.getLastArgIntValue(OPT_Wlarge_by_value_copy_EQ,
-                                                    0, Diags);
+  Opts.NumLargeByValueCopy =
+      getLastArgIntValue(Args, OPT_Wlarge_by_value_copy_EQ, 0, Diags);
   Opts.MSBitfields = Args.hasArg(OPT_mms_bitfields);
   Opts.ObjCConstantStringClass =
     Args.getLastArgValue(OPT_fconstant_string_class);
@@ -1267,9 +1270,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.EncodeExtendedBlockSig =
     Args.hasArg(OPT_fencode_extended_block_signature);
   Opts.EmitAllDecls = Args.hasArg(OPT_femit_all_decls);
-  Opts.PackStruct = Args.getLastArgIntValue(OPT_fpack_struct_EQ, 0, Diags);
-  Opts.PICLevel = Args.getLastArgIntValue(OPT_pic_level, 0, Diags);
-  Opts.PIELevel = Args.getLastArgIntValue(OPT_pie_level, 0, Diags);
+  Opts.PackStruct = getLastArgIntValue(Args, OPT_fpack_struct_EQ, 0, Diags);
+  Opts.PICLevel = getLastArgIntValue(Args, OPT_pic_level, 0, Diags);
+  Opts.PIELevel = getLastArgIntValue(Args, OPT_pie_level, 0, Diags);
   Opts.Static = Args.hasArg(OPT_static_define);
   Opts.DumpRecordLayoutsSimple = Args.hasArg(OPT_fdump_record_layouts_simple);
   Opts.DumpRecordLayouts = Opts.DumpRecordLayoutsSimple 
@@ -1314,7 +1317,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.RetainCommentsFromSystemHeaders =
       Args.hasArg(OPT_fretain_comments_from_system_headers);
 
-  unsigned SSP = Args.getLastArgIntValue(OPT_stack_protector, 0, Diags);
+  unsigned SSP = getLastArgIntValue(Args, OPT_stack_protector, 0, Diags);
   switch (SSP) {
   default:
     Diags.Report(diag::err_drv_invalid_value)
@@ -1546,6 +1549,8 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   // Issue errors on arguments that are not valid for CC1.
   for (ArgList::iterator I = Args->begin(), E = Args->end();
        I != E; ++I) {
+    if ((*I)->getOption().matches(options::OPT_INPUT))
+      continue;
     if (!(*I)->getOption().hasFlag(options::CC1Option)) {
       Diags.Report(diag::err_drv_unknown_argument) << (*I)->getAsString(*Args);
       Success = false;
@@ -1713,4 +1718,21 @@ std::string CompilerInvocation::getModuleHash() const {
   }
 
   return llvm::APInt(64, code).toString(36, /*Signed=*/false);
+}
+
+namespace clang {
+
+// Declared in clang/Frontend/Utils.h.
+int getLastArgIntValue(const ArgList &Args, OptSpecifier Id, int Default,
+                       DiagnosticsEngine *Diags) {
+  int Res = Default;
+  if (Arg *A = Args.getLastArg(Id)) {
+    if (StringRef(A->getValue()).getAsInteger(10, Res)) {
+      if (Diags)
+        Diags->Report(diag::err_drv_invalid_int_value) << A->getAsString(Args)
+                                                       << A->getValue();
+    }
+  }
+  return Res;
+}
 }

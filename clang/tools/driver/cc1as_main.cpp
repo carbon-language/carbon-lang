@@ -14,14 +14,12 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
-#include "clang/Driver/Arg.h"
-#include "clang/Driver/ArgList.h"
 #include "clang/Driver/CC1AsOptions.h"
 #include "clang/Driver/DriverDiagnostic.h"
-#include "clang/Driver/OptTable.h"
 #include "clang/Driver/Options.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "clang/Frontend/Utils.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
@@ -37,6 +35,9 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCTargetAsmParser.h"
+#include "llvm/Option/Arg.h"
+#include "llvm/Option/ArgList.h"
+#include "llvm/Option/OptTable.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
@@ -56,6 +57,7 @@
 using namespace clang;
 using namespace clang::driver;
 using namespace llvm;
+using namespace llvm::opt;
 
 namespace {
 
@@ -225,8 +227,8 @@ bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
   Opts.ShowVersion = Args->hasArg(OPT_version);
 
   // Transliterate Options
-  Opts.OutputAsmVariant = Args->getLastArgIntValue(OPT_output_asm_variant,
-                                                   0, Diags);
+  Opts.OutputAsmVariant =
+      getLastArgIntValue(*Args.get(), OPT_output_asm_variant, 0, Diags);
   Opts.ShowEncoding = Args->hasArg(OPT_show_encoding);
   Opts.ShowInst = Args->hasArg(OPT_show_inst);
 
@@ -427,7 +429,7 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
 
   // Honor -help.
   if (Asm.ShowHelp) {
-    OwningPtr<driver::OptTable> Opts(driver::createCC1AsOptTable());
+    OwningPtr<OptTable> Opts(driver::createCC1AsOptTable());
     Opts->PrintHelp(llvm::outs(), "clang -cc1as", "Clang Integrated Assembler");
     return 0;
   }

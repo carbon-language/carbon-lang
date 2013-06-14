@@ -14,6 +14,7 @@
 #include "clang/Driver/Types.h"
 #include "clang/Driver/Util.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Option/Option.h"
 #include "llvm/Support/Compiler.h"
 
 namespace clang {
@@ -27,6 +28,7 @@ namespace toolchains {
 }
 
 namespace tools {
+using llvm::opt::ArgStringList;
 
   /// \brief Clang compiler tool.
   class LLVM_LIBRARY_VISIBILITY Clang : public Tool {

@@ -17,11 +17,10 @@ Job::~Job() {}
 void Command::anchor() {}
 
 Command::Command(const Action &_Source, const Tool &_Creator,
-                 const char *_Executable, const ArgStringList &_Arguments)
-  : Job(CommandClass), Source(_Source), Creator(_Creator),
-    Executable(_Executable), Arguments(_Arguments)
-{
-}
+                 const char *_Executable,
+                 const llvm::opt::ArgStringList &_Arguments)
+    : Job(CommandClass), Source(_Source), Creator(_Creator),
+      Executable(_Executable), Arguments(_Arguments) {}
 
 JobList::JobList() : Job(JobListClass) {}
 

@@ -13,15 +13,16 @@
 
 #include "clang/Frontend/Utils.h"
 #include "clang/Basic/DiagnosticOptions.h"
-#include "clang/Driver/ArgList.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/Options.h"
 #include "clang/Driver/Tool.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "llvm/Option/ArgList.h"
 #include "llvm/Support/Host.h"
 using namespace clang;
+using namespace llvm::opt;
 
 /// createInvocationFromCommandLine - Construct a compiler invocation object for
 /// a command line argument vector.
@@ -76,7 +77,7 @@ clang::createInvocationFromCommandLine(ArrayRef<const char *> ArgList,
     return 0;
   }
 
-  const driver::ArgStringList &CCArgs = Cmd->getArguments();
+  const ArgStringList &CCArgs = Cmd->getArguments();
   OwningPtr<CompilerInvocation> CI(new CompilerInvocation());
   if (!CompilerInvocation::CreateFromArgs(*CI,
                                      const_cast<const char **>(CCArgs.data()),

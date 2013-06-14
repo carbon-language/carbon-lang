@@ -24,18 +24,26 @@
 #include <set>
 #include <string>
 
-namespace clang {
-namespace driver {
-  class Action;
+namespace llvm {
+namespace opt {
   class Arg;
   class ArgList;
-  class Command;
-  class Compilation;
   class DerivedArgList;
   class InputArgList;
+  class OptTable;
+}
+}
+
+namespace clang {
+namespace driver {
+  // FIXME: Remove this using directive and qualify class usage below.
+  using namespace llvm::opt;
+
+  class Action;
+  class Command;
+  class Compilation;
   class InputInfo;
   class JobAction;
-  class OptTable;
   class ToolChain;
 
 /// Driver - Encapsulate logic for constructing compilation processes

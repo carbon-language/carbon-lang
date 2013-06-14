@@ -17,7 +17,7 @@ TOOL_NO_EXPORTS = 1
 NO_INSTALL = 1
 
 include $(CLANG_LEVEL)/../../Makefile.config
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc option
 USEDLIBS = clangARCMigrate.a clangRewriteCore.a \
 		 clangFrontend.a clangDriver.a clangSerialization.a clangParse.a \
 		 clangSema.a clangEdit.a clangAnalysis.a clangAST.a clangLex.a \

@@ -12,9 +12,17 @@
 
 #include "clang/Basic/LLVM.h"
 
+namespace llvm {
+namespace opt {
+  class ArgList;
+}
+}
+
 namespace clang {
 namespace driver {
-  class ArgList;
+  // FIXME: Remove this using directive and qualify class usage below.
+  using namespace llvm::opt;
+
   class Compilation;
   class InputInfo;
   class Job;

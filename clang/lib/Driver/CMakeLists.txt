@@ -1,14 +1,10 @@
 add_clang_library(clangDriver
   Action.cpp
-  Arg.cpp
-  ArgList.cpp
   CC1AsOptions.cpp
   Compilation.cpp
   Driver.cpp
   DriverOptions.cpp
   Job.cpp
-  Option.cpp
-  OptTable.cpp
   Phases.cpp
   Tool.cpp
   ToolChain.cpp
@@ -28,4 +24,5 @@ add_dependencies(clangDriver
 
 target_link_libraries(clangDriver
   clangBasic
+  LLVMOption
   )

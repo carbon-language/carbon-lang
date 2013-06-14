@@ -10,12 +10,12 @@
 #include "ToolChains.h"
 #include "clang/Basic/CharInfo.h"
 #include "clang/Basic/Version.h"
-#include "clang/Driver/Arg.h"
-#include "clang/Driver/ArgList.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
+#include "llvm/Option/Arg.h"
+#include "llvm/Option/ArgList.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Path.h"
 
@@ -31,6 +31,7 @@
 using namespace clang::driver;
 using namespace clang::driver::toolchains;
 using namespace clang;
+using namespace llvm::opt;
 
 Windows::Windows(const Driver &D, const llvm::Triple& Triple,
                  const ArgList &Args)

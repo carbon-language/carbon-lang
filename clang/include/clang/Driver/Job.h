@@ -11,13 +11,16 @@
 #define CLANG_DRIVER_JOB_H_
 
 #include "clang/Basic/LLVM.h"
-#include "clang/Driver/Util.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Option/Option.h"
 
 namespace clang {
 namespace driver {
+class Action;
 class Command;
 class Tool;
+
+using llvm::opt::ArgStringList;
 
 class Job {
 public:

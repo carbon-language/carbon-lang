@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 // Include the common option parsing interfaces.
-include "OptParser.td"
+include "llvm/Option/OptParser.td"
 
 //===----------------------------------------------------------------------===//
 // Target Options

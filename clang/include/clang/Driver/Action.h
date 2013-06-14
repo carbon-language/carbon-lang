@@ -14,9 +14,17 @@
 #include "clang/Driver/Util.h"
 #include "llvm/ADT/SmallVector.h"
 
+namespace llvm {
+namespace opt {
+  class Arg;
+}
+}
+
 namespace clang {
 namespace driver {
-  class Arg;
+  // FIXME: Remove this using directive and qualify class usage below.
+  using namespace llvm::opt;
+
 
 /// Action - Represent an abstract compilation step to perform.
 ///
