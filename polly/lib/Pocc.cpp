@@ -32,6 +32,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/system_error.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallString.h"
 
 #include "polly/ScopLib.h"
 
@@ -50,8 +51,8 @@ static cl::opt<std::string> PlutoFuse("pluto-fuse", cl::desc(""), cl::Hidden,
 namespace {
 
 class Pocc : public ScopPass {
-  sys::Path plutoStderr;
-  sys::Path plutoStdout;
+  SmallString<128> PlutoStderr;
+  SmallString<128> PlutoStdout;
   std::vector<const char *> arguments;
 
 public:
@@ -74,17 +75,18 @@ bool Pocc::runTransform(Scop &S) {
   Dependences *D = &getAnalysis<Dependences>();
 
   // Create the scop file.
-  sys::Path tempDir = sys::Path::GetTemporaryDirectory();
-  sys::Path scopFile = tempDir;
-  scopFile.appendComponent("polly.scop");
-  scopFile.createFileOnDisk();
+  SmallString<128> TempDir;
+  SmallString<128> ScopFile;
+  llvm::sys::path::system_temp_directory(/*erasedOnReboot=*/ true, TempDir);
+  ScopFile = TempDir;
+  llvm::sys::path::append(ScopFile, "polly.scop");
 
-  FILE *F = fopen(scopFile.c_str(), "w");
+  FILE *F = fopen(ScopFile.c_str(), "w");
 
   arguments.clear();
 
   if (!F) {
-    errs() << "Cannot open file: " << tempDir.c_str() << "\n";
+    errs() << "Cannot open file: " << TempDir.c_str() << "\n";
     errs() << "Skipping export.\n";
     return false;
   }
@@ -94,11 +96,11 @@ bool Pocc::runTransform(Scop &S) {
   fclose(F);
 
   // Execute pocc
-  sys::Path pocc = sys::Program::FindProgramByName("pocc");
+  std::string pocc = sys::FindProgramByName("pocc");
 
   arguments.push_back("pocc");
   arguments.push_back("--read-scop");
-  arguments.push_back(scopFile.c_str());
+  arguments.push_back(ScopFile.c_str());
   arguments.push_back("--pluto-tile-scat");
   arguments.push_back("--candl-dep-isl-simp");
   arguments.push_back("--cloogify-scheds");
@@ -118,24 +120,25 @@ bool Pocc::runTransform(Scop &S) {
 
   arguments.push_back(0);
 
-  plutoStdout = tempDir;
-  plutoStdout.appendComponent("pluto.stdout");
-  plutoStderr = tempDir;
-  plutoStderr.appendComponent("pluto.stderr");
+  PlutoStdout = TempDir;
+  llvm::sys::path::append(PlutoStdout, "pluto.stdout");
+  PlutoStderr = TempDir;
+  llvm::sys::path::append(PlutoStderr, "pluto.stderr");
 
-  std::vector<sys::Path *> redirect;
-  redirect.push_back(0);
-  redirect.push_back(&plutoStdout);
-  redirect.push_back(&plutoStderr);
+  std::vector<llvm::StringRef> Redirect;
+  Redirect.push_back(0);
+  Redirect.push_back(PlutoStdout.c_str());
+  Redirect.push_back(PlutoStderr.c_str());
 
-  sys::Program::ExecuteAndWait(pocc, &arguments[0], 0,
-                         (sys::Path const **)&redirect[0]);
+  sys::ExecuteAndWait(pocc, &arguments[0], 0,
+                      (const llvm::StringRef **)&Redirect[0]);
 
   // Read the created scop file
-  sys::Path newScopFile = tempDir;
-  newScopFile.appendComponent("polly.pocc.c.scop");
+  SmallString<128> NewScopFile;
+  NewScopFile = TempDir;
+  llvm::sys::path::append(NewScopFile, "polly.pocc.c.scop");
 
-  FILE *poccFile = fopen(newScopFile.c_str(), "r");
+  FILE *poccFile = fopen(NewScopFile.c_str(), "r");
   ScopLib newScoplib(&S, poccFile, D);
 
   if (!newScoplib.updateScattering()) {
@@ -251,17 +254,17 @@ void Pocc::printScop(raw_ostream &OS) const {
 
   OS << "\n";
 
-  if (error_code ec = MemoryBuffer::getFile(plutoStdout.c_str(), stdoutBuffer))
+  if (error_code ec = MemoryBuffer::getFile(PlutoStdout, stdoutBuffer))
     OS << "Could not open pocc stdout file: " + ec.message() << "\n";
   else {
     OS << "pocc stdout: " << stdoutBuffer->getBufferIdentifier() << "\n";
     OS << stdoutBuffer->getBuffer() << "\n";
   }
 
-  if (error_code ec = MemoryBuffer::getFile(plutoStderr.c_str(), stderrBuffer))
+  if (error_code ec = MemoryBuffer::getFile(PlutoStderr, stderrBuffer))
     OS << "Could not open pocc stderr file: " + ec.message() << "\n";
   else {
-    OS << "pocc stderr: " << plutoStderr.c_str() << "\n";
+    OS << "pocc stderr: " << PlutoStderr << "\n";
     OS << stderrBuffer->getBuffer() << "\n";
   }
 }
