@@ -26,7 +26,7 @@ entry:
 ; ARMv7-ELF: LoadGV
 ; ARMv7-ELF: ldr r[[reg2:[0-9]+]],
 ; ARMv7-ELF: ldr r[[reg3:[0-9]+]],
-; ARMv7-ELF: ldr r[[reg2]], [r[[reg2]], r[[reg3]]]
+; ARMv7-ELF: ldr r[[reg2]], [r[[reg3]], r[[reg2]]]
   %tmp = load i32* @g
   ret i32 %tmp
 }
@@ -55,7 +55,7 @@ entry:
 ; ARMv7-ELF: LoadIndirectSymbol
 ; ARMv7-ELF: ldr r[[reg5:[0-9]+]],
 ; ARMv7-ELF: ldr r[[reg6:[0-9]+]],
-; ARMv7-ELF: ldr r[[reg5]], [r[[reg5]], r[[reg6]]]
+; ARMv7-ELF: ldr r[[reg5]], [r[[reg6]], r[[reg5]]]
   %tmp = load i32* @i
   ret i32 %tmp
 }

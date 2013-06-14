@@ -1,6 +1,8 @@
 ; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=armv7-apple-ios | FileCheck %s --check-prefix=ARM
+; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=armv7-linux-gnueabi | FileCheck %s --check-prefix=ARM
 ; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios | FileCheck %s --check-prefix=THUMB
 ; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=armv7-apple-ios -arm-long-calls | FileCheck %s --check-prefix=ARM-LONG
+; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=armv7-linux-gnueabi -arm-long-calls | FileCheck %s --check-prefix=ARM-LONG
 ; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios -arm-long-calls | FileCheck %s --check-prefix=THUMB-LONG
 
 ; Note that some of these tests assume that relocations are either
@@ -20,8 +22,8 @@ define void @t1() nounwind ssp {
 ; ARM: and r1, r1, #255
 ; ARM: bl {{_?}}memset
 ; ARM-LONG: t1
-; ARM-LONG: movw r3, :lower16:L_memset$non_lazy_ptr
-; ARM-LONG: movt r3, :upper16:L_memset$non_lazy_ptr
+; ARM-LONG: {{(movw r3, :lower16:L_memset\$non_lazy_ptr)|(ldr r3, .LCPI)}}
+; ARM-LONG: {{(movt r3, :upper16:L_memset\$non_lazy_ptr)?}}
 ; ARM-LONG: ldr r3, [r3]
 ; ARM-LONG: blx r3
 ; THUMB: t1
@@ -58,8 +60,8 @@ define void @t2() nounwind ssp {
 ; ARM: ldr r1, [sp[[SLOT]]] @ 4-byte Reload
 ; ARM: bl {{_?}}memcpy
 ; ARM-LONG: t2
-; ARM-LONG: movw r3, :lower16:L_memcpy$non_lazy_ptr
-; ARM-LONG: movt r3, :upper16:L_memcpy$non_lazy_ptr
+; ARM-LONG: {{(movw r3, :lower16:L_memcpy\$non_lazy_ptr)|(ldr r3, .LCPI)}}
+; ARM-LONG: {{(movt r3, :upper16:L_memcpy\$non_lazy_ptr)?}}
 ; ARM-LONG: ldr r3, [r3]
 ; ARM-LONG: blx r3
 ; THUMB: t2
@@ -96,8 +98,8 @@ define void @t3() nounwind ssp {
 ; ARM: mov r0, r1
 ; ARM: bl {{_?}}memmove
 ; ARM-LONG: t3
-; ARM-LONG: movw r3, :lower16:L_memmove$non_lazy_ptr
-; ARM-LONG: movt r3, :upper16:L_memmove$non_lazy_ptr
+; ARM-LONG: {{(movw r3, :lower16:L_memmove\$non_lazy_ptr)|(ldr r3, .LCPI)}}
+; ARM-LONG: {{(movt r3, :upper16:L_memmove\$non_lazy_ptr)?}}
 ; ARM-LONG: ldr r3, [r3]
 ; ARM-LONG: blx r3
 ; THUMB: t3

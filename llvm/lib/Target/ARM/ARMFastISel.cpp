@@ -630,6 +630,11 @@ unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, MVT VT) {
     (const TargetRegisterClass*)&ARM::GPRRegClass;
   unsigned DestReg = createResultReg(RC);
 
+  // FastISel TLS support on non-Darwin is broken, punt to SelectionDAG.
+  const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
+  bool IsThreadLocal = GVar && GVar->isThreadLocal();
+  if (!Subtarget->isTargetDarwin() && IsThreadLocal) return 0;
+
   // Use movw+movt when possible, it avoids constant pool entries.
   // Darwin targets don't support movt with Reloc::Static, see
   // ARMTargetLowering::LowerGlobalAddressDarwin.  Other targets only support
@@ -3044,13 +3049,23 @@ bool ARMFastISel::FastLowerArguments() {
 namespace llvm {
   FastISel *ARM::createFastISel(FunctionLoweringInfo &funcInfo,
                                 const TargetLibraryInfo *libInfo) {
-    // Completely untested on non-iOS.
     const TargetMachine &TM = funcInfo.MF->getTarget();
 
-    // Darwin and thumb1 only for now.
     const ARMSubtarget *Subtarget = &TM.getSubtarget<ARMSubtarget>();
-    if (Subtarget->isTargetIOS() && !Subtarget->isThumb1Only())
+    // Thumb2 support on iOS; ARM support on iOS, Linux and NaCl.
+    bool UseFastISel = false;
+    UseFastISel |= Subtarget->isTargetIOS() && !Subtarget->isThumb1Only();
+    UseFastISel |= Subtarget->isTargetLinux() && !Subtarget->isThumb();
+    UseFastISel |= Subtarget->isTargetNaCl() && !Subtarget->isThumb();
+
+    if (UseFastISel) {
+      // iOS always has a FP for backtracking, force other targets
+      // to keep their FP when doing FastISel. The emitted code is
+      // currently superior, and in cases like test-suite's lencod
+      // FastISel isn't quite correct when FP is eliminated.
+      TM.Options.NoFramePointerElim = true;
       return new ARMFastISel(funcInfo, libInfo);
+    }
     return 0;
   }
 }

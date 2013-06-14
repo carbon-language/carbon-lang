@@ -1,6 +1,9 @@
 ; RUN: llc < %s -O0 -fast-isel-abort -mtriple=armv7-apple-ios | FileCheck %s --check-prefix=v7
+; RUN: llc < %s -O0 -fast-isel-abort -mtriple=armv7-linux-gnueabi | FileCheck %s --check-prefix=v7
 ; RUN: llc < %s -O0 -fast-isel-abort -mtriple=armv4t-apple-ios | FileCheck %s --check-prefix=prev6
+; RUN: llc < %s -O0 -fast-isel-abort -mtriple=armv4t-linux-gnueabi | FileCheck %s --check-prefix=prev6
 ; RUN: llc < %s -O0 -fast-isel-abort -mtriple=armv5-apple-ios | FileCheck %s --check-prefix=prev6
+; RUN: llc < %s -O0 -fast-isel-abort -mtriple=armv5-linux-gnueabi | FileCheck %s --check-prefix=prev6
 ; RUN: llc < %s -O0 -fast-isel-abort -mtriple=thumbv7-apple-ios | FileCheck %s --check-prefix=v7
 
 ; Can't test pre-ARMv6 Thumb because ARM FastISel currently only supports

@@ -1,4 +1,5 @@
 ; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort -mtriple=thumbv7-apple-darwin
+; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort -mtriple=thumbv7-linux-gnueabi
 
 %union.anon = type { <16 x i32> }
 

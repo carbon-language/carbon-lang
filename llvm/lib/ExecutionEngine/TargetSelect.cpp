@@ -88,6 +88,14 @@ TargetMachine *EngineBuilder::selectTarget(const Triple &TargetTriple,
     FeaturesStr = Features.getString();
   }
 
+  // FIXME: non-iOS ARM FastISel is broken with MCJIT.
+  if (UseMCJIT &&
+      TheTriple.getArch() == Triple::arm &&
+      TheTriple.getOS() != Triple::IOS &&
+      OptLevel == CodeGenOpt::None) {
+    OptLevel = CodeGenOpt::Less;
+  }
+
   // Allocate a target...
   TargetMachine *Target = TheTarget->createTargetMachine(TheTriple.getTriple(),
                                                          MCPU, FeaturesStr,

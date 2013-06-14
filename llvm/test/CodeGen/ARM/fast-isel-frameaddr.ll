@@ -46,8 +46,7 @@ entry:
 ; LINUX-ARM: frameaddr_index1:
 ; LINUX-ARM: push {r11}
 ; LINUX-ARM: mov r11, sp
-; LINUX-ARM: mov r0, r11
-; LINUX-ARM: ldr r0, [r0]
+; LINUX-ARM: ldr r0, [r11]
 
 ; LINUX-THUMB2: frameaddr_index1:
 ; LINUX-THUMB2: str r7, [sp, #-4]!
@@ -80,8 +79,7 @@ entry:
 ; LINUX-ARM: frameaddr_index3:
 ; LINUX-ARM: push {r11}
 ; LINUX-ARM: mov r11, sp
-; LINUX-ARM: mov r0, r11
-; LINUX-ARM: ldr r0, [r0]
+; LINUX-ARM: ldr r0, [r11]
 ; LINUX-ARM: ldr r0, [r0]
 ; LINUX-ARM: ldr r0, [r0]
 
