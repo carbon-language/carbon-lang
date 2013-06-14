@@ -356,8 +356,8 @@ static bool Execute(void **Data,
   return true;
 }
 
-static int WaitAux(Win32ProcessInfo *wpi, const Path &path,
-                   unsigned secondsToWait, std::string *ErrMsg) {
+static int WaitAux(Win32ProcessInfo *wpi, unsigned secondsToWait,
+                   std::string *ErrMsg) {
   // Wait for the process to terminate.
   HANDLE hProcess = wpi->hProcess;
   DWORD millisecondsToWait = INFINITE;
@@ -401,7 +401,7 @@ static int WaitAux(Win32ProcessInfo *wpi, const Path &path,
 static int Wait(void *&Data, const Path &path, unsigned secondsToWait,
                 std::string *ErrMsg) {
   Win32ProcessInfo *wpi = reinterpret_cast<Win32ProcessInfo *>(Data);
-  int Ret = WaitAux(wpi, path, secondsToWait, ErrMsg);
+  int Ret = WaitAux(wpi, secondsToWait, ErrMsg);
 
   CloseHandle(wpi->hProcess);
   delete wpi;
