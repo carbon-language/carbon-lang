@@ -3632,7 +3632,7 @@ multiclass t2LdStCop<bits<4> op31_28, bit load, bit Dbit, string asm> {
     let DecoderMethod = "DecodeCopMemInstruction";
   }
   def _PRE : T2CI<op31_28,
-                  (outs), (ins p_imm:$cop, c_imm:$CRd, addrmode5:$addr),
+                  (outs), (ins p_imm:$cop, c_imm:$CRd, addrmode5_pre:$addr),
                   asm, "\t$cop, $CRd, $addr!"> {
     bits<13> addr;
     bits<4> cop;
