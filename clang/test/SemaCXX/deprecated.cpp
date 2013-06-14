@@ -2,6 +2,8 @@
 // RUN: %clang_cc1 -std=c++11 %s -Wdeprecated -verify
 // RUN: %clang_cc1 -std=c++1y %s -Wdeprecated -verify
 
+#include "Inputs/register.h"
+
 void f() throw();
 void g() throw(int);
 void h() throw(...);
@@ -16,6 +18,8 @@ void stuff() {
 #if __cplusplus >= 201103L
   // expected-warning@-2 {{'register' storage class specifier is deprecated}}
 #endif
+
+  int k = to_int(n); // no-warning
 
   bool b;
   ++b; // expected-warning {{incrementing expression of type bool is deprecated}}
