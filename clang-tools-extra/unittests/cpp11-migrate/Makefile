@@ -11,7 +11,7 @@ CLANG_LEVEL = ../../../..
 include $(CLANG_LEVEL)/../../Makefile.config
 
 TESTNAME = Cpp11MigrateTests
-LINK_COMPONENTS := asmparser bitreader support MC MCParser
+LINK_COMPONENTS := asmparser bitreader support MC MCParser option
 USEDLIBS = migrateCore.a clangTooling.a clangFrontend.a clangSerialization.a clangDriver.a \
 		   clangRewriteFrontend.a clangRewriteCore.a clangParse.a \
 		   clangSema.a clangAnalysis.a \

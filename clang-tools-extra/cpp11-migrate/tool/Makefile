@@ -31,7 +31,7 @@ BUILT_SOURCES += $(ObjDir)/../UseAuto/.objdir
 SOURCES += $(addprefix ../AddOverride/,$(notdir $(wildcard $(PROJ_SRC_DIR)/../AddOverride/*.cpp)))
 BUILT_SOURCES += $(ObjDir)/../AddOverride/.objdir
 
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc mcparser
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc mcparser option
 USEDLIBS = migrateCore.a clangTooling.a clangFrontend.a clangSerialization.a clangDriver.a \
 		   clangRewriteFrontend.a clangRewriteCore.a clangParse.a \
 		   clangSema.a clangAnalysis.a \

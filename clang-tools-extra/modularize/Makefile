@@ -15,7 +15,7 @@ NO_INSTALL = 0
 # No plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1
 
-LINK_COMPONENTS := mcparser bitreader support mc
+LINK_COMPONENTS := mcparser bitreader support mc option
 USEDLIBS = clangFrontend.a clangSerialization.a clangDriver.a \
            clangTooling.a clangParse.a clangSema.a clangAnalysis.a \
            clangEdit.a clangAST.a clangLex.a clangBasic.a
