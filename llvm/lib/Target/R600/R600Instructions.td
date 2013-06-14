@@ -261,6 +261,50 @@ class EG_CF_RAT <bits <8> cfinst, bits <6> ratinst, bits<4> mask, dag outs,
 
 }
 
+class VTX_READ <string name, bits<8> buffer_id, dag outs, list<dag> pattern>
+    : InstR600ISA <outs, (ins MEMxi:$src_gpr), name, pattern>,
+      VTX_WORD1_GPR {
+
+  // Static fields
+  let DST_REL = 0;
+  // The docs say that if this bit is set, then DATA_FORMAT, NUM_FORMAT_ALL,
+  // FORMAT_COMP_ALL, SRF_MODE_ALL, and ENDIAN_SWAP fields will be ignored,
+  // however, based on my testing if USE_CONST_FIELDS is set, then all
+  // these fields need to be set to 0.
+  let USE_CONST_FIELDS = 0;
+  let NUM_FORMAT_ALL = 1;
+  let FORMAT_COMP_ALL = 0;
+  let SRF_MODE_ALL = 0;
+
+  let Inst{63-32} = Word1;
+  // LLVM can only encode 64-bit instructions, so these fields are manually
+  // encoded in R600CodeEmitter
+  //
+  // bits<16> OFFSET;
+  // bits<2>  ENDIAN_SWAP = 0;
+  // bits<1>  CONST_BUF_NO_STRIDE = 0;
+  // bits<1>  MEGA_FETCH = 0;
+  // bits<1>  ALT_CONST = 0;
+  // bits<2>  BUFFER_INDEX_MODE = 0;
+
+  // VTX_WORD2 (LLVM can only encode 64-bit instructions, so WORD2 encoding
+  // is done in R600CodeEmitter
+  //
+  // Inst{79-64} = OFFSET;
+  // Inst{81-80} = ENDIAN_SWAP;
+  // Inst{82}    = CONST_BUF_NO_STRIDE;
+  // Inst{83}    = MEGA_FETCH;
+  // Inst{84}    = ALT_CONST;
+  // Inst{86-85} = BUFFER_INDEX_MODE;
+  // Inst{95-86} = 0; Reserved
+
+  // VTX_WORD3 (Padding)
+  //
+  // Inst{127-96} = 0;
+
+  let VTXInst = 1;
+}
+
 class LoadParamFrag <PatFrag load_type> : PatFrag <
   (ops node:$ptr), (load_type node:$ptr),
   [{ return isParamLoad(dyn_cast<LoadSDNode>(N)); }]
@@ -1249,6 +1293,133 @@ def RAT_WRITE_CACHELESS_128_eg : RAT_WRITE_CACHELESS_eg <
   [(global_store v4i32:$rw_gpr, i32:$index_gpr)]
 >;
 
+class VTX_READ_eg <string name, bits<8> buffer_id, dag outs, list<dag> pattern>
+    : VTX_WORD0_eg, VTX_READ<name, buffer_id, outs, pattern> {
+
+  // Static fields
+  let VC_INST = 0;
+  let FETCH_TYPE = 2;
+  let FETCH_WHOLE_QUAD = 0;
+  let BUFFER_ID = buffer_id;
+  let SRC_REL = 0;
+  // XXX: We can infer this field based on the SRC_GPR.  This would allow us
+  // to store vertex addresses in any channel, not just X.
+  let SRC_SEL_X = 0;
+
+  let Inst{31-0} = Word0;
+}
+
+class VTX_READ_8_eg <bits<8> buffer_id, list<dag> pattern>
+    : VTX_READ_eg <"VTX_READ_8 $dst_gpr, $src_gpr", buffer_id,
+                   (outs R600_TReg32_X:$dst_gpr), pattern> {
+
+  let MEGA_FETCH_COUNT = 1;
+  let DST_SEL_X = 0;
+  let DST_SEL_Y = 7;   // Masked
+  let DST_SEL_Z = 7;   // Masked
+  let DST_SEL_W = 7;   // Masked
+  let DATA_FORMAT = 1; // FMT_8
+}
+
+class VTX_READ_16_eg <bits<8> buffer_id, list<dag> pattern>
+    : VTX_READ_eg <"VTX_READ_16 $dst_gpr, $src_gpr", buffer_id,
+                   (outs R600_TReg32_X:$dst_gpr), pattern> {
+  let MEGA_FETCH_COUNT = 2;
+  let DST_SEL_X = 0;
+  let DST_SEL_Y = 7;   // Masked
+  let DST_SEL_Z = 7;   // Masked
+  let DST_SEL_W = 7;   // Masked
+  let DATA_FORMAT = 5; // FMT_16
+
+}
+
+class VTX_READ_32_eg <bits<8> buffer_id, list<dag> pattern>
+    : VTX_READ_eg <"VTX_READ_32 $dst_gpr, $src_gpr", buffer_id,
+                   (outs R600_TReg32_X:$dst_gpr), pattern> {
+
+  let MEGA_FETCH_COUNT = 4;
+  let DST_SEL_X        = 0;
+  let DST_SEL_Y        = 7;   // Masked
+  let DST_SEL_Z        = 7;   // Masked
+  let DST_SEL_W        = 7;   // Masked
+  let DATA_FORMAT      = 0xD; // COLOR_32
+
+  // This is not really necessary, but there were some GPU hangs that appeared
+  // to be caused by ALU instructions in the next instruction group that wrote
+  // to the $src_gpr registers of the VTX_READ.
+  // e.g.
+  // %T3_X<def> = VTX_READ_PARAM_32_eg %T2_X<kill>, 24
+  // %T2_X<def> = MOV %ZERO
+  //Adding this constraint prevents this from happening.
+  let Constraints = "$src_gpr.ptr = $dst_gpr";
+}
+
+class VTX_READ_128_eg <bits<8> buffer_id, list<dag> pattern>
+    : VTX_READ_eg <"VTX_READ_128 $dst_gpr.XYZW, $src_gpr", buffer_id,
+                   (outs R600_Reg128:$dst_gpr), pattern> {
+
+  let MEGA_FETCH_COUNT = 16;
+  let DST_SEL_X        =  0;
+  let DST_SEL_Y        =  1;
+  let DST_SEL_Z        =  2;
+  let DST_SEL_W        =  3;
+  let DATA_FORMAT      =  0x22; // COLOR_32_32_32_32
+
+  // XXX: Need to force VTX_READ_128 instructions to write to the same register
+  // that holds its buffer address to avoid potential hangs.  We can't use
+  // the same constraint as VTX_READ_32_eg, because the $src_gpr.ptr and $dst
+  // registers are different sizes.
+}
+
+//===----------------------------------------------------------------------===//
+// VTX Read from parameter memory space
+//===----------------------------------------------------------------------===//
+
+def VTX_READ_PARAM_8_eg : VTX_READ_8_eg <0,
+  [(set i32:$dst_gpr, (load_param_zexti8 ADDRVTX_READ:$src_gpr))]
+>;
+
+def VTX_READ_PARAM_16_eg : VTX_READ_16_eg <0,
+  [(set i32:$dst_gpr, (load_param_zexti16 ADDRVTX_READ:$src_gpr))]
+>;
+
+def VTX_READ_PARAM_32_eg : VTX_READ_32_eg <0,
+  [(set i32:$dst_gpr, (load_param ADDRVTX_READ:$src_gpr))]
+>;
+
+def VTX_READ_PARAM_128_eg : VTX_READ_128_eg <0,
+  [(set v4i32:$dst_gpr, (load_param ADDRVTX_READ:$src_gpr))]
+>;
+
+//===----------------------------------------------------------------------===//
+// VTX Read from global memory space
+//===----------------------------------------------------------------------===//
+
+// 8-bit reads
+def VTX_READ_GLOBAL_8_eg : VTX_READ_8_eg <1,
+  [(set i32:$dst_gpr, (zextloadi8_global ADDRVTX_READ:$src_gpr))]
+>;
+
+// 32-bit reads
+def VTX_READ_GLOBAL_32_eg : VTX_READ_32_eg <1,
+  [(set i32:$dst_gpr, (global_load ADDRVTX_READ:$src_gpr))]
+>;
+
+// 128-bit reads
+def VTX_READ_GLOBAL_128_eg : VTX_READ_128_eg <1,
+  [(set v4i32:$dst_gpr, (global_load ADDRVTX_READ:$src_gpr))]
+>;
+
+//===----------------------------------------------------------------------===//
+// Constant Loads
+// XXX: We are currently storing all constants in the global address space.
+//===----------------------------------------------------------------------===//
+
+def CONSTANT_LOAD_eg : VTX_READ_32_eg <1,
+  [(set i32:$dst_gpr, (constant_load ADDRVTX_READ:$src_gpr))]
+>;
+
+
 } // End Predicates = [isEG]
 
 //===----------------------------------------------------------------------===//
@@ -1403,176 +1574,7 @@ let hasSideEffects = 1 in {
     let END_OF_PROGRAM = 1;
   }
 
-//===----------------------------------------------------------------------===//
-// Memory read/write instructions
-//===----------------------------------------------------------------------===//
-
-class VTX_READ_eg <string name, bits<8> buffer_id, dag outs, list<dag> pattern>
-    : InstR600ISA <outs, (ins MEMxi:$ptr), name, pattern>,
-      VTX_WORD1_GPR, VTX_WORD0 {
-
-  // Static fields
-  let VC_INST = 0;
-  let FETCH_TYPE = 2;
-  let FETCH_WHOLE_QUAD = 0;
-  let BUFFER_ID = buffer_id;
-  let SRC_REL = 0;
-  // XXX: We can infer this field based on the SRC_GPR.  This would allow us
-  // to store vertex addresses in any channel, not just X.
-  let SRC_SEL_X = 0;
-  let DST_REL = 0;
-  // The docs say that if this bit is set, then DATA_FORMAT, NUM_FORMAT_ALL,
-  // FORMAT_COMP_ALL, SRF_MODE_ALL, and ENDIAN_SWAP fields will be ignored,
-  // however, based on my testing if USE_CONST_FIELDS is set, then all
-  // these fields need to be set to 0.
-  let USE_CONST_FIELDS = 0;
-  let NUM_FORMAT_ALL = 1;
-  let FORMAT_COMP_ALL = 0;
-  let SRF_MODE_ALL = 0;
-
-  let Inst{31-0} = Word0;
-  let Inst{63-32} = Word1;
-  // LLVM can only encode 64-bit instructions, so these fields are manually
-  // encoded in R600CodeEmitter
-  //
-  // bits<16> OFFSET;
-  // bits<2>  ENDIAN_SWAP = 0;
-  // bits<1>  CONST_BUF_NO_STRIDE = 0;
-  // bits<1>  MEGA_FETCH = 0;
-  // bits<1>  ALT_CONST = 0;
-  // bits<2>  BUFFER_INDEX_MODE = 0;
-
-
-
-  // VTX_WORD2 (LLVM can only encode 64-bit instructions, so WORD2 encoding
-  // is done in R600CodeEmitter
-  //
-  // Inst{79-64} = OFFSET;
-  // Inst{81-80} = ENDIAN_SWAP;
-  // Inst{82}    = CONST_BUF_NO_STRIDE;
-  // Inst{83}    = MEGA_FETCH;
-  // Inst{84}    = ALT_CONST;
-  // Inst{86-85} = BUFFER_INDEX_MODE;
-  // Inst{95-86} = 0; Reserved
-
-  // VTX_WORD3 (Padding)
-  //
-  // Inst{127-96} = 0;
-
-  let VTXInst = 1;
-}
-
-class VTX_READ_8_eg <bits<8> buffer_id, list<dag> pattern>
-    : VTX_READ_eg <"VTX_READ_8 $dst, $ptr", buffer_id, (outs R600_TReg32_X:$dst),
-                   pattern> {
-
-  let MEGA_FETCH_COUNT = 1;
-  let DST_SEL_X = 0;
-  let DST_SEL_Y = 7;   // Masked
-  let DST_SEL_Z = 7;   // Masked
-  let DST_SEL_W = 7;   // Masked
-  let DATA_FORMAT = 1; // FMT_8
-}
-
-class VTX_READ_16_eg <bits<8> buffer_id, list<dag> pattern>
-    : VTX_READ_eg <"VTX_READ_16 $dst, $ptr", buffer_id, (outs R600_TReg32_X:$dst),
-                    pattern> {
-  let MEGA_FETCH_COUNT = 2;
-  let DST_SEL_X = 0;
-  let DST_SEL_Y = 7;   // Masked
-  let DST_SEL_Z = 7;   // Masked
-  let DST_SEL_W = 7;   // Masked
-  let DATA_FORMAT = 5; // FMT_16
-
-}
-
-class VTX_READ_32_eg <bits<8> buffer_id, list<dag> pattern>
-    : VTX_READ_eg <"VTX_READ_32 $dst, $ptr", buffer_id, (outs R600_TReg32_X:$dst),
-                   pattern> {
-
-  let MEGA_FETCH_COUNT = 4;
-  let DST_SEL_X        = 0;
-  let DST_SEL_Y        = 7;   // Masked
-  let DST_SEL_Z        = 7;   // Masked
-  let DST_SEL_W        = 7;   // Masked
-  let DATA_FORMAT      = 0xD; // COLOR_32
-
-  // This is not really necessary, but there were some GPU hangs that appeared
-  // to be caused by ALU instructions in the next instruction group that wrote
-  // to the $ptr registers of the VTX_READ.
-  // e.g.
-  // %T3_X<def> = VTX_READ_PARAM_32_eg %T2_X<kill>, 24
-  // %T2_X<def> = MOV %ZERO
-  //Adding this constraint prevents this from happening.
-  let Constraints = "$ptr.ptr = $dst";
-}
-
-class VTX_READ_128_eg <bits<8> buffer_id, list<dag> pattern>
-    : VTX_READ_eg <"VTX_READ_128 $dst.XYZW, $ptr", buffer_id, (outs R600_Reg128:$dst),
-                   pattern> {
-
-  let MEGA_FETCH_COUNT = 16;
-  let DST_SEL_X        =  0;
-  let DST_SEL_Y        =  1;
-  let DST_SEL_Z        =  2;
-  let DST_SEL_W        =  3;
-  let DATA_FORMAT      =  0x22; // COLOR_32_32_32_32
-
-  // XXX: Need to force VTX_READ_128 instructions to write to the same register
-  // that holds its buffer address to avoid potential hangs.  We can't use
-  // the same constraint as VTX_READ_32_eg, because the $ptr.ptr and $dst
-  // registers are different sizes.
-}
-
-//===----------------------------------------------------------------------===//
-// VTX Read from parameter memory space
-//===----------------------------------------------------------------------===//
-
-def VTX_READ_PARAM_8_eg : VTX_READ_8_eg <0,
-  [(set i32:$dst, (load_param_zexti8 ADDRVTX_READ:$ptr))]
->;
-
-def VTX_READ_PARAM_16_eg : VTX_READ_16_eg <0,
-  [(set i32:$dst, (load_param_zexti16 ADDRVTX_READ:$ptr))]
->;
-
-def VTX_READ_PARAM_32_eg : VTX_READ_32_eg <0,
-  [(set i32:$dst, (load_param ADDRVTX_READ:$ptr))]
->;
-
-def VTX_READ_PARAM_128_eg : VTX_READ_128_eg <0,
-  [(set v4i32:$dst, (load_param ADDRVTX_READ:$ptr))]
->;
-
-//===----------------------------------------------------------------------===//
-// VTX Read from global memory space
-//===----------------------------------------------------------------------===//
-
-// 8-bit reads
-def VTX_READ_GLOBAL_8_eg : VTX_READ_8_eg <1,
-  [(set i32:$dst, (zextloadi8_global ADDRVTX_READ:$ptr))]
->;
-
-// 32-bit reads
-def VTX_READ_GLOBAL_32_eg : VTX_READ_32_eg <1,
-  [(set i32:$dst, (global_load ADDRVTX_READ:$ptr))]
->;
-
-// 128-bit reads
-def VTX_READ_GLOBAL_128_eg : VTX_READ_128_eg <1,
-  [(set v4i32:$dst, (global_load ADDRVTX_READ:$ptr))]
->;
-
-//===----------------------------------------------------------------------===//
-// Constant Loads
-// XXX: We are currently storing all constants in the global address space.
-//===----------------------------------------------------------------------===//
-
-def CONSTANT_LOAD_eg : VTX_READ_32_eg <1,
-  [(set i32:$dst, (constant_load ADDRVTX_READ:$ptr))]
->;
-
-}
+} // End Predicates = [isEGorCayman]
 
 //===----------------------------------------------------------------------===//
 // Regist loads and stores - for indirect addressing
@@ -1634,6 +1636,122 @@ def RAT_STORE_DWORD_cm : EG_CF_RAT <
 > {
   let eop = 0; // This bit is not used on Cayman.
 }
+
+class VTX_READ_cm <string name, bits<8> buffer_id, dag outs, list<dag> pattern>
+    : VTX_WORD0_cm, VTX_READ<name, buffer_id, outs, pattern> {
+
+  // Static fields
+  let VC_INST = 0;
+  let FETCH_TYPE = 2;
+  let FETCH_WHOLE_QUAD = 0;
+  let BUFFER_ID = buffer_id;
+  let SRC_REL = 0;
+  // XXX: We can infer this field based on the SRC_GPR.  This would allow us
+  // to store vertex addresses in any channel, not just X.
+  let SRC_SEL_X = 0;
+  let SRC_SEL_Y = 0;
+  let STRUCTURED_READ = 0;
+  let LDS_REQ = 0;
+  let COALESCED_READ = 0;
+
+  let Inst{31-0} = Word0;
+}
+
+class VTX_READ_8_cm <bits<8> buffer_id, list<dag> pattern>
+    : VTX_READ_cm <"VTX_READ_8 $dst_gpr, $src_gpr", buffer_id,
+                   (outs R600_TReg32_X:$dst_gpr), pattern> {
+
+  let DST_SEL_X = 0;
+  let DST_SEL_Y = 7;   // Masked
+  let DST_SEL_Z = 7;   // Masked
+  let DST_SEL_W = 7;   // Masked
+  let DATA_FORMAT = 1; // FMT_8
+}
+
+class VTX_READ_16_cm <bits<8> buffer_id, list<dag> pattern>
+    : VTX_READ_cm <"VTX_READ_16 $dst_gpr, $src_gpr", buffer_id,
+                   (outs R600_TReg32_X:$dst_gpr), pattern> {
+  let DST_SEL_X = 0;
+  let DST_SEL_Y = 7;   // Masked
+  let DST_SEL_Z = 7;   // Masked
+  let DST_SEL_W = 7;   // Masked
+  let DATA_FORMAT = 5; // FMT_16
+
+}
+
+class VTX_READ_32_cm <bits<8> buffer_id, list<dag> pattern>
+    : VTX_READ_cm <"VTX_READ_32 $dst_gpr, $src_gpr", buffer_id,
+                   (outs R600_TReg32_X:$dst_gpr), pattern> {
+
+  let DST_SEL_X        = 0;
+  let DST_SEL_Y        = 7;   // Masked
+  let DST_SEL_Z        = 7;   // Masked
+  let DST_SEL_W        = 7;   // Masked
+  let DATA_FORMAT      = 0xD; // COLOR_32
+
+  // This is not really necessary, but there were some GPU hangs that appeared
+  // to be caused by ALU instructions in the next instruction group that wrote
+  // to the $src_gpr registers of the VTX_READ.
+  // e.g.
+  // %T3_X<def> = VTX_READ_PARAM_32_eg %T2_X<kill>, 24
+  // %T2_X<def> = MOV %ZERO
+  //Adding this constraint prevents this from happening.
+  let Constraints = "$src_gpr.ptr = $dst_gpr";
+}
+
+class VTX_READ_128_cm <bits<8> buffer_id, list<dag> pattern>
+    : VTX_READ_cm <"VTX_READ_128 $dst_gpr.XYZW, $src_gpr", buffer_id,
+                   (outs R600_Reg128:$dst_gpr), pattern> {
+
+  let DST_SEL_X        =  0;
+  let DST_SEL_Y        =  1;
+  let DST_SEL_Z        =  2;
+  let DST_SEL_W        =  3;
+  let DATA_FORMAT      =  0x22; // COLOR_32_32_32_32
+
+  // XXX: Need to force VTX_READ_128 instructions to write to the same register
+  // that holds its buffer address to avoid potential hangs.  We can't use
+  // the same constraint as VTX_READ_32_eg, because the $src_gpr.ptr and $dst
+  // registers are different sizes.
+}
+
+//===----------------------------------------------------------------------===//
+// VTX Read from parameter memory space
+//===----------------------------------------------------------------------===//
+def VTX_READ_PARAM_8_cm : VTX_READ_8_cm <0,
+  [(set i32:$dst_gpr, (load_param_zexti8 ADDRVTX_READ:$src_gpr))]
+>;
+
+def VTX_READ_PARAM_16_cm : VTX_READ_16_cm <0,
+  [(set i32:$dst_gpr, (load_param_zexti16 ADDRVTX_READ:$src_gpr))]
+>;
+
+def VTX_READ_PARAM_32_cm : VTX_READ_32_cm <0,
+  [(set i32:$dst_gpr, (load_param ADDRVTX_READ:$src_gpr))]
+>;
+
+def VTX_READ_PARAM_128_cm : VTX_READ_128_cm <0,
+  [(set v4i32:$dst_gpr, (load_param ADDRVTX_READ:$src_gpr))]
+>;
+
+//===----------------------------------------------------------------------===//
+// VTX Read from global memory space
+//===----------------------------------------------------------------------===//
+
+// 8-bit reads
+def VTX_READ_GLOBAL_8_cm : VTX_READ_8_cm <1,
+  [(set i32:$dst_gpr, (zextloadi8_global ADDRVTX_READ:$src_gpr))]
+>;
+
+// 32-bit reads
+def VTX_READ_GLOBAL_32_cm : VTX_READ_32_cm <1,
+  [(set i32:$dst_gpr, (global_load ADDRVTX_READ:$src_gpr))]
+>;
+
+// 128-bit reads
+def VTX_READ_GLOBAL_128_cm : VTX_READ_128_cm <1,
+  [(set v4i32:$dst_gpr, (global_load ADDRVTX_READ:$src_gpr))]
+>;
 
 } // End isCayman
 
@@ -1755,7 +1873,7 @@ def CONST_COPY : Instruction {
 def TEX_VTX_CONSTBUF :
   InstR600ISA <(outs R600_Reg128:$dst), (ins MEMxi:$ptr, i32imm:$BUFFER_ID), "VTX_READ_eg $dst, $ptr",
       [(set v4i32:$dst, (CONST_ADDRESS ADDRGA_VAR_OFFSET:$ptr, (i32 imm:$BUFFER_ID)))]>,
-  VTX_WORD1_GPR, VTX_WORD0 {
+  VTX_WORD1_GPR, VTX_WORD0_eg {
 
   let VC_INST = 0;
   let FETCH_TYPE = 2;
@@ -1809,7 +1927,7 @@ def TEX_VTX_CONSTBUF :
 def TEX_VTX_TEXBUF:
   InstR600ISA <(outs R600_Reg128:$dst), (ins MEMxi:$ptr, i32imm:$BUFFER_ID), "TEX_VTX_EXPLICIT_READ $dst, $ptr",
       [(set v4f32:$dst, (int_R600_load_texbuf ADDRGA_VAR_OFFSET:$ptr, imm:$BUFFER_ID))]>,
-VTX_WORD1_GPR, VTX_WORD0 {
+VTX_WORD1_GPR, VTX_WORD0_eg {
 
 let VC_INST = 0;
 let FETCH_TYPE = 2;

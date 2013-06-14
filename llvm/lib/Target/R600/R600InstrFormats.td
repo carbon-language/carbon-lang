@@ -166,28 +166,46 @@ class R600ALU_Word1_OP2_r700 : R600ALU_Word1_OP2 {
 
 class VTX_WORD0 {
   field bits<32> Word0;
-  bits<7> SRC_GPR;
+  bits<7> src_gpr;
   bits<5> VC_INST;
   bits<2> FETCH_TYPE;
   bits<1> FETCH_WHOLE_QUAD;
   bits<8> BUFFER_ID;
   bits<1> SRC_REL;
   bits<2> SRC_SEL_X;
-  bits<6> MEGA_FETCH_COUNT;
 
   let Word0{4-0}   = VC_INST;
   let Word0{6-5}   = FETCH_TYPE;
   let Word0{7}     = FETCH_WHOLE_QUAD;
   let Word0{15-8}  = BUFFER_ID;
-  let Word0{22-16} = SRC_GPR;
+  let Word0{22-16} = src_gpr;
   let Word0{23}    = SRC_REL;
   let Word0{25-24} = SRC_SEL_X;
+}
+
+class VTX_WORD0_eg : VTX_WORD0 {
+
+  bits<6> MEGA_FETCH_COUNT;
+
   let Word0{31-26} = MEGA_FETCH_COUNT;
+}
+
+class VTX_WORD0_cm : VTX_WORD0 {
+
+  bits<2> SRC_SEL_Y;
+  bits<2> STRUCTURED_READ;
+  bits<1> LDS_REQ;
+  bits<1> COALESCED_READ;
+
+  let Word0{27-26} = SRC_SEL_Y;
+  let Word0{29-28} = STRUCTURED_READ;
+  let Word0{30}    = LDS_REQ;
+  let Word0{31}    = COALESCED_READ;
 }
 
 class VTX_WORD1_GPR {
   field bits<32> Word1;
-  bits<7> DST_GPR;
+  bits<7> dst_gpr;
   bits<1> DST_REL;
   bits<3> DST_SEL_X;
   bits<3> DST_SEL_Y;
@@ -199,7 +217,7 @@ class VTX_WORD1_GPR {
   bits<1> FORMAT_COMP_ALL;
   bits<1> SRF_MODE_ALL;
 
-  let Word1{6-0} = DST_GPR;
+  let Word1{6-0} = dst_gpr;
   let Word1{7}    = DST_REL;
   let Word1{8}    = 0; // Reserved
   let Word1{11-9} = DST_SEL_X;
