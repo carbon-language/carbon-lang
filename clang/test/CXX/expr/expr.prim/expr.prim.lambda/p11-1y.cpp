@@ -69,7 +69,7 @@ auto use_multi_return() {
   return nm.n + nm.m;
 }
 
-auto a = [a(4), b = 5, &c = static_cast<const int&&>(0)] {
+auto a = [a(4), b = 5, &c = static_cast<const int&&>(0)] { // expected-warning {{binding reference member 'c' to a temporary value}} expected-note {{here}}
   static_assert(sizeof(a) == sizeof(int), "");
   static_assert(sizeof(b) == sizeof(int), "");
   using T = decltype(c);

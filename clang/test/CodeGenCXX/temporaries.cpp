@@ -1,4 +1,32 @@
 // RUN: %clang_cc1 -emit-llvm %s -o - -triple=x86_64-apple-darwin9 -std=c++11 | FileCheck %s
+
+namespace PR16263 {
+  const unsigned int n = 1234;
+  extern const int &r = (const int&)n;
+  // CHECK: @_ZGRN7PR162631rE = private constant i32 1234,
+  // CHECK: @_ZN7PR162631rE = constant i32* @_ZGRN7PR162631rE,
+
+  extern const int &s = reinterpret_cast<const int&>(n);
+  // CHECK: @_ZN7PR16263L1nE = internal constant i32 1234, align 4
+  // CHECK: @_ZN7PR162631sE = constant i32* @_ZN7PR16263L1nE, align 8
+
+  struct A { int n; };
+  struct B { int n; };
+  struct C : A, B {};
+  extern const A &&a = (A&&)(A&&)(C&&)(C{});
+  // CHECK: @_ZGRN7PR162631aE = private global {{.*}} zeroinitializer,
+  // CHECK: @_ZN7PR162631aE = constant {{.*}} bitcast ({{.*}}* @_ZGRN7PR162631aE to
+
+  extern const int &&t = ((B&&)C{}).n;
+  // CHECK: @_ZGRN7PR162631tE = private global {{.*}} zeroinitializer,
+  // CHECK: @_ZN7PR162631tE = constant i32* {{.*}}* @_ZGRN7PR162631tE {{.*}} 4
+
+  struct D { double d; C c; };
+  extern const int &&u = (123, static_cast<B&&>(0, ((D&&)D{}).*&D::c).n);
+  // CHECK: @_ZGRN7PR162631uE = private global {{.*}} zeroinitializer
+  // CHECK: @_ZN7PR162631uE = constant i32* {{.*}} @_ZGRN7PR162631uE {{.*}} 12
+}
+
 struct A {
   A();
   ~A();

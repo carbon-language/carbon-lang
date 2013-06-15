@@ -73,10 +73,10 @@ const Expr *Expr::skipRValueSubobjectAdjustments(
         continue;
       }
     } else if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
-      if (!ME->isArrow() && ME->getBase()->isRValue()) {
+      if (!ME->isArrow()) {
         assert(ME->getBase()->getType()->isRecordType());
         if (FieldDecl *Field = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
-          if (!Field->isBitField()) {
+          if (!Field->isBitField() && !Field->getType()->isReferenceType()) {
             E = ME->getBase();
             Adjustments.push_back(SubobjectAdjustment(Field));
             continue;

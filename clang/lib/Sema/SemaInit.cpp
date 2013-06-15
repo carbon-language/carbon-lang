@@ -5236,7 +5236,7 @@ getDeclForTemporaryLifetimeExtension(const InitializedEntity &Entity,
   case InitializedEntity::EK_Exception:
   case InitializedEntity::EK_VectorElement:
   case InitializedEntity::EK_ComplexElement:
-    llvm_unreachable("should not materialize a temporary to initialize this");
+    return 0;
   }
   llvm_unreachable("unknown entity kind");
 }
@@ -5245,7 +5245,8 @@ static void performLifetimeExtension(Expr *Init, const ValueDecl *ExtendingD);
 
 /// Update a glvalue expression that is used as the initializer of a reference
 /// to note that its lifetime is extended.
-static void performReferenceExtension(Expr *Init, const ValueDecl *ExtendingD) {
+/// \return \c true if any temporary had its lifetime extended.
+static bool performReferenceExtension(Expr *Init, const ValueDecl *ExtendingD) {
   if (InitListExpr *ILE = dyn_cast<InitListExpr>(Init)) {
     if (ILE->getNumInits() == 1 && ILE->isGLValue()) {
       // This is just redundant braces around an initializer. Step over it.
@@ -5253,12 +5254,38 @@ static void performReferenceExtension(Expr *Init, const ValueDecl *ExtendingD) {
     }
   }
 
+  // Walk past any constructs which we can lifetime-extend across.
+  Expr *Old;
+  do {
+    Old = Init;
+
+    // Step over any subobject adjustments; we may have a materialized
+    // temporary inside them.
+    SmallVector<const Expr *, 2> CommaLHSs;
+    SmallVector<SubobjectAdjustment, 2> Adjustments;
+    Init = const_cast<Expr *>(
+        Init->skipRValueSubobjectAdjustments(CommaLHSs, Adjustments));
+
+    // Per current approach for DR1376, look through casts to reference type
+    // when performing lifetime extension.
+    if (CastExpr *CE = dyn_cast<CastExpr>(Init))
+      if (CE->getSubExpr()->isGLValue())
+        Init = CE->getSubExpr();
+
+    // FIXME: Per DR1213, subscripting on an array temporary produces an xvalue.
+    // It's unclear if binding a reference to that xvalue extends the array
+    // temporary.
+  } while (Init != Old);
+
   if (MaterializeTemporaryExpr *ME = dyn_cast<MaterializeTemporaryExpr>(Init)) {
     // Update the storage duration of the materialized temporary.
     // FIXME: Rebuild the expression instead of mutating it.
     ME->setExtendingDecl(ExtendingD);
     performLifetimeExtension(ME->GetTemporaryExpr(), ExtendingD);
+    return true;
   }
+
+  return false;
 }
 
 /// Update a prvalue expression that is going to be materialized as a
@@ -5274,8 +5301,10 @@ static void performLifetimeExtension(Expr *Init, const ValueDecl *ExtendingD) {
     Init = BTE->getSubExpr();
 
   if (CXXStdInitializerListExpr *ILE =
-          dyn_cast<CXXStdInitializerListExpr>(Init))
-    return performReferenceExtension(ILE->getSubExpr(), ExtendingD);
+          dyn_cast<CXXStdInitializerListExpr>(Init)) {
+    performReferenceExtension(ILE->getSubExpr(), ExtendingD);
+    return;
+  }
 
   if (InitListExpr *ILE = dyn_cast<InitListExpr>(Init)) {
     if (ILE->getType()->isArrayType()) {
@@ -5581,6 +5610,16 @@ InitializationSequence::Perform(Sema &S,
       // Check exception specifications
       if (S.CheckExceptionSpecCompatibility(CurInit.get(), DestType))
         return ExprError();
+
+      // Even though we didn't materialize a temporary, the binding may still
+      // extend the lifetime of a temporary. This happens if we bind a reference
+      // to the result of a cast to reference type.
+      if (const ValueDecl *ExtendingDecl =
+              getDeclForTemporaryLifetimeExtension(Entity)) {
+        if (performReferenceExtension(CurInit.get(), ExtendingDecl))
+          warnOnLifetimeExtension(S, Entity, CurInit.get(), false,
+                                  ExtendingDecl);
+      }
 
       break;
 
