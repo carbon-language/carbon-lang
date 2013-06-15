@@ -124,7 +124,7 @@ AuxVector::DumpToLog(Log *log) const
 const char *
 AuxVector::GetEntryName(EntryType type)
 {
-    const char *name;
+    const char *name = "AT_???";
 
 #define ENTRY_NAME(_type) _type: name = #_type
     switch (type) 
