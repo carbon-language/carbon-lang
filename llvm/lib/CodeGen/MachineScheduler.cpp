@@ -1257,8 +1257,9 @@ public:
     unsigned ExpectedCount;
 
 #ifndef NDEBUG
-    // Remember the greatest min operand latency.
-    unsigned MaxMinLatency;
+    // Remember the greatest operand latency as an upper bound on the number of
+    // times we should retry the pending queue because of a hazard.
+    unsigned MaxObservedLatency;
 #endif
 
     void reset() {
@@ -1281,7 +1282,7 @@ public:
       IsResourceLimited = false;
       ExpectedCount = 0;
 #ifndef NDEBUG
-      MaxMinLatency = 0;
+      MaxObservedLatency = 0;
 #endif
       // Reserve a zero-count for invalid CritResIdx.
       ResourceCounts.resize(1);
@@ -1466,13 +1467,15 @@ void ConvergingScheduler::releaseTopNode(SUnit *SU) {
 
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
+    if (I->isWeak())
+      continue;
     unsigned PredReadyCycle = I->getSUnit()->TopReadyCycle;
-    unsigned MinLatency = I->getMinLatency();
+    unsigned Latency = I->getLatency();
 #ifndef NDEBUG
-    Top.MaxMinLatency = std::max(MinLatency, Top.MaxMinLatency);
+    Top.MaxObservedLatency = std::max(Latency, Top.MaxObservedLatency);
 #endif
-    if (SU->TopReadyCycle < PredReadyCycle + MinLatency)
-      SU->TopReadyCycle = PredReadyCycle + MinLatency;
+    if (SU->TopReadyCycle < PredReadyCycle + Latency)
+      SU->TopReadyCycle = PredReadyCycle + Latency;
   }
   Top.releaseNode(SU, SU->TopReadyCycle);
 }
@@ -1488,12 +1491,12 @@ void ConvergingScheduler::releaseBottomNode(SUnit *SU) {
     if (I->isWeak())
       continue;
     unsigned SuccReadyCycle = I->getSUnit()->BotReadyCycle;
-    unsigned MinLatency = I->getMinLatency();
+    unsigned Latency = I->getLatency();
 #ifndef NDEBUG
-    Bot.MaxMinLatency = std::max(MinLatency, Bot.MaxMinLatency);
+    Bot.MaxObservedLatency = std::max(Latency, Bot.MaxObservedLatency);
 #endif
-    if (SU->BotReadyCycle < SuccReadyCycle + MinLatency)
-      SU->BotReadyCycle = SuccReadyCycle + MinLatency;
+    if (SU->BotReadyCycle < SuccReadyCycle + Latency)
+      SU->BotReadyCycle = SuccReadyCycle + Latency;
   }
   Bot.releaseNode(SU, SU->BotReadyCycle);
 }
@@ -1558,7 +1561,7 @@ void ConvergingScheduler::SchedBoundary::setLatencyPolicy(CandPolicy &Policy) {
     if (L > RemLatency)
       RemLatency = L;
   }
-  unsigned CriticalPathLimit = Rem->CriticalPath + SchedModel->getILPWindow();
+  unsigned CriticalPathLimit = Rem->CriticalPath;
   DEBUG(dbgs() << "  " << Available.getName()
         << " ExpectedLatency " << ExpectedLatency
         << " CP Limit " << CriticalPathLimit << '\n');
@@ -1751,7 +1754,7 @@ SUnit *ConvergingScheduler::SchedBoundary::pickOnlyChoice() {
     }
   }
   for (unsigned i = 0; Available.empty(); ++i) {
-    assert(i <= (HazardRec->getMaxLookAhead() + MaxMinLatency) &&
+    assert(i <= (HazardRec->getMaxLookAhead() + MaxObservedLatency) &&
            "permanent hazard"); (void)i;
     bumpCycle();
     releasePending();

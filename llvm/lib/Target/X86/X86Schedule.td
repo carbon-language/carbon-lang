@@ -559,17 +559,12 @@ def IIC_NOP : InstrItinClass;
 // latencies. Since these latencies are not used for pipeline hazards,
 // they do not need to be exact.
 //
-// ILPWindow=10 is an arbitrary threshold that approximates cycles of
-// latency hidden by instruction buffers. The actual value is not very
-// important but should be zero for inorder and nonzero for OOO processors.
-//
 // The GenericModel contains no instruciton itineraries.
 def GenericModel : SchedMachineModel {
   let IssueWidth = 4;
   let MinLatency = 0;
   let LoadLatency = 4;
   let HighLatency = 10;
-  let ILPWindow = 10;
 }
 
 include "X86ScheduleAtom.td"

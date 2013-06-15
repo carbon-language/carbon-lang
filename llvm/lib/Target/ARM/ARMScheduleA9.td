@@ -1887,9 +1887,6 @@ def CortexA9Model : SchedMachineModel {
   let LoadLatency = 2; // Optimistic load latency assuming bypass.
                        // This is overriden by OperandCycles if the
                        // Itineraries are queried instead.
-  let ILPWindow = 10; // Don't reschedule small blocks to hide
-                      // latency. Minimum latency requirements are already
-                      // modeled strictly by reserving resources.
   let MispredictPenalty = 8; // Based on estimate of pipeline depth.
 
   let Itineraries = CortexA9Itineraries;
@@ -1904,7 +1901,7 @@ def A9UnitALU : ProcResource<2>;
 def A9UnitMul : ProcResource<1> { let Super = A9UnitALU; }
 def A9UnitAGU : ProcResource<1>;
 def A9UnitLS  : ProcResource<1>;
-def A9UnitFP  : ProcResource<1> { let Buffered = 0; }
+def A9UnitFP  : ProcResource<1>;
 def A9UnitB   : ProcResource<1>;
 
 //===----------------------------------------------------------------------===//

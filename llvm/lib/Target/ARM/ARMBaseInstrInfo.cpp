@@ -3684,8 +3684,7 @@ hasHighOperandLatency(const InstrItineraryData *ItinData,
     return true;
 
   // Hoist VFP / NEON instructions with 4 or higher latency.
-  int Latency = computeOperandLatency(ItinData, DefMI, DefIdx, UseMI, UseIdx,
-                                      /*FindMin=*/false);
+  int Latency = computeOperandLatency(ItinData, DefMI, DefIdx, UseMI, UseIdx);
   if (Latency < 0)
     Latency = getInstrLatency(ItinData, DefMI);
   if (Latency <= 3)

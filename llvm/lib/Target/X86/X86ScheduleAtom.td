@@ -529,7 +529,6 @@ def AtomModel : SchedMachineModel {
                        // OperandCycles may be used for expected latency.
   let LoadLatency = 3; // Expected cycles, may be overriden by OperandCycles.
   let HighLatency = 30;// Expected, may be overriden by OperandCycles.
-  let ILPWindow = 0; // Always try to hide expected latency.
 
   let Itineraries = AtomItineraries;
 }

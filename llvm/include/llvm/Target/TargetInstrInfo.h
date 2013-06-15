@@ -817,12 +817,10 @@ public:
 
   /// computeOperandLatency - Compute and return the latency of the given data
   /// dependent def and use when the operand indices are already known.
-  ///
-  /// FindMin may be set to get the minimum vs. expected latency.
   unsigned computeOperandLatency(const InstrItineraryData *ItinData,
                                  const MachineInstr *DefMI, unsigned DefIdx,
-                                 const MachineInstr *UseMI, unsigned UseIdx,
-                                 bool FindMin = false) const;
+                                 const MachineInstr *UseMI, unsigned UseIdx)
+    const;
 
   /// getInstrLatency - Compute the instruction latency of a given instruction.
   /// If the instruction has higher cost when predicated, it's returned via
@@ -839,7 +837,7 @@ public:
                              const MachineInstr *DefMI) const;
 
   int computeDefOperandLatency(const InstrItineraryData *ItinData,
-                               const MachineInstr *DefMI, bool FindMin) const;
+                               const MachineInstr *DefMI) const;
 
   /// isHighLatencyDef - Return true if this opcode has high latency to its
   /// result.

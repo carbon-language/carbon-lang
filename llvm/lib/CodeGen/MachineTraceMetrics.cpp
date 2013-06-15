@@ -853,8 +853,7 @@ computeInstrDepths(const MachineBasicBlock *MBB) {
         // Add latency if DefMI is a real instruction. Transients get latency 0.
         if (!Dep.DefMI->isTransient())
           DepCycle += MTM.SchedModel
-            .computeOperandLatency(Dep.DefMI, Dep.DefOp, UseMI, Dep.UseOp,
-                                   /* FindMin = */ false);
+            .computeOperandLatency(Dep.DefMI, Dep.DefOp, UseMI, Dep.UseOp);
         Cycle = std::max(Cycle, DepCycle);
       }
       // Remember the instruction depth.
@@ -902,8 +901,7 @@ static unsigned updatePhysDepsUpwards(const MachineInstr *MI, unsigned Height,
         // We may not know the UseMI of this dependency, if it came from the
         // live-in list. SchedModel can handle a NULL UseMI.
         DepHeight += SchedModel
-          .computeOperandLatency(MI, MO.getOperandNo(), I->MI, I->Op,
-                                 /* FindMin = */ false);
+          .computeOperandLatency(MI, MO.getOperandNo(), I->MI, I->Op);
       }
       Height = std::max(Height, DepHeight);
       // This regunit is dead above MI.
@@ -941,7 +939,7 @@ static bool pushDepHeight(const DataDep &Dep,
   // Adjust height by Dep.DefMI latency.
   if (!Dep.DefMI->isTransient())
     UseHeight += SchedModel.computeOperandLatency(Dep.DefMI, Dep.DefOp,
-                                                  UseMI, Dep.UseOp, false);
+                                                  UseMI, Dep.UseOp);
 
   // Update Heights[DefMI] to be the maximum height seen.
   MIHeightMap::iterator I;
@@ -1171,7 +1169,7 @@ MachineTraceMetrics::Trace::getPHIDepth(const MachineInstr *PHI) const {
   // Add latency if DefMI is a real instruction. Transients get latency 0.
   if (!Dep.DefMI->isTransient())
     DepCycle += TE.MTM.SchedModel
-      .computeOperandLatency(Dep.DefMI, Dep.DefOp, PHI, Dep.UseOp, false);
+      .computeOperandLatency(Dep.DefMI, Dep.DefOp, PHI, Dep.UseOp);
   return DepCycle;
 }
 

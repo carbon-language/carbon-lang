@@ -90,11 +90,6 @@ namespace llvm {
     /// the value of the Latency field of the predecessor, however advanced
     /// models may provide additional information about specific edges.
     unsigned Latency;
-    /// Record MinLatency seperately from "expected" Latency.
-    ///
-    /// FIXME: this field is not packed on LP64. Convert to 16-bit DAG edge
-    /// latency after introducing saturating truncation.
-    unsigned MinLatency;
 
   public:
     /// SDep - Construct a null SDep. This is only for use by container
@@ -120,10 +115,9 @@ namespace llvm {
         Latency = 1;
         break;
       }
-      MinLatency = Latency;
     }
     SDep(SUnit *S, OrderKind kind)
-      : Dep(S, Order), Contents(), Latency(0), MinLatency(0) {
+      : Dep(S, Order), Contents(), Latency(0) {
       Contents.OrdKind = kind;
     }
 
@@ -142,8 +136,7 @@ namespace llvm {
     }
 
     bool operator==(const SDep &Other) const {
-      return overlaps(Other)
-        && Latency == Other.Latency && MinLatency == Other.MinLatency;
+      return overlaps(Other) && Latency == Other.Latency;
     }
 
     bool operator!=(const SDep &Other) const {
@@ -161,18 +154,6 @@ namespace llvm {
     /// setLatency - Set the latency for this edge.
     void setLatency(unsigned Lat) {
       Latency = Lat;
-    }
-
-    /// getMinLatency - Return the minimum latency for this edge. Minimum
-    /// latency is used for scheduling groups, while normal (expected) latency
-    /// is for instruction cost and critical path.
-    unsigned getMinLatency() const {
-      return MinLatency;
-    }
-
-    /// setMinLatency - Set the minimum latency for this edge.
-    void setMinLatency(unsigned Lat) {
-      MinLatency = Lat;
     }
 
     //// getSUnit - Return the SUnit to which this edge points.

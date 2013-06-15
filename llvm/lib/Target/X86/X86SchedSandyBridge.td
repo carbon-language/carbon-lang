@@ -19,7 +19,6 @@ def SandyBridgeModel : SchedMachineModel {
   let IssueWidth = 4;
   let MinLatency = 0; // 0 = Out-of-order execution.
   let LoadLatency = 4;
-  let ILPWindow = 20;
   let MispredictPenalty = 16;
 }
 

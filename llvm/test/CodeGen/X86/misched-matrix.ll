@@ -1,12 +1,13 @@
-; RUN: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched \
-; RUN:          -misched-topdown -verify-machineinstrs \
-; RUN:     | FileCheck %s -check-prefix=TOPDOWN
-; RUN: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched \
-; RUN:          -misched=ilpmin -verify-machineinstrs \
-; RUN:     | FileCheck %s -check-prefix=ILPMIN
-; RUN: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched \
-; RUN:          -misched=ilpmax -verify-machineinstrs \
-; RUN:     | FileCheck %s -check-prefix=ILPMAX
+; RUN-disabled: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched \
+; RUN-disabled:          -misched-topdown -verify-machineinstrs \
+; RUN-disabled:     | FileCheck %s -check-prefix=TOPDOWN
+; RUN-disabled: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched \
+; RUN-disabled:          -misched=ilpmin -verify-machineinstrs \
+; RUN-disabled:     | FileCheck %s -check-prefix=ILPMIN
+; RUN-disabled: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched \
+; RUN-disabled:          -misched=ilpmax -verify-machineinstrs \
+; RUN-disabled:     | FileCheck %s -check-prefix=ILPMAX
+; RUN: true
 ;
 ; Verify that the MI scheduler minimizes register pressure for a
 ; uniform set of bottom-up subtrees (unrolled matrix multiply).

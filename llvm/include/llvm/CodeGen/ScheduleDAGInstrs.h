@@ -158,7 +158,7 @@ namespace llvm {
 
     /// \brief Resolve and cache a resolved scheduling class for an SUnit.
     const MCSchedClassDesc *getSchedClass(SUnit *SU) const {
-      if (!SU->SchedClass)
+      if (!SU->SchedClass && SchedModel.hasInstrSchedModel())
         SU->SchedClass = SchedModel.resolveSchedClass(SU->getInstr());
       return SU->SchedClass;
     }

@@ -267,13 +267,10 @@ void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU, unsigned OperIdx) {
         SU->hasPhysRegDefs = true;
         Dep = SDep(SU, SDep::Data, *Alias);
         RegUse = UseSU->getInstr();
-        Dep.setMinLatency(
-          SchedModel.computeOperandLatency(SU->getInstr(), OperIdx,
-                                           RegUse, UseOp, /*FindMin=*/true));
       }
       Dep.setLatency(
-        SchedModel.computeOperandLatency(SU->getInstr(), OperIdx,
-                                         RegUse, UseOp, /*FindMin=*/false));
+        SchedModel.computeOperandLatency(SU->getInstr(), OperIdx, RegUse,
+                                         UseOp));
 
       ST.adjustSchedDependency(SU, UseSU, Dep);
       UseSU->addPred(Dep);
@@ -310,10 +307,8 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
           DefSU->addPred(SDep(SU, Kind, /*Reg=*/*Alias));
         else {
           SDep Dep(SU, Kind, /*Reg=*/*Alias);
-          unsigned OutLatency =
-            SchedModel.computeOutputLatency(MI, OperIdx, DefSU->getInstr());
-          Dep.setMinLatency(OutLatency);
-          Dep.setLatency(OutLatency);
+          Dep.setLatency(
+            SchedModel.computeOutputLatency(MI, OperIdx, DefSU->getInstr()));
           DefSU->addPred(Dep);
         }
       }
@@ -389,10 +384,8 @@ void ScheduleDAGInstrs::addVRegDefDeps(SUnit *SU, unsigned OperIdx) {
     SUnit *DefSU = DefI->SU;
     if (DefSU != SU && DefSU != &ExitSU) {
       SDep Dep(SU, SDep::Output, Reg);
-      unsigned OutLatency =
-        SchedModel.computeOutputLatency(MI, OperIdx, DefSU->getInstr());
-      Dep.setMinLatency(OutLatency);
-      Dep.setLatency(OutLatency);
+      Dep.setLatency(
+        SchedModel.computeOutputLatency(MI, OperIdx, DefSU->getInstr()));
       DefSU->addPred(Dep);
     }
     DefI->SU = SU;
@@ -427,10 +420,7 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
       // Adjust the dependence latency using operand def/use information, then
       // allow the target to perform its own adjustments.
       int DefOp = Def->findRegisterDefOperandIdx(Reg);
-      dep.setLatency(
-        SchedModel.computeOperandLatency(Def, DefOp, MI, OperIdx, false));
-      dep.setMinLatency(
-        SchedModel.computeOperandLatency(Def, DefOp, MI, OperIdx, true));
+      dep.setLatency(SchedModel.computeOperandLatency(Def, DefOp, MI, OperIdx));
 
       const TargetSubtargetInfo &ST = TM.getSubtarget<TargetSubtargetInfo>();
       ST.adjustSchedDependency(DefSU, SU, const_cast<SDep &>(dep));

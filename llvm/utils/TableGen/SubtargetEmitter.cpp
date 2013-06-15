@@ -634,16 +634,14 @@ void SubtargetEmitter::EmitProcessorResources(const CodeGenProcModel &ProcModel,
     Record *SuperDef = 0;
     unsigned SuperIdx = 0;
     unsigned NumUnits = 0;
-    bool IsBuffered = true;
+    int BufferSize = -1;
     if (PRDef->isSubClassOf("ProcResGroup")) {
       RecVec ResUnits = PRDef->getValueAsListOfDefs("Resources");
       for (RecIter RUI = ResUnits.begin(), RUE = ResUnits.end();
            RUI != RUE; ++RUI) {
-        if (!NumUnits)
-          IsBuffered = (*RUI)->getValueAsBit("Buffered");
-        else if(IsBuffered != (*RUI)->getValueAsBit("Buffered"))
-          PrintFatalError(PRDef->getLoc(),
-                          "Mixing buffered and unbuffered resources.");
+        int BuffSz = (*RUI)->getValueAsInt("BufferSize");
+        if (!NumUnits || (unsigned)BufferSize < (unsigned)BuffSz)
+          BufferSize = BuffSz;
         NumUnits += (*RUI)->getValueAsInt("NumUnits");
       }
     }
@@ -655,7 +653,7 @@ void SubtargetEmitter::EmitProcessorResources(const CodeGenProcModel &ProcModel,
         SuperIdx = ProcModel.getProcResourceIdx(SuperDef);
       }
       NumUnits = PRDef->getValueAsInt("NumUnits");
-      IsBuffered = PRDef->getValueAsBit("Buffered");
+      BufferSize = PRDef->getValueAsInt("BufferSize");
     }
     // Emit the ProcResourceDesc
     if (i+1 == e)
@@ -664,7 +662,7 @@ void SubtargetEmitter::EmitProcessorResources(const CodeGenProcModel &ProcModel,
     if (PRDef->getName().size() < 15)
       OS.indent(15 - PRDef->getName().size());
     OS << NumUnits << ", " << SuperIdx << ", "
-       << IsBuffered << "}" << Sep << " // #" << i+1;
+       << BufferSize << "}" << Sep << " // #" << i+1;
     if (SuperDef)
       OS << ", Super=" << SuperDef->getName();
     OS << "\n";
@@ -1200,10 +1198,9 @@ void SubtargetEmitter::EmitProcessorModels(raw_ostream &OS) {
     OS << "\n";
     OS << "static const llvm::MCSchedModel " << PI->ModelName << "(\n";
     EmitProcessorProp(OS, PI->ModelDef, "IssueWidth", ',');
-    EmitProcessorProp(OS, PI->ModelDef, "MinLatency", ',');
+    EmitProcessorProp(OS, PI->ModelDef, "MicroOpBufferSize", ',');
     EmitProcessorProp(OS, PI->ModelDef, "LoadLatency", ',');
     EmitProcessorProp(OS, PI->ModelDef, "HighLatency", ',');
-    EmitProcessorProp(OS, PI->ModelDef, "ILPWindow", ',');
     EmitProcessorProp(OS, PI->ModelDef, "MispredictPenalty", ',');
     OS << "  " << PI->Index << ", // Processor ID\n";
     if (PI->hasInstrSchedModel())

@@ -93,31 +93,8 @@ unsigned TargetSchedModel::getNumMicroOps(const MachineInstr *MI,
 // effectively means infinite latency. Since users of the TargetSchedule API
 // don't know how to handle this, we convert it to a very large latency that is
 // easy to distinguish when debugging the DAG but won't induce overflow.
-static unsigned convertLatency(int Cycles) {
+static unsigned capLatency(int Cycles) {
   return Cycles >= 0 ? Cycles : 1000;
-}
-
-/// If we can determine the operand latency from the def only, without machine
-/// model or itinerary lookup, do so. Otherwise return -1.
-int TargetSchedModel::getDefLatency(const MachineInstr *DefMI,
-                                    bool FindMin) const {
-
-  // Return a latency based on the itinerary properties and defining instruction
-  // if possible. Some common subtargets don't require per-operand latency,
-  // especially for minimum latencies.
-  if (FindMin) {
-    // If MinLatency is invalid, then use the itinerary for MinLatency. If no
-    // itinerary exists either, then use single cycle latency.
-    if (SchedModel.MinLatency < 0 && !hasInstrItineraries()) {
-      return 1;
-    }
-    return SchedModel.MinLatency;
-  }
-  else if (!hasInstrSchedModel() && !hasInstrItineraries()) {
-    return TII->defaultDefLatency(&SchedModel, DefMI);
-  }
-  // ...operand lookup required
-  return -1;
 }
 
 /// Return the MCSchedClassDesc for this instruction. Some SchedClasses require
@@ -177,18 +154,16 @@ static unsigned findUseIdx(const MachineInstr *MI, unsigned UseOperIdx) {
 // Top-level API for clients that know the operand indices.
 unsigned TargetSchedModel::computeOperandLatency(
   const MachineInstr *DefMI, unsigned DefOperIdx,
-  const MachineInstr *UseMI, unsigned UseOperIdx,
-  bool FindMin) const {
+  const MachineInstr *UseMI, unsigned UseOperIdx) const {
 
-  int DefLatency = getDefLatency(DefMI, FindMin);
-  if (DefLatency >= 0)
-    return DefLatency;
+  if (!hasInstrSchedModel() && !hasInstrItineraries())
+    return TII->defaultDefLatency(&SchedModel, DefMI);
 
   if (hasInstrItineraries()) {
     int OperLatency = 0;
     if (UseMI) {
-      OperLatency =
-        TII->getOperandLatency(&InstrItins, DefMI, DefOperIdx, UseMI, UseOperIdx);
+      OperLatency = TII->getOperandLatency(&InstrItins, DefMI, DefOperIdx,
+                                           UseMI, UseOperIdx);
     }
     else {
       unsigned DefClass = DefMI->getDesc().getSchedClass();
@@ -205,13 +180,11 @@ unsigned TargetSchedModel::computeOperandLatency(
     // hook to allow subtargets to specialize latency. This hook is only
     // applicable to the InstrItins model. InstrSchedModel should model all
     // special cases without TII hooks.
-    if (!FindMin)
-      InstrLatency = std::max(InstrLatency,
-                              TII->defaultDefLatency(&SchedModel, DefMI));
+    InstrLatency = std::max(InstrLatency,
+                            TII->defaultDefLatency(&SchedModel, DefMI));
     return InstrLatency;
   }
-  assert(!FindMin && hasInstrSchedModel() &&
-         "Expected a SchedModel for this cpu");
+  // hasInstrSchedModel()
   const MCSchedClassDesc *SCDesc = resolveSchedClass(DefMI);
   unsigned DefIdx = findDefIdx(DefMI, DefOperIdx);
   if (DefIdx < SCDesc->NumWriteLatencyEntries) {
@@ -219,7 +192,7 @@ unsigned TargetSchedModel::computeOperandLatency(
     const MCWriteLatencyEntry *WLEntry =
       STI->getWriteLatencyEntry(SCDesc, DefIdx);
     unsigned WriteID = WLEntry->WriteResourceID;
-    unsigned Latency = convertLatency(WLEntry->Cycles);
+    unsigned Latency = capLatency(WLEntry->Cycles);
     if (!UseMI)
       return Latency;
 
@@ -263,7 +236,7 @@ unsigned TargetSchedModel::computeInstrLatency(const MachineInstr *MI) const {
         // Lookup the definition's write latency in SubtargetInfo.
         const MCWriteLatencyEntry *WLEntry =
           STI->getWriteLatencyEntry(SCDesc, DefIdx);
-        Latency = std::max(Latency, convertLatency(WLEntry->Cycles));
+        Latency = std::max(Latency, capLatency(WLEntry->Cycles));
       }
       return Latency;
     }
@@ -274,13 +247,10 @@ unsigned TargetSchedModel::computeInstrLatency(const MachineInstr *MI) const {
 unsigned TargetSchedModel::
 computeOutputLatency(const MachineInstr *DefMI, unsigned DefOperIdx,
                      const MachineInstr *DepMI) const {
-  // MinLatency == -1 is for in-order processors that always have unit
-  // MinLatency. MinLatency > 0 is for in-order processors with varying min
-  // latencies, but since this is not a RAW dep, we always use unit latency.
-  if (SchedModel.MinLatency != 0)
+  if (SchedModel.MicroOpBufferSize <= 1)
     return 1;
 
-  // MinLatency == 0 indicates an out-of-order processor that can dispatch
+  // MicroOpBufferSize > 1 indicates an out-of-order processor that can dispatch
   // WAW dependencies in the same cycle.
 
   // Treat predication as a data dependency for out-of-order cpus. In-order
@@ -302,7 +272,7 @@ computeOutputLatency(const MachineInstr *DefMI, unsigned DefOperIdx,
     if (SCDesc->isValid()) {
       for (const MCWriteProcResEntry *PRI = STI->getWriteProcResBegin(SCDesc),
              *PRE = STI->getWriteProcResEnd(SCDesc); PRI != PRE; ++PRI) {
-        if (!SchedModel.getProcResource(PRI->ProcResourceIdx)->IsBuffered)
+        if (!SchedModel.getProcResource(PRI->ProcResourceIdx)->BufferSize)
           return 1;
       }
     }

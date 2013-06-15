@@ -72,11 +72,13 @@ def instregex;
 //
 // Target hooks allow subtargets to associate LoadLatency and
 // HighLatency with groups of opcodes.
+//
+// See MCSchedule.h for detailed comments.
 class SchedMachineModel {
   int IssueWidth = -1; // Max micro-ops that may be scheduled per cycle.
   int MinLatency = -1; // Determines which instrucions are allowed in a group.
                        // (-1) inorder (0) ooo, (1): inorder +var latencies.
-  int ILPWindow = -1;  // Cycles of latency likely hidden by hardware buffers.
+  int MicroOpBufferSize = -1; // Max micro-ops that can be buffered.
   int LoadLatency = -1; // Cycles for loads to access the cache.
   int HighLatency = -1; // Approximation of cycles for "high latency" ops.
   int MispredictPenalty = -1; // Extra cycles for a mispredicted branch.
@@ -106,7 +108,7 @@ class ProcResourceKind;
 // out-of-order engine that the compiler attempts to conserve.
 // Buffered resources may be held for multiple clock cycles, but the
 // scheduler does not pin them to a particular clock cycle relative to
-// instruction dispatch. Setting Buffered=0 changes this to an
+// instruction dispatch. Setting BufferSize=0 changes this to an
 // in-order resource. In this case, the scheduler counts down from the
 // cycle that the instruction issues in-order, forcing an interlock
 // with subsequent instructions that require the same resource until
@@ -119,7 +121,7 @@ class ProcResourceUnits<ProcResourceKind kind, int num> {
   ProcResourceKind Kind = kind;
   int NumUnits = num;
   ProcResourceKind Super = ?;
-  bit Buffered = 1;
+  int BufferSize = -1;
   SchedMachineModel SchedModel = ?;
 }
 

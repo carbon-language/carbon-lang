@@ -668,27 +668,13 @@ getOperandLatency(const InstrItineraryData *ItinData,
 /// lookup, do so. Otherwise return -1.
 int TargetInstrInfo::computeDefOperandLatency(
   const InstrItineraryData *ItinData,
-  const MachineInstr *DefMI, bool FindMin) const {
+  const MachineInstr *DefMI) const {
 
   // Let the target hook getInstrLatency handle missing itineraries.
   if (!ItinData)
     return getInstrLatency(ItinData, DefMI);
 
-  // Return a latency based on the itinerary properties and defining instruction
-  // if possible. Some common subtargets don't require per-operand latency,
-  // especially for minimum latencies.
-  if (FindMin) {
-    // If MinLatency is valid, call getInstrLatency. This uses Stage latency if
-    // it exists before defaulting to MinLatency.
-    if (ItinData->SchedModel->MinLatency >= 0)
-      return getInstrLatency(ItinData, DefMI);
-
-    // If MinLatency is invalid, OperandLatency is interpreted as MinLatency.
-    // For empty itineraries, short-cirtuit the check and default to one cycle.
-    if (ItinData->isEmpty())
-      return 1;
-  }
-  else if(ItinData->isEmpty())
+  if(ItinData->isEmpty())
     return defaultDefLatency(ItinData->SchedModel, DefMI);
 
   // ...operand lookup required
@@ -709,10 +695,9 @@ int TargetInstrInfo::computeDefOperandLatency(
 unsigned TargetInstrInfo::
 computeOperandLatency(const InstrItineraryData *ItinData,
                       const MachineInstr *DefMI, unsigned DefIdx,
-                      const MachineInstr *UseMI, unsigned UseIdx,
-                      bool FindMin) const {
+                      const MachineInstr *UseMI, unsigned UseIdx) const {
 
-  int DefLatency = computeDefOperandLatency(ItinData, DefMI, FindMin);
+  int DefLatency = computeDefOperandLatency(ItinData, DefMI);
   if (DefLatency >= 0)
     return DefLatency;
 
@@ -732,8 +717,7 @@ computeOperandLatency(const InstrItineraryData *ItinData,
   unsigned InstrLatency = getInstrLatency(ItinData, DefMI);
 
   // Expected latency is the max of the stage latency and itinerary props.
-  if (!FindMin)
-    InstrLatency = std::max(InstrLatency,
-                            defaultDefLatency(ItinData->SchedModel, DefMI));
+  InstrLatency = std::max(InstrLatency,
+                          defaultDefLatency(ItinData->SchedModel, DefMI));
   return InstrLatency;
 }
