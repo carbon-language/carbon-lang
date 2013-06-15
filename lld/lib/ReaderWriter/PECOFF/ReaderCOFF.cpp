@@ -9,8 +9,9 @@
 
 #define DEBUG_TYPE "ReaderCOFF"
 
-#include "lld/ReaderWriter/Reader.h"
 #include "lld/Core/File.h"
+#include "lld/ReaderWriter/Reader.h"
+#include "lld/ReaderWriter/ReaderArchive.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/COFF.h"
@@ -546,11 +547,23 @@ private:
 
 class ReaderCOFF : public Reader {
 public:
-  ReaderCOFF(const TargetInfo &ti) : Reader(ti) {}
+  ReaderCOFF(const TargetInfo &ti) : Reader(ti), _readerArchive(ti, *this) {}
 
   error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
                        std::vector<std::unique_ptr<File> > &result) const {
-    llvm::error_code ec;
+    StringRef magic(mb->getBufferStart(), mb->getBufferSize());
+    llvm::sys::fs::file_magic fileType = llvm::sys::fs::identify_magic(magic);
+    if (fileType == llvm::sys::fs::file_magic::coff_object)
+      return parseCOFFFile(mb, result);
+    if (fileType == llvm::sys::fs::file_magic::archive)
+      return _readerArchive.parseFile(mb, result);
+    return make_error_code(llvm::object::object_error::invalid_file_type);
+  }
+
+private:
+  error_code parseCOFFFile(std::unique_ptr<MemoryBuffer> &mb,
+                           std::vector<std::unique_ptr<File> > &result) const {
+    error_code ec;
     std::unique_ptr<File> file(new FileCOFF(_targetInfo, std::move(mb), ec));
     if (ec)
       return ec;
@@ -568,6 +581,8 @@ public:
     result.push_back(std::move(file));
     return error_code::success();
   }
+
+  ReaderArchive _readerArchive;
 };
 
 } // end namespace anonymous
