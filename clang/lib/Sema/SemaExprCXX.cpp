@@ -1017,10 +1017,23 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
       DeclaratorChunk::ArrayTypeInfo &Array = D.getTypeObject(I).Arr;
       if (Expr *NumElts = (Expr *)Array.NumElts) {
         if (!NumElts->isTypeDependent() && !NumElts->isValueDependent()) {
-          Array.NumElts
-            = VerifyIntegerConstantExpression(NumElts, 0,
-                                              diag::err_new_array_nonconst)
-                .take();
+          if (getLangOpts().CPlusPlus1y) {
+	    // C++1y [expr.new]p6: Every constant-expression in a noptr-new-declarator
+	    //   shall be a converted constant expression (5.19) of type std::size_t
+	    //   and shall evaluate to a strictly positive value.
+            unsigned IntWidth = Context.getTargetInfo().getIntWidth();
+            assert(IntWidth && "Builtin type of size 0?");
+            llvm::APSInt Value(IntWidth);
+            Array.NumElts
+             = CheckConvertedConstantExpression(NumElts, Context.getSizeType(), Value,
+                                                CCEK_NewExpr)
+                 .take();
+          } else {
+            Array.NumElts
+              = VerifyIntegerConstantExpression(NumElts, 0,
+                                                diag::err_new_array_nonconst)
+                  .take();
+          }
           if (!Array.NumElts)
             return ExprError();
         }
@@ -1183,65 +1196,81 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
   // C++1y [expr.new]p6: The expression [...] is implicitly converted to
   //   std::size_t. (FIXME)
   if (ArraySize && !ArraySize->isTypeDependent()) {
-    class SizeConvertDiagnoser : public ICEConvertDiagnoser {
-      Expr *ArraySize;
+    ExprResult ConvertedSize;
+    if (getLangOpts().CPlusPlus1y) {
+      unsigned IntWidth = Context.getTargetInfo().getIntWidth();
+      assert(IntWidth && "Builtin type of size 0?");
+      llvm::APSInt Value(IntWidth);
+      ConvertedSize = PerformImplicitConversion(ArraySize, Context.getSizeType(),
+						AA_Converting);
 
-    public:
-      SizeConvertDiagnoser(Expr *ArraySize)
-          : ICEConvertDiagnoser(/*AllowScopedEnumerations*/false, false, false),
-            ArraySize(ArraySize) {}
+      if (!isSFINAEContext())
+	// Diagnose the compatibility of this conversion.
+	Diag(StartLoc, diag::warn_cxx98_compat_array_size_conversion)
+	  << ArraySize->getType() << 0 << Context.getSizeType();
+    } else {
+      class SizeConvertDiagnoser : public ICEConvertDiagnoser {
+      protected:
+        Expr *ArraySize;
+  
+      public:
+        SizeConvertDiagnoser(Expr *ArraySize)
+            : ICEConvertDiagnoser(/*AllowScopedEnumerations*/false, false, false),
+              ArraySize(ArraySize) {}
+  
+        virtual SemaDiagnosticBuilder diagnoseNotInt(Sema &S, SourceLocation Loc,
+                                                     QualType T) {
+          return S.Diag(Loc, diag::err_array_size_not_integral)
+                   << S.getLangOpts().CPlusPlus11 << T;
+        }
+  
+        virtual SemaDiagnosticBuilder diagnoseIncomplete(
+            Sema &S, SourceLocation Loc, QualType T) {
+          return S.Diag(Loc, diag::err_array_size_incomplete_type)
+                   << T << ArraySize->getSourceRange();
+        }
+  
+        virtual SemaDiagnosticBuilder diagnoseExplicitConv(
+            Sema &S, SourceLocation Loc, QualType T, QualType ConvTy) {
+          return S.Diag(Loc, diag::err_array_size_explicit_conversion) << T << ConvTy;
+        }
+  
+        virtual SemaDiagnosticBuilder noteExplicitConv(
+            Sema &S, CXXConversionDecl *Conv, QualType ConvTy) {
+          return S.Diag(Conv->getLocation(), diag::note_array_size_conversion)
+                   << ConvTy->isEnumeralType() << ConvTy;
+        }
+  
+        virtual SemaDiagnosticBuilder diagnoseAmbiguous(
+            Sema &S, SourceLocation Loc, QualType T) {
+          return S.Diag(Loc, diag::err_array_size_ambiguous_conversion) << T;
+        }
+  
+        virtual SemaDiagnosticBuilder noteAmbiguous(
+            Sema &S, CXXConversionDecl *Conv, QualType ConvTy) {
+          return S.Diag(Conv->getLocation(), diag::note_array_size_conversion)
+                   << ConvTy->isEnumeralType() << ConvTy;
+        }
 
-      virtual SemaDiagnosticBuilder diagnoseNotInt(Sema &S, SourceLocation Loc,
-                                                   QualType T) {
-        return S.Diag(Loc, diag::err_array_size_not_integral)
-                 << S.getLangOpts().CPlusPlus11 << T;
-      }
+        virtual SemaDiagnosticBuilder diagnoseConversion(
+            Sema &S, SourceLocation Loc, QualType T, QualType ConvTy) {
+          return S.Diag(Loc,
+                        S.getLangOpts().CPlusPlus11
+                          ? diag::warn_cxx98_compat_array_size_conversion
+                          : diag::ext_array_size_conversion)
+                   << T << ConvTy->isEnumeralType() << ConvTy;
+        }
+      } SizeDiagnoser(ArraySize);
 
-      virtual SemaDiagnosticBuilder diagnoseIncomplete(
-          Sema &S, SourceLocation Loc, QualType T) {
-        return S.Diag(Loc, diag::err_array_size_incomplete_type)
-                 << T << ArraySize->getSourceRange();
-      }
-
-      virtual SemaDiagnosticBuilder diagnoseExplicitConv(
-          Sema &S, SourceLocation Loc, QualType T, QualType ConvTy) {
-        return S.Diag(Loc, diag::err_array_size_explicit_conversion) << T << ConvTy;
-      }
-
-      virtual SemaDiagnosticBuilder noteExplicitConv(
-          Sema &S, CXXConversionDecl *Conv, QualType ConvTy) {
-        return S.Diag(Conv->getLocation(), diag::note_array_size_conversion)
-                 << ConvTy->isEnumeralType() << ConvTy;
-      }
-
-      virtual SemaDiagnosticBuilder diagnoseAmbiguous(
-          Sema &S, SourceLocation Loc, QualType T) {
-        return S.Diag(Loc, diag::err_array_size_ambiguous_conversion) << T;
-      }
-
-      virtual SemaDiagnosticBuilder noteAmbiguous(
-          Sema &S, CXXConversionDecl *Conv, QualType ConvTy) {
-        return S.Diag(Conv->getLocation(), diag::note_array_size_conversion)
-                 << ConvTy->isEnumeralType() << ConvTy;
-      }
-
-      virtual SemaDiagnosticBuilder diagnoseConversion(
-          Sema &S, SourceLocation Loc, QualType T, QualType ConvTy) {
-        return S.Diag(Loc,
-                      S.getLangOpts().CPlusPlus11
-                        ? diag::warn_cxx98_compat_array_size_conversion
-                        : diag::ext_array_size_conversion)
-                 << T << ConvTy->isEnumeralType() << ConvTy;
-      }
-    } SizeDiagnoser(ArraySize);
-
-    ExprResult ConvertedSize
-      = PerformContextualImplicitConversion(StartLoc, ArraySize, SizeDiagnoser);
+      ConvertedSize = PerformContextualImplicitConversion(StartLoc, ArraySize,
+                                                          SizeDiagnoser);
+    }
     if (ConvertedSize.isInvalid())
       return ExprError();
 
     ArraySize = ConvertedSize.take();
     QualType SizeType = ArraySize->getType();
+
     if (!SizeType->isIntegralOrUnscopedEnumerationType())
       return ExprError();
 
