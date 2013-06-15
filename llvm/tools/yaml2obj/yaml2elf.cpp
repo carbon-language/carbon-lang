@@ -33,6 +33,7 @@ using namespace llvm;
 // to deduplicate suffixes. std::map<> with a custom comparator is likely
 // to be the simplest implementation, but a suffix trie could be more
 // suitable for the job.
+namespace {
 class StringTableBuilder {
   /// \brief Indices of strings currently present in `Buf`.
   StringMap<unsigned> StringIndices;
@@ -60,10 +61,12 @@ public:
     OS.write(Buf.data(), Buf.size());
   }
 };
+} // end anonymous namespace
 
 // This class is used to build up a contiguous binary blob while keeping
 // track of an offset in the output (which notionally begins at
 // `InitialOffset`).
+namespace {
 class ContiguousBlobAccumulator {
   const uint64_t InitialOffset;
   raw_svector_ostream OS;
@@ -75,9 +78,11 @@ public:
   uint64_t currentOffset() const { return InitialOffset + OS.tell(); }
   void writeBlobToStream(raw_ostream &Out) { Out << OS.str(); }
 };
+} // end anonymous namespace
 
 // Used to keep track of section names, so that in the YAML file sections
 // can be referenced by name instead of by index.
+namespace {
 class SectionNameToIdxMap {
   StringMap<int> Map;
 public:
@@ -98,6 +103,7 @@ public:
     return false;
   }
 };
+} // end anonymous namespace
 
 template <class T>
 static size_t vectorDataSize(const std::vector<T> &Vec) {
