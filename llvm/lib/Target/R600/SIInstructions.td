@@ -1638,6 +1638,10 @@ defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORD_ADDR64, i32,
                           global_load, constant_load>;
 defm : MUBUFLoad_Pattern <BUFFER_LOAD_UBYTE_ADDR64, i32,
                           zextloadi8_global, zextloadi8_constant>;
+defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX2_ADDR64, v2i32,
+                          global_load, constant_load>;
+defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX4_ADDR64, v4i32,
+                          global_load, constant_load>;
 
 multiclass MUBUFStore_Pattern <MUBUF Instr, ValueType vt> {
 
@@ -1654,6 +1658,7 @@ multiclass MUBUFStore_Pattern <MUBUF Instr, ValueType vt> {
 
 defm : MUBUFStore_Pattern <BUFFER_STORE_DWORD, i32>;
 defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX2, i64>;
+defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX2, v2i32>;
 defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX4, v4i32>;
 
 /********** ====================== **********/
