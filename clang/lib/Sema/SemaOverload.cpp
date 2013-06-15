@@ -43,8 +43,15 @@ CreateFunctionRefExpr(Sema &S, FunctionDecl *Fn, NamedDecl *FoundDecl,
                       SourceLocation Loc = SourceLocation(), 
                       const DeclarationNameLoc &LocInfo = DeclarationNameLoc()){
   if (S.DiagnoseUseOfDecl(FoundDecl, Loc))
+    return ExprError(); 
+  // If FoundDecl is different from Fn (such as if one is a template
+  // and the other a specialization), make sure DiagnoseUseOfDecl is 
+  // called on both.
+  // FIXME: This would be more comprehensively addressed by modifying
+  // DiagnoseUseOfDecl to accept both the FoundDecl and the decl
+  // being used.
+  if (FoundDecl != Fn && S.DiagnoseUseOfDecl(Fn, Loc))
     return ExprError();
-
   DeclRefExpr *DRE = new (S.Context) DeclRefExpr(Fn, false, Fn->getType(),
                                                  VK_LValue, Loc, LocInfo);
   if (HadMultipleCandidates)
@@ -11001,6 +11008,15 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
       CheckUnresolvedMemberAccess(UnresExpr, Best->FoundDecl);
       if (DiagnoseUseOfDecl(Best->FoundDecl, UnresExpr->getNameLoc()))
         return ExprError();
+      // If FoundDecl is different from Method (such as if one is a template
+      // and the other a specialization), make sure DiagnoseUseOfDecl is 
+      // called on both.
+      // FIXME: This would be more comprehensively addressed by modifying
+      // DiagnoseUseOfDecl to accept both the FoundDecl and the decl
+      // being used.
+      if (Method != FoundDecl.getDecl() && 
+                      DiagnoseUseOfDecl(Method, UnresExpr->getNameLoc()))
+        return ExprError();
       break;
 
     case OR_No_Viable_Function:
@@ -11246,7 +11262,8 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
     CheckMemberOperatorAccess(LParenLoc, Object.get(), 0, Best->FoundDecl);
     if (DiagnoseUseOfDecl(Best->FoundDecl, LParenLoc))
       return ExprError();
-
+    assert(Conv == Best->FoundDecl.getDecl() && 
+             "Found Decl & conversion-to-functionptr should be same, right?!");
     // We selected one of the surrogate functions that converts the
     // object parameter to a function pointer. Perform the conversion
     // on the object argument, then let ActOnCallExpr finish the job.

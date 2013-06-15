@@ -339,5 +339,37 @@ namespace ExplicitInstantiationDecl {
   extern template auto f(int);
   int (*p)(int) = f;
 }
-
+namespace MemberTemplatesWithDeduction {
+  struct M {
+    template<class T> auto foo(T t) { return t; }
+    template<class T> auto operator()(T t) const { return t; }
+    template<class T> static __attribute__((unused)) int static_foo(T) {
+      return 5;
+    }
+    template<class T> operator T() { return T{}; }
+    operator auto() { return &static_foo<int>; } 
+  };
+  struct N : M {
+    using M::foo;
+    using M::operator();
+    using M::static_foo;
+    using M::operator auto;
+  };
+  
+  template <class T> int test() {
+    int i = T{}.foo(3);
+    T m = T{}.foo(M{});
+    int j = T{}(3);
+    M m2 = M{}(M{});
+    int k = T{}.static_foo(4);
+    int l = T::static_foo(5);
+    int l2 = T{};
+    struct X { };
+    X x = T{};
+    return 0;
+  }
+  int Minst = test<M>();
+  int Ninst = test<N>();
+  
+}
 }
