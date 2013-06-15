@@ -266,10 +266,13 @@ public:
     return ProcModels[I->second];
   }
 
-  const CodeGenProcModel &getProcModel(Record *ModelDef) const {
+  CodeGenProcModel &getProcModel(Record *ModelDef) {
     ProcModelMapTy::const_iterator I = ProcModelMap.find(ModelDef);
     assert(I != ProcModelMap.end() && "missing machine model");
     return ProcModels[I->second];
+  }
+  const CodeGenProcModel &getProcModel(Record *ModelDef) const {
+    return const_cast<CodeGenSchedModels*>(this)->getProcModel(ModelDef);
   }
 
   // Iterate over the unique processor models.

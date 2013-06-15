@@ -1476,6 +1476,19 @@ void CodeGenSchedModels::collectProcResources() {
     Record *ModelDef = (*RAI)->getValueAsDef("SchedModel");
     addReadAdvance(*RAI, getProcModel(ModelDef).Index);
   }
+  // Add ProcResGroups that are defined within this processor model, which may
+  // not be directly referenced but may directly specify a buffer size.
+  RecVec ProcResGroups = Records.getAllDerivedDefinitions("ProcResGroup");
+  for (RecIter RI = ProcResGroups.begin(), RE = ProcResGroups.end();
+       RI != RE; ++RI) {
+    if (!(*RI)->getValueInit("SchedModel")->isComplete())
+      continue;
+    CodeGenProcModel &PM = getProcModel((*RI)->getValueAsDef("SchedModel"));
+    RecIter I = std::find(PM.ProcResourceDefs.begin(),
+                          PM.ProcResourceDefs.end(), *RI);
+    if (I == PM.ProcResourceDefs.end())
+      PM.ProcResourceDefs.push_back(*RI);
+  }
   // Finalize each ProcModel by sorting the record arrays.
   for (unsigned PIdx = 0, PEnd = ProcModels.size(); PIdx != PEnd; ++PIdx) {
     CodeGenProcModel &PM = ProcModels[PIdx];

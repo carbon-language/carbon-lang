@@ -45,6 +45,11 @@ def SBPort05  : ProcResGroup<[SBPort0, SBPort5]>;
 def SBPort15  : ProcResGroup<[SBPort1, SBPort5]>;
 def SBPort015 : ProcResGroup<[SBPort0, SBPort1, SBPort5]>;
 
+// 54 Entry Unified Scheduler
+def SBPortAny : ProcResGroup<[SBPort0, SBPort1, SBPort23, SBPort4, SBPort5]> {
+  let BufferSize=54;
+}
+
 // Integer division issued on port 0.
 def SBDivider : ProcResource<1>;
 

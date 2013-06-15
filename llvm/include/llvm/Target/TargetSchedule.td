@@ -138,6 +138,7 @@ class ProcResource<int num> : ProcResourceKind,
 class ProcResGroup<list<ProcResource> resources> : ProcResourceKind {
   list<ProcResource> Resources = resources;
   SchedMachineModel SchedModel = ?;
+  int BufferSize = -1;
 }
 
 // A target architecture may define SchedReadWrite types and associate

@@ -49,6 +49,12 @@ def HWPort15  : ProcResGroup<[HWPort1, HWPort5]>;
 def HWPort015 : ProcResGroup<[HWPort0, HWPort1, HWPort5]>;
 def HWPort0156: ProcResGroup<[HWPort0, HWPort1, HWPort5, HWPort6]>;
 
+// 60 Entry Unified Scheduler
+def HWPortAny : ProcResGroup<[HWPort0, HWPort1, HWPort2, HWPort3, HWPort4,
+                              HWPort5, HWPort6, HWPort7]> {
+  let BufferSize=60;
+}
+
 // Integer division issued on port 0.
 def HWDivider : ProcResource<1>;
 

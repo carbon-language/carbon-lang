@@ -634,14 +634,11 @@ void SubtargetEmitter::EmitProcessorResources(const CodeGenProcModel &ProcModel,
     Record *SuperDef = 0;
     unsigned SuperIdx = 0;
     unsigned NumUnits = 0;
-    int BufferSize = -1;
+    int BufferSize = PRDef->getValueAsInt("BufferSize");
     if (PRDef->isSubClassOf("ProcResGroup")) {
       RecVec ResUnits = PRDef->getValueAsListOfDefs("Resources");
       for (RecIter RUI = ResUnits.begin(), RUE = ResUnits.end();
            RUI != RUE; ++RUI) {
-        int BuffSz = (*RUI)->getValueAsInt("BufferSize");
-        if (!NumUnits || (unsigned)BufferSize < (unsigned)BuffSz)
-          BufferSize = BuffSz;
         NumUnits += (*RUI)->getValueAsInt("NumUnits");
       }
     }
@@ -653,7 +650,6 @@ void SubtargetEmitter::EmitProcessorResources(const CodeGenProcModel &ProcModel,
         SuperIdx = ProcModel.getProcResourceIdx(SuperDef);
       }
       NumUnits = PRDef->getValueAsInt("NumUnits");
-      BufferSize = PRDef->getValueAsInt("BufferSize");
     }
     // Emit the ProcResourceDesc
     if (i+1 == e)
