@@ -267,6 +267,7 @@ void MappingTraits<ELFYAML::Section>::mapping(IO &IO,
   IO.mapOptional("Flags", Section.Flags, ELFYAML::ELF_SHF(0));
   IO.mapOptional("Address", Section.Address, Hex64(0));
   IO.mapOptional("Content", Section.Content);
+  IO.mapOptional("Link", Section.Link);
   IO.mapOptional("AddressAlign", Section.AddressAlign, Hex64(0));
 }
 

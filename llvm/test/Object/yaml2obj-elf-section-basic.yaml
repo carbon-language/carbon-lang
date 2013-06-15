@@ -10,6 +10,7 @@ Sections:
     Type: SHT_PROGBITS
     Flags: [ SHF_ALLOC, SHF_EXECINSTR ]
     Address: 0xCAFEBABE
+    Link: .text # Doesn't make sense for SHT_PROGBITS, but good enough for test.
     Content: EBFE
     AddressAlign: 2
 
@@ -26,6 +27,8 @@ Sections:
 # CHECK-NEXT:     ]
 # CHECK-NEXT:     Address: 0xCAFEBABE
 # CHECK:          Size: 2
+# Check that Link != 0.
+# CHECK:          Link: {{[1-9][0-9]*}}
 # CHECK:          AddressAlignment: 2
 # CHECK:          SectionData (
 # CHECK-NEXT:       0000: EBFE

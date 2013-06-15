@@ -76,6 +76,29 @@ public:
   void writeBlobToStream(raw_ostream &Out) { Out << OS.str(); }
 };
 
+// Used to keep track of section names, so that in the YAML file sections
+// can be referenced by name instead of by index.
+class SectionNameToIdxMap {
+  StringMap<int> Map;
+public:
+  /// \returns true if name is already present in the map.
+  bool addName(StringRef SecName, unsigned i) {
+    StringMapEntry<int> &Entry = Map.GetOrCreateValue(SecName, -1);
+    if (Entry.getValue() != -1)
+      return true;
+    Entry.setValue((int)i);
+    return false;
+  }
+  /// \returns true if name is not present in the map
+  bool lookupSection(StringRef SecName, unsigned &Idx) const {
+    StringMap<int>::const_iterator I = Map.find(SecName);
+    if (I == Map.end())
+      return true;
+    Idx = I->getValue();
+    return false;
+  }
+};
+
 template <class T>
 static size_t vectorDataSize(const std::vector<T> &Vec) {
   return Vec.size() * sizeof(T);
@@ -138,6 +161,18 @@ static void writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   // Place section header string table last.
   Header.e_shstrndx = Sections.size();
 
+  SectionNameToIdxMap SN2I;
+  for (unsigned i = 0, e = Sections.size(); i != e; ++i) {
+    StringRef Name = Sections[i].Name;
+    if (Name.empty())
+      continue;
+    if (SN2I.addName(Name, i)) {
+      errs() << "error: Repeated section name: '" << Name
+             << "' at YAML section number " << i << ".\n";
+      return;
+    }
+  }
+
   StringTableBuilder StrTab;
   SmallVector<char, 128> Buf;
   // XXX: This offset is tightly coupled with the order that we write
@@ -159,7 +194,15 @@ static void writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
     SHeader.sh_size = Sec.Content.binary_size();
     Sec.Content.writeAsBinary(CBA.getOS());
 
-    SHeader.sh_link = 0;
+    if (!Sec.Link.empty()) {
+      unsigned Index;
+      if (SN2I.lookupSection(Sec.Link, Index)) {
+        errs() << "error: Unknown section referenced: '" << Sec.Link
+               << "' at YAML section number " << i << ".\n";
+        return;
+      }
+      SHeader.sh_link = Index;
+    }
     SHeader.sh_info = 0;
     SHeader.sh_addralign = Sec.AddressAlign;
     SHeader.sh_entsize = 0;
