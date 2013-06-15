@@ -1309,11 +1309,13 @@ public:
       return Available.getID() == ConvergingScheduler::TopQID;
     }
 
+#ifndef NDEBUG
     const char *getResourceName(unsigned PIdx) {
       if (!PIdx)
         return "MOps";
       return SchedModel->getProcResource(PIdx)->Name;
     }
+#endif
 
     /// Get the number of latency cycles "covered" by the scheduled
     /// instructions. This is the larger of the critical path within the zone
@@ -1370,7 +1372,9 @@ public:
 
     SUnit *pickOnlyChoice();
 
+#ifndef NDEBUG
     void dumpScheduledState();
+#endif
   };
 
 private:
@@ -1936,6 +1940,7 @@ SUnit *ConvergingScheduler::SchedBoundary::pickOnlyChoice() {
   return NULL;
 }
 
+#ifndef NDEBUG
 // This is useful information to dump after bumpNode.
 // Note that the Queue contents are more useful before pickNodeFromQueue.
 void ConvergingScheduler::SchedBoundary::dumpScheduledState() {
@@ -1959,6 +1964,7 @@ void ConvergingScheduler::SchedBoundary::dumpScheduledState() {
          << (IsResourceLimited ? "  - Resource" : "  - Latency")
          << " limited.\n";
 }
+#endif
 
 void ConvergingScheduler::SchedCandidate::
 initResourceDelta(const ScheduleDAGMI *DAG,
