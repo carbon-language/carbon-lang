@@ -16,7 +16,7 @@ entry:
   call void @llvm.dbg.value(metadata !12, i64 0, metadata !13), !dbg !14
   %tmp2 = load i32 addrspace(1)* %ip, align 4, !dbg !15
   %tmp3 = add i32 0, %tmp2, !dbg !15
-; CHECK:  ##DEBUG_VALUE: idx <- EAX
+; CHECK:  ##DEBUG_VALUE: idx <- EAX{{$}}
   call void @llvm.dbg.value(metadata !{i32 %tmp3}, i64 0, metadata !13), !dbg
 !15
   %arrayidx = getelementptr i32 addrspace(1)* %ip, i32 %1, !dbg !16

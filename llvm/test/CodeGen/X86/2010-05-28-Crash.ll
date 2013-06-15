@@ -46,4 +46,4 @@ entry:
 
 ;CHECK: DEBUG_VALUE: bar:x <- E
 ;CHECK: Ltmp
-;CHECK:	DEBUG_VALUE: foo:y <- 1
+;CHECK:	DEBUG_VALUE: foo:y <- 1{{$}}
