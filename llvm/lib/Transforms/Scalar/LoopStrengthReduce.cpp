@@ -1741,7 +1741,7 @@ void LSRInstance::OptimizeShadowIV() {
     IVUsers::const_iterator CandidateUI = UI;
     ++UI;
     Instruction *ShadowUse = CandidateUI->getUser();
-    Type *DestTy = NULL;
+    Type *DestTy = 0;
     bool IsSigned = false;
 
     /* If shadow use is a int->float cast then insert a second IV
@@ -1803,7 +1803,7 @@ void LSRInstance::OptimizeShadowIV() {
       continue;
 
     /* Initialize new IV, double d = 0.0 in above example. */
-    ConstantInt *C = NULL;
+    ConstantInt *C = 0;
     if (Incr->getOperand(0) == PH)
       C = dyn_cast<ConstantInt>(Incr->getOperand(1));
     else if (Incr->getOperand(1) == PH)
@@ -3125,7 +3125,7 @@ static const SCEV *CollectSubexprs(const SCEV *S, const SCEVConstant *C,
       if (Remainder)
         Ops.push_back(C ? SE.getMulExpr(C, Remainder) : Remainder);
     }
-    return NULL;
+    return 0;
   } else if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
     // Split a non-zero base out of an addrec.
     if (AR->getStart()->isZero())
@@ -3137,7 +3137,7 @@ static const SCEV *CollectSubexprs(const SCEV *S, const SCEVConstant *C,
     // does not pertain to this loop.
     if (Remainder && (AR->getLoop() == L || !isa<SCEVAddRecExpr>(Remainder))) {
       Ops.push_back(C ? SE.getMulExpr(C, Remainder) : Remainder);
-      Remainder = NULL;
+      Remainder = 0;
     }
     if (Remainder != AR->getStart()) {
       if (!Remainder)
@@ -3159,7 +3159,7 @@ static const SCEV *CollectSubexprs(const SCEV *S, const SCEVConstant *C,
         CollectSubexprs(Mul->getOperand(1), C, Ops, L, SE, Depth+1);
       if (Remainder)
         Ops.push_back(SE.getMulExpr(C, Remainder));
-      return NULL;
+      return 0;
     }
   }
   return S;
