@@ -6,7 +6,7 @@
 ; terminator.
 ;
 ; CHECK: test:
-; CHECK: ##DEBUG_VALUE: :i
+; CHECK: ##DEBUG_VALUE: i
 %a = type { i32, i32 }
 
 define hidden fastcc %a* @test() #1 {

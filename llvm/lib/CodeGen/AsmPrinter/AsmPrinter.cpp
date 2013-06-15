@@ -562,8 +562,11 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
 
   // cast away const; DIetc do not take const operands for some reason.
   DIVariable V(const_cast<MDNode*>(MI->getOperand(2).getMetadata()));
-  if (V.getContext().isSubprogram())
-    OS << DISubprogram(V.getContext()).getDisplayName() << ":";
+  if (V.getContext().isSubprogram()) {
+    StringRef Name = DISubprogram(V.getContext()).getDisplayName();
+    if (!Name.empty())
+      OS << Name << ":";
+  }
   OS << V.getName() << " <- ";
 
   // Register or immediate value. Register 0 means undef.
