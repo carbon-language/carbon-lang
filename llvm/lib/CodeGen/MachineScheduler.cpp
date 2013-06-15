@@ -1232,7 +1232,7 @@ public:
     ScheduleHazardRecognizer *HazardRec;
 
     unsigned CurrCycle;
-    unsigned IssueCount;
+    unsigned CurrMOps;
 
     /// MinReadyCycle - Cycle of the soonest available instruction.
     unsigned MinReadyCycle;
@@ -1271,7 +1271,7 @@ public:
       NextSUs.clear();
       HazardRec = 0;
       CurrCycle = 0;
-      IssueCount = 0;
+      CurrMOps = 0;
       MinReadyCycle = UINT_MAX;
       ExpectedLatency = 0;
       DependentLatency = 0;
@@ -1527,7 +1527,7 @@ bool ConvergingScheduler::SchedBoundary::checkHazard(SUnit *SU) {
     return HazardRec->getHazardType(SU) != ScheduleHazardRecognizer::NoHazard;
 
   unsigned uops = SchedModel->getNumMicroOps(SU->getInstr());
-  if ((IssueCount > 0) && (IssueCount + uops > SchedModel->getIssueWidth())) {
+  if ((CurrMOps > 0) && (CurrMOps + uops > SchedModel->getIssueWidth())) {
     DEBUG(dbgs() << "  SU(" << SU->NodeNum << ") uops="
           << SchedModel->getNumMicroOps(SU->getInstr()) << '\n');
     return true;
@@ -1590,12 +1590,12 @@ void ConvergingScheduler::SchedBoundary::releaseNode(SUnit *SU,
 /// Move the boundary of scheduled code by one cycle.
 void ConvergingScheduler::SchedBoundary::bumpCycle() {
   unsigned Width = SchedModel->getIssueWidth();
-  IssueCount = (IssueCount <= Width) ? 0 : IssueCount - Width;
+  CurrMOps = (CurrMOps <= Width) ? 0 : CurrMOps - Width;
 
   unsigned NextCycle = CurrCycle + 1;
   assert(MinReadyCycle < UINT_MAX && "MinReadyCycle uninitialized");
   if (MinReadyCycle > NextCycle) {
-    IssueCount = 0;
+    CurrMOps = 0;
     NextCycle = MinReadyCycle;
   }
   if ((NextCycle - CurrCycle) > DependentLatency)
@@ -1679,14 +1679,14 @@ void ConvergingScheduler::SchedBoundary::bumpNode(SUnit *SU) {
 
   // Check the instruction group dispatch limit.
   // TODO: Check if this SU must end a dispatch group.
-  IssueCount += SchedModel->getNumMicroOps(SU->getInstr());
+  CurrMOps += SchedModel->getNumMicroOps(SU->getInstr());
 
   // checkHazard prevents scheduling multiple instructions per cycle that exceed
   // issue width. However, we commonly reach the maximum. In this case
   // opportunistically bump the cycle to avoid uselessly checking everything in
   // the readyQ. Furthermore, a single instruction may produce more than one
   // cycle's worth of micro-ops.
-  if (IssueCount >= SchedModel->getIssueWidth()) {
+  if (CurrMOps >= SchedModel->getIssueWidth()) {
     DEBUG(dbgs() << "  *** Max instrs at cycle " << CurrCycle << '\n');
     bumpCycle();
   }
@@ -1739,7 +1739,7 @@ SUnit *ConvergingScheduler::SchedBoundary::pickOnlyChoice() {
   if (CheckPending)
     releasePending();
 
-  if (IssueCount > 0) {
+  if (CurrMOps > 0) {
     // Defer any ready instrs that now have a hazard.
     for (ReadyQueue::iterator I = Available.begin(); I != Available.end();) {
       if (checkHazard(*I)) {
