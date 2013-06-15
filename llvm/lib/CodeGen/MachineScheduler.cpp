@@ -1245,6 +1245,11 @@ public:
     // The expected latency of the critical path in this scheduled zone.
     unsigned ExpectedLatency;
 
+    // The latency of dependence chains leading into this zone.
+    // For each node scheduled: DLat = max DLat, N.Depth.
+    // For each cycle scheduled: DLat -= 1.
+    unsigned DependentLatency;
+
     // Resources used in the scheduled zone beyond this boundary.
     SmallVector<unsigned, 16> ResourceCounts;
 
@@ -1274,6 +1279,7 @@ public:
       IssueCount = 0;
       MinReadyCycle = UINT_MAX;
       ExpectedLatency = 0;
+      DependentLatency = 0;
       ResourceCounts.resize(1);
       assert(!ResourceCounts[0] && "nonzero count for bad resource");
       CritResIdx = 0;
@@ -1536,16 +1542,20 @@ bool ConvergingScheduler::SchedBoundary::checkHazard(SUnit *SU) {
 
 /// Compute the remaining latency to determine whether ILP should be increased.
 void ConvergingScheduler::SchedBoundary::setLatencyPolicy(CandPolicy &Policy) {
+  DEBUG(dbgs() << "  " << Available.getName()
+        << " DependentLatency " << DependentLatency << '\n');
+
   // FIXME: compile time. In all, we visit four queues here one we should only
   // need to visit the one that was last popped if we cache the result.
-  unsigned RemLatency = 0;
+  unsigned RemLatency = DependentLatency;
   for (ReadyQueue::iterator I = Available.begin(), E = Available.end();
        I != E; ++I) {
     unsigned L = getUnscheduledLatency(*I);
-    DEBUG(dbgs() << "  " << Available.getName()
-          << " RemLatency SU(" << (*I)->NodeNum << ") " << L << '\n');
-    if (L > RemLatency)
+    if (L > RemLatency) {
+      DEBUG(dbgs() << "  " << Available.getName()
+            << " RemLatency SU(" << (*I)->NodeNum << ") " << L << '\n');
       RemLatency = L;
+    }
   }
   for (ReadyQueue::iterator I = Pending.begin(), E = Pending.end();
        I != E; ++I) {
@@ -1557,7 +1567,8 @@ void ConvergingScheduler::SchedBoundary::setLatencyPolicy(CandPolicy &Policy) {
   DEBUG(dbgs() << "  " << Available.getName()
         << " ExpectedLatency " << ExpectedLatency
         << " CP Limit " << CriticalPathLimit << '\n');
-  if (RemLatency + ExpectedLatency >= CriticalPathLimit
+
+  if (RemLatency + std::max(ExpectedLatency, CurrCycle) >= CriticalPathLimit
       && RemLatency > Rem->getMaxRemainingCount(SchedModel)) {
     Policy.ReduceLatency = true;
     DEBUG(dbgs() << "  Increase ILP: " << Available.getName() << '\n');
@@ -1592,6 +1603,10 @@ void ConvergingScheduler::SchedBoundary::bumpCycle() {
     IssueCount = 0;
     NextCycle = MinReadyCycle;
   }
+  if ((NextCycle - CurrCycle) > DependentLatency)
+    DependentLatency = 0;
+  else
+    DependentLatency -= (NextCycle - CurrCycle);
 
   if (!HazardRec->isEnabled()) {
     // Bypass HazardRec virtual calls.
@@ -1658,14 +1673,12 @@ void ConvergingScheduler::SchedBoundary::bumpNode(SUnit *SU) {
       countResource(PI->ProcResourceIdx, PI->Cycles);
     }
   }
-  if (isTop()) {
-    if (SU->getDepth() > ExpectedLatency)
-      ExpectedLatency = SU->getDepth();
-  }
-  else {
-    if (SU->getHeight() > ExpectedLatency)
-      ExpectedLatency = SU->getHeight();
-  }
+  unsigned &TopLatency = isTop() ? ExpectedLatency : DependentLatency;
+  unsigned &BotLatency = isTop() ? DependentLatency : ExpectedLatency;
+  if (SU->getDepth() > TopLatency)
+    TopLatency = SU->getDepth();
+  if (SU->getHeight() > BotLatency)
+    BotLatency = SU->getHeight();
 
   IsResourceLimited = getCriticalCount() > std::max(ExpectedLatency, CurrCycle);
 
