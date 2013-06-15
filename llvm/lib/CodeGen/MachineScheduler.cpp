@@ -52,11 +52,6 @@ static cl::opt<unsigned> MISchedCutoff("misched-cutoff", cl::Hidden,
 static bool ViewMISchedDAGs = false;
 #endif // NDEBUG
 
-// FIXME: remove this flag after initial testing. It should always be a good
-// thing.
-static cl::opt<bool> EnableCopyConstrain("misched-vcopy", cl::Hidden,
-    cl::desc("Constrain vreg copies."), cl::init(true));
-
 static cl::opt<bool> EnableLoadCluster("misched-cluster", cl::Hidden,
   cl::desc("Enable load clustering."), cl::init(true));
 
@@ -2390,8 +2385,7 @@ static ScheduleDAGInstrs *createConvergingSched(MachineSchedContext *C) {
   // FIXME: extend the mutation API to allow earlier mutations to instantiate
   // data and pass it to later mutations. Have a single mutation that gathers
   // the interesting nodes in one pass.
-  if (EnableCopyConstrain)
-    DAG->addMutation(new CopyConstrain(DAG->TII, DAG->TRI));
+  DAG->addMutation(new CopyConstrain(DAG->TII, DAG->TRI));
   if (EnableLoadCluster)
     DAG->addMutation(new LoadClusterMutation(DAG->TII, DAG->TRI));
   if (EnableMacroFusion)
