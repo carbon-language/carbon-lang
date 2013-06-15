@@ -9,8 +9,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef POLLY_SCEDULE_OPTIMIZER_H
-#define POLLY_SCHEDULE_OPTIMZER_H
+#ifndef POLLY_SCHEDULE_OPTIMIZER_H
+#define POLLY_SCHEDULE_OPTIMIZER_H
 
 namespace polly { extern bool DisablePollyTiling; }
 
