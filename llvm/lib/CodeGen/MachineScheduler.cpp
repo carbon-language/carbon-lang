@@ -1421,6 +1421,10 @@ init(ScheduleDAGMI *DAG, const TargetSchedModel *SchedModel) {
       CritResIdx = PIdx;
     }
   }
+  DEBUG(dbgs() << "Critical Resource: "
+        << SchedModel->getProcResource(CritResIdx)->Name
+        << ": " << RemainingCounts[CritResIdx]
+        << " / " << SchedModel->getLatencyFactor() << '\n');
 }
 
 void ConvergingScheduler::SchedBoundary::
