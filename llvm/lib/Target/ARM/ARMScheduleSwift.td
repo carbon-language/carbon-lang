@@ -1076,7 +1076,7 @@ def SwiftItineraries : ProcessorItineraries<
 // Swift machine model for scheduling and other instruction cost heuristics.
 def SwiftModel : SchedMachineModel {
   let IssueWidth = 3; // 3 micro-ops are dispatched per cycle.
-  let MinLatency = 0; // Data dependencies are allowed within dispatch groups.
+  let MicroOpBufferSize = 45; // Based on NEON renamed registers.
   let LoadLatency = 3;
   let MispredictPenalty = 14; // A branch direction mispredict.
 

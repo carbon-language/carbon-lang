@@ -17,7 +17,7 @@ def SandyBridgeModel : SchedMachineModel {
   // instructions per cycle.
   // FIXME: Identify instructions that aren't a single fused micro-op.
   let IssueWidth = 4;
-  let MinLatency = 0; // 0 = Out-of-order execution.
+  let MicroOpBufferSize = 168; // Based on the reorder buffer.
   let LoadLatency = 4;
   let MispredictPenalty = 16;
 }

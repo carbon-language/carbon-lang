@@ -550,8 +550,9 @@ def IIC_NOP : InstrItinClass;
 // Resources beyond the decoder operate on micro-ops and are bufferred
 // so adjacent micro-ops don't directly compete.
 //
-// MinLatency=0 indicates that RAW dependencies can be decoded in the
-// same cycle.
+// MicroOpBufferSize > 1 indicates that RAW dependencies can be
+// decoded in the same cycle. The value 32 is a reasonably arbitrary
+// number of in-flight instructions.
 //
 // HighLatency=10 is optimistic. X86InstrInfo::isHighLatencyDef
 // indicates high latency opcodes. Alternatively, InstrItinData
@@ -562,7 +563,7 @@ def IIC_NOP : InstrItinClass;
 // The GenericModel contains no instruciton itineraries.
 def GenericModel : SchedMachineModel {
   let IssueWidth = 4;
-  let MinLatency = 0;
+  let MicroOpBufferSize = 32;
   let LoadLatency = 4;
   let HighLatency = 10;
 }

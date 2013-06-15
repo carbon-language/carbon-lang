@@ -16,7 +16,7 @@ def HaswellModel : SchedMachineModel {
   // All x86 instructions are modeled as a single micro-op, and HW can decode 4
   // instructions per cycle.
   let IssueWidth = 4;
-  let MinLatency = 0; // 0 = Out-of-order execution.
+  let MicroOpBufferSize = 192; // Based on the reorder buffer.
   let LoadLatency = 4;
   let MispredictPenalty = 16;
 }

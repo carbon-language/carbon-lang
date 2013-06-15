@@ -1883,7 +1883,7 @@ def CortexA9Itineraries : ProcessorItineraries<
 // Cortex-A9 machine model for scheduling and other instruction cost heuristics.
 def CortexA9Model : SchedMachineModel {
   let IssueWidth = 2; // 2 micro-ops are dispatched per cycle.
-  let MinLatency = 0; // Data dependencies are allowed within dispatch groups.
+  let MicroOpBufferSize = 56; // Based on available renamed registers.
   let LoadLatency = 2; // Optimistic load latency assuming bypass.
                        // This is overriden by OperandCycles if the
                        // Itineraries are queried instead.
@@ -1901,7 +1901,7 @@ def A9UnitALU : ProcResource<2>;
 def A9UnitMul : ProcResource<1> { let Super = A9UnitALU; }
 def A9UnitAGU : ProcResource<1>;
 def A9UnitLS  : ProcResource<1>;
-def A9UnitFP  : ProcResource<1>;
+def A9UnitFP  : ProcResource<1> { let BufferSize = 0; }
 def A9UnitB   : ProcResource<1>;
 
 //===----------------------------------------------------------------------===//

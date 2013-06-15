@@ -525,8 +525,7 @@ def AtomItineraries : ProcessorItineraries<
 // Atom machine model.
 def AtomModel : SchedMachineModel {
   let IssueWidth = 2;  // Allows 2 instructions per scheduling group.
-  let MinLatency = 1;  // InstrStage cycles overrides MinLatency.
-                       // OperandCycles may be used for expected latency.
+  let MicroOpBufferSize = 0; // In-order execution, always hide latency.
   let LoadLatency = 3; // Expected cycles, may be overriden by OperandCycles.
   let HighLatency = 30;// Expected, may be overriden by OperandCycles.
 
