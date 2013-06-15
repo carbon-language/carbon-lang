@@ -337,13 +337,17 @@ public:
   /// \brief Determine if all bits are set
   ///
   /// This checks to see if the value has all bits of the APInt are set or not.
-  bool isAllOnesValue() const { return countPopulation() == BitWidth; }
+  bool isAllOnesValue() const {
+    if (isSingleWord())
+      return VAL == ~integerPart(0) >> (APINT_BITS_PER_WORD - BitWidth);
+    return countPopulationSlowCase() == BitWidth;
+  }
 
   /// \brief Determine if this is the largest unsigned value.
   ///
   /// This checks to see if the value of this APInt is the maximum unsigned
   /// value for the APInt's bit width.
-  bool isMaxValue() const { return countPopulation() == BitWidth; }
+  bool isMaxValue() const { return isAllOnesValue(); }
 
   /// \brief Determine if this is the largest signed value.
   ///
