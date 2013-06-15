@@ -1,0 +1,12 @@
+# Verify that lld can handle multiple input files.
+#
+# RUN: lld -flavor link -out %t1 -subsystem console \
+# RUN:   -- %p/Inputs/static-main.obj %p/Inputs/static-data1.obj \
+# RUN:   %p/Inputs/static-data2.obj \
+# RUN:   && llvm-objdump -d %t1 | FileCheck %s
+
+CHECK: Disassembly of section .text:
+CHECK: .text:
+CHECK:     1000:       a1 00 00 00 00
+CHECK:     1005:       03 05 00 00 00 00
+CHECK:     100b:       c3

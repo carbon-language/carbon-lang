@@ -64,10 +64,10 @@ private:
 
 class COFFAbsoluteAtom : public AbsoluteAtom {
 public:
-  COFFAbsoluteAtom(const File &F, llvm::StringRef N, uint64_t V)
+  COFFAbsoluteAtom(const File &F, llvm::StringRef N, const coff_symbol *S)
     : OwningFile(F)
     , Name(N)
-    , Value(V)
+    , Symbol(S)
   {}
 
   virtual const class File &file() const {
@@ -75,6 +75,8 @@ public:
   }
 
   virtual Scope scope() const {
+    if (Symbol->StorageClass == llvm::COFF::IMAGE_SYM_CLASS_STATIC)
+      return scopeTranslationUnit;
     return scopeGlobal;
   }
 
@@ -83,13 +85,13 @@ public:
   }
 
   virtual uint64_t value() const {
-    return Value;
+    return Symbol->Value;
   }
 
 private:
   const File &OwningFile;
   llvm::StringRef Name;
-  uint64_t Value;
+  const coff_symbol *Symbol;
 };
 
 class COFFUndefinedAtom : public UndefinedAtom {
@@ -341,7 +343,7 @@ private:
       // Create an absolute atom.
       if (SectionIndex == llvm::COFF::IMAGE_SYM_ABSOLUTE) {
         auto *atom = new (AtomStorage.Allocate<COFFAbsoluteAtom>())
-            COFFAbsoluteAtom(*this, Name, Symb->Value);
+            COFFAbsoluteAtom(*this, Name, Symb);
         if (!Name.empty())
           symbolToAtom[Name] = atom;
         absoluteAtoms.push_back(atom);
