@@ -45,7 +45,9 @@ enum ZeroBehavior {
 template <typename T>
 typename enable_if_c<std::numeric_limits<T>::is_integer &&
                      !std::numeric_limits<T>::is_signed, std::size_t>::type
-countTrailingZeros(T Val, ZeroBehavior /*ZB*/ = ZB_Width) {
+countTrailingZeros(T Val, ZeroBehavior ZB = ZB_Width) {
+  (void)ZB;
+
   if (!Val)
     return std::numeric_limits<T>::digits;
   if (Val & 0x1)
@@ -114,7 +116,9 @@ inline std::size_t countTrailingZeros<uint64_t>(uint64_t Val, ZeroBehavior ZB) {
 template <typename T>
 typename enable_if_c<std::numeric_limits<T>::is_integer &&
                      !std::numeric_limits<T>::is_signed, std::size_t>::type
-countLeadingZeros(T Val, ZeroBehavior /*ZB*/ = ZB_Width) {
+countLeadingZeros(T Val, ZeroBehavior ZB = ZB_Width) {
+  (void)ZB;
+
   if (!Val)
     return std::numeric_limits<T>::digits;
 
