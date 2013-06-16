@@ -7372,24 +7372,20 @@ public:
                                    bool IsParameter);
   void CodeCompleteObjCMessageReceiver(Scope *S);
   void CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
-                                    IdentifierInfo **SelIdents,
-                                    unsigned NumSelIdents,
+                                    ArrayRef<IdentifierInfo *> SelIdents,
                                     bool AtArgumentExpression);
   void CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
-                                    IdentifierInfo **SelIdents,
-                                    unsigned NumSelIdents,
+                                    ArrayRef<IdentifierInfo *> SelIdents,
                                     bool AtArgumentExpression,
                                     bool IsSuper = false);
   void CodeCompleteObjCInstanceMessage(Scope *S, Expr *Receiver,
-                                       IdentifierInfo **SelIdents,
-                                       unsigned NumSelIdents,
+                                       ArrayRef<IdentifierInfo *> SelIdents,
                                        bool AtArgumentExpression,
                                        ObjCInterfaceDecl *Super = 0);
   void CodeCompleteObjCForCollection(Scope *S,
                                      DeclGroupPtrTy IterationVar);
   void CodeCompleteObjCSelector(Scope *S,
-                                IdentifierInfo **SelIdents,
-                                unsigned NumSelIdents);
+                                ArrayRef<IdentifierInfo *> SelIdents);
   void CodeCompleteObjCProtocolReferences(IdentifierLocPair *Protocols,
                                           unsigned NumProtocols);
   void CodeCompleteObjCProtocolDecl(Scope *S);
@@ -7414,8 +7410,7 @@ public:
                                           bool IsInstanceMethod,
                                           bool AtParameterName,
                                           ParsedType ReturnType,
-                                          IdentifierInfo **SelIdents,
-                                          unsigned NumSelIdents);
+                                          ArrayRef<IdentifierInfo *> SelIdents);
   void CodeCompletePreprocessorDirective(bool InConditional);
   void CodeCompleteInPreprocessorConditionalExclusion(Scope *S);
   void CodeCompletePreprocessorMacroName(bool IsDefinition);
