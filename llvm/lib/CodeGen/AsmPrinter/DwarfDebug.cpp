@@ -1170,10 +1170,7 @@ static DotDebugLocEntry getDebugLocEntry(AsmPrinter *Asm,
                                          const MachineInstr *MI) {
   const MDNode *Var =  MI->getOperand(MI->getNumOperands() - 1).getMetadata();
 
-  if (MI->getNumOperands() != 3) {
-    MachineLocation MLoc = Asm->getDebugValueLocation(MI);
-    return DotDebugLocEntry(FLabel, SLabel, MLoc, Var);
-  }
+  assert(MI->getNumOperands() == 3);
   if (MI->getOperand(0).isReg() && MI->getOperand(1).isImm()) {
     MachineLocation MLoc;
     // TODO: Currently an offset of 0 in a DBG_VALUE means

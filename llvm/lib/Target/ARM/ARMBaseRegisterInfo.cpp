@@ -702,12 +702,7 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 #endif // NDEBUG
 
-  // Special handling of dbg_value instructions.
-  if (MI.isDebugValue()) {
-    MI.getOperand(FIOperandNum).  ChangeToRegister(FrameReg, false /*isDef*/);
-    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
-    return;
-  }
+  assert(!MI.isDebugValue() && "DBG_VALUEs should be handled in target-independent code");
 
   // Modify MI as necessary to handle as much of 'Offset' as possible
   bool Done = false;

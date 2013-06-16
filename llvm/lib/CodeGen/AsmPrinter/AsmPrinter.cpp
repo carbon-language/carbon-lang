@@ -42,6 +42,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Target/Mangler.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
@@ -591,8 +592,17 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
   } else if (MI->getOperand(0).isCImm()) {
     MI->getOperand(0).getCImm()->getValue().print(OS, false /*isSigned*/);
   } else {
-    assert(MI->getOperand(0).isReg() && "Unknown operand type");
-    unsigned Reg = MI->getOperand(0).getReg();
+    unsigned Reg;
+    if (MI->getOperand(0).isReg()) {
+      Reg = MI->getOperand(0).getReg();
+      Deref = Offset != 0; // FIXME: use a better sentinel value so that deref
+                           // of a reg with a zero offset is valid
+    } else {
+      assert(MI->getOperand(0).isFI() && "Unknown operand type");
+      const TargetFrameLowering *TFI = AP.TM.getFrameLowering();
+      Offset += TFI->getFrameIndexReference(*AP.MF, MI->getOperand(0).getIndex(), Reg);
+      Deref = true;
+    }
     if (Reg == 0) {
       // Suppress offset, it is not meaningful here.
       OS << "undef";
@@ -600,8 +610,6 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
       AP.OutStreamer.EmitRawText(OS.str());
       return true;
     }
-    Deref = Offset != 0; // FIXME: use a better sentinel value so that deref of
-                         // a reg with a zero offset is valid
     if (Deref)
       OS << '[';
     OS << AP.TM.getRegisterInfo()->getName(Reg);

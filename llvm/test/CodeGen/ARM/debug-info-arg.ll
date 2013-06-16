@@ -11,7 +11,7 @@ define void @foo(%struct.tag_s* nocapture %this, %struct.tag_s* %c, i64 %x, i64 
   tail call void @llvm.dbg.value(metadata !{%struct.tag_s* %c}, i64 0, metadata !13), !dbg !21
   tail call void @llvm.dbg.value(metadata !{i64 %x}, i64 0, metadata !14), !dbg !22
   tail call void @llvm.dbg.value(metadata !{i64 %y}, i64 0, metadata !17), !dbg !23
-;CHECK:	@DEBUG_VALUE: foo:y <- [R7+4294967295]
+;CHECK:	@DEBUG_VALUE: foo:y <- [R7+8]
   tail call void @llvm.dbg.value(metadata !{%struct.tag_s* %ptr1}, i64 0, metadata !18), !dbg !24
   tail call void @llvm.dbg.value(metadata !{%struct.tag_s* %ptr2}, i64 0, metadata !19), !dbg !25
   %1 = icmp eq %struct.tag_s* %c, null, !dbg !26

@@ -921,17 +921,6 @@ void UserValue::insertDebugValue(MachineBasicBlock *MBB, SlotIndex Idx,
   MachineOperand &Loc = locations[LocNo];
   ++NumInsertedDebugValues;
 
-  // Frame index locations may require a target callback.
-  if (Loc.isFI()) {
-    MachineInstr *MI = TII.emitFrameIndexDebugValue(*MBB->getParent(),
-                                          Loc.getIndex(), offset, variable, 
-                                                    findDebugLoc());
-    if (MI) {
-      MBB->insert(I, MI);
-      return;
-    }
-  }
-  // This is not a frame index, or the target is happy with a standard FI.
   BuildMI(*MBB, I, findDebugLoc(), TII.get(TargetOpcode::DBG_VALUE))
     .addOperand(Loc).addImm(offset).addMetadata(variable);
 }
@@ -992,4 +981,3 @@ void LiveDebugVariables::dump() {
     static_cast<LDVImpl*>(pImpl)->print(dbgs());
 }
 #endif
-

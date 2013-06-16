@@ -15,6 +15,7 @@
 #include "SelectionDAGBuilder.h"
 #include "SDNodeDbgValue.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/BranchProbabilityInfo.h"
@@ -4349,20 +4350,19 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
 
   MachineFunction &MF = DAG.getMachineFunction();
   const TargetInstrInfo *TII = DAG.getTarget().getInstrInfo();
-  const TargetRegisterInfo *TRI = DAG.getTarget().getRegisterInfo();
 
   // Ignore inlined function arguments here.
   DIVariable DV(Variable);
   if (DV.isInlinedFnArgument(MF.getFunction()))
     return false;
 
-  unsigned Reg = 0;
+  Optional<MachineOperand> Op;
   // Some arguments' frame index is recorded during argument lowering.
-  Offset = FuncInfo.getArgumentFrameIndex(Arg);
-  if (Offset)
-    Reg = TRI->getFrameRegister(MF);
+  if (int FI = FuncInfo.getArgumentFrameIndex(Arg))
+    Op = MachineOperand::CreateFI(FI);
 
-  if (!Reg && N.getNode()) {
+  if (!Op && N.getNode()) {
+    unsigned Reg;
     if (N.getOpcode() == ISD::CopyFromReg)
       Reg = cast<RegisterSDNode>(N.getOperand(1))->getReg();
     else
@@ -4373,32 +4373,33 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
       if (PR)
         Reg = PR;
     }
+    if (Reg)
+      Op = MachineOperand::CreateReg(Reg, false);
   }
 
-  if (!Reg) {
+  if (!Op) {
     // Check if ValueMap has reg number.
     DenseMap<const Value *, unsigned>::iterator VMI = FuncInfo.ValueMap.find(V);
     if (VMI != FuncInfo.ValueMap.end())
-      Reg = VMI->second;
+      Op = MachineOperand::CreateReg(VMI->second, false);
   }
 
-  if (!Reg && N.getNode()) {
+  if (!Op && N.getNode())
     // Check if frame index is available.
     if (LoadSDNode *LNode = dyn_cast<LoadSDNode>(N.getNode()))
       if (FrameIndexSDNode *FINode =
-          dyn_cast<FrameIndexSDNode>(LNode->getBasePtr().getNode())) {
-        Reg = TRI->getFrameRegister(MF);
-        Offset = FINode->getIndex();
-      }
-  }
+          dyn_cast<FrameIndexSDNode>(LNode->getBasePtr().getNode()))
+        Op = MachineOperand::CreateFI(FINode->getIndex());
 
-  if (!Reg)
+  if (!Op)
     return false;
 
-  MachineInstrBuilder MIB = BuildMI(MF, getCurDebugLoc(),
-                                    TII->get(TargetOpcode::DBG_VALUE))
-    .addReg(Reg, RegState::Debug).addImm(Offset).addMetadata(Variable);
-  FuncInfo.ArgDbgValues.push_back(&*MIB);
+  if (Op->isReg())
+    Op->setIsDebug();
+
+  FuncInfo.ArgDbgValues.push_back(
+      BuildMI(MF, getCurDebugLoc(), TII->get(TargetOpcode::DBG_VALUE))
+          .addOperand(*Op).addImm(Offset).addMetadata(Variable));
   return true;
 }
 

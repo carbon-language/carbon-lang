@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -1123,15 +1124,10 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
       uint64_t Offset = MI->getOperand(1).getImm();
       const MDNode *MDPtr = MI->getOperand(2).getMetadata();
       DebugLoc DL = MI->getDebugLoc();
-      if (MachineInstr *NewDV = TII.emitFrameIndexDebugValue(MF, StackSlot,
-                                                           Offset, MDPtr, DL)) {
-        DEBUG(dbgs() << "Modifying debug info due to spill:" << "\t" << *MI);
-        MachineBasicBlock *MBB = MI->getParent();
-        MBB->insert(MBB->erase(MI), NewDV);
-      } else {
-        DEBUG(dbgs() << "Removing debug info due to spill:" << "\t" << *MI);
-        MI->eraseFromParent();
-      }
+      DEBUG(dbgs() << "Modifying debug info due to spill:" << "\t" << *MI);
+      MachineBasicBlock *MBB = MI->getParent();
+      BuildMI(*MBB, MBB->erase(MI), DL, TII.get(TargetOpcode::DBG_VALUE))
+          .addFrameIndex(StackSlot).addImm(Offset).addMetadata(MDPtr);
       continue;
     }
 

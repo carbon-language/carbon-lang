@@ -777,7 +777,22 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
       bool DoIncr = true;
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         if (!MI->getOperand(i).isFI())
-            continue;
+          continue;
+
+        // Frame indicies in debug values are encoded in a target independent
+        // way with simply the frame index and offset rather than any
+        // target-specific addressing mode.
+        if (MI->isDebugValue()) {
+          assert(i == 0 && "Frame indicies can only appear as the first "
+                           "operand of a DBG_VALUE machine instruction");
+          unsigned Reg;
+          MachineOperand &Offset = MI->getOperand(1);
+          Offset.setImm(Offset.getImm() +
+                        TFI->getFrameIndexReference(
+                            Fn, MI->getOperand(0).getIndex(), Reg));
+          MI->getOperand(0).ChangeToRegister(Reg, false /*isDef*/);
+          continue;
+        }
 
         // Some instructions (e.g. inline asm instructions) can have
         // multiple frame indices and/or cause eliminateFrameIndex

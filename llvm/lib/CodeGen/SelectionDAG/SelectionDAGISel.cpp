@@ -401,7 +401,8 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   // Insert DBG_VALUE instructions for function arguments to the entry block.
   for (unsigned i = 0, e = FuncInfo->ArgDbgValues.size(); i != e; ++i) {
     MachineInstr *MI = FuncInfo->ArgDbgValues[e-i-1];
-    unsigned Reg = MI->getOperand(0).getReg();
+    bool hasFI = MI->getOperand(0).isFI();
+    unsigned Reg = hasFI ? TRI.getFrameRegister(*MF) : MI->getOperand(0).getReg();
     if (TargetRegisterInfo::isPhysicalRegister(Reg))
       EntryMBB->insert(EntryMBB->begin(), MI);
     else {
@@ -414,6 +415,8 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
     // If Reg is live-in then update debug info to track its copy in a vreg.
     DenseMap<unsigned, unsigned>::iterator LDI = LiveInMap.find(Reg);
     if (LDI != LiveInMap.end()) {
+      assert(!hasFI && "There's no handling of frame pointer updating here yet "
+                       "- add if needed");
       MachineInstr *Def = RegInfo->getVRegDef(LDI->second);
       MachineBasicBlock::iterator InsertPos = Def;
       const MDNode *Variable =
