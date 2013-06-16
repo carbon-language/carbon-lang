@@ -2132,7 +2132,8 @@ void Preprocessor::HandleIfDirective(Token &IfToken,
   // directive seen, handle it for the multiple-include optimization.
   if (CurPPLexer->getConditionalStackDepth() == 0) {
     if (!ReadAnyTokensBeforeDirective && IfNDefMacro && ConditionalTrue)
-      CurPPLexer->MIOpt.EnterTopLevelIfndef(IfNDefMacro, ConditionalBegin);
+      // FIXME: Pass in the location of the macro name, not the 'if' token.
+      CurPPLexer->MIOpt.EnterTopLevelIfndef(IfNDefMacro, IfToken.getLocation());
     else
       CurPPLexer->MIOpt.EnterTopLevelConditional();
   }
