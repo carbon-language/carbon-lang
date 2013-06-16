@@ -23,12 +23,10 @@ namespace lld {
 class PECOFFTargetInfo : public TargetInfo {
 public:
   PECOFFTargetInfo()
-      : _stackReserve(1024 * 1024),
-        _stackCommit(4096),
-        _heapReserve(1024 * 1024),
-        _heapCommit(4096),
-        _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN),
-        _minOSVersion(6, 0) {}
+      : _stackReserve(1024 * 1024), _stackCommit(4096),
+        _heapReserve(1024 * 1024), _heapCommit(4096),
+        _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN), _minOSVersion(6, 0),
+        _nxCompat(true) {}
 
   struct OSVersion {
     OSVersion(int v1, int v2) : majorVersion(v1), minorVersion(v2) {}
@@ -61,6 +59,9 @@ public:
   void setMinOSVersion(const OSVersion &version) { _minOSVersion = version; }
   OSVersion getMinOSVersion() const { return _minOSVersion; }
 
+  void setNxCompat(bool nxCompat) { _nxCompat = nxCompat; }
+  bool getNxCompat() const { return _nxCompat; }
+
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 
@@ -78,6 +79,7 @@ private:
   uint64_t _heapCommit;
   llvm::COFF::WindowsSubsystem _subsystem;
   OSVersion _minOSVersion;
+  bool _nxCompat;
 
   mutable std::unique_ptr<Reader> _reader;
   mutable std::unique_ptr<Writer> _writer;

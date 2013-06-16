@@ -180,10 +180,12 @@ public:
     // Must be multiple of FileAlignment.
     _peHeader.SizeOfHeaders = 512;
     _peHeader.Subsystem = targetInfo.getSubsystem();
-    _peHeader.DLLCharacteristics =
-        llvm::COFF::IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE
-        | llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NX_COMPAT
-        | llvm::COFF::IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE;
+    uint16_t dllCharacteristics =
+        llvm::COFF::IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE |
+        llvm::COFF::IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE;
+    if (targetInfo.getNxCompat())
+      dllCharacteristics |= llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NX_COMPAT;
+    _peHeader.DLLCharacteristics = dllCharacteristics;
 
     _peHeader.SizeOfStackReserve = targetInfo.getStackReserve();
     _peHeader.SizeOfStackCommit = targetInfo.getStackCommit();

@@ -47,6 +47,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_EQ(1024 * 1024, info->getStackReserve());
   EXPECT_EQ(4096, info->getStackCommit());
   EXPECT_FALSE(info->allowRemainingUndefines());
+  EXPECT_TRUE(info->getNxCompat());
 }
 
 TEST_F(WinLinkParserTest, WindowsStyleOption) {
@@ -115,4 +116,9 @@ TEST_F(WinLinkParserTest, Force) {
   EXPECT_TRUE(info->allowRemainingUndefines());
 }
 
-}  // end anonymous namespace
+TEST_F(WinLinkParserTest, NoNxCompat) {
+  parse("link.exe", "-nxcompat:no", nullptr);
+  EXPECT_FALSE(info->getNxCompat());
+}
+
+} // end anonymous namespace

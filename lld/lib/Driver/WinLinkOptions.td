@@ -28,5 +28,10 @@ def entry_c: Joined<["-", "/"], "entry:">, Alias<entry>;
 def force : Flag<["-", "/"], "force">,
     HelpText<"Allow undefined symbols when creating executables">;
 
+def nxcompat : Flag<["-", "/"], "nxcompat">,
+    HelpText<"Enable data execution provention">;
+def no_nxcompat : Flag<["-", "/"], "nxcompat:no">,
+    HelpText<"Disable data execution provention">;
+
 def help : Flag<["-", "/"], "help">;
 def help_q : Flag<["-", "/"], "?">, Alias<help>;

@@ -258,6 +258,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   if (parsedArgs->getLastArg(OPT_force))
     info.setAllowRemainingUndefines(true);
 
+  // Hanlde -nxcompat:no
+  if (parsedArgs->getLastArg(OPT_no_nxcompat))
+    info.setNxCompat(false);
+
   // Hanlde -out
   if (llvm::opt::Arg *outpath = parsedArgs->getLastArg(OPT_out))
     info.setOutputPath(outpath->getValue());
