@@ -547,8 +547,9 @@ DefaultLayout<ELFT>::mergeSimiliarSections() {
 
 template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
   ScopedTask task(getDefaultDomain(), "assignSectionsToSegments");
-  // TODO: Do we want to give a chance for the targetHandlers
-  // to sort segments in an arbitrary order ?
+  ELFTargetInfo::OutputMagic outputMagic = _targetInfo.getOutputMagic();
+    // TODO: Do we want to give a chance for the targetHandlers
+    // to sort segments in an arbitrary order ?
   // sort the sections by their order as defined by the layout
   std::stable_sort(_sections.begin(), _sections.end(),
                    [](Chunk<ELFT> *A, Chunk<ELFT> *B) {
@@ -608,6 +609,14 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
           segment->append(section);
         }
 
+        // If the output magic is set to OutputMagic::NMAGIC or
+        // OutputMagic::OMAGIC, Place the data alongside text in one single
+        // segment
+        if (outputMagic == ELFTargetInfo::OutputMagic::NMAGIC ||
+            outputMagic == ELFTargetInfo::OutputMagic::OMAGIC)
+          lookupSectionFlag = llvm::ELF::SHF_EXECINSTR | llvm::ELF::SHF_ALLOC |
+                              llvm::ELF::SHF_WRITE;
+
         // Use the flags of the merged Section for the segment
         const SegmentKey key("PT_LOAD", lookupSectionFlag);
         const std::pair<SegmentKey, Segment<ELFT> *> currentSegment(key,
@@ -660,6 +669,7 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
     return;
 
   uint64_t virtualAddress = _targetInfo.getBaseAddress();
+  ELFTargetInfo::OutputMagic outputMagic = _targetInfo.getOutputMagic();
 
   // HACK: This is a super dirty hack. The elf header and program header are
   // not part of a section, but we need them to be loaded at the base address
@@ -690,9 +700,12 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
       // Dont assign offsets for non loadable segments
       if (si->segmentType() != llvm::ELF::PT_LOAD)
         continue;
-      // Align the segment to a page boundary
-      fileoffset =
-          llvm::RoundUpToAlignment(fileoffset, _targetInfo.getPageSize());
+      // Align the segment to a page boundary only if the output mode is
+      // not OutputMagic::NMAGIC/OutputMagic::OMAGIC
+      if (outputMagic != ELFTargetInfo::OutputMagic::NMAGIC &&
+          outputMagic != ELFTargetInfo::OutputMagic::OMAGIC)
+        fileoffset =
+            llvm::RoundUpToAlignment(fileoffset, _targetInfo.getPageSize());
       si->assignOffsets(fileoffset);
       fileoffset = si->fileOffset() + si->fileSize();
     }
@@ -707,8 +720,10 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
       // first segment to the pagesize
       (*si)->assignVirtualAddress(address);
       (*si)->setMemSize(address - virtualAddress);
-      virtualAddress = llvm::RoundUpToAlignment(address,
-                                                _targetInfo.getPageSize());
+      if (outputMagic != ELFTargetInfo::OutputMagic::NMAGIC &&
+          outputMagic != ELFTargetInfo::OutputMagic::OMAGIC)
+        virtualAddress =
+            llvm::RoundUpToAlignment(address, _targetInfo.getPageSize());
     }
     _programHeader->resetProgramHeaders();
   }

@@ -34,7 +34,8 @@ ELFTargetInfo::ELFTargetInfo(llvm::Triple triple,
       _mergeCommonStrings(false),
       _runLayoutPass(true),
       _useShlibUndefines(false),
-      _dynamicLinkerArg(false) {}
+      _dynamicLinkerArg(false),
+      _outputMagic(OutputMagic::DEFAULT) {}
 
 bool ELFTargetInfo::is64Bits() const { return getTriple().isArch64Bit(); }
 

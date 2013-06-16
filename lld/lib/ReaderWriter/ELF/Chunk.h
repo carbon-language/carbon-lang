@@ -41,10 +41,19 @@ public:
     K_AtomSection, ///< A section containing atoms.
     K_SectionHeader ///< Section header
   };
+  /// \brief the ContentType of the chunk
+  enum ContentType {
+    CT_Unknown,
+    CT_Header,
+    CT_Code,
+    CT_Data,
+    CT_Note,
+    CT_Tls,
+  };
+
   Chunk(StringRef name, Kind kind, const ELFTargetInfo &ti)
       : _name(name), _kind(kind), _fsize(0), _msize(0), _align2(0), _order(0),
-        _ordinal(1), _start(0), _fileoffset(0), _targetInfo(ti) {
-  }
+        _ordinal(1), _start(0), _fileoffset(0), _targetInfo(ti) {}
   virtual ~Chunk() {}
   // Does the chunk occupy disk space
   virtual bool occupiesNoDiskSpace() const { return false; }
@@ -70,6 +79,8 @@ public:
   // Does the chunk occupy memory during execution ?
   uint64_t            memSize() const { return _msize; }
   void setMemSize(uint64_t msize) { _msize = msize; }
+  // Whats the contentType of the chunk ?
+  virtual int getContentType() const = 0;
   // Writer the chunk
   virtual void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer) = 0;
   // Finalize the chunk before assigning offsets/virtual addresses

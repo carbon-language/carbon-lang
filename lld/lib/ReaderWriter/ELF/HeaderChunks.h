@@ -51,6 +51,10 @@ public:
     return c->Kind() == Chunk<ELFT>::K_Header;
   }
 
+  inline int getContentType() const {
+    return Chunk<ELFT>::CT_Header;
+  }
+
   void write(ELFWriter *writer, llvm::FileOutputBuffer &buffer);
 
   virtual void doPreFlight() {}
@@ -162,6 +166,10 @@ public:
     return _ph.size();
   }
 
+  inline int getContentType() const {
+    return Chunk<ELFT>::CT_Header;
+  }
+
 private:
   Elf_Phdr *allocateProgramHeader(bool &allocatedNew) {
     Elf_Phdr *phdr;
@@ -185,6 +193,7 @@ private:
 template <class ELFT>
 bool ProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
   bool allocatedNew = false;
+  ELFTargetInfo::OutputMagic outputMagic = this->_targetInfo.getOutputMagic();
   // For segments that are not a loadable segment, we
   // just pick the values directly from the segment as there
   // wouldnt be any slices within that
@@ -213,8 +222,12 @@ bool ProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
     phdr->p_filesz = slice->fileSize();
     phdr->p_memsz = slice->memSize();
     phdr->p_flags = segment->flags();
-    phdr->p_align = (phdr->p_type == llvm::ELF::PT_LOAD) ?
-                          segment->pageSize() : slice->align2();
+    if (outputMagic != ELFTargetInfo::OutputMagic::NMAGIC &&
+        outputMagic != ELFTargetInfo::OutputMagic::OMAGIC)
+      phdr->p_align = (phdr->p_type == llvm::ELF::PT_LOAD) ? segment->pageSize()
+                                                           : slice->align2();
+    else
+      phdr->p_align = slice->align2();
   }
   this->_fsize = fileSize();
   this->_msize = this->_fsize;
@@ -264,6 +277,10 @@ public:
 
   inline uint64_t entsize() {
     return sizeof(Elf_Shdr);
+  }
+
+  inline int getContentType() const {
+    return Chunk<ELFT>::CT_Header;
   }
 
   inline uint64_t numHeaders() {

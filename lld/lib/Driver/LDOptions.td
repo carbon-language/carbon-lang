@@ -61,6 +61,17 @@ def allow_shlib_undefs : Flag<["--"], "allow-shlib-undefined">,
 def use_shlib_undefs: Flag<["--"], "use-shlib-undefines">,
     HelpText<"Resolve undefined symbols from dynamic libraries">;
 
+def nmagic : Flag<["--"], "nmagic">,
+    HelpText<"Turn off page alignment of sections, and disable linking against shared libraries">;
+def nmagic_alias : Flag<["-"], "n">, Alias<nmagic>;
+
+def omagic : Flag<["--"], "omagic">,
+    HelpText<"Set the text and data sections to be readable and writable.  Also, do not page-align the data segment, and disable linking against shared libraries.">;
+def omagic_alias : Flag<["-"], "N">, Alias<omagic>;
+
+def no_omagic : Flag<["--"], "no-omagic">,
+    HelpText<"This option negates most of the effects of the -N option. Disable linking with shared libraries">;
+
 // extensions
 def emit_yaml : Flag<["-"], "emit-yaml">, 
     HelpText<"Write YAML instead of ELF">;

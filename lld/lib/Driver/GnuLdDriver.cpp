@@ -198,6 +198,25 @@ GnuLdDriver::parse(int argc, const char *argv[], raw_ostream &diagnostics) {
           parsedArgs->getLastArg(OPT_dynamic_linker))
     options->setInterpreter(dynamicLinker->getValue());
 
+  // Handle NMAGIC
+  if (parsedArgs->getLastArg(OPT_nmagic))
+    options->setOutputMagic(ELFTargetInfo::OutputMagic::NMAGIC);
+
+  // Handle OMAGIC
+  if (parsedArgs->getLastArg(OPT_omagic))
+    options->setOutputMagic(ELFTargetInfo::OutputMagic::OMAGIC);
+
+  // Handle --no-omagic
+  if (parsedArgs->getLastArg(OPT_no_omagic)) {
+    options->setOutputMagic(ELFTargetInfo::OutputMagic::DEFAULT);
+    options->setNoAllowDynamicLibraries();
+  }
+
+  // If either of the options NMAGIC/OMAGIC have been set, make the executable
+  // static
+  if (!options->allowLinkWithDynamicLibraries())
+    options->setIsStaticExecutable(true);
+
   // Handle -Lxxx
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_L),
                                ie = parsedArgs->filtered_end();

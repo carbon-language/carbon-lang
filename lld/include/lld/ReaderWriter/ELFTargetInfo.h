@@ -35,10 +35,18 @@ public:
 
 class ELFTargetInfo : public TargetInfo {
 public:
+  enum class OutputMagic : uint8_t {
+    DEFAULT, // The default mode, no specific magic set
+    NMAGIC,  // Disallow shared libraries and dont align sections
+             // PageAlign Data, Mark Text Segment/Data segment RW
+    OMAGIC   // Disallow shared libraries and dont align sections,
+             // Mark Text Segment/Data segment RW
+  };
   llvm::Triple getTriple() const { return _triple; }
   virtual bool is64Bits() const;
   virtual bool isLittleEndian() const;
   virtual uint64_t getPageSize() const { return 0x1000; }
+  OutputMagic getOutputMagic() const { return _outputMagic; }
   uint16_t getOutputType() const { return _outputFileType; }
   uint16_t getOutputMachine() const;
   bool outputYAML() const { return _outputYAML; }
@@ -64,6 +72,16 @@ public:
   }
   virtual bool validateImpl(raw_ostream &diagnostics);
 
+  /// \brief Does the linker allow dynamic libraries to be linked with ?
+  /// This is true when the output mode of the executable is set to be
+  /// having NMAGIC/OMAGIC
+  virtual bool allowLinkWithDynamicLibraries() const {
+    if (_outputMagic == OutputMagic::NMAGIC ||
+        _outputMagic == OutputMagic::OMAGIC ||
+        _noAllowDynamicLibraries)
+      return false;
+    return true;
+  }
 
   virtual error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
                         std::vector<std::unique_ptr<File>> &result) const;
@@ -121,6 +139,15 @@ public:
     _dynamicLinkerPath = dynamicLinker;
   }
 
+  /// \brief Set NMAGIC output kind when the linker specifies --nmagic
+  /// or -n in the command line
+  /// Set OMAGIC output kind when the linker specifies --omagic
+  /// or -N in the command line
+  virtual void setOutputMagic(OutputMagic magic) { _outputMagic = magic; }
+
+  /// \brief Disallow dynamic libraries during linking
+  virtual void setNoAllowDynamicLibraries() { _noAllowDynamicLibraries = true; }
+
   void appendSearchPath(StringRef dirPath) {
     _inputSearchPaths.push_back(dirPath);
   }
@@ -145,6 +172,8 @@ protected:
   bool                               _runLayoutPass;
   bool                               _useShlibUndefines;
   bool                               _dynamicLinkerArg;
+  bool                               _noAllowDynamicLibraries;
+  OutputMagic                        _outputMagic;
   std::vector<StringRef>             _inputSearchPaths;
   llvm::BumpPtrAllocator             _extraStrings;
   std::unique_ptr<Reader>            _elfReader;

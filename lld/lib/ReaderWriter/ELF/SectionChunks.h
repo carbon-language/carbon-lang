@@ -78,6 +78,18 @@ public:
   uint32_t getInfo() const { return _info; }
   Layout::SegmentType getSegmentType() const { return _segmentType; }
 
+  /// \brief Return the type of content that the section contains
+  virtual int getContentType() const {
+    if (_flags & llvm::ELF::SHF_EXECINSTR)
+      return Chunk<ELFT>::CT_Code;
+    else if (_flags & llvm::ELF::SHF_WRITE)
+      return Chunk<ELFT>::CT_Data;
+    else if (_flags & llvm::ELF::SHF_ALLOC)
+      return Chunk<ELFT>::CT_Code;
+    else
+      return Chunk<ELFT>::CT_Unknown;
+  }
+
   /// \brief convert the segment type to a String for diagnostics and printing
   /// purposes
   StringRef segmentKindToStr() const;
