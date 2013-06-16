@@ -591,8 +591,8 @@ private:
     }
   }
 
-  /// \Brief Return true if the symbol is corresponding to an architecture
-  /// specific section. We will let the TargetHandler to handle such atoms.
+  /// \brief Return true if the symbol is corresponding to an architecture
+  /// specific section. We will let the TargetHandler handle such atoms.
   inline bool isTargetSpecificAtom(const Elf_Shdr *shdr,
                                    const Elf_Sym *sym) {
     return ((shdr->sh_flags & llvm::ELF::SHF_MASKPROC) ||
