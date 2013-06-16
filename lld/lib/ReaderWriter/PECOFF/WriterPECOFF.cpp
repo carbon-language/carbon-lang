@@ -37,6 +37,7 @@
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileOutputBuffer.h"
@@ -198,6 +199,7 @@ public:
   }
 
   virtual void write(uint8_t *fileBuffer) {
+    fileBuffer += fileOffset();
     std::memcpy(fileBuffer, llvm::COFF::PEMagic, sizeof(llvm::COFF::PEMagic));
     fileBuffer += sizeof(llvm::COFF::PEMagic);
     std::memcpy(fileBuffer, &_coffHeader, sizeof(_coffHeader));
@@ -237,6 +239,7 @@ public:
   }
 
   virtual void write(uint8_t *fileBuffer) {
+    fileBuffer += fileOffset();
     std::memcpy(fileBuffer, &_dirs, sizeof(_dirs));
   }
 
@@ -257,8 +260,9 @@ private:
   std::vector<SectionChunk *> _sections;
 };
 
-/// A SectionChunk represents a section in the output file. It consists of a
-/// section header and atoms which to be output as the content of the section.
+/// A SectionChunk represents a section containing atoms. It consists of a
+/// section header that to be written to PECOFF header and atoms which to be
+/// written to the raw data section.
 class SectionChunk : public Chunk {
 private:
   llvm::object::coff_section
@@ -303,29 +307,61 @@ public:
   }
 
   void appendAtom(const DefinedAtom *atom) {
-    _atoms.push_back(atom);
+    auto *layout = new (_storage) AtomLayout(atom, _size, _size);
+    _atomLayouts.push_back(layout);
     _size += atom->rawContent().size();
   }
 
   virtual void write(uint8_t *fileBuffer) {
-    uint64_t offset = 0;
-    for (const auto &atom : _atoms) {
+    for (const auto *layout : _atomLayouts) {
+      const DefinedAtom *atom = dyn_cast<const DefinedAtom>(layout->_atom);
       ArrayRef<uint8_t> rawContent = atom->rawContent();
-      std::memcpy(fileBuffer + offset, rawContent.data(), rawContent.size());
-      offset += rawContent.size();
+      std::memcpy(fileBuffer + layout->_fileOffset, rawContent.data(),
+                  rawContent.size());
     }
   }
 
-  const std::vector<const DefinedAtom *> getAtoms() { return _atoms; }
+  /// Add all atoms to the given map. This data will be used to do relocation.
+  void
+  buildAtomToVirtualAddr(std::map<const Atom *, uint64_t> &atomToVirtualAddr) {
+    for (const auto *layout : _atomLayouts)
+      atomToVirtualAddr[layout->_atom] = layout->_virtualAddr;
+  }
+
+  void applyRelocations(uint8_t *fileBuffer,
+                        std::map<const Atom *, uint64_t> &atomToVirtualAddr) {
+    for (const auto *layout : _atomLayouts) {
+      const DefinedAtom *atom = dyn_cast<const DefinedAtom>(layout->_atom);
+      for (const Reference *ref : *atom) {
+        auto relocSite = reinterpret_cast<llvm::support::ulittle32_t *>(
+            fileBuffer + layout->_fileOffset + ref->offsetInAtom());
+        uint64_t targetAddr = atomToVirtualAddr[ref->target()];
+        switch (ref->kind()) {
+        case llvm::COFF::IMAGE_REL_I386_DIR32:
+          *relocSite = targetAddr;
+          break;
+        case llvm::COFF::IMAGE_REL_I386_REL32:
+          // TODO: Implement this relocation
+          break;
+        default:
+          llvm_unreachable("Unsupported relocation kind");
+        }
+      }
+    }
+  }
 
   // Set the file offset of the beginning of this section.
   virtual void setFileOffset(uint64_t fileOffset) {
     Chunk::setFileOffset(fileOffset);
     _sectionHeader.PointerToRawData = fileOffset;
+    for (AtomLayout *layout : _atomLayouts)
+      layout->_fileOffset += fileOffset;
   }
 
   virtual void setVirtualAddress(uint32_t rva) {
     _sectionHeader.VirtualAddress = rva;
+    for (AtomLayout *layout : _atomLayouts)
+      layout->_virtualAddr += rva;
   }
 
   virtual uint32_t getVirtualAddress() { return _sectionHeader.VirtualAddress; }
@@ -340,7 +376,8 @@ protected:
   llvm::object::coff_section _sectionHeader;
 
 private:
-  std::vector<const DefinedAtom *> _atoms;
+  std::vector<AtomLayout *> _atomLayouts;
+  mutable llvm::BumpPtrAllocator _storage;
 };
 
 void SectionHeaderTableChunk::addSection(SectionChunk *chunk) {
@@ -353,6 +390,7 @@ uint64_t SectionHeaderTableChunk::size() const {
 
 void SectionHeaderTableChunk::write(uint8_t *fileBuffer) {
   uint64_t offset = 0;
+  fileBuffer += fileOffset();
   for (const auto &chunk : _sections) {
     const llvm::object::coff_section &header = chunk->getSectionHeader();
     std::memcpy(fileBuffer + offset, &header, sizeof(header));
@@ -483,6 +521,20 @@ private:
     imageSize = va - offset;
   }
 
+  /// Apply relocations to the output file buffer. This two pass. In the first
+  /// pass, we visit all atoms to create a map from atom to its virtual
+  /// address. In the second pass, we visit all relocation references to fix
+  /// up addresses in the buffer.
+  void applyRelocations(uint8_t *bufferStart) {
+    std::map<const Atom *, uint64_t> atomToVirtualAddr;
+    for (auto &cp : _chunks)
+      if (SectionChunk *chunk = dyn_cast<SectionChunk>(&*cp))
+        chunk->buildAtomToVirtualAddr(atomToVirtualAddr);
+    for (auto &cp : _chunks)
+      if (SectionChunk *chunk = dyn_cast<SectionChunk>(&*cp))
+        chunk->applyRelocations(bufferStart, atomToVirtualAddr);
+  }
+
   void addChunk(Chunk *chunk) {
     _chunks.push_back(std::unique_ptr<Chunk>(chunk));
   }
@@ -536,7 +588,8 @@ public:
       return ec;
 
     for (const auto &chunk : _chunks)
-      chunk->write(buffer->getBufferStart() + chunk->fileOffset());
+      chunk->write(buffer->getBufferStart());
+    applyRelocations(buffer->getBufferStart());
     return buffer->commit();
   }
 

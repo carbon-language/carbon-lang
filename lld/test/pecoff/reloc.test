@@ -1,0 +1,26 @@
+# RUN: llvm-objdump -d %p/Inputs/hello.obj | FileCheck -check-prefix=BEFORE %s
+#
+# RUN: lld -flavor link -out %t1 -subsystem console -force -- %p/Inputs/hello.obj \
+# RUN:   && llvm-objdump -d %t1 | FileCheck -check-prefix=AFTER %s
+
+BEFORE: Disassembly of section .text:
+BEFORE: _main:
+BEFORE:        0:       b8 00 00 00 00
+BEFORE:        5:       50
+BEFORE:        6:       68 00 00 00 00
+BEFORE:        b:       68 00 00 00 00
+BEFORE:       10:       50
+BEFORE:       11:       e8 00 00 00 00
+BEFORE:       16:       50
+BEFORE:       17:       e8 00 00 00 00
+
+AFTER: Disassembly of section .text:
+AFTER: .text:
+AFTER:     1000:       b8 00 00 00 00
+AFTER:     1005:       50
+AFTER:     1006:       68 00 20 00 00
+AFTER:     100b:       68 06 20 00 00
+AFTER:     1010:       50
+AFTER:     1011:       e8 00 00 00 00
+AFTER:     1016:       50
+AFTER:     1017:       e8 00 00 00 00
