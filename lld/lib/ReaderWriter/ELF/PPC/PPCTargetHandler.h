@@ -24,7 +24,7 @@ public:
   PPCTargetRelocationHandler(const PPCTargetInfo &ti) : _targetInfo(ti) {}
 
   virtual ErrorOr<void> applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                                        const AtomLayout &,
+                                        const lld::AtomLayout &,
                                         const Reference &)const;
 
 private:

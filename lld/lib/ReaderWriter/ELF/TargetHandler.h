@@ -71,8 +71,8 @@ public:
 template <class ELFT> class TargetRelocationHandler {
 public:
   virtual ErrorOr<void>
-  applyRelocation(ELFWriter &, llvm::FileOutputBuffer &, const AtomLayout &,
-                  const Reference &)const = 0;
+  applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
+                  const lld::AtomLayout &, const Reference &) const = 0;
 
   virtual int64_t relocAddend(const Reference &)const { return 0; }
 

@@ -60,7 +60,7 @@ int64_t X86_64TargetRelocationHandler::relocAddend(const Reference &ref) const {
 }
 
 ErrorOr<void> X86_64TargetRelocationHandler::applyRelocation(
-    ELFWriter &writer, llvm::FileOutputBuffer &buf, const AtomLayout &atom,
+    ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
   uint8_t *location = atomContent + ref.offsetInAtom();

@@ -183,7 +183,7 @@ public:
   // \brief Append an atom to a Section. The atom gets pushed into a vector
   // contains the atom, the atom file offset, the atom virtual address
   // the atom file offset is aligned appropriately as set by the Reader
-  virtual const AtomLayout &appendAtom(const Atom *atom);
+  virtual const lld::AtomLayout &appendAtom(const Atom *atom);
 
   /// \brief Set the virtual address of each Atom in the Section. This
   /// routine gets called after the linker fixes up the virtual address
@@ -233,7 +233,7 @@ public:
   }
 
   /// Atom Iterators
-  typedef typename std::vector<AtomLayout *>::iterator atom_iter;
+  typedef typename std::vector<lld::AtomLayout *>::iterator atom_iter;
 
   range<atom_iter> atoms() { return _atoms; }
 
@@ -247,7 +247,7 @@ protected:
   llvm::BumpPtrAllocator _alloc;
   int32_t _contentType;
   int32_t _contentPermissions;
-  std::vector<AtomLayout *> _atoms;
+  std::vector<lld::AtomLayout *> _atoms;
 };
 
 /// Align the offset to the required modulus defined by the atom alignment
@@ -271,7 +271,7 @@ uint64_t AtomSection<ELFT>::alignOffset(uint64_t offset,
 // contains the atom, the atom file offset, the atom virtual address
 // the atom file offset is aligned appropriately as set by the Reader
 template <class ELFT>
-const AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
+const lld::AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
   Atom::Definition atomType = atom->definition();
   const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
 
@@ -293,7 +293,7 @@ const AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
     case DefinedAtom::typeStub:
     case DefinedAtom::typeResolver:
     case DefinedAtom::typeTLVInitialData:
-      _atoms.push_back(new (_alloc) AtomLayout(atom, fOffset, 0));
+      _atoms.push_back(new (_alloc) lld::AtomLayout(atom, fOffset, 0));
       this->_fsize = fOffset + definedAtom->size();
       this->_msize = mOffset + definedAtom->size();
       DEBUG_WITH_TYPE("Section",
@@ -304,7 +304,7 @@ const AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
     case DefinedAtom::typeTLVInitialZeroFill:
     case DefinedAtom::typeZeroFill:
     case DefinedAtom::typeZeroFillFast:
-      _atoms.push_back(new (_alloc) AtomLayout(atom, mOffset, 0));
+      _atoms.push_back(new (_alloc) lld::AtomLayout(atom, mOffset, 0));
       this->_msize = mOffset + definedAtom->size();
       break;
     default:
@@ -354,7 +354,7 @@ template <class ELFT>
 void AtomSection<ELFT>::write(ELFWriter *writer,
                               llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
-  parallel_for_each(_atoms.begin(), _atoms.end(), [&] (AtomLayout *ai) {
+  parallel_for_each(_atoms.begin(), _atoms.end(), [&] (lld::AtomLayout *ai) {
     DEBUG_WITH_TYPE("Section",
                     llvm::dbgs() << "Writing atom: " << ai->_atom->name()
                                  << " | " << ai->_fileOffset << "\n");
@@ -602,13 +602,13 @@ class SymbolTable : public Section<ELFT> {
 
   struct SymbolEntry {
     SymbolEntry(const Atom *a, const Elf_Sym &sym,
-                const AtomLayout *layout) : _atom(a), _symbol(sym),
-                                            _atomLayout(layout) {}
+                const lld::AtomLayout *layout)
+        : _atom(a), _symbol(sym), _atomLayout(layout) {}
     SymbolEntry() : _atom(nullptr) {}
 
     const Atom *_atom;
     Elf_Sym _symbol;
-    const AtomLayout *_atomLayout;
+    const lld::AtomLayout *_atomLayout;
   };
 
 public:
@@ -622,7 +622,7 @@ public:
   }
 
   void addSymbol(const Atom *atom, int32_t sectionIndex, uint64_t addr = 0,
-                 const AtomLayout *layout = nullptr);
+                 const lld::AtomLayout *layout = nullptr);
 
   /// \brief Get the symbol table index for an Atom. If it's not in the symbol
   /// table, return STN_UNDEF.
@@ -786,7 +786,8 @@ void SymbolTable<ELFT>::addUndefinedAtom(Elf_Sym &sym,
 /// information
 template <class ELFT>
 void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
-                                  uint64_t addr, const AtomLayout *atomLayout) {
+                                  uint64_t addr,
+                                  const lld::AtomLayout *atomLayout) {
   Elf_Sym symbol;
 
   if (atom->name().empty())
@@ -876,7 +877,7 @@ public:
     // dont have their addresses known until addresses have been assigned
     // so lets update the symbol values after they have got assigned
     for (auto &ste: this->_symbolTable) {
-      const AtomLayout *atomLayout = ste._atomLayout;
+      const lld::AtomLayout *atomLayout = ste._atomLayout;
       if (!atomLayout)
         continue;
       ste._symbol.st_value = atomLayout->_virtualAddr;

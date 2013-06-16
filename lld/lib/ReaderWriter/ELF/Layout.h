@@ -11,6 +11,7 @@
 #define LLD_READER_WRITER_ELF_LAYOUT_H
 
 #include "lld/Core/DefinedAtom.h"
+#include "lld/ReaderWriter/AtomLayout.h"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/ELF.h"
@@ -21,17 +22,6 @@
 
 namespace lld {
 namespace elf {
-struct AtomLayout {
-  AtomLayout(const Atom *a, uint64_t fileOff, uint64_t virAddr)
-      : _atom(a), _fileOffset(fileOff), _virtualAddr(virAddr) {
-  }
-
-  AtomLayout() : _atom(nullptr), _fileOffset(0), _virtualAddr(0) {}
-
-  const Atom *_atom;
-  uint64_t _fileOffset;
-  uint64_t _virtualAddr;
-};
 
 /// \brief The ELFLayout is an abstract class for managing the final layout for
 ///        the kind of binaries(Shared Libraries / Relocatables / Executables 0
@@ -51,7 +41,7 @@ public:
   /// \brief Append the Atom to the layout and create appropriate sections.
   /// \returns A reference to the atom layout or an error. The atom layout will
   /// be updated as linking progresses.
-  virtual ErrorOr<const AtomLayout &> addAtom(const Atom *atom) = 0;
+  virtual ErrorOr<const lld::AtomLayout &> addAtom(const Atom *atom) = 0;
   /// find the Atom Address in the current layout
   virtual bool findAtomAddrByName(StringRef name, uint64_t &addr) = 0;
   /// associates a section to a segment

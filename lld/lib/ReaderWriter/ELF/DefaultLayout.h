@@ -149,10 +149,10 @@ public:
   struct FindByName {
     const std::string _name;
     FindByName(StringRef name) : _name(name) {}
-    bool operator()(const AtomLayout *j) { return j->_atom->name() == _name; }
+    bool operator()(const lld::AtomLayout *j) { return j->_atom->name() == _name; }
   };
 
-  typedef typename std::vector<AtomLayout *>::iterator AbsoluteAtomIterT;
+  typedef typename std::vector<lld::AtomLayout *>::iterator AbsoluteAtomIterT;
 
   DefaultLayout(const ELFTargetInfo &ti) : _targetInfo(ti) {}
 
@@ -177,7 +177,7 @@ public:
   static bool hasOutputSegment(Section<ELFT> *section);
 
   // Adds an atom to the section
-  virtual ErrorOr<const AtomLayout &> addAtom(const Atom *atom);
+  virtual ErrorOr<const lld::AtomLayout &> addAtom(const Atom *atom);
 
   /// \brief Find an output Section given a section name.
   MergedSections<ELFT> *findOutputSection(StringRef name) {
@@ -304,7 +304,7 @@ private:
   ProgramHeader<ELFT> *_programHeader;
   LLD_UNIQUE_BUMP_PTR(RelocationTable<ELFT>) _dynamicRelocationTable;
   LLD_UNIQUE_BUMP_PTR(RelocationTable<ELFT>) _pltRelocationTable;
-  std::vector<AtomLayout *> _absoluteAtoms;
+  std::vector<lld::AtomLayout *> _absoluteAtoms;
   const ELFTargetInfo &_targetInfo;
 };
 
@@ -488,7 +488,7 @@ AtomSection<ELFT> *DefaultLayout<ELFT>::getSection(
 }
 
 template <class ELFT>
-ErrorOr<const AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) {
+ErrorOr<const lld::AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) {
   if (const DefinedAtom *definedAtom = dyn_cast<DefinedAtom>(atom)) {
     // HACK: Ignore undefined atoms. We need to adjust the interface so that
     // undefined atoms can still be included in the output symbol table for
@@ -513,8 +513,8 @@ ErrorOr<const AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) {
   } else if (const AbsoluteAtom *absoluteAtom = dyn_cast<AbsoluteAtom>(atom)) {
     // Absolute atoms are not part of any section, they are global for the whole
     // link
-    _absoluteAtoms.push_back(
-        new (_allocator) AtomLayout(absoluteAtom, 0, absoluteAtom->value()));
+    _absoluteAtoms.push_back(new (_allocator)
+        lld::AtomLayout(absoluteAtom, 0, absoluteAtom->value()));
     return *_absoluteAtoms.back();
   } else {
     llvm_unreachable("Only absolute / defined atoms can be added here");
