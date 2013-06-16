@@ -44,6 +44,7 @@ MCContext::MCContext(const MCAsmInfo &mai, const MCRegisterInfo &mri,
 
   error_code EC = llvm::sys::fs::current_path(CompilationDir);
   assert(!EC && "Could not determine the current directory");
+  (void)EC;
 
   MachOUniquingMap = 0;
   ELFUniquingMap = 0;
