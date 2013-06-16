@@ -412,6 +412,18 @@ namespace dr39 { // dr39: no
     struct C : A {};
     struct D : B, C { int f() { return n; } }; // expected-error {{found in multiple base-class}}
   }
+
+  namespace PR5916 {
+    // FIXME: This is valid.
+    struct A { int n; }; // expected-note +{{found}}
+    struct B : A {};
+    struct C : A {};
+    struct D : B, C {};
+    int k = sizeof(D::n); // expected-error {{found in multiple base}} expected-error {{unknown type name}}
+#if __cplusplus >= 201103L
+    decltype(D::n) n; // expected-error {{found in multiple base}}
+#endif
+  }
 }
 
 // dr40: na
