@@ -391,7 +391,7 @@ public:
   }
 
   void setIsDebug(bool Val = true) {
-    assert(isReg() && IsDef && "Wrong MachineOperand accessor");
+    assert(isReg() && !IsDef && "Wrong MachineOperand accessor");
     IsDebug = Val;
   }
 
