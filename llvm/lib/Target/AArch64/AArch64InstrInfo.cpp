@@ -116,17 +116,6 @@ void AArch64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     .addImm(0);
 }
 
-MachineInstr *
-AArch64InstrInfo::emitFrameIndexDebugValue(MachineFunction &MF, int FrameIx,
-                                           uint64_t Offset, const MDNode *MDPtr,
-                                           DebugLoc DL) const {
-  MachineInstrBuilder MIB = BuildMI(MF, DL, get(AArch64::DBG_VALUE))
-    .addFrameIndex(FrameIx).addImm(0)
-    .addImm(Offset)
-    .addMetadata(MDPtr);
-  return &*MIB;
-}
-
 /// Does the Opcode represent a conditional branch that we can remove and re-add
 /// at the end of a basic block?
 static bool isCondBranch(unsigned Opc) {

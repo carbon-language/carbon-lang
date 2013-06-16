@@ -63,8 +63,6 @@ namespace {
 
     virtual bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB)
                        const;
-
-    virtual MachineLocation getDebugValueLocation(const MachineInstr *MI) const;
   };
 } // end of anonymous namespace
 
@@ -264,15 +262,6 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
   while (I != Pred->begin() && !(--I)->isTerminator())
     ; // Noop
   return I == Pred->end() || !I->isBarrier();
-}
-
-MachineLocation SparcAsmPrinter::
-getDebugValueLocation(const MachineInstr *MI) const {
-  assert(MI->getNumOperands() == 4 && "Invalid number of operands!");
-  assert(MI->getOperand(0).isReg() && MI->getOperand(1).isImm() &&
-         "Unexpected MachineOperand types");
-  return MachineLocation(MI->getOperand(0).getReg(),
-                         MI->getOperand(1).getImm());
 }
 
 // Force static initialization.

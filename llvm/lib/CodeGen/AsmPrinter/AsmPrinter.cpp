@@ -811,14 +811,6 @@ void AsmPrinter::EmitFunctionBody() {
   OutStreamer.AddBlankLine();
 }
 
-/// getDebugValueLocation - Get location information encoded by DBG_VALUE
-/// operands.
-MachineLocation AsmPrinter::
-getDebugValueLocation(const MachineInstr *MI) const {
-  // Target specific DBG_VALUE instructions are handled by each target.
-  return MachineLocation();
-}
-
 /// EmitDwarfRegOp - Emit dwarf register operation.
 void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();

@@ -97,11 +97,6 @@ private:
                                    const MachineInstr *MI);
 
 public:
-  void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
-
-  virtual MachineLocation
-    getDebugValueLocation(const MachineInstr *MI) const LLVM_OVERRIDE;
-
   /// EmitDwarfRegOp - Emit dwarf register operation.
   virtual void EmitDwarfRegOp(const MachineLocation &MLoc) const LLVM_OVERRIDE;
 

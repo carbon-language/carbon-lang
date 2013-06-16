@@ -386,15 +386,6 @@ void XCoreInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     .addImm(0);
 }
 
-MachineInstr*
-XCoreInstrInfo::emitFrameIndexDebugValue(MachineFunction &MF, int FrameIx,
-                                         uint64_t Offset, const MDNode *MDPtr,
-                                         DebugLoc DL) const {
-  MachineInstrBuilder MIB = BuildMI(MF, DL, get(XCore::DBG_VALUE))
-    .addFrameIndex(FrameIx).addImm(0).addImm(Offset).addMetadata(MDPtr);
-  return &*MIB;
-}
-
 /// ReverseBranchCondition - Return the inverse opcode of the 
 /// specified Branch instruction.
 bool XCoreInstrInfo::

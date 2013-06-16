@@ -67,11 +67,6 @@ class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
                               unsigned AsmVariant = 1);
 
   virtual bool runOnMachineFunction(MachineFunction &F) LLVM_OVERRIDE;
-
-  void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
-
-  virtual MachineLocation
-    getDebugValueLocation(const MachineInstr *MI) const LLVM_OVERRIDE;
 };
 
 } // end namespace llvm

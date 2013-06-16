@@ -27,16 +27,6 @@
 
 using namespace llvm;
 
-MachineLocation
-AArch64AsmPrinter::getDebugValueLocation(const MachineInstr *MI) const {
-  // See emitFrameIndexDebugValue in InstrInfo for where this instruction is
-  // expected to be created.
-  assert(MI->getNumOperands() == 4 && MI->getOperand(0).isReg()
-         && MI->getOperand(1).isImm() && "unexpected custom DBG_VALUE");
-  return MachineLocation(MI->getOperand(0).getReg(),
-                         MI->getOperand(1).getImm());
-}
-
 /// Try to print a floating-point register as if it belonged to a specified
 /// register-class. For example the inline asm operand modifier "b" requires its
 /// argument to be printed as "bN".
@@ -271,42 +261,12 @@ bool AArch64AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   return false;
 }
 
-void AArch64AsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
-                                               raw_ostream &OS) {
-  unsigned NOps = MI->getNumOperands();
-  assert(NOps==4);
-  OS << '\t' << MAI->getCommentString() << "DEBUG_VALUE: ";
-  // cast away const; DIetc do not take const operands for some reason.
-  DIVariable V(const_cast<MDNode *>(MI->getOperand(NOps-1).getMetadata()));
-  OS << V.getName();
-  OS << " <- ";
-  // Frame address.  Currently handles register +- offset only.
-  assert(MI->getOperand(0).isReg() && MI->getOperand(1).isImm());
-  OS << '[' << AArch64InstPrinter::getRegisterName(MI->getOperand(0).getReg());
-  OS << '+' << MI->getOperand(1).getImm();
-  OS << ']';
-  OS << "+" << MI->getOperand(NOps - 2).getImm();
-}
-
-
 #include "AArch64GenMCPseudoLowering.inc"
 
 void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   // Do any auto-generated pseudo lowerings.
   if (emitPseudoExpansionLowering(OutStreamer, MI))
     return;
-
-  switch (MI->getOpcode()) {
-  case AArch64::DBG_VALUE: {
-    if (isVerbose() && OutStreamer.hasRawTextSupport()) {
-      SmallString<128> TmpStr;
-      raw_svector_ostream OS(TmpStr);
-      PrintDebugValueComment(MI, OS);
-      OutStreamer.EmitRawText(StringRef(OS.str()));
-    }
-    return;
-  }
-  }
 
   MCInst TmpInst;
   LowerAArch64MachineInstrToMCInst(MI, TmpInst, *this);

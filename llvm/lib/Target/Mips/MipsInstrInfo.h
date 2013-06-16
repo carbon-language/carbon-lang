@@ -67,11 +67,6 @@ public:
                            bool AllowModify,
                            SmallVectorImpl<MachineInstr*> &BranchInstrs) const;
 
-  virtual MachineInstr* emitFrameIndexDebugValue(MachineFunction &MF,
-                                                 int FrameIx, uint64_t Offset,
-                                                 const MDNode *MDPtr,
-                                                 DebugLoc DL) const;
-
   /// Insert nop instruction when hazard condition is found
   virtual void insertNoop(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator MI) const;

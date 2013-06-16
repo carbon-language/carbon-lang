@@ -791,16 +791,6 @@ PPCInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   NewMIs.back()->addMemOperand(MF, MMO);
 }
 
-MachineInstr*
-PPCInstrInfo::emitFrameIndexDebugValue(MachineFunction &MF,
-                                       int FrameIx, uint64_t Offset,
-                                       const MDNode *MDPtr,
-                                       DebugLoc DL) const {
-  MachineInstrBuilder MIB = BuildMI(MF, DL, get(PPC::DBG_VALUE));
-  addFrameReference(MIB, FrameIx, 0, false).addImm(Offset).addMetadata(MDPtr);
-  return &*MIB;
-}
-
 bool PPCInstrInfo::
 ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   assert(Cond.size() == 2 && "Invalid PPC branch opcode!");

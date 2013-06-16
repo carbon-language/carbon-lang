@@ -55,8 +55,6 @@ class LLVM_LIBRARY_VISIBILITY AArch64AsmPrinter : public AsmPrinter {
                              unsigned AsmVariant, const char *ExtraCode,
                              raw_ostream &O);
 
-  void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
-
   /// printSymbolicAddress - Given some kind of reasonably bare symbolic
   /// reference, print out the appropriate asm string to represent it. If
   /// appropriate, a relocation-specifier will be produced, composed of a
@@ -66,8 +64,6 @@ class LLVM_LIBRARY_VISIBILITY AArch64AsmPrinter : public AsmPrinter {
   bool printSymbolicAddress(const MachineOperand &MO,
                             bool PrintImmediatePrefix,
                             StringRef Suffix, raw_ostream &O);
-
-  MachineLocation getDebugValueLocation(const MachineInstr *MI) const;
 
   virtual const char *getPassName() const {
     return "AArch64 Assembly Printer";
