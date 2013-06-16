@@ -34,7 +34,7 @@ struct ConvertToInt {
 };
 int *ArraySizeConversion = new int[ConvertToInt()];
 #ifdef CXX1Y2
-// expected-warning@-2 {{implicit conversion from array size expression of type 'ConvertToInt' to integral type 'unsigned long' is incompatible with C++98}}
+// expected-warning@-2 {{implicit conversion from array size expression of type 'ConvertToInt' to integral type}} // 'unsigned long' is incompatible with C++98}}
 #else
 // expected-warning@-4 {{implicit conversion from array size expression of type 'ConvertToInt' to integral type 'int' is incompatible with C++98}}
 #endif
