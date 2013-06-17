@@ -575,14 +575,16 @@ class CF_WORD0_R600 {
 class CF_CLAUSE_R600 <bits<7> inst, dag ins, string AsmPrint> : AMDGPUInst <(outs),
 ins, AsmPrint, [] >, CF_WORD0_R600, CF_WORD1_R600 {
   field bits<64> Inst;
+  bits<4> CNT;
 
   let CF_INST = inst;
   let BARRIER = 1;
   let CF_CONST = 0;
   let VALID_PIXEL_MODE = 0;
   let COND = 0;
+  let COUNT = CNT{2-0};
   let CALL_COUNT = 0;
-  let COUNT_3 = 0;
+  let COUNT_3 = CNT{3};
   let END_OF_PROGRAM = 0;
   let WHOLE_QUAD_MODE = 0;
 
@@ -1162,52 +1164,52 @@ let Predicates = [isR600] in {
   }
   defm : SteamOutputExportPattern<R600_ExportBuf, 0x20, 0x21, 0x22, 0x23>;
 
-  def CF_TC_R600 : CF_CLAUSE_R600<1, (ins i32imm:$ADDR, i32imm:$COUNT),
-  "TEX $COUNT @$ADDR"> {
+  def CF_TC_R600 : CF_CLAUSE_R600<1, (ins i32imm:$ADDR, i32imm:$CNT),
+  "TEX $CNT @$ADDR"> {
     let POP_COUNT = 0;
   }
-  def CF_VC_R600 : CF_CLAUSE_R600<2, (ins i32imm:$ADDR, i32imm:$COUNT),
-  "VTX $COUNT @$ADDR"> {
+  def CF_VC_R600 : CF_CLAUSE_R600<2, (ins i32imm:$ADDR, i32imm:$CNT),
+  "VTX $CNT @$ADDR"> {
     let POP_COUNT = 0;
   }
   def WHILE_LOOP_R600 : CF_CLAUSE_R600<6, (ins i32imm:$ADDR),
   "LOOP_START_DX10 @$ADDR"> {
     let POP_COUNT = 0;
-    let COUNT = 0;
+    let CNT = 0;
   }
   def END_LOOP_R600 : CF_CLAUSE_R600<5, (ins i32imm:$ADDR), "END_LOOP @$ADDR"> {
     let POP_COUNT = 0;
-    let COUNT = 0;
+    let CNT = 0;
   }
   def LOOP_BREAK_R600 : CF_CLAUSE_R600<9, (ins i32imm:$ADDR),
   "LOOP_BREAK @$ADDR"> {
     let POP_COUNT = 0;
-    let COUNT = 0;
+    let CNT = 0;
   }
   def CF_CONTINUE_R600 : CF_CLAUSE_R600<8, (ins i32imm:$ADDR),
   "CONTINUE @$ADDR"> {
     let POP_COUNT = 0;
-    let COUNT = 0;
+    let CNT = 0;
   }
   def CF_JUMP_R600 : CF_CLAUSE_R600<10, (ins i32imm:$ADDR, i32imm:$POP_COUNT),
   "JUMP @$ADDR POP:$POP_COUNT"> {
-    let COUNT = 0;
+    let CNT = 0;
   }
   def CF_ELSE_R600 : CF_CLAUSE_R600<13, (ins i32imm:$ADDR, i32imm:$POP_COUNT),
   "ELSE @$ADDR POP:$POP_COUNT"> {
-    let COUNT = 0;
+    let CNT = 0;
   }
   def CF_CALL_FS_R600 : CF_CLAUSE_R600<19, (ins), "CALL_FS"> {
     let ADDR = 0;
-    let COUNT = 0;
+    let CNT = 0;
     let POP_COUNT = 0;
   }
   def POP_R600 : CF_CLAUSE_R600<14, (ins i32imm:$ADDR, i32imm:$POP_COUNT),
   "POP @$ADDR POP:$POP_COUNT"> {
-    let COUNT = 0;
+    let CNT = 0;
   }
   def CF_END_R600 : CF_CLAUSE_R600<0, (ins), "CF_END"> {
-    let COUNT = 0;
+    let CNT = 0;
     let POP_COUNT = 0;
     let ADDR = 0;
     let END_OF_PROGRAM = 1;
