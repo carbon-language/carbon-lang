@@ -88,6 +88,7 @@ our @archive_files = (
     "$llvm_configuration/lib/libLLVMMCDisassembler.a",
     "$llvm_configuration/lib/libLLVMMCJIT.a",
     "$llvm_configuration/lib/libLLVMObject.a",
+    "$llvm_configuration/lib/libLLVMOption.a",
     "$llvm_configuration/lib/libLLVMRuntimeDyld.a",
     "$llvm_configuration/lib/libLLVMScalarOpts.a",
     "$llvm_configuration/lib/libLLVMSelectionDAG.a",
