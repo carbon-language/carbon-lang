@@ -305,7 +305,7 @@ void MachineScheduler::print(raw_ostream &O, const Module* m) const {
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void ReadyQueue::dump() {
-  dbgs() << "  " << Name << ": ";
+  dbgs() << Name << ": ";
   for (unsigned i = 0, e = Queue.size(); i < e; ++i)
     dbgs() << Queue[i]->NodeNum << " ";
   dbgs() << "\n";
@@ -1108,10 +1108,9 @@ public:
   /// Represent the type of SchedCandidate found within a single queue.
   /// pickNodeBidirectional depends on these listed by decreasing priority.
   enum CandReason {
-    NoCand, PhysRegCopy, SingleExcess, SingleCritical, Cluster, Weak,
+    NoCand, PhysRegCopy, RegExcess, RegCritical, Cluster, Weak,
     ResourceReduce, ResourceDemand, BotHeightReduce, BotPathReduce,
-    TopDepthReduce, TopPathReduce, SingleMax, MultiPressure, NextDefUse,
-    NodeOrder};
+    TopDepthReduce, TopPathReduce, SingleMax, NextDefUse, NodeOrder};
 
 #ifndef NDEBUG
   static const char *getReasonStr(ConvergingScheduler::CandReason Reason);
@@ -1156,6 +1155,9 @@ public:
     // The reason for this candidate.
     CandReason Reason;
 
+    // Set of reasons that apply to multiple candidates.
+    uint32_t RepeatReasonSet;
+
     // Register pressure values for the best candidate.
     RegPressureDelta RPDelta;
 
@@ -1163,7 +1165,7 @@ public:
     SchedResourceDelta ResDelta;
 
     SchedCandidate(const CandPolicy &policy)
-    : Policy(policy), SU(NULL), Reason(NoCand) {}
+      : Policy(policy), SU(NULL), Reason(NoCand), RepeatReasonSet(0) {}
 
     bool isValid() const { return SU; }
 
@@ -1175,6 +1177,9 @@ public:
       RPDelta = Best.RPDelta;
       ResDelta = Best.ResDelta;
     }
+
+    bool isRepeat(CandReason R) { return RepeatReasonSet & (1 << R); }
+    void setRepeat(CandReason R) { RepeatReasonSet |= (1 << R); }
 
     void initResourceDelta(const ScheduleDAGMI *DAG,
                            const TargetSchedModel *SchedModel);
@@ -1983,6 +1988,7 @@ initResourceDelta(const ScheduleDAGMI *DAG,
   }
 }
 
+
 /// Return true if this heuristic determines order.
 static bool tryLess(int TryVal, int CandVal,
                     ConvergingScheduler::SchedCandidate &TryCand,
@@ -1997,6 +2003,7 @@ static bool tryLess(int TryVal, int CandVal,
       Cand.Reason = Reason;
     return true;
   }
+  Cand.setRepeat(Reason);
   return false;
 }
 
@@ -2013,6 +2020,7 @@ static bool tryGreater(int TryVal, int CandVal,
       Cand.Reason = Reason;
     return true;
   }
+  Cand.setRepeat(Reason);
   return false;
 }
 
@@ -2083,18 +2091,14 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
 
   // Avoid exceeding the target's limit.
   if (tryLess(TryCand.RPDelta.Excess.UnitIncrease,
-              Cand.RPDelta.Excess.UnitIncrease, TryCand, Cand, SingleExcess))
+              Cand.RPDelta.Excess.UnitIncrease, TryCand, Cand, RegExcess))
     return;
-  if (Cand.Reason == SingleExcess)
-    Cand.Reason = MultiPressure;
 
   // Avoid increasing the max critical pressure in the scheduled region.
   if (tryLess(TryCand.RPDelta.CriticalMax.UnitIncrease,
               Cand.RPDelta.CriticalMax.UnitIncrease,
-              TryCand, Cand, SingleCritical))
+              TryCand, Cand, RegCritical))
     return;
-  if (Cand.Reason == SingleCritical)
-    Cand.Reason = MultiPressure;
 
   // Keep clustered nodes together to encourage downstream peephole
   // optimizations which may reduce resource requirements.
@@ -2158,8 +2162,6 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
   if (tryLess(TryCand.RPDelta.CurrentMax.UnitIncrease,
               Cand.RPDelta.CurrentMax.UnitIncrease, TryCand, Cand, SingleMax))
     return;
-  if (Cand.Reason == SingleMax)
-    Cand.Reason = MultiPressure;
 
   // Prefer immediate defs/users of the last scheduled instruction. This is a
   // local pressure avoidance strategy that also makes the machine code
@@ -2212,12 +2214,11 @@ const char *ConvergingScheduler::getReasonStr(
   switch (Reason) {
   case NoCand:         return "NOCAND    ";
   case PhysRegCopy:    return "PREG-COPY";
-  case SingleExcess:   return "REG-EXCESS";
-  case SingleCritical: return "REG-CRIT  ";
+  case RegExcess:      return "REG-EXCESS";
+  case RegCritical:    return "REG-CRIT  ";
   case Cluster:        return "CLUSTER   ";
   case Weak:           return "WEAK      ";
   case SingleMax:      return "REG-MAX   ";
-  case MultiPressure:  return "REG-MULTI ";
   case ResourceReduce: return "RES-REDUCE";
   case ResourceDemand: return "RES-DEMAND";
   case TopDepthReduce: return "TOP-DEPTH ";
@@ -2237,10 +2238,10 @@ void ConvergingScheduler::traceCandidate(const SchedCandidate &Cand) {
   switch (Cand.Reason) {
   default:
     break;
-  case SingleExcess:
+  case RegExcess:
     P = Cand.RPDelta.Excess;
     break;
-  case SingleCritical:
+  case RegCritical:
     P = Cand.RPDelta.CriticalMax;
     break;
   case SingleMax:
@@ -2350,7 +2351,10 @@ SUnit *ConvergingScheduler::pickNodeBidirectional(bool &IsTopNode) {
   // affects picking from either Q. If scheduling in one direction must
   // increase pressure for one of the excess PSets, then schedule in that
   // direction first to provide more freedom in the other direction.
-  if (BotCand.Reason == SingleExcess || BotCand.Reason == SingleCritical) {
+  if ((BotCand.Reason == RegExcess && !BotCand.isRepeat(RegExcess))
+      || (BotCand.Reason == RegCritical
+          && !BotCand.isRepeat(RegCritical)))
+  {
     IsTopNode = false;
     tracePick(BotCand, IsTopNode);
     return BotCand.SU;
@@ -2359,30 +2363,19 @@ SUnit *ConvergingScheduler::pickNodeBidirectional(bool &IsTopNode) {
   pickNodeFromQueue(Top, DAG->getTopRPTracker(), TopCand);
   assert(TopCand.Reason != NoCand && "failed to find the first candidate");
 
-  // If either Q has a single candidate that minimizes pressure above the
-  // original region's pressure pick it.
-  if (TopCand.Reason <= SingleMax || BotCand.Reason <= SingleMax) {
-    if (TopCand.Reason < BotCand.Reason) {
-      IsTopNode = true;
-      tracePick(TopCand, IsTopNode);
-      return TopCand.SU;
-    }
-    IsTopNode = false;
-    tracePick(BotCand, IsTopNode);
-    return BotCand.SU;
-  }
   // Check for a salient pressure difference and pick the best from either side.
   if (compareRPDelta(TopCand.RPDelta, BotCand.RPDelta)) {
     IsTopNode = true;
     tracePick(TopCand, IsTopNode);
     return TopCand.SU;
   }
-  // Otherwise prefer the bottom candidate, in node order if all else failed.
+  // Choose the queue with the most important (lowest enum) reason.
   if (TopCand.Reason < BotCand.Reason) {
     IsTopNode = true;
     tracePick(TopCand, IsTopNode);
     return TopCand.SU;
   }
+  // Otherwise prefer the bottom candidate, in node order if all else failed.
   IsTopNode = false;
   tracePick(BotCand, IsTopNode);
   return BotCand.SU;
