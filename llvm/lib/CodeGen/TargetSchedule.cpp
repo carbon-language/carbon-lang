@@ -201,7 +201,10 @@ unsigned TargetSchedModel::computeOperandLatency(
     if (UseDesc->NumReadAdvanceEntries == 0)
       return Latency;
     unsigned UseIdx = findUseIdx(UseMI, UseOperIdx);
-    return Latency - STI->getReadAdvanceCycles(UseDesc, UseIdx, WriteID);
+    int Advance = STI->getReadAdvanceCycles(UseDesc, UseIdx, WriteID);
+    if (Advance > 0 && (unsigned)Advance > Latency) // unsigned wrap
+      return 0;
+    return Latency - Advance;
   }
   // If DefIdx does not exist in the model (e.g. implicit defs), then return
   // unit latency (defaultDefLatency may be too conservative).
