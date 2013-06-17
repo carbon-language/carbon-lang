@@ -1,4 +1,4 @@
-set(LLVM_LINK_COMPONENTS archive object)
+set(LLVM_LINK_COMPONENTS object)
 
 add_llvm_utility(obj2yaml
   obj2yaml.cpp coff2yaml.cpp
