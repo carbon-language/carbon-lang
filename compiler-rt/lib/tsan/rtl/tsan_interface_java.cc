@@ -17,6 +17,7 @@
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
+#include "sanitizer_common/sanitizer_stacktrace.h"
 
 using namespace __tsan;  // NOLINT
 
@@ -157,7 +158,7 @@ SyncVar* GetAndRemoveJavaSync(ThreadState *thr, uptr pc, uptr addr) {
 #define SCOPED_JAVA_FUNC(func) \
   ThreadState *thr = cur_thread(); \
   const uptr caller_pc = GET_CALLER_PC(); \
-  const uptr pc = (uptr)&func; \
+  const uptr pc = __sanitizer::StackTrace::GetCurrentPc(); \
   (void)pc; \
   ScopedJavaFunc scoped(thr, caller_pc); \
 /**/

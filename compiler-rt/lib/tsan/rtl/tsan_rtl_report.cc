@@ -106,17 +106,25 @@ static ReportStack *SymbolizeStack(const StackTrace& trace) {
     return 0;
   ReportStack *stack = 0;
   for (uptr si = 0; si < trace.Size(); si++) {
+    const uptr pc = trace.Get(si);
+#ifndef TSAN_GO
     // We obtain the return address, that is, address of the next instruction,
     // so offset it by 1 byte.
-    bool is_last = (si == trace.Size() - 1);
-    ReportStack *ent = SymbolizeCode(trace.Get(si) - !is_last);
+    const uptr pc1 = __sanitizer::StackTrace::GetPreviousInstructionPc(pc);
+#else
+    // FIXME(dvyukov): Go sometimes uses address of a function as top pc.
+    uptr pc1 = pc;
+    if (si != trace.Size() - 1)
+      pc1 -= 1;
+#endif
+    ReportStack *ent = SymbolizeCode(pc1);
     CHECK_NE(ent, 0);
     ReportStack *last = ent;
     while (last->next) {
-      last->pc += !is_last;
+      last->pc = pc;  // restore original pc for report
       last = last->next;
     }
-    last->pc += !is_last;
+    last->pc = pc;  // restore original pc for report
     last->next = stack;
     stack = ent;
   }

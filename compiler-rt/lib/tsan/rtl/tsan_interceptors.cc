@@ -181,8 +181,7 @@ ScopedInterceptor::~ScopedInterceptor() {
     StatInc(thr, StatInt_##func); \
     const uptr caller_pc = GET_CALLER_PC(); \
     ScopedInterceptor si(thr, #func, caller_pc); \
-    const uptr pc = __sanitizer::StackTrace::GetPreviousInstructionPc( \
-        __sanitizer::StackTrace::GetCurrentPc()); \
+    const uptr pc = __sanitizer::StackTrace::GetCurrentPc(); \
     (void)pc; \
 /**/
 
@@ -1882,6 +1881,7 @@ void ProcessPendingSignals(ThreadState *thr) {
           uptr pc = signal->sigaction ?
               (uptr)sigactions[sig].sa_sigaction :
               (uptr)sigactions[sig].sa_handler;
+          pc += 1;  // return address is expected, OutputReport() will undo this
           stack.Init(&pc, 1);
           ThreadRegistryLock l(ctx->thread_registry);
           ScopedReport rep(ReportTypeErrnoInSignal);

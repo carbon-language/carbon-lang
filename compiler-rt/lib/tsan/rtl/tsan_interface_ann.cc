@@ -13,6 +13,7 @@
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
+#include "sanitizer_common/sanitizer_stacktrace.h"
 #include "tsan_interface_ann.h"
 #include "tsan_mutex.h"
 #include "tsan_report.h"
@@ -229,12 +230,12 @@ using namespace __tsan;  // NOLINT
 extern "C" {
 void INTERFACE_ATTRIBUTE AnnotateHappensBefore(char *f, int l, uptr addr) {
   SCOPED_ANNOTATION(AnnotateHappensBefore);
-  Release(cur_thread(), CALLERPC, addr);
+  Release(cur_thread(), pc, addr);
 }
 
 void INTERFACE_ATTRIBUTE AnnotateHappensAfter(char *f, int l, uptr addr) {
   SCOPED_ANNOTATION(AnnotateHappensAfter);
-  Acquire(cur_thread(), CALLERPC, addr);
+  Acquire(cur_thread(), pc, addr);
 }
 
 void INTERFACE_ATTRIBUTE AnnotateCondVarSignal(char *f, int l, uptr cv) {
