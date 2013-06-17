@@ -129,22 +129,39 @@ AuxVector::GetEntryName(EntryType type)
 #define ENTRY_NAME(_type) _type: name = #_type
     switch (type) 
     {
-    case ENTRY_NAME(AT_NULL);   break;
-    case ENTRY_NAME(AT_IGNORE); break;
-    case ENTRY_NAME(AT_EXECFD); break;
-    case ENTRY_NAME(AT_PHDR);   break;
-    case ENTRY_NAME(AT_PHENT);  break;
-    case ENTRY_NAME(AT_PHNUM);  break;
-    case ENTRY_NAME(AT_PAGESZ); break;
-    case ENTRY_NAME(AT_BASE);   break;
-    case ENTRY_NAME(AT_FLAGS);  break;
-    case ENTRY_NAME(AT_ENTRY);  break;
-    case ENTRY_NAME(AT_NOTELF); break;
-    case ENTRY_NAME(AT_UID);    break;
-    case ENTRY_NAME(AT_EUID);   break;
-    case ENTRY_NAME(AT_GID);    break;
-    case ENTRY_NAME(AT_EGID);   break;
-    case ENTRY_NAME(AT_CLKTCK); break;
+    case ENTRY_NAME(AT_NULL);           break;
+    case ENTRY_NAME(AT_IGNORE);         break;
+    case ENTRY_NAME(AT_EXECFD);         break;
+    case ENTRY_NAME(AT_PHDR);           break;
+    case ENTRY_NAME(AT_PHENT);          break;
+    case ENTRY_NAME(AT_PHNUM);          break;
+    case ENTRY_NAME(AT_PAGESZ);         break;
+    case ENTRY_NAME(AT_BASE);           break;
+    case ENTRY_NAME(AT_FLAGS);          break;
+    case ENTRY_NAME(AT_ENTRY);          break;
+    case ENTRY_NAME(AT_NOTELF);         break;
+    case ENTRY_NAME(AT_UID);            break;
+    case ENTRY_NAME(AT_EUID);           break;
+    case ENTRY_NAME(AT_GID);            break;
+    case ENTRY_NAME(AT_EGID);           break;
+    case ENTRY_NAME(AT_CLKTCK);         break;
+    case ENTRY_NAME(AT_PLATFORM);       break;
+    case ENTRY_NAME(AT_HWCAP);          break;
+    case ENTRY_NAME(AT_FPUCW);          break;
+    case ENTRY_NAME(AT_DCACHEBSIZE);    break;
+    case ENTRY_NAME(AT_ICACHEBSIZE);    break;
+    case ENTRY_NAME(AT_UCACHEBSIZE);    break;
+    case ENTRY_NAME(AT_IGNOREPPC);      break;
+    case ENTRY_NAME(AT_SECURE);         break;
+    case ENTRY_NAME(AT_BASE_PLATFORM);  break;
+    case ENTRY_NAME(AT_RANDOM);         break;
+    case ENTRY_NAME(AT_EXECFN);         break;
+    case ENTRY_NAME(AT_SYSINFO);        break;
+    case ENTRY_NAME(AT_SYSINFO_EHDR);   break;
+    case ENTRY_NAME(AT_L1I_CACHESHAPE); break;
+    case ENTRY_NAME(AT_L1D_CACHESHAPE); break;
+    case ENTRY_NAME(AT_L2_CACHESHAPE);  break;
+    case ENTRY_NAME(AT_L3_CACHESHAPE);  break;
     }
 #undef ENTRY_NAME
 
