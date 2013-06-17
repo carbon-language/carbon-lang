@@ -26,8 +26,8 @@
 namespace llvm {
 
   class LiveIntervals;
+  class MachineBlockFrequencyInfo;
   class MachineFunction;
-  class MachineLoopInfo;
   class TargetRegisterInfo;
   template<class T> class OwningPtr;
 
@@ -125,7 +125,7 @@ namespace llvm {
     /// Build a PBQP instance to represent the register allocation problem for
     /// the given MachineFunction.
     virtual PBQPRAProblem *build(MachineFunction *mf, const LiveIntervals *lis,
-                                 const MachineLoopInfo *loopInfo,
+                                 const MachineBlockFrequencyInfo *mbfi,
                                  const RegSet &vregs);
   private:
 
@@ -144,7 +144,7 @@ namespace llvm {
     /// Build a PBQP instance to represent the register allocation problem for
     /// the given MachineFunction.
     virtual PBQPRAProblem *build(MachineFunction *mf, const LiveIntervals *lis,
-                                 const MachineLoopInfo *loopInfo,
+                                 const MachineBlockFrequencyInfo *mbfi,
                                  const RegSet &vregs);   
 
   private:

@@ -18,6 +18,7 @@ namespace llvm {
 
   class LiveInterval;
   class LiveIntervals;
+  class MachineBlockFrequencyInfo;
   class MachineLoopInfo;
 
   /// normalizeSpillWeight - The spill weight of a live interval is computed as:
@@ -43,11 +44,13 @@ namespace llvm {
     MachineFunction &MF;
     LiveIntervals &LIS;
     const MachineLoopInfo &Loops;
+    const MachineBlockFrequencyInfo &MBFI;
     DenseMap<unsigned, float> Hint;
   public:
     VirtRegAuxInfo(MachineFunction &mf, LiveIntervals &lis,
-                   const MachineLoopInfo &loops) :
-      MF(mf), LIS(lis), Loops(loops) {}
+                   const MachineLoopInfo &loops,
+                   const MachineBlockFrequencyInfo &mbfi)
+        : MF(mf), LIS(lis), Loops(loops), MBFI(mbfi) {}
 
     /// CalculateWeightAndHint - (re)compute li's spill weight and allocation
     /// hint.

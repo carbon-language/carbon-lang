@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/LiveRangeEdit.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineDominators.h"
+#include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -65,6 +66,7 @@ class InlineSpiller : public Spiller {
   MachineRegisterInfo &MRI;
   const TargetInstrInfo &TII;
   const TargetRegisterInfo &TRI;
+  const MachineBlockFrequencyInfo &MBFI;
 
   // Variables that are valid during spill(), but used by multiple methods.
   LiveRangeEdit *Edit;
@@ -148,7 +150,8 @@ public:
       MFI(*mf.getFrameInfo()),
       MRI(mf.getRegInfo()),
       TII(*mf.getTarget().getInstrInfo()),
-      TRI(*mf.getTarget().getRegisterInfo()) {}
+      TRI(*mf.getTarget().getRegisterInfo()),
+      MBFI(pass.getAnalysis<MachineBlockFrequencyInfo>()) {}
 
   void spill(LiveRangeEdit &);
 
@@ -1290,5 +1293,5 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
   if (!RegsToSpill.empty())
     spillAll();
 
-  Edit->calculateRegClassAndHint(MF, Loops);
+  Edit->calculateRegClassAndHint(MF, Loops, MBFI);
 }

@@ -12,6 +12,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -33,6 +34,7 @@ INITIALIZE_PASS_END(CalculateSpillWeights, "calcspillweights",
 
 void CalculateSpillWeights::getAnalysisUsage(AnalysisUsage &au) const {
   au.addRequired<LiveIntervals>();
+  au.addRequired<MachineBlockFrequencyInfo>();
   au.addRequired<MachineLoopInfo>();
   au.setPreservesAll();
   MachineFunctionPass::getAnalysisUsage(au);
@@ -45,7 +47,8 @@ bool CalculateSpillWeights::runOnMachineFunction(MachineFunction &MF) {
 
   LiveIntervals &LIS = getAnalysis<LiveIntervals>();
   MachineRegisterInfo &MRI = MF.getRegInfo();
-  VirtRegAuxInfo VRAI(MF, LIS, getAnalysis<MachineLoopInfo>());
+  VirtRegAuxInfo VRAI(MF, LIS, getAnalysis<MachineLoopInfo>(),
+                      getAnalysis<MachineBlockFrequencyInfo>());
   for (unsigned i = 0, e = MRI.getNumVirtRegs(); i != e; ++i) {
     unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
     if (MRI.reg_nodbg_empty(Reg))
@@ -107,12 +110,12 @@ static bool isRematerializable(const LiveInterval &LI,
   return true;
 }
 
-void VirtRegAuxInfo::CalculateWeightAndHint(LiveInterval &li) {
+void
+VirtRegAuxInfo::CalculateWeightAndHint(LiveInterval &li) {
   MachineRegisterInfo &mri = MF.getRegInfo();
   const TargetRegisterInfo &tri = *MF.getTarget().getRegisterInfo();
   MachineBasicBlock *mbb = 0;
   MachineLoop *loop = 0;
-  unsigned loopDepth = 0;
   bool isExiting = false;
   float totalWeight = 0;
   SmallPtrSet<MachineInstr*, 8> visited;
@@ -140,14 +143,14 @@ void VirtRegAuxInfo::CalculateWeightAndHint(LiveInterval &li) {
       if (mi->getParent() != mbb) {
         mbb = mi->getParent();
         loop = Loops.getLoopFor(mbb);
-        loopDepth = loop ? loop->getLoopDepth() : 0;
         isExiting = loop ? loop->isLoopExiting(mbb) : false;
       }
 
       // Calculate instr weight.
       bool reads, writes;
       tie(reads, writes) = mi->readsWritesVirtualRegister(li.reg);
-      weight = LiveIntervals::getSpillWeight(writes, reads, loopDepth);
+      weight = LiveIntervals::getSpillWeight(
+          writes, reads, MBFI.getBlockFreq(mi->getParent()));
 
       // Give extra weight to what looks like a loop induction variable update.
       if (writes && isExiting && LIS.isLiveOutOfMBB(li, mbb))

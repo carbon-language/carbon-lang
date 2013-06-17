@@ -27,6 +27,7 @@ class ConnectedVNInfoEqClasses;
 class LiveInterval;
 class LiveIntervals;
 class LiveRangeEdit;
+class MachineBlockFrequencyInfo;
 class MachineInstr;
 class MachineLoopInfo;
 class MachineRegisterInfo;
@@ -215,6 +216,7 @@ class SplitEditor {
   MachineDominatorTree &MDT;
   const TargetInstrInfo &TII;
   const TargetRegisterInfo &TRI;
+  const MachineBlockFrequencyInfo &MBFI;
 
 public:
 
@@ -349,7 +351,7 @@ public:
   /// Create a new SplitEditor for editing the LiveInterval analyzed by SA.
   /// Newly created intervals will be appended to newIntervals.
   SplitEditor(SplitAnalysis &SA, LiveIntervals&, VirtRegMap&,
-              MachineDominatorTree&);
+              MachineDominatorTree&, MachineBlockFrequencyInfo &);
 
   /// reset - Prepare for a new split.
   void reset(LiveRangeEdit&, ComplementSpillMode = SM_Partition);

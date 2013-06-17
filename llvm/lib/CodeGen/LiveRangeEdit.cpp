@@ -374,9 +374,11 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
   }
 }
 
-void LiveRangeEdit::calculateRegClassAndHint(MachineFunction &MF,
-                                             const MachineLoopInfo &Loops) {
-  VirtRegAuxInfo VRAI(MF, LIS, Loops);
+void
+LiveRangeEdit::calculateRegClassAndHint(MachineFunction &MF,
+                                        const MachineLoopInfo &Loops,
+                                        const MachineBlockFrequencyInfo &MBFI) {
+  VirtRegAuxInfo VRAI(MF, LIS, Loops, MBFI);
   for (iterator I = begin(), E = end(); I != E; ++I) {
     LiveInterval &LI = **I;
     if (MRI.recomputeRegClass(LI.reg, MF.getTarget()))

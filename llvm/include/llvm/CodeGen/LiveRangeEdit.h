@@ -27,6 +27,7 @@ namespace llvm {
 
 class AliasAnalysis;
 class LiveIntervals;
+class MachineBlockFrequencyInfo;
 class MachineLoopInfo;
 class MachineRegisterInfo;
 class VirtRegMap;
@@ -201,7 +202,8 @@ public:
   /// calculateRegClassAndHint - Recompute register class and hint for each new
   /// register.
   void calculateRegClassAndHint(MachineFunction&,
-                                const MachineLoopInfo&);
+                                const MachineLoopInfo&,
+                                const MachineBlockFrequencyInfo&);
 };
 
 }

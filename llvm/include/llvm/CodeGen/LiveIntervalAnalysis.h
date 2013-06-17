@@ -35,6 +35,7 @@ namespace llvm {
 
   class AliasAnalysis;
   class BitVector;
+  class BlockFrequency;
   class LiveRangeCalc;
   class LiveVariables;
   class MachineDominatorTree;
@@ -99,7 +100,7 @@ namespace llvm {
     virtual ~LiveIntervals();
 
     // Calculate the spill weight to assign to a single instruction.
-    static float getSpillWeight(bool isDef, bool isUse, unsigned loopDepth);
+    static float getSpillWeight(bool isDef, bool isUse, BlockFrequency freq);
 
     LiveInterval &getInterval(unsigned Reg) {
       LiveInterval *LI = VirtRegIntervals[Reg];
