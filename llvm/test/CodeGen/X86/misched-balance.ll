@@ -1,5 +1,4 @@
-; RUN-disabled: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched -verify-machineinstrs | FileCheck %s
-; RUN: true
+; RUN: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched -verify-machineinstrs | FileCheck %s
 ;
 ; Verify that misched resource/latency balancy heuristics are sane.
 
@@ -227,4 +226,52 @@ for.body:
 
 end:
   ret void
+}
+
+; A mildly interesting little block extracted from a cipher.  The
+; balanced heuristics are interesting here because we have resource,
+; latency, and register limits all at once. For now, simply check that
+; we don't use any callee-saves.
+; CHECK: @encpc1
+; CHECK: %entry
+; CHECK-NOT: push
+; CHECK-NOT: pop
+; CHECK: ret
+@a = external global i32, align 4
+@b = external global i32, align 4
+@c = external global i32, align 4
+@d = external global i32, align 4
+define i32 @encpc1() nounwind {
+entry:
+  %l1 = load i32* @a, align 16
+  %conv = shl i32 %l1, 8
+  %s5 = lshr i32 %l1, 8
+  %add = or i32 %conv, %s5
+  store i32 %add, i32* @b
+  %l6 = load i32* @a
+  %l7 = load i32* @c
+  %add.i = add i32 %l7, %l6
+  %idxprom.i = zext i32 %l7 to i64
+  %arrayidx.i = getelementptr inbounds i32* @d, i64 %idxprom.i
+  %l8 = load i32* %arrayidx.i
+  store i32 346, i32* @c
+  store i32 20021, i32* @d
+  %l9 = load i32* @a
+  store i32 %l8, i32* @a
+  store i32 %l9, i32* @b
+  store i32 %add.i, i32* @c
+  store i32 %l9, i32* @d
+  %cmp.i = icmp eq i32 %add.i, 0
+  %s10 = lshr i32 %l1, 16
+  %s12 = lshr i32 %l1, 24
+  %s14 = lshr i32 %l1, 30
+  br i1 %cmp.i, label %if, label %return
+if:
+  %sa = add i32 %s5, %s10
+  %sb = add i32 %sa, %s12
+  %sc = add i32 %sb, %s14
+  br label %return
+return:
+  %result = phi i32 [0, %entry], [%sc, %if]
+  ret i32 %result
 }

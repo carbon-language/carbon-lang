@@ -1,6 +1,5 @@
 ; REQUIRES: asserts
-; RUN-disabled: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched -stats 2>&1 | FileCheck %s
-; RUN: true
+; RUN: llc < %s -march=x86-64 -mcpu=core2 -pre-RA-sched=source -enable-misched -stats 2>&1 | FileCheck %s
 ;
 ; Verify that register pressure heuristics are working in MachineScheduler.
 ;
@@ -8,7 +7,7 @@
 ; flag to disable it for this test case.
 ;
 ; CHECK: @wrap_mul4
-; CHECK: 30 regalloc - Number of spills inserted
+; CHECK: 24 regalloc - Number of spills inserted
 
 define void @wrap_mul4(double* nocapture %Out, [4 x double]* nocapture %A, [4 x double]* nocapture %B) #0 {
 entry:
