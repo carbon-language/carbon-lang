@@ -49,6 +49,8 @@ public:
   tool_output_file(const char *filename, std::string &ErrorInfo,
                    unsigned Flags = 0);
 
+  tool_output_file(const char *Filename, int FD);
+
   /// os - Return the contained raw_fd_ostream.
   raw_fd_ostream &os() { return OS; }
 

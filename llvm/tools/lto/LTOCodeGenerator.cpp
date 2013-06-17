@@ -30,10 +30,10 @@
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
@@ -160,36 +160,33 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
 
 bool LTOCodeGenerator::compile_to_file(const char** name, std::string& errMsg) {
   // make unique temp .o file to put generated object file
-  sys::PathWithStatus uniqueObjPath("lto-llvm.o");
-  if (uniqueObjPath.createTemporaryFileOnDisk(false, &errMsg)) {
-    uniqueObjPath.eraseFromDisk();
+  SmallString<128> Filename;
+  int FD;
+  error_code EC = sys::fs::unique_file("lto-llvm-%%%%%%%.o",
+                                       FD, Filename);
+  if (EC) {
+    errMsg = EC.message();
     return true;
   }
-  sys::RemoveFileOnSignal(uniqueObjPath.str());
 
   // generate object file
-  bool genResult = false;
-  tool_output_file objFile(uniqueObjPath.c_str(), errMsg);
-  if (!errMsg.empty()) {
-    uniqueObjPath.eraseFromDisk();
-    return true;
-  }
+  tool_output_file objFile(Filename.c_str(), FD);
 
-  genResult = this->generateObjectFile(objFile.os(), errMsg);
+  bool genResult = generateObjectFile(objFile.os(), errMsg);
   objFile.os().close();
   if (objFile.os().has_error()) {
     objFile.os().clear_error();
-    uniqueObjPath.eraseFromDisk();
+    sys::fs::remove(Twine(Filename));
     return true;
   }
 
   objFile.keep();
   if (genResult) {
-    uniqueObjPath.eraseFromDisk();
+    sys::fs::remove(Twine(Filename));
     return true;
   }
 
-  _nativeObjectPath = uniqueObjPath.str();
+  _nativeObjectPath = Filename.c_str();
   *name = _nativeObjectPath.c_str();
   return false;
 }
@@ -206,13 +203,13 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg) {
   OwningPtr<MemoryBuffer> BuffPtr;
   if (error_code ec = MemoryBuffer::getFile(name, BuffPtr, -1, false)) {
     errMsg = ec.message();
-    sys::Path(_nativeObjectPath).eraseFromDisk();
+    sys::fs::remove(_nativeObjectPath);
     return NULL;
   }
   _nativeObjectFile = BuffPtr.take();
 
   // remove temp files
-  sys::Path(_nativeObjectPath).eraseFromDisk();
+  sys::fs::remove(_nativeObjectPath);
 
   // return buffer, unless error
   if (_nativeObjectFile == NULL)

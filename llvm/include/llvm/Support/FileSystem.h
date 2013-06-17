@@ -292,6 +292,13 @@ error_code current_path(SmallVectorImpl<char> &result);
 ///          successfully set, otherwise a platform specific error_code.
 error_code remove(const Twine &path, bool &existed);
 
+/// @brief Convenience function for clients that don't need to know if the file
+///        existed or not.
+inline error_code remove(const Twine &Path) {
+  bool Existed;
+  return remove(Path, Existed);
+}
+
 /// @brief Recursively remove all files below \a path, then \a path. Files are
 ///        removed as if by POSIX remove().
 ///

@@ -44,3 +44,7 @@ tool_output_file::tool_output_file(const char *filename, std::string &ErrorInfo,
   if (!ErrorInfo.empty())
     Installer.Keep = true;
 }
+
+tool_output_file::tool_output_file(const char *Filename, int FD)
+    : Installer(Filename), OS(FD, true) {
+}
