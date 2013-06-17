@@ -2,6 +2,7 @@ set(LLVM_NO_RTTI 1)
 
 add_lldb_library(lldbInterpreter
   Args.cpp
+  CommandHistory.cpp
   CommandInterpreter.cpp
   CommandObject.cpp
   CommandObjectRegexCommand.cpp
