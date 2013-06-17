@@ -43,13 +43,14 @@ int AddOverrideTransform::apply(const FileOverrides &InputStates,
   MatchFinder Finder;
   AddOverrideFixer Fixer(AddOverrideTool.getReplacements(), AcceptedChanges,
                          DetectMacros);
+  Finder.addMatcher(makeCandidateForOverrideAttrMatcher(), &Fixer);
+
   // Make Fixer available to handleBeginSource().
   this->Fixer = &Fixer;
 
-  Finder.addMatcher(makeCandidateForOverrideAttrMatcher(), &Fixer);
+  setOverrides(InputStates);
 
-  if (int result =
-          AddOverrideTool.run(createActionFactory(Finder, InputStates))) {
+  if (int result = AddOverrideTool.run(createActionFactory(Finder))) {
     llvm::errs() << "Error encountered during translation.\n";
     return result;
   }

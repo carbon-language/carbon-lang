@@ -57,7 +57,9 @@ int LoopConvertTransform::apply(const FileOverrides &InputStates,
                                   Options().MaxRiskLevel, LFK_PseudoArray);
   Finder.addMatcher(makePseudoArrayLoopMatcher(), &PseudoarrrayLoopFixer);
 
-  if (int result = LoopTool.run(createActionFactory(Finder, InputStates))) {
+  setOverrides(InputStates);
+
+  if (int result = LoopTool.run(createActionFactory(Finder))) {
     llvm::errs() << "Error encountered during translation.\n";
     return result;
   }

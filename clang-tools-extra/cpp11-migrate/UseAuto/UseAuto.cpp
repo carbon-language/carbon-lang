@@ -37,7 +37,9 @@ int UseAutoTransform::apply(const FileOverrides &InputStates,
   Finder.addMatcher(makeIteratorDeclMatcher(), &ReplaceIterators);
   Finder.addMatcher(makeDeclWithNewMatcher(), &ReplaceNew);
 
-  if (int Result = UseAutoTool.run(createActionFactory(Finder, InputStates))) {
+  setOverrides(InputStates);
+
+  if (int Result = UseAutoTool.run(createActionFactory(Finder))) {
     llvm::errs() << "Error encountered during translation.\n";
     return Result;
   }

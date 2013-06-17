@@ -37,11 +37,11 @@ int UseNullptrTransform::apply(const FileOverrides &InputStates,
   NullptrFixer Fixer(UseNullptrTool.getReplacements(),
                      AcceptedChanges,
                      Options().MaxRiskLevel);
-
   Finder.addMatcher(makeCastSequenceMatcher(), &Fixer);
 
-  if (int result =
-          UseNullptrTool.run(createActionFactory(Finder, InputStates))) {
+  setOverrides(InputStates);
+
+  if (int result = UseNullptrTool.run(createActionFactory(Finder))) {
     llvm::errs() << "Error encountered during translation.\n";
     return result;
   }

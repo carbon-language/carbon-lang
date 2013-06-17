@@ -19,8 +19,6 @@
 #include <vector>
 #include "Core/IncludeExcludeInfo.h"
 #include "Core/FileOverrides.h"
-#include "clang/ASTMatchers/ASTMatchFinder.h"
-#include "clang/Tooling/Tooling.h"
 #include "llvm/Support/Timer.h"
 
 // For RewriterContainer
@@ -48,8 +46,10 @@ enum RiskLevel {
 
 // Forward declarations
 namespace clang {
+class CompilerInstance;
 namespace tooling {
 class CompilationDatabase;
+class FrontendActionFactory;
 } // namespace tooling
 namespace ast_matchers {
 class MatchFinder;
@@ -112,21 +112,21 @@ struct TransformOptions {
 
 /// \brief Abstract base class for all C++11 migration transforms.
 ///
-/// Per-source performance timing is handled by the callbacks
-/// handleBeginSource() and handleEndSource() if timing is enabled. See
-/// clang::tooling::newFrontendActionFactory() for how to register a Transform
-/// object for callbacks. When a Transform object is registered for
-/// FrontendAction source file callbacks, this behaviour can be used to time
-/// the application of a MatchFinder by subclasses. Durations are automatically
-/// stored in a TimingVec.
-class Transform : public clang::tooling::SourceFileCallbacks {
+/// Subclasses must call createActionFactory() to create a
+/// FrontendActionFactory to pass to ClangTool::run(). Subclasses are also
+/// responsible for calling setOverrides() before calling ClangTool::run().
+///
+/// If timing is enabled (see TransformOptions), per-source performance timing
+/// is recorded and stored in a TimingVec for later access with timing_begin()
+/// and timing_end().
+class Transform {
 public:
   /// \brief Constructor
   /// \param Name Name of the transform for human-readable purposes (e.g. -help
   /// text)
   /// \param Options Collection of options that affect all transforms.
   Transform(llvm::StringRef Name, const TransformOptions &Options)
-      : Name(Name), GlobalOptions(Options) {
+      : Name(Name), GlobalOptions(Options), InputState(0) {
     Reset();
   }
 
@@ -175,17 +175,21 @@ public:
     DeferredChanges = 0;
   }
 
-  /// \brief Callback for notification of the start of processing of a source
-  /// file by a FrontendAction. Starts a performance timer if timing was
-  /// enabled.
+  /// \brief Called before parsing a translation unit for a FrontendAction.
+  ///
+  /// Transform uses this function to apply file overrides and start
+  /// performance timers. Subclasses overriding this function must call it
+  /// before returning.
   virtual bool handleBeginSource(clang::CompilerInstance &CI,
-                                 llvm::StringRef Filename) LLVM_OVERRIDE;
+                                 llvm::StringRef Filename);
 
-  /// \brief Callback for notification of the end of processing of a source
-  /// file by a FrontendAction. Stops a performance timer if timing was enabled
-  /// and records the elapsed time. For a given source, handleBeginSource() and
-  /// handleEndSource() are expected to be called in pairs.
-  virtual void handleEndSource() LLVM_OVERRIDE;
+  /// \brief Called after FrontendAction has been run over a translation unit.
+  ///
+  /// Transform uses this function to stop performance timers. Subclasses
+  /// overriding this function must call it before returning. A call to
+  /// handleEndSource() for a given translation unit is expected to be called
+  /// immediately after the corresponding handleBeginSource() call.
+  virtual void handleEndSource();
 
   /// \brief Performance timing data is stored as a vector of pairs. Pairs are
   /// formed of:
@@ -219,17 +223,26 @@ protected:
 
   const TransformOptions &Options() { return GlobalOptions; }
 
-  /// \brief Subclasses call this function to create a FrontendActionFactory to
-  /// pass to ClangTool. The factory returned by this function is responsible
-  /// for overriding source file contents with results of previous transforms.
+  /// \brief Allows a subclass to provide file contents overrides before
+  /// applying frontend actions.
+  ///
+  /// It is an error not to call this function before calling ClangTool::run()
+  /// with the factory provided by createActionFactory().
+  void setOverrides(const FileOverrides &Overrides) { InputState = &Overrides; }
+
+  /// \brief Subclasses must call this function to create a
+  /// FrontendActionFactory to pass to ClangTool.
+  ///
+  /// The factory returned by this function is responsible for calling back to
+  /// Transform to call handleBeginSource() and handleEndSource().
   clang::tooling::FrontendActionFactory *
-      createActionFactory(clang::ast_matchers::MatchFinder &Finder,
-                          const FileOverrides &InputStates);
+      createActionFactory(clang::ast_matchers::MatchFinder &Finder);
 
 private:
   const std::string Name;
   const TransformOptions &GlobalOptions;
   TimingVec Timings;
+  const FileOverrides *InputState;
   unsigned AcceptedChanges;
   unsigned RejectedChanges;
   unsigned DeferredChanges;

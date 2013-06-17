@@ -2,6 +2,7 @@
 #include "Core/Transform.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DeclGroup.h"
+#include "clang/Tooling/Tooling.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PathV1.h"
@@ -27,6 +28,11 @@ public:
   void setDeferredChanges(unsigned Changes) {
     Transform::setDeferredChanges(Changes);
   }
+
+  void setOverrides(const FileOverrides &Overrides) {
+    Transform::setOverrides(Overrides);
+  }
+
 };
 
 TEST(Transform, Interface) {
@@ -58,9 +64,9 @@ TEST(Transform, Interface) {
   ASSERT_TRUE(T.getChangesNotMade());
 }
 
-class FindTopLevelDeclConsumer : public ASTConsumer {
+class TimePassingASTConsumer : public ASTConsumer {
 public:
-  FindTopLevelDeclConsumer(bool *Called) : Called(Called) {}
+  TimePassingASTConsumer(bool *Called) : Called(Called) {}
 
   virtual bool HandleTopLevelDecl(DeclGroupRef DeclGroup) {
     llvm::sys::TimeValue UserStart;
@@ -83,9 +89,23 @@ public:
 
 struct ConsumerFactory {
   ASTConsumer *newASTConsumer() {
-    return new FindTopLevelDeclConsumer(&Called);
+    return new TimePassingASTConsumer(&Called);
   }
   bool Called;
+};
+
+struct CallbackForwarder : public clang::tooling::SourceFileCallbacks {
+  CallbackForwarder(Transform &Callee) : Callee(Callee) {}
+
+  virtual bool handleBeginSource(CompilerInstance &CI, StringRef Filename) {
+    return Callee.handleBeginSource(CI, Filename);
+  }
+
+  virtual void handleEndSource() {
+    Callee.handleEndSource();
+  }
+
+  Transform &Callee;
 };
 
 TEST(Transform, Timings) {
@@ -115,8 +135,21 @@ TEST(Transform, Timings) {
   Tool.mapVirtualFile(FileAName, "void a() {}");
   Tool.mapVirtualFile(FileBName, "void b() {}");
 
+  // Factory to create TimePassingASTConsumer for each source file the tool
+  // runs on.
   ConsumerFactory Factory;
-  Tool.run(newFrontendActionFactory(&Factory, &T));
+
+  // We don't care about any of Transform's functionality except to get it to
+  // record timings. For that, we need to forward handleBeginSource() and
+  // handleEndSource() calls to it.
+  CallbackForwarder Callbacks(T);
+
+  // Transform's handle* functions require FileOverrides to be set, even if
+  // there aren't any.
+  FileOverrides Overrides;
+  T.setOverrides(Overrides);
+
+  Tool.run(clang::tooling::newFrontendActionFactory(&Factory, &Callbacks));
 
   EXPECT_TRUE(Factory.Called);
   Transform::TimingVec::const_iterator I = T.timing_begin();

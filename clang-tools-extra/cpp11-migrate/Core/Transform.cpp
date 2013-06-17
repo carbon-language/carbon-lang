@@ -2,6 +2,7 @@
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Rewrite/Core/Rewriter.h"
+#include "clang/Tooling/Tooling.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
@@ -11,29 +12,22 @@ namespace {
 using namespace tooling;
 using namespace ast_matchers;
 
-/// \brief Custom FrontendActionFactory to produce FrontendActions that handle
-/// overriding source file contents before parsing.
-///
-/// The nested class FactoryAdaptor overrides BeginSourceFileAction to override
-/// source file contents before parsing happens. Both Begin and
-/// EndSourceFileAction call corresponding callbacks provided by
-/// SourceFileCallbacks.
+/// \brief Custom FrontendActionFactory to produce FrontendActions that simply
+/// forward (Begin|End)SourceFileAction calls to a given Transform.
 class ActionFactory : public clang::tooling::FrontendActionFactory {
 public:
-  ActionFactory(MatchFinder &Finder, const FileOverrides &Overrides,
-                SourceFileCallbacks &Callbacks)
-  : Finder(Finder), Overrides(Overrides), Callbacks(Callbacks) {}
+  ActionFactory(MatchFinder &Finder, Transform &Owner)
+  : Finder(Finder), Owner(Owner) {}
 
   virtual FrontendAction *create() LLVM_OVERRIDE {
-    return new FactoryAdaptor(Finder, Overrides, Callbacks);
+    return new FactoryAdaptor(Finder, Owner);
   }
 
 private:
   class FactoryAdaptor : public ASTFrontendAction {
   public:
-    FactoryAdaptor(MatchFinder &Finder, const FileOverrides &Overrides,
-                  SourceFileCallbacks &Callbacks)
-        : Finder(Finder), Overrides(Overrides), Callbacks(Callbacks) {}
+    FactoryAdaptor(MatchFinder &Finder, Transform &Owner)
+        : Finder(Finder), Owner(Owner) {}
 
     ASTConsumer *CreateASTConsumer(CompilerInstance &, StringRef) {
       return Finder.newASTConsumer();
@@ -44,28 +38,21 @@ private:
       if (!ASTFrontendAction::BeginSourceFileAction(CI, Filename))
         return false;
 
-      FileOverrides::const_iterator I = Overrides.find(Filename.str());
-      if (I != Overrides.end()) {
-        I->second.applyOverrides(CI.getSourceManager(), CI.getFileManager());
-      }
-
-      return Callbacks.handleBeginSource(CI, Filename);
+      return Owner.handleBeginSource(CI, Filename);
     }
 
     virtual void EndSourceFileAction() LLVM_OVERRIDE {
-      Callbacks.handleEndSource();
+      Owner.handleEndSource();
       return ASTFrontendAction::EndSourceFileAction();
     }
 
   private:
     MatchFinder &Finder;
-    const FileOverrides &Overrides;
-    SourceFileCallbacks &Callbacks;
+    Transform &Owner;
   };
 
   MatchFinder &Finder;
-  const FileOverrides &Overrides;
-  SourceFileCallbacks &Callbacks;
+  Transform &Owner;
 };
 
 } // namespace
@@ -121,11 +108,17 @@ void collectResults(clang::Rewriter &Rewrite,
 }
 
 bool Transform::handleBeginSource(CompilerInstance &CI, StringRef Filename) {
-  if (!Options().EnableTiming)
-    return true;
+  assert(InputState != 0 && "Subclass transform didn't provide InputState");
 
-  Timings.push_back(std::make_pair(Filename.str(), llvm::TimeRecord()));
-  Timings.back().second -= llvm::TimeRecord::getCurrentTime(true);
+  FileOverrides::const_iterator I = InputState->find(Filename.str());
+  if (I != InputState->end()) {
+    I->second.applyOverrides(CI.getSourceManager(), CI.getFileManager());
+  }
+
+  if (Options().EnableTiming) {
+    Timings.push_back(std::make_pair(Filename.str(), llvm::TimeRecord()));
+    Timings.back().second -= llvm::TimeRecord::getCurrentTime(true);
+  }
   return true;
 }
 
@@ -141,7 +134,6 @@ void Transform::addTiming(llvm::StringRef Label, llvm::TimeRecord Duration) {
 }
 
 FrontendActionFactory *
-Transform::createActionFactory(MatchFinder &Finder,
-                               const FileOverrides &InputStates) {
-  return new ActionFactory(Finder, InputStates, *this);
+Transform::createActionFactory(MatchFinder &Finder) {
+  return new ActionFactory(Finder, /*Owner=*/ *this);
 }
