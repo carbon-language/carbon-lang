@@ -1108,9 +1108,9 @@ public:
   /// Represent the type of SchedCandidate found within a single queue.
   /// pickNodeBidirectional depends on these listed by decreasing priority.
   enum CandReason {
-    NoCand, PhysRegCopy, RegExcess, RegCritical, Cluster, Weak,
+    NoCand, PhysRegCopy, RegExcess, RegCritical, Cluster, Weak, RegMax,
     ResourceReduce, ResourceDemand, BotHeightReduce, BotPathReduce,
-    TopDepthReduce, TopPathReduce, SingleMax, NextDefUse, NodeOrder};
+    TopDepthReduce, TopPathReduce, NextDefUse, NodeOrder};
 
 #ifndef NDEBUG
   static const char *getReasonStr(ConvergingScheduler::CandReason Reason);
@@ -2118,6 +2118,11 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
               TryCand, Cand, Weak)) {
     return;
   }
+  // Avoid increasing the max pressure of the entire region.
+  if (tryLess(TryCand.RPDelta.CurrentMax.UnitIncrease,
+              Cand.RPDelta.CurrentMax.UnitIncrease, TryCand, Cand, RegMax))
+    return;
+
   // Avoid critical resource consumption and balance the schedule.
   TryCand.initResourceDelta(DAG, SchedModel);
   if (tryLess(TryCand.ResDelta.CritResources, Cand.ResDelta.CritResources,
@@ -2152,11 +2157,6 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
     }
   }
 
-  // Avoid increasing the max pressure of the entire region.
-  if (tryLess(TryCand.RPDelta.CurrentMax.UnitIncrease,
-              Cand.RPDelta.CurrentMax.UnitIncrease, TryCand, Cand, SingleMax))
-    return;
-
   // Prefer immediate defs/users of the last scheduled instruction. This is a
   // local pressure avoidance strategy that also makes the machine code
   // readable.
@@ -2181,7 +2181,7 @@ const char *ConvergingScheduler::getReasonStr(
   case RegCritical:    return "REG-CRIT  ";
   case Cluster:        return "CLUSTER   ";
   case Weak:           return "WEAK      ";
-  case SingleMax:      return "REG-MAX   ";
+  case RegMax:         return "REG-MAX   ";
   case ResourceReduce: return "RES-REDUCE";
   case ResourceDemand: return "RES-DEMAND";
   case TopDepthReduce: return "TOP-DEPTH ";
@@ -2207,7 +2207,7 @@ void ConvergingScheduler::traceCandidate(const SchedCandidate &Cand) {
   case RegCritical:
     P = Cand.RPDelta.CriticalMax;
     break;
-  case SingleMax:
+  case RegMax:
     P = Cand.RPDelta.CurrentMax;
     break;
   case ResourceReduce:
