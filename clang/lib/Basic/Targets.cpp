@@ -3534,7 +3534,9 @@ class ARMTargetInfo : public TargetInfo {
     // the kernel which on armv6 and newer uses ldrex and strex. The net result
     // is that if we assume the kernel is at least as recent as the hardware,
     // it is safe to use atomic instructions on armv6 and newer.
-    if (T.getOS() != llvm::Triple::Linux && T.getOS() != llvm::Triple::FreeBSD)
+    if (T.getOS() != llvm::Triple::Linux &&
+        T.getOS() != llvm::Triple::FreeBSD &&
+        T.getOS() != llvm::Triple::Bitrig)
       return false;
     StringRef ArchName = T.getArchName();
     if (T.getArch() == llvm::Triple::arm) {
