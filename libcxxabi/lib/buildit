@@ -27,7 +27,7 @@ then
   RC_ProjectSourceVersion=1
 fi
 
-EXTRA_FLAGS="-std=c++0x -stdlib=libc++ -fstrict-aliasing -Wstrict-aliasing=2 \
+EXTRA_FLAGS="-std=c++11 -stdlib=libc++ -fstrict-aliasing -Wstrict-aliasing=2 \
              -Wsign-conversion -Wshadow -Wconversion -Wunused-variable \
              -Wmissing-field-initializers -Wchar-subscripts -Wmismatched-tags \
              -Wmissing-braces -Wshorten-64-to-32 -Wsign-compare \

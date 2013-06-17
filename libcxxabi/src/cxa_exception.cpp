@@ -15,7 +15,7 @@
 
 #include <exception>        // for std::terminate
 #include <cstdlib>          // for malloc, free
-#include <string>           // for memset
+#include <cstring>          // for memset
 #include <pthread.h>
 
 #include "cxa_exception.hpp"

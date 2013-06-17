@@ -498,7 +498,7 @@ __dynamic_cast(const void* static_ptr,
             // We get here only if there is some kind of visibility problem
             //   in client code.
             syslog(LOG_ERR, "dynamic_cast error 1: Both of the following type_info's "
-                    "should have public visibility.  At least of of them is hidden. %s" 
+                    "should have public visibility.  At least one of them is hidden. %s" 
                     ", %s.\n", static_type->name(), dynamic_type->name());
             // Redo the search comparing type_info's using strcmp
             info = {dst_type, static_ptr, static_type, src2dst_offset, 0};
