@@ -599,7 +599,7 @@ static void computeMaxPressureDelta(ArrayRef<unsigned> OldMaxPressureVec,
     int MDiff = (int)PNew - (int)MaxPressureLimit[i];
     if (MDiff > Delta.CurrentMax.UnitIncrease) {
       Delta.CurrentMax.PSetID = i;
-      Delta.CurrentMax.UnitIncrease = PNew;
+      Delta.CurrentMax.UnitIncrease = MDiff;
     }
   }
 }
