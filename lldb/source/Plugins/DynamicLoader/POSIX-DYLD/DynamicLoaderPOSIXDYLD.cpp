@@ -419,7 +419,6 @@ DynamicLoaderPOSIXDYLD::LoadModuleAtAddress(const FileSpec &file, addr_t base_ad
     else if ((module_sp = target.GetSharedModule(module_spec))) 
     {
         UpdateLoadedSections(module_sp, base_addr);
-        modules.Append(module_sp);
     }
 
     return module_sp;
