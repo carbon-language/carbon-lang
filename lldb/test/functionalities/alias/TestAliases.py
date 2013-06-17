@@ -96,7 +96,7 @@ class AliasTestCase(TestBase):
                      startstr = "Current breakpoints:",
                      substrs = [ "1: name = 'foo', locations = 1",
                                  "2: name = 'sum', locations = 1",
-                                 "3: file ='main.cpp', line = 32, locations = 1" ])
+                                 "3: file = 'main.cpp', line = 32, locations = 1" ])
 
         self.runCmd ("bpa -s python 1 -o 'print frame; print bp_loc'")
         self.runCmd ("bpa -s command 2 -o 'frame variable b'")

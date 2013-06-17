@@ -98,7 +98,7 @@ class ThreadStateTestCase(TestBase):
 
         # The breakpoint list should show 1 breakpoint with 1 location.
         self.expect("breakpoint list -f", "Breakpoint location shown correctly",
-            substrs = ["1: file ='main.c', line = %d, locations = 1" % self.break_1])
+            substrs = ["1: file = 'main.c', line = %d, locations = 1" % self.break_1])
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)
@@ -139,7 +139,7 @@ class ThreadStateTestCase(TestBase):
 
         # The breakpoint list should show 1 breakpoints with 1 location.
         self.expect("breakpoint list -f", "Breakpoint location shown correctly",
-            substrs = ["1: file ='main.c', line = %d, locations = 1" % self.break_1])
+            substrs = ["1: file = 'main.c', line = %d, locations = 1" % self.break_1])
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)
@@ -188,7 +188,7 @@ class ThreadStateTestCase(TestBase):
 
         # The breakpoint list should show 1 breakpoints with 1 location.
         self.expect("breakpoint list -f", "Breakpoint location shown correctly",
-            substrs = ["1: file ='main.c', line = %d, locations = 1" % self.break_1])
+            substrs = ["1: file = 'main.c', line = %d, locations = 1" % self.break_1])
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)
@@ -232,7 +232,7 @@ class ThreadStateTestCase(TestBase):
 
         # The breakpoint list should show 1 breakpoints with 1 location.
         self.expect("breakpoint list -f", "Breakpoint location shown correctly",
-            substrs = ["1: file ='main.c', line = %d, locations = 1" % self.break_1])
+            substrs = ["1: file = 'main.c', line = %d, locations = 1" % self.break_1])
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)
@@ -286,8 +286,8 @@ class ThreadStateTestCase(TestBase):
 
         # The breakpoint list should show 2 breakpoints with 1 location each.
         self.expect("breakpoint list -f", "Breakpoint location shown correctly",
-            substrs = ["1: file ='main.c', line = %d, locations = 1" % self.break_1,
-                       "2: file ='main.c', line = %d, locations = 1" % self.break_2])
+            substrs = ["1: file = 'main.c', line = %d, locations = 1" % self.break_1,
+                       "2: file = 'main.c', line = %d, locations = 1" % self.break_2])
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)

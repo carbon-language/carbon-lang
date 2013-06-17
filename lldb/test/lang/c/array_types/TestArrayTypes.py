@@ -105,7 +105,7 @@ class ArrayTypesTestCase(TestBase):
         # Sanity check the print representation of breakpoint.
         bp = str(breakpoint)
         self.expect(bp, msg="Breakpoint looks good", exe=False,
-            substrs = ["file ='main.c'",
+            substrs = ["file = 'main.c'",
                        "line = %d" % self.line,
                        "locations = 1"])
         self.expect(bp, msg="Breakpoint is not resolved as yet", exe=False, matching=False,
@@ -139,7 +139,7 @@ class ArrayTypesTestCase(TestBase):
         # The breakpoint should be resolved by now.
         bp = str(breakpoint)
         self.expect(bp, "Breakpoint looks good and is resolved", exe=False,
-            substrs = ["file ='main.c'",
+            substrs = ["file = 'main.c'",
                        "line = %d" % self.line,
                        "locations = 1"])
 

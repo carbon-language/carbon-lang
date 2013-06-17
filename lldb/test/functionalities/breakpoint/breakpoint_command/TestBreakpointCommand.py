@@ -62,12 +62,12 @@ class BreakpointCommandTestCase(TestBase):
 
         # The breakpoint list now only contains breakpoint 1.
         self.expect("breakpoint list", "Breakpoints 1 & 2 created",
-            substrs = ["1: file ='main.c', line = %d, locations = 1" % self.line,
-                       "2: file ='main.c', line = %d, locations = 1" % self.line] )
+            substrs = ["1: file = 'main.c', line = %d, locations = 1" % self.line,
+                       "2: file = 'main.c', line = %d, locations = 1" % self.line] )
 
         self.expect("breakpoint list -f", "Breakpoints 1 & 2 created",
-            substrs = ["1: file ='main.c', line = %d, locations = 1" % self.line,
-                       "2: file ='main.c', line = %d, locations = 1" % self.line],
+            substrs = ["1: file = 'main.c', line = %d, locations = 1" % self.line,
+                       "2: file = 'main.c', line = %d, locations = 1" % self.line],
             patterns = ["1.1: .+at main.c:%d, .+unresolved, hit count = 0" % self.line,
                         "2.1: .+at main.c:%d, .+unresolved, hit count = 0" % self.line])
 
@@ -143,13 +143,13 @@ class BreakpointCommandTestCase(TestBase):
 
         # The breakpoint list now only contains breakpoint 1.
         self.expect("breakpoint list -f", "Breakpoint 1 exists",
-            substrs = ["1: file ='main.c', line = %d, locations = 1, resolved = 1" %
+            substrs = ["1: file = 'main.c', line = %d, locations = 1, resolved = 1" %
                         self.line,
                        "hit count = 1"])
 
         # Not breakpoint 2.
         self.expect("breakpoint list -f", "No more breakpoint 2", matching=False,
-            substrs = ["2: file ='main.c', line = %d, locations = 1, resolved = 1" %
+            substrs = ["2: file = 'main.c', line = %d, locations = 1, resolved = 1" %
                         self.line])
 
         # Run the program again, with breakpoint 1 remaining.

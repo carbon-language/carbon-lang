@@ -122,10 +122,10 @@ class AbbreviationsTestCase(TestBase):
         self.expect("break list",
                     substrs = ["1: name = 'product', locations = 1",
                                "2: name = 'sum', locations = 1",
-                               "3: file ='main.cpp', line = 32, locations = 1"])
+                               "3: file = 'main.cpp', line = 32, locations = 1"])
         self.expect("br cl -l 32 -f main.cpp",
                     startstr = "1 breakpoints cleared:",
-                    substrs = ["3: file ='main.cpp', line = 32, locations = 1"])
+                    substrs = ["3: file = 'main.cpp', line = 32, locations = 1"])
 
         # Add a future to terminate the current process being debugged.
         #

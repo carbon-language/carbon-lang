@@ -41,7 +41,7 @@ class NumberOfThreadsTestCase(TestBase):
 
         # The breakpoint list should show 3 locations.
         self.expect("breakpoint list -f", "Breakpoint location shown correctly",
-            substrs = ["1: file ='main.c', line = %d, locations = 1" % self.line])
+            substrs = ["1: file = 'main.c', line = %d, locations = 1" % self.line])
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)
