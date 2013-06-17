@@ -2171,37 +2171,6 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
   }
 }
 
-/// pickNodeFromQueue helper that returns true if the LHS reg pressure effect is
-/// more desirable than RHS from scheduling standpoint.
-static bool compareRPDelta(const RegPressureDelta &LHS,
-                           const RegPressureDelta &RHS) {
-  // Compare each component of pressure in decreasing order of importance
-  // without checking if any are valid. Invalid PressureElements are assumed to
-  // have UnitIncrease==0, so are neutral.
-
-  // Avoid increasing the max critical pressure in the scheduled region.
-  if (LHS.Excess.UnitIncrease != RHS.Excess.UnitIncrease) {
-    DEBUG(dbgs() << "  RP excess top - bot: "
-          << (LHS.Excess.UnitIncrease - RHS.Excess.UnitIncrease) << '\n');
-    return LHS.Excess.UnitIncrease < RHS.Excess.UnitIncrease;
-  }
-  // Avoid increasing the max critical pressure in the scheduled region.
-  if (LHS.CriticalMax.UnitIncrease != RHS.CriticalMax.UnitIncrease) {
-    DEBUG(dbgs() << "  RP critical top - bot: "
-          << (LHS.CriticalMax.UnitIncrease - RHS.CriticalMax.UnitIncrease)
-          << '\n');
-    return LHS.CriticalMax.UnitIncrease < RHS.CriticalMax.UnitIncrease;
-  }
-  // Avoid increasing the max pressure of the entire region.
-  if (LHS.CurrentMax.UnitIncrease != RHS.CurrentMax.UnitIncrease) {
-    DEBUG(dbgs() << "  RP current top - bot: "
-          << (LHS.CurrentMax.UnitIncrease - RHS.CurrentMax.UnitIncrease)
-          << '\n');
-    return LHS.CurrentMax.UnitIncrease < RHS.CurrentMax.UnitIncrease;
-  }
-  return false;
-}
-
 #ifndef NDEBUG
 const char *ConvergingScheduler::getReasonStr(
   ConvergingScheduler::CandReason Reason) {
@@ -2357,12 +2326,6 @@ SUnit *ConvergingScheduler::pickNodeBidirectional(bool &IsTopNode) {
   pickNodeFromQueue(Top, DAG->getTopRPTracker(), TopCand);
   assert(TopCand.Reason != NoCand && "failed to find the first candidate");
 
-  // Check for a salient pressure difference and pick the best from either side.
-  if (compareRPDelta(TopCand.RPDelta, BotCand.RPDelta)) {
-    IsTopNode = true;
-    tracePick(TopCand, IsTopNode);
-    return TopCand.SU;
-  }
   // Choose the queue with the most important (lowest enum) reason.
   if (TopCand.Reason < BotCand.Reason) {
     IsTopNode = true;
