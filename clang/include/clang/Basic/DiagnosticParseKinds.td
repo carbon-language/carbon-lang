@@ -310,7 +310,8 @@ def err_expected_class_name_not_template :
 def err_unspecified_vla_size_with_static : Error<
   "'static' may not be used with an unspecified variable length array size">;
 def warn_deprecated_register : Warning<
-  "'register' storage class specifier is deprecated">, InGroup<Deprecated>;
+  "'register' storage class specifier is deprecated">,
+  InGroup<DeprecatedRegister>;
 
 def err_expected_case_before_expression: Error<
   "expected 'case' keyword before expression">;

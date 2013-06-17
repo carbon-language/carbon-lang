@@ -57,11 +57,14 @@ def DeleteNonVirtualDtor : DiagGroup<"delete-non-virtual-dtor">;
 def AbstractFinalClass : DiagGroup<"abstract-final-class">;
 
 def DeprecatedDeclarations : DiagGroup<"deprecated-declarations">;
-def DeprecatedWritableStr : DiagGroup<"deprecated-writable-strings">;
-def Deprecated : DiagGroup<"deprecated", [ DeprecatedDeclarations] >,
-                 DiagCategory<"Deprecations">;
-
 def DeprecatedImplementations :DiagGroup<"deprecated-implementations">;
+def DeprecatedRegister : DiagGroup<"deprecated-register">;
+def DeprecatedWritableStr : DiagGroup<"deprecated-writable-strings">;
+// FIXME: Why are DeprecatedImplementations and DeprecatedWritableStr
+// not in this group?
+def Deprecated : DiagGroup<"deprecated", [DeprecatedDeclarations,
+                                          DeprecatedRegister]>,
+                 DiagCategory<"Deprecations">;
 
 def : DiagGroup<"disabled-optimization">;
 def : DiagGroup<"discard-qual">;
