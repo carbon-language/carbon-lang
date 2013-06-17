@@ -151,7 +151,7 @@ private:
     if (!CurrentToken)
       return false;
 
-    // A '[' could be an index subscript (after an indentifier or after
+    // A '[' could be an index subscript (after an identifier or after
     // ')' or ']'), it could be the start of an Objective-C method
     // expression, or it could the the start of an Objective-C array literal.
     FormatToken *Left = CurrentToken->Previous;
@@ -792,11 +792,6 @@ public:
     if (Precedence > prec::PointerToMember || Current == NULL)
       return;
 
-    // Eagerly consume trailing comments.
-    while (Current && Current->isTrailingComment()) {
-      next();
-    }
-
     FormatToken *Start = Current;
     bool OperatorFound = false;
 
@@ -862,7 +857,9 @@ private:
   }
 
   void next() {
-    if (Current != NULL)
+    if (Current)
+      Current = Current->Next;
+    while (Current && Current->isTrailingComment())
       Current = Current->Next;
   }
 

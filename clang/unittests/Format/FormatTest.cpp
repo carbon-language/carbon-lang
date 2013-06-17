@@ -2150,6 +2150,13 @@ TEST_F(FormatTest, ExpressionIndentation) {
                "} else if (aaaaa && bbbbb > // break\n"
                "                        ccccc) {\n"
                "}");
+
+  // Presence of a trailing comment used to change indentation of b.
+  verifyFormat("return aaaaaaaaaaaaaaaaaaa +\n"
+               "       b;\n"
+               "return aaaaaaaaaaaaaaaaaaa +\n"
+               "       b; //",
+               getLLVMStyleWithColumns(30));
 }
 
 TEST_F(FormatTest, ConstructorInitializers) {
