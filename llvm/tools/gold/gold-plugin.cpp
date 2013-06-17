@@ -458,7 +458,7 @@ static ld_plugin_status cleanup_hook(void) {
     error_code EC = sys::fs::remove(Cleanup[i]);
     if (EC)
       (*message)(LDPL_ERROR, "Failed to delete '%s': %s", Cleanup[i].c_str(),
-                 EC.message());
+                 EC.message().c_str());
   }
 
   return LDPS_OK;
