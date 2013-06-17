@@ -16,6 +16,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/ArgList.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
 #include <errno.h>

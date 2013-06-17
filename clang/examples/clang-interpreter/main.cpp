@@ -24,6 +24,7 @@
 #include "llvm/Support/Host.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
