@@ -26,7 +26,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Transforms/IPO.h"
@@ -364,25 +363,19 @@ llvm::SplitFunctionsOutOfModule(Module *M,
 Module *BugDriver::ExtractMappedBlocksFromModule(const
                                                  std::vector<BasicBlock*> &BBs,
                                                  Module *M) {
-  sys::Path uniqueFilename(OutputPrefix + "-extractblocks");
-  std::string ErrMsg;
-  if (uniqueFilename.createTemporaryFileOnDisk(true, &ErrMsg)) {
+  SmallString<128> Filename;
+  int FD;
+  error_code EC = sys::fs::unique_file(OutputPrefix + "-extractblocks%%%%%%%",
+                                       FD, Filename);
+  if (EC) {
     outs() << "*** Basic Block extraction failed!\n";
-    errs() << "Error creating temporary file: " << ErrMsg << "\n";
+    errs() << "Error creating temporary file: " << EC.message() << "\n";
     EmitProgressBitcode(M, "basicblockextractfail", true);
     return 0;
   }
-  sys::RemoveFileOnSignal(uniqueFilename.str());
+  sys::RemoveFileOnSignal(Filename);
 
-  std::string ErrorInfo;
-  tool_output_file BlocksToNotExtractFile(uniqueFilename.c_str(), ErrorInfo);
-  if (!ErrorInfo.empty()) {
-    outs() << "*** Basic Block extraction failed!\n";
-    errs() << "Error writing list of blocks to not extract: " << ErrorInfo
-           << "\n";
-    EmitProgressBitcode(M, "basicblockextractfail", true);
-    return 0;
-  }
+  tool_output_file BlocksToNotExtractFile(Filename.c_str(), FD);
   for (std::vector<BasicBlock*>::const_iterator I = BBs.begin(), E = BBs.end();
        I != E; ++I) {
     BasicBlock *BB = *I;
@@ -394,22 +387,22 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
   }
   BlocksToNotExtractFile.os().close();
   if (BlocksToNotExtractFile.os().has_error()) {
-    errs() << "Error writing list of blocks to not extract: " << ErrorInfo
-           << "\n";
+    errs() << "Error writing list of blocks to not extract\n";
     EmitProgressBitcode(M, "basicblockextractfail", true);
     BlocksToNotExtractFile.os().clear_error();
     return 0;
   }
   BlocksToNotExtractFile.keep();
 
-  std::string uniqueFN = "--extract-blocks-file=" + uniqueFilename.str();
+  std::string uniqueFN = "--extract-blocks-file=";
+  uniqueFN += Filename.str();
   const char *ExtraArg = uniqueFN.c_str();
 
   std::vector<std::string> PI;
   PI.push_back("extract-blocks");
   Module *Ret = runPassesOn(M, PI, false, 1, &ExtraArg);
 
-  uniqueFilename.eraseFromDisk(); // Free disk space
+  sys::fs::remove(Filename.c_str());
 
   if (Ret == 0) {
     outs() << "*** Basic Block extraction failed, please report a bug!\n";
