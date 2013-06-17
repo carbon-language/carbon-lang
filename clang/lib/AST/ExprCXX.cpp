@@ -134,7 +134,10 @@ CXXNewExpr::CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
     this->Range.setEnd(DirectInitRange.getEnd()); break;
   case ListInit:
     this->Range.setEnd(getInitializer()->getSourceRange().getEnd()); break;
-  default: break;
+  default:
+    if (TypeIdParens.isValid())
+      this->Range.setEnd(TypeIdParens.getEnd());
+    break;
   }
 }
 

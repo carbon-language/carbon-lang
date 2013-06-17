@@ -174,5 +174,11 @@ TEST(TemplateSpecializationTypeLoc, AngleBracketLocations) {
       loc(templateSpecializationType())));
 }
 
+TEST(CXXNewExpr, TypeParenRange) {
+  RangeVerifier<CXXNewExpr> Verifier;
+  Verifier.expectRange(1, 10, 1, 18);
+  EXPECT_TRUE(Verifier.match("int* a = new (int);", newExpr()));
+}
+
 } // end namespace ast_matchers
 } // end namespace clang
