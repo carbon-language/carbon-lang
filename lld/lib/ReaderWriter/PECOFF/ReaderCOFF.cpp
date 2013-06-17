@@ -9,6 +9,8 @@
 
 #define DEBUG_TYPE "ReaderCOFF"
 
+#include "ReaderImportHeader.h"
+
 #include "lld/Core/File.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/ReaderArchive.h"
@@ -596,7 +598,7 @@ public:
       return parseCOFFFile(mb, result);
     if (fileType == llvm::sys::fs::file_magic::archive)
       return _readerArchive.parseFile(mb, result);
-    return make_error_code(llvm::object::object_error::invalid_file_type);
+    return lld::coff::parseCOFFImportLibrary(_targetInfo, mb, result);
   }
 
 private:

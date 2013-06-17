@@ -1,6 +1,7 @@
 add_lld_library(lldPECOFF
   PECOFFTargetInfo.cpp
   ReaderCOFF.cpp
+  ReaderImportHeader.cpp
   WriterPECOFF.cpp
   )
 

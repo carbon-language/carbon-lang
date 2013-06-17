@@ -1,7 +1,7 @@
 # Verify that lld can handle multiple input files.
 #
 # RUN: lld -flavor link -out %t1 -subsystem console \
-# RUN:   -- %p/Inputs/static-main.obj %p/Inputs/static-data1.obj \
+# RUN:   -- %p/Inputs/main.obj %p/Inputs/static-data1.obj \
 # RUN:   %p/Inputs/static-data2.obj \
 # RUN:   && llvm-objdump -d %t1 | FileCheck %s
 

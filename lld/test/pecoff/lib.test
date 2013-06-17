@@ -1,7 +1,7 @@
 # Verify that lld can handle a library file.
 #
 # RUN: lld -flavor link -out %t1 -subsystem console \
-# RUN:   -- %p/Inputs/static-main.obj %p/Inputs/static.lib \
+# RUN:   -- %p/Inputs/main.obj %p/Inputs/static.lib \
 # RUN:   && llvm-objdump -d %t1 | FileCheck %s
 
 CHECK: Disassembly of section .text:
