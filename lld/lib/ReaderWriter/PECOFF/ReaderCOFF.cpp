@@ -9,6 +9,7 @@
 
 #define DEBUG_TYPE "ReaderCOFF"
 
+#include "Atoms.h"
 #include "ReaderImportHeader.h"
 
 #include "lld/Core/File.h"
@@ -29,6 +30,10 @@
 #include <vector>
 
 using std::vector;
+using lld::coff::COFFAbsoluteAtom;
+using lld::coff::COFFDefinedAtom;
+using lld::coff::COFFReference;
+using lld::coff::COFFUndefinedAtom;
 using llvm::object::coff_relocation;
 using llvm::object::coff_section;
 using llvm::object::coff_symbol;
@@ -36,228 +41,6 @@ using llvm::object::coff_symbol;
 using namespace lld;
 
 namespace { // anonymous
-
-/// A COFFReference represents relocation information for an atom. For
-/// example, if atom X has a reference to atom Y with offsetInAtom=8, that
-/// means that the address starting at 8th byte of the content of atom X needs
-/// to be fixed up so that the address points to atom Y's address.
-class COFFReference LLVM_FINAL : public Reference {
-public:
-  COFFReference(Kind kind) : _target(nullptr), _offsetInAtom(0) {
-    _kind = kind;
-  }
-
-  COFFReference(const Atom *target, uint32_t offsetInAtom, uint16_t relocType)
-      : _target(target), _offsetInAtom(offsetInAtom) {
-    setKind(static_cast<Reference::Kind>(relocType));
-  }
-
-  virtual const Atom *target() const { return _target; }
-  virtual void setTarget(const Atom *newAtom) { _target = newAtom; }
-
-  // Addend is a value to be added to the relocation target. For example, if
-  // target=AtomX and addend=4, the relocation address will become the address
-  // of AtomX + 4. COFF does not support that sort of relocation, thus addend
-  // is always zero.
-  virtual Addend addend() const { return 0; }
-  virtual void setAddend(Addend) {}
-
-  virtual uint64_t offsetInAtom() const { return _offsetInAtom; }
-
-private:
-  const Atom *_target;
-  uint32_t _offsetInAtom;
-};
-
-class COFFAbsoluteAtom : public AbsoluteAtom {
-public:
-  COFFAbsoluteAtom(const File &F, llvm::StringRef N, const coff_symbol *S)
-    : OwningFile(F)
-    , Name(N)
-    , Symbol(S)
-  {}
-
-  virtual const class File &file() const {
-    return OwningFile;
-  }
-
-  virtual Scope scope() const {
-    if (Symbol->StorageClass == llvm::COFF::IMAGE_SYM_CLASS_STATIC)
-      return scopeTranslationUnit;
-    return scopeGlobal;
-  }
-
-  virtual llvm::StringRef name() const {
-    return Name;
-  }
-
-  virtual uint64_t value() const {
-    return Symbol->Value;
-  }
-
-private:
-  const File &OwningFile;
-  llvm::StringRef Name;
-  const coff_symbol *Symbol;
-};
-
-class COFFUndefinedAtom : public UndefinedAtom {
-public:
-  COFFUndefinedAtom(const File &F, llvm::StringRef N)
-    : OwningFile(F)
-    , Name(N)
-  {}
-
-  virtual const class File &file() const {
-    return OwningFile;
-  }
-
-  virtual llvm::StringRef name() const {
-    return Name;
-  }
-
-  virtual CanBeNull canBeNull() const {
-    return CanBeNull::canBeNullNever;
-  }
-
-private:
-  const File &OwningFile;
-  llvm::StringRef Name;
-};
-
-class COFFDefinedAtom : public DefinedAtom {
-public:
-  COFFDefinedAtom( const File &F
-                 , llvm::StringRef N
-                 , const llvm::object::coff_symbol *Symb
-                 , const llvm::object::coff_section *Sec
-                 , llvm::ArrayRef<uint8_t> D)
-    : OwningFile(F)
-    , Name(N)
-    , Symbol(Symb)
-    , Section(Sec)
-    , Data(D)
-  {}
-
-  virtual const class File &file() const {
-    return OwningFile;
-  }
-
-  virtual llvm::StringRef name() const {
-    return Name;
-  }
-
-  virtual uint64_t ordinal() const {
-    return reinterpret_cast<intptr_t>(Symbol);
-  }
-
-  virtual uint64_t size() const {
-    return Data.size();
-  }
-
-  uint64_t originalOffset() const { return Symbol->Value; }
-
-  void addReference(COFFReference *reference) {
-    References.push_back(reference);
-  }
-
-  virtual Scope scope() const {
-    if (!Symbol)
-      return scopeTranslationUnit;
-    switch (Symbol->StorageClass) {
-    case llvm::COFF::IMAGE_SYM_CLASS_EXTERNAL:
-      return scopeGlobal;
-    case llvm::COFF::IMAGE_SYM_CLASS_STATIC:
-      return scopeTranslationUnit;
-    }
-    llvm_unreachable("Unknown scope!");
-  }
-
-  virtual Interposable interposable() const {
-    return interposeNo;
-  }
-
-  virtual Merge merge() const {
-    return mergeNo;
-  }
-
-  virtual ContentType contentType() const {
-    if (Section->Characteristics & llvm::COFF::IMAGE_SCN_CNT_CODE)
-      return typeCode;
-    if (Section->Characteristics & llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA)
-      return typeData;
-    if (Section->Characteristics & llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA)
-      return typeZeroFill;
-    return typeUnknown;
-  }
-
-  virtual Alignment alignment() const {
-    return Alignment(1);
-  }
-
-  virtual SectionChoice sectionChoice() const {
-    return sectionBasedOnContent;
-  }
-
-  virtual llvm::StringRef customSectionName() const {
-    return "";
-  }
-
-  virtual SectionPosition sectionPosition() const {
-    return sectionPositionAny;
-  }
-
-  virtual DeadStripKind deadStrip() const {
-    return deadStripNormal;
-  }
-
-  virtual ContentPermissions permissions() const {
-    if (   Section->Characteristics & llvm::COFF::IMAGE_SCN_MEM_READ
-        && Section->Characteristics & llvm::COFF::IMAGE_SCN_MEM_WRITE)
-      return permRW_;
-    if (   Section->Characteristics & llvm::COFF::IMAGE_SCN_MEM_READ
-        && Section->Characteristics & llvm::COFF::IMAGE_SCN_MEM_EXECUTE)
-      return permR_X;
-    if (Section->Characteristics & llvm::COFF::IMAGE_SCN_MEM_READ)
-      return permR__;
-    return perm___;
-  }
-
-  virtual bool isAlias() const {
-    return false;
-  }
-
-  virtual llvm::ArrayRef<uint8_t> rawContent() const {
-    return Data;
-  }
-
-  virtual reference_iterator begin() const {
-    return reference_iterator(*this, reinterpret_cast<const void *>(0));
-  }
-
-  virtual reference_iterator end() const {
-    return reference_iterator(
-        *this, reinterpret_cast<const void *>(References.size()));
-  }
-
-private:
-  virtual const Reference *derefIterator(const void *iter) const {
-    size_t index = reinterpret_cast<size_t>(iter);
-    return References[index];
-  }
-
-  virtual void incrementIterator(const void *&iter) const {
-    size_t index = reinterpret_cast<size_t>(iter);
-    iter = reinterpret_cast<const void *>(index + 1);
-  }
-
-  const File &OwningFile;
-  llvm::StringRef Name;
-  const llvm::object::coff_symbol *Symbol;
-  const llvm::object::coff_section *Section;
-  std::vector<COFFReference *> References;
-  llvm::ArrayRef<uint8_t> Data;
-};
 
 class FileCOFF : public File {
 private:
