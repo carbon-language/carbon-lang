@@ -68,7 +68,7 @@ id objc_getClass(const char *s);
 }
 - (int) instance_func1
 {
-   int i = (size_t)[self instance_func0];     // expected-warning {{instance method '-instance_func0' not found (return type defaults to 'id')}}
+   int i = (size_t)[self instance_func0];     // expected-warning {{instance method 'instance_func0' not found (return type defaults to 'id'); did you mean 'instance_func3'?}}
    return i + (size_t)[super instance_func0]; // expected-warning {{'Object' may not respond to 'instance_func0'}}
 }
 - (int) instance_func2

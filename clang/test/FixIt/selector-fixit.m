@@ -28,3 +28,13 @@
 }
 
 @end
+
+// rdar://7853549
+@interface rdar7853549 : NSObject
+- (int) bounds;
+@end
+
+@implementation rdar7853549
+- (int) bounds { return 0; }
+- (void)PrivateMeth { int bounds = [self bonds]; }
+@end

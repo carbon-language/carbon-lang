@@ -2295,8 +2295,18 @@ HelperSelectorsForTypoCorrection(
   }
 }
 
+static bool HelperIsMethodInObjCType(Sema &S, Selector Sel,
+                                     QualType ObjectType) {
+  if (ObjectType.isNull())
+    return true;
+  if (S.LookupMethodInObjectType(Sel, ObjectType, true/*Instance method*/))
+    return true;
+  return S.LookupMethodInObjectType(Sel, ObjectType, false/*Class method*/) != 0;
+}
+
 const ObjCMethodDecl *
-Sema::SelectorsForTypoCorrection(Selector Sel) {
+Sema::SelectorsForTypoCorrection(Selector Sel,
+                                 QualType ObjectType) {
   unsigned NumArgs = Sel.getNumArgs();
   SmallVector<const ObjCMethodDecl *, 8> Methods;
   
@@ -2305,12 +2315,14 @@ Sema::SelectorsForTypoCorrection(Selector Sel) {
     // instance methods
     for (ObjCMethodList *M = &b->second.first; M; M=M->getNext())
       if (M->Method &&
-          (M->Method->getSelector().getNumArgs() == NumArgs))
+          (M->Method->getSelector().getNumArgs() == NumArgs) &&
+          HelperIsMethodInObjCType(*this, M->Method->getSelector(), ObjectType))
         Methods.push_back(M->Method);
     // class methods
     for (ObjCMethodList *M = &b->second.second; M; M=M->getNext())
       if (M->Method &&
-          (M->Method->getSelector().getNumArgs() == NumArgs))
+          (M->Method->getSelector().getNumArgs() == NumArgs) &&
+          HelperIsMethodInObjCType(*this, M->Method->getSelector(), ObjectType))
         Methods.push_back(M->Method);
   }
   

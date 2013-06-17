@@ -12,5 +12,5 @@
 @end
 
 @implementation INTF
-- (void)IMeth {INTF<P> *pi;  [pi Meth]; } // expected-warning {{method '-Meth' not found (return type defaults to 'id')}}
+- (void)IMeth {INTF<P> *pi;  [pi Meth]; } // expected-warning {{instance method 'Meth' not found (return type defaults to 'id'); did you mean 'IMeth'?}}
 @end
