@@ -18,6 +18,7 @@
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Interpreter/CommandHistory.h"
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Core/Event.h"
@@ -381,15 +382,6 @@ public:
     bool
     GetSynchronous ();
     
-    void
-    DumpHistory (Stream &stream, uint32_t count) const;
-
-    void
-    DumpHistory (Stream &stream, uint32_t start, uint32_t end) const;
-    
-    const char *
-    FindHistoryString (const char *input_str) const;
-
     size_t
     FindLongestCommandWord (CommandObject::CommandMap &dict);
 
@@ -407,28 +399,40 @@ public:
     SetBatchCommandMode (bool value) { m_batch_command_mode = value; }
     
     void
-    ChildrenTruncated()
+    ChildrenTruncated ()
     {
         if (m_truncation_warning == eNoTruncation)
             m_truncation_warning = eUnwarnedTruncation;
     }
     
     bool
-    TruncationWarningNecessary()
+    TruncationWarningNecessary ()
     {
         return (m_truncation_warning == eUnwarnedTruncation);
     }
     
     void
-    TruncationWarningGiven()
+    TruncationWarningGiven ()
     {
         m_truncation_warning = eWarnedTruncation;
     }
     
     const char *
-    TruncationWarningText()
+    TruncationWarningText ()
     {
         return "*** Some of your variables have more members than the debugger will show by default. To show all of them, you can either use the --show-all-children option to %s or raise the limit by changing the target.max-children-count setting.\n";
+    }
+    
+    const CommandHistory&
+    GetCommandHistory () const
+    {
+        return m_command_history;
+    }
+    
+    CommandHistory&
+    GetCommandHistory ()
+    {
+        return m_command_history;
     }
     
     //------------------------------------------------------------------
@@ -466,11 +470,10 @@ private:
     CommandObject::CommandMap m_alias_dict;     // Stores user aliases/abbreviations for commands
     CommandObject::CommandMap m_user_dict;      // Stores user-defined commands
     OptionArgMap m_alias_options;               // Stores any options (with or without arguments) that go with any alias.
-    std::vector<std::string> m_command_history;
+    CommandHistory m_command_history;
     std::string m_repeat_command;               // Stores the command that will be executed for an empty command string.
     std::unique_ptr<ScriptInterpreter> m_script_interpreter_ap;
     char m_comment_char;
-    char m_repeat_char;
     bool m_batch_command_mode;
     ChildrenTruncatedWarningStatus m_truncation_warning;    // Whether we truncated children and whether the user has been told
     uint32_t m_command_source_depth;

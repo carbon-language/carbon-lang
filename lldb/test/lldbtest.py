@@ -1543,7 +1543,7 @@ class TestBase(Base):
             if matched:
                 self.runCmd('thread select %s' % matched.group(1))
 
-    def runCmd(self, cmd, msg=None, check=True, trace=False):
+    def runCmd(self, cmd, msg=None, check=True, trace=False, inHistory=False):
         """
         Ask the command interpreter to handle the command and then check its
         return status.
@@ -1557,7 +1557,7 @@ class TestBase(Base):
         running = (cmd.startswith("run") or cmd.startswith("process launch"))
 
         for i in range(self.maxLaunchCount if running else 1):
-            self.ci.HandleCommand(cmd, self.res)
+            self.ci.HandleCommand(cmd, self.res, inHistory)
 
             with recording(self, trace) as sbuf:
                 print >> sbuf, "runCmd:", cmd
@@ -1624,7 +1624,7 @@ class TestBase(Base):
 
         return match_object        
 
-    def expect(self, str, msg=None, patterns=None, startstr=None, endstr=None, substrs=None, trace=False, error=False, matching=True, exe=True):
+    def expect(self, str, msg=None, patterns=None, startstr=None, endstr=None, substrs=None, trace=False, error=False, matching=True, exe=True, inHistory=False):
         """
         Similar to runCmd; with additional expect style output matching ability.
 
@@ -1653,7 +1653,7 @@ class TestBase(Base):
         if exe:
             # First run the command.  If we are expecting error, set check=False.
             # Pass the assert message along since it provides more semantic info.
-            self.runCmd(str, msg=msg, trace = (True if trace else False), check = not error)
+            self.runCmd(str, msg=msg, trace = (True if trace else False), check = not error, inHistory=inHistory)
 
             # Then compare the output against expected strings.
             output = self.res.GetError() if error else self.res.GetOutput()

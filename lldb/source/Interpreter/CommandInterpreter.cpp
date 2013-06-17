@@ -107,7 +107,6 @@ CommandInterpreter::CommandInterpreter
     m_skip_app_init_files (false),
     m_script_interpreter_ap (),
     m_comment_char ('#'),
-    m_repeat_char ('!'),
     m_batch_command_mode (false),
     m_truncation_warning(eNoTruncation),
     m_command_source_depth (0)
@@ -1534,9 +1533,9 @@ CommandInterpreter::HandleCommand (const char *command_line,
             empty_command = true;
         else if (command_string[non_space] == m_comment_char)
              comment_command = true;
-        else if (command_string[non_space] == m_repeat_char)
+        else if (command_string[non_space] == CommandHistory::g_repeat_char)
         {
-            const char *history_string = FindHistoryString (command_string.c_str() + non_space);
+            const char *history_string = m_command_history.FindString(command_string.c_str() + non_space);
             if (history_string == NULL)
             {
                 result.AppendErrorWithFormat ("Could not find entry: %s in history", command_string.c_str());
@@ -1553,7 +1552,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
     {
         if (repeat_on_empty_command)
         {
-            if (m_command_history.empty())
+            if (m_command_history.IsEmpty())
             {
                 result.AppendError ("empty command");
                 result.SetStatus(eReturnStatusFailed);
@@ -1797,9 +1796,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
             else
                 m_repeat_command.assign(original_command_string.c_str());
             
-            // Don't keep pushing the same command onto the history...
-            if (m_command_history.empty() || m_command_history.back() != original_command_string) 
-                m_command_history.push_back (original_command_string);
+            m_command_history.AppendString (original_command_string);
         }
         
         command_string = revised_command_line.GetData();
@@ -1957,9 +1954,9 @@ CommandInterpreter::HandleCompletion (const char *current_line,
     {
         if (first_arg[0] == m_comment_char)
             return 0;
-        else if (first_arg[0] == m_repeat_char)
+        else if (first_arg[0] == CommandHistory::g_repeat_char)
         {
-            const char *history_string = FindHistoryString (first_arg);
+            const char *history_string = m_command_history.FindString (first_arg);
             if (history_string != NULL)
             {
                 matches.Clear();
@@ -2876,61 +2873,5 @@ CommandInterpreter::UpdateExecutionContext (ExecutionContext *override_context)
     {
         const bool adopt_selected = true;
         m_exe_ctx_ref.SetTargetPtr (m_debugger.GetSelectedTarget().get(), adopt_selected);
-    }
-}
-
-void
-CommandInterpreter::DumpHistory (Stream &stream, uint32_t count) const
-{
-    DumpHistory (stream, 0, count - 1);
-}
-
-void
-CommandInterpreter::DumpHistory (Stream &stream, uint32_t start, uint32_t end) const
-{
-    const size_t last_idx = std::min<size_t>(m_command_history.size(), end==UINT32_MAX ? UINT32_MAX : end + 1);
-    for (size_t i = start; i < last_idx; i++)
-    {
-        if (!m_command_history[i].empty())
-        {
-            stream.Indent();
-            stream.Printf ("%4zu: %s\n", i, m_command_history[i].c_str());
-        }
-    }
-}
-
-const char *
-CommandInterpreter::FindHistoryString (const char *input_str) const
-{
-    if (input_str[0] != m_repeat_char)
-        return NULL;
-    if (input_str[1] == '-')
-    {
-        bool success;
-        size_t idx = Args::StringToUInt32 (input_str+2, 0, 0, &success);
-        if (!success)
-            return NULL;
-        if (idx > m_command_history.size())
-            return NULL;
-        idx = m_command_history.size() - idx;
-        return m_command_history[idx].c_str();
-            
-    }
-    else if (input_str[1] == m_repeat_char)
-    {
-        if (m_command_history.empty())
-            return NULL;
-        else
-            return m_command_history.back().c_str();
-    }
-    else
-    {
-        bool success;
-        uint32_t idx = Args::StringToUInt32 (input_str+1, 0, 0, &success);
-        if (!success)
-            return NULL;
-        if (idx >= m_command_history.size())
-            return NULL;
-        return m_command_history[idx].c_str();
     }
 }
