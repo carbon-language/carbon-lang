@@ -139,6 +139,10 @@ namespace test27 {
 // CHECK: @_ZGVZN6Test193fooIiEEvvE1a = linkonce_odr global i64
 // CHECK-HIDDEN: @_ZZN6Test193fooIiEEvvE1a = linkonce_odr hidden global
 // CHECK-HIDDEN: @_ZGVZN6Test193fooIiEEvvE1a = linkonce_odr hidden global i64
+// CHECK: @_ZZN6test681fC1EvE4test = linkonce_odr global
+// CHECK: @_ZGVZN6test681fC1EvE4test = linkonce_odr global
+// CHECK-HIDDEN: @_ZZN6test681fC1EvE4test = linkonce_odr hidden global
+// CHECK-HIDDEN: @_ZGVZN6test681fC1EvE4test = linkonce_odr hidden global
 // CHECK-HIDDEN: @_ZTVN6Test161AIcEE = external unnamed_addr constant
 // CHECK-HIDDEN: @_ZTTN6Test161AIcEE = external unnamed_addr constant
 // CHECK: @_ZTVN5Test63fooE = linkonce_odr hidden unnamed_addr constant 
@@ -1276,4 +1280,18 @@ namespace test67 {
   template struct bar<foo>;
   // CHECK: define weak_odr void @_ZN6test673barINS_3fooEE3zedEv
   // CHECK-HIDDEN: define weak_odr void @_ZN6test673barINS_3fooEE3zedEv
+}
+
+namespace test68 {
+  class A { public: ~A(); };
+  class f {
+  public:
+    f() {
+      static A test;
+    }
+  };
+  void g() {
+    f a;
+  }
+  // Check lines at top of file.
 }

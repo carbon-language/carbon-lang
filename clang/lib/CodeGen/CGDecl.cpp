@@ -218,8 +218,7 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
                              llvm::GlobalVariable::NotThreadLocal,
                              AddrSpace);
   GV->setAlignment(getContext().getDeclAlign(&D).getQuantity());
-  if (Linkage != llvm::GlobalValue::InternalLinkage)
-    GV->setVisibility(CurFn->getVisibility());
+  CGM.setGlobalVisibility(GV, &D);
 
   if (D.getTLSKind())
     CGM.setTLSMode(GV, D);
