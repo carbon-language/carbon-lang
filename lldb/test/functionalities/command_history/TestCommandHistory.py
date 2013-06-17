@@ -13,7 +13,7 @@ class CommandHistoryTestCase(TestBase):
     mydir = os.path.join("functionalities", "command_history")
 
     def test_history(self):
-        self.runCmd('command history --wipe', inHistory=False)
+        self.runCmd('command history --clear', inHistory=False)
         self.runCmd('breakpoint list', check=False, inHistory=True) #0
         self.runCmd('register read', check=False, inHistory=True) #1
         self.runCmd('apropos hello', check=False, inHistory=True) #2

@@ -70,7 +70,7 @@ protected:
             m_start_idx(0),
             m_stop_idx(0),
             m_count(0),
-            m_wipe(false)
+            m_clear(false)
         {
         }
 
@@ -100,9 +100,9 @@ protected:
                 case 'e':
                     error = m_stop_idx.SetValueFromCString(option_arg,eVarSetOperationAssign);
                     break;
-                case 'w':
-                    m_wipe.SetCurrentValue(true);
-                    m_wipe.SetOptionWasSet();
+                case 'C':
+                    m_clear.SetCurrentValue(true);
+                    m_clear.SetOptionWasSet();
                     break;
                 default:
                     error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
@@ -118,7 +118,7 @@ protected:
             m_start_idx.Clear();
             m_stop_idx.Clear();
             m_count.Clear();
-            m_wipe.Clear();
+            m_clear.Clear();
         }
 
         const OptionDefinition*
@@ -136,13 +136,13 @@ protected:
         OptionValueUInt64 m_start_idx;
         OptionValueUInt64 m_stop_idx;
         OptionValueUInt64 m_count;
-        OptionValueBoolean m_wipe;
+        OptionValueBoolean m_clear;
     };
     
     bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        if (m_options.m_wipe.GetCurrentValue() && m_options.m_wipe.OptionWasSet())
+        if (m_options.m_clear.GetCurrentValue() && m_options.m_clear.OptionWasSet())
         {
             m_interpreter.GetCommandHistory().Clear();
             result.SetStatus(lldb::eReturnStatusSuccessFinishNoResult);
@@ -230,7 +230,7 @@ CommandObjectCommandsHistory::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_1, false, "count", 'c', required_argument, NULL, 0, eArgTypeUnsignedInteger,        "How many history commands to print."},
 { LLDB_OPT_SET_1, false, "start-index", 's', required_argument, NULL, 0, eArgTypeUnsignedInteger,  "Index at which to start printing history commands (or end to mean tail mode)."},
 { LLDB_OPT_SET_1, false, "end-index", 'e', required_argument, NULL, 0, eArgTypeUnsignedInteger,    "Index at which to stop printing history commands."},
-{ LLDB_OPT_SET_2, false, "wipe", 'w', no_argument, NULL, 0, eArgTypeBoolean,    "Clears the current command history."},
+{ LLDB_OPT_SET_2, false, "clear", 'C', no_argument, NULL, 0, eArgTypeBoolean,    "Clears the current command history."},
 { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
