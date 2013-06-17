@@ -873,8 +873,14 @@ private:
 
     if (BreakInserted) {
       State.Column = PositionAfterLastLineInToken;
-      for (unsigned i = 0, e = State.Stack.size(); i != e; ++i)
-        State.Stack[i].BreakBeforeParameter = true;
+      // If we break the token inside a parameter list, we need to break before
+      // the next parameter on all levels, so that the next parameter is clearly
+      // visible. Line comments already introduce a break.
+      if (Current.Type != TT_LineComment) {
+        for (unsigned i = 0, e = State.Stack.size(); i != e; ++i)
+          State.Stack[i].BreakBeforeParameter = true;
+      }
+
       State.Stack.back().LastSpace = StartColumn;
     }
     return Penalty;

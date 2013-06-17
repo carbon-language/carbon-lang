@@ -65,10 +65,13 @@ void WhitespaceManager::replaceWhitespaceInToken(
                         Tok.getStartOfNonWhitespace().getLocWithOffset(
                             Offset + ReplaceChars)),
       Spaces, Spaces, Newlines, PreviousPostfix, CurrentPrefix,
-      // FIXME: Unify token adjustment, so we don't split it between
-      // BreakableToken and the WhitespaceManager. That would also allow us to
-      // correctly store a tok::TokenKind instead of rolling our own enum.
-      tok::unknown, InPPDirective && !Tok.IsFirst));
+      // If we don't add a newline this change doesn't start a comment. Thus,
+      // when we align line comments, we don't need to treat this change as one.
+      // FIXME: We still need to take this change in account to properly
+      // calculate the new length of the comment and to calculate the changes
+      // for which to do the alignment when aligning comments.
+      Tok.Type == TT_LineComment && Newlines > 0 ? tok::comment : tok::unknown,
+      InPPDirective && !Tok.IsFirst));
 }
 
 const tooling::Replacements &WhitespaceManager::generateReplacements() {
