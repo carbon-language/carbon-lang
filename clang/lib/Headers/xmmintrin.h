@@ -218,7 +218,9 @@ _mm_cmple_ps(__m128 __a, __m128 __b)
 static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpgt_ss(__m128 __a, __m128 __b)
 {
-  return (__m128)__builtin_ia32_cmpss(__b, __a, 1);
+  return (__m128)__builtin_shufflevector(__a,
+                                         __builtin_ia32_cmpss(__b, __a, 1),
+                                         4, 1, 2, 3);
 }
 
 static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
@@ -230,7 +232,9 @@ _mm_cmpgt_ps(__m128 __a, __m128 __b)
 static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpge_ss(__m128 __a, __m128 __b)
 {
-  return (__m128)__builtin_ia32_cmpss(__b, __a, 2);
+  return (__m128)__builtin_shufflevector(__a,
+                                         __builtin_ia32_cmpss(__b, __a, 2),
+                                         4, 1, 2, 3);
 }
 
 static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
@@ -278,7 +282,9 @@ _mm_cmpnle_ps(__m128 __a, __m128 __b)
 static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpngt_ss(__m128 __a, __m128 __b)
 {
-  return (__m128)__builtin_ia32_cmpss(__b, __a, 5);
+  return (__m128)__builtin_shufflevector(__a,
+                                         __builtin_ia32_cmpss(__b, __a, 5),
+                                         4, 1, 2, 3);
 }
 
 static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
@@ -290,7 +296,9 @@ _mm_cmpngt_ps(__m128 __a, __m128 __b)
 static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpnge_ss(__m128 __a, __m128 __b)
 {
-  return (__m128)__builtin_ia32_cmpss(__b, __a, 6);
+  return (__m128)__builtin_shufflevector(__a,
+                                         __builtin_ia32_cmpss(__b, __a, 6),
+                                         4, 1, 2, 3);
 }
 
 static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))

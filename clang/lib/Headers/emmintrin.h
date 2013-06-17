@@ -245,13 +245,15 @@ _mm_cmple_sd(__m128d __a, __m128d __b)
 static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_cmpgt_sd(__m128d __a, __m128d __b)
 {
-  return (__m128d)__builtin_ia32_cmpsd(__b, __a, 1);
+  __m128d __c = __builtin_ia32_cmpsd(__b, __a, 1);
+  return (__m128d) { __c[0], __a[1] };
 }
 
 static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_cmpge_sd(__m128d __a, __m128d __b)
 {
-  return (__m128d)__builtin_ia32_cmpsd(__b, __a, 2);
+  __m128d __c = __builtin_ia32_cmpsd(__b, __a, 2);
+  return (__m128d) { __c[0], __a[1] };
 }
 
 static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
@@ -287,13 +289,15 @@ _mm_cmpnle_sd(__m128d __a, __m128d __b)
 static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_cmpngt_sd(__m128d __a, __m128d __b)
 {
-  return (__m128d)__builtin_ia32_cmpsd(__b, __a, 5);
+  __m128d __c = __builtin_ia32_cmpsd(__b, __a, 5);
+  return (__m128d) { __c[0], __a[1] };
 }
 
 static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_cmpnge_sd(__m128d __a, __m128d __b)
 {
-  return (__m128d)__builtin_ia32_cmpsd(__b, __a, 6);
+  __m128d __c = __builtin_ia32_cmpsd(__b, __a, 6);
+  return (__m128d) { __c[0], __a[1] };
 }
 
 static __inline__ int __attribute__((__always_inline__, __nodebug__))
