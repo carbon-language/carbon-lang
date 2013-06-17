@@ -278,3 +278,7 @@ void test_pseudo_dtor(fltx4 *f) {
   (*f).~fltx4();
   test_pseudo_dtor_tmpl(f);
 }
+
+// PR16204
+typedef __attribute__((ext_vector_type(4))) int vi4;
+const int &reference_to_vec_element = vi4(1).x;
