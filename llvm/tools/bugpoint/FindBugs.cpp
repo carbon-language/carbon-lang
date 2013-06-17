@@ -17,7 +17,7 @@
 #include "BugDriver.h"
 #include "ToolRunner.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/PathV1.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <ctime>
@@ -104,7 +104,7 @@ bool BugDriver::runManyPasses(const std::vector<std::string> &AllPasses,
     }
     outs() << "\n*** diff'd output matches!\n";
     
-    sys::Path(Filename).eraseFromDisk();
+    sys::fs::remove(Filename);
     
     outs() << "\n\n";
     num++;
