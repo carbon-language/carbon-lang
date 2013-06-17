@@ -40,6 +40,33 @@
 #include "llvm/ADT/DenseMap.h"
 
 namespace lld {
+
+namespace {
+bool shouldReplaceTargetWithGOTAtom(const Atom *target, bool canBypassGOT) {
+  // Accesses to shared library symbols must go through GOT.
+  if (target->definition() == Atom::definitionSharedLibrary)
+    return true;
+  // Accesses to interposable symbols in same linkage unit must also go
+  // through GOT.
+  const DefinedAtom *defTarget = dyn_cast<DefinedAtom>(target);
+  if (defTarget != nullptr &&
+      defTarget->interposable() != DefinedAtom::interposeNo) {
+    assert(defTarget->scope() != DefinedAtom::scopeTranslationUnit);
+    return true;
+  }
+  // Target does not require indirection.  So, if instruction allows GOT to be
+  // by-passed, do that optimization and don't create GOT entry.
+  return !canBypassGOT;
+}
+
+const DefinedAtom *
+findGOTAtom(const Atom *target,
+            llvm::DenseMap<const Atom *, const DefinedAtom *> &targetToGOT) {
+  auto pos = targetToGOT.find(target);
+  return (pos == targetToGOT.end()) ? nullptr : pos->second;
+}
+} // end anonymous namespace
+
 void GOTPass::perform(MutableFile &mergedFile) {
   // Use map so all pointers to same symbol use same GOT entry.
   llvm::DenseMap<const Atom*, const DefinedAtom*> targetToGOT;
@@ -49,48 +76,27 @@ void GOTPass::perform(MutableFile &mergedFile) {
     for (const Reference *ref : *atom) {
       // Look at instructions accessing the GOT.
       bool canBypassGOT;
-      if (isGOTAccess(ref->kind(), canBypassGOT)) {
-        const Atom* target = ref->target();
-        assert(target != nullptr);
-        const DefinedAtom* defTarget = dyn_cast<DefinedAtom>(target);
-        bool replaceTargetWithGOTAtom = false;
-        if (target->definition() == Atom::definitionSharedLibrary) {
-          // Accesses to shared library symbols must go through GOT.
-          replaceTargetWithGOTAtom = true;
-        } else if ((defTarget != nullptr) &&
-                   (defTarget->interposable() != DefinedAtom::interposeNo)) {
-          // Accesses to interposable symbols in same linkage unit
-          // must also go through GOT.
-          assert(defTarget->scope() != DefinedAtom::scopeTranslationUnit);
-          replaceTargetWithGOTAtom = true;
-        } else {
-          // Target does not require indirection.  So, if instruction allows
-          // GOT to be by-passed, do that optimization and don't create
-          // GOT entry.
-          replaceTargetWithGOTAtom = !canBypassGOT;
-        }
-        if (replaceTargetWithGOTAtom) {
-          // Replace the target with a reference to a GOT entry.
-          const DefinedAtom* gotEntry = nullptr;
-          auto pos = targetToGOT.find(target);
-          if (pos == targetToGOT.end()) {
-            // This is no existing GOT entry.  Create a new one.
-            gotEntry = makeGOTEntry(*target);
-            assert(gotEntry != nullptr);
-            assert(gotEntry->contentType() == DefinedAtom::typeGOT);
-            targetToGOT[target] = gotEntry;
-          } else {
-            // Reuse an existing GOT entry.
-            gotEntry = pos->second;
-            assert(gotEntry != nullptr);
-          }
-          // Switch reference to GOT atom.
-          const_cast<Reference*>(ref)->setTarget(gotEntry);
-        }
-        // Update reference kind to reflect
-        // that target is now a GOT entry or a direct accesss.
-        updateReferenceToGOT(ref, replaceTargetWithGOTAtom);
+      if (!isGOTAccess(ref->kind(), canBypassGOT))
+        continue;
+      const Atom *target = ref->target();
+      assert(target != nullptr);
+
+      if (!shouldReplaceTargetWithGOTAtom(target, canBypassGOT)) {
+        // Update reference kind to reflect that target is a direct accesss.
+        updateReferenceToGOT(ref, false);
+        continue;
       }
+      // Replace the target with a reference to a GOT entry.
+      const DefinedAtom *gotEntry = findGOTAtom(target, targetToGOT);
+      if (!gotEntry) {
+        gotEntry = makeGOTEntry(*target);
+        assert(gotEntry != nullptr);
+        assert(gotEntry->contentType() == DefinedAtom::typeGOT);
+        targetToGOT[target] = gotEntry;
+      }
+      const_cast<Reference *>(ref)->setTarget(gotEntry);
+      // Update reference kind to reflect that target is now a GOT entry.
+      updateReferenceToGOT(ref, true);
     }
   }
 
