@@ -1205,9 +1205,9 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
 						AA_Converting);
 
       if (!isSFINAEContext())
-        // Diagnose the compatibility of this conversion.
-        Diag(StartLoc, diag::warn_cxx98_compat_array_size_conversion)
-          << ArraySize->getType() << 0 << "'size_t'";
+	// Diagnose the compatibility of this conversion.
+	Diag(StartLoc, diag::warn_cxx98_compat_array_size_conversion)
+	  << ArraySize->getType() << 0 << Context.getSizeType();
     } else {
       class SizeConvertDiagnoser : public ICEConvertDiagnoser {
       protected:

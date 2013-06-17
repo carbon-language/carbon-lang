@@ -154,22 +154,4 @@ namespace extended_examples_cxx1y {
 //expected-error@143 {{cannot initialize object parameter of type 'extended_examples_cxx1y::D' with an expression of type 'extended_examples_cxx1y::D'}}
 #endif
 
-namespace extended_examples_array_bounds {
-  
-  struct Foo {
-    operator unsigned long();          // @160
-    operator unsigned short();  // @161
-  };
-
-  void bar() {
-    Foo x;
-    int *p = new int[x];        // @166
-  }
-}
-
-#ifdef CXX1Y
-#else
-//expected-error@166 {{ambiguous conversion of array size expression of type 'extended_examples_array_bounds::Foo' to an integral or enumeration type}}
-//expected-note@160 {{conversion to integral type 'unsigned long' declared here}}
-//expected-note@161 {{conversion to integral type 'unsigned short' declared here}}
-#endif
+// FIXME: Extend with more examples, including [expr.const] and [expr.new].
