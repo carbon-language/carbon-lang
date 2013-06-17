@@ -1,0 +1,27 @@
+# This tests that we are able to merge the section .gcc_except_table,
+# .data.rel.local, .data.rel.ro, any other sections that belong to .data 
+# into appropriate output sections
+RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/sectionmap.o  \
+RUN: --noinhibit-exec -o %t
+RUN: llvm-readobj -sections %t | FileCheck %s -check-prefix=VERIFYSECTIONHEADERS
+
+VERIFYSECTIONHEADERS:  Section {
+VERIFYSECTIONHEADERS:    Index: 10
+VERIFYSECTIONHEADERS:    Name: .data (80)
+VERIFYSECTIONHEADERS:  }
+VERIFYSECTIONHEADERS:  Section {
+VERIFYSECTIONHEADERS:    Index: 11
+VERIFYSECTIONHEADERS:    Name: .gcc_except_table (86)
+VERIFYSECTIONHEADERS:  }
+VERIFYSECTIONHEADERS:  Section {
+VERIFYSECTIONHEADERS:    Index: 12
+VERIFYSECTIONHEADERS:    Name: .data.rel.local (104)
+VERIFYSECTIONHEADERS:  }
+VERIFYSECTIONHEADERS:  Section {
+VERIFYSECTIONHEADERS:    Index: 13
+VERIFYSECTIONHEADERS:    Name: .data.rel.ro (120)
+VERIFYSECTIONHEADERS:  }
+VERIFYSECTIONHEADERS:  Section {
+VERIFYSECTIONHEADERS:    Index: 14
+VERIFYSECTIONHEADERS:    Name: .bss (133)
+VERIFYSECTIONHEADERS:  }

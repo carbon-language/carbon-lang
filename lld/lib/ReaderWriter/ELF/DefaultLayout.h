@@ -368,6 +368,14 @@ StringRef DefaultLayout<ELFT>::getSectionName(
     return ".text";
   if (name.startswith(".rodata"))
     return ".rodata";
+  if (name.startswith(".gcc_except_table"))
+    return ".gcc_except_table";
+  if (name.startswith(".data.rel.ro"))
+    return ".data.rel.ro";
+  if (name.startswith(".data.rel.local"))
+    return ".data.rel.local";
+  if (name.startswith(".data"))
+    return ".data";
   if (name.startswith(".tdata"))
     return ".tdata";
   if (name.startswith(".tbss"))
