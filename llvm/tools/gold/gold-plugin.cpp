@@ -17,9 +17,9 @@
 #include "llvm-c/lto.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Errno.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/system_error.h"
@@ -65,7 +65,7 @@ namespace {
   lto_codegen_model output_type = LTO_CODEGEN_PIC_MODEL_STATIC;
   std::string output_name = "";
   std::list<claimed_file> Modules;
-  std::vector<sys::Path> Cleanup;
+  std::vector<std::string> Cleanup;
   lto_code_gen_t code_gen = NULL;
 }
 
@@ -448,18 +448,18 @@ static ld_plugin_status all_symbols_read_hook(void) {
   }
 
   if (options::obj_path.empty())
-    Cleanup.push_back(sys::Path(objPath));
+    Cleanup.push_back(objPath);
 
   return LDPS_OK;
 }
 
 static ld_plugin_status cleanup_hook(void) {
-  std::string ErrMsg;
-
-  for (int i = 0, e = Cleanup.size(); i != e; ++i)
-    if (Cleanup[i].eraseFromDisk(false, &ErrMsg))
+  for (int i = 0, e = Cleanup.size(); i != e; ++i) {
+    error_code EC = sys::fs::remove(Cleanup[i]);
+    if (EC)
       (*message)(LDPL_ERROR, "Failed to delete '%s': %s", Cleanup[i].c_str(),
-                 ErrMsg.c_str());
+                 EC.message());
+  }
 
   return LDPS_OK;
 }
