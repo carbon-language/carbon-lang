@@ -20,8 +20,6 @@ namespace opt {
 
 namespace clang {
 namespace driver {
-  // FIXME: Remove this using directive and qualify class usage below.
-  using namespace llvm::opt;
 
   class Compilation;
   class InputInfo;
@@ -74,7 +72,7 @@ public:
   virtual void ConstructJob(Compilation &C, const JobAction &JA,
                             const InputInfo &Output,
                             const InputInfoList &Inputs,
-                            const ArgList &TCArgs,
+                            const llvm::opt::ArgList &TCArgs,
                             const char *LinkingOutput) const = 0;
 };
 

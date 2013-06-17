@@ -52,7 +52,7 @@ class SanitizerArgs {
   SanitizerArgs() : Kind(0), BlacklistFile(""), MsanTrackOrigins(false),
                     AsanZeroBaseShadow(false), UbsanTrapOnError(false) {}
   /// Parses the sanitizer arguments from an argument list.
-  SanitizerArgs(const ToolChain &TC, const ArgList &Args);
+  SanitizerArgs(const ToolChain &TC, const llvm::opt::ArgList &Args);
 
   bool needsAsanRt() const { return Kind & NeedsAsanRt; }
   bool needsTsanRt() const { return Kind & NeedsTsanRt; }
@@ -73,7 +73,8 @@ class SanitizerArgs {
     return (Kind & HasZeroBaseShadow) || AsanZeroBaseShadow;
   }
 
-  void addArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
+  void addArgs(const llvm::opt::ArgList &Args,
+               llvm::opt::ArgStringList &CmdArgs) const {
     if (!Kind)
       return;
     SmallString<256> SanitizeOpt("-fsanitize=");
@@ -117,7 +118,8 @@ class SanitizerArgs {
 
   /// Parse a -fsanitize= or -fno-sanitize= argument's values, diagnosing any
   /// invalid components.
-  static unsigned parse(const Driver &D, const Arg *A, bool DiagnoseErrors) {
+  static unsigned parse(const Driver &D, const llvm::opt::Arg *A,
+                        bool DiagnoseErrors) {
     unsigned Kind = 0;
     for (unsigned I = 0, N = A->getNumValues(); I != N; ++I) {
       if (unsigned K = parse(A->getValue(I)))
@@ -132,8 +134,9 @@ class SanitizerArgs {
   /// Parse a single flag of the form -f[no]sanitize=, or
   /// -f*-sanitizer. Sets the masks defining required change of Kind value.
   /// Returns true if the flag was parsed successfully.
-  static bool parse(const Driver &D, const ArgList &Args, const Arg *A,
-                    unsigned &Add, unsigned &Remove, bool DiagnoseErrors) {
+  static bool parse(const Driver &D, const llvm::opt::ArgList &Args,
+                    const llvm::opt::Arg *A, unsigned &Add, unsigned &Remove,
+                    bool DiagnoseErrors) {
     Add = 0;
     Remove = 0;
     const char *DeprecatedReplacement = 0;
@@ -177,9 +180,11 @@ class SanitizerArgs {
   /// provides a sanitizer kind in \p Mask. For example, the argument list
   /// "-fsanitize=thread,vptr -faddress-sanitizer" with mask \c NeedsUbsanRt
   /// would produce "-fsanitize=vptr".
-  static std::string lastArgumentForKind(const Driver &D, const ArgList &Args,
+  static std::string lastArgumentForKind(const Driver &D,
+                                         const llvm::opt::ArgList &Args,
                                          unsigned Kind) {
-    for (ArgList::const_reverse_iterator I = Args.rbegin(), E = Args.rend();
+    for (llvm::opt::ArgList::const_reverse_iterator I = Args.rbegin(),
+                                                    E = Args.rend();
          I != E; ++I) {
       unsigned Add, Remove;
       if (parse(D, Args, *I, Add, Remove, false) &&
@@ -194,7 +199,8 @@ class SanitizerArgs {
   /// a value in \p Mask. For instance, the argument
   /// "-fsanitize=address,alignment" with mask \c NeedsUbsanRt would produce
   /// "-fsanitize=alignment".
-  static std::string describeSanitizeArg(const ArgList &Args, const Arg *A,
+  static std::string describeSanitizeArg(const llvm::opt::ArgList &Args,
+                                         const llvm::opt::Arg *A,
                                          unsigned Mask) {
     if (!A->getOption().matches(options::OPT_fsanitize_EQ))
       return A->getAsString(Args);

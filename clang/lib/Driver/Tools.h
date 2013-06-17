@@ -33,34 +33,41 @@ using llvm::opt::ArgStringList;
   /// \brief Clang compiler tool.
   class LLVM_LIBRARY_VISIBILITY Clang : public Tool {
   public:
-    static const char *getBaseInputName(const ArgList &Args,
+    static const char *getBaseInputName(const llvm::opt::ArgList &Args,
                                         const InputInfoList &Inputs);
-    static const char *getBaseInputStem(const ArgList &Args,
+    static const char *getBaseInputStem(const llvm::opt::ArgList &Args,
                                         const InputInfoList &Inputs);
-    static const char *getDependencyFileName(const ArgList &Args,
+    static const char *getDependencyFileName(const llvm::opt::ArgList &Args,
                                              const InputInfoList &Inputs);
 
   private:
-    void AddPreprocessingOptions(Compilation &C,
-                                 const JobAction &JA,
+    void AddPreprocessingOptions(Compilation &C, const JobAction &JA,
                                  const Driver &D,
-                                 const ArgList &Args,
-                                 ArgStringList &CmdArgs,
+                                 const llvm::opt::ArgList &Args,
+                                 llvm::opt::ArgStringList &CmdArgs,
                                  const InputInfo &Output,
                                  const InputInfoList &Inputs) const;
 
-    void AddARMTargetArgs(const ArgList &Args, ArgStringList &CmdArgs,
+    void AddARMTargetArgs(const llvm::opt::ArgList &Args,
+                          llvm::opt::ArgStringList &CmdArgs,
                           bool KernelOrKext) const;
-    void AddMIPSTargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
-    void AddPPCTargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
-    void AddR600TargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
-    void AddSparcTargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
-    void AddX86TargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
-    void AddHexagonTargetArgs (const ArgList &Args, ArgStringList &CmdArgs) const;
+    void AddMIPSTargetArgs(const llvm::opt::ArgList &Args,
+                           llvm::opt::ArgStringList &CmdArgs) const;
+    void AddPPCTargetArgs(const llvm::opt::ArgList &Args,
+                          llvm::opt::ArgStringList &CmdArgs) const;
+    void AddR600TargetArgs(const llvm::opt::ArgList &Args,
+                           llvm::opt::ArgStringList &CmdArgs) const;
+    void AddSparcTargetArgs(const llvm::opt::ArgList &Args,
+                            llvm::opt::ArgStringList &CmdArgs) const;
+    void AddX86TargetArgs(const llvm::opt::ArgList &Args,
+                          llvm::opt::ArgStringList &CmdArgs) const;
+    void AddHexagonTargetArgs(const llvm::opt::ArgList &Args,
+                              llvm::opt::ArgStringList &CmdArgs) const;
 
     enum RewriteKind { RK_None, RK_Fragile, RK_NonFragile };
 
-    ObjCRuntime AddObjCRuntimeArgs(const ArgList &args, ArgStringList &cmdArgs,
+    ObjCRuntime AddObjCRuntimeArgs(const llvm::opt::ArgList &args,
+                                   llvm::opt::ArgStringList &cmdArgs,
                                    RewriteKind rewrite) const;
 
   public:
@@ -73,14 +80,17 @@ using llvm::opt::ArgStringList;
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 
   /// \brief Clang integrated assembler tool.
   class LLVM_LIBRARY_VISIBILITY ClangAs : public Tool {
-    void AddARMTargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
-    void AddX86TargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
+    void AddARMTargetArgs(const llvm::opt::ArgList &Args,
+                          llvm::opt::ArgStringList &CmdArgs) const;
+    void AddX86TargetArgs(const llvm::opt::ArgList &Args,
+                          llvm::opt::ArgStringList &CmdArgs) const;
+
   public:
     ClangAs(const ToolChain &TC) : Tool("clang::as",
                                         "clang integrated assembler", TC) {}
@@ -92,7 +102,7 @@ using llvm::opt::ArgStringList;
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 
@@ -106,15 +116,15 @@ namespace gcc {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
 
     /// RenderExtraToolArgs - Render any arguments necessary to force
     /// the particular tool mode.
-    virtual void RenderExtraToolArgs(const JobAction &JA,
-                                     ArgStringList &CmdArgs) const = 0;
+    virtual void
+        RenderExtraToolArgs(const JobAction &JA,
+                            llvm::opt::ArgStringList &CmdArgs) const = 0;
   };
-
 
   class LLVM_LIBRARY_VISIBILITY Preprocess : public Common {
   public:
@@ -125,7 +135,7 @@ namespace gcc {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void RenderExtraToolArgs(const JobAction &JA,
-                                     ArgStringList &CmdArgs) const;
+                                     llvm::opt::ArgStringList &CmdArgs) const;
   };
 
   class LLVM_LIBRARY_VISIBILITY Precompile : public Common  {
@@ -137,7 +147,7 @@ namespace gcc {
     virtual bool hasIntegratedCPP() const { return true; }
 
     virtual void RenderExtraToolArgs(const JobAction &JA,
-                                     ArgStringList &CmdArgs) const;
+                                     llvm::opt::ArgStringList &CmdArgs) const;
   };
 
   class LLVM_LIBRARY_VISIBILITY Compile : public Common  {
@@ -149,7 +159,7 @@ namespace gcc {
     virtual bool hasIntegratedCPP() const { return true; }
 
     virtual void RenderExtraToolArgs(const JobAction &JA,
-                                     ArgStringList &CmdArgs) const;
+                                     llvm::opt::ArgStringList &CmdArgs) const;
   };
 
   class LLVM_LIBRARY_VISIBILITY Assemble : public Common  {
@@ -160,7 +170,7 @@ namespace gcc {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void RenderExtraToolArgs(const JobAction &JA,
-                                     ArgStringList &CmdArgs) const;
+                                     llvm::opt::ArgStringList &CmdArgs) const;
   };
 
   class LLVM_LIBRARY_VISIBILITY Link : public Common  {
@@ -172,7 +182,7 @@ namespace gcc {
     virtual bool isLinkJob() const { return true; }
 
     virtual void RenderExtraToolArgs(const JobAction &JA,
-                                     ArgStringList &CmdArgs) const;
+                                     llvm::opt::ArgStringList &CmdArgs) const;
   };
 } // end namespace gcc
 
@@ -187,11 +197,11 @@ namespace hexagon {
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void RenderExtraToolArgs(const JobAction &JA,
-                                     ArgStringList &CmdArgs) const;
+                                     llvm::opt::ArgStringList &CmdArgs) const;
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 
@@ -204,11 +214,11 @@ namespace hexagon {
     virtual bool isLinkJob() const { return true; }
 
     virtual void RenderExtraToolArgs(const JobAction &JA,
-                                     ArgStringList &CmdArgs) const;
+                                     llvm::opt::ArgStringList &CmdArgs) const;
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 } // end namespace hexagon.
@@ -220,7 +230,8 @@ namespace darwin {
   class LLVM_LIBRARY_VISIBILITY DarwinTool : public Tool {
     virtual void anchor();
   protected:
-    void AddDarwinArch(const ArgList &Args, ArgStringList &CmdArgs) const;
+    void AddDarwinArch(const llvm::opt::ArgList &Args,
+                       llvm::opt::ArgStringList &CmdArgs) const;
 
     const toolchains::Darwin &getDarwinToolChain() const {
       return reinterpret_cast<const toolchains::Darwin&>(getToolChain());
@@ -241,14 +252,15 @@ namespace darwin {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 
   class LLVM_LIBRARY_VISIBILITY Link : public DarwinTool  {
     bool NeedsTempPath(const InputInfoList &Inputs) const;
-    void AddLinkArgs(Compilation &C, const ArgList &Args,
-                     ArgStringList &CmdArgs, const InputInfoList &Inputs) const;
+    void AddLinkArgs(Compilation &C, const llvm::opt::ArgList &Args,
+                     llvm::opt::ArgStringList &CmdArgs,
+                     const InputInfoList &Inputs) const;
 
   public:
     Link(const ToolChain &TC) : DarwinTool("darwin::Link", "linker", TC) {}
@@ -259,7 +271,7 @@ namespace darwin {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 
@@ -272,7 +284,7 @@ namespace darwin {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 
@@ -287,7 +299,7 @@ namespace darwin {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 
@@ -301,7 +313,7 @@ namespace darwin {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 
@@ -319,7 +331,7 @@ namespace openbsd {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
@@ -332,7 +344,7 @@ namespace openbsd {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 } // end namespace openbsd
@@ -349,7 +361,7 @@ namespace bitrig {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
@@ -362,7 +374,7 @@ namespace bitrig {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 } // end namespace bitrig
@@ -379,7 +391,7 @@ namespace freebsd {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
@@ -392,7 +404,7 @@ namespace freebsd {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 } // end namespace freebsd
@@ -410,7 +422,7 @@ namespace netbsd {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
@@ -425,7 +437,7 @@ namespace netbsd {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 } // end namespace netbsd
@@ -441,7 +453,7 @@ namespace gnutools {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
@@ -454,7 +466,7 @@ namespace gnutools {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 }
@@ -470,7 +482,7 @@ namespace minix {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
@@ -483,7 +495,7 @@ namespace minix {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 } // end namespace minix
@@ -500,7 +512,7 @@ namespace solaris {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
@@ -513,7 +525,7 @@ namespace solaris {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 } // end namespace solaris
@@ -530,7 +542,7 @@ namespace auroraux {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
@@ -543,7 +555,7 @@ namespace auroraux {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 } // end namespace auroraux
@@ -560,7 +572,7 @@ namespace dragonfly {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
@@ -573,7 +585,7 @@ namespace dragonfly {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 } // end namespace dragonfly
@@ -590,7 +602,7 @@ namespace visualstudio {
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               const InputInfo &Output,
                               const InputInfoList &Inputs,
-                              const ArgList &TCArgs,
+                              const llvm::opt::ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 } // end namespace visualstudio
