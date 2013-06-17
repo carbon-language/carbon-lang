@@ -201,3 +201,16 @@ struct Y : Empty {
 
 // CHECK: @g8 = constant [14 x i8] c"{Y={X=[10i]}}\00"
 extern const char g8[] = @encode(Y);
+
+
+class dynamic_class {
+public:
+  virtual ~dynamic_class();
+};
+@interface has_dynamic_class_ivar
+@end
+@implementation has_dynamic_class_ivar {
+  dynamic_class dynamic_class_ivar;
+}
+@end
+// CHECK: internal global [41 x i8] c"{dynamic_class=\22_vptr$dynamic_class\22^^?}\00"
