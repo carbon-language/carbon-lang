@@ -11,11 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LIB_ARCHIVE_ARCHIVEINTERNALS_H
-#define LIB_ARCHIVE_ARCHIVEINTERNALS_H
+#ifndef TOOLS_LLVM_AR_ARCHIVEINTERNALS_H
+#define TOOLS_LLVM_AR_ARCHIVEINTERNALS_H
 
+#include "Archive.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Bitcode/Archive.h"
 #include "llvm/Support/TimeValue.h"
 #include <cstring>
 

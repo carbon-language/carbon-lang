@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_BITCODE_ARCHIVE_H
-#define LLVM_BITCODE_ARCHIVE_H
+#ifndef TOOLS_LLVM_AR_ARCHIVE_H
+#define TOOLS_LLVM_AR_ARCHIVE_H
 
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"

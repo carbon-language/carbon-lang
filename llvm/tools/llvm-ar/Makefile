@@ -9,7 +9,7 @@
 
 LEVEL := ../..
 TOOLNAME := llvm-ar
-LINK_COMPONENTS := archive
+LINK_COMPONENTS := bitreader support
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS := 1
