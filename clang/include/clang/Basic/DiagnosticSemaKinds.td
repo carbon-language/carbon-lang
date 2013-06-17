@@ -5493,10 +5493,8 @@ def ext_empty_struct_union : Extension<
   "empty %select{struct|union}0 is a GNU extension">, InGroup<GNU>;
 def ext_no_named_members_in_struct_union : Extension<
   "%select{struct|union}0 without named members is a GNU extension">, InGroup<GNU>;
-def warn_empty_struct_union_compat : Warning<"empty %select{struct|union}0 "
-  "has size 0 in C, size 1 in C++">, InGroup<CXXCompat>, DefaultIgnore;
-def warn_zero_size_struct_union_compat : Warning<"%select{struct|union}0 "
-  "with only bit-fields of width 0 has size 0 in C, size 1 in C++">,
+def warn_zero_size_struct_union_compat : Warning<"%select{|empty }0"
+  "%select{struct|union}1 has size 0 in C, %select{size 1|non-zero size}2 in C++">,
   InGroup<CXXCompat>, DefaultIgnore;
 } // End of general sema category.
 

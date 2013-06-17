@@ -11236,32 +11236,34 @@ void Sema::ActOnFields(Scope* S,
     // Check if the structure/union declaration is a language extension.
     if (!getLangOpts().CPlusPlus) {
       bool ZeroSize = true;
-      bool UnnamedOnly = true;
-      unsigned UnnamedCnt = 0;
+      bool IsEmpty = true;
+      unsigned NonBitFields = 0;
       for (RecordDecl::field_iterator I = Record->field_begin(),
-                                      E = Record->field_end(); UnnamedOnly && I != E; ++I) {
+                                      E = Record->field_end();
+           (NonBitFields == 0 || ZeroSize) && I != E; ++I) {
+        IsEmpty = false;
         if (I->isUnnamedBitfield()) {
-          UnnamedCnt++;
           if (I->getBitWidthValue(Context) > 0)
             ZeroSize = false;
         } else {
-          UnnamedOnly = ZeroSize = false;
+          ++NonBitFields;
+          QualType FieldType = I->getType();
+          if (FieldType->isIncompleteType() ||
+              !Context.getTypeSizeInChars(FieldType).isZero())
+            ZeroSize = false;
         }
       }
 
       // Empty structs are an extension in C (C99 6.7.2.1p7), but are allowed in
       // C++.
-      if (ZeroSize) {
-        if (UnnamedCnt == 0)
-          Diag(RecLoc, diag::warn_empty_struct_union_compat) << Record->isUnion();
-        else
-          Diag(RecLoc, diag::warn_zero_size_struct_union_compat) << Record->isUnion();
-      }
+      if (ZeroSize)
+        Diag(RecLoc, diag::warn_zero_size_struct_union_compat) << IsEmpty
+            << Record->isUnion() << (NonBitFields > 1);
 
       // Structs without named members are extension in C (C99 6.7.2.1p7), but
       // are accepted by GCC.
-      if (UnnamedOnly) {
-        if (UnnamedCnt == 0)
+      if (NonBitFields == 0) {
+        if (IsEmpty)
           Diag(RecLoc, diag::ext_empty_struct_union) << Record->isUnion();
         else
           Diag(RecLoc, diag::ext_no_named_members_in_struct_union) << Record->isUnion();
