@@ -2113,15 +2113,9 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
     return;
 
   // Weak edges are for clustering and other constraints.
-  //
-  // Deferring TryCand here does not change Cand's reason. This is good in the
-  // sense that a bad candidate shouldn't affect a previous candidate's
-  // goodness, but bad in that it is assymetric and depends on queue order.
-  CandReason OrigReason = Cand.Reason;
   if (tryLess(getWeakLeft(TryCand.SU, Zone.isTop()),
               getWeakLeft(Cand.SU, Zone.isTop()),
               TryCand, Cand, Weak)) {
-    Cand.Reason = OrigReason;
     return;
   }
   // Avoid critical resource consumption and balance the schedule.
