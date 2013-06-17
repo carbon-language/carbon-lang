@@ -27,6 +27,7 @@ class Type;
 class MachineFunction;
 class MachineBasicBlock;
 class TargetFrameLowering;
+class TargetMachine;
 class BitVector;
 class Value;
 class AllocaInst;
@@ -119,6 +120,8 @@ class MachineFrameInfo {
         isSpillSlot(isSS), MayNeedSP(NSP), Alloca(Val), PreAllocated(false) {}
   };
 
+  const TargetMachine &TM;
+
   /// Objects - The list of stack objects allocated...
   ///
   std::vector<StackObject> Objects;
@@ -201,10 +204,6 @@ class MachineFrameInfo {
   /// CSIValid - Has CSInfo been set yet?
   bool CSIValid;
 
-  /// TargetFrameLowering - Target information about frame layout.
-  ///
-  const TargetFrameLowering &TFI;
-
   /// LocalFrameObjects - References to frame indices which are mapped
   /// into the local frame allocation block. <FrameIdx, LocalOffset>
   SmallVector<std::pair<int, int64_t>, 32> LocalFrameObjects;
@@ -223,9 +222,11 @@ class MachineFrameInfo {
 
   /// Whether the "realign-stack" option is on.
   bool RealignOption;
+
+  const TargetFrameLowering *getFrameLowering() const;
 public:
-    explicit MachineFrameInfo(const TargetFrameLowering &tfi, bool RealignOpt)
-    : TFI(tfi), RealignOption(RealignOpt) {
+    explicit MachineFrameInfo(const TargetMachine &TM, bool RealignOpt)
+    : TM(TM), RealignOption(RealignOpt) {
     StackSize = NumFixedObjects = OffsetAdjustment = MaxAlignment = 0;
     HasVarSizedObjects = false;
     FrameAddressTaken = false;

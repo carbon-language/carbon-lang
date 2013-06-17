@@ -17,6 +17,7 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <vector>
 
@@ -26,7 +27,7 @@ namespace llvm {
 /// registers, including vreg register classes, use/def chains for registers,
 /// etc.
 class MachineRegisterInfo {
-  const TargetRegisterInfo *const TRI;
+  const TargetMachine &TM;
 
   /// IsSSA - True when the machine function is in SSA form and virtual
   /// registers have a single def.
@@ -56,6 +57,10 @@ class MachineRegisterInfo {
   /// PhysRegUseDefLists - This is an array of the head of the use/def list for
   /// physical registers.
   MachineOperand **PhysRegUseDefLists;
+
+  const TargetRegisterInfo *getTargetRegisterInfo() const {
+    return TM.getRegisterInfo();
+  }
 
   /// getRegUseDefListHead - Return the head pointer for the register use/def
   /// list for the specified virtual or physical register.
@@ -108,7 +113,7 @@ class MachineRegisterInfo {
   MachineRegisterInfo(const MachineRegisterInfo&) LLVM_DELETED_FUNCTION;
   void operator=(const MachineRegisterInfo&) LLVM_DELETED_FUNCTION;
 public:
-  explicit MachineRegisterInfo(const TargetRegisterInfo &TRI);
+  explicit MachineRegisterInfo(const TargetMachine &TM);
   ~MachineRegisterInfo();
 
   //===--------------------------------------------------------------------===//
@@ -377,7 +382,8 @@ public:
   bool isPhysRegUsed(unsigned Reg) const {
     if (UsedPhysRegMask.test(Reg))
       return true;
-    for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units)
+    for (MCRegUnitIterator Units(Reg, getTargetRegisterInfo());
+         Units.isValid(); ++Units)
       if (UsedRegUnits.test(*Units))
         return true;
     return false;
@@ -392,7 +398,8 @@ public:
   /// setPhysRegUsed - Mark the specified register used in this function.
   /// This should only be called during and after register allocation.
   void setPhysRegUsed(unsigned Reg) {
-    for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units)
+    for (MCRegUnitIterator Units(Reg, getTargetRegisterInfo());
+         Units.isValid(); ++Units)
       UsedRegUnits.set(*Units);
   }
 
@@ -406,7 +413,8 @@ public:
   /// This should only be called during and after register allocation.
   void setPhysRegUnused(unsigned Reg) {
     UsedPhysRegMask.reset(Reg);
-    for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units)
+    for (MCRegUnitIterator Units(Reg, getTargetRegisterInfo());
+         Units.isValid(); ++Units)
       UsedRegUnits.reset(*Units);
   }
 
@@ -466,7 +474,8 @@ public:
   /// register, so a register allocator needs to track its liveness and
   /// availability.
   bool isAllocatable(unsigned PhysReg) const {
-    return TRI->isInAllocatableClass(PhysReg) && !isReserved(PhysReg);
+    return getTargetRegisterInfo()->isInAllocatableClass(PhysReg) &&
+      !isReserved(PhysReg);
   }
 
   //===--------------------------------------------------------------------===//

@@ -19,16 +19,18 @@
 
 using namespace llvm;
 
-MachineRegisterInfo::MachineRegisterInfo(const TargetRegisterInfo &TRI)
-  : TRI(&TRI), IsSSA(true), TracksLiveness(true) {
+MachineRegisterInfo::MachineRegisterInfo(const TargetMachine &TM)
+  : TM(TM), IsSSA(true), TracksLiveness(true) {
   VRegInfo.reserve(256);
   RegAllocHints.reserve(256);
-  UsedRegUnits.resize(TRI.getNumRegUnits());
-  UsedPhysRegMask.resize(TRI.getNumRegs());
+  UsedRegUnits.resize(getTargetRegisterInfo()->getNumRegUnits());
+  UsedPhysRegMask.resize(getTargetRegisterInfo()->getNumRegs());
 
   // Create the physreg use/def lists.
-  PhysRegUseDefLists = new MachineOperand*[TRI.getNumRegs()];
-  memset(PhysRegUseDefLists, 0, sizeof(MachineOperand*)*TRI.getNumRegs());
+  PhysRegUseDefLists =
+    new MachineOperand*[getTargetRegisterInfo()->getNumRegs()];
+  memset(PhysRegUseDefLists, 0,
+         sizeof(MachineOperand*)*getTargetRegisterInfo()->getNumRegs());
 }
 
 MachineRegisterInfo::~MachineRegisterInfo() {
@@ -50,7 +52,8 @@ MachineRegisterInfo::constrainRegClass(unsigned Reg,
   const TargetRegisterClass *OldRC = getRegClass(Reg);
   if (OldRC == RC)
     return RC;
-  const TargetRegisterClass *NewRC = TRI->getCommonSubClass(OldRC, RC);
+  const TargetRegisterClass *NewRC =
+    getTargetRegisterInfo()->getCommonSubClass(OldRC, RC);
   if (!NewRC || NewRC == OldRC)
     return NewRC;
   if (NewRC->getNumRegs() < MinNumRegs)
@@ -63,7 +66,8 @@ bool
 MachineRegisterInfo::recomputeRegClass(unsigned Reg, const TargetMachine &TM) {
   const TargetInstrInfo *TII = TM.getInstrInfo();
   const TargetRegisterClass *OldRC = getRegClass(Reg);
-  const TargetRegisterClass *NewRC = TRI->getLargestLegalSuperClass(OldRC);
+  const TargetRegisterClass *NewRC =
+    getTargetRegisterInfo()->getLargestLegalSuperClass(OldRC);
 
   // Stop early if there is no room to grow.
   if (NewRC == OldRC)
@@ -73,14 +77,16 @@ MachineRegisterInfo::recomputeRegClass(unsigned Reg, const TargetMachine &TM) {
   for (reg_nodbg_iterator I = reg_nodbg_begin(Reg), E = reg_nodbg_end(); I != E;
        ++I) {
     const TargetRegisterClass *OpRC =
-      I->getRegClassConstraint(I.getOperandNo(), TII, TRI);
+      I->getRegClassConstraint(I.getOperandNo(), TII,
+                               getTargetRegisterInfo());
     if (unsigned SubIdx = I.getOperand().getSubReg()) {
       if (OpRC)
-        NewRC = TRI->getMatchingSuperRegClass(NewRC, OpRC, SubIdx);
+        NewRC = getTargetRegisterInfo()->getMatchingSuperRegClass(NewRC, OpRC,
+                                                                  SubIdx);
       else
-        NewRC = TRI->getSubClassWithSubReg(NewRC, SubIdx);
+        NewRC = getTargetRegisterInfo()->getSubClassWithSubReg(NewRC, SubIdx);
     } else if (OpRC)
-      NewRC = TRI->getCommonSubClass(NewRC, OpRC);
+      NewRC = getTargetRegisterInfo()->getCommonSubClass(NewRC, OpRC);
     if (!NewRC || NewRC == OldRC)
       return false;
   }
@@ -126,24 +132,28 @@ void MachineRegisterInfo::verifyUseList(unsigned Reg) const {
     MachineOperand *MO = &I.getOperand();
     MachineInstr *MI = MO->getParent();
     if (!MI) {
-      errs() << PrintReg(Reg, TRI) << " use list MachineOperand " << MO
+      errs() << PrintReg(Reg, getTargetRegisterInfo())
+             << " use list MachineOperand " << MO
              << " has no parent instruction.\n";
       Valid = false;
     }
     MachineOperand *MO0 = &MI->getOperand(0);
     unsigned NumOps = MI->getNumOperands();
     if (!(MO >= MO0 && MO < MO0+NumOps)) {
-      errs() << PrintReg(Reg, TRI) << " use list MachineOperand " << MO
+      errs() << PrintReg(Reg, getTargetRegisterInfo())
+             << " use list MachineOperand " << MO
              << " doesn't belong to parent MI: " << *MI;
       Valid = false;
     }
     if (!MO->isReg()) {
-      errs() << PrintReg(Reg, TRI) << " MachineOperand " << MO << ": " << *MO
+      errs() << PrintReg(Reg, getTargetRegisterInfo())
+             << " MachineOperand " << MO << ": " << *MO
              << " is not a register\n";
       Valid = false;
     }
     if (MO->getReg() != Reg) {
-      errs() << PrintReg(Reg, TRI) << " use-list MachineOperand " << MO << ": "
+      errs() << PrintReg(Reg, getTargetRegisterInfo())
+             << " use-list MachineOperand " << MO << ": "
              << *MO << " is the wrong register\n";
       Valid = false;
     }
@@ -156,7 +166,7 @@ void MachineRegisterInfo::verifyUseLists() const {
 #ifndef NDEBUG
   for (unsigned i = 0, e = getNumVirtRegs(); i != e; ++i)
     verifyUseList(TargetRegisterInfo::index2VirtReg(i));
-  for (unsigned i = 1, e = TRI->getNumRegs(); i != e; ++i)
+  for (unsigned i = 1, e = getTargetRegisterInfo()->getNumRegs(); i != e; ++i)
     verifyUseList(i);
 #endif
 }
@@ -390,8 +400,8 @@ void MachineRegisterInfo::dumpUses(unsigned Reg) const {
 #endif
 
 void MachineRegisterInfo::freezeReservedRegs(const MachineFunction &MF) {
-  ReservedRegs = TRI->getReservedRegs(MF);
-  assert(ReservedRegs.size() == TRI->getNumRegs() &&
+  ReservedRegs = getTargetRegisterInfo()->getReservedRegs(MF);
+  assert(ReservedRegs.size() == getTargetRegisterInfo()->getNumRegs() &&
          "Invalid ReservedRegs vector from target");
 }
 
@@ -401,7 +411,8 @@ bool MachineRegisterInfo::isConstantPhysReg(unsigned PhysReg,
 
   // Check if any overlapping register is modified, or allocatable so it may be
   // used later.
-  for (MCRegAliasIterator AI(PhysReg, TRI, true); AI.isValid(); ++AI)
+  for (MCRegAliasIterator AI(PhysReg, getTargetRegisterInfo(), true);
+       AI.isValid(); ++AI)
     if (!def_empty(*AI) || isAllocatable(*AI))
       return false;
   return true;

@@ -102,11 +102,14 @@ public:
   void resetTargetOptions(const MachineFunction *MF) const;
 
   // Interfaces to the major aspects of target machine information:
+  // 
   // -- Instruction opcode and operand information
   // -- Pipelines and scheduling information
   // -- Stack frame information
   // -- Selection DAG lowering information
   //
+  // N.B. These objects may change during compilation. It's not safe to cache
+  // them between functions.
   virtual const TargetInstrInfo         *getInstrInfo() const { return 0; }
   virtual const TargetFrameLowering *getFrameLowering() const { return 0; }
   virtual const TargetLowering    *getTargetLowering() const { return 0; }

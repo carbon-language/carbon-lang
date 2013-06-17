@@ -55,23 +55,27 @@ MachineFunction::MachineFunction(const Function *F, const TargetMachine &TM,
                                  GCModuleInfo* gmi)
   : Fn(F), Target(TM), Ctx(mmi.getContext()), MMI(mmi), GMI(gmi) {
   if (TM.getRegisterInfo())
-    RegInfo = new (Allocator) MachineRegisterInfo(*TM.getRegisterInfo());
+    RegInfo = new (Allocator) MachineRegisterInfo(TM);
   else
     RegInfo = 0;
+
   MFInfo = 0;
-  FrameInfo = new (Allocator) MachineFrameInfo(*TM.getFrameLowering(),
-                                               TM.Options.RealignStack);
+  FrameInfo = new (Allocator) MachineFrameInfo(TM, TM.Options.RealignStack);
+
   if (Fn->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
                                        Attribute::StackAlignment))
     FrameInfo->ensureMaxAlignment(Fn->getAttributes().
                                 getStackAlignment(AttributeSet::FunctionIndex));
-  ConstantPool = new (Allocator) MachineConstantPool(TM.getDataLayout());
+
+  ConstantPool = new (Allocator) MachineConstantPool(TM);
   Alignment = TM.getTargetLowering()->getMinFunctionAlignment();
+
   // FIXME: Shouldn't use pref alignment if explicit alignment is set on Fn.
   if (!Fn->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
                                         Attribute::OptimizeForSize))
     Alignment = std::max(Alignment,
                          TM.getTargetLowering()->getPrefFunctionAlignment());
+
   FunctionNumber = FunctionNum;
   JumpTableInfo = 0;
 }
@@ -457,11 +461,15 @@ MCSymbol *MachineFunction::getPICBaseSymbol() const {
 //  MachineFrameInfo implementation
 //===----------------------------------------------------------------------===//
 
+const TargetFrameLowering *MachineFrameInfo::getFrameLowering() const {
+  return TM.getFrameLowering();
+}
+
 /// ensureMaxAlignment - Make sure the function is at least Align bytes
 /// aligned.
 void MachineFrameInfo::ensureMaxAlignment(unsigned Align) {
-  if (!TFI.isStackRealignable() || !RealignOption)
-    assert(Align <= TFI.getStackAlignment() &&
+  if (!getFrameLowering()->isStackRealignable() || !RealignOption)
+    assert(Align <= getFrameLowering()->getStackAlignment() &&
            "For targets without stack realignment, Align is out of limit!");
   if (MaxAlignment < Align) MaxAlignment = Align;
 }
@@ -483,8 +491,10 @@ static inline unsigned clampStackAlignment(bool ShouldClamp, unsigned Align,
 int MachineFrameInfo::CreateStackObject(uint64_t Size, unsigned Alignment,
                       bool isSS, bool MayNeedSP, const AllocaInst *Alloca) {
   assert(Size != 0 && "Cannot allocate zero size stack objects!");
-  Alignment = clampStackAlignment(!TFI.isStackRealignable() || !RealignOption,
-                                  Alignment, TFI.getStackAlignment());
+  Alignment =
+    clampStackAlignment(!getFrameLowering()->isStackRealignable() ||
+                          !RealignOption,
+                        Alignment, getFrameLowering()->getStackAlignment());
   Objects.push_back(StackObject(Size, Alignment, 0, false, isSS, MayNeedSP,
                                 Alloca));
   int Index = (int)Objects.size() - NumFixedObjects - 1;
@@ -499,8 +509,10 @@ int MachineFrameInfo::CreateStackObject(uint64_t Size, unsigned Alignment,
 ///
 int MachineFrameInfo::CreateSpillStackObject(uint64_t Size,
                                              unsigned Alignment) {
-  Alignment = clampStackAlignment(!TFI.isStackRealignable() || !RealignOption,
-                                  Alignment, TFI.getStackAlignment()); 
+  Alignment =
+    clampStackAlignment(!getFrameLowering()->isStackRealignable() ||
+                          !RealignOption,
+                        Alignment, getFrameLowering()->getStackAlignment()); 
   CreateStackObject(Size, Alignment, true, false);
   int Index = (int)Objects.size() - NumFixedObjects - 1;
   ensureMaxAlignment(Alignment);
@@ -514,8 +526,10 @@ int MachineFrameInfo::CreateSpillStackObject(uint64_t Size,
 ///
 int MachineFrameInfo::CreateVariableSizedObject(unsigned Alignment) {
   HasVarSizedObjects = true;
-  Alignment = clampStackAlignment(!TFI.isStackRealignable() || !RealignOption,
-                                  Alignment, TFI.getStackAlignment()); 
+  Alignment =
+    clampStackAlignment(!getFrameLowering()->isStackRealignable() ||
+                          !RealignOption,
+                        Alignment, getFrameLowering()->getStackAlignment()); 
   Objects.push_back(StackObject(0, Alignment, 0, false, false, true, 0));
   ensureMaxAlignment(Alignment);
   return (int)Objects.size()-NumFixedObjects-1;
@@ -533,10 +547,12 @@ int MachineFrameInfo::CreateFixedObject(uint64_t Size, int64_t SPOffset,
   // the incoming frame position.  If the frame object is at offset 32 and
   // the stack is guaranteed to be 16-byte aligned, then we know that the
   // object is 16-byte aligned.
-  unsigned StackAlign = TFI.getStackAlignment();
+  unsigned StackAlign = getFrameLowering()->getStackAlignment();
   unsigned Align = MinAlign(SPOffset, StackAlign);
-  Align = clampStackAlignment(!TFI.isStackRealignable() || !RealignOption,
-                              Align, TFI.getStackAlignment()); 
+  Align =
+    clampStackAlignment(!getFrameLowering()->isStackRealignable() ||
+                          !RealignOption,
+                        Align, getFrameLowering()->getStackAlignment()); 
   Objects.insert(Objects.begin(), StackObject(Size, Align, SPOffset, Immutable,
                                               /*isSS*/   false,
                                               /*NeedSP*/ false,
@@ -770,6 +786,10 @@ void MachineJumpTableInfo::dump() const { print(dbgs()); }
 
 void MachineConstantPoolValue::anchor() { }
 
+const DataLayout *MachineConstantPool::getDataLayout() const {
+  return TM.getDataLayout();
+}
+
 Type *MachineConstantPoolEntry::getType() const {
   if (isMachineConstantPoolEntry())
     return Val.MachineCPVal->getType();
@@ -851,7 +871,8 @@ unsigned MachineConstantPool::getConstantPoolIndex(const Constant *C,
   // FIXME, this could be made much more efficient for large constant pools.
   for (unsigned i = 0, e = Constants.size(); i != e; ++i)
     if (!Constants[i].isMachineConstantPoolEntry() &&
-        CanShareConstantPoolEntry(Constants[i].Val.ConstVal, C, TD)) {
+        CanShareConstantPoolEntry(Constants[i].Val.ConstVal, C,
+                                  getDataLayout())) {
       if ((unsigned)Constants[i].getAlignment() < Alignment)
         Constants[i].Alignment = Alignment;
       return i;
