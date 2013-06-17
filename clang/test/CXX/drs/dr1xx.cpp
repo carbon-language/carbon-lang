@@ -311,7 +311,7 @@ namespace dr126 { // dr126: no
 }
 
 namespace dr127 { // dr127: yes
-  typedef __SIZE_TYPE__ size_t;
+  __extension__ typedef __decltype(sizeof(0)) size_t;
   template<typename T> struct A {
     A() throw(int);
     void *operator new(size_t, const char * = 0);
