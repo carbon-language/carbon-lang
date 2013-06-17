@@ -296,7 +296,14 @@ bool can_execute(const Twine &Path) {
   SmallString<128> PathStorage;
   StringRef P = Path.toNullTerminatedStringRef(PathStorage);
 
-  return ::access(P.begin(), X_OK) != -1;
+  if (0 != access(P.begin(), R_OK | X_OK))
+    return false;
+  struct stat buf;
+  if (0 != stat(P.begin(), &buf))
+    return false;
+  if (!S_ISREG(buf.st_mode))
+    return false;
+  return true;
 }
 
 bool equivalent(file_status A, file_status B) {
