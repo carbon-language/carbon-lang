@@ -54,7 +54,7 @@ IRMemoryMap::FindSpace (size_t size)
         
     lldb::addr_t ret = LLDB_INVALID_ADDRESS;
     
-    if (process_sp && process_sp->CanJIT())
+    if (process_sp && process_sp->CanJIT() && process_sp->IsAlive())
     {
         Error alloc_error;
         
@@ -285,7 +285,7 @@ IRMemoryMap::Malloc (size_t size, uint8_t alignment, uint32_t permissions, Alloc
         break;
     case eAllocationPolicyMirror:
         process_sp = m_process_wp.lock();
-        if (process_sp && process_sp->CanJIT())
+        if (process_sp && process_sp->CanJIT() && process_sp->IsAlive())
         {
             allocation_address = process_sp->AllocateMemory(allocation_size, permissions, error);
             if (!error.Success())
@@ -307,7 +307,7 @@ IRMemoryMap::Malloc (size_t size, uint8_t alignment, uint32_t permissions, Alloc
         process_sp = m_process_wp.lock();
         if (process_sp)
         {
-            if (process_sp->CanJIT())
+            if (process_sp->CanJIT() && process_sp->IsAlive())
             {
                 allocation_address = process_sp->AllocateMemory(allocation_size, permissions, error);
                 if (!error.Success())
@@ -414,7 +414,7 @@ IRMemoryMap::Free (lldb::addr_t process_address, Error &error)
             lldb::ProcessSP process_sp = m_process_wp.lock();
             if (process_sp)
             {
-                if (process_sp->CanJIT())
+                if (process_sp->CanJIT() && process_sp->IsAlive())
                     process_sp->DeallocateMemory(allocation.m_process_alloc); // FindSpace allocated this for real
                 else
                     process_sp->GetReservationCache().Unreserve(allocation.m_process_alloc); // FindSpace registered this memory
