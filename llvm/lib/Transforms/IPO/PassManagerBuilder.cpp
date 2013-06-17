@@ -32,12 +32,6 @@ static cl::opt<bool>
 RunLoopVectorization("vectorize-loops",
                      cl::desc("Run the Loop vectorization passes"));
 
-// This is a helper flag that we use for testing the profitability of
-// vectorization on -O2 and -Os. It should go away once we make a decision.
-static cl::opt<bool>
-VectorizeO2("vectorize-o2",
-            cl::desc("Enable vectorization on all O levels"));
-
 static cl::opt<bool>
 RunSLPVectorization("vectorize-slp",
                     cl::desc("Run the SLP vectorization passes"));
@@ -198,7 +192,7 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
   MPM.add(createLoopIdiomPass());             // Recognize idioms like memset.
   MPM.add(createLoopDeletionPass());          // Delete dead loops
 
-  if (LoopVectorize && (OptLevel > 2 || VectorizeO2))
+  if (LoopVectorize && (OptLevel > 1))
     MPM.add(createLoopVectorizePass());
 
   if (!DisableUnrollLoops)
