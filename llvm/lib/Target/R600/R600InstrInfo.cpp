@@ -239,7 +239,7 @@ R600InstrInfo::ExtractSrcs(MachineInstr *MI,
       Result.push_back(DummyPair);
       continue;
     }
-    if (PV.find(Index) != PV.end()) {
+    if (PV.find(Reg) != PV.end()) {
       Result.push_back(DummyPair);
       continue;
     }
