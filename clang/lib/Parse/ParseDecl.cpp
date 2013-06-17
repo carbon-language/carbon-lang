@@ -2771,13 +2771,6 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                            PrevSpec, DiagID);
       break;
     case tok::kw_register:
-      // In C++11, the 'register' storage class specifier is deprecated.
-      // Suppress the warning in system macros, it's used in macros in some
-      // popular C system headers, such as in glibc's htonl() macro.
-      if (getLangOpts().CPlusPlus11 &&
-          !PP.getSourceManager().isInSystemMacro(Tok.getLocation()))
-        Diag(Tok, diag::warn_deprecated_register)
-          << FixItHint::CreateRemoval(Tok.getLocation());
       isInvalid = DS.SetStorageClassSpec(Actions, DeclSpec::SCS_register, Loc,
                                          PrevSpec, DiagID);
       break;

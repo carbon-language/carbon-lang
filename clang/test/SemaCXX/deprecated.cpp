@@ -1,8 +1,8 @@
-// RUN: %clang_cc1 -std=c++98 %s -Wdeprecated -verify
-// RUN: %clang_cc1 -std=c++11 %s -Wdeprecated -verify
-// RUN: %clang_cc1 -std=c++1y %s -Wdeprecated -verify
+// RUN: %clang_cc1 -std=c++98 %s -Wdeprecated -verify -triple x86_64-linux-gnu
+// RUN: %clang_cc1 -std=c++11 %s -Wdeprecated -verify -triple x86_64-linux-gnu
+// RUN: %clang_cc1 -std=c++1y %s -Wdeprecated -verify -triple x86_64-linux-gnu
 
-// RUN: %clang_cc1 -std=c++1y %s -Wdeprecated -verify -Wno-deprecated-register -DNO_DEPRECATED_FLAGS
+// RUN: %clang_cc1 -std=c++1y %s -Wdeprecated -verify -triple x86_64-linux-gnu -Wno-deprecated-register -DNO_DEPRECATED_FLAGS
 
 #include "Inputs/register.h"
 
@@ -20,6 +20,8 @@ void stuff() {
 #if __cplusplus >= 201103L && !defined(NO_DEPRECATED_FLAGS)
   // expected-warning@-2 {{'register' storage class specifier is deprecated}}
 #endif
+
+  register int m asm("rbx"); // no-warning
 
   int k = to_int(n); // no-warning
 

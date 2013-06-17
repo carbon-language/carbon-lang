@@ -7,7 +7,7 @@ class A {
 #if __cplusplus < 201103L
   friend register class E; // expected-error {{'register' is invalid in friend declarations}}
 #else
-  friend register class E; // expected-error {{'register' is invalid in friend declarations}} expected-warning {{deprecated}}
+  friend register class E; // expected-error {{'register' is invalid in friend declarations}}
 #endif
   friend mutable class F; // expected-error {{'mutable' is invalid in friend declarations}}
   friend typedef class G; // expected-error {{'typedef' is invalid in friend declarations}}
