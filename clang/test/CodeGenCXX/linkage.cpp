@@ -209,3 +209,14 @@ namespace test16 {
   }
   void *test() { return foo<int>::bar(); }
 }
+
+namespace test17 {
+  // CHECK-DAG: @_ZZN6test173fooILi42EEEPivE3bar = weak_odr
+  // CHECK-DAG: define weak_odr i32* @_ZN6test173fooILi42EEEPiv(
+  template<int I>
+  int *foo() {
+    static int bar;
+    return &bar;
+  }
+  template int *foo<42>();
+}

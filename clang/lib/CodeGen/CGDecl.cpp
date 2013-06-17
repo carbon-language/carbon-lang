@@ -126,10 +126,8 @@ void CodeGenFunction::EmitVarDecl(const VarDecl &D) {
 
     // If the function definition has some sort of weak linkage, its
     // static variables should also be weak so that they get properly
-    // uniqued.  We can't do this in C, though, because there's no
-    // standard way to agree on which variables are the same (i.e.
-    // there's no mangling).
-    if (getLangOpts().CPlusPlus) {
+    // uniqued.
+    if (D.isExternallyVisible()) {
       const Decl *D = CurCodeDecl;
       while (true) {
         if (isa<BlockDecl>(D)) {
@@ -143,7 +141,7 @@ void CodeGenFunction::EmitVarDecl(const VarDecl &D) {
         }
       }
       // FIXME: Do we really only care about FunctionDecls here?
-      if (D && isa<FunctionDecl>(D)) {
+      if (isa<FunctionDecl>(D)) {
         llvm::GlobalValue::LinkageTypes ParentLinkage =
             CGM.getFunctionLinkage(cast<FunctionDecl>(D));
         if (llvm::GlobalValue::isWeakForLinker(ParentLinkage))

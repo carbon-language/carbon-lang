@@ -1043,9 +1043,13 @@ static LinkageInfo getLVForLocalDecl(const NamedDecl *D,
 
       return LV;
     }
+
+    if (!Var->isStaticLocal())
+      return LinkageInfo::none();
   }
 
-  if (!isa<TagDecl>(D))
+  ASTContext &Context = D->getASTContext();
+  if (!Context.getLangOpts().CPlusPlus)
     return LinkageInfo::none();
 
   const FunctionDecl *FD = getOutermostFunctionContext(D);
