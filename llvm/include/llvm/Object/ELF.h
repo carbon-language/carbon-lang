@@ -2270,7 +2270,16 @@ error_code ELFObjectFile<ELFT>::getRelocationValueString(
       res = "Unknown";
     }
     break;
-  case ELF::EM_AARCH64:
+  case ELF::EM_AARCH64: {
+    std::string fmtbuf;
+    raw_string_ostream fmt(fmtbuf);
+    fmt << symname;
+    if (addend != 0)
+      fmt << (addend < 0 ? "" : "+") << addend;
+    fmt.flush();
+    Result.append(fmtbuf.begin(), fmtbuf.end());
+    break;
+  }
   case ELF::EM_ARM:
   case ELF::EM_HEXAGON:
     res = symname;
