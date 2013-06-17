@@ -336,6 +336,11 @@ public:
         auto relocSite = reinterpret_cast<llvm::support::ulittle32_t *>(
             fileBuffer + layout->_fileOffset + ref->offsetInAtom());
         uint64_t targetAddr = atomToVirtualAddr[ref->target()];
+
+        // Skip if this reference is not for relocation.
+        if (ref->kind() < lld::Reference::kindTargetLow)
+          continue;
+
         switch (ref->kind()) {
         case llvm::COFF::IMAGE_REL_I386_DIR32:
           *relocSite = targetAddr;

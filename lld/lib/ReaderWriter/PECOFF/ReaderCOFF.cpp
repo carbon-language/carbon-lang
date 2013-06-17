@@ -41,6 +41,10 @@ namespace { // anonymous
 /// to be fixed up so that the address points to atom Y's address.
 class COFFReference LLVM_FINAL : public Reference {
 public:
+  COFFReference(Kind kind) : _target(nullptr), _offsetInAtom(0) {
+    _kind = kind;
+  }
+
   COFFReference(const Atom *target, uint32_t offsetInAtom, uint16_t relocType)
       : _target(target), _offsetInAtom(offsetInAtom) {
     setKind(static_cast<Reference::Kind>(relocType));
@@ -431,6 +435,38 @@ private:
     return error_code::success();
   }
 
+  void addEdge(COFFDefinedAtom *a, COFFDefinedAtom *b,
+               lld::Reference::Kind kind) const {
+    auto ref = new (AtomStorage.Allocate<COFFReference>()) COFFReference(kind);
+    ref->setTarget(b);
+    a->addReference(ref);
+  }
+
+  void connectAtomsWithLayoutEdge(COFFDefinedAtom *a,
+                                  COFFDefinedAtom *b) const {
+    addEdge(a, b, lld::Reference::kindLayoutAfter);
+    addEdge(b, a, lld::Reference::kindLayoutBefore);
+  }
+
+  /// Connect atoms appeared in the same section with layout-{before,after}
+  /// edges. It has two purposes.
+  ///
+  ///   - To prevent atoms from being GC'ed (aka dead-stripped) if there is a
+  ///     reference to one of the atoms. In that case we want to emit all the
+  ///     atoms appeared in the same section, because the referenced "live"
+  ///     atom may reference other atoms in the same section. If we don't add
+  ///     edges between atoms, unreferenced atoms in the same section would be
+  ///     GC'ed.
+  ///   - To preserve the order of atmos. We want to emit the atoms in the
+  ///     same order as they appeared in the input object file.
+  void addLayoutEdges(vector<COFFDefinedAtom *> &definedAtoms) const {
+    if (definedAtoms.size() <= 1)
+      return;
+    for (auto it = definedAtoms.begin(), e = definedAtoms.end(); it + 1 != e;
+         ++it)
+      connectAtomsWithLayoutEdge(*it, *(it + 1));
+  }
+
   error_code AtomizeDefinedSymbols(SectionToSymbolsT &definedSymbols,
                                    vector<const DefinedAtom *> &definedAtoms,
                                    SymbolNameToAtomT &symbolToAtom,
@@ -444,6 +480,9 @@ private:
       if (error_code ec =
               AtomizeDefinedSymbolsInSection(section, symbols, atoms))
         return ec;
+
+      // Connect atoms with layout-before/layout-after edges.
+      addLayoutEdges(atoms);
 
       for (COFFDefinedAtom *atom : atoms) {
         if (!atom->name().empty())

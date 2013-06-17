@@ -41,7 +41,7 @@ public:
   virtual Writer &writer() const;
   virtual bool validateImpl(raw_ostream &diagnostics);
 
-  virtual void addPasses(PassManager &pm) const {}
+  virtual void addPasses(PassManager &pm) const;
 
   void setStackReserve(uint64_t size) { _stackReserve = size; }
   void setStackCommit(uint64_t size) { _stackCommit = size; }

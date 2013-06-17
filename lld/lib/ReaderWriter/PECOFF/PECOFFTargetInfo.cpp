@@ -9,6 +9,8 @@
 
 #include "lld/ReaderWriter/PECOFFTargetInfo.h"
 
+#include "lld/Core/PassManager.h"
+#include "lld/Passes/LayoutPass.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
 
@@ -54,6 +56,10 @@ PECOFFTargetInfo::relocKindFromString(StringRef str) const {
 ErrorOr<std::string>
 PECOFFTargetInfo::stringFromRelocKind(Reference::Kind kind) const {
   return make_error_code(yaml_reader_error::illegal_value);
+}
+
+void PECOFFTargetInfo::addPasses(PassManager &pm) const {
+  pm.add(std::unique_ptr<Pass>(new LayoutPass()));
 }
 
 } // end namespace lld
