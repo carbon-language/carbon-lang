@@ -26,6 +26,7 @@
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/Mangle.h"
 #include "clang/AST/RecordLayout.h"
+#include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/SourceManager.h"
@@ -8045,4 +8046,98 @@ bool ASTContext::AtomicUsesUnsupportedLibcall(const AtomicExpr *E) const {
   unsigned Align = alignChars.getQuantity();
   unsigned MaxInlineWidthInBits = getTargetInfo().getMaxAtomicInlineWidth();
   return (Size != Align || toBits(sizeChars) > MaxInlineWidthInBits);
+}
+
+namespace {
+
+  /// \brief A \c RecursiveASTVisitor that builds a map from nodes to their
+  /// parents as defined by the \c RecursiveASTVisitor.
+  ///
+  /// Note that the relationship described here is purely in terms of AST
+  /// traversal - there are other relationships (for example declaration context)
+  /// in the AST that are better modeled by special matchers.
+  ///
+  /// FIXME: Currently only builds up the map using \c Stmt and \c Decl nodes.
+  class ParentMapASTVisitor : public RecursiveASTVisitor<ParentMapASTVisitor> {
+
+  public:
+    /// \brief Builds and returns the translation unit's parent map.
+    ///
+    ///  The caller takes ownership of the returned \c ParentMap.
+    static ASTContext::ParentMap *buildMap(TranslationUnitDecl &TU) {
+      ParentMapASTVisitor Visitor(new ASTContext::ParentMap);
+      Visitor.TraverseDecl(&TU);
+      return Visitor.Parents;
+    }
+
+  private:
+    typedef RecursiveASTVisitor<ParentMapASTVisitor> VisitorBase;
+
+    ParentMapASTVisitor(ASTContext::ParentMap *Parents) : Parents(Parents) {
+    }
+
+    bool shouldVisitTemplateInstantiations() const {
+      return true;
+    }
+    bool shouldVisitImplicitCode() const {
+      return true;
+    }
+    // Disables data recursion. We intercept Traverse* methods in the RAV, which
+    // are not triggered during data recursion.
+    bool shouldUseDataRecursionFor(clang::Stmt *S) const {
+      return false;
+    }
+
+    template <typename T>
+    bool TraverseNode(T *Node, bool(VisitorBase:: *traverse) (T *)) {
+      if (Node == NULL)
+        return true;
+      if (ParentStack.size() > 0)
+        // FIXME: Currently we add the same parent multiple times, for example
+        // when we visit all subexpressions of template instantiations; this is
+        // suboptimal, bug benign: the only way to visit those is with
+        // hasAncestor / hasParent, and those do not create new matches.
+        // The plan is to enable DynTypedNode to be storable in a map or hash
+        // map. The main problem there is to implement hash functions /
+        // comparison operators for all types that DynTypedNode supports that
+        // do not have pointer identity.
+        (*Parents)[Node].push_back(ParentStack.back());
+      ParentStack.push_back(ast_type_traits::DynTypedNode::create(*Node));
+      bool Result = (this ->* traverse) (Node);
+      ParentStack.pop_back();
+      return Result;
+    }
+
+    bool TraverseDecl(Decl *DeclNode) {
+      return TraverseNode(DeclNode, &VisitorBase::TraverseDecl);
+    }
+
+    bool TraverseStmt(Stmt *StmtNode) {
+      return TraverseNode(StmtNode, &VisitorBase::TraverseStmt);
+    }
+
+    ASTContext::ParentMap *Parents;
+    llvm::SmallVector<ast_type_traits::DynTypedNode, 16> ParentStack;
+
+    friend class RecursiveASTVisitor<ParentMapASTVisitor>;
+  };
+
+} // end namespace
+
+ASTContext::ParentVector
+ASTContext::getParents(const ast_type_traits::DynTypedNode &Node) {
+  assert(Node.getMemoizationData() &&
+         "Invariant broken: only nodes that support memoization may be "
+         "used in the parent map.");
+  if (!AllParents) {
+    // We always need to run over the whole translation unit, as
+    // hasAncestor can escape any subtree.
+    AllParents.reset(
+        ParentMapASTVisitor::buildMap(*getTranslationUnitDecl()));
+  }
+  ParentMap::const_iterator I = AllParents->find(Node.getMemoizationData());
+  if (I == AllParents->end()) {
+    return ParentVector();
+  }
+  return I->second;
 }
