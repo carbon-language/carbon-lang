@@ -21,7 +21,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/SystemUtils.h"
 #include <exception>
 #include <vector>
@@ -122,7 +121,7 @@ public:
   /// fails, it sets Error, otherwise, this function returns the type of code
   /// emitted.
   virtual GCC::FileType OutputCode(const std::string &Bitcode,
-                                   sys::Path &OutFile, std::string &Error,
+                                   std::string &OutFile, std::string &Error,
                                    unsigned Timeout = 0,
                                    unsigned MemoryLimit = 0) {
     Error = "OutputCode not supported by this AbstractInterpreter!";
@@ -189,7 +188,7 @@ public:
   /// fails, it sets Error, otherwise, this function returns the type of code
   /// emitted.
   virtual GCC::FileType OutputCode(const std::string &Bitcode,
-                                   sys::Path &OutFile, std::string &Error,
+                                   std::string &OutFile, std::string &Error,
                                    unsigned Timeout = 0,
                                    unsigned MemoryLimit = 0);
 };

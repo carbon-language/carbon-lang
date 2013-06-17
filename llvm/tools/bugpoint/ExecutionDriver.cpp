@@ -17,6 +17,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/raw_ostream.h"
 #include <fstream>
@@ -380,7 +381,7 @@ std::string BugDriver::executeProgramSafely(const Module *Program,
 std::string BugDriver::compileSharedObject(const std::string &BitcodeFile,
                                            std::string &Error) {
   assert(Interpreter && "Interpreter should have been created already!");
-  sys::Path OutputFile;
+  std::string OutputFile;
 
   // Using the known-good backend.
   GCC::FileType FT = SafeInterpreter->OutputCode(BitcodeFile, OutputFile,
@@ -389,7 +390,7 @@ std::string BugDriver::compileSharedObject(const std::string &BitcodeFile,
     return "";
 
   std::string SharedObjectFile;
-  bool Failure = gcc->MakeSharedObject(OutputFile.str(), FT, SharedObjectFile,
+  bool Failure = gcc->MakeSharedObject(OutputFile, FT, SharedObjectFile,
                                        AdditionalLinkerArgs, Error);
   if (!Error.empty())
     return "";
@@ -397,7 +398,7 @@ std::string BugDriver::compileSharedObject(const std::string &BitcodeFile,
     exit(1);
 
   // Remove the intermediate C file
-  OutputFile.eraseFromDisk();
+  sys::fs::remove(OutputFile);
 
   return "./" + SharedObjectFile;
 }

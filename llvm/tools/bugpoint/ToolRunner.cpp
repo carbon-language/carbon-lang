@@ -17,6 +17,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
 #include <fstream>
@@ -460,7 +461,7 @@ AbstractInterpreter *AbstractInterpreter::createCustomExecutor(
 // LLC Implementation of AbstractIntepreter interface
 //
 GCC::FileType LLC::OutputCode(const std::string &Bitcode,
-                              sys::Path &OutputAsmFile, std::string &Error,
+                              std::string &OutputAsmFile, std::string &Error,
                               unsigned Timeout, unsigned MemoryLimit) {
   const char *Suffix = (UseIntegratedAssembler ? ".llc.o" : ".llc.s");
   sys::Path uniqueFile(Bitcode + Suffix);
@@ -469,7 +470,7 @@ GCC::FileType LLC::OutputCode(const std::string &Bitcode,
     errs() << "Error making unique filename: " << ErrMsg << "\n";
     exit(1);
   }
-  OutputAsmFile = uniqueFile;
+  OutputAsmFile = uniqueFile.str();
   std::vector<const char *> LLCArgs;
   LLCArgs.push_back(LLCPath.c_str());
 
@@ -503,9 +504,9 @@ GCC::FileType LLC::OutputCode(const std::string &Bitcode,
 
 void LLC::compileProgram(const std::string &Bitcode, std::string *Error,
                          unsigned Timeout, unsigned MemoryLimit) {
-  sys::Path OutputAsmFile;
+  std::string OutputAsmFile;
   OutputCode(Bitcode, OutputAsmFile, *Error, Timeout, MemoryLimit);
-  OutputAsmFile.eraseFromDisk();
+  sys::fs::remove(OutputAsmFile);
 }
 
 int LLC::ExecuteProgram(const std::string &Bitcode,
@@ -518,16 +519,16 @@ int LLC::ExecuteProgram(const std::string &Bitcode,
                         unsigned Timeout,
                         unsigned MemoryLimit) {
 
-  sys::Path OutputAsmFile;
+  std::string OutputAsmFile;
   GCC::FileType FileKind = OutputCode(Bitcode, OutputAsmFile, *Error, Timeout,
                                       MemoryLimit);
-  FileRemover OutFileRemover(OutputAsmFile.str(), !SaveTemps);
+  FileRemover OutFileRemover(OutputAsmFile, !SaveTemps);
 
   std::vector<std::string> GCCArgs(ArgsForGCC);
   GCCArgs.insert(GCCArgs.end(), SharedLibs.begin(), SharedLibs.end());
 
   // Assuming LLC worked, compile the result with GCC and run it.
-  return gcc->ExecuteProgram(OutputAsmFile.str(), Args, FileKind,
+  return gcc->ExecuteProgram(OutputAsmFile, Args, FileKind,
                              InputFile, OutputFile, Error, GCCArgs,
                              Timeout, MemoryLimit);
 }
