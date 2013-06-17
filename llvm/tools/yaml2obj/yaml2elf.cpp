@@ -121,7 +121,7 @@ static void zero(T &Obj) {
 }
 
 template <class ELFT>
-static void writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
+static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   using namespace llvm::ELF;
   using namespace llvm::object;
   typedef typename ELFObjectFile<ELFT>::Elf_Ehdr Elf_Ehdr;
@@ -175,7 +175,7 @@ static void writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
     if (SN2I.addName(Name, i)) {
       errs() << "error: Repeated section name: '" << Name
              << "' at YAML section number " << i << ".\n";
-      return;
+      return 1;
     }
   }
 
@@ -205,7 +205,7 @@ static void writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
       if (SN2I.lookupSection(Sec.Link, Index)) {
         errs() << "error: Unknown section referenced: '" << Sec.Link
                << "' at YAML section number " << i << ".\n";
-        return;
+        return 1;
       }
       SHeader.sh_link = Index;
     }
@@ -234,6 +234,7 @@ static void writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   writeVectorData(OS, SHeaders);
   OS.write((const char *)&StrTabSHeader, sizeof(StrTabSHeader));
   CBA.writeBlobToStream(OS);
+  return 0;
 }
 
 int yaml2elf(llvm::raw_ostream &Out, llvm::MemoryBuffer *Buf) {
@@ -246,15 +247,13 @@ int yaml2elf(llvm::raw_ostream &Out, llvm::MemoryBuffer *Buf) {
   }
   if (Doc.Header.Class == ELFYAML::ELF_ELFCLASS(ELF::ELFCLASS64)) {
     if (Doc.Header.Data == ELFYAML::ELF_ELFDATA(ELF::ELFDATA2LSB))
-      writeELF<object::ELFType<support::little, 8, true> >(outs(), Doc);
+      return writeELF<object::ELFType<support::little, 8, true> >(outs(), Doc);
     else
-      writeELF<object::ELFType<support::big, 8, true> >(outs(), Doc);
+      return writeELF<object::ELFType<support::big, 8, true> >(outs(), Doc);
   } else {
     if (Doc.Header.Data == ELFYAML::ELF_ELFDATA(ELF::ELFDATA2LSB))
-      writeELF<object::ELFType<support::little, 4, false> >(outs(), Doc);
+      return writeELF<object::ELFType<support::little, 4, false> >(outs(), Doc);
     else
-      writeELF<object::ELFType<support::big, 4, false> >(outs(), Doc);
+      return writeELF<object::ELFType<support::big, 4, false> >(outs(), Doc);
   }
-
-  return 0;
 }
