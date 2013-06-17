@@ -544,44 +544,6 @@ file_magic identify_magic(StringRef magic);
 ///          platform specific error_code.
 error_code identify_magic(const Twine &path, file_magic &result);
 
-/// @brief Get library paths the system linker uses.
-///
-/// @param result Set to the list of system library paths.
-/// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code GetSystemLibraryPaths(SmallVectorImpl<std::string> &result);
-
-/// @brief Get bitcode library paths the system linker uses
-///        + LLVM_LIB_SEARCH_PATH + LLVM_LIBDIR.
-///
-/// @param result Set to the list of bitcode library paths.
-/// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code GetBitcodeLibraryPaths(SmallVectorImpl<std::string> &result);
-
-/// @brief Find a library.
-///
-/// Find the path to a library using its short name. Use the system
-/// dependent library paths to locate the library.
-///
-/// c => /usr/lib/libc.so
-///
-/// @param short_name Library name one would give to the system linker.
-/// @param result Set to the absolute path \a short_name represents.
-/// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code FindLibrary(const Twine &short_name, SmallVectorImpl<char> &result);
-
-/// @brief Get absolute path of main executable.
-///
-/// @param argv0 The program name as it was spelled on the command line.
-/// @param MainAddr Address of some symbol in the executable (not in a library).
-/// @param result Set to the absolute path of the current executable.
-/// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code GetMainExecutable(const char *argv0, void *MainAddr,
-                             SmallVectorImpl<char> &result);
-
 /// This class represents a memory mapped file. It is based on
 /// boost::iostreams::mapped_file.
 class mapped_file_region {
