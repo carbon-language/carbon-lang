@@ -17,7 +17,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <cctype>
-#include <cstdlib>
 
 namespace __cxxabiv1
 {
@@ -138,12 +137,10 @@ struct float_data<float>
 {
     static const size_t mangled_size = 8;
     static const size_t max_demangled_size = 24;
-    static constexpr const char* spec = "%a";
-    static constexpr const char* suffix = "f";
+    static constexpr const char* spec = "%af";
 };
 
 constexpr const char* float_data<float>::spec;
-constexpr const char* float_data<float>::suffix;
 
 template <>
 struct float_data<double>
@@ -151,23 +148,19 @@ struct float_data<double>
     static const size_t mangled_size = 16;
     static const size_t max_demangled_size = 32;
     static constexpr const char* spec = "%a";
-    static constexpr const char* suffix = "";
 };
 
 constexpr const char* float_data<double>::spec;
-constexpr const char* float_data<double>::suffix;
 
 template <>
 struct float_data<long double>
 {
     static const size_t mangled_size = 20;  // May need to be adjusted to 16 or 24 on other platforms
     static const size_t max_demangled_size = 40;
-    static constexpr const char* spec = "%La";
-    static constexpr const char* suffix = "L";
+    static constexpr const char* spec = "%LaL";
 };
 
 constexpr const char* float_data<long double>::spec;
-constexpr const char* float_data<long double>::suffix;
 
 template <class Float, class C>
 const char*
@@ -201,9 +194,10 @@ parse_floating_number(const char* first, const char* last, C& db)
             std::reverse(buf, e);
 #endif
             char num[float_data<Float>::max_demangled_size] = {0};
-            int n = sprintf(num, float_data<Float>::spec, value);
-            db.names.push_back(typename C::String(num, static_cast<std::size_t>(n))
-                               + float_data<Float>::suffix);
+            int n = snprintf(num, sizeof(num), float_data<Float>::spec, value);
+            if (static_cast<std::size_t>(n) >= sizeof(num))
+                return first;
+            db.names.push_back(typename C::String(num, static_cast<std::size_t>(n)));
             first = t+1;
         }
     }
