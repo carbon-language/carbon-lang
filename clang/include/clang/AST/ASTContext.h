@@ -46,6 +46,7 @@ namespace llvm {
 
 namespace clang {
   class FileManager;
+  class AtomicExpr;
   class ASTRecordLayout;
   class BlockExpr;
   class CharUnits;
