@@ -2577,6 +2577,19 @@ ReadPythonBacktrace (PyObject* py_backtrace)
     return retval;
 }
 
+uint64_t replace_all(std::string& str, const std::string& oldStr, const std::string& newStr)
+{
+    size_t pos = 0;
+    uint64_t matches = 0;
+    while((pos = str.find(oldStr, pos)) != std::string::npos)
+    {
+        matches++;
+        str.replace(pos, oldStr.length(), newStr);
+        pos += newStr.length();
+    }
+    return matches;
+}
+
 bool
 ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
                                               bool can_reload,
@@ -2624,13 +2637,14 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
                  target_file.GetFileType() == FileSpec::eFileTypeRegular ||
                  target_file.GetFileType() == FileSpec::eFileTypeSymbolicLink)
         {
-            const char* directory = target_file.GetDirectory().GetCString();
+            std::string directory(target_file.GetDirectory().GetCString());
+            replace_all(directory,"'","\\'");
             
             // now make sure that Python has "directory" in the search path
             StreamString command_stream;
             command_stream.Printf("if not (sys.path.__contains__('%s')):\n    sys.path.insert(1,'%s');\n\n",
-                                  directory,
-                                  directory);
+                                  directory.c_str(),
+                                  directory.c_str());
             bool syspath_retval = ExecuteMultipleLines(command_stream.GetData(), ScriptInterpreter::ExecuteScriptOptions().SetEnableIO(false).SetSetLLDBGlobals(false));
             if (!syspath_retval)
             {
