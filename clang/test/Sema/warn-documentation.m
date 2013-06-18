@@ -215,3 +215,22 @@ int FooBar();
 /// \brief comment
 -(void)meth {}
 @end
+
+// rdar://14124644
+@interface rdar14124644
+/// @param[in] arg somthing
+/// @param[in] ... This is vararg
+- (void) VarArgMeth : (id)arg, ...;
+@end
+
+@implementation rdar14124644
+/// @param[in] arg somthing
+/// @param[in] ... This is vararg
+- (void) VarArgMeth : (id)arg, ... {}
+@end
+
+/// @param[in] format somthing
+/// @param[in] ...
+///     Variable arguments that are needed for the printf style
+///     format string \a format.
+int printf(const char* format, ...);
