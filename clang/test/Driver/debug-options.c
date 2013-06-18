@@ -21,8 +21,8 @@
 // RUN:             | FileCheck -check-prefix=GLTO_NO %s
 //
 // RUN: %clang -### -c -grecord-gcc-switches -gno-record-gcc-switches \
-// RUN:           -gstrict-dwarf -gno-strict-dwarf %s 2>&1 \
-// RUN:        | not grep "argument unused during compilation"
+// RUN:        -gstrict-dwarf -gno-strict-dwarf %s 2>&1 \
+// RUN:        | FileCheck -check-prefix=GIGNORE %s
 //
 // G: "-cc1"
 // G: "-g"
@@ -42,3 +42,5 @@
 //
 // GLTO_NO: "-cc1"
 // GLTO_NO-NOT: "-gline-tables-only"
+//
+// GIGNORE-NOT: "argument unused during compilation"
