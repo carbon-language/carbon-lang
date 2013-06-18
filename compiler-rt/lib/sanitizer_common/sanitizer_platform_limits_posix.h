@@ -305,10 +305,10 @@ namespace __sanitizer {
   extern unsigned IOCTL_CDROMVOLCTRL;
   extern unsigned IOCTL_CDROMVOLREAD;
   extern unsigned IOCTL_CDROM_GET_UPC;
-  extern unsigned IOCTL_EXT2_IOC_GETFLAGS;
-  extern unsigned IOCTL_EXT2_IOC_GETVERSION;
-  extern unsigned IOCTL_EXT2_IOC_SETFLAGS;
-  extern unsigned IOCTL_EXT2_IOC_SETVERSION;
+  extern unsigned IOCTL_FS_IOC_GETFLAGS;
+  extern unsigned IOCTL_FS_IOC_GETVERSION;
+  extern unsigned IOCTL_FS_IOC_SETFLAGS;
+  extern unsigned IOCTL_FS_IOC_SETVERSION;
   extern unsigned IOCTL_FDCLRPRM;
   extern unsigned IOCTL_FDDEFPRM;
   extern unsigned IOCTL_FDFLUSH;

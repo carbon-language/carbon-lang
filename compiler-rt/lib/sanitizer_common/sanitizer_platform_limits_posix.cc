@@ -43,8 +43,8 @@
 #include <sys/mount.h>
 #include <sys/vt.h>
 #include <linux/cdrom.h>
-#include <linux/ext2_fs.h>
 #include <linux/fd.h>
+#include <linux/fs.h>
 #include <linux/hdreg.h>
 #include <linux/ppp_defs.h>
 #include <linux/if_ppp.h>
@@ -306,10 +306,10 @@ namespace __sanitizer {
   unsigned IOCTL_CDROMVOLCTRL = CDROMVOLCTRL;
   unsigned IOCTL_CDROMVOLREAD = CDROMVOLREAD;
   unsigned IOCTL_CDROM_GET_UPC = CDROM_GET_UPC;
-  unsigned IOCTL_EXT2_IOC_GETFLAGS = EXT2_IOC_GETFLAGS;
-  unsigned IOCTL_EXT2_IOC_GETVERSION = EXT2_IOC_GETVERSION;
-  unsigned IOCTL_EXT2_IOC_SETFLAGS = EXT2_IOC_SETFLAGS;
-  unsigned IOCTL_EXT2_IOC_SETVERSION = EXT2_IOC_SETVERSION;
+  unsigned IOCTL_FS_IOC_GETFLAGS = FS_IOC_GETFLAGS;
+  unsigned IOCTL_FS_IOC_GETVERSION = FS_IOC_GETVERSION;
+  unsigned IOCTL_FS_IOC_SETFLAGS = FS_IOC_SETFLAGS;
+  unsigned IOCTL_FS_IOC_SETVERSION = FS_IOC_SETVERSION;
   unsigned IOCTL_FDCLRPRM = FDCLRPRM;
   unsigned IOCTL_FDDEFPRM = FDDEFPRM;
   unsigned IOCTL_FDFLUSH = FDFLUSH;
