@@ -76,3 +76,18 @@ void PR10163 (void) {
   test_PR10163(x[1]); // expected-warning{{uninitialized value}}
 }
 
+struct MyStr {
+  int x;
+  int y;
+};
+void swap(struct MyStr *To, struct MyStr *From) {
+  // This is not really a swap but close enough for our test.
+  To->x = From->x;
+  To->y = From->y; // no warning
+}
+int test_undefined_member_assignment_in_swap(struct MyStr *s2) {
+  struct MyStr s1;
+  s1.x = 5;
+  swap(s2, &s1);
+  return s2->y; // expected-warning{{Undefined or garbage value returned to caller}}
+}
