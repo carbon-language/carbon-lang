@@ -1550,19 +1550,6 @@
 		94031A9F13CF5B3D00DCFF3C /* PriorityPointerPair.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PriorityPointerPair.h; path = include/lldb/Utility/PriorityPointerPair.h; sourceTree = "<group>"; };
 		94094C68163B6CCC0083A547 /* ValueObjectCast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ValueObjectCast.h; path = include/lldb/Core/ValueObjectCast.h; sourceTree = "<group>"; };
 		94094C69163B6CD90083A547 /* ValueObjectCast.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectCast.cpp; path = source/Core/ValueObjectCast.cpp; sourceTree = "<group>"; };
-		940DB8CA16EA66FB00D3C2F1 /* Gauge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Gauge.h; sourceTree = "<group>"; };
-		940DB8CE16EA670C00D3C2F1 /* Measurement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Measurement.h; sourceTree = "<group>"; };
-		940DB8D116EA671800D3C2F1 /* MemoryGauge.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MemoryGauge.cpp; sourceTree = "<group>"; };
-		940DB8D216EA671800D3C2F1 /* MemoryGauge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MemoryGauge.h; sourceTree = "<group>"; };
-		940DB8D516EA672200D3C2F1 /* Metric.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Metric.cpp; sourceTree = "<group>"; };
-		940DB8D616EA672200D3C2F1 /* Metric.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Metric.h; sourceTree = "<group>"; };
-		940DB8D916EA672D00D3C2F1 /* TestCase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TestCase.cpp; sourceTree = "<group>"; };
-		940DB8DA16EA672D00D3C2F1 /* TestCase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestCase.h; sourceTree = "<group>"; };
-		940DB8DD16EA673800D3C2F1 /* Timer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Timer.cpp; sourceTree = "<group>"; };
-		940DB8DE16EA673800D3C2F1 /* Timer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Timer.h; sourceTree = "<group>"; };
-		940DB8E116EA674000D3C2F1 /* Xcode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Xcode.cpp; sourceTree = "<group>"; };
-		940DB8E216EA674000D3C2F1 /* Xcode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Xcode.h; sourceTree = "<group>"; };
-		940DB8E616EA709400D3C2F1 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		94145430175D7FDE00284436 /* lldb-versioning.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "lldb-versioning.h"; path = "include/lldb/lldb-versioning.h"; sourceTree = "<group>"; };
 		944372DA171F6B4300E57C32 /* RegisterContextDummy.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextDummy.cpp; path = Utility/RegisterContextDummy.cpp; sourceTree = "<group>"; };
 		944372DB171F6B4300E57C32 /* RegisterContextDummy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextDummy.h; path = Utility/RegisterContextDummy.h; sourceTree = "<group>"; };
@@ -1637,7 +1624,6 @@
 		94D6A0A716CEB55F00833B6E /* NSArray.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NSArray.cpp; path = source/DataFormatters/NSArray.cpp; sourceTree = "<group>"; };
 		94D6A0A816CEB55F00833B6E /* NSDictionary.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NSDictionary.cpp; path = source/DataFormatters/NSDictionary.cpp; sourceTree = "<group>"; };
 		94D6A0A916CEB55F00833B6E /* NSSet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NSSet.cpp; path = source/DataFormatters/NSSet.cpp; sourceTree = "<group>"; };
-		94DB60F016EA888A00459D9E /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		94E367CC140C4EC4001C7A5A /* modify-python-lldb.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "modify-python-lldb.py"; sourceTree = "<group>"; };
 		94E367CE140C4EEA001C7A5A /* python-typemaps.swig */ = {isa = PBXFileReference; lastKnownFileType = text; path = "python-typemaps.swig"; sourceTree = "<group>"; };
 		94EA1D5A15E6C99B00D4171A /* PythonDataObjects.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PythonDataObjects.h; path = include/lldb/Interpreter/PythonDataObjects.h; sourceTree = "<group>"; };
@@ -3258,7 +3244,6 @@
 				265E9BE0115C2B8500D0DCCB /* debugserver */,
 				26F5C22510F3D956009D5894 /* Driver */,
 				2665CD0915080846002C8FAE /* install-headers */,
-				940DB8C416EA64D400D3C2F1 /* lldb-perf */,
 				26DC6A1B1337FEA400FF7998 /* lldb-platform */,
 			);
 			name = Tools;
@@ -3399,60 +3384,6 @@
 			);
 			name = common;
 			path = source/Host/common;
-			sourceTree = "<group>";
-		};
-		940DB8C416EA64D400D3C2F1 /* lldb-perf */ = {
-			isa = PBXGroup;
-			children = (
-				940DB8C616EA654E00D3C2F1 /* darwin */,
-				940DB8C516EA654900D3C2F1 /* lib */,
-			);
-			name = "lldb-perf";
-			path = "tools/lldb-perf";
-			sourceTree = "<group>";
-		};
-		940DB8C516EA654900D3C2F1 /* lib */ = {
-			isa = PBXGroup;
-			children = (
-				940DB8CA16EA66FB00D3C2F1 /* Gauge.h */,
-				940DB8CE16EA670C00D3C2F1 /* Measurement.h */,
-				940DB8D116EA671800D3C2F1 /* MemoryGauge.cpp */,
-				940DB8D216EA671800D3C2F1 /* MemoryGauge.h */,
-				940DB8D516EA672200D3C2F1 /* Metric.cpp */,
-				940DB8D616EA672200D3C2F1 /* Metric.h */,
-				940DB8D916EA672D00D3C2F1 /* TestCase.cpp */,
-				940DB8DA16EA672D00D3C2F1 /* TestCase.h */,
-				940DB8DD16EA673800D3C2F1 /* Timer.cpp */,
-				940DB8DE16EA673800D3C2F1 /* Timer.h */,
-				940DB8E116EA674000D3C2F1 /* Xcode.cpp */,
-				940DB8E216EA674000D3C2F1 /* Xcode.h */,
-			);
-			path = lib;
-			sourceTree = "<group>";
-		};
-		940DB8C616EA654E00D3C2F1 /* darwin */ = {
-			isa = PBXGroup;
-			children = (
-				940DB8FB16EA84BF00D3C2F1 /* formatters */,
-				940DB8C716EA655400D3C2F1 /* sketch */,
-			);
-			path = darwin;
-			sourceTree = "<group>";
-		};
-		940DB8C716EA655400D3C2F1 /* sketch */ = {
-			isa = PBXGroup;
-			children = (
-				940DB8E616EA709400D3C2F1 /* main.cpp */,
-			);
-			path = sketch;
-			sourceTree = "<group>";
-		};
-		940DB8FB16EA84BF00D3C2F1 /* formatters */ = {
-			isa = PBXGroup;
-			children = (
-				94DB60F016EA888A00459D9E /* main.cpp */,
-			);
-			path = formatters;
 			sourceTree = "<group>";
 		};
 		94CB255616B0683B0059775D /* DataFormatters */ = {
