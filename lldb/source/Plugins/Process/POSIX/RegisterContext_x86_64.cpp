@@ -1244,6 +1244,15 @@ RegisterContext_x86_64::IsWatchpointVacant(uint32_t hw_index)
 
     assert(hw_index < NumSupportedHardwareWatchpoints());
 
+    if (m_watchpoints_initialized == false)
+    {
+        // Reset the debug status and debug control registers
+        RegisterValue zero_bits = RegisterValue(uint64_t(0));
+        if (!WriteRegister(dr6, zero_bits) || !WriteRegister(dr7, zero_bits))
+            assert(false && "Could not initialize watchpoint registers");
+        m_watchpoints_initialized = true;
+    }
+
     if (ReadRegister(dr7, value))
     {
         uint64_t val = value.GetAsUInt64();
@@ -1312,15 +1321,6 @@ RegisterContext_x86_64::SetHardwareWatchpointWithIndex(addr_t addr, size_t size,
 
     if (read == false && write == false)
         return false;
-
-    if (m_watchpoints_initialized == false)
-    {
-        // Reset the debug status and debug control registers
-        RegisterValue zero_bits = RegisterValue(uint64_t(0));
-        if (!WriteRegister(dr6, zero_bits) || !WriteRegister(dr7, zero_bits))
-            return false;
-        m_watchpoints_initialized = true;
-    }
 
     if (!IsWatchpointVacant(hw_index))
         return false;
@@ -1391,6 +1391,15 @@ bool
 RegisterContext_x86_64::IsWatchpointHit(uint32_t hw_index)
 {
     bool is_hit = false;
+
+    if (m_watchpoints_initialized == false)
+    {
+        // Reset the debug status and debug control registers
+        RegisterValue zero_bits = RegisterValue(uint64_t(0));
+        if (!WriteRegister(dr6, zero_bits) || !WriteRegister(dr7, zero_bits))
+            assert(false && "Could not initialize watchpoint registers");
+        m_watchpoints_initialized = true;
+    }
 
     if (hw_index < NumSupportedHardwareWatchpoints())
     {

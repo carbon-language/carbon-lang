@@ -408,9 +408,9 @@ POSIXThread::WatchNotify(const ProcessMessage &message)
         const WatchpointList &wp_list = target.GetWatchpointList();
         lldb::WatchpointSP wp_sp = wp_list.FindByAddress(wp_monitor_addr);
 
-        if (wp_sp)
-            SetStopInfo (StopInfo::CreateStopReasonWithWatchpointID(*this,
-                                                                    wp_sp->GetID()));
+        assert(wp_sp.get() && "No watchpoint found");
+        SetStopInfo (StopInfo::CreateStopReasonWithWatchpointID(*this,
+                                                                wp_sp->GetID()));
     }
 }
 
