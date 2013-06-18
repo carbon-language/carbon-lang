@@ -22,17 +22,16 @@ namespace object {
 const error_category &object_category();
 
 struct object_error {
-enum _ {
-  success = 0,
-  invalid_file_type,
-  parse_failed,
-  unexpected_eof
-};
-  _ v_;
+  enum Impl {
+    success = 0,
+    invalid_file_type,
+    parse_failed,
+    unexpected_eof
+  };
+  Impl V;
 
-  object_error(_ v) : v_(v) {}
-  explicit object_error(int v) : v_(_(v)) {}
-  operator int() const {return v_;}
+  object_error(Impl V) : V(V) {}
+  operator Impl() const { return V; }
 };
 
 inline error_code make_error_code(object_error e) {
@@ -43,7 +42,8 @@ inline error_code make_error_code(object_error e) {
 
 template <> struct is_error_code_enum<object::object_error> : true_type { };
 
-template <> struct is_error_code_enum<object::object_error::_> : true_type { };
+template <> struct is_error_code_enum<object::object_error::Impl> : true_type {
+};
 
 } // end namespace llvm.
 

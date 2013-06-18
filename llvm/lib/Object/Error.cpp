@@ -31,7 +31,8 @@ const char *_object_error_category::name() const {
 }
 
 std::string _object_error_category::message(int ev) const {
-  switch (ev) {
+  object_error::Impl E = static_cast<object_error::Impl>(ev);
+  switch (E) {
   case object_error::success: return "Success";
   case object_error::invalid_file_type:
     return "The file was not recognized as a valid object file";
@@ -39,10 +40,9 @@ std::string _object_error_category::message(int ev) const {
     return "Invalid data was encountered while parsing the file";
   case object_error::unexpected_eof:
     return "The end of the file was unexpectedly encountered";
-  default:
-    llvm_unreachable("An enumerator of object_error does not have a message "
-                     "defined.");
   }
+  llvm_unreachable("An enumerator of object_error does not have a message "
+                   "defined.");
 }
 
 error_condition _object_error_category::default_error_condition(int ev) const {
