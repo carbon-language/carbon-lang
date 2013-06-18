@@ -1807,6 +1807,12 @@ SBTarget::WatchAddress (lldb::addr_t addr, size_t size, bool read, bool write, S
             watch_type |= LLDB_WATCH_TYPE_READ;
         if (write)
             watch_type |= LLDB_WATCH_TYPE_WRITE;
+        if (watch_type == 0)
+        {
+            error.SetErrorString("Can't create a watchpoint that is neither read nor write.");
+            return sb_watchpoint;
+        }
+        
         // Target::CreateWatchpoint() is thread safe.
         Error cw_error;
         // This API doesn't take in a type, so we can't figure out what it is.

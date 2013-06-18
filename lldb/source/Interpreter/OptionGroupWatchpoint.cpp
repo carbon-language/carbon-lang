@@ -77,11 +77,16 @@ OptionGroupWatchpoint::SetOptionValue (CommandInterpreter &interpreter,
     switch (short_option)
     {
         case 'w':
-            watch_type = (WatchType) Args::StringToOptionEnum(option_arg, g_option_table[option_idx].enum_values, 0, error);
+        {
+            WatchType tmp_watch_type;
+            tmp_watch_type = (WatchType) Args::StringToOptionEnum(option_arg, g_option_table[option_idx].enum_values, 0, error);
             if (error.Success())
+            {
+                watch_type = tmp_watch_type;
                 watch_type_specified = true;
+            }
             break;
-
+        }
         case 'x':
             watch_size = (WatchType) Args::StringToOptionEnum(option_arg, g_option_table[option_idx].enum_values, 0, error);
             break;

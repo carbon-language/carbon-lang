@@ -564,6 +564,7 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, const ClangASTType *typ
         error.SetErrorString("process is not alive");
         return wp_sp;
     }
+    
     if (addr == LLDB_INVALID_ADDRESS || size == 0)
     {
         if (size == 0)
@@ -571,6 +572,11 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, const ClangASTType *typ
         else
             error.SetErrorStringWithFormat("invalid watch address: %" PRIu64, addr);
         return wp_sp;
+    }
+    
+    if (!LLDB_WATCH_TYPE_IS_VALID(kind))
+    {
+        error.SetErrorStringWithFormat ("invalid watchpoint type: %d", kind);
     }
 
     // Currently we only support one watchpoint per address, with total number
@@ -588,10 +594,13 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, const ClangASTType *typ
             (matched_sp->WatchpointRead() ? LLDB_WATCH_TYPE_READ : 0) |
             (matched_sp->WatchpointWrite() ? LLDB_WATCH_TYPE_WRITE : 0);
         // Return the existing watchpoint if both size and type match.
-        if (size == old_size && kind == old_type) {
+        if (size == old_size && kind == old_type)
+        {
             wp_sp = matched_sp;
             wp_sp->SetEnabled(false, notify);
-        } else {
+        }
+        else
+        {
             // Nil the matched watchpoint; we will be creating a new one.
             m_process_sp->DisableWatchpoint(matched_sp.get(), notify);
             m_watchpoint_list.Remove(matched_sp->GetID(), true);
