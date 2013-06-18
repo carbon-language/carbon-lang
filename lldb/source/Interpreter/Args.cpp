@@ -231,7 +231,7 @@ Args::SetCommandString (const char *command)
                             if (quote_char == '\0')
                             {
                                 arg.append (arg_piece_start, arg_end - arg_piece_start);
-                                if (arg_end + 1 != '\0')
+                                if (arg_end[1] != '\0')
                                 {
                                     arg.append (arg_end + 1, 1);
                                     arg_pos = arg_end + 2;
