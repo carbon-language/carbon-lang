@@ -1204,13 +1204,13 @@ ScanFormatDescriptor (const char* var_name_begin,
         *var_name_final = *percent_position;
         std::string format_name(*var_name_final+1, var_name_end-*var_name_final-1);
         if (log)
-            log->Printf("ScanFormatDescriptor] parsing %s as a format descriptor", format_name.c_str());
+            log->Printf("[ScanFormatDescriptor] parsing %s as a format descriptor", format_name.c_str());
         if ( !FormatManager::GetFormatFromCString(format_name.c_str(),
                                                   true,
                                                   *custom_format) )
         {
             if (log)
-                log->Printf("ScanFormatDescriptor] %s is an unknown format", format_name.c_str());
+                log->Printf("[ScanFormatDescriptor] %s is an unknown format", format_name.c_str());
             
             switch (format_name.front())
             {
@@ -1242,12 +1242,12 @@ ScanFormatDescriptor (const char* var_name_begin,
         else
         {
             if (log)
-                log->Printf("ScanFormatDescriptor] will display value for this VO");
+                log->Printf("[ScanFormatDescriptor] will display value for this VO");
             *val_obj_display = ValueObject::eValueObjectRepresentationStyleValue;
         }
     }
     if (log)
-        log->Printf("ScanFormatDescriptor] final format description outcome: custom_format = %d, val_obj_display = %d",
+        log->Printf("[ScanFormatDescriptor] final format description outcome: custom_format = %d, val_obj_display = %d",
                     *custom_format,
                     *val_obj_display);
     return true;
@@ -1469,10 +1469,9 @@ FormatPromptRecurse
                                 {
                                     do_deref_pointer = true;
                                     var_name_begin++;
+                                    if (log)
+                                        log->Printf("[Debugger::FormatPrompt] found a deref, new string is: %s",var_name_begin);
                                 }
-                                
-                                if (log)
-                                    log->Printf("[Debugger::FormatPrompt] initial string: %s",var_name_begin);
                                 
                                 if (*var_name_begin == 's')
                                 {
@@ -1481,17 +1480,16 @@ FormatPromptRecurse
                                     if (!valobj)
                                         break;
                                     var_name_begin++;
+                                    if (log)
+                                        log->Printf("[Debugger::FormatPrompt] found a synthetic, new string is: %s",var_name_begin);
                                 }
-                                
-                                if (log)
-                                    log->Printf("[Debugger::FormatPrompt] initial string: %s",var_name_begin);
                                 
                                 // should be a 'v' by now
                                 if (*var_name_begin != 'v')
                                     break;
                                 
                                 if (log)
-                                    log->Printf("[Debugger::FormatPrompt] initial string: %s",var_name_begin);
+                                    log->Printf("[Debugger::FormatPrompt] string I am working with: %s",var_name_begin);
                                                                 
                                 ValueObject::ExpressionPathAftermath what_next = (do_deref_pointer ?
                                                                                   ValueObject::eExpressionPathAftermathDereference : ValueObject::eExpressionPathAftermathNothing);
