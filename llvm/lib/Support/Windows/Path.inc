@@ -244,13 +244,6 @@ Path::isSymLink() const {
 }
 
 bool
-Path::canRead() const {
-  // FIXME: take security attributes into account.
-  DWORD attr = GetFileAttributes(path.c_str());
-  return attr != INVALID_FILE_ATTRIBUTES;
-}
-
-bool
 Path::canWrite() const {
   // FIXME: take security attributes into account.
   DWORD attr = GetFileAttributes(path.c_str());
