@@ -103,7 +103,8 @@ COMMON_CONFIGURE_OPTS="\
   --prefix=$DEST_DIR$DEST_ROOT \
   --enable-assertions=$LLVM_ASSERTIONS \
   --enable-optimized=$LLVM_OPTIMIZED \
-  --disable-bindings"
+  --disable-bindings \
+  --disable-zlib"
 
 COMMON_MAKEFLAGS="\
   UNIVERSAL=1 \
