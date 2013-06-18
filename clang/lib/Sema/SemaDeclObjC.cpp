@@ -2331,7 +2331,8 @@ Sema::SelectorsForTypoCorrection(Selector Sel,
     // instance methods
     for (ObjCMethodList *M = &b->second.first; M; M=M->getNext())
       if (M->Method &&
-          (M->Method->getSelector().getNumArgs() == NumArgs)) {
+          (M->Method->getSelector().getNumArgs() == NumArgs) &&
+          (M->Method->getSelector() != Sel)) {
         if (ObjectIsId)
           Methods.push_back(M->Method);
         else if (!ObjectIsClass &&
@@ -2341,7 +2342,8 @@ Sema::SelectorsForTypoCorrection(Selector Sel,
     // class methods
     for (ObjCMethodList *M = &b->second.second; M; M=M->getNext())
       if (M->Method &&
-          (M->Method->getSelector().getNumArgs() == NumArgs)) {
+          (M->Method->getSelector().getNumArgs() == NumArgs) &&
+          (M->Method->getSelector() != Sel)) {
         if (ObjectIsClass)
           Methods.push_back(M->Method);
         else if (!ObjectIsId &&

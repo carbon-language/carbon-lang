@@ -1233,7 +1233,7 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
                               : diag::warn_inst_method_not_found;
     if (!getLangOpts().DebuggerSupport) {
       const ObjCMethodDecl *OMD = SelectorsForTypoCorrection(Sel, ReceiverType);
-      if (OMD && !OMD->isInvalidDecl() && OMD->getSelector() != Sel) {
+      if (OMD && !OMD->isInvalidDecl()) {
         if (getLangOpts().ObjCAutoRefCount)
           DiagID = diag::error_method_not_found_with_typo;
         else
