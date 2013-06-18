@@ -350,6 +350,18 @@ error_code file_size(const Twine &path, uint64_t &result) {
   return error_code::success();
 }
 
+error_code GetUniqueID(const Twine Path, uint64_t &Result) {
+  SmallString<128> Storage;
+  StringRef P = Path.toNullTerminatedStringRef(Storage);
+
+  struct stat Status;
+  if (::stat(P.begin(), &Status) != 0)
+    return error_code(errno, system_category());
+
+  Result = Status.st_ino;
+  return error_code::success();
+}
+
 error_code status(const Twine &path, file_status &result) {
   SmallString<128> path_storage;
   StringRef p = path.toNullTerminatedStringRef(path_storage);

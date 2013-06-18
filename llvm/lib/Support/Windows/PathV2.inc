@@ -413,6 +413,20 @@ error_code file_size(const Twine &path, uint64_t &result) {
   return error_code::success();
 }
 
+error_code GetUniqueID(const Twine Path, uint64_t &Result) {
+  // FIXME: this is only unique if the file is accessed by the same file path.
+  // How do we do this for C:\dir\file and ..\dir\file ? Unix has inode
+  // numbers, but the concept doesn't exist in Windows.
+  SmallString<128> Storage;
+  StringRef P = Path.toStringRef(Storage);
+  uint64_t UniqueID = 0;
+  for (StringRef::iterator I = P.begin(), E = P.end(); I != E; ++I)
+    UniqueID += *I;
+  Result = UniqueID;
+
+  return error_code::success();
+}
+
 static bool isReservedName(StringRef path) {
   // This list of reserved names comes from MSDN, at:
   // http://msdn.microsoft.com/en-us/library/aa365247%28v=vs.85%29.aspx

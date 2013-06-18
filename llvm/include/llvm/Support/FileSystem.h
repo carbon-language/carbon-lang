@@ -556,6 +556,8 @@ file_magic identify_magic(StringRef magic);
 ///          platform specific error_code.
 error_code identify_magic(const Twine &path, file_magic &result);
 
+error_code GetUniqueID(const Twine Path, uint64_t &Result);
+
 /// This class represents a memory mapped file. It is based on
 /// boost::iostreams::mapped_file.
 class mapped_file_region {
