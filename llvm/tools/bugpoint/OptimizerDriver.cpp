@@ -25,7 +25,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/ToolOutputFile.h"
@@ -34,6 +33,13 @@
 #include "llvm/Support/PluginLoader.h"
 
 #include <fstream>
+
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
+#include <unistd.h>
+#else
+#include <io.h>
+#endif
+
 using namespace llvm;
 
 namespace llvm {
@@ -123,36 +129,35 @@ bool BugDriver::runPasses(Module *Program,
                           const char * const *ExtraArgs) const {
   // setup the output file name
   outs().flush();
-  sys::Path uniqueFilename(OutputPrefix + "-output.bc");
-  std::string ErrMsg;
-  if (uniqueFilename.makeUnique(true, &ErrMsg)) {
+  SmallString<128> UniqueFilename;
+  int UniqueFD;
+  error_code EC = sys::fs::unique_file(OutputPrefix + "-output-%%%%%%%.bc",
+                                       UniqueFD, UniqueFilename);
+  if (EC) {
     errs() << getToolName() << ": Error making unique filename: "
-           << ErrMsg << "\n";
-    return(1);
-  }
-  OutputFilename = uniqueFilename.str();
-
-  // set up the input file name
-  sys::Path inputFilename(OutputPrefix + "-input.bc");
-  if (inputFilename.makeUnique(true, &ErrMsg)) {
-    errs() << getToolName() << ": Error making unique filename: "
-           << ErrMsg << "\n";
-    return(1);
-  }
-
-  std::string ErrInfo;
-  tool_output_file InFile(inputFilename.c_str(), ErrInfo,
-                          raw_fd_ostream::F_Binary);
-
-
-  if (!ErrInfo.empty()) {
-    errs() << "Error opening bitcode file: " << inputFilename.str() << "\n";
+           << EC.message() << "\n";
     return 1;
   }
+  OutputFilename = UniqueFilename.str();
+  close(UniqueFD); // We only want the filename.
+
+  // set up the input file name
+  SmallString<128> InputFilename;
+  int InputFD;
+  EC = sys::fs::unique_file(OutputPrefix + "-input-%%%%%%%.bc", InputFD,
+                            InputFilename);
+  if (EC) {
+    errs() << getToolName() << ": Error making unique filename: "
+           << EC.message() << "\n";
+    return 1;
+  }
+
+  tool_output_file InFile(InputFilename.c_str(), InputFD);
+
   WriteBitcodeToFile(Program, InFile.os());
   InFile.os().close();
   if (InFile.os().has_error()) {
-    errs() << "Error writing bitcode file: " << inputFilename.str() << "\n";
+    errs() << "Error writing bitcode file: " << InputFilename << "\n";
     InFile.os().clear_error();
     return 1;
   }
@@ -191,7 +196,7 @@ bool BugDriver::runPasses(Module *Program,
   for (std::vector<std::string>::const_iterator I = pass_args.begin(),
        E = pass_args.end(); I != E; ++I )
     Args.push_back(I->c_str());
-  Args.push_back(inputFilename.c_str());
+  Args.push_back(InputFilename.c_str());
   for (unsigned i = 0; i < NumExtraArgs; ++i)
     Args.push_back(*ExtraArgs);
   Args.push_back(0);
@@ -202,17 +207,18 @@ bool BugDriver::runPasses(Module *Program,
         errs() << "\n";
         );
 
-  sys::Path prog;
+  std::string Prog;
   if (UseValgrind)
-    prog = sys::FindProgramByName("valgrind");
+    Prog = sys::FindProgramByName("valgrind");
   else
-    prog = tool;
+    Prog = tool;
 
   // Redirect stdout and stderr to nowhere if SilencePasses is given
   StringRef Nowhere;
   const StringRef *Redirects[3] = {0, &Nowhere, &Nowhere};
 
-  int result = sys::ExecuteAndWait(prog.str(), Args.data(), 0,
+  std::string ErrMsg;
+  int result = sys::ExecuteAndWait(Prog, Args.data(), 0,
                                    (SilencePasses ? Redirects : 0), Timeout,
                                    MemoryLimit, &ErrMsg);
 
@@ -222,7 +228,7 @@ bool BugDriver::runPasses(Module *Program,
     sys::fs::remove(OutputFilename);
 
   // Remove the temporary input file as well
-  sys::fs::remove(inputFilename.c_str());
+  sys::fs::remove(InputFilename.c_str());
 
   if (!Quiet) {
     if (result == 0)
