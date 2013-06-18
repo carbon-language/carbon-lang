@@ -1275,17 +1275,19 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation,
   // command line (to another file) or directly through the compiler invocation
   // (to a memory buffer).
   llvm::MemoryBuffer *Buffer = 0;
-  llvm::sys::PathWithStatus MainFilePath(FrontendOpts.Inputs[0].getFile());
-  if (const llvm::sys::FileStatus *MainFileStatus = MainFilePath.getFileStatus()) {
+  std::string MainFilePath(FrontendOpts.Inputs[0].getFile());
+  uint64_t MainFileID;
+  if (!llvm::sys::fs::GetUniqueID(MainFilePath, MainFileID)) {
     // Check whether there is a file-file remapping of the main file
     for (PreprocessorOptions::remapped_file_iterator
           M = PreprocessorOpts.remapped_file_begin(),
           E = PreprocessorOpts.remapped_file_end();
          M != E;
          ++M) {
-      llvm::sys::PathWithStatus MPath(M->first);    
-      if (const llvm::sys::FileStatus *MStatus = MPath.getFileStatus()) {
-        if (MainFileStatus->uniqueID == MStatus->uniqueID) {
+      std::string MPath(M->first);
+      uint64_t MID;
+      if (!llvm::sys::fs::GetUniqueID(MPath, MID)) {
+        if (MainFileID == MID) {
           // We found a remapping. Try to load the resulting, remapped source.
           if (CreatedBuffer) {
             delete Buffer;
@@ -1308,10 +1310,11 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation,
            E = PreprocessorOpts.remapped_file_buffer_end();
          M != E;
          ++M) {
-      llvm::sys::PathWithStatus MPath(M->first);    
-      if (const llvm::sys::FileStatus *MStatus = MPath.getFileStatus()) {
-        if (MainFileStatus->uniqueID == MStatus->uniqueID) {
-          // We found a remapping. 
+      std::string MPath(M->first);
+      uint64_t MID;
+      if (!llvm::sys::fs::GetUniqueID(MPath, MID)) {
+        if (MainFileID == MID) {
+          // We found a remapping.
           if (CreatedBuffer) {
             delete Buffer;
             CreatedBuffer = false;
@@ -2478,15 +2481,19 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   llvm::MemoryBuffer *OverrideMainBuffer = 0;
   if (!getPreambleFile(this).empty()) {
     using llvm::sys::FileStatus;
-    llvm::sys::PathWithStatus CompleteFilePath(File);
-    llvm::sys::PathWithStatus MainPath(OriginalSourceFile);
-    if (const FileStatus *CompleteFileStatus = CompleteFilePath.getFileStatus())
-      if (const FileStatus *MainStatus = MainPath.getFileStatus())
-        if (CompleteFileStatus->getUniqueID() == MainStatus->getUniqueID() &&
-            Line > 1)
+    std::string CompleteFilePath(File);
+    uint64_t CompleteFileID;
+
+    if (!llvm::sys::fs::GetUniqueID(CompleteFilePath, CompleteFileID)) {
+      std::string MainPath(OriginalSourceFile);
+      uint64_t MainID;
+      if (!llvm::sys::fs::GetUniqueID(MainPath, MainID)) {
+        if (CompleteFileID == MainID && Line > 1)
           OverrideMainBuffer
             = getMainBufferWithPrecompiledPreamble(*CCInvocation, false, 
                                                    Line - 1);
+      }
+    }
   }
 
   // If the main file has been overridden due to the use of a preamble,
