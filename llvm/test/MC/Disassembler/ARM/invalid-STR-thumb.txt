@@ -1,0 +1,37 @@
+# invalid STRi12   Rn=PC
+# RUN: echo "0xcf 0xf8 0x00 0x00" | llvm-mc -triple=thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# invalid STRi8    Rn=PC
+# RUN: echo "0x4f 0xf8 0x00 0x0c" | llvm-mc -triple=thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# invalid STRs     Rn=PC
+# RUN: echo "0x4f 0xf8 0x00 0x00" | llvm-mc -triple=thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# invalid STRBi12  Rn=PC
+# RUN: echo "0x0f 0xf8 0x00 0x00" | llvm-mc -triple=thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# invalid STRBi8   Rn=PC
+# RUN: echo "0x0f 0xf8 0x00 0x0c" | llvm-mc -triple=thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# invalid STRBs    Rn=PC
+# RUN: echo "0x0f 0xf8 0x00 0x00" | llvm-mc -triple=thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# invalid STRHi12  Rn=PC
+# RUN: echo "0xaf 0xf8 0x00 0x00" | llvm-mc -triple=thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# invalid STRHi8   Rn=PC
+# RUN: echo "0x2f 0xf8 0x00 0x0c" | llvm-mc -triple=thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# invalid STRHs    Rn=PC
+# RUN: echo "0x2f 0xf8 0x00 0x00" | llvm-mc -triple=thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# invalid STRBT    Rn=PC
+# RUN: echo "0x0f 0xf8 0x00 0x0e" | llvm-mc -triple=thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# invalid STRHT    Rn=PC
+# RUN: echo "0x2f 0xf8 0x00 0x0e" | llvm-mc -triple=thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# invalid STRT     Rn=PC
+# RUN: echo "0x4f 0xf8 0x00 0x0e" | llvm-mc -triple=thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# CHECK: invalid instruction encoding

@@ -3164,6 +3164,17 @@ static DecodeStatus DecodeT2AddrModeSOReg(MCInst &Inst, unsigned Val,
   unsigned Rm = fieldFromInstruction(Val, 2, 4);
   unsigned imm = fieldFromInstruction(Val, 0, 2);
 
+  // Thumb stores cannot use PC as dest register.
+  switch (Inst.getOpcode()) {
+  case ARM::t2STRHs:
+  case ARM::t2STRBs:
+  case ARM::t2STRs:
+    if (Rn == 15)
+      return MCDisassembler::Fail;
+  default:
+    break;
+  }
+
   if (!Check(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)))
     return MCDisassembler::Fail;
   if (!Check(S, DecoderGPRRegisterClass(Inst, Rm, Address, Decoder)))
@@ -3292,6 +3303,21 @@ static DecodeStatus DecodeT2AddrModeImm8(MCInst &Inst, unsigned Val,
   unsigned Rn = fieldFromInstruction(Val, 9, 4);
   unsigned imm = fieldFromInstruction(Val, 0, 9);
 
+  // Thumb stores cannot use PC as dest register.
+  switch (Inst.getOpcode()) {
+  case ARM::t2STRT:
+  case ARM::t2STRBT:
+  case ARM::t2STRHT:
+  case ARM::t2STRi8:
+  case ARM::t2STRHi8:
+  case ARM::t2STRBi8:
+    if (Rn == 15)
+      return MCDisassembler::Fail;
+    break;
+  default:
+    break;
+  }
+
   // Some instructions always use an additive offset.
   switch (Inst.getOpcode()) {
     case ARM::t2LDRT:
@@ -3352,6 +3378,17 @@ static DecodeStatus DecodeT2AddrModeImm12(MCInst &Inst, unsigned Val,
 
   unsigned Rn = fieldFromInstruction(Val, 13, 4);
   unsigned imm = fieldFromInstruction(Val, 0, 12);
+
+  // Thumb stores cannot use PC as dest register.
+  switch (Inst.getOpcode()) {
+  case ARM::t2STRi12:
+  case ARM::t2STRBi12:
+  case ARM::t2STRHi12:
+    if (Rn == 15)
+      return MCDisassembler::Fail;
+  default:
+    break;
+  }
 
   if (!Check(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)))
     return MCDisassembler::Fail;
