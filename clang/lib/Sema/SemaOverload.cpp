@@ -2603,48 +2603,15 @@ void Sema::HandleFunctionTypeMismatch(PartialDiagnostic &PDiag,
 
 /// FunctionArgTypesAreEqual - This routine checks two function proto types
 /// for equality of their argument types. Caller has already checked that
-/// they have same number of arguments. This routine assumes that Objective-C
-/// pointer types which only differ in their protocol qualifiers are equal.
-/// If the parameters are different, ArgPos will have the parameter index
-/// of the first different parameter.
+/// they have same number of arguments.  If the parameters are different,
+/// ArgPos will have the parameter index of the first different parameter.
 bool Sema::FunctionArgTypesAreEqual(const FunctionProtoType *OldType,
                                     const FunctionProtoType *NewType,
                                     unsigned *ArgPos) {
-  if (!getLangOpts().ObjC1) {
-    for (FunctionProtoType::arg_type_iterator O = OldType->arg_type_begin(),
-         N = NewType->arg_type_begin(),
-         E = OldType->arg_type_end(); O && (O != E); ++O, ++N) {
-      if (!Context.hasSameType(*O, *N)) {
-        if (ArgPos) *ArgPos = O - OldType->arg_type_begin();
-        return false;
-      }
-    }
-    return true;
-  }
-
   for (FunctionProtoType::arg_type_iterator O = OldType->arg_type_begin(),
        N = NewType->arg_type_begin(),
        E = OldType->arg_type_end(); O && (O != E); ++O, ++N) {
-    QualType ToType = (*O);
-    QualType FromType = (*N);
-    if (!Context.hasSameType(ToType, FromType)) {
-      if (const PointerType *PTTo = ToType->getAs<PointerType>()) {
-        if (const PointerType *PTFr = FromType->getAs<PointerType>())
-          if ((PTTo->getPointeeType()->isObjCQualifiedIdType() &&
-               PTFr->getPointeeType()->isObjCQualifiedIdType()) ||
-              (PTTo->getPointeeType()->isObjCQualifiedClassType() &&
-               PTFr->getPointeeType()->isObjCQualifiedClassType()))
-            continue;
-      }
-      else if (const ObjCObjectPointerType *PTTo =
-                 ToType->getAs<ObjCObjectPointerType>()) {
-        if (const ObjCObjectPointerType *PTFr =
-              FromType->getAs<ObjCObjectPointerType>())
-          if (Context.hasSameUnqualifiedType(
-                PTTo->getObjectType()->getBaseType(),
-                PTFr->getObjectType()->getBaseType()))
-            continue;
-      }
+    if (!Context.hasSameType(*O, *N)) {
       if (ArgPos) *ArgPos = O - OldType->arg_type_begin();
       return false;
     }

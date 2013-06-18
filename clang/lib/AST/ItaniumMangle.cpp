@@ -2164,8 +2164,19 @@ void CXXNameMangler::mangleType(const ObjCInterfaceType *T) {
 }
 
 void CXXNameMangler::mangleType(const ObjCObjectType *T) {
-  // We don't allow overloading by different protocol qualification,
-  // so mangling them isn't necessary.
+  if (!T->qual_empty()) {
+    // Mangle protocol qualifiers.
+    SmallString<64> QualStr;
+    llvm::raw_svector_ostream QualOS(QualStr);
+    QualOS << "objcproto";
+    ObjCObjectType::qual_iterator i = T->qual_begin(), e = T->qual_end();
+    for ( ; i != e; ++i) {
+      StringRef name = (*i)->getName();
+      QualOS << name.size() << name;
+    }
+    QualOS.flush();
+    Out << 'U' << QualStr.size() << QualStr;
+  }
   mangleType(T->getBaseType());
 }
 

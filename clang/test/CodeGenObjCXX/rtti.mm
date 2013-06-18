@@ -38,14 +38,14 @@ int main() {
   const std::type_info &t5 = typeid(c);
   const std::type_info &t6 = typeid(*c);
 
-  // CHECK: store {{.*}} @_ZTIP11objc_object
-  // CHECK: store {{.*}} @_ZTI11objc_object
+  // CHECK: store {{.*}} @_ZTIPU11objcproto1P11objc_object
+  // CHECK: store {{.*}} @_ZTIU11objcproto1P11objc_object
   id<P> i2 = 0;
   const std::type_info &t7 = typeid(i2);
   const std::type_info &t8 = typeid(*i2);
 
-  // CHECK: store {{.*}} @_ZTIP10objc_class
-  // CHECK: store {{.*}} @_ZTI10objc_class
+  // CHECK: store {{.*}} @_ZTIPU11objcproto1P10objc_class
+  // CHECK: store {{.*}} @_ZTIU11objcproto1P10objc_class
   Class<P> c2 = 0;
   const std::type_info &t9 = typeid(c2);
   const std::type_info &t10 = typeid(*c2);
