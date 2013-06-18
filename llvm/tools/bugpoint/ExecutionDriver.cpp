@@ -17,10 +17,15 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileUtilities.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/raw_ostream.h"
 #include <fstream>
+
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
+#include <unistd.h>
+#else
+#include <io.h>
+#endif
 
 using namespace llvm;
 
@@ -266,16 +271,18 @@ bool BugDriver::initializeExecutionEnvironment() {
 ///
 void BugDriver::compileProgram(Module *M, std::string *Error) const {
   // Emit the program to a bitcode file...
-  sys::Path BitcodeFile (OutputPrefix + "-test-program.bc");
-  std::string ErrMsg;
-  if (BitcodeFile.makeUnique(true, &ErrMsg)) {
-    errs() << ToolName << ": Error making unique filename: " << ErrMsg
+  SmallString<128> BitcodeFile;
+  int BitcodeFD;
+  error_code EC = sys::fs::unique_file(
+      OutputPrefix + "-test-program-%%%%%%%.bc", BitcodeFD, BitcodeFile);
+  if (EC) {
+    errs() << ToolName << ": Error making unique filename: " << EC.message()
            << "\n";
     exit(1);
   }
-  if (writeProgramToFile(BitcodeFile.str(), M)) {
-    errs() << ToolName << ": Error emitting bitcode to file '"
-           << BitcodeFile.str() << "'!\n";
+  if (writeProgramToFile(BitcodeFile.str(), BitcodeFD, M)) {
+    errs() << ToolName << ": Error emitting bitcode to file '" << BitcodeFile
+           << "'!\n";
     exit(1);
   }
 
@@ -303,15 +310,18 @@ std::string BugDriver::executeProgram(const Module *Program,
   std::string ErrMsg;
   if (BitcodeFile.empty()) {
     // Emit the program to a bitcode file...
-    sys::Path uniqueFilename(OutputPrefix + "-test-program.bc");
-    if (uniqueFilename.makeUnique(true, &ErrMsg)) {
+    SmallString<128> UniqueFilename;
+    int UniqueFD;
+    error_code EC = sys::fs::unique_file(
+        OutputPrefix + "-test-program-%%%%%%%.bc", UniqueFD, UniqueFilename);
+    if (EC) {
       errs() << ToolName << ": Error making unique filename: "
-             << ErrMsg << "!\n";
+             << EC.message() << "!\n";
       exit(1);
     }
-    BitcodeFile = uniqueFilename.str();
+    BitcodeFile = UniqueFilename.str();
 
-    if (writeProgramToFile(BitcodeFile, Program)) {
+    if (writeProgramToFile(BitcodeFile, UniqueFD, Program)) {
       errs() << ToolName << ": Error emitting bitcode to file '"
              << BitcodeFile << "'!\n";
       exit(1);
@@ -320,20 +330,23 @@ std::string BugDriver::executeProgram(const Module *Program,
   }
 
   // Remove the temporary bitcode file when we are done.
-  sys::Path BitcodePath(BitcodeFile);
-  FileRemover BitcodeFileRemover(BitcodePath.str(),
+  std::string BitcodePath(BitcodeFile);
+  FileRemover BitcodeFileRemover(BitcodePath,
     CreatedBitcode && !SaveTemps);
 
   if (OutputFile.empty()) OutputFile = OutputPrefix + "-execution-output";
 
   // Check to see if this is a valid output filename...
-  sys::Path uniqueFile(OutputFile);
-  if (uniqueFile.makeUnique(true, &ErrMsg)) {
+  SmallString<128> UniqueFile;
+  int UniqueFD;
+  error_code EC = sys::fs::unique_file(OutputFile, UniqueFD, UniqueFile);
+  if (EC) {
     errs() << ToolName << ": Error making unique filename: "
-           << ErrMsg << "\n";
+           << EC.message() << "\n";
     exit(1);
   }
-  OutputFile = uniqueFile.str();
+  OutputFile = UniqueFile.str();
+  close(UniqueFD);
 
   // Figure out which shared objects to run, if any.
   std::vector<std::string> SharedObjs(AdditionalSOs);
@@ -440,15 +453,15 @@ bool BugDriver::diffProgram(const Module *Program,
                             bool RemoveBitcode,
                             std::string *ErrMsg) const {
   // Execute the program, generating an output file...
-  sys::Path Output(executeProgram(Program, "", BitcodeFile, SharedObject, 0,
-                                  ErrMsg));
+  std::string Output(
+      executeProgram(Program, "", BitcodeFile, SharedObject, 0, ErrMsg));
   if (!ErrMsg->empty())
     return false;
 
   std::string Error;
   bool FilesDifferent = false;
   if (int Diff = DiffFilesWithTolerance(ReferenceOutputFile,
-                                        Output.str(),
+                                        Output,
                                         AbsTolerance, RelTolerance, &Error)) {
     if (Diff == 2) {
       errs() << "While diffing output: " << Error << '\n';
@@ -458,12 +471,12 @@ bool BugDriver::diffProgram(const Module *Program,
   }
   else {
     // Remove the generated output if there are no differences.
-    Output.eraseFromDisk();
+    sys::fs::remove(Output);
   }
 
   // Remove the bitcode file if we are supposed to.
   if (RemoveBitcode)
-    sys::Path(BitcodeFile).eraseFromDisk();
+    sys::fs::remove(BitcodeFile);
   return FilesDifferent;
 }
 
