@@ -225,7 +225,7 @@ Value *BoUpSLP::isUnsafeToSink(Instruction *Src, Instruction *Dst) {
   return 0;
 }
 
-void BoUpSLP::vectorizeArith(ArrayRef<Value *> Operands) {
+Value *BoUpSLP::vectorizeArith(ArrayRef<Value *> Operands) {
   int LastIdx = getLastIndex(Operands, Operands.size());
   Instruction *Loc = getInsertionPoint(LastIdx);
   Builder.SetInsertPoint(Loc);
@@ -241,6 +241,8 @@ void BoUpSLP::vectorizeArith(ArrayRef<Value *> Operands) {
     Value *S = Builder.CreateExtractElement(Vec, Builder.getInt32(i));
     Operands[i]->replaceAllUsesWith(S);
   }
+
+  return Vec;
 }
 
 int BoUpSLP::getTreeCost(ArrayRef<Value *> VL) {

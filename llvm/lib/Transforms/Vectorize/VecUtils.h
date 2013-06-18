@@ -72,7 +72,7 @@ struct BoUpSLP  {
   bool vectorizeStores(ArrayRef<StoreInst *> Stores, int costThreshold);
 
   /// \brief Vectorize a group of scalars into a vector tree.
-  void vectorizeArith(ArrayRef<Value *> Operands);
+  Value *vectorizeArith(ArrayRef<Value *> Operands);
 
   /// \returns the list of new instructions that were added in order to collect
   /// scalars into vectors. This list can be used to further optimize the gather
