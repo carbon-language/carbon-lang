@@ -37,6 +37,7 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
+#include <algorithm>
 #include <string>
 #include <utility>
 using namespace llvm;
@@ -229,6 +230,15 @@ namespace {
     SmallVector<uint32_t, 32> Lines;
   };
 
+
+  // Sorting function for deterministic behaviour in GCOVBlock::writeOut.
+  struct StringKeySort {
+    bool operator()(StringMapEntry<GCOVLines *> *LHS,
+                    StringMapEntry<GCOVLines *> *RHS) const {
+      return LHS->getKey() < RHS->getKey();
+    }
+  };
+
   // Represent a basic block in GCOV. Each block has a unique number in the
   // function, number of lines belonging to each block, and a set of edges to
   // other blocks.
@@ -248,17 +258,23 @@ namespace {
 
     void writeOut() {
       uint32_t Len = 3;
+      SmallVector<StringMapEntry<GCOVLines *> *, 32> SortedLinesByFile;
       for (StringMap<GCOVLines *>::iterator I = LinesByFile.begin(),
                E = LinesByFile.end(); I != E; ++I) {
         Len += I->second->length();
+        SortedLinesByFile.push_back(&*I);
       }
 
       writeBytes(LinesTag, 4);
       write(Len);
       write(Number);
-      for (StringMap<GCOVLines *>::iterator I = LinesByFile.begin(),
-               E = LinesByFile.end(); I != E; ++I) 
-        I->second->writeOut();
+
+      StringKeySort Sorter;
+      std::sort(SortedLinesByFile.begin(), SortedLinesByFile.end(), Sorter);
+      for (SmallVector<StringMapEntry<GCOVLines *> *, 32>::iterator
+               I = SortedLinesByFile.begin(), E = SortedLinesByFile.end();
+           I != E; ++I) 
+        (*I)->getValue()->writeOut();
       write(0);
       write(0);
     }
@@ -335,9 +351,10 @@ namespace {
       DEBUG(dbgs() << Blocks.size() << " blocks.\n");
 
       // Emit edges between blocks.
-      for (DenseMap<BasicBlock *, GCOVBlock *>::iterator I = Blocks.begin(),
-               E = Blocks.end(); I != E; ++I) {
-        GCOVBlock &Block = *I->second;
+      if (Blocks.empty()) return;
+      Function *F = Blocks.begin()->first->getParent();
+      for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
+        GCOVBlock &Block = *Blocks[I];
         if (Block.OutEdges.empty()) continue;
 
         writeBytes(EdgeTag, 4);
@@ -352,9 +369,8 @@ namespace {
       }
 
       // Emit lines for each block.
-      for (DenseMap<BasicBlock *, GCOVBlock *>::iterator I = Blocks.begin(),
-               E = Blocks.end(); I != E; ++I) {
-        I->second->writeOut();
+      for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
+        Blocks[I]->writeOut();
       }
     }
 
