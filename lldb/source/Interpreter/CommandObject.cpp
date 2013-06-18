@@ -94,7 +94,7 @@ CommandObject::GetSyntax ()
         if (m_arguments.size() > 0)
         {
             syntax_str.Printf (" ");
-            if (WantsRawCommandString())
+            if (WantsRawCommandString() && GetOptions() && GetOptions()->NumCommandOptions())
                 syntax_str.Printf("-- ");
             GetFormattedCommandArguments (syntax_str);
         }
@@ -102,13 +102,6 @@ CommandObject::GetSyntax ()
     }
 
     return m_cmd_syntax.c_str();
-}
-
-const char *
-CommandObject::Translate ()
-{
-    //return m_cmd_func_name.c_str();
-    return "This function is currently not implemented.";
 }
 
 const char *
