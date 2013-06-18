@@ -12,7 +12,6 @@ Sections:
   - Name: .symtab
     Type: SHT_SYMTAB
     Symbols:
-    - Name: "" # TODO: Add STN_UNDEF automatically.
     - Name: main
 
 # CHECK:      Symbols [

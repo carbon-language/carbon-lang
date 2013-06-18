@@ -154,7 +154,12 @@ static void handleSymtabSectionHeader(
   SHeader.sh_entsize = sizeof(Elf_Sym);
 
   std::vector<Elf_Sym> Syms;
-  // FIXME: Ensure STN_UNDEF entry is present.
+  {
+    // Ensure STN_UNDEF is present
+    Elf_Sym Sym;
+    zero(Sym);
+    Syms.push_back(Sym);
+  }
   for (unsigned i = 0, e = Sec.Symbols.size(); i != e; ++i) {
     const ELFYAML::Symbol &Sym = Sec.Symbols[i];
     Elf_Sym Symbol;
