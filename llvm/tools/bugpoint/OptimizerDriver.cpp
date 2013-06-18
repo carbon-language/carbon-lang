@@ -219,10 +219,10 @@ bool BugDriver::runPasses(Module *Program,
   // If we are supposed to delete the bitcode file or if the passes crashed,
   // remove it now.  This may fail if the file was never created, but that's ok.
   if (DeleteOutput || result != 0)
-    sys::Path(OutputFilename).eraseFromDisk();
+    sys::fs::remove(OutputFilename);
 
   // Remove the temporary input file as well
-  inputFilename.eraseFromDisk();
+  sys::fs::remove(inputFilename.c_str());
 
   if (!Quiet) {
     if (result == 0)
@@ -270,6 +270,6 @@ Module *BugDriver::runPassesOn(Module *M,
            << BitcodeResult << "'!\n";
     exit(1);
   }
-  sys::Path(BitcodeResult).eraseFromDisk();  // No longer need the file on disk
+  sys::fs::remove(BitcodeResult);
   return Ret;
 }
