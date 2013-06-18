@@ -80,7 +80,8 @@ validCategories = {
 'expression':'Tests related to the expression parser',
 'objc':'Tests related to the Objective-C programming language support',
 'pyapi':'Tests related to the Python API',
-'basic_process': 'Basic process execution sniff tests.'
+'basic_process': 'Basic process execution sniff tests.',
+'cmdline' : 'Tests related to the LLDB command-line interface'
 }
 
 # The test suite.
