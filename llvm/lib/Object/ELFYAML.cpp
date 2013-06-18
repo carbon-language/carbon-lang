@@ -260,6 +260,10 @@ void MappingTraits<ELFYAML::FileHeader>::mapping(IO &IO,
   IO.mapOptional("Entry", FileHdr.Entry, Hex64(0));
 }
 
+void MappingTraits<ELFYAML::Symbol>::mapping(IO &IO, ELFYAML::Symbol &Symbol) {
+  IO.mapOptional("Name", Symbol.Name, StringRef());
+}
+
 void MappingTraits<ELFYAML::Section>::mapping(IO &IO,
                                               ELFYAML::Section &Section) {
   IO.mapOptional("Name", Section.Name, StringRef());
@@ -269,6 +273,12 @@ void MappingTraits<ELFYAML::Section>::mapping(IO &IO,
   IO.mapOptional("Content", Section.Content);
   IO.mapOptional("Link", Section.Link);
   IO.mapOptional("AddressAlign", Section.AddressAlign, Hex64(0));
+  // TODO: Error if `Type` is SHT_SYMTAB and this is not present, or if
+  // `Type` is *not* SHT_SYMTAB and this *is* present. (By SHT_SYMTAB I
+  // also mean SHT_DYNSYM, but for simplicity right now we just do
+  // SHT_SYMTAB). Want to be able to share the predicate with consumers of
+  // this structure.
+  IO.mapOptional("Symbols", Section.Symbols);
 }
 
 void MappingTraits<ELFYAML::Object>::mapping(IO &IO, ELFYAML::Object &Object) {

@@ -133,6 +133,42 @@ static void createStringTableSectionHeader(Elf_Shdr &SHeader,
   SHeader.sh_addralign = 1;
 }
 
+// FIXME: This function is hideous. Between the sheer number of parameters
+// and the hideous ELF typenames, it's just a travesty. Factor the ELF
+// output into a class (templated on ELFT) and share some typedefs.
+template <class ELFT>
+static void handleSymtabSectionHeader(
+    const ELFYAML::Section &Sec,
+    const typename object::ELFObjectFile<ELFT>::Elf_Ehdr &Header,
+    typename object::ELFObjectFile<ELFT>::Elf_Shdr &SHeader,
+    StringTableBuilder &StrTab, ContiguousBlobAccumulator &CBA,
+    unsigned DotStrtabSecNo) {
+
+  typedef typename object::ELFObjectFile<ELFT>::Elf_Sym Elf_Sym;
+  // TODO: Ensure that a manually specified `Link` field is diagnosed as an
+  // error for SHT_SYMTAB.
+  SHeader.sh_link = DotStrtabSecNo;
+  // TODO: Once we handle symbol binding, this should be one greater than
+  // symbol table index of the last local symbol.
+  SHeader.sh_info = 0;
+  SHeader.sh_entsize = sizeof(Elf_Sym);
+
+  std::vector<Elf_Sym> Syms;
+  // FIXME: Ensure STN_UNDEF entry is present.
+  for (unsigned i = 0, e = Sec.Symbols.size(); i != e; ++i) {
+    const ELFYAML::Symbol &Sym = Sec.Symbols[i];
+    Elf_Sym Symbol;
+    zero(Symbol);
+    if (!Sym.Name.empty())
+      Symbol.st_name = StrTab.addString(Sym.Name);
+    Syms.push_back(Symbol);
+  }
+
+  SHeader.sh_offset = CBA.currentOffset();
+  SHeader.sh_size = vectorDataSize(Syms);
+  writeVectorData(CBA.getOS(), Syms);
+}
+
 template <class ELFT>
 static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   using namespace llvm::ELF;
@@ -181,6 +217,7 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   Header.e_shnum = Sections.size() + 2;
   // Place section header string table last.
   Header.e_shstrndx = Sections.size() + 1;
+  const unsigned DotStrtabSecNo = Sections.size();
 
   SectionNameToIdxMap SN2I;
   for (unsigned i = 0, e = Sections.size(); i != e; ++i) {
@@ -202,6 +239,7 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
       Header.e_ehsize + Header.e_shentsize * Header.e_shnum;
   ContiguousBlobAccumulator CBA(SectionContentBeginOffset, Buf);
   std::vector<Elf_Shdr> SHeaders;
+  StringTableBuilder DotStrTab;
   for (unsigned i = 0, e = Sections.size(); i != e; ++i) {
     const ELFYAML::Section &Sec = Sections[i];
     Elf_Shdr SHeader;
@@ -227,11 +265,14 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
     SHeader.sh_info = 0;
     SHeader.sh_addralign = Sec.AddressAlign;
     SHeader.sh_entsize = 0;
+    // XXX: Really ugly right now. Need to put common state into a class.
+    if (Sec.Type == ELFYAML::ELF_SHT(SHT_SYMTAB))
+      handleSymtabSectionHeader<ELFT>(Sec, Header, SHeader, DotStrTab, CBA,
+                                      DotStrtabSecNo);
     SHeaders.push_back(SHeader);
   }
 
-  // .strtab string table header. Currently emitted empty.
-  StringTableBuilder DotStrTab;
+  // .strtab string table header.
   Elf_Shdr DotStrTabSHeader;
   zero(DotStrTabSHeader);
   DotStrTabSHeader.sh_name = SHStrTab.addString(StringRef(".strtab"));

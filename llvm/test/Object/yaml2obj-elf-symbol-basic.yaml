@@ -1,0 +1,22 @@
+# RUN: yaml2obj -format=elf %s | llvm-readobj -symbols - | FileCheck %s
+!ELF
+FileHeader:
+  Class: ELFCLASS64
+  Data: ELFDATA2LSB
+  Type: ET_REL
+  Machine: EM_X86_64
+Sections:
+  - Name: .text
+    Type: SHT_PROGBITS
+    Flags: [ SHF_ALLOC, SHF_EXECINSTR ]
+  - Name: .symtab
+    Type: SHT_SYMTAB
+    Symbols:
+    - Name: "" # TODO: Add STN_UNDEF automatically.
+    - Name: main
+
+# CHECK:      Symbols [
+# CHECK-NEXT:   Symbol {
+# CHECK-NEXT:     Name:  (0)
+# CHECK:        Symbol {
+# CHECK-NEXT:     Name: main
