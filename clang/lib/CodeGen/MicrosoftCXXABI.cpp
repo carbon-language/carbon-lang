@@ -28,6 +28,8 @@ class MicrosoftCXXABI : public CGCXXABI {
 public:
   MicrosoftCXXABI(CodeGenModule &CGM) : CGCXXABI(CGM) {}
 
+  bool HasThisReturn(GlobalDecl GD) const;
+
   bool isReturnTypeIndirect(const CXXRecordDecl *RD) const {
     // Structures that are not C++03 PODs are always indirect.
     return !RD->isPOD();
@@ -71,13 +73,14 @@ public:
 
   void EmitInstanceFunctionProlog(CodeGenFunction &CGF);
 
-  llvm::Value *EmitConstructorCall(CodeGenFunction &CGF,
-                           const CXXConstructorDecl *D,
-                           CXXCtorType Type, bool ForVirtualBase,
-                           bool Delegating,
-                           llvm::Value *This,
-                           CallExpr::const_arg_iterator ArgBeg,
-                           CallExpr::const_arg_iterator ArgEnd);
+  RValue EmitConstructorCall(CodeGenFunction &CGF,
+                             const CXXConstructorDecl *D,
+                             CXXCtorType Type,
+                             bool ForVirtualBase, bool Delegating,
+                             ReturnValueSlot ReturnValue,
+                             llvm::Value *This,
+                             CallExpr::const_arg_iterator ArgBeg,
+                             CallExpr::const_arg_iterator ArgEnd);
 
   RValue EmitVirtualDestructorCall(CodeGenFunction &CGF,
                                    const CXXDestructorDecl *Dtor,
@@ -124,7 +127,6 @@ public:
   llvm::Value *readArrayCookieImpl(CodeGenFunction &CGF,
                                    llvm::Value *allocPtr,
                                    CharUnits cookieSize);
-  static bool needThisReturn(GlobalDecl GD);
 
 private:
   llvm::Constant *getZeroInt() {
@@ -299,19 +301,15 @@ MicrosoftCXXABI::GetVirtualBaseClassOffset(CodeGenFunction &CGF,
   return CGF.Builder.CreateNSWAdd(VBPtrOffset, VBPtrToNewBase);
 }
 
-bool MicrosoftCXXABI::needThisReturn(GlobalDecl GD) {
-  const CXXMethodDecl* MD = cast<CXXMethodDecl>(GD.getDecl());
-  return isa<CXXConstructorDecl>(MD);
+bool MicrosoftCXXABI::HasThisReturn(GlobalDecl GD) const {
+  return isa<CXXConstructorDecl>(GD.getDecl());
 }
 
 void MicrosoftCXXABI::BuildConstructorSignature(const CXXConstructorDecl *Ctor,
                                  CXXCtorType Type,
                                  CanQualType &ResTy,
                                  SmallVectorImpl<CanQualType> &ArgTys) {
-  // 'this' is already in place
-
-  // Ctor returns this ptr
-  ResTy = ArgTys[0];
+  // 'this' parameter and 'this' return are already in place
 
   const CXXRecordDecl *Class = Ctor->getParent();
   if (Class->getNumVBases()) {
@@ -346,6 +344,7 @@ void MicrosoftCXXABI::BuildDestructorSignature(const CXXDestructorDecl *Dtor,
                                                CanQualType &ResTy,
                                         SmallVectorImpl<CanQualType> &ArgTys) {
   // 'this' is already in place
+
   // TODO: 'for base' flag
 
   if (Type == Dtor_Deleting) {
@@ -366,9 +365,6 @@ void MicrosoftCXXABI::BuildInstanceFunctionParams(CodeGenFunction &CGF,
                                                   QualType &ResTy,
                                                   FunctionArgList &Params) {
   BuildThisParam(CGF, Params);
-  if (needThisReturn(CGF.CurGD)) {
-    ResTy = Params[0]->getType();
-  }
 
   ASTContext &Context = getContext();
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(CGF.CurGD.getDecl());
@@ -393,9 +389,17 @@ void MicrosoftCXXABI::BuildInstanceFunctionParams(CodeGenFunction &CGF,
 
 void MicrosoftCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
   EmitThisParam(CGF);
-  if (needThisReturn(CGF.CurGD)) {
+
+  /// If this is a function that the ABI specifies returns 'this', initialize
+  /// the return slot to 'this' at the start of the function.
+  ///
+  /// Unlike the setting of return types, this is done within the ABI
+  /// implementation instead of by clients of CGCXXABI because:
+  /// 1) getThisValue is currently protected
+  /// 2) in theory, an ABI could implement 'this' returns some other way;
+  ///    HasThisReturn only specifies a contract, not the implementation    
+  if (HasThisReturn(CGF.CurGD))
     CGF.Builder.CreateStore(getThisValue(CGF), CGF.ReturnValue);
-  }
 
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(CGF.CurGD.getDecl());
   if (isa<CXXConstructorDecl>(MD) && MD->getParent()->getNumVBases()) {
@@ -417,11 +421,13 @@ void MicrosoftCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
   }
 }
 
-llvm::Value *MicrosoftCXXABI::EmitConstructorCall(CodeGenFunction &CGF,
-                                          const CXXConstructorDecl *D,
-                                          CXXCtorType Type, bool ForVirtualBase,
-                                          bool Delegating,
-                                          llvm::Value *This,
+RValue MicrosoftCXXABI::EmitConstructorCall(CodeGenFunction &CGF,
+                                            const CXXConstructorDecl *D,
+                                            CXXCtorType Type, 
+                                            bool ForVirtualBase,
+                                            bool Delegating,
+                                            ReturnValueSlot ReturnValue,
+                                            llvm::Value *This,
                                           CallExpr::const_arg_iterator ArgBeg,
                                           CallExpr::const_arg_iterator ArgEnd) {
   assert(Type == Ctor_Complete || Type == Ctor_Base);
@@ -435,10 +441,9 @@ llvm::Value *MicrosoftCXXABI::EmitConstructorCall(CodeGenFunction &CGF,
   }
 
   // FIXME: Provide a source location here.
-  CGF.EmitCXXMemberCall(D, SourceLocation(), Callee, ReturnValueSlot(), This,
-                        ImplicitParam, ImplicitParamTy,
-                        ArgBeg, ArgEnd);
-  return Callee;
+  return CGF.EmitCXXMemberCall(D, SourceLocation(), Callee, ReturnValue,
+                               This, ImplicitParam, ImplicitParamTy,
+                               ArgBeg, ArgEnd);
 }
 
 RValue MicrosoftCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,

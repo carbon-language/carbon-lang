@@ -287,8 +287,9 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
                                     GlobalDecl GD, const ThunkInfo &Thunk) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
-  QualType ResultType = FPT->getResultType();
   QualType ThisType = MD->getThisType(getContext());
+  QualType ResultType =
+    CGM.getCXXABI().HasThisReturn(GD) ? ThisType : FPT->getResultType();
 
   FunctionArgList FunctionArgs;
 

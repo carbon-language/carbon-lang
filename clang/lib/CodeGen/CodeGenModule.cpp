@@ -717,6 +717,14 @@ void CodeGenModule::SetFunctionAttributes(GlobalDecl GD,
   if (!IsIncompleteFunction)
     SetLLVMFunctionAttributes(FD, getTypes().arrangeGlobalDeclaration(GD), F);
 
+  if (getCXXABI().HasThisReturn(GD)) {
+    llvm::Type *RetTy = F->getReturnType();
+    assert(!F->arg_empty() &&
+           F->arg_begin()->getType()->canLosslesslyBitCastTo(RetTy) &&
+           "unexpected this return");
+    F->addAttribute(1, llvm::Attribute::Returned);
+  }
+
   // Only a few attributes are set on declarations; these may later be
   // overridden by a definition.
 
