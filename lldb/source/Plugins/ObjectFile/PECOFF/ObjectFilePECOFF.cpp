@@ -527,7 +527,7 @@ ObjectFilePECOFF::GetSymtab()
 
             if (num_syms > 0 && m_coff_header.symoff > 0)
             {
-                const uint32_t symbol_size = sizeof(section_header_t);
+                const uint32_t symbol_size = 18;
                 const uint32_t addr_byte_size = GetAddressByteSize ();
                 const size_t symbol_data_size = num_syms * symbol_size; 
                 // Include the 4 bytes string table size at the end of the symbols
@@ -535,8 +535,13 @@ ObjectFilePECOFF::GetSymtab()
                 DataExtractor symtab_data (symtab_data_sp, GetByteOrder(), addr_byte_size);
                 lldb::offset_t offset = symbol_data_size;
                 const uint32_t strtab_size = symtab_data.GetU32 (&offset);
-                DataBufferSP strtab_data_sp(m_file.ReadFileContents (m_coff_header.symoff + symbol_data_size + 4, strtab_size));
+                DataBufferSP strtab_data_sp(m_file.ReadFileContents (m_coff_header.symoff + symbol_data_size, strtab_size));
                 DataExtractor strtab_data (strtab_data_sp, GetByteOrder(), addr_byte_size);
+
+                // First 4 bytes should be zeroed after strtab_size has been read,
+                // because it is used as offset 0 to encode a NULL string.
+                uint32_t* strtab_data_start = (uint32_t*)strtab_data_sp->GetBytes();
+                strtab_data_start[0] = 0;
 
                 offset = 0;
                 std::string symbol_name;
@@ -571,12 +576,18 @@ ObjectFilePECOFF::GetSymtab()
                     symbol.type     = symtab_data.GetU16 (&offset);
                     symbol.storage  = symtab_data.GetU8  (&offset);
                     symbol.naux     = symtab_data.GetU8  (&offset);		
-                    Address symbol_addr(sect_list->GetSectionAtIndex(symbol.sect-1), symbol.value);
                     symbols[i].GetMangled ().SetValue (ConstString(symbol_name.c_str()));
-                    symbols[i].GetAddress() = symbol_addr;
+                    if ((int16_t)symbol.sect >= 1)
+                    {
+                        Address symbol_addr(sect_list->GetSectionAtIndex(symbol.sect-1), symbol.value);
+                        symbols[i].GetAddress() = symbol_addr;
+                    }
 
                     if (symbol.naux > 0)
+                    {
                         i += symbol.naux;
+                        offset += symbol_size;
+                    }
                 }
                 
             }
@@ -613,6 +624,18 @@ ObjectFilePECOFF::GetSectionList()
                 static ConstString g_reloc_sect_name (".reloc");
                 static ConstString g_stab_sect_name (".stab");
                 static ConstString g_stabstr_sect_name (".stabstr");
+                static ConstString g_sect_name_dwarf_debug_abbrev (".debug_abbrev");
+                static ConstString g_sect_name_dwarf_debug_aranges (".debug_aranges");
+                static ConstString g_sect_name_dwarf_debug_frame (".debug_frame");
+                static ConstString g_sect_name_dwarf_debug_info (".debug_info");
+                static ConstString g_sect_name_dwarf_debug_line (".debug_line");
+                static ConstString g_sect_name_dwarf_debug_loc (".debug_loc");
+                static ConstString g_sect_name_dwarf_debug_macinfo (".debug_macinfo");
+                static ConstString g_sect_name_dwarf_debug_pubnames (".debug_pubnames");
+                static ConstString g_sect_name_dwarf_debug_pubtypes (".debug_pubtypes");
+                static ConstString g_sect_name_dwarf_debug_ranges (".debug_ranges");
+                static ConstString g_sect_name_dwarf_debug_str (".debug_str");
+                static ConstString g_sect_name_eh_frame (".eh_frame");
                 SectionType section_type = eSectionTypeOther;
                 if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_CODE && 
                     ((const_sect_name == g_code_sect_name) || (const_sect_name == g_CODE_sect_name)))
@@ -644,6 +667,18 @@ ObjectFilePECOFF::GetSectionList()
                 {
                     section_type = eSectionTypeOther;
                 }
+                else if (const_sect_name == g_sect_name_dwarf_debug_abbrev)    section_type = eSectionTypeDWARFDebugAbbrev;
+                else if (const_sect_name == g_sect_name_dwarf_debug_aranges)   section_type = eSectionTypeDWARFDebugAranges;
+                else if (const_sect_name == g_sect_name_dwarf_debug_frame)     section_type = eSectionTypeDWARFDebugFrame;
+                else if (const_sect_name == g_sect_name_dwarf_debug_info)      section_type = eSectionTypeDWARFDebugInfo;
+                else if (const_sect_name == g_sect_name_dwarf_debug_line)      section_type = eSectionTypeDWARFDebugLine;
+                else if (const_sect_name == g_sect_name_dwarf_debug_loc)       section_type = eSectionTypeDWARFDebugLoc;
+                else if (const_sect_name == g_sect_name_dwarf_debug_macinfo)   section_type = eSectionTypeDWARFDebugMacInfo;
+                else if (const_sect_name == g_sect_name_dwarf_debug_pubnames)  section_type = eSectionTypeDWARFDebugPubNames;
+                else if (const_sect_name == g_sect_name_dwarf_debug_pubtypes)  section_type = eSectionTypeDWARFDebugPubTypes;
+                else if (const_sect_name == g_sect_name_dwarf_debug_ranges)    section_type = eSectionTypeDWARFDebugRanges;
+                else if (const_sect_name == g_sect_name_dwarf_debug_str)       section_type = eSectionTypeDWARFDebugStr;
+                else if (const_sect_name == g_sect_name_eh_frame)              section_type = eSectionTypeEHFrame;
                 else if (m_sect_headers[idx].flags & IMAGE_SCN_CNT_CODE)
                 {
                     section_type = eSectionTypeCode;
@@ -666,7 +701,7 @@ ObjectFilePECOFF::GetSectionList()
                                                    idx + 1,                      // Section ID is the 1 based segment index shifted right by 8 bits as not to collide with any of the 256 section IDs that are possible
                                                    const_sect_name,              // Name of this section
                                                    section_type,                    // This section is a container of other sections.
-                                                   m_sect_headers[idx].vmaddr,   // File VM address == addresses as they are found in the object file
+                                                   m_coff_header_opt.image_base + m_sect_headers[idx].vmaddr,   // File VM address == addresses as they are found in the object file
                                                    m_sect_headers[idx].vmsize,   // VM size in bytes of this section
                                                    m_sect_headers[idx].offset,   // Offset to the data for this section in the file
                                                    m_sect_headers[idx].size,     // Size in bytes of this section as found in the the file
