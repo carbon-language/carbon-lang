@@ -1951,7 +1951,7 @@ bool Sema::CheckFormatArguments(ArrayRef<const Expr *> Args,
 
   // If there are no arguments specified, warn with -Wformat-security, otherwise
   // warn only with -Wformat-nonliteral.
-  if (Args.size() == format_idx+1)
+  if (Args.size() == firstDataArg)
     Diag(Args[format_idx]->getLocStart(),
          diag::warn_format_nonliteral_noargs)
       << OrigFormatExpr->getSourceRange();

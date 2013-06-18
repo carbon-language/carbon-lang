@@ -591,3 +591,13 @@ void test_qualifiers(volatile int *vip, const int *cip,
   printf("%n", (ip_t)0); // No warning.
   printf("%n", (cip_t)0); // expected-warning{{format specifies type 'int *' but the argument has type 'cip_t' (aka 'const int *')}}
 }
+
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+#pragma GCC diagnostic warning "-Wformat-security"
+// <rdar://problem/14178260>
+extern void test_format_security_extra_args(const char*, int, ...)
+    __attribute__((__format__(__printf__, 1, 3)));
+void test_format_security_pos(char* string) {
+  test_format_security_extra_args(string, 5); // expected-warning {{format string is not a string literal (potentially insecure)}}
+}
+#pragma GCC diagnostic warning "-Wformat-nonliteral"
