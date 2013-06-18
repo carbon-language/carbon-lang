@@ -380,7 +380,7 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
                   SmallVectorImpl<MCFixup> &Fixups) const {
   if (MO.isReg()) {
     unsigned Reg = MO.getReg();
-    unsigned RegNo = Ctx.getRegisterInfo().getEncodingValue(Reg);
+    unsigned RegNo = Ctx.getRegisterInfo()->getEncodingValue(Reg);
     return RegNo;
   } else if (MO.isImm()) {
     return static_cast<unsigned>(MO.getImm());

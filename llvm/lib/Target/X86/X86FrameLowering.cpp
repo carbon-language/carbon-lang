@@ -307,7 +307,7 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
                                                  unsigned FramePtr) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo &MMI = MF.getMMI();
-  const MCRegisterInfo &MRI = MMI.getContext().getRegisterInfo();
+  const MCRegisterInfo *MRI = MMI.getContext().getRegisterInfo();
 
   // Add callee saved registers to move list.
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
@@ -360,7 +360,7 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
     if (HasFP && FramePtr == Reg)
       continue;
 
-    unsigned DwarfReg = MRI.getDwarfRegNum(Reg, true);
+    unsigned DwarfReg = MRI->getDwarfRegNum(Reg, true);
     MMI.addFrameInst(MCCFIInstruction::createOffset(Label, DwarfReg, Offset));
   }
 }

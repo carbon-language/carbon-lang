@@ -54,7 +54,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
   DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
 
   MachineModuleInfo &MMI = MF.getMMI();
-  const MCRegisterInfo &MRI = MMI.getContext().getRegisterInfo();
+  const MCRegisterInfo *MRI = MMI.getContext().getRegisterInfo();
   bool NeedsFrameMoves = MMI.hasDebugInfo()
     || MF.getFunction()->needsUnwindTableEntry();
 
@@ -97,7 +97,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
       .addSym(SPLabel);
 
     MachineLocation Dst(MachineLocation::VirtualFP);
-    unsigned Reg = MRI.getDwarfRegNum(AArch64::XSP, true);
+    unsigned Reg = MRI->getDwarfRegNum(AArch64::XSP, true);
     MMI.addFrameInst(
         MCCFIInstruction::createDefCfa(SPLabel, Reg, -NumInitialBytes));
   }
@@ -132,7 +132,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
         MCSymbol *FPLabel = MMI.getContext().CreateTempSymbol();
         BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::PROLOG_LABEL))
           .addSym(FPLabel);
-        unsigned Reg = MRI.getDwarfRegNum(AArch64::X29, true);
+        unsigned Reg = MRI->getDwarfRegNum(AArch64::X29, true);
         unsigned Offset = MFI->getObjectOffset(X29FrameIdx);
         MMI.addFrameInst(MCCFIInstruction::createDefCfa(FPLabel, Reg, Offset));
       }
@@ -165,7 +165,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
       .addSym(CSLabel);
 
     MachineLocation Dst(MachineLocation::VirtualFP);
-    unsigned Reg = MRI.getDwarfRegNum(AArch64::XSP, true);
+    unsigned Reg = MRI->getDwarfRegNum(AArch64::XSP, true);
     unsigned Offset = NumResidualBytes + NumInitialBytes;
     MMI.addFrameInst(MCCFIInstruction::createDefCfa(CSLabel, Reg, -Offset));
   }
@@ -183,7 +183,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
     for (std::vector<CalleeSavedInfo>::const_iterator I = CSI.begin(),
            E = CSI.end(); I != E; ++I) {
       unsigned Offset = MFI->getObjectOffset(I->getFrameIdx());
-      unsigned Reg = MRI.getDwarfRegNum(I->getReg(), true);
+      unsigned Reg = MRI->getDwarfRegNum(I->getReg(), true);
       MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, Reg, Offset));
     }
   }

@@ -346,7 +346,7 @@ AArch64MCCodeEmitter::getMachineOpValue(const MCInst &MI,
                                        const MCOperand &MO,
                                        SmallVectorImpl<MCFixup> &Fixups) const {
   if (MO.isReg()) {
-    return Ctx.getRegisterInfo().getEncodingValue(MO.getReg());
+    return Ctx.getRegisterInfo()->getEncodingValue(MO.getReg());
   } else if (MO.isImm()) {
     return static_cast<unsigned>(MO.getImm());
   }

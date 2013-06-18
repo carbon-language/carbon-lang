@@ -380,10 +380,10 @@ void ARMELFStreamer::FlushPendingOffset() {
 void ARMELFStreamer::FlushUnwindOpcodes(bool AllowCompactModel0) {
   // Emit the unwind opcode to restore $sp.
   if (UsedFP) {
-    const MCRegisterInfo &MRI = getContext().getRegisterInfo();
+    const MCRegisterInfo *MRI = getContext().getRegisterInfo();
     int64_t LastRegSaveSPOffset = SPOffset - PendingOffset;
     UnwindOpAsm.EmitSPOffset(LastRegSaveSPOffset - FPOffset);
-    UnwindOpAsm.EmitSetSP(MRI.getEncodingValue(FPReg));
+    UnwindOpAsm.EmitSetSP(MRI->getEncodingValue(FPReg));
   } else {
     FlushPendingOffset();
   }
@@ -458,9 +458,9 @@ void ARMELFStreamer::EmitRegSave(const SmallVectorImpl<unsigned> &RegList,
   // Collect the registers in the register list
   unsigned Count = 0;
   uint32_t Mask = 0;
-  const MCRegisterInfo &MRI = getContext().getRegisterInfo();
+  const MCRegisterInfo *MRI = getContext().getRegisterInfo();
   for (size_t i = 0; i < RegList.size(); ++i) {
-    unsigned Reg = MRI.getEncodingValue(RegList[i]);
+    unsigned Reg = MRI->getEncodingValue(RegList[i]);
     assert(Reg < (IsVector ? 32U : 16U) && "Register out of range");
     unsigned Bit = (1u << Reg);
     if ((Mask & Bit) == 0) {

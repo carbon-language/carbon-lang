@@ -32,7 +32,7 @@ typedef StringMap<const MCSectionELF*> ELFUniqueMapTy;
 typedef StringMap<const MCSectionCOFF*> COFFUniqueMapTy;
 
 
-MCContext::MCContext(const MCAsmInfo &mai, const MCRegisterInfo &mri,
+MCContext::MCContext(const MCAsmInfo *mai, const MCRegisterInfo *mri,
                      const MCObjectFileInfo *mofi, const SourceMgr *mgr,
                      bool DoAutoReset) :
   SrcMgr(mgr), MAI(mai), MRI(mri), MOFI(mofi),
@@ -130,7 +130,7 @@ MCSymbol *MCContext::CreateSymbol(StringRef Name) {
   // Determine whether this is an assembler temporary or normal label, if used.
   bool isTemporary = false;
   if (AllowTemporaryLabels)
-    isTemporary = Name.startswith(MAI.getPrivateGlobalPrefix());
+    isTemporary = Name.startswith(MAI->getPrivateGlobalPrefix());
 
   StringMapEntry<bool> *NameEntry = &UsedNames.GetOrCreateValue(Name);
   if (NameEntry->getValue()) {
@@ -160,7 +160,7 @@ MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name) {
 MCSymbol *MCContext::CreateTempSymbol() {
   SmallString<128> NameSV;
   raw_svector_ostream(NameSV)
-    << MAI.getPrivateGlobalPrefix() << "tmp" << NextUniqueID++;
+    << MAI->getPrivateGlobalPrefix() << "tmp" << NextUniqueID++;
   return CreateSymbol(NameSV);
 }
 
@@ -179,14 +179,14 @@ unsigned MCContext::GetInstance(int64_t LocalLabelVal) {
 }
 
 MCSymbol *MCContext::CreateDirectionalLocalSymbol(int64_t LocalLabelVal) {
-  return GetOrCreateSymbol(Twine(MAI.getPrivateGlobalPrefix()) +
+  return GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) +
                            Twine(LocalLabelVal) +
                            "\2" +
                            Twine(NextInstance(LocalLabelVal)));
 }
 MCSymbol *MCContext::GetDirectionalLocalSymbol(int64_t LocalLabelVal,
                                                int bORf) {
-  return GetOrCreateSymbol(Twine(MAI.getPrivateGlobalPrefix()) +
+  return GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) +
                            Twine(LocalLabelVal) +
                            "\2" +
                            Twine(GetInstance(LocalLabelVal) + bORf));

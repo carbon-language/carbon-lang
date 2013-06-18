@@ -334,7 +334,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
     *static_cast<const PPCInstrInfo*>(MF.getTarget().getInstrInfo());
 
   MachineModuleInfo &MMI = MF.getMMI();
-  const MCRegisterInfo &MRI = MMI.getContext().getRegisterInfo();
+  const MCRegisterInfo *MRI = MMI.getContext().getRegisterInfo();
   DebugLoc dl;
   bool needsFrameMoves = MMI.hasDebugInfo() ||
     MF.getFunction()->needsUnwindTableEntry();
@@ -530,14 +530,14 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
 
     if (HasFP) {
       unsigned Reg = isPPC64 ? PPC::X31 : PPC::R31;
-      Reg = MRI.getDwarfRegNum(Reg, true);
+      Reg = MRI->getDwarfRegNum(Reg, true);
       MMI.addFrameInst(
           MCCFIInstruction::createOffset(FrameLabel, Reg, FPOffset));
     }
 
     if (MustSaveLR) {
       unsigned Reg = isPPC64 ? PPC::LR8 : PPC::LR;
-      Reg = MRI.getDwarfRegNum(Reg, true);
+      Reg = MRI->getDwarfRegNum(Reg, true);
       MMI.addFrameInst(
           MCCFIInstruction::createOffset(FrameLabel, Reg, LROffset));
     }
@@ -565,7 +565,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
 
       unsigned Reg = HasFP ? (isPPC64 ? PPC::X31 : PPC::R31)
                            : (isPPC64 ? PPC::X1 : PPC::R1);
-      Reg = MRI.getDwarfRegNum(Reg, true);
+      Reg = MRI->getDwarfRegNum(Reg, true);
       MMI.addFrameInst(MCCFIInstruction::createDefCfaRegister(ReadyLabel, Reg));
     }
   }
@@ -597,13 +597,13 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
 	  && Subtarget.isPPC64()
 	  && (PPC::CR2 <= Reg && Reg <= PPC::CR4)) {
         MMI.addFrameInst(MCCFIInstruction::createOffset(
-            Label, MRI.getDwarfRegNum(PPC::CR2, true), 8));
+            Label, MRI->getDwarfRegNum(PPC::CR2, true), 8));
 	continue;
       }
 
       int Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
       MMI.addFrameInst(MCCFIInstruction::createOffset(
-          Label, MRI.getDwarfRegNum(Reg, true), Offset));
+          Label, MRI->getDwarfRegNum(Reg, true), Offset));
     }
   }
 }

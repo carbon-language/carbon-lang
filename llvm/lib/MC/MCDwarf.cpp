@@ -47,7 +47,7 @@ using namespace llvm;
 #define DWARF2_LINE_RANGE               14
 
 static inline uint64_t ScaleAddrDelta(MCContext &Context, uint64_t AddrDelta) {
-  unsigned MinInsnLength = Context.getAsmInfo().getMinInstAlignment();
+  unsigned MinInsnLength = Context.getAsmInfo()->getMinInstAlignment();
   if (MinInsnLength == 1)
     return AddrDelta;
   if (AddrDelta % MinInsnLength != 0) {
@@ -176,9 +176,9 @@ static inline void EmitDwarfLineTable(MCStreamer *MCOS,
     // At this point we want to emit/create the sequence to encode the delta in
     // line numbers and the increment of the address from the previous Label
     // and the current Label.
-    const MCAsmInfo &asmInfo = MCOS->getContext().getAsmInfo();
+    const MCAsmInfo *asmInfo = MCOS->getContext().getAsmInfo();
     MCOS->EmitDwarfAdvanceLineAddr(LineDelta, LastLabel, Label,
-                                   asmInfo.getPointerSize());
+                                   asmInfo->getPointerSize());
 
     LastLine = it->getLine();
     LastLabel = Label;
@@ -204,9 +204,9 @@ static inline void EmitDwarfLineTable(MCStreamer *MCOS,
   // Switch back the dwarf line section.
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfLineSection());
 
-  const MCAsmInfo &asmInfo = MCOS->getContext().getAsmInfo();
+  const MCAsmInfo *asmInfo = MCOS->getContext().getAsmInfo();
   MCOS->EmitDwarfAdvanceLineAddr(INT64_MAX, LastLabel, SectionEnd,
-                                 asmInfo.getPointerSize());
+                                 asmInfo->getPointerSize());
 }
 
 //
@@ -271,7 +271,7 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS, unsigned CUID) {
                                            (4 + 2 + 4)), 4, 0);
 
   // Parameters of the state machine, are next.
-  MCOS->EmitIntValue(context.getAsmInfo().getMinInstAlignment(), 1);
+  MCOS->EmitIntValue(context.getAsmInfo()->getMinInstAlignment(), 1);
   MCOS->EmitIntValue(DWARF2_LINE_DEFAULT_IS_STMT, 1);
   MCOS->EmitIntValue(DWARF2_LINE_BASE, 1);
   MCOS->EmitIntValue(DWARF2_LINE_RANGE, 1);
@@ -332,7 +332,7 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS, unsigned CUID) {
     EmitDwarfLineTable(MCOS, Sec, Line, CUID);
   }
 
-  if (MCOS->getContext().getAsmInfo().getLinkerRequiresNonEmptyDwarfLines()
+  if (MCOS->getContext().getAsmInfo()->getLinkerRequiresNonEmptyDwarfLines()
       && MCLineSectionOrder.begin() == MCLineSectionOrder.end()) {
     // The darwin9 linker has a bug (see PR8715). For for 32-bit architectures
     // it requires:
@@ -520,8 +520,8 @@ static void EmitGenDwarfAranges(MCStreamer *MCOS,
 
   // Figure the padding after the header before the table of address and size
   // pairs who's values are PointerSize'ed.
-  const MCAsmInfo &asmInfo = context.getAsmInfo();
-  int AddrSize = asmInfo.getPointerSize();
+  const MCAsmInfo *asmInfo = context.getAsmInfo();
+  int AddrSize = asmInfo->getPointerSize();
   int Pad = 2 * AddrSize - (Length & (2 * AddrSize - 1));
   if (Pad == 2 * AddrSize)
     Pad = 0;
@@ -601,8 +601,8 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
     MCOS->EmitIntValue(0, 4);
   }
 
-  const MCAsmInfo &asmInfo = context.getAsmInfo();
-  int AddrSize = asmInfo.getPointerSize();
+  const MCAsmInfo *asmInfo = context.getAsmInfo();
+  int AddrSize = asmInfo->getPointerSize();
   // The 1 byte size of an address.
   MCOS->EmitIntValue(AddrSize, 1);
 
@@ -729,9 +729,9 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
 void MCGenDwarfInfo::Emit(MCStreamer *MCOS, const MCSymbol *LineSectionSymbol) {
   // Create the dwarf sections in this order (.debug_line already created).
   MCContext &context = MCOS->getContext();
-  const MCAsmInfo &AsmInfo = context.getAsmInfo();
+  const MCAsmInfo *AsmInfo = context.getAsmInfo();
   bool CreateDwarfSectionSymbols =
-      AsmInfo.doesDwarfUseRelocationsAcrossSections();
+      AsmInfo->doesDwarfUseRelocationsAcrossSections();
   if (!CreateDwarfSectionSymbols)
     LineSectionSymbol = NULL;
   MCSymbol *AbbrevSectionSymbol = NULL;
@@ -807,9 +807,9 @@ void MCGenDwarfLabelEntry::Make(MCSymbol *Symbol, MCStreamer *MCOS,
 
 static int getDataAlignmentFactor(MCStreamer &streamer) {
   MCContext &context = streamer.getContext();
-  const MCAsmInfo &asmInfo = context.getAsmInfo();
-  int size = asmInfo.getCalleeSaveStackSlotSize();
-  if (asmInfo.isStackGrowthDirectionUp())
+  const MCAsmInfo *asmInfo = context.getAsmInfo();
+  int size = asmInfo->getCalleeSaveStackSlotSize();
+  if (asmInfo->isStackGrowthDirectionUp())
     return size;
   else
     return -size;
@@ -823,7 +823,7 @@ static unsigned getSizeForEncoding(MCStreamer &streamer,
   default: llvm_unreachable("Unknown Encoding");
   case dwarf::DW_EH_PE_absptr:
   case dwarf::DW_EH_PE_signed:
-    return context.getAsmInfo().getPointerSize();
+    return context.getAsmInfo()->getPointerSize();
   case dwarf::DW_EH_PE_udata2:
   case dwarf::DW_EH_PE_sdata2:
     return 2;
@@ -839,10 +839,10 @@ static unsigned getSizeForEncoding(MCStreamer &streamer,
 static void EmitSymbol(MCStreamer &streamer, const MCSymbol &symbol,
                        unsigned symbolEncoding, const char *comment = 0) {
   MCContext &context = streamer.getContext();
-  const MCAsmInfo &asmInfo = context.getAsmInfo();
-  const MCExpr *v = asmInfo.getExprForFDESymbol(&symbol,
-                                                symbolEncoding,
-                                                streamer);
+  const MCAsmInfo *asmInfo = context.getAsmInfo();
+  const MCExpr *v = asmInfo->getExprForFDESymbol(&symbol,
+                                                 symbolEncoding,
+                                                 streamer);
   unsigned size = getSizeForEncoding(streamer, symbolEncoding);
   if (streamer.isVerboseAsm() && comment) streamer.AddComment(comment);
   streamer.EmitAbsValue(v, size);
@@ -851,10 +851,10 @@ static void EmitSymbol(MCStreamer &streamer, const MCSymbol &symbol,
 static void EmitPersonality(MCStreamer &streamer, const MCSymbol &symbol,
                             unsigned symbolEncoding) {
   MCContext &context = streamer.getContext();
-  const MCAsmInfo &asmInfo = context.getAsmInfo();
-  const MCExpr *v = asmInfo.getExprForPersonalitySymbol(&symbol,
-                                                        symbolEncoding,
-                                                        streamer);
+  const MCAsmInfo *asmInfo = context.getAsmInfo();
+  const MCExpr *v = asmInfo->getExprForPersonalitySymbol(&symbol,
+                                                         symbolEncoding,
+                                                         streamer);
   unsigned size = getSizeForEncoding(streamer, symbolEncoding);
   streamer.EmitValue(v, size);
 }
@@ -1194,7 +1194,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
                                           bool IsSignalFrame,
                                           unsigned lsdaEncoding) {
   MCContext &context = streamer.getContext();
-  const MCRegisterInfo &MRI = context.getRegisterInfo();
+  const MCRegisterInfo *MRI = context.getRegisterInfo();
   const MCObjectFileInfo *MOFI = context.getObjectFileInfo();
   bool verboseAsm = streamer.isVerboseAsm();
 
@@ -1242,7 +1242,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
 
   // Code Alignment Factor
   if (verboseAsm) streamer.AddComment("CIE Code Alignment Factor");
-  streamer.EmitULEB128IntValue(context.getAsmInfo().getMinInstAlignment());
+  streamer.EmitULEB128IntValue(context.getAsmInfo()->getMinInstAlignment());
 
   // Data Alignment Factor
   if (verboseAsm) streamer.AddComment("CIE Data Alignment Factor");
@@ -1250,7 +1250,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
 
   // Return Address Register
   if (verboseAsm) streamer.AddComment("CIE Return Address Column");
-  streamer.EmitULEB128IntValue(MRI.getDwarfRegNum(MRI.getRARegister(), true));
+  streamer.EmitULEB128IntValue(MRI->getDwarfRegNum(MRI->getRARegister(), true));
 
   // Augmentation Data Length (optional)
 
@@ -1290,14 +1290,13 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
 
   // Initial Instructions
 
-  const MCAsmInfo &MAI = context.getAsmInfo();
+  const MCAsmInfo *MAI = context.getAsmInfo();
   const std::vector<MCCFIInstruction> &Instructions =
-      MAI.getInitialFrameState();
+      MAI->getInitialFrameState();
   EmitCFIInstructions(streamer, Instructions, NULL);
 
   // Padding
-  streamer.EmitValueToAlignment(IsEH
-                                ? 4 : context.getAsmInfo().getPointerSize());
+  streamer.EmitValueToAlignment(IsEH ? 4 : MAI->getPointerSize());
 
   streamer.EmitLabel(sectionEnd);
   return *sectionStart;
@@ -1327,13 +1326,13 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   streamer.EmitLabel(fdeStart);
 
   // CIE Pointer
-  const MCAsmInfo &asmInfo = context.getAsmInfo();
+  const MCAsmInfo *asmInfo = context.getAsmInfo();
   if (IsEH) {
     const MCExpr *offset = MakeStartMinusEndExpr(streamer, cieStart, *fdeStart,
                                                  0);
     if (verboseAsm) streamer.AddComment("FDE CIE Offset");
     streamer.EmitAbsValue(offset, 4);
-  } else if (!asmInfo.doesDwarfUseRelocationsAcrossSections()) {
+  } else if (!asmInfo->doesDwarfUseRelocationsAcrossSections()) {
     const MCExpr *offset = MakeStartMinusEndExpr(streamer, *SectionStart,
                                                  cieStart, 0);
     streamer.EmitAbsValue(offset, 4);
@@ -1436,7 +1435,7 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
       if (Frame.CompactUnwindEncoding == 0) continue;
       if (!SectionEmitted) {
         Streamer.SwitchSection(MOFI->getCompactUnwindSection());
-        Streamer.EmitValueToAlignment(Context.getAsmInfo().getPointerSize());
+        Streamer.EmitValueToAlignment(Context.getAsmInfo()->getPointerSize());
         SectionEmitted = true;
       }
       Emitter.EmitCompactUnwind(Streamer, Frame);
@@ -1472,7 +1471,7 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
       Streamer.EmitLabel(FDEEnd);
   }
 
-  Streamer.EmitValueToAlignment(Context.getAsmInfo().getPointerSize());
+  Streamer.EmitValueToAlignment(Context.getAsmInfo()->getPointerSize());
   if (FDEEnd)
     Streamer.EmitLabel(FDEEnd);
 }

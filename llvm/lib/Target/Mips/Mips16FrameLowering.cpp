@@ -40,7 +40,7 @@ void Mips16FrameLowering::emitPrologue(MachineFunction &MF) const {
   if (StackSize == 0 && !MFI->adjustsStack()) return;
 
   MachineModuleInfo &MMI = MF.getMMI();
-  const MCRegisterInfo &MRI = MMI.getContext().getRegisterInfo();
+  const MCRegisterInfo *MRI = MMI.getContext().getRegisterInfo();
   MachineLocation DstML, SrcML;
 
   // Adjust stack.
@@ -56,13 +56,13 @@ void Mips16FrameLowering::emitPrologue(MachineFunction &MF) const {
   MCSymbol *CSLabel = MMI.getContext().CreateTempSymbol();
   BuildMI(MBB, MBBI, dl,
           TII.get(TargetOpcode::PROLOG_LABEL)).addSym(CSLabel);
-  unsigned S1 = MRI.getDwarfRegNum(Mips::S1, true);
+  unsigned S1 = MRI->getDwarfRegNum(Mips::S1, true);
   MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, S1, -8));
 
-  unsigned S0 = MRI.getDwarfRegNum(Mips::S0, true);
+  unsigned S0 = MRI->getDwarfRegNum(Mips::S0, true);
   MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, S0, -12));
 
-  unsigned RA = MRI.getDwarfRegNum(Mips::RA, true);
+  unsigned RA = MRI->getDwarfRegNum(Mips::RA, true);
   MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, RA, -4));
 
   if (hasFP(MF))

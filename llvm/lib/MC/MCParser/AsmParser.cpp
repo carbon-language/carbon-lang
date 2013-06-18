@@ -1311,11 +1311,11 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
       case DK_DOUBLE:
         return ParseDirectiveRealValue(APFloat::IEEEdouble);
       case DK_ALIGN: {
-        bool IsPow2 = !getContext().getAsmInfo().getAlignmentIsInBytes();
+        bool IsPow2 = !getContext().getAsmInfo()->getAlignmentIsInBytes();
         return ParseDirectiveAlign(IsPow2, /*ExprSize=*/1);
       }
       case DK_ALIGN32: {
-        bool IsPow2 = !getContext().getAsmInfo().getAlignmentIsInBytes();
+        bool IsPow2 = !getContext().getAsmInfo()->getAlignmentIsInBytes();
         return ParseDirectiveAlign(IsPow2, /*ExprSize=*/4);
       }
       case DK_BALIGN:
@@ -2730,7 +2730,7 @@ bool AsmParser::ParseRegisterOrRegisterNumber(int64_t &Register,
   if (getLexer().isNot(AsmToken::Integer)) {
     if (getTargetParser().ParseRegister(RegNo, DirectiveLoc, DirectiveLoc))
       return true;
-    Register = getContext().getRegisterInfo().getDwarfRegNum(RegNo, true);
+    Register = getContext().getRegisterInfo()->getDwarfRegNum(RegNo, true);
   } else
     return parseAbsoluteExpression(Register);
 

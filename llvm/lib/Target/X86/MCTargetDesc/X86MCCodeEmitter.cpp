@@ -53,7 +53,7 @@ public:
   }
 
   unsigned GetX86RegNum(const MCOperand &MO) const {
-    return Ctx.getRegisterInfo().getEncodingValue(MO.getReg()) & 0x7;
+    return Ctx.getRegisterInfo()->getEncodingValue(MO.getReg()) & 0x7;
   }
 
   // On regular x86, both XMM0-XMM7 and XMM8-XMM15 are encoded in the range

@@ -67,7 +67,7 @@ LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
     return 0;
 
   // Set up the MCContext for creating symbols and MCExpr's.
-  MCContext *Ctx = new MCContext(*MAI, *MRI, 0);
+  MCContext *Ctx = new MCContext(MAI, MRI, 0);
   if (!Ctx)
     return 0;
 

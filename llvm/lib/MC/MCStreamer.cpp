@@ -58,7 +58,7 @@ const MCExpr *MCStreamer::BuildSymbolDiff(MCContext &Context,
 }
 
 const MCExpr *MCStreamer::ForceExpAbs(const MCExpr* Expr) {
-  if (Context.getAsmInfo().hasAggressiveSymbolFolding() ||
+  if (Context.getAsmInfo()->hasAggressiveSymbolFolding() ||
       isa<MCSymbolRefExpr>(Expr))
     return Expr;
 
@@ -92,7 +92,7 @@ void MCStreamer::EmitIntValue(uint64_t Value, unsigned Size,
   assert((isUIntN(8 * Size, Value) || isIntN(8 * Size, Value)) &&
          "Invalid size");
   char buf[8];
-  const bool isLittleEndian = Context.getAsmInfo().isLittleEndian();
+  const bool isLittleEndian = Context.getAsmInfo()->isLittleEndian();
   for (unsigned i = 0; i != Size; ++i) {
     unsigned index = isLittleEndian ? i : (Size - i - 1);
     buf[i] = uint8_t(Value >> (index * 8));
@@ -229,7 +229,7 @@ void MCStreamer::RecordProcStart(MCDwarfFrameInfo &Frame) {
   Frame.Function = LastSymbol;
   // If the function is externally visible, we need to create a local
   // symbol to avoid relocations.
-  StringRef Prefix = getContext().getAsmInfo().getPrivateGlobalPrefix();
+  StringRef Prefix = getContext().getAsmInfo()->getPrivateGlobalPrefix();
   if (LastSymbol && LastSymbol->getName().startswith(Prefix)) {
     Frame.Begin = LastSymbol;
   } else {

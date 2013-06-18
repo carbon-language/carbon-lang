@@ -453,7 +453,7 @@ bool COFFAsmParser::ParseAtUnwindOrAtExcept(bool &unwind, bool &except) {
 bool COFFAsmParser::ParseSEHRegisterNumber(unsigned &RegNo) {
   SMLoc startLoc = getLexer().getLoc();
   if (getLexer().is(AsmToken::Percent)) {
-    const MCRegisterInfo &MRI = getContext().getRegisterInfo();
+    const MCRegisterInfo *MRI = getContext().getRegisterInfo();
     SMLoc endLoc;
     unsigned LLVMRegNo;
     if (getParser().getTargetParser().ParseRegister(LLVMRegNo,startLoc,endLoc))
@@ -473,7 +473,7 @@ bool COFFAsmParser::ParseSEHRegisterNumber(unsigned &RegNo) {
       return Error(startLoc, "expected non-volatile register");
 #endif
 
-    int SEHRegNo = MRI.getSEHRegNum(LLVMRegNo);
+    int SEHRegNo = MRI->getSEHRegNum(LLVMRegNo);
     if (SEHRegNo < 0)
       return Error(startLoc,"register can't be represented in SEH unwind info");
     RegNo = SEHRegNo;

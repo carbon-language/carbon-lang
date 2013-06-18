@@ -277,7 +277,7 @@ public:
     MCAsmParserExtension::Initialize(_Parser);
 
     // Cache the MCRegisterInfo.
-    MRI = &getContext().getRegisterInfo();
+    MRI = getContext().getRegisterInfo();
 
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
@@ -7851,8 +7851,8 @@ bool ARMAsmParser::parseDirectiveARM(SMLoc L) {
 /// parseDirectiveThumbFunc
 ///  ::= .thumbfunc symbol_name
 bool ARMAsmParser::parseDirectiveThumbFunc(SMLoc L) {
-  const MCAsmInfo &MAI = getParser().getStreamer().getContext().getAsmInfo();
-  bool isMachO = MAI.hasSubsectionsViaSymbols();
+  const MCAsmInfo *MAI = getParser().getStreamer().getContext().getAsmInfo();
+  bool isMachO = MAI->hasSubsectionsViaSymbols();
   StringRef Name;
   bool needFuncName = true;
 

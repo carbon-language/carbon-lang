@@ -191,7 +191,7 @@ unsigned PPCMCCodeEmitter::getTLSRegEncoding(const MCInst &MI, unsigned OpNo,
   // Return the thread-pointer register's encoding.
   Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
                                    (MCFixupKind)PPC::fixup_ppc_tlsreg));
-  return CTX.getRegisterInfo().getEncodingValue(PPC::X13);
+  return CTX.getRegisterInfo()->getEncodingValue(PPC::X13);
 }
 
 unsigned PPCMCCodeEmitter::
@@ -202,7 +202,7 @@ get_crbitm_encoding(const MCInst &MI, unsigned OpNo,
           MI.getOpcode() == PPC::MFOCRF ||
           MI.getOpcode() == PPC::MTCRF8) &&
          (MO.getReg() >= PPC::CR0 && MO.getReg() <= PPC::CR7));
-  return 0x80 >> CTX.getRegisterInfo().getEncodingValue(MO.getReg());
+  return 0x80 >> CTX.getRegisterInfo()->getEncodingValue(MO.getReg());
 }
 
 
@@ -214,7 +214,7 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
     // The GPR operand should come through here though.
     assert((MI.getOpcode() != PPC::MTCRF && MI.getOpcode() != PPC::MFOCRF) ||
            MO.getReg() < PPC::CR0 || MO.getReg() > PPC::CR7);
-    return CTX.getRegisterInfo().getEncodingValue(MO.getReg());
+    return CTX.getRegisterInfo()->getEncodingValue(MO.getReg());
   }
   
   assert(MO.isImm() &&

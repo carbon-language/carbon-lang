@@ -880,7 +880,7 @@ int MipsAsmParser::getATReg() {
 }
 
 unsigned MipsAsmParser::getReg(int RC, int RegNo) {
-  return *(getContext().getRegisterInfo().getRegClass(RC).begin() + RegNo);
+  return *(getContext().getRegisterInfo()->getRegClass(RC).begin() + RegNo);
 }
 
 int MipsAsmParser::matchRegisterByNumber(unsigned RegNum, unsigned RegClass) {

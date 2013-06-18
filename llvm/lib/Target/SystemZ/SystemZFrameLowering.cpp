@@ -297,7 +297,7 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
   SystemZMachineFunctionInfo *ZFI = MF.getInfo<SystemZMachineFunctionInfo>();
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineModuleInfo &MMI = MF.getMMI();
-  const MCRegisterInfo &MRI = MMI.getContext().getRegisterInfo();
+  const MCRegisterInfo *MRI = MMI.getContext().getRegisterInfo();
   const std::vector<CalleeSavedInfo> &CSI = MFFrame->getCalleeSavedInfo();
   bool HasFP = hasFP(MF);
   DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
@@ -322,7 +322,7 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
       if (SystemZ::GR64BitRegClass.contains(Reg)) {
         int64_t Offset = SPOffsetFromCFA + RegSpillOffsets[Reg];
         MMI.addFrameInst(MCCFIInstruction::createOffset(
-            GPRSaveLabel, MRI.getDwarfRegNum(Reg, true), Offset));
+            GPRSaveLabel, MRI->getDwarfRegNum(Reg, true), Offset));
       }
     }
   }
@@ -351,7 +351,7 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
     MCSymbol *SetFPLabel = MMI.getContext().CreateTempSymbol();
     BuildMI(MBB, MBBI, DL, ZII->get(TargetOpcode::PROLOG_LABEL))
       .addSym(SetFPLabel);
-    unsigned HardFP = MRI.getDwarfRegNum(SystemZ::R11D, true);
+    unsigned HardFP = MRI->getDwarfRegNum(SystemZ::R11D, true);
     MMI.addFrameInst(
         MCCFIInstruction::createDefCfaRegister(SetFPLabel, HardFP));
 
@@ -379,7 +379,7 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
       // Add CFI for the this save.
       if (!FPRSaveLabel)
         FPRSaveLabel = MMI.getContext().CreateTempSymbol();
-      unsigned Reg = MRI.getDwarfRegNum(I->getReg(), true);
+      unsigned Reg = MRI->getDwarfRegNum(I->getReg(), true);
       int64_t Offset = getFrameIndexOffset(MF, I->getFrameIdx());
       MMI.addFrameInst(MCCFIInstruction::createOffset(
           FPRSaveLabel, Reg, SPOffsetFromCFA + Offset));

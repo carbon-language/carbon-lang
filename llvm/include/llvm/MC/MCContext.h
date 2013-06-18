@@ -52,10 +52,10 @@ namespace llvm {
     const SourceMgr *SrcMgr;
 
     /// The MCAsmInfo for this target.
-    const MCAsmInfo &MAI;
+    const MCAsmInfo *MAI;
 
     /// The MCRegisterInfo for this target.
-    const MCRegisterInfo &MRI;
+    const MCRegisterInfo *MRI;
 
     /// The MCObjectFileInfo for this target.
     const MCObjectFileInfo *MOFI;
@@ -164,16 +164,16 @@ namespace llvm {
     MCSymbol *CreateSymbol(StringRef Name);
 
   public:
-    explicit MCContext(const MCAsmInfo &MAI, const MCRegisterInfo &MRI,
+    explicit MCContext(const MCAsmInfo *MAI, const MCRegisterInfo *MRI,
                        const MCObjectFileInfo *MOFI, const SourceMgr *Mgr = 0,
                        bool DoAutoReset = true);
     ~MCContext();
 
     const SourceMgr *getSourceManager() const { return SrcMgr; }
 
-    const MCAsmInfo &getAsmInfo() const { return MAI; }
+    const MCAsmInfo *getAsmInfo() const { return MAI; }
 
-    const MCRegisterInfo &getRegisterInfo() const { return MRI; }
+    const MCRegisterInfo *getRegisterInfo() const { return MRI; }
 
     const MCObjectFileInfo *getObjectFileInfo() const { return MOFI; }
 

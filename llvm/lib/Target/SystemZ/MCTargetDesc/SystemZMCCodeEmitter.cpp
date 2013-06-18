@@ -112,7 +112,7 @@ uint64_t SystemZMCCodeEmitter::
 getMachineOpValue(const MCInst &MI, const MCOperand &MO,
                   SmallVectorImpl<MCFixup> &Fixups) const {
   if (MO.isReg())
-    return Ctx.getRegisterInfo().getEncodingValue(MO.getReg());
+    return Ctx.getRegisterInfo()->getEncodingValue(MO.getReg());
   if (MO.isImm())
     return static_cast<uint64_t>(MO.getImm());
   llvm_unreachable("Unexpected operand type!");

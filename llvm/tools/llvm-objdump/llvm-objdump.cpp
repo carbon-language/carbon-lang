@@ -310,7 +310,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 
   if (Symbolize) {
     MOFI.reset(new MCObjectFileInfo);
-    Ctx.reset(new MCContext(*AsmInfo.get(), *MRI.get(), MOFI.get()));
+    Ctx.reset(new MCContext(AsmInfo.get(), MRI.get(), MOFI.get()));
     OwningPtr<MCRelocationInfo> RelInfo(
       TheTarget->createMCRelocationInfo(TripleName, *Ctx.get()));
     if (RelInfo) {
