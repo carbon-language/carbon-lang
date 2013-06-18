@@ -591,6 +591,8 @@ PlatformDarwinKernel::GetSharedModule (const ModuleSpec &module_spec,
     Error error;
     module_sp.reset();
     const FileSpec &platform_file = module_spec.GetFileSpec();
+
+    // Treat the file's path as a kext bundle ID (e.g. "com.apple.driver.AppleIRController") and search our kext index.
     std::string kext_bundle_id = platform_file.GetPath();
     if (!kext_bundle_id.empty())
     {
@@ -611,7 +613,8 @@ PlatformDarwinKernel::GetSharedModule (const ModuleSpec &module_spec,
         }
     }
 
-    return error;
+    // Else fall back to treating the file's path as an actual file path - defer to PlatformDarwin's GetSharedModule.
+    return PlatformDarwin::GetSharedModule (module_spec, module_sp, module_search_paths_ptr, old_module_sp_ptr, did_create_ptr);
 }
 
 Error
