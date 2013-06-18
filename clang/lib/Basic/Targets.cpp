@@ -3642,6 +3642,9 @@ public:
 
       // FIXME: Override "preferred align" for double and long long.
     } else if (Name == "aapcs" || Name == "aapcs-vfp") {
+      // size_t is unsigned long on Darwin.
+      if (getTriple().isOSDarwin())
+        SizeType = UnsignedLong;
       IsAAPCS = true;
       // FIXME: Enumerated types are variable width in straight AAPCS.
     } else if (Name == "aapcs-linux") {
