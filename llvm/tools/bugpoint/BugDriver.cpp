@@ -22,7 +22,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/Host.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <memory>
@@ -195,8 +194,8 @@ bool BugDriver::run(std::string &ErrMsg) {
 
   // Make sure the reference output file gets deleted on exit from this
   // function, if appropriate.
-  sys::Path ROF(ReferenceOutputFile);
-  FileRemover RemoverInstance(ROF.str(), CreatedOutput && !SaveTemps);
+  std::string ROF(ReferenceOutputFile);
+  FileRemover RemoverInstance(ROF, CreatedOutput && !SaveTemps);
 
   // Diff the output of the raw program against the reference output.  If it
   // matches, then we assume there is a miscompilation bug and try to
