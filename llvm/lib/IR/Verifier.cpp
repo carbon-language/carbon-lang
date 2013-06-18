@@ -695,11 +695,11 @@ void Verifier::VerifyAttributeTypes(AttributeSet Attrs, unsigned Idx,
         I->getKindAsEnum() == Attribute::NoBuiltin ||
         I->getKindAsEnum() == Attribute::Cold) {
       if (!isFunction)
-          CheckFailed("Attribute '" + I->getKindAsString() +
+          CheckFailed("Attribute '" + I->getAsString() +
                       "' only applies to functions!", V);
           return;
     } else if (isFunction) {
-        CheckFailed("Attribute '" + I->getKindAsString() +
+        CheckFailed("Attribute '" + I->getAsString() +
                     "' does not apply to functions!", V);
         return;
     }
