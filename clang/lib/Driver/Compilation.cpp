@@ -16,6 +16,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/ArgList.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/PathV1.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
@@ -208,7 +209,7 @@ bool Compilation::CleanupFile(const char *File, bool IssueErrors) const {
   // Don't try to remove files which we don't have write access to (but may be
   // able to remove), or non-regular files. Underlying tools may have
   // intentionally not overwritten them.
-  if (!P.canWrite() || !P.isRegularFile())
+  if (!llvm::sys::fs::can_write(File) || !P.isRegularFile())
     return true;
 
   if (P.eraseFromDisk(false, &Error)) {

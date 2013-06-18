@@ -535,7 +535,8 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
     bool Exists;
     if ((CreateMissingDirectories || ParentExists) &&
         ((llvm::sys::fs::exists(AbsPath.str(), Exists) || !Exists) ||
-         (OutPath.isRegularFile() && OutPath.canWrite()))) {
+         (OutPath.isRegularFile() &&
+          llvm::sys::fs::can_write(AbsPath.c_str())))) {
       // Create a temporary file.
       SmallString<128> TempPath;
       TempPath = OutFile;
