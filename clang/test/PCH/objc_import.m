@@ -15,3 +15,18 @@ void func() {
  xx = [TestPCH alloc];
  [xx instMethod];
 }
+
+// rdar://14112291
+@class NewID1;
+void foo1(NewID1 *p);
+void bar1(OldID1 *p) {
+  foo1(p);
+}
+@class NewID2;
+void foo2(NewID2 *p) {
+  [p meth];
+}
+void bar2(OldID2 *p) {
+  foo2(p);
+  [p meth];
+}

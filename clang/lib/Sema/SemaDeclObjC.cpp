@@ -459,6 +459,23 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
 
   // Create a declaration to describe this @interface.
   ObjCInterfaceDecl* PrevIDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
+
+  if (PrevIDecl && PrevIDecl->getIdentifier() != ClassName) {
+    // A previous decl with a different name is because of
+    // @compatibility_alias, for example:
+    // \code
+    //   @class NewImage;
+    //   @compatibility_alias OldImage NewImage;
+    // \endcode
+    // A lookup for 'OldImage' will return the 'NewImage' decl.
+    //
+    // In such a case use the real declaration name, instead of the alias one,
+    // otherwise we will break IdentifierResolver and redecls-chain invariants.
+    // FIXME: If necessary, add a bit to indicate that this ObjCInterfaceDecl
+    // has been aliased.
+    ClassName = PrevIDecl->getIdentifier();
+  }
+
   ObjCInterfaceDecl *IDecl
     = ObjCInterfaceDecl::Create(Context, CurContext, AtInterfaceLoc, ClassName,
                                 PrevIDecl, ClassLoc);
@@ -1938,9 +1955,27 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     // Create a declaration to describe this forward declaration.
     ObjCInterfaceDecl *PrevIDecl
       = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
+
+    IdentifierInfo *ClassName = IdentList[i];
+    if (PrevIDecl && PrevIDecl->getIdentifier() != ClassName) {
+      // A previous decl with a different name is because of
+      // @compatibility_alias, for example:
+      // \code
+      //   @class NewImage;
+      //   @compatibility_alias OldImage NewImage;
+      // \endcode
+      // A lookup for 'OldImage' will return the 'NewImage' decl.
+      //
+      // In such a case use the real declaration name, instead of the alias one,
+      // otherwise we will break IdentifierResolver and redecls-chain invariants.
+      // FIXME: If necessary, add a bit to indicate that this ObjCInterfaceDecl
+      // has been aliased.
+      ClassName = PrevIDecl->getIdentifier();
+    }
+
     ObjCInterfaceDecl *IDecl
       = ObjCInterfaceDecl::Create(Context, CurContext, AtClassLoc,
-                                  IdentList[i], PrevIDecl, IdentLocs[i]);
+                                  ClassName, PrevIDecl, IdentLocs[i]);
     IDecl->setAtEndRange(IdentLocs[i]);
     
     PushOnScopeChains(IDecl, TUScope);
