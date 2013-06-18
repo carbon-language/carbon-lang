@@ -1379,7 +1379,7 @@ llvm::DIType CGDebugInfo::getOrCreateInterfaceType(QualType D,
 /// CreateType - get structure or union type.
 llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty, bool Declaration) {
   RecordDecl *RD = Ty->getDecl();
-  if (Declaration) {
+  if (DebugKind <= CodeGenOptions::LimitedDebugInfo && Declaration) {
     llvm::DIDescriptor FDContext =
       getContextDescriptor(cast<Decl>(RD->getDeclContext()));
     llvm::DIType RetTy = createRecordFwdDecl(RD, FDContext);
