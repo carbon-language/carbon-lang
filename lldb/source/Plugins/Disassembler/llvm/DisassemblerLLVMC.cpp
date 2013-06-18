@@ -441,7 +441,7 @@ DisassemblerLLVMC::LLVMCDisassembler::LLVMCDisassembler (const char *triple, uns
         return;
     }
     
-    m_context_ap.reset(new llvm::MCContext(*m_asm_info_ap.get(), *(m_reg_info_ap.get()), 0));
+    m_context_ap.reset(new llvm::MCContext(m_asm_info_ap.get(), m_reg_info_ap.get(), 0));
     
     m_disasm_ap.reset(curr_target->createMCDisassembler(*m_subtarget_info_ap.get()));
     if (m_disasm_ap.get() && m_context_ap.get())
