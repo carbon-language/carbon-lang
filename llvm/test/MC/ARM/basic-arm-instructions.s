@@ -1247,8 +1247,10 @@ Lforward:
 @ NOP
 @------------------------------------------------------------------------------
         nop
+        nop.w
         nopgt
 
+@ CHECK: nop @ encoding: [0x00,0xf0,0x20,0xe3]
 @ CHECK: nop @ encoding: [0x00,0xf0,0x20,0xe3]
 @ CHECK: nopgt @ encoding: [0x00,0xf0,0x20,0xc3]
 

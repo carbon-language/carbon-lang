@@ -5266,7 +5266,17 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
         doesIgnoreDataTypeSuffix(Mnemonic, ExtraToken))
       continue;
 
-    if (ExtraToken != ".n") {
+    // For for ARM mode generate an error if the .n qualifier is used.
+    if (ExtraToken == ".n" && !isThumb()) {
+      SMLoc Loc = SMLoc::getFromPointer(NameLoc.getPointer() + Start);
+      return Error(Loc, "instruction with .n (narrow) qualifier not allowed in "
+                   "arm mode");
+    }
+
+    // The .n qualifier is always discarded as that is what the tables
+    // and matcher expect.  In ARM mode the .w qualifier has no effect,
+    // so discard it to avoid errors that can be caused by the matcher.
+    if (ExtraToken != ".n" && (isThumb() || ExtraToken != ".w")) {
       SMLoc Loc = SMLoc::getFromPointer(NameLoc.getPointer() + Start);
       Operands.push_back(ARMOperand::CreateToken(ExtraToken, Loc));
     }

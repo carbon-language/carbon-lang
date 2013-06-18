@@ -376,3 +376,6 @@
         isb #16
 @ CHECK-ERRORS: error: immediate value out of range
 @ CHECK-ERRORS: error: immediate value out of range
+
+        nop.n
+@ CHECK-ERRORS: error: instruction with .n (narrow) qualifier not allowed in arm mode
