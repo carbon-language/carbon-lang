@@ -20,18 +20,17 @@ using clang::ast_matchers::MatchFinder;
 using namespace clang;
 using namespace clang::tooling;
 
-int UseAutoTransform::apply(const FileOverrides &InputStates,
+int UseAutoTransform::apply(FileOverrides &InputStates,
                             const clang::tooling::CompilationDatabase &Database,
-                            const std::vector<std::string> &SourcePaths,
-                            FileOverrides &ResultStates) {
-  RefactoringTool UseAutoTool(Database, SourcePaths);
+                            const std::vector<std::string> &SourcePaths) {
+  ClangTool UseAutoTool(Database, SourcePaths);
 
   unsigned AcceptedChanges = 0;
 
   MatchFinder Finder;
-  IteratorReplacer ReplaceIterators(UseAutoTool.getReplacements(),
-                                    AcceptedChanges, Options().MaxRiskLevel);
-  NewReplacer ReplaceNew(UseAutoTool.getReplacements(), AcceptedChanges,
+  IteratorReplacer ReplaceIterators(getReplacements(), AcceptedChanges,
+                                    Options().MaxRiskLevel);
+  NewReplacer ReplaceNew(getReplacements(), AcceptedChanges,
                          Options().MaxRiskLevel);
 
   Finder.addMatcher(makeIteratorDeclMatcher(), &ReplaceIterators);
@@ -43,13 +42,6 @@ int UseAutoTransform::apply(const FileOverrides &InputStates,
     llvm::errs() << "Error encountered during translation.\n";
     return Result;
   }
-
-  RewriterContainer Rewrite(UseAutoTool.getFiles(), InputStates);
-
-  // FIXME: Do something if some replacements didn't get applied?
-  UseAutoTool.applyAllReplacements(Rewrite.getRewriter());
-
-  collectResults(Rewrite.getRewriter(), InputStates, ResultStates);
 
   setAcceptedChanges(AcceptedChanges);
 

@@ -16,7 +16,7 @@ public:
 
     FileOverrides::const_iterator I = Overrides.find(Filename);
     if (I != Overrides.end())
-      I->second.applyOverrides(CI.getSourceManager(), CI.getFileManager());
+      I->second.applyOverrides(CI.getSourceManager());
 
     return true;
   }

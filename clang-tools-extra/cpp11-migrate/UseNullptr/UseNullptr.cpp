@@ -25,17 +25,15 @@ using clang::ast_matchers::MatchFinder;
 using namespace clang::tooling;
 using namespace clang;
 
-int UseNullptrTransform::apply(const FileOverrides &InputStates,
+int UseNullptrTransform::apply(FileOverrides &InputStates,
                                const CompilationDatabase &Database,
-                               const std::vector<std::string> &SourcePaths,
-                               FileOverrides &ResultStates) {
-  RefactoringTool UseNullptrTool(Database, SourcePaths);
+                               const std::vector<std::string> &SourcePaths) {
+  ClangTool UseNullptrTool(Database, SourcePaths);
 
   unsigned AcceptedChanges = 0;
 
   MatchFinder Finder;
-  NullptrFixer Fixer(UseNullptrTool.getReplacements(),
-                     AcceptedChanges,
+  NullptrFixer Fixer(getReplacements(), AcceptedChanges,
                      Options().MaxRiskLevel);
   Finder.addMatcher(makeCastSequenceMatcher(), &Fixer);
 
@@ -45,13 +43,6 @@ int UseNullptrTransform::apply(const FileOverrides &InputStates,
     llvm::errs() << "Error encountered during translation.\n";
     return result;
   }
-
-  RewriterContainer Rewrite(UseNullptrTool.getFiles(), InputStates);
-
-  // FIXME: Do something if some replacements didn't get applied?
-  UseNullptrTool.applyAllReplacements(Rewrite.getRewriter());
-
-  collectResults(Rewrite.getRewriter(), InputStates, ResultStates);
 
   setAcceptedChanges(AcceptedChanges);
 

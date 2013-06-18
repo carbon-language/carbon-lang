@@ -14,10 +14,9 @@ public:
   DummyTransform(llvm::StringRef Name, const TransformOptions &Options)
       : Transform(Name, Options) {}
 
-  virtual int apply(const FileOverrides &,
+  virtual int apply(FileOverrides &,
                     const tooling::CompilationDatabase &,
-                    const std::vector<std::string> &,
-                    FileOverrides &) { return 0; }
+                    const std::vector<std::string> &) { return 0; }
 
   void setAcceptedChanges(unsigned Changes) {
     Transform::setAcceptedChanges(Changes);
@@ -29,7 +28,7 @@ public:
     Transform::setDeferredChanges(Changes);
   }
 
-  void setOverrides(const FileOverrides &Overrides) {
+  void setOverrides(FileOverrides &Overrides) {
     Transform::setOverrides(Overrides);
   }
 

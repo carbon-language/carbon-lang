@@ -32,17 +32,15 @@ static llvm::cl::opt<bool> DetectMacros(
     llvm::cl::desc(
         "Detect and use macros that expand to the 'override' keyword."));
 
-int AddOverrideTransform::apply(const FileOverrides &InputStates,
+int AddOverrideTransform::apply(FileOverrides &InputStates,
                                 const CompilationDatabase &Database,
-                                const std::vector<std::string> &SourcePaths,
-                                FileOverrides &ResultStates) {
-  RefactoringTool AddOverrideTool(Database, SourcePaths);
+                                const std::vector<std::string> &SourcePaths) {
+  ClangTool AddOverrideTool(Database, SourcePaths);
 
   unsigned AcceptedChanges = 0;
 
   MatchFinder Finder;
-  AddOverrideFixer Fixer(AddOverrideTool.getReplacements(), AcceptedChanges,
-                         DetectMacros);
+  AddOverrideFixer Fixer(getReplacements(), AcceptedChanges, DetectMacros);
   Finder.addMatcher(makeCandidateForOverrideAttrMatcher(), &Fixer);
 
   // Make Fixer available to handleBeginSource().
@@ -54,13 +52,6 @@ int AddOverrideTransform::apply(const FileOverrides &InputStates,
     llvm::errs() << "Error encountered during translation.\n";
     return result;
   }
-
-  RewriterContainer Rewrite(AddOverrideTool.getFiles(), InputStates);
-
-  // FIXME: Do something if some replacements didn't get applied?
-  AddOverrideTool.applyAllReplacements(Rewrite.getRewriter());
-
-  collectResults(Rewrite.getRewriter(), InputStates, ResultStates);
 
   setAcceptedChanges(AcceptedChanges);
 

@@ -1,6 +1,10 @@
 #include "Core/Transform.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "clang/Basic/LangOptions.h"
+#include "clang/Basic/DiagnosticOptions.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/CompilerInstance.h"
+#include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -54,29 +58,55 @@ private:
   MatchFinder &Finder;
   Transform &Owner;
 };
-
 } // namespace
 
-RewriterContainer::RewriterContainer(clang::FileManager &Files,
-                                     const FileOverrides &InputStates)
-    : DiagOpts(new clang::DiagnosticOptions()),
-      DiagnosticPrinter(llvm::errs(), DiagOpts.getPtr()),
-      Diagnostics(llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs>(
-                      new clang::DiagnosticIDs()),
-                  DiagOpts.getPtr(), &DiagnosticPrinter, false),
-      Sources(Diagnostics, Files), Rewrite(Sources, DefaultLangOptions) {
-  for (FileOverrides::const_iterator I = InputStates.begin(),
-                                       E = InputStates.end();
-       I != E; ++I)
-    I->second.applyOverrides(Sources, Files);
-}
+/// \brief Class for creating Rewriter objects and housing Rewriter
+/// dependencies.
+///
+/// A Rewriter depends on a SourceManager which in turn depends on a
+/// FileManager and a DiagnosticsEngine. Transform uses this class to create a
+/// new Rewriter and SourceManager for every translation unit it transforms. A
+/// DiagnosticsEngine doesn't need to be re-created so it's constructed once. A
+/// SourceManager and Rewriter and (re)created as required.
+///
+/// FIXME: The DiagnosticsEngine should really come from somewhere more global.
+/// It shouldn't be re-created once for every transform.
+///
+/// NOTE: SourceManagers cannot be shared. Therefore the one used to parse the
+/// translation unit cannot be used to create a Rewriter. This is why both a
+/// SourceManager and Rewriter need to be created for each translation unit.
+class RewriterManager {
+public:
+  RewriterManager()
+      : DiagOpts(new DiagnosticOptions()),
+        DiagnosticPrinter(llvm::errs(), DiagOpts.getPtr()),
+        Diagnostics(
+            llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()),
+            DiagOpts.getPtr(), &DiagnosticPrinter, false) {}
 
-void collectResults(clang::Rewriter &Rewrite,
-                    const FileOverrides &InputStates,
-                    FileOverrides &Results) {
-  // Copy the contents of InputStates to be modified.
-  Results = InputStates;
+  void prepare(FileManager &Files) {
+    Sources.reset(new SourceManager(Diagnostics, Files));
+    Rewrite.reset(new Rewriter(*Sources, DefaultLangOptions));
+  }
 
+  void applyOverrides(const SourceOverrides &Overrides) {
+    Overrides.applyOverrides(*Sources);
+  }
+
+  Rewriter &getRewriter() { return *Rewrite; }
+
+private:
+  LangOptions DefaultLangOptions;
+  llvm::IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
+  TextDiagnosticPrinter DiagnosticPrinter;
+  DiagnosticsEngine Diagnostics;
+  llvm::OwningPtr<SourceManager> Sources;
+  llvm::OwningPtr<Rewriter> Rewrite;
+};
+
+/// \brief Flatten the Rewriter buffers of \p Rewrite and store results as
+/// file content overrides in \p Overrides.
+void collectResults(clang::Rewriter &Rewrite, SourceOverrides &Overrides) {
   for (Rewriter::buffer_iterator I = Rewrite.buffer_begin(),
                                  E = Rewrite.buffer_end();
        I != E; ++I) {
@@ -84,12 +114,6 @@ void collectResults(clang::Rewriter &Rewrite,
     assert(Entry != 0 && "Expected a FileEntry");
     assert(Entry->getName() != 0 &&
            "Unexpected NULL return from FileEntry::getName()");
-
-    FileOverrides::iterator OverrideI = Results.find(Entry->getName());
-    if (OverrideI == Results.end()) {
-      OverrideI = Results.insert(FileOverrides::value_type(
-          Entry->getName(), Entry->getName())).first;
-    }
 
     std::string ResultBuf;
 
@@ -103,17 +127,48 @@ void collectResults(clang::Rewriter &Rewrite,
     // FIXME: Use move semantics to avoid copies of the buffer contents if
     // benchmarking shows the copies are expensive, especially for large source
     // files.
-    OverrideI->second.MainFileOverride = ResultBuf;
+
+    if (Overrides.MainFileName == Entry->getName()) {
+      Overrides.MainFileOverride = ResultBuf;
+      continue;
+    }
+
+    // Header overrides are treated differently. Eventually, raw replacements
+    // will be stored as well for later output to disk. Applying replacements
+    // in memory will always be necessary as the source goes down the transform
+    // pipeline.
+
+    HeaderOverrides &Headers = Overrides.Headers;
+    HeaderOverrides::iterator HeaderI = Headers.find(Entry->getName());
+    if (HeaderI == Headers.end())
+      HeaderI = Headers.insert(HeaderOverrides::value_type(
+          Entry->getName(), Entry->getName())).first;
+
+    HeaderI->second.FileOverride = ResultBuf;
   }
 }
 
-bool Transform::handleBeginSource(CompilerInstance &CI, StringRef Filename) {
-  assert(InputState != 0 && "Subclass transform didn't provide InputState");
+Transform::Transform(llvm::StringRef Name, const TransformOptions &Options)
+    : Name(Name), GlobalOptions(Options), Overrides(0),
+      RewriterOwner(new RewriterManager) {
+  Reset();
+}
 
-  FileOverrides::const_iterator I = InputState->find(Filename.str());
-  if (I != InputState->end()) {
-    I->second.applyOverrides(CI.getSourceManager(), CI.getFileManager());
+Transform::~Transform() {}
+
+bool Transform::handleBeginSource(CompilerInstance &CI, StringRef Filename) {
+  assert(Overrides != 0 && "Subclass transform didn't provide InputState");
+
+  CurrentSource = Filename.str();
+
+  RewriterOwner->prepare(CI.getFileManager());
+  FileOverrides::const_iterator I = Overrides->find(CurrentSource);
+  if (I != Overrides->end()) {
+    I->second.applyOverrides(CI.getSourceManager());
+    RewriterOwner->applyOverrides(I->second);
   }
+
+  Replace.clear();
 
   if (Options().EnableTiming) {
     Timings.push_back(std::make_pair(Filename.str(), llvm::TimeRecord()));
@@ -123,10 +178,21 @@ bool Transform::handleBeginSource(CompilerInstance &CI, StringRef Filename) {
 }
 
 void Transform::handleEndSource() {
-  if (!Options().EnableTiming)
-    return;
+  if (!getReplacements().empty()) {
+    // FIXME: applyAllReplacements will indicate if it couldn't apply all
+    // replacements. Handle that case.
+    applyAllReplacements(getReplacements(), RewriterOwner->getRewriter());
 
-  Timings.back().second += llvm::TimeRecord::getCurrentTime(false);
+    FileOverrides::iterator I = Overrides->find(CurrentSource);
+    if (I == Overrides->end())
+      I = Overrides
+        ->insert(FileOverrides::value_type(CurrentSource, CurrentSource)).first;
+
+    collectResults(RewriterOwner->getRewriter(), I->second);
+  }
+
+  if (Options().EnableTiming)
+    Timings.back().second += llvm::TimeRecord::getCurrentTime(false);
 }
 
 void Transform::addTiming(llvm::StringRef Label, llvm::TimeRecord Duration) {

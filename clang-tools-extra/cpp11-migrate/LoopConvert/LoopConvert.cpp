@@ -25,11 +25,10 @@ using clang::ast_matchers::MatchFinder;
 using namespace clang::tooling;
 using namespace clang;
 
-int LoopConvertTransform::apply(const FileOverrides &InputStates,
+int LoopConvertTransform::apply(FileOverrides &InputStates,
                                 const CompilationDatabase &Database,
-                                const std::vector<std::string> &SourcePaths,
-                                FileOverrides &ResultStates) {
-  RefactoringTool LoopTool(Database, SourcePaths);
+                                const std::vector<std::string> &SourcePaths) {
+  ClangTool LoopTool(Database, SourcePaths);
 
   StmtAncestorASTVisitor ParentFinder;
   StmtGeneratedVarNameMap GeneratedDecls;
@@ -39,22 +38,19 @@ int LoopConvertTransform::apply(const FileOverrides &InputStates,
   unsigned RejectedChanges = 0;
 
   MatchFinder Finder;
-  LoopFixer ArrayLoopFixer(&ParentFinder, &LoopTool.getReplacements(),
-                           &GeneratedDecls, &ReplacedVars, &AcceptedChanges,
-                           &DeferredChanges, &RejectedChanges,
-                           Options().MaxRiskLevel, LFK_Array);
+  LoopFixer ArrayLoopFixer(&ParentFinder, &getReplacements(), &GeneratedDecls,
+                           &ReplacedVars, &AcceptedChanges, &DeferredChanges,
+                           &RejectedChanges, Options().MaxRiskLevel, LFK_Array);
   Finder.addMatcher(makeArrayLoopMatcher(), &ArrayLoopFixer);
-  LoopFixer IteratorLoopFixer(&ParentFinder, &LoopTool.getReplacements(),
-                              &GeneratedDecls, &ReplacedVars,
-                              &AcceptedChanges, &DeferredChanges,
-                              &RejectedChanges,
+  LoopFixer IteratorLoopFixer(&ParentFinder, &getReplacements(),
+                              &GeneratedDecls, &ReplacedVars, &AcceptedChanges,
+                              &DeferredChanges, &RejectedChanges,
                               Options().MaxRiskLevel, LFK_Iterator);
   Finder.addMatcher(makeIteratorLoopMatcher(), &IteratorLoopFixer);
-  LoopFixer PseudoarrrayLoopFixer(&ParentFinder, &LoopTool.getReplacements(),
-                                  &GeneratedDecls, &ReplacedVars,
-                                  &AcceptedChanges, &DeferredChanges,
-                                  &RejectedChanges,
-                                  Options().MaxRiskLevel, LFK_PseudoArray);
+  LoopFixer PseudoarrrayLoopFixer(
+      &ParentFinder, &getReplacements(), &GeneratedDecls, &ReplacedVars,
+      &AcceptedChanges, &DeferredChanges, &RejectedChanges,
+      Options().MaxRiskLevel, LFK_PseudoArray);
   Finder.addMatcher(makePseudoArrayLoopMatcher(), &PseudoarrrayLoopFixer);
 
   setOverrides(InputStates);
@@ -63,13 +59,6 @@ int LoopConvertTransform::apply(const FileOverrides &InputStates,
     llvm::errs() << "Error encountered during translation.\n";
     return result;
   }
-
-  RewriterContainer Rewrite(LoopTool.getFiles(), InputStates);
-
-  // FIXME: Do something if some replacements didn't get applied?
-  LoopTool.applyAllReplacements(Rewrite.getRewriter());
-
-  collectResults(Rewrite.getRewriter(), InputStates, ResultStates);
 
   setAcceptedChanges(AcceptedChanges);
   setRejectedChanges(RejectedChanges);

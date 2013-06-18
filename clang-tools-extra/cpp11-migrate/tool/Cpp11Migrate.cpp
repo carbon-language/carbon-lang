@@ -130,17 +130,15 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
-  FileOverrides FileStates1, FileStates2,
-      *InputFileStates = &FileStates1, *OutputFileStates = &FileStates2;
-
+  FileOverrides FileStates;
   SourcePerfData PerfData;
 
   // Apply transforms.
   for (Transforms::const_iterator I = TransformManager.begin(),
                                   E = TransformManager.end();
        I != E; ++I) {
-    if ((*I)->apply(*InputFileStates, OptionsParser.getCompilations(),
-                    OptionsParser.getSourcePathList(), *OutputFileStates) !=
+    if ((*I)->apply(FileStates, OptionsParser.getCompilations(),
+                    OptionsParser.getSourcePathList()) !=
         0) {
       // FIXME: Improve ClangTool to not abort if just one file fails.
       return 1;
@@ -161,24 +159,25 @@ int main(int argc, const char **argv) {
       }
       llvm::outs() << "\n";
     }
-    std::swap(InputFileStates, OutputFileStates);
-    OutputFileStates->clear();
   }
 
   if (FinalSyntaxCheck)
-    // Final state of files is pointed at by InputFileStates.
     if (!doSyntaxCheck(OptionsParser.getCompilations(),
-                       OptionsParser.getSourcePathList(), *InputFileStates))
+                       OptionsParser.getSourcePathList(), FileStates))
       return 1;
 
   // Write results to file.
-  for (FileOverrides::const_iterator I = InputFileStates->begin(),
-                                     E = InputFileStates->end();
+  for (FileOverrides::const_iterator I = FileStates.begin(),
+                                     E = FileStates.end();
        I != E; ++I) {
-    std::string ErrorInfo;
-    llvm::raw_fd_ostream FileStream(I->first.c_str(), ErrorInfo,
-                                    llvm::raw_fd_ostream::F_Binary);
-    FileStream << I->second.MainFileOverride;
+    if (I->second.isSourceOverriden()) {
+      llvm::errs() << "Writing source: " << I->first << "\n";
+        
+      std::string ErrorInfo;
+      llvm::raw_fd_ostream FileStream(I->first.c_str(), ErrorInfo,
+                                      llvm::raw_fd_ostream::F_Binary);
+      FileStream << I->second.MainFileOverride;
+    }
 
     // FIXME: The Migrator shouldn't be responsible for writing headers
     // to disk. Instead, it should write replacement info and another tool
@@ -188,7 +187,11 @@ int main(int argc, const char **argv) {
     for (HeaderOverrides::const_iterator HeaderI = I->second.Headers.begin(),
                                          HeaderE = I->second.Headers.end();
          HeaderI != HeaderE; ++HeaderI) {
-      llvm::raw_fd_ostream HeaderStream(I->first.c_str(), ErrorInfo,
+      llvm::errs() << "Writing header: " << HeaderI->first << "\n";
+      assert(!HeaderI->second.FileOverride.empty() &&
+             "A header override should not be empty");
+      std::string ErrorInfo;
+      llvm::raw_fd_ostream HeaderStream(HeaderI->first.c_str(), ErrorInfo,
                                         llvm::raw_fd_ostream::F_Binary);
       HeaderStream << HeaderI->second.FileOverride;
     }

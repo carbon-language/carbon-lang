@@ -19,16 +19,9 @@
 #include <vector>
 #include "Core/IncludeExcludeInfo.h"
 #include "Core/FileOverrides.h"
+#include "clang/Tooling/Refactoring.h"
 #include "llvm/Support/Timer.h"
-
-// For RewriterContainer
-#include "clang/Rewrite/Core/Rewriter.h"
-#include "clang/Basic/LangOptions.h"
-#include "clang/Basic/DiagnosticOptions.h"
-#include "clang/Frontend/TextDiagnosticPrinter.h"
-#include "clang/Basic/SourceManager.h"
-#include "llvm/Support/raw_ostream.h"
-////
+#include "llvm/ADT/OwningPtr.h"
 
 
 /// \brief Description of the riskiness of actions that can be taken by
@@ -56,41 +49,7 @@ class MatchFinder;
 } // namespace ast_matchers
 } // namespace clang
 
-
-/// \brief In \p Results place copies of the buffers resulting from applying
-/// all rewrites represented by \p Rewrite.
-///
-/// \p Results is made up of pairs {filename, buffer contents}. Pairs are
-/// simply appended to \p Results.
-void collectResults(clang::Rewriter &Rewrite,
-                    const FileOverrides &InputStates,
-                    FileOverrides &Results);
-
-/// \brief Class for containing a Rewriter instance and all of
-/// its lifetime dependencies.
-///
-/// Subclasses of Transform using RefactoringTools will need to create
-/// Rewriters in order to apply Replacements and get the resulting buffer.
-/// Rewriter requires some objects to exist at least as long as it does so this
-/// class contains instances of those objects.
-///
-/// FIXME: These objects should really come from somewhere more global instead
-/// of being recreated for every Transform subclass, especially diagnostics.
-class RewriterContainer {
-public:
-  RewriterContainer(clang::FileManager &Files,
-                    const FileOverrides &InputStates);
-
-  clang::Rewriter &getRewriter() { return Rewrite; }
-
-private:
-  clang::LangOptions DefaultLangOptions;
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts;
-  clang::TextDiagnosticPrinter DiagnosticPrinter;
-  clang::DiagnosticsEngine Diagnostics;
-  clang::SourceManager Sources;
-  clang::Rewriter Rewrite;
-};
+class RewriterManager;
 
 /// \brief Container for global options affecting all transforms.
 struct TransformOptions {
@@ -125,12 +84,10 @@ public:
   /// \param Name Name of the transform for human-readable purposes (e.g. -help
   /// text)
   /// \param Options Collection of options that affect all transforms.
-  Transform(llvm::StringRef Name, const TransformOptions &Options)
-      : Name(Name), GlobalOptions(Options), InputState(0) {
-    Reset();
-  }
+  /// \param InitialState File Contents to override content on disk.
+  Transform(llvm::StringRef Name, const TransformOptions &Options);
 
-  virtual ~Transform() {}
+  virtual ~Transform();
 
   /// \brief Apply a transform to all files listed in \p SourcePaths.
   ///
@@ -139,10 +96,9 @@ public:
   /// SourcePaths and should take precedence over content of files on disk.
   /// Upon return, \p ResultStates shall contain the result of performing this
   /// transform on the files listed in \p SourcePaths.
-  virtual int apply(const FileOverrides &InputStates,
+  virtual int apply(FileOverrides &InputStates,
                     const clang::tooling::CompilationDatabase &Database,
-                    const std::vector<std::string> &SourcePaths,
-                    FileOverrides &ResultStates) = 0;
+                    const std::vector<std::string> &SourcePaths) = 0;
 
   /// \brief Query if changes were made during the last call to apply().
   bool getChangesMade() const { return AcceptedChanges > 0; }
@@ -221,14 +177,22 @@ protected:
   /// data for all sources processed by this transform.
   void addTiming(llvm::StringRef Label, llvm::TimeRecord Duration);
 
+  /// \brief Provide access for subclasses to the TransformOptions they were
+  /// created with.
   const TransformOptions &Options() { return GlobalOptions; }
 
-  /// \brief Allows a subclass to provide file contents overrides before
+  /// \brief Provide access for subclasses for the container to store
+  /// translation unit replacements.
+  clang::tooling::Replacements &getReplacements() { return Replace; }
+
+  /// \brief Affords a subclass to provide file contents overrides before
   /// applying frontend actions.
   ///
   /// It is an error not to call this function before calling ClangTool::run()
   /// with the factory provided by createActionFactory().
-  void setOverrides(const FileOverrides &Overrides) { InputState = &Overrides; }
+  void setOverrides(FileOverrides &Overrides) {
+    this->Overrides = &Overrides;
+  }
 
   /// \brief Subclasses must call this function to create a
   /// FrontendActionFactory to pass to ClangTool.
@@ -241,8 +205,11 @@ protected:
 private:
   const std::string Name;
   const TransformOptions &GlobalOptions;
+  FileOverrides *Overrides;
+  clang::tooling::Replacements Replace;
+  llvm::OwningPtr<RewriterManager> RewriterOwner;
+  std::string CurrentSource;
   TimingVec Timings;
-  const FileOverrides *InputState;
   unsigned AcceptedChanges;
   unsigned RejectedChanges;
   unsigned DeferredChanges;

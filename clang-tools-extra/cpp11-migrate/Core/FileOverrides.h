@@ -26,6 +26,8 @@ class FileManager;
 
 /// \brief Container for storing override information for a single headers.
 struct HeaderOverride {
+  HeaderOverride(const char *FileName) : FileName(FileName) {}
+
   std::string FileName;
   std::string FileOverride;
 };
@@ -35,12 +37,18 @@ typedef std::map<std::string, HeaderOverride> HeaderOverrides;
 
 /// \brief Container storing the file content overrides for a source file.
 struct SourceOverrides {
-  SourceOverrides(const char *MainFileName)
+  SourceOverrides(const std::string &MainFileName)
       : MainFileName(MainFileName) {}
 
   /// \brief Convenience function for applying this source's overrides to
   /// the given SourceManager.
-  void applyOverrides(clang::SourceManager &SM, clang::FileManager &FM) const;
+  void applyOverrides(clang::SourceManager &SM) const;
+
+  /// \brief Indicates if the source file has been overridden.
+  ///
+  /// It's possible for a source to remain unchanged while only headers are
+  /// changed.
+  bool isSourceOverriden() const { return !MainFileOverride.empty(); }
 
   std::string MainFileName;
   std::string MainFileOverride;
