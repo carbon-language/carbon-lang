@@ -2098,7 +2098,7 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
     STI(TheTarget->createMCSubtargetInfo(TT, "", ""));
 
   llvm::SourceMgr TempSrcMgr;
-  llvm::MCContext Ctx(*MAI, *MRI, MOFI.get(), &TempSrcMgr);
+  llvm::MCContext Ctx(MAI.get(), MRI.get(), MOFI.get(), &TempSrcMgr);
   llvm::MemoryBuffer *Buffer =
     llvm::MemoryBuffer::getMemBuffer(AsmString, "<MS inline asm>");
 

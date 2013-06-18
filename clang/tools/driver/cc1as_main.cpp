@@ -304,7 +304,7 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
   // FIXME: This is not pretty. MCContext has a ptr to MCObjectFileInfo and
   // MCObjectFileInfo needs a MCContext reference in order to initialize itself.
   OwningPtr<MCObjectFileInfo> MOFI(new MCObjectFileInfo());
-  MCContext Ctx(*MAI, *MRI, MOFI.get(), &SrcMgr);
+  MCContext Ctx(MAI.get(), MRI.get(), MOFI.get(), &SrcMgr);
   // FIXME: Assembler behavior can change with -static.
   MOFI->InitMCObjectFileInfo(Opts.Triple,
                              Reloc::Default, CodeModel::Default, Ctx);
