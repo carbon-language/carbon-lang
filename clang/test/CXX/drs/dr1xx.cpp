@@ -9,15 +9,14 @@ namespace dr100 { // dr100: yes
   B<"bar"> b; // expected-error {{does not refer to any declaration}}
 }
 
-namespace dr101 { // dr101: no
-  // FIXME: This is valid.
-  extern "C" void dr101_f(); // expected-note {{conflicting declaration}}
+namespace dr101 { // dr101: yes
+  extern "C" void dr101_f();
   typedef unsigned size_t;
   namespace X {
-    extern "C" void dr101_f(); // expected-note {{target of using declaration}}
+    extern "C" void dr101_f();
     typedef unsigned size_t;
   }
-  using X::dr101_f; // expected-error {{conflicts with declaration already in scope}}
+  using X::dr101_f;
   using X::size_t;
 }
 
