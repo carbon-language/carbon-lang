@@ -314,3 +314,23 @@ namespace CtorLookup {
   constexpr C::C(const C&) = default;
   constexpr C::C(C&) = default; // expected-error {{not constexpr}}
 }
+
+namespace PR14503 {
+  template<typename> struct V {
+    union {
+      int n;
+      struct {
+        int x,
+            y;
+      };
+    };
+    constexpr V() : x(0) {}
+  };
+
+  // The constructor is still 'constexpr' here, but the result is not intended
+  // to be a constant expression. The standard is not clear on how this should
+  // work.
+  constexpr V<int> v; // expected-error {{constant expression}} expected-note {{subobject of type 'int' is not initialized}}
+
+  constexpr int k = V<int>().x; // FIXME: ok?
+}

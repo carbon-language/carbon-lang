@@ -38,6 +38,8 @@ def note_constexpr_nonliteral : Note<
 def note_constexpr_non_global : Note<
   "%select{pointer|reference}0 to %select{|subobject of }1"
   "%select{temporary|%3}2 is not a constant expression">;
+def note_constexpr_uninitialized : Note<
+  "subobject of type %0 is not initialized">;
 def note_constexpr_array_index : Note<"cannot refer to element %0 of "
   "%select{array of %2 elements|non-array object}1 in a constant expression">;
 def note_constexpr_float_arithmetic : Note<

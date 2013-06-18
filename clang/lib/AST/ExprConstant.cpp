@@ -1132,6 +1132,11 @@ static bool CheckLiteralType(EvalInfo &Info, const Expr *E,
 /// check that the expression is of literal type.
 static bool CheckConstantExpression(EvalInfo &Info, SourceLocation DiagLoc,
                                     QualType Type, const APValue &Value) {
+  if (Value.isUninit()) {
+    Info.Diag(DiagLoc, diag::note_constexpr_uninitialized) << Type;
+    return false;
+  }
+
   // Core issue 1454: For a literal constant expression of array or class type,
   // each subobject of its value shall have been initialized by a constant
   // expression.
