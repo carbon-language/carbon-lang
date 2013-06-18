@@ -1194,7 +1194,7 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
   //   enumeration type, or a class type for which a single non-explicit
   //   conversion function to integral or unscoped enumeration type exists.
   // C++1y [expr.new]p6: The expression [...] is implicitly converted to
-  //   std::size_t. (FIXME)
+  //   std::size_t.
   if (ArraySize && !ArraySize->isTypeDependent()) {
     ExprResult ConvertedSize;
     if (getLangOpts().CPlusPlus1y) {
@@ -1204,7 +1204,8 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
       ConvertedSize = PerformImplicitConversion(ArraySize, Context.getSizeType(),
 						AA_Converting);
 
-      if (!isSFINAEContext())
+      if (!ConvertedSize.isInvalid() && 
+          ArraySize->getType()->getAs<RecordType>())
         // Diagnose the compatibility of this conversion.
         Diag(StartLoc, diag::warn_cxx98_compat_array_size_conversion)
           << ArraySize->getType() << 0 << "'size_t'";
