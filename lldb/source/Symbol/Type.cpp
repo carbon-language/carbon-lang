@@ -982,3 +982,10 @@ TypeImpl::GetDescription (lldb_private::Stream &strm,
     return true;
 }
 
+ConstString
+TypeImpl::GetName ()
+{
+    if (m_clang_ast_type.IsValid())
+        return m_clang_ast_type.GetConstQualifiedTypeName();
+    return ConstString();
+}

@@ -444,6 +444,9 @@ public:
     {
         return m_type_sp;
     }
+    
+    ConstString
+    GetName ();
 
     bool
     GetDescription (lldb_private::Stream &strm, 
@@ -524,6 +527,8 @@ public:
         m_bitfield_bit_size (0),
         m_is_bitfield (false)
     {
+        if (m_type_impl_sp)
+            m_name = m_type_impl_sp->GetName();
     }
 
     const lldb::TypeImplSP &
