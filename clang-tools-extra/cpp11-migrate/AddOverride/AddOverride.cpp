@@ -40,7 +40,9 @@ int AddOverrideTransform::apply(FileOverrides &InputStates,
   unsigned AcceptedChanges = 0;
 
   MatchFinder Finder;
-  AddOverrideFixer Fixer(getReplacements(), AcceptedChanges, DetectMacros);
+
+  AddOverrideFixer Fixer(getReplacements(), AcceptedChanges, DetectMacros,
+                         /*Owner=*/ *this);
   Finder.addMatcher(makeCandidateForOverrideAttrMatcher(), &Fixer);
 
   // Make Fixer available to handleBeginSource().

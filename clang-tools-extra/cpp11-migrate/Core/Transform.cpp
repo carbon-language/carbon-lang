@@ -156,6 +156,21 @@ Transform::Transform(llvm::StringRef Name, const TransformOptions &Options)
 
 Transform::~Transform() {}
 
+bool Transform::isFileModifiable(const SourceManager &SM,
+                                 const SourceLocation &Loc) const {
+  if (SM.isFromMainFile(Loc))
+    return true;
+
+  if (!GlobalOptions.EnableHeaderModifications)
+    return false;
+
+  const FileEntry *FE = SM.getFileEntryForID(SM.getFileID(Loc));
+  if (!FE)
+    return false;
+  
+  return GlobalOptions.ModifiableHeaders.isFileIncluded(FE->getName());
+}
+
 bool Transform::handleBeginSource(CompilerInstance &CI, StringRef Filename) {
   assert(Overrides != 0 && "Subclass transform didn't provide InputState");
 

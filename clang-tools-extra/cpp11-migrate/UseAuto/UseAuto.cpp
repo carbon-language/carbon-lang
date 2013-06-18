@@ -29,9 +29,9 @@ int UseAutoTransform::apply(FileOverrides &InputStates,
 
   MatchFinder Finder;
   IteratorReplacer ReplaceIterators(getReplacements(), AcceptedChanges,
-                                    Options().MaxRiskLevel);
+                                    Options().MaxRiskLevel, /*Owner=*/ *this);
   NewReplacer ReplaceNew(getReplacements(), AcceptedChanges,
-                         Options().MaxRiskLevel);
+                         Options().MaxRiskLevel, /*Owner=*/ *this);
 
   Finder.addMatcher(makeIteratorDeclMatcher(), &ReplaceIterators);
   Finder.addMatcher(makeDeclWithNewMatcher(), &ReplaceNew);

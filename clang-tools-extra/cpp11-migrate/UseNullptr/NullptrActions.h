@@ -26,9 +26,8 @@ typedef llvm::SmallVector<llvm::StringRef, 1> UserMacroNames;
 ///
 class NullptrFixer : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
-  NullptrFixer(clang::tooling::Replacements &Replace,
-               unsigned &AcceptedChanges,
-               RiskLevel);
+  NullptrFixer(clang::tooling::Replacements &Replace, unsigned &AcceptedChanges,
+               RiskLevel, const Transform &Owner);
 
   /// \brief Entry point to the callback called when matches are made.
   virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &Result);
@@ -37,6 +36,7 @@ private:
   clang::tooling::Replacements &Replace;
   unsigned &AcceptedChanges;
   UserMacroNames UserNullMacros;
+  const Transform &Owner;
 };
 
 #endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_NULLPTR_ACTIONS_H

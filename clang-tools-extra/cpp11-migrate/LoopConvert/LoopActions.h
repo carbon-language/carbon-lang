@@ -39,20 +39,20 @@ enum LoopFixerKind {
 /// convert the for loop, if possible.
 class LoopFixer : public clang::ast_matchers::MatchFinder::MatchCallback {
  public:
-  LoopFixer(StmtAncestorASTVisitor *ParentFinder,
-            clang::tooling::Replacements *Replace,
-            StmtGeneratedVarNameMap *GeneratedDecls,
-            ReplacedVarsMap *ReplacedVarRanges,
-            unsigned *AcceptedChanges, unsigned *DeferredChanges,
-            unsigned *RejectedChanges,
-            RiskLevel MaxRisk,
-            LoopFixerKind FixerKind) :
-  ParentFinder(ParentFinder), Replace(Replace),
-  GeneratedDecls(GeneratedDecls), ReplacedVarRanges(ReplacedVarRanges),
-  AcceptedChanges(AcceptedChanges), DeferredChanges(DeferredChanges),
-  RejectedChanges(RejectedChanges),
-  MaxRisk(MaxRisk), FixerKind(FixerKind)  { }
-  virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &Result);
+   LoopFixer(StmtAncestorASTVisitor *ParentFinder,
+             clang::tooling::Replacements *Replace,
+             StmtGeneratedVarNameMap *GeneratedDecls,
+             ReplacedVarsMap *ReplacedVarRanges, unsigned *AcceptedChanges,
+             unsigned *DeferredChanges, unsigned *RejectedChanges,
+             RiskLevel MaxRisk, LoopFixerKind FixerKind, const Transform &Owner)
+       : ParentFinder(ParentFinder), Replace(Replace),
+         GeneratedDecls(GeneratedDecls), ReplacedVarRanges(ReplacedVarRanges),
+         AcceptedChanges(AcceptedChanges), DeferredChanges(DeferredChanges),
+         RejectedChanges(RejectedChanges), MaxRisk(MaxRisk),
+         FixerKind(FixerKind), Owner(Owner) {}
+
+   virtual void
+       run(const clang::ast_matchers::MatchFinder::MatchResult &Result);
 
  private:
   StmtAncestorASTVisitor *ParentFinder;
@@ -64,6 +64,7 @@ class LoopFixer : public clang::ast_matchers::MatchFinder::MatchCallback {
   unsigned *RejectedChanges;
   RiskLevel MaxRisk;
   LoopFixerKind FixerKind;
+  const Transform &Owner;
 
   /// \brief Computes the changes needed to convert a given for loop, and
   /// applies it.

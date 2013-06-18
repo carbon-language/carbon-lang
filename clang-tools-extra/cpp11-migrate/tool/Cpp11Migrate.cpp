@@ -171,8 +171,6 @@ int main(int argc, const char **argv) {
                                      E = FileStates.end();
        I != E; ++I) {
     if (I->second.isSourceOverriden()) {
-      llvm::errs() << "Writing source: " << I->first << "\n";
-        
       std::string ErrorInfo;
       llvm::raw_fd_ostream FileStream(I->first.c_str(), ErrorInfo,
                                       llvm::raw_fd_ostream::F_Binary);
@@ -187,7 +185,6 @@ int main(int argc, const char **argv) {
     for (HeaderOverrides::const_iterator HeaderI = I->second.Headers.begin(),
                                          HeaderE = I->second.Headers.end();
          HeaderI != HeaderE; ++HeaderI) {
-      llvm::errs() << "Writing header: " << HeaderI->first << "\n";
       assert(!HeaderI->second.FileOverride.empty() &&
              "A header override should not be empty");
       std::string ErrorInfo;

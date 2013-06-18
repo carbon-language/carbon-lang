@@ -33,8 +33,9 @@ int UseNullptrTransform::apply(FileOverrides &InputStates,
   unsigned AcceptedChanges = 0;
 
   MatchFinder Finder;
-  NullptrFixer Fixer(getReplacements(), AcceptedChanges,
-                     Options().MaxRiskLevel);
+  NullptrFixer Fixer(getReplacements(), AcceptedChanges, Options().MaxRiskLevel,
+                     /*Owner=*/ *this);
+
   Finder.addMatcher(makeCastSequenceMatcher(), &Fixer);
 
   setOverrides(InputStates);

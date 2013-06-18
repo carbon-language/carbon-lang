@@ -25,7 +25,7 @@ void IteratorReplacer::run(const MatchFinder::MatchResult &Result) {
   assert(D && "Bad Callback. No node provided");
 
   SourceManager &SM = *Result.SourceManager;
-  if (!SM.isFromMainFile(D->getLocStart()))
+  if (!Owner.isFileModifiable(SM, D->getLocStart()))
     return;
 
   for (clang::DeclStmt::const_decl_iterator DI = D->decl_begin(),
@@ -81,7 +81,7 @@ void NewReplacer::run(const MatchFinder::MatchResult &Result) {
   assert(D && "Bad Callback. No node provided");
 
   SourceManager &SM = *Result.SourceManager;
-  if (!SM.isFromMainFile(D->getLocStart()))
+  if (!Owner.isFileModifiable(SM, D->getLocStart()))
     return;
 
   const VarDecl *FirstDecl = cast<VarDecl>(*D->decl_begin());

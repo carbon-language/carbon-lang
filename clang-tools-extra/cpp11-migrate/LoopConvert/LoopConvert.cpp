@@ -40,17 +40,18 @@ int LoopConvertTransform::apply(FileOverrides &InputStates,
   MatchFinder Finder;
   LoopFixer ArrayLoopFixer(&ParentFinder, &getReplacements(), &GeneratedDecls,
                            &ReplacedVars, &AcceptedChanges, &DeferredChanges,
-                           &RejectedChanges, Options().MaxRiskLevel, LFK_Array);
+                           &RejectedChanges, Options().MaxRiskLevel, LFK_Array,
+                           /*Owner=*/ *this);
   Finder.addMatcher(makeArrayLoopMatcher(), &ArrayLoopFixer);
-  LoopFixer IteratorLoopFixer(&ParentFinder, &getReplacements(),
-                              &GeneratedDecls, &ReplacedVars, &AcceptedChanges,
-                              &DeferredChanges, &RejectedChanges,
-                              Options().MaxRiskLevel, LFK_Iterator);
+  LoopFixer IteratorLoopFixer(
+      &ParentFinder, &getReplacements(), &GeneratedDecls, &ReplacedVars,
+      &AcceptedChanges, &DeferredChanges, &RejectedChanges,
+      Options().MaxRiskLevel, LFK_Iterator, /*Owner=*/ *this);
   Finder.addMatcher(makeIteratorLoopMatcher(), &IteratorLoopFixer);
   LoopFixer PseudoarrrayLoopFixer(
       &ParentFinder, &getReplacements(), &GeneratedDecls, &ReplacedVars,
       &AcceptedChanges, &DeferredChanges, &RejectedChanges,
-      Options().MaxRiskLevel, LFK_PseudoArray);
+      Options().MaxRiskLevel, LFK_PseudoArray, /*Owner=*/ *this);
   Finder.addMatcher(makePseudoArrayLoopMatcher(), &PseudoarrrayLoopFixer);
 
   setOverrides(InputStates);

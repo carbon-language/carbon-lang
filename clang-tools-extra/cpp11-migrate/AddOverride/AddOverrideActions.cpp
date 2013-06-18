@@ -15,6 +15,7 @@
 
 #include "AddOverrideActions.h"
 #include "AddOverrideMatchers.h"
+#include "Core/Transform.h"
 
 #include "clang/Basic/CharInfo.h"
 #include "clang/AST/ASTContext.h"
@@ -61,8 +62,7 @@ void AddOverrideFixer::run(const MatchFinder::MatchResult &Result) {
   if (const FunctionDecl *TemplateMethod = M->getTemplateInstantiationPattern())
     M = cast<CXXMethodDecl>(TemplateMethod);
 
-  // Check that the method declaration is in the main file
-  if (!SM.isFromMainFile(M->getLocStart()))
+  if (!Owner.isFileModifiable(SM, M->getLocStart()))
     return;
 
   // First check that there isn't already an override attribute.

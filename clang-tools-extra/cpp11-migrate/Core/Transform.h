@@ -131,6 +131,11 @@ public:
     DeferredChanges = 0;
   }
 
+  /// \brief Tests if the file containing \a Loc is allowed to be modified by
+  /// the Migrator.
+  bool isFileModifiable(const clang::SourceManager &SM,
+                        const clang::SourceLocation &Loc) const;
+
   /// \brief Called before parsing a translation unit for a FrontendAction.
   ///
   /// Transform uses this function to apply file overrides and start

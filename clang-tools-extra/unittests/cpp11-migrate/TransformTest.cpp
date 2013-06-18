@@ -2,12 +2,14 @@
 #include "Core/Transform.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DeclGroup.h"
-#include "clang/Tooling/Tooling.h"
+#include "clang/ASTMatchers/ASTMatchers.h"
+#include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PathV1.h"
 
 using namespace clang;
+using namespace ast_matchers;
 
 class DummyTransform : public Transform {
 public:
@@ -170,4 +172,116 @@ TEST(Transform, Timings) {
   }
   ++I;
   EXPECT_EQ(T.timing_end(), I);
+}
+
+class ModifiableCallback
+    : public clang::ast_matchers::MatchFinder::MatchCallback {
+public:
+  ModifiableCallback(const Transform &Owner, bool HeadersModifiable)
+      : Owner(Owner), HeadersModifiable(HeadersModifiable) {}
+
+  virtual void
+  run(const clang::ast_matchers::MatchFinder::MatchResult &Result) {
+    const VarDecl *Decl = Result.Nodes.getNodeAs<VarDecl>("decl");
+    ASSERT_TRUE(Decl != 0);
+
+    const SourceManager &SM = *Result.SourceManager;
+
+    // Decl 'a' comes from the main source file. This test should always pass.
+    if (Decl->getName().equals("a"))
+      EXPECT_TRUE(Owner.isFileModifiable(SM, Decl->getLocStart()));
+
+    // Decl 'c' comes from an excluded header. This test should never pass.
+    else if (Decl->getName().equals("c"))
+      EXPECT_FALSE(Owner.isFileModifiable(SM, Decl->getLocStart()));
+
+    // Decl 'b' comes from an included header. It should be modifiable only if
+    // header modifications are allowed.
+    else if (Decl->getName().equals("b"))
+      EXPECT_EQ(HeadersModifiable,
+                Owner.isFileModifiable(SM, Decl->getLocStart()));
+
+    // Make sure edge cases are handled gracefully (they should never be
+    // allowed).
+    SourceLocation DummyLoc;
+    EXPECT_FALSE(Owner.isFileModifiable(SM, DummyLoc));
+  }
+
+private:
+  const Transform &Owner;
+  bool HeadersModifiable;
+};
+
+TEST(Transform, isFileModifiable) {
+  TransformOptions Options;
+
+  ///
+  /// SETUP
+  ///
+  /// To test Transform::isFileModifiable() we need a SourceManager primed with
+  /// actual files and SourceLocations to test. Easiest way to accomplish this
+  /// is to use Tooling classes.
+  ///
+  /// 1) Simulate a source file that includes two headers, one that is allowed
+  ///    to be modified and the other that is not allowed. Each of the three
+  ///    files involved will declare a single variable with a different name. 
+  /// 2) A matcher is created to find VarDecls.
+  /// 3) A MatchFinder callback calls Transform::isFileModifiable() with the
+  ///    SourceLocations of found VarDecls and thus tests the function.
+  ///
+
+  // All the path stuff is to make the test work independently of OS.
+
+  // The directory used is not important since the path gets mapped to a virtual
+  // file anyway. What is important is that we have an absolute path with which
+  // to use with mapVirtualFile().
+  llvm::sys::Path SourceFile = llvm::sys::Path::GetCurrentDirectory();
+  std::string CurrentDir = SourceFile.str();
+  SourceFile.appendComponent("a.cc");
+  std::string SourceFileName = SourceFile.str();
+
+  llvm::sys::Path HeaderFile = llvm::sys::Path::GetCurrentDirectory();
+  HeaderFile.appendComponent("a.h");
+  std::string HeaderFileName = HeaderFile.str();
+
+  llvm::sys::Path HeaderBFile = llvm::sys::Path::GetCurrentDirectory();
+  HeaderBFile.appendComponent("temp");
+  std::string ExcludeDir = HeaderBFile.str();
+  HeaderBFile.appendComponent("b.h");
+  std::string HeaderBFileName = HeaderBFile.str();
+
+  IncludeExcludeInfo IncInfo;
+  Options.ModifiableHeaders.readListFromString(CurrentDir, ExcludeDir);
+
+  tooling::FixedCompilationDatabase Compilations(CurrentDir, std::vector<std::string>());
+  std::vector<std::string> Sources;
+  Sources.push_back(SourceFileName);
+  tooling::ClangTool Tool(Compilations, Sources);
+
+  Tool.mapVirtualFile(SourceFileName,
+                      "#include \"a.h\"\n"
+                      "#include \"temp/b.h\"\n"
+                      "int a;");
+  Tool.mapVirtualFile(HeaderFileName, "int b;");
+  Tool.mapVirtualFile(HeaderBFileName, "int c;");
+
+  // Run tests with header modifications turned off.
+  {
+    SCOPED_TRACE("Header Modifications are OFF");
+    Options.EnableHeaderModifications = false;
+    DummyTransform T("dummy", Options);
+    MatchFinder Finder;
+    Finder.addMatcher(varDecl().bind("decl"), new ModifiableCallback(T, false));
+    Tool.run(tooling::newFrontendActionFactory(&Finder));
+  }
+
+  // Run again with header modifications turned on.
+  {
+    SCOPED_TRACE("Header Modifications are ON");
+    Options.EnableHeaderModifications = true;
+    DummyTransform T("dummy", Options);
+    MatchFinder Finder;
+    Finder.addMatcher(varDecl().bind("decl"), new ModifiableCallback(T, true));
+    Tool.run(tooling::newFrontendActionFactory(&Finder));
+  }
 }

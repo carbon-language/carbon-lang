@@ -1030,7 +1030,7 @@ void LoopFixer::run(const MatchFinder::MatchResult &Result) {
   ASTContext *Context = Result.Context;
   const ForStmt *TheLoop = Nodes.getStmtAs<ForStmt>(LoopName);
 
-  if (!Context->getSourceManager().isFromMainFile(TheLoop->getForLoc()))
+  if (!Owner.isFileModifiable(Context->getSourceManager(),TheLoop->getForLoc()))
     return;
 
   // Check that we have exactly one index variable and at most one end variable.
