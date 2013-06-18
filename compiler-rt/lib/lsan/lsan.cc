@@ -48,6 +48,7 @@ void Init() {
   u32 tid = ThreadCreate(0, 0, true);
   CHECK_EQ(tid, 0);
   ThreadStart(tid, GetTid());
+  SetCurrentThread(tid);
 
   // Start symbolizer process if necessary.
   const char* external_symbolizer = common_flags()->external_symbolizer_path;
