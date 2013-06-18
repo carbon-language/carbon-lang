@@ -113,7 +113,7 @@ cl::opt<std::string> HeaderPrefix(
         " the files are considered to be relative to the header list file."));
 
 // Read the header list file and collect the header file names.
-error_code GetHeaderFileNames(SmallVectorImpl<std::string> &headerFileNames,
+error_code getHeaderFileNames(SmallVectorImpl<std::string> &headerFileNames,
                               StringRef listFileName, StringRef headerPrefix) {
 
   // By default, use the path component of the list file name.
@@ -445,7 +445,7 @@ int main(int argc, const char **argv) {
 
   // Get header file names.
   SmallVector<std::string, 32> Headers;
-  if (error_code ec = GetHeaderFileNames(Headers, ListFileName, HeaderPrefix)) {
+  if (error_code ec = getHeaderFileNames(Headers, ListFileName, HeaderPrefix)) {
     errs() << argv[0] << ": error: Unable to get header list '" << ListFileName
            << "': " << ec.message() << '\n';
     return 1;
@@ -524,7 +524,7 @@ int main(int argc, const char **argv) {
 
     HadErrors = 1;
     errs() << "error: header '" << H->first->getName()
-           << "' has different contents dependening on how it was included\n";
+           << "' has different contents depending on how it was included\n";
     for (unsigned I = 0, N = H->second.size(); I != N; ++I) {
       errs() << "note: '" << H->second[I].Name << "' in " << H->second[I]
           .Loc.File->getName() << " at " << H->second[I].Loc.Line << ":"
