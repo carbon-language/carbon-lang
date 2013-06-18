@@ -1,0 +1,6 @@
+RUN: llvm-nm %p/Inputs/macho-universal.x86_64.i386 | FileCheck %s
+
+CHECK: macho-universal.x86_64.i386:x86_64
+CHECK: main
+CHECK: macho-universal.x86_64.i386:i386
+CHECK: main

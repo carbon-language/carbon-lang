@@ -34,6 +34,8 @@ std::string _object_error_category::message(int ev) const {
   object_error::Impl E = static_cast<object_error::Impl>(ev);
   switch (E) {
   case object_error::success: return "Success";
+  case object_error::arch_not_found:
+    return "No object file for requested architecture";
   case object_error::invalid_file_type:
     return "The file was not recognized as a valid object file";
   case object_error::parse_failed:

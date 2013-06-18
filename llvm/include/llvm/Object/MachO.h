@@ -17,6 +17,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Object/MachOFormat.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/MachO.h"
@@ -195,6 +196,8 @@ public:
   StringRef getStringTableData() const;
   bool is64Bit() const;
   void ReadULEB128s(uint64_t Index, SmallVectorImpl<uint64_t> &Out) const;
+
+  static Triple::ArchType getArch(uint32_t CPUType);
 
   static bool classof(const Binary *v) {
     return v->isMachO();

@@ -20,6 +20,7 @@
 // Include headers for createBinary.
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/COFF.h"
+#include "llvm/Object/MachOUniversal.h"
 #include "llvm/Object/ObjectFile.h"
 
 using namespace llvm;
@@ -79,6 +80,12 @@ error_code object::createBinary(MemoryBuffer *Source,
         ObjectFile::createMachOObjectFile(scopedSource.take()));
       if (!ret)
         return object_error::invalid_file_type;
+      Result.swap(ret);
+      return object_error::success;
+    }
+    case sys::fs::file_magic::macho_universal_binary: {
+      OwningPtr<Binary> ret(new MachOUniversalBinary(scopedSource.take(), ec));
+      if (ec) return ec;
       Result.swap(ret);
       return object_error::success;
     }

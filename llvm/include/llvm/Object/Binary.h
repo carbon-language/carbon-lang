@@ -38,6 +38,7 @@ protected:
 
   enum {
     ID_Archive,
+    ID_MachOUniversalBinary,
     // Object and children.
     ID_StartObjects,
     ID_COFF,
@@ -85,6 +86,10 @@ public:
 
   bool isArchive() const {
     return TypeID == ID_Archive;
+  }
+
+  bool isMachOUniversalBinary() const {
+    return TypeID == ID_MachOUniversalBinary;
   }
 
   bool isELF() const {

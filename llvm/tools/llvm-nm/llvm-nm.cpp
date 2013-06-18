@@ -20,6 +20,7 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Object/Archive.h"
+#include "llvm/Object/MachOUniversal.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
@@ -400,6 +401,23 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
           outs() << o->getFileName() << ":\n";
           DumpSymbolNamesFromObject(o);
         }
+      }
+    }
+  } else if (magic == sys::fs::file_magic::macho_universal_binary) {
+    OwningPtr<Binary> Bin;
+    if (error(object::createBinary(Buffer.take(), Bin), Filename))
+      return;
+
+    object::MachOUniversalBinary *UB =
+        cast<object::MachOUniversalBinary>(Bin.get());
+    for (object::MachOUniversalBinary::object_iterator
+             I = UB->begin_objects(),
+             E = UB->end_objects();
+         I != E; ++I) {
+      OwningPtr<ObjectFile> Obj;
+      if (!I->getAsObjectFile(Obj)) {
+        outs() << Obj->getFileName() << ":\n";
+        DumpSymbolNamesFromObject(Obj.get());
       }
     }
   } else if (magic.is_object()) {

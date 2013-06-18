@@ -7,6 +7,7 @@ add_llvm_library(LLVMObject
   ELFYAML.cpp
   Error.cpp
   MachOObjectFile.cpp
+  MachOUniversal.cpp
   Object.cpp
   ObjectFile.cpp
   YAML.cpp

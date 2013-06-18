@@ -24,6 +24,7 @@ const error_category &object_category();
 struct object_error {
   enum Impl {
     success = 0,
+    arch_not_found,
     invalid_file_type,
     parse_failed,
     unexpected_eof

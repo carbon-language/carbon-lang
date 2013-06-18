@@ -527,6 +527,7 @@ ObjectImage *RuntimeDyld::loadObject(ObjectBuffer *InputBuffer) {
     case sys::fs::file_magic::archive:
     case sys::fs::file_magic::coff_object:
     case sys::fs::file_magic::pecoff_executable:
+    case sys::fs::file_magic::macho_universal_binary:
       report_fatal_error("Incompatible object format!");
     }
   } else {

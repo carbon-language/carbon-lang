@@ -1297,8 +1297,8 @@ StringRef MachOObjectFile::getFileFormatName() const {
   }
 }
 
-unsigned MachOObjectFile::getArch() const {
-  switch (getCPUType(this)) {
+Triple::ArchType MachOObjectFile::getArch(uint32_t CPUType) {
+  switch (CPUType) {
   case llvm::MachO::CPUTypeI386:
     return Triple::x86;
   case llvm::MachO::CPUTypeX86_64:
@@ -1312,6 +1312,10 @@ unsigned MachOObjectFile::getArch() const {
   default:
     return Triple::UnknownArch;
   }
+}
+
+unsigned MachOObjectFile::getArch() const {
+  return getArch(getCPUType(this));
 }
 
 StringRef MachOObjectFile::getLoadName() const {
