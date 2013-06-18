@@ -130,10 +130,6 @@ static void ioctl_table_fill() {
   _(CDROMVOLCTRL, READ, struct_cdrom_volctrl_sz);
   _(CDROMVOLREAD, WRITE, struct_cdrom_volctrl_sz);
   _(CDROM_GET_UPC, WRITE, 8);
-  _(FS_IOC_GETFLAGS, WRITE, sizeof(int));
-  _(FS_IOC_GETVERSION, WRITE, sizeof(int));
-  _(FS_IOC_SETFLAGS, READ, sizeof(int));
-  _(FS_IOC_SETVERSION, READ, sizeof(int));
   _(FDCLRPRM, NONE, 0);
   _(FDDEFPRM, READ, struct_floppy_struct_sz);
   _(FDFLUSH, NONE, 0);
@@ -354,6 +350,10 @@ static void ioctl_table_fill() {
   _(EQL_GETSLAVECFG, WRITE, struct_ifreq_sz);
   _(EQL_SETMASTRCFG, WRITE, struct_ifreq_sz);
   _(EQL_SETSLAVECFG, WRITE, struct_ifreq_sz);
+  _(FS_IOC_GETFLAGS, WRITE, sizeof(int));
+  _(FS_IOC_GETVERSION, WRITE, sizeof(int));
+  _(FS_IOC_SETFLAGS, READ, sizeof(int));
+  _(FS_IOC_SETVERSION, READ, sizeof(int));
   _(GIO_CMAP, WRITE, 48);
   _(GIO_FONT, WRITE, 8192);
   _(GIO_SCRNMAP, WRITE, e_tabsz);
