@@ -34,10 +34,7 @@ using namespace CodeGen;
 void CodeGenFunction::EmitStopPoint(const Stmt *S) {
   if (CGDebugInfo *DI = getDebugInfo()) {
     SourceLocation Loc;
-    if (isa<DeclStmt>(S))
-      Loc = S->getLocEnd();
-    else
-      Loc = S->getLocStart();
+    Loc = S->getLocStart();
     DI->EmitLocation(Builder, Loc);
 
     LastStopPoint = Loc;
