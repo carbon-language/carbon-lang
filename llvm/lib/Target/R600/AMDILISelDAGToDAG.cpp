@@ -17,6 +17,7 @@
 #include "R600InstrInfo.h"
 #include "SIISelLowering.h"
 #include "llvm/ADT/ValueMap.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -59,20 +60,19 @@ private:
   bool SelectADDR64(SDValue N, SDValue &R1, SDValue &R2);
 
   static bool checkType(const Value *ptr, unsigned int addrspace);
-  static const Value *getBasePointerValue(const Value *V);
 
   static bool isGlobalStore(const StoreSDNode *N);
   static bool isPrivateStore(const StoreSDNode *N);
   static bool isLocalStore(const StoreSDNode *N);
   static bool isRegionStore(const StoreSDNode *N);
 
-  static bool isCPLoad(const LoadSDNode *N);
-  static bool isConstantLoad(const LoadSDNode *N, int cbID);
-  static bool isGlobalLoad(const LoadSDNode *N);
-  static bool isParamLoad(const LoadSDNode *N);
-  static bool isPrivateLoad(const LoadSDNode *N);
-  static bool isLocalLoad(const LoadSDNode *N);
-  static bool isRegionLoad(const LoadSDNode *N);
+  bool isCPLoad(const LoadSDNode *N) const;
+  bool isConstantLoad(const LoadSDNode *N, int cbID) const;
+  bool isGlobalLoad(const LoadSDNode *N) const;
+  bool isParamLoad(const LoadSDNode *N) const;
+  bool isPrivateLoad(const LoadSDNode *N) const;
+  bool isLocalLoad(const LoadSDNode *N) const;
+  bool isRegionLoad(const LoadSDNode *N) const;
 
   bool SelectGlobalValueConstantOffset(SDValue Addr, SDValue& IntPtr);
   bool SelectGlobalValueVariableOffset(SDValue Addr,
@@ -332,7 +332,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
           Result = CurDAG->UpdateNodeOperands(Result, Ops.data(), Ops.size());
         }
       } while (IsModified);
-      
+
     }
     if (Result && Result->isMachineOpcode() &&
         !(TII->get(Result->getMachineOpcode()).TSFlags & R600_InstFlag::VECTOR)
@@ -542,46 +542,6 @@ bool AMDGPUDAGToDAGISel::checkType(const Value *ptr, unsigned int addrspace) {
   return dyn_cast<PointerType>(ptrType)->getAddressSpace() == addrspace;
 }
 
-const Value * AMDGPUDAGToDAGISel::getBasePointerValue(const Value *V) {
-  if (!V) {
-    return NULL;
-  }
-  const Value *ret = NULL;
-  ValueMap<const Value *, bool> ValueBitMap;
-  std::queue<const Value *, std::list<const Value *> > ValueQueue;
-  ValueQueue.push(V);
-  while (!ValueQueue.empty()) {
-    V = ValueQueue.front();
-    if (ValueBitMap.find(V) == ValueBitMap.end()) {
-      ValueBitMap[V] = true;
-      if (dyn_cast<Argument>(V) && dyn_cast<PointerType>(V->getType())) {
-        ret = V;
-        break;
-      } else if (dyn_cast<GlobalVariable>(V)) {
-        ret = V;
-        break;
-      } else if (dyn_cast<Constant>(V)) {
-        const ConstantExpr *CE = dyn_cast<ConstantExpr>(V);
-        if (CE) {
-          ValueQueue.push(CE->getOperand(0));
-        }
-      } else if (const AllocaInst *AI = dyn_cast<AllocaInst>(V)) {
-        ret = AI;
-        break;
-      } else if (const Instruction *I = dyn_cast<Instruction>(V)) {
-        uint32_t numOps = I->getNumOperands();
-        for (uint32_t x = 0; x < numOps; ++x) {
-          ValueQueue.push(I->getOperand(x));
-        }
-      } else {
-        assert(!"Found a Value that we didn't know how to handle!");
-      }
-    }
-    ValueQueue.pop();
-  }
-  return ret;
-}
-
 bool AMDGPUDAGToDAGISel::isGlobalStore(const StoreSDNode *N) {
   return checkType(N->getSrcValue(), AMDGPUAS::GLOBAL_ADDRESS);
 }
@@ -600,41 +560,43 @@ bool AMDGPUDAGToDAGISel::isRegionStore(const StoreSDNode *N) {
   return checkType(N->getSrcValue(), AMDGPUAS::REGION_ADDRESS);
 }
 
-bool AMDGPUDAGToDAGISel::isConstantLoad(const LoadSDNode *N, int cbID) {
+bool AMDGPUDAGToDAGISel::isConstantLoad(const LoadSDNode *N, int cbID) const {
   if (checkType(N->getSrcValue(), AMDGPUAS::CONSTANT_ADDRESS)) {
     return true;
   }
+
+  const DataLayout *DL = TM.getDataLayout();
   MachineMemOperand *MMO = N->getMemOperand();
   const Value *V = MMO->getValue();
-  const Value *BV = getBasePointerValue(V);
+  const Value *BV = GetUnderlyingObject(V, DL, 0);
   if (MMO
       && MMO->getValue()
       && ((V && dyn_cast<GlobalValue>(V))
           || (BV && dyn_cast<GlobalValue>(
-                        getBasePointerValue(MMO->getValue()))))) {
+                GetUnderlyingObject(MMO->getValue(), DL, 0))))) {
     return checkType(N->getSrcValue(), AMDGPUAS::PRIVATE_ADDRESS);
   } else {
     return false;
   }
 }
 
-bool AMDGPUDAGToDAGISel::isGlobalLoad(const LoadSDNode *N) {
+bool AMDGPUDAGToDAGISel::isGlobalLoad(const LoadSDNode *N) const {
   return checkType(N->getSrcValue(), AMDGPUAS::GLOBAL_ADDRESS);
 }
 
-bool AMDGPUDAGToDAGISel::isParamLoad(const LoadSDNode *N) {
+bool AMDGPUDAGToDAGISel::isParamLoad(const LoadSDNode *N) const {
   return checkType(N->getSrcValue(), AMDGPUAS::PARAM_I_ADDRESS);
 }
 
-bool AMDGPUDAGToDAGISel::isLocalLoad(const  LoadSDNode *N) {
+bool AMDGPUDAGToDAGISel::isLocalLoad(const  LoadSDNode *N) const {
   return checkType(N->getSrcValue(), AMDGPUAS::LOCAL_ADDRESS);
 }
 
-bool AMDGPUDAGToDAGISel::isRegionLoad(const  LoadSDNode *N) {
+bool AMDGPUDAGToDAGISel::isRegionLoad(const  LoadSDNode *N) const {
   return checkType(N->getSrcValue(), AMDGPUAS::REGION_ADDRESS);
 }
 
-bool AMDGPUDAGToDAGISel::isCPLoad(const LoadSDNode *N) {
+bool AMDGPUDAGToDAGISel::isCPLoad(const LoadSDNode *N) const {
   MachineMemOperand *MMO = N->getMemOperand();
   if (checkType(N->getSrcValue(), AMDGPUAS::PRIVATE_ADDRESS)) {
     if (MMO) {
@@ -648,7 +610,7 @@ bool AMDGPUDAGToDAGISel::isCPLoad(const LoadSDNode *N) {
   return false;
 }
 
-bool AMDGPUDAGToDAGISel::isPrivateLoad(const LoadSDNode *N) {
+bool AMDGPUDAGToDAGISel::isPrivateLoad(const LoadSDNode *N) const {
   if (checkType(N->getSrcValue(), AMDGPUAS::PRIVATE_ADDRESS)) {
     // Check to make sure we are not a constant pool load or a constant load
     // that is marked as a private load
