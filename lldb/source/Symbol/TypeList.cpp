@@ -135,6 +135,27 @@ TypeList::GetTypeAtIndex(uint32_t idx)
     return TypeSP();
 }
 
+void
+TypeList::ForEach (std::function <bool(const lldb::TypeSP &type_sp)> const &callback) const
+{
+    for (auto pos = m_types.begin(), end = m_types.end(); pos != end; ++pos)
+    {
+        if (!callback(pos->second))
+            break;
+    }
+}
+
+void
+TypeList::ForEach (std::function <bool(lldb::TypeSP &type_sp)> const &callback)
+{
+    for (auto pos = m_types.begin(), end = m_types.end(); pos != end; ++pos)
+    {
+        if (!callback(pos->second))
+            break;
+    }
+}
+
+
 bool
 TypeList::RemoveTypeWithUID (user_id_t uid)
 {

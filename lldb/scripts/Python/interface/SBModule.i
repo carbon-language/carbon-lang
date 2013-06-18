@@ -227,6 +227,25 @@ public:
 
     %feature("docstring", "
     //------------------------------------------------------------------
+    /// Get all types matching \a type_mask from debug info in this
+    /// module.
+    ///
+    /// @param[in] type_mask
+    ///     A bitfield that consists of one or more bits logically OR'ed
+    ///     together from the lldb::TypeClass enumeration. This allows
+    ///     you to request only structure types, or only class, struct
+    ///     and union types. Passing in lldb::eTypeClassAny will return
+    ///     all types found in the debug information for this module.
+    ///
+    /// @return
+    ///     A list of types in this module that match \a type_mask
+    //------------------------------------------------------------------
+    ") GetTypes;
+    lldb::SBTypeList
+    GetTypes (uint32_t type_mask = lldb::eTypeClassAny);
+
+    %feature("docstring", "
+    //------------------------------------------------------------------
     /// Find global and static variables by name.
     ///
     /// @param[in] target

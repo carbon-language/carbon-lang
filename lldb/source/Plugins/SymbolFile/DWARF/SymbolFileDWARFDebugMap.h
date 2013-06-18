@@ -85,9 +85,12 @@ public:
     virtual uint32_t        FindFunctions (const lldb_private::RegularExpression& regex, bool include_inlines, bool append, lldb_private::SymbolContextList& sc_list);
     virtual uint32_t        FindTypes (const lldb_private::SymbolContext& sc, const lldb_private::ConstString &name, const lldb_private::ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, lldb_private::TypeList& types);
     virtual lldb_private::ClangNamespaceDecl
-            FindNamespace (const lldb_private::SymbolContext& sc, 
-                           const lldb_private::ConstString &name,
-                           const lldb_private::ClangNamespaceDecl *parent_namespace_decl);
+                            FindNamespace (const lldb_private::SymbolContext& sc,
+                                           const lldb_private::ConstString &name,
+                                           const lldb_private::ClangNamespaceDecl *parent_namespace_decl);
+    virtual size_t          GetTypes (lldb_private::SymbolContextScope *sc_scope,
+                                      uint32_t type_mask,
+                                      lldb_private::TypeList &type_list);
 
 
     //------------------------------------------------------------------

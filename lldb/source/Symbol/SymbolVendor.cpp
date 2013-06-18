@@ -352,6 +352,21 @@ SymbolVendor::FindTypes (const SymbolContext& sc, const ConstString &name, const
     return 0;
 }
 
+size_t
+SymbolVendor::GetTypes (SymbolContextScope *sc_scope,
+                        uint32_t type_mask,
+                        lldb_private::TypeList &type_list)
+{
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
+    {
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        if (m_sym_file_ap.get())
+            return m_sym_file_ap->GetTypes (sc_scope, type_mask, type_list);
+    }
+    return 0;
+}
+
 ClangNamespaceDecl
 SymbolVendor::FindNamespace(const SymbolContext& sc, const ConstString &name, const ClangNamespaceDecl *parent_namespace_decl)
 {

@@ -486,6 +486,10 @@ public:
 
         virtual const char *
         GetStringForKeyType (KeyType key) const = 0;
+        
+        virtual bool
+        ReadHashData (uint32_t hash_data_offset,
+                      HashData &hash_data) const = 0;
 
         // This method must be implemented in any subclasses and it must try to
         // read one "Pair" at the offset pointed to by the "hash_data_offset_ptr"
@@ -512,6 +516,27 @@ public:
         GetHeader()
         {
             return m_header;
+        }
+
+        
+        void
+        ForEach (std::function <bool(const HashData &hash_data)> const &callback) const
+        {
+            const size_t num_hash_offsets = m_header.hashes_count;
+            for (size_t i=0; i<num_hash_offsets; ++i)
+            {
+                uint32_t hash_data_offset = GetHashDataOffset (i);
+                if (hash_data_offset != UINT32_MAX)
+                {
+                    HashData hash_data;
+                    if (ReadHashData (hash_data_offset, hash_data))
+                    {
+                        // If the callback returns false, then we are done and should stop
+                        if (callback(hash_data) == false)
+                            return;
+                    }
+                }
+            }
         }
 
     protected:

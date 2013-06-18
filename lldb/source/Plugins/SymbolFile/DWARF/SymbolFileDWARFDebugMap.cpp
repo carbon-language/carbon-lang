@@ -1120,6 +1120,43 @@ SymbolFileDWARFDebugMap::FindFunctions (const RegularExpression& regex, bool inc
     return sc_list.GetSize() - initial_size;
 }
 
+size_t
+SymbolFileDWARFDebugMap::GetTypes (SymbolContextScope *sc_scope,
+                                   uint32_t type_mask,
+                                   TypeList &type_list)
+{
+    Timer scoped_timer (__PRETTY_FUNCTION__,
+                        "SymbolFileDWARFDebugMap::GetTypes (type_mask = 0x%8.8x)",
+                        type_mask);
+    
+    
+    uint32_t initial_size = type_list.GetSize();
+    SymbolFileDWARF *oso_dwarf = NULL;
+    if (sc_scope)
+    {
+        SymbolContext sc;
+        sc_scope->CalculateSymbolContext(&sc);
+        
+        CompileUnitInfo *cu_info = GetCompUnitInfo (sc);
+        if (cu_info)
+        {
+            oso_dwarf = GetSymbolFileByCompUnitInfo (cu_info);
+            if (oso_dwarf)
+                oso_dwarf->GetTypes (sc_scope, type_mask, type_list);
+        }
+    }
+    else
+    {
+        uint32_t oso_idx = 0;
+        while ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx++)) != NULL)
+        {
+            oso_dwarf->GetTypes (sc_scope, type_mask, type_list);
+        }
+    }
+    return type_list.GetSize() - initial_size;
+}
+
+
 TypeSP
 SymbolFileDWARFDebugMap::FindDefinitionTypeForDWARFDeclContext (const DWARFDeclContext &die_decl_ctx)
 {

@@ -121,6 +121,12 @@ public:
         return false;
     }
 
+    const char *
+    GetCStringAtIndexUnchecked (uint32_t idx) const
+    {
+        return m_map[idx].cstring;
+    }
+    
     // Use this function if you have simple types in your map that you
     // can easily copy when accessing values by index.
     T

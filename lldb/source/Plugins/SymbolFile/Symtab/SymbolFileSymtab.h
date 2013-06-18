@@ -102,8 +102,10 @@ public:
     virtual uint32_t
     FindTypes (const lldb_private::SymbolContext& sc,const lldb_private::ConstString &name, const lldb_private::ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, lldb_private::TypeList& types);
 
-//  virtual uint32_t
-//  FindTypes(const lldb_private::SymbolContext& sc, const lldb_private::RegularExpression& regex, bool append, uint32_t max_matches, lldb_private::TypeList& types);
+    virtual size_t
+    GetTypes (lldb_private::SymbolContextScope *sc_scope,
+              uint32_t type_mask,
+              lldb_private::TypeList &type_list);
 
     virtual lldb_private::ClangNamespaceDecl
     FindNamespace (const lldb_private::SymbolContext& sc, 

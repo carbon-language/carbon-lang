@@ -561,6 +561,24 @@ SBModule::FindTypes (const char *type)
     return retval;
 }
 
+lldb::SBTypeList
+SBModule::GetTypes (uint32_t type_mask)
+{
+    SBTypeList sb_type_list;
+    
+    ModuleSP module_sp (GetSP ());
+    if (module_sp)
+    {
+        SymbolVendor* vendor = module_sp->GetSymbolVendor();
+        if (vendor)
+        {
+            TypeList type_list;
+            vendor->GetTypes (NULL, type_mask, type_list);
+            sb_type_list.m_opaque_ap->Append(type_list);
+        }
+    }
+    return sb_type_list;
+}
 
 SBSection
 SBModule::FindSection (const char *sect_name)

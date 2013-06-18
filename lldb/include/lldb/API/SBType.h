@@ -235,6 +235,8 @@ public:
     
 private:
     std::unique_ptr<lldb_private::TypeListImpl> m_opaque_ap;
+    friend class SBModule;
+    friend class SBCompileUnit;
 };
     
 

@@ -153,6 +153,11 @@ public:
         return m_type_list;
     }
 
+    virtual size_t
+    GetTypes (lldb_private::SymbolContextScope *sc_scope,
+              uint32_t type_mask,
+              lldb_private::TypeList &type_list);
+
     SymbolFile *
     GetSymbolFile()
     {

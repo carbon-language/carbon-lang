@@ -60,6 +60,12 @@ SymbolFileSymtab::CreateInstance (ObjectFile* obj_file)
     return new SymbolFileSymtab(obj_file);
 }
 
+size_t
+SymbolFileSymtab::GetTypes (SymbolContextScope *sc_scope, uint32_t type_mask, lldb_private::TypeList &type_list)
+{
+    return 0;
+}
+
 SymbolFileSymtab::SymbolFileSymtab(ObjectFile* obj_file) :
     SymbolFile(obj_file),
     m_source_indexes(),

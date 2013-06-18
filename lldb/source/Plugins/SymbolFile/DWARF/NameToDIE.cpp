@@ -73,3 +73,15 @@ NameToDIE::Dump (Stream *s)
         s->Printf("%p: {0x%8.8x} \"%s\"\n", cstr, m_map.GetValueAtIndexUnchecked(i), cstr);
     }
 }
+
+void
+NameToDIE::ForEach (std::function <bool(const char *name, uint32_t die_offset)> const &callback) const
+{
+    const uint32_t size = m_map.GetSize();
+    for (uint32_t i=0; i<size; ++i)
+    {
+        if (!callback(m_map.GetCStringAtIndexUnchecked(i),
+                      m_map.GetValueAtIndexUnchecked (i)))
+            break;
+    }
+}

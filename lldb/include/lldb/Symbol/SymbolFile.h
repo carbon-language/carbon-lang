@@ -140,6 +140,9 @@ public:
     virtual uint32_t        FindTypes (const SymbolContext& sc, const ConstString &name, const ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, TypeList& types) = 0;
 //  virtual uint32_t        FindTypes (const SymbolContext& sc, const RegularExpression& regex, bool append, uint32_t max_matches, TypeList& types) = 0;
     virtual TypeList *      GetTypeList ();
+    virtual size_t          GetTypes (lldb_private::SymbolContextScope *sc_scope,
+                                      uint32_t type_mask,
+                                      lldb_private::TypeList &type_list) = 0;
     virtual ClangASTContext &
                             GetClangASTContext ();
     virtual ClangNamespaceDecl

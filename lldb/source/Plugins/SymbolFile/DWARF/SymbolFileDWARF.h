@@ -14,6 +14,7 @@
 // C++ Includes
 #include <list>
 #include <map>
+#include <set>
 #include <vector>
 
 // Other libraries and framework includes
@@ -121,6 +122,10 @@ public:
     virtual uint32_t        FindTypes (const lldb_private::SymbolContext& sc, const lldb_private::ConstString &name, const lldb_private::ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, lldb_private::TypeList& types);
     virtual lldb_private::TypeList *
                             GetTypeList ();
+    virtual size_t          GetTypes (lldb_private::SymbolContextScope *sc_scope,
+                                      uint32_t type_mask,
+                                      lldb_private::TypeList &type_list);
+
     virtual lldb_private::ClangASTContext &
                             GetClangASTContext ();
 
@@ -544,6 +549,16 @@ protected:
 
     bool
     FixupAddress (lldb_private::Address &addr);
+
+    typedef std::set<lldb_private::Type *> TypeSet;
+
+    void
+    GetTypes (DWARFCompileUnit* dwarf_cu,
+              const DWARFDebugInfoEntry *die,
+              dw_offset_t min_die_offset,
+              dw_offset_t max_die_offset,
+              uint32_t type_mask,
+              TypeSet &type_set);
 
     lldb::ModuleWP                  m_debug_map_module_wp;
     SymbolFileDWARFDebugMap *       m_debug_map_symfile;

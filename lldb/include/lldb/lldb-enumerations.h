@@ -610,7 +610,7 @@ namespace lldb {
         eTypeClassOther             = (1u << 31),
         // Define a mask that can be used for any type when finding types
         eTypeClassAny               = (0xffffffffu)
-    }TypeClass;
+    } TypeClass;
 
     typedef enum TemplateArgumentKind
     {

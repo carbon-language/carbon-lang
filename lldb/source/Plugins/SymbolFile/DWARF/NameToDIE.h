@@ -11,6 +11,9 @@
 #define SymbolFileDWARF_NameToDIE_h_
 
 #include "lldb/Core/UniqueCStringMap.h"
+
+#include <functional>
+
 #include "lldb/lldb-defines.h"
 
 class SymbolFileDWARF;
@@ -50,6 +53,9 @@ public:
     FindAllEntriesForCompileUnit (uint32_t cu_offset, 
                                   uint32_t cu_end_offset, 
                                   DIEArray &info_array) const;
+
+    void
+    ForEach (std::function <bool(const char *name, uint32_t die_offset)> const &callback) const;
 
 protected:
     lldb_private::UniqueCStringMap<uint32_t> m_map;

@@ -474,6 +474,27 @@ public:
         m_content.push_back(type);
     }
     
+    class AppendVisitor
+    {
+    public:
+        AppendVisitor(TypeListImpl &type_list) :
+            m_type_list(type_list)
+        {
+        }
+        
+        void
+        operator() (const lldb::TypeImplSP& type)
+        {
+            m_type_list.Append(type);
+        }
+        
+    private:
+        TypeListImpl &m_type_list;
+    };
+    
+    void
+    Append (const lldb_private::TypeList &type_list);
+
     lldb::TypeImplSP
     GetTypeAtIndex(size_t idx)
     {
