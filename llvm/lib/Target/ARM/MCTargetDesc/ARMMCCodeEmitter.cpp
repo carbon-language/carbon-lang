@@ -743,10 +743,10 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
   if (!MO.isReg()) {
     Reg = CTX.getRegisterInfo()->getEncodingValue(ARM::PC);   // Rn is PC.
     Imm12 = 0;
-    isAdd = false ; // 'U' bit is set as part of the fixup.
 
     if (MO.isExpr()) {
       const MCExpr *Expr = MO.getExpr();
+      isAdd = false ; // 'U' bit is set as part of the fixup.
 
       MCFixupKind Kind;
       if (isThumb2())

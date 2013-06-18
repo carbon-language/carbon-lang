@@ -5862,7 +5862,9 @@ processInstruction(MCInst &Inst,
   case ARM::t2LDRpcrel:
     // Select the narrow version if the immediate will fit.
     if (Inst.getOperand(1).getImm() > 0 &&
-        Inst.getOperand(1).getImm() <= 0xff)
+        Inst.getOperand(1).getImm() <= 0xff &&
+        !(static_cast<ARMOperand*>(Operands[2])->isToken() &&
+         static_cast<ARMOperand*>(Operands[2])->getToken() == ".w"))
       Inst.setOpcode(ARM::tLDRpci);
     else
       Inst.setOpcode(ARM::t2LDRpci);
