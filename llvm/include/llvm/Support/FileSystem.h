@@ -509,6 +509,10 @@ error_code unique_file(const Twine &model, int &result_fd,
                        SmallVectorImpl<char> &result_path,
                        bool makeAbsolute = true, unsigned mode = 0600);
 
+/// @brief Simpler version for clients that don't want an open file.
+error_code unique_file(const Twine &Model, SmallVectorImpl<char> &ResultPath,
+                       bool MakeAbsolute = true, unsigned Mode = 0600);
+
 /// @brief Canonicalize path.
 ///
 /// Sets result to the file system's idea of what path is. The result is always

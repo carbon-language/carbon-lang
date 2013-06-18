@@ -21,12 +21,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include <fstream>
 
-#if !defined(_MSC_VER) && !defined(__MINGW32__)
-#include <unistd.h>
-#else
-#include <io.h>
-#endif
-
 using namespace llvm;
 
 namespace {
@@ -338,15 +332,13 @@ std::string BugDriver::executeProgram(const Module *Program,
 
   // Check to see if this is a valid output filename...
   SmallString<128> UniqueFile;
-  int UniqueFD;
-  error_code EC = sys::fs::unique_file(OutputFile, UniqueFD, UniqueFile);
+  error_code EC = sys::fs::unique_file(OutputFile, UniqueFile);
   if (EC) {
     errs() << ToolName << ": Error making unique filename: "
            << EC.message() << "\n";
     exit(1);
   }
   OutputFile = UniqueFile.str();
-  close(UniqueFD);
 
   // Figure out which shared objects to run, if any.
   std::vector<std::string> SharedObjs(AdditionalSOs);

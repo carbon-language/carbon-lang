@@ -34,12 +34,6 @@
 
 #include <fstream>
 
-#if !defined(_MSC_VER) && !defined(__MINGW32__)
-#include <unistd.h>
-#else
-#include <io.h>
-#endif
-
 using namespace llvm;
 
 namespace llvm {
@@ -130,16 +124,14 @@ bool BugDriver::runPasses(Module *Program,
   // setup the output file name
   outs().flush();
   SmallString<128> UniqueFilename;
-  int UniqueFD;
-  error_code EC = sys::fs::unique_file(OutputPrefix + "-output-%%%%%%%.bc",
-                                       UniqueFD, UniqueFilename);
+  error_code EC =
+      sys::fs::unique_file(OutputPrefix + "-output-%%%%%%%.bc", UniqueFilename);
   if (EC) {
     errs() << getToolName() << ": Error making unique filename: "
            << EC.message() << "\n";
     return 1;
   }
   OutputFilename = UniqueFilename.str();
-  close(UniqueFD); // We only want the filename.
 
   // set up the input file name
   SmallString<128> InputFilename;

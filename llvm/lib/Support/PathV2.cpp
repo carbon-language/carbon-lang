@@ -18,8 +18,11 @@
 #include <cctype>
 #include <cstdio>
 #include <cstring>
-#ifdef __APPLE__
+
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
 #include <unistd.h>
+#else
+#include <io.h>
 #endif
 
 namespace {
@@ -621,6 +624,14 @@ bool is_relative(const Twine &path) {
 } // end namespace path
 
 namespace fs {
+
+error_code unique_file(const Twine &Model, SmallVectorImpl<char> &ResultPath,
+                       bool MakeAbsolute, unsigned Mode) {
+  int FD;
+  error_code Ret = unique_file(Model, FD, ResultPath, MakeAbsolute, Mode);
+  close(FD);
+  return Ret;
+}
 
 error_code make_absolute(SmallVectorImpl<char> &path) {
   StringRef p(path.data(), path.size());
