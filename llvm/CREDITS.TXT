@@ -429,6 +429,7 @@ D: ARM backend improvements
 D: Thread Local Storage implementation
 
 N: Bill Wendling
+I: wendling
 E: wendling@apple.com
 D: Release manager
 D: Bunches of stuff
