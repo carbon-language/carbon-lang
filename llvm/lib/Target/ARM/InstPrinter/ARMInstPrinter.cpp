@@ -315,15 +315,29 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
 void ARMInstPrinter::printThumbLdrLabelOperand(const MCInst *MI, unsigned OpNum,
                                                raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
-  if (MO1.isExpr())
+  if (MO1.isExpr()) {
     O << *MO1.getExpr();
-  else if (MO1.isImm()) {
-    O << markup("<mem:") << "[pc, "
-      << markup("<imm:") << "#" << formatImm(MO1.getImm())
-      << markup(">]>", "]");
+    return;
   }
-  else
-    llvm_unreachable("Unknown LDR label operand?");
+
+  O << markup("<mem:") << "[pc, ";
+
+  int32_t OffImm = (int32_t)MO1.getImm();
+  bool isSub = OffImm < 0;
+
+  // Special value for #-0. All others are normal.
+  if (OffImm == INT32_MIN)
+    OffImm = 0;
+  if (isSub) {
+    O << markup("<imm:")
+      << "#-" << formatImm(-OffImm)
+      << markup(">");
+  } else {
+    O << markup("<imm:")
+      << "#" << formatImm(OffImm)
+      << markup(">");
+  }
+  O << "]" << markup(">");
 }
 
 // so_reg is a 4-operand unit corresponding to register forms of the A5.1

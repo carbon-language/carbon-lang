@@ -959,6 +959,8 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let Inst{19-16} = addr{16-13}; // Rn
     let Inst{15-12} = Rt;
     let Inst{11-0}  = addr{11-0};  // imm
+
+    let DecoderMethod = "DecodeT2LoadImm12";
   }
   def i8  : T2Ii8 <(outs target:$Rt), (ins t2addrmode_negimm8:$addr), iii,
                    opc, "\t$Rt, $addr",
@@ -979,6 +981,8 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let Inst{9}     = addr{8};    // U
     let Inst{8} = 0; // The W bit.
     let Inst{7-0}   = addr{7-0};  // imm
+
+    let DecoderMethod = "DecodeT2LoadImm8";
   }
   def s   : T2Iso <(outs target:$Rt), (ins t2addrmode_so_reg:$addr), iis,
                    opc, ".w\t$Rt, $addr",
@@ -1019,6 +1023,8 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     bits<12> addr;
     let Inst{15-12} = Rt{3-0};
     let Inst{11-0}  = addr{11-0};
+
+    let DecoderMethod = "DecodeT2LoadLabel";
   }
 }
 
@@ -1228,15 +1234,15 @@ defm t2LDR   : T2I_ld<0, 0b10, "ldr", IIC_iLoad_i, IIC_iLoad_si, GPR,
 
 // Loads with zero extension
 defm t2LDRH  : T2I_ld<0, 0b01, "ldrh", IIC_iLoad_bh_i, IIC_iLoad_bh_si,
-                      rGPR, UnOpFrag<(zextloadi16 node:$Src)>>;
+                      GPR, UnOpFrag<(zextloadi16 node:$Src)>>;
 defm t2LDRB  : T2I_ld<0, 0b00, "ldrb", IIC_iLoad_bh_i, IIC_iLoad_bh_si,
-                      rGPR, UnOpFrag<(zextloadi8  node:$Src)>>;
+                      GPR, UnOpFrag<(zextloadi8  node:$Src)>>;
 
 // Loads with sign extension
 defm t2LDRSH : T2I_ld<1, 0b01, "ldrsh", IIC_iLoad_bh_i, IIC_iLoad_bh_si,
-                      rGPR, UnOpFrag<(sextloadi16 node:$Src)>>;
+                      GPR, UnOpFrag<(sextloadi16 node:$Src)>>;
 defm t2LDRSB : T2I_ld<1, 0b00, "ldrsb", IIC_iLoad_bh_i, IIC_iLoad_bh_si,
-                      rGPR, UnOpFrag<(sextloadi8  node:$Src)>>;
+                      GPR, UnOpFrag<(sextloadi8  node:$Src)>>;
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 // Load doubleword
@@ -1373,6 +1379,8 @@ class T2IldT<bit signed, bits<2> type, string opc, InstrItinClass ii>
   let Inst{11} = 1;
   let Inst{10-8} = 0b110; // PUW.
   let Inst{7-0} = addr{7-0};
+
+  let DecoderMethod = "DecodeT2LoadT";
 }
 
 def t2LDRT   : T2IldT<0, 0b10, "ldrt", IIC_iLoad_i>;
