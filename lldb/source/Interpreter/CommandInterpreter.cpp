@@ -850,24 +850,29 @@ CommandInterpreter::GetCommandObject (const char *cmd_cstr, StringList *matches)
 
     // If we didn't find an exact match to the command string in the commands, look in
     // the aliases.
+    
+    if (command_obj)
+        return command_obj;
 
-    if (command_obj == NULL)
-    {
-        command_obj = GetCommandSP (cmd_cstr, true, true, matches).get();
-    }
+    command_obj = GetCommandSP (cmd_cstr, true, true, matches).get();
 
-    // If there wasn't an exact match among the aliases, look for an inexact match
-    // in just the commands.
-
-    if (command_obj == NULL)
-        command_obj = GetCommandSP(cmd_cstr, false, false, matches).get();
+    if (command_obj)
+        return command_obj;
+    
+    // If there wasn't an exact match then look for an inexact one in just the commands
+    command_obj = GetCommandSP(cmd_cstr, false, false, NULL).get();
 
     // Finally, if there wasn't an inexact match among the commands, look for an inexact
     // match in both the commands and aliases.
-    if (command_obj == NULL)
-        command_obj = GetCommandSP(cmd_cstr, true, false, matches).get();
-
-    return command_obj;
+    
+    if (command_obj)
+    {
+        if (matches)
+            matches->AppendString(command_obj->GetCommandName());
+        return command_obj;
+    }
+    
+    return GetCommandSP(cmd_cstr, true, false, matches).get();
 }
 
 bool
