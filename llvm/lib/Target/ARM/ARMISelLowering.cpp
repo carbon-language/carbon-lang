@@ -10184,9 +10184,19 @@ void ARMTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
                                                        APInt &KnownOne,
                                                        const SelectionDAG &DAG,
                                                        unsigned Depth) const {
-  KnownZero = KnownOne = APInt(KnownOne.getBitWidth(), 0);
+  unsigned BitWidth = KnownOne.getBitWidth();
+  KnownZero = KnownOne = APInt(BitWidth, 0);
   switch (Op.getOpcode()) {
   default: break;
+  case ARMISD::ADDC:
+  case ARMISD::ADDE:
+  case ARMISD::SUBC:
+  case ARMISD::SUBE:
+    // These nodes' second result is a boolean
+    if (Op.getResNo() == 0)
+      break;
+    KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - 1);
+    break;
   case ARMISD::CMOV: {
     // Bits are known zero/one if known on the LHS and RHS.
     DAG.ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
