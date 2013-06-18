@@ -37,3 +37,10 @@ def XTEST : I<0x01, MRM_D6, (outs), (ins),
 def XABORT : Ii8<0xc6, MRM_F8, (outs), (ins i8imm:$imm),
                  "xabort\t$imm",
                  [(int_x86_xabort imm:$imm)]>, Requires<[HasRTM]>;
+
+// HLE prefixes
+
+def XACQUIRE_PREFIX : I<0xF2, RawFrm, (outs), (ins), "xacquire", []>, Requires<[HasHLE]>;
+
+def XRELEASE_PREFIX : I<0xF3, RawFrm, (outs), (ins), "xrelease", []>, Requires<[HasHLE]>;
+

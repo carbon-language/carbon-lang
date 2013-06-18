@@ -461,6 +461,12 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
       Name == "VMOVQs64rr")
     return FILTER_WEAK;
 
+  // XACQUIRE and XRELEASE reuse REPNE and REP respectively.
+  // For now, just prefer the REP versions.
+  if (Name == "XACQUIRE_PREFIX" ||
+      Name == "XRELEASE_PREFIX")
+    return FILTER_WEAK;
+
   if (HasFROperands && Name.find("MOV") != Name.npos &&
      ((Name.find("2") != Name.npos && Name.find("32") == Name.npos) ||
       (Name.find("to") != Name.npos)))
