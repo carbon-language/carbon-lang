@@ -562,15 +562,13 @@ namespace {
       AllocatedResults.Contexts = getContextsForContextKind(contextKind, S);
       
       AllocatedResults.Selector = "";
-      if (Context.getNumSelIdents() > 0) {
-        for (unsigned i = 0; i < Context.getNumSelIdents(); i++) {
-          IdentifierInfo *selIdent = Context.getSelIdents()[i];
-          if (selIdent != NULL) {
-            StringRef selectorString = Context.getSelIdents()[i]->getName();
-            AllocatedResults.Selector += selectorString;
-          }
-          AllocatedResults.Selector += ":";
+      for (unsigned i = 0, e = Context.getSelIdents().size(); i != e; i++) {
+        IdentifierInfo *selIdent = Context.getSelIdents()[i];
+        if (selIdent != NULL) {
+          StringRef selectorString = Context.getSelIdents()[i]->getName();
+          AllocatedResults.Selector += selectorString;
         }
+        AllocatedResults.Selector += ":";
       }
       
       QualType baseType = Context.getBaseType();

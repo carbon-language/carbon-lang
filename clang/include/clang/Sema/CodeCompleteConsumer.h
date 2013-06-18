@@ -303,10 +303,7 @@ public:
   QualType getBaseType() const { return BaseType; }
 
   /// \brief Retrieve the Objective-C selector identifiers.
-  IdentifierInfo * const *getSelIdents() const { return SelIdents.data(); }
-
-  /// \brief Retrieve the number of Objective-C selector identifiers.
-  unsigned getNumSelIdents() const { return SelIdents.size(); }
+  ArrayRef<IdentifierInfo *> getSelIdents() const { return SelIdents; }
 
   /// \brief Determines whether we want C++ constructors as results within this
   /// context.
