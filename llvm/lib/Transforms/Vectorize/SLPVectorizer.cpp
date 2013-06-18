@@ -89,7 +89,7 @@ struct SLPVectorizer : public FunctionPass {
       BoUpSLP R(BB, SE, DL, TTI, AA, LI->getLoopFor(BB));
 
       // Vectorize trees that end at reductions.
-      BBChanged |= vectorizeReductions(BB, R);
+      BBChanged |= vectorizeChainsInBlock(BB, R);
 
       // Vectorize trees that end at stores.
       if (unsigned count = collectStores(BB, R)) {
@@ -143,9 +143,9 @@ private:
   /// all of the sources are loop invariant.
   void hoistGatherSequence(LoopInfo *LI, BasicBlock *BB, BoUpSLP &R);
 
-  /// \brief Scan the basic block and look for reductions that may start a
-  /// vectorization chain.
-  bool vectorizeReductions(BasicBlock *BB, BoUpSLP &R);
+  /// \brief Scan the basic block and look for patterns that are likely to start
+  /// a vectorization chain.
+  bool vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R);
 
 private:
   StoreListMap StoreRefs;
@@ -183,12 +183,23 @@ bool SLPVectorizer::tryToVectorizePair(Value *A, Value *B,  BoUpSLP &R) {
 }
 
 bool SLPVectorizer::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R) {
+  if (VL.size() < 2)
+    return false;
+
   DEBUG(dbgs()<<"SLP: Vectorizing a list of length = " << VL.size() << ".\n");
 
-  // Check that all of the parts are scalar.
+  // Check that all of the parts are scalar instructions of the same type.
+  Instruction *I0 = dyn_cast<Instruction>(VL[0]);
+  if (!I0) return 0;
+
+  unsigned Opcode0 = I0->getOpcode();
+
   for (int i = 0, e = VL.size(); i < e; ++i) {
     Type *Ty = VL[i]->getType();
     if (Ty->isAggregateType() || Ty->isVectorTy())
+      return 0;
+    Instruction *Inst = dyn_cast<Instruction>(VL[i]);
+    if (!Inst || Inst->getOpcode() != Opcode0)
       return 0;
   }
 
@@ -240,7 +251,7 @@ bool SLPVectorizer::tryToVectorize(BinaryOperator *V,  BoUpSLP &R) {
   return 0;
 }
 
-bool SLPVectorizer::vectorizeReductions(BasicBlock *BB, BoUpSLP &R) {
+bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
   bool Changed = false;
   for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
     if (isa<DbgInfoIntrinsic>(it)) continue;
@@ -276,6 +287,29 @@ bool SLPVectorizer::vectorizeReductions(BasicBlock *BB, BoUpSLP &R) {
     }
   }
 
+  // Scan the PHINodes in our successors in search for pairing hints.
+  for (succ_iterator it = succ_begin(BB), e = succ_end(BB); it != e; ++it) {
+    BasicBlock *Succ = *it;
+    SmallVector<Value*, 4> Incoming;
+
+    // Collect the incoming values from the PHIs.
+    for (BasicBlock::iterator instr = Succ->begin(), ie = Succ->end();
+         instr != ie; ++instr) {
+      PHINode *P = dyn_cast<PHINode>(instr);
+
+      if (!P)
+        break;
+
+      Value *V = P->getIncomingValueForBlock(BB);
+      if (Instruction *I = dyn_cast<Instruction>(V))
+        if (I->getParent() == BB)
+          Incoming.push_back(I);
+    }
+
+    if (Incoming.size() > 1)
+      Changed |= tryToVectorizeList(Incoming, R);
+  }
+  
   return Changed;
 }
 
