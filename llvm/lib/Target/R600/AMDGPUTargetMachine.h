@@ -25,8 +25,6 @@
 
 namespace llvm {
 
-MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT);
-
 class AMDGPUTargetMachine : public LLVMTargetMachine {
 
   AMDGPUSubtarget Subtarget;
