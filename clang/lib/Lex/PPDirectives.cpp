@@ -1920,6 +1920,8 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok,
         // confused.
         if (getLangOpts().AsmPreprocessor && Tok.isNot(tok::eod)) {
           LastTok.setKind(tok::unknown);
+          MI->AddTokenToBody(LastTok);
+          continue;
         } else {
           Diag(Tok, diag::err_pp_stringize_not_parameter);
           ReleaseMacroInfo(MI);
