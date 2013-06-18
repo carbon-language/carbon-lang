@@ -177,10 +177,10 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
     zero(S.AddressAlign);
     Sections.insert(Sections.begin(), S);
   }
-  // "+ 1" for string table.
-  Header.e_shnum = Sections.size() + 1;
+  // "+ 2" for string table and section header string table.
+  Header.e_shnum = Sections.size() + 2;
   // Place section header string table last.
-  Header.e_shstrndx = Sections.size();
+  Header.e_shstrndx = Sections.size() + 1;
 
   SectionNameToIdxMap SN2I;
   for (unsigned i = 0, e = Sections.size(); i != e; ++i) {
@@ -230,6 +230,13 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
     SHeaders.push_back(SHeader);
   }
 
+  // .strtab string table header. Currently emitted empty.
+  StringTableBuilder DotStrTab;
+  Elf_Shdr DotStrTabSHeader;
+  zero(DotStrTabSHeader);
+  DotStrTabSHeader.sh_name = SHStrTab.addString(StringRef(".strtab"));
+  createStringTableSectionHeader(DotStrTabSHeader, DotStrTab, CBA);
+
   // Section header string table header.
   Elf_Shdr SHStrTabSHeader;
   zero(SHStrTabSHeader);
@@ -237,6 +244,7 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
 
   OS.write((const char *)&Header, sizeof(Header));
   writeVectorData(OS, SHeaders);
+  OS.write((const char *)&DotStrTabSHeader, sizeof(DotStrTabSHeader));
   OS.write((const char *)&SHStrTabSHeader, sizeof(SHStrTabSHeader));
   CBA.writeBlobToStream(OS);
   return 0;
