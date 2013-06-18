@@ -4601,9 +4601,15 @@ def warn_instance_method_on_class_found : Warning<
 def warn_inst_method_not_found : Warning<
   "instance method %objcinstance0 not found (return type defaults to 'id')">,
   InGroup<MethodAccess>;
-def warn_method_not_found_with_typo : Warning<
-  "%select{instance|class}0 method %1 not found (return type defaults to 'id')"
-  "; did you mean %2?">, InGroup<MethodAccess>;
+def warn_instance_method_not_found_with_typo : Warning<
+  "instance method %objcinstance0 not found (return type defaults to 'id')"
+  "; did you mean %objcinstance2?">, InGroup<MethodAccess>;
+def warn_class_method_not_found_with_typo : Warning<
+  "class method %objcclass0 not found (return type defaults to 'id')"
+  "; did you mean %objcclass2?">, InGroup<MethodAccess>;
+def error_method_not_found_with_typo : Error<
+  "%select{instance|class}1 method %0 not found "
+  "; did you mean %2?">;
 def error_no_super_class_message : Error<
   "no @interface declaration found in class messaging of %0">;
 def error_root_class_cannot_use_super : Error<

@@ -411,7 +411,7 @@ void test17(void) {
 
 void test18(void) {
   id x;
-  [x test18]; // expected-error {{no known instance method for selector 'test18'}}
+  [x test18]; // expected-error {{instance method 'test18' not found ; did you mean 'test17'?}}
 }
 
 extern struct Test19 *test19a;

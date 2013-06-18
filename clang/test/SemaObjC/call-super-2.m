@@ -35,7 +35,7 @@ id objc_getClass(const char *s);
 @implementation Derived
 + (int) class_func1
 {
-   int i = (size_t)[self class_func0];       // expected-warning {{class method '+class_func0' not found (return type defaults to 'id')}}
+   int i = (size_t)[self class_func0];       // expected-warning {{class method '+class_func0' not found (return type defaults to 'id'); did you mean '+class_func}}
    return i + (size_t)[super class_func0];   // expected-warning {{class method '+class_func0' not found (return type defaults to 'id')}}
 }
 + (int) class_func2
@@ -68,7 +68,7 @@ id objc_getClass(const char *s);
 }
 - (int) instance_func1
 {
-   int i = (size_t)[self instance_func0];     // expected-warning {{instance method 'instance_func0' not found (return type defaults to 'id'); did you mean}}
+   int i = (size_t)[self instance_func0];     // expected-warning {{instance method '-instance_func0' not found (return type defaults to 'id'); did you mean}}
    return i + (size_t)[super instance_func0]; // expected-warning {{'Object' may not respond to 'instance_func0'}}
 }
 - (int) instance_func2

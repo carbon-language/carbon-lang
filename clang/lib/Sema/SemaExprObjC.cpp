@@ -1232,17 +1232,17 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
       DiagID = isClassMessage ? diag::warn_class_method_not_found
                               : diag::warn_inst_method_not_found;
     if (!getLangOpts().DebuggerSupport) {
-      const ObjCMethodDecl *OMD = 0;
-      if (const ObjCObjectPointerType *ObjCPtr =
-          ReceiverType->getAsObjCInterfacePointerType()) {
-        QualType ObjectType = QualType(ObjCPtr->getInterfaceType(), 0);
-        OMD = SelectorsForTypoCorrection(Sel, ObjectType);
-      }
-      if (OMD) {
+      const ObjCMethodDecl *OMD = SelectorsForTypoCorrection(Sel, ReceiverType);
+      if (OMD && !OMD->isInvalidDecl() && OMD->getSelector() != Sel) {
+        if (getLangOpts().ObjCAutoRefCount)
+          DiagID = diag::error_method_not_found_with_typo;
+        else
+          DiagID = isClassMessage ? diag::warn_class_method_not_found_with_typo
+                                  : diag::warn_instance_method_not_found_with_typo;
         Selector MatchedSel = OMD->getSelector();
         SourceRange SelectorRange(SelectorLocs.front(), SelectorLocs.back());
-        Diag(SelLoc, diag::warn_method_not_found_with_typo)
-          << isClassMessage << Sel << MatchedSel
+        Diag(SelLoc, DiagID)
+          << Sel<< isClassMessage << MatchedSel
           << FixItHint::CreateReplacement(SelectorRange, MatchedSel.getAsString());
       }
       else

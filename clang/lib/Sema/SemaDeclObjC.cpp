@@ -2309,21 +2309,45 @@ Sema::SelectorsForTypoCorrection(Selector Sel,
                                  QualType ObjectType) {
   unsigned NumArgs = Sel.getNumArgs();
   SmallVector<const ObjCMethodDecl *, 8> Methods;
+  bool ObjectIsId = true, ObjectIsClass = true;
+  if (ObjectType.isNull())
+    ObjectIsId = ObjectIsClass = false;
+  else if (!ObjectType->isObjCObjectPointerType())
+    return 0;
+  else if (const ObjCObjectPointerType *ObjCPtr =
+           ObjectType->getAsObjCInterfacePointerType()) {
+    ObjectType = QualType(ObjCPtr->getInterfaceType(), 0);
+    ObjectIsId = ObjectIsClass = false;
+  }
+  else if (ObjectType->isObjCIdType() || ObjectType->isObjCQualifiedIdType())
+    ObjectIsClass = false;
+  else if (ObjectType->isObjCClassType() || ObjectType->isObjCQualifiedClassType())
+    ObjectIsId = false;
+  else
+    return 0;
   
   for (GlobalMethodPool::iterator b = MethodPool.begin(),
        e = MethodPool.end(); b != e; b++) {
     // instance methods
     for (ObjCMethodList *M = &b->second.first; M; M=M->getNext())
       if (M->Method &&
-          (M->Method->getSelector().getNumArgs() == NumArgs) &&
-          HelperIsMethodInObjCType(*this, M->Method->getSelector(), ObjectType))
-        Methods.push_back(M->Method);
+          (M->Method->getSelector().getNumArgs() == NumArgs)) {
+        if (ObjectIsId)
+          Methods.push_back(M->Method);
+        else if (!ObjectIsClass &&
+                 HelperIsMethodInObjCType(*this, M->Method->getSelector(), ObjectType))
+          Methods.push_back(M->Method);
+      }
     // class methods
     for (ObjCMethodList *M = &b->second.second; M; M=M->getNext())
       if (M->Method &&
-          (M->Method->getSelector().getNumArgs() == NumArgs) &&
-          HelperIsMethodInObjCType(*this, M->Method->getSelector(), ObjectType))
-        Methods.push_back(M->Method);
+          (M->Method->getSelector().getNumArgs() == NumArgs)) {
+        if (ObjectIsClass)
+          Methods.push_back(M->Method);
+        else if (!ObjectIsId &&
+                 HelperIsMethodInObjCType(*this, M->Method->getSelector(), ObjectType))
+          Methods.push_back(M->Method);
+      }
   }
   
   SmallVector<const ObjCMethodDecl *, 8> SelectedMethods;
