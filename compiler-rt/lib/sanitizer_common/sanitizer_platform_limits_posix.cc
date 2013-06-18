@@ -62,7 +62,6 @@
 #include <scsi/scsi.h>
 #include <sys/mtio.h>
 #include <sys/kd.h>
-#include <linux/cdk.h>
 #include <linux/cyclades.h>
 #include <linux/if_eql.h>
 #include <linux/if_plip.h>
@@ -606,10 +605,6 @@ namespace __sanitizer {
   unsigned IOCTL_SIOCNRSETPARMS = SIOCNRSETPARMS;
   unsigned IOCTL_SNDCTL_DSP_GETISPACE = SNDCTL_DSP_GETISPACE;
   unsigned IOCTL_SNDCTL_DSP_GETOSPACE = SNDCTL_DSP_GETOSPACE;
-  unsigned IOCTL_STL_BINTR = STL_BINTR;
-  unsigned IOCTL_STL_BRESET = STL_BRESET;
-  unsigned IOCTL_STL_BSTART = STL_BSTART;
-  unsigned IOCTL_STL_BSTOP = STL_BSTOP;
   unsigned IOCTL_TIOCGSERIAL = TIOCGSERIAL;
   unsigned IOCTL_TIOCSERGETMULTI = TIOCSERGETMULTI;
   unsigned IOCTL_TIOCSERSETMULTI = TIOCSERSETMULTI;

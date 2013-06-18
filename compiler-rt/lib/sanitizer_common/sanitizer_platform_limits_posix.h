@@ -605,10 +605,6 @@ namespace __sanitizer {
   extern unsigned IOCTL_SIOCNRSETPARMS;
   extern unsigned IOCTL_SNDCTL_DSP_GETISPACE;
   extern unsigned IOCTL_SNDCTL_DSP_GETOSPACE;
-  extern unsigned IOCTL_STL_BINTR;
-  extern unsigned IOCTL_STL_BRESET;
-  extern unsigned IOCTL_STL_BSTART;
-  extern unsigned IOCTL_STL_BSTOP;
   extern unsigned IOCTL_TIOCGSERIAL;
   extern unsigned IOCTL_TIOCSERGETMULTI;
   extern unsigned IOCTL_TIOCSERSETMULTI;

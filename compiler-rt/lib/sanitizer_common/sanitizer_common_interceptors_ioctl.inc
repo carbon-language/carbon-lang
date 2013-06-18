@@ -410,10 +410,6 @@ static void ioctl_table_fill() {
   _(SCSI_IOCTL_TAGGED_ENABLE, NONE, 0);
   _(SNDCTL_DSP_GETISPACE, WRITE, struct_audio_buf_info_sz);
   _(SNDCTL_DSP_GETOSPACE, WRITE, struct_audio_buf_info_sz);
-  _(STL_BINTR, NONE, 0);
-  _(STL_BRESET, NONE, 0);
-  _(STL_BSTART, NONE, 0);
-  _(STL_BSTOP, NONE, 0);
   _(TIOCGSERIAL, WRITE, struct_serial_struct_sz);
   _(TIOCSERGETMULTI, WRITE, struct_serial_multiport_struct_sz);
   _(TIOCSERSETMULTI, READ, struct_serial_multiport_struct_sz);
