@@ -19,7 +19,7 @@ bb917:		; preds = %entry
 	ret i32 0
 
 bb951:		; preds = %bb986, %entry
-	%tmp955 = sdiv i32 0, 2		; <i32> [#uses=3]
+	%tmp955 = sdiv i32 %offset, 2		; <i32> [#uses=3]
 	%tmp961 = getelementptr %struct.indexentry* null, i32 %tmp955, i32 0		; <i32*> [#uses=1]
 	br i1 %cond, label %bb986, label %bb967
 

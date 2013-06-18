@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm | grep mvn | count 8
+; RUN: llc < %s -march=arm | grep mvn | count 9
 
 define i32 @f1() {
 entry:

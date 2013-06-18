@@ -7,8 +7,10 @@ entry:
 cond_next127:		; preds = %cond_next391, %entry
 	%v.1 = phi i32 [ undef, %entry ], [ %tmp411, %cond_next391 ]		; <i32> [#uses=1]
 	%tmp149 = mul i32 0, %v.1		; <i32> [#uses=0]
-	%tmp254 = and i32 0, 15		; <i32> [#uses=1]
-	%tmp256 = and i32 0, 15		; <i32> [#uses=2]
+	%tmpss = load i32* %ss, align 4		; <i32> [#uses=1]
+	%tmpbp = load i32* %bp, align 4		; <i32> [#uses=2]
+	%tmp254 = and i32 %tmpss, 15		; <i32> [#uses=1]
+	%tmp256 = and i32 %tmpbp, 15		; <i32> [#uses=2]
 	br label %cond_next391
 
 cond_next391:		; preds = %cond_next127

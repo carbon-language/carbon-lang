@@ -718,6 +718,14 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
       unsigned NumSignBits = LOI->NumSignBits;
       unsigned NumZeroBits = LOI->KnownZero.countLeadingOnes();
 
+      if (NumZeroBits == RegSize) {
+        // The current value is a zero.
+        // Explicitly express that as it would be easier for
+        // optimizations to kick in.
+        Parts[i] = DAG.getConstant(0, RegisterVT);
+        continue;
+      }
+
       // FIXME: We capture more information than the dag can represent.  For
       // now, just use the tightest assertzext/assertsext possible.
       bool isSExt = true;
