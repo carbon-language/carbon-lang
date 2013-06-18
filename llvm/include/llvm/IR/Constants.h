@@ -112,7 +112,6 @@ public:
   /// Return the constant as a 64-bit unsigned integer value after it
   /// has been zero extended as appropriate for the type of this constant. Note
   /// that this method can assert if the value does not fit in 64 bits.
-  /// @deprecated
   /// @brief Return the zero extended value.
   inline uint64_t getZExtValue() const {
     return Val.getZExtValue();
@@ -121,7 +120,6 @@ public:
   /// Return the constant as a 64-bit integer value after it has been sign
   /// extended as appropriate for the type of this constant. Note that
   /// this method can assert if the value does not fit in 64 bits.
-  /// @deprecated
   /// @brief Return the sign extended value.
   inline int64_t getSExtValue() const {
     return Val.getSExtValue();

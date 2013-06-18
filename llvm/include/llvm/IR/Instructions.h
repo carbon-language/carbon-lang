@@ -2609,7 +2609,6 @@ public:
   }
 
   /// addCase - Add an entry to the switch instruction...
-  /// @deprecated
   /// Note:
   /// This action invalidates case_end(). Old case_end() iterator will
   /// point to the added case.
@@ -2695,7 +2694,6 @@ public:
     }
 
     /// Resolves case value for current case.
-    /// @deprecated
     ConstantIntTy *getCaseValue() {
       assert(Index < SI->getNumCases() && "Index out the number of cases.");
       IntegersSubsetRef CaseRanges = *SubsetIt;
@@ -2799,7 +2797,6 @@ public:
     CaseIt(const ParentTy& Src) : ParentTy(Src) {}
 
     /// Sets the new value for current case.
-    /// @deprecated.
     void setValue(ConstantInt *V) {
       assert(Index < SI->getNumCases() && "Index out the number of cases.");
       IntegersSubsetToBB Mapping;
