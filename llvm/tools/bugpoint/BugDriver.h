@@ -275,6 +275,8 @@ public:
   /// bitcode file.  If an error occurs, true is returned.
   ///
   bool writeProgramToFile(const std::string &Filename, const Module *M) const;
+  bool writeProgramToFile(const std::string &Filename, int FD,
+                          const Module *M) const;
 
 private:
   /// runPasses - Just like the method above, but this just returns true or

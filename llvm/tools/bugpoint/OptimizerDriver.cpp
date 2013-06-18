@@ -49,20 +49,28 @@ namespace {
 /// writeProgramToFile - This writes the current "Program" to the named bitcode
 /// file.  If an error occurs, true is returned.
 ///
+static bool writeProgramToFileAux(tool_output_file &Out, const Module *M) {
+  WriteBitcodeToFile(M, Out.os());
+  Out.os().close();
+  if (!Out.os().has_error()) {
+    Out.keep();
+    return false;
+  }
+  return true;
+}
+
+bool BugDriver::writeProgramToFile(const std::string &Filename, int FD,
+                                   const Module *M) const {
+  tool_output_file Out(Filename.c_str(), FD);
+  return writeProgramToFileAux(Out, M);
+}
+
 bool BugDriver::writeProgramToFile(const std::string &Filename,
                                    const Module *M) const {
   std::string ErrInfo;
-  tool_output_file Out(Filename.c_str(), ErrInfo,
-                       raw_fd_ostream::F_Binary);
-  if (ErrInfo.empty()) {
-    WriteBitcodeToFile(M, Out.os());
-    Out.os().close();
-    if (!Out.os().has_error()) {
-      Out.keep();
-      return false;
-    }
-  }
-  Out.os().clear_error();
+  tool_output_file Out(Filename.c_str(), ErrInfo, raw_fd_ostream::F_Binary);
+  if (ErrInfo.empty())
+    return writeProgramToFileAux(Out, M);
   return true;
 }
 
