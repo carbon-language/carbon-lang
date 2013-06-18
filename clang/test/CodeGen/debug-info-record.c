@@ -3,7 +3,9 @@
 // rdar://problem/14101097
 //
 // FIXME: This should work with -flimit-debug-info, too.
-//
+
+// Make sure this is not a forward declaration.
+// CHECK-NOT: [ DW_TAG_structure_type ] [elusive_s] {{.*}} [fwd]
 // CHECK: [ DW_TAG_member ] [foo]
 // CHECK: [ DW_TAG_member ] [bar]
 struct elusive_s {
@@ -16,4 +18,3 @@ int baz(void* x) {
   elusive_t s = x;
   return s->foo;
 }
-

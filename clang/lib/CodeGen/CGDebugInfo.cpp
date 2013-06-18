@@ -1379,7 +1379,12 @@ llvm::DIType CGDebugInfo::getOrCreateInterfaceType(QualType D,
 /// CreateType - get structure or union type.
 llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty, bool Declaration) {
   RecordDecl *RD = Ty->getDecl();
+  // Limited debug info should only remove struct definitions that can
+  // safely be replaced by a forward declaration in the source code.
   if (DebugKind <= CodeGenOptions::LimitedDebugInfo && Declaration) {
+    // FIXME: This implementation is problematic; there are some test
+    // cases where we violate the above principle, such as
+    // test/CodeGen/debug-info-records.c .
     llvm::DIDescriptor FDContext =
       getContextDescriptor(cast<Decl>(RD->getDeclContext()));
     llvm::DIType RetTy = createRecordFwdDecl(RD, FDContext);
