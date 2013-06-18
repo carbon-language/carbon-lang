@@ -324,12 +324,6 @@ Path::isSymLink() const {
   return S_ISLNK(buf.st_mode);
 }
 
-
-bool
-Path::canWrite() const {
-  return 0 == access(path.c_str(), W_OK);
-}
-
 bool
 Path::isRegularFile() const {
   // Get the status so we can determine if it's a file or directory

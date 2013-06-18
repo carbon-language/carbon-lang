@@ -267,15 +267,6 @@ namespace sys {
       LLVM_ATTRIBUTE_DEPRECATED(bool isSymLink() const,
         LLVM_PATH_DEPRECATED_MSG(fs::is_symlink));
 
-      /// This function determines if the path name references a writable file
-      /// or directory in the file system. This function checks for the
-      /// existence and writability (by the current program) of the file or
-      /// directory.
-      /// @returns true if the pathname references a writable file.
-      /// @brief Determines if the path is a writable file or directory
-      /// in the file system.
-      bool canWrite() const;
-
       /// This function checks that what we're trying to work only on a regular
       /// file. Check for things like /dev/null, any block special file, or
       /// other things that aren't "regular" regular files.
