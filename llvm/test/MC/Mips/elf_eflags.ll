@@ -6,12 +6,15 @@
 
 ; EF_MIPS_NOREORDER (0x00000001) is always on by default currently
 ; EF_MIPS_PIC (0x00000002)
-; EF_MIPS_CPIC (0x00000004) - not tested yet
+; EF_MIPS_CPIC (0x00000004) - See note below
 ; EF_MIPS_ABI2 (0x00000020) - n32 not tested yet
 ; EF_MIPS_ARCH_32 (0x50000000)
 ; EF_MIPS_ARCH_64 (0x60000000)
 ; EF_MIPS_ARCH_32R2 (0x70000000)
 ; EF_MIPS_ARCH_64R2 (0x80000000)
+
+; Note that EF_MIPS_CPIC is set by -mabicalls which is the default on Linux
+; TODO need to support -mno-abicalls
 
 ; RUN: llc -filetype=obj -mtriple mipsel-unknown-linux -mcpu=mips32 -relocation-model=static %s -o - | llvm-readobj -h | FileCheck -check-prefix=CHECK-BE32 %s
 ; RUN: llc -filetype=obj -mtriple mipsel-unknown-linux -mcpu=mips32 %s -o - | llvm-readobj -h | FileCheck -check-prefix=CHECK-BE32_PIC %s
@@ -28,37 +31,37 @@
 ; RUN: llc -filetype=obj -mtriple mipsel-unknown-linux -mcpu=mips32r2 -mattr=+mips16 -relocation-model=pic %s -o - | llvm-readobj -h | FileCheck -check-prefix=CHECK-LE32R2-MIPS16 %s
  
 ; 32(R1) bit with NO_REORDER and static
-; CHECK-BE32: Flags [ (0x50001001)
+; CHECK-BE32: Flags [ (0x50001005)
 ;
 ; 32(R1) bit with NO_REORDER and PIC
-; CHECK-BE32_PIC: Flags [ (0x50001003)
+; CHECK-BE32_PIC: Flags [ (0x50001007)
 ;
 ; 32R2 bit with NO_REORDER and static
-; CHECK-BE32R2: Flags [ (0x70001001)
+; CHECK-BE32R2: Flags [ (0x70001005)
 ;
 ; 32R2 bit with NO_REORDER and PIC
-; CHECK-BE32R2_PIC: Flags [ (0x70001003)
+; CHECK-BE32R2_PIC: Flags [ (0x70001007)
 ;
 ; 32R2 bit MICROMIPS with NO_REORDER and static
-; CHECK-BE32R2-MICROMIPS: Flags [ (0x72001001)
+; CHECK-BE32R2-MICROMIPS: Flags [ (0x72001005)
 ;
 ; 32R2 bit MICROMIPS with NO_REORDER and PIC
-;CHECK-BE32R2-MICROMIPS_PIC: Flags [ (0x72001003)
+;CHECK-BE32R2-MICROMIPS_PIC: Flags [ (0x72001007)
 ;
 ; 64(R1) bit with NO_REORDER and static
-; CHECK-BE64: Flags [ (0x60000001)
+; CHECK-BE64: Flags [ (0x60000005)
 ;
 ; 64(R1) bit with NO_REORDER and PIC
-; CHECK-BE64_PIC: Flags [ (0x60000003)
+; CHECK-BE64_PIC: Flags [ (0x60000007)
 ;
 ; 64R2 bit with NO_REORDER and static
-; CHECK-BE64R2: Flags [ (0x80000001)
+; CHECK-BE64R2: Flags [ (0x80000005)
 ;
 ; 64R2 bit with NO_REORDER and PIC
-; CHECK-BE64R2_PIC: Flags [ (0x80000003)
+; CHECK-BE64R2_PIC: Flags [ (0x80000007)
 ;
 ; 32R2 bit MIPS16 with PIC
-; CHECK-LE32R2-MIPS16: Flags [ (0x74001002)
+; CHECK-LE32R2-MIPS16: Flags [ (0x74001006)
  
 define i32 @main() nounwind {
 entry:

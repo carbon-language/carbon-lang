@@ -557,6 +557,15 @@ printFCCOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
 void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
   // FIXME: Use SwitchSection.
 
+  // TODO: Need to add -mabicalls and -mno-abicalls flags.
+  // Currently we assume that -mabicalls is the default.
+  if (OutStreamer.hasRawTextSupport()) {
+    OutStreamer.EmitRawText(StringRef("\t.abicalls"));
+    Reloc::Model RM = Subtarget->getRelocationModel();
+    if (RM == Reloc::Static)
+      OutStreamer.EmitRawText(StringRef("\t.option\tpic0"));
+  }
+
   // Tell the assembler which ABI we are using
   if (OutStreamer.hasRawTextSupport())
     OutStreamer.EmitRawText("\t.section .mdebug." +

@@ -36,6 +36,10 @@ namespace llvm {
     MCAssembler& MCA = getAssembler();
     unsigned EFlags = MCA.getELFHeaderEFlags();
 
+    // TODO: Need to add -mabicalls and -mno-abicalls flags.
+    // Currently we assume that -mabicalls is the default.
+    EFlags |= ELF::EF_MIPS_CPIC;
+
     if (Subtarget.inMips16Mode())
       EFlags |= ELF::EF_MIPS_ARCH_ASE_M16;
     else
