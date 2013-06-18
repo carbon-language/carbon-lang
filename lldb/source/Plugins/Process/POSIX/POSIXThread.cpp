@@ -417,6 +417,7 @@ POSIXThread::WatchNotify(const ProcessMessage &message)
 void
 POSIXThread::TraceNotify(const ProcessMessage &message)
 {
+#ifndef __FreeBSD__
     RegisterContextPOSIX* reg_ctx = GetRegisterContextPOSIX();
     if (reg_ctx)
     {
@@ -431,6 +432,7 @@ POSIXThread::TraceNotify(const ProcessMessage &message)
             }
         }
     }
+#endif
     SetStopInfo (StopInfo::CreateStopReasonToTrace(*this));
 }
 
