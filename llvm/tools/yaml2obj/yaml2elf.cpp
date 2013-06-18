@@ -120,6 +120,19 @@ static void zero(T &Obj) {
   memset(&Obj, 0, sizeof(Obj));
 }
 
+/// \brief Create a string table in `SHeader`, which we assume is already
+/// zero'd.
+template <class Elf_Shdr>
+static void createStringTableSectionHeader(Elf_Shdr &SHeader,
+                                           StringTableBuilder &STB,
+                                           ContiguousBlobAccumulator &CBA) {
+  SHeader.sh_type = ELF::SHT_STRTAB;
+  SHeader.sh_offset = CBA.currentOffset();
+  SHeader.sh_size = STB.size();
+  STB.writeToStream(CBA.getOS());
+  SHeader.sh_addralign = 1;
+}
+
 template <class ELFT>
 static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   using namespace llvm::ELF;
@@ -220,17 +233,7 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   // Section header string table header.
   Elf_Shdr SHStrTabSHeader;
   zero(SHStrTabSHeader);
-  SHStrTabSHeader.sh_name = 0;
-  SHStrTabSHeader.sh_type = SHT_STRTAB;
-  SHStrTabSHeader.sh_flags = 0;
-  SHStrTabSHeader.sh_addr = 0;
-  SHStrTabSHeader.sh_offset = CBA.currentOffset();
-  SHStrTabSHeader.sh_size = SHStrTab.size();
-  SHStrTab.writeToStream(CBA.getOS());
-  SHStrTabSHeader.sh_link = 0;
-  SHStrTabSHeader.sh_info = 0;
-  SHStrTabSHeader.sh_addralign = 1;
-  SHStrTabSHeader.sh_entsize = 0;
+  createStringTableSectionHeader(SHStrTabSHeader, SHStrTab, CBA);
 
   OS.write((const char *)&Header, sizeof(Header));
   writeVectorData(OS, SHeaders);
