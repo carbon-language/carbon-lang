@@ -4,9 +4,6 @@
 // RUN: %clangxx_asan -O0 -g %s -o %t && %t
 // RUN: %clangxx_asan -O3 -g %s -o %t && %t
 
-// See https://code.google.com/p/address-sanitizer/issues/detail?id=195
-// XFAIL: darwin
-
 #include <assert.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
@@ -20,7 +17,7 @@ int main(int argc, char **argv) {
   int res = ioctl(fd, FIONBIO, &nonblock + 1);
   // CHECK: AddressSanitizer: stack-buffer-overflow
   // CHECK: READ of size 4 at
-  // CHECK: #{{.*}} in main {{.*}}/ioctl.cc:[[@LINE-3]]
+  // CHECK: {{#.* in _?main .*ioctl.cc:}}[[@LINE-3]]
   assert(res == 0);
   close(fd);
   return 0;
