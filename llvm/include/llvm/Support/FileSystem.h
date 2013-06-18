@@ -356,6 +356,12 @@ inline bool exists(const Twine &path) {
 /// @returns True if we can execute it, false otherwise.
 bool can_execute(const Twine &Path);
 
+/// @brief Can we write this file?
+///
+/// @param Path Input path.
+/// @returns True if we can write to it, false otherwise.
+bool can_write(const Twine &Path);
+
 /// @brief Do file_status's represent the same thing?
 ///
 /// @param A Input file_status.

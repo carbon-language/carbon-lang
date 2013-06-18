@@ -362,6 +362,18 @@ error_code exists(const Twine &path, bool &result) {
   return error_code::success();
 }
 
+bool can_write(const Twine &Path) {
+  // FIXME: take security attributes into account.
+  SmallString<128> PathStorage;
+  SmallVector<wchar_t, 128> PathUtf16;
+
+  if (UTF8ToUTF16(Path.toStringRef(PathStorage), PathUtf16))
+    return false;
+
+  DWORD Attr = ::GetFileAttributesW(PathUtf16.begin());
+  return (Attr != INVALID_FILE_ATTRIBUTES) && !(Attr & FILE_ATTRIBUTE_READONLY);
+}
+
 bool can_execute(const Twine &Path) {
   SmallString<128> PathStorage;
   SmallVector<wchar_t, 128> PathUtf16;

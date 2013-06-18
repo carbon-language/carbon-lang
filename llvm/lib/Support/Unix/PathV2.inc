@@ -308,6 +308,12 @@ error_code exists(const Twine &path, bool &result) {
   return error_code::success();
 }
 
+bool can_write(const Twine &Path) {
+  SmallString<128> PathStorage;
+  StringRef P = Path.toNullTerminatedStringRef(PathStorage);
+  return 0 == access(P.begin(), W_OK);
+}
+
 bool can_execute(const Twine &Path) {
   SmallString<128> PathStorage;
   StringRef P = Path.toNullTerminatedStringRef(PathStorage);
