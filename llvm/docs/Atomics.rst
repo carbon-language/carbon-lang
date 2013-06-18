@@ -211,7 +211,7 @@ Notes for code generation
   never stored.  A normal load or store instruction is usually sufficient, but
   note that an unordered load or store cannot be split into multiple
   instructions (or an instruction which does multiple memory operations, like
-  ``LDRD`` on ARM).
+  ``LDRD`` on ARM without LPAE, or not naturally-aligned ``LDRD`` on LPAE ARM).
 
 Monotonic
 ---------
