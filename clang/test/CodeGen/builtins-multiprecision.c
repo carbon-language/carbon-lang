@@ -2,6 +2,25 @@
 // RUN: %clang_cc1 -triple "x86_64-unknown-unknown" -emit-llvm -x c %s -o - -O3 | FileCheck %s
 // RUN: %clang_cc1 -triple "x86_64-mingw32"         -emit-llvm -x c %s -o - -O3 | FileCheck %s
 
+unsigned char test_addcb(unsigned char x, unsigned char y,
+                         unsigned char carryin, unsigned char *z) {
+  // CHECK: @test_addcb
+  // CHECK: %{{.+}} = {{.*}} call { i8, i1 } @llvm.uadd.with.overflow.i8(i8 %x, i8 %y)
+  // CHECK: %{{.+}} = extractvalue { i8, i1 } %{{.+}}, 1
+  // CHECK: %{{.+}} = extractvalue { i8, i1 } %{{.+}}, 0
+  // CHECK: %{{.+}} = {{.*}} call { i8, i1 } @llvm.uadd.with.overflow.i8(i8 %{{.+}}, i8 %carryin)
+  // CHECK: %{{.+}} = extractvalue { i8, i1 } %{{.+}}, 1
+  // CHECK: %{{.+}} = extractvalue { i8, i1 } %{{.+}}, 0
+  // CHECK: %{{.+}} = or i1 %{{.+}}, %{{.+}}
+  // CHECK: %{{.+}} = zext i1 %{{.+}} to i8
+  // CHECK: store i8 %{{.+}}, i8* %z, align 1
+
+  unsigned char carryout;
+  *z = __builtin_addcb(x, y, carryin, &carryout);
+
+  return carryout;
+}
+
 unsigned short test_addcs(unsigned short x, unsigned short y,
                           unsigned short carryin, unsigned short *z) {
   // CHECK: @test_addcs
@@ -72,6 +91,25 @@ unsigned long long test_addcll(unsigned long long x, unsigned long long y,
   // CHECK: store i64 %{{.+}}, i64* %z
   unsigned long long carryout;
   *z = __builtin_addcll(x, y, carryin, &carryout);
+
+  return carryout;
+}
+
+unsigned char test_subcb(unsigned char x, unsigned char y,
+                         unsigned char carryin, unsigned char *z) {
+  // CHECK: @test_subcb
+  // CHECK: %{{.+}} = {{.*}} call { i8, i1 } @llvm.usub.with.overflow.i8(i8 %x, i8 %y)
+  // CHECK: %{{.+}} = extractvalue { i8, i1 } %{{.+}}, 1
+  // CHECK: %{{.+}} = extractvalue { i8, i1 } %{{.+}}, 0
+  // CHECK: %{{.+}} = {{.*}} call { i8, i1 } @llvm.usub.with.overflow.i8(i8 %{{.+}}, i8 %carryin)
+  // CHECK: %{{.+}} = extractvalue { i8, i1 } %{{.+}}, 1
+  // CHECK: %{{.+}} = extractvalue { i8, i1 } %{{.+}}, 0
+  // CHECK: %{{.+}} = or i1 %{{.+}}, %{{.+}}
+  // CHECK: %{{.+}} = zext i1 %{{.+}} to i8
+  // CHECK: store i8 %{{.+}}, i8* %z, align 1
+
+  unsigned char carryout;
+  *z = __builtin_subcb(x, y, carryin, &carryout);
 
   return carryout;
 }
