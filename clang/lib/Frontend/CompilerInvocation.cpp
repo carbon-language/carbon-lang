@@ -478,6 +478,15 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
       Diags.Report(diag::err_drv_invalid_value) << A->getAsString(Args) << Val;
   }
 
+  if (Arg *A = Args.getLastArg(OPT_fpcc_struct_return, OPT_freg_struct_return)) {
+    if (A->getOption().matches(OPT_fpcc_struct_return)) {
+      Opts.setStructReturnConvention(CodeGenOptions::SRCK_OnStack);
+    } else {
+      assert(A->getOption().matches(OPT_freg_struct_return));
+      Opts.setStructReturnConvention(CodeGenOptions::SRCK_InRegs);
+    }
+  }
+
   return Success;
 }
 

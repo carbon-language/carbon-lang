@@ -575,6 +575,9 @@ public:
       bool d, bool p, bool w, unsigned r)
     :TargetCodeGenInfo(new X86_32ABIInfo(CGT, d, p, w, r)) {}
 
+  static bool isStructReturnInRegABI(
+      const llvm::Triple &Triple, const CodeGenOptions &Opts);
+
   void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &CGM) const;
 
@@ -1293,8 +1296,9 @@ static std::string qualifyWindowsLibrary(llvm::StringRef Lib) {
 
 class WinX86_32TargetCodeGenInfo : public X86_32TargetCodeGenInfo {
 public:
-  WinX86_32TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, unsigned RegParms)
-    : X86_32TargetCodeGenInfo(CGT, false, true, true, RegParms) {}
+  WinX86_32TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT,
+        bool d, bool p, bool w, unsigned RegParms)
+    : X86_32TargetCodeGenInfo(CGT, d, p, w, RegParms) {}
 
   void getDependentLibraryOption(llvm::StringRef Lib,
                                  llvm::SmallString<24> &Opt) const {
@@ -4444,6 +4448,36 @@ llvm::Value *SystemZABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   return ResAddr;
 }
 
+bool X86_32TargetCodeGenInfo::isStructReturnInRegABI(
+    const llvm::Triple &Triple, const CodeGenOptions &Opts) {
+  assert(Triple.getArch() == llvm::Triple::x86);
+
+  switch (Opts.getStructReturnConvention()) {
+  case CodeGenOptions::SRCK_Default:
+    break;
+  case CodeGenOptions::SRCK_OnStack:  // -fpcc-struct-return
+    return false;
+  case CodeGenOptions::SRCK_InRegs:  // -freg-struct-return
+    return true;
+  }
+
+  if (Triple.isOSDarwin())
+    return true;
+
+  switch (Triple.getOS()) {
+  case llvm::Triple::Cygwin:
+  case llvm::Triple::MinGW32:
+  case llvm::Triple::AuroraUX:
+  case llvm::Triple::DragonFly:
+  case llvm::Triple::FreeBSD:
+  case llvm::Triple::OpenBSD:
+  case llvm::Triple::Bitrig:
+  case llvm::Triple::Win32:
+    return true;
+  default:
+    return false;
+  }
+}
 
 ABIArgInfo SystemZABIInfo::classifyReturnType(QualType RetTy) const {
   if (RetTy->isVoidType())
@@ -5506,31 +5540,22 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     return *(TheTargetCodeGenInfo = new TCETargetCodeGenInfo(Types));
 
   case llvm::Triple::x86: {
-    if (Triple.isOSDarwin())
-      return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(Types, true, true, false,
-                                           CodeGenOpts.NumRegisterParameters));
+    bool IsDarwinVectorABI = Triple.isOSDarwin();
+    bool IsSmallStructInRegABI =
+        X86_32TargetCodeGenInfo::isStructReturnInRegABI(Triple, CodeGenOpts);
+    bool IsWin32FloatStructABI = (Triple.getOS() == llvm::Triple::Win32);
 
-    switch (Triple.getOS()) {
-    case llvm::Triple::Cygwin:
-    case llvm::Triple::MinGW32:
-    case llvm::Triple::AuroraUX:
-    case llvm::Triple::DragonFly:
-    case llvm::Triple::FreeBSD:
-    case llvm::Triple::OpenBSD:
-    case llvm::Triple::Bitrig:
-      return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(Types, false, true, false,
-                                           CodeGenOpts.NumRegisterParameters));
-
-    case llvm::Triple::Win32:
+    if (Triple.getOS() == llvm::Triple::Win32) {
       return *(TheTargetCodeGenInfo =
                new WinX86_32TargetCodeGenInfo(Types,
+                                              IsDarwinVectorABI, IsSmallStructInRegABI,
+                                              IsWin32FloatStructABI,
                                               CodeGenOpts.NumRegisterParameters));
-
-    default:
+    } else {
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(Types, false, false, false,
+               new X86_32TargetCodeGenInfo(Types,
+                                           IsDarwinVectorABI, IsSmallStructInRegABI,
+                                           IsWin32FloatStructABI,
                                            CodeGenOpts.NumRegisterParameters));
     }
   }
