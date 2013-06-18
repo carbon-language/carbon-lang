@@ -48,7 +48,6 @@ enum ActionType {
   GenClangCommentHTMLNamedCharacterReferences,
   GenClangCommentCommandInfo,
   GenClangCommentCommandList,
-  GenOptParserDefs, GenOptParserImpl,
   GenArmNeon,
   GenArmNeonSema,
   GenArmNeonTest
@@ -57,11 +56,7 @@ enum ActionType {
 namespace {
   cl::opt<ActionType>
   Action(cl::desc("Action to perform:"),
-         cl::values(clEnumValN(GenOptParserDefs, "gen-opt-parser-defs",
-                               "Generate option definitions"),
-                    clEnumValN(GenOptParserImpl, "gen-opt-parser-impl",
-                               "Generate option parser implementation"),
-                    clEnumValN(GenClangAttrClasses, "gen-clang-attr-classes",
+         cl::values(clEnumValN(GenClangAttrClasses, "gen-clang-attr-classes",
                                "Generate clang attribute clases"),
                     clEnumValN(GenClangAttrExprArgsList,
                                "gen-clang-attr-expr-args-list",
@@ -220,12 +215,6 @@ bool ClangTableGenMain(raw_ostream &OS, RecordKeeper &Records) {
     break;
   case GenClangCommentCommandList:
     EmitClangCommentCommandList(Records, OS);
-    break;
-  case GenOptParserDefs:
-    EmitOptParser(Records, OS, true);
-    break;
-  case GenOptParserImpl:
-    EmitOptParser(Records, OS, false);
     break;
   case GenArmNeon:
     EmitNeon(Records, OS);

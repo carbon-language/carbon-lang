@@ -9,6 +9,5 @@ add_tablegen(clang-tblgen CLANG
   ClangDiagnosticsEmitter.cpp
   ClangSACheckersEmitter.cpp
   NeonEmitter.cpp
-  OptParserEmitter.cpp
   TableGen.cpp
   )
