@@ -374,7 +374,6 @@ PathWithStatus::getFileStatus(bool update, std::string *ErrStr) const {
     status.mode = buf.st_mode;
     status.user = buf.st_uid;
     status.group = buf.st_gid;
-    status.uniqueID = uint64_t(buf.st_ino);
     status.isDir  = S_ISDIR(buf.st_mode);
     status.isFile = S_ISREG(buf.st_mode);
     fsIsValid = true;

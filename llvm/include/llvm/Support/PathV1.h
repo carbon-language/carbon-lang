@@ -45,19 +45,17 @@ namespace sys {
     uint32_t    mode;       ///< Mode of the file, if applicable
     uint32_t    user;       ///< User ID of owner, if applicable
     uint32_t    group;      ///< Group ID of owner, if applicable
-    uint64_t    uniqueID;   ///< A number to uniquely ID this file
     bool        isDir  : 1; ///< True if this is a directory.
     bool        isFile : 1; ///< True if this is a file.
 
     FileStatus() : fileSize(0), modTime(0,0), mode(0777), user(999),
-                   group(999), uniqueID(0), isDir(false), isFile(false) { }
+                   group(999), isDir(false), isFile(false) { }
 
     TimeValue getTimestamp() const { return modTime; }
     uint64_t getSize() const { return fileSize; }
     uint32_t getMode() const { return mode; }
     uint32_t getUser() const { return user; }
     uint32_t getGroup() const { return group; }
-    uint64_t getUniqueID() const { return uniqueID; }
   };
 
   /// This class provides an abstraction for the path to a file or directory
