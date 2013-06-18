@@ -128,3 +128,42 @@
 @ CHECK: vmov.8	d18[1], r1              @ encoding: [0xb0,0x1b,0x42,0xee]
 @ CHECK: vmov.16	d18[1], r1      @ encoding: [0xf0,0x1b,0x02,0xee]
 @ CHECK: vmov.32	d18[1], r1      @ encoding: [0x90,0x1b,0x22,0xee]
+
+
+        vmvn.8 d1, d2
+        vmvn.16 d1, d2
+        vmvn.32 d1, d2
+        vmvn.64 d1, d2
+        vmvn.i8 d1, d2
+        vmvn.i16 d1, d2
+        vmvn.i32 d1, d2
+        vmvn.i64 d1, d2
+        vmvn.s8 d1, d2
+        vmvn.s16 d1, d2
+        vmvn.s32 d1, d2
+        vmvn.s64 d1, d2
+        vmvn.u8 d1, d2
+        vmvn.u16 d1, d2
+        vmvn.u32 d1, d2
+        vmvn.u64 d1, d2
+        vmvn.f32 d1, d2
+        vmvn.f64 d1, d2
+
+@ CHECK: vmvn	d1, d2                  @ encoding: [0x82,0x15,0xb0,0xf3]
+@ CHECK: vmvn	d1, d2                  @ encoding: [0x82,0x15,0xb0,0xf3]
+@ CHECK: vmvn	d1, d2                  @ encoding: [0x82,0x15,0xb0,0xf3]
+@ CHECK: vmvn	d1, d2                  @ encoding: [0x82,0x15,0xb0,0xf3]
+@ CHECK: vmvn	d1, d2                  @ encoding: [0x82,0x15,0xb0,0xf3]
+@ CHECK: vmvn	d1, d2                  @ encoding: [0x82,0x15,0xb0,0xf3]
+@ CHECK: vmvn	d1, d2                  @ encoding: [0x82,0x15,0xb0,0xf3]
+@ CHECK: vmvn	d1, d2                  @ encoding: [0x82,0x15,0xb0,0xf3]
+@ CHECK: vmvn	d1, d2                  @ encoding: [0x82,0x15,0xb0,0xf3]
+@ CHECK: vmvn	d1, d2                  @ encoding: [0x82,0x15,0xb0,0xf3]
+@ CHECK: vmvn	d1, d2                  @ encoding: [0x82,0x15,0xb0,0xf3]
+@ CHECK: vmvn	d1, d2                  @ encoding: [0x82,0x15,0xb0,0xf3]
+@ CHECK: vmvn	d1, d2                  @ encoding: [0x82,0x15,0xb0,0xf3]
+@ CHECK: vmvn	d1, d2                  @ encoding: [0x82,0x15,0xb0,0xf3]
+@ CHECK: vmvn	d1, d2                  @ encoding: [0x82,0x15,0xb0,0xf3]
+@ CHECK: vmvn	d1, d2                  @ encoding: [0x82,0x15,0xb0,0xf3]
+@ CHECK: vmvn	d1, d2                  @ encoding: [0x82,0x15,0xb0,0xf3]
+@ CHECK: vmvn	d1, d2                  @ encoding: [0x82,0x15,0xb0,0xf3]

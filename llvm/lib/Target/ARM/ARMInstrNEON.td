@@ -6698,11 +6698,16 @@ def VST4qWB_register_Asm_32 :
                   (ins VecListFourQ:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
-// VMOV takes an optional datatype suffix
+// VMOV/VMVN takes an optional datatype suffix
 defm : NEONDTAnyInstAlias<"vmov${p}", "$Vd, $Vm",
                          (VORRd DPR:$Vd, DPR:$Vm, DPR:$Vm, pred:$p)>;
 defm : NEONDTAnyInstAlias<"vmov${p}", "$Vd, $Vm",
                          (VORRq QPR:$Vd, QPR:$Vm, QPR:$Vm, pred:$p)>;
+
+defm : NEONDTAnyInstAlias<"vmvn${p}", "$Vd, $Vm",
+                         (VMVNd DPR:$Vd, DPR:$Vm, pred:$p)>;
+defm : NEONDTAnyInstAlias<"vmvn${p}", "$Vd, $Vm",
+                         (VMVNq QPR:$Vd, QPR:$Vm, pred:$p)>;
 
 // VCLT (register) is an assembler alias for VCGT w/ the operands reversed.
 // D-register versions.
