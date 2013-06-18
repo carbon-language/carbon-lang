@@ -579,9 +579,10 @@ void ExprEngine::VisitInitListExpr(const InitListExpr *IE,
   const LocationContext *LCtx = Pred->getLocationContext();
   QualType T = getContext().getCanonicalType(IE->getType());
   unsigned NumInitElements = IE->getNumInits();
-  
-  if (T->isArrayType() || T->isRecordType() || T->isVectorType() ||
-      T->isAnyComplexType()) {
+
+  if (!IE->isGLValue() &&
+      (T->isArrayType() || T->isRecordType() || T->isVectorType() ||
+       T->isAnyComplexType())) {
     llvm::ImmutableList<SVal> vals = getBasicVals().getEmptySValList();
     
     // Handle base case where the initializer has no elements.
@@ -606,7 +607,9 @@ void ExprEngine::VisitInitListExpr(const InitListExpr *IE,
     return;
   }
 
-  // Handle scalars: int{5} and int{}.
+  // Handle scalars: int{5} and int{} and GLvalues.
+  // Note, if the InitListExpr is a GLvalue, it means that there is an address
+  // representing it, so it must have a single init element.
   assert(NumInitElements <= 1);
 
   SVal V;

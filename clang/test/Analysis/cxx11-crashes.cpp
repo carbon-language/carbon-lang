@@ -65,3 +65,24 @@ bool begin(double *it) {
   bool *a = reinterpret_cast<type &>(*( reinterpret_cast<char *>( it )));
   return *a;
 }
+
+// radar://14164698 Don't crash on "assuming" a ComoundVal.
+class JSONWireProtocolInputStream {
+public:
+  virtual ~JSONWireProtocolInputStream();
+};
+class JSONWireProtocolReader {
+public:
+  JSONWireProtocolReader(JSONWireProtocolInputStream& istream)
+  : _istream{istream} {} // On evaluating a bind here,
+                         // the dereference checker issues an assume on a CompoundVal.
+~JSONWireProtocolReader();
+private:
+JSONWireProtocolInputStream& _istream;
+};
+class SocketWireProtocolStream : public JSONWireProtocolInputStream {
+};
+void test() {
+  SocketWireProtocolStream stream{};
+  JSONWireProtocolReader reader{stream};
+}
