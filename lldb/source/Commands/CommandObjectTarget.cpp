@@ -2430,7 +2430,7 @@ public:
     CommandObjectTargetModulesDumpLineTable (CommandInterpreter &interpreter) :
     CommandObjectTargetModulesSourceFileAutoComplete (interpreter,
                                                       "target modules dump line-table",
-                                                      "Dump the debug symbol file for one or more target modules.",
+                                                      "Dump the line table for one or more compilation units.",
                                                       NULL,
                                                       eFlagRequiresTarget)
     {
