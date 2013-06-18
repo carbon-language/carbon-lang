@@ -770,9 +770,6 @@ public:
     /// \brief Initializer has a placeholder type which cannot be
     /// resolved by initialization.
     FK_PlaceholderType,
-    /// \brief Failed to initialize a std::initializer_list because copy
-    /// construction of some element failed.
-    FK_InitListElementCopyFailure,
     /// \brief List-copy-initialization chose an explicit constructor.
     FK_ExplicitConstructor
   };

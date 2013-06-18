@@ -2670,7 +2670,6 @@ bool InitializationSequence::isAmbiguous() const {
   case FK_ListInitializationFailed:
   case FK_VariableLengthArrayHasInitializer:
   case FK_PlaceholderType:
-  case FK_InitListElementCopyFailure:
   case FK_ExplicitConstructor:
     return false;
 
@@ -6493,37 +6492,6 @@ bool InitializationSequence::Diagnose(Sema &S,
     break;
   }
 
-  case FK_InitListElementCopyFailure: {
-    // Try to perform all copies again.
-    InitListExpr* InitList = cast<InitListExpr>(Args[0]);
-    unsigned NumInits = InitList->getNumInits();
-    QualType DestType = Entity.getType();
-    QualType E;
-    bool Success = S.isStdInitializerList(DestType.getNonReferenceType(), &E);
-    (void)Success;
-    assert(Success && "Where did the std::initializer_list go?");
-    InitializedEntity HiddenArray = InitializedEntity::InitializeTemporary(
-        S.Context.getConstantArrayType(E,
-            llvm::APInt(S.Context.getTypeSize(S.Context.getSizeType()),
-                        NumInits),
-            ArrayType::Normal, 0));
-    InitializedEntity Element = InitializedEntity::InitializeElement(S.Context,
-        0, HiddenArray);
-    // Show at most 3 errors. Otherwise, you'd get a lot of errors for errors
-    // where the init list type is wrong, e.g.
-    //   std::initializer_list<void*> list = { 1, 2, 3, 4, 5, 6, 7, 8 };
-    // FIXME: Emit a note if we hit the limit?
-    int ErrorCount = 0;
-    for (unsigned i = 0; i < NumInits && ErrorCount < 3; ++i) {
-      Element.setElementIndex(i);
-      ExprResult Init = S.Owned(InitList->getInit(i));
-      if (S.PerformCopyInitialization(Element, Init.get()->getExprLoc(), Init)
-           .isInvalid())
-        ++ErrorCount;
-    }
-    break;
-  }
-
   case FK_ExplicitConstructor: {
     S.Diag(Kind.getLocation(), diag::err_selected_explicit_constructor)
       << Args[0]->getSourceRange();
@@ -6661,10 +6629,6 @@ void InitializationSequence::dump(raw_ostream &OS) const {
 
     case FK_ListConstructorOverloadFailed:
       OS << "list constructor overloading failed";
-      break;
-
-    case FK_InitListElementCopyFailure:
-      OS << "copy construction of initializer list element failed";
       break;
 
     case FK_ExplicitConstructor:
