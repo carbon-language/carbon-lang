@@ -237,8 +237,9 @@ void AbstractInterpreter::anchor() { }
 /// directory. An empty string is returned on error; note that this function
 /// just mainpulates the path and doesn't check for executability.
 /// @brief Find a named executable.
-static sys::Path PrependMainExecutablePath(const std::string &ExeName,
-                                           const char *Argv0, void *MainAddr) {
+static std::string PrependMainExecutablePath(const std::string &ExeName,
+                                             const char *Argv0,
+                                             void *MainAddr) {
   // Check the directory that the calling program is in.  We can do
   // this if ProgramPath contains at least one / character, indicating that it
   // is a relative path to the executable itself.
@@ -250,7 +251,7 @@ static sys::Path PrependMainExecutablePath(const std::string &ExeName,
     Result.appendSuffix(sys::Path::GetEXESuffix());
   }
 
-  return Result;
+  return Result.str();
 }
 
 // LLI create method - Try to find the LLI executable
@@ -258,7 +259,7 @@ AbstractInterpreter *AbstractInterpreter::createLLI(const char *Argv0,
                                                     std::string &Message,
                                      const std::vector<std::string> *ToolArgs) {
   std::string LLIPath =
-    PrependMainExecutablePath("lli", Argv0, (void *)(intptr_t)&createLLI).str();
+      PrependMainExecutablePath("lli", Argv0, (void *)(intptr_t) & createLLI);
   if (!LLIPath.empty()) {
     Message = "Found lli: " + LLIPath + "\n";
     return new LLI(LLIPath, ToolArgs);
@@ -542,7 +543,7 @@ LLC *AbstractInterpreter::createLLC(const char *Argv0,
                                     const std::vector<std::string> *GCCArgs,
                                     bool UseIntegratedAssembler) {
   std::string LLCPath =
-    PrependMainExecutablePath("llc", Argv0, (void *)(intptr_t)&createLLC).str();
+      PrependMainExecutablePath("llc", Argv0, (void *)(intptr_t) & createLLC);
   if (LLCPath.empty()) {
     Message = "Cannot find `llc' in executable directory!\n";
     return 0;
@@ -630,7 +631,7 @@ int JIT::ExecuteProgram(const std::string &Bitcode,
 AbstractInterpreter *AbstractInterpreter::createJIT(const char *Argv0,
                    std::string &Message, const std::vector<std::string> *Args) {
   std::string LLIPath =
-    PrependMainExecutablePath("lli", Argv0, (void *)(intptr_t)&createJIT).str();
+      PrependMainExecutablePath("lli", Argv0, (void *)(intptr_t) & createJIT);
   if (!LLIPath.empty()) {
     Message = "Found lli: " + LLIPath + "\n";
     return new JIT(LLIPath, Args);
