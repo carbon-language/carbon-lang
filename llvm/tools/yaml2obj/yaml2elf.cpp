@@ -209,27 +209,23 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   Header.e_shentsize = sizeof(Elf_Shdr);
   // Immediately following the ELF header.
   Header.e_shoff = sizeof(Header);
-  std::vector<ELFYAML::Section> Sections = Doc.Sections;
-  if (Sections.empty() || Sections.front().Type != SHT_NULL) {
-    ELFYAML::Section S;
-    S.Type = SHT_NULL;
-    zero(S.Flags);
-    zero(S.Address);
-    zero(S.AddressAlign);
-    Sections.insert(Sections.begin(), S);
-  }
-  // "+ 2" for string table and section header string table.
-  Header.e_shnum = Sections.size() + 2;
+  const std::vector<ELFYAML::Section> &Sections = Doc.Sections;
+  // "+ 3" for
+  // - SHT_NULL entry (placed first, i.e. 0'th entry)
+  // - string table (.strtab) (placed second to last)
+  // - section header string table. (placed last)
+  Header.e_shnum = Sections.size() + 3;
   // Place section header string table last.
-  Header.e_shstrndx = Sections.size() + 1;
-  const unsigned DotStrtabSecNo = Sections.size();
+  Header.e_shstrndx = Header.e_shnum - 1;
+  const unsigned DotStrtabSecNo = Header.e_shnum - 2;
 
   SectionNameToIdxMap SN2I;
   for (unsigned i = 0, e = Sections.size(); i != e; ++i) {
     StringRef Name = Sections[i].Name;
     if (Name.empty())
       continue;
-    if (SN2I.addName(Name, i)) {
+    // "+ 1" to take into account the SHT_NULL entry.
+    if (SN2I.addName(Name, i + 1)) {
       errs() << "error: Repeated section name: '" << Name
              << "' at YAML section number " << i << ".\n";
       return 1;
@@ -244,6 +240,13 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
       Header.e_ehsize + Header.e_shentsize * Header.e_shnum;
   ContiguousBlobAccumulator CBA(SectionContentBeginOffset, Buf);
   std::vector<Elf_Shdr> SHeaders;
+  {
+    // Ensure SHN_UNDEF entry is present. An all-zero section header is a
+    // valid SHN_UNDEF entry since SHT_NULL == 0.
+    Elf_Shdr SHdr;
+    zero(SHdr);
+    SHeaders.push_back(SHdr);
+  }
   StringTableBuilder DotStrTab;
   for (unsigned i = 0, e = Sections.size(); i != e; ++i) {
     const ELFYAML::Section &Sec = Sections[i];
