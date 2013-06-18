@@ -2497,6 +2497,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-split-dwarf=Enable");
   }
 
+
+  Args.AddAllArgs(CmdArgs, options::OPT_fdebug_types_section);
+
   Args.AddAllArgs(CmdArgs, options::OPT_ffunction_sections);
   Args.AddAllArgs(CmdArgs, options::OPT_fdata_sections);
 

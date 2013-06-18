@@ -21,7 +21,8 @@
 // RUN:             | FileCheck -check-prefix=GLTO_NO %s
 //
 // RUN: %clang -### -c -grecord-gcc-switches -gno-record-gcc-switches \
-// RUN:        -gstrict-dwarf -gno-strict-dwarf %s 2>&1 \
+// RUN:        -gstrict-dwarf -gno-strict-dwarf -fdebug-types-section \
+// RUN:        -fno-debug-types-section %s 2>&1                       \
 // RUN:        | FileCheck -check-prefix=GIGNORE %s
 //
 // G: "-cc1"
