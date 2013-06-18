@@ -16,6 +16,7 @@
 #include "llvm/Config/config.h"   // for HAVE_LINK_R
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/PathV1.h"
 #include "llvm/Support/Program.h"
@@ -139,10 +140,12 @@ static std::string ProcessFailure(StringRef ProgPath, const char** Args,
   OS << "\n";
 
   // Rerun the compiler, capturing any error messages to print them.
-  sys::Path ErrorFilename("bugpoint.program_error_messages");
-  std::string ErrMsg;
-  if (ErrorFilename.makeUnique(true, &ErrMsg)) {
-    errs() << "Error making unique filename: " << ErrMsg << "\n";
+  SmallString<128> ErrorFilename;
+  int ErrorFD;
+  error_code EC = sys::fs::unique_file("bugpoint.program_error_messages",
+                                       ErrorFD, ErrorFilename);
+  if (EC) {
+    errs() << "Error making unique filename: " << EC.message() << "\n";
     exit(1);
   }
   RunProgramWithTimeout(ProgPath, Args, "", ErrorFilename.str(),
@@ -158,7 +161,7 @@ static std::string ProcessFailure(StringRef ProgPath, const char** Args,
     ErrorFile.close();
   }
 
-  ErrorFilename.eraseFromDisk();
+  sys::fs::remove(ErrorFilename.c_str());
   return OS.str();
 }
 
@@ -243,12 +246,14 @@ static std::string PrependMainExecutablePath(const std::string &ExeName,
   // Check the directory that the calling program is in.  We can do
   // this if ProgramPath contains at least one / character, indicating that it
   // is a relative path to the executable itself.
-  sys::Path Result = sys::Path::GetMainExecutable(Argv0, MainAddr);
-  Result.eraseComponent();
+  sys::Path Main = sys::Path::GetMainExecutable(Argv0, MainAddr);
+  StringRef Result = sys::path::parent_path(Main.str());
 
-  if (!Result.isEmpty()) {
-    Result.appendComponent(ExeName);
-    Result.appendSuffix(sys::Path::GetEXESuffix());
+  if (!Result.empty()) {
+    SmallString<128> Storage = Result;
+    sys::path::append(Storage, ExeName);
+    sys::path::replace_extension(Storage, sys::Path::GetEXESuffix());
+    return Storage.str();
   }
 
   return Result.str();
@@ -465,13 +470,15 @@ GCC::FileType LLC::OutputCode(const std::string &Bitcode,
                               std::string &OutputAsmFile, std::string &Error,
                               unsigned Timeout, unsigned MemoryLimit) {
   const char *Suffix = (UseIntegratedAssembler ? ".llc.o" : ".llc.s");
-  sys::Path uniqueFile(Bitcode + Suffix);
-  std::string ErrMsg;
-  if (uniqueFile.makeUnique(true, &ErrMsg)) {
-    errs() << "Error making unique filename: " << ErrMsg << "\n";
+
+  SmallString<128> UniqueFile;
+  error_code EC =
+      sys::fs::unique_file(Bitcode + "-%%%%%%%" + Suffix, UniqueFile);
+  if (EC) {
+    errs() << "Error making unique filename: " << EC.message() << "\n";
     exit(1);
   }
-  OutputAsmFile = uniqueFile.str();
+  OutputAsmFile = UniqueFile.str();
   std::vector<const char *> LLCArgs;
   LLCArgs.push_back(LLCPath.c_str());
 
@@ -700,10 +707,12 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   GCCArgs.push_back("-x");
   GCCArgs.push_back("none");
   GCCArgs.push_back("-o");
-  sys::Path OutputBinary (ProgramFile+".gcc.exe");
-  std::string ErrMsg;
-  if (OutputBinary.makeUnique(true, &ErrMsg)) {
-    errs() << "Error making unique filename: " << ErrMsg << "\n";
+
+  SmallString<128> OutputBinary;
+  error_code EC =
+      sys::fs::unique_file(ProgramFile+ "-%%%%%%%.gcc.exe", OutputBinary);
+  if (EC) {
+    errs() << "Error making unique filename: " << EC.message() << "\n";
     exit(1);
   }
   GCCArgs.push_back(OutputBinary.c_str()); // Output to the right file...
@@ -809,13 +818,14 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
                           std::string &OutputFile,
                           const std::vector<std::string> &ArgsForGCC,
                           std::string &Error) {
-  sys::Path uniqueFilename(InputFile+LTDL_SHLIB_EXT);
-  std::string ErrMsg;
-  if (uniqueFilename.makeUnique(true, &ErrMsg)) {
-    errs() << "Error making unique filename: " << ErrMsg << "\n";
+  SmallString<128> UniqueFilename;
+  error_code EC = sys::fs::unique_file(InputFile + "-%%%%%%%" + LTDL_SHLIB_EXT,
+                                       UniqueFilename);
+  if (EC) {
+    errs() << "Error making unique filename: " << EC.message() << "\n";
     exit(1);
   }
-  OutputFile = uniqueFilename.str();
+  OutputFile = UniqueFilename.str();
 
   std::vector<const char*> GCCArgs;
 
