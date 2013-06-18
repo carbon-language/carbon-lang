@@ -160,6 +160,8 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
     ELFYAML::Section S;
     S.Type = SHT_NULL;
     zero(S.Flags);
+    zero(S.Address);
+    zero(S.AddressAlign);
     Sections.insert(Sections.begin(), S);
   }
   // "+ 1" for string table.
