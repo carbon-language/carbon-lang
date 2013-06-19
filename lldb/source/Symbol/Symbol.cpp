@@ -24,7 +24,6 @@ using namespace lldb_private;
 Symbol::Symbol() :
     SymbolContextScope (),
     m_uid (UINT32_MAX),
-    m_mangled (),
     m_type_data (0),
     m_type_data_resolved (false),
     m_is_synthetic (false),
@@ -35,8 +34,9 @@ Symbol::Symbol() :
     m_calculated_size (false),
     m_demangled_is_synthesized (false),
     m_type (eSymbolTypeInvalid),
-    m_flags (),
-    m_addr_range ()
+    m_mangled (),
+    m_addr_range (),
+    m_flags ()
 {
 }
 
@@ -58,7 +58,6 @@ Symbol::Symbol
 ) :
     SymbolContextScope (),
     m_uid (symID),
-    m_mangled (ConstString(name), name_is_mangled),
     m_type_data (0),
     m_type_data_resolved (false),
     m_is_synthetic (is_artificial),
@@ -69,8 +68,9 @@ Symbol::Symbol
     m_calculated_size (size_is_valid || size > 0),
     m_demangled_is_synthesized (false),
     m_type (type),
-    m_flags (flags),
-    m_addr_range (section_sp, offset, size)
+    m_mangled (ConstString(name), name_is_mangled),
+    m_addr_range (section_sp, offset, size),
+    m_flags (flags)
 {
 }
 
@@ -90,7 +90,6 @@ Symbol::Symbol
 ) :
     SymbolContextScope (),
     m_uid (symID),
-    m_mangled (ConstString(name), name_is_mangled),
     m_type_data (0),
     m_type_data_resolved (false),
     m_is_synthetic (is_artificial),
@@ -101,15 +100,15 @@ Symbol::Symbol
     m_calculated_size (size_is_valid || range.GetByteSize() > 0),
     m_demangled_is_synthesized (false),
     m_type (type),
-    m_flags (flags),
-    m_addr_range (range)
+    m_mangled (ConstString(name), name_is_mangled),
+    m_addr_range (range),
+    m_flags (flags)
 {
 }
 
 Symbol::Symbol(const Symbol& rhs):
     SymbolContextScope (rhs),
     m_uid (rhs.m_uid),
-    m_mangled (rhs.m_mangled),
     m_type_data (rhs.m_type_data),
     m_type_data_resolved (rhs.m_type_data_resolved),
     m_is_synthetic (rhs.m_is_synthetic),
@@ -120,8 +119,9 @@ Symbol::Symbol(const Symbol& rhs):
     m_calculated_size (rhs.m_calculated_size),
     m_demangled_is_synthesized (rhs.m_demangled_is_synthesized),
     m_type (rhs.m_type),
-    m_flags (rhs.m_flags),
-    m_addr_range (rhs.m_addr_range)
+    m_mangled (rhs.m_mangled),
+    m_addr_range (rhs.m_addr_range),
+    m_flags (rhs.m_flags)
 {
 }
 
@@ -132,7 +132,6 @@ Symbol::operator= (const Symbol& rhs)
     {
         SymbolContextScope::operator= (rhs);
         m_uid = rhs.m_uid;
-        m_mangled = rhs.m_mangled;
         m_type_data = rhs.m_type_data;
         m_type_data_resolved = rhs.m_type_data_resolved;
         m_is_synthetic = rhs.m_is_synthetic;
@@ -143,8 +142,9 @@ Symbol::operator= (const Symbol& rhs)
         m_calculated_size = rhs.m_calculated_size;
         m_demangled_is_synthesized = rhs.m_demangled_is_synthesized;
         m_type = rhs.m_type;
-        m_flags = rhs.m_flags;
+        m_mangled = rhs.m_mangled;
         m_addr_range = rhs.m_addr_range;
+        m_flags = rhs.m_flags;
     }
     return *this;
 }

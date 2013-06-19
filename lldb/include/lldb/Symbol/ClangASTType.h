@@ -152,6 +152,15 @@ public:
         return GetTypeClass (GetASTContext(), GetOpaqueQualType());
     }
     
+    bool
+    IsPolymorphicClass ()
+    {
+        return IsPolymorphicClass(GetASTContext(), GetOpaqueQualType());
+    }
+    
+    static bool
+    IsPolymorphicClass (clang::ASTContext *ast_context, lldb::clang_type_t clang_type);
+    
     ClangASTType
     GetFullyUnqualifiedType ();
     

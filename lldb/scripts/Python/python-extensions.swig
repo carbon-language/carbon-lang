@@ -759,7 +759,7 @@
 %pythoncode %{
 
 def command(*args, **kwargs):
-    from lldb import debugger
+    import lldb
     """A decorator function that registers an LLDB command line
         command that is bound to the function it is attached to."""
     class obj(object):
@@ -769,7 +769,7 @@ def command(*args, **kwargs):
             if doc:
                 function.__doc__ = doc
             command = "command script add -f %s.%s %s" % (function.__module__, function.__name__, command_name)
-            debugger.HandleCommand(command)
+            lldb.debugger.HandleCommand(command)
             self.function = function
         def __call__(self, *args, **kwargs):
             self.function(*args, **kwargs)

@@ -39,11 +39,10 @@ struct UserID
 
     //------------------------------------------------------------------
     /// Destructor.
-    ///
-    /// The destructor is virtual in case this class is subclassed.
     //------------------------------------------------------------------
-    virtual
-    ~UserID ();
+    ~UserID ()
+    {
+    }
 
     //------------------------------------------------------------------
     /// Clears the object state.

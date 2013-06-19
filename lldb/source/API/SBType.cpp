@@ -231,6 +231,18 @@ SBType::IsFunctionType ()
     return false;
 }
 
+bool
+SBType::IsPolymorphicClass ()
+{
+    if (IsValid())
+    {
+        return ClangASTType::IsPolymorphicClass (m_opaque_sp->GetASTContext(), m_opaque_sp->GetOpaqueQualType());
+    }
+    return false;
+}
+
+
+
 lldb::SBType
 SBType::GetFunctionReturnType ()
 {

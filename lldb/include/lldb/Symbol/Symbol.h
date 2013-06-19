@@ -291,7 +291,6 @@ public:
 protected:
 
     uint32_t        m_uid;                  // User ID (usually the original symbol table index)
-    Mangled         m_mangled;              // uniqued symbol name/mangled name pair
     uint16_t        m_type_data;            // data specific to m_type
     uint16_t        m_type_data_resolved:1, // True if the data in m_type_data has already been calculated
                     m_is_synthetic:1,       // non-zero if this symbol is not actually in the symbol table, but synthesized from other info in the object file.
@@ -302,8 +301,9 @@ protected:
                     m_calculated_size:1,
                     m_demangled_is_synthesized:1, // The demangled name was created should not be used for expressions or other lookups
                     m_type:8;
-    uint32_t        m_flags;                // A copy of the flags from the original symbol table, the ObjectFile plug-in can interpret these
+    Mangled         m_mangled;              // uniqued symbol name/mangled name pair
     AddressRange    m_addr_range;           // Contains the value, or the section offset address when the value is an address in a section, and the size (if any)
+    uint32_t        m_flags;                // A copy of the flags from the original symbol table, the ObjectFile plug-in can interpret these
 };
 
 } // namespace lldb_private

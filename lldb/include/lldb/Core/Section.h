@@ -31,7 +31,6 @@ public:
 
     SectionList();
 
-    virtual
     ~SectionList();
 
     size_t
@@ -274,9 +273,9 @@ public:
 
 protected:
 
+    lldb::SectionType m_type;           // The type of this section
     lldb::SectionWP m_parent_wp;        // Weak pointer to parent section
     ConstString     m_name;             // Name of this section
-    lldb::SectionType m_type;           // The type of this section
     lldb::addr_t    m_file_addr;        // The absolute file virtual address range of this section if m_parent == NULL,
                                         // offset from parent file virtual address if m_parent != NULL
     lldb::addr_t    m_byte_size;        // Size in bytes that this section will occupy in memory at runtime

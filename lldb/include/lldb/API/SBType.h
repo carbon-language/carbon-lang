@@ -93,6 +93,9 @@ public:
     bool
     IsFunctionType ();
     
+    bool
+    IsPolymorphicClass ();
+    
     lldb::SBType
     GetPointerType();
     

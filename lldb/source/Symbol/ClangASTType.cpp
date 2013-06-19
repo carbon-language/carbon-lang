@@ -234,6 +234,36 @@ ClangASTType::GetMinimumLanguage ()
                                              m_type);
 }
 
+bool
+ClangASTType::IsPolymorphicClass (clang::ASTContext *ast_context, lldb::clang_type_t clang_type)
+{
+    if (clang_type)
+    {
+        clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type).getCanonicalType());
+        const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+        switch (type_class)
+        {
+            case clang::Type::Record:
+                if (ClangASTContext::GetCompleteType (ast_context, clang_type))
+                {
+                    const clang::RecordType *record_type = llvm::cast<clang::RecordType>(qual_type.getTypePtr());
+                    const clang::RecordDecl *record_decl = record_type->getDecl();
+                    if (record_decl)
+                    {
+                        const clang::CXXRecordDecl *cxx_record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
+                        if (cxx_record_decl)
+                            return cxx_record_decl->isPolymorphic();
+                    }
+                }
+                break;
+                
+            default:
+                break;
+        }
+    }
+    return false;
+}
+
 lldb::TypeClass
 ClangASTType::GetTypeClass (clang::ASTContext *ast_context, lldb::clang_type_t clang_type)
 {
