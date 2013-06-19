@@ -47,7 +47,6 @@
 #include <linux/fs.h>
 #include <linux/hdreg.h>
 #include <linux/soundcard.h>
-#include <net/if_ppp.h>
 #endif
 
 #if !SANITIZER_ANDROID
@@ -55,6 +54,7 @@
 #endif
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
+#include <net/if_ppp.h>
 #include <netax25/ax25.h>
 #include <netipx/ipx.h>
 #include <netrom/netrom.h>
@@ -74,6 +74,8 @@
 #if SANITIZER_ANDROID
 #include <linux/kd.h>
 #include <linux/mtio.h>
+#include <linux/ppp_defs.h>
+#include <linux/if_ppp.h>
 #endif
 
 #if SANITIZER_LINUX
