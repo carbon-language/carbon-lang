@@ -1,0 +1,10 @@
+# RUN: yaml2obj -format=elf %s | llvm-readobj -file-headers - | FileCheck %s
+!ELF
+FileHeader:
+  Class: ELFCLASS64
+  Data: ELFDATA2LSB
+  OSABI: ELFOSABI_GNU
+  Type: ET_REL
+  Machine: EM_X86_64
+
+# CHECK: OS/ABI: GNU/Linux

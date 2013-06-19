@@ -194,8 +194,7 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   bool IsLittleEndian = ELFT::TargetEndianness == support::little;
   Header.e_ident[EI_DATA] = IsLittleEndian ? ELFDATA2LSB : ELFDATA2MSB;
   Header.e_ident[EI_VERSION] = EV_CURRENT;
-  // TODO: Implement ELF_ELFOSABI enum.
-  Header.e_ident[EI_OSABI] = ELFOSABI_NONE;
+  Header.e_ident[EI_OSABI] =  Hdr.OSABI;
   Header.e_ident[EI_ABIVERSION] = 0;
   Header.e_type = Hdr.Type;
   Header.e_machine = Hdr.Machine;
