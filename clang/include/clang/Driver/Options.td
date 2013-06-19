@@ -810,9 +810,12 @@ def ggdb0 : Flag<["-"], "ggdb0">, Group<g_Group>;
 def ggdb1 : Flag<["-"], "ggdb1">, Group<g_Group>;
 def ggdb2 : Flag<["-"], "ggdb2">, Group<g_Group>;
 def ggdb3 : Flag<["-"], "ggdb3">, Group<g_Group>;
-def gdwarf_2 : Flag<["-"], "gdwarf-2">, Group<g_Group>;
-def gdwarf_3 : Flag<["-"], "gdwarf-3">, Group<g_Group>;
-def gdwarf_4 : Flag<["-"], "gdwarf-4">, Group<g_Group>;
+def gdwarf_2 : Flag<["-"], "gdwarf-2">, Group<g_Group>,
+  HelpText<"Generate source level debug information with dwarf version 2">, Flags<[CC1Option]>;
+def gdwarf_3 : Flag<["-"], "gdwarf-3">, Group<g_Group>,
+  HelpText<"Generate source level debug information with dwarf version 3">, Flags<[CC1Option]>;
+def gdwarf_4 : Flag<["-"], "gdwarf-4">, Group<g_Group>,
+  HelpText<"Generate source level debug information with dwarf version 4">, Flags<[CC1Option]>;
 def gfull : Flag<["-"], "gfull">, Group<g_Group>;
 def gused : Flag<["-"], "gused">, Group<g_Group>;
 def gstabs : Joined<["-"], "gstabs">, Group<g_Group>, Flags<[Unsupported]>;

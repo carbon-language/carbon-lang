@@ -318,7 +318,8 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
 
   if (Args.hasArg(OPT_gline_tables_only)) {
     Opts.setDebugInfo(CodeGenOptions::DebugLineTablesOnly);
-  } else if (Args.hasArg(OPT_g_Flag)) {
+  } else if (Args.hasArg(OPT_g_Flag) || Args.hasArg(OPT_gdwarf_2) ||
+             Args.hasArg(OPT_gdwarf_3) || Args.hasArg(OPT_gdwarf_4)) {
     if (Args.hasFlag(OPT_flimit_debug_info, OPT_fno_limit_debug_info, true))
       Opts.setDebugInfo(CodeGenOptions::LimitedDebugInfo);
     else
@@ -326,6 +327,15 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   }
   Opts.DebugColumnInfo = Args.hasArg(OPT_dwarf_column_info);
   Opts.SplitDwarfFile = Args.getLastArgValue(OPT_split_dwarf_file);
+  if (Args.hasArg(OPT_gdwarf_2))
+    Opts.DwarfVersion = 2;
+  else if (Args.hasArg(OPT_gdwarf_3))
+    Opts.DwarfVersion = 3;
+  else if (Args.hasArg(OPT_gdwarf_4))
+    Opts.DwarfVersion = 4;
+  else if (Opts.getDebugInfo() != CodeGenOptions::NoDebugInfo)
+    // Default Dwarf version is 3 if we are generating debug information.
+    Opts.DwarfVersion = 3;
 
   Opts.DisableLLVMOpts = Args.hasArg(OPT_disable_llvm_optzns);
   Opts.DisableRedZone = Args.hasArg(OPT_disable_red_zone);

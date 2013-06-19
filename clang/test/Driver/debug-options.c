@@ -7,7 +7,7 @@
 // RUN: %clang -### -c -ggdb %s 2>&1 | FileCheck -check-prefix=G %s
 // RUN: %clang -### -c -ggdb1 %s 2>&1 | FileCheck -check-prefix=G %s
 // RUN: %clang -### -c -ggdb3 %s 2>&1 | FileCheck -check-prefix=G %s
-// RUN: %clang -### -c -gdwarf-2 %s 2>&1 | FileCheck -check-prefix=G %s
+// RUN: %clang -### -c -gdwarf-2 %s 2>&1 | FileCheck -check-prefix=G_D2 %s
 //
 // RUN: %clang -### -c -gfoo %s 2>&1 | FileCheck -check-prefix=G_NO %s
 // RUN: %clang -### -c -g -g0 %s 2>&1 | FileCheck -check-prefix=G_NO %s
@@ -27,6 +27,9 @@
 //
 // G: "-cc1"
 // G: "-g"
+// 
+// G_D2: "-cc1"
+// G_D2: "-gdwarf-2"
 //
 // G_NO: "-cc1"
 // G_NO-NOT: "-g"

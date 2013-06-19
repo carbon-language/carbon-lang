@@ -190,6 +190,11 @@ void CodeGenModule::Release() {
       (Context.getLangOpts().Modules || !LinkerOptionsMetadata.empty())) {
     EmitModuleLinkOptions();
   }
+  if (CodeGenOpts.DwarfVersion)
+    // We actually want the latest version when there are conflicts.
+    // We can change from Warning to Latest if such mode is supported.
+    getModule().addModuleFlag(llvm::Module::Warning, "Dwarf Version",
+                              CodeGenOpts.DwarfVersion);
 
   SimplifyPersonality();
 

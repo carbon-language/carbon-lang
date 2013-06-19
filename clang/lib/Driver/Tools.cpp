@@ -2489,6 +2489,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Arg *A = Args.getLastArg(options::OPT_g_Group)) {
     if (A->getOption().matches(options::OPT_gline_tables_only))
       CmdArgs.push_back("-gline-tables-only");
+    else if (A->getOption().matches(options::OPT_gdwarf_2))
+      CmdArgs.push_back("-gdwarf-2");
+    else if (A->getOption().matches(options::OPT_gdwarf_3))
+      CmdArgs.push_back("-gdwarf-3");
+    else if (A->getOption().matches(options::OPT_gdwarf_4))
+      CmdArgs.push_back("-gdwarf-4");
     else if (!A->getOption().matches(options::OPT_g0) &&
              !A->getOption().matches(options::OPT_ggdb0))
       CmdArgs.push_back("-g");
