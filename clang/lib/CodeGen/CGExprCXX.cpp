@@ -280,15 +280,16 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
   // We also don't emit a virtual call if the base expression has a record type
   // because then we know what the type is.
   bool UseVirtualCall = CanUseVirtualCall && !DevirtualizedMethod;
-  llvm::Value *Callee;
 
+  llvm::Value *Callee;
   if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD)) {
-    assert(CE->arg_begin() == CE->arg_end() &&
-           "Destructor shouldn't have explicit parameters");
-    assert(ReturnValue.isNull() && "Destructor shouldn't have return value");
     if (UseVirtualCall) {
-      CGM.getCXXABI().EmitVirtualDestructorCall(*this, Dtor, Dtor_Complete,
-                                                CE->getExprLoc(), This);
+      assert(CE->arg_begin() == CE->arg_end() &&
+             "Virtual destructor shouldn't have explicit parameters");
+      return CGM.getCXXABI().EmitVirtualDestructorCall(*this, Dtor,
+                                                       Dtor_Complete,
+                                                       CE->getExprLoc(),
+                                                       ReturnValue, This);
     } else {
       if (getLangOpts().AppleKext &&
           MD->isVirtual() &&
@@ -301,16 +302,12 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
           cast<CXXDestructorDecl>(DevirtualizedMethod);
         Callee = CGM.GetAddrOfFunction(GlobalDecl(DDtor, Dtor_Complete), Ty);
       }
-      EmitCXXMemberCall(MD, CE->getExprLoc(), Callee, ReturnValue, This,
-                        /*ImplicitParam=*/0, QualType(), 0, 0);
     }
-    return RValue::get(0);
-  }
-  
-  if (const CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(MD)) {
+  } else if (const CXXConstructorDecl *Ctor =
+               dyn_cast<CXXConstructorDecl>(MD)) {
     Callee = CGM.GetAddrOfFunction(GlobalDecl(Ctor, Ctor_Complete), Ty);
   } else if (UseVirtualCall) {
-    Callee = BuildVirtualCall(MD, This, Ty); 
+      Callee = BuildVirtualCall(MD, This, Ty); 
   } else {
     if (getLangOpts().AppleKext &&
         MD->isVirtual() &&
@@ -1416,7 +1413,8 @@ static void EmitObjectDelete(CodeGenFunction &CGF,
         // FIXME: Provide a source location here.
         CXXDtorType DtorType = UseGlobalDelete ? Dtor_Complete : Dtor_Deleting;
         CGF.CGM.getCXXABI().EmitVirtualDestructorCall(CGF, Dtor, DtorType,
-                                                      SourceLocation(), Ptr);
+                                                      SourceLocation(),
+                                                      ReturnValueSlot(), Ptr);
 
         if (UseGlobalDelete) {
           CGF.PopCleanupBlock();

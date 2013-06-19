@@ -119,17 +119,20 @@ public:
 
   void EmitInstanceFunctionProlog(CodeGenFunction &CGF);
 
-  void EmitConstructorCall(CodeGenFunction &CGF,
-                           const CXXConstructorDecl *D, CXXCtorType Type,
-                           bool ForVirtualBase, bool Delegating,
+  llvm::Value *EmitConstructorCall(CodeGenFunction &CGF,
+                           const CXXConstructorDecl *D,
+                           CXXCtorType Type, bool ForVirtualBase,
+                           bool Delegating,
                            llvm::Value *This,
                            CallExpr::const_arg_iterator ArgBeg,
                            CallExpr::const_arg_iterator ArgEnd);
 
-  void EmitVirtualDestructorCall(CodeGenFunction &CGF,
-                                 const CXXDestructorDecl *Dtor,
-                                 CXXDtorType DtorType, SourceLocation CallLoc,
-                                 llvm::Value *This);
+  RValue EmitVirtualDestructorCall(CodeGenFunction &CGF,
+                                   const CXXDestructorDecl *Dtor,
+                                   CXXDtorType DtorType,
+                                   SourceLocation CallLoc,
+                                   ReturnValueSlot ReturnValue,
+                                   llvm::Value *This);
 
   void EmitVirtualInheritanceTables(llvm::GlobalVariable::LinkageTypes Linkage,
                                     const CXXRecordDecl *RD);
@@ -165,11 +168,21 @@ class ARMCXXABI : public ItaniumCXXABI {
 public:
   ARMCXXABI(CodeGen::CodeGenModule &CGM) : ItaniumCXXABI(CGM, /*ARM*/ true) {}
 
-  bool HasThisReturn(GlobalDecl GD) const {
-    return (isa<CXXConstructorDecl>(GD.getDecl()) || (
-              isa<CXXDestructorDecl>(GD.getDecl()) &&
-              GD.getDtorType() != Dtor_Deleting));
-  }
+  void BuildConstructorSignature(const CXXConstructorDecl *Ctor,
+                                 CXXCtorType T,
+                                 CanQualType &ResTy,
+                                 SmallVectorImpl<CanQualType> &ArgTys);
+
+  void BuildDestructorSignature(const CXXDestructorDecl *Dtor,
+                                CXXDtorType T,
+                                CanQualType &ResTy,
+                                SmallVectorImpl<CanQualType> &ArgTys);
+
+  void BuildInstanceFunctionParams(CodeGenFunction &CGF,
+                                   QualType &ResTy,
+                                   FunctionArgList &Params);
+
+  void EmitInstanceFunctionProlog(CodeGenFunction &CGF);
 
   void EmitReturnFromThunk(CodeGenFunction &CGF, RValue RV, QualType ResTy);
 
@@ -181,6 +194,15 @@ public:
                                      QualType ElementType);
   llvm::Value *readArrayCookieImpl(CodeGenFunction &CGF, llvm::Value *allocPtr,
                                    CharUnits cookieSize);
+
+  /// \brief Returns true if the given instance method is one of the
+  /// kinds that the ARM ABI says returns 'this'.
+  bool HasThisReturn(GlobalDecl GD) const {
+    const CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(GD.getDecl());
+    if (!MD) return false;
+    return ((isa<CXXDestructorDecl>(MD) && GD.getDtorType() != Dtor_Deleting) ||
+            (isa<CXXConstructorDecl>(MD)));
+  }
 };
 }
 
@@ -735,12 +757,20 @@ void ItaniumCXXABI::BuildConstructorSignature(const CXXConstructorDecl *Ctor,
                                 SmallVectorImpl<CanQualType> &ArgTys) {
   ASTContext &Context = getContext();
 
-  // 'this' parameter is already there, as well as 'this' return if
-  // HasThisReturn(GlobalDecl(Ctor, Type)) is true
+  // 'this' is already there.
 
   // Check if we need to add a VTT parameter (which has type void **).
   if (Type == Ctor_Base && Ctor->getParent()->getNumVBases() != 0)
     ArgTys.push_back(Context.getPointerType(Context.VoidPtrTy));
+}
+
+/// The ARM ABI does the same as the Itanium ABI, but returns 'this'.
+void ARMCXXABI::BuildConstructorSignature(const CXXConstructorDecl *Ctor,
+                                          CXXCtorType Type,
+                                          CanQualType &ResTy,
+                                SmallVectorImpl<CanQualType> &ArgTys) {
+  ItaniumCXXABI::BuildConstructorSignature(Ctor, Type, ResTy, ArgTys);
+  ResTy = ArgTys[0];
 }
 
 /// The generic ABI passes 'this', plus a VTT if it's destroying a
@@ -751,12 +781,23 @@ void ItaniumCXXABI::BuildDestructorSignature(const CXXDestructorDecl *Dtor,
                                 SmallVectorImpl<CanQualType> &ArgTys) {
   ASTContext &Context = getContext();
 
-  // 'this' parameter is already there, as well as 'this' return if
-  // HasThisReturn(GlobalDecl(Dtor, Type)) is true
+  // 'this' is already there.
 
   // Check if we need to add a VTT parameter (which has type void **).
   if (Type == Dtor_Base && Dtor->getParent()->getNumVBases() != 0)
     ArgTys.push_back(Context.getPointerType(Context.VoidPtrTy));
+}
+
+/// The ARM ABI does the same as the Itanium ABI, but returns 'this'
+/// for non-deleting destructors.
+void ARMCXXABI::BuildDestructorSignature(const CXXDestructorDecl *Dtor,
+                                         CXXDtorType Type,
+                                         CanQualType &ResTy,
+                                SmallVectorImpl<CanQualType> &ArgTys) {
+  ItaniumCXXABI::BuildDestructorSignature(Dtor, Type, ResTy, ArgTys);
+
+  if (Type != Dtor_Deleting)
+    ResTy = ArgTys[0];
 }
 
 void ItaniumCXXABI::BuildInstanceFunctionParams(CodeGenFunction &CGF,
@@ -782,6 +823,16 @@ void ItaniumCXXABI::BuildInstanceFunctionParams(CodeGenFunction &CGF,
   }
 }
 
+void ARMCXXABI::BuildInstanceFunctionParams(CodeGenFunction &CGF,
+                                            QualType &ResTy,
+                                            FunctionArgList &Params) {
+  ItaniumCXXABI::BuildInstanceFunctionParams(CGF, ResTy, Params);
+
+  // Return 'this' from certain constructors and destructors.
+  if (HasThisReturn(CGF.CurGD))
+    ResTy = Params[0]->getType();
+}
+
 void ItaniumCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
   /// Initialize the 'this' slot.
   EmitThisParam(CGF);
@@ -792,23 +843,21 @@ void ItaniumCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
       = CGF.Builder.CreateLoad(CGF.GetAddrOfLocalVar(getVTTDecl(CGF)),
                                "vtt");
   }
+}
 
-  /// If this is a function that the ABI specifies returns 'this', initialize
-  /// the return slot to 'this' at the start of the function.
-  ///
-  /// Unlike the setting of return types, this is done within the ABI
-  /// implementation instead of by clients of CGCXXABI because:
-  /// 1) getThisValue is currently protected
-  /// 2) in theory, an ABI could implement 'this' returns some other way;
-  ///    HasThisReturn only specifies a contract, not the implementation
+void ARMCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
+  ItaniumCXXABI::EmitInstanceFunctionProlog(CGF);
+
+  /// Initialize the return slot to 'this' at the start of the
+  /// function.
   if (HasThisReturn(CGF.CurGD))
     CGF.Builder.CreateStore(getThisValue(CGF), CGF.ReturnValue);
 }
 
-void ItaniumCXXABI::EmitConstructorCall(CodeGenFunction &CGF,
+llvm::Value *ItaniumCXXABI::EmitConstructorCall(CodeGenFunction &CGF,
                                         const CXXConstructorDecl *D,
-                                        CXXCtorType Type,
-                                        bool ForVirtualBase, bool Delegating,
+                                        CXXCtorType Type, bool ForVirtualBase,
+                                        bool Delegating,
                                         llvm::Value *This,
                                         CallExpr::const_arg_iterator ArgBeg,
                                         CallExpr::const_arg_iterator ArgEnd) {
@@ -818,15 +867,17 @@ void ItaniumCXXABI::EmitConstructorCall(CodeGenFunction &CGF,
   llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, Type);
 
   // FIXME: Provide a source location here.
-  CGF.EmitCXXMemberCall(D, SourceLocation(), Callee, ReturnValueSlot(),
-                        This, VTT, VTTTy, ArgBeg, ArgEnd);
+  CGF.EmitCXXMemberCall(D, SourceLocation(), Callee, ReturnValueSlot(), This,
+                        VTT, VTTTy, ArgBeg, ArgEnd);
+  return Callee;
 }
 
-void ItaniumCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
-                                              const CXXDestructorDecl *Dtor,
-                                              CXXDtorType DtorType,
-                                              SourceLocation CallLoc,
-                                              llvm::Value *This) {
+RValue ItaniumCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
+                                                const CXXDestructorDecl *Dtor,
+                                                CXXDtorType DtorType,
+                                                SourceLocation CallLoc,
+                                                ReturnValueSlot ReturnValue,
+                                                llvm::Value *This) {
   assert(DtorType == Dtor_Deleting || DtorType == Dtor_Complete);
 
   const CGFunctionInfo *FInfo
@@ -834,8 +885,8 @@ void ItaniumCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
   llvm::Type *Ty = CGF.CGM.getTypes().GetFunctionType(*FInfo);
   llvm::Value *Callee = CGF.BuildVirtualCall(Dtor, DtorType, This, Ty);
 
-  CGF.EmitCXXMemberCall(Dtor, CallLoc, Callee, ReturnValueSlot(), This,
-                        /*ImplicitParam=*/0, QualType(), 0, 0);
+  return CGF.EmitCXXMemberCall(Dtor, CallLoc, Callee, ReturnValue, This,
+                               /*ImplicitParam=*/0, QualType(), 0, 0);
 }
 
 void ItaniumCXXABI::EmitVirtualInheritanceTables(

@@ -1662,8 +1662,11 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
   }
 
   // Non-trivial constructors are handled in an ABI-specific manner.
-  CGM.getCXXABI().EmitConstructorCall(*this, D, Type, ForVirtualBase,
-                                      Delegating, This, ArgBeg, ArgEnd);
+  llvm::Value *Callee = CGM.getCXXABI().EmitConstructorCall(*this, D, Type,
+                            ForVirtualBase, Delegating, This, ArgBeg, ArgEnd);
+  if (CGM.getCXXABI().HasThisReturn(CurGD) &&
+      CGM.getCXXABI().HasThisReturn(GlobalDecl(D, Type)))
+     CalleeWithThisReturn = Callee;
 }
 
 void
@@ -1755,6 +1758,9 @@ CodeGenFunction::EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
   llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(Ctor, CtorType);
   EmitCall(CGM.getTypes().arrangeCXXConstructorDeclaration(Ctor, CtorType),
            Callee, ReturnValueSlot(), DelegateArgs, Ctor);
+  if (CGM.getCXXABI().HasThisReturn(CurGD) &&
+      CGM.getCXXABI().HasThisReturn(GlobalDecl(Ctor, CtorType)))
+     CalleeWithThisReturn = Callee;
 }
 
 namespace {
@@ -1821,6 +1827,9 @@ void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
   EmitCXXMemberCall(DD, SourceLocation(), Callee, ReturnValueSlot(), This,
                     VTT, getContext().getPointerType(getContext().VoidPtrTy),
                     0, 0);
+  if (CGM.getCXXABI().HasThisReturn(CurGD) &&
+      CGM.getCXXABI().HasThisReturn(GlobalDecl(DD, Type)))
+     CalleeWithThisReturn = Callee;
 }
 
 namespace {

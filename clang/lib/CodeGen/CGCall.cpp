@@ -200,10 +200,7 @@ CodeGenTypes::arrangeCXXConstructorDeclaration(const CXXConstructorDecl *D,
                                                CXXCtorType ctorKind) {
   SmallVector<CanQualType, 16> argTypes;
   argTypes.push_back(GetThisType(Context, D->getParent()));
-
-  GlobalDecl GD(D, ctorKind);
-  CanQualType resultType =
-    TheCXXABI.HasThisReturn(GD) ? argTypes.front() : Context.VoidTy;
+  CanQualType resultType = Context.VoidTy;
 
   TheCXXABI.BuildConstructorSignature(D, ctorKind, resultType, argTypes);
 
@@ -228,10 +225,7 @@ CodeGenTypes::arrangeCXXDestructor(const CXXDestructorDecl *D,
                                    CXXDtorType dtorKind) {
   SmallVector<CanQualType, 2> argTypes;
   argTypes.push_back(GetThisType(Context, D->getParent()));
-
-  GlobalDecl GD(D, dtorKind);
-  CanQualType resultType =
-    TheCXXABI.HasThisReturn(GD) ? argTypes.front() : Context.VoidTy;
+  CanQualType resultType = Context.VoidTy;
 
   TheCXXABI.BuildDestructorSignature(D, dtorKind, resultType, argTypes);
 
@@ -1639,6 +1633,18 @@ static llvm::StoreInst *findDominatingStoreToReturnValue(CodeGenFunction &CGF) {
   return store;
 }
 
+/// Check whether 'this' argument of a callsite matches 'this' of the caller.
+static bool checkThisPointer(llvm::Value *ThisArg, llvm::Value *This) {
+  if (ThisArg == This)
+    return true;
+  // Check whether ThisArg is a bitcast of This.
+  llvm::BitCastInst *Bitcast;
+  if ((Bitcast = dyn_cast<llvm::BitCastInst>(ThisArg)) &&
+      Bitcast->getOperand(0) == This)
+    return true;
+  return false;
+}
+
 void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
                                          bool EmitRetDbgLoc) {
   // Functions with no result always return void.
@@ -1735,6 +1741,19 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
     llvm_unreachable("Invalid ABI kind for return argument");
   }
 
+  // If this function returns 'this', the last instruction is a CallInst
+  // that returns 'this', and 'this' argument of the CallInst points to
+  // the same object as CXXThisValue, use the return value from the CallInst.
+  // We will not need to keep 'this' alive through the callsite. It also enables
+  // optimizations in the backend, such as tail call optimization.
+  if (CalleeWithThisReturn && CGM.getCXXABI().HasThisReturn(CurGD)) {
+    llvm::BasicBlock *IP = Builder.GetInsertBlock();
+    llvm::CallInst *Callsite;
+    if (!IP->empty() && (Callsite = dyn_cast<llvm::CallInst>(&IP->back())) &&
+        Callsite->getCalledFunction() == CalleeWithThisReturn &&
+        checkThisPointer(Callsite->getOperand(0), CXXThisValue))
+      RV = Builder.CreateBitCast(Callsite, RetAI.getCoerceToType());
+  }
   llvm::Instruction *Ret = RV ? Builder.CreateRet(RV) : Builder.CreateRetVoid();
   if (!RetDbgLoc.isUnknown())
     Ret->setDebugLoc(RetDbgLoc);

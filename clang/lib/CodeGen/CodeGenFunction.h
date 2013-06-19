@@ -798,6 +798,10 @@ private:
   CGDebugInfo *DebugInfo;
   bool DisableDebugInfo;
 
+  /// If the current function returns 'this', use the field to keep track of
+  /// the callee that returns 'this'.
+  llvm::Value *CalleeWithThisReturn;
+
   /// DidCallStackSave - Whether llvm.stacksave has been called. Used to avoid
   /// calling llvm.stacksave for multiple VLAs in the same scope.
   bool DidCallStackSave;

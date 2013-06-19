@@ -1,119 +1,60 @@
-//RUN: %clang_cc1 %s -emit-llvm -o - -triple=i686-unknown-linux | FileCheck --check-prefix=CHECKGEN %s
-//RUN: %clang_cc1 %s -emit-llvm -o - -triple=thumbv7-apple-ios3.0 -target-abi apcs-gnu | FileCheck --check-prefix=CHECKARM %s
-//RUN: %clang_cc1 %s -emit-llvm -o - -DPR12784_WORKAROUND -triple=x86_64-pc-win32 -cxx-abi microsoft | FileCheck --check-prefix=CHECKMS %s
+//RUN: %clang_cc1 %s -emit-llvm -o - -triple=thumbv7-apple-ios3.0 -target-abi apcs-gnu | FileCheck %s
 
-// FIXME: Add checks to ensure that Microsoft destructors do not return 'this'
-// once PR12784 is resolved
+// For constructors/desctructors that return 'this', if there exists a callsite
+// that returns 'this' and is immediately before the return instruction, make
+// sure we are using the return value from the callsite.
+// rdar://12818789
 
-// Make sure we attach the 'returned' attribute to the 'this' parameter of
-// constructors and destructors which return this (and only these cases)
+// CHECK: define linkonce_odr [[A:%.*]] @_ZN11ObjectCacheC1Ev([[A]] %this) unnamed_addr
+// CHECK: [[THIS1:%.*]] = call [[A]] @_ZN11ObjectCacheC2Ev(
+// CHECK-NEXT: ret [[A]] [[THIS1]]
 
-class A {
+// CHECK: define linkonce_odr [[A:%.*]] @_ZN5TimerI11ObjectCacheEC1EPS0_MS0_FvPS1_E([[A]] %this
+// CHECK: [[THIS1:%.*]] = call [[A]] @_ZN5TimerI11ObjectCacheEC2EPS0_MS0_FvPS1_E(
+// CHECK-NEXT: ret [[A]] [[THIS1]]
+
+// CHECK: define linkonce_odr [[A:%.*]] @_ZN5TimerI11ObjectCacheED1Ev([[A]] %this) unnamed_addr
+// CHECK: [[THIS1:%.*]] = call [[A]] @_ZN5TimerI11ObjectCacheED2Ev(
+// CHECK-NEXT: ret [[A]] [[THIS1]]
+
+// CHECK: define linkonce_odr [[A:%.*]] @_ZN5TimerI11ObjectCacheED2Ev([[A]] %this) unnamed_addr
+// CHECK: [[THIS1:%.*]] = call [[B:%.*]] @_ZN9TimerBaseD2Ev(
+// CHECK-NEXT: [[THIS2:%.*]] = bitcast [[B]] [[THIS1]] to [[A]]
+// CHECK-NEXT: ret [[A]] [[THIS2]]
+
+class TimerBase {
 public:
-  A();
-  ~A();
+    TimerBase();
+    virtual ~TimerBase();
+};
+
+template <typename TimerFiredClass> class Timer : public TimerBase {
+public:
+    typedef void (TimerFiredClass::*TimerFiredFunction)(Timer*);
+
+    Timer(TimerFiredClass* o, TimerFiredFunction f)
+        : m_object(o), m_function(f) { }
 
 private:
-  int x_;
+    virtual void fired() { (m_object->*m_function)(this); }
+
+    TimerFiredClass* m_object;
+    TimerFiredFunction m_function;
 };
 
-class B : public A {
+class ObjectCache {
 public:
-  B(int *i);
-  ~B();
+    explicit ObjectCache();
+    ~ObjectCache();
 
 private:
-  int *i_;
+    Timer<ObjectCache> m_notificationPostTimer;
 };
 
-B::B(int *i) : i_(i) { }
-#ifndef PR12784_WORKAROUND
-B::~B() { }
-#endif
+inline ObjectCache::ObjectCache() : m_notificationPostTimer(this, 0) { }
+inline ObjectCache::~ObjectCache() { }
 
-// CHECKGEN: define void @_ZN1BC1EPi(%class.B* %this, i32* %i)
-// CHECKGEN: define void @_ZN1BC2EPi(%class.B* %this, i32* %i)
-// CHECKGEN: define void @_ZN1BD1Ev(%class.B* %this)
-// CHECKGEN: define void @_ZN1BD2Ev(%class.B* %this)
-
-// CHECKARM: define %class.B* @_ZN1BC1EPi(%class.B* returned %this, i32* %i)
-// CHECKARM: define %class.B* @_ZN1BC2EPi(%class.B* returned %this, i32* %i)
-// CHECKARM: define %class.B* @_ZN1BD1Ev(%class.B* returned %this)
-// CHECKARM: define %class.B* @_ZN1BD2Ev(%class.B* returned %this)
-
-// CHECKMS: define %class.B* @"\01??0B@@QEAA@PEAH@Z"(%class.B* returned %this, i32* %i)
-
-class C : public A, public B {
-public:
-  C(int *i, char *c);
-  virtual ~C();
-private:
-  char *c_;
-};
-
-C::C(int *i, char *c) : B(i), c_(c) { }
-#ifndef PR12784_WORKAROUND
-C::~C() { }
-#endif
-
-// CHECKGEN: define void @_ZN1CC1EPiPc(%class.C* %this, i32* %i, i8* %c)
-// CHECKGEN: define void @_ZN1CC2EPiPc(%class.C* %this, i32* %i, i8* %c)
-// CHECKGEN: define void @_ZN1CD0Ev(%class.C* %this)
-// CHECKGEN: define void @_ZN1CD1Ev(%class.C* %this)
-// CHECKGEN: define void @_ZN1CD2Ev(%class.C* %this)
-
-// CHECKARM: define %class.C* @_ZN1CC1EPiPc(%class.C* returned %this, i32* %i, i8* %c)
-// CHECKARM: define %class.C* @_ZN1CC2EPiPc(%class.C* returned %this, i32* %i, i8* %c)
-// CHECKARM: define void @_ZN1CD0Ev(%class.C* %this)
-// CHECKARM: define %class.C* @_ZN1CD1Ev(%class.C* returned %this)
-// CHECKARM: define %class.C* @_ZN1CD2Ev(%class.C* returned %this)
-
-// CHECKMS: define %class.C* @"\01??0C@@QEAA@PEAHPEAD@Z"(%class.C* returned %this, i32* %i, i8* %c)
-
-class D : public virtual A {
-public:
-  D();
-  ~D();
-};
-
-#ifndef PR12784_WORKAROUND
-D::D() { }
-D::~D() { }
-#endif
-
-// CHECKGEN: define void @_ZN1DC1Ev(%class.D* %this)
-// CHECKGEN: define void @_ZN1DC2Ev(%class.D* %this, i8** %vtt)
-// CHECKGEN: define void @_ZN1DD1Ev(%class.D* %this)
-// CHECKGEN: define void @_ZN1DD2Ev(%class.D* %this, i8** %vtt)
-
-// CHECKARM: define %class.D* @_ZN1DC1Ev(%class.D* returned %this)
-// CHECKARM: define %class.D* @_ZN1DC2Ev(%class.D* returned %this, i8** %vtt)
-// CHECKARM: define %class.D* @_ZN1DD1Ev(%class.D* returned %this)
-// CHECKARM: define %class.D* @_ZN1DD2Ev(%class.D* returned %this, i8** %vtt)
-
-class E {
-public:
-  E();
-  virtual ~E();
-};
-
-E* gete();
-
-void test_destructor() {
-  const E& e1 = E();
-  E* e2 = gete();
-  e2->~E();
+ObjectCache *test() {
+  ObjectCache *dd = new ObjectCache();
+  return dd;
 }
-
-// CHECKARM: define void @_Z15test_destructorv()
-
-// Verify that virtual calls to destructors are not marked with a 'returned'
-// this parameter at the call site...
-// CHECKARM: [[VFN:%.*]] = getelementptr inbounds %class.E* (%class.E*)**
-// CHECKARM: [[THUNK:%.*]] = load %class.E* (%class.E*)** [[VFN]]
-// CHECKARM: call %class.E* [[THUNK]](%class.E* %
-
-// ...but static calls create declarations with 'returned' this
-// CHECKARM: {{%.*}} = call %class.E* @_ZN1ED1Ev(%class.E* %
-
-// CHECKARM: declare %class.E* @_ZN1ED1Ev(%class.E* returned)

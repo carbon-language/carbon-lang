@@ -52,19 +52,19 @@ namespace test1 {
     a.bar();
   }
 
-  // CHECK: define linkonce_odr [[A]]* @_ZN5test11AC1Ei([[A]]* returned %this, i32 %i) unnamed_addr
+  // CHECK: define linkonce_odr [[A]]* @_ZN5test11AC1Ei([[A]]* %this, i32 %i) unnamed_addr
   // CHECK:   [[THIS:%.*]] = alloca [[A]]*, align 4
   // CHECK:   store [[A]]* {{.*}}, [[A]]** [[THIS]]
   // CHECK:   [[THIS1:%.*]] = load [[A]]** [[THIS]]
-  // CHECK:   {{%.*}} = call [[A]]* @_ZN5test11AC2Ei(
-  // CHECK:   ret [[A]]* [[THIS1]]
+  // CHECK:   [[THIS2:%.*]] = call [[A]]* @_ZN5test11AC2Ei(
+  // CHECK:   ret [[A]]* [[THIS2]]
 
-  // CHECK: define linkonce_odr [[A]]* @_ZN5test11AD1Ev([[A]]* returned %this) unnamed_addr
+  // CHECK: define linkonce_odr [[A]]* @_ZN5test11AD1Ev([[A]]* %this) unnamed_addr
   // CHECK:   [[THIS:%.*]] = alloca [[A]]*, align 4
   // CHECK:   store [[A]]* {{.*}}, [[A]]** [[THIS]]
   // CHECK:   [[THIS1:%.*]] = load [[A]]** [[THIS]]
-  // CHECK:   {{%.*}} = call [[A]]* @_ZN5test11AD2Ev(
-  // CHECK:   ret [[A]]* [[THIS1]]
+  // CHECK:   [[THIS2:%.*]] = call [[A]]* @_ZN5test11AD2Ev(
+  // CHECK:   ret [[A]]* [[THIS2]]
 }
 
 // Awkward virtual cases.
