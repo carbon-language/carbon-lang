@@ -60,5 +60,21 @@ TEST(VerifierTest, AliasUnnamedAddr) {
   EXPECT_TRUE(verifyModule(M, ReturnStatusAction, &Error));
   EXPECT_TRUE(StringRef(Error).startswith("Alias cannot have unnamed_addr"));
 }
+
+TEST(VerifierTest, InvalidRetAttribute) {
+  LLVMContext &C = getGlobalContext();
+  Module M("M", C);
+  FunctionType *FTy = FunctionType::get(Type::getInt32Ty(C), /*isVarArg=*/false);
+  Function *F = cast<Function>(M.getOrInsertFunction("foo", FTy));
+  AttributeSet AS = F->getAttributes();
+  F->setAttributes(AS.addAttribute(C, AttributeSet::ReturnIndex,
+                                   Attribute::UWTable));
+
+  std::string Error;
+  EXPECT_TRUE(verifyModule(M, ReturnStatusAction, &Error));
+  EXPECT_TRUE(StringRef(Error).
+              startswith("Attribute 'uwtable' only applies to functions!"));
+}
+
 }
 }
