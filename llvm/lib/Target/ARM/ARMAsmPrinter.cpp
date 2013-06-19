@@ -214,13 +214,14 @@ namespace {
 } // end of anonymous namespace
 
 /// EmitDwarfRegOp - Emit dwarf register operation.
-void ARMAsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
+void ARMAsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc,
+                                   bool Indirect) const {
   const TargetRegisterInfo *RI = TM.getRegisterInfo();
   if (RI->getDwarfRegNum(MLoc.getReg(), false) != -1) {
-    AsmPrinter::EmitDwarfRegOp(MLoc);
+    AsmPrinter::EmitDwarfRegOp(MLoc, Indirect);
     return;
   }
-  assert(MLoc.isReg() &&
+  assert(MLoc.isReg() && !Indirect &&
          "This doesn't support offset/indirection - implement it if needed");
   unsigned Reg = MLoc.getReg();
   if (Reg >= ARM::S0 && Reg <= ARM::S31) {

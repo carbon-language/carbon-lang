@@ -98,7 +98,8 @@ private:
 
 public:
   /// EmitDwarfRegOp - Emit dwarf register operation.
-  virtual void EmitDwarfRegOp(const MachineLocation &MLoc) const LLVM_OVERRIDE;
+  virtual void EmitDwarfRegOp(const MachineLocation &MLoc, bool Indirect) const
+      LLVM_OVERRIDE;
 
   virtual unsigned getISAEncoding() LLVM_OVERRIDE {
     // ARM/Darwin adds ISA to the DWARF info for each function.

@@ -812,7 +812,8 @@ void AsmPrinter::EmitFunctionBody() {
 }
 
 /// EmitDwarfRegOp - Emit dwarf register operation.
-void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
+void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc,
+                                bool Indirect) const {
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
   int Reg = TRI->getDwarfRegNum(MLoc.getReg(), false);
 
@@ -830,7 +831,7 @@ void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
   // caller might be in the middle of an dwarf expression. We should
   // probably assert that Reg >= 0 once debug info generation is more mature.
 
-  if (MLoc.isIndirect()) {
+  if (MLoc.isIndirect() || Indirect) {
     if (Reg < 32) {
       OutStreamer.AddComment(
         dwarf::OperationEncodingString(dwarf::DW_OP_breg0 + Reg));
@@ -841,7 +842,9 @@ void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
       OutStreamer.AddComment(Twine(Reg));
       EmitULEB128(Reg);
     }
-    EmitSLEB128(MLoc.getOffset());
+    EmitSLEB128(!MLoc.isIndirect() ? 0 : MLoc.getOffset());
+    if (MLoc.isIndirect() && Indirect)
+      EmitInt8(dwarf::DW_OP_deref);
   } else {
     if (Reg < 32) {
       OutStreamer.AddComment(
