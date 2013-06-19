@@ -1,5 +1,6 @@
 add_clang_unittest(ASTTests
   ASTContextParentMapTest.cpp
+  ASTTypeTraitsTest.cpp
   CommentLexer.cpp
   CommentParser.cpp
   DeclPrinterTest.cpp
