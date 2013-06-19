@@ -4537,7 +4537,7 @@ Process::ProcessInputReaderCallback (void *baton,
         break;
         
     case eInputReaderInterrupt:
-        process->Halt ();
+        process->SendAsyncInterrupt();
         break;
             
     case eInputReaderEndOfFile:
