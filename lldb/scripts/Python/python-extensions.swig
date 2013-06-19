@@ -758,6 +758,26 @@
 
 %pythoncode %{
 
+def command(*args, **kwargs):
+    from lldb import debugger
+    """A decorator function that registers an LLDB command line
+        command that is bound to the function it is attached to."""
+    class obj(object):
+        """The object that tracks adding the command to LLDB one time and handles
+            calling the function on subsequent calls."""
+        def __init__(self, function, command_name, doc = None):
+            if doc:
+                function.__doc__ = doc
+            command = "command script add -f %s.%s %s" % (function.__module__, function.__name__, command_name)
+            debugger.HandleCommand(command)
+            self.function = function
+        def __call__(self, *args, **kwargs):
+            self.function(*args, **kwargs)
+    def callable(function):
+        """Creates a callable object that gets used."""
+        return obj(function, *args, **kwargs)
+    return callable
+
 class declaration(object):
     '''A class that represents a source declaration location with file, line and column.'''
     def __init__(self, file, line, col):
