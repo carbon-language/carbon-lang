@@ -203,12 +203,16 @@ namespace llvm {
     /// via the llvm.fma.* intrinsic) will always be honored, regardless of
     /// the value of this option.
     FPOpFusion::FPOpFusionMode AllowFPOpFusion;
-
-    bool operator==(const TargetOptions &TM);
-    bool operator!=(const TargetOptions &TM) {
-      return !(*this == TM);
-    }
   };
+
+// Comparison operators:
+
+bool operator==(const TargetOptions &LHS, const TargetOptions &RHS);
+
+bool operator!=(const TargetOptions &LHS, const TargetOptions &RHS) {
+  return !(LHS == RHS);
+}
+
 } // End llvm namespace
 
 #endif

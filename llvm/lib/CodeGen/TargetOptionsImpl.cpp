@@ -50,8 +50,8 @@ StringRef TargetOptions::getTrapFunctionName() const {
   return TrapFuncName;
 }
 
-bool TargetOptions::operator==(const TargetOptions &TO) {
-#define ARE_EQUAL(X) X == TO.X
+bool operator==(const TargetOptions &LHS, const TargetOptions &RHS) {
+#define ARE_EQUAL(X) LHS.X == RHS.X
   return
     ARE_EQUAL(UnsafeFPMath) &&
     ARE_EQUAL(NoInfsFPMath) &&
