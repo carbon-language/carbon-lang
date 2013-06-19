@@ -1109,7 +1109,8 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
       !CGM.getTarget().getCXXABI().hasConstructorVariants()) {
     // The ABIs that don't have constructor variants need to put a branch
     // before the virtual base initialization code.
-    BaseCtorContinueBB = CGM.getCXXABI().EmitCtorCompleteObjectHandler(*this);
+    BaseCtorContinueBB =
+      CGM.getCXXABI().EmitCtorCompleteObjectHandler(*this, ClassDecl);
     assert(BaseCtorContinueBB);
   }
 

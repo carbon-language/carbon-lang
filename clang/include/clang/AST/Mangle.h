@@ -110,6 +110,12 @@ public:
                                raw_ostream &) = 0;
   virtual void mangleCXXVTT(const CXXRecordDecl *RD,
                             raw_ostream &) = 0;
+  /// \brief Mangle vbtable symbols.  Only a subset of the bases along the path
+  /// to the vbtable are included in the name.  It's up to the caller to pick
+  /// them correctly.
+  virtual void mangleCXXVBTable(const CXXRecordDecl *Derived,
+                                ArrayRef<const CXXRecordDecl *> BasePath,
+                                raw_ostream &Out) = 0;
   virtual void mangleCXXCtorVTable(const CXXRecordDecl *RD, int64_t Offset,
                                    const CXXRecordDecl *Type,
                                    raw_ostream &) = 0;

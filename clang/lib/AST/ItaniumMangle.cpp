@@ -130,6 +130,9 @@ public:
                        raw_ostream &);
   void mangleCXXVTT(const CXXRecordDecl *RD,
                     raw_ostream &);
+  void mangleCXXVBTable(const CXXRecordDecl *Derived,
+                        ArrayRef<const CXXRecordDecl *> BasePath,
+                        raw_ostream &Out);
   void mangleCXXCtorVTable(const CXXRecordDecl *RD, int64_t Offset,
                            const CXXRecordDecl *Type,
                            raw_ostream &);
@@ -3595,6 +3598,13 @@ void ItaniumMangleContext::mangleCXXVTT(const CXXRecordDecl *RD,
   CXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "_ZTT";
   Mangler.mangleNameOrStandardSubstitution(RD);
+}
+
+void
+ItaniumMangleContext::mangleCXXVBTable(const CXXRecordDecl *Derived,
+                                       ArrayRef<const CXXRecordDecl *> BasePath,
+                                       raw_ostream &Out) {
+  llvm_unreachable("The Itanium C++ ABI does not have virtual base tables!");
 }
 
 void ItaniumMangleContext::mangleCXXCtorVTable(const CXXRecordDecl *RD,

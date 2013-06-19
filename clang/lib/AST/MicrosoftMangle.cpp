@@ -155,6 +155,9 @@ public:
                                raw_ostream &);
   virtual void mangleCXXVTT(const CXXRecordDecl *RD,
                             raw_ostream &);
+  virtual void mangleCXXVBTable(const CXXRecordDecl *Derived,
+                                ArrayRef<const CXXRecordDecl *> BasePath,
+                                raw_ostream &Out);
   virtual void mangleCXXCtorVTable(const CXXRecordDecl *RD, int64_t Offset,
                                    const CXXRecordDecl *Type,
                                    raw_ostream &);
@@ -1757,24 +1760,41 @@ void MicrosoftMangleContext::mangleCXXDtorThunk(const CXXDestructorDecl *DD,
     "cannot mangle thunk for this destructor yet");
   getDiags().Report(DD->getLocation(), DiagID);
 }
+
 void MicrosoftMangleContext::mangleCXXVTable(const CXXRecordDecl *RD,
                                              raw_ostream &Out) {
-  // <mangled-name> ::= ? <operator-name> <class-name> <storage-class>
-  //                      <cvr-qualifiers> [<name>] @
-  // <operator-name> ::= _7 # vftable
-  //                 ::= _8 # vbtable
+  // <mangled-name> ::= ?_7 <class-name> <storage-class>
+  //                    <cvr-qualifiers> [<name>] @
   // NOTE: <cvr-qualifiers> here is always 'B' (const). <storage-class>
-  // is always '6' for vftables and '7' for vbtables. (The difference is
-  // beyond me.)
-  // TODO: vbtables.
+  // is always '6' for vftables.
   MicrosoftCXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "\01??_7";
   Mangler.mangleName(RD);
-  Mangler.getStream() << "6B";
+  Mangler.getStream() << "6B";  // '6' for vftable, 'B' for const.
   // TODO: If the class has more than one vtable, mangle in the class it came
   // from.
   Mangler.getStream() << '@';
 }
+
+void MicrosoftMangleContext::mangleCXXVBTable(
+    const CXXRecordDecl *Derived, ArrayRef<const CXXRecordDecl *> BasePath,
+    raw_ostream &Out) {
+  // <mangled-name> ::= ?_8 <class-name> <storage-class>
+  //                    <cvr-qualifiers> [<name>] @
+  // NOTE: <cvr-qualifiers> here is always 'B' (const). <storage-class>
+  // is always '7' for vbtables.
+  MicrosoftCXXNameMangler Mangler(*this, Out);
+  Mangler.getStream() << "\01??_8";
+  Mangler.mangleName(Derived);
+  Mangler.getStream() << "7B";  // '7' for vbtable, 'B' for const.
+  for (ArrayRef<const CXXRecordDecl *>::iterator I = BasePath.begin(),
+                                                 E = BasePath.end();
+       I != E; ++I) {
+    Mangler.mangleName(*I);
+  }
+  Mangler.getStream() << '@';
+}
+
 void MicrosoftMangleContext::mangleCXXVTT(const CXXRecordDecl *RD,
                                           raw_ostream &) {
   llvm_unreachable("The MS C++ ABI does not have virtual table tables!");
