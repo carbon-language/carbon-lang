@@ -723,9 +723,9 @@ void CodeGenModule::SetFunctionAttributes(GlobalDecl GD,
     SetLLVMFunctionAttributes(FD, getTypes().arrangeGlobalDeclaration(GD), F);
 
   if (getCXXABI().HasThisReturn(GD)) {
-    llvm::Type *RetTy = F->getReturnType();
     assert(!F->arg_empty() &&
-           F->arg_begin()->getType()->canLosslesslyBitCastTo(RetTy) &&
+           F->arg_begin()->getType()
+             ->canLosslesslyBitCastTo(F->getReturnType()) &&
            "unexpected this return");
     F->addAttribute(1, llvm::Attribute::Returned);
   }
