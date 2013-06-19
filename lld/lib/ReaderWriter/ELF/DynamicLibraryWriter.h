@@ -31,7 +31,6 @@ public:
 private:
   void buildDynamicSymbolTable(const File &file);
   void addDefaultAtoms();
-  void addFiles(InputFiles&);
   void finalizeDefaultAtomValues();
 
   llvm::BumpPtrAllocator _alloc;
@@ -62,11 +61,6 @@ void DynamicLibraryWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
 
 template<class ELFT>
 void DynamicLibraryWriter<ELFT>::addDefaultAtoms() { }
-
-template <class ELFT>
-void DynamicLibraryWriter<ELFT>::addFiles(InputFiles &inputFiles) {
-  this->_targetHandler.addFiles(inputFiles);
-}
 
 template<class ELFT>
 void DynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues() {

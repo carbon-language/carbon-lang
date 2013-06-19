@@ -217,6 +217,13 @@ GnuLdDriver::parse(int argc, const char *argv[], raw_ostream &diagnostics) {
   if (!options->allowLinkWithDynamicLibraries())
     options->setIsStaticExecutable(true);
 
+  // Handle -u, --undefined option
+  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_u),
+                               ie = parsedArgs->filtered_end();
+       it != ie; ++it) {
+    options->addUndefinedSymbol((*it)->getValue());
+  }
+
   // Handle -Lxxx
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_L),
                                ie = parsedArgs->filtered_end();

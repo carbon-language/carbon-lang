@@ -64,10 +64,13 @@ void ExecutableWriter<ELFT>::addDefaultAtoms() {
 /// \brief Hook in lld to add CRuntime file
 template <class ELFT>
 void ExecutableWriter<ELFT>::addFiles(InputFiles &inputFiles) {
+  // Add the default atoms as defined by executables
   addDefaultAtoms();
+  // Add the runtime file
   inputFiles.prependFile(_runtimeFile);
-  // Give a chance for the target to add atoms
-  this->_targetHandler.addFiles(inputFiles);
+  // Add the Linker internal file for symbols that are defined by
+  // command line options
+  OutputELFWriter<ELFT>::addFiles(inputFiles);
 }
 
 template <class ELFT> void ExecutableWriter<ELFT>::createDefaultSections() {
@@ -120,11 +123,14 @@ template <class ELFT> void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
 
   auto bssSection = this->_layout->findOutputSection(".bss");
 
-  (*bssStartAtomIter)->_virtualAddr = bssSection->virtualAddr();
-  (*bssEndAtomIter)->_virtualAddr =
-      bssSection->virtualAddr() + bssSection->memSize();
-  (*underScoreEndAtomIter)->_virtualAddr = (*bssEndAtomIter)->_virtualAddr;
-  (*endAtomIter)->_virtualAddr = (*bssEndAtomIter)->_virtualAddr;
+  // If we dont find a bss section, then dont set these values
+  if (bssSection) {
+    (*bssStartAtomIter)->_virtualAddr = bssSection->virtualAddr();
+    (*bssEndAtomIter)->_virtualAddr =
+        bssSection->virtualAddr() + bssSection->memSize();
+    (*underScoreEndAtomIter)->_virtualAddr = (*bssEndAtomIter)->_virtualAddr;
+    (*endAtomIter)->_virtualAddr = (*bssEndAtomIter)->_virtualAddr;
+  }
 
   // Give a chance for the target to finalize its atom values
   this->_targetHandler.finalizeSymbolValues();

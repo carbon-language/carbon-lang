@@ -28,6 +28,15 @@ using namespace llvm::object;
 template<class ELFT>
 class OutputELFWriter;
 
+/// \brief This acts as a internal file that the linker uses to add
+/// undefined symbols that are defined by using the linker options such
+/// as -u, or --defsym option.
+template <class ELFT> class LinkerInternalFile : public CRuntimeFile<ELFT> {
+public:
+  LinkerInternalFile(const ELFTargetInfo &ti)
+      : CRuntimeFile<ELFT>(ti, "Linker Internal File") {};
+};
+
 //===----------------------------------------------------------------------===//
 //  OutputELFWriter Class
 //===----------------------------------------------------------------------===//
@@ -78,7 +87,7 @@ protected:
   virtual void addDefaultAtoms() = 0;
 
   // Add any runtime files and their atoms to the output
-  virtual void addFiles(InputFiles&) = 0;
+  virtual void addFiles(InputFiles &);
 
   // Finalize the default atom values
   virtual void finalizeDefaultAtomValues() = 0;
@@ -114,6 +123,7 @@ protected:
   LLD_UNIQUE_BUMP_PTR(HashSection<ELFT>) _hashTable;
   llvm::StringSet<> _soNeeded;
   /// @}
+  LinkerInternalFile<ELFT> _linkerInternalFile;
 };
 
 //===----------------------------------------------------------------------===//
@@ -121,7 +131,8 @@ protected:
 //===----------------------------------------------------------------------===//
 template <class ELFT>
 OutputELFWriter<ELFT>::OutputELFWriter(const ELFTargetInfo &ti)
-    : _targetInfo(ti), _targetHandler(ti.getTargetHandler<ELFT>()) {
+    : _targetInfo(ti), _targetHandler(ti.getTargetHandler<ELFT>()),
+      _linkerInternalFile(ti) {
   _layout = &_targetHandler.targetLayout();
 }
 
@@ -223,8 +234,19 @@ void OutputELFWriter<ELFT>::assignSectionsWithNoSegments() {
         _shdrtab->updateSection(section);
 }
 
-template<class ELFT>
-void OutputELFWriter<ELFT>::createDefaultSections() {
+template <class ELFT>
+void OutputELFWriter<ELFT>::addFiles(InputFiles &inputFiles) {
+  // Add all input Files that are defined by the target
+  _targetHandler.addFiles(inputFiles);
+  // Add all symbols that are specified by the -u option
+  // as part of the command line argument to lld
+  for (auto ai : _targetInfo.undefinedSymbols())
+    _linkerInternalFile.addUndefinedAtom(ai);
+  // Make the linker internal file to be the first file
+  inputFiles.prependFile(_linkerInternalFile);
+}
+
+template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {
   _Header.reset(new (_alloc) Header<ELFT>(_targetInfo));
   _programHeader.reset(new (_alloc) ProgramHeader<ELFT>(_targetInfo));
   _layout->setHeader(_Header.get());

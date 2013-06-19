@@ -72,6 +72,14 @@ def omagic_alias : Flag<["-"], "N">, Alias<omagic>;
 def no_omagic : Flag<["--"], "no-omagic">,
     HelpText<"This option negates most of the effects of the -N option. Disable linking with shared libraries">;
 
+// TODO: remove the options with the = sign, once the change in the OptionParser
+// is done to recognize the allowed suffixes for an argument. 
+def u : Separate<["-"], "u">,
+    HelpText<"Force symbol to be entered in the output file as an undefined symbol">;
+def undefined : Separate<["--"], "undefined">, Alias<u>;
+def u_equal : Joined<["-"], "u=">, Alias<u>;
+def undefined_equal : Joined<["--"], "undefined=">, Alias<u>;
+
 // extensions
 def emit_yaml : Flag<["-"], "emit-yaml">, 
     HelpText<"Write YAML instead of ELF">;
