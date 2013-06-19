@@ -104,6 +104,8 @@ bool BoUpSLP::isConsecutiveAccess(Value *A, Value *B) {
 }
 
 bool BoUpSLP::vectorizeStoreChain(ArrayRef<Value *> Chain, int CostThreshold) {
+  unsigned ChainLen = Chain.size();
+    DEBUG(dbgs()<<"SLP: Analyzing a store chain of length " <<ChainLen<< "\n");
   Type *StoreTy = cast<StoreInst>(Chain[0])->getValueOperand()->getType();
   unsigned Sz = DL->getTypeSizeInBits(StoreTy);
   unsigned VF = MinVecRegSize / Sz;
@@ -112,8 +114,8 @@ bool BoUpSLP::vectorizeStoreChain(ArrayRef<Value *> Chain, int CostThreshold) {
 
   bool Changed = false;
   // Look for profitable vectorizable trees at all offsets, starting at zero.
-  for (unsigned i = 0, e = Chain.size(); i < e; ++i) {
-    if (i + VF > e) return Changed;
+  for (unsigned i = 0, e = ChainLen; i < e; ++i) {
+    if (i + VF > e) break;
     DEBUG(dbgs()<<"SLP: Analyzing " << VF << " stores at offset "<< i << "\n");
     ArrayRef<Value *> Operands = Chain.slice(i, VF);
 
@@ -128,7 +130,19 @@ bool BoUpSLP::vectorizeStoreChain(ArrayRef<Value *> Chain, int CostThreshold) {
     }
   }
 
-  return Changed;
+  if (Changed)
+    return true;
+
+  int Cost = getTreeCost(Chain);
+  if (Cost < CostThreshold) {
+    DEBUG(dbgs() << "SLP: Found store chain cost = "<< Cost <<" for size = " <<
+          ChainLen << "\n");
+    Builder.SetInsertPoint(getInsertionPoint(getLastIndex(Chain, ChainLen)));
+    vectorizeTree(Chain, ChainLen);
+    return true;
+  }
+
+  return false;
 }
 
 bool BoUpSLP::vectorizeStores(ArrayRef<StoreInst *> Stores, int costThreshold) {
