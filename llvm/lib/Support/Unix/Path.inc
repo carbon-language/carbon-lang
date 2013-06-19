@@ -338,18 +338,6 @@ Path::isRegularFile() const {
   return false;
 }
 
-bool
-Path::canExecute() const {
-  if (0 != access(path.c_str(), R_OK | X_OK ))
-    return false;
-  struct stat buf;
-  if (0 != stat(path.c_str(), &buf))
-    return false;
-  if (!S_ISREG(buf.st_mode))
-    return false;
-  return true;
-}
-
 const FileStatus *
 PathWithStatus::getFileStatus(bool update, std::string *ErrStr) const {
   if (!fsIsValid || update) {

@@ -244,13 +244,6 @@ Path::isSymLink() const {
 }
 
 bool
-Path::canExecute() const {
-  // FIXME: take security attributes into account.
-  DWORD attr = GetFileAttributes(path.c_str());
-  return attr != INVALID_FILE_ATTRIBUTES;
-}
-
-bool
 Path::isRegularFile() const {
   bool res;
   if (fs::is_regular_file(path, res))

@@ -274,14 +274,6 @@ namespace sys {
       /// @brief Determines if the file is a regular file
       bool isRegularFile() const;
 
-      /// This function determines if the path name references an executable
-      /// file in the file system. This function checks for the existence and
-      /// executability (by the current program) of the file.
-      /// @returns true if the pathname references an executable file.
-      /// @brief Determines if the path is an executable file in the file
-      /// system.
-      bool canExecute() const;
-
       /// This function builds a list of paths that are the names of the
       /// files and directories in a directory.
       /// @returns true if an error occurs, true otherwise
