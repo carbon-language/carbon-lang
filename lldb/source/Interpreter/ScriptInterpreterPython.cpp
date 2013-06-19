@@ -2670,14 +2670,25 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         
         // check if the module is already import-ed
         command_stream.Clear();
-        command_stream.Printf("sys.getrefcount(%s)",basename.c_str());
+        command_stream.Printf("sys.modules.__contains__('%s')",basename.c_str());
+        bool does_contain = false;
         int refcount = 0;
-        // this call will fail if the module does not exist (because the parameter to it is not a string
-        // but an actual Python module object, which is non-existant if the module was not imported before)
-        bool was_imported = (ExecuteOneLineWithReturn(command_stream.GetData(),
-                                                      ScriptInterpreterPython::eScriptReturnTypeInt,
-                                                      &refcount,
-                                                      ScriptInterpreter::ExecuteScriptOptions().SetEnableIO(false).SetSetLLDBGlobals(false)) && refcount > 0);
+        // this call will succeed if the module was ever imported in any Debugger in the lifetime of the process
+        // in which this LLDB framework is living
+        bool was_imported_globally = (ExecuteOneLineWithReturn(command_stream.GetData(),
+                                                               ScriptInterpreterPython::eScriptReturnTypeBool,
+                                                               &does_contain,
+                                                               ScriptInterpreter::ExecuteScriptOptions().SetEnableIO(false).SetSetLLDBGlobals(false)) && does_contain);
+        // this call will fail if the module was not imported in this Debugger before
+        command_stream.Clear();
+        command_stream.Printf("sys.getrefcount(%s)",basename.c_str());
+        bool was_imported_locally = (ExecuteOneLineWithReturn(command_stream.GetData(),
+                                                              ScriptInterpreterPython::eScriptReturnTypeInt,
+                                                              &refcount,
+                                                              ScriptInterpreter::ExecuteScriptOptions().SetEnableIO(false).SetSetLLDBGlobals(false)) && refcount > 0);
+        
+        bool was_imported = (was_imported_globally || was_imported_locally);
+        
         if (was_imported == true && can_reload == false)
         {
             error.SetErrorString("module already imported");
@@ -2686,10 +2697,17 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
 
         // now actually do the import
         command_stream.Clear();
+        
         if (was_imported)
-            command_stream.Printf("reload(%s)",basename.c_str());
+        {
+            if (!was_imported_locally)
+                command_stream.Printf("import %s ; reload(%s)",basename.c_str(),basename.c_str());
+            else
+                command_stream.Printf("reload(%s)",basename.c_str());
+        }
         else
             command_stream.Printf("import %s",basename.c_str());
+        
         bool import_retval = ExecuteMultipleLines(command_stream.GetData(), ScriptInterpreter::ExecuteScriptOptions().SetEnableIO(false).SetSetLLDBGlobals(false).SetMaskoutErrors(false));
         PyObject* py_error = PyErr_Occurred(); // per Python docs: "you do not need to Py_DECREF()" the return of this function
         
