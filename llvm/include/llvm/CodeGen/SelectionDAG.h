@@ -129,7 +129,6 @@ void checkForCycles(const SelectionDAG *DAG);
 ///
 class SelectionDAG {
   const TargetMachine &TM;
-  const TargetLowering &TLI;
   const TargetSelectionDAGInfo &TSI;
   const TargetTransformInfo *TTI;
   MachineFunction *MF;
@@ -232,7 +231,9 @@ public:
 
   MachineFunction &getMachineFunction() const { return *MF; }
   const TargetMachine &getTarget() const { return TM; }
-  const TargetLowering &getTargetLoweringInfo() const { return TLI; }
+  const TargetLowering &getTargetLoweringInfo() const {
+    return *TM.getTargetLowering();
+  }
   const TargetSelectionDAGInfo &getSelectionDAGInfo() const { return TSI; }
   const TargetTransformInfo *getTargetTransformInfo() const { return TTI; }
   LLVMContext *getContext() const {return Context; }

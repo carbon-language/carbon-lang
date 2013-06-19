@@ -33,7 +33,7 @@ class SparcDAGToDAGISel : public SelectionDAGISel {
   /// Subtarget - Keep a pointer to the Sparc Subtarget around so that we can
   /// make the right decision when generating code for different targets.
   const SparcSubtarget &Subtarget;
-  SparcTargetMachine& TM;
+  SparcTargetMachine &TM;
 public:
   explicit SparcDAGToDAGISel(SparcTargetMachine &tm)
     : SelectionDAGISel(tm),
@@ -67,13 +67,15 @@ private:
 
 SDNode* SparcDAGToDAGISel::getGlobalBaseReg() {
   unsigned GlobalBaseReg = TM.getInstrInfo()->getGlobalBaseReg(MF);
-  return CurDAG->getRegister(GlobalBaseReg, TLI->getPointerTy()).getNode();
+  return CurDAG->getRegister(GlobalBaseReg,
+                             getTargetLowering()->getPointerTy()).getNode();
 }
 
 bool SparcDAGToDAGISel::SelectADDRri(SDValue Addr,
                                      SDValue &Base, SDValue &Offset) {
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
-    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), TLI->getPointerTy());
+    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(),
+                                       getTargetLowering()->getPointerTy());
     Offset = CurDAG->getTargetConstant(0, MVT::i32);
     return true;
   }
@@ -88,7 +90,7 @@ bool SparcDAGToDAGISel::SelectADDRri(SDValue Addr,
                 dyn_cast<FrameIndexSDNode>(Addr.getOperand(0))) {
           // Constant offset from frame ref.
           Base = CurDAG->getTargetFrameIndex(FIN->getIndex(),
-                                             TLI->getPointerTy());
+                                           getTargetLowering()->getPointerTy());
         } else {
           Base = Addr.getOperand(0);
         }
@@ -131,7 +133,7 @@ bool SparcDAGToDAGISel::SelectADDRrr(SDValue Addr, SDValue &R1, SDValue &R2) {
   }
 
   R1 = Addr;
-  R2 = CurDAG->getRegister(SP::G0, TLI->getPointerTy());
+  R2 = CurDAG->getRegister(SP::G0, getTargetLowering()->getPointerTy());
   return true;
 }
 

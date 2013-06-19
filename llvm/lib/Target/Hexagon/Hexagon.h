@@ -29,7 +29,7 @@ namespace llvm {
   class HexagonTargetMachine;
   class raw_ostream;
 
-  FunctionPass *createHexagonISelDag(const HexagonTargetMachine &TM,
+  FunctionPass *createHexagonISelDag(HexagonTargetMachine &TM,
                                      CodeGenOpt::Level OptLevel);
   FunctionPass *createHexagonDelaySlotFillerPass(const TargetMachine &TM);
   FunctionPass *createHexagonFPMoverPass(const TargetMachine &TM);

@@ -92,8 +92,7 @@ FunctionPass *llvm::createAMDGPUISelDag(TargetMachine &TM
   return new AMDGPUDAGToDAGISel(TM);
 }
 
-AMDGPUDAGToDAGISel::AMDGPUDAGToDAGISel(TargetMachine &TM
-                                     )
+AMDGPUDAGToDAGISel::AMDGPUDAGToDAGISel(TargetMachine &TM)
   : SelectionDAGISel(TM), Subtarget(TM.getSubtarget<AMDGPUSubtarget>()) {
 }
 
@@ -712,7 +711,8 @@ void AMDGPUDAGToDAGISel::PostprocessISelDAG() {
   }
 
   // Go over all selected nodes and try to fold them a bit more
-  const AMDGPUTargetLowering& Lowering = (*(const AMDGPUTargetLowering*)TLI);
+  const AMDGPUTargetLowering& Lowering =
+    (*(const AMDGPUTargetLowering*)getTargetLowering());
   for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
        E = CurDAG->allnodes_end(); I != E; ++I) {
 

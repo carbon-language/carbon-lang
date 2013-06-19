@@ -275,8 +275,8 @@ def HasSlowVDUP32 : Predicate<"Subtarget->isSwift()">;
 def UseVMOVSR : Predicate<"Subtarget->isCortexA9() || !Subtarget->useNEONForSinglePrecisionFP()">;
 def DontUseVMOVSR : Predicate<"!Subtarget->isCortexA9() && Subtarget->useNEONForSinglePrecisionFP()">;
 
-def IsLE             : Predicate<"TLI->isLittleEndian()">;
-def IsBE             : Predicate<"TLI->isBigEndian()">;
+def IsLE             : Predicate<"getTargetLowering()->isLittleEndian()">;
+def IsBE             : Predicate<"getTargetLowering()->isBigEndian()">;
 
 //===----------------------------------------------------------------------===//
 // ARM Flag Definitions.

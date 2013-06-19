@@ -52,7 +52,7 @@ class HexagonDAGToDAGISel : public SelectionDAGISel {
   const HexagonTargetMachine& TM;
   DenseMap<const GlobalValue *, unsigned> GlobalAddressUseCountMap;
 public:
-  explicit HexagonDAGToDAGISel(const HexagonTargetMachine &targetmachine,
+  explicit HexagonDAGToDAGISel(HexagonTargetMachine &targetmachine,
                                CodeGenOpt::Level OptLevel)
     : SelectionDAGISel(targetmachine, OptLevel),
       Subtarget(targetmachine.getSubtarget<HexagonSubtarget>()),
@@ -178,7 +178,7 @@ inline SDValue XformUToUM1Imm(unsigned Imm) {
 /// createHexagonISelDag - This pass converts a legalized DAG into a
 /// Hexagon-specific DAG, ready for instruction scheduling.
 ///
-FunctionPass *llvm::createHexagonISelDag(const HexagonTargetMachine &TM,
+FunctionPass *llvm::createHexagonISelDag(HexagonTargetMachine &TM,
                                          CodeGenOpt::Level OptLevel) {
   return new HexagonDAGToDAGISel(TM, OptLevel);
 }
@@ -394,7 +394,7 @@ SDNode *HexagonDAGToDAGISel::SelectBaseOffsetLoad(LoadSDNode *LD, SDLoc dl) {
     EVT LoadedVT = LD->getMemoryVT();
     int64_t Offset = cast<GlobalAddressSDNode>(Base)->getOffset();
     if (Offset != 0 && OffsetFitsS11(LoadedVT, Offset)) {
-      MVT PointerTy = TLI->getPointerTy();
+      MVT PointerTy = getTargetLowering()->getPointerTy();
       const GlobalValue* GV =
         cast<GlobalAddressSDNode>(Base)->getGlobal();
       SDValue TargAddr =
@@ -443,10 +443,10 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoadSignExtend64(LoadSDNode *LD,
   SDValue CPTmpN1_0;
   SDValue CPTmpN1_1;
 
-  const HexagonInstrInfo *TII =
-    static_cast<const HexagonInstrInfo*>(TM.getInstrInfo());
   if (SelectADDRriS11_2(N1, CPTmpN1_0, CPTmpN1_1) &&
       N1.getNode()->getValueType(0) == MVT::i32) {
+    const HexagonInstrInfo *TII =
+      static_cast<const HexagonInstrInfo*>(TM.getInstrInfo());
     if (TII->isValidAutoIncImm(LoadedVT, Val)) {
       SDValue TargetConst = CurDAG->getTargetConstant(Val, MVT::i32);
       SDNode *Result_1 = CurDAG->getMachineNode(Opcode, dl, MVT::i32, MVT::i32,
@@ -510,10 +510,10 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoadZeroExtend64(LoadSDNode *LD,
   SDValue CPTmpN1_0;
   SDValue CPTmpN1_1;
 
-  const HexagonInstrInfo *TII =
-    static_cast<const HexagonInstrInfo*>(TM.getInstrInfo());
   if (SelectADDRriS11_2(N1, CPTmpN1_0, CPTmpN1_1) &&
       N1.getNode()->getValueType(0) == MVT::i32) {
+    const HexagonInstrInfo *TII =
+      static_cast<const HexagonInstrInfo*>(TM.getInstrInfo());
     if (TII->isValidAutoIncImm(LoadedVT, Val)) {
       SDValue TargetConstVal = CurDAG->getTargetConstant(Val, MVT::i32);
       SDValue TargetConst0 = CurDAG->getTargetConstant(0, MVT::i32);
@@ -777,7 +777,7 @@ SDNode *HexagonDAGToDAGISel::SelectBaseOffsetStore(StoreSDNode *ST,
       EVT StoredVT = ST->getMemoryVT();
       int64_t Offset = cast<GlobalAddressSDNode>(Base)->getOffset();
       if (Offset != 0 && OffsetFitsS11(StoredVT, Offset)) {
-        MVT PointerTy = TLI->getPointerTy();
+        MVT PointerTy = getTargetLowering()->getPointerTy();
         const GlobalValue* GV =
           cast<GlobalAddressSDNode>(Base)->getGlobal();
         SDValue TargAddr =
@@ -1215,10 +1215,10 @@ SDNode *HexagonDAGToDAGISel::SelectIntrinsicWOChain(SDNode *N) {
 
   // We are concerned with only those intrinsics that have predicate registers
   // as at least one of the operands.
-  const HexagonInstrInfo *TII =
-    static_cast<const HexagonInstrInfo*>(TM.getInstrInfo());
   if (IntrinsicWithPred) {
     SmallVector<SDValue, 8> Ops;
+    const HexagonInstrInfo *TII =
+      static_cast<const HexagonInstrInfo*>(TM.getInstrInfo());
     const MCInstrDesc &MCID = TII->get(IntrinsicWithPred);
     const TargetRegisterInfo *TRI = TM.getRegisterInfo();
 

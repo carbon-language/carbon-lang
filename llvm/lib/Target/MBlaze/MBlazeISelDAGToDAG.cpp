@@ -181,7 +181,8 @@ SelectAddrRegImm(SDValue N, SDValue &Base, SDValue &Disp) {
 /// GOT address into a register.
 SDNode *MBlazeDAGToDAGISel::getGlobalBaseReg() {
   unsigned GlobalBaseReg = getInstrInfo()->getGlobalBaseReg(MF);
-  return CurDAG->getRegister(GlobalBaseReg, TLI->getPointerTy()).getNode();
+  return CurDAG->getRegister(GlobalBaseReg,
+                             getTargetLowering()->getPointerTy()).getNode();
 }
 
 /// Select instructions not customized! Used for

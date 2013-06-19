@@ -118,11 +118,13 @@ void Mips16DAGToDAGISel::processFunctionAfterISel(MachineFunction &MF) {
 SDValue Mips16DAGToDAGISel::getMips16SPAliasReg() {
   unsigned Mips16SPAliasReg =
     MF->getInfo<MipsFunctionInfo>()->getMips16SPAliasReg();
-  return CurDAG->getRegister(Mips16SPAliasReg, TLI->getPointerTy());
+  return CurDAG->getRegister(Mips16SPAliasReg,
+                             getTargetLowering()->getPointerTy());
 }
 
 void Mips16DAGToDAGISel::getMips16SPRefReg(SDNode *Parent, SDValue &AliasReg) {
-  SDValue AliasFPReg = CurDAG->getRegister(Mips::S0, TLI->getPointerTy());
+  SDValue AliasFPReg = CurDAG->getRegister(Mips::S0,
+                                           getTargetLowering()->getPointerTy());
   if (Parent) {
     switch (Parent->getOpcode()) {
       case ISD::LOAD: {
@@ -149,7 +151,7 @@ void Mips16DAGToDAGISel::getMips16SPRefReg(SDNode *Parent, SDValue &AliasReg) {
       }
     }
   }
-  AliasReg = CurDAG->getRegister(Mips::SP, TLI->getPointerTy());
+  AliasReg = CurDAG->getRegister(Mips::SP, getTargetLowering()->getPointerTy());
   return;
 
 }

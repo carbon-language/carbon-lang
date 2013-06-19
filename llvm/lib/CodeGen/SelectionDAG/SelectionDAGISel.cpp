@@ -275,9 +275,9 @@ void TargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
 // SelectionDAGISel code
 //===----------------------------------------------------------------------===//
 
-SelectionDAGISel::SelectionDAGISel(const TargetMachine &tm,
+SelectionDAGISel::SelectionDAGISel(TargetMachine &tm,
                                    CodeGenOpt::Level OL) :
-  MachineFunctionPass(ID), TM(tm), TLI(tm.getTargetLowering()),
+  MachineFunctionPass(ID), TM(tm),
   FuncInfo(new FunctionLoweringInfo(TM)),
   CurDAG(new SelectionDAG(tm, OL)),
   SDB(new SelectionDAGBuilder(*CurDAG, *FuncInfo, OL)),
@@ -828,6 +828,7 @@ void SelectionDAGISel::PrepareEHLandingPad() {
     .addSym(Label);
 
   // Mark exception register as live in.
+  const TargetLowering *TLI = getTargetLowering();
   unsigned Reg = TLI->getExceptionPointerRegister();
   if (Reg) MBB->addLiveIn(Reg);
 
@@ -932,7 +933,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
   // Initialize the Fast-ISel state, if needed.
   FastISel *FastIS = 0;
   if (TM.Options.EnableFastISel)
-    FastIS = TLI->createFastISel(*FuncInfo, LibInfo);
+    FastIS = getTargetLowering()->createFastISel(*FuncInfo, LibInfo);
 
   // Iterate over all basic blocks in the function.
   ReversePostOrderTraversal<const Function*> RPOT(&Fn);
@@ -2079,7 +2080,7 @@ static unsigned IsPredicateKnownToFail(const unsigned char *Table,
     Result = !::CheckOpcode(Table, Index, N.getNode());
     return Index;
   case SelectionDAGISel::OPC_CheckType:
-    Result = !::CheckType(Table, Index, N, SDISel.TLI);
+    Result = !::CheckType(Table, Index, N, SDISel.getTargetLowering());
     return Index;
   case SelectionDAGISel::OPC_CheckChild0Type:
   case SelectionDAGISel::OPC_CheckChild1Type:
@@ -2089,14 +2090,14 @@ static unsigned IsPredicateKnownToFail(const unsigned char *Table,
   case SelectionDAGISel::OPC_CheckChild5Type:
   case SelectionDAGISel::OPC_CheckChild6Type:
   case SelectionDAGISel::OPC_CheckChild7Type:
-    Result = !::CheckChildType(Table, Index, N, SDISel.TLI,
+    Result = !::CheckChildType(Table, Index, N, SDISel.getTargetLowering(),
                         Table[Index-1] - SelectionDAGISel::OPC_CheckChild0Type);
     return Index;
   case SelectionDAGISel::OPC_CheckCondCode:
     Result = !::CheckCondCode(Table, Index, N);
     return Index;
   case SelectionDAGISel::OPC_CheckValueType:
-    Result = !::CheckValueType(Table, Index, N, SDISel.TLI);
+    Result = !::CheckValueType(Table, Index, N, SDISel.getTargetLowering());
     return Index;
   case SelectionDAGISel::OPC_CheckInteger:
     Result = !::CheckInteger(Table, Index, N);
@@ -2389,7 +2390,8 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       continue;
 
     case OPC_CheckType:
-      if (!::CheckType(MatcherTable, MatcherIndex, N, TLI)) break;
+      if (!::CheckType(MatcherTable, MatcherIndex, N, getTargetLowering()))
+        break;
       continue;
 
     case OPC_SwitchOpcode: {
@@ -2436,7 +2438,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
 
         MVT CaseVT = (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
         if (CaseVT == MVT::iPTR)
-          CaseVT = TLI->getPointerTy();
+          CaseVT = getTargetLowering()->getPointerTy();
 
         // If the VT matches, then we will execute this case.
         if (CurNodeVT == CaseVT)
@@ -2458,7 +2460,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     case OPC_CheckChild2Type: case OPC_CheckChild3Type:
     case OPC_CheckChild4Type: case OPC_CheckChild5Type:
     case OPC_CheckChild6Type: case OPC_CheckChild7Type:
-      if (!::CheckChildType(MatcherTable, MatcherIndex, N, TLI,
+      if (!::CheckChildType(MatcherTable, MatcherIndex, N, getTargetLowering(),
                             Opcode-OPC_CheckChild0Type))
         break;
       continue;
@@ -2466,7 +2468,8 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       if (!::CheckCondCode(MatcherTable, MatcherIndex, N)) break;
       continue;
     case OPC_CheckValueType:
-      if (!::CheckValueType(MatcherTable, MatcherIndex, N, TLI)) break;
+      if (!::CheckValueType(MatcherTable, MatcherIndex, N, getTargetLowering()))
+        break;
       continue;
     case OPC_CheckInteger:
       if (!::CheckInteger(MatcherTable, MatcherIndex, N)) break;
@@ -2658,7 +2661,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       for (unsigned i = 0; i != NumVTs; ++i) {
         MVT::SimpleValueType VT =
           (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
-        if (VT == MVT::iPTR) VT = TLI->getPointerTy().SimpleTy;
+        if (VT == MVT::iPTR) VT = getTargetLowering()->getPointerTy().SimpleTy;
         VTs.push_back(VT);
       }
 

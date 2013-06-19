@@ -402,7 +402,7 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
   }
 
   case MipsISD::ThreadPointer: {
-    EVT PtrVT = TLI->getPointerTy();
+    EVT PtrVT = getTargetLowering()->getPointerTy();
     unsigned RdhwrOpc, SrcReg, DestReg;
 
     if (PtrVT == MVT::i32) {

@@ -864,14 +864,13 @@ unsigned SelectionDAG::getEVTAlignment(EVT VT) const {
                    PointerType::get(Type::getInt8Ty(*getContext()), 0) :
                    VT.getTypeForEVT(*getContext());
 
-  return TLI.getDataLayout()->getABITypeAlignment(Ty);
+  return TM.getTargetLowering()->getDataLayout()->getABITypeAlignment(Ty);
 }
 
 // EntryNode could meaningfully have debug info if we can find it...
 SelectionDAG::SelectionDAG(const TargetMachine &tm, CodeGenOpt::Level OL)
-  : TM(tm), TLI(*tm.getTargetLowering()), TSI(*tm.getSelectionDAGInfo()),
-    TTI(0), OptLevel(OL), EntryNode(ISD::EntryToken, 0, DebugLoc(),
-                                    getVTList(MVT::Other)),
+  : TM(tm), TSI(*tm.getSelectionDAGInfo()), TTI(0), OptLevel(OL),
+    EntryNode(ISD::EntryToken, 0, DebugLoc(), getVTList(MVT::Other)),
     Root(getEntryNode()), UpdateListeners(0) {
   AllNodes.push_back(&EntryNode);
   DbgInfo = new SDDbgInfo();
@@ -972,13 +971,15 @@ SDValue SelectionDAG::getConstant(const ConstantInt &Val, EVT VT, bool isT) {
   EVT EltVT = VT.getScalarType();
   const ConstantInt *Elt = &Val;
 
+  const TargetLowering *TLI = TM.getTargetLowering();
+
   // In some cases the vector type is legal but the element type is illegal and
   // needs to be promoted, for example v8i8 on ARM.  In this case, promote the
   // inserted value (the type does not need to match the vector element type).
   // Any extra bits introduced will be truncated away.
-  if (VT.isVector() && TLI.getTypeAction(*getContext(), EltVT) ==
+  if (VT.isVector() && TLI->getTypeAction(*getContext(), EltVT) ==
       TargetLowering::TypePromoteInteger) {
-   EltVT = TLI.getTypeToTransformTo(*getContext(), EltVT);
+   EltVT = TLI->getTypeToTransformTo(*getContext(), EltVT);
    APInt NewVal = Elt->getValue().zext(EltVT.getSizeInBits());
    Elt = ConstantInt::get(*getContext(), NewVal);
   }
@@ -1011,7 +1012,7 @@ SDValue SelectionDAG::getConstant(const ConstantInt &Val, EVT VT, bool isT) {
 }
 
 SDValue SelectionDAG::getIntPtrConstant(uint64_t Val, bool isTarget) {
-  return getConstant(Val, TLI.getPointerTy(), isTarget);
+  return getConstant(Val, TM.getTargetLowering()->getPointerTy(), isTarget);
 }
 
 
@@ -1078,7 +1079,7 @@ SDValue SelectionDAG::getGlobalAddress(const GlobalValue *GV, SDLoc DL,
          "Cannot set target flags on target-independent globals");
 
   // Truncate (with sign-extension) the offset value to the pointer size.
-  unsigned BitWidth = TLI.getPointerTy().getSizeInBits();
+  unsigned BitWidth = TM.getTargetLowering()->getPointerTy().getSizeInBits();
   if (BitWidth < 64)
     Offset = SignExtend64(Offset, BitWidth);
 
@@ -1155,7 +1156,8 @@ SDValue SelectionDAG::getConstantPool(const Constant *C, EVT VT,
   assert((TargetFlags == 0 || isTarget) &&
          "Cannot set target flags on target-independent globals");
   if (Alignment == 0)
-    Alignment = TLI.getDataLayout()->getPrefTypeAlignment(C->getType());
+    Alignment =
+    TM.getTargetLowering()->getDataLayout()->getPrefTypeAlignment(C->getType());
   unsigned Opc = isTarget ? ISD::TargetConstantPool : ISD::ConstantPool;
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
@@ -1182,7 +1184,8 @@ SDValue SelectionDAG::getConstantPool(MachineConstantPoolValue *C, EVT VT,
   assert((TargetFlags == 0 || isTarget) &&
          "Cannot set target flags on target-independent globals");
   if (Alignment == 0)
-    Alignment = TLI.getDataLayout()->getPrefTypeAlignment(C->getType());
+    Alignment =
+    TM.getTargetLowering()->getDataLayout()->getPrefTypeAlignment(C->getType());
   unsigned Opc = isTarget ? ISD::TargetConstantPool : ISD::ConstantPool;
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
@@ -1512,7 +1515,7 @@ SDValue SelectionDAG::getMDNode(const MDNode *MD) {
 /// the target's desired shift amount type.
 SDValue SelectionDAG::getShiftAmountOperand(EVT LHSTy, SDValue Op) {
   EVT OpTy = Op.getValueType();
-  EVT ShTy = TLI.getShiftAmountTy(LHSTy);
+  EVT ShTy = TM.getTargetLowering()->getShiftAmountTy(LHSTy);
   if (OpTy == ShTy || OpTy.isVector()) return Op;
 
   ISD::NodeType Opcode = OpTy.bitsGT(ShTy) ?  ISD::TRUNCATE : ISD::ZERO_EXTEND;
@@ -1525,11 +1528,12 @@ SDValue SelectionDAG::CreateStackTemporary(EVT VT, unsigned minAlign) {
   MachineFrameInfo *FrameInfo = getMachineFunction().getFrameInfo();
   unsigned ByteSize = VT.getStoreSize();
   Type *Ty = VT.getTypeForEVT(*getContext());
+  const TargetLowering *TLI = TM.getTargetLowering();
   unsigned StackAlign =
-  std::max((unsigned)TLI.getDataLayout()->getPrefTypeAlignment(Ty), minAlign);
+  std::max((unsigned)TLI->getDataLayout()->getPrefTypeAlignment(Ty), minAlign);
 
   int FrameIdx = FrameInfo->CreateStackObject(ByteSize, StackAlign, false);
-  return getFrameIndex(FrameIdx, TLI.getPointerTy());
+  return getFrameIndex(FrameIdx, TLI->getPointerTy());
 }
 
 /// CreateStackTemporary - Create a stack temporary suitable for holding
@@ -1539,13 +1543,14 @@ SDValue SelectionDAG::CreateStackTemporary(EVT VT1, EVT VT2) {
                             VT2.getStoreSizeInBits())/8;
   Type *Ty1 = VT1.getTypeForEVT(*getContext());
   Type *Ty2 = VT2.getTypeForEVT(*getContext());
-  const DataLayout *TD = TLI.getDataLayout();
+  const TargetLowering *TLI = TM.getTargetLowering();
+  const DataLayout *TD = TLI->getDataLayout();
   unsigned Align = std::max(TD->getPrefTypeAlignment(Ty1),
                             TD->getPrefTypeAlignment(Ty2));
 
   MachineFrameInfo *FrameInfo = getMachineFunction().getFrameInfo();
   int FrameIdx = FrameInfo->CreateStackObject(Bytes, Align, false);
-  return getFrameIndex(FrameIdx, TLI.getPointerTy());
+  return getFrameIndex(FrameIdx, TLI->getPointerTy());
 }
 
 SDValue SelectionDAG::FoldSetCC(EVT VT, SDValue N1,
@@ -1674,6 +1679,7 @@ bool SelectionDAG::MaskedValueIsZero(SDValue Op, const APInt &Mask,
 /// processing.
 void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
                                      APInt &KnownOne, unsigned Depth) const {
+  const TargetLowering *TLI = TM.getTargetLowering();
   unsigned BitWidth = Op.getValueType().getScalarType().getSizeInBits();
 
   KnownZero = KnownOne = APInt(BitWidth, 0);   // Don't know anything.
@@ -1796,7 +1802,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
     // The boolean result conforms to getBooleanContents.  Fall through.
   case ISD::SETCC:
     // If we know the result of a setcc has the top bits zero, use this info.
-    if (TLI.getBooleanContents(Op.getValueType().isVector()) ==
+    if (TLI->getBooleanContents(Op.getValueType().isVector()) ==
         TargetLowering::ZeroOrOneBooleanContent && BitWidth > 1)
       KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - 1);
     return;
@@ -2108,7 +2114,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
   case ISD::INTRINSIC_W_CHAIN:
   case ISD::INTRINSIC_VOID:
     // Allow the target to implement this method for its nodes.
-    TLI.computeMaskedBitsForTargetNode(Op, KnownZero, KnownOne, *this, Depth);
+    TLI->computeMaskedBitsForTargetNode(Op, KnownZero, KnownOne, *this, Depth);
     return;
   }
 }
@@ -2119,6 +2125,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
 /// information.  For example, immediately after an "SRA X, 2", we know that
 /// the top 3 bits are all equal to each other, so we return 3.
 unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
+  const TargetLowering *TLI = TM.getTargetLowering();
   EVT VT = Op.getValueType();
   assert(VT.isInteger() && "Invalid VT!");
   unsigned VTBits = VT.getScalarType().getSizeInBits();
@@ -2203,7 +2210,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
     // The boolean result conforms to getBooleanContents.  Fall through.
   case ISD::SETCC:
     // If setcc returns 0/-1, all bits are sign bits.
-    if (TLI.getBooleanContents(Op.getValueType().isVector()) ==
+    if (TLI->getBooleanContents(Op.getValueType().isVector()) ==
         TargetLowering::ZeroOrNegativeOneBooleanContent)
       return VTBits;
     break;
@@ -2304,7 +2311,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
       Op.getOpcode() == ISD::INTRINSIC_WO_CHAIN ||
       Op.getOpcode() == ISD::INTRINSIC_W_CHAIN ||
       Op.getOpcode() == ISD::INTRINSIC_VOID) {
-    unsigned NumBits = TLI.ComputeNumSignBitsForTargetNode(Op, Depth);
+    unsigned NumBits = TLI->ComputeNumSignBitsForTargetNode(Op, Depth);
     if (NumBits > 1) FirstAnswer = std::max(FirstAnswer, NumBits);
   }
 
@@ -3923,10 +3930,12 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, SDLoc dl, SDValue Dst,
   // beyond the given memory regions. But fixing this isn't easy, and most
   // people don't care.
 
+  const TargetLowering *TLI = TM.getTargetLowering();
+
   // Emit a library call.
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
-  Entry.Ty = TLI.getDataLayout()->getIntPtrType(*getContext());
+  Entry.Ty = TLI->getDataLayout()->getIntPtrType(*getContext());
   Entry.Node = Dst; Args.push_back(Entry);
   Entry.Node = Src; Args.push_back(Entry);
   Entry.Node = Size; Args.push_back(Entry);
@@ -3934,13 +3943,13 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, SDLoc dl, SDValue Dst,
   TargetLowering::
   CallLoweringInfo CLI(Chain, Type::getVoidTy(*getContext()),
                     false, false, false, false, 0,
-                    TLI.getLibcallCallingConv(RTLIB::MEMCPY),
+                    TLI->getLibcallCallingConv(RTLIB::MEMCPY),
                     /*isTailCall=*/false,
                     /*doesNotReturn=*/false, /*isReturnValueUsed=*/false,
-                    getExternalSymbol(TLI.getLibcallName(RTLIB::MEMCPY),
-                                      TLI.getPointerTy()),
+                    getExternalSymbol(TLI->getLibcallName(RTLIB::MEMCPY),
+                                      TLI->getPointerTy()),
                     Args, *this, dl);
-  std::pair<SDValue,SDValue> CallResult = TLI.LowerCallTo(CLI);
+  std::pair<SDValue,SDValue> CallResult = TLI->LowerCallTo(CLI);
 
   return CallResult.second;
 }
@@ -3979,10 +3988,12 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, SDLoc dl, SDValue Dst,
   // FIXME: If the memmove is volatile, lowering it to plain libc memmove may
   // not be safe.  See memcpy above for more details.
 
+  const TargetLowering *TLI = TM.getTargetLowering();
+
   // Emit a library call.
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
-  Entry.Ty = TLI.getDataLayout()->getIntPtrType(*getContext());
+  Entry.Ty = TLI->getDataLayout()->getIntPtrType(*getContext());
   Entry.Node = Dst; Args.push_back(Entry);
   Entry.Node = Src; Args.push_back(Entry);
   Entry.Node = Size; Args.push_back(Entry);
@@ -3990,13 +4001,13 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, SDLoc dl, SDValue Dst,
   TargetLowering::
   CallLoweringInfo CLI(Chain, Type::getVoidTy(*getContext()),
                     false, false, false, false, 0,
-                    TLI.getLibcallCallingConv(RTLIB::MEMMOVE),
+                    TLI->getLibcallCallingConv(RTLIB::MEMMOVE),
                     /*isTailCall=*/false,
                     /*doesNotReturn=*/false, /*isReturnValueUsed=*/false,
-                    getExternalSymbol(TLI.getLibcallName(RTLIB::MEMMOVE),
-                                      TLI.getPointerTy()),
+                    getExternalSymbol(TLI->getLibcallName(RTLIB::MEMMOVE),
+                                      TLI->getPointerTy()),
                     Args, *this, dl);
-  std::pair<SDValue,SDValue> CallResult = TLI.LowerCallTo(CLI);
+  std::pair<SDValue,SDValue> CallResult = TLI->LowerCallTo(CLI);
 
   return CallResult.second;
 }
@@ -4032,7 +4043,8 @@ SDValue SelectionDAG::getMemset(SDValue Chain, SDLoc dl, SDValue Dst,
     return Result;
 
   // Emit a library call.
-  Type *IntPtrTy = TLI.getDataLayout()->getIntPtrType(*getContext());
+  const TargetLowering *TLI = TM.getTargetLowering();
+  Type *IntPtrTy = TLI->getDataLayout()->getIntPtrType(*getContext());
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
   Entry.Node = Dst; Entry.Ty = IntPtrTy;
@@ -4054,13 +4066,13 @@ SDValue SelectionDAG::getMemset(SDValue Chain, SDLoc dl, SDValue Dst,
   TargetLowering::
   CallLoweringInfo CLI(Chain, Type::getVoidTy(*getContext()),
                     false, false, false, false, 0,
-                    TLI.getLibcallCallingConv(RTLIB::MEMSET),
+                    TLI->getLibcallCallingConv(RTLIB::MEMSET),
                     /*isTailCall=*/false,
                     /*doesNotReturn*/false, /*isReturnValueUsed=*/false,
-                    getExternalSymbol(TLI.getLibcallName(RTLIB::MEMSET),
-                                      TLI.getPointerTy()),
+                    getExternalSymbol(TLI->getLibcallName(RTLIB::MEMSET),
+                                      TLI->getPointerTy()),
                     Args, *this, dl);
-  std::pair<SDValue,SDValue> CallResult = TLI.LowerCallTo(CLI);
+  std::pair<SDValue,SDValue> CallResult = TLI->LowerCallTo(CLI);
 
   return CallResult.second;
 }
@@ -6122,11 +6134,12 @@ SDValue SelectionDAG::UnrollVectorOp(SDNode *N, unsigned ResNE) {
       EVT OperandVT = Operand.getValueType();
       if (OperandVT.isVector()) {
         // A vector operand; extract a single element.
+        const TargetLowering *TLI = TM.getTargetLowering();
         EVT OperandEltVT = OperandVT.getVectorElementType();
         Operands[j] = getNode(ISD::EXTRACT_VECTOR_ELT, dl,
                               OperandEltVT,
                               Operand,
-                              getConstant(i, TLI.getPointerTy()));
+                              getConstant(i, TLI->getPointerTy()));
       } else {
         // A scalar operand; just use it as is.
         Operands[j] = Operand;
@@ -6204,8 +6217,9 @@ bool SelectionDAG::isConsecutiveLoad(LoadSDNode *LD, LoadSDNode *Base,
   const GlobalValue *GV2 = NULL;
   int64_t Offset1 = 0;
   int64_t Offset2 = 0;
-  bool isGA1 = TLI.isGAPlusOffset(Loc.getNode(), GV1, Offset1);
-  bool isGA2 = TLI.isGAPlusOffset(BaseLoc.getNode(), GV2, Offset2);
+  const TargetLowering *TLI = TM.getTargetLowering();
+  bool isGA1 = TLI->isGAPlusOffset(Loc.getNode(), GV1, Offset1);
+  bool isGA2 = TLI->isGAPlusOffset(BaseLoc.getNode(), GV2, Offset2);
   if (isGA1 && isGA2 && GV1 == GV2)
     return Offset1 == (Offset2 + Dist*Bytes);
   return false;
@@ -6218,11 +6232,12 @@ unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) const {
   // If this is a GlobalAddress + cst, return the alignment.
   const GlobalValue *GV;
   int64_t GVOffset = 0;
-  if (TLI.isGAPlusOffset(Ptr.getNode(), GV, GVOffset)) {
-    unsigned PtrWidth = TLI.getPointerTy().getSizeInBits();
+  const TargetLowering *TLI = TM.getTargetLowering();
+  if (TLI->isGAPlusOffset(Ptr.getNode(), GV, GVOffset)) {
+    unsigned PtrWidth = TLI->getPointerTy().getSizeInBits();
     APInt KnownZero(PtrWidth, 0), KnownOne(PtrWidth, 0);
     llvm::ComputeMaskedBits(const_cast<GlobalValue*>(GV), KnownZero, KnownOne,
-                            TLI.getDataLayout());
+                            TLI->getDataLayout());
     unsigned AlignBits = KnownZero.countTrailingOnes();
     unsigned Align = AlignBits ? 1 << std::min(31U, AlignBits) : 0;
     if (Align)

@@ -37,13 +37,11 @@ using namespace llvm;
 ///
 namespace {
   class XCoreDAGToDAGISel : public SelectionDAGISel {
-    const XCoreTargetLowering &Lowering;
     const XCoreSubtarget &Subtarget;
 
   public:
     XCoreDAGToDAGISel(XCoreTargetMachine &TM, CodeGenOpt::Level OptLevel)
       : SelectionDAGISel(TM, OptLevel),
-        Lowering(*TM.getTargetLowering()), 
         Subtarget(*TM.getSubtargetImpl()) { }
 
     SDNode *Select(SDNode *N);
@@ -125,7 +123,7 @@ SDNode *XCoreDAGToDAGISel::Select(SDNode *N) {
       SDValue CPIdx =
         CurDAG->getTargetConstantPool(ConstantInt::get(
                               Type::getInt32Ty(*CurDAG->getContext()), Val),
-                                      TLI->getPointerTy());
+                                      getTargetLowering()->getPointerTy());
       SDNode *node = CurDAG->getMachineNode(XCore::LDWCP_lru6, dl, MVT::i32,
                                             MVT::Other, CPIdx,
                                             CurDAG->getEntryNode());

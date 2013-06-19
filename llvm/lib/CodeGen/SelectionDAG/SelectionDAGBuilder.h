@@ -278,12 +278,9 @@ private:
     BitTestInfo Cases;
   };
 
-public:
-  // TLI - This is information that describes the available target features we
-  // need for lowering.  This indicates when operations are unavailable,
-  // implemented with a libcall, etc.
+private:
   const TargetMachine &TM;
-  const TargetLowering &TLI;
+public:
   SelectionDAG &DAG;
   const DataLayout *TD;
   AliasAnalysis *AA;
@@ -328,7 +325,6 @@ public:
   SelectionDAGBuilder(SelectionDAG &dag, FunctionLoweringInfo &funcinfo,
                       CodeGenOpt::Level ol)
     : CurInst(NULL), SDNodeOrder(0), TM(dag.getTarget()),
-      TLI(dag.getTargetLoweringInfo()),
       DAG(dag), FuncInfo(funcinfo), OptLevel(ol),
       HasTailCall(false) {
   }
