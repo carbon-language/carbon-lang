@@ -1110,6 +1110,8 @@ def err_explicit_non_ctor_or_conv_function : Error<
 def err_static_not_bitfield : Error<"static member %0 cannot be a bit-field">;
 def err_static_out_of_line : Error<
   "'static' can only be specified inside the class definition">;
+def err_storage_class_for_static_member : Error<
+  "static data member definition cannot specify a storage class">;
 def err_typedef_not_bitfield : Error<"typedef member %0 cannot be a bit-field">;
 def err_not_integral_type_bitfield : Error<
   "bit-field %0 has non-integral type %1">;
