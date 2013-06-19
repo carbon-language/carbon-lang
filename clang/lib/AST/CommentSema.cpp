@@ -720,7 +720,7 @@ void Sema::resolveParamCommandIndexes(const FullComment *FC) {
   SmallVector<ParamCommandComment *, 8> ParamVarDocs;
 
   ArrayRef<const ParmVarDecl *> ParamVars = getParamVars();
-  ParamVarDocs.resize(ParamVars.size() + isFunctionOrMethodVariadic(), NULL);
+  ParamVarDocs.resize(ParamVars.size(), NULL);
 
   // First pass over all \\param commands: resolve all parameter names.
   for (Comment::child_iterator I = FC->child_begin(), E = FC->child_end();
@@ -807,18 +807,6 @@ bool Sema::isAnyFunctionDecl() {
 bool Sema::isObjCMethodDecl() {
   return isFunctionDecl() && ThisDeclInfo->CurrentDecl &&
          isa<ObjCMethodDecl>(ThisDeclInfo->CurrentDecl);
-}
-
-bool Sema::isFunctionOrMethodVariadic() {
-  if (!isAnyFunctionDecl() && !isObjCMethodDecl())
-    return false;
-  if (const FunctionDecl *FD = 
-        dyn_cast<FunctionDecl>(ThisDeclInfo->CurrentDecl))
-    return FD->isVariadic();
-  if (const ObjCMethodDecl *MD = 
-        dyn_cast<ObjCMethodDecl>(ThisDeclInfo->CurrentDecl))
-    return MD->isVariadic();
-  return false;
 }
   
 /// isFunctionPointerVarDecl - returns 'true' if declaration is a pointer to
@@ -918,8 +906,6 @@ unsigned Sema::resolveParmVarReference(StringRef Name,
     if (II && II->getName() == Name)
       return i;
   }
-  if (Name == "..." && isFunctionOrMethodVariadic())
-    return ParamVars.size();
   return ParamCommandComment::InvalidParamIndex;
 }
 
