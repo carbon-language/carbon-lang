@@ -154,7 +154,11 @@ namespace __sanitizer {
     union {
       void *ifcu_req;
     } ifc_ifcu;
+#if SANITIZER_MAC
+  } __attribute__((packed));
+#else
   };
+#endif
 
   extern unsigned struct_arpreq_sz;
   extern unsigned struct_ifreq_sz;

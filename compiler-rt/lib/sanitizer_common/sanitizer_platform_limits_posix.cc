@@ -157,7 +157,6 @@ namespace __sanitizer {
 
   // ioctl arguments
   unsigned struct_arpreq_sz = sizeof(struct arpreq);
-  unsigned struct_ifconf_sz = sizeof(struct ifconf);
   unsigned struct_ifreq_sz = sizeof(struct ifreq);
   unsigned struct_termios_sz = sizeof(struct termios);
   unsigned struct_winsize_sz = sizeof(struct winsize);
@@ -673,4 +672,9 @@ CHECK_SIZE_AND_OFFSET(cmsghdr, cmsg_len);
 CHECK_SIZE_AND_OFFSET(cmsghdr, cmsg_level);
 CHECK_SIZE_AND_OFFSET(cmsghdr, cmsg_type);
 
+CHECK_TYPE_SIZE(ifconf);
+CHECK_SIZE_AND_OFFSET(ifconf, ifc_len);
+CHECK_SIZE_AND_OFFSET(ifconf, ifc_ifcu);
+
 #endif  // SANITIZER_LINUX || SANITIZER_MAC
+
