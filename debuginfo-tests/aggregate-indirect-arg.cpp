@@ -1,13 +1,11 @@
 // RUN: %clangxx -O0 -g %s -c -o %t.o
 // RUN: %clangxx %t.o -o %t.out
 // RUN: %test_debuginfo %s %t.out 
-// XFail while getting location information right
-// XFAIL: *
 // Radar 8945514
 // DEBUGGER: break 22
 // DEBUGGER: r
 // DEBUGGER: p v
-// CHECK: $1 = (SVal &)
+// CHECK: $1 = {
 // CHECK:  Data = 0x0, 
 // CHECK:  Kind = 2142
 

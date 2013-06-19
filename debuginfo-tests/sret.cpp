@@ -1,13 +1,11 @@
 // RUN: %clangxx -O0 -g %s -c -o %t.o
 // RUN: %clangxx %t.o -o %t.out
 // RUN: %test_debuginfo %s %t.out 
-// XFail while getting location information right
-// XFAIL: *
 // Radar 8775834
-// DEBUGGER: break 61
+// DEBUGGER: break 62
 // DEBUGGER: r
 // DEBUGGER: p a
-// CHECK: $1 = (A &)
+// CHECK: $1 = {
 // CHECK:  _vptr$A =
 // CHECK:  m_int = 12
 
