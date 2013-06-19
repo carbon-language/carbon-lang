@@ -160,16 +160,6 @@ bool Sema::isDependentScopeSpecifier(const CXXScopeSpec &SS) {
   return SS.getScopeRep()->isDependent();
 }
 
-// \brief Determine whether this C++ scope specifier refers to an
-// unknown specialization, i.e., a dependent type that is not the
-// current instantiation.
-bool Sema::isUnknownSpecialization(const CXXScopeSpec &SS) {
-  if (!isDependentScopeSpecifier(SS))
-    return false;
-
-  return getCurrentInstantiationOf(SS.getScopeRep()) == 0;
-}
-
 /// \brief If the given nested name specifier refers to the current
 /// instantiation, return the declaration that corresponds to that
 /// current instantiation (C++0x [temp.dep.type]p1).
