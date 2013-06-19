@@ -552,7 +552,7 @@ doQuickAppend(std::string* ErrMsg) {
   // Append them quickly.
   for (std::set<std::string>::iterator PI = Paths.begin(), PE = Paths.end();
        PI != PE; ++PI) {
-    if (TheArchive->addFileBefore(sys::Path(*PI),TheArchive->end(),ErrMsg))
+    if (TheArchive->addFileBefore(*PI, TheArchive->end(), ErrMsg))
       return true;
   }
 
@@ -620,11 +620,11 @@ doReplaceOrInsert(std::string* ErrMsg) {
         if (OnlyUpdate) {
           // Replace the item only if it is newer.
           if (si->modTime > I->getModTime())
-            if (I->replaceWith(sys::Path(*found), ErrMsg))
+            if (I->replaceWith(*found, ErrMsg))
               return true;
         } else {
           // Replace the item regardless of time stamp
-          if (I->replaceWith(sys::Path(*found), ErrMsg))
+          if (I->replaceWith(*found, ErrMsg))
             return true;
         }
       } else {
@@ -649,7 +649,7 @@ doReplaceOrInsert(std::string* ErrMsg) {
   if (!remaining.empty()) {
     for (std::set<std::string>::iterator PI = remaining.begin(),
          PE = remaining.end(); PI != PE; ++PI) {
-      if (TheArchive->addFileBefore(sys::Path(*PI),insert_spot, ErrMsg))
+      if (TheArchive->addFileBefore(*PI, insert_spot, ErrMsg))
         return true;
     }
   }
@@ -697,11 +697,11 @@ int main(int argc, char **argv) {
     // Produce a warning if we should and we're creating the archive
     if (!Create)
       errs() << argv[0] << ": creating " << ArchivePath.str() << "\n";
-    TheArchive = Archive::CreateEmpty(ArchivePath, Context);
+    TheArchive = Archive::CreateEmpty(ArchivePath.str(), Context);
     TheArchive->writeToDisk();
   } else {
     std::string Error;
-    TheArchive = Archive::OpenAndLoad(ArchivePath, Context, &Error);
+    TheArchive = Archive::OpenAndLoad(ArchivePath.str(), Context, &Error);
     if (TheArchive == 0) {
       errs() << argv[0] << ": error loading '" << ArchivePath.str() << "': "
              << Error << "!\n";

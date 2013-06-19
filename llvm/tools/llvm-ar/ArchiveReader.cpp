@@ -265,9 +265,9 @@ Archive::loadArchive(std::string* error) {
 
 // Open and completely load the archive file.
 Archive*
-Archive::OpenAndLoad(const sys::Path& File, LLVMContext& C,
+Archive::OpenAndLoad(StringRef File, LLVMContext& C,
                      std::string* ErrorMessage) {
-  OwningPtr<Archive> result ( new Archive(File, C));
+  OwningPtr<Archive> result(new Archive(File, C));
   if (result->mapToMemory(ErrorMessage))
     return NULL;
   if (!result->loadArchive(ErrorMessage))
@@ -282,8 +282,7 @@ Archive::getAllModules(std::vector<Module*>& Modules,
 
   for (iterator I=begin(), E=end(); I != E; ++I) {
     if (I->isBitcode()) {
-      std::string FullMemberName = archPath.str() +
-        "(" + I->getPath().str() + ")";
+      std::string FullMemberName = archPath + "(" + I->getPath().str() + ")";
       MemoryBuffer *Buffer =
         MemoryBuffer::getMemBufferCopy(StringRef(I->getData(), I->getSize()),
                                        FullMemberName.c_str());
@@ -395,8 +394,7 @@ Archive::findModuleDefiningSymbol(const std::string& symbol,
     return 0;
 
   // Now, load the bitcode module to get the Module.
-  std::string FullMemberName = archPath.str() + "(" +
-    mbr->getPath().str() + ")";
+  std::string FullMemberName = archPath + "(" + mbr->getPath().str() + ")";
   MemoryBuffer *Buffer =
     MemoryBuffer::getMemBufferCopy(StringRef(mbr->getData(), mbr->getSize()),
                                    FullMemberName.c_str());
@@ -445,8 +443,8 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
       if (mbr->isBitcode()) {
         // Get the symbols
         std::vector<std::string> symbols;
-        std::string FullMemberName = archPath.str() + "(" +
-          mbr->getPath().str() + ")";
+        std::string FullMemberName =
+            archPath + "(" + mbr->getPath().str() + ")";
         Module* M = 
           GetBitcodeSymbols(At, mbr->getSize(), FullMemberName, Context,
                             symbols, error);
@@ -526,9 +524,8 @@ bool Archive::isBitcodeArchive() {
   for (iterator I = begin(), E = end(); I != E; ++I) {
     if (!I->isBitcode())
       continue;
-    
-    std::string FullMemberName = 
-      archPath.str() + "(" + I->getPath().str() + ")";
+
+    std::string FullMemberName = archPath + "(" + I->getPath().str() + ")";
 
     MemoryBuffer *Buffer =
       MemoryBuffer::getMemBufferCopy(StringRef(I->getData(), I->getSize()),

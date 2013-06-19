@@ -67,7 +67,7 @@ ArchiveMember::ArchiveMember(Archive* PAR)
 // This method allows an ArchiveMember to be replaced with the data for a
 // different file, presumably as an update to the member. It also makes sure
 // the flags are reset correctly.
-bool ArchiveMember::replaceWith(const sys::Path& newFile, std::string* ErrMsg) {
+bool ArchiveMember::replaceWith(StringRef newFile, std::string* ErrMsg) {
   bool Exists;
   if (sys::fs::exists(newFile.str(), Exists) || !Exists) {
     if (ErrMsg)
@@ -136,10 +136,9 @@ bool ArchiveMember::replaceWith(const sys::Path& newFile, std::string* ErrMsg) {
 // Archive constructor - this is the only constructor that gets used for the
 // Archive class. Everything else (default,copy) is deprecated. This just
 // initializes and maps the file into memory, if requested.
-Archive::Archive(const sys::Path& filename, LLVMContext& C)
-  : archPath(filename), members(), mapfile(0), base(0), symTab(), strtab(),
-    symTabSize(0), firstFileOffset(0), modules(), foreignST(0), Context(C) {
-}
+Archive::Archive(StringRef filename, LLVMContext &C)
+    : archPath(filename), members(), mapfile(0), base(0), symTab(), strtab(),
+      symTabSize(0), firstFileOffset(0), modules(), foreignST(0), Context(C) {}
 
 bool
 Archive::mapToMemory(std::string* ErrMsg) {

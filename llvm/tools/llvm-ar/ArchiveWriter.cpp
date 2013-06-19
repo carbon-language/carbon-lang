@@ -67,7 +67,7 @@ static inline unsigned numVbrBytes(unsigned num) {
 }
 
 // Create an empty archive.
-Archive* Archive::CreateEmpty(const sys::Path& FilePath, LLVMContext& C) {
+Archive* Archive::CreateEmpty(StringRef FilePath, LLVMContext& C) {
   Archive* result = new Archive(FilePath, C);
   return result;
 }
@@ -153,9 +153,8 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
 
 // Insert a file into the archive before some other member. This also takes care
 // of extracting the necessary flags and information from the file.
-bool
-Archive::addFileBefore(const sys::Path& filePath, iterator where,
-                        std::string* ErrMsg) {
+bool Archive::addFileBefore(StringRef filePath, iterator where,
+                            std::string *ErrMsg) {
   bool Exists;
   if (sys::fs::exists(filePath.str(), Exists) || !Exists) {
     if (ErrMsg)
@@ -231,8 +230,8 @@ Archive::writeMember(
   // symbol table if it's a bitcode file.
   if (CreateSymbolTable && member.isBitcode()) {
     std::vector<std::string> symbols;
-    std::string FullMemberName = archPath.str() + "(" + member.getPath().str()
-      + ")";
+    std::string FullMemberName =
+        (archPath + "(" + member.getPath() + ")").str();
     Module* M =
       GetBitcodeSymbols(data, fSize, FullMemberName, Context, symbols, ErrMsg);
 
@@ -305,7 +304,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames,
   }
 
   // Create a temporary file to store the archive in
-  sys::Path TmpArchive = archPath;
+  sys::Path TmpArchive(archPath);
   if (TmpArchive.createTemporaryFileOnDisk(ErrMsg))
     return true;
 
@@ -321,7 +320,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames,
   if (!ArchiveFile.is_open() || ArchiveFile.bad()) {
     TmpArchive.eraseFromDisk();
     if (ErrMsg)
-      *ErrMsg = "Error opening archive file: " + archPath.str();
+      *ErrMsg = "Error opening archive file: " + archPath;
     return true;
   }
 
@@ -355,7 +354,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames,
     // ensure compatibility with other archivers we need to put the symbol
     // table first in the file. Unfortunately, this means mapping the file
     // we just wrote back in and copying it to the destination file.
-    sys::Path FinalFilePath = archPath;
+    sys::Path FinalFilePath(archPath);
 
     // Map in the archive we just wrote.
     {
@@ -416,14 +415,14 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames,
   // this because we cannot replace an open file on Windows.
   cleanUpMemory();
 
-  if (TmpArchive.renamePathOnDisk(archPath, ErrMsg))
+  if (TmpArchive.renamePathOnDisk(sys::Path(archPath), ErrMsg))
     return true;
 
   // Set correct read and write permissions after temporary file is moved
   // to final destination path.
-  if (archPath.makeReadableOnDisk(ErrMsg))
+  if (sys::Path(archPath).makeReadableOnDisk(ErrMsg))
     return true;
-  if (archPath.makeWriteableOnDisk(ErrMsg))
+  if (sys::Path(archPath).makeWriteableOnDisk(ErrMsg))
     return true;
 
   return false;
