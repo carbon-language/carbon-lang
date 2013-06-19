@@ -35,6 +35,11 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
       getCompileUnitAtIndex(i)->dump(OS);
   }
 
+  if (DumpType == DIDT_All || DumpType == DIDT_Loc) {
+    OS << ".debug_loc contents:\n";
+    getDebugLoc()->dump(OS);
+  }
+
   if (DumpType == DIDT_All || DumpType == DIDT_Frames) {
     OS << "\n.debug_frame contents:\n";
     getDebugFrame()->dump(OS);
@@ -169,6 +174,18 @@ const DWARFDebugAbbrev *DWARFContext::getDebugAbbrevDWO() {
   AbbrevDWO.reset(new DWARFDebugAbbrev());
   AbbrevDWO->parse(abbrData);
   return AbbrevDWO.get();
+}
+
+const DWARFDebugLoc *DWARFContext::getDebugLoc() {
+  if (Loc)
+    return Loc.get();
+
+  DataExtractor LocData(getLocSection(), isLittleEndian(), 0);
+  Loc.reset(new DWARFDebugLoc(locRelocMap()));
+  // assume all compile units have the same address byte size
+  if (getNumCompileUnits())
+    Loc->parse(LocData, getCompileUnitAtIndex(0)->getAddressByteSize());
+  return Loc.get();
 }
 
 const DWARFDebugAranges *DWARFContext::getDebugAranges() {
@@ -542,6 +559,7 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
     StringRef *Section = StringSwitch<StringRef*>(name)
         .Case("debug_info", &InfoSection)
         .Case("debug_abbrev", &AbbrevSection)
+        .Case("debug_loc", &LocSection)
         .Case("debug_line", &LineSection)
         .Case("debug_aranges", &ARangeSection)
         .Case("debug_frame", &DebugFrameSection)
@@ -576,6 +594,7 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
     // Record relocations for the debug_info and debug_line sections.
     RelocAddrMap *Map = StringSwitch<RelocAddrMap*>(RelSecName)
         .Case("debug_info", &InfoRelocMap)
+        .Case("debug_loc", &LocRelocMap)
         .Case("debug_info.dwo", &InfoDWORelocMap)
         .Case("debug_line", &LineRelocMap)
         .Default(0);

@@ -9,6 +9,7 @@ add_llvm_library(LLVMDebugInfo
   DWARFDebugFrame.cpp
   DWARFDebugInfoEntry.cpp
   DWARFDebugLine.cpp
+  DWARFDebugLoc.cpp
   DWARFDebugRangeList.cpp
   DWARFFormValue.cpp
   )

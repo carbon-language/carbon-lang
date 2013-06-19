@@ -126,9 +126,13 @@ DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
       Value.uval = data.getU16(offset_ptr);
       break;
     case DW_FORM_data4:
-    case DW_FORM_ref4:
+    case DW_FORM_ref4: {
+      RelocAddrMap::const_iterator AI = cu->getRelocMap()->find(*offset_ptr);
       Value.uval = data.getU32(offset_ptr);
+      if (AI != cu->getRelocMap()->end())
+        Value.uval += AI->second.second;
       break;
+    }
     case DW_FORM_data8:
     case DW_FORM_ref8:
       Value.uval = data.getU64(offset_ptr);

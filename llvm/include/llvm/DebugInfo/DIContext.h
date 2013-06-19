@@ -105,6 +105,7 @@ enum DIDumpType {
   DIDT_Info,
   DIDT_InfoDwo,
   DIDT_Line,
+  DIDT_Loc,
   DIDT_Ranges,
   DIDT_Pubnames,
   DIDT_Str,

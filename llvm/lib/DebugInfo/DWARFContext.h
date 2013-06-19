@@ -14,6 +14,7 @@
 #include "DWARFDebugAranges.h"
 #include "DWARFDebugFrame.h"
 #include "DWARFDebugLine.h"
+#include "DWARFDebugLoc.h"
 #include "DWARFDebugRangeList.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
@@ -28,6 +29,7 @@ namespace llvm {
 class DWARFContext : public DIContext {
   SmallVector<DWARFCompileUnit, 1> CUs;
   OwningPtr<DWARFDebugAbbrev> Abbrev;
+  OwningPtr<DWARFDebugLoc> Loc;
   OwningPtr<DWARFDebugAranges> Aranges;
   OwningPtr<DWARFDebugLine> Line;
   OwningPtr<DWARFDebugFrame> DebugFrame;
@@ -80,6 +82,9 @@ public:
   /// Get a pointer to the parsed DebugAbbrev object.
   const DWARFDebugAbbrev *getDebugAbbrev();
 
+  /// Get a pointer to the parsed DebugLoc object.
+  const DWARFDebugLoc *getDebugLoc();
+
   /// Get a pointer to the parsed dwo abbreviations object.
   const DWARFDebugAbbrev *getDebugAbbrevDWO();
 
@@ -104,8 +109,10 @@ public:
   virtual uint8_t getAddressSize() const = 0;
   virtual const RelocAddrMap &infoRelocMap() const = 0;
   virtual const RelocAddrMap &lineRelocMap() const = 0;
+  virtual const RelocAddrMap &locRelocMap() const = 0;
   virtual StringRef getInfoSection() = 0;
   virtual StringRef getAbbrevSection() = 0;
+  virtual StringRef getLocSection() = 0;
   virtual StringRef getARangeSection() = 0;
   virtual StringRef getDebugFrameSection() = 0;
   virtual StringRef getLineSection() = 0;
@@ -142,9 +149,11 @@ class DWARFContextInMemory : public DWARFContext {
   bool IsLittleEndian;
   uint8_t AddressSize;
   RelocAddrMap InfoRelocMap;
+  RelocAddrMap LocRelocMap;
   RelocAddrMap LineRelocMap;
   StringRef InfoSection;
   StringRef AbbrevSection;
+  StringRef LocSection;
   StringRef ARangeSection;
   StringRef DebugFrameSection;
   StringRef LineSection;
@@ -169,9 +178,11 @@ public:
   virtual bool isLittleEndian() const { return IsLittleEndian; }
   virtual uint8_t getAddressSize() const { return AddressSize; }
   virtual const RelocAddrMap &infoRelocMap() const { return InfoRelocMap; }
+  virtual const RelocAddrMap &locRelocMap() const { return LocRelocMap; }
   virtual const RelocAddrMap &lineRelocMap() const { return LineRelocMap; }
   virtual StringRef getInfoSection() { return InfoSection; }
   virtual StringRef getAbbrevSection() { return AbbrevSection; }
+  virtual StringRef getLocSection() { return LocSection; }
   virtual StringRef getARangeSection() { return ARangeSection; }
   virtual StringRef getDebugFrameSection() { return DebugFrameSection; }
   virtual StringRef getLineSection() { return LineSection; }
