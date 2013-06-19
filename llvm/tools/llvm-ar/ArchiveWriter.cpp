@@ -166,8 +166,9 @@ Archive::addFileBefore(const sys::Path& filePath, iterator where,
   ArchiveMember* mbr = new ArchiveMember(this);
 
   mbr->data = 0;
-  mbr->path = filePath;
-  const sys::FileStatus *FSInfo = mbr->path.getFileStatus(false, ErrMsg);
+  mbr->path = filePath.str();
+  sys::PathWithStatus PWS(mbr->path);
+  const sys::FileStatus *FSInfo = PWS.getFileStatus(false, ErrMsg);
   if (!FSInfo) {
     delete mbr;
     return true;
@@ -182,7 +183,7 @@ Archive::addFileBefore(const sys::Path& filePath, iterator where,
     flags |= ArchiveMember::HasLongFilenameFlag;
 
   sys::fs::file_magic type;
-  if (sys::fs::identify_magic(mbr->path.str(), type))
+  if (sys::fs::identify_magic(mbr->path, type))
     type = sys::fs::file_magic::unknown;
   switch (type) {
     case sys::fs::file_magic::bitcode:
@@ -216,7 +217,7 @@ Archive::writeMember(
   MemoryBuffer *mFile = 0;
   if (!data) {
     OwningPtr<MemoryBuffer> File;
-    if (error_code ec = MemoryBuffer::getFile(member.getPath().c_str(), File)) {
+    if (error_code ec = MemoryBuffer::getFile(member.getPath(), File)) {
       if (ErrMsg)
         *ErrMsg = ec.message();
       return true;

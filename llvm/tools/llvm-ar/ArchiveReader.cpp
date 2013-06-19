@@ -174,7 +174,7 @@ Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
 
   // Fill in fields of the ArchiveMember
   member->parent = this;
-  member->path.set(pathname);
+  member->path = pathname;
   member->info.fileSize = MemberSize;
   member->info.modTime.fromEpochTime(atoi(Hdr->date));
   unsigned int mode;

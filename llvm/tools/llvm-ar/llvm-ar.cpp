@@ -121,7 +121,7 @@ std::vector<std::string> Members;
 
 // This variable holds the (possibly expanded) list of path objects that
 // correspond to files we will
-std::set<sys::Path> Paths;
+std::set<std::string> Paths;
 
 // The Archive object to which all the editing operations will be sent.
 Archive* TheArchive = 0;
@@ -300,9 +300,9 @@ bool buildPaths(bool checkExistence, std::string* ErrMsg) {
       if (si->isDir)
         fail(aPath.str() + " Is a directory");
 
-      Paths.insert(aPath);
+      Paths.insert(aPath.str());
     } else {
-      Paths.insert(aPath);
+      Paths.insert(aPath.str());
     }
   }
   return false;
@@ -430,7 +430,7 @@ doExtract(std::string* ErrMsg) {
       // Open up a file stream for writing
       std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
                                    std::ios::binary;
-      std::ofstream file(I->getPath().c_str(), io_mode);
+      std::ofstream file(I->getPath(), io_mode);
 
       // Get the data and its length
       const char* data = reinterpret_cast<const char*>(I->getData());
@@ -442,8 +442,10 @@ doExtract(std::string* ErrMsg) {
 
       // If we're supposed to retain the original modification times, etc. do so
       // now.
-      if (OriginalDates)
-        I->getPath().setStatusInfoOnDisk(I->getFileStatus());
+      if (OriginalDates) {
+        sys::PathWithStatus PWS(I->getPath());
+        PWS.setStatusInfoOnDisk(I->getFileStatus());
+      }
     }
   }
   return false;
@@ -514,14 +516,14 @@ doMove(std::string* ErrMsg) {
   }
 
   // Keep a list of the paths remaining to be moved
-  std::set<sys::Path> remaining(Paths);
+  std::set<std::string> remaining(Paths);
 
   // Scan the archive again, this time looking for the members to move to the
   // moveto_spot.
   for (Archive::iterator I = TheArchive->begin(), E= TheArchive->end();
        I != E && !remaining.empty(); ++I ) {
-    std::set<sys::Path>::iterator found =
-      std::find(remaining.begin(),remaining.end(),I->getPath());
+    std::set<std::string>::iterator found =
+      std::find(remaining.begin(),remaining.end(), I->getPath());
     if (found != remaining.end()) {
       if (I != moveto_spot)
         TheArchive->splice(moveto_spot,*TheArchive,I);
@@ -548,9 +550,9 @@ doQuickAppend(std::string* ErrMsg) {
     return false;
 
   // Append them quickly.
-  for (std::set<sys::Path>::iterator PI = Paths.begin(), PE = Paths.end();
+  for (std::set<std::string>::iterator PI = Paths.begin(), PE = Paths.end();
        PI != PE; ++PI) {
-    if (TheArchive->addFileBefore(*PI,TheArchive->end(),ErrMsg))
+    if (TheArchive->addFileBefore(sys::Path(*PI),TheArchive->end(),ErrMsg))
       return true;
   }
 
@@ -574,7 +576,7 @@ doReplaceOrInsert(std::string* ErrMsg) {
     return false;
 
   // Keep track of the paths that remain to be inserted.
-  std::set<sys::Path> remaining(Paths);
+  std::set<std::string> remaining(Paths);
 
   // Default the insertion spot to the end of the archive
   Archive::iterator insert_spot = TheArchive->end();
@@ -586,10 +588,10 @@ doReplaceOrInsert(std::string* ErrMsg) {
     // Determine if this archive member matches one of the paths we're trying
     // to replace.
 
-    std::set<sys::Path>::iterator found = remaining.end();
-    for (std::set<sys::Path>::iterator RI = remaining.begin(),
+    std::set<std::string>::iterator found = remaining.end();
+    for (std::set<std::string>::iterator RI = remaining.begin(),
          RE = remaining.end(); RI != RE; ++RI ) {
-      std::string compare(RI->str());
+      std::string compare(*RI);
       if (TruncateNames && compare.length() > 15) {
         const char* nm = compare.c_str();
         unsigned len = compare.length();
@@ -618,11 +620,11 @@ doReplaceOrInsert(std::string* ErrMsg) {
         if (OnlyUpdate) {
           // Replace the item only if it is newer.
           if (si->modTime > I->getModTime())
-            if (I->replaceWith(*found, ErrMsg))
+            if (I->replaceWith(sys::Path(*found), ErrMsg))
               return true;
         } else {
           // Replace the item regardless of time stamp
-          if (I->replaceWith(*found, ErrMsg))
+          if (I->replaceWith(sys::Path(*found), ErrMsg))
             return true;
         }
       } else {
@@ -645,9 +647,9 @@ doReplaceOrInsert(std::string* ErrMsg) {
   // If we didn't replace all the members, some will remain and need to be
   // inserted at the previously computed insert-spot.
   if (!remaining.empty()) {
-    for (std::set<sys::Path>::iterator PI = remaining.begin(),
+    for (std::set<std::string>::iterator PI = remaining.begin(),
          PE = remaining.end(); PI != PE; ++PI) {
-      if (TheArchive->addFileBefore(*PI,insert_spot, ErrMsg))
+      if (TheArchive->addFileBefore(sys::Path(*PI),insert_spot, ErrMsg))
         return true;
     }
   }

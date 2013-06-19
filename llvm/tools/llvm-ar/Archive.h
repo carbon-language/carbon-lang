@@ -66,7 +66,7 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
 
     /// @returns the path to the Archive's file
     /// @brief Get the path to the archive member
-    const sys::Path& getPath() const     { return path; }
+    StringRef getPath() const     { return path; }
 
     /// The "user" is the owner of the file per Unix security. This may not
     /// have any applicability on non-Unix systems but is a required component
@@ -159,7 +159,7 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
   /// @{
   private:
     Archive*            parent;   ///< Pointer to parent archive
-    sys::PathWithStatus path;     ///< Path of file containing the member
+    std::string         path;     ///< Path of file containing the member
     sys::FileStatus     info;     ///< Status info (size,mode,date)
     unsigned            flags;    ///< Flags about the archive member
     const char*         data;     ///< Data for the member
