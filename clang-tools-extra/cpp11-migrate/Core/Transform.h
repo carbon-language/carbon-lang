@@ -84,7 +84,6 @@ public:
   /// \param Name Name of the transform for human-readable purposes (e.g. -help
   /// text)
   /// \param Options Collection of options that affect all transforms.
-  /// \param InitialState File Contents to override content on disk.
   Transform(llvm::StringRef Name, const TransformOptions &Options);
 
   virtual ~Transform();
