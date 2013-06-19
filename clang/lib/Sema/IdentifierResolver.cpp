@@ -78,19 +78,6 @@ void IdentifierResolver::IdDeclInfo::RemoveDecl(NamedDecl *D) {
   llvm_unreachable("Didn't find this decl on its identifier's chain!");
 }
 
-bool
-IdentifierResolver::IdDeclInfo::ReplaceDecl(NamedDecl *Old, NamedDecl *New) {
-  for (DeclsTy::iterator I = Decls.end(); I != Decls.begin(); --I) {
-    if (Old == *(I-1)) {
-      *(I - 1) = New;
-      return true;
-    }
-  }
-
-  return false;
-}
-
-
 //===----------------------------------------------------------------------===//
 // IdentifierResolver Implementation
 //===----------------------------------------------------------------------===//
@@ -233,30 +220,6 @@ void IdentifierResolver::RemoveDecl(NamedDecl *D) {
   }
 
   return toIdDeclInfo(Ptr)->RemoveDecl(D);
-}
-
-bool IdentifierResolver::ReplaceDecl(NamedDecl *Old, NamedDecl *New) {
-  assert(Old->getDeclName() == New->getDeclName() &&
-         "Cannot replace a decl with another decl of a different name");
-
-  DeclarationName Name = Old->getDeclName();
-  if (IdentifierInfo *II = Name.getAsIdentifierInfo())
-    updatingIdentifier(*II);
-
-  void *Ptr = Name.getFETokenInfo<void>();
-
-  if (!Ptr)
-    return false;
-
-  if (isDeclPtr(Ptr)) {
-    if (Ptr == Old) {
-      Name.setFETokenInfo(New);
-      return true;
-    }
-    return false;
-  }
-
-  return toIdDeclInfo(Ptr)->ReplaceDecl(Old, New);
 }
 
 /// begin - Returns an iterator for decls with name 'Name'.
