@@ -61,14 +61,6 @@ Path::isDynamicLibrary() const {
   }
 }
 
-bool
-Path::isObjectFile() const {
-  fs::file_magic type;
-  if (fs::identify_magic(str(), type) || type == fs::file_magic::unknown)
-    return false;
-  return true;
-}
-
 void
 Path::appendSuffix(StringRef suffix) {
   if (!suffix.empty()) {

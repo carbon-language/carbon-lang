@@ -233,17 +233,6 @@ namespace sys {
       /// @brief Determine if the path references a dynamic library.
       bool isDynamicLibrary() const;
 
-      /// This function determines if the path name in the object references a
-      /// native object file by looking at it's magic number. The term object
-      /// file is defined as "an organized collection of separate, named
-      /// sequences of binary data." This covers the obvious file formats such
-      /// as COFF and ELF, but it also includes llvm ir bitcode, archives,
-      /// libraries, etc...
-      /// @returns true if the file starts with the magic number for an object
-      /// file.
-      /// @brief Determine if the path references an object file.
-      bool isObjectFile() const;
-
       /// This function determines if the path name references an existing file
       /// or directory in the file system.
       /// @returns true if the pathname references an existing file or
