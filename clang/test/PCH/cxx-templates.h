@@ -269,3 +269,10 @@ template<typename T> struct ContainsDoNotDeserialize2 {
 };
 template<typename T> int ContainsDoNotDeserialize<T>::doNotDeserialize = 0;
 template<typename T> void ContainsDoNotDeserialize2<T>::doNotDeserialize() {}
+
+
+template<typename T> void DependentSpecializedFunc(T x) { x.foo(); }
+template<typename T> class DependentSpecializedFuncClass {
+  void foo() {}
+  friend void DependentSpecializedFunc<>(DependentSpecializedFuncClass);
+};

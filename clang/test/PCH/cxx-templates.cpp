@@ -85,3 +85,7 @@ namespace rdar13135282 {
     __mt_alloc<> mt = __mt_alloc<>();
   }
 }
+
+void CallDependentSpecializedFunc(DependentSpecializedFuncClass<int> &x) {
+  DependentSpecializedFunc(x);
+}
