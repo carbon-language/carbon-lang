@@ -1204,6 +1204,7 @@ if not noHeaders:
 
 if not os.path.isdir(sdir_name):
     os.mkdir(sdir_name)
+where_to_save_session = os.getcwd()
 fname = os.path.join(sdir_name, "TestStarted")
 with open(fname, "w") as f:
     print >> f, "Test started at: %s\n" % timestamp_started
@@ -1450,6 +1451,8 @@ for ia in range(len(archs) if iterArchs else 1):
             def hardMarkAsSkipped(self,test):
                 getattr(test, test._testMethodName).__func__.__unittest_skip__ = True
                 getattr(test, test._testMethodName).__func__.__unittest_skip_why__ = "test case does not fall in any category of interest for this run"
+                test.__class__.__unittest_skip__ = True
+                test.__class__.__unittest_skip_why__ = "test case does not fall in any category of interest for this run"
 
             def startTest(self, test):
                 if self.shouldSkipBecauseOfCategories(test):
@@ -1564,6 +1567,7 @@ if useCategories and len(failuresPerCategory) > 0:
     for category in failuresPerCategory:
         sys.stderr.write("%s - %d\n" % (category,failuresPerCategory[category]))
 
+os.chdir(where_to_save_session)
 fname = os.path.join(sdir_name, "TestFinished")
 with open(fname, "w") as f:
     print >> f, "Test finished at: %s\n" % datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
