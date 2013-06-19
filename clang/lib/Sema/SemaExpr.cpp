@@ -2003,7 +2003,8 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
       MightBeImplicitMember = true;
     else
       MightBeImplicitMember = isa<FieldDecl>(R.getFoundDecl()) ||
-                              isa<IndirectFieldDecl>(R.getFoundDecl());
+                              isa<IndirectFieldDecl>(R.getFoundDecl()) ||
+                              isa<MSPropertyDecl>(R.getFoundDecl());
 
     if (MightBeImplicitMember)
       return BuildPossibleImplicitMemberExpr(SS, TemplateKWLoc,
