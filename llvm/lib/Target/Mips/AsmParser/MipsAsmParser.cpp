@@ -357,35 +357,22 @@ public:
   bool isCPURegsAsm() const {
     return Kind == k_Register && Reg.Kind == Kind_CPURegs;
   }
-  void addCPURegsAsmOperands(MCInst &Inst, unsigned N) const {
+  void addRegAsmOperands(MCInst &Inst, unsigned N) const {
     Inst.addOperand(MCOperand::CreateReg(Reg.RegNum));
   }
 
   bool isCPU64RegsAsm() const {
     return Kind == k_Register && Reg.Kind == Kind_CPU64Regs;
   }
-  void addCPU64RegsAsmOperands(MCInst &Inst, unsigned N) const {
-    Inst.addOperand(MCOperand::CreateReg(Reg.RegNum));
-  }
 
   bool isHWRegsAsm() const {
     assert((Kind == k_Register) && "Invalid access!");
     return Reg.Kind == Kind_HWRegs;
   }
-  void addHWRegsAsmOperands(MCInst &Inst, unsigned N) const {
-    Inst.addOperand(MCOperand::CreateReg(Reg.RegNum));
-  }
 
   bool isHW64RegsAsm() const {
     assert((Kind == k_Register) && "Invalid access!");
     return Reg.Kind == Kind_HW64Regs;
-  }
-  void addHW64RegsAsmOperands(MCInst &Inst, unsigned N) const {
-    Inst.addOperand(MCOperand::CreateReg(Reg.RegNum));
-  }
-
-  void addCCRAsmOperands(MCInst &Inst, unsigned N) const {
-    Inst.addOperand(MCOperand::CreateReg(Reg.RegNum));
   }
 
   bool isCCRAsm() const {

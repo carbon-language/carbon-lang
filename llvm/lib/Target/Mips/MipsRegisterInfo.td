@@ -388,17 +388,21 @@ def ACRegsDSP : RegisterClass<"Mips", [untyped], 64, (sequence "AC%u", 0, 3)> {
 def DSPCC : RegisterClass<"Mips", [v4i8, v2i16], 32, (add DSPCCond)>;
 
 // Register Operands.
-def CPURegsAsmOperand : AsmOperandClass {
+
+class MipsAsmRegOperand : AsmOperandClass {
+  let RenderMethod = "addRegAsmOperands";
+}
+def CPURegsAsmOperand : MipsAsmRegOperand {
   let Name = "CPURegsAsm";
   let ParserMethod = "parseCPURegs";
 }
 
-def CPU64RegsAsmOperand : AsmOperandClass {
+def CPU64RegsAsmOperand : MipsAsmRegOperand {
   let Name = "CPU64RegsAsm";
   let ParserMethod = "parseCPU64Regs";
 }
 
-def CCRAsmOperand : AsmOperandClass {
+def CCRAsmOperand : MipsAsmRegOperand {
   let Name = "CCRAsm";
   let ParserMethod = "parseCCRRegs";
 }
@@ -415,12 +419,12 @@ def CCROpnd : RegisterOperand<CCR, "printCPURegs"> {
   let ParserMatchClass = CCRAsmOperand;
 }
 
-def HWRegsAsmOperand : AsmOperandClass {
+def HWRegsAsmOperand : MipsAsmRegOperand {
   let Name = "HWRegsAsm";
   let ParserMethod = "parseHWRegs";
 }
 
-def HW64RegsAsmOperand : AsmOperandClass {
+def HW64RegsAsmOperand : MipsAsmRegOperand {
   let Name = "HW64RegsAsm";
   let ParserMethod = "parseHW64Regs";
 }
