@@ -21,11 +21,11 @@ void DWARFDebugLoc::dump(raw_ostream &OS) const {
     for (SmallVectorImpl<Entry>::const_iterator I2 = I->Entries.begin(), E2 = I->Entries.end(); I2 != E2; ++I2) {
       if (I2 != I->Entries.begin())
         OS.indent(Indent);
-      OS << "Begining address offset: " << format("0x%016" PRIx64, I2->Begin)
+      OS << "Beginning address offset: " << format("0x%016" PRIx64, I2->Begin)
          << '\n';
-      OS.indent(Indent) << "  Ending address offset: "
+      OS.indent(Indent) << "   Ending address offset: "
                         << format("0x%016" PRIx64, I2->End) << '\n';
-      OS.indent(Indent) << "   Location description: ";
+      OS.indent(Indent) << "    Location description: ";
       for (SmallVectorImpl<unsigned char>::const_iterator I3 = I2->Loc.begin(), E3 = I2->Loc.end(); I3 != E3; ++I3) {
         OS << format("%2.2x ", *I3);
       }
