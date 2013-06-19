@@ -488,7 +488,7 @@ Value *FAddCombine::performFactorization(Instruction *I) {
                       createFSub(AddSub0, AddSub1);
   if (ConstantFP *CFP = dyn_cast<ConstantFP>(NewAddSub)) {
     const APFloat &F = CFP->getValueAPF();
-    if (!F.isNormal() || F.isDenormal())
+    if (!F.isFiniteNonZero() || F.isDenormal())
       return 0;
   }
 

@@ -679,7 +679,7 @@ APFloat::operator=(const APFloat &rhs)
 
 bool
 APFloat::isDenormal() const {
-  return isNormal() && (exponent == semantics->minExponent) &&
+  return isFiniteNonZero() && (exponent == semantics->minExponent) &&
          (APInt::tcExtractBit(significandParts(), 
                               semantics->precision - 1) == 0);
 }
@@ -689,7 +689,7 @@ APFloat::isSmallest() const {
   // The smallest number by magnitude in our format will be the smallest
   // denormal, i.e. the floating point number with exponent being minimum
   // exponent and significand bitwise equal to 1 (i.e. with MSB equal to 0).
-  return isNormal() && exponent == semantics->minExponent &&
+  return isFiniteNonZero() && exponent == semantics->minExponent &&
     significandMSB() == 0;
 }
 
@@ -741,7 +741,7 @@ bool
 APFloat::isLargest() const {
   // The largest number by magnitude in our format will be the floating point
   // number with maximum exponent and with significand that is all ones.
-  return isNormal() && exponent == semantics->maxExponent
+  return isFiniteNonZero() && exponent == semantics->maxExponent
     && isSignificandAllOnes();
 }
 

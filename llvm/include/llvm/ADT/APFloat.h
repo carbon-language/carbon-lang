@@ -362,7 +362,7 @@ public:
   ///
   /// The current implementation of isNormal() differs from this by treating
   /// subnormal values as normal values.
-  bool isIEEENormal() const { return !isDenormal() && isNormal(); }
+  bool isIEEENormal() const { return !isDenormal() && isFiniteNonZero(); }
 
   /// Returns true if and only if the current value is zero, subnormal, or
   /// normal.
