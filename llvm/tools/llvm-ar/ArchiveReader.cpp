@@ -363,18 +363,6 @@ Archive::loadSymbolTable(std::string* ErrorMsg) {
   return true;
 }
 
-// Open the archive and load just the symbol tables
-Archive* Archive::OpenAndLoadSymbols(const sys::Path& File,
-                                     LLVMContext& C,
-                                     std::string* ErrorMessage) {
-  OwningPtr<Archive> result ( new Archive(File, C) );
-  if (result->mapToMemory(ErrorMessage))
-    return NULL;
-  if (!result->loadSymbolTable(ErrorMessage))
-    return NULL;
-  return result.take();
-}
-
 // Look up one symbol in the symbol table and return the module that defines
 // that symbol.
 Module*
