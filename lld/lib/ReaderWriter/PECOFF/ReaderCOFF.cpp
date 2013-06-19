@@ -184,14 +184,19 @@ private:
     }));
 
     llvm::ArrayRef<uint8_t> SecData;
+    StringRef sectionName;
     if (error_code ec = Obj->getSectionContents(section, SecData))
       return ec;
+    if (error_code ec = Obj->getSectionName(section, sectionName))
+      return ec;
+    uint64_t ordinal = 0;
 
     // Create an atom for the entire section.
     if (symbols.empty()) {
       llvm::ArrayRef<uint8_t> Data(SecData.data(), SecData.size());
       atoms.push_back(new (AtomStorage.Allocate<COFFDefinedAtom>())
-                      COFFDefinedAtom(*this, "", nullptr, section, Data));
+                      COFFDefinedAtom(*this, "", nullptr, section, Data,
+                                      sectionName, ordinal++));
       return error_code::success();
     }
 
@@ -201,7 +206,8 @@ private:
       uint64_t Size = symbols[0]->Value;
       llvm::ArrayRef<uint8_t> Data(SecData.data(), Size);
       atoms.push_back(new (AtomStorage.Allocate<COFFDefinedAtom>())
-                      COFFDefinedAtom(*this, "", nullptr, section, Data));
+                      COFFDefinedAtom(*this, "", nullptr, section, Data,
+                                      sectionName, ordinal++));
     }
 
     for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
@@ -215,22 +221,10 @@ private:
       if (error_code ec = Obj->getSymbolName(*si, name))
         return ec;
       atoms.push_back(new (AtomStorage.Allocate<COFFDefinedAtom>())
-                      COFFDefinedAtom(*this, name, *si, section, Data));
+                      COFFDefinedAtom(*this, name, *si, section, Data,
+                                      sectionName, ordinal++));
     }
     return error_code::success();
-  }
-
-  void addEdge(COFFDefinedAtom *a, COFFDefinedAtom *b,
-               lld::Reference::Kind kind) const {
-    auto ref = new (AtomStorage.Allocate<COFFReference>()) COFFReference(kind);
-    ref->setTarget(b);
-    a->addReference(ref);
-  }
-
-  void connectAtomsWithLayoutEdge(COFFDefinedAtom *a,
-                                  COFFDefinedAtom *b) const {
-    addEdge(a, b, lld::Reference::kindLayoutAfter);
-    addEdge(b, a, lld::Reference::kindLayoutBefore);
   }
 
   /// Connect atoms appeared in the same section with layout-{before,after}
@@ -335,9 +329,8 @@ private:
     COFFDefinedAtom *atom = findAtomAt(rel->VirtualAddress, section, atoms);
     uint32_t offsetInAtom = itemAddress - atom->originalOffset();
     assert(offsetInAtom < atom->size());
-    COFFReference *ref = new (AtomStorage.Allocate<COFFReference>())
-        COFFReference(targetAtom, offsetInAtom, rel->Type);
-    atom->addReference(ref);
+    atom->addReference(std::unique_ptr<COFFReference>(
+        new COFFReference(targetAtom, offsetInAtom, rel->Type)));
     return error_code::success();
   }
 

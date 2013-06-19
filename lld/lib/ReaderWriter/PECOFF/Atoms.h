@@ -15,9 +15,13 @@
 
 namespace lld {
 namespace coff {
+class COFFDefinedAtom;
 
+using llvm::object::COFFObjectFile;
 using llvm::object::coff_section;
 using llvm::object::coff_symbol;
+
+void connectAtomsWithLayoutEdge(COFFDefinedAtom *a, COFFDefinedAtom *b);
 
 /// A COFFReference represents relocation information for an atom. For
 /// example, if atom X has a reference to atom Y with offsetInAtom=8, that
@@ -93,23 +97,23 @@ private:
 class COFFDefinedAtom : public DefinedAtom {
 public:
   COFFDefinedAtom(const File &f, llvm::StringRef n, const coff_symbol *symb,
-                  const coff_section *sec, llvm::ArrayRef<uint8_t> d)
-      : _owningFile(f), _name(n), _symbol(symb), _section(sec), _data(d) {}
+                  const coff_section *sec, llvm::ArrayRef<uint8_t> d,
+                  StringRef sectionName, uint64_t ordinal)
+      : _owningFile(f), _name(n), _symbol(symb), _section(sec), _data(d),
+        _sectionName(sectionName), _ordinal(ordinal) {}
 
   virtual const class File &file() const { return _owningFile; }
 
   virtual llvm::StringRef name() const { return _name; }
 
-  virtual uint64_t ordinal() const {
-    return reinterpret_cast<intptr_t>(_symbol);
-  }
+  virtual uint64_t ordinal() const { return _ordinal; }
 
   virtual uint64_t size() const { return _data.size(); }
 
   uint64_t originalOffset() const { return _symbol->Value; }
 
-  void addReference(COFFReference *reference) {
-    _references.push_back(reference);
+  void addReference(std::unique_ptr<COFFReference> reference) {
+    _references.push_back(std::move(reference));
   }
 
   virtual Scope scope() const {
@@ -163,6 +167,8 @@ public:
 
   virtual bool isAlias() const { return false; }
 
+  virtual StringRef getSectionName() const { return _sectionName; }
+
   virtual llvm::ArrayRef<uint8_t> rawContent() const { return _data; }
 
   virtual reference_iterator begin() const {
@@ -177,7 +183,7 @@ public:
 private:
   virtual const Reference *derefIterator(const void *iter) const {
     size_t index = reinterpret_cast<size_t>(iter);
-    return _references[index];
+    return _references[index].get();
   }
 
   virtual void incrementIterator(const void *&iter) const {
@@ -189,8 +195,10 @@ private:
   llvm::StringRef _name;
   const coff_symbol *_symbol;
   const coff_section *_section;
-  std::vector<COFFReference *> _references;
+  std::vector<std::unique_ptr<COFFReference> > _references;
   llvm::ArrayRef<uint8_t> _data;
+  StringRef _sectionName;
+  uint64_t _ordinal;
 };
 
 } // namespace coff

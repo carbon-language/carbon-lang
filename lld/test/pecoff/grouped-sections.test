@@ -1,0 +1,15 @@
+# RUN: lld -flavor link -out %t1 -subsystem console -force \
+# RUN:   -- %p/Inputs/grouped-sections.obj && llvm-objdump -s %t1 | FileCheck %s
+#
+# The file "grouped-sections.obj" has three data sections in the following
+# order:
+#
+#   .data$2
+#   .data$1
+#   .data
+#
+# If all the sections will be merged correctly, the resulting ".data"
+# section will have the string "Hello, world".
+
+CHECK: Contents of section .rdata:
+CHECK-NEXT: Hello, world

@@ -7,14 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lld/ReaderWriter/PECOFFTargetInfo.h"
+#include "GroupedSectionsPass.h"
 
 #include "lld/Core/PassManager.h"
 #include "lld/Passes/LayoutPass.h"
+#include "lld/ReaderWriter/PECOFFTargetInfo.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
-
-#include "llvm/Support/Debug.h"
 
 namespace lld {
 
@@ -59,6 +58,7 @@ PECOFFTargetInfo::stringFromRelocKind(Reference::Kind kind) const {
 }
 
 void PECOFFTargetInfo::addPasses(PassManager &pm) const {
+  pm.add(std::unique_ptr<Pass>(new pecoff::GroupedSectionsPass()));
   pm.add(std::unique_ptr<Pass>(new LayoutPass()));
 }
 
