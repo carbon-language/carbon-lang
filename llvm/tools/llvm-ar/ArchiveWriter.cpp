@@ -172,7 +172,11 @@ bool Archive::addFileBefore(StringRef filePath, iterator where,
     delete mbr;
     return true;
   }
-  mbr->info = *FSInfo;
+  mbr->User = FSInfo->getUser();
+  mbr->Group = FSInfo->getGroup();
+  mbr->Mode = FSInfo->getMode();
+  mbr->ModTime = FSInfo->getTimestamp();
+  mbr->Size = FSInfo->getSize();
 
   unsigned flags = 0;
   bool hasSlash = filePath.str().find('/') != std::string::npos;

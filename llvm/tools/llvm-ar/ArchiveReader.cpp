@@ -175,13 +175,13 @@ Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
   // Fill in fields of the ArchiveMember
   member->parent = this;
   member->path = pathname;
-  member->info.fileSize = MemberSize;
-  member->info.modTime.fromEpochTime(atoi(Hdr->date));
+  member->Size = MemberSize;
+  member->ModTime.fromEpochTime(atoi(Hdr->date));
   unsigned int mode;
   sscanf(Hdr->mode, "%o", &mode);
-  member->info.mode = mode;
-  member->info.user = atoi(Hdr->uid);
-  member->info.group = atoi(Hdr->gid);
+  member->Mode = mode;
+  member->User = atoi(Hdr->uid);
+  member->Group = atoi(Hdr->gid);
   member->flags = flags;
   member->data = At;
 

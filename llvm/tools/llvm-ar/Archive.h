@@ -20,7 +20,7 @@
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
+#include "llvm/Support/TimeValue.h"
 #include <map>
 #include <set>
 
@@ -72,28 +72,28 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
     /// have any applicability on non-Unix systems but is a required component
     /// of the "ar" file format.
     /// @brief Get the user associated with this archive member.
-    unsigned getUser() const             { return info.getUser(); }
+    unsigned getUser() const             { return User; }
 
     /// The "group" is the owning group of the file per Unix security. This
     /// may not have any applicability on non-Unix systems but is a required
     /// component of the "ar" file format.
     /// @brief Get the group associated with this archive member.
-    unsigned getGroup() const            { return info.getGroup(); }
+    unsigned getGroup() const            { return Group; }
 
     /// The "mode" specifies the access permissions for the file per Unix
     /// security. This may not have any applicability on non-Unix systems but is
     /// a required component of the "ar" file format.
     /// @brief Get the permission mode associated with this archive member.
-    unsigned getMode() const             { return info.getMode(); }
+    unsigned getMode() const             { return Mode; }
 
     /// This method returns the time at which the archive member was last
     /// modified when it was not in the archive.
     /// @brief Get the time of last modification of the archive member.
-    sys::TimeValue getModTime() const    { return info.getTimestamp(); }
+    sys::TimeValue getModTime() const    { return ModTime; }
 
     /// @returns the size of the archive member in bytes.
     /// @brief Get the size of the archive member.
-    uint64_t getSize() const             { return info.getSize(); }
+    uint64_t getSize() const             { return Size; }
 
     /// This method returns the total size of the archive member as it
     /// appears on disk. This includes the file content, the header, the
@@ -149,11 +149,15 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
   /// @name Data
   /// @{
   private:
-    Archive*            parent;   ///< Pointer to parent archive
-    std::string         path;     ///< Path of file containing the member
-    sys::FileStatus     info;     ///< Status info (size,mode,date)
-    unsigned            flags;    ///< Flags about the archive member
-    const char*         data;     ///< Data for the member
+    Archive *parent;  ///< Pointer to parent archive
+    std::string path; ///< Path of file containing the member
+    uint32_t User;
+    uint32_t Group;
+    uint32_t Mode;
+    sys::TimeValue ModTime;
+    uint64_t Size;
+    unsigned flags;   ///< Flags about the archive member
+    const char *data; ///< Data for the member
 
   /// @}
   /// @name Constructors

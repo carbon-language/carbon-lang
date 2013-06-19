@@ -29,7 +29,7 @@ using namespace llvm;
 unsigned
 ArchiveMember::getMemberSize() const {
   // Basically its the file size plus the header size
-  unsigned result =  info.fileSize + sizeof(ArchiveMemberHeader);
+  unsigned result = Size + sizeof(ArchiveMemberHeader);
 
   // If it has a long filename, include the name length
   if (hasLongFilename())
@@ -47,11 +47,11 @@ ArchiveMember::getMemberSize() const {
 ArchiveMember::ArchiveMember()
   : parent(0), path("--invalid--"), flags(0), data(0)
 {
-  info.user = sys::Process::GetCurrentUserId();
-  info.group = sys::Process::GetCurrentGroupId();
-  info.mode = 0777;
-  info.fileSize = 0;
-  info.modTime = sys::TimeValue::now();
+  User = sys::Process::GetCurrentUserId();
+  Group = sys::Process::GetCurrentGroupId();
+  Mode = 0777;
+  Size = 0;
+  ModTime = sys::TimeValue::now();
 }
 
 // This is the constructor that the Archive class uses when it is building or
@@ -117,10 +117,13 @@ bool ArchiveMember::replaceWith(StringRef newFile, std::string* ErrMsg) {
     signature = magic.c_str();
     sys::PathWithStatus PWS(path);
     const sys::FileStatus *FSinfo = PWS.getFileStatus(false, ErrMsg);
-    if (FSinfo)
-      info = *FSinfo;
-    else
+    if (!FSinfo)
       return true;
+    User = FSinfo->getUser();
+    Group = FSinfo->getGroup();
+    Mode = FSinfo->getMode();
+    ModTime = FSinfo->getTimestamp();
+    Size = FSinfo->getSize();
   }
 
   // Determine what kind of file it is.
