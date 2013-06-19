@@ -58,10 +58,18 @@ error_code parseCLInput(StringRef Line, std::vector<std::string> &List,
                                             E = Tokens.end();
        I != E; ++I) {
     // Convert each path to its absolute path.
-    SmallString<64> AbsolutePath = I->rtrim();
-    if (error_code Err = sys::fs::make_absolute(AbsolutePath))
+    SmallString<64> Path = I->rtrim();
+    if (error_code Err = sys::fs::make_absolute(Path))
       return Err;
-    List.push_back(std::string(AbsolutePath.str()));
+
+    // sys::fs::make_absolute will turn "." into "<pwd>/.". Need to strip "/."
+    // off or it interferes with prefix checking.
+    if (Path.endswith("/."))
+      List.push_back(Path.slice(0, Path.size() - 2).str());
+    else
+      List.push_back(Path.str());
+
+    llvm::errs() << "Parse: " <<List.back() << "\n";
   }
   return error_code::success();
 }
