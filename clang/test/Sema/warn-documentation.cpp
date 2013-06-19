@@ -950,3 +950,47 @@ class C1;
   @struct S3;
 */
 class S3;
+
+// rdar://14124702
+//----------------------------------------------------------------------
+/// @class Predicate Predicate.h "lldb/Host/Predicate.h"
+/// @brief A C++ wrapper class for providing threaded access to a value
+/// of type T.
+///
+/// A templatized class.
+/// specified values.
+//----------------------------------------------------------------------
+template <class T, class T1>
+class Predicate
+{
+};
+
+//----------------------------------------------------------------------
+/// @class Predicate<int, char> Predicate.h "lldb/Host/Predicate.h"
+/// @brief A C++ wrapper class for providing threaded access to a value
+/// of type T.
+///
+/// A template specilization class.
+//----------------------------------------------------------------------
+template<> class Predicate<int, char>
+{
+};
+
+//----------------------------------------------------------------------
+/// @class Predicate<T, int> Predicate.h "lldb/Host/Predicate.h"
+/// @brief A C++ wrapper class for providing threaded access to a value
+/// of type T.
+///
+/// A partial specialization template class.
+//----------------------------------------------------------------------
+template<class T> class Predicate<T, int>
+{
+};
+
+/*!     @function test_function
+*/
+template <class T> T test_function (T arg);
+
+/*!     @function test_function<int>
+*/
+template <> int test_function<int> (int arg);

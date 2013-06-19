@@ -99,10 +99,10 @@ void Sema::checkFunctionDeclVerbatimLine(const BlockCommandComment *Comment) {
   unsigned DiagSelect;
   switch (Comment->getCommandID()) {
     case CommandTraits::KCI_function:
-      DiagSelect = !isAnyFunctionDecl() ? 1 : 0;
+      DiagSelect = (!isAnyFunctionDecl() && !isFunctionTemplateDecl())? 1 : 0;
       break;
     case CommandTraits::KCI_functiongroup:
-      DiagSelect = !isAnyFunctionDecl() ? 2 : 0;
+      DiagSelect = (!isAnyFunctionDecl() && !isFunctionTemplateDecl())? 2 : 0;
       break;
     case CommandTraits::KCI_method:
       DiagSelect = !isObjCMethodDecl() ? 3 : 0;
@@ -131,7 +131,7 @@ void Sema::checkContainerDeclVerbatimLine(const BlockCommandComment *Comment) {
   unsigned DiagSelect;
   switch (Comment->getCommandID()) {
     case CommandTraits::KCI_class:
-      DiagSelect = !isClassOrStructDecl() ? 1 : 0;
+      DiagSelect = (!isClassOrStructDecl() && !isClassTemplateDecl()) ? 1 : 0;
       // Allow @class command on @interface declarations.
       // FIXME. Currently, \class and @class are indistinguishable. So,
       // \class is also allowed on an @interface declaration
@@ -869,6 +869,24 @@ bool Sema::isClassOrStructDecl() {
   return ThisDeclInfo->CurrentDecl &&
          isa<RecordDecl>(ThisDeclInfo->CurrentDecl) &&
          !isUnionDecl();
+}
+  
+bool Sema::isClassTemplateDecl() {
+  if (!ThisDeclInfo)
+    return false;
+  if (!ThisDeclInfo->IsFilled)
+    inspectThisDecl();
+  return ThisDeclInfo->CurrentDecl &&
+          (isa<ClassTemplateDecl>(ThisDeclInfo->CurrentDecl));
+}
+
+bool Sema::isFunctionTemplateDecl() {
+  if (!ThisDeclInfo)
+    return false;
+  if (!ThisDeclInfo->IsFilled)
+    inspectThisDecl();
+  return ThisDeclInfo->CurrentDecl &&
+  (isa<FunctionTemplateDecl>(ThisDeclInfo->CurrentDecl));
 }
 
 bool Sema::isObjCInterfaceDecl() {
