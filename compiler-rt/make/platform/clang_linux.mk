@@ -12,10 +12,8 @@ Configs :=
 # compiler and only define configurations we know that compiler can generate.
 CompilerTargetTriple := $(shell \
 	$(CC) -v 2>&1 | grep 'Target:' | cut -d' ' -f2)
-ifneq ($(DEBUGMAKE),)
 ifeq ($(CompilerTargetTriple),)
 $(error "unable to infer compiler target triple for $(CC)")
-endif
 endif
 
 # Only define configs if we detected a linux target.
