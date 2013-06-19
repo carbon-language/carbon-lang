@@ -272,8 +272,11 @@ static void addParameterValuesToBindings(const StackFrameContext *CalleeCtx,
                                          CallEvent::param_iterator E) {
   MemRegionManager &MRMgr = SVB.getRegionManager();
 
+  // If the function has fewer parameters than the call has arguments, we simply
+  // do not bind any values to them.
+  unsigned NumArgs = Call.getNumArgs();
   unsigned Idx = 0;
-  for (; I != E; ++I, ++Idx) {
+  for (; I != E && Idx < NumArgs; ++I, ++Idx) {
     const ParmVarDecl *ParamDecl = *I;
     assert(ParamDecl && "Formal parameter has no decl?");
 

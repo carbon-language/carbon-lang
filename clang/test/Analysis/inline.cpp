@@ -420,3 +420,10 @@ namespace rdar12409977  {
     clang_analyzer_eval(obj.getThis()->x == 42); // expected-warning{{TRUE}}
   }
 }
+
+namespace bug16307 {
+  void one_argument(int a) { }
+  void call_with_less() {
+    reinterpret_cast<void (*)()>(one_argument)(); // expected-warning{{Function taking 1 argument}}
+  }
+}

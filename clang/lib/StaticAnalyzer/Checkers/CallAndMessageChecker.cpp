@@ -40,6 +40,7 @@ class CallAndMessageChecker
   mutable OwningPtr<BugType> BT_objc_subscript_undef;
   mutable OwningPtr<BugType> BT_msg_arg;
   mutable OwningPtr<BugType> BT_msg_ret;
+  mutable OwningPtr<BugType> BT_call_few_args;
 public:
 
   void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
@@ -280,11 +281,33 @@ void CallAndMessageChecker::checkPreCall(const CallEvent &Call,
     State = StNonNull;
   }
 
+  const Decl *D = Call.getDecl();
+  if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D)) {
+    // If we have a declaration, we can make sure we pass enough parameters to
+    // the function.
+    unsigned Params = FD->getNumParams();
+    if (Call.getNumArgs() < Params) {
+      ExplodedNode *N = C.generateSink();
+      if (!N)
+        return;
+
+      LazyInit_BT("Function call with too few arguments", BT_call_few_args);
+
+      SmallString<512> Str;
+      llvm::raw_svector_ostream os(Str);
+      os << "Function taking " << Params << " argument"
+         << (Params == 1 ? "" : "s") << " is called with less ("
+         << Call.getNumArgs() << ")";
+
+      BugReport *R = new BugReport(*BT_call_few_args, os.str(), N);
+      C.emitReport(R);
+    }
+  }
+
   // Don't check for uninitialized field values in arguments if the
   // caller has a body that is available and we have the chance to inline it.
   // This is a hack, but is a reasonable compromise betweens sometimes warning
   // and sometimes not depending on if we decide to inline a function.
-  const Decl *D = Call.getDecl();
   const bool checkUninitFields =
     !(C.getAnalysisManager().shouldInlineCall() && (D && D->getBody()));
 
