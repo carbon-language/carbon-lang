@@ -126,6 +126,7 @@ void MCObjectDisassembler::buildCFG(MCModule *Module) {
     MCTextAtom *TA = dyn_cast<MCTextAtom>(*AI);
     if (!TA) continue;
     Calls.insert(TA->getBeginAddr());
+    BBInfos[TA->getBeginAddr()].Atom = TA;
     for (MCTextAtom::const_iterator II = TA->begin(), IE = TA->end();
          II != IE; ++II) {
       if (MIA.isTerminator(II->Inst))
@@ -145,7 +146,6 @@ void MCObjectDisassembler::buildCFG(MCModule *Module) {
     MCAtom *A = Module->findAtomContaining(*SI);
     if (!A) continue;
     MCTextAtom *TA = cast<MCTextAtom>(A);
-    BBInfos[TA->getBeginAddr()].Atom = TA;
     if (TA->getBeginAddr() == *SI)
       continue;
     MCTextAtom *NewAtom = TA->split(*SI);

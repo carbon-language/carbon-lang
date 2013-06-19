@@ -21,7 +21,7 @@ static bool AtomComp(const MCAtom *L, uint64_t Addr) {
 void MCModule::map(MCAtom *NewAtom) {
   uint64_t Begin = NewAtom->Begin;
 
-  assert(Begin < NewAtom->End && "Creating MCAtom with endpoints reversed?");
+  assert(Begin <= NewAtom->End && "Creating MCAtom with endpoints reversed?");
 
   // Check for atoms already covering this range.
   AtomListTy::iterator I = std::lower_bound(atom_begin(), atom_end(),
