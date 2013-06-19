@@ -196,7 +196,6 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   Header.e_ident[EI_VERSION] = EV_CURRENT;
   // TODO: Implement ELF_ELFOSABI enum.
   Header.e_ident[EI_OSABI] = ELFOSABI_NONE;
-  // TODO: Implement ELF_ABIVERSION enum.
   Header.e_ident[EI_ABIVERSION] = 0;
   Header.e_type = Hdr.Type;
   Header.e_machine = Hdr.Machine;
