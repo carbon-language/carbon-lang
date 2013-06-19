@@ -139,7 +139,6 @@ static void createStringTableSectionHeader(Elf_Shdr &SHeader,
 template <class ELFT>
 static void handleSymtabSectionHeader(
     const ELFYAML::Section &Sec,
-    const typename object::ELFObjectFile<ELFT>::Elf_Ehdr &Header,
     typename object::ELFObjectFile<ELFT>::Elf_Shdr &SHeader,
     StringTableBuilder &StrTab, ContiguousBlobAccumulator &CBA,
     unsigned DotStrtabSecNo) {
@@ -274,7 +273,7 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
     SHeader.sh_entsize = 0;
     // XXX: Really ugly right now. Need to put common state into a class.
     if (Sec.Type == ELFYAML::ELF_SHT(SHT_SYMTAB))
-      handleSymtabSectionHeader<ELFT>(Sec, Header, SHeader, DotStrTab, CBA,
+      handleSymtabSectionHeader<ELFT>(Sec, SHeader, DotStrTab, CBA,
                                       DotStrtabSecNo);
     SHeaders.push_back(SHeader);
   }
