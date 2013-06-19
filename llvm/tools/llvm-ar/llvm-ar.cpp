@@ -96,7 +96,6 @@ bool DontSkipBitcode = false;    ///< 'k' modifier
 bool UseCount = false;           ///< 'N' modifier
 bool OriginalDates = false;      ///< 'o' modifier
 bool FullPath = false;           ///< 'P' modifier
-bool RecurseDirectories = false; ///< 'R' modifier
 bool SymTable = true;            ///< 's' & 'S' modifiers
 bool OnlyUpdate = false;         ///< 'u' modifier
 bool Verbose = false;            ///< 'v' modifier
@@ -218,7 +217,6 @@ ArchiveOperation parseCommandLine() {
     case 'l': /* accepted but unused */ break;
     case 'o': OriginalDates = true; break;
     case 'P': FullPath = true; break;
-    case 'R': RecurseDirectories = true; break;
     case 's': SymTable = true; break;
     case 'S': SymTable = false; break;
     case 'u': OnlyUpdate = true; break;
@@ -268,8 +266,6 @@ ArchiveOperation parseCommandLine() {
       show_help("The 'a', 'b' and 'i' modifiers can only be specified with "
             "the 'm' or 'r' operations");
   }
-  if (RecurseDirectories && Operation != ReplaceOrInsert)
-    show_help("The 'R' modifiers is only applicabe to the 'r' operation");
   if (OriginalDates && Operation != Extract)
     show_help("The 'o' modifier is only applicable to the 'x' operation");
   if (TruncateNames && Operation!=QuickAppend && Operation!=ReplaceOrInsert)
@@ -282,39 +278,6 @@ ArchiveOperation parseCommandLine() {
 
   // Return the parsed operation to the caller
   return Operation;
-}
-
-// recurseDirectories - Implements the "R" modifier. This function scans through
-// the Paths vector (built by buildPaths, below) and replaces any directories it
-// finds with all the files in that directory (recursively). It uses the
-// sys::Path::getDirectoryContent method to perform the actual directory scans.
-bool
-recurseDirectories(const sys::Path& path,
-                   std::set<sys::Path>& result, std::string* ErrMsg) {
-  result.clear();
-  if (RecurseDirectories) {
-    std::set<sys::Path> content;
-    if (path.getDirectoryContents(content, ErrMsg))
-      return true;
-
-    for (std::set<sys::Path>::iterator I = content.begin(), E = content.end();
-         I != E; ++I) {
-      // Make sure it exists and is a directory
-      sys::PathWithStatus PwS(*I);
-      const sys::FileStatus *Status = PwS.getFileStatus(false, ErrMsg);
-      if (!Status)
-        return true;
-      if (Status->isDir) {
-        std::set<sys::Path> moreResults;
-        if (recurseDirectories(*I, moreResults, ErrMsg))
-          return true;
-        result.insert(moreResults.begin(), moreResults.end());
-      } else {
-          result.insert(*I);
-      }
-    }
-  }
-  return false;
 }
 
 // buildPaths - Convert the strings in the Members vector to sys::Path objects
@@ -334,14 +297,10 @@ bool buildPaths(bool checkExistence, std::string* ErrMsg) {
       const sys::FileStatus *si = PwS.getFileStatus(false, &Err);
       if (!si)
         fail(Err);
-      if (si->isDir) {
-        std::set<sys::Path> dirpaths;
-        if (recurseDirectories(aPath, dirpaths, ErrMsg))
-          return true;
-        Paths.insert(dirpaths.begin(),dirpaths.end());
-      } else {
-        Paths.insert(aPath);
-      }
+      if (si->isDir)
+        fail(aPath.str() + " Is a directory");
+
+      Paths.insert(aPath);
     } else {
       Paths.insert(aPath);
     }
