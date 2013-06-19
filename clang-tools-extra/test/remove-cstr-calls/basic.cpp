@@ -13,7 +13,12 @@ template<typename C, typename T, typename A> struct basic_string {
 };
 typedef basic_string<char, std::char_traits<char>, std::allocator<char> > string;
 }
-namespace llvm { struct StringRef { StringRef(const char *p); }; }
+namespace llvm {
+struct StringRef {
+  StringRef(const char *p);
+  StringRef(const std::string &);
+};
+}
 
 void f1(const std::string &s) {
   f1(s.c_str());
