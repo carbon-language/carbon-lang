@@ -119,21 +119,17 @@ public:
 
   void EmitInstanceFunctionProlog(CodeGenFunction &CGF);
 
-  RValue EmitConstructorCall(CodeGenFunction &CGF,
-                             const CXXConstructorDecl *D,
-                             CXXCtorType Type,
-                             bool ForVirtualBase, bool Delegating,
-                             ReturnValueSlot ReturnValue,
-                             llvm::Value *This,
-                             CallExpr::const_arg_iterator ArgBeg,
-                             CallExpr::const_arg_iterator ArgEnd);
+  void EmitConstructorCall(CodeGenFunction &CGF,
+                           const CXXConstructorDecl *D, CXXCtorType Type,
+                           bool ForVirtualBase, bool Delegating,
+                           llvm::Value *This,
+                           CallExpr::const_arg_iterator ArgBeg,
+                           CallExpr::const_arg_iterator ArgEnd);
 
-  RValue EmitVirtualDestructorCall(CodeGenFunction &CGF,
-                                   const CXXDestructorDecl *Dtor,
-                                   CXXDtorType DtorType,
-                                   SourceLocation CallLoc,
-                                   ReturnValueSlot ReturnValue,
-                                   llvm::Value *This);
+  void EmitVirtualDestructorCall(CodeGenFunction &CGF,
+                                 const CXXDestructorDecl *Dtor,
+                                 CXXDtorType DtorType, SourceLocation CallLoc,
+                                 llvm::Value *This);
 
   void EmitVirtualInheritanceTables(llvm::GlobalVariable::LinkageTypes Linkage,
                                     const CXXRecordDecl *RD);
@@ -809,11 +805,10 @@ void ItaniumCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
     CGF.Builder.CreateStore(getThisValue(CGF), CGF.ReturnValue);
 }
 
-RValue ItaniumCXXABI::EmitConstructorCall(CodeGenFunction &CGF,
+void ItaniumCXXABI::EmitConstructorCall(CodeGenFunction &CGF,
                                         const CXXConstructorDecl *D,
                                         CXXCtorType Type,
                                         bool ForVirtualBase, bool Delegating,
-                                        ReturnValueSlot ReturnValue,
                                         llvm::Value *This,
                                         CallExpr::const_arg_iterator ArgBeg,
                                         CallExpr::const_arg_iterator ArgEnd) {
@@ -823,16 +818,15 @@ RValue ItaniumCXXABI::EmitConstructorCall(CodeGenFunction &CGF,
   llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, Type);
 
   // FIXME: Provide a source location here.
-  return CGF.EmitCXXMemberCall(D, SourceLocation(), Callee, ReturnValue,
-                               This, VTT, VTTTy, ArgBeg, ArgEnd);
+  CGF.EmitCXXMemberCall(D, SourceLocation(), Callee, ReturnValueSlot(),
+                        This, VTT, VTTTy, ArgBeg, ArgEnd);
 }
 
-RValue ItaniumCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
-                                                const CXXDestructorDecl *Dtor,
-                                                CXXDtorType DtorType,
-                                                SourceLocation CallLoc,
-                                                ReturnValueSlot ReturnValue,
-                                                llvm::Value *This) {
+void ItaniumCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
+                                              const CXXDestructorDecl *Dtor,
+                                              CXXDtorType DtorType,
+                                              SourceLocation CallLoc,
+                                              llvm::Value *This) {
   assert(DtorType == Dtor_Deleting || DtorType == Dtor_Complete);
 
   const CGFunctionInfo *FInfo
@@ -840,8 +834,8 @@ RValue ItaniumCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
   llvm::Type *Ty = CGF.CGM.getTypes().GetFunctionType(*FInfo);
   llvm::Value *Callee = CGF.BuildVirtualCall(Dtor, DtorType, This, Ty);
 
-  return CGF.EmitCXXMemberCall(Dtor, CallLoc, Callee, ReturnValue, This,
-                               /*ImplicitParam=*/0, QualType(), 0, 0);
+  CGF.EmitCXXMemberCall(Dtor, CallLoc, Callee, ReturnValueSlot(), This,
+                        /*ImplicitParam=*/0, QualType(), 0, 0);
 }
 
 void ItaniumCXXABI::EmitVirtualInheritanceTables(

@@ -259,22 +259,20 @@ public:
   virtual void EmitInstanceFunctionProlog(CodeGenFunction &CGF) = 0;
 
   /// Emit the constructor call. Return the function that is called.
-  virtual RValue EmitConstructorCall(CodeGenFunction &CGF,
-                                     const CXXConstructorDecl *D,
-                                     CXXCtorType Type,
-                                     bool ForVirtualBase, bool Delegating,
-                                     ReturnValueSlot ReturnValue,
-                                     llvm::Value *This,
-                                     CallExpr::const_arg_iterator ArgBeg,
-                                     CallExpr::const_arg_iterator ArgEnd) = 0;
+  virtual void EmitConstructorCall(CodeGenFunction &CGF,
+                                   const CXXConstructorDecl *D,
+                                   CXXCtorType Type,
+                                   bool ForVirtualBase, bool Delegating,
+                                   llvm::Value *This,
+                                   CallExpr::const_arg_iterator ArgBeg,
+                                   CallExpr::const_arg_iterator ArgEnd) = 0;
 
   /// Emit the ABI-specific virtual destructor call.
-  virtual RValue EmitVirtualDestructorCall(CodeGenFunction &CGF,
-                                           const CXXDestructorDecl *Dtor,
-                                           CXXDtorType DtorType,
-                                           SourceLocation CallLoc,
-                                           ReturnValueSlot ReturnValue,
-                                           llvm::Value *This) = 0;
+  virtual void EmitVirtualDestructorCall(CodeGenFunction &CGF,
+                                         const CXXDestructorDecl *Dtor,
+                                         CXXDtorType DtorType,
+                                         SourceLocation CallLoc,
+                                         llvm::Value *This) = 0;
 
   /// Emit any tables needed to implement virtual inheritance.  For Itanium,
   /// this emits virtual table tables.  For the MSVC++ ABI, this emits virtual

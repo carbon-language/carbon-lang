@@ -1662,9 +1662,8 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
   }
 
   // Non-trivial constructors are handled in an ABI-specific manner.
-  CGM.getCXXABI().EmitConstructorCall(*this, D, Type,
-                                      ForVirtualBase, Delegating,
-                                      ReturnValueSlot(), This, ArgBeg, ArgEnd);
+  CGM.getCXXABI().EmitConstructorCall(*this, D, Type, ForVirtualBase,
+                                      Delegating, This, ArgBeg, ArgEnd);
 }
 
 void

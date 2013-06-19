@@ -100,21 +100,20 @@ public:
 E* gete();
 
 void test_destructor() {
-  E* e1 = new E();
+  const E& e1 = E();
   E* e2 = gete();
-  e1->~E();
   e2->~E();
 }
 
 // CHECKARM: define void @_Z15test_destructorv()
 
-// CHECKARM: {{%.*}} = call %class.E* @_ZN1EC1Ev(%class.E* 
-
 // Verify that virtual calls to destructors are not marked with a 'returned'
 // this parameter at the call site...
 // CHECKARM: [[VFN:%.*]] = getelementptr inbounds %class.E* (%class.E*)**
 // CHECKARM: [[THUNK:%.*]] = load %class.E* (%class.E*)** [[VFN]]
-// CHECKARM: call %class.E* [[THUNK]](%class.E*
+// CHECKARM: call %class.E* [[THUNK]](%class.E* %
 
 // ...but static calls create declarations with 'returned' this
-// CHECKARM: declare %class.E* @_ZN1EC1Ev(%class.E* returned)
+// CHECKARM: {{%.*}} = call %class.E* @_ZN1ED1Ev(%class.E* %
+
+// CHECKARM: declare %class.E* @_ZN1ED1Ev(%class.E* returned)
