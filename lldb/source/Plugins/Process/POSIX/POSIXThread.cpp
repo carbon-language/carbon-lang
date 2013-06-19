@@ -488,7 +488,7 @@ POSIXThread::ThreadNotify(const ProcessMessage &message)
 unsigned
 POSIXThread::GetRegisterIndexFromOffset(unsigned offset)
 {
-    unsigned reg = 0;
+    unsigned reg = LLDB_INVALID_REGNUM;
     ArchSpec arch = Host::GetArchitecture();
 
     switch (arch.GetCore())
