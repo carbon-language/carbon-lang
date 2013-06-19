@@ -15,9 +15,9 @@
 #define CLANG_CODEGEN_CODEGENFUNCTION_H
 
 #include "CGBuilder.h"
-#include "CGCleanup.h"
 #include "CGDebugInfo.h"
 #include "CGValue.h"
+#include "EHScopeStack.h"
 #include "CodeGenModule.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/ExprCXX.h"
