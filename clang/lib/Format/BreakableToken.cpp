@@ -77,6 +77,7 @@ BreakableToken::Split getStringSplit(StringRef Text,
                          encoding::getCodePointCount(Text, Encoding) - 1);
   StringRef::size_type SpaceOffset = 0;
   StringRef::size_type SlashOffset = 0;
+  StringRef::size_type WordStartOffset = 0;
   StringRef::size_type SplitPoint = 0;
   for (unsigned Chars = 0;;) {
     unsigned Advance;
@@ -95,6 +96,8 @@ BreakableToken::Split getStringSplit(StringRef Text,
       SpaceOffset = SplitPoint;
     if (Text[0] == '/')
       SlashOffset = SplitPoint;
+    if (Text[0] != '\\' && !isAlphanumeric(Text[0]))
+      WordStartOffset = SplitPoint;
 
     SplitPoint += Advance;
     Text = Text.substr(Advance);
@@ -104,6 +107,8 @@ BreakableToken::Split getStringSplit(StringRef Text,
     return BreakableToken::Split(SpaceOffset + 1, 0);
   if (SlashOffset != 0)
     return BreakableToken::Split(SlashOffset + 1, 0);
+  if (WordStartOffset != 0)
+    return BreakableToken::Split(WordStartOffset + 1, 0);
   if (SplitPoint != 0)
     return BreakableToken::Split(SplitPoint, 0);
   return BreakableToken::Split(StringRef::npos, 0);

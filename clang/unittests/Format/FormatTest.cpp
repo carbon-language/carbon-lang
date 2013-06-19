@@ -4636,6 +4636,26 @@ TEST_F(FormatTest, BreakStringLiterals) {
       "\"slashes\"",
       format("\"split/pathat/slashes\"", getLLVMStyleWithColumns(10)));
 
+  EXPECT_EQ(
+      "\"split/\"\n"
+      "\"pathat/\"\n"
+      "\"slashes\"",
+      format("\"split/pathat/slashes\"", getLLVMStyleWithColumns(10)));
+  EXPECT_EQ("\"split at \"\n"
+            "\"spaces/at/\"\n"
+            "\"slashes.at.any$\"\n"
+            "\"non-alphanumeric%\"\n"
+            "\"1111111111characte\"\n"
+            "\"rs\"",
+            format("\"split at "
+                   "spaces/at/"
+                   "slashes.at."
+                   "any$non-"
+                   "alphanumeric%"
+                   "1111111111characte"
+                   "rs\"",
+                   getLLVMStyleWithColumns(20)));
+
   FormatStyle AlignLeft = getLLVMStyleWithColumns(12);
   AlignLeft.AlignEscapedNewlinesLeft = true;
   EXPECT_EQ(
