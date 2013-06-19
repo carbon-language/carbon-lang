@@ -50,7 +50,6 @@ class Value;
 ///
 class FunctionLoweringInfo {
   const TargetMachine &TM;
-  const TargetLowering *TLI;
 public:
   const Function *Fn;
   MachineFunction *MF;
@@ -116,7 +115,7 @@ public:
   /// there's no other convenient place for it to live right now.
   std::vector<std::pair<MachineInstr*, unsigned> > PHINodesToUpdate;
 
-  explicit FunctionLoweringInfo(const TargetMachine &TM);
+  explicit FunctionLoweringInfo(const TargetMachine &TM) : TM(TM) {}
 
   /// set - Initialize this FunctionLoweringInfo with the given Function
   /// and its associated MachineFunction.
