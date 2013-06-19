@@ -398,6 +398,14 @@ public:
   bool isPosZero() const { return isZero() && !isNegative(); }
   bool isNegZero() const { return isZero() && isNegative(); }
 
+  /// Returns true if and only if the number has the smallest possible non-zero
+  /// magnitude in the current semantics.
+  bool isSmallest() const;
+
+  /// Returns true if and only if the number has the largest possible finite
+  /// magnitude in the current semantics.
+  bool isLargest() const;
+
   /// @}
 
   APFloat &operator=(const APFloat &);
@@ -491,18 +499,6 @@ private:
   void makeNaN(bool SNaN = false, bool Neg = false, const APInt *fill = 0);
   static APFloat makeNaN(const fltSemantics &Sem, bool SNaN, bool Negative,
                          const APInt *fill);
-
-  /// @}
-
-  /// \name Special value queries only useful internally to APFloat
-  /// @{
-
-  /// Returns true if and only if the number has the smallest possible non-zero
-  /// magnitude in the current semantics.
-  bool isSmallest() const;
-  /// Returns true if and only if the number has the largest possible finite
-  /// magnitude in the current semantics.
-  bool isLargest() const;
 
   /// @}
 
