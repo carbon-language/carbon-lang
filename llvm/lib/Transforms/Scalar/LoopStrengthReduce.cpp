@@ -1417,11 +1417,19 @@ static unsigned getScalingFactorCost(const TargetTransformInfo &TTI,
 
   switch (LU.Kind) {
   case LSRUse::Address: {
-    int CurScaleCost = TTI.getScalingFactorCost(LU.AccessTy, F.BaseGV,
-                                                F.BaseOffset, F.HasBaseReg,
-                                                F.Scale);
-    assert(CurScaleCost >= 0 && "Legal addressing mode has an illegal cost!");
-    return CurScaleCost;
+    // Check the scaling factor cost with both the min and max offsets.
+    int ScaleCostMinOffset =
+      TTI.getScalingFactorCost(LU.AccessTy, F.BaseGV,
+                               F.BaseOffset + LU.MinOffset,
+                               F.HasBaseReg, F.Scale);
+    int ScaleCostMaxOffset =
+      TTI.getScalingFactorCost(LU.AccessTy, F.BaseGV,
+                               F.BaseOffset + LU.MaxOffset,
+                               F.HasBaseReg, F.Scale);
+
+    assert(ScaleCostMinOffset >= 0 && ScaleCostMaxOffset >= 0 &&
+           "Legal addressing mode has an illegal cost!");
+    return std::max(ScaleCostMinOffset, ScaleCostMaxOffset);
   }
   case LSRUse::ICmpZero:
     // ICmpZero BaseReg + -1*ScaleReg => ICmp BaseReg, ScaleReg.
