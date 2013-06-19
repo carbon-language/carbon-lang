@@ -72,6 +72,7 @@ struct BoUpSLP  {
   bool vectorizeStores(ArrayRef<StoreInst *> Stores, int costThreshold);
 
   /// \brief Vectorize a group of scalars into a vector tree.
+  /// \returns the vectorized value. 
   Value *vectorizeArith(ArrayRef<Value *> Operands);
 
   /// \returns the list of new instructions that were added in order to collect
@@ -117,7 +118,7 @@ private:
   /// Only consider the first \p VF elements.
   int getFirstUserIndex(ArrayRef<Value *> VL, unsigned VF);
 
-  /// \returns the instruction \p I or \p Jt hat appears last in the BB .
+  /// \returns the instruction \p I or \p J that appears last in the BB .
   int getLastIndex(Instruction *I, Instruction *J);
 
   /// \returns the insertion point for \p Index.
