@@ -92,7 +92,7 @@ private:
 
   internal::BoundNodesMap MyBoundNodes;
 
-  friend class internal::BoundNodesTree;
+  friend class internal::BoundNodesTreeBuilder;
 };
 
 /// \brief If the provided matcher matches a node, binds the node to \c ID.
@@ -281,12 +281,9 @@ AST_MATCHER(Decl, isPrivate) {
 ///   matches the specialization \c A<int>
 AST_MATCHER_P(ClassTemplateSpecializationDecl, hasAnyTemplateArgument,
               internal::Matcher<TemplateArgument>, InnerMatcher) {
-  const TemplateArgumentList &List = Node.getTemplateArgs();
-  for (unsigned i = 0; i < List.size(); ++i) {
-    if (InnerMatcher.matches(List.get(i), Finder, Builder))
-      return true;
-  }
-  return false;
+  llvm::ArrayRef<TemplateArgument> List = Node.getTemplateArgs().asArray();
+  return matchesFirstInRange(InnerMatcher, List.begin(), List.end(), Finder,
+                             Builder);
 }
 
 /// \brief Matches expressions that match InnerMatcher after any implicit casts
@@ -1498,12 +1495,8 @@ inline internal::Matcher<CXXRecordDecl> isSameOrDerivedFrom(
 /// but not \c B.
 AST_MATCHER_P(CXXRecordDecl, hasMethod, internal::Matcher<CXXMethodDecl>,
               InnerMatcher) {
-  for (CXXRecordDecl::method_iterator I = Node.method_begin(),
-                                      E = Node.method_end();
-       I != E; ++I)
-    if (InnerMatcher.matches(**I, Finder, Builder))
-      return true;
-  return false;
+  return matchesFirstInPointerRange(InnerMatcher, Node.method_begin(),
+                                    Node.method_end(), Finder, Builder);
 }
 
 /// \brief Matches AST nodes that have child AST nodes that match the
@@ -2066,13 +2059,8 @@ AST_MATCHER_P2(DeclStmt, containsDeclaration, unsigned, N,
 ///   record matches Foo, hasAnyConstructorInitializer matches foo_(1)
 AST_MATCHER_P(CXXConstructorDecl, hasAnyConstructorInitializer,
               internal::Matcher<CXXCtorInitializer>, InnerMatcher) {
-  for (CXXConstructorDecl::init_const_iterator I = Node.init_begin();
-       I != Node.init_end(); ++I) {
-    if (InnerMatcher.matches(**I, Finder, Builder)) {
-      return true;
-    }
-  }
-  return false;
+  return matchesFirstInPointerRange(InnerMatcher, Node.init_begin(),
+                                    Node.init_end(), Finder, Builder);
 }
 
 /// \brief Matches the field declaration of a constructor initializer.
@@ -2149,6 +2137,11 @@ AST_MATCHER(CXXConstructorDecl, isImplicit) {
 ///   matches x(1, y, 42)
 /// with hasAnyArgument(...)
 ///   matching y
+///
+/// FIXME: Currently this will ignore parentheses and implicit casts on
+/// the argument before applying the inner matcher. We'll want to remove
+/// this to allow for greater control by the user once \c ignoreImplicit()
+/// has been implemented.
 AST_POLYMORPHIC_MATCHER_P(hasAnyArgument, internal::Matcher<Expr>,
                           InnerMatcher) {
   TOOLING_COMPILE_ASSERT((llvm::is_base_of<CallExpr, NodeType>::value ||
@@ -2156,8 +2149,10 @@ AST_POLYMORPHIC_MATCHER_P(hasAnyArgument, internal::Matcher<Expr>,
                                           NodeType>::value),
                          instantiated_with_wrong_types);
   for (unsigned I = 0; I < Node.getNumArgs(); ++I) {
-    if (InnerMatcher.matches(*Node.getArg(I)->IgnoreParenImpCasts(),
-                             Finder, Builder)) {
+    BoundNodesTreeBuilder Result(*Builder);
+    if (InnerMatcher.matches(*Node.getArg(I)->IgnoreParenImpCasts(), Finder,
+                             &Result)) {
+      *Builder = Result;
       return true;
     }
   }
@@ -2196,12 +2191,8 @@ AST_MATCHER_P2(FunctionDecl, hasParameter,
 ///   matching int y
 AST_MATCHER_P(FunctionDecl, hasAnyParameter,
               internal::Matcher<ParmVarDecl>, InnerMatcher) {
-  for (unsigned I = 0; I < Node.getNumParams(); ++I) {
-    if (InnerMatcher.matches(*Node.getParamDecl(I), Finder, Builder)) {
-      return true;
-    }
-  }
-  return false;
+  return matchesFirstInPointerRange(InnerMatcher, Node.param_begin(),
+                                    Node.param_end(), Finder, Builder);
 }
 
 /// \brief Matches \c FunctionDecls that have a specific parameter count.
@@ -2350,12 +2341,8 @@ AST_POLYMORPHIC_MATCHER_P(hasBody, internal::Matcher<Stmt>,
 ///   matching '{}'
 AST_MATCHER_P(CompoundStmt, hasAnySubstatement,
               internal::Matcher<Stmt>, InnerMatcher) {
-  for (CompoundStmt::const_body_iterator It = Node.body_begin();
-       It != Node.body_end();
-       ++It) {
-    if (InnerMatcher.matches(**It, Finder, Builder)) return true;
-  }
-  return false;
+  return matchesFirstInPointerRange(InnerMatcher, Node.body_begin(),
+                                    Node.body_end(), Finder, Builder);
 }
 
 /// \brief Checks that a compound statement contains a specific number of
@@ -2716,12 +2703,8 @@ AST_MATCHER_P(MemberExpr, hasObjectExpression,
 ///   matches \code using X::b \endcode
 AST_MATCHER_P(UsingDecl, hasAnyUsingShadowDecl,
               internal::Matcher<UsingShadowDecl>, InnerMatcher) {
-  for (UsingDecl::shadow_iterator II = Node.shadow_begin();
-       II != Node.shadow_end(); ++II) {
-    if (InnerMatcher.matches(**II, Finder, Builder))
-      return true;
-  }
-  return false;
+  return matchesFirstInPointerRange(InnerMatcher, Node.shadow_begin(),
+                                    Node.shadow_end(), Finder, Builder);
 }
 
 /// \brief Matches a using shadow declaration where the target declaration is
@@ -3388,6 +3371,7 @@ AST_MATCHER_P_OVERLOAD(Stmt, equalsNode, Stmt*, Other, 1) {
 /// "switch (1)", "switch (2)" and "switch (2)".
 AST_MATCHER_P(SwitchStmt, forEachSwitchCase, internal::Matcher<SwitchCase>,
               InnerMatcher) {
+  BoundNodesTreeBuilder Result;
   // FIXME: getSwitchCaseList() does not necessarily guarantee a stable
   // iteration order. We should use the more general iterating matchers once
   // they are capable of expressing this matcher (for example, it should ignore
@@ -3395,14 +3379,14 @@ AST_MATCHER_P(SwitchStmt, forEachSwitchCase, internal::Matcher<SwitchCase>,
   bool Matched = false;
   for (const SwitchCase *SC = Node.getSwitchCaseList(); SC;
        SC = SC->getNextSwitchCase()) {
-    BoundNodesTreeBuilder CaseBuilder;
+    BoundNodesTreeBuilder CaseBuilder(*Builder);
     bool CaseMatched = InnerMatcher.matches(*SC, Finder, &CaseBuilder);
     if (CaseMatched) {
       Matched = true;
-      Builder->addMatch(CaseBuilder.build());
+      Result.addMatch(CaseBuilder);
     }
   }
-
+  *Builder = Result;
   return Matched;
 }
 

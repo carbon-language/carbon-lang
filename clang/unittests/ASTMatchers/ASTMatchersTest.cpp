@@ -3009,12 +3009,13 @@ TEST(ForEachDescendant, NestedForEachDescendant) {
     recordDecl(hasName("A"), anyOf(m, forEachDescendant(m))),
     new VerifyIdIsBoundTo<Decl>("x", "C")));
 
-  // FIXME: This is not really a useful matcher, but the result is still
-  // surprising (currently binds "A").
-  //EXPECT_TRUE(matchAndVerifyResultTrue(
-  //  "class A { class B { class C {}; }; };",
-  //  recordDecl(hasName("A"), allOf(hasDescendant(m), anyOf(m, anything()))),
-  //  new VerifyIdIsBoundTo<Decl>("x", "C")));
+  // Check that a partial match of 'm' that binds 'x' in the
+  // first part of anyOf(m, anything()) will not overwrite the
+  // binding created by the earlier binding in the hasDescendant.
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "class A { class B { class C {}; }; };",
+      recordDecl(hasName("A"), allOf(hasDescendant(m), anyOf(m, anything()))),
+      new VerifyIdIsBoundTo<Decl>("x", "C")));
 }
 
 TEST(ForEachDescendant, BindsMultipleNodes) {
@@ -3032,6 +3033,112 @@ TEST(ForEachDescendant, BindsRecursiveCombinations) {
       recordDecl(hasName("C"), forEachDescendant(recordDecl(
           forEachDescendant(fieldDecl().bind("f"))))),
       new VerifyIdIsBoundTo<FieldDecl>("f", 8)));
+}
+
+TEST(ForEachDescendant, BindsCombinations) {
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "void f() { if(true) {} if (true) {} while (true) {} if (true) {} while "
+      "(true) {} }",
+      compoundStmt(forEachDescendant(ifStmt().bind("if")),
+                   forEachDescendant(whileStmt().bind("while"))),
+      new VerifyIdIsBoundTo<IfStmt>("if", 6)));
+}
+
+TEST(Has, DoesNotDeleteBindings) {
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "class X { int a; };", recordDecl(decl().bind("x"), has(fieldDecl())),
+      new VerifyIdIsBoundTo<Decl>("x", 1)));
+}
+
+TEST(LoopingMatchers, DoNotOverwritePreviousMatchResultOnFailure) {
+  // Those matchers cover all the cases where an inner matcher is called
+  // and there is not a 1:1 relationship between the match of the outer
+  // matcher and the match of the inner matcher.
+  // The pattern to look for is:
+  //   ... return InnerMatcher.matches(...); ...
+  // In which case no special handling is needed.
+  //
+  // On the other hand, if there are multiple alternative matches
+  // (for example forEach*) or matches might be discarded (for example has*)
+  // the implementation must make sure that the discarded matches do not
+  // affect the bindings.
+  // When new such matchers are added, add a test here that:
+  // - matches a simple node, and binds it as the first thing in the matcher:
+  //     recordDecl(decl().bind("x"), hasName("X")))
+  // - uses the matcher under test afterwards in a way that not the first
+  //   alternative is matched; for anyOf, that means the first branch
+  //   would need to return false; for hasAncestor, it means that not
+  //   the direct parent matches the inner matcher.
+
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "class X { int y; };",
+      recordDecl(
+          recordDecl().bind("x"), hasName("::X"),
+          anyOf(forEachDescendant(recordDecl(hasName("Y"))), anything())),
+      new VerifyIdIsBoundTo<CXXRecordDecl>("x", 1)));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "class X {};", recordDecl(recordDecl().bind("x"), hasName("::X"),
+                                anyOf(unless(anything()), anything())),
+      new VerifyIdIsBoundTo<CXXRecordDecl>("x", 1)));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "template<typename T1, typename T2> class X {}; X<float, int> x;",
+      classTemplateSpecializationDecl(
+          decl().bind("x"),
+          hasAnyTemplateArgument(refersToType(asString("int")))),
+      new VerifyIdIsBoundTo<Decl>("x", 1)));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "class X { void f(); void g(); };",
+      recordDecl(decl().bind("x"), hasMethod(hasName("g"))),
+      new VerifyIdIsBoundTo<Decl>("x", 1)));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "class X { X() : a(1), b(2) {} double a; int b; };",
+      recordDecl(decl().bind("x"),
+                 has(constructorDecl(
+                     hasAnyConstructorInitializer(forField(hasName("b")))))),
+      new VerifyIdIsBoundTo<Decl>("x", 1)));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "void x(int, int) { x(0, 42); }",
+      callExpr(expr().bind("x"), hasAnyArgument(integerLiteral(equals(42)))),
+      new VerifyIdIsBoundTo<Expr>("x", 1)));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "void x(int, int y) {}",
+      functionDecl(decl().bind("x"), hasAnyParameter(hasName("y"))),
+      new VerifyIdIsBoundTo<Decl>("x", 1)));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "void x() { return; if (true) {} }",
+      functionDecl(decl().bind("x"),
+                   has(compoundStmt(hasAnySubstatement(ifStmt())))),
+      new VerifyIdIsBoundTo<Decl>("x", 1)));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "namespace X { void b(int); void b(); }"
+      "using X::b;",
+      usingDecl(decl().bind("x"), hasAnyUsingShadowDecl(hasTargetDecl(
+                                      functionDecl(parameterCountIs(1))))),
+      new VerifyIdIsBoundTo<Decl>("x", 1)));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "class A{}; class B{}; class C : B, A {};",
+      recordDecl(decl().bind("x"), isDerivedFrom("::A")),
+      new VerifyIdIsBoundTo<Decl>("x", 1)));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "class A{}; typedef A B; typedef A C; typedef A D;"
+      "class E : A {};",
+      recordDecl(decl().bind("x"), isDerivedFrom("C")),
+      new VerifyIdIsBoundTo<Decl>("x", 1)));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "class A { class B { void f() {} }; };",
+      functionDecl(decl().bind("x"), hasAncestor(recordDecl(hasName("::A")))),
+      new VerifyIdIsBoundTo<Decl>("x", 1)));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "template <typename T> struct A { struct B {"
+      "  void f() { if(true) {} }"
+      "}; };"
+      "void t() { A<int>::B b; b.f(); }",
+      ifStmt(stmt().bind("x"), hasAncestor(recordDecl(hasName("::A")))),
+      new VerifyIdIsBoundTo<Stmt>("x", 2)));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "class A {};",
+      recordDecl(hasName("::A"), decl().bind("x"), unless(hasName("fooble"))),
+      new VerifyIdIsBoundTo<Decl>("x", 1)));
 }
 
 TEST(ForEachDescendant, BindsCorrectNodes) {

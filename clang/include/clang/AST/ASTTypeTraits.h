@@ -67,6 +67,25 @@ public:
   /// method returns NULL.
   const void *getMemoizationData() const;
 
+  /// @{
+  /// \brief Imposes an order on \c DynTypedNode.
+  ///
+  /// Supports comparison of nodes that support memoization.
+  /// FIXME: Implement comparsion for other node types (currently
+  /// only Stmt and Decl return memoization data).
+  bool operator<(const DynTypedNode &Other) const {
+    assert(getMemoizationData() && Other.getMemoizationData());
+    return getMemoizationData() < Other.getMemoizationData();
+  }
+  bool operator==(const DynTypedNode &Other) const {
+    assert(getMemoizationData() && Other.getMemoizationData());
+    return getMemoizationData() == Other.getMemoizationData();
+  }
+  bool operator!=(const DynTypedNode &Other) const {
+    return !operator==(Other);
+  }
+  /// @}
+
 private:
   /// \brief Takes care of converting from and to \c T.
   template <typename T, typename EnablerT = void> struct BaseConverter;

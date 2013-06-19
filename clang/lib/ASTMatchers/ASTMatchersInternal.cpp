@@ -18,68 +18,18 @@ namespace clang {
 namespace ast_matchers {
 namespace internal {
 
-void BoundNodesMap::copyTo(BoundNodesTreeBuilder *Builder) const {
-  for (IDToNodeMap::const_iterator It = NodeMap.begin();
-       It != NodeMap.end();
-       ++It) {
-    Builder->setBinding(It->first, It->second);
+void BoundNodesTreeBuilder::visitMatches(Visitor *ResultVisitor) {
+  if (Bindings.empty())
+    Bindings.push_back(BoundNodesMap());
+  for (unsigned i = 0, e = Bindings.size(); i != e; ++i) {
+    ResultVisitor->visitMatch(BoundNodes(Bindings[i]));
   }
 }
 
-void BoundNodesMap::copyTo(BoundNodesMap *Other) const {
-  for (IDToNodeMap::const_iterator I = NodeMap.begin(),
-                                   E = NodeMap.end();
-       I != E; ++I) {
-    Other->NodeMap[I->first] = I->second;
+void BoundNodesTreeBuilder::addMatch(const BoundNodesTreeBuilder &Other) {
+  for (unsigned i = 0, e = Other.Bindings.size(); i != e; ++i) {
+    Bindings.push_back(Other.Bindings[i]);
   }
-}
-
-BoundNodesTree::BoundNodesTree() {}
-
-BoundNodesTree::BoundNodesTree(
-  const BoundNodesMap& Bindings,
-  const std::vector<BoundNodesTree> RecursiveBindings)
-  : Bindings(Bindings),
-    RecursiveBindings(RecursiveBindings) {}
-
-void BoundNodesTree::copyTo(BoundNodesTreeBuilder* Builder) const {
-  Bindings.copyTo(Builder);
-  for (std::vector<BoundNodesTree>::const_iterator
-         I = RecursiveBindings.begin(),
-         E = RecursiveBindings.end();
-       I != E; ++I) {
-    Builder->addMatch(*I);
-  }
-}
-
-void BoundNodesTree::visitMatches(Visitor* ResultVisitor) {
-  BoundNodesMap AggregatedBindings;
-  visitMatchesRecursively(ResultVisitor, AggregatedBindings);
-}
-
-void BoundNodesTree::
-visitMatchesRecursively(Visitor* ResultVisitor,
-                        const BoundNodesMap& AggregatedBindings) {
-  BoundNodesMap CombinedBindings(AggregatedBindings);
-  Bindings.copyTo(&CombinedBindings);
-  if (RecursiveBindings.empty()) {
-    ResultVisitor->visitMatch(BoundNodes(CombinedBindings));
-  } else {
-    for (unsigned I = 0; I < RecursiveBindings.size(); ++I) {
-      RecursiveBindings[I].visitMatchesRecursively(ResultVisitor,
-                                                   CombinedBindings);
-    }
-  }
-}
-
-BoundNodesTreeBuilder::BoundNodesTreeBuilder() {}
-
-void BoundNodesTreeBuilder::addMatch(const BoundNodesTree& Bindings) {
-  RecursiveBindings.push_back(Bindings);
-}
-
-BoundNodesTree BoundNodesTreeBuilder::build() const {
-  return BoundNodesTree(Bindings, RecursiveBindings);
 }
 
 DynTypedMatcher::~DynTypedMatcher() {}
