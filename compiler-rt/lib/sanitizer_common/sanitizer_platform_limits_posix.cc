@@ -46,9 +46,8 @@
 #include <linux/fd.h>
 #include <linux/fs.h>
 #include <linux/hdreg.h>
-#include <linux/ppp_defs.h>
-#include <linux/if_ppp.h>
 #include <linux/soundcard.h>
+#include <net/if_ppp.h>
 #endif
 
 #if !SANITIZER_ANDROID
