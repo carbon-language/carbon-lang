@@ -2996,6 +2996,11 @@ ClangASTContext::GetTypeInfo
                 break;
 
             case clang::BuiltinType::ObjCSel:
+                if (ast && pointee_or_element_clang_type)
+                    *pointee_or_element_clang_type = ast->CharTy.getAsOpaquePtr();
+                builtin_type_flags |= eTypeIsPointer | eTypeIsObjC;
+                break;
+
             case clang::BuiltinType::Bool:
             case clang::BuiltinType::Char_U:
             case clang::BuiltinType::UChar:
