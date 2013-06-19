@@ -8,3 +8,4 @@ FileHeader:
   Machine: EM_X86_64
 
 # CHECK: OS/ABI: GNU/Linux
+# CHECK: Type: Relocatable
