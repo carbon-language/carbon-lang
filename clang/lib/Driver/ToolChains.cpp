@@ -1084,10 +1084,12 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
   static const char *const ARMLibDirs[] = { "/lib" };
   static const char *const ARMTriples[] = {
     "arm-linux-gnueabi",
+    "armv5tel-suse-linux-gnueabi",
     "arm-linux-androideabi"
   };
   static const char *const ARMHFTriples[] = {
     "arm-linux-gnueabihf",
+    "armv7hl-suse-linux-gnueabi",
     "armv7hl-redhat-linux-gnueabi"
   };
 
