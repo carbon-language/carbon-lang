@@ -430,7 +430,7 @@ doExtract(std::string* ErrMsg) {
       // Open up a file stream for writing
       std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
                                    std::ios::binary;
-      std::ofstream file(I->getPath().str(), io_mode);
+      std::ofstream file(I->getPath().str().c_str(), io_mode);
 
       // Get the data and its length
       const char* data = reinterpret_cast<const char*>(I->getData());
