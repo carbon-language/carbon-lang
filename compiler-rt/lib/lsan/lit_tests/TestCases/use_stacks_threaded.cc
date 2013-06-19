@@ -31,6 +31,6 @@ int main() {
   return 0;
 }
 // CHECK: Test alloc: [[ADDR:.*]].
-// CHECK: LeakSanitizer: detected memory leaks
 // CHECK: Directly leaked 1337 byte object at [[ADDR]]
+// CHECK: LeakSanitizer: detected memory leaks
 // CHECK: SUMMARY: LeakSanitizer:

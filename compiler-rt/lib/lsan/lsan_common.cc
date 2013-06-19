@@ -275,45 +275,34 @@ void PrintLeakedCb::operator()(void *p) const {
   LsanMetadata m(p);
   if (!m.allocated()) return;
   if (m.tag() == kDirectlyLeaked || m.tag() == kIndirectlyLeaked) {
-    Printf("%s leaked %llu byte object at %p\n",
+    Printf("%s leaked %llu byte object at %p.\n",
            m.tag() == kDirectlyLeaked ? "Directly" : "Indirectly",
            m.requested_size(), p);
   }
 }
 
 static void PrintLeaked() {
-  Printf("Reporting individual objects:\n");
-  Printf("============================\n");
-  ForEachChunk(PrintLeakedCb());
   Printf("\n");
+  Printf("Reporting individual objects:\n");
+  ForEachChunk(PrintLeakedCb());
 }
 
-enum LeakCheckResult {
-  kFatalError,
-  kLeaksFound,
-  kNoLeaks
+struct DoLeakCheckParam {
+  bool success;
+  LeakReport leak_report;
 };
 
 static void DoLeakCheckCallback(const SuspendedThreadsList &suspended_threads,
                                 void *arg) {
-  LeakCheckResult *result = reinterpret_cast<LeakCheckResult *>(arg);
-  CHECK_EQ(*result, kFatalError);
+  DoLeakCheckParam *param = reinterpret_cast<DoLeakCheckParam *>(arg);
+  CHECK(param);
+  CHECK(!param->success);
+  CHECK(param->leak_report.IsEmpty());
   ClassifyAllChunks(suspended_threads);
-  LeakReport leak_report;
-  CollectLeaks(&leak_report);
-  if (leak_report.IsEmpty()) {
-    *result = kNoLeaks;
-    return;
-  }
-  Printf("\n");
-  Printf("=================================================================\n");
-  Report("ERROR: LeakSanitizer: detected memory leaks\n");
-  leak_report.PrintLargest(flags()->max_leaks);
-  if (flags()->report_objects)
+  CollectLeaks(&param->leak_report);
+  if (!param->leak_report.IsEmpty() && flags()->report_objects)
     PrintLeaked();
-  leak_report.PrintSummary();
-  Printf("\n");
-  *result = kLeaksFound;
+  param->success = true;
 }
 
 void DoLeakCheck() {
@@ -321,16 +310,25 @@ void DoLeakCheck() {
   static bool already_done;
   CHECK(!already_done);
   already_done = true;
-  LeakCheckResult result = kFatalError;
+
+  DoLeakCheckParam param;
+  param.success = false;
   LockThreadRegistry();
   LockAllocator();
-  StopTheWorld(DoLeakCheckCallback, &result);
+  StopTheWorld(DoLeakCheckCallback, &param);
   UnlockAllocator();
   UnlockThreadRegistry();
-  if (result == kFatalError) {
+
+  if (!param.success) {
     Report("LeakSanitizer has encountered a fatal error.\n");
     Die();
-  } else if (result == kLeaksFound) {
+  }
+  if (!param.leak_report.IsEmpty()) {
+    Printf("\n================================================================="
+           "\n");
+    Report("ERROR: LeakSanitizer: detected memory leaks\n");
+    param.leak_report.PrintLargest(flags()->max_leaks);
+    param.leak_report.PrintSummary();
     if (flags()->exitcode)
       internal__exit(flags()->exitcode);
   }
@@ -396,7 +394,7 @@ void LeakReport::PrintSummary() {
       bytes += leaks_[i].total_size;
       allocations += leaks_[i].hit_count;
   }
-  Printf("SUMMARY: LeakSanitizer: %llu byte(s) leaked in %llu allocation(s).\n",
+  Printf("SUMMARY: LeakSanitizer: %llu byte(s) leaked in %llu allocation(s).\n\n",
          bytes, allocations);
 }
 

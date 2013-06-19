@@ -278,11 +278,20 @@ class ScopedStackSpaceWithGuard {
   uptr guard_start_;
 };
 
+static void WipeStack() {
+  char arr[256];
+  internal_memset(arr, 0, sizeof(arr));
+}
+
 static sigset_t blocked_sigset;
 static sigset_t old_sigset;
 static struct sigaction old_sigactions[ARRAY_SIZE(kUnblockedSignals)];
 
 void StopTheWorld(StopTheWorldCallback callback, void *argument) {
+  // Glibc's sigaction() has a side-effect where it copies garbage stack values
+  // into oldact, which can cause false negatives in LSan. As a quick workaround
+  // we zero some stack space here.
+  WipeStack();
   // Block all signals that can be blocked safely, and install default handlers
   // for the remaining signals.
   // We cannot allow user-defined handlers to run while the ThreadSuspender
