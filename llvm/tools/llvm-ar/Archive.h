@@ -23,7 +23,7 @@
 #include "llvm/Support/TimeValue.h"
 #include <map>
 #include <set>
-#include <vector.h>
+#include <vector>
 
 namespace llvm {
   class MemoryBuffer;
