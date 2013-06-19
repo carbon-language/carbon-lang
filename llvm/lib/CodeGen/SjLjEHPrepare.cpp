@@ -43,7 +43,7 @@ STATISTIC(NumSpilled, "Number of registers live across unwind edges");
 
 namespace {
   class SjLjEHPrepare : public FunctionPass {
-    const TargetLoweringBase *TLI;
+    const TargetMachine *TM;
     Type *FunctionContextTy;
     Constant *RegisterFn;
     Constant *UnregisterFn;
@@ -58,8 +58,8 @@ namespace {
     AllocaInst *FuncCtx;
   public:
     static char ID; // Pass identification, replacement for typeid
-    explicit SjLjEHPrepare(const TargetLoweringBase *tli = NULL)
-      : FunctionPass(ID), TLI(tli) { }
+    explicit SjLjEHPrepare(const TargetMachine *TM)
+      : FunctionPass(ID), TM(TM) { }
     bool doInitialization(Module &M);
     bool runOnFunction(Function &F);
 
@@ -82,8 +82,8 @@ namespace {
 char SjLjEHPrepare::ID = 0;
 
 // Public Interface To the SjLjEHPrepare pass.
-FunctionPass *llvm::createSjLjEHPreparePass(const TargetLoweringBase *TLI) {
-  return new SjLjEHPrepare(TLI);
+FunctionPass *llvm::createSjLjEHPreparePass(const TargetMachine *TM) {
+  return new SjLjEHPrepare(TM);
 }
 // doInitialization - Set up decalarations and types needed to process
 // exceptions.
@@ -190,6 +190,7 @@ setupFunctionContext(Function &F, ArrayRef<LandingPadInst*> LPads) {
   // Create an alloca for the incoming jump buffer ptr and the new jump buffer
   // that needs to be restored on all exits from the function. This is an alloca
   // because the value needs to be added to the global context list.
+  const TargetLowering *TLI = TM->getTargetLowering();
   unsigned Align =
     TLI->getDataLayout()->getPrefTypeAlignment(FunctionContextTy);
   FuncCtx =

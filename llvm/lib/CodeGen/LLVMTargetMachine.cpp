@@ -83,7 +83,7 @@ LLVMTargetMachine::LLVMTargetMachine(const Target &T, StringRef Triple,
 }
 
 void LLVMTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
-  PM.add(createBasicTargetTransformInfoPass(getTargetLowering()));
+  PM.add(createBasicTargetTransformInfoPass(this));
 }
 
 /// addPassesToX helper drives creation and initialization of TargetPassConfig.
@@ -115,7 +115,6 @@ static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
     new MachineModuleInfo(*TM->getMCAsmInfo(), *TM->getRegisterInfo(),
                           &TM->getTargetLowering()->getObjFileLowering());
   PM.add(MMI);
-  MCContext *Context = &MMI->getContext(); // Return the MCContext by-ref.
 
   // Set up a MachineFunction for the rest of CodeGen to work on.
   PM.add(new MachineFunctionAnalysis(*TM));
@@ -134,7 +133,7 @@ static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
 
   PassConfig->setInitialized();
 
-  return Context;
+  return &MMI->getContext();
 }
 
 bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,

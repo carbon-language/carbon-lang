@@ -41,9 +41,11 @@ STATISTIC(NumAddrTaken, "Number of local variables that have their address"
 
 namespace {
   class StackProtector : public FunctionPass {
+    const TargetMachine *TM;
+
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// target type sizes.
-    const TargetLoweringBase *const TLI;
+    const TargetLoweringBase *TLI;
     const Triple Trip;
 
     Function *F;
@@ -83,12 +85,11 @@ namespace {
     bool RequiresStackProtector();
   public:
     static char ID;             // Pass identification, replacement for typeid.
-    StackProtector() : FunctionPass(ID), TLI(0) {
+    StackProtector() : FunctionPass(ID), TM(0), TLI(0) {
       initializeStackProtectorPass(*PassRegistry::getPassRegistry());
     }
-    StackProtector(const TargetLoweringBase *tli)
-        : FunctionPass(ID), TLI(tli),
-          Trip(tli->getTargetMachine().getTargetTriple()) {
+    StackProtector(const TargetMachine *TM)
+      : FunctionPass(ID), TM(TM), TLI(0), Trip(TM->getTargetTriple()) {
       initializeStackProtectorPass(*PassRegistry::getPassRegistry());
     }
 
@@ -104,14 +105,15 @@ char StackProtector::ID = 0;
 INITIALIZE_PASS(StackProtector, "stack-protector",
                 "Insert stack protectors", false, false)
 
-FunctionPass *llvm::createStackProtectorPass(const TargetLoweringBase *tli) {
-  return new StackProtector(tli);
+FunctionPass *llvm::createStackProtectorPass(const TargetMachine *TM) {
+  return new StackProtector(TM);
 }
 
 bool StackProtector::runOnFunction(Function &Fn) {
   F = &Fn;
   M = F->getParent();
   DT = getAnalysisIfAvailable<DominatorTree>();
+  TLI = TM->getTargetLowering();
 
   if (!RequiresStackProtector()) return false;
 

@@ -329,7 +329,7 @@ namespace llvm {
   /// This pass implements the target transform info analysis using the target
   /// independent information available to the LLVM code generator.
   ImmutablePass *
-  createBasicTargetTransformInfoPass(const TargetLoweringBase *TLI);
+  createBasicTargetTransformInfoPass(const TargetMachine *TLI);
 
   /// createUnreachableBlockEliminationPass - The LLVM code generator does not
   /// work well with unreachable basic blocks (what live ranges make sense for a
@@ -518,7 +518,7 @@ namespace llvm {
 
   /// createStackProtectorPass - This pass adds stack protectors to functions.
   ///
-  FunctionPass *createStackProtectorPass(const TargetLoweringBase *tli);
+  FunctionPass *createStackProtectorPass(const TargetMachine *TM);
 
   /// createMachineVerifierPass - This pass verifies cenerated machine code
   /// instructions for correctness.
@@ -527,12 +527,12 @@ namespace llvm {
 
   /// createDwarfEHPass - This pass mulches exception handling code into a form
   /// adapted to code generation.  Required if using dwarf exception handling.
-  FunctionPass *createDwarfEHPass(const TargetLoweringBase *tli);
+  FunctionPass *createDwarfEHPass(const TargetMachine *TM);
 
   /// createSjLjEHPreparePass - This pass adapts exception handling code to use
   /// the GCC-style builtin setjmp/longjmp (sjlj) to handling EH control flow.
   ///
-  FunctionPass *createSjLjEHPreparePass(const TargetLoweringBase *tli);
+  FunctionPass *createSjLjEHPreparePass(const TargetMachine *TM);
 
   /// LocalStackSlotAllocation - This pass assigns local frame indices to stack
   /// slots relative to one another and allocates base registers to access them

@@ -162,7 +162,7 @@ void PPCTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
   // Add first the target-independent BasicTTI pass, then our PPC pass. This
   // allows the PPC pass to delegate to the target independent layer when
   // appropriate.
-  PM.add(createBasicTargetTransformInfoPass(getTargetLowering()));
+  PM.add(createBasicTargetTransformInfoPass(this));
   PM.add(createPPCTargetTransformInfoPass(this));
 }
 

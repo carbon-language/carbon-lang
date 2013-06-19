@@ -26,18 +26,20 @@ using namespace llvm;
 namespace {
 
 class BasicTTI : public ImmutablePass, public TargetTransformInfo {
-  const TargetLoweringBase *TLI;
+  const TargetMachine *TM;
 
   /// Estimate the overhead of scalarizing an instruction. Insert and Extract
   /// are set if the result needs to be inserted and/or extracted from vectors.
   unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract) const;
 
+  const TargetLoweringBase *getTLI() const { return TM->getTargetLowering(); }
+
 public:
-  BasicTTI() : ImmutablePass(ID), TLI(0) {
+  BasicTTI() : ImmutablePass(ID), TM(0) {
     llvm_unreachable("This pass cannot be directly constructed");
   }
 
-  BasicTTI(const TargetLoweringBase *TLI) : ImmutablePass(ID), TLI(TLI) {
+  BasicTTI(const TargetMachine *TM) : ImmutablePass(ID), TM(TM) {
     initializeBasicTTIPass(*PassRegistry::getPassRegistry());
   }
 
@@ -118,17 +120,17 @@ INITIALIZE_AG_PASS(BasicTTI, TargetTransformInfo, "basictti",
 char BasicTTI::ID = 0;
 
 ImmutablePass *
-llvm::createBasicTargetTransformInfoPass(const TargetLoweringBase *TLI) {
-  return new BasicTTI(TLI);
+llvm::createBasicTargetTransformInfoPass(const TargetMachine *TM) {
+  return new BasicTTI(TM);
 }
 
 
 bool BasicTTI::isLegalAddImmediate(int64_t imm) const {
-  return TLI->isLegalAddImmediate(imm);
+  return getTLI()->isLegalAddImmediate(imm);
 }
 
 bool BasicTTI::isLegalICmpImmediate(int64_t imm) const {
-  return TLI->isLegalICmpImmediate(imm);
+  return getTLI()->isLegalICmpImmediate(imm);
 }
 
 bool BasicTTI::isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV,
@@ -139,7 +141,7 @@ bool BasicTTI::isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV,
   AM.BaseOffs = BaseOffset;
   AM.HasBaseReg = HasBaseReg;
   AM.Scale = Scale;
-  return TLI->isLegalAddressingMode(AM, Ty);
+  return getTLI()->isLegalAddressingMode(AM, Ty);
 }
 
 int BasicTTI::getScalingFactorCost(Type *Ty, GlobalValue *BaseGV,
@@ -150,27 +152,28 @@ int BasicTTI::getScalingFactorCost(Type *Ty, GlobalValue *BaseGV,
   AM.BaseOffs = BaseOffset;
   AM.HasBaseReg = HasBaseReg;
   AM.Scale = Scale;
-  return TLI->getScalingFactorCost(AM, Ty);
+  return getTLI()->getScalingFactorCost(AM, Ty);
 }
 
 bool BasicTTI::isTruncateFree(Type *Ty1, Type *Ty2) const {
-  return TLI->isTruncateFree(Ty1, Ty2);
+  return getTLI()->isTruncateFree(Ty1, Ty2);
 }
 
 bool BasicTTI::isTypeLegal(Type *Ty) const {
-  EVT T = TLI->getValueType(Ty);
-  return TLI->isTypeLegal(T);
+  EVT T = getTLI()->getValueType(Ty);
+  return getTLI()->isTypeLegal(T);
 }
 
 unsigned BasicTTI::getJumpBufAlignment() const {
-  return TLI->getJumpBufAlignment();
+  return getTLI()->getJumpBufAlignment();
 }
 
 unsigned BasicTTI::getJumpBufSize() const {
-  return TLI->getJumpBufSize();
+  return getTLI()->getJumpBufSize();
 }
 
 bool BasicTTI::shouldBuildLookupTables() const {
+  const TargetLoweringBase *TLI = getTLI();
   return TLI->supportJumpTables() &&
       (TLI->isOperationLegalOrCustom(ISD::BR_JT, MVT::Other) ||
        TLI->isOperationLegalOrCustom(ISD::BRIND, MVT::Other));
@@ -213,6 +216,7 @@ unsigned BasicTTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
                                           OperandValueKind,
                                           OperandValueKind) const {
   // Check if any of the operands are vector operands.
+  const TargetLoweringBase *TLI = getTLI();
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
@@ -259,6 +263,7 @@ unsigned BasicTTI::getShuffleCost(ShuffleKind Kind, Type *Tp, int Index,
 
 unsigned BasicTTI::getCastInstrCost(unsigned Opcode, Type *Dst,
                                     Type *Src) const {
+  const TargetLoweringBase *TLI = getTLI();
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
@@ -352,6 +357,7 @@ unsigned BasicTTI::getCFInstrCost(unsigned Opcode) const {
 
 unsigned BasicTTI::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
                                       Type *CondTy) const {
+  const TargetLoweringBase *TLI = getTLI();
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
@@ -396,7 +402,7 @@ unsigned BasicTTI::getMemoryOpCost(unsigned Opcode, Type *Src,
                                    unsigned Alignment,
                                    unsigned AddressSpace) const {
   assert(!Src->isVoidTy() && "Invalid type");
-  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Src);
+  std::pair<unsigned, MVT> LT = getTLI()->getTypeLegalizationCost(Src);
 
   // Assume that all loads of legal types cost 1.
   return LT.first;
@@ -443,6 +449,7 @@ unsigned BasicTTI::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
   case Intrinsic::fmuladd: ISD = ISD::FMA;    break; // FIXME: mul + add?
   }
 
+  const TargetLoweringBase *TLI = getTLI();
   std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(RetTy);
 
   if (TLI->isOperationLegalOrPromote(ISD, LT.second)) {
@@ -476,7 +483,7 @@ unsigned BasicTTI::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
 }
 
 unsigned BasicTTI::getNumberOfParts(Type *Tp) const {
-  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Tp);
+  std::pair<unsigned, MVT> LT = getTLI()->getTypeLegalizationCost(Tp);
   return LT.first;
 }
 
