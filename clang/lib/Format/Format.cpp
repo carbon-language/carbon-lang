@@ -832,17 +832,17 @@ private:
     }
     if (Current.UnbreakableTailLength >= getColumnLimit())
       return 0;
-    unsigned RemainingSpace = getColumnLimit() - Current.UnbreakableTailLength;
 
+    unsigned RemainingSpace = getColumnLimit() - Current.UnbreakableTailLength;
     bool BreakInserted = false;
     unsigned Penalty = 0;
-    unsigned PositionAfterLastLineInToken = 0;
+    unsigned RemainingTokenColumns = 0;
     for (unsigned LineIndex = 0, EndIndex = Token->getLineCount();
          LineIndex != EndIndex; ++LineIndex) {
       if (!DryRun)
         Token->replaceWhitespaceBefore(LineIndex, Whitespaces);
       unsigned TailOffset = 0;
-      unsigned RemainingTokenColumns = Token->getLineLengthAfterSplit(
+      RemainingTokenColumns = Token->getLineLengthAfterSplit(
           LineIndex, TailOffset, StringRef::npos);
       while (RemainingTokenColumns > RemainingSpace) {
         BreakableToken::Split Split =
@@ -868,11 +868,11 @@ private:
         RemainingTokenColumns = NewRemainingTokenColumns;
         BreakInserted = true;
       }
-      PositionAfterLastLineInToken = RemainingTokenColumns;
     }
 
+    State.Column = RemainingTokenColumns;
+
     if (BreakInserted) {
-      State.Column = PositionAfterLastLineInToken;
       // If we break the token inside a parameter list, we need to break before
       // the next parameter on all levels, so that the next parameter is clearly
       // visible. Line comments already introduce a break.
