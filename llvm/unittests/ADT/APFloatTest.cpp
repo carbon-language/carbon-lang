@@ -1218,28 +1218,28 @@ TEST(APFloatTest, getSmallest) {
   APFloat test = APFloat::getSmallest(APFloat::IEEEsingle, false);
   APFloat expected = APFloat(APFloat::IEEEsingle, "0x0.000002p-126");
   EXPECT_FALSE(test.isNegative());
-  EXPECT_TRUE(test.isNormal());
+  EXPECT_TRUE(test.isFiniteNonZero());
   EXPECT_TRUE(test.isDenormal());
   EXPECT_TRUE(test.bitwiseIsEqual(expected));
 
   test = APFloat::getSmallest(APFloat::IEEEsingle, true);
   expected = APFloat(APFloat::IEEEsingle, "-0x0.000002p-126");
   EXPECT_TRUE(test.isNegative());
-  EXPECT_TRUE(test.isNormal());
+  EXPECT_TRUE(test.isFiniteNonZero());
   EXPECT_TRUE(test.isDenormal());
   EXPECT_TRUE(test.bitwiseIsEqual(expected));
 
   test = APFloat::getSmallest(APFloat::IEEEquad, false);
   expected = APFloat(APFloat::IEEEquad, "0x0.0000000000000000000000000001p-16382");
   EXPECT_FALSE(test.isNegative());
-  EXPECT_TRUE(test.isNormal());
+  EXPECT_TRUE(test.isFiniteNonZero());
   EXPECT_TRUE(test.isDenormal());
   EXPECT_TRUE(test.bitwiseIsEqual(expected));
 
   test = APFloat::getSmallest(APFloat::IEEEquad, true);
   expected = APFloat(APFloat::IEEEquad, "-0x0.0000000000000000000000000001p-16382");
   EXPECT_TRUE(test.isNegative());
-  EXPECT_TRUE(test.isNormal());
+  EXPECT_TRUE(test.isFiniteNonZero());
   EXPECT_TRUE(test.isDenormal());
   EXPECT_TRUE(test.bitwiseIsEqual(expected));  
 }
@@ -1248,28 +1248,28 @@ TEST(APFloatTest, getSmallestNormalized) {
   APFloat test = APFloat::getSmallestNormalized(APFloat::IEEEsingle, false);
   APFloat expected = APFloat(APFloat::IEEEsingle, "0x1p-126");
   EXPECT_FALSE(test.isNegative());
-  EXPECT_TRUE(test.isNormal());
+  EXPECT_TRUE(test.isFiniteNonZero());
   EXPECT_FALSE(test.isDenormal());
   EXPECT_TRUE(test.bitwiseIsEqual(expected));
 
   test = APFloat::getSmallestNormalized(APFloat::IEEEsingle, true);
   expected = APFloat(APFloat::IEEEsingle, "-0x1p-126");
   EXPECT_TRUE(test.isNegative());
-  EXPECT_TRUE(test.isNormal());
+  EXPECT_TRUE(test.isFiniteNonZero());
   EXPECT_FALSE(test.isDenormal());
   EXPECT_TRUE(test.bitwiseIsEqual(expected));
 
   test = APFloat::getSmallestNormalized(APFloat::IEEEquad, false);
   expected = APFloat(APFloat::IEEEquad, "0x1p-16382");
   EXPECT_FALSE(test.isNegative());
-  EXPECT_TRUE(test.isNormal());
+  EXPECT_TRUE(test.isFiniteNonZero());
   EXPECT_FALSE(test.isDenormal());
   EXPECT_TRUE(test.bitwiseIsEqual(expected));
 
   test = APFloat::getSmallestNormalized(APFloat::IEEEquad, true);
   expected = APFloat(APFloat::IEEEquad, "-0x1p-16382");
   EXPECT_TRUE(test.isNegative());
-  EXPECT_TRUE(test.isNormal());
+  EXPECT_TRUE(test.isFiniteNonZero());
   EXPECT_FALSE(test.isDenormal());
   EXPECT_TRUE(test.bitwiseIsEqual(expected));  
 }
