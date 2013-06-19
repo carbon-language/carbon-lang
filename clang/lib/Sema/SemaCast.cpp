@@ -759,6 +759,7 @@ static void DiagnoseReinterpretUpDownCast(Sema &Self, const Expr *SrcExpr,
     VirtualBase = VirtualBase && IsVirtual;
   }
 
+  (void) NonZeroOffset; // Silence set but not used warning.
   assert((VirtualBase || NonZeroOffset) &&
          "Should have returned if has non-virtual base with zero offset");
 
