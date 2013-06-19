@@ -126,7 +126,7 @@ error_code getHeaderFileNames(SmallVectorImpl<std::string> &headerFileNames,
 
   // Read the header list file into a buffer.
   OwningPtr<MemoryBuffer> listBuffer;
-  if (error_code ec = MemoryBuffer::getFile(ListFileName, listBuffer)) {
+  if (error_code ec = MemoryBuffer::getFile(listFileName, listBuffer)) {
     return ec;
   }
 
