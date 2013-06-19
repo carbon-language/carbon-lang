@@ -23,6 +23,7 @@ class GetElementPtrInst;
 class PassInfo;
 class TerminatorInst;
 class TargetLowering;
+class TargetMachine;
 
 //===----------------------------------------------------------------------===//
 //
@@ -119,7 +120,7 @@ Pass *createLICMPass();
 //
 Pass *createLoopStrengthReducePass();
 
-Pass *createGlobalMergePass(const TargetLowering *TLI = 0);
+Pass *createGlobalMergePass(const TargetMachine *TM = 0);
 
 //===----------------------------------------------------------------------===//
 //
@@ -253,9 +254,8 @@ extern char &LowerSwitchID;
 // purpose "my LLVM-to-LLVM pass doesn't support the invoke instruction yet"
 // lowering pass.
 //
-FunctionPass *createLowerInvokePass(const TargetLowering *TLI = 0);
-FunctionPass *createLowerInvokePass(const TargetLowering *TLI,
-                                    bool useExpensiveEHSupport);
+FunctionPass *createLowerInvokePass(const TargetMachine *TM = 0,
+                                    bool useExpensiveEHSupport = false);
 extern char &LowerInvokePassID;
 
 //===----------------------------------------------------------------------===//
@@ -311,7 +311,7 @@ FunctionPass *createSimplifyLibCallsPass();
 //
 // CodeGenPrepare - This pass prepares a function for instruction selection.
 //
-FunctionPass *createCodeGenPreparePass(const TargetLowering *TLI = 0);
+FunctionPass *createCodeGenPreparePass(const TargetMachine *TM = 0);
 
 //===----------------------------------------------------------------------===//
 //

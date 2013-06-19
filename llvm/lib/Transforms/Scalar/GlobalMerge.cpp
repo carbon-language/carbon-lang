@@ -78,9 +78,7 @@ EnableGlobalMergeOnConst("global-merge-on-const", cl::Hidden,
 STATISTIC(NumMerged      , "Number of globals merged");
 namespace {
   class GlobalMerge : public FunctionPass {
-    /// TLI - Keep a pointer of a TargetLowering to consult for determining
-    /// target type sizes.
-    const TargetLowering *TLI;
+    const TargetMachine *TM;
 
     bool doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
                  Module &M, bool isConst, unsigned AddrSpace) const;
@@ -104,8 +102,8 @@ namespace {
 
   public:
     static char ID;             // Pass identification, replacement for typeid.
-    explicit GlobalMerge(const TargetLowering *tli = 0)
-      : FunctionPass(ID), TLI(tli) {
+    explicit GlobalMerge(const TargetMachine *TM = 0)
+      : FunctionPass(ID), TM(TM) {
       initializeGlobalMergePass(*PassRegistry::getPassRegistry());
     }
 
@@ -144,6 +142,7 @@ INITIALIZE_PASS(GlobalMerge, "global-merge",
 
 bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
                           Module &M, bool isConst, unsigned AddrSpace) const {
+  const TargetLowering *TLI = TM->getTargetLowering();
   const DataLayout *TD = TLI->getDataLayout();
 
   // FIXME: Infer the maximum possible offset depending on the actual users
@@ -234,6 +233,7 @@ void GlobalMerge::setMustKeepGlobalVariables(Module &M) {
 bool GlobalMerge::doInitialization(Module &M) {
   DenseMap<unsigned, SmallVector<GlobalVariable*, 16> > Globals, ConstGlobals,
                                                         BSSGlobals;
+  const TargetLowering *TLI = TM->getTargetLowering();
   const DataLayout *TD = TLI->getDataLayout();
   unsigned MaxOffset = TLI->getMaximalGlobalOffset();
   bool Changed = false;
@@ -305,6 +305,6 @@ bool GlobalMerge::doFinalization(Module &M) {
   return false;
 }
 
-Pass *llvm::createGlobalMergePass(const TargetLowering *tli) {
-  return new GlobalMerge(tli);
+Pass *llvm::createGlobalMergePass(const TargetMachine *TM) {
+  return new GlobalMerge(TM);
 }

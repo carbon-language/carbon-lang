@@ -329,7 +329,7 @@ namespace llvm {
   /// This pass implements the target transform info analysis using the target
   /// independent information available to the LLVM code generator.
   ImmutablePass *
-  createBasicTargetTransformInfoPass(const TargetMachine *TLI);
+  createBasicTargetTransformInfoPass(const TargetMachine *TM);
 
   /// createUnreachableBlockEliminationPass - The LLVM code generator does not
   /// work well with unreachable basic blocks (what live ranges make sense for a

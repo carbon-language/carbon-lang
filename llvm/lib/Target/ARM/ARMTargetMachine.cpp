@@ -150,7 +150,7 @@ TargetPassConfig *ARMBaseTargetMachine::createPassConfig(PassManagerBase &PM) {
 
 bool ARMPassConfig::addPreISel() {
   if (TM->getOptLevel() != CodeGenOpt::None && EnableGlobalMerge)
-    addPass(createGlobalMergePass(TM->getTargetLowering()));
+    addPass(createGlobalMergePass(TM));
 
   return false;
 }

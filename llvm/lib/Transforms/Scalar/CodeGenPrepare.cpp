@@ -76,6 +76,7 @@ namespace {
   class CodeGenPrepare : public FunctionPass {
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// transformation profitability.
+    const TargetMachine *TM;
     const TargetLowering *TLI;
     const TargetLibraryInfo *TLInfo;
     DominatorTree *DT;
@@ -100,8 +101,8 @@ namespace {
 
   public:
     static char ID; // Pass identification, replacement for typeid
-    explicit CodeGenPrepare(const TargetLowering *tli = 0)
-      : FunctionPass(ID), TLI(tli) {
+    explicit CodeGenPrepare(const TargetMachine *TM = 0)
+      : FunctionPass(ID), TM(TM), TLI(0) {
         initializeCodeGenPreparePass(*PassRegistry::getPassRegistry());
       }
     bool runOnFunction(Function &F);
@@ -139,14 +140,15 @@ INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
 INITIALIZE_PASS_END(CodeGenPrepare, "codegenprepare",
                 "Optimize for code generation", false, false)
 
-FunctionPass *llvm::createCodeGenPreparePass(const TargetLowering *TLI) {
-  return new CodeGenPrepare(TLI);
+FunctionPass *llvm::createCodeGenPreparePass(const TargetMachine *TM) {
+  return new CodeGenPrepare(TM);
 }
 
 bool CodeGenPrepare::runOnFunction(Function &F) {
   bool EverMadeChange = false;
 
   ModifiedDT = false;
+  if (TM) TLI = TM->getTargetLowering();
   TLInfo = &getAnalysis<TargetLibraryInfo>();
   DT = getAnalysisIfAvailable<DominatorTree>();
   PFI = getAnalysisIfAvailable<ProfileInfo>();

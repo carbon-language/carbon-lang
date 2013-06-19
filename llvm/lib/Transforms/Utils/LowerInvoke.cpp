@@ -61,6 +61,8 @@ static cl::opt<bool> ExpensiveEHSupport("enable-correct-eh-support",
 
 namespace {
   class LowerInvoke : public FunctionPass {
+    const TargetMachine *TM;
+
     // Used for both models.
     Constant *AbortFn;
 
@@ -70,15 +72,12 @@ namespace {
     Constant *SetJmpFn, *LongJmpFn, *StackSaveFn, *StackRestoreFn;
     bool useExpensiveEHSupport;
 
-    // We peek in TLI to grab the target's jmp_buf size and alignment
-    const TargetLowering *TLI;
-
   public:
     static char ID; // Pass identification, replacement for typeid
-    explicit LowerInvoke(const TargetLowering *tli = NULL,
+    explicit LowerInvoke(const TargetMachine *TM = 0,
                          bool useExpensiveEHSupport = ExpensiveEHSupport)
-      : FunctionPass(ID), useExpensiveEHSupport(useExpensiveEHSupport),
-        TLI(tli) {
+      : FunctionPass(ID), TM(TM),
+        useExpensiveEHSupport(useExpensiveEHSupport) {
       initializeLowerInvokePass(*PassRegistry::getPassRegistry());
     }
     bool doInitialization(Module &M);
@@ -108,12 +107,9 @@ INITIALIZE_PASS(LowerInvoke, "lowerinvoke",
 char &llvm::LowerInvokePassID = LowerInvoke::ID;
 
 // Public Interface To the LowerInvoke pass.
-FunctionPass *llvm::createLowerInvokePass(const TargetLowering *TLI) {
-  return new LowerInvoke(TLI, ExpensiveEHSupport);
-}
-FunctionPass *llvm::createLowerInvokePass(const TargetLowering *TLI,
+FunctionPass *llvm::createLowerInvokePass(const TargetMachine *TM,
                                           bool useExpensiveEHSupport) {
-  return new LowerInvoke(TLI, useExpensiveEHSupport);
+  return new LowerInvoke(TM, useExpensiveEHSupport || ExpensiveEHSupport);
 }
 
 // doInitialization - Make sure that there is a prototype for abort in the
@@ -122,6 +118,7 @@ bool LowerInvoke::doInitialization(Module &M) {
   Type *VoidPtrTy = Type::getInt8PtrTy(M.getContext());
   if (useExpensiveEHSupport) {
     // Insert a type for the linked list of jump buffers.
+    const TargetLowering *TLI = TM ? TM->getTargetLowering() : 0;
     unsigned JBSize = TLI ? TLI->getJumpBufSize() : 0;
     JBSize = JBSize ? JBSize : 200;
     Type *JmpBufTy = ArrayType::get(VoidPtrTy, JBSize);
@@ -430,6 +427,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     // Create an alloca for the incoming jump buffer ptr and the new jump buffer
     // that needs to be restored on all exits from the function.  This is an
     // alloca because the value needs to be live across invokes.
+    const TargetLowering *TLI = TM ? TM->getTargetLowering() : 0;
     unsigned Align = TLI ? TLI->getJumpBufAlignment() : 0;
     AllocaInst *JmpBuf =
       new AllocaInst(JBLinkTy, 0, Align,

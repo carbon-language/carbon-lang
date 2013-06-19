@@ -404,7 +404,7 @@ void TargetPassConfig::addPassesToHandleExceptions() {
     addPass(createDwarfEHPass(TM));
     break;
   case ExceptionHandling::None:
-    addPass(createLowerInvokePass(TM->getTargetLowering()));
+    addPass(createLowerInvokePass(TM));
 
     // The lower invoke pass may create unreachable code. Remove it.
     addPass(createUnreachableBlockEliminationPass());
@@ -416,7 +416,7 @@ void TargetPassConfig::addPassesToHandleExceptions() {
 /// before exception handling preparation passes.
 void TargetPassConfig::addCodeGenPrepare() {
   if (getOptLevel() != CodeGenOpt::None && !DisableCGP)
-    addPass(createCodeGenPreparePass(getTargetLowering()));
+    addPass(createCodeGenPreparePass(TM));
 }
 
 /// Add common passes that perform LLVM IR to IR transforms in preparation for
