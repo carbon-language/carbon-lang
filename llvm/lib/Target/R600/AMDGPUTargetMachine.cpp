@@ -109,7 +109,7 @@ bool
 AMDGPUPassConfig::addPreISel() {
   const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
   if (ST.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS) {
-    addPass(createAMDGPUStructurizeCFGPass());
+    addPass(createStructurizeCFGPass());
     addPass(createSIAnnotateControlFlowPass());
   } else {
     addPass(createR600TextureIntrinsicsReplacer());

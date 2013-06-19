@@ -1,4 +1,4 @@
-//===-- AMDGPUStructurizeCFG.cpp -  ------------------===//
+//===-- StructurizeCFG.cpp ------------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,16 +6,9 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-/// \file
-/// The pass implemented in this file transforms the programs control flow
-/// graph into a form that's suitable for code generation on hardware that
-/// implements control flow by execution masking. This currently includes all
-/// AMD GPUs but may as well be useful for other types of hardware.
-//
-//===----------------------------------------------------------------------===//
 
-#include "AMDGPU.h"
+#define DEBUG_TYPE "structurizecfg"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/Analysis/RegionInfo.h"
@@ -56,10 +49,9 @@ static const char *FlowBlockName = "Flow";
 
 /// @brief Find the nearest common dominator for multiple BasicBlocks
 ///
-/// Helper class for AMDGPUStructurizeCFG
+/// Helper class for StructurizeCFG
 /// TODO: Maybe move into common code
 class NearestCommonDominator {
-
   DominatorTree *DT;
 
   DTN2UnsignedMap IndexMap;
@@ -77,7 +69,6 @@ public:
 
   /// \brief Add BB to the resulting dominator
   void addBlock(BasicBlock *BB, bool Remember = true) {
-
     DomTreeNode *Node = DT->getNode(BB);
 
     if (Result == 0) {
@@ -131,7 +122,7 @@ public:
 /// | |
 /// 2 |
 /// | /
-/// |/   
+/// |/
 /// 3
 /// ||   Where:
 /// | |  1 = "If" block, calculates the condition
@@ -164,10 +155,7 @@ public:
 /// while the true side continues the general flow. So the loop condition
 /// consist of a network of PHI nodes where the true incoming values expresses
 /// breaks and the false values expresses continue states.
-class AMDGPUStructurizeCFG : public RegionPass {
-
-  static char ID;
-
+class StructurizeCFG : public RegionPass {
   Type *Boolean;
   ConstantInt *BoolTrue;
   ConstantInt *BoolFalse;
@@ -239,9 +227,10 @@ class AMDGPUStructurizeCFG : public RegionPass {
   void rebuildSSA();
 
 public:
-  AMDGPUStructurizeCFG():
-    RegionPass(ID) {
+  static char ID;
 
+  StructurizeCFG() :
+    RegionPass(ID) {
     initializeRegionInfoPass(*PassRegistry::getPassRegistry());
   }
 
@@ -251,24 +240,29 @@ public:
   virtual bool runOnRegion(Region *R, RGPassManager &RGM);
 
   virtual const char *getPassName() const {
-    return "AMDGPU simplify control flow";
+    return "Structurize control flow";
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const {
-
     AU.addRequired<DominatorTree>();
     AU.addPreserved<DominatorTree>();
     RegionPass::getAnalysisUsage(AU);
   }
-
 };
 
 } // end anonymous namespace
 
-char AMDGPUStructurizeCFG::ID = 0;
+char StructurizeCFG::ID = 0;
+
+INITIALIZE_PASS_BEGIN(StructurizeCFG, "structurizecfg", "Structurize the CFG",
+                      false, false)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(RegionInfo)
+INITIALIZE_PASS_END(StructurizeCFG, "structurizecfg", "Structurize the CFG",
+                    false, false)
 
 /// \brief Initialize the types and constants used in the pass
-bool AMDGPUStructurizeCFG::doInitialization(Region *R, RGPassManager &RGM) {
+bool StructurizeCFG::doInitialization(Region *R, RGPassManager &RGM) {
   LLVMContext &Context = R->getEntry()->getContext();
 
   Boolean = Type::getInt1Ty(Context);
@@ -280,7 +274,7 @@ bool AMDGPUStructurizeCFG::doInitialization(Region *R, RGPassManager &RGM) {
 }
 
 /// \brief Build up the general order of nodes
-void AMDGPUStructurizeCFG::orderNodes() {
+void StructurizeCFG::orderNodes() {
   scc_iterator<Region *> I = scc_begin(ParentRegion),
                          E = scc_end(ParentRegion);
   for (Order.clear(); I != E; ++I) {
@@ -290,8 +284,7 @@ void AMDGPUStructurizeCFG::orderNodes() {
 }
 
 /// \brief Determine the end of the loops
-void AMDGPUStructurizeCFG::analyzeLoops(RegionNode *N) {
-
+void StructurizeCFG::analyzeLoops(RegionNode *N) {
   if (N->isSubRegion()) {
     // Test for exit as back edge
     BasicBlock *Exit = N->getNodeAs<Region>()->getExit();
@@ -313,8 +306,7 @@ void AMDGPUStructurizeCFG::analyzeLoops(RegionNode *N) {
 }
 
 /// \brief Invert the given condition
-Value *AMDGPUStructurizeCFG::invert(Value *Condition) {
-
+Value *StructurizeCFG::invert(Value *Condition) {
   // First: Check if it's a constant
   if (Condition == BoolTrue)
     return BoolFalse;
@@ -347,8 +339,8 @@ Value *AMDGPUStructurizeCFG::invert(Value *Condition) {
 }
 
 /// \brief Build the condition for one edge
-Value *AMDGPUStructurizeCFG::buildCondition(BranchInst *Term, unsigned Idx,
-                                            bool Invert) {
+Value *StructurizeCFG::buildCondition(BranchInst *Term, unsigned Idx,
+                                      bool Invert) {
   Value *Cond = Invert ? BoolFalse : BoolTrue;
   if (Term->isConditional()) {
     Cond = Term->getCondition();
@@ -360,8 +352,7 @@ Value *AMDGPUStructurizeCFG::buildCondition(BranchInst *Term, unsigned Idx,
 }
 
 /// \brief Analyze the predecessors of each block and build up predicates
-void AMDGPUStructurizeCFG::gatherPredicates(RegionNode *N) {
-
+void StructurizeCFG::gatherPredicates(RegionNode *N) {
   RegionInfo *RI = ParentRegion->getRegionInfo();
   BasicBlock *BB = N->getEntry();
   BBPredicates &Pred = Predicates[BB];
@@ -398,7 +389,7 @@ void AMDGPUStructurizeCFG::gatherPredicates(RegionNode *N) {
             }
           }
           Pred[*PI] = buildCondition(Term, i, false);
- 
+
         } else {
           // Back edge
           LPred[*PI] = buildCondition(Term, i, true);
@@ -425,8 +416,7 @@ void AMDGPUStructurizeCFG::gatherPredicates(RegionNode *N) {
 }
 
 /// \brief Collect various loop and predicate infos
-void AMDGPUStructurizeCFG::collectInfos() {
-
+void StructurizeCFG::collectInfos() {
   // Reset predicate
   Predicates.clear();
 
@@ -452,7 +442,7 @@ void AMDGPUStructurizeCFG::collectInfos() {
 }
 
 /// \brief Insert the missing branch conditions
-void AMDGPUStructurizeCFG::insertConditions(bool Loops) {
+void StructurizeCFG::insertConditions(bool Loops) {
   BranchVector &Conds = Loops ? LoopConds : Conditions;
   Value *Default = Loops ? BoolTrue : BoolFalse;
   SSAUpdater PhiInserter;
@@ -501,7 +491,7 @@ void AMDGPUStructurizeCFG::insertConditions(bool Loops) {
 
 /// \brief Remove all PHI values coming from "From" into "To" and remember
 /// them in DeletedPhis
-void AMDGPUStructurizeCFG::delPhiValues(BasicBlock *From, BasicBlock *To) {
+void StructurizeCFG::delPhiValues(BasicBlock *From, BasicBlock *To) {
   PhiMap &Map = DeletedPhis[To];
   for (BasicBlock::iterator I = To->begin(), E = To->end();
        I != E && isa<PHINode>(*I);) {
@@ -515,7 +505,7 @@ void AMDGPUStructurizeCFG::delPhiValues(BasicBlock *From, BasicBlock *To) {
 }
 
 /// \brief Add a dummy PHI value as soon as we knew the new predecessor
-void AMDGPUStructurizeCFG::addPhiValues(BasicBlock *From, BasicBlock *To) {
+void StructurizeCFG::addPhiValues(BasicBlock *From, BasicBlock *To) {
   for (BasicBlock::iterator I = To->begin(), E = To->end();
        I != E && isa<PHINode>(*I);) {
 
@@ -527,8 +517,7 @@ void AMDGPUStructurizeCFG::addPhiValues(BasicBlock *From, BasicBlock *To) {
 }
 
 /// \brief Add the real PHI value as soon as everything is set up
-void AMDGPUStructurizeCFG::setPhiValues() {
-
+void StructurizeCFG::setPhiValues() {
   SSAUpdater Updater;
   for (BB2BBVecMap::iterator AI = AddedPhis.begin(), AE = AddedPhis.end();
        AI != AE; ++AI) {
@@ -576,7 +565,7 @@ void AMDGPUStructurizeCFG::setPhiValues() {
 }
 
 /// \brief Remove phi values from all successors and then remove the terminator.
-void AMDGPUStructurizeCFG::killTerminator(BasicBlock *BB) {
+void StructurizeCFG::killTerminator(BasicBlock *BB) {
   TerminatorInst *Term = BB->getTerminator();
   if (!Term)
     return;
@@ -591,9 +580,8 @@ void AMDGPUStructurizeCFG::killTerminator(BasicBlock *BB) {
 }
 
 /// \brief Let node exit(s) point to NewExit
-void AMDGPUStructurizeCFG::changeExit(RegionNode *Node, BasicBlock *NewExit,
-                                      bool IncludeDominator) {
-
+void StructurizeCFG::changeExit(RegionNode *Node, BasicBlock *NewExit,
+                                bool IncludeDominator) {
   if (Node->isSubRegion()) {
     Region *SubRegion = Node->getNodeAs<Region>();
     BasicBlock *OldExit = SubRegion->getExit();
@@ -639,7 +627,7 @@ void AMDGPUStructurizeCFG::changeExit(RegionNode *Node, BasicBlock *NewExit,
 }
 
 /// \brief Create a new flow node and update dominator tree and region info
-BasicBlock *AMDGPUStructurizeCFG::getNextFlow(BasicBlock *Dominator) {
+BasicBlock *StructurizeCFG::getNextFlow(BasicBlock *Dominator) {
   LLVMContext &Context = Func->getContext();
   BasicBlock *Insert = Order.empty() ? ParentRegion->getExit() :
                        Order.back()->getEntry();
@@ -651,8 +639,7 @@ BasicBlock *AMDGPUStructurizeCFG::getNextFlow(BasicBlock *Dominator) {
 }
 
 /// \brief Create a new or reuse the previous node as flow node
-BasicBlock *AMDGPUStructurizeCFG::needPrefix(bool NeedEmpty) {
-
+BasicBlock *StructurizeCFG::needPrefix(bool NeedEmpty) {
   BasicBlock *Entry = PrevNode->getEntry();
 
   if (!PrevNode->isSubRegion()) {
@@ -660,7 +647,7 @@ BasicBlock *AMDGPUStructurizeCFG::needPrefix(bool NeedEmpty) {
     if (!NeedEmpty || Entry->getFirstInsertionPt() == Entry->end())
       return Entry;
 
-  } 
+  }
 
   // create a new flow node
   BasicBlock *Flow = getNextFlow(Entry);
@@ -672,9 +659,8 @@ BasicBlock *AMDGPUStructurizeCFG::needPrefix(bool NeedEmpty) {
 }
 
 /// \brief Returns the region exit if possible, otherwise just a new flow node
-BasicBlock *AMDGPUStructurizeCFG::needPostfix(BasicBlock *Flow,
-                                              bool ExitUseAllowed) {
-
+BasicBlock *StructurizeCFG::needPostfix(BasicBlock *Flow,
+                                        bool ExitUseAllowed) {
   if (Order.empty() && ExitUseAllowed) {
     BasicBlock *Exit = ParentRegion->getExit();
     DT->changeImmediateDominator(Exit, Flow);
@@ -685,12 +671,12 @@ BasicBlock *AMDGPUStructurizeCFG::needPostfix(BasicBlock *Flow,
 }
 
 /// \brief Set the previous node
-void AMDGPUStructurizeCFG::setPrevNode(BasicBlock *BB) {
+void StructurizeCFG::setPrevNode(BasicBlock *BB) {
   PrevNode =  ParentRegion->contains(BB) ? ParentRegion->getBBNode(BB) : 0;
 }
 
 /// \brief Does BB dominate all the predicates of Node ?
-bool AMDGPUStructurizeCFG::dominatesPredicates(BasicBlock *BB, RegionNode *Node) {
+bool StructurizeCFG::dominatesPredicates(BasicBlock *BB, RegionNode *Node) {
   BBPredicates &Preds = Predicates[Node->getEntry()];
   for (BBPredicates::iterator PI = Preds.begin(), PE = Preds.end();
        PI != PE; ++PI) {
@@ -702,8 +688,7 @@ bool AMDGPUStructurizeCFG::dominatesPredicates(BasicBlock *BB, RegionNode *Node)
 }
 
 /// \brief Can we predict that this node will always be called?
-bool AMDGPUStructurizeCFG::isPredictableTrue(RegionNode *Node) {
-
+bool StructurizeCFG::isPredictableTrue(RegionNode *Node) {
   BBPredicates &Preds = Predicates[Node->getEntry()];
   bool Dominated = false;
 
@@ -726,9 +711,8 @@ bool AMDGPUStructurizeCFG::isPredictableTrue(RegionNode *Node) {
 }
 
 /// Take one node from the order vector and wire it up
-void AMDGPUStructurizeCFG::wireFlow(bool ExitUseAllowed,
-                                    BasicBlock *LoopEnd) {
-
+void StructurizeCFG::wireFlow(bool ExitUseAllowed,
+                              BasicBlock *LoopEnd) {
   RegionNode *Node = Order.pop_back_val();
   Visited.insert(Node->getEntry());
 
@@ -763,8 +747,8 @@ void AMDGPUStructurizeCFG::wireFlow(bool ExitUseAllowed,
   }
 }
 
-void AMDGPUStructurizeCFG::handleLoops(bool ExitUseAllowed,
-                                       BasicBlock *LoopEnd) {
+void StructurizeCFG::handleLoops(bool ExitUseAllowed,
+                                 BasicBlock *LoopEnd) {
   RegionNode *Node = Order.back();
   BasicBlock *LoopStart = Node->getEntry();
 
@@ -793,8 +777,7 @@ void AMDGPUStructurizeCFG::handleLoops(bool ExitUseAllowed,
 
 /// After this function control flow looks like it should be, but
 /// branches and PHI nodes only have undefined conditions.
-void AMDGPUStructurizeCFG::createFlow() {
-
+void StructurizeCFG::createFlow() {
   BasicBlock *Exit = ParentRegion->getExit();
   bool EntryDominatesExit = DT->dominates(ParentRegion->getEntry(), Exit);
 
@@ -818,7 +801,7 @@ void AMDGPUStructurizeCFG::createFlow() {
 
 /// Handle a rare case where the disintegrated nodes instructions
 /// no longer dominate all their uses. Not sure if this is really nessasary
-void AMDGPUStructurizeCFG::rebuildSSA() {
+void StructurizeCFG::rebuildSSA() {
   SSAUpdater Updater;
   for (Region::block_iterator I = ParentRegion->block_begin(),
                               E = ParentRegion->block_end();
@@ -859,7 +842,7 @@ void AMDGPUStructurizeCFG::rebuildSSA() {
 }
 
 /// \brief Run the transformation for each region found
-bool AMDGPUStructurizeCFG::runOnRegion(Region *R, RGPassManager &RGM) {
+bool StructurizeCFG::runOnRegion(Region *R, RGPassManager &RGM) {
   if (R->isTopLevelRegion())
     return false;
 
@@ -891,6 +874,6 @@ bool AMDGPUStructurizeCFG::runOnRegion(Region *R, RGPassManager &RGM) {
 }
 
 /// \brief Create the pass
-Pass *llvm::createAMDGPUStructurizeCFGPass() {
-  return new AMDGPUStructurizeCFG();
+Pass *llvm::createStructurizeCFGPass() {
+  return new StructurizeCFG();
 }

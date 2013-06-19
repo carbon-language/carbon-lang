@@ -199,6 +199,12 @@ FunctionPass *createCFGSimplificationPass();
 
 //===----------------------------------------------------------------------===//
 //
+// CFG Structurization - Remove irreducible control flow
+//
+Pass *createStructurizeCFGPass();
+
+//===----------------------------------------------------------------------===//
+//
 // BreakCriticalEdges - Break all of the critical edges in the CFG by inserting
 // a dummy basic block. This pass may be "required" by passes that cannot deal
 // with critical edges. For this usage, a pass must call:

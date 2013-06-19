@@ -87,6 +87,7 @@ void initializeCFGOnlyPrinterPass(PassRegistry&);
 void initializeCFGOnlyViewerPass(PassRegistry&);
 void initializeCFGPrinterPass(PassRegistry&);
 void initializeCFGSimplifyPassPass(PassRegistry&);
+void initializeStructurizeCFGPass(PassRegistry&);
 void initializeCFGViewerPass(PassRegistry&);
 void initializeCalculateSpillWeightsPass(PassRegistry&);
 void initializeCallGraphAnalysisGroup(PassRegistry&);
