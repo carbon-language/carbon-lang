@@ -16,7 +16,6 @@
 
 #include "Archive.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/TimeValue.h"
 #include <cstring>
 
@@ -69,13 +68,8 @@ namespace llvm {
       return 0 == memcmp(fmag, ARFILE_MEMBER_MAGIC,2);
     }
   };
-  
+
   // Get just the externally visible defined symbols from the bitcode
-  bool GetBitcodeSymbols(const sys::Path& fName,
-                          LLVMContext& Context,
-                          std::vector<std::string>& symbols,
-                          std::string* ErrMsg);
-  
   Module* GetBitcodeSymbols(const char *Buffer, unsigned Length,
                             const std::string& ModuleID,
                             LLVMContext& Context,

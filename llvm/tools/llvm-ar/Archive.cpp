@@ -18,6 +18,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/system_error.h"
 #include <cstring>
@@ -208,30 +209,6 @@ static void getSymbols(Module*M, std::vector<std::string>& symbols) {
     if (AI->hasName())
       symbols.push_back(AI->getName());
   }
-}
-
-// Get just the externally visible defined symbols from the bitcode
-bool llvm::GetBitcodeSymbols(const sys::Path& fName,
-                             LLVMContext& Context,
-                             std::vector<std::string>& symbols,
-                             std::string* ErrMsg) {
-  OwningPtr<MemoryBuffer> Buffer;
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(fName.c_str(), Buffer)) {
-    if (ErrMsg) *ErrMsg = "Could not open file '" + fName.str() + "'" + ": "
-                        + ec.message();
-    return true;
-  }
-
-  Module *M = ParseBitcodeFile(Buffer.get(), Context, ErrMsg);
-  if (!M)
-    return true;
-
-  // Get the symbols
-  getSymbols(M, symbols);
-
-  // Done with the module.
-  delete M;
-  return true;
 }
 
 Module*
