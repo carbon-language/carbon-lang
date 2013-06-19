@@ -252,7 +252,6 @@ static void MlockIsUnsupported() {
   Printf("INFO: AddressSanitizer ignores mlock/mlockall/munlock/munlockall\n");
 }
 
-extern "C" {
 INTERCEPTOR(int, mlock, const void *addr, uptr len) {
   MlockIsUnsupported();
   return 0;
@@ -272,7 +271,6 @@ INTERCEPTOR(int, munlockall, void) {
   MlockIsUnsupported();
   return 0;
 }
-}  // extern "C"
 
 static inline int CharCmp(unsigned char c1, unsigned char c2) {
   return (c1 == c2) ? 0 : (c1 < c2) ? -1 : 1;
