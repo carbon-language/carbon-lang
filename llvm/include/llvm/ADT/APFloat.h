@@ -395,6 +395,7 @@ public:
   const fltSemantics &getSemantics() const { return *semantics; }
   bool isNonZero() const { return category != fcZero; }
   bool isNormal() const { return category == fcNormal; }
+  bool isFiniteNonZero() const { return isFinite() && !isZero(); }
   bool isPosZero() const { return isZero() && !isNegative(); }
   bool isNegZero() const { return isZero() && isNegative(); }
 

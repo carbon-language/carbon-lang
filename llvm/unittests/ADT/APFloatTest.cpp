@@ -1458,4 +1458,32 @@ TEST(APFloatTest, isNaN) {
   EXPECT_FALSE(APFloat(APFloat::IEEEsingle, "0x1p-159").isNaN());
 }
 
+TEST(APFloatTest, isFiniteNonZero) {
+  // Test positive/negative normal value.
+  EXPECT_TRUE(APFloat(APFloat::IEEEsingle, "0x1p+0").isFiniteNonZero());
+  EXPECT_TRUE(APFloat(APFloat::IEEEsingle, "-0x1p+0").isFiniteNonZero());
+
+  // Test positive/negative denormal value.
+  EXPECT_TRUE(APFloat(APFloat::IEEEsingle, "0x1p-149").isFiniteNonZero());
+  EXPECT_TRUE(APFloat(APFloat::IEEEsingle, "-0x1p-149").isFiniteNonZero());
+
+  // Test +/- Infinity.
+  EXPECT_FALSE(APFloat::getInf(APFloat::IEEEsingle, false).isFiniteNonZero());
+  EXPECT_FALSE(APFloat::getInf(APFloat::IEEEsingle, true).isFiniteNonZero());
+
+  // Test +/- Zero.
+  EXPECT_FALSE(APFloat::getZero(APFloat::IEEEsingle, false).isFiniteNonZero());
+  EXPECT_FALSE(APFloat::getZero(APFloat::IEEEsingle, true).isFiniteNonZero());
+
+  // Test +/- qNaN. +/- dont mean anything with qNaN but paranoia can't hurt in
+  // this instance.
+  EXPECT_FALSE(APFloat::getNaN(APFloat::IEEEsingle, false).isFiniteNonZero());
+  EXPECT_FALSE(APFloat::getNaN(APFloat::IEEEsingle, true).isFiniteNonZero());
+
+  // Test +/- sNaN. +/- dont mean anything with sNaN but paranoia can't hurt in
+  // this instance.
+  EXPECT_FALSE(APFloat::getSNaN(APFloat::IEEEsingle, false).isFiniteNonZero()); 
+  EXPECT_FALSE(APFloat::getSNaN(APFloat::IEEEsingle, true).isFiniteNonZero()); 
+}
+
 }
