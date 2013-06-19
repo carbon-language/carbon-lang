@@ -278,7 +278,7 @@ class ScopedStackSpaceWithGuard {
   uptr guard_start_;
 };
 
-static void WipeStack() {
+NOINLINE static void WipeStack() {
   char arr[256];
   internal_memset(arr, 0, sizeof(arr));
 }
