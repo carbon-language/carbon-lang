@@ -77,11 +77,11 @@ error_code MachOUniversalBinary::ObjectForArch::getAsObjectFile(
   if (Parent) {
     StringRef ParentData = Parent->getData();
     StringRef ObjectData = ParentData.substr(Header.Offset, Header.Size);
-    Twine ObjectName =
-        Twine(Parent->getFileName()) + ":" +
+    std::string ObjectName =
+        Parent->getFileName().str() + ":" +
         Triple::getArchTypeName(MachOObjectFile::getArch(Header.CPUType));
     MemoryBuffer *ObjBuffer = MemoryBuffer::getMemBuffer(
-        ObjectData, ObjectName.str(), false);
+        ObjectData, ObjectName, false);
     if (ObjectFile *Obj = ObjectFile::createMachOObjectFile(ObjBuffer)) {
       Result.reset(Obj);
       return object_error::success;
