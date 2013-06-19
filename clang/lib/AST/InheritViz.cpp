@@ -21,6 +21,7 @@
 #include "llvm/Support/PathV1.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
+#include <set>
 
 using namespace llvm;
 
