@@ -35,7 +35,7 @@ private:
   ManagedStringPool ManagedStrPool;
 
 public:
-  NVPTXRegisterInfo(const TargetInstrInfo &tii, const NVPTXSubtarget &st);
+  NVPTXRegisterInfo(const NVPTXSubtarget &st);
 
   //------------------------------------------------------
   // Pure virtual functions from TargetRegisterInfo

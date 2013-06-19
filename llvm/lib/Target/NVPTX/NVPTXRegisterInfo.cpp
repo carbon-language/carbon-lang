@@ -77,8 +77,7 @@ std::string getNVPTXRegClassStr(TargetRegisterClass const *RC) {
 }
 }
 
-NVPTXRegisterInfo::NVPTXRegisterInfo(const TargetInstrInfo &tii,
-                                     const NVPTXSubtarget &st)
+NVPTXRegisterInfo::NVPTXRegisterInfo(const NVPTXSubtarget &st)
     : NVPTXGenRegisterInfo(0), Is64Bit(st.is64Bit()) {}
 
 #define GET_REGINFO_TARGET_DESC
