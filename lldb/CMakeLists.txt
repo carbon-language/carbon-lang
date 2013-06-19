@@ -118,6 +118,12 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   )
 endif()
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  add_lldb_definitions(
+    -Wno-deprecated-register
+  )
+endif()
+
 # Disable MSVC warnings
 if( MSVC )
   add_lldb_definitions(
