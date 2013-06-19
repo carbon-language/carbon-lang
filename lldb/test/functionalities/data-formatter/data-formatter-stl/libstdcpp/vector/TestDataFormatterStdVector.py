@@ -36,7 +36,7 @@ class StdVectorDataFormatterTestCase(TestBase):
         """Test that that file and class static variables display correctly."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
-        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=-1)
+        lldbutil.run_break_set_by_source_regexp (self, "Set break point at this line.")
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -61,7 +61,7 @@ class StdVectorDataFormatterTestCase(TestBase):
         self.expect("frame variable numbers",
             substrs = ['numbers = size=0'])
 
-        self.runCmd("n")
+        self.runCmd("c")
         
         # first value added
         self.expect("frame variable numbers",
@@ -70,7 +70,7 @@ class StdVectorDataFormatterTestCase(TestBase):
                                '}'])
 
         # add some more data
-        self.runCmd("n");self.runCmd("n");self.runCmd("n");
+        self.runCmd("c");
     
         self.expect("frame variable numbers",
                     substrs = ['numbers = size=4',
@@ -104,7 +104,7 @@ class StdVectorDataFormatterTestCase(TestBase):
         self.runCmd("type summary delete int_vect")
 
         # add some more data
-        self.runCmd("n");self.runCmd("n");self.runCmd("n");
+        self.runCmd("c");
 
         self.expect("frame variable numbers",
                     substrs = ['numbers = size=7',
@@ -148,12 +148,12 @@ class StdVectorDataFormatterTestCase(TestBase):
         self.assertTrue(self.frame().FindVariable("numbers").MightHaveChildren(), "numbers.MightHaveChildren() says False for non empty!")
 
         # clear out the vector and see that we do the right thing once again
-        self.runCmd("n")
+        self.runCmd("c")
 
         self.expect("frame variable numbers",
             substrs = ['numbers = size=0'])
 
-        self.runCmd("n")
+        self.runCmd("c")
 
         # first value added
         self.expect("frame variable numbers",
@@ -162,10 +162,7 @@ class StdVectorDataFormatterTestCase(TestBase):
                                '}'])
 
         # check if we can display strings
-        self.runCmd("n")
-        self.runCmd("n")
-        self.runCmd("n")
-        self.runCmd("n")
+        self.runCmd("c")
 
         self.expect("frame variable strings",
             substrs = ['goofy',
@@ -191,7 +188,7 @@ class StdVectorDataFormatterTestCase(TestBase):
                                'is',
                                'smart'])
 
-        self.runCmd("n");
+        self.runCmd("c");
 
         self.expect("frame variable strings",
                     substrs = ['vector has 4 items'])
@@ -211,7 +208,7 @@ class StdVectorDataFormatterTestCase(TestBase):
         # check that MightHaveChildren() gets it right
         self.assertTrue(self.frame().FindVariable("strings").MightHaveChildren(), "strings.MightHaveChildren() says False for non empty!")
 
-        self.runCmd("n")
+        self.runCmd("c")
 
         self.expect("frame variable strings",
             substrs = ['vector has 0 items'])
