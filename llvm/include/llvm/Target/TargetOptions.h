@@ -204,7 +204,10 @@ namespace llvm {
     /// the value of this option.
     FPOpFusion::FPOpFusionMode AllowFPOpFusion;
 
-    bool operator==(const TargetOptions &);
+    bool operator==(const TargetOptions &TM);
+    bool operator!=(const TargetOptions &TM) {
+      return !(*this == TM);
+    }
   };
 } // End llvm namespace
 
