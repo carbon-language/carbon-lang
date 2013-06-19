@@ -225,7 +225,10 @@ static void addProfileRT(const ToolChain &TC, const ArgList &Args,
 }
 
 static bool forwardToGCC(const Option &O) {
-  return !O.hasFlag(options::NoForward) &&
+  // Don't forward inputs from the original command line.  They are added from
+  // InputInfoList.
+  return !O.getKind() == Option::InputClass &&
+         !O.hasFlag(options::NoForward) &&
          !O.hasFlag(options::DriverOption) &&
          !O.hasFlag(options::LinkerInput);
 }
