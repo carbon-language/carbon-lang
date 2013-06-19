@@ -19,8 +19,8 @@
 ; CHECK: DW_AT_name{{.*}} = "f"
 ; CHECK: DW_AT_location{{.*}}([[LOC:0x[0-9]*]])
 ; CHECK: debug_loc contents
-; CHECK-NEXT: [[LOC]]: Begining
-; CHECK-NEXT:            Ending
+; CHECK-NEXT: [[LOC]]: Beginning
+; CHECK-NEXT:             Ending
 ; 0x74 is DW_OP_breg0 + 4, showing that the parameter is accessed indirectly
 ; (with a zero offset) from the register parameter
 ; CHECK-NEXT: Location description: 74 00
