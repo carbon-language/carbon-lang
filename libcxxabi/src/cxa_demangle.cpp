@@ -1759,7 +1759,11 @@ parse_vector_type(const char* first, const char* last, C& db)
 //        ::= G <type>        # imaginary (C 2000)
 //        ::= Dp <type>       # pack expansion (C++0x)
 //        ::= U <source-name> <type>  # vendor extended type qualifier
+// extension := U <objc-name> <objc-type>  # objc-type<identifier>
 // extension := <vector-type> # <vector-type> starts with Dv
+
+// <objc-name> ::= <k0 number> objcproto <k1 number> <identifier>  # k0 = 9 + <number of digits in k1> + k1
+// <objc-type> := <source-name>  # PU<11+>objcproto 11objc_object<source-name> 11objc_object -> id<source-name>
 
 template <class C>
 const char*
@@ -1924,7 +1928,14 @@ parse_type(const char* first, const char* last, C& db)
                                     db.names[k].first += "(";
                                     db.names[k].second.insert(0, ")");
                                 }
-                                db.names[k].first.append("*");
+                                if (first[1] != 'U' || db.names[k].first.substr(0, 12) != "objc_object<")
+                                {
+                                    db.names[k].first.append("*");
+                                }
+                                else
+                                {
+                                    db.names[k].first.replace(0, 11, "id");
+                                }
                                 db.subs.back().push_back(db.names[k]);
                             }
                             first = t;
@@ -1993,9 +2004,26 @@ parse_type(const char* first, const char* last, C& db)
                                 const char* t2 = parse_type(t, last, db);
                                 if (t2 != t)
                                 {
-                                    auto type = std::move(db.names.back().move_full());
+                                    auto type = db.names.back().move_full();
                                     db.names.pop_back();
-                                    db.names.back() = type + " " + db.names.back().move_full();
+                                    if (db.names.back().first.substr(0, 9) != "objcproto")
+                                    {
+                                        db.names.back() = type + " " + db.names.back().move_full();
+                                    }
+                                    else
+                                    {
+                                        auto proto = db.names.back().move_full();
+                                        db.names.pop_back();
+                                        t = parse_source_name(proto.data() + 9, proto.data() + proto.size(), db);
+                                        if (t != proto.data() + 9)
+                                        {
+                                            db.names.back() = type + "<" + db.names.back().move_full() + ">";
+                                        }
+                                        else
+                                        {
+                                            db.names.push_back(type + " " + proto);
+                                        }
+                                    }
                                     db.subs.push_back(typename C::sub_type(1, db.names.back(), db.names.get_allocator()));
                                     first = t2;
                                 }
@@ -4412,6 +4440,7 @@ __cxa_demangle(const char* mangled_name, char* buf, size_t* n, int* status)
     };
     Db db(a);
     db.cv = 0;
+    db.ref = 0;
     db.parsed_ctor_dtor_cv = false;
     db.tag_templates = true;
     db.template_param.emplace_back(a);
