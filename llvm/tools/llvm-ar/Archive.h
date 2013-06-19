@@ -137,15 +137,6 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
     /// @brief Determine if the member has a long file name
     bool hasLongFilename() const { return flags&HasLongFilenameFlag; }
 
-    /// This method returns the status info (like Unix stat(2)) for the archive
-    /// member. The status info provides the file's size, permissions, and
-    /// modification time. The contents of the Path::StatusInfo structure, other
-    /// than the size and modification time, may not have utility on non-Unix
-    /// systems.
-    /// @returns the status info for the archive member
-    /// @brief Obtain the status info for the archive member
-    const sys::FileStatus &getFileStatus() const { return info; }
-
     /// This method causes the archive member to be replaced with the contents
     /// of the file specified by \p File. The contents of \p this will be
     /// updated to reflect the new data from \p File. The \p File must exist and

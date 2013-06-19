@@ -440,12 +440,18 @@ doExtract(std::string* ErrMsg) {
       file.write(data,len);
       file.close();
 
+      sys::PathWithStatus PWS(I->getPath());
+      sys::FileStatus Status = *PWS.getFileStatus();
+
+      // Retain the original mode.
+      Status.mode = I->getMode();
+
       // If we're supposed to retain the original modification times, etc. do so
       // now.
-      if (OriginalDates) {
-        sys::PathWithStatus PWS(I->getPath());
-        PWS.setStatusInfoOnDisk(I->getFileStatus());
-      }
+      if (OriginalDates)
+        Status.modTime = I->getModTime();
+
+      PWS.setStatusInfoOnDisk(Status);
     }
   }
   return false;
