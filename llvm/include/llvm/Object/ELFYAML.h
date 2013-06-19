@@ -39,6 +39,8 @@ LLVM_YAML_STRONG_TYPEDEF(uint8_t, ELF_ELFDATA)
 LLVM_YAML_STRONG_TYPEDEF(uint32_t, ELF_SHT)
 // Just use 64, since it can hold 32-bit values too.
 LLVM_YAML_STRONG_TYPEDEF(uint64_t, ELF_SHF)
+LLVM_YAML_STRONG_TYPEDEF(uint8_t, ELF_STB)
+LLVM_YAML_STRONG_TYPEDEF(uint8_t, ELF_STT)
 
 // For now, hardcode 64 bits everywhere that 32 or 64 would be needed
 // since 64-bit can hold 32-bit values too.
@@ -51,6 +53,8 @@ struct FileHeader {
 };
 struct Symbol {
   StringRef Name;
+  ELF_STB Binding;
+  ELF_STT Type;
 };
 struct Section {
   StringRef Name;
@@ -105,6 +109,16 @@ struct ScalarEnumerationTraits<ELFYAML::ELF_SHT> {
 template <>
 struct ScalarBitSetTraits<ELFYAML::ELF_SHF> {
   static void bitset(IO &IO, ELFYAML::ELF_SHF &Value);
+};
+
+template <>
+struct ScalarEnumerationTraits<ELFYAML::ELF_STB> {
+  static void enumeration(IO &IO, ELFYAML::ELF_STB &Value);
+};
+
+template <>
+struct ScalarEnumerationTraits<ELFYAML::ELF_STT> {
+  static void enumeration(IO &IO, ELFYAML::ELF_STT &Value);
 };
 
 template <>

@@ -13,9 +13,13 @@ Sections:
     Type: SHT_SYMTAB
     Symbols:
     - Name: main
+      Binding: STB_GLOBAL
+      Type: STT_FUNC
 
 # CHECK:      Symbols [
 # CHECK-NEXT:   Symbol {
 # CHECK-NEXT:     Name:  (0)
 # CHECK:        Symbol {
 # CHECK-NEXT:     Name: main
+# CHECK:          Binding: Global
+# CHECK-NEXT:     Type: Function

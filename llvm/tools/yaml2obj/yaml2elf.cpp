@@ -166,6 +166,7 @@ static void handleSymtabSectionHeader(
     zero(Symbol);
     if (!Sym.Name.empty())
       Symbol.st_name = StrTab.addString(Sym.Name);
+    Symbol.setBindingAndType(Sym.Binding, Sym.Type);
     Syms.push_back(Symbol);
   }
 

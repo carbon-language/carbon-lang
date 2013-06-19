@@ -251,6 +251,29 @@ void ScalarBitSetTraits<ELFYAML::ELF_SHF>::bitset(IO &IO,
 #undef BCase
 }
 
+void ScalarEnumerationTraits<ELFYAML::ELF_STB>::enumeration(
+    IO &IO, ELFYAML::ELF_STB &Value) {
+#define ECase(X) IO.enumCase(Value, #X, ELF::X);
+  ECase(STB_LOCAL)
+  ECase(STB_GLOBAL)
+  ECase(STB_WEAK)
+#undef ECase
+}
+
+void ScalarEnumerationTraits<ELFYAML::ELF_STT>::enumeration(
+    IO &IO, ELFYAML::ELF_STT &Value) {
+#define ECase(X) IO.enumCase(Value, #X, ELF::X);
+  ECase(STT_NOTYPE)
+  ECase(STT_OBJECT)
+  ECase(STT_FUNC)
+  ECase(STT_SECTION)
+  ECase(STT_FILE)
+  ECase(STT_COMMON)
+  ECase(STT_TLS)
+  ECase(STT_GNU_IFUNC)
+#undef ECase
+}
+
 void MappingTraits<ELFYAML::FileHeader>::mapping(IO &IO,
                                                  ELFYAML::FileHeader &FileHdr) {
   IO.mapRequired("Class", FileHdr.Class);
@@ -262,6 +285,8 @@ void MappingTraits<ELFYAML::FileHeader>::mapping(IO &IO,
 
 void MappingTraits<ELFYAML::Symbol>::mapping(IO &IO, ELFYAML::Symbol &Symbol) {
   IO.mapOptional("Name", Symbol.Name, StringRef());
+  IO.mapOptional("Binding", Symbol.Binding, ELFYAML::ELF_STB(0));
+  IO.mapOptional("Type", Symbol.Type, ELFYAML::ELF_STT(0));
 }
 
 void MappingTraits<ELFYAML::Section>::mapping(IO &IO,
