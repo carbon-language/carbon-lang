@@ -952,45 +952,6 @@ ReadAsciiBufferAndDumpToStream (lldb::addr_t location,
     return true;
 }
 
-#ifdef WANT_DEEP_PRINT
-struct lldb__notInlineMutable {
-    void *buffer;
-    signed long length;
-    signed long capacity;
-    unsigned int hasGap:1;
-    unsigned int isFixedCapacity:1;
-    unsigned int isExternalMutable:1;
-    unsigned int capacityProvidedExternally:1;
-#if __LP64__
-    unsigned long desiredCapacity:60;
-#else
-    unsigned long desiredCapacity:28;
-#endif
-    void* contentsAllocator;
-};
-
-struct lldb__CFString {
-    uintptr_t _cfisa;
-    uint8_t _cfinfo[4];
-    uint32_t _rc;
-    union {
-        struct __inline1 {
-            signed long length;
-        } inline1;
-        struct __notInlineImmutable1 {
-            void *buffer;
-            signed long length;
-            void* contentsDeallocator;
-        } notInlineImmutable1;
-        struct __notInlineImmutable2 {
-            void *buffer;
-            void* contentsDeallocator;
-        } notInlineImmutable2;
-        struct lldb__notInlineMutable notInlineMutable;
-    } variants;
-};
-#endif
-
 bool
 lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& stream)
 {
@@ -1056,72 +1017,6 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             explicit_length = process_sp->ReadUnsignedIntegerFromMemory(explicit_length_offset, 4, 0, error);
         }
     }
-    
-#ifdef WANT_DEEP_PRINT
-    lldb__CFString my_string_data;
-    process_sp->ReadMemory(valobj_addr, &my_string_data, sizeof(lldb__CFString),error);
-    
-    printf(R"(
-           __CFString my_string_data = {
-           uintptr_t _cfisa = %lu
-           uint8_t _cfinfo[4] = %c%c%c%c
-           uint32_t _rc = %d
-           union {
-               struct __inline1 {
-                   signed long length = %ld
-               } inline1;
-               struct __notInlineImmutable1 {
-                   void *buffer = %p
-                   signed long length = %ld
-                   void* contentsDeallocator = %p
-               } notInlineImmutable1;
-               struct __notInlineImmutable2 {
-                   void *buffer = %p
-                   void* contentsDeallocator = %p
-               } notInlineImmutable2;
-               struct __notInlineMutable notInlineMutable {
-                   void *buffer = %p
-                   signed long length = %ld
-                   signed long capacity = %ld
-                   unsigned int hasGap:1 = %d
-                   unsigned int isFixedCapacity:1 = %d
-                   unsigned int isExternalMutable:1 = %d
-                   unsigned int capacityProvidedExternally:1 = %d
-#if __LP64__
-                   unsigned long desiredCapacity:60 = %lu
-#else
-                   unsigned long desiredCapacity:28 = %lu
-#endif
-                   void* contentsAllocator = %p
-               }
-           } variants; ==> (M:%dI:%dL:%zuU:%dS:%dN:%d)
-           };\n)",
-    my_string_data._cfisa,
-    my_string_data._cfinfo[0],my_string_data._cfinfo[1],my_string_data._cfinfo[2],my_string_data._cfinfo[3],
-    my_string_data._rc,
-    my_string_data.variants.inline1.length,
-    my_string_data.variants.notInlineImmutable1.buffer,
-    my_string_data.variants.notInlineImmutable1.length,
-    my_string_data.variants.notInlineImmutable1.contentsDeallocator,
-    my_string_data.variants.notInlineImmutable2.buffer,
-    my_string_data.variants.notInlineImmutable2.contentsDeallocator,
-    my_string_data.variants.notInlineMutable.buffer,
-    my_string_data.variants.notInlineMutable.length,
-    my_string_data.variants.notInlineMutable.capacity,
-    my_string_data.variants.notInlineMutable.hasGap,
-    my_string_data.variants.notInlineMutable.isFixedCapacity,
-    my_string_data.variants.notInlineMutable.isExternalMutable,
-    my_string_data.variants.notInlineMutable.capacityProvidedExternally,
-    my_string_data.variants.notInlineMutable.desiredCapacity,
-    my_string_data.variants.notInlineMutable.desiredCapacity,
-    my_string_data.variants.notInlineMutable.contentsAllocator,
-    is_mutable,
-    is_inline,
-    explicit_length,
-    is_unicode,
-    is_special,
-    has_null);
-#endif
     
     if (strcmp(class_name,"NSString") &&
         strcmp(class_name,"CFStringRef") &&
@@ -1221,6 +1116,8 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         location = process_sp->ReadPointerFromMemory(location, error);
         if (error.Fail())
             return false;
+        if (has_explicit_length && !has_null)
+            explicit_length++; // account for the fact that there is no NULL and we need to have one added
         return ReadAsciiBufferAndDumpToStream(location,process_sp,stream,explicit_length);
     }
     
