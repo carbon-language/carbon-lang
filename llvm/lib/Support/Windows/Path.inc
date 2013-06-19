@@ -302,54 +302,6 @@ bool Path::makeWriteableOnDisk(std::string* ErrMsg) {
 }
 
 bool
-Path::getDirectoryContents(std::set<Path>& result, std::string* ErrMsg) const {
-  WIN32_FILE_ATTRIBUTE_DATA fi;
-  if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi)) {
-    MakeErrMsg(ErrMsg, path + ": can't get status of file");
-    return true;
-  }
-
-  if (!(fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-    if (ErrMsg)
-      *ErrMsg = path + ": not a directory";
-    return true;
-  }
-
-  result.clear();
-  WIN32_FIND_DATA fd;
-  std::string searchpath = path;
-  if (path.size() == 0 || searchpath[path.size()-1] == '/')
-    searchpath += "*";
-  else
-    searchpath += "/*";
-
-  HANDLE h = FindFirstFile(searchpath.c_str(), &fd);
-  if (h == INVALID_HANDLE_VALUE) {
-    if (GetLastError() == ERROR_FILE_NOT_FOUND)
-      return true; // not really an error, now is it?
-    MakeErrMsg(ErrMsg, path + ": Can't read directory: ");
-    return true;
-  }
-
-  do {
-    if (fd.cFileName[0] == '.')
-      continue;
-    Path aPath(path);
-    aPath.appendComponent(&fd.cFileName[0]);
-    result.insert(aPath);
-  } while (FindNextFile(h, &fd));
-
-  DWORD err = GetLastError();
-  FindClose(h);
-  if (err != ERROR_NO_MORE_FILES) {
-    SetLastError(err);
-    MakeErrMsg(ErrMsg, path + ": Can't read directory: ");
-    return true;
-  }
-  return false;
-}
-
-bool
 Path::set(StringRef a_path) {
   if (a_path.empty())
     return false;

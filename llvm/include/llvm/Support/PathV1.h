@@ -17,7 +17,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/TimeValue.h"
-#include <set>
 #include <string>
 #include <vector>
 
@@ -262,15 +261,6 @@ namespace sys {
       /// @returns true if the file is S_ISREG.
       /// @brief Determines if the file is a regular file
       bool isRegularFile() const;
-
-      /// This function builds a list of paths that are the names of the
-      /// files and directories in a directory.
-      /// @returns true if an error occurs, true otherwise
-      /// @brief Build a list of directory's contents.
-      bool getDirectoryContents(
-        std::set<Path> &paths, ///< The resulting list of file & directory names
-        std::string* ErrMsg    ///< Optional place to return an error message.
-      ) const;
 
     /// @}
     /// @name Path Mutators

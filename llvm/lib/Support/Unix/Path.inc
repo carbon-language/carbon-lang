@@ -390,36 +390,6 @@ bool Path::makeWriteableOnDisk(std::string* ErrMsg) {
 }
 
 bool
-Path::getDirectoryContents(std::set<Path>& result, std::string* ErrMsg) const {
-  DIR* direntries = ::opendir(path.c_str());
-  if (direntries == 0)
-    return MakeErrMsg(ErrMsg, path + ": can't open directory");
-
-  std::string dirPath = path;
-  if (!lastIsSlash(dirPath))
-    dirPath += '/';
-
-  result.clear();
-  struct dirent* de = ::readdir(direntries);
-  for ( ; de != 0; de = ::readdir(direntries)) {
-    if (de->d_name[0] != '.') {
-      Path aPath(dirPath + (const char*)de->d_name);
-      struct stat st;
-      if (0 != lstat(aPath.path.c_str(), &st)) {
-        if (S_ISLNK(st.st_mode))
-          continue; // dangling symlink -- ignore
-        return MakeErrMsg(ErrMsg,
-                          aPath.path +  ": can't determine file object type");
-      }
-      result.insert(aPath);
-    }
-  }
-
-  closedir(direntries);
-  return false;
-}
-
-bool
 Path::set(StringRef a_path) {
   if (a_path.empty())
     return false;
