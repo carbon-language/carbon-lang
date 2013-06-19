@@ -984,7 +984,7 @@ PlatformDarwin::GetDeveloperDirectory()
                 {
                     const char *cmd_output_ptr = command_output.c_str();
                     developer_dir_path[sizeof (developer_dir_path) - 1] = '\0';
-                    int i;
+                    size_t i;
                     for (i = 0; i < sizeof (developer_dir_path) - 1; i++)
                     {
                         if (cmd_output_ptr[i] == '\r' || cmd_output_ptr[i] == '\n' || cmd_output_ptr[i] == '\0')
@@ -1043,7 +1043,7 @@ PlatformDarwin::SetThreadCreationBreakpoint (Target &target)
     };
 
     FileSpecList bp_modules;
-    for (int i = 0; i < sizeof(g_bp_modules)/sizeof(const char *); i++)
+    for (size_t i = 0; i < sizeof(g_bp_modules)/sizeof(const char *); i++)
     {
         const char *bp_module = g_bp_modules[i];
         bp_modules.Append(FileSpec(bp_module, false));

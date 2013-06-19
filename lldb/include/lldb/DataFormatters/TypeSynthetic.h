@@ -295,20 +295,20 @@ namespace lldb_private {
             m_expression_paths.clear();
         }
         
-        int
+        size_t
         GetCount() const
         {
             return m_expression_paths.size();
         }
         
         const char*
-        GetExpressionPathAtIndex(int i) const
+        GetExpressionPathAtIndex(size_t i) const
         {
             return m_expression_paths[i].c_str();
         }
         
         bool
-        SetExpressionPathAtIndex (int i, const char* path)
+        SetExpressionPathAtIndex (size_t i, const char* path)
         {
             return SetExpressionPathAtIndex(i, std::string(path));
         }
@@ -329,7 +329,7 @@ namespace lldb_private {
         }
         
         bool
-        SetExpressionPathAtIndex (int i, const std::string& path)
+        SetExpressionPathAtIndex (size_t i, const std::string& path)
         {
             if (i >= GetCount())
                 return false;
@@ -399,7 +399,7 @@ namespace lldb_private {
             GetIndexOfChildWithName (const ConstString &name)
             {
                 const char* name_cstr = name.GetCString();
-                for (int i = 0; i < filter->GetCount(); i++)
+                for (size_t i = 0; i < filter->GetCount(); i++)
                 {
                     const char* expr_cstr = filter->GetExpressionPathAtIndex(i);
                     if (expr_cstr)

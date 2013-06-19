@@ -94,7 +94,7 @@ CommandObjectHelp::DoExecute (Args& command, CommandReturnObject &result)
             CommandObject *sub_cmd_obj = cmd_obj;
             // Loop down through sub_command dictionaries until we find the command object that corresponds
             // to the help command entered.
-            for (int i = 1; i < argc && all_okay; ++i)
+            for (size_t i = 1; i < argc && all_okay; ++i)
             {
                 std::string sub_command = command.GetArgumentAtIndex(i);
                 matches.Clear();

@@ -721,7 +721,7 @@ Symtab::AppendSymbolIndexesMatchingRegExAndType (const RegularExpression &regexp
     uint32_t prev_size = indexes.size();
     uint32_t sym_end = m_symbols.size();
 
-    for (int i = 0; i < sym_end; i++)
+    for (uint32_t i = 0; i < sym_end; i++)
     {
         if (symbol_type == eSymbolTypeAny || m_symbols[i].GetType() == symbol_type)
         {
@@ -745,7 +745,7 @@ Symtab::AppendSymbolIndexesMatchingRegExAndType (const RegularExpression &regexp
     uint32_t prev_size = indexes.size();
     uint32_t sym_end = m_symbols.size();
 
-    for (int i = 0; i < sym_end; i++)
+    for (uint32_t i = 0; i < sym_end; i++)
     {
         if (symbol_type == eSymbolTypeAny || m_symbols[i].GetType() == symbol_type)
         {

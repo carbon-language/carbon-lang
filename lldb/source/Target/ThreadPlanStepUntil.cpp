@@ -80,7 +80,7 @@ ThreadPlanStepUntil::ThreadPlanStepUntil
         m_stack_id = m_thread.GetStackFrameAtIndex(frame_idx)->GetStackID();
 
         // Now set breakpoints on all our return addresses:
-        for (int i = 0; i < num_addresses; i++)
+        for (size_t i = 0; i < num_addresses; i++)
         {
             Breakpoint *until_bp = target_sp->CreateBreakpoint (address_list[i], true).get();
             if (until_bp != NULL)

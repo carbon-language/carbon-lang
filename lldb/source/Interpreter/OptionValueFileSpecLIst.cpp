@@ -150,7 +150,7 @@ OptionValueFileSpecList::SetValueFromCString (const char *value, VarSetOperation
                     {
                         // Sort and then erase in reverse so indexes are always valid
                         std::sort(remove_indexes.begin(), remove_indexes.end());
-                        for (int j=num_remove_indexes-1; j<num_remove_indexes; ++j)
+                        for (size_t j=num_remove_indexes-1; j<num_remove_indexes; ++j)
                         {
                             m_current_value.Remove (j);
                         }

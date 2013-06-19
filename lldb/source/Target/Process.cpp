@@ -3226,7 +3226,7 @@ Process::CompleteAttach ()
     size_t num_modules = target_modules.GetSize();
     ModuleSP new_executable_module_sp;
     
-    for (int i = 0; i < num_modules; i++)
+    for (size_t i = 0; i < num_modules; i++)
     {
         ModuleSP module_sp (target_modules.GetModuleAtIndexUnlocked (i));
         if (module_sp && module_sp->IsExecutable())

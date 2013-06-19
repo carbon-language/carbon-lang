@@ -1019,7 +1019,7 @@ CommandInterpreter::GetAliasHelp (const char *alias_name, const char *command_na
     if (option_arg_vector_sp)
     {
         OptionArgVector *options = option_arg_vector_sp.get();
-        for (int i = 0; i < options->size(); ++i)
+        for (size_t i = 0; i < options->size(); ++i)
         {
             OptionArgPair cur_option = (*options)[i];
             std::string opt = cur_option.first;
@@ -1314,7 +1314,7 @@ CommandInterpreter::BuildAliasResult (const char *alias_name,
         {
             OptionArgVector *option_arg_vector = option_arg_vector_sp.get();
 
-            for (int i = 0; i < option_arg_vector->size(); ++i)
+            for (size_t i = 0; i < option_arg_vector->size(); ++i)
             {
                 OptionArgPair option_pair = (*option_arg_vector)[i];
                 OptionArgValue value_pair = option_pair.second;
@@ -2280,7 +2280,7 @@ CommandInterpreter::BuildAliasCommandArgs (CommandObject *alias_cmd_obj,
         
         used[0] = true;
 
-        for (int i = 0; i < option_arg_vector->size(); ++i)
+        for (size_t i = 0; i < option_arg_vector->size(); ++i)
         {
             OptionArgPair option_pair = (*option_arg_vector)[i];
             OptionArgValue value_pair = option_pair.second;
@@ -2345,7 +2345,7 @@ CommandInterpreter::BuildAliasCommandArgs (CommandObject *alias_cmd_obj,
             }
         }
 
-        for (int j = 0; j < cmd_args.GetArgumentCount(); ++j)
+        for (size_t j = 0; j < cmd_args.GetArgumentCount(); ++j)
         {
             if (!used[j] && !wants_raw_input)
                 new_args.AppendArgument (cmd_args.GetArgumentAtIndex (j));
@@ -2509,7 +2509,7 @@ CommandInterpreter::HandleCommands (const StringList &commands,
         m_debugger.SetAsyncExecution (false);
     }
 
-    for (int idx = 0; idx < num_lines; idx++)
+    for (size_t idx = 0; idx < num_lines; idx++)
     {
         const char *cmd = commands.GetStringAtIndex(idx);
         if (cmd[0] == '\0')
@@ -2550,7 +2550,7 @@ CommandInterpreter::HandleCommands (const StringList &commands,
                 error_msg = "<unknown error>.\n";
             if (stop_on_error)
             {
-                result.AppendErrorWithFormat("Aborting reading of commands after command #%d: '%s' failed with %s",
+                result.AppendErrorWithFormat("Aborting reading of commands after command #%zu: '%s' failed with %s",
                                          idx, cmd, error_msg);
                 result.SetStatus (eReturnStatusFailed);
                 m_debugger.SetAsyncExecution (old_async_execution);
@@ -2558,7 +2558,7 @@ CommandInterpreter::HandleCommands (const StringList &commands,
             }
             else if (print_results)
             {
-                result.AppendMessageWithFormat ("Command #%d '%s' failed with %s",
+                result.AppendMessageWithFormat ("Command #%zu '%s' failed with %s",
                                                 idx + 1, 
                                                 cmd, 
                                                 error_msg);
@@ -2583,10 +2583,10 @@ CommandInterpreter::HandleCommands (const StringList &commands,
                 // status in our real result before returning.  This is an error if the continue was not the
                 // last command in the set of commands to be run.
                 if (idx != num_lines - 1)
-                    result.AppendErrorWithFormat("Aborting reading of commands after command #%d: '%s' continued the target.\n", 
+                    result.AppendErrorWithFormat("Aborting reading of commands after command #%zu: '%s' continued the target.\n", 
                                                  idx + 1, cmd);
                 else
-                    result.AppendMessageWithFormat ("Command #%d '%s' continued the target.\n", idx + 1, cmd);
+                    result.AppendMessageWithFormat ("Command #%zu '%s' continued the target.\n", idx + 1, cmd);
                     
                 result.SetStatus(tmp_result.GetStatus());
                 m_debugger.SetAsyncExecution (old_async_execution);

@@ -1435,7 +1435,7 @@ IRForTarget::MaterializeInitializer (uint8_t *data, Constant *initializer)
                         
             size_t element_size = m_target_data->getTypeAllocSize(array_element_type);
             
-            for (int i = 0; i < array_initializer->getNumOperands(); ++i)
+            for (unsigned i = 0; i < array_initializer->getNumOperands(); ++i)
             {
                 Value *operand_value = array_initializer->getOperand(i);
                 Constant *operand_constant = dyn_cast<Constant>(operand_value);
@@ -1454,7 +1454,7 @@ IRForTarget::MaterializeInitializer (uint8_t *data, Constant *initializer)
         StructType *struct_initializer_type = struct_initializer->getType();
         const StructLayout *struct_layout = m_target_data->getStructLayout(struct_initializer_type);
 
-        for (int i = 0;
+        for (unsigned i = 0;
              i < struct_initializer->getNumOperands();
              ++i)
         {

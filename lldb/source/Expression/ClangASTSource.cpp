@@ -861,7 +861,7 @@ FindObjCMethodDeclsWithOrigin (unsigned int current_id,
         
         clang::Selector sel = decl_name.getObjCSelector();
         
-        int num_args = sel.getNumArgs();
+        unsigned num_args = sel.getNumArgs();
         
         for (unsigned i = 0;
              i != num_args;

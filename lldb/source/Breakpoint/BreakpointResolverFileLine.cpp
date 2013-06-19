@@ -87,7 +87,7 @@ BreakpointResolverFileLine::SearchCallback
     while (sc_list.GetSize() > 0)
     {
         SymbolContextList tmp_sc_list;
-        int current_idx = 0;
+        unsigned current_idx = 0;
         SymbolContext sc;
         bool first_entry = true;
         

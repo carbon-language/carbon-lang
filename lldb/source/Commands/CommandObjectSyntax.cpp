@@ -65,7 +65,7 @@ CommandObjectSyntax::DoExecute (Args& command, CommandReturnObject &result)
     {
         cmd_obj = m_interpreter.GetCommandObject (command.GetArgumentAtIndex(0));
         bool all_okay = true;
-        for (int i = 1; i < argc; ++i)
+        for (size_t i = 1; i < argc; ++i)
         {
             std::string sub_command = command.GetArgumentAtIndex (i);
             if (!cmd_obj->IsMultiwordObject())

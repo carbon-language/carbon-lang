@@ -529,7 +529,7 @@ AppleObjCRuntimeV2::CreateObjectChecker(const char *name)
                           name);
     }
     
-    assert (len < sizeof(check_function_code));
+    assert (len < (int)sizeof(check_function_code));
 
     return new ClangUtilityFunction(check_function_code, name);
 }

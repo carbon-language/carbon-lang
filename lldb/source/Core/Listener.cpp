@@ -44,7 +44,7 @@ Listener::~Listener()
     
     size_t num_managers = m_broadcaster_managers.size();
     
-    for (int i = 0; i < num_managers; i++)
+    for (size_t i = 0; i < num_managers; i++)
         m_broadcaster_managers[i]->RemoveListener(*this);
         
     if (log)

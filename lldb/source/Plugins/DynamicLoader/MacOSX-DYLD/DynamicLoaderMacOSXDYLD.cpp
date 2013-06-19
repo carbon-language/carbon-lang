@@ -902,7 +902,7 @@ DynamicLoaderMacOSXDYLD::AddModulesUsingImageInfos (DYLDImageInfo::collection &i
         if (objc_runtime != NULL && !objc_runtime->HasReadObjCLibrary())
         {
             size_t num_modules = loaded_module_list.GetSize();
-            for (int i = 0; i < num_modules; i++)
+            for (size_t i = 0; i < num_modules; i++)
             {
                 if (objc_runtime->IsModuleObjCLibrary (loaded_module_list.GetModuleAtIndex (i)))
                 {
@@ -1031,7 +1031,7 @@ DynamicLoaderMacOSXDYLD::ReadImageInfos (lldb::addr_t image_infos_addr,
     {
         lldb::offset_t info_data_offset = 0;
         DataExtractor info_data_ref(info_data.GetBytes(), info_data.GetByteSize(), endian, addr_size);
-        for (int i = 0; i < image_infos.size() && info_data_ref.ValidOffset(info_data_offset); i++)
+        for (size_t i = 0; i < image_infos.size() && info_data_ref.ValidOffset(info_data_offset); i++)
         {
             image_infos[i].address = info_data_ref.GetPointer(&info_data_offset);
             lldb::addr_t path_addr = info_data_ref.GetPointer(&info_data_offset);

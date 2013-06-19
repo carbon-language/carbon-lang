@@ -186,7 +186,7 @@ GDBRemoteCommunicationServer::SendErrorResponse (uint8_t err)
 {
     char packet[16];
     int packet_len = ::snprintf (packet, sizeof(packet), "E%2.2x", err);
-    assert (packet_len < sizeof(packet));
+    assert (packet_len < (int)sizeof(packet));
     return SendPacketNoLock (packet, packet_len);
 }
 
@@ -713,7 +713,7 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
                             uint16_t port = (intptr_t)accept_thread_result;
                             char response[256];
                             const int response_len = ::snprintf (response, sizeof(response), "pid:%" PRIu64 ";port:%u;", debugserver_pid, port);
-                            assert (response_len < sizeof(response));
+                            assert (response_len < (int)sizeof(response));
                             //m_port_to_pid_map[port] = debugserver_launch_info.GetProcessID();
                             success = SendPacketNoLock (response, response_len) > 0;
                         }

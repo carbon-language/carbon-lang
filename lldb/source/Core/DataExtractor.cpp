@@ -738,7 +738,7 @@ DataExtractor::GetFloat (offset_t *offset_ptr) const
         {
             const uint8_t *src_data = (const uint8_t *)src;
             uint8_t *dst_data = (uint8_t *)&val;
-            for (int i=0; i<sizeof(float_type); ++i)
+            for (size_t i=0; i<sizeof(float_type); ++i)
                 dst_data[sizeof(float_type) - 1 - i] = src_data[i];
         }
         else
@@ -762,7 +762,7 @@ DataExtractor::GetDouble (offset_t *offset_ptr) const
         {
             const uint8_t *src_data = (const uint8_t *)src;
             uint8_t *dst_data = (uint8_t *)&val;
-            for (int i=0; i<sizeof(float_type); ++i)
+            for (size_t i=0; i<sizeof(float_type); ++i)
                 dst_data[sizeof(float_type) - 1 - i] = src_data[i];
         }
         else
@@ -787,7 +787,7 @@ DataExtractor::GetLongDouble (offset_t *offset_ptr) const
         {
             const uint8_t *src_data = (const uint8_t *)src;
             uint8_t *dst_data = (uint8_t *)&val;
-            for (int i=0; i<sizeof(float_type); ++i)
+            for (size_t i=0; i<sizeof(float_type); ++i)
                 dst_data[sizeof(float_type) - 1 - i] = src_data[i];
         }
         else

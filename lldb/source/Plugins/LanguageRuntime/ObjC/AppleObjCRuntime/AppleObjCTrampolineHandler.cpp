@@ -344,7 +344,7 @@ AppleObjCTrampolineHandler::AppleObjCVTables::VTableRegion::SetUpRegion()
     m_code_start_addr = 0;
     m_code_end_addr = 0;
 
-    for (int i = 0; i < num_descriptors; i++)
+    for (size_t i = 0; i < num_descriptors; i++)
     {
         lldb::addr_t start_offset = offset;
         uint32_t voffset = desc_extractor.GetU32 (&offset);
@@ -363,7 +363,7 @@ AppleObjCTrampolineHandler::AppleObjCVTables::VTableRegion::SetUpRegion()
     // Let's compute the blocks and if they are all the same add the size to the code end address:
     lldb::addr_t code_size = 0;
     bool all_the_same = true;
-    for (int i = 0; i < num_descriptors - 1; i++)
+    for (size_t i = 0; i < num_descriptors - 1; i++)
     {
         lldb::addr_t this_size = m_descriptors[i + 1].code_start - m_descriptors[i].code_start;
         if (code_size == 0)
@@ -686,7 +686,7 @@ AppleObjCTrampolineHandler::AppleObjCTrampolineHandler (const ProcessSP &process
     // turn the g_dispatch_functions char * array into a template table, and populate the DispatchFunction map
     // from there.
 
-    for (int i = 0; i != llvm::array_lengthof(g_dispatch_functions); i++)
+    for (size_t i = 0; i != llvm::array_lengthof(g_dispatch_functions); i++)
     {
         ConstString name_const_str(g_dispatch_functions[i].name);
         const Symbol *msgSend_symbol = m_objc_module_sp->FindFirstSymbolWithNameAndType (name_const_str, eSymbolTypeCode);

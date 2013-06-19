@@ -333,7 +333,7 @@
     if (count >= $2)
         count = $2;
     PyObject* list = PyList_New(count);
-    for (int j = 0; j < count; j++)
+    for (uint32_t j = 0; j < count; j++)
     {
         if ($1[j] < UINT32_MAX)
         {

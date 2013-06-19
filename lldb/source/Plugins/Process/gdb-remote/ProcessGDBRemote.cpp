@@ -260,7 +260,7 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
          ++reg_num)
     {
         const int packet_len = ::snprintf (packet, sizeof(packet), "qRegisterInfo%x", reg_num);
-        assert (packet_len < sizeof(packet));
+        assert (packet_len < (int)sizeof(packet));
         StringExtractorGDBRemote response;
         if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, false))
         {
@@ -1942,7 +1942,7 @@ ProcessGDBRemote::DoReadMemory (addr_t addr, void *buf, size_t size, Error &erro
 
     char packet[64];
     const int packet_len = ::snprintf (packet, sizeof(packet), "m%" PRIx64 ",%" PRIx64, (uint64_t)addr, (uint64_t)size);
-    assert (packet_len + 1 < sizeof(packet));
+    assert (packet_len + 1 < (int)sizeof(packet));
     StringExtractorGDBRemote response;
     if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, true))
     {

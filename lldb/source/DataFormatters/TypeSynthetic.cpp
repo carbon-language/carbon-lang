@@ -39,7 +39,7 @@ TypeFilterImpl::GetDescription()
                 SkipsPointers() ? " (skip pointers)" : "",
                 SkipsReferences() ? " (skip references)" : "");
     
-    for (int i = 0; i < GetCount(); i++)
+    for (size_t i = 0; i < GetCount(); i++)
     {
         sstr.Printf("    %s\n",
                     GetExpressionPathAtIndex(i));

@@ -1874,7 +1874,7 @@ ClangASTContext::AddMethodToCXXRecordType
     
     llvm::SmallVector<ParmVarDecl *, 12> params;
     
-    for (int param_index = 0;
+    for (unsigned param_index = 0;
          param_index < num_params;
          ++param_index)
     {
@@ -2817,7 +2817,7 @@ ClangASTContext::AddMethodToObjCObjectType (ASTContext *ast,
     {
         llvm::SmallVector<ParmVarDecl *, 12> params;
             
-        for (int param_index = 0; param_index < num_args; ++param_index)
+        for (unsigned param_index = 0; param_index < num_args; ++param_index)
         {
             params.push_back (ParmVarDecl::Create (*ast,
                                                    objc_method_decl,
@@ -3920,10 +3920,10 @@ ClangASTContext::GetIndexOfFieldWithName (clang::ASTContext *ast,
                                           uint32_t *bitfield_bit_size_ptr,
                                           bool *is_bitfield_ptr)
 {
-    auto count = ClangASTContext::GetNumFields(ast, clang_type);
+    unsigned count = ClangASTContext::GetNumFields(ast, clang_type);
     lldb::clang_type_t field_clang_type_internal;
     std::string field_name;
-    for (auto index = 0; index < count; index++)
+    for (unsigned index = 0; index < count; index++)
     {
         field_clang_type_internal = ClangASTContext::GetFieldAtIndex(ast, clang_type, index, field_name, bit_offset_ptr, bitfield_bit_size_ptr, is_bitfield_ptr);
         if ( strcmp(field_name.c_str(), name) == 0 )

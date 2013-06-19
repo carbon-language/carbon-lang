@@ -206,7 +206,7 @@ Options::BuildValidOptionSets ()
         }
         else
         {
-            for (int j = 0; j < LLDB_MAX_NUM_OPTION_SETS; j++)
+            for (uint32_t j = 0; j < LLDB_MAX_NUM_OPTION_SETS; j++)
             {
                 if (this_usage_mask & (1 << j))
                 {
@@ -224,7 +224,7 @@ Options::BuildValidOptionSets ()
         
         for (int i = 0; i < num_options; ++i)
         {
-            for (int j = 0; j < num_option_sets; j++)
+            for (uint32_t j = 0; j < num_option_sets; j++)
             {
                 if (opt_defs[i].usage_mask & 1 << j)
                 {
@@ -759,7 +759,7 @@ Options::HandleOptionCompletion
     cur_opt_std_str.erase(char_pos);
     const char *cur_opt_str = cur_opt_std_str.c_str();
 
-    for (int i = 0; i < opt_element_vector.size(); i++)
+    for (size_t i = 0; i < opt_element_vector.size(); i++)
     {
         int opt_pos = opt_element_vector[i].opt_pos;
         int opt_arg_pos = opt_element_vector[i].opt_arg_pos;
@@ -833,7 +833,7 @@ Options::HandleOptionCompletion
                             // The options definitions table has duplicates because of the
                             // way the grouping information is stored, so only add once.
                             bool duplicate = false;
-                            for (int k = 0; k < matches.GetSize(); k++)
+                            for (size_t k = 0; k < matches.GetSize(); k++)
                             {
                                 if (matches.GetStringAtIndex(k) == full_name)
                                 {
@@ -944,7 +944,7 @@ Options::HandleOptionArgumentCompletion
     if (completion_mask & CommandCompletions::eSourceFileCompletion
         || completion_mask & CommandCompletions::eSymbolCompletion)
     {
-        for (int i = 0; i < opt_element_vector.size(); i++)
+        for (size_t i = 0; i < opt_element_vector.size(); i++)
         {
             int cur_defs_index = opt_element_vector[i].opt_defs_index;
             int cur_arg_pos    = opt_element_vector[i].opt_arg_pos;

@@ -71,7 +71,7 @@ HasPrefix (const char* str1, const char* str2)
 // those will not match any type because of the way we strip qualifiers from typenames
 // this method looks for the case where the user is adding a "class","struct","enum" or "union" Foo
 // and strips the unnecessary qualifier
-static ConstString
+static inline ConstString
 GetValidTypeName_Impl (const ConstString& type)
 {
     int strip_len = 0;

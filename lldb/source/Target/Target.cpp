@@ -1195,7 +1195,7 @@ Target::ModuleIsExcludedForNonModuleSpecificSearches (const FileSpec &module_fil
         // black list.
         if (num_modules > 0)
         {
-            for (int i  = 0; i < num_modules; i++)
+            for (size_t i  = 0; i < num_modules; i++)
             {
                 if (!ModuleIsExcludedForNonModuleSpecificSearches (matchingModules.GetModuleAtIndex(i)))
                     return false;

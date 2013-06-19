@@ -235,7 +235,7 @@ StringList::CopyList(const char* item_preamble,
                      const char* items_sep)
 {
     StreamString strm;
-    for (int i = 0; i < GetSize(); i++)
+    for (size_t i = 0; i < GetSize(); i++)
     {
         if (i && items_sep && items_sep[0])
             strm << items_sep;

@@ -399,7 +399,7 @@ PlatformRemoteGDBServer::Attach (lldb_private::ProcessAttachInfo &attach_info,
                                                                 "connect://%s:%u", 
                                                                 GetHostname (), 
                                                                 port);
-                        assert (connect_url_len < sizeof(connect_url));
+                        assert (connect_url_len < (int)sizeof(connect_url));
                         error = process_sp->ConnectRemote (NULL, connect_url);
                         if (error.Success())
                             error = process_sp->Attach(attach_info);

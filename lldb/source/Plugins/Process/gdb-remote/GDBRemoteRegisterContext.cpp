@@ -158,7 +158,7 @@ GDBRemoteRegisterContext::GetPrimordialRegister(const lldb_private::RegisterInfo
         packet_len = ::snprintf (packet, sizeof(packet), "p%x;thread:%4.4" PRIx64 ";", reg, m_thread.GetProtocolID());
     else
         packet_len = ::snprintf (packet, sizeof(packet), "p%x", reg);
-    assert (packet_len < (sizeof(packet) - 1));
+    assert (packet_len < ((int)sizeof(packet) - 1));
     if (gdb_comm.SendPacketAndWaitForResponse(packet, response, false))
         return PrivateSetRegisterValue (reg, response);
 
@@ -199,7 +199,7 @@ GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataE
                         packet_len = ::snprintf (packet, sizeof(packet), "g;thread:%4.4" PRIx64 ";", m_thread.GetProtocolID());
                     else
                         packet_len = ::snprintf (packet, sizeof(packet), "g");
-                    assert (packet_len < (sizeof(packet) - 1));
+                    assert (packet_len < ((int)sizeof(packet) - 1));
                     if (gdb_comm.SendPacketAndWaitForResponse(packet, response, false))
                     {
                         if (response.IsNormalResponse())
@@ -515,7 +515,7 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
                 packet_len = ::snprintf (packet, sizeof(packet), "g;thread:%4.4" PRIx64, m_thread.GetProtocolID());
             else
                 packet_len = ::snprintf (packet, sizeof(packet), "g");
-            assert (packet_len < (sizeof(packet) - 1));
+            assert (packet_len < ((int)sizeof(packet) - 1));
 
             if (gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, false))
             {
