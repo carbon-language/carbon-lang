@@ -488,13 +488,13 @@ POSIXThread::ThreadNotify(const ProcessMessage &message)
 unsigned
 POSIXThread::GetRegisterIndexFromOffset(unsigned offset)
 {
-    unsigned reg;
+    unsigned reg = 0;
     ArchSpec arch = Host::GetArchitecture();
 
     switch (arch.GetCore())
     {
     default:
-        assert(false && "CPU type not supported!");
+        llvm_unreachable("CPU type not supported!");
         break;
 
     case ArchSpec::eCore_x86_32_i386:
