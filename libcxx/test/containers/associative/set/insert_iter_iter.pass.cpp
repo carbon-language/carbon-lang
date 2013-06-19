@@ -18,6 +18,7 @@
 #include <cassert>
 
 #include "test_iterators.h"
+#include "../../min_allocator.h"
 
 int main()
 {
@@ -44,4 +45,29 @@ int main()
         assert(*next(m.begin()) == 2);
         assert(*next(m.begin(), 2) == 3);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef std::set<int, std::less<int>, min_allocator<int>> M;
+        typedef int V;
+        V ar[] =
+        {
+            1,
+            1,
+            1,
+            2,
+            2,
+            2,
+            3,
+            3,
+            3
+        };
+        M m;
+        m.insert(input_iterator<const V*>(ar),
+                 input_iterator<const V*>(ar + sizeof(ar)/sizeof(ar[0])));
+        assert(m.size() == 3);
+        assert(*m.begin() == 1);
+        assert(*next(m.begin()) == 2);
+        assert(*next(m.begin(), 2) == 3);
+    }
+#endif
 }

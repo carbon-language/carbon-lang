@@ -17,6 +17,7 @@
 #include <cassert>
 
 #include "../../MoveOnly.h"
+#include "../../min_allocator.h"
 
 int main()
 {
@@ -49,5 +50,35 @@ int main()
         assert(m.size() == 3);
         assert(*r.first == 3);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef std::set<MoveOnly, std::less<MoveOnly>, min_allocator<MoveOnly>> M;
+        typedef std::pair<M::iterator, bool> R;
+        M m;
+        R r = m.insert(M::value_type(2));
+        assert(r.second);
+        assert(r.first == m.begin());
+        assert(m.size() == 1);
+        assert(*r.first == 2);
+
+        r = m.insert(M::value_type(1));
+        assert(r.second);
+        assert(r.first == m.begin());
+        assert(m.size() == 2);
+        assert(*r.first == 1);
+
+        r = m.insert(M::value_type(3));
+        assert(r.second);
+        assert(r.first == prev(m.end()));
+        assert(m.size() == 3);
+        assert(*r.first == 3);
+
+        r = m.insert(M::value_type(3));
+        assert(!r.second);
+        assert(r.first == prev(m.end()));
+        assert(m.size() == 3);
+        assert(*r.first == 3);
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

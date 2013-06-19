@@ -19,6 +19,7 @@
 #include "../../../MoveOnly.h"
 #include "../../../test_compare.h"
 #include "../../../test_allocator.h"
+#include "../../../min_allocator.h"
 
 int main()
 {
@@ -141,4 +142,45 @@ int main()
         assert(m1.empty());
     }
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#if __cplusplus >= 201103L
+    {
+        typedef MoveOnly V;
+        typedef test_compare<std::less<MoveOnly> > C;
+        typedef min_allocator<V> A;
+        typedef std::multiset<MoveOnly, C, A> M;
+        typedef std::move_iterator<V*> I;
+        V a1[] =
+        {
+            V(1),
+            V(1),
+            V(1),
+            V(2),
+            V(2),
+            V(2),
+            V(3),
+            V(3),
+            V(3)
+        };
+        M m1(I(a1), I(a1+sizeof(a1)/sizeof(a1[0])), C(5), A());
+        V a2[] =
+        {
+            V(1),
+            V(1),
+            V(1),
+            V(2),
+            V(2),
+            V(2),
+            V(3),
+            V(3),
+            V(3)
+        };
+        M m2(I(a2), I(a2+sizeof(a2)/sizeof(a2[0])), C(5), A());
+        M m3(C(3), A());
+        m3 = std::move(m1);
+        assert(m3 == m2);
+        assert(m3.get_allocator() == A());
+        assert(m3.key_comp() == C(5));
+        assert(m1.empty());
+    }
+#endif
 }

@@ -17,9 +17,12 @@
 #include <map>
 #include <cassert>
 
+#include "../../../min_allocator.h"
+
 int main()
 {
     typedef std::pair<const int, double> V;
+    {
     typedef std::multimap<int, double> M;
     {
         typedef M::iterator R;
@@ -81,4 +84,70 @@ int main()
         r = m.upper_bound(10);
         assert(r == m.end());
     }
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::multimap<int, double, std::less<int>, min_allocator<std::pair<const int, double>>> M;
+    {
+        typedef M::iterator R;
+        V ar[] =
+        {
+            V(5, 1),
+            V(5, 2),
+            V(5, 3),
+            V(7, 1),
+            V(7, 2),
+            V(7, 3),
+            V(9, 1),
+            V(9, 2),
+            V(9, 3)
+        };
+        M m(ar, ar+sizeof(ar)/sizeof(ar[0]));
+        R r = m.upper_bound(4);
+        assert(r == m.begin());
+        r = m.upper_bound(5);
+        assert(r == next(m.begin(), 3));
+        r = m.upper_bound(6);
+        assert(r == next(m.begin(), 3));
+        r = m.upper_bound(7);
+        assert(r == next(m.begin(), 6));
+        r = m.upper_bound(8);
+        assert(r == next(m.begin(), 6));
+        r = m.upper_bound(9);
+        assert(r == next(m.begin(), 9));
+        r = m.upper_bound(10);
+        assert(r == m.end());
+    }
+    {
+        typedef M::const_iterator R;
+        V ar[] =
+        {
+            V(5, 1),
+            V(5, 2),
+            V(5, 3),
+            V(7, 1),
+            V(7, 2),
+            V(7, 3),
+            V(9, 1),
+            V(9, 2),
+            V(9, 3)
+        };
+        const M m(ar, ar+sizeof(ar)/sizeof(ar[0]));
+        R r = m.upper_bound(4);
+        assert(r == m.begin());
+        r = m.upper_bound(5);
+        assert(r == next(m.begin(), 3));
+        r = m.upper_bound(6);
+        assert(r == next(m.begin(), 3));
+        r = m.upper_bound(7);
+        assert(r == next(m.begin(), 6));
+        r = m.upper_bound(8);
+        assert(r == next(m.begin(), 6));
+        r = m.upper_bound(9);
+        assert(r == next(m.begin(), 9));
+        r = m.upper_bound(10);
+        assert(r == m.end());
+    }
+    }
+#endif
 }

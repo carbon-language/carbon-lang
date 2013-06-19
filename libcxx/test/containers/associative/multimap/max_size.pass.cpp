@@ -16,9 +16,20 @@
 #include <map>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 int main()
 {
+    {
     typedef std::multimap<int, double> M;
     M m;
     assert(m.max_size() != 0);
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::multimap<int, double, std::less<int>, min_allocator<std::pair<const int, double>>> M;
+    M m;
+    assert(m.max_size() != 0);
+    }
+#endif
 }

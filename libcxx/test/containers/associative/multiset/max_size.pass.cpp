@@ -16,9 +16,20 @@
 #include <set>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 int main()
 {
+    {
     typedef std::multiset<int> M;
     M m;
     assert(m.max_size() != 0);
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::multiset<int, std::less<int>, min_allocator<int>> M;
+    M m;
+    assert(m.max_size() != 0);
+    }
+#endif
 }

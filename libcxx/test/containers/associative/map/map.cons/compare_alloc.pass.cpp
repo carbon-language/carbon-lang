@@ -18,9 +18,11 @@
 
 #include "../../../test_compare.h"
 #include "../../../test_allocator.h"
+#include "../../../min_allocator.h"
 
 int main()
 {
+    {
     typedef test_compare<std::less<int> > C;
     typedef test_allocator<std::pair<const int, double> > A;
     std::map<int, double, C, A> m(C(4), A(5));
@@ -28,4 +30,16 @@ int main()
     assert(m.begin() == m.end());
     assert(m.key_comp() == C(4));
     assert(m.get_allocator() == A(5));
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef test_compare<std::less<int> > C;
+    typedef min_allocator<std::pair<const int, double> > A;
+    std::map<int, double, C, A> m(C(4), A());
+    assert(m.empty());
+    assert(m.begin() == m.end());
+    assert(m.key_comp() == C(4));
+    assert(m.get_allocator() == A());
+    }
+#endif
 }

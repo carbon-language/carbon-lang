@@ -19,6 +19,7 @@
 
 #include "../../Emplaceable.h"
 #include "../../DefaultOnly.h"
+#include "../../min_allocator.h"
 
 int main()
 {
@@ -73,5 +74,17 @@ int main()
         assert(m.size() == 1);
         assert(*r.first == 2);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef std::set<int, std::less<int>, min_allocator<int>> M;
+        typedef std::pair<M::iterator, bool> R;
+        M m;
+        R r = m.emplace(M::value_type(2));
+        assert(r.second);
+        assert(r.first == m.begin());
+        assert(m.size() == 1);
+        assert(*r.first == 2);
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

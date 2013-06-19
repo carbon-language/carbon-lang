@@ -17,12 +17,24 @@
 #include <cassert>
 
 #include "../../../test_compare.h"
+#include "../../../min_allocator.h"
 
 int main()
 {
+    {
     typedef test_compare<std::less<int> > C;
     std::multimap<int, double, C> m(C(3));
     assert(m.empty());
     assert(m.begin() == m.end());
     assert(m.key_comp() == C(3));
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef test_compare<std::less<int> > C;
+    std::multimap<int, double, C, min_allocator<std::pair<const int, double>>> m(C(3));
+    assert(m.empty());
+    assert(m.begin() == m.end());
+    assert(m.key_comp() == C(3));
+    }
+#endif
 }

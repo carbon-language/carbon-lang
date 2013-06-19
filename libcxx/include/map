@@ -489,8 +489,8 @@ class __map_node_destructor
 public:
     typedef typename __alloc_traits::pointer    pointer;
 private:
-    typedef typename value_type::first_type     first_type;
-    typedef typename value_type::second_type    second_type;
+    typedef typename value_type::value_type::first_type     first_type;
+    typedef typename value_type::value_type::second_type    second_type;
 
     allocator_type& __na_;
 
@@ -522,9 +522,9 @@ public:
     void operator()(pointer __p) _NOEXCEPT
     {
         if (__second_constructed)
-            __alloc_traits::destroy(__na_, _VSTD::addressof(__p->__value_.second));
+            __alloc_traits::destroy(__na_, _VSTD::addressof(__p->__value_.__cc.second));
         if (__first_constructed)
-            __alloc_traits::destroy(__na_, _VSTD::addressof(__p->__value_.first));
+            __alloc_traits::destroy(__na_, _VSTD::addressof(__p->__value_.__cc.first));
         if (__p)
             __alloc_traits::deallocate(__na_, __p, 1);
     }
@@ -542,8 +542,8 @@ class _LIBCPP_TYPE_VIS __map_iterator
     _TreeIterator __i_;
 
     typedef typename _TreeIterator::__pointer_traits             __pointer_traits;
-    typedef const typename _TreeIterator::value_type::first_type __key_type;
-    typedef typename _TreeIterator::value_type::second_type      __mapped_type;
+    typedef const typename _TreeIterator::value_type::value_type::first_type __key_type;
+    typedef typename _TreeIterator::value_type::value_type::second_type      __mapped_type;
 public:
     typedef bidirectional_iterator_tag                           iterator_category;
     typedef pair<__key_type, __mapped_type>                      value_type;
@@ -564,9 +564,9 @@ public:
     __map_iterator(_TreeIterator __i) _NOEXCEPT : __i_(__i) {}
 
     _LIBCPP_INLINE_VISIBILITY
-    reference operator*() const {return *operator->();}
+    reference operator*() const {return __i_->__cc;}
     _LIBCPP_INLINE_VISIBILITY
-    pointer operator->() const {return (pointer)__i_.operator->();}
+    pointer operator->() const {return pointer_traits<pointer>::pointer_to(__i_->__cc);}
 
     _LIBCPP_INLINE_VISIBILITY
     __map_iterator& operator++() {++__i_; return *this;}
@@ -607,8 +607,8 @@ class _LIBCPP_TYPE_VIS __map_const_iterator
     _TreeIterator __i_;
 
     typedef typename _TreeIterator::__pointer_traits             __pointer_traits;
-    typedef const typename _TreeIterator::value_type::first_type __key_type;
-    typedef typename _TreeIterator::value_type::second_type      __mapped_type;
+    typedef const typename _TreeIterator::value_type::value_type::first_type __key_type;
+    typedef typename _TreeIterator::value_type::value_type::second_type      __mapped_type;
 public:
     typedef bidirectional_iterator_tag                           iterator_category;
     typedef pair<__key_type, __mapped_type>                      value_type;
@@ -634,9 +634,9 @@ public:
                 : __i_(__i.__i_) {}
 
     _LIBCPP_INLINE_VISIBILITY
-    reference operator*() const {return *operator->();}
+    reference operator*() const {return __i_->__cc;}
     _LIBCPP_INLINE_VISIBILITY
-    pointer operator->() const {return (pointer)__i_.operator->();}
+    pointer operator->() const {return pointer_traits<pointer>::pointer_to(__i_->__cc);}
 
     _LIBCPP_INLINE_VISIBILITY
     __map_const_iterator& operator++() {++__i_; return *this;}
@@ -679,6 +679,7 @@ public:
     typedef _Key                                     key_type;
     typedef _Tp                                      mapped_type;
     typedef pair<const key_type, mapped_type>        value_type;
+    typedef pair<key_type, mapped_type>              __nc_value_type;
     typedef _Compare                                 key_compare;
     typedef _Allocator                               allocator_type;
     typedef value_type&                              reference;
@@ -699,7 +700,54 @@ public:
     };
 
 private:
-    typedef pair<key_type, mapped_type>                             __value_type;
+
+#if __cplusplus >= 201103L
+    union __value_type
+    {
+        typedef typename map::value_type value_type;
+        typedef typename map::__nc_value_type __nc_value_type;
+        value_type __cc;
+        __nc_value_type __nc;
+
+        template <class ..._Args>
+        __value_type(_Args&& ...__args)
+            : __cc(std::forward<_Args>(__args)...) {}
+
+        __value_type(const __value_type& __v)
+            : __cc(std::move(__v.__cc)) {}
+
+        __value_type(__value_type&& __v)
+            : __nc(std::move(__v.__nc)) {}
+
+        __value_type& operator=(const __value_type& __v)
+            {__nc = __v.__cc; return *this;}
+
+        __value_type& operator=(__value_type&& __v)
+            {__nc = std::move(__v.__nc); return *this;}
+
+        ~__value_type() {__cc.~value_type();}
+
+        operator const value_type& () const {return __cc;}
+    };
+#else
+    struct __value_type
+    {
+        typedef typename map::value_type value_type;
+        value_type __cc;
+
+        __value_type() {}
+
+        template <class _A0>
+        __value_type(const _A0& __a0)
+            : __cc(__a0) {}
+
+        template <class _A0, class _A1>
+        __value_type(const _A0& __a0, const _A1& __a1)
+            : __cc(__a0, __a1) {}
+
+        operator const value_type& () const {return __cc;}
+    };
+#endif
     typedef __map_value_compare<key_type, mapped_type, key_compare> __vc;
     typedef typename allocator_traits<allocator_type>::template
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
@@ -764,7 +812,14 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     map& operator=(const map& __m)
         {
+#if __cplusplus >= 201103L
             __tree_ = __m.__tree_;
+#else
+            __tree_.clear();
+            __tree_.value_comp() = __m.__tree_.value_comp();
+            __tree_.__copy_assign_alloc(__m.__tree_);
+            insert(__m.begin(), __m.end());
+#endif
             return *this;
         }
 
@@ -1009,9 +1064,6 @@ private:
 
     __node_base_pointer&
         __find_equal_key(__node_base_pointer& __parent, const key_type& __k);
-    __node_base_pointer&
-        __find_equal_key(const_iterator __hint,
-                         __node_base_pointer& __parent, const key_type& __k);
     __node_base_const_pointer
         __find_equal_key(__node_base_const_pointer& __parent, const key_type& __k) const;
 };
@@ -1030,95 +1082,35 @@ map<_Key, _Tp, _Compare, _Allocator>::__find_equal_key(__node_base_pointer& __pa
     {
         while (true)
         {
-            if (__tree_.value_comp().key_comp()(__k, __nd->__value_.first))
+            if (__tree_.value_comp().key_comp()(__k, __nd->__value_.__cc.first))
             {
                 if (__nd->__left_ != nullptr)
                     __nd = static_cast<__node_pointer>(__nd->__left_);
                 else
                 {
-                    __parent = __nd;
+                    __parent = static_cast<__node_base_pointer>(__nd);
                     return __parent->__left_;
                 }
             }
-            else if (__tree_.value_comp().key_comp()(__nd->__value_.first, __k))
+            else if (__tree_.value_comp().key_comp()(__nd->__value_.__cc.first, __k))
             {
                 if (__nd->__right_ != nullptr)
                     __nd = static_cast<__node_pointer>(__nd->__right_);
                 else
                 {
-                    __parent = __nd;
+                    __parent = static_cast<__node_base_pointer>(__nd);
                     return __parent->__right_;
                 }
             }
             else
             {
-                __parent = __nd;
+                __parent = static_cast<__node_base_pointer>(__nd);
                 return __parent;
             }
         }
     }
-    __parent = __tree_.__end_node();
+    __parent = static_cast<__node_base_pointer>(__tree_.__end_node());
     return __parent->__left_;
-}
-
-// Find place to insert if __k doesn't exist
-// First check prior to __hint.
-// Next check after __hint.
-// Next do O(log N) search.
-// Set __parent to parent of null leaf
-// Return reference to null leaf
-// If __k exists, set parent to node of __k and return reference to node of __k
-template <class _Key, class _Tp, class _Compare, class _Allocator>
-typename map<_Key, _Tp, _Compare, _Allocator>::__node_base_pointer&
-map<_Key, _Tp, _Compare, _Allocator>::__find_equal_key(const_iterator __hint,
-                                                       __node_base_pointer& __parent,
-                                                       const key_type& __k)
-{
-    if (__hint == end() || __tree_.value_comp().key_comp()(__k, __hint->first))  // check before
-    {
-        // __k < *__hint
-        const_iterator __prior = __hint;
-        if (__prior == begin() || __tree_.value_comp().key_comp()((--__prior)->first, __k))
-        {
-            // *prev(__hint) < __k < *__hint
-            if (__hint.__ptr_->__left_ == nullptr)
-            {
-                __parent = const_cast<__node_pointer&>(__hint.__ptr_);
-                return __parent->__left_;
-            }
-            else
-            {
-                __parent = const_cast<__node_pointer&>(__prior.__ptr_);
-                return __parent->__right_;
-            }
-        }
-        // __k <= *prev(__hint)
-        return __find_equal_key(__parent, __k);
-    }
-    else if (__tree_.value_comp().key_comp()(__hint->first, __k))  // check after
-    {
-        // *__hint < __k
-        const_iterator __next = _VSTD::next(__hint);
-        if (__next == end() || __tree_.value_comp().key_comp()(__k, __next->first))
-        {
-            // *__hint < __k < *next(__hint)
-            if (__hint.__ptr_->__right_ == nullptr)
-            {
-                __parent = const_cast<__node_pointer&>(__hint.__ptr_);
-                return __parent->__right_;
-            }
-            else
-            {
-                __parent = const_cast<__node_pointer&>(__next.__ptr_);
-                return __parent->__left_;
-            }
-        }
-        // *next(__hint) <= __k
-        return __find_equal_key(__parent, __k);
-    }
-    // else __k == *__hint
-    __parent = const_cast<__node_pointer&>(__hint.__ptr_);
-    return __parent;
 }
 
 // Find __k
@@ -1135,34 +1127,34 @@ map<_Key, _Tp, _Compare, _Allocator>::__find_equal_key(__node_base_const_pointer
     {
         while (true)
         {
-            if (__tree_.value_comp().key_comp()(__k, __nd->__value_.first))
+            if (__tree_.value_comp().key_comp()(__k, __nd->__value_.__cc.first))
             {
                 if (__nd->__left_ != nullptr)
                     __nd = static_cast<__node_pointer>(__nd->__left_);
                 else
                 {
-                    __parent = __nd;
+                    __parent = static_cast<__node_base_pointer>(__nd);
                     return const_cast<const __node_base_const_pointer&>(__parent->__left_);
                 }
             }
-            else if (__tree_.value_comp().key_comp()(__nd->__value_.first, __k))
+            else if (__tree_.value_comp().key_comp()(__nd->__value_.__cc.first, __k))
             {
                 if (__nd->__right_ != nullptr)
                     __nd = static_cast<__node_pointer>(__nd->__right_);
                 else
                 {
-                    __parent = __nd;
+                    __parent = static_cast<__node_base_pointer>(__nd);
                     return const_cast<const __node_base_const_pointer&>(__parent->__right_);
                 }
             }
             else
             {
-                __parent = __nd;
+                __parent = static_cast<__node_base_pointer>(__nd);
                 return __parent;
             }
         }
     }
-    __parent = __tree_.__end_node();
+    __parent = static_cast<__node_base_pointer>(__tree_.__end_node());
     return const_cast<const __node_base_const_pointer&>(__parent->__left_);
 }
 
@@ -1187,9 +1179,9 @@ map<_Key, _Tp, _Compare, _Allocator>::__construct_node()
 {
     __node_allocator& __na = __tree_.__node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.first));
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.first));
     __h.get_deleter().__first_constructed = true;
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.second));
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.second));
     __h.get_deleter().__second_constructed = true;
     return __h;
 }
@@ -1222,9 +1214,9 @@ map<_Key, _Tp, _Compare, _Allocator>::__construct_node(_A0&& __a0)
 {
     __node_allocator& __na = __tree_.__node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.first), _VSTD::forward<_A0>(__a0));
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.first), _VSTD::forward<_A0>(__a0));
     __h.get_deleter().__first_constructed = true;
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.second));
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.second));
     __h.get_deleter().__second_constructed = true;
     return __h;
 }
@@ -1256,9 +1248,9 @@ map<_Key, _Tp, _Compare, _Allocator>::__construct_node(const key_type& __k)
 {
     __node_allocator& __na = __tree_.__node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.first), __k);
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.first), __k);
     __h.get_deleter().__first_constructed = true;
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.second));
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.second));
     __h.get_deleter().__second_constructed = true;
     return _VSTD::move(__h);
 }
@@ -1275,10 +1267,10 @@ map<_Key, _Tp, _Compare, _Allocator>::operator[](const key_type& __k)
     if (__child == nullptr)
     {
         __node_holder __h = __construct_node(__k);
-        __tree_.__insert_node_at(__parent, __child, __h.get());
+        __tree_.__insert_node_at(__parent, __child, static_cast<__node_base_pointer>(__h.get()));
         __r = __h.release();
     }
-    return __r->__value_.second;
+    return __r->__value_.__cc.second;
 }
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -1293,10 +1285,10 @@ map<_Key, _Tp, _Compare, _Allocator>::operator[](key_type&& __k)
     if (__child == nullptr)
     {
         __node_holder __h = __construct_node(_VSTD::move(__k));
-        __tree_.__insert_node_at(__parent, __child, __h.get());
+        __tree_.__insert_node_at(__parent, __child, static_cast<__node_base_pointer>(__h.get()));
         __r = __h.release();
     }
-    return __r->__value_.second;
+    return __r->__value_.__cc.second;
 }
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -1311,7 +1303,7 @@ map<_Key, _Tp, _Compare, _Allocator>::at(const key_type& __k)
     if (__child == nullptr)
         throw out_of_range("map::at:  key not found");
 #endif  // _LIBCPP_NO_EXCEPTIONS
-    return static_cast<__node_pointer>(__child)->__value_.second;
+    return static_cast<__node_pointer>(__child)->__value_.__cc.second;
 }
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
@@ -1324,7 +1316,7 @@ map<_Key, _Tp, _Compare, _Allocator>::at(const key_type& __k) const
     if (__child == nullptr)
         throw out_of_range("map::at:  key not found");
 #endif  // _LIBCPP_NO_EXCEPTIONS
-    return static_cast<__node_const_pointer>(__child)->__value_.second;
+    return static_cast<__node_const_pointer>(__child)->__value_.__cc.second;
 }
 
 #if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
@@ -1429,6 +1421,7 @@ public:
     typedef _Key                                     key_type;
     typedef _Tp                                      mapped_type;
     typedef pair<const key_type, mapped_type>        value_type;
+    typedef pair<key_type, mapped_type>              __nc_value_type;
     typedef _Compare                                 key_compare;
     typedef _Allocator                               allocator_type;
     typedef value_type&                              reference;
@@ -1450,7 +1443,53 @@ public:
     };
 
 private:
-    typedef pair<key_type, mapped_type>                             __value_type;
+#if __cplusplus >= 201103L
+    union __value_type
+    {
+        typedef typename multimap::value_type value_type;
+        typedef typename multimap::__nc_value_type __nc_value_type;
+        value_type __cc;
+        __nc_value_type __nc;
+
+        template <class ..._Args>
+        __value_type(_Args&& ...__args)
+            : __cc(std::forward<_Args>(__args)...) {}
+
+        __value_type(const __value_type& __v)
+            : __cc(std::move(__v.__cc)) {}
+
+        __value_type(__value_type&& __v)
+            : __nc(std::move(__v.__nc)) {}
+
+        __value_type& operator=(const __value_type& __v)
+            {__nc = __v.__cc; return *this;}
+
+        __value_type& operator=(__value_type&& __v)
+            {__nc = std::move(__v.__nc); return *this;}
+
+        ~__value_type() {__cc.~value_type();}
+
+        operator const value_type& () const {return __cc;}
+    };
+#else
+    struct __value_type
+    {
+        typedef typename multimap::value_type value_type;
+        value_type __cc;
+
+        __value_type() {}
+
+        template <class _A0>
+        __value_type(const _A0& __a0)
+            : __cc(__a0) {}
+
+        template <class _A0, class _A1>
+        __value_type(const _A0& __a0, const _A1& __a1)
+            : __cc(__a0, __a1) {}
+
+        operator const value_type& () const {return __cc;}
+    };
+#endif
     typedef __map_value_compare<key_type, mapped_type, key_compare> __vc;
     typedef typename allocator_traits<allocator_type>::template
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
@@ -1516,7 +1555,14 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     multimap& operator=(const multimap& __m)
         {
+#if __cplusplus >= 201103L
             __tree_ = __m.__tree_;
+#else
+            __tree_.clear();
+            __tree_.value_comp() = __m.__tree_.value_comp();
+            __tree_.__copy_assign_alloc(__m.__tree_);
+            insert(__m.begin(), __m.end());
+#endif
             return *this;
         }
 
@@ -1766,9 +1812,9 @@ multimap<_Key, _Tp, _Compare, _Allocator>::__construct_node()
 {
     __node_allocator& __na = __tree_.__node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.first));
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.first));
     __h.get_deleter().__first_constructed = true;
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.second));
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.second));
     __h.get_deleter().__second_constructed = true;
     return __h;
 }
@@ -1801,9 +1847,9 @@ multimap<_Key, _Tp, _Compare, _Allocator>::__construct_node(_A0&& __a0)
 {
     __node_allocator& __na = __tree_.__node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.first), _VSTD::forward<_A0>(__a0));
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.first), _VSTD::forward<_A0>(__a0));
     __h.get_deleter().__first_constructed = true;
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.second));
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.second));
     __h.get_deleter().__second_constructed = true;
     return __h;
 }

@@ -16,6 +16,8 @@
 #include <map>
 #include <cassert>
 
+#include "../../../min_allocator.h"
+
 int main()
 {
     {
@@ -46,4 +48,34 @@ int main()
         assert(r->first == 3);
         assert(r->second == 3.5);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef std::multimap<int, double, std::less<int>, min_allocator<std::pair<const int, double>>> M;
+        typedef M::iterator R;
+        M m;
+        R r = m.insert(M::value_type(2, 2.5));
+        assert(r == m.begin());
+        assert(m.size() == 1);
+        assert(r->first == 2);
+        assert(r->second == 2.5);
+
+        r = m.insert(M::value_type(1, 1.5));
+        assert(r == m.begin());
+        assert(m.size() == 2);
+        assert(r->first == 1);
+        assert(r->second == 1.5);
+
+        r = m.insert(M::value_type(3, 3.5));
+        assert(r == prev(m.end()));
+        assert(m.size() == 3);
+        assert(r->first == 3);
+        assert(r->second == 3.5);
+
+        r = m.insert(M::value_type(3, 3.5));
+        assert(r == prev(m.end()));
+        assert(m.size() == 4);
+        assert(r->first == 3);
+        assert(r->second == 3.5);
+    }
+#endif
 }

@@ -16,6 +16,8 @@
 #include <set>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 int main()
 {
     {
@@ -37,4 +39,25 @@ int main()
         m.clear();
         assert(m.size() == 0);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef std::set<int, std::less<int>, min_allocator<int>> M;
+        typedef int V;
+        V ar[] =
+        {
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+        };
+        M m(ar, ar + sizeof(ar)/sizeof(ar[0]));
+        assert(m.size() == 8);
+        m.clear();
+        assert(m.size() == 0);
+    }
+#endif
 }

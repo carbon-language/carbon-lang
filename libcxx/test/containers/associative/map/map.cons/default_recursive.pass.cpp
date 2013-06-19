@@ -19,7 +19,7 @@
 
 struct X
 {
-    std::multimap<int, X> m;
+    std::map<int, X> m;
 };
 
 #endif

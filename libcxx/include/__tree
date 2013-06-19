@@ -644,7 +644,8 @@ public:
     _LIBCPP_INLINE_VISIBILITY __tree_iterator() _NOEXCEPT {}
 
     _LIBCPP_INLINE_VISIBILITY reference operator*() const {return __ptr_->__value_;}
-    _LIBCPP_INLINE_VISIBILITY pointer operator->() const {return &__ptr_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY pointer operator->() const
+        {return pointer_traits<pointer>::pointer_to(__ptr_->__value_);}
 
     _LIBCPP_INLINE_VISIBILITY
     __tree_iterator& operator++()
@@ -686,7 +687,7 @@ class _LIBCPP_TYPE_VIS __tree_const_iterator
 {
     typedef _ConstNodePtr                                         __node_pointer;
     typedef typename pointer_traits<__node_pointer>::element_type __node;
-    typedef const typename __node::base                           __node_base;
+    typedef typename __node::base                                 __node_base;
     typedef typename pointer_traits<__node_pointer>::template
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
             rebind<__node_base>
@@ -729,7 +730,8 @@ public:
         : __ptr_(__p.__ptr_) {}
 
     _LIBCPP_INLINE_VISIBILITY reference operator*() const {return __ptr_->__value_;}
-    _LIBCPP_INLINE_VISIBILITY pointer operator->() const {return &__ptr_->__value_;}
+    _LIBCPP_INLINE_VISIBILITY pointer operator->() const
+        {return pointer_traits<pointer>::pointer_to(__ptr_->__value_);}
 
     _LIBCPP_INLINE_VISIBILITY
     __tree_const_iterator& operator++()
@@ -779,8 +781,10 @@ public:
     typedef typename __alloc_traits::size_type       size_type;
     typedef typename __alloc_traits::difference_type difference_type;
 
-    typedef __tree_node<value_type, typename __alloc_traits::void_pointer> __node;
-    typedef __tree_node_base<typename __alloc_traits::void_pointer> __node_base;
+    typedef typename __alloc_traits::void_pointer  __void_pointer;
+
+    typedef __tree_node<value_type, __void_pointer> __node;
+    typedef __tree_node_base<__void_pointer>        __node_base;
     typedef typename __alloc_traits::template
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
             rebind_alloc<__node>
@@ -790,9 +794,9 @@ public:
                                                      __node_allocator;
     typedef allocator_traits<__node_allocator>       __node_traits;
     typedef typename __node_traits::pointer          __node_pointer;
-    typedef typename __node_traits::const_pointer    __node_const_pointer;
+    typedef typename __node_traits::pointer          __node_const_pointer;
     typedef typename __node_base::pointer            __node_base_pointer;
-    typedef typename __node_base::const_pointer      __node_base_const_pointer;
+    typedef typename __node_base::pointer            __node_base_const_pointer;
 private:
     typedef typename __node_base::base __end_node_t;
     typedef typename pointer_traits<__node_pointer>::template
@@ -804,9 +808,9 @@ private:
                                                      __end_node_ptr;
     typedef typename pointer_traits<__node_pointer>::template
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
-            rebind<const __end_node_t>
+            rebind<__end_node_t>
 #else
-            rebind<const __end_node_t>::other
+            rebind<__end_node_t>::other
 #endif
                                                      __end_node_const_ptr;
 
@@ -828,7 +832,7 @@ public:
     {
         return static_cast<__node_const_pointer>
                (
-                   pointer_traits<__end_node_const_ptr>::pointer_to(__pair1_.first())
+                   pointer_traits<__end_node_const_ptr>::pointer_to(const_cast<__end_node_t&>(__pair1_.first()))
                );
     }
     _LIBCPP_INLINE_VISIBILITY
@@ -865,7 +869,7 @@ public:
         {return static_cast<__node_const_pointer>(__end_node()->__left_);}
 
     typedef __tree_iterator<value_type, __node_pointer, difference_type>             iterator;
-    typedef __tree_const_iterator<value_type, __node_const_pointer, difference_type> const_iterator;
+    typedef __tree_const_iterator<value_type, __node_pointer, difference_type> const_iterator;
 
     explicit __tree(const value_compare& __comp)
         _NOEXCEPT_(
@@ -1102,6 +1106,9 @@ private:
 
     __node_pointer __detach();
     static __node_pointer __detach(__node_pointer);
+
+    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS map;
+    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS multimap;
 };
 
 template <class _Tp, class _Compare, class _Allocator>
@@ -1161,7 +1168,7 @@ __tree<_Tp, _Compare, _Allocator>::__detach(__node_pointer __cache)
 {
     if (__cache->__parent_ == nullptr)
         return nullptr;
-    if (__tree_is_left_child(__cache))
+    if (__tree_is_left_child(static_cast<__node_base_pointer>(__cache)))
     {
         __cache->__parent_->__left_ = nullptr;
         __cache = static_cast<__node_pointer>(__cache->__parent_);
@@ -1294,7 +1301,7 @@ __tree<_Tp, _Compare, _Allocator>::__tree(__tree&& __t)
         __begin_node() = __end_node();
     else
     {
-        __end_node()->__left_->__parent_ = __end_node();
+        __end_node()->__left_->__parent_ = static_cast<__node_base_pointer>(__end_node());
         __t.__begin_node() = __t.__end_node();
         __t.__end_node()->__left_ = nullptr;
         __t.size() = 0;
@@ -1314,7 +1321,7 @@ __tree<_Tp, _Compare, _Allocator>::__tree(__tree&& __t, const allocator_type& __
         {
             __begin_node() = __t.__begin_node();
             __end_node()->__left_ = __t.__end_node()->__left_;
-            __end_node()->__left_->__parent_ = __end_node();
+            __end_node()->__left_->__parent_ = static_cast<__node_base_pointer>(__end_node());
             size() = __t.size();
             __t.__begin_node() = __t.__end_node();
             __t.__end_node()->__left_ = nullptr;
@@ -1342,7 +1349,7 @@ __tree<_Tp, _Compare, _Allocator>::__move_assign(__tree& __t, true_type)
         __begin_node() = __end_node();
     else
     {
-        __end_node()->__left_->__parent_ = __end_node();
+        __end_node()->__left_->__parent_ = static_cast<__node_base_pointer>(__end_node());
         __t.__begin_node() = __t.__end_node();
         __t.__end_node()->__left_ = nullptr;
         __t.size() = 0;
@@ -1447,11 +1454,11 @@ __tree<_Tp, _Compare, _Allocator>::swap(__tree& __t)
     if (size() == 0)
         __begin_node() = __end_node();
     else
-        __end_node()->__left_->__parent_ = __end_node();
+        __end_node()->__left_->__parent_ = static_cast<__node_base_pointer>(__end_node());
     if (__t.size() == 0)
         __t.__begin_node() = __t.__end_node();
     else
-        __t.__end_node()->__left_->__parent_ = __t.__end_node();
+        __t.__end_node()->__left_->__parent_ = static_cast<__node_base_pointer>(__t.__end_node());
 }
 
 template <class _Tp, class _Compare, class _Allocator>
@@ -1483,7 +1490,7 @@ __tree<_Tp, _Compare, _Allocator>::__find_leaf_low(typename __node_base::pointer
                     __nd = static_cast<__node_pointer>(__nd->__right_);
                 else
                 {
-                    __parent = __nd;
+                    __parent = static_cast<__node_base_pointer>(__nd);
                     return __parent->__right_;
                 }
             }
@@ -1493,13 +1500,13 @@ __tree<_Tp, _Compare, _Allocator>::__find_leaf_low(typename __node_base::pointer
                     __nd = static_cast<__node_pointer>(__nd->__left_);
                 else
                 {
-                    __parent = __nd;
+                    __parent = static_cast<__node_base_pointer>(__nd);
                     return __parent->__left_;
                 }
             }
         }
     }
-    __parent = __end_node();
+    __parent = static_cast<__node_base_pointer>(__end_node());
     return __parent->__left_;
 }
 
@@ -1522,7 +1529,7 @@ __tree<_Tp, _Compare, _Allocator>::__find_leaf_high(typename __node_base::pointe
                     __nd = static_cast<__node_pointer>(__nd->__left_);
                 else
                 {
-                    __parent = __nd;
+                    __parent = static_cast<__node_base_pointer>(__nd);
                     return __parent->__left_;
                 }
             }
@@ -1532,13 +1539,13 @@ __tree<_Tp, _Compare, _Allocator>::__find_leaf_high(typename __node_base::pointe
                     __nd = static_cast<__node_pointer>(__nd->__right_);
                 else
                 {
-                    __parent = __nd;
+                    __parent = static_cast<__node_base_pointer>(__nd);
                     return __parent->__right_;
                 }
             }
         }
     }
-    __parent = __end_node();
+    __parent = static_cast<__node_base_pointer>(__end_node());
     return __parent->__left_;
 }
 
@@ -1563,12 +1570,12 @@ __tree<_Tp, _Compare, _Allocator>::__find_leaf(const_iterator __hint,
             // *prev(__hint) <= __v <= *__hint
             if (__hint.__ptr_->__left_ == nullptr)
             {
-                __parent = const_cast<__node_pointer&>(__hint.__ptr_);
+                __parent = static_cast<__node_base_pointer>(__hint.__ptr_);
                 return __parent->__left_;
             }
             else
             {
-                __parent = const_cast<__node_pointer&>(__prior.__ptr_);
+                __parent = static_cast<__node_base_pointer>(__prior.__ptr_);
                 return __parent->__right_;
             }
         }
@@ -1600,7 +1607,7 @@ __tree<_Tp, _Compare, _Allocator>::__find_equal(typename __node_base::pointer& _
                     __nd = static_cast<__node_pointer>(__nd->__left_);
                 else
                 {
-                    __parent = __nd;
+                    __parent = static_cast<__node_base_pointer>(__nd);
                     return __parent->__left_;
                 }
             }
@@ -1610,18 +1617,18 @@ __tree<_Tp, _Compare, _Allocator>::__find_equal(typename __node_base::pointer& _
                     __nd = static_cast<__node_pointer>(__nd->__right_);
                 else
                 {
-                    __parent = __nd;
+                    __parent = static_cast<__node_base_pointer>(__nd);
                     return __parent->__right_;
                 }
             }
             else
             {
-                __parent = __nd;
+                __parent = static_cast<__node_base_pointer>(__nd);
                 return __parent;
             }
         }
     }
-    __parent = __end_node();
+    __parent = static_cast<__node_base_pointer>(__end_node());
     return __parent->__left_;
 }
 
@@ -1648,12 +1655,12 @@ __tree<_Tp, _Compare, _Allocator>::__find_equal(const_iterator __hint,
             // *prev(__hint) < __v < *__hint
             if (__hint.__ptr_->__left_ == nullptr)
             {
-                __parent = const_cast<__node_pointer&>(__hint.__ptr_);
+                __parent = static_cast<__node_base_pointer>(__hint.__ptr_);
                 return __parent->__left_;
             }
             else
             {
-                __parent = const_cast<__node_pointer&>(__prior.__ptr_);
+                __parent = static_cast<__node_base_pointer>(__prior.__ptr_);
                 return __parent->__right_;
             }
         }
@@ -1669,12 +1676,12 @@ __tree<_Tp, _Compare, _Allocator>::__find_equal(const_iterator __hint,
             // *__hint < __v < *_VSTD::next(__hint)
             if (__hint.__ptr_->__right_ == nullptr)
             {
-                __parent = const_cast<__node_pointer&>(__hint.__ptr_);
+                __parent = static_cast<__node_base_pointer>(__hint.__ptr_);
                 return __parent->__right_;
             }
             else
             {
-                __parent = const_cast<__node_pointer&>(__next.__ptr_);
+                __parent = static_cast<__node_base_pointer>(__next.__ptr_);
                 return __parent->__left_;
             }
         }
@@ -1682,7 +1689,7 @@ __tree<_Tp, _Compare, _Allocator>::__find_equal(const_iterator __hint,
         return __find_equal(__parent, __v);
     }
     // else __v == *__hint
-    __parent = const_cast<__node_pointer&>(__hint.__ptr_);
+    __parent = static_cast<__node_base_pointer>(__hint.__ptr_);
     return __parent;
 }
 
@@ -1729,7 +1736,7 @@ __tree<_Tp, _Compare, _Allocator>::__emplace_unique(_Args&&... __args)
     bool __inserted = false;
     if (__child == nullptr)
     {
-        __insert_node_at(__parent, __child, __h.get());
+        __insert_node_at(__parent, __child, static_cast<__node_base_pointer>(__h.get()));
         __r = __h.release();
         __inserted = true;
     }
@@ -1747,7 +1754,7 @@ __tree<_Tp, _Compare, _Allocator>::__emplace_hint_unique(const_iterator __p, _Ar
     __node_pointer __r = static_cast<__node_pointer>(__child);
     if (__child == nullptr)
     {
-        __insert_node_at(__parent, __child, __h.get());
+        __insert_node_at(__parent, __child, static_cast<__node_base_pointer>(__h.get()));
         __r = __h.release();
     }
     return iterator(__r);
@@ -1761,7 +1768,7 @@ __tree<_Tp, _Compare, _Allocator>::__emplace_multi(_Args&&... __args)
     __node_holder __h = __construct_node(_VSTD::forward<_Args>(__args)...);
     __node_base_pointer __parent;
     __node_base_pointer& __child = __find_leaf_high(__parent, __h->__value_);
-    __insert_node_at(__parent, __child, __h.get());
+    __insert_node_at(__parent, __child, static_cast<__node_base_pointer>(__h.get()));
     return iterator(static_cast<__node_pointer>(__h.release()));
 }
 
@@ -1774,7 +1781,7 @@ __tree<_Tp, _Compare, _Allocator>::__emplace_hint_multi(const_iterator __p,
     __node_holder __h = __construct_node(_VSTD::forward<_Args>(__args)...);
     __node_base_pointer __parent;
     __node_base_pointer& __child = __find_leaf(__p, __parent, __h->__value_);
-    __insert_node_at(__parent, __child, __h.get());
+    __insert_node_at(__parent, __child, static_cast<__node_base_pointer>(__h.get()));
     return iterator(static_cast<__node_pointer>(__h.release()));
 }
 
@@ -1812,7 +1819,7 @@ __tree<_Tp, _Compare, _Allocator>::__insert_multi(_Vp&& __v)
     __node_holder __h = __construct_node(_VSTD::forward<_Vp>(__v));
     __node_base_pointer __parent;
     __node_base_pointer& __child = __find_leaf_high(__parent, __h->__value_);
-    __insert_node_at(__parent, __child, __h.get());
+    __insert_node_at(__parent, __child, static_cast<__node_base_pointer>(__h.get()));
     return iterator(__h.release());
 }
 
@@ -1824,7 +1831,7 @@ __tree<_Tp, _Compare, _Allocator>::__insert_multi(const_iterator __p, _Vp&& __v)
     __node_holder __h = __construct_node(_VSTD::forward<_Vp>(__v));
     __node_base_pointer __parent;
     __node_base_pointer& __child = __find_leaf(__p, __parent, __h->__value_);
-    __insert_node_at(__parent, __child, __h.get());
+    __insert_node_at(__parent, __child, static_cast<__node_base_pointer>(__h.get()));
     return iterator(__h.release());
 }
 
@@ -1854,7 +1861,7 @@ __tree<_Tp, _Compare, _Allocator>::__insert_unique(const value_type& __v)
     if (__child == nullptr)
     {
         __node_holder __h = __construct_node(__v);
-        __insert_node_at(__parent, __child, __h.get());
+        __insert_node_at(__parent, __child, static_cast<__node_base_pointer>(__h.get()));
         __r = __h.release();
         __inserted = true;
     }
@@ -1871,7 +1878,7 @@ __tree<_Tp, _Compare, _Allocator>::__insert_unique(const_iterator __p, const val
     if (__child == nullptr)
     {
         __node_holder __h = __construct_node(__v);
-        __insert_node_at(__parent, __child, __h.get());
+        __insert_node_at(__parent, __child, static_cast<__node_base_pointer>(__h.get()));
         __r = __h.release();
     }
     return iterator(__r);
@@ -1884,7 +1891,7 @@ __tree<_Tp, _Compare, _Allocator>::__insert_multi(const value_type& __v)
     __node_base_pointer __parent;
     __node_base_pointer& __child = __find_leaf_high(__parent, __v);
     __node_holder __h = __construct_node(__v);
-    __insert_node_at(__parent, __child, __h.get());
+    __insert_node_at(__parent, __child, static_cast<__node_base_pointer>(__h.get()));
     return iterator(__h.release());
 }
 
@@ -1895,7 +1902,7 @@ __tree<_Tp, _Compare, _Allocator>::__insert_multi(const_iterator __p, const valu
     __node_base_pointer __parent;
     __node_base_pointer& __child = __find_leaf(__p, __parent, __v);
     __node_holder __h = __construct_node(__v);
-    __insert_node_at(__parent, __child, __h.get());
+    __insert_node_at(__parent, __child, static_cast<__node_base_pointer>(__h.get()));
     return iterator(__h.release());
 }
 
@@ -1909,7 +1916,7 @@ __tree<_Tp, _Compare, _Allocator>::__node_insert_unique(__node_pointer __nd)
     bool __inserted = false;
     if (__child == nullptr)
     {
-        __insert_node_at(__parent, __child, __nd);
+        __insert_node_at(__parent, __child, static_cast<__node_base_pointer>(__nd));
         __r = __nd;
         __inserted = true;
     }
@@ -1926,7 +1933,7 @@ __tree<_Tp, _Compare, _Allocator>::__node_insert_unique(const_iterator __p,
     __node_pointer __r = static_cast<__node_pointer>(__child);
     if (__child == nullptr)
     {
-        __insert_node_at(__parent, __child, __nd);
+        __insert_node_at(__parent, __child, static_cast<__node_base_pointer>(__nd));
         __r = __nd;
     }
     return iterator(__r);
@@ -1938,7 +1945,7 @@ __tree<_Tp, _Compare, _Allocator>::__node_insert_multi(__node_pointer __nd)
 {
     __node_base_pointer __parent;
     __node_base_pointer& __child = __find_leaf_high(__parent, __nd->__value_);
-    __insert_node_at(__parent, __child, __nd);
+    __insert_node_at(__parent, __child, static_cast<__node_base_pointer>(__nd));
     return iterator(__nd);
 }
 
@@ -1949,7 +1956,7 @@ __tree<_Tp, _Compare, _Allocator>::__node_insert_multi(const_iterator __p,
 {
     __node_base_pointer __parent;
     __node_base_pointer& __child = __find_leaf(__p, __parent, __nd->__value_);
-    __insert_node_at(__parent, __child, __nd);
+    __insert_node_at(__parent, __child, static_cast<__node_base_pointer>(__nd));
     return iterator(__nd);
 }
 
@@ -1957,7 +1964,7 @@ template <class _Tp, class _Compare, class _Allocator>
 typename __tree<_Tp, _Compare, _Allocator>::iterator
 __tree<_Tp, _Compare, _Allocator>::erase(const_iterator __p)
 {
-    __node_pointer __np = const_cast<__node_pointer>(__p.__ptr_);
+    __node_pointer __np = __p.__ptr_;
     iterator __r(__np);
     ++__r;
     if (__begin_node() == __np)
@@ -1977,7 +1984,7 @@ __tree<_Tp, _Compare, _Allocator>::erase(const_iterator __f, const_iterator __l)
 {
     while (__f != __l)
         __f = erase(__f);
-    return iterator(const_cast<__node_pointer>(__l.__ptr_));
+    return iterator(__l.__ptr_);
 }
 
 template <class _Tp, class _Compare, class _Allocator>
@@ -2264,7 +2271,7 @@ template <class _Tp, class _Compare, class _Allocator>
 typename __tree<_Tp, _Compare, _Allocator>::__node_holder
 __tree<_Tp, _Compare, _Allocator>::remove(const_iterator __p) _NOEXCEPT
 {
-    __node_pointer __np = const_cast<__node_pointer>(__p.__ptr_);
+    __node_pointer __np = __p.__ptr_;
     if (__begin_node() == __np)
     {
         if (__np->__right_ != nullptr)
