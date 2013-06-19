@@ -1272,7 +1272,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
         Range.setBegin(SS.getBeginLoc());
 
       Diag(TemplateId->LAngleLoc, diag::err_template_spec_syntax_non_template)
-        << Name << static_cast<int>(TemplateId->Kind) << Range;
+        << TemplateId->Name << static_cast<int>(TemplateId->Kind) << Range;
 
       DS.SetTypeSpecError();
       SkipUntil(tok::semi, false, true);
