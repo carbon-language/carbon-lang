@@ -177,9 +177,8 @@ static void handleSymtabSectionHeader(
 template <class ELFT>
 static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   using namespace llvm::ELF;
-  using namespace llvm::object;
-  typedef typename ELFObjectFile<ELFT>::Elf_Ehdr Elf_Ehdr;
-  typedef typename ELFObjectFile<ELFT>::Elf_Shdr Elf_Shdr;
+  typedef typename object::ELFObjectFile<ELFT>::Elf_Ehdr Elf_Ehdr;
+  typedef typename object::ELFObjectFile<ELFT>::Elf_Shdr Elf_Shdr;
 
   const ELFYAML::FileHeader &Hdr = Doc.Header;
 
