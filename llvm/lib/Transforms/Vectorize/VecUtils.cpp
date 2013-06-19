@@ -384,6 +384,9 @@ void BoUpSLP::getTreeUses_rec(ArrayRef<Value *> VL, unsigned Depth) {
     case Instruction::Trunc:
     case Instruction::FPTrunc:
     case Instruction::BitCast:
+    case Instruction::Select:
+    case Instruction::ICmp:
+    case Instruction::FCmp:
     case Instruction::Add:
     case Instruction::FAdd:
     case Instruction::Sub:
@@ -541,6 +544,18 @@ int BoUpSLP::getTreeCost_rec(ArrayRef<Value *> VL, unsigned Depth) {
     Cost += (VecCost - ScalarCost);
     return Cost;
   }
+  case Instruction::FCmp:
+  case Instruction::ICmp: {
+    // Check that all of the compares have the same predicate.
+    CmpInst::Predicate P0 = dyn_cast<CmpInst>(VL0)->getPredicate();
+    for (unsigned i = 1, e = VL.size(); i < e; ++i) {
+      CmpInst *Cmp = cast<CmpInst>(VL[i]);
+      if (Cmp->getPredicate() != P0)
+        return getScalarizationCost(VecTy);
+    }
+    // Fall through.
+  }
+  case Instruction::Select:
   case Instruction::Add:
   case Instruction::FAdd:
   case Instruction::Sub:
@@ -572,10 +587,19 @@ int BoUpSLP::getTreeCost_rec(ArrayRef<Value *> VL, unsigned Depth) {
     }
 
     // Calculate the cost of this instruction.
-    int ScalarCost = VecTy->getNumElements() *
+    int ScalarCost = 0;
+    int VecCost = 0;
+    if (Opcode == Instruction::FCmp || Opcode == Instruction::ICmp ||
+        Opcode == Instruction::Select) {
+      VectorType *MaskTy = VectorType::get(Builder.getInt1Ty(), VL.size());
+      ScalarCost = VecTy->getNumElements() *
+        TTI->getCmpSelInstrCost(Opcode, ScalarTy, Builder.getInt1Ty());
+      VecCost = TTI->getCmpSelInstrCost(Opcode, VecTy, MaskTy);
+    } else {
+      ScalarCost = VecTy->getNumElements() *
       TTI->getArithmeticInstrCost(Opcode, ScalarTy);
-
-    int VecCost = TTI->getArithmeticInstrCost(Opcode, VecTy);
+      VecCost = TTI->getArithmeticInstrCost(Opcode, VecTy);
+    }
     Cost += (VecCost - ScalarCost);
     return Cost;
   }
@@ -766,6 +790,54 @@ Value *BoUpSLP::vectorizeTree_rec(ArrayRef<Value *> VL, int VF) {
     Value *InVec = vectorizeTree_rec(INVL, VF);
     CastInst *CI = dyn_cast<CastInst>(VL0);
     Value *V = Builder.CreateCast(CI->getOpcode(), InVec, VecTy);
+
+    for (int i = 0; i < VF; ++i)
+      VectorizedValues[VL[i]] = V;
+
+    return V;
+  }
+  case Instruction::FCmp:
+  case Instruction::ICmp: {
+    // Check that all of the compares have the same predicate.
+    CmpInst::Predicate P0 = dyn_cast<CmpInst>(VL0)->getPredicate();
+    for (unsigned i = 1, e = VF; i < e; ++i) {
+      CmpInst *Cmp = cast<CmpInst>(VL[i]);
+      if (Cmp->getPredicate() != P0)
+        return Scalarize(VL, VecTy);
+    }
+
+    ValueList LHSV, RHSV;
+    for (int i = 0; i < VF; ++i) {
+      LHSV.push_back(cast<Instruction>(VL[i])->getOperand(0));
+      RHSV.push_back(cast<Instruction>(VL[i])->getOperand(1));
+    }
+
+    Value *L = vectorizeTree_rec(LHSV, VF);
+    Value *R = vectorizeTree_rec(RHSV, VF);
+    Value *V;
+    if (VL0->getOpcode() == Instruction::FCmp)
+      V = Builder.CreateFCmp(P0, L, R);
+    else
+      V = Builder.CreateICmp(P0, L, R);
+
+    for (int i = 0; i < VF; ++i)
+      VectorizedValues[VL[i]] = V;
+
+    return V;
+
+  }
+  case Instruction::Select: {
+    ValueList TrueVec, FalseVec, CondVec;
+    for (int i = 0; i < VF; ++i) {
+      CondVec.push_back(cast<Instruction>(VL[i])->getOperand(0));
+      TrueVec.push_back(cast<Instruction>(VL[i])->getOperand(1));
+      FalseVec.push_back(cast<Instruction>(VL[i])->getOperand(2));
+    }
+
+    Value *True = vectorizeTree_rec(TrueVec, VF);
+    Value *False = vectorizeTree_rec(FalseVec, VF);
+    Value *Cond = vectorizeTree_rec(CondVec, VF);
+    Value *V = Builder.CreateSelect(Cond, True, False);
 
     for (int i = 0; i < VF; ++i)
       VectorizedValues[VL[i]] = V;
