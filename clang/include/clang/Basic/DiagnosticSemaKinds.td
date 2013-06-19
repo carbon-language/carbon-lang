@@ -4313,8 +4313,6 @@ def ext_typecheck_decl_incomplete_type : ExtWarn<
   InGroup<DiagGroup<"tentative-definition-incomplete-type">>;
 def err_tentative_def_incomplete_type : Error<
   "tentative definition has type %0 that is never completed">;
-def err_tentative_def_incomplete_type_arr : Error<
-  "tentative definition has array of type %0 that is never completed">;
 def warn_tentative_incomplete_array : Warning<
   "tentative array definition assumed to have one element">;
 def err_typecheck_incomplete_array_needs_initializer : Error<

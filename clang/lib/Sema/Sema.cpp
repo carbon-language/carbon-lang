@@ -681,13 +681,6 @@ void Sema::ActOnEndOfTranslationUnit() {
 
     if (const IncompleteArrayType *ArrayT
         = Context.getAsIncompleteArrayType(VD->getType())) {
-      if (RequireCompleteType(VD->getLocation(),
-                              ArrayT->getElementType(),
-                              diag::err_tentative_def_incomplete_type_arr)) {
-        VD->setInvalidDecl();
-        continue;
-      }
-
       // Set the length of the array to 1 (C99 6.9.2p5).
       Diag(VD->getLocation(), diag::warn_tentative_incomplete_array);
       llvm::APInt One(Context.getTypeSize(Context.getSizeType()), true);
