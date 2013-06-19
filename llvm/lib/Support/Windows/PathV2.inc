@@ -426,15 +426,20 @@ error_code file_size(const Twine &path, uint64_t &result) {
 }
 
 error_code GetUniqueID(const Twine Path, uint64_t &Result) {
-  // FIXME: this is only unique if the file is accessed by the same file path.
-  // How do we do this for C:\dir\file and ..\dir\file ? Unix has inode
-  // numbers, but the concept doesn't exist in Windows.
-  SmallString<128> Storage;
-  StringRef P = Path.toStringRef(Storage);
-  uint64_t UniqueID = 0;
-  for (StringRef::iterator I = P.begin(), E = P.end(); I != E; ++I)
-    UniqueID += *I;
-  Result = UniqueID;
+  file_status Status;
+  if (error_code E = status(Path, Status))
+    return E;
+
+  // The file is uniquely identified by the volume serial number along
+  // with the 64-bit file identifier.
+  Result = (static_cast<uint64_t>(Status.FileIndexHigh) << 32ULL) |
+           static_cast<uint64_t>(Status.FileIndexLow);
+  
+  // Because the serial number is 32-bits, but we've already used up all 64
+  // bits for the file index, XOR the serial number into the high 32 bits of
+  // the resulting value.  We could potentially get collisons from this, but
+  // the likelihood is low.
+  Result ^= (static_cast<uint64_t>(Status.VolumeSerialNumber) << 32ULL);
 
   return error_code::success();
 }

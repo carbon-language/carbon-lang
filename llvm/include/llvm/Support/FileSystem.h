@@ -162,6 +162,7 @@ class file_status
   #endif
   friend bool equivalent(file_status A, file_status B);
   friend error_code status(const Twine &path, file_status &result);
+  friend error_code GetUniqueID(const Twine Path, uint64_t &Result);
   file_type Type;
   perms Perms;
 public:

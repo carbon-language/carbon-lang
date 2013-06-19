@@ -164,6 +164,42 @@ protected:
   }
 };
 
+TEST_F(FileSystemTest, Unique) {
+  // Create a temp file.
+  int FileDescriptor;
+  SmallString<64> TempPath;
+  ASSERT_NO_ERROR(
+    fs::unique_file("%%-%%-%%-%%.temp", FileDescriptor, TempPath));
+
+  // The same file should return an identical unique id.
+  uint64_t F1, F2;
+  ASSERT_NO_ERROR(fs::GetUniqueID(Twine(TempPath), F1));
+  ASSERT_NO_ERROR(fs::GetUniqueID(Twine(TempPath), F2));
+  ASSERT_EQ(F1, F2);
+
+  // Different files should return different unique ids.
+  int FileDescriptor2;
+  SmallString<64> TempPath2;
+  ASSERT_NO_ERROR(
+    fs::unique_file("%%-%%-%%-%%.temp", FileDescriptor2, TempPath2));
+  
+  uint64_t D;
+  ASSERT_NO_ERROR(fs::GetUniqueID(Twine(TempPath2), D));
+  ASSERT_NE(D, F1);
+  ::close(FileDescriptor2);
+
+  ASSERT_NO_ERROR(fs::remove(Twine(TempPath2)));
+
+  // Two paths representing the same file on disk should still provide the
+  // same unique id.  We can test this by making a hard link.
+  ASSERT_NO_ERROR(fs::create_hard_link(Twine(TempPath), Twine(TempPath2)));
+  uint64_t D2;
+  ASSERT_NO_ERROR(fs::GetUniqueID(Twine(TempPath2), D2));
+  ASSERT_EQ(D2, F1);
+
+  ::close(FileDescriptor);
+}
+
 TEST_F(FileSystemTest, TempFiles) {
   // Create a temp file.
   int FileDescriptor;
