@@ -1886,6 +1886,22 @@ llvm::DIType CGDebugInfo::getTypeOrNull(QualType Ty) {
   return llvm::DIType();
 }
 
+/// ContainsFwdDecl - True if Ty is either a forward declaration or a
+/// derived type of a forward declaration.
+static bool ContainsFwdDecl(llvm::DIType Ty) {
+  // Composite types such as structs inherit from DIDerivedType, so
+  // check this first and do an early exit.
+  if (Ty.isForwardDecl())
+    return true;
+
+  if (Ty.isDerivedType()) {
+    llvm::DIDerivedType DTy(Ty);
+    return ContainsFwdDecl(DTy.getTypeDerivedFrom());
+  }
+
+  return false;
+}
+
 /// getCompletedTypeOrNull - Get the type from the cache or return null if it
 /// doesn't exist.
 llvm::DIType CGDebugInfo::getCompletedTypeOrNull(QualType Ty) {
@@ -1904,8 +1920,17 @@ llvm::DIType CGDebugInfo::getCompletedTypeOrNull(QualType Ty) {
   }
 
   // Verify that any cached debug info still exists.
-  if (V != 0)
-    return llvm::DIType(cast<llvm::MDNode>(V));
+  if (V != 0) {
+    llvm::DIType CachedType(cast<llvm::MDNode>(V));
+
+    // Unless we are limiting debug info, attempt to resolve any
+    // forward declarations.
+    if (DebugKind > CodeGenOptions::LimitedDebugInfo &&
+        ContainsFwdDecl(CachedType))
+      return llvm::DIType();
+
+    return CachedType;
+  }
 
   return llvm::DIType();
 }
