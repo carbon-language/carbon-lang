@@ -585,6 +585,17 @@ error_code permissions(const Twine &path, perms prms) {
   return error_code::success();
 }
 
+error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {
+  ULARGE_INTEGER UI;
+  UI.QuadPart = Time.toWin32Time();
+  FILETIME FT;
+  FT.dwLowDateTime = UI.LowPart;
+  FT.dwHighDateTime = UI.HighPart;
+  HANDLE FileHandle = reinterpret_cast<HANDLE>(_get_osfhandle(FD));
+  if (!SetFileTime(FileHandle, NULL, &FT, &FT))
+    return windows_error(::GetLastError());
+  return error_code::success();
+}
 
 // FIXME: mode should be used here and default to user r/w only,
 // it currently comes in as a UNIX mode.

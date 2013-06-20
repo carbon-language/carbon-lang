@@ -19,13 +19,20 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cstdlib>
+#include <fcntl.h>
 #include <memory>
+
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
+#include <unistd.h>
+#else
+#include <io.h>
+#endif
+
 using namespace llvm;
 
 // Option for compatibility with AIX, not used but must allow it to be present.
@@ -399,32 +406,41 @@ doExtract(std::string* ErrMsg) {
         (std::find(Paths.begin(), Paths.end(), I->getPath()) != Paths.end())) {
 
       // Open up a file stream for writing
-      std::string Err;
-      raw_fd_ostream file(I->getPath().str().c_str(), Err,
-                          raw_fd_ostream::F_Binary);
-      if (!Err.empty())
-        fail(Err);
+      int OpenFlags = O_TRUNC | O_WRONLY | O_CREAT;
+#ifdef O_BINARY
+      OpenFlags |= O_BINARY;
+#endif
 
-      // Get the data and its length
-      const char* data = reinterpret_cast<const char*>(I->getData());
-      unsigned len = I->getSize();
+      int FD = open(I->getPath().str().c_str(), OpenFlags, 0664);
+      if (FD < 0)
+        return true;
 
-      // Write the data.
-      file.write(data,len);
-      file.close();
+      {
+        raw_fd_ostream file(FD, false);
 
-      sys::PathWithStatus PWS(I->getPath());
-      sys::FileStatus Status = *PWS.getFileStatus();
+        // Get the data and its length
+        const char* data = reinterpret_cast<const char*>(I->getData());
+        unsigned len = I->getSize();
+
+        // Write the data.
+        file.write(data, len);
+      }
 
       // Retain the original mode.
-      Status.mode = I->getMode();
+      sys::fs::perms Mode = sys::fs::perms(I->getMode());
+      error_code EC = sys::fs::permissions(I->getPath(), Mode);
+      if (EC)
+        fail(EC.message());
 
       // If we're supposed to retain the original modification times, etc. do so
       // now.
-      if (OriginalDates)
-        Status.modTime = I->getModTime();
-
-      PWS.setStatusInfoOnDisk(Status);
+      if (OriginalDates) {
+        EC = sys::fs::setLastModificationAndAccessTime(FD, I->getModTime());
+        if (EC)
+          fail(EC.message());
+      }
+      if (close(FD))
+        return true;
     }
   }
   return false;

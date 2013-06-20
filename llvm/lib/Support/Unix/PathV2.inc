@@ -441,6 +441,16 @@ error_code permissions(const Twine &path, perms prms) {
   return error_code::success();
 }
 
+error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {
+  timeval Times[2];
+  Times[0].tv_sec = Time.toPosixTime();
+  Times[0].tv_usec = 0;
+  Times[1] = Times[0];
+  if (::futimes(FD, Times))
+    return error_code(errno, system_category());
+  return error_code::success();
+}
+
 // Since this is most often used for temporary files, mode defaults to 0600.
 error_code unique_file(const Twine &model, int &result_fd,
                        SmallVectorImpl<char> &result_path,

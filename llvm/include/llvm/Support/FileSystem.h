@@ -482,6 +482,8 @@ error_code status(const Twine &path, file_status &result);
 ///          platform specific error_code.
 error_code permissions(const Twine &path, perms prms);
 
+error_code setLastModificationAndAccessTime(int FD, TimeValue Time);
+
 /// @brief Is status available?
 ///
 /// @param s Input file status.
