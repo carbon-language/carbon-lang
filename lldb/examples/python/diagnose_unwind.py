@@ -140,6 +140,14 @@ to be helpful when reporting the problem.
         print 'LLDB version %s' % debugger.GetVersionString()
         print 'Unwind diagnostics for thread %d' % thread.GetIndexID()
         print ""
+        print "============================================================================================="
+        print ""
+        print "Live register context:"
+        thread.SetSelectedFrame(0)
+        debugger.HandleCommand("register read")
+        print ""
+        print "============================================================================================="
+        print ""
         print "lldb's unwind algorithm:"
         print ""
         frame_num = 0
