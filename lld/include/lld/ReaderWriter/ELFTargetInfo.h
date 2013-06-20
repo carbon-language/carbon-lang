@@ -12,7 +12,6 @@
 
 #include "lld/Core/PassManager.h"
 #include "lld/Core/Pass.h"
-#include "lld/Core/range.h"
 #include "lld/Core/TargetInfo.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
@@ -155,22 +154,6 @@ public:
   /// Searches directories then calls appendInputFile()
   bool appendLibrary(StringRef libName);
 
-  /// adds undefined symbols that are specified in the command line
-  void addUndefinedSymbol(StringRef symbolName) {
-    _undefinedSymbols.push_back(symbolName);
-  }
-
-  /// Iterators for symbols that appear on the command line
-  typedef std::vector<StringRef> StringRefVector;
-  typedef StringRefVector::iterator StringRefVectorIter;
-  typedef StringRefVector::const_iterator StringRefVectorConstIter;
-
-  /// Return the list of undefined symbols that are specified in the
-  /// linker command line, using the -u option.
-  range<const StringRef *> undefinedSymbols() const {
-    return _undefinedSymbols;
-  }
-
 private:
   ELFTargetInfo() LLVM_DELETED_FUNCTION;
 protected:
@@ -197,7 +180,6 @@ protected:
   std::unique_ptr<Writer>            _writer;
   std::unique_ptr<Reader>            _linkerScriptReader;
   StringRef                          _dynamicLinkerPath;
-  StringRefVector                    _undefinedSymbols;
 };
 } // end namespace lld
 

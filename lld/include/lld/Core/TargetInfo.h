@@ -12,6 +12,7 @@
 
 #include "lld/Core/Error.h"
 #include "lld/Core/LLVM.h"
+#include "lld/Core/range.h"
 #include "lld/Core/Reference.h"
 
 #include "lld/Driver/LinkerInput.h"
@@ -237,6 +238,24 @@ public:
     _llvmOptions.push_back(opt);
   }
 
+  /// This method adds undefined symbols specified by the -u option to the
+  /// to the list of undefined symbols known to the linker. This option
+  /// essentially forces an undefined symbol to be create.
+  void addUndefinedSymbol(StringRef symbolName) {
+    _undefinedSymbols.push_back(symbolName);
+  }
+
+  /// Iterators for symbols that appear on the command line
+  typedef std::vector<StringRef> StringRefVector;
+  typedef StringRefVector::iterator StringRefVectorIter;
+  typedef StringRefVector::const_iterator StringRefVectorConstIter;
+
+  /// Return the list of undefined symbols that are specified in the
+  /// linker command line, using the -u option.
+  range<const StringRef *> undefinedSymbols() const {
+    return _undefinedSymbols;
+  }
+
   /// After all set* methods are called, the Driver calls this method
   /// to validate that there are no missing options or invalid combinations
   /// of options.  If there is a problem, a description of the problem
@@ -340,6 +359,7 @@ protected:
   std::vector<LinkerInput> _inputFiles;
   std::vector<const char*> _llvmOptions;
   std::unique_ptr<Reader>  _yamlReader;
+  StringRefVector          _undefinedSymbols;
 
  private:
   /// Validate the subclass bits. Only called by validate.
