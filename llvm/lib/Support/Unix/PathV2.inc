@@ -694,7 +694,7 @@ error_code get_magic(const Twine &path, uint32_t len,
   if (std::ferror(file) != 0) {
     std::fclose(file);
     return error_code(errno, system_category());
-  } else if (size != result.size()) {
+  } else if (size != len) {
     if (std::feof(file) != 0) {
       std::fclose(file);
       result.set_size(size);
@@ -702,7 +702,7 @@ error_code get_magic(const Twine &path, uint32_t len,
     }
   }
   std::fclose(file);
-  result.set_size(len);
+  result.set_size(size);
   return error_code::success();
 }
 
