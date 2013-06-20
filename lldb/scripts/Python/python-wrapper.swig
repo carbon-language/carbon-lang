@@ -895,6 +895,350 @@ LLDBSWIGPythonCreateOSPlugin
 }
 
 SWIGEXPORT bool
+LLDBSWIGPythonRunScriptKeywordProcess
+(const char* python_function_name,
+const char* session_dictionary_name,
+lldb::ProcessSP& process,
+std::string& output)
+
+{
+    bool retval = false;
+
+    if (python_function_name == NULL || python_function_name[0] == '\0' || !session_dictionary_name)
+        return retval;
+
+    lldb::SBProcess process_sb(process);
+    PyObject *ProcessObj_PyObj = SWIG_NewPointerObj((void *) &process_sb, SWIGTYPE_p_lldb__SBProcess, 0);
+
+    if (ProcessObj_PyObj == NULL)
+        return retval;
+        
+    PyObject *session_dict, *pfunc;
+    PyObject *pargs, *pvalue;
+    
+    session_dict = FindSessionDictionary (session_dictionary_name);
+        
+    if (session_dict != NULL)
+    {
+        pfunc = ResolvePythonName (python_function_name, session_dict);
+        
+        if (PyErr_Occurred()) // this might not exist.. let's make sure we handle that
+        {
+            PyErr_Clear();
+            return true;
+        }
+
+        if (pfunc == NULL)
+            return true;
+        else
+        {
+            // Set up the arguments and call the function.
+                
+            if (PyCallable_Check (pfunc))
+            {
+                pargs = PyTuple_New (2);
+                if (pargs == NULL)
+                {
+                    if (PyErr_Occurred())
+                        PyErr_Clear();
+                    return retval;
+                }
+                
+                PyTuple_SetItem (pargs, 0, ProcessObj_PyObj);  // This "steals" a reference to ProcessObj_PyObj
+                PyTuple_SetItem (pargs, 1, session_dict); // This "steals" a reference to session_dict
+                pvalue = PyObject_CallObject (pfunc, pargs);
+                Py_XDECREF (pargs);
+                
+                if (PyErr_Occurred ())
+                {
+                    PyErr_Print();
+                    PyErr_Clear();
+                }
+                else
+                {
+                    if (PyString_Check(pvalue))
+                    {
+                        output.assign(PyString_AsString(pvalue));
+                        retval = true;
+                    }
+                    else
+                    {
+                        output.clear();
+                        retval = false;
+                    }
+                    Py_XDECREF (pvalue);
+                }
+                Py_INCREF (session_dict);
+            }
+            else if (PyErr_Occurred())
+            {
+                PyErr_Print();
+                PyErr_Clear();
+            }
+        }
+    }
+    return retval;
+}
+
+SWIGEXPORT bool
+LLDBSWIGPythonRunScriptKeywordThread
+(const char* python_function_name,
+const char* session_dictionary_name,
+lldb::ThreadSP& thread,
+std::string& output)
+
+{
+    bool retval = false;
+
+    if (python_function_name == NULL || python_function_name[0] == '\0' || !session_dictionary_name)
+        return retval;
+
+    lldb::SBThread thread_sb(thread);
+    PyObject *ThreadObj_PyObj = SWIG_NewPointerObj((void *) &thread_sb, SWIGTYPE_p_lldb__SBThread, 0);
+
+    if (ThreadObj_PyObj == NULL)
+        return retval;
+        
+    PyObject *session_dict, *pfunc;
+    PyObject *pargs, *pvalue;
+    
+    session_dict = FindSessionDictionary (session_dictionary_name);
+        
+    if (session_dict != NULL)
+    {
+        pfunc = ResolvePythonName (python_function_name, session_dict);
+        
+        if (PyErr_Occurred()) // this might not exist.. let's make sure we handle that
+        {
+            PyErr_Clear();
+            return true;
+        }
+
+        if (pfunc == NULL)
+            return true;
+        else
+        {
+            // Set up the arguments and call the function.
+                
+            if (PyCallable_Check (pfunc))
+            {
+                pargs = PyTuple_New (2);
+                if (pargs == NULL)
+                {
+                    if (PyErr_Occurred())
+                        PyErr_Clear();
+                    return retval;
+                }
+                
+                PyTuple_SetItem (pargs, 0, ThreadObj_PyObj);  // This "steals" a reference to ThreadObj_PyObj
+                PyTuple_SetItem (pargs, 1, session_dict); // This "steals" a reference to session_dict
+                pvalue = PyObject_CallObject (pfunc, pargs);
+                Py_XDECREF (pargs);
+                
+                if (PyErr_Occurred ())
+                {
+                    PyErr_Print();
+                    PyErr_Clear();
+                }
+                else
+                {
+                    if (PyString_Check(pvalue))
+                    {
+                        output.assign(PyString_AsString(pvalue));
+                        retval = true;
+                    }
+                    else
+                    {
+                        output.clear();
+                        retval = false;
+                    }
+                    Py_XDECREF (pvalue);
+                }
+                Py_INCREF (session_dict);
+            }
+            else if (PyErr_Occurred())
+            {
+                PyErr_Print();
+                PyErr_Clear();
+            }
+        }
+    }
+    return retval;
+}
+
+SWIGEXPORT bool
+LLDBSWIGPythonRunScriptKeywordTarget
+(const char* python_function_name,
+const char* session_dictionary_name,
+lldb::TargetSP& target,
+std::string& output)
+
+{
+    bool retval = false;
+
+    if (python_function_name == NULL || python_function_name[0] == '\0' || !session_dictionary_name)
+        return retval;
+
+    lldb::SBTarget target_sb(target);
+    PyObject *TargetObj_PyObj = SWIG_NewPointerObj((void *) &target_sb, SWIGTYPE_p_lldb__SBTarget, 0);
+
+    if (TargetObj_PyObj == NULL)
+        return retval;
+        
+    PyObject *session_dict, *pfunc;
+    PyObject *pargs, *pvalue;
+    
+    session_dict = FindSessionDictionary (session_dictionary_name);
+        
+    if (session_dict != NULL)
+    {
+        pfunc = ResolvePythonName (python_function_name, session_dict);
+        
+        if (PyErr_Occurred()) // this might not exist.. let's make sure we handle that
+        {
+            PyErr_Clear();
+            return true;
+        }
+
+        if (pfunc == NULL)
+            return true;
+        else
+        {
+            // Set up the arguments and call the function.
+                
+            if (PyCallable_Check (pfunc))
+            {
+                pargs = PyTuple_New (2);
+                if (pargs == NULL)
+                {
+                    if (PyErr_Occurred())
+                        PyErr_Clear();
+                    return retval;
+                }
+                
+                PyTuple_SetItem (pargs, 0, TargetObj_PyObj);  // This "steals" a reference to TargetObj_PyObj
+                PyTuple_SetItem (pargs, 1, session_dict); // This "steals" a reference to session_dict
+                pvalue = PyObject_CallObject (pfunc, pargs);
+                Py_XDECREF (pargs);
+                
+                if (PyErr_Occurred ())
+                {
+                    PyErr_Print();
+                    PyErr_Clear();
+                }
+                else
+                {
+                    if (PyString_Check(pvalue))
+                    {
+                        output.assign(PyString_AsString(pvalue));
+                        retval = true;
+                    }
+                    else
+                    {
+                        output.clear();
+                        retval = false;
+                    }
+                    Py_XDECREF (pvalue);
+                }
+                Py_INCREF (session_dict);
+            }
+            else if (PyErr_Occurred())
+            {
+                PyErr_Print();
+                PyErr_Clear();
+            }
+        }
+    }
+    return retval;
+}
+
+SWIGEXPORT bool
+LLDBSWIGPythonRunScriptKeywordFrame
+(const char* python_function_name,
+const char* session_dictionary_name,
+lldb::StackFrameSP& frame,
+std::string& output)
+
+{
+    bool retval = false;
+
+    if (python_function_name == NULL || python_function_name[0] == '\0' || !session_dictionary_name)
+        return retval;
+
+    lldb::SBFrame frame_sb(frame);
+    PyObject *FrameObj_PyObj = SWIG_NewPointerObj((void *) &frame_sb, SWIGTYPE_p_lldb__SBFrame, 0);
+
+    if (FrameObj_PyObj == NULL)
+        return retval;
+        
+    PyObject *session_dict, *pfunc;
+    PyObject *pargs, *pvalue;
+    
+    session_dict = FindSessionDictionary (session_dictionary_name);
+        
+    if (session_dict != NULL)
+    {
+        pfunc = ResolvePythonName (python_function_name, session_dict);
+        
+        if (PyErr_Occurred()) // this might not exist.. let's make sure we handle that
+        {
+            PyErr_Clear();
+            return true;
+        }
+
+        if (pfunc == NULL)
+            return true;
+        else
+        {
+            // Set up the arguments and call the function.
+                
+            if (PyCallable_Check (pfunc))
+            {
+                pargs = PyTuple_New (2);
+                if (pargs == NULL)
+                {
+                    if (PyErr_Occurred())
+                        PyErr_Clear();
+                    return retval;
+                }
+                
+                PyTuple_SetItem (pargs, 0, FrameObj_PyObj);  // This "steals" a reference to FrameObj_PyObj
+                PyTuple_SetItem (pargs, 1, session_dict); // This "steals" a reference to session_dict
+                pvalue = PyObject_CallObject (pfunc, pargs);
+                Py_XDECREF (pargs);
+                
+                if (PyErr_Occurred ())
+                {
+                    PyErr_Print();
+                    PyErr_Clear();
+                }
+                else
+                {
+                    if (PyString_Check(pvalue))
+                    {
+                        output.assign(PyString_AsString(pvalue));
+                        retval = true;
+                    }
+                    else
+                    {
+                        output.clear();
+                        retval = false;
+                    }
+                    Py_XDECREF (pvalue);
+                }
+                Py_INCREF (session_dict);
+            }
+            else if (PyErr_Occurred())
+            {
+                PyErr_Print();
+                PyErr_Clear();
+            }
+        }
+    }
+    return retval;
+}
+
+SWIGEXPORT bool
 LLDBSwigPythonCallModuleInit 
 (
     const char *python_module_name,

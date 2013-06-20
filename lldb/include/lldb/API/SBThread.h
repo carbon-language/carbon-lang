@@ -36,6 +36,8 @@ public:
     SBThread ();
 
     SBThread (const lldb::SBThread &thread);
+    
+    SBThread (const lldb::ThreadSP& lldb_object_sp);
 
    ~SBThread();
 
@@ -200,8 +202,6 @@ protected:
     friend class SBProcess;
     friend class SBDebugger;
     friend class SBValue;
-
-    SBThread (const lldb::ThreadSP& lldb_object_sp);
 
     void
     SetThread (const lldb::ThreadSP& lldb_object_sp);

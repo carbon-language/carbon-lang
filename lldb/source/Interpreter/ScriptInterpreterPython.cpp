@@ -57,6 +57,10 @@ static ScriptInterpreter::SWIGPythonMightHaveChildrenSynthProviderInstance g_swi
 static ScriptInterpreter::SWIGPythonCallCommand g_swig_call_command = NULL;
 static ScriptInterpreter::SWIGPythonCallModuleInit g_swig_call_module_init = NULL;
 static ScriptInterpreter::SWIGPythonCreateOSPlugin g_swig_create_os_plugin = NULL;
+static ScriptInterpreter::SWIGPythonScriptKeyword_Process g_swig_run_script_keyword_process = NULL;
+static ScriptInterpreter::SWIGPythonScriptKeyword_Thread g_swig_run_script_keyword_thread = NULL;
+static ScriptInterpreter::SWIGPythonScriptKeyword_Target g_swig_run_script_keyword_target = NULL;
+static ScriptInterpreter::SWIGPythonScriptKeyword_Frame g_swig_run_script_keyword_frame = NULL;
 
 // these are the Pythonic implementations of the required callbacks
 // these are scripting-language specific, which is why they belong here
@@ -123,6 +127,30 @@ extern "C" void*
 LLDBSWIGPythonCreateOSPlugin (const char *python_class_name,
                               const char *session_dictionary_name,
                               const lldb::ProcessSP& process_sp);
+
+extern "C" bool
+LLDBSWIGPythonRunScriptKeywordProcess (const char* python_function_name,
+                                       const char* session_dictionary_name,
+                                       lldb::ProcessSP& process,
+                                       std::string& output);
+
+extern "C" bool
+LLDBSWIGPythonRunScriptKeywordThread (const char* python_function_name,
+                                      const char* session_dictionary_name,
+                                      lldb::ThreadSP& thread,
+                                      std::string& output);
+
+extern "C" bool
+LLDBSWIGPythonRunScriptKeywordTarget (const char* python_function_name,
+                                      const char* session_dictionary_name,
+                                      lldb::TargetSP& target,
+                                      std::string& output);
+
+extern "C" bool
+LLDBSWIGPythonRunScriptKeywordFrame (const char* python_function_name,
+                                     const char* session_dictionary_name,
+                                     lldb::StackFrameSP& frame,
+                                     std::string& output);
 
 static int
 _check_and_flush (FILE *stream)
@@ -2577,6 +2605,134 @@ ReadPythonBacktrace (PyObject* py_backtrace)
     return retval;
 }
 
+bool
+ScriptInterpreterPython::RunScriptFormatKeyword (const char* impl_function,
+                                                 Process* process,
+                                                 std::string& output,
+                                                 Error& error)
+{
+    bool ret_val;
+    if (!process)
+    {
+        error.SetErrorString("no process");
+        return false;
+    }
+    if (!impl_function || !impl_function[0])
+    {
+        error.SetErrorString("no function to execute");
+        return false;
+    }
+    if (!g_swig_run_script_keyword_process)
+    {
+        error.SetErrorString("internal helper function missing");
+        return false;
+    }
+    {
+        ProcessSP process_sp(process->shared_from_this());
+        Locker py_lock(this);
+        ret_val = g_swig_run_script_keyword_process (impl_function, m_dictionary_name.c_str(), process_sp, output);
+        if (!ret_val)
+            error.SetErrorString("python script evaluation failed");
+    }
+    return ret_val;
+}
+
+bool
+ScriptInterpreterPython::RunScriptFormatKeyword (const char* impl_function,
+                                                 Thread* thread,
+                                                 std::string& output,
+                                                 Error& error)
+{
+    bool ret_val;
+    if (!thread)
+    {
+        error.SetErrorString("no thread");
+        return false;
+    }
+    if (!impl_function || !impl_function[0])
+    {
+        error.SetErrorString("no function to execute");
+        return false;
+    }
+    if (!g_swig_run_script_keyword_thread)
+    {
+        error.SetErrorString("internal helper function missing");
+        return false;
+    }
+    {
+        ThreadSP thread_sp(thread->shared_from_this());
+        Locker py_lock(this);
+        ret_val = g_swig_run_script_keyword_thread (impl_function, m_dictionary_name.c_str(), thread_sp, output);
+        if (!ret_val)
+            error.SetErrorString("python script evaluation failed");
+    }
+    return ret_val;
+}
+
+bool
+ScriptInterpreterPython::RunScriptFormatKeyword (const char* impl_function,
+                                                 Target* target,
+                                                 std::string& output,
+                                                 Error& error)
+{
+    bool ret_val;
+    if (!target)
+    {
+        error.SetErrorString("no thread");
+        return false;
+    }
+    if (!impl_function || !impl_function[0])
+    {
+        error.SetErrorString("no function to execute");
+        return false;
+    }
+    if (!g_swig_run_script_keyword_thread)
+    {
+        error.SetErrorString("internal helper function missing");
+        return false;
+    }
+    {
+        TargetSP target_sp(target->shared_from_this());
+        Locker py_lock(this);
+        ret_val = g_swig_run_script_keyword_target (impl_function, m_dictionary_name.c_str(), target_sp, output);
+        if (!ret_val)
+            error.SetErrorString("python script evaluation failed");
+    }
+    return ret_val;
+}
+
+bool
+ScriptInterpreterPython::RunScriptFormatKeyword (const char* impl_function,
+                                                 StackFrame* frame,
+                                                 std::string& output,
+                                                 Error& error)
+{
+    bool ret_val;
+    if (!frame)
+    {
+        error.SetErrorString("no frame");
+        return false;
+    }
+    if (!impl_function || !impl_function[0])
+    {
+        error.SetErrorString("no function to execute");
+        return false;
+    }
+    if (!g_swig_run_script_keyword_thread)
+    {
+        error.SetErrorString("internal helper function missing");
+        return false;
+    }
+    {
+        StackFrameSP frame_sp(frame->shared_from_this());
+        Locker py_lock(this);
+        ret_val = g_swig_run_script_keyword_frame (impl_function, m_dictionary_name.c_str(), frame_sp, output);
+        if (!ret_val)
+            error.SetErrorString("python script evaluation failed");
+    }
+    return ret_val;
+}
+
 uint64_t replace_all(std::string& str, const std::string& oldStr, const std::string& newStr)
 {
     size_t pos = 0;
@@ -2909,6 +3065,10 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_ini
     g_swig_call_command = LLDBSwigPythonCallCommand;
     g_swig_call_module_init = LLDBSwigPythonCallModuleInit;
     g_swig_create_os_plugin = LLDBSWIGPythonCreateOSPlugin;
+    g_swig_run_script_keyword_process = LLDBSWIGPythonRunScriptKeywordProcess;
+    g_swig_run_script_keyword_thread = LLDBSWIGPythonRunScriptKeywordThread;
+    g_swig_run_script_keyword_target = LLDBSWIGPythonRunScriptKeywordTarget;
+    g_swig_run_script_keyword_frame = LLDBSWIGPythonRunScriptKeywordFrame;
 }
 
 void

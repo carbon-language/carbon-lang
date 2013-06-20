@@ -126,6 +126,27 @@ public:
     typedef bool           (*SWIGPythonCallModuleInit)              (const char *python_module_name,
                                                                      const char *session_dictionary_name,
                                                                      lldb::DebuggerSP& debugger);
+    
+    typedef bool            (*SWIGPythonScriptKeyword_Process)      (const char* python_function_name,
+                                                                     const char* session_dictionary_name,
+                                                                     lldb::ProcessSP& process,
+                                                                     std::string& output);
+    typedef bool            (*SWIGPythonScriptKeyword_Thread)      (const char* python_function_name,
+                                                                    const char* session_dictionary_name,
+                                                                    lldb::ThreadSP& thread,
+                                                                    std::string& output);
+    
+    typedef bool            (*SWIGPythonScriptKeyword_Target)      (const char* python_function_name,
+                                                                    const char* session_dictionary_name,
+                                                                    lldb::TargetSP& target,
+                                                                    std::string& output);
+
+    typedef bool            (*SWIGPythonScriptKeyword_Frame)      (const char* python_function_name,
+                                                                    const char* session_dictionary_name,
+                                                                    lldb::StackFrameSP& frame,
+                                                                    std::string& output);
+
+    
 
     typedef enum
     {
@@ -393,6 +414,46 @@ public:
                            lldb_private::CommandReturnObject& cmd_retobj,
                            Error& error)
     {
+        return false;
+    }
+    
+    virtual bool
+    RunScriptFormatKeyword (const char* impl_function,
+                            Process* process,
+                            std::string& output,
+                            Error& error)
+    {
+        error.SetErrorString("unimplemented");
+        return false;
+    }
+
+    virtual bool
+    RunScriptFormatKeyword (const char* impl_function,
+                            Thread* thread,
+                            std::string& output,
+                            Error& error)
+    {
+        error.SetErrorString("unimplemented");
+        return false;
+    }
+    
+    virtual bool
+    RunScriptFormatKeyword (const char* impl_function,
+                            Target* target,
+                            std::string& output,
+                            Error& error)
+    {
+        error.SetErrorString("unimplemented");
+        return false;
+    }
+    
+    virtual bool
+    RunScriptFormatKeyword (const char* impl_function,
+                            StackFrame* frame,
+                            std::string& output,
+                            Error& error)
+    {
+        error.SetErrorString("unimplemented");
         return false;
     }
     

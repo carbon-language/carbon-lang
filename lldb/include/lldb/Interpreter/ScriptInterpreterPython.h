@@ -173,6 +173,30 @@ public:
     }
     
     virtual bool
+    RunScriptFormatKeyword (const char* impl_function,
+                            Process* process,
+                            std::string& output,
+                            Error& error);
+
+    virtual bool
+    RunScriptFormatKeyword (const char* impl_function,
+                            Thread* thread,
+                            std::string& output,
+                            Error& error);
+    
+    virtual bool
+    RunScriptFormatKeyword (const char* impl_function,
+                            Target* target,
+                            std::string& output,
+                            Error& error);
+    
+    virtual bool
+    RunScriptFormatKeyword (const char* impl_function,
+                            StackFrame* frame,
+                            std::string& output,
+                            Error& error);
+    
+    virtual bool
     LoadScriptingModule (const char* filename,
                          bool can_reload,
                          bool init_session,

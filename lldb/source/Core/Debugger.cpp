@@ -1801,6 +1801,24 @@ FormatPromptRecurse
                                                 }
                                             }
                                         }
+                                        else if (::strncmp(var_name_begin, "script:", strlen("script:")) == 0)
+                                        {
+                                            var_name_begin += ::strlen("script:");
+                                            std::string script_name(var_name_begin,var_name_end);
+                                            ScriptInterpreter* script_interpreter = process->GetTarget().GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
+                                            if (script_interpreter)
+                                            {
+                                                std::string script_output;
+                                                Error script_error;
+                                                if (script_interpreter->RunScriptFormatKeyword(script_name.c_str(), process,script_output,script_error) && script_error.Success())
+                                                {
+                                                    s.Printf("%s", script_output.c_str());
+                                                    var_success = true;
+                                                }
+                                                else
+                                                    s.Printf("<error: %s>",script_error.AsCString());
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1870,6 +1888,24 @@ FormatPromptRecurse
                                                 }
                                             }
                                         }
+                                        else if (::strncmp(var_name_begin, "script:", strlen("script:")) == 0)
+                                        {
+                                            var_name_begin += ::strlen("script:");
+                                            std::string script_name(var_name_begin,var_name_end);
+                                            ScriptInterpreter* script_interpreter = thread->GetProcess()->GetTarget().GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
+                                            if (script_interpreter)
+                                            {
+                                                std::string script_output;
+                                                Error script_error;
+                                                if (script_interpreter->RunScriptFormatKeyword(script_name.c_str(), thread,script_output,script_error) && script_error.Success())
+                                                {
+                                                    s.Printf("%s", script_output.c_str());
+                                                    var_success = true;
+                                                }
+                                                else
+                                                    s.Printf("<error: %s>",script_error.AsCString());
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1909,6 +1945,24 @@ FormatPromptRecurse
                                         {
                                             s.PutCString (arch.GetArchitectureName());
                                             var_success = true;
+                                        }
+                                    }
+                                    else if (::strncmp(var_name_begin, "script:", strlen("script:")) == 0)
+                                    {
+                                        var_name_begin += ::strlen("script:");
+                                        std::string script_name(var_name_begin,var_name_end);
+                                        ScriptInterpreter* script_interpreter = target->GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
+                                        if (script_interpreter)
+                                        {
+                                            std::string script_output;
+                                            Error script_error;
+                                            if (script_interpreter->RunScriptFormatKeyword(script_name.c_str(), target,script_output,script_error) && script_error.Success())
+                                            {
+                                                s.Printf("%s", script_output.c_str());
+                                                var_success = true;
+                                            }
+                                            else
+                                                s.Printf("<error: %s>",script_error.AsCString());
                                         }
                                     }
                                 }
@@ -2016,6 +2070,24 @@ FormatPromptRecurse
                                                     if (reg_info)
                                                         var_success = true;
                                                 }
+                                            }
+                                        }
+                                        else if (::strncmp(var_name_begin, "script:", strlen("script:")) == 0)
+                                        {
+                                            var_name_begin += ::strlen("script:");
+                                            std::string script_name(var_name_begin,var_name_end);
+                                            ScriptInterpreter* script_interpreter = frame->GetThread()->GetProcess()->GetTarget().GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
+                                            if (script_interpreter)
+                                            {
+                                                std::string script_output;
+                                                Error script_error;
+                                                if (script_interpreter->RunScriptFormatKeyword(script_name.c_str(), frame,script_output,script_error) && script_error.Success())
+                                                {
+                                                    s.Printf("%s", script_output.c_str());
+                                                    var_success = true;
+                                                }
+                                                else
+                                                    s.Printf("<error: %s>",script_error.AsCString());
                                             }
                                         }
                                     }
