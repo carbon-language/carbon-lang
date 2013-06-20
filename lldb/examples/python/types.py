@@ -79,7 +79,7 @@ def verify_type (target, type):
     print 'Total pad bytes: %u' % (padding)
     if padding > 0:
         print 'Padding percentage: %2.2f %%' % ((float(padding) / float(byte_size)) * 100.0)
-        
+    print
 
 def verify_type_recursive (target, type, member_name, depth, base_offset, padding):
     prev_end_offset = base_offset
@@ -172,7 +172,6 @@ def verify_types (debugger, command_args):
             print error.GetCString()
             continue
     
-        print target
         modules = list()
         if len(options.modules) == 0:
             # Append just the main executable if nothing was specified
@@ -190,15 +189,16 @@ def verify_types (debugger, command_args):
                 print 'module: %s' % (module.file)
                 if options.typenames:
                     for typename in options.typenames:
-                        print typename
                         types = module.FindTypes(typename)
                         if types.GetSize():
+                            print 'Found %u types matching "%s" in "%s"' % (len(types), typename, module.file)
                             for type in types:
                                 verify_type (target, type)
                         else:
-                            print 'error: no type matches "%s"' % (typename)
+                            print 'error: no type matches "%s" in "%s"' % (typename, module.file)
                 else:
                     types = module.GetTypes(lldb.eTypeClassClass | lldb.eTypeClassStruct)
+                    print 'Found %u types in "%s"' % (len(types), module.file)
                     for type in types:
                         verify_type (target, type)
         else:
