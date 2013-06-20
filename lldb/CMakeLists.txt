@@ -118,9 +118,10 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   )
 endif()
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
+    AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "3.3")
   add_lldb_definitions(
-    -Wno-deprecated-register
+    -Wno-deprecated-register # Suppress "deprecated register keyword" warnings
   )
 endif()
 
