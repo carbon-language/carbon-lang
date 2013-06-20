@@ -40,7 +40,7 @@ namespace llvm {
   FunctionPass *createPPCJITCodeEmitterPass(PPCTargetMachine &TM,
                                             JITCodeEmitter &MCE);
   void LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
-                                    AsmPrinter &AP, bool isDarwin);
+                                    AsmPrinter &AP);
 
   /// \brief Creates an PPC-specific Target Transformation Info pass.
   ImmutablePass *createPPCTargetTransformInfoPass(const PPCTargetMachine *TM);

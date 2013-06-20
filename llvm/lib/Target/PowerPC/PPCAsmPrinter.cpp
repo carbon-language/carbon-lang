@@ -352,7 +352,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case PPC::LDtocCPT:
   case PPC::LDtoc: {
     // Transform %X3 = LDtoc <ga:@min1>, %X2
-    LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, Subtarget.isDarwin());
+    LowerPPCMachineInstrToMCInst(MI, TmpInst, *this);
 
     // Change the opcode to LD, and the global address operand to be a
     // reference to the TOC entry we will synthesize later.
@@ -381,7 +381,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       
   case PPC::ADDIStocHA: {
     // Transform %Xd = ADDIStocHA %X2, <ga:@sym>
-    LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, Subtarget.isDarwin());
+    LowerPPCMachineInstrToMCInst(MI, TmpInst, *this);
 
     // Change the opcode to ADDIS8.  If the global address is external,
     // has common linkage, is a function address, or is a jump table
@@ -425,7 +425,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   case PPC::LDtocL: {
     // Transform %Xd = LDtocL <ga:@sym>, %Xs
-    LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, Subtarget.isDarwin());
+    LowerPPCMachineInstrToMCInst(MI, TmpInst, *this);
 
     // Change the opcode to LD.  If the global address is external, has
     // common linkage, or is a jump table address, then reference the
@@ -462,7 +462,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   case PPC::ADDItocL: {
     // Transform %Xd = ADDItocL %Xs, <ga:@sym>
-    LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, Subtarget.isDarwin());
+    LowerPPCMachineInstrToMCInst(MI, TmpInst, *this);
 
     // Change the opcode to ADDI8.  If the global address is external, then
     // generate a TOC entry and reference that.  Otherwise reference the
@@ -514,7 +514,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   case PPC::LDgotTprelL: {
     // Transform %Xd = LDgotTprelL <ga:@sym>, %Xs
-    LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, Subtarget.isDarwin());
+    LowerPPCMachineInstrToMCInst(MI, TmpInst, *this);
 
     // Change the opcode to LD.
     TmpInst.setOpcode(PPC::LD);
@@ -681,7 +681,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
   }
 
-  LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, Subtarget.isDarwin());
+  LowerPPCMachineInstrToMCInst(MI, TmpInst, *this);
   OutStreamer.EmitInstruction(TmpInst);
 }
 
