@@ -3582,9 +3582,9 @@ ClangASTContext::GetDirectBaseClassAtIndex (clang::ASTContext *ast,
                             {
                                 const ASTRecordLayout &record_layout = ast->getASTRecordLayout(cxx_record_decl);
                                 const CXXRecordDecl *base_class_decl = cast<CXXRecordDecl>(base_class->getType()->getAs<RecordType>()->getDecl());
-//                                if (base_class->isVirtual())
-//                                    *bit_offset_ptr = record_layout.getVBaseClassOffset(base_class_decl).getQuantity() * 8;
-//                                else
+                                if (base_class->isVirtual())
+                                    *bit_offset_ptr = record_layout.getVBaseClassOffset(base_class_decl).getQuantity() * 8;
+                                else
                                     *bit_offset_ptr = record_layout.getBaseClassOffset(base_class_decl).getQuantity() * 8;
                             }
                             return base_class->getType().getAsOpaquePtr();
