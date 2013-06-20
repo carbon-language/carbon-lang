@@ -4641,16 +4641,16 @@ alignment results in undefined behavior. Underestimating the alignment
 may produce less efficient code. An alignment of 1 is always safe.
 
 The optional ``!nontemporal`` metadata must reference a single
-metatadata name ``<index>`` corresponding to a metadata node with one
+metadata name ``<index>`` corresponding to a metadata node with one
 ``i32`` entry of value 1. The existence of the ``!nontemporal``
-metatadata on the instruction tells the optimizer and code generator
+metadata on the instruction tells the optimizer and code generator
 that this load is not expected to be reused in the cache. The code
 generator may select special instructions to save cache bandwidth, such
 as the ``MOVNT`` instruction on x86.
 
 The optional ``!invariant.load`` metadata must reference a single
-metatadata name ``<index>`` corresponding to a metadata node with no
-entries. The existence of the ``!invariant.load`` metatadata on the
+metadata name ``<index>`` corresponding to a metadata node with no
+entries. The existence of the ``!invariant.load`` metadata on the
 instruction tells the optimizer and code generator that this load
 address points to memory which does not change value during program
 execution. The optimizer may then move this load around, for example, by
@@ -4726,9 +4726,9 @@ alignment results in undefined behavior. Underestimating the
 alignment may produce less efficient code. An alignment of 1 is always
 safe.
 
-The optional ``!nontemporal`` metadata must reference a single metatadata
+The optional ``!nontemporal`` metadata must reference a single metadata
 name ``<index>`` corresponding to a metadata node with one ``i32`` entry of
-value 1. The existence of the ``!nontemporal`` metatadata on the instruction
+value 1. The existence of the ``!nontemporal`` metadata on the instruction
 tells the optimizer and code generator that this load is not expected to
 be reused in the cache. The code generator may select special
 instructions to save cache bandwidth, such as the MOVNT instruction on
