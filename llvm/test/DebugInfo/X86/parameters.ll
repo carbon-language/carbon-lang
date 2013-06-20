@@ -1,6 +1,6 @@
 ; REQUIRES: object-emission
 ;
-; RUN: llc -O0 -filetype=obj < %s > %t
+; RUN: llc -mtriple=x86_64-unknown-linux-gnu -O0 -filetype=obj < %s > %t
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 
 ; Test case derived from compiling the following source with clang -g:
