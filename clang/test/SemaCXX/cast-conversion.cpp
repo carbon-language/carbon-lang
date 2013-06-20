@@ -65,3 +65,11 @@ void *intToPointer4() {
 void *intToPointer5(long l) {
   return (void*)l;
 }
+
+struct AmbiguousCast {
+  operator int(); // expected-note {{candidate function}}
+  operator unsigned int(); // expected-note {{candidate function}}
+};
+long long AmbiguousCastFunc(AmbiguousCast& a) {
+  return static_cast<long long>(a); // expected-error {{ambiguous conversion for static_cast from 'AmbiguousCast' to 'long long'}}
+}

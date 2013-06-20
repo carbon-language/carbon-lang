@@ -5,8 +5,6 @@
 // 2012, which supports C++11 and static_assert.  It should pass for both 64-bit
 // and 32-bit x86.
 //
-// expected-no-diagnostics
-
 // Test the size of various member pointer combinations:
 // - complete and incomplete
 // - single, multiple, and virtual inheritance (and unspecified for incomplete)
@@ -165,3 +163,6 @@ struct MemPtrInTemplate {
   int T::*data_ptr;
   void (T::*func_ptr)();
 };
+
+int Virtual::*CastTest = reinterpret_cast<int Virtual::*>(&AA::x);
+  // expected-error@-1 {{cannot reinterpret_cast from member pointer type}}

@@ -64,6 +64,9 @@ nullptr_t f(nullptr_t null)
   (void)reinterpret_cast<uintptr_t>(nullptr);
   (void)reinterpret_cast<uintptr_t>(*pn);
 
+  // You can't reinterpret_cast nullptr to any integer
+  (void)reinterpret_cast<char>(nullptr); // expected-error {{cast from pointer to smaller type 'char' loses information}}
+
   int *ip = *pn;
   if (*pn) { }
 
