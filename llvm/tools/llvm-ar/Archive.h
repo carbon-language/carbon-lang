@@ -323,24 +323,6 @@ class Archive {
     /// @brief Get the offset to the first "real" file member  in the archive.
     unsigned getFirstFileOffset() { return firstFileOffset; }
 
-    /// This method will scan the archive for bitcode modules, interpret them
-    /// and return a vector of the instantiated modules in \p Modules. If an
-    /// error occurs, this method will return true. If \p ErrMessage is not null
-    /// and an error occurs, \p *ErrMessage will be set to a string explaining
-    /// the error that occurred.
-    /// @returns true if an error occurred
-    /// @brief Instantiate all the bitcode modules located in the archive
-    bool getAllModules(std::vector<Module*>& Modules, std::string* ErrMessage);
-
-    /// This method determines whether the archive is a properly formed llvm
-    /// bitcode archive.  It first makes sure the symbol table has been loaded
-    /// and has a non-zero size.  If it does, then it is an archive.  If not,
-    /// then it tries to load all the bitcode modules of the archive.  Finally,
-    /// it returns whether it was successful.
-    /// @returns true if the archive is a proper llvm bitcode archive
-    /// @brief Determine whether the archive is a proper llvm bitcode archive.
-    bool isBitcodeArchive();
-
   /// @}
   /// @name Mutators
   /// @{

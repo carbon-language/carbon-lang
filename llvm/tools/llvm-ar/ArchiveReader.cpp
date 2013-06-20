@@ -275,29 +275,6 @@ Archive::OpenAndLoad(StringRef File, LLVMContext& C,
   return result.take();
 }
 
-// Get all the bitcode modules from the archive
-bool
-Archive::getAllModules(std::vector<Module*>& Modules,
-                       std::string* ErrMessage) {
-
-  for (iterator I=begin(), E=end(); I != E; ++I) {
-    if (I->isBitcode()) {
-      std::string FullMemberName = archPath + "(" + I->getPath().str() + ")";
-      MemoryBuffer *Buffer =
-        MemoryBuffer::getMemBufferCopy(StringRef(I->getData(), I->getSize()),
-                                       FullMemberName.c_str());
-      
-      Module *M = ParseBitcodeFile(Buffer, Context, ErrMessage);
-      delete Buffer;
-      if (!M)
-        return true;
-
-      Modules.push_back(M);
-    }
-  }
-  return false;
-}
-
 // Load just the symbol table from the archive file
 bool
 Archive::loadSymbolTable(std::string* ErrorMsg) {
@@ -360,44 +337,4 @@ Archive::loadSymbolTable(std::string* ErrorMsg) {
 
   firstFileOffset = FirstFile - base;
   return true;
-}
-
-bool Archive::isBitcodeArchive() {
-  // Make sure the symTab has been loaded. In most cases this should have been
-  // done when the archive was constructed, but still,  this is just in case.
-  if (symTab.empty())
-    if (!loadSymbolTable(0))
-      return false;
-
-  // Now that we know it's been loaded, return true
-  // if it has a size
-  if (symTab.size()) return true;
-
-  // We still can't be sure it isn't a bitcode archive
-  if (!loadArchive(0))
-    return false;
-
-  std::vector<Module *> Modules;
-  std::string ErrorMessage;
-
-  // Scan the archive, trying to load a bitcode member.  We only load one to
-  // see if this works.
-  for (iterator I = begin(), E = end(); I != E; ++I) {
-    if (!I->isBitcode())
-      continue;
-
-    std::string FullMemberName = archPath + "(" + I->getPath().str() + ")";
-
-    MemoryBuffer *Buffer =
-      MemoryBuffer::getMemBufferCopy(StringRef(I->getData(), I->getSize()),
-                                     FullMemberName.c_str());
-    Module *M = ParseBitcodeFile(Buffer, Context);
-    delete Buffer;
-    if (!M)
-      return false;  // Couldn't parse bitcode, not a bitcode archive.
-    delete M;
-    return true;
-  }
-  
-  return false;
 }
