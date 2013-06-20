@@ -135,6 +135,7 @@ namespace PR10896 {
 	
     template<typename T>
     T SomeField; // expected-error {{member 'SomeField' declared as a template}}
+    template<> int SomeField2; // expected-error {{extraneous 'template<>' in declaration of member 'SomeField2'}}
   };
 
   void g() {
