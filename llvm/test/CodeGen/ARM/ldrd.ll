@@ -67,3 +67,31 @@ bb:                                               ; preds = %bb, %entry
 return:                                           ; preds = %bb, %entry
   ret void
 }
+
+; rdar://13978317
+; Pair of loads not formed when lifetime markers are set.
+%struct.Test = type { i32, i32, i32 }
+
+@TestVar = external global %struct.Test
+
+define void @Func1() nounwind ssp {
+; CHECK: @Func1
+entry: 
+; A8: movw [[BASE:r[0-9]+]], :lower16:{{.*}}TestVar{{.*}}
+; A8: movt [[BASE]], :upper16:{{.*}}TestVar{{.*}}
+; A8: ldrd [[FIELD1:r[0-9]+]], [[FIELD2:r[0-9]+]], {{\[}}[[BASE]], #4]
+; A8-NEXT: add [[FIELD1]], [[FIELD2]]
+; A8-NEXT: str [[FIELD1]], {{\[}}[[BASE]]{{\]}}
+  %orig_blocks = alloca [256 x i16], align 2
+  %0 = bitcast [256 x i16]* %orig_blocks to i8*call void @llvm.lifetime.start(i64 512, i8* %0) nounwind
+  %tmp1 = load i32* getelementptr inbounds (%struct.Test* @TestVar, i32 0, i32 1), align 4
+  %tmp2 = load i32* getelementptr inbounds (%struct.Test* @TestVar, i32 0, i32 2), align 4
+  %add = add nsw i32 %tmp2, %tmp1
+  store i32 %add, i32* getelementptr inbounds (%struct.Test* @TestVar, i32 0, i32 0), align 4
+  call void @llvm.lifetime.end(i64 512, i8* %0) nounwind
+  ret void
+}
+
+
+declare void @llvm.lifetime.start(i64, i8* nocapture) nounwind
+declare void @llvm.lifetime.end(i64, i8* nocapture) nounwind

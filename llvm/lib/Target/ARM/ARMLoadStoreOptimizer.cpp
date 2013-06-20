@@ -1602,8 +1602,9 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
     return false;
 
   // Make sure the base address satisfies i64 ld / st alignment requirement.
+  // At the moment, we ignore the memoryoperand's value.
+  // If we want to use AliasAnalysis, we should check it accordingly.
   if (!Op0->hasOneMemOperand() ||
-      !(*Op0->memoperands_begin())->getValue() ||
       (*Op0->memoperands_begin())->isVolatile())
     return false;
 
