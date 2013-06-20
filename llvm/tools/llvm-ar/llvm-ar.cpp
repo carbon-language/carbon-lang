@@ -563,7 +563,7 @@ doReplaceOrInsert(std::string* ErrMsg) {
     std::set<std::string>::iterator found = remaining.end();
     for (std::set<std::string>::iterator RI = remaining.begin(),
          RE = remaining.end(); RI != RE; ++RI ) {
-      std::string compare(*RI);
+      std::string compare(sys::path::filename(*RI));
       if (TruncateNames && compare.length() > 15) {
         const char* nm = compare.c_str();
         unsigned len = compare.length();
