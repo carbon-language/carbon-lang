@@ -46,7 +46,6 @@ protected:
     // kept in sync.
     SupportedArchs.push_back(Triple::aarch64);
     SupportedArchs.push_back(Triple::arm);
-    SupportedArchs.push_back(Triple::mips);
     SupportedArchs.push_back(Triple::x86);
     SupportedArchs.push_back(Triple::x86_64);
 
