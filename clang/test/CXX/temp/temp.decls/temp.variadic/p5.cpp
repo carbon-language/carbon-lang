@@ -165,6 +165,7 @@ template<typename T, typename... Types>
 struct alignas(Types) TestUnexpandedDecls : T{ // expected-error{{expression contains unexpanded parameter pack 'Types'}}
   void member_function(Types);  // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
   void member_function () throw(Types); // expected-error{{exception type contains unexpanded parameter pack 'Types'}}
+  void member_function2() noexcept(Types()); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
   operator Types() const; // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
   Types data_member;  // expected-error{{data member type contains unexpanded parameter pack 'Types'}}
   static Types static_data_member; // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
