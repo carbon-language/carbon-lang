@@ -917,6 +917,14 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
         bool success = abi->GetArgumentValues (thread, argument_values);
         if (!success)
             return ret_plan_sp;
+        
+        lldb::addr_t obj_addr = argument_values.GetValueAtIndex(obj_index)->GetScalar().ULongLong();
+        if (obj_addr == 0x0)
+        {
+            if (log)
+                log->Printf("Asked to step to dispatch to nil object, returning empty plan.");
+            return ret_plan_sp;
+        }
             
         ExecutionContext exe_ctx (thread.shared_from_this());
         Process *process = exe_ctx.GetProcessPtr();
