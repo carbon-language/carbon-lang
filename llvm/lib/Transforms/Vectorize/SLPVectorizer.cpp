@@ -41,14 +41,14 @@
 using namespace llvm;
 
 static cl::opt<int>
-SLPCostThreshold("slp-threshold", cl::init(0), cl::Hidden,
-                 cl::desc("Only vectorize trees if the gain is above this "
-                          "number. (gain = -cost of vectorization)"));
+    SLPCostThreshold("slp-threshold", cl::init(0), cl::Hidden,
+                     cl::desc("Only vectorize trees if the gain is above this "
+                              "number. (gain = -cost of vectorization)"));
 namespace {
 
 /// The SLPVectorizer Pass.
 struct SLPVectorizer : public FunctionPass {
-  typedef MapVector<Value*, BoUpSLP::StoreList> StoreListMap;
+  typedef MapVector<Value *, BoUpSLP::StoreList> StoreListMap;
 
   /// Pass identification, replacement for typeid
   static char ID;
@@ -78,7 +78,7 @@ struct SLPVectorizer : public FunctionPass {
     if (!DL)
       return false;
 
-    DEBUG(dbgs()<<"SLP: Analyzing blocks in " << F.getName() << ".\n");
+    DEBUG(dbgs() << "SLP: Analyzing blocks in " << F.getName() << ".\n");
 
     for (Function::iterator it = F.begin(), e = F.end(); it != e; ++it) {
       BasicBlock *BB = it;
@@ -94,7 +94,7 @@ struct SLPVectorizer : public FunctionPass {
       // Vectorize trees that end at stores.
       if (unsigned count = collectStores(BB, R)) {
         (void)count;
-        DEBUG(dbgs()<<"SLP: Found " << count << " stores to vectorize.\n");
+        DEBUG(dbgs() << "SLP: Found " << count << " stores to vectorize.\n");
         BBChanged |= vectorizeStoreChains(R);
       }
 
@@ -108,7 +108,7 @@ struct SLPVectorizer : public FunctionPass {
     }
 
     if (Changed) {
-      DEBUG(dbgs()<<"SLP: vectorized \""<<F.getName()<<"\"\n");
+      DEBUG(dbgs() << "SLP: vectorized \"" << F.getName() << "\"\n");
       DEBUG(verifyFunction(F));
     }
     return Changed;
@@ -131,7 +131,7 @@ private:
   unsigned collectStores(BasicBlock *BB, BoUpSLP &R);
 
   /// \brief Try to vectorize a chain that starts at two arithmetic instrs.
-  bool tryToVectorizePair(Value *A, Value *B,  BoUpSLP &R);
+  bool tryToVectorizePair(Value *A, Value *B, BoUpSLP &R);
 
   /// \brief Try to vectorize a list of operands. If \p NeedExtracts is true
   /// then we calculate the cost of extracting the scalars from the vector.
@@ -139,7 +139,7 @@ private:
   bool tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R, bool NeedExtracts);
 
   /// \brief Try to vectorize a chain that may start at the operands of \V;
-  bool tryToVectorize(BinaryOperator *V,  BoUpSLP &R);
+  bool tryToVectorize(BinaryOperator *V, BoUpSLP &R);
 
   /// \brief Vectorize the stores that were collected in StoreRefs.
   bool vectorizeStoreChains(BoUpSLP &R);
@@ -188,8 +188,9 @@ unsigned SLPVectorizer::collectStores(BasicBlock *BB, BoUpSLP &R) {
   return count;
 }
 
-bool SLPVectorizer::tryToVectorizePair(Value *A, Value *B,  BoUpSLP &R) {
-  if (!A || !B) return false;
+bool SLPVectorizer::tryToVectorizePair(Value *A, Value *B, BoUpSLP &R) {
+  if (!A || !B)
+    return false;
   Value *VL[] = { A, B };
   return tryToVectorizeList(VL, R, true);
 }
@@ -199,11 +200,12 @@ bool SLPVectorizer::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R,
   if (VL.size() < 2)
     return false;
 
-  DEBUG(dbgs()<<"SLP: Vectorizing a list of length = " << VL.size() << ".\n");
+  DEBUG(dbgs() << "SLP: Vectorizing a list of length = " << VL.size() << ".\n");
 
   // Check that all of the parts are scalar instructions of the same type.
   Instruction *I0 = dyn_cast<Instruction>(VL[0]);
-  if (!I0) return 0;
+  if (!I0)
+    return 0;
 
   unsigned Opcode0 = I0->getOpcode();
 
@@ -217,17 +219,20 @@ bool SLPVectorizer::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R,
   }
 
   int Cost = R.getTreeCost(VL);
-  int ExtrCost =  NeedExtracts ? R.getScalarizationCost(VL) : 0;
-  DEBUG(dbgs()<<"SLP: Cost of pair:" << Cost <<
-        " Cost of extract:" << ExtrCost << ".\n");
-  if ((Cost+ExtrCost) >= -SLPCostThreshold) return false;
-  DEBUG(dbgs()<<"SLP: Vectorizing pair.\n");
+  int ExtrCost = NeedExtracts ? R.getScalarizationCost(VL) : 0;
+  DEBUG(dbgs() << "SLP: Cost of pair:" << Cost
+               << " Cost of extract:" << ExtrCost << ".\n");
+  if ((Cost + ExtrCost) >= -SLPCostThreshold)
+    return false;
+  DEBUG(dbgs() << "SLP: Vectorizing pair.\n");
   R.vectorizeArith(VL);
   return true;
 }
 
-bool SLPVectorizer::tryToVectorize(BinaryOperator *V,  BoUpSLP &R) {
-  if (!V) return false;
+bool SLPVectorizer::tryToVectorize(BinaryOperator *V, BoUpSLP &R) {
+  if (!V)
+    return false;
+  
   // Try to vectorize V.
   if (tryToVectorizePair(V->getOperand(0), V->getOperand(1), R))
     return true;
@@ -267,22 +272,27 @@ bool SLPVectorizer::tryToVectorize(BinaryOperator *V,  BoUpSLP &R) {
 bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
   bool Changed = false;
   for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
-    if (isa<DbgInfoIntrinsic>(it)) continue;
+    if (isa<DbgInfoIntrinsic>(it))
+      continue;
 
     // Try to vectorize reductions that use PHINodes.
     if (PHINode *P = dyn_cast<PHINode>(it)) {
       // Check that the PHI is a reduction PHI.
-      if (P->getNumIncomingValues() != 2) return Changed;
-      Value *Rdx = (P->getIncomingBlock(0) == BB ? P->getIncomingValue(0) :
-                    (P->getIncomingBlock(1) == BB ? P->getIncomingValue(1) :
-                     0));
+      if (P->getNumIncomingValues() != 2)
+        return Changed;
+      Value *Rdx =
+          (P->getIncomingBlock(0) == BB
+               ? (P->getIncomingValue(0))
+               : (P->getIncomingBlock(1) == BB ? P->getIncomingValue(1) : 0));
       // Check if this is a Binary Operator.
       BinaryOperator *BI = dyn_cast_or_null<BinaryOperator>(Rdx);
       if (!BI)
         continue;
 
       Value *Inst = BI->getOperand(0);
-      if (Inst == P) Inst = BI->getOperand(1);
+      if (Inst == P)
+        Inst = BI->getOperand(1);
+      
       Changed |= tryToVectorize(dyn_cast<BinaryOperator>(Inst), R);
       continue;
     }
@@ -295,7 +305,8 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
       }
       for (int i = 0; i < 2; ++i)
         if (BinaryOperator *BI = dyn_cast<BinaryOperator>(CI->getOperand(i)))
-          Changed |= tryToVectorizePair(BI->getOperand(0), BI->getOperand(1), R);
+          Changed |=
+              tryToVectorizePair(BI->getOperand(0), BI->getOperand(1), R);
       continue;
     }
   }
@@ -303,7 +314,7 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
   // Scan the PHINodes in our successors in search for pairing hints.
   for (succ_iterator it = succ_begin(BB), e = succ_end(BB); it != e; ++it) {
     BasicBlock *Succ = *it;
-    SmallVector<Value*, 4> Incoming;
+    SmallVector<Value *, 4> Incoming;
 
     // Collect the incoming values from the PHIs.
     for (BasicBlock::iterator instr = Succ->begin(), ie = Succ->end();
@@ -322,7 +333,7 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
     if (Incoming.size() > 1)
       Changed |= tryToVectorizeList(Incoming, R, true);
   }
-  
+
   return Changed;
 }
 
@@ -334,8 +345,8 @@ bool SLPVectorizer::vectorizeStoreChains(BoUpSLP &R) {
     if (it->second.size() < 2)
       continue;
 
-    DEBUG(dbgs()<<"SLP: Analyzing a store chain of length " <<
-          it->second.size() << ".\n");
+    DEBUG(dbgs() << "SLP: Analyzing a store chain of length "
+                 << it->second.size() << ".\n");
 
     Changed |= R.vectorizeStores(it->second, -SLPCostThreshold);
   }
@@ -343,7 +354,7 @@ bool SLPVectorizer::vectorizeStoreChains(BoUpSLP &R) {
 }
 
 bool SLPVectorizer::vectorizeUsingGatherHints(BoUpSLP::InstrList &Gathers) {
-  SmallVector<Value*, 4> Seq;
+  SmallVector<Value *, 4> Seq;
   bool Changed = false;
   for (int i = 0, e = Gathers.size(); i < e; ++i) {
     InsertElementInst *IEI = dyn_cast_or_null<InsertElementInst>(Gathers[i]);
@@ -359,13 +370,13 @@ bool SLPVectorizer::vectorizeUsingGatherHints(BoUpSLP::InstrList &Gathers) {
       Instruction *I = cast<Instruction>(Seq[0]);
       BasicBlock *BB = I->getParent();
 
-      DEBUG(dbgs()<<"SLP: Inspecting a gather list of size " << Seq.size() <<
-            " in " << BB->getName() << ".\n");
+      DEBUG(dbgs() << "SLP: Inspecting a gather list of size " << Seq.size()
+                   << " in " << BB->getName() << ".\n");
 
       // Check if the gathered values have multiple uses. If they only have one
       // user then we know that the insert/extract pair will go away.
       bool HasMultipleUsers = false;
-      for (int i=0; e = Seq.size(), i < e; ++i) {
+      for (int i = 0; e = Seq.size(), i < e; ++i) {
         if (!Seq[i]->hasOneUse()) {
           HasMultipleUsers = true;
           break;
@@ -375,8 +386,8 @@ bool SLPVectorizer::vectorizeUsingGatherHints(BoUpSLP::InstrList &Gathers) {
       BoUpSLP BO(BB, SE, DL, TTI, AA, LI->getLoopFor(BB));
 
       if (tryToVectorizeList(Seq, BO, HasMultipleUsers)) {
-        DEBUG(dbgs()<<"SLP: Vectorized a gather list of len " << Seq.size() <<
-              " in " << BB->getName() << ".\n");
+        DEBUG(dbgs() << "SLP: Vectorized a gather list of len " << Seq.size()
+                     << " in " << BB->getName() << ".\n");
         Changed = true;
       }
 
@@ -418,8 +429,10 @@ void SLPVectorizer::hoistGatherSequence(LoopInfo *LI, BasicBlock *BB,
     // hoist this instruction.
     Instruction *CurrVec = dyn_cast<Instruction>(Insert->getOperand(0));
     Instruction *NewElem = dyn_cast<Instruction>(Insert->getOperand(1));
-    if (CurrVec && L->contains(CurrVec)) continue;
-    if (NewElem && L->contains(NewElem)) continue;
+    if (CurrVec && L->contains(CurrVec))
+      continue;
+    if (NewElem && L->contains(NewElem))
+      continue;
 
     // We can hoist this instruction. Move it to the pre-header.
     Insert->moveBefore(Location);
@@ -438,8 +451,5 @@ INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_END(SLPVectorizer, SV_NAME, lv_name, false, false)
 
 namespace llvm {
-  Pass *createSLPVectorizerPass() {
-    return new SLPVectorizer();
-  }
+Pass *createSLPVectorizerPass() { return new SLPVectorizer(); }
 }
-
