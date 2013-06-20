@@ -399,14 +399,6 @@ doExtract(std::string* ErrMsg) {
     if (Paths.empty() ||
         (std::find(Paths.begin(), Paths.end(), I->getPath()) != Paths.end())) {
 
-      // Make sure the intervening directories are created
-      if (I->hasPath()) {
-        sys::Path dirs(I->getPath());
-        dirs.eraseComponent();
-        if (dirs.createDirectoryOnDisk(/*create_parents=*/true, ErrMsg))
-          return true;
-      }
-
       // Open up a file stream for writing
       std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
                                    std::ios::binary;

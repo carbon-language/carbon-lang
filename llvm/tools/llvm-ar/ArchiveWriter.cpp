@@ -98,13 +98,7 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
   sprintf(buffer,"%-12u", unsigned(secondsSinceEpoch));
   memcpy(hdr.date,buffer,12);
 
-  // Get rid of trailing blanks in the name
-  std::string mbrPath = mbr.getPath().str();
-  size_t mbrLen = mbrPath.length();
-  while (mbrLen > 0 && mbrPath[mbrLen-1] == ' ') {
-    mbrPath.erase(mbrLen-1,1);
-    mbrLen--;
-  }
+  std::string mbrPath = sys::path::filename(mbr.getPath());
 
   // Set the name field in one of its various flavors.
   bool writeLongName = false;
@@ -165,8 +159,8 @@ bool Archive::addFileBefore(StringRef filePath, iterator where,
   ArchiveMember* mbr = new ArchiveMember(this);
 
   mbr->data = 0;
-  mbr->path = filePath.str();
-  sys::PathWithStatus PWS(mbr->path);
+  mbr->path = filePath;
+  sys::PathWithStatus PWS(filePath);
   const sys::FileStatus *FSInfo = PWS.getFileStatus(false, ErrMsg);
   if (!FSInfo) {
     delete mbr;
@@ -179,10 +173,7 @@ bool Archive::addFileBefore(StringRef filePath, iterator where,
   mbr->Size = FSInfo->getSize();
 
   unsigned flags = 0;
-  bool hasSlash = filePath.str().find('/') != std::string::npos;
-  if (hasSlash)
-    flags |= ArchiveMember::HasPathFlag;
-  if (hasSlash || filePath.str().length() > 15)
+  if (sys::path::filename(filePath).size() > 15)
     flags |= ArchiveMember::HasLongFilenameFlag;
 
   sys::fs::file_magic type;
