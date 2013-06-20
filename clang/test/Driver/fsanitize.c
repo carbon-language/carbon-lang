@@ -139,3 +139,6 @@
 
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=address,leak -fno-sanitize=address %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-SANA-SANL-NO-SANA
 // CHECK-SANA-SANL-NO-SANA: "-fsanitize=leak"
+
+// RUN: %clang -target x86_64-linux-gnu -fsanitize=memory %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-MSAN
+// CHECK-MSAN: "-fno-assume-sane-operator-new"

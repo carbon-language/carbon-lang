@@ -94,8 +94,12 @@ class SanitizerArgs {
       CmdArgs.push_back(Args.MakeArgString("-fsanitize-memory-track-origins"));
 
     if (AsanZeroBaseShadow)
-      CmdArgs.push_back(Args.MakeArgString(
-          "-fsanitize-address-zero-base-shadow"));
+      CmdArgs.push_back(
+          Args.MakeArgString("-fsanitize-address-zero-base-shadow"));
+
+    // Workaround for PR16386.
+    if (needsMsanRt())
+      CmdArgs.push_back(Args.MakeArgString("-fno-assume-sane-operator-new"));
   }
 
  private:
