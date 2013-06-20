@@ -449,21 +449,37 @@
 
 # CHECK: cmpdi 2, 3, 128                 # encoding: [0x2d,0x23,0x00,0x80]
          cmpdi 2, 3, 128
+# CHECK: cmpdi 0, 3, 128                 # encoding: [0x2c,0x23,0x00,0x80]
+         cmpdi 3, 128
 # CHECK: cmpd 2, 3, 4                    # encoding: [0x7d,0x23,0x20,0x00]
          cmpd 2, 3, 4
+# CHECK: cmpd 0, 3, 4                    # encoding: [0x7c,0x23,0x20,0x00]
+         cmpd 3, 4
 # CHECK: cmpldi 2, 3, 128                # encoding: [0x29,0x23,0x00,0x80]
          cmpldi 2, 3, 128
+# CHECK: cmpldi 0, 3, 128                # encoding: [0x28,0x23,0x00,0x80]
+         cmpldi 3, 128
 # CHECK: cmpld 2, 3, 4                   # encoding: [0x7d,0x23,0x20,0x40]
          cmpld 2, 3, 4
+# CHECK: cmpld 0, 3, 4                   # encoding: [0x7c,0x23,0x20,0x40]
+         cmpld 3, 4
 
 # CHECK: cmpwi 2, 3, 128                 # encoding: [0x2d,0x03,0x00,0x80]
          cmpwi 2, 3, 128
+# CHECK: cmpwi 0, 3, 128                 # encoding: [0x2c,0x03,0x00,0x80]
+         cmpwi 3, 128
 # CHECK: cmpw 2, 3, 4                    # encoding: [0x7d,0x03,0x20,0x00]
          cmpw 2, 3, 4
+# CHECK: cmpw 0, 3, 4                    # encoding: [0x7c,0x03,0x20,0x00]
+         cmpw 3, 4
 # CHECK: cmplwi 2, 3, 128                # encoding: [0x29,0x03,0x00,0x80]
          cmplwi 2, 3, 128
+# CHECK: cmplwi 0, 3, 128                # encoding: [0x28,0x03,0x00,0x80]
+         cmplwi 3, 128
 # CHECK: cmplw 2, 3, 4                   # encoding: [0x7d,0x03,0x20,0x40]
          cmplw 2, 3, 4
+# CHECK: cmplw 0, 3, 4                   # encoding: [0x7c,0x03,0x20,0x40]
+         cmplw 3, 4
 
 # FIXME: Trap mnemonics
 

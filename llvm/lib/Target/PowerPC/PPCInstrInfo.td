@@ -2201,3 +2201,12 @@ defm : BranchExtendedMnemonic<"ne", 68>;
 defm : BranchExtendedMnemonic<"nu", 100>;
 defm : BranchExtendedMnemonic<"ns", 100>;
 
+def : InstAlias<"cmpwi $rA, $imm", (CMPWI CR0, gprc:$rA, s16imm:$imm)>;
+def : InstAlias<"cmpw $rA, $rB", (CMPW CR0, gprc:$rA, gprc:$rB)>;
+def : InstAlias<"cmplwi $rA, $imm", (CMPLWI CR0, gprc:$rA, u16imm:$imm)>;
+def : InstAlias<"cmplw $rA, $rB", (CMPLW CR0, gprc:$rA, gprc:$rB)>;
+def : InstAlias<"cmpdi $rA, $imm", (CMPDI CR0, g8rc:$rA, s16imm:$imm)>;
+def : InstAlias<"cmpd $rA, $rB", (CMPD CR0, g8rc:$rA, g8rc:$rB)>;
+def : InstAlias<"cmpldi $rA, $imm", (CMPLDI CR0, g8rc:$rA, u16imm:$imm)>;
+def : InstAlias<"cmpld $rA, $rB", (CMPLD CR0, g8rc:$rA, g8rc:$rB)>;
+
