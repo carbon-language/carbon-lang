@@ -408,6 +408,8 @@ error_code status(const Twine &path, file_status &result) {
   result.fs_st_dev = status.st_dev;
   result.fs_st_ino = status.st_ino;
   result.fs_st_mtime = status.st_mtime;
+  result.fs_st_uid = status.st_uid;
+  result.fs_st_gid = status.st_gid;
 
   return error_code::success();
 }

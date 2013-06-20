@@ -153,6 +153,8 @@ class file_status
   dev_t fs_st_dev;
   ino_t fs_st_ino;
   time_t fs_st_mtime;
+  uid_t fs_st_uid;
+  gid_t fs_st_gid;
   #elif defined (LLVM_ON_WIN32)
   uint32_t LastWriteTimeHigh;
   uint32_t LastWriteTimeLow;
@@ -176,6 +178,18 @@ public:
   file_type type() const { return Type; }
   perms permissions() const { return Perms; }
   TimeValue getLastModificationTime() const;
+
+  #if defined(LLVM_ON_UNIX)
+  uint32_t getUser() const { return fs_st_uid; }
+  uint32_t getGroup() const { return fs_st_gid; }
+  #elif defined (LLVM_ON_WIN32)
+  uint32_t getUser() const {
+    return 9999; // Not applicable to Windows, so...
+  }
+  uint32_t getGroup() const {
+    return 9999; // Not applicable to Windows, so...
+  }
+  #endif
 
   // setters
   void type(file_type v) { Type = v; }
