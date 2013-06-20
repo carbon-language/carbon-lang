@@ -19,5 +19,5 @@
 type = Library
 name = PowerPCAsmParser
 parent = PowerPC
-required_libraries = PowerPCInfo MC MCParser Support
+required_libraries = PowerPCDesc PowerPCInfo MC MCParser Support
 add_to_library_groups = PowerPC
