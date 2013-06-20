@@ -1417,15 +1417,15 @@ TEST(APFloatTest, isNegative) {
   EXPECT_TRUE(APFloat::getSNaN(APFloat::IEEEsingle, true).isNegative());
 }
 
-TEST(APFloatTest, isIEEENormal) {
+TEST(APFloatTest, isNormal) {
   APFloat t(APFloat::IEEEsingle, "0x1p+0");
-  EXPECT_TRUE(t.isIEEENormal());
+  EXPECT_TRUE(t.isNormal());
   
-  EXPECT_FALSE(APFloat::getInf(APFloat::IEEEsingle, false).isIEEENormal());
-  EXPECT_FALSE(APFloat::getZero(APFloat::IEEEsingle, false).isIEEENormal());
-  EXPECT_FALSE(APFloat::getNaN(APFloat::IEEEsingle, false).isIEEENormal());
-  EXPECT_FALSE(APFloat::getSNaN(APFloat::IEEEsingle, false).isIEEENormal());  
-  EXPECT_FALSE(APFloat(APFloat::IEEEsingle, "0x1p-149").isIEEENormal());
+  EXPECT_FALSE(APFloat::getInf(APFloat::IEEEsingle, false).isNormal());
+  EXPECT_FALSE(APFloat::getZero(APFloat::IEEEsingle, false).isNormal());
+  EXPECT_FALSE(APFloat::getNaN(APFloat::IEEEsingle, false).isNormal());
+  EXPECT_FALSE(APFloat::getSNaN(APFloat::IEEEsingle, false).isNormal());  
+  EXPECT_FALSE(APFloat(APFloat::IEEEsingle, "0x1p-149").isNormal());
 }
 
 TEST(APFloatTest, isFinite) {

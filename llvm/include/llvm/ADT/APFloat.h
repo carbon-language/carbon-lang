@@ -362,7 +362,7 @@ public:
   ///
   /// The current implementation of isNormal() differs from this by treating
   /// subnormal values as normal values.
-  bool isIEEENormal() const { return !isDenormal() && isFiniteNonZero(); }
+  bool isNormal() const { return !isDenormal() && isFiniteNonZero(); }
 
   /// Returns true if and only if the current value is zero, subnormal, or
   /// normal.
@@ -394,7 +394,6 @@ public:
   fltCategory getCategory() const { return category; }
   const fltSemantics &getSemantics() const { return *semantics; }
   bool isNonZero() const { return category != fcZero; }
-  bool isNormal() const { return category == fcNormal; }
   bool isFiniteNonZero() const { return isFinite() && !isZero(); }
   bool isPosZero() const { return isZero() && !isNegative(); }
   bool isNegZero() const { return isZero() && isNegative(); }
