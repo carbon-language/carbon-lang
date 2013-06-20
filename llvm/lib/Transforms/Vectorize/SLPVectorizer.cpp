@@ -16,7 +16,7 @@
 //
 //===----------------------------------------------------------------------===//
 #define SV_NAME "slp-vectorizer"
-#define DEBUG_TYPE SV_NAME
+#define DEBUG_TYPE "SLP"
 
 #include "VecUtils.h"
 #include "llvm/Transforms/Vectorize.h"
