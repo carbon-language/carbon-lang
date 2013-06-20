@@ -3798,7 +3798,7 @@ parse_name(const char* first, const char* last, C& db)
             else
             {   // try <substitution> <template-args>
                 t1 = parse_substitution(t0, last, db);
-                if (t1 != last && *t1 == 'I')
+                if (t1 != t0 && t1 != last && *t1 == 'I')
                 {
                     t0 = t1;
                     t1 = parse_template_args(t0, last, db);
