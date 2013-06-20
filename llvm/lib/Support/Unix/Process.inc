@@ -224,8 +224,6 @@ static unsigned getColumns(int FileID) {
 #if defined(HAVE_SYS_IOCTL_H) && defined(HAVE_TERMIOS_H)
   // Try to determine the width of the terminal.
   struct winsize ws;
-  // Zero-fill ws to avoid a false positive from MemorySanitizer.
-  memset(&ws, 0, sizeof(ws));
   if (ioctl(FileID, TIOCGWINSZ, &ws) == 0)
     Columns = ws.ws_col;
 #endif
