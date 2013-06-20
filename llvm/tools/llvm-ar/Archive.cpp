@@ -141,8 +141,8 @@ bool ArchiveMember::replaceWith(StringRef newFile, std::string* ErrMsg) {
 // Archive class. Everything else (default,copy) is deprecated. This just
 // initializes and maps the file into memory, if requested.
 Archive::Archive(StringRef filename, LLVMContext &C)
-    : archPath(filename), members(), mapfile(0), base(0), symTab(), strtab(),
-      symTabSize(0), firstFileOffset(0), modules(), foreignST(0), Context(C) {}
+    : archPath(filename), members(), mapfile(0), base(0), strtab(),
+      firstFileOffset(0), modules(), Context(C) {}
 
 bool
 Archive::mapToMemory(std::string* ErrMsg) {
@@ -163,17 +163,7 @@ void Archive::cleanUpMemory() {
   mapfile = 0;
   base = 0;
 
-  // Forget the entire symbol table
-  symTab.clear();
-  symTabSize = 0;
-
   firstFileOffset = 0;
-
-  // Free the foreign symbol table member
-  if (foreignST) {
-    delete foreignST;
-    foreignST = 0;
-  }
 
   // Delete any Modules and ArchiveMember's we've allocated as a result of
   // symbol table searches.
@@ -188,47 +178,3 @@ Archive::~Archive() {
   cleanUpMemory();
 }
 
-
-
-static void getSymbols(Module*M, std::vector<std::string>& symbols) {
-  // Loop over global variables
-  for (Module::global_iterator GI = M->global_begin(), GE=M->global_end(); GI != GE; ++GI)
-    if (!GI->isDeclaration() && !GI->hasLocalLinkage())
-      if (!GI->getName().empty())
-        symbols.push_back(GI->getName());
-
-  // Loop over functions
-  for (Module::iterator FI = M->begin(), FE = M->end(); FI != FE; ++FI)
-    if (!FI->isDeclaration() && !FI->hasLocalLinkage())
-      if (!FI->getName().empty())
-        symbols.push_back(FI->getName());
-
-  // Loop over aliases
-  for (Module::alias_iterator AI = M->alias_begin(), AE = M->alias_end();
-       AI != AE; ++AI) {
-    if (AI->hasName())
-      symbols.push_back(AI->getName());
-  }
-}
-
-Module*
-llvm::GetBitcodeSymbols(const char *BufPtr, unsigned Length,
-                        const std::string& ModuleID,
-                        LLVMContext& Context,
-                        std::vector<std::string>& symbols,
-                        std::string* ErrMsg) {
-  // Get the module.
-  OwningPtr<MemoryBuffer> Buffer(
-    MemoryBuffer::getMemBufferCopy(StringRef(BufPtr, Length),ModuleID.c_str()));
-
-  Module *M = ParseBitcodeFile(Buffer.get(), Context, ErrMsg);
-  if (!M)
-    return 0;
-
-  // Get the symbols
-  getSymbols(M, symbols);
-
-  // Done with the module. Note that it's the caller's responsibility to delete
-  // the Module.
-  return M;
-}

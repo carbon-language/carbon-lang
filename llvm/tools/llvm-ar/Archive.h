@@ -301,20 +301,6 @@ class Archive {
     /// @brief Get the iplist of the members
     MembersList& getMembers() { return members; }
 
-    /// This method allows direct query of the Archive's symbol table. The
-    /// symbol table is a std::map of std::string (the symbol) to unsigned (the
-    /// file offset). Note that for efficiency reasons, the offset stored in
-    /// the symbol table is not the actual offset. It is the offset from the
-    /// beginning of the first "real" file member (after the symbol table). Use
-    /// the getFirstFileOffset() to obtain that offset and add this value to the
-    /// offset in the symbol table to obtain the real file offset. Note that
-    /// there is purposefully no interface provided by Archive to look up
-    /// members by their offset. Use the findModulesDefiningSymbols and
-    /// findModuleDefiningSymbol methods instead.
-    /// @returns the Archive's symbol table.
-    /// @brief Get the archive's symbol table
-    const SymTabType& getSymbolTable() { return symTab; }
-
     /// This method returns the offset in the archive file to the first "real"
     /// file member. Archive files, on disk, have a signature and might have a
     /// symbol table that precedes the first actual file member. This method
@@ -341,7 +327,6 @@ class Archive {
     /// returns false if the writing succeeded.
     /// @brief Write (possibly modified) archive contents to disk
     bool writeToDisk(
-      bool CreateSymbolTable=false,   ///< Create Symbol table
       bool TruncateNames=false,       ///< Truncate the filename to 15 chars
       std::string* ErrMessage=0       ///< If non-null, where error msg is set
     );
@@ -396,7 +381,6 @@ class Archive {
     bool writeMember(
       const ArchiveMember& member, ///< The member to be written
       std::ofstream& ARFile,       ///< The file to write member onto
-      bool CreateSymbolTable,      ///< Should symbol table be created?
       bool TruncateNames,          ///< Should names be truncated to 11 chars?
       std::string* ErrMessage      ///< If non-null, place were error msg is set
     );
@@ -427,12 +411,9 @@ class Archive {
     MembersList members;      ///< The ilist of ArchiveMember
     MemoryBuffer *mapfile;    ///< Raw Archive contents mapped into memory
     const char* base;         ///< Base of the memory mapped file data
-    SymTabType symTab;        ///< The symbol table
     std::string strtab;       ///< The string table for long file names
-    unsigned symTabSize;      ///< Size in bytes of symbol table
     unsigned firstFileOffset; ///< Offset to first normal file.
     ModuleMap modules;        ///< The modules loaded via symbol lookup.
-    ArchiveMember* foreignST; ///< This holds the foreign symbol table.
     LLVMContext& Context;     ///< This holds global data.
   /// @}
   /// @name Hidden

@@ -100,7 +100,6 @@ bool FullPath = false;           ///< 'P' modifier
 bool SymTable = true;            ///< 's' & 'S' modifiers
 bool OnlyUpdate = false;         ///< 'u' modifier
 bool Verbose = false;            ///< 'v' modifier
-bool ReallyVerbose = false;      ///< 'V' modifier
 
 // Relative Positional Argument (for insert/move). This variable holds
 // the name of the archive member to which the 'a', 'b' or 'i' modifier
@@ -217,12 +216,11 @@ ArchiveOperation parseCommandLine() {
     case 'k': DontSkipBitcode = true; break;
     case 'l': /* accepted but unused */ break;
     case 'o': OriginalDates = true; break;
+    case 's': break; // Ignore for now.
+    case 'S': break; // Ignore for now.
     case 'P': FullPath = true; break;
-    case 's': SymTable = true; break;
-    case 'S': SymTable = false; break;
     case 'u': OnlyUpdate = true; break;
     case 'v': Verbose = true; break;
-    case 'V': Verbose = ReallyVerbose = true; break;
     case 'a':
       getRelPos();
       AddAfter = true;
@@ -301,17 +299,6 @@ bool buildPaths(bool checkExistence, std::string* ErrMsg) {
     }
   }
   return false;
-}
-
-// printSymbolTable - print out the archive's symbol table.
-void printSymbolTable() {
-  outs() << "\nArchive Symbol Table:\n";
-  const Archive::SymTabType& symtab = TheArchive->getSymbolTable();
-  for (Archive::SymTabType::const_iterator I=symtab.begin(), E=symtab.end();
-       I != E; ++I ) {
-    unsigned offset = TheArchive->getFirstFileOffset() + I->second;
-    outs() << " " << format("%9u", offset) << "\t" << I->first <<"\n";
-  }
 }
 
 // doPrint - Implements the 'p' operation. This function traverses the archive
@@ -398,8 +385,6 @@ doDisplayTable(std::string* ErrMsg) {
       }
     }
   }
-  if (ReallyVerbose)
-    printSymbolTable();
   return false;
 }
 
@@ -478,10 +463,8 @@ doDelete(std::string* ErrMsg) {
   }
 
   // We're done editting, reconstruct the archive.
-  if (TheArchive->writeToDisk(SymTable,TruncateNames,ErrMsg))
+  if (TheArchive->writeToDisk(TruncateNames,ErrMsg))
     return true;
-  if (ReallyVerbose)
-    printSymbolTable();
   return false;
 }
 
@@ -533,10 +516,8 @@ doMove(std::string* ErrMsg) {
   }
 
   // We're done editting, reconstruct the archive.
-  if (TheArchive->writeToDisk(SymTable,TruncateNames,ErrMsg))
+  if (TheArchive->writeToDisk(TruncateNames,ErrMsg))
     return true;
-  if (ReallyVerbose)
-    printSymbolTable();
   return false;
 }
 
@@ -558,10 +539,8 @@ doQuickAppend(std::string* ErrMsg) {
   }
 
   // We're done editting, reconstruct the archive.
-  if (TheArchive->writeToDisk(SymTable,TruncateNames,ErrMsg))
+  if (TheArchive->writeToDisk(TruncateNames,ErrMsg))
     return true;
-  if (ReallyVerbose)
-    printSymbolTable();
   return false;
 }
 
@@ -656,10 +635,8 @@ doReplaceOrInsert(std::string* ErrMsg) {
   }
 
   // We're done editting, reconstruct the archive.
-  if (TheArchive->writeToDisk(SymTable,TruncateNames,ErrMsg))
+  if (TheArchive->writeToDisk(TruncateNames,ErrMsg))
     return true;
-  if (ReallyVerbose)
-    printSymbolTable();
   return false;
 }
 

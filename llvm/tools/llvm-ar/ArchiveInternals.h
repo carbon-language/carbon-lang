@@ -68,13 +68,6 @@ namespace llvm {
       return 0 == memcmp(fmag, ARFILE_MEMBER_MAGIC,2);
     }
   };
-
-  // Get just the externally visible defined symbols from the bitcode
-  Module* GetBitcodeSymbols(const char *Buffer, unsigned Length,
-                            const std::string& ModuleID,
-                            LLVMContext& Context,
-                            std::vector<std::string>& symbols,
-                            std::string* ErrMsg);
 }
 
 #endif

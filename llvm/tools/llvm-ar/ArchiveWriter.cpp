@@ -205,7 +205,6 @@ bool
 Archive::writeMember(
   const ArchiveMember& member,
   std::ofstream& ARFile,
-  bool CreateSymbolTable,
   bool TruncateNames,
   std::string* ErrMsg
 ) {
@@ -228,40 +227,6 @@ Archive::writeMember(
     mFile = File.take();
     data = mFile->getBufferStart();
     fSize = mFile->getBufferSize();
-  }
-
-  // Now that we have the data in memory, update the
-  // symbol table if it's a bitcode file.
-  if (CreateSymbolTable && member.isBitcode()) {
-    std::vector<std::string> symbols;
-    std::string FullMemberName =
-        (archPath + "(" + member.getPath() + ")").str();
-    Module* M =
-      GetBitcodeSymbols(data, fSize, FullMemberName, Context, symbols, ErrMsg);
-
-    // If the bitcode parsed successfully
-    if ( M ) {
-      for (std::vector<std::string>::iterator SI = symbols.begin(),
-           SE = symbols.end(); SI != SE; ++SI) {
-
-        std::pair<SymTabType::iterator,bool> Res =
-          symTab.insert(std::make_pair(*SI,filepos));
-
-        if (Res.second) {
-          symTabSize += SI->length() +
-                        numVbrBytes(SI->length()) +
-                        numVbrBytes(filepos);
-        }
-      }
-      // We don't need this module any more.
-      delete M;
-    } else {
-      delete mFile;
-      if (ErrMsg)
-        *ErrMsg = "Can't parse bitcode member: " + member.getPath().str()
-          + ": " + *ErrMsg;
-      return true;
-    }
   }
 
   int hdrSize = fSize;
@@ -295,10 +260,7 @@ Archive::writeMember(
 // This writes to a temporary file first. Options are for creating a symbol
 // table, flattening the file names (no directories, 15 chars max) and
 // compressing each archive member.
-bool
-Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames,
-                     std::string* ErrMsg)
-{
+bool Archive::writeToDisk(bool TruncateNames, std::string *ErrMsg) {
   // Make sure they haven't opened up the file, not loaded it,
   // but are now trying to write it which would wipe out the file.
   if (members.empty() && mapfile && mapfile->getBufferSize() > 8) {
@@ -328,20 +290,13 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames,
     return true;
   }
 
-  // If we're creating a symbol table, reset it now
-  if (CreateSymbolTable) {
-    symTabSize = 0;
-    symTab.clear();
-  }
-
   // Write magic string to archive.
   ArchiveFile << ARFILE_MAGIC;
 
   // Loop over all member files, and write them out. Note that this also
   // builds the symbol table, symTab.
   for (MembersList::iterator I = begin(), E = end(); I != E; ++I) {
-    if (writeMember(*I, ArchiveFile, CreateSymbolTable,
-                     TruncateNames, ErrMsg)) {
+    if (writeMember(*I, ArchiveFile, TruncateNames, ErrMsg)) {
       TmpArchive.eraseFromDisk();
       ArchiveFile.close();
       return true;
@@ -350,69 +305,6 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames,
 
   // Close archive file.
   ArchiveFile.close();
-
-  // Write the symbol table
-  if (CreateSymbolTable) {
-    // At this point we have written a file that is a legal archive but it
-    // doesn't have a symbol table in it. To aid in faster reading and to
-    // ensure compatibility with other archivers we need to put the symbol
-    // table first in the file. Unfortunately, this means mapping the file
-    // we just wrote back in and copying it to the destination file.
-    sys::Path FinalFilePath(archPath);
-
-    // Map in the archive we just wrote.
-    {
-    OwningPtr<MemoryBuffer> arch;
-    if (error_code ec = MemoryBuffer::getFile(TmpArchive.c_str(), arch)) {
-      if (ErrMsg)
-        *ErrMsg = ec.message();
-      return true;
-    }
-    const char* base = arch->getBufferStart();
-
-    // Open another temporary file in order to avoid invalidating the
-    // mmapped data
-    if (FinalFilePath.createTemporaryFileOnDisk(ErrMsg))
-      return true;
-    sys::RemoveFileOnSignal(FinalFilePath.str());
-
-    std::ofstream FinalFile(FinalFilePath.c_str(), io_mode);
-    if (!FinalFile.is_open() || FinalFile.bad()) {
-      TmpArchive.eraseFromDisk();
-      if (ErrMsg)
-        *ErrMsg = "Error opening archive file: " + FinalFilePath.str();
-      return true;
-    }
-
-    // Write the file magic number
-    FinalFile << ARFILE_MAGIC;
-
-    // If there is a foreign symbol table, put it into the file now. Most
-    // ar(1) implementations require the symbol table to be first but llvm-ar
-    // can deal with it being after a foreign symbol table. This ensures
-    // compatibility with other ar(1) implementations as well as allowing the
-    // archive to store both native .o and LLVM .bc files, both indexed.
-    if (foreignST) {
-      if (writeMember(*foreignST, FinalFile, false, false, ErrMsg)) {
-        FinalFile.close();
-        TmpArchive.eraseFromDisk();
-        return true;
-      }
-    }
-
-    // Copy the temporary file contents being sure to skip the file's magic
-    // number.
-    FinalFile.write(base + sizeof(ARFILE_MAGIC)-1,
-      arch->getBufferSize()-sizeof(ARFILE_MAGIC)+1);
-
-    // Close up shop
-    FinalFile.close();
-    } // free arch.
-
-    // Move the final file over top of TmpArchive
-    if (FinalFilePath.renamePathOnDisk(TmpArchive, ErrMsg))
-      return true;
-  }
 
   // Before we replace the actual archive, we need to forget all the
   // members, since they point to data in that old archive. We need to do

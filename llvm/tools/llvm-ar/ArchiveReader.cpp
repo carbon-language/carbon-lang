@@ -207,7 +207,6 @@ Archive::loadArchive(std::string* error) {
 
   // Set up parsing
   members.clear();
-  symTab.clear();
   const char *At = base;
   const char *End = mapfile->getBufferEnd();
 
@@ -226,14 +225,6 @@ Archive::loadArchive(std::string* error) {
 
     // check if this is the foreign symbol table
     if (mbr->isSVR4SymbolTable() || mbr->isBSD4SymbolTable()) {
-      // We just save this but don't do anything special
-      // with it. It doesn't count as the "first file".
-      if (foreignST) {
-        // What? Multiple foreign symbol tables? Just chuck it
-        // and retain the last one found.
-        delete foreignST;
-      }
-      foreignST = mbr;
       At += mbr->getSize();
       if ((intptr_t(At) & 1) == 1)
         At++;
@@ -281,7 +272,6 @@ Archive::loadSymbolTable(std::string* ErrorMsg) {
 
   // Set up parsing
   members.clear();
-  symTab.clear();
   const char *At = base;
   const char *End = mapfile->getBufferEnd();
 
