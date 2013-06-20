@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-none-linux-gnu -emit-llvm -g %s -o - | FileCheck %s
 template<typename T> struct Identity {
   typedef T Type;
 };
@@ -92,7 +92,7 @@ incomplete (*x)[3];
 }
 
 // For some reason the argument for PR14763 ended up all the way down here
-// CHECK: = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], {{.*}}, metadata [[FOO]], i32 {{[0-9]+}}, i32 0} ; [ DW_TAG_arg_variable ] [f]
+// CHECK: = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], {{.*}}, metadata [[FOO]], i32 8192, i32 0} ; [ DW_TAG_arg_variable ] [f]
 
 namespace pr16214 {
 struct a {
