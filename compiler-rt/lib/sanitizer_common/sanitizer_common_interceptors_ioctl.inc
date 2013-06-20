@@ -456,7 +456,6 @@ static void ioctl_table_fill() {
   // _(SIOCAX25SETPARMS, READ, struct_ax25_parms_struct_sz);
 #endif
 #undef _
-  // FIXME: missing USB ioctls (EVIOxx...x).
 }
 
 static bool ioctl_initialized = false;
