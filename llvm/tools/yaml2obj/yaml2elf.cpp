@@ -206,6 +206,8 @@ static void handleSymtabSectionHeader(
       exit(1);
     }
     Symbol.st_shndx = Index;
+    Symbol.st_value = Sym.Value;
+    Symbol.st_size = Sym.Size;
     Syms.push_back(Symbol);
   }
 

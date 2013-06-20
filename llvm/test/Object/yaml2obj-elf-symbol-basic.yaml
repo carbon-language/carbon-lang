@@ -1,4 +1,5 @@
 # RUN: yaml2obj -format=elf %s | llvm-readobj -symbols - | FileCheck %s
+# RUN: yaml2obj -format=elf %s | llvm-objdump -d -no-show-raw-insn - | FileCheck %s --check-prefix=DISASSEMBLY
 !ELF
 FileHeader:
   Class: ELFCLASS64
@@ -9,6 +10,13 @@ Sections:
   - Name: .text
     Type: SHT_PROGBITS
     Flags: [ SHF_ALLOC, SHF_EXECINSTR ]
+    Content: "90EBFE" # x86 machine code
+                      #   NOP ; To make main's `Value` non-zero (for testing).
+                      # main:
+                      #   JMP -2 ; (infloop)
+                      # This YAML file is a valid relocatable object that,
+                      # when linked and run on x86_64, will go into an
+                      # infloop.
   - Name: .symtab
     Type: SHT_SYMTAB
     Symbols:
@@ -16,12 +24,20 @@ Sections:
       Binding: STB_GLOBAL
       Type: STT_FUNC
       Section: .text
+      Value: 0x1
+      Size: 2
 
 # CHECK:      Symbols [
 # CHECK-NEXT:   Symbol {
 # CHECK-NEXT:     Name:  (0)
 # CHECK:        Symbol {
 # CHECK-NEXT:     Name: main
+# CHECK-NEXT:     Value: 0x1
+# CHECK-NEXT:     Size: 2
 # CHECK:          Binding: Global
 # CHECK-NEXT:     Type: Function
 # CHECK:          Section: .text
+
+# DISASSEMBLY:      Disassembly of section .text:
+# DISASSEMBLY-NEXT: main:
+# DISASSEMBLY-NEXT:        1:       jmp     -2
