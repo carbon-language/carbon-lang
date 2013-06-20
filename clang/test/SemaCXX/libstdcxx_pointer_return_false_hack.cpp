@@ -1,9 +1,9 @@
 // RUN: %clang_cc1 -fsyntax-only %s -std=c++11 -verify
 
 // This is a test for an egregious hack in Clang that works around
-// an issue with GCC's <type_traits> implementation. std::common_type
-// relies on pre-standard rules for decltype(), in which it doesn't
-// produce reference types so frequently.
+// an issue with libstdc++-4.2's <tr1/hashtable> implementation.
+// The code in question returns 'false' from a function with a pointer
+// return type, which is ill-formed in C++11.
 
 #ifdef BE_THE_HEADER
 
