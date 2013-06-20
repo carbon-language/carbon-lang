@@ -859,12 +859,12 @@ TypedefDecl *ASTContext::getUInt128Decl() const {
 
 TypeDecl *ASTContext::getFloat128StubType() const {
   if (!Float128StubDecl) {
-    Float128StubDecl = RecordDecl::Create(const_cast<ASTContext &>(*this), 
-                                          TTK_Struct,
-                                          getTranslationUnitDecl(),
-                                          SourceLocation(),
-                                          SourceLocation(),
-                                          &Idents.get("__float128"));
+    Float128StubDecl = CXXRecordDecl::Create(const_cast<ASTContext &>(*this), 
+                                             TTK_Struct,
+                                             getTranslationUnitDecl(),
+                                             SourceLocation(),
+                                             SourceLocation(),
+                                             &Idents.get("__float128"));
   }
   
   return Float128StubDecl;
