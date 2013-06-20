@@ -4464,7 +4464,7 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
     if (BuiltinID)
       return CheckBuiltinFunctionCall(BuiltinID, TheCall);
   } else if (NDecl) {
-    if (CheckBlockCall(NDecl, TheCall, Proto))
+    if (CheckPointerCall(NDecl, TheCall, Proto))
       return ExprError();
   }
 

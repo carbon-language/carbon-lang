@@ -597,18 +597,24 @@ bool Sema::CheckObjCMethodCall(ObjCMethodDecl *Method, SourceLocation lbrac,
   return false;
 }
 
-bool Sema::CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall,
-                          const FunctionProtoType *Proto) {
+bool Sema::CheckPointerCall(NamedDecl *NDecl, CallExpr *TheCall,
+                            const FunctionProtoType *Proto) {
   const VarDecl *V = dyn_cast<VarDecl>(NDecl);
   if (!V)
     return false;
 
   QualType Ty = V->getType();
-  if (!Ty->isBlockPointerType())
+  if (!Ty->isBlockPointerType() && !Ty->isFunctionPointerType())
     return false;
 
-  VariadicCallType CallType = 
-      Proto && Proto->isVariadic() ? VariadicBlock : VariadicDoesNotApply ;
+  VariadicCallType CallType;
+  if (!Proto) {
+    CallType = VariadicDoesNotApply;
+  } else if (Ty->isBlockPointerType()) {
+    CallType = VariadicBlock;
+  } else { // Ty->isFunctionPointerType()
+    CallType = VariadicFunction;
+  }
   unsigned NumProtoArgs = Proto ? Proto->getNumArgs() : 0;
 
   checkCall(NDecl,
