@@ -89,7 +89,7 @@ static llvm::Constant *getEndCatchFn(CodeGenModule &CGM) {
 }
 
 static llvm::Constant *getUnexpectedFn(CodeGenModule &CGM) {
-  // void __cxa_call_unexepcted(void *thrown_exception);
+  // void __cxa_call_unexpected(void *thrown_exception);
 
   llvm::FunctionType *FTy =
     llvm::FunctionType::get(CGM.VoidTy, CGM.Int8PtrTy, /*IsVarArgs=*/false);
