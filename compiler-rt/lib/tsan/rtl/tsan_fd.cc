@@ -160,9 +160,9 @@ void FdRelease(ThreadState *thr, uptr pc, int fd) {
   FdDesc *d = fddesc(thr, pc, fd);
   FdSync *s = d->sync;
   DPrintf("#%d: FdRelease(%d) -> %p\n", thr->tid, fd, s);
+  MemoryRead(thr, pc, (uptr)d, kSizeLog8);
   if (s)
     Release(thr, pc, (uptr)s);
-  MemoryRead(thr, pc, (uptr)d, kSizeLog8);
 }
 
 void FdAccess(ThreadState *thr, uptr pc, int fd) {
