@@ -608,7 +608,7 @@ bool Sema::CheckPointerCall(NamedDecl *NDecl, CallExpr *TheCall,
     return false;
 
   VariadicCallType CallType;
-  if (!Proto) {
+  if (!Proto || !Proto->isVariadic()) {
     CallType = VariadicDoesNotApply;
   } else if (Ty->isBlockPointerType()) {
     CallType = VariadicBlock;
