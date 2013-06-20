@@ -6032,8 +6032,8 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
   if (SC == SC_Static) {
     if (!D.isInvalidType())
       Diag(D.getIdentifierLoc(), diag::err_conv_function_not_member)
-        << "static" << SourceRange(D.getDeclSpec().getStorageClassSpecLoc())
-        << SourceRange(D.getIdentifierLoc());
+        << SourceRange(D.getDeclSpec().getStorageClassSpecLoc())
+        << D.getName().getSourceRange();
     D.setInvalidType();
     SC = SC_None;
   }
