@@ -4135,6 +4135,24 @@ static void TryUserDefinedConversion(Sema &S,
   }
 }
 
+/// An egregious hack for compatibility with libstdc++-4.2: in <tr1/hashtable>,
+/// a function with a pointer return type contains a 'return false;' statement.
+/// In C++11, 'false' is not a null pointer, so this breaks the build of any
+/// code using that header.
+///
+/// Work around this by treating 'return false;' as zero-initializing the result
+/// if it's used in a pointer-returning function in a system header.
+static bool isLibstdcxxPointerReturnFalseHack(Sema &S,
+                                              const InitializedEntity &Entity,
+                                              const Expr *Init) {
+  return S.getLangOpts().CPlusPlus11 &&
+         Entity.getKind() == InitializedEntity::EK_Result &&
+         Entity.getType()->isPointerType() &&
+         isa<CXXBoolLiteralExpr>(Init) &&
+         !cast<CXXBoolLiteralExpr>(Init)->getValue() &&
+         S.getSourceManager().isInSystemHeader(Init->getExprLoc());
+}
+
 /// The non-zero enum values here are indexes into diagnostic alternatives.
 enum InvalidICRKind { IIK_okay, IIK_nonlocal, IIK_nonscalar };
 
@@ -4571,9 +4589,11 @@ InitializationSequence::InitializationSequence(Sema &S,
     AddPassByIndirectCopyRestoreStep(Entity.getType(), ShouldCopy);
   } else if (ICS.isBad()) {
     DeclAccessPair dap;
-    if (Initializer->getType() == Context.OverloadTy && 
-          !S.ResolveAddressOfOverloadedFunction(Initializer
-                      , DestType, false, dap))
+    if (isLibstdcxxPointerReturnFalseHack(S, Entity, Initializer)) {
+      AddZeroInitializationStep(Entity.getType());
+    } else if (Initializer->getType() == Context.OverloadTy &&
+               !S.ResolveAddressOfOverloadedFunction(Initializer, DestType,
+                                                     false, dap))
       SetFailed(InitializationSequence::FK_AddressOfOverloadFailed);
     else
       SetFailed(InitializationSequence::FK_ConversionFailed);
