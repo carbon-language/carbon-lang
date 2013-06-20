@@ -733,14 +733,13 @@ Currently, only the following parameter attributes are defined:
     attribute for return values and can only be applied to one parameter.
 
 ``returned``
-    This indicates that the value of the function always returns the value
-    of the parameter as its return value. This is an optimization hint to
-    the code generator when generating the caller, allowing tail call
-    optimization and omission of register saves and restores in some cases;
-    it is not checked or enforced when generating the callee. The parameter
-    and the function return type must be valid operands for the
-    :ref:`bitcast instruction <i_bitcast>`. This is not a valid attribute for
-    return values and can only be applied to one parameter.
+    This indicates that the function always returns the argument as its return
+    value. This is an optimization hint to the code generator when generating
+    the caller, allowing tail call optimization and omission of register saves
+    and restores in some cases; it is not checked or enforced when generating
+    the callee. The parameter and the function return type must be valid
+    operands for the :ref:`bitcast instruction <i_bitcast>`. This is not a
+    valid attribute for return values and can only be applied to one parameter.
 
 .. _gc:
 
