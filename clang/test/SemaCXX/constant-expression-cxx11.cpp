@@ -1649,3 +1649,24 @@ namespace InitializerList {
   }
   static_assert(sum({1, 2, 3, 4, 5}) == 15, "");
 }
+
+namespace StmtExpr {
+  struct A { int k; };
+  void f() {
+    static_assert(({ const int x = 5; x * 3; }) == 15, ""); // expected-warning {{extension}}
+    constexpr auto a = ({ A(); }); // expected-warning {{extension}}
+  }
+  constexpr int g(int k) {
+    return ({ // expected-warning {{extension}}
+      const int x = k;
+      x * x;
+    });
+  }
+  static_assert(g(123) == 15129, "");
+  constexpr int h() { // expected-error {{never produces a constant}}
+    return ({ // expected-warning {{extension}}
+      return 0; // expected-note {{not supported}}
+      1;
+    });
+  }
+}

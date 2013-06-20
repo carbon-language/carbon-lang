@@ -39,7 +39,7 @@ def note_constexpr_non_global : Note<
   "%select{pointer|reference}0 to %select{|subobject of }1"
   "%select{temporary|%3}2 is not a constant expression">;
 def note_constexpr_uninitialized : Note<
-  "subobject of type %0 is not initialized">;
+  "%select{|sub}0object of type %1 is not initialized">;
 def note_constexpr_array_index : Note<"cannot refer to element %0 of "
   "%select{array of %2 elements|non-array object}1 in a constant expression">;
 def note_constexpr_float_arithmetic : Note<
@@ -126,6 +126,9 @@ def note_constexpr_access_static_temporary : Note<
 def note_constexpr_modify_global : Note<
   "a constant expression cannot modify an object that is visible outside "
   "that expression">;
+def note_constexpr_stmt_expr_unsupported : Note<
+  "this use of statement expressions is not supported in a "
+  "constant expression">;
 def note_constexpr_calls_suppressed : Note<
   "(skipping %0 call%s0 in backtrace; use -fconstexpr-backtrace-limit=0 to "
   "see all)">;

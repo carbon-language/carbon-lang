@@ -765,3 +765,28 @@ namespace InitializerList {
   }
   static_assert(sum({1, 2, 3, 4, 5}) == 15, "");
 }
+
+namespace StmtExpr {
+  constexpr int f(int k) {
+    switch (k) {
+    case 0:
+      return 0;
+
+      ({
+        case 1: // expected-note {{not supported}}
+          return 1;
+      });
+    }
+  }
+  static_assert(f(1) == 1, ""); // expected-error {{constant expression}} expected-note {{in call}}
+
+  constexpr int g() { // expected-error {{never produces a constant}}
+    return ({ int n; n; }); // expected-note {{object of type 'int' is not initialized}}
+  }
+
+  // FIXME: We should handle the void statement expression case.
+  constexpr int h() { // expected-error {{never produces a constant}}
+    ({ if (true) {} }); // expected-note {{not supported}}
+    return 0;
+  }
+}
