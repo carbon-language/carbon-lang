@@ -280,6 +280,9 @@ struct QuarantineCallback {
     if (p != m) {
       uptr *alloc_magic = reinterpret_cast<uptr *>(p);
       CHECK_EQ(alloc_magic[0], kAllocBegMagic);
+      // Clear the magic value, as allocator internals may overwrite the
+      // contents of deallocated chunk, confusing GetAsanChunk lookup.
+      alloc_magic[0] = 0;
       CHECK_EQ(alloc_magic[1], reinterpret_cast<uptr>(m));
     }
 
