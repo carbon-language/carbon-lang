@@ -27,9 +27,11 @@ public:
 private:
   const VariantKind Kind;
   const MCExpr *Expr;
+  const int AssemblerDialect;
 
-  explicit PPCMCExpr(VariantKind _Kind, const MCExpr *_Expr)
-    : Kind(_Kind), Expr(_Expr) {}
+  explicit PPCMCExpr(VariantKind _Kind, const MCExpr *_Expr,
+                     int _AssemblerDialect)
+    : Kind(_Kind), Expr(_Expr), AssemblerDialect(_AssemblerDialect) {}
 
 public:
   /// @name Construction
@@ -55,6 +57,10 @@ public:
 
   /// getSubExpr - Get the child of this expression.
   const MCExpr *getSubExpr() const { return Expr; }
+
+  /// isDarwinSyntax - True if expression is to be printed using Darwin syntax.
+  bool isDarwinSyntax() const { return AssemblerDialect == 1; }
+
 
   /// @}
 

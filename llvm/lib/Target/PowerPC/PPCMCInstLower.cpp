@@ -111,30 +111,22 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
 
   unsigned access = MO.getTargetFlags() & PPCII::MO_ACCESS_MASK;
 
-  if (!isDarwin) {
-    switch (access) {
-      case PPCII::MO_HA16:
-        RefKind = MCSymbolRefExpr::VK_PPC_ADDR16_HA;
-        break;
-      case PPCII::MO_LO16:
-        RefKind = MCSymbolRefExpr::VK_PPC_ADDR16_LO;
-        break;
-      case PPCII::MO_TPREL16_HA:
-        RefKind = MCSymbolRefExpr::VK_PPC_TPREL16_HA;
-        break;
-      case PPCII::MO_TPREL16_LO:
-        RefKind = MCSymbolRefExpr::VK_PPC_TPREL16_LO;
-        break;
-      case PPCII::MO_DTPREL16_LO:
-        RefKind = MCSymbolRefExpr::VK_PPC_DTPREL16_LO;
-        break;
-      case PPCII::MO_TLSLD16_LO:
-        RefKind = MCSymbolRefExpr::VK_PPC_GOT_TLSLD16_LO;
-        break;
-      case PPCII::MO_TOC16_LO:
-        RefKind = MCSymbolRefExpr::VK_PPC_TOC16_LO;
-        break;
-    }
+  switch (access) {
+    case PPCII::MO_TPREL16_HA:
+      RefKind = MCSymbolRefExpr::VK_PPC_TPREL16_HA;
+      break;
+    case PPCII::MO_TPREL16_LO:
+      RefKind = MCSymbolRefExpr::VK_PPC_TPREL16_LO;
+      break;
+    case PPCII::MO_DTPREL16_LO:
+      RefKind = MCSymbolRefExpr::VK_PPC_DTPREL16_LO;
+      break;
+    case PPCII::MO_TLSLD16_LO:
+      RefKind = MCSymbolRefExpr::VK_PPC_GOT_TLSLD16_LO;
+      break;
+    case PPCII::MO_TOC16_LO:
+      RefKind = MCSymbolRefExpr::VK_PPC_TOC16_LO;
+      break;
   }
 
   const MCExpr *Expr = MCSymbolRefExpr::Create(Symbol, RefKind, Ctx);
@@ -152,16 +144,14 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
     Expr = MCBinaryExpr::CreateSub(Expr, PB, Ctx);
   }
 
-  // Add Darwin ha16() / lo16() markers if required.
-  if (isDarwin) {
-    switch (access) {
-      case PPCII::MO_HA16:
-        Expr = PPCMCExpr::CreateHa16(Expr, Ctx);
-        break;
-      case PPCII::MO_LO16:
-        Expr = PPCMCExpr::CreateLo16(Expr, Ctx);
-        break;
-    }
+  // Add ha16() / lo16() markers if required.
+  switch (access) {
+    case PPCII::MO_HA16:
+      Expr = PPCMCExpr::CreateHa16(Expr, Ctx);
+      break;
+    case PPCII::MO_LO16:
+      Expr = PPCMCExpr::CreateLo16(Expr, Ctx);
+      break;
   }
 
   return MCOperand::CreateExpr(Expr);

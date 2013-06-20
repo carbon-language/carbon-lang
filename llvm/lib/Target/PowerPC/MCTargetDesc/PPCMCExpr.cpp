@@ -11,25 +11,37 @@
 #include "PPCMCExpr.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCAsmInfo.h"
 
 using namespace llvm;
 
 const PPCMCExpr*
 PPCMCExpr::Create(VariantKind Kind, const MCExpr *Expr,
                        MCContext &Ctx) {
-  return new (Ctx) PPCMCExpr(Kind, Expr);
+  int AssemblerDialect = Ctx.getAsmInfo()->getAssemblerDialect();
+  return new (Ctx) PPCMCExpr(Kind, Expr, AssemblerDialect);
 }
 
 void PPCMCExpr::PrintImpl(raw_ostream &OS) const {
-  switch (Kind) {
-  default: llvm_unreachable("Invalid kind!");
-  case VK_PPC_HA16: OS << "ha16"; break;
-  case VK_PPC_LO16: OS << "lo16"; break;
-  }
+  if (isDarwinSyntax()) {
+    switch (Kind) {
+    default: llvm_unreachable("Invalid kind!");
+    case VK_PPC_HA16: OS << "ha16"; break;
+    case VK_PPC_LO16: OS << "lo16"; break;
+    }
 
-  OS << '(';
-  getSubExpr()->print(OS);
-  OS << ')';
+    OS << '(';
+    getSubExpr()->print(OS);
+    OS << ')';
+  } else {
+    getSubExpr()->print(OS);
+
+    switch (Kind) {
+    default: llvm_unreachable("Invalid kind!");
+    case VK_PPC_HA16: OS << "@ha"; break;
+    case VK_PPC_LO16: OS << "@l"; break;
+    }
+  }
 }
 
 bool

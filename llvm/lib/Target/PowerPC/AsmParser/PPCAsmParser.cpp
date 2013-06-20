@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/PPCMCTargetDesc.h"
+#include "MCTargetDesc/PPCMCExpr.h"
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
@@ -125,6 +126,10 @@ class PPCAsmParser : public MCTargetAsmParser {
                          unsigned &RegNo, int64_t &IntVal);
 
   virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
+
+  const MCExpr *ExtractModifierFromExpr(const MCExpr *E,
+                                        PPCMCExpr::VariantKind &Variant);
+  bool ParseExpression(const MCExpr *&EVal);
 
   bool ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
@@ -540,6 +545,91 @@ ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) {
   return Error(StartLoc, "invalid register name");
 }
 
+/// Extract @l/@ha modifier from expression.  Recursively scan
+/// the expression and check for VK_PPC_ADDR16_HA/VK_PPC_ADDR16_LO
+/// symbol variants.  If all symbols with modifier use the same
+/// variant, return the corresponding PPCMCExpr::VariantKind,
+/// and a modified expression using the default symbol variant.
+/// Otherwise, return NULL.
+const MCExpr *PPCAsmParser::
+ExtractModifierFromExpr(const MCExpr *E,
+                        PPCMCExpr::VariantKind &Variant) {
+  MCContext &Context = getParser().getContext();
+  Variant = PPCMCExpr::VK_PPC_None;
+
+  switch (E->getKind()) {
+  case MCExpr::Target:
+  case MCExpr::Constant:
+    return 0;
+
+  case MCExpr::SymbolRef: {
+    const MCSymbolRefExpr *SRE = cast<MCSymbolRefExpr>(E);
+
+    switch (SRE->getKind()) {
+    case MCSymbolRefExpr::VK_PPC_ADDR16_HA:
+      Variant = PPCMCExpr::VK_PPC_HA16;
+      break;
+    case MCSymbolRefExpr::VK_PPC_ADDR16_LO:
+      Variant = PPCMCExpr::VK_PPC_LO16;
+      break;
+    default:
+      return 0;
+    }
+
+    return MCSymbolRefExpr::Create(&SRE->getSymbol(), Context);
+  }
+
+  case MCExpr::Unary: {
+    const MCUnaryExpr *UE = cast<MCUnaryExpr>(E);
+    const MCExpr *Sub = ExtractModifierFromExpr(UE->getSubExpr(), Variant);
+    if (!Sub)
+      return 0;
+    return MCUnaryExpr::Create(UE->getOpcode(), Sub, Context);
+  }
+
+  case MCExpr::Binary: {
+    const MCBinaryExpr *BE = cast<MCBinaryExpr>(E);
+    PPCMCExpr::VariantKind LHSVariant, RHSVariant;
+    const MCExpr *LHS = ExtractModifierFromExpr(BE->getLHS(), LHSVariant);
+    const MCExpr *RHS = ExtractModifierFromExpr(BE->getRHS(), RHSVariant);
+
+    if (!LHS && !RHS)
+      return 0;
+
+    if (!LHS) LHS = BE->getLHS();
+    if (!RHS) RHS = BE->getRHS();
+
+    if (LHSVariant == PPCMCExpr::VK_PPC_None)
+      Variant = RHSVariant;
+    else if (RHSVariant == PPCMCExpr::VK_PPC_None)
+      Variant = LHSVariant;
+    else if (LHSVariant == RHSVariant)
+      Variant = LHSVariant;
+    else
+      return 0;
+
+    return MCBinaryExpr::Create(BE->getOpcode(), LHS, RHS, Context);
+  }
+  }
+
+  llvm_unreachable("Invalid expression kind!");
+}
+
+/// Parse an expression.  This differs from the default "parseExpression"
+/// in that it handles complex @l/@ha modifiers.
+bool PPCAsmParser::
+ParseExpression(const MCExpr *&EVal) {
+  if (getParser().parseExpression(EVal))
+    return true;
+
+  PPCMCExpr::VariantKind Variant;
+  const MCExpr *E = ExtractModifierFromExpr(EVal, Variant);
+  if (E)
+    EVal = PPCMCExpr::Create(Variant, E, getParser().getContext());
+
+  return false;
+}
+
 bool PPCAsmParser::
 ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
@@ -571,7 +661,7 @@ ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   case AsmToken::Identifier:
   case AsmToken::Dot:
   case AsmToken::Dollar:
-    if (!getParser().parseExpression(EVal))
+    if (!ParseExpression(EVal))
       break;
     /* fall through */
   default:
