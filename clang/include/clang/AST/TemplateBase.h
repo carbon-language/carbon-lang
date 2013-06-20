@@ -494,17 +494,6 @@ public:
     assert(Argument.getKind() == TemplateArgument::TemplateExpansion);
     return LocInfo.getTemplateEllipsisLoc();
   }
-  
-  /// \brief When the template argument is a pack expansion, returns 
-  /// the pattern of the pack expansion.
-  ///
-  /// \param Ellipsis Will be set to the location of the ellipsis.
-  ///
-  /// \param NumExpansions Will be set to the number of expansions that will
-  /// be generated from this pack expansion, if known a priori.
-  TemplateArgumentLoc getPackExpansionPattern(SourceLocation &Ellipsis,
-                                              Optional<unsigned> &NumExpansions,
-                                              ASTContext &Context) const;
 };
 
 /// A convenient class for passing around template argument

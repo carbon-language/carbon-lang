@@ -3233,8 +3233,8 @@ bool TreeTransform<Derived>::TransformTemplateArguments(InputIterator First,
       SourceLocation Ellipsis;
       Optional<unsigned> OrigNumExpansions;
       TemplateArgumentLoc Pattern
-        = In.getPackExpansionPattern(Ellipsis, OrigNumExpansions,
-                                     getSema().Context);
+        = getSema().getTemplateArgumentPackExpansionPattern(
+              In, Ellipsis, OrigNumExpansions);
 
       SmallVector<UnexpandedParameterPack, 2> Unexpanded;
       getSema().collectUnexpandedParameterPacks(Pattern, Unexpanded);

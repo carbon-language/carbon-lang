@@ -450,68 +450,6 @@ SourceRange TemplateArgumentLoc::getSourceRange() const {
   llvm_unreachable("Invalid TemplateArgument Kind!");
 }
 
-TemplateArgumentLoc TemplateArgumentLoc::getPackExpansionPattern(
-    SourceLocation &Ellipsis, Optional<unsigned> &NumExpansions,
-    ASTContext &Context) const {
-  assert(Argument.isPackExpansion());
-  
-  switch (Argument.getKind()) {
-  case TemplateArgument::Type: {
-    // FIXME: We shouldn't ever have to worry about missing
-    // type-source info!
-    TypeSourceInfo *ExpansionTSInfo = getTypeSourceInfo();
-    if (!ExpansionTSInfo)
-      ExpansionTSInfo = Context.getTrivialTypeSourceInfo(
-                                                     getArgument().getAsType(),
-                                                         Ellipsis);
-    PackExpansionTypeLoc Expansion =
-        ExpansionTSInfo->getTypeLoc().castAs<PackExpansionTypeLoc>();
-    Ellipsis = Expansion.getEllipsisLoc();
-    
-    TypeLoc Pattern = Expansion.getPatternLoc();
-    NumExpansions = Expansion.getTypePtr()->getNumExpansions();
-    
-    // FIXME: This is horrible. We know where the source location data is for
-    // the pattern, and we have the pattern's type, but we are forced to copy
-    // them into an ASTContext because TypeSourceInfo bundles them together
-    // and TemplateArgumentLoc traffics in TypeSourceInfo pointers.
-    TypeSourceInfo *PatternTSInfo
-      = Context.CreateTypeSourceInfo(Pattern.getType(),
-                                     Pattern.getFullDataSize());
-    memcpy(PatternTSInfo->getTypeLoc().getOpaqueData(), 
-           Pattern.getOpaqueData(), Pattern.getFullDataSize());
-    return TemplateArgumentLoc(TemplateArgument(Pattern.getType()),
-                               PatternTSInfo);
-  }
-      
-  case TemplateArgument::Expression: {
-    PackExpansionExpr *Expansion
-      = cast<PackExpansionExpr>(Argument.getAsExpr());
-    Expr *Pattern = Expansion->getPattern();
-    Ellipsis = Expansion->getEllipsisLoc();
-    NumExpansions = Expansion->getNumExpansions();
-    return TemplateArgumentLoc(Pattern, Pattern);
-  }
-
-  case TemplateArgument::TemplateExpansion:
-    Ellipsis = getTemplateEllipsisLoc();
-    NumExpansions = Argument.getNumTemplateExpansions();
-    return TemplateArgumentLoc(Argument.getPackExpansionPattern(),
-                               getTemplateQualifierLoc(),
-                               getTemplateNameLoc());
-    
-  case TemplateArgument::Declaration:
-  case TemplateArgument::NullPtr:
-  case TemplateArgument::Template:
-  case TemplateArgument::Integral:
-  case TemplateArgument::Pack:
-  case TemplateArgument::Null:
-    return TemplateArgumentLoc();
-  }
-
-  llvm_unreachable("Invalid TemplateArgument Kind!");
-}
-
 const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
                                            const TemplateArgument &Arg) {
   switch (Arg.getKind()) {
