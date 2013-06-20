@@ -46,6 +46,8 @@
 #include <linux/fd.h>
 #include <linux/fs.h>
 #include <linux/hdreg.h>
+#include <linux/input.h>
+#include <linux/ioctl.h>
 #include <linux/soundcard.h>
 #endif
 
@@ -173,6 +175,7 @@ namespace __sanitizer {
   unsigned struct_copr_buffer_sz = sizeof(struct copr_buffer);
   unsigned struct_copr_debug_buf_sz = sizeof(struct copr_debug_buf);
   unsigned struct_copr_msg_sz = sizeof(struct copr_msg);
+  unsigned struct_ff_effect_sz = sizeof(struct ff_effect);
   unsigned struct_floppy_drive_params_sz = sizeof(struct floppy_drive_params);
   unsigned struct_floppy_drive_struct_sz = sizeof(struct floppy_drive_struct);
   unsigned struct_floppy_fdc_state_sz = sizeof(struct floppy_fdc_state);
@@ -183,6 +186,8 @@ namespace __sanitizer {
   unsigned struct_format_descr_sz = sizeof(struct format_descr);
   unsigned struct_hd_driveid_sz = sizeof(struct hd_driveid);
   unsigned struct_hd_geometry_sz = sizeof(struct hd_geometry);
+  unsigned struct_input_absinfo_sz = sizeof(struct input_absinfo);
+  unsigned struct_input_id_sz = sizeof(struct input_id);
   unsigned struct_midi_info_sz = sizeof(struct midi_info);
   unsigned struct_mtget_sz = sizeof(struct mtget);
   unsigned struct_mtop_sz = sizeof(struct mtop);
@@ -199,15 +204,16 @@ namespace __sanitizer {
 #endif
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
+  unsigned mpu_command_rec_sz = sizeof(mpu_command_rec);
   unsigned struct_audio_buf_info_sz = sizeof(struct audio_buf_info);
   unsigned struct_ax25_parms_struct_sz = sizeof(struct ax25_parms_struct);
   unsigned struct_cyclades_monitor_sz = sizeof(struct cyclades_monitor);
+  unsigned struct_input_keymap_entry_sz = sizeof(struct input_keymap_entry);
   unsigned struct_ipx_config_data_sz = sizeof(struct ipx_config_data);
   unsigned struct_kbdiacrs_sz = sizeof(struct kbdiacrs);
   unsigned struct_kbentry_sz = sizeof(struct kbentry);
   unsigned struct_kbkeycode_sz = sizeof(struct kbkeycode);
   unsigned struct_kbsentry_sz = sizeof(struct kbsentry);
-  unsigned mpu_command_rec_sz = sizeof(mpu_command_rec);
   unsigned struct_mtconfiginfo_sz = sizeof(struct mtconfiginfo);
   unsigned struct_nr_parms_struct_sz = sizeof(struct nr_parms_struct);
   unsigned struct_ppp_stats_sz = sizeof(struct ppp_stats);
@@ -275,6 +281,26 @@ namespace __sanitizer {
   unsigned IOCTL_SIOCGETVIFCNT = SIOCGETVIFCNT;
 #endif
 #if SANITIZER_LINUX
+  unsigned IOCTL_EVIOCGABS = EVIOCGABS(0);
+  unsigned IOCTL_EVIOCGBIT = EVIOCGBIT(0, 0);
+  unsigned IOCTL_EVIOCGEFFECTS = EVIOCGEFFECTS;
+  unsigned IOCTL_EVIOCGID = EVIOCGID;
+  unsigned IOCTL_EVIOCGKEY = EVIOCGKEY(0);
+  unsigned IOCTL_EVIOCGKEYCODE = EVIOCGKEYCODE;
+  unsigned IOCTL_EVIOCGLED = EVIOCGLED(0);
+  unsigned IOCTL_EVIOCGNAME = EVIOCGNAME(0);
+  unsigned IOCTL_EVIOCGPHYS = EVIOCGPHYS(0);
+  unsigned IOCTL_EVIOCGRAB = EVIOCGRAB;
+  unsigned IOCTL_EVIOCGREP = EVIOCGREP;
+  unsigned IOCTL_EVIOCGSND = EVIOCGSND(0);
+  unsigned IOCTL_EVIOCGSW = EVIOCGSW(0);
+  unsigned IOCTL_EVIOCGUNIQ = EVIOCGUNIQ(0);
+  unsigned IOCTL_EVIOCGVERSION = EVIOCGVERSION;
+  unsigned IOCTL_EVIOCRMFF = EVIOCRMFF;
+  unsigned IOCTL_EVIOCSABS = EVIOCSABS(0);
+  unsigned IOCTL_EVIOCSFF = EVIOCSFF;
+  unsigned IOCTL_EVIOCSKEYCODE = EVIOCSKEYCODE;
+  unsigned IOCTL_EVIOCSREP = EVIOCSREP;
   unsigned IOCTL_BLKFLSBUF = BLKFLSBUF;
   unsigned IOCTL_BLKGETSIZE = BLKGETSIZE;
   unsigned IOCTL_BLKRAGET = BLKRAGET;
@@ -530,6 +556,9 @@ namespace __sanitizer {
   unsigned IOCTL_EQL_GETSLAVECFG = EQL_GETSLAVECFG;
   unsigned IOCTL_EQL_SETMASTRCFG = EQL_SETMASTRCFG;
   unsigned IOCTL_EQL_SETSLAVECFG = EQL_SETSLAVECFG;
+  unsigned IOCTL_EVIOCGKEYCODE_V2 = EVIOCGKEYCODE_V2;
+  unsigned IOCTL_EVIOCGPROP = EVIOCGPROP(0);
+  unsigned IOCTL_EVIOCSKEYCODE_V2 = EVIOCSKEYCODE_V2;
   unsigned IOCTL_FS_IOC_GETFLAGS = FS_IOC_GETFLAGS;
   unsigned IOCTL_FS_IOC_GETVERSION = FS_IOC_GETVERSION;
   unsigned IOCTL_FS_IOC_SETFLAGS = FS_IOC_SETFLAGS;
@@ -635,6 +664,8 @@ CHECK_SIZE_AND_OFFSET(dl_phdr_info, dlpi_addr);
 CHECK_SIZE_AND_OFFSET(dl_phdr_info, dlpi_name);
 CHECK_SIZE_AND_OFFSET(dl_phdr_info, dlpi_phdr);
 CHECK_SIZE_AND_OFFSET(dl_phdr_info, dlpi_phnum);
+
+COMPILER_CHECK(IOC_SIZE(0x12345678) == _IOC_SIZE(0x12345678));
 #endif
 
 CHECK_TYPE_SIZE(addrinfo);

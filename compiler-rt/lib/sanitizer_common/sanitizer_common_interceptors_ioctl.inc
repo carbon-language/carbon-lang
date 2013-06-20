@@ -130,6 +130,26 @@ static void ioctl_table_fill() {
   _(CDROMVOLCTRL, READ, struct_cdrom_volctrl_sz);
   _(CDROMVOLREAD, WRITE, struct_cdrom_volctrl_sz);
   _(CDROM_GET_UPC, WRITE, 8);
+  _(EVIOCGABS, WRITE, struct_input_absinfo_sz); // fixup
+  _(EVIOCGBIT, WRITE, struct_input_id_sz); // fixup
+  _(EVIOCGEFFECTS, WRITE, sizeof(int));
+  _(EVIOCGID, WRITE, struct_input_id_sz);
+  _(EVIOCGKEY, WRITE, 0);
+  _(EVIOCGKEYCODE, WRITE, sizeof(int) * 2);
+  _(EVIOCGLED, WRITE, 0);
+  _(EVIOCGNAME, WRITE, 0);
+  _(EVIOCGPHYS, WRITE, 0);
+  _(EVIOCGRAB, READ, sizeof(int));
+  _(EVIOCGREP, WRITE, sizeof(int) * 2);
+  _(EVIOCGSND, WRITE, 0);
+  _(EVIOCGSW, WRITE, 0);
+  _(EVIOCGUNIQ, WRITE, 0);
+  _(EVIOCGVERSION, WRITE, sizeof(int));
+  _(EVIOCRMFF, READ, sizeof(int));
+  _(EVIOCSABS, READ, struct_input_absinfo_sz); // fixup
+  _(EVIOCSFF, READ, struct_ff_effect_sz);
+  _(EVIOCSKEYCODE, READ, sizeof(int) * 2);
+  _(EVIOCSREP, READ, sizeof(int) * 2);
   _(FDCLRPRM, NONE, 0);
   _(FDDEFPRM, READ, struct_floppy_struct_sz);
   _(FDFLUSH, NONE, 0);
@@ -350,6 +370,9 @@ static void ioctl_table_fill() {
   _(EQL_GETSLAVECFG, WRITE, struct_ifreq_sz);
   _(EQL_SETMASTRCFG, WRITE, struct_ifreq_sz);
   _(EQL_SETSLAVECFG, WRITE, struct_ifreq_sz);
+  _(EVIOCGKEYCODE_V2, WRITE, struct_input_keymap_entry_sz);
+  _(EVIOCGPROP, WRITE, 0);
+  _(EVIOCSKEYCODE_V2, READ, struct_input_keymap_entry_sz);
   _(FS_IOC_GETFLAGS, WRITE, sizeof(int));
   _(FS_IOC_GETVERSION, WRITE, sizeof(int));
   _(FS_IOC_SETFLAGS, READ, sizeof(int));
@@ -463,7 +486,18 @@ static void ioctl_init() {
   ioctl_initialized = true;
 }
 
-static const ioctl_desc *ioctl_lookup(unsigned req) {
+// Handle the most evil ioctls that encode argument value as part of request id.
+static unsigned ioctl_request_fixup(unsigned req) {
+  if ((req & ~0x3fff001fU) == IOCTL_EVIOCGBIT)
+    return IOCTL_EVIOCGBIT;
+  if ((req & ~0x3fU) == IOCTL_EVIOCGABS)
+    return IOCTL_EVIOCGABS;
+  if ((req & ~0x3fU) == IOCTL_EVIOCSABS)
+    return IOCTL_EVIOCSABS;
+  return req;
+}
+
+static const ioctl_desc *ioctl_table_lookup(unsigned req) {
   int left = 0;
   int right = ioctl_table_size;
   while (left < right) {
@@ -479,10 +513,27 @@ static const ioctl_desc *ioctl_lookup(unsigned req) {
     return 0;
 }
 
+static const ioctl_desc *ioctl_lookup(unsigned req) {
+  req = ioctl_request_fixup(req);
+  const ioctl_desc *desc = ioctl_table_lookup(req);
+  if (desc) return desc;
+
+  // Try stripping access size from the request id.
+  desc = ioctl_table_lookup(req & ~0x3fff0000U);
+  // Sanity check: requests that encode access size are either read or write and
+  // have size of 0 in the table.
+  if (desc && desc->size == 0 &&
+      (desc->type == ioctl_desc::WRITE || desc->type == ioctl_desc::READ))
+    return desc;
+  return 0;
+}
+
 static void ioctl_common_pre(void *ctx, const ioctl_desc *desc, int d,
                              unsigned request, void *arg) {
-  if (desc->type == ioctl_desc::READ)
-    COMMON_INTERCEPTOR_READ_RANGE(ctx, arg, desc->size);
+  if (desc->type == ioctl_desc::READ) {
+    unsigned size = desc->size ? desc->size : IOC_SIZE(request);
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, arg, size);
+  }
   if (desc->type != ioctl_desc::CUSTOM)
     return;
   switch (request) {
@@ -499,7 +550,8 @@ static void ioctl_common_post(void *ctx, const ioctl_desc *desc, int res, int d,
                               unsigned request, void *arg) {
   if (desc->type == ioctl_desc::WRITE) {
     // FIXME: add verbose output
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, arg, desc->size);
+    unsigned size = desc->size ? desc->size : IOC_SIZE(request);
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, arg, size);
   }
   if (desc->type != ioctl_desc::CUSTOM)
     return;
