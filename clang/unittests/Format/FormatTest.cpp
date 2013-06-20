@@ -893,6 +893,9 @@ TEST_F(FormatTest, SplitsLongCxxComments) {
                    "    int bbb, // xxxxxxx yyyyyyyyy\n"
                    "    int c, int d, int e) {}",
                    getLLVMStyleWithColumns(40)));
+  EXPECT_EQ("//\t aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            format("//\t aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                   getLLVMStyleWithColumns(20)));
 }
 
 TEST_F(FormatTest, PriorityOfCommentBreaking) {
