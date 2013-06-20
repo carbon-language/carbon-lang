@@ -97,8 +97,15 @@ bool ArchiveMember::replaceWith(StringRef newFile, std::string* ErrMsg) {
   else
     flags &= ~StringTableFlag;
 
+  // If it has a slash then it has a path
+  bool hasSlash = path.find('/') != std::string::npos;
+  if (hasSlash)
+    flags |= HasPathFlag;
+  else
+    flags &= ~HasPathFlag;
+
   // If it has a slash or its over 15 chars then its a long filename format
-  if (path.length() > 15)
+  if (hasSlash || path.length() > 15)
     flags |= HasLongFilenameFlag;
   else
     flags &= ~HasLongFilenameFlag;
