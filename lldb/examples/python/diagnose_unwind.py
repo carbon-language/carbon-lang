@@ -142,6 +142,9 @@ to be helpful when reporting the problem.
         print ""
         print "============================================================================================="
         print ""
+        print "OS plugin setting:"
+        debugger.HandleCommand("settings show target.process.python-os-plugin-path")
+        print ""
         print "Live register context:"
         thread.SetSelectedFrame(0)
         debugger.HandleCommand("register read")
