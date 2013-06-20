@@ -1007,11 +1007,6 @@ def p_imm : Operand<i32> {
   let DecoderMethod = "DecodeCoprocessor";
 }
 
-def pf_imm : Operand<i32> {
-  let PrintMethod = "printPImmediate";
-  let ParserMatchClass = CoprocNumAsmOperand;
-}
-
 def CoprocRegAsmOperand : AsmOperandClass {
   let Name = "CoprocReg";
   let ParserMethod = "parseCoprocRegOperand";
@@ -4447,7 +4442,7 @@ def CDP : ABI<0b1110, (outs), (ins p_imm:$cop, imm0_15:$opc1,
   let Inst{23-20} = opc1;
 }
 
-def CDP2 : ABXI<0b1110, (outs), (ins pf_imm:$cop, imm0_15:$opc1,
+def CDP2 : ABXI<0b1110, (outs), (ins p_imm:$cop, imm0_15:$opc1,
                c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, imm0_7:$opc2),
                NoItinerary, "cdp2\t$cop, $opc1, $CRd, $CRn, $CRm, $opc2",
                [(int_arm_cdp2 imm:$cop, imm:$opc1, imm:$CRd, imm:$CRn,
