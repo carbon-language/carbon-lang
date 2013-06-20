@@ -797,18 +797,22 @@ IgnoreObjectResult IgnoreObjectLocked(const void *p) {
 extern "C" {
 SANITIZER_INTERFACE_ATTRIBUTE
 void __lsan_disable() {
+#if CAN_SANITIZE_LEAKS
   __asan_init();
   __asan::AsanThread *t = __asan::GetCurrentThread();
   CHECK(t);
   t->disable_lsan();
+#endif  // CAN_SANITIZE_LEAKS
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void __lsan_enable() {
+#if CAN_SANITIZE_LEAKS
   __asan_init();
   __asan::AsanThread *t = __asan::GetCurrentThread();
   CHECK(t);
   t->enable_lsan();
+#endif  // CAN_SANITIZE_LEAKS
 }
 }  // extern "C"
 

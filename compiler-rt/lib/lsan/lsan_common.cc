@@ -399,12 +399,14 @@ void LeakReport::PrintSummary() {
 }
 
 }  // namespace __lsan
+#endif  // CAN_SANITIZE_LEAKS
 
 using namespace __lsan;  // NOLINT
 
 extern "C" {
 SANITIZER_INTERFACE_ATTRIBUTE
 void __lsan_ignore_object(const void *p) {
+#if CAN_SANITIZE_LEAKS
   // Cannot use PointsIntoChunk or LsanMetadata here, since the allocator is not
   // locked.
   BlockingMutexLock l(&global_mutex);
@@ -416,6 +418,6 @@ void __lsan_ignore_object(const void *p) {
            "heap object at %p is already being ignored\n", p);
   if (res == kIgnoreObjectSuccess && flags()->verbosity >= 2)
     Report("__lsan_ignore_object(): ignoring heap object at %p\n", p);
+#endif  // CAN_SANITIZE_LEAKS
 }
 }  // extern "C"
-#endif  // CAN_SANITIZE_LEAKS
