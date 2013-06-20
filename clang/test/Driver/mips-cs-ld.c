@@ -2,8 +2,8 @@
 //
 // = Big-endian, hard float
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target mips-linux-gnu \
-// RUN:     -gcc-toolchain %S/Inputs/mips_cs_tree \
+// RUN:     --target=mips-linux-gnu \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_cs_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-BE-HF-32 %s
 // CHECK-BE-HF-32: "{{.*}}ld{{(.exe)?}}"
 // CHECK-BE-HF-32: "--sysroot=[[TC:[^"]+]]/../../../../mips-linux-gnu/libc"
@@ -19,8 +19,8 @@
 //
 // = Big-endian, hard float, mips16
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target mips-linux-gnu -mips16 \
-// RUN:     -gcc-toolchain %S/Inputs/mips_cs_tree \
+// RUN:     --target=mips-linux-gnu -mips16 \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_cs_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-BE-HF-16 %s
 // CHECK-BE-HF-16: "{{.*}}ld{{(.exe)?}}"
 // CHECK-BE-HF-16: "--sysroot=[[TC:[^"]+]]/../../../../mips-linux-gnu/libc/mips16"
@@ -37,8 +37,8 @@
 //
 // = Big-endian, hard float, mmicromips
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target mips-linux-gnu -mmicromips \
-// RUN:     -gcc-toolchain %S/Inputs/mips_cs_tree \
+// RUN:     --target=mips-linux-gnu -mmicromips \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_cs_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-BE-HF-MICRO %s
 // CHECK-BE-HF-MICRO: "{{.*}}ld{{(.exe)?}}"
 // CHECK-BE-HF-MICRO: "--sysroot=[[TC:[^"]+]]/../../../../mips-linux-gnu/libc/micromips"
@@ -55,8 +55,8 @@
 //
 // = Big-endian, soft float
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target mips-linux-gnu -msoft-float \
-// RUN:     -gcc-toolchain %S/Inputs/mips_cs_tree \
+// RUN:     --target=mips-linux-gnu -msoft-float \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_cs_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-BE-SF-32 %s
 // CHECK-BE-SF-32: "{{.*}}ld{{(.exe)?}}"
 // CHECK-BE-SF-32: "--sysroot=[[TC:[^"]+]]/../../../../mips-linux-gnu/libc/soft-float"
@@ -73,8 +73,8 @@
 //
 // = Big-endian, soft float, mips16
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target mips-linux-gnu -msoft-float -mips16 \
-// RUN:     -gcc-toolchain %S/Inputs/mips_cs_tree \
+// RUN:     --target=mips-linux-gnu -msoft-float -mips16 \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_cs_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-BE-SF-16 %s
 // CHECK-BE-SF-16: "{{.*}}ld{{(.exe)?}}"
 // CHECK-BE-SF-16: "--sysroot=[[TC:[^"]+]]/../../../../mips-linux-gnu/libc/mips16/soft-float"
@@ -91,8 +91,8 @@
 //
 // = Big-endian, soft float, micromips
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target mips-linux-gnu -msoft-float -mmicromips \
-// RUN:     -gcc-toolchain %S/Inputs/mips_cs_tree \
+// RUN:     --target=mips-linux-gnu -msoft-float -mmicromips \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_cs_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-BE-SF-MICRO %s
 // CHECK-BE-SF-MICRO: "{{.*}}ld{{(.exe)?}}"
 // CHECK-BE-SF-MICRO: "--sysroot=[[TC:[^"]+]]/../../../../mips-linux-gnu/libc/micromips/soft-float"
@@ -109,8 +109,8 @@
 //
 // = Big-endian, hard float, 64-bit
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target mips64-linux-gnu \
-// RUN:     -gcc-toolchain %S/Inputs/mips_cs_tree \
+// RUN:     --target=mips64-linux-gnu \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_cs_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-BE-HF-64 %s
 // CHECK-BE-HF-64: "{{.*}}ld{{(.exe)?}}"
 // CHECK-BE-HF-64: "--sysroot=[[TC:[^"]+]]/../../../../mips-linux-gnu/libc"
@@ -127,8 +127,8 @@
 //
 // = Big-endian, soft float, 64-bit
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target mips64-linux-gnu -msoft-float \
-// RUN:     -gcc-toolchain %S/Inputs/mips_cs_tree \
+// RUN:     --target=mips64-linux-gnu -msoft-float \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_cs_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-BE-SF-64 %s
 // CHECK-BE-SF-64: "{{.*}}ld{{(.exe)?}}"
 // CHECK-BE-SF-64: "--sysroot=[[TC:[^"]+]]/../../../../mips-linux-gnu/libc/soft-float"
@@ -145,8 +145,8 @@
 //
 // = Little-endian, hard float
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target mipsel-linux-gnu -mhard-float \
-// RUN:     -gcc-toolchain %S/Inputs/mips_cs_tree \
+// RUN:     --target=mipsel-linux-gnu -mhard-float \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_cs_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-EL-HF-32 %s
 // CHECK-EL-HF-32: "{{.*}}ld{{(.exe)?}}"
 // CHECK-EL-HF-32: "--sysroot=[[TC:[^"]+]]/../../../../mips-linux-gnu/libc/el"
@@ -163,8 +163,8 @@
 //
 // = Little-endian, hard float, mips16
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target mipsel-linux-gnu -mips16 \
-// RUN:     -gcc-toolchain %S/Inputs/mips_cs_tree \
+// RUN:     --target=mipsel-linux-gnu -mips16 \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_cs_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-EL-HF-16 %s
 // CHECK-EL-HF-16: "{{.*}}ld{{(.exe)?}}"
 // CHECK-EL-HF-16: "--sysroot=[[TC:[^"]+]]/../../../../mips-linux-gnu/libc/mips16/el"
@@ -181,8 +181,8 @@
 //
 // = Little-endian, hard float, micromips
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target mipsel-linux-gnu -mmicromips \
-// RUN:     -gcc-toolchain %S/Inputs/mips_cs_tree \
+// RUN:     --target=mipsel-linux-gnu -mmicromips \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_cs_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-EL-HF-MICRO %s
 // CHECK-EL-HF-MICRO: "{{.*}}ld{{(.exe)?}}"
 // CHECK-EL-HF-MICRO: "--sysroot=[[TC:[^"]+]]/../../../../mips-linux-gnu/libc/micromips/el"
@@ -199,8 +199,8 @@
 //
 // = Little-endian, soft float
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target mipsel-linux-gnu -mfloat-abi=soft \
-// RUN:     -gcc-toolchain %S/Inputs/mips_cs_tree \
+// RUN:     --target=mipsel-linux-gnu -mfloat-abi=soft \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_cs_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-EL-SF-32 %s
 // CHECK-EL-SF-32: "{{.*}}ld{{(.exe)?}}"
 // CHECK-EL-SF-32: "--sysroot=[[TC:[^"]+]]/../../../../mips-linux-gnu/libc/soft-float/el"
@@ -217,8 +217,8 @@
 //
 // = Little-endian, soft float, mips16
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target mipsel-linux-gnu -mips16 -msoft-float \
-// RUN:     -gcc-toolchain %S/Inputs/mips_cs_tree \
+// RUN:     --target=mipsel-linux-gnu -mips16 -msoft-float \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_cs_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-EL-SF-16 %s
 // CHECK-EL-SF-16: "{{.*}}ld{{(.exe)?}}"
 // CHECK-EL-SF-16: "--sysroot=[[TC:[^"]+]]/../../../../mips-linux-gnu/libc/mips16/soft-float/el"
@@ -235,8 +235,8 @@
 //
 // = Little-endian, soft float, micromips
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target mipsel-linux-gnu -mmicromips -msoft-float \
-// RUN:     -gcc-toolchain %S/Inputs/mips_cs_tree \
+// RUN:     --target=mipsel-linux-gnu -mmicromips -msoft-float \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_cs_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-EL-SF-MICRO %s
 // CHECK-EL-SF-MICRO: "{{.*}}ld{{(.exe)?}}"
 // CHECK-EL-SF-MICRO: "--sysroot=[[TC:[^"]+]]/../../../../mips-linux-gnu/libc/micromips/soft-float/el"
@@ -253,8 +253,8 @@
 //
 // = Little-endian, hard float, 64-bit
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target mips64el-linux-gnu \
-// RUN:     -gcc-toolchain %S/Inputs/mips_cs_tree \
+// RUN:     --target=mips64el-linux-gnu \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_cs_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-EL-HF-64 %s
 // CHECK-EL-HF-64: "{{.*}}ld{{(.exe)?}}"
 // CHECK-EL-HF-64: "--sysroot=[[TC:[^"]+]]/../../../../mips-linux-gnu/libc/el"
@@ -271,8 +271,8 @@
 //
 // = Little-endian, soft float, 64-bit
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target mips64el-linux-gnu -msoft-float \
-// RUN:     -gcc-toolchain %S/Inputs/mips_cs_tree \
+// RUN:     --target=mips64el-linux-gnu -msoft-float \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_cs_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-EL-SF-64 %s
 // CHECK-EL-SF-64: "{{.*}}ld{{(.exe)?}}"
 // CHECK-EL-SF-64: "--sysroot=[[TC:[^"]+]]/../../../../mips-linux-gnu/libc/soft-float/el"
