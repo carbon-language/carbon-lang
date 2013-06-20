@@ -100,7 +100,6 @@ public:
   /// added to the per-module passes.
   Pass *Inliner;
 
-  bool DisableSimplifyLibCalls;
   bool DisableUnitAtATime;
   bool DisableUnrollLoops;
   bool BBVectorize;

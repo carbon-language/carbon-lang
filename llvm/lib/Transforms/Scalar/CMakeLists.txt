@@ -28,7 +28,6 @@ add_llvm_library(LLVMScalarOpts
   Scalar.cpp
   ScalarReplAggregates.cpp
   SimplifyCFGPass.cpp
-  SimplifyLibCalls.cpp
   Sink.cpp
   StructurizeCFG.cpp
   TailRecursionElimination.cpp

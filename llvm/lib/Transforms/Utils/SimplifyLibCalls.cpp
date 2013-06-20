@@ -1950,3 +1950,53 @@ void LibCallSimplifier::replaceAllUsesWith(Instruction *I, Value *With) const {
 }
 
 }
+
+// TODO:
+//   Additional cases that we need to add to this file:
+//
+// cbrt:
+//   * cbrt(expN(X))  -> expN(x/3)
+//   * cbrt(sqrt(x))  -> pow(x,1/6)
+//   * cbrt(sqrt(x))  -> pow(x,1/9)
+//
+// exp, expf, expl:
+//   * exp(log(x))  -> x
+//
+// log, logf, logl:
+//   * log(exp(x))   -> x
+//   * log(x**y)     -> y*log(x)
+//   * log(exp(y))   -> y*log(e)
+//   * log(exp2(y))  -> y*log(2)
+//   * log(exp10(y)) -> y*log(10)
+//   * log(sqrt(x))  -> 0.5*log(x)
+//   * log(pow(x,y)) -> y*log(x)
+//
+// lround, lroundf, lroundl:
+//   * lround(cnst) -> cnst'
+//
+// pow, powf, powl:
+//   * pow(exp(x),y)  -> exp(x*y)
+//   * pow(sqrt(x),y) -> pow(x,y*0.5)
+//   * pow(pow(x,y),z)-> pow(x,y*z)
+//
+// round, roundf, roundl:
+//   * round(cnst) -> cnst'
+//
+// signbit:
+//   * signbit(cnst) -> cnst'
+//   * signbit(nncst) -> 0 (if pstv is a non-negative constant)
+//
+// sqrt, sqrtf, sqrtl:
+//   * sqrt(expN(x))  -> expN(x*0.5)
+//   * sqrt(Nroot(x)) -> pow(x,1/(2*N))
+//   * sqrt(pow(x,y)) -> pow(|x|,y*0.5)
+//
+// strchr:
+//   * strchr(p, 0) -> strlen(p)
+// tan, tanf, tanl:
+//   * tan(atan(x)) -> x
+//
+// trunc, truncf, truncl:
+//   * trunc(cnst) -> cnst'
+//
+//

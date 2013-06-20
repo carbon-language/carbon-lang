@@ -303,12 +303,6 @@ Pass *createLoopDeletionPass();
   
 //===----------------------------------------------------------------------===//
 //
-/// createSimplifyLibCallsPass - This pass optimizes specific calls to
-/// specific well-known (library) functions.
-FunctionPass *createSimplifyLibCallsPass();
-
-//===----------------------------------------------------------------------===//
-//
 // CodeGenPrepare - This pass prepares a function for instruction selection.
 //
 FunctionPass *createCodeGenPreparePass(const TargetMachine *TM = 0);

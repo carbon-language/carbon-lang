@@ -54,7 +54,6 @@ PassManagerBuilder::PassManagerBuilder() {
     SizeLevel = 0;
     LibraryInfo = 0;
     Inliner = 0;
-    DisableSimplifyLibCalls = false;
     DisableUnitAtATime = false;
     DisableUnrollLoops = false;
     BBVectorize = RunBBVectorization;
@@ -174,8 +173,6 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
   else
     MPM.add(createScalarReplAggregatesPass(-1, false));
   MPM.add(createEarlyCSEPass());              // Catch trivial redundancies
-  if (!DisableSimplifyLibCalls)
-    MPM.add(createSimplifyLibCallsPass());    // Library Call Optimizations
   MPM.add(createJumpThreadingPass());         // Thread jumps.
   MPM.add(createCorrelatedValuePropagationPass()); // Propagate conditionals
   MPM.add(createCFGSimplificationPass());     // Merge & remove BBs
@@ -379,8 +376,7 @@ LLVMPassManagerBuilderSetDisableUnrollLoops(LLVMPassManagerBuilderRef PMB,
 void
 LLVMPassManagerBuilderSetDisableSimplifyLibCalls(LLVMPassManagerBuilderRef PMB,
                                                  LLVMBool Value) {
-  PassManagerBuilder *Builder = unwrap(PMB);
-  Builder->DisableSimplifyLibCalls = Value;
+  // NOTE: The simplify-libcalls pass has been removed.
 }
 
 void

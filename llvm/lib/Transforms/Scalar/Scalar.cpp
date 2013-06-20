@@ -59,7 +59,6 @@ void llvm::initializeScalarOpts(PassRegistry &Registry) {
   initializeSROA_SSAUpPass(Registry);
   initializeCFGSimplifyPassPass(Registry);
   initializeStructurizeCFGPass(Registry);
-  initializeSimplifyLibCallsPass(Registry);
   initializeSinkingPass(Registry);
   initializeTailCallElimPass(Registry);
 }
@@ -150,7 +149,7 @@ void LLVMAddScalarReplAggregatesPassWithThreshold(LLVMPassManagerRef PM,
 }
 
 void LLVMAddSimplifyLibCallsPass(LLVMPassManagerRef PM) {
-  unwrap(PM)->add(createSimplifyLibCallsPass());
+  // NOTE: The simplify-libcalls pass has been removed.
 }
 
 void LLVMAddTailCallEliminationPass(LLVMPassManagerRef PM) {
