@@ -5387,6 +5387,35 @@ class SequenceChecker : public EvaluatedExprVisitor<SequenceChecker> {
     llvm::SmallVectorImpl<std::pair<Object, Usage> > *OldModAsSideEffect;
   };
 
+  /// RAII object wrapping the visitation of a subexpression which we might
+  /// choose to evaluate as a constant. If any subexpression is evaluated and
+  /// found to be non-constant, this allows us to suppress the evaluation of
+  /// the outer expression.
+  class EvaluationTracker {
+  public:
+    EvaluationTracker(SequenceChecker &Self)
+        : Self(Self), Prev(Self.EvalTracker), EvalOK(true) {
+      Self.EvalTracker = this;
+    }
+    ~EvaluationTracker() {
+      Self.EvalTracker = Prev;
+      if (Prev)
+        Prev->EvalOK &= EvalOK;
+    }
+
+    bool evaluate(const Expr *E, bool &Result) {
+      if (!EvalOK || E->isValueDependent())
+        return false;
+      EvalOK = E->EvaluateAsBooleanCondition(Result, Self.SemaRef.Context);
+      return EvalOK;
+    }
+
+  private:
+    SequenceChecker &Self;
+    EvaluationTracker *Prev;
+    bool EvalOK;
+  } *EvalTracker;
+
   /// \brief Find the object which is produced by the specified expression,
   /// if any.
   Object getObject(Expr *E, bool Mod) const {
@@ -5468,7 +5497,8 @@ public:
   SequenceChecker(Sema &S, Expr *E,
                   llvm::SmallVectorImpl<Expr*> &WorkList)
     : EvaluatedExprVisitor<SequenceChecker>(S.Context), SemaRef(S),
-      Region(Tree.root()), ModAsSideEffect(0), WorkList(WorkList) {
+      Region(Tree.root()), ModAsSideEffect(0), WorkList(WorkList),
+      EvalTracker(0) {
     Visit(E);
   }
 
@@ -5581,14 +5611,14 @@ public:
     // value computation of the RHS, and hence before the value computation
     // of the '&&' itself, unless the LHS evaluates to zero. We treat them
     // as if they were unconditionally sequenced.
+    EvaluationTracker Eval(*this);
     {
       SequencedSubexpression Sequenced(*this);
       Visit(BO->getLHS());
     }
 
     bool Result;
-    if (!BO->getLHS()->isValueDependent() &&
-        BO->getLHS()->EvaluateAsBooleanCondition(Result, SemaRef.Context)) {
+    if (Eval.evaluate(BO->getLHS(), Result)) {
       if (!Result)
         Visit(BO->getRHS());
     } else {
@@ -5602,14 +5632,14 @@ public:
     }
   }
   void VisitBinLAnd(BinaryOperator *BO) {
+    EvaluationTracker Eval(*this);
     {
       SequencedSubexpression Sequenced(*this);
       Visit(BO->getLHS());
     }
 
     bool Result;
-    if (!BO->getLHS()->isValueDependent() &&
-        BO->getLHS()->EvaluateAsBooleanCondition(Result, SemaRef.Context)) {
+    if (Eval.evaluate(BO->getLHS(), Result)) {
       if (Result)
         Visit(BO->getRHS());
     } else {
@@ -5620,12 +5650,12 @@ public:
   // Only visit the condition, unless we can be sure which subexpression will
   // be chosen.
   void VisitAbstractConditionalOperator(AbstractConditionalOperator *CO) {
+    EvaluationTracker Eval(*this);
     SequencedSubexpression Sequenced(*this);
     Visit(CO->getCond());
 
     bool Result;
-    if (!CO->getCond()->isValueDependent() &&
-        CO->getCond()->EvaluateAsBooleanCondition(Result, SemaRef.Context))
+    if (Eval.evaluate(CO->getCond(), Result))
       Visit(Result ? CO->getTrueExpr() : CO->getFalseExpr());
     else {
       WorkList.push_back(CO->getTrueExpr());
