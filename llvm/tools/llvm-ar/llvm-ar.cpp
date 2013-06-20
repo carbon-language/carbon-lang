@@ -653,26 +653,19 @@ int main(int argc, char **argv) {
   // can't handle the grouped positional parameters without a dash.
   ArchiveOperation Operation = parseCommandLine();
 
-  // Check the path name of the archive
-  sys::Path ArchivePath;
-  if (!ArchivePath.set(ArchiveName)) {
-    errs() << argv[0] << ": Archive name invalid: " << ArchiveName << "\n";
-    return 1;
-  }
-
   // Create or open the archive object.
   bool Exists;
-  if (llvm::sys::fs::exists(ArchivePath.str(), Exists) || !Exists) {
+  if (llvm::sys::fs::exists(ArchiveName, Exists) || !Exists) {
     // Produce a warning if we should and we're creating the archive
     if (!Create)
-      errs() << argv[0] << ": creating " << ArchivePath.str() << "\n";
-    TheArchive = Archive::CreateEmpty(ArchivePath.str(), Context);
+      errs() << argv[0] << ": creating " << ArchiveName << "\n";
+    TheArchive = Archive::CreateEmpty(ArchiveName, Context);
     TheArchive->writeToDisk();
   } else {
     std::string Error;
-    TheArchive = Archive::OpenAndLoad(ArchivePath.str(), Context, &Error);
+    TheArchive = Archive::OpenAndLoad(ArchiveName, Context, &Error);
     if (TheArchive == 0) {
-      errs() << argv[0] << ": error loading '" << ArchivePath.str() << "': "
+      errs() << argv[0] << ": error loading '" << ArchiveName << "': "
              << Error << "!\n";
       return 1;
     }
