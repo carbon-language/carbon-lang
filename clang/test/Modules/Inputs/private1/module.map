@@ -1,0 +1,4 @@
+module libPrivate1 {
+  header "public1.h"
+  private header "private1.h"
+}
