@@ -66,6 +66,18 @@ namespace dr7 { // dr7: no
 
   class X { ~X(); }; // expected-note {{here}}
   class Y : X { ~Y() {} }; // expected-error {{private destructor}}
+
+  namespace PR16370 { // This regressed the first time DR7 was fixed.
+    struct S1 { virtual ~S1(); };
+    struct S2 : S1 {};
+    struct S3 : S2 {};
+    struct S4 : virtual S2 {};
+    struct S5 : S3, S4 {
+      S5();
+      ~S5();
+    };
+    S5::S5() {}
+  }
 }
 
 namespace dr8 { // dr8: dup 45
