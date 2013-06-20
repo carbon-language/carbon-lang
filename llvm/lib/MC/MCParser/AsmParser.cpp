@@ -805,11 +805,21 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
     // Look for 'b' or 'f' following an Integer as a directional label
     if (Lexer.getKind() == AsmToken::Identifier) {
       StringRef IDVal = getTok().getString();
+      // Lookup the symbol variant if used.
+      std::pair<StringRef, StringRef> Split = IDVal.split('@');
+      MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
+      if (Split.first.size() != IDVal.size()) {
+        Variant = MCSymbolRefExpr::getVariantKindForName(Split.second);
+        if (Variant == MCSymbolRefExpr::VK_Invalid) {
+          Variant = MCSymbolRefExpr::VK_None;
+          return TokError("invalid variant '" + Split.second + "'");
+        }
+	IDVal = Split.first;
+      }
       if (IDVal == "f" || IDVal == "b"){
         MCSymbol *Sym = Ctx.GetDirectionalLocalSymbol(IntVal,
                                                       IDVal == "f" ? 1 : 0);
-        Res = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None,
-                                      getContext());
+        Res = MCSymbolRefExpr::Create(Sym, Variant, getContext());
         if (IDVal == "b" && Sym->isUndefined())
           return Error(Loc, "invalid reference to undefined symbol");
         EndLoc = Lexer.getTok().getEndLoc();
