@@ -32,8 +32,7 @@ set(SANITIZER_TEST_CFLAGS_COMMON
   -I${COMPILER_RT_SOURCE_DIR}/lib/sanitizer_common
   -DGTEST_HAS_RTTI=0
   -O2 -g -fno-rtti
-  -Wall -Werror -Werror=sign-compare
-  -Wno-unused-function)
+  -Wall -Werror -Werror=sign-compare)
 
 set(SANITIZER_TEST_LINK_FLAGS_COMMON
   -lstdc++ -ldl)

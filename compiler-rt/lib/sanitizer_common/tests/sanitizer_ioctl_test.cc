@@ -42,7 +42,12 @@ using namespace __sanitizer;
 #include "sanitizer_common/sanitizer_common_interceptors_ioctl.inc"
 
 static struct IoctlInit {
-  IoctlInit() { ioctl_init(); }
+  IoctlInit() {
+    ioctl_init();
+    // Avoid unused function warnings.
+    (void)&ioctl_common_pre;
+    (void)&ioctl_common_post;
+  }
 } ioctl_static_initializer;
 
 TEST(SanitizerIoctl, Fixup) {
