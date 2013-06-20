@@ -487,12 +487,14 @@ static void ioctl_init() {
 
 // Handle the most evil ioctls that encode argument value as part of request id.
 static unsigned ioctl_request_fixup(unsigned req) {
+#if SANITIZER_LINUX
   if ((req & ~0x3fff001fU) == IOCTL_EVIOCGBIT)
     return IOCTL_EVIOCGBIT;
   if ((req & ~0x3fU) == IOCTL_EVIOCGABS)
     return IOCTL_EVIOCGABS;
   if ((req & ~0x3fU) == IOCTL_EVIOCSABS)
     return IOCTL_EVIOCSABS;
+#endif
   return req;
 }
 
