@@ -28,8 +28,8 @@ TEST(VariantValueTest, Unsigned) {
 
   EXPECT_FALSE(Value.isString());
   EXPECT_FALSE(Value.isMatcher());
-  EXPECT_FALSE(Value.isTypedMatcher<clang::Decl>());
-  EXPECT_FALSE(Value.isTypedMatcher<clang::UnaryOperator>());
+  EXPECT_FALSE(Value.hasTypedMatcher<clang::Decl>());
+  EXPECT_FALSE(Value.hasTypedMatcher<clang::UnaryOperator>());
 }
 
 TEST(VariantValueTest, String) {
@@ -38,11 +38,12 @@ TEST(VariantValueTest, String) {
 
   EXPECT_TRUE(Value.isString());
   EXPECT_EQ(kString, Value.getString());
+  EXPECT_EQ("String", Value.getTypeAsString());
 
   EXPECT_FALSE(Value.isUnsigned());
   EXPECT_FALSE(Value.isMatcher());
-  EXPECT_FALSE(Value.isTypedMatcher<clang::Decl>());
-  EXPECT_FALSE(Value.isTypedMatcher<clang::UnaryOperator>());
+  EXPECT_FALSE(Value.hasTypedMatcher<clang::Decl>());
+  EXPECT_FALSE(Value.hasTypedMatcher<clang::UnaryOperator>());
 }
 
 TEST(VariantValueTest, DynTypedMatcher) {
@@ -52,22 +53,25 @@ TEST(VariantValueTest, DynTypedMatcher) {
   EXPECT_FALSE(Value.isString());
 
   EXPECT_TRUE(Value.isMatcher());
-  EXPECT_TRUE(Value.isTypedMatcher<clang::Decl>());
-  EXPECT_TRUE(Value.isTypedMatcher<clang::UnaryOperator>());
+  EXPECT_FALSE(Value.hasTypedMatcher<clang::Decl>());
+  EXPECT_TRUE(Value.hasTypedMatcher<clang::UnaryOperator>());
+  EXPECT_EQ("Matcher<Stmt>", Value.getTypeAsString());
 
-  // Conversion to any type of matcher works.
-  // If they are not compatible it would just return a matcher that matches
-  // nothing. We test this below.
+  // Can only convert to compatible matchers.
   Value = recordDecl();
   EXPECT_TRUE(Value.isMatcher());
-  EXPECT_TRUE(Value.isTypedMatcher<clang::Decl>());
-  EXPECT_TRUE(Value.isTypedMatcher<clang::UnaryOperator>());
+  EXPECT_TRUE(Value.hasTypedMatcher<clang::Decl>());
+  EXPECT_FALSE(Value.hasTypedMatcher<clang::UnaryOperator>());
+  EXPECT_EQ("Matcher<Decl>", Value.getTypeAsString());
 
-  Value = unaryOperator();
+  Value = ignoringImpCasts(expr());
   EXPECT_TRUE(Value.isMatcher());
-  EXPECT_TRUE(Value.isTypedMatcher<clang::Decl>());
-  EXPECT_TRUE(Value.isTypedMatcher<clang::Stmt>());
-  EXPECT_TRUE(Value.isTypedMatcher<clang::UnaryOperator>());
+  EXPECT_FALSE(Value.hasTypedMatcher<clang::Decl>());
+  EXPECT_FALSE(Value.hasTypedMatcher<clang::Stmt>());
+  EXPECT_TRUE(Value.hasTypedMatcher<clang::Expr>());
+  EXPECT_TRUE(Value.hasTypedMatcher<clang::IntegerLiteral>());
+  EXPECT_FALSE(Value.hasTypedMatcher<clang::GotoStmt>());
+  EXPECT_EQ("Matcher<Expr>", Value.getTypeAsString());
 }
 
 TEST(VariantValueTest, Assignment) {
@@ -76,13 +80,15 @@ TEST(VariantValueTest, Assignment) {
   EXPECT_EQ("A", Value.getString());
   EXPECT_FALSE(Value.isUnsigned());
   EXPECT_FALSE(Value.isMatcher());
+  EXPECT_EQ("String", Value.getTypeAsString());
 
   Value = recordDecl();
   EXPECT_FALSE(Value.isUnsigned());
   EXPECT_FALSE(Value.isString());
   EXPECT_TRUE(Value.isMatcher());
-  EXPECT_TRUE(Value.isTypedMatcher<clang::Decl>());
-  EXPECT_TRUE(Value.isTypedMatcher<clang::UnaryOperator>());
+  EXPECT_TRUE(Value.hasTypedMatcher<clang::Decl>());
+  EXPECT_FALSE(Value.hasTypedMatcher<clang::UnaryOperator>());
+  EXPECT_EQ("Matcher<Decl>", Value.getTypeAsString());
 
   Value = 17;
   EXPECT_TRUE(Value.isUnsigned());
@@ -94,25 +100,28 @@ TEST(VariantValueTest, Assignment) {
   EXPECT_FALSE(Value.isUnsigned());
   EXPECT_FALSE(Value.isString());
   EXPECT_FALSE(Value.isMatcher());
+  EXPECT_EQ("Nothing", Value.getTypeAsString());
 }
 
 TEST(GeneicValueTest, Matcher) {
-  EXPECT_TRUE(matchesDynamic(
-      "class X {};", VariantValue(recordDecl(hasName("X"))).getMatcher()));
-  EXPECT_TRUE(matchesDynamic(
-      "int x;", VariantValue(varDecl()).getTypedMatcher<clang::Decl>()));
-  EXPECT_TRUE(matchesDynamic("int foo() { return 1 + 1; }",
-                             VariantValue(functionDecl()).getMatcher()));
-  // Going through the wrong Matcher<T> will fail to match, even if the
-  // underlying matcher is correct.
-  EXPECT_FALSE(matchesDynamic(
-      "int x;", VariantValue(varDecl()).getTypedMatcher<clang::Stmt>()));
+  EXPECT_TRUE(matches("class X {};", VariantValue(recordDecl(hasName("X")))
+                                         .getTypedMatcher<Decl>()));
+  EXPECT_TRUE(
+      matches("int x;", VariantValue(varDecl()).getTypedMatcher<Decl>()));
+  EXPECT_TRUE(matches("int foo() { return 1 + 1; }",
+                      VariantValue(functionDecl()).getTypedMatcher<Decl>()));
+  // Can't get the wrong matcher.
+  EXPECT_FALSE(VariantValue(varDecl()).hasTypedMatcher<Stmt>());
+#if GTEST_HAS_DEATH_TEST and DEBUG
+  // Trying to get the wrong matcher fails an assertion in Matcher<T>.
+  EXPECT_DEATH(VariantValue(varDecl()).getTypedMatcher<Stmt>(),
+               "canConstructFrom");
+#endif
 
   EXPECT_FALSE(
-      matchesDynamic("int x;", VariantValue(functionDecl()).getMatcher()));
-  EXPECT_FALSE(matchesDynamic(
-      "int foo() { return 1 + 1; }",
-      VariantValue(declRefExpr()).getTypedMatcher<clang::DeclRefExpr>()));
+      matches("int x;", VariantValue(functionDecl()).getTypedMatcher<Decl>()));
+  EXPECT_FALSE(matches("int foo() { return 1 + 1; }",
+                       VariantValue(declRefExpr()).getTypedMatcher<Stmt>()));
 }
 
 } // end anonymous namespace

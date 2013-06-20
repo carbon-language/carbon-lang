@@ -70,43 +70,23 @@ public:
   /// \brief Set the value to be \c Matcher by taking ownership of the object.
   void takeMatcher(DynTypedMatcher *Matcher);
 
-  /// \brief Specialized Matcher<T> is/get functions.
+  /// \brief Specialized Matcher<T> functions.
   template <class T>
-  bool isTypedMatcher() const {
-    // TODO: Add some logic to test if T is actually valid for the underlying
-    // type of the matcher.
-    return isMatcher();
+  bool hasTypedMatcher() const {
+    return isMatcher() &&
+           ast_matchers::internal::Matcher<T>::canConstructFrom(getMatcher());
   }
 
   template <class T>
   ast_matchers::internal::Matcher<T> getTypedMatcher() const {
-    return ast_matchers::internal::makeMatcher(
-        new DerivedTypeMatcher<T>(getMatcher()));
+    return ast_matchers::internal::Matcher<T>::constructFrom(getMatcher());
   }
+
+  /// \brief String representation of the type of the value.
+  std::string getTypeAsString() const;
 
 private:
   void reset();
-
-  /// \brief Matcher bridge between a Matcher<T> and a generic DynTypedMatcher.
-  template <class T>
-  class DerivedTypeMatcher :
-      public ast_matchers::internal::MatcherInterface<T> {
-  public:
-    explicit DerivedTypeMatcher(const DynTypedMatcher &DynMatcher)
-        : DynMatcher(DynMatcher.clone()) {}
-    virtual ~DerivedTypeMatcher() {}
-
-    typedef ast_matchers::internal::ASTMatchFinder ASTMatchFinder;
-    typedef ast_matchers::internal::BoundNodesTreeBuilder BoundNodesTreeBuilder;
-    bool matches(const T &Node, ASTMatchFinder *Finder,
-                 BoundNodesTreeBuilder *Builder) const {
-      return DynMatcher->matches(ast_type_traits::DynTypedNode::create(Node),
-                                 Finder, Builder);
-    }
-
-  private:
-    const OwningPtr<DynTypedMatcher> DynMatcher;
-  };
 
   /// \brief All supported value types.
   enum ValueType {

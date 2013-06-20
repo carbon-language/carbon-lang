@@ -14,6 +14,8 @@
 
 #include "clang/ASTMatchers/Dynamic/VariantValue.h"
 
+#include "clang/Basic/LLVM.h"
+
 namespace clang {
 namespace ast_matchers {
 namespace dynamic {
@@ -121,6 +123,18 @@ void VariantValue::takeMatcher(DynTypedMatcher *NewValue) {
   reset();
   Type = VT_Matcher;
   Value.Matcher = NewValue;
+}
+
+std::string VariantValue::getTypeAsString() const {
+  switch (Type) {
+  case VT_String: return "String";
+  case VT_Matcher:
+    return (Twine("Matcher<") + getMatcher().getSupportedKind().asStringRef() +
+            ">").str();
+  case VT_Unsigned: return "Unsigned";
+  case VT_Nothing: return "Nothing";
+  }
+  llvm_unreachable("Invalid Type");
 }
 
 } // end namespace dynamic

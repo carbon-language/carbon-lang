@@ -36,7 +36,7 @@ StringRef ErrorTypeToString(Diagnostics::ErrorType Type) {
   case Diagnostics::ET_RegistryWrongArgCount:
     return "Incorrect argument count. (Expected = $0) != (Actual = $1)";
   case Diagnostics::ET_RegistryWrongArgType:
-    return "Incorrect type on function $0 for arg $1.";
+    return "Incorrect type for arg $0. (Expected = $1) != (Actual = $2)";
   case Diagnostics::ET_RegistryNotBindable:
     return "Matcher does not support binding.";
 

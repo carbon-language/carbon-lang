@@ -803,14 +803,6 @@ void MatchFinder::addMatcher(const TypeLocMatcher &NodeMatch,
     new TypeLocMatcher(NodeMatch), Action));
 }
 
-bool MatchFinder::addDynamicMatcher(const internal::DynTypedMatcher &NodeMatch,
-                                    MatchCallback *Action) {
-  MatcherCallbackPairs.push_back(std::make_pair(NodeMatch.clone(), Action));
-  // TODO: Do runtime type checking to make sure the matcher is one of the valid
-  // top-level matchers.
-  return true;
-}
-
 ASTConsumer *MatchFinder::newASTConsumer() {
   return new internal::MatchASTConsumer(&MatcherCallbackPairs, ParsingDone);
 }

@@ -49,6 +49,9 @@ public:
 
   StringRef boundID() const { return BoundID; }
 
+  virtual ast_type_traits::ASTNodeKind getSupportedKind() const {
+    return ast_type_traits::ASTNodeKind();
+  }
 private:
   uint64_t ID;
   std::string BoundID;
@@ -172,15 +175,19 @@ TEST(ParserTest, ParseMatcher) {
 using ast_matchers::internal::Matcher;
 
 TEST(ParserTest, FullParserTest) {
-  OwningPtr<DynTypedMatcher> Matcher(Parser::parseMatcherExpression(
-      "hasInitializer(binaryOperator(hasLHS(integerLiteral())))", NULL));
-  EXPECT_TRUE(matchesDynamic("int x = 1 + false;", *Matcher));
-  EXPECT_FALSE(matchesDynamic("int x = true + 1;", *Matcher));
+  OwningPtr<DynTypedMatcher> VarDecl(Parser::parseMatcherExpression(
+      "varDecl(hasInitializer(binaryOperator(hasLHS(integerLiteral()))))",
+      NULL));
+  Matcher<Decl> M = Matcher<Decl>::constructFrom(*VarDecl);
+  EXPECT_TRUE(matches("int x = 1 + false;", M));
+  EXPECT_FALSE(matches("int x = true + 1;", M));
 
-  Matcher.reset(
-      Parser::parseMatcherExpression("hasParameter(1, hasName(\"x\"))", NULL));
-  EXPECT_TRUE(matchesDynamic("void f(int a, int x);", *Matcher));
-  EXPECT_FALSE(matchesDynamic("void f(int x, int a);", *Matcher));
+  OwningPtr<DynTypedMatcher> HasParameter(Parser::parseMatcherExpression(
+      "functionDecl(hasParameter(1, hasName(\"x\")))", NULL));
+  M = Matcher<Decl>::constructFrom(*HasParameter);
+
+  EXPECT_TRUE(matches("void f(int a, int x);", M));
+  EXPECT_FALSE(matches("void f(int x, int a);", M));
 
   Diagnostics Error;
   EXPECT_TRUE(Parser::parseMatcherExpression(
@@ -188,7 +195,8 @@ TEST(ParserTest, FullParserTest) {
   EXPECT_EQ("1:1: Error parsing argument 1 for matcher hasInitializer.\n"
             "2:5: Error parsing argument 1 for matcher binaryOperator.\n"
             "2:20: Error building matcher hasLHS.\n"
-            "2:27: Incorrect type on function hasLHS for arg 1.",
+            "2:27: Incorrect type for arg 1. "
+            "(Expected = Matcher<Expr>) != (Actual = String)",
             Error.ToStringFull());
 }
 

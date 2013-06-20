@@ -224,6 +224,12 @@ public:
   /// \return A new matcher with the \p ID bound to it if this matcher supports
   ///   binding. Otherwise, returns NULL. Returns NULL by default.
   virtual DynTypedMatcher* tryBind(StringRef ID) const;
+
+  /// \brief Returns the type this matcher works on.
+  ///
+  /// \c matches() will always return false unless the node passed is of this
+  /// or a derived type.
+  virtual ast_type_traits::ASTNodeKind getSupportedKind() const = 0;
 };
 
 /// \brief Wrapper of a MatcherInterface<T> *that allows copying.
@@ -261,6 +267,27 @@ public:
             llvm::is_same<TypeT, Type>::value >::type* = 0)
       : Implementation(new TypeToQualType<TypeT>(Other)) {}
 
+  /// \brief Returns \c true if the passed DynTypedMatcher can be converted
+  ///   to a \c Matcher<T>.
+  ///
+  /// This method verifies that the underlying matcher in \c Other can process
+  /// nodes of types T.
+  static bool canConstructFrom(const DynTypedMatcher &Other) {
+    return Other.getSupportedKind()
+        .isBaseOf(ast_type_traits::ASTNodeKind::getFromNodeKind<T>());
+  }
+
+  /// \brief Construct a Matcher<T> interface around the dynamic matcher
+  ///   \c Other.
+  ///
+  /// This method asserts that canConstructFrom(Other) is \c true. Callers
+  /// should call canConstructFrom(Other) first to make sure that Other is
+  /// compatible with T.
+  static Matcher<T> constructFrom(const DynTypedMatcher &Other) {
+    assert(canConstructFrom(Other));
+    return Matcher<T>(new WrappedMatcher(Other));
+  }
+
   /// \brief Forwards the call to the underlying MatcherInterface<T> pointer.
   bool matches(const T &Node,
                ASTMatchFinder *Finder,
@@ -279,6 +306,11 @@ public:
     /// FIXME: Document the requirements this imposes on matcher
     /// implementations (no new() implementation_ during a Matches()).
     return reinterpret_cast<uint64_t>(Implementation.getPtr());
+  }
+
+  /// \brief Returns the type this matcher works on.
+  ast_type_traits::ASTNodeKind getSupportedKind() const {
+    return ast_type_traits::ASTNodeKind::getFromNodeKind<T>();
   }
 
   /// \brief Returns whether the matcher matches on the given \c DynNode.
@@ -335,6 +367,23 @@ private:
     const Matcher<Base> From;
   };
 
+  /// \brief Simple MatcherInterface<T> wrapper around a DynTypedMatcher.
+  class WrappedMatcher : public MatcherInterface<T> {
+  public:
+    explicit WrappedMatcher(const DynTypedMatcher &Matcher)
+        : Inner(Matcher.clone()) {}
+    virtual ~WrappedMatcher() {}
+
+    bool matches(const T &Node, ASTMatchFinder *Finder,
+                 BoundNodesTreeBuilder *Builder) const {
+      return Inner->matches(ast_type_traits::DynTypedNode::create(Node), Finder,
+                            Builder);
+    }
+
+  private:
+    const OwningPtr<DynTypedMatcher> Inner;
+  };
+
   IntrusiveRefCntPtr< MatcherInterface<T> > Implementation;
 };  // class Matcher
 
@@ -343,6 +392,34 @@ private:
 template <typename T>
 inline Matcher<T> makeMatcher(MatcherInterface<T> *Implementation) {
   return Matcher<T>(Implementation);
+}
+
+/// \brief Specialization of the conversion functions for QualType.
+///
+/// These specializations provide the Matcher<Type>->Matcher<QualType>
+/// conversion that the static API does.
+template <>
+inline bool
+Matcher<QualType>::canConstructFrom(const DynTypedMatcher &Other) {
+  ast_type_traits::ASTNodeKind SourceKind = Other.getSupportedKind();
+  // We support implicit conversion from Matcher<Type> to Matcher<QualType>
+  return SourceKind.isSame(
+             ast_type_traits::ASTNodeKind::getFromNodeKind<Type>()) ||
+         SourceKind.isSame(
+             ast_type_traits::ASTNodeKind::getFromNodeKind<QualType>());
+}
+
+template <>
+inline Matcher<QualType>
+Matcher<QualType>::constructFrom(const DynTypedMatcher &Other) {
+  assert(canConstructFrom(Other));
+  ast_type_traits::ASTNodeKind SourceKind = Other.getSupportedKind();
+  if (SourceKind.isSame(
+          ast_type_traits::ASTNodeKind::getFromNodeKind<Type>())) {
+    // We support implicit conversion from Matcher<Type> to Matcher<QualType>
+    return Matcher<Type>::constructFrom(Other);
+  }
+  return makeMatcher(new WrappedMatcher(Other));
 }
 
 /// \brief Finds the first node in a range that matches the given matcher.

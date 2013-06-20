@@ -42,6 +42,7 @@ template <class T> struct ArgTypeTraits<const T &> : public ArgTypeTraits<T> {
 };
 
 template <> struct ArgTypeTraits<std::string> {
+  static StringRef asString() { return "String"; }
   static bool is(const VariantValue &Value) { return Value.isString(); }
   static const std::string &get(const VariantValue &Value) {
     return Value.getString();
@@ -49,13 +50,21 @@ template <> struct ArgTypeTraits<std::string> {
 };
 
 template <class T> struct ArgTypeTraits<ast_matchers::internal::Matcher<T> > {
-  static bool is(const VariantValue &Value) { return Value.isMatcher(); }
+  static std::string asString() {
+    return (Twine("Matcher<") +
+            ast_type_traits::ASTNodeKind::getFromNodeKind<T>().asStringRef() +
+            ">").str();
+  }
+  static bool is(const VariantValue &Value) {
+    return Value.hasTypedMatcher<T>();
+  }
   static ast_matchers::internal::Matcher<T> get(const VariantValue &Value) {
     return Value.getTypedMatcher<T>();
   }
 };
 
 template <> struct ArgTypeTraits<unsigned> {
+  static std::string asString() { return "Unsigned"; }
   static bool is(const VariantValue &Value) { return Value.isUnsigned(); }
   static unsigned get(const VariantValue &Value) {
     return Value.getUnsigned();
@@ -147,7 +156,8 @@ private:
 #define CHECK_ARG_TYPE(index, type)                                            \
   if (!ArgTypeTraits<type>::is(Args[index].Value)) {                           \
     Error->pushErrorFrame(Args[index].Range, Error->ET_RegistryWrongArgType)   \
-        << MatcherName << (index + 1);                                         \
+        << (index + 1) << ArgTypeTraits<type>::asString()                      \
+        << Args[index].Value.getTypeAsString();                                \
     return NULL;                                                               \
   }
 
@@ -201,14 +211,16 @@ DynTypedMatcher *VariadicMatcherCreateCallback(StringRef MatcherName,
 
   bool HasError = false;
   for (size_t i = 0, e = Args.size(); i != e; ++i) {
-    if (!Args[i].Value.isTypedMatcher<DerivedType>()) {
-      Error->pushErrorFrame(Args[i].Range, Error->ET_RegistryWrongArgType)
-          << MatcherName << (i + 1);
+    typedef ArgTypeTraits<DerivedMatcherType> DerivedTraits;
+    const ParserValue &Arg = Args[i];
+    const VariantValue &Value = Arg.Value;
+    if (!DerivedTraits::is(Value)) {
+      Error->pushErrorFrame(Arg.Range, Error->ET_RegistryWrongArgType)
+          << (i + 1) << DerivedTraits::asString() << Value.getTypeAsString();
       HasError = true;
       break;
     }
-    InnerArgs[i] =
-        new DerivedMatcherType(Args[i].Value.getTypedMatcher<DerivedType>());
+    InnerArgs[i] = new DerivedMatcherType(DerivedTraits::get(Value));
   }
 
   DynTypedMatcher *Out = NULL;
