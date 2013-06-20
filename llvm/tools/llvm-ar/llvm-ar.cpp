@@ -428,6 +428,7 @@ doExtract(std::string* ErrMsg) {
 
       // Retain the original mode.
       sys::fs::perms Mode = sys::fs::perms(I->getMode());
+      // FIXME: at least on posix we should be able to reuse FD (fchmod).
       error_code EC = sys::fs::permissions(I->getPath(), Mode);
       if (EC)
         fail(EC.message());
