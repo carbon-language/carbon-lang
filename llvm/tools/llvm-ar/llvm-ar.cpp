@@ -25,7 +25,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cstdlib>
-#include <fstream>
 #include <memory>
 using namespace llvm;
 
@@ -400,9 +399,11 @@ doExtract(std::string* ErrMsg) {
         (std::find(Paths.begin(), Paths.end(), I->getPath()) != Paths.end())) {
 
       // Open up a file stream for writing
-      std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
-                                   std::ios::binary;
-      std::ofstream file(I->getPath().str().c_str(), io_mode);
+      std::string Err;
+      raw_fd_ostream file(I->getPath().str().c_str(), Err,
+                          raw_fd_ostream::F_Binary);
+      if (!Err.empty())
+        fail(Err);
 
       // Get the data and its length
       const char* data = reinterpret_cast<const char*>(I->getData());
