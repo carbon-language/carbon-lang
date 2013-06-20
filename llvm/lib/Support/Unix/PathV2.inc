@@ -420,6 +420,7 @@ error_code permissions(const Twine &path, perms prms) {
     llvm_unreachable("add_perms and remove_perms are mutually exclusive");
 
   // Get current permissions
+  // FIXME: We only need this stat for add_perms and remove_perms.
   file_status info;
   if (error_code ec = status(path, info)) {
     return ec;
