@@ -328,6 +328,27 @@ static int readPrefixes(struct InternalInstruction* insn) {
         break;
       if (lookAtByte(insn, &nextByte))
         return -1;
+      /*
+       * If the byte is 0xf2 or 0xf3, and any of the following conditions are
+       * met:
+       * - it is followed by a LOCK (0xf0) prefix
+       * - it is followed by an xchg instruction
+       * then it should be disassembled as a xacquire/xrelease not repne/rep.
+       */
+      if ((byte == 0xf2 || byte == 0xf3) &&
+          ((nextByte == 0xf0) |
+          ((nextByte & 0xfe) == 0x86 || (nextByte & 0xf8) == 0x90)))
+        insn->xAcquireRelease = TRUE;
+      /*
+       * Also if the byte is 0xf3, and the following condition is met:
+       * - it is followed by a "mov mem, reg" (opcode 0x88/0x89) or
+       *                       "mov mem, imm" (opcode 0xc6/0xc7) instructions.
+       * then it should be disassembled as an xrelease not rep.
+       */
+      if (byte == 0xf3 &&
+          (nextByte == 0x88 || nextByte == 0x89 ||
+           nextByte == 0xc6 || nextByte == 0xc7))
+        insn->xAcquireRelease = TRUE;
       if (insn->mode == MODE_64BIT && (nextByte & 0xf0) == 0x40) {
         if (consumeByte(insn, &nextByte))
           return -1;

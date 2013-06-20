@@ -457,6 +457,8 @@ struct InternalInstruction {
   uint64_t necessaryPrefixLocation;
   /* The segment override type */
   SegmentOverride segmentOverride;
+  /* 1 if the prefix byte, 0xf2 or 0xf3 is xacquire or xrelease */
+  BOOL xAcquireRelease;
 
   /* Sizes of various critical pieces of data, in bytes */
   uint8_t registerSize;
