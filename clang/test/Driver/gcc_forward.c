@@ -3,10 +3,15 @@
 // RUN: %clang -target powerpc-unknown-unknown \
 // RUN:   -c %s \
 // RUN:   -Xclang foo-bar \
+// RUN:   -march=x86_64 \
 // RUN:   -mlinker-version=10 -### 2> %t
 // RUN: FileCheck < %t %s
 //
 // CHECK: gcc{{.*}}"
+// CHECK-NOT: "-mlinker-version=10"
+// CHECK-NOT: "-Xclang"
+// CHECK-NOT: "foo-bar"
+// CHECK: -march
 // CHECK-NOT: "-mlinker-version=10"
 // CHECK-NOT: "-Xclang"
 // CHECK-NOT: "foo-bar"
