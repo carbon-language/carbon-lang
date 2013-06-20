@@ -371,7 +371,7 @@ static bool ParseDirective(StringRef S, ExpectedData *ED, SourceManager &SM,
 
         // Lookup file via Preprocessor, like a #include.
         const DirectoryLookup *CurDir;
-        const FileEntry *FE = PP->LookupFile(Filename, false, NULL, CurDir,
+        const FileEntry *FE = PP->LookupFile(Pos, Filename, false, NULL, CurDir,
                                              NULL, NULL, 0);
         if (!FE) {
           Diags.Report(Pos.getLocWithOffset(PH.C-PH.Begin),

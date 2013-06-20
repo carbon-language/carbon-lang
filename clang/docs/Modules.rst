@@ -231,8 +231,8 @@ Module map files use a simplified form of the C99 lexer, with the same rules for
 
   ``config_macros`` ``export``     ``module``
   ``conflict``      ``framework``  ``requires``
-  ``exclude``       ``header``     ``umbrella``
-  ``explicit``      ``link``
+  ``exclude``       ``header``     ``private``
+  ``explicit``      ``link``       ``umbrella``
 
 Module map file
 ---------------
@@ -360,6 +360,7 @@ A header declaration specifies that a particular header is associated with the e
 
   *header-declaration*:
     ``umbrella``:sub:`opt` ``header`` *string-literal*
+    ``private`` ``header`` *string-literal*
     ``exclude`` ``header`` *string-literal*
 
 A header declaration that does not contain ``exclude`` specifies a header that contributes to the enclosing module. Specifically, when the module is built, the named header will be parsed and its declarations will be (logically) placed into the enclosing submodule.
@@ -371,6 +372,8 @@ A header with the ``umbrella`` specifier is called an umbrella header. An umbrel
     explicit ``header`` declarations. Use the   
     ``-Wincomplete-umbrella`` warning option to ask Clang to complain
     about headers not covered by the umbrella header or the module map.
+
+A header with the ``private`` specifier may not be included from outside the module itself.
 
 A header with the ``exclude`` specifier is excluded from the module. It will not be included when the module is built, nor will it be considered to be part of the module.
 

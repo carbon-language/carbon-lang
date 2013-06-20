@@ -77,10 +77,13 @@ private:
 
 public:
   /// \brief The headers that are part of this module.
-  SmallVector<const FileEntry *, 2> Headers;
+  SmallVector<const FileEntry *, 2> NormalHeaders;
 
   /// \brief The headers that are explicitly excluded from this module.
   SmallVector<const FileEntry *, 2> ExcludedHeaders;
+
+  /// \brief The headers that are private to this module.
+  llvm::SmallVector<const FileEntry *, 2> PrivateHeaders;
 
   /// \brief The set of language features required to use this module.
   ///

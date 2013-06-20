@@ -466,8 +466,8 @@ void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
 
   // Search include directories for this file.
   const DirectoryLookup *CurDir;
-  const FileEntry *File = LookupFile(Filename, isAngled, 0, CurDir, NULL, NULL,
-                                     NULL);
+  const FileEntry *File = LookupFile(FilenameTok.getLocation(), Filename,
+                                     isAngled, 0, CurDir, NULL, NULL, NULL);
   if (File == 0) {
     if (!SuppressIncludeNotFoundError)
       Diag(FilenameTok, diag::err_pp_file_not_found) << Filename;

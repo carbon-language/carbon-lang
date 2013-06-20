@@ -532,13 +532,14 @@ void Preprocessor::PTHSkipExcludedConditionalBlock() {
 }
 
 const FileEntry *Preprocessor::LookupFile(
+    SourceLocation FilenameLoc,
     StringRef Filename,
     bool isAngled,
     const DirectoryLookup *FromDir,
     const DirectoryLookup *&CurDir,
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
-    Module **SuggestedModule,
+    ModuleMap::KnownHeader *SuggestedModule,
     bool SkipCache) {
   // If the header lookup mechanism may be relative to the current file, pass in
   // info about where the current file is.
@@ -564,7 +565,32 @@ const FileEntry *Preprocessor::LookupFile(
   const FileEntry *FE = HeaderInfo.LookupFile(
       Filename, isAngled, FromDir, CurDir, CurFileEnt,
       SearchPath, RelativePath, SuggestedModule, SkipCache);
-  if (FE) return FE;
+  if (FE) {
+    if (SuggestedModule) {
+      Module *RequestedModule = SuggestedModule->getModule();
+      if (RequestedModule) {
+        ModuleMap::ModuleHeaderRole Role = SuggestedModule->getRole();
+        #ifndef NDEBUG
+        // Check for consistency between the module header role
+        // as obtained from the lookup and as obtained from the module.
+        // This check is not cheap, so enable it only for debugging.
+        SmallVectorImpl<const FileEntry *> &PvtHdrs
+            = RequestedModule->PrivateHeaders;
+        SmallVectorImpl<const FileEntry *>::iterator Look
+            = std::find(PvtHdrs.begin(), PvtHdrs.end(), FE);
+        bool IsPrivate = Look != PvtHdrs.end();
+        assert((IsPrivate && Role == ModuleMap::PrivateHeader)
+               || (!IsPrivate && Role != ModuleMap::PrivateHeader));
+        #endif
+        if (Role == ModuleMap::PrivateHeader) {
+          if (RequestedModule->getTopLevelModule() != getCurrentModule())
+            Diag(FilenameLoc, diag::error_use_of_private_header_outside_module)
+                 << Filename;
+        }
+      }
+    }
+    return FE;
+  }
 
   // Otherwise, see if this is a subframework header.  If so, this is relative
   // to one of the headers on the #include stack.  Walk the list of the current
@@ -1390,9 +1416,10 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   SmallString<1024> RelativePath;
   // We get the raw path only if we have 'Callbacks' to which we later pass
   // the path.
-  Module *SuggestedModule = 0;
+  ModuleMap::KnownHeader SuggestedModule;
+  SourceLocation FilenameLoc = FilenameTok.getLocation();
   const FileEntry *File = LookupFile(
-      Filename, isAngled, LookupFrom, CurDir,
+      FilenameLoc, Filename, isAngled, LookupFrom, CurDir,
       Callbacks ? &SearchPath : NULL, Callbacks ? &RelativePath : NULL,
       getLangOpts().Modules? &SuggestedModule : 0);
 
@@ -1407,8 +1434,8 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
           HeaderInfo.AddSearchPath(DL, isAngled);
           
           // Try the lookup again, skipping the cache.
-          File = LookupFile(Filename, isAngled, LookupFrom, CurDir, 0, 0,
-                            getLangOpts().Modules? &SuggestedModule : 0,
+          File = LookupFile(FilenameLoc, Filename, isAngled, LookupFrom, CurDir,
+                            0, 0, getLangOpts().Modules? &SuggestedModule : 0,
                             /*SkipCache*/true);
         }
       }
@@ -1429,7 +1456,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
       // brackets, we can attempt a lookup as though it were a quoted path to
       // provide the user with a possible fixit.
       if (isAngled) {
-        File = LookupFile(Filename, false, LookupFrom, CurDir, 
+        File = LookupFile(FilenameLoc, Filename, false, LookupFrom, CurDir, 
                           Callbacks ? &SearchPath : 0, 
                           Callbacks ? &RelativePath : 0, 
                           getLangOpts().Modules ? &SuggestedModule : 0);
@@ -1455,7 +1482,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     // FIXME: Should we have a second loadModule() overload to avoid this
     // extra lookup step?
     SmallVector<std::pair<IdentifierInfo *, SourceLocation>, 2> Path;
-    for (Module *Mod = SuggestedModule; Mod; Mod = Mod->Parent)
+    for (Module *Mod = SuggestedModule.getModule(); Mod; Mod = Mod->Parent)
       Path.push_back(std::make_pair(getIdentifierInfo(Mod->Name),
                                     FilenameTok.getLocation()));
     std::reverse(Path.begin(), Path.end());
@@ -1514,7 +1541,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     ModuleLoadResult Imported
       = TheModuleLoader.loadModule(IncludeTok.getLocation(), Path, Visibility,
                                    /*IsIncludeDirective=*/true);
-    assert((Imported == 0 || Imported == SuggestedModule) &&
+    assert((Imported == 0 || Imported == SuggestedModule.getModule()) &&
            "the imported module is different than the suggested one");
 
     if (!Imported && hadModuleLoaderFatalFailure()) {

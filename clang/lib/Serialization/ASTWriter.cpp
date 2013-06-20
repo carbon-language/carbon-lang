@@ -1476,7 +1476,8 @@ namespace {
       using namespace clang::io;
       uint64_t Start = Out.tell(); (void)Start;
       
-      unsigned char Flags = (Data.isImport << 5)
+      unsigned char Flags = (Data.HeaderRole << 6)
+                          | (Data.isImport << 5)
                           | (Data.isPragmaOnce << 4)
                           | (Data.DirInfo << 2)
                           | (Data.Resolved << 1)
@@ -1507,7 +1508,7 @@ namespace {
       Emit32(Out, Offset);
 
       if (Data.isModuleHeader) {
-        Module *Mod = HS.findModuleForHeader(key.FE);
+        Module *Mod = HS.findModuleForHeader(key.FE).getModule();
         Emit32(Out, Writer.getExistingSubmoduleID(Mod));
       }
 
@@ -2261,6 +2262,11 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
   unsigned ExcludedHeaderAbbrev = Stream.EmitAbbrev(Abbrev);
 
   Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(SUBMODULE_PRIVATE_HEADER));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Name
+  unsigned PrivateHeaderAbbrev = Stream.EmitAbbrev(Abbrev);
+
+  Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(SUBMODULE_LINK_LIBRARY));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // IsFramework
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));     // Name
@@ -2333,11 +2339,11 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
     }
     
     // Emit the headers.
-    for (unsigned I = 0, N = Mod->Headers.size(); I != N; ++I) {
+    for (unsigned I = 0, N = Mod->NormalHeaders.size(); I != N; ++I) {
       Record.clear();
       Record.push_back(SUBMODULE_HEADER);
       Stream.EmitRecordWithBlob(HeaderAbbrev, Record, 
-                                Mod->Headers[I]->getName());
+                                Mod->NormalHeaders[I]->getName());
     }
     // Emit the excluded headers.
     for (unsigned I = 0, N = Mod->ExcludedHeaders.size(); I != N; ++I) {
@@ -2345,6 +2351,13 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
       Record.push_back(SUBMODULE_EXCLUDED_HEADER);
       Stream.EmitRecordWithBlob(ExcludedHeaderAbbrev, Record, 
                                 Mod->ExcludedHeaders[I]->getName());
+    }
+    // Emit the private headers.
+    for (unsigned I = 0, N = Mod->PrivateHeaders.size(); I != N; ++I) {
+      Record.clear();
+      Record.push_back(SUBMODULE_PRIVATE_HEADER);
+      Stream.EmitRecordWithBlob(PrivateHeaderAbbrev, Record, 
+                                Mod->PrivateHeaders[I]->getName());
     }
     ArrayRef<const FileEntry *>
       TopHeaders = Mod->getTopHeaders(PP->getFileManager());

@@ -168,14 +168,14 @@ static bool isBuiltinHeader(StringRef FileName) {
            .Default(false);
 }
 
-Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
+ModuleMap::KnownHeader ModuleMap::findModuleForHeader(const FileEntry *File) {
   HeadersMap::iterator Known = Headers.find(File);
   if (Known != Headers.end()) {
     // If a header is not available, don't report that it maps to anything.
     if (!Known->second.isAvailable())
-      return 0;
+      return KnownHeader();
 
-    return Known->second.getModule();
+    return Known->second;
   }
 
   // If we've found a builtin header within Clang's builtin include directory,
@@ -190,9 +190,9 @@ Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
     if (Known != Headers.end()) {
       // If a header is not available, don't report that it maps to anything.
       if (!Known->second.isAvailable())
-        return 0;
+        return KnownHeader();
 
-      return Known->second.getModule();
+      return Known->second;
     }
   }
   
@@ -262,14 +262,14 @@ Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
           UmbrellaDirs[SkippedDirs[I]] = Result;
       }
       
-      Headers[File] = KnownHeader(Result, /*Excluded=*/false);
+      Headers[File] = KnownHeader(Result, NormalHeader);
 
       // If a header corresponds to an unavailable module, don't report
       // that it maps to anything.
       if (!Result->isAvailable())
-        return 0;
+        return KnownHeader();
 
-      return Result;
+      return Headers[File];
     }
     
     SkippedDirs.push_back(Dir);
@@ -283,7 +283,7 @@ Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
     Dir = SourceMgr->getFileManager().getDirectory(DirName);
   } while (Dir);
   
-  return 0;
+  return KnownHeader();
 }
 
 bool ModuleMap::isHeaderInUnavailableModule(const FileEntry *Header) const {
@@ -527,7 +527,7 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   
   // umbrella header "umbrella-header-name"
   Result->Umbrella = UmbrellaHeader;
-  Headers[UmbrellaHeader] = KnownHeader(Result, /*Excluded=*/false);
+  Headers[UmbrellaHeader] = KnownHeader(Result, NormalHeader);
   UmbrellaDirs[UmbrellaHeader->getDir()] = Result;
   
   // export *
@@ -593,7 +593,7 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
 }
 
 void ModuleMap::setUmbrellaHeader(Module *Mod, const FileEntry *UmbrellaHeader){
-  Headers[UmbrellaHeader] = KnownHeader(Mod, /*Excluded=*/false);
+  Headers[UmbrellaHeader] = KnownHeader(Mod, NormalHeader);
   Mod->Umbrella = UmbrellaHeader;
   UmbrellaDirs[UmbrellaHeader->getDir()] = Mod;
 }
@@ -604,15 +604,18 @@ void ModuleMap::setUmbrellaDir(Module *Mod, const DirectoryEntry *UmbrellaDir) {
 }
 
 void ModuleMap::addHeader(Module *Mod, const FileEntry *Header,
-                          bool Excluded) {
-  if (Excluded) {
+                          ModuleHeaderRole Role) {
+  if (Role == ExcludedHeader) {
     Mod->ExcludedHeaders.push_back(Header);
   } else {
-    Mod->Headers.push_back(Header);
+    if (Role == PrivateHeader)
+      Mod->PrivateHeaders.push_back(Header);
+    else
+      Mod->NormalHeaders.push_back(Header);
     bool isCompilingModuleHeader = Mod->getTopLevelModule() == CompilingModule;
-    HeaderInfo.MarkFileModuleHeader(Header, isCompilingModuleHeader);
+    HeaderInfo.MarkFileModuleHeader(Header, Role, isCompilingModuleHeader);
   }
-  Headers[Header] = KnownHeader(Mod, Excluded);
+  Headers[Header] = KnownHeader(Mod, Role);
 }
 
 const FileEntry *
@@ -688,7 +691,7 @@ Module *ModuleMap::inferModuleFromLocation(FullSourceLoc Loc) {
   while (const FileEntry *ExpansionFile
            = SrcMgr.getFileEntryForID(ExpansionFileID)) {
     // Find the module that owns this header (if any).
-    if (Module *Mod = findModuleForHeader(ExpansionFile))
+    if (Module *Mod = findModuleForHeader(ExpansionFile).getModule())
       return Mod;
     
     // No module owns this header, so look up the inclusion chain to see if
@@ -724,6 +727,7 @@ namespace clang {
       LinkKeyword,
       ModuleKeyword,
       Period,
+      PrivateKeyword,
       UmbrellaKeyword,
       RequiresKeyword,
       Star,
@@ -809,7 +813,8 @@ namespace clang {
     bool parseModuleId(ModuleId &Id);
     void parseModuleDecl();
     void parseRequiresDecl();
-    void parseHeaderDecl(SourceLocation UmbrellaLoc, SourceLocation ExcludeLoc);
+    void parseHeaderDecl(clang::MMToken::TokenKind,
+                         SourceLocation LeadingLoc);
     void parseUmbrellaDirDecl(SourceLocation UmbrellaLoc);
     void parseExportDecl();
     void parseLinkDecl();
@@ -861,6 +866,7 @@ retry:
                  .Case("header", MMToken::HeaderKeyword)
                  .Case("link", MMToken::LinkKeyword)
                  .Case("module", MMToken::ModuleKeyword)
+                 .Case("private", MMToken::PrivateKeyword)
                  .Case("requires", MMToken::RequiresKeyword)
                  .Case("umbrella", MMToken::UmbrellaKeyword)
                  .Default(MMToken::Identifier);
@@ -1200,7 +1206,7 @@ void ModuleMapParser::parseModuleDecl() {
     case MMToken::UmbrellaKeyword: {
       SourceLocation UmbrellaLoc = consumeToken();
       if (Tok.is(MMToken::HeaderKeyword))
-        parseHeaderDecl(UmbrellaLoc, SourceLocation());
+        parseHeaderDecl(MMToken::UmbrellaKeyword, UmbrellaLoc);
       else
         parseUmbrellaDirDecl(UmbrellaLoc);
       break;
@@ -1209,7 +1215,7 @@ void ModuleMapParser::parseModuleDecl() {
     case MMToken::ExcludeKeyword: {
       SourceLocation ExcludeLoc = consumeToken();
       if (Tok.is(MMToken::HeaderKeyword)) {
-        parseHeaderDecl(SourceLocation(), ExcludeLoc);
+        parseHeaderDecl(MMToken::ExcludeKeyword, ExcludeLoc);
       } else {
         Diags.Report(Tok.getLocation(), diag::err_mmap_expected_header)
           << "exclude";
@@ -1217,8 +1223,19 @@ void ModuleMapParser::parseModuleDecl() {
       break;
     }
       
+    case MMToken::PrivateKeyword: {
+      SourceLocation PrivateLoc = consumeToken();
+      if (Tok.is(MMToken::HeaderKeyword)) {
+        parseHeaderDecl(MMToken::PrivateKeyword, PrivateLoc);
+      } else {
+        Diags.Report(Tok.getLocation(), diag::err_mmap_expected_header)
+          << "private";
+      }
+      break;
+    }
+      
     case MMToken::HeaderKeyword:
-      parseHeaderDecl(SourceLocation(), SourceLocation());
+      parseHeaderDecl(MMToken::HeaderKeyword, SourceLocation());
       break;
 
     case MMToken::LinkKeyword:
@@ -1314,14 +1331,11 @@ static void appendSubframeworkPaths(Module *Mod,
 ///   header-declaration:
 ///     'umbrella'[opt] 'header' string-literal
 ///     'exclude'[opt] 'header' string-literal
-void ModuleMapParser::parseHeaderDecl(SourceLocation UmbrellaLoc,
-                                      SourceLocation ExcludeLoc) {
+void ModuleMapParser::parseHeaderDecl(MMToken::TokenKind LeadingToken,
+                                      SourceLocation LeadingLoc) {
   assert(Tok.is(MMToken::HeaderKeyword));
   consumeToken();
 
-  bool Umbrella = UmbrellaLoc.isValid();
-  bool Exclude = ExcludeLoc.isValid();
-  assert(!(Umbrella && Exclude) && "Cannot have both 'umbrella' and 'exclude'");
   // Parse the header name.
   if (!Tok.is(MMToken::StringLiteral)) {
     Diags.Report(Tok.getLocation(), diag::err_mmap_expected_header) 
@@ -1333,7 +1347,7 @@ void ModuleMapParser::parseHeaderDecl(SourceLocation UmbrellaLoc,
   SourceLocation FileNameLoc = consumeToken();
   
   // Check whether we already have an umbrella.
-  if (Umbrella && ActiveModule->Umbrella) {
+  if (LeadingToken == MMToken::UmbrellaKeyword && ActiveModule->Umbrella) {
     Diags.Report(FileNameLoc, diag::err_mmap_umbrella_clash)
       << ActiveModule->getFullModuleName();
     HadError = true;
@@ -1379,8 +1393,9 @@ void ModuleMapParser::parseHeaderDecl(SourceLocation UmbrellaLoc,
       // If this is a system module with a top-level header, this header
       // may have a counterpart (or replacement) in the set of headers
       // supplied by Clang. Find that builtin header.
-      if (ActiveModule->IsSystem && !Umbrella && BuiltinIncludeDir &&
-          BuiltinIncludeDir != Directory && isBuiltinHeader(FileName)) {
+      if (ActiveModule->IsSystem && LeadingToken != MMToken::UmbrellaKeyword &&
+          BuiltinIncludeDir && BuiltinIncludeDir != Directory &&
+          isBuiltinHeader(FileName)) {
         SmallString<128> BuiltinPathName(BuiltinIncludeDir->getName());
         llvm::sys::path::append(BuiltinPathName, FileName);
         BuiltinFile = SourceMgr.getFileManager().getFile(BuiltinPathName);
@@ -1403,10 +1418,10 @@ void ModuleMapParser::parseHeaderDecl(SourceLocation UmbrellaLoc,
       Diags.Report(FileNameLoc, diag::err_mmap_header_conflict)
         << FileName << OwningModule.getModule()->getFullModuleName();
       HadError = true;
-    } else if (Umbrella) {
+    } else if (LeadingToken == MMToken::UmbrellaKeyword) {
       const DirectoryEntry *UmbrellaDir = File->getDir();
       if (Module *UmbrellaModule = Map.UmbrellaDirs[UmbrellaDir]) {
-        Diags.Report(UmbrellaLoc, diag::err_mmap_umbrella_clash)
+        Diags.Report(LeadingLoc, diag::err_mmap_umbrella_clash)
           << UmbrellaModule->getFullModuleName();
         HadError = true;
       } else {
@@ -1415,17 +1430,25 @@ void ModuleMapParser::parseHeaderDecl(SourceLocation UmbrellaLoc,
       }
     } else {
       // Record this header.
-      Map.addHeader(ActiveModule, File, Exclude);
+      ModuleMap::ModuleHeaderRole Role = ModuleMap::NormalHeader;
+      if (LeadingToken == MMToken::ExcludeKeyword)
+        Role = ModuleMap::ExcludedHeader;
+      else if (LeadingToken == MMToken::PrivateKeyword)
+        Role = ModuleMap::PrivateHeader;
+      else
+        assert(LeadingToken == MMToken::HeaderKeyword);
+        
+      Map.addHeader(ActiveModule, File, Role);
       
       // If there is a builtin counterpart to this file, add it now.
       if (BuiltinFile)
-        Map.addHeader(ActiveModule, BuiltinFile, Exclude);
+        Map.addHeader(ActiveModule, BuiltinFile, Role);
     }
-  } else if (!Exclude) {
+  } else if (LeadingToken != MMToken::ExcludeKeyword) {
     // Ignore excluded header files. They're optional anyway.
     
     Diags.Report(FileNameLoc, diag::err_mmap_header_not_found)
-      << Umbrella << FileName;
+      << (LeadingToken == MMToken::UmbrellaKeyword) << FileName;
     HadError = true;
   }
 }
@@ -1792,6 +1815,7 @@ void ModuleMapParser::parseInferredModuleDecl(bool Framework, bool Explicit) {
     case MMToken::ExplicitKeyword:
     case MMToken::ModuleKeyword:
     case MMToken::HeaderKeyword:
+    case MMToken::PrivateKeyword:
     case MMToken::UmbrellaKeyword:
     default:
       Diags.Report(Tok.getLocation(), diag::err_mmap_expected_inferred_member)
@@ -1918,6 +1942,7 @@ bool ModuleMapParser::parseModuleMapFile() {
     case MMToken::LinkKeyword:
     case MMToken::LSquare:
     case MMToken::Period:
+    case MMToken::PrivateKeyword:
     case MMToken::RBrace:
     case MMToken::RSquare:
     case MMToken::RequiresKeyword:

@@ -223,7 +223,7 @@ const FileEntry *DirectoryLookup::LookupFile(
     HeaderSearch &HS,
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
-    Module **SuggestedModule,
+    ModuleMap::KnownHeader *SuggestedModule,
     bool &InUserSpecifiedSystemFramework) const {
   InUserSpecifiedSystemFramework = false;
 
@@ -337,7 +337,7 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
     HeaderSearch &HS,
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
-    Module **SuggestedModule,
+    ModuleMap::KnownHeader *SuggestedModule,
     bool &InUserSpecifiedSystemFramework) const
 {
   FileManager &FileMgr = HS.getFileMgr();
@@ -496,11 +496,11 @@ const FileEntry *HeaderSearch::LookupFile(
     const FileEntry *CurFileEnt,
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
-    Module **SuggestedModule,
+    ModuleMap::KnownHeader *SuggestedModule,
     bool SkipCache)
 {
   if (SuggestedModule)
-    *SuggestedModule = 0;
+    *SuggestedModule = ModuleMap::KnownHeader();
     
   // If 'Filename' is absolute, check to see if it exists and no searching.
   if (llvm::sys::path::is_absolute(Filename)) {
@@ -676,7 +676,7 @@ LookupSubframeworkHeader(StringRef Filename,
                          const FileEntry *ContextFileEnt,
                          SmallVectorImpl<char> *SearchPath,
                          SmallVectorImpl<char> *RelativePath,
-                         Module **SuggestedModule) {
+                         ModuleMap::KnownHeader *SuggestedModule) {
   assert(ContextFileEnt && "No context file?");
 
   // Framework names must have a '/' in the filename.  Find it.
@@ -867,6 +867,7 @@ bool HeaderSearch::isFileMultipleIncludeGuarded(const FileEntry *File) {
 }
 
 void HeaderSearch::MarkFileModuleHeader(const FileEntry *FE,
+                                        ModuleMap::ModuleHeaderRole Role,
                                         bool isCompilingModuleHeader) {
   if (FE->getUID() >= FileInfo.size())
     FileInfo.resize(FE->getUID()+1);
@@ -874,6 +875,7 @@ void HeaderSearch::MarkFileModuleHeader(const FileEntry *FE,
   HeaderFileInfo &HFI = FileInfo[FE->getUID()];
   HFI.isModuleHeader = true;
   HFI.isCompilingModuleHeader = isCompilingModuleHeader;
+  HFI.setHeaderRole(Role);
 }
 
 bool HeaderSearch::ShouldEnterIncludeFile(const FileEntry *File, bool isImport){
@@ -966,16 +968,14 @@ bool HeaderSearch::hasModuleMap(StringRef FileName,
   } while (true);
 }
 
-Module *HeaderSearch::findModuleForHeader(const FileEntry *File) const {
+ModuleMap::KnownHeader
+HeaderSearch::findModuleForHeader(const FileEntry *File) const {
   if (ExternalSource) {
     // Make sure the external source has handled header info about this file,
     // which includes whether the file is part of a module.
     (void)getFileInfo(File);
   }
-  if (Module *Mod = ModMap.findModuleForHeader(File))
-    return Mod;
-  
-  return 0;
+  return ModMap.findModuleForHeader(File);
 }
 
 bool HeaderSearch::loadModuleMapFile(const FileEntry *File) {

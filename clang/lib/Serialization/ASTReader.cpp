@@ -1281,6 +1281,8 @@ HeaderFileInfoTrait::ReadData(internal_key_ref key, const unsigned char *d,
   using namespace clang::io;
   HeaderFileInfo HFI;
   unsigned Flags = *d++;
+  HFI.HeaderRole = static_cast<ModuleMap::ModuleHeaderRole>
+                   ((Flags >> 6) & 0x03);
   HFI.isImport = (Flags >> 5) & 0x01;
   HFI.isPragmaOnce = (Flags >> 4) & 0x01;
   HFI.DirInfo = (Flags >> 2) & 0x03;
@@ -1307,7 +1309,7 @@ HeaderFileInfoTrait::ReadData(internal_key_ref key, const unsigned char *d,
       FileManager &FileMgr = Reader.getFileManager();
       ModuleMap &ModMap =
           Reader.getPreprocessor().getHeaderSearchInfo().getModuleMap();
-      ModMap.addHeader(Mod, FileMgr.getFile(key.Filename), /*Excluded=*/false);
+      ModMap.addHeader(Mod, FileMgr.getFile(key.Filename), HFI.getHeaderRole());
     }
   }
 
@@ -3753,6 +3755,21 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
     }
 
     case SUBMODULE_EXCLUDED_HEADER: {
+      if (First) {
+        Error("missing submodule metadata record at beginning of block");
+        return true;
+      }
+
+      if (!CurrentModule)
+        break;
+      
+      // We lazily associate headers with their modules via the HeaderInfoTable.
+      // FIXME: Re-evaluate this section; maybe only store InputFile IDs instead
+      // of complete filenames or remove it entirely.
+      break;      
+    }
+
+    case SUBMODULE_PRIVATE_HEADER: {
       if (First) {
         Error("missing submodule metadata record at beginning of block");
         return true;
