@@ -2505,7 +2505,12 @@ parse_expr_primary(const char* first, const char* last, C& db)
         switch (first[1])
         {
         case 'w':
-            return parse_integer_literal(first+2, last, "wchar_t", db);
+            {
+            const char* t = parse_integer_literal(first+2, last, "wchar_t", db);
+            if (t != first+2)
+                first = t;
+            }
+            break;
         case 'b':
             if (first[3] == 'E')
             {
@@ -2523,37 +2528,117 @@ parse_expr_primary(const char* first, const char* last, C& db)
             }
             break;
         case 'c':
-            return parse_integer_literal(first+2, last, "char", db);
+            {
+            const char* t = parse_integer_literal(first+2, last, "char", db);
+            if (t != first+2)
+                first = t;
+            }
+            break;
         case 'a':
-            return parse_integer_literal(first+2, last, "signed char", db);
+            {
+            const char* t = parse_integer_literal(first+2, last, "signed char", db);
+            if (t != first+2)
+                first = t;
+            }
+            break;
         case 'h':
-            return parse_integer_literal(first+2, last, "unsigned char", db);
+            {
+            const char* t = parse_integer_literal(first+2, last, "unsigned char", db);
+            if (t != first+2)
+                first = t;
+            }
+            break;
         case 's':
-            return parse_integer_literal(first+2, last, "short", db);
+            {
+            const char* t = parse_integer_literal(first+2, last, "short", db);
+            if (t != first+2)
+                first = t;
+            }
+            break;
         case 't':
-            return parse_integer_literal(first+2, last, "unsigned short", db);
+            {
+            const char* t = parse_integer_literal(first+2, last, "unsigned short", db);
+            if (t != first+2)
+                first = t;
+            }
+            break;
         case 'i':
-            return parse_integer_literal(first+2, last, "", db);
+            {
+            const char* t = parse_integer_literal(first+2, last, "", db);
+            if (t != first+2)
+                first = t;
+            }
+            break;
         case 'j':
-            return parse_integer_literal(first+2, last, "u", db);
+            {
+            const char* t = parse_integer_literal(first+2, last, "u", db);
+            if (t != first+2)
+                first = t;
+            }
+            break;
         case 'l':
-            return parse_integer_literal(first+2, last, "l", db);
+            {
+            const char* t = parse_integer_literal(first+2, last, "l", db);
+            if (t != first+2)
+                first = t;
+            }
+            break;
         case 'm':
-            return parse_integer_literal(first+2, last, "ul", db);
+            {
+            const char* t = parse_integer_literal(first+2, last, "ul", db);
+            if (t != first+2)
+                first = t;
+            }
+            break;
         case 'x':
-            return parse_integer_literal(first+2, last, "ll", db);
+            {
+            const char* t = parse_integer_literal(first+2, last, "ll", db);
+            if (t != first+2)
+                first = t;
+            }
+            break;
         case 'y':
-            return parse_integer_literal(first+2, last, "ull", db);
+            {
+            const char* t = parse_integer_literal(first+2, last, "ull", db);
+            if (t != first+2)
+                first = t;
+            }
+            break;
         case 'n':
-            return parse_integer_literal(first+2, last, "__int128", db);
+            {
+            const char* t = parse_integer_literal(first+2, last, "__int128", db);
+            if (t != first+2)
+                first = t;
+            }
+            break;
         case 'o':
-            return parse_integer_literal(first+2, last, "unsigned __int128", db);
+            {
+            const char* t = parse_integer_literal(first+2, last, "unsigned __int128", db);
+            if (t != first+2)
+                first = t;
+            }
+            break;
         case 'f':
-            return parse_floating_number<float>(first+2, last, db);
+            {
+            const char* t = parse_floating_number<float>(first+2, last, db);
+            if (t != first+2)
+                first = t;
+            }
+            break;
         case 'd':
-            return parse_floating_number<double>(first+2, last, db);
+            {
+            const char* t = parse_floating_number<double>(first+2, last, db);
+            if (t != first+2)
+                first = t;
+            }
+            break;
          case 'e':
-            return parse_floating_number<long double>(first+2, last, db);
+            {
+            const char* t = parse_floating_number<long double>(first+2, last, db);
+            if (t != first+2)
+                first = t;
+            }
+            break;
         case '_':
             if (first[2] == 'Z')
             {
@@ -3050,15 +3135,30 @@ parse_expression(const char* first, const char* last, C& db)
             switch (t[1])
             {
             case 'a':
-                return parse_binary_expression(first+2, last, "&&", db);
+                t = parse_binary_expression(first+2, last, "&&", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'd':
-                return parse_prefix_expression(first+2, last, "&", db);
+                t = parse_prefix_expression(first+2, last, "&", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'n':
-                return parse_binary_expression(first+2, last, "&", db);
+                t = parse_binary_expression(first+2, last, "&", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'N':
-                return parse_binary_expression(first+2, last, "&=", db);
+                t = parse_binary_expression(first+2, last, "&=", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'S':
-                return parse_binary_expression(first+2, last, "=", db);
+                t = parse_binary_expression(first+2, last, "=", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 't':
                 first = parse_alignof_type(first, last, db);
                 break;
@@ -3077,10 +3177,15 @@ parse_expression(const char* first, const char* last, C& db)
                 first = parse_call_expr(first, last, db);
                 break;
             case 'm':
-                return parse_binary_expression(first+2, last, ",", db);
+                t = parse_binary_expression(first+2, last, ",", db);
+                if (t != first+2)
+                    first = t;
                 break;
             case 'o':
-                return parse_prefix_expression(first+2, last, "~", db);
+                t = parse_prefix_expression(first+2, last, "~", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'v':
                 first = parse_conversion_expr(first, last, db);
                 break;
@@ -3104,7 +3209,10 @@ parse_expression(const char* first, const char* last, C& db)
                 first = parse_dynamic_cast_expr(first, last, db);
                 break;
             case 'e':
-                return parse_prefix_expression(first+2, last, "*", db);
+                t = parse_prefix_expression(first+2, last, "*", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'l':
                 {
                     const char* t1 = parse_expression(t+2, last, db);
@@ -3125,29 +3233,50 @@ parse_expression(const char* first, const char* last, C& db)
                 first = parse_dot_expr(first, last, db);
                 break;
             case 'v':
-                return parse_binary_expression(first+2, last, "/", db);
+                t = parse_binary_expression(first+2, last, "/", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'V':
-                return parse_binary_expression(first+2, last, "/=", db);
+                t = parse_binary_expression(first+2, last, "/=", db);
+                if (t != first+2)
+                    first = t;
+                break;
             }
             break;
         case 'e':
             switch (t[1])
             {
             case 'o':
-                return parse_binary_expression(first+2, last, "^", db);
+                t = parse_binary_expression(first+2, last, "^", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'O':
-                return parse_binary_expression(first+2, last, "^=", db);
+                t = parse_binary_expression(first+2, last, "^=", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'q':
-                return parse_binary_expression(first+2, last, "==", db);
+                t = parse_binary_expression(first+2, last, "==", db);
+                if (t != first+2)
+                    first = t;
+                break;
             }
             break;
         case 'g':
             switch (t[1])
             {
             case 'e':
-                return parse_binary_expression(first+2, last, ">=", db);
+                t = parse_binary_expression(first+2, last, ">=", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 't':
-                return parse_binary_expression(first+2, last, ">", db);
+                t = parse_binary_expression(first+2, last, ">", db);
+                if (t != first+2)
+                    first = t;
+                break;
             }
             break;
         case 'i':
@@ -3174,29 +3303,57 @@ parse_expression(const char* first, const char* last, C& db)
             switch (t[1])
             {
             case 'e':
-                return parse_binary_expression(first+2, last, "<=", db);
+                t = parse_binary_expression(first+2, last, "<=", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 's':
-                return parse_binary_expression(first+2, last, "<<", db);
+                t = parse_binary_expression(first+2, last, "<<", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'S':
-                return parse_binary_expression(first+2, last, "<<=", db);
+                t = parse_binary_expression(first+2, last, "<<=", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 't':
-                return parse_binary_expression(first+2, last, "<", db);
+                t = parse_binary_expression(first+2, last, "<", db);
+                if (t != first+2)
+                    first = t;
+                break;
             }
             break;
         case 'm':
             switch (t[1])
             {
             case 'i':
-                return parse_binary_expression(first+2, last, "-", db);
+                t = parse_binary_expression(first+2, last, "-", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'I':
-                return parse_binary_expression(first+2, last, "-=", db);
+                t = parse_binary_expression(first+2, last, "-=", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'l':
-                return parse_binary_expression(first+2, last, "*", db);
+                t = parse_binary_expression(first+2, last, "*", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'L':
-                return parse_binary_expression(first+2, last, "*=", db);
+                t = parse_binary_expression(first+2, last, "*=", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'm':
                 if (first+2 != last && first[2] == '_')
-                    return parse_prefix_expression(first+3, last, "--", db);
+                {
+                    t = parse_prefix_expression(first+3, last, "--", db);
+                    if (t != first+3)
+                        first = t;
+                }
                 else
                 {
                     const char* t1 = parse_expression(first+2, last, db);
@@ -3217,13 +3374,25 @@ parse_expression(const char* first, const char* last, C& db)
                 first = parse_new_expr(first, last, db);
                 break;
             case 'e':
-                return parse_binary_expression(first+2, last, "!=", db);
+                t = parse_binary_expression(first+2, last, "!=", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'g':
-                return parse_prefix_expression(first+2, last, "-", db);
+                t = parse_prefix_expression(first+2, last, "-", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 't':
-                return parse_prefix_expression(first+2, last, "!", db);
+                t = parse_prefix_expression(first+2, last, "!", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'x':
-                return parse_noexcept_expression(first+2, last, db);
+                t = parse_noexcept_expression(first+2, last, db);
+                if (t != first+2)
+                    first = t;
+                break;
             }
             break;
         case 'o':
@@ -3232,25 +3401,47 @@ parse_expression(const char* first, const char* last, C& db)
             case 'n':
                 return parse_unresolved_name(first, last, db);
             case 'o':
-                return parse_binary_expression(first+2, last, "||", db);
+                t = parse_binary_expression(first+2, last, "||", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'r':
-                return parse_binary_expression(first+2, last, "|", db);
+                t = parse_binary_expression(first+2, last, "|", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'R':
-                return parse_binary_expression(first+2, last, "|=", db);
+                t = parse_binary_expression(first+2, last, "|=", db);
+                if (t != first+2)
+                    first = t;
+                break;
             }
             break;
         case 'p':
             switch (t[1])
             {
             case 'm':
-                return parse_binary_expression(first+2, last, "->*", db);
+                t = parse_binary_expression(first+2, last, "->*", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'l':
-                return parse_binary_expression(first+2, last, "+", db);
+                t = parse_binary_expression(first+2, last, "+", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'L':
-                return parse_binary_expression(first+2, last, "+=", db);
+                t = parse_binary_expression(first+2, last, "+=", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'p':
                 if (first+2 != last && first[2] == '_')
-                    return parse_prefix_expression(first+3, last, "++", db);
+                {
+                    t = parse_prefix_expression(first+3, last, "++", db);
+                    if (t != first+3)
+                        first = t;
+                }
                 else
                 {
                     const char* t1 = parse_expression(first+2, last, db);
@@ -3262,7 +3453,10 @@ parse_expression(const char* first, const char* last, C& db)
                 }
                 break;
             case 's':
-                return parse_prefix_expression(first+2, last, "+", db);
+                t = parse_prefix_expression(first+2, last, "+", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 't':
                 first = parse_arrow_expr(first, last, db);
                 break;
@@ -3306,13 +3500,25 @@ parse_expression(const char* first, const char* last, C& db)
                 first = parse_reinterpret_cast_expr(first, last, db);
                 break;
             case 'm':
-                return parse_binary_expression(first+2, last, "%", db);
+                t = parse_binary_expression(first+2, last, "%", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'M':
-                return parse_binary_expression(first+2, last, "%=", db);
+                t = parse_binary_expression(first+2, last, "%=", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 's':
-                return parse_binary_expression(first+2, last, ">>", db);
+                t = parse_binary_expression(first+2, last, ">>", db);
+                if (t != first+2)
+                    first = t;
+                break;
             case 'S':
-                return parse_binary_expression(first+2, last, ">>=", db);
+                t = parse_binary_expression(first+2, last, ">>=", db);
+                if (t != first+2)
+                    first = t;
+                break;
             }
             break;
         case 's':
