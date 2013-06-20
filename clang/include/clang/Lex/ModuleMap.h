@@ -85,7 +85,7 @@ class ModuleMap {
 
   typedef llvm::DenseMap<const FileEntry *, KnownHeader> HeadersMap;
 
-  /// \brief Mapping from each header to the module that owns the contents of the
+  /// \brief Mapping from each header to the module that owns the contents of
   /// that header.
   HeadersMap Headers;
   
