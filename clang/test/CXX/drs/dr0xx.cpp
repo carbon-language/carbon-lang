@@ -59,13 +59,10 @@ namespace dr5 { // dr5: yes
   const C c = e;
 }
 
-namespace dr7 { // dr7: yes
+namespace dr7 { // dr7: no
   class A { public: ~A(); };
-  class B : virtual private A {}; // expected-note 2 {{declared private here}}
-  class C : public B {} c; // expected-error 2 {{inherited virtual base class 'dr7::A' has private destructor}} \
-                           // expected-note {{implicit default constructor for 'dr7::C' first required here}} \
-                           // expected-note {{implicit destructor for 'dr7::C' first required here}}
-  class VeryDerivedC : public B, virtual public A {} vdc;
+  class B : virtual private A {};
+  class C : public B {} c; // FIXME: should be rejected, ~A is inaccessible
 
   class X { ~X(); }; // expected-note {{here}}
   class Y : X { ~Y() {} }; // expected-error {{private destructor}}
