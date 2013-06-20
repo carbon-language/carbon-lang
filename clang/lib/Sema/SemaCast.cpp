@@ -384,11 +384,6 @@ static bool tryDiagnoseOverloadedCast(Sema &S, CastType CT,
 static void diagnoseBadCast(Sema &S, unsigned msg, CastType castType,
                             SourceRange opRange, Expr *src, QualType destType,
                             bool listInitialization) {
-  if (src->getType() == S.Context.BoundMemberTy) {
-    (void) S.CheckPlaceholderExpr(src); // will always fail
-    return;
-  }
-
   if (msg == diag::err_bad_cxx_cast_generic &&
       tryDiagnoseOverloadedCast(S, castType, opRange, src, destType,
                                 listInitialization))
