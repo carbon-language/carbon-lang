@@ -356,7 +356,7 @@ error_code file_size(const Twine &path, uint64_t &result) {
   return error_code::success();
 }
 
-error_code GetUniqueID(const Twine Path, uint64_t &Result) {
+error_code getUniqueID(const Twine Path, uint64_t &Result) {
   SmallString<128> Storage;
   StringRef P = Path.toNullTerminatedStringRef(Storage);
 

@@ -425,7 +425,7 @@ error_code file_size(const Twine &path, uint64_t &result) {
   return error_code::success();
 }
 
-error_code GetUniqueID(const Twine Path, uint64_t &Result) {
+error_code getUniqueID(const Twine Path, uint64_t &Result) {
   file_status Status;
   if (error_code E = status(Path, Status))
     return E;

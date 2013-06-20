@@ -162,7 +162,7 @@ class file_status
   #endif
   friend bool equivalent(file_status A, file_status B);
   friend error_code status(const Twine &path, file_status &result);
-  friend error_code GetUniqueID(const Twine Path, uint64_t &Result);
+  friend error_code getUniqueID(const Twine Path, uint64_t &Result);
   file_type Type;
   perms Perms;
 public:
@@ -563,7 +563,11 @@ file_magic identify_magic(StringRef magic);
 ///          platform specific error_code.
 error_code identify_magic(const Twine &path, file_magic &result);
 
-error_code GetUniqueID(const Twine Path, uint64_t &Result);
+error_code getUniqueID(const Twine Path, uint64_t &Result);
+
+inline error_code GetUniqueID(const Twine Path, uint64_t &Result) {
+  return getUniqueID(Path, Result);
+}
 
 /// This class represents a memory mapped file. It is based on
 /// boost::iostreams::mapped_file.
