@@ -407,11 +407,17 @@ SymbolFileDWARF::GetTypes (SymbolContextScope *sc_scope,
 //        });
 //    }
     
+    std::set<clang_type_t> clang_type_set;
     size_t num_types_added = 0;
     for (Type *type : type_set)
     {
-        type_list.Insert (type->shared_from_this());
-        ++num_types_added;
+        clang_type_t clang_type = type->GetClangForwardType();
+        if (clang_type_set.find(clang_type) == clang_type_set.end())
+        {
+            clang_type_set.insert(clang_type);
+            type_list.Insert (type->shared_from_this());
+            ++num_types_added;
+        }
     }
     return num_types_added;
 }
