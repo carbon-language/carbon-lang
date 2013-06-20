@@ -156,8 +156,7 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
 // of extracting the necessary flags and information from the file.
 bool Archive::addFileBefore(StringRef filePath, iterator where,
                             std::string *ErrMsg) {
-  bool Exists;
-  if (sys::fs::exists(filePath.str(), Exists) || !Exists) {
+  if (!sys::fs::exists(filePath)) {
     if (ErrMsg)
       *ErrMsg = "Can not add a non-existent file to archive";
     return true;
