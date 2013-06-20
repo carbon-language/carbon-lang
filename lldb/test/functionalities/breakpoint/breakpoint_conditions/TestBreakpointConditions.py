@@ -117,6 +117,20 @@ class BreakpointConditionsTestCase(TestBase):
         self.expect("frame variable --show-types val", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(int) val = 1')
 
+        self.runCmd("process kill")
+        self.runCmd("breakpoint disable")
+
+        self.runCmd("breakpoint set -p Loop")
+        self.runCmd("breakpoint modify -c ($eax&&!i)")
+        self.runCmd("run")
+        
+        self.expect("process status", PROCESS_STOPPED,
+            patterns = ['Process .* stopped'])
+
+        self.runCmd("continue")
+
+        self.expect("process status", PROCESS_EXITED,
+            patterns = ['Process .* exited'])
 
     def breakpoint_conditions_python(self):
         """Use Python APIs to set breakpoint conditions."""

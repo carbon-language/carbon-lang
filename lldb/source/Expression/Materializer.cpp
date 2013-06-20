@@ -21,6 +21,7 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Target/Thread.h"
 
 using namespace lldb_private;
 
@@ -1288,7 +1289,11 @@ Materializer::Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb:
 void
 Materializer::Dematerializer::Dematerialize (Error &error, lldb::ClangExpressionVariableSP &result_sp, lldb::addr_t frame_bottom, lldb::addr_t frame_top)
 {
-    lldb::StackFrameSP frame_sp = m_frame_wp.lock();
+    lldb::StackFrameSP frame_sp;
+
+    lldb::ThreadSP thread_sp = m_thread_wp.lock();
+    if (thread_sp)
+        frame_sp = thread_sp->GetFrameWithStackID(m_stack_id);
     
     ExecutionContextScope *exe_scope = m_map->GetBestExecutionContextScope();
     

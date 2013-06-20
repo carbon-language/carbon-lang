@@ -15,6 +15,7 @@
 #include "lldb/Expression/IRMemoryMap.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Symbol/SymbolContext.h"
+#include "lldb/Target/StackFrame.h"
 
 #include <vector>
 
@@ -61,14 +62,19 @@ public:
                         IRMemoryMap &map,
                         lldb::addr_t process_address) :
             m_materializer(&materializer),
-            m_frame_wp(frame_sp),
             m_map(&map),
             m_process_address(process_address)
         {
+            if (frame_sp)
+            {
+                m_thread_wp = frame_sp->GetThread();
+                m_stack_id = frame_sp->GetStackID();
+            }
         }
         
         Materializer       *m_materializer;
-        lldb::StackFrameWP  m_frame_wp;
+        lldb::ThreadWP      m_thread_wp;
+        StackID             m_stack_id;
         IRMemoryMap        *m_map;
         lldb::addr_t        m_process_address;
     };

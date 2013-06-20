@@ -46,6 +46,9 @@ int main (int argc, char const *argv[])
     
     int A3 = a(3);  // a(3) -> c(3)
     printf("a(3) returns %d\n", A3);
+
+    for (int i = 0; i < 2; ++i)
+        printf("Loop\n");
     
     return 0;
 }
