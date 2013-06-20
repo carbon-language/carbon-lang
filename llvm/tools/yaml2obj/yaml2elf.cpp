@@ -69,11 +69,12 @@ public:
 namespace {
 class ContiguousBlobAccumulator {
   const uint64_t InitialOffset;
+  SmallVector<char, 128> Buf;
   raw_svector_ostream OS;
 
 public:
-  ContiguousBlobAccumulator(uint64_t InitialOffset_, SmallVectorImpl<char> &Buf)
-      : InitialOffset(InitialOffset_), OS(Buf) {}
+  ContiguousBlobAccumulator(uint64_t InitialOffset_)
+      : InitialOffset(InitialOffset_), Buf(), OS(Buf) {}
   raw_ostream &getOS() { return OS; }
   uint64_t currentOffset() const { return InitialOffset + OS.tell(); }
   void writeBlobToStream(raw_ostream &Out) { Out << OS.str(); }
@@ -230,12 +231,11 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   }
 
   StringTableBuilder SHStrTab;
-  SmallVector<char, 128> Buf;
   // XXX: This offset is tightly coupled with the order that we write
   // things to `OS`.
   const size_t SectionContentBeginOffset =
       Header.e_ehsize + Header.e_shentsize * Header.e_shnum;
-  ContiguousBlobAccumulator CBA(SectionContentBeginOffset, Buf);
+  ContiguousBlobAccumulator CBA(SectionContentBeginOffset);
   std::vector<Elf_Shdr> SHeaders;
   {
     // Ensure SHN_UNDEF entry is present. An all-zero section header is a
