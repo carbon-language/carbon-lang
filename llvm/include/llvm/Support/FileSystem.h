@@ -175,11 +175,11 @@ public:
   // getters
   file_type type() const { return Type; }
   perms permissions() const { return Perms; }
-  
+  TimeValue getLastModificationTime() const;
+
   // setters
   void type(file_type v) { Type = v; }
   void permissions(perms p) { Perms = p; }
-  TimeValue getLastModificationTime();
 };
 
 /// file_magic - An "enum class" enumeration of file types based on magic (the first

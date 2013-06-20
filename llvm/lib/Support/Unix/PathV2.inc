@@ -110,7 +110,7 @@ namespace llvm {
 namespace sys  {
 namespace fs {
 
-TimeValue file_status::getLastModificationTime() {
+TimeValue file_status::getLastModificationTime() const {
   TimeValue Ret;
   Ret.fromEpochTime(fs_st_mtime);
   return Ret;

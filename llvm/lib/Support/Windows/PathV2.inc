@@ -128,7 +128,7 @@ namespace llvm {
 namespace sys  {
 namespace fs {
 
-TimeValue file_status::getLastModificationTime() {
+TimeValue file_status::getLastModificationTime() const {
   ULARGE_INTEGER UI;
   UI.LowPart = LastWriteTimeLow;
   UI.HighPart = LastWriteTimeHigh;
