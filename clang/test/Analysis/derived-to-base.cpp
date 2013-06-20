@@ -450,3 +450,28 @@ namespace PR15394 {
   }
 };
 
+namespace Bug16309 {
+  struct Incomplete;
+
+  struct Base { virtual ~Base(); };
+
+  struct Derived : public Base { int x; };
+
+  void* f(Incomplete *i) {
+    Base *b = reinterpret_cast<Base *>(i);
+    // This used to crash because of the reinterpret_cast above.
+    Derived *d = dynamic_cast<Derived *>(b);
+    return d;
+  }
+
+  // And check that reinterpret+dynamic casts work correctly after the fix.
+  void g() {
+    Derived d;
+    d.x = 47;
+    Base *b = &d;
+    Incomplete *i = reinterpret_cast<Incomplete *>(b);
+    Base *b2 = reinterpret_cast<Base *>(i);
+    Derived *d2 = dynamic_cast<Derived *>(b2);
+    clang_analyzer_eval(d2->x == 47); // expected-warning{{TRUE}}
+  }
+}

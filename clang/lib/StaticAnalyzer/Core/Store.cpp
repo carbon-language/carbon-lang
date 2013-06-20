@@ -325,7 +325,10 @@ SVal StoreManager::evalDynamicCast(SVal Base, QualType TargetType,
     if (MRClass == TargetClass)
       return loc::MemRegionVal(MR);
 
-    if (!TargetType->isVoidType()) {
+    // We skip over incomplete types. They must be the result of an earlier
+    // reinterpret_cast, as one can only dynamic_cast between types in the same
+    // class hierarchy.
+    if (!TargetType->isVoidType() && MRClass->hasDefinition()) {
       // Static upcasts are marked as DerivedToBase casts by Sema, so this will
       // only happen when multiple or virtual inheritance is involved.
       CXXBasePaths Paths(/*FindAmbiguities=*/false, /*RecordPaths=*/true,
