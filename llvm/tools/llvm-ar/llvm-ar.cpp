@@ -286,24 +286,18 @@ ArchiveOperation parseCommandLine() {
 // the operations that add/replace files to the archive ('q' and 'r')
 bool buildPaths(bool checkExistence, std::string* ErrMsg) {
   for (unsigned i = 0; i < Members.size(); i++) {
-    sys::Path aPath;
-    if (!aPath.set(Members[i]))
-      fail(std::string("File member name invalid: ") + Members[i]);
+    std::string aPath = Members[i];
     if (checkExistence) {
-      bool Exists;
-      if (sys::fs::exists(aPath.str(), Exists) || !Exists)
-        fail(std::string("File does not exist: ") + Members[i]);
-      std::string Err;
-      sys::PathWithStatus PwS(aPath);
-      const sys::FileStatus *si = PwS.getFileStatus(false, &Err);
-      if (!si)
-        fail(Err);
-      if (si->isDir)
-        fail(aPath.str() + " Is a directory");
+      bool IsDirectory;
+      error_code EC = sys::fs::is_directory(aPath, IsDirectory);
+      if (EC)
+        fail(aPath + ": " + EC.message());
+      if (IsDirectory)
+        fail(aPath + " Is a directory");
 
-      Paths.insert(aPath.str());
+      Paths.insert(aPath);
     } else {
-      Paths.insert(aPath.str());
+      Paths.insert(aPath);
     }
   }
   return false;
