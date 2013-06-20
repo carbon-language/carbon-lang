@@ -511,6 +511,14 @@ static bool LookupBuiltin(Sema &S, LookupResult &R) {
       NameKind == Sema::LookupRedeclarationWithLinkage) {
     IdentifierInfo *II = R.getLookupName().getAsIdentifierInfo();
     if (II) {
+      if (S.getLangOpts().CPlusPlus11 && S.getLangOpts().GNUMode &&
+          II == S.getFloat128Identifier()) {
+        // libstdc++4.7's type_traits expects type __float128 to exist, so
+        // insert a dummy type to make that header build in gnu++11 mode.
+        R.addDecl(S.getASTContext().getFloat128StubType());
+        return true;
+      }
+
       // If this is a builtin on this (or all) targets, create the decl.
       if (unsigned BuiltinID = II->getBuiltinID()) {
         // In C++, we don't have any predefined library functions like

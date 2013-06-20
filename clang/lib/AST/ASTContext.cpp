@@ -698,7 +698,7 @@ ASTContext::ASTContext(LangOptions& LOpts, SourceManager &SM,
     DependentTemplateSpecializationTypes(this_()),
     SubstTemplateTemplateParmPacks(this_()),
     GlobalNestedNameSpecifier(0), 
-    Int128Decl(0), UInt128Decl(0),
+    Int128Decl(0), UInt128Decl(0), Float128StubDecl(0),
     BuiltinVaListDecl(0),
     ObjCIdDecl(0), ObjCSelDecl(0), ObjCClassDecl(0), ObjCProtocolClassDecl(0),
     BOOLDecl(0),
@@ -855,6 +855,19 @@ TypedefDecl *ASTContext::getUInt128Decl() const {
   }
   
   return UInt128Decl;
+}
+
+TypeDecl *ASTContext::getFloat128StubType() const {
+  if (!Float128StubDecl) {
+    Float128StubDecl = RecordDecl::Create(const_cast<ASTContext &>(*this), 
+                                          TTK_Struct,
+                                          getTranslationUnitDecl(),
+                                          SourceLocation(),
+                                          SourceLocation(),
+                                          &Idents.get("__float128"));
+  }
+  
+  return Float128StubDecl;
 }
 
 void ASTContext::InitBuiltinType(CanQualType &R, BuiltinType::Kind K) {

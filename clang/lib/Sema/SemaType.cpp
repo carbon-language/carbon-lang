@@ -4939,6 +4939,12 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
     return true;
 
   // We have an incomplete type. Produce a diagnostic.
+  if (Ident___float128 &&
+      T == Context.getTypeDeclType(Context.getFloat128StubType())) {
+    Diag(Loc, diag::err_typecheck_decl_incomplete_type___float128);
+    return true;
+  }
+
   Diagnoser.diagnose(*this, Loc, T);
 
   // If the type was a forward declaration of a class/struct/union

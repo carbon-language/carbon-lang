@@ -196,6 +196,9 @@ class ASTContext : public RefCountedBase<ASTContext> {
 
   /// \brief The typedef for the __uint128_t type.
   mutable TypedefDecl *UInt128Decl;
+
+  /// \brief The typedef for the __float128 stub type.
+  mutable TypeDecl *Float128StubDecl;
   
   /// \brief The typedef for the target specific predefined
   /// __builtin_va_list type.
@@ -808,6 +811,9 @@ public:
 
   /// \brief Retrieve the declaration for the 128-bit unsigned integer type.
   TypedefDecl *getUInt128Decl() const;
+
+  /// \brief Retrieve the declaration for a 128-bit float stub type.
+  TypeDecl *getFloat128StubType() const;
   
   //===--------------------------------------------------------------------===//
   //                           Type Constructors
