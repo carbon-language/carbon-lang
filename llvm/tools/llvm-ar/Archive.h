@@ -332,37 +332,6 @@ class Archive {
     /// @brief Instantiate all the bitcode modules located in the archive
     bool getAllModules(std::vector<Module*>& Modules, std::string* ErrMessage);
 
-    /// This accessor looks up the \p symbol in the archive's symbol table and
-    /// returns the associated module that defines that symbol. This method can
-    /// be called as many times as necessary. This is handy for linking the
-    /// archive into another module based on unresolved symbols. Note that the
-    /// Module returned by this accessor should not be deleted by the caller. It
-    /// is managed internally by the Archive class. It is possible that multiple
-    /// calls to this accessor will return the same Module instance because the
-    /// associated module defines multiple symbols.
-    /// @returns The Module* found or null if the archive does not contain a
-    /// module that defines the \p symbol.
-    /// @brief Look up a module by symbol name.
-    Module* findModuleDefiningSymbol(
-      const std::string& symbol,  ///< Symbol to be sought
-      std::string* ErrMessage     ///< Error message storage, if non-zero
-    );
-
-    /// This method is similar to findModuleDefiningSymbol but allows lookup of
-    /// more than one symbol at a time. If \p symbols contains a list of
-    /// undefined symbols in some module, then calling this method is like
-    /// making one complete pass through the archive to resolve symbols but is
-    /// more efficient than looking at the individual members. Note that on
-    /// exit, the symbols resolved by this method will be removed from \p
-    /// symbols to ensure they are not re-searched on a subsequent call. If
-    /// you need to retain the list of symbols, make a copy.
-    /// @brief Look up multiple symbols in the archive.
-    bool findModulesDefiningSymbols(
-      std::set<std::string>& symbols,     ///< Symbols to be sought
-      SmallVectorImpl<Module*>& modules,  ///< The modules matching \p symbols
-      std::string* ErrMessage             ///< Error msg storage, if non-zero
-    );
-
     /// This method determines whether the archive is a properly formed llvm
     /// bitcode archive.  It first makes sure the symbol table has been loaded
     /// and has a non-zero size.  If it does, then it is an archive.  If not,
