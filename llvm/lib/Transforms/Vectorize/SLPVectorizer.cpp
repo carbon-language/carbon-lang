@@ -99,7 +99,10 @@ struct SLPVectorizer : public FunctionPass {
       }
 
       // Try to hoist some of the scalarization code to the preheader.
-      if (BBChanged) hoistGatherSequence(LI, BB, R);
+      if (BBChanged) {
+        hoistGatherSequence(LI, BB, R);
+        Changed |= vectorizeUsingGatherHints(R.getGatherSeqInstructions());
+      }
 
       Changed |= BBChanged;
     }
@@ -130,8 +133,10 @@ private:
   /// \brief Try to vectorize a chain that starts at two arithmetic instrs.
   bool tryToVectorizePair(Value *A, Value *B,  BoUpSLP &R);
 
-  /// \brief Try to vectorize a list of operands.
-  bool tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R);
+  /// \brief Try to vectorize a list of operands. If \p NeedExtracts is true
+  /// then we calculate the cost of extracting the scalars from the vector.
+  /// \returns true if a value was vectorized.
+  bool tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R, bool NeedExtracts);
 
   /// \brief Try to vectorize a chain that may start at the operands of \V;
   bool tryToVectorize(BinaryOperator *V,  BoUpSLP &R);
@@ -142,6 +147,13 @@ private:
   /// \brief Try to hoist gather sequences outside of the loop in cases where
   /// all of the sources are loop invariant.
   void hoistGatherSequence(LoopInfo *LI, BasicBlock *BB, BoUpSLP &R);
+
+  /// \brief Try to vectorize additional sequences in different basic blocks
+  /// based on values that we gathered in previous blocks. The list \p Gathers
+  /// holds the gather InsertElement instructions that were generated during
+  /// vectorization.
+  /// \returns True if some code was vectorized.
+  bool vectorizeUsingGatherHints(BoUpSLP::InstrList &Gathers);
 
   /// \brief Scan the basic block and look for patterns that are likely to start
   /// a vectorization chain.
@@ -179,10 +191,11 @@ unsigned SLPVectorizer::collectStores(BasicBlock *BB, BoUpSLP &R) {
 bool SLPVectorizer::tryToVectorizePair(Value *A, Value *B,  BoUpSLP &R) {
   if (!A || !B) return false;
   Value *VL[] = { A, B };
-  return tryToVectorizeList(VL, R);
+  return tryToVectorizeList(VL, R, true);
 }
 
-bool SLPVectorizer::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R) {
+bool SLPVectorizer::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R,
+                                       bool NeedExtracts) {
   if (VL.size() < 2)
     return false;
 
@@ -204,7 +217,7 @@ bool SLPVectorizer::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R) {
   }
 
   int Cost = R.getTreeCost(VL);
-  int ExtrCost = R.getScalarizationCost(VL);
+  int ExtrCost =  NeedExtracts ? R.getScalarizationCost(VL) : 0;
   DEBUG(dbgs()<<"SLP: Cost of pair:" << Cost <<
         " Cost of extract:" << ExtrCost << ".\n");
   if ((Cost+ExtrCost) >= -SLPCostThreshold) return false;
@@ -307,7 +320,7 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
     }
 
     if (Incoming.size() > 1)
-      Changed |= tryToVectorizeList(Incoming, R);
+      Changed |= tryToVectorizeList(Incoming, R, true);
   }
   
   return Changed;
@@ -329,6 +342,51 @@ bool SLPVectorizer::vectorizeStoreChains(BoUpSLP &R) {
   return Changed;
 }
 
+bool SLPVectorizer::vectorizeUsingGatherHints(BoUpSLP::InstrList &Gathers) {
+  SmallVector<Value*, 4> Seq;
+  bool Changed = false;
+  for (int i = 0, e = Gathers.size(); i < e; ++i) {
+    InsertElementInst *IEI = dyn_cast_or_null<InsertElementInst>(Gathers[i]);
+
+    if (IEI) {
+      if (Instruction *I = dyn_cast<Instruction>(IEI->getOperand(1)))
+        Seq.push_back(I);
+    } else {
+
+      if (!Seq.size())
+        continue;
+
+      Instruction *I = cast<Instruction>(Seq[0]);
+      BasicBlock *BB = I->getParent();
+
+      DEBUG(dbgs()<<"SLP: Inspecting a gather list of size " << Seq.size() <<
+            " in " << BB->getName() << ".\n");
+
+      // Check if the gathered values have multiple uses. If they only have one
+      // user then we know that the insert/extract pair will go away.
+      bool HasMultipleUsers = false;
+      for (int i=0; e = Seq.size(), i < e; ++i) {
+        if (!Seq[i]->hasOneUse()) {
+          HasMultipleUsers = true;
+          break;
+        }
+      }
+
+      BoUpSLP BO(BB, SE, DL, TTI, AA, LI->getLoopFor(BB));
+
+      if (tryToVectorizeList(Seq, BO, HasMultipleUsers)) {
+        DEBUG(dbgs()<<"SLP: Vectorized a gather list of len " << Seq.size() <<
+              " in " << BB->getName() << ".\n");
+        Changed = true;
+      }
+
+      Seq.clear();
+    }
+  }
+
+  return Changed;
+}
+
 void SLPVectorizer::hoistGatherSequence(LoopInfo *LI, BasicBlock *BB,
                                         BoUpSLP &R) {
   // Check if this block is inside a loop.
@@ -344,12 +402,14 @@ void SLPVectorizer::hoistGatherSequence(LoopInfo *LI, BasicBlock *BB,
   // Mark the insertion point for the block.
   Instruction *Location = PreHeader->getTerminator();
 
-  BoUpSLP::ValueList &Gathers = R.getGatherSeqInstructions();
-  for (BoUpSLP::ValueList::iterator it = Gathers.begin(), e = Gathers.end();
+  BoUpSLP::InstrList &Gathers = R.getGatherSeqInstructions();
+  for (BoUpSLP::InstrList::iterator it = Gathers.begin(), e = Gathers.end();
        it != e; ++it) {
-    InsertElementInst *Insert = dyn_cast<InsertElementInst>(*it);
+    InsertElementInst *Insert = dyn_cast_or_null<InsertElementInst>(*it);
 
     // The InsertElement sequence can be simplified into a constant.
+    // Also Ignore NULL pointers because they are only here to separate
+    // sequences.
     if (!Insert)
       continue;
 

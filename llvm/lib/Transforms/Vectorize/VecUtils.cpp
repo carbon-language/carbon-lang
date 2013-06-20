@@ -731,8 +731,12 @@ Value *BoUpSLP::Scalarize(ArrayRef<Value *> VL, VectorType *Ty) {
     // Remember that this instruction is used as part of a 'gather' sequence.
     // The caller of the bottom-up slp vectorizer can try to hoist the sequence
     // if the users are outside of the basic block.
-    GatherInstructions.push_back(Vec);
+    if (InsertElementInst *IEI = dyn_cast<InsertElementInst>(Vec))
+      GatherInstructions.push_back(IEI);
   }
+
+  // Mark the end of the gather sequence.
+  GatherInstructions.push_back(0);
 
   for (unsigned i = 0; i < Ty->getNumElements(); ++i)
     VectorizedValues[VL[i]] = Vec;

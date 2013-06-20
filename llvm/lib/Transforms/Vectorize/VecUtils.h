@@ -34,6 +34,7 @@ class Loop;
 /// Bottom Up SLP vectorization utility class.
 struct BoUpSLP  {
   typedef SmallVector<Value*, 8> ValueList;
+  typedef SmallVector<Instruction*, 16> InstrList;
   typedef SmallPtrSet<Value*, 16> ValueSet;
   typedef SmallVector<StoreInst*, 8> StoreList;
   static const int max_cost = 1<<20;
@@ -78,7 +79,7 @@ struct BoUpSLP  {
   /// \returns the list of new instructions that were added in order to collect
   /// scalars into vectors. This list can be used to further optimize the gather
   /// sequences.
-  ValueList &getGatherSeqInstructions() {return GatherInstructions; }
+  InstrList &getGatherSeqInstructions() {return GatherInstructions; }
 
 private:
   /// \brief This method contains the recursive part of getTreeCost.
@@ -166,7 +167,9 @@ private:
   /// A list of instructions that are used when gathering scalars into vectors.
   /// In many cases these instructions can be hoisted outside of the BB.
   /// Iterating over this list is faster than calling LICM.
-  ValueList GatherInstructions;
+  /// Notice: We insert NULL ptrs to separate between the different gather
+  /// sequences.
+   InstrList GatherInstructions;
 
   /// Instruction builder to construct the vectorized tree.
   IRBuilder<> Builder;
