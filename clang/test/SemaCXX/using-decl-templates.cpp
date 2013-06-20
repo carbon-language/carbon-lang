@@ -80,3 +80,8 @@ namespace PR10883 {
     void foo(const Container& current); // expected-error {{unknown type name 'Container'}}
   };
 }
+
+template<typename T> class UsingTypenameNNS {
+  using typename T::X;
+  typename X::X x;
+};
