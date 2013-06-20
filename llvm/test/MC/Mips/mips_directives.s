@@ -38,7 +38,8 @@ $JTI0_0:
     .set STORE_MASK,$t7
     .set FPU_MASK,$f7
     .set r3,$3
+    .set f6,$f6
 #CHECK:    abs.s   $f6, $f7           # encoding: [0x46,0x00,0x39,0x85]
 #CHECK:    and     $3, $15, $15       # encoding: [0x01,0xef,0x18,0x24]
-    abs.s  $f6,FPU_MASK
+    abs.s  f6,FPU_MASK
     and    r3,$t7,STORE_MASK
