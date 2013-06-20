@@ -1277,7 +1277,7 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation,
   llvm::MemoryBuffer *Buffer = 0;
   std::string MainFilePath(FrontendOpts.Inputs[0].getFile());
   uint64_t MainFileID;
-  if (!llvm::sys::fs::GetUniqueID(MainFilePath, MainFileID)) {
+  if (!llvm::sys::fs::getUniqueID(MainFilePath, MainFileID)) {
     // Check whether there is a file-file remapping of the main file
     for (PreprocessorOptions::remapped_file_iterator
           M = PreprocessorOpts.remapped_file_begin(),
@@ -1286,7 +1286,7 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation,
          ++M) {
       std::string MPath(M->first);
       uint64_t MID;
-      if (!llvm::sys::fs::GetUniqueID(MPath, MID)) {
+      if (!llvm::sys::fs::getUniqueID(MPath, MID)) {
         if (MainFileID == MID) {
           // We found a remapping. Try to load the resulting, remapped source.
           if (CreatedBuffer) {
@@ -1312,7 +1312,7 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation,
          ++M) {
       std::string MPath(M->first);
       uint64_t MID;
-      if (!llvm::sys::fs::GetUniqueID(MPath, MID)) {
+      if (!llvm::sys::fs::getUniqueID(MPath, MID)) {
         if (MainFileID == MID) {
           // We found a remapping.
           if (CreatedBuffer) {
@@ -2484,10 +2484,10 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
     std::string CompleteFilePath(File);
     uint64_t CompleteFileID;
 
-    if (!llvm::sys::fs::GetUniqueID(CompleteFilePath, CompleteFileID)) {
+    if (!llvm::sys::fs::getUniqueID(CompleteFilePath, CompleteFileID)) {
       std::string MainPath(OriginalSourceFile);
       uint64_t MainID;
-      if (!llvm::sys::fs::GetUniqueID(MainPath, MainID)) {
+      if (!llvm::sys::fs::getUniqueID(MainPath, MainID)) {
         if (CompleteFileID == MainID && Line > 1)
           OverrideMainBuffer
             = getMainBufferWithPrecompiledPreamble(*CCInvocation, false, 
