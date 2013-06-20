@@ -204,6 +204,28 @@ const internal::VariadicDynCastAllOfMatcher<
   Decl,
   ClassTemplateSpecializationDecl> classTemplateSpecializationDecl;
 
+/// \brief Matches declarator declarations (field, variable, function
+/// and non-type template parameter declarations).
+///
+/// Given
+/// \code
+///   class X { int y; };
+/// \endcode
+/// declaratorDecl()
+///   matches \c int y.
+const internal::VariadicDynCastAllOfMatcher<Decl, DeclaratorDecl>
+    declaratorDecl;
+
+/// \brief Matches parameter variable declarations.
+///
+/// Given
+/// \code
+///   void f(int x);
+/// \endcode
+/// parmVarDecl()
+///   matches \c int x.
+const internal::VariadicDynCastAllOfMatcher<Decl, ParmVarDecl> parmVarDecl;
+
 /// \brief Matches C++ access specifier declarations.
 ///
 /// Given
@@ -1792,6 +1814,22 @@ inline internal::PolymorphicMatcherWithParam1<
   internal::Matcher<QualType> >
 hasType(const internal::Matcher<Decl> &InnerMatcher) {
   return hasType(qualType(hasDeclaration(InnerMatcher)));
+}
+
+/// \brief Matches if the type location of the declarator decl's type matches
+/// the inner matcher.
+///
+/// Given
+/// \code
+///   int x;
+/// \endcode
+/// declaratorDecl(hasTypeLoc(loc(asString("int"))))
+///   matches int x
+AST_MATCHER_P(DeclaratorDecl, hasTypeLoc, internal::Matcher<TypeLoc>, Inner) {
+  if (!Node.getTypeSourceInfo())
+    // This happens for example for implicit destructors.
+    return false;
+  return Inner.matches(Node.getTypeSourceInfo()->getTypeLoc(), Finder, Builder);
 }
 
 /// \brief Matches if the matched type is represented by the given string.

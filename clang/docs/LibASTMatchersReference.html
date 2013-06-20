@@ -134,6 +134,17 @@ Examples matches X, C, and the friend declaration inside C;
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('declaratorDecl0')"><a name="declaratorDecl0Anchor">declaratorDecl</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1DeclaratorDecl.html">DeclaratorDecl</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="declaratorDecl0"><pre>Matches declarator declarations (field, variable, function
+and non-type template parameter declarations).
+
+Given
+  class X { int y; };
+declaratorDecl()
+  matches int y.
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('destructorDecl0')"><a name="destructorDecl0Anchor">destructorDecl</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXDestructorDecl.html">CXXDestructorDecl</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="destructorDecl0"><pre>Matches explicit C++ destructor declarations.
 
@@ -220,6 +231,16 @@ Given
   namespace test {}
 namespaceDecl()
   matches "namespace {}" and "namespace test {}"
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('parmVarDecl0')"><a name="parmVarDecl0Anchor">parmVarDecl</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ParmVarDecl.html">ParmVarDecl</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="parmVarDecl0"><pre>Matches parameter variable declarations.
+
+Given
+  void f(int x);
+parmVarDecl()
+  matches int x.
 </pre></td></tr>
 
 
@@ -2509,6 +2530,11 @@ callExpr(hasAnyArgument(declRefExpr()))
   matches x(1, y, 42)
 with hasAnyArgument(...)
   matching y
+
+FIXME: Currently this will ignore parentheses and implicit casts on
+the argument before applying the inner matcher. We'll want to remove
+this to allow for greater control by the user once ignoreImplicit()
+has been implemented.
 </pre></td></tr>
 
 
@@ -2716,6 +2742,17 @@ Given
   int c;
 declStmt(hasSingleDecl(anything()))
   matches 'int c;' but not 'int a, b;'.
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1DeclaratorDecl.html">DeclaratorDecl</a>&gt;</td><td class="name" onclick="toggle('hasTypeLoc0')"><a name="hasTypeLoc0Anchor">hasTypeLoc</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TypeLoc.html">TypeLoc</a>&gt; Inner</td></tr>
+<tr><td colspan="4" class="doc" id="hasTypeLoc0"><pre>Matches if the type location of the declarator decl's type matches
+the inner matcher.
+
+Given
+  int x;
+declaratorDecl(hasTypeLoc(loc(asString("int"))))
+  matches int x
 </pre></td></tr>
 
 

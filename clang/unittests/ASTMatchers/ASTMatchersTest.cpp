@@ -912,6 +912,15 @@ TEST(HasType, TakesDeclMatcherAndMatchesValueDecl) {
       notMatches("class X {}; void y() { X *x; }", varDecl(hasType(ClassX))));
 }
 
+TEST(HasTypeLoc, MatchesDeclaratorDecls) {
+  EXPECT_TRUE(matches("int x;",
+                      varDecl(hasName("x"), hasTypeLoc(loc(asString("int"))))));
+
+  // Make sure we don't crash on implicit constructors.
+  EXPECT_TRUE(notMatches("class X {}; X x;",
+                         declaratorDecl(hasTypeLoc(loc(asString("int"))))));
+}
+
 TEST(Matcher, Call) {
   // FIXME: Do we want to overload Call() to directly take
   // Matcher<Decl>, too?
@@ -1450,6 +1459,16 @@ TEST(Matcher, MatchesClassTemplateSpecialization) {
                       classTemplateSpecializationDecl()));
   EXPECT_TRUE(notMatches("template<typename T> struct A {};",
                          classTemplateSpecializationDecl()));
+}
+
+TEST(DeclaratorDecl, MatchesDeclaratorDecls) {
+  EXPECT_TRUE(matches("int x;", declaratorDecl()));
+  EXPECT_TRUE(notMatches("class A {};", declaratorDecl()));
+}
+
+TEST(ParmVarDecl, MatchesParmVars) {
+  EXPECT_TRUE(matches("void f(int x);", parmVarDecl()));
+  EXPECT_TRUE(notMatches("void f();", parmVarDecl()));
 }
 
 TEST(Matcher, MatchesTypeTemplateArgument) {
