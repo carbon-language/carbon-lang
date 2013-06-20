@@ -43,10 +43,10 @@ public:
   }
 
   /// \brief Returns \c true if \c this and \c Other represent the same kind.
-  bool isSame(ASTNodeKind Other);
+  bool isSame(ASTNodeKind Other) const;
 
   /// \brief Returns \c true if \c this is a base kind of (or same as) \c Other
-  bool isBaseOf(ASTNodeKind Other);
+  bool isBaseOf(ASTNodeKind Other) const;
 
   /// \brief String representation of the kind.
   StringRef asStringRef() const;
@@ -144,8 +144,8 @@ public:
   /// convertible to \c T.
   ///
   /// For types that have identity via their pointer in the AST
-  /// (like \c Stmt and \c Decl) the returned pointer points to the
-  /// referenced AST node.
+  /// (like \c Stmt, \c Decl, \c Type and \c NestedNameSpecifier) the returned
+  /// pointer points to the referenced AST node.
   /// For other types (like \c QualType) the value is stored directly
   /// in the \c DynTypedNode, and the returned pointer points at
   /// the storage inside DynTypedNode. For those nodes, do not
@@ -167,12 +167,20 @@ public:
   ///
   /// Supports comparison of nodes that support memoization.
   /// FIXME: Implement comparsion for other node types (currently
-  /// only Stmt and Decl return memoization data).
+  /// only Stmt, Decl, Type and NestedNameSpecifier return memoization data).
   bool operator<(const DynTypedNode &Other) const {
     assert(getMemoizationData() && Other.getMemoizationData());
     return getMemoizationData() < Other.getMemoizationData();
   }
   bool operator==(const DynTypedNode &Other) const {
+    // Nodes with different types cannot be equal.
+    if (!NodeKind.isSame(Other.NodeKind))
+      return false;
+
+    // FIXME: Implement for other types.
+    if (ASTNodeKind::getFromNodeKind<QualType>().isBaseOf(NodeKind)) {
+      return *get<QualType>() == *Other.get<QualType>();
+    }
     assert(getMemoizationData() && Other.getMemoizationData());
     return getMemoizationData() == Other.getMemoizationData();
   }
@@ -189,13 +197,14 @@ private:
 
   /// \brief Stores the data of the node.
   ///
-  /// Note that we can store \c Decls and \c Stmts by pointer as they are
-  /// guaranteed to be unique pointers pointing to dedicated storage in the
-  /// AST. \c QualTypes on the other hand do not have storage or unique
-  /// pointers and thus need to be stored by value.
-  llvm::AlignedCharArrayUnion<Decl *, Stmt *, NestedNameSpecifier *,
-                              NestedNameSpecifierLoc, QualType, Type *,
-                              TypeLoc> Storage;
+  /// Note that we can store \c Decls, \c Stmts, \c Types and
+  /// \c NestedNameSpecifiers by pointer as they are guaranteed to be unique
+  /// pointers pointing to dedicated storage in the AST. \c QualTypes on the
+  /// other hand do not have storage or unique pointers and thus need to be
+  /// stored by value.
+  llvm::AlignedCharArrayUnion<Decl *, Stmt *, Type *, NestedNameSpecifier *,
+                              NestedNameSpecifierLoc, QualType, TypeLoc>
+      Storage;
 };
 
 // FIXME: Pull out abstraction for the following.
@@ -311,6 +320,10 @@ inline const void *DynTypedNode::getMemoizationData() const {
     return BaseConverter<Decl>::get(NodeKind, Storage.buffer);
   } else if (ASTNodeKind::getFromNodeKind<Stmt>().isBaseOf(NodeKind)) {
     return BaseConverter<Stmt>::get(NodeKind, Storage.buffer);
+  } else if (ASTNodeKind::getFromNodeKind<Type>().isBaseOf(NodeKind)) {
+    return BaseConverter<Type>::get(NodeKind, Storage.buffer);
+  } else if (ASTNodeKind::getFromNodeKind<NestedNameSpecifier>().isBaseOf(NodeKind)) {
+    return BaseConverter<NestedNameSpecifier>::get(NodeKind, Storage.buffer);
   }
   return NULL;
 }

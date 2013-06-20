@@ -2294,6 +2294,55 @@ AST_POLYMORPHIC_MATCHER_P(hasCondition, internal::Matcher<Expr>,
           InnerMatcher.matches(*Condition, Finder, Builder));
 }
 
+namespace internal {
+struct NotEqualsBoundNodePredicate {
+  bool operator()(const internal::BoundNodesMap &Nodes) const {
+    return Nodes.getNode(ID) != Node;
+  }
+  std::string ID;
+  ast_type_traits::DynTypedNode Node;
+};
+} // namespace internal
+
+/// \brief Matches if a node equals a previously bound node.
+///
+/// Matches a node if it equals the node previously bound to \p ID.
+///
+/// Given
+/// \code
+///   class X { int a; int b; };
+/// \endcode
+/// recordDecl(
+///     has(fieldDecl(hasName("a"), hasType(type().bind("t")))),
+///     has(fieldDecl(hasName("b"), hasType(type(equalsBoundNode("t"))))))
+///   matches the class \c X, as \c a and \c b have the same type.
+///
+/// Note that when multiple matches are involved via \c forEach* matchers,
+/// \c equalsBoundNodes acts as a filter.
+/// For example:
+/// compoundStmt(
+///     forEachDescendant(varDecl().bind("d")),
+///     forEachDescendant(declRefExpr(to(decl(equalsBoundNode("d"))))))
+/// will trigger a match for each combination of variable declaration
+/// and reference to that variable declaration within a compound statement.
+AST_POLYMORPHIC_MATCHER_P(equalsBoundNode, std::string, ID) {
+  // FIXME: Figure out whether it makes sense to allow this
+  // on any other node types.
+  // For *Loc it probably does not make sense, as those seem
+  // unique. For NestedNameSepcifier it might make sense, as
+  // those also have pointer identity, but I'm not sure whether
+  // they're ever reused.
+  TOOLING_COMPILE_ASSERT((llvm::is_base_of<Stmt, NodeType>::value ||
+                          llvm::is_base_of<Decl, NodeType>::value ||
+                          llvm::is_base_of<Type, NodeType>::value ||
+                          llvm::is_base_of<QualType, NodeType>::value),
+                         equals_bound_node_requires_non_unique_node_class);
+  internal::NotEqualsBoundNodePredicate Predicate;
+  Predicate.ID = ID;
+  Predicate.Node = ast_type_traits::DynTypedNode::create(Node);
+  return Builder->removeBindings(Predicate);
+}
+
 /// \brief Matches the condition variable statement in an if statement.
 ///
 /// Given

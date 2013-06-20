@@ -84,6 +84,14 @@ public:
     return It->second.get<T>();
   }
 
+  ast_type_traits::DynTypedNode getNode(StringRef ID) const {
+    IDToNodeMap::const_iterator It = NodeMap.find(ID);
+    if (It == NodeMap.end()) {
+      return ast_type_traits::DynTypedNode();
+    }
+    return It->second;
+  }
+
   /// \brief Imposes an order on BoundNodesMaps.
   bool operator<(const BoundNodesMap &Other) const {
     return NodeMap < Other.NodeMap;
@@ -133,6 +141,13 @@ public:
   ///
   /// The ownership of 'ResultVisitor' remains at the caller.
   void visitMatches(Visitor* ResultVisitor);
+
+  template <typename ExcludePredicate>
+  bool removeBindings(const ExcludePredicate &Predicate) {
+    Bindings.erase(std::remove_if(Bindings.begin(), Bindings.end(), Predicate),
+                   Bindings.end());
+    return !Bindings.empty();
+  }
 
   /// \brief Imposes an order on BoundNodesTreeBuilders.
   bool operator<(const BoundNodesTreeBuilder &Other) const {
