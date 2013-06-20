@@ -196,16 +196,16 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_ARM_TARGET1: return "(target1)";
   case VK_ARM_TARGET2: return "(target2)";
   case VK_ARM_PREL31: return "(prel31)";
-  case VK_PPC_TOC: return "tocbase";
-  case VK_PPC_TOC_ENTRY: return "toc";
   case VK_PPC_ADDR16_HA: return "ha";
   case VK_PPC_ADDR16_LO: return "l";
+  case VK_PPC_TOCBASE: return "tocbase";
+  case VK_PPC_TOC16: return "toc";
+  case VK_PPC_TOC16_HA: return "toc@ha";
+  case VK_PPC_TOC16_LO: return "toc@l";
   case VK_PPC_TPREL16_HA: return "tprel@ha";
   case VK_PPC_TPREL16_LO: return "tprel@l";
   case VK_PPC_DTPREL16_HA: return "dtprel@ha";
   case VK_PPC_DTPREL16_LO: return "dtprel@l";
-  case VK_PPC_TOC16_HA: return "toc@ha";
-  case VK_PPC_TOC16_LO: return "toc@l";
   case VK_PPC_GOT_TPREL16_HA: return "got@tprel@ha";
   case VK_PPC_GOT_TPREL16_LO: return "got@tprel@l";
   case VK_PPC_TLS: return "tls";
@@ -283,10 +283,10 @@ MCSymbolRefExpr::getVariantKindForName(StringRef Name) {
     .Case("ha", VK_PPC_ADDR16_HA)
     .Case("L", VK_PPC_ADDR16_LO)
     .Case("l", VK_PPC_ADDR16_LO)
-    .Case("TOCBASE", VK_PPC_TOC)
-    .Case("tocbase", VK_PPC_TOC)
-    .Case("TOC", VK_PPC_TOC_ENTRY)
-    .Case("toc", VK_PPC_TOC_ENTRY)
+    .Case("TOCBASE", VK_PPC_TOCBASE)
+    .Case("tocbase", VK_PPC_TOCBASE)
+    .Case("TOC", VK_PPC_TOC16)
+    .Case("toc", VK_PPC_TOC16)
     .Case("TOC@HA", VK_PPC_TOC16_HA)
     .Case("toc@ha", VK_PPC_TOC16_HA)
     .Case("TOC@L", VK_PPC_TOC16_LO)

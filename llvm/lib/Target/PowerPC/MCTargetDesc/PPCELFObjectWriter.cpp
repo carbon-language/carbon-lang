@@ -93,7 +93,7 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
       case MCSymbolRefExpr::VK_PPC_ADDR16_HA:
         Type = ELF::R_PPC_ADDR16_HA;
         break;
-      case MCSymbolRefExpr::VK_PPC_TOC_ENTRY:
+      case MCSymbolRefExpr::VK_PPC_TOC16:
         Type = ELF::R_PPC64_TOC16;
         break;
       case MCSymbolRefExpr::VK_PPC_TOC16_LO:
@@ -140,7 +140,7 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
       case MCSymbolRefExpr::VK_PPC_ADDR16_LO:
         Type = ELF::R_PPC64_ADDR16_LO_DS;
         break;
-      case MCSymbolRefExpr::VK_PPC_TOC_ENTRY:
+      case MCSymbolRefExpr::VK_PPC_TOC16:
         Type = ELF::R_PPC64_TOC16_DS;
 	break;
       case MCSymbolRefExpr::VK_PPC_TOC16_LO:
@@ -168,7 +168,7 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
     case FK_Data_8:
       switch (Modifier) {
       default: llvm_unreachable("Unsupported Modifier");
-      case MCSymbolRefExpr::VK_PPC_TOC:
+      case MCSymbolRefExpr::VK_PPC_TOCBASE:
         Type = ELF::R_PPC64_TOC;
         break;
       case MCSymbolRefExpr::VK_None:

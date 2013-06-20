@@ -171,16 +171,16 @@ public:
     VK_ARM_TARGET2,
     VK_ARM_PREL31,
 
-    VK_PPC_TOC,          // TOC base
-    VK_PPC_TOC_ENTRY,    // TOC entry
-    VK_PPC_ADDR16_HA,    // symbol@ha
-    VK_PPC_ADDR16_LO,    // symbol@l
-    VK_PPC_TPREL16_HA,   // symbol@tprel@ha
-    VK_PPC_TPREL16_LO,   // symbol@tprel@l
-    VK_PPC_DTPREL16_HA,  // symbol@dtprel@ha
-    VK_PPC_DTPREL16_LO,  // symbol@dtprel@l
-    VK_PPC_TOC16_HA,     // symbol@toc@ha
-    VK_PPC_TOC16_LO,     // symbol@toc@l
+    VK_PPC_ADDR16_HA,      // symbol@ha
+    VK_PPC_ADDR16_LO,      // symbol@l
+    VK_PPC_TOCBASE,        // symbol@tocbase
+    VK_PPC_TOC16,          // symbol@toc
+    VK_PPC_TOC16_HA,       // symbol@toc@ha
+    VK_PPC_TOC16_LO,       // symbol@toc@l
+    VK_PPC_TPREL16_HA,     // symbol@tprel@ha
+    VK_PPC_TPREL16_LO,     // symbol@tprel@l
+    VK_PPC_DTPREL16_HA,    // symbol@dtprel@ha
+    VK_PPC_DTPREL16_LO,    // symbol@dtprel@l
     VK_PPC_GOT_TPREL16_HA, // symbol@got@tprel@ha
     VK_PPC_GOT_TPREL16_LO, // symbol@got@tprel@l
     VK_PPC_TLS,            // symbol@tls
