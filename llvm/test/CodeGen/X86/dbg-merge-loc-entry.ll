@@ -1,18 +1,12 @@
-; RUN: llc < %s | FileCheck %s
-; RUN: llc < %s -regalloc=basic | FileCheck %s
+; RUN: llc < %s -o %t -filetype=obj
+; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
+; RUN: llc < %s -o %t -filetype=obj -regalloc=basic
+; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
+
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-apple-darwin8"
 
-;CHECK: Ldebug_loc0:
-;CHECK-NEXT:	.quad	Lfunc_begin0
-;CHECK-NEXT:	.quad	L
-;CHECK-NEXT: Lset{{.*}} = Ltmp{{.*}}-Ltmp{{.*}}          ## Loc expr size
-;CHECK-NEXT:    .short  Lset
-;CHECK-NEXT: Ltmp
-;CHECK-NEXT:	.byte	85                      ## DW_OP_reg5
-;CHECK-NEXT: Ltmp
-;CHECK-NEXT:	.quad	0
-;CHECK-NEXT:	.quad	0
+;CHECK: DW_AT_location{{.*}}(<0x01> 55 )
 
 %0 = type { i64, i1 }
 

@@ -3,14 +3,15 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin -regalloc=basic %s -filetype=obj -o %t
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 
-;CHECK: DW_TAG_inlined_subroutine [12]
+;CHECK: DW_TAG_inlined_subroutine
 ;CHECK-NEXT: DW_AT_abstract_origin
 ;CHECK-NEXT: DW_AT_low_pc
 ;CHECK-NEXT: DW_AT_high_pc
 ;CHECK-NEXT: DW_AT_call_file
 ;CHECK-NEXT: DW_AT_call_line
 
-;CHECK: DW_TAG_formal_parameter [9]
+;CHECK: DW_TAG_formal_parameter
+;CHECK: DW_TAG_formal_parameter
 ;CHECK-NEXT: DW_AT_name [DW_FORM_strp] ( .debug_str[0x00000055] = "sp")
 
 %struct.S1 = type { float*, i32 }

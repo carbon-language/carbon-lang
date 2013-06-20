@@ -348,7 +348,8 @@ void CompileUnit::addVariableAddress(DbgVariable *&DV, DIE *Die,
   else if (DV->isBlockByrefVariable())
     addBlockByrefAddress(DV, Die, dwarf::DW_AT_location, Location);
   else
-    addAddress(Die, dwarf::DW_AT_location, Location);
+    addAddress(Die, dwarf::DW_AT_location, Location,
+               DV->getVariable().isIndirect());
 }
 
 /// addRegisterOp - Add register operand.
@@ -384,13 +385,17 @@ void CompileUnit::addRegisterOffset(DIE *TheDie, unsigned Reg,
 /// addAddress - Add an address attribute to a die based on the location
 /// provided.
 void CompileUnit::addAddress(DIE *Die, unsigned Attribute,
-                             const MachineLocation &Location) {
+                             const MachineLocation &Location, bool Indirect) {
   DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
 
-  if (Location.isReg())
+  if (Location.isReg() && !Indirect)
     addRegisterOp(Block, Location.getReg());
-  else
+  else {
     addRegisterOffset(Block, Location.getReg(), Location.getOffset());
+    if (Indirect && !Location.isReg()) {
+      addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
+    }
+  }
 
   // Now attach the location information to the DIE.
   addBlock(Die, Attribute, 0, Block);

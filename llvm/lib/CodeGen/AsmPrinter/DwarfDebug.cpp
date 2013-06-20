@@ -1519,11 +1519,9 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
                 DEBUG(dbgs() << "Dropping DBG_VALUE for empty range:\n"
                       << "\t" << *Prev << "\n");
                 History.pop_back();
-              }
-              else {
+              } else if (llvm::next(PrevMBB) != PrevMBB->getParent()->end())
                 // Terminate after LastMI.
                 History.push_back(LastMI);
-              }
             }
           }
         }
@@ -1592,7 +1590,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
       if (LastMI == PrevMBB->end())
         // Drop DBG_VALUE for empty range.
         History.pop_back();
-      else {
+      else if (PrevMBB != &PrevMBB->getParent()->back()) {
         // Terminate after LastMI.
         History.push_back(LastMI);
       }

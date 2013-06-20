@@ -257,7 +257,7 @@ public:
   /// addAddress - Add an address attribute to a die based on the location
   /// provided.
   void addAddress(DIE *Die, unsigned Attribute,
-                  const MachineLocation &Location);
+                  const MachineLocation &Location, bool Indirect = false);
 
   /// addConstantValue - Add constant value entry in variable DIE.
   bool addConstantValue(DIE *Die, const MachineOperand &MO, DIType Ty);
