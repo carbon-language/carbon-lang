@@ -37,6 +37,8 @@ void basic_bad()
   (void)dynamic_cast<Incomplete*>((A*)0); // expected-error {{'Incomplete' is an incomplete type}}
   // incomplete -> ptr
   (void)dynamic_cast<A*>((Incomplete*)0); // expected-error {{'Incomplete' is an incomplete type}}
+  // rvalue -> lvalue
+  (void)dynamic_cast<A&>(A()); // expected-error {{dynamic_cast from rvalue to reference type 'A &'}}
 }
 
 void same()
