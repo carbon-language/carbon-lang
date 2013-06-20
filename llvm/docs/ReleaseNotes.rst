@@ -46,6 +46,10 @@ Non-comprehensive list of changes in this release
 
 * The R600 backend is not marked experimental anymore and is built by default.
 
+* APFloat::isNormal() was renamed to APFloat::isFiniteNonZero() and
+  APFloat::isIEEENormal() was renamed to APFloat::isNormal(). This ensures that
+  APFloat::isNormal() conforms to IEEE-754R-2008.
+
 * ... next change ...
 
 .. NOTE
