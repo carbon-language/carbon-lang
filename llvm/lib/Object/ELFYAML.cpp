@@ -315,6 +315,7 @@ void MappingTraits<ELFYAML::Symbol>::mapping(IO &IO, ELFYAML::Symbol &Symbol) {
   IO.mapOptional("Name", Symbol.Name, StringRef());
   IO.mapOptional("Binding", Symbol.Binding, ELFYAML::ELF_STB(0));
   IO.mapOptional("Type", Symbol.Type, ELFYAML::ELF_STT(0));
+  IO.mapOptional("Section", Symbol.Section, StringRef());
 }
 
 void MappingTraits<ELFYAML::Section>::mapping(IO &IO,

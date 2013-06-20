@@ -15,6 +15,7 @@ Sections:
     - Name: main
       Binding: STB_GLOBAL
       Type: STT_FUNC
+      Section: .text
 
 # CHECK:      Symbols [
 # CHECK-NEXT:   Symbol {
@@ -23,3 +24,4 @@ Sections:
 # CHECK-NEXT:     Name: main
 # CHECK:          Binding: Global
 # CHECK-NEXT:     Type: Function
+# CHECK:          Section: .text

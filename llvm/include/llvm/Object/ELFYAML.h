@@ -57,6 +57,7 @@ struct Symbol {
   StringRef Name;
   ELF_STB Binding;
   ELF_STT Type;
+  StringRef Section;
 };
 struct Section {
   StringRef Name;
