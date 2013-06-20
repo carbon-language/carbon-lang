@@ -184,7 +184,10 @@ void ASTDeclWriter::VisitTypeDecl(TypeDecl *D) {
 void ASTDeclWriter::VisitTypedefNameDecl(TypedefNameDecl *D) {
   VisitRedeclarable(D);
   VisitTypeDecl(D);
-  Writer.AddTypeSourceInfo(D->getTypeSourceInfo(), Record);  
+  Writer.AddTypeSourceInfo(D->getTypeSourceInfo(), Record);
+  Record.push_back(D->isModed());
+  if (D->isModed())
+    Writer.AddTypeRef(D->getUnderlyingType(), Record);
 }
 
 void ASTDeclWriter::VisitTypedefDecl(TypedefDecl *D) {

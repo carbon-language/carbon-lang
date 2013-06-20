@@ -337,12 +337,14 @@ void DeclPrinter::VisitTypedefDecl(TypedefDecl *D) {
     if (D->isModulePrivate())
       Out << "__module_private__ ";
   }
-  D->getUnderlyingType().print(Out, Policy, D->getName());
+  D->getTypeSourceInfo()->getType().print(Out, Policy, D->getName());
   prettyPrintAttributes(D);
 }
 
 void DeclPrinter::VisitTypeAliasDecl(TypeAliasDecl *D) {
-  Out << "using " << *D << " = " << D->getUnderlyingType().getAsString(Policy);
+  Out << "using " << *D;
+  prettyPrintAttributes(D);
+  Out << " = " << D->getTypeSourceInfo()->getType().getAsString(Policy);
 }
 
 void DeclPrinter::VisitEnumDecl(EnumDecl *D) {
@@ -665,9 +667,9 @@ void DeclPrinter::VisitVarDecl(VarDecl *D) {
       Out << "__module_private__ ";
   }
 
-  QualType T = D->getASTContext().getUnqualifiedObjCPointerType(D->getType());
-  if (ParmVarDecl *Parm = dyn_cast<ParmVarDecl>(D))
-    T = Parm->getOriginalType();
+  QualType T = D->getTypeSourceInfo()
+    ? D->getTypeSourceInfo()->getType()
+    : D->getASTContext().getUnqualifiedObjCPointerType(D->getType());
   T.print(Out, Policy, D->getName());
   Expr *Init = D->getInit();
   if (!Policy.SuppressInitializers && Init) {

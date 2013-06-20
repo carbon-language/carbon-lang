@@ -441,7 +441,6 @@ def Mips16 : InheritableAttr {
 def Mode : Attr {
   let Spellings = [GNU<"mode">, CXX11<"gnu", "mode">];
   let Args = [IdentifierArgument<"Mode">];
-  let ASTNode = 0;
 }
 
 def Naked : InheritableAttr {

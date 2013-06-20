@@ -75,3 +75,6 @@ template <typename T> struct S {
 // CHECK: static int f() __attribute__((pure))
 // CHECK: static int g() {{\[}}[gnu::pure]]
 template struct S<int>;
+
+// CHECK: using Small2 {{\[}}[gnu::mode(byte)]] = int;
+using Small2 [[gnu::mode(byte)]] = int;

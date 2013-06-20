@@ -417,8 +417,12 @@ void ASTDeclReader::VisitTypeDecl(TypeDecl *TD) {
 void ASTDeclReader::VisitTypedefNameDecl(TypedefNameDecl *TD) {
   RedeclarableResult Redecl = VisitRedeclarable(TD);
   VisitTypeDecl(TD);
-  
-  TD->setTypeSourceInfo(GetTypeSourceInfo(Record, Idx));
+  TypeSourceInfo *TInfo = GetTypeSourceInfo(Record, Idx);
+  if (Record[Idx++]) { // isModed
+    QualType modedT = Reader.readType(F, Record, Idx);
+    TD->setModedTypeSourceInfo(TInfo, modedT);
+  } else
+    TD->setTypeSourceInfo(TInfo);
   mergeRedeclarable(TD, Redecl);
 }
 

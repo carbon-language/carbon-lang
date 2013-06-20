@@ -3740,11 +3740,14 @@ static void handleModeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
 
   // Install the new type.
-  if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
-    // FIXME: preserve existing source info.
-    TD->setTypeSourceInfo(S.Context.getTrivialTypeSourceInfo(NewTy));
-  } else
+  if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D))
+    TD->setModedTypeSourceInfo(TD->getTypeSourceInfo(), NewTy);
+  else
     cast<ValueDecl>(D)->setType(NewTy);
+
+  D->addAttr(::new (S.Context)
+             ModeAttr(Attr.getRange(), S.Context, Name,
+                      Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleNoDebugAttr(Sema &S, Decl *D, const AttributeList &Attr) {

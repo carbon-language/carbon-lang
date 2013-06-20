@@ -2312,14 +2312,14 @@ public:
 /// Base class for declarations which introduce a typedef-name.
 class TypedefNameDecl : public TypeDecl, public Redeclarable<TypedefNameDecl> {
   virtual void anchor();
-  /// UnderlyingType - This is the type the typedef is set to.
-  TypeSourceInfo *TInfo;
+  typedef std::pair<TypeSourceInfo*, QualType> ModedTInfo;
+  llvm::PointerUnion<TypeSourceInfo*, ModedTInfo*> MaybeModedTInfo;
 
 protected:
   TypedefNameDecl(Kind DK, DeclContext *DC, SourceLocation StartLoc,
                   SourceLocation IdLoc, IdentifierInfo *Id,
                   TypeSourceInfo *TInfo)
-    : TypeDecl(DK, DC, IdLoc, Id, StartLoc), TInfo(TInfo) {}
+    : TypeDecl(DK, DC, IdLoc, Id, StartLoc), MaybeModedTInfo(TInfo) {}
 
   typedef Redeclarable<TypedefNameDecl> redeclarable_base;
   virtual TypedefNameDecl *getNextRedeclaration() {
@@ -2339,8 +2339,23 @@ public:
   using redeclarable_base::getPreviousDecl;
   using redeclarable_base::getMostRecentDecl;
 
+  bool isModed() const { return MaybeModedTInfo.is<ModedTInfo*>(); }
+
   TypeSourceInfo *getTypeSourceInfo() const {
-    return TInfo;
+    return isModed()
+      ? MaybeModedTInfo.get<ModedTInfo*>()->first
+      : MaybeModedTInfo.get<TypeSourceInfo*>();
+  }
+  QualType getUnderlyingType() const {
+    return isModed()
+      ? MaybeModedTInfo.get<ModedTInfo*>()->second
+      : MaybeModedTInfo.get<TypeSourceInfo*>()->getType();
+  }
+  void setTypeSourceInfo(TypeSourceInfo *newType) {
+    MaybeModedTInfo = newType;
+  }
+  void setModedTypeSourceInfo(TypeSourceInfo *unmodedTSI, QualType modedTy) {
+    MaybeModedTInfo = new (getASTContext()) ModedTInfo(unmodedTSI, modedTy);
   }
 
   /// Retrieves the canonical declaration of this typedef-name.
@@ -2349,13 +2364,6 @@ public:
   }
   const TypedefNameDecl *getCanonicalDecl() const {
     return getFirstDeclaration();
-  }
-
-  QualType getUnderlyingType() const {
-    return TInfo->getType();
-  }
-  void setTypeSourceInfo(TypeSourceInfo *newType) {
-    TInfo = newType;
   }
 
   // Implement isa/cast/dyncast/etc.
