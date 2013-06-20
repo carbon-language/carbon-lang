@@ -128,6 +128,16 @@ namespace llvm {
 namespace sys  {
 namespace fs {
 
+TimeValue file_status::getLastModificationTime() {
+  ULARGE_INTEGER UI;
+  UI.LowPart = LastWriteTimeLow;
+  UI.HighPart = LastWriteTimeHigh;
+
+  TimeValue Ret;
+  Ret.fromWin32Time(UI.QuadPart);
+  return Ret;
+}
+
 error_code current_path(SmallVectorImpl<char> &result) {
   SmallVector<wchar_t, 128> cur_path;
   cur_path.reserve(128);

@@ -33,6 +33,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/TimeValue.h"
 #include "llvm/Support/system_error.h"
 #include <ctime>
 #include <iterator>
@@ -151,6 +152,7 @@ class file_status
   #if defined(LLVM_ON_UNIX)
   dev_t fs_st_dev;
   ino_t fs_st_ino;
+  time_t fs_st_mtime;
   #elif defined (LLVM_ON_WIN32)
   uint32_t LastWriteTimeHigh;
   uint32_t LastWriteTimeLow;
@@ -177,6 +179,7 @@ public:
   // setters
   void type(file_type v) { Type = v; }
   void permissions(perms p) { Perms = p; }
+  TimeValue getLastModificationTime();
 };
 
 /// file_magic - An "enum class" enumeration of file types based on magic (the first

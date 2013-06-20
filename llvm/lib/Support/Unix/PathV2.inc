@@ -110,6 +110,12 @@ namespace llvm {
 namespace sys  {
 namespace fs {
 
+TimeValue file_status::getLastModificationTime() {
+  TimeValue Ret;
+  Ret.fromEpochTime(fs_st_mtime);
+  return Ret;
+}
+
 error_code current_path(SmallVectorImpl<char> &result) {
 #ifdef MAXPATHLEN
   result.reserve(MAXPATHLEN);
@@ -401,6 +407,7 @@ error_code status(const Twine &path, file_status &result) {
 
   result.fs_st_dev = status.st_dev;
   result.fs_st_ino = status.st_ino;
+  result.fs_st_mtime = status.st_mtime;
 
   return error_code::success();
 }

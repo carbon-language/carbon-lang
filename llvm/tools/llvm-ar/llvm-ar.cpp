@@ -583,15 +583,14 @@ doReplaceOrInsert(std::string* ErrMsg) {
     }
 
     if (found != remaining.end()) {
-      std::string Err;
-      sys::PathWithStatus PwS(*found);
-      const sys::FileStatus *si = PwS.getFileStatus(false, &Err);
-      if (!si)
+      sys::fs::file_status Status;
+      error_code EC = sys::fs::status(*found, Status);
+      if (EC)
         return true;
-      if (!si->isDir) {
+      if (!sys::fs::is_directory(Status)) {
         if (OnlyUpdate) {
           // Replace the item only if it is newer.
-          if (si->modTime > I->getModTime())
+          if (Status.getLastModificationTime() > I->getModTime())
             if (I->replaceWith(*found, ErrMsg))
               return true;
         } else {
