@@ -64,6 +64,8 @@ New Compiler Flags
 C Language Changes in Clang
 ---------------------------
 
+- Added new checked arithmetic builtins for security critical applications.
+
 C11 Feature Support
 ^^^^^^^^^^^^^^^^^^^
 

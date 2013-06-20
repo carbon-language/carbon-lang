@@ -939,5 +939,25 @@ BUILTIN(__builtin_subc, "UiUiCUiCUiCUi*", "n")
 BUILTIN(__builtin_subcl, "ULiULiCULiCULiCULi*", "n")
 BUILTIN(__builtin_subcll, "ULLiULLiCULLiCULLiCULLi*", "n")
 
+// Checked Arithmetic Builtins for Security.
+BUILTIN(__builtin_uadd_overflow, "bUiCUiCUi*", "n")
+BUILTIN(__builtin_uaddl_overflow, "bULiCULiCULi*", "n")
+BUILTIN(__builtin_uaddll_overflow, "bULLiCULLiCULLi*", "n")
+BUILTIN(__builtin_usub_overflow, "bUiCUiCUi*", "n")
+BUILTIN(__builtin_usubl_overflow, "bULiCULiCULi*", "n")
+BUILTIN(__builtin_usubll_overflow, "bULLiCULLiCULLi*", "n")
+BUILTIN(__builtin_umul_overflow, "bUiCUiCUi*", "n")
+BUILTIN(__builtin_umull_overflow, "bULiCULiCULi*", "n")
+BUILTIN(__builtin_umulll_overflow, "bULLiCULLiCULLi*", "n")
+BUILTIN(__builtin_sadd_overflow, "bSiCSiCSi*", "n")
+BUILTIN(__builtin_saddl_overflow, "bSLiCSLiCSLi*", "n")
+BUILTIN(__builtin_saddll_overflow, "bSLLiCSLLiCSLLi*", "n")
+BUILTIN(__builtin_ssub_overflow, "bSiCSiCSi*", "n")
+BUILTIN(__builtin_ssubl_overflow, "bSLiCSLiCSLi*", "n")
+BUILTIN(__builtin_ssubll_overflow, "bSLLiCSLLiCSLLi*", "n")
+BUILTIN(__builtin_smul_overflow, "bSiCSiCSi*", "n")
+BUILTIN(__builtin_smull_overflow, "bSLiCSLiCSLi*", "n")
+BUILTIN(__builtin_smulll_overflow, "bSLLiCSLLiCSLLi*", "n")
+
 #undef BUILTIN
 #undef LIBBUILTIN
