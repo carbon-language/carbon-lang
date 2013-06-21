@@ -57,7 +57,7 @@ struct B
 
 struct C {
   C &getC() {
-    return makeAC; // expected-error-re{{reference to non-static member function must be called$}}
+    return makeAC; // expected-error{{reference to non-static member function must be called; did you mean to call it with no arguments?}}
   }
 
   // FIXME: filter by const so we can unambiguously suggest '()' & point to just the one candidate, probably
@@ -69,6 +69,32 @@ struct C {
 
   void g() {
     int (&fp)() = f; // expected-error{{address of overloaded function 'f' does not match required type 'int ()'}}
+  }
+
+  template<typename T>
+  void q1(int); // expected-note{{possible target for call}}
+  template<typename T>
+  void q2(T t = T()); // expected-note{{possible target for call}}
+  template<typename T>
+  void q3(); // expected-note{{possible target for call}}
+  template<typename T1, typename T2>
+  void q4(); // expected-note{{possible target for call}}
+  template<typename T1 = int> // expected-warning{{default template arguments for a function template are a C++11 extension}}
+  void q5(); // expected-note{{possible target for call}}
+
+  void h() {
+    // Do not suggest '()' since an int argument is required
+    q1<int>; // expected-error-re{{reference to non-static member function must be called$}}
+    // Suggest '()' since there's a default value for the only argument & the
+    // type argument is already provided
+    q2<int>; // expected-error{{reference to non-static member function must be called; did you mean to call it with no arguments?}}
+    // Suggest '()' since no arguments are required & the type argument is
+    // already provided
+    q3<int>; // expected-error{{reference to non-static member function must be called; did you mean to call it with no arguments?}}
+    // Do not suggest '()' since another type argument is required
+    q4<int>; // expected-error-re{{reference to non-static member function must be called$}}
+    // Suggest '()' since the type parameter has a default value
+    q5; // expected-error{{reference to non-static member function must be called; did you mean to call it with no arguments?}}
   }
 };
 

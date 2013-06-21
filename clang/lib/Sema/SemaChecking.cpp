@@ -4871,7 +4871,7 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
             << FixItHint::CreateInsertion(E->getExprLoc(), "&");
           QualType ReturnType;
           UnresolvedSet<4> NonTemplateOverloads;
-          S.isExprCallable(*E, ReturnType, NonTemplateOverloads);
+          S.tryExprAsCall(*E, ReturnType, NonTemplateOverloads);
           if (!ReturnType.isNull() 
               && ReturnType->isSpecificBuiltinType(BuiltinType::Bool))
             S.Diag(E->getExprLoc(), diag::note_function_to_bool_call)
