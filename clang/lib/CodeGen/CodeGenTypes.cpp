@@ -260,6 +260,11 @@ void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
   // yet, we'll just do it lazily.
   if (RecordDeclTypes.count(Context.getTagDeclType(RD).getTypePtr()))
     ConvertRecordDeclType(RD);
+
+  // If necessary, provide the full definition of a type only used with a
+  // declaration so far.
+  if (CGDebugInfo *DI = CGM.getModuleDebugInfo())
+    DI->completeFwdDecls(RD);
 }
 
 static llvm::Type *getTypeForFormat(llvm::LLVMContext &VMContext,
