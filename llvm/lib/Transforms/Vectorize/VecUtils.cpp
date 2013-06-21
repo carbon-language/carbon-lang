@@ -141,9 +141,11 @@ bool BoUpSLP::vectorizeStoreChain(ArrayRef<Value *> Chain, int CostThreshold) {
     }
   }
 
-  if (Changed)
-    return true;
+  if (Changed || ChainLen > VF)
+    return Changed;
 
+  // Handle short chains. This helps us catch types such as <3 x float> that
+  // are smaller than vector size.
   int Cost = getTreeCost(Chain);
   if (Cost < CostThreshold) {
     DEBUG(dbgs() << "SLP: Found store chain cost = " << Cost
