@@ -176,7 +176,7 @@ public:
   }
 
   /// file - returns the File that produced/owns this Atom
-  virtual const class File &file() const { return _file; }
+  virtual const File &file() const { return _file; }
 
   /// name - The name of the atom. For a function atom, it is the (mangled)
   /// name of the function.

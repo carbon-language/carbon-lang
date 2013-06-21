@@ -14,6 +14,7 @@
 #include "llvm/ADT/StringSwitch.h"
 
 namespace lld {
+class Atom;
 
 ///
 /// The linker has a Graph Theory model of linking. An object file is seen
@@ -81,11 +82,11 @@ public:
 
   /// If the reference is an edge to another Atom, then this returns the
   /// other Atom.  Otherwise, it returns nullptr.
-  virtual const class Atom * target() const = 0;
+  virtual const Atom *target() const = 0;
 
   /// During linking, the linker may merge graphs which coalesces some nodes
   /// (i.e. Atoms).  To switch the target of a reference, this method is called.
-  virtual void setTarget(const class Atom *) = 0;
+  virtual void setTarget(const Atom *) = 0;
 
   /// Some relocations require a symbol and a value (e.g. foo + 4).
   virtual Addend addend() const = 0;

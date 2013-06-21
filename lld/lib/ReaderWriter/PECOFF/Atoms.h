@@ -60,7 +60,7 @@ public:
   COFFAbsoluteAtom(const File &f, llvm::StringRef n, const coff_symbol *s)
       : _owningFile(f), _name(n), _symbol(s) {}
 
-  virtual const class File &file() const { return _owningFile; }
+  virtual const File &file() const { return _owningFile; }
 
   virtual Scope scope() const {
     if (_symbol->StorageClass == llvm::COFF::IMAGE_SYM_CLASS_STATIC)
@@ -83,7 +83,7 @@ public:
   COFFUndefinedAtom(const File &f, llvm::StringRef n)
       : _owningFile(f), _name(n) {}
 
-  virtual const class File &file() const { return _owningFile; }
+  virtual const File &file() const { return _owningFile; }
 
   virtual llvm::StringRef name() const { return _name; }
 
@@ -102,7 +102,7 @@ public:
       : _owningFile(f), _name(n), _symbol(symb), _section(sec), _data(d),
         _sectionName(sectionName), _ordinal(ordinal) {}
 
-  virtual const class File &file() const { return _owningFile; }
+  virtual const File &file() const { return _owningFile; }
 
   virtual llvm::StringRef name() const { return _name; }
 
