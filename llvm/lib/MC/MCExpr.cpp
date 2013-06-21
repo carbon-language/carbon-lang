@@ -197,6 +197,7 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_ARM_TARGET2: return "(target2)";
   case VK_ARM_PREL31: return "(prel31)";
   case VK_PPC_LO: return "l";
+  case VK_PPC_HI: return "h";
   case VK_PPC_HA: return "ha";
   case VK_PPC_TOCBASE: return "tocbase";
   case VK_PPC_TOC: return "toc";
@@ -281,6 +282,8 @@ MCSymbolRefExpr::getVariantKindForName(StringRef Name) {
     .Case("secrel32", VK_SECREL)
     .Case("L", VK_PPC_LO)
     .Case("l", VK_PPC_LO)
+    .Case("H", VK_PPC_HI)
+    .Case("h", VK_PPC_HI)
     .Case("HA", VK_PPC_HA)
     .Case("ha", VK_PPC_HA)
     .Case("TOCBASE", VK_PPC_TOCBASE)

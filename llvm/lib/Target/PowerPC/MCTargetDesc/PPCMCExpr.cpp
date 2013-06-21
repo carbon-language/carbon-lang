@@ -27,6 +27,7 @@ void PPCMCExpr::PrintImpl(raw_ostream &OS) const {
     switch (Kind) {
     default: llvm_unreachable("Invalid kind!");
     case VK_PPC_LO: OS << "lo16"; break;
+    case VK_PPC_HI: OS << "hi16"; break;
     case VK_PPC_HA: OS << "ha16"; break;
     }
 
@@ -39,6 +40,7 @@ void PPCMCExpr::PrintImpl(raw_ostream &OS) const {
     switch (Kind) {
     default: llvm_unreachable("Invalid kind!");
     case VK_PPC_LO: OS << "@l"; break;
+    case VK_PPC_HI: OS << "@h"; break;
     case VK_PPC_HA: OS << "@ha"; break;
     }
   }
@@ -60,6 +62,9 @@ PPCMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
       case VK_PPC_LO:
         Result = Result & 0xffff;
         break;
+      case VK_PPC_HI:
+        Result = (Result >> 16) & 0xffff;
+        break;
       case VK_PPC_HA:
         Result = ((Result >> 16) + ((Result & 0x8000) ? 1 : 0)) & 0xffff;
         break;
@@ -76,6 +81,9 @@ PPCMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
         llvm_unreachable("Invalid kind!");
       case VK_PPC_LO:
         Modifier = MCSymbolRefExpr::VK_PPC_LO;
+        break;
+      case VK_PPC_HI:
+        Modifier = MCSymbolRefExpr::VK_PPC_HI;
         break;
       case VK_PPC_HA:
         Modifier = MCSymbolRefExpr::VK_PPC_HA;

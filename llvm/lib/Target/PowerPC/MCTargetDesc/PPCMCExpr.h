@@ -21,6 +21,7 @@ public:
   enum VariantKind {
     VK_PPC_None,
     VK_PPC_LO,
+    VK_PPC_HI,
     VK_PPC_HA
   };
 
@@ -42,6 +43,10 @@ public:
 
   static const PPCMCExpr *CreateLo(const MCExpr *Expr, MCContext &Ctx) {
     return Create(VK_PPC_LO, Expr, Ctx);
+  }
+
+  static const PPCMCExpr *CreateHi(const MCExpr *Expr, MCContext &Ctx) {
+    return Create(VK_PPC_HI, Expr, Ctx);
   }
 
   static const PPCMCExpr *CreateHa(const MCExpr *Expr, MCContext &Ctx) {

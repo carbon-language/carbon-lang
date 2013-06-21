@@ -172,6 +172,7 @@ public:
     VK_ARM_PREL31,
 
     VK_PPC_LO,             // symbol@l
+    VK_PPC_HI,             // symbol@h
     VK_PPC_HA,             // symbol@ha
     VK_PPC_TOCBASE,        // symbol@tocbase
     VK_PPC_TOC,            // symbol@toc
