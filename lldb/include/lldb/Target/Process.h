@@ -3288,10 +3288,6 @@ public:
         return m_thread_list;
     }
     
-    // This is obsoleted and will be removed very soon.
-    uint32_t
-    GetNextThreadIndexID ();
-    
     uint32_t
     GetNextThreadIndexID (uint64_t thread_id);
     

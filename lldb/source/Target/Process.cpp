@@ -1580,15 +1580,6 @@ Process::CreateOSPluginThread (lldb::tid_t tid, lldb::addr_t context)
     return ThreadSP();
 }
 
-
-
-// This is obsoleted. Staged removal for Xcode.
-uint32_t
-Process::GetNextThreadIndexID ()
-{
-    return ++m_thread_index_id;
-}
-
 uint32_t
 Process::GetNextThreadIndexID (uint64_t thread_id)
 {
