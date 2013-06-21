@@ -171,11 +171,12 @@ public:
 // FIXME: At this point it is fairly clear that we need to refactor these
 // static functions into methods of a class sharing some typedefs. These
 // ELF type names are insane.
-template <class ELFT,
-          class Elf_Sym = typename object::ELFObjectFile<ELFT>::Elf_Sym>
-static void addSymbols(const std::vector<ELFYAML::Symbol> &Symbols,
-                       ELFState<ELFT> &State, std::vector<Elf_Sym> &Syms,
-                       unsigned SymbolBinding) {
+template <class ELFT>
+static void
+addSymbols(const std::vector<ELFYAML::Symbol> &Symbols, ELFState<ELFT> &State,
+           std::vector<typename object::ELFObjectFile<ELFT>::Elf_Sym> &Syms,
+           unsigned SymbolBinding) {
+  typedef typename object::ELFObjectFile<ELFT>::Elf_Sym Elf_Sym;
   for (unsigned i = 0, e = Symbols.size(); i != e; ++i) {
     const ELFYAML::Symbol &Sym = Symbols[i];
     Elf_Sym Symbol;
