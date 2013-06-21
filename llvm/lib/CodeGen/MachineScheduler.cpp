@@ -489,11 +489,12 @@ void ScheduleDAGMI::initRegPressure() {
     RPTracker.getPressure().MaxSetPressure;
   for (unsigned i = 0, e = RegionPressure.size(); i < e; ++i) {
     unsigned Limit = RegClassInfo->getRegPressureSetLimit(i);
-    DEBUG(dbgs() << TRI->getRegPressureSetName(i)
-          << "Limit " << Limit
-          << " Actual " << RegionPressure[i] << "\n");
-    if (RegionPressure[i] > Limit)
+    if (RegionPressure[i] > Limit) {
+      DEBUG(dbgs() << TRI->getRegPressureSetName(i)
+            << " Limit " << Limit
+            << " Actual " << RegionPressure[i] << "\n");
       RegionCriticalPSets.push_back(PressureElement(i, 0));
+    }
   }
   DEBUG(dbgs() << "Excess PSets: ";
         for (unsigned i = 0, e = RegionCriticalPSets.size(); i != e; ++i)
@@ -1666,7 +1667,7 @@ void ConvergingScheduler::SchedBoundary::setPolicy(CandPolicy &Policy,
              << getResourceName(ZoneCritResIdx) << "\n";
     }
     if (OtherResLimited)
-      dbgs() << "  RemainingLimit: " << getResourceName(OtherCritIdx);
+      dbgs() << "  RemainingLimit: " << getResourceName(OtherCritIdx) << "\n";
     if (!IsResourceLimited && !OtherResLimited)
       dbgs() << "  Latency limited both directions.\n");
 
