@@ -2072,6 +2072,9 @@ static bool isLocalCopy(MachineInstr *Copy, const LiveIntervals *LIS) {
   if (!Copy->isCopy())
     return false;
 
+  if (Copy->getOperand(1).isUndef())
+    return false;
+
   unsigned SrcReg = Copy->getOperand(1).getReg();
   unsigned DstReg = Copy->getOperand(0).getReg();
   if (TargetRegisterInfo::isPhysicalRegister(SrcReg)
