@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_CORE_SIMPLE_H
-#define LLD_CORE_SIMPLE_H
+#ifndef LLD_READER_WRITER_SIMPLE_H
+#define LLD_READER_WRITER_SIMPLE_H
 
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
