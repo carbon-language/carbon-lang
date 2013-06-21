@@ -75,12 +75,6 @@ struct Flags {
 extern Flags lsan_flags;
 inline Flags *flags() { return &lsan_flags; }
 
-void InitCommonLsan();
-// Testing interface. Find leaked chunks and dump their addresses to vector.
-void ReportLeaked(InternalMmapVector<void *> *leaked, uptr sources);
-// Normal leak check. Find leaks and print a report according to flags.
-void DoLeakCheck();
-
 struct Leak {
   uptr hit_count;
   uptr total_size;
@@ -151,9 +145,9 @@ class MarkIndirectlyLeakedCb {
 };
 
 // Finds all chunk marked as kIgnored and adds their addresses to frontier.
-class CollectSuppressedCb {
+class CollectIgnoredCb {
  public:
-  explicit CollectSuppressedCb(Frontier *frontier)
+  explicit CollectIgnoredCb(Frontier *frontier)
       : frontier_(frontier) {}
   void operator()(void *p) const;
  private:
@@ -165,6 +159,11 @@ enum IgnoreObjectResult {
   kIgnoreObjectAlreadyIgnored,
   kIgnoreObjectInvalid
 };
+
+// Functions called from the parent tool.
+void InitCommonLsan();
+void DoLeakCheck();
+bool DisabledInThisThread();
 
 // The following must be implemented in the parent tool.
 

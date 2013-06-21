@@ -423,10 +423,8 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
     uptr fill_size = Min(size, (uptr)fl.max_malloc_fill_size);
     REAL(memset)(res, fl.malloc_fill_byte, fill_size);
   }
-  if (t && t->lsan_disabled())
-    m->lsan_tag = __lsan::kIgnored;
-  else
-    m->lsan_tag = __lsan::kDirectlyLeaked;
+  m->lsan_tag = __lsan::DisabledInThisThread() ? __lsan::kIgnored
+                                               : __lsan::kDirectlyLeaked;
   // Must be the last mutation of metadata in this function.
   atomic_store((atomic_uint8_t *)m, CHUNK_ALLOCATED, memory_order_release);
   ASAN_MALLOC_HOOK(res, size);
@@ -775,8 +773,8 @@ template void ForEachChunk<PrintLeakedCb>(PrintLeakedCb const &callback);
 template void ForEachChunk<CollectLeaksCb>(CollectLeaksCb const &callback);
 template void ForEachChunk<MarkIndirectlyLeakedCb>(
     MarkIndirectlyLeakedCb const &callback);
-template void ForEachChunk<CollectSuppressedCb>(
-    CollectSuppressedCb const &callback);
+template void ForEachChunk<CollectIgnoredCb>(
+    CollectIgnoredCb const &callback);
 #endif  // CAN_SANITIZE_LEAKS
 
 IgnoreObjectResult IgnoreObjectLocked(const void *p) {
@@ -793,28 +791,6 @@ IgnoreObjectResult IgnoreObjectLocked(const void *p) {
   }
 }
 }  // namespace __lsan
-
-extern "C" {
-SANITIZER_INTERFACE_ATTRIBUTE
-void __lsan_disable() {
-#if CAN_SANITIZE_LEAKS
-  __asan_init();
-  __asan::AsanThread *t = __asan::GetCurrentThread();
-  CHECK(t);
-  t->disable_lsan();
-#endif  // CAN_SANITIZE_LEAKS
-}
-
-SANITIZER_INTERFACE_ATTRIBUTE
-void __lsan_enable() {
-#if CAN_SANITIZE_LEAKS
-  __asan_init();
-  __asan::AsanThread *t = __asan::GetCurrentThread();
-  CHECK(t);
-  t->enable_lsan();
-#endif  // CAN_SANITIZE_LEAKS
-}
-}  // extern "C"
 
 // ---------------------- Interface ---------------- {{{1
 using namespace __asan;  // NOLINT

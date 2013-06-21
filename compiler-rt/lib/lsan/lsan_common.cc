@@ -26,6 +26,9 @@ namespace __lsan {
 // This mutex is used to prevent races between DoLeakCheck and SuppressObject.
 BlockingMutex global_mutex(LINKER_INITIALIZED);
 
+THREADLOCAL int disable_counter;
+bool DisabledInThisThread() { return disable_counter > 0; }
+
 Flags lsan_flags;
 
 static void InitializeFlags() {
@@ -83,7 +86,7 @@ static inline bool CanBeAHeapPointer(uptr p) {
 
 // Scan the memory range, looking for byte patterns that point into allocator
 // chunks. Mark those chunks with tag and add them to the frontier.
-// There are two usage modes for this function: finding reachable or suppressed
+// There are two usage modes for this function: finding reachable or ignored 
 // chunks (tag = kReachable or kIgnored) and finding indirectly leaked chunks
 // (tag = kIndirectlyLeaked). In the second case, there's no flood fill,
 // so frontier = 0.
@@ -102,7 +105,7 @@ void ScanRangeForPointers(uptr begin, uptr end,
     void *chunk = PointsIntoChunk(p);
     if (!chunk) continue;
     LsanMetadata m(chunk);
-    // Reachable beats suppressed beats leaked.
+    // Reachable beats ignored beats leaked.
     if (m.tag() == kReachable) continue;
     if (m.tag() == kIgnored && tag != kReachable) continue;
     m.set_tag(tag);
@@ -205,7 +208,7 @@ void MarkIndirectlyLeakedCb::operator()(void *p) const {
   }
 }
 
-void CollectSuppressedCb::operator()(void *p) const {
+void CollectIgnoredCb::operator()(void *p) const {
   p = GetUserBegin(p);
   LsanMetadata m(p);
   if (m.allocated() && m.tag() == kIgnored)
@@ -230,7 +233,7 @@ static void ClassifyAllChunks(SuspendedThreadsList const &suspended_threads) {
   if (flags()->log_pointers)
     Report("Scanning ignored chunks.\n");
   CHECK_EQ(0, frontier.size());
-  ForEachChunk(CollectSuppressedCb(&frontier));
+  ForEachChunk(CollectIgnoredCb(&frontier));
   FloodFillTag(&frontier, kIgnored);
 
   // Iterate over leaked chunks and mark those that are reachable from other
@@ -394,8 +397,9 @@ void LeakReport::PrintSummary() {
       bytes += leaks_[i].total_size;
       allocations += leaks_[i].hit_count;
   }
-  Printf("SUMMARY: LeakSanitizer: %llu byte(s) leaked in %llu allocation(s).\n\n",
-         bytes, allocations);
+  Printf(
+      "SUMMARY: LeakSanitizer: %llu byte(s) leaked in %llu allocation(s).\n\n",
+      bytes, allocations);
 }
 
 }  // namespace __lsan
@@ -419,5 +423,23 @@ void __lsan_ignore_object(const void *p) {
   if (res == kIgnoreObjectSuccess && flags()->verbosity >= 2)
     Report("__lsan_ignore_object(): ignoring heap object at %p\n", p);
 #endif  // CAN_SANITIZE_LEAKS
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void __lsan_disable() {
+#if CAN_SANITIZE_LEAKS
+  __lsan::disable_counter++;
+#endif
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void __lsan_enable() {
+#if CAN_SANITIZE_LEAKS
+  if (!__lsan::disable_counter) {
+    Report("Unmatched call to __lsan_enable().\n");
+    Die();
+  }
+  __lsan::disable_counter--;
+#endif
 }
 }  // extern "C"
