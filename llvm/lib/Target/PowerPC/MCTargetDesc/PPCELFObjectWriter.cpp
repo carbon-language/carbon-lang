@@ -102,6 +102,9 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
       case MCSymbolRefExpr::VK_PPC_TOC_LO:
         Type = ELF::R_PPC64_TOC16_LO;
         break;
+      case MCSymbolRefExpr::VK_PPC_TOC_HI:
+        Type = ELF::R_PPC64_TOC16_HI;
+        break;
       case MCSymbolRefExpr::VK_PPC_TOC_HA:
         Type = ELF::R_PPC64_TOC16_HA;
         break;

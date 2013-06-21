@@ -177,6 +177,7 @@ public:
     VK_PPC_TOCBASE,        // symbol@tocbase
     VK_PPC_TOC,            // symbol@toc
     VK_PPC_TOC_LO,         // symbol@toc@l
+    VK_PPC_TOC_HI,         // symbol@toc@h
     VK_PPC_TOC_HA,         // symbol@toc@ha
     VK_PPC_TPREL_LO,       // symbol@tprel@l
     VK_PPC_TPREL_HA,       // symbol@tprel@ha

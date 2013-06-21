@@ -488,6 +488,7 @@ enum {
   R_PPC64_REL64               = 44,
   R_PPC64_TOC16               = 47,
   R_PPC64_TOC16_LO            = 48,
+  R_PPC64_TOC16_HI            = 49,
   R_PPC64_TOC16_HA            = 50,
   R_PPC64_TOC                 = 51,
   R_PPC64_ADDR16_DS           = 56,
