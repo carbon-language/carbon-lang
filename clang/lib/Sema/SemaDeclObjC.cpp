@@ -603,10 +603,7 @@ Decl *Sema::ActOnCompatibilityAlias(SourceLocation AtLoc,
   NamedDecl *ADecl = LookupSingleName(TUScope, AliasName, AliasLocation,
                                       LookupOrdinaryName, ForRedeclaration);
   if (ADecl) {
-    if (isa<ObjCCompatibleAliasDecl>(ADecl))
-      Diag(AliasLocation, diag::warn_previous_alias_decl);
-    else
-      Diag(AliasLocation, diag::err_conflicting_aliasing_type) << AliasName;
+    Diag(AliasLocation, diag::err_conflicting_aliasing_type) << AliasName;
     Diag(ADecl->getLocation(), diag::note_previous_declaration);
     return 0;
   }

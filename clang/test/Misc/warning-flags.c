@@ -18,7 +18,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (141):
+CHECK: Warnings without flags (140):
 CHECK-NEXT:   ext_delete_void_ptr_operand
 CHECK-NEXT:   ext_enum_friend
 CHECK-NEXT:   ext_expected_semi_decl_list
@@ -136,7 +136,6 @@ CHECK-NEXT:   warn_pragma_unused_expected_punc
 CHECK-NEXT:   warn_pragma_unused_expected_var
 CHECK-NEXT:   warn_pragma_unused_expected_var_arg
 CHECK-NEXT:   warn_pragma_unused_undeclared_var
-CHECK-NEXT:   warn_previous_alias_decl
 CHECK-NEXT:   warn_property_attr_mismatch
 CHECK-NEXT:   warn_property_attribute
 CHECK-NEXT:   warn_property_getter_owning_mismatch
