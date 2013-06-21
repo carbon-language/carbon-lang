@@ -201,8 +201,8 @@ unsigned PPCCodeEmitter::getS16ImmEncoding(const MachineInstr &MI,
   unsigned RelocID;
   switch (MO.getTargetFlags() & PPCII::MO_ACCESS_MASK) {
     default: llvm_unreachable("Unsupported target operand flags!");
-    case PPCII::MO_HA16: RelocID = PPC::reloc_absolute_high; break;
-    case PPCII::MO_LO16: RelocID = PPC::reloc_absolute_low; break;
+    case PPCII::MO_LO: RelocID = PPC::reloc_absolute_low; break;
+    case PPCII::MO_HA: RelocID = PPC::reloc_absolute_high; break;
   }
 
   MCE.addRelocation(GetRelocation(MO, RelocID));

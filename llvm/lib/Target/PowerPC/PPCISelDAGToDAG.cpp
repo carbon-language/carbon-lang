@@ -1502,13 +1502,13 @@ void PPCDAGToDAGISel::PostprocessISelDAG() {
         continue;
       break;
     case PPC::ADDIdtprelL:
-      Flags = PPCII::MO_DTPREL16_LO;
+      Flags = PPCII::MO_DTPREL_LO;
       break;
     case PPC::ADDItlsldL:
-      Flags = PPCII::MO_TLSLD16_LO;
+      Flags = PPCII::MO_TLSLD_LO;
       break;
     case PPC::ADDItocL:
-      Flags = PPCII::MO_TOC16_LO;
+      Flags = PPCII::MO_TOC_LO;
       break;
     }
 

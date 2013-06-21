@@ -1236,8 +1236,8 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDValue &Base,
 /// PICBase, set the HiOpFlags and LoOpFlags to the target MO flags.
 static bool GetLabelAccessInfo(const TargetMachine &TM, unsigned &HiOpFlags,
                                unsigned &LoOpFlags, const GlobalValue *GV = 0) {
-  HiOpFlags = PPCII::MO_HA16;
-  LoOpFlags = PPCII::MO_LO16;
+  HiOpFlags = PPCII::MO_HA;
+  LoOpFlags = PPCII::MO_LO;
 
   // Don't use the pic base if not in PIC relocation model.  Or if we are on a
   // non-darwin platform.  We don't support PIC on other platforms yet.
@@ -1350,9 +1350,9 @@ SDValue PPCTargetLowering::LowerGlobalTLSAddress(SDValue Op,
 
   if (Model == TLSModel::LocalExec) {
     SDValue TGAHi = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
-                                               PPCII::MO_TPREL16_HA);
+                                               PPCII::MO_TPREL_HA);
     SDValue TGALo = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
-                                               PPCII::MO_TPREL16_LO);
+                                               PPCII::MO_TPREL_LO);
     SDValue TLSReg = DAG.getRegister(is64bit ? PPC::X13 : PPC::R2,
                                      is64bit ? MVT::i64 : MVT::i32);
     SDValue Hi = DAG.getNode(PPCISD::Hi, dl, PtrVT, TGAHi, TLSReg);

@@ -171,24 +171,24 @@ public:
     VK_ARM_TARGET2,
     VK_ARM_PREL31,
 
-    VK_PPC_ADDR16_HA,      // symbol@ha
-    VK_PPC_ADDR16_LO,      // symbol@l
+    VK_PPC_LO,             // symbol@l
+    VK_PPC_HA,             // symbol@ha
     VK_PPC_TOCBASE,        // symbol@tocbase
-    VK_PPC_TOC16,          // symbol@toc
-    VK_PPC_TOC16_HA,       // symbol@toc@ha
-    VK_PPC_TOC16_LO,       // symbol@toc@l
-    VK_PPC_TPREL16_HA,     // symbol@tprel@ha
-    VK_PPC_TPREL16_LO,     // symbol@tprel@l
-    VK_PPC_DTPREL16_HA,    // symbol@dtprel@ha
-    VK_PPC_DTPREL16_LO,    // symbol@dtprel@l
-    VK_PPC_GOT_TPREL16_HA, // symbol@got@tprel@ha
-    VK_PPC_GOT_TPREL16_LO, // symbol@got@tprel@l
+    VK_PPC_TOC,            // symbol@toc
+    VK_PPC_TOC_LO,         // symbol@toc@l
+    VK_PPC_TOC_HA,         // symbol@toc@ha
+    VK_PPC_TPREL_LO,       // symbol@tprel@l
+    VK_PPC_TPREL_HA,       // symbol@tprel@ha
+    VK_PPC_DTPREL_LO,      // symbol@dtprel@l
+    VK_PPC_DTPREL_HA,      // symbol@dtprel@ha
+    VK_PPC_GOT_TPREL_LO,   // symbol@got@tprel@l
+    VK_PPC_GOT_TPREL_HA,   // symbol@got@tprel@ha
     VK_PPC_TLS,            // symbol@tls
-    VK_PPC_GOT_TLSGD16_HA, // symbol@got@tlsgd@ha
-    VK_PPC_GOT_TLSGD16_LO, // symbol@got@tlsgd@l
+    VK_PPC_GOT_TLSGD_LO,   // symbol@got@tlsgd@l
+    VK_PPC_GOT_TLSGD_HA,   // symbol@got@tlsgd@ha
     VK_PPC_TLSGD,          // symbol@tlsgd
-    VK_PPC_GOT_TLSLD16_HA, // symbol@got@tlsld@ha
-    VK_PPC_GOT_TLSLD16_LO, // symbol@got@tlsld@l
+    VK_PPC_GOT_TLSLD_LO,   // symbol@got@tlsld@l
+    VK_PPC_GOT_TLSLD_HA,   // symbol@got@tlsld@ha
     VK_PPC_TLSLD,          // symbol@tlsld
 
     VK_Mips_GPREL,

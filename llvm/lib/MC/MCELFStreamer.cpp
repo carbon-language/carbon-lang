@@ -363,18 +363,18 @@ void  MCELFStreamer::fixSymbolsInTLSFixups(const MCExpr *expr) {
     case MCSymbolRefExpr::VK_Mips_GOTTPREL:
     case MCSymbolRefExpr::VK_Mips_TPREL_HI:
     case MCSymbolRefExpr::VK_Mips_TPREL_LO:
-    case MCSymbolRefExpr::VK_PPC_TPREL16_HA:
-    case MCSymbolRefExpr::VK_PPC_TPREL16_LO:
-    case MCSymbolRefExpr::VK_PPC_DTPREL16_HA:
-    case MCSymbolRefExpr::VK_PPC_DTPREL16_LO:
-    case MCSymbolRefExpr::VK_PPC_GOT_TPREL16_HA:
-    case MCSymbolRefExpr::VK_PPC_GOT_TPREL16_LO:
+    case MCSymbolRefExpr::VK_PPC_TPREL_LO:
+    case MCSymbolRefExpr::VK_PPC_TPREL_HA:
+    case MCSymbolRefExpr::VK_PPC_DTPREL_LO:
+    case MCSymbolRefExpr::VK_PPC_DTPREL_HA:
+    case MCSymbolRefExpr::VK_PPC_GOT_TPREL_LO:
+    case MCSymbolRefExpr::VK_PPC_GOT_TPREL_HA:
     case MCSymbolRefExpr::VK_PPC_TLS:
-    case MCSymbolRefExpr::VK_PPC_GOT_TLSGD16_HA:
-    case MCSymbolRefExpr::VK_PPC_GOT_TLSGD16_LO:
+    case MCSymbolRefExpr::VK_PPC_GOT_TLSGD_LO:
+    case MCSymbolRefExpr::VK_PPC_GOT_TLSGD_HA:
     case MCSymbolRefExpr::VK_PPC_TLSGD:
-    case MCSymbolRefExpr::VK_PPC_GOT_TLSLD16_HA:
-    case MCSymbolRefExpr::VK_PPC_GOT_TLSLD16_LO:
+    case MCSymbolRefExpr::VK_PPC_GOT_TLSLD_LO:
+    case MCSymbolRefExpr::VK_PPC_GOT_TLSLD_HA:
     case MCSymbolRefExpr::VK_PPC_TLSLD:
       break;
     }

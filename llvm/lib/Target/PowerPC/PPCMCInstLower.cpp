@@ -112,20 +112,20 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
   unsigned access = MO.getTargetFlags() & PPCII::MO_ACCESS_MASK;
 
   switch (access) {
-    case PPCII::MO_TPREL16_HA:
-      RefKind = MCSymbolRefExpr::VK_PPC_TPREL16_HA;
+    case PPCII::MO_TPREL_LO:
+      RefKind = MCSymbolRefExpr::VK_PPC_TPREL_LO;
       break;
-    case PPCII::MO_TPREL16_LO:
-      RefKind = MCSymbolRefExpr::VK_PPC_TPREL16_LO;
+    case PPCII::MO_TPREL_HA:
+      RefKind = MCSymbolRefExpr::VK_PPC_TPREL_HA;
       break;
-    case PPCII::MO_DTPREL16_LO:
-      RefKind = MCSymbolRefExpr::VK_PPC_DTPREL16_LO;
+    case PPCII::MO_DTPREL_LO:
+      RefKind = MCSymbolRefExpr::VK_PPC_DTPREL_LO;
       break;
-    case PPCII::MO_TLSLD16_LO:
-      RefKind = MCSymbolRefExpr::VK_PPC_GOT_TLSLD16_LO;
+    case PPCII::MO_TLSLD_LO:
+      RefKind = MCSymbolRefExpr::VK_PPC_GOT_TLSLD_LO;
       break;
-    case PPCII::MO_TOC16_LO:
-      RefKind = MCSymbolRefExpr::VK_PPC_TOC16_LO;
+    case PPCII::MO_TOC_LO:
+      RefKind = MCSymbolRefExpr::VK_PPC_TOC_LO;
       break;
   }
 
@@ -146,11 +146,11 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
 
   // Add ha16() / lo16() markers if required.
   switch (access) {
-    case PPCII::MO_HA16:
-      Expr = PPCMCExpr::CreateHa16(Expr, Ctx);
+    case PPCII::MO_LO:
+      Expr = PPCMCExpr::CreateLo(Expr, Ctx);
       break;
-    case PPCII::MO_LO16:
-      Expr = PPCMCExpr::CreateLo16(Expr, Ctx);
+    case PPCII::MO_HA:
+      Expr = PPCMCExpr::CreateHa(Expr, Ctx);
       break;
   }
 

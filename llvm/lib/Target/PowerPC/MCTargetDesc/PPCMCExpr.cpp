@@ -26,8 +26,8 @@ void PPCMCExpr::PrintImpl(raw_ostream &OS) const {
   if (isDarwinSyntax()) {
     switch (Kind) {
     default: llvm_unreachable("Invalid kind!");
-    case VK_PPC_HA16: OS << "ha16"; break;
-    case VK_PPC_LO16: OS << "lo16"; break;
+    case VK_PPC_LO: OS << "lo16"; break;
+    case VK_PPC_HA: OS << "ha16"; break;
     }
 
     OS << '(';
@@ -38,8 +38,8 @@ void PPCMCExpr::PrintImpl(raw_ostream &OS) const {
 
     switch (Kind) {
     default: llvm_unreachable("Invalid kind!");
-    case VK_PPC_HA16: OS << "@ha"; break;
-    case VK_PPC_LO16: OS << "@l"; break;
+    case VK_PPC_LO: OS << "@l"; break;
+    case VK_PPC_HA: OS << "@ha"; break;
     }
   }
 }
@@ -57,11 +57,11 @@ PPCMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
     switch (Kind) {
       default:
         llvm_unreachable("Invalid kind!");
-      case VK_PPC_HA16:
-        Result = ((Result >> 16) + ((Result & 0x8000) ? 1 : 0)) & 0xffff;
-        break;
-      case VK_PPC_LO16:
+      case VK_PPC_LO:
         Result = Result & 0xffff;
+        break;
+      case VK_PPC_HA:
+        Result = ((Result >> 16) + ((Result & 0x8000) ? 1 : 0)) & 0xffff;
         break;
     }
     Res = MCValue::get(Result);
@@ -74,11 +74,11 @@ PPCMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
     switch (Kind) {
       default:
         llvm_unreachable("Invalid kind!");
-      case VK_PPC_HA16:
-        Modifier = MCSymbolRefExpr::VK_PPC_ADDR16_HA;
+      case VK_PPC_LO:
+        Modifier = MCSymbolRefExpr::VK_PPC_LO;
         break;
-      case VK_PPC_LO16:
-        Modifier = MCSymbolRefExpr::VK_PPC_ADDR16_LO;
+      case VK_PPC_HA:
+        Modifier = MCSymbolRefExpr::VK_PPC_HA;
         break;
     }
     Sym = MCSymbolRefExpr::Create(&Sym->getSymbol(), Modifier, Context);
