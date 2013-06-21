@@ -484,7 +484,11 @@ enum {
   R_PPC_GOT_DTPREL16_DS       = 91,
   R_PPC_GOT_DTPREL16_LO_DS    = 92,
   R_PPC_GOT_DTPREL16_HI       = 93,
-  R_PPC_GOT_DTPREL16_HA       = 94
+  R_PPC_GOT_DTPREL16_HA       = 94,
+  R_PPC_REL16                 = 249,
+  R_PPC_REL16_LO              = 250,
+  R_PPC_REL16_HI              = 251,
+  R_PPC_REL16_HA              = 252
 };
 
 // ELF Relocation types for PPC64
@@ -557,7 +561,11 @@ enum {
   R_PPC64_DTPREL16_HIGHEST    = 105,
   R_PPC64_DTPREL16_HIGHESTA   = 106,
   R_PPC64_TLSGD               = 107,
-  R_PPC64_TLSLD               = 108
+  R_PPC64_TLSLD               = 108,
+  R_PPC64_REL16               = 249,
+  R_PPC64_REL16_LO            = 250,
+  R_PPC64_REL16_HI            = 251,
+  R_PPC64_REL16_HA            = 252
 };
 
 // ELF Relocation types for AArch64
