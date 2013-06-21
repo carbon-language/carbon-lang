@@ -99,7 +99,7 @@ void ScanRangeForPointers(uptr begin, uptr end,
   uptr pp = begin;
   if (pp % alignment)
     pp = pp + alignment - pp % alignment;
-  for (; pp + sizeof(uptr) <= end; pp += alignment) {
+  for (; pp + sizeof(void *) <= end; pp += alignment) {
     void *p = *reinterpret_cast<void**>(pp);
     if (!CanBeAHeapPointer(reinterpret_cast<uptr>(p))) continue;
     void *chunk = PointsIntoChunk(p);
@@ -110,7 +110,7 @@ void ScanRangeForPointers(uptr begin, uptr end,
     if (m.tag() == kIgnored && tag != kReachable) continue;
     m.set_tag(tag);
     if (flags()->log_pointers)
-      Report("%p: found %p pointing into chunk %p-%p of size %llu.\n", pp, p,
+      Report("%p: found %p pointing into chunk %p-%p of size %zu.\n", pp, p,
              chunk, reinterpret_cast<uptr>(chunk) + m.requested_size(),
              m.requested_size());
     if (frontier)
@@ -278,7 +278,7 @@ void PrintLeakedCb::operator()(void *p) const {
   LsanMetadata m(p);
   if (!m.allocated()) return;
   if (m.tag() == kDirectlyLeaked || m.tag() == kIndirectlyLeaked) {
-    Printf("%s leaked %llu byte object at %p.\n",
+    Printf("%s leaked %zu byte object at %p.\n",
            m.tag() == kDirectlyLeaked ? "Directly" : "Indirectly",
            m.requested_size(), p);
   }
@@ -370,15 +370,15 @@ void LeakReport::PrintLargest(uptr max_leaks) {
   CHECK(leaks_.size() <= kMaxLeaksConsidered);
   Printf("\n");
   if (leaks_.size() == kMaxLeaksConsidered)
-    Printf("Too many leaks! Only the first %llu leaks encountered will be "
+    Printf("Too many leaks! Only the first %zu leaks encountered will be "
            "reported.\n",
            kMaxLeaksConsidered);
   if (max_leaks > 0 && max_leaks < leaks_.size())
-    Printf("The %llu largest leak(s):\n", max_leaks);
+    Printf("The %zu largest leak(s):\n", max_leaks);
   InternalSort(&leaks_, leaks_.size(), IsLarger);
   max_leaks = max_leaks > 0 ? Min(max_leaks, leaks_.size()) : leaks_.size();
   for (uptr i = 0; i < max_leaks; i++) {
-    Printf("%s leak of %llu byte(s) in %llu object(s) allocated from:\n",
+    Printf("%s leak of %zu byte(s) in %zu object(s) allocated from:\n",
            leaks_[i].is_directly_leaked ? "Direct" : "Indirect",
            leaks_[i].total_size, leaks_[i].hit_count);
     PrintStackTraceById(leaks_[i].stack_trace_id);
@@ -386,7 +386,7 @@ void LeakReport::PrintLargest(uptr max_leaks) {
   }
   if (max_leaks < leaks_.size()) {
     uptr remaining = leaks_.size() - max_leaks;
-    Printf("Omitting %llu more leak(s).\n", remaining);
+    Printf("Omitting %zu more leak(s).\n", remaining);
   }
 }
 
@@ -398,7 +398,7 @@ void LeakReport::PrintSummary() {
       allocations += leaks_[i].hit_count;
   }
   Printf(
-      "SUMMARY: LeakSanitizer: %llu byte(s) leaked in %llu allocation(s).\n\n",
+      "SUMMARY: LeakSanitizer: %zu byte(s) leaked in %zu allocation(s).\n\n",
       bytes, allocations);
 }
 

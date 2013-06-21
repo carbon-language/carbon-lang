@@ -22,11 +22,9 @@
 
 namespace __lsan {
 
-static const uptr kMaxAllowedMallocSize =
-    FIRST_32_SECOND_64(3UL << 30, 8UL << 30);
-
+static const uptr kMaxAllowedMallocSize = 8UL << 30;
 static const uptr kAllocatorSpace = 0x600000000000ULL;
-static const uptr kAllocatorSize  =  0x10000000000ULL;  // 1T.
+static const uptr kAllocatorSize  =  0x40000000000ULL;  // 4T.
 
 struct ChunkMetadata {
   bool allocated : 8;  // Must be first.
@@ -79,9 +77,8 @@ void *Allocate(const StackTrace &stack, uptr size, uptr alignment,
   if (size == 0)
     size = 1;
   if (size > kMaxAllowedMallocSize) {
-      Report("WARNING: LeakSanitizer failed to allocate %p bytes\n",
-             (void*)size);
-      return 0;
+    Report("WARNING: LeakSanitizer failed to allocate %zu bytes\n", size);
+    return 0;
   }
   void *p = allocator.Allocate(&cache, size, alignment, cleared);
   RegisterAllocation(stack, p, size);
@@ -97,10 +94,9 @@ void *Reallocate(const StackTrace &stack, void *p, uptr new_size,
                  uptr alignment) {
   RegisterDeallocation(p);
   if (new_size > kMaxAllowedMallocSize) {
-      Report("WARNING: LeakSanitizer failed to allocate %p bytes\n",
-             (void*)new_size);
-      allocator.Deallocate(&cache, p);
-      return 0;
+    Report("WARNING: LeakSanitizer failed to allocate %zu bytes\n", new_size);
+    allocator.Deallocate(&cache, p);
+    return 0;
   }
   p = allocator.Reallocate(&cache, p, new_size, alignment);
   RegisterAllocation(stack, p, new_size);
