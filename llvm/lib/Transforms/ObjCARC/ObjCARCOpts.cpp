@@ -530,6 +530,15 @@ namespace {
     PtrState() : KnownPositiveRefCount(false), Partial(false),
                  Seq(S_None) {}
 
+
+    bool IsKnownSafe() const {
+      return RRI.KnownSafe;    
+    }
+
+    void SetKnownSafe(const bool NewValue) {
+      RRI.KnownSafe = NewValue;
+    }
+
     void SetKnownPositiveRefCount() {
       DEBUG(dbgs() << "Setting Known Positive.\n");
       KnownPositiveRefCount = true;
@@ -1723,7 +1732,7 @@ static void CheckForUseCFGHazard(const Sequence SuccSSeq,
                                  bool &ShouldContinue) {
   switch (SuccSSeq) {
   case S_CanRelease: {
-    if (!S.RRI.KnownSafe && !SuccSRRIKnownSafe) {
+    if (!S.IsKnownSafe() && !SuccSRRIKnownSafe) {
       S.ClearSequenceProgress();
       break;
     }
@@ -1737,7 +1746,7 @@ static void CheckForUseCFGHazard(const Sequence SuccSSeq,
   case S_Stop:
   case S_Release:
   case S_MovableRelease:
-    if (!S.RRI.KnownSafe && !SuccSRRIKnownSafe)
+    if (!S.IsKnownSafe() && !SuccSRRIKnownSafe)
       AllSuccsHaveSame = false;
     else
       NotAllSeqEqualButKnownSafe = true;
@@ -1766,7 +1775,7 @@ static void CheckForCanReleaseCFGHazard(const Sequence SuccSSeq,
   case S_Release:
   case S_MovableRelease:
   case S_Use:
-    if (!S.RRI.KnownSafe && !SuccSRRIKnownSafe)
+    if (!S.IsKnownSafe() && !SuccSRRIKnownSafe)
       AllSuccsHaveSame = false;
     else
       NotAllSeqEqualButKnownSafe = true;
@@ -1830,7 +1839,7 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
 
       // If we have S_Use or S_CanRelease, perform our check for cfg hazard
       // checks.
-      const bool SuccSRRIKnownSafe = SuccS.RRI.KnownSafe;
+      const bool SuccSRRIKnownSafe = SuccS.IsKnownSafe();
 
       // *NOTE* We do not use Seq from above here since we are allowing for
       // S.GetSeq() to change while we are visiting basic blocks.
@@ -1908,7 +1917,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     ANNOTATE_BOTTOMUP(Inst, Arg, S.GetSeq(), NewSeq);
     S.ResetSequenceProgress(NewSeq);
     S.RRI.ReleaseMetadata = ReleaseMetadata;
-    S.RRI.KnownSafe = S.HasKnownPositiveRefCount();
+    S.SetKnownSafe(S.HasKnownPositiveRefCount());
     S.RRI.IsTailCallRelease = cast<CallInst>(Inst)->isTailCall();
     S.RRI.Calls.insert(Inst);
     S.SetKnownPositiveRefCount();
@@ -2166,7 +2175,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
 
       ANNOTATE_TOPDOWN(Inst, Arg, S.GetSeq(), S_Retain);
       S.ResetSequenceProgress(S_Retain);
-      S.RRI.KnownSafe = S.HasKnownPositiveRefCount();
+      S.SetKnownSafe(S.HasKnownPositiveRefCount());
       S.RRI.Calls.insert(Inst);
     }
 
