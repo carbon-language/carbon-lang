@@ -20,13 +20,14 @@
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_stoptheworld.h"
 
-namespace __lsan {
 #if CAN_SANITIZE_LEAKS
+namespace __lsan {
 
 // This mutex is used to prevent races between DoLeakCheck and SuppressObject.
 BlockingMutex global_mutex(LINKER_INITIALIZED);
 
 THREADLOCAL int disable_counter;
+bool DisabledInThisThread() { return disable_counter > 0; }
 
 Flags lsan_flags;
 
@@ -400,15 +401,8 @@ void LeakReport::PrintSummary() {
       "SUMMARY: LeakSanitizer: %zu byte(s) leaked in %zu allocation(s).\n\n",
       bytes, allocations);
 }
-#endif  // CAN_SANITIZE_LEAKS
-
-bool DisabledInThisThread() {
-#if CAN_SANITIZE_LEAKS
-  return disable_counter > 0;
-#endif
-  return false;
-}
 }  // namespace __lsan
+#endif  // CAN_SANITIZE_LEAKS
 
 using namespace __lsan;  // NOLINT
 

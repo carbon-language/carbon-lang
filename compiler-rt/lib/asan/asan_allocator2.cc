@@ -423,8 +423,10 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
     uptr fill_size = Min(size, (uptr)fl.max_malloc_fill_size);
     REAL(memset)(res, fl.malloc_fill_byte, fill_size);
   }
+#if CAN_SANITIZE_LEAKS
   m->lsan_tag = __lsan::DisabledInThisThread() ? __lsan::kIgnored
                                                : __lsan::kDirectlyLeaked;
+#endif
   // Must be the last mutation of metadata in this function.
   atomic_store((atomic_uint8_t *)m, CHUNK_ALLOCATED, memory_order_release);
   ASAN_MALLOC_HOOK(res, size);
