@@ -1,7 +1,3 @@
-#ifndef __cplusplus
-#error needs C++ to build these
-#endif
-
 // leaving this undefined ensures we will get a linker error if we try to use SBTypeToSWIGWrapper()
 // for a type for which we did not specialze this function
 template <typename SBClass>
@@ -13,6 +9,38 @@ PyObject*
 SBTypeToSWIGWrapper (SBClass& sb_object)
 {
     return SBTypeToSWIGWrapper(&sb_object);
+}
+
+template <typename SBClass>
+PyObject*
+SBTypeToSWIGWrapper (const SBClass& sb_object)
+{
+    return SBTypeToSWIGWrapper(&sb_object);
+}
+
+template <>
+PyObject*
+SBTypeToSWIGWrapper (PyObject* py_object)
+{
+    return py_object;
+}
+
+template <>
+PyObject*
+SBTypeToSWIGWrapper (const char* c_str)
+{
+    if (c_str)
+        return PyString_FromString(c_str);
+    return NULL;
+}
+
+template <>
+PyObject*
+SBTypeToSWIGWrapper (unsigned int* c_int)
+{
+    if (!c_int)
+        return NULL;
+    return PyInt_FromLong(*c_int);
 }
 
 template <>
