@@ -20,6 +20,7 @@
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/TimeValue.h"
 #include <map>
 #include <set>
@@ -375,7 +376,7 @@ class Archive {
     /// returns true if writing member failed, \p error set to error message.
     bool writeMember(
       const ArchiveMember& member, ///< The member to be written
-      std::ofstream& ARFile,       ///< The file to write member onto
+      raw_fd_ostream& ARFile,      ///< The file to write member onto
       bool TruncateNames,          ///< Should names be truncated to 11 chars?
       std::string* ErrMessage      ///< If non-null, place were error msg is set
     );
