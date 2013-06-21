@@ -542,7 +542,7 @@ namespace {
       RRI.IsTailCallRelease = NewValue;
     }
 
-    bool IsTrackingImpreciseReleases() {
+    bool IsTrackingImpreciseReleases() const {
       return RRI.ReleaseMetadata != 0;
     }
 
