@@ -57,6 +57,18 @@ find all matchers that can be used to match on Stmt nodes.</p>
 <p>The exception to that rule are matchers that can match on any node. Those
 are marked with a * and are listed in the beginning of each category.</p>
 
+<p>Note that the categorization of matchers is a great help when you combine
+them into matcher expressions. You will usually want to form matcher expressions
+that read like english sentences by alternating between node matchers and
+narrowing or traversal matchers, like this:
+<pre>
+recordDecl(hasDescendant(
+    ifStmt(hasTrueExpression(
+        expr(hasDescendant(
+            ifStmt()))))))
+</pre>
+</p>
+
 <!-- ======================================================================= -->
 <h2 id="decl-matchers">Node Matchers</h2>
 <!-- ======================================================================= -->
@@ -72,6 +84,17 @@ and implicitly act as allOf matchers.</p>
 <p>Node matchers are the only matchers that support the bind("id") call to
 bind the matched node to the given string, to be later retrieved from the
 match callback.</p>
+
+<p>It is important to remember that the arguments to node matchers are
+predicates on the same node, just with additional information about the type.
+This is often useful to make matcher expression more readable by inlining bind
+calls into redundant node matchers inside another node matcher:
+<pre>
+// This binds the CXXRecordDecl to "id", as the decl() matcher will stay on
+// the same node.
+recordDecl(decl().bind("id"), hasName("::MyClass"))
+</pre>
+</p>
 
 <table>
 <tr style="text-align:left"><th>Return type</th><th>Name</th><th>Parameters</th></tr>
