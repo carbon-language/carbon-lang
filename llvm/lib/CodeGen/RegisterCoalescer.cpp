@@ -2117,8 +2117,8 @@ RegisterCoalescer::copyCoalesceInMBB(MachineBasicBlock *MBB) {
     // are not inherently easier to resolve, but slightly preferable until we
     // have local live range splitting. In particular this is required by
     // cmp+jmp macro fusion.
-    for (MachineBasicBlock::reverse_iterator
-           MII = MBB->rbegin(), E = MBB->rend(); MII != E; ++MII) {
+    for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
+         MII != E; ++MII) {
       if (!MII->isCopyLike())
         continue;
       if (isLocalCopy(&(*MII), LIS))
