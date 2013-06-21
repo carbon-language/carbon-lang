@@ -18,7 +18,7 @@ struct foo {
   int i;
 };
 
-foo *foo(foo *a) {
+foo *bar(foo *a) {
   foo *b = new foo(*a);
   return b;
 }
