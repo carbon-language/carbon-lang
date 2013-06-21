@@ -55,9 +55,9 @@ int func(bool b) {
 // CHECK: [[LEX1]] = metadata !{i32 {{[0-9]*}}, metadata [[FILE2]], metadata [[FUNC]], i32 16, i32 0, i32 {{.*}}} ; [ DW_TAG_lexical_block ]
 // CHECK: [[M5]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[CTXT]], i32 20} ; [ DW_TAG_imported_module ]
 // CHECK: [[M6]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[FOO:![0-9]*]], i32 21} ; [ DW_TAG_imported_declaration ]
-// CHECK: [[FOO]] {{.*}} ; [ DW_TAG_structure_type ] [foo] [line 5, size 0, align 0, offset 0] [fwd] [from ]
+// CHECK: [[FOO]] {{.*}} ; [ DW_TAG_structure_type ] [foo] [line 5, size 0, align 0, offset 0] [decl] [from ]
 // CHECK: [[M7]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[BAR:![0-9]*]], i32 22} ; [ DW_TAG_imported_declaration ]
-// CHECK: [[BAR]] {{.*}} ; [ DW_TAG_structure_type ] [bar] [line 6, {{.*}}] [fwd] [from ]
+// CHECK: [[BAR]] {{.*}} ; [ DW_TAG_structure_type ] [bar] [line 6, {{.*}}] [decl] [from ]
 // CHECK: [[M8]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[F1]], i32 23} ; [ DW_TAG_imported_declaration ]
 // CHECK: [[M9]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[I]], i32 24} ; [ DW_TAG_imported_declaration ]
 // CHECK: [[M10]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[BAZ:![0-9]*]], i32 25} ; [ DW_TAG_imported_declaration ]
@@ -68,7 +68,7 @@ int func(bool b) {
 // CHECK-GMLT: [[CU:![0-9]*]] = {{.*}}[[MODULES:![0-9]*]], metadata !""} ; [ DW_TAG_compile_unit ]
 // CHECK-GMLT: [[MODULES]] = metadata !{i32 0}
 
-// CHECK-NOLIMIT: ; [ DW_TAG_structure_type ] [bar] [line 6, {{.*}}] [from ]
+// CHECK-NOLIMIT: ; [ DW_TAG_structure_type ] [bar] [line 6, {{.*}}] [def] [from ]
 
 // FIXME: It is confused on win32 to generate file entry when dosish filename is given.
 // REQUIRES: shell

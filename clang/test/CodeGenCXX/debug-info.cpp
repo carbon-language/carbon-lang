@@ -88,7 +88,7 @@ incomplete (*x)[3];
 // CHECK: metadata [[INCARRAYPTR:![0-9]*]], i32 0, i32 1, [3 x i8]** @_ZN6pr96081xE, null} ; [ DW_TAG_variable ] [x]
 // CHECK: [[INCARRAYPTR]] = {{.*}}metadata [[INCARRAY:![0-9]*]]} ; [ DW_TAG_pointer_type ]
 // CHECK: [[INCARRAY]] = {{.*}}metadata [[INCTYPE:![0-9]*]], metadata {{![0-9]*}}, i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 0, align 0, offset 0] [from incomplete]
-// CHECK: [[INCTYPE]] = {{.*}} ; [ DW_TAG_structure_type ] [incomplete]{{.*}} [fwd]
+// CHECK: [[INCTYPE]] = {{.*}} ; [ DW_TAG_structure_type ] [incomplete]{{.*}} [decl]
 }
 
 // For some reason the argument for PR14763 ended up all the way down here
@@ -115,5 +115,5 @@ void func() {
 // CHECK: metadata [[A_MEM:![0-9]*]], i32 0, null, null} ; [ DW_TAG_structure_type ] [a]
 // CHECK: [[A_MEM]] = metadata !{metadata [[A_I:![0-9]*]], metadata !{{[0-9]*}}}
 // CHECK: [[A_I]] = {{.*}} ; [ DW_TAG_member ] [i] {{.*}} [from int]
-// CHECK: ; [ DW_TAG_structure_type ] [b] {{.*}}[fwd]
+// CHECK: ; [ DW_TAG_structure_type ] [b] {{.*}}[decl]
 }
