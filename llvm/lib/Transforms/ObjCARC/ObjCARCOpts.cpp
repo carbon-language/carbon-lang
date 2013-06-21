@@ -465,6 +465,10 @@ namespace {
 
     void clear();
 
+    /// Conservatively merge the two RRInfo. Returns true if a partial merge has
+    /// occured, false otherwise.
+    bool Merge(const RRInfo &Other);
+
     bool IsTrackingImpreciseReleases() {
       return ReleaseMetadata != 0;
     }
@@ -478,6 +482,29 @@ void RRInfo::clear() {
   Calls.clear();
   ReverseInsertPts.clear();
   CFGHazardAfflicted = false;
+}
+
+bool RRInfo::Merge(const RRInfo &Other) {
+    // Conservatively merge the ReleaseMetadata information.
+    if (ReleaseMetadata != Other.ReleaseMetadata)
+      ReleaseMetadata = 0;
+
+    // Conservatively merge the boolean state.
+    KnownSafe &= Other.KnownSafe;
+    IsTailCallRelease &= Other.IsTailCallRelease;
+    CFGHazardAfflicted |= Other.CFGHazardAfflicted;
+
+    // Merge the call sets.
+    Calls.insert(Other.Calls.begin(), Other.Calls.end());
+
+    // Merge the insert point sets. If there are any differences,
+    // that makes this a partial merge.
+    bool Partial = ReverseInsertPts.size() != Other.ReverseInsertPts.size();
+    for (SmallPtrSet<Instruction *, 2>::const_iterator
+         I = Other.ReverseInsertPts.begin(),
+         E = Other.ReverseInsertPts.end(); I != E; ++I)
+      Partial |= ReverseInsertPts.insert(*I);
+    return Partial;
 }
 
 namespace {
@@ -557,23 +584,7 @@ PtrState::Merge(const PtrState &Other, bool TopDown) {
     // mixing them is unsafe.
     ClearSequenceProgress();
   } else {
-    // Conservatively merge the ReleaseMetadata information.
-    if (RRI.ReleaseMetadata != Other.RRI.ReleaseMetadata)
-      RRI.ReleaseMetadata = 0;
-
-    RRI.KnownSafe = RRI.KnownSafe && Other.RRI.KnownSafe;
-    RRI.IsTailCallRelease = RRI.IsTailCallRelease &&
-                            Other.RRI.IsTailCallRelease;
-    RRI.Calls.insert(Other.RRI.Calls.begin(), Other.RRI.Calls.end());
-    RRI.CFGHazardAfflicted |= Other.RRI.CFGHazardAfflicted;
-
-    // Merge the insert point sets. If there are any differences,
-    // that makes this a partial merge.
-    Partial = RRI.ReverseInsertPts.size() != Other.RRI.ReverseInsertPts.size();
-    for (SmallPtrSet<Instruction *, 2>::const_iterator
-         I = Other.RRI.ReverseInsertPts.begin(),
-         E = Other.RRI.ReverseInsertPts.end(); I != E; ++I)
-      Partial |= RRI.ReverseInsertPts.insert(*I);
+    Partial = RRI.Merge(Other.RRI);
   }
 }
 
