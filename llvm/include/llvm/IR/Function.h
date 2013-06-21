@@ -181,6 +181,13 @@ public:
                                              AttributeSet::FunctionIndex, N));
   }
 
+  /// removeFnAttr - Remove function attributes from this function.
+  ///
+  void removeFnAttr(Attribute::AttrKind N) {
+    setAttributes(AttributeSets.removeAttribute(
+        getContext(), AttributeSet::FunctionIndex, N));
+  }
+
   /// addFnAttr - Add function attributes to this function.
   ///
   void addFnAttr(StringRef Kind) {
