@@ -289,7 +289,7 @@ public:
   llvm::DIType getOrCreateInterfaceType(QualType Ty,
                                         SourceLocation Loc);
 
-  void completeFwdDecls(const RecordDecl *TD);
+  void completeFwdDecl(const RecordDecl &TD);
 
 private:
   /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.

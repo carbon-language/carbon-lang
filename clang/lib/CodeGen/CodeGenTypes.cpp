@@ -264,7 +264,7 @@ void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
   // If necessary, provide the full definition of a type only used with a
   // declaration so far.
   if (CGDebugInfo *DI = CGM.getModuleDebugInfo())
-    DI->completeFwdDecls(RD);
+    DI->completeFwdDecl(*RD);
 }
 
 static llvm::Type *getTypeForFormat(llvm::LLVMContext &VMContext,
