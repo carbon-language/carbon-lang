@@ -19,6 +19,7 @@
 #define LLVM_CODEGEN_LIVERANGEEDIT_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/Target/TargetMachine.h"
@@ -89,6 +90,12 @@ private:
   /// foldAsLoad - If LI has a single use and a single def that can be folded as
   /// a load, eliminate the register by folding the def into the use.
   bool foldAsLoad(LiveInterval *LI, SmallVectorImpl<MachineInstr*> &Dead);
+
+  typedef SetVector<LiveInterval*,
+                    SmallVector<LiveInterval*, 8>,
+                    SmallPtrSet<LiveInterval*, 8> > ToShrinkSet;
+  /// Helper for eliminateDeadDefs.
+  void eliminateDeadDef(MachineInstr *MI, ToShrinkSet &ToShrink);
 
 public:
   /// Create a LiveRangeEdit for breaking down parent into smaller pieces.
