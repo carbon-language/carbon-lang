@@ -1022,8 +1022,6 @@ parse_base_unresolved_name(const char* first, const char* last, C& db)
                         db.names.back().first += std::move(args);
                     }
                 }
-                else
-                    first = t;
             }
             else
             {
@@ -2071,7 +2069,7 @@ parse_type(const char* first, const char* last, C& db)
                                 size_t k0 = db.names.size();
                                 t = parse_type(first+2, last, db);
                                 size_t k1 = db.names.size();
-                                if (t != first+1)
+                                if (t != first+2)
                                 {
                                     db.subs.emplace_back(db.names.get_allocator());
                                     for (size_t k = k0; k < k1; ++k)
@@ -3841,7 +3839,7 @@ parse_nested_name(const char* first, const char* last, C& db)
         }
         first = t0 + 1;
         db.cv = cv;
-        if (pop_subs)
+        if (pop_subs && !db.subs.empty())
             db.subs.pop_back();
     }
     return first;
