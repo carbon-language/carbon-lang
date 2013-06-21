@@ -160,6 +160,13 @@ private:
   int64_t CppHashLineNumber;
   SMLoc CppHashLoc;
   int CppHashBuf;
+  /// When generating dwarf for assembly source files we need to calculate the
+  /// logical line number based on the last parsed cpp hash file line comment
+  /// and current line. Since this is slow and messes up the SourceMgr's 
+  /// cache we save the last info we queried with SrcMgr.FindLineNumber().
+  SMLoc LastQueryIDLoc;
+  int LastQueryBuffer;
+  unsigned LastQueryLine;
 
   /// AssemblerDialect. ~OU means unset value and use value provided by MAI.
   unsigned AssemblerDialect;
@@ -1519,7 +1526,18 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
         getStreamer().EmitDwarfFileDirective(
           getContext().nextGenDwarfFileNumber(), StringRef(), CppHashFilename);
 
-       unsigned CppHashLocLineNo = SrcMgr.FindLineNumber(CppHashLoc,CppHashBuf);
+       // Since SrcMgr.FindLineNumber() is slow and messes up the SourceMgr's 
+       // cache with the different Loc from the call above we save the last
+       // info we queried here with SrcMgr.FindLineNumber().
+       unsigned CppHashLocLineNo;
+       if (LastQueryIDLoc == CppHashLoc && LastQueryBuffer == CppHashBuf)
+         CppHashLocLineNo = LastQueryLine;
+       else {
+         CppHashLocLineNo = SrcMgr.FindLineNumber(CppHashLoc, CppHashBuf);
+         LastQueryLine = CppHashLocLineNo;
+         LastQueryIDLoc = CppHashLoc;
+         LastQueryBuffer = CppHashBuf;
+       }
        Line = CppHashLineNumber - 1 + (Line - CppHashLocLineNo);
     }
 
