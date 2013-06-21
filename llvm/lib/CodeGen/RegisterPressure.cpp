@@ -533,7 +533,7 @@ bool RegPressureTracker::advance() {
 static void computeExcessPressureDelta(ArrayRef<unsigned> OldPressureVec,
                                        ArrayRef<unsigned> NewPressureVec,
                                        RegPressureDelta &Delta,
-                                       const TargetRegisterInfo *TRI) {
+                                       const RegisterClassInfo *RCI) {
   int ExcessUnits = 0;
   unsigned PSetID = ~0U;
   for (unsigned i = 0, e = OldPressureVec.size(); i < e; ++i) {
@@ -543,7 +543,7 @@ static void computeExcessPressureDelta(ArrayRef<unsigned> OldPressureVec,
     if (!PDiff) // No change in this set in the common case.
       continue;
     // Only consider change beyond the limit.
-    unsigned Limit = TRI->getRegPressureSetLimit(i);
+    unsigned Limit = RCI->getRegPressureSetLimit(i);
     if (Limit > POld) {
       if (Limit > PNew)
         PDiff = 0;            // Under the limit
@@ -659,7 +659,7 @@ getMaxUpwardPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta,
 
   bumpUpwardPressure(MI);
 
-  computeExcessPressureDelta(SavedPressure, CurrSetPressure, Delta, TRI);
+  computeExcessPressureDelta(SavedPressure, CurrSetPressure, Delta, RCI);
   computeMaxPressureDelta(SavedMaxPressure, P.MaxSetPressure, CriticalPSets,
                           MaxPressureLimit, Delta);
   assert(Delta.CriticalMax.UnitIncrease >= 0 &&
@@ -749,7 +749,7 @@ getMaxDownwardPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta,
 
   bumpDownwardPressure(MI);
 
-  computeExcessPressureDelta(SavedPressure, CurrSetPressure, Delta, TRI);
+  computeExcessPressureDelta(SavedPressure, CurrSetPressure, Delta, RCI);
   computeMaxPressureDelta(SavedMaxPressure, P.MaxSetPressure, CriticalPSets,
                           MaxPressureLimit, Delta);
   assert(Delta.CriticalMax.UnitIncrease >= 0 &&

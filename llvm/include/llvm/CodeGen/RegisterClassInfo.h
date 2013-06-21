@@ -62,6 +62,8 @@ class RegisterClassInfo {
   // Reserved registers in the current MF.
   BitVector Reserved;
 
+  OwningArrayPtr<unsigned> PSetLimits;
+
   // Compute all information about RC.
   void compute(const TargetRegisterClass *RC) const;
 
@@ -126,8 +128,19 @@ public:
   unsigned getLastCostChange(const TargetRegisterClass *RC) {
     return get(RC).LastCostChange;
   }
+
+  /// Get the register unit limit for the given pressure set index.
+  ///
+  /// RegisterClassInfo adjusts this limit for reserved registers.
+  unsigned getRegPressureSetLimit(unsigned Idx) const {
+    if (!PSetLimits[Idx])
+      PSetLimits[Idx] = computePSetLimit(Idx);
+    return PSetLimits[Idx];
+  }
+
+protected:
+  unsigned computePSetLimit(unsigned Idx) const;
 };
 } // end namespace llvm
 
 #endif
-

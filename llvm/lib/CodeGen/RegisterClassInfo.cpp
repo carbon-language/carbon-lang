@@ -40,6 +40,9 @@ void RegisterClassInfo::runOnMachineFunction(const MachineFunction &mf) {
   if (MF->getTarget().getRegisterInfo() != TRI) {
     TRI = MF->getTarget().getRegisterInfo();
     RegClass.reset(new RCInfo[TRI->getNumRegClasses()]);
+    unsigned NumPSets = TRI->getNumRegPressureSets();
+    PSetLimits.reset(new unsigned[NumPSets]);
+    std::fill(&PSetLimits[0], &PSetLimits[NumPSets], 0);
     Update = true;
   }
 
@@ -144,3 +147,32 @@ void RegisterClassInfo::compute(const TargetRegisterClass *RC) const {
   RCI.Tag = Tag;
 }
 
+/// This is not accurate because two overlapping register sets may have some
+/// nonoverlapping reserved registers. However, computing the allocation order
+/// for all register classes would be too expensive.
+unsigned RegisterClassInfo::computePSetLimit(unsigned Idx) const {
+  const TargetRegisterClass *RC = 0;
+  unsigned NumRCUnits = 0;
+  for (TargetRegisterInfo::regclass_iterator
+         RI = TRI->regclass_begin(), RE = TRI->regclass_end(); RI != RE; ++RI) {
+    const int *PSetID = TRI->getRegClassPressureSets(*RI);
+    for (; *PSetID != -1; ++PSetID) {
+      if ((unsigned)*PSetID == Idx)
+        break;
+    }
+    if (*PSetID == -1)
+      continue;
+
+    // Found a register class that counts against this pressure set.
+    // For efficiency, only compute the set order for the largest set.
+    unsigned NUnits = TRI->getRegClassWeight(*RI).WeightLimit;
+    if (!RC || NUnits > NumRCUnits) {
+      RC = *RI;
+      NumRCUnits = NUnits;
+    }
+  }
+  compute(RC);
+  unsigned NReserved = RC->getNumRegs() - getNumAllocatableRegs(RC);
+  return TRI->getRegPressureSetLimit(Idx)
+    - TRI->getRegClassWeight(RC).RegWeight * NReserved;
+}
