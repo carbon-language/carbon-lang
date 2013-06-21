@@ -28,12 +28,6 @@
 // ACHTUNG! No other system header includes in this file.
 // Ideally, we should get rid of stdarg.h as well.
 
-extern "C" SANITIZER_WEAK_ATTRIBUTE const int __msan_keep_going;
-
-int __msan_get_keep_going() {
-  return &__msan_keep_going ? __msan_keep_going : 0;
-}
-
 using namespace __msan;
 
 // True if this is a nested interceptor.
@@ -56,22 +50,22 @@ bool IsInInterceptorScope() {
 } while (0)
 
 // Check that [x, x+n) range is unpoisoned.
-#define CHECK_UNPOISONED_0(x, n)                                              \
-  do {                                                                        \
-    sptr offset = __msan_test_shadow(x, n);                                   \
-    if (__msan::IsInSymbolizer()) break;                                      \
-    if (offset >= 0 && __msan::flags()->report_umrs) {                        \
-      GET_CALLER_PC_BP_SP;                                                    \
-      (void) sp;                                                              \
-      Printf("UMR in %s at offset %d inside [%p, +%d) \n", __FUNCTION__,      \
-             offset, x, n);                                                   \
-      __msan::PrintWarningWithOrigin(pc, bp,                                  \
-                                     __msan_get_origin((char *) x + offset)); \
-      if (!__msan_get_keep_going()) {                                         \
-        Printf("Exiting\n");                                                  \
-        Die();                                                                \
-      }                                                                       \
-    }                                                                         \
+#define CHECK_UNPOISONED_0(x, n)                                             \
+  do {                                                                       \
+    sptr offset = __msan_test_shadow(x, n);                                  \
+    if (__msan::IsInSymbolizer()) break;                                     \
+    if (offset >= 0 && __msan::flags()->report_umrs) {                       \
+      GET_CALLER_PC_BP_SP;                                                   \
+      (void) sp;                                                             \
+      Printf("UMR in %s at offset %d inside [%p, +%d) \n", __FUNCTION__,     \
+             offset, x, n);                                                  \
+      __msan::PrintWarningWithOrigin(pc, bp,                                 \
+                                     __msan_get_origin((char *)x + offset)); \
+      if (!__msan::flags()->keep_going) {                                    \
+        Printf("Exiting\n");                                                 \
+        Die();                                                               \
+      }                                                                      \
+    }                                                                        \
   } while (0)
 
 // Check that [x, x+n) range is unpoisoned unless we are in a nested

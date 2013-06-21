@@ -63,6 +63,11 @@ extern "C" {
      The last line will verify that a UMR happened. */
   void __msan_set_expect_umr(int expect_umr);
 
+  /* Change the value of keep_going flag. Non-zero value means don't terminate
+     program execution when an error is detected. This will not affect error in
+     modules that were compiled without the corresponding compiler flag. */
+  void __msan_set_keep_going(int keep_going);
+
   /* Print shadow and origin for the memory range to stdout in a human-readable
      format. */
   void __msan_print_shadow(const void *x, size_t size);

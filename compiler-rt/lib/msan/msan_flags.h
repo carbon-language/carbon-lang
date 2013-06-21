@@ -25,6 +25,7 @@ struct Flags {
   bool poison_in_malloc;  // default: true
   bool report_umrs;
   bool wrap_signals;
+  bool keep_going;
 };
 
 Flags *flags();

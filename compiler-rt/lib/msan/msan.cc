@@ -67,6 +67,8 @@ int __msan_get_track_origins() {
   return &__msan_track_origins ? __msan_track_origins : 0;
 }
 
+extern "C" SANITIZER_WEAK_ATTRIBUTE const int __msan_keep_going;
+
 namespace __msan {
 
 static bool IsRunningUnderDr() {
@@ -128,6 +130,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->report_umrs, "report_umrs");
   ParseFlag(str, &f->verbosity, "verbosity");
   ParseFlag(str, &f->wrap_signals, "wrap_signals");
+  ParseFlag(str, &f->keep_going, "keep_going");
 }
 
 static void InitializeFlags(Flags *f, const char *options) {
@@ -147,6 +150,7 @@ static void InitializeFlags(Flags *f, const char *options) {
   f->report_umrs = true;
   f->verbosity = 0;
   f->wrap_signals = true;
+  f->keep_going = !!&__msan_keep_going;
 
   // Override from user-specified string.
   if (__msan_default_options)
@@ -226,6 +230,10 @@ void __msan_warning() {
   GET_CALLER_PC_BP_SP;
   (void)sp;
   PrintWarning(pc, bp);
+  if (!__msan::flags()->keep_going) {
+    Printf("Exiting\n");
+    Die();
+  }
 }
 
 void __msan_warning_noreturn() {
@@ -294,6 +302,10 @@ void __msan_init() {
 
 void __msan_set_exit_code(int exit_code) {
   flags()->exit_code = exit_code;
+}
+
+void __msan_set_keep_going(int keep_going) {
+  flags()->keep_going = keep_going;
 }
 
 void __msan_set_expect_umr(int expect_umr) {
