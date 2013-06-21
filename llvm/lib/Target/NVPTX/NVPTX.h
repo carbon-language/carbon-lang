@@ -77,8 +77,7 @@ extern Target TheNVPTXTarget64;
 namespace NVPTX {
 enum DrvInterface {
   NVCL,
-  CUDA,
-  TEST
+  CUDA
 };
 
 // A field inside TSFlags needs a shift and a mask. The usage is

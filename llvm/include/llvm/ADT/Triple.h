@@ -81,7 +81,8 @@ public:
     BGP,
     BGQ,
     Freescale,
-    IBM
+    IBM,
+    NVIDIA
   };
   enum OSType {
     UnknownOS,
@@ -107,7 +108,9 @@ public:
     NaCl,       // Native Client
     CNK,        // BG/P Compute-Node Kernel
     Bitrig,
-    AIX
+    AIX,
+    CUDA,       // NVIDIA CUDA
+    NVCL        // NVIDIA OpenCL
   };
   enum EnvironmentType {
     UnknownEnvironment,

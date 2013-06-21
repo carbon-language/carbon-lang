@@ -1,4 +1,6 @@
-; RUN: llc < %s -march=nvptx -mcpu=sm_20 -drvcuda | FileCheck %s
+; RUN: llc < %s -march=nvptx -mcpu=sm_20 | FileCheck %s
+
+target triple = "nvptx-nvidia-cuda"
 
 ; Function Attrs: nounwind
 ; CHECK: .entry foo
