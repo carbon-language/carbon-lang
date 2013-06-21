@@ -28,3 +28,12 @@ namespace rdar13267210 {
     }
   };
 }
+
+namespace PR16292 {
+  class IncompleteClass;  // expected-note{{forward declaration}}
+  class BaseClass {
+    IncompleteClass Foo;  // expected-error{{field has incomplete type}}
+  };
+  template<class T> class DerivedClass : public BaseClass {};
+  void* p = new DerivedClass<void>;
+}

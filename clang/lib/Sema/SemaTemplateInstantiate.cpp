@@ -1754,6 +1754,10 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
          Base = Pattern->bases_begin(), BaseEnd = Pattern->bases_end();
        Base != BaseEnd; ++Base) {
     if (!Base->getType()->isDependentType()) {
+      if (const CXXRecordDecl *RD = Base->getType()->getAsCXXRecordDecl()) {
+        if (RD->isInvalidDecl())
+          Instantiation->setInvalidDecl();
+      }
       InstantiatedBases.push_back(new (Context) CXXBaseSpecifier(*Base));
       continue;
     }
