@@ -65,9 +65,6 @@ uint64_t div96bit(uint64_t W[2], uint32_t D) {
 
 
 BlockFrequency &BlockFrequency::operator*=(const BranchProbability &Prob) {
-  if (Frequency == 0)
-    return *this;
-
   uint32_t n = Prob.getNumerator();
   uint32_t d = Prob.getDenominator();
 
@@ -87,15 +84,10 @@ BlockFrequency &BlockFrequency::operator*=(const BranchProbability &Prob) {
     // 64-bit.
     mult96bit(Frequency, n, W);
     Frequency = div96bit(W, d);
-  } else {
-    // Fast case.
-    Frequency = mulRes / d;
+    return *this;
   }
 
-  // Limit the result to 1; 0 is a sentinel value. This keeps BlockFrequencyInfo
-  // from getting stuck at zero frequencies just because a value became too
-  // small to be represented as a BlockFrequency.
-  Frequency = (n == 0 || Frequency != 0) ? Frequency : 1;
+  Frequency = mulRes / d;
   return *this;
 }
 
