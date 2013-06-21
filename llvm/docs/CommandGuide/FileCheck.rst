@@ -44,7 +44,7 @@ OPTIONS
  By default, FileCheck canonicalizes input horizontal whitespace (spaces and
  tabs) which causes it to ignore these differences (a space will match a tab).
  The :option:`--strict-whitespace` argument disables this behavior. End-of-line
- sequences are canonicalized to UNIX-style '\n' in all modes.
+ sequences are canonicalized to UNIX-style ``\n`` in all modes.
 
 .. option:: -version
 
