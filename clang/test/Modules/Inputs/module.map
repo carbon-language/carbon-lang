@@ -131,6 +131,10 @@ module MethodPoolA {
 module MethodPoolB {
   header "MethodPoolB.h"
 
+  explicit module Sub2 {
+    header "MethodPoolBSub2.h"
+  }
+
   explicit module Sub {
     header "MethodPoolBSub.h"
   }

@@ -47,6 +47,10 @@ void testMethod3Again(id object) {
   char *str = [object method3]; // okay: only found in MethodPoolB.Sub
 }
 
+void testMethod6(id object) {
+  [object method6];
+}
+
 @import MethodPoolA.Sub;
 
 void testMethod3AgainAgain(id object) {
