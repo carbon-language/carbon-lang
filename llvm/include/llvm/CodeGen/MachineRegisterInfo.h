@@ -58,10 +58,6 @@ class MachineRegisterInfo {
   /// physical registers.
   MachineOperand **PhysRegUseDefLists;
 
-  const TargetRegisterInfo *getTargetRegisterInfo() const {
-    return TM.getRegisterInfo();
-  }
-
   /// getRegUseDefListHead - Return the head pointer for the register use/def
   /// list for the specified virtual or physical register.
   MachineOperand *&getRegUseDefListHead(unsigned RegNo) {
@@ -115,6 +111,10 @@ class MachineRegisterInfo {
 public:
   explicit MachineRegisterInfo(const TargetMachine &TM);
   ~MachineRegisterInfo();
+
+  const TargetRegisterInfo *getTargetRegisterInfo() const {
+    return TM.getRegisterInfo();
+  }
 
   //===--------------------------------------------------------------------===//
   // Function State
