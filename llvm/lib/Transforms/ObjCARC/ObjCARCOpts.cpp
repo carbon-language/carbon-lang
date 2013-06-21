@@ -469,9 +469,6 @@ namespace {
     /// occured, false otherwise.
     bool Merge(const RRInfo &Other);
 
-    bool IsTrackingImpreciseReleases() {
-      return ReleaseMetadata != 0;
-    }
   };
 }
 
@@ -545,6 +542,10 @@ namespace {
 
     void SetTailCallRelease(const bool NewValue) {
       RRI.IsTailCallRelease = NewValue;
+    }
+
+    bool IsTrackingImpreciseReleases() {
+      return RRI.ReleaseMetadata != 0;
     }
 
     const MDNode *GetReleaseMetadata() const {
@@ -1967,7 +1968,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     case S_Use:
       // If OldSeq is not S_Use or OldSeq is S_Use and we are tracking an
       // imprecise release, clear our reverse insertion points.
-      if (OldSeq != S_Use || S.RRI.IsTrackingImpreciseReleases())
+      if (OldSeq != S_Use || S.IsTrackingImpreciseReleases())
         S.RRI.ReverseInsertPts.clear();
       // FALL THROUGH
     case S_CanRelease:
