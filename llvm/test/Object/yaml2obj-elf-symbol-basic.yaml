@@ -26,6 +26,7 @@ Sections:
           Section: .text
           Value: 0x1
           Size: 2
+        - Name: undefined_symbol
 
 # CHECK:      Symbols [
 # CHECK-NEXT:   Symbol {
@@ -37,6 +38,9 @@ Sections:
 # CHECK:          Binding: Global
 # CHECK-NEXT:     Type: Function
 # CHECK:          Section: .text
+# CHECK:        Symbol {
+# CHECK:          Name: undefined_symbol
+# CHECK:          Section:  (0x0)
 
 # DISASSEMBLY:      Disassembly of section .text:
 # DISASSEMBLY-NEXT: main:

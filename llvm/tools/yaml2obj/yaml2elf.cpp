@@ -184,13 +184,15 @@ addSymbols(const std::vector<ELFYAML::Symbol> &Symbols, ELFState<ELFT> &State,
     if (!Sym.Name.empty())
       Symbol.st_name = State.getStringTable().addString(Sym.Name);
     Symbol.setBindingAndType(SymbolBinding, Sym.Type);
-    unsigned Index;
-    if (State.getSN2I().lookupSection(Sym.Section, Index)) {
-      errs() << "error: Unknown section referenced: '" << Sym.Section
-             << "' by YAML symbol " << Sym.Name << ".\n";
-      exit(1);
-    }
-    Symbol.st_shndx = Index;
+    if (!Sym.Section.empty()) {
+      unsigned Index;
+      if (State.getSN2I().lookupSection(Sym.Section, Index)) {
+        errs() << "error: Unknown section referenced: '" << Sym.Section
+               << "' by YAML symbol " << Sym.Name << ".\n";
+        exit(1);
+      }
+      Symbol.st_shndx = Index;
+    } // else Symbol.st_shndex == SHN_UNDEF (== 0), since it was zero'd earlier.
     Symbol.st_value = Sym.Value;
     Symbol.st_size = Sym.Size;
     Syms.push_back(Symbol);
