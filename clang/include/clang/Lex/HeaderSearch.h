@@ -496,7 +496,11 @@ public:
   ///
   /// \param Root The "root" directory, at which we should stop looking for
   /// module maps.
-  bool hasModuleMap(StringRef Filename, const DirectoryEntry *Root);
+  ///
+  /// \param IsSystem Whether the directories we're looking at are system
+  /// header directories.
+  bool hasModuleMap(StringRef Filename, const DirectoryEntry *Root,
+                    bool IsSystem);
   
   /// \brief Retrieve the module that corresponds to the given file, if any.
   ///
@@ -506,9 +510,10 @@ public:
   /// \brief Read the contents of the given module map file.
   ///
   /// \param File The module map file.
+  /// \param IsSystem Whether this file is in a system header directory.
   ///
   /// \returns true if an error occurred, false otherwise.
-  bool loadModuleMapFile(const FileEntry *File);
+  bool loadModuleMapFile(const FileEntry *File, bool IsSystem);
 
   /// \brief Collect the set of all known, top-level modules.
   ///
@@ -602,18 +607,21 @@ private:
   ///
   /// \param DirName The name of the directory where we will look for a module
   /// map file.
+  /// \param IsSystem Whether this is a system header directory.
   ///
   /// \returns The result of attempting to load the module map file from the
   /// named directory.
-  LoadModuleMapResult loadModuleMapFile(StringRef DirName);
+  LoadModuleMapResult loadModuleMapFile(StringRef DirName, bool IsSystem);
 
   /// \brief Try to load the module map file in the given directory.
   ///
   /// \param Dir The directory where we will look for a module map file.
+  /// \param IsSystem Whether this is a system header directory.
   ///
   /// \returns The result of attempting to load the module map file from the
   /// named directory.
-  LoadModuleMapResult loadModuleMapFile(const DirectoryEntry *Dir);
+  LoadModuleMapResult loadModuleMapFile(const DirectoryEntry *Dir,
+                                        bool IsSystem);
 
   /// \brief Return the HeaderFileInfo structure for the specified FileEntry.
   HeaderFileInfo &getFileInfo(const FileEntry *FE);

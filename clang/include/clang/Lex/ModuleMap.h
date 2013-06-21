@@ -337,8 +337,11 @@ public:
   ///
   /// \param File The file to be parsed.
   ///
+  /// \param IsSystem Whether this module map file is in a system header
+  /// directory, and therefore should be considered a system module.
+  ///
   /// \returns true if an error occurred, false otherwise.
-  bool parseModuleMapFile(const FileEntry *File);
+  bool parseModuleMapFile(const FileEntry *File, bool IsSystem);
     
   /// \brief Dump the contents of the module map, for debugging purposes.
   void dump();

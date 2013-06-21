@@ -476,7 +476,7 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
           SmallString<128> ModMapPath = Parent;
           llvm::sys::path::append(ModMapPath, "module.map");
           if (const FileEntry *ModMapFile = FileMgr.getFile(ModMapPath)) {
-            parseModuleMapFile(ModMapFile);
+            parseModuleMapFile(ModMapFile, IsSystem);
             inferred = InferredDirectories.find(ParentDir);
           }
 
@@ -789,6 +789,9 @@ namespace clang {
     /// \brief The directory containing Clang-supplied headers.
     const DirectoryEntry *BuiltinIncludeDir;
 
+    /// \brief Whether this module map is in a system header directory.
+    bool IsSystem;
+    
     /// \brief Whether an error occurred.
     bool HadError;
         
@@ -831,10 +834,11 @@ namespace clang {
                              DiagnosticsEngine &Diags,
                              ModuleMap &Map,
                              const DirectoryEntry *Directory,
-                             const DirectoryEntry *BuiltinIncludeDir)
+                             const DirectoryEntry *BuiltinIncludeDir,
+                             bool IsSystem)
       : L(L), SourceMgr(SourceMgr), Target(Target), Diags(Diags), Map(Map), 
-        Directory(Directory), BuiltinIncludeDir(BuiltinIncludeDir), 
-        HadError(false), ActiveModule(0)
+        Directory(Directory), BuiltinIncludeDir(BuiltinIncludeDir),
+        IsSystem(IsSystem), HadError(false), ActiveModule(0)
     {
       Tok.clear();
       consumeToken();
@@ -1170,7 +1174,7 @@ void ModuleMapParser::parseModuleDecl() {
   ActiveModule = Map.findOrCreateModule(ModuleName, ActiveModule, Framework,
                                         Explicit).first;
   ActiveModule->DefinitionLoc = ModuleNameLoc;
-  if (Attrs.IsSystem)
+  if (Attrs.IsSystem || IsSystem)
     ActiveModule->IsSystem = true;
   
   bool Done = false;
@@ -1957,7 +1961,7 @@ bool ModuleMapParser::parseModuleMapFile() {
   } while (true);
 }
 
-bool ModuleMap::parseModuleMapFile(const FileEntry *File) {
+bool ModuleMap::parseModuleMapFile(const FileEntry *File, bool IsSystem) {
   llvm::DenseMap<const FileEntry *, bool>::iterator Known
     = ParsedModuleMap.find(File);
   if (Known != ParsedModuleMap.end())
@@ -1973,7 +1977,7 @@ bool ModuleMap::parseModuleMapFile(const FileEntry *File) {
   Lexer L(ID, SourceMgr->getBuffer(ID), *SourceMgr, MMapLangOpts);
   Diags->getClient()->BeginSourceFile(MMapLangOpts);
   ModuleMapParser Parser(L, *SourceMgr, Target, *Diags, *this, File->getDir(),
-                         BuiltinIncludeDir);
+                         BuiltinIncludeDir, IsSystem);
   bool Result = Parser.parseModuleMapFile();
   Diags->getClient()->EndSourceFile();
   ParsedModuleMap[File] = Result;

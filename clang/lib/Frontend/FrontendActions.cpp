@@ -232,7 +232,7 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
   
   // Parse the module map file.
   HeaderSearch &HS = CI.getPreprocessor().getHeaderSearchInfo();
-  if (HS.loadModuleMapFile(ModuleMap))
+  if (HS.loadModuleMapFile(ModuleMap, IsSystem))
     return false;
   
   if (CI.getLangOpts().CurrentModule.empty()) {

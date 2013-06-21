@@ -99,6 +99,7 @@ public:
 
 class GenerateModuleAction : public ASTFrontendAction {
   clang::Module *Module;
+  bool IsSystem;
   
 protected:
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
@@ -111,6 +112,9 @@ protected:
   virtual bool hasASTFileSupport() const { return false; }
   
 public:
+  explicit GenerateModuleAction(bool IsSystem = false)
+    : ASTFrontendAction(), IsSystem(IsSystem) { }
+
   virtual bool BeginSourceFileAction(CompilerInstance &CI, StringRef Filename);
   
   /// \brief Compute the AST consumer arguments that will be used to

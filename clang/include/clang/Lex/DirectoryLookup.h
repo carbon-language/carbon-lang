@@ -130,6 +130,11 @@ public:
     return (SrcMgr::CharacteristicKind)DirCharacteristic;
   }
 
+  /// \brief Whether this describes a system header directory.
+  bool isSystemHeaderDirectory() const {
+    return getDirCharacteristic() != SrcMgr::C_User;
+  }
+
   /// \brief Whether this header map is building a framework or not.
   bool isIndexHeaderMap() const { 
     return isHeaderMap() && IsIndexHeaderMap; 
