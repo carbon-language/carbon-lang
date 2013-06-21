@@ -9,6 +9,28 @@ struct foo {
 
 typedef foo bar;
 
-bar *f;
-bar g;
+bar *a;
+bar b;
+}
+
+namespace test1 {
+struct foo {
+  int i;
+};
+
+foo *foo(foo *a) {
+  foo *b = new foo(*a);
+  return b;
+}
+}
+
+namespace test2 {
+struct foo {
+  int i;
+};
+
+extern int bar(foo *a);
+int baz(foo *a) {
+  return bar(a);
+}
 }
