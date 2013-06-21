@@ -43,7 +43,7 @@ public:
                           const NativeDefinedAtomIvarsV1* ivarData)
         : _file(&f), _ivarData(ivarData) { }
 
-  virtual const class lld::File& file() const;
+  virtual const lld::File& file() const;
 
   virtual uint64_t ordinal() const;
 
@@ -370,11 +370,11 @@ public:
   virtual const TargetInfo &getTargetInfo() const { return _targetInfo; }
 
 private:
-  friend class NativeDefinedAtomV1;
-  friend class NativeUndefinedAtomV1;
-  friend class NativeSharedLibraryAtomV1;
-  friend class NativeAbsoluteAtomV1;
-  friend class NativeReferenceV1;
+  friend NativeDefinedAtomV1;
+  friend NativeUndefinedAtomV1;
+  friend NativeSharedLibraryAtomV1;
+  friend NativeAbsoluteAtomV1;
+  friend NativeReferenceV1;
 
   // instantiate array of DefinedAtoms from v1 ivar data in file
   error_code processDefinedAtomsV1(const uint8_t *base,
@@ -797,7 +797,7 @@ private:
   const TargetInfo &_targetInfo;
 };
 
-inline const class lld::File &NativeDefinedAtomV1::file() const {
+inline const lld::File &NativeDefinedAtomV1::file() const {
   return *_file;
 }
 
@@ -851,7 +851,7 @@ void NativeDefinedAtomV1::incrementIterator(const void*& it) const {
   it = reinterpret_cast<const void*>(index);
 }
 
-inline const class lld::File& NativeUndefinedAtomV1::file() const {
+inline const lld::File& NativeUndefinedAtomV1::file() const {
   return *_file;
 }
 
@@ -862,7 +862,7 @@ inline StringRef NativeUndefinedAtomV1::name() const {
 
 
 
-inline const class lld::File& NativeSharedLibraryAtomV1::file() const {
+inline const lld::File& NativeSharedLibraryAtomV1::file() const {
   return *_file;
 }
 
@@ -876,7 +876,7 @@ inline StringRef NativeSharedLibraryAtomV1::loadName() const {
 
 
 
-inline const class lld::File& NativeAbsoluteAtomV1::file() const {
+inline const lld::File& NativeAbsoluteAtomV1::file() const {
   return *_file;
 }
 

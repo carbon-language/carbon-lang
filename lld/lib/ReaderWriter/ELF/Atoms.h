@@ -511,7 +511,7 @@ public:
         _contentData(contentData), _offset(offset) {
   }
 
-  virtual const class ELFFile<ELFT> &file() const {
+  virtual const ELFFile<ELFT> &file() const {
     return _owningFile;
   }
 

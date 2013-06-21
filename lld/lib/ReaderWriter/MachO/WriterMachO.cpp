@@ -42,6 +42,9 @@
 
 namespace lld {
 namespace mach_o {
+class LoadCommandPaddingChunk;
+class SymbolStringsChunk;
+class MachOWriter;
 
 //
 // A mach-o file consists of some meta data (header and load commands),
@@ -104,7 +107,7 @@ class SectionChunk : public Chunk {
 public:
   static SectionChunk*  make(DefinedAtom::ContentType,
                              const MachOTargetInfo &ti,
-                             class MachOWriter &writer);
+                             MachOWriter &writer);
   virtual StringRef     segmentName() const;
   virtual bool          occupiesNoDiskSpace();
   virtual void          write(uint8_t *fileBuffer);
@@ -126,12 +129,12 @@ private:
                              StringRef sect,
                              uint32_t flags,
                              const MachOTargetInfo &ti,
-                             class MachOWriter &writer);
+                             MachOWriter &writer);
 
   StringRef                 _segmentName;
   StringRef                 _sectionName;
   const MachOTargetInfo    &_targetInfo;
-  class MachOWriter        &_writer;
+  MachOWriter              &_writer;
   uint32_t                  _flags;
   uint32_t                  _permissions;
   std::vector<AtomInfo>     _atoms;
@@ -170,7 +173,7 @@ class LoadCommandsChunk : public Chunk {
 public:
                       LoadCommandsChunk(MachHeaderChunk&,
                                         const MachOTargetInfo &,
-                                        class MachOWriter&);
+                                        MachOWriter&);
   virtual StringRef   segmentName() const;
   virtual void        write(uint8_t *fileBuffer);
   virtual const char* info();
@@ -179,7 +182,7 @@ public:
   void                updateLoadCommandContent(const lld::File &file);
 
 private:
-  friend class LoadCommandPaddingChunk;
+  friend LoadCommandPaddingChunk;
 
   void                addLoadCommand(load_command* lc);
   void                setMachOSection(SectionChunk *chunk,
@@ -196,7 +199,7 @@ private:
 
   MachHeaderChunk             &_mh;
   const MachOTargetInfo       &_targetInfo;
-  class MachOWriter           &_writer;
+  MachOWriter                 &_writer;
   segment_command             *_linkEditSegment;
   symtab_command              *_symbolTableLoadCommand;
   entry_point_command         *_entryPointLoadCommand;
@@ -247,7 +250,7 @@ public:
 //
 class DyldInfoChunk : public LinkEditChunk {
 public:
-                      DyldInfoChunk(class MachOWriter &);
+                      DyldInfoChunk(MachOWriter &);
   virtual void        write(uint8_t *fileBuffer);
 
 protected:
@@ -255,7 +258,7 @@ protected:
   void                append_uleb128(uint64_t);
   void                append_string(StringRef);
 
-  class MachOWriter      &_writer;
+  MachOWriter            &_writer;
   std::vector<uint8_t>    _bytes;
 };
 
@@ -267,7 +270,7 @@ protected:
 //
 class BindingInfoChunk : public DyldInfoChunk {
 public:
-                      BindingInfoChunk(class MachOWriter &);
+                      BindingInfoChunk(MachOWriter &);
   virtual void        computeSize(const lld::File &file,
                                       const std::vector<SectionChunk*>&);
   virtual const char* info();
@@ -281,7 +284,7 @@ public:
 //
 class LazyBindingInfoChunk : public DyldInfoChunk {
 public:
-                      LazyBindingInfoChunk(class MachOWriter &);
+                      LazyBindingInfoChunk(MachOWriter &);
   virtual void        computeSize(const lld::File &file,
                                       const std::vector<SectionChunk*>&);
   virtual const char* info();
@@ -296,7 +299,7 @@ private:
 //
 class SymbolTableChunk : public LinkEditChunk {
 public:
-                      SymbolTableChunk(class SymbolStringsChunk&, MachOWriter&);
+                      SymbolTableChunk(SymbolStringsChunk&, MachOWriter&);
   virtual void        write(uint8_t *fileBuffer);
   virtual void        computeSize(const lld::File &file,
                                       const std::vector<SectionChunk*>&);
@@ -353,9 +356,9 @@ public:
   bool use64BitMachO() const;
 
 private:
-  friend class LoadCommandsChunk;
-  friend class LazyBindingInfoChunk;
-  friend class BindingInfoChunk;
+  friend LoadCommandsChunk;
+  friend LazyBindingInfoChunk;
+  friend BindingInfoChunk;
 
   void        build(const lld::File &file);
   void        createChunks(const lld::File &file);

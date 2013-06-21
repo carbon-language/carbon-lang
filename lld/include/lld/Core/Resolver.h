@@ -36,10 +36,10 @@ public:
   }
 
   // InputFiles::Handler methods
-  virtual void doDefinedAtom(const class DefinedAtom&);
-  virtual void doUndefinedAtom(const class UndefinedAtom&);
-  virtual void doSharedLibraryAtom(const class SharedLibraryAtom &);
-  virtual void doAbsoluteAtom(const class AbsoluteAtom &);
+  virtual void doDefinedAtom(const DefinedAtom&);
+  virtual void doUndefinedAtom(const UndefinedAtom&);
+  virtual void doSharedLibraryAtom(const SharedLibraryAtom &);
+  virtual void doAbsoluteAtom(const AbsoluteAtom &);
   virtual void doFile(const File&);
 
   /// @brief do work of merging and resolving and return list
@@ -87,7 +87,7 @@ private:
     virtual DefinedAtomRange definedAtoms();
 
   private:
-    friend class Resolver;
+    friend Resolver;
     atom_collection_vector<DefinedAtom>         _definedAtoms;
     atom_collection_vector<UndefinedAtom>       _undefinedAtoms;
     atom_collection_vector<SharedLibraryAtom>   _sharedLibraryAtoms;

@@ -369,7 +369,7 @@ private:
   }
 
   // append atom cotent to content pool and return offset
-  uint32_t getContentOffset(const class DefinedAtom& atom) {
+  uint32_t getContentOffset(const DefinedAtom& atom) {
     if ((atom.contentType() == DefinedAtom::typeZeroFill ) ||
         (atom.contentType() == DefinedAtom::typeZeroFillFast))
       return 0;
@@ -380,7 +380,7 @@ private:
   }
 
   // reuse existing attributes entry or create a new one and return offet
-  uint32_t getAttributeOffset(const class DefinedAtom& atom) {
+  uint32_t getAttributeOffset(const DefinedAtom& atom) {
     NativeAtomAttributesV1 attrs;
     computeAttributesV1(atom, attrs);
     for(unsigned int i=0; i < _attributes.size(); ++i) {
@@ -395,7 +395,7 @@ private:
     return result;
   }
 
-  uint32_t getAttributeOffset(const class AbsoluteAtom& atom) {
+  uint32_t getAttributeOffset(const AbsoluteAtom& atom) {
     NativeAtomAttributesV1 attrs;
     computeAbsoluteAttributes(atom, attrs);
     for(unsigned int i=0; i < _absAttributes.size(); ++i) {
@@ -410,7 +410,7 @@ private:
     return result;
   }
 
-  uint32_t sectionNameOffset(const class DefinedAtom& atom) {
+  uint32_t sectionNameOffset(const DefinedAtom& atom) {
     // if section based on content, then no custom section name available
     if ( atom.sectionChoice() == DefinedAtom::sectionBasedOnContent )
       return 0;
@@ -428,8 +428,8 @@ private:
     return result;
   }
 
-  void computeAttributesV1(const class DefinedAtom& atom,
-                                                NativeAtomAttributesV1& attrs) {
+  void computeAttributesV1(const DefinedAtom& atom,
+                           NativeAtomAttributesV1& attrs) {
     attrs.sectionNameOffset = sectionNameOffset(atom);
     attrs.align2            = atom.alignment().powerOf2;
     attrs.alignModulus      = atom.alignment().modulus;
@@ -444,8 +444,8 @@ private:
     attrs.alias             = atom.isAlias();
   }
 
-  void computeAbsoluteAttributes(const class AbsoluteAtom& atom,
-                                                NativeAtomAttributesV1& attrs) {
+  void computeAbsoluteAttributes(const AbsoluteAtom& atom,
+                                 NativeAtomAttributesV1& attrs) {
     attrs.scope       = atom.scope();
   }
 

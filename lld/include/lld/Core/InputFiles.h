@@ -28,11 +28,11 @@ public:
   class Handler {
   public:
     virtual ~Handler() {}
-    virtual void doFile(const class File &) = 0;
-    virtual void doDefinedAtom(const class DefinedAtom &) = 0;
-    virtual void doUndefinedAtom(const class UndefinedAtom &) = 0;
-    virtual void doSharedLibraryAtom(const class SharedLibraryAtom &) = 0;
-    virtual void doAbsoluteAtom(const class AbsoluteAtom &) = 0;
+    virtual void doFile(const File &) = 0;
+    virtual void doDefinedAtom(const DefinedAtom &) = 0;
+    virtual void doUndefinedAtom(const UndefinedAtom &) = 0;
+    virtual void doSharedLibraryAtom(const SharedLibraryAtom &) = 0;
+    virtual void doAbsoluteAtom(const AbsoluteAtom &) = 0;
   };
 
   InputFiles();

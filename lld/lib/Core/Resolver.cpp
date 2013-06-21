@@ -88,7 +88,7 @@ void Resolver::doFile(const File &file) {
 }
 
 
-void Resolver::doUndefinedAtom(const class UndefinedAtom& atom) {
+void Resolver::doUndefinedAtom(const UndefinedAtom& atom) {
   DEBUG_WITH_TYPE("resolver", llvm::dbgs()
                     << "       UndefinedAtom: "
                     << llvm::format("0x%09lX", &atom)
