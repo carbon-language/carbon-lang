@@ -208,7 +208,11 @@ namespace __sanitizer {
   unsigned struct_audio_buf_info_sz = sizeof(struct audio_buf_info);
   unsigned struct_ax25_parms_struct_sz = sizeof(struct ax25_parms_struct);
   unsigned struct_cyclades_monitor_sz = sizeof(struct cyclades_monitor);
+#if EV_VERSION > (0x010000)
   unsigned struct_input_keymap_entry_sz = sizeof(struct input_keymap_entry);
+#else
+  unsigned struct_input_keymap_entry_sz = 0;
+#endif
   unsigned struct_ipx_config_data_sz = sizeof(struct ipx_config_data);
   unsigned struct_kbdiacrs_sz = sizeof(struct kbdiacrs);
   unsigned struct_kbentry_sz = sizeof(struct kbentry);
@@ -231,6 +235,8 @@ namespace __sanitizer {
   unsigned struct_sioc_sg_req_sz = sizeof(struct sioc_sg_req);
   unsigned struct_sioc_vif_req_sz = sizeof(struct sioc_vif_req);
 #endif
+
+  unsigned IOCTL_NOT_PRESENT = 0;
 
   unsigned IOCTL_FIOASYNC = FIOASYNC;
   unsigned IOCTL_FIOCLEX = FIOCLEX;
@@ -556,9 +562,15 @@ namespace __sanitizer {
   unsigned IOCTL_EQL_GETSLAVECFG = EQL_GETSLAVECFG;
   unsigned IOCTL_EQL_SETMASTRCFG = EQL_SETMASTRCFG;
   unsigned IOCTL_EQL_SETSLAVECFG = EQL_SETSLAVECFG;
+#if EV_VERSION > (0x010000)
   unsigned IOCTL_EVIOCGKEYCODE_V2 = EVIOCGKEYCODE_V2;
   unsigned IOCTL_EVIOCGPROP = EVIOCGPROP(0);
   unsigned IOCTL_EVIOCSKEYCODE_V2 = EVIOCSKEYCODE_V2;
+#else
+  unsigned IOCTL_EVIOCGKEYCODE_V2 = IOCTL_NOT_PRESENT;
+  unsigned IOCTL_EVIOCGPROP = IOCTL_NOT_PRESENT;
+  unsigned IOCTL_EVIOCSKEYCODE_V2 = IOCTL_NOT_PRESENT;
+#endif
   unsigned IOCTL_FS_IOC_GETFLAGS = FS_IOC_GETFLAGS;
   unsigned IOCTL_FS_IOC_GETVERSION = FS_IOC_GETVERSION;
   unsigned IOCTL_FS_IOC_SETFLAGS = FS_IOC_SETFLAGS;

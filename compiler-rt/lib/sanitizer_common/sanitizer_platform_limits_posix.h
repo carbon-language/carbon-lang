@@ -236,6 +236,11 @@ namespace __sanitizer {
 #endif
 
   // ioctl request identifiers
+
+  // A special value to mark ioctls that are not present on the target platform,
+  // when it can not be determined without including any system headers.
+  extern unsigned IOCTL_NOT_PRESENT;
+
   extern unsigned IOCTL_FIOASYNC;
   extern unsigned IOCTL_FIOCLEX;
   extern unsigned IOCTL_FIOGETOWN;

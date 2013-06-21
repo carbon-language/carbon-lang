@@ -33,13 +33,15 @@ static unsigned ioctl_table_size = 0;
 // require a global initializer. And this table must be available before global
 // initializers are run.
 static void ioctl_table_fill() {
-#define _(rq, tp, sz)                                  \
-  CHECK(ioctl_table_size < ioctl_table_max);           \
-  ioctl_table[ioctl_table_size].req = IOCTL_##rq;      \
-  ioctl_table[ioctl_table_size].type = ioctl_desc::tp; \
-  ioctl_table[ioctl_table_size].size = sz;             \
-  ioctl_table[ioctl_table_size].name = #rq;            \
-  ++ioctl_table_size;
+#define _(rq, tp, sz)                                    \
+  if (IOCTL_##rq != IOCTL_NOT_PRESENT) {                 \
+    CHECK(ioctl_table_size < ioctl_table_max);           \
+    ioctl_table[ioctl_table_size].req = IOCTL_##rq;      \
+    ioctl_table[ioctl_table_size].type = ioctl_desc::tp; \
+    ioctl_table[ioctl_table_size].size = sz;             \
+    ioctl_table[ioctl_table_size].name = #rq;            \
+    ++ioctl_table_size;                                  \
+  }
 
   _(FIOASYNC, READ, sizeof(int));
   _(FIOCLEX, NONE, 0);
