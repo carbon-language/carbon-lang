@@ -11,6 +11,8 @@ matchers.
 
   <center><iframe width="560" height="315" src="http://www.youtube.com/embed/VqCkCDFLSsc?vq=hd720" frameborder="0" allowfullscreen></iframe></center>
 
+`Slides <http://llvm.org/devmtg/2013-04/klimek-slides.pdf>`_
+
 Introduction
 ============
 
