@@ -539,6 +539,14 @@ namespace {
       RRI.KnownSafe = NewValue;
     }
 
+    bool IsTailCallRelease() const {
+      return RRI.IsTailCallRelease;
+    }
+
+    void SetTailCallRelease(const bool NewValue) {
+      RRI.IsTailCallRelease = NewValue;
+    }
+
     void SetKnownPositiveRefCount() {
       DEBUG(dbgs() << "Setting Known Positive.\n");
       KnownPositiveRefCount = true;
@@ -1918,7 +1926,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     S.ResetSequenceProgress(NewSeq);
     S.RRI.ReleaseMetadata = ReleaseMetadata;
     S.SetKnownSafe(S.HasKnownPositiveRefCount());
-    S.RRI.IsTailCallRelease = cast<CallInst>(Inst)->isTailCall();
+    S.SetTailCallRelease(cast<CallInst>(Inst)->isTailCall());
     S.RRI.Calls.insert(Inst);
     S.SetKnownPositiveRefCount();
     break;
@@ -2203,7 +2211,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
       // FALL THROUGH
     case S_Use:
       S.RRI.ReleaseMetadata = ReleaseMetadata;
-      S.RRI.IsTailCallRelease = cast<CallInst>(Inst)->isTailCall();
+      S.SetTailCallRelease(cast<CallInst>(Inst)->isTailCall());
       Releases[Inst] = S.RRI;
       ANNOTATE_TOPDOWN(Inst, Arg, S.GetSeq(), S_None);
       S.ClearSequenceProgress();
