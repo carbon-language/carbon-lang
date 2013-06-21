@@ -1951,8 +1951,15 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit,
 
   llvm::DIType T = getCompletedTypeOrNull(Ty);
 
-  if (T.Verify())
+  if (T.Verify()) {
+    // If we're looking for a definition, make sure we have definitions of any
+    // underlying types.
+    if (const TypedefType* TTy = dyn_cast<TypedefType>(Ty))
+      getOrCreateType(TTy->getDecl()->getUnderlyingType(), Unit, Declaration);
+    if (Ty.hasLocalQualifiers())
+      getOrCreateType(QualType(Ty.getTypePtr(), 0), Unit, Declaration);
     return T;
+  }
 
   // Otherwise create the type.
   llvm::DIType Res = CreateTypeNode(Ty, Unit, Declaration);
