@@ -300,6 +300,8 @@ public:
   /// IEEE-754R 5.3.1: nextUp/nextDown.
   opStatus next(bool nextDown);
 
+  /// @}
+
   /// \name Sign operations.
   /// @{
 
