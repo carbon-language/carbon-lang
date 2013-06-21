@@ -103,7 +103,7 @@ TEST(VariantValueTest, Assignment) {
   EXPECT_EQ("Nothing", Value.getTypeAsString());
 }
 
-TEST(GeneicValueTest, Matcher) {
+TEST(GenericValueTest, Matcher) {
   EXPECT_TRUE(matches("class X {};", VariantValue(recordDecl(hasName("X")))
                                          .getTypedMatcher<Decl>()));
   EXPECT_TRUE(
@@ -112,8 +112,10 @@ TEST(GeneicValueTest, Matcher) {
                       VariantValue(functionDecl()).getTypedMatcher<Decl>()));
   // Can't get the wrong matcher.
   EXPECT_FALSE(VariantValue(varDecl()).hasTypedMatcher<Stmt>());
-#if GTEST_HAS_DEATH_TEST and DEBUG
-  // Trying to get the wrong matcher fails an assertion in Matcher<T>.
+#if !defined(NDEBUG) && GTEST_HAS_DEATH_TEST && !defined(_MSC_VER)
+  // Trying to get the wrong matcher fails an assertion in Matcher<T>.  We don't
+  // do this test when building with MSVC because its debug C runtime prints the
+  // assertion failure message as a wide string, which gtest doesn't understand.
   EXPECT_DEATH(VariantValue(varDecl()).getTypedMatcher<Stmt>(),
                "canConstructFrom");
 #endif
