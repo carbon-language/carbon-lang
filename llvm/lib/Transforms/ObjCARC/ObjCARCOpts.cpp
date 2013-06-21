@@ -547,6 +547,14 @@ namespace {
       RRI.IsTailCallRelease = NewValue;
     }
 
+    const MDNode *GetReleaseMetadata() const {
+      return RRI.ReleaseMetadata;
+    }
+
+    void SetReleaseMetadata(MDNode *NewValue) {
+      RRI.ReleaseMetadata = NewValue;
+    }
+
     void SetKnownPositiveRefCount() {
       DEBUG(dbgs() << "Setting Known Positive.\n");
       KnownPositiveRefCount = true;
@@ -1924,7 +1932,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     Sequence NewSeq = ReleaseMetadata ? S_MovableRelease : S_Release;
     ANNOTATE_BOTTOMUP(Inst, Arg, S.GetSeq(), NewSeq);
     S.ResetSequenceProgress(NewSeq);
-    S.RRI.ReleaseMetadata = ReleaseMetadata;
+    S.SetReleaseMetadata(ReleaseMetadata);
     S.SetKnownSafe(S.HasKnownPositiveRefCount());
     S.SetTailCallRelease(cast<CallInst>(Inst)->isTailCall());
     S.RRI.Calls.insert(Inst);
@@ -2210,7 +2218,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
         S.RRI.ReverseInsertPts.clear();
       // FALL THROUGH
     case S_Use:
-      S.RRI.ReleaseMetadata = ReleaseMetadata;
+      S.SetReleaseMetadata(ReleaseMetadata);
       S.SetTailCallRelease(cast<CallInst>(Inst)->isTailCall());
       Releases[Inst] = S.RRI;
       ANNOTATE_TOPDOWN(Inst, Arg, S.GetSeq(), S_None);
