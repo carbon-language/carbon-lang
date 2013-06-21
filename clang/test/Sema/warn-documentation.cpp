@@ -136,7 +136,6 @@ int test_duplicate_brief2(int);
 int test_duplicate_brief3(int);
 
 
-// expected-warning@+5 {{duplicated command '\return'}} expected-note@+1 {{previous command '\return' here}}
 /// \return Aaa
 ///
 /// Bbb
@@ -144,7 +143,6 @@ int test_duplicate_brief3(int);
 /// \return Ccc
 int test_duplicate_returns1(int);
 
-// expected-warning@+5 {{duplicated command '\returns'}} expected-note@+1 {{previous command '\returns' here}}
 /// \returns Aaa
 ///
 /// Bbb
@@ -152,7 +150,6 @@ int test_duplicate_returns1(int);
 /// \returns Ccc
 int test_duplicate_returns2(int);
 
-// expected-warning@+5 {{duplicated command '\result'}} expected-note@+1 {{previous command '\result' here}}
 /// \result Aaa
 ///
 /// Bbb
@@ -160,7 +157,6 @@ int test_duplicate_returns2(int);
 /// \result Ccc
 int test_duplicate_returns3(int);
 
-// expected-warning@+5 {{duplicated command '\return'}} expected-note@+1 {{previous command '\returns' (an alias of '\return') here}}
 /// \returns Aaa
 ///
 /// Bbb

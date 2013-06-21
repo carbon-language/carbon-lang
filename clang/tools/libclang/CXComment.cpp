@@ -412,7 +412,7 @@ struct FullCommentParts {
   const BlockContentComment *Brief;
   const BlockContentComment *Headerfile;
   const ParagraphComment *FirstParagraph;
-  const BlockCommandComment *Returns;
+  SmallVector<const BlockCommandComment *, 4> Returns;
   SmallVector<const ParamCommandComment *, 8> Params;
   SmallVector<const TParamCommandComment *, 4> TParams;
   SmallVector<const BlockContentComment *, 8> MiscBlocks;
@@ -420,7 +420,7 @@ struct FullCommentParts {
 
 FullCommentParts::FullCommentParts(const FullComment *C,
                                    const CommandTraits &Traits) :
-    Brief(NULL), Headerfile(NULL), FirstParagraph(NULL), Returns(NULL) {
+    Brief(NULL), Headerfile(NULL), FirstParagraph(NULL) {
   for (Comment::child_iterator I = C->child_begin(), E = C->child_end();
        I != E; ++I) {
     const Comment *Child = *I;
@@ -452,8 +452,8 @@ FullCommentParts::FullCommentParts(const FullComment *C,
         Headerfile = BCC;
         break;
       }
-      if (!Returns && Info->IsReturnsCommand) {
-        Returns = BCC;
+      if (Info->IsReturnsCommand) {
+        Returns.push_back(BCC);
         break;
       }
       MiscBlocks.push_back(BCC);
@@ -786,8 +786,12 @@ void CommentASTToHTMLConverter::visitFullComment(const FullComment *C) {
     Result << "</dl>";
   }
 
-  if (Parts.Returns)
-    visit(Parts.Returns);
+  if (Parts.Returns.size() != 0) {
+    Result << "<dl>";
+    for (unsigned i = 0, e = Parts.Returns.size(); i != e; ++i)
+      visit(Parts.Returns[i]);
+    Result << "</dl>";
+  }
 
   Result.flush();
 }
@@ -1297,9 +1301,10 @@ void CommentASTToXMLConverter::visitFullComment(const FullComment *C) {
     Result << "</Parameters>";
   }
 
-  if (Parts.Returns) {
+  if (Parts.Returns.size() != 0) {
     Result << "<ResultDiscussion>";
-    visit(Parts.Returns);
+    for (unsigned i = 0, e = Parts.Returns.size(); i != e; ++i)
+      visit(Parts.Returns[i]);
     Result << "</ResultDiscussion>";
   }
   
