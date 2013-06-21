@@ -50,6 +50,10 @@ Non-comprehensive list of changes in this release
   APFloat::isIEEENormal() was renamed to APFloat::isNormal(). This ensures that
   APFloat::isNormal() conforms to IEEE-754R-2008.
 
+* The library call simplification pass has been removed.  Its functionality
+  has been integrated into the instruction combiner and function attribute
+  marking passes.
+
 * ... next change ...
 
 .. NOTE
