@@ -571,7 +571,7 @@ namespace {
 void
 PtrState::Merge(const PtrState &Other, bool TopDown) {
   Seq = MergeSeqs(Seq, Other.Seq, TopDown);
-  KnownPositiveRefCount = KnownPositiveRefCount && Other.KnownPositiveRefCount;
+  KnownPositiveRefCount &= Other.KnownPositiveRefCount;
 
   // If we're not in a sequence (anymore), drop all associated state.
   if (Seq == S_None) {
@@ -584,6 +584,10 @@ PtrState::Merge(const PtrState &Other, bool TopDown) {
     // mixing them is unsafe.
     ClearSequenceProgress();
   } else {
+    // Otherwise merge the other PtrState's RRInfo into our RRInfo. At this
+    // point, we know that currently we are not partial. Stash whether or not
+    // the merge operation caused us to undergo a partial merging of reverse
+    // insertion points.
     Partial = RRI.Merge(Other.RRI);
   }
 }
