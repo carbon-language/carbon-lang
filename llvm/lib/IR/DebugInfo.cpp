@@ -1120,7 +1120,12 @@ void DIType::printInternal(raw_ostream &OS) const {
     OS << " [artificial]";
 
   if (isForwardDecl())
-    OS << " [fwd]";
+    OS << " [decl]";
+  else if (getTag() == dwarf::DW_TAG_structure_type ||
+           getTag() == dwarf::DW_TAG_union_type ||
+           getTag() == dwarf::DW_TAG_enumeration_type ||
+           getTag() == dwarf::DW_TAG_class_type)
+    OS << " [def]";
   if (isVector())
     OS << " [vector]";
   if (isStaticMember())
