@@ -42,6 +42,10 @@ void PPCMCExpr::PrintImpl(raw_ostream &OS) const {
     case VK_PPC_LO: OS << "@l"; break;
     case VK_PPC_HI: OS << "@h"; break;
     case VK_PPC_HA: OS << "@ha"; break;
+    case VK_PPC_HIGHER: OS << "@higher"; break;
+    case VK_PPC_HIGHERA: OS << "@highera"; break;
+    case VK_PPC_HIGHEST: OS << "@highest"; break;
+    case VK_PPC_HIGHESTA: OS << "@highesta"; break;
     }
   }
 }
@@ -66,7 +70,19 @@ PPCMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
         Result = (Result >> 16) & 0xffff;
         break;
       case VK_PPC_HA:
-        Result = ((Result >> 16) + ((Result & 0x8000) ? 1 : 0)) & 0xffff;
+        Result = ((Result + 0x8000) >> 16) & 0xffff;
+        break;
+      case VK_PPC_HIGHER:
+        Result = (Result >> 32) & 0xffff;
+        break;
+      case VK_PPC_HIGHERA:
+        Result = ((Result + 0x8000) >> 32) & 0xffff;
+        break;
+      case VK_PPC_HIGHEST:
+        Result = (Result >> 48) & 0xffff;
+        break;
+      case VK_PPC_HIGHESTA:
+        Result = ((Result + 0x8000) >> 48) & 0xffff;
         break;
     }
     Res = MCValue::get(Result);
@@ -87,6 +103,18 @@ PPCMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
         break;
       case VK_PPC_HA:
         Modifier = MCSymbolRefExpr::VK_PPC_HA;
+        break;
+      case VK_PPC_HIGHERA:
+        Modifier = MCSymbolRefExpr::VK_PPC_HIGHERA;
+        break;
+      case VK_PPC_HIGHER:
+        Modifier = MCSymbolRefExpr::VK_PPC_HIGHER;
+        break;
+      case VK_PPC_HIGHEST:
+        Modifier = MCSymbolRefExpr::VK_PPC_HIGHEST;
+        break;
+      case VK_PPC_HIGHESTA:
+        Modifier = MCSymbolRefExpr::VK_PPC_HIGHESTA;
         break;
     }
     Sym = MCSymbolRefExpr::Create(&Sym->getSymbol(), Modifier, Context);

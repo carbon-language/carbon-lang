@@ -575,6 +575,18 @@ ExtractModifierFromExpr(const MCExpr *E,
     case MCSymbolRefExpr::VK_PPC_HA:
       Variant = PPCMCExpr::VK_PPC_HA;
       break;
+    case MCSymbolRefExpr::VK_PPC_HIGHER:
+      Variant = PPCMCExpr::VK_PPC_HIGHER;
+      break;
+    case MCSymbolRefExpr::VK_PPC_HIGHERA:
+      Variant = PPCMCExpr::VK_PPC_HIGHERA;
+      break;
+    case MCSymbolRefExpr::VK_PPC_HIGHEST:
+      Variant = PPCMCExpr::VK_PPC_HIGHEST;
+      break;
+    case MCSymbolRefExpr::VK_PPC_HIGHESTA:
+      Variant = PPCMCExpr::VK_PPC_HIGHESTA;
+      break;
     default:
       return 0;
     }

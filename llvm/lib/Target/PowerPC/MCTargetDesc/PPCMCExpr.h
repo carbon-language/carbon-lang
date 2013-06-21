@@ -22,7 +22,11 @@ public:
     VK_PPC_None,
     VK_PPC_LO,
     VK_PPC_HI,
-    VK_PPC_HA
+    VK_PPC_HA,
+    VK_PPC_HIGHER,
+    VK_PPC_HIGHERA,
+    VK_PPC_HIGHEST,
+    VK_PPC_HIGHESTA
   };
 
 private:

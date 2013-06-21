@@ -174,6 +174,10 @@ public:
     VK_PPC_LO,             // symbol@l
     VK_PPC_HI,             // symbol@h
     VK_PPC_HA,             // symbol@ha
+    VK_PPC_HIGHER,         // symbol@higher
+    VK_PPC_HIGHERA,        // symbol@highera
+    VK_PPC_HIGHEST,        // symbol@highest
+    VK_PPC_HIGHESTA,       // symbol@highesta
     VK_PPC_TOCBASE,        // symbol@tocbase
     VK_PPC_TOC,            // symbol@toc
     VK_PPC_TOC_LO,         // symbol@toc@l

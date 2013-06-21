@@ -57,6 +57,26 @@
 # CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16_HI target 0x0
          lis 3, target@h
 
+# CHECK: li 3, target@higher             # encoding: [0x38,0x60,A,A]
+# CHECK-NEXT:                            #   fixup A - offset: 2, value: target@higher, kind: fixup_ppc_half16
+# CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16_HIGHER target 0x0
+         li 3, target@higher
+
+# CHECK: lis 3, target@highest           # encoding: [0x3c,0x60,A,A]
+# CHECK-NEXT:                            #   fixup A - offset: 2, value: target@highest, kind: fixup_ppc_half16
+# CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16_HIGHEST target 0x0
+         lis 3, target@highest
+
+# CHECK: li 3, target@highera            # encoding: [0x38,0x60,A,A]
+# CHECK-NEXT:                            #   fixup A - offset: 2, value: target@highera, kind: fixup_ppc_half16
+# CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16_HIGHERA target 0x0
+         li 3, target@highera
+
+# CHECK: lis 3, target@highesta          # encoding: [0x3c,0x60,A,A]
+# CHECK-NEXT:                            #   fixup A - offset: 2, value: target@highesta, kind: fixup_ppc_half16
+# CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16_HIGHESTA target 0x0
+         lis 3, target@highesta
+
 # CHECK: lwz 1, target@l(3)              # encoding: [0x80,0x23,A,A]
 # CHECK-NEXT:                            #   fixup A - offset: 2, value: target@l, kind: fixup_ppc_half16
 # CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16_LO target 0x0

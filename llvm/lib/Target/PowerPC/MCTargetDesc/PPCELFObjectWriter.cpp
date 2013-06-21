@@ -96,6 +96,18 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
       case MCSymbolRefExpr::VK_PPC_HA:
         Type = ELF::R_PPC_ADDR16_HA;
         break;
+      case MCSymbolRefExpr::VK_PPC_HIGHER:
+        Type = ELF::R_PPC64_ADDR16_HIGHER;
+        break;
+      case MCSymbolRefExpr::VK_PPC_HIGHERA:
+        Type = ELF::R_PPC64_ADDR16_HIGHERA;
+        break;
+      case MCSymbolRefExpr::VK_PPC_HIGHEST:
+        Type = ELF::R_PPC64_ADDR16_HIGHEST;
+        break;
+      case MCSymbolRefExpr::VK_PPC_HIGHESTA:
+        Type = ELF::R_PPC64_ADDR16_HIGHESTA;
+        break;
       case MCSymbolRefExpr::VK_PPC_TOC:
         Type = ELF::R_PPC64_TOC16;
         break;
