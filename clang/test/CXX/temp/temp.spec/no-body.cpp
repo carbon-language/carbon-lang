@@ -1,4 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: cp %s %t
+// RUN: not %clang_cc1 -fsyntax-only -fixit -x c++ %t
+// RUN: grep test_string %t
 
 template<typename T> void f(T) { }
 template<typename T> void g(T) { }
