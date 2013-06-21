@@ -27,9 +27,9 @@ TEST(VariantValueTest, Unsigned) {
   EXPECT_EQ(kUnsigned, Value.getUnsigned());
 
   EXPECT_FALSE(Value.isString());
-  EXPECT_FALSE(Value.isMatcher());
-  EXPECT_FALSE(Value.hasTypedMatcher<clang::Decl>());
-  EXPECT_FALSE(Value.hasTypedMatcher<clang::UnaryOperator>());
+  EXPECT_FALSE(Value.isMatchers());
+  EXPECT_FALSE(Value.hasTypedMatcher<Decl>());
+  EXPECT_FALSE(Value.hasTypedMatcher<UnaryOperator>());
 }
 
 TEST(VariantValueTest, String) {
@@ -41,9 +41,7 @@ TEST(VariantValueTest, String) {
   EXPECT_EQ("String", Value.getTypeAsString());
 
   EXPECT_FALSE(Value.isUnsigned());
-  EXPECT_FALSE(Value.isMatcher());
-  EXPECT_FALSE(Value.hasTypedMatcher<clang::Decl>());
-  EXPECT_FALSE(Value.hasTypedMatcher<clang::UnaryOperator>());
+  EXPECT_FALSE(Value.isMatchers());
 }
 
 TEST(VariantValueTest, DynTypedMatcher) {
@@ -52,25 +50,25 @@ TEST(VariantValueTest, DynTypedMatcher) {
   EXPECT_FALSE(Value.isUnsigned());
   EXPECT_FALSE(Value.isString());
 
-  EXPECT_TRUE(Value.isMatcher());
-  EXPECT_FALSE(Value.hasTypedMatcher<clang::Decl>());
-  EXPECT_TRUE(Value.hasTypedMatcher<clang::UnaryOperator>());
+  EXPECT_TRUE(Value.isMatchers());
+  EXPECT_FALSE(Value.hasTypedMatcher<Decl>());
+  EXPECT_TRUE(Value.hasTypedMatcher<UnaryOperator>());
   EXPECT_EQ("Matcher<Stmt>", Value.getTypeAsString());
 
   // Can only convert to compatible matchers.
   Value = recordDecl();
-  EXPECT_TRUE(Value.isMatcher());
-  EXPECT_TRUE(Value.hasTypedMatcher<clang::Decl>());
-  EXPECT_FALSE(Value.hasTypedMatcher<clang::UnaryOperator>());
+  EXPECT_TRUE(Value.isMatchers());
+  EXPECT_TRUE(Value.hasTypedMatcher<Decl>());
+  EXPECT_FALSE(Value.hasTypedMatcher<UnaryOperator>());
   EXPECT_EQ("Matcher<Decl>", Value.getTypeAsString());
 
   Value = ignoringImpCasts(expr());
-  EXPECT_TRUE(Value.isMatcher());
-  EXPECT_FALSE(Value.hasTypedMatcher<clang::Decl>());
-  EXPECT_FALSE(Value.hasTypedMatcher<clang::Stmt>());
-  EXPECT_TRUE(Value.hasTypedMatcher<clang::Expr>());
-  EXPECT_TRUE(Value.hasTypedMatcher<clang::IntegerLiteral>());
-  EXPECT_FALSE(Value.hasTypedMatcher<clang::GotoStmt>());
+  EXPECT_TRUE(Value.isMatchers());
+  EXPECT_FALSE(Value.hasTypedMatcher<Decl>());
+  EXPECT_FALSE(Value.hasTypedMatcher<Stmt>());
+  EXPECT_TRUE(Value.hasTypedMatcher<Expr>());
+  EXPECT_TRUE(Value.hasTypedMatcher<IntegerLiteral>());
+  EXPECT_FALSE(Value.hasTypedMatcher<GotoStmt>());
   EXPECT_EQ("Matcher<Expr>", Value.getTypeAsString());
 }
 
@@ -79,31 +77,31 @@ TEST(VariantValueTest, Assignment) {
   EXPECT_TRUE(Value.isString());
   EXPECT_EQ("A", Value.getString());
   EXPECT_FALSE(Value.isUnsigned());
-  EXPECT_FALSE(Value.isMatcher());
+  EXPECT_FALSE(Value.isMatchers());
   EXPECT_EQ("String", Value.getTypeAsString());
 
   Value = recordDecl();
   EXPECT_FALSE(Value.isUnsigned());
   EXPECT_FALSE(Value.isString());
-  EXPECT_TRUE(Value.isMatcher());
-  EXPECT_TRUE(Value.hasTypedMatcher<clang::Decl>());
-  EXPECT_FALSE(Value.hasTypedMatcher<clang::UnaryOperator>());
+  EXPECT_TRUE(Value.isMatchers());
+  EXPECT_TRUE(Value.hasTypedMatcher<Decl>());
+  EXPECT_FALSE(Value.hasTypedMatcher<UnaryOperator>());
   EXPECT_EQ("Matcher<Decl>", Value.getTypeAsString());
 
   Value = 17;
   EXPECT_TRUE(Value.isUnsigned());
   EXPECT_EQ(17U, Value.getUnsigned());
-  EXPECT_FALSE(Value.isMatcher());
+  EXPECT_FALSE(Value.isMatchers());
   EXPECT_FALSE(Value.isString());
 
   Value = VariantValue();
   EXPECT_FALSE(Value.isUnsigned());
   EXPECT_FALSE(Value.isString());
-  EXPECT_FALSE(Value.isMatcher());
+  EXPECT_FALSE(Value.isMatchers());
   EXPECT_EQ("Nothing", Value.getTypeAsString());
 }
 
-TEST(GenericValueTest, Matcher) {
+TEST(VariantValueTest, Matcher) {
   EXPECT_TRUE(matches("class X {};", VariantValue(recordDecl(hasName("X")))
                                          .getTypedMatcher<Decl>()));
   EXPECT_TRUE(
@@ -117,13 +115,15 @@ TEST(GenericValueTest, Matcher) {
   // do this test when building with MSVC because its debug C runtime prints the
   // assertion failure message as a wide string, which gtest doesn't understand.
   EXPECT_DEATH(VariantValue(varDecl()).getTypedMatcher<Stmt>(),
-               "canConstructFrom");
+               "hasTypedMatcher");
 #endif
 
   EXPECT_FALSE(
       matches("int x;", VariantValue(functionDecl()).getTypedMatcher<Decl>()));
-  EXPECT_FALSE(matches("int foo() { return 1 + 1; }",
-                       VariantValue(declRefExpr()).getTypedMatcher<Stmt>()));
+  EXPECT_FALSE(
+      matches("int foo() { return 1 + 1; }",
+
+              VariantValue(declRefExpr()).getTypedMatcher<Stmt>()));
 }
 
 } // end anonymous namespace

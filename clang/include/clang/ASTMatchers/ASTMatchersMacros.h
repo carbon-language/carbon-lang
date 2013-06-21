@@ -155,16 +155,34 @@
       const Type &Node, ASTMatchFinder *Finder,                                \
       BoundNodesTreeBuilder *Builder) const
 
+/// \brief Construct a type-list to be passed to the AST_POLYMORPHIC_MATCHER*
+///   macros.
+///
+/// You can't pass something like \c TypeList<Foo, Bar> to a macro, because it
+/// will look at that as two arguments. However, you can pass
+/// \c void(TypeList<Foo, Bar>), which works thanks to the parenthesis.
+/// The \c PolymorphicMatcherWithParam* classes will unpack the function type to
+/// extract the TypeList object.
+#define AST_POLYMORPHIC_SUPPORTED_TYPES_2(t1, t2)                              \
+  void(internal::TypeList<t1, t2>)
+#define AST_POLYMORPHIC_SUPPORTED_TYPES_3(t1, t2, t3)                          \
+  void(internal::TypeList<t1, t2, t3>)
+#define AST_POLYMORPHIC_SUPPORTED_TYPES_4(t1, t2, t3, t4)                      \
+  void(internal::TypeList<t1, t2, t3, t4>)
+#define AST_POLYMORPHIC_SUPPORTED_TYPES_5(t1, t2, t3, t4, t5)                  \
+  void(internal::TypeList<t1, t2, t3, t4, t5>)
+
 /// \brief AST_POLYMORPHIC_MATCHER(DefineMatcher) { ... }
 /// defines a single-parameter function named DefineMatcher() that is
 /// polymorphic in the return type.
 ///
 /// The variables are the same as for AST_MATCHER, but NodeType will be deduced
 /// from the calling context.
-#define AST_POLYMORPHIC_MATCHER(DefineMatcher)                                 \
-  AST_POLYMORPHIC_MATCHER_OVERLOAD(DefineMatcher, 0)
+#define AST_POLYMORPHIC_MATCHER(DefineMatcher, ReturnTypesF)                   \
+  AST_POLYMORPHIC_MATCHER_OVERLOAD(DefineMatcher, ReturnTypesF, 0)
 
-#define AST_POLYMORPHIC_MATCHER_OVERLOAD(DefineMatcher, OverloadId)            \
+#define AST_POLYMORPHIC_MATCHER_OVERLOAD(DefineMatcher, ReturnTypesF,          \
+                                         OverloadId)                           \
   namespace internal {                                                         \
   template <typename NodeType>                                                 \
   class matcher_##DefineMatcher##OverloadId##Matcher                           \
@@ -175,9 +193,11 @@
   };                                                                           \
   }                                                                            \
   inline internal::PolymorphicMatcherWithParam0<                               \
-      internal::matcher_##DefineMatcher##OverloadId##Matcher> DefineMatcher() {\
+      internal::matcher_##DefineMatcher##OverloadId##Matcher, ReturnTypesF>    \
+  DefineMatcher() {                                                            \
     return internal::PolymorphicMatcherWithParam0<                             \
-        internal::matcher_##DefineMatcher##OverloadId##Matcher>();             \
+        internal::matcher_##DefineMatcher##OverloadId##Matcher,                \
+        ReturnTypesF>();                                                       \
   }                                                                            \
   template <typename NodeType>                                                 \
   bool internal::matcher_##DefineMatcher##OverloadId##Matcher<                 \
@@ -193,11 +213,13 @@
 /// of the matcher Matcher<NodeType> returned by the function matcher().
 ///
 /// FIXME: Pull out common code with above macro?
-#define AST_POLYMORPHIC_MATCHER_P(DefineMatcher, ParamType, Param)             \
-  AST_POLYMORPHIC_MATCHER_P_OVERLOAD(DefineMatcher, ParamType, Param, 0)
+#define AST_POLYMORPHIC_MATCHER_P(DefineMatcher, ReturnTypesF, ParamType,      \
+                                  Param)                                       \
+  AST_POLYMORPHIC_MATCHER_P_OVERLOAD(DefineMatcher, ReturnTypesF, ParamType,   \
+                                     Param, 0)
 
-#define AST_POLYMORPHIC_MATCHER_P_OVERLOAD(DefineMatcher, ParamType, Param,    \
-                                           OverloadId)                         \
+#define AST_POLYMORPHIC_MATCHER_P_OVERLOAD(DefineMatcher, ReturnTypesF,        \
+                                           ParamType, Param, OverloadId)       \
   namespace internal {                                                         \
   template <typename NodeType, typename ParamT>                                \
   class matcher_##DefineMatcher##OverloadId##Matcher                           \
@@ -214,11 +236,11 @@
   };                                                                           \
   }                                                                            \
   inline internal::PolymorphicMatcherWithParam1<                               \
-      internal::matcher_##DefineMatcher##OverloadId##Matcher, ParamType>       \
-  DefineMatcher(const ParamType &Param) {                                      \
+      internal::matcher_##DefineMatcher##OverloadId##Matcher, ParamType,       \
+      ReturnTypesF> DefineMatcher(const ParamType & Param) {                   \
     return internal::PolymorphicMatcherWithParam1<                             \
-        internal::matcher_##DefineMatcher##OverloadId##Matcher, ParamType>(    \
-        Param);                                                                \
+        internal::matcher_##DefineMatcher##OverloadId##Matcher, ParamType,     \
+        ReturnTypesF>(Param);                                                  \
   }                                                                            \
   template <typename NodeType, typename ParamT>                                \
   bool internal::matcher_##DefineMatcher##OverloadId##Matcher<                 \
@@ -233,13 +255,14 @@
 /// The variables are the same as for AST_MATCHER_P2, with the
 /// addition of NodeType, which specifies the node type of the matcher
 /// Matcher<NodeType> returned by the function DefineMatcher().
-#define AST_POLYMORPHIC_MATCHER_P2(DefineMatcher, ParamType1, Param1,          \
-                                   ParamType2, Param2)                         \
-  AST_POLYMORPHIC_MATCHER_P2_OVERLOAD(DefineMatcher, ParamType1, Param1,       \
-                                      ParamType2, Param2, 0)
+#define AST_POLYMORPHIC_MATCHER_P2(DefineMatcher, ReturnTypesF, ParamType1,    \
+                                   Param1, ParamType2, Param2)                 \
+  AST_POLYMORPHIC_MATCHER_P2_OVERLOAD(DefineMatcher, ReturnTypesF, ParamType1, \
+                                      Param1, ParamType2, Param2, 0)
 
-#define AST_POLYMORPHIC_MATCHER_P2_OVERLOAD(DefineMatcher, ParamType1, Param1, \
-                                            ParamType2, Param2, OverloadId)    \
+#define AST_POLYMORPHIC_MATCHER_P2_OVERLOAD(DefineMatcher, ReturnTypesF,       \
+                                            ParamType1, Param1, ParamType2,    \
+                                            Param2, OverloadId)                \
   namespace internal {                                                         \
   template <typename NodeType, typename ParamT1, typename ParamT2>             \
   class matcher_##DefineMatcher##OverloadId##Matcher                           \
@@ -258,11 +281,11 @@
   }                                                                            \
   inline internal::PolymorphicMatcherWithParam2<                               \
       internal::matcher_##DefineMatcher##OverloadId##Matcher, ParamType1,      \
-      ParamType2>                                                              \
-  DefineMatcher(const ParamType1 &Param1, const ParamType2 &Param2) {          \
+      ParamType2, ReturnTypesF> DefineMatcher(const ParamType1 & Param1,       \
+                                              const ParamType2 & Param2) {     \
     return internal::PolymorphicMatcherWithParam2<                             \
         internal::matcher_##DefineMatcher##OverloadId##Matcher, ParamType1,    \
-        ParamType2>(Param1, Param2);                                           \
+        ParamType2, ReturnTypesF>(Param1, Param2);                             \
   }                                                                            \
   template <typename NodeType, typename ParamT1, typename ParamT2>             \
   bool internal::matcher_##DefineMatcher##OverloadId##Matcher<                 \

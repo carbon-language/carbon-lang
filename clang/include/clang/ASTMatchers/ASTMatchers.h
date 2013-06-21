@@ -1451,10 +1451,13 @@ AST_MATCHER_P(NamedDecl, matchesName, std::string, RegExp) {
 ///
 /// Usable as: Matcher<CXXOperatorCallExpr>, Matcher<CXXMethodDecl>
 inline internal::PolymorphicMatcherWithParam1<
-    internal::HasOverloadedOperatorNameMatcher, StringRef>
+    internal::HasOverloadedOperatorNameMatcher, StringRef,
+    AST_POLYMORPHIC_SUPPORTED_TYPES_2(CXXOperatorCallExpr, CXXMethodDecl)>
 hasOverloadedOperatorName(const StringRef Name) {
   return internal::PolymorphicMatcherWithParam1<
-      internal::HasOverloadedOperatorNameMatcher, StringRef>(Name);
+      internal::HasOverloadedOperatorNameMatcher, StringRef,
+      AST_POLYMORPHIC_SUPPORTED_TYPES_2(CXXOperatorCallExpr, CXXMethodDecl)>(
+      Name);
 }
 
 /// \brief Matches C++ classes that are directly or indirectly derived from
@@ -1784,11 +1787,9 @@ inline internal::Matcher<CallExpr> callee(
 ///  class X {};
 ///  void y(X &x) { x; X z; }
 /// \endcode
-AST_POLYMORPHIC_MATCHER_P(hasType, internal::Matcher<QualType>,
-                          InnerMatcher) {
-  TOOLING_COMPILE_ASSERT((llvm::is_base_of<Expr, NodeType>::value ||
-                          llvm::is_base_of<ValueDecl, NodeType>::value),
-                         instantiated_with_wrong_types);
+AST_POLYMORPHIC_MATCHER_P(hasType,
+                          AST_POLYMORPHIC_SUPPORTED_TYPES_2(Expr, ValueDecl),
+                          internal::Matcher<QualType>, InnerMatcher) {
   return InnerMatcher.matches(Node.getType(), Finder, Builder);
 }
 
@@ -1810,8 +1811,8 @@ AST_POLYMORPHIC_MATCHER_P(hasType, internal::Matcher<QualType>,
 ///
 /// Usable as: Matcher<Expr>, Matcher<ValueDecl>
 inline internal::PolymorphicMatcherWithParam1<
-  internal::matcher_hasType0Matcher,
-  internal::Matcher<QualType> >
+    internal::matcher_hasType0Matcher, internal::Matcher<QualType>,
+    AST_POLYMORPHIC_SUPPORTED_TYPES_2(Expr, ValueDecl)>
 hasType(const internal::Matcher<Decl> &InnerMatcher) {
   return hasType(qualType(hasDeclaration(InnerMatcher)));
 }
@@ -2013,11 +2014,9 @@ AST_MATCHER_P(
 ///   void f(int x, int y);
 ///   f(0, 0);
 /// \endcode
-AST_POLYMORPHIC_MATCHER_P(argumentCountIs, unsigned, N) {
-  TOOLING_COMPILE_ASSERT((llvm::is_base_of<CallExpr, NodeType>::value ||
-                          llvm::is_base_of<CXXConstructExpr,
-                                           NodeType>::value),
-                         instantiated_with_wrong_types);
+AST_POLYMORPHIC_MATCHER_P(argumentCountIs, AST_POLYMORPHIC_SUPPORTED_TYPES_2(
+                                               CallExpr, CXXConstructExpr),
+                          unsigned, N) {
   return Node.getNumArgs() == N;
 }
 
@@ -2030,11 +2029,9 @@ AST_POLYMORPHIC_MATCHER_P(argumentCountIs, unsigned, N) {
 ///   void x(int) { int y; x(y); }
 /// \endcode
 AST_POLYMORPHIC_MATCHER_P2(
-    hasArgument, unsigned, N, internal::Matcher<Expr>, InnerMatcher) {
-  TOOLING_COMPILE_ASSERT((llvm::is_base_of<CallExpr, NodeType>::value ||
-                         llvm::is_base_of<CXXConstructExpr,
-                                          NodeType>::value),
-                         instantiated_with_wrong_types);
+    hasArgument,
+    AST_POLYMORPHIC_SUPPORTED_TYPES_2(CallExpr, CXXConstructExpr),
+    unsigned, N, internal::Matcher<Expr>, InnerMatcher) {
   return (N < Node.getNumArgs() &&
           InnerMatcher.matches(
               *Node.getArg(N)->IgnoreParenImpCasts(), Finder, Builder));
@@ -2180,12 +2177,9 @@ AST_MATCHER(CXXConstructorDecl, isImplicit) {
 /// the argument before applying the inner matcher. We'll want to remove
 /// this to allow for greater control by the user once \c ignoreImplicit()
 /// has been implemented.
-AST_POLYMORPHIC_MATCHER_P(hasAnyArgument, internal::Matcher<Expr>,
-                          InnerMatcher) {
-  TOOLING_COMPILE_ASSERT((llvm::is_base_of<CallExpr, NodeType>::value ||
-                         llvm::is_base_of<CXXConstructExpr,
-                                          NodeType>::value),
-                         instantiated_with_wrong_types);
+AST_POLYMORPHIC_MATCHER_P(hasAnyArgument, AST_POLYMORPHIC_SUPPORTED_TYPES_2(
+                                              CallExpr, CXXConstructExpr),
+                          internal::Matcher<Expr>, InnerMatcher) {
   for (unsigned I = 0; I < Node.getNumArgs(); ++I) {
     BoundNodesTreeBuilder Result(*Builder);
     if (InnerMatcher.matches(*Node.getArg(I)->IgnoreParenImpCasts(), Finder,
@@ -2280,15 +2274,10 @@ AST_MATCHER(FunctionDecl, isExternC) {
 /// \code
 ///   if (true) {}
 /// \endcode
-AST_POLYMORPHIC_MATCHER_P(hasCondition, internal::Matcher<Expr>,
-                          InnerMatcher) {
-  TOOLING_COMPILE_ASSERT(
-    (llvm::is_base_of<IfStmt, NodeType>::value) ||
-    (llvm::is_base_of<ForStmt, NodeType>::value) ||
-    (llvm::is_base_of<WhileStmt, NodeType>::value) ||
-    (llvm::is_base_of<DoStmt, NodeType>::value) ||
-    (llvm::is_base_of<ConditionalOperator, NodeType>::value),
-    has_condition_requires_if_statement_conditional_operator_or_loop);
+AST_POLYMORPHIC_MATCHER_P(
+    hasCondition, AST_POLYMORPHIC_SUPPORTED_TYPES_5(
+                      IfStmt, ForStmt, WhileStmt, DoStmt, ConditionalOperator),
+    internal::Matcher<Expr>, InnerMatcher) {
   const Expr *const Condition = Node.getCond();
   return (Condition != NULL &&
           InnerMatcher.matches(*Condition, Finder, Builder));
@@ -2325,18 +2314,15 @@ struct NotEqualsBoundNodePredicate {
 ///     forEachDescendant(declRefExpr(to(decl(equalsBoundNode("d"))))))
 /// will trigger a match for each combination of variable declaration
 /// and reference to that variable declaration within a compound statement.
-AST_POLYMORPHIC_MATCHER_P(equalsBoundNode, std::string, ID) {
+AST_POLYMORPHIC_MATCHER_P(equalsBoundNode, AST_POLYMORPHIC_SUPPORTED_TYPES_4(
+                                               Stmt, Decl, Type, QualType),
+                          std::string, ID) {
   // FIXME: Figure out whether it makes sense to allow this
   // on any other node types.
   // For *Loc it probably does not make sense, as those seem
   // unique. For NestedNameSepcifier it might make sense, as
   // those also have pointer identity, but I'm not sure whether
   // they're ever reused.
-  TOOLING_COMPILE_ASSERT((llvm::is_base_of<Stmt, NodeType>::value ||
-                          llvm::is_base_of<Decl, NodeType>::value ||
-                          llvm::is_base_of<Type, NodeType>::value ||
-                          llvm::is_base_of<QualType, NodeType>::value),
-                         equals_bound_node_requires_non_unique_node_class);
   internal::NotEqualsBoundNodePredicate Predicate;
   Predicate.ID = ID;
   Predicate.Node = ast_type_traits::DynTypedNode::create(Node);
@@ -2403,13 +2389,9 @@ AST_MATCHER_P(ArraySubscriptExpr, hasBase,
 ///   matches 'for (;;) {}'
 /// with compoundStmt()
 ///   matching '{}'
-AST_POLYMORPHIC_MATCHER_P(hasBody, internal::Matcher<Stmt>,
-                          InnerMatcher) {
-  TOOLING_COMPILE_ASSERT(
-      (llvm::is_base_of<DoStmt, NodeType>::value) ||
-      (llvm::is_base_of<ForStmt, NodeType>::value) ||
-      (llvm::is_base_of<WhileStmt, NodeType>::value),
-      has_body_requires_for_while_or_do_statement);
+AST_POLYMORPHIC_MATCHER_P(
+    hasBody, AST_POLYMORPHIC_SUPPORTED_TYPES_3(DoStmt, ForStmt, WhileStmt),
+    internal::Matcher<Stmt>, InnerMatcher) {
   const Stmt *const Statement = Node.getBody();
   return (Statement != NULL &&
           InnerMatcher.matches(*Statement, Finder, Builder));
@@ -2470,11 +2452,9 @@ equals(const ValueT &Value) {
 /// \code
 ///   !(a || b)
 /// \endcode
-AST_POLYMORPHIC_MATCHER_P(hasOperatorName, std::string, Name) {
-  TOOLING_COMPILE_ASSERT(
-    (llvm::is_base_of<BinaryOperator, NodeType>::value) ||
-    (llvm::is_base_of<UnaryOperator, NodeType>::value),
-    has_condition_requires_if_statement_or_conditional_operator);
+AST_POLYMORPHIC_MATCHER_P(hasOperatorName, AST_POLYMORPHIC_SUPPORTED_TYPES_2(
+                                               BinaryOperator, UnaryOperator),
+                          std::string, Name) {
   return Name == Node.getOpcodeStr(Node.getOpcode());
 }
 
@@ -2596,12 +2576,8 @@ AST_MATCHER_P(ConditionalOperator, hasFalseExpression,
 /// \endcode
 ///
 /// Usable as: Matcher<TagDecl>, Matcher<VarDecl>, Matcher<FunctionDecl>
-AST_POLYMORPHIC_MATCHER(isDefinition) {
-  TOOLING_COMPILE_ASSERT(
-      (llvm::is_base_of<TagDecl, NodeType>::value) ||
-      (llvm::is_base_of<VarDecl, NodeType>::value) ||
-      (llvm::is_base_of<FunctionDecl, NodeType>::value),
-      is_definition_requires_isThisDeclarationADefinition_method);
+AST_POLYMORPHIC_MATCHER(isDefinition, AST_POLYMORPHIC_SUPPORTED_TYPES_3(
+                                          TagDecl, VarDecl, FunctionDecl)) {
   return Node.isThisDeclarationADefinition();
 }
 
@@ -2834,11 +2810,9 @@ AST_MATCHER_P(UsingShadowDecl, hasTargetDecl,
 ///   does not match, as X<A> is an explicit template specialization.
 ///
 /// Usable as: Matcher<FunctionDecl>, Matcher<VarDecl>, Matcher<CXXRecordDecl>
-AST_POLYMORPHIC_MATCHER(isTemplateInstantiation) {
-  TOOLING_COMPILE_ASSERT((llvm::is_base_of<FunctionDecl, NodeType>::value) ||
-                         (llvm::is_base_of<VarDecl, NodeType>::value) ||
-                         (llvm::is_base_of<CXXRecordDecl, NodeType>::value),
-                         requires_getTemplateSpecializationKind_method);
+AST_POLYMORPHIC_MATCHER(
+    isTemplateInstantiation,
+    AST_POLYMORPHIC_SUPPORTED_TYPES_3(FunctionDecl, VarDecl, CXXRecordDecl)) {
   return (Node.getTemplateSpecializationKind() == TSK_ImplicitInstantiation ||
           Node.getTemplateSpecializationKind() ==
           TSK_ExplicitInstantiationDefinition);
@@ -2856,11 +2830,9 @@ AST_POLYMORPHIC_MATCHER(isTemplateInstantiation) {
 ///   matches the specialization A<int>().
 ///
 /// Usable as: Matcher<FunctionDecl>, Matcher<VarDecl>, Matcher<CXXRecordDecl>
-AST_POLYMORPHIC_MATCHER(isExplicitTemplateSpecialization) {
-  TOOLING_COMPILE_ASSERT((llvm::is_base_of<FunctionDecl, NodeType>::value) ||
-                         (llvm::is_base_of<VarDecl, NodeType>::value) ||
-                         (llvm::is_base_of<CXXRecordDecl, NodeType>::value),
-                         requires_getTemplateSpecializationKind_method);
+AST_POLYMORPHIC_MATCHER(
+    isExplicitTemplateSpecialization,
+    AST_POLYMORPHIC_SUPPORTED_TYPES_3(FunctionDecl, VarDecl, CXXRecordDecl)) {
   return (Node.getTemplateSpecializationKind() == TSK_ExplicitSpecialization);
 }
 

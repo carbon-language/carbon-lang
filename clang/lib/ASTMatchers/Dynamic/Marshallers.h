@@ -49,6 +49,10 @@ template <> struct ArgTypeTraits<std::string> {
   }
 };
 
+template <>
+struct ArgTypeTraits<StringRef> : public ArgTypeTraits<std::string> {
+};
+
 template <class T> struct ArgTypeTraits<ast_matchers::internal::Matcher<T> > {
   static std::string asString() {
     return (Twine("Matcher<") +
@@ -78,9 +82,9 @@ template <> struct ArgTypeTraits<unsigned> {
 class MatcherCreateCallback {
 public:
   virtual ~MatcherCreateCallback() {}
-  virtual DynTypedMatcher *run(const SourceRange &NameRange,
-                               ArrayRef<ParserValue> Args,
-                               Diagnostics *Error) const = 0;
+  virtual MatcherList run(const SourceRange &NameRange,
+                          ArrayRef<ParserValue> Args,
+                          Diagnostics *Error) const = 0;
 };
 
 /// \brief Simple callback implementation. Marshaller and function are provided.
@@ -95,10 +99,10 @@ public:
   /// FIXME: Use void(*)() as FuncType on this interface to remove the template
   /// argument of this class. The marshaller can cast the function pointer back
   /// to the original type.
-  typedef DynTypedMatcher *(*MarshallerType)(FuncType, StringRef,
-                                             const SourceRange &,
-                                             ArrayRef<ParserValue>,
-                                             Diagnostics *);
+  typedef MatcherList (*MarshallerType)(FuncType, StringRef,
+                                        const SourceRange &,
+                                        ArrayRef<ParserValue>,
+                                        Diagnostics *);
 
   /// \param Marshaller Function to unpack the arguments and call \c Func
   /// \param Func Matcher construct function. This is the function that
@@ -107,8 +111,8 @@ public:
                                      StringRef MatcherName)
       : Marshaller(Marshaller), Func(Func), MatcherName(MatcherName.str()) {}
 
-  DynTypedMatcher *run(const SourceRange &NameRange,
-                       ArrayRef<ParserValue> Args, Diagnostics *Error) const {
+  MatcherList run(const SourceRange &NameRange, ArrayRef<ParserValue> Args,
+                  Diagnostics *Error) const {
     return Marshaller(Func, MatcherName, NameRange, Args, Error);
   }
 
@@ -127,16 +131,16 @@ private:
 /// object file.
 class FreeFuncMatcherCreateCallback : public MatcherCreateCallback {
 public:
-  typedef DynTypedMatcher *(*RunFunc)(StringRef MatcherName,
-                                      const SourceRange &NameRange,
-                                      ArrayRef<ParserValue> Args,
-                                      Diagnostics *Error);
+  typedef MatcherList (*RunFunc)(StringRef MatcherName,
+                                 const SourceRange &NameRange,
+                                 ArrayRef<ParserValue> Args,
+                                 Diagnostics *Error);
 
   FreeFuncMatcherCreateCallback(RunFunc Func, StringRef MatcherName)
       : Func(Func), MatcherName(MatcherName.str()) {}
 
-  DynTypedMatcher *run(const SourceRange &NameRange, ArrayRef<ParserValue> Args,
-                       Diagnostics *Error) const {
+  MatcherList run(const SourceRange &NameRange, ArrayRef<ParserValue> Args,
+                  Diagnostics *Error) const {
     return Func(MatcherName, NameRange, Args, Error);
   }
 
@@ -150,7 +154,7 @@ private:
   if (Args.size() != count) {                                                  \
     Error->pushErrorFrame(NameRange, Error->ET_RegistryWrongArgCount)          \
         << count << Args.size();                                               \
-    return NULL;                                                               \
+    return MatcherList();                                                      \
   }
 
 #define CHECK_ARG_TYPE(index, type)                                            \
@@ -158,43 +162,78 @@ private:
     Error->pushErrorFrame(Args[index].Range, Error->ET_RegistryWrongArgType)   \
         << (index + 1) << ArgTypeTraits<type>::asString()                      \
         << Args[index].Value.getTypeAsString();                                \
-    return NULL;                                                               \
+    return MatcherList();                                                      \
   }
+
+/// \brief Helper methods to extract and merge all possible typed matchers
+/// out of the polymorphic object.
+template <class PolyMatcher>
+static void mergePolyMatchers(const PolyMatcher &Poly, MatcherList *Out,
+                              ast_matchers::internal::EmptyTypeList) {}
+
+template <class PolyMatcher, class TypeList>
+static void mergePolyMatchers(const PolyMatcher &Poly, MatcherList *Out,
+                              TypeList) {
+  Out->add(ast_matchers::internal::Matcher<typename TypeList::head>(Poly));
+  mergePolyMatchers(Poly, Out, typename TypeList::tail());
+}
+
+/// \brief Convert the return values of the functions into a MatcherList.
+///
+/// There are 2 cases right now: The return value is a Matcher<T> or is a
+/// polymorphic matcher. For the former, we just construct the MatcherList. For
+/// the latter, we instantiate all the possible Matcher<T> of the poly matcher.
+template <typename T>
+static MatcherList
+outvalueToMatcherList(const ast_matchers::internal::Matcher<T> &Matcher) {
+  return MatcherList(Matcher);
+}
+
+template <typename T>
+static MatcherList
+outvalueToMatcherList(const T& PolyMatcher, typename T::ReturnTypes* = NULL) {
+  MatcherList Matchers;
+  mergePolyMatchers(PolyMatcher, &Matchers, typename T::ReturnTypes());
+  return Matchers;
+}
 
 /// \brief 0-arg marshaller function.
 template <typename ReturnType>
-DynTypedMatcher *matcherMarshall0(ReturnType (*Func)(), StringRef MatcherName,
-                                  const SourceRange &NameRange,
-                                  ArrayRef<ParserValue> Args,
-                                  Diagnostics *Error) {
+static MatcherList matcherMarshall0(ReturnType (*Func)(),
+                                    StringRef MatcherName,
+                                    const SourceRange &NameRange,
+                                    ArrayRef<ParserValue> Args,
+                                    Diagnostics *Error) {
   CHECK_ARG_COUNT(0);
-  return Func().clone();
+  return outvalueToMatcherList(Func());
 }
 
 /// \brief 1-arg marshaller function.
 template <typename ReturnType, typename ArgType1>
-DynTypedMatcher *matcherMarshall1(ReturnType (*Func)(ArgType1),
-                                  StringRef MatcherName,
-                                  const SourceRange &NameRange,
-                                  ArrayRef<ParserValue> Args,
-                                  Diagnostics *Error) {
+static MatcherList matcherMarshall1(ReturnType (*Func)(ArgType1),
+                                    StringRef MatcherName,
+                                    const SourceRange &NameRange,
+                                    ArrayRef<ParserValue> Args,
+                                    Diagnostics *Error) {
   CHECK_ARG_COUNT(1);
   CHECK_ARG_TYPE(0, ArgType1);
-  return Func(ArgTypeTraits<ArgType1>::get(Args[0].Value)).clone();
+  return outvalueToMatcherList(
+      Func(ArgTypeTraits<ArgType1>::get(Args[0].Value)));
 }
 
 /// \brief 2-arg marshaller function.
 template <typename ReturnType, typename ArgType1, typename ArgType2>
-DynTypedMatcher *matcherMarshall2(ReturnType (*Func)(ArgType1, ArgType2),
-                                  StringRef MatcherName,
-                                  const SourceRange &NameRange,
-                                  ArrayRef<ParserValue> Args,
-                                  Diagnostics *Error) {
+static MatcherList matcherMarshall2(ReturnType (*Func)(ArgType1, ArgType2),
+                                    StringRef MatcherName,
+                                    const SourceRange &NameRange,
+                                    ArrayRef<ParserValue> Args,
+                                    Diagnostics *Error) {
   CHECK_ARG_COUNT(2);
   CHECK_ARG_TYPE(0, ArgType1);
   CHECK_ARG_TYPE(1, ArgType2);
-  return Func(ArgTypeTraits<ArgType1>::get(Args[0].Value),
-              ArgTypeTraits<ArgType2>::get(Args[1].Value)).clone();
+  return outvalueToMatcherList(
+      Func(ArgTypeTraits<ArgType1>::get(Args[0].Value),
+           ArgTypeTraits<ArgType2>::get(Args[1].Value)));
 }
 
 #undef CHECK_ARG_COUNT
@@ -202,10 +241,10 @@ DynTypedMatcher *matcherMarshall2(ReturnType (*Func)(ArgType1, ArgType2),
 
 /// \brief Variadic marshaller function.
 template <typename BaseType, typename DerivedType>
-DynTypedMatcher *VariadicMatcherCreateCallback(StringRef MatcherName,
-                                               const SourceRange &NameRange,
-                                               ArrayRef<ParserValue> Args,
-                                               Diagnostics *Error) {
+MatcherList VariadicMatcherCreateCallback(StringRef MatcherName,
+                                          const SourceRange &NameRange,
+                                          ArrayRef<ParserValue> Args,
+                                          Diagnostics *Error) {
   typedef ast_matchers::internal::Matcher<DerivedType> DerivedMatcherType;
   DerivedMatcherType **InnerArgs = new DerivedMatcherType *[Args.size()]();
 
@@ -223,10 +262,10 @@ DynTypedMatcher *VariadicMatcherCreateCallback(StringRef MatcherName,
     InnerArgs[i] = new DerivedMatcherType(DerivedTraits::get(Value));
   }
 
-  DynTypedMatcher *Out = NULL;
+  MatcherList Out;
   if (!HasError) {
     Out = ast_matchers::internal::makeDynCastAllOfComposite<BaseType>(
-        ArrayRef<const DerivedMatcherType *>(InnerArgs, Args.size())).clone();
+        ArrayRef<const DerivedMatcherType *>(InnerArgs, Args.size()));
   }
 
   for (size_t i = 0, e = Args.size(); i != e; ++i) {
@@ -264,7 +303,7 @@ MatcherCreateCallback *makeMatcherAutoMarshall(ReturnType (*Func)(ArgType1,
       ReturnType (*)(ArgType1, ArgType2)>(matcherMarshall2, Func, MatcherName);
 }
 
-/// \brief Variadic overload.
+/// \brief Variadic overloads.
 template <typename MatcherType>
 MatcherCreateCallback *makeMatcherAutoMarshall(
     ast_matchers::internal::VariadicAllOfMatcher<MatcherType> Func,

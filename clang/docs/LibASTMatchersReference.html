@@ -1547,6 +1547,16 @@ Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Charac
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXConstructExpr.html">CXXConstructExpr</a>&gt;</td><td class="name" onclick="toggle('argumentCountIs1')"><a name="argumentCountIs1Anchor">argumentCountIs</a></td><td>unsigned N</td></tr>
+<tr><td colspan="4" class="doc" id="argumentCountIs1"><pre>Checks that a call expression or a constructor call expression has
+a specific number of arguments (including absent default arguments).
+
+Example matches f(0, 0) (matcher = callExpr(argumentCountIs(2)))
+  void f(int x, int y);
+  f(0, 0);
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXConstructorDecl.html">CXXConstructorDecl</a>&gt;</td><td class="name" onclick="toggle('isImplicit0')"><a name="isImplicit0Anchor">isImplicit</a></td><td></td></tr>
 <tr><td colspan="4" class="doc" id="isImplicit0"><pre>Matches a constructor declaration that has been implicitly added
 by the compiler (eg. implicit defaultcopy constructors).
@@ -2480,6 +2490,34 @@ pointerType(pointee(isConstQualified(), isInteger()))
 
 Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1BlockPointerType.html">BlockPointerType</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1MemberPointerType.html">MemberPointerType</a>&gt;,
   Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1PointerType.html">PointerType</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ReferenceType.html">ReferenceType</a>&gt;
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXConstructExpr.html">CXXConstructExpr</a>&gt;</td><td class="name" onclick="toggle('hasAnyArgument1')"><a name="hasAnyArgument1Anchor">hasAnyArgument</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Expr.html">Expr</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="hasAnyArgument1"><pre>Matches any argument of a call expression or a constructor call
+expression.
+
+Given
+  void x(int, int, int) { int y; x(1, y, 42); }
+callExpr(hasAnyArgument(declRefExpr()))
+  matches x(1, y, 42)
+with hasAnyArgument(...)
+  matching y
+
+FIXME: Currently this will ignore parentheses and implicit casts on
+the argument before applying the inner matcher. We'll want to remove
+this to allow for greater control by the user once ignoreImplicit()
+has been implemented.
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXConstructExpr.html">CXXConstructExpr</a>&gt;</td><td class="name" onclick="toggle('hasArgument1')"><a name="hasArgument1Anchor">hasArgument</a></td><td>unsigned N, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Expr.html">Expr</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="hasArgument1"><pre>Matches the n'th argument of a call expression or a constructor
+call expression.
+
+Example matches y in x(y)
+    (matcher = callExpr(hasArgument(0, declRefExpr())))
+  void x(int) { int y; x(y); }
 </pre></td></tr>
 
 

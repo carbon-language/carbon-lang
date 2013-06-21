@@ -761,6 +761,58 @@ private:
   const Matcher<T> InnerMatcher;
 };
 
+/// \brief A simple type-list implementation.
+///
+/// It is implemented as a flat struct with a maximum number of arguments to
+/// simplify compiler error messages.
+/// However, it is used as a "linked list" of types.
+///
+/// Note: If you need to extend for more types, add them as template arguments
+///       and to the "typedef TypeList<...> tail" below. Nothing else is needed.
+template <typename T1 = void, typename T2 = void, typename T3 = void,
+          typename T4 = void, typename T5 = void, typename T6 = void,
+          typename T7 = void, typename T8 = void>
+struct TypeList {
+  /// \brief The first type on the list.
+  typedef T1 head;
+
+  /// \brief A sub list with the tail. ie everything but the head.
+  ///
+  /// This type is used to do recursion. TypeList<>/EmptyTypeList indicates the
+  /// end of the list.
+  typedef TypeList<T2, T3, T4, T5, T6, T7, T8> tail;
+
+  /// \brief Helper meta-function to determine if some type \c T is present or
+  ///   a parent type in the list.
+  template <typename T> struct ContainsSuperOf {
+    static const bool value = llvm::is_base_of<head, T>::value ||
+                              tail::template ContainsSuperOf<T>::value;
+  };
+};
+
+/// \brief Specialization of ContainsSuperOf for the empty list.
+template <> template <typename T> struct TypeList<>::ContainsSuperOf {
+  static const bool value = false;
+};
+
+/// \brief The empty type list.
+typedef TypeList<> EmptyTypeList;
+
+/// \brief A "type list" that contains all types.
+///
+/// Useful for matchers like \c anything and \c unless.
+typedef TypeList<Decl, Stmt, NestedNameSpecifier, NestedNameSpecifierLoc,
+        QualType, Type, TypeLoc, CXXCtorInitializer> AllNodeBaseTypes;
+
+/// \brief Helper meta-function to extract the argument out of a function of
+///   type void(Arg).
+///
+/// See AST_POLYMORPHIC_SUPPORTED_TYPES_* for details.
+template <class T> struct ExtractFunctionArgMeta;
+template <class T> struct ExtractFunctionArgMeta<void(T)> {
+  typedef T type;
+};
+
 /// \brief A PolymorphicMatcherWithParamN<MatcherT, P1, ..., PN> object can be
 /// created from N parameters p1, ..., pN (of type P1, ..., PN) and
 /// used as a Matcher<T> where a MatcherT<T, P1, ..., PN>(p1, ..., pN)
@@ -773,24 +825,33 @@ private:
 /// - PolymorphicMatcherWithParam1<ValueEqualsMatcher, int>(42)
 ///   creates an object that can be used as a Matcher<T> for any type T
 ///   where a ValueEqualsMatcher<T, int>(42) can be constructed.
-template <template <typename T> class MatcherT>
+template <template <typename T> class MatcherT,
+          typename ReturnTypesF = void(AllNodeBaseTypes)>
 class PolymorphicMatcherWithParam0 {
 public:
+  typedef typename ExtractFunctionArgMeta<ReturnTypesF>::type ReturnTypes;
   template <typename T>
   operator Matcher<T>() const {
+    TOOLING_COMPILE_ASSERT(ReturnTypes::template ContainsSuperOf<T>::value,
+                           right_polymorphic_conversion);
     return Matcher<T>(new MatcherT<T>());
   }
 };
 
 template <template <typename T, typename P1> class MatcherT,
-          typename P1>
+          typename P1,
+          typename ReturnTypesF = void(AllNodeBaseTypes)>
 class PolymorphicMatcherWithParam1 {
 public:
   explicit PolymorphicMatcherWithParam1(const P1 &Param1)
       : Param1(Param1) {}
 
+  typedef typename ExtractFunctionArgMeta<ReturnTypesF>::type ReturnTypes;
+
   template <typename T>
   operator Matcher<T>() const {
+    TOOLING_COMPILE_ASSERT(ReturnTypes::template ContainsSuperOf<T>::value,
+                           right_polymorphic_conversion);
     return Matcher<T>(new MatcherT<T, P1>(Param1));
   }
 
@@ -799,14 +860,19 @@ private:
 };
 
 template <template <typename T, typename P1, typename P2> class MatcherT,
-          typename P1, typename P2>
+          typename P1, typename P2,
+          typename ReturnTypesF = void(AllNodeBaseTypes)>
 class PolymorphicMatcherWithParam2 {
 public:
   PolymorphicMatcherWithParam2(const P1 &Param1, const P2 &Param2)
       : Param1(Param1), Param2(Param2) {}
 
+  typedef typename ExtractFunctionArgMeta<ReturnTypesF>::type ReturnTypes;
+
   template <typename T>
   operator Matcher<T>() const {
+    TOOLING_COMPILE_ASSERT(ReturnTypes::template ContainsSuperOf<T>::value,
+                           right_polymorphic_conversion);
     return Matcher<T>(new MatcherT<T, P1, P2>(Param1, Param2));
   }
 

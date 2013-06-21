@@ -2250,10 +2250,9 @@ TEST(AstMatcherPMacro, Works) {
 }
 
 AST_POLYMORPHIC_MATCHER_P(
-    polymorphicHas, internal::Matcher<Decl>, AMatcher) {
-  TOOLING_COMPILE_ASSERT((llvm::is_same<NodeType, Decl>::value) ||
-                         (llvm::is_same<NodeType, Stmt>::value),
-                         assert_node_type_is_accessible);
+    polymorphicHas,
+    AST_POLYMORPHIC_SUPPORTED_TYPES_2(Decl, Stmt),
+    internal::Matcher<Decl>, AMatcher) {
   return Finder->matchesChildOf(
       Node, AMatcher, Builder,
       ASTMatchFinder::TK_IgnoreImplicitCastsAndParentheses,

@@ -64,6 +64,8 @@ StringRef ErrorTypeToString(Diagnostics::ErrorType Type) {
     return "Expected end of code.";
   case Diagnostics::ET_ParserUnsignedError:
     return "Error parsing unsigned token: <$0>";
+  case Diagnostics::ET_ParserOverloadedType:
+    return "Input value has unresolved overloaded type: $0";
 
   case Diagnostics::ET_None:
     return "<N/A>";

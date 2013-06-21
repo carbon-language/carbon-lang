@@ -52,6 +52,7 @@ public:
   virtual ast_type_traits::ASTNodeKind getSupportedKind() const {
     return ast_type_traits::ASTNodeKind();
   }
+
 private:
   uint64_t ID;
   std::string BoundID;
@@ -75,15 +76,16 @@ public:
     Errors.push_back(Error.ToStringFull());
   }
 
-  DynTypedMatcher *actOnMatcherExpression(StringRef MatcherName,
-                                          const SourceRange &NameRange,
-                                          StringRef BindID,
-                                          ArrayRef<ParserValue> Args,
-                                          Diagnostics *Error) {
+  MatcherList actOnMatcherExpression(StringRef MatcherName,
+                                     const SourceRange &NameRange,
+                                     StringRef BindID,
+                                     ArrayRef<ParserValue> Args,
+                                     Diagnostics *Error) {
     MatcherInfo ToStore = { MatcherName, NameRange, Args, BindID };
     Matchers.push_back(ToStore);
     DummyDynTypedMatcher Matcher(ExpectedMatchers[MatcherName]);
-    return Matcher.tryBind(BindID);
+    OwningPtr<DynTypedMatcher> Out(Matcher.tryBind(BindID));
+    return *Out;
   }
 
   struct MatcherInfo {
@@ -146,9 +148,9 @@ TEST(ParserTest, ParseMatcher) {
   }
 
   EXPECT_EQ(1ULL, Sema.Values.size());
-  EXPECT_EQ(ExpectedFoo, Sema.Values[0].getMatcher().getID());
-  EXPECT_EQ("Yo!", static_cast<const DummyDynTypedMatcher &>(
-                       Sema.Values[0].getMatcher()).boundID());
+  EXPECT_EQ(ExpectedFoo, Sema.Values[0].getMatchers().matchers()[0]->getID());
+  EXPECT_EQ("Yo!", static_cast<const DummyDynTypedMatcher *>(
+                       Sema.Values[0].getMatchers().matchers()[0])->boundID());
 
   EXPECT_EQ(3ULL, Sema.Matchers.size());
   const MockSema::MatcherInfo Bar = Sema.Matchers[0];
@@ -167,8 +169,10 @@ TEST(ParserTest, ParseMatcher) {
   EXPECT_EQ("Foo", Foo.MatcherName);
   EXPECT_TRUE(matchesRange(Foo.NameRange, 1, 2, 2, 12));
   EXPECT_EQ(2ULL, Foo.Args.size());
-  EXPECT_EQ(ExpectedBar, Foo.Args[0].Value.getMatcher().getID());
-  EXPECT_EQ(ExpectedBaz, Foo.Args[1].Value.getMatcher().getID());
+  EXPECT_EQ(ExpectedBar,
+            Foo.Args[0].Value.getMatchers().matchers()[0]->getID());
+  EXPECT_EQ(ExpectedBaz,
+            Foo.Args[1].Value.getMatchers().matchers()[0]->getID());
   EXPECT_EQ("Yo!", Foo.BoundID);
 }
 
@@ -176,11 +180,14 @@ using ast_matchers::internal::Matcher;
 
 TEST(ParserTest, FullParserTest) {
   OwningPtr<DynTypedMatcher> VarDecl(Parser::parseMatcherExpression(
-      "varDecl(hasInitializer(binaryOperator(hasLHS(integerLiteral()))))",
+      "varDecl(hasInitializer(binaryOperator(hasLHS(integerLiteral()),"
+      "                                      hasOperatorName(\"+\"))))",
       NULL));
   Matcher<Decl> M = Matcher<Decl>::constructFrom(*VarDecl);
   EXPECT_TRUE(matches("int x = 1 + false;", M));
   EXPECT_FALSE(matches("int x = true + 1;", M));
+  EXPECT_FALSE(matches("int x = 1 - false;", M));
+  EXPECT_FALSE(matches("int x = true - 1;", M));
 
   OwningPtr<DynTypedMatcher> HasParameter(Parser::parseMatcherExpression(
       "functionDecl(hasParameter(1, hasName(\"x\")))", NULL));
@@ -242,6 +249,9 @@ TEST(ParserTest, Errors) {
   EXPECT_EQ("1:1: Error building matcher isArrow.\n"
             "1:1: Matcher does not support binding.",
             ParseWithError("isArrow().bind(\"foo\")"));
+  EXPECT_EQ("Input value has unresolved overloaded type: "
+            "Matcher<DoStmt|ForStmt|WhileStmt>",
+            ParseMatcherWithError("hasBody(stmt())"));
 }
 
 }  // end anonymous namespace

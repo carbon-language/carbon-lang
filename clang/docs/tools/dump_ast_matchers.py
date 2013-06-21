@@ -175,7 +175,31 @@ def act_on_decl(declaration, comment, allowed_types):
                       comment)
       return
 
-    m = re.match(r"""^\s*AST_(POLYMORPHIC_)?MATCHER(_P)?(.?)(?:_OVERLOAD)?\(
+    m = re.match(r"""^\s*AST_POLYMORPHIC_MATCHER(_P)?(.?)(?:_OVERLOAD)?\(
+                          \s*([^\s,]+)\s*,
+                          \s*AST_POLYMORPHIC_SUPPORTED_TYPES_([^(]*)\(([^)]*)\)
+                       (?:,\s*([^\s,]+)\s*
+                          ,\s*([^\s,]+)\s*)?
+                       (?:,\s*([^\s,]+)\s*
+                          ,\s*([^\s,]+)\s*)?
+                       (?:,\s*\d+\s*)?
+                      \)\s*{\s*$""", declaration, flags=re.X)
+
+    if m:
+      p, n, name, n_results, results = m.groups()[0:5]
+      args = m.groups()[5:]
+      result_types = [r.strip() for r in results.split(',')]
+      if allowed_types and allowed_types != result_types:
+        raise Exception('Inconsistent documentation for: %s' % name)
+      if n not in ['', '2']:
+        raise Exception('Cannot parse "%s"' % declaration)
+      args = ', '.join('%s %s' % (args[i], args[i+1])
+                       for i in range(0, len(args), 2) if args[i])
+      for result_type in result_types:
+        add_matcher(result_type, name, args, comment)
+      return
+
+    m = re.match(r"""^\s*AST_MATCHER(_P)?(.?)(?:_OVERLOAD)?\(
                        (?:\s*([^\s,]+)\s*,)?
                           \s*([^\s,]+)\s*
                        (?:,\s*([^\s,]+)\s*
@@ -185,8 +209,8 @@ def act_on_decl(declaration, comment, allowed_types):
                        (?:,\s*\d+\s*)?
                       \)\s*{\s*$""", declaration, flags=re.X)
     if m:
-      p, n, result, name = m.groups()[1:5]
-      args = m.groups()[5:]
+      p, n, result, name = m.groups()[0:4]
+      args = m.groups()[4:]
       if not result:
         if not allowed_types:
           raise Exception('Did not find allowed result types for: %s' % name)

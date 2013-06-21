@@ -38,25 +38,23 @@ public:
 
   template <class T>
   Matcher<T> constructMatcher(StringRef MatcherName, Diagnostics *Error) {
-    OwningPtr<DynTypedMatcher> Out(
-        Registry::constructMatcher(MatcherName, SourceRange(), Args(), Error));
-    return Matcher<T>::constructFrom(*Out);
+    return Registry::constructMatcher(MatcherName, SourceRange(), Args(), Error)
+        .getTypedMatcher<T>();
   }
 
   template <class T>
   Matcher<T> constructMatcher(StringRef MatcherName, const VariantValue &Arg1,
                               Diagnostics *Error) {
-    OwningPtr<DynTypedMatcher> Out(Registry::constructMatcher(
-        MatcherName, SourceRange(), Args(Arg1), Error));
-    return Matcher<T>::constructFrom(*Out);
+    return Registry::constructMatcher(MatcherName, SourceRange(), Args(Arg1),
+                                      Error).getTypedMatcher<T>();
   }
 
   template <class T>
   Matcher<T> constructMatcher(StringRef MatcherName, const VariantValue &Arg1,
                               const VariantValue &Arg2, Diagnostics *Error) {
-    OwningPtr<DynTypedMatcher> Out(Registry::constructMatcher(
-        MatcherName, SourceRange(), Args(Arg1, Arg2), Error));
-    return Matcher<T>::constructFrom(*Out);
+    return Registry::constructMatcher(MatcherName, SourceRange(),
+                                      Args(Arg1, Arg2), Error)
+        .getTypedMatcher<T>();
   }
 };
 
@@ -115,34 +113,57 @@ TEST_F(RegistryTest, ConstructWithMatcherArgs) {
   EXPECT_FALSE(matches("void f(int x, int a);", HasParameter));
 }
 
+TEST_F(RegistryTest, PolymorphicMatchers) {
+  const MatcherList IsDefinition =
+      Registry::constructMatcher("isDefinition", SourceRange(), Args(), NULL);
+  Matcher<Decl> Var = constructMatcher<Decl>("varDecl", IsDefinition, NULL);
+  Matcher<Decl> Class =
+      constructMatcher<Decl>("recordDecl", IsDefinition, NULL);
+  Matcher<Decl> Func =
+      constructMatcher<Decl>("functionDecl", IsDefinition, NULL);
+  EXPECT_TRUE(matches("int a;", Var));
+  EXPECT_FALSE(matches("extern int a;", Var));
+  EXPECT_TRUE(matches("class A {};", Class));
+  EXPECT_FALSE(matches("class A;", Class));
+  EXPECT_TRUE(matches("void f(){};", Func));
+  EXPECT_FALSE(matches("void f();", Func));
+
+  Matcher<Decl> Anything = constructMatcher<Decl>("anything", NULL);
+  Matcher<Decl> RecordDecl =
+      constructMatcher<Decl>("recordDecl", Anything, NULL);
+
+  EXPECT_TRUE(matches("int a;", Anything));
+  EXPECT_TRUE(matches("class A {};", Anything));
+  EXPECT_TRUE(matches("void f(){};", Anything));
+  EXPECT_FALSE(matches("int a;", RecordDecl));
+  EXPECT_TRUE(matches("class A {};", RecordDecl));
+  EXPECT_FALSE(matches("void f(){};", RecordDecl));
+}
+
 TEST_F(RegistryTest, Errors) {
   // Incorrect argument count.
   OwningPtr<Diagnostics> Error(new Diagnostics());
-  EXPECT_TRUE(NULL ==
-              Registry::constructMatcher("hasInitializer", SourceRange(),
-                                         Args(), Error.get()));
+  EXPECT_TRUE(Registry::constructMatcher("hasInitializer", SourceRange(),
+                                         Args(), Error.get()).empty());
   EXPECT_EQ("Incorrect argument count. (Expected = 1) != (Actual = 0)",
             Error->ToString());
   Error.reset(new Diagnostics());
-  EXPECT_TRUE(NULL ==
-              Registry::constructMatcher("isArrow", SourceRange(),
-                                         Args(std::string()), Error.get()));
+  EXPECT_TRUE(Registry::constructMatcher(
+      "isArrow", SourceRange(), Args(std::string()), Error.get()).empty());
   EXPECT_EQ("Incorrect argument count. (Expected = 0) != (Actual = 1)",
             Error->ToString());
 
   // Bad argument type
   Error.reset(new Diagnostics());
-  EXPECT_TRUE(NULL ==
-              Registry::constructMatcher("ofClass", SourceRange(),
-                                         Args(std::string()), Error.get()));
+  EXPECT_TRUE(Registry::constructMatcher(
+      "ofClass", SourceRange(), Args(std::string()), Error.get()).empty());
   EXPECT_EQ("Incorrect type for arg 1. (Expected = Matcher<CXXRecordDecl>) != "
             "(Actual = String)",
             Error->ToString());
   Error.reset(new Diagnostics());
-  EXPECT_TRUE(NULL ==
-              Registry::constructMatcher(
-                  "recordDecl", SourceRange(),
-                  Args(recordDecl(), parameterCountIs(3)), Error.get()));
+  EXPECT_TRUE(Registry::constructMatcher(
+      "recordDecl", SourceRange(), Args(recordDecl(), parameterCountIs(3)),
+      Error.get()).empty());
   EXPECT_EQ("Incorrect type for arg 2. (Expected = Matcher<CXXRecordDecl>) != "
             "(Actual = Matcher<FunctionDecl>)",
             Error->ToString());

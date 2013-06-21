@@ -315,15 +315,15 @@ bool Parser::parseMatcherExpressionImpl(VariantValue *Value) {
   // Merge the start and end infos.
   SourceRange MatcherRange = NameToken.Range;
   MatcherRange.End = EndToken.Range.End;
-  DynTypedMatcher *Result = S->actOnMatcherExpression(
+  MatcherList Result = S->actOnMatcherExpression(
       NameToken.Text, MatcherRange, BindID, Args, Error);
-  if (Result == NULL) {
+  if (Result.empty()) {
     Error->pushErrorFrame(NameToken.Range, Error->ET_ParserMatcherFailure)
         << NameToken.Text;
     return false;
   }
 
-  Value->takeMatcher(Result);
+  *Value = Result;
   return true;
 }
 
@@ -367,11 +367,11 @@ Parser::Parser(CodeTokenizer *Tokenizer, Sema *S,
 class RegistrySema : public Parser::Sema {
 public:
   virtual ~RegistrySema() {}
-  DynTypedMatcher *actOnMatcherExpression(StringRef MatcherName,
-                                          const SourceRange &NameRange,
-                                          StringRef BindID,
-                                          ArrayRef<ParserValue> Args,
-                                          Diagnostics *Error) {
+  MatcherList actOnMatcherExpression(StringRef MatcherName,
+                                     const SourceRange &NameRange,
+                                     StringRef BindID,
+                                     ArrayRef<ParserValue> Args,
+                                     Diagnostics *Error) {
     if (BindID.empty()) {
       return Registry::constructMatcher(MatcherName, NameRange, Args, Error);
     } else {
@@ -411,11 +411,16 @@ DynTypedMatcher *Parser::parseMatcherExpression(StringRef Code,
   VariantValue Value;
   if (!parseExpression(Code, S, &Value, Error))
     return NULL;
-  if (!Value.isMatcher()) {
+  if (!Value.isMatchers()) {
     Error->pushErrorFrame(SourceRange(), Error->ET_ParserNotAMatcher);
     return NULL;
   }
-  return Value.getMatcher().clone();
+  if (Value.getMatchers().matchers().size() != 1) {
+    Error->pushErrorFrame(SourceRange(), Error->ET_ParserOverloadedType)
+        << Value.getTypeAsString();
+    return NULL;
+  }
+  return Value.getMatchers().matchers()[0]->clone();
 }
 
 }  // namespace dynamic
