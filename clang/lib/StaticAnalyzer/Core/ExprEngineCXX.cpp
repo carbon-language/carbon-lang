@@ -176,7 +176,6 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
       }
 
       // FIXME: This will eventually need to handle new-expressions as well.
-      // Don't forget to update the pre-constructor initialization code below.
     }
 
     // If we couldn't find an existing region to construct into, assume we're
@@ -216,60 +215,22 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
 
   ExplodedNodeSet DstPreVisit;
   getCheckerManager().runCheckersForPreStmt(DstPreVisit, Pred, CE, *this);
-
-  bool IsArray = isa<ElementRegion>(Target);
-  ExplodedNodeSet PreInitialized;
-  {
-    StmtNodeBuilder Bldr(DstPreVisit, PreInitialized, *currBldrCtx);
-    if (CE->requiresZeroInitialization()) {
-      // Type of the zero doesn't matter.
-      SVal ZeroVal = svalBuilder.makeZeroVal(getContext().CharTy);
-
-      for (ExplodedNodeSet::iterator I = DstPreVisit.begin(),
-                                     E = DstPreVisit.end();
-           I != E; ++I) {
-        ProgramStateRef State = (*I)->getState();
-        // FIXME: Once we properly handle constructors in new-expressions, we'll
-        // need to invalidate the region before setting a default value, to make
-        // sure there aren't any lingering bindings around. This probably needs
-        // to happen regardless of whether or not the object is zero-initialized
-        // to handle random fields of a placement-initialized object picking up
-        // old bindings. We might only want to do it when we need to, though.
-        // FIXME: This isn't actually correct for arrays -- we need to zero-
-        // initialize the entire array, not just the first element -- but our
-        // handling of arrays everywhere else is weak as well, so this shouldn't
-        // actually make things worse.
-        State = State->bindDefault(loc::MemRegionVal(Target), ZeroVal);
-        Bldr.generateNode(CE, *I, State, /*tag=*/0, ProgramPoint::PreStmtKind);
-      }
-    }
-  }
-
   ExplodedNodeSet DstPreCall;
-  getCheckerManager().runCheckersForPreCall(DstPreCall, PreInitialized,
+  getCheckerManager().runCheckersForPreCall(DstPreCall, DstPreVisit,
                                             *Call, *this);
 
   ExplodedNodeSet DstEvaluated;
   StmtNodeBuilder Bldr(DstPreCall, DstEvaluated, *currBldrCtx);
 
-  if (CE->getConstructor()->isTrivial() && !IsArray) {
-    if (CE->getConstructor()->isCopyOrMoveConstructor()) {
-      for (ExplodedNodeSet::iterator I = DstPreCall.begin(),
-                                     E = DstPreCall.end();
-           I != E; ++I)
-        performTrivialCopy(Bldr, *I, *Call);
-    } else {
-      assert(CE->getConstructor()->isDefaultConstructor());
+  bool IsArray = isa<ElementRegion>(Target);
+  if (CE->getConstructor()->isTrivial() &&
+      CE->getConstructor()->isCopyOrMoveConstructor() &&
+      !IsArray) {
+    // FIXME: Handle other kinds of trivial constructors as well.
+    for (ExplodedNodeSet::iterator I = DstPreCall.begin(), E = DstPreCall.end();
+         I != E; ++I)
+      performTrivialCopy(Bldr, *I, *Call);
 
-      // We still have to bind the return value.
-      for (ExplodedNodeSet::iterator I = DstPreCall.begin(),
-                                     E = DstPreCall.end();
-           I != E; ++I) {
-        ProgramStateRef State = (*I)->getState();
-        State = bindReturnValue(*Call, LCtx, State);
-        Bldr.generateNode(CE, *I, State);
-      }
-    }
   } else {
     for (ExplodedNodeSet::iterator I = DstPreCall.begin(), E = DstPreCall.end();
          I != E; ++I)
