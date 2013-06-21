@@ -555,6 +555,14 @@ namespace {
       RRI.ReleaseMetadata = NewValue;
     }
 
+    bool IsCFGHazardAfflicted() const {
+      return RRI.CFGHazardAfflicted;
+    }
+
+    void SetCFGHazardAfflicted(const bool NewValue) {
+      RRI.CFGHazardAfflicted = NewValue;
+    }
+
     void SetKnownPositiveRefCount() {
       DEBUG(dbgs() << "Setting Known Positive.\n");
       KnownPositiveRefCount = true;
@@ -1752,7 +1760,7 @@ static void CheckForUseCFGHazard(const Sequence SuccSSeq,
       S.ClearSequenceProgress();
       break;
     }
-    S.RRI.CFGHazardAfflicted = true;
+    S.SetCFGHazardAfflicted(true);
     ShouldContinue = true;
     break;
   }
@@ -1894,7 +1902,7 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
       // safe, stop code motion. This is because whether or not it is safe to
       // remove RR pairs via KnownSafe is an orthogonal concept to whether we
       // are allowed to perform code motion.
-      S.RRI.CFGHazardAfflicted = true;
+      S.SetCFGHazardAfflicted(true);
     }
   }
 }
