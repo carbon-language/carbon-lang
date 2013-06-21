@@ -3078,7 +3078,7 @@ public:
                 output_strm.Printf ("  packet: %s\n", packet_cstr);
                 std::string &response_str = response.GetStringRef();
                 
-                if (strcmp(packet_cstr, "qGetProfileData") == 0)
+                if (strstr(packet_cstr, "qGetProfileData") != NULL)
                 {
                     response_str = process->GetGDBRemote().HarmonizeThreadIdsForProfileData(process, response);
                 }
