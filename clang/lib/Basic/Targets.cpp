@@ -1290,9 +1290,18 @@ namespace {
       NumAliases = 0;
     }
     virtual bool validateAsmConstraint(const char *&Name,
-                                       TargetInfo::ConstraintInfo &info) const {
-      // FIXME: implement
-      return true;
+                                       TargetInfo::ConstraintInfo &Info) const {
+      switch (*Name) {
+      default: return false;
+      case 'c':
+      case 'h':
+      case 'r':
+      case 'l':
+      case 'f':
+      case 'd':
+        Info.setAllowsRegister();
+        return true;
+      }
     }
     virtual const char *getClobbers() const {
       // FIXME: Is this really right?
