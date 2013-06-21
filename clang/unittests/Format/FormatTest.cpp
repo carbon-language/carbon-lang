@@ -2008,7 +2008,7 @@ TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
   EXPECT_EQ("int\n"
             "#define A\n"
             "    a;",
-            format("int\n#define A\na;"));
+            format("int\n#define A\na;", getGoogleStyle()));
   verifyFormat("functionCallTo(\n"
                "    someOtherFunction(\n"
                "        withSomeParameters, whichInSequence,\n"
@@ -2337,19 +2337,22 @@ TEST_F(FormatTest, BreaksFunctionDeclarations) {
 
   // 2) break after return type.
   verifyFormat(
-      "Aaaaaaaaaaaaaaaaaaaaaaaa\n"
-      "    bbbbbbbbbbbbbb(Cccccccccccccc cccccccccccccccccccccccccc);");
+      "Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+      "    bbbbbbbbbbbbbb(Cccccccccccccc cccccccccccccccccccccccccc);",
+      getGoogleStyle());
 
   // 3) break after (.
   verifyFormat(
       "Aaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbb(\n"
-      "    Cccccccccccccccccccccccccccccc cccccccccccccccccccccccccccccccc);");
+      "    Cccccccccccccccccccccccccccccc cccccccccccccccccccccccccccccccc);",
+      getGoogleStyle());
 
   // 4) break before after nested name specifiers.
   verifyFormat(
       "Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
       "    SomeClasssssssssssssssssssssssssssssssssssssss::\n"
-      "        bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb(Cccccccccccccc cccccccccc);");
+      "        bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb(Cccccccccccccc cccccccccc);",
+      getGoogleStyle());
 
   // However, there are exceptions, if a sufficient amount of lines can be
   // saved.
@@ -2361,10 +2364,11 @@ TEST_F(FormatTest, BreaksFunctionDeclarations) {
                "                                  Cccccccccccccc cccccccccc,\n"
                "                                  Cccccccccccccc cccccccccc);");
   verifyFormat(
-      "Aaaaaaaaaaaaaaaaaa\n"
+      "Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
       "    bbbbbbbbbbb(Cccccccccccccc cccccccccc, Cccccccccccccc cccccccccc,\n"
       "                Cccccccccccccc cccccccccc, Cccccccccccccc cccccccccc,\n"
-      "                Cccccccccccccc cccccccccc, Cccccccccccccc cccccccccc);");
+      "                Cccccccccccccc cccccccccc, Cccccccccccccc cccccccccc);",
+      getGoogleStyle());
   verifyFormat(
       "Aaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb(Cccccccccccccc cccccccccc,\n"
       "                                          Cccccccccccccc cccccccccc,\n"
@@ -2419,10 +2423,10 @@ TEST_F(FormatTest, BreaksFunctionDeclarationsWithTrailingTokens) {
   verifyFormat("bool aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
                "    __attribute__((unused));");
   verifyFormat(
-      "bool aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
-      "    GUARDED_BY(aaaaaaaaaaaa);");
+      "bool aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+      "    GUARDED_BY(aaaaaaaaaaaa);",
+      getGoogleStyle());
 }
-
 
 TEST_F(FormatTest, BreaksDesireably) {
   verifyFormat("if (aaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaa) ||\n"
@@ -2745,9 +2749,10 @@ TEST_F(FormatTest, DeclarationsOfMultipleVariables) {
                "          ***c = ccccccccccccccccccc, ***d = ddddddddddddddd;");
   // FIXME: If multiple variables are defined, the "*" needs to move to the new
   // line. Also fix indent for breaking after the type, this looks bad.
-  verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa *\n"
+  verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa*\n"
                "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaa = aaaaaaaaaaaaaaaaaaa,\n"
-               "   *b = bbbbbbbbbbbbbbbbbbb;");
+               "    *b = bbbbbbbbbbbbbbbbbbb;",
+               getGoogleStyle());
 
   // Not ideal, but pointer-with-type does not allow much here.
   verifyGoogleFormat(
@@ -3400,17 +3405,21 @@ TEST_F(FormatTest, FormatsFunctionTypes) {
 
 TEST_F(FormatTest, BreaksLongDeclarations) {
   verifyFormat("typedef LoooooooooooooooooooooooooooooooooooooooongType\n"
-               "    AnotherNameForTheLongType;");
+               "    AnotherNameForTheLongType;",
+               getGoogleStyle());
   verifyFormat("LoooooooooooooooooooooooooooooooooooooooongType\n"
-               "    LoooooooooooooooooooooooooooooooooooooooongVariable;");
+               "    LoooooooooooooooooooooooooooooooooooooooongVariable;",
+               getGoogleStyle());
   verifyFormat("LoooooooooooooooooooooooooooooooooooooooongReturnType\n"
-               "    LoooooooooooooooooooooooooooooooongFunctionDeclaration();");
+               "    LoooooooooooooooooooooooooooooooongFunctionDeclaration();",
+               getGoogleStyle());
   verifyFormat("LoooooooooooooooooooooooooooooooooooooooongReturnType\n"
                "LooooooooooooooooooooooooooooooooooongFunctionDefinition() {}");
 
   // FIXME: Without the comment, this breaks after "(".
-  verifyFormat("LoooooooooooooooooooooooooooooooooooooooongType // break\n"
-               "    (*LoooooooooooooooooooooooooooongFunctionTypeVarialbe)();");
+  verifyFormat("LoooooooooooooooooooooooooooooooooooooooongType  // break\n"
+               "    (*LoooooooooooooooooooooooooooongFunctionTypeVarialbe)();",
+               getGoogleStyle());
 
   verifyFormat("int *someFunction(int LoooooooooooooooooooongParam1,\n"
                "                  int LoooooooooooooooooooongParam2) {}");
@@ -3431,7 +3440,8 @@ TEST_F(FormatTest, BreaksLongDeclarations) {
                "Function() {}");
   verifyFormat(
       "aaaaaaaaaaaaaaaa::aaaaaaaaaaaaaaaa<aaaaaaaaaaaaa, aaaaaaaaaaaa>\n"
-      "    aaaaaaaaaaaaaaaaaaaaaaa;");
+      "    aaaaaaaaaaaaaaaaaaaaaaa;",
+      getGoogleStyle());
 
   verifyGoogleFormat(
       "TypeSpecDecl* TypeSpecDecl::Create(ASTContext& C, DeclContext* DC,\n"
@@ -4808,6 +4818,12 @@ TEST_F(FormatTest, ConfigurableIndentWidth) {
                EightIndent);
 }
 
+TEST_F(FormatTest, ConfigureableFunctionDeclarationIndentAfterType) {
+  verifyFormat("void\n"
+               "f();",
+               getLLVMStyleWithColumns(8));
+}
+
 TEST_F(FormatTest, ConfigurableUseOfTab) {
   FormatStyle Tab = getLLVMStyleWithColumns(42);
   Tab.IndentWidth = 8;
@@ -4975,6 +4991,7 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE_BOOL(PointerBindsToType);
   CHECK_PARSE_BOOL(SpacesInBracedLists);
   CHECK_PARSE_BOOL(UseTab);
+  CHECK_PARSE_BOOL(IndentFunctionDeclarationAfterType);
 
   CHECK_PARSE("AccessModifierOffset: -1234", AccessModifierOffset, -1234);
   CHECK_PARSE("ColumnLimit: 1234", ColumnLimit, 1234u);

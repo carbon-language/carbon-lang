@@ -131,6 +131,10 @@ struct FormatStyle {
   /// \brief If \c true, format { 1 }, otherwise {1}.
   bool SpacesInBracedLists;
 
+  /// \brief If \c true, indent when breaking function declarations which
+  /// are not also definitions after the type.
+  bool IndentFunctionDeclarationAfterType;
+
   bool operator==(const FormatStyle &R) const {
     return AccessModifierOffset == R.AccessModifierOffset &&
            AlignEscapedNewlinesLeft == R.AlignEscapedNewlinesLeft &&
@@ -157,9 +161,10 @@ struct FormatStyle {
            PointerBindsToType == R.PointerBindsToType &&
            SpacesBeforeTrailingComments == R.SpacesBeforeTrailingComments &&
            SpacesInBracedLists == R.SpacesInBracedLists &&
-           Standard == R.Standard && UseTab == R.UseTab;
+           Standard == R.Standard && UseTab == R.UseTab &&
+           IndentFunctionDeclarationAfterType ==
+               R.IndentFunctionDeclarationAfterType;
   }
-
 };
 
 /// \brief Returns a format style complying with the LLVM coding standards:

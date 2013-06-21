@@ -109,6 +109,8 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
     IO.mapOptional("IndentWidth", Style.IndentWidth);
     IO.mapOptional("UseTab", Style.UseTab);
     IO.mapOptional("BreakBeforeBraces", Style.BreakBeforeBraces);
+    IO.mapOptional("IndentFunctionDeclarationAfterType",
+                   Style.IndentFunctionDeclarationAfterType);
   }
 };
 }
@@ -143,6 +145,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.IndentWidth = 2;
   LLVMStyle.UseTab = false;
   LLVMStyle.BreakBeforeBraces = FormatStyle::BS_Attach;
+  LLVMStyle.IndentFunctionDeclarationAfterType = false;
   return LLVMStyle;
 }
 
@@ -172,6 +175,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.IndentWidth = 2;
   GoogleStyle.UseTab = false;
   GoogleStyle.BreakBeforeBraces = FormatStyle::BS_Attach;
+  GoogleStyle.IndentFunctionDeclarationAfterType = true;
   return GoogleStyle;
 }
 
@@ -524,7 +528,8 @@ private:
         State.Column = State.Stack.back().VariablePos;
       } else if (Previous.ClosesTemplateDeclaration ||
                  (Current.Type == TT_StartOfName && State.ParenLevel == 0 &&
-                  Line.StartsDefinition)) {
+                  (!Style.IndentFunctionDeclarationAfterType ||
+                   Line.StartsDefinition))) {
         State.Column = State.Stack.back().Indent;
       } else if (Current.Type == TT_ObjCSelectorName) {
         if (State.Stack.back().ColonPos > Current.CodePointCount) {
