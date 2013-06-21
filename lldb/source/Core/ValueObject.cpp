@@ -1693,6 +1693,10 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
     
     {
         const char *cstr = NULL;
+        
+         // this is a local stream that we are using to ensure that the data pointed to by cstr survives
+        // long enough for us to copy it to its destination - it is necessary to have this temporary storage
+        // area for cases where our desired output is not backed by some other longer-term storage
         StreamString strm;
 
         if (custom_format != eFormatInvalid)
@@ -1723,6 +1727,15 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
                 
             case eValueObjectRepresentationStyleType:
                 cstr = GetTypeName().AsCString();
+                break;
+                
+            case eValueObjectRepresentationStyleName:
+                cstr = GetName().AsCString();
+                break;
+                
+            case eValueObjectRepresentationStyleExpressionPath:
+                GetExpressionPath(strm, false);
+                cstr = strm.GetString().c_str();
                 break;
         }
         

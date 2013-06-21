@@ -80,7 +80,9 @@ public:
         eValueObjectRepresentationStyleLanguageSpecific,
         eValueObjectRepresentationStyleLocation,
         eValueObjectRepresentationStyleChildrenCount,
-        eValueObjectRepresentationStyleType
+        eValueObjectRepresentationStyleType,
+        eValueObjectRepresentationStyleName,
+        eValueObjectRepresentationStyleExpressionPath
     };
     
     enum ExpressionPathScanEndReason

@@ -1232,6 +1232,12 @@ ScanFormatDescriptor (const char* var_name_begin,
                 case 'T': // if this is a 'T', print the type
                     *val_obj_display = ValueObject::eValueObjectRepresentationStyleType;
                     break;
+                case 'N': // if this is a 'N', print the name
+                    *val_obj_display = ValueObject::eValueObjectRepresentationStyleName;
+                    break;
+                case '>': // if this is a '>', print the name
+                    *val_obj_display = ValueObject::eValueObjectRepresentationStyleExpressionPath;
+                    break;
                 default:
                     if (log)
                         log->Printf("ScanFormatDescriptor] %s is an error, leaving the previous value alone", format_name.c_str());
