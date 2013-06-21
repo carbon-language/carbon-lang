@@ -1917,13 +1917,6 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     NamedDecl *PrevDecl
       = LookupSingleName(TUScope, IdentList[i], IdentLocs[i], 
                          LookupOrdinaryName, ForRedeclaration);
-    if (PrevDecl && PrevDecl->isTemplateParameter()) {
-      // Maybe we will complain about the shadowed template parameter.
-      DiagnoseTemplateParameterShadow(AtClassLoc, PrevDecl);
-      // Just pretend that we didn't see the previous declaration.
-      PrevDecl = 0;
-    }
-
     if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
       // GCC apparently allows the following idiom:
       //
