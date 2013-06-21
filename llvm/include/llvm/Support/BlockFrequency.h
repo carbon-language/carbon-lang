@@ -30,12 +30,20 @@ class BlockFrequency {
 public:
   BlockFrequency(uint64_t Freq = 0) : Frequency(Freq) { }
 
+  /// \brief Returns the frequency of the entry block of the function.
   static uint64_t getEntryFrequency() { return ENTRY_FREQ; }
+
+  /// \brief Returns the frequency as a fixpoint number scaled by the entry
+  /// frequency.
   uint64_t getFrequency() const { return Frequency; }
 
+  /// \brief Multiplies with a branch probability. The computation will never
+  /// overflow. If the result is equal to zero but the input wasn't this method
+  /// will return a frequency of one.
   BlockFrequency &operator*=(const BranchProbability &Prob);
   const BlockFrequency operator*(const BranchProbability &Prob) const;
 
+  /// \brief Adds another block frequency using saturating arithmetic.
   BlockFrequency &operator+=(const BlockFrequency &Freq);
   const BlockFrequency operator+(const BlockFrequency &Freq) const;
 

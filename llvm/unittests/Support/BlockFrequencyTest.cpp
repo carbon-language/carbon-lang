@@ -8,11 +8,22 @@ using namespace llvm;
 
 namespace {
 
+TEST(BlockFrequencyTest, ZeroToZero) {
+  BlockFrequency Freq(0);
+  BranchProbability Prob(UINT32_MAX - 1, UINT32_MAX);
+  Freq *= Prob;
+  EXPECT_EQ(Freq.getFrequency(), 0u);
+
+  Freq = 1;
+  Freq *= BranchProbability::getZero();
+  EXPECT_EQ(Freq.getFrequency(), 0u);
+}
+
 TEST(BlockFrequencyTest, OneToZero) {
   BlockFrequency Freq(1);
   BranchProbability Prob(UINT32_MAX - 1, UINT32_MAX);
   Freq *= Prob;
-  EXPECT_EQ(Freq.getFrequency(), 0u);
+  EXPECT_EQ(Freq.getFrequency(), 1u);
 }
 
 TEST(BlockFrequencyTest, OneToOne) {
