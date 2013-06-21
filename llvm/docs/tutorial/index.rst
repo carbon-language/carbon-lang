@@ -34,7 +34,7 @@ External Tutorials
    A simple guide for how to implement an LLVM integrated assembler for an
    architecture.
 
-.. _`Howto: Implementing LLVM Integrated Assembler`: http://www.embecosm.com/download/ean10.html
+.. _`Howto: Implementing LLVM Integrated Assembler`: http://www.embecosm.com/appnotes/ean10/ean10-howto-llvmas-1.0.html
 
 Advanced Topics
 ===============
