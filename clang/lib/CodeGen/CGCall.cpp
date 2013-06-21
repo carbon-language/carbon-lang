@@ -1865,6 +1865,19 @@ static void emitWritebacks(CodeGenFunction &CGF,
     emitWriteback(CGF, *i);
 }
 
+static void deactivateArgCleanupsBeforeCall(CodeGenFunction &CGF,
+                                            const CallArgList &CallArgs) {
+  assert(CGF.getTarget().getCXXABI().isArgumentDestroyedByCallee());
+  ArrayRef<CallArgList::CallArgCleanup> Cleanups =
+    CallArgs.getCleanupsToDeactivate();
+  // Iterate in reverse to increase the likelihood of popping the cleanup.
+  for (ArrayRef<CallArgList::CallArgCleanup>::reverse_iterator
+         I = Cleanups.rbegin(), E = Cleanups.rend(); I != E; ++I) {
+    CGF.DeactivateCleanupBlock(I->Cleanup, I->IsActiveIP);
+    I->IsActiveIP->eraseFromParent();
+  }
+}
+
 static const Expr *maybeGetUnaryAddrOfOperand(const Expr *E) {
   if (const UnaryOperator *uop = dyn_cast<UnaryOperator>(E->IgnoreParens()))
     if (uop->getOpcode() == UO_AddrOf)
@@ -2016,8 +2029,31 @@ void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
     return args.add(EmitReferenceBindingToExpr(E), type);
   }
 
-  if (hasAggregateEvaluationKind(type) &&
-      isa<ImplicitCastExpr>(E) &&
+  bool HasAggregateEvalKind = hasAggregateEvaluationKind(type);
+
+  // In the Microsoft C++ ABI, aggregate arguments are destructed by the callee.
+  // However, we still have to push an EH-only cleanup in case we unwind before
+  // we make it to the call.
+  if (HasAggregateEvalKind &&
+      CGM.getTarget().getCXXABI().isArgumentDestroyedByCallee()) {
+    const CXXRecordDecl *RD = type->getAsCXXRecordDecl();
+    if (RD && RD->hasNonTrivialDestructor()) {
+      AggValueSlot Slot = CreateAggTemp(type, "agg.arg.tmp");
+      Slot.setExternallyDestructed();
+      EmitAggExpr(E, Slot);
+      RValue RV = Slot.asRValue();
+      args.add(RV, type);
+
+      pushDestroy(EHCleanup, RV.getAggregateAddr(), type, destroyCXXObject,
+                  /*useEHCleanupForArray*/ true);
+      // This unreachable is a temporary marker which will be removed later.
+      llvm::Instruction *IsActive = Builder.CreateUnreachable();
+      args.addArgCleanupDeactivation(EHStack.getInnermostEHScope(), IsActive);
+      return;
+    }
+  }
+
+  if (HasAggregateEvalKind && isa<ImplicitCastExpr>(E) &&
       cast<CastExpr>(E)->getCastKind() == CK_LValueToRValue) {
     LValue L = EmitLValue(cast<CastExpr>(E)->getSubExpr());
     assert(L.isSimple());
@@ -2427,6 +2463,9 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       break;
     }
   }
+
+  if (!CallArgs.getCleanupsToDeactivate().empty())
+    deactivateArgCleanupsBeforeCall(*this, CallArgs);
 
   // If the callee is a bitcast of a function to a varargs pointer to function
   // type, check to see if we can remove the bitcast.  This handles some cases

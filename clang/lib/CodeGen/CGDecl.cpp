@@ -1651,10 +1651,18 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
   }
 
   llvm::Value *DeclPtr;
+  bool HasNonScalarEvalKind = !CodeGenFunction::hasScalarEvaluationKind(Ty);
   // If this is an aggregate or variable sized value, reuse the input pointer.
-  if (!Ty->isConstantSizeType() ||
-      !CodeGenFunction::hasScalarEvaluationKind(Ty)) {
+  if (HasNonScalarEvalKind || !Ty->isConstantSizeType()) {
     DeclPtr = Arg;
+    // Push a destructor cleanup for this parameter if the ABI requires it.
+    if (HasNonScalarEvalKind &&
+        getTarget().getCXXABI().isArgumentDestroyedByCallee()) {
+      if (const CXXRecordDecl *RD = Ty->getAsCXXRecordDecl()) {
+        if (RD->hasNonTrivialDestructor())
+          pushDestroy(QualType::DK_cxx_destructor, DeclPtr, Ty);
+      }
+    }
   } else {
     // Otherwise, create a temporary to hold the value.
     llvm::AllocaInst *Alloc = CreateTempAlloca(ConvertTypeForMem(Ty),

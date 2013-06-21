@@ -5777,6 +5777,15 @@ bool Sema::CheckParmsForFunctionDef(ParmVarDecl **P, ParmVarDecl **PEnd,
       }
       PType= AT->getElementType();
     }
+
+    // MSVC destroys objects passed by value in the callee.  Therefore a
+    // function definition which takes such a parameter must be able to call the
+    // object's destructor.
+    if (getLangOpts().CPlusPlus &&
+        Context.getTargetInfo().getCXXABI().isArgumentDestroyedByCallee()) {
+      if (const RecordType *RT = Param->getType()->getAs<RecordType>())
+        FinalizeVarWithDestructor(Param, RT);
+    }
   }
 
   return HasInvalidParm;

@@ -16,6 +16,7 @@
 #define CLANG_CODEGEN_CGCALL_H
 
 #include "CGValue.h"
+#include "EHScopeStack.h"
 #include "clang/AST/CanonicalType.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -67,6 +68,14 @@ namespace CodeGen {
       llvm::Value *ToUse;
     };
 
+    struct CallArgCleanup {
+      EHScopeStack::stable_iterator Cleanup;
+
+      /// The "is active" insertion point.  This instruction is temporary and
+      /// will be removed after insertion.
+      llvm::Instruction *IsActiveIP;
+    };
+
     void add(RValue rvalue, QualType type, bool needscopy = false) {
       push_back(CallArg(rvalue, type, needscopy));
     }
@@ -92,8 +101,25 @@ namespace CodeGen {
     writeback_iterator writeback_begin() const { return Writebacks.begin(); }
     writeback_iterator writeback_end() const { return Writebacks.end(); }
 
+    void addArgCleanupDeactivation(EHScopeStack::stable_iterator Cleanup,
+                                   llvm::Instruction *IsActiveIP) {
+      CallArgCleanup ArgCleanup;
+      ArgCleanup.Cleanup = Cleanup;
+      ArgCleanup.IsActiveIP = IsActiveIP;
+      CleanupsToDeactivate.push_back(ArgCleanup);
+    }
+
+    ArrayRef<CallArgCleanup> getCleanupsToDeactivate() const {
+      return CleanupsToDeactivate;
+    }
+
   private:
     SmallVector<Writeback, 1> Writebacks;
+
+    /// Deactivate these cleanups immediately before making the call.  This
+    /// is used to cleanup objects that are owned by the callee once the call
+    /// occurs.
+    SmallVector<CallArgCleanup, 1> CleanupsToDeactivate;
   };
 
   /// A class for recording the number of arguments that a function

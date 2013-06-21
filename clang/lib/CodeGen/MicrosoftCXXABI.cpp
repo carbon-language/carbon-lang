@@ -36,7 +36,7 @@ public:
   }
 
   RecordArgABI getRecordArgABI(const CXXRecordDecl *RD) const {
-    if (RD->hasNonTrivialCopyConstructor())
+    if (RD->hasNonTrivialCopyConstructor() || RD->hasNonTrivialDestructor())
       return RAA_DirectInMemory;
     return RAA_Default;
   }

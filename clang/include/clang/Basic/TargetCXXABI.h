@@ -131,8 +131,19 @@ public:
   /// \brief Is the default C++ member function calling convention
   /// the same as the default calling convention?
   bool isMemberFunctionCCDefault() const {
-    // Right now, this is always true for Microsoft.
+    // Right now, this is always false for Microsoft.
     return !isMicrosoft();
+  }
+
+  /// Are temporary objects passed by value to a call destroyed by the callee?
+  /// This is a fundamental language change, since it implies that objects
+  /// passed by value do *not* live to the end of the full expression.
+  /// Temporaries passed to a function taking a const reference live to the end
+  /// of the full expression as usual.  Both the caller and the callee must
+  /// have access to the destructor, while only the caller needs the
+  /// destructor if this is false.
+  bool isArgumentDestroyedByCallee() const {
+    return isMicrosoft();
   }
 
   /// \brief Does this ABI have different entrypoints for complete-object

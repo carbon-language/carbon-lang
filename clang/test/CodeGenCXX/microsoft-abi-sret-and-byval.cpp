@@ -22,6 +22,12 @@ struct SmallWithCtor {
   int x;
 };
 
+struct SmallWithDtor {
+  SmallWithDtor();
+  ~SmallWithDtor();
+  int x;
+};
+
 struct SmallWithVftable {
   int x;
   virtual void foo();
@@ -95,6 +101,44 @@ void small_arg_with_ctor(SmallWithCtor s) {}
 // WIN32: define void @"\01?small_arg_with_ctor@@YAXUSmallWithCtor@@@Z"(%struct.SmallWithCtor* byval align 4 %s)
 // WIN64: define void @"\01?small_arg_with_ctor@@YAXUSmallWithCtor@@@Z"(i32 %s.coerce)
 
+// Test that dtors are invoked in the callee.
+void small_arg_with_dtor(SmallWithDtor s) {}
+// WIN32: define void @"\01?small_arg_with_dtor@@YAXUSmallWithDtor@@@Z"(%struct.SmallWithDtor* byval align 4 %s) {{.*}} {
+// WIN32:   call x86_thiscallcc void @"\01??1SmallWithDtor@@QAE@XZ"(%struct.SmallWithDtor* %s)
+// WIN32: }
+// WIN64: define void @"\01?small_arg_with_dtor@@YAXUSmallWithDtor@@@Z"(%struct.SmallWithDtor* byval %s) {{.*}} {
+// WIN64:   call void @"\01??1SmallWithDtor@@QEAA@XZ"(%struct.SmallWithDtor* %s)
+// WIN64: }
+
+// Test that references aren't destroyed in the callee.
+void ref_small_arg_with_dtor(const SmallWithDtor &s) { }
+// WIN32: define void @"\01?ref_small_arg_with_dtor@@YAXABUSmallWithDtor@@@Z"(%struct.SmallWithDtor* %s) {{.*}} {
+// WIN32-NOT:   call x86_thiscallcc void @"\01??1SmallWithDtor@@QAE@XZ"
+// WIN32: }
+
+// Test that temporaries passed by reference are destroyed in the caller.
+void temporary_ref_with_dtor() {
+  ref_small_arg_with_dtor(SmallWithDtor());
+}
+// WIN32: define void @"\01?temporary_ref_with_dtor@@YAXXZ"() {{.*}} {
+// WIN32:   call x86_thiscallcc %struct.SmallWithDtor* @"\01??0SmallWithDtor@@QAE@XZ"
+// WIN32:   call void @"\01?ref_small_arg_with_dtor@@YAXABUSmallWithDtor@@@Z"
+// WIN32:   call x86_thiscallcc void @"\01??1SmallWithDtor@@QAE@XZ"
+// WIN32: }
+
+void takes_two_by_val_with_dtor(SmallWithDtor a, SmallWithDtor b);
+void eh_cleanup_arg_with_dtor() {
+  takes_two_by_val_with_dtor(SmallWithDtor(), SmallWithDtor());
+}
+//   When exceptions are off, we don't have any cleanups.  See
+//   microsoft-abi-exceptions.cpp for these cleanups.
+// WIN32: define void @"\01?eh_cleanup_arg_with_dtor@@YAXXZ"() {{.*}} {
+// WIN32:   call x86_thiscallcc %struct.SmallWithDtor* @"\01??0SmallWithDtor@@QAE@XZ"
+// WIN32:   call x86_thiscallcc %struct.SmallWithDtor* @"\01??0SmallWithDtor@@QAE@XZ"
+// WIN32:   call void @"\01?takes_two_by_val_with_dtor@@YAXUSmallWithDtor@@0@Z"
+// WIN32-NOT: call x86_thiscallcc void @"\01??1SmallWithDtor@@QAE@XZ"
+// WIN32: }
+
 void small_arg_with_vftable(SmallWithVftable s) {}
 // LINUX: define void @_Z22small_arg_with_vftable16SmallWithVftable(%struct.SmallWithVftable* %s)
 // WIN32: define void @"\01?small_arg_with_vftable@@YAXUSmallWithVftable@@@Z"(%struct.SmallWithVftable* byval align 4 %s)
@@ -167,3 +211,19 @@ void use_class() {
   c.thiscall_method_arg(SmallWithCtor());
   c.thiscall_method_arg(Big());
 }
+
+struct X {
+  X();
+  ~X();
+};
+void g(X) {
+}
+// WIN32: define void @"\01?g@@YAXUX@@@Z"(%struct.X* byval align 4) {{.*}} {
+// WIN32:   call x86_thiscallcc void @"\01??1X@@QAE@XZ"(%struct.X* %0)
+// WIN32: }
+void f() {
+  g(X());
+}
+// WIN32: define void @"\01?f@@YAXXZ"() {{.*}} {
+// WIN32-NOT: call {{.*}} @"\01??1X@@QAE@XZ"
+// WIN32: }
