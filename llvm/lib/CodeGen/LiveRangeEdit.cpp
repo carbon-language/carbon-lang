@@ -331,7 +331,7 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
       TheDelegate->LRE_WillShrinkVirtReg(LI->reg);
     if (!LIS.shrinkToUses(LI, &Dead))
       continue;
-    
+
     // Don't create new intervals for a register being spilled.
     // The new intervals would have to be spilled anyway so its not worth it.
     // Also they currently aren't spilled so creating them and not spilling
@@ -343,7 +343,7 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
         break;
       }
     }
-    
+
     if (BeingSpilled) continue;
 
     // LI may have been separated, create new intervals.
