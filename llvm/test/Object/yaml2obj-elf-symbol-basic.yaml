@@ -1,5 +1,4 @@
 # RUN: yaml2obj -format=elf %s | llvm-readobj -symbols - | FileCheck %s
-# RUN: yaml2obj -format=elf %s | llvm-objdump -d -no-show-raw-insn - | FileCheck %s --check-prefix=DISASSEMBLY
 !ELF
 FileHeader:
   Class: ELFCLASS64
@@ -42,6 +41,8 @@ Sections:
 # CHECK:          Name: undefined_symbol
 # CHECK:          Section:  (0x0)
 
+# How to conditionalize on X86 being present?
+# yaml2obj -format=elf %s | llvm-objdump -d -no-show-raw-insn - | FileCheck %s --check-prefix=DISASSEMBLY
 # DISASSEMBLY:      Disassembly of section .text:
 # DISASSEMBLY-NEXT: main:
 # DISASSEMBLY-NEXT:        1:       jmp     -2
