@@ -1732,8 +1732,6 @@ bool X86FastISel::FastLowerArguments() {
   const TargetRegisterClass *RC64 = TLI.getRegClassFor(MVT::i64);
   for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
        I != E; ++I, ++Idx) {
-    if (I->use_empty())
-      continue;
     bool is32Bit = TLI.getValueType(I->getType()) == MVT::i32;
     const TargetRegisterClass *RC = is32Bit ? RC32 : RC64;
     unsigned SrcReg = is32Bit ? GPR32ArgRegs[Idx] : GPR64ArgRegs[Idx];

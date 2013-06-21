@@ -92,7 +92,7 @@ declare signext i8 @t7();
 declare zeroext i8 @t8();
 declare zeroext i1 @t9();
 
-define i32 @t10(i32 %argc, i8** nocapture %argv) {
+define i32 @t10() {
 entry:
 ; ARM: @t10
 ; ARM: movw [[R0:l?r[0-9]*]], #0

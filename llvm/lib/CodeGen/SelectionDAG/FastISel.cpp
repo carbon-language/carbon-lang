@@ -97,14 +97,12 @@ bool FastISel::LowerArguments() {
   if (!FastLowerArguments())
     return false;
 
-  // Enter non-dead arguments into ValueMap for uses in non-entry BBs.
+  // Enter arguments into ValueMap for uses in non-entry BBs.
   for (Function::const_arg_iterator I = FuncInfo.Fn->arg_begin(),
          E = FuncInfo.Fn->arg_end(); I != E; ++I) {
-    if (!I->use_empty()) {
-      DenseMap<const Value *, unsigned>::iterator VI = LocalValueMap.find(I);
-      assert(VI != LocalValueMap.end() && "Missed an argument?");
-      FuncInfo.ValueMap[I] = VI->second;
-    }
+    DenseMap<const Value *, unsigned>::iterator VI = LocalValueMap.find(I);
+    assert(VI != LocalValueMap.end() && "Missed an argument?");
+    FuncInfo.ValueMap[I] = VI->second;
   }
   return true;
 }
