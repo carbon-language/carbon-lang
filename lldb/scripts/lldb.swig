@@ -98,6 +98,9 @@ import os
 #include "lldb/API/SBValue.h"
 #include "lldb/API/SBValueList.h"
 #include "lldb/API/SBWatchpoint.h"
+
+#include "../scripts/Python/python-swigsafecast.swig"
+
 %}
 
 /* Various liblldb typedefs that SWIG needs to know about.  */

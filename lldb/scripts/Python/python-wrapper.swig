@@ -119,8 +119,8 @@ LLDBSwigPythonBreakpointCallbackFunction
     lldb::SBBreakpointLocation sb_bp_loc(bp_loc_sp);
 
     bool stop_at_breakpoint = true;
-    PyObject *Frame_PyObj = SWIG_NewPointerObj((void *) &sb_frame, SWIGTYPE_p_lldb__SBFrame, 0);
-    PyObject *Bp_Loc_PyObj = SWIG_NewPointerObj ((void *) &sb_bp_loc, SWIGTYPE_p_lldb__SBBreakpointLocation, 0);
+    PyObject *Frame_PyObj = SBTypeToSWIGWrapper(sb_frame);
+    PyObject *Bp_Loc_PyObj = SBTypeToSWIGWrapper(sb_bp_loc);
     
     if (Frame_PyObj == NULL || Bp_Loc_PyObj == NULL)
         return stop_at_breakpoint;
@@ -202,8 +202,8 @@ LLDBSwigPythonWatchpointCallbackFunction
     lldb::SBWatchpoint sb_wp(wp_sp);
 
     bool stop_at_watchpoint = true;
-    PyObject *Frame_PyObj = SWIG_NewPointerObj((void *) &sb_frame, SWIGTYPE_p_lldb__SBFrame, 0);
-    PyObject *Wp_PyObj = SWIG_NewPointerObj ((void *) &sb_wp, SWIGTYPE_p_lldb__SBWatchpoint, 0);
+    PyObject *Frame_PyObj = SBTypeToSWIGWrapper(sb_frame);
+    PyObject *Wp_PyObj = SBTypeToSWIGWrapper(sb_wp);
     
     if (Frame_PyObj == NULL || Wp_PyObj == NULL)
         return stop_at_watchpoint;
@@ -279,7 +279,7 @@ LLDBSwigPythonCallTypeScript
 
     retval.clear();
 
-    PyObject *ValObj_PyObj = SWIG_NewPointerObj((void *) &sb_value, SWIGTYPE_p_lldb__SBValue, 0);
+    PyObject *ValObj_PyObj = SBTypeToSWIGWrapper(sb_value);
     
     if (ValObj_PyObj == NULL)
         return false;
@@ -357,10 +357,10 @@ LLDBSwigPythonCreateSyntheticProvider
 
     // I do not want the SBValue to be deallocated when going out of scope because python
     // has ownership of it and will manage memory for this object by itself
-    lldb::SBValue *valobj_sb = new lldb::SBValue(valobj_sp);
-    valobj_sb->SetPreferSyntheticValue(false);
+    lldb::SBValue *sb_value = new lldb::SBValue(valobj_sp);
+    sb_value->SetPreferSyntheticValue(false);
 
-    PyObject *ValObj_PyObj = SWIG_NewPointerObj((void *)valobj_sb, SWIGTYPE_p_lldb__SBValue, 0);
+    PyObject *ValObj_PyObj = SBTypeToSWIGWrapper(sb_value);
 
     if (ValObj_PyObj == NULL)
         Py_RETURN_NONE;
@@ -714,8 +714,8 @@ LLDBSwigPythonCallCommand
 
     bool retval = false;
 
-    PyObject *DebuggerObj_PyObj = SWIG_NewPointerObj((void *) &debugger_sb, SWIGTYPE_p_lldb__SBDebugger, 0);
-    PyObject *CmdRetObj_PyObj = SWIG_NewPointerObj((void *) &cmd_retobj_sb, SWIGTYPE_p_lldb__SBCommandReturnObject, 0);
+    PyObject *DebuggerObj_PyObj = SBTypeToSWIGWrapper(debugger_sb);
+    PyObject *CmdRetObj_PyObj = SBTypeToSWIGWrapper(cmd_retobj_sb);
 
     if (DebuggerObj_PyObj == NULL)
         return retval;
@@ -810,11 +810,11 @@ LLDBSWIGPythonCreateOSPlugin
     if (python_class_name == NULL || python_class_name[0] == '\0' || !session_dictionary_name)
         Py_RETURN_NONE;
 
-    // I do not want the SBValue to be deallocated when going out of scope because python
+    // I do not want the SBProcess to be deallocated when going out of scope because python
     // has ownership of it and will manage memory for this object by itself
     lldb::SBProcess *process_sb = new lldb::SBProcess(process_sp);
 
-    PyObject *SBProc_PyObj = SWIG_NewPointerObj((void *)process_sb, SWIGTYPE_p_lldb__SBProcess, 0);
+    PyObject *SBProc_PyObj = SBTypeToSWIGWrapper(process_sb);
 
     if (SBProc_PyObj == NULL)
         Py_RETURN_NONE;
@@ -908,7 +908,7 @@ std::string& output)
         return retval;
 
     lldb::SBProcess process_sb(process);
-    PyObject *ProcessObj_PyObj = SWIG_NewPointerObj((void *) &process_sb, SWIGTYPE_p_lldb__SBProcess, 0);
+    PyObject *ProcessObj_PyObj = SBTypeToSWIGWrapper(process_sb);
 
     if (ProcessObj_PyObj == NULL)
         return retval;
@@ -994,7 +994,7 @@ std::string& output)
         return retval;
 
     lldb::SBThread thread_sb(thread);
-    PyObject *ThreadObj_PyObj = SWIG_NewPointerObj((void *) &thread_sb, SWIGTYPE_p_lldb__SBThread, 0);
+    PyObject *ThreadObj_PyObj = SBTypeToSWIGWrapper(thread_sb);
 
     if (ThreadObj_PyObj == NULL)
         return retval;
@@ -1080,7 +1080,7 @@ std::string& output)
         return retval;
 
     lldb::SBTarget target_sb(target);
-    PyObject *TargetObj_PyObj = SWIG_NewPointerObj((void *) &target_sb, SWIGTYPE_p_lldb__SBTarget, 0);
+    PyObject *TargetObj_PyObj = SBTypeToSWIGWrapper(target_sb);
 
     if (TargetObj_PyObj == NULL)
         return retval;
@@ -1166,7 +1166,7 @@ std::string& output)
         return retval;
 
     lldb::SBFrame frame_sb(frame);
-    PyObject *FrameObj_PyObj = SWIG_NewPointerObj((void *) &frame_sb, SWIGTYPE_p_lldb__SBFrame, 0);
+    PyObject *FrameObj_PyObj = SBTypeToSWIGWrapper(frame_sb);
 
     if (FrameObj_PyObj == NULL)
         return retval;
@@ -1251,7 +1251,7 @@ LLDBSwigPythonCallModuleInit
 
     bool retval = false;
 
-    PyObject *DebuggerObj_PyObj = SWIG_NewPointerObj((void *) &debugger_sb, SWIGTYPE_p_lldb__SBDebugger, 0);
+    PyObject *DebuggerObj_PyObj = SBTypeToSWIGWrapper(debugger_sb);
 
     if (DebuggerObj_PyObj == NULL)
         return retval;
@@ -1360,7 +1360,7 @@ LLDBSwigPythonCallSBInputReaderCallback(void *baton,
     if (baton != Py_None) {
         SWIG_PYTHON_THREAD_BEGIN_BLOCK;
     
-        PyObject *py_InputReader = SWIG_NewPointerObj(reader, SWIGTYPE_p_lldb__SBInputReader, false);
+        PyObject *py_InputReader = SBTypeToSWIGWrapper(reader);
         PyObject *py_Notification = PyInt_FromLong(notification);
         PyObject *py_Bytes = PyBytes_FromStringAndSize(bytes, bytes_len);
     

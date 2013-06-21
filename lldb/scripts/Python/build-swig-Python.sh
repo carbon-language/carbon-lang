@@ -46,6 +46,7 @@ swig_input_file=${SRC_ROOT}/scripts/lldb.swig
 swig_python_extensions=${SRC_ROOT}/scripts/Python/python-extensions.swig
 swig_python_wrapper=${SRC_ROOT}/scripts/Python/python-wrapper.swig
 swig_python_typemaps=${SRC_ROOT}/scripts/Python/python-typemaps.swig
+swig_python_swigsafecast=${SRC_ROOT}/scripts/Python/python-swigsafecast.swig
 
 if [ "$LLDB_DISABLE_PYTHON" = "1" ] ; then
     # We don't want Python for this build, but touch the output file so we don't have to
@@ -273,6 +274,19 @@ then
         if [ $Debug -eq 1 ]
         then
             echo "${swig_python_typemaps} is newer than ${swig_output_file}"
+            echo "swig file will need to be re-built."
+        fi
+    fi
+fi
+
+if [ $NeedToUpdate -eq 0 ]
+then
+    if [ ${swig_python_swigsafecast} -nt ${swig_output_file} ]
+    then
+        NeedToUpdate=1
+        if [ $Debug -eq 1 ]
+        then
+            echo "${swig_python_swigsafecast} is newer than ${swig_output_file}"
             echo "swig file will need to be re-built."
         fi
     fi
