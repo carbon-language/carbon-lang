@@ -42,6 +42,7 @@ multiclass X86SchedWritePair {
 // Arithmetic.
 defm WriteALU  : X86SchedWritePair; // Simple integer ALU op.
 defm WriteIMul : X86SchedWritePair; // Integer multiplication.
+def  WriteIMulH : SchedWrite;       // Integer multiplication, high part.
 defm WriteIDiv : X86SchedWritePair; // Integer division.
 def  WriteLEA  : SchedWrite;        // LEA instructions can't fold loads.
 

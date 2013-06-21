@@ -86,6 +86,7 @@ def : WriteRes<WriteZero,  []>;
 
 defm : SBWriteResPair<WriteALU,   SBPort015, 1>;
 defm : SBWriteResPair<WriteIMul,  SBPort1,   3>;
+def  : WriteRes<WriteIMulH, []> { let Latency = 3; }
 defm : SBWriteResPair<WriteShift, SBPort05,  1>;
 defm : SBWriteResPair<WriteJump,  SBPort5,   1>;
 

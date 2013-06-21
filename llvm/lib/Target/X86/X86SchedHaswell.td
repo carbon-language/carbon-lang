@@ -91,6 +91,7 @@ def : WriteRes<WriteZero,  []>;
 
 defm : HWWriteResPair<WriteALU,   HWPort0156, 1>;
 defm : HWWriteResPair<WriteIMul,  HWPort1,   3>;
+def  : WriteRes<WriteIMulH, []> { let Latency = 3; }
 defm : HWWriteResPair<WriteShift, HWPort056,  1>;
 defm : HWWriteResPair<WriteJump,  HWPort5,   1>;
 

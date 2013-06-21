@@ -1302,12 +1302,12 @@ let neverHasSideEffects = 1 in {
   let isCommutable = 1 in
   def rr : I<0xF6, MRMSrcReg, (outs RC:$dst1, RC:$dst2), (ins RC:$src),
              !strconcat(mnemonic, "\t{$src, $dst2, $dst1|$dst1, $dst2, $src}"),
-             [], IIC_MUL8>, T8XD, VEX_4V, Sched<[WriteIMul]>;
+             [], IIC_MUL8>, T8XD, VEX_4V, Sched<[WriteIMul, WriteIMulH]>;
 
   let mayLoad = 1 in
   def rm : I<0xF6, MRMSrcMem, (outs RC:$dst1, RC:$dst2), (ins x86memop:$src),
              !strconcat(mnemonic, "\t{$src, $dst2, $dst1|$dst1, $dst2, $src}"),
-             [], IIC_MUL8>, T8XD, VEX_4V, Sched<[WriteIMulLd]>;
+             [], IIC_MUL8>, T8XD, VEX_4V, Sched<[WriteIMulLd, WriteIMulH]>;
 }
 }
 
@@ -1336,7 +1336,7 @@ let hasSideEffects = 0, Predicates = [HasADX], Defs = [EFLAGS] in {
   def ADCX32rm : I<0xF6, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
              "adcx{l}\t{$src, $dst|$dst, $src}",
              [], IIC_BIN_MEM>, T8, OpSize;
- 
+
   def ADCX64rm : I<0xF6, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
              "adcx{q}\t{$src, $dst|$dst, $src}",
              [], IIC_BIN_MEM>, T8, OpSize, REX_W, Requires<[In64BitMode]>;
@@ -1361,7 +1361,7 @@ let hasSideEffects = 0, Predicates = [HasADX], Defs = [EFLAGS] in {
   def ADOX32rm : I<0xF6, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
              "adox{l}\t{$src, $dst|$dst, $src}",
              [], IIC_BIN_MEM>, T8XS;
- 
+
   def ADOX64rm : I<0xF6, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
              "adox{q}\t{$src, $dst|$dst, $src}",
              [], IIC_BIN_MEM>, T8XS, REX_W, Requires<[In64BitMode]>;
