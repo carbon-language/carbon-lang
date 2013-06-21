@@ -311,11 +311,30 @@ INTERCEPTOR(long double, strtold, const char *nptr, char **endptr) {  // NOLINT
   return res;
 }
 
+INTERCEPTOR(int, vasprintf, char **strp, const char *format, va_list ap) {
+  ENSURE_MSAN_INITED();
+  int res = REAL(vasprintf)(strp, format, ap);
+  if (res >= 0 && !__msan_has_dynamic_component()) {
+    __msan_unpoison(strp, sizeof(*strp));
+    __msan_unpoison(*strp, res + 1);
+  }
+  return res;
+}
+
+INTERCEPTOR(int, asprintf, char **strp, const char *format, ...) {  // NOLINT
+  ENSURE_MSAN_INITED();
+  va_list ap;
+  va_start(ap, format);
+  int res = vasprintf(strp, format, ap);  // NOLINT
+  va_end(ap);
+  return res;
+}
+
 INTERCEPTOR(int, vsnprintf, char *str, uptr size,
             const char *format, va_list ap) {
   ENSURE_MSAN_INITED();
   int res = REAL(vsnprintf)(str, size, format, ap);
-  if (!__msan_has_dynamic_component()) {
+  if (res >= 0 && !__msan_has_dynamic_component()) {
     __msan_unpoison(str, res + 1);
   }
   return res;
@@ -324,7 +343,7 @@ INTERCEPTOR(int, vsnprintf, char *str, uptr size,
 INTERCEPTOR(int, vsprintf, char *str, const char *format, va_list ap) {
   ENSURE_MSAN_INITED();
   int res = REAL(vsprintf)(str, format, ap);
-  if (!__msan_has_dynamic_component()) {
+  if (res >= 0 && !__msan_has_dynamic_component()) {
     __msan_unpoison(str, res + 1);
   }
   return res;
@@ -333,7 +352,7 @@ INTERCEPTOR(int, vsprintf, char *str, const char *format, va_list ap) {
 INTERCEPTOR(int, vswprintf, void *str, uptr size, void *format, va_list ap) {
   ENSURE_MSAN_INITED();
   int res = REAL(vswprintf)(str, size, format, ap);
-  if (!__msan_has_dynamic_component()) {
+  if (res >= 0 && !__msan_has_dynamic_component()) {
     __msan_unpoison(str, 4 * (res + 1));
   }
   return res;
@@ -1144,6 +1163,8 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(strtod);
   INTERCEPT_FUNCTION(strtof);
   INTERCEPT_FUNCTION(strtold);
+  INTERCEPT_FUNCTION(vasprintf);
+  INTERCEPT_FUNCTION(asprintf);
   INTERCEPT_FUNCTION(vsprintf);
   INTERCEPT_FUNCTION(vsnprintf);
   INTERCEPT_FUNCTION(vswprintf);
