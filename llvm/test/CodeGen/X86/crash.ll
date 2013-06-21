@@ -1,3 +1,4 @@
+; REQUIRES: asserts
 ; RUN: llc -march=x86 < %s -verify-machineinstrs -precompute-phys-liveness
 ; RUN: llc -march=x86-64 < %s -verify-machineinstrs -precompute-phys-liveness
 
