@@ -505,20 +505,18 @@ IntegerType *IslExprBuilder::getType(__isl_keep isl_ast_expr *Expr) {
 Value *IslExprBuilder::createInt(__isl_take isl_ast_expr *Expr) {
   assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_int &&
          "Expression not of type isl_ast_expr_int");
-  isl_int Int;
+  isl_val *Val;
   Value *V;
   APInt APValue;
   IntegerType *T;
 
-  isl_int_init(Int);
-  isl_ast_expr_get_int(Expr, &Int);
-  APValue = APInt_from_MPZ(Int);
+  Val = isl_ast_expr_get_val(Expr);
+  APValue = APIntFromVal(Val);
   T = getType(Expr);
   APValue = APValue.sextOrSelf(T->getBitWidth());
   V = ConstantInt::get(T, APValue);
 
   isl_ast_expr_free(Expr);
-  isl_int_clear(Int);
   return V;
 }
 

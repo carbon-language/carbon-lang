@@ -58,11 +58,10 @@ static inline int getNumberOfIterations(__isl_take isl_set *Domain) {
 
   isl_point *P = isl_set_sample_point(Elements);
 
-  isl_int V;
-  isl_int_init(V);
-  isl_point_get_coordinate(P, isl_dim_set, Dim - 1, &V);
-  int NumberIterations = isl_int_get_si(V);
-  isl_int_clear(V);
+  isl_val *V;
+  V = isl_point_get_coordinate_val(P, isl_dim_set, Dim - 1);
+  int NumberIterations = isl_val_get_num_si(V);
+  isl_val_free(V);
   isl_point_free(P);
 
   return NumberIterations;

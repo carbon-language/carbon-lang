@@ -314,7 +314,7 @@ isl_map *IslScheduleOptimizer::getPrevectorMap(isl_ctx *ctx, int DimToVectorize,
   isl_aff *Aff;
   int PointDimension; /* ip */
   int TileDimension;  /* it */
-  isl_int VectorWidthMP;
+  isl_val *VectorWidthMP;
 
   assert(0 <= DimToVectorize && DimToVectorize < ScheduleDimensions);
 
@@ -343,10 +343,8 @@ isl_map *IslScheduleOptimizer::getPrevectorMap(isl_ctx *ctx, int DimToVectorize,
   Aff = isl_aff_zero_on_domain(LocalSpaceRange);
   Aff = isl_aff_set_constant_si(Aff, VectorWidth);
   Aff = isl_aff_set_coefficient_si(Aff, isl_dim_in, TileDimension, 1);
-  isl_int_init(VectorWidthMP);
-  isl_int_set_si(VectorWidthMP, VectorWidth);
-  Aff = isl_aff_mod(Aff, VectorWidthMP);
-  isl_int_clear(VectorWidthMP);
+  VectorWidthMP = isl_val_int_from_si(ctx, VectorWidth);
+  Aff = isl_aff_mod_val(Aff, VectorWidthMP);
   Modulo = isl_pw_aff_zero_set(isl_pw_aff_from_aff(Aff));
   TilingMap = isl_map_intersect_range(TilingMap, Modulo);
 

@@ -66,7 +66,7 @@ class IslGenerator {
 public:
   IslGenerator(IRBuilder<> &Builder, std::vector<Value *> &IVS)
       : Builder(Builder), IVS(IVS) {}
-  Value *generateIslInt(__isl_take isl_int Int);
+  Value *generateIslVal(__isl_take isl_val *Val);
   Value *generateIslAff(__isl_take isl_aff *Aff);
   Value *generateIslPwAff(__isl_take isl_pw_aff *PwAff);
 
@@ -83,23 +83,18 @@ private:
 };
 }
 
-Value *IslGenerator::generateIslInt(isl_int Int) {
-  mpz_t IntMPZ;
-  mpz_init(IntMPZ);
-  isl_int_get_gmp(Int, IntMPZ);
-  Value *IntValue = Builder.getInt(APInt_from_MPZ(IntMPZ));
-  mpz_clear(IntMPZ);
+Value *IslGenerator::generateIslVal(__isl_take isl_val *Val) {
+  Value *IntValue = Builder.getInt(APIntFromVal(Val));
   return IntValue;
 }
 
 Value *IslGenerator::generateIslAff(__isl_take isl_aff *Aff) {
   Value *Result;
   Value *ConstValue;
-  isl_int ConstIsl;
+  isl_val *Val;
 
-  isl_int_init(ConstIsl);
-  isl_aff_get_constant(Aff, &ConstIsl);
-  ConstValue = generateIslInt(ConstIsl);
+  Val = isl_aff_get_constant_val(Aff);
+  ConstValue = generateIslVal(Val);
   Type *Ty = Builder.getInt64Ty();
 
   // FIXME: We should give the constant and coefficients the right type. Here
@@ -112,25 +107,22 @@ Value *IslGenerator::generateIslAff(__isl_take isl_aff *Aff) {
          "The Dimension of Induction Variables must match the dimension of the "
          "affine space.");
 
-  isl_int CoefficientIsl;
-  isl_int_init(CoefficientIsl);
-
   for (unsigned int i = 0; i < NbInputDims; ++i) {
     Value *CoefficientValue;
-    isl_aff_get_coefficient(Aff, isl_dim_in, i, &CoefficientIsl);
+    Val = isl_aff_get_coefficient_val(Aff, isl_dim_in, i);
 
-    if (isl_int_is_zero(CoefficientIsl))
+    if (isl_val_is_zero(Val)) {
+      isl_val_free(Val);
       continue;
+    }
 
-    CoefficientValue = generateIslInt(CoefficientIsl);
+    CoefficientValue = generateIslVal(Val);
     CoefficientValue = Builder.CreateIntCast(CoefficientValue, Ty, true);
     Value *IV = Builder.CreateIntCast(IVS[i], Ty, true);
     Value *PAdd = Builder.CreateMul(CoefficientValue, IV, "p_mul_coeff");
     Result = Builder.CreateAdd(Result, PAdd, "p_sum_coeff");
   }
 
-  isl_int_clear(CoefficientIsl);
-  isl_int_clear(ConstIsl);
   isl_aff_free(Aff);
 
   return Result;

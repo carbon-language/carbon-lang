@@ -17,6 +17,9 @@
 #include "isl/set.h"
 #include "isl/union_map.h"
 #include "isl/union_set.h"
+#include "isl/val.h"
+
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -39,6 +42,27 @@ void polly::MPZ_from_APInt(mpz_t v, const APInt apint, bool is_signed) {
     mpz_neg(v, v);
 }
 
+__isl_give isl_val *polly::isl_valFromAPInt(isl_ctx *Ctx, const APInt Int,
+                                            bool IsSigned) {
+  APInt Abs;
+  isl_val *v;
+
+  if (IsSigned)
+    Abs = Int.abs();
+  else
+    Abs = Int;
+
+  const uint64_t *Data = Abs.getRawData();
+  unsigned Words = Abs.getNumWords();
+
+  v = isl_val_int_from_chunks(Ctx, Words, sizeof(uint64_t), Data);
+
+  if (IsSigned && Int.isNegative())
+    v = isl_val_neg(v);
+
+  return v;
+}
+
 APInt polly::APInt_from_MPZ(const mpz_t mpz) {
   uint64_t *p = NULL;
   size_t sz;
@@ -58,6 +82,29 @@ APInt polly::APInt_from_MPZ(const mpz_t mpz) {
     uint64_t val = 0;
     return APInt(1, 1, &val);
   }
+}
+
+APInt polly::APIntFromVal(__isl_take isl_val *Val) {
+  uint64_t *Data;
+  int NumChunks;
+
+  NumChunks = isl_val_n_abs_num_chunks(Val, sizeof(uint64_t));
+
+  Data = (uint64_t*) malloc(NumChunks * sizeof(uint64_t));
+  isl_val_get_abs_num_chunks(Val, sizeof(uint64_t), Data);
+  APInt A(8 * sizeof(uint64_t) * NumChunks, NumChunks, Data);
+
+  if (isl_val_is_neg(Val)) {
+    A = A.zext(A.getBitWidth() + 1);
+    A = -A;
+  }
+
+  if (A.getMinSignedBits() < A.getBitWidth())
+    A = A.trunc(A.getMinSignedBits());
+
+  free(Data);
+  isl_val_free(Val);
+  return A;
 }
 
 template <typename ISLTy, typename ISL_CTX_GETTER, typename ISL_PRINTER>
