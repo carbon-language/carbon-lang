@@ -599,6 +599,22 @@ namespace {
     }
 
     void Merge(const PtrState &Other, bool TopDown);
+
+    void InsertCall(Instruction *I) {
+      RRI.Calls.insert(I);
+    }
+
+    void InsertReverseInsertPt(Instruction *I) {
+      RRI.ReverseInsertPts.insert(I);
+    }
+
+    void ClearReverseInsertPts() {
+      RRI.ReverseInsertPts.clear();
+    }
+
+    bool HasReverseInsertPts() const {
+      return !RRI.ReverseInsertPts.empty();
+    }
   };
 }
 
@@ -1944,7 +1960,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     S.SetReleaseMetadata(ReleaseMetadata);
     S.SetKnownSafe(S.HasKnownPositiveRefCount());
     S.SetTailCallRelease(cast<CallInst>(Inst)->isTailCall());
-    S.RRI.Calls.insert(Inst);
+    S.InsertCall(Inst);
     S.SetKnownPositiveRefCount();
     break;
   }
@@ -1969,7 +1985,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
       // If OldSeq is not S_Use or OldSeq is S_Use and we are tracking an
       // imprecise release, clear our reverse insertion points.
       if (OldSeq != S_Use || S.IsTrackingImpreciseReleases())
-        S.RRI.ReverseInsertPts.clear();
+        S.ClearReverseInsertPts();
       // FALL THROUGH
     case S_CanRelease:
       // Don't do retain+release tracking for IC_RetainRV, because it's
@@ -2059,14 +2075,14 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
       if (CanUse(Inst, Ptr, PA, Class)) {
         DEBUG(dbgs() << "CanUse: Seq: " << Seq << "; " << *Ptr
               << "\n");
-        assert(S.RRI.ReverseInsertPts.empty());
+        assert(!S.HasReverseInsertPts());
         // If this is an invoke instruction, we're scanning it as part of
         // one of its successor blocks, since we can't insert code after it
         // in its own block, and we don't want to split critical edges.
         if (isa<InvokeInst>(Inst))
-          S.RRI.ReverseInsertPts.insert(BB->getFirstInsertionPt());
+          S.InsertReverseInsertPt(BB->getFirstInsertionPt());
         else
-          S.RRI.ReverseInsertPts.insert(llvm::next(BasicBlock::iterator(Inst)));
+          S.InsertReverseInsertPt(llvm::next(BasicBlock::iterator(Inst)));
         S.SetSeq(S_Use);
         ANNOTATE_BOTTOMUP(Inst, Ptr, Seq, S_Use);
       } else if (Seq == S_Release && IsUser(Class)) {
@@ -2075,12 +2091,12 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
         // Non-movable releases depend on any possible objc pointer use.
         S.SetSeq(S_Stop);
         ANNOTATE_BOTTOMUP(Inst, Ptr, S_Release, S_Stop);
-        assert(S.RRI.ReverseInsertPts.empty());
+        assert(!S.HasReverseInsertPts());
         // As above; handle invoke specially.
         if (isa<InvokeInst>(Inst))
-          S.RRI.ReverseInsertPts.insert(BB->getFirstInsertionPt());
+          S.InsertReverseInsertPt(BB->getFirstInsertionPt());
         else
-          S.RRI.ReverseInsertPts.insert(llvm::next(BasicBlock::iterator(Inst)));
+          S.InsertReverseInsertPt(llvm::next(BasicBlock::iterator(Inst)));
       }
       break;
     case S_Stop:
@@ -2201,7 +2217,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
       ANNOTATE_TOPDOWN(Inst, Arg, S.GetSeq(), S_Retain);
       S.ResetSequenceProgress(S_Retain);
       S.SetKnownSafe(S.HasKnownPositiveRefCount());
-      S.RRI.Calls.insert(Inst);
+      S.InsertCall(Inst);
     }
 
     S.SetKnownPositiveRefCount();
@@ -2224,7 +2240,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
     case S_Retain:
     case S_CanRelease:
       if (OldSeq == S_Retain || ReleaseMetadata != 0)
-        S.RRI.ReverseInsertPts.clear();
+        S.ClearReverseInsertPts();
       // FALL THROUGH
     case S_Use:
       S.SetReleaseMetadata(ReleaseMetadata);
@@ -2273,8 +2289,8 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
       case S_Retain:
         S.SetSeq(S_CanRelease);
         ANNOTATE_TOPDOWN(Inst, Ptr, Seq, S_CanRelease);
-        assert(S.RRI.ReverseInsertPts.empty());
-        S.RRI.ReverseInsertPts.insert(Inst);
+        assert(!S.HasReverseInsertPts());
+        S.InsertReverseInsertPt(Inst);
 
         // One call can't cause a transition from S_Retain to S_CanRelease
         // and S_CanRelease to S_Use. If we've made the first transition,
