@@ -403,7 +403,7 @@ void LeakReport::PrintSummary() {
 #endif  // CAN_SANITIZE_LEAKS
 
 bool DisabledInThisThread() {
-#ifdef CAN_SANITIZE_LEAKS
+#if CAN_SANITIZE_LEAKS
   return disable_counter > 0;
 #endif
   return false;
