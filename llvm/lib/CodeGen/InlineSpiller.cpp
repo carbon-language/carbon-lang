@@ -1054,6 +1054,34 @@ foldMemoryOperand(ArrayRef<std::pair<MachineInstr*, unsigned> > Ops,
                        : TII.foldMemoryOperand(MI, FoldOps, StackSlot);
   if (!FoldMI)
     return false;
+
+  // Remove LIS for any dead defs in the original MI not in FoldMI.
+  for (MIBundleOperands MO(MI); MO.isValid(); ++MO) {
+    if (!MO->isReg())
+      continue;
+    unsigned Reg = MO->getReg();
+    if (!Reg || TargetRegisterInfo::isVirtualRegister(Reg) ||
+        MRI.isReserved(Reg)) {
+      continue;
+    }
+    MIBundleOperands::PhysRegInfo RI =
+      MIBundleOperands(FoldMI).analyzePhysReg(Reg, &TRI);
+    if (MO->readsReg()) {
+      assert(RI.Reads && "Cannot fold physreg reader");
+      continue;
+    }
+    if (RI.Defines)
+      continue;
+    // FoldMI does not define this physreg. Remove the LI segment.
+    assert(MO->isDead() && "Cannot fold physreg def");
+    for (MCRegUnitIterator Units(Reg, &TRI); Units.isValid(); ++Units) {
+      if (LiveInterval *LI = LIS.getCachedRegUnit(*Units)) {
+        SlotIndex Idx = LIS.getInstructionIndex(MI).getRegSlot();
+        if (VNInfo *VNI = LI->getVNInfoAt(Idx))
+          LI->removeValNo(VNI);
+      }
+    }
+  }
   LIS.ReplaceMachineInstrInMaps(MI, FoldMI);
   MI->eraseFromParent();
 

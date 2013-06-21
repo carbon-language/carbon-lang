@@ -1,5 +1,5 @@
-; RUN: llc -march=x86 < %s -verify-machineinstrs
-; RUN: llc -march=x86-64 < %s -verify-machineinstrs
+; RUN: llc -march=x86 < %s -verify-machineinstrs -precompute-phys-liveness
+; RUN: llc -march=x86-64 < %s -verify-machineinstrs -precompute-phys-liveness
 
 ; PR6497
 
@@ -107,8 +107,8 @@ do.body92:                                        ; preds = %if.then66
   ret void
 }
 
-!0 = metadata !{i32 633550}                       
-!1 = metadata !{i32 634261}                       
+!0 = metadata !{i32 633550}
+!1 = metadata !{i32 634261}
 
 
 ; Crash during XOR optimization.
