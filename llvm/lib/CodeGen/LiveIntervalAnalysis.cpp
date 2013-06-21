@@ -52,6 +52,14 @@ INITIALIZE_PASS_DEPENDENCY(SlotIndexes)
 INITIALIZE_PASS_END(LiveIntervals, "liveintervals",
                 "Live Interval Analysis", false, false)
 
+#ifndef NDEBUG
+static cl::opt<bool> EnablePrecomputePhysRegs(
+  "precompute-phys-liveness", cl::Hidden,
+  cl::desc("Eagerly compute live intervals for all physreg units."));
+#else
+static bool EnablePrecomputePhysRegs = false;
+#endif // NDEBUG
+
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
   AU.addRequired<AliasAnalysis>();
@@ -116,6 +124,12 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   computeRegMasks();
   computeLiveInRegUnits();
 
+  if (EnablePrecomputePhysRegs) {
+    // For stress testing, precompute live ranges of all physical register
+    // units, including reserved registers.
+    for (unsigned i = 0, e = TRI->getNumRegUnits(); i != e; ++i)
+      getRegUnit(i);
+  }
   DEBUG(dump());
   return true;
 }
