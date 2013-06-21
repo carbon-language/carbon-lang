@@ -236,8 +236,39 @@ Parser::ParseSingleDeclarationAfterTemplate(
         << FixItHint::CreateRemoval(DS.getStorageClassSpecLoc());
       DS.ClearStorageClassSpecs();
     }
+
+    if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation) {
+      if (DeclaratorInfo.getName().getKind() != UnqualifiedId::IK_TemplateId) {
+        // If the declarator-id is not a template-id, issue a diagnostic and
+        // recover by ignoring the 'template' keyword.
+        Diag(Tok, diag::err_template_defn_explicit_instantiation) << 0;
+      } else {
+        SourceLocation LAngleLoc
+          = PP.getLocForEndOfToken(TemplateInfo.TemplateLoc);
+        Diag(DeclaratorInfo.getIdentifierLoc(), 
+             diag::err_explicit_instantiation_with_definition)
+          << SourceRange(TemplateInfo.TemplateLoc)
+          << FixItHint::CreateInsertion(LAngleLoc, "<>");
+
+        // Recover as if it were an explicit specialization. 
+        TemplateParameterLists ParamLists;
+        SmallVector<Decl*, 4> TemplateParams;
+        ParamLists.push_back(
+            TemplateParameterList::Create(Actions.getASTContext(), 
+                                          TemplateInfo.TemplateLoc,
+                                          LAngleLoc, 
+                                          (NamedDecl**)TemplateParams.data(),
+                                          TemplateParams.size(), LAngleLoc));
+
+        return ParseFunctionDefinition(DeclaratorInfo, 
+                                       ParsedTemplateInfo(&ParamLists,
+                                           /*isSpecialization=*/true,
+                                           /*LastParamListWasEmpty=*/true),
+                                       &LateParsedAttrs);
+      }
+    }
     return ParseFunctionDefinition(DeclaratorInfo, TemplateInfo,
-                                   &LateParsedAttrs);
+				                           &LateParsedAttrs);
   }
 
   // Parse this declaration.

@@ -1539,6 +1539,14 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   } else {
     if (TUK != Sema::TUK_Declaration && TUK != Sema::TUK_Definition)
       ProhibitAttributes(attrs);
+    
+    if (TUK == Sema::TUK_Definition &&
+        TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation) {
+      // If the declarator-id is not a template-id, issue a diagnostic and
+      // recover by ignoring the 'template' keyword.
+      Diag(Tok, diag::err_template_defn_explicit_instantiation)
+        << 1 << FixItHint::CreateRemoval(TemplateInfo.TemplateLoc);
+    }
 
     bool IsDependent = false;
 
