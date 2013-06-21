@@ -858,6 +858,7 @@ TypedefDecl *ASTContext::getUInt128Decl() const {
 }
 
 TypeDecl *ASTContext::getFloat128StubType() const {
+  assert(LangOpts.CPlusPlus && "should only be called for c++");
   if (!Float128StubDecl) {
     Float128StubDecl = CXXRecordDecl::Create(const_cast<ASTContext &>(*this), 
                                              TTK_Struct,
