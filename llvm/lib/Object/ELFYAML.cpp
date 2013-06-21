@@ -278,15 +278,6 @@ void ScalarBitSetTraits<ELFYAML::ELF_SHF>::bitset(IO &IO,
 #undef BCase
 }
 
-void ScalarEnumerationTraits<ELFYAML::ELF_STB>::enumeration(
-    IO &IO, ELFYAML::ELF_STB &Value) {
-#define ECase(X) IO.enumCase(Value, #X, ELF::X);
-  ECase(STB_LOCAL)
-  ECase(STB_GLOBAL)
-  ECase(STB_WEAK)
-#undef ECase
-}
-
 void ScalarEnumerationTraits<ELFYAML::ELF_STT>::enumeration(
     IO &IO, ELFYAML::ELF_STT &Value) {
 #define ECase(X) IO.enumCase(Value, #X, ELF::X);
@@ -313,11 +304,17 @@ void MappingTraits<ELFYAML::FileHeader>::mapping(IO &IO,
 
 void MappingTraits<ELFYAML::Symbol>::mapping(IO &IO, ELFYAML::Symbol &Symbol) {
   IO.mapOptional("Name", Symbol.Name, StringRef());
-  IO.mapOptional("Binding", Symbol.Binding, ELFYAML::ELF_STB(0));
   IO.mapOptional("Type", Symbol.Type, ELFYAML::ELF_STT(0));
   IO.mapOptional("Section", Symbol.Section, StringRef());
   IO.mapOptional("Value", Symbol.Value, Hex64(0));
   IO.mapOptional("Size", Symbol.Size, Hex64(0));
+}
+
+void MappingTraits<ELFYAML::LocalGlobalWeakSymbols>::mapping(
+    IO &IO, ELFYAML::LocalGlobalWeakSymbols &Symbols) {
+  IO.mapOptional("Local", Symbols.Local);
+  IO.mapOptional("Global", Symbols.Global);
+  IO.mapOptional("Weak", Symbols.Weak);
 }
 
 void MappingTraits<ELFYAML::Section>::mapping(IO &IO,

@@ -20,12 +20,12 @@ Sections:
   - Name: .symtab
     Type: SHT_SYMTAB
     Symbols:
-    - Name: main
-      Binding: STB_GLOBAL
-      Type: STT_FUNC
-      Section: .text
-      Value: 0x1
-      Size: 2
+      Global:
+        - Name: main
+          Type: STT_FUNC
+          Section: .text
+          Value: 0x1
+          Size: 2
 
 # CHECK:      Symbols [
 # CHECK-NEXT:   Symbol {
