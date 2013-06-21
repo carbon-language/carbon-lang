@@ -518,12 +518,10 @@ namespace {
     /// The current position in the sequence.
     Sequence Seq : 8;
 
-  public:
     /// Unidirectional information about the current sequence.
-    ///
-    /// TODO: Encapsulate this better.
     RRInfo RRI;
 
+  public:
     PtrState() : KnownPositiveRefCount(false), Partial(false),
                  Seq(S_None) {}
 
@@ -614,6 +612,10 @@ namespace {
 
     bool HasReverseInsertPts() const {
       return !RRI.ReverseInsertPts.empty();
+    }
+
+    const RRInfo &GetRRInfo() const {
+      return RRI;
     }
   };
 }
@@ -1991,7 +1993,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
       // Don't do retain+release tracking for IC_RetainRV, because it's
       // better to let it remain as the first instruction after a call.
       if (Class != IC_RetainRV)
-        Retains[Inst] = S.RRI;
+        Retains[Inst] = S.GetRRInfo();
       S.ClearSequenceProgress();
       break;
     case S_None:
@@ -2245,7 +2247,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
     case S_Use:
       S.SetReleaseMetadata(ReleaseMetadata);
       S.SetTailCallRelease(cast<CallInst>(Inst)->isTailCall());
-      Releases[Inst] = S.RRI;
+      Releases[Inst] = S.GetRRInfo();
       ANNOTATE_TOPDOWN(Inst, Arg, S.GetSeq(), S_None);
       S.ClearSequenceProgress();
       break;
