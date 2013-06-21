@@ -183,17 +183,39 @@ public:
     VK_PPC_TOC_LO,         // symbol@toc@l
     VK_PPC_TOC_HI,         // symbol@toc@h
     VK_PPC_TOC_HA,         // symbol@toc@ha
+    VK_PPC_TPREL,          // symbol@tprel
     VK_PPC_TPREL_LO,       // symbol@tprel@l
+    VK_PPC_TPREL_HI,       // symbol@tprel@h
     VK_PPC_TPREL_HA,       // symbol@tprel@ha
+    VK_PPC_TPREL_HIGHER,   // symbol@tprel@higher
+    VK_PPC_TPREL_HIGHERA,  // symbol@tprel@highera
+    VK_PPC_TPREL_HIGHEST,  // symbol@tprel@highest
+    VK_PPC_TPREL_HIGHESTA, // symbol@tprel@highesta
+    VK_PPC_DTPREL,         // symbol@dtprel
     VK_PPC_DTPREL_LO,      // symbol@dtprel@l
+    VK_PPC_DTPREL_HI,      // symbol@dtprel@h
     VK_PPC_DTPREL_HA,      // symbol@dtprel@ha
+    VK_PPC_DTPREL_HIGHER,  // symbol@dtprel@higher
+    VK_PPC_DTPREL_HIGHERA, // symbol@dtprel@highera
+    VK_PPC_DTPREL_HIGHEST, // symbol@dtprel@highest
+    VK_PPC_DTPREL_HIGHESTA,// symbol@dtprel@highesta
+    VK_PPC_GOT_TPREL,      // symbol@got@tprel
     VK_PPC_GOT_TPREL_LO,   // symbol@got@tprel@l
+    VK_PPC_GOT_TPREL_HI,   // symbol@got@tprel@h
     VK_PPC_GOT_TPREL_HA,   // symbol@got@tprel@ha
+    VK_PPC_GOT_DTPREL,     // symbol@got@dtprel
+    VK_PPC_GOT_DTPREL_LO,  // symbol@got@dtprel@l
+    VK_PPC_GOT_DTPREL_HI,  // symbol@got@dtprel@h
+    VK_PPC_GOT_DTPREL_HA,  // symbol@got@dtprel@ha
     VK_PPC_TLS,            // symbol@tls
+    VK_PPC_GOT_TLSGD,      // symbol@got@tlsgd
     VK_PPC_GOT_TLSGD_LO,   // symbol@got@tlsgd@l
+    VK_PPC_GOT_TLSGD_HI,   // symbol@got@tlsgd@h
     VK_PPC_GOT_TLSGD_HA,   // symbol@got@tlsgd@ha
     VK_PPC_TLSGD,          // symbol@tlsgd
+    VK_PPC_GOT_TLSLD,      // symbol@got@tlsld
     VK_PPC_GOT_TLSLD_LO,   // symbol@got@tlsld@l
+    VK_PPC_GOT_TLSLD_HI,   // symbol@got@tlsld@h
     VK_PPC_GOT_TLSLD_HA,   // symbol@got@tlsld@ha
     VK_PPC_TLSLD,          // symbol@tlsld
 

@@ -120,32 +120,89 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
       case MCSymbolRefExpr::VK_PPC_TOC_HA:
         Type = ELF::R_PPC64_TOC16_HA;
         break;
+      case MCSymbolRefExpr::VK_PPC_TPREL:
+        Type = ELF::R_PPC_TPREL16;
+        break;
       case MCSymbolRefExpr::VK_PPC_TPREL_LO:
         Type = ELF::R_PPC_TPREL16_LO;
+        break;
+      case MCSymbolRefExpr::VK_PPC_TPREL_HI:
+        Type = ELF::R_PPC_TPREL16_HI;
         break;
       case MCSymbolRefExpr::VK_PPC_TPREL_HA:
         Type = ELF::R_PPC_TPREL16_HA;
         break;
+      case MCSymbolRefExpr::VK_PPC_TPREL_HIGHER:
+        Type = ELF::R_PPC64_TPREL16_HIGHER;
+        break;
+      case MCSymbolRefExpr::VK_PPC_TPREL_HIGHERA:
+        Type = ELF::R_PPC64_TPREL16_HIGHERA;
+        break;
+      case MCSymbolRefExpr::VK_PPC_TPREL_HIGHEST:
+        Type = ELF::R_PPC64_TPREL16_HIGHEST;
+        break;
+      case MCSymbolRefExpr::VK_PPC_TPREL_HIGHESTA:
+        Type = ELF::R_PPC64_TPREL16_HIGHESTA;
+        break;
+      case MCSymbolRefExpr::VK_PPC_DTPREL:
+        Type = ELF::R_PPC64_DTPREL16;
+        break;
       case MCSymbolRefExpr::VK_PPC_DTPREL_LO:
         Type = ELF::R_PPC64_DTPREL16_LO;
+        break;
+      case MCSymbolRefExpr::VK_PPC_DTPREL_HI:
+        Type = ELF::R_PPC64_DTPREL16_HI;
         break;
       case MCSymbolRefExpr::VK_PPC_DTPREL_HA:
         Type = ELF::R_PPC64_DTPREL16_HA;
         break;
+      case MCSymbolRefExpr::VK_PPC_DTPREL_HIGHER:
+        Type = ELF::R_PPC64_DTPREL16_HIGHER;
+        break;
+      case MCSymbolRefExpr::VK_PPC_DTPREL_HIGHERA:
+        Type = ELF::R_PPC64_DTPREL16_HIGHERA;
+        break;
+      case MCSymbolRefExpr::VK_PPC_DTPREL_HIGHEST:
+        Type = ELF::R_PPC64_DTPREL16_HIGHEST;
+        break;
+      case MCSymbolRefExpr::VK_PPC_DTPREL_HIGHESTA:
+        Type = ELF::R_PPC64_DTPREL16_HIGHESTA;
+        break;
+      case MCSymbolRefExpr::VK_PPC_GOT_TLSGD:
+        Type = ELF::R_PPC64_GOT_TLSGD16;
+        break;
       case MCSymbolRefExpr::VK_PPC_GOT_TLSGD_LO:
         Type = ELF::R_PPC64_GOT_TLSGD16_LO;
+        break;
+      case MCSymbolRefExpr::VK_PPC_GOT_TLSGD_HI:
+        Type = ELF::R_PPC64_GOT_TLSGD16_HI;
         break;
       case MCSymbolRefExpr::VK_PPC_GOT_TLSGD_HA:
         Type = ELF::R_PPC64_GOT_TLSGD16_HA;
         break;
+      case MCSymbolRefExpr::VK_PPC_GOT_TLSLD:
+        Type = ELF::R_PPC64_GOT_TLSLD16;
+        break;
       case MCSymbolRefExpr::VK_PPC_GOT_TLSLD_LO:
         Type = ELF::R_PPC64_GOT_TLSLD16_LO;
+        break;
+      case MCSymbolRefExpr::VK_PPC_GOT_TLSLD_HI:
+        Type = ELF::R_PPC64_GOT_TLSLD16_HI;
         break;
       case MCSymbolRefExpr::VK_PPC_GOT_TLSLD_HA:
         Type = ELF::R_PPC64_GOT_TLSLD16_HA;
         break;
+      case MCSymbolRefExpr::VK_PPC_GOT_TPREL_HI:
+        Type = ELF::R_PPC64_GOT_TPREL16_HI;
+        break;
       case MCSymbolRefExpr::VK_PPC_GOT_TPREL_HA:
         Type = ELF::R_PPC64_GOT_TPREL16_HA;
+        break;
+      case MCSymbolRefExpr::VK_PPC_GOT_DTPREL_HI:
+        Type = ELF::R_PPC64_GOT_DTPREL16_HI;
+        break;
+      case MCSymbolRefExpr::VK_PPC_GOT_DTPREL_HA:
+        Type = ELF::R_PPC64_GOT_DTPREL16_HA;
         break;
       }
       break;
@@ -164,8 +221,29 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
       case MCSymbolRefExpr::VK_PPC_TOC_LO:
         Type = ELF::R_PPC64_TOC16_LO_DS;
         break;
+      case MCSymbolRefExpr::VK_PPC_TPREL:
+        Type = ELF::R_PPC64_TPREL16_DS;
+        break;
+      case MCSymbolRefExpr::VK_PPC_TPREL_LO:
+        Type = ELF::R_PPC64_TPREL16_LO_DS;
+        break;
+      case MCSymbolRefExpr::VK_PPC_DTPREL:
+        Type = ELF::R_PPC64_DTPREL16_DS;
+        break;
+      case MCSymbolRefExpr::VK_PPC_DTPREL_LO:
+        Type = ELF::R_PPC64_DTPREL16_LO_DS;
+        break;
+      case MCSymbolRefExpr::VK_PPC_GOT_TPREL:
+        Type = ELF::R_PPC64_GOT_TPREL16_DS;
+        break;
       case MCSymbolRefExpr::VK_PPC_GOT_TPREL_LO:
         Type = ELF::R_PPC64_GOT_TPREL16_LO_DS;
+        break;
+      case MCSymbolRefExpr::VK_PPC_GOT_DTPREL:
+        Type = ELF::R_PPC64_GOT_DTPREL16_DS;
+        break;
+      case MCSymbolRefExpr::VK_PPC_GOT_DTPREL_LO:
+        Type = ELF::R_PPC64_GOT_DTPREL16_LO_DS;
         break;
       }
       break;

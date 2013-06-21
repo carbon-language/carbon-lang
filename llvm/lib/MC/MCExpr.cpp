@@ -208,17 +208,39 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_PPC_TOC_LO: return "toc@l";
   case VK_PPC_TOC_HI: return "toc@h";
   case VK_PPC_TOC_HA: return "toc@ha";
+  case VK_PPC_TPREL: return "tprel";
   case VK_PPC_TPREL_LO: return "tprel@l";
+  case VK_PPC_TPREL_HI: return "tprel@h";
   case VK_PPC_TPREL_HA: return "tprel@ha";
+  case VK_PPC_TPREL_HIGHER: return "tprel@higher";
+  case VK_PPC_TPREL_HIGHERA: return "tprel@highera";
+  case VK_PPC_TPREL_HIGHEST: return "tprel@highest";
+  case VK_PPC_TPREL_HIGHESTA: return "tprel@highesta";
+  case VK_PPC_DTPREL: return "dtprel";
   case VK_PPC_DTPREL_LO: return "dtprel@l";
+  case VK_PPC_DTPREL_HI: return "dtprel@h";
   case VK_PPC_DTPREL_HA: return "dtprel@ha";
+  case VK_PPC_DTPREL_HIGHER: return "dtprel@higher";
+  case VK_PPC_DTPREL_HIGHERA: return "dtprel@highera";
+  case VK_PPC_DTPREL_HIGHEST: return "dtprel@highest";
+  case VK_PPC_DTPREL_HIGHESTA: return "dtprel@highesta";
+  case VK_PPC_GOT_TPREL: return "got@tprel";
   case VK_PPC_GOT_TPREL_LO: return "got@tprel@l";
+  case VK_PPC_GOT_TPREL_HI: return "got@tprel@h";
   case VK_PPC_GOT_TPREL_HA: return "got@tprel@ha";
+  case VK_PPC_GOT_DTPREL: return "got@dtprel";
+  case VK_PPC_GOT_DTPREL_LO: return "got@dtprel@l";
+  case VK_PPC_GOT_DTPREL_HI: return "got@dtprel@h";
+  case VK_PPC_GOT_DTPREL_HA: return "got@dtprel@ha";
   case VK_PPC_TLS: return "tls";
+  case VK_PPC_GOT_TLSGD: return "got@tlsgd";
   case VK_PPC_GOT_TLSGD_LO: return "got@tlsgd@l";
+  case VK_PPC_GOT_TLSGD_HI: return "got@tlsgd@h";
   case VK_PPC_GOT_TLSGD_HA: return "got@tlsgd@ha";
   case VK_PPC_TLSGD: return "tlsgd";
+  case VK_PPC_GOT_TLSLD: return "got@tlsld";
   case VK_PPC_GOT_TLSLD_LO: return "got@tlsld@l";
+  case VK_PPC_GOT_TLSLD_HI: return "got@tlsld@h";
   case VK_PPC_GOT_TLSLD_HA: return "got@tlsld@ha";
   case VK_PPC_TLSLD: return "tlsld";
   case VK_Mips_GPREL: return "GPREL";
@@ -311,24 +333,68 @@ MCSymbolRefExpr::getVariantKindForName(StringRef Name) {
     .Case("toc@ha", VK_PPC_TOC_HA)
     .Case("TLS", VK_PPC_TLS)
     .Case("tls", VK_PPC_TLS)
+    .Case("TPREL", VK_PPC_TPREL)
+    .Case("tprel", VK_PPC_TPREL)
     .Case("TPREL@L", VK_PPC_TPREL_LO)
     .Case("tprel@l", VK_PPC_TPREL_LO)
+    .Case("TPREL@H", VK_PPC_TPREL_HI)
+    .Case("tprel@h", VK_PPC_TPREL_HI)
     .Case("TPREL@HA", VK_PPC_TPREL_HA)
     .Case("tprel@ha", VK_PPC_TPREL_HA)
+    .Case("TPREL@HIGHER", VK_PPC_TPREL_HIGHER)
+    .Case("tprel@higher", VK_PPC_TPREL_HIGHER)
+    .Case("TPREL@HIGHERA", VK_PPC_TPREL_HIGHERA)
+    .Case("tprel@highera", VK_PPC_TPREL_HIGHERA)
+    .Case("TPREL@HIGHEST", VK_PPC_TPREL_HIGHEST)
+    .Case("tprel@highest", VK_PPC_TPREL_HIGHEST)
+    .Case("TPREL@HIGHESTA", VK_PPC_TPREL_HIGHESTA)
+    .Case("tprel@highesta", VK_PPC_TPREL_HIGHESTA)
+    .Case("DTPREL", VK_PPC_DTPREL)
+    .Case("dtprel", VK_PPC_DTPREL)
     .Case("DTPREL@L", VK_PPC_DTPREL_LO)
     .Case("dtprel@l", VK_PPC_DTPREL_LO)
+    .Case("DTPREL@H", VK_PPC_DTPREL_HI)
+    .Case("dtprel@h", VK_PPC_DTPREL_HI)
     .Case("DTPREL@HA", VK_PPC_DTPREL_HA)
     .Case("dtprel@ha", VK_PPC_DTPREL_HA)
+    .Case("DTPREL@HIGHER", VK_PPC_DTPREL_HIGHER)
+    .Case("dtprel@higher", VK_PPC_DTPREL_HIGHER)
+    .Case("DTPREL@HIGHERA", VK_PPC_DTPREL_HIGHERA)
+    .Case("dtprel@highera", VK_PPC_DTPREL_HIGHERA)
+    .Case("DTPREL@HIGHEST", VK_PPC_DTPREL_HIGHEST)
+    .Case("dtprel@highest", VK_PPC_DTPREL_HIGHEST)
+    .Case("DTPREL@HIGHESTA", VK_PPC_DTPREL_HIGHESTA)
+    .Case("dtprel@highesta", VK_PPC_DTPREL_HIGHESTA)
+    .Case("GOT@TPREL", VK_PPC_GOT_TPREL)
+    .Case("got@tprel", VK_PPC_GOT_TPREL)
     .Case("GOT@TPREL@L", VK_PPC_GOT_TPREL_LO)
     .Case("got@tprel@l", VK_PPC_GOT_TPREL_LO)
+    .Case("GOT@TPREL@H", VK_PPC_GOT_TPREL_HI)
+    .Case("got@tprel@h", VK_PPC_GOT_TPREL_HI)
     .Case("GOT@TPREL@HA", VK_PPC_GOT_TPREL_HA)
     .Case("got@tprel@ha", VK_PPC_GOT_TPREL_HA)
+    .Case("GOT@DTPREL", VK_PPC_GOT_DTPREL)
+    .Case("got@dtprel", VK_PPC_GOT_DTPREL)
+    .Case("GOT@DTPREL@L", VK_PPC_GOT_DTPREL_LO)
+    .Case("got@dtprel@l", VK_PPC_GOT_DTPREL_LO)
+    .Case("GOT@DTPREL@H", VK_PPC_GOT_DTPREL_HI)
+    .Case("got@dtprel@h", VK_PPC_GOT_DTPREL_HI)
+    .Case("GOT@DTPREL@HA", VK_PPC_GOT_DTPREL_HA)
+    .Case("got@dtprel@ha", VK_PPC_GOT_DTPREL_HA)
+    .Case("GOT@TLSGD", VK_PPC_GOT_TLSGD)
+    .Case("got@tlsgd", VK_PPC_GOT_TLSGD)
     .Case("GOT@TLSGD@L", VK_PPC_GOT_TLSGD_LO)
     .Case("got@tlsgd@l", VK_PPC_GOT_TLSGD_LO)
+    .Case("GOT@TLSGD@H", VK_PPC_GOT_TLSGD_HI)
+    .Case("got@tlsgd@h", VK_PPC_GOT_TLSGD_HI)
     .Case("GOT@TLSGD@HA", VK_PPC_GOT_TLSGD_HA)
     .Case("got@tlsgd@ha", VK_PPC_GOT_TLSGD_HA)
+    .Case("GOT@TLSLD", VK_PPC_GOT_TLSLD)
+    .Case("got@tlsld", VK_PPC_GOT_TLSLD)
     .Case("GOT@TLSLD@L", VK_PPC_GOT_TLSLD_LO)
     .Case("got@tlsld@l", VK_PPC_GOT_TLSLD_LO)
+    .Case("GOT@TLSLD@H", VK_PPC_GOT_TLSLD_HI)
+    .Case("got@tlsld@h", VK_PPC_GOT_TLSLD_HI)
     .Case("GOT@TLSLD@HA", VK_PPC_GOT_TLSLD_HA)
     .Case("got@tlsld@ha", VK_PPC_GOT_TLSLD_HA)
     .Default(VK_Invalid);
