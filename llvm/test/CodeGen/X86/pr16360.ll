@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i686-pc-linux | FileCheck %s
+; RUN: llc < %s -mcpu=pentium4 -mtriple=i686-pc-linux | FileCheck %s
 
 define i64 @foo(i32 %sum) {
 entry:
