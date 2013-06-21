@@ -3915,8 +3915,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
                        DAG.getConstant(~0ULL >> ShAmt, VT));
   }
 
-
-  // fold (srl (anyextend x), c) -> (anyextend (srl x, c))
+  // fold (srl (anyextend x), c) -> (and (anyextend (srl x, c)), mask)
   if (N1C && N0.getOpcode() == ISD::ANY_EXTEND) {
     // Shifting in all undef bits?
     EVT SmallVT = N0.getOperand(0).getValueType();
@@ -3929,7 +3928,10 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
                                        N0.getOperand(0),
                           DAG.getConstant(ShiftAmt, getShiftAmountTy(SmallVT)));
       AddToWorkList(SmallShift.getNode());
-      return DAG.getNode(ISD::ANY_EXTEND, SDLoc(N), VT, SmallShift);
+      APInt Mask = APInt::getAllOnesValue(VT.getSizeInBits()).lshr(ShiftAmt);
+      return DAG.getNode(ISD::AND, SDLoc(N), VT,
+                         DAG.getNode(ISD::ANY_EXTEND, SDLoc(N), VT, SmallShift),
+                         DAG.getConstant(Mask, VT));
     }
   }
 
