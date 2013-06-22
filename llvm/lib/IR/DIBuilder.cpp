@@ -530,15 +530,14 @@ DIBuilder::createTemplateTypeParameter(DIDescriptor Context, StringRef Name,
   return DITemplateTypeParameter(MDNode::get(VMContext, Elts));
 }
 
-/// createTemplateValueParameter - Create debugging information for template
-/// value parameter.
 DITemplateValueParameter
-DIBuilder::createTemplateValueParameter(DIDescriptor Context, StringRef Name,
-                                        DIType Ty, Value *Val,
-                                        MDNode *File, unsigned LineNo,
+DIBuilder::createTemplateValueParameter(unsigned Tag, DIDescriptor Context,
+                                        StringRef Name, DIType Ty,
+                                        Value *Val, MDNode *File,
+                                        unsigned LineNo,
                                         unsigned ColumnNo) {
   Value *Elts[] = {
-    GetTagConstant(VMContext, dwarf::DW_TAG_template_value_parameter),
+    GetTagConstant(VMContext, Tag),
     getNonCompileUnitScope(Context),
     MDString::get(VMContext, Name),
     Ty,
@@ -548,6 +547,38 @@ DIBuilder::createTemplateValueParameter(DIDescriptor Context, StringRef Name,
     ConstantInt::get(Type::getInt32Ty(VMContext), ColumnNo)
   };
   return DITemplateValueParameter(MDNode::get(VMContext, Elts));
+}
+
+/// createTemplateValueParameter - Create debugging information for template
+/// value parameter.
+DITemplateValueParameter
+DIBuilder::createTemplateValueParameter(DIDescriptor Context, StringRef Name,
+                                        DIType Ty, Value *Val,
+                                        MDNode *File, unsigned LineNo,
+                                        unsigned ColumnNo) {
+  return createTemplateValueParameter(dwarf::DW_TAG_template_value_parameter,
+                                      Context, Name, Ty, Val, File, LineNo,
+                                      ColumnNo);
+}
+
+DITemplateValueParameter
+DIBuilder::createTemplateTemplateParameter(DIDescriptor Context, StringRef Name,
+                                           DIType Ty, StringRef Val,
+                                           MDNode *File, unsigned LineNo,
+                                           unsigned ColumnNo) {
+  return createTemplateValueParameter(
+      dwarf::DW_TAG_GNU_template_template_param, Context, Name, Ty,
+      MDString::get(VMContext, Val), File, LineNo, ColumnNo);
+}
+
+DITemplateValueParameter
+DIBuilder::createTemplateParameterPack(DIDescriptor Context, StringRef Name,
+                                       DIType Ty, DIArray Val,
+                                       MDNode *File, unsigned LineNo,
+                                       unsigned ColumnNo) {
+  return createTemplateValueParameter(dwarf::DW_TAG_GNU_template_parameter_pack,
+                                      Context, Name, Ty, Val, File, LineNo,
+                                      ColumnNo);
 }
 
 /// createClassType - Create debugging information entry for a class.

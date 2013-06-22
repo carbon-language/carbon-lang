@@ -70,6 +70,12 @@ namespace llvm {
     SmallVector<Value *, 4> AllGVs;
     SmallVector<Value *, 4> AllImportedModules;
 
+    DITemplateValueParameter
+    createTemplateValueParameter(unsigned Tag, DIDescriptor Scope,
+                                 StringRef Name, DIType Ty, Value *Val,
+                                 MDNode *File = 0, unsigned LineNo = 0,
+                                 unsigned ColumnNo = 0);
+
     DIBuilder(const DIBuilder &) LLVM_DELETED_FUNCTION;
     void operator=(const DIBuilder &) LLVM_DELETED_FUNCTION;
 
@@ -336,6 +342,32 @@ namespace llvm {
     createTemplateValueParameter(DIDescriptor Scope, StringRef Name,
                                  DIType Ty, Value *Val, MDNode *File = 0,
                                  unsigned LineNo = 0, unsigned ColumnNo = 0);
+
+    /// \brief Create debugging information for a template template parameter.
+    /// @param Scope        Scope in which this type is defined.
+    /// @param Name         Value parameter name.
+    /// @param Ty           Parameter type.
+    /// @param Val          The fully qualified name of the template.
+    /// @param File         File where this type parameter is defined.
+    /// @param LineNo       Line number.
+    /// @param ColumnNo     Column Number.
+    DITemplateValueParameter
+    createTemplateTemplateParameter(DIDescriptor Scope, StringRef Name,
+                                    DIType Ty, StringRef Val, MDNode *File = 0,
+                                    unsigned LineNo = 0, unsigned ColumnNo = 0);
+
+    /// \brief Create debugging information for a template parameter pack.
+    /// @param Scope        Scope in which this type is defined.
+    /// @param Name         Value parameter name.
+    /// @param Ty           Parameter type.
+    /// @param Val          An array of types in the pack.
+    /// @param File         File where this type parameter is defined.
+    /// @param LineNo       Line number.
+    /// @param ColumnNo     Column Number.
+    DITemplateValueParameter
+    createTemplateParameterPack(DIDescriptor Scope, StringRef Name,
+                                DIType Ty, DIArray Val, MDNode *File = 0,
+                                unsigned LineNo = 0, unsigned ColumnNo = 0);
 
     /// createArrayType - Create debugging information entry for an array.
     /// @param Size         Array size.
