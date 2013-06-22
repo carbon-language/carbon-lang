@@ -595,6 +595,9 @@ def err_explicit_instantiation_with_definition : Error<
 def err_template_defn_explicit_instantiation : Error<
   "%select{function|class}0 cannot be defined in an explicit instantiation; if this "
   "declaration is meant to be a %select{function|class}0 definition, remove the 'template' keyword">;
+def err_friend_explicit_instantiation : Error<
+  "friend cannot be declared in an explicit instantiation; if this "
+  "declaration is meant to be a friend declaration, remove the 'template' keyword">;
 def err_explicit_instantiation_enum : Error<
     "enumerations cannot be explicitly instantiated">;
 def err_expected_template_parameter : Error<"expected template parameter">;

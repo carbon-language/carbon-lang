@@ -242,6 +242,8 @@ Parser::ParseSingleDeclarationAfterTemplate(
         // If the declarator-id is not a template-id, issue a diagnostic and
         // recover by ignoring the 'template' keyword.
         Diag(Tok, diag::err_template_defn_explicit_instantiation) << 0;
+	return ParseFunctionDefinition(DeclaratorInfo, ParsedTemplateInfo(),
+				       &LateParsedAttrs);
       } else {
         SourceLocation LAngleLoc
           = PP.getLocForEndOfToken(TemplateInfo.TemplateLoc);
@@ -251,24 +253,21 @@ Parser::ParseSingleDeclarationAfterTemplate(
           << FixItHint::CreateInsertion(LAngleLoc, "<>");
 
         // Recover as if it were an explicit specialization. 
-        TemplateParameterLists ParamLists;
-        SmallVector<Decl*, 4> TemplateParams;
-        ParamLists.push_back(
-            TemplateParameterList::Create(Actions.getASTContext(), 
-                                          TemplateInfo.TemplateLoc,
-                                          LAngleLoc, 
-                                          (NamedDecl**)TemplateParams.data(),
-                                          TemplateParams.size(), LAngleLoc));
+        TemplateParameterLists FakedParamLists;
+        FakedParamLists.push_back(
+	     Actions.ActOnTemplateParameterList(0, SourceLocation(),
+					        TemplateInfo.TemplateLoc, 
+						LAngleLoc, 0, 0, LAngleLoc));
 
         return ParseFunctionDefinition(DeclaratorInfo, 
-                                       ParsedTemplateInfo(&ParamLists,
+                                       ParsedTemplateInfo(&FakedParamLists,
                                            /*isSpecialization=*/true,
                                            /*LastParamListWasEmpty=*/true),
                                        &LateParsedAttrs);
       }
     }
     return ParseFunctionDefinition(DeclaratorInfo, TemplateInfo,
-				                           &LateParsedAttrs);
+				   &LateParsedAttrs);
   }
 
   // Parse this declaration.

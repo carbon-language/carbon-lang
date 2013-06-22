@@ -1465,7 +1465,6 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       // This is an explicit specialization or a class template
       // partial specialization.
       TemplateParameterLists FakedParamLists;
-
       if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation) {
         // This looks like an explicit instantiation, because we have
         // something like
@@ -1475,25 +1474,35 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
         // but it actually has a definition. Most likely, this was
         // meant to be an explicit specialization, but the user forgot
         // the '<>' after 'template'.
-        assert(TUK == Sema::TUK_Definition && "Expected a definition here");
+	// It this is friend declaration however, since it cannot have a
+	// template header, it is most likely that the user meant to
+	// remove the 'template' keyword.
+        assert((TUK == Sema::TUK_Definition || TUK == Sema::TUK_Friend) &&
+	       "Expected a definition here");
 
-        SourceLocation LAngleLoc
-          = PP.getLocForEndOfToken(TemplateInfo.TemplateLoc);
-        Diag(TemplateId->TemplateNameLoc,
-             diag::err_explicit_instantiation_with_definition)
-          << SourceRange(TemplateInfo.TemplateLoc)
-          << FixItHint::CreateInsertion(LAngleLoc, "<>");
-
-        // Create a fake template parameter list that contains only
-        // "template<>", so that we treat this construct as a class
-        // template specialization.
-        FakedParamLists.push_back(
-          Actions.ActOnTemplateParameterList(0, SourceLocation(),
-                                             TemplateInfo.TemplateLoc,
-                                             LAngleLoc,
-                                             0, 0,
-                                             LAngleLoc));
-        TemplateParams = &FakedParamLists;
+	if (TUK == Sema::TUK_Friend) {
+	  Diag(DS.getFriendSpecLoc(), 
+	       diag::err_friend_explicit_instantiation);
+	  TemplateParams = 0;
+	} else {
+	  SourceLocation LAngleLoc
+	    = PP.getLocForEndOfToken(TemplateInfo.TemplateLoc);
+	  Diag(TemplateId->TemplateNameLoc,
+	       diag::err_explicit_instantiation_with_definition)
+	    << SourceRange(TemplateInfo.TemplateLoc)
+	    << FixItHint::CreateInsertion(LAngleLoc, "<>");
+	  
+	  // Create a fake template parameter list that contains only
+	  // "template<>", so that we treat this construct as a class
+	  // template specialization.
+	  FakedParamLists.push_back(
+	    Actions.ActOnTemplateParameterList(0, SourceLocation(),
+					       TemplateInfo.TemplateLoc,
+					       LAngleLoc,
+					       0, 0,
+					       LAngleLoc));
+	  TemplateParams = &FakedParamLists;
+	}
       }
 
       // Build the class template specialization.
@@ -1546,6 +1555,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       // recover by ignoring the 'template' keyword.
       Diag(Tok, diag::err_template_defn_explicit_instantiation)
         << 1 << FixItHint::CreateRemoval(TemplateInfo.TemplateLoc);
+      TemplateParams = 0;
     }
 
     bool IsDependent = false;
