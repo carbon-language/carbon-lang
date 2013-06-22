@@ -2267,6 +2267,9 @@ llvm::DIDescriptor CGDebugInfo::getDeclarationOrDefinition(const Decl *D) {
 /// getFunctionDeclaration - Return debug info descriptor to describe method
 /// declaration for the given method definition.
 llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
+  if (!D || DebugKind == CodeGenOptions::DebugLineTablesOnly)
+    return llvm::DISubprogram();
+
   const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
   if (!FD) return llvm::DISubprogram();
 
@@ -2278,7 +2281,7 @@ llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
   if (MI != SPCache.end()) {
     llvm::Value *V = MI->second;
     llvm::DISubprogram SP(dyn_cast_or_null<llvm::MDNode>(V));
-    if (SP.isSubprogram() && !llvm::DISubprogram(SP).isDefinition())
+    if (SP.isSubprogram() && !SP.isDefinition())
       return SP;
   }
 
@@ -2290,7 +2293,7 @@ llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
     if (MI != SPCache.end()) {
       llvm::Value *V = MI->second;
       llvm::DISubprogram SP(dyn_cast_or_null<llvm::MDNode>(V));
-      if (SP.isSubprogram() && !llvm::DISubprogram(SP).isDefinition())
+      if (SP.isSubprogram() && !SP.isDefinition())
         return SP;
     }
   }
@@ -2302,6 +2305,12 @@ llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
 llvm::DICompositeType CGDebugInfo::getOrCreateFunctionType(const Decl *D,
                                                            QualType FnType,
                                                            llvm::DIFile F) {
+  if (!D || DebugKind == CodeGenOptions::DebugLineTablesOnly)
+    // Create fake but valid subroutine type. Otherwise
+    // llvm::DISubprogram::Verify() would return false, and
+    // subprogram DIE will miss DW_AT_decl_file and
+    // DW_AT_decl_line fields.
+    return DBuilder.createSubroutineType(F, DBuilder.getOrCreateArray(None));
 
   if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
     return getOrCreateMethodType(Method, F);
@@ -2417,28 +2426,11 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   if (!HasDecl || D->isImplicit())
     Flags |= llvm::DIDescriptor::FlagArtificial;
 
-  llvm::DICompositeType DIFnType;
-  llvm::DISubprogram SPDecl;
-  if (HasDecl &&
-      DebugKind >= CodeGenOptions::LimitedDebugInfo) {
-    DIFnType = getOrCreateFunctionType(D, FnType, Unit);
-    SPDecl = getFunctionDeclaration(D);
-  } else {
-    // Create fake but valid subroutine type. Otherwise
-    // llvm::DISubprogram::Verify() would return false, and
-    // subprogram DIE will miss DW_AT_decl_file and
-    // DW_AT_decl_line fields.
-    SmallVector<llvm::Value*, 16> Elts;
-    llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(Elts);
-    DIFnType = DBuilder.createSubroutineType(Unit, EltTypeArray);
-  }
-  llvm::DISubprogram SP;
-  SP = DBuilder.createFunction(FDContext, Name, LinkageName, Unit,
-                               LineNo, DIFnType,
-                               Fn->hasInternalLinkage(), true/*definition*/,
-                               getLineNumber(CurLoc), Flags,
-                               CGM.getLangOpts().Optimize,
-                               Fn, TParamsArray, SPDecl);
+  llvm::DISubprogram SP = DBuilder.createFunction(
+      FDContext, Name, LinkageName, Unit, LineNo,
+      getOrCreateFunctionType(D, FnType, Unit), Fn->hasInternalLinkage(),
+      true /*definition*/, getLineNumber(CurLoc), Flags,
+      CGM.getLangOpts().Optimize, Fn, TParamsArray, getFunctionDeclaration(D));
   if (HasDecl)
     DeclCache.insert(std::make_pair(D->getCanonicalDecl(), llvm::WeakVH(SP)));
 
