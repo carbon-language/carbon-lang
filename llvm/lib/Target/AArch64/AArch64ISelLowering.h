@@ -245,7 +245,7 @@ public:
                                     SelectionDAG &DAG) const;
 
   std::pair<unsigned, const TargetRegisterClass*>
-  getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const;
+  getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const;
 private:
   const InstrItineraryData *Itins;
 

@@ -2932,7 +2932,7 @@ AArch64TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
 std::pair<unsigned, const TargetRegisterClass*>
 AArch64TargetLowering::getRegForInlineAsmConstraint(
                                                   const std::string &Constraint,
-                                                  EVT VT) const {
+                                                  MVT VT) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     case 'r':

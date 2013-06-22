@@ -1590,11 +1590,11 @@ const {
 std::pair<unsigned, const TargetRegisterClass*>
 HexagonTargetLowering::getRegForInlineAsmConstraint(const
                                                     std::string &Constraint,
-                                                    EVT VT) const {
+                                                    MVT VT) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     case 'r':   // R0-R31
-       switch (VT.getSimpleVT().SimpleTy) {
+       switch (VT.SimpleTy) {
        default:
          llvm_unreachable("getRegForInlineAsmConstraint Unhandled data type");
        case MVT::i32:

@@ -129,7 +129,7 @@ public:
   virtual const char *getTargetNodeName(unsigned Opcode) const LLVM_OVERRIDE;
   virtual std::pair<unsigned, const TargetRegisterClass *>
     getRegForInlineAsmConstraint(const std::string &Constraint,
-                                 EVT VT) const LLVM_OVERRIDE;
+                                 MVT VT) const LLVM_OVERRIDE;
   virtual TargetLowering::ConstraintType
     getConstraintType(const std::string &Constraint) const LLVM_OVERRIDE;
   virtual TargetLowering::ConstraintWeight

@@ -150,7 +150,7 @@ namespace llvm {
 
     std::pair<unsigned, const TargetRegisterClass*>
     getRegForInlineAsmConstraint(const std::string &Constraint,
-                                 EVT VT) const;
+                                 MVT VT) const;
 
     // Intrinsics
     virtual SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op,
