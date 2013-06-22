@@ -52,7 +52,7 @@ private:
 
 public:
   FileCOFF(const TargetInfo &ti, std::unique_ptr<llvm::MemoryBuffer> MB,
-           llvm::error_code &EC)
+           error_code &EC)
       : File(MB->getBufferIdentifier(), kindObject), _targetInfo(ti) {
     llvm::OwningPtr<llvm::object::Binary> Bin;
     EC = llvm::object::createBinary(MB.release(), Bin);
@@ -121,7 +121,7 @@ private:
       const coff_symbol *Symb;
       if (error_code ec = Obj->getSymbol(i, Symb))
         return ec;
-      llvm::StringRef Name;
+      StringRef Name;
       if (error_code ec = Obj->getSymbolName(Symb, Name))
         return ec;
 
@@ -183,7 +183,7 @@ private:
       return A->Value < B->Value;
     }));
 
-    llvm::ArrayRef<uint8_t> SecData;
+    ArrayRef<uint8_t> SecData;
     StringRef sectionName;
     if (error_code ec = Obj->getSectionContents(section, SecData))
       return ec;
@@ -193,7 +193,7 @@ private:
 
     // Create an atom for the entire section.
     if (symbols.empty()) {
-      llvm::ArrayRef<uint8_t> Data(SecData.data(), SecData.size());
+      ArrayRef<uint8_t> Data(SecData.data(), SecData.size());
       atoms.push_back(new (AtomStorage.Allocate<COFFDefinedAtom>())
                       COFFDefinedAtom(*this, "", nullptr, section, Data,
                                       sectionName, ordinal++));
@@ -204,7 +204,7 @@ private:
     // section.
     if (symbols[0]->Value != 0) {
       uint64_t Size = symbols[0]->Value;
-      llvm::ArrayRef<uint8_t> Data(SecData.data(), Size);
+      ArrayRef<uint8_t> Data(SecData.data(), Size);
       atoms.push_back(new (AtomStorage.Allocate<COFFDefinedAtom>())
                       COFFDefinedAtom(*this, "", nullptr, section, Data,
                                       sectionName, ordinal++));
@@ -216,8 +216,8 @@ private:
       const uint8_t *end = (si + 1 == se)
           ? start + SecData.size()
           : SecData.data() + (*(si + 1))->Value;
-      llvm::ArrayRef<uint8_t> Data(start, end);
-      llvm::StringRef name;
+      ArrayRef<uint8_t> Data(start, end);
+      StringRef name;
       if (error_code ec = Obj->getSymbolName(*si, name))
         return ec;
       atoms.push_back(new (AtomStorage.Allocate<COFFDefinedAtom>())

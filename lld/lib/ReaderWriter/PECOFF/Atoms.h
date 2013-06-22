@@ -57,7 +57,7 @@ private:
 
 class COFFAbsoluteAtom : public AbsoluteAtom {
 public:
-  COFFAbsoluteAtom(const File &f, llvm::StringRef n, const coff_symbol *s)
+  COFFAbsoluteAtom(const File &f, StringRef n, const coff_symbol *s)
       : _owningFile(f), _name(n), _symbol(s) {}
 
   virtual const File &file() const { return _owningFile; }
@@ -68,43 +68,43 @@ public:
     return scopeGlobal;
   }
 
-  virtual llvm::StringRef name() const { return _name; }
+  virtual StringRef name() const { return _name; }
 
   virtual uint64_t value() const { return _symbol->Value; }
 
 private:
   const File &_owningFile;
-  llvm::StringRef _name;
+  StringRef _name;
   const coff_symbol *_symbol;
 };
 
 class COFFUndefinedAtom : public UndefinedAtom {
 public:
-  COFFUndefinedAtom(const File &f, llvm::StringRef n)
+  COFFUndefinedAtom(const File &f, StringRef n)
       : _owningFile(f), _name(n) {}
 
   virtual const File &file() const { return _owningFile; }
 
-  virtual llvm::StringRef name() const { return _name; }
+  virtual StringRef name() const { return _name; }
 
   virtual CanBeNull canBeNull() const { return CanBeNull::canBeNullNever; }
 
 private:
   const File &_owningFile;
-  llvm::StringRef _name;
+  StringRef _name;
 };
 
 class COFFDefinedAtom : public DefinedAtom {
 public:
-  COFFDefinedAtom(const File &f, llvm::StringRef n, const coff_symbol *symb,
-                  const coff_section *sec, llvm::ArrayRef<uint8_t> d,
+  COFFDefinedAtom(const File &f, StringRef n, const coff_symbol *symb,
+                  const coff_section *sec, ArrayRef<uint8_t> d,
                   StringRef sectionName, uint64_t ordinal)
       : _owningFile(f), _name(n), _symbol(symb), _section(sec), _data(d),
         _sectionName(sectionName), _ordinal(ordinal) {}
 
   virtual const File &file() const { return _owningFile; }
 
-  virtual llvm::StringRef name() const { return _name; }
+  virtual StringRef name() const { return _name; }
 
   virtual uint64_t ordinal() const { return _ordinal; }
 
@@ -147,7 +147,7 @@ public:
 
   virtual SectionChoice sectionChoice() const { return sectionBasedOnContent; }
 
-  virtual llvm::StringRef customSectionName() const { return ""; }
+  virtual StringRef customSectionName() const { return ""; }
 
   virtual SectionPosition sectionPosition() const { return sectionPositionAny; }
 
@@ -169,7 +169,7 @@ public:
 
   virtual StringRef getSectionName() const { return _sectionName; }
 
-  virtual llvm::ArrayRef<uint8_t> rawContent() const { return _data; }
+  virtual ArrayRef<uint8_t> rawContent() const { return _data; }
 
   virtual reference_iterator begin() const {
     return reference_iterator(*this, reinterpret_cast<const void *>(0));
@@ -192,11 +192,11 @@ private:
   }
 
   const File &_owningFile;
-  llvm::StringRef _name;
+  StringRef _name;
   const coff_symbol *_symbol;
   const coff_section *_section;
   std::vector<std::unique_ptr<COFFReference> > _references;
-  llvm::ArrayRef<uint8_t> _data;
+  ArrayRef<uint8_t> _data;
   StringRef _sectionName;
   uint64_t _ordinal;
 };
