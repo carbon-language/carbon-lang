@@ -227,25 +227,6 @@ private:
     return error_code::success();
   }
 
-  /// Connect atoms appeared in the same section with layout-{before,after}
-  /// edges. It has two purposes.
-  ///
-  ///   - To prevent atoms from being GC'ed (aka dead-stripped) if there is a
-  ///     reference to one of the atoms. In that case we want to emit all the
-  ///     atoms appeared in the same section, because the referenced "live"
-  ///     atom may reference other atoms in the same section. If we don't add
-  ///     edges between atoms, unreferenced atoms in the same section would be
-  ///     GC'ed.
-  ///   - To preserve the order of atmos. We want to emit the atoms in the
-  ///     same order as they appeared in the input object file.
-  void addLayoutEdges(vector<COFFDefinedAtom *> &definedAtoms) const {
-    if (definedAtoms.size() <= 1)
-      return;
-    for (auto it = definedAtoms.begin(), e = definedAtoms.end(); it + 1 != e;
-         ++it)
-      connectAtomsWithLayoutEdge(*it, *(it + 1));
-  }
-
   error_code AtomizeDefinedSymbols(SectionToSymbolsT &definedSymbols,
                                    vector<const DefinedAtom *> &definedAtoms,
                                    SymbolNameToAtomT &symbolToAtom,
@@ -261,7 +242,7 @@ private:
         return ec;
 
       // Connect atoms with layout-before/layout-after edges.
-      addLayoutEdges(atoms);
+      connectAtomsWithLayoutEdge(atoms);
 
       for (COFFDefinedAtom *atom : atoms) {
         if (!atom->name().empty())

@@ -21,7 +21,7 @@ using llvm::object::COFFObjectFile;
 using llvm::object::coff_section;
 using llvm::object::coff_symbol;
 
-void connectAtomsWithLayoutEdge(COFFDefinedAtom *a, COFFDefinedAtom *b);
+void connectAtomsWithLayoutEdge(std::vector<COFFDefinedAtom *>);
 
 /// A COFFReference represents relocation information for an atom. For
 /// example, if atom X has a reference to atom Y with offsetInAtom=8, that

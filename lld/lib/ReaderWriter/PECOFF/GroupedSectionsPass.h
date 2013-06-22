@@ -66,7 +66,7 @@ public:
     std::vector<std::vector<COFFDefinedAtom *>> groupedAtomsList(
         groupBySectionName(sectionToHeadAtoms));
     for (auto &groupedAtoms : groupedAtomsList)
-      connectAtoms(groupedAtoms);
+      connectAtomsWithLayoutEdge(groupedAtoms);
   }
 
 private:
@@ -106,13 +106,6 @@ private:
     for (auto &i : res)
       vec.push_back(std::move(i.second));
     return std::move(vec);
-  }
-
-  void connectAtoms(std::vector<COFFDefinedAtom *> atoms) const {
-    if (atoms.size() < 2)
-      return;
-    for (auto it = atoms.begin(), e = atoms.end(); it + 1 != e; ++it)
-      connectAtomsWithLayoutEdge(*it, *(it + 1));
   }
 };
 
