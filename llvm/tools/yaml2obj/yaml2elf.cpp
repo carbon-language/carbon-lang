@@ -361,6 +361,14 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   return 0;
 }
 
+static bool is64Bit(const ELFYAML::Object &Doc) {
+  return Doc.Header.Class == ELFYAML::ELF_ELFCLASS(ELF::ELFCLASS64);
+}
+
+static bool isLittleEndian(const ELFYAML::Object &Doc) {
+  return Doc.Header.Data == ELFYAML::ELF_ELFDATA(ELF::ELFDATA2LSB);
+}
+
 int yaml2elf(llvm::raw_ostream &Out, llvm::MemoryBuffer *Buf) {
   yaml::Input YIn(Buf->getBuffer());
   ELFYAML::Object Doc;
@@ -369,15 +377,20 @@ int yaml2elf(llvm::raw_ostream &Out, llvm::MemoryBuffer *Buf) {
     errs() << "yaml2obj: Failed to parse YAML file!\n";
     return 1;
   }
-  if (Doc.Header.Class == ELFYAML::ELF_ELFCLASS(ELF::ELFCLASS64)) {
-    if (Doc.Header.Data == ELFYAML::ELF_ELFDATA(ELF::ELFDATA2LSB))
-      return writeELF<object::ELFType<support::little, 8, true> >(outs(), Doc);
+  using object::ELFType;
+  typedef ELFType<support::little, 8, true> LE64;
+  typedef ELFType<support::big, 8, true> BE64;
+  typedef ELFType<support::little, 4, false> LE32;
+  typedef ELFType<support::big, 4, false> BE32;
+  if (is64Bit(Doc)) {
+    if (isLittleEndian(Doc))
+      return writeELF<LE64>(outs(), Doc);
     else
-      return writeELF<object::ELFType<support::big, 8, true> >(outs(), Doc);
+      return writeELF<BE64>(outs(), Doc);
   } else {
-    if (Doc.Header.Data == ELFYAML::ELF_ELFDATA(ELF::ELFDATA2LSB))
-      return writeELF<object::ELFType<support::little, 4, false> >(outs(), Doc);
+    if (isLittleEndian(Doc))
+      return writeELF<LE32>(outs(), Doc);
     else
-      return writeELF<object::ELFType<support::big, 4, false> >(outs(), Doc);
+      return writeELF<BE32>(outs(), Doc);
   }
 }
