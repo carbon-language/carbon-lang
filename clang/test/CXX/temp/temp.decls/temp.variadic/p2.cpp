@@ -12,7 +12,7 @@ void test() {
 template<typename Head, typename ...Tail>
 void recurse_until_fail(const Head &, const Tail &...tail) { // expected-note{{candidate function template not viable: requires at least 1 argument, but 0 were provided}}
   recurse_until_fail(tail...); // expected-error{{no matching function for call to 'recurse_until_fail'}} \
-  // expected-note{{in instantiation of function template specialization 'recurse_until_fail<char [7], >' requested here}} \
+  // expected-note{{in instantiation of function template specialization 'recurse_until_fail<char [7]>' requested here}} \
   // expected-note{{in instantiation of function template specialization 'recurse_until_fail<double, char [7]>' requested here}}
 }
 

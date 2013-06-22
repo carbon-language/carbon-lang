@@ -1281,18 +1281,19 @@ TemplateSpecializationType::PrintTemplateArgumentList(
   
   bool needSpace = false;
   for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
-    if (Arg > 0)
-      OS << ", ";
-    
     // Print the argument into a string.
     SmallString<128> Buf;
     llvm::raw_svector_ostream ArgOS(Buf);
     if (Args[Arg].getKind() == TemplateArgument::Pack) {
+      if (Args[Arg].pack_size() && Arg > 0)
+        OS << ", ";
       PrintTemplateArgumentList(ArgOS,
                                 Args[Arg].pack_begin(), 
                                 Args[Arg].pack_size(), 
                                 Policy, true);
     } else {
+      if (Arg > 0)
+        OS << ", ";
       Args[Arg].print(Policy, ArgOS);
     }
     StringRef ArgString = ArgOS.str();

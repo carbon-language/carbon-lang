@@ -166,7 +166,7 @@ class CGDebugInfo {
 
   llvm::DIArray
   CollectTemplateParams(const TemplateParameterList *TPList,
-                        const TemplateArgumentList &TAList,
+                        ArrayRef<TemplateArgument> TAList,
                         llvm::DIFile Unit);
   llvm::DIArray
   CollectFunctionTemplateParams(const FunctionDecl *FD, llvm::DIFile Unit);

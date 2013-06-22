@@ -1176,24 +1176,26 @@ CollectCXXBases(const CXXRecordDecl *RD, llvm::DIFile Unit,
 /// CollectTemplateParams - A helper function to collect template parameters.
 llvm::DIArray CGDebugInfo::
 CollectTemplateParams(const TemplateParameterList *TPList,
-                      const TemplateArgumentList &TAList,
+                      ArrayRef<TemplateArgument> TAList,
                       llvm::DIFile Unit) {
   SmallVector<llvm::Value *, 16> TemplateParams;
   for (unsigned i = 0, e = TAList.size(); i != e; ++i) {
     const TemplateArgument &TA = TAList[i];
-    const NamedDecl *ND = TPList->getParam(i);
+    StringRef Name;
+    if (TPList)
+      Name = TPList->getParam(i)->getName();
     switch (TA.getKind()) {
     case TemplateArgument::Type: {
       llvm::DIType TTy = getOrCreateType(TA.getAsType(), Unit);
       llvm::DITemplateTypeParameter TTP =
-        DBuilder.createTemplateTypeParameter(TheCU, ND->getName(), TTy);
+          DBuilder.createTemplateTypeParameter(TheCU, Name, TTy);
       TemplateParams.push_back(TTP);
     } break;
     case TemplateArgument::Integral: {
       llvm::DIType TTy = getOrCreateType(TA.getIntegralType(), Unit);
       llvm::DITemplateValueParameter TVP =
           DBuilder.createTemplateValueParameter(
-              TheCU, ND->getName(), TTy,
+              TheCU, Name, TTy,
               llvm::ConstantInt::get(CGM.getLLVMContext(), TA.getAsIntegral()));
       TemplateParams.push_back(TVP);
     } break;
@@ -1231,7 +1233,7 @@ CollectTemplateParams(const TemplateParameterList *TPList,
             cast<MemberPointerType>(T.getTypePtr()), chars);
       }
       llvm::DITemplateValueParameter TVP =
-          DBuilder.createTemplateValueParameter(TheCU, ND->getName(), TTy, V);
+          DBuilder.createTemplateValueParameter(TheCU, Name, TTy, V);
       TemplateParams.push_back(TVP);
     } break;
     case TemplateArgument::NullPtr: {
@@ -1252,16 +1254,24 @@ CollectTemplateParams(const TemplateParameterList *TPList,
       if (!V)
         V = llvm::ConstantInt::get(CGM.Int8Ty, 0);
       llvm::DITemplateValueParameter TVP =
-          DBuilder.createTemplateValueParameter(TheCU, ND->getName(), TTy, V);
+          DBuilder.createTemplateValueParameter(TheCU, Name, TTy, V);
       TemplateParams.push_back(TVP);
     } break;
-    case TemplateArgument::Template:
-      // We could support this with the GCC extension
-      // DW_TAG_GNU_template_template_param
-      break;
-    case TemplateArgument::Pack:
-      // And this with DW_TAG_GNU_template_parameter_pack
-      break;
+    case TemplateArgument::Template: {
+      llvm::DITemplateValueParameter TVP =
+          DBuilder.createTemplateTemplateParameter(
+              TheCU, Name, llvm::DIType(),
+              TA.getAsTemplate().getAsTemplateDecl()
+                  ->getQualifiedNameAsString());
+      TemplateParams.push_back(TVP);
+    } break;
+    case TemplateArgument::Pack: {
+      llvm::DITemplateValueParameter TVP =
+          DBuilder.createTemplateParameterPack(
+              TheCU, Name, llvm::DIType(),
+              CollectTemplateParams(NULL, TA.getPackAsArray(), Unit));
+      TemplateParams.push_back(TVP);
+    } break;
     // And the following should never occur:
     case TemplateArgument::Expression:
     case TemplateArgument::TemplateExpansion:
@@ -1282,8 +1292,8 @@ CollectFunctionTemplateParams(const FunctionDecl *FD, llvm::DIFile Unit) {
     const TemplateParameterList *TList =
       FD->getTemplateSpecializationInfo()->getTemplate()
       ->getTemplateParameters();
-    return
-      CollectTemplateParams(TList, *FD->getTemplateSpecializationArgs(), Unit);
+    return CollectTemplateParams(
+        TList, FD->getTemplateSpecializationArgs()->asArray(), Unit);
   }
   return llvm::DIArray();
 }
@@ -1301,7 +1311,7 @@ CollectCXXTemplateParams(const ClassTemplateSpecializationDecl *TSpecial,
     PU.get<ClassTemplateDecl *>()->getTemplateParameters() :
     PU.get<ClassTemplatePartialSpecializationDecl *>()->getTemplateParameters();
   const TemplateArgumentList &TAList = TSpecial->getTemplateInstantiationArgs();
-  return CollectTemplateParams(TPList, TAList, Unit);
+  return CollectTemplateParams(TPList, TAList.asArray(), Unit);
 }
 
 /// getOrCreateVTablePtrType - Return debug info descriptor for vtable.
