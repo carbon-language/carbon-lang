@@ -216,8 +216,7 @@ static void handleSymtabSectionHeader(
     typename object::ELFObjectFile<ELFT>::Elf_Shdr &SHeader) {
 
   typedef typename object::ELFObjectFile<ELFT>::Elf_Sym Elf_Sym;
-  // TODO: Ensure that a manually specified `Link` field is diagnosed as an
-  // error for SHT_SYMTAB.
+  SHeader.sh_type = ELF::SHT_SYMTAB;
   SHeader.sh_link = State.getDotStrTabSecNo();
   // One greater than symbol table index of the last local symbol.
   SHeader.sh_info = Symbols.Local.size() + 1;
@@ -272,11 +271,12 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   // Immediately following the ELF header.
   Header.e_shoff = sizeof(Header);
   const std::vector<ELFYAML::Section> &Sections = Doc.Sections;
-  // "+ 3" for
+  // "+ 4" for
   // - SHT_NULL entry (placed first, i.e. 0'th entry)
+  // - symbol table (.symtab) (placed third to last)
   // - string table (.strtab) (placed second to last)
   // - section header string table. (placed last)
-  Header.e_shnum = Sections.size() + 3;
+  Header.e_shnum = Sections.size() + 4;
   // Place section header string table last.
   Header.e_shstrndx = Header.e_shnum - 1;
   const unsigned DotStrtabSecNo = Header.e_shnum - 2;
@@ -334,13 +334,15 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
     SHeader.sh_info = 0;
     SHeader.sh_addralign = Sec.AddressAlign;
     SHeader.sh_entsize = 0;
-    // XXX: Really ugly right now. Should not be writing to `CBA` above
-    // (and setting sh_offset and sh_size) when going through this branch
-    // here.
-    if (Sec.Type == ELFYAML::ELF_SHT(SHT_SYMTAB))
-      handleSymtabSectionHeader<ELFT>(Sec.Symbols, State, SHeader);
     SHeaders.push_back(SHeader);
   }
+
+  // .symtab section.
+  Elf_Shdr SymtabSHeader;
+  zero(SymtabSHeader);
+  SymtabSHeader.sh_name = SHStrTab.addString(StringRef(".symtab"));
+  handleSymtabSectionHeader<ELFT>(Doc.Symbols, State, SymtabSHeader);
+  SHeaders.push_back(SymtabSHeader);
 
   // .strtab string table header.
   Elf_Shdr DotStrTabSHeader;

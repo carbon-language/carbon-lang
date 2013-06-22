@@ -16,16 +16,14 @@ Sections:
                       # This YAML file is a valid relocatable object that,
                       # when linked and run on x86_64, will go into an
                       # infloop.
-  - Name: .symtab
-    Type: SHT_SYMTAB
-    Symbols:
-      Global:
-        - Name: main
-          Type: STT_FUNC
-          Section: .text
-          Value: 0x1
-          Size: 2
-        - Name: undefined_symbol
+Symbols:
+  Global:
+    - Name: main
+      Type: STT_FUNC
+      Section: .text
+      Value: 0x1
+      Size: 2
+    - Name: undefined_symbol
 
 # CHECK:      Symbols [
 # CHECK-NEXT:   Symbol {

@@ -72,12 +72,15 @@ struct Section {
   object::yaml::BinaryRef Content;
   StringRef Link;
   llvm::yaml::Hex64 AddressAlign;
-  // For SHT_SYMTAB; should be empty otherwise.
-  LocalGlobalWeakSymbols Symbols;
 };
 struct Object {
   FileHeader Header;
   std::vector<Section> Sections;
+  // Although in reality the symbols reside in a section, it is a lot
+  // cleaner and nicer if we read them from the YAML as a separate
+  // top-level key, which automatically ensures that invariants like there
+  // being a single SHT_SYMTAB section are upheld.
+  LocalGlobalWeakSymbols Symbols;
 };
 
 } // end namespace ELFYAML

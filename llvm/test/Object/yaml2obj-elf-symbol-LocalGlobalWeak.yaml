@@ -10,21 +10,19 @@ Sections:
     Type: SHT_PROGBITS
     Flags: [ SHF_ALLOC, SHF_WRITE ]
     Content: "DEADBEEF"
-  - Name: .symtab
-    Type: SHT_SYMTAB
-    Symbols:
-      Local:
-        - Name: local_symbol
-          Type: STT_OBJECT
-          Section: .data
-      Global:
-        - Name: global_symbol
-          Type: STT_OBJECT
-          Section: .data
-      Weak:
-        - Name: weak_symbol
-          Type: STT_OBJECT
-          Section: .data
+Symbols:
+  Local:
+    - Name: local_symbol
+      Type: STT_OBJECT
+      Section: .data
+  Global:
+    - Name: global_symbol
+      Type: STT_OBJECT
+      Section: .data
+  Weak:
+    - Name: weak_symbol
+      Type: STT_OBJECT
+      Section: .data
 
 # CHECK: Symbol {
 # CHECK:   Name:  (0)

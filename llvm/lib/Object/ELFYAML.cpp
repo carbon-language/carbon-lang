@@ -244,7 +244,8 @@ void ScalarEnumerationTraits<ELFYAML::ELF_SHT>::enumeration(
 #define ECase(X) IO.enumCase(Value, #X, ELF::X);
   ECase(SHT_NULL)
   ECase(SHT_PROGBITS)
-  ECase(SHT_SYMTAB)
+  // No SHT_SYMTAB. Use the top-level `Symbols` key instead.
+  // FIXME: Issue a diagnostic with this information.
   ECase(SHT_STRTAB)
   ECase(SHT_RELA)
   ECase(SHT_HASH)
@@ -326,17 +327,12 @@ void MappingTraits<ELFYAML::Section>::mapping(IO &IO,
   IO.mapOptional("Content", Section.Content);
   IO.mapOptional("Link", Section.Link);
   IO.mapOptional("AddressAlign", Section.AddressAlign, Hex64(0));
-  // TODO: Error if `Type` is SHT_SYMTAB and this is not present, or if
-  // `Type` is *not* SHT_SYMTAB and this *is* present. (By SHT_SYMTAB I
-  // also mean SHT_DYNSYM, but for simplicity right now we just do
-  // SHT_SYMTAB). Want to be able to share the predicate with consumers of
-  // this structure.
-  IO.mapOptional("Symbols", Section.Symbols);
 }
 
 void MappingTraits<ELFYAML::Object>::mapping(IO &IO, ELFYAML::Object &Object) {
   IO.mapRequired("FileHeader", Object.Header);
   IO.mapOptional("Sections", Object.Sections);
+  IO.mapOptional("Symbols", Object.Symbols);
 }
 
 } // end namespace yaml
