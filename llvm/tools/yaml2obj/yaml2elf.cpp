@@ -72,11 +72,23 @@ class ContiguousBlobAccumulator {
   SmallVector<char, 128> Buf;
   raw_svector_ostream OS;
 
+  /// \returns The new offset.
+  uint64_t padToAlignment(unsigned Align) {
+    uint64_t CurrentOffset = InitialOffset + OS.tell();
+    uint64_t AlignedOffset = RoundUpToAlignment(CurrentOffset, Align);
+    for (; CurrentOffset != AlignedOffset; ++CurrentOffset)
+      OS.write('\0');
+    return AlignedOffset; // == CurrentOffset;
+  }
+
 public:
   ContiguousBlobAccumulator(uint64_t InitialOffset_)
       : InitialOffset(InitialOffset_), Buf(), OS(Buf) {}
-  raw_ostream &getOS() { return OS; }
-  uint64_t currentOffset() const { return InitialOffset + OS.tell(); }
+  template <class Integer>
+  raw_ostream &getOSAndAlignedOffset(Integer &Offset, unsigned Align = 16) {
+    Offset = padToAlignment(Align);
+    return OS;
+  }
   void writeBlobToStream(raw_ostream &Out) { Out << OS.str(); }
 };
 } // end anonymous namespace
@@ -128,9 +140,8 @@ static void createStringTableSectionHeader(Elf_Shdr &SHeader,
                                            StringTableBuilder &STB,
                                            ContiguousBlobAccumulator &CBA) {
   SHeader.sh_type = ELF::SHT_STRTAB;
-  SHeader.sh_offset = CBA.currentOffset();
+  STB.writeToStream(CBA.getOSAndAlignedOffset(SHeader.sh_offset));
   SHeader.sh_size = STB.size();
-  STB.writeToStream(CBA.getOS());
   SHeader.sh_addralign = 1;
 }
 
@@ -224,9 +235,8 @@ static void handleSymtabSectionHeader(
   addSymbols(Sec.Symbols.Weak, State, Syms, ELF::STB_WEAK);
 
   ContiguousBlobAccumulator &CBA = State.getSectionContentAccum();
-  SHeader.sh_offset = CBA.currentOffset();
+  writeVectorData(CBA.getOSAndAlignedOffset(SHeader.sh_offset), Syms);
   SHeader.sh_size = vectorDataSize(Syms);
-  writeVectorData(CBA.getOS(), Syms);
 }
 
 template <class ELFT>
@@ -309,9 +319,8 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
     SHeader.sh_flags = Sec.Flags;
     SHeader.sh_addr = Sec.Address;
 
-    SHeader.sh_offset = CBA.currentOffset();
+    Sec.Content.writeAsBinary(CBA.getOSAndAlignedOffset(SHeader.sh_offset));
     SHeader.sh_size = Sec.Content.binary_size();
-    Sec.Content.writeAsBinary(CBA.getOS());
 
     if (!Sec.Link.empty()) {
       unsigned Index;
