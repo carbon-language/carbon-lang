@@ -19,7 +19,10 @@
 #include <string>
 #include <cassert>
 
-void test(const std::unordered_map<int, std::string>& c)
+#include "../../min_allocator.h"
+
+template <class C>
+void test(const C& c)
 {
     assert(c.size() == 4);
     assert(c.at(1) == "one");
@@ -56,4 +59,33 @@ int main()
         assert(c.bucket_count() == 31);
         test(c);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef std::unordered_map<int, std::string, std::hash<int>, std::equal_to<int>,
+                            min_allocator<std::pair<const int, std::string>>> C;
+        typedef std::pair<int, std::string> P;
+        P a[] =
+        {
+            P(1, "one"),
+            P(2, "two"),
+            P(3, "three"),
+            P(4, "four"),
+            P(1, "four"),
+            P(2, "four"),
+        };
+        C c(a, a + sizeof(a)/sizeof(a[0]));
+        test(c);
+        assert(c.bucket_count() >= 5);
+        c.rehash(3);
+        assert(c.bucket_count() == 5);
+        test(c);
+        c.max_load_factor(2);
+        c.rehash(3);
+        assert(c.bucket_count() == 3);
+        test(c);
+        c.rehash(31);
+        assert(c.bucket_count() == 31);
+        test(c);
+    }
+#endif
 }

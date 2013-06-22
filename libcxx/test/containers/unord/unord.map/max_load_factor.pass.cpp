@@ -20,6 +20,8 @@
 #include <string>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 int main()
 {
     {
@@ -36,4 +38,22 @@ int main()
         c.max_load_factor(2.5);
         assert(c.max_load_factor() == 2.5);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef std::unordered_map<int, std::string, std::hash<int>, std::equal_to<int>,
+                            min_allocator<std::pair<const int, std::string>>> C;
+        typedef std::pair<int, std::string> P;
+        const C c;
+        assert(c.max_load_factor() == 1);
+    }
+    {
+        typedef std::unordered_map<int, std::string, std::hash<int>, std::equal_to<int>,
+                            min_allocator<std::pair<const int, std::string>>> C;
+        typedef std::pair<int, std::string> P;
+        C c;
+        assert(c.max_load_factor() == 1);
+        c.max_load_factor(2.5);
+        assert(c.max_load_factor() == 2.5);
+    }
+#endif
 }

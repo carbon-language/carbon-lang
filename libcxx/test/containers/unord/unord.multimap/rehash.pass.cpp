@@ -20,14 +20,16 @@
 #include <cassert>
 #include <cfloat>
 
-void test(const std::unordered_multimap<int, std::string>& c)
+#include "../../min_allocator.h"
+
+template <class C>
+void test(const C& c)
 {
-    typedef std::unordered_multimap<int, std::string> C;
     assert(c.size() == 6);
-    typedef std::pair<C::const_iterator, C::const_iterator> Eq;
+    typedef std::pair<typename C::const_iterator, typename C::const_iterator> Eq;
     Eq eq = c.equal_range(1);
     assert(std::distance(eq.first, eq.second) == 2);
-    C::const_iterator i = eq.first;
+    typename C::const_iterator i = eq.first;
     assert(i->first == 1);
     assert(i->second == "one");
     ++i;
@@ -85,4 +87,33 @@ int main()
         assert(c.bucket_count() == 31);
         test(c);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef std::unordered_multimap<int, std::string, std::hash<int>, std::equal_to<int>,
+                            min_allocator<std::pair<const int, std::string>>> C;
+        typedef std::pair<int, std::string> P;
+        P a[] =
+        {
+            P(1, "one"),
+            P(2, "two"),
+            P(3, "three"),
+            P(4, "four"),
+            P(1, "four"),
+            P(2, "four"),
+        };
+        C c(a, a + sizeof(a)/sizeof(a[0]));
+        test(c);
+        assert(c.bucket_count() >= 7);
+        c.rehash(3);
+        assert(c.bucket_count() == 7);
+        test(c);
+        c.max_load_factor(2);
+        c.rehash(3);
+        assert(c.bucket_count() == 3);
+        test(c);
+        c.rehash(31);
+        assert(c.bucket_count() == 31);
+        test(c);
+    }
+#endif
 }

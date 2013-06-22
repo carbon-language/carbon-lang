@@ -19,6 +19,8 @@
 #include <string>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 int main()
 {
     {
@@ -43,4 +45,29 @@ int main()
         assert(c.bucket_size(5) == 0);
         assert(c.bucket_size(6) == 0);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef std::unordered_multimap<int, std::string, std::hash<int>, std::equal_to<int>,
+                            min_allocator<std::pair<const int, std::string>>> C;
+        typedef std::pair<int, std::string> P;
+        P a[] =
+        {
+            P(1, "one"),
+            P(2, "two"),
+            P(3, "three"),
+            P(4, "four"),
+            P(1, "four"),
+            P(2, "four"),
+        };
+        const C c(std::begin(a), std::end(a));
+        assert(c.bucket_count() >= 7);
+        assert(c.bucket_size(0) == 0);
+        assert(c.bucket_size(1) == 2);
+        assert(c.bucket_size(2) == 2);
+        assert(c.bucket_size(3) == 1);
+        assert(c.bucket_size(4) == 1);
+        assert(c.bucket_size(5) == 0);
+        assert(c.bucket_size(6) == 0);
+    }
+#endif
 }

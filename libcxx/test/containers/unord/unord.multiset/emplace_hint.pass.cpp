@@ -20,6 +20,7 @@
 #include <cassert>
 
 #include "../../Emplaceable.h"
+#include "../../min_allocator.h"
 
 int main()
 {
@@ -41,5 +42,25 @@ int main()
         assert(c.size() == 3);
         assert(*r == Emplaceable(5, 6));
     }
+#if __cplusplus >= 201103L
+    {
+        typedef std::unordered_multiset<Emplaceable, std::hash<Emplaceable>,
+                      std::equal_to<Emplaceable>, min_allocator<Emplaceable>> C;
+        typedef C::iterator R;
+        C c;
+        C::const_iterator e = c.end();
+        R r = c.emplace_hint(e);
+        assert(c.size() == 1);
+        assert(*r == Emplaceable());
+
+        r = c.emplace_hint(e, Emplaceable(5, 6));
+        assert(c.size() == 2);
+        assert(*r == Emplaceable(5, 6));
+
+        r = c.emplace_hint(r, 5, 6);
+        assert(c.size() == 3);
+        assert(*r == Emplaceable(5, 6));
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

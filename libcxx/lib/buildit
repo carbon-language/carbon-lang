@@ -35,7 +35,7 @@ then
   RC_ProjectSourceVersion=1
 fi
 
-EXTRA_FLAGS="-std=c++0x -fstrict-aliasing -Wall -Wextra -Wshadow -Wconversion \
+EXTRA_FLAGS="-std=c++11 -fstrict-aliasing -Wall -Wextra -Wshadow -Wconversion \
              -Wnewline-eof -Wpadded -Wmissing-prototypes -Wstrict-aliasing=2 \
              -Wstrict-overflow=4 "
 
@@ -48,7 +48,7 @@ case $TRIPLE in
     SOEXT=dylib
     if [ "$MACOSX_DEPLOYMENT_TARGET" == "10.6" ]
     then
-        EXTRA_FLAGS="-std=c++0x -U__STRICT_ANSI__"
+        EXTRA_FLAGS="-std=c++11 -U__STRICT_ANSI__"
         LDSHARED_FLAGS="-o libc++.1.dylib \
             -dynamiclib -nodefaultlibs -current_version 1 \
             -compatibility_version 1 \

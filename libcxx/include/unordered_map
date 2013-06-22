@@ -492,8 +492,8 @@ class __hash_map_node_destructor
 public:
     typedef typename __alloc_traits::pointer    pointer;
 private:
-    typedef typename value_type::first_type     first_type;
-    typedef typename value_type::second_type    second_type;
+    typedef typename value_type::value_type::first_type     first_type;
+    typedef typename value_type::value_type::second_type    second_type;
 
     allocator_type& __na_;
 
@@ -535,9 +535,9 @@ public:
     void operator()(pointer __p) _NOEXCEPT
     {
         if (__second_constructed)
-            __alloc_traits::destroy(__na_, _VSTD::addressof(__p->__value_.second));
+            __alloc_traits::destroy(__na_, _VSTD::addressof(__p->__value_.__cc.second));
         if (__first_constructed)
-            __alloc_traits::destroy(__na_, _VSTD::addressof(__p->__value_.first));
+            __alloc_traits::destroy(__na_, _VSTD::addressof(__p->__value_.__cc.first));
         if (__p)
             __alloc_traits::deallocate(__na_, __p, 1);
     }
@@ -549,8 +549,8 @@ class _LIBCPP_TYPE_VIS __hash_map_iterator
     _HashIterator __i_;
 
     typedef pointer_traits<typename _HashIterator::pointer>      __pointer_traits;
-    typedef const typename _HashIterator::value_type::first_type key_type;
-    typedef typename _HashIterator::value_type::second_type      mapped_type;
+    typedef const typename _HashIterator::value_type::value_type::first_type key_type;
+    typedef typename _HashIterator::value_type::value_type::second_type      mapped_type;
 public:
     typedef forward_iterator_tag                                 iterator_category;
     typedef pair<key_type, mapped_type>                          value_type;
@@ -571,9 +571,9 @@ public:
     __hash_map_iterator(_HashIterator __i) _NOEXCEPT : __i_(__i) {}
 
     _LIBCPP_INLINE_VISIBILITY
-    reference operator*() const {return *operator->();}
+    reference operator*() const {return __i_->__cc;}
     _LIBCPP_INLINE_VISIBILITY
-    pointer operator->() const {return (pointer)__i_.operator->();}
+    pointer operator->() const {return pointer_traits<pointer>::pointer_to(__i_->__cc);}
 
     _LIBCPP_INLINE_VISIBILITY
     __hash_map_iterator& operator++() {++__i_; return *this;}
@@ -605,8 +605,8 @@ class _LIBCPP_TYPE_VIS __hash_map_const_iterator
     _HashIterator __i_;
 
     typedef pointer_traits<typename _HashIterator::pointer>      __pointer_traits;
-    typedef const typename _HashIterator::value_type::first_type key_type;
-    typedef typename _HashIterator::value_type::second_type      mapped_type;
+    typedef const typename _HashIterator::value_type::value_type::first_type key_type;
+    typedef typename _HashIterator::value_type::value_type::second_type      mapped_type;
 public:
     typedef forward_iterator_tag                                 iterator_category;
     typedef pair<key_type, mapped_type>                          value_type;
@@ -632,9 +632,9 @@ public:
                 : __i_(__i.__i_) {}
 
     _LIBCPP_INLINE_VISIBILITY
-    reference operator*() const {return *operator->();}
+    reference operator*() const {return __i_->__cc;}
     _LIBCPP_INLINE_VISIBILITY
-    pointer operator->() const {return (pointer)__i_.operator->();}
+    pointer operator->() const {return pointer_traits<pointer>::pointer_to(__i_->__cc);}
 
     _LIBCPP_INLINE_VISIBILITY
     __hash_map_const_iterator& operator++() {++__i_; return *this;}
@@ -671,11 +671,58 @@ public:
     typedef _Pred                                          key_equal;
     typedef _Alloc                                         allocator_type;
     typedef pair<const key_type, mapped_type>              value_type;
+    typedef pair<key_type, mapped_type>                    __nc_value_type;
     typedef value_type&                                    reference;
     typedef const value_type&                              const_reference;
 
 private:
-    typedef pair<key_type, mapped_type>                    __value_type;
+#if __cplusplus >= 201103L
+    union __value_type
+    {
+        typedef typename unordered_map::value_type value_type;
+        typedef typename unordered_map::__nc_value_type __nc_value_type;
+        value_type __cc;
+        __nc_value_type __nc;
+
+        template <class ..._Args>
+        __value_type(_Args&& ...__args)
+            : __cc(std::forward<_Args>(__args)...) {}
+
+        __value_type(const __value_type& __v)
+            : __cc(std::move(__v.__cc)) {}
+
+        __value_type(__value_type&& __v)
+            : __nc(std::move(__v.__nc)) {}
+
+        __value_type& operator=(const __value_type& __v)
+            {__nc = __v.__cc; return *this;}
+
+        __value_type& operator=(__value_type&& __v)
+            {__nc = std::move(__v.__nc); return *this;}
+
+        ~__value_type() {__cc.~value_type();}
+
+        operator const value_type& () const {return __cc;}
+    };
+#else
+    struct __value_type
+    {
+        typedef typename unordered_map::value_type value_type;
+        value_type __cc;
+
+        __value_type() {}
+
+        template <class _A0>
+        __value_type(const _A0& __a0)
+            : __cc(__a0) {}
+
+        template <class _A0, class _A1>
+        __value_type(const _A0& __a0, const _A1& __a1)
+            : __cc(__a0, __a1) {}
+
+        operator const value_type& () const {return __cc;}
+    };
+#endif
     typedef __unordered_map_hasher<key_type, mapped_type, hasher>   __hasher;
     typedef __unordered_map_equal<key_type, mapped_type, key_equal> __key_equal;
     typedef typename allocator_traits<allocator_type>::template
@@ -750,7 +797,16 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     unordered_map& operator=(const unordered_map& __u)
     {
+#if __cplusplus >= 201103L
         __table_ = __u.__table_;
+#else
+        __table_.clear();
+        __table_.hash_function() = __u.__table_.hash_function();
+        __table_.key_eq() = __u.__table_.key_eq();
+        __table_.max_load_factor() = __u.__table_.max_load_factor();
+        __table_.__copy_assign_alloc(__u.__table_);
+        insert(__u.begin(), __u.end());
+#endif
         return *this;
     }
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -1132,10 +1188,10 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(_A0&& __a0)
 {
     __node_allocator& __na = __table_.__node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.first),
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.first),
                              _VSTD::forward<_A0>(__a0));
     __h.get_deleter().__first_constructed = true;
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.second));
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.second));
     __h.get_deleter().__second_constructed = true;
     return __h;
 }
@@ -1180,9 +1236,9 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(const key_type&
 {
     __node_allocator& __na = __table_.__node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.first), __k);
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.first), __k);
     __h.get_deleter().__first_constructed = true;
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.second));
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.second));
     __h.get_deleter().__second_constructed = true;
     return _VSTD::move(__h);
 }
@@ -1304,11 +1360,58 @@ public:
     typedef _Pred                                          key_equal;
     typedef _Alloc                                         allocator_type;
     typedef pair<const key_type, mapped_type>              value_type;
+    typedef pair<key_type, mapped_type>                    __nc_value_type;
     typedef value_type&                                    reference;
     typedef const value_type&                              const_reference;
 
 private:
-    typedef pair<key_type, mapped_type>                    __value_type;
+#if __cplusplus >= 201103L
+    union __value_type
+    {
+        typedef typename unordered_multimap::value_type value_type;
+        typedef typename unordered_multimap::__nc_value_type __nc_value_type;
+        value_type __cc;
+        __nc_value_type __nc;
+
+        template <class ..._Args>
+        __value_type(_Args&& ...__args)
+            : __cc(std::forward<_Args>(__args)...) {}
+
+        __value_type(const __value_type& __v)
+            : __cc(std::move(__v.__cc)) {}
+
+        __value_type(__value_type&& __v)
+            : __nc(std::move(__v.__nc)) {}
+
+        __value_type& operator=(const __value_type& __v)
+            {__nc = __v.__cc; return *this;}
+
+        __value_type& operator=(__value_type&& __v)
+            {__nc = std::move(__v.__nc); return *this;}
+
+        ~__value_type() {__cc.~value_type();}
+
+        operator const value_type& () const {return __cc;}
+    };
+#else
+    struct __value_type
+    {
+        typedef typename unordered_multimap::value_type value_type;
+        value_type __cc;
+
+        __value_type() {}
+
+        template <class _A0>
+        __value_type(const _A0& __a0)
+            : __cc(__a0) {}
+
+        template <class _A0, class _A1>
+        __value_type(const _A0& __a0, const _A1& __a1)
+            : __cc(__a0, __a1) {}
+
+        operator const value_type& () const {return __cc;}
+    };
+#endif
     typedef __unordered_map_hasher<key_type, mapped_type, hasher>   __hasher;
     typedef __unordered_map_equal<key_type, mapped_type, key_equal> __key_equal;
     typedef typename allocator_traits<allocator_type>::template
@@ -1382,7 +1485,16 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     unordered_multimap& operator=(const unordered_multimap& __u)
     {
+#if __cplusplus >= 201103L
         __table_ = __u.__table_;
+#else
+        __table_.clear();
+        __table_.hash_function() = __u.__table_.hash_function();
+        __table_.key_eq() = __u.__table_.key_eq();
+        __table_.max_load_factor() = __u.__table_.max_load_factor();
+        __table_.__copy_assign_alloc(__u.__table_);
+        insert(__u.begin(), __u.end());
+#endif
         return *this;
     }
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -1754,10 +1866,10 @@ unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(_A0&& __a0
 {
     __node_allocator& __na = __table_.__node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.first),
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.first),
                              _VSTD::forward<_A0>(__a0));
     __h.get_deleter().__first_constructed = true;
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.second));
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.second));
     __h.get_deleter().__second_constructed = true;
     return __h;
 }

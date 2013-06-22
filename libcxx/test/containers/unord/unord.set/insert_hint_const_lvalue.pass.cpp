@@ -18,6 +18,8 @@
 #include <unordered_set>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 int main()
 {
     {
@@ -42,4 +44,29 @@ int main()
         assert(c.size() == 3);
         assert(*r == 5.5);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef std::unordered_set<double, std::hash<double>,
+                                std::equal_to<double>, min_allocator<double>> C;
+        typedef C::iterator R;
+        typedef C::value_type P;
+        C c;
+        C::const_iterator e = c.end();
+        R r = c.insert(e, P(3.5));
+        assert(c.size() == 1);
+        assert(*r == 3.5);
+
+        r = c.insert(e, P(3.5));
+        assert(c.size() == 1);
+        assert(*r == 3.5);
+
+        r = c.insert(e, P(4.5));
+        assert(c.size() == 2);
+        assert(*r == 4.5);
+
+        r = c.insert(e, P(5.5));
+        assert(c.size() == 3);
+        assert(*r == 5.5);
+    }
+#endif
 }

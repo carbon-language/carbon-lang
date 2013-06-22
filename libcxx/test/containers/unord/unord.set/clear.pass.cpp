@@ -18,6 +18,8 @@
 #include <unordered_set>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 int main()
 {
     {
@@ -36,4 +38,22 @@ int main()
         c.clear();
         assert(c.size() == 0);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef std::unordered_set<int, std::hash<int>, std::equal_to<int>, min_allocator<int>> C;
+        typedef int P;
+        P a[] =
+        {
+            P(1),
+            P(2),
+            P(3),
+            P(4),
+            P(1),
+            P(2)
+        };
+        C c(a, a + sizeof(a)/sizeof(a[0]));
+        c.clear();
+        assert(c.size() == 0);
+    }
+#endif
 }

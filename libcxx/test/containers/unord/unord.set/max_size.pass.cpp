@@ -18,10 +18,19 @@
 #include <unordered_set>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 int main()
 {
     {
         std::unordered_set<int> u;
         assert(u.max_size() > 0);
     }
+#if __cplusplus >= 201103L
+    {
+        std::unordered_set<int, std::hash<int>,
+                                      std::equal_to<int>, min_allocator<int>> u;
+        assert(u.max_size() > 0);
+    }
+#endif
 }

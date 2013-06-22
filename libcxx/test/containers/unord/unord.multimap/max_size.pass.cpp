@@ -18,10 +18,19 @@
 #include <unordered_map>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 int main()
 {
     {
         std::unordered_multimap<int, int> u;
         assert(u.max_size() > 0);
     }
+#if __cplusplus >= 201103L
+    {
+        std::unordered_multimap<int, int, std::hash<int>, std::equal_to<int>,
+                            min_allocator<std::pair<const int, int>>> u;
+        assert(u.max_size() > 0);
+    }
+#endif
 }

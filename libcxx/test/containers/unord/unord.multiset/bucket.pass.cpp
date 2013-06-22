@@ -18,6 +18,8 @@
 #include <unordered_set>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 int main()
 {
     {
@@ -38,4 +40,25 @@ int main()
         for (size_t i = 0; i < 13; ++i)
             assert(c.bucket(i) == i % bc);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef std::unordered_multiset<int, std::hash<int>,
+                                      std::equal_to<int>, min_allocator<int>> C;
+        typedef int P;
+        P a[] =
+        {
+            P(1),
+            P(2),
+            P(3),
+            P(4),
+            P(1),
+            P(2)
+        };
+        const C c(std::begin(a), std::end(a));
+        size_t bc = c.bucket_count();
+        assert(bc >= 7);
+        for (size_t i = 0; i < 13; ++i)
+            assert(c.bucket(i) == i % bc);
+    }
+#endif
 }

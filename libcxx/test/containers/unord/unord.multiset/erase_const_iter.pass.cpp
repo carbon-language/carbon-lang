@@ -18,6 +18,8 @@
 #include <unordered_set>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 int main()
 {
     {
@@ -41,4 +43,28 @@ int main()
         assert(c.count(3) == 1);
         assert(c.count(4) == 1);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef std::unordered_multiset<int, std::hash<int>,
+                                      std::equal_to<int>, min_allocator<int>> C;
+        typedef int P;
+        P a[] =
+        {
+            P(1),
+            P(2),
+            P(3),
+            P(4),
+            P(1),
+            P(2)
+        };
+        C c(a, a + sizeof(a)/sizeof(a[0]));
+        C::const_iterator i = c.find(2);
+        C::iterator j = c.erase(i);
+        assert(c.size() == 5);
+        assert(c.count(1) == 2);
+        assert(c.count(2) == 1);
+        assert(c.count(3) == 1);
+        assert(c.count(4) == 1);
+    }
+#endif
 }

@@ -33,7 +33,6 @@ template <class _NodePtr>
 struct __hash_node_base
 {
     typedef __hash_node_base __first_node;
- //   typedef _NodePtr pointer;
 
     _NodePtr    __next_;
 
@@ -111,7 +110,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
         reference operator*() const {return __node_->__value_;}
     _LIBCPP_INLINE_VISIBILITY
-        pointer operator->() const {return _VSTD::addressof(__node_->__value_);}
+        pointer operator->() const {return pointer_traits<pointer>::pointer_to(__node_->__value_);}
 
     _LIBCPP_INLINE_VISIBILITY
     __hash_iterator& operator++()
@@ -189,7 +188,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
         reference operator*() const {return __node_->__value_;}
     _LIBCPP_INLINE_VISIBILITY
-        pointer operator->() const {return _VSTD::addressof(__node_->__value_);}
+        pointer operator->() const {return pointer_traits<pointer>::pointer_to(__node_->__value_);}
 
     _LIBCPP_INLINE_VISIBILITY
     __hash_const_iterator& operator++()
@@ -255,7 +254,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
         reference operator*() const {return __node_->__value_;}
     _LIBCPP_INLINE_VISIBILITY
-        pointer operator->() const {return &__node_->__value_;}
+        pointer operator->() const {return pointer_traits<pointer>::pointer_to(__node_->__value_);}
 
     _LIBCPP_INLINE_VISIBILITY
     __hash_local_iterator& operator++()
@@ -345,7 +344,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
         reference operator*() const {return __node_->__value_;}
     _LIBCPP_INLINE_VISIBILITY
-        pointer operator->() const {return &__node_->__value_;}
+        pointer operator->() const {return pointer_traits<pointer>::pointer_to(__node_->__value_);}
 
     _LIBCPP_INLINE_VISIBILITY
     __hash_const_local_iterator& operator++()
@@ -505,8 +504,15 @@ public:
                                                      __node_allocator;
     typedef allocator_traits<__node_allocator>       __node_traits;
     typedef typename __node_traits::pointer          __node_pointer;
-    typedef typename __node_traits::const_pointer    __node_const_pointer;
+    typedef typename __node_traits::pointer          __node_const_pointer;
     typedef __hash_node_base<__node_pointer>         __first_node;
+    typedef typename pointer_traits<__node_pointer>::template
+#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+            rebind<__first_node>
+#else
+            rebind<__first_node>::other
+#endif
+                                                     __node_base_pointer;
 
 private:
 
@@ -558,9 +564,9 @@ public:
 
 public:
     typedef __hash_iterator<__node_pointer>                   iterator;
-    typedef __hash_const_iterator<__node_const_pointer>       const_iterator;
+    typedef __hash_const_iterator<__node_pointer>             const_iterator;
     typedef __hash_local_iterator<__node_pointer>             local_iterator;
-    typedef __hash_const_local_iterator<__node_const_pointer> const_local_iterator;
+    typedef __hash_const_local_iterator<__node_pointer>       const_local_iterator;
 
     __hash_table()
         _NOEXCEPT_(
@@ -706,7 +712,7 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY
     size_type max_bucket_count() const _NOEXCEPT
-        {return __bucket_list_.get_deleter().__alloc().max_size();}
+        {return __pointer_alloc_traits::max_size(__bucket_list_.get_deleter().__alloc());}
     size_type bucket_size(size_type __n) const;
     _LIBCPP_INLINE_VISIBILITY float load_factor() const _NOEXCEPT
     {
@@ -807,6 +813,9 @@ private:
 
     void __deallocate(__node_pointer __np) _NOEXCEPT;
     __node_pointer __detach() _NOEXCEPT;
+
+    template <class, class, class, class, class> friend class _LIBCPP_TYPE_VIS unordered_map;
+    template <class, class, class, class, class> friend class _LIBCPP_TYPE_VIS unordered_multimap;
 };
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
@@ -893,7 +902,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(__hash_table&& __u)
     if (size() > 0)
     {
         __bucket_list_[__constrain_hash(__p1_.first().__next_->__hash_, bucket_count())] =
-            static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
+            static_cast<__node_pointer>(pointer_traits<__node_base_pointer>::pointer_to(__p1_.first()));
         __u.__p1_.first().__next_ = nullptr;
         __u.size() = 0;
     }
@@ -917,7 +926,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(__hash_table&& __u,
             __p1_.first().__next_ = __u.__p1_.first().__next_;
             __u.__p1_.first().__next_ = nullptr;
             __bucket_list_[__constrain_hash(__p1_.first().__next_->__hash_, bucket_count())] =
-                static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
+                static_cast<__node_pointer>(pointer_traits<__node_base_pointer>::pointer_to(__p1_.first()));
             size() = __u.size();
             __u.size() = 0;
         }
@@ -1014,7 +1023,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__move_assign(
     if (size() > 0)
     {
         __bucket_list_[__constrain_hash(__p1_.first().__next_->__hash_, bucket_count())] =
-            static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
+            static_cast<__node_pointer>(pointer_traits<__node_base_pointer>::pointer_to(__p1_.first()));
         __u.__p1_.first().__next_ = nullptr;
         __u.size() = 0;
     }
@@ -1236,7 +1245,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_unique(__node_pointer __
         __node_pointer __pn = __bucket_list_[__chash];
         if (__pn == nullptr)
         {
-            __pn = static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
+            __pn = static_cast<__node_pointer>(pointer_traits<__node_base_pointer>::pointer_to(__p1_.first()));
             __nd->__next_ = __pn->__next_;
             __pn->__next_ = __nd;
             // fix up __bucket_list_
@@ -1274,7 +1283,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_multi(__node_pointer __c
     __node_pointer __pn = __bucket_list_[__chash];
     if (__pn == nullptr)
     {
-        __pn = static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
+        __pn = static_cast<__node_pointer>(pointer_traits<__node_base_pointer>::pointer_to(__p1_.first()));
         __cp->__next_ = __pn->__next_;
         __pn->__next_ = __cp;
         // fix up __bucket_list_
@@ -1322,7 +1331,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_multi(
 {
     if (__p != end() && key_eq()(*__p, __cp->__value_))
     {
-        __node_pointer __np = const_cast<__node_pointer>(__p.__node_);
+        __node_pointer __np = __p.__node_;
         __cp->__hash_ = __np->__hash_;
         size_type __bc = bucket_count();
         if (size()+1 > __bc * max_load_factor() || __bc == 0)
@@ -1380,7 +1389,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_unique(const value_type& __x)
         __node_pointer __pn = __bucket_list_[__chash];
         if (__pn == nullptr)
         {
-            __pn = static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
+            __pn = static_cast<__node_pointer>(pointer_traits<__node_base_pointer>::pointer_to(__p1_.first()));
             __h->__next_ = __pn->__next_;
             __pn->__next_ = __h.get();
             // fix up __bucket_list_
@@ -1542,7 +1551,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__rehash(size_type __nbc)
     {
         for (size_type __i = 0; __i < __nbc; ++__i)
             __bucket_list_[__i] = nullptr;
-        __node_pointer __pp(static_cast<__node_pointer>(_VSTD::addressof(__p1_.first())));
+        __node_pointer __pp(static_cast<__node_pointer>(pointer_traits<__node_base_pointer>::pointer_to(__p1_.first())));
         __node_pointer __cp = __pp->__next_;
         if (__cp != nullptr)
         {
@@ -1700,7 +1709,7 @@ template <class _Tp, class _Hash, class _Equal, class _Alloc>
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::erase(const_iterator __p)
 {
-    __node_pointer __np = const_cast<__node_pointer>(__p.__node_);
+    __node_pointer __np = __p.__node_;
     iterator __r(__np);
     ++__r;
     remove(__p);
@@ -1717,7 +1726,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::erase(const_iterator __first,
         ++__first;
         erase(__p);
     }
-    __node_pointer __np = const_cast<__node_pointer>(__last.__node_);
+    __node_pointer __np = __last.__node_;
     return iterator (__np);
 }
 
@@ -1757,7 +1766,7 @@ typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_holder
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::remove(const_iterator __p) _NOEXCEPT
 {
     // current node
-    __node_pointer __cn = const_cast<__node_pointer>(__p.__node_);
+    __node_pointer __cn = __p.__node_;
     size_type __bc = bucket_count();
     size_t __chash = __constrain_hash(__cn->__hash_, __bc);
     // find previous node
@@ -1767,7 +1776,8 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::remove(const_iterator __p) _NOEXCEPT
     // Fix up __bucket_list_
         // if __pn is not in same bucket (before begin is not in same bucket) &&
         //    if __cn->__next_ is not in same bucket (nullptr is not in same bucket)
-    if (__pn == _VSTD::addressof(__p1_.first()) || __constrain_hash(__pn->__hash_, __bc) != __chash)
+    if (__pn == static_cast<__node_pointer>(pointer_traits<__node_base_pointer>::pointer_to(__p1_.first()))
+                            || __constrain_hash(__pn->__hash_, __bc) != __chash)
     {
         if (__cn->__next_ == nullptr || __constrain_hash(__cn->__next_->__hash_, __bc) != __chash)
             __bucket_list_[__chash] = nullptr;
@@ -1907,10 +1917,10 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::swap(__hash_table& __u)
     __p3_.swap(__u.__p3_);
     if (size() > 0)
         __bucket_list_[__constrain_hash(__p1_.first().__next_->__hash_, bucket_count())] =
-            static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
+            static_cast<__node_pointer>(pointer_traits<__node_base_pointer>::pointer_to(__p1_.first()));
     if (__u.size() > 0)
         __u.__bucket_list_[__constrain_hash(__u.__p1_.first().__next_->__hash_, __u.bucket_count())] =
-            static_cast<__node_pointer>(_VSTD::addressof(__u.__p1_.first()));
+            static_cast<__node_pointer>(pointer_traits<__node_base_pointer>::pointer_to(__u.__p1_.first()));
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>

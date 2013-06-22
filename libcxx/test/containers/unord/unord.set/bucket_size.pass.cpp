@@ -18,6 +18,8 @@
 #include <unordered_set>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 int main()
 {
     {
@@ -40,4 +42,26 @@ int main()
         assert(c.bucket_size(3) == 1);
         assert(c.bucket_size(4) == 1);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef std::unordered_set<int, std::hash<int>, std::equal_to<int>, min_allocator<int>> C;
+        typedef int P;
+        P a[] =
+        {
+            P(1),
+            P(2),
+            P(3),
+            P(4),
+            P(1),
+            P(2)
+        };
+        const C c(std::begin(a), std::end(a));
+        assert(c.bucket_count() >= 5);
+        assert(c.bucket_size(0) == 0);
+        assert(c.bucket_size(1) == 1);
+        assert(c.bucket_size(2) == 1);
+        assert(c.bucket_size(3) == 1);
+        assert(c.bucket_size(4) == 1);
+    }
+#endif
 }

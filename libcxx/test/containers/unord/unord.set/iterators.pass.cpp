@@ -23,6 +23,8 @@
 #include <unordered_set>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 int main()
 {
     {
@@ -63,4 +65,46 @@ int main()
         assert(std::distance(c.cbegin(), c.cend()) == c.size());
         C::const_iterator i;
     }
+#if __cplusplus >= 201103L
+    {
+        typedef std::unordered_set<int, std::hash<int>,
+                                      std::equal_to<int>, min_allocator<int>> C;
+        typedef int P;
+        P a[] =
+        {
+            P(1),
+            P(2),
+            P(3),
+            P(4),
+            P(1),
+            P(2)
+        };
+        C c(a, a + sizeof(a)/sizeof(a[0]));
+        assert(c.bucket_count() >= 5);
+        assert(c.size() == 4);
+        assert(std::distance(c.begin(), c.end()) == c.size());
+        assert(std::distance(c.cbegin(), c.cend()) == c.size());
+        C::iterator i;
+    }
+    {
+        typedef std::unordered_set<int, std::hash<int>,
+                                      std::equal_to<int>, min_allocator<int>> C;
+        typedef int P;
+        P a[] =
+        {
+            P(1),
+            P(2),
+            P(3),
+            P(4),
+            P(1),
+            P(2)
+        };
+        const C c(a, a + sizeof(a)/sizeof(a[0]));
+        assert(c.bucket_count() >= 5);
+        assert(c.size() == 4);
+        assert(std::distance(c.begin(), c.end()) == c.size());
+        assert(std::distance(c.cbegin(), c.cend()) == c.size());
+        C::const_iterator i;
+    }
+#endif
 }
