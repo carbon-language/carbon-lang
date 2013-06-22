@@ -220,6 +220,10 @@ void LiveRangeEdit::eliminateDeadDef(MachineInstr *MI, ToShrinkSet &ToShrink) {
   assert(MI->allDefsAreDead() && "Def isn't really dead");
   SlotIndex Idx = LIS.getInstructionIndex(MI).getRegSlot();
 
+  // Never delete a bundled instruction.
+  if (MI->isBundled()) {
+    return;
+  }
   // Never delete inline asm.
   if (MI->isInlineAsm()) {
     DEBUG(dbgs() << "Won't delete: " << Idx << '\t' << *MI);
