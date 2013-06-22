@@ -2183,17 +2183,24 @@ CFGBlock *CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   // Now create the true branch.
   {
     // Save the current values for Succ, continue and break targets.
-    SaveAndRestore<CFGBlock*> save_Succ(Succ);
+    SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ);
     SaveAndRestore<JumpTarget> save_continue(ContinueJumpTarget),
-        save_break(BreakJumpTarget);
+                               save_break(BreakJumpTarget);
 
+    // Add an intermediate block between the BodyBlock and the
+    // EntryConditionBlock to represent the "loop back" transition, for looping
+    // back to the head of the loop.
+    CFGBlock *LoopBackBlock = 0;
+    Succ = LoopBackBlock = createBlock();
+    LoopBackBlock->setLoopTarget(S);
+    
     BreakJumpTarget = JumpTarget(LoopSuccessor, ScopePos);
-    ContinueJumpTarget = JumpTarget(EntryConditionBlock, ScopePos);
+    ContinueJumpTarget = JumpTarget(Succ, ScopePos);
 
     CFGBlock *BodyBlock = addStmt(S->getBody());
 
     if (!BodyBlock)
-      BodyBlock = EntryConditionBlock; // can happen for "for (X in Y) ;"
+      BodyBlock = ContinueJumpTarget.block; // can happen for "for (X in Y) ;"
     else if (Block) {
       if (badCFG)
         return 0;
