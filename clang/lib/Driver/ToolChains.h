@@ -74,7 +74,7 @@ protected:
 
     // FIXME: These might be better as path objects.
     std::string GCCInstallPath;
-    std::string GCCMultiarchSuffix;
+    std::string GCCBiarchSuffix;
     std::string GCCParentLibPath;
 
     GCCVersion Version;
@@ -92,8 +92,9 @@ protected:
     /// \brief Get the detected GCC installation path.
     StringRef getInstallPath() const { return GCCInstallPath; }
 
-    /// \brief Get the detected GCC installation path suffix for multiarch GCCs.
-    StringRef getMultiarchSuffix() const { return GCCMultiarchSuffix; }
+    /// \brief Get the detected GCC installation path suffix for the bi-arch
+    /// target variant.
+    StringRef getBiarchSuffix() const { return GCCBiarchSuffix; }
 
     /// \brief Get the detected GCC parent lib path.
     StringRef getParentLibPath() const { return GCCParentLibPath; }
@@ -102,19 +103,19 @@ protected:
     const GCCVersion &getVersion() const { return Version; }
 
   private:
-    static void CollectLibDirsAndTriples(
-      const llvm::Triple &TargetTriple,
-      const llvm::Triple &MultiarchTriple,
-      SmallVectorImpl<StringRef> &LibDirs,
-      SmallVectorImpl<StringRef> &TripleAliases,
-      SmallVectorImpl<StringRef> &MultiarchLibDirs,
-      SmallVectorImpl<StringRef> &MultiarchTripleAliases);
+    static void
+    CollectLibDirsAndTriples(const llvm::Triple &TargetTriple,
+                             const llvm::Triple &BiarchTriple,
+                             SmallVectorImpl<StringRef> &LibDirs,
+                             SmallVectorImpl<StringRef> &TripleAliases,
+                             SmallVectorImpl<StringRef> &BiarchLibDirs,
+                             SmallVectorImpl<StringRef> &BiarchTripleAliases);
 
     void ScanLibDirForGCCTriple(llvm::Triple::ArchType TargetArch,
                                 const llvm::opt::ArgList &Args,
                                 const std::string &LibDir,
                                 StringRef CandidateTriple,
-                                bool NeedsMultiarchSuffix = false);
+                                bool NeedsBiarchSuffix = false);
   };
 
   GCCInstallationDetector GCCInstallation;
