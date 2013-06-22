@@ -347,16 +347,16 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   zero(DotStrTabSHeader);
   DotStrTabSHeader.sh_name = SHStrTab.addString(StringRef(".strtab"));
   createStringTableSectionHeader(DotStrTabSHeader, State.getStringTable(), CBA);
+  SHeaders.push_back(DotStrTabSHeader);
 
   // Section header string table header.
   Elf_Shdr SHStrTabSHeader;
   zero(SHStrTabSHeader);
   createStringTableSectionHeader(SHStrTabSHeader, SHStrTab, CBA);
+  SHeaders.push_back(SHStrTabSHeader);
 
   OS.write((const char *)&Header, sizeof(Header));
   writeVectorData(OS, SHeaders);
-  OS.write((const char *)&DotStrTabSHeader, sizeof(DotStrTabSHeader));
-  OS.write((const char *)&SHStrTabSHeader, sizeof(SHStrTabSHeader));
   CBA.writeBlobToStream(OS);
   return 0;
 }
