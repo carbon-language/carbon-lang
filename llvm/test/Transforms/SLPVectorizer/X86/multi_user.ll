@@ -12,8 +12,8 @@ target triple = "x86_64-apple-macosx10.7.0"
 ;}
 
 ;CHECK: @foo
-;CHECK: load <4 x i32>
 ;CHECK: insertelement <4 x i32>
+;CHECK: load <4 x i32>
 ;CHECK: add <4 x i32>
 ;CHECK: store <4 x i32>
 ;CHECK: ret

@@ -3,7 +3,6 @@ add_llvm_library(LLVMVectorize
   Vectorize.cpp
   LoopVectorize.cpp
   SLPVectorizer.cpp
-  VecUtils.cpp
   )
 
 add_dependencies(LLVMVectorize intrinsics_gen)
