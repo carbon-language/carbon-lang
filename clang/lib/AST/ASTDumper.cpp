@@ -16,6 +16,7 @@
 #include "clang/AST/Attr.h"
 #include "clang/AST/CommentVisitor.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclLookups.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
@@ -176,6 +177,7 @@ namespace  {
     void dumpName(const NamedDecl *D);
     bool hasNodes(const DeclContext *DC);
     void dumpDeclContext(const DeclContext *DC);
+    void dumpLookups(const DeclContext *DC);
     void dumpAttr(const Attr *A);
 
     // C++ Utilities
@@ -502,6 +504,51 @@ void ASTDumper::dumpDeclContext(const DeclContext *DC) {
     IndentScope Indent(*this);
     ColorScope Color(*this, UndeserializedColor);
     OS << "<undeserialized declarations>";
+  }
+}
+
+void ASTDumper::dumpLookups(const DeclContext *DC) {
+  IndentScope Indent(*this);
+
+  OS << "StoredDeclsMap ";
+  dumpBareDeclRef(cast<Decl>(DC));
+
+  const DeclContext *Primary = DC->getPrimaryContext();
+  if (Primary != DC) {
+    OS << " primary";
+    dumpPointer(cast<Decl>(Primary));
+  }
+
+  bool HasUndeserializedLookups = Primary->hasExternalVisibleStorage();
+
+  DeclContext::all_lookups_iterator I = Primary->noload_lookups_begin(),
+                                    E = Primary->noload_lookups_end();
+  while (I != E) {
+    DeclarationName Name = I.getLookupName();
+    DeclContextLookupResult R = *I++;
+    if (I == E && !HasUndeserializedLookups)
+      lastChild();
+
+    IndentScope Indent(*this);
+    OS << "DeclarationName ";
+    {
+      ColorScope Color(*this, DeclNameColor);
+      OS << '\'' << Name << '\'';
+    }
+
+    for (DeclContextLookupResult::iterator RI = R.begin(), RE = R.end();
+         RI != RE; ++RI) {
+      if (RI + 1 == RE)
+        lastChild();
+      dumpDeclRef(*RI);
+    }
+  }
+
+  if (HasUndeserializedLookups) {
+    lastChild();
+    IndentScope Indent(*this);
+    ColorScope Color(*this, UndeserializedColor);
+    OS << "<undeserialized lookups>";
   }
 }
 
@@ -1982,6 +2029,18 @@ void Decl::dumpColor() const {
               &getASTContext().getSourceManager(), /*ShowColors*/true);
   P.dumpDecl(this);
 }
+
+void DeclContext::dumpLookups() const {
+  const DeclContext *DC = this;
+  while (!DC->isTranslationUnit())
+    DC = DC->getParent();
+  ASTContext &Ctx = cast<TranslationUnitDecl>(DC)->getASTContext();
+
+  ASTDumper P(llvm::errs(), &Ctx.getCommentCommandTraits(),
+              &Ctx.getSourceManager());
+  P.dumpLookups(this);
+}
+
 //===----------------------------------------------------------------------===//
 // Stmt method implementations
 //===----------------------------------------------------------------------===//

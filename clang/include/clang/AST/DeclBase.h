@@ -1469,9 +1469,15 @@ public:
   /// of looking up every possible name.
   class all_lookups_iterator;
 
+  /// \brief Iterators over all possible lookups within this context.
   all_lookups_iterator lookups_begin() const;
-
   all_lookups_iterator lookups_end() const;
+
+  /// \brief Iterators over all possible lookups within this context that are
+  /// currently loaded; don't attempt to retrieve anything from an external
+  /// source.
+  all_lookups_iterator noload_lookups_begin() const;
+  all_lookups_iterator noload_lookups_end() const;
 
   /// udir_iterator - Iterates through the using-directives stored
   /// within this context.
@@ -1543,6 +1549,7 @@ public:
   static bool classof(const DeclContext *D) { return true; }
 
   LLVM_ATTRIBUTE_USED void dumpDeclContext() const;
+  LLVM_ATTRIBUTE_USED void dumpLookups() const;
 
 private:
   void reconcileExternalVisibleStorage();
