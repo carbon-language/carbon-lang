@@ -499,11 +499,13 @@ void Sema::checkCall(NamedDecl *FDecl,
 
   // Printf and scanf checking.
   bool HandledFormatString = false;
-  for (specific_attr_iterator<FormatAttr>
-         I = FDecl->specific_attr_begin<FormatAttr>(),
-         E = FDecl->specific_attr_end<FormatAttr>(); I != E ; ++I)
-    if (CheckFormatArguments(*I, Args, IsMemberFunction, CallType, Loc, Range))
-        HandledFormatString = true;
+  if (FDecl)
+    for (specific_attr_iterator<FormatAttr>
+           I = FDecl->specific_attr_begin<FormatAttr>(),
+           E = FDecl->specific_attr_end<FormatAttr>(); I != E ; ++I)
+      if (CheckFormatArguments(*I, Args, IsMemberFunction, CallType, Loc,
+                               Range))
+          HandledFormatString = true;
 
   // Refuse POD arguments that weren't caught by the format string
   // checks above.
@@ -514,16 +516,19 @@ void Sema::checkCall(NamedDecl *FDecl,
         variadicArgumentPODCheck(Arg, CallType);
     }
 
-  for (specific_attr_iterator<NonNullAttr>
-         I = FDecl->specific_attr_begin<NonNullAttr>(),
-         E = FDecl->specific_attr_end<NonNullAttr>(); I != E; ++I)
-    CheckNonNullArguments(*I, Args.data(), Loc);
+  if (FDecl) {
+    for (specific_attr_iterator<NonNullAttr>
+           I = FDecl->specific_attr_begin<NonNullAttr>(),
+           E = FDecl->specific_attr_end<NonNullAttr>(); I != E; ++I)
+      CheckNonNullArguments(*I, Args.data(), Loc);
 
-  // Type safety checking.
-  for (specific_attr_iterator<ArgumentWithTypeTagAttr>
-         i = FDecl->specific_attr_begin<ArgumentWithTypeTagAttr>(),
-         e = FDecl->specific_attr_end<ArgumentWithTypeTagAttr>(); i != e; ++i) {
-    CheckArgumentWithTypeTag(*i, Args.data());
+    // Type safety checking.
+    for (specific_attr_iterator<ArgumentWithTypeTagAttr>
+           i = FDecl->specific_attr_begin<ArgumentWithTypeTagAttr>(),
+           e = FDecl->specific_attr_end<ArgumentWithTypeTagAttr>();
+         i != e; ++i) {
+      CheckArgumentWithTypeTag(*i, Args.data());
+    }
   }
 }
 
@@ -624,6 +629,23 @@ bool Sema::CheckPointerCall(NamedDecl *NDecl, CallExpr *TheCall,
             TheCall->getRParenLoc(),
             TheCall->getCallee()->getSourceRange(), CallType);
   
+  return false;
+}
+
+/// Checks function calls when a FunctionDecl or a NamedDecl is not available,
+/// such as function pointers returned from functions.
+bool Sema::CheckOtherCall(CallExpr *TheCall, const FunctionProtoType *Proto) {
+  VariadicCallType CallType = getVariadicCallType(/*FDecl=*/0, Proto,
+                                                  TheCall->getCallee());
+  unsigned NumProtoArgs = Proto ? Proto->getNumArgs() : 0;
+
+  checkCall(/*FDecl=*/0,
+            llvm::makeArrayRef<const Expr *>(TheCall->getArgs(),
+                                             TheCall->getNumArgs()),
+            NumProtoArgs, /*IsMemberFunction=*/false,
+            TheCall->getRParenLoc(),
+            TheCall->getCallee()->getSourceRange(), CallType);
+
   return false;
 }
 
