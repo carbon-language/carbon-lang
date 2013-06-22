@@ -704,8 +704,9 @@ Thread::ShouldStop (Event* event_ptr)
     
     if (log)
     {
-        log->Printf ("Thread::%s for tid = 0x%4.4" PRIx64 " 0x%4.4" PRIx64 ", pc = 0x%16.16" PRIx64,
-                     __FUNCTION__, 
+        log->Printf ("Thread::%s(%p) for tid = 0x%4.4" PRIx64 " 0x%4.4" PRIx64 ", pc = 0x%16.16" PRIx64,
+                     __FUNCTION__,
+                     this,
                      GetID (),
                      GetProtocolID (),
                      GetRegisterContext() ? GetRegisterContext()->GetPC() : LLDB_INVALID_ADDRESS);
@@ -966,8 +967,9 @@ Thread::ShouldReportRun (Event* event_ptr)
     {
         // Don't use GetCompletedPlan here, since that suppresses private plans.
         if (log)
-            log->Printf ("Current Plan for thread %d (0x%4.4" PRIx64 ", %s): %s being asked whether we should report run.",
-                         GetIndexID(), 
+            log->Printf ("Current Plan for thread %d(%p) (0x%4.4" PRIx64 ", %s): %s being asked whether we should report run.",
+                         GetIndexID(),
+                         this,
                          GetID(),
                          StateAsCString(GetTemporaryResumeState()),
                          m_completed_plan_stack.back()->GetName());
@@ -977,8 +979,9 @@ Thread::ShouldReportRun (Event* event_ptr)
     else
     {
         if (log)
-            log->Printf ("Current Plan for thread %d (0x%4.4" PRIx64 ", %s): %s being asked whether we should report run.",
-                         GetIndexID(), 
+            log->Printf ("Current Plan for thread %d(%p) (0x%4.4" PRIx64 ", %s): %s being asked whether we should report run.",
+                         GetIndexID(),
+                         this,
                          GetID(),
                          StateAsCString(GetTemporaryResumeState()),
                          GetCurrentPlan()->GetName());
@@ -1013,7 +1016,8 @@ Thread::PushPlan (ThreadPlanSP &thread_plan_sp)
         {
             StreamString s;
             thread_plan_sp->GetDescription (&s, lldb::eDescriptionLevelFull);
-            log->Printf("Pushing plan: \"%s\", tid = 0x%4.4" PRIx64 ".",
+            log->Printf("Thread::PushPlan(0x%p): \"%s\", tid = 0x%4.4" PRIx64 ".",
+                        this,
                         s.GetData(),
                         thread_plan_sp->GetThread().GetID());
         }
@@ -1043,9 +1047,13 @@ Thread::PopPlan ()
 void
 Thread::DiscardPlan ()
 {
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (m_plan_stack.size() > 1)
     {
         ThreadPlanSP &plan = m_plan_stack.back();
+        if (log)
+            log->Printf("Discarding plan: \"%s\", tid = 0x%4.4" PRIx64 ".", plan->GetName(), plan->GetThread().GetID());
+
         m_discarded_plan_stack.push_back (plan);
         plan->WillPop();
         m_plan_stack.pop_back();

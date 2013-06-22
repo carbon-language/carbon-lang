@@ -1314,7 +1314,24 @@ ProcessGDBRemote::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new
             tid_t tid = m_thread_ids[i];
             ThreadSP thread_sp (old_thread_list_copy.RemoveThreadByProtocolID(tid, false));
             if (!thread_sp)
+            {
                 thread_sp.reset (new ThreadGDBRemote (*this, tid));
+                if (log && log->GetMask().Test(GDBR_LOG_VERBOSE))
+                    log->Printf(
+                            "ProcessGDBRemote::%s Making new thread: %p for thread ID: 0x%" PRIx64 ".\n",
+                            __FUNCTION__,
+                            thread_sp.get(),
+                            thread_sp->GetID());
+            }
+            else
+            {
+                if (log && log->GetMask().Test(GDBR_LOG_VERBOSE))
+                    log->Printf(
+                           "ProcessGDBRemote::%s Found old thread: %p for thread ID: 0x%" PRIx64 ".\n",
+                           __FUNCTION__,
+                           thread_sp.get(),
+                           thread_sp->GetID());
+            }
             new_thread_list.AddThread(thread_sp);
         }
     }
@@ -1403,6 +1420,13 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                     {
                         // Create the thread if we need to
                         thread_sp.reset (new ThreadGDBRemote (*this, tid));
+                        Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_THREAD));
+                        if (log && log->GetMask().Test(GDBR_LOG_VERBOSE))
+                            log->Printf ("ProcessGDBRemote::%s Adding new thread: %p for thread ID: 0x%" PRIx64 ".\n",
+                                         __FUNCTION__,
+                                         thread_sp.get(),
+                                         thread_sp->GetID());
+                                         
                         m_thread_list_real.AddThread(thread_sp);
                     }
                     gdb_thread = static_cast<ThreadGDBRemote *> (thread_sp.get());
