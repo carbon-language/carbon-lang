@@ -212,7 +212,7 @@ addSymbols(const std::vector<ELFYAML::Symbol> &Symbols, ELFState<ELFT> &State,
 
 template <class ELFT>
 static void handleSymtabSectionHeader(
-    const ELFYAML::Section &Sec, ELFState<ELFT> &State,
+    const ELFYAML::LocalGlobalWeakSymbols &Symbols, ELFState<ELFT> &State,
     typename object::ELFObjectFile<ELFT>::Elf_Shdr &SHeader) {
 
   typedef typename object::ELFObjectFile<ELFT>::Elf_Sym Elf_Sym;
@@ -220,7 +220,7 @@ static void handleSymtabSectionHeader(
   // error for SHT_SYMTAB.
   SHeader.sh_link = State.getDotStrTabSecNo();
   // One greater than symbol table index of the last local symbol.
-  SHeader.sh_info = Sec.Symbols.Local.size() + 1;
+  SHeader.sh_info = Symbols.Local.size() + 1;
   SHeader.sh_entsize = sizeof(Elf_Sym);
 
   std::vector<Elf_Sym> Syms;
@@ -230,9 +230,9 @@ static void handleSymtabSectionHeader(
     zero(Sym);
     Syms.push_back(Sym);
   }
-  addSymbols(Sec.Symbols.Local, State, Syms, ELF::STB_LOCAL);
-  addSymbols(Sec.Symbols.Global, State, Syms, ELF::STB_GLOBAL);
-  addSymbols(Sec.Symbols.Weak, State, Syms, ELF::STB_WEAK);
+  addSymbols(Symbols.Local, State, Syms, ELF::STB_LOCAL);
+  addSymbols(Symbols.Global, State, Syms, ELF::STB_GLOBAL);
+  addSymbols(Symbols.Weak, State, Syms, ELF::STB_WEAK);
 
   ContiguousBlobAccumulator &CBA = State.getSectionContentAccum();
   writeVectorData(CBA.getOSAndAlignedOffset(SHeader.sh_offset), Syms);
@@ -338,7 +338,7 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
     // (and setting sh_offset and sh_size) when going through this branch
     // here.
     if (Sec.Type == ELFYAML::ELF_SHT(SHT_SYMTAB))
-      handleSymtabSectionHeader<ELFT>(Sec, State, SHeader);
+      handleSymtabSectionHeader<ELFT>(Sec.Symbols, State, SHeader);
     SHeaders.push_back(SHeader);
   }
 
