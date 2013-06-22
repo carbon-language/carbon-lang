@@ -18,7 +18,7 @@ class CommandHistoryTestCase(TestBase):
         self.runCmd('register read', check=False, inHistory=True) #1
         self.runCmd('apropos hello', check=False, inHistory=True) #2
         self.runCmd('memory write', check=False, inHistory=True) #3
-        self.runCmd('script foo', check=False, inHistory=True) #4
+        self.runCmd('log list', check=False, inHistory=True) #4
         self.runCmd('disassemble', check=False, inHistory=True) #5
         self.runCmd('expression 1', check=False, inHistory=True) #6
         self.runCmd('type summary list -w default', check=False, inHistory=True) #7
@@ -26,7 +26,7 @@ class CommandHistoryTestCase(TestBase):
         self.runCmd('frame select 1', check=False, inHistory=True) #9
 
         self.expect ("command history -s 3 -c 3", inHistory=True,
-                     substrs = ['3: memory write','4: script foo','5: disassemble'])
+                     substrs = ['3: memory write','4: log list','5: disassemble'])
         
         self.expect ("command history -s 3 -e 3", inHistory=True,
                      substrs = ['3: memory write'])
