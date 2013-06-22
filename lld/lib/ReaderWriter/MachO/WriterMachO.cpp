@@ -106,7 +106,6 @@ protected:
 class SectionChunk : public Chunk {
 public:
   static SectionChunk*  make(DefinedAtom::ContentType,
-                             const MachOTargetInfo &ti,
                              MachOWriter &writer);
   virtual StringRef     segmentName() const;
   virtual bool          occupiesNoDiskSpace();
@@ -128,12 +127,10 @@ private:
                 SectionChunk(StringRef seg,
                              StringRef sect,
                              uint32_t flags,
-                             const MachOTargetInfo &ti,
                              MachOWriter &writer);
 
   StringRef                 _segmentName;
   StringRef                 _sectionName;
-  const MachOTargetInfo    &_targetInfo;
   MachOWriter              &_writer;
   uint32_t                  _flags;
   uint32_t                  _permissions;
@@ -456,46 +453,38 @@ void Chunk::assignFileOffset(uint64_t &curOffset, uint64_t &curAddress) {
 //===----------------------------------------------------------------------===//
 
 SectionChunk::SectionChunk(StringRef seg, StringRef sect,
-                           uint32_t flags, const MachOTargetInfo &ti,
-                                                MachOWriter &writer)
- : _segmentName(seg), _sectionName(sect), _targetInfo(ti),
-   _writer(writer), _flags(flags), _permissions(0) {
+                           uint32_t flags, MachOWriter &writer)
+ : _segmentName(seg), _sectionName(sect), _writer(writer),
+   _flags(flags), _permissions(0) {
 
 }
 
 SectionChunk* SectionChunk::make(DefinedAtom::ContentType type,
-                                 const MachOTargetInfo &ti,
                                  MachOWriter &writer) {
   switch ( type ) {
     case DefinedAtom::typeCode:
       return new SectionChunk("__TEXT", "__text",
-                              S_REGULAR | S_ATTR_PURE_INSTRUCTIONS,
-                              ti, writer);
+                              S_REGULAR | S_ATTR_PURE_INSTRUCTIONS, writer);
       break;
     case DefinedAtom::typeCString:
        return new SectionChunk("__TEXT", "__cstring",
-                               S_CSTRING_LITERALS,
-                              ti, writer);
+                               S_CSTRING_LITERALS, writer);
        break;
     case DefinedAtom::typeStub:
       return new SectionChunk("__TEXT", "__stubs",
-                              S_SYMBOL_STUBS | S_ATTR_PURE_INSTRUCTIONS,
-                              ti, writer);
+                              S_SYMBOL_STUBS | S_ATTR_PURE_INSTRUCTIONS, writer);
       break;
     case DefinedAtom::typeStubHelper:
       return new SectionChunk("__TEXT", "__stub_helper",
-                              S_REGULAR | S_ATTR_PURE_INSTRUCTIONS,
-                              ti, writer);
+                              S_REGULAR | S_ATTR_PURE_INSTRUCTIONS, writer);
       break;
     case DefinedAtom::typeLazyPointer:
       return new SectionChunk("__DATA", "__la_symbol_ptr",
-                              S_LAZY_SYMBOL_POINTERS,
-                              ti, writer);
+                              S_LAZY_SYMBOL_POINTERS, writer);
       break;
     case DefinedAtom::typeGOT:
       return new SectionChunk("__DATA", "__got",
-                              S_NON_LAZY_SYMBOL_POINTERS,
-                              ti, writer);
+                              S_NON_LAZY_SYMBOL_POINTERS, writer);
       break;
     default:
       assert(0 && "TO DO: add support for more sections");
@@ -1320,7 +1309,7 @@ void MachOWriter::createChunks(const lld::File &file) {
     DefinedAtom::ContentType type = atom->contentType();
     auto pos = map.find(type);
     if ( pos == map.end() ) {
-      SectionChunk *chunk = SectionChunk::make(type, _targetInfo, *this);
+      SectionChunk *chunk = SectionChunk::make(type, *this);
       map[type] = chunk;
       chunk->appendAtom(atom);
     }
