@@ -6341,14 +6341,22 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                                  AttributeList *Attr) {
   // Find the class template we're specializing
   TemplateName Name = TemplateD.getAsVal<TemplateName>();
-  ClassTemplateDecl *ClassTemplate
-    = cast<ClassTemplateDecl>(Name.getAsTemplateDecl());
-
+  TemplateDecl *TD = Name.getAsTemplateDecl();
   // Check that the specialization uses the same tag kind as the
   // original template.
   TagTypeKind Kind = TypeWithKeyword::getTagTypeKindForTypeSpec(TagSpec);
   assert(Kind != TTK_Enum &&
          "Invalid enum tag in class template explicit instantiation!");
+
+  if (isa<TypeAliasTemplateDecl>(TD)) {
+      Diag(KWLoc, diag::err_tag_reference_non_tag) << Kind;
+      Diag(TD->getTemplatedDecl()->getLocation(),
+           diag::note_previous_use);
+    return true;
+  }
+
+  ClassTemplateDecl *ClassTemplate = cast<ClassTemplateDecl>(TD);
+
   if (!isAcceptableTagRedeclaration(ClassTemplate->getTemplatedDecl(),
                                     Kind, /*isDefinition*/false, KWLoc,
                                     *ClassTemplate->getIdentifier())) {
