@@ -328,6 +328,9 @@ def unique_string_match(yourentry,list):
 			candidate = item
 	return candidate
 
+class ArgParseNamespace(object):
+    pass
+
 def parseOptionsAndInitTestdirs():
     """Initialize the list of directories containing our unittest scripts.
 
@@ -440,7 +443,14 @@ def parseOptionsAndInitTestdirs():
 
     group = parser.add_argument_group('Test directories')
     group.add_argument('args', metavar='test-dir', nargs='*', help='Specify a list of directory names to search for test modules named after Test*.py (test discovery). If empty, search from the current working directory instead.')
-    args = parser.parse_args()
+
+    args = ArgParseNamespace()
+
+    if ('LLDB_TEST_ARGUMENTS' in os.environ):
+        print "Arguments passed through environment: '%s'" % os.environ['LLDB_TEST_ARGUMENTS']
+        args = parser.parse_args([sys.argv[0]].__add__(os.environ['LLDB_TEST_ARGUMENTS'].split()),namespace=args)
+
+    args = parser.parse_args(namespace=args)
 
     platform_system = platform.system()
     platform_machine = platform.machine()
