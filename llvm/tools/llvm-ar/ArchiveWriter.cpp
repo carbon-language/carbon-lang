@@ -18,7 +18,6 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/system_error.h"
@@ -269,7 +268,7 @@ bool Archive::writeToDisk(bool TruncateNames, std::string *ErrMsg) {
   int TmpArchiveFD;
   SmallString<128> TmpArchive;
   error_code EC = sys::fs::unique_file("temp-archive-%%%%%%%.a", TmpArchiveFD,
-                                       TmpArchive);
+                                       TmpArchive, true, 0666);
   if (EC)
     return true;
 
@@ -304,13 +303,6 @@ bool Archive::writeToDisk(bool TruncateNames, std::string *ErrMsg) {
     *ErrMsg = EC.message();
     return true;
   }
-
-  // Set correct read and write permissions after temporary file is moved
-  // to final destination path.
-  if (sys::Path(archPath).makeReadableOnDisk(ErrMsg))
-    return true;
-  if (sys::Path(archPath).makeWriteableOnDisk(ErrMsg))
-    return true;
 
   return false;
 }
