@@ -1564,6 +1564,8 @@ Process::UpdateThreadListIfNeeded ()
                         new_thread_list = real_thread_list;
                     }
                 }
+                
+                m_thread_list_real.Update(real_thread_list);
                 m_thread_list.Update (new_thread_list);
                 m_thread_list.SetStopID (stop_id);
             }
