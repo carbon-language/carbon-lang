@@ -4818,7 +4818,7 @@ TEST_F(FormatTest, ConfigurableIndentWidth) {
                EightIndent);
 }
 
-TEST_F(FormatTest, ConfigureableFunctionDeclarationIndentAfterType) {
+TEST_F(FormatTest, ConfigurableFunctionDeclarationIndentAfterType) {
   verifyFormat("void\n"
                "f();",
                getLLVMStyleWithColumns(8));
