@@ -410,9 +410,6 @@ bool FunctionAttrs::AddNoCaptureAttrs(const CallGraphSCC &SCC) {
 
   ArgumentGraph AG;
 
-  AttrBuilder B;
-  B.addAttribute(Attribute::NoCapture);
-
   // Check each function in turn, determining which pointer arguments are not
   // captured.
   for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
@@ -427,43 +424,59 @@ bool FunctionAttrs::AddNoCaptureAttrs(const CallGraphSCC &SCC) {
     if (F->isDeclaration() || F->mayBeOverridden())
       continue;
 
+    SmallVector<AttributeSet, 8> AttrSets;
+
     // Functions that are readonly (or readnone) and nounwind and don't return
     // a value can't capture arguments. Don't analyze them.
     if (F->onlyReadsMemory() && F->doesNotThrow() &&
         F->getReturnType()->isVoidTy()) {
-      for (Function::arg_iterator A = F->arg_begin(), E = F->arg_end();
-           A != E; ++A) {
-        if (A->getType()->isPointerTy() && !A->hasNoCaptureAttr()) {
-          A->addAttr(AttributeSet::get(F->getContext(), A->getArgNo() + 1, B));
-          ++NumNoCapture;
-          Changed = true;
-        }
-      }
-      continue;
-    }
+      for (Function::arg_iterator A = F->arg_begin(), E = F->arg_end(); A != E;
+           ++A) {
+        if (!A->getType()->isPointerTy() || A->hasNoCaptureAttr())
+          continue;
 
-    for (Function::arg_iterator A = F->arg_begin(), E = F->arg_end(); A!=E; ++A)
-      if (A->getType()->isPointerTy() && !A->hasNoCaptureAttr()) {
+        AttributeSet In =
+            F->getAttributes().getParamAttributes(A->getArgNo() + 1);
+        AttrSets.push_back(In.addAttribute(F->getContext(), A->getArgNo() + 1,
+                                           Attribute::NoCapture));
+      }
+    } else {
+      for (Function::arg_iterator A = F->arg_begin(), E = F->arg_end(); A != E;
+           ++A) {
+        if (!A->getType()->isPointerTy() || A->hasNoCaptureAttr())
+          continue;
+
         ArgumentUsesTracker Tracker(SCCNodes);
         PointerMayBeCaptured(A, &Tracker);
-        if (!Tracker.Captured) {
-          if (Tracker.Uses.empty()) {
-            // If it's trivially not captured, mark it nocapture now.
-            A->addAttr(AttributeSet::get(F->getContext(), A->getArgNo()+1, B));
-            ++NumNoCapture;
-            Changed = true;
-          } else {
-            // If it's not trivially captured and not trivially not captured,
-            // then it must be calling into another function in our SCC. Save
-            // its particulars for Argument-SCC analysis later.
-            ArgumentGraphNode *Node = AG[A];
-            for (SmallVectorImpl<Argument*>::iterator UI = Tracker.Uses.begin(),
-                   UE = Tracker.Uses.end(); UI != UE; ++UI)
-              Node->Uses.push_back(AG[*UI]);
-          }
+        if (Tracker.Captured)
+          continue; // It's captured. Don't bother doing SCC analysis on it.
+
+        if (Tracker.Uses.empty()) {
+          // If it's trivially not captured, mark it nocapture now.
+          AttributeSet In =
+              F->getAttributes().getParamAttributes(A->getArgNo() + 1);
+          AttrSets.push_back(In.addAttribute(F->getContext(), A->getArgNo() + 1,
+                                             Attribute::NoCapture));
+        } else {
+          // If it's not trivially captured and not trivially not captured,
+          // then it must be calling into another function in our SCC. Save
+          // its particulars for Argument-SCC analysis later.
+          ArgumentGraphNode *Node = AG[A];
+          for (SmallVectorImpl<Argument *>::iterator UI = Tracker.Uses.begin(),
+                                                     UE = Tracker.Uses.end();
+               UI != UE; ++UI)
+            Node->Uses.push_back(AG[*UI]);
         }
-        // Otherwise, it's captured. Don't bother doing SCC analysis on it.
       }
+    }
+
+    // Merge all attribute sets into one in a single step.
+    if (!AttrSets.empty()) {
+      NumNoCapture += AttrSets.size();
+      AttrSets.push_back(F->getAttributes());
+      F->setAttributes(AttributeSet::get(F->getContext(), AttrSets));
+      Changed = true;
+    }
   }
 
   // The graph we've collected is partial because we stopped scanning for
@@ -486,7 +499,7 @@ bool FunctionAttrs::AddNoCaptureAttrs(const CallGraphSCC &SCC) {
           Definition->
           addAttr(AttributeSet::get(ArgumentSCC[0]->Definition->getContext(),
                                     ArgumentSCC[0]->Definition->getArgNo() + 1,
-                                    B));
+                                    Attribute::NoCapture));
         ++NumNoCapture;
         Changed = true;
       }
@@ -528,7 +541,8 @@ bool FunctionAttrs::AddNoCaptureAttrs(const CallGraphSCC &SCC) {
 
     for (unsigned i = 0, e = ArgumentSCC.size(); i != e; ++i) {
       Argument *A = ArgumentSCC[i]->Definition;
-      A->addAttr(AttributeSet::get(A->getContext(), A->getArgNo() + 1, B));
+      A->addAttr(AttributeSet::get(A->getContext(), A->getArgNo() + 1,
+                                   Attribute::NoCapture));
       ++NumNoCapture;
       Changed = true;
     }
