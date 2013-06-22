@@ -21,10 +21,13 @@
     <Discussion><Para>Ddd</Para></Discussion>
   </Parameter>
 </Parameters>
-<ResultDiscussion><Para>Eee.</Para></ResultDiscussion>
-<Discussion>
+<ResultDiscussion>
+  <Para>Eee.</Para>
   <Para>Fff</Para>
-  <Verbatim xml:space="preserve" kind="verbatim">Ggg</Verbatim>
+</ResultDiscussion>
+<Discussion>
+  <Para>Ggg</Para>
+  <Verbatim xml:space="preserve" kind="verbatim">Hhh</Verbatim>
 </Discussion>
 </Function>
 

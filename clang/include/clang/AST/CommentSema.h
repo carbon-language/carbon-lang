@@ -58,9 +58,6 @@ class Sema {
   /// AST node for the \\brief command and its aliases.
   const BlockCommandComment *BriefCommand;
 
-  /// AST node for the \\returns command and its aliases.
-  const BlockCommandComment *ReturnsCommand;
-  
   /// AST node for the \\headerfile command.
   const BlockCommandComment *HeaderfileCommand;
 

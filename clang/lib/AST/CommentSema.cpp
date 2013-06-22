@@ -29,8 +29,7 @@ Sema::Sema(llvm::BumpPtrAllocator &Allocator, const SourceManager &SourceMgr,
            DiagnosticsEngine &Diags, CommandTraits &Traits,
            const Preprocessor *PP) :
     Allocator(Allocator), SourceMgr(SourceMgr), Diags(Diags), Traits(Traits),
-    PP(PP), ThisDeclInfo(NULL), BriefCommand(NULL), ReturnsCommand(NULL),
-    HeaderfileCommand(NULL) {
+    PP(PP), ThisDeclInfo(NULL), BriefCommand(NULL), HeaderfileCommand(NULL) {
 }
 
 void Sema::setDecl(const Decl *D) {
@@ -623,11 +622,6 @@ void Sema::checkBlockCommandDuplicate(const BlockCommandComment *Command) {
       return;
     }
     PrevCommand = BriefCommand;
-  } else if (Info->IsReturnsCommand) {
-    if (!ReturnsCommand)
-      ReturnsCommand = Command;
-    PrevCommand = ReturnsCommand;
-    return;
   } else if (Info->IsHeaderfileCommand) {
     if (!HeaderfileCommand) {
       HeaderfileCommand = Command;

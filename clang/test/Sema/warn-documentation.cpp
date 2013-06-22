@@ -141,28 +141,28 @@ int test_duplicate_brief3(int);
 /// Bbb
 ///
 /// \return Ccc
-int test_duplicate_returns1(int);
+int test_multiple_returns1(int);
 
 /// \returns Aaa
 ///
 /// Bbb
 ///
 /// \returns Ccc
-int test_duplicate_returns2(int);
+int test_multiple_returns2(int);
 
 /// \result Aaa
 ///
 /// Bbb
 ///
 /// \result Ccc
-int test_duplicate_returns3(int);
+int test_multiple_returns3(int);
 
 /// \returns Aaa
 ///
 /// Bbb
 ///
 /// \return Ccc
-int test_duplicate_returns4(int);
+int test_multiple_returns4(int);
 
 
 // expected-warning@+1 {{'\param' command used in a comment that is not attached to a function declaration}}
