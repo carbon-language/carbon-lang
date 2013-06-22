@@ -19,12 +19,10 @@ set(ASAN_SOURCES
   asan_stack.cc
   asan_stats.cc
   asan_thread.cc
-  asan_win.cc
-  )
+  asan_win.cc)
 
 set(ASAN_DYLIB_SOURCES
-  ${ASAN_SOURCES}
-  )
+  ${ASAN_SOURCES})
 
 include_directories(..)
 
@@ -58,6 +56,7 @@ if(APPLE)
     SOURCES ${ASAN_DYLIB_SOURCES}
             $<TARGET_OBJECTS:RTInterception.osx>
             $<TARGET_OBJECTS:RTSanitizerCommon.osx>
+            $<TARGET_OBJECTS:RTLSanCommon.osx>
     CFLAGS ${ASAN_CFLAGS}
     DEFS ${ASAN_COMMON_DEFINITIONS}
     # Dynamic lookup is needed because shadow scale and offset are

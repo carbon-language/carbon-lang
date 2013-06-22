@@ -26,7 +26,12 @@ filter_available_targets(LSAN_SUPPORTED_ARCH
 
 set(LSAN_RUNTIME_LIBRARIES)
 
-if (NOT APPLE AND NOT ANDROID)
+if(APPLE)
+  add_compiler_rt_osx_object_library(RTLSanCommon
+    ARCH ${LSAN_COMMON_SUPPORTED_ARCH}
+    SOURCES ${LSAN_COMMON_SOURCES}
+    CFLAGS ${LSAN_CFLAGS})
+elseif(NOT ANDROID)
   foreach(arch ${LSAN_COMMON_SUPPORTED_ARCH})
     add_compiler_rt_object_library(RTLSanCommon ${arch}
       SOURCES ${LSAN_COMMON_SOURCES}
