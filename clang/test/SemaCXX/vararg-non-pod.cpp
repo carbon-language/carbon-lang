@@ -31,7 +31,7 @@ void t2()
   c.g(10, version);
 
   void (C::*ptr)(int, ...) = &C::g;
-  (c.*ptr)(10, c);  // TODO: This should also warn.
+  (c.*ptr)(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic method; call will abort at runtime}}
   (c.*ptr)(10, version);
  
   C::h(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic function; call will abort at runtime}}
@@ -173,7 +173,7 @@ namespace t11 {
     (get_f_ptr())(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic function; call will abort at runtime}}
     (get_f_ptr())(10, version);
 
-    (c.*get_m_ptr())(10, c); // TODO: This should also warn.
+    (c.*get_m_ptr())(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic method; call will abort at runtime}}
     (c.*get_m_ptr())(10, version);
 
     (get_b_ptr())(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic block; call will abort at runtime}}
@@ -182,7 +182,7 @@ namespace t11 {
     (arr_f_ptr[3])(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic function; call will abort at runtime}}
     (arr_f_ptr[3])(10, version);
 
-    (c.*arr_m_ptr[3])(10, c); // TODO: This should also warn.
+    (c.*arr_m_ptr[3])(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic method; call will abort at runtime}}
     (c.*arr_m_ptr[3])(10, version);
 
     (arr_b_ptr[3])(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic block; call will abort at runtime}}

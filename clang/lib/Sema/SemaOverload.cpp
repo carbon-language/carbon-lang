@@ -10895,6 +10895,9 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     if (ConvertArgumentsForCall(call, op, 0, proto, Args, RParenLoc))
       return ExprError();
 
+    if (CheckOtherCall(call, proto))
+      return ExprError();
+
     return MaybeBindToTemporary(call);
   }
 
