@@ -786,12 +786,30 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
 // Improves the modeling of loops over Cocoa collections.
 //===----------------------------------------------------------------------===//
 
+// The map from container symbol to the container count symbol.
+// We currently will remember the last countainer count symbol encountered.
+REGISTER_MAP_WITH_PROGRAMSTATE(ContainerCountMap, SymbolRef, SymbolRef)
+
 namespace {
 class ObjCLoopChecker
-  : public Checker<check::PostStmt<ObjCForCollectionStmt> > {
-  
+  : public Checker<check::PostStmt<ObjCForCollectionStmt>,
+                   check::PostObjCMessage,
+                   check::DeadSymbols,
+                   check::PointerEscape > {
+  mutable IdentifierInfo *CountSelectorII;
+
+  bool isCollectionCountMethod(const ObjCMethodCall &M,
+                               CheckerContext &C) const;
+
 public:
+  ObjCLoopChecker() : CountSelectorII(0) {}
   void checkPostStmt(const ObjCForCollectionStmt *FCS, CheckerContext &C) const;
+  void checkPostObjCMessage(const ObjCMethodCall &M, CheckerContext &C) const;
+  void checkDeadSymbols(SymbolReaper &SymReaper, CheckerContext &C) const;
+  ProgramStateRef checkPointerEscape(ProgramStateRef State,
+                                     const InvalidatedSymbols &Escaped,
+                                     const CallEvent *Call,
+                                     PointerEscapeKind Kind) const;
 };
 }
 
@@ -876,21 +894,170 @@ static ProgramStateRef checkElementNonNil(CheckerContext &C,
   return State->assume(Val.castAs<DefinedOrUnknownSVal>(), true);
 }
 
+/// Returns NULL state if the collection is known to contain elements
+/// (or is known not to contain elements if the Assumption parameter is false.)
+static ProgramStateRef assumeCollectionNonEmpty(CheckerContext &C,
+                                            ProgramStateRef State,
+                                            const ObjCForCollectionStmt *FCS,
+                                            bool Assumption = false) {
+  if (!State)
+    return NULL;
+
+  SymbolRef CollectionS = C.getSVal(FCS->getCollection()).getAsSymbol();
+  if (!CollectionS)
+    return State;
+  const SymbolRef *CountS = State->get<ContainerCountMap>(CollectionS);
+  if (!CountS)
+    return State;
+
+  SValBuilder &SvalBuilder = C.getSValBuilder();
+  SVal CountGreaterThanZeroVal =
+    SvalBuilder.evalBinOp(State, BO_GT,
+                          nonloc::SymbolVal(*CountS),
+                          SvalBuilder.makeIntVal(0, (*CountS)->getType()),
+                          SvalBuilder.getConditionType());
+  Optional<DefinedSVal> CountGreaterThanZero =
+    CountGreaterThanZeroVal.getAs<DefinedSVal>();
+  if (!CountGreaterThanZero) {
+    // The SValBuilder cannot construct a valid SVal for this condition.
+    // This means we cannot properly reason about it.
+    return State;
+  }
+
+  return State->assume(*CountGreaterThanZero, Assumption);
+}
+
+/// If the fist block edge is a back edge, we are reentering the loop.
+static bool alreadyExecutedAtLeastOneLoopIteration(const ExplodedNode *N,
+                                             const ObjCForCollectionStmt *FCS) {
+  if (!N)
+    return false;
+
+  ProgramPoint P = N->getLocation();
+  if (Optional<BlockEdge> BE = P.getAs<BlockEdge>()) {
+    if (BE->getSrc()->getLoopTarget() == FCS)
+      return true;
+    return false;
+  }
+
+  // Keep looking for a block edge.
+  for (ExplodedNode::const_pred_iterator I = N->pred_begin(),
+                                         E = N->pred_end(); I != E; ++I) {
+    if (alreadyExecutedAtLeastOneLoopIteration(*I, FCS))
+      return true;
+  }
+
+  return false;
+}
+
 void ObjCLoopChecker::checkPostStmt(const ObjCForCollectionStmt *FCS,
                                     CheckerContext &C) const {
+  ProgramStateRef State = C.getState();
+
   // Check if this is the branch for the end of the loop.
   SVal CollectionSentinel = C.getSVal(FCS);
-  if (CollectionSentinel.isZeroConstant())
-    return;
+  if (CollectionSentinel.isZeroConstant()) {
+    if (!alreadyExecutedAtLeastOneLoopIteration(C.getPredecessor(), FCS))
+      State = assumeCollectionNonEmpty(C, State, FCS, /*Assumption*/false);
 
-  ProgramStateRef State = C.getState();
-  State = checkCollectionNonNil(C, State, FCS);
-  State = checkElementNonNil(C, State, FCS);
-
+  // Otherwise, this is a branch that goes through the loop body.
+  } else {
+    State = checkCollectionNonNil(C, State, FCS);
+    State = checkElementNonNil(C, State, FCS);
+    State = assumeCollectionNonEmpty(C, State, FCS, /*Assumption*/true);
+  }
+  
   if (!State)
     C.generateSink();
   else if (State != C.getState())
     C.addTransition(State);
+}
+
+bool ObjCLoopChecker::isCollectionCountMethod(const ObjCMethodCall &M,
+                                              CheckerContext &C) const {
+  Selector S = M.getSelector();
+  // Initialize the identifiers on first use.
+  if (!CountSelectorII)
+    CountSelectorII = &C.getASTContext().Idents.get("count");
+
+  // If the method returns collection count, record the value.
+  if (S.isUnarySelector() &&
+      (S.getIdentifierInfoForSlot(0) == CountSelectorII))
+    return true;
+  
+  return false;
+}
+
+void ObjCLoopChecker::checkPostObjCMessage(const ObjCMethodCall &M,
+                                           CheckerContext &C) const {
+  if (!M.isInstanceMessage())
+    return;
+
+  const ObjCInterfaceDecl *ClassID = M.getReceiverInterface();
+  if (!ClassID)
+    return;
+
+  FoundationClass Class = findKnownClass(ClassID);
+  if (Class != FC_NSDictionary &&
+      Class != FC_NSArray &&
+      Class != FC_NSSet)
+    return;
+
+  SymbolRef ContainerS = M.getReceiverSVal().getAsSymbol();
+  if (!ContainerS)
+    return;
+
+  // If we are processing a call to "count", get the symbolic value returned by
+  // a call to "count" and add it to the map.
+  if (!isCollectionCountMethod(M, C))
+    return;
+  
+  const Expr *MsgExpr = M.getOriginExpr();
+  SymbolRef CountS = C.getSVal(MsgExpr).getAsSymbol();
+  if (CountS) {
+    ProgramStateRef State = C.getState();
+    C.getSymbolManager().addSymbolDependency(ContainerS, CountS);
+    State = State->set<ContainerCountMap>(ContainerS, CountS);
+    C.addTransition(State);
+  }
+  return;
+}
+
+ProgramStateRef
+ObjCLoopChecker::checkPointerEscape(ProgramStateRef State,
+                                    const InvalidatedSymbols &Escaped,
+                                    const CallEvent *Call,
+                                    PointerEscapeKind Kind) const {
+  // TODO: If we know that the call cannot change the collection count, there
+  // is nothing to do, just return.
+
+  // Remove the invalidated symbols form the collection count map.
+  for (InvalidatedSymbols::const_iterator I = Escaped.begin(),
+       E = Escaped.end();
+       I != E; ++I) {
+    SymbolRef Sym = *I;
+
+    // The symbol escaped. Pessimistically, assume that the count could have
+    // changed.
+    State = State->remove<ContainerCountMap>(Sym);
+  }
+  return State;
+}
+
+void ObjCLoopChecker::checkDeadSymbols(SymbolReaper &SymReaper,
+                                       CheckerContext &C) const {
+  ProgramStateRef State = C.getState();
+
+  // Remove the dead symbols from the collection count map.
+  ContainerCountMapTy Tracked = State->get<ContainerCountMap>();
+  for (ContainerCountMapTy::iterator I = Tracked.begin(),
+                                     E = Tracked.end(); I != E; ++I) {
+    SymbolRef Sym = I->first;
+    if (SymReaper.isDead(Sym))
+      State = State->remove<ContainerCountMap>(Sym);
+  }
+
+  C.addTransition(State);
 }
 
 namespace {

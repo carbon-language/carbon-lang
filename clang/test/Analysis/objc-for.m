@@ -4,6 +4,7 @@ void clang_analyzer_eval(int);
 
 #define nil ((id)0)
 
+typedef unsigned long NSUInteger;
 @protocol NSFastEnumeration
 - (int)countByEnumeratingWithState:(void *)state objects:(id *)objects count:(unsigned)count;
 @end
@@ -16,19 +17,25 @@ void clang_analyzer_eval(int);
 @end
 
 @interface NSArray : NSObject <NSFastEnumeration>
+- (NSUInteger)count;
 - (NSEnumerator *)objectEnumerator;
 @end
 
 @interface NSDictionary : NSObject <NSFastEnumeration>
+- (NSUInteger)count;
 @end
 
 @interface NSMutableDictionary : NSDictionary
 @end
 
 @interface NSSet : NSObject <NSFastEnumeration>
+- (NSUInteger)count;
 @end
 
 @interface NSPointerArray : NSObject <NSFastEnumeration>
+@end
+
+@interface NSString : NSObject
 @end
 
 void test() {
@@ -68,3 +75,127 @@ void testNonNil(id a, id b) {
   clang_analyzer_eval(b != nil); // expected-warning{{FALSE}}
 }
 
+void collectionIsEmpty(NSMutableDictionary *D){
+  if ([D count] == 0) { // Count is zero.
+    NSString *s = 0;
+    for (NSString *key in D) {
+      s = key;       // Loop is never entered.
+    }
+    clang_analyzer_eval(s == 0); //expected-warning{{TRUE}}
+  }
+}
+
+void processCollection(NSMutableDictionary *D);
+void collectionIsEmptyCollectionIsModified(NSMutableDictionary *D){
+  if ([D count] == 0) {      // Count is zero.
+    NSString *s = 0;
+    processCollection(D);  // However, the collection has changed.
+    for (NSString *key in D) {
+      s = key;       // Loop might be entered.
+    }
+    clang_analyzer_eval(s == 0); //expected-warning{{FALSE}} //expected-warning{{TRUE}}
+  }
+}
+
+int collectionIsEmptyNSSet(NSSet *S){
+  if ([S count] == 2) { // Count is non zero.
+    int tapCounts[2];
+    int i = 0;
+    for (NSString *elem in S) {
+      tapCounts[i]= 1;       // Loop is entered.
+      i++;
+    }
+    return (tapCounts[0]); //no warning
+  }
+  return 0;
+}
+
+int collectionIsNotEmptyNSArray(NSArray *A) {
+  int count = [A count];
+  if (count > 0) {
+    int i;
+    int j;
+    for (NSString *a in A) {
+      i = 1;
+      j++;
+    }
+    clang_analyzer_eval(i == 1); // expected-warning {{TRUE}}
+  }
+  return 0;
+}
+
+void onlySuppressExitAfterZeroIterations(NSMutableDictionary *D) {
+  if (D.count > 0) {
+    int *x;
+    int i;
+    for (NSString *key in D) {
+      x = 0;
+      i++;
+    }
+    // Test that this is reachable.
+    int y = *x; // expected-warning {{Dereference of null pointer}}
+    y++;
+  }
+}
+
+void onlySuppressLoopExitAfterZeroIterations_WithContinue(NSMutableDictionary *D) {
+  if (D.count > 0) {
+    int *x;
+    int i;
+    for (NSString *key in D) {
+      x = 0;
+      i++;
+      continue;
+    }
+    // Test that this is reachable.
+    int y = *x; // expected-warning {{Dereference of null pointer}}
+    y++;
+  }
+}
+
+int* getPtr();
+void onlySuppressLoopExitAfterZeroIterations_WithBreak(NSMutableDictionary *D) {
+  if (D.count > 0) {
+    int *x;
+    int i;
+    for (NSString *key in D) {
+      x = 0;
+      break;
+      x = getPtr();
+      i++;
+    }
+    int y = *x; // expected-warning {{Dereference of null pointer}}
+    y++;
+  }
+}
+
+int consistencyBetweenLoopsWhenCountIsUnconstrained(NSMutableDictionary *D) {
+  // Note, The current limitation is that we need to have a count.
+  // TODO: This should work even when we do not call count.
+  int count = [D count];
+  int i;
+  int j = 0;
+  for (NSString *key in D) {
+    i = 5;
+    j++;
+  }
+  for (NSString *key in D)  {
+    return i; // no-warning
+  }
+  return 0;
+}
+
+int consistencyBetweenLoopsWhenCountIsUnconstrained_dual(NSMutableDictionary *D) {
+  int count = [D count];
+  int i = 8;
+  int j = 1;
+  for (NSString *key in D) {
+    i = 0;
+    j++;
+  }
+  for (NSString *key in D)  {
+    i = 5;
+    j++;
+  }
+  return 5/i;
+}

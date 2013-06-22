@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.NonNilReturnValue,osx.cocoa.NilArg -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.NonNilReturnValue,osx.cocoa.NilArg,osx.cocoa.Loops -verify -Wno-objc-root-class %s
 typedef unsigned long NSUInteger;
 typedef signed char BOOL;
 typedef struct _NSZone NSZone;
@@ -14,8 +14,6 @@ typedef struct _NSZone NSZone;
 @protocol NSCoding
 - (void)encodeWithCoder:(NSCoder *)aCoder;
 @end
-@protocol NSFastEnumeration
-@end
 @protocol NSSecureCoding <NSCoding>
 @required
 + (BOOL)supportsSecureCoding;
@@ -24,11 +22,20 @@ typedef struct _NSZone NSZone;
 - (id)init;
 + (id)alloc;
 @end
-@interface NSArray : NSObject <NSCopying, NSMutableCopying, NSSecureCoding, NSFastEnumeration>
 
+typedef struct {
+  unsigned long state;
+  id *itemsPtr;
+  unsigned long *mutationsPtr;
+  unsigned long extra[5];
+} NSFastEnumerationState;
+@protocol NSFastEnumeration
+- (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id [])buffer count:(NSUInteger)len;
+@end
+
+@interface NSArray : NSObject <NSCopying, NSMutableCopying, NSSecureCoding, NSFastEnumeration>
 - (NSUInteger)count;
 - (id)objectAtIndex:(NSUInteger)index;
-
 @end
 
 @interface NSArray (NSExtendedArray)
@@ -240,6 +247,16 @@ void testAssumeNSNullNullReturnsNonNil(NSMutableDictionary *Table, id Object,
   if (!Value) {
     Value = InValue;
     [Table setObject:Value forKey:Object]; // no warning
+  }
+}
+
+void testCollectionIsNotEmptyWhenCountIsGreaterThanZero(NSMutableDictionary *D){
+  if ([D count] > 0) { // Count is greater than zero.
+    NSString *s = 0;
+    for (NSString *key in D) {
+      s = key;       // Loop is always entered.
+    }
+    [D removeObjectForKey:s]; // no warning
   }
 }
 
