@@ -547,7 +547,7 @@ parse_template_param(const char* first, const char* last, C& db)
                 }
                 else
                 {
-                    db.names.push_back("`T_");
+                    db.names.push_back("T_");
                     first += 2;
                     db.fix_forward_references = true;
                 }
@@ -572,7 +572,7 @@ parse_template_param(const char* first, const char* last, C& db)
                 }
                 else
                 {
-                    db.names.push_back("`" + typename C::String(first, t+1));
+                    db.names.push_back(typename C::String(first, t+1));
                     first = t+1;
                     db.fix_forward_references = true;
                 }
@@ -4425,51 +4425,6 @@ demangle(const char* first, const char* last, C& db, int& status)
     }
     if (status == success && db.names.empty())
         status = invalid_mangled_name;
-    if (status == success && db.fix_forward_references)
-    {
-        auto nm = db.names.back().move_full();
-        db.names.pop_back();
-        size_t p = nm.size();
-        while (p != 0)
-        {
-            if (nm[--p] == '`')
-            {
-                size_t k0 = db.names.size();
-                const char* t = parse_template_param(&nm[p+1], &nm[nm.size()], db);
-                size_t k1 = db.names.size();
-                if (t == &nm[p+1])
-                {
-                    status = invalid_mangled_name;
-                    return;
-                }
-                if (k1 == k0)
-                {
-                    nm.erase(p, static_cast<std::size_t>(t - &nm[p]));
-                }
-                else
-                {
-                    if (db.names[k0].first.front() == '`')
-                    {
-                        status = invalid_mangled_name;
-                        return;
-                    }
-                    size_t p2 = static_cast<size_t>(t - &nm[p]);
-                    size_t s = db.names[k0].size();
-                    nm.replace(p, p2, db.names[k0].move_full());
-                    p2 = p + s;
-                    for (size_t k = k0+1; k < k1; ++k)
-                    {
-                        s = db.names[k].size() + 2;
-                        nm.insert(p2, ", " + db.names[k].move_full());
-                        p2 += s;
-                    }
-                    for (; k1 > k0; --k1)
-                        db.names.pop_back();
-                }
-            }
-        }
-        db.names.push_back(std::move(nm));
-    }
 }
 
 template <std::size_t N>
@@ -4682,8 +4637,20 @@ __cxa_demangle(const char* mangled_name, char* buf, size_t* n, int* status)
     db.fix_forward_references = false;
     db.try_to_parse_template_args = true;
     int internal_status = success;
-    demangle(mangled_name, mangled_name + std::strlen(mangled_name), db,
+    size_t len = std::strlen(mangled_name);
+    demangle(mangled_name, mangled_name + len, db,
              internal_status);
+    if (internal_status == success && db.fix_forward_references &&
+           !db.template_param.empty() && !db.template_param.front().empty())
+    {
+        db.fix_forward_references = false;
+        db.tag_templates = false;
+        db.names.clear();
+        db.subs.clear();
+        demangle(mangled_name, mangled_name + len, db, internal_status);
+        if (db.fix_forward_references)
+            internal_status = invalid_mangled_name;
+    }
     if (internal_status == success)
     {
         size_t sz = db.names.back().size() + 1;
