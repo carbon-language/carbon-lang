@@ -96,11 +96,14 @@ TryCompile = \
     $(1) $$cflags $(2) -o /dev/null > /dev/null 2> /dev/null ; \
     echo $$?)
 
-# We currently only try to generate runtime libraries on x86.
-ifeq ($(ARCH),x86)
-RuntimeLibrary.linux.Configs += \
+# We try to build 32-bit runtimes both on 32-bit hosts and 64-bit hosts.
+Runtime32BitConfigs = \
 	full-i386.a profile-i386.a san-i386.a asan-i386.a ubsan-i386.a \
 	ubsan_cxx-i386.a
+
+# We currently only try to generate runtime libraries on x86.
+ifeq ($(ARCH),x86)
+RuntimeLibrary.linux.Configs += $(Runtime32BitConfigs)
 endif
 
 ifeq ($(ARCH),x86_64)
@@ -114,8 +117,7 @@ RuntimeLibrary.linux.Configs += \
 # executable.
 test_source = $(LLVM_SRC_ROOT)/tools/clang/runtime/compiler-rt/clang_linux_test_input.c
 ifeq ($(call TryCompile,$(ToolDir)/clang,$(test_source),-m32),0)
-RuntimeLibrary.linux.Configs += san-i386.a asan-i386.a ubsan-i386.a \
-                                ubsan_cxx-i386.a
+RuntimeLibrary.linux.Configs += $(Runtime32BitConfigs)
 endif
 ifneq ($(LLVM_ANDROID_TOOLCHAIN_DIR),)
 RuntimeLibrary.linux.Configs += asan-arm-android.so
