@@ -28,7 +28,9 @@
 #include "isl/ast.h"
 
 struct clast_name;
-namespace llvm { class raw_ostream; }
+namespace llvm {
+class raw_ostream;
+}
 
 struct isl_ast_node;
 struct isl_ast_build;

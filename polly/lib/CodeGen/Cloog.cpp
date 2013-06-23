@@ -94,7 +94,7 @@ public:
   }
   ~FileToString() {
     close(FD[0]);
-    //close(FD[1]);
+    // close(FD[1]);
   }
 
   FILE *getInputFile() { return input; }
@@ -119,7 +119,6 @@ public:
 
     return output;
   }
-
 };
 
 /// Write .cloog input file.
@@ -251,7 +250,6 @@ struct CloogExporter : public ScopPass {
   virtual bool runOnScop(Scop &S);
   void getAnalysisUsage(AnalysisUsage &AU) const;
 };
-
 }
 std::string CloogExporter::getFileName(Region *R) const {
   std::string FunctionName = R->getEntry()->getParent()->getName();
@@ -330,7 +328,7 @@ bool CloogInfo::runOnScop(Scop &S) {
   C = new Cloog(&S);
 
   Function *F = S.getRegion().getEntry()->getParent();
-  (void) F;
+  (void)F;
 
   DEBUG(dbgs() << ":: " << F->getName());
   DEBUG(dbgs() << " : " << S.getRegion().getNameStr() << "\n");

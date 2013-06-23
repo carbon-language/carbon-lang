@@ -67,7 +67,6 @@ public:
 private:
   bool runTransform(Scop &S);
 };
-
 }
 
 char Pocc::ID = 0;

@@ -48,7 +48,6 @@ public:
   virtual bool runOnScop(Scop &scop);
   void getAnalysisUsage(AnalysisUsage &AU) const;
 };
-
 }
 
 char ScopLibExporter::ID = 0;

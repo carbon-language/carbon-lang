@@ -169,7 +169,8 @@ Value *ClastExpCodeGen::codegen(const clast_binary *e, Type *Ty) {
 
 Value *ClastExpCodeGen::codegen(const clast_reduction *r, Type *Ty) {
   assert((r->type == clast_red_min || r->type == clast_red_max ||
-          r->type == clast_red_sum) && "Clast reduction type not supported");
+          r->type == clast_red_sum) &&
+         "Clast reduction type not supported");
   Value *old = codegen(r->elts[0], Ty);
 
   for (int i = 1; i < r->n; ++i) {

@@ -35,7 +35,6 @@ std::vector<const llvm::SCEV *>
 getParamsInAffineExpr(const llvm::Region *R, const llvm::SCEV *Expression,
                       llvm::ScalarEvolution &SE,
                       const llvm::Value *BaseAddress = 0);
-
 }
 
 #endif

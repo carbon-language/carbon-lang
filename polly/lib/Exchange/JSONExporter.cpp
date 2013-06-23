@@ -76,7 +76,6 @@ struct JSONImporter : public ScopPass {
   void printScop(raw_ostream &OS) const;
   void getAnalysisUsage(AnalysisUsage &AU) const;
 };
-
 }
 
 char JSONExporter::ID = 0;
@@ -219,7 +218,6 @@ bool JSONImporter::runOnScop(Scop &scop) {
   for (unsigned i = 0; i < isl_set_dim(OldContext, isl_dim_param); i++) {
     isl_id *id = isl_set_get_dim_id(OldContext, isl_dim_param, i);
     NewContext = isl_set_set_dim_id(NewContext, isl_dim_param, i, id);
-
   }
 
   isl_set_free(OldContext);
@@ -276,7 +274,6 @@ bool JSONImporter::runOnScop(Scop &scop) {
         isl_map_free(currentAccessMap);
         isl_map_free(newAccessMap);
         return false;
-
       }
 
       // We need to copy the isl_ids for the parameter dimensions to the new

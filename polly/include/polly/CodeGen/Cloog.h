@@ -34,7 +34,9 @@
 #include "cloog/cloog.h"
 
 struct clast_name;
-namespace llvm { class raw_ostream; }
+namespace llvm {
+class raw_ostream;
+}
 
 namespace polly {
 class Scop;

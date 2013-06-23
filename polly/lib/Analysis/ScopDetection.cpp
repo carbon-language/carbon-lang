@@ -115,7 +115,7 @@ STATISTIC(ValidRegion, "Number of regions that a valid part of Scop");
     LastFailure = Buf;                                                         \
     DEBUG(dbgs() << MESSAGE);                                                  \
     DEBUG(dbgs() << "\n");                                                     \
-    assert(!Context.Verifying && #NAME);                                       \
+    assert(!Context.Verifying &&#NAME);                                        \
     if (!Context.Verifying)                                                    \
       ++Bad##NAME##ForScop;                                                    \
     return false;                                                              \
@@ -212,9 +212,9 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
 
     if (!isAffineExpr(&Context.CurRegion, LHS, *SE) ||
         !isAffineExpr(&Context.CurRegion, RHS, *SE))
-      INVALID(AffFunc, "Non affine branch in BB '" << BB.getName()
-                                                   << "' with LHS: " << *LHS
-                                                   << " and RHS: " << *RHS);
+      INVALID(AffFunc,
+              "Non affine branch in BB '" << BB.getName() << "' with LHS: "
+                                          << *LHS << " and RHS: " << *RHS);
   }
 
   // Allow loop exit conditions.
@@ -267,8 +267,8 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
 
   AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
 
-  if (!AllowNonAffine && !isAffineExpr(&Context.CurRegion, AccessFunction, *SE,
-                                       BaseValue))
+  if (!AllowNonAffine &&
+      !isAffineExpr(&Context.CurRegion, AccessFunction, *SE, BaseValue))
     INVALID(AffFunc, "Non affine access function: " << *AccessFunction);
 
   // FIXME: Alias Analysis thinks IntToPtrInst aliases with alloca instructions
@@ -279,17 +279,17 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   if (!IgnoreAliasing) {
     // Check if the base pointer of the memory access does alias with
     // any other pointer. This cannot be handled at the moment.
-    AliasSet &AS =
-        Context.AST.getAliasSetForPointer(BaseValue, AliasAnalysis::UnknownSize,
-                                          Inst.getMetadata(LLVMContext::MD_tbaa));
+    AliasSet &AS = Context.AST
+        .getAliasSetForPointer(BaseValue, AliasAnalysis::UnknownSize,
+                               Inst.getMetadata(LLVMContext::MD_tbaa));
 
-    // INVALID triggers an assertion in verifying mode, if it detects that a SCoP
-    // was detected by SCoP detection and that this SCoP was invalidated by a pass
-    // that stated it would preserve the SCoPs.
-    // We disable this check as the independent blocks pass may create memory
-    // references which seem to alias, if -basicaa is not available. They actually
-    // do not, but as we can not proof this without -basicaa we would fail. We
-    // disable this check to not cause irrelevant verification failures.
+    // INVALID triggers an assertion in verifying mode, if it detects that a
+    // SCoP was detected by SCoP detection and that this SCoP was invalidated by
+    // a pass that stated it would preserve the SCoPs. We disable this check as
+    // the independent blocks pass may create memory references which seem to
+    // alias, if -basicaa is not available. They actually do not, but as we can
+    // not proof this without -basicaa we would fail. We disable this check to
+    // not cause irrelevant verification failures.
     if (!AS.isMustAlias()) {
       std::string Message;
       raw_string_ostream OS(Message);
@@ -304,7 +304,8 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
       std::sort(Pointers.begin(), Pointers.end());
 
       for (std::vector<Value *>::iterator PI = Pointers.begin(),
-          PE = Pointers.end(); ;) {
+                                          PE = Pointers.end();
+           ;) {
         Value *V = *PI;
 
         if (V->getName().size() == 0)
@@ -402,9 +403,8 @@ bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
   // Is the loop count affine?
   const SCEV *LoopCount = SE->getBackedgeTakenCount(L);
   if (!isAffineExpr(&Context.CurRegion, LoopCount, *SE))
-    INVALID(LoopBound,
-            "Non affine loop bound '"
-                << *LoopCount << "' in loop: " << L->getHeader()->getName());
+    INVALID(LoopBound, "Non affine loop bound '" << *LoopCount << "' in loop: "
+                                                 << L->getHeader()->getName());
 
   return true;
 }

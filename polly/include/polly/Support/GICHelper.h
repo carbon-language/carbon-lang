@@ -43,9 +43,8 @@ void MPZ_from_APInt(mpz_t v, const llvm::APInt apint, bool is_signed = true);
 /// @param mpz    The mpz_t you want to convert.
 llvm::APInt APInt_from_MPZ(const mpz_t mpz);
 
-
-__isl_give isl_val *isl_valFromAPInt(isl_ctx *Ctx, const llvm::APInt Int, bool
-                                     IsSigned);
+__isl_give isl_val *isl_valFromAPInt(isl_ctx *Ctx, const llvm::APInt Int,
+                                     bool IsSigned);
 llvm::APInt APIntFromVal(__isl_take isl_val *Val);
 
 /// @brief Get c++ string from Isl objects.
@@ -61,6 +60,6 @@ std::string stringFromIslObj(/*__isl_keep*/ isl_aff *aff);
 std::string stringFromIslObj(/*__isl_keep*/ isl_pw_aff *pwaff);
 
 //@}
-} //end namespace polly
+} // end namespace polly
 
 #endif

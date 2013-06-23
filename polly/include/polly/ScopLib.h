@@ -22,7 +22,9 @@
 
 #include <map>
 
-namespace llvm { class Value; }
+namespace llvm {
+class Value;
+}
 
 struct isl_constraint;
 struct isl_basic_map;
@@ -63,7 +65,6 @@ public:
   ~ScopLib();
   void print(FILE *F);
   bool updateScattering();
-
 };
 }
 

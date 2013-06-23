@@ -22,7 +22,9 @@
 #include "llvm/Analysis/RegionPass.h"
 #include "llvm/IR/Instructions.h"
 
-namespace llvm { class DataLayout; }
+namespace llvm {
+class DataLayout;
+}
 
 using namespace llvm;
 

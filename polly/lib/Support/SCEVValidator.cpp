@@ -120,8 +120,8 @@ raw_ostream &operator<<(raw_ostream &OS, class ValidatorResult &VR) {
 }
 
 /// Check if a SCEV is valid in a SCoP.
-struct SCEVValidator :
-    public SCEVVisitor<SCEVValidator, class ValidatorResult> {
+struct SCEVValidator
+    : public SCEVVisitor<SCEVValidator, class ValidatorResult> {
 private:
   const Region *R;
   ScalarEvolution &SE;
@@ -349,8 +349,8 @@ public:
 
 /// @brief Check whether a SCEV refers to an SSA name defined inside a region.
 ///
-struct SCEVInRegionDependences :
-    public SCEVVisitor<SCEVInRegionDependences, bool> {
+struct SCEVInRegionDependences
+    : public SCEVVisitor<SCEVInRegionDependences, bool> {
 public:
 
   /// Returns true when the SCEV has SSA names defined in region R.

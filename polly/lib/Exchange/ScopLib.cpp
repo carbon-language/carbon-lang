@@ -170,7 +170,7 @@ void ScopLib::print(FILE *F) { scoplib_scop_print_dot_scop(F, scoplib); }
 /// @param user The matrix
 /// @param c The constraint
 int ScopLib::domainToMatrix_constraint(isl_constraint *c, void *user) {
-  scoplib_matrix_p m = (scoplib_matrix_p) user;
+  scoplib_matrix_p m = (scoplib_matrix_p)user;
 
   int nb_params = isl_constraint_dim(c, isl_dim_param);
   int nb_vars = isl_constraint_dim(c, isl_dim_set);
@@ -223,7 +223,7 @@ int ScopLib::domainToMatrix_constraint(isl_constraint *c, void *user) {
 /// for matrix lists is currently not available in ScopLib. So union of
 /// polyhedron are not yet supported
 int ScopLib::domainToMatrix_basic_set(isl_basic_set *bset, void *user) {
-  scoplib_matrix_p m = (scoplib_matrix_p) user;
+  scoplib_matrix_p m = (scoplib_matrix_p)user;
   assert(!m->NbRows && "Union of polyhedron not yet supported");
 
   isl_basic_set_foreach_constraint(bset, &domainToMatrix_constraint, user);
@@ -258,7 +258,7 @@ scoplib_matrix_p ScopLib::domainToMatrix(__isl_take isl_set *set) {
 /// @param user The matrix
 /// @param c The constraint
 int ScopLib::scatteringToMatrix_constraint(isl_constraint *c, void *user) {
-  scoplib_matrix_p m = (scoplib_matrix_p) user;
+  scoplib_matrix_p m = (scoplib_matrix_p)user;
 
   int nb_params = isl_constraint_dim(c, isl_dim_param);
   int nb_in = isl_constraint_dim(c, isl_dim_in);
@@ -313,7 +313,7 @@ int ScopLib::scatteringToMatrix_constraint(isl_constraint *c, void *user) {
 /// for matrix lists is currently not available in ScopLib. So union of
 /// polyhedron are not yet supported
 int ScopLib::scatteringToMatrix_basic_map(isl_basic_map *bmap, void *user) {
-  scoplib_matrix_p m = (scoplib_matrix_p) user;
+  scoplib_matrix_p m = (scoplib_matrix_p)user;
   assert(!m->NbRows && "Union of polyhedron not yet supported");
 
   isl_basic_map_foreach_constraint(bmap, &scatteringToMatrix_constraint, user);
@@ -353,7 +353,7 @@ scoplib_matrix_p ScopLib::scatteringToMatrix(__isl_take isl_map *map) {
 /// @param user The matrix
 /// @param c The constraint
 int ScopLib::accessToMatrix_constraint(isl_constraint *c, void *user) {
-  scoplib_matrix_p m = (scoplib_matrix_p) user;
+  scoplib_matrix_p m = (scoplib_matrix_p)user;
 
   int nb_params = isl_constraint_dim(c, isl_dim_param);
   int nb_in = isl_constraint_dim(c, isl_dim_in);

@@ -199,7 +199,7 @@ Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
     }
 
   if (const Instruction *Inst = dyn_cast<Instruction>(Old)) {
-    (void) Inst;
+    (void)Inst;
     assert(!Statement.getParent()->getRegion().contains(Inst->getParent()) &&
            "unexpected scalar dependence in region");
   }

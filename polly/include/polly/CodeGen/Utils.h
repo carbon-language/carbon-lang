@@ -57,6 +57,5 @@ class Scop;
 /// @param PassInfo A reference to the pass calling this function.
 /// @return BasicBlock The 'StartBlock' to which new code can be added.
 llvm::BasicBlock *executeScopConditionally(Scop &S, llvm::Pass *PassInfo);
-
 }
 #endif

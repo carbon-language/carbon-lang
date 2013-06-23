@@ -77,7 +77,6 @@ public:
   virtual bool runOnFunction(Function &F);
   virtual void print(raw_ostream &OS, const Module *) const;
   //@}
-
 };
 }
 

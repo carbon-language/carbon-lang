@@ -107,7 +107,6 @@ void ScopLibImporter::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<ScopInfo>();
   AU.addRequired<Dependences>();
 }
-
 }
 
 static RegisterPass<ScopLibImporter>

@@ -162,7 +162,7 @@ struct DOTGraphTraits<ScopDetection *> : public DOTGraphTraits<RegionNode *> {
   }
 };
 
-} //end namespace llvm
+} // end namespace llvm
 
 struct ScopViewer : public DOTGraphTraitsViewer<ScopDetection, false> {
   static char ID;

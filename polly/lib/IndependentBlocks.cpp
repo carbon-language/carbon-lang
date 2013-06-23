@@ -403,7 +403,7 @@ bool IndependentBlocks::translateScalarToArray(Instruction *Inst,
     StorePos = Inst;
     StorePos++;
   }
-  (void) new StoreInst(Inst, Slot, StorePos);
+  (void)new StoreInst(Inst, Slot, StorePos);
 
   if (!LoadOutside.empty()) {
     LoadInst *ExitLoad = new LoadInst(Slot, Inst->getName() + ".loadoutside",

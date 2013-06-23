@@ -218,7 +218,9 @@ static bool ConvertToSInt(const APFloat &APF, int64_t &IntVal) {
   // See if we can convert this to an int64_t
   uint64_t UIntVal;
   if (APF.convertToInteger(&UIntVal, 64, true, APFloat::rmTowardZero,
-                           &isExact) != APFloat::opOK || !isExact)
+                           &isExact) !=
+          APFloat::opOK ||
+      !isExact)
     return false;
   IntVal = UIntVal;
   return true;
@@ -1557,8 +1559,8 @@ static Value *genLoopLimit(PHINode *IndVar, const SCEV *IVCount, Loop *L,
     // We could handle pointer IVs other than i8*, but we need to compensate for
     // gep index scaling. See canExpandBackedgeTakenCount comments.
     assert(SE->getSizeOfExpr(cast<PointerType>(GEPBase->getType())
-                                 ->getElementType())
-               ->isOne() && "unit stride pointer IV must be i8*");
+                                 ->getElementType())->isOne() &&
+           "unit stride pointer IV must be i8*");
 
     IRBuilder<> Builder(L->getLoopPreheader()->getTerminator());
     return Builder.CreateGEP(GEPBase, GEPOffset, "lftr.limit");
@@ -1656,7 +1658,8 @@ Value *PollyIndVarSimplify::LinearFunctionTestReplace(
 
   Value *ExitCnt = genLoopLimit(IndVar, IVCount, L, Rewriter, SE);
   assert(ExitCnt->getType()->isPointerTy() ==
-             IndVar->getType()->isPointerTy() && "genLoopLimit missed a cast");
+             IndVar->getType()->isPointerTy() &&
+         "genLoopLimit missed a cast");
 
   // Insert a new icmp_ne or icmp_eq instruction before the branch.
   BranchInst *BI = cast<BranchInst>(L->getExitingBlock()->getTerminator());
@@ -1850,7 +1853,7 @@ bool PollyIndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   //        but just a canonical induction variable. In the near future, we
   //        should remove the need of canonical induction variables all
   //        together.
-  //if (EnableIVRewrite)
+  // if (EnableIVRewrite)
   //  Changed |= simplifyIVUsers(IU, SE, &LPM, DeadInsts);
 
   // Eliminate redundant IV cycles.

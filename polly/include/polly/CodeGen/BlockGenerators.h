@@ -305,6 +305,5 @@ private:
 
   void copyBB();
 };
-
 }
 #endif

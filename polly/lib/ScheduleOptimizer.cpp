@@ -37,7 +37,9 @@
 using namespace llvm;
 using namespace polly;
 
-namespace polly { bool DisablePollyTiling; }
+namespace polly {
+bool DisablePollyTiling;
+}
 static cl::opt<bool, true>
 DisableTiling("polly-no-tiling", cl::desc("Disable tiling in the scheduler"),
               cl::location(polly::DisablePollyTiling), cl::init(false),
@@ -185,7 +187,6 @@ private:
     return true;
   }
 };
-
 }
 
 char IslScheduleOptimizer::ID = 0;
