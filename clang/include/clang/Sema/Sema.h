@@ -7365,9 +7365,10 @@ public:
   void CodeCompleteNamespaceDecl(Scope *S);
   void CodeCompleteNamespaceAliasDecl(Scope *S);
   void CodeCompleteOperatorName(Scope *S);
-  void CodeCompleteConstructorInitializer(Decl *Constructor,
-                                          CXXCtorInitializer** Initializers,
-                                          unsigned NumInitializers);
+  void CodeCompleteConstructorInitializer(
+                                Decl *Constructor,
+                                ArrayRef<CXXCtorInitializer *> Initializers);
+
   void CodeCompleteLambdaIntroducer(Scope *S, LambdaIntroducer &Intro,
                                     bool AfterAmpersand);
 

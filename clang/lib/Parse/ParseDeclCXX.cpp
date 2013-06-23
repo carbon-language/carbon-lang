@@ -2709,9 +2709,8 @@ void Parser::ParseConstructorInitializer(Decl *ConstructorDecl) {
 
   do {
     if (Tok.is(tok::code_completion)) {
-      Actions.CodeCompleteConstructorInitializer(ConstructorDecl, 
-                                                 MemInitializers.data(), 
-                                                 MemInitializers.size());
+      Actions.CodeCompleteConstructorInitializer(ConstructorDecl,
+                                                 MemInitializers);
       return cutOffParsing();
     } else {
       MemInitResult MemInit = ParseMemInitializer(ConstructorDecl);
