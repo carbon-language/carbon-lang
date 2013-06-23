@@ -848,6 +848,12 @@ bool FuncSLP::vectorizeStoreChain(ArrayRef<Value *> Chain, int CostThreshold) {
     if (Cost < CostThreshold) {
       DEBUG(dbgs() << "SLP: Decided to vectorize cost=" << Cost << "\n");
       vectorizeTree(Operands);
+
+      // Remove the scalar stores.
+      for (int i = 0, e = VF; i < e; ++i)
+        cast<Instruction>(Operands[i])->eraseFromParent();
+
+      // Move to the next bundle.
       i += VF - 1;
       Changed = true;
     }
@@ -865,6 +871,11 @@ bool FuncSLP::vectorizeStoreChain(ArrayRef<Value *> Chain, int CostThreshold) {
     DEBUG(dbgs() << "SLP: Found store chain cost = " << Cost
                  << " for size = " << ChainLen << "\n");
     vectorizeTree(Chain);
+
+    // Remove all of the scalar stores.
+    for (int i = 0, e = Chain.size(); i < e; ++i)
+      cast<Instruction>(Chain[i])->eraseFromParent();
+
     return true;
   }
 
@@ -1100,9 +1111,6 @@ Value *FuncSLP::vectorizeTree_rec(ArrayRef<Value *> VL) {
     Value *VecPtr =
         Builder.CreateBitCast(SI->getPointerOperand(), VecTy->getPointerTo());
     Builder.CreateStore(VecValue, VecPtr)->setAlignment(Alignment);
-
-    for (int i = 0, e = VL.size(); i < e; ++i)
-      cast<Instruction>(VL[i])->eraseFromParent();
     return 0;
   }
   default:
