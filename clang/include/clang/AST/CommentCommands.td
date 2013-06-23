@@ -200,6 +200,11 @@ def Mainpage : VerbatimLineCommand<"mainpage">;
 def Subpage  : VerbatimLineCommand<"subpage">;
 def Ref      : VerbatimLineCommand<"ref">;
 
+def Relates     : VerbatimLineCommand<"relates">;
+def Related     : VerbatimLineCommand<"related">;
+def RelatesAlso : VerbatimLineCommand<"relatesalso">;
+def RelatedAlso : VerbatimLineCommand<"relatedalso">;
+
 //===----------------------------------------------------------------------===//
 // DeclarationVerbatimLineCommand
 //===----------------------------------------------------------------------===//

@@ -588,6 +588,25 @@ int test4; ///< \brief
            ///< \author Aaa
 
 
+class TestRelates {};
+
+/// \relates TestRelates
+/// \brief Aaa
+void test_relates_1();
+
+/// \related TestRelates
+/// \brief Aaa
+void test_relates_2();
+
+/// \relatesalso TestRelates
+/// \brief Aaa
+void test_relates_3();
+
+/// \relatedalso TestRelates
+/// \brief Aaa
+void test_relates_4();
+
+
 // Check that we attach the comment to the declaration during parsing in the
 // following cases.  The test is based on the fact that we don't parse
 // documentation comments that are not attached to anything.
