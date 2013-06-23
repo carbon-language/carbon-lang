@@ -4382,7 +4382,7 @@ template <class C>
 void
 demangle(const char* first, const char* last, C& db, int& status)
 {
-    if (first >= last)
+    if (first >= last || std::find(first, last, '`') != last)
     {
         status = invalid_mangled_name;
         return;
