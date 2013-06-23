@@ -70,5 +70,5 @@ end:
 ; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] : i0 >= 0 and i0 <= -1 + n and i1 >= 0 and i1 <= -1 + m and i2 >= 0 and i2 <= -1 + o };
 ; CHECK: Scattering
 ; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] -> scattering[0, i0, 0, i1, 0, i2, 0] };
-; CHECK: WriteAccess
+; CHECK: MayWriteAccess
 ; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] -> MemRef_A[o0] };

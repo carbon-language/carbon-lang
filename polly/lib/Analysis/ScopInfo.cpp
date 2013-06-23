@@ -277,17 +277,22 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
                            ScopStmt *Statement)
     : Inst(AccInst) {
   newAccessRelation = NULL;
-  Type = Access.isRead() ? Read : Write;
   statement = Statement;
 
   BaseAddr = Access.getBase();
   setBaseName();
 
   if (!Access.isAffine()) {
-    Type = (Type == Read) ? Read : MayWrite;
-    AccessRelation = isl_map_from_basic_map(createBasicAccessMap(Statement));
+    // We overapproximate non-affine accesses with a possible access to the
+    // whole array. For read accesses it does not make a difference, if an
+    // access must or may happen. However, for write accesses it is important to
+    // differentiate between writes that must happen and writes that may happen.
+  AccessRelation = isl_map_from_basic_map(createBasicAccessMap(Statement));
+    Type = Access.isRead() ? Read : MayWrite;
     return;
   }
+
+  Type = Access.isRead() ? Read: MustWrite;
 
   isl_pw_aff *Affine = SCEVAffinator::getPwAff(Statement, Access.getOffset());
 
@@ -330,7 +335,17 @@ MemoryAccess::MemoryAccess(const Value *BaseAddress, ScopStmt *Statement) {
 }
 
 void MemoryAccess::print(raw_ostream &OS) const {
-  OS.indent(12) << (isRead() ? "Read" : "Write") << "Access := \n";
+  switch (Type) {
+  case Read:
+    OS.indent(12) << "ReadAccess := \n";
+    break;
+  case MustWrite:
+    OS.indent(12) << "MustWriteAccess := \n";
+    break;
+  case MayWrite:
+    OS.indent(12) << "MayWriteAccess := \n";
+    break;
+  }
   OS.indent(16) << getAccessRelationStr() << ";\n";
 }
 
