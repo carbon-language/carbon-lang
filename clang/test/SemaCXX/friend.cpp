@@ -154,3 +154,12 @@ namespace test8 {
     friend void B::f(); // expected-error {{cannot befriend target of using declaration}}
   };
 }
+
+// PR16423
+namespace test9 {
+  class C {
+  };
+  struct A {
+    friend void C::f(int, int, int) {}  // expected-error {{no function named 'f' with type 'void (int, int, int)' was found in the specified scope}}
+  };
+}
