@@ -83,3 +83,54 @@ entry:
   ret i32 undef
 }
 
+; int test2(double *G, int k) {
+;   if (k) {
+;     G[0] = 1+G[5]*4;
+;     G[1] = 6+G[6]*3;
+;   } else {
+;     G[2] = 7+G[5]*4;
+;     G[3] = 8+G[6]*3;
+;   }
+; }
+
+; We can't merge the gather sequences because one does not dominate the other.
+; CHECK: test2
+; CHECK: insertelement
+; CHECK: insertelement
+; CHECK: insertelement
+; CHECK: insertelement
+; CHECK: ret
+define i32 @test2(double* nocapture %G, i32 %k) {
+  %1 = icmp eq i32 %k, 0
+  %2 = getelementptr inbounds double* %G, i64 5
+  %3 = load double* %2, align 8
+  %4 = fmul double %3, 4.000000e+00
+  br i1 %1, label %12, label %5
+
+; <label>:5                                       ; preds = %0
+  %6 = fadd double %4, 1.000000e+00
+  store double %6, double* %G, align 8
+  %7 = getelementptr inbounds double* %G, i64 6
+  %8 = load double* %7, align 8
+  %9 = fmul double %8, 3.000000e+00
+  %10 = fadd double %9, 6.000000e+00
+  %11 = getelementptr inbounds double* %G, i64 1
+  store double %10, double* %11, align 8
+  br label %20
+
+; <label>:12                                      ; preds = %0
+  %13 = fadd double %4, 7.000000e+00
+  %14 = getelementptr inbounds double* %G, i64 2
+  store double %13, double* %14, align 8
+  %15 = getelementptr inbounds double* %G, i64 6
+  %16 = load double* %15, align 8
+  %17 = fmul double %16, 3.000000e+00
+  %18 = fadd double %17, 8.000000e+00
+  %19 = getelementptr inbounds double* %G, i64 3
+  store double %18, double* %19, align 8
+  br label %20
+
+; <label>:20                                      ; preds = %12, %5
+  ret i32 undef
+}
+
