@@ -20,6 +20,7 @@
 
 #include "llvm/Transforms/Vectorize.h"
 #include "llvm/ADT/MapVector.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/ScalarEvolution.h"
@@ -126,9 +127,9 @@ public:
   static const int MAX_COST = INT_MIN;
 
   FuncSLP(Function *Func, ScalarEvolution *Se, DataLayout *Dl,
-          TargetTransformInfo *Tti, AliasAnalysis *Aa, LoopInfo *Li)
-      : F(Func), SE(Se), DL(Dl), TTI(Tti), AA(Aa), LI(Li),
-        Builder(Se->getContext()) {
+          TargetTransformInfo *Tti, AliasAnalysis *Aa, LoopInfo *Li) :
+    F(Func), SE(Se), DL(Dl), TTI(Tti), AA(Aa), LI(Li),
+    Builder(Se->getContext()) {
     for (Function::iterator it = F->begin(), e = F->end(); it != e; ++it) {
       BasicBlock *BB = it;
       BlocksNumbers[BB] = BlockNumbering(BB);
@@ -209,9 +210,8 @@ public:
   /// \returns a vector from a collection of scalars in \p VL.
   Value *Gather(ArrayRef<Value *> VL, VectorType *Ty);
 
-  /// \brief Try to hoist gather sequences outside of the loop in cases where
-  /// all of the sources are loop invariant.
-  void hoistGatherSequence();
+  /// \brief Perform LICM and CSE on the newly generated gather sequences.
+  void optimizeGatherSequence();
 
   bool needToGatherAny(ArrayRef<Value *> VL) {
     for (int i = 0, e = VL.size(); i < e; ++i)
@@ -574,6 +574,7 @@ Instruction *FuncSLP::getInstructionForIndex(unsigned Index, BasicBlock *BB) {
 
 int FuncSLP::getFirstUserIndex(ArrayRef<Value *> VL) {
   BasicBlock *BB = getSameBlock(VL);
+  assert(BB && "All instructions must come from the same block");
   BlockNumbering &BN = BlocksNumbers[BB];
 
   // Find the first user of the values.
@@ -932,7 +933,6 @@ Value *FuncSLP::Gather(ArrayRef<Value *> VL, VectorType *Ty) {
       GatherSeq.insert(I);
   }
 
-  VectorizedValues[VL[0]] = Vec;
   return Vec;
 }
 
@@ -1116,11 +1116,12 @@ Value *FuncSLP::vectorizeTree(ArrayRef<Value *> VL) {
 
   // We moved some instructions around. We have to number them again
   // before we can do any analysis.
+  for (Function::iterator it = F->begin(), e = F->end(); it != e; ++it)
+    BlocksNumbers[it].forget();
+  // Clear the state.
   MustGather.clear();
   VectorizedValues.clear();
   MemBarrierIgnoreList.clear();
-  for (Function::iterator it = F->begin(), e = F->end(); it != e; ++it)
-    BlocksNumbers[it].forget();
   return V;
 }
 
@@ -1137,24 +1138,19 @@ Value *FuncSLP::vectorizeArith(ArrayRef<Value *> Operands) {
   return Vec;
 }
 
-void FuncSLP::hoistGatherSequence() {
+void FuncSLP::optimizeGatherSequence() {
+  // LICM InsertElementInst sequences.
   for (SetVector<Instruction *>::iterator it = GatherSeq.begin(),
-                                          e = GatherSeq.end();
-       it != e; ++it) {
-    InsertElementInst *Insert = dyn_cast_or_null<InsertElementInst>(*it);
+       e = GatherSeq.end(); it != e; ++it) {
+    InsertElementInst *Insert = dyn_cast<InsertElementInst>(*it);
 
-    // The InsertElement sequence can be simplified into a constant.
-    // Also Ignore NULL pointers because they are only here to separate
-    // sequences.
     if (!Insert)
       continue;
 
-    BasicBlock *BB = Insert->getParent();
-
     // Check if this block is inside a loop.
-    Loop *L = LI->getLoopFor(BB);
+    Loop *L = LI->getLoopFor(Insert->getParent());
     if (!L)
-      return;
+      continue;
 
     // Check if it has a preheader.
     BasicBlock *PreHeader = L->getLoopPreheader();
@@ -1171,10 +1167,35 @@ void FuncSLP::hoistGatherSequence() {
     if (NewElem && L->contains(NewElem))
       continue;
 
-    // Mark the insertion point for the block.
-    Instruction *Location = PreHeader->getTerminator();
     // We can hoist this instruction. Move it to the pre-header.
-    Insert->moveBefore(Location);
+    Insert->moveBefore(PreHeader->getTerminator());
+  }
+
+  // Perform O(N^2) search over the gather sequences and merge identical
+  // instructions. TODO: We can further optimize this scan if we split the
+  // instructions into different buckets based on the insert lane.
+  SmallPtrSet<Instruction*, 16> Visited;
+  ReversePostOrderTraversal<Function*> RPOT(F);
+  for (ReversePostOrderTraversal<Function*>::rpo_iterator I = RPOT.begin(),
+       E = RPOT.end(); I != E; ++I) {
+    BasicBlock *BB = *I;
+    // For all instructions in the function:
+    for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
+      InsertElementInst *Insert = dyn_cast<InsertElementInst>(it);
+      if (!Insert || !GatherSeq.count(Insert))
+        continue;
+
+     // Check if we can replace this instruction with any of the
+     // visited instructions.
+      for (SmallPtrSet<Instruction*, 16>::iterator v = Visited.begin(),
+           ve = Visited.end(); v != ve; ++v) {
+        if (Insert->isIdenticalTo(*v)) {
+          Insert->replaceAllUsesWith(*v);
+          break;
+        }
+      }
+      Visited.insert(Insert);
+    }
   }
 }
 
@@ -1232,7 +1253,7 @@ struct SLPVectorizer : public FunctionPass {
     }
 
     if (Changed) {
-      R.hoistGatherSequence();
+      R.optimizeGatherSequence();
       DEBUG(dbgs() << "SLP: vectorized \"" << F.getName() << "\"\n");
       DEBUG(verifyFunction(F));
     }
