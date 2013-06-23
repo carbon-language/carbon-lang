@@ -339,6 +339,9 @@ public:
                                        int64_t Offset1, int64_t Offset2,
                                        unsigned NumLoads) const;
 
+  virtual bool shouldScheduleAdjacent(MachineInstr* First,
+                                      MachineInstr *Second) const LLVM_OVERRIDE;
+
   virtual void getNoopForMachoTarget(MCInst &NopInst) const;
 
   virtual
