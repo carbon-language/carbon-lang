@@ -4382,7 +4382,7 @@ template <class C>
 void
 demangle(const char* first, const char* last, C& db, int& status)
 {
-    if (first >= last || std::find(first, last, '`') != last)
+    if (first >= last)
     {
         status = invalid_mangled_name;
         return;
@@ -4423,21 +4423,52 @@ demangle(const char* first, const char* last, C& db, int& status)
         if (t != last)
             status = invalid_mangled_name;
     }
+    if (status == success && db.names.empty())
+        status = invalid_mangled_name;
     if (status == success && db.fix_forward_references)
     {
-        db.names.reserve(db.names.size()+1);
-        auto& nm = db.names.back().first;
+        auto nm = db.names.back().move_full();
+        db.names.pop_back();
         size_t p = nm.size();
         while (p != 0)
         {
             if (nm[--p] == '`')
             {
+                size_t k0 = db.names.size();
                 const char* t = parse_template_param(&nm[p+1], &nm[nm.size()], db);
-                auto s = db.names.back().move_full();
-                db.names.pop_back();
-                nm.replace(p, static_cast<std::size_t>(t - &nm[p]), s);
+                size_t k1 = db.names.size();
+                if (t == &nm[p+1])
+                {
+                    status = invalid_mangled_name;
+                    return;
+                }
+                if (k1 == k0)
+                {
+                    nm.erase(p, static_cast<std::size_t>(t - &nm[p]));
+                }
+                else
+                {
+                    if (db.names[k0].first.front() == '`')
+                    {
+                        status = invalid_mangled_name;
+                        return;
+                    }
+                    size_t p2 = static_cast<size_t>(t - &nm[p]);
+                    size_t s = db.names[k0].size();
+                    nm.replace(p, p2, db.names[k0].move_full());
+                    p2 = p + s;
+                    for (size_t k = k0+1; k < k1; ++k)
+                    {
+                        s = db.names[k].size() + 2;
+                        nm.insert(p2, ", " + db.names[k].move_full());
+                        p2 += s;
+                    }
+                    for (; k1 > k0; --k1)
+                        db.names.pop_back();
+                }
             }
         }
+        db.names.push_back(std::move(nm));
     }
 }
 
