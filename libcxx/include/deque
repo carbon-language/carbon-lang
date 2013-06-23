@@ -915,7 +915,14 @@ protected:
                                                          __pointer_allocator;
     typedef allocator_traits<__pointer_allocator>        __map_traits;
     typedef typename __map_traits::pointer               __map_pointer;
-    typedef typename __map_traits::const_pointer         __map_const_pointer;
+    typedef typename __alloc_traits::template
+#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+                rebind_alloc<const_pointer>
+#else
+                rebind_alloc<const_pointer>::other
+#endif
+                                                         __const_pointer_allocator;
+    typedef typename allocator_traits<__const_pointer_allocator>::const_pointer __map_const_pointer;
     typedef __split_buffer<pointer, __pointer_allocator> __map;
 
     typedef __deque_iterator<value_type, pointer, reference, __map_pointer,
@@ -1053,7 +1060,7 @@ template <class _Tp, class _Allocator>
 typename __deque_base<_Tp, _Allocator>::const_iterator
 __deque_base<_Tp, _Allocator>::begin() const _NOEXCEPT
 {
-    __map_const_pointer __mp = __map_.begin() + __start_ / __block_size;
+    __map_const_pointer __mp = static_cast<__map_const_pointer>(__map_.begin() + __start_ / __block_size);
     return const_iterator(__mp, __map_.empty() ? 0 : *__mp + __start_ % __block_size);
 }
 
@@ -1071,7 +1078,7 @@ typename __deque_base<_Tp, _Allocator>::const_iterator
 __deque_base<_Tp, _Allocator>::end() const _NOEXCEPT
 {
     size_type __p = size() + __start_;
-    __map_const_pointer __mp = __map_.begin() + __p / __block_size;
+    __map_const_pointer __mp = static_cast<__map_const_pointer>(__map_.begin() + __p / __block_size);
     return const_iterator(__mp, __map_.empty() ? 0 : *__mp + __p % __block_size);
 }
 
@@ -1341,6 +1348,8 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     bool __invariants() const {return __base::__invariants();}
 private:
+    typedef typename __base::__map_const_pointer __map_const_pointer;
+
     _LIBCPP_INLINE_VISIBILITY
     static size_type __recommend_blocks(size_type __n)
     {
@@ -2505,9 +2514,9 @@ void
 deque<_Tp, _Allocator>::pop_front()
 {
     allocator_type& __a = __base::__alloc();
-    __alloc_traits::destroy(__a, *(__base::__map_.begin() +
-                                   __base::__start_ / __base::__block_size) +
-                                   __base::__start_ % __base::__block_size);
+    __alloc_traits::destroy(__a, __to_raw_pointer(*(__base::__map_.begin() +
+                                                    __base::__start_ / __base::__block_size) +
+                                                    __base::__start_ % __base::__block_size));
     --__base::size();
     if (++__base::__start_ >= 2 * __base::__block_size)
     {
@@ -2523,9 +2532,9 @@ deque<_Tp, _Allocator>::pop_back()
 {
     allocator_type& __a = __base::__alloc();
     size_type __p = __base::size() + __base::__start_ - 1;
-    __alloc_traits::destroy(__a, *(__base::__map_.begin() +
-                                   __p / __base::__block_size) +
-                                   __p % __base::__block_size);
+    __alloc_traits::destroy(__a, __to_raw_pointer(*(__base::__map_.begin() +
+                                                    __p / __base::__block_size) +
+                                                    __p % __base::__block_size));
     --__base::size();
     if (__back_spare() >= 2 * __base::__block_size)
     {
@@ -2556,7 +2565,7 @@ deque<_Tp, _Allocator>::__move_and_check(iterator __f, iterator __l, iterator __
             __fe = __fb + __bs;
         }
         if (__fb <= __vt && __vt < __fe)
-            __vt = (const_iterator(__f.__m_iter_, __vt) -= __f - __r).__ptr_;
+            __vt = (const_iterator(static_cast<__map_const_pointer>(__f.__m_iter_), __vt) -= __f - __r).__ptr_;
         __r = _VSTD::move(__fb, __fe, __r);
         __n -= __bs;
         __f += __bs;
@@ -2587,7 +2596,7 @@ deque<_Tp, _Allocator>::__move_backward_and_check(iterator __f, iterator __l, it
             __lb = __le - __bs;
         }
         if (__lb <= __vt && __vt < __le)
-            __vt = (const_iterator(__l.__m_iter_, __vt) += __r - __l - 1).__ptr_;
+            __vt = (const_iterator(static_cast<__map_const_pointer>(__l.__m_iter_), __vt) += __r - __l - 1).__ptr_;
         __r = _VSTD::move_backward(__lb, __le, __r);
         __n -= __bs;
         __l -= __bs - 1;
@@ -2618,7 +2627,7 @@ deque<_Tp, _Allocator>::__move_construct_and_check(iterator __f, iterator __l,
             __fe = __fb + __bs;
         }
         if (__fb <= __vt && __vt < __fe)
-            __vt = (const_iterator(__f.__m_iter_, __vt) += __r - __f).__ptr_;
+            __vt = (const_iterator(static_cast<__map_const_pointer>(__f.__m_iter_), __vt) += __r - __f).__ptr_;
         for (; __fb != __fe; ++__fb, ++__r, ++__base::size())
             __alloc_traits::construct(__a, _VSTD::addressof(*__r), _VSTD::move(*__fb));
         __n -= __bs;
@@ -2654,7 +2663,7 @@ deque<_Tp, _Allocator>::__move_construct_backward_and_check(iterator __f, iterat
             __lb = __le - __bs;
         }
         if (__lb <= __vt && __vt < __le)
-            __vt = (const_iterator(__l.__m_iter_, __vt) -= __l - __r + 1).__ptr_;
+            __vt = (const_iterator(static_cast<__map_const_pointer>(__l.__m_iter_), __vt) -= __l - __r + 1).__ptr_;
         while (__le != __lb)
         {
             __alloc_traits::construct(__a, _VSTD::addressof(*--__r), _VSTD::move(*--__le));

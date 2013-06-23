@@ -16,6 +16,7 @@
 
 #include "../../../stack_allocator.h"
 #include "../../../NotConstructible.h"
+#include "../../../min_allocator.h"
 
 template <class T, class Allocator>
 void
@@ -29,4 +30,8 @@ int main()
 {
     test<int, std::allocator<int> >();
     test<NotConstructible, stack_allocator<NotConstructible, 1> >();
+#if __cplusplus >= 201103L
+    test<int, min_allocator<int> >();
+    test<NotConstructible, min_allocator<NotConstructible> >();
+#endif
 }

@@ -24,7 +24,10 @@
 #include <deque>
 #include <cassert>
 
-std::deque<int>
+#include "../../../min_allocator.h"
+
+template <class C>
+C
 make(int size, int start = 0 )
 {
     const int b = 4096 / sizeof(int);
@@ -35,7 +38,7 @@ make(int size, int start = 0 )
         init *= b;
         --init;
     }
-    std::deque<int> c(init, 0);
+    C c(init, 0);
     for (int i = 0; i < init-start; ++i)
         c.pop_back();
     for (int i = 0; i < size; ++i)
@@ -48,7 +51,7 @@ make(int size, int start = 0 )
 int main()
 {
     {
-        std::deque<int> c = make(10);
+        std::deque<int> c = make<std::deque<int> >(10);
         for (unsigned i = 0; i < 10; ++i)
             assert(c[i] == i);
         for (unsigned i = 0; i < 10; ++i)
@@ -57,7 +60,7 @@ int main()
         assert(c.back() == 9);
     }
     {
-        const std::deque<int> c = make(10);
+        const std::deque<int> c = make<std::deque<int> >(10);
         for (unsigned i = 0; i < 10; ++i)
             assert(c[i] == i);
         for (unsigned i = 0; i < 10; ++i)
@@ -65,4 +68,24 @@ int main()
         assert(c.front() == 0);
         assert(c.back() == 9);
     }
+#if __cplusplus >= 201103L
+    {
+        std::deque<int, min_allocator<int>> c = make<std::deque<int, min_allocator<int>> >(10);
+        for (unsigned i = 0; i < 10; ++i)
+            assert(c[i] == i);
+        for (unsigned i = 0; i < 10; ++i)
+            assert(c.at(i) == i);
+        assert(c.front() == 0);
+        assert(c.back() == 9);
+    }
+    {
+        const std::deque<int, min_allocator<int>> c = make<std::deque<int, min_allocator<int>> >(10);
+        for (unsigned i = 0; i < 10; ++i)
+            assert(c[i] == i);
+        for (unsigned i = 0; i < 10; ++i)
+            assert(c.at(i) == i);
+        assert(c.front() == 0);
+        assert(c.back() == 9);
+    }
+#endif
 }

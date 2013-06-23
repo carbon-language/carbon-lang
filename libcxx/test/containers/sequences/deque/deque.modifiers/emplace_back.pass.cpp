@@ -15,10 +15,12 @@
 #include <cassert>
 
 #include "../../../Emplaceable.h"
+#include "../../../min_allocator.h"
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-std::deque<Emplaceable>
+template <class C>
+C
 make(int size, int start = 0 )
 {
     const int b = 4096 / sizeof(int);
@@ -29,7 +31,7 @@ make(int size, int start = 0 )
         init *= b;
         --init;
     }
-    std::deque<Emplaceable> c(init);
+    C c(init);
     for (int i = 0; i < init-start; ++i)
         c.pop_back();
     for (int i = 0; i < size; ++i)
@@ -39,11 +41,11 @@ make(int size, int start = 0 )
     return c;
 };
 
+template <class C>
 void
-test(std::deque<Emplaceable>& c1)
+test(C& c1)
 {
-    typedef std::deque<Emplaceable> C;
-    typedef C::iterator I;
+    typedef typename C::iterator I;
     std::size_t c1_osize = c1.size();
     c1.emplace_back(Emplaceable(1, 2.5));
     assert(c1.size() == c1_osize + 1);
@@ -52,11 +54,11 @@ test(std::deque<Emplaceable>& c1)
     assert(*--i == Emplaceable(1, 2.5));
 }
 
+template <class C>
 void
 testN(int start, int N)
 {
-    typedef std::deque<Emplaceable> C;
-    C c1 = make(N, start);
+    C c1 = make<C>(N, start);
     test(c1);
 }
 
@@ -65,10 +67,21 @@ testN(int start, int N)
 int main()
 {
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    {
     int rng[] = {0, 1, 2, 3, 1023, 1024, 1025, 2047, 2048, 2049};
     const int N = sizeof(rng)/sizeof(rng[0]);
     for (int i = 0; i < N; ++i)
         for (int j = 0; j < N; ++j)
-            testN(rng[i], rng[j]);
+            testN<std::deque<Emplaceable> >(rng[i], rng[j]);
+    }
+#if __cplusplus >= 201103L
+    {
+    int rng[] = {0, 1, 2, 3, 1023, 1024, 1025, 2047, 2048, 2049};
+    const int N = sizeof(rng)/sizeof(rng[0]);
+    for (int i = 0; i < N; ++i)
+        for (int j = 0; j < N; ++j)
+            testN<std::deque<Emplaceable, min_allocator<Emplaceable>> >(rng[i], rng[j]);
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

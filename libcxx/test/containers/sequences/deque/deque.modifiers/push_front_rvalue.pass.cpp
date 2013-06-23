@@ -15,10 +15,12 @@
 #include <cassert>
 
 #include "../../../MoveOnly.h"
+#include "../../../min_allocator.h"
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-std::deque<MoveOnly>
+template <class C>
+C
 make(int size, int start = 0 )
 {
     const int b = 4096 / sizeof(int);
@@ -29,7 +31,7 @@ make(int size, int start = 0 )
         init *= b;
         --init;
     }
-    std::deque<MoveOnly> c(init);
+    C c(init);
     for (int i = 0; i < init-start; ++i)
         c.pop_back();
     for (int i = 0; i < size; ++i)
@@ -39,11 +41,11 @@ make(int size, int start = 0 )
     return c;
 };
 
+template <class C>
 void
-test(std::deque<MoveOnly>& c1, int x)
+test(C& c1, int x)
 {
-    typedef std::deque<MoveOnly> C;
-    typedef C::iterator I;
+    typedef typename C::iterator I;
     std::size_t c1_osize = c1.size();
     c1.push_front(MoveOnly(x));
     assert(c1.size() == c1_osize + 1);
@@ -55,11 +57,11 @@ test(std::deque<MoveOnly>& c1, int x)
         assert(*i == MoveOnly(j));
 }
 
+template <class C>
 void
 testN(int start, int N)
 {
-    typedef std::deque<MoveOnly> C;
-    C c1 = make(N, start);
+    C c1 = make<C>(N, start);
     test(c1, -10);
 }
 
@@ -68,10 +70,21 @@ testN(int start, int N)
 int main()
 {
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    {
     int rng[] = {0, 1, 2, 3, 1023, 1024, 1025, 2047, 2048, 2049};
     const int N = sizeof(rng)/sizeof(rng[0]);
     for (int i = 0; i < N; ++i)
         for (int j = 0; j < N; ++j)
-            testN(rng[i], rng[j]);
+            testN<std::deque<MoveOnly> >(rng[i], rng[j]);
+    }
+#if __cplusplus >= 201103L
+    {
+    int rng[] = {0, 1, 2, 3, 1023, 1024, 1025, 2047, 2048, 2049};
+    const int N = sizeof(rng)/sizeof(rng[0]);
+    for (int i = 0; i < N; ++i)
+        for (int j = 0; j < N; ++j)
+            testN<std::deque<MoveOnly, min_allocator<MoveOnly>> >(rng[i], rng[j]);
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

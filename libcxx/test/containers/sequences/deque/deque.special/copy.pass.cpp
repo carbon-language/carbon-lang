@@ -19,8 +19,10 @@
 #include <cassert>
 
 #include "test_iterators.h"
+#include "../../../min_allocator.h"
 
-std::deque<int>
+template <class C>
+C
 make(int size, int start = 0 )
 {
     const int b = 4096 / sizeof(int);
@@ -31,7 +33,7 @@ make(int size, int start = 0 )
         init *= b;
         --init;
     }
-    std::deque<int> c(init, 0);
+    C c(init, 0);
     for (int i = 0; i < init-start; ++i)
         c.pop_back();
     for (int i = 0; i < size; ++i)
@@ -41,16 +43,16 @@ make(int size, int start = 0 )
     return c;
 };
 
+template <class C>
 void testN(int start, int N)
 {
-    typedef std::deque<int> C;
-    typedef C::iterator I;
-    typedef C::const_iterator CI;
+    typedef typename C::iterator I;
+    typedef typename C::const_iterator CI;
     typedef random_access_iterator<I> RAI;
     typedef random_access_iterator<CI> RACI;
     typedef input_iterator<CI> ICI;
-    C c1 = make(N, start);
-    C c2 = make(N);
+    C c1 = make<C>(N, start);
+    C c2 = make<C>(N);
     assert(std::copy(c1.cbegin(), c1.cend(), c2.begin()) == c2.end());
     assert(c1 == c2);
     assert(std::copy(c2.cbegin(), c2.cend(), c1.begin()) == c1.end());
@@ -67,9 +69,20 @@ void testN(int start, int N)
 
 int main()
 {
+    {
     int rng[] = {0, 1, 2, 3, 1023, 1024, 1025, 2047, 2048, 2049};
     const int N = sizeof(rng)/sizeof(rng[0]);
     for (int i = 0; i < N; ++i)
         for (int j = 0; j < N; ++j)
-            testN(rng[i], rng[j]);
+            testN<std::deque<int> >(rng[i], rng[j]);
+    }
+#if __cplusplus >= 201103L
+    {
+    int rng[] = {0, 1, 2, 3, 1023, 1024, 1025, 2047, 2048, 2049};
+    const int N = sizeof(rng)/sizeof(rng[0]);
+    for (int i = 0; i < N; ++i)
+        for (int j = 0; j < N; ++j)
+            testN<std::deque<int, min_allocator<int>> >(rng[i], rng[j]);
+    }
+#endif
 }

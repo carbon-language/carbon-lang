@@ -20,8 +20,11 @@
 #include <iterator>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 int main()
 {
+    {
     typedef std::deque<int> C;
     C c;
     C::iterator i;
@@ -29,4 +32,16 @@ int main()
     C::const_iterator j;
     j = c.cbegin();
     assert(i == j);
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::deque<int, min_allocator<int>> C;
+    C c;
+    C::iterator i;
+    i = c.begin();
+    C::const_iterator j;
+    j = c.cbegin();
+    assert(i == j);
+    }
+#endif
 }

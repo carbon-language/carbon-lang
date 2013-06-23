@@ -15,6 +15,7 @@
 #include <cassert>
 
 #include "../../../test_allocator.h"
+#include "../../../min_allocator.h"
 
 template <class C>
 void
@@ -39,4 +40,12 @@ int main()
         test(std::deque<int, other_allocator<int> >(ab, an, other_allocator<int>(3)),
                                                             other_allocator<int>(4));
     }
+#if __cplusplus >= 201103L
+    {
+        int ab[] = {3, 4, 2, 8, 0, 1, 44, 34, 45, 96, 80, 1, 13, 31, 45};
+        int* an = ab + sizeof(ab)/sizeof(ab[0]);
+        test(std::deque<int, min_allocator<int> >(ab, an, min_allocator<int>()),
+                                                          min_allocator<int>());
+    }
+#endif
 }

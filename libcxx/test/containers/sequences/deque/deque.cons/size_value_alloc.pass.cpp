@@ -14,6 +14,8 @@
 #include <deque>
 #include <cassert>
 
+#include "../../../min_allocator.h"
+
 template <class T, class Allocator>
 void
 test(unsigned n, const T& x, const Allocator& a)
@@ -30,6 +32,7 @@ test(unsigned n, const T& x, const Allocator& a)
 
 int main()
 {
+    {
     std::allocator<int> a;
     test(0, 5, a);
     test(1, 10, a);
@@ -43,4 +46,22 @@ int main()
     test(4095, 78, a);
     test(4096, 1165, a);
     test(4097, 157, a);
+    }
+#if __cplusplus >= 201103L
+    {
+    min_allocator<int> a;
+    test(0, 5, a);
+    test(1, 10, a);
+    test(10, 11, a);
+    test(1023, -11, a);
+    test(1024, 25, a);
+    test(1025, 0, a);
+    test(2047, 110, a);
+    test(2048, -500, a);
+    test(2049, 654, a);
+    test(4095, 78, a);
+    test(4096, 1165, a);
+    test(4097, 157, a);
+    }
+#endif
 }

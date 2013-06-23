@@ -16,6 +16,7 @@
 
 #include "../../../stack_allocator.h"
 #include "../../../DefaultOnly.h"
+#include "../../../min_allocator.h"
 
 template <class T, class Allocator>
 void
@@ -52,4 +53,7 @@ int main()
     test<DefaultOnly, std::allocator<DefaultOnly> >(4096);
     test<DefaultOnly, std::allocator<DefaultOnly> >(4097);
     test<DefaultOnly, stack_allocator<DefaultOnly, 4096> >(4095);
+#if __cplusplus >= 201103L
+    test<DefaultOnly, min_allocator<DefaultOnly> >(4095);
+#endif
 }

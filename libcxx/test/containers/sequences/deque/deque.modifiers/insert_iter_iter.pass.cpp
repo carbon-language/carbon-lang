@@ -18,8 +18,10 @@
 #include "test_iterators.h"
 #include "../../../MoveOnly.h"
 #include "../../../stack_allocator.h"
+#include "../../../min_allocator.h"
 
-std::deque<int>
+template <class C>
+C
 make(int size, int start = 0 )
 {
     const int b = 4096 / sizeof(int);
@@ -30,7 +32,7 @@ make(int size, int start = 0 )
         init *= b;
         --init;
     }
-    std::deque<int> c(init, 0);
+    C c(init, 0);
     for (int i = 0; i < init-start; ++i)
         c.pop_back();
     for (int i = 0; i < size; ++i)
@@ -40,12 +42,12 @@ make(int size, int start = 0 )
     return c;
 };
 
+template <class C>
 void
-test(int P, std::deque<int>& c1, const std::deque<int>& c2)
+test(int P, C& c1, const C& c2)
 {
-    typedef std::deque<int> C;
-    typedef C::iterator I;
-    typedef C::const_iterator CI;
+    typedef typename C::iterator I;
+    typedef typename C::const_iterator CI;
     typedef bidirectional_iterator<CI> BCI;
     std::size_t c1_osize = c1.size();
     CI i = c1.insert(c1.begin() + P, BCI(c2.begin()), BCI(c2.end()));
@@ -61,18 +63,18 @@ test(int P, std::deque<int>& c1, const std::deque<int>& c2)
         assert(*i == j);
 }
 
+template <class C>
 void
 testN(int start, int N, int M)
 {
-    typedef std::deque<int> C;
-    typedef C::iterator I;
-    typedef C::const_iterator CI;
+    typedef typename C::iterator I;
+    typedef typename C::const_iterator CI;
     for (int i = 0; i <= 3; ++i)
     {
         if (0 <= i && i <= N)
         {
-            C c1 = make(N, start);
-            C c2 = make(M);
+            C c1 = make<C>(N, start);
+            C c2 = make<C>(M);
             test(i, c1, c2);
         }
     }
@@ -80,8 +82,8 @@ testN(int start, int N, int M)
     {
         if (0 <= i && i <= N)
         {
-            C c1 = make(N, start);
-            C c2 = make(M);
+            C c1 = make<C>(N, start);
+            C c2 = make<C>(M);
             test(i, c1, c2);
         }
     }
@@ -89,8 +91,8 @@ testN(int start, int N, int M)
     {
         if (0 <= i && i <= N)
         {
-            C c1 = make(N, start);
-            C c2 = make(M);
+            C c1 = make<C>(N, start);
+            C c2 = make<C>(M);
             test(i, c1, c2);
         }
     }
@@ -98,8 +100,8 @@ testN(int start, int N, int M)
     {
         if (0 <= i && i <= N)
         {
-            C c1 = make(N, start);
-            C c2 = make(M);
+            C c1 = make<C>(N, start);
+            C c2 = make<C>(M);
             test(i, c1, c2);
         }
     }
@@ -107,8 +109,8 @@ testN(int start, int N, int M)
     {
         if (0 <= i && i <= N)
         {
-            C c1 = make(N, start);
-            C c2 = make(M);
+            C c1 = make<C>(N, start);
+            C c2 = make<C>(M);
             test(i, c1, c2);
         }
     }
@@ -116,19 +118,19 @@ testN(int start, int N, int M)
     {
         if (0 <= i && i <= N)
         {
-            C c1 = make(N, start);
-            C c2 = make(M);
+            C c1 = make<C>(N, start);
+            C c2 = make<C>(M);
             test(i, c1, c2);
         }
     }
 }
 
+template <class C>
 void
-testI(int P, std::deque<int>& c1, const std::deque<int>& c2)
+testI(int P, C& c1, const C& c2)
 {
-    typedef std::deque<int> C;
-    typedef C::iterator I;
-    typedef C::const_iterator CI;
+    typedef typename C::iterator I;
+    typedef typename C::const_iterator CI;
     typedef input_iterator<CI> ICI;
     std::size_t c1_osize = c1.size();
     CI i = c1.insert(c1.begin() + P, ICI(c2.begin()), ICI(c2.end()));
@@ -144,18 +146,18 @@ testI(int P, std::deque<int>& c1, const std::deque<int>& c2)
         assert(*i == j);
 }
 
+template <class C>
 void
 testNI(int start, int N, int M)
 {
-    typedef std::deque<int> C;
-    typedef C::iterator I;
-    typedef C::const_iterator CI;
+    typedef typename C::iterator I;
+    typedef typename C::const_iterator CI;
     for (int i = 0; i <= 3; ++i)
     {
         if (0 <= i && i <= N)
         {
-            C c1 = make(N, start);
-            C c2 = make(M);
+            C c1 = make<C>(N, start);
+            C c2 = make<C>(M);
             testI(i, c1, c2);
         }
     }
@@ -163,8 +165,8 @@ testNI(int start, int N, int M)
     {
         if (0 <= i && i <= N)
         {
-            C c1 = make(N, start);
-            C c2 = make(M);
+            C c1 = make<C>(N, start);
+            C c2 = make<C>(M);
             testI(i, c1, c2);
         }
     }
@@ -172,8 +174,8 @@ testNI(int start, int N, int M)
     {
         if (0 <= i && i <= N)
         {
-            C c1 = make(N, start);
-            C c2 = make(M);
+            C c1 = make<C>(N, start);
+            C c2 = make<C>(M);
             testI(i, c1, c2);
         }
     }
@@ -181,8 +183,8 @@ testNI(int start, int N, int M)
     {
         if (0 <= i && i <= N)
         {
-            C c1 = make(N, start);
-            C c2 = make(M);
+            C c1 = make<C>(N, start);
+            C c2 = make<C>(M);
             testI(i, c1, c2);
         }
     }
@@ -190,19 +192,20 @@ testNI(int start, int N, int M)
     {
         if (0 <= i && i <= N)
         {
-            C c1 = make(N, start);
-            C c2 = make(M);
+            C c1 = make<C>(N, start);
+            C c2 = make<C>(M);
             testI(i, c1, c2);
         }
     }
 }
 
+template <class C>
 void
 test_move()
 {
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    std::deque<MoveOnly, stack_allocator<MoveOnly, 2000> > c;
-    typedef std::deque<MoveOnly>::const_iterator CI;
+    C c;
+    typedef typename C::const_iterator CI;
     {
         MoveOnly mo(0);
         typedef MoveOnly* I;
@@ -224,12 +227,28 @@ test_move()
 
 int main()
 {
+    {
     int rng[] = {0, 1, 2, 3, 1023, 1024, 1025, 2047, 2048, 2049};
     const int N = sizeof(rng)/sizeof(rng[0]);
     for (int i = 0; i < N; ++i)
         for (int j = 0; j < N; ++j)
             for (int k = 0; k < N; ++k)
-                testN(rng[i], rng[j], rng[k]);
-    testNI(1500, 2000, 1000);
-    test_move();
+                testN<std::deque<int> >(rng[i], rng[j], rng[k]);
+    testNI<std::deque<int> >(1500, 2000, 1000);
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    test_move<std::deque<MoveOnly, stack_allocator<MoveOnly, 2000> > >();
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    }
+#if __cplusplus >= 201103L
+    {
+    int rng[] = {0, 1, 2, 3, 1023, 1024, 1025, 2047, 2048, 2049};
+    const int N = sizeof(rng)/sizeof(rng[0]);
+    for (int i = 0; i < N; ++i)
+        for (int j = 0; j < N; ++j)
+            for (int k = 0; k < N; ++k)
+                testN<std::deque<int, min_allocator<int>> >(rng[i], rng[j], rng[k]);
+    testNI<std::deque<int> >(1500, 2000, 1000);
+    test_move<std::deque<MoveOnly, min_allocator<MoveOnly> > >();
+    }
+#endif
 }

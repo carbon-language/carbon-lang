@@ -16,6 +16,7 @@
 
 #include "../../../stack_allocator.h"
 #include "test_iterators.h"
+#include "../../../min_allocator.h"
 
 template <class InputIterator>
 void
@@ -55,4 +56,7 @@ int main()
     test(bidirectional_iterator<const int*>(ab), bidirectional_iterator<const int*>(an));
     test(random_access_iterator<const int*>(ab), random_access_iterator<const int*>(an));
     test<stack_allocator<int, 4096> >(ab, an);
+#if __cplusplus >= 201103L
+    test<min_allocator<int> >(ab, an);
+#endif
 }
