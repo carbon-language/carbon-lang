@@ -287,12 +287,12 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
     // whole array. For read accesses it does not make a difference, if an
     // access must or may happen. However, for write accesses it is important to
     // differentiate between writes that must happen and writes that may happen.
-  AccessRelation = isl_map_from_basic_map(createBasicAccessMap(Statement));
+    AccessRelation = isl_map_from_basic_map(createBasicAccessMap(Statement));
     Type = Access.isRead() ? Read : MayWrite;
     return;
   }
 
-  Type = Access.isRead() ? Read: MustWrite;
+  Type = Access.isRead() ? Read : MustWrite;
 
   isl_pw_aff *Affine = SCEVAffinator::getPwAff(Statement, Access.getOffset());
 
