@@ -847,9 +847,9 @@ public:
   }
 
   enum FriendObjectKind {
-    FOK_None, // not a friend object
-    FOK_Declared, // a friend of a previously-declared entity
-    FOK_Undeclared // a friend of a previously-undeclared entity
+    FOK_None,      ///< not a friend object
+    FOK_Declared,  ///< a friend of a previously-declared entity
+    FOK_Undeclared ///< a friend of a previously-undeclared entity
   };
 
   /// \brief Determines whether this declaration is the object of a
@@ -857,11 +857,11 @@ public:
   ///
   /// There is currently no direct way to find the associated FriendDecl.
   FriendObjectKind getFriendObjectKind() const {
-    unsigned mask
-      = (IdentifierNamespace & (IDNS_TagFriend | IDNS_OrdinaryFriend));
+    unsigned mask =
+        (IdentifierNamespace & (IDNS_TagFriend | IDNS_OrdinaryFriend));
     if (!mask) return FOK_None;
-    return (IdentifierNamespace & (IDNS_Tag | IDNS_Ordinary) ?
-              FOK_Declared : FOK_Undeclared);
+    return (IdentifierNamespace & (IDNS_Tag | IDNS_Ordinary) ? FOK_Declared
+                                                             : FOK_Undeclared);
   }
 
   /// Specifies that this declaration is a C++ overloaded non-member.
