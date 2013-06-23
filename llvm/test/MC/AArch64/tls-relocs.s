@@ -30,11 +30,11 @@
         movn w8, #:dtprel_g1:var
 // CHECK: movz    x5, #:dtprel_g1:var     // encoding: [0x05'A',A,0xa0'A',0x92'A']
 // CHECK-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g1:var, kind: fixup_a64_movw_dtprel_g1
-// CHECK-NEXT: movn    x6, #:dtprel_g1:var     // encoding: [0x06'A',A,0xa0'A',0x92'A']
+// CHECK: movn    x6, #:dtprel_g1:var     // encoding: [0x06'A',A,0xa0'A',0x92'A']
 // CHECK-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g1:var, kind: fixup_a64_movw_dtprel_g1
-// CHECK-NEXT: movz    w7, #:dtprel_g1:var     // encoding: [0x07'A',A,0xa0'A',0x12'A']
+// CHECK: movz    w7, #:dtprel_g1:var     // encoding: [0x07'A',A,0xa0'A',0x12'A']
 // CHECK-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g1:var, kind: fixup_a64_movw_dtprel_g1
-// CHECK-NEXT: movn    w8, #:dtprel_g1:var     // encoding: [0x08'A',A,0xa0'A',0x12'A']
+// CHECK: movn    w8, #:dtprel_g1:var     // encoding: [0x08'A',A,0xa0'A',0x12'A']
 // CHECK-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_g1:var, kind: fixup_a64_movw_dtprel_g1
 
 // CHECK-ELF-NEXT:     0x10 R_AARCH64_TLSLD_MOVW_DTPREL_G1 [[VARSYM]]
