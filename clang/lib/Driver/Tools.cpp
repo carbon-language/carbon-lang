@@ -1674,6 +1674,24 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC, const ArgList &Args)
   }
 }
 
+static void addProfileRTLinux(
+    const ToolChain &TC, const ArgList &Args, ArgStringList &CmdArgs) {
+  if (!(Args.hasArg(options::OPT_fprofile_arcs) ||
+        Args.hasArg(options::OPT_fprofile_generate) ||
+        Args.hasArg(options::OPT_fcreate_profile) ||
+        Args.hasArg(options::OPT_coverage)))
+    return;
+
+  // The profile runtime is located in the Linux library directory and has name
+  // "libclang_rt.profile-<ArchName>.a".
+  SmallString<128> LibProfile(TC.getDriver().ResourceDir);
+  llvm::sys::path::append(
+      LibProfile, "lib", "linux",
+      Twine("libclang_rt.profile-") + TC.getArchName() + ".a");
+
+  CmdArgs.push_back(Args.MakeArgString(LibProfile));
+}
+
 static void addSanitizerRTLinkFlagsLinux(
     const ToolChain &TC, const ArgList &Args, ArgStringList &CmdArgs,
     const StringRef Sanitizer, bool BeforeLibStdCXX,
@@ -6244,7 +6262,7 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  addProfileRT(getToolChain(), Args, CmdArgs, getToolChain().getTriple());
+  addProfileRTLinux(getToolChain(), Args, CmdArgs);
 
   C.addCommand(new Command(JA, *this, ToolChain.Linker.c_str(), CmdArgs));
 }
