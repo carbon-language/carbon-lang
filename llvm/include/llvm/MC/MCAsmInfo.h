@@ -344,8 +344,8 @@ namespace llvm {
     virtual ~MCAsmInfo();
 
     // FIXME: move these methods to DwarfPrinter when the JIT stops using them.
-    static unsigned getSLEB128Size(int Value);
-    static unsigned getULEB128Size(unsigned Value);
+    static unsigned getSLEB128Size(int64_t Value);
+    static unsigned getULEB128Size(uint64_t Value);
 
     /// getPointerSize - Get the pointer size in bytes.
     unsigned getPointerSize() const {

@@ -33,7 +33,7 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 /// EmitSLEB128 - emit the specified signed leb128 value.
-void AsmPrinter::EmitSLEB128(int Value, const char *Desc) const {
+void AsmPrinter::EmitSLEB128(int64_t Value, const char *Desc) const {
   if (isVerbose() && Desc)
     OutStreamer.AddComment(Desc);
 
@@ -41,7 +41,7 @@ void AsmPrinter::EmitSLEB128(int Value, const char *Desc) const {
 }
 
 /// EmitULEB128 - emit the specified signed leb128 value.
-void AsmPrinter::EmitULEB128(unsigned Value, const char *Desc,
+void AsmPrinter::EmitULEB128(uint64_t Value, const char *Desc,
                              unsigned PadTo) const {
   if (isVerbose() && Desc)
     OutStreamer.AddComment(Desc);
