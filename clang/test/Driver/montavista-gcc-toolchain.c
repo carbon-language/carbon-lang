@@ -6,4 +6,4 @@
 // RUN:   | FileCheck %s
 
 // Test for header search toolchain detection.
-// CHECK: montavista_i686_tree/usr/lib/gcc/i686-montavista-linux/4.2.0/libgcc.a
+// CHECK: montavista_i686_tree/usr/lib/gcc/i686-montavista-linux/4.2.0{{/|\\}}libgcc.a

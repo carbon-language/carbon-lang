@@ -10,7 +10,7 @@
 
 // CHECK: #include <...> search starts here:
 // CHECK: {{.*}}.tmps/first
-// CHECK: /lib/clang/{{[.0-9]+}}/include
+// CHECK: {{/|\\}}lib{{/|\\}}clang{{/|\\}}{{[.0-9]+}}{{/|\\}}include
 // CHECK: {{.*}}.tmps/second
 // CHECK-NOT: {{.*}}.tmps
 
