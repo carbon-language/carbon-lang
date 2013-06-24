@@ -204,6 +204,7 @@ EnsureFDFlags(int fd, int flags, Error &error)
 class Operation
 {
 public:
+    virtual ~Operation() {}
     virtual void Execute(ProcessMonitor *monitor) = 0;
 };
 
