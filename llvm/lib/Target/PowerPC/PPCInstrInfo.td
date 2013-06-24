@@ -916,6 +916,10 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR] in {
                     "bl $func", BrB, []>;  // See Pat patterns below.
     def BLA : IForm<18, 1, 1, (outs), (ins aaddr:$func),
                     "bla $func", BrB, [(PPCcall (i32 imm:$func))]>;
+
+    let isCodeGenOnly = 1 in
+    def BCCL : BForm<16, 0, 1, (outs), (ins pred:$cond, condbrtarget:$dst),
+                     "b${cond:cc}l ${cond:reg}, $dst">;
   }
   let Uses = [CTR, RM] in {
     def BCTRL : XLForm_2_ext<19, 528, 20, 0, 1, (outs), (ins),
@@ -2190,6 +2194,11 @@ multiclass BranchExtendedMnemonic<string name, int bibo> {
                   (BCCTR bibo, crrc:$cc)>;
   def : InstAlias<"b"#name#"ctr",
                   (BCCTR bibo, CR0)>;
+
+  def : InstAlias<"b"#name#"l $cc, $dst",
+                  (BCCL bibo, crrc:$cc, condbrtarget:$dst)>;
+  def : InstAlias<"b"#name#"l $dst",
+                  (BCCL bibo, CR0, condbrtarget:$dst)>;
 
   def : InstAlias<"b"#name#"lrl $cc",
                   (BCLRL bibo, crrc:$cc)>;
