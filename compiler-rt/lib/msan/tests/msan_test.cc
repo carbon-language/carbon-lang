@@ -566,6 +566,52 @@ TEST(MemorySanitizer, pread) {
   delete x;
 }
 
+TEST(MemorySanitizer, readv) {
+  char buf[2011];
+  struct iovec iov[2];
+  iov[0].iov_base = buf + 1;
+  iov[0].iov_len = 5;
+  iov[1].iov_base = buf + 10;
+  iov[1].iov_len = 2000;
+  int fd = open("/proc/self/stat", O_RDONLY);
+  assert(fd > 0);
+  int sz = readv(fd, iov, 2);
+  ASSERT_LT(sz, 5 + 2000);
+  ASSERT_GT(sz, iov[0].iov_len);
+  EXPECT_POISONED(buf[0]);
+  EXPECT_NOT_POISONED(buf[1]);
+  EXPECT_NOT_POISONED(buf[5]);
+  EXPECT_POISONED(buf[6]);
+  EXPECT_POISONED(buf[9]);
+  EXPECT_NOT_POISONED(buf[10]);
+  EXPECT_NOT_POISONED(buf[10 + (sz - 1) - 5]);
+  EXPECT_POISONED(buf[11 + (sz - 1) - 5]);
+  close(fd);
+}
+
+TEST(MemorySanitizer, preadv) {
+  char buf[2011];
+  struct iovec iov[2];
+  iov[0].iov_base = buf + 1;
+  iov[0].iov_len = 5;
+  iov[1].iov_base = buf + 10;
+  iov[1].iov_len = 2000;
+  int fd = open("/proc/self/stat", O_RDONLY);
+  assert(fd > 0);
+  int sz = preadv(fd, iov, 2, 3);
+  ASSERT_LT(sz, 5 + 2000);
+  ASSERT_GT(sz, iov[0].iov_len);
+  EXPECT_POISONED(buf[0]);
+  EXPECT_NOT_POISONED(buf[1]);
+  EXPECT_NOT_POISONED(buf[5]);
+  EXPECT_POISONED(buf[6]);
+  EXPECT_POISONED(buf[9]);
+  EXPECT_NOT_POISONED(buf[10]);
+  EXPECT_NOT_POISONED(buf[10 + (sz - 1) - 5]);
+  EXPECT_POISONED(buf[11 + (sz - 1) - 5]);
+  close(fd);
+}
+
 // FIXME: fails now.
 TEST(MemorySanitizer, DISABLED_ioctl) {
   struct winsize ws;

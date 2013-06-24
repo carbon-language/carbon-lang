@@ -1449,40 +1449,6 @@ TSAN_INTERCEPTOR(int, pipe2, int *pipefd, int flags) {
   return res;
 }
 
-TSAN_INTERCEPTOR(long_t, readv, int fd, void *vec, int cnt) {
-  SCOPED_TSAN_INTERCEPTOR(readv, fd, vec, cnt);
-  int res = REAL(readv)(fd, vec, cnt);
-  if (res >= 0 && fd >= 0) {
-    FdAcquire(thr, pc, fd);
-  }
-  return res;
-}
-
-TSAN_INTERCEPTOR(long_t, preadv64, int fd, void *vec, int cnt, u64 off) {
-  SCOPED_TSAN_INTERCEPTOR(preadv64, fd, vec, cnt, off);
-  int res = REAL(preadv64)(fd, vec, cnt, off);
-  if (res >= 0 && fd >= 0) {
-    FdAcquire(thr, pc, fd);
-  }
-  return res;
-}
-
-TSAN_INTERCEPTOR(long_t, writev, int fd, void *vec, int cnt) {
-  SCOPED_TSAN_INTERCEPTOR(writev, fd, vec, cnt);
-  if (fd >= 0)
-    FdRelease(thr, pc, fd);
-  int res = REAL(writev)(fd, vec, cnt);
-  return res;
-}
-
-TSAN_INTERCEPTOR(long_t, pwritev64, int fd, void *vec, int cnt, u64 off) {
-  SCOPED_TSAN_INTERCEPTOR(pwritev64, fd, vec, cnt, off);
-  if (fd >= 0)
-    FdRelease(thr, pc, fd);
-  int res = REAL(pwritev64)(fd, vec, cnt, off);
-  return res;
-}
-
 TSAN_INTERCEPTOR(long_t, send, int fd, void *buf, long_t len, int flags) {
   SCOPED_TSAN_INTERCEPTOR(send, fd, buf, len, flags);
   if (fd >= 0)
@@ -2049,10 +2015,6 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(pipe);
   TSAN_INTERCEPT(pipe2);
 
-  TSAN_INTERCEPT(readv);
-  TSAN_INTERCEPT(preadv64);
-  TSAN_INTERCEPT(writev);
-  TSAN_INTERCEPT(pwritev64);
   TSAN_INTERCEPT(send);
   TSAN_INTERCEPT(sendmsg);
   TSAN_INTERCEPT(recv);

@@ -229,11 +229,13 @@ void StatOutput(u64 *stat) {
   name[StatInt_pread]                    = "  pread                           ";
   name[StatInt_pread64]                  = "  pread64                         ";
   name[StatInt_readv]                    = "  readv                           ";
+  name[StatInt_preadv]                   = "  preadv                          ";
   name[StatInt_preadv64]                 = "  preadv64                        ";
   name[StatInt_write]                    = "  write                           ";
   name[StatInt_pwrite]                   = "  pwrite                          ";
   name[StatInt_pwrite64]                 = "  pwrite64                        ";
   name[StatInt_writev]                   = "  writev                          ";
+  name[StatInt_pwritev]                  = "  pwritev                         ";
   name[StatInt_pwritev64]                = "  pwritev64                       ";
   name[StatInt_send]                     = "  send                            ";
   name[StatInt_sendmsg]                  = "  sendmsg                         ";

@@ -112,6 +112,27 @@ INTERCEPTOR(long double, frexpl, long double x, int *exp) {
 #define INIT_FREXPF_FREXPL
 #endif // SANITIZER_INTERCEPT_FREXPF_FREXPL
 
+#if SI_NOT_WINDOWS
+static void write_iovec(void *ctx, struct __sanitizer_iovec *iovec,
+                        SIZE_T iovlen, SIZE_T maxlen) {
+  for (SIZE_T i = 0; i < iovlen && maxlen; ++i) {
+    SSIZE_T sz = Min(iovec[i].iov_len, maxlen);
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, iovec[i].iov_base, sz);
+    maxlen -= sz;
+  }
+}
+
+static void read_iovec(void *ctx, struct __sanitizer_iovec *iovec,
+                       SIZE_T iovlen, SIZE_T maxlen) {
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, iovec, sizeof(*iovec) * iovlen);
+  for (SIZE_T i = 0; i < iovlen && maxlen; ++i) {
+    SSIZE_T sz = Min(iovec[i].iov_len, maxlen);
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, iovec[i].iov_base, sz);
+    maxlen -= sz;
+  }
+}
+#endif
+
 #if SANITIZER_INTERCEPT_READ
 INTERCEPTOR(SSIZE_T, read, int fd, void *ptr, SIZE_T count) {
   void *ctx;
@@ -160,6 +181,51 @@ INTERCEPTOR(SSIZE_T, pread64, int fd, void *ptr, SIZE_T count, OFF64_T offset) {
 #define INIT_PREAD64
 #endif
 
+#if SANITIZER_INTERCEPT_READV
+INTERCEPTOR_WITH_SUFFIX(SSIZE_T, readv, int fd, __sanitizer_iovec *iov,
+                        int iovcnt) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, readv, fd, iov, iovcnt);
+  SSIZE_T res = REAL(readv)(fd, iov, iovcnt);
+  if (res > 0) write_iovec(ctx, iov, iovcnt, res);
+  if (res >= 0 && fd >= 0) COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd);
+  return res;
+}
+#define INIT_READV INTERCEPT_FUNCTION(readv)
+#else
+#define INIT_READV
+#endif
+
+#if SANITIZER_INTERCEPT_PREADV
+INTERCEPTOR(SSIZE_T, preadv, int fd, __sanitizer_iovec *iov, int iovcnt,
+            OFF_T offset) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, preadv, fd, iov, iovcnt, offset);
+  SSIZE_T res = REAL(preadv)(fd, iov, iovcnt, offset);
+  if (res > 0) write_iovec(ctx, iov, iovcnt, res);
+  if (res >= 0 && fd >= 0) COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd);
+  return res;
+}
+#define INIT_PREADV INTERCEPT_FUNCTION(preadv)
+#else
+#define INIT_PREADV
+#endif
+
+#if SANITIZER_INTERCEPT_PREADV64
+INTERCEPTOR(SSIZE_T, preadv64, int fd, __sanitizer_iovec *iov, int iovcnt,
+            OFF64_T offset) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, preadv64, fd, iov, iovcnt, offset);
+  SSIZE_T res = REAL(preadv64)(fd, iov, iovcnt, offset);
+  if (res > 0) write_iovec(ctx, iov, iovcnt, res);
+  if (res >= 0 && fd >= 0) COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd);
+  return res;
+}
+#define INIT_PREADV64 INTERCEPT_FUNCTION(preadv64)
+#else
+#define INIT_PREADV64
+#endif
+
 #if SANITIZER_INTERCEPT_WRITE
 INTERCEPTOR(SSIZE_T, write, int fd, void *ptr, SIZE_T count) {
   void *ctx;
@@ -167,6 +233,7 @@ INTERCEPTOR(SSIZE_T, write, int fd, void *ptr, SIZE_T count) {
   if (fd >= 0)
     COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd);
   SSIZE_T res = REAL(write)(fd, ptr, count);
+  // FIXME: this check should be _before_ the call to REAL(write), not after
   if (res > 0)
     COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, res);
   return res;
@@ -207,6 +274,51 @@ INTERCEPTOR(SSIZE_T, pwrite64, int fd, void *ptr, OFF64_T count,
 #define INIT_PWRITE64 INTERCEPT_FUNCTION(pwrite64)
 #else
 #define INIT_PWRITE64
+#endif
+
+#if SANITIZER_INTERCEPT_WRITEV
+INTERCEPTOR_WITH_SUFFIX(SSIZE_T, writev, int fd, __sanitizer_iovec *iov,
+                        int iovcnt) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, writev, fd, iov, iovcnt);
+  if (fd >= 0) COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd);
+  SSIZE_T res = REAL(writev)(fd, iov, iovcnt);
+  if (res > 0) read_iovec(ctx, iov, iovcnt, res);
+  return res;
+}
+#define INIT_WRITEV INTERCEPT_FUNCTION(writev)
+#else
+#define INIT_WRITEV
+#endif
+
+#if SANITIZER_INTERCEPT_PWRITEV
+INTERCEPTOR(SSIZE_T, pwritev, int fd, __sanitizer_iovec *iov, int iovcnt,
+            OFF_T offset) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, pwritev, fd, iov, iovcnt, offset);
+  if (fd >= 0) COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd);
+  SSIZE_T res = REAL(pwritev)(fd, iov, iovcnt, offset);
+  if (res > 0) read_iovec(ctx, iov, iovcnt, res);
+  return res;
+}
+#define INIT_PWRITEV INTERCEPT_FUNCTION(pwritev)
+#else
+#define INIT_PWRITEV
+#endif
+
+#if SANITIZER_INTERCEPT_PWRITEV64
+INTERCEPTOR(SSIZE_T, pwritev64, int fd, __sanitizer_iovec *iov, int iovcnt,
+            OFF64_T offset) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, pwritev64, fd, iov, iovcnt, offset);
+  if (fd >= 0) COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd);
+  SSIZE_T res = REAL(pwritev64)(fd, iov, iovcnt, offset);
+  if (res > 0) read_iovec(ctx, iov, iovcnt, res);
+  return res;
+}
+#define INIT_PWRITEV64 INTERCEPT_FUNCTION(pwritev64)
+#else
+#define INIT_PWRITEV64
 #endif
 
 #if SANITIZER_INTERCEPT_PRCTL
@@ -1079,16 +1191,15 @@ INTERCEPTOR(long double, modfl, long double x, long double *iptr) {
 #endif
 
 #if SANITIZER_INTERCEPT_RECVMSG
-static void write_msghdr(void *ctx, struct __sanitizer_msghdr *msg) {
+static void write_msghdr(void *ctx, struct __sanitizer_msghdr *msg, SSIZE_T maxlen) {
   COMMON_INTERCEPTOR_WRITE_RANGE(ctx, msg, sizeof(*msg));
   if (msg->msg_name)
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, msg->msg_name,
                                    REAL(strlen)((char *)msg->msg_name) + 1);
   if (msg->msg_iov)
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, msg->msg_iov, msg->msg_iovlen);
-  for (SIZE_T i = 0; i < msg->msg_iovlen; ++i)
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, msg->msg_iov[i].iov_base,
-                                   msg->msg_iov[i].iov_len);
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, msg->msg_iov,
+                                   sizeof(*msg->msg_iov) * msg->msg_iovlen);
+  write_iovec(ctx, msg->msg_iov, msg->msg_iovlen, maxlen);
   if (msg->msg_control)
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, msg->msg_control, msg->msg_controllen);
 }
@@ -1100,7 +1211,7 @@ INTERCEPTOR(SSIZE_T, recvmsg, int fd, struct __sanitizer_msghdr *msg,
   SSIZE_T res = REAL(recvmsg)(fd, msg, flags);
   if (res >= 0) {
     if (fd >= 0) COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd);
-    if (msg) write_msghdr(ctx, msg);
+    if (msg) write_msghdr(ctx, msg, res);
   }
   return res;
 }
@@ -1131,10 +1242,16 @@ INTERCEPTOR(int, getpeername, int sockfd, void *addr, unsigned *addrlen) {
   INIT_READ;                               \
   INIT_PREAD;                              \
   INIT_PREAD64;                            \
-  INIT_PRCTL;                              \
+  INIT_READV;                              \
+  INIT_PREADV;                             \
+  INIT_PREADV64;                           \
   INIT_WRITE;                              \
   INIT_PWRITE;                             \
   INIT_PWRITE64;                           \
+  INIT_WRITEV;                             \
+  INIT_PWRITEV;                            \
+  INIT_PWRITEV64;                          \
+  INIT_PRCTL;                              \
   INIT_LOCALTIME_AND_FRIENDS;              \
   INIT_SCANF;                              \
   INIT_FREXP;                              \
