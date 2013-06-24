@@ -64,6 +64,8 @@ run: all
 
 presubmit:
 	../sanitizer_common/scripts/check_lint.sh
+	./gen_dynamic_list.sh > rtl/tsan.syms.new
+	diff rtl/tsan.syms rtl/tsan.syms.new
 	# Debug build with clang.
 	$(MAKE) -f Makefile.old clean
 	$(MAKE) -f Makefile.old run DEBUG=1 -j 16 CC=$(CLANG) CXX=$(CLANG)++
