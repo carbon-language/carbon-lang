@@ -54,7 +54,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopIterator.h"
@@ -409,11 +408,10 @@ bool LoadHoisting::canHoistAllLoads() {
 class LoopVectorizationLegality {
 public:
   LoopVectorizationLegality(Loop *L, ScalarEvolution *SE, DataLayout *DL,
-                            DominatorTree *DT, TargetTransformInfo* TTI,
-                            AliasAnalysis *AA, TargetLibraryInfo *TLI)
-      : TheLoop(L), SE(SE), DL(DL), DT(DT), TTI(TTI), AA(AA), TLI(TLI),
+                            DominatorTree *DT, TargetLibraryInfo *TLI)
+      : TheLoop(L), SE(SE), DL(DL), DT(DT), TLI(TLI),
         Induction(0), WidestIndTy(0), HasFunNoNaNAttr(false),
-        LoadSpeculation(L, DT) {}
+        MaxSafeDepDistBytes(-1U), LoadSpeculation(L, DT) {}
 
   /// This enum represents the kinds of reductions that we support.
   enum ReductionKind {
@@ -500,7 +498,8 @@ public:
     }
 
     /// Insert a pointer and calculate the start and end SCEVs.
-    void insert(ScalarEvolution *SE, Loop *Lp, Value *Ptr, bool WritePtr);
+    void insert(ScalarEvolution *SE, Loop *Lp, Value *Ptr, bool WritePtr,
+                unsigned DepSetId);
 
     /// This flag indicates if we need to add the runtime check.
     bool Need;
@@ -512,6 +511,9 @@ public:
     SmallVector<const SCEV*, 2> Ends;
     /// Holds the information if this pointer is used for writing to memory.
     SmallVector<bool, 2> IsWritePtr;
+    /// Holds the id of the set of pointers that could be dependent because of a
+    /// shared underlying object.
+    SmallVector<unsigned, 2> DependencySetId;
   };
 
   /// A POD for saving information about induction variables.
@@ -531,11 +533,6 @@ public:
   /// InductionList saves induction variables and maps them to the
   /// induction descriptor.
   typedef MapVector<PHINode*, InductionInfo> InductionList;
-
-  /// Alias(Multi)Map stores the values (GEPs or underlying objects and their
-  /// respective Store/Load instruction(s) to calculate aliasing.
-  typedef MapVector<Value*, Instruction* > AliasMap;
-  typedef DenseMap<Value*, std::vector<Instruction*> > AliasMultiMap;
 
   /// Returns true if it is legal to vectorize this loop.
   /// This does not mean that it is profitable to vectorize this
@@ -583,6 +580,9 @@ public:
   /// This function returns the identity element (or neutral element) for
   /// the operation K.
   static Constant *getReductionIdentity(ReductionKind K, Type *Tp);
+
+  unsigned getMaxSafeDepDistBytes() { return MaxSafeDepDistBytes; }
+
 private:
   /// Check if a single basic block loop is vectorizable.
   /// At this point we know that this is a loop with a constant trip count
@@ -623,16 +623,6 @@ private:
   /// Returns the induction kind of Phi. This function may return NoInduction
   /// if the PHI is not an induction variable.
   InductionKind isInductionVariable(PHINode *Phi);
-  /// Return true if can compute the address bounds of Ptr within the loop.
-  bool hasComputableBounds(Value *Ptr);
-  /// Return true if there is the chance of write reorder.
-  bool hasPossibleGlobalWriteReorder(Value *Object,
-                                     Instruction *Inst,
-                                     AliasMultiMap &WriteObjects,
-                                     unsigned MaxByteWidth);
-  /// Return the AA location for a load or a store.
-  AliasAnalysis::Location getLoadStoreLocation(Instruction *Inst);
-
 
   /// The loop that we evaluate.
   Loop *TheLoop;
@@ -642,10 +632,6 @@ private:
   DataLayout *DL;
   /// Dominators.
   DominatorTree *DT;
-  /// Target Info.
-  TargetTransformInfo *TTI;
-  /// Alias Analysis.
-  AliasAnalysis *AA;
   /// Target Library Info.
   TargetLibraryInfo *TLI;
 
@@ -674,6 +660,8 @@ private:
   RuntimePointerCheck PtrRtCheck;
   /// Can we assume the absence of NaNs.
   bool HasFunNoNaNAttr;
+
+  unsigned MaxSafeDepDistBytes;
 
   /// Utility to determine whether loads can be speculated.
   LoadHoisting LoadSpeculation;
@@ -903,7 +891,6 @@ struct LoopVectorize : public LoopPass {
   LoopInfo *LI;
   TargetTransformInfo *TTI;
   DominatorTree *DT;
-  AliasAnalysis *AA;
   TargetLibraryInfo *TLI;
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
@@ -916,7 +903,6 @@ struct LoopVectorize : public LoopPass {
     LI = &getAnalysis<LoopInfo>();
     TTI = &getAnalysis<TargetTransformInfo>();
     DT = &getAnalysis<DominatorTree>();
-    AA = getAnalysisIfAvailable<AliasAnalysis>();
     TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
 
     if (DL == NULL) {
@@ -935,7 +921,7 @@ struct LoopVectorize : public LoopPass {
     }
 
     // Check if it is legal to vectorize the loop.
-    LoopVectorizationLegality LVL(L, SE, DL, DT, TTI, AA, TLI);
+    LoopVectorizationLegality LVL(L, SE, DL, DT, TLI);
     if (!LVL.canVectorize()) {
       DEBUG(dbgs() << "LV: Not vectorizing.\n");
       return false;
@@ -1010,7 +996,8 @@ struct LoopVectorize : public LoopPass {
 void
 LoopVectorizationLegality::RuntimePointerCheck::insert(ScalarEvolution *SE,
                                                        Loop *Lp, Value *Ptr,
-                                                       bool WritePtr) {
+                                                       bool WritePtr,
+                                                       unsigned DepSetId) {
   const SCEV *Sc = SE->getSCEV(Ptr);
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Sc);
   assert(AR && "Invalid addrec expression");
@@ -1020,6 +1007,7 @@ LoopVectorizationLegality::RuntimePointerCheck::insert(ScalarEvolution *SE,
   Starts.push_back(AR->getStart());
   Ends.push_back(ScEnd);
   IsWritePtr.push_back(WritePtr);
+  DependencySetId.push_back(DepSetId);
 }
 
 Value *InnerLoopVectorizer::getBroadcastInstrs(Value *V) {
@@ -1357,10 +1345,9 @@ InnerLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
   if (!PtrRtCheck->Need)
     return NULL;
 
-  Instruction *MemoryRuntimeCheck = 0;
   unsigned NumPointers = PtrRtCheck->Pointers.size();
-  SmallVector<Value* , 2> Starts;
-  SmallVector<Value* , 2> Ends;
+  SmallVector<TrackingVH<Value> , 2> Starts;
+  SmallVector<TrackingVH<Value> , 2> Ends;
 
   SCEVExpander Exp(*SE, "induction");
 
@@ -1387,12 +1374,17 @@ InnerLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
   }
 
   IRBuilder<> ChkBuilder(Loc);
-
+  // Our instructions might fold to a constant.
+  Value *MemoryRuntimeCheck = 0;
   for (unsigned i = 0; i < NumPointers; ++i) {
     for (unsigned j = i+1; j < NumPointers; ++j) {
       // No need to check if two readonly pointers intersect.
       if (!PtrRtCheck->IsWritePtr[i] && !PtrRtCheck->IsWritePtr[j])
         continue;
+
+      // Only need to check pointers between two different dependency sets.
+      if (PtrRtCheck->DependencySetId[i] == PtrRtCheck->DependencySetId[j])
+       continue;
 
       Value *Start0 = ChkBuilder.CreateBitCast(Starts[i], PtrArithTy, "bc");
       Value *Start1 = ChkBuilder.CreateBitCast(Starts[j], PtrArithTy, "bc");
@@ -1405,12 +1397,18 @@ InnerLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
       if (MemoryRuntimeCheck)
         IsConflict = ChkBuilder.CreateOr(MemoryRuntimeCheck, IsConflict,
                                          "conflict.rdx");
-
-      MemoryRuntimeCheck = cast<Instruction>(IsConflict);
+      MemoryRuntimeCheck = IsConflict;
     }
   }
 
-  return MemoryRuntimeCheck;
+  // We have to do this trickery because the IRBuilder might fold the check to a
+  // constant expression in which case there is no Instruction anchored in a
+  // the block.
+  LLVMContext &Ctx = Loc->getContext();
+  Instruction * Check = BinaryOperator::CreateAnd(MemoryRuntimeCheck,
+                                                  ConstantInt::getTrue(Ctx));
+  ChkBuilder.Insert(Check, "memcheck.conflict");
+  return Check;
 }
 
 void
@@ -2981,7 +2979,7 @@ bool AccessAnalysis::canCheckPtrAtRT(
         // Each access has its own dependence set.
         DepId = RunningDepId++;
 
-      //RtCheck.insert(SE, TheLoop, Ptr, IsWrite, DepId);
+      RtCheck.insert(SE, TheLoop, Ptr, IsWrite, DepId);
 
       DEBUG(dbgs() << "LV: Found a runtime check ptr:" << *Ptr <<"\n");
     } else {
@@ -3463,53 +3461,29 @@ MemoryDepChecker::areDepsSafe(AccessAnalysis::DepCandidates &AccessSets,
   return true;
 }
 
-AliasAnalysis::Location
-LoopVectorizationLegality::getLoadStoreLocation(Instruction *Inst) {
-  if (StoreInst *Store = dyn_cast<StoreInst>(Inst))
-    return AA->getLocation(Store);
-  else if (LoadInst *Load = dyn_cast<LoadInst>(Inst))
-    return AA->getLocation(Load);
-
-  llvm_unreachable("Should be either load or store instruction");
-}
-
-bool
-LoopVectorizationLegality::hasPossibleGlobalWriteReorder(
-                                                Value *Object,
-                                                Instruction *Inst,
-                                                AliasMultiMap& WriteObjects,
-                                                unsigned MaxByteWidth) {
-
-  AliasAnalysis::Location ThisLoc = getLoadStoreLocation(Inst);
-
-  std::vector<Instruction*>::iterator
-              it = WriteObjects[Object].begin(),
-              end = WriteObjects[Object].end();
-
-  for (; it != end; ++it) {
-    Instruction* I = *it;
-    if (I == Inst)
-      continue;
-
-    AliasAnalysis::Location ThatLoc = getLoadStoreLocation(I);
-    if (AA->alias(ThisLoc.getWithNewSize(MaxByteWidth),
-                  ThatLoc.getWithNewSize(MaxByteWidth)))
-      return true;
-  }
-  return false;
-}
-
 bool LoopVectorizationLegality::canVectorizeMemory() {
 
   typedef SmallVector<Value*, 16> ValueVector;
   typedef SmallPtrSet<Value*, 16> ValueSet;
+
+  // Stores a pair of memory access location and whether the access is a store
+  // (true) or a load (false).
+  typedef std::pair<Value*, char> MemAccessInfo;
+  typedef DenseSet<MemAccessInfo> PtrAccessSet;
+
   // Holds the Load and Store *instructions*.
   ValueVector Loads;
   ValueVector Stores;
+
+  // Holds all the different accesses in the loop.
+  unsigned NumReads = 0;
+  unsigned NumReadWrites = 0;
+
   PtrRtCheck.Pointers.clear();
   PtrRtCheck.Need = false;
 
   const bool IsAnnotatedParallel = TheLoop->isAnnotatedParallel();
+  MemoryDepChecker DepChecker(SE, DL, TheLoop);
 
   // For each block.
   for (Loop::block_iterator bb = TheLoop->block_begin(),
@@ -3530,6 +3504,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
           return false;
         }
         Loads.push_back(Ld);
+        DepChecker.addAccess(Ld);
         continue;
       }
 
@@ -3542,6 +3517,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
           return false;
         }
         Stores.push_back(St);
+        DepChecker.addAccess(St);
       }
     } // next instr.
   } // next block.
@@ -3556,10 +3532,8 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     return true;
   }
 
-  // Holds the read and read-write *pointers* that we find. These maps hold
-  // unique values for pointers (so no need for multi-map).
-  AliasMap Reads;
-  AliasMap ReadWrites;
+  AccessAnalysis::DepCandidates DependentAccesses;
+  AccessAnalysis Accesses(DL, DependentAccesses);
 
   // Holds the analyzed pointers. We don't want to call GetUnderlyingObjects
   // multiple times on the same object. If the ptr is accessed twice, once
@@ -3578,10 +3552,12 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
       return false;
     }
 
-    // If we did *not* see this pointer before, insert it to
-    // the read-write list. At this phase it is only a 'write' list.
-    if (Seen.insert(Ptr))
-      ReadWrites.insert(std::make_pair(Ptr, ST));
+    // If we did *not* see this pointer before, insert it to  the read-write
+    // list. At this phase it is only a 'write' list.
+    if (Seen.insert(Ptr)) {
+      ++NumReadWrites;
+      Accesses.addStore(Ptr);
+    }
   }
 
   if (IsAnnotatedParallel) {
@@ -3591,6 +3567,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     return true;
   }
 
+  SmallPtrSet<Value *, 16> ReadOnlyPtr;
   for (I = Loads.begin(), IE = Loads.end(); I != IE; ++I) {
     LoadInst *LD = cast<LoadInst>(*I);
     Value* Ptr = LD->getPointerOperand();
@@ -3602,51 +3579,44 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     // If the address of i is unknown (for example A[B[i]]) then we may
     // read a few words, modify, and write a few words, and some of the
     // words may be written to the same address.
-    if (Seen.insert(Ptr) || 0 == isConsecutivePtr(Ptr))
-      Reads.insert(std::make_pair(Ptr, LD));
+    bool IsReadOnlyPtr = false;
+    if (Seen.insert(Ptr) || !isStridedPtr(SE, DL, Ptr, TheLoop)) {
+      ++NumReads;
+      IsReadOnlyPtr = true;
+    }
+    Accesses.addLoad(Ptr, IsReadOnlyPtr);
   }
 
   // If we write (or read-write) to a single destination and there are no
   // other reads in this loop then is it safe to vectorize.
-  if (ReadWrites.size() == 1 && Reads.size() == 0) {
+  if (NumReadWrites == 1 && NumReads == 0) {
     DEBUG(dbgs() << "LV: Found a write-only loop!\n");
     return true;
   }
 
-  unsigned NumReadPtrs = 0;
-  unsigned NumWritePtrs = 0;
+  // Build dependence sets and check whether we need a runtime pointer bounds
+  // check.
+  Accesses.buildDependenceSets();
+  bool NeedRTCheck = Accesses.isRTCheckNeeded();
 
   // Find pointers with computable bounds. We are going to use this information
   // to place a runtime bound check.
-  bool CanDoRT = true;
-  AliasMap::iterator MI, ME;
-  for (MI = ReadWrites.begin(), ME = ReadWrites.end(); MI != ME; ++MI) {
-    Value *V = (*MI).first;
-    if (hasComputableBounds(V)) {
-      PtrRtCheck.insert(SE, TheLoop, V, true);
-      NumWritePtrs++;
-      DEBUG(dbgs() << "LV: Found a runtime check ptr:" << *V <<"\n");
-    } else {
-      CanDoRT = false;
-      break;
-    }
-  }
-  for (MI = Reads.begin(), ME = Reads.end(); MI != ME; ++MI) {
-    Value *V = (*MI).first;
-    if (hasComputableBounds(V)) {
-      PtrRtCheck.insert(SE, TheLoop, V, false);
-      NumReadPtrs++;
-      DEBUG(dbgs() << "LV: Found a runtime check ptr:" << *V <<"\n");
-    } else {
-      CanDoRT = false;
-      break;
-    }
-  }
+  unsigned NumComparisons = 0;
+  bool CanDoRT = false;
+  if (NeedRTCheck)
+    CanDoRT = Accesses.canCheckPtrAtRT(PtrRtCheck, NumComparisons, SE, TheLoop);
 
-  // Check that we did not collect too many pointers or found a
-  // unsizeable pointer.
-  unsigned NumComparisons = (NumWritePtrs * (NumReadPtrs + NumWritePtrs - 1));
-  DEBUG(dbgs() << "LV: We need to compare " << NumComparisons << " ptrs.\n");
+
+  DEBUG(dbgs() << "LV: We need to do " << NumComparisons <<
+        " pointer comparisons.\n");
+
+  // If we only have one set of dependences to check pointers among we don't
+  // need a runtime check.
+  if (NumComparisons == 0 && NeedRTCheck)
+    NeedRTCheck = false;
+
+  // Check that we did not collect too many pointers or found a unsizeable
+  // pointer.
   if (!CanDoRT || NumComparisons > RuntimeMemoryCheckThreshold) {
     PtrRtCheck.reset();
     CanDoRT = false;
@@ -3656,113 +3626,6 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     DEBUG(dbgs() << "LV: We can perform a memory runtime check if needed.\n");
   }
 
-  bool NeedRTCheck = false;
-
-  // Biggest vectorized access possible, vector width * unroll factor.
-  // TODO: We're being very pessimistic here, find a way to know the
-  // real access width before getting here.
-  unsigned MaxByteWidth = (TTI->getRegisterBitWidth(true) / 8) *
-                           TTI->getMaximumUnrollFactor();
-  // Now that the pointers are in two lists (Reads and ReadWrites), we
-  // can check that there are no conflicts between each of the writes and
-  // between the writes to the reads.
-  // Note that WriteObjects duplicates the stores (indexed now by underlying
-  // objects) to avoid pointing to elements inside ReadWrites.
-  // TODO: Maybe create a new type where they can interact without duplication.
-  AliasMultiMap WriteObjects;
-  ValueVector TempObjects;
-
-  // Check that the read-writes do not conflict with other read-write
-  // pointers.
-  bool AllWritesIdentified = true;
-  for (MI = ReadWrites.begin(), ME = ReadWrites.end(); MI != ME; ++MI) {
-    Value *Val = (*MI).first;
-    Instruction *Inst = (*MI).second;
-
-    GetUnderlyingObjects(Val, TempObjects, DL);
-    for (ValueVector::iterator UI=TempObjects.begin(), UE=TempObjects.end();
-         UI != UE; ++UI) {
-      if (!isIdentifiedObject(*UI)) {
-        DEBUG(dbgs() << "LV: Found an unidentified write ptr:"<< **UI <<"\n");
-        NeedRTCheck = true;
-        AllWritesIdentified = false;
-      }
-
-      // Never seen it before, can't alias.
-      if (WriteObjects[*UI].empty()) {
-        DEBUG(dbgs() << "LV: Adding Underlying value:" << **UI <<"\n");
-        WriteObjects[*UI].push_back(Inst);
-        continue;
-      }
-      // Direct alias found.
-      if (!AA || dyn_cast<GlobalValue>(*UI) == NULL) {
-        DEBUG(dbgs() << "LV: Found a possible write-write reorder:"
-              << **UI <<"\n");
-        return false;
-      }
-      DEBUG(dbgs() << "LV: Found a conflicting global value:"
-            << **UI <<"\n");
-      DEBUG(dbgs() << "LV: While examining store:" << *Inst <<"\n");
-      DEBUG(dbgs() << "LV: On value:" << *Val <<"\n");
-
-      // If global alias, make sure they do alias.
-      if (hasPossibleGlobalWriteReorder(*UI,
-                                        Inst,
-                                        WriteObjects,
-                                        MaxByteWidth)) {
-        DEBUG(dbgs() << "LV: Found a possible write-write reorder:" << **UI
-                     << "\n");
-        return false;
-      }
-
-      // Didn't alias, insert into map for further reference.
-      WriteObjects[*UI].push_back(Inst);
-    }
-    TempObjects.clear();
-  }
-
-  /// Check that the reads don't conflict with the read-writes.
-  for (MI = Reads.begin(), ME = Reads.end(); MI != ME; ++MI) {
-    Value *Val = (*MI).first;
-    GetUnderlyingObjects(Val, TempObjects, DL);
-    for (ValueVector::iterator UI=TempObjects.begin(), UE=TempObjects.end();
-         UI != UE; ++UI) {
-      // If all of the writes are identified then we don't care if the read
-      // pointer is identified or not.
-      if (!AllWritesIdentified && !isIdentifiedObject(*UI)) {
-        DEBUG(dbgs() << "LV: Found an unidentified read ptr:"<< **UI <<"\n");
-        NeedRTCheck = true;
-      }
-
-      // Never seen it before, can't alias.
-      if (WriteObjects[*UI].empty())
-        continue;
-      // Direct alias found.
-      if (!AA || dyn_cast<GlobalValue>(*UI) == NULL) {
-        DEBUG(dbgs() << "LV: Found a possible write-write reorder:"
-              << **UI <<"\n");
-        return false;
-      }
-      DEBUG(dbgs() << "LV: Found a global value:  "
-            << **UI <<"\n");
-      Instruction *Inst = (*MI).second;
-      DEBUG(dbgs() << "LV: While examining load:" << *Inst <<"\n");
-      DEBUG(dbgs() << "LV: On value:" << *Val <<"\n");
-
-      // If global alias, make sure they do alias.
-      if (hasPossibleGlobalWriteReorder(*UI,
-                                        Inst,
-                                        WriteObjects,
-                                        MaxByteWidth)) {
-        DEBUG(dbgs() << "LV: Found a possible read-write reorder:" << **UI
-                     << "\n");
-        return false;
-      }
-    }
-    TempObjects.clear();
-  }
-
-  PtrRtCheck.Need = NeedRTCheck;
   if (NeedRTCheck && !CanDoRT) {
     DEBUG(dbgs() << "LV: We can't vectorize because we can't find " <<
           "the array bounds.\n");
@@ -3770,9 +3633,20 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     return false;
   }
 
+  PtrRtCheck.Need = NeedRTCheck;
+
+  bool CanVecMem = true;
+  if (Accesses.isDependencyCheckNeeded()) {
+    DEBUG(dbgs() << "LV: Checking memory dependencies\n");
+    CanVecMem = DepChecker.areDepsSafe(DependentAccesses,
+                                       Accesses.getDependenciesToCheck());
+    MaxSafeDepDistBytes = DepChecker.getMaxSafeDepDistBytes();
+  }
+
   DEBUG(dbgs() << "LV: We "<< (NeedRTCheck ? "" : "don't") <<
         " need a runtime memory check.\n");
-  return true;
+
+  return CanVecMem;
 }
 
 static bool hasMultipleUsesOf(Instruction *I,
@@ -4125,15 +3999,6 @@ bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB) {
   return true;
 }
 
-bool LoopVectorizationLegality::hasComputableBounds(Value *Ptr) {
-  const SCEV *PhiScev = SE->getSCEV(Ptr);
-  const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(PhiScev);
-  if (!AR)
-    return false;
-
-  return AR->isAffine();
-}
-
 LoopVectorizationCostModel::VectorizationFactor
 LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
                                                       unsigned UserVF) {
@@ -4150,6 +4015,10 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
 
   unsigned WidestType = getWidestType();
   unsigned WidestRegister = TTI.getRegisterBitWidth(true);
+  unsigned MaxSafeDepDist = -1U;
+  if (Legal->getMaxSafeDepDistBytes() != -1U)
+    MaxSafeDepDist = Legal->getMaxSafeDepDistBytes() * 8;
+  WidestRegister = WidestRegister < MaxSafeDepDist ?  WidestRegister : MaxSafeDepDist;
   unsigned MaxVectorSize = WidestRegister / WidestType;
   DEBUG(dbgs() << "LV: The Widest type: " << WidestType << " bits.\n");
   DEBUG(dbgs() << "LV: The Widest register is:" << WidestRegister << "bits.\n");
@@ -4281,6 +4150,10 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
 
   // When we optimize for size we don't unroll.
   if (OptForSize)
+    return 1;
+
+  // We used the distance for the unroll factor.
+  if (Legal->getMaxSafeDepDistBytes() != -1U)
     return 1;
 
   // Do not unroll loops with a relatively small trip count.
@@ -4679,7 +4552,6 @@ Type* LoopVectorizationCostModel::ToVectorTy(Type *Scalar, unsigned VF) {
 char LoopVectorize::ID = 0;
 static const char lv_name[] = "Loop Vectorization";
 INITIALIZE_PASS_BEGIN(LoopVectorize, LV_NAME, lv_name, false, false)
-INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
