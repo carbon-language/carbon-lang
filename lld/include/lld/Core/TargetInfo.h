@@ -241,8 +241,8 @@ public:
   /// This method adds undefined symbols specified by the -u option to the
   /// to the list of undefined symbols known to the linker. This option
   /// essentially forces an undefined symbol to be create.
-  void addUndefinedSymbol(StringRef symbolName) {
-    _undefinedSymbols.push_back(symbolName);
+  void addInitialUndefinedSymbol(StringRef symbolName) {
+    _initialUndefinedSymbols.push_back(symbolName);
   }
 
   /// Iterators for symbols that appear on the command line
@@ -252,8 +252,8 @@ public:
 
   /// Return the list of undefined symbols that are specified in the
   /// linker command line, using the -u option.
-  range<const StringRef *> undefinedSymbols() const {
-    return _undefinedSymbols;
+  range<const StringRef *> initialUndefinedSymbols() const {
+    return _initialUndefinedSymbols;
   }
 
   /// After all set* methods are called, the Driver calls this method
@@ -359,7 +359,7 @@ protected:
   std::vector<LinkerInput> _inputFiles;
   std::vector<const char*> _llvmOptions;
   std::unique_ptr<Reader>  _yamlReader;
-  StringRefVector          _undefinedSymbols;
+  StringRefVector          _initialUndefinedSymbols;
 
  private:
   /// Validate the subclass bits. Only called by validate.

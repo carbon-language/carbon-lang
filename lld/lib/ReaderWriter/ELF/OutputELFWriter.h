@@ -240,7 +240,7 @@ void OutputELFWriter<ELFT>::addFiles(InputFiles &inputFiles) {
   _targetHandler.addFiles(inputFiles);
   // Add all symbols that are specified by the -u option
   // as part of the command line argument to lld
-  for (auto ai : _targetInfo.undefinedSymbols())
+  for (auto ai : _targetInfo.initialUndefinedSymbols())
     _linkerInternalFile.addUndefinedAtom(ai);
   // Make the linker internal file to be the first file
   inputFiles.prependFile(_linkerInternalFile);

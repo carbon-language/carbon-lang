@@ -221,7 +221,7 @@ GnuLdDriver::parse(int argc, const char *argv[], raw_ostream &diagnostics) {
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_u),
                                ie = parsedArgs->filtered_end();
        it != ie; ++it) {
-    options->addUndefinedSymbol((*it)->getValue());
+    options->addInitialUndefinedSymbol((*it)->getValue());
   }
 
   // Handle -Lxxx
