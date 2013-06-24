@@ -49,6 +49,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/ADT/MapVector.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -2888,7 +2889,7 @@ public:
   DenseSet<MemAccessInfo> &getDependenciesToCheck() { return CheckDeps; }
 
 private:
-  typedef DenseSet<MemAccessInfo> PtrAccessSet;
+  typedef SetVector<MemAccessInfo> PtrAccessSet;
   typedef DenseMap<Value*, MemAccessInfo> UnderlyingObjToAccessMap;
 
   /// \brief Go over all memory access or only the deferred ones if
