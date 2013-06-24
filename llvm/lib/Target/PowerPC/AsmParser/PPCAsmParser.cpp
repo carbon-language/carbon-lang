@@ -423,6 +423,15 @@ void PPCAsmParser::
 ProcessInstruction(MCInst &Inst,
                    const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   switch (Inst.getOpcode()) {
+  case PPC::LAx: {
+    MCInst TmpInst;
+    TmpInst.setOpcode(PPC::LA);
+    TmpInst.addOperand(Inst.getOperand(0));
+    TmpInst.addOperand(Inst.getOperand(2));
+    TmpInst.addOperand(Inst.getOperand(1));
+    Inst = TmpInst;
+    break;
+  }
   case PPC::SLWI: {
     MCInst TmpInst;
     int64_t N = Inst.getOperand(2).getImm();

@@ -1899,15 +1899,20 @@
 
 # CHECK: nop                             # encoding: [0x60,0x00,0x00,0x00]
          nop
-# FIXME: xnop
+# CHECK: xori 0, 0, 0                    # encoding: [0x68,0x00,0x00,0x00]
+         xnop
 # CHECK: li 2, 128                       # encoding: [0x38,0x40,0x00,0x80]
          li 2, 128
 # CHECK: lis 2, 128                      # encoding: [0x3c,0x40,0x00,0x80]
          lis 2, 128
-# FIXME: la 2, 128(4)
+# CHECK: la 2, 128(4)
+         la 2, 128(4)
 # CHECK: mr 2, 3                         # encoding: [0x7c,0x62,0x1b,0x78]
          mr 2, 3
-# FIXME: mr. 2, 3
-# FIXME: not 2, 3
-# FIXME: not. 2, 3
+# CHECK: or. 2, 3, 3                     # encoding: [0x7c,0x62,0x1b,0x79]
+         mr. 2, 3
+# CHECK: nor 2, 3, 3                     # encoding: [0x7c,0x62,0x18,0xf8]
+         not 2, 3
+# CHECK: nor. 2, 3, 3                    # encoding: [0x7c,0x62,0x18,0xf9]
+         not. 2, 3
 
