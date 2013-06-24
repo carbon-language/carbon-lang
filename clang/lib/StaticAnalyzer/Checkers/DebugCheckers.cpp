@@ -17,6 +17,8 @@
 #include "clang/Analysis/CallGraph.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "llvm/Support/Process.h"
 
 using namespace clang;
@@ -178,4 +180,23 @@ public:
 
 void ento::registerConfigDumper(CheckerManager &mgr) {
   mgr.registerChecker<ConfigDumper>();
+}
+
+//===----------------------------------------------------------------------===//
+// ExplodedGraph Viewer
+//===----------------------------------------------------------------------===//
+
+namespace {
+class ExplodedGraphViewer : public Checker< check::EndAnalysis > {
+public:
+  ExplodedGraphViewer() {}
+  void checkEndAnalysis(ExplodedGraph &G, BugReporter &B,ExprEngine &Eng) const {
+    Eng.ViewGraph(0);
+  }
+};
+
+}
+
+void ento::registerExplodedGraphViewer(CheckerManager &mgr) {
+  mgr.registerChecker<ExplodedGraphViewer>();
 }

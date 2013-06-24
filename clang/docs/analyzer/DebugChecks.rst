@@ -30,6 +30,10 @@ using a 'dot' format viewer (such as Graphviz on OS X) instead.
 - debug.DumpLiveVars: Show the results of live variable analysis for each
   top-level function being analyzed.
 
+- debug.ViewExplodedGraph: Show the Exploded Graphs generated for the
+  analysis of different functions in the input translation unit. When there
+  are several functions analyzed, display one graph per function. Beware 
+  that these graphs may grow very large, even for small functions.
 
 Path Tracking
 =============

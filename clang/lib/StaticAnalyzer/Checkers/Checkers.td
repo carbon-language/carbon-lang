@@ -538,4 +538,8 @@ def ExprInspectionChecker : Checker<"ExprInspection">,
   HelpText<"Check the analyzer's understanding of expressions">,
   DescFile<"ExprInspectionChecker.cpp">;
 
+def ExplodedGraphViewer : Checker<"ViewExplodedGraph">,
+  HelpText<"View Exploded Graphs using GraphViz">,
+  DescFile<"DebugCheckers.cpp">;
+
 } // end "debug"
