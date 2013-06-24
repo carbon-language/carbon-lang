@@ -2230,6 +2230,8 @@ void NeonEmitter::runTests(raw_ostream &OS) {
     "// RUN:  -target-cpu swift -ffreestanding -Os -S -o - %s\\\n"
     "// RUN:  | FileCheck %s\n"
     "\n"
+    "// REQUIRES: long_tests\n"
+    "\n"
     "#include <arm_neon.h>\n"
     "\n";
 
