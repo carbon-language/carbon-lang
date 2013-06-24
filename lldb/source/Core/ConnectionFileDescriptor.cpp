@@ -25,7 +25,7 @@
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <sys/termios.h>
+#include <termios.h>
 #include <sys/types.h>
 #include <string.h>
 #include <stdlib.h>
