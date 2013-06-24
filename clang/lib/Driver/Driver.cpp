@@ -977,8 +977,7 @@ void Driver::BuildInputs(const ToolChain &TC, const DerivedArgList &Args,
           }
         }
 
-        bool exists = false;
-        if (llvm::sys::fs::exists(Path.c_str(), exists) || !exists)
+        if (!llvm::sys::fs::exists(Twine(Path)))
           Diag(clang::diag::err_drv_no_such_file) << Path.str();
         else
           Inputs.push_back(std::make_pair(Ty, A));
@@ -1538,15 +1537,13 @@ std::string Driver::GetFilePath(const char *Name, const ToolChain &TC) const {
       Dir = SysRoot + Dir.substr(1);
     llvm::sys::Path P(Dir);
     P.appendComponent(Name);
-    bool Exists;
-    if (!llvm::sys::fs::exists(P.str(), Exists) && Exists)
+    if (llvm::sys::fs::exists(P.str()))
       return P.str();
   }
 
   llvm::sys::Path P(ResourceDir);
   P.appendComponent(Name);
-  bool Exists;
-  if (!llvm::sys::fs::exists(P.str(), Exists) && Exists)
+  if (llvm::sys::fs::exists(P.str()))
     return P.str();
 
   const ToolChain::path_list &List = TC.getFilePaths();
@@ -1559,8 +1556,7 @@ std::string Driver::GetFilePath(const char *Name, const ToolChain &TC) const {
       Dir = SysRoot + Dir.substr(1);
     llvm::sys::Path P(Dir);
     P.appendComponent(Name);
-    bool Exists;
-    if (!llvm::sys::fs::exists(P.str(), Exists) && Exists)
+    if (llvm::sys::fs::exists(P.str()))
       return P.str();
   }
 
