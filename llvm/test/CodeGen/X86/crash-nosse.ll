@@ -1,4 +1,4 @@
-; RUN: llc < %s -mattr=-sse2,-sse41 -verify-machineinstrs
+; RUN: llc < %s -mcpu=corei7 -mattr=-sse2,-sse41 -verify-machineinstrs
 target triple = "x86_64-unknown-linux-gnu"
 
 ; PR10503

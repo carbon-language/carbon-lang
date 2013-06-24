@@ -2,8 +2,8 @@
 ; insertion of register-register copies.
 
 ; Make sure there are only 3 mov's for each testcase
-; RUN: llc < %s -mtriple=i686-pc-linux-gnu   | FileCheck %s -check-prefix=LINUX
-; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s -check-prefix=DARWIN
+; RUN: llc < %s -mtriple=i686-pc-linux-gnu   -mcpu=corei7 | FileCheck %s -check-prefix=LINUX
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7 | FileCheck %s -check-prefix=DARWIN
 
 
 @G = external global i32                ; <i32*> [#uses=2]
