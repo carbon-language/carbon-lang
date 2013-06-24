@@ -872,8 +872,8 @@ bool FuncSLP::vectorizeStoreChain(ArrayRef<Value *> Chain, int CostThreshold) {
       vectorizeTree(Operands);
 
       // Remove the scalar stores.
-      for (int i = 0, e = VF; i < e; ++i)
-        cast<Instruction>(Operands[i])->eraseFromParent();
+      for (int j = 0, e = VF; j < e; ++j)
+        cast<Instruction>(Operands[j])->eraseFromParent();
 
       // Move to the next bundle.
       i += VF - 1;
