@@ -38,11 +38,11 @@ namespace llvm {
   struct fltSemantics {
     /* The largest E such that 2^E is representable; this matches the
        definition of IEEE 754.  */
-    exponent_t maxExponent;
+    APFloat::ExponentType maxExponent;
 
     /* The smallest E such that 2^E is a normalized number; this
        matches the definition of IEEE 754.  */
-    exponent_t minExponent;
+    APFloat::ExponentType minExponent;
 
     /* Number of bits in the significand.  This includes the integer
        bit.  */
@@ -288,9 +288,9 @@ interpretDecimal(StringRef::iterator begin, StringRef::iterator end,
     }
 
     /* Adjust the exponents for any decimal point.  */
-    D->exponent += static_cast<exponent_t>((dot - p) - (dot > p));
+    D->exponent += static_cast<APFloat::ExponentType>((dot - p) - (dot > p));
     D->normalizedExponent = (D->exponent +
-              static_cast<exponent_t>((p - D->firstSigDigit)
+              static_cast<APFloat::ExponentType>((p - D->firstSigDigit)
                                       - (dot > D->firstSigDigit && dot < p)));
   }
 
@@ -1121,7 +1121,7 @@ lostFraction
 APFloat::shiftSignificandRight(unsigned int bits)
 {
   /* Our exponent should not overflow.  */
-  assert((exponent_t) (exponent + bits) >= exponent);
+  assert((ExponentType) (exponent + bits) >= exponent);
 
   exponent += bits;
 

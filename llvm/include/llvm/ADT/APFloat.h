@@ -21,9 +21,6 @@
 
 namespace llvm {
 
-/// A signed type to represent a floating point numbers unbiased exponent.
-typedef signed short exponent_t;
-
 struct fltSemantics;
 class APSInt;
 class StringRef;
@@ -124,6 +121,9 @@ enum lostFraction { // Example of truncated bits:
 ///
 class APFloat {
 public:
+
+  /// A signed type to represent a floating point numbers unbiased exponent.
+  typedef signed short ExponentType;
 
   /// \name Floating Point Semantics.
   /// @{
@@ -555,7 +555,7 @@ private:
   } significand;
 
   /// The signed unbiased exponent of the value.
-  exponent_t exponent;
+  ExponentType exponent;
 
   /// What kind of floating point number this is.
   ///
