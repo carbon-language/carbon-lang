@@ -448,6 +448,15 @@ bool is_regular_file(file_status status);
 ///          platform specific error_code.
 error_code is_regular_file(const Twine &path, bool &result);
 
+/// @brief Simpler version of is_regular_file for clients that don't need to
+///        differentiate between an error and false.
+inline bool is_regular_file(const Twine &Path) {
+  bool Result;
+  if (is_regular_file(Path, Result))
+    return false;
+  return Result;
+}
+
 /// @brief Does this status represent something that exists but is not a
 ///        directory, regular file, or symlink?
 ///
