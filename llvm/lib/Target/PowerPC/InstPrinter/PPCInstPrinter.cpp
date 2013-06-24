@@ -130,9 +130,8 @@ void PPCInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNo,
     case PPC::PRED_NU:
       O << "nu";
       return;
-    default:
-      llvm_unreachable("Invalid predicate code");
     }
+    llvm_unreachable("Invalid predicate code");
   }
 
   if (StringRef(Modifier) == "pm") {
@@ -166,9 +165,8 @@ void PPCInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNo,
     case PPC::PRED_NU_PLUS:
       O << "+";
       return;
-    default:
-      llvm_unreachable("Invalid predicate code");
     }
+    llvm_unreachable("Invalid predicate code");
   }
   
   assert(StringRef(Modifier) == "reg" &&
