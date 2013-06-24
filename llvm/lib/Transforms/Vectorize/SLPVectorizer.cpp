@@ -53,7 +53,7 @@ namespace {
 
 static const unsigned MinVecRegSize = 128;
 
-static const unsigned RecursionMaxDepth = 6;
+static const unsigned RecursionMaxDepth = 12;
 
 /// RAII pattern to save the insertion point of the IR builder.
 class BuilderLocGuard {
@@ -605,16 +605,17 @@ int FuncSLP::getTreeCost_rec(ArrayRef<Value *> VL, unsigned Depth) {
   if (ScalarTy->isVectorTy())
     return FuncSLP::MAX_COST;
 
-  VectorType *VecTy = VectorType::get(ScalarTy, VL.size());
-
   if (allConstant(VL))
     return 0;
+
+  VectorType *VecTy = VectorType::get(ScalarTy, VL.size());
 
   if (isSplat(VL))
     return TTI->getShuffleCost(TargetTransformInfo::SK_Broadcast, VecTy, 0);
 
+  int GatherCost = getGatherCost(VecTy);
   if (Depth == RecursionMaxDepth || needToGatherAny(VL))
-    return getGatherCost(VecTy);
+    return GatherCost;
 
   BasicBlock *BB = getSameBlock(VL);
   unsigned Opcode = getSameOpcode(VL);
@@ -677,6 +678,12 @@ int FuncSLP::getTreeCost_rec(ArrayRef<Value *> VL, unsigned Depth) {
     VectorType *SrcVecTy = VectorType::get(SrcTy, VL.size());
     int VecCost = TTI->getCastInstrCost(VL0->getOpcode(), VecTy, SrcVecTy);
     Cost += (VecCost - ScalarCost);
+
+    if (Cost > GatherCost) {
+      MustGather.insert(VL.begin(), VL.end());
+      return GatherCost;
+    }
+
     return Cost;
   }
   case Instruction::FCmp:
@@ -739,6 +746,12 @@ int FuncSLP::getTreeCost_rec(ArrayRef<Value *> VL, unsigned Depth) {
       VecCost = TTI->getArithmeticInstrCost(Opcode, VecTy);
     }
     TotalCost += (VecCost - ScalarCost);
+
+    if (TotalCost > GatherCost) {
+      MustGather.insert(VL.begin(), VL.end());
+      return GatherCost;
+    }
+
     return TotalCost;
   }
   case Instruction::Load: {
@@ -751,7 +764,14 @@ int FuncSLP::getTreeCost_rec(ArrayRef<Value *> VL, unsigned Depth) {
     int ScalarLdCost = VecTy->getNumElements() *
                        TTI->getMemoryOpCost(Instruction::Load, ScalarTy, 1, 0);
     int VecLdCost = TTI->getMemoryOpCost(Instruction::Load, ScalarTy, 1, 0);
-    return VecLdCost - ScalarLdCost;
+    int TotalCost = VecLdCost - ScalarLdCost;
+
+    if (TotalCost > GatherCost) {
+      MustGather.insert(VL.begin(), VL.end());
+      return GatherCost;
+    }
+
+    return TotalCost;
   }
   case Instruction::Store: {
     // We know that we can merge the stores. Calculate the cost.
