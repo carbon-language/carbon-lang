@@ -1,0 +1,9 @@
+# VMOV/VDUP between scalar and core registers with invalid predicate bits (pred != 0b1110)
+
+# VMOV
+# RUN: echo "0x00 0xde 0x10 0x0b" | llvm-mc -triple thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# VDUP
+# RUN: echo "0xff 0xde 0xf0 0xfb" | llvm-mc -triple thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# CHECK: invalid instruction encoding

@@ -1,0 +1,9 @@
+# VFP instructions with invalid predicate bits (pred != 0b1110)
+
+# VABS
+# RUN: echo "0x40 0xde 0x00 0x0a" | llvm-mc -triple thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# VMLA
+# RUN: echo "0xf0 0xde 0xe0 0x0b" | llvm-mc -triple thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# CHECK: invalid instruction encoding
