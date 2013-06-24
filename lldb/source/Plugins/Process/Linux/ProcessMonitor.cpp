@@ -741,7 +741,7 @@ ResumeOperation::Execute(ProcessMonitor *monitor)
 }
 
 //------------------------------------------------------------------------------
-/// @class ResumeOperation
+/// @class SingleStepOperation
 /// @brief Implements ProcessMonitor::SingleStep.
 class SingleStepOperation : public Operation
 {
