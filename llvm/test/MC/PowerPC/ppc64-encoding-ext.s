@@ -9,7 +9,8 @@
          blr
 # CHECK: bctr                            # encoding: [0x4e,0x80,0x04,0x20]
          bctr
-# FIXME: blrl
+# CHECK: blrl                            # encoding: [0x4e,0x80,0x00,0x21]
+         blrl
 # CHECK: bctrl                           # encoding: [0x4e,0x80,0x04,0x21]
          bctrl
 
@@ -137,8 +138,10 @@
 # FIXME: bltl target
 # FIXME: bltla 2, target
 # FIXME: bltla target
-# FIXME: bltlrl 2
-# FIXME: bltlrl
+# CHECK: bltlrl 2                        # encoding: [0x4d,0x88,0x00,0x21]
+         bltlrl 2
+# CHECK: bltlrl 0                        # encoding: [0x4d,0x80,0x00,0x21]
+         bltlrl
 # CHECK: bltctrl 2                       # encoding: [0x4d,0x88,0x04,0x21]
          bltctrl 2
 # CHECK: bltctrl 0                       # encoding: [0x4d,0x80,0x04,0x21]
@@ -164,8 +167,10 @@
 # FIXME: blel target
 # FIXME: blela 2, target
 # FIXME: blela target
-# FIXME: blelrl 2
-# FIXME: blelrl
+# CHECK: blelrl 2                        # encoding: [0x4c,0x89,0x00,0x21]
+         blelrl 2
+# CHECK: blelrl 0                        # encoding: [0x4c,0x81,0x00,0x21]
+         blelrl
 # CHECK: blectrl 2                       # encoding: [0x4c,0x89,0x04,0x21]
          blectrl 2
 # CHECK: blectrl 0                       # encoding: [0x4c,0x81,0x04,0x21]
@@ -191,8 +196,10 @@
 # FIXME: beql target
 # FIXME: beqla 2, target
 # FIXME: beqla target
-# FIXME: beqlrl 2
-# FIXME: beqlrl
+# CHECK: beqlrl 2                        # encoding: [0x4d,0x8a,0x00,0x21]
+         beqlrl 2
+# CHECK: beqlrl 0                        # encoding: [0x4d,0x82,0x00,0x21]
+         beqlrl
 # CHECK: beqctrl 2                       # encoding: [0x4d,0x8a,0x04,0x21]
          beqctrl 2
 # CHECK: beqctrl 0                       # encoding: [0x4d,0x82,0x04,0x21]
@@ -218,8 +225,10 @@
 # FIXME: bgel target
 # FIXME: bgela 2, target
 # FIXME: bgela target
-# FIXME: bgelrl 2
-# FIXME: bgelrl
+# CHECK: bgelrl 2                        # encoding: [0x4c,0x88,0x00,0x21]
+         bgelrl 2
+# CHECK: bgelrl 0                        # encoding: [0x4c,0x80,0x00,0x21]
+         bgelrl
 # CHECK: bgectrl 2                       # encoding: [0x4c,0x88,0x04,0x21]
          bgectrl 2
 # CHECK: bgectrl 0                       # encoding: [0x4c,0x80,0x04,0x21]
@@ -245,8 +254,10 @@
 # FIXME: bgtl target
 # FIXME: bgtla 2, target
 # FIXME: bgtla target
-# FIXME: bgtlrl 2
-# FIXME: bgtlrl
+# CHECK: bgtlrl 2                        # encoding: [0x4d,0x89,0x00,0x21]
+         bgtlrl 2
+# CHECK: bgtlrl 0                        # encoding: [0x4d,0x81,0x00,0x21]
+         bgtlrl
 # CHECK: bgtctrl 2                       # encoding: [0x4d,0x89,0x04,0x21]
          bgtctrl 2
 # CHECK: bgtctrl 0                       # encoding: [0x4d,0x81,0x04,0x21]
@@ -272,8 +283,10 @@
 # FIXME: bnll target
 # FIXME: bnlla 2, target
 # FIXME: bnlla target
-# FIXME: bnllrl 2
-# FIXME: bnllrl
+# CHECK: bgelrl 2                        # encoding: [0x4c,0x88,0x00,0x21]
+         bnllrl 2
+# CHECK: bgelrl 0                        # encoding: [0x4c,0x80,0x00,0x21]
+         bnllrl
 # CHECK: bgectrl 2                       # encoding: [0x4c,0x88,0x04,0x21]
          bnlctrl 2
 # CHECK: bgectrl 0                       # encoding: [0x4c,0x80,0x04,0x21]
@@ -299,8 +312,10 @@
 # FIXME: bnel target
 # FIXME: bnela 2, target
 # FIXME: bnela target
-# FIXME: bnelrl 2
-# FIXME: bnelrl
+# CHECK: bnelrl 2                        # encoding: [0x4c,0x8a,0x00,0x21]
+         bnelrl 2
+# CHECK: bnelrl 0                        # encoding: [0x4c,0x82,0x00,0x21]
+         bnelrl
 # CHECK: bnectrl 2                       # encoding: [0x4c,0x8a,0x04,0x21]
          bnectrl 2
 # CHECK: bnectrl 0                       # encoding: [0x4c,0x82,0x04,0x21]
@@ -326,8 +341,10 @@
 # FIXME: bngl target
 # FIXME: bngla 2, target
 # FIXME: bngla target
-# FIXME: bnglrl 2
-# FIXME: bnglrl
+# CHECK: blelrl 2                        # encoding: [0x4c,0x89,0x00,0x21]
+         bnglrl 2
+# CHECK: blelrl 0                        # encoding: [0x4c,0x81,0x00,0x21]
+         bnglrl
 # CHECK: blectrl 2                       # encoding: [0x4c,0x89,0x04,0x21]
          bngctrl 2
 # CHECK: blectrl 0                       # encoding: [0x4c,0x81,0x04,0x21]
@@ -353,8 +370,10 @@
 # FIXME: bsol target
 # FIXME: bsola 2, target
 # FIXME: bsola target
-# FIXME: bsolrl 2
-# FIXME: bsolrl
+# CHECK: bunlrl 2                        # encoding: [0x4d,0x8b,0x00,0x21]
+         bsolrl 2
+# CHECK: bunlrl 0                        # encoding: [0x4d,0x83,0x00,0x21]
+         bsolrl
 # CHECK: bunctrl 2                       # encoding: [0x4d,0x8b,0x04,0x21]
          bsoctrl 2
 # CHECK: bunctrl 0                       # encoding: [0x4d,0x83,0x04,0x21]
@@ -380,8 +399,10 @@
 # FIXME: bnsl target
 # FIXME: bnsla 2, target
 # FIXME: bnsla target
-# FIXME: bnslrl 2
-# FIXME: bnslrl
+# CHECK: bnulrl 2                        # encoding: [0x4c,0x8b,0x00,0x21]
+         bnslrl 2
+# CHECK: bnulrl 0                        # encoding: [0x4c,0x83,0x00,0x21]
+         bnslrl
 # CHECK: bnuctrl 2                       # encoding: [0x4c,0x8b,0x04,0x21]
          bnsctrl 2
 # CHECK: bnuctrl 0                       # encoding: [0x4c,0x83,0x04,0x21]
@@ -407,8 +428,10 @@
 # FIXME: bunl target
 # FIXME: bunla 2, target
 # FIXME: bunla target
-# FIXME: bunlrl 2
-# FIXME: bunlrl
+# CHECK: bunlrl 2                        # encoding: [0x4d,0x8b,0x00,0x21]
+         bunlrl 2
+# CHECK: bunlrl 0                        # encoding: [0x4d,0x83,0x00,0x21]
+         bunlrl
 # CHECK: bunctrl 2                       # encoding: [0x4d,0x8b,0x04,0x21]
          bunctrl 2
 # CHECK: bunctrl 0                       # encoding: [0x4d,0x83,0x04,0x21]
@@ -434,8 +457,10 @@
 # FIXME: bnul target
 # FIXME: bnula 2, target
 # FIXME: bnula target
-# FIXME: bnulrl 2
-# FIXME: bnulrl
+# CHECK: bnulrl 2                        # encoding: [0x4c,0x8b,0x00,0x21]
+         bnulrl 2
+# CHECK: bnulrl 0                        # encoding: [0x4c,0x83,0x00,0x21]
+         bnulrl
 # CHECK: bnuctrl 2                       # encoding: [0x4c,0x8b,0x04,0x21]
          bnuctrl 2
 # CHECK: bnuctrl 0                       # encoding: [0x4c,0x83,0x04,0x21]

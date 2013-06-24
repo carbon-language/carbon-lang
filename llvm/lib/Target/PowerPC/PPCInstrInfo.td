@@ -926,6 +926,14 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR] in {
     def BCCTRL : XLForm_2_br<19, 528, 1, (outs), (ins pred:$cond),
                              "b${cond:cc}ctrl ${cond:reg}", BrB, []>;
   }
+  let Uses = [LR, RM] in {
+    def BLRL : XLForm_2_ext<19, 16, 20, 0, 1, (outs), (ins),
+                            "blrl", BrB, []>;
+
+    let isCodeGenOnly = 1 in
+    def BCLRL : XLForm_2_br<19, 16, 1, (outs), (ins pred:$cond),
+                            "b${cond:cc}lrl ${cond:reg}", BrB, []>;
+  }
 }
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [RM] in
@@ -2182,6 +2190,11 @@ multiclass BranchExtendedMnemonic<string name, int bibo> {
                   (BCCTR bibo, crrc:$cc)>;
   def : InstAlias<"b"#name#"ctr",
                   (BCCTR bibo, CR0)>;
+
+  def : InstAlias<"b"#name#"lrl $cc",
+                  (BCLRL bibo, crrc:$cc)>;
+  def : InstAlias<"b"#name#"lrl",
+                  (BCLRL bibo, CR0)>;
 
   def : InstAlias<"b"#name#"ctrl $cc",
                   (BCCTRL bibo, crrc:$cc)>;
