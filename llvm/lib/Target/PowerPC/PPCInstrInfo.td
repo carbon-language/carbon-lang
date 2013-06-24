@@ -2270,6 +2270,26 @@ def : InstAlias<"bclrl $bo, $bi", (gBCLRL u5imm:$bo, crbitrc:$bi, 0)>;
 def : InstAlias<"bcctr $bo, $bi", (gBCCTR u5imm:$bo, crbitrc:$bi, 0)>;
 def : InstAlias<"bcctrl $bo, $bi", (gBCCTRL u5imm:$bo, crbitrc:$bi, 0)>;
 
+multiclass BranchSimpleMnemonic1<string name, int bo> {
+  def : InstAlias<"b"#name#" $bi, $dst", (gBC bo, crbitrc:$bi, condbrtarget:$dst)>;
+  def : InstAlias<"b"#name#"a $bi, $dst", (gBCA bo, crbitrc:$bi, abscondbrtarget:$dst)>;
+  def : InstAlias<"b"#name#"lr $bi", (gBCLR bo, crbitrc:$bi, 0)>;
+  def : InstAlias<"b"#name#"l $bi, $dst", (gBCL bo, crbitrc:$bi, condbrtarget:$dst)>;
+  def : InstAlias<"b"#name#"la $bi, $dst", (gBCLA bo, crbitrc:$bi, abscondbrtarget:$dst)>;
+  def : InstAlias<"b"#name#"lrl $bi", (gBCLRL bo, crbitrc:$bi, 0)>;
+}
+multiclass BranchSimpleMnemonic2<string name, int bo>
+  : BranchSimpleMnemonic1<name, bo> {
+  def : InstAlias<"b"#name#"ctr $bi", (gBCCTR bo, crbitrc:$bi, 0)>;
+  def : InstAlias<"b"#name#"ctrl $bi", (gBCCTRL bo, crbitrc:$bi, 0)>;
+}
+defm : BranchSimpleMnemonic2<"t", 12>;
+defm : BranchSimpleMnemonic2<"f", 4>;
+defm : BranchSimpleMnemonic1<"dnzt", 8>;
+defm : BranchSimpleMnemonic1<"dnzf", 0>;
+defm : BranchSimpleMnemonic1<"dzt", 10>;
+defm : BranchSimpleMnemonic1<"dzf", 2>;
+
 multiclass BranchExtendedMnemonic<string name, int bibo> {
   def : InstAlias<"b"#name#" $cc, $dst",
                   (BCC bibo, crrc:$cc, condbrtarget:$dst)>;
