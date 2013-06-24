@@ -2611,6 +2611,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         break;
       }
     }
+  } else {
+    Args.ClaimAllArgs(options::OPT_ccc_arcmt_check);
+    Args.ClaimAllArgs(options::OPT_ccc_arcmt_modify);
+    Args.ClaimAllArgs(options::OPT_ccc_arcmt_migrate);
   }
 
   if (const Arg *A = Args.getLastArg(options::OPT_ccc_objcmt_migrate)) {

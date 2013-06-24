@@ -10,3 +10,6 @@
 
 // LINK-NOT: {{ld(.exe)?"}}
 // LINK: {{touch(.exe)?"}}
+
+// RUN: %clang -### -ccc-arcmt-migrate /foo/bar -fsyntax-only -fno-objc-arc %s 2>&1 | FileCheck -check-prefix=CHECK-NOARC %s
+// CHECK-NOARC-NOT: argument unused during compilation
