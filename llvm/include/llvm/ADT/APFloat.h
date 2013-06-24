@@ -361,9 +361,6 @@ public:
   ///
   /// This implies that the current value of the float is not zero, subnormal,
   /// infinite, or NaN following the definition of normality from IEEE-754R.
-  ///
-  /// The current implementation of isNormal() differs from this by treating
-  /// subnormal values as normal values.
   bool isNormal() const { return !isDenormal() && isFiniteNonZero(); }
 
   /// Returns true if and only if the current value is zero, subnormal, or
