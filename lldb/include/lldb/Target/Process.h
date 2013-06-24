@@ -3520,9 +3520,6 @@ public:
     ReadWriteLock &
     GetRunLock ()
     {
-        // The "m_private_run_lock" causes problems for other platforms
-        // right now, so we are leaving this in for Apple builds only
-        // until we can get the kinks worked out.
         if (Host::GetCurrentThread() == m_private_state_thread)
             return m_private_run_lock;
         else
