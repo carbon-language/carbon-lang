@@ -938,6 +938,18 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR] in {
     def BCLRL : XLForm_2_br<19, 16, 1, (outs), (ins pred:$cond),
                             "b${cond:cc}lrl ${cond:reg}", BrB, []>;
   }
+  let Defs = [CTR], Uses = [CTR, RM] in {
+    def BDZL  : BForm_1<16, 18, 0, 1, (outs), (ins condbrtarget:$dst),
+                        "bdzl $dst">;
+    def BDNZL : BForm_1<16, 16, 0, 1, (outs), (ins condbrtarget:$dst),
+                        "bdnzl $dst">;
+  }
+  let Defs = [CTR], Uses = [CTR, LR, RM] in {
+    def BDZLRL  : XLForm_2_ext<19, 16, 18, 0, 1, (outs), (ins),
+                               "bdzlrl", BrB, []>;
+    def BDNZLRL : XLForm_2_ext<19, 16, 16, 0, 1, (outs), (ins),
+                               "bdnzlrl", BrB, []>;
+  }
 }
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [RM] in

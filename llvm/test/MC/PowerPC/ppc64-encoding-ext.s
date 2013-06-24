@@ -54,9 +54,12 @@
 # FIXME: bdnza target
 # CHECK: bdnzlr                          # encoding: [0x4e,0x00,0x00,0x20]
          bdnzlr
-# FIXME: bdnzl target
+# CHECK: bdnzl target                    # encoding: [0x42,0x00,A,0bAAAAAA01]
+# CHECK-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_brcond14
+         bdnzl target
 # FIXME: bdnzla target
-# FIXME: bdnzlrl
+# CHECK: bdnzlrl                         # encoding: [0x4e,0x00,0x00,0x21]
+         bdnzlrl
 
 # FIXME: bdnzt 2, target
 # FIXME: bdnzt target
@@ -89,9 +92,12 @@
 # FIXME: bdza target
 # CHECK: bdzlr                           # encoding: [0x4e,0x40,0x00,0x20]
          bdzlr
-# FIXME: bdzl target
+# CHECK: bdzl target                     # encoding: [0x42,0x40,A,0bAAAAAA01]
+# CHECK-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_brcond14
+         bdzl target
 # FIXME: bdzla target
-# FIXME: bdzlrl
+# CHECK: bdzlrl                          # encoding: [0x4e,0x40,0x00,0x21]
+         bdzlrl
 
 # FIXME: bdzt 2, target
 # FIXME: bdzt target
