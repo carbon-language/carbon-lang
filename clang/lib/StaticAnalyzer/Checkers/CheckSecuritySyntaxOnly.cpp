@@ -297,8 +297,7 @@ void WalkAST::checkCall_gets(const CallExpr *CE, const FunctionDecl *FD) {
   if (!filter.check_gets)
     return;
   
-  const FunctionProtoType *FPT
-    = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
+  const FunctionProtoType *FPT = FD->getType()->getAs<FunctionProtoType>();
   if (!FPT)
     return;
 
@@ -335,8 +334,7 @@ void WalkAST::checkCall_getpw(const CallExpr *CE, const FunctionDecl *FD) {
   if (!filter.check_getpw)
     return;
 
-  const FunctionProtoType *FPT
-    = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
+  const FunctionProtoType *FPT = FD->getType()->getAs<FunctionProtoType>();
   if (!FPT)
     return;
 
@@ -381,8 +379,7 @@ void WalkAST::checkCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
     return;
   }
 
-  const FunctionProtoType *FPT
-    = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
+  const FunctionProtoType *FPT = FD->getType()->getAs<FunctionProtoType>();
   if(!FPT)
     return;
 
@@ -555,8 +552,7 @@ void WalkAST::checkCall_strcat(const CallExpr *CE, const FunctionDecl *FD) {
 // Common check for str* functions with no bounds parameters.
 //===----------------------------------------------------------------------===//
 bool WalkAST::checkCall_strCommon(const CallExpr *CE, const FunctionDecl *FD) {
-  const FunctionProtoType *FPT
-    = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
+  const FunctionProtoType *FPT = FD->getType()->getAs<FunctionProtoType>();
   if (!FPT)
     return false;
 
@@ -590,8 +586,7 @@ void WalkAST::checkCall_rand(const CallExpr *CE, const FunctionDecl *FD) {
   if (!filter.check_rand || !CheckRand)
     return;
 
-  const FunctionProtoType *FTP
-    = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
+  const FunctionProtoType *FTP = FD->getType()->getAs<FunctionProtoType>();
   if (!FTP)
     return;
 
@@ -635,8 +630,7 @@ void WalkAST::checkCall_random(const CallExpr *CE, const FunctionDecl *FD) {
   if (!CheckRand || !filter.check_rand)
     return;
 
-  const FunctionProtoType *FTP
-    = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
+  const FunctionProtoType *FTP = FD->getType()->getAs<FunctionProtoType>();
   if (!FTP)
     return;
 
@@ -713,8 +707,7 @@ void WalkAST::checkUncheckedReturnValue(CallExpr *CE) {
   if (identifierid >= num_setids)
     return;
 
-  const FunctionProtoType *FTP
-    = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
+  const FunctionProtoType *FTP = FD->getType()->getAs<FunctionProtoType>();
   if (!FTP)
     return;
 
