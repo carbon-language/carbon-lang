@@ -1535,15 +1535,15 @@ std::string Driver::GetFilePath(const char *Name, const ToolChain &TC) const {
       continue;
     if (Dir[0] == '=')
       Dir = SysRoot + Dir.substr(1);
-    llvm::sys::Path P(Dir);
-    P.appendComponent(Name);
-    if (llvm::sys::fs::exists(P.str()))
+    SmallString<128> P(Dir);
+    llvm::sys::path::append(P, Name);
+    if (llvm::sys::fs::exists(Twine(P)))
       return P.str();
   }
 
-  llvm::sys::Path P(ResourceDir);
-  P.appendComponent(Name);
-  if (llvm::sys::fs::exists(P.str()))
+  SmallString<128> P(ResourceDir);
+  llvm::sys::path::append(P, Name);
+  if (llvm::sys::fs::exists(Twine(P)))
     return P.str();
 
   const ToolChain::path_list &List = TC.getFilePaths();
@@ -1554,9 +1554,9 @@ std::string Driver::GetFilePath(const char *Name, const ToolChain &TC) const {
       continue;
     if (Dir[0] == '=')
       Dir = SysRoot + Dir.substr(1);
-    llvm::sys::Path P(Dir);
-    P.appendComponent(Name);
-    if (llvm::sys::fs::exists(P.str()))
+    SmallString<128> P(Dir);
+    llvm::sys::path::append(P, Name);
+    if (llvm::sys::fs::exists(Twine(P)))
       return P.str();
   }
 
@@ -1573,17 +1573,17 @@ std::string Driver::GetProgramPath(const char *Name,
        ie = PrefixDirs.end(); it != ie; ++it) {
     bool IsDirectory;
     if (!llvm::sys::fs::is_directory(*it, IsDirectory) && IsDirectory) {
-      llvm::sys::Path P(*it);
-      P.appendComponent(TargetSpecificExecutable);
-      if (llvm::sys::fs::can_execute(P.str()))
+      SmallString<128> P(*it);
+      llvm::sys::path::append(P, TargetSpecificExecutable);
+      if (llvm::sys::fs::can_execute(Twine(P)))
         return P.str();
-      P.eraseComponent();
-      P.appendComponent(Name);
-      if (llvm::sys::fs::can_execute(P.str()))
+      llvm::sys::path::remove_filename(P);
+      llvm::sys::path::append(P, Name);
+      if (llvm::sys::fs::can_execute(Twine(P)))
         return P.str();
     } else {
-      llvm::sys::Path P(*it + Name);
-      if (llvm::sys::fs::can_execute(P.str()))
+      SmallString<128> P(*it + Name);
+      if (llvm::sys::fs::can_execute(Twine(P)))
         return P.str();
     }
   }
@@ -1591,24 +1591,24 @@ std::string Driver::GetProgramPath(const char *Name,
   const ToolChain::path_list &List = TC.getProgramPaths();
   for (ToolChain::path_list::const_iterator
          it = List.begin(), ie = List.end(); it != ie; ++it) {
-    llvm::sys::Path P(*it);
-    P.appendComponent(TargetSpecificExecutable);
-    if (llvm::sys::fs::can_execute(P.str()))
+    SmallString<128> P(*it);
+    llvm::sys::path::append(P, TargetSpecificExecutable);
+    if (llvm::sys::fs::can_execute(Twine(P)))
       return P.str();
-    P.eraseComponent();
-    P.appendComponent(Name);
-    if (llvm::sys::fs::can_execute(P.str()))
+    llvm::sys::path::remove_filename(P);
+    llvm::sys::path::append(P, Name);
+    if (llvm::sys::fs::can_execute(Twine(P)))
       return P.str();
   }
 
   // If all else failed, search the path.
-  llvm::sys::Path P(llvm::sys::FindProgramByName(TargetSpecificExecutable));
+  std::string P(llvm::sys::FindProgramByName(TargetSpecificExecutable));
   if (!P.empty())
-    return P.str();
+    return P;
 
-  P = llvm::sys::Path(llvm::sys::FindProgramByName(Name));
+  P = llvm::sys::FindProgramByName(Name);
   if (!P.empty())
-    return P.str();
+    return P;
 
   return Name;
 }
