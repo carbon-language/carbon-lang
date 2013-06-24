@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mcpu=core-avx-i -mattr=+rdseed | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=core-avx-i -mattr=+rdseed | FileCheck %s
 
 declare {i16, i32} @llvm.x86.rdseed.16()
 declare {i32, i32} @llvm.x86.rdseed.32()
