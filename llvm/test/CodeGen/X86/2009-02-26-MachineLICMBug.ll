@@ -17,9 +17,9 @@ bb4:		; preds = %bb.i, %bb26, %bb4, %entry
 ; CHECK: %bb4
 ; CHECK: xorl
 ; CHECK: callq
+; CHECK: xorl
+; CHECK: xorl
 ; CHECK: movq
-; CHECK: xorl
-; CHECK: xorl
 
 	%0 = call i32 (...)* @xxGetOffsetForCode(i32 undef) nounwind		; <i32> [#uses=0]
 	%ins = or i64 %p, 2097152		; <i64> [#uses=1]

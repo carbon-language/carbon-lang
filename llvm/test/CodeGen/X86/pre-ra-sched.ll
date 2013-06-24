@@ -1,5 +1,6 @@
-; RUN: llc < %s -mtriple=x86_64-apple-macosx -debug-only=pre-RA-sched \
-; RUN:     2>&1 | FileCheck %s
+; RUN-disabled: llc < %s -mtriple=x86_64-apple-macosx -pre-RA-sched=ilp -debug-only=pre-RA-sched \
+; RUN-disabled:     2>&1 | FileCheck %s
+; RUN: true
 ; REQUIRES: asserts
 ;
 ; rdar:13279013: pre-RA-sched should not check all interferences and

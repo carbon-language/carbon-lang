@@ -26,11 +26,10 @@ define double @foo(double %x, double %y, i1 %c) nounwind {
 
 ; CHECK: split:
 ; CHECK-NEXT: testb $1, %dil
-; CHECK-NEXT: jne
-; CHECK-NEXT: movaps
-; CHECK-NEXT: ret
+; CHECK-NEXT: je
 ; CHECK:      divsd
-; CHECK-NEXT: ret
+; CHECK:      movaps
+; CHECK:      ret
 define double @split(double %x, double %y, i1 %c) nounwind {
   %a = fdiv double %x, 3.2
   %z = select i1 %c, double %a, double %y
@@ -65,7 +64,7 @@ return:
 ; Sink instructions with dead EFLAGS defs.
 
 ; FIXME: Unfail the zzz test if we can correctly mark pregs with the kill flag.
-; 
+;
 ; See <rdar://problem/8030636>. This test isn't valid after we made machine
 ; sinking more conservative about sinking instructions that define a preg into a
 ; block when we don't know if the preg is killed within the current block.

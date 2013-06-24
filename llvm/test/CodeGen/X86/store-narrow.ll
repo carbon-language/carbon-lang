@@ -12,7 +12,7 @@ entry:
   %D = or i32 %C, %B
   store i32 %D, i32* %a0, align 4
   ret void
-  
+
 ; X64: test1:
 ; X64: movb	%sil, (%rdi)
 
@@ -34,8 +34,8 @@ entry:
 ; X64: movb	%sil, 1(%rdi)
 
 ; X32: test2:
-; X32: movb	8(%esp), %al
-; X32: movb	%al, 1(%{{.*}})
+; X32: movb	8(%esp), %[[REG:[abcd]l]]
+; X32: movb	%[[REG]], 1(%{{.*}})
 }
 
 define void @test3(i32* nocapture %a0, i16 zeroext %a1) nounwind ssp {
@@ -67,8 +67,8 @@ entry:
 ; X64: movw	%si, 2(%rdi)
 
 ; X32: test4:
-; X32: movl	8(%esp), %eax
-; X32: movw	%ax, 2(%{{.*}})
+; X32: movl	8(%esp), %e[[REG:[abcd]x]]
+; X32: movw	%[[REG]], 2(%{{.*}})
 }
 
 define void @test5(i64* nocapture %a0, i16 zeroext %a1) nounwind ssp {
@@ -84,8 +84,8 @@ entry:
 ; X64: movw	%si, 2(%rdi)
 
 ; X32: test5:
-; X32: movzwl	8(%esp), %eax
-; X32: movw	%ax, 2(%{{.*}})
+; X32: movzwl	8(%esp), %e[[REG:[abcd]x]]
+; X32: movw	%[[REG]], 2(%{{.*}})
 }
 
 define void @test6(i64* nocapture %a0, i8 zeroext %a1) nounwind ssp {
@@ -102,8 +102,8 @@ entry:
 
 
 ; X32: test6:
-; X32: movb	8(%esp), %al
-; X32: movb	%al, 5(%{{.*}})
+; X32: movb	8(%esp), %[[REG:[abcd]l]]
+; X32: movb	%[[REG]], 5(%{{.*}})
 }
 
 define i32 @test7(i64* nocapture %a0, i8 zeroext %a1, i32* %P2) nounwind {
@@ -121,8 +121,8 @@ entry:
 
 
 ; X32: test7:
-; X32: movb	8(%esp), %cl
-; X32: movb	%cl, 5(%{{.*}})
+; X32: movb	8(%esp), %[[REG:[abcd]l]]
+; X32: movb	%[[REG]], 5(%{{.*}})
 }
 
 ; PR7833

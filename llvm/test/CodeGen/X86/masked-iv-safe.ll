@@ -3,9 +3,9 @@
 ; RUN: not grep movz %t
 ; RUN: not grep sar %t
 ; RUN: not grep shl %t
-; RUN: grep add %t | count 5
+; RUN: grep add %t | count 6
 ; RUN: grep inc %t | count 2
-; RUN: grep lea %t | count 3
+; RUN: grep lea %t | count 0
 
 ; Optimize away zext-inreg and sext-inreg on the loop induction
 ; variable using trip-count information.

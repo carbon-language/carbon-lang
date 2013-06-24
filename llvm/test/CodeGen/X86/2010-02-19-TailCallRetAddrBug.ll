@@ -3,17 +3,17 @@
 ; Bug 6225
 ;
 ; If a call is a fastcc tail call and tail call optimization is enabled, the
-; caller frame is replaced by the callee frame. This can require that arguments are 
+; caller frame is replaced by the callee frame. This can require that arguments are
 ; placed on the former return address stack slot. Special care needs to be taken
 ; taken that the return address is moved / or stored in a register before
 ; lowering of arguments potentially overwrites the value.
 ;
-; Move return address (76(%esp)) to a temporary register (%ebp)
-; CHECK: movl 76(%esp), [[REGISTER:%[a-z]+]]
+; Move return address (60(%esp)) to a temporary register (%ebp)
+; CHECK: movl 60(%esp), [[REGISTER:%[a-z]+]]
 ; Overwrite return addresss
-; CHECK: movl [[EBX:%[a-z]+]], 76(%esp)
+; CHECK: movl [[EBX:%[a-z]+]], 60(%esp)
 ; Move return address from temporary register (%ebp) to new stack location (60(%esp))
-; CHECK: movl [[REGISTER]], 60(%esp)
+; CHECK: movl [[REGISTER]], 44(%esp)
 
 %tupl_p = type [9 x i32]*
 
@@ -51,5 +51,3 @@ false:
   tail call fastcc void @l298(i32 %r10, i32 %r9, i32 %r4) noreturn nounwind
   ret void
 }
-
-

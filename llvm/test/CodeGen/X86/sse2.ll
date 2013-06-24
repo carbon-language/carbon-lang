@@ -7,7 +7,7 @@ define void @test1(<2 x double>* %r, <2 x double>* %A, double %B) nounwind  {
 	%tmp9 = shufflevector <2 x double> %tmp3, <2 x double> %tmp7, <2 x i32> < i32 2, i32 1 >
 	store <2 x double> %tmp9, <2 x double>* %r, align 16
 	ret void
-        
+
 ; CHECK: test1:
 ; CHECK: 	movl	8(%esp), %eax
 ; CHECK-NEXT: 	movapd	(%eax), %xmm0
@@ -23,12 +23,12 @@ define void @test2(<2 x double>* %r, <2 x double>* %A, double %B) nounwind  {
 	%tmp9 = shufflevector <2 x double> %tmp3, <2 x double> %tmp7, <2 x i32> < i32 0, i32 2 >
 	store <2 x double> %tmp9, <2 x double>* %r, align 16
 	ret void
-        
+
 ; CHECK: test2:
-; CHECK: 	movl	8(%esp), %eax
-; CHECK-NEXT: 	movapd	(%eax), %xmm0
+; CHECK: 	movl	4(%esp), %eax
+; CHECK: 	movl	8(%esp), %ecx
+; CHECK-NEXT: 	movapd	(%ecx), %xmm0
 ; CHECK-NEXT: 	movhpd	12(%esp), %xmm0
-; CHECK-NEXT: 	movl	4(%esp), %eax
 ; CHECK-NEXT: 	movapd	%xmm0, (%eax)
 ; CHECK-NEXT: 	ret
 }
@@ -48,7 +48,7 @@ define void @test3(<4 x float>* %res, <4 x float>* %A, <4 x float>* %B) nounwind
 	store <4 x float> %tmp13, <4 x float>* %res
 	ret void
 ; CHECK: @test3
-; CHECK: 	unpcklps	
+; CHECK: 	unpcklps
 }
 
 define void @test4(<4 x float> %X, <4 x float>* %res) nounwind {
@@ -85,9 +85,9 @@ define void @test6(<4 x float>* %res, <4 x float>* %A) nounwind {
         %tmp2 = shufflevector <4 x float> %tmp1, <4 x float> undef, <4 x i32> < i32 0, i32 5, i32 6, i32 7 >          ; <<4 x float>> [#uses=1]
         store <4 x float> %tmp2, <4 x float>* %res
         ret void
-        
+
 ; CHECK: test6:
-; CHECK: 	movaps	(%eax), %xmm0
+; CHECK: 	movaps	(%ecx), %xmm0
 ; CHECK:	movaps	%xmm0, (%eax)
 }
 
@@ -96,7 +96,7 @@ define void @test7() nounwind {
         shufflevector <4 x float> %1, <4 x float> zeroinitializer, <4 x i32> zeroinitializer         ; <<4 x float>>:2 [#uses=1]
         store <4 x float> %2, <4 x float>* null
         ret void
-        
+
 ; CHECK: test7:
 ; CHECK:	xorps	%xmm0, %xmm0
 ; CHECK:	movaps	%xmm0, 0
@@ -166,7 +166,7 @@ define void @test13(<4 x float>* %res, <4 x float>* %A, <4 x float>* %B, <4 x fl
         store <4 x float> %tmp11, <4 x float>* %res
         ret void
 ; CHECK: test13
-; CHECK: shufps	$69, (%eax), %xmm0
+; CHECK: shufps	$69, (%ecx), %xmm0
 ; CHECK: pshufd	$-40, %xmm0, %xmm0
 }
 
@@ -178,8 +178,8 @@ define <4 x float> @test14(<4 x float>* %x, <4 x float>* %y) nounwind {
         %tmp27 = shufflevector <4 x float> %tmp9, <4 x float> %tmp21, <4 x i32> < i32 0, i32 1, i32 4, i32 5 >                ; <<4 x float>> [#uses=1]
         ret <4 x float> %tmp27
 ; CHECK: test14:
-; CHECK: 	subps	[[X1:%xmm[0-9]+]], [[X2:%xmm[0-9]+]]
-; CHECK: 	addps	[[X1]], [[X0:%xmm[0-9]+]]
+; CHECK: 	addps	[[X1:%xmm[0-9]+]], [[X0:%xmm[0-9]+]]
+; CHECK: 	subps	[[X1]], [[X2:%xmm[0-9]+]]
 ; CHECK: 	movlhps	[[X2]], [[X0]]
 }
 
@@ -221,4 +221,3 @@ entry:
  %double2float.i = fptrunc <4 x double> %0 to <4 x float>
  ret <4 x float> %double2float.i
 }
-

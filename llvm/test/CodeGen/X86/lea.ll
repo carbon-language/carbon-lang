@@ -28,8 +28,7 @@ bb.nph:
 bb2:
 	ret i32 %x_offs
 ; CHECK: test2:
-; CHECK: movl %e[[A0]], %eax
-; CHECK: addl $-5, %eax
+; CHECK:        leal    -5(%r[[A0:..]]), %eax
 ; CHECK:	andl	$-4, %eax
 ; CHECK:	negl	%eax
 ; CHECK:	leal	-4(%r[[A0]],%rax), %eax

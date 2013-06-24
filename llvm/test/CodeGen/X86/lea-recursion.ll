@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 | grep lea | count 12
+; RUN: llc < %s -march=x86-64 | grep lea | count 13
 
 ; This testcase was written to demonstrate an instruction-selection problem,
 ; however it also happens to expose a limitation in the DAGCombiner's
@@ -44,4 +44,3 @@ entry:
 	store i32 %tmp10.6, i32* getelementptr ([1000 x i32]* @g0, i32 0, i32 7)
 	ret void
 }
-

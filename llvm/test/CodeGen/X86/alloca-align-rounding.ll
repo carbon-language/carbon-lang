@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mtriple=i686-pc-linux | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mtriple=i686-pc-linux -enable-misched=false | FileCheck %s
 
 declare void @bar(<2 x i64>* %n)
 

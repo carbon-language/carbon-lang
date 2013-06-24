@@ -54,22 +54,27 @@ forbody:		; preds = %forcond
 	%mul310 = fmul <4 x float> %bitcast204.i104, zeroinitializer		; <<4 x float>> [#uses=2]
 	%mul313 = fmul <4 x float> %bitcast204.i, zeroinitializer		; <<4 x float>> [#uses=1]
 	%cmpunord.i11 = call <4 x float> @llvm.x86.sse.cmp.ps(<4 x float> zeroinitializer, <4 x float> zeroinitializer, i8 3) nounwind		; <<4 x float>> [#uses=1]
+	%tmp83 = call <4 x float> @llvm.x86.sse.min.ps(<4 x float> %mul310, <4 x float> zeroinitializer) nounwind		; <<4 x float>> [#uses=1]
+	%bitcast.i3 = bitcast <4 x float> %mul310 to <4 x i32>		; <<4 x i32>> [#uses=1]
+	%andps.i5 = and <4 x i32> %bitcast.i3, zeroinitializer		; <<4 x i32>> [#uses=1]
+
+	call void null(<4 x float> %mul313, <4 x float> %cmpunord.i11, <4 x float> %tmp83, <4 x float> zeroinitializer, %struct.__ImageExecInfo* null, <4 x i32> zeroinitializer) nounwind
+
+	%tmp84 = call <4 x float> @llvm.x86.sse.min.ps(<4 x float> %mul313, <4 x float> zeroinitializer) nounwind		; <<4 x float>> [#uses=1]
+
 	%bitcast6.i13 = bitcast <4 x float> %cmpunord.i11 to <4 x i32>		; <<4 x i32>> [#uses=2]
 	%andps.i14 = add <4 x i32> <i32 1, i32 1, i32 1, i32 1>, %bitcast6.i13		; <<4 x i32>> [#uses=1]
 	%not.i16 = xor <4 x i32> %bitcast6.i13, < i32 -1, i32 -1, i32 -1, i32 -1 >		; <<4 x i32>> [#uses=1]
 	%andnps.i17 = add <4 x i32> <i32 1, i32 1, i32 1, i32 1>, %not.i16		; <<4 x i32>> [#uses=1]
 	%orps.i18 = or <4 x i32> %andnps.i17, %andps.i14		; <<4 x i32>> [#uses=1]
 	%bitcast17.i19 = bitcast <4 x i32> %orps.i18 to <4 x float>		; <<4 x float>> [#uses=1]
-	%tmp83 = call <4 x float> @llvm.x86.sse.min.ps(<4 x float> %mul310, <4 x float> zeroinitializer) nounwind		; <<4 x float>> [#uses=1]
-	%bitcast.i3 = bitcast <4 x float> %mul310 to <4 x i32>		; <<4 x i32>> [#uses=1]
-	%andps.i5 = and <4 x i32> %bitcast.i3, zeroinitializer		; <<4 x i32>> [#uses=1]
+
 	%bitcast11.i6 = bitcast <4 x float> %tmp83 to <4 x i32>		; <<4 x i32>> [#uses=1]
 	%not.i7 = xor <4 x i32> zeroinitializer, < i32 -1, i32 -1, i32 -1, i32 -1 >		; <<4 x i32>> [#uses=1]
 	%andnps.i8 = and <4 x i32> %bitcast11.i6, %not.i7		; <<4 x i32>> [#uses=1]
-	call void null(<4 x float> %mul313, <4 x float> %cmpunord.i11, <4 x float> %tmp83, <4 x float> zeroinitializer, %struct.__ImageExecInfo* null, <4 x i32> zeroinitializer) nounwind
 	%orps.i9 = or <4 x i32> %andnps.i8, %andps.i5		; <<4 x i32>> [#uses=1]
 	%bitcast17.i10 = bitcast <4 x i32> %orps.i9 to <4 x float>		; <<4 x float>> [#uses=1]
-	%tmp84 = call <4 x float> @llvm.x86.sse.min.ps(<4 x float> %mul313, <4 x float> zeroinitializer) nounwind		; <<4 x float>> [#uses=1]
+
 	%bitcast6.i = bitcast <4 x float> zeroinitializer to <4 x i32>		; <<4 x i32>> [#uses=2]
 	%andps.i = and <4 x i32> zeroinitializer, %bitcast6.i		; <<4 x i32>> [#uses=1]
 	%bitcast11.i = bitcast <4 x float> %tmp84 to <4 x i32>		; <<4 x i32>> [#uses=1]

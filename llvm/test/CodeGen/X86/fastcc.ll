@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=i686-apple-darwin -mattr=+sse2 -post-RA-scheduler=false | FileCheck %s
-; CHECK: movsd %xmm0, 8(%esp)
-; CHECK: xorl %ecx, %ecx
+; CHECK: movsd %xmm{{[0-9]}}, 8(%esp)
+; CHECK: xorl %eax, %eax
 
 @d = external global double		; <double*> [#uses=1]
 @c = external global double		; <double*> [#uses=1]

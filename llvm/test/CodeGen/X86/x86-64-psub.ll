@@ -4,8 +4,8 @@
 ; This test checks that the operands of packed sub instructions are
 ; never interchanged by the "Two-Address instruction pass".
 
-declare { i64, double } @getFirstParam() 
-declare { i64, double } @getSecondParam() 
+declare { i64, double } @getFirstParam()
+declare { i64, double } @getSecondParam()
 
 define i64 @test_psubb() {
 entry:
@@ -28,9 +28,10 @@ entry:
 
 ; CHECK: test_psubb:
 ; CHECK:   callq getFirstParam
+; CHECK:   movq %rax, [[TEMP:%[a-z0-9]+]]
 ; CHECK:   callq getSecondParam
+; CHECK:   movd [[TEMP]], [[PARAM1:%[a-z0-9]+]]
 ; CHECK:   movd %rax, [[PARAM2:%[a-z0-9]+]]
-; CHECK:   movq (%rsp), [[PARAM1:%[a-z0-9]+]]
 ; CHECK:   psubb [[PARAM2]], [[PARAM1]]
 ; CHECK: ret
 
@@ -55,9 +56,10 @@ entry:
 
 ; CHECK: test_psubw:
 ; CHECK:   callq getFirstParam
+; CHECK:   movq %rax, [[TEMP:%[a-z0-9]+]]
 ; CHECK:   callq getSecondParam
+; CHECK:   movd [[TEMP]], [[PARAM1:%[a-z0-9]+]]
 ; CHECK:   movd %rax, [[PARAM2:%[a-z0-9]+]]
-; CHECK:   movq (%rsp), [[PARAM1:%[a-z0-9]+]]
 ; CHECK:   psubw [[PARAM2]], [[PARAM1]]
 ; CHECK: ret
 
@@ -83,9 +85,10 @@ entry:
 
 ; CHECK: test_psubd:
 ; CHECK:   callq getFirstParam
+; CHECK:   movq %rax, [[TEMP:%[a-z0-9]+]]
 ; CHECK:   callq getSecondParam
+; CHECK:   movd [[TEMP]], [[PARAM1:%[a-z0-9]+]]
 ; CHECK:   movd %rax, [[PARAM2:%[a-z0-9]+]]
-; CHECK:   movq (%rsp), [[PARAM1:%[a-z0-9]+]]
 ; CHECK:   psubd [[PARAM2]], [[PARAM1]]
 ; CHECK: ret
 
@@ -110,9 +113,10 @@ entry:
 
 ; CHECK: test_psubsb:
 ; CHECK:   callq getFirstParam
+; CHECK:   movq %rax, [[TEMP:%[a-z0-9]+]]
 ; CHECK:   callq getSecondParam
+; CHECK:   movd [[TEMP]], [[PARAM1:%[a-z0-9]+]]
 ; CHECK:   movd %rax, [[PARAM2:%[a-z0-9]+]]
-; CHECK:   movq (%rsp), [[PARAM1:%[a-z0-9]+]]
 ; CHECK:   psubsb [[PARAM2]], [[PARAM1]]
 ; CHECK: ret
 
@@ -137,9 +141,10 @@ entry:
 
 ; CHECK: test_psubswv:
 ; CHECK:   callq getFirstParam
+; CHECK:   movq %rax, [[TEMP:%[a-z0-9]+]]
 ; CHECK:   callq getSecondParam
+; CHECK:   movd [[TEMP]], [[PARAM1:%[a-z0-9]+]]
 ; CHECK:   movd %rax, [[PARAM2:%[a-z0-9]+]]
-; CHECK:   movq (%rsp), [[PARAM1:%[a-z0-9]+]]
 ; CHECK:   psubsw [[PARAM2]], [[PARAM1]]
 ; CHECK: ret
 
@@ -164,9 +169,10 @@ entry:
 
 ; CHECK: test_psubusbv:
 ; CHECK:   callq getFirstParam
+; CHECK:   movq %rax, [[TEMP:%[a-z0-9]+]]
 ; CHECK:   callq getSecondParam
+; CHECK:   movd [[TEMP]], [[PARAM1:%[a-z0-9]+]]
 ; CHECK:   movd %rax, [[PARAM2:%[a-z0-9]+]]
-; CHECK:   movq (%rsp), [[PARAM1:%[a-z0-9]+]]
 ; CHECK:   psubusb [[PARAM2]], [[PARAM1]]
 ; CHECK: ret
 
@@ -191,9 +197,10 @@ entry:
 
 ; CHECK: test_psubuswv:
 ; CHECK:   callq getFirstParam
+; CHECK:   movq %rax, [[TEMP:%[a-z0-9]+]]
 ; CHECK:   callq getSecondParam
+; CHECK:   movd [[TEMP]], [[PARAM1:%[a-z0-9]+]]
 ; CHECK:   movd %rax, [[PARAM2:%[a-z0-9]+]]
-; CHECK:   movq (%rsp), [[PARAM1:%[a-z0-9]+]]
 ; CHECK:   psubusw [[PARAM2]], [[PARAM1]]
 ; CHECK: ret
 

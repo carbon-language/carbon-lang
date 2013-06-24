@@ -56,15 +56,15 @@ entry:
 define void @t2(%struct.s0* nocapture %a, %struct.s0* nocapture %b) nounwind ssp {
 entry:
 ; SSE2-Darwin: t2:
-; SSE2-Darwin: movaps (%eax), %xmm0
+; SSE2-Darwin: movaps (%ecx), %xmm0
 ; SSE2-Darwin: movaps %xmm0, (%eax)
 
 ; SSE2-Mingw32: t2:
-; SSE2-Mingw32: movaps (%eax), %xmm0
+; SSE2-Mingw32: movaps (%ecx), %xmm0
 ; SSE2-Mingw32: movaps %xmm0, (%eax)
 
 ; SSE1: t2:
-; SSE1: movaps (%eax), %xmm0
+; SSE1: movaps (%ecx), %xmm0
 ; SSE1: movaps %xmm0, (%eax)
 
 ; NOSSE: t2:
@@ -91,14 +91,14 @@ entry:
 define void @t3(%struct.s0* nocapture %a, %struct.s0* nocapture %b) nounwind ssp {
 entry:
 ; SSE2-Darwin: t3:
-; SSE2-Darwin: movsd (%eax), %xmm0
-; SSE2-Darwin: movsd 8(%eax), %xmm1
+; SSE2-Darwin: movsd (%ecx), %xmm0
+; SSE2-Darwin: movsd 8(%ecx), %xmm1
 ; SSE2-Darwin: movsd %xmm1, 8(%eax)
 ; SSE2-Darwin: movsd %xmm0, (%eax)
 
 ; SSE2-Mingw32: t3:
-; SSE2-Mingw32: movsd (%eax), %xmm0
-; SSE2-Mingw32: movsd 8(%eax), %xmm1
+; SSE2-Mingw32: movsd (%ecx), %xmm0
+; SSE2-Mingw32: movsd 8(%ecx), %xmm1
 ; SSE2-Mingw32: movsd %xmm1, 8(%eax)
 ; SSE2-Mingw32: movsd %xmm0, (%eax)
 

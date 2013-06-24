@@ -3,8 +3,8 @@
 ;CHECK: cftx020
 ;CHECK: vmovsd  (%rdi), %xmm{{.*}}
 ;CHECK: vmovsd  16(%rdi), %xmm{{.*}}
-;CHECK: vmovhpd  8(%rdi), %xmm{{.*}}
 ;CHECK: vmovsd  24(%rdi), %xmm{{.*}}
+;CHECK: vmovhpd  8(%rdi), %xmm{{.*}}
 ;CHECK: vmovupd %xmm{{.*}}, (%rdi)
 ;CHECK: vmovupd %xmm{{.*}}, 16(%rdi)
 ;CHECK: ret
@@ -35,4 +35,3 @@ entry:
   store <2 x double> %14, <2 x double>* %15, align 8
   ret void
 }
-

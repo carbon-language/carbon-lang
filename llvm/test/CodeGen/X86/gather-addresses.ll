@@ -1,21 +1,35 @@
-; RUN: llc -mtriple=x86_64-linux -mcpu=nehalem < %s | FileCheck %s
-; RUN: llc -mtriple=x86_64-win32 -mcpu=nehalem < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-linux -mcpu=nehalem < %s | FileCheck %s --check-prefix=LIN
+; RUN: llc -mtriple=x86_64-win32 -mcpu=nehalem < %s | FileCheck %s --check-prefix=WIN
 ; rdar://7398554
 
 ; When doing vector gather-scatter index calculation with 32-bit indices,
 ; bounce the vector off of cache rather than shuffling each individual
 ; element out of the index vector.
 
-; CHECK: andps    ([[H:%rdx|%r8]]), %xmm0
-; CHECK: movaps   %xmm0, {{(-24)?}}(%rsp)
-; CHECK: movslq   {{(-24)?}}(%rsp), %rax
-; CHECK: movsd    ([[P:%rdi|%rcx]],%rax,8), %xmm0
-; CHECK: movslq   {{-20|4}}(%rsp), %rax
-; CHECK: movhpd   ([[P]],%rax,8), %xmm0
-; CHECK: movslq   {{-16|8}}(%rsp), %rax
-; CHECK: movsd    ([[P]],%rax,8), %xmm1
-; CHECK: movslq   {{-12|12}}(%rsp), %rax
-; CHECK: movhpd   ([[P]],%rax,8), %xmm1
+; CHECK: foo:
+; LIN: movaps	(%rsi), %xmm0
+; LIN: andps	(%rdx), %xmm0
+; LIN: movaps	%xmm0, -24(%rsp)
+; LIN: movslq	-24(%rsp), %rsi
+; LIN: movslq	-20(%rsp), %rcx
+; LIN: movslq	-16(%rsp), %rdx
+; LIN: movslq	-12(%rsp), %rax
+; LIN: movsd	(%rdi,%rsi,8), %xmm0
+; LIN: movhpd	(%rdi,%rcx,8), %xmm0
+; LIN: movsd	(%rdi,%rdx,8), %xmm1
+; LIN: movhpd	(%rdi,%rax,8), %xmm1
+
+; WIN: movaps	(%rdx), %xmm0
+; WIN: andps	(%r8), %xmm0
+; WIN: movaps	%xmm0, (%rsp)
+; WIN: movslq	(%rsp), %rax
+; WIN: movslq	4(%rsp), %rdx
+; WIN: movslq	8(%rsp), %r9
+; WIN: movslq	12(%rsp), %r8
+; WIN: movsd	(%rcx,%rax,8), %xmm0
+; WIN: movhpd	(%rcx,%rdx,8), %xmm0
+; WIN: movsd	(%rcx,%r9,8), %xmm1
+; WIN: movhpd	(%rcx,%r8,8), %xmm1
 
 define <4 x double> @foo(double* %p, <4 x i32>* %i, <4 x i32>* %h) nounwind {
   %a = load <4 x i32>* %i

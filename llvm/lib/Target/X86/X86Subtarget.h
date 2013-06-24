@@ -361,10 +361,13 @@ public:
   /// memset with zero passed as the second argument. Otherwise it
   /// returns null.
   const char *getBZeroEntry() const;
-  
+
   /// This function returns true if the target has sincos() routine in its
   /// compiler runtime or math libraries.
   bool hasSinCos() const;
+
+  /// Enable the MachineScheduler pass for all X86 subtargets.
+  bool enableMachineScheduler() const LLVM_OVERRIDE { return true; }
 
   /// enablePostRAScheduler - run for Atom optimization.
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,

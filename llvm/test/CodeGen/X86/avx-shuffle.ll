@@ -81,7 +81,7 @@ entry:
 define i32 @test9(<4 x i32> %a) nounwind {
 ; CHECK: test9
 ; CHECK: vpextrd
-  %b = shufflevector <4 x i32> %a, <4 x i32> undef, <8 x i32> <i32 1, i32 1, i32 2, i32 2, i32 3, i32 3, i32 undef, i32 4> 
+  %b = shufflevector <4 x i32> %a, <4 x i32> undef, <8 x i32> <i32 1, i32 1, i32 2, i32 2, i32 3, i32 3, i32 undef, i32 4>
   %r = extractelement <8 x i32> %b, i32 2
 ; CHECK: ret
   ret i32 %r
@@ -251,8 +251,8 @@ define <8 x float> @test19(<8 x float> %A, <8 x float>%B) nounwind {
 ; CHECK: swap8doubles
 ; CHECK: vmovups {{[0-9]*}}(%rdi), %xmm{{[0-9]+}}
 ; CHECK: vmovups {{[0-9]*}}(%rdi), %xmm{{[0-9]+}}
-; CHECK: vmovups {{[0-9]*}}(%rdi), %xmm{{[0-9]+}}
-; CHECK: vmovups {{[0-9]*}}(%rdi), %xmm{{[0-9]+}}
+; CHECK: vinsertf128 $1, {{[0-9]*}}(%rdi), %ymm{{[0-9]+}}
+; CHECK: vinsertf128 $1, {{[0-9]*}}(%rdi), %ymm{{[0-9]+}}
 ; CHECK: vmovaps {{[0-9]*}}(%rsi), %ymm{{[0-9]+}}
 ; CHECK: vmovaps {{[0-9]*}}(%rsi), %ymm{{[0-9]+}}
 ; CHECK: vmovaps %xmm{{[0-9]+}}, {{[0-9]*}}(%rdi)

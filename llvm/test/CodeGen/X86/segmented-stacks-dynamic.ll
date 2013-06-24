@@ -31,7 +31,7 @@ false:
 ; X32-NEXT: ret
 
 ; X32:      movl %esp, %eax
-; X32-NEXT: subl %ecx, %eax
+; X32:      subl %ecx, %eax
 ; X32-NEXT: cmpl %eax, %gs:48
 
 ; X32:      movl %eax, %esp
@@ -52,7 +52,7 @@ false:
 ; X64-NEXT: ret
 
 ; X64:      movq %rsp, %[[RDI:rdi|rax]]
-; X64-NEXT: subq %{{.*}}, %[[RDI]]
+; X64:      subq %{{.*}}, %[[RDI]]
 ; X64-NEXT: cmpq %[[RDI]], %fs:112
 
 ; X64:      movq %[[RDI]], %rsp

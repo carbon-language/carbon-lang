@@ -22,7 +22,7 @@ ret_false:
     ret i1 false
 }
 ; CHECK: test2:
-; CHECK: btl %eax
+; CHECK: btl
 
 define i32 @test3(i8* %ptr) nounwind {
     %val = load i8* %ptr
