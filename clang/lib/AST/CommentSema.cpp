@@ -801,9 +801,7 @@ bool Sema::isObjCMethodDecl() {
   return isFunctionDecl() && ThisDeclInfo->CurrentDecl &&
          isa<ObjCMethodDecl>(ThisDeclInfo->CurrentDecl);
 }
-  
-/// isFunctionPointerVarDecl - returns 'true' if declaration is a pointer to
-/// function decl.
+
 bool Sema::isFunctionPointerVarDecl() {
   if (!ThisDeclInfo)
     return false;
