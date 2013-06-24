@@ -3814,7 +3814,7 @@ protected:
     AppendSTDERR (const char *s, size_t len);
     
     void
-    BroadcastAsyncProfileData(const char *s, size_t len);
+    BroadcastAsyncProfileData(const std::string &one_profile_data);
     
     static void
     STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_len);

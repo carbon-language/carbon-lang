@@ -764,8 +764,8 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                         while ((found = input.find(end_delimiter, pos)) != std::string::npos)
                         {
                             StringExtractorGDBRemote profileDataExtractor(input.substr(pos, found).c_str());
-                            const std::string& profile_data = HarmonizeThreadIdsForProfileData(process, profileDataExtractor);
-                            process->BroadcastAsyncProfileData (profile_data.c_str(), profile_data.length());
+                            std::string profile_data = HarmonizeThreadIdsForProfileData(process, profileDataExtractor);
+                            process->BroadcastAsyncProfileData (profile_data);
                             
                             pos = found + end_delimiter_len;
                         }
