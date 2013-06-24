@@ -82,10 +82,11 @@ void test_setuid()
 }
 
 // <rdar://problem/6337100> CWE-338: Use of cryptographically weak prng
+typedef  unsigned short *ushort_ptr_t;  // Test that sugar doesn't confuse the warning.
 int      rand(void);
 double   drand48(void);
 double   erand48(unsigned short[3]);
-long     jrand48(unsigned short[3]);
+long     jrand48(ushort_ptr_t);
 void     lcong48(unsigned short[7]);
 long     lrand48(void);
 long     mrand48(void);
