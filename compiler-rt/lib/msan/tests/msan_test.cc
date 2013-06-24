@@ -1950,6 +1950,15 @@ TEST(MemorySanitizer, inet_pton) {
   EXPECT_NOT_POISONED(s_out[3]);
 }
 
+TEST(MemorySanitizer, inet_aton) {
+  const char *s = "127.0.0.1";
+  struct in_addr in[2];
+  int res = inet_aton(s, in);
+  ASSERT_NE(0, res);
+  EXPECT_NOT_POISONED(in[0]);
+  EXPECT_POISONED(*(char *)(in + 1));
+}
+
 TEST(MemorySanitizer, uname) {
   struct utsname u;
   int res = uname(&u);

@@ -112,6 +112,8 @@ namespace __sanitizer {
   extern int e_tabsz;
 #endif
 
+  extern int af_inet;
+  extern int af_inet6;
   uptr __sanitizer_in_addr_sz(int af);
 
 #if SANITIZER_LINUX

@@ -878,6 +878,23 @@ INTERCEPTOR(int, inet_pton, int af, const char *src, void *dst) {
 #define INIT_INET
 #endif
 
+#if SANITIZER_INTERCEPT_INET
+INTERCEPTOR(int, inet_aton, const char *cp, void *dst) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, inet_aton, cp, dst);
+  if (cp) COMMON_INTERCEPTOR_READ_RANGE(ctx, cp, REAL(strlen)(cp) + 1);
+  int res = REAL(inet_aton)(cp, dst);
+  if (res != 0) {
+    uptr sz = __sanitizer_in_addr_sz(af_inet);
+    if (sz) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, sz);
+  }
+  return res;
+}
+#define INIT_INET_ATON INTERCEPT_FUNCTION(inet_aton);
+#else
+#define INIT_INET_ATON
+#endif
+
 #if SANITIZER_INTERCEPT_PTHREAD_GETSCHEDPARAM
 INTERCEPTOR(int, pthread_getschedparam, uptr thread, int *policy, int *param) {
   void *ctx;
@@ -1275,4 +1292,5 @@ INTERCEPTOR(int, getpeername, int sockfd, void *addr, unsigned *addrlen) {
   INIT_MODF;                               \
   INIT_RECVMSG;                            \
   INIT_GETPEERNAME;                        \
-  INIT_IOCTL;
+  INIT_IOCTL;                              \
+  INIT_INET_ATON;
