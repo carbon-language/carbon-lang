@@ -42,7 +42,7 @@
 @ CHECK: bkpt  #2                       @ encoding: [0x02,0xbe]
 
         nop
-@ CHECK: nop @ encoding: [0xc0,0x46]
+@ CHECK: mov r8, r8 @ encoding: [0xc0,0x46]
 
         cpsie aif
 @ CHECK: cpsie aif                      @ encoding: [0x67,0xb6]
