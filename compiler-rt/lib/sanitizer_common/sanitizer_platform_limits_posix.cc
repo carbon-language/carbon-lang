@@ -41,6 +41,7 @@
 
 #if SANITIZER_LINUX
 #include <sys/mount.h>
+#include <sys/sysinfo.h>
 #include <sys/vt.h>
 #include <linux/cdrom.h>
 #include <linux/fd.h>
@@ -117,6 +118,7 @@ namespace __sanitizer {
   unsigned struct_dirent_sz = sizeof(struct dirent);
   unsigned struct_statfs_sz = sizeof(struct statfs);
   unsigned struct_epoll_event_sz = sizeof(struct epoll_event);
+  unsigned struct_sysinfo_sz = sizeof(struct sysinfo);
   unsigned struct_timespec_sz = sizeof(struct timespec);
 #endif // SANITIZER_LINUX
 

@@ -42,6 +42,7 @@ namespace __sanitizer {
   extern unsigned struct_dirent_sz;
   extern unsigned struct_statfs_sz;
   extern unsigned struct_epoll_event_sz;
+  extern unsigned struct_sysinfo_sz;
   extern unsigned struct_timespec_sz;
 #endif // SANITIZER_LINUX
 

@@ -330,6 +330,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_modfl]                    = "  modfl                           ";
   name[StatInt_getpeername]              = "  getpeername                     ";
   name[StatInt_ioctl]                    = "  ioctl                           ";
+  name[StatInt_sysinfo]                  = "  sysinfo                         ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

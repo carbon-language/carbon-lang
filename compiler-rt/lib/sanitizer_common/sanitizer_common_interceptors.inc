@@ -1253,6 +1253,20 @@ INTERCEPTOR(int, getpeername, int sockfd, void *addr, unsigned *addrlen) {
 #define INIT_GETPEERNAME
 #endif
 
+#if SANITIZER_INTERCEPT_SYSINFO
+INTERCEPTOR(int, sysinfo, void *info) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, sysinfo, info);
+  int res = REAL(sysinfo)(info);
+  if (!res && info)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, info, struct_sysinfo_sz);
+  return res;
+}
+#define INIT_SYSINFO INTERCEPT_FUNCTION(sysinfo);
+#else
+#define INIT_SYSINFO
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCASECMP;                         \
   INIT_STRNCASECMP;                        \
@@ -1293,4 +1307,5 @@ INTERCEPTOR(int, getpeername, int sockfd, void *addr, unsigned *addrlen) {
   INIT_RECVMSG;                            \
   INIT_GETPEERNAME;                        \
   INIT_IOCTL;                              \
-  INIT_INET_ATON;
+  INIT_INET_ATON;                          \
+  INIT_SYSINFO;
