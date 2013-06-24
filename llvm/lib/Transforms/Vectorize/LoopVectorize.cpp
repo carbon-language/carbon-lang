@@ -47,6 +47,7 @@
 
 #include "llvm/Transforms/Vectorize.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
@@ -2834,6 +2835,252 @@ void LoopVectorizationLegality::collectLoopUniforms() {
 
     // Insert all operands.
     Worklist.insert(Worklist.end(), I->op_begin(), I->op_end());
+  }
+}
+
+/// \brief Analyses memory accesses in a loop.
+///
+/// Checks whether run time pointer checks are needed and builds sets for data
+/// dependence checking.
+class AccessAnalysis {
+public:
+  /// \brief Read or write access location.
+  typedef std::pair<Value*, char> MemAccessInfo;
+
+  /// \brief Set of potential dependent memory accesses.
+  typedef EquivalenceClasses<MemAccessInfo> DepCandidates;
+
+  AccessAnalysis(DataLayout *Dl, DepCandidates &DA) :
+    DL(Dl), DepCands(DA), AreAllWritesIdentified(true),
+    AreAllReadsIdentified(true), IsRTCheckNeeded(false) {}
+
+  /// \brief Register a load  and whether it is only read from.
+  void addLoad(Value *Ptr, bool IsReadOnly) {
+    Accesses.insert(std::make_pair(Ptr, false));
+    if (IsReadOnly)
+      ReadOnlyPtr.insert(Ptr);
+  }
+
+  /// \brief Register a store.
+  void addStore(Value *Ptr) {
+    Accesses.insert(std::make_pair(Ptr, true));
+  }
+
+  /// \brief Check whether we can check the pointers at runtime for
+  /// non-intersection.
+  bool canCheckPtrAtRT(LoopVectorizationLegality::RuntimePointerCheck &RtCheck,
+                       unsigned &NumComparisons, ScalarEvolution *SE,
+                       Loop *TheLoop);
+
+  /// \brief Goes over all memory accesses, checks whether a RT check is needed
+  /// and builds sets of dependent accesses.
+  void buildDependenceSets() {
+    // Process read-write pointers first.
+    processMemAccesses(false);
+    // Next, process read pointers.
+    processMemAccesses(true);
+  }
+
+  bool isRTCheckNeeded() { return IsRTCheckNeeded; }
+
+  bool isDependencyCheckNeeded() { return !CheckDeps.empty(); }
+
+  DenseSet<MemAccessInfo> &getDependenciesToCheck() { return CheckDeps; }
+
+private:
+  typedef DenseSet<MemAccessInfo> PtrAccessSet;
+  typedef DenseMap<Value*, MemAccessInfo> UnderlyingObjToAccessMap;
+
+  /// \brief Go over all memory access or only the deferred ones if
+  /// \p UseDeferred is true and check whether runtime pointer checks are needed
+  /// and build sets of dependency check candidates.
+  void processMemAccesses(bool UseDeferred);
+
+  /// Set of all accesses.
+  PtrAccessSet Accesses;
+
+  /// Set of access to check after all writes have been processed.
+  PtrAccessSet DeferredAccesses;
+
+  /// Map of pointers to last access encountered.
+  UnderlyingObjToAccessMap ObjToLastAccess;
+
+  /// Set of accesses that need a further dependence check.
+  DenseSet<MemAccessInfo> CheckDeps;
+
+  /// Set of pointers that are read only.
+  SmallPtrSet<Value*, 16> ReadOnlyPtr;
+
+  /// Set of underlying objects already written to.
+  SmallPtrSet<Value*, 16> WriteObjects;
+
+  DataLayout *DL;
+
+  /// Sets of potentially dependent accesses - members of one set share an
+  /// underlying pointer. The set "CheckDeps" identfies which sets really need a
+  /// dependence check.
+  DepCandidates &DepCands;
+
+  bool AreAllWritesIdentified;
+  bool AreAllReadsIdentified;
+  bool IsRTCheckNeeded;
+};
+
+/// \brief Check whether a pointer can participate in a runtime bounds check.
+static bool hasComputableBounds(ScalarEvolution *SE, Value *Ptr) {
+  const SCEV *PtrScev = SE->getSCEV(Ptr);
+  const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(PtrScev);
+  if (!AR)
+    return false;
+
+  return AR->isAffine();
+}
+
+bool AccessAnalysis::canCheckPtrAtRT(
+                       LoopVectorizationLegality::RuntimePointerCheck &RtCheck,
+                        unsigned &NumComparisons, ScalarEvolution *SE,
+                        Loop *TheLoop) {
+  // Find pointers with computable bounds. We are going to use this information
+  // to place a runtime bound check.
+  unsigned NumReadPtrChecks = 0;
+  unsigned NumWritePtrChecks = 0;
+  bool CanDoRT = true;
+
+  bool IsDepCheckNeeded = isDependencyCheckNeeded();
+  // We assign consecutive id to access from different dependence sets.
+  // Accesses within the same set don't need a runtime check.
+  unsigned RunningDepId = 1;
+  DenseMap<Value *, unsigned> DepSetId;
+
+  for (PtrAccessSet::iterator AI = Accesses.begin(), AE = Accesses.end();
+       AI != AE; ++AI) {
+    const MemAccessInfo &Access = *AI;
+    Value *Ptr = Access.first;
+    bool IsWrite = Access.second;
+
+    // Just add write checks if we have both.
+    if (!IsWrite && Accesses.count(std::make_pair(Ptr, true)))
+      continue;
+
+    if (IsWrite)
+      ++NumWritePtrChecks;
+    else
+      ++NumReadPtrChecks;
+
+    if (hasComputableBounds(SE, Ptr)) {
+      // The id of the dependence set.
+      unsigned DepId;
+
+      if (IsDepCheckNeeded) {
+        Value *Leader = DepCands.getLeaderValue(Access).first;
+        unsigned &LeaderId = DepSetId[Leader];
+        if (!LeaderId)
+          LeaderId = RunningDepId++;
+        DepId = LeaderId;
+      } else
+        // Each access has its own dependence set.
+        DepId = RunningDepId++;
+
+      //RtCheck.insert(SE, TheLoop, Ptr, IsWrite, DepId);
+
+      DEBUG(dbgs() << "LV: Found a runtime check ptr:" << *Ptr <<"\n");
+    } else {
+      CanDoRT = false;
+    }
+  }
+
+  if (IsDepCheckNeeded && CanDoRT && RunningDepId == 2)
+    NumComparisons = 0; // Only one dependence set.
+  else
+    NumComparisons = (NumWritePtrChecks * (NumReadPtrChecks +
+                                           NumWritePtrChecks - 1));
+  return CanDoRT;
+}
+
+static bool isFunctionScopeIdentifiedObject(Value *Ptr) {
+  return isNoAliasArgument(Ptr) || isNoAliasCall(Ptr) || isa<AllocaInst>(Ptr);
+}
+
+void AccessAnalysis::processMemAccesses(bool UseDeferred) {
+  // We process the set twice: first we process read-write pointers, last we
+  // process read-only pointers. This allows us to skip dependence tests for
+  // read-only pointers.
+
+  PtrAccessSet &S = UseDeferred ? DeferredAccesses : Accesses;
+  for (PtrAccessSet::iterator AI = S.begin(), AE = S.end(); AI != AE; ++AI) {
+    const MemAccessInfo &Access = *AI;
+    Value *Ptr = Access.first;
+    bool IsWrite = Access.second;
+
+    DepCands.insert(Access);
+
+    // Memorize read-only pointers for later processing and skip them in the
+    // first round (they need to be checked after we have seen all write
+    // pointers). Note: we also mark pointer that are not consecutive as
+    // "read-only" pointers (so that we check "a[b[i]] +="). Hence, we need the
+    // second check for "!IsWrite".
+    bool IsReadOnlyPtr = ReadOnlyPtr.count(Ptr) && !IsWrite;
+    if (!UseDeferred && IsReadOnlyPtr) {
+      DeferredAccesses.insert(Access);
+      continue;
+    }
+
+    bool NeedDepCheck = false;
+    // Check whether there is the possiblity of dependency because of underlying
+    // objects being the same.
+    typedef SmallVector<Value*, 16> ValueVector;
+    ValueVector TempObjects;
+    GetUnderlyingObjects(Ptr, TempObjects, DL);
+    for (ValueVector::iterator UI = TempObjects.begin(), UE = TempObjects.end();
+         UI != UE; ++UI) {
+      Value *UnderlyingObj = *UI;
+
+      // If this is a write then it needs to be an identified object.  If this a
+      // read and all writes (so far) are identified function scope objects we
+      // don't need an identified underlying object but only an Argument (the
+      // next write is going to invalidate this assumption if it is
+      // unidentified).
+      // This is a micro-optimization for the case where all writes are
+      // identified and we have one argument pointer.
+      // Otherwise, we do need a runtime check.
+      if ((IsWrite && !isFunctionScopeIdentifiedObject(UnderlyingObj)) ||
+          (!IsWrite && (!AreAllWritesIdentified ||
+                        !isa<Argument>(UnderlyingObj)) &&
+           !isIdentifiedObject(UnderlyingObj))) {
+        DEBUG(dbgs() << "LV: Found an unidentified " <<
+              (IsWrite ?  "write" : "read" ) << " ptr:" << *UnderlyingObj <<
+              "\n");
+        IsRTCheckNeeded = (IsRTCheckNeeded ||
+                           !isIdentifiedObject(UnderlyingObj) ||
+                           !AreAllReadsIdentified);
+
+        if (IsWrite)
+          AreAllWritesIdentified = false;
+        if (!IsWrite)
+          AreAllReadsIdentified = false;
+      }
+
+      // If this is a write - check other reads and writes for conflicts.  If
+      // this is a read only check other writes for conflicts (but only if there
+      // is no other write to the ptr - this is an optimization to catch "a[i] =
+      // a[i] + " without having to do a dependence check).
+      if ((IsWrite || IsReadOnlyPtr) && WriteObjects.count(UnderlyingObj))
+        NeedDepCheck = true;
+
+      if (IsWrite)
+        WriteObjects.insert(UnderlyingObj);
+
+      // Create sets of pointers connected by shared underlying objects.
+      UnderlyingObjToAccessMap::iterator Prev =
+        ObjToLastAccess.find(UnderlyingObj);
+      if (Prev != ObjToLastAccess.end())
+        DepCands.unionSets(Access, Prev->second);
+
+      ObjToLastAccess[UnderlyingObj] = Access;
+    }
+
+    if (NeedDepCheck)
+      CheckDeps.insert(Access);
   }
 }
 
