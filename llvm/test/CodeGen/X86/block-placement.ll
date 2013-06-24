@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=i686-linux < %s | FileCheck %s
+; RUN: llc -mtriple=i686-linux -pre-RA-sched=source < %s | FileCheck %s
 
 declare void @error(i32 %i, i32 %a, i32 %b)
 
@@ -997,7 +997,7 @@ define void @benchmark_heapsort(i32 %n, double* nocapture %ra) {
 ; CHECK: %while.body
 ; CHECK: %land.lhs.true
 ; CHECK: %if.then19
-; CHECK: %if.then19
+; CHECK: %if.end20
 ; CHECK: %if.then8
 ; CHECK: ret
 

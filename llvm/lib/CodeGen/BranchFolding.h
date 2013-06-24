@@ -100,13 +100,15 @@ namespace llvm {
     void ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
                                  MachineBasicBlock *NewDest);
     MachineBasicBlock *SplitMBBAt(MachineBasicBlock &CurMBB,
-                                  MachineBasicBlock::iterator BBI1);
+                                  MachineBasicBlock::iterator BBI1,
+                                  const BasicBlock *BB);
     unsigned ComputeSameTails(unsigned CurHash, unsigned minCommonTailLength,
                               MachineBasicBlock *SuccBB,
                               MachineBasicBlock *PredBB);
     void RemoveBlocksWithHash(unsigned CurHash, MachineBasicBlock* SuccBB,
                                                 MachineBasicBlock* PredBB);
     bool CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
+                                   MachineBasicBlock *SuccBB,
                                    unsigned maxCommonTailLength,
                                    unsigned &commonTailIndex);
 
