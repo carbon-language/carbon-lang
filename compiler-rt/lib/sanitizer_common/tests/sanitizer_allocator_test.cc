@@ -637,7 +637,7 @@ TEST(Allocator, ScopedBuffer) {
 
 void IterationTestCallback(uptr chunk, void *arg) {
   reinterpret_cast<std::set<uptr> *>(arg)->insert(chunk);
-};
+}
 
 template <class Allocator>
 void TestSizeClassAllocatorIteration() {
