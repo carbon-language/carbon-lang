@@ -1815,10 +1815,10 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
        (TagY->getTagKind() == TTK_Struct || TagY->getTagKind() == TTK_Class ||
         TagY->getTagKind() == TTK_Interface));
   }
-  
+
   // Functions with the same type and linkage match.
-  // FIXME: This needs to cope with function templates, merging of 
-  //prototyped/non-prototyped functions, etc.
+  // FIXME: This needs to cope with function template specializations,
+  // merging of prototyped/non-prototyped functions, etc.
   if (FunctionDecl *FuncX = dyn_cast<FunctionDecl>(X)) {
     FunctionDecl *FuncY = cast<FunctionDecl>(Y);
     return (FuncX->getLinkageInternal() == FuncY->getLinkageInternal()) &&
@@ -1831,16 +1831,21 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
     return (VarX->getLinkageInternal() == VarY->getLinkageInternal()) &&
       VarX->getASTContext().hasSameType(VarX->getType(), VarY->getType());
   }
-  
+
   // Namespaces with the same name and inlinedness match.
   if (NamespaceDecl *NamespaceX = dyn_cast<NamespaceDecl>(X)) {
     NamespaceDecl *NamespaceY = cast<NamespaceDecl>(Y);
     return NamespaceX->isInline() == NamespaceY->isInline();
   }
 
-  // Identical template names and kinds match.
-  if (isa<TemplateDecl>(X))
-    return true;
+  // Identical template names and kinds match if their template parameter lists
+  // and patterns match.
+  if (TemplateDecl *TemplateX = dyn_cast<TemplateDecl>(X)) {
+    TemplateDecl *TemplateY = dyn_cast<TemplateDecl>(Y);
+    // FIXME: Check template parameter lists.
+    return isSameEntity(TemplateX->getTemplatedDecl(),
+                        TemplateY->getTemplatedDecl());
+  }
 
   // FIXME: Many other cases to implement.
   return false;

@@ -188,6 +188,14 @@ module cxx_linkage_cache {
   header "cxx-linkage-cache.h"
 }
 
+module cxx_templates_a {
+  header "cxx-templates-a.h"
+}
+
+module cxx_templates_b {
+  header "cxx-templates-b.h"
+}
+
 module config {
   header "config.h"
   config_macros [exhaustive] WANT_FOO, WANT_BAR
