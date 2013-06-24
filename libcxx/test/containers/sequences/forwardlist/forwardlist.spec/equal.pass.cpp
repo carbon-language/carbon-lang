@@ -22,10 +22,12 @@
 #include <algorithm>
 #include <cassert>
 
+#include "../../../min_allocator.h"
+
+template <class C>
 void test(int N, int M)
 {
-    typedef int T;
-    typedef std::forward_list<T> C;
+    typedef typename C::value_type T;
     C c1;
     for (int i = 0; i < N; ++i)
         c1.push_front(i);
@@ -49,5 +51,10 @@ int main()
 {
     for (int i = 0; i < 10; ++i)
         for (int j = 0; j < 10; ++j)
-            test(i, j);
+            test<std::forward_list<int> >(i, j);
+#if __cplusplus >= 201103L
+    for (int i = 0; i < 10; ++i)
+        for (int j = 0; j < 10; ++j)
+            test<std::forward_list<int, min_allocator<int>> >(i, j);
+#endif
 }

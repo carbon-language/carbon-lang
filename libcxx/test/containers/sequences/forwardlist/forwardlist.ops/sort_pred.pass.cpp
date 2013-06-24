@@ -18,10 +18,12 @@
 #include <functional>
 #include <cassert>
 
+#include "../../../min_allocator.h"
+
+template <class C>
 void test(int N)
 {
-    typedef int T;
-    typedef std::forward_list<T> C;
+    typedef typename C::value_type T;
     typedef std::vector<T> V;
     V v;
     for (int i = 0; i < N; ++i)
@@ -30,7 +32,7 @@ void test(int N)
     C c(v.begin(), v.end());
     c.sort(std::greater<T>());
     assert(distance(c.begin(), c.end()) == N);
-    C::const_iterator j = c.begin();
+    typename C::const_iterator j = c.begin();
     for (int i = 0; i < N; ++i, ++j)
         assert(*j == N-1-i);
 }
@@ -38,5 +40,9 @@ void test(int N)
 int main()
 {
     for (int i = 0; i < 40; ++i)
-        test(i);
+        test<std::forward_list<int> >(i);
+#if __cplusplus >= 201103L
+    for (int i = 0; i < 40; ++i)
+        test<std::forward_list<int, min_allocator<int>> >(i);
+#endif
 }

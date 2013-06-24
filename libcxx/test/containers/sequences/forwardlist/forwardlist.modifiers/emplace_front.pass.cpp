@@ -15,6 +15,7 @@
 #include <cassert>
 
 #include "../../../Emplaceable.h"
+#include "../../../min_allocator.h"
 
 int main()
 {
@@ -31,5 +32,19 @@ int main()
         assert(*next(c.begin()) == Emplaceable());
         assert(distance(c.begin(), c.end()) == 2);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef Emplaceable T;
+        typedef std::forward_list<T, min_allocator<T>> C;
+        C c;
+        c.emplace_front();
+        assert(c.front() == Emplaceable());
+        assert(distance(c.begin(), c.end()) == 1);
+        c.emplace_front(1, 2.5);
+        assert(c.front() == Emplaceable(1, 2.5));
+        assert(*next(c.begin()) == Emplaceable());
+        assert(distance(c.begin(), c.end()) == 2);
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

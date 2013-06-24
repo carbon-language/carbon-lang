@@ -15,6 +15,8 @@
 #include <cassert>
 #include <iterator>
 
+#include "../../../min_allocator.h"
+
 int main()
 {
 #ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
@@ -40,5 +42,29 @@ int main()
             assert(*i == 10+n);
         assert(n == 4);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef int T;
+        typedef std::forward_list<T, min_allocator<T>> C;
+        const T t1[] = {10, 11, 12, 13};
+        C c(std::begin(t1), std::end(t1));
+        c.assign({0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
+        int n = 0;
+        for (C::const_iterator i = c.cbegin(); i != c.cend(); ++i, ++n)
+            assert(*i == n);
+        assert(n == 10);
+    }
+    {
+        typedef int T;
+        typedef std::forward_list<T, min_allocator<T>> C;
+        const T t1[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        C c(std::begin(t1), std::end(t1));
+        c.assign({10, 11, 12, 13});
+        int n = 0;
+        for (C::const_iterator i = c.cbegin(); i != c.cend(); ++i, ++n)
+            assert(*i == 10+n);
+        assert(n == 4);
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

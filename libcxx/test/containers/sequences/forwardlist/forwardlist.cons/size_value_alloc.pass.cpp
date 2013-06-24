@@ -15,6 +15,7 @@
 #include <cassert>
 
 #include "../../../test_allocator.h"
+#include "../../../min_allocator.h"
 
 int main()
 {
@@ -31,4 +32,19 @@ int main()
         assert(n == N);
         assert(c.get_allocator() == A(12));
     }
+#if __cplusplus >= 201103L
+    {
+        typedef min_allocator<int> A;
+        typedef A::value_type T;
+        typedef std::forward_list<T, A> C;
+        T v(6);
+        unsigned N = 10;
+        C c(N, v, A());
+        unsigned n = 0;
+        for (C::const_iterator i = c.begin(), e = c.end(); i != e; ++i, ++n)
+            assert(*i == v);
+        assert(n == N);
+        assert(c.get_allocator() == A());
+    }
+#endif
 }

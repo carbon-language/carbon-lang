@@ -16,6 +16,8 @@
 #include <cassert>
 #include <iterator>
 
+#include "../../../min_allocator.h"
+
 int main()
 {
     {
@@ -36,4 +38,24 @@ int main()
         assert(c.front() == 0);
         assert(*c.begin() == 0);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef int T;
+        typedef std::forward_list<T, min_allocator<T>> C;
+        const T t[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        C c(std::begin(t), std::end(t));
+        assert(c.front() == 0);
+        c.front() = 10;
+        assert(c.front() == 10);
+        assert(*c.begin() == 10);
+    }
+    {
+        typedef int T;
+        typedef std::forward_list<T, min_allocator<T>> C;
+        const T t[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        const C c(std::begin(t), std::end(t));
+        assert(c.front() == 0);
+        assert(*c.begin() == 0);
+    }
+#endif
 }

@@ -15,6 +15,7 @@
 #include <cassert>
 
 #include "../../../NotConstructible.h"
+#include "../../../min_allocator.h"
 
 int main()
 {
@@ -37,4 +38,25 @@ int main()
         c.clear();
         assert(distance(c.begin(), c.end()) == 0);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef NotConstructible T;
+        typedef std::forward_list<T, min_allocator<T>> C;
+        C c;
+        c.clear();
+        assert(distance(c.begin(), c.end()) == 0);
+    }
+    {
+        typedef int T;
+        typedef std::forward_list<T, min_allocator<T>> C;
+        const T t[] = {0, 1, 2, 3, 4};
+        C c(std::begin(t), std::end(t));
+
+        c.clear();
+        assert(distance(c.begin(), c.end()) == 0);
+
+        c.clear();
+        assert(distance(c.begin(), c.end()) == 0);
+    }
+#endif
 }

@@ -15,17 +15,19 @@
 #include <cassert>
 #include <iterator>
 
+#include "../../../min_allocator.h"
+
 typedef int T;
-typedef std::forward_list<T> C;
 const T t1[] = {0, 1, 2, 3, 4, 5, 6, 7};
 const T t2[] = {10, 11, 12};
 const int size_t1 = std::end(t1) - std::begin(t1);
 const int size_t2 = std::end(t2) - std::begin(t2);
 
+template <class C>
 void
 testd(const C& c, int p, int f)
 {
-    C::const_iterator i = c.begin();
+    typename C::const_iterator i = c.begin();
     int n1 = 0;
     for (; n1 < p; ++n1, ++i)
         assert(*i == t1[n1]);
@@ -36,10 +38,11 @@ testd(const C& c, int p, int f)
     assert(distance(c.begin(), c.end()) == size_t1 + 1);
 }
 
+template <class C>
 void
 tests(const C& c, int p, int f)
 {
-    C::const_iterator i = c.begin();
+    typename C::const_iterator i = c.begin();
     int n = 0;
     int d = 1;
     if (p == f || p == f+1)
@@ -74,7 +77,9 @@ tests(const C& c, int p, int f)
 
 int main()
 {
+    {
     // splicing different containers
+    typedef std::forward_list<T> C;
     for (int f = 0; f <= size_t2-1; ++f)
     {
         for (int p = 0; p <= size_t1; ++p)
@@ -100,4 +105,36 @@ int main()
             tests(c1, p, f);
         }
     }
+    }
+#if __cplusplus >= 201103L
+    {
+    // splicing different containers
+    typedef std::forward_list<T, min_allocator<T>> C;
+    for (int f = 0; f <= size_t2-1; ++f)
+    {
+        for (int p = 0; p <= size_t1; ++p)
+        {
+            C c1(std::begin(t1), std::end(t1));
+            C c2(std::begin(t2), std::end(t2));
+
+            c1.splice_after(next(c1.cbefore_begin(), p), std::move(c2),
+                  next(c2.cbefore_begin(), f));
+            testd(c1, p, f);
+        }
+    }
+
+    // splicing within same container
+    for (int f = 0; f <= size_t1-1; ++f)
+    {
+        for (int p = 0; p <= size_t1; ++p)
+        {
+            C c1(std::begin(t1), std::end(t1));
+
+            c1.splice_after(next(c1.cbefore_begin(), p), std::move(c1),
+                  next(c1.cbefore_begin(), f));
+            tests(c1, p, f);
+        }
+    }
+    }
+#endif
 }

@@ -16,6 +16,7 @@
 #include <iterator>
 
 #include "../../../test_allocator.h"
+#include "../../../min_allocator.h"
 
 int main()
 {
@@ -116,4 +117,30 @@ int main()
         assert(c1 == c0);
         assert(c1.get_allocator() == A(10));
     }
+#if __cplusplus >= 201103L
+    {
+        typedef int T;
+        typedef min_allocator<int> A;
+        typedef std::forward_list<T, A> C;
+        const T t0[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        const T t1[] = {10, 11, 12, 13};
+        C c0(std::begin(t0), std::end(t0), A());
+        C c1(std::begin(t1), std::end(t1), A());
+        c1 = c0;
+        assert(c1 == c0);
+        assert(c1.get_allocator() == A());
+    }
+    {
+        typedef int T;
+        typedef min_allocator<int> A;
+        typedef std::forward_list<T, A> C;
+        const T t0[] = {10, 11, 12, 13};
+        const T t1[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        C c0(std::begin(t0), std::end(t0), A());
+        C c1(std::begin(t1), std::end(t1), A());
+        c1 = c0;
+        assert(c1 == c0);
+        assert(c1.get_allocator() == A());
+    }
+#endif
 }

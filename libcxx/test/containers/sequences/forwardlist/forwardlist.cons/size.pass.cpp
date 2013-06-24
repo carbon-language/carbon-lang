@@ -15,6 +15,7 @@
 #include <cassert>
 
 #include "../../../DefaultOnly.h"
+#include "../../../min_allocator.h"
 
 int main()
 {
@@ -32,4 +33,20 @@ int main()
 #endif
         assert(n == N);
     }
+#if __cplusplus >= 201103L
+    {
+        typedef DefaultOnly T;
+        typedef std::forward_list<T, min_allocator<T>> C;
+        unsigned N = 10;
+        C c(N);
+        unsigned n = 0;
+        for (C::const_iterator i = c.begin(), e = c.end(); i != e; ++i, ++n)
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+            assert(*i == T());
+#else
+            ;
+#endif
+        assert(n == N);
+    }
+#endif
 }

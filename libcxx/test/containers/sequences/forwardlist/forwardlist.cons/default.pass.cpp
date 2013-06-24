@@ -14,6 +14,8 @@
 #include <forward_list>
 #include <cassert>
 
+#include "../../../min_allocator.h"
+
 int main()
 {
     {
@@ -22,4 +24,12 @@ int main()
         C c;
         assert(c.empty());
     }
+#if __cplusplus >= 201103L
+    {
+        typedef int T;
+        typedef std::forward_list<T, min_allocator<T>> C;
+        C c;
+        assert(c.empty());
+    }
+#endif
 }

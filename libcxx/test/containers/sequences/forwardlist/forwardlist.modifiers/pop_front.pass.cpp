@@ -15,6 +15,7 @@
 #include <cassert>
 
 #include "../../../MoveOnly.h"
+#include "../../../min_allocator.h"
 
 int main()
 {
@@ -45,4 +46,33 @@ int main()
         assert(distance(c.begin(), c.end()) == 0);
     }
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#if __cplusplus >= 201103L
+    {
+        typedef int T;
+        typedef std::forward_list<T, min_allocator<T>> C;
+        typedef std::forward_list<T, min_allocator<T>> C;
+        C c;
+        c.push_front(1);
+        c.push_front(3);
+        c.pop_front();
+        assert(distance(c.begin(), c.end()) == 1);
+        assert(c.front() == 1);
+        c.pop_front();
+        assert(distance(c.begin(), c.end()) == 0);
+    }
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    {
+        typedef MoveOnly T;
+        typedef std::forward_list<T, min_allocator<T>> C;
+        C c;
+        c.push_front(1);
+        c.push_front(3);
+        c.pop_front();
+        assert(distance(c.begin(), c.end()) == 1);
+        assert(c.front() == 1);
+        c.pop_front();
+        assert(distance(c.begin(), c.end()) == 0);
+    }
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif
 }
