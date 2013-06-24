@@ -1803,7 +1803,7 @@ llvm::DIType CGDebugInfo::CreateEnumType(const EnumDecl *ED) {
        Enum != EnumEnd; ++Enum) {
     Enumerators.push_back(
       DBuilder.createEnumerator(Enum->getName(),
-                                Enum->getInitVal().getZExtValue()));
+                                Enum->getInitVal().getSExtValue()));
   }
 
   // Return a CompositeType for the enum itself.
