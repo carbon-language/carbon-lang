@@ -2229,6 +2229,47 @@ def SLDI : PPCAsmPseudo<"sldi $rA, $rS, $n",
 def SRDI : PPCAsmPseudo<"srdi $rA, $rS, $n",
                         (ins g8rc:$rA, g8rc:$rS, u6imm:$n)>;
 
+// These generic branch instruction forms are used for the assembler parser only.
+// Defs and Uses are conservative, since we don't know the BO value.
+let PPC970_Unit = 7 in {
+  let Defs = [CTR], Uses = [CTR, RM] in {
+    def gBC : BForm_3<16, 0, 0, (outs),
+                      (ins u5imm:$bo, crbitrc:$bi, condbrtarget:$dst),
+                      "bc $bo, $bi, $dst">;
+    def gBCA : BForm_3<16, 1, 0, (outs),
+                       (ins u5imm:$bo, crbitrc:$bi, abscondbrtarget:$dst),
+                       "bca $bo, $bi, $dst">;
+  }
+  let Defs = [LR, CTR], Uses = [CTR, RM] in {
+    def gBCL : BForm_3<16, 0, 1, (outs),
+                       (ins u5imm:$bo, crbitrc:$bi, condbrtarget:$dst),
+                       "bcl $bo, $bi, $dst">;
+    def gBCLA : BForm_3<16, 1, 1, (outs),
+                        (ins u5imm:$bo, crbitrc:$bi, abscondbrtarget:$dst),
+                        "bcla $bo, $bi, $dst">;
+  }
+  let Defs = [CTR], Uses = [CTR, LR, RM] in
+    def gBCLR : XLForm_2<19, 16, 0, (outs),
+                         (ins u5imm:$bo, crbitrc:$bi, i32imm:$bh),
+                         "bclr $bo, $bi, $bh", BrB, []>;
+  let Defs = [LR, CTR], Uses = [CTR, LR, RM] in
+    def gBCLRL : XLForm_2<19, 16, 1, (outs),
+                          (ins u5imm:$bo, crbitrc:$bi, i32imm:$bh),
+                          "bclrl $bo, $bi, $bh", BrB, []>;
+  let Defs = [CTR], Uses = [CTR, LR, RM] in
+    def gBCCTR : XLForm_2<19, 528, 0, (outs),
+                          (ins u5imm:$bo, crbitrc:$bi, i32imm:$bh),
+                          "bcctr $bo, $bi, $bh", BrB, []>;
+  let Defs = [LR, CTR], Uses = [CTR, LR, RM] in
+    def gBCCTRL : XLForm_2<19, 528, 1, (outs),
+                           (ins u5imm:$bo, crbitrc:$bi, i32imm:$bh),
+                           "bcctrl $bo, $bi, $bh", BrB, []>;
+}
+def : InstAlias<"bclr $bo, $bi", (gBCLR u5imm:$bo, crbitrc:$bi, 0)>;
+def : InstAlias<"bclrl $bo, $bi", (gBCLRL u5imm:$bo, crbitrc:$bi, 0)>;
+def : InstAlias<"bcctr $bo, $bi", (gBCCTR u5imm:$bo, crbitrc:$bi, 0)>;
+def : InstAlias<"bcctrl $bo, $bi", (gBCCTRL u5imm:$bo, crbitrc:$bi, 0)>;
+
 multiclass BranchExtendedMnemonic<string name, int bibo> {
   def : InstAlias<"b"#name#" $cc, $dst",
                   (BCC bibo, crrc:$cc, condbrtarget:$dst)>;

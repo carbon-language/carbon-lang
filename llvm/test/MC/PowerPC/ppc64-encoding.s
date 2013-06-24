@@ -18,15 +18,35 @@
 # CHECK-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_br24abs
          bla target
 
-# FIXME: bc 4, 10, target
-# FIXME: bca 4, 10, target
-# FIXME: bcl 4, 10, target
-# FIXME: bcla 4, 10, target
+# CHECK: bc 4, 10, target                # encoding: [0x40,0x8a,A,0bAAAAAA00]
+# CHECK-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_brcond14
+         bc 4, 10, target
+# CHECK: bca 4, 10, target               # encoding: [0x40,0x8a,A,0bAAAAAA10]
+# CHECK-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_brcond14abs
+         bca 4, 10, target
+# CHECK: bcl 4, 10, target               # encoding: [0x40,0x8a,A,0bAAAAAA01]
+# CHECK-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_brcond14
+         bcl 4, 10, target
+# CHECK: bcla 4, 10, target              # encoding: [0x40,0x8a,A,0bAAAAAA11]
+# CHECK-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_brcond14abs
+         bcla 4, 10, target
 
-# FIXME: bclr 4, 10, 3
-# FIXME: bclrl 4, 10, 3
-# FIXME: bcctr 4, 10, 3
-# FIXME: bcctrl 4, 10, 3
+# CHECK: bclr 4, 10, 3                   # encoding: [0x4c,0x8a,0x18,0x20]
+         bclr 4, 10, 3
+# CHECK: bclr 4, 10, 0                   # encoding: [0x4c,0x8a,0x00,0x20]
+         bclr 4, 10
+# CHECK: bclrl 4, 10, 3                  # encoding: [0x4c,0x8a,0x18,0x21]
+         bclrl 4, 10, 3
+# CHECK: bclrl 4, 10, 0                  # encoding: [0x4c,0x8a,0x00,0x21]
+         bclrl 4, 10
+# CHECK: bcctr 4, 10, 3                  # encoding: [0x4c,0x8a,0x1c,0x20]
+         bcctr 4, 10, 3
+# CHECK: bcctr 4, 10, 0                  # encoding: [0x4c,0x8a,0x04,0x20]
+         bcctr 4, 10
+# CHECK: bcctrl 4, 10, 3                 # encoding: [0x4c,0x8a,0x1c,0x21]
+         bcctrl 4, 10, 3
+# CHECK: bcctrl 4, 10, 0                 # encoding: [0x4c,0x8a,0x04,0x21]
+         bcctrl 4, 10
 
 # Condition register instructions
 
