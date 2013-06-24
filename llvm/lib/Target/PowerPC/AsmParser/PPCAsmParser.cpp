@@ -747,6 +747,22 @@ bool PPCAsmParser::
 ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // The first operand is the token for the instruction name.
+  // If the next character is a '+' or '-', we need to add it to the
+  // instruction name, to match what TableGen is doing.
+  if (getLexer().is(AsmToken::Plus)) {
+    getLexer().Lex();
+    char *NewOpcode = new char[Name.size() + 1];
+    memcpy(NewOpcode, Name.data(), Name.size());
+    NewOpcode[Name.size()] = '+';
+    Name = StringRef(NewOpcode, Name.size() + 1);
+  }
+  if (getLexer().is(AsmToken::Minus)) {
+    getLexer().Lex();
+    char *NewOpcode = new char[Name.size() + 1];
+    memcpy(NewOpcode, Name.data(), Name.size());
+    NewOpcode[Name.size()] = '-';
+    Name = StringRef(NewOpcode, Name.size() + 1);
+  }
   // If the instruction ends in a '.', we need to create a separate
   // token for it, to match what TableGen is doing.
   size_t Dot = Name.find('.');

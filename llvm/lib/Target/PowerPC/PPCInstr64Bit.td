@@ -69,7 +69,7 @@ let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
 
     let isCodeGenOnly = 1 in
     def BCCTR8 : XLForm_2_br<19, 528, 0, (outs), (ins pred:$cond),
-                             "b${cond:cc}ctr ${cond:reg}", BrB, []>,
+                             "b${cond:cc}ctr${cond:pm} ${cond:reg}", BrB, []>,
         Requires<[In64BitMode]>;
   }
 }
@@ -130,7 +130,7 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR8] in {
 
     let isCodeGenOnly = 1 in
     def BCCTRL8 : XLForm_2_br<19, 528, 1, (outs), (ins pred:$cond),
-                              "b${cond:cc}ctrl ${cond:reg}", BrB, []>,
+                              "b${cond:cc}ctrl${cond:pm} ${cond:reg}", BrB, []>,
         Requires<[In64BitMode]>;
   }
 }

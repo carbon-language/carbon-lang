@@ -883,7 +883,7 @@ let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
 
     let isCodeGenOnly = 1 in
     def BCCTR : XLForm_2_br<19, 528, 0, (outs), (ins pred:$cond),
-                            "b${cond:cc}ctr ${cond:reg}", BrB, []>;
+                            "b${cond:cc}ctr${cond:pm} ${cond:reg}", BrB, []>;
   }
 }
 
@@ -905,21 +905,29 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
   // a two-value operand where a dag node expects two operands. :(
   let isCodeGenOnly = 1 in {
     def BCC : BForm<16, 0, 0, (outs), (ins pred:$cond, condbrtarget:$dst),
-                    "b${cond:cc} ${cond:reg}, $dst"
+                    "b${cond:cc}${cond:pm} ${cond:reg}, $dst"
                     /*[(PPCcondbranch crrc:$crS, imm:$opc, bb:$dst)]*/>;
     def BCCA : BForm<16, 1, 0, (outs), (ins pred:$cond, abscondbrtarget:$dst),
-                     "b${cond:cc}a ${cond:reg}, $dst">;
+                     "b${cond:cc}a${cond:pm} ${cond:reg}, $dst">;
 
     let isReturn = 1, Uses = [LR, RM] in
     def BCLR : XLForm_2_br<19, 16, 0, (outs), (ins pred:$cond),
-                           "b${cond:cc}lr ${cond:reg}", BrB, []>;
+                           "b${cond:cc}lr${cond:pm} ${cond:reg}", BrB, []>;
+  }
 
-    let isReturn = 1, Defs = [CTR], Uses = [CTR, LR, RM] in {
-      def BDZLR  : XLForm_2_ext<19, 16, 18, 0, 0, (outs), (ins),
+  let isReturn = 1, Defs = [CTR], Uses = [CTR, LR, RM] in {
+   def BDZLR  : XLForm_2_ext<19, 16, 18, 0, 0, (outs), (ins),
                              "bdzlr", BrB, []>;
-      def BDNZLR : XLForm_2_ext<19, 16, 16, 0, 0, (outs), (ins),
+   def BDNZLR : XLForm_2_ext<19, 16, 16, 0, 0, (outs), (ins),
                              "bdnzlr", BrB, []>;
-    }
+   def BDZLRp : XLForm_2_ext<19, 16, 27, 0, 0, (outs), (ins),
+                             "bdzlr+", BrB, []>;
+   def BDNZLRp: XLForm_2_ext<19, 16, 25, 0, 0, (outs), (ins),
+                             "bdnzlr+", BrB, []>;
+   def BDZLRm : XLForm_2_ext<19, 16, 26, 0, 0, (outs), (ins),
+                             "bdzlr-", BrB, []>;
+   def BDNZLRm: XLForm_2_ext<19, 16, 24, 0, 0, (outs), (ins),
+                             "bdnzlr-", BrB, []>;
   }
 
   let Defs = [CTR], Uses = [CTR] in {
@@ -931,6 +939,22 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
                         "bdza $dst">;
     def BDNZA : BForm_1<16, 16, 1, 0, (outs), (ins abscondbrtarget:$dst),
                         "bdnza $dst">;
+    def BDZp : BForm_1<16, 27, 0, 0, (outs), (ins condbrtarget:$dst),
+                       "bdz+ $dst">;
+    def BDNZp: BForm_1<16, 25, 0, 0, (outs), (ins condbrtarget:$dst),
+                       "bdnz+ $dst">;
+    def BDZAp : BForm_1<16, 27, 1, 0, (outs), (ins abscondbrtarget:$dst),
+                        "bdza+ $dst">;
+    def BDNZAp: BForm_1<16, 25, 1, 0, (outs), (ins abscondbrtarget:$dst),
+                        "bdnza+ $dst">;
+    def BDZm : BForm_1<16, 26, 0, 0, (outs), (ins condbrtarget:$dst),
+                       "bdz- $dst">;
+    def BDNZm: BForm_1<16, 24, 0, 0, (outs), (ins condbrtarget:$dst),
+                       "bdnz- $dst">;
+    def BDZAm : BForm_1<16, 26, 1, 0, (outs), (ins abscondbrtarget:$dst),
+                        "bdza- $dst">;
+    def BDNZAm: BForm_1<16, 24, 1, 0, (outs), (ins abscondbrtarget:$dst),
+                        "bdnza- $dst">;
   }
 }
 
@@ -952,9 +976,9 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR] in {
 
     let isCodeGenOnly = 1 in {
       def BCCL : BForm<16, 0, 1, (outs), (ins pred:$cond, condbrtarget:$dst),
-                       "b${cond:cc}l ${cond:reg}, $dst">;
+                       "b${cond:cc}l${cond:pm} ${cond:reg}, $dst">;
       def BCCLA : BForm<16, 1, 1, (outs), (ins pred:$cond, abscondbrtarget:$dst),
-                        "b${cond:cc}la ${cond:reg}, $dst">;
+                        "b${cond:cc}la${cond:pm} ${cond:reg}, $dst">;
     }
   }
   let Uses = [CTR, RM] in {
@@ -964,7 +988,7 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR] in {
 
     let isCodeGenOnly = 1 in
     def BCCTRL : XLForm_2_br<19, 528, 1, (outs), (ins pred:$cond),
-                             "b${cond:cc}ctrl ${cond:reg}", BrB, []>;
+                             "b${cond:cc}ctrl${cond:pm} ${cond:reg}", BrB, []>;
   }
   let Uses = [LR, RM] in {
     def BLRL : XLForm_2_ext<19, 16, 20, 0, 1, (outs), (ins),
@@ -972,7 +996,7 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR] in {
 
     let isCodeGenOnly = 1 in
     def BCLRL : XLForm_2_br<19, 16, 1, (outs), (ins pred:$cond),
-                            "b${cond:cc}lrl ${cond:reg}", BrB, []>;
+                            "b${cond:cc}lrl${cond:pm} ${cond:reg}", BrB, []>;
   }
   let Defs = [CTR], Uses = [CTR, RM] in {
     def BDZL  : BForm_1<16, 18, 0, 1, (outs), (ins condbrtarget:$dst),
@@ -983,12 +1007,36 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR] in {
                          "bdzla $dst">;
     def BDNZLA : BForm_1<16, 16, 1, 1, (outs), (ins abscondbrtarget:$dst),
                          "bdnzla $dst">;
+    def BDZLp : BForm_1<16, 27, 0, 1, (outs), (ins condbrtarget:$dst),
+                        "bdzl+ $dst">;
+    def BDNZLp: BForm_1<16, 25, 0, 1, (outs), (ins condbrtarget:$dst),
+                        "bdnzl+ $dst">;
+    def BDZLAp : BForm_1<16, 27, 1, 1, (outs), (ins abscondbrtarget:$dst),
+                         "bdzla+ $dst">;
+    def BDNZLAp: BForm_1<16, 25, 1, 1, (outs), (ins abscondbrtarget:$dst),
+                         "bdnzla+ $dst">;
+    def BDZLm : BForm_1<16, 26, 0, 1, (outs), (ins condbrtarget:$dst),
+                        "bdzl- $dst">;
+    def BDNZLm: BForm_1<16, 24, 0, 1, (outs), (ins condbrtarget:$dst),
+                        "bdnzl- $dst">;
+    def BDZLAm : BForm_1<16, 26, 1, 1, (outs), (ins abscondbrtarget:$dst),
+                         "bdzla- $dst">;
+    def BDNZLAm: BForm_1<16, 24, 1, 1, (outs), (ins abscondbrtarget:$dst),
+                         "bdnzla- $dst">;
   }
   let Defs = [CTR], Uses = [CTR, LR, RM] in {
     def BDZLRL  : XLForm_2_ext<19, 16, 18, 0, 1, (outs), (ins),
                                "bdzlrl", BrB, []>;
     def BDNZLRL : XLForm_2_ext<19, 16, 16, 0, 1, (outs), (ins),
                                "bdnzlrl", BrB, []>;
+    def BDZLRLp : XLForm_2_ext<19, 16, 27, 0, 1, (outs), (ins),
+                               "bdzlrl+", BrB, []>;
+    def BDNZLRLp: XLForm_2_ext<19, 16, 25, 0, 1, (outs), (ins),
+                               "bdnzlrl+", BrB, []>;
+    def BDZLRLm : XLForm_2_ext<19, 16, 26, 0, 1, (outs), (ins),
+                               "bdzlrl-", BrB, []>;
+    def BDNZLRLm: XLForm_2_ext<19, 16, 24, 0, 1, (outs), (ins),
+                               "bdnzlrl-", BrB, []>;
   }
 }
 
@@ -2270,66 +2318,75 @@ def : InstAlias<"bclrl $bo, $bi", (gBCLRL u5imm:$bo, crbitrc:$bi, 0)>;
 def : InstAlias<"bcctr $bo, $bi", (gBCCTR u5imm:$bo, crbitrc:$bi, 0)>;
 def : InstAlias<"bcctrl $bo, $bi", (gBCCTRL u5imm:$bo, crbitrc:$bi, 0)>;
 
-multiclass BranchSimpleMnemonic1<string name, int bo> {
-  def : InstAlias<"b"#name#" $bi, $dst", (gBC bo, crbitrc:$bi, condbrtarget:$dst)>;
-  def : InstAlias<"b"#name#"a $bi, $dst", (gBCA bo, crbitrc:$bi, abscondbrtarget:$dst)>;
-  def : InstAlias<"b"#name#"lr $bi", (gBCLR bo, crbitrc:$bi, 0)>;
-  def : InstAlias<"b"#name#"l $bi, $dst", (gBCL bo, crbitrc:$bi, condbrtarget:$dst)>;
-  def : InstAlias<"b"#name#"la $bi, $dst", (gBCLA bo, crbitrc:$bi, abscondbrtarget:$dst)>;
-  def : InstAlias<"b"#name#"lrl $bi", (gBCLRL bo, crbitrc:$bi, 0)>;
+multiclass BranchSimpleMnemonic1<string name, string pm, int bo> {
+  def : InstAlias<"b"#name#pm#" $bi, $dst", (gBC bo, crbitrc:$bi, condbrtarget:$dst)>;
+  def : InstAlias<"b"#name#"a"#pm#" $bi, $dst", (gBCA bo, crbitrc:$bi, abscondbrtarget:$dst)>;
+  def : InstAlias<"b"#name#"lr"#pm#" $bi", (gBCLR bo, crbitrc:$bi, 0)>;
+  def : InstAlias<"b"#name#"l"#pm#" $bi, $dst", (gBCL bo, crbitrc:$bi, condbrtarget:$dst)>;
+  def : InstAlias<"b"#name#"la"#pm#" $bi, $dst", (gBCLA bo, crbitrc:$bi, abscondbrtarget:$dst)>;
+  def : InstAlias<"b"#name#"lrl"#pm#" $bi", (gBCLRL bo, crbitrc:$bi, 0)>;
 }
-multiclass BranchSimpleMnemonic2<string name, int bo>
-  : BranchSimpleMnemonic1<name, bo> {
-  def : InstAlias<"b"#name#"ctr $bi", (gBCCTR bo, crbitrc:$bi, 0)>;
-  def : InstAlias<"b"#name#"ctrl $bi", (gBCCTRL bo, crbitrc:$bi, 0)>;
+multiclass BranchSimpleMnemonic2<string name, string pm, int bo>
+  : BranchSimpleMnemonic1<name, pm, bo> {
+  def : InstAlias<"b"#name#"ctr"#pm#" $bi", (gBCCTR bo, crbitrc:$bi, 0)>;
+  def : InstAlias<"b"#name#"ctrl"#pm#" $bi", (gBCCTRL bo, crbitrc:$bi, 0)>;
 }
-defm : BranchSimpleMnemonic2<"t", 12>;
-defm : BranchSimpleMnemonic2<"f", 4>;
-defm : BranchSimpleMnemonic1<"dnzt", 8>;
-defm : BranchSimpleMnemonic1<"dnzf", 0>;
-defm : BranchSimpleMnemonic1<"dzt", 10>;
-defm : BranchSimpleMnemonic1<"dzf", 2>;
+defm : BranchSimpleMnemonic2<"t", "", 12>;
+defm : BranchSimpleMnemonic2<"f", "", 4>;
+defm : BranchSimpleMnemonic2<"t", "-", 14>;
+defm : BranchSimpleMnemonic2<"f", "-", 6>;
+defm : BranchSimpleMnemonic2<"t", "+", 15>;
+defm : BranchSimpleMnemonic2<"f", "+", 7>;
+defm : BranchSimpleMnemonic1<"dnzt", "", 8>;
+defm : BranchSimpleMnemonic1<"dnzf", "", 0>;
+defm : BranchSimpleMnemonic1<"dzt", "", 10>;
+defm : BranchSimpleMnemonic1<"dzf", "", 2>;
 
-multiclass BranchExtendedMnemonic<string name, int bibo> {
-  def : InstAlias<"b"#name#" $cc, $dst",
+multiclass BranchExtendedMnemonicPM<string name, string pm, int bibo> {
+  def : InstAlias<"b"#name#pm#" $cc, $dst",
                   (BCC bibo, crrc:$cc, condbrtarget:$dst)>;
-  def : InstAlias<"b"#name#" $dst",
+  def : InstAlias<"b"#name#pm#" $dst",
                   (BCC bibo, CR0, condbrtarget:$dst)>;
 
-  def : InstAlias<"b"#name#"a $cc, $dst",
+  def : InstAlias<"b"#name#"a"#pm#" $cc, $dst",
                   (BCCA bibo, crrc:$cc, abscondbrtarget:$dst)>;
-  def : InstAlias<"b"#name#"a $dst",
+  def : InstAlias<"b"#name#"a"#pm#" $dst",
                   (BCCA bibo, CR0, abscondbrtarget:$dst)>;
 
-  def : InstAlias<"b"#name#"lr $cc",
+  def : InstAlias<"b"#name#"lr"#pm#" $cc",
                   (BCLR bibo, crrc:$cc)>;
-  def : InstAlias<"b"#name#"lr",
+  def : InstAlias<"b"#name#"lr"#pm,
                   (BCLR bibo, CR0)>;
 
-  def : InstAlias<"b"#name#"ctr $cc",
+  def : InstAlias<"b"#name#"ctr"#pm#" $cc",
                   (BCCTR bibo, crrc:$cc)>;
-  def : InstAlias<"b"#name#"ctr",
+  def : InstAlias<"b"#name#"ctr"#pm,
                   (BCCTR bibo, CR0)>;
 
-  def : InstAlias<"b"#name#"l $cc, $dst",
+  def : InstAlias<"b"#name#"l"#pm#" $cc, $dst",
                   (BCCL bibo, crrc:$cc, condbrtarget:$dst)>;
-  def : InstAlias<"b"#name#"l $dst",
+  def : InstAlias<"b"#name#"l"#pm#" $dst",
                   (BCCL bibo, CR0, condbrtarget:$dst)>;
 
-  def : InstAlias<"b"#name#"la $cc, $dst",
+  def : InstAlias<"b"#name#"la"#pm#" $cc, $dst",
                   (BCCLA bibo, crrc:$cc, abscondbrtarget:$dst)>;
-  def : InstAlias<"b"#name#"la $dst",
+  def : InstAlias<"b"#name#"la"#pm#" $dst",
                   (BCCLA bibo, CR0, abscondbrtarget:$dst)>;
 
-  def : InstAlias<"b"#name#"lrl $cc",
+  def : InstAlias<"b"#name#"lrl"#pm#" $cc",
                   (BCLRL bibo, crrc:$cc)>;
-  def : InstAlias<"b"#name#"lrl",
+  def : InstAlias<"b"#name#"lrl"#pm,
                   (BCLRL bibo, CR0)>;
 
-  def : InstAlias<"b"#name#"ctrl $cc",
+  def : InstAlias<"b"#name#"ctrl"#pm#" $cc",
                   (BCCTRL bibo, crrc:$cc)>;
-  def : InstAlias<"b"#name#"ctrl",
+  def : InstAlias<"b"#name#"ctrl"#pm,
                   (BCCTRL bibo, CR0)>;
+}
+multiclass BranchExtendedMnemonic<string name, int bibo> {
+  defm : BranchExtendedMnemonicPM<name, "", bibo>;
+  defm : BranchExtendedMnemonicPM<name, "-", !add(bibo, 2)>;
+  defm : BranchExtendedMnemonicPM<name, "+", !add(bibo, 3)>;
 }
 defm : BranchExtendedMnemonic<"lt", 12>;
 defm : BranchExtendedMnemonic<"gt", 44>;

@@ -90,19 +90,89 @@ void PPCInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNo,
 
   if (StringRef(Modifier) == "cc") {
     switch ((PPC::Predicate)Code) {
-    case PPC::PRED_LT: O << "lt"; return;
-    case PPC::PRED_LE: O << "le"; return;
-    case PPC::PRED_EQ: O << "eq"; return;
-    case PPC::PRED_GE: O << "ge"; return;
-    case PPC::PRED_GT: O << "gt"; return;
-    case PPC::PRED_NE: O << "ne"; return;
-    case PPC::PRED_UN: O << "un"; return;
-    case PPC::PRED_NU: O << "nu"; return;
+    case PPC::PRED_LT_MINUS:
+    case PPC::PRED_LT_PLUS:
+    case PPC::PRED_LT:
+      O << "lt";
+      return;
+    case PPC::PRED_LE_MINUS:
+    case PPC::PRED_LE_PLUS:
+    case PPC::PRED_LE:
+      O << "le";
+      return;
+    case PPC::PRED_EQ_MINUS:
+    case PPC::PRED_EQ_PLUS:
+    case PPC::PRED_EQ:
+      O << "eq";
+      return;
+    case PPC::PRED_GE_MINUS:
+    case PPC::PRED_GE_PLUS:
+    case PPC::PRED_GE:
+      O << "ge";
+      return;
+    case PPC::PRED_GT_MINUS:
+    case PPC::PRED_GT_PLUS:
+    case PPC::PRED_GT:
+      O << "gt";
+      return;
+    case PPC::PRED_NE_MINUS:
+    case PPC::PRED_NE_PLUS:
+    case PPC::PRED_NE:
+      O << "ne";
+      return;
+    case PPC::PRED_UN_MINUS:
+    case PPC::PRED_UN_PLUS:
+    case PPC::PRED_UN:
+      O << "un";
+      return;
+    case PPC::PRED_NU_MINUS:
+    case PPC::PRED_NU_PLUS:
+    case PPC::PRED_NU:
+      O << "nu";
+      return;
+    default:
+      llvm_unreachable("Invalid predicate code");
+    }
+  }
+
+  if (StringRef(Modifier) == "pm") {
+    switch ((PPC::Predicate)Code) {
+    case PPC::PRED_LT:
+    case PPC::PRED_LE:
+    case PPC::PRED_EQ:
+    case PPC::PRED_GE:
+    case PPC::PRED_GT:
+    case PPC::PRED_NE:
+    case PPC::PRED_UN:
+    case PPC::PRED_NU:
+      return;
+    case PPC::PRED_LT_MINUS:
+    case PPC::PRED_LE_MINUS:
+    case PPC::PRED_EQ_MINUS:
+    case PPC::PRED_GE_MINUS:
+    case PPC::PRED_GT_MINUS:
+    case PPC::PRED_NE_MINUS:
+    case PPC::PRED_UN_MINUS:
+    case PPC::PRED_NU_MINUS:
+      O << "-";
+      return;
+    case PPC::PRED_LT_PLUS:
+    case PPC::PRED_LE_PLUS:
+    case PPC::PRED_EQ_PLUS:
+    case PPC::PRED_GE_PLUS:
+    case PPC::PRED_GT_PLUS:
+    case PPC::PRED_NE_PLUS:
+    case PPC::PRED_UN_PLUS:
+    case PPC::PRED_NU_PLUS:
+      O << "+";
+      return;
+    default:
+      llvm_unreachable("Invalid predicate code");
     }
   }
   
   assert(StringRef(Modifier) == "reg" &&
-         "Need to specify 'cc' or 'reg' as predicate op modifier!");
+         "Need to specify 'cc', 'pm' or 'reg' as predicate op modifier!");
   printOperand(MI, OpNo+1, O);
 }
 
