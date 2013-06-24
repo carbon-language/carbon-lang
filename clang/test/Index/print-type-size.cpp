@@ -74,13 +74,6 @@ struct Test2 {
           int foobar;
         };
     };
-    struct inner {
-        struct {
-//CHECK64: FieldDecl=mybar:[[@LINE+1]]:15 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=0]
-          int mybar;
-        };
-//CHECK64: FieldDecl=mole:[[@LINE+1]]:7 (Definition) [type=struct inner] [typekind=Unexposed] [sizeof=4] [alignof=4] [offsetof=96]
-    } mole;
   };
 };
 
@@ -91,12 +84,9 @@ namespace Incomplete {
 // test that fields in incomplete named record do not crash
 union named {
   struct forward_decl f1;
-//CHECK64: FieldDecl=f2:[[@LINE+1]]:7 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=-2]
   int f2;
   struct x {
-//CHECK64: FieldDecl=g1:[[@LINE+1]]:9 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=0]
     int g1;
-//CHECK64: FieldDecl=f3:[[@LINE+1]]:5 (Definition) [type=struct x] [typekind=Unexposed] [sizeof=4] [alignof=4] [offsetof=-2]
   } f3;
   struct forward_decl f4;
   struct x2{
@@ -107,18 +97,13 @@ union named {
 
 // test that fields in incomplete anonymous record do not crash
 union f {
-//CHECK64: FieldDecl=f1:[[@LINE+1]]:23 (Definition) [type=struct forward_decl] [typekind=Unexposed] [sizeof=-2] [alignof=-2] [offsetof=-2]
   struct forward_decl f1;
-//CHECK64: FieldDecl=f2:[[@LINE+1]]:7 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=-2]
   int f2;
   struct {
-//CHECK64: FieldDecl=e1:[[@LINE+1]]:9 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=-2]
     int e1;
     struct {
-//CHECK64: FieldDecl=g1:[[@LINE+1]]:28 (Definition) [type=struct forward_decl2] [typekind=Unexposed] [sizeof=-2] [alignof=-2] [offsetof=-2]
       struct forward_decl2 g1;
     };
-//CHECK64: FieldDecl=e3:[[@LINE+1]]:9 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=-2]
     int e3;
   };
 };
@@ -128,10 +113,8 @@ union f {
 struct s1 {
   struct {
     struct forward_decl2 s1_g1;
-//CHECK64: FieldDecl=s1_e1:[[@LINE+1]]:9 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=-2]
     int s1_e1;
   } s1_x; // named record shows in s1->field_iterator
-//CHECK64: FieldDecl=s1_e3:[[@LINE+1]]:7 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=-2]
   int s1_e3;
 };
 
@@ -140,17 +123,14 @@ struct s1b {
   struct {
     struct forward_decl2 s1b_g1;
   }; // erroneous anonymous record does not show in s1b->field_iterator
-//CHECK64: FieldDecl=s1b_e2:[[@LINE+1]]:7 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=0]
   int s1b_e2;
 };
 
 struct s2 {
   struct {
     struct forward_decl2 s2_g1;
-//CHECK64: FieldDecl=s2_e1:[[@LINE+1]]:9 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=-5]
     int s2_e1;
   }; // erroneous anonymous record does not show in s1b->field_iterator
-//CHECK64: FieldDecl=s2_e3:[[@LINE+1]]:7 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=0]
   int s2_e3;
 };
 
@@ -167,7 +147,6 @@ struct s3 {
         };
       };
     };
-//CHECK64: FieldDecl=s3_e3:[[@LINE+1]]:9 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=64]
     int s3_e3;
   };
 };
@@ -181,13 +160,11 @@ struct s4a {
       struct {
         struct {
           struct {
-//CHECK64: FieldDecl=s4_e1:[[@LINE+1]]:17 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=-2]
             int s4_e1;
           };
         };
       };
     };
-//CHECK64: FieldDecl=s4_e3:[[@LINE+1]]:9 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=-2]
     int s4_e3;
   };
 };
@@ -200,14 +177,21 @@ struct s4b {
       struct {
         struct {
           struct {
-//CHECK64: FieldDecl=s4b_e1:[[@LINE+1]]:17 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=-5]
             int s4b_e1;
           };
         };
       };
     };
-//CHECK64: FieldDecl=s4b_e3:[[@LINE+1]]:9 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=-5]
     int s4b_e3;
+  };
+};
+
+//named struct within anonymous struct
+struct s5 {
+  struct {
+    struct x {
+      int i;
+    };
   };
 };
 
@@ -217,13 +201,8 @@ struct As;
 // undefined class. Should not crash
 // CHECK64: ClassDecl=A:[[@LINE+1]]:7 [type=Incomplete::A] [typekind=Record]
 class A;
-// CHECK64: ClassDecl=B:[[@LINE+1]]:7 (Definition) [type=Incomplete::B] [typekind=Record] [sizeof=16] [alignof=8]
 class B {
-// CHECK64: FieldDecl=a1:[[@LINE+2]]:6 (Definition) [type=Incomplete::A *] [typekind=Pointer] [sizeof=8] [alignof=8] [offsetof=0]
-// CHECK32: FieldDecl=a1:[[@LINE+1]]:6 (Definition) [type=Incomplete::A *] [typekind=Pointer] [sizeof=4] [alignof=4] [offsetof=0]
   A* a1;
-// CHECK64: FieldDecl=a2:[[@LINE+2]]:6 (Definition) [type=Incomplete::A &] [typekind=LValueReference] [sizeof=-2] [alignof=-2] [offsetof=64]
-// CHECK32: FieldDecl=a2:[[@LINE+1]]:6 (Definition) [type=Incomplete::A &] [typekind=LValueReference] [sizeof=-2] [alignof=-2] [offsetof=32]
   A& a2;
 };
 
@@ -392,11 +371,8 @@ void f(int i) {
    int v2[i];
    {
    struct CS1 {
-// FIXME: should libclang return [offsetof=0] ?
-//CHECK32: FieldDecl=f1:[[@LINE+1]]:9 (Definition) [type=int [i]] [typekind=Unexposed] [sizeof=-4] [alignof=4] [offsetof=0]
-    int f1[i];
-//CHECK32: FieldDecl=f2:[[@LINE+1]]:11 (Definition) [type=float] [typekind=Float] [sizeof=4] [alignof=4] [offsetof=0]
-    float f2;
+     int f1[i];
+     float f2;
    };
    }
 }
@@ -407,9 +383,7 @@ namespace CrashTest {
 // test crash scenarios on dependent types.
 template<typename T>
 struct Foo {
-//CHECK32: FieldDecl=t:[[@LINE+1]]:5 (Definition) [type=T] [typekind=Unexposed] [sizeof=-3] [alignof=-3] [offsetof=-1]
   T t;
-//CHECK32: FieldDecl=a:[[@LINE+1]]:7 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=-1]
   int a;
 };
 

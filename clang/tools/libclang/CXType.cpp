@@ -733,11 +733,13 @@ long long clang_Type_getOffsetOf(CXType PT, const char *S) {
     return CXTypeLayoutError_Invalid;
   const RecordDecl *RD =
         dyn_cast_or_null<RecordDecl>(cxcursor::getCursorDecl(PC));
-  if (!RD)
+  if (!RD || RD->isInvalidDecl())
     return CXTypeLayoutError_Invalid;
   RD = RD->getDefinition();
   if (!RD)
     return CXTypeLayoutError_Incomplete;
+  if (RD->isInvalidDecl())
+    return CXTypeLayoutError_Invalid;
   QualType RT = GetQualType(PT);
   if (RT->isIncompleteType())
     return CXTypeLayoutError_Incomplete;
