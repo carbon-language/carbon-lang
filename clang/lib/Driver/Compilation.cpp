@@ -257,7 +257,7 @@ bool Compilation::CleanupFileMap(const ArgStringMap &Files,
 
 int Compilation::ExecuteCommand(const Command &C,
                                 const Command *&FailingCommand) const {
-  llvm::sys::Path Prog(C.getExecutable());
+  std::string Prog(C.getExecutable());
   const char **Argv = new const char*[C.getArguments().size() + 2];
   Argv[0] = C.getExecutable();
   std::copy(C.getArguments().begin(), C.getArguments().end(), Argv+1);
@@ -294,7 +294,7 @@ int Compilation::ExecuteCommand(const Command &C,
 
   std::string Error;
   bool ExecutionFailed;
-  int Res = llvm::sys::ExecuteAndWait(Prog.str(), Argv, /*env*/ 0, Redirects,
+  int Res = llvm::sys::ExecuteAndWait(Prog, Argv, /*env*/ 0, Redirects,
                                       /*secondsToWait*/ 0, /*memoryLimit*/ 0,
                                       &Error, &ExecutionFailed);
   if (!Error.empty()) {
