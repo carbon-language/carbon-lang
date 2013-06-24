@@ -1,4 +1,4 @@
-##===- source/Plugins/Platform/Linux/Makefile --------------*- Makefile -*-===##
+##===- source/Plugins/Platform/FreeBSD/Makefile ------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #

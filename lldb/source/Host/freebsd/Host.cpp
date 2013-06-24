@@ -121,8 +121,8 @@ Host::GetEnvironment (StringList &env)
 }
 
 bool
-Host::GetOSVersion(uint32_t &major, 
-                   uint32_t &minor, 
+Host::GetOSVersion(uint32_t &major,
+                   uint32_t &minor,
                    uint32_t &update)
 {
     struct utsname un;
@@ -193,7 +193,7 @@ GetFreeBSDProcessArgs (const ProcessInstanceInfoMatch *match_info_ptr,
             {
                 process_info.GetExecutableFile().SetFile(cstr, false);
 
-                if (!(match_info_ptr == NULL || 
+                if (!(match_info_ptr == NULL ||
                     NameMatches (process_info.GetExecutableFile().GetFilename().GetCString(),
                                  match_info_ptr->GetNameMatchType(),
                                  match_info_ptr->GetProcessInfo().GetName())))
@@ -218,7 +218,7 @@ GetFreeBSDProcessArgs (const ProcessInstanceInfoMatch *match_info_ptr,
                         return true;
                 }
             }
-        } 
+        }
     }
     return false;
 }
@@ -240,7 +240,7 @@ GetFreeBSDProcessUserAndGroup(ProcessInstanceInfo &process_info)
     struct kinfo_proc proc_kinfo;
     size_t proc_kinfo_size;
 
-    if (process_info.ProcessIDIsValid()) 
+    if (process_info.ProcessIDIsValid())
     {
         int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID,
             (int)process_info.GetProcessID() };

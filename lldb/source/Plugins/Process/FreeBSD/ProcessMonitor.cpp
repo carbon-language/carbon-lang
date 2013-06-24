@@ -932,25 +932,25 @@ ProcessMonitor::Launch(LaunchArgs *args)
         args->m_error.SetErrorToGenericError();
         switch (WEXITSTATUS(status))
         {
-            case ePtraceFailed: 
+            case ePtraceFailed:
                 args->m_error.SetErrorString("Child ptrace failed.");
                 break;
-            case eDupStdinFailed: 
+            case eDupStdinFailed:
                 args->m_error.SetErrorString("Child open stdin failed.");
                 break;
-            case eDupStdoutFailed: 
+            case eDupStdoutFailed:
                 args->m_error.SetErrorString("Child open stdout failed.");
                 break;
-            case eDupStderrFailed: 
+            case eDupStderrFailed:
                 args->m_error.SetErrorString("Child open stderr failed.");
                 break;
             case eChdirFailed:
                 args->m_error.SetErrorString("Child failed to set working directory.");
                 break;
-            case eExecFailed: 
+            case eExecFailed:
                 args->m_error.SetErrorString("Child exec failed.");
                 break;
-            default: 
+            default:
                 args->m_error.SetErrorString("Child returned unknown exit status.");
                 break;
         }
@@ -1458,19 +1458,6 @@ ProcessMonitor::WriteRegisterValue(lldb::tid_t tid, unsigned offset,
 }
 
 bool
-ProcessMonitor::ReadRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset)
-{
-    return false;
-}
-
-bool
-ProcessMonitor::WriteRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset)
-{
-    return false;
-}
-
-
-bool
 ProcessMonitor::ReadGPR(lldb::tid_t tid, void *buf, size_t buf_size)
 {
     bool result;
@@ -1489,6 +1476,12 @@ ProcessMonitor::ReadFPR(lldb::tid_t tid, void *buf, size_t buf_size)
 }
 
 bool
+ProcessMonitor::ReadRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset)
+{
+    return false;
+}
+
+bool
 ProcessMonitor::WriteGPR(lldb::tid_t tid, void *buf, size_t buf_size)
 {
     bool result;
@@ -1504,6 +1497,12 @@ ProcessMonitor::WriteFPR(lldb::tid_t tid, void *buf, size_t buf_size)
     WriteFPROperation op(buf, result);
     DoOperation(&op);
     return result;
+}
+
+bool
+ProcessMonitor::WriteRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset)
+{
+    return false;
 }
 
 bool

@@ -168,7 +168,7 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
 
     if (IsHost())
     {
-        // If we have "ls" as the exe_file, resolve the executable loation based on
+        // If we have "ls" as the exe_file, resolve the executable location based on
         // the current path variables
         if (!resolved_exe_file.Exists())
         {
@@ -178,9 +178,6 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
 
         if (!resolved_exe_file.Exists())
             resolved_exe_file.ResolveExecutableLocation ();
-
-        // Resolve any executable within a bundle on MacOSX
-        //Host::ResolveExecutableInBundle (resolved_exe_file);
 
         if (resolved_exe_file.Exists())
             error.Clear();
