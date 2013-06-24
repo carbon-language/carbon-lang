@@ -1530,9 +1530,8 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV,
 
   unsigned Offset = DV->getDotDebugLocOffset();
   if (Offset != ~0U) {
-    addLabel(VariableDie, dwarf::DW_AT_location,
-                         dwarf::DW_FORM_data4,
-                         Asm->GetTempSymbol("debug_loc", Offset));
+    addLabel(VariableDie, dwarf::DW_AT_location, dwarf::DW_FORM_data4,
+             Asm->GetTempSymbol("debug_loc", Offset));
     DV->setDIE(VariableDie);
     return VariableDie;
   }
