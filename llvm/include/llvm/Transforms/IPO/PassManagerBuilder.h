@@ -105,6 +105,7 @@ public:
   bool BBVectorize;
   bool SLPVectorize;
   bool LoopVectorize;
+  bool LateVectorize;
 
 private:
   /// ExtensionList - This is list of all of the extensions that are registered.
