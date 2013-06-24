@@ -46,3 +46,13 @@ enum bogus; // expected-note {{forward declaration of 'enum bogus'}}
 - (int[6])arrayRet; // expected-error {{function cannot return array type 'int [6]'}}
 - (int())funcRet; // expected-error {{function cannot return function type 'int ()'}}
 @end
+
+@interface qux
+- (void) my_method: (int)arg; // expected-note {{method 'my_method:' declared here}}
+@end
+
+// FIXME: The diagnostic and recovery here could probably be improved.
+@implementation qux // expected-warning {{method definition for 'my_method:' not found}}
+- (void) my_method: (int) { // expected-error {{expected identifier}}
+}
+@end
