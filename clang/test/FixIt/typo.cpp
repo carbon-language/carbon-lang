@@ -6,7 +6,7 @@
 
 namespace std {
   template<typename T> class basic_string { // expected-note 2{{'basic_string' declared here}} \
-                                            // expected-note {{'otherstd::basic_string' declared here}}
+                                            // expected-note {{'::basic_string' declared here}}
   public:
     int find(const char *substr); // expected-note{{'find' declared here}}
     static const int npos = -1; // expected-note{{'npos' declared here}}
@@ -84,8 +84,12 @@ namespace nonstd {
 yarn str4; // expected-error{{unknown type name 'yarn'; did you mean 'nonstd::yarn'?}}
 wibble::yarn str5; // expected-error{{no type named 'yarn' in namespace 'otherstd'; did you mean 'nonstd::yarn'?}}
 
+namespace another {
+  template<typename T> class wide_string {}; // expected-note {{'another::wide_string' declared here}}
+}
 int poit() {
-  nonstd::basic_string<char> str; // expected-error{{no template named 'basic_string' in namespace 'nonstd'; did you mean 'otherstd::basic_string'?}}
+  nonstd::basic_string<char> str; // expected-error{{no template named 'basic_string' in namespace 'nonstd'; did you mean '::basic_string'?}}
+  nonstd::wide_string<char> str2; // expected-error{{no template named 'wide_string' in namespace 'nonstd'; did you mean 'another::wide_string'?}}
   return wibble::narf; // expected-error{{no member named 'narf' in namespace 'otherstd'; did you mean 'nonstd::narf'?}}
 }
 

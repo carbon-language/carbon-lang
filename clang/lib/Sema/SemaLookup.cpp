@@ -3414,7 +3414,7 @@ class NamespaceSpecifierSet {
   NamespaceSpecifierSet(ASTContext &Context, DeclContext *CurContext,
                         CXXScopeSpec *CurScopeSpec)
       : Context(Context), CurContextChain(BuildContextChain(CurContext)),
-        isSorted(true) {
+        isSorted(false) {
     if (CurScopeSpec && CurScopeSpec->getScopeRep())
       getNestedNameSpecifierIdentifiers(CurScopeSpec->getScopeRep(),
                                         CurNameSpecifierIdentifiers);
@@ -3427,6 +3427,12 @@ class NamespaceSpecifierSet {
       if (NamespaceDecl *ND = dyn_cast_or_null<NamespaceDecl>(*C))
         CurContextIdentifiers.push_back(ND->getIdentifier());
     }
+
+    // Add the global context as a NestedNameSpecifier
+    Distances.insert(1);
+    DistanceMap[1].push_back(
+        SpecifierInfo(cast<DeclContext>(Context.getTranslationUnitDecl()),
+                      NestedNameSpecifier::GlobalSpecifier(Context), 1));
   }
 
   /// \brief Add the namespace to the set, computing the corresponding

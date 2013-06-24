@@ -8,7 +8,7 @@ namespace B {
   using namespace A ;
 }
 
-namespace C {}
+namespace C {} // expected-note{{namespace '::C' defined here}}
 
 namespace D {
   
@@ -22,7 +22,8 @@ namespace D {
   using namespace C ;
   using namespace B::A ; // expected-error{{no namespace named 'A' in namespace 'D::B'; did you mean '::B::A'?}}
   using namespace ::B::A ;
-  using namespace ::D::C ; // expected-error{{expected namespace name}}
+  using namespace ::D::F ; // expected-error{{expected namespace name}}
+  using namespace ::D::C ; // expected-error{{no namespace named 'C' in namespace 'D'; did you mean '::C'?}}
 }
 
 using namespace ! ; // expected-error{{expected namespace name}}
