@@ -222,7 +222,7 @@ namespace llvm {
     explicit DIEnumerator(const MDNode *N = 0) : DIDescriptor(N) {}
 
     StringRef getName() const        { return getStringField(1); }
-    uint64_t getEnumValue() const      { return getUInt64Field(2); }
+    int64_t getEnumValue() const      { return getInt64Field(2); }
     bool Verify() const;
   };
 
