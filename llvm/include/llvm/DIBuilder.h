@@ -113,7 +113,7 @@ namespace llvm {
     DIFile createFile(StringRef Filename, StringRef Directory);
 
     /// createEnumerator - Create a single enumerator value.
-    DIEnumerator createEnumerator(StringRef Name, uint64_t Val);
+    DIEnumerator createEnumerator(StringRef Name, int64_t Val);
 
     /// createNullPtrType - Create C++0x nullptr type.
     DIBasicType createNullPtrType(StringRef Name);
