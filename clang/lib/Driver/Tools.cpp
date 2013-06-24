@@ -6206,6 +6206,9 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (Sanitize.needsLsanRt())
     addLsanRTLinux(getToolChain(), Args, CmdArgs);
 
+  // The profile runtime also needs access to system libraries.
+  addProfileRTLinux(getToolChain(), Args, CmdArgs);
+
   if (D.CCCIsCXX &&
       !Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
@@ -6261,8 +6264,6 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
         CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtn.o")));
     }
   }
-
-  addProfileRTLinux(getToolChain(), Args, CmdArgs);
 
   C.addCommand(new Command(JA, *this, ToolChain.Linker.c_str(), CmdArgs));
 }
