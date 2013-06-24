@@ -1,4 +1,4 @@
-; RUN: llc -mcpu=generic -march=x86 < %s | FileCheck %s
+; RUN: llc -mcpu=generic -mtriple=i686-unknown-unknown < %s | FileCheck %s
 
 define i64 @test1(i32 %xx, i32 %test) nounwind {
   %conv = zext i32 %xx to i64
