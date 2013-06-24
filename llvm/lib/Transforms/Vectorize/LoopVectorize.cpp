@@ -3084,6 +3084,385 @@ void AccessAnalysis::processMemAccesses(bool UseDeferred) {
   }
 }
 
+/// \brief Checks memory dependences among accesses to the same underlying
+/// object to determine whether there vectorization is legal or not (and at
+/// which vectorization factor).
+///
+/// This class works under the assumption that we already checked that memory
+/// locations with different underlying pointers are "must-not alias".
+/// We use the ScalarEvolution framework to symbolically evalutate access
+/// functions pairs. Since we currently don't restructure the loop we can rely
+/// on the program order of memory accesses to determine their safety.
+/// At the moment we will only deem accesses as safe for:
+///  * A negative constant distance assuming program order.
+///
+///      Safe: tmp = a[i + 1];     OR     a[i + 1] = x;
+///            a[i] = tmp;                y = a[i];
+///
+///   The latter case is safe because later checks guarantuee that there can't
+///   be a cycle through a phi node (that is, we check that "x" and "y" is not
+///   the same variable: a header phi can only be an induction or a reduction, a
+///   reduction can't have a memory sink, an induction can't have a memory
+///   source). This is important and must not be violated (or we have to
+///   resort to checking for cycles through memory).
+///
+///  * A positive constant distance assuming program order that is bigger
+///    than the biggest memory access.
+///
+///     tmp = a[i]        OR              b[i] = x
+///     a[i+2] = tmp                      y = b[i+2];
+///
+///     Safe distance: 2 x sizeof(a[0]), and 2 x sizeof(b[0]), respectively.
+///
+///  * Zero distances and all accesses have the same size.
+///
+class MemoryDepChecker {
+public:
+  typedef std::pair<Value*, char> MemAccessInfo;
+
+  MemoryDepChecker(ScalarEvolution *Se, DataLayout *Dl, const Loop *L) :
+    SE(Se), DL(Dl), InnermostLoop(L), AccessIdx(0) {}
+
+  /// \brief Register the location (instructions are given increasing numbers)
+  /// of a write access.
+  void addAccess(StoreInst *SI) {
+    Value *Ptr = SI->getPointerOperand();
+    Accesses[std::make_pair(Ptr, true)].push_back(AccessIdx);
+    InstMap.push_back(SI);
+    ++AccessIdx;
+  }
+
+  /// \brief Register the location (instructions are given increasing numbers)
+  /// of a write access.
+  void addAccess(LoadInst *LI) {
+    Value *Ptr = LI->getPointerOperand();
+    Accesses[std::make_pair(Ptr, false)].push_back(AccessIdx);
+    InstMap.push_back(LI);
+    ++AccessIdx;
+  }
+
+  /// \brief Check whether the dependencies between the accesses are safe.
+  ///
+  /// Only checks sets with elements in \p CheckDeps.
+  bool areDepsSafe(AccessAnalysis::DepCandidates &AccessSets,
+                   DenseSet<MemAccessInfo> &CheckDeps);
+
+  /// \brief The maximum number of bytes of a vector register we can vectorize
+  /// the accesses safely with.
+  unsigned getMaxSafeDepDistBytes() { return MaxSafeDepDistBytes; }
+
+private:
+  ScalarEvolution *SE;
+  DataLayout *DL;
+  const Loop *InnermostLoop;
+
+  /// \brief Maps access locations (ptr, read/write) to program order.
+  DenseMap<MemAccessInfo, std::vector<unsigned> > Accesses;
+
+  /// \brief Memory access instructions in program order.
+  SmallVector<Instruction *, 16> InstMap;
+
+  /// \brief The program order index to be used for the next instruction.
+  unsigned AccessIdx;
+
+  // We can access this many bytes in parallel safely.
+  unsigned MaxSafeDepDistBytes;
+
+  /// \brief Check whether there is a plausible dependence between the two
+  /// accesses.
+  ///
+  /// Access \p A must happen before \p B in program order. The two indices
+  /// identify the index into the program order map.
+  ///
+  /// This function checks  whether there is a plausible dependence (or the
+  /// absence of such can't be proved) between the two accesses. If there is a
+  /// plausible dependence but the dependence distance is bigger than one
+  /// element access it records this distance in \p MaxSafeDepDistBytes (if this
+  /// distance is smaller than any other distance encountered so far).
+  /// Otherwise, this function returns true signaling a possible dependence.
+  bool isDependent(const MemAccessInfo &A, unsigned AIdx,
+                   const MemAccessInfo &B, unsigned BIdx);
+
+  /// \brief Check whether the data dependence could prevent store-load
+  /// forwarding.
+  bool couldPreventStoreLoadForward(unsigned Distance, unsigned TypeByteSize);
+};
+
+static bool isInBoundsGep(Value *Ptr) {
+  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr))
+    return GEP->isInBounds();
+  return false;
+}
+
+/// \brief Check whether the access through \p Ptr has a constant stride.
+static int isStridedPtr(ScalarEvolution *SE, DataLayout *DL, Value *Ptr,
+                        const Loop *Lp) {
+  const Type *PtrTy = Ptr->getType();
+  assert(PtrTy->isPointerTy() && "Unexpected non ptr");
+
+  // Make sure that the pointer does not point to aggregate types.
+  if (cast<PointerType>(Ptr->getType())->getElementType()->isAggregateType()) {
+    DEBUG(dbgs() << "LV: Bad stride - Not a pointer to a scalar type" << *Ptr
+          << "\n");
+    return 0;
+  }
+
+  const SCEV *PtrScev = SE->getSCEV(Ptr);
+  const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(PtrScev);
+  if (!AR) {
+    DEBUG(dbgs() << "LV: Bad stride - Not an AddRecExpr pointer "
+          << *Ptr << " SCEV: " << *PtrScev << "\n");
+    return 0;
+  }
+
+  // The accesss function must stride over the innermost loop.
+  if (Lp != AR->getLoop()) {
+    DEBUG(dbgs() << "LV: Bad stride - Not striding over innermost loop " << *Ptr
+          << " SCEV: " << *PtrScev << "\n");
+  }
+
+  // The address calculation must not wrap. Otherwise, a dependence could be
+  // inverted. An inbounds getelementptr that is a AddRec with a unit stride
+  // cannot wrap per definition. The unit stride requirement is checked later.
+  bool IsInBoundsGEP = isInBoundsGep(Ptr);
+  bool IsNoWrapAddRec = AR->getNoWrapFlags(SCEV::NoWrapMask);
+  if (!IsNoWrapAddRec && !IsInBoundsGEP) {
+    DEBUG(dbgs() << "LV: Bad stride - Pointer may wrap in the address space "
+          << *Ptr << " SCEV: " << *PtrScev << "\n");
+    return 0;
+  }
+
+  // Check the step is constant.
+  const SCEV *Step = AR->getStepRecurrence(*SE);
+
+  // Calculate the pointer stride and check if it is consecutive.
+  const SCEVConstant *C = dyn_cast<SCEVConstant>(Step);
+  if (!C) {
+    DEBUG(dbgs() << "LV: Bad stride - Not a constant strided " << *Ptr <<
+          " SCEV: " << *PtrScev << "\n");
+    return 0;
+  }
+
+  int64_t Size = DL->getTypeAllocSize(PtrTy->getPointerElementType());
+  const APInt &APStepVal = C->getValue()->getValue();
+
+  // Huge step value - give up.
+  if (APStepVal.getBitWidth() > 64)
+    return 0;
+
+  int64_t StepVal = APStepVal.getSExtValue();
+
+  // Strided access.
+  int64_t Stride = StepVal / Size;
+  int64_t Rem = StepVal % Size;
+  if (Rem)
+    return 0;
+
+  // If the SCEV could wrap but we have an inbounds gep with a unit stride we
+  // know we can't "wrap around the address space".
+  if (!IsNoWrapAddRec && IsInBoundsGEP && Stride != 1 && Stride != -1)
+    return 0;
+
+  return Stride;
+}
+
+bool MemoryDepChecker::couldPreventStoreLoadForward(unsigned Distance,
+                                                    unsigned TypeByteSize) {
+  // If loads occur at a distance that is not a multiple of a feasible vector
+  // factor store-load forwarding does not take place.
+  // Positive dependences might cause troubles because vectorizing them might
+  // prevent store-load forwarding making vectorized code run a lot slower.
+  //   a[i] = a[i-3] ^ a[i-8];
+  //   The stores to a[i:i+1] don't align with the stores to a[i-3:i-2] and
+  //   hence on your typical architecture store-load forwarding does not take
+  //   place. Vectorizing in such cases does not make sense.
+  // Store-load forwarding distance.
+  const unsigned NumCyclesForStoreLoadThroughMemory = 8*TypeByteSize;
+  // Maximum vector factor.
+  unsigned MaxVFWithoutSLForwardIssues = MaxVectorWidth*TypeByteSize;
+  if(MaxSafeDepDistBytes < MaxVFWithoutSLForwardIssues)
+    MaxVFWithoutSLForwardIssues = MaxSafeDepDistBytes;
+
+  for (unsigned vf = 2*TypeByteSize; vf <= MaxVFWithoutSLForwardIssues;
+       vf *= 2) {
+    if (Distance % vf && Distance / vf < NumCyclesForStoreLoadThroughMemory) {
+      MaxVFWithoutSLForwardIssues = (vf >>=1);
+      break;
+    }
+  }
+
+  if (MaxVFWithoutSLForwardIssues< 2*TypeByteSize) {
+    DEBUG(dbgs() << "LV: Distance " << Distance <<
+          " that could cause a store-load forwarding conflict\n");
+    return true;
+  }
+
+  if (MaxVFWithoutSLForwardIssues < MaxSafeDepDistBytes &&
+      MaxVFWithoutSLForwardIssues != MaxVectorWidth*TypeByteSize)
+    MaxSafeDepDistBytes = MaxVFWithoutSLForwardIssues;
+  return false;
+}
+
+bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
+                                   const MemAccessInfo &B, unsigned BIdx) {
+  assert (AIdx < BIdx && "Must pass arguments in program order");
+
+  Value *APtr = A.first;
+  Value *BPtr = B.first;
+  bool AIsWrite = A.second;
+  bool BIsWrite = B.second;
+
+  // Two reads are independent.
+  if (!AIsWrite && !BIsWrite)
+    return false;
+
+  const SCEV *AScev = SE->getSCEV(APtr);
+  const SCEV *BScev = SE->getSCEV(BPtr);
+
+  int StrideAPtr = isStridedPtr(SE, DL, APtr, InnermostLoop);
+  int StrideBPtr = isStridedPtr(SE, DL, BPtr, InnermostLoop);
+
+  const SCEV *Src = AScev;
+  const SCEV *Sink = BScev;
+
+  // If the induction step is negative we have to invert source and sink of the
+  // dependence.
+  if (StrideAPtr < 0) {
+    //Src = BScev;
+    //Sink = AScev;
+    std::swap(APtr, BPtr);
+    std::swap(Src, Sink);
+    std::swap(AIsWrite, BIsWrite);
+    std::swap(AIdx, BIdx);
+    std::swap(StrideAPtr, StrideBPtr);
+  }
+
+  const SCEV *Dist = SE->getMinusSCEV(Sink, Src);
+
+  DEBUG(dbgs() << "LV: Src Scev: " << *Src << "Sink Scev: " << *Sink
+        << "(Induction step: " << StrideAPtr <<  ")\n");
+  DEBUG(dbgs() << "LV: Distance for " << *InstMap[AIdx] << " to "
+        << *InstMap[BIdx] << ": " << *Dist << "\n");
+
+  // Need consecutive accesses. We don't want to vectorize
+  // "A[B[i]] += ..." and similar code or pointer arithmetic that could wrap in
+  // the address space.
+  if (!StrideAPtr || !StrideBPtr || StrideAPtr != StrideBPtr){
+    DEBUG(dbgs() << "Non-consecutive pointer access\n");
+    return true;
+  }
+
+  const SCEVConstant *C = dyn_cast<SCEVConstant>(Dist);
+  if (!C) {
+    DEBUG(dbgs() << "LV: Dependence because of non constant distance\n");
+    return true;
+  }
+
+  Type *ATy = APtr->getType()->getPointerElementType();
+  Type *BTy = BPtr->getType()->getPointerElementType();
+  unsigned TypeByteSize = DL->getTypeAllocSize(ATy);
+
+  // Negative distances are not plausible dependencies.
+  const APInt &Val = C->getValue()->getValue();
+  if (Val.isNegative()) {
+    bool IsTrueDataDependence = (AIsWrite && !BIsWrite);
+    if (IsTrueDataDependence &&
+        (couldPreventStoreLoadForward(Val.abs().getZExtValue(), TypeByteSize) ||
+         ATy != BTy))
+      return true;
+
+    DEBUG(dbgs() << "LV: Dependence is negative: NoDep\n");
+    return false;
+  }
+
+  // Write to the same location with the same size.
+  // Could be improved to assert type sizes are the same (i32 == float, etc).
+  if (Val == 0) {
+    if (ATy == BTy)
+      return false;
+    DEBUG(dbgs() << "LV: Zero dependence difference but different types");
+    return true;
+  }
+
+  assert(Val.isStrictlyPositive() && "Expect a positive value");
+
+  // Positive distance bigger than max vectorization factor.
+  if (ATy != BTy) {
+    DEBUG(dbgs() <<
+          "LV: ReadWrite-Write positive dependency with different types");
+    return false;
+  }
+
+  unsigned Distance = (unsigned) Val.getZExtValue();
+
+  // Bail out early if passed-in parameters make vectorization not feasible.
+  unsigned ForcedFactor = VectorizationFactor ? VectorizationFactor : 1;
+  unsigned ForcedUnroll = VectorizationUnroll ? VectorizationUnroll : 1;
+
+  // The distance must be bigger than the size needed for a vectorized version
+  // of the operation and the size of the vectorized operation must not be
+  // bigger than the currrent maximum size.
+  if (Distance < 2*TypeByteSize ||
+      2*TypeByteSize > MaxSafeDepDistBytes ||
+      Distance < TypeByteSize * ForcedUnroll * ForcedFactor) {
+    DEBUG(dbgs() << "LV: Failure because of Positive distance "
+        << Val.getSExtValue() << "\n");
+    return true;
+  }
+
+  MaxSafeDepDistBytes = Distance < MaxSafeDepDistBytes ?
+    Distance : MaxSafeDepDistBytes;
+
+  bool IsTrueDataDependence = (!AIsWrite && BIsWrite);
+  if (IsTrueDataDependence &&
+      couldPreventStoreLoadForward(Distance, TypeByteSize))
+     return true;
+
+  DEBUG(dbgs() << "LV: Positive distance " << Val.getSExtValue() <<
+        " with max VF=" << MaxSafeDepDistBytes/TypeByteSize << "\n");
+
+  return false;
+}
+
+bool
+MemoryDepChecker::areDepsSafe(AccessAnalysis::DepCandidates &AccessSets,
+                              DenseSet<MemAccessInfo> &CheckDeps) {
+
+  MaxSafeDepDistBytes = -1U;
+  while (!CheckDeps.empty()) {
+    MemAccessInfo CurAccess = *CheckDeps.begin();
+
+    // Get the relevant memory access set.
+    EquivalenceClasses<MemAccessInfo>::iterator I =
+      AccessSets.findValue(AccessSets.getLeaderValue(CurAccess));
+
+    // Check accesses within this set.
+    EquivalenceClasses<MemAccessInfo>::member_iterator AI, AE;
+    AI = AccessSets.member_begin(I), AE = AccessSets.member_end();
+
+    // Check every access pair.
+    while (AI != AE) {
+      CheckDeps.erase(*AI);
+      EquivalenceClasses<MemAccessInfo>::member_iterator OI = llvm::next(AI);
+      while (OI != AE) {
+        // Check every accessing instruction pair in program order.
+        for (std::vector<unsigned>::iterator I1 = Accesses[*AI].begin(),
+             I1E = Accesses[*AI].end(); I1 != I1E; ++I1)
+          for (std::vector<unsigned>::iterator I2 = Accesses[*OI].begin(),
+               I2E = Accesses[*OI].end(); I2 != I2E; ++I2) {
+            if (*I1 < *I2 && isDependent(*AI, *I1, *OI, *I2))
+              return false;
+            if (*I2 < *I1 && isDependent(*OI, *I2, *AI, *I1))
+              return false;
+          }
+        ++OI;
+      }
+      AI++;
+    }
+  }
+  return true;
+}
+
 AliasAnalysis::Location
 LoopVectorizationLegality::getLoadStoreLocation(Instruction *Inst) {
   if (StoreInst *Store = dyn_cast<StoreInst>(Inst))
