@@ -7,6 +7,7 @@
 //
 //===---------------------------------------------------------------------===//
 
+#include "llvm/Support/Compiler.h"
 #include "RegisterContextLinux_x86_64.h"
 #include <vector>
 
@@ -29,7 +30,7 @@ do {                                                                        \
 } while(false);
 
 #define DR_OFFSET(reg_index)                                                \
-    (offsetof(UserArea, u_debugreg[reg_index]))
+    (LLVM_EXTENSION offsetof(UserArea, u_debugreg[reg_index]))
 
 #define UPDATE_DR_INFO(reg_index)                                                \
 do {                                                                             \

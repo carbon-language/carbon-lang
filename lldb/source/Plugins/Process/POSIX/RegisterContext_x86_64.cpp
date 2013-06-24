@@ -18,6 +18,7 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Host/Endian.h"
+#include "llvm/Support/Compiler.h"
 
 #include "ProcessPOSIX.h"
 #include "ProcessMonitor.h"
@@ -326,20 +327,20 @@ static uint32_t value_regs = LLDB_INVALID_REGNUM;
       eFormatHex, { kind1, kind2, kind3, kind4, fpu_##reg }, NULL, NULL }
 
 #define DEFINE_FP(reg, i)                                          \
-    { #reg#i, NULL, FP_SIZE, FPR_OFFSET(reg[i]), eEncodingVector,  \
-      eFormatVectorOfUInt8,                                        \
+    { #reg#i, NULL, FP_SIZE, LLVM_EXTENSION FPR_OFFSET(reg[i]),    \
+      eEncodingVector, eFormatVectorOfUInt8,                       \
       { gcc_dwarf_fpu_##reg##i, gcc_dwarf_fpu_##reg##i,            \
         LLDB_INVALID_REGNUM, gdb_fpu_##reg##i, fpu_##reg##i }, NULL, NULL }
 
 #define DEFINE_XMM(reg, i)                                         \
-    { #reg#i, NULL, XMM_SIZE, FPR_OFFSET(reg[i]), eEncodingVector, \
-      eFormatVectorOfUInt8,                                        \
+    { #reg#i, NULL, XMM_SIZE, LLVM_EXTENSION FPR_OFFSET(reg[i]),   \
+      eEncodingVector, eFormatVectorOfUInt8,                       \
       { gcc_dwarf_fpu_##reg##i, gcc_dwarf_fpu_##reg##i,            \
         LLDB_INVALID_REGNUM, gdb_fpu_##reg##i, fpu_##reg##i }, NULL, NULL }
 
 #define DEFINE_YMM(reg, i)                                         \
-    { #reg#i, NULL, YMM_SIZE, YMM_OFFSET(reg[i]), eEncodingVector, \
-      eFormatVectorOfUInt8,                                        \
+    { #reg#i, NULL, YMM_SIZE, LLVM_EXTENSION YMM_OFFSET(reg[i]),   \
+      eEncodingVector, eFormatVectorOfUInt8,                       \
       { gcc_dwarf_fpu_##reg##i, gcc_dwarf_fpu_##reg##i,            \
         LLDB_INVALID_REGNUM, gdb_fpu_##reg##i, fpu_##reg##i }, NULL, NULL }
 
