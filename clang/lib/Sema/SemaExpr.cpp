@@ -4021,6 +4021,8 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
 
 static void DiagnoseCalleeStaticArrayParam(Sema &S, ParmVarDecl *PVD) {
   TypeLoc TL = PVD->getTypeSourceInfo()->getTypeLoc();
+  if (DecayedTypeLoc DTL = TL.getAs<DecayedTypeLoc>())
+    TL = DTL.getOriginalLoc();
   if (ArrayTypeLoc ATL = TL.getAs<ArrayTypeLoc>())
     S.Diag(PVD->getLocation(), diag::note_callee_static_array)
       << ATL.getLocalSourceRange();

@@ -4531,6 +4531,18 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     return Context.getPointerType(PointeeType);
   }
 
+  case TYPE_DECAYED: {
+    if (Record.size() != 1) {
+      Error("Incorrect encoding of decayed type");
+      return QualType();
+    }
+    QualType OriginalType = readType(*Loc.F, Record, Idx);
+    QualType DT = Context.getAdjustedParameterType(OriginalType);
+    if (!isa<DecayedType>(DT))
+      Error("Decayed type does not decay");
+    return DT;
+  }
+
   case TYPE_BLOCK_POINTER: {
     if (Record.size() != 1) {
       Error("Incorrect encoding of block pointer type");
@@ -4976,6 +4988,9 @@ void TypeLocReader::VisitComplexTypeLoc(ComplexTypeLoc TL) {
 }
 void TypeLocReader::VisitPointerTypeLoc(PointerTypeLoc TL) {
   TL.setStarLoc(ReadSourceLocation(Record, Idx));
+}
+void TypeLocReader::VisitDecayedTypeLoc(DecayedTypeLoc TL) {
+  // nothing to do
 }
 void TypeLocReader::VisitBlockPointerTypeLoc(BlockPointerTypeLoc TL) {
   TL.setCaretLoc(ReadSourceLocation(Record, Idx));

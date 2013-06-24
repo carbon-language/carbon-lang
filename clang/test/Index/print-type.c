@@ -35,7 +35,7 @@ typedef int __attribute__((vector_size(16))) int4_t;
 // CHECK: DeclRefExpr=p:3:13 [type=int *] [typekind=Pointer] [isPOD=1]
 // CHECK: DeclRefExpr=z:3:33 [type=FooType] [typekind=Typedef] [canonicaltype=int] [canonicaltypekind=Int] [isPOD=1]
 // CHECK: ArraySubscriptExpr= [type=int] [typekind=Int] [isPOD=1]
-// CHECK: DeclRefExpr=arr:3:40 [type=int *] [typekind=Pointer] [isPOD=1]
+// CHECK: UnexposedExpr=arr:3:40 [type=int *] [typekind=Unexposed] [canonicaltype=int *] [canonicaltypekind=Pointer] [isPOD=1]
 // CHECK: IntegerLiteral= [type=int] [typekind=Int] [isPOD=1]
 // CHECK: TypedefDecl=OtherType:8:16 (Definition) [type=OtherType] [typekind=Typedef] [canonicaltype=double] [canonicaltypekind=Double] [isPOD=1]
 // CHECK: TypedefDecl=ArrayType:9:13 (Definition) [type=ArrayType] [typekind=Typedef] [canonicaltype=int [5]] [canonicaltypekind=ConstantArray] [isPOD=1]

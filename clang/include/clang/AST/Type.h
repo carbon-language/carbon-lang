@@ -1991,6 +1991,44 @@ public:
   static bool classof(const Type *T) { return T->getTypeClass() == Pointer; }
 };
 
+/// \brief Represents a pointer type decayed from an array or function type.
+class DecayedType : public Type, public llvm::FoldingSetNode {
+  QualType OriginalType;
+  QualType DecayedPointer;
+
+  DecayedType(QualType OriginalType, QualType DecayedPointer,
+              QualType CanonicalPtr)
+      : Type(Decayed, CanonicalPtr, OriginalType->isDependentType(),
+             OriginalType->isInstantiationDependentType(),
+             OriginalType->isVariablyModifiedType(),
+             OriginalType->containsUnexpandedParameterPack()),
+        OriginalType(OriginalType), DecayedPointer(DecayedPointer) {
+    assert(isa<PointerType>(DecayedPointer));
+  }
+
+  friend class ASTContext;  // ASTContext creates these.
+
+public:
+  QualType getDecayedType() const { return DecayedPointer; }
+  QualType getOriginalType() const { return OriginalType; }
+
+  QualType getPointeeType() const {
+    return cast<PointerType>(DecayedPointer)->getPointeeType();
+  }
+
+  bool isSugared() const { return true; }
+  QualType desugar() const { return DecayedPointer; }
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, OriginalType);
+  }
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType OriginalType) {
+    ID.AddPointer(OriginalType.getAsOpaquePtr());
+  }
+
+  static bool classof(const Type *T) { return T->getTypeClass() == Decayed; }
+};
+
 /// BlockPointerType - pointer to a block type.
 /// This type is to represent types syntactically represented as
 /// "void (^)(int)", etc. Pointee is required to always be a function type.

@@ -1337,11 +1337,7 @@ public:
     ParmVarDeclBits.HasInheritedDefaultArg = I;
   }
 
-  QualType getOriginalType() const {
-    if (getTypeSourceInfo())
-      return getTypeSourceInfo()->getType();
-    return getType();
-  }
+  QualType getOriginalType() const;
 
   /// \brief Determine whether this parameter is actually a function
   /// parameter pack.

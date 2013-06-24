@@ -3586,6 +3586,22 @@ QualType TreeTransform<Derived>::TransformComplexType(TypeLocBuilder &TLB,
 }
 
 template<typename Derived>
+QualType TreeTransform<Derived>::TransformDecayedType(TypeLocBuilder &TLB,
+                                                      DecayedTypeLoc TL) {
+  QualType OriginalType = getDerived().TransformType(TLB, TL.getOriginalLoc());
+  if (OriginalType.isNull())
+    return QualType();
+
+  QualType Result = TL.getType();
+  if (getDerived().AlwaysRebuild() ||
+      OriginalType != TL.getOriginalLoc().getType())
+    Result = SemaRef.Context.getDecayedType(OriginalType);
+  TLB.push<DecayedTypeLoc>(Result);
+  // Nothing to set for DecayedTypeLoc.
+  return Result;
+}
+
+template<typename Derived>
 QualType TreeTransform<Derived>::TransformPointerType(TypeLocBuilder &TLB,
                                                       PointerTypeLoc TL) {
   QualType PointeeType

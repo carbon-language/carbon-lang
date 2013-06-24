@@ -1615,6 +1615,8 @@ ASTContext::getTypeInfoImpl(const Type *T) const {
   }
   case Type::ObjCObject:
     return getTypeInfo(cast<ObjCObjectType>(T)->getBaseType().getTypePtr());
+  case Type::Decayed:
+    return getTypeInfo(cast<DecayedType>(T)->getDecayedType().getTypePtr());
   case Type::ObjCInterface: {
     const ObjCInterfaceType *ObjCI = cast<ObjCInterfaceType>(T);
     const ASTRecordLayout &Layout = getASTObjCInterfaceLayout(ObjCI->getDecl());
@@ -2164,6 +2166,45 @@ QualType ASTContext::getPointerType(QualType T) const {
   PointerType *New = new (*this, TypeAlignment) PointerType(T, Canonical);
   Types.push_back(New);
   PointerTypes.InsertNode(New, InsertPos);
+  return QualType(New, 0);
+}
+
+QualType ASTContext::getDecayedType(QualType T) const {
+  assert((T->isArrayType() || T->isFunctionType()) && "T does not decay");
+
+  llvm::FoldingSetNodeID ID;
+  DecayedType::Profile(ID, T);
+  void *InsertPos = 0;
+  if (DecayedType *DT = DecayedTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(DT, 0);
+
+  QualType Decayed;
+
+  // C99 6.7.5.3p7:
+  //   A declaration of a parameter as "array of type" shall be
+  //   adjusted to "qualified pointer to type", where the type
+  //   qualifiers (if any) are those specified within the [ and ] of
+  //   the array type derivation.
+  if (T->isArrayType())
+    Decayed = getArrayDecayedType(T);
+
+  // C99 6.7.5.3p8:
+  //   A declaration of a parameter as "function returning type"
+  //   shall be adjusted to "pointer to function returning type", as
+  //   in 6.3.2.1.
+  if (T->isFunctionType())
+    Decayed = getPointerType(T);
+
+  QualType Canonical = getCanonicalType(Decayed);
+
+  // Get the new insert position for the node we care about.
+  DecayedType *NewIP = DecayedTypes.FindNodeOrInsertPos(ID, InsertPos);
+  assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
+
+  DecayedType *New =
+      new (*this, TypeAlignment) DecayedType(T, Decayed, Canonical);
+  Types.push_back(New);
+  DecayedTypes.InsertNode(New, InsertPos);
   return QualType(New, 0);
 }
 
@@ -4154,22 +4195,9 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) const {
 }
 
 QualType ASTContext::getAdjustedParameterType(QualType T) const {
-  // C99 6.7.5.3p7:
-  //   A declaration of a parameter as "array of type" shall be
-  //   adjusted to "qualified pointer to type", where the type
-  //   qualifiers (if any) are those specified within the [ and ] of
-  //   the array type derivation.
-  if (T->isArrayType())
-    return getArrayDecayedType(T);
-  
-  // C99 6.7.5.3p8:
-  //   A declaration of a parameter as "function returning type"
-  //   shall be adjusted to "pointer to function returning type", as
-  //   in 6.3.2.1.
-  if (T->isFunctionType())
-    return getPointerType(T);
-  
-  return T;  
+  if (T->isArrayType() || T->isFunctionType())
+    return getDecayedType(T);
+  return T;
 }
 
 QualType ASTContext::getSignatureParameterType(QualType T) const {

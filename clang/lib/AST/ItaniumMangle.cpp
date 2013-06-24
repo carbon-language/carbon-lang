@@ -828,6 +828,7 @@ void CXXNameMangler::mangleUnresolvedPrefix(NestedNameSpecifier *qualifier,
     switch (type->getTypeClass()) {
     case Type::Builtin:
     case Type::Complex:
+    case Type::Decayed:
     case Type::Pointer:
     case Type::BlockPointer:
     case Type::LValueReference:

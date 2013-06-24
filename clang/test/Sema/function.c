@@ -103,3 +103,13 @@ int func_e(int x) {
   }
   return x + 3;
 }
+
+void decays(int a[3][3]);   // expected-note {{passing argument to parameter 'a' here}}
+void no_decay(int (*a)[3]); // expected-note {{passing argument to parameter 'a' here}}
+
+void t22(int *ptr, int (*array)[3]) {
+  decays(ptr);   // expected-warning {{incompatible pointer types passing 'int *' to parameter of type 'int (*)[3]'}}
+  no_decay(ptr); // expected-warning {{incompatible pointer types passing 'int *' to parameter of type 'int (*)[3]'}}
+  decays(array);
+  no_decay(array);
+}

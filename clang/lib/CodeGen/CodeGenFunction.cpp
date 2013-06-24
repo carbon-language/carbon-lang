@@ -1273,6 +1273,10 @@ void CodeGenFunction::EmitVariablyModifiedType(QualType type) {
     case Type::ObjCObjectPointer:
       llvm_unreachable("type class is never variably-modified!");
 
+    case Type::Decayed:
+      type = cast<DecayedType>(ty)->getPointeeType();
+      break;
+
     case Type::Pointer:
       type = cast<PointerType>(ty)->getPointeeType();
       break;

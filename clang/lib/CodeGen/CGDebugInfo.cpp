@@ -2069,6 +2069,10 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile Unit,
     return CreateType(cast<ComplexType>(Ty));
   case Type::Pointer:
     return CreateType(cast<PointerType>(Ty), Unit);
+  case Type::Decayed:
+    // Decayed types are just pointers in LLVM and DWARF.
+    return CreateType(
+        cast<PointerType>(cast<DecayedType>(Ty)->getDecayedType()), Unit);
   case Type::BlockPointer:
     return CreateType(cast<BlockPointerType>(Ty), Unit);
   case Type::Typedef:

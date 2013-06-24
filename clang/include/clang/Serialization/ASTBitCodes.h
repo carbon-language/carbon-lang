@@ -836,7 +836,9 @@ namespace clang {
       /// \brief A UnaryTransformType record.
       TYPE_UNARY_TRANSFORM       = 39,
       /// \brief An AtomicType record.
-      TYPE_ATOMIC                = 40
+      TYPE_ATOMIC                = 40,
+      /// \brief A DecayedType record.
+      TYPE_DECAYED               = 41
     };
 
     /// \brief The type IDs for special types constructed by semantic

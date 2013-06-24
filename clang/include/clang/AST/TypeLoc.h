@@ -974,6 +974,40 @@ inline TypeLoc TypeLoc::IgnoreParens() const {
   return *this;
 }
 
+
+struct DecayedLocInfo { }; // Nothing.
+
+/// \brief Wrapper for source info for pointers decayed from arrays and
+/// funcitons.
+class DecayedTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc, DecayedTypeLoc,
+                                              DecayedType, DecayedLocInfo> {
+public:
+  TypeLoc getOriginalLoc() const {
+    return getInnerTypeLoc();
+  }
+
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
+    // do nothing
+  }
+
+  QualType getInnerType() const {
+    // The inner type is the undecayed type, since that's what we have source
+    // location information for.
+    return getTypePtr()->getOriginalType();
+  }
+
+  SourceRange getLocalSourceRange() const {
+    return SourceRange();
+  }
+
+  unsigned getLocalDataSize() const {
+    // sizeof(DecayedLocInfo) is 1, but we don't need its address to be unique
+    // anyway.  TypeLocBuilder can't handle data sizes of 1.
+    return 0;  // No data.
+  }
+};
+
+
 struct PointerLikeLocInfo {
   SourceLocation StarLoc;
 };

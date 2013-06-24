@@ -400,6 +400,13 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
       return false;
     break;
   
+  case Type::Decayed:
+    if (!IsStructurallyEquivalent(Context,
+                                  cast<DecayedType>(T1)->getPointeeType(),
+                                  cast<DecayedType>(T2)->getPointeeType()))
+      return false;
+    break;
+
   case Type::Pointer:
     if (!IsStructurallyEquivalent(Context,
                                   cast<PointerType>(T1)->getPointeeType(),

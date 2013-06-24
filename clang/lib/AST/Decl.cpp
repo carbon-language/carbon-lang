@@ -1995,6 +1995,14 @@ ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
                              S, DefArg);
 }
 
+QualType ParmVarDecl::getOriginalType() const {
+  TypeSourceInfo *TSI = getTypeSourceInfo();
+  QualType T = TSI ? TSI->getType() : getType();
+  if (const DecayedType *DT = dyn_cast<DecayedType>(T))
+    return DT->getOriginalType();
+  return T;
+}
+
 ParmVarDecl *ParmVarDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
   void *Mem = AllocateDeserializedDecl(C, ID, sizeof(ParmVarDecl));
   return new (Mem) ParmVarDecl(ParmVar, 0, SourceLocation(), SourceLocation(),

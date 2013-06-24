@@ -29,3 +29,11 @@ cfn C::*mpg;
 
 // Don't crash!
 void (PR14171)() const; // expected-error {{non-member function cannot have 'const' qualifier}}
+
+// Test template instantiation of decayed array types.  Not really related to
+// type quals.
+template <typename T> void arrayDecay(const T a[]) { }
+void instantiateArrayDecay() {
+  int a[1];
+  arrayDecay(a);
+}
