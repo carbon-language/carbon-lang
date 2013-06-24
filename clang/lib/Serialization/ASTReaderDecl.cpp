@@ -967,6 +967,9 @@ void ASTDeclReader::VisitParmVarDecl(ParmVarDecl *PD) {
   PD->ParmVarDeclBits.HasInheritedDefaultArg = Record[Idx++];
   if (Record[Idx++]) // hasUninstantiatedDefaultArg.
     PD->setUninstantiatedDefaultArg(Reader.ReadExpr(F));
+
+  // FIXME: If this is a redeclaration of a function from another module, handle
+  // inheritance of default arguments.
 }
 
 void ASTDeclReader::VisitFileScopeAsmDecl(FileScopeAsmDecl *AD) {
@@ -1334,6 +1337,9 @@ void ASTDeclReader::VisitTemplateDecl(TemplateDecl *D) {
   TemplateParameterList* TemplateParams
       = Reader.ReadTemplateParameterList(F, Record, Idx); 
   D->init(TemplatedDecl, TemplateParams);
+
+  // FIXME: If this is a redeclaration of a template from another module, handle
+  // inheritance of default template arguments.
 }
 
 ASTDeclReader::RedeclarableResult 
@@ -1772,6 +1778,48 @@ uint64_t ASTReader::getGlobalBitOffset(ModuleFile &M, uint32_t LocalOffset) {
   return LocalOffset + M.GlobalBitOffset;
 }
 
+static bool isSameTemplateParameterList(const TemplateParameterList *X,
+                                        const TemplateParameterList *Y);
+
+/// \brief Determine whether two template parameters are similar enough
+/// that they may be used in declarations of the same template.
+static bool isSameTemplateParameter(const NamedDecl *X,
+                                    const NamedDecl *Y) {
+  if (X->getKind() != Y->getKind())
+    return false;
+
+  if (const TemplateTypeParmDecl *TX = dyn_cast<TemplateTypeParmDecl>(X)) {
+    const TemplateTypeParmDecl *TY = cast<TemplateTypeParmDecl>(Y);
+    return TX->isParameterPack() == TY->isParameterPack();
+  }
+
+  if (const NonTypeTemplateParmDecl *TX = dyn_cast<NonTypeTemplateParmDecl>(X)) {
+    const NonTypeTemplateParmDecl *TY = cast<NonTypeTemplateParmDecl>(Y);
+    return TX->isParameterPack() == TY->isParameterPack() &&
+           TX->getASTContext().hasSameType(TX->getType(), TY->getType());
+  }
+
+  const TemplateTemplateParmDecl *TX = cast<TemplateTemplateParmDecl>(X);
+  const TemplateTemplateParmDecl *TY = cast<TemplateTemplateParmDecl>(Y);
+  return TX->isParameterPack() == TY->isParameterPack() &&
+         isSameTemplateParameterList(TX->getTemplateParameters(),
+                                     TY->getTemplateParameters());
+}
+
+/// \brief Determine whether two template parameter lists are similar enough
+/// that they may be used in declarations of the same template.
+static bool isSameTemplateParameterList(const TemplateParameterList *X,
+                                        const TemplateParameterList *Y) {
+  if (X->size() != Y->size())
+    return false;
+
+  for (unsigned I = 0, N = X->size(); I != N; ++I)
+    if (!isSameTemplateParameter(X->getParam(I), Y->getParam(I)))
+      return false;
+
+  return true;
+}
+
 /// \brief Determine whether the two declarations refer to the same entity.
 static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
   assert(X->getDeclName() == Y->getDeclName() && "Declaration name mismatch!");
@@ -1841,10 +1889,11 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
   // Identical template names and kinds match if their template parameter lists
   // and patterns match.
   if (TemplateDecl *TemplateX = dyn_cast<TemplateDecl>(X)) {
-    TemplateDecl *TemplateY = dyn_cast<TemplateDecl>(Y);
-    // FIXME: Check template parameter lists.
+    TemplateDecl *TemplateY = cast<TemplateDecl>(Y);
     return isSameEntity(TemplateX->getTemplatedDecl(),
-                        TemplateY->getTemplatedDecl());
+                        TemplateY->getTemplatedDecl()) &&
+           isSameTemplateParameterList(TemplateX->getTemplateParameters(),
+                                       TemplateY->getTemplateParameters());
   }
 
   // FIXME: Many other cases to implement.
