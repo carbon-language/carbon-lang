@@ -2575,10 +2575,39 @@ APFloat::convertFromDecimalString(StringRef str, roundingMode rounding_mode)
   return fs;
 }
 
+bool
+APFloat::convertFromStringSpecials(StringRef str) {
+  if (str.equals("inf") || str.equals("INFINITY")) {
+    makeInf(false);
+    return true;
+  }
+
+  if (str.equals("-inf") || str.equals("-INFINITY")) {
+    makeInf(true);
+    return true;
+  }
+
+  if (str.equals("nan") || str.equals("NaN")) {
+    makeNaN(false, false);
+    return true;
+  }
+
+  if (str.equals("-nan") || str.equals("-NaN")) {
+    makeNaN(false, true);
+    return true;
+  }
+
+  return false;
+}
+
 APFloat::opStatus
 APFloat::convertFromString(StringRef str, roundingMode rounding_mode)
 {
   assert(!str.empty() && "Invalid string length");
+
+  // Handle special cases.
+  if (convertFromStringSpecials(str))
+    return opOK;
 
   /* Handle a leading minus sign.  */
   StringRef::iterator p = str.begin();

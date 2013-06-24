@@ -510,6 +510,7 @@ private:
   /// \name Miscellany
   /// @{
 
+  bool convertFromStringSpecials(StringRef str);
   opStatus normalize(roundingMode, lostFraction);
   opStatus addOrSubtract(const APFloat &, roundingMode, bool subtract);
   cmpResult compareAbsoluteValue(const APFloat &) const;
