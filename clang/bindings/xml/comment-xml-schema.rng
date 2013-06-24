@@ -410,9 +410,14 @@
             </data>
           </element>
           <optional>
-            <element name="Index">
-              <data type="nonNegativeInteger" />
-            </element>
+            <choice>
+              <element name="Index">
+                <data type="nonNegativeInteger" />
+              </element>
+              <element name="IsVarArg">
+                <empty />
+              </element>
+            </choice>
           </optional>
           <element name="Direction">
             <attribute name="isExplicit">

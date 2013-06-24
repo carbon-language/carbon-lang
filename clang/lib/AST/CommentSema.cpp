@@ -726,6 +726,10 @@ void Sema::resolveParamCommandIndexes(const FullComment *FC) {
     // Check that referenced parameter name is in the function decl.
     const unsigned ResolvedParamIndex = resolveParmVarReference(ParamName,
                                                                 ParamVars);
+    if (ResolvedParamIndex == ParamCommandComment::VarArgParamIndex) {
+      PCC->setIsVarArgParam();
+      continue;
+    }
     if (ResolvedParamIndex == ParamCommandComment::InvalidParamIndex) {
       UnresolvedParamCommands.push_back(PCC);
       continue;
@@ -796,7 +800,19 @@ bool Sema::isAnyFunctionDecl() {
   return isFunctionDecl() && ThisDeclInfo->CurrentDecl &&
          isa<FunctionDecl>(ThisDeclInfo->CurrentDecl);
 }
-  
+
+bool Sema::isFunctionOrMethodVariadic() {
+  if (!isAnyFunctionDecl() && !isObjCMethodDecl())
+    return false;
+  if (const FunctionDecl *FD =
+        dyn_cast<FunctionDecl>(ThisDeclInfo->CurrentDecl))
+    return FD->isVariadic();
+  if (const ObjCMethodDecl *MD =
+        dyn_cast<ObjCMethodDecl>(ThisDeclInfo->CurrentDecl))
+    return MD->isVariadic();
+  return false;
+}
+
 bool Sema::isObjCMethodDecl() {
   return isFunctionDecl() && ThisDeclInfo->CurrentDecl &&
          isa<ObjCMethodDecl>(ThisDeclInfo->CurrentDecl);
@@ -915,6 +931,8 @@ unsigned Sema::resolveParmVarReference(StringRef Name,
     if (II && II->getName() == Name)
       return i;
   }
+  if (Name == "..." && isFunctionOrMethodVariadic())
+    return ParamCommandComment::VarArgParamIndex;
   return ParamCommandComment::InvalidParamIndex;
 }
 

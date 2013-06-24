@@ -293,6 +293,8 @@ void DeclInfo::fill() {
 
 StringRef ParamCommandComment::getParamName(const FullComment *FC) const {
   assert(isParamIndexValid());
+  if (isVarArgParam())
+    return "...";
   return FC->getThisDeclInfo()->ParamVars[getParamIndex()]->getName();
 }
 

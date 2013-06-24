@@ -699,7 +699,10 @@ private:
   unsigned ParamIndex;
 
 public:
-  enum { InvalidParamIndex = ~0U };
+  enum {
+    InvalidParamIndex = ~0U,
+    VarArgParamIndex = InvalidParamIndex - 1U
+  };
 
   ParamCommandComment(SourceLocation LocBegin,
                       SourceLocation LocEnd,
@@ -755,14 +758,25 @@ public:
     return ParamIndex != InvalidParamIndex;
   }
 
+  bool isVarArgParam() const LLVM_READONLY {
+    return ParamIndex == VarArgParamIndex;
+  }
+
+  void setIsVarArgParam() {
+    ParamIndex = VarArgParamIndex;
+    assert(isParamIndexValid());
+  }
+
   unsigned getParamIndex() const LLVM_READONLY {
     assert(isParamIndexValid());
+    assert(!isVarArgParam());
     return ParamIndex;
   }
 
   void setParamIndex(unsigned Index) {
     ParamIndex = Index;
     assert(isParamIndexValid());
+    assert(!isVarArgParam());
   }
 };
 

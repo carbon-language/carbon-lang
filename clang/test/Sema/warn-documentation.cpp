@@ -305,6 +305,22 @@ typedef test_param27 test_param28;
 typedef unsigned int test_param29;
 
 
+/// \param aaa Aaa
+/// \param ... Vararg
+int test_vararg_param1(int aaa, ...);
+
+/// \param ... Vararg
+int test_vararg_param2(...);
+
+// expected-warning@+1 {{parameter '...' not found in the function declaration}} expected-note@+1 {{did you mean 'aaa'?}}
+/// \param ... Vararg
+int test_vararg_param3(int aaa);
+
+// expected-warning@+1 {{parameter '...' not found in the function declaration}}
+/// \param ... Vararg
+int test_vararg_param4();
+
+
 // expected-warning@+1 {{'\tparam' command used in a comment that is not attached to a template declaration}}
 /// \tparam T Aaa
 int test_tparam1;

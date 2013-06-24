@@ -271,12 +271,29 @@ void comment_to_html_conversion_16(int x1, int x2);
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Aaa.]))))]
 
+/// \param x1 Aaa.
+/// \param ... Bbb.
+void comment_to_html_conversion_17(int x1, ...);
+
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_17:{{.*}} FullCommentAsHTML=[<dl><dt class="param-name-index-0">x1</dt><dd class="param-descr-index-0"> Aaa. </dd><dt class="param-name-index-vararg">...</dt><dd class="param-descr-index-vararg"> Bbb.</dd></dl>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_17</Name><USR>c:@F@comment_to_html_conversion_17#I.#</USR><Declaration>void comment_to_html_conversion_17(int x1, ...)</Declaration><Parameters><Parameter><Name>x1</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Aaa. </Para></Discussion></Parameter><Parameter><Name>...</Name><IsVarArg /><Direction isExplicit="0">in</Direction><Discussion><Para> Bbb.</Para></Discussion></Parameter></Parameters></Function>]
+// CHECK-NEXT:  CommentAST=[
+// CHECK-NEXT:    (CXComment_FullComment
+// CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
+// CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace))
+// CHECK-NEXT:       (CXComment_ParamCommand in implicitly ParamName=[x1] ParamIndex=0
+// CHECK-NEXT:         (CXComment_Paragraph
+// CHECK-NEXT:           (CXComment_Text Text=[ Aaa.] HasTrailingNewline)
+// CHECK-NEXT:           (CXComment_Text Text=[ ] IsWhitespace)))
+// CHECK-NEXT:       (CXComment_ParamCommand in implicitly ParamName=[...] ParamIndex=4294967295
+// CHECK-NEXT:         (CXComment_Paragraph
+// CHECK-NEXT:           (CXComment_Text Text=[ Bbb.]))))] Extent=[276:1 - 276:48]
+
 /// \tparam
 /// \param aaa Blah blah
 template<typename T>
-void comment_to_html_conversion_17(T aaa);
+void comment_to_html_conversion_18(T aaa);
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionTemplate=comment_to_html_conversion_17:{{.*}} FullCommentAsHTML=[<dl><dt class="param-name-index-0">aaa</dt><dd class="param-descr-index-0"> Blah blah</dd></dl>] FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_17</Name><USR>c:@FT@&gt;1#Tcomment_to_html_conversion_17#t0.0#</USR><Declaration>template &lt;typename T&gt; void comment_to_html_conversion_17(T aaa)</Declaration><Parameters><Parameter><Name>aaa</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Blah blah</Para></Discussion></Parameter></Parameters></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionTemplate=comment_to_html_conversion_18:{{.*}} FullCommentAsHTML=[<dl><dt class="param-name-index-0">aaa</dt><dd class="param-descr-index-0"> Blah blah</dd></dl>] FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_18</Name><USR>c:@FT@&gt;1#Tcomment_to_html_conversion_18#t0.0#</USR><Declaration>template &lt;typename T&gt; void comment_to_html_conversion_18(T aaa)</Declaration><Parameters><Parameter><Name>aaa</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Blah blah</Para></Discussion></Parameter></Parameters></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -291,9 +308,9 @@ void comment_to_html_conversion_17(T aaa);
 /// \tparam T
 /// \param aaa Blah blah
 template<typename T>
-void comment_to_html_conversion_18(T aaa);
+void comment_to_html_conversion_19(T aaa);
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionTemplate=comment_to_html_conversion_18:{{.*}} FullCommentAsHTML=[<dl><dt class="param-name-index-0">aaa</dt><dd class="param-descr-index-0"> Blah blah</dd></dl>] FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_18</Name><USR>c:@FT@&gt;1#Tcomment_to_html_conversion_18#t0.0#</USR><Declaration>template &lt;typename T&gt; void comment_to_html_conversion_18(T aaa)</Declaration><Parameters><Parameter><Name>aaa</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Blah blah</Para></Discussion></Parameter></Parameters></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionTemplate=comment_to_html_conversion_19:{{.*}} FullCommentAsHTML=[<dl><dt class="param-name-index-0">aaa</dt><dd class="param-descr-index-0"> Blah blah</dd></dl>] FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_19</Name><USR>c:@FT@&gt;1#Tcomment_to_html_conversion_19#t0.0#</USR><Declaration>template &lt;typename T&gt; void comment_to_html_conversion_19(T aaa)</Declaration><Parameters><Parameter><Name>aaa</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Blah blah</Para></Discussion></Parameter></Parameters></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -308,9 +325,9 @@ void comment_to_html_conversion_18(T aaa);
 /// \tparam T2 Bbb
 /// \tparam T1 Aaa
 template<typename T1, typename T2>
-void comment_to_html_conversion_19(T1 aaa, T2 bbb);
+void comment_to_html_conversion_20(T1 aaa, T2 bbb);
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionTemplate=comment_to_html_conversion_19:{{.*}} FullCommentAsHTML=[<dl><dt class="tparam-name-index-0">T1</dt><dd class="tparam-descr-index-0"> Aaa</dd><dt class="tparam-name-index-1">T2</dt><dd class="tparam-descr-index-1"> Bbb </dd></dl>] FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_19</Name><USR>c:@FT@&gt;2#T#Tcomment_to_html_conversion_19#t0.0#t0.1#</USR><Declaration>template &lt;typename T1, typename T2&gt;\nvoid comment_to_html_conversion_19(T1 aaa, T2 bbb)</Declaration><TemplateParameters><Parameter><Name>T1</Name><Index>0</Index><Discussion><Para> Aaa</Para></Discussion></Parameter><Parameter><Name>T2</Name><Index>1</Index><Discussion><Para> Bbb </Para></Discussion></Parameter></TemplateParameters></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionTemplate=comment_to_html_conversion_20:{{.*}} FullCommentAsHTML=[<dl><dt class="tparam-name-index-0">T1</dt><dd class="tparam-descr-index-0"> Aaa</dd><dt class="tparam-name-index-1">T2</dt><dd class="tparam-descr-index-1"> Bbb </dd></dl>] FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_20</Name><USR>c:@FT@&gt;2#T#Tcomment_to_html_conversion_20#t0.0#t0.1#</USR><Declaration>template &lt;typename T1, typename T2&gt;\nvoid comment_to_html_conversion_20(T1 aaa, T2 bbb)</Declaration><TemplateParameters><Parameter><Name>T1</Name><Index>0</Index><Discussion><Para> Aaa</Para></Discussion></Parameter><Parameter><Name>T2</Name><Index>1</Index><Discussion><Para> Bbb </Para></Discussion></Parameter></TemplateParameters></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -328,9 +345,9 @@ void comment_to_html_conversion_19(T1 aaa, T2 bbb);
 /// \tparam V Ccc
 /// \tparam T1 Aaa
 template<typename T1, typename T2, int V>
-void comment_to_html_conversion_20(T1 aaa, T2 bbb);
+void comment_to_html_conversion_21(T1 aaa, T2 bbb);
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionTemplate=comment_to_html_conversion_20:{{.*}} FullCommentAsHTML=[<dl><dt class="tparam-name-index-0">T1</dt><dd class="tparam-descr-index-0"> Aaa</dd><dt class="tparam-name-index-1">T2</dt><dd class="tparam-descr-index-1"> Bbb </dd><dt class="tparam-name-index-2">V</dt><dd class="tparam-descr-index-2"> Ccc </dd><dt class="tparam-name-index-invalid">U</dt><dd class="tparam-descr-index-invalid"> Zzz </dd></dl>] FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_20</Name><USR>c:@FT@&gt;3#T#T#NIcomment_to_html_conversion_20#t0.0#t0.1#</USR><Declaration>template &lt;typename T1, typename T2, int V&gt;\nvoid comment_to_html_conversion_20(T1 aaa, T2 bbb)</Declaration><TemplateParameters><Parameter><Name>T1</Name><Index>0</Index><Discussion><Para> Aaa</Para></Discussion></Parameter><Parameter><Name>T2</Name><Index>1</Index><Discussion><Para> Bbb </Para></Discussion></Parameter><Parameter><Name>V</Name><Index>2</Index><Discussion><Para> Ccc </Para></Discussion></Parameter><Parameter><Name>U</Name><Discussion><Para> Zzz </Para></Discussion></Parameter></TemplateParameters></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionTemplate=comment_to_html_conversion_21:{{.*}} FullCommentAsHTML=[<dl><dt class="tparam-name-index-0">T1</dt><dd class="tparam-descr-index-0"> Aaa</dd><dt class="tparam-name-index-1">T2</dt><dd class="tparam-descr-index-1"> Bbb </dd><dt class="tparam-name-index-2">V</dt><dd class="tparam-descr-index-2"> Ccc </dd><dt class="tparam-name-index-invalid">U</dt><dd class="tparam-descr-index-invalid"> Zzz </dd></dl>] FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_21</Name><USR>c:@FT@&gt;3#T#T#NIcomment_to_html_conversion_21#t0.0#t0.1#</USR><Declaration>template &lt;typename T1, typename T2, int V&gt;\nvoid comment_to_html_conversion_21(T1 aaa, T2 bbb)</Declaration><TemplateParameters><Parameter><Name>T1</Name><Index>0</Index><Discussion><Para> Aaa</Para></Discussion></Parameter><Parameter><Name>T2</Name><Index>1</Index><Discussion><Para> Bbb </Para></Discussion></Parameter><Parameter><Name>V</Name><Index>2</Index><Discussion><Para> Ccc </Para></Discussion></Parameter><Parameter><Name>U</Name><Discussion><Para> Zzz </Para></Discussion></Parameter></TemplateParameters></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -356,9 +373,9 @@ void comment_to_html_conversion_20(T1 aaa, T2 bbb);
 /// \tparam T Aaa
 /// \tparam TT Bbb
 template<template<template<typename T> class TT, class C> class TTT>
-void comment_to_html_conversion_21();
+void comment_to_html_conversion_22();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionTemplate=comment_to_html_conversion_21:{{.*}} FullCommentAsHTML=[<dl><dt class="tparam-name-index-0">TTT</dt><dd class="tparam-descr-index-0"> Ddd </dd><dt class="tparam-name-index-other">C</dt><dd class="tparam-descr-index-other"> Ccc </dd><dt class="tparam-name-index-other">T</dt><dd class="tparam-descr-index-other"> Aaa </dd><dt class="tparam-name-index-other">TT</dt><dd class="tparam-descr-index-other"> Bbb</dd></dl>] FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_21</Name><USR>c:@FT@&gt;1#t&gt;2#t&gt;1#T#Tcomment_to_html_conversion_21#</USR><Declaration>template &lt;template &lt;template &lt;typename T&gt; class TT, class C&gt; class TTT&gt;\nvoid comment_to_html_conversion_21()</Declaration><TemplateParameters><Parameter><Name>TTT</Name><Index>0</Index><Discussion><Para> Ddd </Para></Discussion></Parameter><Parameter><Name>C</Name><Discussion><Para> Ccc </Para></Discussion></Parameter><Parameter><Name>T</Name><Discussion><Para> Aaa </Para></Discussion></Parameter><Parameter><Name>TT</Name><Discussion><Para> Bbb</Para></Discussion></Parameter></TemplateParameters></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionTemplate=comment_to_html_conversion_22:{{.*}} FullCommentAsHTML=[<dl><dt class="tparam-name-index-0">TTT</dt><dd class="tparam-descr-index-0"> Ddd </dd><dt class="tparam-name-index-other">C</dt><dd class="tparam-descr-index-other"> Ccc </dd><dt class="tparam-name-index-other">T</dt><dd class="tparam-descr-index-other"> Aaa </dd><dt class="tparam-name-index-other">TT</dt><dd class="tparam-descr-index-other"> Bbb</dd></dl>] FullCommentAsXML=[<Function templateKind="template" file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_22</Name><USR>c:@FT@&gt;1#t&gt;2#t&gt;1#T#Tcomment_to_html_conversion_22#</USR><Declaration>template &lt;template &lt;template &lt;typename T&gt; class TT, class C&gt; class TTT&gt;\nvoid comment_to_html_conversion_22()</Declaration><TemplateParameters><Parameter><Name>TTT</Name><Index>0</Index><Discussion><Para> Ddd </Para></Discussion></Parameter><Parameter><Name>C</Name><Discussion><Para> Ccc </Para></Discussion></Parameter><Parameter><Name>T</Name><Discussion><Para> Aaa </Para></Discussion></Parameter><Parameter><Name>TT</Name><Discussion><Para> Bbb</Para></Discussion></Parameter></TemplateParameters></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -386,9 +403,9 @@ void comment_to_html_conversion_21();
 /// \param x2 Ddd.
 /// \param x1 Ccc.
 /// \returns Eee.
-void comment_to_html_conversion_22(int x1, int x2);
+void comment_to_html_conversion_23(int x1, int x2);
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_22:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa.</p><p> Bbb.</p><dl><dt class="param-name-index-0">x1</dt><dd class="param-descr-index-0"> Ccc. </dd><dt class="param-name-index-1">x2</dt><dd class="param-descr-index-1"> Ddd. </dd></dl><div class="result-discussion"><p class="para-returns"><span class="word-returns">Returns</span>  Eee.</p></div>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_22</Name><USR>c:@F@comment_to_html_conversion_22#I#I#</USR><Declaration>void comment_to_html_conversion_22(int x1, int x2)</Declaration><Abstract><Para> Aaa.</Para></Abstract><Parameters><Parameter><Name>x1</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Ccc. </Para></Discussion></Parameter><Parameter><Name>x2</Name><Index>1</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Ddd. </Para></Discussion></Parameter></Parameters><ResultDiscussion><Para> Eee.</Para></ResultDiscussion><Discussion><Para> Bbb.</Para></Discussion></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_23:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Aaa.</p><p> Bbb.</p><dl><dt class="param-name-index-0">x1</dt><dd class="param-descr-index-0"> Ccc. </dd><dt class="param-name-index-1">x2</dt><dd class="param-descr-index-1"> Ddd. </dd></dl><div class="result-discussion"><p class="para-returns"><span class="word-returns">Returns</span>  Eee.</p></div>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_23</Name><USR>c:@F@comment_to_html_conversion_23#I#I#</USR><Declaration>void comment_to_html_conversion_23(int x1, int x2)</Declaration><Abstract><Para> Aaa.</Para></Abstract><Parameters><Parameter><Name>x1</Name><Index>0</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Ccc. </Para></Discussion></Parameter><Parameter><Name>x2</Name><Index>1</Index><Direction isExplicit="0">in</Direction><Discussion><Para> Ddd. </Para></Discussion></Parameter></Parameters><ResultDiscussion><Para> Eee.</Para></ResultDiscussion><Discussion><Para> Bbb.</Para></Discussion></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -413,9 +430,9 @@ void comment_to_html_conversion_22(int x1, int x2);
 // CHECK-NEXT:           (CXComment_Text Text=[ Eee.]))))]
 
 /// <br><a href="http://example.com/">Aaa</a>
-void comment_to_html_conversion_23();
+void comment_to_html_conversion_24();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_23:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <br><a href="http://example.com/">Aaa</a></p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_23</Name><USR>c:@F@comment_to_html_conversion_23#</USR><Declaration>void comment_to_html_conversion_23()</Declaration><Abstract><Para> <rawHTML><![CDATA[<br>]]></rawHTML><rawHTML><![CDATA[<a href="http://example.com/">]]></rawHTML>Aaa<rawHTML>&lt;/a&gt;</rawHTML></Para></Abstract></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_24:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <br><a href="http://example.com/">Aaa</a></p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_24</Name><USR>c:@F@comment_to_html_conversion_24#</USR><Declaration>void comment_to_html_conversion_24()</Declaration><Abstract><Para> <rawHTML><![CDATA[<br>]]></rawHTML><rawHTML><![CDATA[<a href="http://example.com/">]]></rawHTML>Aaa<rawHTML>&lt;/a&gt;</rawHTML></Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -429,9 +446,9 @@ void comment_to_html_conversion_23();
 /// <a href="http://example.com/">Aaa</a>
 /// <a href='http://example.com/'>Aaa</a>
 /// \endverbatim
-void comment_to_html_conversion_24();
+void comment_to_html_conversion_25();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_24:{{.*}} FullCommentAsHTML=[<pre> &lt;a href=&quot;http:&#47;&#47;example.com&#47;&quot;&gt;Aaa&lt;&#47;a&gt;\n &lt;a href=&#39;http:&#47;&#47;example.com&#47;&#39;&gt;Aaa&lt;&#47;a&gt;</pre>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_24</Name><USR>c:@F@comment_to_html_conversion_24#</USR><Declaration>void comment_to_html_conversion_24()</Declaration><Discussion><Verbatim xml:space="preserve" kind="verbatim"> &lt;a href=&quot;http://example.com/&quot;&gt;Aaa&lt;/a&gt;\n &lt;a href=&apos;http://example.com/&apos;&gt;Aaa&lt;/a&gt;</Verbatim></Discussion></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_25:{{.*}} FullCommentAsHTML=[<pre> &lt;a href=&quot;http:&#47;&#47;example.com&#47;&quot;&gt;Aaa&lt;&#47;a&gt;\n &lt;a href=&#39;http:&#47;&#47;example.com&#47;&#39;&gt;Aaa&lt;&#47;a&gt;</pre>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_25</Name><USR>c:@F@comment_to_html_conversion_25#</USR><Declaration>void comment_to_html_conversion_25()</Declaration><Discussion><Verbatim xml:space="preserve" kind="verbatim"> &lt;a href=&quot;http://example.com/&quot;&gt;Aaa&lt;/a&gt;\n &lt;a href=&apos;http://example.com/&apos;&gt;Aaa&lt;/a&gt;</Verbatim></Discussion></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -445,9 +462,9 @@ void comment_to_html_conversion_24();
 /// \method foo
 /// \interface foo
 /// Blah blah.
-void comment_to_html_conversion_25();
+void comment_to_html_conversion_26();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_25:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Blah blah.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_25</Name><USR>c:@F@comment_to_html_conversion_25#</USR><Declaration>void comment_to_html_conversion_25()</Declaration><Abstract><Para> Blah blah.</Para></Abstract></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_26:{{.*}} FullCommentAsHTML=[<p class="para-brief"> Blah blah.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_26</Name><USR>c:@F@comment_to_html_conversion_26#</USR><Declaration>void comment_to_html_conversion_26()</Declaration><Abstract><Para> Blah blah.</Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph IsWhitespace
@@ -466,9 +483,9 @@ void comment_to_html_conversion_25();
 // CHECK-NEXT:         (CXComment_Text Text=[ Blah blah.])))]
 
 /// \unknown
-void comment_to_html_conversion_26();
+void comment_to_html_conversion_27();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_26:{{.*}} FullCommentAsHTML=[<p class="para-brief"> </p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_26</Name><USR>c:@F@comment_to_html_conversion_26#</USR><Declaration>void comment_to_html_conversion_26()</Declaration><Abstract><Para> </Para></Abstract></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_27:{{.*}} FullCommentAsHTML=[<p class="para-brief"> </p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_27</Name><USR>c:@F@comment_to_html_conversion_27#</USR><Declaration>void comment_to_html_conversion_27()</Declaration><Abstract><Para> </Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -476,9 +493,9 @@ void comment_to_html_conversion_26();
 // CHECK-NEXT:         (CXComment_InlineCommand CommandName=[unknown] RenderNormal)))]
 
 /// \b Aaa
-void comment_to_html_conversion_27();
+void comment_to_html_conversion_28();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_27:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <b>Aaa</b></p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_27</Name><USR>c:@F@comment_to_html_conversion_27#</USR><Declaration>void comment_to_html_conversion_27()</Declaration><Abstract><Para> <bold>Aaa</bold></Para></Abstract></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_28:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <b>Aaa</b></p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_28</Name><USR>c:@F@comment_to_html_conversion_28#</USR><Declaration>void comment_to_html_conversion_28()</Declaration><Abstract><Para> <bold>Aaa</bold></Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -486,9 +503,9 @@ void comment_to_html_conversion_27();
 // CHECK-NEXT:         (CXComment_InlineCommand CommandName=[b] RenderBold Arg[0]=Aaa)))]
 
 /// \c Aaa \p Bbb
-void comment_to_html_conversion_28();
+void comment_to_html_conversion_29();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_28:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <tt>Aaa</tt> <tt>Bbb</tt></p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_28</Name><USR>c:@F@comment_to_html_conversion_28#</USR><Declaration>void comment_to_html_conversion_28()</Declaration><Abstract><Para> <monospaced>Aaa</monospaced> <monospaced>Bbb</monospaced></Para></Abstract></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_29:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <tt>Aaa</tt> <tt>Bbb</tt></p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_29</Name><USR>c:@F@comment_to_html_conversion_29#</USR><Declaration>void comment_to_html_conversion_29()</Declaration><Abstract><Para> <monospaced>Aaa</monospaced> <monospaced>Bbb</monospaced></Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -498,9 +515,9 @@ void comment_to_html_conversion_28();
 // CHECK-NEXT:         (CXComment_InlineCommand CommandName=[p] RenderMonospaced Arg[0]=Bbb)))]
 
 /// \a Aaa \e Bbb \em Ccc
-void comment_to_html_conversion_29();
+void comment_to_html_conversion_30();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_29:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>Aaa</em> <em>Bbb</em> <em>Ccc</em></p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_29</Name><USR>c:@F@comment_to_html_conversion_29#</USR><Declaration>void comment_to_html_conversion_29()</Declaration><Abstract><Para> <emphasized>Aaa</emphasized> <emphasized>Bbb</emphasized> <emphasized>Ccc</emphasized></Para></Abstract></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_30:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>Aaa</em> <em>Bbb</em> <em>Ccc</em></p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_30</Name><USR>c:@F@comment_to_html_conversion_30#</USR><Declaration>void comment_to_html_conversion_30()</Declaration><Abstract><Para> <emphasized>Aaa</emphasized> <emphasized>Bbb</emphasized> <emphasized>Ccc</emphasized></Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -512,9 +529,9 @@ void comment_to_html_conversion_29();
 // CHECK-NEXT:         (CXComment_InlineCommand CommandName=[em] RenderEmphasized Arg[0]=Ccc)))]
 
 /// \a 1<2 \e 3<4 \em 5<6 \param 7<8 aaa \tparam 9<10 bbb
-void comment_to_html_conversion_30();
+void comment_to_html_conversion_31();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_30:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>1&lt;2</em> <em>3&lt;4</em> <em>5&lt;6</em> </p><dl><dt class="tparam-name-index-invalid">9&lt;10</dt><dd class="tparam-descr-index-invalid"> bbb</dd></dl><dl><dt class="param-name-index-invalid">7&lt;8</dt><dd class="param-descr-index-invalid"> aaa </dd></dl>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_30</Name><USR>c:@F@comment_to_html_conversion_30#</USR><Declaration>void comment_to_html_conversion_30()</Declaration><Abstract><Para> <emphasized>1&lt;2</emphasized> <emphasized>3&lt;4</emphasized> <emphasized>5&lt;6</emphasized> </Para></Abstract><TemplateParameters><Parameter><Name>9&lt;10</Name><Discussion><Para> bbb</Para></Discussion></Parameter></TemplateParameters><Parameters><Parameter><Name>7&lt;8</Name><Direction isExplicit="0">in</Direction><Discussion><Para> aaa </Para></Discussion></Parameter></Parameters></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_31:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>1&lt;2</em> <em>3&lt;4</em> <em>5&lt;6</em> </p><dl><dt class="tparam-name-index-invalid">9&lt;10</dt><dd class="tparam-descr-index-invalid"> bbb</dd></dl><dl><dt class="param-name-index-invalid">7&lt;8</dt><dd class="param-descr-index-invalid"> aaa </dd></dl>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_31</Name><USR>c:@F@comment_to_html_conversion_31#</USR><Declaration>void comment_to_html_conversion_31()</Declaration><Abstract><Para> <emphasized>1&lt;2</emphasized> <emphasized>3&lt;4</emphasized> <emphasized>5&lt;6</emphasized> </Para></Abstract><TemplateParameters><Parameter><Name>9&lt;10</Name><Discussion><Para> bbb</Para></Discussion></Parameter></TemplateParameters><Parameters><Parameter><Name>7&lt;8</Name><Direction isExplicit="0">in</Direction><Discussion><Para> aaa </Para></Discussion></Parameter></Parameters></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -533,9 +550,9 @@ void comment_to_html_conversion_30();
 // CHECK-NEXT:           (CXComment_Text Text=[ bbb]))))]
 
 /// \\ \@ \& \$ \# \< \> \% \" \. \::
-void comment_to_html_conversion_31();
+void comment_to_html_conversion_32();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_31:{{.*}} FullCommentAsHTML=[<p class="para-brief"> \ @ &amp; $ # &lt; &gt; % &quot; . ::</p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_31</Name><USR>c:@F@comment_to_html_conversion_31#</USR><Declaration>void comment_to_html_conversion_31()</Declaration><Abstract><Para> \ @ &amp; $ # &lt; &gt; % &quot; . ::</Para></Abstract></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_32:{{.*}} FullCommentAsHTML=[<p class="para-brief"> \ @ &amp; $ # &lt; &gt; % &quot; . ::</p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_32</Name><USR>c:@F@comment_to_html_conversion_32#</USR><Declaration>void comment_to_html_conversion_32()</Declaration><Abstract><Para> \ @ &amp; $ # &lt; &gt; % &quot; . ::</Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -563,9 +580,9 @@ void comment_to_html_conversion_31();
 // CHECK-NEXT:         (CXComment_Text Text=[::])))]
 
 /// &amp; &lt; &gt; &quot; &apos; &#109;&#101;&#111;&#119; &#x6d;&#x65;&#x6F;&#X77;
-void comment_to_html_conversion_32();
+void comment_to_html_conversion_33();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_32:{{.*}} FullCommentAsHTML=[<p class="para-brief"> &amp; &lt; &gt; &quot; &#39; meow meow</p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_32</Name><USR>c:@F@comment_to_html_conversion_32#</USR><Declaration>void comment_to_html_conversion_32()</Declaration><Abstract><Para> &amp; &lt; &gt; &quot; &apos; meow  meow</Para></Abstract></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_33:{{.*}} FullCommentAsHTML=[<p class="para-brief"> &amp; &lt; &gt; &quot; &#39; meow meow</p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_33</Name><USR>c:@F@comment_to_html_conversion_33#</USR><Declaration>void comment_to_html_conversion_33()</Declaration><Abstract><Para> &amp; &lt; &gt; &quot; &apos; meow  meow</Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -591,9 +608,9 @@ void comment_to_html_conversion_32();
 // CHECK-NEXT:         (CXComment_Text Text=[w])))]
 
 /// <em>0&lt;i</em>
-void comment_to_html_conversion_33();
+void comment_to_html_conversion_34();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_33:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>0&lt;i</em></p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_33</Name><USR>c:@F@comment_to_html_conversion_33#</USR><Declaration>void comment_to_html_conversion_33()</Declaration><Abstract><Para> <rawHTML><![CDATA[<em>]]></rawHTML>0&lt;i<rawHTML>&lt;/em&gt;</rawHTML></Para></Abstract></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_34:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>0&lt;i</em></p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_34</Name><USR>c:@F@comment_to_html_conversion_34#</USR><Declaration>void comment_to_html_conversion_34()</Declaration><Abstract><Para> <rawHTML><![CDATA[<em>]]></rawHTML>0&lt;i<rawHTML>&lt;/em&gt;</rawHTML></Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -611,9 +628,9 @@ void comment_to_html_conversion_33();
 /// &nbsp; a non breakable space.
 /// &Delta; Greek letter Delta Δ.
 /// &Gamma; Greek letter Gamma Γ.
-void comment_to_html_conversion_34();
+void comment_to_html_conversion_35();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_34:{{.*}} FullCommentAsHTML=[<p class="para-brief"> © the copyright symbol ™ the trade mark symbol ® the registered trade mark symbol   a non breakable space. Δ Greek letter Delta Δ. Γ Greek letter Gamma Γ.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_34</Name><USR>c:@F@comment_to_html_conversion_34#</USR><Declaration>void comment_to_html_conversion_34()</Declaration><Abstract><Para> © the copyright symbol ™ the trade mark symbol ® the registered trade mark symbol   a non breakable space. Δ Greek letter Delta Δ. Γ Greek letter Gamma Γ.</Para></Abstract></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_35:{{.*}} FullCommentAsHTML=[<p class="para-brief"> © the copyright symbol ™ the trade mark symbol ® the registered trade mark symbol   a non breakable space. Δ Greek letter Delta Δ. Γ Greek letter Gamma Γ.</p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_35</Name><USR>c:@F@comment_to_html_conversion_35#</USR><Declaration>void comment_to_html_conversion_35()</Declaration><Abstract><Para> © the copyright symbol ™ the trade mark symbol ® the registered trade mark symbol   a non breakable space. Δ Greek letter Delta Δ. Γ Greek letter Gamma Γ.</Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph

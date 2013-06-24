@@ -268,7 +268,7 @@ unsigned clang_ParamCommandComment_isParamIndexValid(CXComment CXC) {
 
 unsigned clang_ParamCommandComment_getParamIndex(CXComment CXC) {
   const ParamCommandComment *PCC = getASTNodeAs<ParamCommandComment>(CXC);
-  if (!PCC || !PCC->isParamIndexValid())
+  if (!PCC || !PCC->isParamIndexValid() || PCC->isVarArgParam())
     return ParamCommandComment::InvalidParamIndex;
 
   return PCC->getParamIndex();
@@ -358,19 +358,27 @@ CXString clang_VerbatimLineComment_getText(CXComment CXC) {
 
 namespace {
 
-/// This comparison will sort parameters with valid index by index and
-/// invalid (unresolved) parameters last.
+/// This comparison will sort parameters with valid index by index, then vararg
+/// parameters, and invalid (unresolved) parameters last.
 class ParamCommandCommentCompareIndex {
 public:
   bool operator()(const ParamCommandComment *LHS,
                   const ParamCommandComment *RHS) const {
     unsigned LHSIndex = UINT_MAX;
     unsigned RHSIndex = UINT_MAX;
-    if (LHS->isParamIndexValid())
-      LHSIndex = LHS->getParamIndex();
-    if (RHS->isParamIndexValid())
-      RHSIndex = RHS->getParamIndex();
 
+    if (LHS->isParamIndexValid()) {
+      if (LHS->isVarArgParam())
+        LHSIndex = UINT_MAX - 1;
+      else
+        LHSIndex = LHS->getParamIndex();
+    }
+    if (RHS->isParamIndexValid()) {
+      if (RHS->isVarArgParam())
+        RHSIndex = UINT_MAX - 1;
+      else
+        RHSIndex = RHS->getParamIndex();
+    }
     return LHSIndex < RHSIndex;
   }
 };
@@ -671,10 +679,15 @@ void CommentASTToHTMLConverter::visitBlockCommandComment(
 void CommentASTToHTMLConverter::visitParamCommandComment(
                                   const ParamCommandComment *C) {
   if (C->isParamIndexValid()) {
-    Result << "<dt class=\"param-name-index-"
-           << C->getParamIndex()
-           << "\">";
-    appendToResultWithHTMLEscaping(C->getParamName(FC));
+    if (C->isVarArgParam()) {
+      Result << "<dt class=\"param-name-index-vararg\">";
+      appendToResultWithHTMLEscaping(C->getParamNameAsWritten());
+    } else {
+      Result << "<dt class=\"param-name-index-"
+             << C->getParamIndex()
+             << "\">";
+      appendToResultWithHTMLEscaping(C->getParamName(FC));
+    }
   } else {
     Result << "<dt class=\"param-name-index-invalid\">";
     appendToResultWithHTMLEscaping(C->getParamNameAsWritten());
@@ -682,9 +695,12 @@ void CommentASTToHTMLConverter::visitParamCommandComment(
   Result << "</dt>";
 
   if (C->isParamIndexValid()) {
-    Result << "<dd class=\"param-descr-index-"
-           << C->getParamIndex()
-           << "\">";
+    if (C->isVarArgParam())
+      Result << "<dd class=\"param-descr-index-vararg\">";
+    else
+      Result << "<dd class=\"param-descr-index-"
+             << C->getParamIndex()
+             << "\">";
   } else
     Result << "<dd class=\"param-descr-index-invalid\">";
 
@@ -1070,8 +1086,12 @@ void CommentASTToXMLConverter::visitParamCommandComment(const ParamCommandCommen
                                                        : C->getParamNameAsWritten());
   Result << "</Name>";
 
-  if (C->isParamIndexValid())
-    Result << "<Index>" << C->getParamIndex() << "</Index>";
+  if (C->isParamIndexValid()) {
+    if (C->isVarArgParam())
+      Result << "<IsVarArg />";
+    else
+      Result << "<Index>" << C->getParamIndex() << "</Index>";
+  }
 
   Result << "<Direction isExplicit=\"" << C->isDirectionExplicit() << "\">";
   switch (C->getDirection()) {
