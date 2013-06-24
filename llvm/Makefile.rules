@@ -691,9 +691,9 @@ ifdef UNIVERSAL
     UNIVERSAL_ARCH := i386 ppc
   endif
   UNIVERSAL_ARCH_OPTIONS := $(UNIVERSAL_ARCH:%=-arch %)
-  CompileCommonOpts += $(UNIVERSAL_ARCH_OPTIONS)
+  TargetCommonOpts += $(UNIVERSAL_ARCH_OPTIONS)
   ifdef UNIVERSAL_SDK_PATH
-    CompileCommonOpts += -isysroot $(UNIVERSAL_SDK_PATH)
+    TargetCommonOpts += -isysroot $(UNIVERSAL_SDK_PATH)
   endif
 
   # Building universal cannot compute dependencies automatically.
@@ -755,8 +755,7 @@ Preprocess.CXX= $(Compile.Wrapper) \
 	          $(CXX) $(CPP.Flags) $(TargetCommonOpts) $(CPPFLAGS) \
                 $(CompileCommonOpts) $(CXX.Flags) -E
 Link          = $(Compile.Wrapper) \
-	          $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) $(LD.Flags) \
-                $(LDFLAGS) $(TargetCommonOpts)  $(CompileCommonOpts) $(Strip)
+	          $(CXX) $(LD.Flags) $(LDFLAGS) $(TargetCommonOpts) $(Strip)
 
 BCCompile.C   = $(LLVMCC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \
                 $(TargetCommonOpts) $(CompileCommonOpts)
