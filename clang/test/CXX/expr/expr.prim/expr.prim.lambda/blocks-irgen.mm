@@ -14,7 +14,7 @@ namespace PR12746 {
   }
 
   // CHECK: define internal zeroext i1 @___ZN7PR127462f1EPi_block_invoke
-  // CHECK: call zeroext i1 @"_ZNK7PR127462f132___ZN7PR127462f1EPi_block_invoke3$_0clEv"
+  // CHECK: call zeroext i1 @"_ZNK23__block_prefix_internal3$_0clEv"
 
   bool f2(int *x) {
     auto outer = [&]() -> bool {

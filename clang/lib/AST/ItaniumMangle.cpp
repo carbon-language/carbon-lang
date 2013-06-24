@@ -1416,12 +1416,15 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC, bool NoFunction) {
     return;
 
   if (const BlockDecl *Block = dyn_cast<BlockDecl>(DC)) {
-    manglePrefix(getEffectiveParentContext(DC), NoFunction);    
-    SmallString<64> Name;
-    llvm::raw_svector_ostream NameStream(Name);
-    Context.mangleBlock(Block, NameStream);
-    NameStream.flush();
-    Out << Name.size() << Name;
+    // The symbol we're adding a prefix for isn't externally
+    // visible; make up something sane.
+    // FIXME: This isn't always true!
+    SmallString<16> BlockPrefix;
+    BlockPrefix += "__block_prefix_internal";
+    unsigned Number = Context.getBlockId(Block, false);
+    if (Number > 1)
+      BlockPrefix += llvm::utostr_32(Number - 2);
+    Out << BlockPrefix.size() << BlockPrefix;
     return;
   } else if (isa<CapturedDecl>(DC)) {
     // Skip CapturedDecl context.
