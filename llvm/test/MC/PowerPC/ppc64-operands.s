@@ -85,3 +85,18 @@
 # CHECK: ld 1, -4(2)                     # encoding: [0xe8,0x22,0xff,0xfc]
          ld 1, -4(2)
 
+
+# Immediate branch operands
+
+# CHECK: b .+1024                        # encoding: [0x48,0x00,0x04,0x00]
+         b 1024
+
+# CHECK: ba 1024                         # encoding: [0x48,0x00,0x04,0x02]
+         ba 1024
+
+# CHECK: beq 0, .+1024                   # encoding: [0x41,0x82,0x04,0x00]
+         beq 1024
+
+# CHECK: beqa 0, 1024                    # encoding: [0x41,0x82,0x04,0x02]
+         beqa 1024
+

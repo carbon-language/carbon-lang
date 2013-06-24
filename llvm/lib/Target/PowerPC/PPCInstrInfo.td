@@ -445,19 +445,43 @@ def u16imm  : Operand<i32> {
   let PrintMethod = "printU16ImmOperand";
   let ParserMatchClass = PPCU16ImmAsmOperand;
 }
+def PPCDirectBrAsmOperand : AsmOperandClass {
+  let Name = "DirectBr"; let PredicateMethod = "isDirectBr";
+  let RenderMethod = "addBranchTargetOperands";
+}
 def directbrtarget : Operand<OtherVT> {
   let PrintMethod = "printBranchOperand";
   let EncoderMethod = "getDirectBrEncoding";
+  let ParserMatchClass = PPCDirectBrAsmOperand;
+}
+def absdirectbrtarget : Operand<OtherVT> {
+  let PrintMethod = "printAbsBranchOperand";
+  let EncoderMethod = "getAbsDirectBrEncoding";
+  let ParserMatchClass = PPCDirectBrAsmOperand;
+}
+def PPCCondBrAsmOperand : AsmOperandClass {
+  let Name = "CondBr"; let PredicateMethod = "isCondBr";
+  let RenderMethod = "addBranchTargetOperands";
 }
 def condbrtarget : Operand<OtherVT> {
   let PrintMethod = "printBranchOperand";
   let EncoderMethod = "getCondBrEncoding";
+  let ParserMatchClass = PPCCondBrAsmOperand;
+}
+def abscondbrtarget : Operand<OtherVT> {
+  let PrintMethod = "printAbsBranchOperand";
+  let EncoderMethod = "getAbsCondBrEncoding";
+  let ParserMatchClass = PPCCondBrAsmOperand;
 }
 def calltarget : Operand<iPTR> {
+  let PrintMethod = "printBranchOperand";
   let EncoderMethod = "getDirectBrEncoding";
+  let ParserMatchClass = PPCDirectBrAsmOperand;
 }
-def aaddr : Operand<iPTR> {
-  let PrintMethod = "printAbsAddrOperand";
+def abscalltarget : Operand<iPTR> {
+  let PrintMethod = "printAbsBranchOperand";
+  let EncoderMethod = "getAbsDirectBrEncoding";
+  let ParserMatchClass = PPCDirectBrAsmOperand;
 }
 def PPCCRBitMaskOperand : AsmOperandClass {
  let Name = "CRBitMask"; let PredicateMethod = "isCRBitMask";
@@ -872,6 +896,8 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
   def B   : IForm<18, 0, 0, (outs), (ins directbrtarget:$dst),
                   "b $dst", BrB,
                   [(br bb:$dst)]>;
+  def BA  : IForm<18, 1, 0, (outs), (ins absdirectbrtarget:$dst),
+                  "ba $dst", BrB, []>;
   }
 
   // BCC represents an arbitrary conditional branch on a predicate.
@@ -881,6 +907,9 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
     def BCC : BForm<16, 0, 0, (outs), (ins pred:$cond, condbrtarget:$dst),
                     "b${cond:cc} ${cond:reg}, $dst"
                     /*[(PPCcondbranch crrc:$crS, imm:$opc, bb:$dst)]*/>;
+    def BCCA : BForm<16, 1, 0, (outs), (ins pred:$cond, abscondbrtarget:$dst),
+                     "b${cond:cc}a ${cond:reg}, $dst">;
+
     let isReturn = 1, Uses = [LR, RM] in
     def BCLR : XLForm_2_br<19, 16, 0, (outs), (ins pred:$cond),
                            "b${cond:cc}lr ${cond:reg}", BrB, []>;
@@ -898,6 +927,10 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
                        "bdz $dst">;
     def BDNZ : BForm_1<16, 16, 0, 0, (outs), (ins condbrtarget:$dst),
                        "bdnz $dst">;
+    def BDZA  : BForm_1<16, 18, 1, 0, (outs), (ins abscondbrtarget:$dst),
+                        "bdza $dst">;
+    def BDNZA : BForm_1<16, 16, 1, 0, (outs), (ins abscondbrtarget:$dst),
+                        "bdnza $dst">;
   }
 }
 
@@ -914,12 +947,15 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR] in {
   let Uses = [RM] in {
     def BL  : IForm<18, 0, 1, (outs), (ins calltarget:$func),
                     "bl $func", BrB, []>;  // See Pat patterns below.
-    def BLA : IForm<18, 1, 1, (outs), (ins aaddr:$func),
+    def BLA : IForm<18, 1, 1, (outs), (ins abscalltarget:$func),
                     "bla $func", BrB, [(PPCcall (i32 imm:$func))]>;
 
-    let isCodeGenOnly = 1 in
-    def BCCL : BForm<16, 0, 1, (outs), (ins pred:$cond, condbrtarget:$dst),
-                     "b${cond:cc}l ${cond:reg}, $dst">;
+    let isCodeGenOnly = 1 in {
+      def BCCL : BForm<16, 0, 1, (outs), (ins pred:$cond, condbrtarget:$dst),
+                       "b${cond:cc}l ${cond:reg}, $dst">;
+      def BCCLA : BForm<16, 1, 1, (outs), (ins pred:$cond, abscondbrtarget:$dst),
+                        "b${cond:cc}la ${cond:reg}, $dst">;
+    }
   }
   let Uses = [CTR, RM] in {
     def BCTRL : XLForm_2_ext<19, 528, 20, 0, 1, (outs), (ins),
@@ -943,6 +979,10 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR] in {
                         "bdzl $dst">;
     def BDNZL : BForm_1<16, 16, 0, 1, (outs), (ins condbrtarget:$dst),
                         "bdnzl $dst">;
+    def BDZLA  : BForm_1<16, 18, 1, 1, (outs), (ins abscondbrtarget:$dst),
+                         "bdzla $dst">;
+    def BDNZLA : BForm_1<16, 16, 1, 1, (outs), (ins abscondbrtarget:$dst),
+                         "bdnzla $dst">;
   }
   let Defs = [CTR], Uses = [CTR, LR, RM] in {
     def BDZLRL  : XLForm_2_ext<19, 16, 18, 0, 1, (outs), (ins),
@@ -960,7 +1000,7 @@ def TCRETURNdi :Pseudo< (outs),
 
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [RM] in
-def TCRETURNai :Pseudo<(outs), (ins aaddr:$func, i32imm:$offset),
+def TCRETURNai :Pseudo<(outs), (ins abscalltarget:$func, i32imm:$offset),
                  "#TC_RETURNa $func $offset",
                  [(PPCtc_return (i32 imm:$func), imm:$offset)]>;
 
@@ -977,21 +1017,19 @@ let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7, isBranch = 1,
 def TAILBCTR : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>,
      Requires<[In32BitMode]>;
 
-
-
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7,
     isBarrier = 1, isCall = 1, isReturn = 1, Uses = [RM] in
 def TAILB   : IForm<18, 0, 0, (outs), (ins calltarget:$dst),
                   "b $dst", BrB,
                   []>;
 
-}
-
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7,
     isBarrier = 1, isCall = 1, isReturn = 1, Uses = [RM] in
-def TAILBA   : IForm<18, 0, 0, (outs), (ins aaddr:$dst),
+def TAILBA   : IForm<18, 0, 0, (outs), (ins abscalltarget:$dst),
                   "ba $dst", BrB,
                   []>;
+
+}
 
 let hasSideEffects = 1, isBarrier = 1, usesCustomInserter = 1 in {
   def EH_SjLj_SetJmp32  : Pseudo<(outs gprc:$dst), (ins memr:$buf),
@@ -2197,6 +2235,11 @@ multiclass BranchExtendedMnemonic<string name, int bibo> {
   def : InstAlias<"b"#name#" $dst",
                   (BCC bibo, CR0, condbrtarget:$dst)>;
 
+  def : InstAlias<"b"#name#"a $cc, $dst",
+                  (BCCA bibo, crrc:$cc, abscondbrtarget:$dst)>;
+  def : InstAlias<"b"#name#"a $dst",
+                  (BCCA bibo, CR0, abscondbrtarget:$dst)>;
+
   def : InstAlias<"b"#name#"lr $cc",
                   (BCLR bibo, crrc:$cc)>;
   def : InstAlias<"b"#name#"lr",
@@ -2211,6 +2254,11 @@ multiclass BranchExtendedMnemonic<string name, int bibo> {
                   (BCCL bibo, crrc:$cc, condbrtarget:$dst)>;
   def : InstAlias<"b"#name#"l $dst",
                   (BCCL bibo, CR0, condbrtarget:$dst)>;
+
+  def : InstAlias<"b"#name#"la $cc, $dst",
+                  (BCCLA bibo, crrc:$cc, abscondbrtarget:$dst)>;
+  def : InstAlias<"b"#name#"la $dst",
+                  (BCCLA bibo, CR0, abscondbrtarget:$dst)>;
 
   def : InstAlias<"b"#name#"lrl $cc",
                   (BCLRL bibo, crrc:$cc)>;

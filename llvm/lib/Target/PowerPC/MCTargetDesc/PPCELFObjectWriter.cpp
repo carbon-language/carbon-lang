@@ -58,9 +58,11 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
     default:
       llvm_unreachable("Unimplemented");
     case PPC::fixup_ppc_br24:
+    case PPC::fixup_ppc_br24abs:
       Type = ELF::R_PPC_REL24;
       break;
     case PPC::fixup_ppc_brcond14:
+    case PPC::fixup_ppc_brcond14abs:
       Type = ELF::R_PPC_REL14;
       break;
     case PPC::fixup_ppc_half16:
@@ -92,10 +94,10 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
   } else {
     switch ((unsigned)Fixup.getKind()) {
       default: llvm_unreachable("invalid fixup kind!");
-    case PPC::fixup_ppc_br24:
+    case PPC::fixup_ppc_br24abs:
       Type = ELF::R_PPC_ADDR24;
       break;
-    case PPC::fixup_ppc_brcond14:
+    case PPC::fixup_ppc_brcond14abs:
       Type = ELF::R_PPC_ADDR14; // XXX: or BRNTAKEN?_
       break;
     case PPC::fixup_ppc_half16:

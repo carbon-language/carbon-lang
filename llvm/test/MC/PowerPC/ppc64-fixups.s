@@ -4,6 +4,26 @@
 # RUN: llvm-mc -triple powerpc64-unknown-unknown -filetype=obj %s | \
 # RUN: llvm-readobj -r | FileCheck %s -check-prefix=REL
 
+# CHECK: b target                        # encoding: [0b010010AA,A,A,0bAAAAAA00]
+# CHECK-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_br24
+# CHECK-REL:                             0x{{[0-9A-F]*[048C]}} R_PPC64_REL24 target 0x0
+         b target
+
+# CHECK: ba target                       # encoding: [0b010010AA,A,A,0bAAAAAA10]
+# CHECK-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_br24abs
+# CHECK-REL:                             0x{{[0-9A-F]*[048C]}} R_PPC64_ADDR24 target 0x0
+         ba target
+
+# CHECK: beq 0, target                   # encoding: [0x41,0x82,A,0bAAAAAA00]
+# CHECK-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_brcond14
+# CHECK-REL:                             0x{{[0-9A-F]*[048C]}} R_PPC64_REL14 target 0x0
+         beq target
+
+# CHECK: beqa 0, target                  # encoding: [0x41,0x82,A,0bAAAAAA10]
+# CHECK-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_brcond14abs
+# CHECK-REL:                             0x{{[0-9A-F]*[048C]}} R_PPC64_ADDR14 target 0x0
+         beqa target
+
 
 # FIXME: .TOC.@tocbase
 

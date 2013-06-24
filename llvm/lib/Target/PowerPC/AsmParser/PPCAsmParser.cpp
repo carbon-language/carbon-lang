@@ -267,6 +267,12 @@ public:
   bool isS16ImmX4() const { return Kind == Expression ||
                                    (Kind == Immediate && isInt<16>(getImm()) &&
                                     (getImm() & 3) == 0); }
+  bool isDirectBr() const { return Kind == Expression ||
+                                   (Kind == Immediate && isInt<26>(getImm()) &&
+                                    (getImm() & 3) == 0); }
+  bool isCondBr() const { return Kind == Expression ||
+                                 (Kind == Immediate && isInt<16>(getImm()) &&
+                                  (getImm() & 3) == 0); }
   bool isRegNumber() const { return Kind == Immediate && isUInt<5>(getImm()); }
   bool isCCRegNumber() const { return Kind == Immediate &&
                                       isUInt<3>(getImm()); }
@@ -347,6 +353,14 @@ public:
     assert(N == 1 && "Invalid number of operands!");
     if (Kind == Immediate)
       Inst.addOperand(MCOperand::CreateImm(getImm()));
+    else
+      Inst.addOperand(MCOperand::CreateExpr(getExpr()));
+  }
+
+  void addBranchTargetOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    if (Kind == Immediate)
+      Inst.addOperand(MCOperand::CreateImm(getImm() / 4));
     else
       Inst.addOperand(MCOperand::CreateExpr(getExpr()));
   }

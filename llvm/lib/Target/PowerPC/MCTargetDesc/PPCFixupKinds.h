@@ -25,6 +25,14 @@ enum Fixups {
   /// branches.
   fixup_ppc_brcond14,
   
+  /// fixup_ppc_br24abs - 24-bit absolute relocation for direct branches
+  /// like 'ba' and 'bla'.
+  fixup_ppc_br24abs,
+
+  /// fixup_ppc_brcond14abs - 14-bit absolute relocation for conditional
+  /// branches.
+  fixup_ppc_brcond14abs,
+
   /// fixup_ppc_half16 - A 16-bit fixup corresponding to lo16(_foo)
   /// or ha16(_foo) for instrs like 'li' or 'addis'.
   fixup_ppc_half16,

@@ -102,7 +102,7 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR8] in {
     def BL8  : IForm<18, 0, 1, (outs), (ins calltarget:$func),
                      "bl $func", BrB, []>;  // See Pat patterns below.
 
-    def BLA8 : IForm<18, 1, 1, (outs), (ins aaddr:$func),
+    def BLA8 : IForm<18, 1, 1, (outs), (ins abscalltarget:$func),
                      "bla $func", BrB, [(PPCcall (i64 imm:$func))]>;
   }
   let Uses = [RM], isCodeGenOnly = 1 in {
@@ -119,7 +119,7 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR8] in {
                                   "bl $func($sym)\n\tnop", BrB, []>;
 
     def BLA8_NOP : IForm_and_DForm_4_zero<18, 1, 1, 24,
-                             (outs), (ins aaddr:$func),
+                             (outs), (ins abscalltarget:$func),
                              "bla $func\n\tnop", BrB,
                              [(PPCcall_nop (i64 imm:$func))]>;
   }
@@ -198,7 +198,7 @@ def TCRETURNdi8 :Pseudo< (outs),
                  []>;
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [RM] in
-def TCRETURNai8 :Pseudo<(outs), (ins aaddr:$func, i32imm:$offset),
+def TCRETURNai8 :Pseudo<(outs), (ins abscalltarget:$func, i32imm:$offset),
                  "#TC_RETURNa8 $func $offset",
                  [(PPCtc_return (i64 imm:$func), imm:$offset)]>;
 
@@ -224,7 +224,7 @@ def TAILB8   : IForm<18, 0, 0, (outs), (ins calltarget:$dst),
 
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7,
     isBarrier = 1, isCall = 1, isReturn = 1, Uses = [RM] in
-def TAILBA8   : IForm<18, 0, 0, (outs), (ins aaddr:$dst),
+def TAILBA8   : IForm<18, 0, 0, (outs), (ins abscalltarget:$dst),
                   "ba $dst", BrB,
                   []>;
 

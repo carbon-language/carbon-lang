@@ -63,6 +63,9 @@ namespace {
     unsigned get_crbitm_encoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getDirectBrEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getCondBrEncoding(const MachineInstr &MI, unsigned OpNo) const;
+    unsigned getAbsDirectBrEncoding(const MachineInstr &MI,
+                                    unsigned OpNo) const;
+    unsigned getAbsCondBrEncoding(const MachineInstr &MI, unsigned OpNo) const;
 
     unsigned getS16ImmEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getMemRIEncoding(const MachineInstr &MI, unsigned OpNo) const;
@@ -191,6 +194,19 @@ unsigned PPCCodeEmitter::getCondBrEncoding(const MachineInstr &MI,
   const MachineOperand &MO = MI.getOperand(OpNo);
   MCE.addRelocation(GetRelocation(MO, PPC::reloc_pcrel_bcx));
   return 0;
+}
+
+unsigned PPCCodeEmitter::getAbsDirectBrEncoding(const MachineInstr &MI,
+                                                unsigned OpNo) const {
+  const MachineOperand &MO = MI.getOperand(OpNo);
+  if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO);
+
+  llvm_unreachable("Absolute branch relocations unsupported on the old JIT.");
+}
+
+unsigned PPCCodeEmitter::getAbsCondBrEncoding(const MachineInstr &MI,
+                                              unsigned OpNo) const {
+  llvm_unreachable("Absolute branch relocations unsupported on the old JIT.");
 }
 
 unsigned PPCCodeEmitter::getS16ImmEncoding(const MachineInstr &MI,

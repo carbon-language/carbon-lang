@@ -8,11 +8,15 @@
 # CHECK: b target                        # encoding: [0b010010AA,A,A,0bAAAAAA00]
 # CHECK-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_br24
          b target
-# FIXME: ba target
+# CHECK: ba target                       # encoding: [0b010010AA,A,A,0bAAAAAA10]
+# CHECK-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_br24abs
+         ba target
 # CHECK: bl target                       # encoding: [0b010010AA,A,A,0bAAAAAA01]
 # CHECK-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_br24
          bl target
-# FIXME: bla target
+# CHECK: bla target                      # encoding: [0b010010AA,A,A,0bAAAAAA11]
+# CHECK-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_br24abs
+         bla target
 
 # FIXME: bc 4, 10, target
 # FIXME: bca 4, 10, target
