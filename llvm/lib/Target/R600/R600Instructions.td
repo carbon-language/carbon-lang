@@ -126,7 +126,7 @@ class R600_1OP_Helper <bits<11> inst, string opName, SDPatternOperator node,
               [(set R600_Reg32:$dst, (node R600_Reg32:$src0))]
 >;
 
-// If you add our change the operands for R600_2OP instructions, you must
+// If you add or change the operands for R600_2OP instructions, you must
 // also update the R600Op2OperandIndex::ROI enum in R600Defines.h,
 // R600InstrInfo::buildDefaultInstruction(), and R600InstrInfo::getOperandIdx().
 class R600_2OP <bits<11> inst, string opName, list<dag> pattern,
