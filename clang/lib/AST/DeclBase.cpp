@@ -1012,13 +1012,38 @@ ExternalASTSource::SetExternalVisibleDeclsForName(const DeclContext *DC,
     Map = DC->CreateStoredDeclsMap(Context);
 
   StoredDeclsList &List = (*Map)[Name];
-  for (ArrayRef<NamedDecl*>::iterator
-         I = Decls.begin(), E = Decls.end(); I != E; ++I) {
-    if (List.isNull())
-      List.setOnlyValue(*I);
-    else
-      // FIXME: Need declarationReplaces handling for redeclarations in modules.
-      List.AddSubsequentDecl(*I);
+
+  // Clear out any old external visible declarations, to avoid quadratic
+  // performance in the redeclaration checks below.
+  List.removeExternalDecls();
+
+  if (!List.isNull()) {
+    // We have both existing declarations and new declarations for this name.
+    // Some of the declarations may simply replace existing ones. Handle those
+    // first.
+    llvm::SmallVector<unsigned, 8> Skip;
+    for (unsigned I = 0, N = Decls.size(); I != N; ++I)
+      if (List.HandleRedeclaration(Decls[I]))
+        Skip.push_back(I);
+    Skip.push_back(Decls.size());
+
+    // Add in any new declarations.
+    unsigned SkipPos = 0;
+    for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
+      if (I == Skip[SkipPos])
+        ++SkipPos;
+      else
+        List.AddSubsequentDecl(Decls[I]);
+    }
+  } else {
+    // Convert the array to a StoredDeclsList.
+    for (ArrayRef<NamedDecl*>::iterator
+           I = Decls.begin(), E = Decls.end(); I != E; ++I) {
+      if (List.isNull())
+        List.setOnlyValue(*I);
+      else
+        List.AddSubsequentDecl(*I);
+    }
   }
 
   return List.getLookupResult();
