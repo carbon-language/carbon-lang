@@ -1550,6 +1550,7 @@ public:
 
   LLVM_ATTRIBUTE_USED void dumpDeclContext() const;
   LLVM_ATTRIBUTE_USED void dumpLookups() const;
+  LLVM_ATTRIBUTE_USED void dumpLookups(llvm::raw_ostream &OS) const;
 
 private:
   void reconcileExternalVisibleStorage();

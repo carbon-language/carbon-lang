@@ -2031,13 +2031,15 @@ void Decl::dumpColor() const {
 }
 
 void DeclContext::dumpLookups() const {
+  dumpLookups(llvm::errs());
+}
+
+void DeclContext::dumpLookups(raw_ostream &OS) const {
   const DeclContext *DC = this;
   while (!DC->isTranslationUnit())
     DC = DC->getParent();
   ASTContext &Ctx = cast<TranslationUnitDecl>(DC)->getASTContext();
-
-  ASTDumper P(llvm::errs(), &Ctx.getCommentCommandTraits(),
-              &Ctx.getSourceManager());
+  ASTDumper P(OS, &Ctx.getCommentCommandTraits(), &Ctx.getSourceManager());
   P.dumpLookups(this);
 }
 

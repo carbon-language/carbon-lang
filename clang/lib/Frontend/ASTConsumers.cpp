@@ -37,20 +37,15 @@ namespace {
 
   public:
     ASTPrinter(raw_ostream *Out = NULL, bool Dump = false,
-               StringRef FilterString = "")
+               StringRef FilterString = "", bool DumpLookups = false)
         : Out(Out ? *Out : llvm::outs()), Dump(Dump),
-          FilterString(FilterString) {}
+          FilterString(FilterString), DumpLookups(DumpLookups) {}
 
     virtual void HandleTranslationUnit(ASTContext &Context) {
       TranslationUnitDecl *D = Context.getTranslationUnitDecl();
 
-      if (FilterString.empty()) {
-        if (Dump)
-          D->dump(Out);
-        else
-          D->print(Out, /*Indentation=*/0, /*PrintInstantiation=*/true);
-        return;
-      }
+      if (FilterString.empty())
+        return print(D);
 
       TraverseDecl(D);
     }
@@ -65,10 +60,7 @@ namespace {
         Out << (Dump ? "Dumping " : "Printing ") << getName(D) << ":\n";
         if (ShowColors)
           Out.resetColor();
-        if (Dump)
-          D->dump(Out);
-        else
-          D->print(Out, /*Indentation=*/0, /*PrintInstantiation=*/true);
+        print(D);
         Out << "\n";
         // Don't traverse child nodes to avoid output duplication.
         return true;
@@ -85,10 +77,22 @@ namespace {
     bool filterMatches(Decl *D) {
       return getName(D).find(FilterString) != std::string::npos;
     }
+    void print(Decl *D) {
+      if (DumpLookups) {
+        if (DeclContext *DC = dyn_cast<DeclContext>(D))
+          DC->dumpLookups(Out);
+        else
+          Out << "Not a DeclContext\n";
+      } else if (Dump)
+        D->dump(Out);
+      else
+        D->print(Out, /*Indentation=*/0, /*PrintInstantiation=*/true);
+    }
 
     raw_ostream &Out;
     bool Dump;
     std::string FilterString;
+    bool DumpLookups;
   };
 
   class ASTDeclNodeLister : public ASTConsumer,
@@ -119,8 +123,8 @@ ASTConsumer *clang::CreateASTPrinter(raw_ostream *Out,
   return new ASTPrinter(Out, /*Dump=*/ false, FilterString);
 }
 
-ASTConsumer *clang::CreateASTDumper(StringRef FilterString) {
-  return new ASTPrinter(0, /*Dump=*/ true, FilterString);
+ASTConsumer *clang::CreateASTDumper(StringRef FilterString, bool DumpLookups) {
+  return new ASTPrinter(0, /*Dump=*/ true, FilterString, DumpLookups);
 }
 
 ASTConsumer *clang::CreateASTDeclNodeLister() {

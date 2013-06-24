@@ -54,7 +54,8 @@ ASTConsumer *ASTPrintAction::CreateASTConsumer(CompilerInstance &CI,
 
 ASTConsumer *ASTDumpAction::CreateASTConsumer(CompilerInstance &CI,
                                               StringRef InFile) {
-  return CreateASTDumper(CI.getFrontendOpts().ASTDumpFilter);
+  return CreateASTDumper(CI.getFrontendOpts().ASTDumpFilter,
+                         CI.getFrontendOpts().ASTDumpLookups);
 }
 
 ASTConsumer *ASTDeclListAction::CreateASTConsumer(CompilerInstance &CI,
