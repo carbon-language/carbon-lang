@@ -1831,33 +1831,56 @@
 # Rotate and shift mnemonics
 
 # FIXME: extldi 2, 3, 4, 5
+# FIXME: extldi. 2, 3, 4, 5
 # FIXME: extrdi 2, 3, 4, 5
+# FIXME: extrdi. 2, 3, 4, 5
 # FIXME: insrdi 2, 3, 4, 5
+# FIXME: insrdi. 2, 3, 4, 5
 # FIXME: rotldi 2, 3, 4
+# FIXME: rotldi. 2, 3, 4
 # FIXME: rotrdi 2, 3, 4
+# FIXME: rotrdi. 2, 3, 4
 # FIXME: rotld 2, 3, 4
+# FIXME: rotld. 2, 3, 4
 # CHECK: sldi 2, 3, 4                    # encoding: [0x78,0x62,0x26,0xe4]
          sldi 2, 3, 4
+# FIXME: sldi. 2, 3, 4
 # CHECK: rldicl 2, 3, 60, 4              # encoding: [0x78,0x62,0xe1,0x02]
          srdi 2, 3, 4
+# FIXME: srdi. 2, 3, 4
 # FIXME: clrldi 2, 3, 4
+# FIXME: clrldi. 2, 3, 4
 # FIXME: clrrdi 2, 3, 4
+# FIXME: clrrdi. 2, 3, 4
 # FIXME: clrlsldi 2, 3, 4, 5
+# FIXME: clrlsldi. 2, 3, 4, 5
 
 # FIXME: extlwi 2, 3, 4, 5
+# FIXME: extlwi. 2, 3, 4, 5
 # FIXME: extrwi 2, 3, 4, 5
+# FIXME: extrwi. 2, 3, 4, 5
 # FIXME: inslwi 2, 3, 4, 5
+# FIXME: inslwi. 2, 3, 4, 5
 # FIXME: insrwi 2, 3, 4, 5
+# FIXME: insrwi. 2, 3, 4, 5
 # FIXME: rotlwi 2, 3, 4
+# FIXME: rotlwi. 2, 3, 4
 # FIXME: rotrwi 2, 3, 4
+# FIXME: rotrwi. 2, 3, 4
 # FIXME: rotlw 2, 3, 4
+# FIXME: rotlw. 2, 3, 4
 # CHECK: slwi 2, 3, 4                    # encoding: [0x54,0x62,0x20,0x36]
          slwi 2, 3, 4
+# FIXME: slwi. 2, 3, 4
 # CHECK: srwi 2, 3, 4                    # encoding: [0x54,0x62,0xe1,0x3e]
          srwi 2, 3, 4
+# FIXME: srwi. 2, 3, 4
 # FIXME: clrlwi 2, 3, 4
+# FIXME: clrlwi. 2, 3, 4
 # FIXME: clrrwi 2, 3, 4
+# FIXME: clrrwi. 2, 3, 4
 # FIXME: clrlslwi 2, 3, 4, 5
+# FIXME: clrlslwi. 2, 3, 4, 5
 
 # Move to/from special purpose register mnemonics
 
@@ -1884,5 +1907,7 @@
 # FIXME: la 2, 128(4)
 # CHECK: mr 2, 3                         # encoding: [0x7c,0x62,0x1b,0x78]
          mr 2, 3
+# FIXME: mr. 2, 3
 # FIXME: not 2, 3
+# FIXME: not. 2, 3
 
