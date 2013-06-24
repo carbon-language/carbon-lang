@@ -916,8 +916,11 @@ static DecodeStatus DecodetcGPRRegisterClass(MCInst &Inst, unsigned RegNo,
 
 static DecodeStatus DecoderGPRRegisterClass(MCInst &Inst, unsigned RegNo,
                                    uint64_t Address, const void *Decoder) {
-  if (RegNo == 13 || RegNo == 15) return MCDisassembler::Fail;
-  return DecodeGPRRegisterClass(Inst, RegNo, Address, Decoder);
+  DecodeStatus S = MCDisassembler::Success;
+  if (RegNo == 13 || RegNo == 15)
+    S = MCDisassembler::SoftFail;
+  Check(S, DecodeGPRRegisterClass(Inst, RegNo, Address, Decoder));
+  return S;
 }
 
 static const uint16_t SPRDecoderTable[] = {
