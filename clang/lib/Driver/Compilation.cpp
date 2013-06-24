@@ -17,7 +17,6 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/FileSystem.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
 #include <errno.h>
@@ -203,29 +202,33 @@ void Compilation::PrintDiagnosticJob(raw_ostream &OS, const Job &J) const {
 }
 
 bool Compilation::CleanupFile(const char *File, bool IssueErrors) const {
-  llvm::sys::Path P(File);
-  std::string Error;
+  std::string P(File);
+
+  // FIXME: Why are we trying to remove files that we have not created? For
+  // example we should only try to remove a temporary assembly file if
+  // "clang -cc1" succeed in writing it. Was this a workaround for when
+  // clang was writing directly to a .s file and sometimes leaving it behind
+  // during a failure?
+
+  // FIXME: If this is necessary, we can still try to split
+  // llvm::sys::fs::remove into a removeFile and a removeDir and avoid the
+  // duplicated stat from is_regular_file.
 
   // Don't try to remove files which we don't have write access to (but may be
   // able to remove), or non-regular files. Underlying tools may have
   // intentionally not overwritten them.
-  if (!llvm::sys::fs::can_write(File) || !P.isRegularFile())
+  if (!llvm::sys::fs::can_write(File) || !llvm::sys::fs::is_regular_file(File))
     return true;
 
-  if (P.eraseFromDisk(false, &Error)) {
-    // Failure is only failure if the file exists and is "regular". There is
-    // a race condition here due to the limited interface of
-    // llvm::sys::Path, we want to know if the removal gave ENOENT.
+  if (llvm::error_code EC = llvm::sys::fs::remove(File)) {
+    // Failure is only failure if the file exists and is "regular". We checked
+    // for it being regular before, and llvm::sys::fs::remove ignores ENOENT,
+    // so we don't need to check again.
     
-    // FIXME: Grumble, P.exists() is broken. PR3837.
-    struct stat buf;
-    if (::stat(P.c_str(), &buf) == 0 ? (buf.st_mode & S_IFMT) == S_IFREG :
-        (errno != ENOENT)) {
-      if (IssueErrors)
-        getDriver().Diag(clang::diag::err_drv_unable_to_remove_file)
-          << Error;
-      return false;
-    }
+    if (IssueErrors)
+      getDriver().Diag(clang::diag::err_drv_unable_to_remove_file)
+        << EC.message();
+    return false;
   }
   return true;
 }
