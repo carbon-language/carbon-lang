@@ -14,9 +14,11 @@ typedef struct objc_object {
   id firstobj;
   struct objc_class *isa;
 }
+- (id)performSelector:(SEL)aSelector;;
 @end
 @interface Whatever : NSObject
 +self;
+-(id)foo;
 @end
 
 static void func() {
@@ -94,4 +96,9 @@ void testBitmasking(NSObject *p) {
   (void) (0x1 & ((NSUInteger) p)); // expected-warning {{bitmasking for introspection of Objective-C object pointers is strongly discouraged}}
   (void) (((NSUInteger) p) ^ 0x1); // no-warning
   (void) (0x1 ^ ((NSUInteger) p)); // no-warning
+  (void) (0x1 & ((NSUInteger) [p performSelector:@selector(foo)])); // expected-warning {{bitmasking for introspection of Objective-C object pointers is strongly discouraged}}
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-objc-pointer-introspection-performSelector"
+  (void) (0x1 & ((NSUInteger) [p performSelector:@selector(foo)])); // no-warning
+#pragma clang diagnostic pop
 }
