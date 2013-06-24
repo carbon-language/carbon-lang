@@ -770,9 +770,9 @@ GenerateRegisterCheckPatternForLoadStores(const StringRef &NameRef,
     // a dup/lane instruction.
     if (IsLDSTOne) {
       if ((HasLanePostfix || HasDupPostfix) && OutTypeCode != "8") {
-        RegisterSuffix += ", :" + OutTypeCode;
+        RegisterSuffix += ":" + OutTypeCode;
       } else if (OutTypeCode == "64") {
-        RegisterSuffix += ", :64";
+        RegisterSuffix += ":64";
       }
     }
 
