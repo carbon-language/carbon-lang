@@ -349,7 +349,7 @@ EmulationStateARM::LoadStateFromDictionary (OptionValueDictionary *test_data)
         uint32_t num_elts = mem_array->GetSize();
         uint32_t address = (uint32_t) start_address;
         
-        for (int i = 0; i < num_elts; ++i)
+        for (uint32_t i = 0; i < num_elts; ++i)
         {
             value_sp = mem_array->GetValueAtIndex (i);
             if (value_sp.get() == NULL)

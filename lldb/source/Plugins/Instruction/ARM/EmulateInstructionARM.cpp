@@ -4092,8 +4092,8 @@ EmulateInstructionARM::EmulateSTM (const uint32_t opcode, const ARMEncoding enco
         GetRegisterInfo (eRegisterKindDWARF, dwarf_r0 + n, base_reg);
                   
         // for i = 0 to 14
-        int lowest_set_bit = 14;
-        for (int i = 0; i < 14; ++i)
+        uint32_t lowest_set_bit = 14;
+        for (uint32_t i = 0; i < 14; ++i)
         {
             // if registers<i> == '1' then
             if (BitIsSet (registers, i))
@@ -4217,8 +4217,8 @@ EmulateInstructionARM::EmulateSTMDA (const uint32_t opcode, const ARMEncoding en
         GetRegisterInfo (eRegisterKindDWARF, dwarf_r0 + n, base_reg);
                   
         // for i = 0 to 14 
-        int lowest_bit_set = 14;
-        for (int i = 0; i < 14; ++i)
+        uint32_t lowest_bit_set = 14;
+        for (uint32_t i = 0; i < 14; ++i)
         {
             // if registers<i> == '1' then
             if (BitIsSet (registers, i))
@@ -4369,7 +4369,7 @@ EmulateInstructionARM::EmulateSTMDB (const uint32_t opcode, const ARMEncoding en
                   
         // for i = 0 to 14
         uint32_t lowest_set_bit = 14;
-        for (int i = 0; i < 14; ++i)
+        for (uint32_t i = 0; i < 14; ++i)
         {
             // if registers<i> == '1' then
             if (BitIsSet (registers, i))
@@ -4494,7 +4494,7 @@ EmulateInstructionARM::EmulateSTMIB (const uint32_t opcode, const ARMEncoding en
                 
         uint32_t lowest_set_bit = 14;
         // for i = 0 to 14
-        for (int i = 0; i < 14; ++i)
+        for (uint32_t i = 0; i < 14; ++i)
         {
             // if registers<i> == '1' then
             if (BitIsSet (registers, i))
@@ -10940,7 +10940,7 @@ EmulateInstructionARM::EmulateVSTM (const uint32_t opcode, const ARMEncoding enc
 
         context.type = eContextRegisterStore;
         // for r = 0 to regs-1
-        for (int r = 0; r < regs; ++r)
+        for (uint32_t r = 0; r < regs; ++r)
         {
             
             if (single_regs)
@@ -11403,11 +11403,11 @@ EmulateInstructionARM::EmulateVLD1Multiple (const uint32_t opcode, ARMEncoding e
         }
         
         // for r = 0 to regs-1
-        for (int r = 0; r < regs; ++r)
+        for (uint32_t r = 0; r < regs; ++r)
         {
             // for e = 0 to elements-1
             uint64_t assembled_data = 0;
-            for (int e = 0; e < elements; ++e)
+            for (uint32_t e = 0; e < elements; ++e)
             {
                 // Elem[D[d+r],e,esize] = MemU[address,ebytes];
                 context.type = eContextRegisterLoad;
@@ -11742,7 +11742,7 @@ EmulateInstructionARM::EmulateVST1Multiple (const uint32_t opcode, ARMEncoding e
         RegisterInfo data_reg;
         context.type = eContextRegisterStore;
         // for r = 0 to regs-1
-        for (int r = 0; r < regs; ++r)
+        for (uint32_t r = 0; r < regs; ++r)
         {
             GetRegisterInfo (eRegisterKindDWARF, dwarf_d0 + d + r, data_reg);
             uint64_t register_data = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_d0 + d + r, 0, &success);
@@ -11750,7 +11750,7 @@ EmulateInstructionARM::EmulateVST1Multiple (const uint32_t opcode, ARMEncoding e
                 return false;
 
              // for e = 0 to elements-1
-            for (int e = 0; e < elements; ++e)
+            for (uint32_t e = 0; e < elements; ++e)
             {
                 // MemU[address,ebytes] = Elem[D[d+r],e,esize];
                 uint64_t word = Bits64 (register_data, ((e + 1) * esize) - 1, e * esize);
@@ -12046,11 +12046,11 @@ EmulateInstructionARM::EmulateVLD1SingleAll (const uint32_t opcode, const ARMEnc
         
         uint64_t replicated_element = 0;
         uint32_t esize = ebytes * 8;
-        for (int e = 0; e < elements; ++e)
+        for (uint32_t e = 0; e < elements; ++e)
             replicated_element = (replicated_element << esize) | Bits64 (word, esize - 1, 0);
 
         // for r = 0 to regs-1
-        for (int r = 0; r < regs; ++r)
+        for (uint32_t r = 0; r < regs; ++r)
         {
             // D[d+r] = replicated_element;
             if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_d0 + d + r, replicated_element))

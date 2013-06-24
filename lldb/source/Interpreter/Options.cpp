@@ -498,7 +498,7 @@ Options::GenerateOptionUsage
     if (num_options == 0)
         return;
         
-    int num_option_sets = GetRequiredOptions().size();
+    uint32_t num_option_sets = GetRequiredOptions().size();
     
     uint32_t i;
     
