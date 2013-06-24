@@ -25,7 +25,13 @@
 
 using namespace llvm;
 
-#define convolve(lhs, rhs) ((lhs) * 4 + (rhs))
+/// A macro used to combine two fcCategory enums into one key which can be used
+/// in a switch statement to classify how the interaction of two APFloat's
+/// categories affects an operation.
+///
+/// TODO: If clang source code is ever allowed to use constexpr in its own
+/// codebase, change this into a static inline function.
+#define PackCategoriesIntoKey(_lhs, _rhs) ((_lhs) * 4 + (_rhs))
 
 /* Assumed in hexadecimal significand parsing, and conversion to
    hexadecimal strings.  */
@@ -1345,42 +1351,42 @@ APFloat::normalize(roundingMode rounding_mode,
 APFloat::opStatus
 APFloat::addOrSubtractSpecials(const APFloat &rhs, bool subtract)
 {
-  switch (convolve(category, rhs.category)) {
+  switch (PackCategoriesIntoKey(category, rhs.category)) {
   default:
     llvm_unreachable(0);
 
-  case convolve(fcNaN, fcZero):
-  case convolve(fcNaN, fcNormal):
-  case convolve(fcNaN, fcInfinity):
-  case convolve(fcNaN, fcNaN):
-  case convolve(fcNormal, fcZero):
-  case convolve(fcInfinity, fcNormal):
-  case convolve(fcInfinity, fcZero):
+  case PackCategoriesIntoKey(fcNaN, fcZero):
+  case PackCategoriesIntoKey(fcNaN, fcNormal):
+  case PackCategoriesIntoKey(fcNaN, fcInfinity):
+  case PackCategoriesIntoKey(fcNaN, fcNaN):
+  case PackCategoriesIntoKey(fcNormal, fcZero):
+  case PackCategoriesIntoKey(fcInfinity, fcNormal):
+  case PackCategoriesIntoKey(fcInfinity, fcZero):
     return opOK;
 
-  case convolve(fcZero, fcNaN):
-  case convolve(fcNormal, fcNaN):
-  case convolve(fcInfinity, fcNaN):
+  case PackCategoriesIntoKey(fcZero, fcNaN):
+  case PackCategoriesIntoKey(fcNormal, fcNaN):
+  case PackCategoriesIntoKey(fcInfinity, fcNaN):
     category = fcNaN;
     copySignificand(rhs);
     return opOK;
 
-  case convolve(fcNormal, fcInfinity):
-  case convolve(fcZero, fcInfinity):
+  case PackCategoriesIntoKey(fcNormal, fcInfinity):
+  case PackCategoriesIntoKey(fcZero, fcInfinity):
     category = fcInfinity;
     sign = rhs.sign ^ subtract;
     return opOK;
 
-  case convolve(fcZero, fcNormal):
+  case PackCategoriesIntoKey(fcZero, fcNormal):
     assign(rhs);
     sign = rhs.sign ^ subtract;
     return opOK;
 
-  case convolve(fcZero, fcZero):
+  case PackCategoriesIntoKey(fcZero, fcZero):
     /* Sign depends on rounding mode; handled by caller.  */
     return opOK;
 
-  case convolve(fcInfinity, fcInfinity):
+  case PackCategoriesIntoKey(fcInfinity, fcInfinity):
     /* Differently signed infinities can only be validly
        subtracted.  */
     if (((sign ^ rhs.sign)!=0) != subtract) {
@@ -1390,7 +1396,7 @@ APFloat::addOrSubtractSpecials(const APFloat &rhs, bool subtract)
 
     return opOK;
 
-  case convolve(fcNormal, fcNormal):
+  case PackCategoriesIntoKey(fcNormal, fcNormal):
     return opDivByZero;
   }
 }
@@ -1471,41 +1477,41 @@ APFloat::addOrSubtractSignificand(const APFloat &rhs, bool subtract)
 APFloat::opStatus
 APFloat::multiplySpecials(const APFloat &rhs)
 {
-  switch (convolve(category, rhs.category)) {
+  switch (PackCategoriesIntoKey(category, rhs.category)) {
   default:
     llvm_unreachable(0);
 
-  case convolve(fcNaN, fcZero):
-  case convolve(fcNaN, fcNormal):
-  case convolve(fcNaN, fcInfinity):
-  case convolve(fcNaN, fcNaN):
+  case PackCategoriesIntoKey(fcNaN, fcZero):
+  case PackCategoriesIntoKey(fcNaN, fcNormal):
+  case PackCategoriesIntoKey(fcNaN, fcInfinity):
+  case PackCategoriesIntoKey(fcNaN, fcNaN):
     return opOK;
 
-  case convolve(fcZero, fcNaN):
-  case convolve(fcNormal, fcNaN):
-  case convolve(fcInfinity, fcNaN):
+  case PackCategoriesIntoKey(fcZero, fcNaN):
+  case PackCategoriesIntoKey(fcNormal, fcNaN):
+  case PackCategoriesIntoKey(fcInfinity, fcNaN):
     category = fcNaN;
     copySignificand(rhs);
     return opOK;
 
-  case convolve(fcNormal, fcInfinity):
-  case convolve(fcInfinity, fcNormal):
-  case convolve(fcInfinity, fcInfinity):
+  case PackCategoriesIntoKey(fcNormal, fcInfinity):
+  case PackCategoriesIntoKey(fcInfinity, fcNormal):
+  case PackCategoriesIntoKey(fcInfinity, fcInfinity):
     category = fcInfinity;
     return opOK;
 
-  case convolve(fcZero, fcNormal):
-  case convolve(fcNormal, fcZero):
-  case convolve(fcZero, fcZero):
+  case PackCategoriesIntoKey(fcZero, fcNormal):
+  case PackCategoriesIntoKey(fcNormal, fcZero):
+  case PackCategoriesIntoKey(fcZero, fcZero):
     category = fcZero;
     return opOK;
 
-  case convolve(fcZero, fcInfinity):
-  case convolve(fcInfinity, fcZero):
+  case PackCategoriesIntoKey(fcZero, fcInfinity):
+  case PackCategoriesIntoKey(fcInfinity, fcZero):
     makeNaN();
     return opInvalidOp;
 
-  case convolve(fcNormal, fcNormal):
+  case PackCategoriesIntoKey(fcNormal, fcNormal):
     return opOK;
   }
 }
@@ -1513,41 +1519,41 @@ APFloat::multiplySpecials(const APFloat &rhs)
 APFloat::opStatus
 APFloat::divideSpecials(const APFloat &rhs)
 {
-  switch (convolve(category, rhs.category)) {
+  switch (PackCategoriesIntoKey(category, rhs.category)) {
   default:
     llvm_unreachable(0);
 
-  case convolve(fcNaN, fcZero):
-  case convolve(fcNaN, fcNormal):
-  case convolve(fcNaN, fcInfinity):
-  case convolve(fcNaN, fcNaN):
-  case convolve(fcInfinity, fcZero):
-  case convolve(fcInfinity, fcNormal):
-  case convolve(fcZero, fcInfinity):
-  case convolve(fcZero, fcNormal):
+  case PackCategoriesIntoKey(fcNaN, fcZero):
+  case PackCategoriesIntoKey(fcNaN, fcNormal):
+  case PackCategoriesIntoKey(fcNaN, fcInfinity):
+  case PackCategoriesIntoKey(fcNaN, fcNaN):
+  case PackCategoriesIntoKey(fcInfinity, fcZero):
+  case PackCategoriesIntoKey(fcInfinity, fcNormal):
+  case PackCategoriesIntoKey(fcZero, fcInfinity):
+  case PackCategoriesIntoKey(fcZero, fcNormal):
     return opOK;
 
-  case convolve(fcZero, fcNaN):
-  case convolve(fcNormal, fcNaN):
-  case convolve(fcInfinity, fcNaN):
+  case PackCategoriesIntoKey(fcZero, fcNaN):
+  case PackCategoriesIntoKey(fcNormal, fcNaN):
+  case PackCategoriesIntoKey(fcInfinity, fcNaN):
     category = fcNaN;
     copySignificand(rhs);
     return opOK;
 
-  case convolve(fcNormal, fcInfinity):
+  case PackCategoriesIntoKey(fcNormal, fcInfinity):
     category = fcZero;
     return opOK;
 
-  case convolve(fcNormal, fcZero):
+  case PackCategoriesIntoKey(fcNormal, fcZero):
     category = fcInfinity;
     return opDivByZero;
 
-  case convolve(fcInfinity, fcInfinity):
-  case convolve(fcZero, fcZero):
+  case PackCategoriesIntoKey(fcInfinity, fcInfinity):
+  case PackCategoriesIntoKey(fcZero, fcZero):
     makeNaN();
     return opInvalidOp;
 
-  case convolve(fcNormal, fcNormal):
+  case PackCategoriesIntoKey(fcNormal, fcNormal):
     return opOK;
   }
 }
@@ -1555,35 +1561,35 @@ APFloat::divideSpecials(const APFloat &rhs)
 APFloat::opStatus
 APFloat::modSpecials(const APFloat &rhs)
 {
-  switch (convolve(category, rhs.category)) {
+  switch (PackCategoriesIntoKey(category, rhs.category)) {
   default:
     llvm_unreachable(0);
 
-  case convolve(fcNaN, fcZero):
-  case convolve(fcNaN, fcNormal):
-  case convolve(fcNaN, fcInfinity):
-  case convolve(fcNaN, fcNaN):
-  case convolve(fcZero, fcInfinity):
-  case convolve(fcZero, fcNormal):
-  case convolve(fcNormal, fcInfinity):
+  case PackCategoriesIntoKey(fcNaN, fcZero):
+  case PackCategoriesIntoKey(fcNaN, fcNormal):
+  case PackCategoriesIntoKey(fcNaN, fcInfinity):
+  case PackCategoriesIntoKey(fcNaN, fcNaN):
+  case PackCategoriesIntoKey(fcZero, fcInfinity):
+  case PackCategoriesIntoKey(fcZero, fcNormal):
+  case PackCategoriesIntoKey(fcNormal, fcInfinity):
     return opOK;
 
-  case convolve(fcZero, fcNaN):
-  case convolve(fcNormal, fcNaN):
-  case convolve(fcInfinity, fcNaN):
+  case PackCategoriesIntoKey(fcZero, fcNaN):
+  case PackCategoriesIntoKey(fcNormal, fcNaN):
+  case PackCategoriesIntoKey(fcInfinity, fcNaN):
     category = fcNaN;
     copySignificand(rhs);
     return opOK;
 
-  case convolve(fcNormal, fcZero):
-  case convolve(fcInfinity, fcZero):
-  case convolve(fcInfinity, fcNormal):
-  case convolve(fcInfinity, fcInfinity):
-  case convolve(fcZero, fcZero):
+  case PackCategoriesIntoKey(fcNormal, fcZero):
+  case PackCategoriesIntoKey(fcInfinity, fcZero):
+  case PackCategoriesIntoKey(fcInfinity, fcNormal):
+  case PackCategoriesIntoKey(fcInfinity, fcInfinity):
+  case PackCategoriesIntoKey(fcZero, fcZero):
     makeNaN();
     return opInvalidOp;
 
-  case convolve(fcNormal, fcNormal):
+  case PackCategoriesIntoKey(fcNormal, fcNormal):
     return opOK;
   }
 }
@@ -1866,36 +1872,36 @@ APFloat::compare(const APFloat &rhs) const
 
   assert(semantics == rhs.semantics);
 
-  switch (convolve(category, rhs.category)) {
+  switch (PackCategoriesIntoKey(category, rhs.category)) {
   default:
     llvm_unreachable(0);
 
-  case convolve(fcNaN, fcZero):
-  case convolve(fcNaN, fcNormal):
-  case convolve(fcNaN, fcInfinity):
-  case convolve(fcNaN, fcNaN):
-  case convolve(fcZero, fcNaN):
-  case convolve(fcNormal, fcNaN):
-  case convolve(fcInfinity, fcNaN):
+  case PackCategoriesIntoKey(fcNaN, fcZero):
+  case PackCategoriesIntoKey(fcNaN, fcNormal):
+  case PackCategoriesIntoKey(fcNaN, fcInfinity):
+  case PackCategoriesIntoKey(fcNaN, fcNaN):
+  case PackCategoriesIntoKey(fcZero, fcNaN):
+  case PackCategoriesIntoKey(fcNormal, fcNaN):
+  case PackCategoriesIntoKey(fcInfinity, fcNaN):
     return cmpUnordered;
 
-  case convolve(fcInfinity, fcNormal):
-  case convolve(fcInfinity, fcZero):
-  case convolve(fcNormal, fcZero):
+  case PackCategoriesIntoKey(fcInfinity, fcNormal):
+  case PackCategoriesIntoKey(fcInfinity, fcZero):
+  case PackCategoriesIntoKey(fcNormal, fcZero):
     if (sign)
       return cmpLessThan;
     else
       return cmpGreaterThan;
 
-  case convolve(fcNormal, fcInfinity):
-  case convolve(fcZero, fcInfinity):
-  case convolve(fcZero, fcNormal):
+  case PackCategoriesIntoKey(fcNormal, fcInfinity):
+  case PackCategoriesIntoKey(fcZero, fcInfinity):
+  case PackCategoriesIntoKey(fcZero, fcNormal):
     if (rhs.sign)
       return cmpGreaterThan;
     else
       return cmpLessThan;
 
-  case convolve(fcInfinity, fcInfinity):
+  case PackCategoriesIntoKey(fcInfinity, fcInfinity):
     if (sign == rhs.sign)
       return cmpEqual;
     else if (sign)
@@ -1903,10 +1909,10 @@ APFloat::compare(const APFloat &rhs) const
     else
       return cmpGreaterThan;
 
-  case convolve(fcZero, fcZero):
+  case PackCategoriesIntoKey(fcZero, fcZero):
     return cmpEqual;
 
-  case convolve(fcNormal, fcNormal):
+  case PackCategoriesIntoKey(fcNormal, fcNormal):
     break;
   }
 
