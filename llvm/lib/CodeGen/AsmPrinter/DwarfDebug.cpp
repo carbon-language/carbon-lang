@@ -601,7 +601,8 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
     if (Children.empty() && Range.first == Range.second)
       return NULL;
     ScopeDIE = constructLexicalScopeDIE(TheCU, Scope);
-    for (ImportedEntityMap::const_iterator i = Range.first; i != Range.second; ++i)
+    for (ImportedEntityMap::const_iterator i = Range.first; i != Range.second;
+         ++i)
       constructImportedEntityDIE(TheCU, i->second, ScopeDIE);
   }
 
@@ -812,7 +813,8 @@ void DwarfDebug::constructImportedEntityDIE(CompileUnit *TheCU,
                                         TheCU->getUniqueID());
   TheCU->addUInt(IMDie, dwarf::DW_AT_decl_file, 0, FileID);
   TheCU->addUInt(IMDie, dwarf::DW_AT_decl_line, 0, Module.getLineNumber());
-  TheCU->addDIEEntry(IMDie, dwarf::DW_AT_import, dwarf::DW_FORM_ref4, EntityDie);
+  TheCU->addDIEEntry(IMDie, dwarf::DW_AT_import, dwarf::DW_FORM_ref4,
+                     EntityDie);
   StringRef Name = Module.getName();
   if (!Name.empty())
     TheCU->addString(IMDie, dwarf::DW_AT_name, Name);

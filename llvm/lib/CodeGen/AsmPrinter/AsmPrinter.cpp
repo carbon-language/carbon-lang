@@ -396,7 +396,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     //   - pointer to mangled symbol above with initializer
     unsigned PtrSize = TD->getPointerSizeInBits()/8;
     OutStreamer.EmitSymbolValue(GetExternalSymbolSymbol("_tlv_bootstrap"),
-				PtrSize);
+                                PtrSize);
     OutStreamer.EmitIntValue(0, PtrSize);
     OutStreamer.EmitSymbolValue(MangSym, PtrSize);
 
@@ -600,7 +600,8 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
     } else {
       assert(MI->getOperand(0).isFI() && "Unknown operand type");
       const TargetFrameLowering *TFI = AP.TM.getFrameLowering();
-      Offset += TFI->getFrameIndexReference(*AP.MF, MI->getOperand(0).getIndex(), Reg);
+      Offset += TFI->getFrameIndexReference(*AP.MF,
+                                            MI->getOperand(0).getIndex(), Reg);
       Deref = true;
     }
     if (Reg == 0) {

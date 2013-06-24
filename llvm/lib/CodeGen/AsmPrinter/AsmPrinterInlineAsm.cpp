@@ -213,7 +213,7 @@ static void EmitMSInlineAsmStr(const char *AsmStr, const MachineInstr *MI,
       } else {
         unsigned OpFlags = MI->getOperand(OpNo).getImm();
         ++OpNo;  // Skip over the ID number.
-        
+
         if (InlineAsm::isMemKind(OpFlags)) {
           Error = AP->PrintAsmMemoryOperand(MI, OpNo, InlineAsmVariant,
                                             /*Modifier*/ 0, OS);
