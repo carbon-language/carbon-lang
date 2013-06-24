@@ -888,6 +888,7 @@ static void SignalHandler(int signo) {
 }
 
 static void SignalAction(int signo, void *si, void *uc) {
+  __msan_unpoison_param(3);
   __msan_unpoison(si, __sanitizer::struct_sigaction_sz);
   __msan_unpoison(uc, __sanitizer::ucontext_t_sz);
 
