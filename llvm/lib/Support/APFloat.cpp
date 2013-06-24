@@ -3827,3 +3827,19 @@ APFloat::opStatus APFloat::next(bool nextDown) {
 
   return result;
 }
+
+void
+APFloat::makeInf(bool Negative) {
+  category = fcInfinity;
+  sign = Negative;
+  exponent = semantics->maxExponent + 1;
+  APInt::tcSet(significandParts(), 0, partCount());
+}
+
+void
+APFloat::makeZero(bool Negative) {
+  category = fcZero;
+  sign = Negative;
+  exponent = semantics->minExponent-1;
+  APInt::tcSet(significandParts(), 0, partCount());  
+}

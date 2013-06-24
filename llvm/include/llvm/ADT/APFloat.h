@@ -211,14 +211,18 @@ public:
   ///
   /// \param Negative True iff the number should be negative.
   static APFloat getZero(const fltSemantics &Sem, bool Negative = false) {
-    return APFloat(Sem, fcZero, Negative);
+    APFloat Val(Sem, uninitialized);
+    Val.makeZero(Negative);
+    return Val;
   }
 
   /// Factory for Positive and Negative Infinity.
   ///
   /// \param Negative True iff the number should be negative.
   static APFloat getInf(const fltSemantics &Sem, bool Negative = false) {
-    return APFloat(Sem, fcInfinity, Negative);
+    APFloat Val(Sem, uninitialized);
+    Val.makeInf(Negative);
+    return Val;
   }
 
   /// Factory for QNaN values.
@@ -498,6 +502,8 @@ private:
   void makeNaN(bool SNaN = false, bool Neg = false, const APInt *fill = 0);
   static APFloat makeNaN(const fltSemantics &Sem, bool SNaN, bool Negative,
                          const APInt *fill);
+  void makeInf(bool Neg = false);
+  void makeZero(bool Neg = false);
 
   /// @}
 
