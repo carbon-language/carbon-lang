@@ -104,6 +104,15 @@ class MipsAsmParser : public MCTargetAsmParser {
   MipsAsmParser::OperandMatchResultTy
   parseCCRRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
+  MipsAsmParser::OperandMatchResultTy
+  parseAFGR64Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+
+  MipsAsmParser::OperandMatchResultTy
+  parseFGR64Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+
+  MipsAsmParser::OperandMatchResultTy
+  parseFGR32Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+
   bool searchSymbolAlias(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                          unsigned RegKind);
 
@@ -176,8 +185,6 @@ class MipsAsmParser : public MCTargetAsmParser {
   void setFpFormat(StringRef Format);
 
   FpFormatTy getFpFormat() {return FpFormat;}
-
-  bool requestsDoubleOperand(StringRef Mnemonic);
 
   unsigned getReg(int RC, int RegNo);
 
@@ -383,6 +390,18 @@ public:
   bool isCCRAsm() const {
     assert((Kind == k_Register) && "Invalid access!");
     return Reg.Kind == Kind_CCRRegs;
+  }
+
+   bool isAFGR64Asm() const {
+    return Kind == k_Register && Reg.Kind == Kind_AFGR64Regs;
+  }
+
+  bool isFGR64Asm() const {
+    return Kind == k_Register && Reg.Kind == Kind_FGR64Regs;
+  }
+
+  bool isFGR32Asm() const {
+    return (Kind == k_Register) && Reg.Kind == Kind_FGR32Regs;
   }
 
   /// getStartLoc - Get the location of the first token of this operand.
@@ -838,18 +857,6 @@ void MipsAsmParser::setDefaultFpFormat() {
     FpFormat = FP_FORMAT_S;
 }
 
-bool MipsAsmParser::requestsDoubleOperand(StringRef Mnemonic){
-
-  bool IsDouble = StringSwitch<bool>(Mnemonic.lower())
-    .Case("ldxc1", true)
-    .Case("ldc1",  true)
-    .Case("sdxc1", true)
-    .Case("sdc1",  true)
-    .Default(false);
-
-  return IsDouble;
-}
-
 void MipsAsmParser::setFpFormat(StringRef Format) {
 
   FpFormat = StringSwitch<FpFormatTy>(Format.lower())
@@ -1280,6 +1287,34 @@ MipsAsmParser::parseCPURegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
  return parseRegs(Operands, (int) MipsOperand::Kind_CPURegs);
 }
 
+MipsAsmParser::OperandMatchResultTy
+MipsAsmParser::parseAFGR64Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+
+  if (isFP64())
+    return MatchOperand_NoMatch;
+  // Double operand is expected, set appropriate format
+  setFpFormat(FP_FORMAT_D);
+
+  return parseRegs(Operands, (int) MipsOperand::Kind_AFGR64Regs);
+}
+
+MipsAsmParser::OperandMatchResultTy
+MipsAsmParser::parseFGR64Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  if (!isFP64())
+    return MatchOperand_NoMatch;
+  // Double operand is expected, set appropriate format
+  setFpFormat(FP_FORMAT_D);
+
+ return parseRegs(Operands, (int) MipsOperand::Kind_FGR64Regs);
+}
+
+MipsAsmParser::OperandMatchResultTy
+MipsAsmParser::parseFGR32Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+ // Single operand is expected, set appropriate format
+  setFpFormat(FP_FORMAT_S);
+  return parseRegs(Operands, (int) MipsOperand::Kind_FGR32Regs);
+}
+
 bool MipsAsmParser::searchSymbolAlias(
     SmallVectorImpl<MCParsedAsmOperand*> &Operands, unsigned RegKind) {
 
@@ -1537,50 +1572,44 @@ bool MipsAsmParser::
 ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   StringRef Mnemonic;
-  // Floating point instructions: Should the register be treated as a double?
-  if (requestsDoubleOperand(Name)) {
-    setFpFormat(FP_FORMAT_D);
-    Operands.push_back(MipsOperand::CreateToken(Name, NameLoc));
-    Mnemonic = Name;
-  } else {
-    setDefaultFpFormat();
-    // Create the leading tokens for the mnemonic, split by '.' characters.
-    size_t Start = 0, Next = Name.find('.');
-    Mnemonic = Name.slice(Start, Next);
 
-    Operands.push_back(MipsOperand::CreateToken(Mnemonic, NameLoc));
+  setDefaultFpFormat();
+  // Create the leading tokens for the mnemonic, split by '.' characters.
+  size_t Start = 0, Next = Name.find('.');
+  Mnemonic = Name.slice(Start, Next);
 
-    if (Next != StringRef::npos) {
-      // There is a format token in mnemonic.
-      size_t Dot = Name.find('.', Next + 1);
-      StringRef Format = Name.slice(Next, Dot);
-      if (Dot == StringRef::npos) // Only one '.' in a string, it's a format.
-        Operands.push_back(MipsOperand::CreateToken(Format, NameLoc));
-      else {
-        if (Name.startswith("c.")) {
-          // Floating point compare, add '.' and immediate represent for cc.
-          Operands.push_back(MipsOperand::CreateToken(".", NameLoc));
-          int Cc = ConvertCcString(Format);
-          if (Cc == -1) {
-            return Error(NameLoc, "Invalid conditional code");
-          }
-          SMLoc E = SMLoc::getFromPointer(
-              Parser.getTok().getLoc().getPointer() - 1);
-          Operands.push_back(
-              MipsOperand::CreateImm(MCConstantExpr::Create(Cc, getContext()),
-                                     NameLoc, E));
-        } else {
-          // trunc, ceil, floor ...
-          return parseMathOperation(Name, NameLoc, Operands);
+  Operands.push_back(MipsOperand::CreateToken(Mnemonic, NameLoc));
+
+  if (Next != StringRef::npos) {
+    // There is a format token in mnemonic.
+    size_t Dot = Name.find('.', Next + 1);
+    StringRef Format = Name.slice(Next, Dot);
+    if (Dot == StringRef::npos) // Only one '.' in a string, it's a format.
+      Operands.push_back(MipsOperand::CreateToken(Format, NameLoc));
+    else {
+      if (Name.startswith("c.")) {
+        // Floating point compare, add '.' and immediate represent for cc.
+        Operands.push_back(MipsOperand::CreateToken(".", NameLoc));
+        int Cc = ConvertCcString(Format);
+        if (Cc == -1) {
+          return Error(NameLoc, "Invalid conditional code");
         }
-
-        // The rest is a format.
-        Format = Name.slice(Dot, StringRef::npos);
-        Operands.push_back(MipsOperand::CreateToken(Format, NameLoc));
+        SMLoc E = SMLoc::getFromPointer(
+            Parser.getTok().getLoc().getPointer() - 1);
+        Operands.push_back(
+            MipsOperand::CreateImm(MCConstantExpr::Create(Cc, getContext()),
+                                   NameLoc, E));
+      } else {
+        // trunc, ceil, floor ...
+        return parseMathOperation(Name, NameLoc, Operands);
       }
 
-      setFpFormat(Format);
+      // The rest is a format.
+      Format = Name.slice(Dot, StringRef::npos);
+      Operands.push_back(MipsOperand::CreateToken(Format, NameLoc));
     }
+
+    setFpFormat(Format);
   }
 
   // Read the remaining operands.
