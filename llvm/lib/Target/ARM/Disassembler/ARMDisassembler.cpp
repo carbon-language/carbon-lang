@@ -4667,10 +4667,8 @@ static DecodeStatus DecodeIT(MCInst &Inst, unsigned Insn,
     S = MCDisassembler::SoftFail;
   }
 
-  if (mask == 0x0) {
-    mask |= 0x8;
-    S = MCDisassembler::SoftFail;
-  }
+  if (mask == 0x0)
+    return MCDisassembler::Fail;
 
   Inst.addOperand(MCOperand::CreateImm(pred));
   Inst.addOperand(MCOperand::CreateImm(mask));

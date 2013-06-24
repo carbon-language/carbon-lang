@@ -1,3 +1,7 @@
-# RUN: llvm-mc --disassemble %s -triple=thumbv7-unknown-unknown 2>&1 | grep "potentially undefined instruction encoding"
+# CHECK-UNPRED: potentially undefined instruction encoding
+# CHECK-UNDEF: invalid instruction encoding
 
-0xff 0xbf 0x6b 0x80 0x00 0x75
+# RUN: echo "0xff 0xbf 0x6b 0x80 0x00 0x75" | llvm-mc -disassemble -triple thumbv7 2>&1 | FileCheck %s --check-prefix=CHECK-UNPRED
+
+# mask = 0
+# RUN: echo "0x50 0xbf 0x00 0x00" | llvm-mc -disassemble -triple thumbv7 2>&1 | FileCheck %s --check-prefix=CHECK-UNDEF
