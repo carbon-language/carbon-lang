@@ -308,6 +308,7 @@ enum StatType {
   StatInt_wait4,
   StatInt_inet_ntop,
   StatInt_inet_pton,
+  StatInt_inet_aton,
   StatInt_getaddrinfo,
   StatInt_getsockname,
   StatInt_gethostent,
