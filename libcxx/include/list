@@ -1600,7 +1600,7 @@ template <class _Tp, class _Alloc>
 void
 list<_Tp, _Alloc>::pop_back()
 {
-    _LIBCPP_ASSERT(!empty(), "list::pop_front() called with empty list");
+    _LIBCPP_ASSERT(!empty(), "list::pop_back() called with empty list");
     __node_allocator& __na = base::__node_alloc();
     __node& __n = *base::__end_.__prev_;
     base::__unlink_nodes(__n, __n);
