@@ -3199,36 +3199,49 @@ static DecodeStatus DecodeT2LoadShift(MCInst &Inst, unsigned Insn,
   unsigned Rt = fieldFromInstruction(Insn, 12, 4);
   unsigned Rn = fieldFromInstruction(Insn, 16, 4);
 
-  if (Rn == 0xF) {
+  if (Rn == 15) {
     switch (Inst.getOpcode()) {
-      case ARM::t2LDRBs:
-        Inst.setOpcode(ARM::t2LDRBpci);
-        break;
-      case ARM::t2LDRHs:
-        Inst.setOpcode(ARM::t2LDRHpci);
-        break;
-      case ARM::t2LDRSHs:
-        Inst.setOpcode(ARM::t2LDRSHpci);
-        break;
-      case ARM::t2LDRSBs:
-        Inst.setOpcode(ARM::t2LDRSBpci);
-        break;
-      case ARM::t2LDRs:
-        Inst.setOpcode(ARM::t2LDRpci);
-        break;
-      case ARM::t2PLDs: {
-        Inst.setOpcode(ARM::t2PLDi12);
-        Inst.addOperand(MCOperand::CreateReg(ARM::PC));
-        int imm = fieldFromInstruction(Insn, 0, 12);
-        if (!fieldFromInstruction(Insn, 23, 1)) imm *= -1;
-        Inst.addOperand(MCOperand::CreateImm(imm));
-        return S;
-      }
-      default:
-        return MCDisassembler::Fail;
+    case ARM::t2LDRBs:
+      Inst.setOpcode(ARM::t2LDRBpci);
+      break;
+    case ARM::t2LDRHs:
+      Inst.setOpcode(ARM::t2LDRHpci);
+      break;
+    case ARM::t2LDRSHs:
+      Inst.setOpcode(ARM::t2LDRSHpci);
+      break;
+    case ARM::t2LDRSBs:
+      Inst.setOpcode(ARM::t2LDRSBpci);
+      break;
+    case ARM::t2LDRs:
+      Inst.setOpcode(ARM::t2LDRpci);
+      break;
+    case ARM::t2PLDs:
+      Inst.setOpcode(ARM::t2PLDpci);
+      break;
+    case ARM::t2PLIs:
+      Inst.setOpcode(ARM::t2PLIpci);
+      break;
+    default:
+      return MCDisassembler::Fail;
     }
 
     return DecodeT2LoadLabel(Inst, Insn, Address, Decoder);
+  }
+
+  if (Rt == 15) {
+    switch (Inst.getOpcode()) {
+    case ARM::t2LDRSHs:
+      return MCDisassembler::Fail;
+    case ARM::t2LDRHs:
+      // FIXME: this instruction is only available with MP extensions,
+      // this should be checked first but we don't have access to the
+      // feature bits here.
+      Inst.setOpcode(ARM::t2PLDWs);
+      break;
+    default:
+      break;
+    }
   }
 
   switch (Inst.getOpcode()) {
@@ -3278,14 +3291,36 @@ static DecodeStatus DecodeT2LoadImm8(MCInst &Inst, unsigned Insn,
     case ARM::t2LDRSHi8:
       Inst.setOpcode(ARM::t2LDRSHpci);
       break;
+    case ARM::t2PLDi8:
+      Inst.setOpcode(ARM::t2PLDpci);
+      break;
+    case ARM::t2PLIi8:
+      Inst.setOpcode(ARM::t2PLIpci);
+      break;
     default:
       return MCDisassembler::Fail;
     }
     return DecodeT2LoadLabel(Inst, Insn, Address, Decoder);
   }
 
-  if (!Check(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)))
-    return MCDisassembler::Fail;
+  if (Rt == 15) {
+    switch (Inst.getOpcode()) {
+    case ARM::t2LDRSHi8:
+      return MCDisassembler::Fail;
+    default:
+      break;
+    }
+  }
+
+  switch (Inst.getOpcode()) {
+  case ARM::t2PLDi8:
+  case ARM::t2PLIi8:
+    break;
+  default:
+    if (!Check(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)))
+      return MCDisassembler::Fail;
+  }
+
   if (!Check(S, DecodeT2AddrModeImm8(Inst, imm, Address, Decoder)))
     return MCDisassembler::Fail;
   return S;
@@ -3317,14 +3352,39 @@ static DecodeStatus DecodeT2LoadImm12(MCInst &Inst, unsigned Insn,
     case ARM::t2LDRSBi12:
       Inst.setOpcode(ARM::t2LDRSBpci);
       break;
+    case ARM::t2PLDi12:
+      Inst.setOpcode(ARM::t2PLDpci);
+      break;
+    case ARM::t2PLIi12:
+      Inst.setOpcode(ARM::t2PLIpci);
+      break;
     default:
       return MCDisassembler::Fail;
     }
     return DecodeT2LoadLabel(Inst, Insn, Address, Decoder);
   }
 
-  if (!Check(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)))
-    return MCDisassembler::Fail;
+  if (Rt == 15) {
+    switch (Inst.getOpcode()) {
+    case ARM::t2LDRSHi12:
+      return MCDisassembler::Fail;
+    case ARM::t2LDRHi12:
+      Inst.setOpcode(ARM::t2PLDi12);
+      break;
+    default:
+      break;
+    }
+  }
+
+  switch (Inst.getOpcode()) {
+  case ARM::t2PLDi12:
+  case ARM::t2PLIi12:
+    break;
+  default:
+    if (!Check(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)))
+      return MCDisassembler::Fail;
+  }
+
   if (!Check(S, DecodeT2AddrModeImm12(Inst, imm, Address, Decoder)))
     return MCDisassembler::Fail;
   return S;
@@ -3377,11 +3437,27 @@ static DecodeStatus DecodeT2LoadLabel(MCInst &Inst, unsigned Insn,
   unsigned U = fieldFromInstruction(Insn, 23, 1);
   int imm = fieldFromInstruction(Insn, 0, 12);
 
-  // FIXME: detect and decode PLD properly
-  if (Inst.getOpcode() == ARM::t2LDRBpci && Rt == 15) {
-    Inst.setOpcode(ARM::t2PLDi12);
-    Inst.addOperand(MCOperand::CreateReg(ARM::PC));
-  } else {
+  if (Rt == 15) {
+    switch (Inst.getOpcode()) {
+      case ARM::t2LDRBpci:
+      case ARM::t2LDRHpci:
+        Inst.setOpcode(ARM::t2PLDpci);
+        break;
+      case ARM::t2LDRSBpci:
+        Inst.setOpcode(ARM::t2PLIpci);
+        break;
+      case ARM::t2LDRSHpci:
+        return MCDisassembler::Fail;
+      default:
+        break;
+    }
+  }
+
+  switch(Inst.getOpcode()) {
+  case ARM::t2PLDpci:
+  case ARM::t2PLIpci:
+    break;
+  default:
     if (!Check(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)))
       return MCDisassembler::Fail;
   }
@@ -3528,7 +3604,10 @@ static DecodeStatus DecodeT2LdStPre(MCInst &Inst, unsigned Insn,
       break;
     case ARM::t2LDRSB_PRE:
     case ARM::t2LDRSB_POST:
-      Inst.setOpcode(ARM::t2LDRSBpci);
+      if (Rt == 15)
+        Inst.setOpcode(ARM::t2PLIpci);
+      else
+        Inst.setOpcode(ARM::t2LDRSBpci);
       break;
     case ARM::t2LDRSH_PRE:
     case ARM::t2LDRSH_POST:

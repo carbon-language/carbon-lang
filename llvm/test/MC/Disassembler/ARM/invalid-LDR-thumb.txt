@@ -1,0 +1,10 @@
+# invalid LDRSHs   Rt=PC
+# RUN: echo "0x30 0xf9 0x00 0xf0" | llvm-mc -triple=thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# invalid LDRSHi8  Rt=PC
+# RUN: echo "0x30 0xf9 0x00 0xfc" | llvm-mc -triple=thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# invalid LDRSHi12 Rt=PC
+# RUN: echo "0xb0 0xf9 0x00 0xf0" | llvm-mc -triple=thumbv7 -disassemble 2>&1 | FileCheck %s
+
+# CHECK: invalid instruction encoding

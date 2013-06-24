@@ -1024,17 +1024,19 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
   def pci : T2Ipc <(outs target:$Rt), (ins t2ldrlabel:$addr), iii,
                    opc, ".w\t$Rt, $addr",
                    [(set target:$Rt, (opnode (ARMWrapper tconstpool:$addr)))]> {
-    bits<4> Rt;
-    bits<13> addr;
     let isReMaterializable = 1;
     let Inst{31-27} = 0b11111;
     let Inst{26-25} = 0b00;
     let Inst{24} = signed;
-    let Inst{23} = addr{12}; // add = (U == '1')
     let Inst{22-21} = opcod;
     let Inst{20} = 1; // load
     let Inst{19-16} = 0b1111; // Rn
+
+    bits<4> Rt;
     let Inst{15-12} = Rt{3-0};
+
+    bits<13> addr;
+    let Inst{23} = addr{12}; // add = (U == '1')
     let Inst{11-0}  = addr{11-0};
 
     let DecoderMethod = "DecodeT2LoadLabel";
@@ -1564,16 +1566,17 @@ multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
               Sched<[WritePreLd]> {
     let Inst{31-25} = 0b1111100;
     let Inst{24} = instr;
+    let Inst{23} = 1;
     let Inst{22} = 0;
     let Inst{21} = write;
     let Inst{20} = 1;
     let Inst{15-12} = 0b1111;
 
     bits<17> addr;
-    let addr{12}    = 1;           // add = TRUE
     let Inst{19-16} = addr{16-13}; // Rn
-    let Inst{23}    = addr{12};    // U
     let Inst{11-0}  = addr{11-0};  // imm12
+
+    let DecoderMethod = "DecodeT2LoadImm12";
   }
 
   def i8 : T2Ii8<(outs), (ins t2addrmode_negimm8:$addr), IIC_Preload, opc,
@@ -1592,6 +1595,8 @@ multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
     bits<13> addr;
     let Inst{19-16} = addr{12-9}; // Rn
     let Inst{7-0}   = addr{7-0};  // imm8
+
+    let DecoderMethod = "DecodeT2LoadImm8";
   }
 
   def s : T2Iso<(outs), (ins t2addrmode_so_reg:$addr), IIC_Preload, opc,
@@ -1605,7 +1610,7 @@ multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
     let Inst{21} = write;
     let Inst{20} = 1;
     let Inst{15-12} = 0b1111;
-    let Inst{11-6} = 0000000;
+    let Inst{11-6} = 0b000000;
 
     bits<10> addr;
     let Inst{19-16} = addr{9-6}; // Rn
@@ -1614,10 +1619,28 @@ multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
 
     let DecoderMethod = "DecodeT2LoadShift";
   }
-  // FIXME: We should have a separate 'pci' variant here. As-is we represent
-  // it via the i12 variant, which it's related to, but that means we can
-  // represent negative immediates, which aren't legal for anything except
-  // the 'pci' case (Rn == 15).
+
+  // pci variant is very similar to i12, but supports negative offsets
+  // from the PC.
+  def pci : T2Iso<(outs), (ins t2ldrlabel:$addr), IIC_Preload, opc,
+                 "\t$addr",
+                 [(ARMPreload (ARMWrapper tconstpool:$addr),
+                              (i32 write), (i32 instr))]>,
+                 Sched<[WritePreLd]> {
+    let Inst{31-25} = 0b1111100;
+    let Inst{24} = instr;
+    let Inst{22} = 0;
+    let Inst{21} = write;
+    let Inst{20} = 1;
+    let Inst{19-16} = 0b1111;
+    let Inst{15-12} = 0b1111;
+
+    bits<13> addr;
+    let Inst{23}   = addr{12};   // add = (U == '1')
+    let Inst{11-0} = addr{11-0}; // imm12
+
+    let DecoderMethod = "DecodeT2LoadLabel";
+  }
 }
 
 defm t2PLD  : T2Ipl<0, 0, "pld">,  Requires<[IsThumb2]>;
