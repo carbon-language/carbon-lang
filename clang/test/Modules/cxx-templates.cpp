@@ -27,10 +27,6 @@ void g() {
 // CHECK-GLOBAL-NEXT: |-FunctionTemplate {{.*}} 'f'
 // CHECK-GLOBAL-NEXT: |-FunctionTemplate {{.*}} 'f'
 // CHECK-GLOBAL-NEXT: |-FunctionTemplate {{.*}} 'f'
-// CHECK-GLOBAL-NEXT: |-FunctionTemplate {{.*}} 'f'
-// CHECK-GLOBAL-NEXT: |-FunctionTemplate {{.*}} 'f'
-// CHECK-GLOBAL-NEXT: |-FunctionTemplate {{.*}} 'f'
-// CHECK-GLOBAL-NEXT: |-FunctionTemplate {{.*}} 'f'
 // CHECK-GLOBAL-NEXT: `-FunctionTemplate {{.*}} 'f'
 
 // FIXME: There should only be two 'f's here.

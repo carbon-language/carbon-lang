@@ -1216,8 +1216,16 @@ void DeclContext::buildLookupImpl(DeclContext *DCtx) {
     // Insert this declaration into the lookup structure, but only if
     // it's semantically within its decl context. Any other decls which
     // should be found in this context are added eagerly.
+    //
+    // If it's from an AST file, don't add it now. It'll get handled by
+    // FindExternalVisibleDeclsByName if needed. Exception: if we're not
+    // in C++, we do not track external visible decls for the TU, so in
+    // that case we need to collect them all here.
     if (NamedDecl *ND = dyn_cast<NamedDecl>(D))
-      if (ND->getDeclContext() == DCtx && !shouldBeHidden(ND))
+      if (ND->getDeclContext() == DCtx && !shouldBeHidden(ND) &&
+          (!ND->isFromASTFile() ||
+           (isTranslationUnit() &&
+            !getParentASTContext().getLangOpts().CPlusPlus)))
         makeDeclVisibleInContextImpl(ND, false);
 
     // If this declaration is itself a transparent declaration context
