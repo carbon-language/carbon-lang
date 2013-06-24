@@ -847,8 +847,6 @@ APFloat::significandParts() const
 integerPart *
 APFloat::significandParts()
 {
-  assert(category == fcNormal || category == fcNaN);
-
   if (partCount() > 1)
     return significand.parts;
   else
