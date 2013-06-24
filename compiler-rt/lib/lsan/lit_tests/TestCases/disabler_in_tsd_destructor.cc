@@ -12,7 +12,7 @@
 
 pthread_key_t key;
 
-void key_destructor(void *) {
+void key_destructor(void *arg) {
   __lsan::ScopedDisabler d;
   void *p = malloc(1337);
   // Break optimization.

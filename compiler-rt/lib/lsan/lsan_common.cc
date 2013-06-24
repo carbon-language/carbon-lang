@@ -23,7 +23,7 @@
 #if CAN_SANITIZE_LEAKS
 namespace __lsan {
 
-// This mutex is used to prevent races between DoLeakCheck and SuppressObject.
+// This mutex is used to prevent races between DoLeakCheck and IgnoreObject.
 BlockingMutex global_mutex(LINKER_INITIALIZED);
 
 THREADLOCAL int disable_counter;
@@ -84,12 +84,12 @@ static inline bool CanBeAHeapPointer(uptr p) {
 #endif
 }
 
-// Scan the memory range, looking for byte patterns that point into allocator
-// chunks. Mark those chunks with tag and add them to the frontier.
-// There are two usage modes for this function: finding reachable or ignored 
-// chunks (tag = kReachable or kIgnored) and finding indirectly leaked chunks
-// (tag = kIndirectlyLeaked). In the second case, there's no flood fill,
-// so frontier = 0.
+// Scans the memory range, looking for byte patterns that point into allocator
+// chunks. Marks those chunks with |tag| and adds them to |frontier|.
+// There are two usage modes for this function: finding reachable or ignored
+// chunks (|tag| = kReachable or kIgnored) and finding indirectly leaked chunks
+// (|tag| = kIndirectlyLeaked). In the second case, there's no flood fill,
+// so |frontier| = 0.
 void ScanRangeForPointers(uptr begin, uptr end,
                           Frontier *frontier,
                           const char *region_type, ChunkTag tag) {
@@ -99,10 +99,10 @@ void ScanRangeForPointers(uptr begin, uptr end,
   uptr pp = begin;
   if (pp % alignment)
     pp = pp + alignment - pp % alignment;
-  for (; pp + sizeof(void *) <= end; pp += alignment) {
+  for (; pp + sizeof(void *) <= end; pp += alignment) {  // NOLINT
     void *p = *reinterpret_cast<void**>(pp);
     if (!CanBeAHeapPointer(reinterpret_cast<uptr>(p))) continue;
-    void *chunk = PointsIntoChunk(p);
+    uptr chunk = PointsIntoChunk(p);
     if (!chunk) continue;
     LsanMetadata m(chunk);
     // Reachable beats ignored beats leaked.
@@ -111,14 +111,13 @@ void ScanRangeForPointers(uptr begin, uptr end,
     m.set_tag(tag);
     if (flags()->log_pointers)
       Report("%p: found %p pointing into chunk %p-%p of size %zu.\n", pp, p,
-             chunk, reinterpret_cast<uptr>(chunk) + m.requested_size(),
-             m.requested_size());
+             chunk, chunk + m.requested_size(), m.requested_size());
     if (frontier)
-      frontier->push_back(reinterpret_cast<uptr>(chunk));
+      frontier->push_back(chunk);
   }
 }
 
-// Scan thread data (stacks and TLS) for heap pointers.
+// Scans thread data (stacks and TLS) for heap pointers.
 static void ProcessThreads(SuspendedThreadsList const &suspended_threads,
                            Frontier *frontier) {
   InternalScopedBuffer<uptr> registers(SuspendedThreadsList::RegisterCount());
@@ -191,31 +190,34 @@ static void FloodFillTag(Frontier *frontier, ChunkTag tag) {
   while (frontier->size()) {
     uptr next_chunk = frontier->back();
     frontier->pop_back();
-    LsanMetadata m(reinterpret_cast<void *>(next_chunk));
+    LsanMetadata m(next_chunk);
     ScanRangeForPointers(next_chunk, next_chunk + m.requested_size(), frontier,
                          "HEAP", tag);
   }
 }
 
-// Mark leaked chunks which are reachable from other leaked chunks.
-void MarkIndirectlyLeakedCb::operator()(void *p) const {
-  p = GetUserBegin(p);
-  LsanMetadata m(p);
+// ForEachChunk callback. If the chunk is marked as leaked, marks all chunks
+// which are reachable from it as indirectly leaked.
+static void MarkIndirectlyLeakedCb(uptr chunk, void *arg) {
+  chunk = GetUserBegin(chunk);
+  LsanMetadata m(chunk);
   if (m.allocated() && m.tag() != kReachable) {
-    ScanRangeForPointers(reinterpret_cast<uptr>(p),
-                         reinterpret_cast<uptr>(p) + m.requested_size(),
+    ScanRangeForPointers(chunk, chunk + m.requested_size(),
                          /* frontier */ 0, "HEAP", kIndirectlyLeaked);
   }
 }
 
-void CollectIgnoredCb::operator()(void *p) const {
-  p = GetUserBegin(p);
-  LsanMetadata m(p);
+// ForEachChunk callback. If chunk is marked as ignored, adds its address to
+// frontier.
+static void CollectIgnoredCb(uptr chunk, void *arg) {
+  CHECK(arg);
+  chunk = GetUserBegin(chunk);
+  LsanMetadata m(chunk);
   if (m.allocated() && m.tag() == kIgnored)
-    frontier_->push_back(reinterpret_cast<uptr>(p));
+    reinterpret_cast<Frontier *>(arg)->push_back(chunk);
 }
 
-// Set the appropriate tag on each chunk.
+// Sets the appropriate tag on each chunk.
 static void ClassifyAllChunks(SuspendedThreadsList const &suspended_threads) {
   // Holds the flood fill frontier.
   Frontier frontier(GetPageSizeCached());
@@ -233,14 +235,14 @@ static void ClassifyAllChunks(SuspendedThreadsList const &suspended_threads) {
   if (flags()->log_pointers)
     Report("Scanning ignored chunks.\n");
   CHECK_EQ(0, frontier.size());
-  ForEachChunk(CollectIgnoredCb(&frontier));
+  ForEachChunk(CollectIgnoredCb, &frontier);
   FloodFillTag(&frontier, kIgnored);
 
   // Iterate over leaked chunks and mark those that are reachable from other
   // leaked chunks.
   if (flags()->log_pointers)
     Report("Scanning leaked chunks.\n");
-  ForEachChunk(MarkIndirectlyLeakedCb());
+  ForEachChunk(MarkIndirectlyLeakedCb, 0 /* arg */);
 }
 
 static void PrintStackTraceById(u32 stack_trace_id) {
@@ -251,9 +253,12 @@ static void PrintStackTraceById(u32 stack_trace_id) {
                          common_flags()->strip_path_prefix, 0);
 }
 
-void CollectLeaksCb::operator()(void *p) const {
-  p = GetUserBegin(p);
-  LsanMetadata m(p);
+// ForEachChunk callback. Aggregates unreachable chunks into a LeakReport.
+static void CollectLeaksCb(uptr chunk, void *arg) {
+  CHECK(arg);
+  LeakReport *leak_report = reinterpret_cast<LeakReport *>(arg);
+  chunk = GetUserBegin(chunk);
+  LsanMetadata m(chunk);
   if (!m.allocated()) return;
   if (m.tag() == kDirectlyLeaked || m.tag() == kIndirectlyLeaked) {
     uptr resolution = flags()->resolution;
@@ -261,33 +266,29 @@ void CollectLeaksCb::operator()(void *p) const {
       uptr size = 0;
       const uptr *trace = StackDepotGet(m.stack_trace_id(), &size);
       size = Min(size, resolution);
-      leak_report_->Add(StackDepotPut(trace, size), m.requested_size(),
-                        m.tag());
+      leak_report->Add(StackDepotPut(trace, size), m.requested_size(), m.tag());
     } else {
-      leak_report_->Add(m.stack_trace_id(), m.requested_size(), m.tag());
+      leak_report->Add(m.stack_trace_id(), m.requested_size(), m.tag());
     }
   }
 }
 
-static void CollectLeaks(LeakReport *leak_report) {
-  ForEachChunk(CollectLeaksCb(leak_report));
-}
-
-void PrintLeakedCb::operator()(void *p) const {
-  p = GetUserBegin(p);
-  LsanMetadata m(p);
+// ForEachChunkCallback. Prints addresses of unreachable chunks.
+static void PrintLeakedCb(uptr chunk, void *arg) {
+  chunk = GetUserBegin(chunk);
+  LsanMetadata m(chunk);
   if (!m.allocated()) return;
   if (m.tag() == kDirectlyLeaked || m.tag() == kIndirectlyLeaked) {
     Printf("%s leaked %zu byte object at %p.\n",
            m.tag() == kDirectlyLeaked ? "Directly" : "Indirectly",
-           m.requested_size(), p);
+           m.requested_size(), chunk);
   }
 }
 
 static void PrintLeaked() {
   Printf("\n");
   Printf("Reporting individual objects:\n");
-  ForEachChunk(PrintLeakedCb());
+  ForEachChunk(PrintLeakedCb, 0 /* arg */);
 }
 
 struct DoLeakCheckParam {
@@ -302,7 +303,7 @@ static void DoLeakCheckCallback(const SuspendedThreadsList &suspended_threads,
   CHECK(!param->success);
   CHECK(param->leak_report.IsEmpty());
   ClassifyAllChunks(suspended_threads);
-  CollectLeaks(&param->leak_report);
+  ForEachChunk(CollectLeaksCb, &param->leak_report);
   if (!param->leak_report.IsEmpty() && flags()->report_objects)
     PrintLeaked();
   param->success = true;

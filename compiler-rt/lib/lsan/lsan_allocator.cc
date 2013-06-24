@@ -52,7 +52,7 @@ void AllocatorThreadFinish() {
 }
 
 static ChunkMetadata *Metadata(void *p) {
-  return (ChunkMetadata *)allocator.GetMetaData(p);
+  return reinterpret_cast<ChunkMetadata *>(allocator.GetMetaData(p));
 }
 
 static void RegisterAllocation(const StackTrace &stack, void *p, uptr size) {
@@ -62,14 +62,14 @@ static void RegisterAllocation(const StackTrace &stack, void *p, uptr size) {
   m->tag = DisabledInThisThread() ? kIgnored : kDirectlyLeaked;
   m->stack_trace_id = StackDepotPut(stack.trace, stack.size);
   m->requested_size = size;
-  atomic_store((atomic_uint8_t*)m, 1, memory_order_relaxed);
+  atomic_store(reinterpret_cast<atomic_uint8_t *>(m), 1, memory_order_relaxed);
 }
 
 static void RegisterDeallocation(void *p) {
   if (!p) return;
   ChunkMetadata *m = Metadata(p);
   CHECK(m);
-  atomic_store((atomic_uint8_t*)m, 0, memory_order_relaxed);
+  atomic_store(reinterpret_cast<atomic_uint8_t *>(m), 0, memory_order_relaxed);
 }
 
 void *Allocate(const StackTrace &stack, uptr size, uptr alignment,
@@ -129,25 +129,26 @@ void GetAllocatorGlobalRange(uptr *begin, uptr *end) {
   *end = *begin + sizeof(allocator);
 }
 
-void *PointsIntoChunk(void* p) {
-  void *chunk = allocator.GetBlockBeginFastLocked(p);
+uptr PointsIntoChunk(void* p) {
+  uptr addr = reinterpret_cast<uptr>(p);
+  uptr chunk = reinterpret_cast<uptr>(allocator.GetBlockBeginFastLocked(p));
   if (!chunk) return 0;
   // LargeMmapAllocator considers pointers to the meta-region of a chunk to be
   // valid, but we don't want that.
-  if (p < chunk) return 0;
-  ChunkMetadata *m = Metadata(chunk);
+  if (addr < chunk) return 0;
+  ChunkMetadata *m = Metadata(reinterpret_cast<void *>(chunk));
   CHECK(m);
-  if (m->allocated && (uptr)p < (uptr)chunk + m->requested_size)
+  if (m->allocated && addr < chunk + m->requested_size)
     return chunk;
   return 0;
 }
 
-void *GetUserBegin(void *p) {
-  return p;
+uptr GetUserBegin(uptr chunk) {
+  return chunk;
 }
 
-LsanMetadata::LsanMetadata(void *chunk) {
-  metadata_ = Metadata(chunk);
+LsanMetadata::LsanMetadata(uptr chunk) {
+  metadata_ = Metadata(reinterpret_cast<void *>(chunk));
   CHECK(metadata_);
 }
 
@@ -171,19 +172,9 @@ u32 LsanMetadata::stack_trace_id() const {
   return reinterpret_cast<ChunkMetadata *>(metadata_)->stack_trace_id;
 }
 
-template<typename Callable>
-void ForEachChunk(Callable const &callback) {
-  allocator.ForEachChunk(callback);
+void ForEachChunk(ForEachChunkCallback callback, void *arg) {
+  allocator.ForEachChunk(callback, arg);
 }
-
-template void ForEachChunk<ProcessPlatformSpecificAllocationsCb>(
-    ProcessPlatformSpecificAllocationsCb const &callback);
-template void ForEachChunk<PrintLeakedCb>(PrintLeakedCb const &callback);
-template void ForEachChunk<CollectLeaksCb>(CollectLeaksCb const &callback);
-template void ForEachChunk<MarkIndirectlyLeakedCb>(
-    MarkIndirectlyLeakedCb const &callback);
-template void ForEachChunk<CollectIgnoredCb>(
-    CollectIgnoredCb const &callback);
 
 IgnoreObjectResult IgnoreObjectLocked(const void *p) {
   void *chunk = allocator.GetBlockBegin(p);

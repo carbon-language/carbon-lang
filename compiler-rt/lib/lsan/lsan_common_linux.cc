@@ -53,8 +53,7 @@ void InitializePlatformSpecificModules() {
 
 static int ProcessGlobalRegionsCallback(struct dl_phdr_info *info, size_t size,
                                         void *data) {
-  Frontier *frontier =
-      reinterpret_cast<Frontier *>(data);
+  Frontier *frontier = reinterpret_cast<Frontier *>(data);
   for (uptr j = 0; j < info->dlpi_phnum; j++) {
     const ElfW(Phdr) *phdr = &(info->dlpi_phdr[j]);
     // We're looking for .data and .bss sections, which reside in writeable,
@@ -82,7 +81,7 @@ static int ProcessGlobalRegionsCallback(struct dl_phdr_info *info, size_t size,
   return 0;
 }
 
-// Scan global variables for heap pointers.
+// Scans global variables for heap pointers.
 void ProcessGlobalRegions(Frontier *frontier) {
   // FIXME: dl_iterate_phdr acquires a linker lock, so we run a risk of
   // deadlocking by running this under StopTheWorld. However, the lock is
@@ -101,23 +100,26 @@ static uptr GetCallerPC(u32 stack_id) {
   return 0;
 }
 
-void ProcessPlatformSpecificAllocationsCb::operator()(void *p) const {
-  p = GetUserBegin(p);
-  LsanMetadata m(p);
+// ForEachChunk callback. Identifies unreachable chunks which must be treated as
+// reachable. Marks them as reachable and adds them to the frontier.
+static void ProcessPlatformSpecificAllocationsCb(uptr chunk, void *arg) {
+  CHECK(arg);
+  chunk = GetUserBegin(chunk);
+  LsanMetadata m(chunk);
   if (m.allocated() && m.tag() != kReachable) {
     if (linker->containsAddress(GetCallerPC(m.stack_trace_id()))) {
       m.set_tag(kReachable);
-      frontier_->push_back(reinterpret_cast<uptr>(p));
+      reinterpret_cast<Frontier *>(arg)->push_back(chunk);
     }
   }
 }
 
-// Handle dynamically allocated TLS blocks by treating all chunks allocated from
-// ld-linux.so as reachable.
+// Handles dynamically allocated TLS blocks by treating all chunks allocated
+// from ld-linux.so as reachable.
 void ProcessPlatformSpecificAllocations(Frontier *frontier) {
   if (!flags()->use_tls) return;
   if (!linker) return;
-  ForEachChunk(ProcessPlatformSpecificAllocationsCb(frontier));
+  ForEachChunk(ProcessPlatformSpecificAllocationsCb, frontier);
 }
 
 }  // namespace __lsan

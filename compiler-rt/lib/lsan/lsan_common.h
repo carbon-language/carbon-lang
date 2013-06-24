@@ -15,6 +15,7 @@
 #ifndef LSAN_COMMON_H
 #define LSAN_COMMON_H
 
+#include "sanitizer_common/sanitizer_allocator.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_platform.h"
@@ -105,55 +106,6 @@ void ScanRangeForPointers(uptr begin, uptr end,
                           Frontier *frontier,
                           const char *region_type, ChunkTag tag);
 
-// Callables for iterating over chunks. Those classes are used as template
-// parameters in ForEachChunk, so we must expose them here to allow for explicit
-// template instantiation.
-
-// Identifies unreachable chunks which must be treated as reachable. Marks them
-// as reachable and adds them to the frontier.
-class ProcessPlatformSpecificAllocationsCb {
- public:
-  explicit ProcessPlatformSpecificAllocationsCb(
-      Frontier *frontier)
-      : frontier_(frontier) {}
-  void operator()(void *p) const;
- private:
-  Frontier *frontier_;
-};
-
-// Prints addresses of unreachable chunks.
-class PrintLeakedCb {
- public:
-  void operator()(void *p) const;
-};
-
-// Aggregates unreachable chunks into a LeakReport.
-class CollectLeaksCb {
- public:
-  explicit CollectLeaksCb(LeakReport *leak_report)
-      : leak_report_(leak_report) {}
-  void operator()(void *p) const;
- private:
-  LeakReport *leak_report_;
-};
-
-// Scans each leaked chunk for pointers to other leaked chunks, and marks each
-// of them as indirectly leaked.
-class MarkIndirectlyLeakedCb {
- public:
-  void operator()(void *p) const;
-};
-
-// Finds all chunk marked as kIgnored and adds their addresses to frontier.
-class CollectIgnoredCb {
- public:
-  explicit CollectIgnoredCb(Frontier *frontier)
-      : frontier_(frontier) {}
-  void operator()(void *p) const;
- private:
-  Frontier *frontier_;
-};
-
 enum IgnoreObjectResult {
   kIgnoreObjectSuccess,
   kIgnoreObjectAlreadyIgnored,
@@ -167,8 +119,8 @@ bool DisabledInThisThread();
 
 // The following must be implemented in the parent tool.
 
-template<typename Callable> void ForEachChunk(Callable const &callback);
-// The address range occupied by the global allocator object.
+void ForEachChunk(ForEachChunkCallback callback, void *arg);
+// Returns the address range occupied by the global allocator object.
 void GetAllocatorGlobalRange(uptr *begin, uptr *end);
 // Wrappers for allocator's ForceLock()/ForceUnlock().
 void LockAllocator();
@@ -179,18 +131,18 @@ void UnlockThreadRegistry();
 bool GetThreadRangesLocked(uptr os_id, uptr *stack_begin, uptr *stack_end,
                            uptr *tls_begin, uptr *tls_end,
                            uptr *cache_begin, uptr *cache_end);
-// If p points into a chunk that has been allocated to the user, return its
-// user-visible address. Otherwise, return 0.
-void *PointsIntoChunk(void *p);
-// Return address of user-visible chunk contained in this allocator chunk.
-void *GetUserBegin(void *p);
+// If p points into a chunk that has been allocated to the user, returns its
+// user-visible address. Otherwise, returns 0.
+uptr PointsIntoChunk(void *p);
+// Returns address of user-visible chunk contained in this allocator chunk.
+uptr GetUserBegin(uptr chunk);
 // Helper for __lsan_ignore_object().
 IgnoreObjectResult IgnoreObjectLocked(const void *p);
 // Wrapper for chunk metadata operations.
 class LsanMetadata {
  public:
-  // Constructor accepts pointer to user-visible chunk.
-  explicit LsanMetadata(void *chunk);
+  // Constructor accepts address of user-visible chunk.
+  explicit LsanMetadata(uptr chunk);
   bool allocated() const;
   ChunkTag tag() const;
   void set_tag(ChunkTag value);

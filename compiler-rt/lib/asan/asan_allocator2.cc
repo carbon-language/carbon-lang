@@ -718,26 +718,25 @@ void GetAllocatorGlobalRange(uptr *begin, uptr *end) {
   *end = *begin + sizeof(__asan::allocator);
 }
 
-void *PointsIntoChunk(void* p) {
+uptr PointsIntoChunk(void* p) {
   uptr addr = reinterpret_cast<uptr>(p);
   __asan::AsanChunk *m = __asan::GetAsanChunkByAddrFastLocked(addr);
   if (!m) return 0;
   uptr chunk = m->Beg();
   if ((m->chunk_state == __asan::CHUNK_ALLOCATED) && m->AddrIsInside(addr))
-    return reinterpret_cast<void *>(chunk);
+    return chunk;
   return 0;
 }
 
-void *GetUserBegin(void *p) {
+uptr GetUserBegin(uptr chunk) {
   __asan::AsanChunk *m =
-      __asan::GetAsanChunkByAddrFastLocked(reinterpret_cast<uptr>(p));
+      __asan::GetAsanChunkByAddrFastLocked(chunk);
   CHECK(m);
-  return reinterpret_cast<void *>(m->Beg());
+  return m->Beg();
 }
 
-LsanMetadata::LsanMetadata(void *chunk) {
-  uptr addr = reinterpret_cast<uptr>(chunk);
-  metadata_ = reinterpret_cast<void *>(addr - __asan::kChunkHeaderSize);
+LsanMetadata::LsanMetadata(uptr chunk) {
+  metadata_ = reinterpret_cast<void *>(chunk - __asan::kChunkHeaderSize);
 }
 
 bool LsanMetadata::allocated() const {
@@ -765,19 +764,9 @@ u32 LsanMetadata::stack_trace_id() const {
   return m->alloc_context_id;
 }
 
-template <typename Callable> void ForEachChunk(Callable const &callback) {
-  __asan::allocator.ForEachChunk(callback);
+void ForEachChunk(ForEachChunkCallback callback, void *arg) {
+  __asan::allocator.ForEachChunk(callback, arg);
 }
-#if CAN_SANITIZE_LEAKS
-template void ForEachChunk<ProcessPlatformSpecificAllocationsCb>(
-    ProcessPlatformSpecificAllocationsCb const &callback);
-template void ForEachChunk<PrintLeakedCb>(PrintLeakedCb const &callback);
-template void ForEachChunk<CollectLeaksCb>(CollectLeaksCb const &callback);
-template void ForEachChunk<MarkIndirectlyLeakedCb>(
-    MarkIndirectlyLeakedCb const &callback);
-template void ForEachChunk<CollectIgnoredCb>(
-    CollectIgnoredCb const &callback);
-#endif  // CAN_SANITIZE_LEAKS
 
 IgnoreObjectResult IgnoreObjectLocked(const void *p) {
   uptr addr = reinterpret_cast<uptr>(p);

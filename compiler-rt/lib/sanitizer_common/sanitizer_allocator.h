@@ -279,6 +279,9 @@ struct NoOpMapUnmapCallback {
   void OnUnmap(uptr p, uptr size) const { }
 };
 
+// Callback type for iterating over chunks.
+typedef void (*ForEachChunkCallback)(uptr chunk, void *arg);
+
 // SizeClassAllocator64 -- allocator for 64-bit address space.
 //
 // Space: a portion of address space of kSpaceSize bytes starting at
@@ -433,20 +436,18 @@ class SizeClassAllocator64 {
     }
   }
 
-  // Iterate over existing chunks. May include chunks that are not currently
-  // allocated to the user (e.g. freed).
-  // The caller is expected to call ForceLock() before calling this function.
-  template<typename Callable>
-  void ForEachChunk(const Callable &callback) {
+  // Iterate over all existing chunks.
+  // The allocator must be locked when calling this function.
+  void ForEachChunk(ForEachChunkCallback callback, void *arg) {
     for (uptr class_id = 1; class_id < kNumClasses; class_id++) {
       RegionInfo *region = GetRegionInfo(class_id);
       uptr chunk_size = SizeClassMap::Size(class_id);
       uptr region_beg = kSpaceBeg + class_id * kRegionSize;
-      for (uptr p = region_beg;
-           p < region_beg + region->allocated_user;
-           p += chunk_size) {
-        // Too slow: CHECK_EQ((void *)p, GetBlockBegin((void *)p));
-        callback((void *)p);
+      for (uptr chunk = region_beg;
+           chunk < region_beg + region->allocated_user;
+           chunk += chunk_size) {
+        // Too slow: CHECK_EQ((void *)chunk, GetBlockBegin((void *)chunk));
+        callback(chunk, arg);
       }
     }
   }
@@ -726,21 +727,19 @@ class SizeClassAllocator32 {
     }
   }
 
-  // Iterate over existing chunks. May include chunks that are not currently
-  // allocated to the user (e.g. freed).
-  // The caller is expected to call ForceLock() before calling this function.
-  template<typename Callable>
-  void ForEachChunk(const Callable &callback) {
+  // Iterate over all existing chunks.
+  // The allocator must be locked when calling this function.
+  void ForEachChunk(ForEachChunkCallback callback, void *arg) {
     for (uptr region = 0; region < kNumPossibleRegions; region++)
       if (possible_regions[region]) {
         uptr chunk_size = SizeClassMap::Size(possible_regions[region]);
         uptr max_chunks_in_region = kRegionSize / (chunk_size + kMetadataSize);
         uptr region_beg = region * kRegionSize;
-        for (uptr p = region_beg;
-             p < region_beg + max_chunks_in_region * chunk_size;
-             p += chunk_size) {
-          // Too slow: CHECK_EQ((void *)p, GetBlockBegin((void *)p));
-          callback((void *)p);
+        for (uptr chunk = region_beg;
+             chunk < region_beg + max_chunks_in_region * chunk_size;
+             chunk += chunk_size) {
+          // Too slow: CHECK_EQ((void *)chunk, GetBlockBegin((void *)chunk));
+          callback(chunk, arg);
         }
       }
   }
@@ -1108,13 +1107,11 @@ class LargeMmapAllocator {
     mutex_.Unlock();
   }
 
-  // Iterate over existing chunks. May include chunks that are not currently
-  // allocated to the user (e.g. freed).
-  // The caller is expected to call ForceLock() before calling this function.
-  template<typename Callable>
-  void ForEachChunk(const Callable &callback) {
+  // Iterate over all existing chunks.
+  // The allocator must be locked when calling this function.
+  void ForEachChunk(ForEachChunkCallback callback, void *arg) {
     for (uptr i = 0; i < n_chunks_; i++)
-      callback(GetUser(chunks_[i]));
+      callback(reinterpret_cast<uptr>(GetUser(chunks_[i])), arg);
   }
 
  private:
@@ -1290,13 +1287,11 @@ class CombinedAllocator {
     primary_.ForceUnlock();
   }
 
-  // Iterate over existing chunks. May include chunks that are not currently
-  // allocated to the user (e.g. freed).
-  // The caller is expected to call ForceLock() before calling this function.
-  template<typename Callable>
-  void ForEachChunk(const Callable &callback) {
-    primary_.ForEachChunk(callback);
-    secondary_.ForEachChunk(callback);
+  // Iterate over all existing chunks.
+  // The allocator must be locked when calling this function.
+  void ForEachChunk(ForEachChunkCallback callback, void *arg) {
+    primary_.ForEachChunk(callback, arg);
+    secondary_.ForEachChunk(callback, arg);
   }
 
  private:
