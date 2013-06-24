@@ -884,7 +884,15 @@ void AddTopLevelDeclarationToHash(Decl *D, unsigned &Hash) {
       Hash = llvm::HashString(NameStr, Hash);
     }
     return;
-  }  
+  }
+
+  if (ImportDecl *ImportD = dyn_cast<ImportDecl>(D)) {
+    if (Module *Mod = ImportD->getImportedModule()) {
+      std::string ModName = Mod->getFullModuleName();
+      Hash = llvm::HashString(ModName, Hash);
+    }
+    return;
+  }
 }
 
 class TopLevelDeclTrackerConsumer : public ASTConsumer {
