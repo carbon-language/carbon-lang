@@ -343,6 +343,10 @@ namespace llvm {
 
     unsigned getSizeInBits() const {
       switch (SimpleTy) {
+      default:
+        llvm_unreachable("getSizeInBits called on extended MVT.");
+      case Other:
+        llvm_unreachable("Value type is non-standard value, Other.");
       case iPTR:
         llvm_unreachable("Value type size is target-dependent. Ask TLI.");
       case iPTRAny:
@@ -352,8 +356,6 @@ namespace llvm {
         llvm_unreachable("Value type is overloaded.");
       case Metadata:
         llvm_unreachable("Value type is metadata.");
-      default:
-        llvm_unreachable("getSizeInBits called on extended MVT.");
       case i1  :  return 1;
       case v2i1:  return 2;
       case v4i1:  return 4;
