@@ -30,7 +30,7 @@ if.then:                                          ; preds = %for.body
 if.end:                                           ; preds = %for.body, %if.then
   %z.0 = phi i32 [ %add1, %if.then ], [ 9, %for.body ]
   store i32 %z.0, i32* %arrayidx, align 4
-  %indvars.iv.next = add nsw i64 %indvars.iv, 1
+  %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
   %exitcond = icmp eq i32 %lftr.wideiv, %x
   br i1 %exitcond, label %for.end, label %for.body
