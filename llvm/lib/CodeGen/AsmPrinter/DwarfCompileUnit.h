@@ -96,7 +96,7 @@ class CompileUnit {
 
 public:
   CompileUnit(unsigned UID, unsigned L, DIE *D, const MDNode *N, AsmPrinter *A,
-	      DwarfDebug *DW, DwarfUnits *DWU);
+              DwarfDebug *DW, DwarfUnits *DWU);
   ~CompileUnit();
 
   // Accessors.
@@ -282,7 +282,7 @@ public:
   /// (navigating the extra location information encoded in the type) based on
   /// the starting location.  Add the DWARF information to the die.
   ///
-  void addComplexAddress(DbgVariable *&DV, DIE *Die, unsigned Attribute,
+  void addComplexAddress(const DbgVariable &DV, DIE *Die, unsigned Attribute,
                          const MachineLocation &Location);
 
   // FIXME: Should be reformulated in terms of addComplexAddress.
@@ -292,12 +292,13 @@ public:
   /// starting location.  Add the DWARF information to the die.  Obsolete,
   /// please use addComplexAddress instead.
   ///
-  void addBlockByrefAddress(DbgVariable *&DV, DIE *Die, unsigned Attribute,
+  void addBlockByrefAddress(const DbgVariable &DV, DIE *Die, unsigned Attribute,
                             const MachineLocation &Location);
 
   /// addVariableAddress - Add DW_AT_location attribute for a
   /// DbgVariable based on provided MachineLocation.
-  void addVariableAddress(DbgVariable *&DV, DIE *Die, MachineLocation Location);
+  void addVariableAddress(const DbgVariable &DV, DIE *Die,
+                          MachineLocation Location);
 
   /// addToContextOwner - Add Die into the list of its context owner's children.
   void addToContextOwner(DIE *Die, DIDescriptor Context);
