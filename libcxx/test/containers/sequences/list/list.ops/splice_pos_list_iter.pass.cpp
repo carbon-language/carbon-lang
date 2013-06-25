@@ -18,6 +18,8 @@
 #include <list>
 #include <cassert>
 
+#include "../../../min_allocator.h"
+
 int main()
 {
     int a1[] = {1, 2, 3};
@@ -185,5 +187,171 @@ int main()
         v1.splice(v1.begin(), v2, v1.begin());
         assert(false);
     }
+#endif
+#if __cplusplus >= 201103L
+    {
+        std::list<int, min_allocator<int>> l1;
+        std::list<int, min_allocator<int>> l2(a2, a2+1);
+        l1.splice(l1.end(), l2, l2.begin());
+        assert(l1.size() == 1);
+        assert(distance(l1.begin(), l1.end()) == 1);
+        assert(l2.size() == 0);
+        assert(distance(l2.begin(), l2.end()) == 0);
+        std::list<int, min_allocator<int>>::const_iterator i = l1.begin();
+        assert(*i == 4);
+    }
+    {
+        std::list<int, min_allocator<int>> l1;
+        std::list<int, min_allocator<int>> l2(a2, a2+2);
+        l1.splice(l1.end(), l2, l2.begin());
+        assert(l1.size() == 1);
+        assert(distance(l1.begin(), l1.end()) == 1);
+        assert(l2.size() == 1);
+        assert(distance(l2.begin(), l2.end()) == 1);
+        std::list<int, min_allocator<int>>::const_iterator i = l1.begin();
+        assert(*i == 4);
+        i = l2.begin();
+        assert(*i == 5);
+    }
+    {
+        std::list<int, min_allocator<int>> l1;
+        std::list<int, min_allocator<int>> l2(a2, a2+2);
+        l1.splice(l1.end(), l2, next(l2.begin()));
+        assert(l1.size() == 1);
+        assert(distance(l1.begin(), l1.end()) == 1);
+        assert(l2.size() == 1);
+        assert(distance(l2.begin(), l2.end()) == 1);
+        std::list<int, min_allocator<int>>::const_iterator i = l1.begin();
+        assert(*i == 5);
+        i = l2.begin();
+        assert(*i == 4);
+    }
+    {
+        std::list<int, min_allocator<int>> l1;
+        std::list<int, min_allocator<int>> l2(a2, a2+3);
+        l1.splice(l1.end(), l2, l2.begin());
+        assert(l1.size() == 1);
+        assert(distance(l1.begin(), l1.end()) == 1);
+        assert(l2.size() == 2);
+        assert(distance(l2.begin(), l2.end()) == 2);
+        std::list<int, min_allocator<int>>::const_iterator i = l1.begin();
+        assert(*i == 4);
+        i = l2.begin();
+        assert(*i == 5);
+        ++i;
+        assert(*i == 6);
+    }
+    {
+        std::list<int, min_allocator<int>> l1;
+        std::list<int, min_allocator<int>> l2(a2, a2+3);
+        l1.splice(l1.end(), l2, next(l2.begin()));
+        assert(l1.size() == 1);
+        assert(distance(l1.begin(), l1.end()) == 1);
+        assert(l2.size() == 2);
+        assert(distance(l2.begin(), l2.end()) == 2);
+        std::list<int, min_allocator<int>>::const_iterator i = l1.begin();
+        assert(*i == 5);
+        i = l2.begin();
+        assert(*i == 4);
+        ++i;
+        assert(*i == 6);
+    }
+    {
+        std::list<int, min_allocator<int>> l1;
+        std::list<int, min_allocator<int>> l2(a2, a2+3);
+        l1.splice(l1.end(), l2, next(l2.begin(), 2));
+        assert(l1.size() == 1);
+        assert(distance(l1.begin(), l1.end()) == 1);
+        assert(l2.size() == 2);
+        assert(distance(l2.begin(), l2.end()) == 2);
+        std::list<int, min_allocator<int>>::const_iterator i = l1.begin();
+        assert(*i == 6);
+        i = l2.begin();
+        assert(*i == 4);
+        ++i;
+        assert(*i == 5);
+    }
+    {
+        std::list<int, min_allocator<int>> l1(a1, a1+1);
+        l1.splice(l1.begin(), l1, l1.begin());
+        assert(l1.size() == 1);
+        assert(distance(l1.begin(), l1.end()) == 1);
+        std::list<int, min_allocator<int>>::const_iterator i = l1.begin();
+        assert(*i == 1);
+    }
+    {
+        std::list<int, min_allocator<int>> l1(a1, a1+1);
+        std::list<int, min_allocator<int>> l2(a2, a2+1);
+        l1.splice(l1.begin(), l2, l2.begin());
+        assert(l1.size() == 2);
+        assert(distance(l1.begin(), l1.end()) == 2);
+        assert(l2.size() == 0);
+        assert(distance(l2.begin(), l2.end()) == 0);
+        std::list<int, min_allocator<int>>::const_iterator i = l1.begin();
+        assert(*i == 4);
+        ++i;
+        assert(*i == 1);
+    }
+    {
+        std::list<int, min_allocator<int>> l1(a1, a1+1);
+        std::list<int, min_allocator<int>> l2(a2, a2+1);
+        l1.splice(next(l1.begin()), l2, l2.begin());
+        assert(l1.size() == 2);
+        assert(distance(l1.begin(), l1.end()) == 2);
+        assert(l2.size() == 0);
+        assert(distance(l2.begin(), l2.end()) == 0);
+        std::list<int, min_allocator<int>>::const_iterator i = l1.begin();
+        assert(*i == 1);
+        ++i;
+        assert(*i == 4);
+    }
+    {
+        std::list<int, min_allocator<int>> l1(a1, a1+2);
+        l1.splice(l1.begin(), l1, l1.begin());
+        assert(l1.size() == 2);
+        assert(distance(l1.begin(), l1.end()) == 2);
+        std::list<int, min_allocator<int>>::const_iterator i = l1.begin();
+        assert(*i == 1);
+        ++i;
+        assert(*i == 2);
+    }
+    {
+        std::list<int, min_allocator<int>> l1(a1, a1+2);
+        l1.splice(l1.begin(), l1, next(l1.begin()));
+        assert(l1.size() == 2);
+        assert(distance(l1.begin(), l1.end()) == 2);
+        std::list<int, min_allocator<int>>::const_iterator i = l1.begin();
+        assert(*i == 2);
+        ++i;
+        assert(*i == 1);
+    }
+    {
+        std::list<int, min_allocator<int>> l1(a1, a1+2);
+        l1.splice(next(l1.begin()), l1, l1.begin());
+        assert(l1.size() == 2);
+        assert(distance(l1.begin(), l1.end()) == 2);
+        std::list<int, min_allocator<int>>::const_iterator i = l1.begin();
+        assert(*i == 1);
+        ++i;
+        assert(*i == 2);
+    }
+    {
+        std::list<int, min_allocator<int>> l1(a1, a1+2);
+        l1.splice(next(l1.begin()), l1, next(l1.begin()));
+        assert(l1.size() == 2);
+        assert(distance(l1.begin(), l1.end()) == 2);
+        std::list<int, min_allocator<int>>::const_iterator i = l1.begin();
+        assert(*i == 1);
+        ++i;
+        assert(*i == 2);
+    }
+#if _LIBCPP_DEBUG2 >= 1
+    {
+        std::list<int, min_allocator<int>> v1(3);
+        std::list<int, min_allocator<int>> v2(3);
+        v1.splice(v1.begin(), v2, v1.begin());
+        assert(false);
+    }
+#endif
 #endif
 }

@@ -15,10 +15,12 @@
 #include <cassert>
 
 #include "../../../MoveOnly.h"
+#include "../../../min_allocator.h"
 
 int main()
 {
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    {
     std::list<MoveOnly> l1;
     l1.push_front(MoveOnly(1));
     assert(l1.size() == 1);
@@ -27,5 +29,18 @@ int main()
     assert(l1.size() == 2);
     assert(l1.front() == MoveOnly(2));
     assert(l1.back() == MoveOnly(1));
+    }
+#if __cplusplus >= 201103L
+    {
+    std::list<MoveOnly, min_allocator<MoveOnly>> l1;
+    l1.push_front(MoveOnly(1));
+    assert(l1.size() == 1);
+    assert(l1.front() == MoveOnly(1));
+    l1.push_front(MoveOnly(2));
+    assert(l1.size() == 2);
+    assert(l1.front() == MoveOnly(2));
+    assert(l1.back() == MoveOnly(1));
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

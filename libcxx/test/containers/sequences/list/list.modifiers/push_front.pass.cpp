@@ -14,11 +14,24 @@
 #include <list>
 #include <cassert>
 
+#include "../../../min_allocator.h"
+
 int main()
 {
+    {
     std::list<int> c;
     for (int i = 0; i < 5; ++i)
         c.push_front(i);
     int a[] = {4, 3, 2, 1, 0};
     assert(c == std::list<int>(a, a+5));
+    }
+#if __cplusplus >= 201103L
+    {
+    std::list<int, min_allocator<int>> c;
+    for (int i = 0; i < 5; ++i)
+        c.push_front(i);
+    int a[] = {4, 3, 2, 1, 0};
+    assert((c == std::list<int, min_allocator<int>>(a, a+5)));
+    }
+#endif
 }

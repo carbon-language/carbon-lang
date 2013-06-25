@@ -21,8 +21,11 @@
 #include <exception>
 #include <cstdlib>
 
+#include "../../min_allocator.h"
+
 int main()
 {
+    {
     typedef int T;
     typedef std::list<T> C;
     C c(1);
@@ -30,6 +33,18 @@ int main()
     c.clear();
     assert(c.back() == 0);
     assert(false);
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef int T;
+    typedef std::list<T, min_allocator<T>> C;
+    C c(1);
+    assert(c.back() == 0);
+    c.clear();
+    assert(c.back() == 0);
+    assert(false);
+    }
+#endif
 }
 
 #else

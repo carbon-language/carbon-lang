@@ -14,6 +14,8 @@
 #include <list>
 #include <cassert>
 
+#include "../../../min_allocator.h"
+
 class A
 {
     int i_;
@@ -32,6 +34,7 @@ public:
 int main()
 {
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    {
     std::list<A> c;
     c.emplace_front(2, 3.5);
     assert(c.size() == 1);
@@ -43,5 +46,21 @@ int main()
     assert(c.front().getd() == 4.5);
     assert(c.back().geti() == 2);
     assert(c.back().getd() == 3.5);
+    }
+#if __cplusplus >= 201103L
+    {
+    std::list<A, min_allocator<A>> c;
+    c.emplace_front(2, 3.5);
+    assert(c.size() == 1);
+    assert(c.front().geti() == 2);
+    assert(c.front().getd() == 3.5);
+    c.emplace_front(3, 4.5);
+    assert(c.size() == 2);
+    assert(c.front().geti() == 3);
+    assert(c.front().getd() == 4.5);
+    assert(c.back().geti() == 2);
+    assert(c.back().getd() == 3.5);
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

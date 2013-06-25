@@ -15,6 +15,7 @@
 #include <cassert>
 #include "../../../DefaultOnly.h"
 #include "../../../stack_allocator.h"
+#include "../../../min_allocator.h"
 
 int main()
 {
@@ -47,4 +48,24 @@ int main()
         assert(std::distance(l.begin(), l.end()) == 3);
     }
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#if __cplusplus >= 201103L
+    {
+        std::list<int, min_allocator<int>> l(3);
+        assert(l.size() == 3);
+        assert(std::distance(l.begin(), l.end()) == 3);
+        std::list<int, min_allocator<int>>::const_iterator i = l.begin();
+        assert(*i == 0);
+        ++i;
+        assert(*i == 0);
+        ++i;
+        assert(*i == 0);
+    }
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    {
+        std::list<DefaultOnly, min_allocator<DefaultOnly>> l(3);
+        assert(l.size() == 3);
+        assert(std::distance(l.begin(), l.end()) == 3);
+    }
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif
 }

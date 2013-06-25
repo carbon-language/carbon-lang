@@ -14,6 +14,7 @@
 #include <list>
 #include <cassert>
 #include "../../../DefaultOnly.h"
+#include "../../../min_allocator.h"
 
 int main()
 {
@@ -32,4 +33,21 @@ int main()
         assert(l.size() == 0);
         assert(std::distance(l.begin(), l.end()) == 0);
     }
+#if __cplusplus >= 201103L
+    {
+        std::list<int, min_allocator<int>> l;
+        assert(l.size() == 0);
+        assert(std::distance(l.begin(), l.end()) == 0);
+    }
+    {
+        std::list<DefaultOnly, min_allocator<DefaultOnly>> l;
+        assert(l.size() == 0);
+        assert(std::distance(l.begin(), l.end()) == 0);
+    }
+    {
+        std::list<int, min_allocator<int>> l((min_allocator<int>()));
+        assert(l.size() == 0);
+        assert(std::distance(l.begin(), l.end()) == 0);
+    }
+#endif
 }

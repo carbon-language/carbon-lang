@@ -15,6 +15,7 @@
 #include <cassert>
 #include "../../../DefaultOnly.h"
 #include "../../../test_allocator.h"
+#include "../../../min_allocator.h"
 
 int main()
 {
@@ -30,4 +31,12 @@ int main()
         assert(l2 == l);
         assert(l2.get_allocator() == other_allocator<int>(3));
     }
+#if __cplusplus >= 201103L
+    {
+        std::list<int, min_allocator<int> > l(3, 2, min_allocator<int>());
+        std::list<int, min_allocator<int> > l2(l, min_allocator<int>());
+        assert(l2 == l);
+        assert(l2.get_allocator() == min_allocator<int>());
+    }
+#endif
 }

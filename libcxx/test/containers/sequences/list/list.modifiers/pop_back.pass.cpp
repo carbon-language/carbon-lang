@@ -18,8 +18,11 @@
 #include <list>
 #include <cassert>
 
+#include "../../../min_allocator.h"
+
 int main()
 {
+    {
     int a[] = {1, 2, 3};
     std::list<int> c(a, a+3);
     c.pop_back();
@@ -32,4 +35,21 @@ int main()
         c.pop_back();
         assert(false);
 #endif        
+    }
+#if __cplusplus >= 201103L
+    {
+    int a[] = {1, 2, 3};
+    std::list<int, min_allocator<int>> c(a, a+3);
+    c.pop_back();
+    assert((c == std::list<int, min_allocator<int>>(a, a+2)));
+    c.pop_back();
+    assert((c == std::list<int, min_allocator<int>>(a, a+1)));
+    c.pop_back();
+    assert(c.empty());
+#if _LIBCPP_DEBUG2 >= 1
+        c.pop_back();
+        assert(false);
+#endif        
+    }
+#endif
 }

@@ -15,6 +15,8 @@
 #include <cassert>
 #include <functional>
 
+#include "../../../min_allocator.h"
+
 bool g(int i)
 {
     return i < 3;
@@ -22,9 +24,20 @@ bool g(int i)
 
 int main()
 {
+    {
     int a1[] = {1, 2, 3, 4};
     int a2[] = {3, 4};
     std::list<int> c(a1, a1+4);
     c.remove_if(g);
     assert(c == std::list<int>(a2, a2+2));
+    }
+#if __cplusplus >= 201103L
+    {
+    int a1[] = {1, 2, 3, 4};
+    int a2[] = {3, 4};
+    std::list<int, min_allocator<int>> c(a1, a1+4);
+    c.remove_if(g);
+    assert((c == std::list<int, min_allocator<int>>(a2, a2+2)));
+    }
+#endif
 }
