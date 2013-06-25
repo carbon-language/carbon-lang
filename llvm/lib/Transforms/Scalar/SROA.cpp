@@ -2591,22 +2591,23 @@ private:
 
   bool rewriteVectorizedStoreInst(Value *V,
                                   StoreInst &SI, Value *OldOp) {
-    unsigned BeginIndex = getIndex(BeginOffset);
-    unsigned EndIndex = getIndex(EndOffset);
-    assert(EndIndex > BeginIndex && "Empty vector!");
-    unsigned NumElements = EndIndex - BeginIndex;
-    assert(NumElements <= VecTy->getNumElements() && "Too many elements!");
-    Type *PartitionTy
-      = (NumElements == 1) ? ElementTy
-                           : VectorType::get(ElementTy, NumElements);
-    if (V->getType() != PartitionTy)
-      V = convertValue(TD, IRB, V, PartitionTy);
+    if (V->getType() != VecTy) {
+      unsigned BeginIndex = getIndex(BeginOffset);
+      unsigned EndIndex = getIndex(EndOffset);
+      assert(EndIndex > BeginIndex && "Empty vector!");
+      unsigned NumElements = EndIndex - BeginIndex;
+      assert(NumElements <= VecTy->getNumElements() && "Too many elements!");
+      Type *PartitionTy
+        = (NumElements == 1) ? ElementTy
+        : VectorType::get(ElementTy, NumElements);
+      if (V->getType() != PartitionTy)
+        V = convertValue(TD, IRB, V, PartitionTy);
 
-    // Mix in the existing elements.
-    Value *Old = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
-                                       "load");
-    V = insertVector(IRB, Old, V, BeginIndex, "vec");
-
+      // Mix in the existing elements.
+      Value *Old = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
+                                         "load");
+      V = insertVector(IRB, Old, V, BeginIndex, "vec");
+    }
     StoreInst *Store = IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment());
     Pass.DeadInsts.insert(&SI);
 

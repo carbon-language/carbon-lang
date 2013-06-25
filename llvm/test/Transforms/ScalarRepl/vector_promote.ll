@@ -111,3 +111,27 @@ entry:
 ; CHECK-NOT: alloca
 ; CHECK: and i192
 }
+
+; When promoting an alloca to a 1-element vector type, instructions that
+; produce that same vector type should not be changed to insert one element
+; into a new vector. <rdar://problem/14249078>
+define <1 x i64> @test8(<1 x i64> %a) {
+entry:
+  %a.addr = alloca <1 x i64>, align 8
+  %__a = alloca <1 x i64>, align 8
+  %tmp = alloca <1 x i64>, align 8
+  store <1 x i64> %a, <1 x i64>* %a.addr, align 8
+  %0 = load <1 x i64>* %a.addr, align 8
+  store <1 x i64> %0, <1 x i64>* %__a, align 8
+  %1 = load <1 x i64>* %__a, align 8
+  %2 = bitcast <1 x i64> %1 to <8 x i8>
+  %3 = bitcast <8 x i8> %2 to <1 x i64>
+  %vshl_n = shl <1 x i64> %3, <i64 4>
+  store <1 x i64> %vshl_n, <1 x i64>* %tmp
+  %4 = load <1 x i64>* %tmp
+  ret <1 x i64> %4
+; CHECK: @test8
+; CHECK-NOT: alloca
+; CHECK-NOT: insertelement
+; CHECK: ret <1 x i64>
+}
