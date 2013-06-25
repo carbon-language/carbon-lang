@@ -95,6 +95,7 @@ static clang::CompilerInvocation *newInvocation(
       *Invocation, CC1Args.data() + 1, CC1Args.data() + CC1Args.size(),
       *Diagnostics);
   Invocation->getFrontendOpts().DisableFree = false;
+  Invocation->getCodeGenOpts().DisableFree = false;
   return Invocation;
 }
 
