@@ -4270,6 +4270,10 @@ def err_member_def_undefined_record : Error<
   "out-of-line definition of %0 from class %1 without definition">;
 def err_member_def_does_not_match : Error<
   "out-of-line definition of %0 does not match any declaration in %1">;
+def err_friend_decl_with_def_arg_must_be_def : Error<
+  "friend declaration specifying a default argument must be a definition">;
+def err_friend_decl_with_def_arg_redeclared : Error<
+  "friend declaration specifying a default argument must be the only declaration">;
 def err_friend_decl_does_not_match : Error<
   "friend declaration of %0 does not match any declaration in %1">;
 def err_member_def_does_not_match_suggest : Error<

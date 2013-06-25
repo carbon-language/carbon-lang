@@ -357,25 +357,39 @@ namespace dr135 { // dr135: yes
   };
 }
 
-namespace dr136 { // dr136: no
-  void f(int, int, int = 0);
-  void g(int, int, int);
+namespace dr136 { // dr136: 3.4
+  void f(int, int, int = 0); // expected-note {{previous declaration is here}}
+  void g(int, int, int); // expected-note {{previous declaration is here}}
   struct A {
-    // FIXME: These declarations of f, g, and h are invalid.
-    friend void f(int, int = 0, int);
-    friend void g(int, int, int = 0);
-    friend void h(int, int, int = 0);
-    friend void i(int, int, int = 0) {}
+    friend void f(int, int = 0, int); // expected-error {{friend declaration specifying a default argument must be the only declaration}}
+    friend void g(int, int, int = 0); // expected-error {{friend declaration specifying a default argument must be the only declaration}}
+    friend void h(int, int, int = 0); // expected-error {{friend declaration specifying a default argument must be a definition}}
+    friend void i(int, int, int = 0) {} // expected-note {{previous declaration is here}}
     friend void j(int, int, int = 0) {}
     operator int();
   };
-  // FIXME: This declaration of i is invalid.
-  void i(int, int, int);
+  void i(int, int, int); // expected-error {{friend declaration specifying a default argument must be the only declaration}}
   void q() {
     j(A(), A()); // ok, has default argument
   }
-  // FIXME: Also test extern "C" friends and default arguments from other
-  // namespaces?
+  extern "C" void k(int, int, int, int); // expected-note {{previous declaration is here}}
+  namespace NSA {
+  struct A {
+    friend void dr136::k(int, int, int, int = 0); // expected-error {{friend declaration specifying a default argument must be the only declaration}} \
+                                                  // expected-note {{previous declaration is here}}
+  };
+  }
+  namespace NSB {
+  struct A {
+    friend void dr136::k(int, int, int = 0, int); // expected-error {{friend declaration specifying a default argument must be the only declaration}}
+  };
+  }
+  struct B {
+    void f(int); // expected-note {{previous declaration is here}}
+  };
+  struct C {
+    friend void B::f(int = 0); // expected-error {{friend declaration specifying a default argument must be the only declaration}}
+  };
 }
 
 namespace dr137 { // dr137: yes

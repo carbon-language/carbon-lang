@@ -4,6 +4,6 @@
 
 namespace nm {
   struct str {
-    friend int foo(int arg = 0);
+    friend void foo(int arg = 0) {};
   };
 }
