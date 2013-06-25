@@ -19,6 +19,9 @@ class CreateAfterAttachTestCase(TestBase):
         self.buildDsym(dictionary=self.getBuildFlags(use_cpp11=False))
         self.create_after_attach(use_fork=False)
 
+    @skipIfFreeBSD # Hangs.  May be the same as Linux issue llvm.org/pr16229 but
+                   # not yet investigated.  Revisit once required functionality
+                   # is implemented for FreeBSD.
     @skipIfLinux # Hangs, see llvm.org/pr16229
     @dwarf_test
     def test_create_after_attach_with_dwarf_and_popen(self):
@@ -26,6 +29,8 @@ class CreateAfterAttachTestCase(TestBase):
         self.buildDwarf(dictionary=self.getBuildFlags(use_cpp11=False))
         self.create_after_attach(use_fork=False)
 
+    @skipIfFreeBSD # Hangs. Revisit once required functionality is implemented
+                   # for FreeBSD.
     @dwarf_test
     def test_create_after_attach_with_dwarf_and_fork(self):
         """Test thread creation after process attach."""
