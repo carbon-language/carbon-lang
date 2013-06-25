@@ -119,11 +119,7 @@ public:
   static error_code getFileOrSTDIN(StringRef Filename,
                                    OwningPtr<MemoryBuffer> &result,
                                    int64_t FileSize = -1);
-  static error_code getFileOrSTDIN(const char *Filename,
-                                   OwningPtr<MemoryBuffer> &result,
-                                   int64_t FileSize = -1);
-  
-  
+
   //===--------------------------------------------------------------------===//
   // Provided for performance analysis.
   //===--------------------------------------------------------------------===//

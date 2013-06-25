@@ -43,7 +43,7 @@ Module *llvm::ParseAssembly(MemoryBuffer *F,
 Module *llvm::ParseAssemblyFile(const std::string &Filename, SMDiagnostic &Err,
                                 LLVMContext &Context) {
   OwningPtr<MemoryBuffer> File;
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), File)) {
+  if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, File)) {
     Err = SMDiagnostic(Filename, SourceMgr::DK_Error,
                        "Could not open input file: " + ec.message());
     return 0;

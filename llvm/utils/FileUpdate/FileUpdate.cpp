@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
 
   // Get the input data.
   OwningPtr<MemoryBuffer> In;
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename.c_str(), In)) {
+  if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, In)) {
     errs() << argv[0] << ": error: Unable to get input '"
            << InputFilename << "': " << ec.message() << '\n';
     return 1;

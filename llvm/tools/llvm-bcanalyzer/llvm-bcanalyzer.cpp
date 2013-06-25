@@ -481,7 +481,7 @@ static int AnalyzeBitcode() {
   OwningPtr<MemoryBuffer> MemBuf;
 
   if (error_code ec =
-        MemoryBuffer::getFileOrSTDIN(InputFilename.c_str(), MemBuf))
+        MemoryBuffer::getFileOrSTDIN(InputFilename, MemBuf))
     return Error("Error reading '" + InputFilename + "': " + ec.message());
 
   if (MemBuf->getBufferSize() & 3)

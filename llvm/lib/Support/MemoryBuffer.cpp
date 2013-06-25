@@ -173,14 +173,6 @@ error_code MemoryBuffer::getFileOrSTDIN(StringRef Filename,
   return getFile(Filename, result, FileSize);
 }
 
-error_code MemoryBuffer::getFileOrSTDIN(const char *Filename,
-                                        OwningPtr<MemoryBuffer> &result,
-                                        int64_t FileSize) {
-  if (strcmp(Filename, "-") == 0)
-    return getSTDIN(result);
-  return getFile(Filename, result, FileSize);
-}
-
 //===----------------------------------------------------------------------===//
 // MemoryBuffer::getFile implementation.
 //===----------------------------------------------------------------------===//

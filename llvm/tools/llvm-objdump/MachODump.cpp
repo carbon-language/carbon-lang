@@ -295,7 +295,7 @@ static void DisassembleInputMachO2(StringRef Filename,
     // get the sections and supply it to the section name parsing machinery.
     if (!DSYMFile.empty()) {
       OwningPtr<MemoryBuffer> Buf;
-      if (error_code ec = MemoryBuffer::getFileOrSTDIN(DSYMFile.c_str(), Buf)) {
+      if (error_code ec = MemoryBuffer::getFileOrSTDIN(DSYMFile, Buf)) {
         errs() << "llvm-objdump: " << Filename << ": " << ec.message() << '\n';
         return;
       }
