@@ -534,6 +534,15 @@ void Sema::translateTemplateArguments(const ASTTemplateArgsPtr &TemplateArgsIn,
                                                       TemplateArgsIn[I]));
 }
 
+static void maybeDiagnoseTemplateParameterShadow(Sema &SemaRef, Scope *S,
+                                                 SourceLocation Loc,
+                                                 IdentifierInfo *Name) {
+  NamedDecl *PrevDecl = SemaRef.LookupSingleName(
+      S, Name, Loc, Sema::LookupOrdinaryName, Sema::ForRedeclaration);
+  if (PrevDecl && PrevDecl->isTemplateParameter())
+    SemaRef.DiagnoseTemplateParameterShadow(Loc, PrevDecl);
+}
+
 /// ActOnTypeParameter - Called when a C++ template type parameter
 /// (e.g., "typename T") has been parsed. Typename specifies whether
 /// the keyword "typename" was used to declare the type parameter
@@ -555,16 +564,6 @@ Decl *Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
          "Template type parameter not in template parameter scope!");
   bool Invalid = false;
 
-  if (ParamName) {
-    NamedDecl *PrevDecl = LookupSingleName(S, ParamName, ParamNameLoc,
-                                           LookupOrdinaryName,
-                                           ForRedeclaration);
-    if (PrevDecl && PrevDecl->isTemplateParameter()) {
-      DiagnoseTemplateParameterShadow(ParamNameLoc, PrevDecl);
-      PrevDecl = 0;
-    }
-  }
-
   SourceLocation Loc = ParamNameLoc;
   if (!ParamName)
     Loc = KeyLoc;
@@ -578,6 +577,8 @@ Decl *Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
     Param->setInvalidDecl();
 
   if (ParamName) {
+    maybeDiagnoseTemplateParameterShadow(*this, S, ParamNameLoc, ParamName);
+
     // Add the template parameter into the current scope.
     S->AddDecl(Param);
     IdResolver.AddDecl(Param);
@@ -683,23 +684,13 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
          "Non-type template parameter not in template parameter scope!");
   bool Invalid = false;
 
-  IdentifierInfo *ParamName = D.getIdentifier();
-  if (ParamName) {
-    NamedDecl *PrevDecl = LookupSingleName(S, ParamName, D.getIdentifierLoc(),
-                                           LookupOrdinaryName,
-                                           ForRedeclaration);
-    if (PrevDecl && PrevDecl->isTemplateParameter()) {
-      DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), PrevDecl);
-      PrevDecl = 0;
-    }
-  }
-
   T = CheckNonTypeTemplateParameterType(T, D.getIdentifierLoc());
   if (T.isNull()) {
     T = Context.IntTy; // Recover with an 'int' type.
     Invalid = true;
   }
 
+  IdentifierInfo *ParamName = D.getIdentifier();
   bool IsParameterPack = D.hasEllipsis();
   NonTypeTemplateParmDecl *Param
     = NonTypeTemplateParmDecl::Create(Context, Context.getTranslationUnitDecl(),
@@ -708,11 +699,14 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
                                       Depth, Position, ParamName, T,
                                       IsParameterPack, TInfo);
   Param->setAccess(AS_public);
-  
+
   if (Invalid)
     Param->setInvalidDecl();
 
-  if (D.getIdentifier()) {
+  if (ParamName) {
+    maybeDiagnoseTemplateParameterShadow(*this, S, D.getIdentifierLoc(),
+                                         ParamName);
+
     // Add the template parameter into the current scope.
     S->AddDecl(Param);
     IdResolver.AddDecl(Param);
@@ -774,6 +768,8 @@ Decl *Sema::ActOnTemplateTemplateParameter(Scope* S,
   // If the template template parameter has a name, then link the identifier
   // into the scope and lookup mechanisms.
   if (Name) {
+    maybeDiagnoseTemplateParameterShadow(*this, S, NameLoc, Name);
+
     S->AddDecl(Param);
     IdResolver.AddDecl(Param);
   }

@@ -85,6 +85,19 @@ struct shadow5 {
   int T(int, float); // expected-error{{shadows}}
 };
 
+template<typename T, // expected-note{{template parameter is declared here}}
+         T T> // expected-error{{declaration of 'T' shadows template parameter}}
+void shadow6();
+
+template<typename T, // expected-note{{template parameter is declared here}}
+         template<typename> class T> // expected-error{{declaration of 'T' shadows template parameter}}
+void shadow7();
+
+// PR8302
+template<template<typename> class T> struct shadow8 { // expected-note{{template parameter is declared here}}
+  template<template<typename> class T> struct inner; // expected-error{{declaration of 'T' shadows template parameter}}
+};
+
 // Non-type template parameters in scope
 template<int Size> 
 void f(int& i) {
