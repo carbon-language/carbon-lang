@@ -250,8 +250,7 @@ void DarwinClang::AddLinkRuntimeLib(const ArgList &Args,
   // For now, allow missing resource libraries to support developers who may
   // not have compiler-rt checked out or integrated into their build (unless
   // we explicitly force linking with this library).
-  bool Exists;
-  if (AlwaysLink || (!llvm::sys::fs::exists(P.str(), Exists) && Exists))
+  if (AlwaysLink || llvm::sys::fs::exists(P.str()))
     CmdArgs.push_back(Args.MakeArgString(P.str()));
 }
 
@@ -378,8 +377,7 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   // isysroot.
   if (const Arg *A = Args.getLastArg(options::OPT_isysroot)) {
     // Warn if the path does not exist.
-    bool Exists;
-    if (llvm::sys::fs::exists(A->getValue(), Exists) || !Exists)
+    if (!llvm::sys::fs::exists(A->getValue()))
       getDriver().Diag(clang::diag::warn_missing_sysroot) << A->getValue();
   } else {
     if (char *env = ::getenv("SDKROOT")) {
@@ -540,17 +538,16 @@ void DarwinClang::AddCXXStdlibLibArgs(const ArgList &Args,
     // explicitly if we can't see an obvious -lstdc++ candidate.
 
     // Check in the sysroot first.
-    bool Exists;
     if (const Arg *A = Args.getLastArg(options::OPT_isysroot)) {
       llvm::sys::Path P(A->getValue());
       P.appendComponent("usr");
       P.appendComponent("lib");
       P.appendComponent("libstdc++.dylib");
 
-      if (llvm::sys::fs::exists(P.str(), Exists) || !Exists) {
+      if (!llvm::sys::fs::exists(P.str())) {
         P.eraseComponent();
         P.appendComponent("libstdc++.6.dylib");
-        if (!llvm::sys::fs::exists(P.str(), Exists) && Exists) {
+        if (llvm::sys::fs::exists(P.str())) {
           CmdArgs.push_back(Args.MakeArgString(P.str()));
           return;
         }
@@ -560,8 +557,8 @@ void DarwinClang::AddCXXStdlibLibArgs(const ArgList &Args,
     // Otherwise, look in the root.
     // FIXME: This should be removed someday when we don't have to care about
     // 10.6 and earlier, where /usr/lib/libstdc++.dylib does not exist.
-    if ((llvm::sys::fs::exists("/usr/lib/libstdc++.dylib", Exists) || !Exists)&&
-      (!llvm::sys::fs::exists("/usr/lib/libstdc++.6.dylib", Exists) && Exists)){
+    if (!llvm::sys::fs::exists("/usr/lib/libstdc++.dylib") &&
+        llvm::sys::fs::exists("/usr/lib/libstdc++.6.dylib")) {
       CmdArgs.push_back("/usr/lib/libstdc++.6.dylib");
       return;
     }
@@ -594,8 +591,7 @@ void DarwinClang::AddCCKextLibArgs(const ArgList &Args,
 
   // For now, allow missing resource libraries to support developers who may
   // not have compiler-rt checked out or integrated into their build.
-  bool Exists;
-  if (!llvm::sys::fs::exists(P.str(), Exists) && Exists)
+  if (llvm::sys::fs::exists(P.str()))
     CmdArgs.push_back(Args.MakeArgString(P.str()));
 }
 
@@ -2072,11 +2068,10 @@ static Distro DetectDistro(llvm::Triple::ArchType Arch) {
       .StartsWith("openSUSE 12.2", OpenSuse12_2)
       .Default(UnknownDistro);
 
-  bool Exists;
-  if (!llvm::sys::fs::exists("/etc/exherbo-release", Exists) && Exists)
+  if (llvm::sys::fs::exists("/etc/exherbo-release"))
     return Exherbo;
 
-  if (!llvm::sys::fs::exists("/etc/arch-release", Exists) && Exists)
+  if (llvm::sys::fs::exists("/etc/arch-release"))
     return ArchLinux;
 
   return UnknownDistro;
