@@ -25,7 +25,7 @@ class BranchProbability;
 class BlockFrequency {
 
   uint64_t Frequency;
-  static const int64_t ENTRY_FREQ = 1024;
+  static const int64_t ENTRY_FREQ = 1 << 14;
 
 public:
   BlockFrequency(uint64_t Freq = 0) : Frequency(Freq) { }
