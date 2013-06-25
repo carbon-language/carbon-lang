@@ -1848,57 +1848,99 @@
 
 # Rotate and shift mnemonics
 
-# FIXME: extldi 2, 3, 4, 5
-# FIXME: extldi. 2, 3, 4, 5
-# FIXME: extrdi 2, 3, 4, 5
-# FIXME: extrdi. 2, 3, 4, 5
-# FIXME: insrdi 2, 3, 4, 5
-# FIXME: insrdi. 2, 3, 4, 5
-# FIXME: rotldi 2, 3, 4
-# FIXME: rotldi. 2, 3, 4
-# FIXME: rotrdi 2, 3, 4
-# FIXME: rotrdi. 2, 3, 4
-# FIXME: rotld 2, 3, 4
-# FIXME: rotld. 2, 3, 4
+# CHECK: rldicr 2, 3, 5, 3               # encoding: [0x78,0x62,0x28,0xc4]
+         extldi 2, 3, 4, 5
+# CHECK: rldicr. 2, 3, 5, 3              # encoding: [0x78,0x62,0x28,0xc5]
+         extldi. 2, 3, 4, 5
+# CHECK: rldicl 2, 3, 9, 60              # encoding: [0x78,0x62,0x4f,0x20]
+         extrdi 2, 3, 4, 5
+# CHECK: rldicl. 2, 3, 9, 60             # encoding: [0x78,0x62,0x4f,0x21]
+         extrdi. 2, 3, 4, 5
+# CHECK: rldimi 2, 3, 55, 5              # encoding: [0x78,0x62,0xb9,0x4e]
+         insrdi 2, 3, 4, 5
+# CHECK: rldimi. 2, 3, 55, 5             # encoding: [0x78,0x62,0xb9,0x4f]
+         insrdi. 2, 3, 4, 5
+# CHECK: rldicl 2, 3, 4, 0               # encoding: [0x78,0x62,0x20,0x00]
+         rotldi 2, 3, 4
+# CHECK: rldicl. 2, 3, 4, 0              # encoding: [0x78,0x62,0x20,0x01]
+         rotldi. 2, 3, 4
+# CHECK: rldicl 2, 3, 60, 0              # encoding: [0x78,0x62,0xe0,0x02]
+         rotrdi 2, 3, 4
+# CHECK: rldicl. 2, 3, 60, 0             # encoding: [0x78,0x62,0xe0,0x03]
+         rotrdi. 2, 3, 4
+# CHECK: rldcl 2, 3, 4, 0                # encoding: [0x78,0x62,0x20,0x10]
+         rotld 2, 3, 4
+# CHECK: rldcl. 2, 3, 4, 0               # encoding: [0x78,0x62,0x20,0x11]
+         rotld. 2, 3, 4
 # CHECK: sldi 2, 3, 4                    # encoding: [0x78,0x62,0x26,0xe4]
          sldi 2, 3, 4
-# FIXME: sldi. 2, 3, 4
+# CHECK: rldicr. 2, 3, 4, 59             # encoding: [0x78,0x62,0x26,0xe5]
+         sldi. 2, 3, 4
 # CHECK: rldicl 2, 3, 60, 4              # encoding: [0x78,0x62,0xe1,0x02]
          srdi 2, 3, 4
-# FIXME: srdi. 2, 3, 4
-# FIXME: clrldi 2, 3, 4
-# FIXME: clrldi. 2, 3, 4
-# FIXME: clrrdi 2, 3, 4
-# FIXME: clrrdi. 2, 3, 4
-# FIXME: clrlsldi 2, 3, 4, 5
-# FIXME: clrlsldi. 2, 3, 4, 5
+# CHECK: rldicl. 2, 3, 60, 4             # encoding: [0x78,0x62,0xe1,0x03]
+         srdi. 2, 3, 4
+# CHECK: rldicl 2, 3, 0, 4               # encoding: [0x78,0x62,0x01,0x00]
+         clrldi 2, 3, 4
+# CHECK: rldicl. 2, 3, 0, 4              # encoding: [0x78,0x62,0x01,0x01]
+         clrldi. 2, 3, 4
+# CHECK: rldicr 2, 3, 0, 59              # encoding: [0x78,0x62,0x06,0xe4]
+         clrrdi 2, 3, 4
+# CHECK: rldicr. 2, 3, 0, 59             # encoding: [0x78,0x62,0x06,0xe5]
+         clrrdi. 2, 3, 4
+# CHECK: rldic 2, 3, 4, 1                # encoding: [0x78,0x62,0x20,0x48]
+         clrlsldi 2, 3, 5, 4
+# CHECK: rldic. 2, 3, 4, 1               # encoding: [0x78,0x62,0x20,0x49]
+         clrlsldi. 2, 3, 5, 4
 
-# FIXME: extlwi 2, 3, 4, 5
-# FIXME: extlwi. 2, 3, 4, 5
-# FIXME: extrwi 2, 3, 4, 5
-# FIXME: extrwi. 2, 3, 4, 5
-# FIXME: inslwi 2, 3, 4, 5
-# FIXME: inslwi. 2, 3, 4, 5
-# FIXME: insrwi 2, 3, 4, 5
-# FIXME: insrwi. 2, 3, 4, 5
-# FIXME: rotlwi 2, 3, 4
-# FIXME: rotlwi. 2, 3, 4
-# FIXME: rotrwi 2, 3, 4
-# FIXME: rotrwi. 2, 3, 4
-# FIXME: rotlw 2, 3, 4
-# FIXME: rotlw. 2, 3, 4
+# CHECK: rlwinm 2, 3, 5, 0, 3            # encoding: [0x54,0x62,0x28,0x06]
+         extlwi 2, 3, 4, 5
+# CHECK: rlwinm. 2, 3, 5, 0, 3           # encoding: [0x54,0x62,0x28,0x07]
+         extlwi. 2, 3, 4, 5
+# CHECK: rlwinm 2, 3, 9, 28, 31          # encoding: [0x54,0x62,0x4f,0x3e]
+         extrwi 2, 3, 4, 5
+# CHECK: rlwinm. 2, 3, 9, 28, 31         # encoding: [0x54,0x62,0x4f,0x3f]
+         extrwi. 2, 3, 4, 5
+# CHECK: rlwimi 2, 3, 27, 5, 8           # encoding: [0x50,0x62,0xd9,0x50]
+         inslwi 2, 3, 4, 5
+# CHECK: rlwimi. 2, 3, 27, 5, 8          # encoding: [0x50,0x62,0xd9,0x51]
+         inslwi. 2, 3, 4, 5
+# CHECK: rlwimi 2, 3, 23, 5, 8           # encoding: [0x50,0x62,0xb9,0x50]
+         insrwi 2, 3, 4, 5
+# CHECK: rlwimi. 2, 3, 23, 5, 8          # encoding: [0x50,0x62,0xb9,0x51]
+         insrwi. 2, 3, 4, 5
+# CHECK: rlwinm 2, 3, 4, 0, 31           # encoding: [0x54,0x62,0x20,0x3e]
+         rotlwi 2, 3, 4
+# CHECK: rlwinm. 2, 3, 4, 0, 31          # encoding: [0x54,0x62,0x20,0x3f]
+         rotlwi. 2, 3, 4
+# CHECK: rlwinm 2, 3, 28, 0, 31          # encoding: [0x54,0x62,0xe0,0x3e]
+         rotrwi 2, 3, 4
+# CHECK: rlwinm. 2, 3, 28, 0, 31         # encoding: [0x54,0x62,0xe0,0x3f]
+         rotrwi. 2, 3, 4
+# CHECK: rlwnm 2, 3, 4, 0, 31            # encoding: [0x5c,0x62,0x20,0x3e]
+         rotlw 2, 3, 4
+# CHECK: rlwnm. 2, 3, 4, 0, 31           # encoding: [0x5c,0x62,0x20,0x3f]
+         rotlw. 2, 3, 4
 # CHECK: slwi 2, 3, 4                    # encoding: [0x54,0x62,0x20,0x36]
          slwi 2, 3, 4
-# FIXME: slwi. 2, 3, 4
+# CHECK: rlwinm. 2, 3, 4, 0, 27          # encoding: [0x54,0x62,0x20,0x37]
+         slwi. 2, 3, 4
 # CHECK: srwi 2, 3, 4                    # encoding: [0x54,0x62,0xe1,0x3e]
          srwi 2, 3, 4
-# FIXME: srwi. 2, 3, 4
-# FIXME: clrlwi 2, 3, 4
-# FIXME: clrlwi. 2, 3, 4
-# FIXME: clrrwi 2, 3, 4
-# FIXME: clrrwi. 2, 3, 4
-# FIXME: clrlslwi 2, 3, 4, 5
-# FIXME: clrlslwi. 2, 3, 4, 5
+# CHECK: rlwinm. 2, 3, 28, 4, 31         # encoding: [0x54,0x62,0xe1,0x3f]
+         srwi. 2, 3, 4
+# CHECK: rlwinm 2, 3, 0, 4, 31           # encoding: [0x54,0x62,0x01,0x3e]
+         clrlwi 2, 3, 4
+# CHECK: rlwinm. 2, 3, 0, 4, 31          # encoding: [0x54,0x62,0x01,0x3f]
+         clrlwi. 2, 3, 4
+# CHECK: rlwinm 2, 3, 0, 0, 27           # encoding: [0x54,0x62,0x00,0x36]
+         clrrwi 2, 3, 4
+# CHECK: rlwinm. 2, 3, 0, 0, 27          # encoding: [0x54,0x62,0x00,0x37]
+         clrrwi. 2, 3, 4
+# CHECK: rlwinm 2, 3, 4, 1, 27           # encoding: [0x54,0x62,0x20,0x76]
+         clrlslwi 2, 3, 5, 4
+# CHECK: rlwinm. 2, 3, 4, 1, 27          # encoding: [0x54,0x62,0x20,0x77]
+         clrlslwi. 2, 3, 5, 4
 
 # Move to/from special purpose register mnemonics
 
