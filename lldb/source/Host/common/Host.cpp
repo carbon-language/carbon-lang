@@ -27,16 +27,14 @@
 #include <mach-o/dyld.h>
 #include <mach/mach_port.h>
 
-#elif defined (__linux__) || defined(__FreeBSD_kernel__)
-/*  Linux or the FreeBSD kernel with glibc (Debian KFreeBSD for example) */
+#endif
 
+#if defined (__linux__) || defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
 #include <sys/wait.h>
+#endif
 
-#elif defined (__FreeBSD__)
-
-#include <sys/wait.h>
+#if defined (__FreeBSD__)
 #include <pthread_np.h>
-
 #endif
 
 #include "lldb/Host/Host.h"
