@@ -196,6 +196,16 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
     { ISD::SRA,  MVT::v32i8,  32*10 }, // Scalarized.
     { ISD::SRA,  MVT::v16i16,  16*10 }, // Scalarized.
     { ISD::SRA,  MVT::v4i64,  4*10 }, // Scalarized.
+
+    // Vectorizing division is a bad idea. See the SSE2 table for more comments.
+    { ISD::SDIV,  MVT::v32i8,  32*20 },
+    { ISD::SDIV,  MVT::v16i16, 16*20 },
+    { ISD::SDIV,  MVT::v8i32,  8*20 },
+    { ISD::SDIV,  MVT::v4i64,  4*20 },
+    { ISD::UDIV,  MVT::v32i8,  32*20 },
+    { ISD::UDIV,  MVT::v16i16, 16*20 },
+    { ISD::UDIV,  MVT::v8i32,  8*20 },
+    { ISD::UDIV,  MVT::v4i64,  4*20 },
   };
 
   // Look for AVX2 lowering tricks.
@@ -258,6 +268,21 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
     { ISD::SRA,  MVT::v8i16,  8*10 }, // Scalarized.
     { ISD::SRA,  MVT::v4i32,  4*10 }, // Scalarized.
     { ISD::SRA,  MVT::v2i64,  2*10 }, // Scalarized.
+
+    // It is not a good idea to vectorize division. We have to scalarize it and
+    // in the process we will often end up having to spilling regular
+    // registers. The overhead of division is going to dominate most kernels
+    // anyways so try hard to prevent vectorization of division - it is
+    // generally a bad idea. Assume somewhat arbitrarily that we have to be able
+    // to hide "20 cycles" for each lane.
+    { ISD::SDIV,  MVT::v16i8,  16*20 },
+    { ISD::SDIV,  MVT::v8i16,  8*20 },
+    { ISD::SDIV,  MVT::v4i32,  4*20 },
+    { ISD::SDIV,  MVT::v2i64,  2*20 },
+    { ISD::UDIV,  MVT::v16i8,  16*20 },
+    { ISD::UDIV,  MVT::v8i16,  8*20 },
+    { ISD::UDIV,  MVT::v4i32,  4*20 },
+    { ISD::UDIV,  MVT::v2i64,  2*20 },
   };
 
   if (ST->hasSSE2()) {
