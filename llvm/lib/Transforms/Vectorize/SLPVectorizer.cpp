@@ -727,7 +727,7 @@ int FuncSLP::getTreeCost_rec(ArrayRef<Value *> VL, unsigned Depth) {
       int Cost = getTreeCost_rec(Operands, Depth + 1);
       if (Cost == MAX_COST)
         return MAX_COST;
-      TotalCost += TotalCost;
+      TotalCost += Cost;
     }
 
     // Calculate the cost of this instruction.
