@@ -2276,6 +2276,20 @@ def : InstAlias<"not. $rA, $rB", (NOR8o g8rc:$rA, g8rc:$rB, g8rc:$rB)>;
 
 def LAx : PPCAsmPseudo<"la $rA, $addr", (ins gprc:$rA, memri:$addr)>;
 
+def SUBI : PPCAsmPseudo<"subi $rA, $rB, $imm",
+                        (ins gprc:$rA, gprc:$rB, s16imm:$imm)>;
+def SUBIS : PPCAsmPseudo<"subis $rA, $rB, $imm",
+                         (ins gprc:$rA, gprc:$rB, s16imm:$imm)>;
+def SUBIC : PPCAsmPseudo<"subic $rA, $rB, $imm",
+                         (ins gprc:$rA, gprc:$rB, s16imm:$imm)>;
+def SUBICo : PPCAsmPseudo<"subic. $rA, $rB, $imm",
+                          (ins gprc:$rA, gprc:$rB, s16imm:$imm)>;
+
+def : InstAlias<"sub $rA, $rB, $rC", (SUBF8 g8rc:$rA, g8rc:$rC, g8rc:$rB)>;
+def : InstAlias<"sub. $rA, $rB, $rC", (SUBF8o g8rc:$rA, g8rc:$rC, g8rc:$rB)>;
+def : InstAlias<"subc $rA, $rB, $rC", (SUBFC8 g8rc:$rA, g8rc:$rC, g8rc:$rB)>;
+def : InstAlias<"subc. $rA, $rB, $rC", (SUBFC8o g8rc:$rA, g8rc:$rC, g8rc:$rB)>;
+
 def SLWI : PPCAsmPseudo<"slwi $rA, $rS, $n",
                         (ins gprc:$rA, gprc:$rS, u5imm:$n)>;
 def SRWI : PPCAsmPseudo<"srwi $rA, $rS, $n",

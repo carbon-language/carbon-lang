@@ -432,6 +432,46 @@ ProcessInstruction(MCInst &Inst,
     Inst = TmpInst;
     break;
   }
+  case PPC::SUBI: {
+    MCInst TmpInst;
+    int64_t N = Inst.getOperand(2).getImm();
+    TmpInst.setOpcode(PPC::ADDI);
+    TmpInst.addOperand(Inst.getOperand(0));
+    TmpInst.addOperand(Inst.getOperand(1));
+    TmpInst.addOperand(MCOperand::CreateImm(-N));
+    Inst = TmpInst;
+    break;
+  }
+  case PPC::SUBIS: {
+    MCInst TmpInst;
+    int64_t N = Inst.getOperand(2).getImm();
+    TmpInst.setOpcode(PPC::ADDIS);
+    TmpInst.addOperand(Inst.getOperand(0));
+    TmpInst.addOperand(Inst.getOperand(1));
+    TmpInst.addOperand(MCOperand::CreateImm(-N));
+    Inst = TmpInst;
+    break;
+  }
+  case PPC::SUBIC: {
+    MCInst TmpInst;
+    int64_t N = Inst.getOperand(2).getImm();
+    TmpInst.setOpcode(PPC::ADDIC);
+    TmpInst.addOperand(Inst.getOperand(0));
+    TmpInst.addOperand(Inst.getOperand(1));
+    TmpInst.addOperand(MCOperand::CreateImm(-N));
+    Inst = TmpInst;
+    break;
+  }
+  case PPC::SUBICo: {
+    MCInst TmpInst;
+    int64_t N = Inst.getOperand(2).getImm();
+    TmpInst.setOpcode(PPC::ADDICo);
+    TmpInst.addOperand(Inst.getOperand(0));
+    TmpInst.addOperand(Inst.getOperand(1));
+    TmpInst.addOperand(MCOperand::CreateImm(-N));
+    Inst = TmpInst;
+    break;
+  }
   case PPC::SLWI: {
     MCInst TmpInst;
     int64_t N = Inst.getOperand(2).getImm();

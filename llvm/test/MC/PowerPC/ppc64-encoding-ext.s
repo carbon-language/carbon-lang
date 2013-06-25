@@ -1788,7 +1788,25 @@
 
 # FIXME: Condition register logical mnemonics
 
-# FIXME: Subtract mnemonics
+# Subtract mnemonics
+
+# CHECK: addi 2, 3, -128                 # encoding: [0x38,0x43,0xff,0x80]
+         subi 2, 3, 128
+# CHECK: addis 2, 3, -128                # encoding: [0x3c,0x43,0xff,0x80]
+         subis 2, 3, 128
+# CHECK: addic 2, 3, -128                # encoding: [0x30,0x43,0xff,0x80]
+         subic 2, 3, 128
+# CHECK: addic. 2, 3, -128               # encoding: [0x34,0x43,0xff,0x80]
+         subic. 2, 3, 128
+
+# CHECK: subf 2, 4, 3                    # encoding: [0x7c,0x44,0x18,0x50]
+         sub 2, 3, 4
+# CHECK: subf. 2, 4, 3                   # encoding: [0x7c,0x44,0x18,0x51]
+         sub. 2, 3, 4
+# CHECK: subfc 2, 4, 3                   # encoding: [0x7c,0x44,0x18,0x10]
+         subc 2, 3, 4
+# CHECK: subfc. 2, 4, 3                  # encoding: [0x7c,0x44,0x18,0x11]
+         subc. 2, 3, 4
 
 # Compare mnemonics
 
