@@ -510,6 +510,19 @@ case "$enableval" in
   *) AC_MSG_ERROR([Invalid setting for --enable-cxx11. Use "yes" or "no"]) ;;
 esac
 
+dnl --enable-fission : check whether or not to use -gsplit-dwarf on the command
+dnl line
+AC_ARG_ENABLE(split-dwarf,
+              AS_HELP_STRING([--enable-split-dwarf],
+                             [Use split-dwarf if available (default is NO)]),,
+                             enableval=default)
+case "$enableval" in
+  yes) AC_SUBST(ENABLE_SPLIT_DWARF,[1]) ;;
+  no)  AC_SUBST(ENABLE_SPLIT_DWARF,[0]) ;;
+  default) AC_SUBST(ENABLE_SPLIT_DWARF,[0]);;
+  *) AC_MSG_ERROR([Invalid setting for --enable-split-dwarf. Use "yes" or "no"]) ;;
+esac
+
 dnl --enable-clang-arcmt: check whether to enable clang arcmt
 clang_arcmt="yes"
 AC_ARG_ENABLE(clang-arcmt,

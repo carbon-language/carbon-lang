@@ -297,8 +297,13 @@ else
     KEEP_SYMBOLS := 1
   else
     BuildMode := Debug
+    ifeq ($(ENABLE_SPLIT_DWARF), 1)
+    CXX.Flags += -gsplit-dwarf
+    C.Flags   += -gsplit-dwarf
+    else
     CXX.Flags += -g
     C.Flags   += -g
+    endif
     KEEP_SYMBOLS := 1
   endif
 endif

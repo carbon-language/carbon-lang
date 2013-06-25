@@ -685,6 +685,7 @@ BUILD_CXX
 CVSBUILD
 ENABLE_LIBCPP
 ENABLE_CXX11
+ENABLE_SPLIT_DWARF
 ENABLE_CLANG_ARCMT
 ENABLE_CLANG_STATIC_ANALYZER
 ENABLE_CLANG_REWRITER
@@ -1406,6 +1407,7 @@ Optional Features:
   --enable-polly          Use polly if available (default is YES)
   --enable-libcpp         Use libc++ if available (default is NO)
   --enable-cxx11          Use c++11 if available (default is NO)
+  --enable-split-dwarf    Use split-dwarf if available (default is NO)
   --enable-clang-arcmt    Enable building of clang ARCMT (default is YES)
   --enable-clang-static-analyzer
                           Enable building of clang Static Analyzer (default is
@@ -5162,6 +5164,25 @@ case "$enableval" in
 ;;
   *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-cxx11. Use \"yes\" or \"no\"" >&5
 echo "$as_me: error: Invalid setting for --enable-cxx11. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+
+# Check whether --enable-split-dwarf was given.
+if test "${enable_split_dwarf+set}" = set; then
+  enableval=$enable_split_dwarf;
+else
+  enableval=default
+fi
+
+case "$enableval" in
+  yes) ENABLE_SPLIT_DWARF=1
+ ;;
+  no)  ENABLE_SPLIT_DWARF=0
+ ;;
+  default) ENABLE_SPLIT_DWARF=0
+;;
+  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-split-dwarf. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-split-dwarf. Use \"yes\" or \"no\"" >&2;}
    { (exit 1); exit 1; }; } ;;
 esac
 
@@ -10518,7 +10539,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10521 "configure"
+#line 10542 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -23349,6 +23370,7 @@ BUILD_CXX!$BUILD_CXX$ac_delim
 CVSBUILD!$CVSBUILD$ac_delim
 ENABLE_LIBCPP!$ENABLE_LIBCPP$ac_delim
 ENABLE_CXX11!$ENABLE_CXX11$ac_delim
+ENABLE_SPLIT_DWARF!$ENABLE_SPLIT_DWARF$ac_delim
 ENABLE_CLANG_ARCMT!$ENABLE_CLANG_ARCMT$ac_delim
 ENABLE_CLANG_STATIC_ANALYZER!$ENABLE_CLANG_STATIC_ANALYZER$ac_delim
 ENABLE_CLANG_REWRITER!$ENABLE_CLANG_REWRITER$ac_delim
@@ -23362,7 +23384,6 @@ DEBUG_RUNTIME!$DEBUG_RUNTIME$ac_delim
 DEBUG_SYMBOLS!$DEBUG_SYMBOLS$ac_delim
 KEEP_SYMBOLS!$KEEP_SYMBOLS$ac_delim
 JIT!$JIT$ac_delim
-TARGET_HAS_JIT!$TARGET_HAS_JIT$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -23404,6 +23425,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+TARGET_HAS_JIT!$TARGET_HAS_JIT$ac_delim
 ENABLE_DOCS!$ENABLE_DOCS$ac_delim
 ENABLE_DOXYGEN!$ENABLE_DOXYGEN$ac_delim
 LLVM_ENABLE_THREADS!$LLVM_ENABLE_THREADS$ac_delim
@@ -23500,7 +23522,6 @@ LLVM_MANDIR!$LLVM_MANDIR$ac_delim
 LLVM_CONFIGTIME!$LLVM_CONFIGTIME$ac_delim
 BINDINGS_TO_BUILD!$BINDINGS_TO_BUILD$ac_delim
 ALL_BINDINGS!$ALL_BINDINGS$ac_delim
-OCAML_LIBDIR!$OCAML_LIBDIR$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -23542,6 +23563,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+OCAML_LIBDIR!$OCAML_LIBDIR$ac_delim
 ENABLE_VISIBILITY_INLINES_HIDDEN!$ENABLE_VISIBILITY_INLINES_HIDDEN$ac_delim
 RPATH!$RPATH$ac_delim
 RDYNAMIC!$RDYNAMIC$ac_delim
@@ -23550,7 +23572,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 6; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 7; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

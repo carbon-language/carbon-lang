@@ -235,6 +235,9 @@ ENABLE_LIBCPP = @ENABLE_LIBCPP@
 # When ENABLE_CXX11 is enabled, LLVM uses c++11 mode by default to build.
 ENABLE_CXX11 = @ENABLE_CXX11@
 
+# When ENABLE_SPLIT_DWARF is enabled, LLVM uses -gfission to build in debug mode.
+ENABLE_SPLIT_DWARF = @ENABLE_SPLIT_DWARF@
+
 # When ENABLE_CLANG_ARCMT is enabled, clang will have ARCMigrationTool.
 ENABLE_CLANG_ARCMT = @ENABLE_CLANG_ARCMT@
 
