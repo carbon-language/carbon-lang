@@ -1755,6 +1755,15 @@ def VTX_READ_GLOBAL_128_cm : VTX_READ_128_cm <1,
   [(set v4i32:$dst_gpr, (global_load ADDRVTX_READ:$src_gpr))]
 >;
 
+//===----------------------------------------------------------------------===//
+// Constant Loads
+// XXX: We are currently storing all constants in the global address space.
+//===----------------------------------------------------------------------===//
+
+def CONSTANT_LOAD_cm : VTX_READ_32_cm <1,
+  [(set i32:$dst_gpr, (constant_load ADDRVTX_READ:$src_gpr))]
+>;
+
 } // End isCayman
 
 //===----------------------------------------------------------------------===//
