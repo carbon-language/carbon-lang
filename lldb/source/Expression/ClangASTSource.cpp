@@ -1818,7 +1818,15 @@ NameSearchContext::AddTypeDecl(void *type)
     {
         QualType qual_type = QualType::getFromOpaquePtr(type);
 
-        if (const TagType *tag_type = qual_type->getAs<TagType>())
+        if (const TypedefType *typedef_type = llvm::dyn_cast<TypedefType>(qual_type))
+        {
+            TypedefNameDecl *typedef_name_decl = typedef_type->getDecl();
+            
+            m_decls.push_back(typedef_name_decl);
+            
+            return (NamedDecl*)typedef_name_decl;
+        }
+        else if (const TagType *tag_type = qual_type->getAs<TagType>())
         {
             TagDecl *tag_decl = tag_type->getDecl();
             
@@ -1833,14 +1841,6 @@ NameSearchContext::AddTypeDecl(void *type)
             m_decls.push_back((NamedDecl*)interface_decl);
             
             return (NamedDecl*)interface_decl;
-        }
-        else if (const TypedefType *typedef_type = qual_type->getAs<TypedefType>())
-        {
-            TypedefNameDecl *typedef_name_decl = typedef_type->getDecl();
-            
-            m_decls.push_back(typedef_name_decl);
-            
-            return (NamedDecl*)typedef_name_decl;
         }
     }
     return NULL;
