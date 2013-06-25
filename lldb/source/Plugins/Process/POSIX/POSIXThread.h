@@ -24,7 +24,7 @@ class RegisterContextPOSIX;
 
 //------------------------------------------------------------------------------
 // @class POSIXThread
-// @brief Abstraction of a linux process (thread).
+// @brief Abstraction of a POSIX thread.
 class POSIXThread
     : public lldb_private::Thread
 {
@@ -67,7 +67,7 @@ public:
     GetRegisterNameFromOffset(unsigned offset);
 
     //--------------------------------------------------------------------------
-    // These methods form a specialized interface to linux threads.
+    // These methods form a specialized interface to POSIX threads.
     //
     bool Resume();
 
