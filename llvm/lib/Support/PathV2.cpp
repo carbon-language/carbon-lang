@@ -638,7 +638,8 @@ error_code unique_file(const Twine &Model, SmallVectorImpl<char> &ResultPath,
   if (close(FD))
     return error_code(errno, system_category());
 
-  return fs::remove(ResultPath.begin());
+  StringRef P(ResultPath.begin(), ResultPath.size());
+  return fs::remove(P);
 }
 
 error_code make_absolute(SmallVectorImpl<char> &path) {
