@@ -181,13 +181,13 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
     return false;
   }
 
-  // The failure was something other than an empty exception
+  // The failure was something other than an missing exception
   // specification; return an error.
-  if (!MissingExceptionSpecification && !MissingEmptyExceptionSpecification)
+  if (!MissingExceptionSpecification)
     return true;
 
   const FunctionProtoType *NewProto =
-    New->getType()->getAs<FunctionProtoType>();
+    New->getType()->castAs<FunctionProtoType>();
 
   // The new function declaration is only missing an empty exception
   // specification "throw()". If the throw() specification came from a
@@ -209,94 +209,88 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
     return false;
   }
 
-  if (MissingExceptionSpecification && NewProto) {
-    const FunctionProtoType *OldProto =
-      Old->getType()->getAs<FunctionProtoType>();
+  const FunctionProtoType *OldProto =
+    Old->getType()->castAs<FunctionProtoType>();
 
-    FunctionProtoType::ExtProtoInfo EPI = NewProto->getExtProtoInfo();
-    EPI.ExceptionSpecType = OldProto->getExceptionSpecType();
-    if (EPI.ExceptionSpecType == EST_Dynamic) {
-      EPI.NumExceptions = OldProto->getNumExceptions();
-      EPI.Exceptions = OldProto->exception_begin();
-    } else if (EPI.ExceptionSpecType == EST_ComputedNoexcept) {
-      // FIXME: We can't just take the expression from the old prototype. It
-      // likely contains references to the old prototype's parameters.
-    }
-
-    // Update the type of the function with the appropriate exception
-    // specification.
-    QualType NewType = Context.getFunctionType(NewProto->getResultType(),
-                                               NewProto->getArgTypes(), EPI);
-    New->setType(NewType);
-
-    // Warn about the lack of exception specification.
-    SmallString<128> ExceptionSpecString;
-    llvm::raw_svector_ostream OS(ExceptionSpecString);
-    switch (OldProto->getExceptionSpecType()) {
-    case EST_DynamicNone:
-      OS << "throw()";
-      break;
-
-    case EST_Dynamic: {
-      OS << "throw(";
-      bool OnFirstException = true;
-      for (FunctionProtoType::exception_iterator E = OldProto->exception_begin(),
-                                              EEnd = OldProto->exception_end();
-           E != EEnd;
-           ++E) {
-        if (OnFirstException)
-          OnFirstException = false;
-        else
-          OS << ", ";
-        
-        OS << E->getAsString(getPrintingPolicy());
-      }
-      OS << ")";
-      break;
-    }
-
-    case EST_BasicNoexcept:
-      OS << "noexcept";
-      break;
-
-    case EST_ComputedNoexcept:
-      OS << "noexcept(";
-      OldProto->getNoexceptExpr()->printPretty(OS, 0, getPrintingPolicy());
-      OS << ")";
-      break;
-
-    default:
-      llvm_unreachable("This spec type is compatible with none.");
-    }
-    OS.flush();
-
-    SourceLocation FixItLoc;
-    if (TypeSourceInfo *TSInfo = New->getTypeSourceInfo()) {
-      TypeLoc TL = TSInfo->getTypeLoc().IgnoreParens();
-      if (FunctionTypeLoc FTLoc = TL.getAs<FunctionTypeLoc>())
-        FixItLoc = PP.getLocForEndOfToken(FTLoc.getLocalRangeEnd());
-    }
-
-    if (FixItLoc.isInvalid())
-      Diag(New->getLocation(), diag::warn_missing_exception_specification)
-        << New << OS.str();
-    else {
-      // FIXME: This will get more complicated with C++0x
-      // late-specified return types.
-      Diag(New->getLocation(), diag::warn_missing_exception_specification)
-        << New << OS.str()
-        << FixItHint::CreateInsertion(FixItLoc, " " + OS.str().str());
-    }
-
-    if (!Old->getLocation().isInvalid())
-      Diag(Old->getLocation(), diag::note_previous_declaration);
-
-    return false;    
+  FunctionProtoType::ExtProtoInfo EPI = NewProto->getExtProtoInfo();
+  EPI.ExceptionSpecType = OldProto->getExceptionSpecType();
+  if (EPI.ExceptionSpecType == EST_Dynamic) {
+    EPI.NumExceptions = OldProto->getNumExceptions();
+    EPI.Exceptions = OldProto->exception_begin();
+  } else if (EPI.ExceptionSpecType == EST_ComputedNoexcept) {
+    // FIXME: We can't just take the expression from the old prototype. It
+    // likely contains references to the old prototype's parameters.
   }
 
-  Diag(New->getLocation(), DiagID);
-  Diag(Old->getLocation(), diag::note_previous_declaration);
-  return true;
+  // Update the type of the function with the appropriate exception
+  // specification.
+  QualType NewType = Context.getFunctionType(NewProto->getResultType(),
+                                             NewProto->getArgTypes(), EPI);
+  New->setType(NewType);
+
+  // Warn about the lack of exception specification.
+  SmallString<128> ExceptionSpecString;
+  llvm::raw_svector_ostream OS(ExceptionSpecString);
+  switch (OldProto->getExceptionSpecType()) {
+  case EST_DynamicNone:
+    OS << "throw()";
+    break;
+
+  case EST_Dynamic: {
+    OS << "throw(";
+    bool OnFirstException = true;
+    for (FunctionProtoType::exception_iterator E = OldProto->exception_begin(),
+                                            EEnd = OldProto->exception_end();
+         E != EEnd;
+         ++E) {
+      if (OnFirstException)
+        OnFirstException = false;
+      else
+        OS << ", ";
+      
+      OS << E->getAsString(getPrintingPolicy());
+    }
+    OS << ")";
+    break;
+  }
+
+  case EST_BasicNoexcept:
+    OS << "noexcept";
+    break;
+
+  case EST_ComputedNoexcept:
+    OS << "noexcept(";
+    OldProto->getNoexceptExpr()->printPretty(OS, 0, getPrintingPolicy());
+    OS << ")";
+    break;
+
+  default:
+    llvm_unreachable("This spec type is compatible with none.");
+  }
+  OS.flush();
+
+  SourceLocation FixItLoc;
+  if (TypeSourceInfo *TSInfo = New->getTypeSourceInfo()) {
+    TypeLoc TL = TSInfo->getTypeLoc().IgnoreParens();
+    if (FunctionTypeLoc FTLoc = TL.getAs<FunctionTypeLoc>())
+      FixItLoc = PP.getLocForEndOfToken(FTLoc.getLocalRangeEnd());
+  }
+
+  if (FixItLoc.isInvalid())
+    Diag(New->getLocation(), diag::warn_missing_exception_specification)
+      << New << OS.str();
+  else {
+    // FIXME: This will get more complicated with C++0x
+    // late-specified return types.
+    Diag(New->getLocation(), diag::warn_missing_exception_specification)
+      << New << OS.str()
+      << FixItHint::CreateInsertion(FixItLoc, " " + OS.str().str());
+  }
+
+  if (!Old->getLocation().isInvalid())
+    Diag(Old->getLocation(), diag::note_previous_declaration);
+
+  return false;
 }
 
 /// CheckEquivalentExceptionSpec - Check if the two types have equivalent
