@@ -123,7 +123,7 @@ class BlockFrequencyImpl {
 
   rpot_iterator rpot_at(BlockT *BB) {
     rpot_iterator I = rpot_begin();
-    unsigned idx = RPO[BB];
+    unsigned idx = RPO.lookup(BB);
     assert(idx);
     std::advance(I, idx - 1);
 
@@ -131,22 +131,14 @@ class BlockFrequencyImpl {
     return I;
   }
 
-
-  /// isReachable - Returns if BB block is reachable from the entry.
-  ///
-  bool isReachable(BlockT *BB) {
-    return RPO.count(BB);
-  }
-
-  /// isBackedge - Return if edge Src -> Dst is a backedge.
+  /// isBackedge - Return if edge Src -> Dst is a reachable backedge.
   ///
   bool isBackedge(BlockT *Src, BlockT *Dst) {
-    assert(isReachable(Src));
-    assert(isReachable(Dst));
-
-    unsigned a = RPO[Src];
-    unsigned b = RPO[Dst];
-
+    unsigned a = RPO.lookup(Src);
+    if (!a)
+      return false;
+    unsigned b = RPO.lookup(Dst);
+    assert(b && "Destination block should be reachable");
     return a >= b;
   }
 
@@ -196,7 +188,7 @@ class BlockFrequencyImpl {
          PI != PE; ++PI) {
       BlockT *Pred = *PI;
 
-      if (isReachable(Pred) && isBackedge(Pred, BB)) {
+      if (isBackedge(Pred, BB)) {
         isLoopHead = true;
       } else if (BlocksInLoop.count(Pred)) {
         incBlockFreq(BB, getEdgeFreq(Pred, BB));
@@ -240,7 +232,7 @@ class BlockFrequencyImpl {
          PI != PE; ++PI) {
       BlockT *Pred = *PI;
       assert(Pred);
-      if (isReachable(Pred) && isBackedge(Pred, Head)) {
+      if (isBackedge(Pred, Head)) {
         uint64_t N = getEdgeFreq(Pred, Head).getFrequency();
         uint64_t D = getBlockFreq(Head).getFrequency();
         assert(N <= EntryFreq && "Backedge frequency must be <= EntryFreq!");
@@ -292,8 +284,7 @@ class BlockFrequencyImpl {
            PI != PE; ++PI) {
 
         BlockT *Pred = *PI;
-        if (isReachable(Pred) && isBackedge(Pred, BB)
-            && (!LastTail || RPO[Pred] > RPO[LastTail]))
+        if (isBackedge(Pred, BB) && (!LastTail || RPO[Pred] > RPO[LastTail]))
           LastTail = Pred;
       }
 
