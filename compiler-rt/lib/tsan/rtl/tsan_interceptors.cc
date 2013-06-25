@@ -367,21 +367,29 @@ extern "C" void __tsan_setjmp(uptr sp, uptr mangled_sp) {
 }
 
 // Not called.  Merely to satisfy TSAN_INTERCEPT().
+extern "C" int __interceptor_setjmp(void *env)
+    SANITIZER_INTERFACE_ATTRIBUTE;
 extern "C" int __interceptor_setjmp(void *env) {
   CHECK(0);
   return 0;
 }
 
+extern "C" int __interceptor__setjmp(void *env)
+    SANITIZER_INTERFACE_ATTRIBUTE;
 extern "C" int __interceptor__setjmp(void *env) {
   CHECK(0);
   return 0;
 }
 
+extern "C" int __interceptor_sigsetjmp(void *env)
+    SANITIZER_INTERFACE_ATTRIBUTE;
 extern "C" int __interceptor_sigsetjmp(void *env) {
   CHECK(0);
   return 0;
 }
 
+extern "C" int __interceptor___sigsetjmp(void *env)
+    SANITIZER_INTERFACE_ATTRIBUTE;
 extern "C" int __interceptor___sigsetjmp(void *env) {
   CHECK(0);
   return 0;
@@ -493,15 +501,26 @@ TSAN_INTERCEPTOR(uptr, malloc_usable_size, void *p) {
   invoke_malloc_hook(p, size);  \
   return p;
 
+void *operator new(__sanitizer::uptr size)
+    SANITIZER_INTERFACE_ATTRIBUTE;
 void *operator new(__sanitizer::uptr size) {
   OPERATOR_NEW_BODY(_Znwm);
 }
+
+void *operator new[](__sanitizer::uptr size)
+    SANITIZER_INTERFACE_ATTRIBUTE;
 void *operator new[](__sanitizer::uptr size) {
   OPERATOR_NEW_BODY(_Znam);
 }
+
+void *operator new(__sanitizer::uptr size, std::nothrow_t const&)
+    SANITIZER_INTERFACE_ATTRIBUTE;
 void *operator new(__sanitizer::uptr size, std::nothrow_t const&) {
   OPERATOR_NEW_BODY(_ZnwmRKSt9nothrow_t);
 }
+
+void *operator new[](__sanitizer::uptr size, std::nothrow_t const&)
+    SANITIZER_INTERFACE_ATTRIBUTE;
 void *operator new[](__sanitizer::uptr size, std::nothrow_t const&) {
   OPERATOR_NEW_BODY(_ZnamRKSt9nothrow_t);
 }
@@ -514,15 +533,26 @@ void *operator new[](__sanitizer::uptr size, std::nothrow_t const&) {
   SCOPED_INTERCEPTOR_RAW(mangled_name, ptr);  \
   user_free(thr, pc, ptr);
 
+void operator delete(void *ptr)
+    SANITIZER_INTERFACE_ATTRIBUTE;
 void operator delete(void *ptr) {
   OPERATOR_DELETE_BODY(_ZdlPv);
 }
+
+void operator delete[](void *ptr)
+    SANITIZER_INTERFACE_ATTRIBUTE;
 void operator delete[](void *ptr) {
   OPERATOR_DELETE_BODY(_ZdlPvRKSt9nothrow_t);
 }
+
+void operator delete(void *ptr, std::nothrow_t const&)
+    SANITIZER_INTERFACE_ATTRIBUTE;
 void operator delete(void *ptr, std::nothrow_t const&) {
   OPERATOR_DELETE_BODY(_ZdaPv);
 }
+
+void operator delete[](void *ptr, std::nothrow_t const&)
+    SANITIZER_INTERFACE_ATTRIBUTE;
 void operator delete[](void *ptr, std::nothrow_t const&) {
   OPERATOR_DELETE_BODY(_ZdaPvRKSt9nothrow_t);
 }
