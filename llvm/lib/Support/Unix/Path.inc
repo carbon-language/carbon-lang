@@ -81,8 +81,6 @@ inline bool lastIsSlash(const std::string& path) {
 namespace llvm {
 using namespace sys;
 
-const char sys::PathSeparator = ':';
-
 StringRef Path::GetEXESuffix() {
   return StringRef();
 }

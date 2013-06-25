@@ -497,10 +497,6 @@ namespace sys {
 
     /// @}
   };
-
-  /// This is the OS-specific path separator: a colon on Unix or a semicolon
-  /// on Windows.
-  extern const char PathSeparator;
 }
 
 }
