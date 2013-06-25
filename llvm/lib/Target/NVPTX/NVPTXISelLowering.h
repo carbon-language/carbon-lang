@@ -144,7 +144,7 @@ private:
 
   SDValue getExtSymb(SelectionDAG &DAG, const char *name, int idx,
                      EVT = MVT::i32) const;
-  SDValue getParamSymbol(SelectionDAG &DAG, int idx, EVT = MVT::i32) const;
+  SDValue getParamSymbol(SelectionDAG &DAG, int idx, EVT) const;
   SDValue getParamHelpSymbol(SelectionDAG &DAG, int idx);
 
   SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const;

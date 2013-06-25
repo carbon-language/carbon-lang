@@ -1135,7 +1135,7 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
       // A plain scalar.
       if (isABI || isKernel) {
         // If ABI, load from the param symbol
-        SDValue Arg = getParamSymbol(DAG, idx);
+        SDValue Arg = getParamSymbol(DAG, idx, getPointerTy());
         // Conjure up a value that we can get the address space from.
         // FIXME: Using a constant here is a hack.
         Value *srcValue = Constant::getNullValue(
