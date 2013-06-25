@@ -4309,6 +4309,10 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
   verifyFormat("throw [self errorFor:a];");
   verifyFormat("@throw [self errorFor:a];");
 
+  verifyFormat("[(id)foo bar:(id)baz quux:(id)snorf];");
+  verifyFormat("[(id)foo bar:(id) ? baz : quux];");
+  verifyFormat("4 > 4 ? (id)a : (id)baz;");
+
   // This tests that the formatter doesn't break after "backing" but before ":",
   // which would be at 80 columns.
   verifyFormat(

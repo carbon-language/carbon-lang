@@ -637,9 +637,8 @@ private:
         // there is also an identifier before the ().
         if (LeftOfParens && (LeftOfParens->Tok.getIdentifierInfo() == NULL ||
                              LeftOfParens->is(tok::kw_return)) &&
-            LeftOfParens->Type != TT_TemplateCloser &&
-            LeftOfParens->Type != TT_ObjCMethodExpr && Current.Next &&
-            (Current.Next->is(tok::identifier)))
+            LeftOfParens->Type != TT_TemplateCloser && Current.Next &&
+            Current.Next->is(tok::identifier))
           IsCast = true;
         if (IsCast && !ParensAreEmpty)
           Current.Type = TT_CastRParen;
