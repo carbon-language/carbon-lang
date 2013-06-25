@@ -790,11 +790,8 @@ static CanThrowResult canSubExprsThrow(Sema &S, const Expr *CE) {
   return R;
 }
 
-static CanThrowResult canCalleeThrow(Sema &S, const Expr *E,
-                                           const Decl *D,
-                                           bool NullThrows = true) {
-  if (!D)
-    return NullThrows ? CT_Can : CT_Cannot;
+static CanThrowResult canCalleeThrow(Sema &S, const Expr *E, const Decl *D) {
+  assert(D && "Expected decl");
 
   // See if we can get a function type from the decl somehow.
   const ValueDecl *VD = dyn_cast<ValueDecl>(D);
@@ -945,7 +942,9 @@ CanThrowResult Sema::canThrow(const Expr *E) {
                           cast<CXXDeleteExpr>(E)->getOperatorDelete());
       if (const RecordType *RT = DTy->getAs<RecordType>()) {
         const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-        CT = mergeCanThrow(CT, canCalleeThrow(*this, E, RD->getDestructor()));
+        const CXXDestructorDecl *DD = RD->getDestructor();
+        if (DD)
+          CT = mergeCanThrow(CT, canCalleeThrow(*this, E, DD));
       }
       if (CT == CT_Can)
         return CT;
