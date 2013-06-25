@@ -131,8 +131,9 @@ Host::GetOSVersion(uint32_t &major,
     if (uname(&un) < 0)
         return false;
 
-    status = sscanf(un.release, "%u.%u-%u", &major, &minor, &update);
-    return status == 3;
+    status = sscanf(un.release, "%u.%u", &major, &minor);
+    update = UINT32_MAX;
+    return status == 2;
 }
 
 Error
