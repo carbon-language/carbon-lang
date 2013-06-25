@@ -61,8 +61,11 @@ struct SimpleWithPointers
 	SimpleWithPointers(int X, float Y, char Z) :
 	x(new int (X)),
 	y(new float (Y)),
-	z(new char (Z))
-	{}
+	z(new char[2])
+	{
+          z[0] = Z;
+          z[1] = '\0';
+        }
 };
 
 struct Couple
