@@ -1080,7 +1080,8 @@ static bool shouldTryToOverload(Sema &S, FunctionDecl *New, FunctionDecl *Old,
     // or non-static member function). Add it now, on the assumption that this
     // is a redeclaration of OldMethod.
     unsigned NewQuals = NewMethod->getTypeQualifiers();
-    if (NewMethod->isConstexpr() && !isa<CXXConstructorDecl>(NewMethod))
+    if (!S.getLangOpts().CPlusPlus1y && NewMethod->isConstexpr() &&
+        !isa<CXXConstructorDecl>(NewMethod))
       NewQuals |= Qualifiers::Const;
     if (OldMethod->getTypeQualifiers() != NewQuals)
       return true;
