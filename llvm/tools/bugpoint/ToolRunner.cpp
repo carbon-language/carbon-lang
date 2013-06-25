@@ -234,6 +234,12 @@ int LLI::ExecuteProgram(const std::string &Bitcode,
 
 void AbstractInterpreter::anchor() { }
 
+#if defined(LLVM_ON_UNIX)
+const char EXESuffix[] = "";
+#elif defined (LLVM_ON_WIN32)
+const char EXESuffix[] = "exe";
+#endif
+
 /// Prepend the path to the program being executed
 /// to \p ExeName, given the value of argv[0] and the address of main()
 /// itself. This allows us to find another LLVM tool if it is built in the same
@@ -252,7 +258,7 @@ static std::string PrependMainExecutablePath(const std::string &ExeName,
   if (!Result.empty()) {
     SmallString<128> Storage = Result;
     sys::path::append(Storage, ExeName);
-    sys::path::replace_extension(Storage, sys::Path::GetEXESuffix());
+    sys::path::replace_extension(Storage, EXESuffix);
     return Storage.str();
   }
 

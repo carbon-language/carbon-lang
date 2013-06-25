@@ -104,12 +104,6 @@ namespace sys {
       /// @brief Returns the current working directory.
       static Path GetCurrentDirectory();
 
-      /// Return the suffix commonly used on file names that contain an
-      /// executable.
-      /// @returns The executable file suffix for the current platform.
-      /// @brief Return the executable file suffix.
-      static StringRef GetEXESuffix();
-
       /// GetMainExecutable - Return the path to the main executable, given the
       /// value of argv[0] from program startup and the address of main itself.
       /// In extremis, this function may fail and return an empty path.

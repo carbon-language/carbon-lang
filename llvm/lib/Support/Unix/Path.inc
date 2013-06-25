@@ -81,10 +81,6 @@ inline bool lastIsSlash(const std::string& path) {
 namespace llvm {
 using namespace sys;
 
-StringRef Path::GetEXESuffix() {
-  return StringRef();
-}
-
 Path::Path(StringRef p)
   : path(p) {}
 
