@@ -214,7 +214,7 @@ struct FormatToken {
            Type == TT_TemplateOpener;
 
   }
-  /// \brief Returns whether \p Tok is )]} or a template opening >.
+  /// \brief Returns whether \p Tok is )]} or a template closing >.
   bool closesScope() const {
     return isOneOf(tok::r_paren, tok::r_brace, tok::r_square) ||
            Type == TT_TemplateCloser;
