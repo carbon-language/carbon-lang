@@ -81,6 +81,8 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::SHL, MVT::v4i32, Expand);
   setOperationAction(ISD::SRL, MVT::v4i32, Expand);
   setOperationAction(ISD::SRL, MVT::v2i32, Expand);
+  setOperationAction(ISD::SRA, MVT::v4i32, Expand);
+  setOperationAction(ISD::SRA, MVT::v2i32, Expand);
 
   setOperationAction(ISD::SUB, MVT::v2i32, Expand);
   setOperationAction(ISD::SUB, MVT::v4i32, Expand);
