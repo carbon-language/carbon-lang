@@ -20,6 +20,7 @@
 |*
 \*===----------------------------------------------------------------------===*/
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,6 +44,11 @@ typedef unsigned int uint64_t;
 /*
  * --- GCOV file format I/O primitives ---
  */
+
+/*
+ * The current file name we're outputting. Used primarily for error logging.
+ */
+static char *filename = NULL;
 
 /*
  * The current file we're outputting.
@@ -196,17 +202,32 @@ static void recursive_mkdir(char *filename) {
   }
 }
 
-static void map_file() {
+static int map_file() {
   fseek(output_file, 0L, SEEK_END);
   file_size = ftell(output_file);
 
   write_buffer = mmap(0, file_size, PROT_READ | PROT_WRITE,
                       MAP_FILE | MAP_SHARED, fd, 0);
+  if (write_buffer == (void *)-1) {
+    int errnum = errno;
+    fprintf(stderr, "profiling: %s: cannot map: %s\n", filename,
+            strerror(errnum));
+    return -1;
+  }
+  return 0;
 }
 
 static void unmap_file() {
-  msync(write_buffer, file_size, MS_SYNC);
-  munmap(write_buffer, file_size);
+  if (msync(write_buffer, file_size, MS_SYNC) == -1) {
+    int errnum = errno;
+    fprintf(stderr, "profiling: %s: cannot msync: %s\n", filename,
+            strerror(errnum));
+  }
+
+  /* We explicitly ignore errors from unmapping because at this point the data
+   * is written and we don't care.
+   */
+  (void)munmap(write_buffer, file_size);
   write_buffer = NULL;
   file_size = 0;
 }
@@ -220,8 +241,8 @@ static void unmap_file() {
  * started at a time.
  */
 void llvm_gcda_start_file(const char *orig_filename, const char version[4]) {
-  char *filename = mangle_filename(orig_filename);
   const char *mode = "r+b";
+  filename = mangle_filename(orig_filename);
 
   /* Try just opening the file. */
   new_file = 0;
@@ -236,9 +257,11 @@ void llvm_gcda_start_file(const char *orig_filename, const char version[4]) {
       /* Try creating the directories first then opening the file. */
       recursive_mkdir(filename);
       fd = open(filename, O_RDWR | O_CREAT, 0644);
-      if (!output_file) {
+      if (fd == -1) {
         /* Bah! It's hopeless. */
-        fprintf(stderr, "profiling:%s: cannot open\n", filename);
+        int errnum = errno;
+        fprintf(stderr, "profiling: %s: cannot open: %s\n", filename,
+                strerror(errnum));
         free(filename);
         return;
       }
@@ -256,7 +279,14 @@ void llvm_gcda_start_file(const char *orig_filename, const char version[4]) {
     resize_write_buffer(WRITE_BUFFER_SIZE);
     memset(write_buffer, 0, WRITE_BUFFER_SIZE);
   } else {
-    map_file();
+    if (map_file() == -1) {
+      /* mmap failed, try to recover by clobbering */
+      new_file = 1;
+      write_buffer = NULL;
+      cur_buffer_size = 0;
+      resize_write_buffer(WRITE_BUFFER_SIZE);
+      memset(write_buffer, 0, WRITE_BUFFER_SIZE);
+    }
   }
 
   /* gcda file, version, stamp LLVM. */
