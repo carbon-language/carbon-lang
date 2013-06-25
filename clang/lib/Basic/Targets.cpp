@@ -871,6 +871,7 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
                                      MacroBuilder &Builder) const {
   // Target identification.
   Builder.defineMacro("__ppc__");
+  Builder.defineMacro("__PPC__");
   Builder.defineMacro("_ARCH_PPC");
   Builder.defineMacro("__powerpc__");
   Builder.defineMacro("__POWERPC__");
@@ -878,8 +879,7 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("_ARCH_PPC64");
     Builder.defineMacro("__powerpc64__");
     Builder.defineMacro("__ppc64__");
-  } else {
-    Builder.defineMacro("__ppc__");
+    Builder.defineMacro("__PPC64__");
   }
 
   // Target properties.

@@ -1585,6 +1585,7 @@
 // PPC603E:#define __NATURAL_ALIGNMENT__ 1
 // PPC603E:#define __POINTER_WIDTH__ 32
 // PPC603E:#define __POWERPC__ 1
+// PPC603E:#define __PPC__ 1
 // PPC603E:#define __PTRDIFF_TYPE__ long int
 // PPC603E:#define __PTRDIFF_WIDTH__ 32
 // PPC603E:#define __REGISTER_PREFIX__
@@ -1694,6 +1695,8 @@
 // PPC64:#define __NATURAL_ALIGNMENT__ 1
 // PPC64:#define __POINTER_WIDTH__ 64
 // PPC64:#define __POWERPC__ 1
+// PPC64:#define __PPC64__ 1
+// PPC64:#define __PPC__ 1
 // PPC64:#define __PTRDIFF_TYPE__ long int
 // PPC64:#define __PTRDIFF_WIDTH__ 64
 // PPC64:#define __REGISTER_PREFIX__ 
@@ -1957,6 +1960,8 @@
 // PPC64-LINUX:#define __NATURAL_ALIGNMENT__ 1
 // PPC64-LINUX:#define __POINTER_WIDTH__ 64
 // PPC64-LINUX:#define __POWERPC__ 1
+// PPC64-LINUX:#define __PPC64__ 1
+// PPC64-LINUX:#define __PPC__ 1
 // PPC64-LINUX:#define __PTRDIFF_TYPE__ long int
 // PPC64-LINUX:#define __PTRDIFF_WIDTH__ 64
 // PPC64-LINUX:#define __REGISTER_PREFIX__
@@ -2062,6 +2067,7 @@
 // PPC:#define __NATURAL_ALIGNMENT__ 1
 // PPC:#define __POINTER_WIDTH__ 32
 // PPC:#define __POWERPC__ 1
+// PPC:#define __PPC__ 1
 // PPC:#define __PTRDIFF_TYPE__ long int
 // PPC:#define __PTRDIFF_WIDTH__ 32
 // PPC:#define __REGISTER_PREFIX__ 
@@ -2163,6 +2169,7 @@
 // PPC-LINUX:#define __NATURAL_ALIGNMENT__ 1
 // PPC-LINUX:#define __POINTER_WIDTH__ 32
 // PPC-LINUX:#define __POWERPC__ 1
+// PPC-LINUX:#define __PPC__ 1
 // PPC-LINUX:#define __PTRDIFF_TYPE__ int
 // PPC-LINUX:#define __PTRDIFF_WIDTH__ 32
 // PPC-LINUX:#define __REGISTER_PREFIX__
@@ -2267,6 +2274,7 @@
 // PPC-DARWIN:#define __ORDER_PDP_ENDIAN__ 3412
 // PPC-DARWIN:#define __POINTER_WIDTH__ 32
 // PPC-DARWIN:#define __POWERPC__ 1
+// PPC-DARWIN:#define __PPC__ 1
 // PPC-DARWIN:#define __PTRDIFF_TYPE__ int
 // PPC-DARWIN:#define __PTRDIFF_WIDTH__ 32
 // PPC-DARWIN:#define __REGISTER_PREFIX__ 
