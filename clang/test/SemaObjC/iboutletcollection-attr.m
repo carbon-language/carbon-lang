@@ -41,3 +41,10 @@ typedef void *PV;
 @property (nonatomic, strong) 
   __attribute__((iboutletcollection(RDar10296078_OtherClass<RDar10296078_Protocol>))) NSArray *stuff; 
 @end
+
+// rdar://14212998
+@class UILabel;
+@class NSArray;
+@interface OCTViewController
+@property (nonatomic, assign) __attribute__((iboutletcollection(UILabel))) NSArray *labels; // expected-warning {{IBOutletCollection properties should be copy/strong and not assign}}
+@end
