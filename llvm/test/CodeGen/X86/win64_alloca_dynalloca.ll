@@ -40,27 +40,27 @@ entry:
 ; W64: subq  %rax, %rsp
 ; W64: movq  %rsp, %rax
 
-; EFI: movq  %rsp, [[R64:%r.*]]
 ; EFI: leaq  15(%{{.*}}), [[R1:%r.*]]
 ; EFI: andq  $-16, [[R1]]
+; EFI: movq  %rsp, [[R64:%r.*]]
 ; EFI: subq  [[R1]], [[R64]]
 ; EFI: movq  [[R64]], %rsp
 
   %r = call i64 @bar(i64 %n, i64 %x, i64 %n, i8* %buf0, i8* %buf1) nounwind
 
 ; M64: subq  $48, %rsp
-; M64: movq  %rax, 32(%rsp)
 ; M64: leaq  -4096(%rbp), %r9
+; M64: movq  %rax, 32(%rsp)
 ; M64: callq bar
 
 ; W64: subq  $48, %rsp
-; W64: movq  %rax, 32(%rsp)
 ; W64: leaq  -4096(%rbp), %r9
+; W64: movq  %rax, 32(%rsp)
 ; W64: callq bar
 
 ; EFI: subq  $48, %rsp
-; EFI: movq  [[R64]], 32(%rsp)
 ; EFI: leaq  -[[B0OFS]](%rbp), %r9
+; EFI: movq  [[R64]], 32(%rsp)
 ; EFI: callq _bar
 
   ret i64 %r

@@ -9,7 +9,7 @@ define i32 @test1(i32 inreg %a) nounwind {
   %b = add i32 %a, 128
   ret i32 %b
 ; X32: subl	$-128, %eax
-; X64: subl $-128,
+; X64: subl $-128, 
 }
 define i64 @test2(i64 inreg %a) nounwind {
   %b = add i64 %a, 2147483648
@@ -20,7 +20,7 @@ define i64 @test2(i64 inreg %a) nounwind {
 define i64 @test3(i64 inreg %a) nounwind {
   %b = add i64 %a, 128
   ret i64 %b
-
+  
 ; X32: addl $128, %eax
 ; X64: subq	$-128,
 }
@@ -38,7 +38,7 @@ normal:
 
 overflow:
   ret i1 false
-
+  
 ; X32: test4:
 ; X32: addl
 ; X32-NEXT: jo
@@ -82,11 +82,11 @@ define i64 @test6(i64 %A, i32 %B) nounwind {
         ret i64 %tmp5
 
 ; X32: test6:
-; X32:      movl 4(%esp), %eax
-; X32-NEXT: movl 12(%esp), %edx
+; X32:	    movl 12(%esp), %edx
 ; X32-NEXT: addl 8(%esp), %edx
+; X32-NEXT: movl 4(%esp), %eax
 ; X32-NEXT: ret
-
+        
 ; X64: test6:
 ; X64:	shlq	$32, %r[[A1]]
 ; X64:	leaq	(%r[[A1]],%r[[A0]]), %rax

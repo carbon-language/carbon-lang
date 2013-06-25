@@ -1,10 +1,7 @@
 ; REQUIRES: asserts
 ; RUN: llc < %s -march=x86 -relocation-model=static -stats 2>&1 | \
-; RUN:   grep asm-printer | grep 16
+; RUN:   grep asm-printer | grep 14
 ;
-; It's possible to schedule this in 14 instructions by avoiding
-; callee-save registers, but the scheduler isn't currently that
-; conervative with registers.
 @size20 = external global i32		; <i32*> [#uses=1]
 @in5 = external global i8*		; <i8**> [#uses=1]
 
@@ -24,3 +21,4 @@ define i32 @compare(i8* %a, i8* %b) nounwind {
 }
 
 declare i32 @memcmp(i8*, i8*, i32)
+

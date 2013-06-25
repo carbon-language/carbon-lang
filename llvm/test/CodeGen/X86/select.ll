@@ -256,8 +256,8 @@ entry:
   %call = tail call noalias i8* @_Znam(i64 %D) nounwind noredzone
   ret i8* %call
 ; CHECK: test12:
-; CHECK: mulq
 ; CHECK: movq $-1, %rdi
+; CHECK: mulq
 ; CHECK: cmovnoq	%rax, %rdi
 ; CHECK: jmp	__Znam
 

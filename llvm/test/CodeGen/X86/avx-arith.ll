@@ -240,14 +240,14 @@ define <16 x i16> @vpmullw(<16 x i16> %i, <16 x i16> %j) nounwind readnone {
 ; CHECK-NEXT: vpmuludq %xmm
 ; CHECK-NEXT: vpsllq $32, %xmm
 ; CHECK-NEXT: vpaddq %xmm
+; CHECK-NEXT: vpmuludq %xmm
+; CHECK-NEXT: vpsrlq $32, %xmm
+; CHECK-NEXT: vpmuludq %xmm
+; CHECK-NEXT: vpsllq $32, %xmm
 ; CHECK-NEXT: vpsrlq $32, %xmm
 ; CHECK-NEXT: vpmuludq %xmm
 ; CHECK-NEXT: vpsllq $32, %xmm
 ; CHECK-NEXT: vpaddq %xmm
-; CHECK-NEXT: vpmuludq %xmm
-; CHECK-NEXT: vpsrlq $32, %xmm
-; CHECK-NEXT: vpmuludq %xmm
-; CHECK-NEXT: vpsllq $32, %xmm
 ; CHECK-NEXT: vpaddq %xmm
 ; CHECK-NEXT: vpsrlq $32, %xmm
 ; CHECK-NEXT: vpmuludq %xmm
@@ -269,3 +269,4 @@ define <4 x float> @int_sqrt_ss() {
  %x2 = call <4 x float> @llvm.x86.sse.sqrt.ss(<4 x float> %x1) nounwind
  ret <4 x float> %x2
 }
+

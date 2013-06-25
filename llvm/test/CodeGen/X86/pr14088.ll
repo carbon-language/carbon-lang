@@ -20,6 +20,6 @@ return:
 }
 
 ; We were miscompiling this and using %ax instead of %cx in the movw.
-; CHECK: movw	%ax, (%rsi)
-; CHECK: movswl	%ax, %eax
-; CHECK: movslq	%eax, %rax
+; CHECK: movswl	%cx, %ecx
+; CHECK: movw	%cx, (%rsi)
+; CHECK: movslq	%ecx, %rcx

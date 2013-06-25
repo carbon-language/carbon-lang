@@ -57,10 +57,11 @@ entry:
 	%tmp22 = tail call %"struct.std::basic_ostream<char,std::char_traits<char> >"* @_ZNSolsEd( %"struct.std::basic_ostream<char,std::char_traits<char> >"* %tmp16, double %tmp1920 )		; <%"struct.std::basic_ostream<char,std::char_traits<char> >"*> [#uses=1]
 	%tmp30 = tail call %"struct.std::basic_ostream<char,std::char_traits<char> >"* @_ZSt4endlIcSt11char_traitsIcEERSt13basic_ostreamIT_T0_ES6_( %"struct.std::basic_ostream<char,std::char_traits<char> >"* %tmp22 )		; <%"struct.std::basic_ostream<char,std::char_traits<char> >"*> [#uses=0]
 ; reload:
+; CHECK: fld
+; CHECK: fstps
 ; CHECK: ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc
 	%tmp34 = tail call %"struct.std::basic_ostream<char,std::char_traits<char> >"* @_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc( %"struct.std::basic_ostream<char,std::char_traits<char> >"* @_ZSt4cout, i8* getelementptr ([13 x i8]* @.str1, i32 0, i32 0) )		; <%"struct.std::basic_ostream<char,std::char_traits<char> >"*> [#uses=1]
 	%tmp3940 = fpext float %tmp1314 to double		; <double> [#uses=1]
-; CHECK: fld
 ; CHECK: fstpl
 ; CHECK: ZNSolsEd
 	%tmp42 = tail call %"struct.std::basic_ostream<char,std::char_traits<char> >"* @_ZNSolsEd( %"struct.std::basic_ostream<char,std::char_traits<char> >"* %tmp34, double %tmp3940 )		; <%"struct.std::basic_ostream<char,std::char_traits<char> >"*> [#uses=1]

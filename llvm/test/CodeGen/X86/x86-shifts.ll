@@ -6,8 +6,8 @@
 define <4 x i32> @shl4(<4 x i32> %A) nounwind {
 entry:
 ; CHECK:      shl4
-; CHECK:      pslld
 ; CHECK:      padd
+; CHECK:      pslld
 ; CHECK:      ret
   %B = shl <4 x i32> %A,  < i32 2, i32 2, i32 2, i32 2>
   %C = shl <4 x i32> %A,  < i32 1, i32 1, i32 1, i32 1>
@@ -67,8 +67,8 @@ entry:
 define <8 x i16> @shl8(<8 x i16> %A) nounwind {
 entry:
 ; CHECK:      shl8
-; CHECK:      psllw
 ; CHECK:      padd
+; CHECK:      psllw
 ; CHECK:      ret
   %B = shl <8 x i16> %A,  < i16 2, i16 2, i16 2, i16 2, i16 2, i16 2, i16 2, i16 2>
   %C = shl <8 x i16> %A,  < i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>

@@ -7,10 +7,10 @@ target triple = "i686-apple-cl.1.0"
 define <8 x float> @my2filter4_1d(<4 x float> %a, <8 x float> %T0, <8 x float> %T1) nounwind readnone {
 entry:
 ; CHECK: subps
-; CHECK: subps
-; CHECK: mulps
 ; CHECK: mulps
 ; CHECK: addps
+; CHECK: subps
+; CHECK: mulps
 ; CHECK: addps
 	%tmp7 = shufflevector <4 x float> %a, <4 x float> undef, <8 x i32> < i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3 >		; <<8 x float>> [#uses=1]
 	%sub = fsub <8 x float> %T1, %T0		; <<8 x float>> [#uses=1]

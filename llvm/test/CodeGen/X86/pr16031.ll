@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i386-unknown-linux-gnu -mcpu=corei7-avx -enable-misched=false | FileCheck %s
+; RUN: llc < %s -mtriple=i386-unknown-linux-gnu -mcpu=corei7-avx | FileCheck %s
 
 ; CHECK: main:
 ; CHECK: pushl %esi

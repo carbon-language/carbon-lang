@@ -38,10 +38,10 @@ L:
 
   store i16 %A, i16* %Q
   ret i32 %D
-
+  
 ; CHECK: test2:
 ; CHECK: 	movl	4(%esp), %eax
-; CHECK-NEXT:	movzwl	(%eax), %e{{..}}
+; CHECK-NEXT:	movzwl	(%eax), %ecx
 
 }
 
