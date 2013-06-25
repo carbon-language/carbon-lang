@@ -259,10 +259,6 @@ unsigned DwarfUnits::getAddrPoolIndex(MCSymbol *Sym) {
 // Define a unique number for the abbreviation.
 //
 void DwarfUnits::assignAbbrevNumber(DIEAbbrev &Abbrev) {
-  // Profile the node so that we can make it unique.
-  FoldingSetNodeID ID;
-  Abbrev.Profile(ID);
-
   // Check the set for priors.
   DIEAbbrev *InSet = AbbreviationsSet->GetOrInsertNode(&Abbrev);
 
