@@ -115,6 +115,7 @@ class R600_1OP <bits<11> inst, string opName, list<dag> pattern,
   let HasNativeOperands = 1;
   let Op1 = 1;
   let DisableEncoding = "$literal";
+  let UseNamedOperandTable = 1;
 
   let Inst{31-0}  = Word0;
   let Inst{63-32} = Word1;
@@ -151,6 +152,7 @@ class R600_2OP <bits<11> inst, string opName, list<dag> pattern,
   let HasNativeOperands = 1;
   let Op2 = 1;
   let DisableEncoding = "$literal";
+  let UseNamedOperandTable = 1;
 
   let Inst{31-0}  = Word0;
   let Inst{63-32} = Word1;
@@ -190,6 +192,7 @@ class R600_3OP <bits<5> inst, string opName, list<dag> pattern,
   let HasNativeOperands = 1;
   let DisableEncoding = "$literal";
   let Op3 = 1;
+  let UseNamedOperandTable = 1;
 
   let Inst{31-0}  = Word0;
   let Inst{63-32} = Word1;
@@ -931,7 +934,11 @@ class R600_VEC2OP<list<dag> pattern> : InstR600 <(outs R600_Reg32:$dst), (ins
    LITERAL:$literal0, LITERAL:$literal1),
   "",
   pattern,
-  AnyALU> {}
+  AnyALU> {
+
+  let UseNamedOperandTable = 1;
+
+}
 }
 
 def DOT_4 : R600_VEC2OP<[(set R600_Reg32:$dst, (DOT4
@@ -949,12 +956,13 @@ multiclass CUBE_Common <bits<11> inst> {
 
   def _pseudo : InstR600 <
     (outs R600_Reg128:$dst),
-    (ins R600_Reg128:$src),
-    "CUBE $dst $src",
-    [(set v4f32:$dst, (int_AMDGPU_cube v4f32:$src))],
+    (ins R600_Reg128:$src0),
+    "CUBE $dst $src0",
+    [(set v4f32:$dst, (int_AMDGPU_cube v4f32:$src0))],
     VecALU
   > {
     let isPseudo = 1;
+    let UseNamedOperandTable = 1;
   }
 
   def _real : R600_2OP <inst, "CUBE", []>;

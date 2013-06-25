@@ -23,6 +23,7 @@
 
 #define GET_INSTRINFO_HEADER
 #define GET_INSTRINFO_ENUM
+#define GET_INSTRINFO_OPERAND_ENUM
 #include "AMDGPUGenInstrInfo.inc"
 
 #define OPCODE_IS_ZERO_INT AMDGPU::PRED_SETE_INT
@@ -197,6 +198,10 @@ public:
     DebugLoc DL) const;
 
 };
+
+namespace AMDGPU {
+  int16_t getNamedOperandIdx(uint16_t Opcode, uint16_t NamedIndex);
+}  // End namespace AMDGPU
 
 } // End llvm namespace
 

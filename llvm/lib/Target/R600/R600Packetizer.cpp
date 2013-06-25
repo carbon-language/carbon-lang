@@ -79,7 +79,7 @@ private:
         continue;
       if (TII->isTransOnly(BI))
         continue;
-      int OperandIdx = TII->getOperandIdx(BI->getOpcode(), R600Operands::WRITE);
+      int OperandIdx = TII->getOperandIdx(BI->getOpcode(), AMDGPU::OpName::write);
       if (OperandIdx > -1 && BI->getOperand(OperandIdx).getImm() == 0)
         continue;
       unsigned Dst = BI->getOperand(0).getReg();
@@ -112,10 +112,10 @@ private:
 
   void substitutePV(MachineInstr *MI, const DenseMap<unsigned, unsigned> &PVs)
       const {
-    R600Operands::Ops Ops[] = {
-      R600Operands::SRC0,
-      R600Operands::SRC1,
-      R600Operands::SRC2
+    unsigned Ops[] = {
+      AMDGPU::OpName::src0,
+      AMDGPU::OpName::src1,
+      AMDGPU::OpName::src2
     };
     for (unsigned i = 0; i < 3; i++) {
       int OperandIdx = TII->getOperandIdx(MI->getOpcode(), Ops[i]);
@@ -164,8 +164,8 @@ public:
     if (getSlot(MII) <= getSlot(MIJ))
       return false;
     // Does MII and MIJ share the same pred_sel ?
-    int OpI = TII->getOperandIdx(MII->getOpcode(), R600Operands::PRED_SEL),
-        OpJ = TII->getOperandIdx(MIJ->getOpcode(), R600Operands::PRED_SEL);
+    int OpI = TII->getOperandIdx(MII->getOpcode(), AMDGPU::OpName::pred_sel),
+        OpJ = TII->getOperandIdx(MIJ->getOpcode(), AMDGPU::OpName::pred_sel);
     unsigned PredI = (OpI > -1)?MII->getOperand(OpI).getReg():0,
         PredJ = (OpJ > -1)?MIJ->getOperand(OpJ).getReg():0;
     if (PredI != PredJ)
@@ -191,7 +191,7 @@ public:
   bool isLegalToPruneDependencies(SUnit *SUI, SUnit *SUJ) {return false;}
 
   void setIsLastBit(MachineInstr *MI, unsigned Bit) const {
-    unsigned LastOp = TII->getOperandIdx(MI->getOpcode(), R600Operands::LAST);
+    unsigned LastOp = TII->getOperandIdx(MI->getOpcode(), AMDGPU::OpName::last);
     MI->getOperand(LastOp).setImm(Bit);
   }
 
@@ -230,7 +230,7 @@ public:
       for (unsigned i = 0, e = CurrentPacketMIs.size(); i < e; i++) {
         MachineInstr *MI = CurrentPacketMIs[i];
             unsigned Op = TII->getOperandIdx(MI->getOpcode(),
-                R600Operands::BANK_SWIZZLE);
+                AMDGPU::OpName::bank_swizzle);
             MI->getOperand(Op).setImm(BS[i]);
       }
     }

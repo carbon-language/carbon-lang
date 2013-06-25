@@ -280,7 +280,8 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
           continue;
         }
 
-        int ImmIdx = TII->getOperandIdx(Use->getMachineOpcode(), R600Operands::IMM);
+        int ImmIdx = TII->getOperandIdx(Use->getMachineOpcode(),
+                                        AMDGPU::OpName::literal);
         assert(ImmIdx != -1);
 
         // subtract one from ImmIdx, because the DST operand is usually index
@@ -357,7 +358,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
         if (PotentialClamp->isMachineOpcode() &&
             PotentialClamp->getMachineOpcode() == AMDGPU::CLAMP_R600) {
           unsigned ClampIdx =
-            TII->getOperandIdx(Result->getMachineOpcode(), R600Operands::CLAMP);
+            TII->getOperandIdx(Result->getMachineOpcode(), AMDGPU::OpName::clamp);
           std::vector<SDValue> Ops;
           unsigned NumOp = Result->getNumOperands();
           for (unsigned i = 0; i < NumOp; ++i) {
@@ -415,23 +416,23 @@ bool AMDGPUDAGToDAGISel::FoldOperand(SDValue &Src, SDValue &Sel, SDValue &Neg,
 bool AMDGPUDAGToDAGISel::FoldOperands(unsigned Opcode,
     const R600InstrInfo *TII, std::vector<SDValue> &Ops) {
   int OperandIdx[] = {
-    TII->getOperandIdx(Opcode, R600Operands::SRC0),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1),
-    TII->getOperandIdx(Opcode, R600Operands::SRC2)
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src2)
   };
   int SelIdx[] = {
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_SEL),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_SEL),
-    TII->getOperandIdx(Opcode, R600Operands::SRC2_SEL)
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_sel),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_sel),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src2_sel)
   };
   int NegIdx[] = {
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_NEG),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_NEG),
-    TII->getOperandIdx(Opcode, R600Operands::SRC2_NEG)
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_neg),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_neg),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src2_neg)
   };
   int AbsIdx[] = {
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_ABS),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_ABS),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_abs),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_abs),
     -1
   };
 
@@ -466,44 +467,44 @@ bool AMDGPUDAGToDAGISel::FoldOperands(unsigned Opcode,
 bool AMDGPUDAGToDAGISel::FoldDotOperands(unsigned Opcode,
     const R600InstrInfo *TII, std::vector<SDValue> &Ops) {
   int OperandIdx[] = {
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_X),
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_Y),
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_Z),
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_W),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_X),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_Y),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_Z),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_W)
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_X),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_Y),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_Z),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_W),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_X),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_Y),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_Z),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_W)
   };
   int SelIdx[] = {
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_SEL_X),
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_SEL_Y),
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_SEL_Z),
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_SEL_W),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_SEL_X),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_SEL_Y),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_SEL_Z),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_SEL_W)
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_sel_X),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_sel_Y),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_sel_Z),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_sel_W),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_sel_X),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_sel_Y),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_sel_Z),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_sel_W)
   };
   int NegIdx[] = {
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_NEG_X),
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_NEG_Y),
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_NEG_Z),
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_NEG_W),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_NEG_X),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_NEG_Y),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_NEG_Z),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_NEG_W)
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_neg_X),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_neg_Y),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_neg_Z),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_neg_W),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_neg_X),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_neg_Y),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_neg_Z),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_neg_W)
   };
   int AbsIdx[] = {
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_ABS_X),
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_ABS_Y),
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_ABS_Z),
-    TII->getOperandIdx(Opcode, R600Operands::SRC0_ABS_W),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_ABS_X),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_ABS_Y),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_ABS_Z),
-    TII->getOperandIdx(Opcode, R600Operands::SRC1_ABS_W)
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_abs_X),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_abs_Y),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_abs_Z),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src0_abs_W),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_abs_X),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_abs_Y),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_abs_Z),
+    TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_abs_W)
   };
 
   // Gather constants values

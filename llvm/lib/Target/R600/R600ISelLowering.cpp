@@ -150,7 +150,7 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
   case AMDGPU::CONST_COPY: {
     MachineInstr *NewMI = TII->buildDefaultInstruction(*BB, MI, AMDGPU::MOV,
         MI->getOperand(0).getReg(), AMDGPU::ALU_CONST);
-    TII->setImmOperand(NewMI, R600Operands::SRC0_SEL,
+    TII->setImmOperand(NewMI, AMDGPU::OpName::src0_sel,
         MI->getOperand(1).getImm());
     break;
   }

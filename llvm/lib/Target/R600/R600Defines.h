@@ -57,46 +57,7 @@ namespace R600_InstFlag {
 #define IS_VTX(desc) ((desc).TSFlags & R600_InstFlag::VTX_INST)
 #define IS_TEX(desc) ((desc).TSFlags & R600_InstFlag::TEX_INST)
 
-namespace R600Operands {
-  enum Ops {
-    DST,
-    UPDATE_EXEC_MASK,
-    UPDATE_PREDICATE,
-    WRITE,
-    OMOD,
-    DST_REL,
-    CLAMP,
-    SRC0,
-    SRC0_NEG,
-    SRC0_REL,
-    SRC0_ABS,
-    SRC0_SEL,
-    SRC1,
-    SRC1_NEG,
-    SRC1_REL,
-    SRC1_ABS,
-    SRC1_SEL,
-    SRC2,
-    SRC2_NEG,
-    SRC2_REL,
-    SRC2_SEL,
-    LAST,
-    PRED_SEL,
-    IMM,
-    BANK_SWIZZLE,
-    COUNT
- };
-
-  const static int ALUOpTable[3][R600Operands::COUNT] = {
-//            W        C     S  S  S  S     S  S  S  S     S  S  S
-//            R  O  D  L  S  R  R  R  R  S  R  R  R  R  S  R  R  R  L  P
-//   D  U     I  M  R  A  R  C  C  C  C  R  C  C  C  C  R  C  C  C  A  R  I
-//   S  E  U  T  O  E  M  C  0  0  0  0  C  1  1  1  1  C  2  2  2  S  E  M  B
-//   T  M  P  E  D  L  P  0  N  R  A  S  1  N  R  A  S  2  N  R  S  T  D  M  S
-    {0,-1,-1, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,10,11,12,13},
-    {0, 1, 2, 3, 4 ,5 ,6 ,7, 8, 9,10,11,12,13,14,15,16,-1,-1,-1,-1,17,18,19,20},
-    {0,-1,-1,-1,-1, 1, 2, 3, 4, 5,-1, 6, 7, 8, 9,-1,10,11,12,13,14,15,16,17,18}
-  };
+namespace OpName {
 
   enum VecOps {
     UPDATE_EXEC_MASK_X,
