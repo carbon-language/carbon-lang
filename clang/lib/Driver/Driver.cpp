@@ -30,7 +30,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
@@ -244,7 +243,7 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
     StringRef CompilerPath = env;
     while (!CompilerPath.empty()) {
       std::pair<StringRef, StringRef> Split
-        = CompilerPath.split(llvm::sys::PathSeparator);
+        = CompilerPath.split(llvm::sys::EnvPathSeparator);
       PrefixDirs.push_back(Split.first);
       CompilerPath = Split.second;
     }
