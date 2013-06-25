@@ -45,11 +45,25 @@ private:
   void emitEnums(raw_ostream &OS);
 
   typedef std::map<std::vector<std::string>, unsigned> OperandInfoMapTy;
+
+  /// The keys of this map are maps which have OpName enum values as their keys
+  /// and instruction operand indices as their values.  The values of this map
+  /// are lists of instruction names.
+  typedef std::map<std::map<unsigned, unsigned>,
+                   std::vector<std::string> > OpNameMapTy;
+  typedef std::map<std::string, unsigned>::iterator StrUintMapIter;
   void emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                   Record *InstrInfo,
                   std::map<std::vector<Record*>, unsigned> &EL,
                   const OperandInfoMapTy &OpInfo,
                   raw_ostream &OS);
+  void initOperandMapData(
+             const std::vector<const CodeGenInstruction *> NumberedInstructions,
+             const std::string &Namespace,
+             std::map<std::string, unsigned> &Operands,
+             OpNameMapTy &OperandMap);
+  void emitOperandNameMappings(raw_ostream &OS, const CodeGenTarget &Target,
+            const std::vector<const CodeGenInstruction*> &NumberedInstructions);
 
   // Operand information.
   void EmitOperandInfo(raw_ostream &OS, OperandInfoMapTy &OperandInfoIDs);
@@ -176,6 +190,120 @@ void InstrInfoEmitter::EmitOperandInfo(raw_ostream &OS,
   }
 }
 
+
+/// Initialize data structures for generating operand name mappings.
+/// 
+/// \param Operands [out] A map used to generate the OpName enum with operand
+///        names as its keys and operand enum values as its values.
+/// \param OperandMap [out] A map for representing the operand name mappings for
+///        each instructions.  This is used to generate the OperandMap table as
+///        well as the getNamedOperandIdx() function.
+void InstrInfoEmitter::initOperandMapData(
+        const std::vector<const CodeGenInstruction *> NumberedInstructions,
+        const std::string &Namespace,
+        std::map<std::string, unsigned> &Operands,
+        OpNameMapTy &OperandMap) {
+
+  unsigned NumOperands = 0;
+  for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
+    const CodeGenInstruction *Inst = NumberedInstructions[i];
+    if (!Inst->TheDef->getValueAsBit("UseNamedOperandTable")) {
+      continue;
+    }
+    std::map<unsigned, unsigned> OpList;
+    for (unsigned j = 0, je = Inst->Operands.size(); j != je; ++j) {
+      const CGIOperandList::OperandInfo &Info = Inst->Operands[j];
+      StrUintMapIter I = Operands.find(Info.Name);
+
+      if (I == Operands.end()) {
+        I = Operands.insert(Operands.begin(),
+                    std::pair<std::string, unsigned>(Info.Name, NumOperands++));
+      }
+      OpList[I->second] = Info.MIOperandNo;
+    }
+    OperandMap[OpList].push_back(Namespace + "::" + Inst->TheDef->getName());
+  }
+}
+
+/// Generate a table and function for looking up the indices of operands by
+/// name.
+///
+/// This code generates:
+/// - An enum in the llvm::TargetNamespace::OpName namespace, with one entry
+///   for each operand name.
+/// - A 2-dimensional table called OperandMap for mapping OpName enum values to
+///   operand indices.
+/// - A function called getNamedOperandIdx(uint16_t Opcode, uint16_t NamedIdx)
+///   for looking up the operand index for an instruction, given a value from
+///   OpName enum
+void InstrInfoEmitter::emitOperandNameMappings(raw_ostream &OS,
+           const CodeGenTarget &Target,
+           const std::vector<const CodeGenInstruction*> &NumberedInstructions) {
+
+  const std::string &Namespace = Target.getInstNamespace();
+  std::string OpNameNS = "OpName";
+  // Map of operand names to their enumeration value.  This will be used to
+  // generate the OpName enum.
+  std::map<std::string, unsigned> Operands;
+  OpNameMapTy OperandMap;
+
+  initOperandMapData(NumberedInstructions, Namespace, Operands, OperandMap);
+
+  OS << "#ifdef GET_INSTRINFO_OPERAND_ENUM\n";
+  OS << "#undef GET_INSTRINFO_OPERAND_ENUM\n";
+  OS << "namespace llvm {";
+  OS << "namespace " << Namespace << " {\n";
+  OS << "namespace " << OpNameNS << " { \n";
+  OS << "enum {\n";
+  for (StrUintMapIter i = Operands.begin(), e = Operands.end(); i != e; ++i)
+    OS << "  " << i->first << " = " << i->second << ",\n";
+
+  OS << "OPERAND_LAST";
+  OS << "\n};\n";
+  OS << "} // End namespace OpName\n";
+  OS << "} // End namespace " << Namespace << "\n";
+  OS << "} // End namespace llvm\n";
+  OS << "#endif //GET_INSTRINFO_OPERAND_ENUM\n";
+
+  OS << "#ifdef GET_INSTRINFO_NAMED_OPS\n";
+  OS << "#undef GET_INSTRINFO_NAMED_OPS\n";
+  OS << "namespace llvm {";
+  OS << "namespace " << Namespace << " {\n";
+  OS << "int16_t getNamedOperandIdx(uint16_t Opcode, uint16_t NamedIdx) {\n";
+  OS << "  static const int16_t OperandMap []["<< Operands.size() << "] = {\n";
+  for (OpNameMapTy::iterator i = OperandMap.begin(), e = OperandMap.end();
+                                                     i != e; ++i) {
+    const std::map<unsigned, unsigned> &OpList = i->first;
+    OS << "{";
+
+    // Emit a row of the OperandMap table
+    for (unsigned ii = 0, ie = Operands.size(); ii != ie; ++ii)
+      OS << (OpList.count(ii) == 0 ? -1 : (int)OpList.find(ii)->second) << ", ";
+
+    OS << "},\n";
+  }
+  OS << "};\n";
+
+  OS << "  switch(Opcode) {\n";
+  unsigned TableIndex = 0;
+  for (OpNameMapTy::iterator i = OperandMap.begin(), e = OperandMap.end();
+                                                     i != e; ++i) {
+    std::vector<std::string> &OpcodeList = i->second;
+
+    for (unsigned ii = 0, ie = OpcodeList.size(); ii != ie; ++ii)
+      OS << "  case " << OpcodeList[ii] << ":\n";
+
+    OS << "    return OperandMap[" << TableIndex++ << "][NamedIdx];\n";
+  }
+  OS << "    default: return -1;\n";
+  OS << "  }\n";
+  OS << "}\n";
+  OS << "} // End namespace " << Namespace << "\n";
+  OS << "} // End namespace llvm\n";
+  OS << "#endif //GET_INSTRINFO_NAMED_OPS\n";
+
+}
+
 //===----------------------------------------------------------------------===//
 // Main Output.
 //===----------------------------------------------------------------------===//
@@ -293,6 +421,8 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   OS << "} // End llvm namespace \n";
 
   OS << "#endif // GET_INSTRINFO_CTOR\n\n";
+
+  emitOperandNameMappings(OS, Target, NumberedInstructions);
 }
 
 void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,

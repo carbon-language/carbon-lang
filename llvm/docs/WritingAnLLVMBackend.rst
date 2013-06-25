@@ -911,6 +911,47 @@ format instructions will bind the operands to the ``rd``, ``rs1``, and ``rs2``
 fields.  This results in the ``XNORrr`` instruction binding ``$dst``, ``$b``,
 and ``$c`` operands to the ``rd``, ``rs1``, and ``rs2`` fields respectively.
 
+TableGen will also generate a function called getNamedOperandIdx() which
+can be used to look up an operand's index in a MachineInstr based on its
+TableGen name.  Setting the UseNamedOperandTable bit in an instruction's
+TableGen definition will add all of its operands to an enumeration in the
+llvm::XXX:OpName namespace and also add an entry for it into the OperandMap
+table, which can be queried using getNamedOperandIdx()
+
+.. code-block:: llvm
+
+  int DstIndex = SP::getNamedOperandIdx(SP::XNORrr, SP::OpName::dst); // => 0
+  int BIndex = SP::getNamedOperandIdx(SP::XNORrr, SP::OpName::b);     // => 1
+  int CIndex = SP::getNamedOperandIdx(SP::XNORrr, SP::OpName::c);     // => 2
+  int DIndex = SP::getNamedOperandIdx(SP::XNORrr, SP::OpName::d);     // => -1
+
+  ...
+
+The entries in the OpName enum are taken verbatim from the TableGen definitions,
+so operands with lowercase names will have lower case entries in the enum.
+
+To include the getNamedOperandIdx() function in your backend, you will need
+to define a few preprocessor macros in XXXInstrInfo.cpp and XXXInstrInfo.h.
+For example:
+
+XXXInstrInfo.cpp:
+
+.. code-block:: c++ 
+
+  #define GET_INSTRINFO_NAMED_OPS // For getNamedOperandIdx() function
+  #include "XXXGenInstrInfo.inc"
+
+XXXInstrInfo.h:
+
+.. code-block:: c++
+
+  #define GET_INSTRINFO_OPERAND_ENUM // For OpName enum
+  #include "XXXGenInstrInfo.inc"
+
+  namespace XXX {
+    int16_t getNamedOperandIdx(uint16_t Opcode, uint16_t NamedIndex);
+  } // End namespace XXX
+
 Instruction Relation Mapping
 ----------------------------
 

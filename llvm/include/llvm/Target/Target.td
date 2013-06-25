@@ -445,6 +445,11 @@ class Instruction {
   string TwoOperandAliasConstraint = "";
 
   ///@}
+
+  /// UseNamedOperandTable - If set, the operand indices of this instruction
+  /// can be queried via the getNamedOperandIdx() function which is generated
+  /// by TableGen.
+  bit UseNamedOperandTable = 0;
 }
 
 /// PseudoInstExpansion - Expansion information for a pseudo-instruction.
