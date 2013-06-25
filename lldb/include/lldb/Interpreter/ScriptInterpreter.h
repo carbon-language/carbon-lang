@@ -120,7 +120,6 @@ public:
                                                                      const char *session_dictionary_name,
                                                                      lldb::DebuggerSP& debugger,
                                                                      const char* args,
-                                                                     std::string& err_msg,
                                                                      lldb_private::CommandReturnObject& cmd_retobj);
     
     typedef bool           (*SWIGPythonCallModuleInit)              (const char *python_module_name,

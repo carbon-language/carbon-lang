@@ -115,7 +115,6 @@ LLDBSwigPythonCallCommand (const char *python_function_name,
                            const char *session_dictionary_name,
                            lldb::DebuggerSP& debugger,
                            const char* args,
-                           std::string& err_msg,
                            lldb_private::CommandReturnObject& cmd_retobj);
 
 extern "C" bool
@@ -2970,7 +2969,7 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
         return false;
     }
     
-    bool ret_val;
+    bool ret_val = false;
     
     std::string err_msg;
 
@@ -2995,12 +2994,11 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
                                              m_dictionary_name.c_str(),
                                              debugger_sp,
                                              args,
-                                             err_msg,
                                              cmd_retobj);
     }
 
     if (!ret_val)
-        error.SetErrorString(err_msg.c_str());
+        error.SetErrorString("unable to execute script function");
     else
         error.Clear();
     

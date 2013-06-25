@@ -98,6 +98,13 @@ public:
     const char *
     GetError (bool only_if_no_immediate);
     
+    void
+    SetError (lldb::SBError &error,
+              const char *fallback_error_cstr = NULL);
+    
+    void
+    SetError (const char* error_cstr);
+    
 protected:
     friend class SBCommandInterpreter;
     friend class SBOptions;

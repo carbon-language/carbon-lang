@@ -13,9 +13,7 @@ def target_name_impl(debugger, args, result, dict):
     file = target.GetExecutable()
     print >>result,  ('Current target ' + file.GetFilename())
     if args == 'fail':
-        return 'a test for error in command'
-    else:
-        return None
+        result.SetError('a test for error in command')
 
 def print_wait_impl(debugger, args, result, dict):
     result.SetImmediateOutputFile(sys.stdout)
@@ -25,11 +23,10 @@ def print_wait_impl(debugger, args, result, dict):
     print >>result,  ('Still doing long task..')
     time.sleep(1)
     print >>result,  ('Done; if you saw the delays I am doing OK')
-    return None
 
 def check_for_synchro(debugger, args, result, dict):
     if debugger.GetAsync() == True:
         print >>result,  ('I am running async')
     if debugger.GetAsync() == False:
         print >>result,  ('I am running sync')
-    return None
+

@@ -318,7 +318,7 @@ LLDBSwigPythonCallTypeScript
     if (!python_function_name || !session_dictionary)
         return false;
 
-    PyObject *session_dict = (PyObject*)session_dictionary, *pfunc_impl = NULL, *pargs = NULL, *pvalue = NULL;
+    PyObject *session_dict = (PyObject*)session_dictionary, *pfunc_impl = NULL, *pvalue = NULL;
     
     if (pyfunct_wrapper && *pyfunct_wrapper && PyFunction_Check (*pyfunct_wrapper))
     {
@@ -475,10 +475,6 @@ LLDBSwigPython_GetChildAtIndex
     uint32_t idx
 )
 {
-
-    static char callee_name[] = "get_child_at_index";
-    static char param_format[] = "i";
-
     PyErr_Cleaner py_err_cleaner(true);
     
     PyCallable pfunc = PyCallable::FindWithMemberFunction(implementor,"get_child_at_index");
@@ -628,7 +624,6 @@ LLDBSwigPythonCallCommand
     const char *session_dictionary_name,
     lldb::DebuggerSP& debugger,
     const char* args,
-    std::string& err_msg,
     lldb_private::CommandReturnObject& cmd_retobj
 )
 {
@@ -653,23 +648,9 @@ LLDBSwigPythonCallCommand
         pvalue = pfunc(debugger_sb, args, &cmd_retobj_sb, session_dict = FindSessionDictionary(session_dictionary_name));
         
         Py_XINCREF (session_dict);
-        
-        if (pvalue != NULL)
-        {
-            if (pvalue == Py_None) // no error
-            {
-                err_msg.clear();
-                retval = true;
-            }
-            else
-            {
-                // return value is an error string
-                PyObjectToString(pvalue,err_msg);
-                retval = false;
-            }
-        }
-        
         Py_XDECREF (pvalue);
+        
+        retval = true;
     }
     
     return retval;
