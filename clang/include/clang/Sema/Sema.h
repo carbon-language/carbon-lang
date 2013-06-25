@@ -4938,6 +4938,7 @@ public:
     TPC_ClassTemplate,
     TPC_FunctionTemplate,
     TPC_ClassTemplateMember,
+    TPC_FriendClassTemplate,
     TPC_FriendFunctionTemplate,
     TPC_FriendFunctionTemplateDefinition,
     TPC_TypeAliasTemplate

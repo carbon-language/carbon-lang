@@ -223,12 +223,11 @@ namespace dr20 { // dr20: yes
   X x = f(); // expected-error {{private}}
 }
 
-namespace dr21 { // dr21: no
+namespace dr21 { // dr21: yes
   template<typename T> struct A;
   struct X {
-    // FIXME: We should reject these, per [temp.param]p9.
-    template<typename T = int> friend struct A;
-    template<typename T = int> friend struct B;
+    template<typename T = int> friend struct A; // expected-error {{default template argument not permitted on a friend template}}
+    template<typename T = int> friend struct B; // expected-error {{default template argument not permitted on a friend template}}
   };
 }
 

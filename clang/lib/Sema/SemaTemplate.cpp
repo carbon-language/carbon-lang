@@ -1033,13 +1033,14 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   // template declaration. Skip this check for a friend in a dependent
   // context, because the template parameter list might be dependent.
   if (!(TUK == TUK_Friend && CurContext->isDependentContext()) &&
-      CheckTemplateParameterList(TemplateParams,
-            PrevClassTemplate? PrevClassTemplate->getTemplateParameters() : 0,
-                                 (SS.isSet() && SemanticContext &&
-                                  SemanticContext->isRecord() &&
-                                  SemanticContext->isDependentContext())
-                                   ? TPC_ClassTemplateMember
-                                   : TPC_ClassTemplate))
+      CheckTemplateParameterList(
+          TemplateParams,
+          PrevClassTemplate ? PrevClassTemplate->getTemplateParameters() : 0,
+          (SS.isSet() && SemanticContext && SemanticContext->isRecord() &&
+           SemanticContext->isDependentContext())
+              ? TPC_ClassTemplateMember
+              : TUK == TUK_Friend ? TPC_FriendClassTemplate
+                                  : TPC_ClassTemplate))
     Invalid = true;
 
   if (SS.isSet()) {
@@ -1187,6 +1188,7 @@ static bool DiagnoseDefaultTemplateArgument(Sema &S,
       << DefArgRange;
     return true;
 
+  case Sema::TPC_FriendClassTemplate:
   case Sema::TPC_FriendFunctionTemplate:
     // C++ [temp.param]p9:
     //   A default template-argument shall not be specified in a
