@@ -4419,6 +4419,9 @@ TEST_F(FormatTest, ObjCSnippets) {
   verifyFormat("@property(assign, nonatomic) CGFloat hoverAlpha;");
   verifyFormat("@property(assign, getter=isEditable) BOOL editable;");
   verifyGoogleFormat("@property(assign, getter=isEditable) BOOL editable;");
+
+  verifyFormat("@import foo.bar;\n"
+               "@import baz;");
 }
 
 TEST_F(FormatTest, ObjCLiterals) {
