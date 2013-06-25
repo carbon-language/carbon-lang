@@ -229,23 +229,6 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
                                                NewProto->getArgTypes(), EPI);
     New->setType(NewType);
 
-    // If exceptions are disabled, suppress the warning about missing
-    // exception specifications for new and delete operators.
-    if (!getLangOpts().CXXExceptions) {
-      switch (New->getDeclName().getCXXOverloadedOperator()) {
-      case OO_New:
-      case OO_Array_New:
-      case OO_Delete:
-      case OO_Array_Delete:
-        if (New->getDeclContext()->isTranslationUnit())
-          return false;
-        break;
-
-      default:
-        break;
-      }
-    } 
-
     // Warn about the lack of exception specification.
     SmallString<128> ExceptionSpecString;
     llvm::raw_svector_ostream OS(ExceptionSpecString);
