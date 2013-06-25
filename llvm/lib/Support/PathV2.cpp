@@ -627,10 +627,18 @@ namespace fs {
 
 error_code unique_file(const Twine &Model, SmallVectorImpl<char> &ResultPath,
                        bool MakeAbsolute, unsigned Mode) {
+  // FIXME: This is really inefficient. unique_path creates a path an tries to
+  // open it. We should factor the code so that we just don't create/open the
+  // file when we don't need it.
   int FD;
   error_code Ret = unique_file(Model, FD, ResultPath, MakeAbsolute, Mode);
-  close(FD);
-  return Ret;
+  if (Ret)
+    return Ret;
+
+  if (close(FD))
+    return error_code(errno, system_category());
+
+  return fs::remove(ResultPath.begin());
 }
 
 error_code make_absolute(SmallVectorImpl<char> &path) {
