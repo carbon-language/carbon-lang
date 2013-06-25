@@ -56,6 +56,7 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::SUB, MVT::v4i32, Expand);
   setOperationAction(ISD::SUB, MVT::v2i32, Expand);
   setOperationAction(ISD::UINT_TO_FP, MVT::v4i32, Expand);
+  setOperationAction(ISD::UDIV, MVT::v2i32, Expand);
   setOperationAction(ISD::UDIV, MVT::v4i32, Expand);
   setOperationAction(ISD::UREM, MVT::v4i32, Expand);
   setOperationAction(ISD::SETCC, MVT::v4i32, Expand);
