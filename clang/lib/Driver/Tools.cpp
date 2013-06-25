@@ -32,6 +32,7 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/PathV1.h"
+#include "llvm/Support/Program.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/raw_ostream.h"
 #include <sys/stat.h>
@@ -109,7 +110,7 @@ static void addDirectoryList(const ArgList &Args,
     return;
 
   StringRef::size_type Delim;
-  while ((Delim = Dirs.find(llvm::sys::PathSeparator)) != StringRef::npos) {
+  while ((Delim = Dirs.find(llvm::sys::EnvPathSeparator)) != StringRef::npos) {
     if (Delim == 0) { // Leading colon.
       if (CombinedArg) {
         CmdArgs.push_back(Args.MakeArgString(std::string(ArgName) + "."));
