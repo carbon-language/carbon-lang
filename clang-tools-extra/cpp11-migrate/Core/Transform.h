@@ -83,6 +83,7 @@ public:
   /// \brief Constructor
   /// \param Name Name of the transform for human-readable purposes (e.g. -help
   /// text)
+  /// \param Options Global options that affect all Transforms.
   Transform(llvm::StringRef Name, const TransformOptions &Options);
 
   virtual ~Transform();
