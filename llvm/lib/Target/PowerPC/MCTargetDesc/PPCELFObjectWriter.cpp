@@ -127,6 +127,18 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
       case MCSymbolRefExpr::VK_PPC_HIGHESTA:
         Type = ELF::R_PPC64_ADDR16_HIGHESTA;
         break;
+      case MCSymbolRefExpr::VK_GOT:
+        Type = ELF::R_PPC_GOT16;
+        break;
+      case MCSymbolRefExpr::VK_PPC_GOT_LO:
+        Type = ELF::R_PPC_GOT16_LO;
+        break;
+      case MCSymbolRefExpr::VK_PPC_GOT_HI:
+        Type = ELF::R_PPC_GOT16_HI;
+        break;
+      case MCSymbolRefExpr::VK_PPC_GOT_HA:
+        Type = ELF::R_PPC_GOT16_HA;
+        break;
       case MCSymbolRefExpr::VK_PPC_TOC:
         Type = ELF::R_PPC64_TOC16;
         break;
@@ -233,6 +245,12 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
         break;
       case MCSymbolRefExpr::VK_PPC_LO:
         Type = ELF::R_PPC64_ADDR16_LO_DS;
+        break;
+      case MCSymbolRefExpr::VK_GOT:
+        Type = ELF::R_PPC64_GOT16_DS;
+	break;
+      case MCSymbolRefExpr::VK_PPC_GOT_LO:
+        Type = ELF::R_PPC64_GOT16_LO_DS;
         break;
       case MCSymbolRefExpr::VK_PPC_TOC:
         Type = ELF::R_PPC64_TOC16_DS;

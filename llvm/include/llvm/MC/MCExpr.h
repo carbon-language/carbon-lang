@@ -178,6 +178,9 @@ public:
     VK_PPC_HIGHERA,        // symbol@highera
     VK_PPC_HIGHEST,        // symbol@highest
     VK_PPC_HIGHESTA,       // symbol@highesta
+    VK_PPC_GOT_LO,         // symbol@got@l
+    VK_PPC_GOT_HI,         // symbol@got@h
+    VK_PPC_GOT_HA,         // symbol@got@ha
     VK_PPC_TOCBASE,        // symbol@tocbase
     VK_PPC_TOC,            // symbol@toc
     VK_PPC_TOC_LO,         // symbol@toc@l
