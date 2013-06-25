@@ -208,7 +208,7 @@ DIEnumerator DIBuilder::createEnumerator(StringRef Name, int64_t Val) {
   return DIEnumerator(MDNode::get(VMContext, Elts));
 }
 
-/// createNullPtrType - Create C++0x nullptr type.
+/// createNullPtrType - Create C++11 nullptr type.
 DIBasicType DIBuilder::createNullPtrType(StringRef Name) {
   assert(!Name.empty() && "Unable to create type without name");
   // nullptr is encoded in DIBasicType format. Line number, filename,
