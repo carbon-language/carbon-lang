@@ -538,6 +538,10 @@ defm RLDCL  : MDSForm_1r<30, 8,
                         (outs g8rc:$rA), (ins g8rc:$rS, gprc:$rB, u6imm:$MBE),
                         "rldcl", "$rA, $rS, $rB, $MBE", IntRotateD,
                         []>, isPPC64;
+defm RLDCR  : MDSForm_1r<30, 9,
+                        (outs g8rc:$rA), (ins g8rc:$rS, gprc:$rB, u6imm:$MBE),
+                        "rldcr", "$rA, $rS, $rB, $MBE", IntRotateD,
+                        []>, isPPC64;
 defm RLDICL : MDForm_1r<30, 0,
                         (outs g8rc:$rA), (ins g8rc:$rS, u6imm:$SH, u6imm:$MBE),
                         "rldicl", "$rA, $rS, $SH, $MBE", IntRotateDI,
@@ -545,6 +549,10 @@ defm RLDICL : MDForm_1r<30, 0,
 defm RLDICR : MDForm_1r<30, 1,
                         (outs g8rc:$rA), (ins g8rc:$rS, u6imm:$SH, u6imm:$MBE),
                         "rldicr", "$rA, $rS, $SH, $MBE", IntRotateDI,
+                        []>, isPPC64;
+defm RLDIC  : MDForm_1r<30, 2,
+                        (outs g8rc:$rA), (ins g8rc:$rS, u6imm:$SH, u6imm:$MBE),
+                        "rldic", "$rA, $rS, $SH, $MBE", IntRotateDI,
                         []>, isPPC64;
 
 let Interpretation64Bit = 1 in {

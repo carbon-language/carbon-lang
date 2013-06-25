@@ -444,14 +444,18 @@
          rldicr 2, 3, 4, 5
 # CHECK: rldicr. 2, 3, 4, 5              # encoding: [0x78,0x62,0x21,0x45]
          rldicr. 2, 3, 4, 5
-# FIXME: rldic 2, 3, 4, 5
-# FIXME: rldic. 2, 3, 4, 5
+# CHECK: rldic 2, 3, 4, 5                # encoding: [0x78,0x62,0x21,0x48]
+         rldic 2, 3, 4, 5
+# CHECK: rldic. 2, 3, 4, 5               # encoding: [0x78,0x62,0x21,0x49]
+         rldic. 2, 3, 4, 5
 # CHECK: rldcl 2, 3, 4, 5                # encoding: [0x78,0x62,0x21,0x50]
          rldcl 2, 3, 4, 5
 # CHECK: rldcl. 2, 3, 4, 5               # encoding: [0x78,0x62,0x21,0x51]
          rldcl. 2, 3, 4, 5
-# FIXME: rldcr 2, 3, 4, 5
-# FIXME: rldcr. 2, 3, 4, 5
+# CHECK: rldcr 2, 3, 4, 5                # encoding: [0x78,0x62,0x21,0x52]
+         rldcr 2, 3, 4, 5
+# CHECK: rldcr. 2, 3, 4, 5               # encoding: [0x78,0x62,0x21,0x53]
+         rldcr. 2, 3, 4, 5
 # CHECK: rldimi 2, 3, 4, 5               # encoding: [0x78,0x62,0x21,0x4c]
          rldimi 2, 3, 4, 5
 # CHECK: rldimi. 2, 3, 4, 5              # encoding: [0x78,0x62,0x21,0x4d]
