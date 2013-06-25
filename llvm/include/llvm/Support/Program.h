@@ -21,6 +21,15 @@
 namespace llvm {
 class error_code;
 namespace sys {
+
+  /// This is the OS-specific separator for PATH like environment variables:
+  // a colon on Unix or a semicolon on Windows.
+#if defined(LLVM_ON_UNIX)
+  const char EnvPathSeparator = ':';
+#elif defined (LLVM_ON_WIN32)
+  const char EnvPathSeparator = ';';
+#endif
+
   /// This static constructor (factory) will attempt to locate a program in
   /// the operating system's file system using some pre-determined set of
   /// locations to search (e.g. the PATH on Unix). Paths with slashes are
