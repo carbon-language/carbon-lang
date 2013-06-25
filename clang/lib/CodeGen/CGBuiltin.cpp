@@ -1293,7 +1293,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BIpow:
   case Builtin::BIpowf:
   case Builtin::BIpowl: {
-    // Rewrite sqrt to intrinsic if allowed.
     if (!FD->hasAttr<ConstAttr>())
       break;
     Value *Base = EmitScalarExpr(E->getArg(0));
