@@ -500,3 +500,37 @@ namespace ArrayMembers {
     clang_analyzer_eval(c.values[2].x == 3); // expected-warning{{UNKNOWN}}
   }
 };
+
+namespace VirtualInheritance {
+  int counter;
+
+  struct base {
+    base() {
+      ++counter;
+    }
+  };
+
+  struct virtual_subclass : public virtual base {
+    virtual_subclass() {}
+  };
+
+  struct double_subclass : public virtual_subclass {
+    double_subclass() {}
+  };
+
+  void test() {
+    counter = 0;
+    double_subclass obj;
+    clang_analyzer_eval(counter == 1); // expected-warning{{TRUE}}
+  }
+
+  struct double_virtual_subclass : public virtual virtual_subclass {
+    double_virtual_subclass() {}
+  };
+
+  void testVirtual() {
+    counter = 0;
+    double_virtual_subclass obj;
+    clang_analyzer_eval(counter == 1); // expected-warning{{TRUE}}
+  }
+}

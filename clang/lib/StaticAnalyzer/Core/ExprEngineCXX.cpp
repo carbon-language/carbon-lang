@@ -187,8 +187,26 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
 
     break;
   }
-  case CXXConstructExpr::CK_NonVirtualBase:
   case CXXConstructExpr::CK_VirtualBase:
+    // Make sure we are not calling virtual base class initializers twice.
+    // Only the most-derived object should initialize virtual base classes.
+    if (const Stmt *Outer = LCtx->getCurrentStackFrame()->getCallSite()) {
+      const CXXConstructExpr *OuterCtor = dyn_cast<CXXConstructExpr>(Outer);
+      if (OuterCtor) {
+        switch (OuterCtor->getConstructionKind()) {
+        case CXXConstructExpr::CK_NonVirtualBase:
+        case CXXConstructExpr::CK_VirtualBase:
+          // Bail out!
+          destNodes.Add(Pred);
+          return;
+        case CXXConstructExpr::CK_Complete:
+        case CXXConstructExpr::CK_Delegating:
+          break;
+        }
+      }
+    }
+    // FALLTHROUGH
+  case CXXConstructExpr::CK_NonVirtualBase:
   case CXXConstructExpr::CK_Delegating: {
     const CXXMethodDecl *CurCtor = cast<CXXMethodDecl>(LCtx->getDecl());
     Loc ThisPtr = getSValBuilder().getCXXThis(CurCtor,
