@@ -568,7 +568,7 @@ ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) {
   return Error(StartLoc, "invalid register name");
 }
 
-/// Extract @l/@ha modifier from expression.  Recursively scan
+/// Extract \code @l/@ha \endcode modifier from expression.  Recursively scan
 /// the expression and check for VK_PPC_LO/HI/HA
 /// symbol variants.  If all symbols with modifier use the same
 /// variant, return the corresponding PPCMCExpr::VariantKind,
@@ -654,7 +654,7 @@ ExtractModifierFromExpr(const MCExpr *E,
 }
 
 /// Parse an expression.  This differs from the default "parseExpression"
-/// in that it handles complex @l/@ha modifiers.
+/// in that it handles complex \code @l/@ha \endcode modifiers.
 bool PPCAsmParser::
 ParseExpression(const MCExpr *&EVal) {
   if (getParser().parseExpression(EVal))
