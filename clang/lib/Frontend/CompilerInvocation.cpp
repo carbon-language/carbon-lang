@@ -399,6 +399,10 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.FunctionSections = Args.hasArg(OPT_ffunction_sections);
   Opts.DataSections = Args.hasArg(OPT_fdata_sections);
 
+  Opts.VectorizeBB = Args.hasArg(OPT_vectorize_slp_aggressive);
+  Opts.VectorizeLoop = Args.hasArg(OPT_vectorize_loops);
+  Opts.VectorizeSLP = Args.hasArg(OPT_vectorize_slp);
+
   Opts.MainFileName = Args.getLastArgValue(OPT_main_file_name);
   Opts.VerifyModule = !Args.hasArg(OPT_disable_llvm_verifier);
   Opts.SanitizeRecover = !Args.hasArg(OPT_fno_sanitize_recover);

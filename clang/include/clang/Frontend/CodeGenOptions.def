@@ -109,6 +109,9 @@ CODEGENOPT(UnitAtATime       , 1, 1) ///< Unused. For mirroring GCC optimization
 CODEGENOPT(UnrollLoops       , 1, 0) ///< Control whether loops are unrolled.
 CODEGENOPT(UnsafeFPMath      , 1, 0) ///< Allow unsafe floating point optzns.
 CODEGENOPT(UnwindTables      , 1, 0) ///< Emit unwind tables.
+CODEGENOPT(VectorizeBB       , 1, 0) ///< Run basic block vectorizer.
+CODEGENOPT(VectorizeLoop     , 1, 0) ///< Run loop vectorizer.
+CODEGENOPT(VectorizeSLP      , 1, 0) ///< Run SLP vectorizer.
 
   /// Attempt to use register sized accesses to bit-fields in structures, when
   /// possible.

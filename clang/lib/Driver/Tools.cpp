@@ -2186,7 +2186,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue());
   }
 
-  if (Arg *A = Args.getLastArg(options::OPT_fpcc_struct_return, options::OPT_freg_struct_return)) {
+  if (Arg *A = Args.getLastArg(options::OPT_fpcc_struct_return,
+                               options::OPT_freg_struct_return)) {
     if (getToolChain().getTriple().getArch() != llvm::Triple::x86) {
       D.Diag(diag::err_drv_unsupported_opt_for_target)
         << A->getSpelling() << getToolChain().getTriple().str();
@@ -3400,24 +3401,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -fvectorize is default.
   if (Args.hasFlag(options::OPT_fvectorize, VectorizeAliasOption,
-                   options::OPT_fno_vectorize, true)) {
-    CmdArgs.push_back("-backend-option");
+                   options::OPT_fno_vectorize, true))
     CmdArgs.push_back("-vectorize-loops");
-  }
 
   // -fno-slp-vectorize is default.
   if (Args.hasFlag(options::OPT_fslp_vectorize,
-                   options::OPT_fno_slp_vectorize, false)) {
-    CmdArgs.push_back("-backend-option");
+                   options::OPT_fno_slp_vectorize, false))
     CmdArgs.push_back("-vectorize-slp");
-  }
 
   // -fno-slp-vectorize-aggressive is default.
   if (Args.hasFlag(options::OPT_fslp_vectorize_aggressive,
-                   options::OPT_fno_slp_vectorize_aggressive, false)) {
-    CmdArgs.push_back("-backend-option");
+                   options::OPT_fno_slp_vectorize_aggressive, false))
     CmdArgs.push_back("-vectorize-slp-aggressive");
-  }
 
   if (Arg *A = Args.getLastArg(options::OPT_fshow_overloads_EQ))
     A->render(Args, CmdArgs);
