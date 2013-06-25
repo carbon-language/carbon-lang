@@ -37,6 +37,8 @@ struct CommonFlags {
   bool handle_ioctl;
   // Max number of stack frames kept for each allocation/deallocation.
   int malloc_context_size;
+  // Write logs to "log_path.pid" instead of stderr.
+  const char *log_path;
 };
 
 extern CommonFlags common_flags_dont_use_directly;

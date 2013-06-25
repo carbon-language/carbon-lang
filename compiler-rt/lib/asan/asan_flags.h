@@ -93,8 +93,6 @@ struct Flags {
   // but also thread creation stacks for threads that created those threads,
   // etc. up to main thread.
   bool print_full_thread_history;
-  // ASan will write logs to "log_path.pid" instead of stderr.
-  const char *log_path;
   // Poison (or not) the heap memory on [de]allocation. Zero value is useful
   // for benchmarking the allocator or instrumentator.
   bool poison_heap;

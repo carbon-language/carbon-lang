@@ -119,7 +119,6 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->disable_core, "disable_core");
   ParseFlag(str, &f->allow_reexec, "allow_reexec");
   ParseFlag(str, &f->print_full_thread_history, "print_full_thread_history");
-  ParseFlag(str, &f->log_path, "log_path");
   ParseFlag(str, &f->poison_heap, "poison_heap");
   ParseFlag(str, &f->alloc_dealloc_mismatch, "alloc_dealloc_mismatch");
   ParseFlag(str, &f->use_stack_depot, "use_stack_depot");
@@ -137,6 +136,7 @@ void InitializeFlags(Flags *f, const char *env) {
   cf->fast_unwind_on_malloc = true;
   cf->strip_path_prefix = "";
   cf->handle_ioctl = false;
+  cf->log_path = 0;
 
   internal_memset(f, 0, sizeof(*f));
   f->quarantine_size = (ASAN_LOW_MEMORY) ? 1UL << 26 : 1UL << 28;
@@ -166,7 +166,6 @@ void InitializeFlags(Flags *f, const char *env) {
   f->disable_core = (SANITIZER_WORDSIZE == 64);
   f->allow_reexec = true;
   f->print_full_thread_history = true;
-  f->log_path = 0;
   f->poison_heap = true;
   // Turn off alloc/dealloc mismatch checker on Mac for now.
   // TODO(glider): Fix known issues and enable this back.
@@ -464,7 +463,7 @@ void __asan_init() {
   // initialization steps look at flags().
   const char *options = GetEnv("ASAN_OPTIONS");
   InitializeFlags(flags(), options);
-  __sanitizer_set_report_path(flags()->log_path);
+  __sanitizer_set_report_path(common_flags()->log_path);
 
   if (flags()->verbosity && options) {
     Report("Parsed ASAN_OPTIONS: %s\n", options);
