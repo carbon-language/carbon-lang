@@ -422,51 +422,7 @@ DNBArchMachARM::ThreadDidStop()
         // We are single stepping, was this the primary thread?
         if (m_thread->IsStepping())
         {
-            // Are we software single stepping?
-            if (NUB_BREAK_ID_IS_VALID(m_sw_single_step_break_id) || m_sw_single_step_itblock_break_count)
-            {
-                // Remove any software single stepping breakpoints that we have set
-
-                // Do we have a normal software single step breakpoint?
-                if (NUB_BREAK_ID_IS_VALID(m_sw_single_step_break_id))
-                {
-                    DNBLogThreadedIf(LOG_STEP, "%s: removing software single step breakpoint (breakID=%d)", __FUNCTION__, m_sw_single_step_break_id);
-                    success = m_thread->Process()->DisableBreakpoint(m_sw_single_step_break_id, true);
-                    m_sw_single_step_break_id = INVALID_NUB_BREAK_ID;
-                }
-
-                // Do we have any Thumb IT breakpoints?
-                if (m_sw_single_step_itblock_break_count > 0)
-                {
-                    // See if we hit one of our Thumb IT breakpoints?
-                    DNBBreakpoint *step_bp = m_thread->Process()->Breakpoints().FindByAddress(m_state.context.gpr.__pc);
-
-                    if (step_bp)
-                    {
-                        // We did hit our breakpoint, tell the breakpoint it was
-                        // hit so that it can run its callback routine and fixup
-                        // the PC.
-                        DNBLogThreadedIf(LOG_STEP, "%s: IT software single step breakpoint hit (breakID=%u)", __FUNCTION__, step_bp->GetID());
-                        step_bp->BreakpointHit(m_thread->Process()->ProcessID(), m_thread->ThreadID());
-                    }
-
-                    // Remove all Thumb IT breakpoints
-                    for (int i = 0; i < m_sw_single_step_itblock_break_count; i++)
-                    {
-                        if (NUB_BREAK_ID_IS_VALID(m_sw_single_step_itblock_break_id[i]))
-                        {
-                            DNBLogThreadedIf(LOG_STEP, "%s: removing IT software single step breakpoint (breakID=%d)", __FUNCTION__, m_sw_single_step_itblock_break_id[i]);
-                            success = m_thread->Process()->DisableBreakpoint(m_sw_single_step_itblock_break_id[i], true);
-                            m_sw_single_step_itblock_break_id[i] = INVALID_NUB_BREAK_ID;
-                        }
-                    }
-                    m_sw_single_step_itblock_break_count = 0;
-
-                }
-
-            }
-            else
-                success = EnableHardwareSingleStep(false) == KERN_SUCCESS;
+            success = EnableHardwareSingleStep(false) == KERN_SUCCESS;
         }
         else
         {
@@ -699,18 +655,6 @@ DNBArchMachARM::ConditionPassed(uint8_t condition, uint32_t cpsr)
     }
 
     return false;
-}
-
-nub_bool_t
-DNBArchMachARM::BreakpointHit (nub_process_t pid, nub_thread_t tid, nub_break_t breakID, void *baton)
-{
-    nub_addr_t bkpt_pc = (nub_addr_t)baton;
-    DNBLogThreadedIf(LOG_STEP | LOG_VERBOSE, "%s(pid = %i, tid = %4.4x, breakID = %u, baton = %p): Setting PC to 0x%8.8x", __FUNCTION__, pid, tid, breakID, baton, bkpt_pc);
-    
-    DNBRegisterValue pc_value;
-    DNBThreadGetRegisterValueByID (pid, tid, REGISTER_SET_GENERIC, GENERIC_REGNUM_PC, &pc_value);
-    pc_value.value.uint32 = bkpt_pc;
-    return DNBThreadSetRegisterValueByID (pid, tid, REGISTER_SET_GENERIC, GENERIC_REGNUM_PC, &pc_value);
 }
 
 uint32_t

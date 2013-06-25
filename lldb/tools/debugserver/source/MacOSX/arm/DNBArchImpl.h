@@ -29,9 +29,6 @@ public:
         m_thread(thread),
         m_state(),
         m_hw_single_chained_step_addr(INVALID_NUB_ADDRESS),
-        m_sw_single_step_next_pc(INVALID_NUB_ADDRESS),
-        m_sw_single_step_break_id(INVALID_NUB_BREAK_ID),
-        m_sw_single_step_itblock_break_count(0),
         m_last_decode_pc(INVALID_NUB_ADDRESS),
         m_watchpoint_hw_index(-1),
         m_watchpoint_did_occur(false),
@@ -41,8 +38,6 @@ public:
 #if defined (USE_ARM_DISASSEMBLER_FRAMEWORK)
         ThumbStaticsInit(&m_last_decode_thumb);
 #endif
-        for (int i = 0; i < kMaxNumThumbITBreakpoints; i++)
-            m_sw_single_step_itblock_break_id[i] = INVALID_NUB_BREAK_ID;
     }
 
     virtual ~DNBArchMachARM()
@@ -100,7 +95,6 @@ protected:
     void                    DecodeITBlockInstructions(nub_addr_t curr_pc);
 #endif
     void                    EvaluateNextInstructionForSoftwareBreakpointSetup(nub_addr_t currentPC, uint32_t cpsr, bool currentPCIsThumb, nub_addr_t *nextPC, bool *nextPCIsThumb);
-    static nub_bool_t       BreakpointHit (nub_process_t pid, nub_thread_t tid, nub_break_t breakID, void *baton);
 
     typedef enum RegisterSetTag
     {
@@ -249,16 +243,6 @@ protected:
     State           m_state;
     DBG             m_dbg_save;
     nub_addr_t      m_hw_single_chained_step_addr;
-    // Software single stepping support
-    nub_addr_t      m_sw_single_step_next_pc;
-    nub_break_t     m_sw_single_step_break_id;
-    nub_break_t     m_sw_single_step_itblock_break_id[kMaxNumThumbITBreakpoints];
-    nub_addr_t      m_sw_single_step_itblock_break_count;
-    // Disassembler state
-#if defined (USE_ARM_DISASSEMBLER_FRAMEWORK)
-    thumb_static_data_t m_last_decode_thumb;
-    arm_decoded_instruction_t m_last_decode_arm;
-#endif
     nub_addr_t      m_last_decode_pc;
 
     // The following member variables should be updated atomically.

@@ -453,18 +453,7 @@ MachThread::ShouldStop(bool &step_more)
 bool
 MachThread::IsStepping()
 {
-#if ENABLE_AUTO_STEPPING_OVER_BP
-    // Return true if this thread is currently being stepped.
-    // MachThread::ThreadWillResume currently determines this by looking if we
-    // have been asked to single step, or if we are at a breakpoint instruction
-    // and have been asked to resume. In the latter case we need to disable the
-    // breakpoint we are at, single step, re-enable and continue.
-    nub_state_t state = GetState();
-    return ((state == eStateStepping) ||
-            (state == eStateRunning && NUB_BREAK_ID_IS_VALID(CurrentBreakpoint())));
-#else
     return GetState() == eStateStepping;
-#endif
 }
 
 
@@ -493,52 +482,10 @@ MachThread::ThreadDidStop()
     // Update the basic information for a thread
     MachThread::GetBasicInfo(m_mach_port_number, &m_basic_info);
 
-#if ENABLE_AUTO_STEPPING_OVER_BP
-    // See if we were at a breakpoint when we last resumed that we disabled,
-    // re-enable it.
-    nub_break_t breakID = CurrentBreakpoint();
-
-    if (NUB_BREAK_ID_IS_VALID(breakID))
-    {
-        m_process->EnableBreakpoint(breakID);
-        if (m_basic_info.suspend_count > 0)
-        {
-            SetState(eStateSuspended);
-        }
-        else
-        {
-            // If we last were at a breakpoint and we single stepped, our state
-            // will be "running" to indicate we need to continue after stepping
-            // over the breakpoint instruction. If we step over a breakpoint
-            // instruction, we need to stop.
-            if (GetState() == eStateRunning)
-            {
-                // Leave state set to running so we will continue automatically
-                // from this breakpoint
-            }
-            else
-            {
-                SetState(eStateStopped);
-            }
-        }
-    }
-    else
-    {
-        if (m_basic_info.suspend_count > 0)
-        {
-            SetState(eStateSuspended);
-        }
-        else
-        {
-            SetState(eStateStopped);
-        }
-    }
-#else
     if (m_basic_info.suspend_count > 0)
         SetState(eStateSuspended);
     else
         SetState(eStateStopped);
-#endif
     return true;
 }
 
