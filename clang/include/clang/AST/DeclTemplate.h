@@ -1711,7 +1711,8 @@ public:
   }
 
   /// \brief Get the sequence number for this class template partial
-  /// specialization.
+  /// specialization. Internal, only valid for specializations which
+  /// are in the specialized class template's folding set.
   unsigned getSequenceNumber() const { return SequenceNumber; }
 
   /// \brief Retrieve the member class template partial specialization from
@@ -1928,7 +1929,9 @@ public:
 
   /// \brief Return the next partial specialization sequence number.
   unsigned getNextPartialSpecSequenceNumber() {
-    return getPartialSpecializations().size();
+    // Do not load lazy specializations here. They get numbered as they are
+    // loaded.
+    return getCommonPtr()->PartialSpecializations.size();
   }
 
   /// \brief Retrieve the partial specializations as an ordered list.

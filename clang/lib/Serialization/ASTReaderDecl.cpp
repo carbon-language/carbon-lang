@@ -1458,9 +1458,12 @@ ASTDeclReader::VisitClassTemplateSpecializationDeclImpl(
   if (writtenAsCanonicalDecl) {
     ClassTemplateDecl *CanonPattern = ReadDeclAs<ClassTemplateDecl>(Record,Idx);
     if (D->isCanonicalDecl()) { // It's kept in the folding set.
-      if (ClassTemplatePartialSpecializationDecl *Partial
-                        = dyn_cast<ClassTemplatePartialSpecializationDecl>(D)) {
-  CanonPattern->getCommonPtr()->PartialSpecializations.GetOrInsertNode(Partial);
+      if (ClassTemplatePartialSpecializationDecl *Partial =
+              dyn_cast<ClassTemplatePartialSpecializationDecl>(D)) {
+        Partial->SequenceNumber =
+            CanonPattern->getNextPartialSpecSequenceNumber();
+        CanonPattern->getCommonPtr()->PartialSpecializations
+            .GetOrInsertNode(Partial);
       } else {
         CanonPattern->getCommonPtr()->Specializations.GetOrInsertNode(D);
       }
@@ -1484,8 +1487,6 @@ void ASTDeclReader::VisitClassTemplatePartialSpecializationDecl(
     for (unsigned i=0; i != NumArgs; ++i)
       D->ArgsAsWritten[i] = Reader.ReadTemplateArgumentLoc(F, Record, Idx);
   }
-
-  D->SequenceNumber = Record[Idx++];
 
   // These are read/set from/to the first declaration.
   if (ThisDeclID == Redecl.getFirstID()) {

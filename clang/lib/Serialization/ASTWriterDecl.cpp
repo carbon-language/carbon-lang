@@ -1174,8 +1174,6 @@ void ASTDeclWriter::VisitClassTemplatePartialSpecializationDecl(
   for (int i = 0, e = D->getNumTemplateArgsAsWritten(); i != e; ++i)
     Writer.AddTemplateArgumentLoc(D->getTemplateArgsAsWritten()[i], Record);
 
-  Record.push_back(D->getSequenceNumber());
-
   // These are read/set from/to the first declaration.
   if (D->getPreviousDecl() == 0) {
     Writer.AddDeclRef(D->getInstantiatedFromMember(), Record);

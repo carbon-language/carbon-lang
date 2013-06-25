@@ -188,6 +188,10 @@ module cxx_linkage_cache {
   header "cxx-linkage-cache.h"
 }
 
+module cxx_templates_common {
+  header "cxx-templates-common.h"
+}
+
 module cxx_templates_a {
   header "cxx-templates-a.h"
 }

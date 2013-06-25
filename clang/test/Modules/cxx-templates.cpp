@@ -17,36 +17,43 @@ void g() {
   f<double>(1.0);
   f<int>();
   f(); // expected-error {{no matching function}}
-  // expected-note@Inputs/cxx-templates-b.h:1 {{couldn't infer template argument}}
-  // expected-note@Inputs/cxx-templates-b.h:2 {{requires single argument}}
+  // expected-note@Inputs/cxx-templates-b.h:3 {{couldn't infer template argument}}
+  // expected-note@Inputs/cxx-templates-b.h:4 {{requires single argument}}
 
   N::f(0);
   N::f<double>(1.0);
   N::f<int>();
   N::f(); // expected-error {{no matching function}}
-  // expected-note@Inputs/cxx-templates-a.h:4 {{couldn't infer template argument}}
-  // expected-note@Inputs/cxx-templates-a.h:5 {{requires 1 argument, but 0 were provided}}
+  // expected-note@Inputs/cxx-templates-a.h:6 {{couldn't infer template argument}}
+  // expected-note@Inputs/cxx-templates-a.h:7 {{requires 1 argument, but 0 were provided}}
 
   template_param_kinds_1<0>(); // ok, from cxx-templates-a.h
   template_param_kinds_1<int>(); // ok, from cxx-templates-b.h
 
   template_param_kinds_2<Tmpl_T_C>(); // expected-error {{no matching function}}
-  // expected-note@Inputs/cxx-templates-a.h:9 {{invalid explicitly-specified argument}}
-  // expected-note@Inputs/cxx-templates-b.h:9 {{invalid explicitly-specified argument}}
+  // expected-note@Inputs/cxx-templates-a.h:11 {{invalid explicitly-specified argument}}
+  // expected-note@Inputs/cxx-templates-b.h:11 {{invalid explicitly-specified argument}}
 
   template_param_kinds_2<Tmpl_T_I_I>(); // expected-error {{ambiguous}}
-  // expected-note@Inputs/cxx-templates-a.h:9 {{candidate}}
-  // expected-note@Inputs/cxx-templates-b.h:9 {{candidate}}
+  // expected-note@Inputs/cxx-templates-a.h:11 {{candidate}}
+  // expected-note@Inputs/cxx-templates-b.h:11 {{candidate}}
 
   // FIXME: This should be valid, but we incorrectly match the template template
   // argument against both template template parameters.
   template_param_kinds_3<Tmpl_T_T_A>(); // expected-error {{ambiguous}}
-  // expected-note@Inputs/cxx-templates-a.h:10 {{candidate}}
-  // expected-note@Inputs/cxx-templates-b.h:10 {{candidate}}
+  // expected-note@Inputs/cxx-templates-a.h:12 {{candidate}}
+  // expected-note@Inputs/cxx-templates-b.h:12 {{candidate}}
   template_param_kinds_3<Tmpl_T_T_B>(); // expected-error {{ambiguous}}
-  // expected-note@Inputs/cxx-templates-a.h:10 {{candidate}}
-  // expected-note@Inputs/cxx-templates-b.h:10 {{candidate}}
+  // expected-note@Inputs/cxx-templates-a.h:12 {{candidate}}
+  // expected-note@Inputs/cxx-templates-b.h:12 {{candidate}}
 }
+
+@import cxx_templates_common;
+
+typedef SomeTemplate<int*> SomeTemplateIntPtr;
+typedef SomeTemplate<int&> SomeTemplateIntRef;
+SomeTemplate<char*> some_template_char_ptr;
+SomeTemplate<char&> some_template_char_ref;
 
 // FIXME: There should only be two 'f's here.
 // CHECK-GLOBAL:      DeclarationName 'f'
