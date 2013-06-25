@@ -781,6 +781,29 @@ RNBRemote::ThreadFunctionReadRemoteData(void *arg)
 }
 
 
+// If we fail to get back a valid CPU type for the remote process,
+// make a best guess for the CPU type based on the currently running
+// debugserver binary -- the debugger may not handle the case of an
+// un-specified process CPU type correctly.
+
+static cpu_type_t
+best_guess_cpu_type ()
+{
+#if defined (__arm__)
+    return CPU_TYPE_ARM;
+#elif defined (__i386__) || defined (__x86_64__)
+    if (sizeof (char*) == 8)
+    {
+        return CPU_TYPE_X86_64;
+    }
+    else
+    {
+        return CPU_TYPE_I386;
+    }
+#endif
+    return 0;
+}
+
 
 /* Read the bytes in STR which are GDB Remote Protocol binary encoded bytes
  (8-bit bytes).
@@ -1133,6 +1156,12 @@ RNBRemote::InitializeRegisters (bool force)
     else
     {
         uint32_t cpu_type = DNBProcessGetCPUType (pid);
+        if (cpu_type == 0)
+        {
+            DNBLog ("Unable to get the process cpu_type, making a best guess.");
+            cpu_type = best_guess_cpu_type ();
+        }
+
         DNBLogThreadedIf (LOG_RNB_PROC, "RNBRemote::%s() getting gdb registers(%s)", __FUNCTION__, m_arch.c_str());
 #if defined (__i386__) || defined (__x86_64__)
         if (cpu_type == CPU_TYPE_X86_64)
@@ -1526,7 +1555,6 @@ get_value (std::string &line)
     }
     return value;
 }
-
 
 extern void FileLogCallback(void *baton, uint32_t flags, const char *format, va_list args);
 extern void ASLLogCallback(void *baton, uint32_t flags, const char *format, va_list args);
@@ -3976,6 +4004,12 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
     }
     
     cpu_type_t cputype = DNBProcessGetCPUType (pid);
+    if (cputype == 0)
+    {
+        DNBLog ("Unable to get the process cpu_type, making a best guess.");
+        cputype = best_guess_cpu_type();
+    }
+
     if (cputype != 0)
     {
         rep << "cputype:" << std::hex << cputype << ";";
