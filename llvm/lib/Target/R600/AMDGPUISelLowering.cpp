@@ -70,6 +70,28 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::UDIV, MVT::i32, Expand);
   setOperationAction(ISD::UDIVREM, MVT::i32, Custom);
   setOperationAction(ISD::UREM, MVT::i32, Expand);
+
+  int types[] = {
+    (int)MVT::v2i32,
+    (int)MVT::v4i32
+  };
+  size_t NumTypes = sizeof(types) / sizeof(*types);
+
+  for (unsigned int x  = 0; x < NumTypes; ++x) {
+    MVT::SimpleValueType VT = (MVT::SimpleValueType)types[x];
+    //Expand the following operations for the current type by default
+    setOperationAction(ISD::ADD,  VT, Expand);
+    setOperationAction(ISD::AND,  VT, Expand);
+    setOperationAction(ISD::MUL,  VT, Expand);
+    setOperationAction(ISD::OR,   VT, Expand);
+    setOperationAction(ISD::SHL,  VT, Expand);
+    setOperationAction(ISD::SRL,  VT, Expand);
+    setOperationAction(ISD::SRA,  VT, Expand);
+    setOperationAction(ISD::SUB,  VT, Expand);
+    setOperationAction(ISD::UDIV, VT, Expand);
+    setOperationAction(ISD::UREM, VT, Expand);
+    setOperationAction(ISD::XOR,  VT, Expand);
+  }
 }
 
 //===---------------------------------------------------------------------===//

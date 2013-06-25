@@ -65,36 +65,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::ADD, MVT::i64, Legal);
   setOperationAction(ISD::ADD, MVT::i32, Legal);
-  setOperationAction(ISD::ADD, MVT::v4i32, Expand);
-  setOperationAction(ISD::ADD, MVT::v2i32, Expand);
-
-  setOperationAction(ISD::AND, MVT::v2i32, Expand);
-  setOperationAction(ISD::AND, MVT::v4i32, Expand);
-
-  setOperationAction(ISD::MUL, MVT::v2i32, Expand);
-  setOperationAction(ISD::MUL, MVT::v4i32, Expand);
-
-  setOperationAction(ISD::OR, MVT::v2i32, Expand);
-  setOperationAction(ISD::OR, MVT::v4i32, Expand);
-
-  setOperationAction(ISD::SHL, MVT::v2i32, Expand);
-  setOperationAction(ISD::SHL, MVT::v4i32, Expand);
-  setOperationAction(ISD::SRL, MVT::v4i32, Expand);
-  setOperationAction(ISD::SRL, MVT::v2i32, Expand);
-  setOperationAction(ISD::SRA, MVT::v4i32, Expand);
-  setOperationAction(ISD::SRA, MVT::v2i32, Expand);
-
-  setOperationAction(ISD::SUB, MVT::v2i32, Expand);
-  setOperationAction(ISD::SUB, MVT::v4i32, Expand);
-
-  setOperationAction(ISD::UDIV, MVT::v2i32, Expand);
-  setOperationAction(ISD::UDIV, MVT::v4i32, Expand);
-
-  setOperationAction(ISD::UREM, MVT::v2i32, Expand);
-  setOperationAction(ISD::UREM, MVT::v4i32, Expand);
-
-  setOperationAction(ISD::XOR, MVT::v2i32, Expand);
-  setOperationAction(ISD::XOR, MVT::v4i32, Expand);
 
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
