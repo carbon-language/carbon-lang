@@ -346,10 +346,9 @@ void Clang::AddPreprocessingOptions(Compilation &C,
       bool FoundPTH = false;
       bool FoundPCH = false;
       llvm::sys::Path P(A->getValue());
-      bool Exists;
       if (UsePCH) {
         P.appendSuffix("pch");
-        if (!llvm::sys::fs::exists(P.str(), Exists) && Exists)
+        if (llvm::sys::fs::exists(P.str()))
           FoundPCH = true;
         else
           P.eraseSuffix();
@@ -357,7 +356,7 @@ void Clang::AddPreprocessingOptions(Compilation &C,
 
       if (!FoundPCH) {
         P.appendSuffix("pth");
-        if (!llvm::sys::fs::exists(P.str(), Exists) && Exists)
+        if (llvm::sys::fs::exists(P.str()))
           FoundPTH = true;
         else
           P.eraseSuffix();
@@ -365,7 +364,7 @@ void Clang::AddPreprocessingOptions(Compilation &C,
 
       if (!FoundPCH && !FoundPTH) {
         P.appendSuffix("gch");
-        if (!llvm::sys::fs::exists(P.str(), Exists) && Exists) {
+        if (llvm::sys::fs::exists(P.str())) {
           FoundPCH = UsePCH;
           FoundPTH = !UsePCH;
         }
@@ -1635,8 +1634,7 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC, const ArgList &Args)
                                    options::OPT_fno_sanitize_blacklist)) {
     if (BLArg->getOption().matches(options::OPT_fsanitize_blacklist)) {
       std::string BLPath = BLArg->getValue();
-      bool BLExists = false;
-      if (!llvm::sys::fs::exists(BLPath, BLExists) && BLExists)
+      if (llvm::sys::fs::exists(BLPath))
         BlacklistFile = BLPath;
       else
         D.Diag(diag::err_drv_no_such_file) << BLPath;
@@ -1645,9 +1643,8 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC, const ArgList &Args)
     // If no -fsanitize-blacklist option is specified, try to look up for
     // blacklist in the resource directory.
     std::string BLPath;
-    bool BLExists = false;
     if (getDefaultBlacklistForKind(D, Kind, BLPath) &&
-        !llvm::sys::fs::exists(BLPath, BLExists) && BLExists)
+        llvm::sys::fs::exists(BLPath))
       BlacklistFile = BLPath;
   }
 
