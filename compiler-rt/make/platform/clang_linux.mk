@@ -112,12 +112,10 @@ LDFLAGS.asan-arm-android := $(LDFLAGS) $(ANDROID_COMMON_FLAGS) -ldl \
 	-Wl,-soname=libclang_rt.asan-arm-android.so
 
 # Use our stub SDK as the sysroot to support more portable building. For now we
-# just do this for the non-ASAN modules, because the stub SDK doesn't have
-# enough support to build ASAN.
+# just do this for the core module, because the stub SDK doesn't have
+# enough support to build the sanitizers or profile runtimes.
 CFLAGS.full-i386 += --sysroot=$(ProjSrcRoot)/SDKs/linux
 CFLAGS.full-x86_64 += --sysroot=$(ProjSrcRoot)/SDKs/linux
-CFLAGS.profile-i386 += --sysroot=$(ProjSrcRoot)/SDKs/linux
-CFLAGS.profile-x86_64 += --sysroot=$(ProjSrcRoot)/SDKs/linux
 
 FUNCTIONS.full-i386 := $(CommonFunctions) $(ArchFunctions.i386)
 FUNCTIONS.full-x86_64 := $(CommonFunctions) $(ArchFunctions.x86_64)
