@@ -94,7 +94,7 @@ bool GCOVFunction::read(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
   Buff.readInt(); // Function header length
   Ident = Buff.readInt(); 
   Buff.readInt(); // Checksum #1
-  if (Format != GCOV::GCNO_402)
+  if (Format != GCOV::GCNO_402 && Format != GCOV::GCDA_402)
     Buff.readInt(); // Checksum #2
 
   Name = Buff.readString();
