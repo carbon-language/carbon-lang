@@ -8732,17 +8732,19 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
   const FunctionDecl *PossibleZeroParamPrototype = 0;
   if (ShouldWarnAboutMissingPrototype(FD, PossibleZeroParamPrototype)) {
     Diag(FD->getLocation(), diag::warn_missing_prototype) << FD;
-  
+
     if (PossibleZeroParamPrototype) {
-      // We found a declaration that is not a prototype, 
+      // We found a declaration that is not a prototype,
       // but that could be a zero-parameter prototype
-      TypeSourceInfo* TI = PossibleZeroParamPrototype->getTypeSourceInfo();
-      TypeLoc TL = TI->getTypeLoc();
-      if (FunctionNoProtoTypeLoc FTL = TL.getAs<FunctionNoProtoTypeLoc>())
-        Diag(PossibleZeroParamPrototype->getLocation(), 
-             diag::note_declaration_not_a_prototype)
-          << PossibleZeroParamPrototype 
-          << FixItHint::CreateInsertion(FTL.getRParenLoc(), "void");
+      if (TypeSourceInfo *TI =
+              PossibleZeroParamPrototype->getTypeSourceInfo()) {
+        TypeLoc TL = TI->getTypeLoc();
+        if (FunctionNoProtoTypeLoc FTL = TL.getAs<FunctionNoProtoTypeLoc>())
+          Diag(PossibleZeroParamPrototype->getLocation(),
+               diag::note_declaration_not_a_prototype)
+            << PossibleZeroParamPrototype
+            << FixItHint::CreateInsertion(FTL.getRParenLoc(), "void");
+      }
     }
   }
 
