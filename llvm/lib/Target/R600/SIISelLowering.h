@@ -40,6 +40,7 @@ class SITargetLowering : public AMDGPUTargetLowering {
 
 public:
   SITargetLowering(TargetMachine &tm);
+  bool allowsUnalignedMemoryAccesses(EVT  VT, bool *IsFast) const;
 
   SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv,
                                bool isVarArg,

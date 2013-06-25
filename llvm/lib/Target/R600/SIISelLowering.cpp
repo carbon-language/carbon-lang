@@ -87,6 +87,18 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setSchedulingPreference(Sched::RegPressure);
 }
 
+//===----------------------------------------------------------------------===//
+// TargetLowering queries
+//===----------------------------------------------------------------------===//
+
+bool SITargetLowering::allowsUnalignedMemoryAccesses(EVT  VT,
+                                                     bool *IsFast) const {
+  // XXX: This depends on the address space and also we may want to revist
+  // the alignment values we specify in the DataLayout.
+  return VT.bitsGT(MVT::i32);
+}
+
+
 SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT,
                                          SDLoc DL, SDValue Chain,
                                          unsigned Offset) const {
