@@ -895,8 +895,10 @@ CanThrowResult Sema::canThrow(const Expr *E) {
       CT = CT_Dependent;
     else if (isa<CXXPseudoDestructorExpr>(CE->getCallee()->IgnoreParens()))
       CT = CT_Cannot;
-    else
+    else if (CE->getCalleeDecl())
       CT = canCalleeThrow(*this, E, CE->getCalleeDecl());
+    else
+      CT = CT_Can;
     if (CT == CT_Can)
       return CT;
     return mergeCanThrow(CT, canSubExprsThrow(*this, E));

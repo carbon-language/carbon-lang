@@ -39,6 +39,9 @@ void (*pallspec)() throw(...);
 void (*pintspec)() throw(int);
 void (*pemptyspec)() throw();
 
+typedef void (*funcptr)();
+funcptr returnsptr() throw();
+
 void callptr() {
   N(pnospec());
   N((*pnospec)());
@@ -48,6 +51,7 @@ void callptr() {
   N((*pintspec)());
   P(pemptyspec());
   P((*pemptyspec)());
+  N(returnsptr()());
 }
 
 struct S1 {
