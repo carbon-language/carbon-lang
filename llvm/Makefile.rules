@@ -287,7 +287,6 @@ ifeq ($(ENABLE_OPTIMIZED),1)
     BuildMode := $(BuildMode)+Debug
     CXX.Flags += -g
     C.Flags   += -g
-    LD.Flags  += -g
     KEEP_SYMBOLS := 1
   endif
 else
@@ -295,13 +294,11 @@ else
     BuildMode := Unoptimized
     CXX.Flags +=
     C.Flags   +=
-    LD.Flags  +=
     KEEP_SYMBOLS := 1
   else
     BuildMode := Debug
     CXX.Flags += -g
     C.Flags   += -g
-    LD.Flags  += -g
     KEEP_SYMBOLS := 1
   endif
 endif
@@ -324,7 +321,7 @@ ifeq ($(ENABLE_PROFILING),1)
   BuildMode := $(BuildMode)+Profile
   CXX.Flags := $(filter-out -fomit-frame-pointer,$(CXX.Flags)) -pg -g
   C.Flags   := $(filter-out -fomit-frame-pointer,$(C.Flags)) -pg -g
-  LD.Flags  := $(filter-out -fomit-frame-pointer,$(LD.Flags)) -pg -g
+  LD.Flags  := $(filter-out -fomit-frame-pointer,$(LD.Flags)) -pg
   KEEP_SYMBOLS := 1
 endif
 
