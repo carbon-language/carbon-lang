@@ -33,7 +33,7 @@ forbody:		; preds = %forcond
 	%arrayidx6 = getelementptr <5 x i16>* %tmp5, i32 %tmp4		; <<5 x i16>*> [#uses=1]
 	%tmp7 = load <5 x i16>* %arrayidx6		; <<5 x i16>> [#uses=1]
 	%sub = sub <5 x i16> %tmp7, < i16 271, i16 271, i16 271, i16 271, i16 271 >		; <<5 x i16>> [#uses=1]
-	%mul = mul <5 x i16> %sub, < i16 2, i16 2, i16 2, i16 2, i16 2 >		; <<5 x i16>> [#uses=1]
+	%mul = mul <5 x i16> %sub, < i16 2, i16 4, i16 2, i16 2, i16 2 >		; <<5 x i16>> [#uses=1]
 	store <5 x i16> %mul, <5 x i16>* %arrayidx
 	br label %forinc
 

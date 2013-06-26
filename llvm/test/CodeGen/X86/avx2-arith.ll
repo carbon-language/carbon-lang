@@ -74,3 +74,76 @@ define <4 x i64> @mul-v4i64(<4 x i64> %i, <4 x i64> %j) nounwind readnone {
   ret <4 x i64> %x
 }
 
+; CHECK: mul_const1
+; CHECK: vpaddd
+; CHECK: ret
+define <8 x i32> @mul_const1(<8 x i32> %x) {
+  %y = mul <8 x i32> %x, <i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2>
+  ret <8 x i32> %y
+}
+
+; CHECK: mul_const2
+; CHECK: vpsllq  $2
+; CHECK: ret
+define <4 x i64> @mul_const2(<4 x i64> %x) {
+  %y = mul <4 x i64> %x, <i64 4, i64 4, i64 4, i64 4>
+  ret <4 x i64> %y
+}
+
+; CHECK: mul_const3
+; CHECK: vpsllw  $3
+; CHECK: ret
+define <16 x i16> @mul_const3(<16 x i16> %x) {
+  %y = mul <16 x i16> %x, <i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8>
+  ret <16 x i16> %y
+}
+
+; CHECK: mul_const4
+; CHECK: vpxor
+; CHECK: vpsubq
+; CHECK: ret
+define <4 x i64> @mul_const4(<4 x i64> %x) {
+  %y = mul <4 x i64> %x, <i64 -1, i64 -1, i64 -1, i64 -1>
+  ret <4 x i64> %y
+}
+
+; CHECK: mul_const5
+; CHECK: vxorps
+; CHECK-NEXT: ret
+define <8 x i32> @mul_const5(<8 x i32> %x) {
+  %y = mul <8 x i32> %x, <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
+  ret <8 x i32> %y
+}
+
+; CHECK: mul_const6
+; CHECK: vpmulld
+; CHECK: ret
+define <8 x i32> @mul_const6(<8 x i32> %x) {
+  %y = mul <8 x i32> %x, <i32 0, i32 0, i32 0, i32 2, i32 0, i32 2, i32 0, i32 0>
+  ret <8 x i32> %y
+}
+
+; CHECK: mul_const7
+; CHECK: vpaddq
+; CHECK: vpaddq
+; CHECK: ret
+define <8 x i64> @mul_const7(<8 x i64> %x) {
+  %y = mul <8 x i64> %x, <i64 2, i64 2, i64 2, i64 2, i64 2, i64 2, i64 2, i64 2>
+  ret <8 x i64> %y
+}
+
+; CHECK: mul_const8
+; CHECK: vpsllw  $3
+; CHECK: ret
+define <8 x i16> @mul_const8(<8 x i16> %x) {
+  %y = mul <8 x i16> %x, <i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8>
+  ret <8 x i16> %y
+}
+
+; CHECK: mul_const9
+; CHECK: vpmulld
+; CHECK: ret
+define <8 x i32> @mul_const9(<8 x i32> %x) {
+  %y = mul <8 x i32> %x, <i32 2, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
+  ret <8 x i32> %y
+}

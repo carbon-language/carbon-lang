@@ -11560,9 +11560,11 @@ SDValue X86TargetLowering::LowerSDIV(SDValue Op, SelectionDAG &DAG) const {
     return SDValue();
 
   APInt SplatValue, SplatUndef;
-  unsigned MinSplatBits;
+  unsigned SplatBitSize;
   bool HasAnyUndefs;
-  if (!C->isConstantSplat(SplatValue, SplatUndef, MinSplatBits, HasAnyUndefs))
+  if (!C->isConstantSplat(SplatValue, SplatUndef, SplatBitSize,
+                          HasAnyUndefs) ||
+      EltTy.getSizeInBits() < SplatBitSize)
     return SDValue();
 
   if ((SplatValue != 0) &&
