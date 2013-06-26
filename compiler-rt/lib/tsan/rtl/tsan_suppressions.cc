@@ -126,7 +126,7 @@ uptr IsSuppressed(ReportType typ, const ReportLocation *loc, Suppression **sp) {
   if (g_ctx->Match(loc->name, stype, &s) ||
       g_ctx->Match(loc->file, stype, &s) ||
       g_ctx->Match(loc->module, stype, &s)) {
-      DPrintf("ThreadSanitizer: matched suppression '%s'\n", templ);
+      DPrintf("ThreadSanitizer: matched suppression '%s'\n", s->templ);
       s->hit_count++;
       *sp = s;
       return loc->addr;
