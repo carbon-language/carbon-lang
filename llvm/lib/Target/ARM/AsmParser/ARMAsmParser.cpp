@@ -161,6 +161,9 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool hasV7Ops() const {
     return STI.getFeatureBits() & ARM::HasV7Ops;
   }
+  bool hasV8Ops() const {
+    return STI.getFeatureBits() & ARM::HasV8Ops;
+  }
   bool hasARM() const {
     return !(STI.getFeatureBits() & ARM::FeatureNoARM);
   }

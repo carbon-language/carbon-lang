@@ -138,6 +138,9 @@ def HasV6T2Ops  : SubtargetFeature<"v6t2", "HasV6T2Ops", "true",
 def HasV7Ops    : SubtargetFeature<"v7", "HasV7Ops", "true",
                                    "Support ARM v7 instructions",
                                    [HasV6T2Ops, FeaturePerfMon]>;
+def HasV8Ops    : SubtargetFeature<"v8", "HasV8Ops", "true",
+                                   "Support ARM v8 instructions",
+                                   [HasV7Ops]>;
 
 //===----------------------------------------------------------------------===//
 // ARM Processors supported.
@@ -290,6 +293,9 @@ def : ProcessorModel<"swift",       SwiftModel,
                                     [ProcSwift, HasV7Ops, FeatureNEON,
                                      FeatureDB, FeatureDSPThumb2,
                                      FeatureHasRAS]>;
+
+// V8 Processors
+def : ProcNoItin<"cortex-a53",      [HasV8Ops]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description

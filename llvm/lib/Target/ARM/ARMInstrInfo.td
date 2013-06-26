@@ -194,6 +194,8 @@ def HasV6T2          : Predicate<"Subtarget->hasV6T2Ops()">,
 def NoV6T2           : Predicate<"!Subtarget->hasV6T2Ops()">;
 def HasV7            : Predicate<"Subtarget->hasV7Ops()">,
                                  AssemblerPredicate<"HasV7Ops", "armv7">;
+def HasV8            : Predicate<"Subtarget->hasV8Ops()">,
+                                 AssemblerPredicate<"HasV8Ops", "armv8">;
 def NoVFP            : Predicate<"!Subtarget->hasVFP2()">;
 def HasVFP2          : Predicate<"Subtarget->hasVFP2()">,
                                  AssemblerPredicate<"FeatureVFP2", "VFP2">;

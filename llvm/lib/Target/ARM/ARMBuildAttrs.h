@@ -89,7 +89,8 @@ namespace ARMBuildAttrs {
     v7       = 10,  // e.g. Cortex A8, Cortex M3
     v6_M     = 11,  // e.g. Cortex M1
     v6S_M    = 12,  // v6_M with the System extensions
-    v7E_M    = 13   // v7_M with DSP extensions
+    v7E_M    = 13,  // v7_M with DSP extensions
+    v8       = 14   // v8, AArch32
   };
 
   enum CPUArchProfile { // (=7), uleb128 
