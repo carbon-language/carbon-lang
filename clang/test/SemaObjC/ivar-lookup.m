@@ -111,3 +111,46 @@ extern struct foo x;
 }
 @end
 
+// rdar://14278560
+@class NSString, NSData, NSNumber;
+
+@interface NSObject
+{
+  Class isa;
+}
+@end
+
+@interface Foo
+{
+  int a;
+  NSString* b;
+  NSData* c;
+}
+@end
+
+@interface Bar : Foo
+@end
+
+@interface Bar () {
+	NSString *q_strong;
+	NSNumber *r_strong;
+	int d; // expected-note {{previous definition is here}}
+	NSString *e_strong; // expected-note {{previous definition is here}}
+	NSData *f_weak; // expected-note {{previous definition is here}}
+	int g; // expected-note 2 {{previous definition is here}}
+}
+@end
+
+@interface Bar () {
+	int g; // expected-note {{previous definition is here}} \
+               // expected-error {{instance variable is already declared}}
+}
+@end
+
+@implementation Bar {
+	int d; // expected-error {{instance variable is already declared}}
+	NSString *e_strong; // expected-error {{instance variable is already declared}}
+	NSData *f_weak; // expected-error {{instance variable is already declared}}
+	NSData *g; // expected-error 2 {{instance variable is already declared}}
+}
+@end
