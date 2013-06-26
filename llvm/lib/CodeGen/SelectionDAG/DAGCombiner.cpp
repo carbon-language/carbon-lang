@@ -1765,8 +1765,8 @@ SDValue DAGCombiner::visitSUBE(SDNode *N) {
   return SDValue();
 }
 
-/// isSplatVector - Returns true if N is a BUILD_VECTOR node whose elements are
-/// all the same or undefined.
+/// isConstantSplatVector - Returns true if N is a BUILD_VECTOR node whose elements are
+/// all the same constant or undefined.
 static bool isConstantSplatVector(SDNode *N, APInt& SplatValue) {
   BuildVectorSDNode *C = dyn_cast<BuildVectorSDNode>(N);
   if (!C)
