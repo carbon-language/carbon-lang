@@ -326,9 +326,7 @@ protected:
             switch (short_option)
             {
                 case 'e':
-                    m_stop_on_error.SetCurrentValue(Args::StringToBoolean(option_arg, true, &success));
-                    if (!success)
-                        error.SetErrorStringWithFormat("invalid value for stop-on-error: %s", option_arg);
+                    error = m_stop_on_error.SetValueFromCString(option_arg);
                     break;
                 case 'c':
                     m_stop_on_continue = Args::StringToBoolean(option_arg, true, &success);
