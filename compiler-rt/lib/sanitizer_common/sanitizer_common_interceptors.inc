@@ -1208,7 +1208,8 @@ INTERCEPTOR(long double, modfl, long double x, long double *iptr) {
 #endif
 
 #if SANITIZER_INTERCEPT_RECVMSG
-static void write_msghdr(void *ctx, struct __sanitizer_msghdr *msg, SSIZE_T maxlen) {
+static void write_msghdr(void *ctx, struct __sanitizer_msghdr *msg,
+                         SSIZE_T maxlen) {
   COMMON_INTERCEPTOR_WRITE_RANGE(ctx, msg, sizeof(*msg));
   if (msg->msg_name)
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, msg->msg_name,
