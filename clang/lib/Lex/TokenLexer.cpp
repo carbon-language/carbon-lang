@@ -278,6 +278,14 @@ void TokenLexer::ExpandFunctionArguments() {
         unsigned NumToks = MacroArgs::getArgLength(ResultArgToks);
         ResultToks.append(ResultArgToks, ResultArgToks+NumToks);
 
+        // In Microsoft-compatibility mode, we follow MSVC's preprocessing
+        // behavior by not considering single commas from nested macro
+        // expansions as argument separators. Set a flag on the token so we can
+        // test for this later when the macro expansion is processed.
+        if (PP.getLangOpts().MicrosoftMode && NumToks == 1 &&
+            ResultToks.back().is(tok::comma))
+          ResultToks.back().setFlag(Token::IgnoredComma);
+
         // If the '##' came from expanding an argument, turn it into 'unknown'
         // to avoid pasting.
         for (unsigned i = FirstResult, e = ResultToks.size(); i != e; ++i) {

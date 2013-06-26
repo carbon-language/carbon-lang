@@ -22,3 +22,15 @@ class GMOCK_ACTION_CLASS_(name, value_params) {\
 ACTION_TEMPLATE(InvokeArgument,
                 HAS_1_TEMPLATE_PARAMS(int, k),
                 AND_2_VALUE_PARAMS(p0, p1));
+
+// This tests compatibility with behaviour needed for type_traits in VS2012
+// Test based on _VARIADIC_EXPAND_0X macros in xstddef of VS2012
+#define _COMMA ,
+
+#define MAKER(_arg1, _comma, _arg2)                                            \
+  void func(_arg1 _comma _arg2) {}
+#define MAKE_FUNC(_makerP1, _makerP2, _arg1, _comma, _arg2)                    \
+  _makerP1##_makerP2(_arg1, _comma, _arg2)
+
+MAKE_FUNC(MAK, ER, int a, _COMMA, int b);
+// CHECK: void func(int a , int b) {}

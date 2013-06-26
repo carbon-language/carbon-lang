@@ -77,7 +77,8 @@ public:
     NeedsCleaning = 0x08,  // Contained an escaped newline or trigraph.
     LeadingEmptyMacro = 0x10, // Empty macro exists before this token.
     HasUDSuffix = 0x20,    // This string or character literal has a ud-suffix.
-    HasUCN = 0x40          // This identifier contains a UCN.
+    HasUCN = 0x40,         // This identifier contains a UCN.
+    IgnoredComma = 0x80,   // This comma is not a macro argument separator (MS).
   };
 
   tok::TokenKind getKind() const { return (tok::TokenKind)Kind; }
