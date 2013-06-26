@@ -854,7 +854,7 @@ static bool LdStHasDebugValue(DIVariable &DIVar, Instruction *I) {
 bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
                                            StoreInst *SI, DIBuilder &Builder) {
   DIVariable DIVar(DDI->getVariable());
-  if (!DIVar.Verify())
+  if (!DIVar.isVariable())
     return false;
 
   if (LdStHasDebugValue(DIVar, SI))
@@ -888,7 +888,7 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
 bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
                                            LoadInst *LI, DIBuilder &Builder) {
   DIVariable DIVar(DDI->getVariable());
-  if (!DIVar.Verify())
+  if (!DIVar.isVariable())
     return false;
 
   if (LdStHasDebugValue(DIVar, LI))
@@ -961,7 +961,7 @@ bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
   if (!DDI)
     return false;
   DIVariable DIVar(DDI->getVariable());
-  if (!DIVar.Verify())
+  if (!DIVar.isVariable())
     return false;
 
   // Create a copy of the original DIDescriptor for user variable, appending

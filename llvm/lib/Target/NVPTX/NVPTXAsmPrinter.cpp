@@ -279,7 +279,7 @@ void NVPTXAsmPrinter::emitLineNumberAsDotLoc(const MachineInstr &MI) {
   const LLVMContext &ctx = MF->getFunction()->getContext();
   DIScope Scope(curLoc.getScope(ctx));
 
-  if (!Scope.Verify())
+  if (!Scope.isScope())
     return;
 
   StringRef fileName(Scope.getFilename());
