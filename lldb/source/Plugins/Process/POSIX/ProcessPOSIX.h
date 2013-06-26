@@ -171,13 +171,6 @@ protected:
     lldb_private::Mutex m_message_mutex;
     std::queue<ProcessMessage> m_message_queue;
 
-    /// True when the process has entered a state of "limbo".
-    ///
-    /// This flag qualifies eStateStopped.  It lets us know that when we
-    /// continue from this state the process will exit.  Also, when true,
-    /// Process::m_exit_status is set.
-    bool m_in_limbo;
-
     /// Drive any exit events to completion.
     bool m_exit_now;
 
