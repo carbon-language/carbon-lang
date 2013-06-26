@@ -13,6 +13,7 @@ set(SANITIZER_SOURCES
   sanitizer_printf.cc
   sanitizer_stackdepot.cc
   sanitizer_stacktrace.cc
+  sanitizer_suppressions.cc
   sanitizer_symbolizer_itanium.cc
   sanitizer_symbolizer_linux.cc
   sanitizer_symbolizer_mac.cc
