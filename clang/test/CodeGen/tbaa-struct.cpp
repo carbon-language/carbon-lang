@@ -70,5 +70,5 @@ void copy5(struct six *a, struct six *b) {
 // CHECK: [[TS2]] = metadata !{i64 0, i64 1, metadata !{{.*}}, i64 4, i64 2, metadata !{{.*}}, i64 8, i64 4, metadata !{{.*}}, i64 12, i64 1, metadata !{{.*}}, i64 16, i64 4, metadata {{.*}}, i64 20, i64 4, metadata {{.*}}}
 // (offset, size) = (0,8) char; (0,2) char; (4,8) char
 // CHECK: [[TS3]] = metadata !{i64 0, i64 8, metadata !{{.*}}, i64 0, i64 2, metadata !{{.*}}, i64 4, i64 8, metadata !{{.*}}}
-// CHECK: [[TS4]] = metadata !{i64 0, i64 1, metadata [[CHAR]], i64 1, i64 1, metadata [[CHAR]], i64 2, i64 1, metadata [[CHAR]]}
+// CHECK: [[TS4]] = metadata !{i64 0, i64 1, metadata [[CHAR]], i64 1, i64 4, metadata [[INT]], i64 1, i64 1, metadata [[CHAR]], i64 2, i64 1, metadata [[CHAR]]}
 // CHECK: [[TS5]] = metadata !{i64 0, i64 1, metadata [[CHAR]], i64 4, i64 4, metadata [[INT]], i64 4, i64 1, metadata [[CHAR]], i64 5, i64 1, metadata [[CHAR]]}

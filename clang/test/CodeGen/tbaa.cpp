@@ -250,6 +250,6 @@ char g14(struct six *a, struct six *b) {
 // PATH: [[TAG_D_b_a_f32]] = metadata !{metadata [[TYPE_D:!.*]], metadata [[TYPE_INT]], i64 12}
 // PATH: [[TYPE_D]] = metadata !{metadata !"_ZTS7StructD", metadata [[TYPE_SHORT]], i64 0, metadata [[TYPE_B]], i64 4, metadata [[TYPE_INT]], i64 28, metadata [[TYPE_CHAR]], i64 32}
 // PATH: [[TAG_five_b]] = metadata !{metadata [[TYPE_five:!.*]], metadata [[TYPE_CHAR]], i64 1}
-// PATH: [[TYPE_five]] = metadata !{metadata !"_ZTS4five", metadata [[TYPE_CHAR]], i64 0, metadata [[TYPE_CHAR]], i64 1, metadata [[TYPE_CHAR]], i64 2}
+// PATH: [[TYPE_five]] = metadata !{metadata !"_ZTS4five", metadata [[TYPE_CHAR]], i64 0, metadata [[TYPE_INT]], i64 1, metadata [[TYPE_CHAR]], i64 1, metadata [[TYPE_CHAR]], i64 2}
 // PATH: [[TAG_six_b]] = metadata !{metadata [[TYPE_six:!.*]], metadata [[TYPE_CHAR]], i64 4}
 // PATH: [[TYPE_six]] = metadata !{metadata !"_ZTS3six", metadata [[TYPE_CHAR]], i64 0, metadata [[TYPE_INT]], i64 4, metadata [[TYPE_CHAR]], i64 4, metadata [[TYPE_CHAR]], i64 5}

@@ -203,18 +203,8 @@ CodeGenTBAA::CollectFields(uint64_t BaseOffset,
     const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
     unsigned idx = 0;
-    const FieldDecl *LastFD = 0;
-    bool IsMsStruct = RD->isMsStruct(Context);
     for (RecordDecl::field_iterator i = RD->field_begin(),
          e = RD->field_end(); i != e; ++i, ++idx) {
-      if (IsMsStruct) {
-        // Zero-length bitfields following non-bitfield members are ignored.
-        if (Context.ZeroBitfieldFollowsNonBitfield(*i, LastFD)) {
-          --idx;
-          continue;
-        }
-        LastFD = *i;
-      }
       uint64_t Offset = BaseOffset +
                         Layout.getFieldOffset(idx) / Context.getCharWidth();
       QualType FieldQTy = i->getType();
@@ -278,19 +268,8 @@ CodeGenTBAA::getTBAAStructTypeInfo(QualType QTy) {
     const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
     SmallVector <std::pair<llvm::MDNode*, uint64_t>, 4> Fields;
     unsigned idx = 0;
-    const FieldDecl *LastFD = 0;
-    bool IsMsStruct = RD->isMsStruct(Context);
     for (RecordDecl::field_iterator i = RD->field_begin(),
          e = RD->field_end(); i != e; ++i, ++idx) {
-      if (IsMsStruct) {
-        // Zero-length bitfields following non-bitfield members are ignored.
-        if (Context.ZeroBitfieldFollowsNonBitfield(*i, LastFD)) {
-          --idx;
-          continue;
-        }
-        LastFD = *i;
-      }
-
       QualType FieldQTy = i->getType();
       llvm::MDNode *FieldNode;
       if (isTBAAPathStruct(FieldQTy))

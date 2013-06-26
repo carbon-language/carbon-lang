@@ -915,10 +915,6 @@ CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
     // Field number for non-static fields.
     unsigned fieldNo = 0;
 
-    // Bookkeeping for an ms struct, which ignores certain fields.
-    bool IsMsStruct = record->isMsStruct(CGM.getContext());
-    const FieldDecl *LastFD = 0;
-
     // Static and non-static members should appear in the same order as
     // the corresponding declarations in the source program.
     for (RecordDecl::decl_iterator I = record->decls_begin(),
@@ -926,13 +922,6 @@ CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
       if (const VarDecl *V = dyn_cast<VarDecl>(*I))
         CollectRecordStaticField(V, elements, RecordTy);
       else if (FieldDecl *field = dyn_cast<FieldDecl>(*I)) {
-        if (IsMsStruct) {
-          // Zero-length bitfields following non-bitfield members are
-          // completely ignored; we don't even count them.
-          if (CGM.getContext().ZeroBitfieldFollowsNonBitfield((field), LastFD))
-            continue;
-          LastFD = field;
-        }
         CollectRecordNormalField(field, layout.getFieldOffset(fieldNo),
                                  tunit, elements, RecordTy);
 
