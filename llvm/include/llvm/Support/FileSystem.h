@@ -271,6 +271,13 @@ error_code copy_file(const Twine &from, const Twine &to,
 ///          otherwise a platform specific error_code.
 error_code create_directories(const Twine &path, bool &existed);
 
+/// @brief Convenience function for clients that don't need to know if the
+///        directory existed or not.
+inline error_code create_directories(const Twine &Path) {
+  bool Existed;
+  return create_directories(Path, Existed);
+}
+
 /// @brief Create the directory in path.
 ///
 /// @param path Directory to create.
@@ -278,6 +285,13 @@ error_code create_directories(const Twine &path, bool &existed);
 /// @returns errc::success if is_directory(path) and existed have been set,
 ///          otherwise a platform specific error_code.
 error_code create_directory(const Twine &path, bool &existed);
+
+/// @brief Convenience function for clients that don't need to know if the
+///        directory existed or not.
+inline error_code create_directory(const Twine &Path) {
+  bool Existed;
+  return create_directory(Path, Existed);
+}
 
 /// @brief Create a hard link from \a from to \a to.
 ///
