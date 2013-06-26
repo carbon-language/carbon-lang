@@ -1176,19 +1176,14 @@ void ARMInstPrinter::printT2AddrModeImm8s4OffsetOperand(const MCInst *MI,
 
   assert(((OffImm & 0x3) == 0) && "Not a valid immediate!");
 
-  // Don't print +0.
-  if (OffImm != 0)
-    O << ", ";
-  if (OffImm != 0 && UseMarkup)
-    O << "<imm:";
+  O << ", " << markup("<imm:");
   if (OffImm == INT32_MIN)
     O << "#-0";
   else if (OffImm < 0)
     O << "#-" << -OffImm;
-  else if (OffImm > 0)
+  else
     O << "#" << OffImm;
-  if (OffImm != 0 && UseMarkup)
-    O << ">";
+  O << markup(">");
 }
 
 void ARMInstPrinter::printT2AddrModeSoRegOperand(const MCInst *MI,
