@@ -562,7 +562,7 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
   if (OutStreamer.hasRawTextSupport()) {
     OutStreamer.EmitRawText(StringRef("\t.abicalls"));
     Reloc::Model RM = Subtarget->getRelocationModel();
-    if (RM == Reloc::Static)
+    if (RM == Reloc::Static && !Subtarget->hasMips64())
       OutStreamer.EmitRawText(StringRef("\t.option\tpic0"));
   }
 
