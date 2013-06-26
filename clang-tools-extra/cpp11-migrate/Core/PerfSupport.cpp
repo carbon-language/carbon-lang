@@ -13,11 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "PerfSupport.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 
 void collectSourcePerfData(const Transform &T, SourcePerfData &Data) {
   for (Transform::TimingVec::const_iterator I = T.timing_begin(),
@@ -34,8 +34,7 @@ void writePerfDataJSON(
     const llvm::StringRef DirectoryName,
     const SourcePerfData &TimingResults) {
   // Create directory path if it doesn't exist
-  llvm::sys::Path P(DirectoryName);
-  P.createDirectoryOnDisk(true);
+  llvm::sys::fs::create_directories(DirectoryName);
 
   // Get PID and current time.
   // FIXME: id_type on Windows is NOT a process id despite the function name.
@@ -48,7 +47,7 @@ void writePerfDataJSON(
 
   std::string FileName;
   llvm::raw_string_ostream SS(FileName);
-  SS << P.str() << "/" << static_cast<int>(T.getWallTime()) << "_" << Pid
+  SS << DirectoryName << "/" << static_cast<int>(T.getWallTime()) << "_" << Pid
      << ".json";
 
   std::string ErrorInfo;
