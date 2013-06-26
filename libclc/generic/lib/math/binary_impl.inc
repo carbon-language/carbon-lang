@@ -1,0 +1,18 @@
+
+#ifndef SCALAR
+
+_CLC_OVERLOAD _CLC_DEF GENTYPE FUNCTION(GENTYPE x, GENTYPE y) {
+  return FUNCTION_IMPL(x, y);
+}
+
+#endif
+
+_CLC_OVERLOAD _CLC_DEF GENTYPE FUNCTION(GENTYPE x, double y) {
+  GENTYPE vec_y = (GENTYPE) (y);
+  return FUNCTION_IMPL(x, vec_y);
+}
+
+_CLC_OVERLOAD _CLC_DEF GENTYPE FUNCTION(GENTYPE x, float y) {
+  GENTYPE vec_y = (GENTYPE) (y);
+  return FUNCTION_IMPL(x, vec_y);
+}

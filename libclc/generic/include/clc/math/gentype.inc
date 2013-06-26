@@ -1,6 +1,8 @@
 #define GENTYPE float
+#define SCALAR
 #include BODY
 #undef GENTYPE
+#undef SCALAR
 
 #define GENTYPE float2
 #include BODY
@@ -23,9 +25,11 @@
 #undef GENTYPE
 
 #ifdef cl_khr_fp64
+#define SCALAR
 #define GENTYPE double
 #include BODY
 #undef GENTYPE
+#undef SCALAR
 
 #define GENTYPE double2
 #include BODY

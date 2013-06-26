@@ -38,6 +38,8 @@
 #include <clc/math/fabs.h>
 #include <clc/math/floor.h>
 #include <clc/math/fma.h>
+#include <clc/math/fmax.h>
+#include <clc/math/fmin.h>
 #include <clc/math/hypot.h>
 #include <clc/math/log.h>
 #include <clc/math/log2.h>
