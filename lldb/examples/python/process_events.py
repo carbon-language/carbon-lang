@@ -48,13 +48,6 @@ except ImportError:
         print "error: couldn't locate the 'lldb' module, please set PYTHONPATH correctly"
         sys.exit(1)
 
-
-
-
-
-
-
-
 def print_threads(process, options):
     if options.show_threads:
         for thread in process:
@@ -87,6 +80,7 @@ def main(argv):
     parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help="Enable verbose logging.", default=False)
     parser.add_option('-b', '--breakpoint', action='append', type='string', metavar='BPEXPR', dest='breakpoints', help='Breakpoint commands to create after the target has been created, the values will be sent to the "_regexp-break" command which supports breakpoints by name, file:line, and address.')
     parser.add_option('-a', '--arch', type='string', dest='arch', help='The architecture to use when creating the debug target.', default=None)
+    parser.add_option('--platform', type='string', metavar='platform', dest='platform', help='Specify the platform to use when creating the debug target. Valid values include "localhost", "darwin-kernel", "ios-simulator", "remote-freebsd", "remote-macosx", "remote-ios", "remote-linux".', default=None)
     parser.add_option('-l', '--launch-command', action='append', type='string', metavar='CMD', dest='launch_commands', help='LLDB command interpreter commands to run once after the process has launched. This option can be specified more than once.', default=[])
     parser.add_option('-s', '--stop-command', action='append', type='string', metavar='CMD', dest='stop_commands', help='LLDB command interpreter commands to run each time the process stops. This option can be specified more than once.', default=[])
     parser.add_option('-c', '--crash-command', action='append', type='string', metavar='CMD', dest='crash_commands', help='LLDB command interpreter commands to run in case the process crashes. This option can be specified more than once.', default=[])
@@ -135,16 +129,19 @@ def main(argv):
 
     # Create a new debugger instance
     debugger = lldb.SBDebugger.Create()
+    debugger.SetAsync (True)
     command_interpreter = debugger.GetCommandInterpreter()
     # Create a target from a file and arch
     
     if exe:
         print "Creating a target for '%s'" % exe
-    target = debugger.CreateTargetWithFileAndArch (exe, options.arch)
+    error = lldb.SBError()
+    target = debugger.CreateTarget (exe, options.arch, options.platform, True, error)
     
     if target:
         
-        # Set any breakpoints that were specified in the args if we are launching
+        # Set any breakpoints that were specified in the args if we are launching. We use the
+        # command line command to take advantage of the shorthand breakpoint creation
         if launch_info and options.breakpoints:
             for bp in options.breakpoints:
                 debugger.HandleCommand( "_regexp-break %s" % (bp))
@@ -175,70 +172,72 @@ def main(argv):
             # Make sure the launch went ok
             if process and process.GetProcessID() != lldb.LLDB_INVALID_PROCESS_ID:
                 pid = process.GetProcessID()
-                listener = lldb.SBListener("event_listener")
+                listener = debugger.GetListener()
                 # sign up for process state change events
-                process.GetBroadcaster().AddListener(listener, lldb.SBProcess.eBroadcastBitStateChanged)
+                #process.GetBroadcaster().AddListener(listener, lldb.SBProcess.eBroadcastBitStateChanged)
                 stop_idx = 0
                 done = False
                 while not done:
                     event = lldb.SBEvent()
                     if listener.WaitForEvent (options.event_timeout, event):
-                        state = lldb.SBProcess.GetStateFromEvent (event)
-                        print "event %s" % (lldb.SBDebugger.StateAsCString(state))
-                        if state == lldb.eStateStopped:
-                            if stop_idx == 0:
-                                if launch_info:
-                                    print "process %u launched" % (pid)
-                                else:
-                                    print "attached to process %u" % (pid)
-                                    for m in target.modules:
-                                        print m
-                                    if options.breakpoints:
-                                        for bp in options.breakpoints:
-                                            debugger.HandleCommand( "_regexp-break %s" % (bp))
+                        if lldb.SBProcess.EventIsProcessEvent(event):
+                            state = lldb.SBProcess.GetStateFromEvent (event)
+                            print "event %s" % (lldb.SBDebugger.StateAsCString(state))
+                            if state == lldb.eStateStopped:
+                                if stop_idx == 0:
+                                    if launch_info:
+                                        print "process %u launched" % (pid)
                                         run_commands(command_interpreter, ['breakpoint list'])
-                                run_commands (command_interpreter, options.launch_commands)
-                            else:
+                                    else:
+                                        print "attached to process %u" % (pid)
+                                        for m in target.modules:
+                                            print m
+                                        if options.breakpoints:
+                                            for bp in options.breakpoints:
+                                                debugger.HandleCommand( "_regexp-break %s" % (bp))
+                                            run_commands(command_interpreter, ['breakpoint list'])
+                                    run_commands (command_interpreter, options.launch_commands)
+                                else:
+                                    if options.verbose:
+                                        print "process %u stopped" % (pid)
+                                    run_commands (command_interpreter, options.stop_commands)
+                                stop_idx += 1
+                                print_threads (process, options)
+                                print "continuing process %u" % (pid)
+                                process.Continue()
+                            elif state == lldb.eStateExited:
+                                exit_desc = process.GetExitDescription()
+                                if exit_desc:
+                                    print "process %u exited with status %u: %s" % (pid, process.GetExitStatus (), exit_desc)
+                                else:
+                                    print "process %u exited with status %u" % (pid, process.GetExitStatus ())
+                                run_commands (command_interpreter, options.exit_commands)
+                                done = True
+                            elif state == lldb.eStateCrashed:
+                                print "process %u crashed" % (pid)
+                                print_threads (process, options)
+                                run_commands (command_interpreter, options.crash_commands)
+                                done = True
+                            elif state == lldb.eStateDetached:
+                                print "process %u detached" % (pid)
+                                done = True
+                            elif state == lldb.eStateRunning:
+                                # process is running, don't say anything, we will always get one of these after resuming
                                 if options.verbose:
-                                    print "process %u stopped" % (pid)
-                                run_commands (command_interpreter, options.stop_commands)
-                            stop_idx += 1
-                            print_threads (process, options)
-                            print "continuing process %u" % (pid)
-                            process.Continue()
-                        elif state == lldb.eStateExited:
-                            exit_desc = process.GetExitDescription()
-                            if exit_desc:
-                                print "process %u exited with status %u: %s" % (pid, process.GetExitStatus (), exit_desc)
-                            else:
-                                print "process %u exited with status %u" % (pid, process.GetExitStatus ())
-                            run_commands (command_interpreter, options.exit_commands)
+                                    print "process %u resumed" % (pid)
+                            elif state == lldb.eStateUnloaded:
+                                print "process %u unloaded, this shouldn't happen" % (pid)
+                                done = True
+                            elif state == lldb.eStateConnected:
+                                print "process connected"
+                            elif state == lldb.eStateAttaching:
+                                print "process attaching"
+                            elif state == lldb.eStateLaunching:
+                                print "process launching"
+                        else:
+                            # timeout waiting for an event
+                            print "no process event for %u seconds, killing the process..." % (options.event_timeout)
                             done = True
-                        elif state == lldb.eStateCrashed:
-                            print "process %u crashed" % (pid)
-                            print_threads (process, options)
-                            run_commands (command_interpreter, options.crash_commands)
-                            done = True
-                        elif state == lldb.eStateDetached:
-                            print "process %u detached" % (pid)
-                            done = True
-                        elif state == lldb.eStateRunning:
-                            # process is running, don't say anything, we will always get one of these after resuming
-                            if options.verbose:
-                                print "process %u resumed" % (pid)
-                        elif state == lldb.eStateUnloaded:
-                            print "process %u unloaded, this shouldn't happen" % (pid)
-                            done = True
-                        elif state == lldb.eStateConnected:
-                            print "process connected"
-                        elif state == lldb.eStateAttaching:
-                            print "process attaching"
-                        elif state == lldb.eStateLaunching:
-                            print "process launching"
-                    else:
-                        # timeout waiting for an event
-                        print "no process event for %u seconds, killing the process..." % (options.event_timeout)
-                        done = True
                 process.Kill() # kill the process
             else:
                 if error:
