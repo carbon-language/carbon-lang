@@ -701,7 +701,7 @@ private:
 public:
   enum {
     InvalidParamIndex = ~0U,
-    VarArgParamIndex = InvalidParamIndex - 1U
+    VarArgParamIndex = ~0U/*InvalidParamIndex*/ - 1U
   };
 
   ParamCommandComment(SourceLocation LocBegin,
