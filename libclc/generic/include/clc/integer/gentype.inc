@@ -1,4 +1,8 @@
+//These 2 defines only change when switching between data sizes or base types to
+//keep this file manageable.
 #define GENSIZE 8
+#define SCALAR_GENTYPE char
+
 #define GENTYPE char
 #define UGENTYPE uchar
 #define SGENTYPE char
@@ -48,6 +52,9 @@
 #undef GENTYPE
 #undef UGENTYPE
 #undef SGENTYPE
+
+#undef SCALAR_GENTYPE
+#define SCALAR_GENTYPE uchar
 
 #define GENTYPE uchar
 #define UGENTYPE uchar
@@ -101,6 +108,8 @@
 
 #undef GENSIZE
 #define GENSIZE 16
+#undef SCALAR_GENTYPE
+#define SCALAR_GENTYPE short
 
 #define GENTYPE short
 #define UGENTYPE ushort
@@ -151,6 +160,9 @@
 #undef GENTYPE
 #undef UGENTYPE
 #undef SGENTYPE
+
+#undef SCALAR_GENTYPE
+#define SCALAR_GENTYPE ushort
 
 #define GENTYPE ushort
 #define UGENTYPE ushort
@@ -204,6 +216,8 @@
 
 #undef GENSIZE
 #define GENSIZE 32
+#undef SCALAR_GENTYPE
+#define SCALAR_GENTYPE int
 
 #define GENTYPE int
 #define UGENTYPE uint
@@ -254,6 +268,9 @@
 #undef GENTYPE
 #undef UGENTYPE
 #undef SGENTYPE
+
+#undef SCALAR_GENTYPE
+#define SCALAR_GENTYPE uint
 
 #define GENTYPE uint
 #define UGENTYPE uint
@@ -307,6 +324,8 @@
 
 #undef GENSIZE
 #define GENSIZE 64
+#undef SCALAR_GENTYPE
+#define SCALAR_GENTYPE long
 
 #define GENTYPE long
 #define UGENTYPE ulong
@@ -357,6 +376,9 @@
 #undef GENTYPE
 #undef UGENTYPE
 #undef SGENTYPE
+
+#undef SCALAR_GENTYPE
+#define SCALAR_GENTYPE ulong
 
 #define GENTYPE ulong
 #define UGENTYPE ulong
@@ -409,4 +431,5 @@
 #undef SGENTYPE
 
 #undef GENSIZE
+#undef SCALAR_GENTYPE
 #undef BODY
