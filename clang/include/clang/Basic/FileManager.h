@@ -35,7 +35,6 @@ struct stat;
 
 namespace llvm {
 class MemoryBuffer;
-namespace sys { class Path; }
 }
 
 namespace clang {

@@ -16,9 +16,6 @@
 
 #include "clang/Basic/LLVM.h"
 
-namespace llvm {
-  namespace sys { class Path; }
-}
 namespace clang {
 
 class ASTConsumer;
