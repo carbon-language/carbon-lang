@@ -1,1 +1,2 @@
 workitem/get_global_id.cl
+workitem/get_global_size.cl
