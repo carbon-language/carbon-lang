@@ -1258,8 +1258,6 @@ Value *FuncSLP::vectorizeArith(ArrayRef<Value *> Operands) {
   for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
     Value *S = Builder.CreateExtractElement(Vec, Builder.getInt32(i));
     Operands[i]->replaceAllUsesWith(S);
-    Instruction *I = cast<Instruction>(Operands[i]);
-    I->eraseFromParent();
   }
 
   return Vec;
