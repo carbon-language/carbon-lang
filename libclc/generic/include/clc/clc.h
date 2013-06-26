@@ -33,6 +33,7 @@
 
 /* 6.11.2 Math Functions */
 #include <clc/math/cos.h>
+#include <clc/math/ceil.h>
 #include <clc/math/exp.h>
 #include <clc/math/exp2.h>
 #include <clc/math/fabs.h>
