@@ -1873,7 +1873,7 @@ private:
             return true;
         
         // if we have a regex and this category does not match it, just skip it
-        if(param->cate_regex != NULL && param->cate_regex->Execute(cate_name) == false)
+        if(param->cate_regex != NULL && strcmp(cate_name,param->cate_regex->GetText()) != 0 && param->cate_regex->Execute(cate_name) == false)
             return true;
         
         result->GetOutputStream().Printf("-----------------------\nCategory: %s (%s)\n-----------------------\n",
@@ -1897,7 +1897,7 @@ private:
                   RegularExpression* regex,
                   CommandReturnObject *result)
     {
-        if (regex == NULL || regex->Execute(type)) 
+        if (regex == NULL || strcmp(type,regex->GetText()) == 0 || regex->Execute(type))
                 result->GetOutputStream().Printf ("%s: %s\n", type, entry->GetDescription().c_str());
         return true;
     }
@@ -2208,7 +2208,7 @@ private:
         
         const char* cate_name = cate->GetName();
         
-        if (regex == NULL || regex->Execute(cate_name))
+        if (regex == NULL || strcmp(cate_name, regex->GetText()) == 0 || regex->Execute(cate_name))
             result->GetOutputStream().Printf("Category %s is%s enabled\n",
                                        cate_name,
                                        (cate->IsEnabled() ? "" : " not"));
@@ -2421,7 +2421,7 @@ private:
             return true;
         
         // if we have a regex and this category does not match it, just skip it
-        if(param->cate_regex != NULL && param->cate_regex->Execute(cate_name) == false)
+        if(param->cate_regex != NULL && strcmp(cate_name,param->cate_regex->GetText()) != 0 && param->cate_regex->Execute(cate_name) == false)
             return true;
         
         result->GetOutputStream().Printf("-----------------------\nCategory: %s (%s)\n-----------------------\n",
@@ -2635,7 +2635,7 @@ private:
             return true;
         
         // if we have a regex and this category does not match it, just skip it
-        if(param->cate_regex != NULL && param->cate_regex->Execute(cate_name) == false)
+        if(param->cate_regex != NULL && strcmp(cate_name,param->cate_regex->GetText()) != 0 && param->cate_regex->Execute(cate_name) == false)
             return true;
         
         result->GetOutputStream().Printf("-----------------------\nCategory: %s (%s)\n-----------------------\n",
