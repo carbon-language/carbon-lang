@@ -1548,11 +1548,11 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   memset(const_cast<char*>(PreambleBuffer->getBufferStart()) + Preamble.size(), 
          ' ', PreambleReservedSize - Preamble.size() - 1);
   const_cast<char*>(PreambleBuffer->getBufferEnd())[-1] = '\n';  
-  
+
   // Remap the main source file to the preamble buffer.
-  llvm::sys::PathWithStatus MainFilePath(FrontendOpts.Inputs[0].getFile());
-  PreprocessorOpts.addRemappedFile(MainFilePath.str(), PreambleBuffer);
-  
+  StringRef MainFilePath = FrontendOpts.Inputs[0].getFile();
+  PreprocessorOpts.addRemappedFile(MainFilePath, PreambleBuffer);
+
   // Tell the compiler invocation to generate a temporary precompiled header.
   FrontendOpts.ProgramAction = frontend::GeneratePCH;
   // FIXME: Generate the precompiled header into memory?
