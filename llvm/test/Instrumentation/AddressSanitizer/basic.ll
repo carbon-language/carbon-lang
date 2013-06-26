@@ -89,6 +89,25 @@ entry:
 ; CHECK-NOT: = alloca
 ; CHECK: ret void
 
+; Check that asan does not touch allocas with alignment > 32.
+define void @alloca_alignment_test() sanitize_address {
+entry:
+  %x = alloca [10 x i8], align 64
+  %y = alloca [10 x i8], align 128
+  %z = alloca [10 x i8], align 256
+  call void @alloca_test_use([10 x i8]* %x)
+  call void @alloca_test_use([10 x i8]* %y)
+  call void @alloca_test_use([10 x i8]* %z)
+  ret void
+}
+
+; CHECK: define void @alloca_alignment_test()
+; CHECK: = alloca{{.*}} align 64
+; CHECK: = alloca{{.*}} align 128
+; CHECK: = alloca{{.*}} align 256
+; CHECK: ret void
+
+
 define void @LongDoubleTest(x86_fp80* nocapture %a) nounwind uwtable sanitize_address {
 entry:
     store x86_fp80 0xK3FFF8000000000000000, x86_fp80* %a, align 16

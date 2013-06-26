@@ -451,7 +451,7 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
 
     StackAlignment = std::max(StackAlignment, AI.getAlignment());
     AllocaVec.push_back(&AI);
-    uint64_t AlignedSize =  getAlignedAllocaSize(&AI);
+    uint64_t AlignedSize = getAlignedAllocaSize(&AI);
     TotalStackSize += AlignedSize;
   }
 
@@ -488,6 +488,7 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   bool isInterestingAlloca(AllocaInst &AI) {
     return (!AI.isArrayAllocation() &&
             AI.isStaticAlloca() &&
+            AI.getAlignment() <= RedzoneSize() &&
             AI.getAllocatedType()->isSized());
   }
 
