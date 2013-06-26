@@ -405,7 +405,10 @@ static DecodeStatus DecodeCCRRegisterClass(MCInst &Inst,
                                            unsigned RegNo,
                                            uint64_t Address,
                                            const void *Decoder) {
-  Inst.addOperand(MCOperand::CreateReg(RegNo));
+  if (RegNo > 31)
+    return MCDisassembler::Fail;
+  unsigned Reg = getReg(Decoder, Mips::CCRRegClassID, RegNo);
+  Inst.addOperand(MCOperand::CreateReg(Reg));
   return MCDisassembler::Success;
 }
 
