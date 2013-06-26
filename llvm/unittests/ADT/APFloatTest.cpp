@@ -1778,10 +1778,6 @@ TEST(APFloatTest, add) {
 
     APFloat result(APFloat::IEEEsingle, SpecialCaseTests[i].result);
 
-    printf("%a, %a, %a, %a\n", SpecialCaseTests[i].x.convertToFloat(),
-           SpecialCaseTests[i].y.convertToFloat(),
-           x.convertToFloat(), result.convertToFloat());
-
     EXPECT_TRUE(result.bitwiseIsEqual(x));
     EXPECT_TRUE((int)status == SpecialCaseTests[i].status);
     EXPECT_TRUE((int)x.getCategory() == SpecialCaseTests[i].category);
