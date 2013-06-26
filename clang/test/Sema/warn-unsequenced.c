@@ -1,51 +1,36 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wno-unused %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c11 -Wno-unused %s
 
 int f(int, int);
 
-struct A {
+typedef struct A {
   int x, y;
-};
-struct S {
-  S(int, int);
-};
+} A;
 
 void test() {
   int a;
   int xs[10];
-  ++a = 0; // ok
   a + ++a; // expected-warning {{unsequenced modification and access to 'a'}}
-  a = ++a; // ok
+  a = ++a; // expected-warning {{multiple unsequenced modifications to 'a'}}
   a + a++; // expected-warning {{unsequenced modification and access to 'a'}}
   a = a++; // expected-warning {{multiple unsequenced modifications to 'a'}}
-  ++ ++a; // ok
   (a++, a++); // ok
-  ++a + ++a; // expected-warning {{multiple unsequenced modifications to 'a'}}
+  ++a + ++a; // expected-warning {{multiple unsequenced modifications}}
   a++ + a++; // expected-warning {{multiple unsequenced modifications}}
-  (a++, a) = 0; // ok, increment is sequenced before value computation of LHS
-  a = xs[++a]; // ok
+  a = xs[++a]; // expected-warning {{multiple unsequenced modifications}}
   a = xs[a++]; // expected-warning {{multiple unsequenced modifications}}
-  (a ? xs[0] : xs[1]) = ++a; // expected-warning {{unsequenced modification and access}}
-  a = (++a, ++a); // ok
-  a = (a++, ++a); // ok
+  a = (++a, ++a); // expected-warning {{multiple unsequenced modifications}}
+  a = (a++, ++a); // expected-warning {{multiple unsequenced modifications}}
   a = (a++, a++); // expected-warning {{multiple unsequenced modifications}}
   f(a, a); // ok
   f(a = 0, a); // expected-warning {{unsequenced modification and access}}
   f(a, a += 0); // expected-warning {{unsequenced modification and access}}
   f(a = 0, a = 0); // expected-warning {{multiple unsequenced modifications}}
 
-  // Compound assignment "A OP= B" is equivalent to "A = A OP B" except that A
-  // is evaluated only once.
-  (++a, a) = 1; // ok
-  (++a, a) += 1; // ok
-  a = ++a; // ok
+  a = ++a; // expected-warning {{multiple unsequenced modifications}}
   a += ++a; // expected-warning {{unsequenced modification and access}}
 
-  A agg1 = { a++, a++ }; // ok
+  A agg1 = { a++, a++ }; // expected-warning {{multiple unsequenced modifications}}
   A agg2 = { a++ + a, a++ }; // expected-warning {{unsequenced modification and access}}
-
-  S str1(a++, a++); // expected-warning {{multiple unsequenced modifications}}
-  S str2 = { a++, a++ }; // ok
-  S str3 = { a++ + a, a++ }; // expected-warning {{unsequenced modification and access}}
 
   (xs[2] && (a = 0)) + a; // ok
   (0 && (a = 0)) + a; // ok
@@ -58,11 +43,9 @@ void test() {
   (xs[4] ? a : ++a) + a; // ok
   (0 ? a : ++a) + a; // expected-warning {{unsequenced modification and access}}
   (1 ? a : ++a) + a; // ok
-  (0 ? a : a++) + a; // expected-warning {{unsequenced modification and access}}
-  (1 ? a : a++) + a; // ok
   (xs[5] ? ++a : ++a) + a; // FIXME: warn here
 
-  (++a, xs[6] ? ++a : 0) + a; // expected-warning {{unsequenced modification and access}}
+  (++a, xs[6] ? ++a : 0) + a; // FIXME: warn here
 
   // Here, the read of the fourth 'a' might happen before or after the write to
   // the second 'a'.
@@ -88,8 +71,6 @@ void test() {
   (xs[7] && ++a) * (!xs[7] && ++a); // ok
 
   xs[0] = (a = 1, a); // ok
-  (a -= 128) &= 128; // ok
-  ++a += 1; // ok
 
   xs[8] ? ++a + a++ : 0; // expected-warning {{multiple unsequenced modifications}}
   xs[8] ? 0 : ++a + a++; // expected-warning {{multiple unsequenced modifications}}
@@ -100,6 +81,5 @@ void test() {
 
   (__builtin_classify_type(++a) ? 1 : 0) + ++a; // ok
   (__builtin_constant_p(++a) ? 1 : 0) + ++a; // ok
-  (__builtin_object_size(&(++a, a), 0) ? 1 : 0) + ++a; // ok
-  (__builtin_expect(++a, 0) ? 1 : 0) + ++a; // expected-warning {{multiple unsequenced modifications}}
+  (__builtin_expect(++a, 0) ? 1 : 0) + ++a; // FIXME: warn here
 }

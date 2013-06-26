@@ -5347,7 +5347,7 @@ class SequenceChecker : public EvaluatedExprVisitor<SequenceChecker> {
     /// A read of an object. Multiple unsequenced reads are OK.
     UK_Use,
     /// A modification of an object which is sequenced before the value
-    /// computation of the expression, such as ++n.
+    /// computation of the expression, such as ++n in C++.
     UK_ModAsValue,
     /// A modification of an object which is not sequenced before the value
     /// computation of the expression, such as n++.
@@ -5597,7 +5597,12 @@ public:
 
     Visit(BO->getRHS());
 
-    notePostMod(O, BO, UK_ModAsValue);
+    // C++11 [expr.ass]p1:
+    //   the assignment is sequenced [...] before the value computation of the
+    //   assignment expression.
+    // C11 6.5.16/3 has no such rule.
+    notePostMod(O, BO, SemaRef.getLangOpts().CPlusPlus ? UK_ModAsValue
+                                                       : UK_ModAsSideEffect);
   }
   void VisitCompoundAssignOperator(CompoundAssignOperator *CAO) {
     VisitBinAssign(CAO);
@@ -5612,7 +5617,10 @@ public:
 
     notePreMod(O, UO);
     Visit(UO->getSubExpr());
-    notePostMod(O, UO, UK_ModAsValue);
+    // C++11 [expr.pre.incr]p1:
+    //   the expression ++x is equivalent to x+=1
+    notePostMod(O, UO, SemaRef.getLangOpts().CPlusPlus ? UK_ModAsValue
+                                                       : UK_ModAsSideEffect);
   }
 
   void VisitUnaryPostInc(UnaryOperator *UO) { VisitUnaryPostIncDec(UO); }
@@ -5673,8 +5681,10 @@ public:
   // be chosen.
   void VisitAbstractConditionalOperator(AbstractConditionalOperator *CO) {
     EvaluationTracker Eval(*this);
-    SequencedSubexpression Sequenced(*this);
-    Visit(CO->getCond());
+    {
+      SequencedSubexpression Sequenced(*this);
+      Visit(CO->getCond());
+    }
 
     bool Result;
     if (Eval.evaluate(CO->getCond(), Result))
