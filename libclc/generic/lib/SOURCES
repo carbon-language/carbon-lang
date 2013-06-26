@@ -19,5 +19,6 @@ math/mad.cl
 relational/any.cl
 shared/clamp.cl
 shared/max.cl
+shared/min.cl
 workitem/get_global_id.cl
 workitem/get_global_size.cl

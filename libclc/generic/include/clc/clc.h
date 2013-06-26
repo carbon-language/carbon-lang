@@ -69,6 +69,7 @@
 /* 6.11.2 and 6.11.3 Shared Integer/Math Functions */
 #include <clc/shared/clamp.h>
 #include <clc/shared/max.h>
+#include <clc/shared/min.h>
 
 /* 6.11.5 Geometric Functions */
 #include <clc/geometric/cross.h>
