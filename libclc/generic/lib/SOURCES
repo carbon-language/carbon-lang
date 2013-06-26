@@ -7,6 +7,7 @@ integer/abs.cl
 integer/add_sat.cl
 integer/add_sat.ll
 integer/add_sat_impl.ll
+integer/max.cl
 integer/sub_sat.cl
 integer/sub_sat.ll
 integer/sub_sat_impl.ll
@@ -14,6 +15,7 @@ math/fmax.cl
 math/fmin.cl
 math/hypot.cl
 math/mad.cl
+math/max.cl
 relational/any.cl
 workitem/get_global_id.cl
 workitem/get_global_size.cl
