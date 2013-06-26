@@ -598,14 +598,14 @@ APFloat::assign(const APFloat &rhs)
   sign = rhs.sign;
   category = rhs.category;
   exponent = rhs.exponent;
-  if (category == fcNormal || category == fcNaN)
+  if (isFiniteNonZero() || category == fcNaN)
     copySignificand(rhs);
 }
 
 void
 APFloat::copySignificand(const APFloat &rhs)
 {
-  assert(category == fcNormal || category == fcNaN);
+  assert(isFiniteNonZero() || category == fcNaN);
   assert(rhs.partCount() >= partCount());
 
   APInt::tcAssign(significandParts(), rhs.significandParts(),
@@ -761,7 +761,7 @@ APFloat::bitwiseIsEqual(const APFloat &rhs) const {
     return false;
   if (category==fcZero || category==fcInfinity)
     return true;
-  else if (category==fcNormal && exponent!=rhs.exponent)
+  else if (isFiniteNonZero() && exponent!=rhs.exponent)
     return false;
   else {
     int i= partCount();
@@ -800,7 +800,7 @@ APFloat::APFloat(const fltSemantics &ourSemantics,
   initialize(&ourSemantics);
   category = ourCategory;
   sign = negative;
-  if (category == fcNormal)
+  if (isFiniteNonZero())
     category = fcZero;
   else if (ourCategory == fcNaN)
     makeNaN();
@@ -1154,8 +1154,8 @@ APFloat::compareAbsoluteValue(const APFloat &rhs) const
   int compare;
 
   assert(semantics == rhs.semantics);
-  assert(category == fcNormal);
-  assert(rhs.category == fcNormal);
+  assert(isFiniteNonZero());
+  assert(rhs.isFiniteNonZero());
 
   compare = exponent - rhs.exponent;
 
@@ -1207,7 +1207,7 @@ APFloat::roundAwayFromZero(roundingMode rounding_mode,
                            unsigned int bit) const
 {
   /* NaNs and infinities should not have lost fractions.  */
-  assert(category == fcNormal || category == fcZero);
+  assert(isFiniteNonZero() || category == fcZero);
 
   /* Current callers never pass this so we don't handle it.  */
   assert(lost_fraction != lfExactlyZero);
@@ -1245,7 +1245,7 @@ APFloat::normalize(roundingMode rounding_mode,
   unsigned int omsb;                /* One, not zero, based MSB.  */
   int exponentChange;
 
-  if (category != fcNormal)
+  if (!isFiniteNonZero())
     return opOK;
 
   /* Before rounding normalize the exponent of fcNormal numbers.  */
@@ -1668,7 +1668,7 @@ APFloat::multiply(const APFloat &rhs, roundingMode rounding_mode)
   sign ^= rhs.sign;
   fs = multiplySpecials(rhs);
 
-  if (category == fcNormal) {
+  if (isFiniteNonZero()) {
     lostFraction lost_fraction = multiplySignificand(rhs, 0);
     fs = normalize(rounding_mode, lost_fraction);
     if (lost_fraction != lfExactlyZero)
@@ -1687,7 +1687,7 @@ APFloat::divide(const APFloat &rhs, roundingMode rounding_mode)
   sign ^= rhs.sign;
   fs = divideSpecials(rhs);
 
-  if (category == fcNormal) {
+  if (isFiniteNonZero()) {
     lostFraction lost_fraction = divideSignificand(rhs);
     fs = normalize(rounding_mode, lost_fraction);
     if (lost_fraction != lfExactlyZero)
@@ -1741,7 +1741,7 @@ APFloat::mod(const APFloat &rhs, roundingMode rounding_mode)
   opStatus fs;
   fs = modSpecials(rhs);
 
-  if (category == fcNormal && rhs.category == fcNormal) {
+  if (isFiniteNonZero() && rhs.isFiniteNonZero()) {
     APFloat V = *this;
     unsigned int origSign = sign;
 
@@ -1787,9 +1787,9 @@ APFloat::fusedMultiplyAdd(const APFloat &multiplicand,
 
   /* If and only if all arguments are normal do we need to do an
      extended-precision calculation.  */
-  if (category == fcNormal &&
-      multiplicand.category == fcNormal &&
-      addend.category == fcNormal) {
+  if (isFiniteNonZero() &&
+      multiplicand.isFiniteNonZero() &&
+      addend.isFiniteNonZero()) {
     lostFraction lost_fraction;
 
     lost_fraction = multiplySignificand(multiplicand, &addend);
@@ -1826,7 +1826,7 @@ APFloat::opStatus APFloat::roundToIntegral(roundingMode rounding_mode) {
   // If the exponent is large enough, we know that this value is already
   // integral, and the arithmetic below would potentially cause it to saturate
   // to +/-Inf.  Bail out early instead.
-  if (category == fcNormal && exponent+1 >= (int)semanticsPrecision(*semantics))
+  if (isFiniteNonZero() && exponent+1 >= (int)semanticsPrecision(*semantics))
     return opOK;
 
   // The algorithm here is quite simple: we add 2^(p-1), where p is the
@@ -1968,7 +1968,7 @@ APFloat::convert(const fltSemantics &toSemantics,
   }
 
   // If this is a truncation, perform the shift before we narrow the storage.
-  if (shift < 0 && (category==fcNormal || category==fcNaN))
+  if (shift < 0 && (isFiniteNonZero() || category==fcNaN))
     lostFraction = shiftRight(significandParts(), oldPartCount, -shift);
 
   // Fix the storage so it can hold to new value.
@@ -1977,14 +1977,14 @@ APFloat::convert(const fltSemantics &toSemantics,
     integerPart *newParts;
     newParts = new integerPart[newPartCount];
     APInt::tcSet(newParts, 0, newPartCount);
-    if (category==fcNormal || category==fcNaN)
+    if (isFiniteNonZero() || category==fcNaN)
       APInt::tcAssign(newParts, significandParts(), oldPartCount);
     freeSignificand();
     significand.parts = newParts;
   } else if (newPartCount == 1 && oldPartCount != 1) {
     // Switch to built-in storage for a single part.
     integerPart newPart = 0;
-    if (category==fcNormal || category==fcNaN)
+    if (isFiniteNonZero() || category==fcNaN)
       newPart = significandParts()[0];
     freeSignificand();
     significand.part = newPart;
@@ -1995,10 +1995,10 @@ APFloat::convert(const fltSemantics &toSemantics,
 
   // If this is an extension, perform the shift now that the storage is
   // available.
-  if (shift > 0 && (category==fcNormal || category==fcNaN))
+  if (shift > 0 && (isFiniteNonZero() || category==fcNaN))
     APInt::tcShiftLeft(significandParts(), newPartCount, shift);
 
-  if (category == fcNormal) {
+  if (isFiniteNonZero()) {
     fs = normalize(rounding_mode, lostFraction);
     *losesInfo = (fs != opOK);
   } else if (category == fcNaN) {
@@ -2805,7 +2805,7 @@ APFloat::convertNormalToHexString(char *dst, unsigned int hexDigits,
 }
 
 hash_code llvm::hash_value(const APFloat &Arg) {
-  if (Arg.category != APFloat::fcNormal)
+  if (!Arg.isFiniteNonZero())
     return hash_combine((uint8_t)Arg.category,
                         // NaN has no sign, fix it at zero.
                         Arg.isNaN() ? (uint8_t)0 : (uint8_t)Arg.sign,
@@ -2836,7 +2836,7 @@ APFloat::convertF80LongDoubleAPFloatToAPInt() const
 
   uint64_t myexponent, mysignificand;
 
-  if (category==fcNormal) {
+  if (isFiniteNonZero()) {
     myexponent = exponent+16383; //bias
     mysignificand = significandParts()[0];
     if (myexponent==1 && !(mysignificand & 0x8000000000000000ULL))
@@ -2893,7 +2893,7 @@ APFloat::convertPPCDoubleDoubleAPFloatToAPInt() const
   // just set the second double to zero.  Otherwise, re-convert back to
   // the extended format and compute the difference.  This now should
   // convert exactly to double.
-  if (u.category == fcNormal && losesInfo) {
+  if (u.isFiniteNonZero() && losesInfo) {
     fs = u.convert(extendedSemantics, rmNearestTiesToEven, &losesInfo);
     assert(fs == opOK && !losesInfo);
     (void)fs;
@@ -2919,7 +2919,7 @@ APFloat::convertQuadrupleAPFloatToAPInt() const
 
   uint64_t myexponent, mysignificand, mysignificand2;
 
-  if (category==fcNormal) {
+  if (isFiniteNonZero()) {
     myexponent = exponent+16383; //bias
     mysignificand = significandParts()[0];
     mysignificand2 = significandParts()[1];
@@ -2955,7 +2955,7 @@ APFloat::convertDoubleAPFloatToAPInt() const
 
   uint64_t myexponent, mysignificand;
 
-  if (category==fcNormal) {
+  if (isFiniteNonZero()) {
     myexponent = exponent+1023; //bias
     mysignificand = *significandParts();
     if (myexponent==1 && !(mysignificand & 0x10000000000000LL))
@@ -2985,7 +2985,7 @@ APFloat::convertFloatAPFloatToAPInt() const
 
   uint32_t myexponent, mysignificand;
 
-  if (category==fcNormal) {
+  if (isFiniteNonZero()) {
     myexponent = exponent+127; //bias
     mysignificand = (uint32_t)*significandParts();
     if (myexponent == 1 && !(mysignificand & 0x800000))
@@ -3014,7 +3014,7 @@ APFloat::convertHalfAPFloatToAPInt() const
 
   uint32_t myexponent, mysignificand;
 
-  if (category==fcNormal) {
+  if (isFiniteNonZero()) {
     myexponent = exponent+15; //bias
     mysignificand = (uint32_t)*significandParts();
     if (myexponent == 1 && !(mysignificand & 0x400))
@@ -3137,7 +3137,7 @@ APFloat::initFromPPCDoubleDoubleAPInt(const APInt &api)
   (void)fs;
 
   // Unless we have a special case, add in second double.
-  if (category == fcNormal) {
+  if (isFiniteNonZero()) {
     APFloat v(IEEEdouble, APInt(64, i2));
     fs = v.convert(PPCDoubleDouble, rmNearestTiesToEven, &losesInfo);
     assert(fs == opOK && !losesInfo);
@@ -3701,7 +3701,7 @@ void APFloat::toString(SmallVectorImpl<char> &Str,
 
 bool APFloat::getExactInverse(APFloat *inv) const {
   // Special floats and denormals have no exact inverse.
-  if (category != fcNormal)
+  if (!isFiniteNonZero())
     return false;
 
   // Check that the number is a power of two by making sure that only the
@@ -3719,7 +3719,7 @@ bool APFloat::getExactInverse(APFloat *inv) const {
   if (reciprocal.isDenormal())
     return false;
 
-  assert(reciprocal.category == fcNormal &&
+  assert(reciprocal.isFiniteNonZero() &&
          reciprocal.significandLSB() == reciprocal.semantics->precision - 1);
 
   if (inv)
