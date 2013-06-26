@@ -481,7 +481,8 @@ class ScopedInErrorReport {
       // in case we call an instrumented function from a symbolizer.
       AsanThread *curr_thread = GetCurrentThread();
       CHECK(curr_thread);
-      curr_thread->fake_stack().StopUsingFakeStack();
+      if (curr_thread->fake_stack())
+        curr_thread->fake_stack()->StopUsingFakeStack();
     }
   }
   // Destructor is NORETURN, as functions that report errors are.

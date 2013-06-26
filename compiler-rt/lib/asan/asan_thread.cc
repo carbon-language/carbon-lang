@@ -102,7 +102,7 @@ void AsanThread::Destroy() {
   // some code may still be executing in later TSD destructors
   // and we don't want it to have any poisoned stack.
   ClearShadowForThreadStackAndTLS();
-  fake_stack().Cleanup();
+  DeleteFakeStack();
   uptr size = RoundUpTo(sizeof(AsanThread), GetPageSizeCached());
   UnmapOrDie(this, size);
 }
@@ -118,7 +118,7 @@ void AsanThread::Init() {
            tid(), (void*)stack_bottom_, (void*)stack_top_,
            stack_top_ - stack_bottom_, &local);
   }
-  fake_stack_.Init(stack_size());
+  fake_stack_ = 0;  // Will be initialized lazily if needed.
   AsanPlatformThreadInit();
 }
 
@@ -166,8 +166,8 @@ const char *AsanThread::GetFrameNameByAddr(uptr addr, uptr *offset,
   uptr bottom = 0;
   if (AddrIsInStack(addr)) {
     bottom = stack_bottom();
-  } else {
-    bottom = fake_stack().AddrIsInFakeStack(addr);
+  } else if (fake_stack()) {
+    bottom = fake_stack()->AddrIsInFakeStack(addr);
     CHECK(bottom);
     *offset = addr - bottom;
     *frame_pc = ((uptr*)bottom)[2];
@@ -203,9 +203,11 @@ static bool ThreadStackContainsAddress(ThreadContextBase *tctx_base,
                                        void *addr) {
   AsanThreadContext *tctx = static_cast<AsanThreadContext*>(tctx_base);
   AsanThread *t = tctx->thread;
-  return (t && t->fake_stack().StackSize() &&
-          (t->fake_stack().AddrIsInFakeStack((uptr)addr) ||
-           t->AddrIsInStack((uptr)addr)));
+  if (!t) return false;
+  if (t->AddrIsInStack((uptr)addr)) return true;
+  if (t->fake_stack() && t->fake_stack()->AddrIsInFakeStack((uptr)addr))
+    return true;
+  return false;
 }
 
 AsanThread *GetCurrentThread() {

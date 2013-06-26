@@ -75,7 +75,18 @@ class AsanThread {
     return addr >= stack_bottom_ && addr < stack_top_;
   }
 
-  FakeStack &fake_stack() { return fake_stack_; }
+  void LazyInitFakeStack() {
+    if (fake_stack_) return;
+    fake_stack_ = (FakeStack*)MmapOrDie(sizeof(FakeStack), "FakeStack");
+    fake_stack_->Init(stack_size());
+  }
+  void DeleteFakeStack() {
+    if (!fake_stack_) return;
+    fake_stack_->Cleanup();
+    UnmapOrDie(fake_stack_, sizeof(FakeStack));
+  }
+  FakeStack *fake_stack() { return fake_stack_; }
+
   AsanThreadLocalMallocStorage &malloc_storage() { return malloc_storage_; }
   AsanStats &stats() { return stats_; }
 
@@ -91,7 +102,7 @@ class AsanThread {
   uptr tls_begin_;
   uptr tls_end_;
 
-  FakeStack fake_stack_;
+  FakeStack *fake_stack_;
   AsanThreadLocalMallocStorage malloc_storage_;
   AsanStats stats_;
 };
