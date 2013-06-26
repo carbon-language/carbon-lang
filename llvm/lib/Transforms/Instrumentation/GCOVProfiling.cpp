@@ -434,7 +434,7 @@ void GCOVProfiler::emitProfileNotes() {
     DIArray SPs = CU.getSubprograms();
     for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
       DISubprogram SP(SPs.getElement(i));
-      assert(SP.isSubprogram());
+      if (!SP.Verify()) continue;
 
       Function *F = SP.getFunction();
       if (!F) continue;
@@ -483,7 +483,7 @@ bool GCOVProfiler::emitProfileArcs() {
     SmallVector<std::pair<GlobalVariable *, MDNode *>, 8> CountersBySP;
     for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
       DISubprogram SP(SPs.getElement(i));
-      assert(SP.isSubprogram());
+      if (!SP.Verify()) continue;
       Function *F = SP.getFunction();
       if (!F) continue;
       if (!Result) Result = true;

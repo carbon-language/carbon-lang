@@ -389,8 +389,8 @@ struct BreakpointPrinter : public ModulePass {
       for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
         std::string Name;
         DISubprogram SP(NMD->getOperand(i));
-        assert(SP.isSubprogram());
-        getContextName(SP.getContext(), Name);
+        if (SP.Verify())
+          getContextName(SP.getContext(), Name);
         Name = Name + SP.getDisplayName().str();
         if (!Name.empty() && Processed.insert(Name)) {
           Out << Name << "\n";
