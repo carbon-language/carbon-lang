@@ -27,7 +27,6 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 
@@ -219,33 +218,32 @@ void DarwinClang::AddLinkARCArgs(const ArgList &Args,
                                  ArgStringList &CmdArgs) const {
 
   CmdArgs.push_back("-force_load");
-  llvm::sys::Path P(getDriver().ClangExecutable);
-  P.eraseComponent(); // 'clang'
-  P.eraseComponent(); // 'bin'
-  P.appendComponent("lib");
-  P.appendComponent("arc");
-  P.appendComponent("libarclite_");
-  std::string s = P.str();
+  SmallString<128> P(getDriver().ClangExecutable);
+  llvm::sys::path::remove_filename(P); // 'clang'
+  llvm::sys::path::remove_filename(P); // 'bin'
+  llvm::sys::path::append(P, "lib");
+  llvm::sys::path::append(P, "arc");
+  llvm::sys::path::append(P, "libarclite_");
   // Mash in the platform.
   if (isTargetIOSSimulator())
-    s += "iphonesimulator";
+    P += "iphonesimulator";
   else if (isTargetIPhoneOS())
-    s += "iphoneos";
+    P += "iphoneos";
   else
-    s += "macosx";
-  s += ".a";
+    P += "macosx";
+  P += ".a";
 
-  CmdArgs.push_back(Args.MakeArgString(s));
+  CmdArgs.push_back(Args.MakeArgString(P));
 }
 
 void DarwinClang::AddLinkRuntimeLib(const ArgList &Args,
                                     ArgStringList &CmdArgs,
                                     const char *DarwinStaticLib,
                                     bool AlwaysLink) const {
-  llvm::sys::Path P(getDriver().ResourceDir);
-  P.appendComponent("lib");
-  P.appendComponent("darwin");
-  P.appendComponent(DarwinStaticLib);
+  SmallString<128> P(getDriver().ResourceDir);
+  llvm::sys::path::append(P, "lib");
+  llvm::sys::path::append(P, "darwin");
+  llvm::sys::path::append(P, DarwinStaticLib);
 
   // For now, allow missing resource libraries to support developers who may
   // not have compiler-rt checked out or integrated into their build (unless
@@ -539,14 +537,14 @@ void DarwinClang::AddCXXStdlibLibArgs(const ArgList &Args,
 
     // Check in the sysroot first.
     if (const Arg *A = Args.getLastArg(options::OPT_isysroot)) {
-      llvm::sys::Path P(A->getValue());
-      P.appendComponent("usr");
-      P.appendComponent("lib");
-      P.appendComponent("libstdc++.dylib");
+      SmallString<128> P(A->getValue());
+      llvm::sys::path::append(P, "usr");
+      llvm::sys::path::append(P, "lib");
+      llvm::sys::path::append(P, "libstdc++.dylib");
 
       if (!llvm::sys::fs::exists(P.str())) {
-        P.eraseComponent();
-        P.appendComponent("libstdc++.6.dylib");
+        llvm::sys::path::remove_filename(P);
+        llvm::sys::path::append(P, "libstdc++.6.dylib");
         if (llvm::sys::fs::exists(P.str())) {
           CmdArgs.push_back(Args.MakeArgString(P.str()));
           return;
@@ -577,16 +575,16 @@ void DarwinClang::AddCCKextLibArgs(const ArgList &Args,
   // instead of the gcc-provided one (which is also incidentally
   // only present in the gcc lib dir, which makes it hard to find).
 
-  llvm::sys::Path P(getDriver().ResourceDir);
-  P.appendComponent("lib");
-  P.appendComponent("darwin");
+  SmallString<128> P(getDriver().ResourceDir);
+  llvm::sys::path::append(P, "lib");
+  llvm::sys::path::append(P, "darwin");
 
   // Use the newer cc_kext for iOS ARM after 6.0.
   if (!isTargetIPhoneOS() || isTargetIOSSimulator() ||
       !isIPhoneOSVersionLT(6, 0)) {
-    P.appendComponent("libclang_rt.cc_kext.a");
+    llvm::sys::path::append(P, "libclang_rt.cc_kext.a");
   } else {
-    P.appendComponent("libclang_rt.cc_kext_ios5.a");
+    llvm::sys::path::append(P, "libclang_rt.cc_kext_ios5.a");
   }
 
   // For now, allow missing resource libraries to support developers who may
@@ -1592,7 +1590,6 @@ void Hexagon_TC::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
       DriverArgs.hasArg(options::OPT_nostdlibinc))
     return;
 
-  llvm::sys::Path InstallDir(D.InstalledDir);
   std::string Ver(GetGCCLibAndIncVersion());
   std::string GnuDir = Hexagon_TC::GetGnuDir(D.InstalledDir);
   std::string HexagonDir(GnuDir + "/lib/gcc/hexagon/" + Ver);
@@ -1610,10 +1607,10 @@ void Hexagon_TC::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
 
   const Driver &D = getDriver();
   std::string Ver(GetGCCLibAndIncVersion());
-  llvm::sys::Path IncludeDir(Hexagon_TC::GetGnuDir(D.InstalledDir));
+  SmallString<128> IncludeDir(Hexagon_TC::GetGnuDir(D.InstalledDir));
 
-  IncludeDir.appendComponent("hexagon/include/c++/");
-  IncludeDir.appendComponent(Ver);
+  llvm::sys::path::append(IncludeDir, "hexagon/include/c++/");
+  llvm::sys::path::append(IncludeDir, Ver);
   addSystemInclude(DriverArgs, CC1Args, IncludeDir.str());
 }
 
@@ -2370,8 +2367,8 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     addSystemInclude(DriverArgs, CC1Args, SysRoot + "/usr/local/include");
 
   if (!DriverArgs.hasArg(options::OPT_nobuiltininc)) {
-    llvm::sys::Path P(D.ResourceDir);
-    P.appendComponent("include");
+    SmallString<128> P(D.ResourceDir);
+    llvm::sys::path::append(P, "include");
     addSystemInclude(DriverArgs, CC1Args, P.str());
   }
 
