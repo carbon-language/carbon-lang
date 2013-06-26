@@ -79,7 +79,7 @@ be verified in all specified modules.
     parser = optparse.OptionParser(description=description, prog='framestats',usage=usage)
     if not for_lldb_command:
         parser.add_option('-a', '--arch', type='string', dest='arch', help='The architecture to use when creating the debug target.', default=None)
-        parser.add_option('-p', '--platform', type='string', metavar='platform', dest='platform', help='specify one platform by name')
+        parser.add_option('-p', '--platform', type='string', metavar='platform', dest='platform', help='Specify the platform to use when creating the debug target. Valid values include "localhost", "darwin-kernel", "ios-simulator", "remote-freebsd", "remote-macosx", "remote-ios", "remote-linux".')
     parser.add_option('-m', '--module', action='append', type='string', metavar='MODULE', dest='modules', help='Specify one or more modules which will be used to verify the types.', default=[])
     parser.add_option('-d', '--debug', action='store_true', dest='debug', help='Pause 10 seconds to wait for a debugger to attach.', default=False)
     parser.add_option('-t', '--type', action='append', type='string', metavar='TYPENAME', dest='typenames', help='Specify one or more type names which should be verified. If no type names are specified, all class and struct types will be verified.', default=[])

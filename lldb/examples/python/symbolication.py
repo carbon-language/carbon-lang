@@ -538,7 +538,7 @@ def Symbolicate(command_args):
     description='''Symbolicate one or more addresses using LLDB's python scripting API..'''
     parser = optparse.OptionParser(description=description, prog='crashlog.py',usage=usage)
     parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
-    parser.add_option('-p', '--platform', type='string', metavar='platform', dest='platform', help='specify one platform by name')
+    parser.add_option('-p', '--platform', type='string', metavar='platform', dest='platform', help='Specify the platform to use when creating the debug target. Valid values include "localhost", "darwin-kernel", "ios-simulator", "remote-freebsd", "remote-macosx", "remote-ios", "remote-linux".')
     parser.add_option('-f', '--file', type='string', metavar='file', dest='file', help='Specify a file to use when symbolicating')
     parser.add_option('-a', '--arch', type='string', metavar='arch', dest='arch', help='Specify a architecture to use when symbolicating')
     parser.add_option('-s', '--slide', type='int', metavar='slide', dest='slide', help='Specify the slide to use on the file specified with the --file option', default=None)

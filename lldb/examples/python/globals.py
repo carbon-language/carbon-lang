@@ -57,7 +57,7 @@ def globals(command_args):
     parser = optparse.OptionParser(description=description, prog='globals',usage=usage)
     parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
     parser.add_option('-a', '--arch', type='string', metavar='arch', dest='arch', help='Specify an architecture (or triple) to use when extracting from a file.')
-    parser.add_option('-p', '--platform', type='string', metavar='platform', dest='platform', help='specify one platform by name')
+    parser.add_option('-p', '--platform', type='string', metavar='platform', dest='platform', help='Specify the platform to use when creating the debug target. Valid values include "localhost", "darwin-kernel", "ios-simulator", "remote-freebsd", "remote-macosx", "remote-ios", "remote-linux".')
     try:
         (options, args) = parser.parse_args(command_args)
     except:
