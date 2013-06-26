@@ -1,8 +1,20 @@
 #include "Core/IncludeExcludeInfo.h"
 #include "gtest/gtest.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 #include <fstream>
+
+// FIXME: copied from unittests/Support/Path.cpp
+#define ASSERT_NO_ERROR(x)                                                     \
+  if (llvm::error_code ASSERT_NO_ERROR_ec = x) {                               \
+    llvm::SmallString<128> MessageStorage;                                     \
+    llvm::raw_svector_ostream Message(MessageStorage);                         \
+    Message << #x ": did not return errc::success.\n"                          \
+            << "error number: " << ASSERT_NO_ERROR_ec.value() << "\n"          \
+            << "error message: " << ASSERT_NO_ERROR_ec.message() << "\n";      \
+    GTEST_FATAL_FAILURE_(MessageStorage.c_str());                              \
+  } else {                                                                     \
+  }
 
 TEST(IncludeExcludeTest, ParseString) {
   IncludeExcludeInfo IEManager;
@@ -38,29 +50,35 @@ struct InputFiles {
   // This function uses fatal assertions. The caller is responsible for making
   // sure fatal assertions propagate.
   void CreateFiles(bool UnixMode) {
-    IncludeDataPath = llvm::sys::Path::GetTemporaryDirectory();
-    ExcludeDataPath = IncludeDataPath;
+    llvm::SmallString<128> Path;
+    int FD;
 
-    ASSERT_FALSE(IncludeDataPath.createTemporaryFileOnDisk());
-    std::ofstream IncludeDataFile(IncludeDataPath.c_str());
-    ASSERT_TRUE(IncludeDataFile.good());
-    for (unsigned i = 0; i < sizeof(IncludeData)/sizeof(char*); ++i) {
-      IncludeDataFile << IncludeData[i] << (UnixMode ? "\n" : "\r\n");
+    ASSERT_NO_ERROR(
+        llvm::sys::fs::unique_file("include-%%%%%%", FD, Path));
+    IncludeDataPath = Path.str();
+    {
+      llvm::raw_fd_ostream IncludeDataFile(FD, true);
+      for (unsigned i = 0; i < sizeof(IncludeData) / sizeof(char *); ++i) {
+        IncludeDataFile << IncludeData[i] << (UnixMode ? "\n" : "\r\n");
+      }
     }
 
-    ASSERT_FALSE(ExcludeDataPath.createTemporaryFileOnDisk());
-    std::ofstream ExcludeDataFile(ExcludeDataPath.c_str());
-    ASSERT_TRUE(ExcludeDataFile.good());
-    for (unsigned i = 0; i < sizeof(ExcludeData)/sizeof(char*); ++i) {
-      ExcludeDataFile << ExcludeData[i] << (UnixMode ? "\n" : "\r\n");;
+    ASSERT_NO_ERROR(
+        llvm::sys::fs::unique_file("exclude-%%%%%%", FD, Path));
+    ExcludeDataPath = Path.str();
+    {
+      llvm::raw_fd_ostream ExcludeDataFile(FD, true);
+      for (unsigned i = 0; i < sizeof(ExcludeData) / sizeof(char *); ++i) {
+        ExcludeDataFile << ExcludeData[i] << (UnixMode ? "\n" : "\r\n");
+      }
     }
   }
 
   static const char *IncludeData[3];
   static const char *ExcludeData[4];
 
-  llvm::sys::Path IncludeDataPath;
-  llvm::sys::Path ExcludeDataPath;
+  std::string IncludeDataPath;
+  std::string ExcludeDataPath;
 };
 
 const char *InputFiles::IncludeData[3] = { "a", "b/b2", "c/c2" };
