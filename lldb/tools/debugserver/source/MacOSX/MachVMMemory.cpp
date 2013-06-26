@@ -235,6 +235,22 @@ static uint64_t GetPhysicalMemory()
 void 
 MachVMMemory::GetRegionSizes(task_t task, mach_vm_size_t &rsize, mach_vm_size_t &dirty_size)
 {
+#if defined (TASK_VM_INFO) && TASK_VM_INFO >= 22
+    
+    task_vm_info_data_t vm_info;
+    mach_msg_type_number_t info_count;
+    kern_return_t kr;
+    
+    info_count = TASK_VM_INFO_COUNT;
+#ifdef TASK_VM_INFO_PURGEABLE
+    kr = task_info(task, TASK_VM_INFO_PURGEABLE, (task_info_t)&vm_info, &info_count);
+#else
+    kr = task_info(task, TASK_VM_INFO, (task_info_t)&vm_info, &info_count);
+#endif
+    if (kr == KERN_SUCCESS)
+        dirty_size = vm_info.internal;
+    
+#else
     mach_vm_address_t address = 0;
     mach_vm_size_t size;
     kern_return_t err = 0;
@@ -285,6 +301,8 @@ MachVMMemory::GetRegionSizes(task_t task, mach_vm_size_t &rsize, mach_vm_size_t 
     vm_size_t pagesize = PageSize (task);
     rsize = pages_resident * pagesize;
     dirty_size = pages_dirtied * pagesize;
+    
+#endif
 }
 
 // Test whether the virtual address is within the architecture's shared region.
