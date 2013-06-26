@@ -18,5 +18,6 @@ math/hypot.cl
 math/mad.cl
 math/max.cl
 relational/any.cl
+shared/clamp.cl
 workitem/get_global_id.cl
 workitem/get_global_size.cl

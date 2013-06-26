@@ -67,6 +67,9 @@
 #include <clc/integer/max.h>
 #include <clc/integer/sub_sat.h>
 
+/* 6.11.2 and 6.11.3 Shared Integer/Math Functions */
+#include <clc/shared/clamp.h>
+
 /* 6.11.5 Geometric Functions */
 #include <clc/geometric/cross.h>
 #include <clc/geometric/dot.h>
