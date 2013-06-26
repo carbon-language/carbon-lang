@@ -2086,5 +2086,312 @@ TEST(APFloatTest, subtract) {
   }
 }
 
+TEST(APFloatTest, multiply) {
+  // Test Special Cases against each other and normal values.
+
+  // TODOS/NOTES:
+  // 1. Since we perform only default exception handling all operations with
+  // signaling NaNs should have a result that is a quiet NaN. Currently they
+  // return sNaN.
+  // 2. It seems that multiply(-x, NaN) = multiply(NaN, -x) = -NaN. IEEE-754R
+  // leaves the meaning of the sign of NaNs as unspecified. To simplify things,
+  // we should just assume that NaN is always positive. I will fix this.
+
+  APFloat PInf = APFloat::getInf(APFloat::IEEEsingle, false);
+  APFloat MInf = APFloat::getInf(APFloat::IEEEsingle, true);
+  APFloat PZero = APFloat::getZero(APFloat::IEEEsingle, false);
+  APFloat MZero = APFloat::getZero(APFloat::IEEEsingle, true);
+  APFloat QNaN = APFloat::getNaN(APFloat::IEEEsingle, false);
+  APFloat SNaN = APFloat::getSNaN(APFloat::IEEEsingle, false);
+  APFloat PNormalValue = APFloat(APFloat::IEEEsingle, "0x1p+0");
+  APFloat MNormalValue = APFloat(APFloat::IEEEsingle, "-0x1p+0");
+  APFloat PLargestValue = APFloat::getLargest(APFloat::IEEEsingle, false);
+  APFloat MLargestValue = APFloat::getLargest(APFloat::IEEEsingle, true);
+  APFloat PSmallestValue = APFloat::getSmallest(APFloat::IEEEsingle, false);
+  APFloat MSmallestValue = APFloat::getSmallest(APFloat::IEEEsingle, true);
+  APFloat PSmallestNormalized =
+    APFloat::getSmallestNormalized(APFloat::IEEEsingle, false);
+  APFloat MSmallestNormalized =
+    APFloat::getSmallestNormalized(APFloat::IEEEsingle, true);
+
+  const int OverflowStatus = APFloat::opOverflow | APFloat::opInexact;
+  const int UnderflowStatus = APFloat::opUnderflow | APFloat::opInexact;
+
+  const unsigned NumTests = 169;
+  struct {
+    APFloat x;
+    APFloat y;
+    const char *result;
+    int status;
+    int category;
+  } SpecialCaseTests[NumTests] = {
+    { PInf, PInf, "inf", APFloat::opOK, APFloat::fcInfinity },
+    { PInf, MInf, "-inf", APFloat::opOK, APFloat::fcInfinity },
+    { PInf, PZero, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { PInf, MZero, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { PInf, QNaN, "nan", APFloat::opOK, APFloat::fcNaN },
+#if 0
+// See Note 1.
+    { PInf, SNaN, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+#endif
+    { PInf, PNormalValue, "inf", APFloat::opOK, APFloat::fcInfinity },
+    { PInf, MNormalValue, "-inf", APFloat::opOK, APFloat::fcInfinity },
+    { PInf, PLargestValue, "inf", APFloat::opOK, APFloat::fcInfinity },
+    { PInf, MLargestValue, "-inf", APFloat::opOK, APFloat::fcInfinity },
+    { PInf, PSmallestValue, "inf", APFloat::opOK, APFloat::fcInfinity },
+    { PInf, MSmallestValue, "-inf", APFloat::opOK, APFloat::fcInfinity },
+    { PInf, PSmallestNormalized, "inf", APFloat::opOK, APFloat::fcInfinity },
+    { PInf, MSmallestNormalized, "-inf", APFloat::opOK, APFloat::fcInfinity },
+    { MInf, PInf, "-inf", APFloat::opOK, APFloat::fcInfinity },
+    { MInf, MInf, "inf", APFloat::opOK, APFloat::fcInfinity },
+    { MInf, PZero, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { MInf, MZero, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    // See Note 2.
+    { MInf, QNaN, "-nan", APFloat::opOK, APFloat::fcNaN },
+#if 0
+// See Note 1.
+    { MInf, SNaN, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+#endif
+    { MInf, PNormalValue, "-inf", APFloat::opOK, APFloat::fcInfinity },
+    { MInf, MNormalValue, "inf", APFloat::opOK, APFloat::fcInfinity },
+    { MInf, PLargestValue, "-inf", APFloat::opOK, APFloat::fcInfinity },
+    { MInf, MLargestValue, "inf", APFloat::opOK, APFloat::fcInfinity },
+    { MInf, PSmallestValue, "-inf", APFloat::opOK, APFloat::fcInfinity },
+    { MInf, MSmallestValue, "inf", APFloat::opOK, APFloat::fcInfinity },
+    { MInf, PSmallestNormalized, "-inf", APFloat::opOK, APFloat::fcInfinity },
+    { MInf, MSmallestNormalized, "inf", APFloat::opOK, APFloat::fcInfinity },
+    { PZero, PInf, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { PZero, MInf, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { PZero, PZero, "0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { PZero, MZero, "-0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { PZero, QNaN, "nan", APFloat::opOK, APFloat::fcNaN },
+#if 0
+// See Note 1.
+    { PZero, SNaN, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+#endif
+    { PZero, PNormalValue, "0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { PZero, MNormalValue, "-0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { PZero, PLargestValue, "0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { PZero, MLargestValue, "-0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { PZero, PSmallestValue, "0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { PZero, MSmallestValue, "-0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { PZero, PSmallestNormalized, "0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { PZero, MSmallestNormalized, "-0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { MZero, PInf, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { MZero, MInf, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { MZero, PZero, "-0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { MZero, MZero, "0x0p+0", APFloat::opOK, APFloat::fcZero },
+    // See Note 2.
+    { MZero, QNaN, "-nan", APFloat::opOK, APFloat::fcNaN },
+#if 0
+// See Note 1.
+    { MZero, SNaN, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+#endif
+    { MZero, PNormalValue, "-0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { MZero, MNormalValue, "0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { MZero, PLargestValue, "-0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { MZero, MLargestValue, "0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { MZero, PSmallestValue, "-0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { MZero, MSmallestValue, "0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { MZero, PSmallestNormalized, "-0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { MZero, MSmallestNormalized, "0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { QNaN, PInf, "nan", APFloat::opOK, APFloat::fcNaN },
+    // See Note 2.
+    { QNaN, MInf, "-nan", APFloat::opOK, APFloat::fcNaN },
+    { QNaN, PZero, "nan", APFloat::opOK, APFloat::fcNaN },
+    // See Note 2.
+    { QNaN, MZero, "-nan", APFloat::opOK, APFloat::fcNaN },
+    { QNaN, QNaN, "nan", APFloat::opOK, APFloat::fcNaN },
+#if 0
+// See Note 1.
+    { QNaN, SNaN, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+#endif
+    { QNaN, PNormalValue, "nan", APFloat::opOK, APFloat::fcNaN },
+    // See Note 2.
+    { QNaN, MNormalValue, "-nan", APFloat::opOK, APFloat::fcNaN },
+    { QNaN, PLargestValue, "nan", APFloat::opOK, APFloat::fcNaN },
+    // See Note 2.
+    { QNaN, MLargestValue, "-nan", APFloat::opOK, APFloat::fcNaN },
+    { QNaN, PSmallestValue, "nan", APFloat::opOK, APFloat::fcNaN },
+    // See Note 2.
+    { QNaN, MSmallestValue, "-nan", APFloat::opOK, APFloat::fcNaN },
+    { QNaN, PSmallestNormalized, "nan", APFloat::opOK, APFloat::fcNaN },
+    // See Note 2.
+    { QNaN, MSmallestNormalized, "-nan", APFloat::opOK, APFloat::fcNaN },
+#if 0
+// See Note 1.
+    { SNaN, PInf, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { SNaN, MInf, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { SNaN, PZero, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { SNaN, MZero, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { SNaN, QNaN, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { SNaN, SNaN, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { SNaN, PNormalValue, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { SNaN, MNormalValue, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { SNaN, PLargestValue, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { SNaN, MLargestValue, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { SNaN, PSmallestValue, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { SNaN, MSmallestValue, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { SNaN, PSmallestNormalized, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+    { SNaN, MSmallestNormalized, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+#endif
+    { PNormalValue, PInf, "inf", APFloat::opOK, APFloat::fcInfinity },
+    { PNormalValue, MInf, "-inf", APFloat::opOK, APFloat::fcInfinity },
+    { PNormalValue, PZero, "0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { PNormalValue, MZero, "-0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { PNormalValue, QNaN, "nan", APFloat::opOK, APFloat::fcNaN },
+#if 0
+// See Note 1.
+    { PNormalValue, SNaN, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+#endif
+    { PNormalValue, PNormalValue, "0x1p+0", APFloat::opOK, APFloat::fcNormal },
+    { PNormalValue, MNormalValue, "-0x1p+0", APFloat::opOK, APFloat::fcNormal },
+    { PNormalValue, PLargestValue, "0x1.fffffep+127", APFloat::opOK, APFloat::fcNormal },
+    { PNormalValue, MLargestValue, "-0x1.fffffep+127", APFloat::opOK, APFloat::fcNormal },
+    { PNormalValue, PSmallestValue, "0x1p-149", APFloat::opOK, APFloat::fcNormal },
+    { PNormalValue, MSmallestValue, "-0x1p-149", APFloat::opOK, APFloat::fcNormal },
+    { PNormalValue, PSmallestNormalized, "0x1p-126", APFloat::opOK, APFloat::fcNormal },
+    { PNormalValue, MSmallestNormalized, "-0x1p-126", APFloat::opOK, APFloat::fcNormal },
+    { MNormalValue, PInf, "-inf", APFloat::opOK, APFloat::fcInfinity },
+    { MNormalValue, MInf, "inf", APFloat::opOK, APFloat::fcInfinity },
+    { MNormalValue, PZero, "-0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { MNormalValue, MZero, "0x0p+0", APFloat::opOK, APFloat::fcZero },
+    // See Note 2.
+    { MNormalValue, QNaN, "-nan", APFloat::opOK, APFloat::fcNaN },
+#if 0
+// See Note 1.
+    { MNormalValue, SNaN, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+#endif
+    { MNormalValue, PNormalValue, "-0x1p+0", APFloat::opOK, APFloat::fcNormal },
+    { MNormalValue, MNormalValue, "0x1p+0", APFloat::opOK, APFloat::fcNormal },
+    { MNormalValue, PLargestValue, "-0x1.fffffep+127", APFloat::opOK, APFloat::fcNormal },
+    { MNormalValue, MLargestValue, "0x1.fffffep+127", APFloat::opOK, APFloat::fcNormal },
+    { MNormalValue, PSmallestValue, "-0x1p-149", APFloat::opOK, APFloat::fcNormal },
+    { MNormalValue, MSmallestValue, "0x1p-149", APFloat::opOK, APFloat::fcNormal },
+    { MNormalValue, PSmallestNormalized, "-0x1p-126", APFloat::opOK, APFloat::fcNormal },
+    { MNormalValue, MSmallestNormalized, "0x1p-126", APFloat::opOK, APFloat::fcNormal },
+    { PLargestValue, PInf, "inf", APFloat::opOK, APFloat::fcInfinity },
+    { PLargestValue, MInf, "-inf", APFloat::opOK, APFloat::fcInfinity },
+    { PLargestValue, PZero, "0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { PLargestValue, MZero, "-0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { PLargestValue, QNaN, "nan", APFloat::opOK, APFloat::fcNaN },
+#if 0
+// See Note 1.
+    { PLargestValue, SNaN, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+#endif
+    { PLargestValue, PNormalValue, "0x1.fffffep+127", APFloat::opOK, APFloat::fcNormal },
+    { PLargestValue, MNormalValue, "-0x1.fffffep+127", APFloat::opOK, APFloat::fcNormal },
+    { PLargestValue, PLargestValue, "inf", OverflowStatus, APFloat::fcInfinity },
+    { PLargestValue, MLargestValue, "-inf", OverflowStatus, APFloat::fcInfinity },
+    { PLargestValue, PSmallestValue, "0x1.fffffep-22", APFloat::opOK, APFloat::fcNormal },
+    { PLargestValue, MSmallestValue, "-0x1.fffffep-22", APFloat::opOK, APFloat::fcNormal },
+    { PLargestValue, PSmallestNormalized, "0x1.fffffep+1", APFloat::opOK, APFloat::fcNormal },
+    { PLargestValue, MSmallestNormalized, "-0x1.fffffep+1", APFloat::opOK, APFloat::fcNormal },
+    { MLargestValue, PInf, "-inf", APFloat::opOK, APFloat::fcInfinity },
+    { MLargestValue, MInf, "inf", APFloat::opOK, APFloat::fcInfinity },
+    { MLargestValue, PZero, "-0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { MLargestValue, MZero, "0x0p+0", APFloat::opOK, APFloat::fcZero },
+    // See Note 2.
+    { MLargestValue, QNaN, "-nan", APFloat::opOK, APFloat::fcNaN },
+#if 0
+// See Note 1.
+    { MLargestValue, SNaN, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+#endif
+    { MLargestValue, PNormalValue, "-0x1.fffffep+127", APFloat::opOK, APFloat::fcNormal },
+    { MLargestValue, MNormalValue, "0x1.fffffep+127", APFloat::opOK, APFloat::fcNormal },
+    { MLargestValue, PLargestValue, "-inf", OverflowStatus, APFloat::fcInfinity },
+    { MLargestValue, MLargestValue, "inf", OverflowStatus, APFloat::fcInfinity },
+    { MLargestValue, PSmallestValue, "-0x1.fffffep-22", APFloat::opOK, APFloat::fcNormal },
+    { MLargestValue, MSmallestValue, "0x1.fffffep-22", APFloat::opOK, APFloat::fcNormal },
+    { MLargestValue, PSmallestNormalized, "-0x1.fffffep+1", APFloat::opOK, APFloat::fcNormal },
+    { MLargestValue, MSmallestNormalized, "0x1.fffffep+1", APFloat::opOK, APFloat::fcNormal },
+    { PSmallestValue, PInf, "inf", APFloat::opOK, APFloat::fcInfinity },
+    { PSmallestValue, MInf, "-inf", APFloat::opOK, APFloat::fcInfinity },
+    { PSmallestValue, PZero, "0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { PSmallestValue, MZero, "-0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { PSmallestValue, QNaN, "nan", APFloat::opOK, APFloat::fcNaN },
+#if 0
+// See Note 1.
+    { PSmallestValue, SNaN, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+#endif
+    { PSmallestValue, PNormalValue, "0x1p-149", APFloat::opOK, APFloat::fcNormal },
+    { PSmallestValue, MNormalValue, "-0x1p-149", APFloat::opOK, APFloat::fcNormal },
+    { PSmallestValue, PLargestValue, "0x1.fffffep-22", APFloat::opOK, APFloat::fcNormal },
+    { PSmallestValue, MLargestValue, "-0x1.fffffep-22", APFloat::opOK, APFloat::fcNormal },
+    { PSmallestValue, PSmallestValue, "0x0p+0", UnderflowStatus, APFloat::fcZero },
+    { PSmallestValue, MSmallestValue, "-0x0p+0", UnderflowStatus, APFloat::fcZero },
+    { PSmallestValue, PSmallestNormalized, "0x0p+0", UnderflowStatus, APFloat::fcZero },
+    { PSmallestValue, MSmallestNormalized, "-0x0p+0", UnderflowStatus, APFloat::fcZero },
+    { MSmallestValue, PInf, "-inf", APFloat::opOK, APFloat::fcInfinity },
+    { MSmallestValue, MInf, "inf", APFloat::opOK, APFloat::fcInfinity },
+    { MSmallestValue, PZero, "-0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { MSmallestValue, MZero, "0x0p+0", APFloat::opOK, APFloat::fcZero },
+    // See Note 2.
+    { MSmallestValue, QNaN, "-nan", APFloat::opOK, APFloat::fcNaN },
+#if 0
+// See Note 1.
+    { MSmallestValue, SNaN, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+#endif
+    { MSmallestValue, PNormalValue, "-0x1p-149", APFloat::opOK, APFloat::fcNormal },
+    { MSmallestValue, MNormalValue, "0x1p-149", APFloat::opOK, APFloat::fcNormal },
+    { MSmallestValue, PLargestValue, "-0x1.fffffep-22", APFloat::opOK, APFloat::fcNormal },
+    { MSmallestValue, MLargestValue, "0x1.fffffep-22", APFloat::opOK, APFloat::fcNormal },
+    { MSmallestValue, PSmallestValue, "-0x0p+0", UnderflowStatus, APFloat::fcZero },
+    { MSmallestValue, MSmallestValue, "0x0p+0", UnderflowStatus, APFloat::fcZero },
+    { MSmallestValue, PSmallestNormalized, "-0x0p+0", UnderflowStatus, APFloat::fcZero },
+    { MSmallestValue, MSmallestNormalized, "0x0p+0", UnderflowStatus, APFloat::fcZero },
+    { PSmallestNormalized, PInf, "inf", APFloat::opOK, APFloat::fcInfinity },
+    { PSmallestNormalized, MInf, "-inf", APFloat::opOK, APFloat::fcInfinity },
+    { PSmallestNormalized, PZero, "0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { PSmallestNormalized, MZero, "-0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { PSmallestNormalized, QNaN, "nan", APFloat::opOK, APFloat::fcNaN },
+#if 0
+// See Note 1.
+    { PSmallestNormalized, SNaN, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+#endif
+    { PSmallestNormalized, PNormalValue, "0x1p-126", APFloat::opOK, APFloat::fcNormal },
+    { PSmallestNormalized, MNormalValue, "-0x1p-126", APFloat::opOK, APFloat::fcNormal },
+    { PSmallestNormalized, PLargestValue, "0x1.fffffep+1", APFloat::opOK, APFloat::fcNormal },
+    { PSmallestNormalized, MLargestValue, "-0x1.fffffep+1", APFloat::opOK, APFloat::fcNormal },
+    { PSmallestNormalized, PSmallestValue, "0x0p+0", UnderflowStatus, APFloat::fcZero },
+    { PSmallestNormalized, MSmallestValue, "-0x0p+0", UnderflowStatus, APFloat::fcZero },
+    { PSmallestNormalized, PSmallestNormalized, "0x0p+0", UnderflowStatus, APFloat::fcZero },
+    { PSmallestNormalized, MSmallestNormalized, "-0x0p+0", UnderflowStatus, APFloat::fcZero },
+    { MSmallestNormalized, PInf, "-inf", APFloat::opOK, APFloat::fcInfinity },
+    { MSmallestNormalized, MInf, "inf", APFloat::opOK, APFloat::fcInfinity },
+    { MSmallestNormalized, PZero, "-0x0p+0", APFloat::opOK, APFloat::fcZero },
+    { MSmallestNormalized, MZero, "0x0p+0", APFloat::opOK, APFloat::fcZero },
+    // See Note 2.
+    { MSmallestNormalized, QNaN, "-nan", APFloat::opOK, APFloat::fcNaN },
+#if 0
+// See Note 1.
+    { MSmallestNormalized, SNaN, "nan", APFloat::opInvalidOp, APFloat::fcNaN },
+#endif
+    { MSmallestNormalized, PNormalValue, "-0x1p-126", APFloat::opOK, APFloat::fcNormal },
+    { MSmallestNormalized, MNormalValue, "0x1p-126", APFloat::opOK, APFloat::fcNormal },
+    { MSmallestNormalized, PLargestValue, "-0x1.fffffep+1", APFloat::opOK, APFloat::fcNormal },
+    { MSmallestNormalized, MLargestValue, "0x1.fffffep+1", APFloat::opOK, APFloat::fcNormal },
+    { MSmallestNormalized, PSmallestValue, "-0x0p+0", UnderflowStatus, APFloat::fcZero },
+    { MSmallestNormalized, MSmallestValue, "0x0p+0", UnderflowStatus, APFloat::fcZero },
+    { MSmallestNormalized, PSmallestNormalized, "-0x0p+0", UnderflowStatus, APFloat::fcZero },
+    { MSmallestNormalized, MSmallestNormalized, "0x0p+0", UnderflowStatus, APFloat::fcZero }
+  };
+
+  for (size_t i = 0; i < NumTests; ++i) {
+    APFloat x(SpecialCaseTests[i].x);
+    APFloat y(SpecialCaseTests[i].y);
+    APFloat::opStatus status = x.multiply(y, APFloat::rmNearestTiesToEven);
+
+    APFloat result(APFloat::IEEEsingle, SpecialCaseTests[i].result);
+
+    printf("%a, %a, %a, %a\n", SpecialCaseTests[i].x.convertToFloat(),
+           SpecialCaseTests[i].y.convertToFloat(),
+           x.convertToFloat(), result.convertToFloat());
+
+    EXPECT_TRUE(result.bitwiseIsEqual(x));
+    EXPECT_TRUE((int)status == SpecialCaseTests[i].status);
+    EXPECT_TRUE((int)x.getCategory() == SpecialCaseTests[i].category);
+  }
+}
 
 }
