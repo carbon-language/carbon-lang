@@ -332,26 +332,6 @@ Path::isRegularFile() const {
   return false;
 }
 
-const FileStatus *
-PathWithStatus::getFileStatus(bool update, std::string *ErrStr) const {
-  if (!fsIsValid || update) {
-    struct stat buf;
-    if (0 != stat(path.c_str(), &buf)) {
-      MakeErrMsg(ErrStr, path + ": can't get status of file");
-      return 0;
-    }
-    status.fileSize = buf.st_size;
-    status.modTime.fromEpochTime(buf.st_mtime);
-    status.mode = buf.st_mode;
-    status.user = buf.st_uid;
-    status.group = buf.st_gid;
-    status.isDir  = S_ISDIR(buf.st_mode);
-    status.isFile = S_ISREG(buf.st_mode);
-    fsIsValid = true;
-  }
-  return &status;
-}
-
 static bool AddPermissionBits(const Path &File, int bits) {
   // Get the umask value from the operating system.  We want to use it
   // when changing the file's permissions. Since calling umask() sets

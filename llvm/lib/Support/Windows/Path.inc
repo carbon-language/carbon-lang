@@ -245,35 +245,6 @@ Path::isRegularFile() const {
   return res;
 }
 
-const FileStatus *
-PathWithStatus::getFileStatus(bool update, std::string *ErrStr) const {
-  if (!fsIsValid || update) {
-    WIN32_FILE_ATTRIBUTE_DATA fi;
-    if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi)) {
-      MakeErrMsg(ErrStr, "getStatusInfo():" + std::string(path) +
-                      ": Can't get status: ");
-      return 0;
-    }
-
-    status.fileSize = fi.nFileSizeHigh;
-    status.fileSize <<= sizeof(fi.nFileSizeHigh)*8;
-    status.fileSize += fi.nFileSizeLow;
-
-    status.mode = fi.dwFileAttributes & FILE_ATTRIBUTE_READONLY ? 0555 : 0777;
-    status.user = 9999;    // Not applicable to Windows, so...
-    status.group = 9999;   // Not applicable to Windows, so...
-
-    ULARGE_INTEGER ui;
-    ui.LowPart = fi.ftLastWriteTime.dwLowDateTime;
-    ui.HighPart = fi.ftLastWriteTime.dwHighDateTime;
-    status.modTime.fromWin32Time(ui.QuadPart);
-
-    status.isDir = fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
-    fsIsValid = true;
-  }
-  return &status;
-}
-
 bool Path::makeReadableOnDisk(std::string* ErrMsg) {
   // All files are readable on Windows (ignoring security attributes).
   return false;
