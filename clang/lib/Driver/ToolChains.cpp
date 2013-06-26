@@ -112,6 +112,7 @@ static const char *GetArmArchForMArch(StringRef Value) {
     .Cases("armv7k", "armv7-k", "armv7k")
     .Cases("armv7m", "armv7-m", "armv7m")
     .Cases("armv7s", "armv7-s", "armv7s")
+    .Cases("armv8", "armv8a", "armv8-a", "armv8")
     .Default(0);
 }
 

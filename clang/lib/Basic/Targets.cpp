@@ -3750,6 +3750,7 @@ public:
       .Case("swift", "7S")
       .Cases("cortex-m3", "cortex-m4", "7M")
       .Case("cortex-m0", "6M")
+      .Case("cortex-a53", "8A")
       .Default(0);
   }
   static const char *getCPUProfile(StringRef Name) {

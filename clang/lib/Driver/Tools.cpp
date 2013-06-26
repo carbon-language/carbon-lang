@@ -528,6 +528,7 @@ static std::string getARMTargetCPU(const ArgList &Args,
     .Cases("armv7s", "armv7-s", "swift")
     .Cases("armv7r", "armv7-r", "cortex-r4")
     .Cases("armv7m", "armv7-m", "cortex-m3")
+    .Cases("armv8", "armv8a", "armv8-a", "cortex-a53")
     .Case("ep9312", "ep9312")
     .Case("iwmmxt", "iwmmxt")
     .Case("xscale", "xscale")
