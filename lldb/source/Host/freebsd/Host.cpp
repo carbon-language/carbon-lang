@@ -132,7 +132,6 @@ Host::GetOSVersion(uint32_t &major,
         return false;
 
     status = sscanf(un.release, "%u.%u", &major, &minor);
-    update = UINT32_MAX;
     return status == 2;
 }
 
