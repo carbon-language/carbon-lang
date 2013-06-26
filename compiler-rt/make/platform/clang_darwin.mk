@@ -67,12 +67,7 @@ UniversalArchs.cc_kext_ios5 := $(call CheckArches,x86_64 armv7,cc_kext_ios5)
 Configs += profile_osx
 UniversalArchs.profile_osx := $(call CheckArches,i386 x86_64,profile_osx)
 Configs += profile_ios
-# FIXME: I've removed the armv7 configs for profile_ios until a viable solution
-# to using the *actual* SDK instead of a fake SDK sysroot is found (or until
-# the fake SDK sysroot is expanded correctly for darwin errno on all the
-# various platforms that I can't find out about).
-#UniversalArchs.profile_ios := $(call CheckArches,i386 x86_64 armv7,profile_ios)
-UniversalArchs.profile_ios := $(call CheckArches,i386 x86_64,profile_ios)
+UniversalArchs.profile_ios := $(call CheckArches,i386 x86_64 armv7,profile_ios)
 
 # Configurations which define the ASAN support functions.
 Configs += asan_osx_dynamic
