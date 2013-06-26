@@ -2,7 +2,9 @@
 #define GENTYPE char
 #define UGENTYPE uchar
 #define SGENTYPE char
+#define SCALAR 1
 #include BODY
+#undef SCALAR
 #undef GENTYPE
 #undef UGENTYPE
 #undef SGENTYPE
@@ -50,7 +52,9 @@
 #define GENTYPE uchar
 #define UGENTYPE uchar
 #define SGENTYPE char
+#define SCALAR 1
 #include BODY
+#undef SCALAR
 #undef GENTYPE
 #undef UGENTYPE
 #undef SGENTYPE
@@ -101,7 +105,9 @@
 #define GENTYPE short
 #define UGENTYPE ushort
 #define SGENTYPE short
+#define SCALAR 1
 #include BODY
+#undef SCALAR
 #undef GENTYPE
 #undef UGENTYPE
 #undef SGENTYPE
@@ -149,7 +155,9 @@
 #define GENTYPE ushort
 #define UGENTYPE ushort
 #define SGENTYPE short
+#define SCALAR 1
 #include BODY
+#undef SCALAR
 #undef GENTYPE
 #undef UGENTYPE
 #undef SGENTYPE
@@ -200,7 +208,9 @@
 #define GENTYPE int
 #define UGENTYPE uint
 #define SGENTYPE int
+#define SCALAR 1
 #include BODY
+#undef SCALAR
 #undef GENTYPE
 #undef UGENTYPE
 #undef SGENTYPE
@@ -248,7 +258,9 @@
 #define GENTYPE uint
 #define UGENTYPE uint
 #define SGENTYPE int
+#define SCALAR 1
 #include BODY
+#undef SCALAR
 #undef GENTYPE
 #undef UGENTYPE
 #undef SGENTYPE
@@ -299,7 +311,9 @@
 #define GENTYPE long
 #define UGENTYPE ulong
 #define SGENTYPE long
+#define SCALAR 1
 #include BODY
+#undef SCALAR
 #undef GENTYPE
 #undef UGENTYPE
 #undef SGENTYPE
@@ -347,7 +361,9 @@
 #define GENTYPE ulong
 #define UGENTYPE ulong
 #define SGENTYPE long
+#define SCALAR 1
 #include BODY
+#undef SCALAR
 #undef GENTYPE
 #undef UGENTYPE
 #undef SGENTYPE
