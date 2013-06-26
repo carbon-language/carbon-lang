@@ -162,11 +162,11 @@ Typical components:\n\
 }
 
 /// \brief Compute the path to the main executable.
-llvm::sys::Path GetExecutablePath(const char *Argv0) {
+std::string GetExecutablePath(const char *Argv0) {
   // This just needs to be some symbol in the binary; C++ doesn't
   // allow taking the address of ::main however.
   void *P = (void*) (intptr_t) GetExecutablePath;
-  return llvm::sys::Path::GetMainExecutable(Argv0, P);
+  return llvm::sys::fs::getMainExecutable(Argv0, P);
 }
 
 int main(int argc, char **argv) {
@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
   // tree.
   bool IsInDevelopmentTree;
   enum { MakefileStyle, CMakeStyle, CMakeBuildModeStyle } DevelopmentTreeLayout;
-  llvm::SmallString<256> CurrentPath(GetExecutablePath(argv[0]).str());
+  llvm::SmallString<256> CurrentPath(GetExecutablePath(argv[0]));
   std::string CurrentExecPrefix;
   std::string ActiveObjRoot;
 

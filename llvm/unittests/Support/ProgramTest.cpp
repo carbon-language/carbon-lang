@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PathV1.h"
 #include "llvm/Support/Program.h"
@@ -56,7 +57,8 @@ TEST(ProgramTest, CreateProcessTrailingSlash) {
     exit(1);
   }
 
-  Path my_exe = Path::GetMainExecutable(TestMainArgv0, &ProgramTestStringArg1);
+  std::string my_exe =
+      sys::fs::getMainExecutable(TestMainArgv0, &ProgramTestStringArg1);
   const char *argv[] = {
     my_exe.c_str(),
     "--gtest_filter=ProgramTest.CreateProcessTrailingSlashChild",
@@ -80,7 +82,7 @@ TEST(ProgramTest, CreateProcessTrailingSlash) {
   StringRef nul("/dev/null");
 #endif
   const StringRef *redirects[] = { &nul, &nul, 0 };
-  int rc = ExecuteAndWait(my_exe.str(), argv, &envp[0], redirects,
+  int rc = ExecuteAndWait(my_exe, argv, &envp[0], redirects,
                           /*secondsToWait=*/ 10, /*memoryLimit=*/ 0, &error,
                           &ExecutionFailed);
   EXPECT_FALSE(ExecutionFailed) << error;

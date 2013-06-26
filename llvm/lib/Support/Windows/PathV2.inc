@@ -128,6 +128,13 @@ namespace llvm {
 namespace sys  {
 namespace fs {
 
+std::string getMainExecutable(const char *argv0, void *MainExecAddr) {
+  char pathname[MAX_PATH];
+  DWORD ret = ::GetModuleFileNameA(NULL, pathname, MAX_PATH);
+  return ret != MAX_PATH ? pathname : "";
+}
+
+
 TimeValue file_status::getLastModificationTime() const {
   ULARGE_INTEGER UI;
   UI.LowPart = LastWriteTimeLow;

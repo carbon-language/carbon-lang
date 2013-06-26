@@ -252,8 +252,8 @@ static std::string PrependMainExecutablePath(const std::string &ExeName,
   // Check the directory that the calling program is in.  We can do
   // this if ProgramPath contains at least one / character, indicating that it
   // is a relative path to the executable itself.
-  sys::Path Main = sys::Path::GetMainExecutable(Argv0, MainAddr);
-  StringRef Result = sys::path::parent_path(Main.str());
+  std::string Main = sys::fs::getMainExecutable(Argv0, MainAddr);
+  StringRef Result = sys::path::parent_path(Main);
 
   if (!Result.empty()) {
     SmallString<128> Storage = Result;

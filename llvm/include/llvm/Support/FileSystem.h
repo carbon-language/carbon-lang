@@ -696,7 +696,10 @@ error_code map_file_pages(const Twine &path, off_t file_offset, size_t size,
 ///          platform specific error_code.
 error_code unmap_file_pages(void *base, size_t size);
 
-
+/// Return the path to the main executable, given the value of argv[0] from
+/// program startup and the address of main itself. In extremis, this function
+/// may fail and return an empty path.
+std::string getMainExecutable(const char *argv0, void *MainExecAddr);
 
 /// @}
 /// @name Iterators
