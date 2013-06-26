@@ -1123,7 +1123,7 @@ static void diagnoseRepeatedUseOfWeak(Sema &S,
 
     // Show the first time the object was read.
     S.Diag(FirstRead->getLocStart(), DiagKind)
-      << ObjectKind << D << FunctionKind
+      << int(ObjectKind) << D << int(FunctionKind)
       << FirstRead->getSourceRange();
 
     // Print all the other accesses as notes.

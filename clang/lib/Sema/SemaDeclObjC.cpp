@@ -1485,8 +1485,8 @@ static bool checkMethodFamilyMismatch(Sema &S, ObjCMethodDecl *impl,
     reasonSelector = R_NonObjectReturn;
   }
 
-  S.Diag(impl->getLocation(), errorID) << familySelector << reasonSelector;
-  S.Diag(decl->getLocation(), noteID) << familySelector << reasonSelector;
+  S.Diag(impl->getLocation(), errorID) << int(familySelector) << int(reasonSelector);
+  S.Diag(decl->getLocation(), noteID) << int(familySelector) << int(reasonSelector);
 
   return true;
 }

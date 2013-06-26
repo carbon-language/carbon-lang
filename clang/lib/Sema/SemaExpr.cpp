@@ -372,7 +372,7 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
   // the sentinel, and the args after the sentinel, complain.
   if (Args.size() < numFormalParams + numArgsAfterSentinel + 1) {
     Diag(Loc, diag::warn_not_enough_argument) << D->getDeclName();
-    Diag(D->getLocation(), diag::note_sentinel_here) << calleeType;
+    Diag(D->getLocation(), diag::note_sentinel_here) << int(calleeType);
     return;
   }
 
@@ -398,12 +398,12 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
     NullValue = "(void*) 0";
 
   if (MissingNilLoc.isInvalid())
-    Diag(Loc, diag::warn_missing_sentinel) << calleeType;
+    Diag(Loc, diag::warn_missing_sentinel) << int(calleeType);
   else
     Diag(MissingNilLoc, diag::warn_missing_sentinel) 
-      << calleeType
+      << int(calleeType)
       << FixItHint::CreateInsertion(MissingNilLoc, ", " + NullValue);
-  Diag(D->getLocation(), diag::note_sentinel_here) << calleeType;
+  Diag(D->getLocation(), diag::note_sentinel_here) << int(calleeType);
 }
 
 SourceRange Sema::getExprRange(Expr *E) const {

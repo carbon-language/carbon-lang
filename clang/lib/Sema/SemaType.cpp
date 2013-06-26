@@ -3864,7 +3864,7 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
   max = Qualifiers::MaxAddressSpace;
   if (addrSpace > max) {
     S.Diag(Attr.getLoc(), diag::err_attribute_address_space_too_high)
-      << Qualifiers::MaxAddressSpace << ASArgExpr->getSourceRange();
+      << int(Qualifiers::MaxAddressSpace) << ASArgExpr->getSourceRange();
     Attr.setInvalid();
     return;
   }

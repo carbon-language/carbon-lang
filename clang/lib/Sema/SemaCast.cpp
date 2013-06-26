@@ -765,10 +765,10 @@ static void DiagnoseReinterpretUpDownCast(Sema &Self, const Expr *SrcExpr,
 
   SourceLocation BeginLoc = OpRange.getBegin();
   Self.Diag(BeginLoc, diag::warn_reinterpret_different_from_static)
-    << DerivedType << BaseType << !VirtualBase << ReinterpretKind
+    << DerivedType << BaseType << !VirtualBase << int(ReinterpretKind)
     << OpRange;
   Self.Diag(BeginLoc, diag::note_reinterpret_updowncast_use_static)
-    << ReinterpretKind
+    << int(ReinterpretKind)
     << FixItHint::CreateReplacement(BeginLoc, "static_cast");
 }
 
