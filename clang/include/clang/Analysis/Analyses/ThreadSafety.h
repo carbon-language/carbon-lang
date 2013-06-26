@@ -11,8 +11,8 @@
 // A intra-procedural analysis for thread safety (e.g. deadlocks and race
 // conditions), based off of an annotation system.
 //
-// See http://clang.llvm.org/docs/LanguageExtensions.html#threadsafety for more
-// information.
+// See http://clang.llvm.org/docs/LanguageExtensions.html#thread-safety-annotation-checking
+// for more information.
 //
 //===----------------------------------------------------------------------===//
 
