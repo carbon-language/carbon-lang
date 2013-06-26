@@ -50,6 +50,10 @@
 #include <limits.h>
 #endif
 
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
+
 // Both stdio.h and cstdio are included via different pathes and
 // stdcxx's cstdio doesn't include stdio.h, so it doesn't #undef the macros
 // either.
@@ -177,7 +181,7 @@ std::string getMainExecutable(const char *argv0, void *MainAddr) {
   if (_NSGetExecutablePath(exe_path, &size) == 0) {
     char link_path[MAXPATHLEN];
     if (realpath(exe_path, link_path))
-      return Path(link_path);
+      return link_path;
   }
 #elif defined(__FreeBSD__) || defined (__NetBSD__) || defined(__Bitrig__) || \
       defined(__OpenBSD__) || defined(__minix) || defined(__FreeBSD_kernel__)
