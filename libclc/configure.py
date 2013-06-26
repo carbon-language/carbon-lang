@@ -4,6 +4,10 @@ def c_compiler_rule(b, name, description, compiler, flags):
   command = "%s -MMD -MF $out.d %s -c -o $out $in" % (compiler, flags)
   b.rule(name, command, description + " $out", depfile="$out.d")
 
+version_major = 0;
+version_minor = 0;
+version_patch = 1;
+
 from optparse import OptionParser
 import os
 from subprocess import *
@@ -19,11 +23,33 @@ p.add_option('--with-llvm-config', metavar='PATH',
              help='use given llvm-config script')
 p.add_option('--prefix', metavar='PATH',
              help='install to given prefix')
+p.add_option('--libexecdir', metavar='PATH',
+             help='install *.bc to given dir')
+p.add_option('--includedir', metavar='PATH',
+             help='install include files to given dir')
+p.add_option('--pkgconfigdir', metavar='PATH',
+             help='install clc.pc to given dir')
 p.add_option('-g', metavar='GENERATOR', default='make',
              help='use given generator (default: make)')
 (options, args) = p.parse_args()
 
 llvm_config_exe = options.with_llvm_config or "llvm-config"
+
+prefix = options.prefix
+if not prefix:
+  prefix = '/usr/local'
+
+libexecdir = options.libexecdir
+if not libexecdir:
+  libexecdir = os.path.join(prefix, 'lib/clc')
+
+includedir = options.includedir
+if not includedir:
+  includedir = os.path.join(prefix, 'include')
+
+pkgconfigdir = options.pkgconfigdir
+if not pkgconfigdir:
+  pkgconfigdir = os.path.join(prefix, 'lib/pkgconfig')
 
 def llvm_config(args):
   try:
@@ -58,8 +84,8 @@ b.rule("LLVM_LINK", command = llvm_link + " -o $out $in",
 b.rule("OPT", command = llvm_opt + " -O3 -o $out $in",
        description = 'OPT $out')
 
-c_compiler_rule(b, "LLVM_TOOL_CXX", 'CXX', 'c++', llvm_cxxflags)
-b.rule("LLVM_TOOL_LINK", "c++ -o $out $in %s" % llvm_core_libs, 'LINK $out')
+c_compiler_rule(b, "LLVM_TOOL_CXX", 'LLVM-CXX', 'clang++', llvm_cxxflags)
+b.rule("LLVM_TOOL_LINK", "clang++ -o $out $in %s" % llvm_core_libs, 'LINK $out')
 
 prepare_builtins = os.path.join('utils', 'prepare-builtins')
 b.build(os.path.join('utils', 'prepare-builtins.o'), "LLVM_TOOL_CXX",
@@ -73,8 +99,14 @@ b.rule("PREPARE_BUILTINS", "%s -o $out $in" % prepare_builtins,
 manifest_deps = set([sys.argv[0], os.path.join(srcdir, 'build', 'metabuild.py'),
                      os.path.join(srcdir, 'build', 'ninja_syntax.py')])
 
-install_files = []
+install_files_bc = []
 install_deps = []
+
+# Create libclc.pc
+clc = open('libclc.pc', 'w')
+clc.write('includedir=%(inc)s\nlibexecdir=%(lib)s\n\nName: libclc\nDescription: Library requirements of the OpenCL C programming language\nVersion: %(maj)s.%(min)s.%(pat)s\nCflags: -I${includedir}\nLibs: -L${libexecdir}' %
+{'inc': includedir, 'lib': libexecdir, 'maj': version_major, 'min': version_minor, 'pat': version_patch})
+clc.close()
 
 for target in targets:
   (t_arch, t_vendor, t_os) = target.split('-')
@@ -95,7 +127,6 @@ for target in targets:
                    [os.path.join(srcdir, subdir, 'lib') for subdir in subdirs])
 
   clang_cl_includes = ' '.join(["-I%s" % incdir for incdir in incdirs])
-  install_files += [(incdir, incdir[len(srcdir)+1:]) for incdir in incdirs]
 
   # The rule for building a .bc file for the specified architecture using clang.
   clang_bc_flags = "-target %s -I`dirname $in` %s " \
@@ -126,22 +157,28 @@ for target in targets:
 
   builtins_link_bc = os.path.join(target, 'lib', 'builtins.link.bc')
   builtins_opt_bc = os.path.join(target, 'lib', 'builtins.opt.bc')
-  builtins_bc = os.path.join(target, 'lib', 'builtins.bc')
+  builtins_bc = os.path.join('built_libs', target + '.bc')
   b.build(builtins_link_bc, "LLVM_LINK", objects)
   b.build(builtins_opt_bc, "OPT", builtins_link_bc)
   b.build(builtins_bc, "PREPARE_BUILTINS", builtins_opt_bc, prepare_builtins)
-  install_files.append((builtins_bc, builtins_bc))
+  install_files_bc.append((builtins_bc, builtins_bc))
   install_deps.append(builtins_bc)
   b.default(builtins_bc)
 
-if options.prefix:
-  install_cmd = ' && '.join(['mkdir -p %(dst)s && cp -r %(src)s %(dst)s' % 
-                             {'src': file,
-                              'dst': os.path.join(options.prefix,
-                                                  os.path.dirname(dest))}
-                             for (file, dest) in install_files])
-  b.rule('install', command = install_cmd, description = 'INSTALL')
-  b.build('install', 'install', install_deps)
+
+install_cmd = ' && '.join(['mkdir -p $(DESTDIR)/%(dst)s && cp -r %(src)s $(DESTDIR)/%(dst)s' % 
+                           {'src': file,
+                            'dst': libexecdir}
+                           for (file, dest) in install_files_bc])
+install_cmd = ' && '.join(['%(old)s && mkdir -p $(DESTDIR)/%(dst)s && cp -r generic/include/clc $(DESTDIR)/%(dst)s' %
+                           {'old': install_cmd,
+                            'dst': includedir}])
+install_cmd = ' && '.join(['%(old)s && mkdir -p $(DESTDIR)/%(dst)s && cp -r libclc.pc $(DESTDIR)/%(dst)s' %
+                           {'old': install_cmd, 
+                            'dst': pkgconfigdir}])
+  
+b.rule('install', command = install_cmd, description = 'INSTALL')
+b.build('install', 'install', install_deps)
 
 b.rule("configure", command = ' '.join(sys.argv), description = 'CONFIGURE',
        generator = True)
