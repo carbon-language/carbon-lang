@@ -134,3 +134,87 @@ define i32 @test2(double* nocapture %G, i32 %k) {
   ret i32 undef
 }
 
+
+;int foo(double *A, int n) {
+;  A[0] = A[0] * 7.9 * n + 6.0;
+;  A[1] = A[1] * 7.9 * n + 6.0;
+;  A[2] = A[2] * 7.9 * n + 6.0;
+;  A[3] = A[3] * 7.9 * n + 6.0;
+;}
+;CHECK: @foo4
+;CHECK: insertelement <2 x double>
+;CHECK: insertelement <2 x double>
+;CHECK-NOT: insertelement <2 x double>
+;CHECK: ret
+define i32 @foo4(double* nocapture %A, i32 %n) {
+entry:
+  %0 = load double* %A, align 8
+  %mul = fmul double %0, 7.900000e+00
+  %conv = sitofp i32 %n to double
+  %mul1 = fmul double %conv, %mul
+  %add = fadd double %mul1, 6.000000e+00
+  store double %add, double* %A, align 8
+  %arrayidx3 = getelementptr inbounds double* %A, i64 1
+  %1 = load double* %arrayidx3, align 8
+  %mul4 = fmul double %1, 7.900000e+00
+  %mul6 = fmul double %conv, %mul4
+  %add7 = fadd double %mul6, 6.000000e+00
+  store double %add7, double* %arrayidx3, align 8
+  %arrayidx9 = getelementptr inbounds double* %A, i64 2
+  %2 = load double* %arrayidx9, align 8
+  %mul10 = fmul double %2, 7.900000e+00
+  %mul12 = fmul double %conv, %mul10
+  %add13 = fadd double %mul12, 6.000000e+00
+  store double %add13, double* %arrayidx9, align 8
+  %arrayidx15 = getelementptr inbounds double* %A, i64 3
+  %3 = load double* %arrayidx15, align 8
+  %mul16 = fmul double %3, 7.900000e+00
+  %mul18 = fmul double %conv, %mul16
+  %add19 = fadd double %mul18, 6.000000e+00
+  store double %add19, double* %arrayidx15, align 8
+  ret i32 undef
+}
+
+;int partial_mrg(double *A, int n) {
+;  A[0] = A[0] * n;
+;  A[1] = A[1] * n;
+;  if (n < 4) return 0;
+;  A[2] = A[2] * n;
+;  A[3] = A[3] * (n+4);
+;}
+;CHECK: @partial_mrg
+;CHECK: insertelement <2 x double>
+;CHECK: insertelement <2 x double>
+;CHECK: insertelement <2 x double>
+;CHECK-NOT: insertelement <2 x double>
+;CHECK: ret
+define i32 @partial_mrg(double* nocapture %A, i32 %n) {
+entry:
+  %0 = load double* %A, align 8
+  %conv = sitofp i32 %n to double
+  %mul = fmul double %conv, %0
+  store double %mul, double* %A, align 8
+  %arrayidx2 = getelementptr inbounds double* %A, i64 1
+  %1 = load double* %arrayidx2, align 8
+  %mul4 = fmul double %conv, %1
+  store double %mul4, double* %arrayidx2, align 8
+  %cmp = icmp slt i32 %n, 4
+  br i1 %cmp, label %return, label %if.end
+
+if.end:                                           ; preds = %entry
+  %arrayidx7 = getelementptr inbounds double* %A, i64 2
+  %2 = load double* %arrayidx7, align 8
+  %mul9 = fmul double %conv, %2
+  store double %mul9, double* %arrayidx7, align 8
+  %arrayidx11 = getelementptr inbounds double* %A, i64 3
+  %3 = load double* %arrayidx11, align 8
+  %add = add nsw i32 %n, 4
+  %conv12 = sitofp i32 %add to double
+  %mul13 = fmul double %conv12, %3
+  store double %mul13, double* %arrayidx11, align 8
+  br label %return
+
+return:                                           ; preds = %entry, %if.end
+  ret i32 0
+}
+

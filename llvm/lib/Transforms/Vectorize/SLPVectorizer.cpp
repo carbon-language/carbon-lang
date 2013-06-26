@@ -1258,6 +1258,8 @@ Value *FuncSLP::vectorizeArith(ArrayRef<Value *> Operands) {
   for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
     Value *S = Builder.CreateExtractElement(Vec, Builder.getInt32(i));
     Operands[i]->replaceAllUsesWith(S);
+    Instruction *I = cast<Instruction>(Operands[i]);
+    I->eraseFromParent();
   }
 
   return Vec;
@@ -1280,7 +1282,7 @@ void FuncSLP::optimizeGatherSequence() {
     // Check if it has a preheader.
     BasicBlock *PreHeader = L->getLoopPreheader();
     if (!PreHeader)
-      return;
+      continue;
 
     // If the vector or the element that we insert into it are
     // instructions that are defined in this basic block then we can't
@@ -1310,17 +1312,19 @@ void FuncSLP::optimizeGatherSequence() {
       if (!Insert || !GatherSeq.count(Insert))
         continue;
 
-     // Check if we can replace this instruction with any of the
-     // visited instructions.
+      // Check if we can replace this instruction with any of the
+      // visited instructions.
       for (SmallPtrSet<Instruction*, 16>::iterator v = Visited.begin(),
            ve = Visited.end(); v != ve; ++v) {
         if (Insert->isIdenticalTo(*v) &&
-          DT->dominates((*v)->getParent(), Insert->getParent())) {
+            DT->dominates((*v)->getParent(), Insert->getParent())) {
           Insert->replaceAllUsesWith(*v);
+          Insert = 0;
           break;
         }
       }
-      Visited.insert(Insert);
+      if (Insert)
+        Visited.insert(Insert);
     }
   }
 }
