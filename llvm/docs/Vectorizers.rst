@@ -7,11 +7,11 @@ Auto-Vectorization in LLVM
 
 LLVM has two vectorizers: The :ref:`Loop Vectorizer <loop-vectorizer>`,
 which operates on Loops, and the :ref:`SLP Vectorizer
-<slp-vectorizer>`, which optimizes straight-line code. These vectorizers
+<slp-vectorizer>`. These vectorizers
 focus on different optimization opportunities and use different techniques.
 The SLP vectorizer merges multiple scalars that are found in the code into
-vectors while the Loop Vectorizer widens instructions in the original loop
-to operate on multiple consecutive loop iterations.
+vectors while the Loop Vectorizer widens instructions in loops
+to operate on multiple consecutive iterations.
 
 .. _loop-vectorizer:
 
@@ -302,10 +302,9 @@ Details
 -------
 
 The goal of SLP vectorization (a.k.a. superword-level parallelism) is
-to combine similar independent instructions within simple control-flow regions
-into vector instructions. Memory accesses, arithemetic operations, comparison
-operations and some math functions can all be vectorized using this technique
-(subject to the capabilities of the target architecture).
+to combine similar independent instructions
+into vector instructions. Memory accesses, arithmetic operations, comparison
+operations, PHI-nodes, can all be vectorized using this technique.
 
 For example, the following function performs very similar operations on its
 inputs (a1, b1) and (a2, b2). The basic-block vectorizer may combine these
@@ -318,8 +317,7 @@ into vector operations.
     A[1] = a2*(a2 + b2)/b2 + 50*b2/a2;
   }
 
-The SLP-vectorizer has two phases, bottom-up, and top-down. The top-down vectorization
-phase is more aggressive, but takes more time to run.
+The SLP-vectorizer processes the code bottom-up, across basic blocks, in search of scalars to combine.
 
 Usage
 ------
