@@ -72,6 +72,7 @@
 #include <clc/shared/max.h>
 #include <clc/shared/min.h>
 #include <clc/shared/vload.h>
+#include <clc/shared/vstore.h>
 
 /* 6.11.5 Geometric Functions */
 #include <clc/geometric/cross.h>
