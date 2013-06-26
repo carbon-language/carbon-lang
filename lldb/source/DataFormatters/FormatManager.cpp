@@ -334,13 +334,11 @@ GetTypeForCache (ValueObject& valobj,
     return ConstString();
 }
 
-#define USE_CACHE 1
 lldb::TypeSummaryImplSP
 FormatManager::GetSummaryFormat (ValueObject& valobj,
                                  lldb::DynamicValueType use_dynamic)
 {
     TypeSummaryImplSP retval;
-#if USE_CACHE
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     ConstString valobj_type(GetTypeForCache(valobj, use_dynamic));
     if (valobj_type)
@@ -352,39 +350,32 @@ FormatManager::GetSummaryFormat (ValueObject& valobj,
             if (log)
             {
                 log->Printf("[FormatManager::GetSummaryFormat] Cache search success. Returning.");
-#ifdef LLDB_CONFIGURATION_DEBUG
-                log->Printf("[FormatManager::GetSummaryFormat] Cache hits: %llu - Cache Misses: %llu", m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
-#endif
+                if (log->GetDebug())
+                    log->Printf("[FormatManager::GetSummaryFormat] Cache hits: %llu - Cache Misses: %llu", m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
             }
             return retval;
         }
         if (log)
             log->Printf("[FormatManager::GetSummaryFormat] Cache search failed. Going normal route");
     }
-#endif
     retval = m_categories_map.GetSummaryFormat(valobj, use_dynamic);
-#if USE_CACHE
     if (valobj_type)
     {
         if (log)
             log->Printf("[FormatManager::GetSummaryFormat] Caching %p for type %s",retval.get(),valobj_type.AsCString("<invalid>"));
         m_format_cache.SetSummary(valobj_type,retval);
     }
-#ifdef LLDB_CONFIGURATION_DEBUG
-    if (log)
+    if (log && log->GetDebug())
         log->Printf("[FormatManager::GetSummaryFormat] Cache hits: %llu - Cache Misses: %llu", m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
-#endif
-#endif
     return retval;
 }
 
 #ifndef LLDB_DISABLE_PYTHON
 lldb::SyntheticChildrenSP
 FormatManager::GetSyntheticChildren (ValueObject& valobj,
-                      lldb::DynamicValueType use_dynamic)
+                                     lldb::DynamicValueType use_dynamic)
 {
     SyntheticChildrenSP retval;
-#if USE_CACHE
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     ConstString valobj_type(GetTypeForCache(valobj, use_dynamic));
     if (valobj_type)
@@ -396,33 +387,26 @@ FormatManager::GetSyntheticChildren (ValueObject& valobj,
             if (log)
             {
                 log->Printf("[FormatManager::GetSyntheticChildren] Cache search success. Returning.");
-#ifdef LLDB_CONFIGURATION_DEBUG
-                log->Printf("[FormatManager::GetSyntheticChildren] Cache hits: %llu - Cache Misses: %llu", m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
-#endif
+                if (log->GetDebug())
+                    log->Printf("[FormatManager::GetSyntheticChildren] Cache hits: %llu - Cache Misses: %llu", m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
             }
             return retval;
         }
         if (log)
             log->Printf("[FormatManager::GetSyntheticChildren] Cache search failed. Going normal route");
     }
-#endif
     retval = m_categories_map.GetSyntheticChildren(valobj, use_dynamic);
-#if USE_CACHE
     if (valobj_type)
     {
         if (log)
             log->Printf("[FormatManager::GetSyntheticChildren] Caching %p for type %s",retval.get(),valobj_type.AsCString("<invalid>"));
         m_format_cache.SetSynthetic(valobj_type,retval);
     }
-#ifdef LLDB_CONFIGURATION_DEBUG
-    if (log)
+    if (log && log->GetDebug())
         log->Printf("[FormatManager::GetSyntheticChildren] Cache hits: %llu - Cache Misses: %llu", m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
-#endif
-#endif
     return retval;
 }
 #endif
-#undef USE_CACHE
 
 FormatManager::FormatManager() :
     m_format_cache(),
