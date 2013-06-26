@@ -26,7 +26,6 @@
 #include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 #include "gtest/gtest.h"
 
 namespace clang {
@@ -177,36 +176,43 @@ TEST(ShiftedCodePositionTest, FindsNewCodePositionWithInserts) {
 }
 
 class FlushRewrittenFilesTest : public ::testing::Test {
- public:
-  FlushRewrittenFilesTest() {
-    std::string ErrorInfo;
-    TemporaryDirectory = llvm::sys::Path::GetTemporaryDirectory(&ErrorInfo);
-    assert(ErrorInfo.empty());
-  }
+public:
+   FlushRewrittenFilesTest() {}
 
   ~FlushRewrittenFilesTest() {
-    std::string ErrorInfo;
-    TemporaryDirectory.eraseFromDisk(true, &ErrorInfo);
-    assert(ErrorInfo.empty());
+    for (llvm::StringMap<std::string>::iterator I = TemporaryFiles.begin(),
+                                                E = TemporaryFiles.end();
+         I != E; ++I) {
+      llvm::StringRef Name = I->second;
+      llvm::error_code EC = llvm::sys::fs::remove(Name);
+      (void)EC;
+      assert(!EC);
+    }
   }
 
   FileID createFile(llvm::StringRef Name, llvm::StringRef Content) {
-    SmallString<1024> Path(TemporaryDirectory.str());
-    llvm::sys::path::append(Path, Name);
-    std::string ErrorInfo;
-    llvm::raw_fd_ostream OutStream(Path.c_str(),
-                                   ErrorInfo, llvm::raw_fd_ostream::F_Binary);
-    assert(ErrorInfo.empty());
+    SmallString<1024> Path;
+    int FD;
+    llvm::error_code EC =
+        llvm::sys::fs::unique_file(Twine(Name) + "%%%%%%", FD, Path);
+    assert(!EC);
+    (void)EC;
+
+    llvm::raw_fd_ostream OutStream(FD, true);
     OutStream << Content;
     OutStream.close();
     const FileEntry *File = Context.Files.getFile(Path);
     assert(File != NULL);
+
+    StringRef Found = TemporaryFiles.GetOrCreateValue(Name, Path.str()).second;
+    assert(Found == Path);
+    (void)Found;
     return Context.Sources.createFileID(File, SourceLocation(), SrcMgr::C_User);
   }
 
   std::string getFileContentFromDisk(llvm::StringRef Name) {
-    SmallString<1024> Path(TemporaryDirectory.str());
-    llvm::sys::path::append(Path, Name);
+    std::string Path = TemporaryFiles.lookup(Name);
+    assert(!Path.empty());
     // We need to read directly from the FileManager without relaying through
     // a FileEntry, as otherwise we'd read through an already opened file
     // descriptor, which might not see the changes made.
@@ -215,7 +221,7 @@ class FlushRewrittenFilesTest : public ::testing::Test {
     return Context.Files.getBufferForFile(Path, NULL)->getBuffer();
   }
 
-  llvm::sys::Path TemporaryDirectory;
+  llvm::StringMap<std::string> TemporaryFiles;
   RewriterTestContext Context;
 };
 
