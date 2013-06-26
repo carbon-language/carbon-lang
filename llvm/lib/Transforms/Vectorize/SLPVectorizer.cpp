@@ -1377,8 +1377,10 @@ struct SLPVectorizer : public FunctionPass {
     // he store instructions.
     FuncSLP R(&F, SE, DL, TTI, AA, LI, DT);
 
-    for (Function::iterator it = F.begin(), e = F.end(); it != e; ++it) {
-      BasicBlock *BB = it;
+    // Scan the blocks in the function in post order.
+    for (po_iterator<BasicBlock*> it = po_begin(&F.getEntryBlock()),
+         e = po_end(&F.getEntryBlock()); it != e; ++it) {
+      BasicBlock *BB = *it;
 
       // Vectorize trees that end at reductions.
       Changed |= vectorizeChainsInBlock(BB, R);
