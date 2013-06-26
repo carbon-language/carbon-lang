@@ -60,10 +60,8 @@ private:
     CacheMap m_map;
     Mutex m_mutex;
     
-#ifdef LLDB_CONFIGURATION_DEBUG
     uint64_t m_cache_hits;
     uint64_t m_cache_misses;
-#endif
     
     Entry&
     GetEntry (const ConstString& type);
@@ -86,7 +84,6 @@ public:
     void
     Clear ();
     
-#ifdef LLDB_CONFIGURATION_DEBUG
     uint64_t
     GetCacheHits ()
     {
@@ -98,7 +95,6 @@ public:
     {
         return m_cache_misses;
     }
-#endif
 };
 } // namespace lldb_private
 
