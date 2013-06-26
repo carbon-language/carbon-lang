@@ -62,11 +62,11 @@ static llvm::cl::extrahelp extraHelp(
 // GetMainExecutable (since some platforms don't support taking the
 // address of main, and some platforms can't implement GetMainExecutable
 // without being given the address of a function in the main executable).
-llvm::sys::Path GetExecutablePath(const char *Argv0) {
+std::string GetExecutablePath(const char *Argv0) {
   // This just needs to be some symbol in the binary; C++ doesn't
   // allow taking the address of ::main however.
   void *MainAddr = (void*) (intptr_t) GetExecutablePath;
-  return llvm::sys::Path::GetMainExecutable(Argv0, MainAddr);
+  return llvm::sys::fs::getMainExecutable(Argv0, MainAddr);
 }
 
 static void printSourceLocation(SourceLocation loc, ASTContext &Ctx,

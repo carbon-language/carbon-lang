@@ -48,14 +48,14 @@ using namespace clang;
 using namespace clang::driver;
 using namespace llvm::opt;
 
-llvm::sys::Path GetExecutablePath(const char *Argv0, bool CanonicalPrefixes) {
+std::string GetExecutablePath(const char *Argv0, bool CanonicalPrefixes) {
   if (!CanonicalPrefixes)
-    return llvm::sys::Path(Argv0);
+    return Argv0;
 
   // This just needs to be some symbol in the binary; C++ doesn't
   // allow taking the address of ::main however.
   void *P = (void*) (intptr_t) GetExecutablePath;
-  return llvm::sys::Path::GetMainExecutable(Argv0, P);
+  return llvm::sys::fs::getMainExecutable(Argv0, P);
 }
 
 static const char *SaveStringInSet(std::set<std::string> &SavedStrings,
@@ -401,7 +401,7 @@ int main(int argc_, const char **argv_) {
     argv.insert(&argv[1], ExtraArgs.begin(), ExtraArgs.end());
   }
 
-  llvm::sys::Path Path = GetExecutablePath(argv[0], CanonicalPrefixes);
+  std::string Path = GetExecutablePath(argv[0], CanonicalPrefixes);
 
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions;
   {
@@ -419,14 +419,13 @@ int main(int argc_, const char **argv_) {
   // DiagnosticOptions instance.
   TextDiagnosticPrinter *DiagClient
     = new TextDiagnosticPrinter(llvm::errs(), &*DiagOpts);
-  DiagClient->setPrefix(llvm::sys::path::filename(Path.str()));
+  DiagClient->setPrefix(llvm::sys::path::filename(Path));
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
 
   DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
   ProcessWarningOptions(Diags, *DiagOpts, /*ReportDiags=*/false);
 
-  Driver TheDriver(Path.str(), llvm::sys::getDefaultTargetTriple(),
-                   "a.out", Diags);
+  Driver TheDriver(Path, llvm::sys::getDefaultTargetTriple(), "a.out", Diags);
 
   // Attempt to find the original path used to invoke the driver, to determine
   // the installed path. We do this manually, because we want to support that

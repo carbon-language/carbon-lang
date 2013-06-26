@@ -29,6 +29,7 @@
 #include "llvm/Option/OptTable.h"
 #include "llvm/Option/Option.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PathV1.h"
@@ -845,7 +846,7 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
 
 std::string CompilerInvocation::GetResourcesPath(const char *Argv0,
                                                  void *MainAddr) {
-  llvm::sys::Path P = llvm::sys::Path::GetMainExecutable(Argv0, MainAddr);
+  llvm::sys::Path P(llvm::sys::fs::getMainExecutable(Argv0, MainAddr));
 
   if (!P.isEmpty()) {
     P.eraseComponent();  // Remove /clang from foo/bin/clang

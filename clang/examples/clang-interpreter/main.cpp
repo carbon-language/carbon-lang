@@ -21,6 +21,7 @@
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Path.h"
@@ -35,11 +36,11 @@ using namespace clang::driver;
 // GetMainExecutable (since some platforms don't support taking the
 // address of main, and some platforms can't implement GetMainExecutable
 // without being given the address of a function in the main executable).
-llvm::sys::Path GetExecutablePath(const char *Argv0) {
+std::string GetExecutablePath(const char *Argv0) {
   // This just needs to be some symbol in the binary; C++ doesn't
   // allow taking the address of ::main however.
   void *MainAddr = (void*) (intptr_t) GetExecutablePath;
-  return llvm::sys::Path::GetMainExecutable(Argv0, MainAddr);
+  return llvm::sys::fs::getMainExecutable(Argv0, MainAddr);
 }
 
 static int Execute(llvm::Module *Mod, char * const *envp) {
@@ -68,14 +69,14 @@ static int Execute(llvm::Module *Mod, char * const *envp) {
 
 int main(int argc, const char **argv, char * const *envp) {
   void *MainAddr = (void*) (intptr_t) GetExecutablePath;
-  llvm::sys::Path Path = GetExecutablePath(argv[0]);
+  std::string Path = GetExecutablePath(argv[0]);
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   TextDiagnosticPrinter *DiagClient =
     new TextDiagnosticPrinter(llvm::errs(), &*DiagOpts);
 
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
-  Driver TheDriver(Path.str(), llvm::sys::getProcessTriple(), "a.out", Diags);
+  Driver TheDriver(Path, llvm::sys::getProcessTriple(), "a.out", Diags);
   TheDriver.setTitle("clang interpreter");
 
   // FIXME: This is a hack to try to force the driver to do something we can
