@@ -326,6 +326,10 @@ enum StatType {
   StatInt_getpeername,
   StatInt_ioctl,
   StatInt_sysinfo,
+  StatInt_readdir,
+  StatInt_readdir64,
+  StatInt_readdir_r,
+  StatInt_readdir64_r,
 
   // Dynamic annotations.
   StatAnnotation,

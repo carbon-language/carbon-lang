@@ -18,6 +18,7 @@
 #include "sanitizer_platform.h"
 
 namespace __sanitizer {
+  extern unsigned struct_dirent_sz;
   extern unsigned struct_utsname_sz;
   extern unsigned struct_stat_sz;
   extern unsigned struct_stat64_sz;
@@ -39,7 +40,6 @@ namespace __sanitizer {
 
 #if SANITIZER_LINUX
   extern unsigned struct_rlimit_sz;
-  extern unsigned struct_dirent_sz;
   extern unsigned struct_statfs_sz;
   extern unsigned struct_epoll_event_sz;
   extern unsigned struct_sysinfo_sz;

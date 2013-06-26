@@ -1268,6 +1268,66 @@ INTERCEPTOR(int, sysinfo, void *info) {
 #define INIT_SYSINFO
 #endif
 
+#if SANITIZER_INTERCEPT_READDIR
+INTERCEPTOR(void *, readdir, void *dirp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, readdir, dirp);
+  void *res = REAL(readdir)(dirp);
+  if (res)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_dirent_sz);
+  return res;
+}
+
+INTERCEPTOR(int, readdir_r, void *dirp, void *entry, void **result) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, readdir_r, dirp, entry, result);
+  int res = REAL(readdir_r)(dirp, entry, result);
+  if (!res) {
+    if (result)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
+    if (entry)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, entry, struct_dirent_sz);
+  }
+  return res;
+}
+
+#define INIT_READDIR           \
+  INTERCEPT_FUNCTION(readdir); \
+  INTERCEPT_FUNCTION(readdir_r);
+#else
+#define INIT_READDIR
+#endif
+
+#if SANITIZER_INTERCEPT_READDIR64
+INTERCEPTOR(void *, readdir64, void *dirp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, readdir64, dirp);
+  void *res = REAL(readdir64)(dirp);
+  if (res)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_dirent64_sz);
+  return res;
+}
+
+INTERCEPTOR(int, readdir64_r, void *dirp, void *entry, void **result) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, readdir64_r, dirp, entry, result);
+  int res = REAL(readdir64_r)(dirp, entry, result);
+  if (!res) {
+    if (result)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
+    if (entry)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, entry, struct_dirent64_sz);
+  }
+  return res;
+}
+#define INIT_READDIR64           \
+  INTERCEPT_FUNCTION(readdir64); \
+  INTERCEPT_FUNCTION(readdir64_r);
+#else
+#define INIT_READDIR64
+#endif
+
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCASECMP;                         \
   INIT_STRNCASECMP;                        \
@@ -1309,4 +1369,6 @@ INTERCEPTOR(int, sysinfo, void *info) {
   INIT_GETPEERNAME;                        \
   INIT_IOCTL;                              \
   INIT_INET_ATON;                          \
-  INIT_SYSINFO;
+  INIT_SYSINFO;                            \
+  INIT_READDIR;                            \
+  INIT_READDIR64;

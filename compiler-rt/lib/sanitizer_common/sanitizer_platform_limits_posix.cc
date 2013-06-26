@@ -94,6 +94,7 @@
 #endif
 
 namespace __sanitizer {
+  unsigned struct_dirent_sz = sizeof(struct dirent);
   unsigned struct_utsname_sz = sizeof(struct utsname);
   unsigned struct_stat_sz = sizeof(struct stat);
   unsigned struct_stat64_sz = sizeof(struct stat64);
@@ -115,7 +116,6 @@ namespace __sanitizer {
 
 #if SANITIZER_LINUX
   unsigned struct_rlimit_sz = sizeof(struct rlimit);
-  unsigned struct_dirent_sz = sizeof(struct dirent);
   unsigned struct_statfs_sz = sizeof(struct statfs);
   unsigned struct_epoll_event_sz = sizeof(struct epoll_event);
   unsigned struct_sysinfo_sz = sizeof(struct sysinfo);

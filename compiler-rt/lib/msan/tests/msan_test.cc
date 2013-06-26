@@ -889,6 +889,17 @@ TEST(MemorySanitizer, readdir) {
   closedir(dir);
 }
 
+TEST(MemorySanitizer, readdir_r) {
+  DIR *dir = opendir(".");
+  struct dirent d;
+  struct dirent *pd;
+  int res = readdir_r(dir, &d, &pd);
+  assert(!res);
+  EXPECT_NOT_POISONED(pd);
+  EXPECT_NOT_POISONED(d.d_name[0]);
+  closedir(dir);
+}
+
 TEST(MemorySanitizer, realpath) {
   const char* relpath = ".";
   char path[PATH_MAX + 1];
