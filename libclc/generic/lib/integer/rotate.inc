@@ -27,6 +27,9 @@ _CLC_OVERLOAD _CLC_DEF GENTYPE rotate(GENTYPE x, GENTYPE n){
     
     UGENTYPE x_1 = __builtin_astype(x, UGENTYPE);
 
+    //XXX: Is (UGENTYPE >> SGENTYPE) | (UGENTYPE << SGENTYPE) legal?
+    //     If so, then combine the amt and shifts into a single set of statements
+    
     UGENTYPE amt;
     amt = (n < (GENTYPE)0 ? __builtin_astype((GENTYPE)0-n, UGENTYPE) : (UGENTYPE)0);
     x_1 = (x_1 >> amt) | (x_1 << ((UGENTYPE)GENSIZE - amt));
