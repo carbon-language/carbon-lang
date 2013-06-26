@@ -1711,10 +1711,17 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   const uint32_t *Mask;
   const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
   const ARMBaseRegisterInfo *ARI = static_cast<const ARMBaseRegisterInfo*>(TRI);
-  if (isThisReturn)
-    // For 'this' returns, use the R0-preserving mask
+  if (isThisReturn) {
+    // For 'this' returns, use the R0-preserving mask if applicable
     Mask = ARI->getThisReturnPreservedMask(CallConv);
-  else
+    if (!Mask) {
+      // Set isThisReturn to false if the calling convention is not one that
+      // allows 'returned' to be modeled in this way, so LowerCallResult does
+      // not try to pass 'this' straight through 
+      isThisReturn = false;
+      Mask = ARI->getCallPreservedMask(CallConv);
+    }
+  } else
     Mask = ARI->getCallPreservedMask(CallConv);
 
   assert(Mask && "Missing call preserved mask for calling convention");

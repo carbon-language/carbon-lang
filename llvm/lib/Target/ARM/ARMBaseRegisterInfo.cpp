@@ -75,6 +75,9 @@ const uint32_t*
 ARMBaseRegisterInfo::getThisReturnPreservedMask(CallingConv::ID) const {
   return (STI.isTargetIOS() && !STI.isAAPCS_ABI())
     ? CSR_iOS_ThisReturn_RegMask : CSR_AAPCS_ThisReturn_RegMask;
+  // This should return NULL in the case of any calling convention that does
+  // not use the same register for an i32 first argument and an i32 return
+  // value
 }
 
 const uint32_t*

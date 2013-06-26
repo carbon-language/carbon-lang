@@ -94,9 +94,18 @@ public:
   /// Code Generation virtual methods...
   const uint16_t *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
   const uint32_t *getCallPreservedMask(CallingConv::ID) const;
-  const uint32_t *getThisReturnPreservedMask(CallingConv::ID) const;
   const uint32_t *getNoPreservedMask() const;
 
+  // getThisReturnPreservedMask - Returns a call preserved mask specific to the
+  // case that 'returned' is  an i32 first argument if the calling convention
+  // is one that can (partially) model this attribute with a preserved mask
+  // (i.e. it is a calling convention that uses the same register for the first
+  // i32 argument and an i32 return value)
+  //
+  // Should return NULL in the case that the calling convention does not have
+  // this property
+  const uint32_t *getThisReturnPreservedMask(CallingConv::ID) const;
+  
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
   const TargetRegisterClass*
