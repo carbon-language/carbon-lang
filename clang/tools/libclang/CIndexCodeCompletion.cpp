@@ -31,8 +31,8 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Atomic.h"
 #include "llvm/Support/CrashRecoveryContext.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
@@ -272,7 +272,7 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   
   /// \brief Temporary files that should be removed once we have finished
   /// with the code-completion results.
-  std::vector<llvm::sys::Path> TemporaryFiles;
+  std::vector<std::string> TemporaryFiles;
 
   /// \brief Temporary buffers that will be deleted once we have finished with
   /// the code-completion results.
@@ -341,7 +341,7 @@ AllocatedCXCodeCompleteResults::~AllocatedCXCodeCompleteResults() {
   delete [] Results;
 
   for (unsigned I = 0, N = TemporaryFiles.size(); I != N; ++I)
-    TemporaryFiles[I].eraseFromDisk();
+    llvm::sys::fs::remove(TemporaryFiles[I]);
   for (unsigned I = 0, N = TemporaryBuffers.size(); I != N; ++I)
     delete TemporaryBuffers[I];
 
