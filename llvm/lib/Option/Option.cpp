@@ -50,11 +50,13 @@ void Option::dump() const {
 #undef P
   }
 
-  llvm::errs() << " Prefixes:[";
-  for (const char * const *Pre = Info->Prefixes; *Pre != 0; ++Pre) {
-    llvm::errs() << '"' << *Pre << (*(Pre + 1) == 0 ? "\"" : "\", ");
+  if (Info->Prefixes) {
+    llvm::errs() << " Prefixes:[";
+    for (const char * const *Pre = Info->Prefixes; *Pre != 0; ++Pre) {
+      llvm::errs() << '"' << *Pre << (*(Pre + 1) == 0 ? "\"" : "\", ");
+    }
+    llvm::errs() << ']';
   }
-  llvm::errs() << ']';
 
   llvm::errs() << " Name:\"" << getName() << '"';
 
