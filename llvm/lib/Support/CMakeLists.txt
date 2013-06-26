@@ -73,7 +73,6 @@ add_llvm_library(LLVMSupport
   IncludeFile.cpp
   Memory.cpp
   Mutex.cpp
-  Path.cpp
   PathV2.cpp
   Process.cpp
   Program.cpp
@@ -90,7 +89,6 @@ add_llvm_library(LLVMSupport
   Unix/Host.inc
   Unix/Memory.inc
   Unix/Mutex.inc
-  Unix/Path.inc
   Unix/PathV2.inc
   Unix/Process.inc
   Unix/Program.inc
@@ -104,7 +102,6 @@ add_llvm_library(LLVMSupport
   Windows/Host.inc
   Windows/Memory.inc
   Windows/Mutex.inc
-  Windows/Path.inc
   Windows/PathV2.inc
   Windows/Process.inc
   Windows/Program.inc
