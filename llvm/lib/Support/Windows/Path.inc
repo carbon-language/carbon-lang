@@ -200,15 +200,6 @@ Path::GetCurrentDirectory() {
   return Path(pathname);
 }
 
-/// GetMainExecutable - Return the path to the main executable, given the
-/// value of argv[0] from program startup.
-Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
-  char pathname[MAX_PATH];
-  DWORD ret = ::GetModuleFileNameA(NULL, pathname, MAX_PATH);
-  return ret != MAX_PATH ? Path(pathname) : Path();
-}
-
-
 // FIXME: the above set of functions don't map to Windows very well.
 
 bool
