@@ -25,6 +25,14 @@ def u16imm64 : Operand<i64> {
   let EncoderMethod = "getImm16Encoding";
   let ParserMatchClass = PPCU16ImmAsmOperand;
 }
+def s17imm64 : Operand<i64> {
+  // This operand type is used for addis/lis to allow the assembler parser
+  // to accept immediates in the range -65536..65535 for compatibility with
+  // the GNU assembler.  The operand is treated as 16-bit otherwise.
+  let PrintMethod = "printS16ImmOperand";
+  let EncoderMethod = "getImm16Encoding";
+  let ParserMatchClass = PPCS17ImmAsmOperand;
+}
 def tocentry : Operand<iPTR> {
   let MIOperandInfo = (ops i64imm:$imm);
 }
@@ -330,7 +338,7 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in {
 def LI8  : DForm_2_r0<14, (outs g8rc:$rD), (ins s16imm64:$imm),
                       "li $rD, $imm", IntSimple,
                       [(set i64:$rD, imm64SExt16:$imm)]>;
-def LIS8 : DForm_2_r0<15, (outs g8rc:$rD), (ins s16imm64:$imm),
+def LIS8 : DForm_2_r0<15, (outs g8rc:$rD), (ins s17imm64:$imm),
                       "lis $rD, $imm", IntSimple,
                       [(set i64:$rD, imm16ShiftedSExt:$imm)]>;
 }
@@ -406,7 +414,7 @@ def ADDIC8 : DForm_2<12, (outs g8rc:$rD), (ins g8rc:$rA, s16imm64:$imm),
 def ADDI8  : DForm_2<14, (outs g8rc:$rD), (ins g8rc_nox0:$rA, s16imm64:$imm),
                      "addi $rD, $rA, $imm", IntSimple,
                      [(set i64:$rD, (add i64:$rA, imm64SExt16:$imm))]>;
-def ADDIS8 : DForm_2<15, (outs g8rc:$rD), (ins g8rc_nox0:$rA, s16imm64:$imm),
+def ADDIS8 : DForm_2<15, (outs g8rc:$rD), (ins g8rc_nox0:$rA, s17imm64:$imm),
                      "addis $rD, $rA, $imm", IntSimple,
                      [(set i64:$rD, (add i64:$rA, imm16ShiftedSExt:$imm))]>;
 

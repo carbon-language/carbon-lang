@@ -40,6 +40,14 @@
 # CHECK: ori 1, 2, 65535                 # encoding: [0x60,0x41,0xff,0xff]
          ori 1, 2, 65535
 
+# Signed 16-bit immediate operands (extended range for addis)
+
+# CHECK: addis 1, 0, 0                   # encoding: [0x3c,0x20,0x00,0x00]
+         addis 1, 0, -65536
+
+# CHECK: addis 1, 0, -1                  # encoding: [0x3c,0x20,0xff,0xff]
+         addis 1, 0, 65535
+
 # D-Form memory operands
 
 # CHECK: lwz 1, 0(0)                     # encoding: [0x80,0x20,0x00,0x00]

@@ -267,6 +267,8 @@ public:
   bool isS16ImmX4() const { return Kind == Expression ||
                                    (Kind == Immediate && isInt<16>(getImm()) &&
                                     (getImm() & 3) == 0); }
+  bool isS17Imm() const { return Kind == Expression ||
+                                 (Kind == Immediate && isInt<17>(getImm())); }
   bool isDirectBr() const { return Kind == Expression ||
                                    (Kind == Immediate && isInt<26>(getImm()) &&
                                     (getImm() & 3) == 0); }
