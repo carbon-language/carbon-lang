@@ -1,4 +1,4 @@
-//===-- PathV2.cpp - Implement OS Path Concept ------------------*- C++ -*-===//
+//===-- Path.cpp - Implement OS Path Concept ------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file implements the operating system PathV2 API.
+//  This file implements the operating system Path API.
 //
 //===----------------------------------------------------------------------===//
 
@@ -962,8 +962,8 @@ error_code directory_entry::status(file_status &result) const {
 
 // Include the truly platform-specific parts.
 #if defined(LLVM_ON_UNIX)
-#include "Unix/PathV2.inc"
+#include "Unix/Path.inc"
 #endif
 #if defined(LLVM_ON_WIN32)
-#include "Windows/PathV2.inc"
+#include "Windows/Path.inc"
 #endif

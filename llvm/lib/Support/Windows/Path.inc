@@ -1,4 +1,4 @@
-//===- llvm/Support/Windows/PathV2.inc - Windows Path Impl ------*- C++ -*-===//
+//===- llvm/Support/Windows/Path.inc - Windows Path Impl --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the Windows specific implementation of the PathV2 API.
+// This file implements the Windows specific implementation of the Path API.
 //
 //===----------------------------------------------------------------------===//
 

@@ -1,4 +1,4 @@
-//===- llvm/Support/Unix/PathV2.cpp - Unix Path Implementation --*- C++ -*-===//
+//===- llvm/Support/Unix/Path.inc - Unix Path Implementation ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the Unix specific implementation of the PathV2 API.
+// This file implements the Unix specific implementation of the Path API.
 //
 //===----------------------------------------------------------------------===//
 
