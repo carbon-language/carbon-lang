@@ -4966,12 +4966,12 @@ getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
   } else
     CanAcceptCarrySet = false;
 
-  if (Mnemonic == "cbnz" || Mnemonic == "setend" || Mnemonic == "dmb" ||
-      Mnemonic == "cps" || Mnemonic == "mcr2" || Mnemonic == "it" ||
-      Mnemonic == "mcrr2" || Mnemonic == "cbz" || Mnemonic == "cdp2" ||
-      Mnemonic == "trap" || Mnemonic == "mrc2" || Mnemonic == "mrrc2" ||
-      Mnemonic == "dsb" || Mnemonic == "isb" || Mnemonic == "setend" ||
-      (Mnemonic == "clrex" && !isThumb()) ||
+  if (Mnemonic == "cbnz" || Mnemonic == "setend" || Mnemonic == "cps" ||
+      Mnemonic == "mcr2" || Mnemonic == "it" || Mnemonic == "mcrr2" ||
+      Mnemonic == "cbz" || Mnemonic == "cdp2" || Mnemonic == "trap" ||
+      Mnemonic == "mrc2" || Mnemonic == "mrrc2" || Mnemonic == "setend" ||
+      ((Mnemonic == "clrex" ||  Mnemonic == "dmb" || Mnemonic == "dsb" ||
+       Mnemonic == "isb") && !isThumb()) ||
       (Mnemonic == "nop" && isThumbOne()) ||
       ((Mnemonic == "pld" || Mnemonic == "pli" || Mnemonic == "pldw" ||
         Mnemonic == "ldc2" || Mnemonic == "ldc2l" ||

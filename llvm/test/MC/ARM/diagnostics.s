@@ -379,3 +379,17 @@
 
         nop.n
 @ CHECK-ERRORS: error: instruction with .n (narrow) qualifier not allowed in arm mode
+
+	dmbeq #5
+	dsble #15
+	isblo #7
+@ CHECK-ERRORS: error: instruction 'dmb' is not predicable, but condition code specified
+@ CHECK-ERRORS: error: instruction 'dsb' is not predicable, but condition code specified
+@ CHECK-ERRORS: error: instruction 'isb' is not predicable, but condition code specified
+
+	dmblt
+	dsbne
+	isbeq
+@ CHECK-ERRORS: error: instruction 'dmb' is not predicable, but condition code specified
+@ CHECK-ERRORS: error: instruction 'dsb' is not predicable, but condition code specified
+@ CHECK-ERRORS: error: instruction 'isb' is not predicable, but condition code specified

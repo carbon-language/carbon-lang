@@ -3136,26 +3136,24 @@ def t2MOVCCror : T2I_movcc_sh<0b11, (outs rGPR:$Rd),
 
 // memory barriers protect the atomic sequences
 let hasSideEffects = 1 in {
-def t2DMB : AInoP<(outs), (ins memb_opt:$opt), ThumbFrm, NoItinerary,
-                  "dmb", "\t$opt", [(ARMMemBarrier (i32 imm:$opt))]>,
-                  Requires<[IsThumb, HasDB]> {
+def t2DMB : T2I<(outs), (ins memb_opt:$opt), NoItinerary,
+                "dmb", "\t$opt", [(ARMMemBarrier (i32 imm:$opt))]>,
+                Requires<[HasDB]> {
   bits<4> opt;
   let Inst{31-4} = 0xf3bf8f5;
   let Inst{3-0} = opt;
 }
 }
 
-def t2DSB : AInoP<(outs), (ins memb_opt:$opt), ThumbFrm, NoItinerary,
-                  "dsb", "\t$opt", []>,
-                  Requires<[IsThumb, HasDB]> {
+def t2DSB : T2I<(outs), (ins memb_opt:$opt), NoItinerary,
+                "dsb", "\t$opt", []>, Requires<[HasDB]> {
   bits<4> opt;
   let Inst{31-4} = 0xf3bf8f4;
   let Inst{3-0} = opt;
 }
 
-def t2ISB : AInoP<(outs), (ins instsyncb_opt:$opt), ThumbFrm, NoItinerary,
-                  "isb", "\t$opt",
-                  []>, Requires<[IsThumb, HasDB]> {
+def t2ISB : T2I<(outs), (ins instsyncb_opt:$opt), NoItinerary,
+                "isb", "\t$opt", []>, Requires<[HasDB]> {
   bits<4> opt;
   let Inst{31-4} = 0xf3bf8f6;
   let Inst{3-0} = opt;
@@ -4141,9 +4139,9 @@ def : t2InstAlias<"tst${p} $Rn, $Rm",
                   (t2TSTrr GPRnopc:$Rn, rGPR:$Rm, pred:$p)>;
 
 // Memory barriers
-def : InstAlias<"dmb", (t2DMB 0xf)>, Requires<[IsThumb, HasDB]>;
-def : InstAlias<"dsb", (t2DSB 0xf)>, Requires<[IsThumb, HasDB]>;
-def : InstAlias<"isb", (t2ISB 0xf)>, Requires<[IsThumb, HasDB]>;
+def : InstAlias<"dmb${p}", (t2DMB 0xf, pred:$p)>, Requires<[IsThumb2, HasDB]>;
+def : InstAlias<"dsb${p}", (t2DSB 0xf, pred:$p)>, Requires<[IsThumb2, HasDB]>;
+def : InstAlias<"isb${p}", (t2ISB 0xf, pred:$p)>, Requires<[IsThumb2, HasDB]>;
 
 // Alias for LDR, LDRB, LDRH, LDRSB, and LDRSH without the ".w" optional
 // width specifier.
