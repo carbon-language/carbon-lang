@@ -327,6 +327,13 @@ inline error_code remove(const Twine &Path) {
 ///          successfully set, otherwise a platform specific error_code.
 error_code remove_all(const Twine &path, uint32_t &num_removed);
 
+/// @brief Convenience function for clients that don't need to know how many
+///        files were removed.
+inline error_code remove_all(const Twine &Path) {
+  uint32_t Removed;
+  return remove_all(Path, Removed);
+}
+
 /// @brief Rename \a from to \a to. Files are renamed as if by POSIX rename().
 ///
 /// @param from The path to rename from.
