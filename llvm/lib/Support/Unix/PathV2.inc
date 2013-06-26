@@ -188,7 +188,7 @@ std::string getMainExecutable(const char *argv0, void *MainAddr) {
   char exe_path[PATH_MAX];
 
   if (getprogpath(exe_path, argv0) != NULL)
-    return Path(exe_path);
+    return exe_path;
 #elif defined(__linux__) || defined(__CYGWIN__)
   char exe_path[MAXPATHLEN];
   StringRef aPath("/proc/self/exe");
@@ -207,13 +207,13 @@ std::string getMainExecutable(const char *argv0, void *MainAddr) {
   Dl_info DLInfo;
   int err = dladdr(MainAddr, &DLInfo);
   if (err == 0)
-    return Path();
+    return "";
 
   // If the filename is a symlink, we need to resolve and return the location of
   // the actual executable.
   char link_path[MAXPATHLEN];
   if (realpath(DLInfo.dli_fname, link_path))
-    return Path(link_path);
+    return link_path;
 #else
 #error GetMainExecutable is not implemented on this host yet.
 #endif
