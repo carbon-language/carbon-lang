@@ -1,8 +1,8 @@
-// RUN: %clang_cc1 -fsyntax-only %s 2>&1| FileCheck %s
+// RUN: %clang_cc1 -fsyntax-only %s -std=c++11 2>&1| FileCheck %s
 
 // Note that the error count below doesn't matter. We just want to
 // make sure that the parser doesn't crash.
-// CHECK: 15 errors
+// CHECK: 16 errors
 
 // PR7511
 template<a>
@@ -109,4 +109,36 @@ namespace libcxx_test {
   };
   template <class T> struct B {};
   __pointer_traits_element_type<B<int>, true>::type x;
+}
+
+namespace PR14281_part1 {
+  template <class P, int> struct A;
+  template <class P> struct A<P, 1>;
+  template <template <class, int> class S, class T> struct A<S<T, 1>, 1> {
+    typedef char type;
+  };
+  template <class T, int i> struct B {};
+  A<B<int, 1>, 1>::type x;
+}
+
+namespace PR14281_part2 {
+  typedef decltype(nullptr) nullptr_t;
+  template <class P, nullptr_t> struct A;
+  template <class P> struct A<P, nullptr>;
+  template <template <class, nullptr_t> class S, class T> struct A<S<T, nullptr>, nullptr> {
+    typedef char type;
+  };
+  template <class T, nullptr_t i> struct B {};
+  A<B<int, nullptr>, nullptr>::type x;
+}
+
+namespace PR14281_part3 {
+  extern int some_decl;
+  template <class P, int*> struct A;
+  template <class P> struct A<P, &some_decl>;
+  template <template <class, int*> class S, class T> struct A<S<T, &some_decl>, &some_decl> {
+    typedef char type;
+  };
+  template <class T, int* i> struct B {};
+  A<B<int, &some_decl>, &some_decl>::type x;
 }
