@@ -43,7 +43,7 @@ llvm_clang = os.path.join(llvm_bindir, 'clang')
 llvm_link = os.path.join(llvm_bindir, 'llvm-link')
 llvm_opt = os.path.join(llvm_bindir, 'opt')
 
-default_targets = ['nvptx--nvidiacl', 'nvptx64--nvidiacl']
+default_targets = ['nvptx--nvidiacl', 'nvptx64--nvidiacl', 'r600--']
 
 targets = args
 if not targets:
