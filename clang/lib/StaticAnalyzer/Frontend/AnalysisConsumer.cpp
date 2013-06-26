@@ -681,14 +681,14 @@ namespace {
 
 class UbigraphViz : public ExplodedNode::Auditor {
   OwningPtr<raw_ostream> Out;
-  std::string Dir, Filename;
+  std::string Filename;
   unsigned Cntr;
 
   typedef llvm::DenseMap<void*,unsigned> VMap;
   VMap M;
 
 public:
-  UbigraphViz(raw_ostream *Out, StringRef Dir, StringRef Filename);
+  UbigraphViz(raw_ostream *Out, StringRef Filename);
 
   ~UbigraphViz();
 
@@ -706,8 +706,7 @@ static ExplodedNode::Auditor* CreateUbiViz() {
   OwningPtr<llvm::raw_fd_ostream> Stream;
   Stream.reset(new llvm::raw_fd_ostream(FD, true));
 
-  StringRef Dir = llvm::sys::path::parent_path(P);
-  return new UbigraphViz(Stream.take(), Dir, P);
+  return new UbigraphViz(Stream.take(), P);
 }
 
 void UbigraphViz::AddEdge(ExplodedNode *Src, ExplodedNode *Dst) {
@@ -744,8 +743,8 @@ void UbigraphViz::AddEdge(ExplodedNode *Src, ExplodedNode *Dst) {
        << ", ('arrow','true'), ('oriented', 'true'))\n";
 }
 
-UbigraphViz::UbigraphViz(raw_ostream *Out, StringRef Dir, StringRef Filename)
-  : Out(Out), Dir(Dir), Filename(Filename), Cntr(0) {
+UbigraphViz::UbigraphViz(raw_ostream *Out, StringRef Filename)
+  : Out(Out), Filename(Filename), Cntr(0) {
 
   *Out << "('vertex_style_attribute', 0, ('shape', 'icosahedron'))\n";
   *Out << "('vertex_style', 1, 0, ('shape', 'sphere'), ('color', '#ffcc66'),"
@@ -766,6 +765,6 @@ UbigraphViz::~UbigraphViz() {
     llvm::errs() << "Error viewing graph: " << ErrMsg << "\n";
   }
 
-  // Delete the directory.
-  llvm::sys::fs::remove_all(Dir);
+  // Delete the file.
+  llvm::sys::fs::remove(Filename);
 }
