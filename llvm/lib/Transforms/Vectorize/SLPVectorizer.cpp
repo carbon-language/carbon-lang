@@ -1302,6 +1302,7 @@ void FuncSLP::optimizeGatherSequence() {
   // instructions. TODO: We can further optimize this scan if we split the
   // instructions into different buckets based on the insert lane.
   SmallPtrSet<Instruction*, 16> Visited;
+  SmallPtrSet<Instruction*, 16> ToRemove;
   ReversePostOrderTraversal<Function*> RPOT(F);
   for (ReversePostOrderTraversal<Function*>::rpo_iterator I = RPOT.begin(),
        E = RPOT.end(); I != E; ++I) {
@@ -1319,6 +1320,7 @@ void FuncSLP::optimizeGatherSequence() {
         if (Insert->isIdenticalTo(*v) &&
             DT->dominates((*v)->getParent(), Insert->getParent())) {
           Insert->replaceAllUsesWith(*v);
+          ToRemove.insert(Insert);
           Insert = 0;
           break;
         }
@@ -1326,6 +1328,13 @@ void FuncSLP::optimizeGatherSequence() {
       if (Insert)
         Visited.insert(Insert);
     }
+  }
+
+  // Erase all of the instructions that we RAUWed.
+  for (SmallPtrSet<Instruction*, 16>::iterator v = ToRemove.begin(),
+       ve = ToRemove.end(); v != ve; ++v) {
+    assert((*v)->getNumUses() == 0 && "Can't remove instructions with uses");
+    (*v)->eraseFromParent();
   }
 }
 
