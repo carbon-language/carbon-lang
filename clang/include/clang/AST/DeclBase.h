@@ -847,9 +847,9 @@ public:
   }
 
   enum FriendObjectKind {
-    FOK_None,      ///< not a friend object
-    FOK_Declared,  ///< a friend of a previously-declared entity
-    FOK_Undeclared ///< a friend of a previously-undeclared entity
+    FOK_None,      ///< Not a friend object.
+    FOK_Declared,  ///< A friend of a previously-declared entity.
+    FOK_Undeclared ///< A friend of a previously-undeclared entity.
   };
 
   /// \brief Determines whether this declaration is the object of a
