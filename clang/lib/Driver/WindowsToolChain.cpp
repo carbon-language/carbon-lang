@@ -18,7 +18,6 @@
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 
 // Include the necessary headers to interface with the Windows registry and
 // environment.
@@ -284,8 +283,8 @@ void Windows::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     return;
 
   if (!DriverArgs.hasArg(options::OPT_nobuiltininc)) {
-    llvm::sys::Path P(getDriver().ResourceDir);
-    P.appendComponent("include");
+    SmallString<128> P(getDriver().ResourceDir);
+    llvm::sys::path::append(P, "include");
     addSystemInclude(DriverArgs, CC1Args, P.str());
   }
 
