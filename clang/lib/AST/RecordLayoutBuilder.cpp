@@ -592,8 +592,6 @@ protected:
   CharUnits NonVirtualSize;
   CharUnits NonVirtualAlignment;
 
-  FieldDecl *ZeroLengthBitfield;
-
   /// PrimaryBase - the primary base class (if one exists) of the class
   /// we're laying out.
   const CXXRecordDecl *PrimaryBase;
@@ -654,8 +652,7 @@ protected:
       MaxFieldAlignment(CharUnits::Zero()), 
       DataSize(0), NonVirtualSize(CharUnits::Zero()), 
       NonVirtualAlignment(CharUnits::One()), 
-      ZeroLengthBitfield(0), PrimaryBase(0), 
-      PrimaryBaseIsVirtual(false),
+      PrimaryBase(0), PrimaryBaseIsVirtual(false),
       HasOwnVFPtr(false),
       VBPtrOffset(CharUnits::fromQuantity(-1)),
       FirstNearlyEmptyVBase(0) { }
@@ -1733,16 +1730,9 @@ void RecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D) {
 void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   // Layout each field, for now, just sequentially, respecting alignment.  In
   // the future, this will need to be tweakable by targets.
-  ZeroLengthBitfield = 0;
   for (RecordDecl::field_iterator Field = D->field_begin(),
-       FieldEnd = D->field_end(); Field != FieldEnd; ++Field) {
-    if (!Context.getTargetInfo().useBitFieldTypeAlignment() &&
-        Context.getTargetInfo().useZeroLengthBitfieldAlignment()) {
-      if (Field->isBitField() && Field->getBitWidthValue(Context) == 0)
-        ZeroLengthBitfield = *Field;
-    }
+       FieldEnd = D->field_end(); Field != FieldEnd; ++Field)
     LayoutField(*Field);
-  }
 }
 
 void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
@@ -1836,10 +1826,14 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   uint64_t UnpaddedFieldOffset = getDataSizeInBits() - UnfilledBitsInLastUnit;
   uint64_t FieldOffset = IsUnion ? 0 : UnpaddedFieldOffset;
 
-  if (ZeroLengthBitfield) {
+  bool ZeroLengthBitfield = false;
+  if (!Context.getTargetInfo().useBitFieldTypeAlignment() &&
+      Context.getTargetInfo().useZeroLengthBitfieldAlignment() &&
+      FieldSize == 0) {
     // The alignment of a zero-length bitfield affects the alignment
     // of the next member.  The alignment is the max of the zero 
     // length bitfield's alignment and a target specific fixed value.
+    ZeroLengthBitfield = true;
     unsigned ZeroLengthBitfieldBoundary =
       Context.getTargetInfo().getZeroLengthBitfieldBoundary();
     if (ZeroLengthBitfieldBoundary > FieldAlign)
@@ -1896,8 +1890,6 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
       !Context.getTargetInfo().useZeroLengthBitfieldAlignment() &&
       !IsMsStruct)
     FieldAlign = UnpackedFieldAlign = 1;
-
-  ZeroLengthBitfield = 0;
 
   if (ExternalLayout)
     FieldOffset = updateExternalFieldOffset(D, FieldOffset);
@@ -1984,30 +1976,6 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
       Context.getTypeInfoInChars(D->getType());
     FieldSize = FieldInfo.first;
     FieldAlign = FieldInfo.second;
-
-    if (ZeroLengthBitfield) {
-      CharUnits ZeroLengthBitfieldBoundary = 
-        Context.toCharUnitsFromBits(
-          Context.getTargetInfo().getZeroLengthBitfieldBoundary());
-      if (ZeroLengthBitfieldBoundary == CharUnits::Zero()) {
-        // If a zero-length bitfield is inserted after a bitfield,
-        // and the alignment of the zero-length bitfield is
-        // greater than the member that follows it, `bar', `bar' 
-        // will be aligned as the type of the zero-length bitfield.
-        std::pair<CharUnits, CharUnits> FieldInfo = 
-          Context.getTypeInfoInChars(ZeroLengthBitfield->getType());
-        CharUnits ZeroLengthBitfieldAlignment = FieldInfo.second;        
-        if (ZeroLengthBitfieldAlignment > FieldAlign)
-          FieldAlign = ZeroLengthBitfieldAlignment;
-      } else if (ZeroLengthBitfieldBoundary > FieldAlign) {
-        // Align 'bar' based on a fixed alignment specified by the target.
-        assert(Context.getTargetInfo().useZeroLengthBitfieldAlignment() &&
-               "ZeroLengthBitfieldBoundary should only be used in conjunction"
-               " with useZeroLengthBitfieldAlignment.");
-        FieldAlign = ZeroLengthBitfieldBoundary;
-      }
-      ZeroLengthBitfield = 0;
-    }
 
     if (IsMsStruct) {
       // If MS bitfield layout is required, figure out what type is being
