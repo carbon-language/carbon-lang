@@ -1230,8 +1230,9 @@ class T2JTI<dag oops, dag iops, InstrItinClass itin,
   : Thumb2XI<oops, iops, AddrModeNone, 0, itin, asm, "", pattern>;
 
 // Move to/from coprocessor instructions
-class T2Cop<bits<4> opc, dag oops, dag iops, string asm, list<dag> pattern>
-  : T2XI <oops, iops, NoItinerary, asm, pattern>, Requires<[IsThumb2]> {
+class T2Cop<bits<4> opc, dag oops, dag iops, string opcstr, string asm,
+            list<dag> pattern>
+  : T2I <oops, iops, NoItinerary, opcstr, asm, pattern>, Requires<[IsThumb2]> {
   let Inst{31-28} = opc;
 }
 

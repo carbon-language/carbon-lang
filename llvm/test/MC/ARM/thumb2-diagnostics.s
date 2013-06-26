@@ -47,3 +47,7 @@
         isb  #16
 @ CHECK-ERRORS: error: immediate value out of range
 @ CHECK-ERRORS: error: immediate value out of range
+
+        itt eq
+        bkpteq #1
+@ CHECK-ERRORS: error: instruction 'bkpt' is not predicable, but condition code specified

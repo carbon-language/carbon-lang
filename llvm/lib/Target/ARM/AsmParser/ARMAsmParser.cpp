@@ -4966,28 +4966,26 @@ getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
   } else
     CanAcceptCarrySet = false;
 
-  if (Mnemonic == "cbnz" || Mnemonic == "setend" || Mnemonic == "cps" ||
-      Mnemonic == "mcr2" || Mnemonic == "it" || Mnemonic == "mcrr2" ||
-      Mnemonic == "cbz" || Mnemonic == "cdp2" || Mnemonic == "trap" ||
-      Mnemonic == "mrc2" || Mnemonic == "mrrc2" || Mnemonic == "setend" ||
-      ((Mnemonic == "clrex" ||  Mnemonic == "dmb" || Mnemonic == "dsb" ||
-       Mnemonic == "isb") && !isThumb()) ||
-      (Mnemonic == "nop" && isThumbOne()) ||
-      ((Mnemonic == "pld" || Mnemonic == "pli" || Mnemonic == "pldw" ||
-        Mnemonic == "ldc2" || Mnemonic == "ldc2l" ||
-        Mnemonic == "stc2" || Mnemonic == "stc2l") && !isThumb()) ||
-      ((Mnemonic.startswith("rfe") || Mnemonic.startswith("srs")) &&
-       !isThumb()) ||
-      Mnemonic.startswith("cps") || (Mnemonic == "movs" && isThumbOne())) {
+  if (Mnemonic == "bkpt" || Mnemonic == "cbnz" || Mnemonic == "setend" ||
+      Mnemonic == "cps" ||  Mnemonic == "it" ||  Mnemonic == "cbz" ||
+      Mnemonic == "trap" || Mnemonic == "setend" ||
+      Mnemonic.startswith("cps")) {
+    // These mnemonics are never predicable
     CanAcceptPredicationCode = false;
+  } else if (!isThumb()) {
+    // Some instructions are only predicable in Thumb mode
+    CanAcceptPredicationCode
+      = Mnemonic != "cdp2" && Mnemonic != "clrex" && Mnemonic != "mcr2" &&
+        Mnemonic != "mcrr2" && Mnemonic != "mrc2" && Mnemonic != "mrrc2" &&
+        Mnemonic != "dmb" && Mnemonic != "dsb" && Mnemonic != "isb" &&
+        Mnemonic != "pld" && Mnemonic != "pli" && Mnemonic != "pldw" &&
+        Mnemonic != "ldc2" && Mnemonic != "ldc2l" &&
+        Mnemonic != "stc2" && Mnemonic != "stc2l" &&
+        !Mnemonic.startswith("rfe") && !Mnemonic.startswith("srs");
+  } else if (isThumbOne()) {
+    CanAcceptPredicationCode = Mnemonic != "nop" && Mnemonic != "movs";
   } else
     CanAcceptPredicationCode = true;
-
-  if (isThumb()) {
-    if (Mnemonic == "bkpt" || Mnemonic == "mcr" || Mnemonic == "mcrr" ||
-        Mnemonic == "mrc" || Mnemonic == "mrrc" || Mnemonic == "cdp")
-      CanAcceptPredicationCode = false;
-  }
 }
 
 bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,

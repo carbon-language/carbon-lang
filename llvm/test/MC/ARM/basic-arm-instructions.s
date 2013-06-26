@@ -465,6 +465,8 @@ Lforward:
 @ CHECK: cdp2  p7, #1, c1, c1, c1, #4    @ encoding: [0x81,0x17,0x11,0xfe]
 @ CHECK: cdp2  p10, #0, c6, c12, c0, #7   @ encoding: [0xe0,0x6a,0x0c,0xfe]
 
+        cdpne  p7, #1, c1, c1, c1, #4
+@ CHECK: cdpne  p7, #1, c1, c1, c1, #4     @ encoding: [0x81,0x17,0x11,0x1e]
 
 @------------------------------------------------------------------------------
 @ CLREX
@@ -969,6 +971,9 @@ Lforward:
 @ CHECK: mcr  p7, #1, r5, c1, c1, #4    @ encoding: [0x91,0x57,0x21,0xee]
 @ CHECK: mcr2  p7, #1, r5, c1, c1, #4   @ encoding: [0x91,0x57,0x21,0xfe]
 
+        mcrls  p7, #1, r5, c1, c1, #4
+@ CHECK: mcrls  p7, #1, r5, c1, c1, #4   @ encoding: [0x91,0x57,0x21,0x9e]
+
 @------------------------------------------------------------------------------
 @ MCRR/MCRR2
 @------------------------------------------------------------------------------
@@ -978,6 +983,8 @@ Lforward:
 @ CHECK: mcrr  p7, #15, r5, r4, c1      @ encoding: [0xf1,0x57,0x44,0xec]
 @ CHECK: mcrr2  p7, #15, r5, r4, c1     @ encoding: [0xf1,0x57,0x44,0xfc]
 
+        mcrrgt  p7, #15, r5, r4, c1
+@ CHECK: mcrrgt  p7, #15, r5, r4, c1     @ encoding: [0xf1,0x57,0x44,0xcc]
 
 @------------------------------------------------------------------------------
 @ MLA
@@ -1081,6 +1088,9 @@ Lforward:
 @ CHECK: mrc2  p10, #7, apsr_nzcv, c15, c0, #1    @ encoding: [0x30,0xfa,0xff,0xfe]
 @ CHECK: mrc2  p10, #7, pc, c15, c0, #1           @ encoding: [0x30,0xfa,0xff,0xfe]
 
+        mrceq  p15, #7, pc, c15, c6, #6
+@ CHECK: mrceq  p15, #7, pc, c15, c6, #6            @ encoding: [0xd6,0xff,0xff,0x0e]
+
 @------------------------------------------------------------------------------
 @ MRRC/MRRC2
 @------------------------------------------------------------------------------
@@ -1090,6 +1100,8 @@ Lforward:
 @ CHECK: mrrc  p7, #1, r5, r4, c1       @ encoding: [0x11,0x57,0x54,0xec]
 @ CHECK: mrrc2  p7, #1, r5, r4, c1      @ encoding: [0x11,0x57,0x54,0xfc]
 
+        mrrclo  p7, #1, r5, r4, c1
+@ CHECK: mrrclo  p7, #1, r5, r4, c1      @ encoding: [0x11,0x57,0x54,0x3c]
 
 @------------------------------------------------------------------------------
 @ MRS
