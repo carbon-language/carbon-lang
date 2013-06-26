@@ -3,7 +3,11 @@
 
 // Test with pch.
 // RUN: %clang_cc1 -x c++-header -emit-pch -o %t %S/cxx-friends.h
-// RUN: %clang_cc1 -include-pch %t -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -include-pch %t -fsyntax-only -verify %s -error-on-deserialized-decl doNotDeserialize
+
+// Test with modules.
+// RUN: %clang_cc1 -x c++-header -emit-pch -o %t %S/cxx-friends.h -fmodules
+// RUN: %clang_cc1 -include-pch %t -fsyntax-only -verify %s -error-on-deserialized-decl doNotDeserialize -fmodules
 
 // expected-no-diagnostics
 
@@ -21,3 +25,5 @@ public:
   }
 };
 int k = PR12585::future_base::setter<int>().f();
+
+Lazy::S *p;

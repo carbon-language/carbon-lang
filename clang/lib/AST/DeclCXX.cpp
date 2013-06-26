@@ -62,7 +62,7 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     HasDeclaredCopyAssignmentWithConstParam(false),
     FailedImplicitMoveConstructor(false), FailedImplicitMoveAssignment(false),
     IsLambda(false), NumBases(0), NumVBases(0), Bases(), VBases(),
-    Definition(D), FirstFriend(0) {
+    Definition(D), FirstFriend() {
 }
 
 CXXBaseSpecifier *CXXRecordDecl::DefinitionData::getBasesSlowCase() const {

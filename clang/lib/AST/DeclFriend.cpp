@@ -63,3 +63,8 @@ FriendDecl *FriendDecl::CreateDeserialized(ASTContext &C, unsigned ID,
   return new (Mem) FriendDecl(EmptyShell(), FriendTypeNumTPLists);
 }
 
+FriendDecl *CXXRecordDecl::getFirstFriend() const {
+  ExternalASTSource *Source = getParentASTContext().getExternalSource();
+  Decl *First = data().FirstFriend.get(Source);
+  return First ? cast<FriendDecl>(First) : 0;
+}

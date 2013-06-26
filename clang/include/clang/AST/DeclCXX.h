@@ -482,7 +482,7 @@ class CXXRecordDecl : public RecordDecl {
     /// FirstFriend - The first friend declaration in this class, or
     /// null if there aren't any.  This is actually currently stored
     /// in reverse order.
-    FriendDecl *FirstFriend;
+    LazyDeclPtr FirstFriend;
 
     /// \brief Retrieve the set of direct base classes.
     CXXBaseSpecifier *getBases() const {
@@ -596,6 +596,10 @@ class CXXRecordDecl : public RecordDecl {
   friend void FunctionDecl::setPure(bool);
 
   friend class ASTNodeImporter;
+
+  /// \brief Get the head of our list of friend declarations, possibly
+  /// deserializing the friends from an external AST source.
+  FriendDecl *getFirstFriend() const;
 
 protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
@@ -749,7 +753,7 @@ public:
 
   /// Determines whether this record has any friends.
   bool hasFriends() const {
-    return data().FirstFriend != 0;
+    return data().FirstFriend.isValid();
   }
 
   /// \brief \c true if we know for sure that this class has a single,

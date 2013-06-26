@@ -1156,7 +1156,7 @@ void ASTDeclReader::ReadCXXDefinitionData(
   Reader.ReadUnresolvedSet(F, Data.Conversions, Record, Idx);
   Reader.ReadUnresolvedSet(F, Data.VisibleConversions, Record, Idx);
   assert(Data.Definition && "Data.Definition should be already set!");
-  Data.FirstFriend = ReadDeclAs<FriendDecl>(Record, Idx);
+  Data.FirstFriend = Record[Idx++];
   
   if (Data.IsLambda) {
     typedef LambdaExpr::Capture Capture;

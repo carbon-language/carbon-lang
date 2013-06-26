@@ -5054,7 +5054,7 @@ void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Rec
   AddUnresolvedSet(Data.Conversions, Record);
   AddUnresolvedSet(Data.VisibleConversions, Record);
   // Data.Definition is the owning decl, no need to write it. 
-  AddDeclRef(Data.FirstFriend, Record);
+  AddDeclRef(D->getFirstFriend(), Record);
   
   // Add lambda-specific data.
   if (Data.IsLambda) {

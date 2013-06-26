@@ -16,3 +16,28 @@ namespace PR12585 {
     int k;
   };
 }
+
+namespace Lazy {
+  struct S {
+    friend void doNotDeserialize();
+  };
+}
+
+// Reduced testcase from libc++'s <valarray>. Used to crash with modules
+// enabled.
+namespace std {
+
+template <class T> struct valarray;
+
+template <class T> struct valarray {
+  valarray();
+  template <class U> friend struct valarray;
+  template <class U> friend U *begin(valarray<U> &v);
+};
+
+struct gslice {
+  valarray<int> size;
+  gslice() {}
+};
+
+}

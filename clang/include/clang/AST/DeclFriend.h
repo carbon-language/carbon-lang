@@ -220,7 +220,7 @@ public:
 };
 
 inline CXXRecordDecl::friend_iterator CXXRecordDecl::friend_begin() const {
-  return friend_iterator(data().FirstFriend);
+  return friend_iterator(getFirstFriend());
 }
 
 inline CXXRecordDecl::friend_iterator CXXRecordDecl::friend_end() const {
