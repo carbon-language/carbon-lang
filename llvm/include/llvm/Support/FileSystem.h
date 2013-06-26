@@ -111,6 +111,9 @@ enum perms {
   others_write =   02, 
   others_exe   =   01, 
   others_all   = others_read | others_write | others_exe, 
+  all_read     = owner_read | group_read | others_read,
+  all_write    = owner_write | group_write | others_write,
+  all_exe      = owner_exe | group_exe | others_exe,
   all_all      = owner_all | group_all | others_all,
   set_uid_on_exe  = 04000, 
   set_gid_on_exe  = 02000, 
@@ -559,15 +562,17 @@ error_code status_known(const Twine &path, bool &result);
 /// @param result_path Set to the opened file's absolute path.
 /// @param makeAbsolute If true and \a model is not an absolute path, a temp
 ///        directory will be prepended.
+/// @param mode Set to the file open mode; since this is most often used for
+///        temporary files, mode defaults to owner_read | owner_write.
 /// @returns errc::success if result_{fd,path} have been successfully set,
 ///          otherwise a platform specific error_code.
 error_code unique_file(const Twine &model, int &result_fd,
                        SmallVectorImpl<char> &result_path,
-                       bool makeAbsolute = true, unsigned mode = 0600);
+                       bool makeAbsolute = true, unsigned mode = owner_read | owner_write);
 
 /// @brief Simpler version for clients that don't want an open file.
 error_code unique_file(const Twine &Model, SmallVectorImpl<char> &ResultPath,
-                       bool MakeAbsolute = true, unsigned Mode = 0600);
+                       bool MakeAbsolute = true, unsigned Mode = owner_read | owner_write);
 
 /// @brief Canonicalize path.
 ///

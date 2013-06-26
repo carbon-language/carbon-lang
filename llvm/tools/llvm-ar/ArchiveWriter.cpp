@@ -268,7 +268,7 @@ bool Archive::writeToDisk(bool TruncateNames, std::string *ErrMsg) {
   int TmpArchiveFD;
   SmallString<128> TmpArchive;
   error_code EC = sys::fs::unique_file("temp-archive-%%%%%%%.a", TmpArchiveFD,
-                                       TmpArchive, true, 0666);
+                                       TmpArchive, true, sys::fs::all_read | sys::fs::all_write);
   if (EC)
     return true;
 

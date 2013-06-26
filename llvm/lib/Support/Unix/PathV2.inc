@@ -564,7 +564,6 @@ error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {
   return error_code::success();
 }
 
-// Since this is most often used for temporary files, mode defaults to 0600.
 error_code unique_file(const Twine &model, int &result_fd,
                        SmallVectorImpl<char> &result_path,
                        bool makeAbsolute, unsigned mode) {
