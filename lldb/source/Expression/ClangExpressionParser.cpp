@@ -52,6 +52,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/PathV1.h"
 #include "llvm/Support/TargetSelect.h"
 
@@ -81,19 +82,16 @@ using namespace lldb_private;
 //===----------------------------------------------------------------------===//
 
 std::string GetBuiltinIncludePath(const char *Argv0) {
-    llvm::sys::Path P =
-    llvm::sys::Path::GetMainExecutable(Argv0,
-                                       (void*)(intptr_t) GetBuiltinIncludePath);
-    
-    if (!P.isEmpty()) {
-        P.eraseComponent();  // Remove /clang from foo/bin/clang
-        P.eraseComponent();  // Remove /bin   from foo/bin
-        
+    SmallString<128> P(llvm::sys::fs::getMainExecutable(
+        Argv0, (void *)(intptr_t) GetBuiltinIncludePath));
+
+    if (!P.empty()) {
+        llvm::sys::path::remove_filename(P); // Remove /clang from foo/bin/clang
+        llvm::sys::path::remove_filename(P); // Remove /bin   from foo/bin
+
         // Get foo/lib/clang/<version>/include
-        P.appendComponent("lib");
-        P.appendComponent("clang");
-        P.appendComponent(CLANG_VERSION_STRING);
-        P.appendComponent("include");
+        llvm::sys::path::append(P, "lib", "clang", CLANG_VERSION_STRING,
+                                "include");
     }
     
     return P.str();
