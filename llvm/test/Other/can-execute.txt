@@ -1,4 +1,4 @@
-REQUIRES: shell
+REQUIRES: can-execute
 
 This tests that we abstract two peculiarities of unix in can_execute:
 
