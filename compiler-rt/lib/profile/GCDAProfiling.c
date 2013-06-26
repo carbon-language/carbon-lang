@@ -271,7 +271,6 @@ void llvm_gcda_start_file(const char *orig_filename, const char version[4]) {
         fprintf(stderr, "profiling: %s: cannot open: %s\n", filename,
                 strerror(errnum));
 #endif
-        free(filename);
         return;
       }
     }
@@ -302,8 +301,6 @@ void llvm_gcda_start_file(const char *orig_filename, const char version[4]) {
   write_bytes("adcg", 4);
   write_bytes(version, 4);
   write_bytes("MVLL", 4);
-
-  free(filename);
 
 #ifdef DEBUG_GCDAPROFILING
   fprintf(stderr, "llvmgcda: [%s]\n", orig_filename);
@@ -409,19 +406,21 @@ void llvm_gcda_emit_arcs(uint32_t num_counters, uint64_t *counters) {
 
 void llvm_gcda_end_file() {
   /* Write out EOF record. */
-  if (!output_file) return;
-  write_bytes("\0\0\0\0\0\0\0\0", 8);
+  if (output_file) {
+    write_bytes("\0\0\0\0\0\0\0\0", 8);
 
-  if (new_file) {
-    fwrite(write_buffer, cur_pos, 1, output_file);
-    free(write_buffer);
-  } else {
-    unmap_file();
+    if (new_file) {
+      fwrite(write_buffer, cur_pos, 1, output_file);
+      free(write_buffer);
+    } else {
+      unmap_file();
+    }
+
+    fclose(output_file);
+    output_file = NULL;
+    write_buffer = NULL;
   }
-
-  fclose(output_file);
-  output_file = NULL;
-  write_buffer = NULL;
+  free(filename);
 
 #ifdef DEBUG_GCDAPROFILING
   fprintf(stderr, "llvmgcda: -----\n");
