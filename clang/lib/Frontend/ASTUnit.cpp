@@ -84,10 +84,10 @@ namespace {
     /// \brief The file in which the precompiled preamble is stored.
     std::string PreambleFile;
 
-    /// \brief Temporary files that should be removed when the ASTUnit is 
+    /// \brief Temporary files that should be removed when the ASTUnit is
     /// destroyed.
-    SmallVector<llvm::sys::Path, 4> TemporaryFiles;
-    
+    SmallVector<std::string, 4> TemporaryFiles;
+
     /// \brief Erase temporary files.
     void CleanTemporaryFiles();
 
@@ -166,8 +166,8 @@ static const std::string &getPreambleFile(const ASTUnit *AU) {
 
 void OnDiskData::CleanTemporaryFiles() {
   for (unsigned I = 0, N = TemporaryFiles.size(); I != N; ++I)
-    TemporaryFiles[I].eraseFromDisk();
-  TemporaryFiles.clear(); 
+    llvm::sys::fs::remove(TemporaryFiles[I]);
+  TemporaryFiles.clear();
 }
 
 void OnDiskData::CleanPreambleFile() {
@@ -201,7 +201,7 @@ void ASTUnit::CleanTemporaryFiles() {
   getOnDiskData(this).CleanTemporaryFiles();
 }
 
-void ASTUnit::addTemporaryFile(const llvm::sys::Path &TempFile) {
+void ASTUnit::addTemporaryFile(StringRef TempFile) {
   getOnDiskData(this).TemporaryFiles.push_back(TempFile);
 }
 

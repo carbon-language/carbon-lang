@@ -478,8 +478,8 @@ public:
   /// \brief Add a temporary file that the ASTUnit depends on.
   ///
   /// This file will be erased when the ASTUnit is destroyed.
-  void addTemporaryFile(const llvm::sys::Path &TempFile);
-                        
+  void addTemporaryFile(StringRef TempFile);
+
   bool getOnlyLocalDecls() const { return OnlyLocalDecls; }
 
   bool getOwnsRemappedFileBuffers() const { return OwnsRemappedFileBuffers; }
