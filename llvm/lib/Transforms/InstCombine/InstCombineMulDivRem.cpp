@@ -344,7 +344,7 @@ static bool isFMulOrFDivWithConstant(Value *V) {
 
 static bool isNormalFp(const ConstantFP *C) {
   const APFloat &Flt = C->getValueAPF();
-  return Flt.isFiniteNonZero() && !Flt.isDenormal();
+  return Flt.isNormal();
 }
 
 /// foldFMulConst() is a helper routine of InstCombiner::visitFMul().
@@ -893,14 +893,14 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
         //
         Constant *C = ConstantExpr::getFDiv(C1, C2);
         const APFloat &F = cast<ConstantFP>(C)->getValueAPF();
-        if (F.isFiniteNonZero() && !F.isDenormal())
+        if (F.isNormal())
           Res = BinaryOperator::CreateFMul(X, C);
       } else if (match(Op0, m_FDiv(m_Value(X), m_ConstantFP(C1)))) {
         // (X/C1)/C2 => X /(C2*C1) [=> X * 1/(C2*C1) if reciprocal is allowed]
         //
         Constant *C = ConstantExpr::getFMul(C1, C2);
         const APFloat &F = cast<ConstantFP>(C)->getValueAPF();
-        if (F.isFiniteNonZero() && !F.isDenormal()) {
+        if (F.isNormal()) {
           Res = CvtFDivConstToReciprocal(X, cast<ConstantFP>(C),
                                          AllowReciprocal);
           if (!Res)
@@ -941,7 +941,7 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
 
     if (Fold) {
       const APFloat &FoldC = cast<ConstantFP>(Fold)->getValueAPF();
-      if (FoldC.isFiniteNonZero() && !FoldC.isDenormal()) {
+      if (FoldC.isNormal()) {
         Instruction *R = CreateDiv ?
                          BinaryOperator::CreateFDiv(Fold, X) :
                          BinaryOperator::CreateFMul(X, Fold);
