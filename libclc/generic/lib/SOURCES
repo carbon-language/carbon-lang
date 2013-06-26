@@ -4,6 +4,7 @@ geometric/dot.cl
 geometric/length.cl
 geometric/normalize.cl
 integer/abs.cl
+integer/abs_diff.cl
 integer/add_sat.cl
 integer/add_sat.ll
 integer/add_sat_impl.ll
