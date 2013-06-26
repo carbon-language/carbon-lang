@@ -21,6 +21,10 @@ _CLC_OVERLOAD _CLC_DEF GENTYPE rotate(GENTYPE x, GENTYPE n){
         return ( (((UGENTYPE)x) >> -n) | (x << (GENSIZE + n)) );
     }
 #else
+    //XXX: There's a lot of __builtin_astype calls to cast everything to
+    //     unsigned ... This should be improved so that if GENTYPE==UGENTYPE, no
+    //     casts are required.
+    
     UGENTYPE x_1 = __builtin_astype(x, UGENTYPE);
 
     UGENTYPE amt;
