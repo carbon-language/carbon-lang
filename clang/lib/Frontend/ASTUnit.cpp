@@ -172,7 +172,7 @@ void OnDiskData::CleanTemporaryFiles() {
 
 void OnDiskData::CleanPreambleFile() {
   if (!PreambleFile.empty()) {
-    llvm::sys::Path(PreambleFile).eraseFromDisk();
+    llvm::sys::fs::remove(PreambleFile);
     PreambleFile.clear();
   }
 }
@@ -1237,36 +1237,17 @@ error:
 
 /// \brief Simple function to retrieve a path for a preamble precompiled header.
 static std::string GetPreamblePCHPath() {
-  // FIXME: This is lame; sys::Path should provide this function (in particular,
-  // it should know how to find the temporary files dir).
-  // FIXME: This is really lame. I copied this code from the Driver!
   // FIXME: This is a hack so that we can override the preamble file during
   // crash-recovery testing, which is the only case where the preamble files
-  // are not necessarily cleaned up. 
+  // are not necessarily cleaned up.
   const char *TmpFile = ::getenv("CINDEXTEST_PREAMBLE_FILE");
   if (TmpFile)
     return TmpFile;
-  
-  std::string Error;
-  const char *TmpDir = ::getenv("TMPDIR");
-  if (!TmpDir)
-    TmpDir = ::getenv("TEMP");
-  if (!TmpDir)
-    TmpDir = ::getenv("TMP");
-#ifdef LLVM_ON_WIN32
-  if (!TmpDir)
-    TmpDir = ::getenv("USERPROFILE");
-#endif
-  if (!TmpDir)
-    TmpDir = "/tmp";
-  llvm::sys::Path P(TmpDir);
-  P.createDirectoryOnDisk(true);
-  P.appendComponent("preamble");
-  P.appendSuffix("pch");
-  if (P.makeUnique(/*reuse_current=*/false, /*ErrMsg*/0))
-    return std::string();
-  
-  return P.str();
+
+  SmallString<128> Path;
+  llvm::sys::fs::unique_file("preamble-%%%%%%.pch", Path);
+
+  return Path.str();
 }
 
 /// \brief Compute the preamble for the main file, providing the source buffer
