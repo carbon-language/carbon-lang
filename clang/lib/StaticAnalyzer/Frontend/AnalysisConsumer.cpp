@@ -40,6 +40,7 @@
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PathV1.h"
 #include "llvm/Support/Program.h"
@@ -681,15 +682,14 @@ namespace {
 
 class UbigraphViz : public ExplodedNode::Auditor {
   OwningPtr<raw_ostream> Out;
-  llvm::sys::Path Dir, Filename;
+  std::string Dir, Filename;
   unsigned Cntr;
 
   typedef llvm::DenseMap<void*,unsigned> VMap;
   VMap M;
 
 public:
-  UbigraphViz(raw_ostream *out, llvm::sys::Path& dir,
-              llvm::sys::Path& filename);
+  UbigraphViz(raw_ostream *Out, StringRef Dir, StringRef Filename);
 
   ~UbigraphViz();
 
@@ -699,28 +699,16 @@ public:
 } // end anonymous namespace
 
 static ExplodedNode::Auditor* CreateUbiViz() {
-  std::string ErrMsg;
-
-  llvm::sys::Path Dir = llvm::sys::Path::GetTemporaryDirectory(&ErrMsg);
-  if (!ErrMsg.empty())
-    return 0;
-
-  llvm::sys::Path Filename = Dir;
-  Filename.appendComponent("llvm_ubi");
-  Filename.makeUnique(true,&ErrMsg);
-
-  if (!ErrMsg.empty())
-    return 0;
-
-  llvm::errs() << "Writing '" << Filename.str() << "'.\n";
+  SmallString<128> P;
+  int FD;
+  llvm::sys::fs::unique_file("llvm_ubi-%%%%%%", FD, P);
+  llvm::errs() << "Writing '" << P.str() << "'.\n";
 
   OwningPtr<llvm::raw_fd_ostream> Stream;
-  Stream.reset(new llvm::raw_fd_ostream(Filename.c_str(), ErrMsg));
+  Stream.reset(new llvm::raw_fd_ostream(FD, true));
 
-  if (!ErrMsg.empty())
-    return 0;
-
-  return new UbigraphViz(Stream.take(), Dir, Filename);
+  StringRef Dir = llvm::sys::path::parent_path(P);
+  return new UbigraphViz(Stream.take(), Dir, P);
 }
 
 void UbigraphViz::AddEdge(ExplodedNode *Src, ExplodedNode *Dst) {
@@ -757,9 +745,8 @@ void UbigraphViz::AddEdge(ExplodedNode *Src, ExplodedNode *Dst) {
        << ", ('arrow','true'), ('oriented', 'true'))\n";
 }
 
-UbigraphViz::UbigraphViz(raw_ostream *out, llvm::sys::Path& dir,
-                         llvm::sys::Path& filename)
-  : Out(out), Dir(dir), Filename(filename), Cntr(0) {
+UbigraphViz::UbigraphViz(raw_ostream *Out, StringRef Dir, StringRef Filename)
+  : Out(Out), Dir(Dir), Filename(Filename), Cntr(0) {
 
   *Out << "('vertex_style_attribute', 0, ('shape', 'icosahedron'))\n";
   *Out << "('vertex_style', 1, 0, ('shape', 'sphere'), ('color', '#ffcc66'),"
@@ -781,5 +768,5 @@ UbigraphViz::~UbigraphViz() {
   }
 
   // Delete the directory.
-  Dir.eraseFromDisk(true);
+  llvm::sys::fs::remove_all(Dir);
 }
