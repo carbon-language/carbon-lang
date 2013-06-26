@@ -69,6 +69,17 @@ llvm_clang = os.path.join(llvm_bindir, 'clang')
 llvm_link = os.path.join(llvm_bindir, 'llvm-link')
 llvm_opt = os.path.join(llvm_bindir, 'opt')
 
+available_targets = {
+  'r600--' : { 'devices' :
+               [{'gpu' : 'cedar',   'aliases' : ['palm', 'sumo', 'sumo2', 'redwood', 'juniper']},
+                {'gpu' : 'cypress', 'aliases' : ['hemlock']},
+                {'gpu' : 'barts',   'aliases' : ['turks', 'caicos']},
+                {'gpu' : 'cayman',  'aliases' : ['aruba']},
+                {'gpu' : 'tahiti',  'aliases' : ['pitcairn', 'verde', 'oland']}]},
+  'nvptx--nvidiacl'   : { 'devices' : [{'gpu' : '', 'aliases' : []}] },
+  'nvptx64--nvidiacl' : { 'devices' : [{'gpu' : '', 'aliases' : []}] }
+}
+
 default_targets = ['nvptx--nvidiacl', 'nvptx64--nvidiacl', 'r600--']
 
 targets = args
@@ -128,50 +139,68 @@ for target in targets:
 
   clang_cl_includes = ' '.join(["-I%s" % incdir for incdir in incdirs])
 
-  # The rule for building a .bc file for the specified architecture using clang.
-  clang_bc_flags = "-target %s -I`dirname $in` %s " \
-                   "-Dcl_clang_storage_class_specifiers " \
-                   "-Dcl_khr_fp64 " \
-                   "-emit-llvm" % (target, clang_cl_includes)
-  clang_bc_rule = "CLANG_CL_BC_" + target
-  c_compiler_rule(b, clang_bc_rule, "LLVM-CC", llvm_clang, clang_bc_flags)
-  
-  objects = []
-  sources_seen = set()
+  for device in available_targets[target]['devices']:
+    # The rule for building a .bc file for the specified architecture using clang.
+    clang_bc_flags = "-target %s -I`dirname $in` %s " \
+                     "-Dcl_clang_storage_class_specifiers " \
+                     "-Dcl_khr_fp64 " \
+                     "-emit-llvm" % (target, clang_cl_includes)
+    if device['gpu'] != '':
+      clang_bc_flags += ' -mcpu=' + device['gpu']
+    clang_bc_rule = "CLANG_CL_BC_" + target
+    c_compiler_rule(b, clang_bc_rule, "LLVM-CC", llvm_clang, clang_bc_flags)
 
-  for libdir in libdirs:
-    subdir_list_file = os.path.join(libdir, 'SOURCES')
-    manifest_deps.add(subdir_list_file)
-    override_list_file = os.path.join(libdir, 'OVERRIDES')
+    objects = []
+    sources_seen = set()
 
-    # Add target overrides
-    if os.path.exists(override_list_file):
-      for override in open(override_list_file).readlines():
-        override = override.rstrip()
-        sources_seen.add(override)
+    if device['gpu'] == '':
+      full_target_name = target
+      obj_suffix = ''
+    else:
+      full_target_name = device['gpu'] + '-' + target
+      obj_suffix = '.' + device['gpu']
 
-    for src in open(subdir_list_file).readlines():
-      src = src.rstrip()
-      if src not in sources_seen:
-        sources_seen.add(src)
-        obj = os.path.join(target, 'lib', src + '.bc')
-        objects.append(obj)
-        src_file = os.path.join(libdir, src)
-        ext = os.path.splitext(src)[1]
-        if ext == '.ll':
-          b.build(obj, 'LLVM_AS', src_file)
-        else:
-          b.build(obj, clang_bc_rule, src_file)
+    for libdir in libdirs:
+      subdir_list_file = os.path.join(libdir, 'SOURCES')
+      manifest_deps.add(subdir_list_file)
+      override_list_file = os.path.join(libdir, 'OVERRIDES')
 
-  builtins_link_bc = os.path.join(target, 'lib', 'builtins.link.bc')
-  builtins_opt_bc = os.path.join(target, 'lib', 'builtins.opt.bc')
-  builtins_bc = os.path.join('built_libs', target + '.bc')
-  b.build(builtins_link_bc, "LLVM_LINK", objects)
-  b.build(builtins_opt_bc, "OPT", builtins_link_bc)
-  b.build(builtins_bc, "PREPARE_BUILTINS", builtins_opt_bc, prepare_builtins)
-  install_files_bc.append((builtins_bc, builtins_bc))
-  install_deps.append(builtins_bc)
-  b.default(builtins_bc)
+      # Add target overrides
+      if os.path.exists(override_list_file):
+        for override in open(override_list_file).readlines():
+          override = override.rstrip()
+          sources_seen.add(override)
+
+      for src in open(subdir_list_file).readlines():
+        src = src.rstrip()
+        if src not in sources_seen:
+          sources_seen.add(src)
+          obj = os.path.join(target, 'lib', src + obj_suffix + '.bc')
+          objects.append(obj)
+          src_file = os.path.join(libdir, src)
+          ext = os.path.splitext(src)[1]
+          if ext == '.ll':
+            b.build(obj, 'LLVM_AS', src_file)
+          else:
+            b.build(obj, clang_bc_rule, src_file)
+
+    builtins_link_bc = os.path.join(target, 'lib', 'builtins.link' + obj_suffix + '.bc')
+    builtins_opt_bc = os.path.join(target, 'lib', 'builtins.opt' + obj_suffix + '.bc')
+    builtins_bc = os.path.join('built_libs', full_target_name + '.bc')
+    b.build(builtins_link_bc, "LLVM_LINK", objects)
+    b.build(builtins_opt_bc, "OPT", builtins_link_bc)
+    b.build(builtins_bc, "PREPARE_BUILTINS", builtins_opt_bc, prepare_builtins)
+    install_files_bc.append((builtins_bc, builtins_bc))
+    install_deps.append(builtins_bc)
+    for alias in device['aliases']:
+      b.rule("CREATE_ALIAS", "ln -fs %s $out" % os.path.basename(builtins_bc)
+             ,"CREATE-ALIAS $out")
+
+      alias_file = os.path.join('built_libs', alias + '-' + target + '.bc')
+      b.build(alias_file, "CREATE_ALIAS", builtins_bc)
+      install_files_bc.append((alias_file, alias_file))
+      install_deps.append(alias_file)
+    b.default(builtins_bc)
 
 
 install_cmd = ' && '.join(['mkdir -p $(DESTDIR)/%(dst)s && cp -r %(src)s $(DESTDIR)/%(dst)s' % 
