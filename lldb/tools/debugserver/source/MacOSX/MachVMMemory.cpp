@@ -418,7 +418,7 @@ MachVMMemory::GetMemorySizes(task_t task, cpu_type_t cputype, nub_process_t pid,
 }
 
 #if defined (TASK_VM_INFO) && TASK_VM_INFO >= 22
-
+#ifndef TASK_VM_INFO_PURGEABLE
 // cribbed from sysmond
 static uint64_t
 SumVMPurgeableInfo(const vm_purgeable_info_t info)
@@ -438,7 +438,7 @@ SumVMPurgeableInfo(const vm_purgeable_info_t info)
     
     return sum;
 }
-
+#endif /* !TASK_VM_INFO_PURGEABLE */
 #endif
 
 static void
@@ -447,11 +447,14 @@ GetPurgeableAndAnonymous(task_t task, uint64_t &purgeable, uint64_t &anonymous)
 #if defined (TASK_VM_INFO) && TASK_VM_INFO >= 22
 
     kern_return_t kr;
+#ifndef TASK_VM_INFO_PURGEABLE
     task_purgable_info_t purgeable_info;
     uint64_t purgeable_sum = 0;
+#endif /* !TASK_VM_INFO_PURGEABLE */
     mach_msg_type_number_t info_count;
     task_vm_info_data_t vm_info;
     
+#ifndef TASK_VM_INFO_PURGEABLE
     typedef kern_return_t (*task_purgable_info_type) (task_t, task_purgable_info_t *);
     task_purgable_info_type task_purgable_info_ptr = NULL;
     task_purgable_info_ptr = (task_purgable_info_type)dlsym(RTLD_NEXT, "task_purgable_info");
@@ -463,11 +466,20 @@ GetPurgeableAndAnonymous(task_t task, uint64_t &purgeable, uint64_t &anonymous)
             purgeable = purgeable_sum;
         }
     }
+#endif /* !TASK_VM_INFO_PURGEABLE */
 
     info_count = TASK_VM_INFO_COUNT;
+#ifdef TASK_VM_INFO_PURGEABLE
+    kr = task_info(task, TASK_VM_INFO_PURGEABLE, (task_info_t)&vm_info, &info_count);
+#else
     kr = task_info(task, TASK_VM_INFO, (task_info_t)&vm_info, &info_count);
+#endif
     if (kr == KERN_SUCCESS)
     {
+#ifdef TASK_VM_INFO_PURGEABLE
+        purgeable = vm_info.purgeable_volatile_resident;
+        anonymous = vm_info.internal - vm_info.purgeable_volatile_pmap;
+#else
         if (purgeable_sum < vm_info.internal)
         {
             anonymous = vm_info.internal - purgeable_sum;
@@ -476,8 +488,9 @@ GetPurgeableAndAnonymous(task_t task, uint64_t &purgeable, uint64_t &anonymous)
         {
             anonymous = 0;
         }
+#endif
     }
-    
+
 #endif
 }
 
