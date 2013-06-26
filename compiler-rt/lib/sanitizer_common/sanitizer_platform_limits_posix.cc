@@ -177,9 +177,15 @@ namespace __sanitizer {
   unsigned struct_cdrom_tocentry_sz = sizeof(struct cdrom_tocentry);
   unsigned struct_cdrom_tochdr_sz = sizeof(struct cdrom_tochdr);
   unsigned struct_cdrom_volctrl_sz = sizeof(struct cdrom_volctrl);
+#if SOUND_VERSION >= 0x040000
+  unsigned struct_copr_buffer_sz = 0;
+  unsigned struct_copr_debug_buf_sz = 0;
+  unsigned struct_copr_msg_sz = 0;
+#else
   unsigned struct_copr_buffer_sz = sizeof(struct copr_buffer);
   unsigned struct_copr_debug_buf_sz = sizeof(struct copr_debug_buf);
   unsigned struct_copr_msg_sz = sizeof(struct copr_msg);
+#endif
   unsigned struct_ff_effect_sz = sizeof(struct ff_effect);
   unsigned struct_floppy_drive_params_sz = sizeof(struct floppy_drive_params);
   unsigned struct_floppy_drive_struct_sz = sizeof(struct floppy_drive_struct);
@@ -209,7 +215,6 @@ namespace __sanitizer {
 #endif
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
-  unsigned mpu_command_rec_sz = sizeof(mpu_command_rec);
   unsigned struct_audio_buf_info_sz = sizeof(struct audio_buf_info);
   unsigned struct_ax25_parms_struct_sz = sizeof(struct ax25_parms_struct);
   unsigned struct_cyclades_monitor_sz = sizeof(struct cyclades_monitor);
@@ -416,6 +421,24 @@ namespace __sanitizer {
   unsigned IOCTL_SIOCSIFMEM = SIOCSIFMEM;
   unsigned IOCTL_SIOCSIFSLAVE = SIOCSIFSLAVE;
   unsigned IOCTL_SIOCSRARP = SIOCSRARP;
+#if SOUND_VERSION >= 0x040000
+  unsigned IOCTL_SNDCTL_COPR_HALT = IOCTL_NOT_PRESENT;
+  unsigned IOCTL_SNDCTL_COPR_LOAD = IOCTL_NOT_PRESENT;
+  unsigned IOCTL_SNDCTL_COPR_RCODE = IOCTL_NOT_PRESENT;
+  unsigned IOCTL_SNDCTL_COPR_RCVMSG = IOCTL_NOT_PRESENT;
+  unsigned IOCTL_SNDCTL_COPR_RDATA = IOCTL_NOT_PRESENT;
+  unsigned IOCTL_SNDCTL_COPR_RESET = IOCTL_NOT_PRESENT;
+  unsigned IOCTL_SNDCTL_COPR_RUN = IOCTL_NOT_PRESENT;
+  unsigned IOCTL_SNDCTL_COPR_SENDMSG = IOCTL_NOT_PRESENT;
+  unsigned IOCTL_SNDCTL_COPR_WCODE = IOCTL_NOT_PRESENT;
+  unsigned IOCTL_SNDCTL_COPR_WDATA = IOCTL_NOT_PRESENT;
+  unsigned IOCTL_SOUND_PCM_READ_BITS = IOCTL_NOT_PRESENT;
+  unsigned IOCTL_SOUND_PCM_READ_CHANNELS = IOCTL_NOT_PRESENT;
+  unsigned IOCTL_SOUND_PCM_READ_FILTER = IOCTL_NOT_PRESENT;
+  unsigned IOCTL_SOUND_PCM_READ_RATE = IOCTL_NOT_PRESENT;
+  unsigned IOCTL_SOUND_PCM_WRITE_CHANNELS = IOCTL_NOT_PRESENT;
+  unsigned IOCTL_SOUND_PCM_WRITE_FILTER = IOCTL_NOT_PRESENT;
+#else
   unsigned IOCTL_SNDCTL_COPR_HALT = SNDCTL_COPR_HALT;
   unsigned IOCTL_SNDCTL_COPR_LOAD = SNDCTL_COPR_LOAD;
   unsigned IOCTL_SNDCTL_COPR_RCODE = SNDCTL_COPR_RCODE;
@@ -426,6 +449,13 @@ namespace __sanitizer {
   unsigned IOCTL_SNDCTL_COPR_SENDMSG = SNDCTL_COPR_SENDMSG;
   unsigned IOCTL_SNDCTL_COPR_WCODE = SNDCTL_COPR_WCODE;
   unsigned IOCTL_SNDCTL_COPR_WDATA = SNDCTL_COPR_WDATA;
+  unsigned IOCTL_SOUND_PCM_READ_BITS = SOUND_PCM_READ_BITS;
+  unsigned IOCTL_SOUND_PCM_READ_CHANNELS = SOUND_PCM_READ_CHANNELS;
+  unsigned IOCTL_SOUND_PCM_READ_FILTER = SOUND_PCM_READ_FILTER;
+  unsigned IOCTL_SOUND_PCM_READ_RATE = SOUND_PCM_READ_RATE;
+  unsigned IOCTL_SOUND_PCM_WRITE_CHANNELS = SOUND_PCM_WRITE_CHANNELS;
+  unsigned IOCTL_SOUND_PCM_WRITE_FILTER = SOUND_PCM_WRITE_FILTER;
+#endif
   unsigned IOCTL_SNDCTL_DSP_GETBLKSIZE = SNDCTL_DSP_GETBLKSIZE;
   unsigned IOCTL_SNDCTL_DSP_GETFMTS = SNDCTL_DSP_GETFMTS;
   unsigned IOCTL_SNDCTL_DSP_NONBLOCK = SNDCTL_DSP_NONBLOCK;
@@ -440,7 +470,6 @@ namespace __sanitizer {
   unsigned IOCTL_SNDCTL_FM_4OP_ENABLE = SNDCTL_FM_4OP_ENABLE;
   unsigned IOCTL_SNDCTL_FM_LOAD_INSTR = SNDCTL_FM_LOAD_INSTR;
   unsigned IOCTL_SNDCTL_MIDI_INFO = SNDCTL_MIDI_INFO;
-  unsigned IOCTL_SNDCTL_MIDI_MPUMODE = SNDCTL_MIDI_MPUMODE;
   unsigned IOCTL_SNDCTL_MIDI_PRETIME = SNDCTL_MIDI_PRETIME;
   unsigned IOCTL_SNDCTL_SEQ_CTRLRATE = SNDCTL_SEQ_CTRLRATE;
   unsigned IOCTL_SNDCTL_SEQ_GETINCOUNT = SNDCTL_SEQ_GETINCOUNT;
@@ -511,12 +540,6 @@ namespace __sanitizer {
   unsigned IOCTL_SOUND_MIXER_WRITE_SYNTH = SOUND_MIXER_WRITE_SYNTH;
   unsigned IOCTL_SOUND_MIXER_WRITE_TREBLE = SOUND_MIXER_WRITE_TREBLE;
   unsigned IOCTL_SOUND_MIXER_WRITE_VOLUME = SOUND_MIXER_WRITE_VOLUME;
-  unsigned IOCTL_SOUND_PCM_READ_BITS = SOUND_PCM_READ_BITS;
-  unsigned IOCTL_SOUND_PCM_READ_CHANNELS = SOUND_PCM_READ_CHANNELS;
-  unsigned IOCTL_SOUND_PCM_READ_FILTER = SOUND_PCM_READ_FILTER;
-  unsigned IOCTL_SOUND_PCM_READ_RATE = SOUND_PCM_READ_RATE;
-  unsigned IOCTL_SOUND_PCM_WRITE_CHANNELS = SOUND_PCM_WRITE_CHANNELS;
-  unsigned IOCTL_SOUND_PCM_WRITE_FILTER = SOUND_PCM_WRITE_FILTER;
   unsigned IOCTL_TCFLSH = TCFLSH;
   unsigned IOCTL_TCGETA = TCGETA;
   unsigned IOCTL_TCGETS = TCGETS;

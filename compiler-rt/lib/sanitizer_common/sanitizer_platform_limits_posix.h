@@ -211,7 +211,6 @@ namespace __sanitizer {
 #endif
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
-  extern unsigned mpu_command_rec_sz;
   extern unsigned struct_audio_buf_info_sz;
   extern unsigned struct_ax25_parms_struct_sz;
   extern unsigned struct_cyclades_monitor_sz;
@@ -441,7 +440,6 @@ namespace __sanitizer {
   extern unsigned IOCTL_SNDCTL_FM_4OP_ENABLE;
   extern unsigned IOCTL_SNDCTL_FM_LOAD_INSTR;
   extern unsigned IOCTL_SNDCTL_MIDI_INFO;
-  extern unsigned IOCTL_SNDCTL_MIDI_MPUMODE;
   extern unsigned IOCTL_SNDCTL_MIDI_PRETIME;
   extern unsigned IOCTL_SNDCTL_SEQ_CTRLRATE;
   extern unsigned IOCTL_SNDCTL_SEQ_GETINCOUNT;

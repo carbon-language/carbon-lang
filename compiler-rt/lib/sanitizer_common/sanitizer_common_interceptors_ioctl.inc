@@ -250,7 +250,6 @@ static void ioctl_table_fill() {
   _(SNDCTL_FM_4OP_ENABLE, READ, sizeof(int));
   _(SNDCTL_FM_LOAD_INSTR, READ, struct_sbi_instrument_sz);
   _(SNDCTL_MIDI_INFO, WRITE, struct_midi_info_sz);
-  _(SNDCTL_MIDI_MPUMODE, READ, sizeof(int));
   _(SNDCTL_MIDI_PRETIME, WRITE, sizeof(int));
   _(SNDCTL_SEQ_CTRLRATE, WRITE, sizeof(int));
   _(SNDCTL_SEQ_GETINCOUNT, WRITE, sizeof(int));
