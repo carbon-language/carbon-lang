@@ -361,3 +361,7 @@ void SP11::UseV() {
   TakeRef(V);
   TakeVal(V);
 }
+
+struct StructWithUnnamedMember {
+  __declspec(property(get=GetV)) int : 10; // expected-error {{anonymous property is not supported}}
+};
