@@ -63,6 +63,7 @@
 #include <clc/integer/abs.h>
 #include <clc/integer/abs_diff.h>
 #include <clc/integer/add_sat.h>
+#include <clc/integer/rotate.h>
 #include <clc/integer/sub_sat.h>
 
 /* 6.11.2 and 6.11.3 Shared Integer/Math Functions */

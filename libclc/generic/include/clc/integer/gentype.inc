@@ -1,3 +1,4 @@
+#define GENSIZE 8
 #define GENTYPE char
 #define UGENTYPE uchar
 #define SGENTYPE char
@@ -93,6 +94,9 @@
 #undef GENTYPE
 #undef UGENTYPE
 #undef SGENTYPE
+
+#undef GENSIZE
+#define GENSIZE 16
 
 #define GENTYPE short
 #define UGENTYPE ushort
@@ -190,6 +194,9 @@
 #undef UGENTYPE
 #undef SGENTYPE
 
+#undef GENSIZE
+#define GENSIZE 32
+
 #define GENTYPE int
 #define UGENTYPE uint
 #define SGENTYPE int
@@ -285,6 +292,9 @@
 #undef GENTYPE
 #undef UGENTYPE
 #undef SGENTYPE
+
+#undef GENSIZE
+#define GENSIZE 64
 
 #define GENTYPE long
 #define UGENTYPE ulong
@@ -382,4 +392,5 @@
 #undef UGENTYPE
 #undef SGENTYPE
 
+#undef GENSIZE
 #undef BODY
