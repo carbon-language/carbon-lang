@@ -6,11 +6,11 @@ geometric/normalize.cl
 integer/abs.cl
 integer/abs_diff.cl
 integer/add_sat.cl
-integer/add_sat.ll
+integer/add_sat_if.ll
 integer/add_sat_impl.ll
 integer/rotate.cl
 integer/sub_sat.cl
-integer/sub_sat.ll
+integer/sub_sat_if.ll
 integer/sub_sat_impl.ll
 math/fmax.cl
 math/fmin.cl
