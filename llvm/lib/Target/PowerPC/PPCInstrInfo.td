@@ -434,7 +434,7 @@ def PPCS16ImmAsmOperand : AsmOperandClass {
 }
 def s16imm  : Operand<i32> {
   let PrintMethod = "printS16ImmOperand";
-  let EncoderMethod = "getS16ImmEncoding";
+  let EncoderMethod = "getImm16Encoding";
   let ParserMatchClass = PPCS16ImmAsmOperand;
 }
 def PPCU16ImmAsmOperand : AsmOperandClass {
@@ -443,6 +443,7 @@ def PPCU16ImmAsmOperand : AsmOperandClass {
 }
 def u16imm  : Operand<i32> {
   let PrintMethod = "printU16ImmOperand";
+  let EncoderMethod = "getImm16Encoding";
   let ParserMatchClass = PPCU16ImmAsmOperand;
 }
 def PPCDirectBrAsmOperand : AsmOperandClass {

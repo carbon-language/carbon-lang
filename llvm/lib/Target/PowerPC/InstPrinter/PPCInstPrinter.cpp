@@ -205,7 +205,10 @@ void PPCInstPrinter::printS16ImmOperand(const MCInst *MI, unsigned OpNo,
 
 void PPCInstPrinter::printU16ImmOperand(const MCInst *MI, unsigned OpNo,
                                         raw_ostream &O) {
-  O << (unsigned short)MI->getOperand(OpNo).getImm();
+  if (MI->getOperand(OpNo).isImm())
+    O << (unsigned short)MI->getOperand(OpNo).getImm();
+  else
+    printOperand(MI, OpNo, O);
 }
 
 void PPCInstPrinter::printBranchOperand(const MCInst *MI, unsigned OpNo,

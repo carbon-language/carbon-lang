@@ -67,7 +67,7 @@ namespace {
                                     unsigned OpNo) const;
     unsigned getAbsCondBrEncoding(const MachineInstr &MI, unsigned OpNo) const;
 
-    unsigned getS16ImmEncoding(const MachineInstr &MI, unsigned OpNo) const;
+    unsigned getImm16Encoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getMemRIEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getMemRIXEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getTLSRegEncoding(const MachineInstr &MI, unsigned OpNo) const;
@@ -209,8 +209,8 @@ unsigned PPCCodeEmitter::getAbsCondBrEncoding(const MachineInstr &MI,
   llvm_unreachable("Absolute branch relocations unsupported on the old JIT.");
 }
 
-unsigned PPCCodeEmitter::getS16ImmEncoding(const MachineInstr &MI,
-                                           unsigned OpNo) const {
+unsigned PPCCodeEmitter::getImm16Encoding(const MachineInstr &MI,
+                                          unsigned OpNo) const {
   const MachineOperand &MO = MI.getOperand(OpNo);
   if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO);
 
