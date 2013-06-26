@@ -214,7 +214,7 @@ public:
   /// This returns true if the block was not considered live before.
   bool MarkBlockExecutable(BasicBlock *BB) {
     if (!BBExecutable.insert(BB)) return false;
-    DEBUG(dbgs() << "Marking Block Executable: " << BB->getName() << "\n");
+    DEBUG(dbgs() << "Marking Block Executable: " << BB->getName() << '\n');
     BBWorkList.push_back(BB);  // Add the block to the work list!
     return true;
   }
@@ -427,7 +427,7 @@ private:
       // feasible that wasn't before.  Revisit the PHI nodes in the block
       // because they have potentially new operands.
       DEBUG(dbgs() << "Marking Edge Executable: " << Source->getName()
-            << " -> " << Dest->getName() << "\n");
+            << " -> " << Dest->getName() << '\n');
 
       PHINode *PN;
       for (BasicBlock::iterator I = Dest->begin();
@@ -501,7 +501,7 @@ private:
 
   void visitInstruction(Instruction &I) {
     // If a new instruction is added to LLVM that we don't handle.
-    dbgs() << "SCCP: Don't know how to handle: " << I;
+    dbgs() << "SCCP: Don't know how to handle: " << I << '\n';
     markAnythingOverdefined(&I);   // Just in case
   }
 };
@@ -1604,7 +1604,7 @@ bool SCCP::runOnFunction(Function &F) {
 
       Constant *Const = IV.isConstant()
         ? IV.getConstant() : UndefValue::get(Inst->getType());
-      DEBUG(dbgs() << "  Constant: " << *Const << " = " << *Inst);
+      DEBUG(dbgs() << "  Constant: " << *Const << " = " << *Inst << '\n');
 
       // Replaces all of the uses of a variable with uses of the constant.
       Inst->replaceAllUsesWith(Const);
@@ -1812,7 +1812,7 @@ bool IPSCCP::runOnModule(Module &M) {
 
         Constant *Const = IV.isConstant()
           ? IV.getConstant() : UndefValue::get(Inst->getType());
-        DEBUG(dbgs() << "  Constant: " << *Const << " = " << *Inst);
+        DEBUG(dbgs() << "  Constant: " << *Const << " = " << *Inst << '\n');
 
         // Replaces all of the uses of a variable with uses of the
         // constant.
