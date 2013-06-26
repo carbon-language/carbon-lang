@@ -45,7 +45,6 @@
 #include <clc/math/log.h>
 #include <clc/math/log2.h>
 #include <clc/math/mad.h>
-#include <clc/math/max.h>
 #include <clc/math/pow.h>
 #include <clc/math/sin.h>
 #include <clc/math/sqrt.h>
@@ -64,11 +63,11 @@
 #include <clc/integer/abs.h>
 #include <clc/integer/abs_diff.h>
 #include <clc/integer/add_sat.h>
-#include <clc/integer/max.h>
 #include <clc/integer/sub_sat.h>
 
 /* 6.11.2 and 6.11.3 Shared Integer/Math Functions */
 #include <clc/shared/clamp.h>
+#include <clc/shared/max.h>
 
 /* 6.11.5 Geometric Functions */
 #include <clc/geometric/cross.h>
