@@ -178,9 +178,10 @@ install_cmd = ' && '.join(['mkdir -p $(DESTDIR)/%(dst)s && cp -r %(src)s $(DESTD
                            {'src': file,
                             'dst': libexecdir}
                            for (file, dest) in install_files_bc])
-install_cmd = ' && '.join(['%(old)s && mkdir -p $(DESTDIR)/%(dst)s && cp -r generic/include/clc $(DESTDIR)/%(dst)s' %
+install_cmd = ' && '.join(['%(old)s && mkdir -p $(DESTDIR)/%(dst)s && cp -r %(srcdir)s/generic/include/clc $(DESTDIR)/%(dst)s' %
                            {'old': install_cmd,
-                            'dst': includedir}])
+                            'dst': includedir,
+                            'srcdir': srcdir}])
 install_cmd = ' && '.join(['%(old)s && mkdir -p $(DESTDIR)/%(dst)s && cp -r libclc.pc $(DESTDIR)/%(dst)s' %
                            {'old': install_cmd, 
                             'dst': pkgconfigdir}])
