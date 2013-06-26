@@ -4,9 +4,9 @@
 #include "clang/AST/DeclGroup.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PathV1.h"
 
 using namespace clang;
 using namespace ast_matchers;
@@ -119,22 +119,26 @@ TEST(Transform, Timings) {
   // The directory used is not important since the path gets mapped to a virtual
   // file anyway. What is important is that we have an absolute path with which
   // to use with mapVirtualFile().
-  llvm::sys::Path FileA = llvm::sys::Path::GetCurrentDirectory();
-  std::string CurrentDir = FileA.str();
-  FileA.appendComponent("a.cc");
-  std::string FileAName = FileA.str();
-  llvm::sys::Path FileB = llvm::sys::Path::GetCurrentDirectory();
-  FileB.appendComponent("b.cc");
-  std::string FileBName = FileB.str();
+  SmallString<128> CurrentDir;
+  llvm::error_code EC = llvm::sys::fs::current_path(CurrentDir);
+  assert(!EC);
+  (void)EC;
 
-  tooling::FixedCompilationDatabase Compilations(CurrentDir, std::vector<std::string>());
+  SmallString<128> FileA = CurrentDir;
+  llvm::sys::path::append(FileA, "a.cc");
+
+  SmallString<128> FileB = CurrentDir;
+  llvm::sys::path::append(FileB, "b.cc");
+
+  tooling::FixedCompilationDatabase Compilations(CurrentDir.str(),
+                                                 std::vector<std::string>());
   std::vector<std::string> Sources;
-  Sources.push_back(FileAName);
-  Sources.push_back(FileBName);
+  Sources.push_back(FileA.str());
+  Sources.push_back(FileB.str());
   tooling::ClangTool Tool(Compilations, Sources);
 
-  Tool.mapVirtualFile(FileAName, "void a() {}");
-  Tool.mapVirtualFile(FileBName, "void b() {}");
+  Tool.mapVirtualFile(FileA, "void a() {}");
+  Tool.mapVirtualFile(FileB, "void b() {}");
 
   // Factory to create TimePassingASTConsumer for each source file the tool
   // runs on.
@@ -158,14 +162,14 @@ TEST(Transform, Timings) {
 
   // The success of the test shouldn't depend on the order of iteration through
   // timers.
-  llvm::sys::Path FirstFile(I->first);
+  StringRef FirstFile = I->first;
   if (FileA == FirstFile) {
     ++I;
-    EXPECT_EQ(FileB, llvm::sys::Path(I->first));
+    EXPECT_EQ(FileB, I->first);
     EXPECT_GT(I->second.getProcessTime(), 0.0);
   } else if (FileB == FirstFile) {
     ++I;
-    EXPECT_EQ(FileA, llvm::sys::Path(I->first));
+    EXPECT_EQ(FileA, I->first);
     EXPECT_GT(I->second.getProcessTime(), 0.0);
   } else {
     FAIL() << "Unexpected file name " << I->first << " in timing data.";
@@ -235,35 +239,38 @@ TEST(Transform, isFileModifiable) {
   // The directory used is not important since the path gets mapped to a virtual
   // file anyway. What is important is that we have an absolute path with which
   // to use with mapVirtualFile().
-  llvm::sys::Path SourceFile = llvm::sys::Path::GetCurrentDirectory();
-  std::string CurrentDir = SourceFile.str();
-  SourceFile.appendComponent("a.cc");
-  std::string SourceFileName = SourceFile.str();
+  SmallString<128> CurrentDir;
+  llvm::error_code EC = llvm::sys::fs::current_path(CurrentDir);
+  assert(!EC);
+  (void)EC;
 
-  llvm::sys::Path HeaderFile = llvm::sys::Path::GetCurrentDirectory();
-  HeaderFile.appendComponent("a.h");
-  std::string HeaderFileName = HeaderFile.str();
+  SmallString<128> SourceFile = CurrentDir;
+  llvm::sys::path::append(SourceFile, "a.cc");
 
-  llvm::sys::Path HeaderBFile = llvm::sys::Path::GetCurrentDirectory();
-  HeaderBFile.appendComponent("temp");
-  std::string ExcludeDir = HeaderBFile.str();
-  HeaderBFile.appendComponent("b.h");
-  std::string HeaderBFileName = HeaderBFile.str();
+  SmallString<128> HeaderFile = CurrentDir;
+  llvm::sys::path::append(HeaderFile, "a.h");
+
+  SmallString<128> HeaderBFile = CurrentDir;
+  llvm::sys::path::append(HeaderBFile, "temp");
+  llvm::sys::path::append(HeaderBFile, "b.h");
+
+  StringRef ExcludeDir = llvm::sys::path::parent_path(HeaderBFile);
 
   IncludeExcludeInfo IncInfo;
   Options.ModifiableHeaders.readListFromString(CurrentDir, ExcludeDir);
 
-  tooling::FixedCompilationDatabase Compilations(CurrentDir, std::vector<std::string>());
+  tooling::FixedCompilationDatabase Compilations(CurrentDir.str(),
+                                                 std::vector<std::string>());
   std::vector<std::string> Sources;
-  Sources.push_back(SourceFileName);
+  Sources.push_back(SourceFile.str());
   tooling::ClangTool Tool(Compilations, Sources);
 
-  Tool.mapVirtualFile(SourceFileName,
+  Tool.mapVirtualFile(SourceFile,
                       "#include \"a.h\"\n"
                       "#include \"temp/b.h\"\n"
                       "int a;");
-  Tool.mapVirtualFile(HeaderFileName, "int b;");
-  Tool.mapVirtualFile(HeaderBFileName, "int c;");
+  Tool.mapVirtualFile(HeaderFile, "int b;");
+  Tool.mapVirtualFile(HeaderBFile, "int c;");
 
   // Run tests with header modifications turned off.
   {
