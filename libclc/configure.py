@@ -142,6 +142,14 @@ for target in targets:
   for libdir in libdirs:
     subdir_list_file = os.path.join(libdir, 'SOURCES')
     manifest_deps.add(subdir_list_file)
+    override_list_file = os.path.join(libdir, 'OVERRIDES')
+
+    # Add target overrides
+    if os.path.exists(override_list_file):
+      for override in open(override_list_file).readlines():
+        override = override.rstrip()
+        sources_seen.add(override)
+
     for src in open(subdir_list_file).readlines():
       src = src.rstrip()
       if src not in sources_seen:
