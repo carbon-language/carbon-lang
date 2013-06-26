@@ -1110,6 +1110,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return false;
   if (Left.is(tok::period) || Right.is(tok::period))
     return false;
+  if (Left.Type == TT_BlockComment && Left.TokenText.endswith("=*/"))
+    return false;
   return true;
 }
 
