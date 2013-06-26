@@ -58,13 +58,11 @@ ARMBaseRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     ghcCall = (F ? F->getCallingConv() == CallingConv::GHC : false);
   }
  
-  if (ghcCall) {
-      return CSR_GHC_SaveList;
-  }
-  else {
-  return (STI.isTargetIOS() && !STI.isAAPCS_ABI())
-    ? CSR_iOS_SaveList : CSR_AAPCS_SaveList;
-  }
+  if (ghcCall)
+    return CSR_GHC_SaveList;
+  else
+    return (STI.isTargetIOS() && !STI.isAAPCS_ABI())
+      ? CSR_iOS_SaveList : CSR_AAPCS_SaveList;
 }
 
 const uint32_t*
