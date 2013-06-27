@@ -1731,6 +1731,86 @@ struct LessRecordFieldName {
   }
 };
 
+struct LessRecordRegister {
+  static size_t min(size_t a, size_t b) { return a < b ? a : b; }
+  static bool ascii_isdigit(char x) { return x >= '0' && x <= '9'; }
+
+  struct RecordParts {
+    SmallVector<std::pair< bool, StringRef>, 4> Parts;
+
+    RecordParts(StringRef Rec) {
+      if (Rec.empty())
+        return;
+
+      size_t Len = 0;
+      const char *Start = Rec.data();
+      const char *Curr = Start;
+      bool isDigitPart = ascii_isdigit(Curr[0]);
+      for (size_t I = 0, E = Rec.size(); I != E; ++I, ++Len) {
+        bool isDigit = ascii_isdigit(Curr[I]);
+        if (isDigit != isDigitPart) {
+          Parts.push_back(std::make_pair(isDigitPart, StringRef(Start, Len)));
+          Len = 0;
+          Start = &Curr[I];
+          isDigitPart = ascii_isdigit(Curr[I]);
+        }
+      }
+      // Push the last part.
+      Parts.push_back(std::make_pair(isDigitPart, StringRef(Start, Len)));
+    }
+
+    size_t size() { return Parts.size(); }
+
+    std::pair<bool, StringRef> getPart(size_t i) {
+      assert (i < Parts.size() && "Invalid idx!");
+      return Parts[i];
+    }
+  };
+
+  bool operator()(const Record *Rec1, const Record *Rec2) const {
+    RecordParts LHSParts(StringRef(Rec1->getName()));
+    RecordParts RHSParts(StringRef(Rec2->getName()));
+
+    size_t LHSNumParts = LHSParts.size();
+    size_t RHSNumParts = RHSParts.size();
+    assert (LHSNumParts && RHSNumParts && "Expected at least one part!");
+
+    if (LHSNumParts != RHSNumParts)
+      return LHSNumParts < RHSNumParts;
+
+    // We expect the registers to be of the form [_a-zA-z]+([0-9]*[_a-zA-Z]*)*.
+    for (size_t I = 0, E = LHSNumParts; I < E; I+=2) {
+      std::pair<bool, StringRef> LHSPart = LHSParts.getPart(I);
+      std::pair<bool, StringRef> RHSPart = RHSParts.getPart(I);
+      if ((I & 1) == 0) { // Expect even part to always be alpha.
+        assert (LHSPart.first == false && RHSPart.first == false &&
+                "Expected both parts to be alpha.");
+        if (int Res = LHSPart.second.compare(RHSPart.second))
+          return Res < 0;
+      }
+    }
+    for (size_t I = 1, E = LHSNumParts; I < E; I+=2) {
+      std::pair<bool, StringRef> LHSPart = LHSParts.getPart(I);
+      std::pair<bool, StringRef> RHSPart = RHSParts.getPart(I);
+      if (I & 1) { // Expect odd part to always be numeric.
+        assert (LHSPart.first == true && RHSPart.first == true &&
+                "Expected both parts to be numeric.");
+        if (LHSPart.second.size() != RHSPart.second.size())
+          return LHSPart.second.size() < RHSPart.second.size();
+
+        unsigned LHSVal, RHSVal;
+        if (LHSPart.second.getAsInteger(10, LHSVal))
+          assert("Unable to convert LHS to integer.");
+        if (RHSPart.second.getAsInteger(10, RHSVal))
+          assert("Unable to convert RHS to integer.");
+        if (LHSVal != RHSVal)
+          return LHSVal < RHSVal;
+      }
+    }
+    return LHSNumParts < RHSNumParts;
+  }
+};
+
 raw_ostream &operator<<(raw_ostream &OS, const RecordKeeper &RK);
 
 /// QualifyName - Return an Init with a qualifier prefix referring

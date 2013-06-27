@@ -897,17 +897,17 @@ Lforward:
         ldm r0, {r0, r2, lr}^
         ldm sp!, {r0-r3, pc}^
 
-@ CHECK: ldm   r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x92,0xe8]
-@ CHECK: ldm   r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x92,0xe8]
-@ CHECK: ldmib r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x92,0xe9]
-@ CHECK: ldmda r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x12,0xe8]
-@ CHECK: ldmdb r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x12,0xe9]
-@ CHECK: ldm   r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x92,0xe8]
+@ CHECK: ldm   r2, {sp, r1, r3, r4, r5, r6} @ encoding: [0x7a,0x20,0x92,0xe8]
+@ CHECK: ldm   r2, {sp, r1, r3, r4, r5, r6} @ encoding: [0x7a,0x20,0x92,0xe8]
+@ CHECK: ldmib r2, {sp, r1, r3, r4, r5, r6} @ encoding: [0x7a,0x20,0x92,0xe9]
+@ CHECK: ldmda r2, {sp, r1, r3, r4, r5, r6} @ encoding: [0x7a,0x20,0x12,0xe8]
+@ CHECK: ldmdb r2, {sp, r1, r3, r4, r5, r6} @ encoding: [0x7a,0x20,0x12,0xe9]
+@ CHECK: ldm   r2, {sp, r1, r3, r4, r5, r6} @ encoding: [0x7a,0x20,0x92,0xe8]
 
-@ CHECK: ldm   r2!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0xb2,0xe8]
-@ CHECK: ldmib r2!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0xb2,0xe9]
-@ CHECK: ldmda r2!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x32,0xe8]
-@ CHECK: ldmdb r2!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x32,0xe9]
+@ CHECK: ldm   r2!, {sp, r1, r3, r4, r5, r6} @ encoding: [0x7a,0x20,0xb2,0xe8]
+@ CHECK: ldmib r2!, {sp, r1, r3, r4, r5, r6} @ encoding: [0x7a,0x20,0xb2,0xe9]
+@ CHECK: ldmda r2!, {sp, r1, r3, r4, r5, r6} @ encoding: [0x7a,0x20,0x32,0xe8]
+@ CHECK: ldmdb r2!, {sp, r1, r3, r4, r5, r6} @ encoding: [0x7a,0x20,0x32,0xe9]
 @ CHECK: ldm	r0, {lr, r0, r2} ^          @ encoding: [0x05,0x40,0xd0,0xe8]
 @ CHECK: ldm	sp!, {pc, r0, r1, r2, r3} ^ @ encoding: [0x0f,0x80,0xfd,0xe8]
 
@@ -2332,17 +2332,17 @@ Lforward:
         stmda     sp!, {r1,r3-r6}
         stmdb     r0!, {r1,r5,r7,sp}
 
-@ CHECK: stm	r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x82,0xe8]
+@ CHECK: stm	r2, {sp, r1, r3, r4, r5, r6} @ encoding: [0x7a,0x20,0x82,0xe8]
 @ CHECK: stm	r3, {lr, r1, r3, r4, r5, r6} @ encoding: [0x7a,0x40,0x83,0xe8]
-@ CHECK: stmib	r4, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x84,0xe9]
-@ CHECK: stmda	r5, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x05,0xe8]
+@ CHECK: stmib	r4, {sp, r1, r3, r4, r5, r6} @ encoding: [0x7a,0x20,0x84,0xe9]
+@ CHECK: stmda	r5, {sp, r1, r3, r4, r5, r6} @ encoding: [0x7a,0x20,0x05,0xe8]
 @ CHECK: stmdb	r6, {r1, r3, r4, r5, r6, r8} @ encoding: [0x7a,0x01,0x06,0xe9]
-@ CHECK: stmdb	sp, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x0d,0xe9]
+@ CHECK: stmdb	sp, {sp, r1, r3, r4, r5, r6} @ encoding: [0x7a,0x20,0x0d,0xe9]
 
-@ CHECK: stm	r8!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0xa8,0xe8]
-@ CHECK: stmib	r9!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0xa9,0xe9]
+@ CHECK: stm	r8!, {sp, r1, r3, r4, r5, r6} @ encoding: [0x7a,0x20,0xa8,0xe8]
+@ CHECK: stmib	r9!, {sp, r1, r3, r4, r5, r6} @ encoding: [0x7a,0x20,0xa9,0xe9]
 @ CHECK: stmda	sp!, {r1, r3, r4, r5, r6}     @ encoding: [0x7a,0x00,0x2d,0xe8]
-@ CHECK: stmdb	r0!, {r1, r5, r7, sp}         @ encoding: [0xa2,0x20,0x20,0xe9]
+@ CHECK: stmdb	r0!, {sp, r1, r5, r7}         @ encoding: [0xa2,0x20,0x20,0xe9]
 
 
 @------------------------------------------------------------------------------

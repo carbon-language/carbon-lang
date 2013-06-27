@@ -938,7 +938,7 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) {
 
   // Read in the register definitions.
   std::vector<Record*> Regs = Records.getAllDerivedDefinitions("Register");
-  std::sort(Regs.begin(), Regs.end(), LessRecord());
+  std::sort(Regs.begin(), Regs.end(), LessRecordRegister());
   Registers.reserve(Regs.size());
   // Assign the enumeration values.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i)
@@ -947,10 +947,16 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) {
   // Expand tuples and number the new registers.
   std::vector<Record*> Tups =
     Records.getAllDerivedDefinitions("RegisterTuples");
+
+  std::vector<Record*> TupRegsCopy;
   for (unsigned i = 0, e = Tups.size(); i != e; ++i) {
     const std::vector<Record*> *TupRegs = Sets.expand(Tups[i]);
-    for (unsigned j = 0, je = TupRegs->size(); j != je; ++j)
-      getReg((*TupRegs)[j]);
+    TupRegsCopy.reserve(TupRegs->size());
+    TupRegsCopy.assign(TupRegs->begin(), TupRegs->end());
+    std::sort(TupRegsCopy.begin(), TupRegsCopy.end(), LessRecordRegister());
+    for (unsigned j = 0, je = TupRegsCopy.size(); j != je; ++j)
+      getReg((TupRegsCopy)[j]);
+    TupRegsCopy.clear();    
   }
 
   // Now all the registers are known. Build the object graph of explicit
