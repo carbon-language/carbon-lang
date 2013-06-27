@@ -26,6 +26,7 @@
 #include "LogChannelDWARF.h"
 #include "NameToDIE.h"
 #include "SymbolFileDWARF.h"
+#include "SymbolFileDWARFDebugMap.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -403,20 +404,26 @@ DWARFCompileUnit::BuildAddressRangeTable (SymbolFileDWARF* dwarf2Data,
         sc.comp_unit = dwarf2Data->GetCompUnitForDWARFCompUnit(this);
         if (sc.comp_unit)
         {
-            LineTable *line_table = sc.comp_unit->GetLineTable();
-
-            if (line_table)
+            SymbolFileDWARFDebugMap *debug_map_sym_file = m_dwarf2Data->GetDebugMapSymfile();
+            if (debug_map_sym_file == NULL)
             {
-                LineTable::FileAddressRanges file_ranges;
-                const bool append = true;
-                const size_t num_ranges = line_table->GetContiguousFileAddressRanges (file_ranges, append);
-                for (uint32_t idx=0; idx<num_ranges; ++idx)
+                LineTable *line_table = sc.comp_unit->GetLineTable();
+
+                if (line_table)
                 {
-                    const LineTable::FileAddressRanges::Entry &range = file_ranges.GetEntryRef(idx);
-                    debug_aranges->AppendRange(GetOffset(), range.GetRangeBase(), range.GetRangeEnd());
-                    printf ("0x%8.8x: [0x%16.16" PRIx64 " - 0x%16.16" PRIx64 ")\n", GetOffset(), range.GetRangeBase(), range.GetRangeEnd());
+                    LineTable::FileAddressRanges file_ranges;
+                    const bool append = true;
+                    const size_t num_ranges = line_table->GetContiguousFileAddressRanges (file_ranges, append);
+                    for (uint32_t idx=0; idx<num_ranges; ++idx)
+                    {
+                        const LineTable::FileAddressRanges::Entry &range = file_ranges.GetEntryRef(idx);
+                        debug_aranges->AppendRange(GetOffset(), range.GetRangeBase(), range.GetRangeEnd());
+                        printf ("0x%8.8x: [0x%16.16" PRIx64 " - 0x%16.16" PRIx64 ")\n", GetOffset(), range.GetRangeBase(), range.GetRangeEnd());
+                    }
                 }
             }
+            else
+                debug_map_sym_file->AddOSOARanges(dwarf2Data,debug_aranges);
         }
     }
     

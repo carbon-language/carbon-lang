@@ -23,6 +23,7 @@
 
 class SymbolFileDWARF;
 class DWARFCompileUnit;
+class DWARFDebugAranges;
 class DWARFDebugInfoEntry;
 class DWARFDeclContext;
 class DebugMapModule;
@@ -128,6 +129,7 @@ protected:
         kNumFlags
     };
 
+    friend class DWARFCompileUnit;
     friend class SymbolFileDWARF;
     friend class DebugMapModule;
     struct OSOInfo
@@ -409,6 +411,10 @@ protected:
     lldb_private::LineTable *
     LinkOSOLineTable (SymbolFileDWARF *oso_symfile,
                       lldb_private::LineTable *line_table);
+    
+    size_t
+    AddOSOARanges (SymbolFileDWARF* dwarf2Data,
+                   DWARFDebugAranges* debug_aranges);
 };
 
 #endif // #ifndef SymbolFileDWARF_SymbolFileDWARFDebugMap_h_

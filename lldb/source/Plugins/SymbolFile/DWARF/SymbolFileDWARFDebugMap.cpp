@@ -9,6 +9,9 @@
 
 #include "SymbolFileDWARFDebugMap.h"
 
+#include "DWARFDebugAranges.h"
+
+#include "lldb/Core/RangeMap.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/PluginManager.h"
@@ -1542,4 +1545,30 @@ SymbolFileDWARFDebugMap::LinkOSOLineTable (SymbolFileDWARF *oso_dwarf, LineTable
     return NULL;
 }
 
+size_t
+SymbolFileDWARFDebugMap::AddOSOARanges (SymbolFileDWARF* dwarf2Data, DWARFDebugAranges* debug_aranges)
+{
+    size_t num_line_entries_added = 0;
+    if (debug_aranges && dwarf2Data)
+    {
+        CompileUnitInfo *compile_unit_info = GetCompileUnitInfo(dwarf2Data);
+        if (compile_unit_info)
+        {
+            const FileRangeMap &file_range_map = compile_unit_info->GetFileRangeMap(this);
+            for (size_t idx = 0;
+                 idx < file_range_map.GetSize();
+                 idx++)
+            {
+                const FileRangeMap::Entry* entry = file_range_map.GetEntryAtIndex(idx);
+                if (entry)
+                {
+                    printf ("[0x%16.16" PRIx64 " - 0x%16.16" PRIx64 ")\n", entry->GetRangeBase(), entry->GetRangeEnd());
+                    debug_aranges->AppendRange(dwarf2Data->GetID(), entry->GetRangeBase(), entry->GetRangeEnd());
+                    num_line_entries_added++;
+                }
+            }
+        }
+    }
+    return num_line_entries_added;
+}
 
