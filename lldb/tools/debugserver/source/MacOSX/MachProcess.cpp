@@ -268,22 +268,26 @@ MachProcess::SetState(nub_state_t new_state)
         PTHREAD_MUTEX_LOCKER(locker, m_state_mutex);
         const nub_state_t old_state = m_state;
 
-        if (old_state != new_state)
+        if (old_state == eStateExited)
+        {
+            DNBLogThreadedIf(LOG_PROCESS, "MachProcess::SetState(%s) ignoring new state since current state is exited", DNBStateAsString(new_state));
+        }
+        else if (old_state == new_state)
+        {
+            DNBLogThreadedIf(LOG_PROCESS, "MachProcess::SetState(%s) ignoring redundant state change...", DNBStateAsString(new_state));
+        }
+        else
         {
             if (NUB_STATE_IS_STOPPED(new_state))
                 event_mask = eEventProcessStoppedStateChanged;
             else
                 event_mask = eEventProcessRunningStateChanged;
 
-            DNBLogThreadedIf(LOG_PROCESS, "MachProcess::SetState ( old = %s, new = %s ) updating state, event_mask = 0x%8.8x", DNBStateAsString(old_state), DNBStateAsString(new_state), event_mask);
+            DNBLogThreadedIf(LOG_PROCESS, "MachProcess::SetState(%s) upating state (previous state was %s), event_mask = 0x%8.8x", DNBStateAsString(new_state), DNBStateAsString(old_state), event_mask);
 
             m_state = new_state;
             if (new_state == eStateStopped)
                 m_stop_count++;
-        }
-        else
-        {
-            DNBLogThreadedIf(LOG_PROCESS, "MachProcess::SetState ( old = %s, new = %s ) ignoring state...", DNBStateAsString(old_state), DNBStateAsString(new_state));
         }
     }
 

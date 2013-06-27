@@ -132,7 +132,7 @@ waitpid_thread (void *arg)
     while (1)
     {
         pid_t child_pid = waitpid(pid, &status, 0);
-        DNBLogThreadedIf(LOG_PROCESS, "waitpid_process_thread (): waitpid (pid = %i, &status, 0) => %i, status = %i, errno = %i", pid, child_pid, status, errno);
+        DNBLogThreadedIf(LOG_PROCESS, "waitpid_thread (): waitpid (pid = %i, &status, 0) => %i, status = %i, errno = %i", pid, child_pid, status, errno);
 
         if (child_pid < 0)
         {
@@ -148,7 +148,7 @@ waitpid_thread (void *arg)
             }
             else// if (WIFEXITED(status) || WIFSIGNALED(status))
             {
-                DNBLogThreadedIf(LOG_PROCESS, "waitpid_process_thread (): setting exit status for pid = %i to %i", child_pid, status);
+                DNBLogThreadedIf(LOG_PROCESS, "waitpid_thread (): setting exit status for pid = %i to %i", child_pid, status);
                 DNBProcessSetExitStatus (child_pid, status);
                 return NULL;
             }
@@ -157,7 +157,7 @@ waitpid_thread (void *arg)
 
     // We should never exit as long as our child process is alive, so if we
     // do something else went wrong and we should exit...
-    DNBLogThreadedIf(LOG_PROCESS, "waitpid_process_thread (): main loop exited, setting exit status to an invalid value (-1) for pid %i", pid);
+    DNBLogThreadedIf(LOG_PROCESS, "waitpid_thread (): main loop exited, setting exit status to an invalid value (-1) for pid %i", pid);
     DNBProcessSetExitStatus (pid, -1);
     return NULL;
 }
