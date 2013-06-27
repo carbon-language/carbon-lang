@@ -386,62 +386,38 @@ namespace clang {
         Owner(Owner), TemplateArgs(TemplateArgs), LateAttrs(0), StartingScope(0)
     { }
 
-    // FIXME: Once we get closer to completion, replace these manually-written
-    // declarations with automatically-generated ones from
-    // clang/AST/DeclNodes.inc.
-    Decl *VisitTranslationUnitDecl(TranslationUnitDecl *D);
-    Decl *VisitLabelDecl(LabelDecl *D);
-    Decl *VisitNamespaceDecl(NamespaceDecl *D);
-    Decl *VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
-    Decl *VisitTypedefDecl(TypedefDecl *D);
-    Decl *VisitTypeAliasDecl(TypeAliasDecl *D);
-    Decl *VisitTypeAliasTemplateDecl(TypeAliasTemplateDecl *D);
-    Decl *VisitVarDecl(VarDecl *D);
-    Decl *VisitAccessSpecDecl(AccessSpecDecl *D);
-    Decl *VisitFieldDecl(FieldDecl *D);
-    Decl *VisitMSPropertyDecl(MSPropertyDecl *D);
-    Decl *VisitIndirectFieldDecl(IndirectFieldDecl *D);
-    Decl *VisitStaticAssertDecl(StaticAssertDecl *D);
-    Decl *VisitEnumDecl(EnumDecl *D);
-    Decl *VisitEnumConstantDecl(EnumConstantDecl *D);
-    Decl *VisitFriendDecl(FriendDecl *D);
-    Decl *VisitFunctionDecl(FunctionDecl *D,
-                            TemplateParameterList *TemplateParams = 0);
-    Decl *VisitCXXRecordDecl(CXXRecordDecl *D);
-    Decl *VisitCXXMethodDecl(CXXMethodDecl *D,
-                             TemplateParameterList *TemplateParams = 0,
-                             bool IsClassScopeSpecialization = false);
-    Decl *VisitCXXConstructorDecl(CXXConstructorDecl *D);
-    Decl *VisitCXXDestructorDecl(CXXDestructorDecl *D);
-    Decl *VisitCXXConversionDecl(CXXConversionDecl *D);
-    ParmVarDecl *VisitParmVarDecl(ParmVarDecl *D);
-    Decl *VisitClassTemplateDecl(ClassTemplateDecl *D);
-    Decl *VisitClassTemplatePartialSpecializationDecl(
-                                    ClassTemplatePartialSpecializationDecl *D);
-    Decl *VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
-    Decl *VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
-    Decl *VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
-    Decl *VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
-    Decl *VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
-    Decl *VisitUsingDecl(UsingDecl *D);
-    Decl *VisitUsingShadowDecl(UsingShadowDecl *D);
-    Decl *VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D);
-    Decl *VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D);
-    Decl *VisitClassScopeFunctionSpecializationDecl(
-                                      ClassScopeFunctionSpecializationDecl *D);
-    Decl *VisitOMPThreadPrivateDecl(OMPThreadPrivateDecl *D);
+// Define all the decl visitors using DeclNodes.inc
+#define DECL(DERIVED, BASE) \
+    Decl *Visit ## DERIVED ## Decl(DERIVED ## Decl *D);
+#define ABSTRACT_DECL(DECL)
 
-    // Base case. FIXME: Remove once we can instantiate everything.
-    Decl *VisitDecl(Decl *D) {
-      unsigned DiagID = SemaRef.getDiagnostics().getCustomDiagID(
-                                                   DiagnosticsEngine::Error,
-                                                   "cannot instantiate %0 yet");
-      SemaRef.Diag(D->getLocation(), DiagID)
-        << D->getDeclKindName();
-      
-      return 0;
-    }
-    
+// Decls which never appear inside a class or function.
+#define OBJCCONTAINER(DERIVED, BASE)
+#define FILESCOPEASM(DERIVED, BASE)
+#define IMPORT(DERIVED, BASE)
+#define LINKAGESPEC(DERIVED, BASE)
+#define OBJCCOMPATIBLEALIAS(DERIVED, BASE)
+#define OBJCMETHOD(DERIVED, BASE)
+#define OBJCIVAR(DERIVED, BASE)
+#define OBJCPROPERTY(DERIVED, BASE)
+#define OBJCPROPERTYIMPL(DERIVED, BASE)
+#define EMPTY(DERIVED, BASE)
+
+// Decls which use special-case instantiation code.
+#define BLOCK(DERIVED, BASE)
+#define CAPTURED(DERIVED, BASE)
+#define IMPLICITPARAM(DERIVED, BASE)
+
+#include "clang/AST/DeclNodes.inc"
+
+    // A few supplemental visitor functions.
+    Decl *VisitCXXMethodDecl(CXXMethodDecl *D,
+                             TemplateParameterList *TemplateParams,
+                             bool IsClassScopeSpecialization = false);
+    Decl *VisitFunctionDecl(FunctionDecl *D,
+                            TemplateParameterList *TemplateParams);
+    Decl *VisitDecl(Decl *D);
+
     // Enable late instantiation of attributes.  Late instantiated attributes
     // will be stored in LA.
     void enableLateAttributeInstantiation(Sema::LateInstantiatedAttrVec *LA) {

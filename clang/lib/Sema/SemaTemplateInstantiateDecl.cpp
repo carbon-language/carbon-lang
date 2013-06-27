@@ -1755,7 +1755,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
   return VisitCXXMethodDecl(D);
 }
 
-ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
+Decl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
   return SemaRef.SubstParmVarDecl(D, TemplateArgs, /*indexAdjustment*/ 0, None,
                                   /*ExpectParameterPack=*/ false);
 }
@@ -2277,6 +2277,44 @@ Decl *TemplateDeclInstantiator::VisitOMPThreadPrivateDecl(
   return TD;
 }
 
+Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
+  return VisitFunctionDecl(D, 0);
+}
+
+Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
+  return VisitCXXMethodDecl(D, 0);
+}
+
+Decl *TemplateDeclInstantiator::VisitRecordDecl(RecordDecl *D) {
+  llvm_unreachable("There are only CXXRecordDecls in C++");
+}
+
+Decl *
+TemplateDeclInstantiator::VisitClassTemplateSpecializationDecl(
+    ClassTemplateSpecializationDecl *D) {
+  llvm_unreachable("Only ClassTemplatePartialSpecializationDecls occur"
+                   "inside templates");
+}
+
+Decl *TemplateDeclInstantiator::VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *D) {
+  llvm_unreachable("@defs is not supported in Objective-C++");
+}
+
+Decl *TemplateDeclInstantiator::VisitFriendTemplateDecl(FriendTemplateDecl *D) {
+  // FIXME: We need to be able to instantiate FriendTemplateDecls.
+  unsigned DiagID = SemaRef.getDiagnostics().getCustomDiagID(
+                                               DiagnosticsEngine::Error,
+                                               "cannot instantiate %0 yet");
+  SemaRef.Diag(D->getLocation(), DiagID)
+    << D->getDeclKindName();
+
+  return 0;
+}
+
+Decl *TemplateDeclInstantiator::VisitDecl(Decl *D) {
+  llvm_unreachable("Unexpected decl");
+}
+
 Decl *Sema::SubstDecl(Decl *D, DeclContext *Owner,
                       const MultiLevelTemplateArgumentList &TemplateArgs) {
   TemplateDeclInstantiator Instantiator(*this, Owner, TemplateArgs);
@@ -2509,7 +2547,8 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
     if (FunctionProtoTypeLoc OldProtoLoc =
             OldTL.getAs<FunctionProtoTypeLoc>()) {
       for (unsigned i = 0, i_end = OldProtoLoc.getNumArgs(); i != i_end; ++i) {
-        ParmVarDecl *Parm = VisitParmVarDecl(OldProtoLoc.getArg(i));
+        ParmVarDecl *Parm =
+            cast_or_null<ParmVarDecl>(VisitParmVarDecl(OldProtoLoc.getArg(i)));
         if (!Parm)
           return 0;
         Params.push_back(Parm);
