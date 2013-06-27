@@ -757,7 +757,8 @@ Preprocess.CXX= $(Compile.Wrapper) \
 	          $(CXX) $(CPP.Flags) $(TargetCommonOpts) $(CPPFLAGS) \
                 $(CompileCommonOpts) $(CXX.Flags) -E
 Link          = $(Compile.Wrapper) \
-	          $(CXX) $(LD.Flags) $(LDFLAGS) $(TargetCommonOpts) $(Strip)
+	          $(CXX) $(CXXFLAGS) $(LD.Flags) $(LDFLAGS) \
+                $(TargetCommonOpts) $(Strip)
 
 BCCompile.C   = $(LLVMCC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \
                 $(TargetCommonOpts) $(CompileCommonOpts)
