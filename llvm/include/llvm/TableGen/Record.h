@@ -1782,30 +1782,28 @@ struct LessRecordRegister {
     for (size_t I = 0, E = LHSNumParts; I < E; I+=2) {
       std::pair<bool, StringRef> LHSPart = LHSParts.getPart(I);
       std::pair<bool, StringRef> RHSPart = RHSParts.getPart(I);
-      if ((I & 1) == 0) { // Expect even part to always be alpha.
-        assert (LHSPart.first == false && RHSPart.first == false &&
-                "Expected both parts to be alpha.");
-        if (int Res = LHSPart.second.compare(RHSPart.second))
-          return Res < 0;
-      }
+      // Expect even part to always be alpha.
+      assert (LHSPart.first == false && RHSPart.first == false &&
+              "Expected both parts to be alpha.");
+      if (int Res = LHSPart.second.compare(RHSPart.second))
+        return Res < 0;
     }
     for (size_t I = 1, E = LHSNumParts; I < E; I+=2) {
       std::pair<bool, StringRef> LHSPart = LHSParts.getPart(I);
       std::pair<bool, StringRef> RHSPart = RHSParts.getPart(I);
-      if (I & 1) { // Expect odd part to always be numeric.
-        assert (LHSPart.first == true && RHSPart.first == true &&
-                "Expected both parts to be numeric.");
-        if (LHSPart.second.size() != RHSPart.second.size())
-          return LHSPart.second.size() < RHSPart.second.size();
+      // Expect odd part to always be numeric.
+      assert (LHSPart.first == true && RHSPart.first == true &&
+              "Expected both parts to be numeric.");
+      if (LHSPart.second.size() != RHSPart.second.size())
+        return LHSPart.second.size() < RHSPart.second.size();
 
-        unsigned LHSVal, RHSVal;
-        if (LHSPart.second.getAsInteger(10, LHSVal))
-          assert("Unable to convert LHS to integer.");
-        if (RHSPart.second.getAsInteger(10, RHSVal))
-          assert("Unable to convert RHS to integer.");
-        if (LHSVal != RHSVal)
-          return LHSVal < RHSVal;
-      }
+      unsigned LHSVal, RHSVal;
+      if (LHSPart.second.getAsInteger(10, LHSVal))
+        assert("Unable to convert LHS to integer.");
+      if (RHSPart.second.getAsInteger(10, RHSVal))
+        assert("Unable to convert RHS to integer.");
+      if (LHSVal != RHSVal)
+        return LHSVal < RHSVal;
     }
     return LHSNumParts < RHSNumParts;
   }
