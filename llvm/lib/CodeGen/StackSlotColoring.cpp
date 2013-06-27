@@ -14,7 +14,6 @@
 #define DEBUG_TYPE "stackslotcoloring"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
@@ -293,7 +292,6 @@ bool StackSlotColoring::ColorSlots(MachineFunction &MF) {
     return false;
 
   // Rewrite all MO_FrameIndex operands.
-  SmallVector<SmallSet<unsigned, 4>, 4> NewDefs(MF.getNumBlockIDs());
   for (unsigned SS = 0, SE = SSRefs.size(); SS != SE; ++SS) {
     int NewFI = SlotMapping[SS];
     if (NewFI == -1 || (NewFI == (int)SS))
