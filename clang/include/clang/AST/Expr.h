@@ -277,7 +277,6 @@ public:
     MLV_IncompleteType,
     MLV_ConstQualified,
     MLV_ArrayType,
-    MLV_ReadonlyProperty,
     MLV_NoSetterProperty,
     MLV_MemberFunction,
     MLV_SubObjCPropertySetting,

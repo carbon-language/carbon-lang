@@ -2499,9 +2499,6 @@ public:
                              ObjCMethodDecl *MethodDecl,
                              bool IsProtocolMethodDecl);
 
-  bool isPropertyReadonly(ObjCPropertyDecl *PropertyDecl,
-                          ObjCInterfaceDecl *IDecl);
-
   typedef llvm::SmallPtrSet<Selector, 8> SelectorSet;
   typedef llvm::DenseMap<Selector, ObjCMethodDecl*> ProtocolsMethodsMap;
 
@@ -6427,9 +6424,6 @@ public:
 
   void DiagnoseClassExtensionDupMethods(ObjCCategoryDecl *CAT,
                                         ObjCInterfaceDecl *ID);
-
-  void MatchOneProtocolPropertiesInClass(Decl *CDecl,
-                                         ObjCProtocolDecl *PDecl);
 
   Decl *ActOnAtEnd(Scope *S, SourceRange AtEnd,
                    Decl **allMethods = 0, unsigned allNum = 0,

@@ -7872,28 +7872,6 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   return Context.BoolTy;
 }
 
-/// IsReadonlyProperty - Verify that otherwise a valid l-value expression
-/// is a read-only property; return true if so. A readonly property expression
-/// depends on various declarations and thus must be treated specially.
-///
-static bool IsReadonlyProperty(Expr *E, Sema &S) {
-  const ObjCPropertyRefExpr *PropExpr = dyn_cast<ObjCPropertyRefExpr>(E);
-  if (!PropExpr) return false;
-  if (PropExpr->isImplicitProperty()) return false;
-
-  ObjCPropertyDecl *PDecl = PropExpr->getExplicitProperty();
-  QualType BaseType = PropExpr->isSuperReceiver() ? 
-                            PropExpr->getSuperReceiverType() :  
-                            PropExpr->getBase()->getType();
-      
-  if (const ObjCObjectPointerType *OPT =
-      BaseType->getAsObjCInterfacePointerType())
-    if (ObjCInterfaceDecl *IFace = OPT->getInterfaceDecl())
-      if (S.isPropertyReadonly(PDecl, IFace))
-        return true;
-  return false;
-}
-
 static bool IsReadonlyMessage(Expr *E, Sema &S) {
   const MemberExpr *ME = dyn_cast<MemberExpr>(E);
   if (!ME) return false;
@@ -7937,9 +7915,7 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
   SourceLocation OrigLoc = Loc;
   Expr::isModifiableLvalueResult IsLV = E->isModifiableLvalue(S.Context,
                                                               &Loc);
-  if (IsLV == Expr::MLV_Valid && IsReadonlyProperty(E, S))
-    IsLV = Expr::MLV_ReadonlyProperty;
-  else if (IsLV == Expr::MLV_ClassTemporary && IsReadonlyMessage(E, S))
+  if (IsLV == Expr::MLV_ClassTemporary && IsReadonlyMessage(E, S))
     IsLV = Expr::MLV_InvalidMessageExpression;
   if (IsLV == Expr::MLV_Valid)
     return false;
@@ -8022,7 +7998,6 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
   case Expr::MLV_DuplicateVectorComponents:
     Diag = diag::err_typecheck_duplicate_vector_components_not_mlvalue;
     break;
-  case Expr::MLV_ReadonlyProperty:
   case Expr::MLV_NoSetterProperty:
     llvm_unreachable("readonly properties should be processed differently");
   case Expr::MLV_InvalidMessageExpression:
