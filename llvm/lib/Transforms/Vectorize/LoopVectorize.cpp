@@ -175,6 +175,11 @@ private:
   /// originated from one scalar instruction.
   typedef SmallVector<Value*, 2> VectorParts;
 
+  // When we if-convert we need create edge masks. We have to cache values so
+  // that we don't end up with exponential recursion/IR.
+  typedef DenseMap<std::pair<BasicBlock*, BasicBlock*>,
+                   VectorParts> EdgeMaskCache;
+
   /// Add code that checks at runtime if the accessed arrays overlap.
   /// Returns the comparator value or NULL if no check is needed.
   Instruction *addRuntimeCheck(LoopVectorizationLegality *Legal,
@@ -318,6 +323,7 @@ private:
   Value *ExtendedIdx;
   /// Maps scalars to widened vectors.
   ValueMap WidenMap;
+  EdgeMaskCache MaskCache;
 };
 
 /// \brief Check if conditionally executed loads are hoistable.
@@ -2166,6 +2172,12 @@ InnerLoopVectorizer::createEdgeMask(BasicBlock *Src, BasicBlock *Dst) {
   assert(std::find(pred_begin(Dst), pred_end(Dst), Src) != pred_end(Dst) &&
          "Invalid edge");
 
+  // Look for cached value.
+  std::pair<BasicBlock*, BasicBlock*> Edge(Src, Dst);
+  EdgeMaskCache::iterator ECEntryIt = MaskCache.find(Edge);
+  if (ECEntryIt != MaskCache.end())
+    return ECEntryIt->second;
+
   VectorParts SrcMask = createBlockInMask(Src);
 
   // The terminator has to be a branch inst!
@@ -2181,9 +2193,12 @@ InnerLoopVectorizer::createEdgeMask(BasicBlock *Src, BasicBlock *Dst) {
 
     for (unsigned part = 0; part < UF; ++part)
       EdgeMask[part] = Builder.CreateAnd(EdgeMask[part], SrcMask[part]);
+
+    MaskCache[Edge] = EdgeMask;
     return EdgeMask;
   }
 
+  MaskCache[Edge] = SrcMask;
   return SrcMask;
 }
 
