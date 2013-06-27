@@ -1928,19 +1928,6 @@ bool VarDecl::checkInitIsICE() const {
   return Eval->IsICE;
 }
 
-bool VarDecl::extendsLifetimeOfTemporary() const {
-  assert(getType()->isReferenceType() &&"Non-references never extend lifetime");
-  
-  const Expr *E = getInit();
-  if (!E)
-    return false;
-  
-  if (const ExprWithCleanups *Cleanups = dyn_cast<ExprWithCleanups>(E))
-    E = Cleanups->getSubExpr();
-  
-  return isa<MaterializeTemporaryExpr>(E);
-}
-
 VarDecl *VarDecl::getInstantiatedFromStaticDataMember() const {
   if (MemberSpecializationInfo *MSI = getMemberSpecializationInfo())
     return cast<VarDecl>(MSI->getInstantiatedFrom());

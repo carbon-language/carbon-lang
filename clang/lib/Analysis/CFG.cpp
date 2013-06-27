@@ -974,10 +974,23 @@ LocalScope* CFGBuilder::addLocalScopeForVarDecl(VarDecl *VD,
   // Check for const references bound to temporary. Set type to pointee.
   QualType QT = VD->getType();
   if (QT.getTypePtr()->isReferenceType()) {
-    if (!VD->extendsLifetimeOfTemporary())
+    // Attempt to determine whether this declaration lifetime-extends a
+    // temporary.
+    //
+    // FIXME: This is incorrect. Non-reference declarations can lifetime-extend
+    // temporaries, and a single declaration can extend multiple temporaries.
+    // We should look at the storage duration on each nested
+    // MaterializeTemporaryExpr instead.
+    const Expr *Init = VD->getInit();
+    if (!Init)
+      return Scope;
+    if (const ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(Init))
+      Init = EWC->getSubExpr();
+    if (!isa<MaterializeTemporaryExpr>(Init))
       return Scope;
 
-    QT = getReferenceInitTemporaryType(*Context, VD->getInit());
+    // Lifetime-extending a temporary.
+    QT = getReferenceInitTemporaryType(*Context, Init);
   }
 
   // Check for constant size array. Set type to array element type.
