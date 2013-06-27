@@ -795,17 +795,6 @@ APFloat::APFloat(const fltSemantics &ourSemantics, uninitializedTag tag) {
   initialize(&ourSemantics);
 }
 
-APFloat::APFloat(const fltSemantics &ourSemantics,
-                 fltCategory ourCategory, bool negative) {
-  initialize(&ourSemantics);
-  category = ourCategory;
-  sign = negative;
-  if (isFiniteNonZero())
-    category = fcZero;
-  else if (ourCategory == fcNaN)
-    makeNaN();
-}
-
 APFloat::APFloat(const fltSemantics &ourSemantics, StringRef text) {
   initialize(&ourSemantics);
   convertFromString(text, rmNearestTiesToEven);
@@ -2406,8 +2395,8 @@ APFloat::roundSignificandWithExponent(const integerPart *decSigParts,
     excessPrecision = calcSemantics.precision - semantics->precision;
     truncatedBits = excessPrecision;
 
-    APFloat decSig(calcSemantics, fcZero, sign);
-    APFloat pow5(calcSemantics, fcZero, false);
+    APFloat decSig = APFloat::getZero(calcSemantics, sign);
+    APFloat pow5(calcSemantics);
 
     sigStatus = decSig.convertFromUnsignedParts(decSigParts, sigPartCount,
                                                 rmNearestTiesToEven);
@@ -3388,15 +3377,16 @@ APFloat APFloat::getSmallest(const fltSemantics &Sem, bool Negative) {
 }
 
 APFloat APFloat::getSmallestNormalized(const fltSemantics &Sem, bool Negative) {
-  APFloat Val(Sem, fcNormal, Negative);
+  APFloat Val(Sem, uninitialized);
 
   // We want (in interchange format):
   //   sign = {Negative}
   //   exponent = 0..0
   //   significand = 10..0
 
-  Val.exponent = Sem.minExponent;
   Val.zeroSignificand();
+  Val.sign = Negative;
+  Val.exponent = Sem.minExponent;
   Val.significandParts()[partCountForBits(Sem.precision)-1] |=
     (((integerPart) 1) << ((Sem.precision - 1) % integerPartWidth));
 
