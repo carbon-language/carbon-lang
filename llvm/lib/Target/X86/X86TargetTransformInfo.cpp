@@ -33,7 +33,6 @@ void initializeX86TTIPass(PassRegistry &);
 namespace {
 
 class X86TTI : public ImmutablePass, public TargetTransformInfo {
-  const X86TargetMachine *TM;
   const X86Subtarget *ST;
   const X86TargetLowering *TLI;
 
@@ -42,12 +41,12 @@ class X86TTI : public ImmutablePass, public TargetTransformInfo {
   unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract) const;
 
 public:
-  X86TTI() : ImmutablePass(ID), TM(0), ST(0), TLI(0) {
+  X86TTI() : ImmutablePass(ID), ST(0), TLI(0) {
     llvm_unreachable("This pass cannot be directly constructed");
   }
 
   X86TTI(const X86TargetMachine *TM)
-      : ImmutablePass(ID), TM(TM), ST(TM->getSubtargetImpl()),
+      : ImmutablePass(ID), ST(TM->getSubtargetImpl()),
         TLI(TM->getTargetLowering()) {
     initializeX86TTIPass(*PassRegistry::getPassRegistry());
   }
