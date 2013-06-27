@@ -428,7 +428,6 @@ public:
     return const_cast<AttrVec&>(const_cast<const Decl*>(this)->getAttrs());
   }
   const AttrVec &getAttrs() const;
-  void swapAttrs(Decl *D);
   void dropAttrs();
 
   void addAttr(Attr *A) {
