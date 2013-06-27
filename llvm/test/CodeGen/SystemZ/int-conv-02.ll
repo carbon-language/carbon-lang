@@ -6,7 +6,7 @@
 define i32 @f1(i32 %a) {
 ; CHECK: f1:
 ; CHECK: llcr %r2, %r2
-; CHECk: br %r14
+; CHECK: br %r14
   %byte = trunc i32 %a to i8
   %ext = zext i8 %byte to i32
   ret i32 %ext
@@ -16,7 +16,7 @@ define i32 @f1(i32 %a) {
 define i32 @f2(i64 %a) {
 ; CHECK: f2:
 ; CHECK: llcr %r2, %r2
-; CHECk: br %r14
+; CHECK: br %r14
   %byte = trunc i64 %a to i8
   %ext = zext i8 %byte to i32
   ret i32 %ext
@@ -26,7 +26,7 @@ define i32 @f2(i64 %a) {
 define i32 @f3(i32 %a) {
 ; CHECK: f3:
 ; CHECK: llcr %r2, %r2
-; CHECk: br %r14
+; CHECK: br %r14
   %ext = and i32 %a, 255
   ret i32 %ext
 }

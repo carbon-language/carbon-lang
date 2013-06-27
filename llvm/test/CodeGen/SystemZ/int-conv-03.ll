@@ -6,7 +6,7 @@
 define i64 @f1(i32 %a) {
 ; CHECK: f1:
 ; CHECK: lgbr %r2, %r2
-; CHECk: br %r14
+; CHECK: br %r14
   %byte = trunc i32 %a to i8
   %ext = sext i8 %byte to i64
   ret i64 %ext
@@ -16,7 +16,7 @@ define i64 @f1(i32 %a) {
 define i64 @f2(i64 %a) {
 ; CHECK: f2:
 ; CHECK: lgbr %r2, %r2
-; CHECk: br %r14
+; CHECK: br %r14
   %byte = trunc i64 %a to i8
   %ext = sext i8 %byte to i64
   ret i64 %ext

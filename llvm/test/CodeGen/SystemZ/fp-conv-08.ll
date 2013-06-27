@@ -17,7 +17,7 @@ define float @f1(i64 %i) {
 define double @f2(i64 %i) {
 ; CHECK: f2:
 ; CHECK: ldgr
-; CHECL: adbr
+; CHECK: adbr
 ; CHECK: br %r14
   %conv = uitofp i64 %i to double
   ret double %conv

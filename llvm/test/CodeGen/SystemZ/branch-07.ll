@@ -2,7 +2,7 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
-declare i64 @foo();
+declare i64 @foo()
 
 define void @f1(i64 %target) {
 ; CHECK: f1:

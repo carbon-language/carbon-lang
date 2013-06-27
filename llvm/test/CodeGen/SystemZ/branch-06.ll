@@ -2,7 +2,7 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
-declare i32 @foo();
+declare i32 @foo()
 
 define void @f1(i32 %target) {
 ; CHECK: f1:
