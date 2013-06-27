@@ -14,6 +14,8 @@
 #ifndef LLVM_SUPPORT_REGISTRY_H
 #define LLVM_SUPPORT_REGISTRY_H
 
+#include "llvm/Support/Compiler.h"
+
 namespace llvm {
   /// A simple registry entry which provides only a name, description, and
   /// no-argument constructor.
