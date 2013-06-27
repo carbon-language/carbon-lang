@@ -14,9 +14,12 @@
 #include <vector>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 int main()
 {
 #ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+    {
     std::vector<bool> d(10, true);
     std::vector<bool>::iterator i = d.insert(d.cbegin() + 2, {false, true, true, false});
     assert(d.size() == 14);
@@ -35,5 +38,28 @@ int main()
     assert(d[11] == true);
     assert(d[12] == true);
     assert(d[13] == true);
+    }
+#if __cplusplus >= 201103L
+    {
+    std::vector<bool, min_allocator<bool>> d(10, true);
+    std::vector<bool, min_allocator<bool>>::iterator i = d.insert(d.cbegin() + 2, {false, true, true, false});
+    assert(d.size() == 14);
+    assert(i == d.begin() + 2);
+    assert(d[0] == true);
+    assert(d[1] == true);
+    assert(d[2] == false);
+    assert(d[3] == true);
+    assert(d[4] == true);
+    assert(d[5] == false);
+    assert(d[6] == true);
+    assert(d[7] == true);
+    assert(d[8] == true);
+    assert(d[9] == true);
+    assert(d[10] == true);
+    assert(d[11] == true);
+    assert(d[12] == true);
+    assert(d[13] == true);
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

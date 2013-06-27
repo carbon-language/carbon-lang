@@ -17,6 +17,7 @@
 #include "../../../test_allocator.h"
 #include "../../../NotConstructible.h"
 #include "../../../stack_allocator.h"
+#include "../../../min_allocator.h"
 
 template <class C>
 void
@@ -51,4 +52,17 @@ int main()
         std::vector<int, stack_allocator<int, 10> > v;
         assert(v.empty());
     }
+#if __cplusplus >= 201103L
+    {
+    test0<std::vector<int, min_allocator<int>> >();
+    test0<std::vector<NotConstructible, min_allocator<NotConstructible>> >();
+    test1<std::vector<int, min_allocator<int> > >(min_allocator<int>{});
+    test1<std::vector<NotConstructible, min_allocator<NotConstructible> > >
+        (min_allocator<NotConstructible>{});
+    }
+    {
+        std::vector<int, min_allocator<int> > v;
+        assert(v.empty());
+    }
+#endif
 }

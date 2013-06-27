@@ -33,6 +33,7 @@
 
 #include "../../test_allocator.h"
 #include "../../Copyable.h"
+#include "../../min_allocator.h"
 
 template <class Allocator>
 void
@@ -43,8 +44,8 @@ test()
     static_assert((std::is_same<typename C::value_type, bool>::value), "");
     static_assert((std::is_same<typename C::value_type, typename Allocator::value_type>::value), "");
     static_assert((std::is_same<typename C::allocator_type, Allocator>::value), "");
-    static_assert((std::is_same<typename C::size_type, typename Allocator::size_type>::value), "");
-    static_assert((std::is_same<typename C::difference_type, typename Allocator::difference_type>::value), "");
+    static_assert((std::is_same<typename C::size_type, typename std::allocator_traits<Allocator>::size_type>::value), "");
+    static_assert((std::is_same<typename C::difference_type, typename std::allocator_traits<Allocator>::difference_type>::value), "");
     static_assert((std::is_same<
         typename std::iterator_traits<typename C::iterator>::iterator_category,
         std::random_access_iterator_tag>::value), "");
@@ -65,4 +66,7 @@ int main()
     test<std::allocator<bool> >();
     static_assert((std::is_same<std::vector<bool>::allocator_type,
                                 std::allocator<bool> >::value), "");
+#if __cplusplus >= 201103L
+    test<min_allocator<bool> >();
+#endif
 }

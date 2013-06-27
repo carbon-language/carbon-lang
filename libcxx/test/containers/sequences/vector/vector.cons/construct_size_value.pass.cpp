@@ -15,6 +15,7 @@
 #include <cassert>
 
 #include "../../../stack_allocator.h"
+#include "../../../min_allocator.h"
 
 template <class C>
 void
@@ -31,4 +32,7 @@ int main()
 {
     test<std::vector<int> >(50, 3);
     test<std::vector<int, stack_allocator<int, 50> > >(50, 5);
+#if __cplusplus >= 201103L
+    test<std::vector<int, min_allocator<int>> >(50, 3);
+#endif
 }

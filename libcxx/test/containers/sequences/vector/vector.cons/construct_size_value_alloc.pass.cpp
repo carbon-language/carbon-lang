@@ -13,6 +13,7 @@
 
 #include <vector>
 #include <cassert>
+#include "../../../min_allocator.h"
 
 template <class C>
 void
@@ -30,4 +31,7 @@ test(typename C::size_type n, const typename C::value_type& x,
 int main()
 {
     test<std::vector<int> >(50, 3, std::allocator<int>());
+#if __cplusplus >= 201103L
+    test<std::vector<int, min_allocator<int>> >(50, 3, min_allocator<int>());
+#endif
 }

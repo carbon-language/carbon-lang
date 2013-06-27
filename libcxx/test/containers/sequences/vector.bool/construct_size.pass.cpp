@@ -15,6 +15,8 @@
 #include <vector>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 template <class C>
 void
 test(typename C::size_type n)
@@ -30,4 +32,7 @@ test(typename C::size_type n)
 int main()
 {
     test<std::vector<bool> >(50);
+#if __cplusplus >= 201103L
+    test<std::vector<bool, min_allocator<bool>> >(50);
+#endif
 }

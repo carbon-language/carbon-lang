@@ -1135,7 +1135,14 @@ public:
 #endif
         return *__i;
     }
-    _LIBCPP_INLINE_VISIBILITY pointer  operator->() const _NOEXCEPT {return &(operator*());}
+    _LIBCPP_INLINE_VISIBILITY pointer  operator->() const _NOEXCEPT
+    {
+#if _LIBCPP_DEBUG_LEVEL >= 2
+        _LIBCPP_ASSERT(__get_const_db()->__dereferenceable(this),
+                       "Attempted to dereference a non-dereferenceable iterator");
+#endif
+        return (pointer)&reinterpret_cast<const volatile char&>(*__i);
+    }
     _LIBCPP_INLINE_VISIBILITY __wrap_iter& operator++() _NOEXCEPT
     {
 #if _LIBCPP_DEBUG_LEVEL >= 2

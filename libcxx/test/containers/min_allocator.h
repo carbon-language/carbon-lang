@@ -11,10 +11,6 @@ template <> class min_pointer<void>;
 template <> class min_pointer<const void>;
 template <class T> class min_allocator;
 
-template <class T>
-bool
-operator==(min_pointer<T> x, min_pointer<T> y);
-
 template <>
 class min_pointer<const void>
 {
@@ -27,7 +23,8 @@ public:
 
     explicit operator bool() const {return ptr_ != nullptr;}
 
-    template <class U> friend bool operator==(min_pointer<U>, min_pointer<U>);
+    friend bool operator==(min_pointer x, min_pointer y) {return x.ptr_ == y.ptr_;}
+    friend bool operator!=(min_pointer x, min_pointer y) {return !(x == y);}
     template <class U> friend class min_pointer;
 };
 
@@ -48,7 +45,8 @@ public:
 
     explicit operator bool() const {return ptr_ != nullptr;}
 
-    template <class U> friend bool operator==(min_pointer<U>, min_pointer<U>);
+    friend bool operator==(min_pointer x, min_pointer y) {return x.ptr_ == y.ptr_;}
+    friend bool operator!=(min_pointer x, min_pointer y) {return !(x == y);}
     template <class U> friend class min_pointer;
 };
 
@@ -116,7 +114,8 @@ public:
 
     static min_pointer pointer_to(T& t) {return min_pointer(std::addressof(t));}
 
-    template <class U> friend bool operator==(min_pointer<U>, min_pointer<U>);
+    friend bool operator==(min_pointer x, min_pointer y) {return x.ptr_ == y.ptr_;}
+    friend bool operator!=(min_pointer x, min_pointer y) {return !(x == y);}
     template <class U> friend class min_pointer;
     template <class U> friend class min_allocator;
 };
@@ -186,25 +185,10 @@ public:
 
     static min_pointer pointer_to(const T& t) {return min_pointer(std::addressof(t));}
 
-    template <class U> friend bool operator==(min_pointer<U>, min_pointer<U>);
+    friend bool operator==(min_pointer x, min_pointer y) {return x.ptr_ == y.ptr_;}
+    friend bool operator!=(min_pointer x, min_pointer y) {return !(x == y);}
     template <class U> friend class min_pointer;
 };
-
-template <class T>
-inline
-bool
-operator==(min_pointer<T> x, min_pointer<T> y)
-{
-    return x.ptr_ == y.ptr_;
-}
-
-template <class T>
-inline
-bool
-operator!=(min_pointer<T> x, min_pointer<T> y)
-{
-    return !(x == y);
-}
 
 template <class T>
 inline

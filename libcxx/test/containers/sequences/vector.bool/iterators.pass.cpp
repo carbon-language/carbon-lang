@@ -20,6 +20,8 @@
 #include <cassert>
 #include <iterator>
 
+#include "../../min_allocator.h"
+
 int main()
 {
     {
@@ -56,4 +58,40 @@ int main()
         C::iterator i;
         C::const_iterator j;
     }
+#if __cplusplus >= 201103L
+    {
+        typedef bool T;
+        typedef std::vector<T, min_allocator<T>> C;
+        C c;
+        C::iterator i = c.begin();
+        C::iterator j = c.end();
+        assert(std::distance(i, j) == 0);
+        assert(i == j);
+    }
+    {
+        typedef bool T;
+        typedef std::vector<T, min_allocator<T>> C;
+        const C c;
+        C::const_iterator i = c.begin();
+        C::const_iterator j = c.end();
+        assert(std::distance(i, j) == 0);
+        assert(i == j);
+    }
+    {
+        typedef bool T;
+        typedef std::vector<T, min_allocator<T>> C;
+        C c;
+        C::const_iterator i = c.cbegin();
+        C::const_iterator j = c.cend();
+        assert(std::distance(i, j) == 0);
+        assert(i == j);
+        assert(i == c.end());
+    }
+    {
+        typedef bool T;
+        typedef std::vector<T, min_allocator<T>> C;
+        C::iterator i;
+        C::const_iterator j;
+    }
+#endif
 }

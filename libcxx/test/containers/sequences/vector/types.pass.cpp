@@ -35,6 +35,7 @@
 
 #include "../../test_allocator.h"
 #include "../../Copyable.h"
+#include "../../min_allocator.h"
 
 template <class T, class Allocator>
 void
@@ -72,4 +73,12 @@ int main()
     test<Copyable, test_allocator<Copyable> >();
     static_assert((std::is_same<std::vector<char>::allocator_type,
                                 std::allocator<char> >::value), "");
+#if __cplusplus >= 201103L
+    static_assert((std::is_same<std::vector<int, min_allocator<int>>::value_type, int>::value), "");
+    static_assert((std::is_same<std::vector<int, min_allocator<int>>::allocator_type, min_allocator<int> >::value), "");
+    static_assert((std::is_same<std::vector<int, min_allocator<int>>::reference, int&>::value), "");
+    static_assert((std::is_same<std::vector<int, min_allocator<int>>::const_reference, const int&>::value), "");
+    static_assert((std::is_same<std::vector<int, min_allocator<int>>::pointer, min_pointer<int>>::value), "");
+    static_assert((std::is_same<std::vector<int, min_allocator<int>>::const_pointer, min_pointer<const int>>::value), "");
+#endif
 }

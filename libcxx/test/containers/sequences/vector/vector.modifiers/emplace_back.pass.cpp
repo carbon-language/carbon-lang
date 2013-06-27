@@ -14,6 +14,7 @@
 #include <vector>
 #include <cassert>
 #include "../../../stack_allocator.h"
+#include "../../../min_allocator.h"
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
@@ -80,5 +81,20 @@ int main()
         assert(c.back().geti() == 3);
         assert(c.back().getd() == 4.5);
     }
+#if __cplusplus >= 201103L
+    {
+        std::vector<A, min_allocator<A>> c;
+        c.emplace_back(2, 3.5);
+        assert(c.size() == 1);
+        assert(c.front().geti() == 2);
+        assert(c.front().getd() == 3.5);
+        c.emplace_back(3, 4.5);
+        assert(c.size() == 2);
+        assert(c.front().geti() == 2);
+        assert(c.front().getd() == 3.5);
+        assert(c.back().geti() == 3);
+        assert(c.back().getd() == 4.5);
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

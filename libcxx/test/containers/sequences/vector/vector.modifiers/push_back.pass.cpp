@@ -14,6 +14,7 @@
 #include <vector>
 #include <cassert>
 #include "../../../stack_allocator.h"
+#include "../../../min_allocator.h"
 
 int main()
 {
@@ -63,4 +64,29 @@ int main()
         for (int j = 0; j < c.size(); ++j)
             assert(c[j] == j);
     }
+#if __cplusplus >= 201103L
+    {
+        std::vector<int, min_allocator<int>> c;
+        c.push_back(0);
+        assert(c.size() == 1);
+        for (int j = 0; j < c.size(); ++j)
+            assert(c[j] == j);
+        c.push_back(1);
+        assert(c.size() == 2);
+        for (int j = 0; j < c.size(); ++j)
+            assert(c[j] == j);
+        c.push_back(2);
+        assert(c.size() == 3);
+        for (int j = 0; j < c.size(); ++j)
+            assert(c[j] == j);
+        c.push_back(3);
+        assert(c.size() == 4);
+        for (int j = 0; j < c.size(); ++j)
+            assert(c[j] == j);
+        c.push_back(4);
+        assert(c.size() == 5);
+        for (int j = 0; j < c.size(); ++j)
+            assert(c[j] == j);
+    }
+#endif
 }

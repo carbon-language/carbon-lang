@@ -20,6 +20,7 @@
 #include <cassert>
 #include "../../../stack_allocator.h"
 #include "test_iterators.h"
+#include "../../../min_allocator.h"
 
 int main()
 {
@@ -97,5 +98,50 @@ int main()
                                         input_iterator<const int*>(a+N));
         assert(false);
     }
+#endif
+#if __cplusplus >= 201103L
+    {
+        std::vector<int, min_allocator<int>> v(100);
+        int a[] = {1, 2, 3, 4, 5};
+        const int N = sizeof(a)/sizeof(a[0]);
+        std::vector<int, min_allocator<int>>::iterator i = v.insert(v.cbegin() + 10, input_iterator<const int*>(a),
+                                        input_iterator<const int*>(a+N));
+        assert(v.size() == 100 + N);
+        assert(i == v.begin() + 10);
+        int j;
+        for (j = 0; j < 10; ++j)
+            assert(v[j] == 0);
+        for (int k = 0; k < N; ++j, ++k)
+            assert(v[j] == a[k]);
+        for (; j < 105; ++j)
+            assert(v[j] == 0);
+    }
+    {
+        std::vector<int, min_allocator<int>> v(100);
+        int a[] = {1, 2, 3, 4, 5};
+        const int N = sizeof(a)/sizeof(a[0]);
+        std::vector<int, min_allocator<int>>::iterator i = v.insert(v.cbegin() + 10, forward_iterator<const int*>(a),
+                                        forward_iterator<const int*>(a+N));
+        assert(v.size() == 100 + N);
+        assert(i == v.begin() + 10);
+        int j;
+        for (j = 0; j < 10; ++j)
+            assert(v[j] == 0);
+        for (int k = 0; k < N; ++j, ++k)
+            assert(v[j] == a[k]);
+        for (; j < 105; ++j)
+            assert(v[j] == 0);
+    }
+#if _LIBCPP_DEBUG2 >= 1
+    {
+        std::vector<int, min_allocator<int>> v(100);
+        std::vector<int, min_allocator<int>> v2(100);
+        int a[] = {1, 2, 3, 4, 5};
+        const int N = sizeof(a)/sizeof(a[0]);
+        std::vector<int, min_allocator<int>>::iterator i = v.insert(v2.cbegin() + 10, input_iterator<const int*>(a),
+                                        input_iterator<const int*>(a+N));
+        assert(false);
+    }
+#endif
 #endif
 }

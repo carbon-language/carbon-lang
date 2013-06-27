@@ -18,6 +18,7 @@
 #include <vector>
 #include <cassert>
 #include "../../../stack_allocator.h"
+#include "../../../min_allocator.h"
 
 int main()
 {
@@ -54,5 +55,41 @@ int main()
         std::vector<int>::iterator i = c1.insert(c2.cbegin() + 10, 5, 1);
         assert(false);
     }
+#endif
+#if __cplusplus >= 201103L
+    {
+        std::vector<int, min_allocator<int>> v(100);
+        std::vector<int, min_allocator<int>>::iterator i = v.insert(v.cbegin() + 10, 5, 1);
+        assert(v.size() == 105);
+        assert(i == v.begin() + 10);
+        int j;
+        for (j = 0; j < 10; ++j)
+            assert(v[j] == 0);
+        for (; j < 15; ++j)
+            assert(v[j] == 1);
+        for (++j; j < 105; ++j)
+            assert(v[j] == 0);
+    }
+    {
+        std::vector<int, min_allocator<int>> v(100);
+        std::vector<int, min_allocator<int>>::iterator i = v.insert(v.cbegin() + 10, 5, 1);
+        assert(v.size() == 105);
+        assert(i == v.begin() + 10);
+        int j;
+        for (j = 0; j < 10; ++j)
+            assert(v[j] == 0);
+        for (; j < 15; ++j)
+            assert(v[j] == 1);
+        for (++j; j < 105; ++j)
+            assert(v[j] == 0);
+    }
+#if _LIBCPP_DEBUG2 >= 1
+    {
+        std::vector<int, min_allocator<int>> c1(100);
+        std::vector<int, min_allocator<int>> c2;
+        std::vector<int, min_allocator<int>>::iterator i = c1.insert(c2.cbegin() + 10, 5, 1);
+        assert(false);
+    }
+#endif
 #endif
 }

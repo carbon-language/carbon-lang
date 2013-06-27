@@ -15,6 +15,7 @@
 #include <cassert>
 #include "../../../stack_allocator.h"
 #include "../../../MoveOnly.h"
+#include "../../../min_allocator.h"
 
 int main()
 {
@@ -57,4 +58,15 @@ int main()
         assert(v.capacity() >= 200);
     }
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#if __cplusplus >= 201103L
+    {
+        std::vector<MoveOnly, min_allocator<MoveOnly>> v(100);
+        v.resize(50);
+        assert(v.size() == 50);
+        assert(v.capacity() == 100);
+        v.resize(200);
+        assert(v.size() == 200);
+        assert(v.capacity() >= 200);
+    }
+#endif
 }

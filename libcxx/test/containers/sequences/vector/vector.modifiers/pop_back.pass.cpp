@@ -18,6 +18,7 @@
 #include <vector>
 #include <cassert>
 #include "../../../stack_allocator.h"
+#include "../../../min_allocator.h"
 
 #if _LIBCPP_DEBUG2 >= 1
 #include <cstdlib>
@@ -38,4 +39,17 @@ int main()
         assert(false);
 #endif        
     }
+#if __cplusplus >= 201103L
+    {
+        std::vector<int, min_allocator<int>> c;
+        c.push_back(1);
+        assert(c.size() == 1);
+        c.pop_back();
+        assert(c.size() == 0);
+#if _LIBCPP_DEBUG2 >= 1
+        c.pop_back();
+        assert(false);
+#endif        
+    }
+#endif        
 }

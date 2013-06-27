@@ -14,6 +14,8 @@
 #include <vector>
 #include <cassert>
 
+#include "../../../min_allocator.h"
+
 int main()
 {
     {
@@ -24,4 +26,14 @@ int main()
         const std::vector<int> v(100);
         assert(v.data() == &v.front());
     }
+#if __cplusplus >= 201103L
+    {
+        const std::vector<int, min_allocator<int>> v;
+        assert(v.data() == 0);
+    }
+    {
+        const std::vector<int, min_allocator<int>> v(100);
+        assert(v.data() == &v.front());
+    }
+#endif
 }

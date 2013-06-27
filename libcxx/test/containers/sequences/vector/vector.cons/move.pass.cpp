@@ -15,6 +15,7 @@
 #include <cassert>
 #include "../../../MoveOnly.h"
 #include "../../../test_allocator.h"
+#include "../../../min_allocator.h"
 
 int main()
 {
@@ -53,5 +54,28 @@ int main()
         std::vector<int>::iterator j = c2.erase(i);
         assert(*j == 3);
     }
+#if __cplusplus >= 201103L
+    {
+        std::vector<MoveOnly, min_allocator<MoveOnly> > l(min_allocator<MoveOnly>{});
+        std::vector<MoveOnly, min_allocator<MoveOnly> > lo(min_allocator<MoveOnly>{});
+        for (int i = 1; i <= 3; ++i)
+        {
+            l.push_back(i);
+            lo.push_back(i);
+        }
+        std::vector<MoveOnly, min_allocator<MoveOnly> > l2 = std::move(l);
+        assert(l2 == lo);
+        assert(l.empty());
+        assert(l2.get_allocator() == lo.get_allocator());
+    }
+    {
+        int a1[] = {1, 3, 7, 9, 10};
+        std::vector<int, min_allocator<int>> c1(a1, a1+sizeof(a1)/sizeof(a1[0]));
+        std::vector<int, min_allocator<int>>::const_iterator i = c1.begin();
+        std::vector<int, min_allocator<int>> c2 = std::move(c1);
+        std::vector<int, min_allocator<int>>::iterator j = c2.erase(i);
+        assert(*j == 3);
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

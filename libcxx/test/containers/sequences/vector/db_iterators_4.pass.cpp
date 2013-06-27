@@ -21,8 +21,11 @@
 #include <exception>
 #include <cstdlib>
 
+#include "../../min_allocator.h"
+
 int main()
 {
+    {
     typedef int T;
     typedef std::vector<T> C;
     C c(1);
@@ -30,6 +33,18 @@ int main()
     assert(i[0] == 0);
     assert(i[1] == 0);
     assert(false);
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef int T;
+    typedef std::vector<T, min_allocator<T>> C;
+    C c(1);
+    C::iterator i = c.begin();
+    assert(i[0] == 0);
+    assert(i[1] == 0);
+    assert(false);
+    }
+#endif
 }
 
 #else

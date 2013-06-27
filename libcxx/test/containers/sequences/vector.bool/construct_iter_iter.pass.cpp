@@ -16,6 +16,7 @@
 #include <cassert>
 
 #include "test_iterators.h"
+#include "../../min_allocator.h"
 
 template <class C, class Iterator>
 void
@@ -37,4 +38,11 @@ int main()
     test<std::vector<bool> >(bidirectional_iterator<const bool*>(a), bidirectional_iterator<const bool*>(an));
     test<std::vector<bool> >(random_access_iterator<const bool*>(a), random_access_iterator<const bool*>(an));
     test<std::vector<bool> >(a, an);
+#if __cplusplus >= 201103L
+    test<std::vector<bool, min_allocator<bool>> >(input_iterator<const bool*>(a), input_iterator<const bool*>(an));
+    test<std::vector<bool, min_allocator<bool>> >(forward_iterator<const bool*>(a), forward_iterator<const bool*>(an));
+    test<std::vector<bool, min_allocator<bool>> >(bidirectional_iterator<const bool*>(a), bidirectional_iterator<const bool*>(an));
+    test<std::vector<bool, min_allocator<bool>> >(random_access_iterator<const bool*>(a), random_access_iterator<const bool*>(an));
+    test<std::vector<bool, min_allocator<bool>> >(a, an);
+#endif
 }

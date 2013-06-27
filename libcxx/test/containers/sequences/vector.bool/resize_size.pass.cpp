@@ -15,6 +15,8 @@
 #include <vector>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 int main()
 {
     {
@@ -26,4 +28,15 @@ int main()
         assert(v.size() == 200);
         assert(v.capacity() >= 200);
     }
+#if __cplusplus >= 201103L
+    {
+        std::vector<bool, min_allocator<bool>> v(100);
+        v.resize(50);
+        assert(v.size() == 50);
+        assert(v.capacity() >= 100);
+        v.resize(200);
+        assert(v.size() == 200);
+        assert(v.capacity() >= 200);
+    }
+#endif
 }

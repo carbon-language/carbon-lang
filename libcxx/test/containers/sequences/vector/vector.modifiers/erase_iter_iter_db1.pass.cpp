@@ -20,13 +20,26 @@
 #include <exception>
 #include <cstdlib>
 
+#include "../../../min_allocator.h"
+
 int main()
 {
+    {
     int a1[] = {1, 2, 3};
     std::vector<int> l1(a1, a1+3);
     std::vector<int> l2(a1, a1+3);
     std::vector<int>::iterator i = l1.erase(l2.cbegin(), l1.cbegin()+1);
     assert(false);
+    }
+#if __cplusplus >= 201103L
+    {
+    int a1[] = {1, 2, 3};
+    std::vector<int, min_allocator<int>> l1(a1, a1+3);
+    std::vector<int, min_allocator<int>> l2(a1, a1+3);
+    std::vector<int, min_allocator<int>>::iterator i = l1.erase(l2.cbegin(), l1.cbegin()+1);
+    assert(false);
+    }
+#endif
 }
 
 #else

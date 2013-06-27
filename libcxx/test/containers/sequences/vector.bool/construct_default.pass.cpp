@@ -16,6 +16,7 @@
 #include <cassert>
 
 #include "../../test_allocator.h"
+#include "../../min_allocator.h"
 
 template <class C>
 void
@@ -43,4 +44,10 @@ int main()
     test0<std::vector<bool> >();
     test1<std::vector<bool, test_allocator<bool> > >(test_allocator<bool>(3));
     }
+#if __cplusplus >= 201103L
+    {
+    test0<std::vector<bool, min_allocator<bool>> >();
+    test1<std::vector<bool, min_allocator<bool> > >(min_allocator<bool>());
+    }
+#endif
 }

@@ -15,6 +15,7 @@
 #include <vector>
 #include <cassert>
 #include "../../test_allocator.h"
+#include "../../min_allocator.h"
 
 template <class C>
 void
@@ -48,4 +49,17 @@ int main()
         assert(v2.get_allocator() == other_allocator<bool>(-2));
     }
 #endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
+#if __cplusplus >= 201103L
+    {
+        bool a[] = {0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0};
+        bool* an = a + sizeof(a)/sizeof(a[0]);
+        test(std::vector<bool, min_allocator<bool>>(a, an));
+    }
+    {
+        std::vector<bool, min_allocator<bool> > v(3, 2, min_allocator<bool>());
+        std::vector<bool, min_allocator<bool> > v2 = v;
+        assert(v2 == v);
+        assert(v2.get_allocator() == v.get_allocator());
+    }
+#endif
 }

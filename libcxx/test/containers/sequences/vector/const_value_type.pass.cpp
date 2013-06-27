@@ -16,5 +16,7 @@
 
 int main()
 {
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     std::vector<const int> v = {1, 2, 3};
+#endif
 }

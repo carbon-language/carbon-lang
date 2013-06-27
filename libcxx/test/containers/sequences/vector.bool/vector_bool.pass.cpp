@@ -22,8 +22,11 @@
 #include <cassert>
 #include <type_traits>
 
+#include "../../min_allocator.h"
+
 int main()
 {
+    {
     typedef std::vector<bool> T;
     typedef std::hash<T> H;
     static_assert((std::is_base_of<std::unary_function<T, std::size_t>,
@@ -32,4 +35,17 @@ int main()
     T vb(std::begin(ba), std::end(ba));
     H h;
     assert(h(vb) != 0);
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::vector<bool, min_allocator<bool>> T;
+    typedef std::hash<T> H;
+    static_assert((std::is_base_of<std::unary_function<T, std::size_t>,
+                                   H>::value), "");
+    bool ba[] = {true, false, true, true, false};
+    T vb(std::begin(ba), std::end(ba));
+    H h;
+    assert(h(vb) != 0);
+    }
+#endif
 }

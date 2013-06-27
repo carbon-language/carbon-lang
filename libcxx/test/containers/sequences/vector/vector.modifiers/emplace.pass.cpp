@@ -18,6 +18,7 @@
 #include <vector>
 #include <cassert>
 #include "../../../stack_allocator.h"
+#include "../../../min_allocator.h"
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
@@ -113,6 +114,40 @@ int main()
         std::vector<A>::iterator i = c1.emplace(c2.cbegin(), 2, 3.5);
         assert(false);
     }
+#endif
+#if __cplusplus >= 201103L
+    {
+        std::vector<A, min_allocator<A>> c;
+        std::vector<A, min_allocator<A>>::iterator i = c.emplace(c.cbegin(), 2, 3.5);
+        assert(i == c.begin());
+        assert(c.size() == 1);
+        assert(c.front().geti() == 2);
+        assert(c.front().getd() == 3.5);
+        i = c.emplace(c.cend(), 3, 4.5);
+        assert(i == c.end()-1);
+        assert(c.size() == 2);
+        assert(c.front().geti() == 2);
+        assert(c.front().getd() == 3.5);
+        assert(c.back().geti() == 3);
+        assert(c.back().getd() == 4.5);
+        i = c.emplace(c.cbegin()+1, 4, 6.5);
+        assert(i == c.begin()+1);
+        assert(c.size() == 3);
+        assert(c.front().geti() == 2);
+        assert(c.front().getd() == 3.5);
+        assert(c[1].geti() == 4);
+        assert(c[1].getd() == 6.5);
+        assert(c.back().geti() == 3);
+        assert(c.back().getd() == 4.5);
+    }
+#if _LIBCPP_DEBUG2 >= 1
+    {
+        std::vector<A, min_allocator<A>> c1;
+        std::vector<A, min_allocator<A>> c2;
+        std::vector<A, min_allocator<A>>::iterator i = c1.emplace(c2.cbegin(), 2, 3.5);
+        assert(false);
+    }
+#endif
 #endif
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }
