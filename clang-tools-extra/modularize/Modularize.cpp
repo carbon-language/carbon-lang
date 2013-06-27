@@ -96,13 +96,14 @@ using namespace clang;
 using namespace llvm;
 
 // Option to specify a file name for a list of header files to check.
-cl::opt<std::string>
-ListFileName(cl::Positional,
-             cl::desc("<name of file containing list of headers to check>"));
+cl::opt<std::string> ListFileName(
+    cl::Positional,
+    cl::desc("<name of file containing list of headers to check>"));
 
 // Collect all other arguments, which will be passed to the front end.
-cl::list<std::string> CC1Arguments(
-    cl::ConsumeAfter, cl::desc("<arguments to be passed to front end>..."));
+cl::list<std::string>
+    CC1Arguments(cl::ConsumeAfter,
+                 cl::desc("<arguments to be passed to front end>..."));
 
 // Option to specify a prefix to be prepended to the header names.
 cl::opt<std::string> HeaderPrefix(
@@ -314,13 +315,14 @@ public:
 
     CurHeaderContents.clear();
   }
+
 private:
   DenseMap<const FileEntry *, HeaderContents> CurHeaderContents;
   DenseMap<const FileEntry *, HeaderContents> AllHeaderContents;
 };
 
-class CollectEntitiesVisitor :
-    public RecursiveASTVisitor<CollectEntitiesVisitor> {
+class CollectEntitiesVisitor
+    : public RecursiveASTVisitor<CollectEntitiesVisitor> {
 public:
   CollectEntitiesVisitor(SourceManager &SM, EntityMap &Entities)
       : SM(SM), Entities(Entities) {}
@@ -373,6 +375,7 @@ public:
     Entities.add(Name, isa<TagDecl>(ND) ? Entry::EK_Tag : Entry::EK_Value, Loc);
     return true;
   }
+
 private:
   SourceManager &SM;
   EntityMap &Entities;
@@ -404,6 +407,7 @@ public:
     // Merge header contents.
     Entities.mergeCurHeaderContents();
   }
+
 private:
   EntityMap &Entities;
   Preprocessor &PP;
@@ -412,11 +416,13 @@ private:
 class CollectEntitiesAction : public SyntaxOnlyAction {
 public:
   CollectEntitiesAction(EntityMap &Entities) : Entities(Entities) {}
+
 protected:
-  virtual clang::ASTConsumer *
-  CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
+  virtual clang::ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                                StringRef InFile) {
     return new CollectEntitiesConsumer(Entities, CI.getPreprocessor());
   }
+
 private:
   EntityMap &Entities;
 };
@@ -428,6 +434,7 @@ public:
   virtual CollectEntitiesAction *create() {
     return new CollectEntitiesAction(Entities);
   }
+
 private:
   EntityMap &Entities;
 };
@@ -526,9 +533,10 @@ int main(int argc, const char **argv) {
     errs() << "error: header '" << H->first->getName()
            << "' has different contents depending on how it was included\n";
     for (unsigned I = 0, N = H->second.size(); I != N; ++I) {
-      errs() << "note: '" << H->second[I].Name << "' in " << H->second[I]
-          .Loc.File->getName() << " at " << H->second[I].Loc.Line << ":"
-             << H->second[I].Loc.Column << " not always provided\n";
+      errs() << "note: '" << H->second[I].Name << "' in "
+             << H->second[I].Loc.File->getName() << " at "
+             << H->second[I].Loc.Line << ":" << H->second[I].Loc.Column
+             << " not always provided\n";
     }
   }
 
