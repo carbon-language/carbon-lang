@@ -1227,8 +1227,10 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
   if (SI) {
     assert(!Legal->isUniform(SI->getPointerOperand()) &&
            "We do not allow storing to uniform addresses");
+    // We don't want to update the value in the map as it might be used in
+    // another expression. So don't use a reference type for "StoredVal".
+    VectorParts StoredVal = getVectorValue(SI->getValueOperand());
 
-    VectorParts &StoredVal = getVectorValue(SI->getValueOperand());
     for (unsigned Part = 0; Part < UF; ++Part) {
       // Calculate the pointer for the specific unroll-part.
       Value *PartPtr = Builder.CreateGEP(Ptr, Builder.getInt32(Part * VF));
@@ -1246,6 +1248,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
       Value *VecPtr = Builder.CreateBitCast(PartPtr, DataTy->getPointerTo(AddressSpace));
       Builder.CreateStore(StoredVal[Part], VecPtr)->setAlignment(Alignment);
     }
+    return;
   }
 
   for (unsigned Part = 0; Part < UF; ++Part) {
