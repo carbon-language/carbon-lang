@@ -203,6 +203,9 @@ private:
   // Implement EmitInstrWithCustomInserter for individual operation types.
   MachineBasicBlock *emitSelect(MachineInstr *MI,
                                 MachineBasicBlock *BB) const;
+  MachineBasicBlock *emitCondStore(MachineInstr *MI,
+                                   MachineBasicBlock *BB,
+                                   unsigned StoreOpcode, bool Invert) const;
   MachineBasicBlock *emitExt128(MachineInstr *MI,
                                 MachineBasicBlock *MBB,
                                 bool ClearEven, unsigned SubReg) const;

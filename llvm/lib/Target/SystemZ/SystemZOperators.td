@@ -120,6 +120,20 @@ def zext32 : PatFrag<(ops node:$src), (zext (i32 node:$src))>;
 def loadf32 : PatFrag<(ops node:$src), (f32 (load node:$src))>;
 def loadf64 : PatFrag<(ops node:$src), (f64 (load node:$src))>;
 
+// Extending loads in which the extension type doesn't matter.
+def anyextload : PatFrag<(ops node:$ptr), (unindexedload node:$ptr), [{
+  return cast<LoadSDNode>(N)->getExtensionType() != ISD::NON_EXTLOAD;
+}]>;
+def anyextloadi8 : PatFrag<(ops node:$ptr), (anyextload node:$ptr), [{
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i8;
+}]>;
+def anyextloadi16 : PatFrag<(ops node:$ptr), (anyextload node:$ptr), [{
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i16;
+}]>;
+def anyextloadi32 : PatFrag<(ops node:$ptr), (anyextload node:$ptr), [{
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i32;
+}]>;
+
 // Aligned loads.
 class AlignedLoad<SDPatternOperator load>
   : PatFrag<(ops node:$addr), (load node:$addr), [{
@@ -149,7 +163,10 @@ class NonvolatileLoad<SDPatternOperator load>
   LoadSDNode *Load = cast<LoadSDNode>(N);
   return !Load->isVolatile();
 }]>;
-def nonvolatile_load : NonvolatileLoad<load>;
+def nonvolatile_load          : NonvolatileLoad<load>;
+def nonvolatile_anyextloadi8  : NonvolatileLoad<anyextloadi8>;
+def nonvolatile_anyextloadi16 : NonvolatileLoad<anyextloadi16>;
+def nonvolatile_anyextloadi32 : NonvolatileLoad<anyextloadi32>;
 
 // Non-volatile stores.
 class NonvolatileStore<SDPatternOperator store>
@@ -157,7 +174,10 @@ class NonvolatileStore<SDPatternOperator store>
   StoreSDNode *Store = cast<StoreSDNode>(N);
   return !Store->isVolatile();
 }]>;
-def nonvolatile_store : NonvolatileStore<store>;
+def nonvolatile_store         : NonvolatileStore<store>;
+def nonvolatile_truncstorei8  : NonvolatileStore<truncstorei8>;
+def nonvolatile_truncstorei16 : NonvolatileStore<truncstorei16>;
+def nonvolatile_truncstorei32 : NonvolatileStore<truncstorei32>;
 
 // Insertions.
 def inserti8 : PatFrag<(ops node:$src1, node:$src2),

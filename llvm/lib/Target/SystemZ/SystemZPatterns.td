@@ -50,12 +50,8 @@ class RMWI<SDPatternOperator load, SDPatternOperator operator,
 // memory location.  IMM is the type of the second operand.
 multiclass RMWIByte<SDPatternOperator operator, AddressingMode mode,
                     Instruction insn> {
-  def : RMWI<zextloadi8, operator, truncstorei8, mode, imm32, insn>;
-  def : RMWI<zextloadi8, operator, truncstorei8, mode, imm64, insn>;
-  def : RMWI<sextloadi8, operator, truncstorei8, mode, imm32, insn>;
-  def : RMWI<sextloadi8, operator, truncstorei8, mode, imm64, insn>;
-  def : RMWI<extloadi8, operator, truncstorei8, mode, imm32, insn>;
-  def : RMWI<extloadi8, operator, truncstorei8, mode, imm64, insn>;
+  def : RMWI<anyextloadi8, operator, truncstorei8, mode, imm32, insn>;
+  def : RMWI<anyextloadi8, operator, truncstorei8, mode, imm64, insn>;
 }
 
 // Record that INSN performs insertion TYPE into a register of class CLS.

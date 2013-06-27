@@ -956,6 +956,19 @@ class SelectWrapper<RegisterOperand cls>
   let Uses = [CC];
 }
 
+// Stores $new to $addr if $cc is true ("" case) or false (Inv case).
+multiclass CondStores<RegisterOperand cls, SDPatternOperator store,
+                      SDPatternOperator load, AddressingMode mode> {
+  let Defs = [CC], Uses = [CC], usesCustomInserter = 1 in {
+    def "" : Pseudo<(outs), (ins mode:$addr, cls:$new, i8imm:$cc),
+                    [(store (z_select_ccmask cls:$new, (load mode:$addr),
+                                             imm:$cc), mode:$addr)]>;
+    def Inv : Pseudo<(outs), (ins mode:$addr, cls:$new, i8imm:$cc),
+                     [(store (z_select_ccmask (load mode:$addr), cls:$new,
+                                              imm:$cc), mode:$addr)]>;
+  }
+}
+
 // OPERATOR is ATOMIC_SWAP or an ATOMIC_LOAD_* operation.  PAT and OPERAND
 // describe the second (non-memory) operand.
 class AtomicLoadBinary<SDPatternOperator operator, RegisterOperand cls,

@@ -8,13 +8,18 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-// Control-flow instructions
+// Select instructions
 //===----------------------------------------------------------------------===//
 
 // C's ?: operator for floating-point operands.
 def SelectF32  : SelectWrapper<FP32>;
 def SelectF64  : SelectWrapper<FP64>;
 def SelectF128 : SelectWrapper<FP128>;
+
+defm CondStoreF32 : CondStores<FP32, nonvolatile_store,
+                               nonvolatile_load, bdxaddr20only>;
+defm CondStoreF64 : CondStores<FP64, nonvolatile_store,
+                               nonvolatile_load, bdxaddr20only>;
 
 //===----------------------------------------------------------------------===//
 // Move instructions

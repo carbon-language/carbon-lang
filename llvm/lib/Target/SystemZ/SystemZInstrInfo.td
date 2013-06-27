@@ -163,8 +163,28 @@ defm AsmJE   : IntCondExtendedMnemonic<8,  "e",  "nlh">;
 defm AsmJHE  : IntCondExtendedMnemonic<10, "he", "nl">;
 defm AsmJLE  : IntCondExtendedMnemonic<12, "le", "nh">;
 
+//===----------------------------------------------------------------------===//
+// Select instructions
+//===----------------------------------------------------------------------===//
+
 def Select32 : SelectWrapper<GR32>;
 def Select64 : SelectWrapper<GR64>;
+
+defm CondStore8_32  : CondStores<GR32, nonvolatile_truncstorei8,
+                                 nonvolatile_anyextloadi8, bdxaddr20only>;
+defm CondStore16_32 : CondStores<GR32, nonvolatile_truncstorei16,
+                                 nonvolatile_anyextloadi16, bdxaddr20only>;
+defm CondStore32_32 : CondStores<GR32, nonvolatile_store,
+                                 nonvolatile_load, bdxaddr20only>;
+
+defm CondStore8  : CondStores<GR64, nonvolatile_truncstorei8,
+                              nonvolatile_anyextloadi8, bdxaddr20only>;
+defm CondStore16 : CondStores<GR64, nonvolatile_truncstorei16,
+                              nonvolatile_anyextloadi16, bdxaddr20only>;
+defm CondStore32 : CondStores<GR64, nonvolatile_truncstorei32,
+                              nonvolatile_anyextloadi32, bdxaddr20only>;
+defm CondStore64 : CondStores<GR64, nonvolatile_store,
+                              nonvolatile_load, bdxaddr20only>;
 
 //===----------------------------------------------------------------------===//
 // Call instructions

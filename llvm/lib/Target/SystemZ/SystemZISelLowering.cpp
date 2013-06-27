@@ -1696,6 +1696,59 @@ SystemZTargetLowering::emitSelect(MachineInstr *MI,
   return JoinMBB;
 }
 
+// Implement EmitInstrWithCustomInserter for pseudo CondStore* instruction MI.
+// StoreOpcode is the store to use and Invert says whether the store should
+// happen when the condition is false rather than true.
+MachineBasicBlock *
+SystemZTargetLowering::emitCondStore(MachineInstr *MI,
+                                     MachineBasicBlock *MBB,
+                                     unsigned StoreOpcode, bool Invert) const {
+  const SystemZInstrInfo *TII = TM.getInstrInfo();
+
+  MachineOperand Base = MI->getOperand(0);
+  int64_t Disp        = MI->getOperand(1).getImm();
+  unsigned IndexReg   = MI->getOperand(2).getReg();
+  unsigned SrcReg     = MI->getOperand(3).getReg();
+  unsigned CCMask     = MI->getOperand(4).getImm();
+  DebugLoc DL         = MI->getDebugLoc();
+
+  StoreOpcode = TII->getOpcodeForOffset(StoreOpcode, Disp);
+
+  // Get the condition needed to branch around the store.
+  if (!Invert)
+    CCMask = CCMask ^ SystemZ::CCMASK_ANY;
+
+  MachineBasicBlock *StartMBB = MBB;
+  MachineBasicBlock *JoinMBB  = splitBlockAfter(MI, MBB);
+  MachineBasicBlock *FalseMBB = emitBlockAfter(StartMBB);
+
+  //  StartMBB:
+  //   BRC CCMask, JoinMBB
+  //   # fallthrough to FalseMBB
+  //
+  // The original DAG glues comparisons to their uses, both to ensure
+  // that no CC-clobbering instructions are inserted between them, and
+  // to ensure that comparison results are not reused.  This means that
+  // this CondStore is the sole user of any preceding comparison instruction
+  // and that we can try to use a fused compare and branch instead.
+  MBB = StartMBB;
+  if (!convertPrevCompareToBranch(MBB, MI, CCMask, JoinMBB))
+    BuildMI(MBB, DL, TII->get(SystemZ::BRC)).addImm(CCMask).addMBB(JoinMBB);
+  MBB->addSuccessor(JoinMBB);
+  MBB->addSuccessor(FalseMBB);
+
+  //  FalseMBB:
+  //   store %SrcReg, %Disp(%Index,%Base)
+  //   # fallthrough to JoinMBB
+  MBB = FalseMBB;
+  BuildMI(MBB, DL, TII->get(StoreOpcode))
+    .addReg(SrcReg).addOperand(Base).addImm(Disp).addReg(IndexReg);
+  MBB->addSuccessor(JoinMBB);
+
+  MI->eraseFromParent();
+  return JoinMBB;
+}
+
 // Implement EmitInstrWithCustomInserter for pseudo ATOMIC_LOAD{,W}_*
 // or ATOMIC_SWAP{,W} instruction MI.  BinOpcode is the instruction that
 // performs the binary operation elided by "*", or 0 for ATOMIC_SWAP{,W}.
@@ -2099,6 +2152,43 @@ EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
   case SystemZ::SelectF64:
   case SystemZ::SelectF128:
     return emitSelect(MI, MBB);
+
+  case SystemZ::CondStore8_32:
+    return emitCondStore(MI, MBB, SystemZ::STC32, false);
+  case SystemZ::CondStore8_32Inv:
+    return emitCondStore(MI, MBB, SystemZ::STC32, true);
+  case SystemZ::CondStore16_32:
+    return emitCondStore(MI, MBB, SystemZ::STH32, false);
+  case SystemZ::CondStore16_32Inv:
+    return emitCondStore(MI, MBB, SystemZ::STH32, true);
+  case SystemZ::CondStore32_32:
+    return emitCondStore(MI, MBB, SystemZ::ST32, false);
+  case SystemZ::CondStore32_32Inv:
+    return emitCondStore(MI, MBB, SystemZ::ST32, true);
+  case SystemZ::CondStore8:
+    return emitCondStore(MI, MBB, SystemZ::STC, false);
+  case SystemZ::CondStore8Inv:
+    return emitCondStore(MI, MBB, SystemZ::STC, true);
+  case SystemZ::CondStore16:
+    return emitCondStore(MI, MBB, SystemZ::STH, false);
+  case SystemZ::CondStore16Inv:
+    return emitCondStore(MI, MBB, SystemZ::STH, true);
+  case SystemZ::CondStore32:
+    return emitCondStore(MI, MBB, SystemZ::ST, false);
+  case SystemZ::CondStore32Inv:
+    return emitCondStore(MI, MBB, SystemZ::ST, true);
+  case SystemZ::CondStore64:
+    return emitCondStore(MI, MBB, SystemZ::STG, false);
+  case SystemZ::CondStore64Inv:
+    return emitCondStore(MI, MBB, SystemZ::STG, true);
+  case SystemZ::CondStoreF32:
+    return emitCondStore(MI, MBB, SystemZ::STE, false);
+  case SystemZ::CondStoreF32Inv:
+    return emitCondStore(MI, MBB, SystemZ::STE, true);
+  case SystemZ::CondStoreF64:
+    return emitCondStore(MI, MBB, SystemZ::STD, false);
+  case SystemZ::CondStoreF64Inv:
+    return emitCondStore(MI, MBB, SystemZ::STD, true);
 
   case SystemZ::AEXT128_64:
     return emitExt128(MI, MBB, false, SystemZ::subreg_low);
