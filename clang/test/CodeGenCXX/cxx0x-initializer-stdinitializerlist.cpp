@@ -395,3 +395,39 @@ namespace partly_constant {
   // 'il' reference.
   // CHECK: store {{.*}}* @[[PARTLY_CONSTANT_OUTER]], {{.*}}** @_ZN15partly_constant2ilE, align 8
 }
+
+namespace nested {
+  struct A { A(); ~A(); };
+  struct B { const A &a; ~B(); };
+  struct C { std::initializer_list<B> b; ~C(); };
+  void f();
+  // CHECK: define void @_ZN6nested1gEv(
+  void g() {
+    // CHECK: call void @_ZN6nested1AC1Ev(
+    // CHECK-NOT: call
+    // CHECK: call void @_ZN6nested1AC1Ev(
+    // CHECK-NOT: call
+    const C &c { { { A() }, { A() } } };
+
+    // CHECK: call void @_ZN6nested1fEv(
+    // CHECK-NOT: call
+    f();
+
+    // CHECK: call void @_ZN6nested1CD1Ev(
+    // CHECK-NOT: call
+
+    // Destroy B[2] array.
+    // FIXME: This isn't technically correct: reverse construction order would
+    // destroy the second B then the second A then the first B then the first A.
+    // CHECK: call void @_ZN6nested1BD1Ev(
+    // CHECK-NOT: call
+    // CHECK: br
+
+    // CHECK-NOT: call
+    // CHECK: call void @_ZN6nested1AD1Ev(
+    // CHECK-NOT: call
+    // CHECK: call void @_ZN6nested1AD1Ev(
+    // CHECK-NOT: call
+    // CHECK: }
+  }
+}
