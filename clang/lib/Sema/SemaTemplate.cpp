@@ -3727,7 +3727,7 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
     }
   }
 
-  if (S.getLangOpts().MicrosoftExt && isa<CXXUuidofExpr>(Arg)) {
+  if (isa<CXXUuidofExpr>(Arg)) {
     Converted = TemplateArgument(ArgIn);
     return false;
   }
