@@ -1205,16 +1205,28 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
     // The last index does not have to be the induction. It can be
     // consecutive and be a function of the index. For example A[I+1];
     unsigned NumOperands = Gep->getNumOperands();
-
-    Value *LastGepOperand = Gep->getOperand(NumOperands - 1);
-    VectorParts &GEPParts = getVectorValue(LastGepOperand);
-    Value *LastIndex = GEPParts[0];
-    LastIndex = Builder.CreateExtractElement(LastIndex, Zero);
-
+    unsigned LastOperand = NumOperands - 1;
     // Create the new GEP with the new induction variable.
     GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
-    Gep2->setOperand(NumOperands - 1, LastIndex);
-    Gep2->setName("gep.indvar.idx");
+
+    for (unsigned i = 0; i < NumOperands; ++i) {
+      Value *GepOperand = Gep->getOperand(i);
+      Instruction *GepOperandInst = dyn_cast<Instruction>(GepOperand);
+
+      // Update last index or loop invariant instruction anchored in loop.
+      if (i == LastOperand ||
+          (GepOperandInst && OrigLoop->contains(GepOperandInst))) {
+        assert((i == LastOperand ||
+               SE->isLoopInvariant(SE->getSCEV(GepOperandInst), OrigLoop)) &&
+               "Must be last index or loop invariant");
+
+        VectorParts &GEPParts = getVectorValue(GepOperand);
+        Value *Index = GEPParts[0];
+        Index = Builder.CreateExtractElement(Index, Zero);
+        Gep2->setOperand(i, Index);
+        Gep2->setName("gep.indvar.idx");
+      }
+    }
     Ptr = Builder.Insert(Gep2);
   } else {
     // Use the induction element ptr.
