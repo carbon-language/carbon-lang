@@ -171,6 +171,13 @@ namespace clang {
     /// arguments in %al.  On these platforms, it is desireable to
     /// call unprototyped functions using the variadic convention so
     /// that unprototyped calls to varargs functions still succeed.
+    ///
+    /// Relatedly, platforms which pass the fixed arguments to this:
+    ///   A foo(B, C, D);
+    /// differently than they would pass them to this:
+    ///   A foo(B, C, D, ...);
+    /// may need to adjust the debugger-support code in Sema to do the
+    /// right thing when calling a function with no know signature.
     virtual bool isNoProtoCallVariadic(const CodeGen::CallArgList &args,
                                        const FunctionNoProtoType *fnType) const;
 
