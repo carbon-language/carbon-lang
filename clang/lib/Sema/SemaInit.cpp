@@ -6251,8 +6251,7 @@ bool InitializationSequence::Diagnose(Sema &S,
       break;
 
     case OR_No_Viable_Function:
-      if (!DestType.getNonReferenceType()->isIncompleteType() ||
-          !S.RequireCompleteType(Kind.getLocation(),
+      if (!S.RequireCompleteType(Kind.getLocation(),
                                  DestType.getNonReferenceType(),
                           diag::err_typecheck_nonviable_condition_incomplete,
                                Args[0]->getType(), Args[0]->getSourceRange()))
