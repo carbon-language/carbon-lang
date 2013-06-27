@@ -94,7 +94,6 @@
 #endif
 
 namespace __sanitizer {
-  unsigned struct_dirent_sz = sizeof(struct dirent);
   unsigned struct_utsname_sz = sizeof(struct utsname);
   unsigned struct_stat_sz = sizeof(struct stat);
   unsigned struct_stat64_sz = sizeof(struct stat64);
@@ -123,7 +122,6 @@ namespace __sanitizer {
 #endif // SANITIZER_LINUX
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
-  unsigned struct_dirent64_sz = sizeof(struct dirent64);
   unsigned struct_rlimit64_sz = sizeof(struct rlimit64);
   unsigned struct_statfs64_sz = sizeof(struct statfs64);
 #endif // SANITIZER_LINUX && !SANITIZER_ANDROID
@@ -742,6 +740,12 @@ CHECK_TYPE_SIZE(cmsghdr);
 CHECK_SIZE_AND_OFFSET(cmsghdr, cmsg_len);
 CHECK_SIZE_AND_OFFSET(cmsghdr, cmsg_level);
 CHECK_SIZE_AND_OFFSET(cmsghdr, cmsg_type);
+
+CHECK_SIZE_AND_OFFSET(dirent, d_ino);
+#ifndef SANITIZER_MAC
+CHECK_SIZE_AND_OFFSET(dirent, d_off);
+#endif
+CHECK_SIZE_AND_OFFSET(dirent, d_reclen);
 
 CHECK_TYPE_SIZE(ifconf);
 CHECK_SIZE_AND_OFFSET(ifconf, ifc_len);

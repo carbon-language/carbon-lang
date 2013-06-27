@@ -1269,16 +1269,16 @@ INTERCEPTOR(int, sysinfo, void *info) {
 #endif
 
 #if SANITIZER_INTERCEPT_READDIR
-INTERCEPTOR(void *, readdir, void *dirp) {
+INTERCEPTOR(__sanitizer_dirent *, readdir, void *dirp) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, readdir, dirp);
-  void *res = REAL(readdir)(dirp);
+  __sanitizer_dirent *res = REAL(readdir)(dirp);
   if (res)
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_dirent_sz);
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, res->d_reclen);
   return res;
 }
 
-INTERCEPTOR(int, readdir_r, void *dirp, void *entry, void **result) {
+INTERCEPTOR(int, readdir_r, void *dirp, __sanitizer_dirent *entry, __sanitizer_dirent **result) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, readdir_r, dirp, entry, result);
   int res = REAL(readdir_r)(dirp, entry, result);
@@ -1286,7 +1286,7 @@ INTERCEPTOR(int, readdir_r, void *dirp, void *entry, void **result) {
     if (result)
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
     if (entry)
-      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, entry, struct_dirent_sz);
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, entry, entry->d_reclen);
   }
   return res;
 }
@@ -1299,16 +1299,16 @@ INTERCEPTOR(int, readdir_r, void *dirp, void *entry, void **result) {
 #endif
 
 #if SANITIZER_INTERCEPT_READDIR64
-INTERCEPTOR(void *, readdir64, void *dirp) {
+INTERCEPTOR(__sanitizer_dirent64 *, readdir64, void *dirp) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, readdir64, dirp);
-  void *res = REAL(readdir64)(dirp);
+  __sanitizer_dirent64 *res = REAL(readdir64)(dirp);
   if (res)
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_dirent64_sz);
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, res->d_reclen);
   return res;
 }
 
-INTERCEPTOR(int, readdir64_r, void *dirp, void *entry, void **result) {
+INTERCEPTOR(int, readdir64_r, void *dirp, __sanitizer_dirent64 *entry, __sanitizer_dirent64 **result) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, readdir64_r, dirp, entry, result);
   int res = REAL(readdir64_r)(dirp, entry, result);
@@ -1316,7 +1316,7 @@ INTERCEPTOR(int, readdir64_r, void *dirp, void *entry, void **result) {
     if (result)
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
     if (entry)
-      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, entry, struct_dirent64_sz);
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, entry, entry->d_reclen);
   }
   return res;
 }

@@ -18,7 +18,6 @@
 #include "sanitizer_platform.h"
 
 namespace __sanitizer {
-  extern unsigned struct_dirent_sz;
   extern unsigned struct_utsname_sz;
   extern unsigned struct_stat_sz;
   extern unsigned struct_stat64_sz;
@@ -47,7 +46,6 @@ namespace __sanitizer {
 #endif // SANITIZER_LINUX
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
-  extern unsigned struct_dirent64_sz;
   extern unsigned struct_rlimit64_sz;
   extern unsigned struct_statfs64_sz;
 #endif // SANITIZER_LINUX && !SANITIZER_ANDROID
@@ -86,6 +84,37 @@ namespace __sanitizer {
     uptr cmsg_len;
     int cmsg_level;
     int cmsg_type;
+  };
+#endif
+
+#if SANITIZER_MAC
+  struct __sanitizer_dirent {
+    unsigned d_ino;
+    unsigned short d_reclen;
+    // more fields that we don't care about
+  };
+#elif SANITIZER_ANDROID
+  struct __sanitizer_dirent {
+    unsigned long long d_ino;
+    unsigned long long d_off;
+    unsigned short d_reclen;
+    // more fields that we don't care about
+  };
+#else
+  struct __sanitizer_dirent {
+    uptr d_ino;
+    uptr d_off;
+    unsigned short d_reclen;
+    // more fields that we don't care about
+  };
+#endif
+
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
+  struct __sanitizer_dirent64 {
+    uptr d_ino;
+    uptr d_off;
+    unsigned short d_reclen;
+    // more fields that we don't care about
   };
 #endif
 
