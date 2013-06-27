@@ -18,6 +18,7 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCSection.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
@@ -372,6 +373,12 @@ void MCObjectStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue,
   // FIXME: A MCFillFragment would be more memory efficient but MCExpr has
   //        problems evaluating expressions across multiple fragments.
   getOrCreateDataFragment()->getContents().append(NumBytes, FillValue);
+}
+
+void MCObjectStreamer::EmitZeros(uint64_t NumBytes, unsigned AddrSpace) {
+  assert(AddrSpace == 0 && "Address space must be 0!");
+  unsigned ItemSize = getCurrentSection().first->isVirtualSection() ? 0 : 1;
+  insert(new MCFillFragment(0, ItemSize, NumBytes));
 }
 
 void MCObjectStreamer::FinishImpl() {

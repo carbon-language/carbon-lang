@@ -154,6 +154,12 @@ void MCStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue,
     EmitValue(E, 1, AddrSpace);
 }
 
+/// EmitZeros - Emit NumBytes worth of zeros.  Implementation in this class
+/// just redirects to EmitFill.
+void MCStreamer::EmitZeros(uint64_t NumBytes, unsigned AddrSpace) {
+  EmitFill(NumBytes, 0, AddrSpace);
+}
+
 bool MCStreamer::EmitDwarfFileDirective(unsigned FileNo,
                                         StringRef Directory,
                                         StringRef Filename, unsigned CUID) {

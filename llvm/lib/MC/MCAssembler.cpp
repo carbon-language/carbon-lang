@@ -708,12 +708,13 @@ void MCAssembler::writeSectionData(const MCSectionData *SD,
       case MCFragment::FT_Align:
         // Check that we aren't trying to write a non-zero value into a virtual
         // section.
-        assert((!cast<MCAlignFragment>(it)->getValueSize() ||
-                !cast<MCAlignFragment>(it)->getValue()) &&
+        assert((cast<MCAlignFragment>(it)->getValueSize() == 0 ||
+                cast<MCAlignFragment>(it)->getValue() == 0) &&
                "Invalid align in virtual section!");
         break;
       case MCFragment::FT_Fill:
-        assert(!cast<MCFillFragment>(it)->getValueSize() &&
+        assert((cast<MCFillFragment>(it)->getValueSize() == 0 ||
+                cast<MCFillFragment>(it)->getValue() == 0) &&
                "Invalid fill in virtual section!");
         break;
       }

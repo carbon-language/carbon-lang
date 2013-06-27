@@ -116,6 +116,7 @@ public:
   virtual void EmitGPRel64Value(const MCExpr *Value);
   virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue,
                         unsigned AddrSpace = 0);
+  virtual void EmitZeros(uint64_t NumBytes, unsigned AddrSpace = 0);
   virtual void FinishImpl();
 
   /// @}
