@@ -182,8 +182,14 @@ public:
     // Must be multiple of FileAlignment.
     _peHeader.SizeOfHeaders = 512;
     _peHeader.Subsystem = targetInfo.getSubsystem();
+
+    // Despite its name, DLL characteristics field has meaning both for
+    // executables and DLLs. We are not very sure if the following bits must
+    // be set, but regular binaries seem to have these bits, so we follow
+    // them.
     uint16_t dllCharacteristics =
         llvm::COFF::IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE |
+        llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NO_SEH |
         llvm::COFF::IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE;
     if (targetInfo.getNxCompat())
       dllCharacteristics |= llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NX_COMPAT;
