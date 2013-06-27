@@ -839,7 +839,7 @@ static int msan_dl_iterate_phdr_cb(__sanitizer_dl_phdr_info *info, SIZE_T size,
       __msan_unpoison(info->dlpi_name, REAL(strlen)(info->dlpi_name) + 1);
   }
   dl_iterate_phdr_data *cbdata = (dl_iterate_phdr_data *)data;
-  __msan_unpoison_param(3);
+  UnpoisonParam(3);
   return cbdata->callback(info, size, cbdata->data);
 }
 
@@ -874,7 +874,7 @@ static void SignalHandler(int signo) {
 }
 
 static void SignalAction(int signo, void *si, void *uc) {
-  __msan_unpoison_param(3);
+  UnpoisonParam(3);
   __msan_unpoison(si, __sanitizer::struct_sigaction_sz);
   __msan_unpoison(uc, __sanitizer::ucontext_t_sz);
 

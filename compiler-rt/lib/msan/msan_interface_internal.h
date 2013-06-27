@@ -124,9 +124,6 @@ void __msan_partial_poison(const void* data, void* shadow, uptr size);
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_allocated_memory(const void* data, uptr size);
 
-// Unpoison first n function arguments.
-void __msan_unpoison_param(uptr n);
-
 SANITIZER_INTERFACE_ATTRIBUTE
 u16 __sanitizer_unaligned_load16(const uu16 *p);
 

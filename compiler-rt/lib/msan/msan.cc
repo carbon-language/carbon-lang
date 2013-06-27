@@ -221,6 +221,10 @@ void PrintWarningWithOrigin(uptr pc, uptr bp, u32 origin) {
   }
 }
 
+void UnpoisonParam(uptr n) {
+  internal_memset(__msan_param_tls, 0, n * sizeof(*__msan_param_tls));
+}
+
 }  // namespace __msan
 
 // Interface.
@@ -345,10 +349,6 @@ void __msan_print_param_shadow() {
     Printf("#%d:%zx ", i, __msan_param_tls[i]);
   }
   Printf("\n");
-}
-
-void __msan_unpoison_param(uptr n) {
-  internal_memset(__msan_param_tls, 0, n * sizeof(*__msan_param_tls));
 }
 
 sptr __msan_test_shadow(const void *x, uptr size) {

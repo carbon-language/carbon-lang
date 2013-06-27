@@ -77,6 +77,8 @@ void ReportExpectedUMRNotFound(StackTrace *stack);
 void ReportAtExitStatistics();
 
 void UnpoisonMappedDSO(struct link_map *map);
+// Unpoison first n function arguments.
+void UnpoisonParam(uptr n);
 
 #define GET_MALLOC_STACK_TRACE                                     \
   StackTrace stack;                                                \
