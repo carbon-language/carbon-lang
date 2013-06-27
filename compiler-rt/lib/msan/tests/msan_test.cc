@@ -780,11 +780,15 @@ TEST(MemorySanitizer, gethostent) {
   EXPECT_HOSTENT_NOT_POISONED(he);
 }
 
+#ifndef MSAN_TEST_DISABLE_GETHOSTBYNAME
+
 TEST(MemorySanitizer, gethostbyname) {
   struct hostent *he = gethostbyname("localhost");
   ASSERT_NE((void *)NULL, he);
   EXPECT_HOSTENT_NOT_POISONED(he);
 }
+
+#endif // MSAN_TEST_DISABLE_GETHOSTBYNAME
 
 TEST(MemorySanitizer, gethostbyname2) {
   struct hostent *he = gethostbyname2("localhost", AF_INET);
@@ -1762,18 +1766,6 @@ extern char *program_invocation_name;
 # error "TODO: port this"
 #endif
 
-// Compute the path to our loadable DSO.  We assume it's in the same
-// directory.  Only use string routines that we intercept so far to do this.
-static int PathToLoadable(char *buf, size_t sz) {
-  const char *basename = "libmsan_loadable.x86_64.so";
-  char *argv0 = program_invocation_name;
-  char *last_slash = strrchr(argv0, '/');
-  assert(last_slash);
-  int res =
-      snprintf(buf, sz, "%.*s/%s", int(last_slash - argv0), argv0, basename);
-  return res < sz ? 0 : res;
-}
-
 static void dladdr_testfn() {}
 
 TEST(MemorySanitizer, dladdr) {
@@ -1799,6 +1791,20 @@ static int dl_phdr_callback(struct dl_phdr_info *info, size_t size, void *data) 
   for (int i = 0; i < info->dlpi_phnum; ++i)
     EXPECT_NOT_POISONED(info->dlpi_phdr[i]);
   return 0;
+}
+
+#ifndef MSAN_TEST_DISABLE_DLOPEN
+
+// Compute the path to our loadable DSO.  We assume it's in the same
+// directory.  Only use string routines that we intercept so far to do this.
+static int PathToLoadable(char *buf, size_t sz) {
+  const char *basename = "libmsan_loadable.x86_64.so";
+  char *argv0 = program_invocation_name;
+  char *last_slash = strrchr(argv0, '/');
+  assert(last_slash);
+  int res =
+      snprintf(buf, sz, "%.*s/%s", int(last_slash - argv0), argv0, basename);
+  return res < sz ? 0 : res;
 }
 
 TEST(MemorySanitizer, dl_iterate_phdr) {
@@ -1851,6 +1857,8 @@ TEST(MemorySanitizer, dlopenFailed) {
   void *lib = dlopen(path, RTLD_LAZY);
   ASSERT_EQ(0, lib);
 }
+
+#endif // MSAN_TEST_DISABLE_DLOPEN
 
 TEST(MemorySanitizer, scanf) {
   const char *input = "42 hello";
