@@ -198,6 +198,12 @@ public:
     CALLSITE_DELEGATE_GETTER(getParamAlignment(i));
   }
 
+  /// \brief Return true if the call should not be treated as a call to a
+  /// builtin.
+  bool isNoBuiltin() const {
+    CALLSITE_DELEGATE_GETTER(isNoBuiltin());
+  }
+
   /// @brief Return true if the call should not be inlined.
   bool isNoInline() const {
     CALLSITE_DELEGATE_GETTER(isNoInline());

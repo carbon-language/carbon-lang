@@ -1940,7 +1940,7 @@ LibCallSimplifier::~LibCallSimplifier() {
 }
 
 Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
-  if (CI->hasFnAttr(Attribute::NoBuiltin)) return 0;
+  if (CI->isNoBuiltin()) return 0;
   return Impl->optimizeCall(CI);
 }
 

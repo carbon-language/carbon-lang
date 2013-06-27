@@ -810,13 +810,13 @@ bool LLParser::ParseUnnamedAttrGrp() {
   assert(Lex.getKind() == lltok::AttrGrpID);
   unsigned VarID = Lex.getUIntVal();
   std::vector<unsigned> unused;
-  LocTy NoBuiltinLoc;
+  LocTy BuiltinLoc;
   Lex.Lex();
 
   if (ParseToken(lltok::equal, "expected '=' here") ||
       ParseToken(lltok::lbrace, "expected '{' here") ||
       ParseFnAttributeValuePairs(NumberedAttrBuilders[VarID], unused, true,
-                                 NoBuiltinLoc) ||
+                                 BuiltinLoc) ||
       ParseToken(lltok::rbrace, "expected end of attribute group"))
     return true;
 
@@ -830,15 +830,15 @@ bool LLParser::ParseUnnamedAttrGrp() {
 ///   ::= <attr> | <attr> '=' <value>
 bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
                                           std::vector<unsigned> &FwdRefAttrGrps,
-                                          bool inAttrGrp, LocTy &NoBuiltinLoc) {
+                                          bool inAttrGrp, LocTy &BuiltinLoc) {
   bool HaveError = false;
 
   B.clear();
 
   while (true) {
     lltok::Kind Token = Lex.getKind();
-    if (Token == lltok::kw_nobuiltin)
-      NoBuiltinLoc = Lex.getLoc();
+    if (Token == lltok::kw_builtin)
+      BuiltinLoc = Lex.getLoc();
     switch (Token) {
     default:
       if (!inAttrGrp) return HaveError;
@@ -909,6 +909,7 @@ bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
       continue;
     }
     case lltok::kw_alwaysinline:      B.addAttribute(Attribute::AlwaysInline); break;
+    case lltok::kw_builtin:           B.addAttribute(Attribute::Builtin); break;
     case lltok::kw_cold:              B.addAttribute(Attribute::Cold); break;
     case lltok::kw_inlinehint:        B.addAttribute(Attribute::InlineHint); break;
     case lltok::kw_minsize:           B.addAttribute(Attribute::MinSize); break;
@@ -1165,6 +1166,7 @@ bool LLParser::ParseOptionalParamAttrs(AttrBuilder &B) {
 
     case lltok::kw_alignstack:
     case lltok::kw_alwaysinline:
+    case lltok::kw_builtin:
     case lltok::kw_inlinehint:
     case lltok::kw_minsize:
     case lltok::kw_naked:
@@ -1223,6 +1225,7 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
 
     case lltok::kw_alignstack:
     case lltok::kw_alwaysinline:
+    case lltok::kw_builtin:
     case lltok::kw_cold:
     case lltok::kw_inlinehint:
     case lltok::kw_minsize:
@@ -2983,7 +2986,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   bool isVarArg;
   AttrBuilder FuncAttrs;
   std::vector<unsigned> FwdRefAttrGrps;
-  LocTy NoBuiltinLoc;
+  LocTy BuiltinLoc;
   std::string Section;
   unsigned Alignment;
   std::string GC;
@@ -2994,7 +2997,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
       ParseOptionalToken(lltok::kw_unnamed_addr, UnnamedAddr,
                          &UnnamedAddrLoc) ||
       ParseFnAttributeValuePairs(FuncAttrs, FwdRefAttrGrps, false,
-                                 NoBuiltinLoc) ||
+                                 BuiltinLoc) ||
       (EatIfPresent(lltok::kw_section) &&
        ParseStringConstant(Section)) ||
       ParseOptionalAlignment(Alignment) ||
@@ -3002,8 +3005,8 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
        ParseStringConstant(GC)))
     return true;
 
-  if (FuncAttrs.contains(Attribute::NoBuiltin))
-    return Error(NoBuiltinLoc, "'nobuiltin' attribute not valid on function");
+  if (FuncAttrs.contains(Attribute::Builtin))
+    return Error(BuiltinLoc, "'builtin' attribute not valid on function");
 
   // If the alignment was parsed as an attribute, move to the alignment field.
   if (FuncAttrs.hasAlignmentAttr()) {
@@ -3927,7 +3930,7 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
                          bool isTail) {
   AttrBuilder RetAttrs, FnAttrs;
   std::vector<unsigned> FwdRefAttrGrps;
-  LocTy NoBuiltinLoc;
+  LocTy BuiltinLoc;
   CallingConv::ID CC;
   Type *RetType = 0;
   LocTy RetTypeLoc;
@@ -3942,7 +3945,7 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
       ParseValID(CalleeID) ||
       ParseParameterList(ArgList, PFS) ||
       ParseFnAttributeValuePairs(FnAttrs, FwdRefAttrGrps, false,
-                                 NoBuiltinLoc))
+                                 BuiltinLoc))
     return true;
 
   // If RetType is a non-function pointer type, then this is the short syntax

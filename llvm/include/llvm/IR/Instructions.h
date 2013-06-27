@@ -1278,7 +1278,11 @@ public:
   void removeAttribute(unsigned i, Attribute attr);
 
   /// \brief Determine whether this call has the given attribute.
-  bool hasFnAttr(Attribute::AttrKind A) const;
+  bool hasFnAttr(Attribute::AttrKind A) const {
+    assert(A != Attribute::NoBuiltin &&
+           "Use CallInst::isNoBuiltin() to check for Attribute::NoBuiltin");
+    return hasFnAttrImpl(A);
+  }
 
   /// \brief Determine whether the call or the callee has the given attributes.
   bool paramHasAttr(unsigned i, Attribute::AttrKind A) const;
@@ -1286,6 +1290,13 @@ public:
   /// \brief Extract the alignment for a call or parameter (0=unknown).
   unsigned getParamAlignment(unsigned i) const {
     return AttributeList.getParamAlignment(i);
+  }
+
+  /// \brief Return true if the call should not be treated as a call to a
+  /// builtin.
+  bool isNoBuiltin() const {
+    return hasFnAttrImpl(Attribute::NoBuiltin) &&
+      !hasFnAttrImpl(Attribute::Builtin);
   }
 
   /// \brief Return true if the call should not be inlined.
@@ -1378,6 +1389,9 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 private:
+
+  bool hasFnAttrImpl(Attribute::AttrKind A) const;
+
   // Shadow Instruction::setInstructionSubclassData with a private forwarding
   // method so that subclasses cannot accidentally use it.
   void setInstructionSubclassData(unsigned short D) {
@@ -3021,7 +3035,11 @@ public:
   void removeAttribute(unsigned i, Attribute attr);
 
   /// \brief Determine whether this call has the NoAlias attribute.
-  bool hasFnAttr(Attribute::AttrKind A) const;
+  bool hasFnAttr(Attribute::AttrKind A) const {
+    assert(A != Attribute::NoBuiltin &&
+           "Use CallInst::isNoBuiltin() to check for Attribute::NoBuiltin");
+    return hasFnAttrImpl(A);
+  }
 
   /// \brief Determine whether the call or the callee has the given attributes.
   bool paramHasAttr(unsigned i, Attribute::AttrKind A) const;
@@ -3029,6 +3047,15 @@ public:
   /// \brief Extract the alignment for a call or parameter (0=unknown).
   unsigned getParamAlignment(unsigned i) const {
     return AttributeList.getParamAlignment(i);
+  }
+
+  /// \brief Return true if the call should not be treated as a call to a
+  /// builtin.
+  bool isNoBuiltin() const {
+    // We assert in hasFnAttr if one passes in Attribute::NoBuiltin, so we have
+    // to check it by hand.
+    return hasFnAttrImpl(Attribute::NoBuiltin) &&
+      !hasFnAttrImpl(Attribute::Builtin);
   }
 
   /// \brief Return true if the call should not be inlined.
@@ -3136,6 +3163,8 @@ private:
   virtual BasicBlock *getSuccessorV(unsigned idx) const;
   virtual unsigned getNumSuccessorsV() const;
   virtual void setSuccessorV(unsigned idx, BasicBlock *B);
+
+  bool hasFnAttrImpl(Attribute::AttrKind A) const;
 
   // Shadow Instruction::setInstructionSubclassData with a private forwarding
   // method so that subclasses cannot accidentally use it.

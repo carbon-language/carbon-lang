@@ -130,3 +130,15 @@ define i32 @MemCpy() {
 }
 
 declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
+
+declare i32 @strcmp(i8*, i8*) #0
+
+define void @test9(i8* %x) {
+; CHECK: @test9
+; CHECK-NOT: strcmp
+  %y = call i32 @strcmp(i8* %x, i8* %x) #1
+  ret void
+}
+
+attributes #0 = { nobuiltin }
+attributes #1 = { builtin }

@@ -157,6 +157,8 @@ std::string Attribute::getAsString(bool InAttrGrp) const {
     return "sanitize_address";
   if (hasAttribute(Attribute::AlwaysInline))
     return "alwaysinline";
+  if (hasAttribute(Attribute::Builtin))
+    return "builtin";
   if (hasAttribute(Attribute::ByVal))
     return "byval";
   if (hasAttribute(Attribute::InlineHint))
@@ -399,6 +401,7 @@ uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   case Attribute::NoBuiltin:       return 1ULL << 38;
   case Attribute::Returned:        return 1ULL << 39;
   case Attribute::Cold:            return 1ULL << 40;
+  case Attribute::Builtin:         return 1ULL << 41;
   }
   llvm_unreachable("Unsupported attribute type");
 }

@@ -692,6 +692,7 @@ void Verifier::VerifyAttributeTypes(AttributeSet Attrs, unsigned Idx,
         I->getKindAsEnum() == Attribute::SanitizeMemory ||
         I->getKindAsEnum() == Attribute::MinSize ||
         I->getKindAsEnum() == Attribute::NoDuplicate ||
+        I->getKindAsEnum() == Attribute::Builtin ||
         I->getKindAsEnum() == Attribute::NoBuiltin ||
         I->getKindAsEnum() == Attribute::Cold) {
       if (!isFunction)
@@ -876,6 +877,13 @@ void Verifier::visitFunction(Function &F) {
 
   // Check function attributes.
   VerifyFunctionAttrs(FT, Attrs, &F);
+
+  // On function declarations/definitions, we do not support the builtin
+  // attribute. We do not check this in VerifyFunctionAttrs since that is
+  // checking for Attributes that can/can not ever be on functions.
+  Assert1(!Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                              Attribute::Builtin),
+          "Attribute 'builtin' can only be applied to a callsite.", &F);
 
   // Check that this function meets the restrictions on this calling convention.
   switch (F.getCallingConv()) {
@@ -1434,6 +1442,14 @@ void Verifier::VerifyCallSite(CallSite CS) {
       Assert1(!(*PI)->isMetadataTy(),
               "Function has metadata parameter but isn't an intrinsic", I);
   }
+
+  // If the call site has the 'builtin' attribute, verify that it's applied to a
+  // direct call to a function with the 'nobuiltin' attribute.
+  if (CS.hasFnAttr(Attribute::Builtin))
+    Assert1(CS.getCalledFunction() &&
+            CS.getCalledFunction()->hasFnAttribute(Attribute::NoBuiltin),
+            "Attribute 'builtin' can only be used in a call to a function with "
+            "the 'nobuiltin' attribute.", I);
 
   visitInstruction(*I);
 }

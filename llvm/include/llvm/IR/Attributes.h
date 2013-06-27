@@ -67,6 +67,8 @@ public:
                            ///< stored as log2 of alignment with +1 bias
                            ///< 0 means unaligned (different from align(1))
     AlwaysInline,          ///< inline=always
+    Builtin,               ///< Callee is recognized as a builtin, despite
+                           ///< nobuiltin attribute on its declaration.
     ByVal,                 ///< Pass structure by value
     Cold,                  ///< Marks function as being in a cold path.
     InlineHint,            ///< Source said inlining was desirable
