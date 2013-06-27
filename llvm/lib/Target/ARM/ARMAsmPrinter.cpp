@@ -781,8 +781,14 @@ void ARMAsmPrinter::emitAttributes() {
     emitFPU = false;
   }
 
-  /* VFPv4 + .fpu */
-  if (Subtarget->hasVFP4()) {
+  /* V8FP + .fpu */
+  if (Subtarget->hasV8FP()) {
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch,
+                               ARMBuildAttrs::AllowV8FPA);
+    if (emitFPU)
+      AttrEmitter->EmitTextAttribute(ARMBuildAttrs::VFP_arch, "v8fp");
+    /* VFPv4 + .fpu */
+  } else if (Subtarget->hasVFP4()) {
     AttrEmitter->EmitAttribute(ARMBuildAttrs::VFP_arch,
                                ARMBuildAttrs::AllowFPv4A);
     if (emitFPU)
@@ -806,8 +812,12 @@ void ARMAsmPrinter::emitAttributes() {
   /* TODO: ARMBuildAttrs::Allowed is not completely accurate,
    * since NEON can have 1 (allowed) or 2 (MAC operations) */
   if (Subtarget->hasNEON()) {
-    AttrEmitter->EmitAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
-                               ARMBuildAttrs::Allowed);
+    if (Subtarget->hasV8Ops())
+      AttrEmitter->EmitAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
+                                 ARMBuildAttrs::AllowedNeonV8);
+    else
+      AttrEmitter->EmitAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
+                                 ARMBuildAttrs::Allowed);
   }
 
   // Signal various FP modes.

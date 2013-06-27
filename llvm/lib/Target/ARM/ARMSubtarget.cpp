@@ -81,6 +81,7 @@ void ARMSubtarget::initializeEnvironment() {
   HasVFPv2 = false;
   HasVFPv3 = false;
   HasVFPv4 = false;
+  HasV8FP = false;
   HasNEON = false;
   UseNEONForSinglePrecisionFP = false;
   UseMulOps = UseFusedMulOps;

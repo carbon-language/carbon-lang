@@ -45,6 +45,9 @@ def FeatureFP16   : SubtargetFeature<"fp16", "HasFP16", "true",
 def FeatureVFP4   : SubtargetFeature<"vfp4", "HasVFPv4", "true",
                                      "Enable VFP4 instructions",
                                      [FeatureVFP3, FeatureFP16]>;
+def FeatureV8FP : SubtargetFeature<"v8fp", "HasV8FP",
+                                   "true", "Enable ARMv8 FP",
+                                   [FeatureVFP4]>;
 def FeatureD16    : SubtargetFeature<"d16", "HasD16", "true",
                                      "Restrict VFP3 to 16 double registers">;
 def FeatureHWDiv  : SubtargetFeature<"hwdiv", "HasHardwareDivide", "true",
