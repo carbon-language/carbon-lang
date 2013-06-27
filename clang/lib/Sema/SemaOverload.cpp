@@ -3231,10 +3231,15 @@ Sema::DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType) {
     Diag(From->getLocStart(),
          diag::err_typecheck_ambiguous_condition)
           << From->getType() << ToType << From->getSourceRange();
-  else if (OvResult == OR_No_Viable_Function && !CandidateSet.empty())
-    Diag(From->getLocStart(),
-         diag::err_typecheck_nonviable_condition)
-    << From->getType() << ToType << From->getSourceRange();
+  else if (OvResult == OR_No_Viable_Function && !CandidateSet.empty()) {
+    if (!ToType->isIncompleteType() ||
+        !RequireCompleteType(From->getLocStart(), ToType,
+                          diag::err_typecheck_nonviable_condition_incomplete,
+                             From->getType(), From->getSourceRange()))
+      Diag(From->getLocStart(),
+           diag::err_typecheck_nonviable_condition)
+           << From->getType() << From->getSourceRange() << ToType;
+  }
   else
     return false;
   CandidateSet.NoteCandidates(*this, OCD_AllCandidates, From);
