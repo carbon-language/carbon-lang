@@ -3681,7 +3681,7 @@ public:
                                  bool Enabled) const {
     if (Name == "soft-float" || Name == "soft-float-abi" ||
         Name == "vfp2" || Name == "vfp3" || Name == "vfp4" || Name == "neon" ||
-        Name == "d16" || Name == "neonfp") {
+        Name == "d16" || Name == "neonfp" || Name == "v8fp") {
       Features[Name] = Enabled;
     } else
       return false;

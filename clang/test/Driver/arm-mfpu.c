@@ -46,3 +46,12 @@
 // RUN: %clang -target arm-linux-eabi -msoft-float %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-SOFT-FLOAT %s
 // CHECK-SOFT-FLOAT: "-target-feature" "-neon"
+
+// RUN: %clang -target armv8-linux-gnueabihf -mfpu=fp-armv8 %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-FP-ARMV8 %s
+// CHECK-FP-ARMV8: "-target-feature" "+v8fp"
+
+// RUN: %clang -target armv8-linux-gnueabihf -mfpu=neon-fp-armv8 %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NEON-FP-ARMV8 %s
+// CHECK-NEON-FP-ARMV8: "-target-feature" "+v8fp"
+// CHECK-NEON-FP-ARMV8: "-target-feature" "+neon"
