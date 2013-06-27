@@ -2,6 +2,8 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
+declare void @foo(i64, i64, i64, i64)
+
 ; Check 0.
 define i64 @f1() {
 ; CHECK: f1:
@@ -248,4 +250,36 @@ define i64 @f30() {
 ; CHECK-NEXT: oilf %r2, 2147483647
 ; CHECK-NEXT: br %r14
   ret i64 -2147483649
+}
+
+; Check that constant loads are rematerialized.
+define i64 @f31() {
+; CHECK: f31:
+; CHECK-DAG: lghi %r2, 42
+; CHECK-DAG: lgfi %r3, 65537
+; CHECK-DAG: llilf %r4, 2147483649
+; CHECK-DAG: llihf %r5, 65537
+; CHECK: brasl %r14, foo@PLT
+; CHECK-DAG: llill %r2, 32768
+; CHECK-DAG: llilh %r3, 1
+; CHECK-DAG: llihl %r4, 1
+; CHECK-DAG: llihh %r5, 1
+; CHECK: brasl %r14, foo@PLT
+; CHECK-DAG: lghi %r2, 42
+; CHECK-DAG: lgfi %r3, 65537
+; CHECK-DAG: llilf %r4, 2147483649
+; CHECK-DAG: llihf %r5, 65537
+; CHECK: brasl %r14, foo@PLT
+; CHECK-DAG: llill %r2, 32768
+; CHECK-DAG: llilh %r3, 1
+; CHECK-DAG: llihl %r4, 1
+; CHECK-DAG: llihh %r5, 1
+; CHECK: brasl %r14, foo@PLT
+; CHECK: lghi %r2, 42
+; CHECK: br %r14
+  call void @foo(i64 42, i64 65537, i64 2147483649, i64 281479271677952)
+  call void @foo(i64 32768, i64 65536, i64 4294967296, i64 281474976710656)
+  call void @foo(i64 42, i64 65537, i64 2147483649, i64 281479271677952)
+  call void @foo(i64 32768, i64 65536, i64 4294967296, i64 281474976710656)
+  ret i64 42
 }

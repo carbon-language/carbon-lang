@@ -2,6 +2,8 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
+declare void @foo(i32, i32, i32, i32)
+
 ; Check 0.
 define i32 @f1() {
 ; CHECK: f1:
@@ -88,4 +90,24 @@ define i32 @f11() {
 ; CHECK: lhi %r2, -1
 ; CHECK: br %r14
   ret i32 -1
+}
+
+; Check that constant loads are rematerialized.
+define i32 @f12() {
+; CHECK: f12:
+; CHECK-DAG: lhi %r2, 42
+; CHECK-DAG: llill %r3, 32768
+; CHECK-DAG: llilh %r4, 1
+; CHECK-DAG: iilf %r5, 65537
+; CHECK: brasl %r14, foo@PLT
+; CHECK-DAG: lhi %r2, 42
+; CHECK-DAG: llill %r3, 32768
+; CHECK-DAG: llilh %r4, 1
+; CHECK-DAG: iilf %r5, 65537
+; CHECK: brasl %r14, foo@PLT
+; CHECK: lhi %r2, 42
+; CHECK: br %r14
+  call void @foo(i32 42, i32 32768, i32 65536, i32 65537)
+  call void @foo(i32 42, i32 32768, i32 65536, i32 65537)
+  ret i32 42
 }

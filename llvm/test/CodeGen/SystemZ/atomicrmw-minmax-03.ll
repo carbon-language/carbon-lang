@@ -156,7 +156,7 @@ define i32 @f12(i32 %dummy, i64 %base, i64 %index, i32 %b) {
   ret i32 %res
 }
 
-; Check that constants are forced into a register.
+; Check that constants are handled.
 define i32 @f13(i32 %dummy, i32 *%ptr) {
 ; CHECK: f13:
 ; CHECK: lhi [[LIMIT:%r[0-9]+]], 42
@@ -164,7 +164,7 @@ define i32 @f13(i32 %dummy, i32 *%ptr) {
 ; CHECK: [[LOOP:\.[^:]*]]:
 ; CHECK: lr [[NEW:%r[0-9]+]], %r2
 ; CHECK: crjle %r2, [[LIMIT]], [[KEEP:\..*]]
-; CHECK: lr [[NEW]], [[LIMIT]]
+; CHECK: lhi [[NEW]], 42
 ; CHECK: cs %r2, [[NEW]], 0(%r3)
 ; CHECK: jlh [[LOOP]]
 ; CHECK: br %r14

@@ -123,7 +123,7 @@ define i64 @f9(i64 %dummy, i64 %base, i64 %index, i64 %b) {
   ret i64 %res
 }
 
-; Check that constants are forced into a register.
+; Check that constants are handled.
 define i64 @f10(i64 %dummy, i64 *%ptr) {
 ; CHECK: f10:
 ; CHECK: lghi [[LIMIT:%r[0-9]+]], 42
@@ -131,7 +131,7 @@ define i64 @f10(i64 %dummy, i64 *%ptr) {
 ; CHECK: [[LOOP:\.[^:]*]]:
 ; CHECK: lgr [[NEW:%r[0-9]+]], %r2
 ; CHECK: cgrjle %r2, [[LIMIT]], [[KEEP:\..*]]
-; CHECK: lgr [[NEW]], [[LIMIT]]
+; CHECK: lghi [[NEW]], 42
 ; CHECK: csg %r2, [[NEW]], 0(%r3)
 ; CHECK: jlh [[LOOP]]
 ; CHECK: br %r14

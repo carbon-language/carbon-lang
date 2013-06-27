@@ -18,16 +18,15 @@ declare void @bar(i8 zeroext, i16 zeroext, i32 zeroext, i64, float, double,
 ; normally use %f0/%f2 as the first available 128-bit pair.  This choice
 ; is hard-coded in the FP128 tests.
 ;
-; The order of the CHECK-INT loads doesn't matter.  The same goes for the
-; CHECK_FP128-* stores and the CHECK-STACK stores.  It would be OK to reorder
+; The order of the CHECK-STACK stores doesn't matter.  It would be OK to reorder
 ; them in response to future code changes.
 define void @foo() {
 ; CHECK-INT: foo:
-; CHECK-INT: lghi %r2, 255
-; CHECK-INT: llill %r3, 65534
-; CHECK-INT: llilf %r4, 4294967293
-; CHECK-INT: lghi %r5, -4
-; CHECK-INT: la %r6, {{224|240}}(%r15)
+; CHECK-INT-DAG: lghi %r2, 255
+; CHECK-INT-DAG: llill %r3, 65534
+; CHECK-INT-DAG: llilf %r4, 4294967293
+; CHECK-INT-DAG: lghi %r5, -4
+; CHECK-INT-DAG: la %r6, {{224|240}}(%r15)
 ; CHECK-INT: brasl %r14, bar@PLT
 ;
 ; CHECK-FLOAT: foo:
@@ -43,15 +42,15 @@ define void @foo() {
 ; CHECK-FP128-1: foo:
 ; CHECK-FP128-1: aghi %r15, -256
 ; CHECK-FP128-1: lzxr %f0
-; CHECK-FP128-1: std %f0, 224(%r15)
-; CHECK-FP128-1: std %f2, 232(%r15)
+; CHECK-FP128-1-DAG: std %f0, 224(%r15)
+; CHECK-FP128-1-DAG: std %f2, 232(%r15)
 ; CHECK-FP128-1: brasl %r14, bar@PLT
 ;
 ; CHECK-FP128-2: foo:
 ; CHECK-FP128-2: aghi %r15, -256
 ; CHECK-FP128-2: lzxr %f0
-; CHECK-FP128-2: std %f0, 240(%r15)
-; CHECK-FP128-2: std %f2, 248(%r15)
+; CHECK-FP128-2-DAG: std %f0, 240(%r15)
+; CHECK-FP128-2-DAG: std %f2, 248(%r15)
 ; CHECK-FP128-2: brasl %r14, bar@PLT
 ;
 ; CHECK-STACK: foo:

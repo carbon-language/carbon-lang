@@ -222,7 +222,8 @@ let neverHasSideEffects = 1 in {
 }
 
 // Immediate moves.
-let neverHasSideEffects = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in {
+let neverHasSideEffects = 1, isAsCheapAsAMove = 1, isMoveImm = 1,
+    isReMaterializable = 1 in {
   // 16-bit sign-extended immediates.
   def LHI  : UnaryRI<"lhi",  0xA78, bitconvert, GR32, imm32sx16>;
   def LGHI : UnaryRI<"lghi", 0xA79, bitconvert, GR64, imm64sx16>;
@@ -476,7 +477,8 @@ def IIHH : BinaryRI<"iihh", 0xA50, inserthh, GR64, imm64hh16>;
 // full-width move.  (We use IILF rather than something like LLILF
 // for 32-bit moves because IILF leaves the upper 32 bits of the
 // GR64 unchanged.)
-let isCodeGenOnly = 1 in {
+let isCodeGenOnly = 1, isAsCheapAsAMove = 1, isMoveImm = 1,
+    isReMaterializable = 1 in {
   def IILF32 : UnaryRIL<"iilf", 0xC09, bitconvert, GR32, uimm32>;
 }
 def IILF : BinaryRIL<"iilf", 0xC09, insertlf, GR64, imm64lf32>;
