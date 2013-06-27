@@ -591,10 +591,10 @@ public:
   /// \return - Null on error.
   llvm::raw_fd_ostream *
   createOutputFile(StringRef OutputPath,
-                   bool Binary = true, bool RemoveFileOnSignal = true,
-                   StringRef BaseInput = "",
-                   StringRef Extension = "",
-                   bool UseTemporary = false,
+                   bool Binary, bool RemoveFileOnSignal,
+                   StringRef BaseInput,
+                   StringRef Extension,
+                   bool UseTemporary,
                    bool CreateMissingDirectories = false);
 
   /// Create a new output file, optionally deriving the output path name.
@@ -624,13 +624,13 @@ public:
   /// will be stored here on success.
   static llvm::raw_fd_ostream *
   createOutputFile(StringRef OutputPath, std::string &Error,
-                   bool Binary = true, bool RemoveFileOnSignal = true,
-                   StringRef BaseInput = "",
-                   StringRef Extension = "",
-                   bool UseTemporary = false,
-                   bool CreateMissingDirectories = false,
-                   std::string *ResultPathName = 0,
-                   std::string *TempPathName = 0);
+                   bool Binary, bool RemoveFileOnSignal,
+                   StringRef BaseInput,
+                   StringRef Extension,
+                   bool UseTemporary,
+                   bool CreateMissingDirectories,
+                   std::string *ResultPathName,
+                   std::string *TempPathName);
 
   /// }
   /// @name Initialization Utility Methods

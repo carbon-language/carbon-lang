@@ -519,34 +519,50 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
   OwningPtr<llvm::raw_fd_ostream> OS;
   std::string OSFile;
 
-  if (UseTemporary && OutFile != "-") {
-    // Only create the temporary if the parent directory exists (or create
-    // missing directories is true) and we can actually write to OutPath,
-    // otherwise we want to fail early.
-    SmallString<256> AbsPath(OutputPath);
-    llvm::sys::fs::make_absolute(AbsPath);
-    StringRef OutPath = AbsPath;
-    bool ParentExists = false;
-    if (llvm::sys::fs::exists(llvm::sys::path::parent_path(AbsPath.str()),
-                              ParentExists))
-      ParentExists = false;
-    bool Exists;
-    if ((CreateMissingDirectories || ParentExists) &&
-        ((llvm::sys::fs::exists(AbsPath.str(), Exists) || !Exists) ||
-         (llvm::sys::fs::is_regular_file(OutPath) &&
-          llvm::sys::fs::can_write(AbsPath.c_str())))) {
-      // Create a temporary file.
-      SmallString<128> TempPath;
-      TempPath = OutFile;
-      TempPath += "-%%%%%%%%";
-      int fd;
-      if (llvm::sys::fs::unique_file(TempPath.str(), fd, TempPath,
-                                     /*makeAbsolute=*/false, 0664)
-          == llvm::errc::success) {
-        OS.reset(new llvm::raw_fd_ostream(fd, /*shouldClose=*/true));
-        OSFile = TempFile = TempPath.str();
+  if (UseTemporary) {
+    if (OutFile == "-")
+      UseTemporary = false;
+    else {
+      llvm::sys::fs::file_status Status;
+      llvm::sys::fs::status(OutputPath, Status);
+      if (llvm::sys::fs::exists(Status)) {
+        // Fail early if we can't write to the final destination.
+        if (!llvm::sys::fs::can_write(OutputPath))
+          return 0;
+
+        // Don't use a temporary if the output is a special file. This handles
+        // things like '-o /dev/null'
+        if (!llvm::sys::fs::is_regular_file(Status))
+          UseTemporary = false;
       }
     }
+  }
+
+  if (UseTemporary) {
+    SmallString<256> AbsPath(OutputPath);
+    llvm::sys::fs::make_absolute(AbsPath);
+
+    // If the parent directory doesn't exist and we can't create it, fail.
+    bool ParentExists =
+        llvm::sys::fs::exists(llvm::sys::path::parent_path(AbsPath.str()));
+    if (!CreateMissingDirectories && !ParentExists) {
+      Error = "Parent directory doesn't exist";
+      return 0;
+    }
+
+    // Create a temporary file.
+    SmallString<128> TempPath;
+    TempPath = OutFile;
+    TempPath += "-%%%%%%%%";
+    int fd;
+    if (!llvm::sys::fs::unique_file(TempPath.str(), fd, TempPath,
+                                   /*makeAbsolute=*/false, 0664)) {
+      OS.reset(new llvm::raw_fd_ostream(fd, /*shouldClose=*/true));
+      OSFile = TempFile = TempPath.str();
+    }
+    // If we failed to create the temporary, fallback to writing to the file
+    // directly. This handles the corner case where we cannot write to the
+    // directory, but can write to the file.
   }
 
   if (!OS) {
