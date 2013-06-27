@@ -568,11 +568,16 @@ error_code status_known(const Twine &path, bool &result);
 ///          otherwise a platform specific error_code.
 error_code unique_file(const Twine &model, int &result_fd,
                        SmallVectorImpl<char> &result_path,
-                       bool makeAbsolute = true, unsigned mode = owner_read | owner_write);
+                       bool makeAbsolute = true,
+                       unsigned mode = owner_read | owner_write);
 
 /// @brief Simpler version for clients that don't want an open file.
 error_code unique_file(const Twine &Model, SmallVectorImpl<char> &ResultPath,
-                       bool MakeAbsolute = true, unsigned Mode = owner_read | owner_write);
+                       bool MakeAbsolute = true,
+                       unsigned Mode = owner_read | owner_write);
+
+error_code createUniqueDirectory(const Twine &Prefix,
+                                 SmallVectorImpl<char> &ResultPath);
 
 /// @brief Canonicalize path.
 ///

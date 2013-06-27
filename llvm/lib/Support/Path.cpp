@@ -642,6 +642,17 @@ error_code unique_file(const Twine &Model, SmallVectorImpl<char> &ResultPath,
   return fs::remove(P);
 }
 
+error_code createUniqueDirectory(const Twine &Prefix,
+                                 SmallVectorImpl<char> &ResultPath) {
+  // FIXME: This is double inefficient. We compute a unique file name, created
+  // it, delete it and keep only the directory.
+  error_code EC = unique_file(Prefix + "-%%%%%%/dummy", ResultPath);
+  if (EC)
+    return EC;
+  path::remove_filename(ResultPath);
+  return error_code::success();
+}
+
 error_code make_absolute(SmallVectorImpl<char> &path) {
   StringRef p(path.data(), path.size());
 

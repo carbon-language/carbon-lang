@@ -30,12 +30,8 @@ TEST(FileOutputBuffer, Test) {
   // Create unique temporary directory for these tests
   SmallString<128> TestDirectory;
   {
-    int fd;
     ASSERT_NO_ERROR(
-      fs::unique_file("FileOutputBuffer-test-%%-%%-%%-%%/dir", fd,
-                      TestDirectory));
-    ::close(fd);
-    TestDirectory = path::parent_path(TestDirectory);
+        fs::createUniqueDirectory("FileOutputBuffer-test", TestDirectory));
   }
 
   // TEST 1: Verify commit case.

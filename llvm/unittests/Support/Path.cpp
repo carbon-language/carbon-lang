@@ -147,13 +147,9 @@ protected:
   SmallString<128> TestDirectory;
 
   virtual void SetUp() {
-    int fd;
     ASSERT_NO_ERROR(
-      fs::unique_file("file-system-test-%%-%%-%%-%%/test-directory.anchor", fd,
-                      TestDirectory));
+        fs::createUniqueDirectory("file-system-test", TestDirectory));
     // We don't care about this specific file.
-    ::close(fd);
-    TestDirectory = path::parent_path(TestDirectory);
     errs() << "Test Directory: " << TestDirectory << '\n';
     errs().flush();
   }
