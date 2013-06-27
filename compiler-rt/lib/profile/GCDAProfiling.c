@@ -20,10 +20,7 @@
 |*
 \*===----------------------------------------------------------------------===*/
 
-#ifndef __APPLE__
 #include <errno.h>
-#endif
-
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -212,11 +209,9 @@ static int map_file() {
   write_buffer = mmap(0, file_size, PROT_READ | PROT_WRITE,
                       MAP_FILE | MAP_SHARED, fd, 0);
   if (write_buffer == (void *)-1) {
-#ifndef __APPLE__
     int errnum = errno;
     fprintf(stderr, "profiling: %s: cannot map: %s\n", filename,
             strerror(errnum));
-#endif
     return -1;
   }
   return 0;
@@ -224,11 +219,9 @@ static int map_file() {
 
 static void unmap_file() {
   if (msync(write_buffer, file_size, MS_SYNC) == -1) {
-#ifndef __APPLE__
     int errnum = errno;
     fprintf(stderr, "profiling: %s: cannot msync: %s\n", filename,
             strerror(errnum));
-#endif
   }
 
   /* We explicitly ignore errors from unmapping because at this point the data
@@ -266,11 +259,9 @@ void llvm_gcda_start_file(const char *orig_filename, const char version[4]) {
       fd = open(filename, O_RDWR | O_CREAT, 0644);
       if (fd == -1) {
         /* Bah! It's hopeless. */
-#ifndef __APPLE__
         int errnum = errno;
         fprintf(stderr, "profiling: %s: cannot open: %s\n", filename,
                 strerror(errnum));
-#endif
         return;
       }
     }
