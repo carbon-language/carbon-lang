@@ -104,22 +104,36 @@ TEST(Printf, OverflowPtr) {
 }
 
 template<typename T>
-static void TestMinMax(const char *fmt, T min, T max) {
+static void TestAgainstLibc(const char *fmt, T arg1, T arg2) {
   char buf[1024];
-  uptr len = internal_snprintf(buf, sizeof(buf), fmt, min, max);
+  uptr len = internal_snprintf(buf, sizeof(buf), fmt, arg1, arg2);
   char buf2[1024];
-  snprintf(buf2, sizeof(buf2), fmt, min, max);
+  snprintf(buf2, sizeof(buf2), fmt, arg1, arg2);
   EXPECT_EQ(len, strlen(buf));
   EXPECT_STREQ(buf2, buf);
 }
 
 TEST(Printf, MinMax) {
-  TestMinMax<int>("%d-%d", INT_MIN, INT_MAX);  // NOLINT
-  TestMinMax<long>("%zd-%zd", LONG_MIN, LONG_MAX);  // NOLINT
-  TestMinMax<unsigned>("%u-%u", 0, UINT_MAX);  // NOLINT
-  TestMinMax<unsigned long>("%zu-%zu", 0, ULONG_MAX);  // NOLINT
-  TestMinMax<unsigned>("%x-%x", 0, UINT_MAX);  // NOLINT
-  TestMinMax<unsigned long>("%zx-%zx", 0, ULONG_MAX);  // NOLINT
+  TestAgainstLibc<int>("%d-%d", INT_MIN, INT_MAX);  // NOLINT
+  TestAgainstLibc<long>("%zd-%zd", LONG_MIN, LONG_MAX);  // NOLINT
+  TestAgainstLibc<unsigned>("%u-%u", 0, UINT_MAX);  // NOLINT
+  TestAgainstLibc<unsigned long>("%zu-%zu", 0, ULONG_MAX);  // NOLINT
+  TestAgainstLibc<unsigned>("%x-%x", 0, UINT_MAX);  // NOLINT
+  TestAgainstLibc<unsigned long>("%zx-%zx", 0, ULONG_MAX);  // NOLINT
+  Report("%zd\n", LONG_MIN);
+}
+
+TEST(Printf, Padding) {
+  TestAgainstLibc<int>("%3d - %3d", 1, 0);
+  TestAgainstLibc<int>("%3d - %3d", -1, 123);
+  TestAgainstLibc<int>("%3d - %3d", -1, -123);
+  TestAgainstLibc<int>("%3d - %3d", 12, 1234);
+  TestAgainstLibc<int>("%3d - %3d", -12, -1234);
+  TestAgainstLibc<int>("%03d - %03d", 1, 0);
+  TestAgainstLibc<int>("%03d - %03d", -1, 123);
+  TestAgainstLibc<int>("%03d - %03d", -1, -123);
+  TestAgainstLibc<int>("%03d - %03d", 12, 1234);
+  TestAgainstLibc<int>("%03d - %03d", -12, -1234);
 }
 
 }  // namespace __sanitizer
