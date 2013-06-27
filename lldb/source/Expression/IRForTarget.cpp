@@ -73,11 +73,9 @@ IRForTarget::IRForTarget (lldb_private::ClangExpressionDeclMap *decl_map,
     m_module(NULL),
     m_decl_map(decl_map),
     m_data_allocator(execution_unit),
-    m_memory_map(execution_unit),
     m_CFStringCreateWithBytes(NULL),
     m_sel_registerName(NULL),
     m_error_stream(error_stream),
-    m_has_side_effects(false),
     m_result_store(NULL),
     m_result_is_pointer(false),
     m_reloc_placeholder(NULL)
@@ -125,67 +123,6 @@ IRForTarget::FixFunctionLinkage(llvm::Function &llvm_function)
     std::string name = llvm_function.getName().str();
     
     return true;
-}
-
-bool 
-IRForTarget::HasSideEffects (llvm::Function &llvm_function)
-{
-    llvm::Function::iterator bbi;
-    BasicBlock::iterator ii;
-        
-    for (bbi = llvm_function.begin();
-         bbi != llvm_function.end();
-         ++bbi)
-    {
-        BasicBlock &basic_block = *bbi;
-        
-        for (ii = basic_block.begin();
-             ii != basic_block.end();
-             ++ii)
-        {      
-            switch (ii->getOpcode())
-            {
-            default:
-                return true;
-            case Instruction::Store:
-                {
-                    StoreInst *store_inst = dyn_cast<StoreInst>(ii);
-                    
-                    Value *store_ptr = store_inst->getPointerOperand();
-                    
-                    std::string ptr_name;
-                    
-                    if (store_ptr->hasName())
-                        ptr_name = store_ptr->getName().str();
-                    
-                    if (isa <AllocaInst> (store_ptr))
-                        break;
-
-                    if (ptr_name.find("$__lldb_expr_result") != std::string::npos)
-                    {
-                        if (ptr_name.find("GV") == std::string::npos)
-                            m_result_store = store_inst;
-                    }
-                    else
-                    {
-                        return true;
-                    }
-                        
-                    break;
-                }
-            case Instruction::Load:
-            case Instruction::Alloca:
-            case Instruction::GetElementPtr:
-            case Instruction::BitCast:
-            case Instruction::Ret:
-            case Instruction::ICmp:
-            case Instruction::Br:
-                break;
-            }
-        }
-    }
-    
-    return false;
 }
 
 bool 
@@ -687,16 +624,6 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
         
         Constant *initializer = result_global->getInitializer();
         
-        // Here we write the initializer into a result variable assuming it
-        // can be computed statically.
-        
-        if (!m_has_side_effects)
-        {
-            //MaybeSetConstantResult (initializer, 
-            //                        m_result_name, 
-            //                        m_result_type);
-        }
-                
         StoreInst *synthesized_store = new StoreInst(initializer,
                                                      new_result_global,
                                                      first_entry_instruction);
@@ -706,11 +633,6 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
     }
     else
     {
-        if (!m_has_side_effects && lldb_private::ClangASTContext::IsPointerType (m_result_type.GetOpaqueQualType()))
-        {
-            //MaybeSetCastResult (m_result_type);
-        }
-        
         result_global->replaceAllUsesWith(new_result_global);
     }
         
@@ -2668,8 +2590,6 @@ IRForTarget::runOnModule (Module &llvm_module)
                                                    0 /* AddressSpace */);
         
     Function::iterator bbi;
-    
-    m_has_side_effects = HasSideEffects(*function);
     
     ////////////////////////////////////////////////////////////
     // Replace $__lldb_expr_result with a persistent variable

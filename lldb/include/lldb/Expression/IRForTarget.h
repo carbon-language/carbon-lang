@@ -654,15 +654,13 @@ private:
     lldb_private::ConstString               m_result_name;              ///< The name of the result variable ($0, $1, ...)
     lldb_private::TypeFromParser            m_result_type;              ///< The type of the result variable.
     llvm::Module                           *m_module;                   ///< The module being processed, or NULL if that has not been determined yet.
-    std::unique_ptr<llvm::DataLayout>        m_target_data;              ///< The target data for the module being processed, or NULL if there is no module.
+    std::unique_ptr<llvm::DataLayout>       m_target_data;              ///< The target data for the module being processed, or NULL if there is no module.
     lldb_private::ClangExpressionDeclMap   *m_decl_map;                 ///< The DeclMap containing the Decls 
     StaticDataAllocator                     m_data_allocator;           ///< The allocator to use for constant strings
-    lldb_private::IRMemoryMap              &m_memory_map;               ///< The memory map to pass to the IR interpreter
     llvm::Constant                         *m_CFStringCreateWithBytes;  ///< The address of the function CFStringCreateWithBytes, cast to the appropriate function pointer type
     llvm::Constant                         *m_sel_registerName;         ///< The address of the function sel_registerName, cast to the appropriate function pointer type
     lldb_private::Stream                   *m_error_stream;             ///< If non-NULL, the stream on which errors should be printed
     
-    bool                                    m_has_side_effects;         ///< True if the function's result cannot be simply determined statically
     llvm::StoreInst                        *m_result_store;             ///< If non-NULL, the store instruction that writes to the result variable.  If m_has_side_effects is true, this is NULL.
     bool                                    m_result_is_pointer;        ///< True if the function's result in the AST is a pointer (see comments in ASTResultSynthesizer::SynthesizeBodyResult)
     
