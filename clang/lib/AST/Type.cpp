@@ -357,23 +357,6 @@ const Type *Type::getUnqualifiedDesugaredType() const {
     }
   }
 }
-
-bool Type::isDerivedType() const {
-  switch (CanonicalType->getTypeClass()) {
-  case Pointer:
-  case VariableArray:
-  case ConstantArray:
-  case IncompleteArray:
-  case FunctionProto:
-  case FunctionNoProto:
-  case LValueReference:
-  case RValueReference:
-  case Record:
-    return true;
-  default:
-    return false;
-  }
-}
 bool Type::isClassType() const {
   if (const RecordType *RT = getAs<RecordType>())
     return RT->getDecl()->isClass();
@@ -1917,7 +1900,8 @@ anyDependentTemplateArguments(const TemplateArgumentLoc *Args, unsigned N,
   return false;
 }
 
-bool TemplateSpecializationType::
+#ifndef NDEBUG
+static bool 
 anyDependentTemplateArguments(const TemplateArgument *Args, unsigned N,
                               bool &InstantiationDependent) {
   for (unsigned i = 0; i != N; ++i) {
@@ -1931,6 +1915,7 @@ anyDependentTemplateArguments(const TemplateArgument *Args, unsigned N,
   }
   return false;
 }
+#endif
 
 TemplateSpecializationType::
 TemplateSpecializationType(TemplateName T,
@@ -1954,8 +1939,8 @@ TemplateSpecializationType(TemplateName T,
   (void)InstantiationDependent;
   assert((!Canon.isNull() ||
           T.isDependent() || 
-          anyDependentTemplateArguments(Args, NumArgs, 
-                                        InstantiationDependent)) &&
+          ::anyDependentTemplateArguments(Args, NumArgs, 
+                                          InstantiationDependent)) &&
          "No canonical type for non-dependent class template specialization");
 
   TemplateArgument *TemplateArgs

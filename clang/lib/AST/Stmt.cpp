@@ -298,28 +298,6 @@ AttributedStmt *AttributedStmt::CreateEmpty(ASTContext &C, unsigned NumAttrs) {
   return new (Mem) AttributedStmt(EmptyShell(), NumAttrs);
 }
 
-bool Stmt::hasImplicitControlFlow() const {
-  switch (StmtBits.sClass) {
-    default:
-      return false;
-
-    case CallExprClass:
-    case ConditionalOperatorClass:
-    case ChooseExprClass:
-    case StmtExprClass:
-    case DeclStmtClass:
-      return true;
-
-    case Stmt::BinaryOperatorClass: {
-      const BinaryOperator* B = cast<BinaryOperator>(this);
-      if (B->isLogicalOp() || B->getOpcode() == BO_Comma)
-        return true;
-      else
-        return false;
-    }
-  }
-}
-
 std::string AsmStmt::generateAsmString(ASTContext &C) const {
   if (const GCCAsmStmt *gccAsmStmt = dyn_cast<GCCAsmStmt>(this))
     return gccAsmStmt->generateAsmString(C);

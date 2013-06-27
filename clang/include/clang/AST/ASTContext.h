@@ -1918,7 +1918,6 @@ public:
   bool isObjCSelType(QualType T) const {
     return T == getObjCSelType();
   }
-  bool QualifiedIdConformsQualifiedId(QualType LHS, QualType RHS);
   bool ObjCQualifiedIdTypesAreCompatible(QualType LHS, QualType RHS,
                                          bool ForCompare);
 

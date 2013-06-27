@@ -2272,8 +2272,7 @@ VTableLayout::VTableLayout(uint64_t NumVTableComponents,
 VTableLayout::~VTableLayout() { }
 
 VTableContext::VTableContext(ASTContext &Context)
-  : Context(Context),
-    IsMicrosoftABI(Context.getTargetInfo().getCXXABI().isMicrosoft()) {
+  : IsMicrosoftABI(Context.getTargetInfo().getCXXABI().isMicrosoft()) {
 }
 
 VTableContext::~VTableContext() {
@@ -2376,14 +2375,6 @@ void VTableContext::ComputeVTableRelatedInformation(const CXXRecordDecl *RD) {
     
     VirtualBaseClassOffsetOffsets.insert(std::make_pair(ClassPair, I->second));
   }
-}
-
-void VTableContext::ErrorUnsupported(StringRef Feature,
-                                     SourceLocation Location) {
-  clang::DiagnosticsEngine &Diags = Context.getDiagnostics();
-  unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
-                                  "v-table layout for %0 is not supported yet");
-  Diags.Report(Context.getFullLoc(Location), DiagID) << Feature;
 }
 
 VTableLayout *VTableContext::createConstructionVTableLayout(

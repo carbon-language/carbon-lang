@@ -267,8 +267,6 @@ public:
 };
 
 class VTableContext {
-  ASTContext &Context;
-
 public:
   typedef SmallVector<std::pair<uint64_t, ThunkInfo>, 1>
     VTableThunksTy;
@@ -305,10 +303,6 @@ private:
   /// information (vtable layout, vbase offset offsets, thunks etc) for the
   /// given record decl.
   void ComputeVTableRelatedInformation(const CXXRecordDecl *RD);
-
-  /// ErrorUnsupported - Print out an error that the v-table layout code
-  /// doesn't support the particular C++ feature yet.
-  void ErrorUnsupported(StringRef Feature, SourceLocation Location);
 
 public:
   VTableContext(ASTContext &Context);
