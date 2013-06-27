@@ -564,6 +564,8 @@ IRExecutionUnit::MemoryManager::deallocateFunctionBody(void *Body)
 lldb::addr_t
 IRExecutionUnit::GetRemoteAddressForLocal (lldb::addr_t local_address)
 {
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
     for (AllocationRecord &record : m_records)
     {
         if (local_address >= record.m_host_address &&
@@ -571,9 +573,22 @@ IRExecutionUnit::GetRemoteAddressForLocal (lldb::addr_t local_address)
         {
             if (record.m_process_address == LLDB_INVALID_ADDRESS)
                 return LLDB_INVALID_ADDRESS;
+            
+            lldb::addr_t ret = record.m_process_address + (local_address - record.m_host_address);
+            
+            if (log)
+            {
+                log->Printf("IRExecutionUnit::GetRemoteAddressForLocal() found 0x%" PRIx64 " in [0x%" PRIx64 "..0x%" PRIx64 "], and returned 0x%" PRIx64 " from [0x%" PRIx64 "..0x%" PRIx64 "].",
+                            local_address,
+                            (unsigned long long)record.m_host_address,
+                            (unsigned long long)record.m_host_address + (unsigned long long)record.m_size,
+                            ret,
+                            record.m_process_address,
+                            record.m_process_address + record.m_size);
+            }
+            
+            return ret;
         }
-        
-        return record.m_process_address + (local_address - record.m_host_address);
     }
 
     return LLDB_INVALID_ADDRESS;
