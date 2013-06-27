@@ -117,6 +117,10 @@ N: Duncan Sands
 E: baldrick@free.fr
 D: DragonEgg
 
+N: Kostya Serebryany
+E: kcc@google.com
+D: AddressSanitizer, ThreadSanitizer (LLVM parts)
+
 N: Michael Spencer
 E: bigcheesegs@gmail.com
 D: Windows parts of Support, Object, ar, nm, objdump, ranlib, size
@@ -125,6 +129,10 @@ N: Tom Stellard
 E: thomas.stellard@amd.com
 E: mesa-dev@lists.freedesktop.org
 D: R600 Backend
+
+N: Evgeniy Stepanov
+E: eugenis@google.com
+D: MemorySanitizer (LLVM part)
 
 N: Andrew Trick
 E: atrick@apple.com
