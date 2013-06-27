@@ -191,6 +191,7 @@ public:
   APFloat(const fltSemantics &); // Default construct to 0.0
   APFloat(const fltSemantics &, StringRef);
   APFloat(const fltSemantics &, integerPart);
+  APFloat(const fltSemantics &, fltCategory, bool negative);
   APFloat(const fltSemantics &, uninitializedTag);
   APFloat(const fltSemantics &, const APInt &);
   explicit APFloat(double d);

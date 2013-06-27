@@ -2888,7 +2888,7 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
   if (!LHSUnsigned) {
     // If the RHS value is > SignedMax, fold the comparison.  This handles +INF
     // and large values.
-    APFloat SMax(RHS.getSemantics());
+    APFloat SMax(RHS.getSemantics(), APFloat::fcZero, false);
     SMax.convertFromAPInt(APInt::getSignedMaxValue(IntWidth), true,
                           APFloat::rmNearestTiesToEven);
     if (SMax.compare(RHS) == APFloat::cmpLessThan) {  // smax < 13123.0
@@ -2900,7 +2900,7 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
   } else {
     // If the RHS value is > UnsignedMax, fold the comparison. This handles
     // +INF and large values.
-    APFloat UMax(RHS.getSemantics());
+    APFloat UMax(RHS.getSemantics(), APFloat::fcZero, false);
     UMax.convertFromAPInt(APInt::getMaxValue(IntWidth), false,
                           APFloat::rmNearestTiesToEven);
     if (UMax.compare(RHS) == APFloat::cmpLessThan) {  // umax < 13123.0
@@ -2913,7 +2913,7 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
 
   if (!LHSUnsigned) {
     // See if the RHS value is < SignedMin.
-    APFloat SMin(RHS.getSemantics());
+    APFloat SMin(RHS.getSemantics(), APFloat::fcZero, false);
     SMin.convertFromAPInt(APInt::getSignedMinValue(IntWidth), true,
                           APFloat::rmNearestTiesToEven);
     if (SMin.compare(RHS) == APFloat::cmpGreaterThan) { // smin > 12312.0
@@ -2924,7 +2924,7 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
     }
   } else {
     // See if the RHS value is < UnsignedMin.
-    APFloat SMin(RHS.getSemantics());
+    APFloat SMin(RHS.getSemantics(), APFloat::fcZero, false);
     SMin.convertFromAPInt(APInt::getMinValue(IntWidth), true,
                           APFloat::rmNearestTiesToEven);
     if (SMin.compare(RHS) == APFloat::cmpGreaterThan) { // umin > 12312.0
