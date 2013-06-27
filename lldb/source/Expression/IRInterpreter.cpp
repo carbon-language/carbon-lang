@@ -428,6 +428,20 @@ IRInterpreter::CanInterpret (llvm::Module &module,
 {
     lldb_private::Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
+    bool saw_function_with_body = false;
+    
+    for (Module::iterator fi = module.begin(), fe = module.end();
+         fi != fe;
+         ++fi)
+    {
+        if (fi->begin() != fi->end())
+        {
+            if (saw_function_with_body)
+                return false;
+            saw_function_with_body = true;
+        }
+    }
+    
     for (Function::iterator bbi = function.begin(), bbe = function.end();
          bbi != bbe;
          ++bbi)
