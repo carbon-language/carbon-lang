@@ -59,6 +59,25 @@ define i32 @loads(i32 %arg) {
   ;CHECK: cost of 4 {{.*}} load
   load <8 x i64>* undef, align 4
 
+
+  ;CHECK: cost of 3 {{.*}} load
+  load <3 x float>* undef, align 4
+
+  ;CHECK: cost of 3 {{.*}} load
+  load <3 x double>* undef, align 4
+
+  ;CHECK: cost of 3 {{.*}} load
+  load <3 x i32>* undef, align 4
+
+  ;CHECK: cost of 3 {{.*}} load
+  load <3 x i64>* undef, align 4
+
+  ;CHECK: cost of 10 {{.*}} load
+  load <5 x i32>* undef, align 4
+
+  ;CHECK: cost of 10 {{.*}} load
+  load <5 x i64>* undef, align 4
+
   ret i32 undef
 }
 

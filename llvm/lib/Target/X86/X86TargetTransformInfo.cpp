@@ -539,8 +539,51 @@ unsigned X86TTI::getVectorInstrCost(unsigned Opcode, Type *Val,
   return TargetTransformInfo::getVectorInstrCost(Opcode, Val, Index);
 }
 
+unsigned X86TTI::getScalarizationOverhead(Type *Ty, bool Insert,
+                                            bool Extract) const {
+  assert (Ty->isVectorTy() && "Can only scalarize vectors");
+  unsigned Cost = 0;
+
+  for (int i = 0, e = Ty->getVectorNumElements(); i < e; ++i) {
+    if (Insert)
+      Cost += TopTTI->getVectorInstrCost(Instruction::InsertElement, Ty, i);
+    if (Extract)
+      Cost += TopTTI->getVectorInstrCost(Instruction::ExtractElement, Ty, i);
+  }
+
+  return Cost;
+}
+
 unsigned X86TTI::getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
                                  unsigned AddressSpace) const {
+  // Handle non power of two vectors such as <3 x float>
+  if (VectorType *VTy = dyn_cast<VectorType>(Src)) {
+    unsigned NumElem = VTy->getVectorNumElements();
+
+    // Handle a few common cases:
+    // <3 x float>
+    if (NumElem == 3 && VTy->getScalarSizeInBits() == 32)
+      // Cost = 64 bit store + extract + 32 bit store.
+      return 3;
+
+    // <3 x double>
+    if (NumElem == 3 && VTy->getScalarSizeInBits() == 64)
+      // Cost = 128 bit store + unpack + 64 bit store.
+      return 3;
+
+    // Assume that all other non power-of-two numbers are scalarized.
+    if (!isPowerOf2_32(NumElem)) {
+      unsigned Cost = TargetTransformInfo::getMemoryOpCost(Opcode,
+                                                           VTy->getScalarType(),
+                                                           Alignment,
+                                                           AddressSpace);
+      unsigned SplitCost = getScalarizationOverhead(Src,
+                                                    Opcode == Instruction::Load,
+                                                    Opcode==Instruction::Store);
+      return NumElem * Cost + SplitCost;
+    }
+  }
+
   // Legalize the type.
   std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Src);
   assert((Opcode == Instruction::Load || Opcode == Instruction::Store) &&
