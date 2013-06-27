@@ -66,14 +66,6 @@ IRMemoryMap::FindSpace (size_t size)
             return ret;
     }
     
-    if (process_sp)
-    {
-        ret = process_sp->GetReservationCache().Find(size);
-        
-        if (ret != LLDB_INVALID_ADDRESS)
-            return ret;
-    }
-    
     for (int iterations = 0; iterations < 16; ++iterations)
     {
         lldb::addr_t candidate = LLDB_INVALID_ADDRESS;
@@ -101,21 +93,9 @@ IRMemoryMap::FindSpace (size_t size)
         
         if (IntersectsAllocation(candidate, size))
             continue;
-        
-        char buf[1];
-        
-        Error err;
-        
-        if (process_sp &&
-            (process_sp->ReadMemory(candidate, buf, 1, err) == 1 ||
-             process_sp->ReadMemory(candidate + size, buf, 1, err) == 1))
-            continue;
-        
+                
         ret = candidate;
-        
-        if (process_sp)
-            process_sp->GetReservationCache().Reserve(candidate, size);
-    
+            
         return ret;
     }
     
@@ -416,8 +396,6 @@ IRMemoryMap::Free (lldb::addr_t process_address, Error &error)
             {
                 if (process_sp->CanJIT() && process_sp->IsAlive())
                     process_sp->DeallocateMemory(allocation.m_process_alloc); // FindSpace allocated this for real
-                else
-                    process_sp->GetReservationCache().Unreserve(allocation.m_process_alloc); // FindSpace registered this memory
             }
     
             break;
