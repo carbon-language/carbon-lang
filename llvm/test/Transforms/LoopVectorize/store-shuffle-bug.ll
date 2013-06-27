@@ -10,7 +10,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 ; PR16455
 
 
-; Due do a bug in the way we handled reverse induction stores we would generate
+; Due to a bug in the way we handled reverse induction stores we would generate
 ; a shuffle too many.
 
 define void @t()  {
