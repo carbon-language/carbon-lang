@@ -15,6 +15,8 @@ define void @df() {
   ret void
 }
 
+declare void @foo(i32 *)
+
 ; Test a load of a fully-aligned external variable.
 define i32 *@f1() {
 ; CHECK: f1:
@@ -77,4 +79,17 @@ define void() *@f8() {
 ; CHECK: larl %r2, df
 ; CHECK-NEXT: br %r14
   ret void() *@df
+}
+
+; Test that LARL can be rematerialized.
+define i32 @f9() {
+; CHECK: f9:
+; CHECK: larl %r2, d2
+; CHECK: brasl %r14, foo@PLT
+; CHECK: larl %r2, d2
+; CHECK: brasl %r14, foo@PLT
+; CHECK: br %r14
+  call void @foo(i32 *@d2)
+  call void @foo(i32 *@d2)
+  ret i32 0
 }

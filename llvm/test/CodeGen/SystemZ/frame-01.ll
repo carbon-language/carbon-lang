@@ -3,6 +3,8 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
+declare void @foo(i32 *)
+
 ; The CFA offset is 160 (the caller-allocated part of the frame) + 168.
 define void @f1(i64 %x) {
 ; CHECK: f1:
@@ -106,5 +108,19 @@ define void @f7(i64 %x) {
   %y = alloca [268435436 x i64], align 8
   %ptr = getelementptr inbounds [268435436 x i64]* %y, i64 0, i64 0
   store volatile i64 %x, i64* %ptr
+  ret void
+}
+
+; Make sure that LA can be rematerialized.
+define void @f8() {
+; CHECK: f8:
+; CHECK: la %r2, 164(%r15)
+; CHECK: brasl %r14, foo@PLT
+; CHECK: la %r2, 164(%r15)
+; CHECK: brasl %r14, foo@PLT
+; CHECK: br %r14
+  %ptr = alloca i32
+  call void @foo(i32 *%ptr)
+  call void @foo(i32 *%ptr)
   ret void
 }

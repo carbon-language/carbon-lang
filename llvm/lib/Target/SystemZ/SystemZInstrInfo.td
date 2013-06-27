@@ -417,7 +417,8 @@ def STRVG : StoreRXY<"strvg", 0xE32F, storeu<bswap, nonvolatile_store>, GR64>;
 //===----------------------------------------------------------------------===//
 
 // Load BDX-style addresses.
-let neverHasSideEffects = 1, Function = "la" in {
+let neverHasSideEffects = 1, isAsCheapAsAMove = 1, isReMaterializable = 1,
+    Function = "la" in {
   let PairType = "12" in
     def LA : InstRX<0x41, (outs GR64:$R1), (ins laaddr12pair:$XBD2),
                     "la\t$R1, $XBD2",
@@ -430,7 +431,8 @@ let neverHasSideEffects = 1, Function = "la" in {
 
 // Load a PC-relative address.  There's no version of this instruction
 // with a 16-bit offset, so there's no relaxation.
-let neverHasSideEffects = 1 in {
+let neverHasSideEffects = 1, isAsCheapAsAMove = 1, isMoveImm = 1,
+    isReMaterializable = 1 in {
   def LARL : InstRIL<0xC00, (outs GR64:$R1), (ins pcrel32:$I2),
                      "larl\t$R1, $I2",
                      [(set GR64:$R1, pcrel32:$I2)]>;

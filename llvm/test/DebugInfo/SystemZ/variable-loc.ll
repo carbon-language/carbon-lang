@@ -8,8 +8,7 @@
 ;
 ; CHECK: main:
 ; CHECK: aghi    %r15, -568
-; CHECK: la      [[MAIN_ARR:%r[0-9]+]], 164(%r11)
-; CHECK: lgr     %r2, [[MAIN_ARR]]
+; CHECK: la      %r2, 164(%r11)
 ; CHECK: brasl   %r14, populate_array@PLT
 ;
 ; Now check that the debugging information reflects this:
