@@ -365,3 +365,23 @@ void SP11::UseV() {
 struct StructWithUnnamedMember {
   __declspec(property(get=GetV)) int : 10; // expected-error {{anonymous property is not supported}}
 };
+
+namespace rdar14250378 {
+  class Bar {};
+  
+  namespace NyNamespace {
+    class Foo {
+    public:
+      Bar* EnsureBar();
+    };
+    
+    class Baz : public Foo {
+    public:
+      friend class Bar;
+    };
+    
+    Bar* Foo::EnsureBar() {
+      return 0;
+    }
+  }
+}
