@@ -174,7 +174,6 @@ def main(argv):
                 pid = process.GetProcessID()
                 listener = debugger.GetListener()
                 # sign up for process state change events
-                #process.GetBroadcaster().AddListener(listener, lldb.SBProcess.eBroadcastBitStateChanged)
                 stop_idx = 0
                 done = False
                 while not done:
@@ -182,62 +181,81 @@ def main(argv):
                     if listener.WaitForEvent (options.event_timeout, event):
                         if lldb.SBProcess.EventIsProcessEvent(event):
                             state = lldb.SBProcess.GetStateFromEvent (event)
-                            print "event %s" % (lldb.SBDebugger.StateAsCString(state))
-                            if state == lldb.eStateStopped:
-                                if stop_idx == 0:
-                                    if launch_info:
-                                        print "process %u launched" % (pid)
-                                        run_commands(command_interpreter, ['breakpoint list'])
-                                    else:
-                                        print "attached to process %u" % (pid)
-                                        for m in target.modules:
-                                            print m
-                                        if options.breakpoints:
-                                            for bp in options.breakpoints:
-                                                debugger.HandleCommand( "_regexp-break %s" % (bp))
+                            if state == lldb.eStateInvalid:
+                                # Not a state event
+                                print 'process event = %s' % (event)
+                            else:
+                                print "process state changed event: %s" % (lldb.SBDebugger.StateAsCString(state))
+                                if state == lldb.eStateStopped:
+                                    if stop_idx == 0:
+                                        if launch_info:
+                                            print "process %u launched" % (pid)
                                             run_commands(command_interpreter, ['breakpoint list'])
-                                    run_commands (command_interpreter, options.launch_commands)
-                                else:
+                                        else:
+                                            print "attached to process %u" % (pid)
+                                            for m in target.modules:
+                                                print m
+                                            if options.breakpoints:
+                                                for bp in options.breakpoints:
+                                                    debugger.HandleCommand( "_regexp-break %s" % (bp))
+                                                run_commands(command_interpreter, ['breakpoint list'])
+                                        run_commands (command_interpreter, options.launch_commands)
+                                    else:
+                                        if options.verbose:
+                                            print "process %u stopped" % (pid)
+                                        run_commands (command_interpreter, options.stop_commands)
+                                    stop_idx += 1
+                                    print_threads (process, options)
+                                    print "continuing process %u" % (pid)
+                                    process.Continue()
+                                elif state == lldb.eStateExited:
+                                    exit_desc = process.GetExitDescription()
+                                    if exit_desc:
+                                        print "process %u exited with status %u: %s" % (pid, process.GetExitStatus (), exit_desc)
+                                    else:
+                                        print "process %u exited with status %u" % (pid, process.GetExitStatus ())
+                                    run_commands (command_interpreter, options.exit_commands)
+                                    done = True
+                                elif state == lldb.eStateCrashed:
+                                    print "process %u crashed" % (pid)
+                                    print_threads (process, options)
+                                    run_commands (command_interpreter, options.crash_commands)
+                                    done = True
+                                elif state == lldb.eStateDetached:
+                                    print "process %u detached" % (pid)
+                                    done = True
+                                elif state == lldb.eStateRunning:
+                                    # process is running, don't say anything, we will always get one of these after resuming
                                     if options.verbose:
-                                        print "process %u stopped" % (pid)
-                                    run_commands (command_interpreter, options.stop_commands)
-                                stop_idx += 1
-                                print_threads (process, options)
-                                print "continuing process %u" % (pid)
-                                process.Continue()
-                            elif state == lldb.eStateExited:
-                                exit_desc = process.GetExitDescription()
-                                if exit_desc:
-                                    print "process %u exited with status %u: %s" % (pid, process.GetExitStatus (), exit_desc)
-                                else:
-                                    print "process %u exited with status %u" % (pid, process.GetExitStatus ())
-                                run_commands (command_interpreter, options.exit_commands)
-                                done = True
-                            elif state == lldb.eStateCrashed:
-                                print "process %u crashed" % (pid)
-                                print_threads (process, options)
-                                run_commands (command_interpreter, options.crash_commands)
-                                done = True
-                            elif state == lldb.eStateDetached:
-                                print "process %u detached" % (pid)
-                                done = True
-                            elif state == lldb.eStateRunning:
-                                # process is running, don't say anything, we will always get one of these after resuming
-                                if options.verbose:
-                                    print "process %u resumed" % (pid)
-                            elif state == lldb.eStateUnloaded:
-                                print "process %u unloaded, this shouldn't happen" % (pid)
-                                done = True
-                            elif state == lldb.eStateConnected:
-                                print "process connected"
-                            elif state == lldb.eStateAttaching:
-                                print "process attaching"
-                            elif state == lldb.eStateLaunching:
-                                print "process launching"
+                                        print "process %u resumed" % (pid)
+                                elif state == lldb.eStateUnloaded:
+                                    print "process %u unloaded, this shouldn't happen" % (pid)
+                                    done = True
+                                elif state == lldb.eStateConnected:
+                                    print "process connected"
+                                elif state == lldb.eStateAttaching:
+                                    print "process attaching"
+                                elif state == lldb.eStateLaunching:
+                                    print "process launching"
                         else:
-                            # timeout waiting for an event
-                            print "no process event for %u seconds, killing the process..." % (options.event_timeout)
-                            done = True
+                            print 'event = %s' % (event)
+                    else:
+                        # timeout waiting for an event
+                        print "no process event for %u seconds, killing the process..." % (options.event_timeout)
+                        done = True
+                # Now that we are done dump the stdout and stderr
+                process_stdout = process.GetSTDOUT(1024)
+                if process_stdout:
+                    print "Process STDOUT:\n%s" % (process_stdout)
+                    while process_stdout:
+                        process_stdout = process.GetSTDOUT(1024)
+                        print process_stdout
+                process_stderr = process.GetSTDERR(1024)
+                if process_stderr:
+                    print "Process STDERR:\n%s" % (process_stderr)
+                    while process_stderr:
+                        process_stderr = process.GetSTDERR(1024)
+                        print process_stderr
                 process.Kill() # kill the process
             else:
                 if error:
