@@ -390,8 +390,6 @@ Communication::ReadThread (void *p)
 
     // Let clients know that this thread is exiting
     comm->BroadcastEvent (eBroadcastBitReadThreadDidExit);
-    comm->m_read_thread_enabled = false;
-    comm->m_read_thread = LLDB_INVALID_HOST_THREAD;
     return NULL;
 }
 
