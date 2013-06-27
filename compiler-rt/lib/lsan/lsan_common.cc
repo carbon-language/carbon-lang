@@ -314,6 +314,8 @@ void DoLeakCheck() {
   static bool already_done;
   CHECK(!already_done);
   already_done = true;
+  if (&__lsan_is_turned_off && __lsan_is_turned_off())
+    return;
 
   DoLeakCheckParam param;
   param.success = false;
@@ -442,4 +444,11 @@ void __lsan_enable() {
   __lsan::disable_counter--;
 #endif
 }
+
+#if !SANITIZER_SUPPORTS_WEAK_HOOKS
+SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+int __lsan_is_turned_off() {
+  return 0;
+}
+#endif
 }  // extern "C"

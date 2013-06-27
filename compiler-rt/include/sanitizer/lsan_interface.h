@@ -25,6 +25,10 @@ extern "C" {
   void __lsan_enable();
   // The heap object into which p points will be treated as a non-leak.
   void __lsan_ignore_object(const void *p);
+  // The user may optionally provide this function to disallow leak checking
+  // for the program it is linked into. Note: this function may be called late,
+  // after all the global destructors.
+  int __lsan_is_turned_off();
 #ifdef __cplusplus
 }  // extern "C"
 

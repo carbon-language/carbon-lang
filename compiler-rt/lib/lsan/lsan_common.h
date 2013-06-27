@@ -154,4 +154,9 @@ class LsanMetadata {
 
 }  // namespace __lsan
 
+extern "C" {
+int __lsan_is_turned_off() SANITIZER_WEAK_ATTRIBUTE
+    SANITIZER_INTERFACE_ATTRIBUTE;
+}  // extern "C"
+
 #endif  // LSAN_COMMON_H
