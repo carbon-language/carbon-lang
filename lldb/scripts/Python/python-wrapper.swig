@@ -689,7 +689,8 @@ LLDBSWIGPythonCreateOSPlugin
         Py_INCREF(SBProc_PyObj);
         
         PyObject* session_dict = NULL;
-        retval = pfunc(SBProc_PyObj, session_dict = FindSessionDictionary(session_dictionary_name));
+        session_dict = session_dict = FindSessionDictionary(session_dictionary_name);
+        retval = pfunc(SBProc_PyObj);
         
         Py_XINCREF (session_dict);
         
