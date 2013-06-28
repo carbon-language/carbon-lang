@@ -253,7 +253,7 @@ void DIEInteger::print(raw_ostream &O) const {
 /// EmitValue - Emit label value.
 ///
 void DIELabel::EmitValue(AsmPrinter *AP, unsigned Form) const {
-  AP->OutStreamer.EmitSymbolValue(Label, SizeOf(AP, Form));
+  AP->OutStreamer.EmitValue(Label, SizeOf(AP, Form));
 }
 
 /// SizeOf - Determine size of label value in bytes.
@@ -267,7 +267,7 @@ unsigned DIELabel::SizeOf(AsmPrinter *AP, unsigned Form) const {
 
 #ifndef NDEBUG
 void DIELabel::print(raw_ostream &O) const {
-  O << "Lbl: " << Label->getName();
+  O << "Lbl: " << Label->getSymbol().getName();
 }
 #endif
 

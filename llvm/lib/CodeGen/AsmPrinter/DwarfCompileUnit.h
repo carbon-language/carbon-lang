@@ -19,6 +19,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/DebugInfo.h"
+#include "llvm/MC/MCExpr.h"
 
 namespace llvm {
 
@@ -220,6 +221,8 @@ public:
   /// addLabel - Add a Dwarf label attribute data and value.
   ///
   void addLabel(DIE *Die, unsigned Attribute, unsigned Form,
+                const MCSymbolRefExpr *Label);
+  void addLabel(DIE *Die, unsigned Attribute, unsigned Form,
                 const MCSymbol *Label);
 
   /// addLabelAddress - Add a dwarf label attribute data and value using
@@ -230,7 +233,8 @@ public:
   /// addOpAddress - Add a dwarf op address data and value using the
   /// form given and an op of either DW_FORM_addr or DW_FORM_GNU_addr_index.
   ///
-  void addOpAddress(DIE *Die, MCSymbol *Label);
+  void addOpAddress(DIE *Die, const MCSymbol *Label);
+  void addOpAddress(DIE *Die, const MCSymbolRefExpr *Label);
 
   /// addDelta - Add a label delta attribute data and value.
   ///

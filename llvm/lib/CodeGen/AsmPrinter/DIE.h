@@ -18,11 +18,13 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/MC/MCExpr.h"
 #include <vector>
 
 namespace llvm {
   class AsmPrinter;
   class MCSymbol;
+  class MCSymbolRefExpr;
   class raw_ostream;
 
   //===--------------------------------------------------------------------===//
@@ -264,9 +266,11 @@ namespace llvm {
   /// DIELabel - A label expression DIE.
   //
   class DIELabel : public DIEValue {
-    const MCSymbol *Label;
+    const MCSymbolRefExpr *Label;
   public:
-    explicit DIELabel(const MCSymbol *L) : DIEValue(isLabel), Label(L) {}
+    explicit DIELabel(const MCSymbolRefExpr *L) : DIEValue(isLabel), Label(L) {}
+    explicit DIELabel(const MCSymbol *Sym, MCContext &Ctxt)
+        : DIEValue(isLabel), Label(MCSymbolRefExpr::Create(Sym, Ctxt)) {}
 
     /// EmitValue - Emit label value.
     ///
@@ -274,7 +278,7 @@ namespace llvm {
 
     /// getValue - Get MCSymbol.
     ///
-    const MCSymbol *getValue() const { return Label; }
+    const MCSymbolRefExpr *getValue() const { return Label; }
 
     /// SizeOf - Determine size of label value in bytes.
     ///
