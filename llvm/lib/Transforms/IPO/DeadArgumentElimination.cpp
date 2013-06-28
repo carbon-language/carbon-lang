@@ -211,7 +211,9 @@ void DAE::CollectFunctionDIs(Module &M) {
       for (unsigned SPIndex = 0, SPNum = SPs.getNumElements();
            SPIndex < SPNum; ++SPIndex) {
         DISubprogram SP(SPs.getElement(SPIndex));
-        if (!SP.Verify())
+        assert((!SP || SP.isSubprogram()) &&
+          "A MDNode in subprograms of a CU should be null or a DISubprogram.");
+        if (!SP)
           continue;
         if (Function *F = SP.getFunction())
           FunctionDIs[F] = SP;

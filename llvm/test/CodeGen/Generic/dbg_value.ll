@@ -10,4 +10,5 @@ define void @t(%0*, i32, i32, i32, i32) nounwind {
 
 declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
-!0 = metadata !{i32 0} ;
+; !0 should conform to the format of DIVariable.
+!0 = metadata !{i32 786689, null, metadata !"a", null, i32 0, null, i32 0, i32 0} ;

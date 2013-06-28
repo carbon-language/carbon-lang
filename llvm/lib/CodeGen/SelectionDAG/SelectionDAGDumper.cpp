@@ -500,8 +500,10 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
     DIScope
       Scope(dl.getScope(G->getMachineFunction().getFunction()->getContext()));
     OS << " dbg:";
+    assert((!Scope || Scope.isScope()) &&
+      "Scope of a DebugLoc should be null or a DIScope.");
     // Omit the directory, since it's usually long and uninteresting.
-    if (Scope.Verify())
+    if (Scope)
       OS << Scope.getFilename();
     else
       OS << "<unknown>";

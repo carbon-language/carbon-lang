@@ -1411,8 +1411,10 @@ static void printDebugLoc(DebugLoc DL, const MachineFunction *MF,
   const LLVMContext &Ctx = MF->getFunction()->getContext();
   if (!DL.isUnknown()) {          // Print source line info.
     DIScope Scope(DL.getScope(Ctx));
+    assert((!Scope || Scope.isScope()) &&
+      "Scope of a DebugLoc should be null or a DIScope.");
     // Omit the directory, because it's likely to be long and uninteresting.
-    if (Scope.Verify())
+    if (Scope)
       CommentOS << Scope.getFilename();
     else
       CommentOS << "<unknown>";

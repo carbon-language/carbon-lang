@@ -344,8 +344,11 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
   if (NamedMDNode *NMD = M.getNamedMetadata("llvm.dbg.gv")) {
     SmallVector<MDNode *, 8> MDs;
     for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
-      if (DIGlobalVariable(NMD->getOperand(i)).Verify())
+      if (NMD->getOperand(i)) {
+        assert(DIGlobalVariable(NMD->getOperand(i)).isGlobalVariable() &&
+          "A MDNode in llvm.dbg.gv should be a DIGlobalVariable.");
         MDs.push_back(NMD->getOperand(i));
+      }
       else
         Changed = true;
     NMD->eraseFromParent();
@@ -368,8 +371,11 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
   if (NamedMDNode *NMD = M.getNamedMetadata("llvm.dbg.sp")) {
     SmallVector<MDNode *, 8> MDs;
     for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
-      if (DISubprogram(NMD->getOperand(i)).Verify())
+      if (NMD->getOperand(i)) {
+        assert(DISubprogram(NMD->getOperand(i)).isSubprogram() &&
+          "A MDNode in llvm.dbg.sp should be a DISubprogram.");
         MDs.push_back(NMD->getOperand(i));
+      }
       else
         Changed = true;
     NMD->eraseFromParent();

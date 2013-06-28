@@ -50,8 +50,8 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !9 = metadata !{i32 786451, metadata !26, metadata !4, metadata !"S", i32 2, i64 8, i64 8, i64 0, i32 0, null, metadata !11, i32 0, null} ; [ DW_TAG_structure_type ]
 !10 = metadata !{i32 786473, metadata !26} ; [ DW_TAG_file_type ]
 !11 = metadata !{metadata !12}
-!12 = metadata !{i32 786478, metadata !10, metadata !9, metadata !"foo", metadata !"foo", metadata !"_ZN1S3fooEv", i32 3, metadata !13, i1 false, i1 true, i32 0, i32 0, null, i1 false, i32 (%struct.S*)* @_ZN1S3fooEv, null, null, null, i32 3} ; [ DW_TAG_subprogram ]
-!13 = metadata !{i32 786453, metadata !25, metadata !4, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !14, i32 0, null} ; [ DW_TAG_subroutine_type ]
+!12 = metadata !{i32 786478, metadata !26, metadata !9, metadata !"foo", metadata !"foo", metadata !"_ZN1S3fooEv", i32 3, metadata !13, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, i32 (%struct.S*)* @_ZN1S3fooEv, null, null, null, i32 3} ; [ DW_TAG_subprogram ]
+!13 = metadata !{i32 786453, metadata !25, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !14, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !14 = metadata !{metadata !8, metadata !15}
 !15 = metadata !{i32 786447, metadata !25, metadata !4, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 64, metadata !9} ; [ DW_TAG_pointer_type ]
 !16 = metadata !{i32 3, i32 0, metadata !1, null}

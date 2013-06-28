@@ -112,8 +112,11 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf) {
       // in a predictable order.
       if (const DbgDeclareInst *DI = dyn_cast<DbgDeclareInst>(I)) {
         MachineModuleInfo &MMI = MF->getMMI();
+        DIVariable DIVar(DI->getVariable());
+        assert((!DIVar || DIVar.isVariable()) &&
+          "Variable in DbgDeclareInst should be either null or a DIVariable.");
         if (MMI.hasDebugInfo() &&
-            DIVariable(DI->getVariable()).Verify() &&
+            DIVar &&
             !DI->getDebugLoc().isUnknown()) {
           // Don't handle byval struct arguments or VLAs, for example.
           // Non-byval arguments are handled here (they refer to the stack

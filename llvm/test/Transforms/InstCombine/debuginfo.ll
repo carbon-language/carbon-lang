@@ -40,8 +40,8 @@ entry:
 !7 = metadata !{i32 786689, metadata !1, metadata !"__val", metadata !2, i32 33554510, metadata !8, i32 0, null} ; [ DW_TAG_arg_variable ]
 !8 = metadata !{i32 786468, metadata !3, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !9 = metadata !{i32 786689, metadata !1, metadata !"__len", metadata !2, i32 50331726, metadata !10, i32 0, null} ; [ DW_TAG_arg_variable ]
-!10 = metadata !{i32 589846, metadata !2, metadata !3, metadata !"size_t", i32 80, i64 0, i64 0, i64 0, i32 0, metadata !11} ; [ DW_TAG_typedef ]
-!11 = metadata !{i32 589846, metadata !2, metadata !3, metadata !"__darwin_size_t", i32 90, i64 0, i64 0, i64 0, i32 0, metadata !12} ; [ DW_TAG_typedef ]
+!10 = metadata !{i32 589846, metadata !27, metadata !3, metadata !"size_t", i32 80, i64 0, i64 0, i64 0, i32 0, metadata !11} ; [ DW_TAG_typedef ]
+!11 = metadata !{i32 589846, metadata !27, metadata !3, metadata !"__darwin_size_t", i32 90, i64 0, i64 0, i64 0, i32 0, metadata !12} ; [ DW_TAG_typedef ]
 !12 = metadata !{i32 786468, metadata !3, metadata !"long unsigned int", null, i32 0, i64 64, i64 64, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
 !16 = metadata !{i32 78, i32 28, metadata !1, null}
 !18 = metadata !{i32 78, i32 40, metadata !1, null}
