@@ -18,6 +18,8 @@
 #include "lldb/Symbol/TaggedASTType.h"
 #include "llvm/Pass.h"
 
+#include <map>
+
 namespace llvm {
     class BasicBlock;
     class CallInst;
@@ -235,8 +237,7 @@ private:
     ///     be determined); false otherwise.
     //------------------------------------------------------------------
     bool 
-    ResolveFunctionPointers (llvm::Module &llvm_module,
-                             llvm::Function &llvm_function);
+    ResolveFunctionPointers (llvm::Module &llvm_module);
     
     //------------------------------------------------------------------
     /// A function-level pass to take the generated global value
@@ -307,7 +308,7 @@ private:
     CreateResultVariable (llvm::Function &llvm_function);
     
     //------------------------------------------------------------------
-    /// A function-level pass to find Objective-C constant strings and
+    /// A module-level pass to find Objective-C constant strings and
     /// transform them to calls to CFStringCreateWithBytes.
     //------------------------------------------------------------------
 
@@ -321,32 +322,21 @@ private:
     ///     The constant C string inside the NSString.  This will be
     ///     passed as the bytes argument to CFStringCreateWithBytes.
     ///
-    /// @param[in] FirstEntryInstruction
-    ///     An instruction early in the execution of the function.
-    ///     When this function synthesizes a call to 
-    ///     CFStringCreateWithBytes, it places the call before this
-    ///     instruction.  The instruction should come before all 
-    ///     uses of the NSString.
-    ///
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
     bool 
     RewriteObjCConstString (llvm::GlobalVariable *NSStr,
-                            llvm::GlobalVariable *CStr,
-                            llvm::Instruction *FirstEntryInstruction);    
+                            llvm::GlobalVariable *CStr);    
     
     //------------------------------------------------------------------
     /// The top-level pass implementation
-    ///
-    /// @param[in] llvm_function
-    ///     The function currently being processed.
     ///
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
     bool 
-    RewriteObjCConstStrings (llvm::Function &llvm_function);
+    RewriteObjCConstStrings ();
 
     //------------------------------------------------------------------
     /// A basic block-level pass to find all Objective-C method calls and
@@ -686,10 +676,26 @@ private:
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    static bool 
+    
+    class FunctionValueCache {
+    public:
+        typedef std::function <llvm::Value *(llvm::Function *)> Maker;
+
+        FunctionValueCache (Maker const &maker);
+        ~FunctionValueCache ();
+        llvm::Value *GetValue (llvm::Function *function);
+    private:
+        Maker const m_maker;
+        typedef std::map<llvm::Function *, llvm::Value *> FunctionValueMap;
+        FunctionValueMap m_values;
+    };
+    
+    FunctionValueCache m_entry_instruction_finder;
+    
+    static bool
     UnfoldConstant (llvm::Constant *old_constant, 
-                    llvm::Value *new_constant, 
-                    llvm::Instruction *first_entry_inst);
+                    FunctionValueCache &value_maker,
+                    FunctionValueCache &entry_instruction_finder);
     
     //------------------------------------------------------------------
     /// Construct a reference to m_reloc_placeholder with a given type

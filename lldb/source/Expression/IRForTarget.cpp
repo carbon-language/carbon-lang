@@ -47,6 +47,27 @@ IRForTarget::StaticDataAllocator::StaticDataAllocator(lldb_private::IRExecutionU
 {
 }
 
+IRForTarget::FunctionValueCache::FunctionValueCache(Maker const &maker) :
+    m_maker(maker),
+    m_values()
+{
+}
+
+IRForTarget::FunctionValueCache::~FunctionValueCache()
+{
+}
+
+llvm::Value *IRForTarget::FunctionValueCache::GetValue(llvm::Function *function)
+{    
+    if (!m_values.count(function))
+    {
+        llvm::Value *ret = m_maker(function);
+        m_values[function] = ret;
+        return ret;
+    }
+    return m_values[function];
+}
+
 lldb::addr_t IRForTarget::StaticDataAllocator::Allocate()
 {
     lldb_private::Error err;
@@ -60,6 +81,14 @@ lldb::addr_t IRForTarget::StaticDataAllocator::Allocate()
     m_allocation = m_execution_unit.WriteNow((const uint8_t*)m_stream_string.GetData(), m_stream_string.GetSize(), err);
 
     return m_allocation;
+}
+
+static llvm::Value *FindEntryInstruction (llvm::Function *function)
+{
+    if (function->empty())
+        return NULL;
+    
+    return function->getEntryBlock().getFirstNonPHIOrDbg();
 }
 
 IRForTarget::IRForTarget (lldb_private::ClangExpressionDeclMap *decl_map,
@@ -78,7 +107,8 @@ IRForTarget::IRForTarget (lldb_private::ClangExpressionDeclMap *decl_map,
     m_error_stream(error_stream),
     m_result_store(NULL),
     m_result_is_pointer(false),
-    m_reloc_placeholder(NULL)
+    m_reloc_placeholder(NULL),
+    m_entry_instruction_finder (FindEntryInstruction)
 {
 }
 
@@ -288,8 +318,7 @@ IRForTarget::RegisterFunctionMetadata(LLVMContext &context,
 }
 
 bool 
-IRForTarget::ResolveFunctionPointers(llvm::Module &llvm_module,
-                                     llvm::Function &llvm_function)
+IRForTarget::ResolveFunctionPointers(llvm::Module &llvm_module)
 {
     lldb_private::Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
@@ -673,10 +702,9 @@ static void DebugUsers(Log *log, Value *value, uint8_t depth)
 }
 #endif
 
-bool 
+bool
 IRForTarget::RewriteObjCConstString (llvm::GlobalVariable *ns_str,
-                                     llvm::GlobalVariable *cstr,
-                                     Instruction *FirstEntryInstruction)
+                                     llvm::GlobalVariable *cstr)
 {
     lldb_private::Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
@@ -767,12 +795,14 @@ IRForTarget::RewriteObjCConstString (llvm::GlobalVariable *ns_str,
     
     ArrayRef <Value *> CFSCWB_arguments(argument_array, 5);
     
-    CallInst *CFSCWB_call = CallInst::Create(m_CFStringCreateWithBytes, 
-                                             CFSCWB_arguments,
-                                             "CFStringCreateWithBytes",
-                                             FirstEntryInstruction);
+    FunctionValueCache CFSCWB_Caller ([this, &CFSCWB_arguments] (llvm::Function *function)->llvm::Value * {
+        return CallInst::Create(m_CFStringCreateWithBytes,
+                                CFSCWB_arguments,
+                                "CFStringCreateWithBytes",
+                                llvm::cast<Instruction>(m_entry_instruction_finder.GetValue(function)));
+    });
             
-    if (!UnfoldConstant(ns_str, CFSCWB_call, FirstEntryInstruction))
+    if (!UnfoldConstant(ns_str, CFSCWB_Caller, m_entry_instruction_finder))
     {
         if (log)
             log->PutCString("Couldn't replace the NSString with the result of the call");
@@ -789,25 +819,11 @@ IRForTarget::RewriteObjCConstString (llvm::GlobalVariable *ns_str,
 }
 
 bool
-IRForTarget::RewriteObjCConstStrings(Function &llvm_function)
+IRForTarget::RewriteObjCConstStrings()
 {
     lldb_private::Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     ValueSymbolTable& value_symbol_table = m_module->getValueSymbolTable();
-    
-    BasicBlock &entry_block(llvm_function.getEntryBlock());
-    Instruction *FirstEntryInstruction(entry_block.getFirstNonPHIOrDbg());
-    
-    if (!FirstEntryInstruction)
-    {
-        if (log)
-            log->PutCString("Couldn't find first instruction for rewritten Objective-C strings");
-        
-        if (m_error_stream)
-            m_error_stream->Printf("Internal error [IRForTarget]: Couldn't find the location for calls to CFStringCreateWithBytes\n");
-        
-        return false;
-    }
     
     for (ValueSymbolTable::iterator vi = value_symbol_table.begin(), ve = value_symbol_table.end();
          vi != ve;
@@ -977,7 +993,7 @@ IRForTarget::RewriteObjCConstStrings(Function &llvm_function)
             if (!cstr_array)
                 cstr_global = NULL;
             
-            if (!RewriteObjCConstString(nsstring_global, cstr_global, FirstEntryInstruction))
+            if (!RewriteObjCConstString(nsstring_global, cstr_global))
             {                
                 if (log)
                     log->PutCString("Error rewriting the constant string");
@@ -2151,7 +2167,9 @@ IRForTarget::RemoveGuards(BasicBlock &basic_block)
 
 // This function does not report errors; its callers are responsible.
 bool
-IRForTarget::UnfoldConstant(Constant *old_constant, Value *new_constant, Instruction *first_entry_inst)
+IRForTarget::UnfoldConstant(Constant *old_constant,
+                            FunctionValueCache &value_maker,
+                            FunctionValueCache &entry_instruction_finder)
 {
     lldb_private::Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
@@ -2185,18 +2203,21 @@ IRForTarget::UnfoldConstant(Constant *old_constant, Value *new_constant, Instruc
                         log->Printf("Unhandled constant expression type: \"%s\"", PrintValue(constant_expr).c_str());
                     return false;
                 case Instruction::BitCast:
-                    {
-                        // UnaryExpr
-                        //   OperandList[0] is value
+                    {                                                
+                        FunctionValueCache bit_cast_maker ([&value_maker, &entry_instruction_finder, old_constant, constant_expr] (llvm::Function *function)->llvm::Value* {
+                            // UnaryExpr
+                            //   OperandList[0] is value
+
+                            if (constant_expr->getOperand(0) != old_constant)
+                                return constant_expr;
+                            
+                            return new BitCastInst(value_maker.GetValue(function),
+                                                   constant_expr->getType(),
+                                                   "",
+                                                   llvm::cast<Instruction>(entry_instruction_finder.GetValue(function)));
+                        });
                         
-                        Value *s = constant_expr->getOperand(0);
-                        
-                        if (s == old_constant)
-                            s = new_constant;
-                        
-                        BitCastInst *bit_cast(new BitCastInst(s, constant_expr->getType(), "", first_entry_inst));
-                        
-                        UnfoldConstant(constant_expr, bit_cast, first_entry_inst);
+                        return UnfoldConstant(constant_expr, bit_cast_maker, entry_instruction_finder);
                     }
                     break;
                 case Instruction::GetElementPtr:
@@ -2205,33 +2226,35 @@ IRForTarget::UnfoldConstant(Constant *old_constant, Value *new_constant, Instruc
                         //   OperandList[0] is base
                         //   OperandList[1]... are indices
                         
-                        Value *ptr = constant_expr->getOperand(0);
-                        
-                        if (ptr == old_constant)
-                            ptr = new_constant;
-                                                
-                        std::vector<Value*> index_vector;
-                        
-                        unsigned operand_index;
-                        unsigned num_operands = constant_expr->getNumOperands();
-                        
-                        for (operand_index = 1;
-                             operand_index < num_operands;
-                             ++operand_index)
-                        {
-                            Value *operand = constant_expr->getOperand(operand_index);
+                        FunctionValueCache get_element_pointer_maker ([&value_maker, &entry_instruction_finder, old_constant, constant_expr] (llvm::Function *function)->llvm::Value* {
+                            Value *ptr = constant_expr->getOperand(0);
                             
-                            if (operand == old_constant)
-                                operand = new_constant;
+                            if (ptr == old_constant)
+                                ptr = value_maker.GetValue(function);
                             
-                            index_vector.push_back(operand);
-                        }
+                            std::vector<Value*> index_vector;
+                            
+                            unsigned operand_index;
+                            unsigned num_operands = constant_expr->getNumOperands();
+                            
+                            for (operand_index = 1;
+                                 operand_index < num_operands;
+                                 ++operand_index)
+                            {
+                                Value *operand = constant_expr->getOperand(operand_index);
+                                
+                                if (operand == old_constant)
+                                    operand = value_maker.GetValue(function);
+                                
+                                index_vector.push_back(operand);
+                            }
+                            
+                            ArrayRef <Value*> indices(index_vector);
+                            
+                            return GetElementPtrInst::Create(ptr, indices, "", llvm::cast<Instruction>(entry_instruction_finder.GetValue(function)));
+                        });
                         
-                        ArrayRef <Value*> indices(index_vector);
-                        
-                        GetElementPtrInst *get_element_ptr(GetElementPtrInst::Create(ptr, indices, "", first_entry_inst));
-                        
-                        UnfoldConstant(constant_expr, get_element_ptr, first_entry_inst);
+                        return UnfoldConstant(constant_expr, get_element_pointer_maker, entry_instruction_finder);
                     }
                     break;
                 }
@@ -2245,8 +2268,16 @@ IRForTarget::UnfoldConstant(Constant *old_constant, Value *new_constant, Instruc
         }
         else
         {
-            // simple fall-through case for non-constants
-            user->replaceUsesOfWith(old_constant, new_constant);
+            if (Instruction *inst = llvm::dyn_cast<Instruction>(user))
+            {
+                inst->replaceUsesOfWith(old_constant, value_maker.GetValue(inst->getParent()->getParent()));
+            }
+            else
+            {
+                if (log)
+                    log->Printf("Unhandled non-constant type: \"%s\"", PrintValue(user).c_str());
+                return false;
+            }
         }
     }
     
@@ -2387,39 +2418,58 @@ IRForTarget::ReplaceVariables (Function &llvm_function)
                         name.GetCString(),
                         decl->getNameAsString().c_str(),
                         offset);
-        
-        ConstantInt *offset_int(ConstantInt::get(offset_type, offset, true));
-        GetElementPtrInst *get_element_ptr = GetElementPtrInst::Create(argument, offset_int, "", FirstEntryInstruction);
-                
+    
         if (value)
         {
-            Value *replacement = NULL;
-            
             if (log)
                 log->Printf("    Replacing [%s]", PrintValue(value).c_str());
             
-            // Per the comment at ASTResultSynthesizer::SynthesizeBodyResult, in cases where the result
-            // variable is an rvalue, we have to synthesize a dereference of the appropriate structure
-            // entry in order to produce the static variable that the AST thinks it is accessing.
-            if (name == m_result_name && !m_result_is_pointer)
-            {
-                BitCastInst *bit_cast = new BitCastInst(get_element_ptr, value->getType()->getPointerTo(), "", FirstEntryInstruction);
+            FunctionValueCache body_result_maker ([this, name, offset_type, offset, argument, value] (llvm::Function *function)->llvm::Value * {
+                // Per the comment at ASTResultSynthesizer::SynthesizeBodyResult, in cases where the result
+                // variable is an rvalue, we have to synthesize a dereference of the appropriate structure
+                // entry in order to produce the static variable that the AST thinks it is accessing.
                 
-                LoadInst *load = new LoadInst(bit_cast, "", FirstEntryInstruction);
+                llvm::Instruction *entry_instruction = llvm::cast<Instruction>(m_entry_instruction_finder.GetValue(function));
                 
-                replacement = load;
-            }
-            else
-            {
-                BitCastInst *bit_cast = new BitCastInst(get_element_ptr, value->getType(), "", FirstEntryInstruction);
-                
-                replacement = bit_cast;
-            }
+                ConstantInt *offset_int(ConstantInt::get(offset_type, offset, true));
+                GetElementPtrInst *get_element_ptr = GetElementPtrInst::Create(argument,
+                                                                               offset_int,
+                                                                               "",
+                                                                               entry_instruction);
+
+                if (name == m_result_name && !m_result_is_pointer)
+                {
+                    BitCastInst *bit_cast = new BitCastInst(get_element_ptr,
+                                                            value->getType()->getPointerTo(),
+                                                            "",
+                                                            entry_instruction);
+                    
+                    LoadInst *load = new LoadInst(bit_cast, "", entry_instruction);
+                    
+                    return load;
+                }
+                else
+                {
+                    BitCastInst *bit_cast = new BitCastInst(get_element_ptr, value->getType(), "", entry_instruction);
+                    
+                    return bit_cast;
+                }
+            });            
             
             if (Constant *constant = dyn_cast<Constant>(value))
-                UnfoldConstant(constant, replacement, FirstEntryInstruction);
+            {
+                UnfoldConstant(constant, body_result_maker, m_entry_instruction_finder);
+            }
+            else if (Instruction *instruction = dyn_cast<Instruction>(value))
+            {
+                value->replaceAllUsesWith(body_result_maker.GetValue(instruction->getParent()->getParent()));
+            }
             else
-                value->replaceAllUsesWith(replacement);
+            {
+                if (log)
+                    log->Printf("Unhandled non-constant type: \"%s\"", PrintValue(value).c_str());
+                return false;
+            }
             
             if (GlobalVariable *var = dyn_cast<GlobalVariable>(value))
                 var->eraseFromParent();
@@ -2543,28 +2593,7 @@ IRForTarget::runOnModule (Module &llvm_module)
     
     m_module = &llvm_module;
     m_target_data.reset(new DataLayout(m_module));
-    
-    Function* function = m_module->getFunction(StringRef(m_func_name.c_str()));
-    
-    if (!function)
-    {
-        if (log)
-            log->Printf("Couldn't find \"%s()\" in the module", m_func_name.c_str());
-        
-        if (m_error_stream)
-            m_error_stream->Printf("Internal error [IRForTarget]: Couldn't find wrapper '%s' in the module", m_func_name.c_str());
-
-        return false;
-    }
-    
-    if (!FixFunctionLinkage (*function))
-    {
-        if (log)
-            log->Printf("Couldn't fix the linkage for the function");
-        
-        return false;
-    }
-    
+   
     if (log)
     {
         std::string s;
@@ -2577,9 +2606,30 @@ IRForTarget::runOnModule (Module &llvm_module)
         log->Printf("Module as passed in to IRForTarget: \n\"%s\"", s.c_str());
     }
     
+    Function* main_function = m_module->getFunction(StringRef(m_func_name.c_str()));
+    
+    if (!main_function)
+    {
+        if (log)
+            log->Printf("Couldn't find \"%s()\" in the module", m_func_name.c_str());
+        
+        if (m_error_stream)
+            m_error_stream->Printf("Internal error [IRForTarget]: Couldn't find wrapper '%s' in the module", m_func_name.c_str());
+
+        return false;
+    }
+    
+    if (!FixFunctionLinkage (*main_function))
+    {
+        if (log)
+            log->Printf("Couldn't fix the linkage for the function");
+        
+        return false;
+    }
+    
     llvm::Type *intptr_ty = Type::getInt8Ty(m_module->getContext());
     
-    m_reloc_placeholder = new llvm::GlobalVariable((*m_module), 
+    m_reloc_placeholder = new llvm::GlobalVariable((*m_module),
                                                    intptr_ty,
                                                    false /* IsConstant */,
                                                    GlobalVariable::InternalLinkage,
@@ -2588,14 +2638,12 @@ IRForTarget::runOnModule (Module &llvm_module)
                                                    NULL /* InsertBefore */,
                                                    GlobalVariable::NotThreadLocal /* ThreadLocal */,
                                                    0 /* AddressSpace */);
-        
-    Function::iterator bbi;
-    
+
     ////////////////////////////////////////////////////////////
     // Replace $__lldb_expr_result with a persistent variable
     //
     
-    if (!CreateResultVariable(*function))
+    if (!CreateResultVariable(*main_function))
     {
         if (log)
             log->Printf("CreateResultVariable() failed");
@@ -2604,42 +2652,7 @@ IRForTarget::runOnModule (Module &llvm_module)
         
         return false;
     }
-    
-    for (bbi = function->begin();
-         bbi != function->end();
-         ++bbi)
-    {
-        if (!RemoveGuards(*bbi))
-        {
-            if (log)
-                log->Printf("RemoveGuards() failed");
-            
-            // RemoveGuards() reports its own errors, so we don't do so here
-            
-            return false;
-        }
-        
-        if (!RewritePersistentAllocs(*bbi))
-        {
-            if (log)
-                log->Printf("RewritePersistentAllocs() failed");
-            
-            // RewritePersistentAllocs() reports its own errors, so we don't do so here
-            
-            return false;
-        }
-        
-        if (!RemoveCXAAtExit(*bbi))
-        {
-            if (log)
-                log->Printf("RemoveCXAAtExit() failed");
-            
-            // RemoveCXAAtExit() reports its own errors, so we don't do so here
 
-            return false;
-        }
-    }
-    
     if (log && log->GetVerbose())
     {
         std::string s;
@@ -2652,11 +2665,58 @@ IRForTarget::runOnModule (Module &llvm_module)
         log->Printf("Module after creating the result variable: \n\"%s\"", s.c_str());
     }
     
+    for (Module::iterator fi = m_module->begin(), fe = m_module->end();
+         fi != fe;
+         ++fi)
+    {
+        llvm::Function *function = fi;
+        
+        if (function->begin() == function->end())
+            continue;
+        
+        Function::iterator bbi;
+        
+        for (bbi = function->begin();
+             bbi != function->end();
+             ++bbi)
+        {
+            if (!RemoveGuards(*bbi))
+            {
+                if (log)
+                    log->Printf("RemoveGuards() failed");
+                
+                // RemoveGuards() reports its own errors, so we don't do so here
+                
+                return false;
+            }
+            
+            if (!RewritePersistentAllocs(*bbi))
+            {
+                if (log)
+                    log->Printf("RewritePersistentAllocs() failed");
+                
+                // RewritePersistentAllocs() reports its own errors, so we don't do so here
+                
+                return false;
+            }
+            
+            if (!RemoveCXAAtExit(*bbi))
+            {
+                if (log)
+                    log->Printf("RemoveCXAAtExit() failed");
+                
+                // RemoveCXAAtExit() reports its own errors, so we don't do so here
+                
+                return false;
+            }
+        }
+    }
+    
     ///////////////////////////////////////////////////////////////////////////////
     // Fix all Objective-C constant strings to use NSStringWithCString:encoding:
     //
-        
-    if (!RewriteObjCConstStrings(*function))
+    
+    if (!RewriteObjCConstStrings())
     {
         if (log)
             log->Printf("RewriteObjCConstStrings() failed");
@@ -2670,7 +2730,7 @@ IRForTarget::runOnModule (Module &llvm_module)
     // Resolve function pointers
     //
     
-    if (!ResolveFunctionPointers(llvm_module, *function))
+    if (!ResolveFunctionPointers(llvm_module))
     {
         if (log)
             log->Printf("ResolveFunctionPointers() failed");
@@ -2680,49 +2740,63 @@ IRForTarget::runOnModule (Module &llvm_module)
         return false;
     }
     
-    for (bbi = function->begin();
-         bbi != function->end();
-         ++bbi)
+    for (Module::iterator fi = m_module->begin(), fe = m_module->end();
+         fi != fe;
+         ++fi)
     {
-        if (!RewriteObjCSelectors(*bbi))
+        llvm::Function *function = fi;
+
+        for (llvm::Function::iterator bbi = function->begin(), bbe = function->end();
+             bbi != bbe;
+             ++bbi)
         {
-            if (log)
-                log->Printf("RewriteObjCSelectors() failed");
-            
-            // RewriteObjCSelectors() reports its own errors, so we don't do so here
-            
-            return false;
+            if (!RewriteObjCSelectors(*bbi))
+            {
+                if (log)
+                    log->Printf("RewriteObjCSelectors() failed");
+                
+                // RewriteObjCSelectors() reports its own errors, so we don't do so here
+                
+                return false;
+            }
         }
     }
 
-    for (bbi = function->begin();
-         bbi != function->end();
-         ++bbi)
+    for (Module::iterator fi = m_module->begin(), fe = m_module->end();
+         fi != fe;
+         ++fi)
     {
-        if (!ResolveCalls(*bbi))
-        {
-            if (log)
-                log->Printf("ResolveCalls() failed");
-            
-            // ResolveCalls() reports its own errors, so we don't do so here
-            
-            return false;
-        }
+        llvm::Function *function = fi;
         
-        if (!ReplaceStaticLiterals(*bbi))
+        for (llvm::Function::iterator bbi = function->begin(), bbe = function->end();
+             bbi != bbe;
+             ++bbi)
         {
-            if (log)
-                log->Printf("ReplaceStaticLiterals() failed");
+            if (!ResolveCalls(*bbi))
+            {
+                if (log)
+                    log->Printf("ResolveCalls() failed");
+                
+                // ResolveCalls() reports its own errors, so we don't do so here
+                
+                return false;
+            }
             
-            return false;
+            if (!ReplaceStaticLiterals(*bbi))
+            {
+                if (log)
+                    log->Printf("ReplaceStaticLiterals() failed");
+                
+                return false;
+            }
         }
     }
-    
-    ///////////////////////////////
-    // Run function-level passes
+        
+    ////////////////////////////////////////////////////////////////////////
+    // Run function-level passes that only make sense on the main function
     //
     
-    if (!ResolveExternals(*function))
+    if (!ResolveExternals(*main_function))
     {
         if (log)
             log->Printf("ResolveExternals() failed");
@@ -2732,7 +2806,7 @@ IRForTarget::runOnModule (Module &llvm_module)
         return false;
     }
     
-    if (!ReplaceVariables(*function))
+    if (!ReplaceVariables(*main_function))
     {
         if (log)
             log->Printf("ReplaceVariables() failed");
@@ -2741,7 +2815,7 @@ IRForTarget::runOnModule (Module &llvm_module)
         
         return false;
     }
-    
+        
     if (!ReplaceStrings())
     {
         if (log)
@@ -2757,7 +2831,7 @@ IRForTarget::runOnModule (Module &llvm_module)
         
         return false;
     }
-    
+        
     if (!StripAllGVs(llvm_module))
     {
         if (log)
