@@ -30,42 +30,19 @@
 
 namespace llvm {
 
-class MCJITTestBase : public MCJITTestAPICommon {
+/// Helper class that can build very simple Modules
+class TrivialModuleBuilder {
 protected:
+  LLVMContext Context;
+  IRBuilder<> Builder;
+  std::string BuilderTriple;
 
-  MCJITTestBase()
-    : OptLevel(CodeGenOpt::None)
-    , RelocModel(Reloc::Default)
-    , CodeModel(CodeModel::Default)
-    , MArch("")
-    , Builder(Context)
-    , MM(new SectionMemoryManager)
-  {
-    // The architectures below are known to be compatible with MCJIT as they
-    // are copied from test/ExecutionEngine/MCJIT/lit.local.cfg and should be
-    // kept in sync.
-    SupportedArchs.push_back(Triple::aarch64);
-    SupportedArchs.push_back(Triple::arm);
-    SupportedArchs.push_back(Triple::x86);
-    SupportedArchs.push_back(Triple::x86_64);
+  TrivialModuleBuilder(const std::string &Triple)
+    : Builder(Context), BuilderTriple(Triple) {}
 
-    // Some architectures have sub-architectures in which tests will fail, like
-    // ARM. These two vectors will define if they do have sub-archs (to avoid
-    // extra work for those who don't), and if so, if they are listed to work
-    HasSubArchs.push_back(Triple::arm);
-    SupportedSubArchs.push_back("armv6");
-    SupportedSubArchs.push_back("armv7");
-
-    // The operating systems below are known to be incompatible with MCJIT as
-    // they are copied from the test/ExecutionEngine/MCJIT/lit.local.cfg and
-    // should be kept in sync.
-    UnsupportedOSs.push_back(Triple::Cygwin);
-    UnsupportedOSs.push_back(Triple::Darwin);
-  }
-
-  Module *createEmptyModule(StringRef Name) {
+  Module *createEmptyModule(StringRef Name = StringRef()) {
     Module * M = new Module(Name, Context);
-    M->setTargetTriple(Triple::normalize(HostTriple));
+    M->setTargetTriple(Triple::normalize(BuilderTriple));
     return M;
   }
 
@@ -161,6 +138,40 @@ protected:
                                                 name);
     return Global;
   }
+};
+
+class MCJITTestBase : public MCJITTestAPICommon, public TrivialModuleBuilder {
+protected:
+  
+  MCJITTestBase()
+    : TrivialModuleBuilder(HostTriple)
+    , OptLevel(CodeGenOpt::None)
+    , RelocModel(Reloc::Default)
+    , CodeModel(CodeModel::Default)
+    , MArch("")
+    , MM(new SectionMemoryManager)
+  {
+    // The architectures below are known to be compatible with MCJIT as they
+    // are copied from test/ExecutionEngine/MCJIT/lit.local.cfg and should be
+    // kept in sync.
+    SupportedArchs.push_back(Triple::aarch64);
+    SupportedArchs.push_back(Triple::arm);
+    SupportedArchs.push_back(Triple::x86);
+    SupportedArchs.push_back(Triple::x86_64);
+
+    // Some architectures have sub-architectures in which tests will fail, like
+    // ARM. These two vectors will define if they do have sub-archs (to avoid
+    // extra work for those who don't), and if so, if they are listed to work
+    HasSubArchs.push_back(Triple::arm);
+    SupportedSubArchs.push_back("armv6");
+    SupportedSubArchs.push_back("armv7");
+
+    // The operating systems below are known to be incompatible with MCJIT as
+    // they are copied from the test/ExecutionEngine/MCJIT/lit.local.cfg and
+    // should be kept in sync.
+    UnsupportedOSs.push_back(Triple::Cygwin);
+    UnsupportedOSs.push_back(Triple::Darwin);
+  }
 
   void createJIT(Module *M) {
 
@@ -186,14 +197,12 @@ protected:
     assert(TheJIT.get() != NULL && "error creating MCJIT with EngineBuilder");
   }
 
-  LLVMContext Context;
   CodeGenOpt::Level OptLevel;
   Reloc::Model RelocModel;
   CodeModel::Model CodeModel;
   StringRef MArch;
   SmallVector<std::string, 1> MAttrs;
   OwningPtr<ExecutionEngine> TheJIT;
-  IRBuilder<> Builder;
   RTDyldMemoryManager *MM;
 
   OwningPtr<Module> M;

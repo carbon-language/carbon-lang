@@ -1,4 +1,4 @@
-##===- unittests/Transforms/Makefile -----------------------*- Makefile -*-===##
+##===- unittests/Transforms/Utils/Makefile -----------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,11 +7,9 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
+LEVEL = ../../..
+TESTNAME = DebugIR
+LINK_COMPONENTS := Instrumentation
 
-PARALLEL_DIRS = DebugIR Utils
-
-include $(LEVEL)/Makefile.common
-
-clean::
-	$(Verb) $(RM) -f *Tests
+include $(LEVEL)/Makefile.config
+include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest
