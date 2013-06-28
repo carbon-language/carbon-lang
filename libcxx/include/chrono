@@ -468,7 +468,7 @@ template <class _LhsDuration, class _RhsDuration>
 struct __duration_eq
 {
     _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
-    bool operator()(const _LhsDuration& __lhs, const _RhsDuration& __rhs)
+    bool operator()(const _LhsDuration& __lhs, const _RhsDuration& __rhs) const
         {
             typedef typename common_type<_LhsDuration, _RhsDuration>::type _Ct;
             return _Ct(__lhs).count() == _Ct(__rhs).count();
@@ -479,7 +479,7 @@ template <class _LhsDuration>
 struct __duration_eq<_LhsDuration, _LhsDuration>
 {
     _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
-    bool operator()(const _LhsDuration& __lhs, const _LhsDuration& __rhs)
+    bool operator()(const _LhsDuration& __lhs, const _LhsDuration& __rhs) const
         {return __lhs.count() == __rhs.count();}
 };
 
@@ -509,7 +509,7 @@ template <class _LhsDuration, class _RhsDuration>
 struct __duration_lt
 {
     _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
-    bool operator()(const _LhsDuration& __lhs, const _RhsDuration& __rhs)
+    bool operator()(const _LhsDuration& __lhs, const _RhsDuration& __rhs) const
         {
             typedef typename common_type<_LhsDuration, _RhsDuration>::type _Ct;
             return _Ct(__lhs).count() < _Ct(__rhs).count();
@@ -520,7 +520,7 @@ template <class _LhsDuration>
 struct __duration_lt<_LhsDuration, _LhsDuration>
 {
     _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
-    bool operator()(const _LhsDuration& __lhs, const _LhsDuration& __rhs)
+    bool operator()(const _LhsDuration& __lhs, const _LhsDuration& __rhs) const
         {return __lhs.count() < __rhs.count();}
 };
 
