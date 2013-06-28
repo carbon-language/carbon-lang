@@ -293,3 +293,7 @@ LValue CGCXXABI::EmitThreadLocalDeclRefExpr(CodeGenFunction &CGF,
   ErrorUnsupportedABI(CGF, "odr-use of thread_local global");
   return LValue();
 }
+
+bool CGCXXABI::NeedsVTTParameter(GlobalDecl GD) {
+  return false;
+}

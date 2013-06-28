@@ -331,6 +331,9 @@ public:
                                QualType ElementType, llvm::Value *&NumElements,
                                llvm::Value *&AllocPtr, CharUnits &CookieSize);
 
+  /// Return whether the given global decl needs a VTT parameter.
+  virtual bool NeedsVTTParameter(GlobalDecl GD);
+
 protected:
   /// Returns the extra size required in order to store the array
   /// cookie for the given type.  Assumes that an array cookie is

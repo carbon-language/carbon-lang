@@ -286,7 +286,7 @@ CodeGenFunction::GetAddressOfDerivedClass(llvm::Value *Value,
 llvm::Value *CodeGenFunction::GetVTTParameter(GlobalDecl GD,
                                               bool ForVirtualBase,
                                               bool Delegating) {
-  if (!CodeGenVTables::needsVTTParameter(GD)) {
+  if (!CGM.getCXXABI().NeedsVTTParameter(GD)) {
     // This constructor/destructor does not need a VTT parameter.
     return 0;
   }
@@ -304,7 +304,7 @@ llvm::Value *CodeGenFunction::GetVTTParameter(GlobalDecl GD,
   } else if (RD == Base) {
     // If the record matches the base, this is the complete ctor/dtor
     // variant calling the base variant in a class with virtual bases.
-    assert(!CodeGenVTables::needsVTTParameter(CurGD) &&
+    assert(!CGM.getCXXABI().NeedsVTTParameter(CurGD) &&
            "doing no-op VTT offset in base dtor/ctor?");
     assert(!ForVirtualBase && "Can't have same class as virtual base!");
     SubVTTIndex = 0;
@@ -319,7 +319,7 @@ llvm::Value *CodeGenFunction::GetVTTParameter(GlobalDecl GD,
     assert(SubVTTIndex != 0 && "Sub-VTT index must be greater than zero!");
   }
   
-  if (CodeGenVTables::needsVTTParameter(CurGD)) {
+  if (CGM.getCXXABI().NeedsVTTParameter(CurGD)) {
     // A VTT parameter was passed to the constructor, use it.
     VTT = LoadCXXVTT();
     VTT = Builder.CreateConstInBoundsGEP1_64(VTT, SubVTTIndex);
@@ -1742,7 +1742,7 @@ CodeGenFunction::EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
     QualType VoidPP = getContext().getPointerType(getContext().VoidPtrTy);
     DelegateArgs.add(RValue::get(VTT), VoidPP);
 
-    if (CodeGenVTables::needsVTTParameter(CurGD)) {
+    if (CGM.getCXXABI().NeedsVTTParameter(CurGD)) {
       assert(I != E && "cannot skip vtt parameter, already done with args");
       assert((*I)->getType() == VoidPP && "skipping parameter not of vtt type");
       ++I;
@@ -1874,9 +1874,10 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
   // Compute the address point.
   llvm::Value *VTableAddressPoint;
 
+  bool NeedsVTTParam = CGM.getCXXABI().NeedsVTTParameter(CurGD);
+
   // Check if we need to use a vtable from the VTT.
-  if (CodeGenVTables::needsVTTParameter(CurGD) &&
-      (RD->getNumVBases() || NearestVBase)) {
+  if (NeedsVTTParam && (RD->getNumVBases() || NearestVBase)) {
     // Get the secondary vpointer index.
     uint64_t VirtualPointerIndex = 
      CGM.getVTables().getSecondaryVirtualPointerIndex(VTableClass, Base);
@@ -1899,7 +1900,7 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
   llvm::Value *VirtualOffset = 0;
   CharUnits NonVirtualOffset = CharUnits::Zero();
   
-  if (CodeGenVTables::needsVTTParameter(CurGD) && NearestVBase) {
+  if (NeedsVTTParam && NearestVBase) {
     // We need to use the virtual base offset offset because the virtual base
     // might have a different offset in the most derived class.
     VirtualOffset = CGM.getCXXABI().GetVirtualBaseClassOffset(*this,

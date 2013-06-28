@@ -77,11 +77,6 @@ public:
 
   VTableContext &getVTableContext() { return VTContext; }
 
-  /// needsVTTParameter - Return whether the given global decl needs a VTT
-  /// parameter, which it does if it's a base constructor or destructor with
-  /// virtual bases.
-  static bool needsVTTParameter(GlobalDecl GD);
-
   /// getSubVTTIndex - Return the index of the sub-VTT for the base class of the
   /// given record decl.
   uint64_t getSubVTTIndex(const CXXRecordDecl *RD, BaseSubobject Base);

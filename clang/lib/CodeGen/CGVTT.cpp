@@ -120,24 +120,6 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTT(const CXXRecordDecl *RD) {
   return GV;
 }
 
-bool CodeGenVTables::needsVTTParameter(GlobalDecl GD) {
-  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
-  
-  // We don't have any virtual bases, just return early.
-  if (!MD->getParent()->getNumVBases())
-    return false;
-  
-  // Check if we have a base constructor.
-  if (isa<CXXConstructorDecl>(MD) && GD.getCtorType() == Ctor_Base)
-    return true;
-
-  // Check if we have a base destructor.
-  if (isa<CXXDestructorDecl>(MD) && GD.getDtorType() == Dtor_Base)
-    return true;
-  
-  return false;
-}
-
 uint64_t CodeGenVTables::getSubVTTIndex(const CXXRecordDecl *RD, 
                                         BaseSubobject Base) {
   BaseSubobjectPairTy ClassSubobjectPair(RD, Base);
