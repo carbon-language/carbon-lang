@@ -659,7 +659,7 @@ a64 __tsan_atomic64_compare_exchange_val(volatile a64 *a, a64 c, a64 v,
 }
 
 #if __TSAN_HAS_INT128
-a128 __tsan_atomic64_compare_exchange_val(volatile a128 *a, a128 c, a128 v,
+a128 __tsan_atomic128_compare_exchange_val(volatile a128 *a, a128 c, a128 v,
     morder mo, morder fmo) {
   SCOPED_ATOMIC(CAS, a, c, v, mo, fmo);
 }
