@@ -539,24 +539,27 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
   }
 
   if (UseTemporary) {
-    SmallString<256> AbsPath(OutputPath);
-    llvm::sys::fs::make_absolute(AbsPath);
-
-    // If the parent directory doesn't exist and we can't create it, fail.
-    bool ParentExists =
-        llvm::sys::fs::exists(llvm::sys::path::parent_path(AbsPath.str()));
-    if (!CreateMissingDirectories && !ParentExists) {
-      Error = "Parent directory doesn't exist";
-      return 0;
-    }
-
     // Create a temporary file.
     SmallString<128> TempPath;
     TempPath = OutFile;
     TempPath += "-%%%%%%%%";
     int fd;
-    if (!llvm::sys::fs::unique_file(TempPath.str(), fd, TempPath,
-                                   /*makeAbsolute=*/false, 0664)) {
+    llvm::error_code EC = llvm::sys::fs::unique_file(
+        TempPath.str(), fd, TempPath, /*makeAbsolute=*/ false, 0664);
+
+    if (CreateMissingDirectories &&
+        (EC == llvm::errc::no_such_file_or_directory ||
+         EC == llvm::windows_error::file_not_found ||
+         EC == llvm::windows_error::path_not_found)) {
+      StringRef Parent = llvm::sys::path::parent_path(OutputPath);
+      EC = llvm::sys::fs::create_directories(Parent);
+      if (!EC) {
+        EC = llvm::sys::fs::unique_file(TempPath.str(), fd, TempPath,
+                                        /*makeAbsolute=*/ false, 0664);
+      }
+    }
+
+    if (!EC) {
       OS.reset(new llvm::raw_fd_ostream(fd, /*shouldClose=*/true));
       OSFile = TempFile = TempPath.str();
     }
@@ -780,6 +783,11 @@ static void compileModule(CompilerInstance &ImportingInstance,
                           SourceLocation ImportLoc,
                           Module *Module,
                           StringRef ModuleFileName) {
+  // FIXME: have LockFileManager return an error_code so that we can
+  // avoid the mkdir when the directory already exists.
+  StringRef Dir = llvm::sys::path::parent_path(ModuleFileName);
+  llvm::sys::fs::create_directories(Dir);
+
   llvm::LockFileManager Locked(ModuleFileName);
   switch (Locked) {
   case llvm::LockFileManager::LFS_Error:
