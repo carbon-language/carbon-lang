@@ -68,6 +68,11 @@ TEST(BlockFrequencyTest, Saturate) {
   Freq = 0x1000000000000000ULL;
   Freq /= BranchProbability(10000, 160000);
   EXPECT_EQ(Freq.getFrequency(), UINT64_MAX);
+
+  // Try to cheat the multiplication overflow check.
+  Freq = 0x00000001f0000001ull;
+  Freq /= BranchProbability(1000, 0xf000000f);
+  EXPECT_EQ(33506781356485509ULL, Freq.getFrequency());
 }
 
 TEST(BlockFrequencyTest, ProbabilityCompare) {

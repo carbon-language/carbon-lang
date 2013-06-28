@@ -47,9 +47,7 @@ static uint64_t div96bit(uint64_t W[2], uint32_t D) {
   uint64_t x = W[1];
   unsigned i;
 
-  // This is really a 64-bit division.
-  if (!x)
-    return y / D;
+  assert(x != 0 && "This is really a 64-bit division");
 
   // This long division algorithm automatically saturates on overflow.
   for (i = 0; i < 64 && x; ++i) {
@@ -75,7 +73,7 @@ void BlockFrequency::scale(uint32_t N, uint32_t D) {
   uint64_t MulRes = (MulHi << 32) + MulLo;
 
   // If the product fits in 64 bits, just use built-in division.
-  if (MulHi <= UINT32_MAX && MulRes <= MulLo) {
+  if (MulHi <= UINT32_MAX && MulRes >= MulLo) {
     Frequency = MulRes / D;
     return;
   }
