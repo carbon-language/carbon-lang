@@ -16,8 +16,8 @@
 #include <limits.h>
 #include <netdb.h>
 #include <pwd.h>
-#include <sys/sysctl.h>
 #include <sys/types.h>
+#include <sys/sysctl.h>
 #include <unistd.h>
 
 #if defined (__APPLE__)
