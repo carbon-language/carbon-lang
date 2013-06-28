@@ -32,9 +32,9 @@ CHECK-NEXT: dwarfdump-inl-test.cc:
 CHECK:       _Z3do1v
 CHECK-NEXT: dwarfdump-test3-decl.h:7
 
-CHECK:      _main
-CHECK:      __Z3inci
-CHECK:      __Z3inci
+CHECK:      main
+CHECK:      _Z3inci
+CHECK:      _Z3inci
 
 RUN: echo "unexisting-file 0x1234" > %t.input2
 RUN: llvm-symbolizer < %t.input2

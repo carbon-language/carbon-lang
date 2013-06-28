@@ -74,6 +74,9 @@ ModuleInfo::ModuleInfo(ObjectFile *Obj, DIContext *DICtx)
     StringRef SymbolName;
     if (error(si->getName(SymbolName)))
       continue;
+    // Mach-O symbol table names have leading underscore, skip it.
+    if (Module->isMachO() && SymbolName.size() > 0 && SymbolName[0] == '_')
+      SymbolName = SymbolName.drop_front();
     // FIXME: If a function has alias, there are two entries in symbol table
     // with same address size. Make sure we choose the correct one.
     SymbolMapTy &M = SymbolType == SymbolRef::ST_Function ? Functions : Objects;
