@@ -12,19 +12,18 @@
 // basic_string<charT,traits,Allocator>&
 //   replace(size_type pos1, size_type n1, const basic_string<charT,traits,Allocator>& str);
 
-#include <stdio.h>
-
 #include <string>
 #include <stdexcept>
 #include <algorithm>
 #include <cassert>
 
-typedef std::string S;
+#include "../../min_allocator.h"
 
+template <class S>
 void
-test(S s, S::size_type pos1, S::size_type n1, S str, S expected)
+test(S s, typename S::size_type pos1, typename S::size_type n1, S str, S expected)
 {
-    S::size_type old_size = s.size();
+    typename S::size_type old_size = s.size();
     S s0 = s;
     try
     {
@@ -32,8 +31,8 @@ test(S s, S::size_type pos1, S::size_type n1, S str, S expected)
         assert(s.__invariants());
         assert(pos1 <= old_size);
         assert(s == expected);
-        S::size_type xlen = std::min(n1, old_size - pos1);
-        S::size_type rlen = str.size();
+        typename S::size_type xlen = std::min(n1, old_size - pos1);
+        typename S::size_type rlen = str.size();
         assert(s.size() == old_size - xlen + rlen);
     }
     catch (std::out_of_range&)
@@ -43,6 +42,7 @@ test(S s, S::size_type pos1, S::size_type n1, S str, S expected)
     }
 }
 
+template <class S>
 void test0()
 {
     test(S(""), 0, 0, S(""), S(""));
@@ -147,6 +147,7 @@ void test0()
     test(S("abcde"), 5, 1, S("12345678901234567890"), S("abcde12345678901234567890"));
 }
 
+template <class S>
 void test1()
 {
     test(S("abcde"), 6, 0, S(""), S("can't happen"));
@@ -251,6 +252,7 @@ void test1()
     test(S("abcdefghij"), 11, 0, S("12345678901234567890"), S("can't happen"));
 }
 
+template <class S>
 void test2()
 {
     test(S("abcdefghijklmnopqrst"), 0, 0, S(""), S("abcdefghijklmnopqrst"));
@@ -353,7 +355,18 @@ void test2()
 
 int main()
 {
-    test0();
-    test1();
-    test2();
+    {
+    typedef std::string S;
+    test0<S>();
+    test1<S>();
+    test2<S>();
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+    test0<S>();
+    test1<S>();
+    test2<S>();
+    }
+#endif
 }

@@ -18,6 +18,7 @@
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 #include "../test_allocator.h"
+#include "../min_allocator.h"
 
 template <class S>
 void
@@ -36,6 +37,7 @@ test(S s1, S s2)
 int main()
 {
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    {
     typedef std::string S;
     test(S(), S());
     test(S("1"), S());
@@ -52,5 +54,26 @@ int main()
     test(S("1234567890123456789012345678901234567890123456789012345678901234567890"
            "1234567890123456789012345678901234567890123456789012345678901234567890"),
          S("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"));
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+    test(S(), S());
+    test(S("1"), S());
+    test(S(), S("1"));
+    test(S("1"), S("2"));
+    test(S("1"), S("2"));
+
+    test(S(),
+         S("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"));
+    test(S("123456789"),
+         S("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"));
+    test(S("1234567890123456789012345678901234567890123456789012345678901234567890"),
+         S("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"));
+    test(S("1234567890123456789012345678901234567890123456789012345678901234567890"
+           "1234567890123456789012345678901234567890123456789012345678901234567890"),
+         S("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"));
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

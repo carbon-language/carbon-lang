@@ -20,6 +20,8 @@
 #include <string>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 template <class S>
 void
 test0(const S& lhs, typename S::value_type rhs, const S& x)
@@ -38,10 +40,10 @@ test1(S&& lhs, typename S::value_type rhs, const S& x)
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-typedef std::string S;
-
 int main()
 {
+    {
+    typedef std::string S;
     test0(S(""), '1', S("1"));
     test0(S("abcde"), '1', S("abcde1"));
     test0(S("abcdefghij"), '1', S("abcdefghij1"));
@@ -55,4 +57,23 @@ int main()
     test1(S("abcdefghijklmnopqrst"), '1', S("abcdefghijklmnopqrst1"));
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+    test0(S(""), '1', S("1"));
+    test0(S("abcde"), '1', S("abcde1"));
+    test0(S("abcdefghij"), '1', S("abcdefghij1"));
+    test0(S("abcdefghijklmnopqrst"), '1', S("abcdefghijklmnopqrst1"));
+
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+    test1(S(""), '1', S("1"));
+    test1(S("abcde"), '1', S("abcde1"));
+    test1(S("abcdefghij"), '1', S("abcdefghij1"));
+    test1(S("abcdefghijklmnopqrst"), '1', S("abcdefghijklmnopqrst1"));
+
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    }
+#endif
 }

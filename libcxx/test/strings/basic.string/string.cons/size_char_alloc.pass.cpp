@@ -17,6 +17,7 @@
 #include <cassert>
 
 #include "../test_allocator.h"
+#include "../min_allocator.h"
 
 template <class charT>
 void
@@ -34,13 +35,12 @@ test(unsigned n, charT c)
     assert(s2.capacity() >= s2.size());
 }
 
-template <class charT>
+template <class charT, class A>
 void
-test(unsigned n, charT c, const test_allocator<charT>& a)
+test(unsigned n, charT c, const A& a)
 {
-    typedef std::basic_string<charT, std::char_traits<charT>, test_allocator<charT> > S;
+    typedef std::basic_string<charT, std::char_traits<charT>, A> S;
     typedef typename S::traits_type T;
-    typedef typename S::allocator_type A;
     S s2(n, c, a);
     assert(s2.__invariants());
     assert(s2.size() == n);
@@ -67,14 +67,13 @@ test(Tp n, Tp c)
     assert(s2.capacity() >= s2.size());
 }
 
-template <class Tp>
+template <class Tp, class A>
 void
-test(Tp n, Tp c, const test_allocator<char>& a)
+test(Tp n, Tp c, const A& a)
 {
     typedef char charT;
-    typedef std::basic_string<charT, std::char_traits<charT>, test_allocator<charT> > S;
+    typedef std::basic_string<charT, std::char_traits<charT>, A> S;
     typedef typename S::traits_type T;
-    typedef typename S::allocator_type A;
     S s2(n, c, a);
     assert(s2.__invariants());
     assert(s2.size() == n);
@@ -86,6 +85,7 @@ test(Tp n, Tp c, const test_allocator<char>& a)
 
 int main()
 {
+    {
     typedef test_allocator<char> A;
     typedef std::basic_string<char, std::char_traits<char>, A> S;
 
@@ -103,4 +103,26 @@ int main()
 
     test(100, 65);
     test(100, 65, A(3));
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef min_allocator<char> A;
+    typedef std::basic_string<char, std::char_traits<char>, A> S;
+
+    test(0, 'a');
+    test(0, 'a', A());
+
+    test(1, 'a');
+    test(1, 'a', A());
+
+    test(10, 'a');
+    test(10, 'a', A());
+
+    test(100, 'a');
+    test(100, 'a', A());
+
+    test(100, 65);
+    test(100, 65, A());
+    }
+#endif
 }

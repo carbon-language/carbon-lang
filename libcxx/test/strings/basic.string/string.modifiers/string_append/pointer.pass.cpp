@@ -15,6 +15,8 @@
 #include <stdexcept>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 template <class S>
 void
 test(S s, const typename S::value_type* str, S expected)
@@ -26,6 +28,7 @@ test(S s, const typename S::value_type* str, S expected)
 
 int main()
 {
+    {
     typedef std::string S;
     test(S(), "", S());
     test(S(), "12345", S("12345"));
@@ -39,4 +42,22 @@ int main()
     test(S("12345678901234567890"), "12345", S("1234567890123456789012345"));
     test(S("12345678901234567890"), "12345678901234567890",
          S("1234567890123456789012345678901234567890"));
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+    test(S(), "", S());
+    test(S(), "12345", S("12345"));
+    test(S(), "12345678901234567890", S("12345678901234567890"));
+
+    test(S("12345"), "", S("12345"));
+    test(S("12345"), "12345", S("1234512345"));
+    test(S("12345"), "1234567890", S("123451234567890"));
+
+    test(S("12345678901234567890"), "", S("12345678901234567890"));
+    test(S("12345678901234567890"), "12345", S("1234567890123456789012345"));
+    test(S("12345678901234567890"), "12345678901234567890",
+         S("1234567890123456789012345678901234567890"));
+    }
+#endif
 }

@@ -18,6 +18,8 @@
 #include <algorithm>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 template <class S>
 void
 test(S s1, S s2)
@@ -33,6 +35,7 @@ test(S s1, S s2)
 
 int main()
 {
+    {
     typedef std::string S;
     test(S(""), S(""));
     test(S(""), S("12345"));
@@ -50,4 +53,26 @@ int main()
     test(S("abcdefghijklmnopqrst"), S("12345"));
     test(S("abcdefghijklmnopqrst"), S("1234567890"));
     test(S("abcdefghijklmnopqrst"), S("12345678901234567890"));
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+    test(S(""), S(""));
+    test(S(""), S("12345"));
+    test(S(""), S("1234567890"));
+    test(S(""), S("12345678901234567890"));
+    test(S("abcde"), S(""));
+    test(S("abcde"), S("12345"));
+    test(S("abcde"), S("1234567890"));
+    test(S("abcde"), S("12345678901234567890"));
+    test(S("abcdefghij"), S(""));
+    test(S("abcdefghij"), S("12345"));
+    test(S("abcdefghij"), S("1234567890"));
+    test(S("abcdefghij"), S("12345678901234567890"));
+    test(S("abcdefghijklmnopqrst"), S(""));
+    test(S("abcdefghijklmnopqrst"), S("12345"));
+    test(S("abcdefghijklmnopqrst"), S("1234567890"));
+    test(S("abcdefghijklmnopqrst"), S("12345678901234567890"));
+    }
+#endif
 }

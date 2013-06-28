@@ -18,23 +18,25 @@
 #include <algorithm>
 #include <cassert>
 
-typedef std::string S;
+#include "../../min_allocator.h"
 
+template <class S>
 void
-test(S s, S::size_type pos1, S::size_type n1, S::size_type n2,
-     S::value_type c, S expected)
+test(S s, typename S::size_type pos1, typename S::size_type n1, typename S::size_type n2,
+     typename S::value_type c, S expected)
 {
-    S::size_type old_size = s.size();
-    S::const_iterator first = s.begin() + pos1;
-    S::const_iterator last = s.begin() + pos1 + n1;
+    typename S::size_type old_size = s.size();
+    typename S::const_iterator first = s.begin() + pos1;
+    typename S::const_iterator last = s.begin() + pos1 + n1;
     s.replace(first, last, n2, c);
     assert(s.__invariants());
     assert(s == expected);
-    S::size_type xlen = last - first;
-    S::size_type rlen = n2;
+    typename S::size_type xlen = last - first;
+    typename S::size_type rlen = n2;
     assert(s.size() == old_size - xlen + rlen);
 }
 
+template <class S>
 void test0()
 {
     test(S(""), 0, 0, 0, '3', S(""));
@@ -139,6 +141,7 @@ void test0()
     test(S("abcdefghij"), 1, 1, 20, '3', S("a33333333333333333333cdefghij"));
 }
 
+template <class S>
 void test1()
 {
     test(S("abcdefghij"), 1, 4, 0, '3', S("afghij"));
@@ -243,6 +246,7 @@ void test1()
     test(S("abcdefghijklmnopqrst"), 10, 9, 20, '3', S("abcdefghij33333333333333333333t"));
 }
 
+template <class S>
 void test2()
 {
     test(S("abcdefghijklmnopqrst"), 10, 10, 0, '3', S("abcdefghij"));
@@ -265,7 +269,18 @@ void test2()
 
 int main()
 {
-    test0();
-    test1();
-    test2();
+    {
+    typedef std::string S;
+    test0<S>();
+    test1<S>();
+    test2<S>();
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+    test0<S>();
+    test1<S>();
+    test2<S>();
+    }
+#endif
 }

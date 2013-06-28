@@ -15,6 +15,8 @@
 #include <stdexcept>
 #include <cassert>
 
+#include "../min_allocator.h"
+
 template <class S>
 void
 test(S s)
@@ -50,6 +52,7 @@ test(S s, typename S::size_type res_arg)
 
 int main()
 {
+    {
     typedef std::string S;
     {
     S s;
@@ -78,4 +81,37 @@ int main()
     test(s, 100);
     test(s, S::npos);
     }
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+    {
+    S s;
+    test(s);
+
+    s.assign(10, 'a');
+    s.erase(5);
+    test(s);
+
+    s.assign(100, 'a');
+    s.erase(50);
+    test(s);
+    }
+    {
+    S s;
+    test(s, 5);
+    test(s, 10);
+    test(s, 50);
+    }
+    {
+    S s(100, 'a');
+    s.erase(50);
+    test(s, 5);
+    test(s, 10);
+    test(s, 50);
+    test(s, 100);
+    test(s, S::npos);
+    }
+    }
+#endif
 }

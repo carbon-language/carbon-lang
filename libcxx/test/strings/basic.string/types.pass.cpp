@@ -38,6 +38,7 @@
 
 #include "test_traits.h"
 #include "test_allocator.h"
+#include "min_allocator.h"
 
 template <class Traits, class Allocator>
 void
@@ -49,12 +50,12 @@ test()
     static_assert((std::is_same<typename S::value_type, typename Traits::char_type>::value), "");
     static_assert((std::is_same<typename S::value_type, typename Allocator::value_type>::value), "");
     static_assert((std::is_same<typename S::allocator_type, Allocator>::value), "");
-    static_assert((std::is_same<typename S::size_type, typename Allocator::size_type>::value), "");
-    static_assert((std::is_same<typename S::difference_type, typename Allocator::difference_type>::value), "");
-    static_assert((std::is_same<typename S::reference, typename Allocator::reference>::value), "");
-    static_assert((std::is_same<typename S::const_reference, typename Allocator::const_reference>::value), "");
-    static_assert((std::is_same<typename S::pointer, typename Allocator::pointer>::value), "");
-    static_assert((std::is_same<typename S::const_pointer, typename Allocator::const_pointer>::value), "");
+    static_assert((std::is_same<typename S::size_type, typename std::allocator_traits<Allocator>::size_type>::value), "");
+    static_assert((std::is_same<typename S::difference_type, typename std::allocator_traits<Allocator>::difference_type>::value), "");
+    static_assert((std::is_same<typename S::reference, typename S::value_type&>::value), "");
+    static_assert((std::is_same<typename S::const_reference, const typename S::value_type&>::value), "");
+    static_assert((std::is_same<typename S::pointer, typename std::allocator_traits<Allocator>::pointer>::value), "");
+    static_assert((std::is_same<typename S::const_pointer, typename std::allocator_traits<Allocator>::const_pointer>::value), "");
     static_assert((std::is_same<
         typename std::iterator_traits<typename S::iterator>::iterator_category,
         std::random_access_iterator_tag>::value), "");
@@ -78,4 +79,7 @@ int main()
                                 std::char_traits<char> >::value), "");
     static_assert((std::is_same<std::basic_string<char>::allocator_type,
                                 std::allocator<char> >::value), "");
+#if __cplusplus >= 201103L
+    test<std::char_traits<char>, min_allocator<char> >();
+#endif
 }

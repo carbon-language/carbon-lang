@@ -14,6 +14,8 @@
 #include <string>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 template <class S>
 void
 test(const S& s, typename S::value_type c, typename S::size_type pos,
@@ -33,10 +35,10 @@ test(const S& s, typename S::value_type c, typename S::size_type x)
         assert(x < s.size());
 }
 
-typedef std::string S;
-
 int main()
 {
+    {
+    typedef std::string S;
     test(S(""), 'e', 0, S::npos);
     test(S(""), 'e', 1, S::npos);
     test(S("kitcj"), 'e', 0, S::npos);
@@ -62,4 +64,35 @@ int main()
     test(S("csope"), 'e', 4);
     test(S("gfsmthlkon"), 'e', S::npos);
     test(S("laenfsbridchgotmkqpj"), 'e', 2);
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+    test(S(""), 'e', 0, S::npos);
+    test(S(""), 'e', 1, S::npos);
+    test(S("kitcj"), 'e', 0, S::npos);
+    test(S("qkamf"), 'e', 1, S::npos);
+    test(S("nhmko"), 'e', 2, S::npos);
+    test(S("tpsaf"), 'e', 4, S::npos);
+    test(S("lahfb"), 'e', 5, S::npos);
+    test(S("irkhs"), 'e', 6, S::npos);
+    test(S("gmfhdaipsr"), 'e', 0, S::npos);
+    test(S("kantesmpgj"), 'e', 1, 4);
+    test(S("odaftiegpm"), 'e', 5, 6);
+    test(S("oknlrstdpi"), 'e', 9, S::npos);
+    test(S("eolhfgpjqk"), 'e', 10, S::npos);
+    test(S("pcdrofikas"), 'e', 11, S::npos);
+    test(S("nbatdlmekrgcfqsophij"), 'e', 0, 7);
+    test(S("bnrpehidofmqtcksjgla"), 'e', 1, 4);
+    test(S("jdmciepkaqgotsrfnhlb"), 'e', 10, S::npos);
+    test(S("jtdaefblsokrmhpgcnqi"), 'e', 19, S::npos);
+    test(S("hkbgspofltajcnedqmri"), 'e', 20, S::npos);
+    test(S("oselktgbcapndfjihrmq"), 'e', 21, S::npos);
+
+    test(S(""), 'e', S::npos);
+    test(S("csope"), 'e', 4);
+    test(S("gfsmthlkon"), 'e', S::npos);
+    test(S("laenfsbridchgotmkqpj"), 'e', 2);
+    }
+#endif
 }

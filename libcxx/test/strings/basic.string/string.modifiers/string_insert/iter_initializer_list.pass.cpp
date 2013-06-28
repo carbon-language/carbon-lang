@@ -14,6 +14,8 @@
 #include <string>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 int main()
 {
 #ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
@@ -23,5 +25,14 @@ int main()
         assert(i - s.begin() == 3);
         assert(s == "123abc456");
     }
+#if __cplusplus >= 201103L
+    {
+        typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+        S s("123456");
+        S::iterator i = s.insert(s.begin() + 3, {'a', 'b', 'c'});
+        assert(i - s.begin() == 3);
+        assert(s == "123abc456");
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

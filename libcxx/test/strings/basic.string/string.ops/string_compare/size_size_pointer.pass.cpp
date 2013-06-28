@@ -15,6 +15,8 @@
 #include <stdexcept>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 int sign(int x)
 {
     if (x == 0)
@@ -40,8 +42,7 @@ test(const S& s, typename S::size_type pos1, typename S::size_type n1,
     }
 }
 
-typedef std::string S;
-
+template <class S>
 void test0()
 {
     test(S(""), 0, 0, "", 0);
@@ -146,6 +147,7 @@ void test0()
     test(S("abcde"), 5, 1, "abcdefghijklmnopqrst", -20);
 }
 
+template <class S>
 void test1()
 {
     test(S("abcde"), 6, 0, "", 0);
@@ -250,6 +252,7 @@ void test1()
     test(S("abcdefghij"), 11, 0, "abcdefghijklmnopqrst", 0);
 }
 
+template <class S>
 void test2()
 {
     test(S("abcdefghijklmnopqrst"), 0, 0, "", 0);
@@ -352,7 +355,18 @@ void test2()
 
 int main()
 {
-    test0();
-    test1();
-    test2();
+    {
+    typedef std::string S;
+    test0<S>();
+    test1<S>();
+    test2<S>();
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+    test0<S>();
+    test1<S>();
+    test2<S>();
+    }
+#endif
 }

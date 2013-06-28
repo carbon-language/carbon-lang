@@ -14,6 +14,8 @@
 #include <string>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 template <class S>
 void
 test(const S& s, const typename S::value_type* str, typename S::size_type pos,
@@ -24,8 +26,7 @@ test(const S& s, const typename S::value_type* str, typename S::size_type pos,
         assert(x <= pos && x < s.size());
 }
 
-typedef std::string S;
-
+template <class S>
 void test0()
 {
     test(S(""), "", 0, 0, S::npos);
@@ -130,6 +131,7 @@ void test0()
     test(S("hkjae"), "dfsmk", 5, 2, 4);
 }
 
+template <class S>
 void test1()
 {
     test(S("gbhqo"), "skqne", 5, 4, 4);
@@ -234,6 +236,7 @@ void test1()
     test(S("iomkfthagj"), "oaklidrbqg", 10, 1, 9);
 }
 
+template <class S>
 void test2()
 {
     test(S("sdpcilonqj"), "dnjfsagktr", 10, 5, 8);
@@ -338,6 +341,7 @@ void test2()
     test(S("lifhpdgmbconstjeqark"), "tomglrkencbsfjqpihda", 20, 0, 19);
 }
 
+template <class S>
 void test3()
 {
     test(S("pboqganrhedjmltsicfk"), "gbkhdnpoietfcmrslajq", 20, 1, 19);
@@ -364,8 +368,20 @@ void test3()
 
 int main()
 {
-    test0();
-    test1();
-    test2();
-    test3();
+    {
+    typedef std::string S;
+    test0<S>();
+    test1<S>();
+    test2<S>();
+    test3<S>();
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+    test0<S>();
+    test1<S>();
+    test2<S>();
+    test3<S>();
+    }
+#endif
 }

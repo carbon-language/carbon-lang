@@ -17,7 +17,7 @@
 #include <iterator>
 #include <cassert>
 
-#include <stdio.h>
+#include "../../min_allocator.h"
 
 template <class S, class It>
 void
@@ -34,10 +34,9 @@ test(S s, typename S::size_type pos1, typename S::size_type n1, It f, It l, S ex
     assert(s.size() == old_size - xlen + rlen);
 }
 
-typedef std::string S;
-
 const char* str = "12345678901234567890";
 
+template <class S>
 void test0()
 {
     test(S(""), 0, 0, str, str+0, S(""));
@@ -119,29 +118,30 @@ void test0()
     test(S("abcde"), 0, 4, str, str+1, S("1e"));
     test(S("abcde"), 0, 4, str, str+10, S("1234567890e"));
     test(S("abcde"), 0, 4, str, str+19, S("1234567890123456789e"));
-//     test(S("abcde"), 0, 4, str, str+20, S("12345678901234567890e"));
-//     test(S("abcde"), 0, 5, str, str+0, S(""));
-//     test(S("abcde"), 0, 5, str, str+0, S(""));
-//     test(S("abcde"), 0, 5, str, str+1, S("1"));
-//     test(S("abcde"), 0, 5, str, str+2, S("12"));
-//     test(S("abcde"), 0, 5, str, str+4, S("1234"));
-//     test(S("abcde"), 0, 5, str, str+5, S("12345"));
-//     test(S("abcde"), 0, 5, str, str+0, S(""));
-//     test(S("abcde"), 0, 5, str, str+1, S("1"));
-//     test(S("abcde"), 0, 5, str, str+5, S("12345"));
-//     test(S("abcde"), 0, 5, str, str+9, S("123456789"));
-//     test(S("abcde"), 0, 5, str, str+10, S("1234567890"));
-//     test(S("abcde"), 0, 5, str, str+0, S(""));
-//     test(S("abcde"), 0, 5, str, str+1, S("1"));
-//     test(S("abcde"), 0, 5, str, str+10, S("1234567890"));
-//     test(S("abcde"), 0, 5, str, str+19, S("1234567890123456789"));
-//     test(S("abcde"), 0, 5, str, str+20, S("12345678901234567890"));
-//     test(S("abcde"), 1, 0, str, str+0, S("abcde"));
-//     test(S("abcde"), 1, 0, str, str+0, S("abcde"));
-//     test(S("abcde"), 1, 0, str, str+1, S("a1bcde"));
-//     test(S("abcde"), 1, 0, str, str+2, S("a12bcde"));
+    test(S("abcde"), 0, 4, str, str+20, S("12345678901234567890e"));
+    test(S("abcde"), 0, 5, str, str+0, S(""));
+    test(S("abcde"), 0, 5, str, str+0, S(""));
+    test(S("abcde"), 0, 5, str, str+1, S("1"));
+    test(S("abcde"), 0, 5, str, str+2, S("12"));
+    test(S("abcde"), 0, 5, str, str+4, S("1234"));
+    test(S("abcde"), 0, 5, str, str+5, S("12345"));
+    test(S("abcde"), 0, 5, str, str+0, S(""));
+    test(S("abcde"), 0, 5, str, str+1, S("1"));
+    test(S("abcde"), 0, 5, str, str+5, S("12345"));
+    test(S("abcde"), 0, 5, str, str+9, S("123456789"));
+    test(S("abcde"), 0, 5, str, str+10, S("1234567890"));
+    test(S("abcde"), 0, 5, str, str+0, S(""));
+    test(S("abcde"), 0, 5, str, str+1, S("1"));
+    test(S("abcde"), 0, 5, str, str+10, S("1234567890"));
+    test(S("abcde"), 0, 5, str, str+19, S("1234567890123456789"));
+    test(S("abcde"), 0, 5, str, str+20, S("12345678901234567890"));
+    test(S("abcde"), 1, 0, str, str+0, S("abcde"));
+    test(S("abcde"), 1, 0, str, str+0, S("abcde"));
+    test(S("abcde"), 1, 0, str, str+1, S("a1bcde"));
+    test(S("abcde"), 1, 0, str, str+2, S("a12bcde"));
 }
-/*
+
+template <class S>
 void test1()
 {
     test(S("abcde"), 1, 0, str, str+4, S("a1234bcde"));
@@ -246,6 +246,7 @@ void test1()
     test(S("abcde"), 2, 1, str, str+1, S("ab1de"));
 }
 
+template <class S>
 void test2()
 {
     test(S("abcde"), 2, 1, str, str+5, S("ab12345de"));
@@ -350,6 +351,7 @@ void test2()
     test(S("abcdefghij"), 0, 0, str, str+0, S("abcdefghij"));
 }
 
+template <class S>
 void test3()
 {
     test(S("abcdefghij"), 0, 0, str, str+1, S("1abcdefghij"));
@@ -454,6 +456,7 @@ void test3()
     test(S("abcdefghij"), 1, 1, str, str+20, S("a12345678901234567890cdefghij"));
 }
 
+template <class S>
 void test4()
 {
     test(S("abcdefghij"), 1, 4, str, str+0, S("afghij"));
@@ -558,6 +561,7 @@ void test4()
     test(S("abcdefghij"), 5, 4, str, str+2, S("abcde12j"));
 }
 
+template <class S>
 void test5()
 {
     test(S("abcdefghij"), 5, 4, str, str+4, S("abcde1234j"));
@@ -662,6 +666,7 @@ void test5()
     test(S("abcdefghijklmnopqrst"), 0, 1, str, str+1, S("1bcdefghijklmnopqrst"));
 }
 
+template <class S>
 void test6()
 {
     test(S("abcdefghijklmnopqrst"), 0, 1, str, str+5, S("12345bcdefghijklmnopqrst"));
@@ -766,6 +771,7 @@ void test6()
     test(S("abcdefghijklmnopqrst"), 1, 9, str, str+0, S("aklmnopqrst"));
 }
 
+template <class S>
 void test7()
 {
     test(S("abcdefghijklmnopqrst"), 1, 9, str, str+1, S("a1klmnopqrst"));
@@ -870,6 +876,7 @@ void test7()
     test(S("abcdefghijklmnopqrst"), 10, 9, str, str+20, S("abcdefghij12345678901234567890t"));
 }
 
+template <class S>
 void test8()
 {
     test(S("abcdefghijklmnopqrst"), 10, 10, str, str+0, S("abcdefghij"));
@@ -937,16 +944,33 @@ void test8()
     test(S("abcdefghijklmnopqrst"), 20, 0, str, str+19, S("abcdefghijklmnopqrst1234567890123456789"));
     test(S("abcdefghijklmnopqrst"), 20, 0, str, str+20, S("abcdefghijklmnopqrst12345678901234567890"));
 }
-*/
+
 int main()
 {
-    test0();
-//     test1();
-//     test2();
-//     test3();
-//     test4();
-//     test5();
-//     test6();
-//     test7();
-//     test8();
+    {
+    typedef std::string S;
+    test0<S>();
+    test1<S>();
+    test2<S>();
+    test3<S>();
+    test4<S>();
+    test5<S>();
+    test6<S>();
+    test7<S>();
+    test8<S>();
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+    test0<S>();
+    test1<S>();
+    test2<S>();
+    test3<S>();
+    test4<S>();
+    test5<S>();
+    test6<S>();
+    test7<S>();
+    test8<S>();
+    }
+#endif
 }

@@ -14,6 +14,8 @@
 #include <string>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 template <class S>
 void
 test(S s, typename S::value_type str, S expected)
@@ -25,9 +27,20 @@ test(S s, typename S::value_type str, S expected)
 
 int main()
 {
+    {
     typedef std::string S;
     test(S(), 'a', S("a"));
     test(S("12345"), 'a', S("12345a"));
     test(S("1234567890"), 'a', S("1234567890a"));
     test(S("12345678901234567890"), 'a', S("12345678901234567890a"));
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+    test(S(), 'a', S("a"));
+    test(S("12345"), 'a', S("12345a"));
+    test(S("1234567890"), 'a', S("1234567890a"));
+    test(S("12345678901234567890"), 'a', S("12345678901234567890a"));
+    }
+#endif
 }

@@ -14,6 +14,8 @@
 #include <string>
 #include <cassert>
 
+#include "../../min_allocator.h"
+
 template <class S>
 void
 test(const S& s, const S& str, typename S::size_type pos, typename S::size_type x)
@@ -32,8 +34,7 @@ test(const S& s, const S& str, typename S::size_type x)
         assert(x < s.size());
 }
 
-typedef std::string S;
-
+template <class S>
 void test0()
 {
     test(S(""), S(""), 0, S::npos);
@@ -118,6 +119,7 @@ void test0()
     test(S("lecfratdjkhnsmqpoigb"), S("tpflmdnoicjgkberhqsa"), 21, 19);
 }
 
+template <class S>
 void test1()
 {
     test(S(""), S(""), S::npos);
@@ -140,6 +142,16 @@ void test1()
 
 int main()
 {
-    test0();
-    test1();
+    {
+    typedef std::string S;
+    test0<S>();
+    test1<S>();
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+    test0<S>();
+    test1<S>();
+    }
+#endif
 }
