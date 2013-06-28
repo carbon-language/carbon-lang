@@ -4,27 +4,27 @@
 
 ;; i8
 define i8 @ld_global_i8(i8 addrspace(1)* %ptr) {
-; PTX32: ld.global.u8 %rs{{[0-9]+}}, [%r{{[0-9]+}}]
+; PTX32: ld.global.u8 %r{{[0-9]+}}, [%r{{[0-9]+}}]
 ; PTX32: ret
-; PTX64: ld.global.u8 %rs{{[0-9]+}}, [%rl{{[0-9]+}}]
+; PTX64: ld.global.u8 %r{{[0-9]+}}, [%rl{{[0-9]+}}]
 ; PTX64: ret
   %a = load i8 addrspace(1)* %ptr
   ret i8 %a
 }
 
 define i8 @ld_shared_i8(i8 addrspace(3)* %ptr) {
-; PTX32: ld.shared.u8 %rs{{[0-9]+}}, [%r{{[0-9]+}}]
+; PTX32: ld.shared.u8 %r{{[0-9]+}}, [%r{{[0-9]+}}]
 ; PTX32: ret
-; PTX64: ld.shared.u8 %rs{{[0-9]+}}, [%rl{{[0-9]+}}]
+; PTX64: ld.shared.u8 %r{{[0-9]+}}, [%rl{{[0-9]+}}]
 ; PTX64: ret
   %a = load i8 addrspace(3)* %ptr
   ret i8 %a
 }
 
 define i8 @ld_local_i8(i8 addrspace(5)* %ptr) {
-; PTX32: ld.local.u8 %rs{{[0-9]+}}, [%r{{[0-9]+}}]
+; PTX32: ld.local.u8 %r{{[0-9]+}}, [%r{{[0-9]+}}]
 ; PTX32: ret
-; PTX64: ld.local.u8 %rs{{[0-9]+}}, [%rl{{[0-9]+}}]
+; PTX64: ld.local.u8 %r{{[0-9]+}}, [%rl{{[0-9]+}}]
 ; PTX64: ret
   %a = load i8 addrspace(5)* %ptr
   ret i8 %a
@@ -32,27 +32,27 @@ define i8 @ld_local_i8(i8 addrspace(5)* %ptr) {
 
 ;; i16
 define i16 @ld_global_i16(i16 addrspace(1)* %ptr) {
-; PTX32: ld.global.u16 %rs{{[0-9]+}}, [%r{{[0-9]+}}]
+; PTX32: ld.global.u16 %r{{[0-9]+}}, [%r{{[0-9]+}}]
 ; PTX32: ret
-; PTX64: ld.global.u16 %rs{{[0-9]+}}, [%rl{{[0-9]+}}]
+; PTX64: ld.global.u16 %r{{[0-9]+}}, [%rl{{[0-9]+}}]
 ; PTX64: ret
   %a = load i16 addrspace(1)* %ptr
   ret i16 %a
 }
 
 define i16 @ld_shared_i16(i16 addrspace(3)* %ptr) {
-; PTX32: ld.shared.u16 %rs{{[0-9]+}}, [%r{{[0-9]+}}]
+; PTX32: ld.shared.u16 %r{{[0-9]+}}, [%r{{[0-9]+}}]
 ; PTX32: ret
-; PTX64: ld.shared.u16 %rs{{[0-9]+}}, [%rl{{[0-9]+}}]
+; PTX64: ld.shared.u16 %r{{[0-9]+}}, [%rl{{[0-9]+}}]
 ; PTX64: ret
   %a = load i16 addrspace(3)* %ptr
   ret i16 %a
 }
 
 define i16 @ld_local_i16(i16 addrspace(5)* %ptr) {
-; PTX32: ld.local.u16 %rs{{[0-9]+}}, [%r{{[0-9]+}}]
+; PTX32: ld.local.u16 %r{{[0-9]+}}, [%r{{[0-9]+}}]
 ; PTX32: ret
-; PTX64: ld.local.u16 %rs{{[0-9]+}}, [%rl{{[0-9]+}}]
+; PTX64: ld.local.u16 %r{{[0-9]+}}, [%rl{{[0-9]+}}]
 ; PTX64: ret
   %a = load i16 addrspace(5)* %ptr
   ret i16 %a

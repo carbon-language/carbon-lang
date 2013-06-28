@@ -1207,7 +1207,14 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
           sz = 8;
 
         SmallVector<EVT, 4> LoadRetVTs;
-        if (sz < 16) {
+        EVT TheLoadType = VTs[i];
+        if (retTy->isIntegerTy() &&
+            TD->getTypeAllocSizeInBits(retTy) < 32) {
+          // This is for integer types only, and specifically not for
+          // aggregates.
+          LoadRetVTs.push_back(MVT::i32);
+          TheLoadType = MVT::i32;
+        } else if (sz < 16) {
           // If loading i1/i8 result, generate
           //   load i8 (-> i16)
           //   trunc i16 to i1/i8
@@ -1225,7 +1232,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
         SDValue retval = DAG.getMemIntrinsicNode(
             NVPTXISD::LoadParam, dl,
             DAG.getVTList(&LoadRetVTs[0], LoadRetVTs.size()), &LoadRetOps[0],
-            LoadRetOps.size(), VTs[i], MachinePointerInfo());
+            LoadRetOps.size(), TheLoadType, MachinePointerInfo());
         Chain = retval.getValue(1);
         InFlag = retval.getValue(2);
         SDValue Ret0 = retval.getValue(0);
@@ -1798,7 +1805,7 @@ NVPTXTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
                                  SDLoc dl, SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
   const Function *F = MF.getFunction();
-  const Type *RetTy = F->getReturnType();
+  Type *RetTy = F->getReturnType();
   const DataLayout *TD = getDataLayout();
 
   bool isABI = (nvptxSubtarget.getSmVersion() >= 20);
@@ -1806,14 +1813,14 @@ NVPTXTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   if (!isABI)
     return Chain;
 
-  if (const VectorType *VTy = dyn_cast<const VectorType>(RetTy)) {
+  if (VectorType *VTy = dyn_cast<VectorType>(RetTy)) {
     // If we have a vector type, the OutVals array will be the scalarized
     // components and we have combine them into 1 or more vector stores.
     unsigned NumElts = VTy->getNumElements();
     assert(NumElts == Outs.size() && "Bad scalarization of return value");
 
     // const_cast can be removed in later LLVM versions
-    EVT EltVT = getValueType(const_cast<Type *>(RetTy)).getVectorElementType();
+    EVT EltVT = getValueType(RetTy).getVectorElementType();
     bool NeedExtend = false;
     if (EltVT.getSizeInBits() < 16)
       NeedExtend = true;
@@ -1923,34 +1930,43 @@ NVPTXTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
     SmallVector<EVT, 16> ValVTs;
     // const_cast is necessary since we are still using an LLVM version from
     // before the type system re-write.
-    ComputePTXValueVTs(*this, const_cast<Type *>(RetTy), ValVTs);
+    ComputePTXValueVTs(*this, RetTy, ValVTs);
     assert(ValVTs.size() == OutVals.size() && "Bad return value decomposition");
 
-    unsigned sizesofar = 0;
+    unsigned SizeSoFar = 0;
     for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
       SDValue theVal = OutVals[i];
-      EVT theValType = theVal.getValueType();
+      EVT TheValType = theVal.getValueType();
       unsigned numElems = 1;
-      if (theValType.isVector())
-        numElems = theValType.getVectorNumElements();
+      if (TheValType.isVector())
+        numElems = TheValType.getVectorNumElements();
       for (unsigned j = 0, je = numElems; j != je; ++j) {
-        SDValue tmpval = theVal;
-        if (theValType.isVector())
-          tmpval = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
-                               theValType.getVectorElementType(), tmpval,
+        SDValue TmpVal = theVal;
+        if (TheValType.isVector())
+          TmpVal = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
+                               TheValType.getVectorElementType(), TmpVal,
                                DAG.getIntPtrConstant(j));
-        EVT theStoreType = tmpval.getValueType();
-        if (theStoreType.getSizeInBits() < 8)
-          tmpval = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i8, tmpval);
-        SDValue Ops[] = { Chain, DAG.getConstant(sizesofar, MVT::i32), tmpval };
+        EVT TheStoreType = ValVTs[i];
+        if (RetTy->isIntegerTy() &&
+            TD->getTypeAllocSizeInBits(RetTy) < 32) {
+          // The following zero-extension is for integer types only, and
+          // specifically not for aggregates.
+          TmpVal = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, TmpVal);
+          TheStoreType = MVT::i32;
+        }
+        else if (TmpVal.getValueType().getSizeInBits() < 16)
+          TmpVal = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i16, TmpVal);
+
+        SDValue Ops[] = { Chain, DAG.getConstant(SizeSoFar, MVT::i32), TmpVal };
         Chain = DAG.getMemIntrinsicNode(NVPTXISD::StoreRetval, dl,
-                                        DAG.getVTList(MVT::Other), &Ops[0], 3,
-                                        ValVTs[i], MachinePointerInfo());
-        if (theValType.isVector())
-          sizesofar +=
-              ValVTs[i].getVectorElementType().getStoreSizeInBits() / 8;
+                                        DAG.getVTList(MVT::Other), &Ops[0],
+                                        3, TheStoreType,
+                                        MachinePointerInfo());
+        if(TheValType.isVector())
+          SizeSoFar += 
+            TheStoreType.getVectorElementType().getStoreSizeInBits() / 8;
         else
-          sizesofar += ValVTs[i].getStoreSizeInBits() / 8;
+          SizeSoFar += TheStoreType.getStoreSizeInBits()/8;
       }
     }
   }

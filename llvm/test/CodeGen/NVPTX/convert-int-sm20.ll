@@ -8,16 +8,16 @@
 ; i16
 
 define i16 @cvt_i16_i32(i32 %x) {
-; CHECK: ld.param.u16 %rs[[R0:[0-9]+]], [cvt_i16_i32_param_{{[0-9]+}}]
-; CHECK: st.param.b16 [func_retval{{[0-9]+}}+0], %rs[[R0]]
+; CHECK: ld.param.u16 %r[[R0:[0-9]+]], [cvt_i16_i32_param_{{[0-9]+}}]
+; CHECK: st.param.b32 [func_retval{{[0-9]+}}+0], %r[[R0]]
 ; CHECK: ret
   %a = trunc i32 %x to i16
   ret i16 %a
 }
 
 define i16 @cvt_i16_i64(i64 %x) {
-; CHECK: ld.param.u16 %rs[[R0:[0-9]+]], [cvt_i16_i64_param_{{[0-9]+}}]
-; CHECK: st.param.b16 [func_retval{{[0-9]+}}+0], %rs[[R0]]
+; CHECK: ld.param.u16 %r[[R0:[0-9]+]], [cvt_i16_i64_param_{{[0-9]+}}]
+; CHECK: st.param.b32 [func_retval{{[0-9]+}}+0], %r[[R0]]
 ; CHECK: ret
   %a = trunc i64 %x to i16
   ret i16 %a
