@@ -273,52 +273,11 @@ private:
 /// section header that to be written to PECOFF header and atoms which to be
 /// written to the raw data section.
 class SectionChunk : public Chunk {
-private:
-  llvm::object::coff_section
-  createSectionHeader(StringRef sectionName, uint32_t characteristics) const {
-    llvm::object::coff_section header;
-
-    // Section name equal to or shorter than 8 byte fits in the section
-    // header. Longer names should be stored to string table, which is not
-    // implemented yet.
-    if (sizeof(header.Name) < sectionName.size())
-      llvm_unreachable("Cannot handle section name longer than 8 byte");
-
-    // Name field must be NUL-padded. If the name is exactly 8 byte long,
-    // there's no terminating NUL.
-    std::memset(header.Name, 0, sizeof(header.Name));
-    std::strncpy(header.Name, sectionName.data(), sizeof(header.Name));
-
-    header.VirtualSize = 0;
-    header.VirtualAddress = 0;
-    header.SizeOfRawData = 0;
-    header.PointerToRawData = 0;
-    header.PointerToRelocations = 0;
-    header.PointerToLinenumbers = 0;
-    header.NumberOfRelocations = 0;
-    header.NumberOfLinenumbers = 0;
-    header.Characteristics = characteristics;
-    return header;
-  }
-
 public:
-  SectionChunk(SectionHeaderTableChunk *table, StringRef sectionName,
-               uint32_t characteristics)
-      : Chunk(kindSection),
-        _sectionHeader(createSectionHeader(sectionName, characteristics)) {
-    table->addSection(this);
-  }
-
   virtual uint64_t size() const {
     // Round up to the nearest alignment border, so that the text segment ends
     // at a border.
     return llvm::RoundUpToAlignment(_size, _align);
-  }
-
-  void appendAtom(const DefinedAtom *atom) {
-    auto *layout = new (_storage) AtomLayout(atom, _size, _size);
-    _atomLayouts.push_back(layout);
-    _size += atom->rawContent().size();
   }
 
   virtual void write(uint8_t *fileBuffer) {
@@ -399,9 +358,67 @@ public:
   static bool classof(const Chunk *c) { return c->getKind() == kindSection; }
 
 protected:
-  llvm::object::coff_section _sectionHeader;
+  SectionChunk(SectionHeaderTableChunk *table, StringRef sectionName,
+               uint32_t characteristics)
+      : Chunk(kindSection),
+        _sectionHeader(createSectionHeader(sectionName, characteristics)) {
+    // The section should be aligned to disk sector.
+    _align = SECTOR_SIZE;
+
+    // Add this section to the file header.
+    table->addSection(this);
+  }
+
+  void buildContents(const File &linkedFile,
+                     bool (*isEligible)(const DefinedAtom *)) {
+    // Extract atoms from the linked file and append them to this section.
+    for (const DefinedAtom *atom : linkedFile.defined()) {
+      assert(atom->sectionChoice() == DefinedAtom::sectionBasedOnContent);
+      if (isEligible(atom))
+        appendAtom(atom);
+    }
+
+    // Now that we have a list of atoms that to be written in this section,
+    // and we know the size of the section.
+    _sectionHeader.VirtualSize = _size;
+    _sectionHeader.SizeOfRawData = _size;
+  }
 
 private:
+  llvm::object::coff_section
+  createSectionHeader(StringRef sectionName, uint32_t characteristics) const {
+    llvm::object::coff_section header;
+
+    // Section name equal to or shorter than 8 byte fits in the section
+    // header. Longer names should be stored to string table, which is not
+    // implemented yet.
+    if (sizeof(header.Name) < sectionName.size())
+      llvm_unreachable("Cannot handle section name longer than 8 byte");
+
+    // Name field must be NUL-padded. If the name is exactly 8 byte long,
+    // there's no terminating NUL.
+    std::memset(header.Name, 0, sizeof(header.Name));
+    std::strncpy(header.Name, sectionName.data(), sizeof(header.Name));
+
+    header.VirtualSize = 0;
+    header.VirtualAddress = 0;
+    header.SizeOfRawData = 0;
+    header.PointerToRawData = 0;
+    header.PointerToRelocations = 0;
+    header.PointerToLinenumbers = 0;
+    header.NumberOfRelocations = 0;
+    header.NumberOfLinenumbers = 0;
+    header.Characteristics = characteristics;
+    return header;
+  }
+
+  void appendAtom(const DefinedAtom *atom) {
+    auto *layout = new (_storage) AtomLayout(atom, _size, _size);
+    _atomLayouts.push_back(layout);
+    _size += atom->rawContent().size();
+  }
+
+  llvm::object::coff_section _sectionHeader;
   std::vector<AtomLayout *> _atomLayouts;
   mutable llvm::BumpPtrAllocator _storage;
 };
@@ -426,89 +443,56 @@ void SectionHeaderTableChunk::write(uint8_t *fileBuffer) {
 
 // \brief A TextSectionChunk represents a .text section.
 class TextSectionChunk : public SectionChunk {
+public:
+  TextSectionChunk(const File &linkedFile, SectionHeaderTableChunk *table)
+      : SectionChunk(table, ".text", characteristics) {
+    buildContents(linkedFile, [](const DefinedAtom *atom) {
+      return atom->contentType() == DefinedAtom::typeCode;
+    });
+  }
+
+private:
   // When loaded into memory, text section should be readable and executable.
   static const uint32_t characteristics =
       llvm::COFF::IMAGE_SCN_CNT_CODE | llvm::COFF::IMAGE_SCN_MEM_EXECUTE |
       llvm::COFF::IMAGE_SCN_MEM_READ;
-
-public:
-  TextSectionChunk(const File &linkedFile, SectionHeaderTableChunk *table)
-      : SectionChunk(table, ".text", characteristics) {
-    // The text section should be aligned to disk sector.
-    _align = SECTOR_SIZE;
-
-    // Extract executable atoms from the linked file and append them to this
-    // section.
-    for (const DefinedAtom *atom : linkedFile.defined()) {
-      assert(atom->sectionChoice() == DefinedAtom::sectionBasedOnContent);
-      if (atom->contentType() == DefinedAtom::typeCode)
-        appendAtom(atom);
-    }
-
-    // Now that we have a list of atoms that to be written in this section, and
-    // we know the size of the section.
-    _sectionHeader.VirtualSize = _size;
-    _sectionHeader.SizeOfRawData = _size;
-  }
 };
 
 // \brief A RDataSectionChunk represents a .rdata section.
 class RDataSectionChunk : public SectionChunk {
+public:
+  RDataSectionChunk(const File &linkedFile, SectionHeaderTableChunk *table)
+      : SectionChunk(table, ".rdata", characteristics) {
+    buildContents(linkedFile, [](const DefinedAtom *atom) {
+      return (atom->contentType() == DefinedAtom::typeData &&
+              atom->permissions() == DefinedAtom::permR__);
+    });
+  }
+
+private:
   // When loaded into memory, rdata section should be readable.
   static const uint32_t characteristics =
       llvm::COFF::IMAGE_SCN_MEM_READ |
       llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA;
-
-public:
-  RDataSectionChunk(const File &linkedFile, SectionHeaderTableChunk *table)
-      : SectionChunk(table, ".rdata", characteristics) {
-    // The data section should be aligned to disk sector.
-    _align = SECTOR_SIZE;
-
-    // Extract executable atoms from the linked file and append them to this
-    // section.
-    for (const DefinedAtom *atom : linkedFile.defined()) {
-      assert(atom->sectionChoice() == DefinedAtom::sectionBasedOnContent);
-      if (atom->contentType() == DefinedAtom::typeData &&
-          atom->permissions() == DefinedAtom::permR__)
-        appendAtom(atom);
-    }
-
-    // Now that we have a list of atoms that to be written in this section, and
-    // we know the size of the section.
-    _sectionHeader.VirtualSize = _size;
-    _sectionHeader.SizeOfRawData = _size;
-  }
 };
 
 // \brief A DataSectionChunk represents a .data section.
 class DataSectionChunk : public SectionChunk {
+public:
+  DataSectionChunk(const File &linkedFile, SectionHeaderTableChunk *table)
+      : SectionChunk(table, ".data", characteristics) {
+    buildContents(linkedFile, [](const DefinedAtom *atom) {
+      return (atom->contentType() == DefinedAtom::typeData &&
+              atom->permissions() == DefinedAtom::permRW_);
+    });
+  }
+
+private:
   // When loaded into memory, data section should be readable and writable.
   static const uint32_t characteristics =
       llvm::COFF::IMAGE_SCN_MEM_READ |
       llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
       llvm::COFF::IMAGE_SCN_MEM_WRITE;
-
-public:
-  DataSectionChunk(const File &linkedFile, SectionHeaderTableChunk *table)
-      : SectionChunk(table, ".data", characteristics) {
-    // The data section should be aligned to disk sector.
-    _align = SECTOR_SIZE;
-
-    // Extract executable atoms from the linked file and append them to this
-    // section.
-    for (const DefinedAtom *atom : linkedFile.defined()) {
-      assert(atom->sectionChoice() == DefinedAtom::sectionBasedOnContent);
-      if (atom->contentType() == DefinedAtom::typeData &&
-          atom->permissions() == DefinedAtom::permRW_)
-        appendAtom(atom);
-    }
-
-    // Now that we have a list of atoms that to be written in this section, and
-    // we know the size of the section.
-    _sectionHeader.VirtualSize = _size;
-    _sectionHeader.SizeOfRawData = _size;
-  }
 };
 
 };  // end anonymous namespace
