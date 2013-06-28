@@ -1,5 +1,6 @@
-; RUN: llc -march=ppc32 < %s -o - | grep "__stack_chk_guard"
-; RUN: llc -march=ppc32 < %s -o - | grep "__stack_chk_fail"
+; RUN: llc -march=ppc32 -mtriple=ppc32-unknown-linux < %s | FileCheck %s
+; CHECK: __stack_chk_guard
+; CHECK: __stack_chk_fail
 
 @"\01LC" = internal constant [11 x i8] c"buf == %s\0A\00"		; <[11 x i8]*> [#uses=1]
 
