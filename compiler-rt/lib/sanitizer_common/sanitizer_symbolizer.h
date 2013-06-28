@@ -74,7 +74,9 @@ bool IsSymbolizerAvailable();
 void FlushSymbolizer();  // releases internal caches (if any)
 
 // Attempts to demangle the provided C++ mangled name.
-const char *Demangle(const char *Name);
+const char *Demangle(const char *name);
+// Attempts to demangle the name via __cxa_demangle from __cxxabiv1.
+const char *DemangleCXXABI(const char *name);
 
 // Starts external symbolizer program in a subprocess. Sanitizer communicates
 // with external symbolizer via pipes.
