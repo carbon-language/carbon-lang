@@ -162,7 +162,7 @@ namespace __sanitizer {
       return 0;
   }
 
-#ifdef SANITIZER_LINUX
+#if SANITIZER_LINUX
   unsigned struct_user_regs_struct_sz = sizeof(struct user_regs_struct);
   unsigned struct_user_fpregs_struct_sz = sizeof(struct user_fpregs_struct);
 #if __WORDSIZE == 64

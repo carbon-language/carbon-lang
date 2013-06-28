@@ -180,7 +180,7 @@ namespace __sanitizer {
     char **h_addr_list;
   };
 
-#ifdef SANITIZER_LINUX
+#if SANITIZER_LINUX
   extern unsigned struct_user_regs_struct_sz;
   extern unsigned struct_user_fpregs_struct_sz;
   extern unsigned struct_user_fpxregs_struct_sz;
