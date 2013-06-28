@@ -141,7 +141,7 @@ TEST(InstructionsTest, VectorGep) {
 
   // Type Definitions
   PointerType *Ptri8Ty = PointerType::get(IntegerType::get(C, 8), 0);
-  PointerType *Ptri32Ty = PointerType::get(IntegerType::get(C, 8), 0);
+  PointerType *Ptri32Ty = PointerType::get(IntegerType::get(C, 32), 0);
 
   VectorType *V2xi8PTy = VectorType::get(Ptri8Ty, 2);
   VectorType *V2xi32PTy = VectorType::get(Ptri32Ty, 2);
