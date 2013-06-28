@@ -48,6 +48,9 @@ public:
   };
 
   LLVMSymbolizer(const Options &Opts = Options()) : Opts(Opts) {}
+  ~LLVMSymbolizer() {
+    flush();
+  }
 
   // Returns the result of symbolization for module name/offset as
   // a string (possibly containing newlines).

@@ -202,6 +202,8 @@ std::string LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
 void LLVMSymbolizer::flush() {
   DeleteContainerSeconds(Modules);
   DeleteContainerPointers(ParsedBinariesAndObjects);
+  BinaryForPath.clear();
+  ObjectFileForArch.clear();
 }
 
 static std::string getDarwinDWARFResourceForPath(const std::string &Path) {
