@@ -36,7 +36,11 @@ enum NodeType {
   DeclareRet,
   DeclareScalarRet,
   LoadParam,
+  LoadParamV2,
+  LoadParamV4,
   StoreParam,
+  StoreParamV2,
+  StoreParamV4,
   StoreParamS32, // to sext and store a <32bit value, not used currently
   StoreParamU32, // to zext and store a <32bit value, not used currently
   MoveToParam,
@@ -54,6 +58,8 @@ enum NodeType {
   MoveRetval,
   MoveToRetval,
   StoreRetval,
+  StoreRetvalV2,
+  StoreRetvalV4,
   PseudoUseParam,
   RETURN,
   CallSeqBegin,

@@ -210,8 +210,16 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "NVPTXISD::PrintCall";
   case NVPTXISD::LoadParam:
     return "NVPTXISD::LoadParam";
+  case NVPTXISD::LoadParamV2:
+    return "NVPTXISD::LoadParamV2";
+  case NVPTXISD::LoadParamV4:
+    return "NVPTXISD::LoadParamV4";
   case NVPTXISD::StoreParam:
     return "NVPTXISD::StoreParam";
+  case NVPTXISD::StoreParamV2:
+    return "NVPTXISD::StoreParamV2";
+  case NVPTXISD::StoreParamV4:
+    return "NVPTXISD::StoreParamV4";
   case NVPTXISD::StoreParamS32:
     return "NVPTXISD::StoreParamS32";
   case NVPTXISD::StoreParamU32:
@@ -242,6 +250,10 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "NVPTXISD::MoveToRetval";
   case NVPTXISD::StoreRetval:
     return "NVPTXISD::StoreRetval";
+  case NVPTXISD::StoreRetvalV2:
+    return "NVPTXISD::StoreRetvalV2";
+  case NVPTXISD::StoreRetvalV4:
+    return "NVPTXISD::StoreRetvalV4";
   case NVPTXISD::PseudoUseParam:
     return "NVPTXISD::PseudoUseParam";
   case NVPTXISD::RETURN:

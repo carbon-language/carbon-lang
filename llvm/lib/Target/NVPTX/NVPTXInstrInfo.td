@@ -1751,9 +1751,13 @@ def SDTDeclareParamProfile : SDTypeProfile<0, 3, [SDTCisInt<0>, SDTCisInt<1>,
 def SDTDeclareScalarParamProfile : SDTypeProfile<0, 3, [SDTCisInt<0>,
   SDTCisInt<1>, SDTCisInt<2>]>;
 def SDTLoadParamProfile : SDTypeProfile<1, 2, [SDTCisInt<1>, SDTCisInt<2>]>;
+def SDTLoadParamV2Profile : SDTypeProfile<2, 2, [SDTCisSameAs<0, 1>, SDTCisInt<2>, SDTCisInt<3>]>;
+def SDTLoadParamV4Profile : SDTypeProfile<4, 2, [SDTCisInt<4>, SDTCisInt<5>]>;
 def SDTPrintCallProfile : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 def SDTPrintCallUniProfile : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 def SDTStoreParamProfile : SDTypeProfile<0, 3, [SDTCisInt<0>, SDTCisInt<1>]>;
+def SDTStoreParamV2Profile : SDTypeProfile<0, 4, [SDTCisInt<0>, SDTCisInt<1>]>;
+def SDTStoreParamV4Profile : SDTypeProfile<0, 6, [SDTCisInt<0>, SDTCisInt<1>]>;
 def SDTStoreParam32Profile : SDTypeProfile<0, 3, [SDTCisInt<0>, SDTCisInt<1>]>;
 def SDTCallArgProfile : SDTypeProfile<0, 2, [SDTCisInt<0>]>;
 def SDTCallArgMarkProfile : SDTypeProfile<0, 0, []>;
@@ -1762,6 +1766,8 @@ def SDTCallValProfile : SDTypeProfile<1, 0, []>;
 def SDTMoveParamProfile : SDTypeProfile<1, 1, []>;
 def SDTMoveRetvalProfile : SDTypeProfile<0, 1, []>;
 def SDTStoreRetvalProfile : SDTypeProfile<0, 2, [SDTCisInt<0>]>;
+def SDTStoreRetvalV2Profile : SDTypeProfile<0, 3, [SDTCisInt<0>]>;
+def SDTStoreRetvalV4Profile : SDTypeProfile<0, 5, [SDTCisInt<0>]>;
 def SDTPseudoUseParamProfile : SDTypeProfile<0, 1, []>;
 
 def DeclareParam : SDNode<"NVPTXISD::DeclareParam", SDTDeclareParamProfile,
@@ -1776,12 +1782,20 @@ def DeclareRet   : SDNode<"NVPTXISD::DeclareRet", SDTDeclareScalarParamProfile,
                        [SDNPHasChain, SDNPOutGlue, SDNPInGlue, SDNPSideEffect]>;
 def LoadParam    : SDNode<"NVPTXISD::LoadParam", SDTLoadParamProfile,
                          [SDNPHasChain, SDNPMayLoad, SDNPOutGlue, SDNPInGlue]>;
+def LoadParamV2  : SDNode<"NVPTXISD::LoadParamV2", SDTLoadParamV2Profile,
+                         [SDNPHasChain, SDNPMayLoad, SDNPOutGlue, SDNPInGlue]>;
+def LoadParamV4  : SDNode<"NVPTXISD::LoadParamV4", SDTLoadParamV4Profile,
+                         [SDNPHasChain, SDNPMayLoad, SDNPOutGlue, SDNPInGlue]>;
 def PrintCall    : SDNode<"NVPTXISD::PrintCall", SDTPrintCallProfile,
                        [SDNPHasChain, SDNPOutGlue, SDNPInGlue, SDNPSideEffect]>;
 def PrintCallUni : SDNode<"NVPTXISD::PrintCallUni", SDTPrintCallUniProfile,
                        [SDNPHasChain, SDNPOutGlue, SDNPInGlue, SDNPSideEffect]>;
 def StoreParam   : SDNode<"NVPTXISD::StoreParam", SDTStoreParamProfile,
                        [SDNPHasChain, SDNPOutGlue, SDNPInGlue, SDNPSideEffect]>;
+def StoreParamV2 : SDNode<"NVPTXISD::StoreParamV2", SDTStoreParamV2Profile,
+                         [SDNPHasChain, SDNPOutGlue, SDNPInGlue, SDNPSideEffect]>;
+def StoreParamV4 : SDNode<"NVPTXISD::StoreParamV4", SDTStoreParamV4Profile,
+                         [SDNPHasChain, SDNPOutGlue, SDNPInGlue, SDNPSideEffect]>;
 def StoreParamU32 : SDNode<"NVPTXISD::StoreParamU32", SDTStoreParam32Profile,
                        [SDNPHasChain, SDNPOutGlue, SDNPInGlue, SDNPSideEffect]>;
 def StoreParamS32 : SDNode<"NVPTXISD::StoreParamS32", SDTStoreParam32Profile,
@@ -1808,6 +1822,10 @@ def MoveRetval   : SDNode<"NVPTXISD::MoveRetval", SDTMoveRetvalProfile,
                          [SDNPHasChain, SDNPSideEffect]>;
 def StoreRetval  : SDNode<"NVPTXISD::StoreRetval", SDTStoreRetvalProfile,
                          [SDNPHasChain, SDNPSideEffect]>;
+def StoreRetvalV2  : SDNode<"NVPTXISD::StoreRetvalV2", SDTStoreRetvalV2Profile,
+                           [SDNPHasChain, SDNPSideEffect]>;
+def StoreRetvalV4  : SDNode<"NVPTXISD::StoreRetvalV4", SDTStoreRetvalV4Profile,
+                           [SDNPHasChain, SDNPSideEffect]>;
 def MoveToRetval : SDNode<"NVPTXISD::MoveToRetval", SDTStoreRetvalProfile,
                          [SDNPHasChain, SDNPSideEffect]>;
 def PseudoUseParam : SDNode<"NVPTXISD::PseudoUseParam",
@@ -1828,11 +1846,42 @@ class LoadParamRegInst<NVPTXRegClass regclass, string opstr> :
                 "\t$dst, retval$b;"),
                 [(set regclass:$dst, (LoadParam (i32 0), (i32 imm:$b)))]>;
 
+// FIXME: A bug in tablegen currently prevents us from using multi-output
+// patterns here, so we have to custom select these in C++.
+class LoadParamV2MemInst<NVPTXRegClass regclass, string opstr> :
+      NVPTXInst<(outs regclass:$dst, regclass:$dst2), (ins i32imm:$b),
+                !strconcat(!strconcat("ld.param.v2", opstr),
+                "\t{{$dst, $dst2}}, [retval0+$b];"), []>;
+
+class LoadParamV4MemInst<NVPTXRegClass regclass, string opstr> :
+      NVPTXInst<(outs regclass:$dst, regclass:$dst2, regclass:$dst3,
+                      regclass:$dst4),
+                (ins i32imm:$b),
+                !strconcat(!strconcat("ld.param.v4", opstr),
+                "\t{{$dst, $dst2, $dst3, $dst4}}, [retval0+$b];"), []>;
+
 class StoreParamInst<NVPTXRegClass regclass, string opstr> :
       NVPTXInst<(outs), (ins regclass:$val, i32imm:$a, i32imm:$b),
                 !strconcat(!strconcat("st.param", opstr),
                 "\t[param$a+$b], $val;"),
                 [(StoreParam (i32 imm:$a), (i32 imm:$b), regclass:$val)]>;
+
+class StoreParamV2Inst<NVPTXRegClass regclass, string opstr> :
+      NVPTXInst<(outs), (ins regclass:$val, regclass:$val2,
+                             i32imm:$a, i32imm:$b),
+                !strconcat(!strconcat("st.param.v2", opstr),
+                "\t[param$a+$b], {{$val, $val2}};"),
+                [(StoreParamV2 (i32 imm:$a), (i32 imm:$b), regclass:$val,
+                               regclass:$val2)]>;
+
+class StoreParamV4Inst<NVPTXRegClass regclass, string opstr> :
+      NVPTXInst<(outs), (ins regclass:$val, regclass:$val1, regclass:$val2,
+                             regclass:$val3, i32imm:$a, i32imm:$b),
+                !strconcat(!strconcat("st.param.v4", opstr),
+                "\t[param$a+$b], {{$val, $val2, $val3, $val4}};"),
+                [(StoreParamV4 (i32 imm:$a), (i32 imm:$b), regclass:$val,
+                               regclass:$val2, regclass:$val3,
+                               regclass:$val4)]>;
 
 class MoveToParamInst<NVPTXRegClass regclass, string opstr> :
       NVPTXInst<(outs), (ins regclass:$val, i32imm:$a, i32imm:$b),
@@ -1845,6 +1894,21 @@ class StoreRetvalInst<NVPTXRegClass regclass, string opstr> :
                 !strconcat(!strconcat("st.param", opstr),
                 "\t[func_retval0+$a], $val;"),
                 [(StoreRetval (i32 imm:$a), regclass:$val)]>;
+
+class StoreRetvalV2Inst<NVPTXRegClass regclass, string opstr> :
+      NVPTXInst<(outs), (ins regclass:$val, regclass:$val2, i32imm:$a),
+                !strconcat(!strconcat("st.param.v2", opstr),
+                "\t[func_retval0+$a], {{$val, $val2}};"),
+                [(StoreRetvalV2 (i32 imm:$a), regclass:$val, regclass:$val2)]>;
+
+class StoreRetvalV4Inst<NVPTXRegClass regclass, string opstr> :
+      NVPTXInst<(outs),
+                (ins regclass:$val, regclass:$val2, regclass:$val3,
+                     regclass:$val4, i32imm:$a),
+                !strconcat(!strconcat("st.param.v4", opstr),
+                "\t[func_retval0+$a], {{$val, $val2, $val3, $val4}};"),
+                [(StoreRetvalV4 (i32 imm:$a), regclass:$val, regclass:$val2,
+                                              regclass:$val3, regclass:$val4)]>;
 
 class MoveToRetvalInst<NVPTXRegClass regclass, string opstr> :
       NVPTXInst<(outs), (ins i32imm:$num, regclass:$val),
@@ -1920,6 +1984,13 @@ def LoadParamMemI64    : LoadParamMemInst<Int64Regs, ".b64">;
 def LoadParamMemI32    : LoadParamMemInst<Int32Regs, ".b32">;
 def LoadParamMemI16    : LoadParamMemInst<Int16Regs, ".b16">;
 def LoadParamMemI8     : LoadParamMemInst<Int8Regs, ".b8">;
+def LoadParamMemV2I64    : LoadParamV2MemInst<Int64Regs, ".b64">;
+def LoadParamMemV2I32    : LoadParamV2MemInst<Int32Regs, ".b32">;
+def LoadParamMemV2I16    : LoadParamV2MemInst<Int16Regs, ".b16">;
+def LoadParamMemV2I8     : LoadParamV2MemInst<Int8Regs, ".b8">;
+def LoadParamMemV4I32    : LoadParamV4MemInst<Int32Regs, ".b32">;
+def LoadParamMemV4I16    : LoadParamV4MemInst<Int16Regs, ".b16">;
+def LoadParamMemV4I8     : LoadParamV4MemInst<Int8Regs, ".b8">;
 
 //def LoadParamMemI16    : NVPTXInst<(outs Int16Regs:$dst), (ins i32imm:$b),
 //                !strconcat("ld.param.b32\ttemp_param_reg, [retval0+$b];\n\t",
@@ -1932,6 +2003,9 @@ def LoadParamMemI8     : LoadParamMemInst<Int8Regs, ".b8">;
 
 def LoadParamMemF32    : LoadParamMemInst<Float32Regs, ".f32">;
 def LoadParamMemF64    : LoadParamMemInst<Float64Regs, ".f64">;
+def LoadParamMemV2F32    : LoadParamV2MemInst<Float32Regs, ".f32">;
+def LoadParamMemV2F64    : LoadParamV2MemInst<Float64Regs, ".f64">;
+def LoadParamMemV4F32    : LoadParamV4MemInst<Float32Regs, ".f32">;
 
 def LoadParamRegI64    : LoadParamRegInst<Int64Regs, ".b64">;
 def LoadParamRegI32    : LoadParamRegInst<Int32Regs, ".b32">;
@@ -1961,6 +2035,47 @@ def StoreParamI8     : NVPTXInst<(outs),
                        [(StoreParam
                          (i32 imm:$a), (i32 imm:$b), Int8Regs:$val)]>;
 
+def StoreParamV2I64    : StoreParamV2Inst<Int64Regs, ".b64">;
+def StoreParamV2I32    : StoreParamV2Inst<Int32Regs, ".b32">;
+
+def StoreParamV2I16    : NVPTXInst<(outs), (ins Int16Regs:$val, Int16Regs:$val2,
+                                                i32imm:$a, i32imm:$b),
+                       "st.param.v2.b16\t[param$a+$b], {{$val, $val2}};",
+                       [(StoreParamV2 (i32 imm:$a), (i32 imm:$b),
+                                      Int16Regs:$val, Int16Regs:$val2)]>;
+
+def StoreParamV2I8     : NVPTXInst<(outs), (ins Int8Regs:$val, Int8Regs:$val2,
+                                                i32imm:$a, i32imm:$b),
+                       "st.param.v2.b8\t[param$a+$b], {{$val, $val2}};",
+                       [(StoreParamV2 (i32 imm:$a), (i32 imm:$b),
+                                       Int8Regs:$val, Int8Regs:$val2)]>;
+
+// FIXME: StoreParamV4Inst crashes llvm-tblgen :(
+//def StoreParamV4I32    : StoreParamV4Inst<Int32Regs, ".b32">;
+def StoreParamV4I32    : NVPTXInst<(outs), (ins Int32Regs:$val, Int32Regs:$val2,
+                                               Int32Regs:$val3, Int32Regs:$val4,
+                                                i32imm:$a, i32imm:$b),
+                   "st.param.b32\t[param$a+$b], {{$val, $val2, $val3, $val4}};",
+                         [(StoreParamV4 (i32 imm:$a), (i32 imm:$b),
+                          Int32Regs:$val, Int32Regs:$val2,
+                          Int32Regs:$val3, Int32Regs:$val4)]>;
+
+def StoreParamV4I16    : NVPTXInst<(outs), (ins Int16Regs:$val, Int16Regs:$val2,
+                                               Int16Regs:$val3, Int16Regs:$val4,
+                                                i32imm:$a, i32imm:$b),
+                "st.param.v4.b16\t[param$a+$b], {{$val, $val2, $val3, $val4}};",
+                         [(StoreParamV4 (i32 imm:$a), (i32 imm:$b),
+                          Int16Regs:$val, Int16Regs:$val2,
+                          Int16Regs:$val3, Int16Regs:$val4)]>;
+
+def StoreParamV4I8     : NVPTXInst<(outs), (ins Int8Regs:$val, Int8Regs:$val2,
+                                                Int8Regs:$val3, Int8Regs:$val4,
+                                                i32imm:$a, i32imm:$b),
+                 "st.param.v4.b8\t[param$a+$b], {{$val, $val2, $val3, $val4}};",
+                         [(StoreParamV4 (i32 imm:$a), (i32 imm:$b),
+                          Int8Regs:$val, Int8Regs:$val2,
+                          Int8Regs:$val3, Int8Regs:$val4)]>;
+
 def StoreParamS32I16 : NVPTXInst<(outs),
   (ins Int16Regs:$val, i32imm:$a, i32imm:$b),
                  !strconcat("cvt.s32.s16\ttemp_param_reg, $val;\n\t",
@@ -1985,6 +2100,18 @@ def StoreParamS32I8   : NVPTXInst<(outs),
 
 def StoreParamF32    : StoreParamInst<Float32Regs, ".f32">;
 def StoreParamF64    : StoreParamInst<Float64Regs, ".f64">;
+def StoreParamV2F32    : StoreParamV2Inst<Float32Regs, ".f32">;
+def StoreParamV2F64    : StoreParamV2Inst<Float64Regs, ".f64">;
+// FIXME: StoreParamV4Inst crashes llvm-tblgen :(
+//def StoreParamV4F32    : StoreParamV4Inst<Float32Regs, ".f32">;
+def StoreParamV4F32    : NVPTXInst<(outs),
+                                   (ins Float32Regs:$val, Float32Regs:$val2,
+                                        Float32Regs:$val3, Float32Regs:$val4,
+                                        i32imm:$a, i32imm:$b),
+                "st.param.v4.f32\t[param$a+$b], {{$val, $val2, $val3, $val4}};",
+                        [(StoreParamV4 (i32 imm:$a), (i32 imm:$b),
+                         Float32Regs:$val, Float32Regs:$val2,
+                         Float32Regs:$val3, Float32Regs:$val4)]>;
 
 def MoveToParamI64   : MoveToParamInst<Int64Regs, ".b64">;
 def MoveToParamI32   : MoveToParamInst<Int32Regs, ".b32">;
@@ -2005,6 +2132,13 @@ def StoreRetvalI64    : StoreRetvalInst<Int64Regs, ".b64">;
 def StoreRetvalI32    : StoreRetvalInst<Int32Regs, ".b32">;
 def StoreRetvalI16    : StoreRetvalInst<Int16Regs, ".b16">;
 def StoreRetvalI8     : StoreRetvalInst<Int8Regs, ".b8">;
+def StoreRetvalV2I64  : StoreRetvalV2Inst<Int64Regs, ".b64">;
+def StoreRetvalV2I32  : StoreRetvalV2Inst<Int32Regs, ".b32">;
+def StoreRetvalV2I16  : StoreRetvalV2Inst<Int16Regs, ".b16">;
+def StoreRetvalV2I8   : StoreRetvalV2Inst<Int8Regs, ".b8">;
+def StoreRetvalV4I32  : StoreRetvalV4Inst<Int32Regs, ".b32">;
+def StoreRetvalV4I16  : StoreRetvalV4Inst<Int16Regs, ".b16">;
+def StoreRetvalV4I8   : StoreRetvalV4Inst<Int8Regs, ".b8">;
 
 //def StoreRetvalI16    : NVPTXInst<(outs), (ins Int16Regs:$val, i32imm:$a),
 //     !strconcat("\{\n\t",
@@ -2021,6 +2155,9 @@ def StoreRetvalI8     : StoreRetvalInst<Int8Regs, ".b8">;
 
 def StoreRetvalF64    : StoreRetvalInst<Float64Regs, ".f64">;
 def StoreRetvalF32    : StoreRetvalInst<Float32Regs, ".f32">;
+def StoreRetvalV2F64  : StoreRetvalV2Inst<Float64Regs, ".f64">;
+def StoreRetvalV2F32  : StoreRetvalV2Inst<Float32Regs, ".f32">;
+def StoreRetvalV4F32  : StoreRetvalV4Inst<Float32Regs, ".f32">;
 
 def MoveRetvalI64    : MoveRetvalInst<Int64Regs, ".b64">;
 def MoveRetvalI32    : MoveRetvalInst<Int32Regs, ".b32">;
