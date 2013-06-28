@@ -42,8 +42,11 @@ INTERCEPTOR(malloc_zone_t *, malloc_create_zone,
                              vm_size_t start_size, unsigned zone_flags) {
   if (!asan_inited) __asan_init();
   GET_STACK_TRACE_MALLOC;
+  uptr page_size = GetPageSizeCached();
+  uptr allocated_size = RoundUpTo(sizeof(asan_zone), page_size);
   malloc_zone_t *new_zone =
-      (malloc_zone_t*)asan_malloc(sizeof(asan_zone), &stack);
+      (malloc_zone_t*)asan_memalign(page_size, allocated_size,
+                                    &stack, FROM_MALLOC);
   internal_memcpy(new_zone, &asan_zone, sizeof(asan_zone));
   new_zone->zone_name = NULL;  // The name will be changed anyway.
   return new_zone;
