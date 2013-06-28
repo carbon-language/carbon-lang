@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLD_READER_WRITER_PE_COFF_ATOMS_H_
+#define LLD_READER_WRITER_PE_COFF_ATOMS_H_
+
 #include "lld/Core/File.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/COFF.h"
@@ -239,3 +242,5 @@ void connectAtomsWithLayoutEdge(std::vector<T *> &atoms) {
 
 } // namespace coff
 } // namespace lld
+
+#endif
