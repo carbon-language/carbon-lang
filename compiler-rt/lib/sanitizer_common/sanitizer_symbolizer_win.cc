@@ -35,8 +35,8 @@ void SymbolizerPrepareForSandboxing() {
   // Do nothing on Windows.
 }
 
-const char *Demangle(const char *MangledName) {
-  return MangledName;
+const char *DemangleCXXABI(const char *name) {
+  return name;
 }
 
 }  // namespace __sanitizer
