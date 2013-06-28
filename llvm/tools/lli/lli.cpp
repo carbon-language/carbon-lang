@@ -45,6 +45,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Instrumentation.h"
 #include <cerrno>
 
 #ifdef __CYGWIN__
@@ -69,6 +70,10 @@ namespace {
 
   cl::opt<bool> UseMCJIT(
     "use-mcjit", cl::desc("Enable use of the MC-based JIT (if available)"),
+    cl::init(false));
+
+  cl::opt<bool> DebugIR(
+    "debug-ir", cl::desc("Generate debug information to allow debugging IR."),
     cl::init(false));
 
   // The MCJIT supports building for a target address space separate from
@@ -319,6 +324,17 @@ int main(int argc, char **argv, char * const *envp) {
       errs() << "Reason: " << ErrorMsg << "\n";
       exit(1);
     }
+  }
+
+  if (DebugIR) {
+    if (!UseMCJIT) {
+      errs() << "warning: -debug-ir used without -use-mcjit. Only partial debug"
+        << " information will be emitted by the non-MC JIT engine. To see full"
+        << " source debug information, enable the flag '-use-mcjit'.\n";
+
+    }
+    ModulePass *DebugIRPass = createDebugIRPass();
+    DebugIRPass->runOnModule(*Mod);
   }
 
   EngineBuilder builder(Mod);

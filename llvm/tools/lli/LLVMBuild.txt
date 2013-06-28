@@ -19,4 +19,4 @@
 type = Tool
 name = lli
 parent = Tools
-required_libraries = AsmParser BitReader IRReader Interpreter JIT MCJIT NativeCodeGen SelectionDAG Native
+required_libraries = AsmParser BitReader IRReader Instrumentation Interpreter JIT MCJIT NativeCodeGen SelectionDAG Native
