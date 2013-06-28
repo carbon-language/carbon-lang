@@ -946,7 +946,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
     int ix = FTy->getNumParams();
     // See if we can optimize any arguments passed through the varargs area of
     // the call.
-    for (CallSite::arg_iterator I = CS.arg_begin()+FTy->getNumParams(),
+    for (CallSite::arg_iterator I = CS.arg_begin() + FTy->getNumParams(),
            E = CS.arg_end(); I != E; ++I, ++ix) {
       CastInst *CI = dyn_cast<CastInst>(*I);
       if (CI && isSafeToEliminateVarargsCast(CS, CI, TD, ix)) {
@@ -1036,7 +1036,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
               return false;
   }
 
-  unsigned NumActualArgs = unsigned(CS.arg_end()-CS.arg_begin());
+  unsigned NumActualArgs = CS.arg_size();
   unsigned NumCommonArgs = std::min(FT->getNumParams(), NumActualArgs);
 
   CallSite::arg_iterator AI = CS.arg_begin();
@@ -1287,7 +1287,7 @@ InstCombiner::transformCallThroughTrampoline(CallSite CS,
     if (NestTy) {
       Instruction *Caller = CS.getInstruction();
       std::vector<Value*> NewArgs;
-      NewArgs.reserve(unsigned(CS.arg_end()-CS.arg_begin())+1);
+      NewArgs.reserve(CS.arg_size() + 1);
 
       SmallVector<AttributeSet, 8> NewAttrs;
       NewAttrs.reserve(Attrs.getNumSlots() + 1);
