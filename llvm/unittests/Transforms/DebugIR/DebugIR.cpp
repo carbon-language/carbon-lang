@@ -32,6 +32,14 @@
 
 #include "gtest/gtest.h"
 
+#if defined(LLVM_ON_WIN32)
+#include <direct.h>
+#define getcwd_impl _getcwd
+#elif defined (HAVE_GETCWD)
+#include <unistd.h>
+#define getcwd_impl getcwd
+#endif // LLVM_ON_WIN32
+
 using namespace llvm;
 using namespace std;
 
@@ -53,19 +61,21 @@ bool removeIfExists(StringRef Path) {
   return existed;
 }
 
+char * current_dir() {
+#if defined(LLVM_ON_WIN32) || defined(HAVE_GETCWD)
+  // calling getcwd (or _getcwd() on windows) with a null buffer makes it
+  // allocate a sufficiently sized buffer to store the current working dir.
+  return getcwd_impl(0, 0);
+#else
+  return 0;
+#endif
+}
+
 class TestDebugIR : public ::testing::Test, public TrivialModuleBuilder {
 protected:
   TestDebugIR()
       : TrivialModuleBuilder(sys::getProcessTriple())
-#ifdef HAVE_GETCWD
-        ,
-        cwd(get_current_dir_name())
-#else
-        ,
-        cwd(0)
-#endif
-        {
-  }
+      , cwd(current_dir()) {}
 
   ~TestDebugIR() { free(cwd); }
 
