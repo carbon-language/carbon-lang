@@ -110,6 +110,76 @@ namespace {
   }
 }
 
+static error_code createUniqueEntity(const Twine &Model, int &ResultFD,
+                                     SmallVectorImpl<char> &ResultPath,
+                                     bool MakeAbsolute, unsigned Mode,
+                                     FSEntity Type) {
+  SmallString<128> ModelStorage;
+  Model.toVector(ModelStorage);
+
+  if (MakeAbsolute) {
+    // Make model absolute by prepending a temp directory if it's not already.
+    bool absolute = sys::path::is_absolute(Twine(ModelStorage));
+    if (!absolute) {
+      SmallString<128> TDir;
+      if (error_code ec = TempDir(TDir)) return ec;
+      sys::path::append(TDir, Twine(ModelStorage));
+      ModelStorage.swap(TDir);
+    }
+  }
+
+  // From here on, DO NOT modify model. It may be needed if the randomly chosen
+  // path already exists.
+  ResultPath = ModelStorage;
+  // Null terminate.
+  ResultPath.push_back(0);
+  ResultPath.pop_back();
+
+retry_random_path:
+  // Replace '%' with random chars.
+  for (unsigned i = 0, e = ModelStorage.size(); i != e; ++i) {
+    if (ModelStorage[i] == '%')
+      ResultPath[i] = "0123456789abcdef"[sys::Process::GetRandomNumber() & 15];
+  }
+
+  // Try to open + create the file.
+  switch (Type) {
+  case FS_File: {
+    int RandomFD = ::open(ResultPath.begin(), O_RDWR | O_CREAT | O_EXCL, Mode);
+    if (RandomFD == -1) {
+      int SavedErrno = errno;
+      // If the file existed, try again, otherwise, error.
+      if (SavedErrno == errc::file_exists)
+        goto retry_random_path;
+      return error_code(SavedErrno, system_category());
+    }
+
+    ResultFD = RandomFD;
+    return error_code::success();
+  }
+
+  case FS_Name: {
+    bool Exists;
+    error_code EC = sys::fs::exists(ResultPath.begin(), Exists);
+    if (EC)
+      return EC;
+    if (Exists)
+      goto retry_random_path;
+    return error_code::success();
+  }
+
+  case FS_Dir: {
+    bool Existed;
+    error_code EC = sys::fs::create_directory(ResultPath.begin(), Existed);
+    if (EC)
+      return EC;
+    if (Existed)
+      goto retry_random_path;
+    return error_code::success();
+  }
+  }
+}
+
 namespace llvm {
 namespace sys  {
 namespace fs {
@@ -561,92 +631,6 @@ error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {
   Times[1] = Times[0];
   if (::futimes(FD, Times))
     return error_code(errno, system_category());
-  return error_code::success();
-}
-
-error_code unique_file(const Twine &model, int &result_fd,
-                       SmallVectorImpl<char> &result_path,
-                       bool makeAbsolute, unsigned mode) {
-  SmallString<128> Model;
-  model.toVector(Model);
-  // Null terminate.
-  Model.c_str();
-
-  if (makeAbsolute) {
-    // Make model absolute by prepending a temp directory if it's not already.
-    bool absolute = path::is_absolute(Twine(Model));
-    if (!absolute) {
-      SmallString<128> TDir;
-      if (error_code ec = TempDir(TDir)) return ec;
-      path::append(TDir, Twine(Model));
-      Model.swap(TDir);
-    }
-  }
-
-  // From here on, DO NOT modify model. It may be needed if the randomly chosen
-  // path already exists.
-  SmallString<128> RandomPath = Model;
-
-retry_random_path:
-  // Replace '%' with random chars.
-  for (unsigned i = 0, e = Model.size(); i != e; ++i) {
-    if (Model[i] == '%')
-      RandomPath[i] = "0123456789abcdef"[sys::Process::GetRandomNumber() & 15];
-  }
-
-  // Make sure we don't fall into an infinite loop by constantly trying
-  // to create the parent path.
-  bool TriedToCreateParent = false;
-
-  // Try to open + create the file.
-rety_open_create:
-  int RandomFD = ::open(RandomPath.c_str(), O_RDWR | O_CREAT | O_EXCL, mode);
-  if (RandomFD == -1) {
-    int SavedErrno = errno;
-    // If the file existed, try again, otherwise, error.
-    if (SavedErrno == errc::file_exists)
-      goto retry_random_path;
-    // If path prefix doesn't exist, try to create it.
-    if (SavedErrno == errc::no_such_file_or_directory && !TriedToCreateParent) {
-      TriedToCreateParent = true;
-      StringRef p(RandomPath);
-      SmallString<64> dir_to_create;
-      for (path::const_iterator i = path::begin(p),
-                                e = --path::end(p); i != e; ++i) {
-        path::append(dir_to_create, *i);
-        bool Exists;
-        if (error_code ec = exists(Twine(dir_to_create), Exists)) return ec;
-        if (!Exists) {
-          // Don't try to create network paths.
-          if (i->size() > 2 && (*i)[0] == '/' &&
-                               (*i)[1] == '/' &&
-                               (*i)[2] != '/')
-            return make_error_code(errc::no_such_file_or_directory);
-          if (::mkdir(dir_to_create.c_str(), 0700) == -1 &&
-              errno != errc::file_exists)
-            return error_code(errno, system_category());
-        }
-      }
-      goto rety_open_create;
-    }
-
-    return error_code(SavedErrno, system_category());
-  }
-
-   // Make the path absolute.
-  char real_path_buff[PATH_MAX + 1];
-  if (realpath(RandomPath.c_str(), real_path_buff) == NULL) {
-    int error = errno;
-    ::close(RandomFD);
-    ::unlink(RandomPath.c_str());
-    return error_code(error, system_category());
-  }
-
-  result_path.clear();
-  StringRef d(real_path_buff);
-  result_path.append(d.begin(), d.end());
-
-  result_fd = RandomFD;
   return error_code::success();
 }
 
