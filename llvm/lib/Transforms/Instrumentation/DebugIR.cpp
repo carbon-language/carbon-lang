@@ -37,7 +37,6 @@
 #include "DebugIR.h"
 
 #include <string>
-#include <unistd.h>
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
@@ -542,7 +541,6 @@ void DebugIR::writeDebugBitcode(const Module *M, int *fd) {
 
   M->print(*Out, 0);
   Out->close();
-  sync();
 }
 
 void DebugIR::createDebugInfo(Module &M, OwningPtr<Module> &DisplayM) {
