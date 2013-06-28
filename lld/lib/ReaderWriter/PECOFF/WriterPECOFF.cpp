@@ -56,6 +56,9 @@ const int PAGE_SIZE = 4096;
 // file.
 const int SECTOR_SIZE = 512;
 
+// The address of the executable when loaded into memory.
+const int32_t IMAGE_BASE = 0x400000;
+
 /// A Chunk is an abstrace contiguous range in an output file.
 class Chunk {
 public:
@@ -159,7 +162,7 @@ public:
 
     // The address of the executable when loaded into memory. The default for
     // DLLs is 0x10000000. The default for executables is 0x400000.
-    _peHeader.ImageBase = 0x400000;
+    _peHeader.ImageBase = IMAGE_BASE;
 
     // Sections should be page-aligned when loaded into memory, which is 4KB on
     // x86.
@@ -348,12 +351,24 @@ public:
           continue;
 
         switch (ref->kind()) {
+        case llvm::COFF::IMAGE_REL_I386_ABSOLUTE:
+          // This relocation is no-op.
+          break;
         case llvm::COFF::IMAGE_REL_I386_DIR32:
+          // Set target's 32-bit VA.
+          *relocSite = targetAddr + IMAGE_BASE;
+          break;
+        case llvm::COFF::IMAGE_REL_I386_DIR32NB:
+          // Set target's 32-bit RVA.
           *relocSite = targetAddr;
           break;
-        case llvm::COFF::IMAGE_REL_I386_REL32:
-          // TODO: Implement this relocation
+        case llvm::COFF::IMAGE_REL_I386_REL32: {
+          // Set 32-bit relative address of the target. This relocation is
+          // usually used for relative branch or call instruction.
+          uint32_t disp = atomToVirtualAddr[atom] + ref->offsetInAtom() + 4;
+          *relocSite = targetAddr - disp;
           break;
+        }
         default:
           llvm_unreachable("Unsupported relocation kind");
         }

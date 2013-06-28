@@ -18,9 +18,9 @@ AFTER: Disassembly of section .text:
 AFTER: .text:
 AFTER:     1000:       b8 00 00 00 00
 AFTER:     1005:       50
-AFTER:     1006:       68 00 20 00 00
-AFTER:     100b:       68 06 20 00 00
+AFTER:     1006:       68 00 20 40 00
+AFTER:     100b:       68 06 20 40 00
 AFTER:     1010:       50
-AFTER:     1011:       e8 00 00 00 00
+AFTER:     1011:       e8 ea ef ff ff
 AFTER:     1016:       50
-AFTER:     1017:       e8 00 00 00 00
+AFTER:     1017:       e8 e4 ef ff ff
