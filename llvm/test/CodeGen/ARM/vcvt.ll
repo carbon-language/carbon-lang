@@ -156,3 +156,44 @@ define <4 x i16> @vcvt_f32tof16(<4 x float>* %A) nounwind {
 
 declare <4 x float> @llvm.arm.neon.vcvthf2fp(<4 x i16>) nounwind readnone
 declare <4 x i16> @llvm.arm.neon.vcvtfp2hf(<4 x float>) nounwind readnone
+
+
+define <4 x i16> @fix_float_to_i16(<4 x float> %in) {
+; CHECK: fix_float_to_i16:
+; CHECK: vcvt.u32.f32 [[TMP:q[0-9]+]], {{q[0-9]+}}, #1
+; CHECK: vmovn.i32 {{d[0-9]+}}, [[TMP]]
+
+  %scale = fmul <4 x float> %in, <float 2.0, float 2.0, float 2.0, float 2.0>
+  %conv = fptoui <4 x float> %scale to <4 x i16>
+  ret <4 x i16> %conv
+}
+
+define <2 x i64> @fix_float_to_i64(<2 x float> %in) {
+; CHECK: fix_float_to_i64:
+; CHECK: bl
+; CHECK: bl
+
+  %scale = fmul <2 x float> %in, <float 2.0, float 2.0>
+  %conv = fptoui <2 x float> %scale to <2 x i64>
+  ret <2 x i64> %conv
+}
+
+define <4 x i16> @fix_double_to_i16(<4 x double> %in) {
+; CHECK: fix_double_to_i16:
+; CHECK: vcvt.s32.f64
+; CHECK: vcvt.s32.f64
+
+  %scale = fmul <4 x double> %in, <double 2.0, double 2.0, double 2.0, double 2.0>
+  %conv = fptoui <4 x double> %scale to <4 x i16>
+  ret <4 x i16> %conv
+}
+
+define <2 x i64> @fix_double_to_i64(<2 x double> %in) {
+; CHECK: fix_double_to_i64:
+; CHECK: bl
+; CHECK: bl
+  %scale = fmul <2 x double> %in, <double 2.0, double 2.0>
+  %conv = fptoui <2 x double> %scale to <2 x i64>
+  ret <2 x i64> %conv
+}
+

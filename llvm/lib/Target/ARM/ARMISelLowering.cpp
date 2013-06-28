@@ -9141,12 +9141,27 @@ static SDValue PerformVCVTCombine(SDNode *N,
       !isConstVecPow2(ConstVec, isSigned, C))
     return SDValue();
 
+  MVT FloatTy = Op.getSimpleValueType().getVectorElementType();
+  MVT IntTy = N->getSimpleValueType(0).getVectorElementType();
+  if (FloatTy.getSizeInBits() != 32 || IntTy.getSizeInBits() > 32) {
+    // These instructions only exist converting from f32 to i32. We can handle
+    // smaller integers by generating an extra truncate, but larger ones would
+    // be lossy.
+    return SDValue();
+  }
+
   unsigned IntrinsicOpcode = isSigned ? Intrinsic::arm_neon_vcvtfp2fxs :
     Intrinsic::arm_neon_vcvtfp2fxu;
-  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, SDLoc(N),
-                     N->getValueType(0),
-                     DAG.getConstant(IntrinsicOpcode, MVT::i32), N0,
-                     DAG.getConstant(Log2_64(C), MVT::i32));
+  unsigned NumLanes = Op.getValueType().getVectorNumElements();
+  SDValue FixConv =  DAG.getNode(ISD::INTRINSIC_WO_CHAIN, SDLoc(N),
+                                 NumLanes == 2 ? MVT::v2i32 : MVT::v4i32,
+                                 DAG.getConstant(IntrinsicOpcode, MVT::i32), N0,
+                                 DAG.getConstant(Log2_64(C), MVT::i32));
+
+  if (IntTy.getSizeInBits() < FloatTy.getSizeInBits())
+    FixConv = DAG.getNode(ISD::TRUNCATE, SDLoc(N), N->getValueType(0), FixConv);
+
+  return FixConv;
 }
 
 /// PerformVDIVCombine - VCVT (fixed-point to floating-point, Advanced SIMD)
@@ -9177,12 +9192,28 @@ static SDValue PerformVDIVCombine(SDNode *N,
       !isConstVecPow2(ConstVec, isSigned, C))
     return SDValue();
 
+  MVT FloatTy = N->getSimpleValueType(0).getVectorElementType();
+  MVT IntTy = Op.getOperand(0).getSimpleValueType().getVectorElementType();
+  if (FloatTy.getSizeInBits() != 32 || IntTy.getSizeInBits() > 32) {
+    // These instructions only exist converting from i32 to f32. We can handle
+    // smaller integers by generating an extra extend, but larger ones would
+    // be lossy.
+    return SDValue();
+  }
+
+  SDValue ConvInput = Op.getOperand(0);
+  unsigned NumLanes = Op.getValueType().getVectorNumElements();
+  if (IntTy.getSizeInBits() < FloatTy.getSizeInBits())
+    ConvInput = DAG.getNode(isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND,
+                            SDLoc(N), NumLanes == 2 ? MVT::v2i32 : MVT::v4i32,
+                            ConvInput);
+
   unsigned IntrinsicOpcode = isSigned ? Intrinsic::arm_neon_vcvtfxs2fp :
     Intrinsic::arm_neon_vcvtfxu2fp;
   return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, SDLoc(N),
                      Op.getValueType(),
                      DAG.getConstant(IntrinsicOpcode, MVT::i32),
-                     Op.getOperand(0), DAG.getConstant(Log2_64(C), MVT::i32));
+                     ConvInput, DAG.getConstant(Log2_64(C), MVT::i32));
 }
 
 /// Getvshiftimm - Check if this is a valid build_vector for the immediate
