@@ -1799,9 +1799,9 @@ struct LessRecordRegister {
 
       unsigned LHSVal, RHSVal;
       if (LHSPart.second.getAsInteger(10, LHSVal))
-        assert("Unable to convert LHS to integer.");
+        assert(0 && "Unable to convert LHS to integer.");
       if (RHSPart.second.getAsInteger(10, RHSVal))
-        assert("Unable to convert RHS to integer.");
+        assert(0 && "Unable to convert RHS to integer.");
       if (LHSVal != RHSVal)
         return LHSVal < RHSVal;
     }
