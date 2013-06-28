@@ -21,8 +21,6 @@ using llvm::object::COFFObjectFile;
 using llvm::object::coff_section;
 using llvm::object::coff_symbol;
 
-void connectAtomsWithLayoutEdge(std::vector<COFFDefinedAtom *>);
-
 /// A COFFReference represents relocation information for an atom. For
 /// example, if atom X has a reference to atom Y with offsetInAtom=8, that
 /// means that the address starting at 8th byte of the content of atom X needs
@@ -200,6 +198,44 @@ private:
   StringRef _sectionName;
   uint64_t _ordinal;
 };
+
+//===----------------------------------------------------------------------===//
+//
+// Utility functions to handle layout edges.
+//
+//===----------------------------------------------------------------------===//
+
+template<typename T, typename U>
+void addLayoutEdge(T *a, U *b, lld::Reference::Kind kind) {
+  auto ref = new COFFReference(kind);
+  ref->setTarget(b);
+  a->addReference(std::unique_ptr<COFFReference>(ref));
+}
+
+template<typename T, typename U>
+void connectWithLayoutEdge(T *a, U *b) {
+  addLayoutEdge(a, b, lld::Reference::kindLayoutAfter);
+  addLayoutEdge(b, a, lld::Reference::kindLayoutBefore);
+}
+
+/// Connect atoms with layout-{before,after} edges. It usually serves two
+/// purposes.
+///
+///   - To prevent atoms from being GC'ed (aka dead-stripped) if there is a
+///     reference to one of the atoms. In that case we want to emit all the
+///     atoms appeared in the same section, because the referenced "live" atom
+///     may reference other atoms in the same section. If we don't add layout
+///     edges between atoms, unreferenced atoms in the same section would be
+///     GC'ed.
+///   - To preserve the order of atmos. We want to emit the atoms in the
+///     same order as they appeared in the input object file.
+template<typename T>
+void connectAtomsWithLayoutEdge(std::vector<T *> &atoms) {
+  if (atoms.size() < 2)
+    return;
+  for (auto it = atoms.begin(), e = atoms.end(); it + 1 != e; ++it)
+    connectWithLayoutEdge(*it, *(it + 1));
+}
 
 } // namespace coff
 } // namespace lld

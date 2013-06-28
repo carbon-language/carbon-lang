@@ -1,5 +1,4 @@
 add_lld_library(lldPECOFF
-  Atoms.cpp
   PECOFFTargetInfo.cpp
   ReaderCOFF.cpp
   ReaderImportHeader.cpp
