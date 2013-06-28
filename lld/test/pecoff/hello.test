@@ -11,7 +11,7 @@ CHECK:     Number: 1
 CHECK:     Name: .text (2E 74 65 78 74 00 00 00)
 CHECK:     VirtualSize: 0x1C
 CHECK:     VirtualAddress: 0x1000
-CHECK:     RawDataSize: 28
+CHECK:     RawDataSize: 512
 CHECK:     PointerToRawData: 0x200
 CHECK:     PointerToRelocations: 0x0
 CHECK:     PointerToLineNumbers: 0x0
@@ -44,7 +44,7 @@ CHECK:     Number: 3
 CHECK:     Name: .data (2E 64 61 74 61 00 00 00)
 CHECK:     VirtualSize: 0x18
 CHECK:     VirtualAddress: 0x2000
-CHECK:     RawDataSize: 24
+CHECK:     RawDataSize: 512
 CHECK:     PointerToRawData: 0x400
 CHECK:     PointerToRelocations: 0x0
 CHECK:     PointerToLineNumbers: 0x0

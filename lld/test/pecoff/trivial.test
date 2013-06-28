@@ -66,7 +66,7 @@ SECTIONS:     Number: 1
 SECTIONS:     Name: .text (2E 74 65 78 74 00 00 00)
 SECTIONS:     VirtualSize: 0x6
 SECTIONS:     VirtualAddress: 0x1000
-SECTIONS:     RawDataSize: 6
+SECTIONS:     RawDataSize: 512
 SECTIONS:     PointerToRawData: 0x200
 SECTIONS:     PointerToRelocations: 0x0
 SECTIONS:     PointerToLineNumbers: 0x0

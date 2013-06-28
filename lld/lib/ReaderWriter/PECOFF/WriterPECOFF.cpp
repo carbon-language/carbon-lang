@@ -274,9 +274,10 @@ private:
 /// written to the raw data section.
 class SectionChunk : public Chunk {
 public:
+  /// Returns the size of the section on disk. The returned value is multiple
+  /// of disk sector, so the size may include the null padding at the end of
+  /// section.
   virtual uint64_t size() const {
-    // Round up to the nearest alignment border, so that the text segment ends
-    // at a border.
     return llvm::RoundUpToAlignment(_size, _align);
   }
 
@@ -379,9 +380,11 @@ protected:
     }
 
     // Now that we have a list of atoms that to be written in this section,
-    // and we know the size of the section.
+    // and we know the size of the section. Let's write them to the section
+    // header. VirtualSize should be the size of the actual content, and
+    // SizeOfRawData should be aligned to the section alignment.
     _sectionHeader.VirtualSize = _size;
-    _sectionHeader.SizeOfRawData = _size;
+    _sectionHeader.SizeOfRawData = size();
   }
 
 private:
