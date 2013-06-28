@@ -2406,6 +2406,64 @@ def F64toV2F32 : NVPTXInst<(outs Float32Regs:$d1, Float32Regs:$d2),
                            "mov.b64\t{{$d1, $d2}}, $s;",
                           []>;
 
+// Count leading zeros
+def CLZr32 : NVPTXInst<(outs Int32Regs:$d), (ins Int32Regs:$a),
+                       "clz.b32\t$d, $a;",
+                       []>;
+def CLZr64 : NVPTXInst<(outs Int32Regs:$d), (ins Int64Regs:$a),
+                       "clz.b64\t$d, $a;",
+                       []>;
+
+// 32-bit has a direct PTX instruction
+def : Pat<(ctlz Int32Regs:$a),
+          (CLZr32 Int32Regs:$a)>;
+def : Pat<(ctlz_zero_undef Int32Regs:$a),
+          (CLZr32 Int32Regs:$a)>;
+
+// For 64-bit, the result in PTX is actually 32-bit so we zero-extend
+// to 64-bit to match the LLVM semantics
+def : Pat<(ctlz Int64Regs:$a),
+          (CVT_u64_u32 (CLZr64 Int64Regs:$a), CvtNONE)>;
+def : Pat<(ctlz_zero_undef Int64Regs:$a),
+          (CVT_u64_u32 (CLZr64 Int64Regs:$a), CvtNONE)>;
+
+// For 16-bit, we zero-extend to 32-bit, then trunc the result back
+// to 16-bits (ctlz of a 16-bit value is guaranteed to require less
+// than 16 bits to store). We also need to subtract 16 because the
+// high-order 16 zeros were counted.
+def : Pat<(ctlz Int16Regs:$a),
+          (SUBi16ri (CVT_u16_u32 (CLZr32
+            (CVT_u32_u16 Int16Regs:$a, CvtNONE)),
+           CvtNONE), 16)>;
+def : Pat<(ctlz_zero_undef Int16Regs:$a),
+          (SUBi16ri (CVT_u16_u32 (CLZr32
+            (CVT_u32_u16 Int16Regs:$a, CvtNONE)),
+           CvtNONE), 16)>;
+
+// Population count
+def POPCr32 : NVPTXInst<(outs Int32Regs:$d), (ins Int32Regs:$a),
+                        "popc.b32\t$d, $a;",
+                        []>;
+def POPCr64 : NVPTXInst<(outs Int32Regs:$d), (ins Int64Regs:$a),
+                        "popc.b64\t$d, $a;",
+                        []>;
+
+// 32-bit has a direct PTX instruction
+def : Pat<(ctpop Int32Regs:$a),
+          (POPCr32 Int32Regs:$a)>;
+
+// For 64-bit, the result in PTX is actually 32-bit so we zero-extend
+// to 64-bit to match the LLVM semantics
+def : Pat<(ctpop Int64Regs:$a),
+          (CVT_u64_u32 (POPCr64 Int64Regs:$a), CvtNONE)>;
+
+// For 16-bit, we zero-extend to 32-bit, then trunc the result back
+// to 16-bits (ctpop of a 16-bit value is guaranteed to require less
+// than 16 bits to store)
+def : Pat<(ctpop Int16Regs:$a),
+          (CVT_u16_u32 (POPCr32 (CVT_u32_u16 Int16Regs:$a, CvtNONE)),
+           CvtNONE)>;
+
 // fround f64 -> f32
 def : Pat<(f32 (fround Float64Regs:$a)),
           (CVT_f32_f64 Float64Regs:$a, CvtRN_FTZ)>, Requires<[doF32FTZ]>;

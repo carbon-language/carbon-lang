@@ -216,6 +216,22 @@ NVPTXTargetLowering::NVPTXTargetLowering(NVPTXTargetMachine &TM)
   // Custom handling for i8 intrinsics
   setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::i8, Custom);
 
+  setOperationAction(ISD::CTLZ, MVT::i16, Legal);
+  setOperationAction(ISD::CTLZ, MVT::i32, Legal);
+  setOperationAction(ISD::CTLZ, MVT::i64, Legal);
+  setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i16, Legal);
+  setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i32, Legal);
+  setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64, Legal);
+  setOperationAction(ISD::CTTZ, MVT::i16, Expand);
+  setOperationAction(ISD::CTTZ, MVT::i32, Expand);
+  setOperationAction(ISD::CTTZ, MVT::i64, Expand);
+  setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i16, Expand);
+  setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i32, Expand);
+  setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64, Expand);
+  setOperationAction(ISD::CTPOP, MVT::i16, Legal);
+  setOperationAction(ISD::CTPOP, MVT::i32, Legal);
+  setOperationAction(ISD::CTPOP, MVT::i64, Legal);
+
   // Now deduce the information based on the above mentioned
   // actions
   computeRegisterProperties();
