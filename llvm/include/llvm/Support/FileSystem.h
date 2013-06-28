@@ -573,8 +573,7 @@ error_code unique_file(const Twine &model, int &result_fd,
 
 /// @brief Simpler version for clients that don't want an open file.
 error_code unique_file(const Twine &Model, SmallVectorImpl<char> &ResultPath,
-                       bool MakeAbsolute = true,
-                       unsigned Mode = owner_read | owner_write);
+                       bool MakeAbsolute = true);
 
 error_code createUniqueDirectory(const Twine &Prefix,
                                  SmallVectorImpl<char> &ResultPath);

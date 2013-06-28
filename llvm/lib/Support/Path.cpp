@@ -626,12 +626,12 @@ bool is_relative(const Twine &path) {
 namespace fs {
 
 error_code unique_file(const Twine &Model, SmallVectorImpl<char> &ResultPath,
-                       bool MakeAbsolute, unsigned Mode) {
+                       bool MakeAbsolute) {
   // FIXME: This is really inefficient. unique_path creates a path an tries to
   // open it. We should factor the code so that we just don't create/open the
   // file when we don't need it.
   int FD;
-  error_code Ret = unique_file(Model, FD, ResultPath, MakeAbsolute, Mode);
+  error_code Ret = unique_file(Model, FD, ResultPath, MakeAbsolute, all_read);
   if (Ret)
     return Ret;
 
