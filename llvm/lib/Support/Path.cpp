@@ -638,8 +638,7 @@ bool is_relative(const Twine &path) {
 namespace fs {
 
 // This is a mkostemps with a different pattern. Unfortunatelly OS X (ond *BSD)
-// don't have it. It might be worth experimenting with mkostemps on systems
-// that have it.
+// don't have it. We should try using mkostemps on systems that have it.
 error_code unique_file(const Twine &Model, int &ResultFD,
                        SmallVectorImpl<char> &ResultPath, bool MakeAbsolute,
                        unsigned Mode) {
@@ -648,7 +647,7 @@ error_code unique_file(const Twine &Model, int &ResultFD,
 }
 
 // This is a mktemp with a differet pattern. We use createUniqueEntity mostly
-// for consistency. It might be worth it experimenting with mktemp.
+// for consistency. We should try using mktemp.
 error_code unique_file(const Twine &Model, SmallVectorImpl<char> &ResultPath,
                        bool MakeAbsolute) {
   int Dummy;
@@ -656,7 +655,7 @@ error_code unique_file(const Twine &Model, SmallVectorImpl<char> &ResultPath,
 }
 
 // This is a mkdtemp with a different pattern. We use createUniqueEntity mostly
-// for consistency. It might be worth it experimenting with mkdtemp.
+// for consistency. We should try using mkdtemp.
 error_code createUniqueDirectory(const Twine &Prefix,
                                  SmallVectorImpl<char> &ResultPath) {
   int Dummy;
