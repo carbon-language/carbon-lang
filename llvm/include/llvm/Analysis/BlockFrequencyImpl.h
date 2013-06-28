@@ -235,8 +235,8 @@ class BlockFrequencyImpl {
     //
     //   Iterations = 1 / ExitProb
     //
-    uint64_t D = std::max(getBlockFreq(Head).getFrequency(), 1ull);
-    uint64_t N = std::max(BackFreq.getFrequency(), 1ull);
+    uint64_t D = std::max(getBlockFreq(Head).getFrequency(), UINT64_C(1));
+    uint64_t N = std::max(BackFreq.getFrequency(), UINT64_C(1));
     if (N < D)
       N = D - N;
     else
