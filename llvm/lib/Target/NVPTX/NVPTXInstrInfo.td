@@ -2294,11 +2294,11 @@ def : Pat<(i64 (zext Int1Regs:$a)),
 
 // anyext i1
 def : Pat<(i16 (anyext Int1Regs:$a)),
-          (SELP_u16ii 1, 0, Int1Regs:$a)>;
+          (SELP_u16ii -1, 0, Int1Regs:$a)>;
 def : Pat<(i32 (anyext Int1Regs:$a)),
-          (SELP_u32ii 1, 0, Int1Regs:$a)>;
+          (SELP_u32ii -1, 0, Int1Regs:$a)>;
 def : Pat<(i64 (anyext Int1Regs:$a)),
-          (SELP_u64ii 1, 0, Int1Regs:$a)>;
+          (SELP_u64ii -1, 0, Int1Regs:$a)>;
 
 // sext i16
 def : Pat<(i32 (sext Int16Regs:$a)),
