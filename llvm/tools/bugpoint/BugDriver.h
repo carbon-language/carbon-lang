@@ -191,7 +191,7 @@ public:
   /// this function.
   ///
   bool createReferenceFile(Module *M, const std::string &Filename
-                                            = "bugpoint.reference.out");
+                                            = "bugpoint.reference.out-%%%%%%%");
 
   /// diffProgram - This method executes the specified module and diffs the
   /// output against the file specified by ReferenceOutputFile.  If the output

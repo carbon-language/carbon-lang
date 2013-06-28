@@ -328,7 +328,7 @@ std::string BugDriver::executeProgram(const Module *Program,
   FileRemover BitcodeFileRemover(BitcodePath,
     CreatedBitcode && !SaveTemps);
 
-  if (OutputFile.empty()) OutputFile = OutputPrefix + "-execution-output";
+  if (OutputFile.empty()) OutputFile = OutputPrefix + "-execution-output-%%%%%%%";
 
   // Check to see if this is a valid output filename...
   SmallString<128> UniqueFile;
