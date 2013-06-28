@@ -369,18 +369,20 @@ void DoLeakCheck() {
     Report("LeakSanitizer has encountered a fatal error.\n");
     Die();
   }
-  if (!param.leak_report.IsEmpty()) {
-    uptr unsuppressed_count = param.leak_report.ApplySuppressions();
-    if (!unsuppressed_count) return;
-    Printf("\n================================================================="
+  uptr have_unsuppressed = param.leak_report.ApplySuppressions();
+  if (have_unsuppressed) {
+    Printf("\n"
+           "================================================================="
            "\n");
     Report("ERROR: LeakSanitizer: detected memory leaks\n");
     param.leak_report.PrintLargest(flags()->max_leaks);
+  }
+  if (have_unsuppressed || (flags()->verbosity >= 1)) {
     PrintMatchedSuppressions();
     param.leak_report.PrintSummary();
-    if (flags()->exitcode)
-      internal__exit(flags()->exitcode);
   }
+  if (have_unsuppressed && flags()->exitcode)
+    internal__exit(flags()->exitcode);
 }
 
 static Suppression *GetSuppressionForAddr(uptr addr) {
@@ -461,7 +463,7 @@ void LeakReport::PrintLargest(uptr num_leaks_to_print) {
            leaks_[i].total_size, leaks_[i].hit_count);
     PrintStackTraceById(leaks_[i].stack_trace_id);
     Printf("\n");
-    leaks_printed = 0;
+    leaks_printed++;
     if (leaks_printed == num_leaks_to_print) break;
   }
   if (leaks_printed < unsuppressed_count) {
@@ -510,12 +512,12 @@ void __lsan_ignore_object(const void *p) {
   // locked.
   BlockingMutexLock l(&global_mutex);
   IgnoreObjectResult res = IgnoreObjectLocked(p);
-  if (res == kIgnoreObjectInvalid && flags()->verbosity >= 1)
+  if (res == kIgnoreObjectInvalid && flags()->verbosity >= 2)
     Report("__lsan_ignore_object(): no heap object found at %p", p);
-  if (res == kIgnoreObjectAlreadyIgnored && flags()->verbosity >= 1)
+  if (res == kIgnoreObjectAlreadyIgnored && flags()->verbosity >= 2)
     Report("__lsan_ignore_object(): "
            "heap object at %p is already being ignored\n", p);
-  if (res == kIgnoreObjectSuccess && flags()->verbosity >= 2)
+  if (res == kIgnoreObjectSuccess && flags()->verbosity >= 3)
     Report("__lsan_ignore_object(): ignoring heap object at %p\n", p);
 #endif  // CAN_SANITIZE_LEAKS
 }
