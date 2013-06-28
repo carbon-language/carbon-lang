@@ -41,7 +41,8 @@ namespace R600_InstFlag {
     OP1 = (1 << 10),
     OP2 = (1 << 11),
     VTX_INST  = (1 << 12),
-    TEX_INST = (1 << 13)
+    TEX_INST = (1 << 13),
+    ALU_INST = (1 << 14)
   };
 }
 

@@ -114,6 +114,7 @@ class R600_1OP <bits<11> inst, string opName, list<dag> pattern,
   let update_pred = 0;
   let HasNativeOperands = 1;
   let Op1 = 1;
+  let ALUInst = 1;
   let DisableEncoding = "$literal";
   let UseNamedOperandTable = 1;
 
@@ -151,6 +152,7 @@ class R600_2OP <bits<11> inst, string opName, list<dag> pattern,
 
   let HasNativeOperands = 1;
   let Op2 = 1;
+  let ALUInst = 1;
   let DisableEncoding = "$literal";
   let UseNamedOperandTable = 1;
 
@@ -193,6 +195,7 @@ class R600_3OP <bits<5> inst, string opName, list<dag> pattern,
   let DisableEncoding = "$literal";
   let Op3 = 1;
   let UseNamedOperandTable = 1;
+  let ALUInst = 1;
 
   let Inst{31-0}  = Word0;
   let Inst{63-32} = Word1;

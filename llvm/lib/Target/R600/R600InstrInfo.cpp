@@ -133,9 +133,7 @@ bool R600InstrInfo::isCubeOp(unsigned Opcode) const {
 bool R600InstrInfo::isALUInstr(unsigned Opcode) const {
   unsigned TargetFlags = get(Opcode).TSFlags;
 
-  return ((TargetFlags & R600_InstFlag::OP1) |
-          (TargetFlags & R600_InstFlag::OP2) |
-          (TargetFlags & R600_InstFlag::OP3));
+  return (TargetFlags & R600_InstFlag::ALU_INST);
 }
 
 bool R600InstrInfo::isTransOnly(unsigned Opcode) const {
