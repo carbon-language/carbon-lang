@@ -1,5 +1,7 @@
 ; Ignore stderr, we expect warnings there
-; RUN: opt < %s -instcombine 2> /dev/null -S | not grep bitcast
+; RUN: opt < %s -instcombine 2> /dev/null -S | FileCheck %s
+
+; CHECK-NOT: bitcast
 
 define void @a() {
 	ret void
