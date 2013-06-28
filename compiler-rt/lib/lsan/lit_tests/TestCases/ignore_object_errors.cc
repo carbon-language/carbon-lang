@@ -1,5 +1,5 @@
 // Test for incorrect use of __lsan_ignore_object().
-// RUN: LSAN_BASE="verbosity=1"
+// RUN: LSAN_BASE="verbosity=2"
 // RUN: %clangxx_lsan %s -o %t
 // RUN: LSAN_OPTIONS=$LSAN_BASE %t 2>&1 | FileCheck %s
 
