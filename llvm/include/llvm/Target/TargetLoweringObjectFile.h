@@ -138,6 +138,10 @@ public:
     return StaticDtorSection;
   }
 
+  /// \brief Create a symbol reference to describe the given TLS variable when
+  /// emitting the address in debug info.
+  virtual const MCSymbolRefExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const;
+
 protected:
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,

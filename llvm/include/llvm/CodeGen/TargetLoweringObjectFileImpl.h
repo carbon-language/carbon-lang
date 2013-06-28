@@ -72,6 +72,9 @@ public:
   getStaticCtorSection(unsigned Priority = 65535) const;
   virtual const MCSection *
   getStaticDtorSection(unsigned Priority = 65535) const;
+
+  /// \brief Describe a TLS variable address within debug info.
+  virtual const MCSymbolRefExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const;
 };
 
 

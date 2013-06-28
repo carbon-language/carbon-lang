@@ -27,6 +27,7 @@
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
 using namespace llvm;
@@ -1351,7 +1352,23 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
   if (isGlobalVariable) {
     addToAccelTable = true;
     DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
-    addOpAddress(Block, Asm->Mang->getSymbol(GV.getGlobal()));
+    const MCSymbol *Sym = Asm->Mang->getSymbol(GV.getGlobal());
+    if (GV.getGlobal()->isThreadLocal()) {
+      // FIXME: Make this work with -gsplit-dwarf.
+      unsigned PointerSize = Asm->getDataLayout().getPointerSize();
+      assert((PointerSize == 4 || PointerSize == 8) &&
+             "Add support for other sizes if necessary");
+      // Based on GCC's support for TLS:
+      // 1) Start with a constNu of the appropriate pointer size
+      addUInt(Block, 0, dwarf::DW_FORM_data1,
+              PointerSize == 4 ? dwarf::DW_OP_const4u : dwarf::DW_OP_const8u);
+      // 2) containing the (relocated) address of the TLS variable
+      addLabel(Block, 0, dwarf::DW_FORM_udata,
+               Asm->getObjFileLowering().getDebugThreadLocalSymbol(Sym));
+      // 3) followed by a custom OP to tell the debugger about TLS (presumably)
+      addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_lo_user);
+    } else
+      addOpAddress(Block, Sym);
     // Do not create specification DIE if context is either compile unit
     // or a subprogram.
     if (GVContext && GV.isDefinition() && !GVContext.isCompileUnit() &&
@@ -1413,8 +1430,6 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     if (GV.getLinkageName() != "" && GV.getName() != GV.getLinkageName())
       addAccelName(GV.getLinkageName(), AddrDIE);
   }
-
-  return;
 }
 
 /// constructSubrangeDIE - Construct subrange DIE from DISubrange.
