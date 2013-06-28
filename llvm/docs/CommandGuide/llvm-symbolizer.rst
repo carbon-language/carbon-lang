@@ -22,6 +22,8 @@ EXAMPLE
   a.out 0x4004f4
   /tmp/b.out 0x400528
   /tmp/c.so 0x710
+  /tmp/mach_universal_binary:i386 0x1f84
+  /tmp/mach_universal_binary:x86_64 0x100000f24
   $ llvm-symbolizer < addr.txt
   main
   /tmp/a.cc:4
@@ -37,6 +39,12 @@ EXAMPLE
   /tmp/source.cc:3
   main
   /tmp/source.cc:8
+
+  _main
+  /tmp/source_i386.cc:8
+
+  _main
+  /tmp/source_x86_64.cc:8
 
 OPTIONS
 -------
@@ -58,6 +66,14 @@ OPTIONS
 
  If a source code location is in an inlined function, prints all the
  inlnied frames. Defaults to true.
+
+.. option:: -default-arch
+
+ If a binary contains object files for multiple architectures (e.g. it is a
+ Mach-O universal binary), symbolize the object file for a given architecture.
+ You can also specify architecture by writing ``binary_name:arch_name`` in the
+ input (see example above). If architecture is not specified in either way,
+ address will not be symbolized. Defaults to empty string.
 
 EXIT STATUS
 -----------

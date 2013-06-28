@@ -198,23 +198,10 @@ std::string LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
 
 void LLVMSymbolizer::flush() {
   DeleteContainerSeconds(Modules);
+  DeleteContainerPointers(ParsedBinariesAndObjects);
 }
 
-// Returns true if the object endianness is known.
-static bool getObjectEndianness(const ObjectFile *Obj, bool &IsLittleEndian) {
-  // FIXME: Implement this when libLLVMObject allows to do it easily.
-  IsLittleEndian = true;
-  return true;
-}
-
-static ObjectFile *getObjectFile(const std::string &Path) {
-  OwningPtr<MemoryBuffer> Buff;
-  if (error(MemoryBuffer::getFile(Path, Buff)))
-    return 0;
-  return ObjectFile::createObjectFile(Buff.take());
-}
-
-static std::string getDarwinDWARFResourceForModule(const std::string &Path) {
+static std::string getDarwinDWARFResourceForPath(const std::string &Path) {
   StringRef Basename = sys::path::filename(Path);
   const std::string &DSymDirectory = Path + ".dSYM";
   SmallString<16> ResourceName = StringRef(DSymDirectory);
@@ -223,39 +210,85 @@ static std::string getDarwinDWARFResourceForModule(const std::string &Path) {
   return ResourceName.str();
 }
 
+LLVMSymbolizer::BinaryPair
+LLVMSymbolizer::getOrCreateBinary(const std::string &Path) {
+  BinaryMapTy::iterator I = BinaryForPath.find(Path);
+  if (I != BinaryForPath.end())
+    return I->second;
+  Binary *Bin = 0;
+  Binary *DbgBin = 0;
+  OwningPtr<Binary> ParsedBinary;
+  OwningPtr<Binary> ParsedDbgBinary;
+  if (!error(createBinary(Path, ParsedBinary))) {
+    // Check if it's a universal binary.
+    Bin = ParsedBinary.take();
+    ParsedBinariesAndObjects.push_back(Bin);
+    if (Bin->isMachO() || Bin->isMachOUniversalBinary()) {
+      // On Darwin we may find DWARF in separate object file in
+      // resource directory.
+      const std::string &ResourcePath =
+          getDarwinDWARFResourceForPath(Path);
+      bool ResourceFileExists = false;
+      if (!sys::fs::exists(ResourcePath, ResourceFileExists) &&
+          ResourceFileExists &&
+          !error(createBinary(ResourcePath, ParsedDbgBinary))) {
+        DbgBin = ParsedDbgBinary.take();
+        ParsedBinariesAndObjects.push_back(DbgBin);
+      }
+    }
+  }
+  if (DbgBin == 0)
+    DbgBin = Bin;
+  BinaryPair Res = std::make_pair(Bin, DbgBin);
+  BinaryForPath[Path] = Res;
+  return Res;
+}
+
+ObjectFile *
+LLVMSymbolizer::getObjectFileFromBinary(Binary *Bin, const std::string &ArchName) {
+  if (Bin == 0)
+    return 0;
+  ObjectFile *Res = 0;
+  if (MachOUniversalBinary *UB = dyn_cast<MachOUniversalBinary>(Bin)) {
+    ObjectFileForArchMapTy::iterator I = ObjectFileForArch.find(
+        std::make_pair(UB, ArchName));
+    if (I != ObjectFileForArch.end())
+      return I->second;
+    OwningPtr<ObjectFile> ParsedObj;
+    if (!UB->getObjectForArch(Triple(ArchName).getArch(), ParsedObj)) {
+      Res = ParsedObj.take();
+      ParsedBinariesAndObjects.push_back(Res);
+    }
+    ObjectFileForArch[std::make_pair(UB, ArchName)] = Res;
+  } else if (Bin->isObject()) {
+    Res = cast<ObjectFile>(Bin);
+  }
+  return Res;
+}
+
 ModuleInfo *
 LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
   ModuleMapTy::iterator I = Modules.find(ModuleName);
   if (I != Modules.end())
     return I->second;
+  std::string BinaryName = ModuleName;
+  std::string ArchName = Opts.DefaultArch;
+  size_t ColonPos = ModuleName.find(':');
+  if (ColonPos != std::string::npos) {
+    BinaryName = ModuleName.substr(0, ColonPos);
+    ArchName = ModuleName.substr(ColonPos + 1);
+  }
+  BinaryPair Binaries = getOrCreateBinary(BinaryName);
+  ObjectFile *Obj = getObjectFileFromBinary(Binaries.first, ArchName);
+  ObjectFile *DbgObj = getObjectFileFromBinary(Binaries.second, ArchName);
 
-  ObjectFile *Obj = getObjectFile(ModuleName);
   if (Obj == 0) {
-    // Module name doesn't point to a valid object file.
+    // Failed to find valid object file.
     Modules.insert(make_pair(ModuleName, (ModuleInfo *)0));
     return 0;
   }
-
-  DIContext *Context = 0;
-  bool IsLittleEndian;
-  if (getObjectEndianness(Obj, IsLittleEndian)) {
-    // On Darwin we may find DWARF in separate object file in
-    // resource directory.
-    ObjectFile *DbgObj = Obj;
-    if (isa<MachOObjectFile>(Obj)) {
-      const std::string &ResourceName =
-          getDarwinDWARFResourceForModule(ModuleName);
-      bool ResourceFileExists = false;
-      if (!sys::fs::exists(ResourceName, ResourceFileExists) &&
-          ResourceFileExists) {
-        if (ObjectFile *ResourceObj = getObjectFile(ResourceName))
-          DbgObj = ResourceObj;
-      }
-    }
-    Context = DIContext::getDWARFContext(DbgObj);
-    assert(Context);
-  }
-
+  DIContext *Context = DIContext::getDWARFContext(DbgObj);
+  assert(Context);
   ModuleInfo *Info = new ModuleInfo(Obj, Context);
   Modules.insert(make_pair(ModuleName, Info));
   return Info;

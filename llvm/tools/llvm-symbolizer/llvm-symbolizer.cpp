@@ -47,6 +47,10 @@ ClPrintInlining("inlining", cl::init(true),
 static cl::opt<bool>
 ClDemangle("demangle", cl::init(true), cl::desc("Demangle function names"));
 
+static cl::opt<std::string> ClDefaultArch("default-arch", cl::init(""),
+                                          cl::desc("Default architecture "
+                                                   "(for multi-arch objects)"));
+
 static bool parseCommand(bool &IsData, std::string &ModuleName,
                          uint64_t &ModuleOffset) {
   const char *kDataCmd = "DATA ";
@@ -102,7 +106,7 @@ int main(int argc, char **argv) {
 
   cl::ParseCommandLineOptions(argc, argv, "llvm symbolizer for compiler-rt\n");
   LLVMSymbolizer::Options Opts(ClUseSymbolTable, ClPrintFunctions,
-                               ClPrintInlining, ClDemangle);
+                               ClPrintInlining, ClDemangle, ClDefaultArch);
   LLVMSymbolizer Symbolizer(Opts);
 
   bool IsData = false;

@@ -3,9 +3,12 @@ RUN: echo "%p/Inputs/dwarfdump-test.elf-x86-64 0x400436" >> %t.input
 RUN: echo "%p/Inputs/dwarfdump-test4.elf-x86-64 0x62c" >> %t.input
 RUN: echo "%p/Inputs/dwarfdump-inl-test.elf-x86-64 0x710" >> %t.input
 RUN: echo "\"%p/Inputs/dwarfdump-test3.elf-x86-64 space\" 0x633" >> %t.input
+RUN: echo "%p/Inputs/macho-universal 0x1f84" >> %t.input
+RUN: echo "%p/Inputs/macho-universal:i386 0x1f67" >> %t.input
+RUN: echo "%p/Inputs/macho-universal:x86_64 0x100000f05" >> %t.input
 
-RUN: llvm-symbolizer --functions --inlining --demangle=false < %t.input \
-RUN:    | FileCheck %s
+RUN: llvm-symbolizer --functions --inlining --demangle=false \
+RUN:    --default-arch=i386 < %t.input | FileCheck %s
 
 REQUIRES: shell
 
@@ -29,5 +32,16 @@ CHECK-NEXT: dwarfdump-inl-test.cc:
 CHECK:       _Z3do1v
 CHECK-NEXT: dwarfdump-test3-decl.h:7
 
+CHECK:      _main
+CHECK:      __Z3inci
+CHECK:      __Z3inci
+
 RUN: echo "unexisting-file 0x1234" > %t.input2
 RUN: llvm-symbolizer < %t.input2
+
+RUN: echo "%p/Inputs/macho-universal 0x1f84" > %t.input3
+RUN: llvm-symbolizer < %t.input3 | FileCheck %s --check-prefix=UNKNOWN-ARCH
+
+UNKNOWN-ARCH-NOT: main
+UNKNOWN-ARCH: ??
+UNKNOWN-ARCH-NOT: main
