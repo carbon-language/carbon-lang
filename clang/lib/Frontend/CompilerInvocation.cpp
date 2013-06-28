@@ -852,9 +852,7 @@ std::string CompilerInvocation::GetResourcesPath(const char *Argv0,
     llvm::sys::path::remove_filename(P); // Remove /bin   from foo/bin
 
     // Get foo/lib/clang/<version>/include
-    llvm::sys::path::append(P, "lib");
-    llvm::sys::path::append(P, "clang");
-    llvm::sys::path::append(P, CLANG_VERSION_STRING);
+    llvm::sys::path::append(P, "lib", "clang", CLANG_VERSION_STRING);
   }
 
   return P.str();

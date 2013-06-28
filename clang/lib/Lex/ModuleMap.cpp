@@ -507,8 +507,7 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
 
   // Look for an umbrella header.
   SmallString<128> UmbrellaName = StringRef(FrameworkDir->getName());
-  llvm::sys::path::append(UmbrellaName, "Headers");
-  llvm::sys::path::append(UmbrellaName, ModuleName + ".h");
+  llvm::sys::path::append(UmbrellaName, "Headers", ModuleName + ".h");
   const FileEntry *UmbrellaHeader = FileMgr.getFile(UmbrellaName);
   
   // FIXME: If there's no umbrella header, we could probably scan the
@@ -1324,10 +1323,8 @@ static void appendSubframeworkPaths(Module *Mod,
     return;
   
   // Add Frameworks/Name.framework for each subframework.
-  for (unsigned I = Paths.size() - 1; I != 0; --I) {
-    llvm::sys::path::append(Path, "Frameworks");
-    llvm::sys::path::append(Path, Paths[I-1] + ".framework");
-  }
+  for (unsigned I = Paths.size() - 1; I != 0; --I)
+    llvm::sys::path::append(Path, "Frameworks", Paths[I-1] + ".framework");
 }
 
 /// \brief Parse a header declaration.
@@ -1378,15 +1375,13 @@ void ModuleMapParser::parseHeaderDecl(MMToken::TokenKind LeadingToken,
       appendSubframeworkPaths(ActiveModule, PathName);
       
       // Check whether this file is in the public headers.
-      llvm::sys::path::append(PathName, "Headers");
-      llvm::sys::path::append(PathName, FileName);
+      llvm::sys::path::append(PathName, "Headers", FileName);
       File = SourceMgr.getFileManager().getFile(PathName);
       
       if (!File) {
         // Check whether this file is in the private headers.
         PathName.resize(PathLength);
-        llvm::sys::path::append(PathName, "PrivateHeaders");
-        llvm::sys::path::append(PathName, FileName);
+        llvm::sys::path::append(PathName, "PrivateHeaders", FileName);
         File = SourceMgr.getFileManager().getFile(PathName);
       }
     } else {

@@ -222,9 +222,7 @@ void DarwinClang::AddLinkARCArgs(const ArgList &Args,
   SmallString<128> P(getDriver().ClangExecutable);
   llvm::sys::path::remove_filename(P); // 'clang'
   llvm::sys::path::remove_filename(P); // 'bin'
-  llvm::sys::path::append(P, "lib");
-  llvm::sys::path::append(P, "arc");
-  llvm::sys::path::append(P, "libarclite_");
+  llvm::sys::path::append(P, "lib", "arc", "libarclite_");
   // Mash in the platform.
   if (isTargetIOSSimulator())
     P += "iphonesimulator";
@@ -242,9 +240,7 @@ void DarwinClang::AddLinkRuntimeLib(const ArgList &Args,
                                     const char *DarwinStaticLib,
                                     bool AlwaysLink) const {
   SmallString<128> P(getDriver().ResourceDir);
-  llvm::sys::path::append(P, "lib");
-  llvm::sys::path::append(P, "darwin");
-  llvm::sys::path::append(P, DarwinStaticLib);
+  llvm::sys::path::append(P, "lib", "darwin", DarwinStaticLib);
 
   // For now, allow missing resource libraries to support developers who may
   // not have compiler-rt checked out or integrated into their build (unless
@@ -539,9 +535,7 @@ void DarwinClang::AddCXXStdlibLibArgs(const ArgList &Args,
     // Check in the sysroot first.
     if (const Arg *A = Args.getLastArg(options::OPT_isysroot)) {
       SmallString<128> P(A->getValue());
-      llvm::sys::path::append(P, "usr");
-      llvm::sys::path::append(P, "lib");
-      llvm::sys::path::append(P, "libstdc++.dylib");
+      llvm::sys::path::append(P, "usr", "lib", "libstdc++.dylib");
 
       if (!llvm::sys::fs::exists(P.str())) {
         llvm::sys::path::remove_filename(P);
@@ -577,8 +571,7 @@ void DarwinClang::AddCCKextLibArgs(const ArgList &Args,
   // only present in the gcc lib dir, which makes it hard to find).
 
   SmallString<128> P(getDriver().ResourceDir);
-  llvm::sys::path::append(P, "lib");
-  llvm::sys::path::append(P, "darwin");
+  llvm::sys::path::append(P, "lib", "darwin");
 
   // Use the newer cc_kext for iOS ARM after 6.0.
   if (!isTargetIPhoneOS() || isTargetIOSSimulator() ||
