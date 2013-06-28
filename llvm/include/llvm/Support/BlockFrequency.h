@@ -27,6 +27,9 @@ class BlockFrequency {
   uint64_t Frequency;
   static const int64_t ENTRY_FREQ = 1 << 14;
 
+  // Scale frequency by N/D, saturating on overflow.
+  void scale(uint32_t N, uint32_t D);
+
 public:
   BlockFrequency(uint64_t Freq = 0) : Frequency(Freq) { }
 
@@ -41,6 +44,11 @@ public:
   /// overflow.
   BlockFrequency &operator*=(const BranchProbability &Prob);
   const BlockFrequency operator*(const BranchProbability &Prob) const;
+
+  /// \brief Divide by a non-zero branch probability using saturating
+  /// arithmetic.
+  BlockFrequency &operator/=(const BranchProbability &Prob);
+  BlockFrequency operator/(const BranchProbability &Prob) const;
 
   /// \brief Adds another block frequency using saturating arithmetic.
   BlockFrequency &operator+=(const BlockFrequency &Freq);
