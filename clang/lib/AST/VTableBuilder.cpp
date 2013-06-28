@@ -1914,6 +1914,8 @@ VTableBuilder::LayoutVTablesForVirtualBases(const CXXRecordDecl *RD,
 
 /// dumpLayout - Dump the vtable layout.
 void VTableBuilder::dumpLayout(raw_ostream& Out) {
+  // FIXME: write more tests that actually use the dumpLayout output to prevent
+  // VTableBuilder regressions.
 
   if (isBuildingConstructorVTable()) {
     Out << "Construction vtable for ('";
@@ -2166,7 +2168,7 @@ void VTableBuilder::dumpLayout(raw_ostream& Out) {
         
         // If this function pointer has a return pointer adjustment, dump it.
         if (!Thunk.Return.isEmpty()) {
-          Out << "return adjustment: " << Thunk.This.NonVirtual;
+          Out << "return adjustment: " << Thunk.Return.NonVirtual;
           Out << " non-virtual";
           if (Thunk.Return.VBaseOffsetOffset) {
             Out << ", " << Thunk.Return.VBaseOffsetOffset;
