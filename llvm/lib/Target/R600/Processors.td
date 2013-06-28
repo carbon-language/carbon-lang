@@ -48,3 +48,6 @@ def : Proc<"pitcairn",   SI_Itin, [FeatureSouthernIslands]>;
 def : Proc<"verde",      SI_Itin, [FeatureSouthernIslands]>;
 def : Proc<"oland",      SI_Itin, [FeatureSouthernIslands]>;
 def : Proc<"hainan",     SI_Itin, [FeatureSouthernIslands]>;
+def : Proc<"bonaire",    SI_Itin, [FeatureSouthernIslands]>;
+def : Proc<"kabini",     SI_Itin, [FeatureSouthernIslands]>;
+def : Proc<"kaveri",     SI_Itin, [FeatureSouthernIslands]>;
