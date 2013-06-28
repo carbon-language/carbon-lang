@@ -347,8 +347,8 @@ static Instruction *getDebugLocFromInstOrOperands(Instruction *I) {
 
 /// \brief Set the debug location in the builder using the debug location in the
 /// instruction.
-static void setDebugLocFromInst(IRBuilder<> &B, const Instruction *Inst) {
-  if (Inst)
+static void setDebugLocFromInst(IRBuilder<> &B, const Value *Ptr) {
+  if (const Instruction *Inst = dyn_cast_or_null<Instruction>(Ptr))
     B.SetCurrentDebugLocation(Inst->getDebugLoc());
   else
     B.SetCurrentDebugLocation(DebugLoc());
@@ -1267,7 +1267,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
   } else {
     // Use the induction element ptr.
     assert(isa<PHINode>(Ptr) && "Invalid induction ptr");
-    setDebugLocFromInst(Builder, cast<Instruction>(Ptr));
+    setDebugLocFromInst(Builder, Ptr);
     VectorParts &PtrVal = getVectorValue(Ptr);
     Ptr = Builder.CreateExtractElement(PtrVal[0], Zero);
   }
@@ -2046,8 +2046,7 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     LoopVectorizationLegality::ReductionDescriptor RdxDesc =
     (*Legal->getReductionVars())[RdxPhi];
 
-    setDebugLocFromInst(Builder,
-                        dyn_cast<Instruction>((Value*)RdxDesc.StartValue));
+    setDebugLocFromInst(Builder, RdxDesc.StartValue);
 
     // We need to generate a reduction vector from the incoming scalar.
     // To do so, we need to generate the 'identity' vector and overide
@@ -2122,7 +2121,7 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     // Reduce all of the unrolled parts into a single vector.
     Value *ReducedPartRdx = RdxParts[0];
     unsigned Op = getReductionBinOp(RdxDesc.Kind);
-    setDebugLocFromInst(Builder, dyn_cast<Instruction>(ReducedPartRdx));
+    setDebugLocFromInst(Builder, ReducedPartRdx);
     for (unsigned part = 1; part < UF; ++part) {
       if (Op != Instruction::ICmp && Op != Instruction::FCmp)
         ReducedPartRdx = Builder.CreateBinOp((Instruction::BinaryOps)Op,
