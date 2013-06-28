@@ -96,14 +96,15 @@ protected:
 
 // Test empty named Module that is not supposed to be output to disk.
 TEST_F(TestDebugIR, EmptyNamedModuleNoWrite) {
-  string name = "/mock/path/to/empty_module.ll";
-  M.reset(createEmptyModule(name));
-  D.reset(static_cast<DebugIR *>(llvm::createDebugIRPass()));
-  string Path;
-  D->runOnModule(*M, Path);
+  string Dir = "MadeUpDirectory";
+  string File = "empty_module.ll";
+  string Path(getPath(Dir, File));
 
-  // verify DebugIR was able to correctly parse the file name from module ID
-  ASSERT_EQ(Path, name);
+  M.reset(createEmptyModule(Path));
+
+  // constructing DebugIR with no args should not result in any file generated.
+  D.reset(static_cast<DebugIR *>(llvm::createDebugIRPass()));
+  D->runOnModule(*M);
 
   // verify DebugIR did not generate a file
   ASSERT_FALSE(removeIfExists(Path)) << "Unexpected file " << Path;
