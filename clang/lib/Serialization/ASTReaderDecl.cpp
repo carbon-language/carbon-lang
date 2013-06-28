@@ -606,11 +606,16 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
       FunctionTemplateSpecializationInfo::Profile(ID, TemplArgs.data(),
                                                   TemplArgs.size(), C);
       void *InsertPos = 0;
-      CanonTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
+      FunctionTemplateDecl::Common *CommonPtr = CanonTemplate->getCommonPtr();
+      CommonPtr->Specializations.FindNodeOrInsertPos(ID, InsertPos);
       if (InsertPos)
-        CanonTemplate->getSpecializations().InsertNode(FTInfo, InsertPos);
-      else
-        assert(0 && "Another specialization already inserted!");
+        CommonPtr->Specializations.InsertNode(FTInfo, InsertPos);
+      else {
+        assert(Reader.getContext().getLangOpts().Modules &&
+               "already deserialized this template specialization");
+        // FIXME: This specialization is a redeclaration of one from another
+        // module. Merge it.
+      }
     }
     break;
   }
@@ -1508,12 +1513,17 @@ void ASTDeclReader::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   if (ThisDeclID == Redecl.getFirstID()) {
     // This FunctionTemplateDecl owns a CommonPtr; read it.
 
-    // Read the function specialization declarations.
-    // FunctionTemplateDecl's FunctionTemplateSpecializationInfos are filled
-    // when reading the specialized FunctionDecl.
-    unsigned NumSpecs = Record[Idx++];
-    while (NumSpecs--)
-      (void)ReadDecl(Record, Idx);
+    // Read the function specialization declaration IDs. The specializations
+    // themselves will be loaded if they're needed.
+    if (unsigned NumSpecs = Record[Idx++]) {
+      // FIXME: Append specializations!
+      FunctionTemplateDecl::Common *CommonPtr = D->getCommonPtr();
+      CommonPtr->LazySpecializations = new (Reader.getContext())
+          serialization::DeclID[NumSpecs + 1];
+      CommonPtr->LazySpecializations[0] = NumSpecs;
+      for (unsigned I = 0; I != NumSpecs; ++I)
+        CommonPtr->LazySpecializations[I + 1] = ReadDeclID(Record, Idx);
+    }
   }
 }
 

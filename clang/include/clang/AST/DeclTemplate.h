@@ -743,7 +743,7 @@ protected:
   /// \brief Data that is common to all of the declarations of a given
   /// function template.
   struct Common : CommonBase {
-    Common() : InjectedArgs(0) { }
+    Common() : InjectedArgs(), LazySpecializations() { }
 
     /// \brief The function template specializations for this function
     /// template, including explicit specializations and instantiations.
@@ -757,6 +757,13 @@ protected:
     /// template, and is allocated lazily, since most function templates do not
     /// require the use of this information.
     TemplateArgument *InjectedArgs;
+
+    /// \brief If non-null, points to an array of specializations known only
+    /// by their external declaration IDs.
+    ///
+    /// The first value in the array is the number of of specializations
+    /// that follow.
+    uint32_t *LazySpecializations;
   };
 
   FunctionTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
@@ -771,12 +778,13 @@ protected:
 
   friend class FunctionDecl;
 
+  /// \brief Load any lazily-loaded specializations from the external source.
+  void LoadLazySpecializations() const;
+
   /// \brief Retrieve the set of function template specializations of this
   /// function template.
   llvm::FoldingSetVector<FunctionTemplateSpecializationInfo> &
-  getSpecializations() const {
-    return getCommonPtr()->Specializations;
-  }
+  getSpecializations() const;
 
   /// \brief Add a specialization of this function template.
   ///
@@ -1822,7 +1830,7 @@ protected:
     QualType InjectedClassNameType;
 
     /// \brief If non-null, points to an array of specializations (including
-    /// partial specializations) known ownly by their external declaration IDs.
+    /// partial specializations) known only by their external declaration IDs.
     ///
     /// The first value in the array is the number of of specializations/
     /// partial specializations that follow.

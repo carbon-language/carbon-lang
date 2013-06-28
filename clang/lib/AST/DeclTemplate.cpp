@@ -245,6 +245,23 @@ FunctionTemplateDecl::newCommon(ASTContext &C) const {
   return CommonPtr;
 }
 
+void FunctionTemplateDecl::LoadLazySpecializations() const {
+  Common *CommonPtr = getCommonPtr();
+  if (CommonPtr->LazySpecializations) {
+    ASTContext &Context = getASTContext();
+    uint32_t *Specs = CommonPtr->LazySpecializations;
+    CommonPtr->LazySpecializations = 0;
+    for (uint32_t I = 0, N = *Specs++; I != N; ++I)
+      (void)Context.getExternalSource()->GetExternalDecl(Specs[I]);
+  }
+}
+
+llvm::FoldingSetVector<FunctionTemplateSpecializationInfo> &
+FunctionTemplateDecl::getSpecializations() const {
+  LoadLazySpecializations();
+  return getCommonPtr()->Specializations;
+}
+
 FunctionDecl *
 FunctionTemplateDecl::findSpecialization(const TemplateArgument *Args,
                                          unsigned NumArgs, void *&InsertPos) {
