@@ -693,6 +693,130 @@ void NVPTXAsmPrinter::printLdStCode(const MachineInstr *MI, int opNum,
     llvm_unreachable("Empty Modifier");
 }
 
+void NVPTXAsmPrinter::printCvtMode(const MachineInstr *MI, int OpNum,
+                                   raw_ostream &O, const char *Modifier) {
+  const MachineOperand &MO = MI->getOperand(OpNum);
+  int64_t Imm = MO.getImm();
+
+  if (strcmp(Modifier, "ftz") == 0) {
+    // FTZ flag
+    if (Imm & NVPTX::PTXCvtMode::FTZ_FLAG)
+      O << ".ftz";
+  } else if (strcmp(Modifier, "sat") == 0) {
+    // SAT flag
+    if (Imm & NVPTX::PTXCvtMode::SAT_FLAG)
+      O << ".sat";
+  } else if (strcmp(Modifier, "base") == 0) {
+    // Default operand
+    switch (Imm & NVPTX::PTXCvtMode::BASE_MASK) {
+    default:
+      return;
+    case NVPTX::PTXCvtMode::NONE:
+      break;
+    case NVPTX::PTXCvtMode::RNI:
+      O << ".rni";
+      break;
+    case NVPTX::PTXCvtMode::RZI:
+      O << ".rzi";
+      break;
+    case NVPTX::PTXCvtMode::RMI:
+      O << ".rmi";
+      break;
+    case NVPTX::PTXCvtMode::RPI:
+      O << ".rpi";
+      break;
+    case NVPTX::PTXCvtMode::RN:
+      O << ".rn";
+      break;
+    case NVPTX::PTXCvtMode::RZ:
+      O << ".rz";
+      break;
+    case NVPTX::PTXCvtMode::RM:
+      O << ".rm";
+      break;
+    case NVPTX::PTXCvtMode::RP:
+      O << ".rp";
+      break;
+    }
+  } else {
+    llvm_unreachable("Invalid conversion modifier");
+  }
+}
+
+void NVPTXAsmPrinter::printCmpMode(const MachineInstr *MI, int OpNum,
+                                   raw_ostream &O, const char *Modifier) {
+  const MachineOperand &MO = MI->getOperand(OpNum);
+  int64_t Imm = MO.getImm();
+
+  if (strcmp(Modifier, "ftz") == 0) {
+    // FTZ flag
+    if (Imm & NVPTX::PTXCmpMode::FTZ_FLAG)
+      O << ".ftz";
+  } else if (strcmp(Modifier, "base") == 0) {
+    switch (Imm & NVPTX::PTXCmpMode::BASE_MASK) {
+    default:
+      return;
+    case NVPTX::PTXCmpMode::EQ:
+      O << ".eq";
+      break;
+    case NVPTX::PTXCmpMode::NE:
+      O << ".ne";
+      break;
+    case NVPTX::PTXCmpMode::LT:
+      O << ".lt";
+      break;
+    case NVPTX::PTXCmpMode::LE:
+      O << ".le";
+      break;
+    case NVPTX::PTXCmpMode::GT:
+      O << ".gt";
+      break;
+    case NVPTX::PTXCmpMode::GE:
+      O << ".ge";
+      break;
+    case NVPTX::PTXCmpMode::LO:
+      O << ".lo";
+      break;
+    case NVPTX::PTXCmpMode::LS:
+      O << ".ls";
+      break;
+    case NVPTX::PTXCmpMode::HI:
+      O << ".hi";
+      break;
+    case NVPTX::PTXCmpMode::HS:
+      O << ".hs";
+      break;
+    case NVPTX::PTXCmpMode::EQU:
+      O << ".equ";
+      break;
+    case NVPTX::PTXCmpMode::NEU:
+      O << ".neu";
+      break;
+    case NVPTX::PTXCmpMode::LTU:
+      O << ".ltu";
+      break;
+    case NVPTX::PTXCmpMode::LEU:
+      O << ".leu";
+      break;
+    case NVPTX::PTXCmpMode::GTU:
+      O << ".gtu";
+      break;
+    case NVPTX::PTXCmpMode::GEU:
+      O << ".geu";
+      break;
+    case NVPTX::PTXCmpMode::NUM:
+      O << ".num";
+      break;
+    case NVPTX::PTXCmpMode::NotANumber:
+      O << ".nan";
+      break;
+    }
+  } else {
+    llvm_unreachable("Empty Modifier");
+  }
+}
+
+
 void NVPTXAsmPrinter::emitDeclaration(const Function *F, raw_ostream &O) {
 
   emitLinkageDirective(F, O);
@@ -2033,10 +2157,6 @@ bool NVPTXAsmPrinter::ignoreLoc(const MachineInstr &MI) {
   case NVPTX::StoreParamI32:
   case NVPTX::StoreParamI64:
   case NVPTX::StoreParamI8:
-  case NVPTX::StoreParamS32I8:
-  case NVPTX::StoreParamU32I8:
-  case NVPTX::StoreParamS32I16:
-  case NVPTX::StoreParamU32I16:
   case NVPTX::StoreRetvalF32:
   case NVPTX::StoreRetvalF64:
   case NVPTX::StoreRetvalI16:
@@ -2056,11 +2176,6 @@ bool NVPTXAsmPrinter::ignoreLoc(const MachineInstr &MI) {
   case NVPTX::LoadParamMemI32:
   case NVPTX::LoadParamMemI64:
   case NVPTX::LoadParamMemI8:
-  case NVPTX::LoadParamRegF32:
-  case NVPTX::LoadParamRegF64:
-  case NVPTX::LoadParamRegI16:
-  case NVPTX::LoadParamRegI32:
-  case NVPTX::LoadParamRegI64:
   case NVPTX::PrototypeInst:
   case NVPTX::DBG_VALUE:
     return true;

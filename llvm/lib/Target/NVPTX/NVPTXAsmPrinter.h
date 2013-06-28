@@ -198,6 +198,10 @@ private:
                     const char *Modifier = 0);
   void printLdStCode(const MachineInstr *MI, int opNum, raw_ostream &O,
                      const char *Modifier = 0);
+  void printCvtMode(const MachineInstr *MI, int OpNum, raw_ostream &O,
+                    const char *Modifier = 0);
+  void printCmpMode(const MachineInstr *MI, int OpNum, raw_ostream &O,
+                    const char *Modifier = 0);
   void printVecModifiedImmediate(const MachineOperand &MO, const char *Modifier,
                                  raw_ostream &O);
   void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O,

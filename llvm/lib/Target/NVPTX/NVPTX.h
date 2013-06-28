@@ -131,6 +131,53 @@ enum VecType {
   V4 = 4
 };
 }
+
+/// PTXCvtMode - Conversion code enumeration
+namespace PTXCvtMode {
+enum CvtMode {
+  NONE = 0,
+  RNI,
+  RZI,
+  RMI,
+  RPI,
+  RN,
+  RZ,
+  RM,
+  RP,
+
+  BASE_MASK = 0x0F,
+  FTZ_FLAG = 0x10,
+  SAT_FLAG = 0x20
+};
+}
+
+/// PTXCmpMode - Comparison mode enumeration
+namespace PTXCmpMode {
+enum CmpMode {
+  EQ = 0,
+  NE,
+  LT,
+  LE,
+  GT,
+  GE,
+  LO,
+  LS,
+  HI,
+  HS,
+  EQU,
+  NEU,
+  LTU,
+  LEU,
+  GTU,
+  GEU,
+  NUM,
+  // NAN is a MACRO
+  NotANumber,
+
+  BASE_MASK = 0xFF,
+  FTZ_FLAG = 0x100
+};
+}
 }
 } // end namespace llvm;
 

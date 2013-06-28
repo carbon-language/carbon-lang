@@ -259,8 +259,6 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "NVPTXISD::StoreParamS32";
   case NVPTXISD::StoreParamU32:
     return "NVPTXISD::StoreParamU32";
-  case NVPTXISD::MoveToParam:
-    return "NVPTXISD::MoveToParam";
   case NVPTXISD::CallArgBegin:
     return "NVPTXISD::CallArgBegin";
   case NVPTXISD::CallArg:
@@ -279,10 +277,6 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "NVPTXISD::Prototype";
   case NVPTXISD::MoveParam:
     return "NVPTXISD::MoveParam";
-  case NVPTXISD::MoveRetval:
-    return "NVPTXISD::MoveRetval";
-  case NVPTXISD::MoveToRetval:
-    return "NVPTXISD::MoveToRetval";
   case NVPTXISD::StoreRetval:
     return "NVPTXISD::StoreRetval";
   case NVPTXISD::StoreRetvalV2:

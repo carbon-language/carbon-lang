@@ -82,49 +82,36 @@ def INT_MEMBAR_SYS : MEMBAR<"membar.sys;", int_nvvm_membar_sys>;
 //-----------------------------------
 
 // Map min(1.0, max(0.0, x)) to sat(x)
-multiclass SAT<NVPTXRegClass regclass, Operand fimm, Intrinsic IntMinOp,
-  Intrinsic IntMaxOp, PatLeaf f0, PatLeaf f1, string OpStr> {
-
-   // fmin(1.0, fmax(0.0, x)) => sat(x)
-   def SAT11 : NVPTXInst<(outs regclass:$dst),
-     (ins fimm:$srcf0, fimm:$srcf1, regclass:$src),
-           OpStr,
-     [(set regclass:$dst, (IntMinOp f1:$srcf0 ,
-       (IntMaxOp f0:$srcf1, regclass:$src)))]>;
-
-   // fmin(1.0, fmax(x, 0.0)) => sat(x)
-   def SAT12 : NVPTXInst<(outs regclass:$dst),
-     (ins fimm:$srcf0, fimm:$srcf1, regclass:$src),
-           OpStr,
-     [(set regclass:$dst, (IntMinOp f1:$srcf0 ,
-       (IntMaxOp regclass:$src, f0:$srcf1)))]>;
-
-   // fmin(fmax(0.0, x), 1.0) => sat(x)
-   def SAT13 : NVPTXInst<(outs regclass:$dst),
-     (ins fimm:$srcf0, fimm:$srcf1, regclass:$src),
-           OpStr,
-     [(set regclass:$dst, (IntMinOp
-       (IntMaxOp f0:$srcf0, regclass:$src), f1:$srcf1))]>;
-
-   // fmin(fmax(x, 0.0), 1.0) => sat(x)
-   def SAT14 : NVPTXInst<(outs regclass:$dst),
-     (ins fimm:$srcf0, fimm:$srcf1, regclass:$src),
-         OpStr,
-     [(set regclass:$dst, (IntMinOp
-       (IntMaxOp regclass:$src, f0:$srcf0), f1:$srcf1))]>;
-
-}
-// Note that max(0.0, min(x, 1.0)) cannot be mapped to sat(x) because when x
-// is NaN
+// Note that max(0.0, min(x, 1.0)) cannot be mapped to sat(x) because when x is
+// NaN
 // max(0.0, min(x, 1.0)) is 1.0 while sat(x) is 0.
 // Same story for fmax, fmin.
 
-defm SAT_fmin_fmax_f : SAT<Float32Regs, f32imm, int_nvvm_fmin_f,
-  int_nvvm_fmax_f, immFloat0, immFloat1,
-           "cvt.sat.f32.f32 \t$dst, $src; \n">;
-defm SAT_fmin_fmax_d : SAT<Float64Regs, f64imm, int_nvvm_fmin_d,
-  int_nvvm_fmax_d, immDouble0, immDouble1,
-           "cvt.sat.f64.f64 \t$dst, $src; \n">;
+def : Pat<(int_nvvm_fmin_f immFloat1,
+            (int_nvvm_fmax_f immFloat0, Float32Regs:$a)),
+          (CVT_f32_f32 Float32Regs:$a, CvtSAT)>;
+def : Pat<(int_nvvm_fmin_f immFloat1,
+            (int_nvvm_fmax_f Float32Regs:$a, immFloat0)),
+          (CVT_f32_f32 Float32Regs:$a, CvtSAT)>;
+def : Pat<(int_nvvm_fmin_f
+            (int_nvvm_fmax_f immFloat0, Float32Regs:$a), immFloat1),
+          (CVT_f32_f32 Float32Regs:$a, CvtSAT)>;
+def : Pat<(int_nvvm_fmin_f
+            (int_nvvm_fmax_f Float32Regs:$a, immFloat0), immFloat1),
+          (CVT_f32_f32 Float32Regs:$a, CvtSAT)>;
+
+def : Pat<(int_nvvm_fmin_d immDouble1,
+            (int_nvvm_fmax_d immDouble0, Float64Regs:$a)),
+          (CVT_f64_f64 Float64Regs:$a, CvtSAT)>;
+def : Pat<(int_nvvm_fmin_d immDouble1,
+            (int_nvvm_fmax_d Float64Regs:$a, immDouble0)),
+          (CVT_f64_f64 Float64Regs:$a, CvtSAT)>;
+def : Pat<(int_nvvm_fmin_d
+            (int_nvvm_fmax_d immDouble0, Float64Regs:$a), immDouble1),
+          (CVT_f64_f64 Float64Regs:$a, CvtSAT)>;
+def : Pat<(int_nvvm_fmin_d
+            (int_nvvm_fmax_d Float64Regs:$a, immDouble0), immDouble1),
+          (CVT_f64_f64 Float64Regs:$a, CvtSAT)>;
 
 
 // We need a full string for OpcStr here because we need to deal with case like
@@ -312,19 +299,19 @@ def INT_NVVM_SAD_UI : F_MATH_3<"sad.u32 \t$dst, $src0, $src1, $src2;",
 // Floor  Ceil
 //
 
-def INT_NVVM_FLOOR_FTZ_F : F_MATH_1<"cvt.rmi.ftz.f32.f32 \t$dst, $src0;",
-  Float32Regs, Float32Regs, int_nvvm_floor_ftz_f>;
-def INT_NVVM_FLOOR_F : F_MATH_1<"cvt.rmi.f32.f32 \t$dst, $src0;",
-  Float32Regs, Float32Regs, int_nvvm_floor_f>;
-def INT_NVVM_FLOOR_D : F_MATH_1<"cvt.rmi.f64.f64 \t$dst, $src0;",
-  Float64Regs, Float64Regs, int_nvvm_floor_d>;
+def : Pat<(int_nvvm_floor_ftz_f Float32Regs:$a),
+          (CVT_f32_f32 Float32Regs:$a, CvtRMI_FTZ)>;
+def : Pat<(int_nvvm_floor_f Float32Regs:$a),
+          (CVT_f32_f32 Float32Regs:$a, CvtRMI)>;
+def : Pat<(int_nvvm_floor_d Float64Regs:$a),
+          (CVT_f64_f64 Float64Regs:$a, CvtRMI)>;
 
-def INT_NVVM_CEIL_FTZ_F : F_MATH_1<"cvt.rpi.ftz.f32.f32 \t$dst, $src0;",
-  Float32Regs, Float32Regs, int_nvvm_ceil_ftz_f>;
-def INT_NVVM_CEIL_F : F_MATH_1<"cvt.rpi.f32.f32 \t$dst, $src0;",
-  Float32Regs, Float32Regs, int_nvvm_ceil_f>;
-def INT_NVVM_CEIL_D : F_MATH_1<"cvt.rpi.f64.f64 \t$dst, $src0;",
-  Float64Regs, Float64Regs, int_nvvm_ceil_d>;
+def : Pat<(int_nvvm_ceil_ftz_f Float32Regs:$a),
+          (CVT_f32_f32 Float32Regs:$a, CvtRPI_FTZ)>;
+def : Pat<(int_nvvm_ceil_f Float32Regs:$a),
+          (CVT_f32_f32 Float32Regs:$a, CvtRPI)>;
+def : Pat<(int_nvvm_ceil_d Float64Regs:$a),
+          (CVT_f64_f64 Float64Regs:$a, CvtRPI)>;
 
 //
 // Abs
@@ -347,37 +334,34 @@ def INT_NVVM_FABS_D : F_MATH_1<"abs.f64 \t$dst, $src0;", Float64Regs,
 // Round
 //
 
-def INT_NVVM_ROUND_FTZ_F : F_MATH_1<"cvt.rni.ftz.f32.f32 \t$dst, $src0;",
-  Float32Regs, Float32Regs, int_nvvm_round_ftz_f>;
-def INT_NVVM_ROUND_F : F_MATH_1<"cvt.rni.f32.f32 \t$dst, $src0;", Float32Regs,
-  Float32Regs, int_nvvm_round_f>;
-
-def INT_NVVM_ROUND_D : F_MATH_1<"cvt.rni.f64.f64 \t$dst, $src0;", Float64Regs,
-  Float64Regs, int_nvvm_round_d>;
+def : Pat<(int_nvvm_round_ftz_f Float32Regs:$a),
+          (CVT_f32_f32 Float32Regs:$a, CvtRNI_FTZ)>;
+def : Pat<(int_nvvm_round_f Float32Regs:$a),
+          (CVT_f32_f32 Float32Regs:$a, CvtRNI)>;
+def : Pat<(int_nvvm_round_d Float64Regs:$a),
+          (CVT_f64_f64 Float64Regs:$a, CvtRNI)>;
 
 //
 // Trunc
 //
 
-def INT_NVVM_TRUNC_FTZ_F : F_MATH_1<"cvt.rzi.ftz.f32.f32 \t$dst, $src0;",
-  Float32Regs, Float32Regs, int_nvvm_trunc_ftz_f>;
-def INT_NVVM_TRUNC_F : F_MATH_1<"cvt.rzi.f32.f32 \t$dst, $src0;", Float32Regs,
-  Float32Regs, int_nvvm_trunc_f>;
-
-def INT_NVVM_TRUNC_D : F_MATH_1<"cvt.rzi.f64.f64 \t$dst, $src0;", Float64Regs,
-  Float64Regs, int_nvvm_trunc_d>;
+def : Pat<(int_nvvm_trunc_ftz_f Float32Regs:$a),
+          (CVT_f32_f32 Float32Regs:$a, CvtRZI_FTZ)>;
+def : Pat<(int_nvvm_trunc_f Float32Regs:$a),
+          (CVT_f32_f32 Float32Regs:$a, CvtRZI)>;
+def : Pat<(int_nvvm_trunc_d Float64Regs:$a),
+          (CVT_f64_f64 Float64Regs:$a, CvtRZI)>;
 
 //
 // Saturate
 //
 
-def INT_NVVM_SATURATE_FTZ_F : F_MATH_1<"cvt.sat.ftz.f32.f32 \t$dst, $src0;",
-  Float32Regs, Float32Regs, int_nvvm_saturate_ftz_f>;
-def INT_NVVM_SATURATE_F : F_MATH_1<"cvt.sat.f32.f32 \t$dst, $src0;",
-  Float32Regs, Float32Regs, int_nvvm_saturate_f>;
-
-def INT_NVVM_SATURATE_D : F_MATH_1<"cvt.sat.f64.f64 \t$dst, $src0;",
-  Float64Regs, Float64Regs, int_nvvm_saturate_d>;
+def : Pat<(int_nvvm_saturate_ftz_f Float32Regs:$a),
+          (CVT_f32_f32 Float32Regs:$a, CvtSAT_FTZ)>;
+def : Pat<(int_nvvm_saturate_f Float32Regs:$a),
+          (CVT_f32_f32 Float32Regs:$a, CvtSAT)>;
+def : Pat<(int_nvvm_saturate_d Float64Regs:$a),
+          (CVT_f64_f64 Float64Regs:$a, CvtSAT)>;
 
 //
 // Exp2  Log2
@@ -568,110 +552,110 @@ def INT_NVVM_ADD_RP_D : F_MATH_2<"add.rp.f64 \t$dst, $src0, $src1;",
 // Convert
 //
 
-def INT_NVVM_D2F_RN_FTZ : F_MATH_1<"cvt.rn.ftz.f32.f64 \t$dst, $src0;",
-  Float32Regs, Float64Regs, int_nvvm_d2f_rn_ftz>;
-def INT_NVVM_D2F_RN : F_MATH_1<"cvt.rn.f32.f64 \t$dst, $src0;",
-  Float32Regs, Float64Regs, int_nvvm_d2f_rn>;
-def INT_NVVM_D2F_RZ_FTZ : F_MATH_1<"cvt.rz.ftz.f32.f64 \t$dst, $src0;",
-  Float32Regs, Float64Regs, int_nvvm_d2f_rz_ftz>;
-def INT_NVVM_D2F_RZ : F_MATH_1<"cvt.rz.f32.f64 \t$dst, $src0;",
-  Float32Regs, Float64Regs, int_nvvm_d2f_rz>;
-def INT_NVVM_D2F_RM_FTZ : F_MATH_1<"cvt.rm.ftz.f32.f64 \t$dst, $src0;",
-  Float32Regs, Float64Regs, int_nvvm_d2f_rm_ftz>;
-def INT_NVVM_D2F_RM : F_MATH_1<"cvt.rm.f32.f64 \t$dst, $src0;",
-  Float32Regs, Float64Regs, int_nvvm_d2f_rm>;
-def INT_NVVM_D2F_RP_FTZ : F_MATH_1<"cvt.rp.ftz.f32.f64 \t$dst, $src0;",
-  Float32Regs, Float64Regs, int_nvvm_d2f_rp_ftz>;
-def INT_NVVM_D2F_RP : F_MATH_1<"cvt.rp.f32.f64 \t$dst, $src0;",
-  Float32Regs, Float64Regs, int_nvvm_d2f_rp>;
+def : Pat<(int_nvvm_d2f_rn_ftz Float64Regs:$a),
+          (CVT_f32_f64 Float64Regs:$a, CvtRN_FTZ)>;
+def : Pat<(int_nvvm_d2f_rn Float64Regs:$a),
+          (CVT_f32_f64 Float64Regs:$a, CvtRN)>;
+def : Pat<(int_nvvm_d2f_rz_ftz Float64Regs:$a),
+          (CVT_f32_f64 Float64Regs:$a, CvtRZ_FTZ)>;
+def : Pat<(int_nvvm_d2f_rz Float64Regs:$a),
+          (CVT_f32_f64 Float64Regs:$a, CvtRZ)>;
+def : Pat<(int_nvvm_d2f_rm_ftz Float64Regs:$a),
+          (CVT_f32_f64 Float64Regs:$a, CvtRM_FTZ)>;
+def : Pat<(int_nvvm_d2f_rm Float64Regs:$a),
+          (CVT_f32_f64 Float64Regs:$a, CvtRM)>;
+def : Pat<(int_nvvm_d2f_rp_ftz Float64Regs:$a),
+          (CVT_f32_f64 Float64Regs:$a, CvtRP_FTZ)>;
+def : Pat<(int_nvvm_d2f_rp Float64Regs:$a),
+          (CVT_f32_f64 Float64Regs:$a, CvtRP)>;
 
-def INT_NVVM_D2I_RN : F_MATH_1<"cvt.rni.s32.f64 \t$dst, $src0;",
-  Int32Regs, Float64Regs, int_nvvm_d2i_rn>;
-def INT_NVVM_D2I_RZ : F_MATH_1<"cvt.rzi.s32.f64 \t$dst, $src0;",
-  Int32Regs, Float64Regs, int_nvvm_d2i_rz>;
-def INT_NVVM_D2I_RM : F_MATH_1<"cvt.rmi.s32.f64 \t$dst, $src0;",
-  Int32Regs, Float64Regs, int_nvvm_d2i_rm>;
-def INT_NVVM_D2I_RP : F_MATH_1<"cvt.rpi.s32.f64 \t$dst, $src0;",
-  Int32Regs, Float64Regs, int_nvvm_d2i_rp>;
+def : Pat<(int_nvvm_d2i_rn Float64Regs:$a),
+          (CVT_s32_f64 Float64Regs:$a, CvtRNI)>;
+def : Pat<(int_nvvm_d2i_rz Float64Regs:$a),
+          (CVT_s32_f64 Float64Regs:$a, CvtRZI)>;
+def : Pat<(int_nvvm_d2i_rm Float64Regs:$a),
+          (CVT_s32_f64 Float64Regs:$a, CvtRMI)>;
+def : Pat<(int_nvvm_d2i_rp Float64Regs:$a),
+          (CVT_s32_f64 Float64Regs:$a, CvtRPI)>;
 
-def INT_NVVM_D2UI_RN : F_MATH_1<"cvt.rni.u32.f64 \t$dst, $src0;",
-  Int32Regs, Float64Regs, int_nvvm_d2ui_rn>;
-def INT_NVVM_D2UI_RZ : F_MATH_1<"cvt.rzi.u32.f64 \t$dst, $src0;",
-  Int32Regs, Float64Regs, int_nvvm_d2ui_rz>;
-def INT_NVVM_D2UI_RM : F_MATH_1<"cvt.rmi.u32.f64 \t$dst, $src0;",
-  Int32Regs, Float64Regs, int_nvvm_d2ui_rm>;
-def INT_NVVM_D2UI_RP : F_MATH_1<"cvt.rpi.u32.f64 \t$dst, $src0;",
-  Int32Regs, Float64Regs, int_nvvm_d2ui_rp>;
+def : Pat<(int_nvvm_d2ui_rn Float64Regs:$a),
+          (CVT_u32_f64 Float64Regs:$a, CvtRNI)>;
+def : Pat<(int_nvvm_d2ui_rz Float64Regs:$a),
+          (CVT_u32_f64 Float64Regs:$a, CvtRZI)>;
+def : Pat<(int_nvvm_d2ui_rm Float64Regs:$a),
+          (CVT_u32_f64 Float64Regs:$a, CvtRMI)>;
+def : Pat<(int_nvvm_d2ui_rp Float64Regs:$a),
+          (CVT_u32_f64 Float64Regs:$a, CvtRPI)>;
 
-def INT_NVVM_I2D_RN : F_MATH_1<"cvt.rn.f64.s32 \t$dst, $src0;",
-  Float64Regs, Int32Regs, int_nvvm_i2d_rn>;
-def INT_NVVM_I2D_RZ : F_MATH_1<"cvt.rz.f64.s32 \t$dst, $src0;",
-  Float64Regs, Int32Regs, int_nvvm_i2d_rz>;
-def INT_NVVM_I2D_RM : F_MATH_1<"cvt.rm.f64.s32 \t$dst, $src0;",
-  Float64Regs, Int32Regs, int_nvvm_i2d_rm>;
-def INT_NVVM_I2D_RP : F_MATH_1<"cvt.rp.f64.s32 \t$dst, $src0;",
-  Float64Regs, Int32Regs, int_nvvm_i2d_rp>;
+def : Pat<(int_nvvm_i2d_rn Int32Regs:$a),
+          (CVT_f64_s32 Int32Regs:$a, CvtRN)>;
+def : Pat<(int_nvvm_i2d_rz Int32Regs:$a),
+          (CVT_f64_s32 Int32Regs:$a, CvtRZ)>;
+def : Pat<(int_nvvm_i2d_rm Int32Regs:$a),
+          (CVT_f64_s32 Int32Regs:$a, CvtRM)>;
+def : Pat<(int_nvvm_i2d_rp Int32Regs:$a),
+          (CVT_f64_s32 Int32Regs:$a, CvtRP)>;
 
-def INT_NVVM_UI2D_RN : F_MATH_1<"cvt.rn.f64.u32 \t$dst, $src0;",
-  Float64Regs, Int32Regs, int_nvvm_ui2d_rn>;
-def INT_NVVM_UI2D_RZ : F_MATH_1<"cvt.rz.f64.u32 \t$dst, $src0;",
-  Float64Regs, Int32Regs, int_nvvm_ui2d_rz>;
-def INT_NVVM_UI2D_RM : F_MATH_1<"cvt.rm.f64.u32 \t$dst, $src0;",
-  Float64Regs, Int32Regs, int_nvvm_ui2d_rm>;
-def INT_NVVM_UI2D_RP : F_MATH_1<"cvt.rp.f64.u32 \t$dst, $src0;",
-  Float64Regs, Int32Regs, int_nvvm_ui2d_rp>;
+def : Pat<(int_nvvm_ui2d_rn Int32Regs:$a),
+          (CVT_f64_u32 Int32Regs:$a, CvtRN)>;
+def : Pat<(int_nvvm_ui2d_rz Int32Regs:$a),
+          (CVT_f64_u32 Int32Regs:$a, CvtRZ)>;
+def : Pat<(int_nvvm_ui2d_rm Int32Regs:$a),
+          (CVT_f64_u32 Int32Regs:$a, CvtRM)>;
+def : Pat<(int_nvvm_ui2d_rp Int32Regs:$a),
+          (CVT_f64_u32 Int32Regs:$a, CvtRP)>;
 
-def INT_NVVM_F2I_RN_FTZ : F_MATH_1<"cvt.rni.ftz.s32.f32 \t$dst, $src0;",
-  Int32Regs, Float32Regs, int_nvvm_f2i_rn_ftz>;
-def INT_NVVM_F2I_RN : F_MATH_1<"cvt.rni.s32.f32 \t$dst, $src0;", Int32Regs,
-  Float32Regs, int_nvvm_f2i_rn>;
-def INT_NVVM_F2I_RZ_FTZ : F_MATH_1<"cvt.rzi.ftz.s32.f32 \t$dst, $src0;",
-  Int32Regs, Float32Regs, int_nvvm_f2i_rz_ftz>;
-def INT_NVVM_F2I_RZ : F_MATH_1<"cvt.rzi.s32.f32 \t$dst, $src0;", Int32Regs,
-  Float32Regs, int_nvvm_f2i_rz>;
-def INT_NVVM_F2I_RM_FTZ : F_MATH_1<"cvt.rmi.ftz.s32.f32 \t$dst, $src0;",
-  Int32Regs, Float32Regs, int_nvvm_f2i_rm_ftz>;
-def INT_NVVM_F2I_RM : F_MATH_1<"cvt.rmi.s32.f32 \t$dst, $src0;", Int32Regs,
-  Float32Regs, int_nvvm_f2i_rm>;
-def INT_NVVM_F2I_RP_FTZ : F_MATH_1<"cvt.rpi.ftz.s32.f32 \t$dst, $src0;",
-  Int32Regs, Float32Regs, int_nvvm_f2i_rp_ftz>;
-def INT_NVVM_F2I_RP : F_MATH_1<"cvt.rpi.s32.f32 \t$dst, $src0;", Int32Regs,
-  Float32Regs, int_nvvm_f2i_rp>;
+def : Pat<(int_nvvm_f2i_rn_ftz Float32Regs:$a),
+          (CVT_s32_f32 Float32Regs:$a, CvtRNI_FTZ)>;
+def : Pat<(int_nvvm_f2i_rn Float32Regs:$a),
+          (CVT_s32_f32 Float32Regs:$a, CvtRNI)>;
+def : Pat<(int_nvvm_f2i_rz_ftz Float32Regs:$a),
+          (CVT_s32_f32 Float32Regs:$a, CvtRZI_FTZ)>;
+def : Pat<(int_nvvm_f2i_rz Float32Regs:$a),
+          (CVT_s32_f32 Float32Regs:$a, CvtRZI)>;
+def : Pat<(int_nvvm_f2i_rm_ftz Float32Regs:$a),
+          (CVT_s32_f32 Float32Regs:$a, CvtRMI_FTZ)>;
+def : Pat<(int_nvvm_f2i_rm Float32Regs:$a),
+          (CVT_s32_f32 Float32Regs:$a, CvtRMI)>;
+def : Pat<(int_nvvm_f2i_rp_ftz Float32Regs:$a),
+          (CVT_s32_f32 Float32Regs:$a, CvtRPI_FTZ)>;
+def : Pat<(int_nvvm_f2i_rp Float32Regs:$a),
+          (CVT_s32_f32 Float32Regs:$a, CvtRPI)>;
 
-def INT_NVVM_F2UI_RN_FTZ : F_MATH_1<"cvt.rni.ftz.u32.f32 \t$dst, $src0;",
-  Int32Regs, Float32Regs, int_nvvm_f2ui_rn_ftz>;
-def INT_NVVM_F2UI_RN : F_MATH_1<"cvt.rni.u32.f32 \t$dst, $src0;", Int32Regs,
-  Float32Regs, int_nvvm_f2ui_rn>;
-def INT_NVVM_F2UI_RZ_FTZ : F_MATH_1<"cvt.rzi.ftz.u32.f32 \t$dst, $src0;",
-  Int32Regs, Float32Regs, int_nvvm_f2ui_rz_ftz>;
-def INT_NVVM_F2UI_RZ : F_MATH_1<"cvt.rzi.u32.f32 \t$dst, $src0;", Int32Regs,
-  Float32Regs, int_nvvm_f2ui_rz>;
-def INT_NVVM_F2UI_RM_FTZ : F_MATH_1<"cvt.rmi.ftz.u32.f32 \t$dst, $src0;",
-  Int32Regs, Float32Regs, int_nvvm_f2ui_rm_ftz>;
-def INT_NVVM_F2UI_RM : F_MATH_1<"cvt.rmi.u32.f32 \t$dst, $src0;", Int32Regs,
-  Float32Regs, int_nvvm_f2ui_rm>;
-def INT_NVVM_F2UI_RP_FTZ : F_MATH_1<"cvt.rpi.ftz.u32.f32 \t$dst, $src0;",
-  Int32Regs, Float32Regs, int_nvvm_f2ui_rp_ftz>;
-def INT_NVVM_F2UI_RP : F_MATH_1<"cvt.rpi.u32.f32 \t$dst, $src0;", Int32Regs,
-  Float32Regs, int_nvvm_f2ui_rp>;
+def : Pat<(int_nvvm_f2ui_rn_ftz Float32Regs:$a),
+          (CVT_u32_f32 Float32Regs:$a, CvtRNI_FTZ)>;
+def : Pat<(int_nvvm_f2ui_rn Float32Regs:$a),
+          (CVT_u32_f32 Float32Regs:$a, CvtRNI)>;
+def : Pat<(int_nvvm_f2ui_rz_ftz Float32Regs:$a),
+          (CVT_u32_f32 Float32Regs:$a, CvtRZI_FTZ)>;
+def : Pat<(int_nvvm_f2ui_rz Float32Regs:$a),
+          (CVT_u32_f32 Float32Regs:$a, CvtRZI)>;
+def : Pat<(int_nvvm_f2ui_rm_ftz Float32Regs:$a),
+          (CVT_u32_f32 Float32Regs:$a, CvtRMI_FTZ)>;
+def : Pat<(int_nvvm_f2ui_rm Float32Regs:$a),
+          (CVT_u32_f32 Float32Regs:$a, CvtRMI)>;
+def : Pat<(int_nvvm_f2ui_rp_ftz Float32Regs:$a),
+          (CVT_u32_f32 Float32Regs:$a, CvtRPI_FTZ)>;
+def : Pat<(int_nvvm_f2ui_rp Float32Regs:$a),
+          (CVT_u32_f32 Float32Regs:$a, CvtRPI)>;
 
-def INT_NVVM_I2F_RN : F_MATH_1<"cvt.rn.f32.s32 \t$dst, $src0;", Float32Regs,
-  Int32Regs, int_nvvm_i2f_rn>;
-def INT_NVVM_I2F_RZ : F_MATH_1<"cvt.rz.f32.s32 \t$dst, $src0;", Float32Regs,
-  Int32Regs, int_nvvm_i2f_rz>;
-def INT_NVVM_I2F_RM : F_MATH_1<"cvt.rm.f32.s32 \t$dst, $src0;", Float32Regs,
-  Int32Regs, int_nvvm_i2f_rm>;
-def INT_NVVM_I2F_RP : F_MATH_1<"cvt.rp.f32.s32 \t$dst, $src0;", Float32Regs,
-  Int32Regs, int_nvvm_i2f_rp>;
+def : Pat<(int_nvvm_i2f_rn Int32Regs:$a),
+          (CVT_f32_s32 Int32Regs:$a, CvtRN)>;
+def : Pat<(int_nvvm_i2f_rz Int32Regs:$a),
+          (CVT_f32_s32 Int32Regs:$a, CvtRZ)>;
+def : Pat<(int_nvvm_i2f_rm Int32Regs:$a),
+          (CVT_f32_s32 Int32Regs:$a, CvtRM)>;
+def : Pat<(int_nvvm_i2f_rp Int32Regs:$a),
+          (CVT_f32_s32 Int32Regs:$a, CvtRP)>;
 
-def INT_NVVM_UI2F_RN : F_MATH_1<"cvt.rn.f32.u32 \t$dst, $src0;", Float32Regs,
-  Int32Regs, int_nvvm_ui2f_rn>;
-def INT_NVVM_UI2F_RZ : F_MATH_1<"cvt.rz.f32.u32 \t$dst, $src0;", Float32Regs,
-  Int32Regs, int_nvvm_ui2f_rz>;
-def INT_NVVM_UI2F_RM : F_MATH_1<"cvt.rm.f32.u32 \t$dst, $src0;", Float32Regs,
-  Int32Regs, int_nvvm_ui2f_rm>;
-def INT_NVVM_UI2F_RP : F_MATH_1<"cvt.rp.f32.u32 \t$dst, $src0;", Float32Regs,
-  Int32Regs, int_nvvm_ui2f_rp>;
+def : Pat<(int_nvvm_ui2f_rn Int32Regs:$a),
+          (CVT_f32_u32 Int32Regs:$a, CvtRN)>;
+def : Pat<(int_nvvm_ui2f_rz Int32Regs:$a),
+          (CVT_f32_u32 Int32Regs:$a, CvtRZ)>;
+def : Pat<(int_nvvm_ui2f_rm Int32Regs:$a),
+          (CVT_f32_u32 Int32Regs:$a, CvtRM)>;
+def : Pat<(int_nvvm_ui2f_rp Int32Regs:$a),
+          (CVT_f32_u32 Int32Regs:$a, CvtRP)>;
 
 def INT_NVVM_LOHI_I2D : F_MATH_2<"mov.b64 \t$dst, {{$src0, $src1}};",
   Float64Regs, Int32Regs, Int32Regs, int_nvvm_lohi_i2d>;
@@ -687,91 +671,106 @@ def INT_NVVM_D2I_HI : F_MATH_1<!strconcat("{{\n\t",
                            "}}"))),
              Int32Regs, Float64Regs, int_nvvm_d2i_hi>;
 
-def INT_NVVM_F2LL_RN_FTZ : F_MATH_1<"cvt.rni.ftz.s64.f32 \t$dst, $src0;",
-  Int64Regs, Float32Regs, int_nvvm_f2ll_rn_ftz>;
-def INT_NVVM_F2LL_RN : F_MATH_1<"cvt.rni.s64.f32 \t$dst, $src0;", Int64Regs,
-  Float32Regs, int_nvvm_f2ll_rn>;
-def INT_NVVM_F2LL_RZ_FTZ : F_MATH_1<"cvt.rzi.ftz.s64.f32 \t$dst, $src0;",
-  Int64Regs, Float32Regs, int_nvvm_f2ll_rz_ftz>;
-def INT_NVVM_F2LL_RZ : F_MATH_1<"cvt.rzi.s64.f32 \t$dst, $src0;", Int64Regs,
-  Float32Regs, int_nvvm_f2ll_rz>;
-def INT_NVVM_F2LL_RM_FTZ : F_MATH_1<"cvt.rmi.ftz.s64.f32 \t$dst, $src0;",
-  Int64Regs, Float32Regs, int_nvvm_f2ll_rm_ftz>;
-def INT_NVVM_F2LL_RM : F_MATH_1<"cvt.rmi.s64.f32 \t$dst, $src0;", Int64Regs,
-  Float32Regs, int_nvvm_f2ll_rm>;
-def INT_NVVM_F2LL_RP_FTZ : F_MATH_1<"cvt.rpi.ftz.s64.f32 \t$dst, $src0;",
-  Int64Regs, Float32Regs, int_nvvm_f2ll_rp_ftz>;
-def INT_NVVM_F2LL_RP : F_MATH_1<"cvt.rpi.s64.f32 \t$dst, $src0;", Int64Regs,
-  Float32Regs, int_nvvm_f2ll_rp>;
+def : Pat<(int_nvvm_f2ll_rn_ftz Float32Regs:$a),
+          (CVT_s64_f32 Float32Regs:$a, CvtRNI_FTZ)>;
+def : Pat<(int_nvvm_f2ll_rn Float32Regs:$a),
+          (CVT_s64_f32 Float32Regs:$a, CvtRNI)>;
+def : Pat<(int_nvvm_f2ll_rz_ftz Float32Regs:$a),
+          (CVT_s64_f32 Float32Regs:$a, CvtRZI_FTZ)>;
+def : Pat<(int_nvvm_f2ll_rz Float32Regs:$a),
+          (CVT_s64_f32 Float32Regs:$a, CvtRZI)>;
+def : Pat<(int_nvvm_f2ll_rm_ftz Float32Regs:$a),
+          (CVT_s64_f32 Float32Regs:$a, CvtRMI_FTZ)>;
+def : Pat<(int_nvvm_f2ll_rm Float32Regs:$a),
+          (CVT_s64_f32 Float32Regs:$a, CvtRMI)>;
+def : Pat<(int_nvvm_f2ll_rp_ftz Float32Regs:$a),
+          (CVT_s64_f32 Float32Regs:$a, CvtRPI_FTZ)>;
+def : Pat<(int_nvvm_f2ll_rp Float32Regs:$a),
+          (CVT_s64_f32 Float32Regs:$a, CvtRPI)>;
 
-def INT_NVVM_F2ULL_RN_FTZ : F_MATH_1<"cvt.rni.ftz.u64.f32 \t$dst, $src0;",
-  Int64Regs, Float32Regs, int_nvvm_f2ull_rn_ftz>;
-def INT_NVVM_F2ULL_RN : F_MATH_1<"cvt.rni.u64.f32 \t$dst, $src0;", Int64Regs,
-  Float32Regs, int_nvvm_f2ull_rn>;
-def INT_NVVM_F2ULL_RZ_FTZ : F_MATH_1<"cvt.rzi.ftz.u64.f32 \t$dst, $src0;",
-  Int64Regs, Float32Regs, int_nvvm_f2ull_rz_ftz>;
-def INT_NVVM_F2ULL_RZ : F_MATH_1<"cvt.rzi.u64.f32 \t$dst, $src0;", Int64Regs,
-  Float32Regs, int_nvvm_f2ull_rz>;
-def INT_NVVM_F2ULL_RM_FTZ : F_MATH_1<"cvt.rmi.ftz.u64.f32 \t$dst, $src0;",
-  Int64Regs, Float32Regs, int_nvvm_f2ull_rm_ftz>;
-def INT_NVVM_F2ULL_RM : F_MATH_1<"cvt.rmi.u64.f32 \t$dst, $src0;", Int64Regs,
-  Float32Regs, int_nvvm_f2ull_rm>;
-def INT_NVVM_F2ULL_RP_FTZ : F_MATH_1<"cvt.rpi.ftz.u64.f32 \t$dst, $src0;",
-  Int64Regs, Float32Regs, int_nvvm_f2ull_rp_ftz>;
-def INT_NVVM_F2ULL_RP : F_MATH_1<"cvt.rpi.u64.f32 \t$dst, $src0;", Int64Regs,
-  Float32Regs, int_nvvm_f2ull_rp>;
+def : Pat<(int_nvvm_f2ull_rn_ftz Float32Regs:$a),
+          (CVT_u64_f32 Float32Regs:$a, CvtRNI_FTZ)>;
+def : Pat<(int_nvvm_f2ull_rn Float32Regs:$a),
+          (CVT_u64_f32 Float32Regs:$a, CvtRNI)>;
+def : Pat<(int_nvvm_f2ull_rz_ftz Float32Regs:$a),
+          (CVT_u64_f32 Float32Regs:$a, CvtRZI_FTZ)>;
+def : Pat<(int_nvvm_f2ull_rz Float32Regs:$a),
+          (CVT_u64_f32 Float32Regs:$a, CvtRZI)>;
+def : Pat<(int_nvvm_f2ull_rm_ftz Float32Regs:$a),
+          (CVT_u64_f32 Float32Regs:$a, CvtRMI_FTZ)>;
+def : Pat<(int_nvvm_f2ull_rm Float32Regs:$a),
+          (CVT_u64_f32 Float32Regs:$a, CvtRMI)>;
+def : Pat<(int_nvvm_f2ull_rp_ftz Float32Regs:$a),
+          (CVT_u64_f32 Float32Regs:$a, CvtRPI_FTZ)>;
+def : Pat<(int_nvvm_f2ull_rp Float32Regs:$a),
+          (CVT_u64_f32 Float32Regs:$a, CvtRPI)>;
 
-def INT_NVVM_D2LL_RN : F_MATH_1<"cvt.rni.s64.f64 \t$dst, $src0;", Int64Regs,
-  Float64Regs, int_nvvm_d2ll_rn>;
-def INT_NVVM_D2LL_RZ : F_MATH_1<"cvt.rzi.s64.f64 \t$dst, $src0;", Int64Regs,
-  Float64Regs, int_nvvm_d2ll_rz>;
-def INT_NVVM_D2LL_RM : F_MATH_1<"cvt.rmi.s64.f64 \t$dst, $src0;", Int64Regs,
-  Float64Regs, int_nvvm_d2ll_rm>;
-def INT_NVVM_D2LL_RP : F_MATH_1<"cvt.rpi.s64.f64 \t$dst, $src0;", Int64Regs,
-  Float64Regs, int_nvvm_d2ll_rp>;
+def : Pat<(int_nvvm_d2ll_rn Float64Regs:$a),
+          (CVT_s64_f64 Float64Regs:$a, CvtRNI)>;
+def : Pat<(int_nvvm_d2ll_rz Float64Regs:$a),
+          (CVT_s64_f64 Float64Regs:$a, CvtRZI)>;
+def : Pat<(int_nvvm_d2ll_rm Float64Regs:$a),
+          (CVT_s64_f64 Float64Regs:$a, CvtRMI)>;
+def : Pat<(int_nvvm_d2ll_rp Float64Regs:$a),
+          (CVT_s64_f64 Float64Regs:$a, CvtRPI)>;
 
-def INT_NVVM_D2ULL_RN : F_MATH_1<"cvt.rni.u64.f64 \t$dst, $src0;", Int64Regs,
-  Float64Regs, int_nvvm_d2ull_rn>;
-def INT_NVVM_D2ULL_RZ : F_MATH_1<"cvt.rzi.u64.f64 \t$dst, $src0;", Int64Regs,
-  Float64Regs, int_nvvm_d2ull_rz>;
-def INT_NVVM_D2ULL_RM : F_MATH_1<"cvt.rmi.u64.f64 \t$dst, $src0;", Int64Regs,
-  Float64Regs, int_nvvm_d2ull_rm>;
-def INT_NVVM_D2ULL_RP : F_MATH_1<"cvt.rpi.u64.f64 \t$dst, $src0;", Int64Regs,
-  Float64Regs, int_nvvm_d2ull_rp>;
+def : Pat<(int_nvvm_d2ull_rn Float64Regs:$a),
+          (CVT_u64_f64 Float64Regs:$a, CvtRNI)>;
+def : Pat<(int_nvvm_d2ull_rz Float64Regs:$a),
+          (CVT_u64_f64 Float64Regs:$a, CvtRZI)>;
+def : Pat<(int_nvvm_d2ull_rm Float64Regs:$a),
+          (CVT_u64_f64 Float64Regs:$a, CvtRMI)>;
+def : Pat<(int_nvvm_d2ull_rp Float64Regs:$a),
+          (CVT_u64_f64 Float64Regs:$a, CvtRPI)>;
 
-def INT_NVVM_LL2F_RN : F_MATH_1<"cvt.rn.f32.s64 \t$dst, $src0;", Float32Regs,
-  Int64Regs, int_nvvm_ll2f_rn>;
-def INT_NVVM_LL2F_RZ : F_MATH_1<"cvt.rz.f32.s64 \t$dst, $src0;", Float32Regs,
-  Int64Regs, int_nvvm_ll2f_rz>;
-def INT_NVVM_LL2F_RM : F_MATH_1<"cvt.rm.f32.s64 \t$dst, $src0;", Float32Regs,
-  Int64Regs, int_nvvm_ll2f_rm>;
-def INT_NVVM_LL2F_RP : F_MATH_1<"cvt.rp.f32.s64 \t$dst, $src0;", Float32Regs,
-  Int64Regs, int_nvvm_ll2f_rp>;
-def INT_NVVM_ULL2F_RN : F_MATH_1<"cvt.rn.f32.u64 \t$dst, $src0;", Float32Regs,
-  Int64Regs, int_nvvm_ull2f_rn>;
-def INT_NVVM_ULL2F_RZ : F_MATH_1<"cvt.rz.f32.u64 \t$dst, $src0;", Float32Regs,
-  Int64Regs, int_nvvm_ull2f_rz>;
-def INT_NVVM_ULL2F_RM : F_MATH_1<"cvt.rm.f32.u64 \t$dst, $src0;", Float32Regs,
-  Int64Regs, int_nvvm_ull2f_rm>;
-def INT_NVVM_ULL2F_RP : F_MATH_1<"cvt.rp.f32.u64 \t$dst, $src0;", Float32Regs,
-  Int64Regs, int_nvvm_ull2f_rp>;
+def : Pat<(int_nvvm_ll2f_rn Int64Regs:$a),
+          (CVT_f32_s64 Int64Regs:$a, CvtRN)>;
+def : Pat<(int_nvvm_ll2f_rz Int64Regs:$a),
+          (CVT_f32_s64 Int64Regs:$a, CvtRZ)>;
+def : Pat<(int_nvvm_ll2f_rm Int64Regs:$a),
+          (CVT_f32_s64 Int64Regs:$a, CvtRM)>;
+def : Pat<(int_nvvm_ll2f_rp Int64Regs:$a),
+          (CVT_f32_s64 Int64Regs:$a, CvtRP)>;
 
-def INT_NVVM_LL2D_RN : F_MATH_1<"cvt.rn.f64.s64 \t$dst, $src0;", Float64Regs,
-  Int64Regs, int_nvvm_ll2d_rn>;
-def INT_NVVM_LL2D_RZ : F_MATH_1<"cvt.rz.f64.s64 \t$dst, $src0;", Float64Regs,
-  Int64Regs, int_nvvm_ll2d_rz>;
-def INT_NVVM_LL2D_RM : F_MATH_1<"cvt.rm.f64.s64 \t$dst, $src0;", Float64Regs,
-  Int64Regs, int_nvvm_ll2d_rm>;
-def INT_NVVM_LL2D_RP : F_MATH_1<"cvt.rp.f64.s64 \t$dst, $src0;", Float64Regs,
-  Int64Regs, int_nvvm_ll2d_rp>;
-def INT_NVVM_ULL2D_RN : F_MATH_1<"cvt.rn.f64.u64 \t$dst, $src0;", Float64Regs,
-  Int64Regs, int_nvvm_ull2d_rn>;
-def INT_NVVM_ULL2D_RZ : F_MATH_1<"cvt.rz.f64.u64 \t$dst, $src0;", Float64Regs,
-  Int64Regs, int_nvvm_ull2d_rz>;
-def INT_NVVM_ULL2D_RM : F_MATH_1<"cvt.rm.f64.u64 \t$dst, $src0;", Float64Regs,
-  Int64Regs, int_nvvm_ull2d_rm>;
-def INT_NVVM_ULL2D_RP : F_MATH_1<"cvt.rp.f64.u64 \t$dst, $src0;", Float64Regs,
-  Int64Regs, int_nvvm_ull2d_rp>;
+def : Pat<(int_nvvm_ull2f_rn Int64Regs:$a),
+          (CVT_f32_u64 Int64Regs:$a, CvtRN)>;
+def : Pat<(int_nvvm_ull2f_rz Int64Regs:$a),
+          (CVT_f32_u64 Int64Regs:$a, CvtRZ)>;
+def : Pat<(int_nvvm_ull2f_rm Int64Regs:$a),
+          (CVT_f32_u64 Int64Regs:$a, CvtRM)>;
+def : Pat<(int_nvvm_ull2f_rp Int64Regs:$a),
+          (CVT_f32_u64 Int64Regs:$a, CvtRP)>;
+
+def : Pat<(int_nvvm_ll2d_rn Int64Regs:$a),
+          (CVT_f64_s64 Int64Regs:$a, CvtRN)>;
+def : Pat<(int_nvvm_ll2d_rz Int64Regs:$a),
+          (CVT_f64_s64 Int64Regs:$a, CvtRZ)>;
+def : Pat<(int_nvvm_ll2d_rm Int64Regs:$a),
+          (CVT_f64_s64 Int64Regs:$a, CvtRM)>;
+def : Pat<(int_nvvm_ll2d_rp Int64Regs:$a),
+          (CVT_f64_s64 Int64Regs:$a, CvtRP)>;
+
+def : Pat<(int_nvvm_ull2d_rn Int64Regs:$a),
+          (CVT_f64_u64 Int64Regs:$a, CvtRN)>;
+def : Pat<(int_nvvm_ull2d_rz Int64Regs:$a),
+          (CVT_f64_u64 Int64Regs:$a, CvtRZ)>;
+def : Pat<(int_nvvm_ull2d_rm Int64Regs:$a),
+          (CVT_f64_u64 Int64Regs:$a, CvtRM)>;
+def : Pat<(int_nvvm_ull2d_rp Int64Regs:$a),
+          (CVT_f64_u64 Int64Regs:$a, CvtRP)>;
+
+
+// FIXME: Ideally, we could use these patterns instead of the scope-creating
+// patterns, but ptxas does not like these since .s16 is not compatible with
+// .f16.  The solution is to use .bXX for all integer register types, but we
+// are not there yet.
+//def : Pat<(int_nvvm_f2h_rn_ftz Float32Regs:$a),
+//          (CVT_f16_f32 Float32Regs:$a, CvtRN_FTZ)>;
+//def : Pat<(int_nvvm_f2h_rn Float32Regs:$a),
+//          (CVT_f16_f32 Float32Regs:$a, CvtRN)>;
+//
+//def : Pat<(int_nvvm_h2f Int16Regs:$a),
+//          (CVT_f32_f16 Int16Regs:$a, CvtNONE)>;
 
 def INT_NVVM_F2H_RN_FTZ : F_MATH_1<!strconcat("{{\n\t",
                                    !strconcat(".reg .b16 %temp;\n\t",
@@ -792,6 +791,13 @@ def INT_NVVM_H2F : F_MATH_1<!strconcat("{{\n\t",
           !strconcat("cvt.f32.f16 \t$dst, %temp;\n\t",
             "}}")))),
           Float32Regs, Int16Regs, int_nvvm_h2f>;
+
+def : Pat<(f32 (f16_to_f32 Int16Regs:$a)),
+          (CVT_f32_f16 Int16Regs:$a, CvtNONE)>;
+def : Pat<(i16 (f32_to_f16 Float32Regs:$a)),
+          (CVT_f16_f32 Float32Regs:$a, CvtRN_FTZ)>, Requires<[doF32FTZ]>;
+def : Pat<(i16 (f32_to_f16 Float32Regs:$a)),
+          (CVT_f16_f32 Float32Regs:$a, CvtRN)>;
 
 //
 // Bitcast

@@ -1965,12 +1965,27 @@ SDNode *NVPTXDAGToDAGISel::SelectStoreParam(SDNode *N) {
       break;
     }
     break;
-  case NVPTXISD::StoreParamU32:
-    Opcode = NVPTX::StoreParamU32I16;
+  // Special case: if we have a sign-extend/zero-extend node, insert the
+  // conversion instruction first, and use that as the value operand to
+  // the selected StoreParam node.
+  case NVPTXISD::StoreParamU32: {
+    Opcode = NVPTX::StoreParamI32;
+    SDValue CvtNone = CurDAG->getTargetConstant(NVPTX::PTXCvtMode::NONE,
+                                                MVT::i32);
+    SDNode *Cvt = CurDAG->getMachineNode(NVPTX::CVT_u32_u16, DL,
+                                         MVT::i32, Ops[0], CvtNone);
+    Ops[0] = SDValue(Cvt, 0);
     break;
-  case NVPTXISD::StoreParamS32:
-    Opcode = NVPTX::StoreParamS32I16;
+  }
+  case NVPTXISD::StoreParamS32: {
+    Opcode = NVPTX::StoreParamI32;
+    SDValue CvtNone = CurDAG->getTargetConstant(NVPTX::PTXCvtMode::NONE,
+                                                MVT::i32);
+    SDNode *Cvt = CurDAG->getMachineNode(NVPTX::CVT_s32_s16, DL,
+                                         MVT::i32, Ops[0], CvtNone);
+    Ops[0] = SDValue(Cvt, 0);
     break;
+  }
   }
 
   SDNode *Ret =
