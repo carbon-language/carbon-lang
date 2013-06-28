@@ -218,7 +218,11 @@ tooling::Replacements reformat(const FormatStyle &Style, StringRef Code,
                                StringRef FileName = "<stdin>");
 
 /// \brief Returns the \c LangOpts that the formatter expects you to set.
-LangOptions getFormattingLangOpts();
+///
+/// \param Standard determines lexing mode: LC_Cpp11 and LS_Auto turn on C++11
+/// lexing mode, LS_Cpp03 - C++03 mode.
+LangOptions getFormattingLangOpts(FormatStyle::LanguageStandard Standard =
+                                      FormatStyle::LS_Cpp11);
 
 } // end namespace format
 } // end namespace clang

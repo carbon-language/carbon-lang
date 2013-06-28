@@ -1660,7 +1660,8 @@ tooling::Replacements reformat(const FormatStyle &Style, StringRef Code,
   SourceMgr.overrideFileContents(Entry, Buf);
   FileID ID =
       SourceMgr.createFileID(Entry, SourceLocation(), clang::SrcMgr::C_User);
-  Lexer Lex(ID, SourceMgr.getBuffer(ID), SourceMgr, getFormattingLangOpts());
+  Lexer Lex(ID, SourceMgr.getBuffer(ID), SourceMgr,
+            getFormattingLangOpts(Style.Standard));
   SourceLocation StartOfFile = SourceMgr.getLocForStartOfFile(ID);
   std::vector<CharSourceRange> CharRanges;
   for (unsigned i = 0, e = Ranges.size(); i != e; ++i) {
@@ -1671,10 +1672,10 @@ tooling::Replacements reformat(const FormatStyle &Style, StringRef Code,
   return reformat(Style, Lex, SourceMgr, CharRanges);
 }
 
-LangOptions getFormattingLangOpts() {
+LangOptions getFormattingLangOpts(FormatStyle::LanguageStandard Standard) {
   LangOptions LangOpts;
   LangOpts.CPlusPlus = 1;
-  LangOpts.CPlusPlus11 = 1;
+  LangOpts.CPlusPlus11 = Standard == FormatStyle::LS_Cpp03 ? 0 : 1;
   LangOpts.LineComment = 1;
   LangOpts.Bool = 1;
   LangOpts.ObjC1 = 1;

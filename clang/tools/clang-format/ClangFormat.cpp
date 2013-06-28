@@ -163,7 +163,6 @@ static bool format(std::string FileName) {
     return true;
   }
   FileID ID = createInMemoryFile(FileName, Code.get(), Sources, Files);
-  Lexer Lex(ID, Sources.getBuffer(ID), Sources, getFormattingLangOpts());
   if (Offsets.empty())
     Offsets.push_back(0);
   if (Offsets.size() != Lengths.size() &&
@@ -195,8 +194,10 @@ static bool format(std::string FileName) {
     }
     Ranges.push_back(CharSourceRange::getCharRange(Start, End));
   }
-  tooling::Replacements Replaces =
-      reformat(getStyle(Style, FileName), Lex, Sources, Ranges);
+  FormatStyle FormatStyle = getStyle(Style, FileName);
+  Lexer Lex(ID, Sources.getBuffer(ID), Sources,
+            getFormattingLangOpts(FormatStyle.Standard));
+  tooling::Replacements Replaces = reformat(FormatStyle, Lex, Sources, Ranges);
   if (OutputXML) {
     llvm::outs()
         << "<?xml version='1.0'?>\n<replacements xml:space='preserve'>\n";

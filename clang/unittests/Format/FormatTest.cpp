@@ -3097,9 +3097,9 @@ TEST_F(FormatTest, UnderstandsUnaryOperators) {
   verifyFormat("a-- > b;");
   verifyFormat("b ? -a : c;");
   verifyFormat("n * sizeof char16;");
-  verifyFormat("n * alignof char16;");
+  verifyFormat("n * alignof char16;", getGoogleStyle());
   verifyFormat("sizeof(char);");
-  verifyFormat("alignof(char);");
+  verifyFormat("alignof(char);", getGoogleStyle());
 
   verifyFormat("return -1;");
   verifyFormat("switch (a) {\n"
@@ -3374,7 +3374,7 @@ TEST_F(FormatTest, FormatsCasts) {
   verifyFormat("void f(int i = (kValue) * kMask) {}");
   verifyFormat("void f(int i = (kA * kB) & kMask) {}");
   verifyFormat("int a = sizeof(int) * b;");
-  verifyFormat("int a = alignof(int) * b;");
+  verifyFormat("int a = alignof(int) * b;", getGoogleStyle());
   verifyFormat("template <> void f<int>(int i) SOME_ANNOTATION;");
   verifyFormat("f(\"%\" SOME_MACRO(ll) \"d\");");
 
@@ -3383,7 +3383,7 @@ TEST_F(FormatTest, FormatsCasts) {
   verifyFormat("virtual void foo(char &) const;");
   verifyFormat("virtual void foo(int *a, char *) const;");
   verifyFormat("int a = sizeof(int *) + b;");
-  verifyFormat("int a = alignof(int *) + b;");
+  verifyFormat("int a = alignof(int *) + b;", getGoogleStyle());
 }
 
 TEST_F(FormatTest, FormatsFunctionTypes) {
@@ -4250,7 +4250,7 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
   verifyFormat("int a = ++[foo bar:baz];");
   verifyFormat("int a = --[foo bar:baz];");
   verifyFormat("int a = sizeof [foo bar:baz];");
-  verifyFormat("int a = alignof [foo bar:baz];");
+  verifyFormat("int a = alignof [foo bar:baz];", getGoogleStyle());
   verifyFormat("int a = &[foo bar:baz];");
   verifyFormat("int a = *[foo bar:baz];");
   // FIXME: Make casts work, without breaking f()[4].
@@ -4689,16 +4689,22 @@ TEST_F(FormatTest, BreakStringLiterals) {
 }
 
 TEST_F(FormatTest, SkipsUnknownStringLiterals) {
-  EXPECT_EQ("u8\"unsupported literal\";",
-            format("u8\"unsupported literal\";", getLLVMStyleWithColumns(15)));
+  EXPECT_EQ(
+      "u8\"unsupported literal\";",
+      format("u8\"unsupported literal\";", getGoogleStyleWithColumns(15)));
   EXPECT_EQ("u\"unsupported literal\";",
-            format("u\"unsupported literal\";", getLLVMStyleWithColumns(15)));
+            format("u\"unsupported literal\";", getGoogleStyleWithColumns(15)));
   EXPECT_EQ("U\"unsupported literal\";",
-            format("U\"unsupported literal\";", getLLVMStyleWithColumns(15)));
+            format("U\"unsupported literal\";", getGoogleStyleWithColumns(15)));
   EXPECT_EQ("L\"unsupported literal\";",
-            format("L\"unsupported literal\";", getLLVMStyleWithColumns(15)));
+            format("L\"unsupported literal\";", getGoogleStyleWithColumns(15)));
   EXPECT_EQ("R\"x(raw literal)x\";",
-            format("R\"x(raw literal)x\";", getLLVMStyleWithColumns(15)));
+            format("R\"x(raw literal)x\";", getGoogleStyleWithColumns(15)));
+}
+
+TEST_F(FormatTest, DoesNotTryToParseUDLiteralsInPreCpp11Code) {
+  EXPECT_EQ("#define x(_a) printf(\"foo\" _a);",
+            format("#define x(_a) printf(\"foo\"_a);", getLLVMStyle()));
 }
 
 TEST_F(FormatTest, BreakStringLiteralsBeforeUnbreakableTokenSequence) {
@@ -4780,7 +4786,7 @@ TEST_F(FormatTest, DoNotBreakStringLiteralsInEscapeSequence) {
             "\"1\"",
             format("\"test\\000000000001\"", getLLVMStyleWithColumns(10)));
   EXPECT_EQ("R\"(\\x\\x00)\"\n",
-            format("R\"(\\x\\x00)\"\n", getLLVMStyleWithColumns(7)));
+            format("R\"(\\x\\x00)\"\n", getGoogleStyleWithColumns(7)));
 }
 
 TEST_F(FormatTest, DoNotCreateUnreasonableUnwrappedLines) {
