@@ -1741,18 +1741,21 @@ NameSearchContext::AddFunDecl (void *type)
     
     m_function_types.insert(type);
     
+    const bool isInlineSpecified = false;
+    const bool hasWrittenPrototype = true;
+    const bool isConstexprSpecified = false;
+
     clang::FunctionDecl *func_decl = FunctionDecl::Create (*m_ast_source.m_ast_context,
                                                            const_cast<DeclContext*>(m_decl_context),
-                                                           SourceLocation(),
                                                            SourceLocation(),
                                                            m_decl_name.getAsIdentifierInfo(),
                                                            QualType::getFromOpaquePtr(type),
                                                            NULL,
                                                            SC_Static,
-                                                           SC_Static,
-                                                           false,
-                                                           true);
-    
+                                                           isInlineSpecified,
+                                                           hasWrittenPrototype,
+                                                           isConstexprSpecified);
+
     // We have to do more than just synthesize the FunctionDecl.  We have to
     // synthesize ParmVarDecls for all of the FunctionDecl's arguments.  To do
     // this, we raid the function's FunctionProtoType for types.

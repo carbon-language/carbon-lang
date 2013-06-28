@@ -5534,6 +5534,10 @@ ClangASTContext::CreateFunctionDeclaration (DeclContext *decl_ctx, const char *n
     if (decl_ctx == NULL)
         decl_ctx = ast->getTranslationUnitDecl();
 
+    
+    const bool hasWrittenPrototype = true;
+    const bool isConstexprSpecified = false;
+
     if (name && name[0])
     {
         func_decl = FunctionDecl::Create (*ast,
@@ -5544,8 +5548,9 @@ ClangASTContext::CreateFunctionDeclaration (DeclContext *decl_ctx, const char *n
                                           QualType::getFromOpaquePtr(function_clang_type),
                                           NULL,
                                           (FunctionDecl::StorageClass)storage,
-                                          (FunctionDecl::StorageClass)storage,
-                                          is_inline);
+                                          is_inline,
+                                          hasWrittenPrototype,
+                                          isConstexprSpecified);
     }
     else
     {
@@ -5557,8 +5562,9 @@ ClangASTContext::CreateFunctionDeclaration (DeclContext *decl_ctx, const char *n
                                           QualType::getFromOpaquePtr(function_clang_type),
                                           NULL,
                                           (FunctionDecl::StorageClass)storage,
-                                          (FunctionDecl::StorageClass)storage,
-                                          is_inline);
+                                          is_inline,
+                                          hasWrittenPrototype,
+                                          isConstexprSpecified);
     }
     if (func_decl)
         decl_ctx->addDecl (func_decl);
