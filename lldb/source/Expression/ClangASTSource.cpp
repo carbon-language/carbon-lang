@@ -1748,6 +1748,7 @@ NameSearchContext::AddFunDecl (void *type)
     clang::FunctionDecl *func_decl = FunctionDecl::Create (*m_ast_source.m_ast_context,
                                                            const_cast<DeclContext*>(m_decl_context),
                                                            SourceLocation(),
+                                                           SourceLocation(),
                                                            m_decl_name.getAsIdentifierInfo(),
                                                            QualType::getFromOpaquePtr(type),
                                                            NULL,
