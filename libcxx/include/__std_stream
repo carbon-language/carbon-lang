@@ -263,30 +263,31 @@ __stdoutbuf<_CharT>::overflow(int_type __c)
     char_type __1buf;
     if (!traits_type::eq_int_type(__c, traits_type::eof()))
     {
-        this->setp(&__1buf, &__1buf+1);
-        *this->pptr() = traits_type::to_char_type(__c);
-        this->pbump(1);
+        __1buf = traits_type::to_char_type(__c);
         if (__always_noconv_)
         {
-            if (fwrite(this->pbase(), sizeof(char_type), 1, __file_) != 1)
+            if (fwrite(&__1buf, sizeof(char_type), 1, __file_) != 1)
                 return traits_type::eof();
         }
         else
         {
             char* __extbe = __extbuf;
             codecvt_base::result __r;
+            char_type* pbase = &__1buf;
+            char_type* pptr = pbase + 1;
+            char_type* epptr = pptr;
             do
             {
                 const char_type* __e;
-                __r = __cv_->out(*__st_, this->pbase(), this->pptr(), __e,
+                __r = __cv_->out(*__st_, pbase, pptr, __e,
                                         __extbuf,
                                         __extbuf + sizeof(__extbuf),
                                         __extbe);
-                if (__e == this->pbase())
+                if (__e == pbase)
                     return traits_type::eof();
                 if (__r == codecvt_base::noconv)
                 {
-                    if (fwrite(this->pbase(), 1, 1, __file_) != 1)
+                    if (fwrite(pbase, 1, 1, __file_) != 1)
                         return traits_type::eof();
                 }
                 else if (__r == codecvt_base::ok || __r == codecvt_base::partial)
@@ -296,15 +297,13 @@ __stdoutbuf<_CharT>::overflow(int_type __c)
                         return traits_type::eof();
                     if (__r == codecvt_base::partial)
                     {
-                        this->setp((char_type*)__e, this->pptr());
-                        this->pbump(static_cast<int>(this->epptr() - this->pbase()));
+                        pbase = (char_type*)__e;
                     }
                 }
                 else
                     return traits_type::eof();
             } while (__r == codecvt_base::partial);
         }
-        this->setp(0, 0);
     }
     return traits_type::not_eof(__c);
 }
