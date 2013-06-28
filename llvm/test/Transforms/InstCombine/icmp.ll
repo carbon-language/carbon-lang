@@ -998,3 +998,107 @@ define i1 @test71(i8* %x) {
   %c = icmp ugt i8* %a, %b
   ret i1 %c
 }
+
+; CHECK: @icmp_shl_1_V_ult_32
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ult i32 %V, 5
+; CHECK-NEXT: ret i1 [[CMP]]
+define i1 @icmp_shl_1_V_ult_32(i32 %V) {
+  %shl = shl i32 1, %V
+  %cmp = icmp ult i32 %shl, 32
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_shl_1_V_eq_32
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp eq i32 %V, 5
+; CHECK-NEXT: ret i1 [[CMP]]
+define i1 @icmp_shl_1_V_eq_32(i32 %V) {
+  %shl = shl i32 1, %V
+  %cmp = icmp eq i32 %shl, 32
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_shl_1_V_eq_31
+; CHECK-NEXT: ret i1 false
+define i1 @icmp_shl_1_V_eq_31(i32 %V) {
+  %shl = shl i32 1, %V
+  %cmp = icmp eq i32 %shl, 31
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_shl_1_V_ne_31
+; CHECK-NEXT: ret i1 true
+define i1 @icmp_shl_1_V_ne_31(i32 %V) {
+  %shl = shl i32 1, %V
+  %cmp = icmp ne i32 %shl, 31
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_shl_1_V_ult_30
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ult i32 %V, 5
+; CHECK-NEXT: ret i1 [[CMP]]
+define i1 @icmp_shl_1_V_ult_30(i32 %V) {
+  %shl = shl i32 1, %V
+  %cmp = icmp ult i32 %shl, 30
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_shl_1_V_ugt_30
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ugt i32 %V, 4
+; CHECK-NEXT: ret i1 [[CMP]]
+define i1 @icmp_shl_1_V_ugt_30(i32 %V) {
+  %shl = shl i32 1, %V
+  %cmp = icmp ugt i32 %shl, 30
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_shl_1_V_ule_30
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ult i32 %V, 5
+; CHECK-NEXT: ret i1 [[CMP]]
+define i1 @icmp_shl_1_V_ule_30(i32 %V) {
+  %shl = shl i32 1, %V
+  %cmp = icmp ule i32 %shl, 30
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_shl_1_V_uge_30
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ugt i32 %V, 4
+; CHECK-NEXT: ret i1 [[CMP]]
+define i1 @icmp_shl_1_V_uge_30(i32 %V) {
+  %shl = shl i32 1, %V
+  %cmp = icmp uge i32 %shl, 30
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_shl_1_V_uge_2147483648
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp eq i32 %V, 31
+; CHECK-NEXT: ret i1 [[CMP]]
+define i1 @icmp_shl_1_V_uge_2147483648(i32 %V) {
+  %shl = shl i32 1, %V
+  %cmp = icmp uge i32 %shl, 2147483648
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_shl_1_V_ugt_2147483648
+; CHECK-NEXT: ret i1 false
+define i1 @icmp_shl_1_V_ugt_2147483648(i32 %V) {
+  %shl = shl i32 1, %V
+  %cmp = icmp ugt i32 %shl, 2147483648
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_shl_1_V_ule_2147483648
+; CHECK-NEXT: ret i1 true
+define i1 @icmp_shl_1_V_ule_2147483648(i32 %V) {
+  %shl = shl i32 1, %V
+  %cmp = icmp ule i32 %shl, 2147483648
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_shl_1_V_ult_2147483648
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ne i32 %V, 31
+; CHECK-NEXT: ret i1 [[CMP]]
+define i1 @icmp_shl_1_V_ult_2147483648(i32 %V) {
+  %shl = shl i32 1, %V
+  %cmp = icmp ult i32 %shl, 2147483648
+  ret i1 %cmp
+}
