@@ -44,3 +44,54 @@ if.end:                                           ; preds = %entry, %if.else
   ret i32 undef
 }
 
+
+;int foo(double * restrict B,  double * restrict A, int n, int m) {
+;  double R=A[1];
+;  double G=A[0];
+;  for (int i=0; i < 100; i++) {
+;    R += 10;
+;    G += 10;
+;    R *= 4;
+;    G *= 4;
+;    R += 4;
+;    G += 4;
+;  }
+;  B[0] = G;
+;  B[1] = R;
+;  return 0;
+;}
+
+;CHECK: foo2
+;CHECK: load <2 x double>
+;CHECK: phi <2 x double>
+;CHECK: fmul <2 x double>
+;CHECK: store <2 x double>
+;CHECK: ret
+define i32 @foo2(double* noalias nocapture %B, double* noalias nocapture %A, i32 %n, i32 %m) #0 {
+entry:
+  %arrayidx = getelementptr inbounds double* %A, i64 1
+  %0 = load double* %arrayidx, align 8
+  %1 = load double* %A, align 8
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %i.019 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %G.018 = phi double [ %1, %entry ], [ %add5, %for.body ]
+  %R.017 = phi double [ %0, %entry ], [ %add4, %for.body ]
+  %add = fadd double %R.017, 1.000000e+01
+  %add2 = fadd double %G.018, 1.000000e+01
+  %mul = fmul double %add, 4.000000e+00
+  %mul3 = fmul double %add2, 4.000000e+00
+  %add4 = fadd double %mul, 4.000000e+00
+  %add5 = fadd double %mul3, 4.000000e+00
+  %inc = add nsw i32 %i.019, 1
+  %exitcond = icmp eq i32 %inc, 100
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body
+  store double %add5, double* %B, align 8
+  %arrayidx7 = getelementptr inbounds double* %B, i64 1
+  store double %add4, double* %arrayidx7, align 8
+  ret i32 0
+}
+

@@ -11,13 +11,12 @@ target triple = "i386-apple-macosx10.8.0"
 ;}
 
 ;CHECK: @test
-;CHECK: insertelement <2 x double> undef
-;CHECK-NEXT: insertelement <2 x double>
-;CHECK-NEXT: fadd <2 x double>
+;CHECK: load <2 x double>
+;CHECK: fadd <2 x double>
 ;CHECK: store <2 x double>
-;CHECK:  insertelement <2 x double>
-;CHECK-NEXT:  fadd <2 x double>
-;CHECK:  store <2 x double>
+;CHECK: insertelement <2 x double>
+;CHECK: fadd <2 x double>
+;CHECK: store <2 x double>
 ;CHECK: ret i32
 
 define i32 @test(double* nocapture %G) {
