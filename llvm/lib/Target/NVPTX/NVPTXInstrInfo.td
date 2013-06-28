@@ -136,7 +136,8 @@ def hasLDG : Predicate<"Subtarget.hasLDG()">;
 def hasLDU : Predicate<"Subtarget.hasLDU()">;
 def hasGenericLdSt : Predicate<"Subtarget.hasGenericLdSt()">;
 
-def doF32FTZ : Predicate<"UseF32FTZ">;
+def doF32FTZ : Predicate<"UseF32FTZ==1">;
+def doNoF32FTZ : Predicate<"UseF32FTZ==0">;
 
 def doFMAF32      : Predicate<"doFMAF32">;
 def doFMAF32_ftz  : Predicate<"(doFMAF32 && UseF32FTZ)">;
@@ -765,6 +766,16 @@ def FDIV32ri_prec : NVPTXInst<(outs Float32Regs:$dst),
                         (fdiv Float32Regs:$a, fpimm:$b))]>,
                       Requires<[reqPTX20]>;
 
+//
+// F32 rsqrt
+//
+
+def RSQRTF32approx1r : NVPTXInst<(outs Float32Regs:$dst), (ins Float32Regs:$b),
+                       "rsqrt.approx.f32 \t$dst, $b;", []>;
+
+def: Pat<(fdiv FloatConst1, (int_nvvm_sqrt_f Float32Regs:$b)),
+         (RSQRTF32approx1r Float32Regs:$b)>,
+         Requires<[do_DIVF32_FULL, do_SQRTF32_APPROX, doNoF32FTZ]>;
 
 multiclass FPCONTRACT32<string OpcStr, Predicate Pred> {
    def rrr : NVPTXInst<(outs Float32Regs:$dst),
