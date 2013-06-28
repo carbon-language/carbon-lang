@@ -326,30 +326,6 @@ private:
   EdgeMaskCache MaskCache;
 };
 
-/// \brief Set/reset the debug location in the IR builder using the RAII idiom.
-class DebugLocSetter {
-  IRBuilder<> &Builder;
-  DebugLoc OldDL;
-
-  DebugLocSetter(const DebugLocSetter&);
-  DebugLocSetter &operator=(const DebugLocSetter&);
-
-public:
-  /// \brief Set the debug location in the IRBuilder 'B' using the instruction
-  /// 'Inst'.
-  DebugLocSetter(IRBuilder<> &B, Instruction *Inst) : Builder(B) {
-    OldDL = Builder.getCurrentDebugLocation();
-    // Handle null instructions gracefully. This is so we can use a dyn_cast on
-    // values without nowing it is an instruction.
-    if (Inst)
-      Builder.SetCurrentDebugLocation(Inst->getDebugLoc());
-  }
-
-  ~DebugLocSetter() {
-    Builder.SetCurrentDebugLocation(OldDL);
-  }
-};
-
 /// \brief Look for a meaningful debug location on the instruction or it's
 /// operands.
 static Instruction *getDebugLocFromInstOrOperands(Instruction *I) {
@@ -367,6 +343,15 @@ static Instruction *getDebugLocFromInstOrOperands(Instruction *I) {
   }
 
   return I;
+}
+
+/// \brief Set the debug location in the builder using the debug location in the
+/// instruction.
+static void setDebugLocFromInst(IRBuilder<> &B, const Instruction *Inst) {
+  if (Inst)
+    B.SetCurrentDebugLocation(Inst->getDebugLoc());
+  else
+    B.SetCurrentDebugLocation(DebugLoc());
 }
 
 /// \brief Check if conditionally executed loads are hoistable.
@@ -1238,7 +1223,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
   // Handle consecutive loads/stores.
   GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(Ptr);
   if (Gep && Legal->isInductionVariable(Gep->getPointerOperand())) {
-    DebugLocSetter SetDL(Builder, Gep);
+    setDebugLocFromInst(Builder, Gep);
     Value *PtrOperand = Gep->getPointerOperand();
     Value *FirstBasePtr = getVectorValue(PtrOperand)[0];
     FirstBasePtr = Builder.CreateExtractElement(FirstBasePtr, Zero);
@@ -1249,7 +1234,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
     Gep2->setName("gep.indvar.base");
     Ptr = Builder.Insert(Gep2);
   } else if (Gep) {
-    DebugLocSetter SetDL(Builder, Gep);
+    setDebugLocFromInst(Builder, Gep);
     assert(SE->isLoopInvariant(SE->getSCEV(Gep->getPointerOperand()),
                                OrigLoop) && "Base ptr must be invariant");
 
@@ -1282,7 +1267,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
   } else {
     // Use the induction element ptr.
     assert(isa<PHINode>(Ptr) && "Invalid induction ptr");
-    DebugLocSetter SetDL(Builder, cast<Instruction>(Ptr));
+    setDebugLocFromInst(Builder, cast<Instruction>(Ptr));
     VectorParts &PtrVal = getVectorValue(Ptr);
     Ptr = Builder.CreateExtractElement(PtrVal[0], Zero);
   }
@@ -1291,7 +1276,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
   if (SI) {
     assert(!Legal->isUniform(SI->getPointerOperand()) &&
            "We do not allow storing to uniform addresses");
-    DebugLocSetter SetDL(Builder, SI);
+    setDebugLocFromInst(Builder, SI);
     // We don't want to update the value in the map as it might be used in
     // another expression. So don't use a reference type for "StoredVal".
     VectorParts StoredVal = getVectorValue(SI->getValueOperand());
@@ -1318,7 +1303,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
 
   // Handle loads.
   assert(LI && "Must have a load instruction");
-  DebugLocSetter SetDL(Builder, LI);
+  setDebugLocFromInst(Builder, LI);
   for (unsigned Part = 0; Part < UF; ++Part) {
     // Calculate the pointer for the specific unroll-part.
     Value *PartPtr = Builder.CreateGEP(Ptr, Builder.getInt32(Part * VF));
@@ -1342,7 +1327,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
   // Holds vector parameters or scalars, in case of uniform vals.
   SmallVector<VectorParts, 4> Params;
 
-  DebugLocSetter SetDL(Builder, Instr);
+  setDebugLocFromInst(Builder, Instr);
 
   // Find all of the vectorized parameters.
   for (unsigned op = 0, e = Instr->getNumOperands(); op != e; ++op) {
@@ -1571,7 +1556,7 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   Builder.SetInsertPoint(VecBody->getFirstInsertionPt());
 
   // Generate the induction variable.
-  DebugLocSetter SetDL(Builder, getDebugLocFromInstOrOperands(OldInduction));
+  setDebugLocFromInst(Builder, getDebugLocFromInstOrOperands(OldInduction));
   Induction = Builder.CreatePHI(IdxTy, 2, "index");
   // The loop step is equal to the vectorization factor (num of SIMD elements)
   // times the unroll factor (num of SIMD instructions).
@@ -1580,8 +1565,8 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   // This is the IR builder that we use to add all of the logic for bypassing
   // the new vector loop.
   IRBuilder<> BypassBuilder(BypassBlock->getTerminator());
-  DebugLocSetter SetDLByPass(BypassBuilder,
-                             getDebugLocFromInstOrOperands(OldInduction));
+  setDebugLocFromInst(BypassBuilder,
+                      getDebugLocFromInstOrOperands(OldInduction));
 
   // We may need to extend the index in case there is a type mismatch.
   // We know that the count starts at zero and does not overflow.
@@ -2061,6 +2046,9 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     LoopVectorizationLegality::ReductionDescriptor RdxDesc =
     (*Legal->getReductionVars())[RdxPhi];
 
+    setDebugLocFromInst(Builder,
+                        dyn_cast<Instruction>((Value*)RdxDesc.StartValue));
+
     // We need to generate a reduction vector from the incoming scalar.
     // To do so, we need to generate the 'identity' vector and overide
     // one of the elements with the incoming scalar reduction. We need
@@ -2118,11 +2106,10 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     Builder.SetInsertPoint(LoopMiddleBlock->getFirstInsertionPt());
 
     VectorParts RdxParts;
+    setDebugLocFromInst(Builder, RdxDesc.LoopExitInstr);
     for (unsigned part = 0; part < UF; ++part) {
       // This PHINode contains the vectorized reduction variable, or
       // the initial value vector, if we bypass the vector loop.
-      DebugLocSetter SetDL(Builder, RdxDesc.LoopExitInstr);
-
       VectorParts &RdxExitVal = getVectorValue(RdxDesc.LoopExitInstr);
       PHINode *NewPhi = Builder.CreatePHI(VecTy, 2, "rdx.vec.exit.phi");
       Value *StartVal = (part == 0) ? VectorStart : Identity;
@@ -2135,9 +2122,8 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     // Reduce all of the unrolled parts into a single vector.
     Value *ReducedPartRdx = RdxParts[0];
     unsigned Op = getReductionBinOp(RdxDesc.Kind);
+    setDebugLocFromInst(Builder, dyn_cast<Instruction>(ReducedPartRdx));
     for (unsigned part = 1; part < UF; ++part) {
-      DebugLocSetter SetDL(Builder, dyn_cast<Instruction>(RdxParts[part]));
-
       if (Op != Instruction::ICmp && Op != Instruction::FCmp)
         ReducedPartRdx = Builder.CreateBinOp((Instruction::BinaryOps)Op,
                                              RdxParts[part], ReducedPartRdx,
@@ -2155,7 +2141,6 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     Value *TmpVec = ReducedPartRdx;
     SmallVector<Constant*, 32> ShuffleMask(VF, 0);
     for (unsigned i = VF; i != 1; i >>= 1) {
-      DebugLocSetter SetDL(Builder, dyn_cast<Instruction>(ReducedPartRdx));
       // Move the upper half of the vector to the lower half.
       for (unsigned j = 0; j != i/2; ++j)
         ShuffleMask[j] = Builder.getInt32(i/2 + j);
@@ -2178,11 +2163,7 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     }
 
     // The result is in the first element of the vector.
-    Value *Scalar0;
-    {
-      DebugLocSetter SetDL(Builder, dyn_cast<Instruction>(ReducedPartRdx));
-      Scalar0 = Builder.CreateExtractElement(TmpVec, Builder.getInt32(0));
-    }
+    Value *Scalar0 = Builder.CreateExtractElement(TmpVec, Builder.getInt32(0));
 
     // Now, we need to fix the users of the reduction variable
     // inside and outside of the scalar remainder loop.
@@ -2315,9 +2296,9 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
         continue;
       }
 
+      setDebugLocFromInst(Builder, P);
       // Check for PHI nodes that are lowered to vector selects.
       if (P->getParent() != OrigLoop->getHeader()) {
-        DebugLocSetter SetDL(Builder, P);
         // We know that all PHIs in non header blocks are converted into
         // selects, so we don't have to worry about the insertion order and we
         // can just use the builder.
@@ -2359,8 +2340,6 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
 
       LoopVectorizationLegality::InductionInfo II =
         Legal->getInductionVars()->lookup(P);
-
-      DebugLocSetter SetDL(Builder, P);
 
       switch (II.IK) {
       case LoopVectorizationLegality::IK_NoInduction:
@@ -2469,7 +2448,7 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
     case Instruction::Xor: {
       // Just widen binops.
       BinaryOperator *BinOp = dyn_cast<BinaryOperator>(it);
-      DebugLocSetter SetDL(Builder, BinOp);
+      setDebugLocFromInst(Builder, BinOp);
       VectorParts &A = getVectorValue(it->getOperand(0));
       VectorParts &B = getVectorValue(it->getOperand(1));
 
@@ -2496,7 +2475,7 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
       // instruction with a scalar condition. Otherwise, use vector-select.
       bool InvariantCond = SE->isLoopInvariant(SE->getSCEV(it->getOperand(0)),
                                                OrigLoop);
-      DebugLocSetter SetDL(Builder, it);
+      setDebugLocFromInst(Builder, it);
 
       // The condition can be loop invariant  but still defined inside the
       // loop. This means that we can't just use the original 'cond' value.
@@ -2521,7 +2500,7 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
       // Widen compares. Generate vector compares.
       bool FCmp = (it->getOpcode() == Instruction::FCmp);
       CmpInst *Cmp = dyn_cast<CmpInst>(it);
-      DebugLocSetter SetDL(Builder, it);
+      setDebugLocFromInst(Builder, it);
       VectorParts &A = getVectorValue(it->getOperand(0));
       VectorParts &B = getVectorValue(it->getOperand(1));
       for (unsigned Part = 0; Part < UF; ++Part) {
@@ -2552,7 +2531,7 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
     case Instruction::FPTrunc:
     case Instruction::BitCast: {
       CastInst *CI = dyn_cast<CastInst>(it);
-      DebugLocSetter SetDL(Builder, it);
+      setDebugLocFromInst(Builder, it);
       /// Optimize the special case where the source is the induction
       /// variable. Notice that we can only optimize the 'trunc' case
       /// because: a. FP conversions lose precision, b. sext/zext may wrap,
@@ -2579,8 +2558,7 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
       // Ignore dbg intrinsics.
       if (isa<DbgInfoIntrinsic>(it))
         break;
-
-      DebugLocSetter SetDL(Builder, it);
+      setDebugLocFromInst(Builder, it);
 
       Module *M = BB->getParent()->getParent();
       CallInst *CI = cast<CallInst>(it);
