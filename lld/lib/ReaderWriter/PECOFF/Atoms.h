@@ -95,26 +95,99 @@ private:
   StringRef _name;
 };
 
-class COFFDefinedAtom : public DefinedAtom {
+/// The base class of all COFF defined atoms. A derived class of
+/// COFFBaseDefinedAtom may represent atoms read from a file or atoms created
+/// by the linker. An example of the latter case is the jump table for symbols
+/// in a DLL.
+class COFFBaseDefinedAtom : public DefinedAtom {
 public:
-  COFFDefinedAtom(const File &f, StringRef n, const coff_symbol *symb,
-                  const coff_section *sec, ArrayRef<uint8_t> d,
-                  StringRef sectionName, uint64_t ordinal)
-      : _owningFile(f), _name(n), _symbol(symb), _section(sec), _data(d),
-        _sectionName(sectionName), _ordinal(ordinal) {}
+  enum class Kind {
+    File, Internal
+  };
 
-  virtual const File &file() const { return _owningFile; }
-
+  virtual const File &file() const { return _file; }
   virtual StringRef name() const { return _name; }
+  virtual uint64_t size() const { return _dataref.size(); }
+  virtual Interposable interposable() const { return interposeNo; }
+  virtual Merge merge() const { return mergeNo; }
+  virtual Alignment alignment() const { return Alignment(1); }
+  virtual SectionChoice sectionChoice() const { return sectionBasedOnContent; }
+  virtual StringRef customSectionName() const { return ""; }
+  virtual SectionPosition sectionPosition() const { return sectionPositionAny; }
+  virtual DeadStripKind deadStrip() const { return deadStripNormal; }
+  virtual bool isAlias() const { return false; }
+  virtual ArrayRef<uint8_t> rawContent() const { return _dataref; }
 
-  virtual uint64_t ordinal() const { return _ordinal; }
-
-  virtual uint64_t size() const { return _data.size(); }
-
-  uint64_t originalOffset() const { return _symbol->Value; }
+  Kind getKind() const { return _kind; }
+  void setKind(Kind kind) { _kind = kind; }
 
   void addReference(std::unique_ptr<COFFReference> reference) {
     _references.push_back(std::move(reference));
+  }
+
+  virtual reference_iterator begin() const {
+    return reference_iterator(*this, reinterpret_cast<const void *>(0));
+  }
+
+  virtual reference_iterator end() const {
+    return reference_iterator(
+        *this, reinterpret_cast<const void *>(_references.size()));
+  }
+
+protected:
+  COFFBaseDefinedAtom(const File &file, StringRef name)
+      : _file(file), _name(name), _kind(Kind::Internal) {}
+
+  COFFBaseDefinedAtom(const File &file, StringRef name, ArrayRef<uint8_t> data)
+      : _file(file), _name(name), _dataref(data), _kind(Kind::Internal) {}
+
+  COFFBaseDefinedAtom(const File &file, StringRef name,
+                      std::vector<uint8_t> *data)
+      : _file(file), _name(name), _dataref(*data),
+        _data(std::unique_ptr<std::vector<uint8_t>>(data)),
+        _kind(Kind::Internal) {}
+
+  void setRawContent(std::vector<uint8_t> *data) {
+    _dataref = *data;
+    _data = std::unique_ptr<std::vector<uint8_t>>(data);
+  }
+
+private:
+  virtual const Reference *derefIterator(const void *iter) const {
+    size_t index = reinterpret_cast<size_t>(iter);
+    return _references[index].get();
+  }
+
+  virtual void incrementIterator(const void *&iter) const {
+    size_t index = reinterpret_cast<size_t>(iter);
+    iter = reinterpret_cast<const void *>(index + 1);
+  }
+
+  const File &_file;
+  StringRef _name;
+  ArrayRef<uint8_t> _dataref;
+  std::unique_ptr<std::vector<uint8_t>> _data;
+  Kind _kind;
+  std::vector<std::unique_ptr<COFFReference>> _references;
+};
+
+/// A COFFDefinedAtom represents an atom read from a file.
+class COFFDefinedAtom : public COFFBaseDefinedAtom {
+public:
+  COFFDefinedAtom(const File &file, StringRef name, const coff_symbol *symbol,
+                  const coff_section *section, ArrayRef<uint8_t> data,
+                  StringRef sectionName, uint64_t ordinal)
+      : COFFBaseDefinedAtom(file, name, data), _symbol(symbol),
+        _section(section), _sectionName(sectionName), _ordinal(ordinal) {
+    setKind(Kind::File);
+  }
+
+  virtual uint64_t ordinal() const { return _ordinal; }
+  uint64_t originalOffset() const { return _symbol->Value; }
+  virtual StringRef getSectionName() const { return _sectionName; }
+
+  static bool classof(const COFFBaseDefinedAtom *atom) {
+    return atom->getKind() == Kind::File;
   }
 
   virtual Scope scope() const {
@@ -129,10 +202,6 @@ public:
     llvm_unreachable("Unknown scope!");
   }
 
-  virtual Interposable interposable() const { return interposeNo; }
-
-  virtual Merge merge() const { return mergeNo; }
-
   virtual ContentType contentType() const {
     if (_section->Characteristics & llvm::COFF::IMAGE_SCN_CNT_CODE)
       return typeCode;
@@ -143,16 +212,6 @@ public:
       return typeZeroFill;
     return typeUnknown;
   }
-
-  virtual Alignment alignment() const { return Alignment(1); }
-
-  virtual SectionChoice sectionChoice() const { return sectionBasedOnContent; }
-
-  virtual StringRef customSectionName() const { return ""; }
-
-  virtual SectionPosition sectionPosition() const { return sectionPositionAny; }
-
-  virtual DeadStripKind deadStrip() const { return deadStripNormal; }
 
   virtual ContentPermissions permissions() const {
     if (_section->Characteristics & llvm::COFF::IMAGE_SCN_MEM_READ &&
@@ -166,40 +225,38 @@ public:
     return perm___;
   }
 
-  virtual bool isAlias() const { return false; }
+private:
+  const coff_symbol *_symbol;
+  const coff_section *_section;
+  StringRef _sectionName;
+  std::vector<std::unique_ptr<COFFReference>> _references;
+  uint64_t _ordinal;
+};
 
-  virtual StringRef getSectionName() const { return _sectionName; }
+class COFFSharedLibraryAtom : public SharedLibraryAtom {
+public:
+  enum class Kind {
+    DATA, FUNC
+  };
 
-  virtual ArrayRef<uint8_t> rawContent() const { return _data; }
+  virtual const File &file() const { return _file; }
+  virtual StringRef name() const { return _symbolName; }
+  virtual StringRef loadName() const { return _loadName; }
+  virtual bool canBeNullAtRuntime() const { return false; }
 
-  virtual reference_iterator begin() const {
-    return reference_iterator(*this, reinterpret_cast<const void *>(0));
-  }
+  Kind getKind() const { return _kind; }
 
-  virtual reference_iterator end() const {
-    return reference_iterator(
-        *this, reinterpret_cast<const void *>(_references.size()));
+protected:
+  COFFSharedLibraryAtom(const File &file, StringRef symbolName,
+                        StringRef loadName, Kind kind)
+      : _file(file), _symbolName(symbolName), _loadName(loadName), _kind(kind) {
   }
 
 private:
-  virtual const Reference *derefIterator(const void *iter) const {
-    size_t index = reinterpret_cast<size_t>(iter);
-    return _references[index].get();
-  }
-
-  virtual void incrementIterator(const void *&iter) const {
-    size_t index = reinterpret_cast<size_t>(iter);
-    iter = reinterpret_cast<const void *>(index + 1);
-  }
-
-  const File &_owningFile;
-  StringRef _name;
-  const coff_symbol *_symbol;
-  const coff_section *_section;
-  std::vector<std::unique_ptr<COFFReference> > _references;
-  ArrayRef<uint8_t> _data;
-  StringRef _sectionName;
-  uint64_t _ordinal;
+  const File &_file;
+  StringRef _symbolName;
+  StringRef _loadName;
+  Kind _kind;
 };
 
 //===----------------------------------------------------------------------===//
