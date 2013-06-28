@@ -43,7 +43,6 @@
 #include <sys/mount.h>
 #include <sys/ptrace.h>
 #include <sys/sysinfo.h>
-#include <sys/user.h>
 #include <sys/vt.h>
 #include <linux/cdrom.h>
 #include <linux/fd.h>
@@ -66,6 +65,7 @@
 #include <scsi/scsi.h>
 #include <sys/mtio.h>
 #include <sys/kd.h>
+#include <sys/user.h>
 #include <linux/cyclades.h>
 #include <linux/if_eql.h>
 #include <linux/if_plip.h>
@@ -162,7 +162,7 @@ namespace __sanitizer {
       return 0;
   }
 
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
   unsigned struct_user_regs_struct_sz = sizeof(struct user_regs_struct);
   unsigned struct_user_fpregs_struct_sz = sizeof(struct user_fpregs_struct);
 #if __WORDSIZE == 64
