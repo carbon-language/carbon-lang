@@ -696,7 +696,7 @@ public:
   char *data() const;
 
   /// Get a const view of the data. Modifying this memory has undefined
-  /// behaivor.
+  /// behavior.
   const char *const_data() const;
 
   /// \returns The minimum alignment offset must be.
