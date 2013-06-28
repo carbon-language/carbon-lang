@@ -18,10 +18,8 @@
 
 using namespace llvm;
 
-namespace {
-
-/// mult96bit - Multiply FREQ by N and store result in W array.
-void mult96bit(uint64_t freq, uint32_t N, uint64_t W[2]) {
+/// Multiply FREQ by N and store result in W array.
+static void mult96bit(uint64_t freq, uint32_t N, uint64_t W[2]) {
   uint64_t u0 = freq & UINT32_MAX;
   uint64_t u1 = freq >> 32;
 
@@ -42,15 +40,15 @@ void mult96bit(uint64_t freq, uint32_t N, uint64_t W[2]) {
 }
 
 
-/// div96bit - Divide 96-bit value stored in W array by D.
+/// Divide 96-bit value stored in W array by D.
 /// Return 64-bit quotient, saturated to UINT64_MAX on overflow.
-uint64_t div96bit(uint64_t W[2], uint32_t D) {
+static uint64_t div96bit(uint64_t W[2], uint32_t D) {
   uint64_t y = W[0];
   uint64_t x = W[1];
-  int i;
+  unsigned i;
 
   // This long division algorithm automatically saturates on overflow.
-  for (i = 1; i <= 64 && x; ++i) {
+  for (i = 0; i < 64 && x; ++i) {
     uint32_t t = (int)x >> 31;
     x = (x << 1) | (y >> 63);
     y = y << 1;
@@ -60,10 +58,9 @@ uint64_t div96bit(uint64_t W[2], uint32_t D) {
     }
   }
 
-  return y << (64 - i + 1);
+  return y << (64 - i);
 }
 
-}
 
 void BlockFrequency::scale(uint32_t N, uint32_t D) {
   assert(D != 0 && "Division by zero");
