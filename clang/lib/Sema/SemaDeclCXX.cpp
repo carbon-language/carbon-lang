@@ -919,6 +919,9 @@ static void CheckConstexprCtorInitializer(Sema &SemaRef,
                                           FieldDecl *Field,
                                           llvm::SmallSet<Decl*, 16> &Inits,
                                           bool &Diagnosed) {
+  if (Field->isInvalidDecl())
+    return;
+
   if (Field->isUnnamedBitfield())
     return;
 
@@ -3236,6 +3239,8 @@ static bool isIncompleteOrZeroLengthArrayType(ASTContext &Context, QualType T) {
 static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
                                     FieldDecl *Field, 
                                     IndirectFieldDecl *Indirect = 0) {
+  if (Field->isInvalidDecl())
+    return false;
 
   // Overwhelmingly common case: we have a direct initializer for this field.
   if (CXXCtorInitializer *Init = Info.AllBaseFields.lookup(Field))
@@ -3274,7 +3279,7 @@ static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
   // Don't try to build an implicit initializer if there were semantic
   // errors in any of the initializers (and therefore we might be
   // missing some that the user actually wrote).
-  if (Info.AnyErrorsInInits || Field->isInvalidDecl())
+  if (Info.AnyErrorsInInits)
     return false;
 
   CXXCtorInitializer *Init = 0;

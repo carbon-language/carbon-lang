@@ -1694,3 +1694,18 @@ namespace VirtualFromBase {
   constexpr X<S2> *q = const_cast<X<X<S2>>*>(&xxs2);
   static_assert(q->f() == sizeof(S2), "");
 }
+
+namespace ConstexprConstructorRecovery {
+  class X { 
+  public: 
+      enum E : short { 
+          headers = 0x1, 
+          middlefile = 0x2, 
+          choices = 0x4 
+      }; 
+      constexpr X() noexcept {}; 
+  protected: 
+      E val{0}; // expected-error {{cannot initialize a member subobject of type 'ConstexprConstructorRecovery::X::E' with an rvalue of type 'int'}}
+  }; 
+  constexpr X x{};
+}
