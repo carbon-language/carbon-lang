@@ -354,79 +354,6 @@ static void setDebugLocFromInst(IRBuilder<> &B, const Value *Ptr) {
     B.SetCurrentDebugLocation(DebugLoc());
 }
 
-/// \brief Check if conditionally executed loads are hoistable.
-///
-/// This class has two functions: isHoistableLoad and canHoistAllLoads.
-/// isHoistableLoad should be called on all load instructions that are executed
-/// conditionally. After all conditional loads are processed, the client should
-/// call canHoistAllLoads to determine if all of the conditional executed loads
-/// have an unconditional memory access to the same memory address in the loop.
-class LoadHoisting {
-  typedef SmallPtrSet<Value *, 8> MemorySet;
-
-  Loop *TheLoop;
-  DominatorTree *DT;
-  MemorySet CondLoadAddrSet;
-
-public:
-  LoadHoisting(Loop *L, DominatorTree *D) : TheLoop(L), DT(D) {}
-
-  /// \brief Check if the instruction is a load with a identifiable address.
-  bool isHoistableLoad(Instruction *L);
-
-  /// \brief Check if all of the conditional loads are hoistable because there
-  /// exists an unconditional memory access to the same address in the loop.
-  bool canHoistAllLoads();
-};
-
-bool LoadHoisting::isHoistableLoad(Instruction *L) {
-  LoadInst *LI = dyn_cast<LoadInst>(L);
-  if (!LI)
-    return false;
-
-  CondLoadAddrSet.insert(LI->getPointerOperand());
-  return true;
-}
-
-static void addMemAccesses(BasicBlock *BB, SmallPtrSet<Value *, 8> &Set) {
-  for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE; ++BI) {
-    if (LoadInst *LI = dyn_cast<LoadInst>(BI)) // Try a load.
-      Set.insert(LI->getPointerOperand());
-    else if (StoreInst *SI = dyn_cast<StoreInst>(BI)) // Try a store.
-      Set.insert(SI->getPointerOperand());
-  }
-}
-
-bool LoadHoisting::canHoistAllLoads() {
-  // No conditional loads.
-  if (CondLoadAddrSet.empty())
-    return true;
-
-  MemorySet UncondMemAccesses;
-  std::vector<BasicBlock*> &LoopBlocks = TheLoop->getBlocksVector();
-  BasicBlock *LoopLatch = TheLoop->getLoopLatch();
-
-  // Iterate over the unconditional blocks and collect memory access addresses.
-  for (unsigned i = 0, e = LoopBlocks.size(); i < e; ++i) {
-    BasicBlock *BB = LoopBlocks[i];
-
-    // Ignore conditional blocks.
-    if (BB != LoopLatch && !DT->dominates(BB, LoopLatch))
-      continue;
-
-    addMemAccesses(BB, UncondMemAccesses);
-  }
-
-  // And make sure there is a matching unconditional access for every
-  // conditional load.
-  for (MemorySet::iterator MI = CondLoadAddrSet.begin(),
-       ME = CondLoadAddrSet.end(); MI != ME; ++MI)
-    if (!UncondMemAccesses.count(*MI))
-      return false;
-
-  return true;
-}
-
 /// LoopVectorizationLegality checks if it is legal to vectorize a loop, and
 /// to what vectorization factor.
 /// This class does not look at the profitability of vectorization, only the
@@ -446,7 +373,7 @@ public:
                             DominatorTree *DT, TargetLibraryInfo *TLI)
       : TheLoop(L), SE(SE), DL(DL), DT(DT), TLI(TLI),
         Induction(0), WidestIndTy(0), HasFunNoNaNAttr(false),
-        MaxSafeDepDistBytes(-1U), LoadSpeculation(L, DT) {}
+        MaxSafeDepDistBytes(-1U) {}
 
   /// This enum represents the kinds of reductions that we support.
   enum ReductionKind {
@@ -638,8 +565,9 @@ private:
   void collectLoopUniforms();
 
   /// Return true if all of the instructions in the block can be speculatively
-  /// executed.
-  bool blockCanBePredicated(BasicBlock *BB);
+  /// executed. \p SafePtrs is a list of addresses that are known to be legal
+  /// and we know that we can read from them without segfault.
+  bool blockCanBePredicated(BasicBlock *BB, SmallPtrSet<Value *, 8>& SafePtrs);
 
   /// Returns True, if 'Phi' is the kind of reduction variable for type
   /// 'Kind'. If this is a reduction variable, it adds it to ReductionList.
@@ -697,9 +625,6 @@ private:
   bool HasFunNoNaNAttr;
 
   unsigned MaxSafeDepDistBytes;
-
-  /// Utility to determine whether loads can be speculated.
-  LoadHoisting LoadSpeculation;
 };
 
 /// LoopVectorizationCostModel - estimates the expected speedups due to
@@ -2611,6 +2536,24 @@ bool LoopVectorizationLegality::canVectorizeWithIfConvert() {
   assert(TheLoop->getNumBlocks() > 1 && "Single block loops are vectorizable");
   std::vector<BasicBlock*> &LoopBlocks = TheLoop->getBlocksVector();
 
+  // A list of pointers that we can safely read and write to.
+  SmallPtrSet<Value *, 8> SafePointes;
+
+  // Collect safe addresses.
+  for (unsigned i = 0, e = LoopBlocks.size(); i < e; ++i) {
+    BasicBlock *BB = LoopBlocks[i];
+
+    if (blockNeedsPredication(BB))
+      continue;
+
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+      if (LoadInst *LI = dyn_cast<LoadInst>(I))
+        SafePointes.insert(LI->getPointerOperand());
+      else if (StoreInst *SI = dyn_cast<StoreInst>(I))
+        SafePointes.insert(SI->getPointerOperand());
+    }
+  }
+
   // Collect the blocks that need predication.
   for (unsigned i = 0, e = LoopBlocks.size(); i < e; ++i) {
     BasicBlock *BB = LoopBlocks[i];
@@ -2620,13 +2563,9 @@ bool LoopVectorizationLegality::canVectorizeWithIfConvert() {
       return false;
 
     // We must be able to predicate all blocks that need to be predicated.
-    if (blockNeedsPredication(BB) && !blockCanBePredicated(BB))
+    if (blockNeedsPredication(BB) && !blockCanBePredicated(BB, SafePointes))
       return false;
   }
-
-  // Check that we can actually speculate the hoistable loads.
-  if (!LoadSpeculation.canHoistAllLoads())
-    return false;
 
   // We can if-convert this loop.
   return true;
@@ -4056,11 +3995,15 @@ bool LoopVectorizationLegality::blockNeedsPredication(BasicBlock *BB)  {
   return !DT->dominates(BB, Latch);
 }
 
-bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB) {
+bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB,
+                                            SmallPtrSet<Value *, 8>& SafePtrs) {
   for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
     // We might be able to hoist the load.
-    if (it->mayReadFromMemory() && !LoadSpeculation.isHoistableLoad(it))
-      return false;
+    if (it->mayReadFromMemory()) {
+      LoadInst *LI = dyn_cast<LoadInst>(it);
+      if (!LI || !SafePtrs.count(LI->getPointerOperand()))
+        return false;
+    }
 
     // We don't predicate stores at the moment.
     if (it->mayWriteToMemory() || it->mayThrow())
