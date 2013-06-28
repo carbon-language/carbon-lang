@@ -248,12 +248,10 @@ unsigned DwarfUnits::getStringPoolIndex(StringRef Str) {
 }
 
 unsigned DwarfUnits::getAddrPoolIndex(const MCSymbol *Sym) {
-  std::pair<const MCSymbol*, unsigned> &Entry = AddressPool[Sym];
-  if (Entry.first) return Entry.second;
-
-  Entry.second = NextAddrPoolNumber++;
-  Entry.first = Sym;
-  return Entry.second;
+  std::pair<DenseMap<const MCSymbol *, unsigned>::iterator, bool> P =
+      AddressPool.insert(std::make_pair(Sym, NextAddrPoolNumber));
+  NextAddrPoolNumber += P.second;
+  return P.first->second;
 }
 
 // Define a unique number for the abbreviation.
@@ -2356,23 +2354,20 @@ void DwarfUnits::emitAddresses(const MCSection *AddrSection) {
   // Start the dwarf addr section.
   Asm->OutStreamer.SwitchSection(AddrSection);
 
-  // Get all of the string pool entries and put them in an array by their ID so
+  // Get all of the address pool entries and put them in an array by their ID so
   // we can sort them.
-  SmallVector<std::pair<unsigned, std::pair<const MCSymbol *, unsigned> *>, 64>
-      Entries;
+  SmallVector<std::pair<unsigned, const MCSymbol *>, 64> Entries;
 
-  for (DenseMap<const MCSymbol *,
-                std::pair<const MCSymbol *, unsigned> >::iterator
-           I = AddressPool.begin(),
-           E = AddressPool.end();
+  for (DenseMap<const MCSymbol *, unsigned>::iterator I = AddressPool.begin(),
+                                                      E = AddressPool.end();
        I != E; ++I)
-    Entries.push_back(std::make_pair(I->second.second, &(I->second)));
+    Entries.push_back(std::make_pair(I->second, I->first));
 
   array_pod_sort(Entries.begin(), Entries.end());
 
   for (unsigned i = 0, e = Entries.size(); i != e; ++i) {
     // Emit a label for reference from debug information entries.
-    if (const MCSymbol *Sym = Entries[i].second->first)
+    if (const MCSymbol *Sym = Entries[i].second)
       Asm->EmitLabelReference(Sym, Asm->getDataLayout().getPointerSize());
     else
       Asm->OutStreamer.EmitIntValue(0, Asm->getDataLayout().getPointerSize());

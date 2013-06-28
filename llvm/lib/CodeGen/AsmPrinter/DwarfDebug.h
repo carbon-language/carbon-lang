@@ -195,10 +195,9 @@ public:
 typedef StringMap<std::pair<MCSymbol*, unsigned>,
                   BumpPtrAllocator&> StrPool;
 
-// A Symbol->pair<Symbol, unsigned> mapping of addresses used by indirect
+// A Symbol->unsigned mapping of addresses used by indirect
 // references.
-typedef DenseMap<const MCSymbol *, std::pair<const MCSymbol *, unsigned> >
-    AddrPool;
+typedef DenseMap<const MCSymbol *, unsigned> AddrPool;
 
 /// \brief Collects and handles information specific to a particular
 /// collection of units.
