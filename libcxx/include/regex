@@ -3420,6 +3420,7 @@ basic_regex<_CharT, _Traits>::__parse_QUOTED_CHAR_ERE(_ForwardIterator __first,
                 case '+':
                 case '?':
                 case '{':
+                case '}':
                     __push_char(*__temp);
                     __first = ++__temp;
                     break;
