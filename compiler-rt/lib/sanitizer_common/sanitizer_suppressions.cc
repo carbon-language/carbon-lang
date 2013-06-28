@@ -20,7 +20,7 @@
 namespace __sanitizer {
 
 static const char *const kTypeStrings[SuppressionTypeCount] = {
-  "none", "race", "mutex", "thread", "signal"
+  "none", "race", "mutex", "thread", "signal", "leak"
 };
 
 bool TemplateMatch(char *templ, const char *str) {
@@ -95,7 +95,7 @@ void SuppressionContext::Parse(const char *str) {
         }
       }
       if (type == SuppressionTypeCount) {
-        Printf("%s: failed to parse suppressions file\n", SanitizerToolName);
+        Printf("%s: failed to parse suppressions\n", SanitizerToolName);
         Die();
       }
       Suppression s;
@@ -104,6 +104,7 @@ void SuppressionContext::Parse(const char *str) {
       internal_memcpy(s.templ, line, end2 - line);
       s.templ[end2 - line] = 0;
       s.hit_count = 0;
+      s.weight = 0;
       suppressions_.push_back(s);
     }
     if (end[0] == 0)

@@ -24,6 +24,7 @@ enum SuppressionType {
   SuppressionMutex,
   SuppressionThread,
   SuppressionSignal,
+  SuppressionLeak,
   SuppressionTypeCount
 };
 
@@ -31,6 +32,7 @@ struct Suppression {
   SuppressionType type;
   char *templ;
   unsigned hit_count;
+  uptr weight;
 };
 
 class SuppressionContext {

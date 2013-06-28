@@ -16,9 +16,11 @@
 
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_flags.h"
+#include "sanitizer_common/sanitizer_placement_new.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_stoptheworld.h"
+#include "sanitizer_common/sanitizer_suppressions.h"
 
 #if CAN_SANITIZE_LEAKS
 namespace __lsan {
@@ -38,6 +40,7 @@ static void InitializeFlags() {
   f->resolution = 0;
   f->max_leaks = 0;
   f->exitcode = 23;
+  f->suppressions="";
   f->use_registers = true;
   f->use_globals = true;
   f->use_stacks = true;
@@ -63,17 +66,39 @@ static void InitializeFlags() {
     ParseFlag(options, &f->log_pointers, "log_pointers");
     ParseFlag(options, &f->log_threads, "log_threads");
     ParseFlag(options, &f->exitcode, "exitcode");
+    ParseFlag(options, &f->suppressions, "suppressions");
   }
+}
+
+SuppressionContext *suppression_ctx;
+
+void InitializeSuppressions() {
+  CHECK(!suppression_ctx);
+  ALIGNED(64) static char placeholder_[sizeof(SuppressionContext)];
+  suppression_ctx = new(placeholder_) SuppressionContext;
+  char *suppressions_from_file;
+  uptr buffer_size;
+  if (ReadFileToBuffer(flags()->suppressions, &suppressions_from_file,
+                       &buffer_size, 1 << 26 /* max_len */))
+    suppression_ctx->Parse(suppressions_from_file);
+  if (flags()->suppressions[0] && !buffer_size) {
+    Printf("LeakSanitizer: failed to read suppressions file '%s'\n",
+           flags()->suppressions);
+    Die();
+  }
+  if (&__lsan_default_suppressions)
+    suppression_ctx->Parse(__lsan_default_suppressions());
 }
 
 void InitCommonLsan() {
   InitializeFlags();
+  InitializeSuppressions();
   InitializePlatformSpecificModules();
 }
 
 static inline bool CanBeAHeapPointer(uptr p) {
   // Since our heap is located in mmap-ed memory, we can assume a sensible lower
-  // boundary on heap addresses.
+  // bound on heap addresses.
   const uptr kMinAddress = 4 * 4096;
   if (p < kMinAddress) return false;
 #ifdef __x86_64__
@@ -158,7 +183,7 @@ static void ProcessThreads(SuspendedThreadsList const &suspended_threads,
         // signal handler on alternate stack). Again, consider the entire stack
         // range to be reachable.
         if (flags()->log_threads)
-          Report("WARNING: stack_pointer not in stack_range.\n");
+          Report("WARNING: stack pointer not in stack range.\n");
       } else {
         // Shrink the stack range to ignore out-of-scope values.
         stack_begin = sp;
@@ -285,6 +310,21 @@ static void PrintLeakedCb(uptr chunk, void *arg) {
   }
 }
 
+static void PrintMatchedSuppressions() {
+  InternalMmapVector<Suppression *> matched(1);
+  suppression_ctx->GetMatched(&matched);
+  if (!matched.size())
+    return;
+  const char *line = "-----------------------------------------------------";
+  Printf("%s\n", line);
+  Printf("Suppressions used:\n");
+  Printf("  count      bytes template\n");
+  for (uptr i = 0; i < matched.size(); i++)
+    Printf("%7zu %10zu %s\n", static_cast<uptr>(matched[i]->hit_count),
+           matched[i]->weight, matched[i]->templ);
+  Printf("%s\n\n", line);
+}
+
 static void PrintLeaked() {
   Printf("\n");
   Printf("Reporting individual objects:\n");
@@ -330,14 +370,44 @@ void DoLeakCheck() {
     Die();
   }
   if (!param.leak_report.IsEmpty()) {
+    uptr unsuppressed_count = param.leak_report.ApplySuppressions();
+    if (!unsuppressed_count) return;
     Printf("\n================================================================="
            "\n");
     Report("ERROR: LeakSanitizer: detected memory leaks\n");
     param.leak_report.PrintLargest(flags()->max_leaks);
+    PrintMatchedSuppressions();
     param.leak_report.PrintSummary();
     if (flags()->exitcode)
       internal__exit(flags()->exitcode);
   }
+}
+
+static Suppression *GetSuppressionForAddr(uptr addr) {
+  static const uptr kMaxAddrFrames = 16;
+  InternalScopedBuffer<AddressInfo> addr_frames(kMaxAddrFrames);
+  for (uptr i = 0; i < kMaxAddrFrames; i++) new (&addr_frames[i]) AddressInfo();
+  uptr addr_frames_num = __sanitizer::SymbolizeCode(addr, addr_frames.data(),
+                                                    kMaxAddrFrames);
+  for (uptr i = 0; i < addr_frames_num; i++) {
+    Suppression* s;
+    if (suppression_ctx->Match(addr_frames[i].function, SuppressionLeak, &s) ||
+        suppression_ctx->Match(addr_frames[i].file, SuppressionLeak, &s) ||
+        suppression_ctx->Match(addr_frames[i].module, SuppressionLeak, &s))
+      return s;
+  }
+  return 0;
+}
+
+static Suppression *GetSuppressionForStack(u32 stack_trace_id) {
+  uptr size = 0;
+  const uptr *trace = StackDepotGet(stack_trace_id, &size);
+  for (uptr i = 0; i < size; i++) {
+    Suppression *s =
+        GetSuppressionForAddr(StackTrace::GetPreviousInstructionPc(trace[i]));
+    if (s) return s;
+  }
+  return 0;
 }
 
 ///// LeakReport implementation. /////
@@ -361,7 +431,7 @@ void LeakReport::Add(u32 stack_trace_id, uptr leaked_size, ChunkTag tag) {
     }
   if (leaks_.size() == kMaxLeaksConsidered) return;
   Leak leak = { /* hit_count */ 1, leaked_size, stack_trace_id,
-                is_directly_leaked };
+                is_directly_leaked, /* is_suppressed */ false };
   leaks_.push_back(leak);
 }
 
@@ -369,26 +439,33 @@ static bool IsLarger(const Leak &leak1, const Leak &leak2) {
   return leak1.total_size > leak2.total_size;
 }
 
-void LeakReport::PrintLargest(uptr max_leaks) {
+void LeakReport::PrintLargest(uptr num_leaks_to_print) {
   CHECK(leaks_.size() <= kMaxLeaksConsidered);
   Printf("\n");
   if (leaks_.size() == kMaxLeaksConsidered)
     Printf("Too many leaks! Only the first %zu leaks encountered will be "
            "reported.\n",
            kMaxLeaksConsidered);
-  if (max_leaks > 0 && max_leaks < leaks_.size())
-    Printf("The %zu largest leak(s):\n", max_leaks);
+
+  uptr unsuppressed_count = 0;
+  for (uptr i = 0; i < leaks_.size(); i++)
+    if (!leaks_[i].is_suppressed) unsuppressed_count++;
+  if (num_leaks_to_print > 0 && num_leaks_to_print < unsuppressed_count)
+    Printf("The %zu largest leak(s):\n", num_leaks_to_print);
   InternalSort(&leaks_, leaks_.size(), IsLarger);
-  max_leaks = max_leaks > 0 ? Min(max_leaks, leaks_.size()) : leaks_.size();
-  for (uptr i = 0; i < max_leaks; i++) {
+  uptr leaks_printed = 0;
+  for (uptr i = 0; i < leaks_.size(); i++) {
+    if (leaks_[i].is_suppressed) continue;
     Printf("%s leak of %zu byte(s) in %zu object(s) allocated from:\n",
            leaks_[i].is_directly_leaked ? "Direct" : "Indirect",
            leaks_[i].total_size, leaks_[i].hit_count);
     PrintStackTraceById(leaks_[i].stack_trace_id);
     Printf("\n");
+    leaks_printed = 0;
+    if (leaks_printed == num_leaks_to_print) break;
   }
-  if (max_leaks < leaks_.size()) {
-    uptr remaining = leaks_.size() - max_leaks;
+  if (leaks_printed < unsuppressed_count) {
+    uptr remaining = unsuppressed_count - leaks_printed;
     Printf("Omitting %zu more leak(s).\n", remaining);
   }
 }
@@ -397,12 +474,28 @@ void LeakReport::PrintSummary() {
   CHECK(leaks_.size() <= kMaxLeaksConsidered);
   uptr bytes = 0, allocations = 0;
   for (uptr i = 0; i < leaks_.size(); i++) {
+      if (leaks_[i].is_suppressed) continue;
       bytes += leaks_[i].total_size;
       allocations += leaks_[i].hit_count;
   }
   Printf(
       "SUMMARY: LeakSanitizer: %zu byte(s) leaked in %zu allocation(s).\n\n",
       bytes, allocations);
+}
+
+uptr LeakReport::ApplySuppressions() {
+  uptr unsuppressed_count = 0;
+  for (uptr i = 0; i < leaks_.size(); i++) {
+    Suppression *s = GetSuppressionForStack(leaks_[i].stack_trace_id);
+    if (s) {
+      s->weight += leaks_[i].total_size;
+      s->hit_count += leaks_[i].hit_count;
+      leaks_[i].is_suppressed = true;
+    } else {
+    unsuppressed_count++;
+    }
+  }
+  return unsuppressed_count;
 }
 }  // namespace __lsan
 #endif  // CAN_SANITIZE_LEAKS

@@ -51,6 +51,8 @@ struct Flags {
   int max_leaks;
   // If nonzero kill the process with this exit code upon finding leaks.
   int exitcode;
+  // Suppressions file name.
+  const char* suppressions;
 
   // Flags controlling the root set of reachable memory.
   // Global variables (.data and .bss).
@@ -81,6 +83,7 @@ struct Leak {
   uptr total_size;
   u32 stack_trace_id;
   bool is_directly_leaked;
+  bool is_suppressed;
 };
 
 // Aggregates leaks by stack trace prefix.
@@ -91,6 +94,7 @@ class LeakReport {
   void PrintLargest(uptr max_leaks);
   void PrintSummary();
   bool IsEmpty() { return leaks_.size() == 0; }
+  uptr ApplySuppressions();
  private:
   InternalMmapVector<Leak> leaks_;
 };
@@ -156,6 +160,8 @@ class LsanMetadata {
 
 extern "C" {
 int __lsan_is_turned_off() SANITIZER_WEAK_ATTRIBUTE
+    SANITIZER_INTERFACE_ATTRIBUTE;
+const char *__lsan_default_suppressions() SANITIZER_WEAK_ATTRIBUTE
     SANITIZER_INTERFACE_ATTRIBUTE;
 }  // extern "C"
 

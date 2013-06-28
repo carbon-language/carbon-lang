@@ -45,8 +45,9 @@ TEST(Suppressions, TypeStrings) {
   CHECK(!internal_strcmp(SuppressionTypeString(SuppressionMutex), "mutex"));
   CHECK(!internal_strcmp(SuppressionTypeString(SuppressionThread), "thread"));
   CHECK(!internal_strcmp(SuppressionTypeString(SuppressionSignal), "signal"));
+  CHECK(!internal_strcmp(SuppressionTypeString(SuppressionLeak), "leak"));
   // Ensure this test is up-to-date when suppression types are added.
-  CHECK_EQ(SuppressionTypeCount, 5);
+  CHECK_EQ(SuppressionTypeCount, 6);
 }
 
 class SuppressionContextTest : public ::testing::Test {
