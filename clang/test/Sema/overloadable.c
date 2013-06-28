@@ -69,3 +69,18 @@ void test() {
   f0();
   f1();
 }
+
+void before_local_1(int) __attribute__((overloadable)); // expected-note {{here}}
+void before_local_2(int); // expected-note {{here}}
+void before_local_3(int) __attribute__((overloadable));
+void local() {
+  void before_local_1(char); // expected-error {{must have the 'overloadable' attribute}}
+  void before_local_2(char) __attribute__((overloadable)); // expected-error {{conflicting types}}
+  void before_local_3(char) __attribute__((overloadable));
+  void after_local_1(char); // expected-note {{here}}
+  void after_local_2(char) __attribute__((overloadable)); // expected-note {{here}}
+  void after_local_3(char) __attribute__((overloadable));
+}
+void after_local_1(int) __attribute__((overloadable)); // expected-error {{conflicting types}}
+void after_local_2(int); // expected-error {{must have the 'overloadable' attribute}}
+void after_local_3(int) __attribute__((overloadable));

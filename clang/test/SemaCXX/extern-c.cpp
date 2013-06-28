@@ -3,20 +3,20 @@
 namespace test1 {
   extern "C" {
     void test1_f() {
-      void test1_g(int); // expected-note {{previous declaration is here}}
+      void test1_g(int); // expected-note {{declared with C language linkage here}}
     }
   }
 }
-int test1_g(int); // expected-error {{functions that differ only in their return type cannot be overloaded}}
+int test1_g(int); // expected-error {{declaration of 'test1_g' in global scope conflicts with declaration with C language linkage}}
 
 namespace test2 {
   extern "C" {
     void test2_f() {
-      extern int test2_x; // expected-note {{previous definition is here}}
+      extern int test2_x; // expected-note {{declared with C language linkage here}}
     }
   }
 }
-float test2_x; // expected-error {{redefinition of 'test2_x' with a different type: 'float' vs 'int'}}
+float test2_x; // expected-error {{declaration of 'test2_x' in global scope conflicts with declaration with C language linkage}}
 
 namespace test3 {
   extern "C" {
@@ -31,18 +31,18 @@ namespace test3 {
 
 extern "C" {
   void test4_f() {
-    extern int test4_b; // expected-note {{previous definition is here}}
+    extern int test4_b; // expected-note {{declared with C language linkage here}}
   }
 }
-static float test4_b; // expected-error {{redefinition of 'test4_b' with a different type: 'float' vs 'int'}}
+static float test4_b; // expected-error {{declaration of 'test4_b' in global scope conflicts with declaration with C language linkage}}
 
 extern "C" {
   void test5_f() {
-    extern int test5_b; // expected-note {{previous definition is here}}
+    extern int test5_b; // expected-note {{declared with C language linkage here}}
   }
 }
 extern "C" {
-  static float test5_b; // expected-error {{redefinition of 'test5_b' with a different type: 'float' vs 'int'}}
+  static float test5_b; // expected-error {{declaration of 'test5_b' in global scope conflicts with declaration with C language linkage}}
 }
 
 extern "C" {
@@ -69,11 +69,11 @@ namespace linkage {
     }
   }
   namespace from_outer {
-    void linkage_from_outer_1();
+    void linkage_from_outer_1(); // expected-note {{previous}}
     void linkage_from_outer_2(); // expected-note {{previous}}
     extern "C" {
-      void linkage_from_outer_1(int); // expected-note {{previous}}
-      void linkage_from_outer_1(); // expected-error {{conflicting types}}
+      void linkage_from_outer_1(int);
+      void linkage_from_outer_1(); // expected-error {{different language linkage}}
       void linkage_from_outer_2(); // expected-error {{different language linkage}}
     }
   }
@@ -98,11 +98,44 @@ namespace linkage {
   }
 }
 
-void lookup_in_global_f();
+void lookup_in_global_f(); // expected-note {{here}}
 namespace lookup_in_global {
   void lookup_in_global_f();
+  void lookup_in_global_g();
   extern "C" {
-    // FIXME: We should reject this.
-    void lookup_in_global_f(int);
+    void lookup_in_global_f(int); // expected-error {{conflicts with declaration in global scope}}
+    void lookup_in_global_g(int); // expected-note {{here}}
   }
 }
+void lookup_in_global_g(); // expected-error {{conflicts with declaration with C language linkage}}
+
+namespace N1 {
+  extern "C" int different_kind_1; // expected-note {{here}}
+  extern "C" void different_kind_2(); // expected-note {{here}}
+}
+namespace N2 {
+  extern "C" void different_kind_1(); // expected-error {{different kind of symbol}}
+  extern "C" int different_kind_2; // expected-error {{different kind of symbol}}
+}
+
+extern "C" {
+  struct stat {};
+  void stat(struct stat);
+}
+namespace X {
+  extern "C" {
+    void stat(struct ::stat);
+  }
+}
+
+extern "C" void name_with_using_decl_1(int);
+namespace using_decl {
+  void name_with_using_decl_1();
+  void name_with_using_decl_2();
+  void name_with_using_decl_3();
+}
+using using_decl::name_with_using_decl_1;
+using using_decl::name_with_using_decl_2;
+extern "C" void name_with_using_decl_2(int);
+extern "C" void name_with_using_decl_3(int);
+using using_decl::name_with_using_decl_3;

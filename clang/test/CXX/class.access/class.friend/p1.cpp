@@ -287,22 +287,22 @@ namespace test9 {
 
 // PR7230
 namespace test10 {
-  extern "C" void f(void);
-  extern "C" void g(void);
+  extern "C" void test10_f(void);
+  extern "C" void test10_g(void);
 
   namespace NS {
     class C {
       void foo(void); // expected-note {{declared private here}}
-      friend void test10::f(void);
+      friend void test10::test10_f(void);
     };
     static C* bar;
   }
 
-  void f(void) {
+  void test10_f(void) {
     NS::bar->foo();
   }
 
-  void g(void) {
+  void test10_g(void) {
     NS::bar->foo(); // expected-error {{private member}}
   }
 }

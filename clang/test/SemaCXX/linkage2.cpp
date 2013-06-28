@@ -201,3 +201,15 @@ namespace test18 {
   }
   void *h() { return f(); }
 }
+
+extern "C" void pr16247_foo(int); // expected-note {{here}}
+static void pr16247_foo(double); // expected-error {{conflicts with declaration with C language linkage}}
+void pr16247_foo(int) {}
+void pr16247_foo(double) {}
+
+namespace PR16247 {
+  extern "C" void pr16247_bar(int);
+  static void pr16247_bar(double);
+  void pr16247_bar(int) {}
+  void pr16247_bar(double) {}
+}
