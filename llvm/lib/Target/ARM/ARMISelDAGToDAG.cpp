@@ -3472,16 +3472,16 @@ SDNode *ARMDAGToDAGISel::SelectInlineAsm(SDNode *N){
   // However, some instrstions (e.g. ldrexd/strexd in ARM mode) require
   // (even/even+1) GPRs and use %n and %Hn to refer to the individual regs
   // respectively. Since there is no constraint to explicitly specify a
-  // reg pair, we search %H operand inside the asm string. If it is found, the
-  // transformation below enforces a GPRPair reg class for "%r" for 64-bit data.
-  if (AsmString.find(":H}") == StringRef::npos)
-    return NULL;
+  // reg pair, we use GPRPair reg class for "%r" for 64-bit data. For Thumb,
+  // the 64-bit data may be referred by H, Q, R modifiers, so we still pack
+  // them into a GPRPair.
 
   SDLoc dl(N);
-  SDValue Glue = N->getOperand(NumOps-1);
+  SDValue Glue = N->getGluedNode() ? N->getOperand(NumOps-1) : SDValue(0,0);
 
+  SmallVector<bool, 8> OpChanged;
   // Glue node will be appended late.
-  for(unsigned i = 0; i < NumOps -1; ++i) {
+  for(unsigned i = 0, e = N->getGluedNode() ? NumOps - 1 : NumOps; i < e; ++i) {
     SDValue op = N->getOperand(i);
     AsmNodeOperands.push_back(op);
 
@@ -3495,17 +3495,28 @@ SDNode *ARMDAGToDAGISel::SelectInlineAsm(SDNode *N){
     else
       continue;
 
+    unsigned NumRegs = InlineAsm::getNumOperandRegisters(Flag);
+    if (NumRegs)
+      OpChanged.push_back(false);
+
+    unsigned DefIdx = 0;
+    bool IsTiedToChangedOp = false;
+    // If it's a use that is tied with a previous def, it has no
+    // reg class constraint.
+    if (Changed && InlineAsm::isUseOperandTiedToDef(Flag, DefIdx))
+      IsTiedToChangedOp = OpChanged[DefIdx];
+
     if (Kind != InlineAsm::Kind_RegUse && Kind != InlineAsm::Kind_RegDef
         && Kind != InlineAsm::Kind_RegDefEarlyClobber)
       continue;
 
-    unsigned RegNum = InlineAsm::getNumOperandRegisters(Flag);
     unsigned RC;
     bool HasRC = InlineAsm::hasRegClassConstraint(Flag, RC);
-    if (!HasRC || RC != ARM::GPRRegClassID || RegNum != 2)
+    if ((!IsTiedToChangedOp && (!HasRC || RC != ARM::GPRRegClassID))
+        || NumRegs != 2)
       continue;
 
-    assert((i+2 < NumOps-1) && "Invalid number of operands in inline asm");
+    assert((i+2 < NumOps) && "Invalid number of operands in inline asm");
     SDValue V0 = N->getOperand(i+1);
     SDValue V1 = N->getOperand(i+2);
     unsigned Reg0 = cast<RegisterSDNode>(V0)->getReg();
@@ -3566,6 +3577,7 @@ SDNode *ARMDAGToDAGISel::SelectInlineAsm(SDNode *N){
     Changed = true;
 
     if(PairedReg.getNode()) {
+      OpChanged[OpChanged.size() -1 ] = true;
       Flag = InlineAsm::getFlagWord(Kind, 1 /* RegNum*/);
       Flag = InlineAsm::getFlagWordForRegClass(Flag, ARM::GPRPairRegClassID);
       // Replace the current flag.
@@ -3578,7 +3590,8 @@ SDNode *ARMDAGToDAGISel::SelectInlineAsm(SDNode *N){
     }
   }
 
-  AsmNodeOperands.push_back(Glue);
+  if (Glue.getNode())
+    AsmNodeOperands.push_back(Glue);
   if (!Changed)
     return NULL;
 

@@ -464,8 +464,14 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       // This takes advantage of the 2 operand-ness of ldm/stm and that we've
       // already got the operands in registers that are operands to the
       // inline asm statement.
-
-      O << "{" << ARMInstPrinter::getRegisterName(RegBegin);
+      O << "{";
+      if (ARM::GPRPairRegClass.contains(RegBegin)) {
+        const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
+        unsigned Reg0 = TRI->getSubReg(RegBegin, ARM::gsub_0);
+        O << ARMInstPrinter::getRegisterName(Reg0) << ", ";;
+        RegBegin = TRI->getSubReg(RegBegin, ARM::gsub_1);
+      }
+      O << ARMInstPrinter::getRegisterName(RegBegin);
 
       // FIXME: The register allocator not only may not have given us the
       // registers in sequence, but may not be in ascending registers. This
@@ -491,6 +497,20 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
         return true;
       unsigned Flags = FlagsOP.getImm();
       unsigned NumVals = InlineAsm::getNumOperandRegisters(Flags);
+      unsigned RC;
+      InlineAsm::hasRegClassConstraint(Flags, RC);
+      if (RC == ARM::GPRPairRegClassID) {
+        if (NumVals != 1)
+          return true;
+        const MachineOperand &MO = MI->getOperand(OpNum);
+        if (!MO.isReg())
+          return true;
+        const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
+        unsigned Reg = TRI->getSubReg(MO.getReg(), ExtraCode[0] == 'Q' ?
+            ARM::gsub_0 : ARM::gsub_1);
+        O << ARMInstPrinter::getRegisterName(Reg);
+        return false;
+      }
       if (NumVals != 2)
         return true;
       unsigned RegOp = ExtraCode[0] == 'Q' ? OpNum : OpNum + 1;
