@@ -179,7 +179,7 @@ void HexagonInstPrinter::printBranchOperand(const MCInst *MI, unsigned OpNo,
                                             raw_ostream &O) const {
   // Branches can take an immediate operand.  This is used by the branch
   // selection pass to print $+8, an eight byte displacement from the PC.
-  assert(0 && "Unknown branch operand.");
+  llvm_unreachable("Unknown branch operand.");
 }
 
 void HexagonInstPrinter::printCallOperand(const MCInst *MI, unsigned OpNo,
@@ -203,7 +203,7 @@ void HexagonInstPrinter::printSymbol(const MCInst *MI, unsigned OpNo,
     O << '#';
     printOperand(MI, OpNo, O);
   } else {
-    assert(0 && "Unknown symbol operand");
+    llvm_unreachable("Unknown symbol operand");
     printOperand(MI, OpNo, O);
   }
   O << ')';
