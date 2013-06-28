@@ -129,7 +129,7 @@ void MCJIT::loadObject(Module *M) {
   OwningPtr<ObjectBuffer> ObjectToLoad;
   // Try to load the pre-compiled object from cache if possible
   if (0 != ObjCache) {
-    OwningPtr<MemoryBuffer> PreCompiledObject(ObjCache->getObjectCopy(M));
+    OwningPtr<MemoryBuffer> PreCompiledObject(ObjCache->getObject(M));
     if (0 != PreCompiledObject.get())
       ObjectToLoad.reset(new ObjectBuffer(PreCompiledObject.take()));
   }

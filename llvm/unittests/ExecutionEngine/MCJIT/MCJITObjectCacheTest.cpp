@@ -45,6 +45,16 @@ public:
     ObjMap[ModuleID] = copyBuffer(Obj);
   }
 
+  virtual MemoryBuffer* getObject(const Module* M) {
+    const MemoryBuffer* BufferFound = getObjectInternal(M);
+    ModulesLookedUp.insert(M->getModuleIdentifier());
+    if (!BufferFound)
+      return NULL;
+    // Our test cache wants to maintain ownership of its object buffers
+    // so we make a copy here for the execution engine.
+    return MemoryBuffer::getMemBufferCopy(BufferFound->getBuffer());
+  }
+
   // Test-harness-specific functions
   bool wereDuplicatesInserted() { return DuplicateInserted; }
 
@@ -60,13 +70,6 @@ public:
     if (it == ObjMap.end())
       return 0;
     return it->second;
-  }
-
-protected:
-  virtual const MemoryBuffer* getObject(const Module* M) {
-    const MemoryBuffer* BufferFound = getObjectInternal(M);
-    ModulesLookedUp.insert(M->getModuleIdentifier());
-    return BufferFound;
   }
 
 private:

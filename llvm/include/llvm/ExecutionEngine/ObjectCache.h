@@ -30,23 +30,9 @@ public:
 
   /// getObjectCopy - Returns a pointer to a newly allocated MemoryBuffer that
   /// contains the object which corresponds with Module M, or 0 if an object is
-  /// not available. The caller owns the MemoryBuffer returned by this function.
-  MemoryBuffer* getObjectCopy(const Module* M) {
-    const MemoryBuffer* Obj = getObject(M);
-    if (Obj)
-      return MemoryBuffer::getMemBufferCopy(Obj->getBuffer());
-    else
-      return 0;
-  }
-
-protected:
-  /// getObject - Returns a pointer to a MemoryBuffer that contains an object
-  /// that corresponds with Module M, or 0 if an object is not available.
-  /// The pointer returned by this function is not suitable for loading because
-  /// the memory is read-only and owned by the ObjectCache. To retrieve an
-  /// owning pointer to a MemoryBuffer (which is suitable for calling
-  /// RuntimeDyld::loadObject() with) use getObjectCopy() instead.
-  virtual const MemoryBuffer* getObject(const Module* M) = 0;
+  /// not available. The caller owns both the MemoryBuffer returned by this
+  /// and the memory it references.
+  virtual MemoryBuffer* getObject(const Module* M) = 0;
 };
 
 }
