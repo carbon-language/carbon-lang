@@ -61,11 +61,20 @@ namespace llvm {
   /// cases (for output, flow, and anti dependences), the dependence implies
   /// an ordering, where the source must precede the destination; in contrast,
   /// input dependences are unordered.
+  ///
+  /// When a dependence graph is built, each Dependence will be a member of
+  /// the set of predecessor edges for its destination instruction and a set
+  /// if successor edges for its source instruction. These sets are represented
+  /// as singly-linked lists, with the "next" fields stored in the dependence
+  /// itelf.
   class Dependence {
   public:
     Dependence(Instruction *Source,
                Instruction *Destination) :
-      Src(Source), Dst(Destination) {}
+      Src(Source),
+      Dst(Destination),
+      NextPredecessor(NULL),
+      NextSuccessor(NULL) {}
     virtual ~Dependence() {}
 
     /// Dependence::DVEntry - Each level in the distance/direction vector
@@ -164,11 +173,36 @@ namespace llvm {
     /// variable associated with the loop at this level.
     virtual bool isScalar(unsigned Level) const;
 
+    /// getNextPredecessor - Returns the value of the NextPredecessor
+    /// field.
+    const Dependence *getNextPredecessor() const {
+      return NextPredecessor;
+    }
+    
+    /// getNextSuccessor - Returns the value of the NextSuccessor
+    /// field.
+    const Dependence *getNextSuccessor() const {
+      return NextSuccessor;
+    }
+    
+    /// setNextPredecessor - Sets the value of the NextPredecessor
+    /// field.
+    void setNextPredecessor(const Dependence *pred) {
+      NextPredecessor = pred;
+    }
+    
+    /// setNextSuccessor - Sets the value of the NextSuccessor
+    /// field.
+    void setNextSuccessor(const Dependence *succ) {
+      NextSuccessor = succ;
+    }
+    
     /// dump - For debugging purposes, dumps a dependence to OS.
     ///
     void dump(raw_ostream &OS) const;
   private:
     Instruction *Src, *Dst;
+    const Dependence *NextPredecessor, *NextSuccessor;
     friend class DependenceAnalysis;
   };
 
