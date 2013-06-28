@@ -82,167 +82,12 @@ def hasHWROT32 : Predicate<"Subtarget.hasHWROT32()">;
 
 def true : Predicate<"1">;
 
-//===----------------------------------------------------------------------===//
-// Special Handling for 8-bit Operands and Operations
-//
-// PTX supports 8-bit signed and unsigned types, but does not support 8-bit
-// operations (like add, shift, etc) except for ld/st/cvt. SASS does not have
-// 8-bit registers.
-//
-// PTX ld, st and cvt instructions permit source and destination data operands
-// to be wider than the instruction-type size, so that narrow values may be
-// loaded, stored, and converted using regular-width registers.
-//
-// So in PTX generation, we
-// - always use 16-bit registers in place in 8-bit registers.
-//   (8-bit variables should stay as 8-bit as they represent memory layout.)
-// - for the following 8-bit operations, we sign-ext/zero-ext the 8-bit values
-//   before operation
-//   . div
-//   . rem
-//   . neg (sign)
-//   . set, setp
-//   . shr
-//
-// We are patching the operations by inserting the cvt instructions in the
-// asm strings of the affected instructions.
-//
-// Since vector operations, except for ld/st, are eventually elementized. We
-// do not need to special-hand the vector 8-bit operations.
-//
-//
-//===----------------------------------------------------------------------===//
-
-// Generate string block like
-// {
-//   .reg .s16 %temp1;
-//   .reg .s16 %temp2;
-//   cvt.s16.s8 %temp1, %a;
-//   cvt.s16.s8 %temp2, %b;
-//   opc.s16    %dst, %temp1, %temp2;
-// }
-// when OpcStr=opc.s TypeStr=s16 CVTStr=cvt.s16.s8
-class Handle_i8rr<string OpcStr, string TypeStr, string CVTStr> {
-  string s = !strconcat("{{\n\t",
-             !strconcat(".reg .", !strconcat(TypeStr,
-             !strconcat(" \t%temp1;\n\t",
-             !strconcat(".reg .", !strconcat(TypeStr,
-             !strconcat(" \t%temp2;\n\t",
-             !strconcat(CVTStr, !strconcat(" \t%temp1, $a;\n\t",
-             !strconcat(CVTStr, !strconcat(" \t%temp2, $b;\n\t",
-             !strconcat(OpcStr, "16 \t$dst, %temp1, %temp2;\n\t}}"))))))))))));
-}
-
-// Generate string block like
-// {
-//   .reg .s16 %temp1;
-//   .reg .s16 %temp2;
-//   cvt.s16.s8 %temp1, %a;
-//   mov.b16    %temp2, %b;
-//   cvt.s16.s8 %temp2, %temp2;
-//   opc.s16    %dst, %temp1, %temp2;
-// }
-// when OpcStr=opc.s TypeStr=s16 CVTStr=cvt.s16.s8
-class Handle_i8ri<string OpcStr, string TypeStr, string CVTStr> {
-  string s = !strconcat("{{\n\t",
-             !strconcat(".reg .", !strconcat(TypeStr,
-             !strconcat(" \t%temp1;\n\t",
-             !strconcat(".reg .",
-             !strconcat(TypeStr, !strconcat(" \t%temp2;\n\t",
-             !strconcat(CVTStr, !strconcat(" \t%temp1, $a;\n\t",
-             !strconcat("mov.b16 \t%temp2, $b;\n\t",
-             !strconcat(CVTStr, !strconcat(" \t%temp2, %temp2;\n\t",
-             !strconcat(OpcStr, "16 \t$dst, %temp1, %temp2;\n\t}}")))))))))))));
-}
-
-// Generate string block like
-// {
-//   .reg .s16 %temp1;
-//   .reg .s16 %temp2;
-//   mov.b16    %temp1, %b;
-//   cvt.s16.s8 %temp1, %temp1;
-//   cvt.s16.s8 %temp2, %a;
-//   opc.s16    %dst, %temp1, %temp2;
-// }
-// when OpcStr=opc.s TypeStr=s16 CVTStr=cvt.s16.s8
-class Handle_i8ir<string OpcStr, string TypeStr, string CVTStr> {
-  string s = !strconcat("{{\n\t",
-             !strconcat(".reg .", !strconcat(TypeStr,
-             !strconcat(" \t%temp1;\n\t",
-             !strconcat(".reg .", !strconcat(TypeStr,
-             !strconcat(" \t%temp2;\n\t",
-             !strconcat("mov.b16 \t%temp1, $a;\n\t",
-             !strconcat(CVTStr, !strconcat(" \t%temp1, %temp1;\n\t",
-             !strconcat(CVTStr, !strconcat(" \t%temp2, $b;\n\t",
-             !strconcat(OpcStr, "16 \t$dst, %temp1, %temp2;\n\t}}")))))))))))));
-}
-
 
 //===----------------------------------------------------------------------===//
 // Some Common Instruction Class Templates
 //===----------------------------------------------------------------------===//
 
 multiclass I3<string OpcStr, SDNode OpNode> {
-  def i64rr : NVPTXInst<(outs Int64Regs:$dst), (ins Int64Regs:$a, Int64Regs:$b),
-                     !strconcat(OpcStr, "64 \t$dst, $a, $b;"),
-                     [(set Int64Regs:$dst, (OpNode Int64Regs:$a,
-                       Int64Regs:$b))]>;
-  def i64ri : NVPTXInst<(outs Int64Regs:$dst), (ins Int64Regs:$a, i64imm:$b),
-                     !strconcat(OpcStr, "64 \t$dst, $a, $b;"),
-                     [(set Int64Regs:$dst, (OpNode Int64Regs:$a, imm:$b))]>;
-  def i32rr : NVPTXInst<(outs Int32Regs:$dst), (ins Int32Regs:$a, Int32Regs:$b),
-                     !strconcat(OpcStr, "32 \t$dst, $a, $b;"),
-                     [(set Int32Regs:$dst, (OpNode Int32Regs:$a,
-                       Int32Regs:$b))]>;
-  def i32ri : NVPTXInst<(outs Int32Regs:$dst), (ins Int32Regs:$a, i32imm:$b),
-                     !strconcat(OpcStr, "32 \t$dst, $a, $b;"),
-                     [(set Int32Regs:$dst, (OpNode Int32Regs:$a, imm:$b))]>;
-  def i16rr : NVPTXInst<(outs Int16Regs:$dst), (ins Int16Regs:$a, Int16Regs:$b),
-                     !strconcat(OpcStr, "16 \t$dst, $a, $b;"),
-                     [(set Int16Regs:$dst, (OpNode Int16Regs:$a,
-                       Int16Regs:$b))]>;
-  def i16ri : NVPTXInst<(outs Int16Regs:$dst), (ins Int16Regs:$a, i16imm:$b),
-                     !strconcat(OpcStr, "16 \t$dst, $a, $b;"),
-                     [(set Int16Regs:$dst, (OpNode Int16Regs:$a, (imm):$b))]>;
-  def i8rr : NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$a, Int8Regs:$b),
-                     !strconcat(OpcStr, "16 \t$dst, $a, $b;"),
-                     [(set Int8Regs:$dst, (OpNode Int8Regs:$a, Int8Regs:$b))]>;
-  def i8ri : NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$a, i8imm:$b),
-                     !strconcat(OpcStr, "16 \t$dst, $a, $b;"),
-                     [(set Int8Regs:$dst, (OpNode Int8Regs:$a, (imm):$b))]>;
-}
-
-multiclass I3_i8<string OpcStr, SDNode OpNode, string TypeStr, string CVTStr> {
-  def i64rr : NVPTXInst<(outs Int64Regs:$dst), (ins Int64Regs:$a, Int64Regs:$b),
-                     !strconcat(OpcStr, "64 \t$dst, $a, $b;"),
-                     [(set Int64Regs:$dst, (OpNode Int64Regs:$a,
-                       Int64Regs:$b))]>;
-  def i64ri : NVPTXInst<(outs Int64Regs:$dst), (ins Int64Regs:$a, i64imm:$b),
-                     !strconcat(OpcStr, "64 \t$dst, $a, $b;"),
-                     [(set Int64Regs:$dst, (OpNode Int64Regs:$a, imm:$b))]>;
-  def i32rr : NVPTXInst<(outs Int32Regs:$dst), (ins Int32Regs:$a, Int32Regs:$b),
-                     !strconcat(OpcStr, "32 \t$dst, $a, $b;"),
-                     [(set Int32Regs:$dst, (OpNode Int32Regs:$a,
-                       Int32Regs:$b))]>;
-  def i32ri : NVPTXInst<(outs Int32Regs:$dst), (ins Int32Regs:$a, i32imm:$b),
-                     !strconcat(OpcStr, "32 \t$dst, $a, $b;"),
-                     [(set Int32Regs:$dst, (OpNode Int32Regs:$a, imm:$b))]>;
-  def i16rr : NVPTXInst<(outs Int16Regs:$dst), (ins Int16Regs:$a, Int16Regs:$b),
-                     !strconcat(OpcStr, "16 \t$dst, $a, $b;"),
-                     [(set Int16Regs:$dst, (OpNode Int16Regs:$a,
-                       Int16Regs:$b))]>;
-  def i16ri : NVPTXInst<(outs Int16Regs:$dst), (ins Int16Regs:$a, i16imm:$b),
-                     !strconcat(OpcStr, "16 \t$dst, $a, $b;"),
-                     [(set Int16Regs:$dst, (OpNode Int16Regs:$a, (imm):$b))]>;
-  def i8rr : NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$a, Int8Regs:$b),
-                     Handle_i8rr<OpcStr, TypeStr, CVTStr>.s,
-                     [(set Int8Regs:$dst, (OpNode Int8Regs:$a, Int8Regs:$b))]>;
-  def i8ri : NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$a, i8imm:$b),
-                     Handle_i8ri<OpcStr, TypeStr, CVTStr>.s,
-                     [(set Int8Regs:$dst, (OpNode Int8Regs:$a, (imm):$b))]>;
-}
-
-multiclass I3_noi8<string OpcStr, SDNode OpNode> {
   def i64rr : NVPTXInst<(outs Int64Regs:$dst), (ins Int64Regs:$a, Int64Regs:$b),
                      !strconcat(OpcStr, "64 \t$dst, $a, $b;"),
                      [(set Int64Regs:$dst, (OpNode Int64Regs:$a,
@@ -522,80 +367,16 @@ def : Pat<(mul (zext Int16Regs:$a), (i32 UInt16Const:$b)),
 
 defm MULT : I3<"mul.lo.s", mul>;
 
-defm MULTHS : I3_noi8<"mul.hi.s", mulhs>;
-defm MULTHU : I3_noi8<"mul.hi.u", mulhu>;
-def MULTHSi8rr : NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$a, Int8Regs:$b),
-            !strconcat("{{ \n\t",
-            !strconcat(".reg \t.s16 temp1; \n\t",
-            !strconcat(".reg \t.s16 temp2; \n\t",
-            !strconcat("cvt.s16.s8 \ttemp1, $a; \n\t",
-            !strconcat("cvt.s16.s8 \ttemp2, $b; \n\t",
-            !strconcat("mul.lo.s16 \t$dst, temp1, temp2; \n\t",
-            !strconcat("shr.s16 \t$dst, $dst, 8; \n\t",
-            !strconcat("}}", "")))))))),
-      [(set Int8Regs:$dst, (mulhs Int8Regs:$a, Int8Regs:$b))]>;
-def MULTHSi8ri : NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$a, i8imm:$b),
-            !strconcat("{{ \n\t",
-            !strconcat(".reg \t.s16 temp1; \n\t",
-            !strconcat(".reg \t.s16 temp2; \n\t",
-            !strconcat("cvt.s16.s8 \ttemp1, $a; \n\t",
-            !strconcat("mov.b16 \ttemp2, $b; \n\t",
-            !strconcat("cvt.s16.s8 \ttemp2, temp2; \n\t",
-            !strconcat("mul.lo.s16 \t$dst, temp1, temp2; \n\t",
-            !strconcat("shr.s16 \t$dst, $dst, 8; \n\t",
-            !strconcat("}}", ""))))))))),
-      [(set Int8Regs:$dst, (mulhs Int8Regs:$a, imm:$b))]>;
-def MULTHUi8rr : NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$a, Int8Regs:$b),
-            !strconcat("{{ \n\t",
-            !strconcat(".reg \t.u16 temp1; \n\t",
-            !strconcat(".reg \t.u16 temp2; \n\t",
-            !strconcat("cvt.u16.u8 \ttemp1, $a; \n\t",
-            !strconcat("cvt.u16.u8 \ttemp2, $b; \n\t",
-            !strconcat("mul.lo.u16 \t$dst, temp1, temp2; \n\t",
-            !strconcat("shr.u16 \t$dst, $dst, 8; \n\t",
-            !strconcat("}}", "")))))))),
-      [(set Int8Regs:$dst, (mulhu Int8Regs:$a, Int8Regs:$b))]>;
-def MULTHUi8ri : NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$a, i8imm:$b),
-            !strconcat("{{ \n\t",
-            !strconcat(".reg \t.u16 temp1; \n\t",
-            !strconcat(".reg \t.u16 temp2; \n\t",
-            !strconcat("cvt.u16.u8 \ttemp1, $a; \n\t",
-            !strconcat("mov.b16 \ttemp2, $b; \n\t",
-            !strconcat("cvt.u16.u8 \ttemp2, temp2; \n\t",
-            !strconcat("mul.lo.u16 \t$dst, temp1, temp2; \n\t",
-            !strconcat("shr.u16 \t$dst, $dst, 8; \n\t",
-            !strconcat("}}", ""))))))))),
-      [(set Int8Regs:$dst, (mulhu Int8Regs:$a, imm:$b))]>;
+defm MULTHS : I3<"mul.hi.s", mulhs>;
+defm MULTHU : I3<"mul.hi.u", mulhu>;
 
+defm SDIV : I3<"div.s", sdiv>;
+defm UDIV : I3<"div.u", udiv>;
 
-defm SDIV : I3_i8<"div.s", sdiv, "s16", "cvt.s16.s8">;
-defm UDIV : I3_i8<"div.u", udiv, "u16", "cvt.u16.u8">;
-
-defm SREM : I3_i8<"rem.s", srem, "s16", "cvt.s16.s8">;
+defm SREM : I3<"rem.s", srem>;
 // The ri version will not be selected as DAGCombiner::visitSREM will lower it.
-defm UREM : I3_i8<"rem.u", urem, "u16", "cvt.u16.u8">;
+defm UREM : I3<"rem.u", urem>;
 // The ri version will not be selected as DAGCombiner::visitUREM will lower it.
-
-def MAD8rrr : NVPTXInst<(outs Int8Regs:$dst),
-                      (ins Int8Regs:$a, Int8Regs:$b, Int8Regs:$c),
-                      "mad.lo.s16 \t$dst, $a, $b, $c;",
-                      [(set Int8Regs:$dst, (add (mul Int8Regs:$a, Int8Regs:$b),
-                        Int8Regs:$c))]>;
-def MAD8rri : NVPTXInst<(outs Int8Regs:$dst),
-                      (ins Int8Regs:$a, Int8Regs:$b, i8imm:$c),
-                      "mad.lo.s16 \t$dst, $a, $b, $c;",
-                      [(set Int8Regs:$dst, (add (mul Int8Regs:$a, Int8Regs:$b),
-                        imm:$c))]>;
-def MAD8rir : NVPTXInst<(outs Int8Regs:$dst),
-                      (ins Int8Regs:$a, i8imm:$b, Int8Regs:$c),
-                      "mad.lo.s16 \t$dst, $a, $b, $c;",
-                      [(set Int8Regs:$dst, (add (mul Int8Regs:$a, imm:$b),
-                        Int8Regs:$c))]>;
-def MAD8rii : NVPTXInst<(outs Int8Regs:$dst),
-                      (ins Int8Regs:$a, i8imm:$b, i8imm:$c),
-                      "mad.lo.s16 \t$dst, $a, $b, $c;",
-                      [(set Int8Regs:$dst, (add (mul Int8Regs:$a, imm:$b),
-                        imm:$c))]>;
 
 def MAD16rrr : NVPTXInst<(outs Int16Regs:$dst),
                       (ins Int16Regs:$a, Int16Regs:$b, Int16Regs:$c),
@@ -661,10 +442,6 @@ def MAD64rii : NVPTXInst<(outs Int64Regs:$dst),
                         (mul Int64Regs:$a, imm:$b), imm:$c))]>;
 
 
-def INEG8 : NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$src),
-                     !strconcat("cvt.s16.s8 \t$dst, $src;\n\t",
-                                 "neg.s16 \t$dst, $dst;"),
-         [(set Int8Regs:$dst, (ineg Int8Regs:$src))]>;
 def INEG16 : NVPTXInst<(outs Int16Regs:$dst), (ins Int16Regs:$src),
                      "neg.s16 \t$dst, $src;",
          [(set Int16Regs:$dst, (ineg Int16Regs:$src))]>;
@@ -974,12 +751,6 @@ multiclass LOG_FORMAT<string OpcStr, SDNode OpNode> {
   def b1ri:  NVPTXInst<(outs Int1Regs:$dst), (ins Int1Regs:$a, i1imm:$b),
                       !strconcat(OpcStr, ".pred  \t$dst, $a, $b;"),
                       [(set Int1Regs:$dst, (OpNode Int1Regs:$a, imm:$b))]>;
-  def b8rr:  NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$a, Int8Regs:$b),
-                      !strconcat(OpcStr, ".b16  \t$dst, $a, $b;"),
-                      [(set Int8Regs:$dst, (OpNode Int8Regs:$a, Int8Regs:$b))]>;
-  def b8ri:  NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$a, i8imm:$b),
-                      !strconcat(OpcStr, ".b16  \t$dst, $a, $b;"),
-                      [(set Int8Regs:$dst, (OpNode Int8Regs:$a, imm:$b))]>;
   def b16rr:  NVPTXInst<(outs Int16Regs:$dst), (ins Int16Regs:$a, Int16Regs:$b),
                       !strconcat(OpcStr, ".b16  \t$dst, $a, $b;"),
                       [(set Int16Regs:$dst, (OpNode Int16Regs:$a,
@@ -1010,9 +781,6 @@ defm XOR : LOG_FORMAT<"xor", xor>;
 def NOT1:  NVPTXInst<(outs Int1Regs:$dst), (ins Int1Regs:$src),
                       "not.pred \t$dst, $src;",
                       [(set Int1Regs:$dst, (not Int1Regs:$src))]>;
-def NOT8:  NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$src),
-                      "not.b16 \t$dst, $src;",
-                      [(set Int8Regs:$dst, (not Int8Regs:$src))]>;
 def NOT16:  NVPTXInst<(outs Int16Regs:$dst), (ins Int16Regs:$src),
                       "not.b16 \t$dst, $src;",
                       [(set Int16Regs:$dst, (not Int16Regs:$src))]>;
@@ -1056,14 +824,6 @@ multiclass LSHIFT_FORMAT<string OpcStr, SDNode OpNode> {
                       !strconcat(OpcStr, "16 \t$dst, $a, $b;"),
                       [(set Int16Regs:$dst, (OpNode Int16Regs:$a,
                         (i32 imm:$b)))]>;
-   def i8rr : NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$a, Int32Regs:$b),
-                      !strconcat(OpcStr, "16 \t$dst, $a, $b;"),
-                      [(set Int8Regs:$dst, (OpNode Int8Regs:$a,
-                        Int32Regs:$b))]>;
-   def i8ri : NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$a, i32imm:$b),
-                      !strconcat(OpcStr, "16 \t$dst, $a, $b;"),
-                      [(set Int8Regs:$dst, (OpNode Int8Regs:$a,
-                        (i32 imm:$b)))]>;
 }
 
 defm SHL : LSHIFT_FORMAT<"shl.b", shl>;
@@ -1101,16 +861,6 @@ multiclass RSHIFT_FORMAT<string OpcStr, SDNode OpNode, string CVTStr> {
    def i16ri : NVPTXInst<(outs Int16Regs:$dst), (ins Int16Regs:$a, i32imm:$b),
                       !strconcat(OpcStr, "16 \t$dst, $a, $b;"),
                       [(set Int16Regs:$dst, (OpNode Int16Regs:$a,
-                        (i32 imm:$b)))]>;
-   def i8rr : NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$a, Int32Regs:$b),
-                      !strconcat(CVTStr, !strconcat(" \t$dst, $a;\n\t",
-                      !strconcat(OpcStr, "16 \t$dst, $dst, $b;"))),
-                      [(set Int8Regs:$dst, (OpNode Int8Regs:$a,
-                        Int32Regs:$b))]>;
-   def i8ri : NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$a, i32imm:$b),
-                      !strconcat(CVTStr, !strconcat(" \t$dst, $a;\n\t",
-                      !strconcat(OpcStr, "16 \t$dst, $dst, $b;"))),
-                      [(set Int8Regs:$dst, (OpNode Int8Regs:$a,
                         (i32 imm:$b)))]>;
 }
 
@@ -1257,8 +1007,6 @@ def MOV_ADDR64 : NVPTXInst<(outs Int64Regs:$dst), (ins imem:$a),
 let IsSimpleMove=1 in {
 def IMOV1rr: NVPTXInst<(outs Int1Regs:$dst), (ins Int1Regs:$sss),
                    "mov.pred \t$dst, $sss;", []>;
-def IMOV8rr: NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$sss),
-                    "mov.u16 \t$dst, $sss;", []>;
 def IMOV16rr: NVPTXInst<(outs Int16Regs:$dst), (ins Int16Regs:$sss),
                     "mov.u16 \t$dst, $sss;", []>;
 def IMOV32rr: NVPTXInst<(outs Int32Regs:$dst), (ins Int32Regs:$sss),
@@ -1274,9 +1022,6 @@ def FMOV64rr: NVPTXInst<(outs Float64Regs:$dst), (ins Float64Regs:$src),
 def IMOV1ri: NVPTXInst<(outs Int1Regs:$dst), (ins i1imm:$src),
                     "mov.pred \t$dst, $src;",
           [(set Int1Regs:$dst, imm:$src)]>;
-def IMOV8ri: NVPTXInst<(outs Int8Regs:$dst), (ins i8imm:$src),
-                    "mov.u16 \t$dst, $src;",
-          [(set Int8Regs:$dst, imm:$src)]>;
 def IMOV16ri: NVPTXInst<(outs Int16Regs:$dst), (ins i16imm:$src),
                     "mov.u16 \t$dst, $src;",
           [(set Int16Regs:$dst, imm:$src)]>;
@@ -1331,47 +1076,8 @@ class Set_Str<string OpcStr, string sz1, string sz2, string d, string a,
   string s   = !strconcat(t11, ", -1, 0, p;\n\t}}");
 }
 
-// Generate string block like
-// {
-//   .reg .pred p;
-//   .reg .s16 %temp1;
-//   .reg .s16 %temp2;
-//   cvt.s16.s8 %temp1, %a;
-//   cvt s16.s8 %temp1, %b;
-//   setp.gt.s16 p, %temp1, %temp2;
-//   selp.s16 %dst, -1, 0, p;
-// }
-// when OpcStr=setp.gt.s d=%dst a=%a b=%b type=s16 cvt=cvt.s16.s8
-class Set_Stri8<string OpcStr, string d, string a, string b, string type,
-  string cvt> {
-  string t1  = "{{\n\t.reg .pred p;\n\t";
-  string t2  = !strconcat(t1, ".reg .");
-  string t3  = !strconcat(t2, type);
-  string t4  = !strconcat(t3, " %temp1;\n\t");
-  string t5  = !strconcat(t4, ".reg .");
-  string t6  = !strconcat(t5, type);
-  string t7  = !strconcat(t6, " %temp2;\n\t");
-  string t8  = !strconcat(t7, cvt);
-  string t9  = !strconcat(t8, " \t%temp1, ");
-  string t10 = !strconcat(t9, a);
-  string t11 = !strconcat(t10, ";\n\t");
-  string t12 = !strconcat(t11, cvt);
-  string t13 = !strconcat(t12, " \t%temp2, ");
-  string t14 = !strconcat(t13, b);
-  string t15 = !strconcat(t14, ";\n\t");
-  string t16 = !strconcat(t15, OpcStr);
-  string t17 = !strconcat(t16, "16");
-  string t18 = !strconcat(t17, " \tp, %temp1, %temp2;\n\t");
-  string t19 = !strconcat(t18, "selp.s16 \t");
-  string t20 = !strconcat(t19, d);
-  string s   = !strconcat(t20, ", -1, 0, p;\n\t}}");
-}
-
 multiclass ISET_FORMAT<string OpcStr, string OpcStr_u32, PatFrag OpNode,
   string TypeStr, string CVTStr> {
-  def i8rr_toi8: NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$a, Int8Regs:$b),
-                     Set_Stri8<OpcStr, "$dst", "$a", "$b", TypeStr, CVTStr>.s,
-               []>;
   def i16rr_toi16: NVPTXInst<(outs Int16Regs:$dst), (ins Int16Regs:$a,
       Int16Regs:$b),
                      Set_Str<OpcStr, "16", "16", "$dst", "$a", "$b">.s,
@@ -1385,15 +1091,6 @@ multiclass ISET_FORMAT<string OpcStr, string OpcStr_u32, PatFrag OpNode,
                      Set_Str<OpcStr, "64", "64", "$dst", "$a", "$b">.s,
                []>;
 
-  def i8rr_p: NVPTXInst<(outs Int1Regs:$dst), (ins Int8Regs:$a, Int8Regs:$b),
-                     Handle_i8rr<OpcStr, TypeStr, CVTStr>.s,
-               [(set Int1Regs:$dst, (OpNode Int8Regs:$a, Int8Regs:$b))]>;
-  def i8ri_p: NVPTXInst<(outs Int1Regs:$dst), (ins Int8Regs:$a, i8imm:$b),
-                     Handle_i8ri<OpcStr, TypeStr, CVTStr>.s,
-               [(set Int1Regs:$dst, (OpNode Int8Regs:$a, imm:$b))]>;
-  def i8ir_p: NVPTXInst<(outs Int1Regs:$dst), (ins i8imm:$a, Int8Regs:$b),
-                     Handle_i8ir<OpcStr, TypeStr, CVTStr>.s,
-               [(set Int1Regs:$dst, (OpNode imm:$a, Int8Regs:$b))]>;
   def i16rr_p: NVPTXInst<(outs Int1Regs:$dst), (ins Int16Regs:$a, Int16Regs:$b),
                  !strconcat(OpcStr, "16 \t$dst, $a, $b;"),
                [(set Int1Regs:$dst, (OpNode Int16Regs:$a, Int16Regs:$b))]>;
@@ -1422,15 +1119,6 @@ multiclass ISET_FORMAT<string OpcStr, string OpcStr_u32, PatFrag OpNode,
                  !strconcat(OpcStr, "64 \t$dst, $a, $b;"),
                [(set Int1Regs:$dst, (OpNode imm:$a, Int64Regs:$b))]>;
 
-  def i8rr_u32: NVPTXInst<(outs Int32Regs:$dst), (ins Int8Regs:$a, Int8Regs:$b),
-                     Handle_i8rr<OpcStr_u32, TypeStr, CVTStr>.s,
-               [(set Int32Regs:$dst, (OpNode Int8Regs:$a, Int8Regs:$b))]>;
-  def i8ri_u32: NVPTXInst<(outs Int32Regs:$dst), (ins Int8Regs:$a, i8imm:$b),
-                     Handle_i8ri<OpcStr_u32, TypeStr, CVTStr>.s,
-               [(set Int32Regs:$dst, (OpNode Int8Regs:$a, imm:$b))]>;
-  def i8ir_u32: NVPTXInst<(outs Int32Regs:$dst), (ins i8imm:$a, Int8Regs:$b),
-                     Handle_i8ir<OpcStr_u32, TypeStr, CVTStr>.s,
-               [(set Int32Regs:$dst, (OpNode imm:$a, Int8Regs:$b))]>;
   def i16rr_u32: NVPTXInst<(outs Int32Regs:$dst), (ins Int16Regs:$a,
       Int16Regs:$b),
                  !strconcat(OpcStr_u32, "16 \t$dst, $a, $b;"),
@@ -1639,22 +1327,6 @@ defm FSetNAN : FSET_FORMAT<"setp.nan.", "set.nan.u32.",setuo>;
 def SELECTi1rr : Pat<(i1 (select Int1Regs:$p, Int1Regs:$a, Int1Regs:$b)),
                      (ORb1rr (ANDb1rr Int1Regs:$p, Int1Regs:$a),
                              (ANDb1rr (NOT1 Int1Regs:$p), Int1Regs:$b))>;
-def SELECTi8rr : NVPTXInst<(outs Int8Regs:$dst),
-  (ins Int8Regs:$a, Int8Regs:$b, Int1Regs:$p),
-                      "selp.b16 \t$dst, $a, $b, $p;",
-      [(set Int8Regs:$dst, (select Int1Regs:$p, Int8Regs:$a, Int8Regs:$b))]>;
-def SELECTi8ri : NVPTXInst<(outs Int8Regs:$dst),
-  (ins Int8Regs:$a, i8imm:$b, Int1Regs:$p),
-                      "selp.b16 \t$dst, $a, $b, $p;",
-      [(set Int8Regs:$dst, (select Int1Regs:$p, Int8Regs:$a, imm:$b))]>;
-def SELECTi8ir : NVPTXInst<(outs Int8Regs:$dst),
-  (ins i8imm:$a, Int8Regs:$b, Int1Regs:$p),
-                      "selp.b16 \t$dst, $a, $b, $p;",
-      [(set Int8Regs:$dst, (select Int1Regs:$p, imm:$a, Int8Regs:$b))]>;
-def SELECTi8ii : NVPTXInst<(outs Int8Regs:$dst),
-  (ins i8imm:$a, i8imm:$b, Int1Regs:$p),
-                      "selp.b16 \t$dst, $a, $b, $p;",
-      [(set Int8Regs:$dst, (select Int1Regs:$p, imm:$a, imm:$b))]>;
 
 def SELECTi16rr : NVPTXInst<(outs Int16Regs:$dst),
   (ins Int16Regs:$a, Int16Regs:$b, Int1Regs:$p),
@@ -1838,7 +1510,7 @@ class LoadParamMemInst<NVPTXRegClass regclass, string opstr> :
       NVPTXInst<(outs regclass:$dst), (ins i32imm:$b),
                 !strconcat(!strconcat("ld.param", opstr),
                 "\t$dst, [retval0+$b];"),
-                [(set regclass:$dst, (LoadParam (i32 1), (i32 imm:$b)))]>;
+                []>;
 
 class LoadParamRegInst<NVPTXRegClass regclass, string opstr> :
       NVPTXInst<(outs regclass:$dst), (ins i32imm:$b),
@@ -1846,8 +1518,6 @@ class LoadParamRegInst<NVPTXRegClass regclass, string opstr> :
                 "\t$dst, retval$b;"),
                 [(set regclass:$dst, (LoadParam (i32 0), (i32 imm:$b)))]>;
 
-// FIXME: A bug in tablegen currently prevents us from using multi-output
-// patterns here, so we have to custom select these in C++.
 class LoadParamV2MemInst<NVPTXRegClass regclass, string opstr> :
       NVPTXInst<(outs regclass:$dst, regclass:$dst2), (ins i32imm:$b),
                 !strconcat(!strconcat("ld.param.v2", opstr),
@@ -1864,24 +1534,21 @@ class StoreParamInst<NVPTXRegClass regclass, string opstr> :
       NVPTXInst<(outs), (ins regclass:$val, i32imm:$a, i32imm:$b),
                 !strconcat(!strconcat("st.param", opstr),
                 "\t[param$a+$b], $val;"),
-                [(StoreParam (i32 imm:$a), (i32 imm:$b), regclass:$val)]>;
+                []>;
 
 class StoreParamV2Inst<NVPTXRegClass regclass, string opstr> :
       NVPTXInst<(outs), (ins regclass:$val, regclass:$val2,
                              i32imm:$a, i32imm:$b),
                 !strconcat(!strconcat("st.param.v2", opstr),
                 "\t[param$a+$b], {{$val, $val2}};"),
-                [(StoreParamV2 (i32 imm:$a), (i32 imm:$b), regclass:$val,
-                               regclass:$val2)]>;
+                []>;
 
 class StoreParamV4Inst<NVPTXRegClass regclass, string opstr> :
       NVPTXInst<(outs), (ins regclass:$val, regclass:$val1, regclass:$val2,
                              regclass:$val3, i32imm:$a, i32imm:$b),
                 !strconcat(!strconcat("st.param.v4", opstr),
                 "\t[param$a+$b], {{$val, $val2, $val3, $val4}};"),
-                [(StoreParamV4 (i32 imm:$a), (i32 imm:$b), regclass:$val,
-                               regclass:$val2, regclass:$val3,
-                               regclass:$val4)]>;
+                []>;
 
 class MoveToParamInst<NVPTXRegClass regclass, string opstr> :
       NVPTXInst<(outs), (ins regclass:$val, i32imm:$a, i32imm:$b),
@@ -1893,13 +1560,13 @@ class StoreRetvalInst<NVPTXRegClass regclass, string opstr> :
       NVPTXInst<(outs), (ins regclass:$val, i32imm:$a),
                 !strconcat(!strconcat("st.param", opstr),
                 "\t[func_retval0+$a], $val;"),
-                [(StoreRetval (i32 imm:$a), regclass:$val)]>;
+                []>;
 
 class StoreRetvalV2Inst<NVPTXRegClass regclass, string opstr> :
       NVPTXInst<(outs), (ins regclass:$val, regclass:$val2, i32imm:$a),
                 !strconcat(!strconcat("st.param.v2", opstr),
                 "\t[func_retval0+$a], {{$val, $val2}};"),
-                [(StoreRetvalV2 (i32 imm:$a), regclass:$val, regclass:$val2)]>;
+                []>;
 
 class StoreRetvalV4Inst<NVPTXRegClass regclass, string opstr> :
       NVPTXInst<(outs),
@@ -1907,8 +1574,7 @@ class StoreRetvalV4Inst<NVPTXRegClass regclass, string opstr> :
                      regclass:$val4, i32imm:$a),
                 !strconcat(!strconcat("st.param.v4", opstr),
                 "\t[func_retval0+$a], {{$val, $val2, $val3, $val4}};"),
-                [(StoreRetvalV4 (i32 imm:$a), regclass:$val, regclass:$val2,
-                                              regclass:$val3, regclass:$val4)]>;
+                []>;
 
 class MoveToRetvalInst<NVPTXRegClass regclass, string opstr> :
       NVPTXInst<(outs), (ins i32imm:$num, regclass:$val),
@@ -1983,39 +1649,25 @@ def PrintCallUniNoRetInst : NVPTXInst<(outs), (ins), "call.uni ",
 def LoadParamMemI64    : LoadParamMemInst<Int64Regs, ".b64">;
 def LoadParamMemI32    : LoadParamMemInst<Int32Regs, ".b32">;
 def LoadParamMemI16    : LoadParamMemInst<Int16Regs, ".b16">;
-def LoadParamMemI8     : LoadParamMemInst<Int8Regs, ".b8">;
-def LoadParamMemV2I64    : LoadParamV2MemInst<Int64Regs, ".b64">;
-def LoadParamMemV2I32    : LoadParamV2MemInst<Int32Regs, ".b32">;
-def LoadParamMemV2I16    : LoadParamV2MemInst<Int16Regs, ".b16">;
-def LoadParamMemV2I8     : LoadParamV2MemInst<Int8Regs, ".b8">;
-def LoadParamMemV4I32    : LoadParamV4MemInst<Int32Regs, ".b32">;
-def LoadParamMemV4I16    : LoadParamV4MemInst<Int16Regs, ".b16">;
-def LoadParamMemV4I8     : LoadParamV4MemInst<Int8Regs, ".b8">;
-
-//def LoadParamMemI16    : NVPTXInst<(outs Int16Regs:$dst), (ins i32imm:$b),
-//                !strconcat("ld.param.b32\ttemp_param_reg, [retval0+$b];\n\t",
-//                "cvt.u16.u32\t$dst, temp_param_reg;"),
-//                [(set Int16Regs:$dst, (LoadParam (i32 1), (i32 imm:$b)))]>;
-//def LoadParamMemI8     : NVPTXInst<(outs Int8Regs:$dst), (ins i32imm:$b),
-//                !strconcat("ld.param.b32\ttemp_param_reg, [retval0+$b];\n\t",
-//                "cvt.u16.u32\t$dst, temp_param_reg;"),
-//                [(set Int8Regs:$dst, (LoadParam (i32 1), (i32 imm:$b)))]>;
-
+def LoadParamMemI8     : LoadParamMemInst<Int16Regs, ".b8">;
+def LoadParamMemV2I64  : LoadParamV2MemInst<Int64Regs, ".b64">;
+def LoadParamMemV2I32  : LoadParamV2MemInst<Int32Regs, ".b32">;
+def LoadParamMemV2I16  : LoadParamV2MemInst<Int16Regs, ".b16">;
+def LoadParamMemV2I8   : LoadParamV2MemInst<Int16Regs, ".b8">;
+def LoadParamMemV4I32  : LoadParamV4MemInst<Int32Regs, ".b32">;
+def LoadParamMemV4I16  : LoadParamV4MemInst<Int16Regs, ".b16">;
+def LoadParamMemV4I8   : LoadParamV4MemInst<Int16Regs, ".b8">;
 def LoadParamMemF32    : LoadParamMemInst<Float32Regs, ".f32">;
 def LoadParamMemF64    : LoadParamMemInst<Float64Regs, ".f64">;
-def LoadParamMemV2F32    : LoadParamV2MemInst<Float32Regs, ".f32">;
-def LoadParamMemV2F64    : LoadParamV2MemInst<Float64Regs, ".f64">;
-def LoadParamMemV4F32    : LoadParamV4MemInst<Float32Regs, ".f32">;
+def LoadParamMemV2F32  : LoadParamV2MemInst<Float32Regs, ".f32">;
+def LoadParamMemV2F64  : LoadParamV2MemInst<Float64Regs, ".f64">;
+def LoadParamMemV4F32  : LoadParamV4MemInst<Float32Regs, ".f32">;
 
 def LoadParamRegI64    : LoadParamRegInst<Int64Regs, ".b64">;
 def LoadParamRegI32    : LoadParamRegInst<Int32Regs, ".b32">;
 def LoadParamRegI16    : NVPTXInst<(outs Int16Regs:$dst), (ins i32imm:$b),
                          "cvt.u16.u32\t$dst, retval$b;",
                          [(set Int16Regs:$dst,
-                           (LoadParam (i32 0), (i32 imm:$b)))]>;
-def LoadParamRegI8     : NVPTXInst<(outs Int8Regs:$dst), (ins i32imm:$b),
-                         "cvt.u16.u32\t$dst, retval$b;",
-                         [(set Int8Regs:$dst,
                            (LoadParam (i32 0), (i32 imm:$b)))]>;
 
 def LoadParamRegF32    : LoadParamRegInst<Float32Regs, ".f32">;
@@ -2024,31 +1676,12 @@ def LoadParamRegF64    : LoadParamRegInst<Float64Regs, ".f64">;
 def StoreParamI64    : StoreParamInst<Int64Regs, ".b64">;
 def StoreParamI32    : StoreParamInst<Int32Regs, ".b32">;
 
-def StoreParamI16    : NVPTXInst<(outs),
-  (ins Int16Regs:$val, i32imm:$a, i32imm:$b),
-                       "st.param.b16\t[param$a+$b], $val;",
-           [(StoreParam (i32 imm:$a), (i32 imm:$b), Int16Regs:$val)]>;
-
-def StoreParamI8     : NVPTXInst<(outs),
-  (ins Int8Regs:$val, i32imm:$a, i32imm:$b),
-                       "st.param.b8\t[param$a+$b], $val;",
-                       [(StoreParam
-                         (i32 imm:$a), (i32 imm:$b), Int8Regs:$val)]>;
-
-def StoreParamV2I64    : StoreParamV2Inst<Int64Regs, ".b64">;
-def StoreParamV2I32    : StoreParamV2Inst<Int32Regs, ".b32">;
-
-def StoreParamV2I16    : NVPTXInst<(outs), (ins Int16Regs:$val, Int16Regs:$val2,
-                                                i32imm:$a, i32imm:$b),
-                       "st.param.v2.b16\t[param$a+$b], {{$val, $val2}};",
-                       [(StoreParamV2 (i32 imm:$a), (i32 imm:$b),
-                                      Int16Regs:$val, Int16Regs:$val2)]>;
-
-def StoreParamV2I8     : NVPTXInst<(outs), (ins Int8Regs:$val, Int8Regs:$val2,
-                                                i32imm:$a, i32imm:$b),
-                       "st.param.v2.b8\t[param$a+$b], {{$val, $val2}};",
-                       [(StoreParamV2 (i32 imm:$a), (i32 imm:$b),
-                                       Int8Regs:$val, Int8Regs:$val2)]>;
+def StoreParamI16    : StoreParamInst<Int16Regs, ".b16">;
+def StoreParamI8     : StoreParamInst<Int16Regs, ".b8">;
+def StoreParamV2I64  : StoreParamV2Inst<Int64Regs, ".b64">;
+def StoreParamV2I32  : StoreParamV2Inst<Int32Regs, ".b32">;
+def StoreParamV2I16  : StoreParamV2Inst<Int16Regs, ".b16">;
+def StoreParamV2I8   : StoreParamV2Inst<Int16Regs, ".b8">;
 
 // FIXME: StoreParamV4Inst crashes llvm-tblgen :(
 //def StoreParamV4I32    : StoreParamV4Inst<Int32Regs, ".b32">;
@@ -2056,47 +1689,41 @@ def StoreParamV4I32    : NVPTXInst<(outs), (ins Int32Regs:$val, Int32Regs:$val2,
                                                Int32Regs:$val3, Int32Regs:$val4,
                                                 i32imm:$a, i32imm:$b),
                    "st.param.b32\t[param$a+$b], {{$val, $val2, $val3, $val4}};",
-                         [(StoreParamV4 (i32 imm:$a), (i32 imm:$b),
-                          Int32Regs:$val, Int32Regs:$val2,
-                          Int32Regs:$val3, Int32Regs:$val4)]>;
+                         []>;
 
 def StoreParamV4I16    : NVPTXInst<(outs), (ins Int16Regs:$val, Int16Regs:$val2,
                                                Int16Regs:$val3, Int16Regs:$val4,
                                                 i32imm:$a, i32imm:$b),
                 "st.param.v4.b16\t[param$a+$b], {{$val, $val2, $val3, $val4}};",
-                         [(StoreParamV4 (i32 imm:$a), (i32 imm:$b),
-                          Int16Regs:$val, Int16Regs:$val2,
-                          Int16Regs:$val3, Int16Regs:$val4)]>;
+                         []>;
 
-def StoreParamV4I8     : NVPTXInst<(outs), (ins Int8Regs:$val, Int8Regs:$val2,
-                                                Int8Regs:$val3, Int8Regs:$val4,
+def StoreParamV4I8     : NVPTXInst<(outs), (ins Int16Regs:$val, Int16Regs:$val2,
+                                                Int16Regs:$val3, Int16Regs:$val4,
                                                 i32imm:$a, i32imm:$b),
                  "st.param.v4.b8\t[param$a+$b], {{$val, $val2, $val3, $val4}};",
-                         [(StoreParamV4 (i32 imm:$a), (i32 imm:$b),
-                          Int8Regs:$val, Int8Regs:$val2,
-                          Int8Regs:$val3, Int8Regs:$val4)]>;
+                         []>;
 
 def StoreParamS32I16 : NVPTXInst<(outs),
   (ins Int16Regs:$val, i32imm:$a, i32imm:$b),
                  !strconcat("cvt.s32.s16\ttemp_param_reg, $val;\n\t",
                             "st.param.b32\t[param$a+$b], temp_param_reg;"),
-                 [(StoreParamS32 (i32 imm:$a), (i32 imm:$b), Int16Regs:$val)]>;
+                 []>;
 def StoreParamU32I16 : NVPTXInst<(outs),
   (ins Int16Regs:$val, i32imm:$a, i32imm:$b),
                  !strconcat("cvt.u32.u16\ttemp_param_reg, $val;\n\t",
                             "st.param.b32\t[param$a+$b], temp_param_reg;"),
-                 [(StoreParamU32 (i32 imm:$a), (i32 imm:$b), Int16Regs:$val)]>;
+                 []>;
 
 def StoreParamU32I8   : NVPTXInst<(outs),
-  (ins Int8Regs:$val, i32imm:$a, i32imm:$b),
+  (ins Int16Regs:$val, i32imm:$a, i32imm:$b),
                  !strconcat("cvt.u32.u8\ttemp_param_reg, $val;\n\t",
                             "st.param.b32\t[param$a+$b], temp_param_reg;"),
-                 [(StoreParamU32 (i32 imm:$a), (i32 imm:$b), Int8Regs:$val)]>;
+                 []>;
 def StoreParamS32I8   : NVPTXInst<(outs),
-  (ins Int8Regs:$val, i32imm:$a, i32imm:$b),
+  (ins Int16Regs:$val, i32imm:$a, i32imm:$b),
                  !strconcat("cvt.s32.s8\ttemp_param_reg, $val;\n\t",
                             "st.param.b32\t[param$a+$b], temp_param_reg;"),
-                 [(StoreParamS32 (i32 imm:$a), (i32 imm:$b), Int8Regs:$val)]>;
+                 []>;
 
 def StoreParamF32    : StoreParamInst<Float32Regs, ".f32">;
 def StoreParamF64    : StoreParamInst<Float64Regs, ".f64">;
@@ -2109,9 +1736,7 @@ def StoreParamV4F32    : NVPTXInst<(outs),
                                         Float32Regs:$val3, Float32Regs:$val4,
                                         i32imm:$a, i32imm:$b),
                 "st.param.v4.f32\t[param$a+$b], {{$val, $val2, $val3, $val4}};",
-                        [(StoreParamV4 (i32 imm:$a), (i32 imm:$b),
-                         Float32Regs:$val, Float32Regs:$val2,
-                         Float32Regs:$val3, Float32Regs:$val4)]>;
+                        []>;
 
 def MoveToParamI64   : MoveToParamInst<Int64Regs, ".b64">;
 def MoveToParamI32   : MoveToParamInst<Int32Regs, ".b32">;
@@ -2122,36 +1747,18 @@ def MoveToParamI16   : NVPTXInst<(outs),
                    !strconcat("cvt.u32.u16\ttemp_param_reg, $val;\n\t",
                               "mov.b32\tparam$a, temp_param_reg;"),
                    [(MoveToParam (i32 imm:$a), (i32 imm:$b), Int16Regs:$val)]>;
-def MoveToParamI8    : NVPTXInst<(outs),
-  (ins Int8Regs:$val, i32imm:$a, i32imm:$b),
-                   !strconcat("cvt.u32.u16\ttemp_param_reg, $val;\n\t",
-                              "mov.b32\tparam$a, temp_param_reg;"),
-                   [(MoveToParam (i32 imm:$a), (i32 imm:$b), Int8Regs:$val)]>;
 
 def StoreRetvalI64    : StoreRetvalInst<Int64Regs, ".b64">;
 def StoreRetvalI32    : StoreRetvalInst<Int32Regs, ".b32">;
 def StoreRetvalI16    : StoreRetvalInst<Int16Regs, ".b16">;
-def StoreRetvalI8     : StoreRetvalInst<Int8Regs, ".b8">;
+def StoreRetvalI8     : StoreRetvalInst<Int16Regs, ".b8">;
 def StoreRetvalV2I64  : StoreRetvalV2Inst<Int64Regs, ".b64">;
 def StoreRetvalV2I32  : StoreRetvalV2Inst<Int32Regs, ".b32">;
 def StoreRetvalV2I16  : StoreRetvalV2Inst<Int16Regs, ".b16">;
-def StoreRetvalV2I8   : StoreRetvalV2Inst<Int8Regs, ".b8">;
+def StoreRetvalV2I8   : StoreRetvalV2Inst<Int16Regs, ".b8">;
 def StoreRetvalV4I32  : StoreRetvalV4Inst<Int32Regs, ".b32">;
 def StoreRetvalV4I16  : StoreRetvalV4Inst<Int16Regs, ".b16">;
-def StoreRetvalV4I8   : StoreRetvalV4Inst<Int8Regs, ".b8">;
-
-//def StoreRetvalI16    : NVPTXInst<(outs), (ins Int16Regs:$val, i32imm:$a),
-//     !strconcat("\{\n\t",
-//     !strconcat(".reg .b32 temp_retval_reg;\n\t",
-//     !strconcat("cvt.u32.u16\ttemp_retval_reg, $val;\n\t",
-//                "st.param.b32\t[func_retval0+$a], temp_retval_reg;\n\t\}"))),
-//     [(StoreRetval (i32 imm:$a), Int16Regs:$val)]>;
-//def StoreRetvalI8     : NVPTXInst<(outs), (ins Int8Regs:$val, i32imm:$a),
-//     !strconcat("\{\n\t",
-//     !strconcat(".reg .b32 temp_retval_reg;\n\t",
-//     !strconcat("cvt.u32.u16\ttemp_retval_reg, $val;\n\t",
-//                "st.param.b32\t[func_retval0+$a], temp_retval_reg;\n\t\}"))),
-//     [(StoreRetval (i32 imm:$a), Int8Regs:$val)]>;
+def StoreRetvalV4I8   : StoreRetvalV4Inst<Int16Regs, ".b8">;
 
 def StoreRetvalF64    : StoreRetvalInst<Float64Regs, ".f64">;
 def StoreRetvalF32    : StoreRetvalInst<Float32Regs, ".f32">;
@@ -2162,7 +1769,7 @@ def StoreRetvalV4F32  : StoreRetvalV4Inst<Float32Regs, ".f32">;
 def MoveRetvalI64    : MoveRetvalInst<Int64Regs, ".b64">;
 def MoveRetvalI32    : MoveRetvalInst<Int32Regs, ".b32">;
 def MoveRetvalI16    : MoveRetvalInst<Int16Regs, ".b16">;
-def MoveRetvalI8     : MoveRetvalInst<Int8Regs, ".b8">;
+def MoveRetvalI8     : MoveRetvalInst<Int16Regs, ".b8">;
 def MoveRetvalF64    : MoveRetvalInst<Float64Regs, ".f64">;
 def MoveRetvalF32    : MoveRetvalInst<Float32Regs, ".f32">;
 
@@ -2173,9 +1780,6 @@ def MoveToRetvalF32    : MoveToRetvalInst<Float32Regs, ".f32">;
 def MoveToRetvalI16    : NVPTXInst<(outs), (ins i32imm:$num, Int16Regs:$val),
                          "cvt.u32.u16\tfunc_retval$num, $val;",
                          [(MoveToRetval (i32 imm:$num), Int16Regs:$val)]>;
-def MoveToRetvalI8     : NVPTXInst<(outs), (ins i32imm:$num, Int8Regs:$val),
-                         "cvt.u32.u16\tfunc_retval$num, $val;",
-                         [(MoveToRetval (i32 imm:$num), Int8Regs:$val)]>;
 
 def CallArgBeginInst : NVPTXInst<(outs), (ins), "(", [(CallArgBegin)]>;
 def CallArgEndInst1  : NVPTXInst<(outs), (ins), ");", [(CallArgEnd (i32 1))]>;
@@ -2193,7 +1797,6 @@ class LastCallArgInst<NVPTXRegClass regclass> :
 def CallArgI64     : CallArgInst<Int64Regs>;
 def CallArgI32     : CallArgInst<Int32Regs>;
 def CallArgI16     : CallArgInst<Int16Regs>;
-def CallArgI8      : CallArgInst<Int8Regs>;
 
 def CallArgF64     : CallArgInst<Float64Regs>;
 def CallArgF32     : CallArgInst<Float32Regs>;
@@ -2201,7 +1804,6 @@ def CallArgF32     : CallArgInst<Float32Regs>;
 def LastCallArgI64 : LastCallArgInst<Int64Regs>;
 def LastCallArgI32 : LastCallArgInst<Int32Regs>;
 def LastCallArgI16 : LastCallArgInst<Int16Regs>;
-def LastCallArgI8  : LastCallArgInst<Int8Regs>;
 
 def LastCallArgF64 : LastCallArgInst<Float64Regs>;
 def LastCallArgF32 : LastCallArgInst<Float32Regs>;
@@ -2261,9 +1863,6 @@ def MoveParamI32 : MoveParamInst<Int32Regs, ".b32">;
 def MoveParamI16 : NVPTXInst<(outs Int16Regs:$dst), (ins Int16Regs:$src),
                    "cvt.u16.u32\t$dst, $src;",
                    [(set Int16Regs:$dst, (MoveParam Int16Regs:$src))]>;
-def MoveParamI8  : NVPTXInst<(outs Int8Regs:$dst), (ins Int8Regs:$src),
-                   "cvt.u16.u32\t$dst, $src;",
-                   [(set Int8Regs:$dst, (MoveParam Int8Regs:$src))]>;
 def MoveParamF64 : MoveParamInst<Float64Regs, ".f64">;
 def MoveParamF32 : MoveParamInst<Float32Regs, ".f32">;
 
@@ -2275,7 +1874,6 @@ class PseudoUseParamInst<NVPTXRegClass regclass> :
 def PseudoUseParamI64 : PseudoUseParamInst<Int64Regs>;
 def PseudoUseParamI32 : PseudoUseParamInst<Int32Regs>;
 def PseudoUseParamI16 : PseudoUseParamInst<Int16Regs>;
-def PseudoUseParamI8  : PseudoUseParamInst<Int8Regs>;
 def PseudoUseParamF64 : PseudoUseParamInst<Float64Regs>;
 def PseudoUseParamF32 : PseudoUseParamInst<Float32Regs>;
 
@@ -2317,7 +1915,7 @@ multiclass LD<NVPTXRegClass regclass> {
 }
 
 let mayLoad=1, neverHasSideEffects=1 in {
-defm LD_i8  : LD<Int8Regs>;
+defm LD_i8  : LD<Int16Regs>;
 defm LD_i16 : LD<Int16Regs>;
 defm LD_i32 : LD<Int32Regs>;
 defm LD_i64 : LD<Int64Regs>;
@@ -2359,7 +1957,7 @@ multiclass ST<NVPTXRegClass regclass> {
 }
 
 let mayStore=1, neverHasSideEffects=1 in {
-defm ST_i8  : ST<Int8Regs>;
+defm ST_i8  : ST<Int16Regs>;
 defm ST_i16 : ST<Int16Regs>;
 defm ST_i32 : ST<Int32Regs>;
 defm ST_i64 : ST<Int64Regs>;
@@ -2443,7 +2041,7 @@ multiclass LD_VEC<NVPTXRegClass regclass> {
                 []>;
 }
 let mayLoad=1, neverHasSideEffects=1 in {
-defm LDV_i8  : LD_VEC<Int8Regs>;
+defm LDV_i8  : LD_VEC<Int16Regs>;
 defm LDV_i16 : LD_VEC<Int16Regs>;
 defm LDV_i32 : LD_VEC<Int32Regs>;
 defm LDV_i64 : LD_VEC<Int64Regs>;
@@ -2526,7 +2124,7 @@ multiclass ST_VEC<NVPTXRegClass regclass> {
     []>;
 }
 let mayStore=1, neverHasSideEffects=1 in {
-defm STV_i8  : ST_VEC<Int8Regs>;
+defm STV_i8  : ST_VEC<Int16Regs>;
 defm STV_i16 : ST_VEC<Int16Regs>;
 defm STV_i32 : ST_VEC<Int32Regs>;
 defm STV_i64 : ST_VEC<Int64Regs>;
@@ -2539,10 +2137,6 @@ defm STV_f64 : ST_VEC<Float64Regs>;
 
 multiclass CVT_INT_TO_FP <string OpStr, SDNode OpNode> {
 // FIXME: need to add f16 support
-//  def CVTf16i8 :
-//    NVPTXInst<(outs Float16Regs:$d), (ins Int8Regs:$a),
-//              !strconcat(!strconcat("cvt.rn.f16.", OpStr), "8 \t$d, $a;"),
-//        [(set Float16Regs:$d, (OpNode Int8Regs:$a))]>;
 //  def CVTf16i16 :
 //    NVPTXInst<(outs Float16Regs:$d), (ins Int16Regs:$a),
 //              !strconcat(!strconcat("cvt.rn.f16.", OpStr), "16 \t$d, $a;"),
@@ -2560,10 +2154,6 @@ multiclass CVT_INT_TO_FP <string OpStr, SDNode OpNode> {
     NVPTXInst<(outs Float32Regs:$d), (ins Int1Regs:$a),
               "selp.f32 \t$d, 1.0, 0.0, $a;",
         [(set Float32Regs:$d, (OpNode Int1Regs:$a))]>;
-  def CVTf32i8 :
-    NVPTXInst<(outs Float32Regs:$d), (ins Int8Regs:$a),
-              !strconcat(!strconcat("cvt.rn.f32.", OpStr), "8 \t$d, $a;"),
-        [(set Float32Regs:$d, (OpNode Int8Regs:$a))]>;
   def CVTf32i16 :
     NVPTXInst<(outs Float32Regs:$d), (ins Int16Regs:$a),
               !strconcat(!strconcat("cvt.rn.f32.", OpStr), "16 \t$d, $a;"),
@@ -2581,10 +2171,6 @@ multiclass CVT_INT_TO_FP <string OpStr, SDNode OpNode> {
     NVPTXInst<(outs Float64Regs:$d), (ins Int1Regs:$a),
               "selp.f64 \t$d, 1.0, 0.0, $a;",
         [(set Float64Regs:$d, (OpNode Int1Regs:$a))]>;
-  def CVTf64i8 :
-    NVPTXInst<(outs Float64Regs:$d), (ins Int8Regs:$a),
-              !strconcat(!strconcat("cvt.rn.f64.", OpStr), "8 \t$d, $a;"),
-        [(set Float64Regs:$d, (OpNode Int8Regs:$a))]>;
   def CVTf64i16 :
     NVPTXInst<(outs Float64Regs:$d), (ins Int16Regs:$a),
               !strconcat(!strconcat("cvt.rn.f64.", OpStr), "16 \t$d, $a;"),
@@ -2603,24 +2189,6 @@ defm Sint_to_fp : CVT_INT_TO_FP <"s", sint_to_fp>;
 defm Uint_to_fp : CVT_INT_TO_FP <"u", uint_to_fp>;
 
 multiclass CVT_FP_TO_INT <string OpStr, SDNode OpNode> {
-// FIXME: need to add f16 support
-//  def CVTi8f16:
-//    NVPTXInst<(outs Int8Regs:$d), (ins Float16Regs:$a),
-//              !strconcat(!strconcat("cvt.rzi.", OpStr), "8.f16 $d, $a;"),
-//        [(set Int8Regs:$d, (OpNode Float16Regs:$a))]>;
-  def CVTi8f32_ftz:
-    NVPTXInst<(outs Int8Regs:$d), (ins Float32Regs:$a),
-              !strconcat(!strconcat("cvt.rzi.ftz.", OpStr), "16.f32 \t$d, $a;"),
-        [(set Int8Regs:$d, (OpNode Float32Regs:$a))]>, Requires<[doF32FTZ]>;
-  def CVTi8f32:
-    NVPTXInst<(outs Int8Regs:$d), (ins Float32Regs:$a),
-              !strconcat(!strconcat("cvt.rzi.", OpStr), "16.f32 \t$d, $a;"),
-        [(set Int8Regs:$d, (OpNode Float32Regs:$a))]>;
-  def CVTi8f64:
-    NVPTXInst<(outs Int8Regs:$d), (ins Float64Regs:$a),
-              !strconcat(!strconcat("cvt.rzi.", OpStr), "16.f64 \t$d, $a;"),
-        [(set Int8Regs:$d, (OpNode Float64Regs:$a))]>;
-
 // FIXME: need to add f16 support
 //  def CVTi16f16:
 //    NVPTXInst<(outs Int16Regs:$d), (ins Float16Regs:$a),
@@ -2680,10 +2248,6 @@ defm Fp_to_sint : CVT_FP_TO_INT <"s", fp_to_sint>;
 defm Fp_to_uint : CVT_FP_TO_INT <"u", fp_to_uint>;
 
 multiclass INT_EXTEND_UNSIGNED_1 <SDNode OpNode> {
-  def ext1to8:
-       NVPTXInst<(outs Int8Regs:$d), (ins Int1Regs:$a),
-           "selp.u16 \t$d, 1, 0, $a;",
-     [(set Int8Regs:$d, (OpNode Int1Regs:$a))]>;
   def ext1to16:
        NVPTXInst<(outs Int16Regs:$d), (ins Int1Regs:$a),
            "selp.u16 \t$d, 1, 0, $a;",
@@ -2699,10 +2263,6 @@ multiclass INT_EXTEND_UNSIGNED_1 <SDNode OpNode> {
 }
 
 multiclass INT_EXTEND_SIGNED_1 <SDNode OpNode> {
-  def ext1to8:
-       NVPTXInst<(outs Int8Regs:$d), (ins Int1Regs:$a),
-           "selp.s16 \t$d, -1, 0, $a;",
-     [(set Int8Regs:$d, (OpNode Int1Regs:$a))]>;
   def ext1to16:
        NVPTXInst<(outs Int16Regs:$d), (ins Int1Regs:$a),
            "selp.s16 \t$d, -1, 0, $a;",
@@ -2718,23 +2278,6 @@ multiclass INT_EXTEND_SIGNED_1 <SDNode OpNode> {
 }
 
 multiclass INT_EXTEND <string OpStr, SDNode OpNode> {
-  // All Int8Regs are emiited as 16bit registers in ptx.
-  // And there is no selp.u8 in ptx.
-  def ext8to16:
-       NVPTXInst<(outs Int16Regs:$d), (ins Int8Regs:$a),
-           !strconcat("cvt.", !strconcat(OpStr, !strconcat("16.",
-             !strconcat(OpStr, "8 \t$d, $a;")))),
-     [(set Int16Regs:$d, (OpNode Int8Regs:$a))]>;
-  def ext8to32:
-       NVPTXInst<(outs Int32Regs:$d), (ins Int8Regs:$a),
-           !strconcat("cvt.", !strconcat(OpStr, !strconcat("32.",
-             !strconcat(OpStr, "8 \t$d, $a;")))),
-     [(set Int32Regs:$d, (OpNode Int8Regs:$a))]>;
-  def ext8to64:
-       NVPTXInst<(outs Int64Regs:$d), (ins Int8Regs:$a),
-           !strconcat("cvt.", !strconcat(OpStr, !strconcat("64.",
-             !strconcat(OpStr, "8 \t$d, $a;")))),
-     [(set Int64Regs:$d, (OpNode Int8Regs:$a))]>;
   def ext16to32:
        NVPTXInst<(outs Int32Regs:$d), (ins Int16Regs:$a),
            !strconcat("cvt.", !strconcat(OpStr, !strconcat("32.",
@@ -2778,18 +2321,9 @@ def TRUNC_64to32 : NVPTXInst<(outs Int32Regs:$d), (ins Int64Regs:$a),
 def TRUNC_64to16 : NVPTXInst<(outs Int16Regs:$d), (ins Int64Regs:$a),
              "cvt.u16.u64 \t$d, $a;",
        [(set Int16Regs:$d, (trunc Int64Regs:$a))]>;
-def TRUNC_64to8 : NVPTXInst<(outs Int8Regs:$d), (ins Int64Regs:$a),
-             "cvt.u8.u64 \t$d, $a;",
-       [(set Int8Regs:$d, (trunc Int64Regs:$a))]>;
 def TRUNC_32to16 : NVPTXInst<(outs Int16Regs:$d), (ins Int32Regs:$a),
              "cvt.u16.u32 \t$d, $a;",
        [(set Int16Regs:$d, (trunc Int32Regs:$a))]>;
-def TRUNC_32to8 : NVPTXInst<(outs Int8Regs:$d), (ins Int32Regs:$a),
-             "cvt.u8.u32 \t$d, $a;",
-       [(set Int8Regs:$d, (trunc Int32Regs:$a))]>;
-def TRUNC_16to8 : NVPTXInst<(outs Int8Regs:$d), (ins Int16Regs:$a),
-             "cvt.u8.u16 \t$d, $a;",
-       [(set Int8Regs:$d, (trunc Int16Regs:$a))]>;
 def TRUNC_64to1 : NVPTXInst<(outs Int1Regs:$d), (ins Int64Regs:$a),
              TRUNC_to1_asm<".b64">.s,
              [(set Int1Regs:$d, (trunc Int64Regs:$a))]>;
@@ -2799,13 +2333,8 @@ def TRUNC_32to1 : NVPTXInst<(outs Int1Regs:$d), (ins Int32Regs:$a),
 def TRUNC_16to1 : NVPTXInst<(outs Int1Regs:$d), (ins Int16Regs:$a),
              TRUNC_to1_asm<".b16">.s,
              [(set Int1Regs:$d, (trunc Int16Regs:$a))]>;
-def TRUNC_8to1 : NVPTXInst<(outs Int1Regs:$d), (ins Int8Regs:$a),
-             TRUNC_to1_asm<".b16">.s,
-             [(set Int1Regs:$d, (trunc Int8Regs:$a))]>;
 
 // Select instructions
-def : Pat<(select Int32Regs:$pred, Int8Regs:$a, Int8Regs:$b),
-          (SELECTi8rr Int8Regs:$a, Int8Regs:$b, (TRUNC_32to1 Int32Regs:$pred))>;
 def : Pat<(select Int32Regs:$pred, Int16Regs:$a, Int16Regs:$b),
           (SELECTi16rr Int16Regs:$a, Int16Regs:$b,
             (TRUNC_32to1 Int32Regs:$pred))>;
@@ -2834,27 +2363,10 @@ def BITCONVERT_64_I2F : F_BITCONVERT<"64", Int64Regs, Float64Regs>;
 def BITCONVERT_64_F2I : F_BITCONVERT<"64", Float64Regs, Int64Regs>;
 
 // pack a set of smaller int registers to a larger int register
-def V4I8toI32 : NVPTXInst<(outs Int32Regs:$d),
-                          (ins Int8Regs:$s1, Int8Regs:$s2,
-                               Int8Regs:$s3, Int8Regs:$s4),
-                          !strconcat("{{\n\t.reg .b8\t%t<4>;",
-                          !strconcat("\n\tcvt.u8.u8\t%t0, $s1;",
-                          !strconcat("\n\tcvt.u8.u8\t%t1, $s2;",
-                          !strconcat("\n\tcvt.u8.u8\t%t2, $s3;",
-                          !strconcat("\n\tcvt.u8.u8\t%t3, $s4;",
-                           "\n\tmov.b32\t$d, {%t0, %t1, %t2, %t3};\n\t}}"))))),
-                          []>;
 def V4I16toI64 : NVPTXInst<(outs Int64Regs:$d),
                           (ins Int16Regs:$s1, Int16Regs:$s2,
                                Int16Regs:$s3, Int16Regs:$s4),
                           "mov.b64\t$d, {{$s1, $s2, $s3, $s4}};",
-                          []>;
-def V2I8toI16 : NVPTXInst<(outs Int16Regs:$d),
-                          (ins Int8Regs:$s1, Int8Regs:$s2),
-                          !strconcat("{{\n\t.reg .b8\t%t<2>;",
-                          !strconcat("\n\tcvt.u8.u8\t%t0, $s1;",
-                          !strconcat("\n\tcvt.u8.u8\t%t1, $s2;",
-                                     "\n\tmov.b16\t$d, {%t0, %t1};\n\t}}"))),
                           []>;
 def V2I16toI32 : NVPTXInst<(outs Int32Regs:$d),
                           (ins Int16Regs:$s1, Int16Regs:$s2),
@@ -2870,27 +2382,10 @@ def V2F32toF64 : NVPTXInst<(outs Float64Regs:$d),
                           []>;
 
 // unpack a larger int register to a set of smaller int registers
-def I32toV4I8 : NVPTXInst<(outs Int8Regs:$d1, Int8Regs:$d2,
-                                Int8Regs:$d3, Int8Regs:$d4),
-                          (ins Int32Regs:$s),
-                          !strconcat("{{\n\t.reg .b8\t%t<4>;",
-                          !strconcat("\n\tmov.b32\t{%t0, %t1, %t2, %t3}, $s;",
-                          !strconcat("\n\tcvt.u8.u8\t$d1, %t0;",
-                          !strconcat("\n\tcvt.u8.u8\t$d2, %t1;",
-                          !strconcat("\n\tcvt.u8.u8\t$d3, %t2;",
-                                     "\n\tcvt.u8.u8\t$d4, %t3;\n\t}}"))))),
-                          []>;
 def I64toV4I16 : NVPTXInst<(outs Int16Regs:$d1, Int16Regs:$d2,
                                  Int16Regs:$d3, Int16Regs:$d4),
                            (ins Int64Regs:$s),
                            "mov.b64\t{{$d1, $d2, $d3, $d4}}, $s;",
-                          []>;
-def I16toV2I8 : NVPTXInst<(outs Int8Regs:$d1, Int8Regs:$d2),
-                          (ins Int16Regs:$s),
-                          !strconcat("{{\n\t.reg .b8\t%t<2>;",
-                          !strconcat("\n\tmov.b16\t{%t0, %t1}, $s;",
-                          !strconcat("\n\tcvt.u8.u8\t$d1, %t0;",
-                                     "\n\tcvt.u8.u8\t$d2, %t1;\n\t}}"))),
                           []>;
 def I32toV2I16 : NVPTXInst<(outs Int16Regs:$d1, Int16Regs:$d2),
                            (ins Int32Regs:$s),

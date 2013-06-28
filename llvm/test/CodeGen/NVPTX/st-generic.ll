@@ -5,9 +5,9 @@
 ;; i8
 
 define void @st_global_i8(i8 addrspace(0)* %ptr, i8 %a) {
-; PTX32: st.u8 [%r{{[0-9]+}}], %rc{{[0-9]+}}
+; PTX32: st.u8 [%r{{[0-9]+}}], %rs{{[0-9]+}}
 ; PTX32: ret
-; PTX64: st.u8 [%rl{{[0-9]+}}], %rc{{[0-9]+}}
+; PTX64: st.u8 [%rl{{[0-9]+}}], %rs{{[0-9]+}}
 ; PTX64: ret
   store i8 %a, i8 addrspace(0)* %ptr
   ret void

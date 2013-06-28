@@ -4,27 +4,27 @@
 
 ;; i8
 define i8 @ld_global_i8(i8 addrspace(1)* %ptr) {
-; PTX32: ld.global.u8 %rc{{[0-9]+}}, [%r{{[0-9]+}}]
+; PTX32: ld.global.u8 %rs{{[0-9]+}}, [%r{{[0-9]+}}]
 ; PTX32: ret
-; PTX64: ld.global.u8 %rc{{[0-9]+}}, [%rl{{[0-9]+}}]
+; PTX64: ld.global.u8 %rs{{[0-9]+}}, [%rl{{[0-9]+}}]
 ; PTX64: ret
   %a = load i8 addrspace(1)* %ptr
   ret i8 %a
 }
 
 define i8 @ld_shared_i8(i8 addrspace(3)* %ptr) {
-; PTX32: ld.shared.u8 %rc{{[0-9]+}}, [%r{{[0-9]+}}]
+; PTX32: ld.shared.u8 %rs{{[0-9]+}}, [%r{{[0-9]+}}]
 ; PTX32: ret
-; PTX64: ld.shared.u8 %rc{{[0-9]+}}, [%rl{{[0-9]+}}]
+; PTX64: ld.shared.u8 %rs{{[0-9]+}}, [%rl{{[0-9]+}}]
 ; PTX64: ret
   %a = load i8 addrspace(3)* %ptr
   ret i8 %a
 }
 
 define i8 @ld_local_i8(i8 addrspace(5)* %ptr) {
-; PTX32: ld.local.u8 %rc{{[0-9]+}}, [%r{{[0-9]+}}]
+; PTX32: ld.local.u8 %rs{{[0-9]+}}, [%r{{[0-9]+}}]
 ; PTX32: ret
-; PTX64: ld.local.u8 %rc{{[0-9]+}}, [%rl{{[0-9]+}}]
+; PTX64: ld.local.u8 %rs{{[0-9]+}}, [%rl{{[0-9]+}}]
 ; PTX64: ret
   %a = load i8 addrspace(5)* %ptr
   ret i8 %a

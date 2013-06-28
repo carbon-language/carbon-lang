@@ -51,9 +51,6 @@ void NVPTXInstrInfo::copyPhysReg(
   else if (DestRC == &NVPTX::Int16RegsRegClass)
     BuildMI(MBB, I, DL, get(NVPTX::IMOV16rr), DestReg)
       .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (DestRC == &NVPTX::Int8RegsRegClass)
-    BuildMI(MBB, I, DL, get(NVPTX::IMOV8rr), DestReg)
-      .addReg(SrcReg, getKillRegState(KillSrc));
   else if (DestRC == &NVPTX::Int64RegsRegClass)
     BuildMI(MBB, I, DL, get(NVPTX::IMOV64rr), DestReg)
       .addReg(SrcReg, getKillRegState(KillSrc));

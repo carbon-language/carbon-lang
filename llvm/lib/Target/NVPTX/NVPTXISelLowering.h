@@ -35,14 +35,6 @@ enum NodeType {
   DeclareRetParam,
   DeclareRet,
   DeclareScalarRet,
-  LoadParam,
-  LoadParamV2,
-  LoadParamV4,
-  StoreParam,
-  StoreParamV2,
-  StoreParamV4,
-  StoreParamS32, // to sext and store a <32bit value, not used currently
-  StoreParamU32, // to zext and store a <32bit value, not used currently
   MoveToParam,
   PrintCall,
   PrintCallUni,
@@ -57,9 +49,6 @@ enum NodeType {
   MoveParam,
   MoveRetval,
   MoveToRetval,
-  StoreRetval,
-  StoreRetvalV2,
-  StoreRetvalV4,
   PseudoUseParam,
   RETURN,
   CallSeqBegin,
@@ -73,7 +62,18 @@ enum NodeType {
   LDUV2, // LDU.v2
   LDUV4, // LDU.v4
   StoreV2,
-  StoreV4
+  StoreV4,
+  LoadParam,
+  LoadParamV2,
+  LoadParamV4,
+  StoreParam,
+  StoreParamV2,
+  StoreParamV4,
+  StoreParamS32, // to sext and store a <32bit value, not used currently
+  StoreParamU32, // to zext and store a <32bit value, not used currently 
+  StoreRetval,
+  StoreRetvalV2,
+  StoreRetvalV4
 };
 }
 
@@ -126,7 +126,8 @@ public:
 
   std::string getPrototype(Type *, const ArgListTy &,
                            const SmallVectorImpl<ISD::OutputArg> &,
-                           unsigned retAlignment) const;
+                           unsigned retAlignment,
+                           const ImmutableCallSite *CS) const;
 
   virtual SDValue
   LowerReturn(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
@@ -164,6 +165,9 @@ private:
 
   virtual void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue> &Results,
                                   SelectionDAG &DAG) const;
+
+  unsigned getArgumentAlignment(SDValue Callee, const ImmutableCallSite *CS,
+                                Type *Ty, unsigned Idx) const;
 };
 } // namespace llvm
 

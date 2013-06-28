@@ -861,8 +861,6 @@ def int_nvvm_ptr_gen_to_param: Intrinsic<[llvm_anyptr_ty],
 
 // Move intrinsics, used in nvvm internally
 
-def int_nvvm_move_i8 : Intrinsic<[llvm_i8_ty], [llvm_i8_ty], [IntrNoMem],
-  "llvm.nvvm.move.i8">;
 def int_nvvm_move_i16 : Intrinsic<[llvm_i16_ty], [llvm_i16_ty], [IntrNoMem],
   "llvm.nvvm.move.i16">;
 def int_nvvm_move_i32 : Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrNoMem],

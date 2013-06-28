@@ -2016,7 +2016,6 @@ bool NVPTXAsmPrinter::ignoreLoc(const MachineInstr &MI) {
   case NVPTX::CallArgI32:
   case NVPTX::CallArgI32imm:
   case NVPTX::CallArgI64:
-  case NVPTX::CallArgI8:
   case NVPTX::CallArgParam:
   case NVPTX::CallVoidInst:
   case NVPTX::CallVoidInstReg:
@@ -2050,7 +2049,6 @@ bool NVPTXAsmPrinter::ignoreLoc(const MachineInstr &MI) {
   case NVPTX::LastCallArgI32:
   case NVPTX::LastCallArgI32imm:
   case NVPTX::LastCallArgI64:
-  case NVPTX::LastCallArgI8:
   case NVPTX::LastCallArgParam:
   case NVPTX::LoadParamMemF32:
   case NVPTX::LoadParamMemF64:
@@ -2063,7 +2061,6 @@ bool NVPTXAsmPrinter::ignoreLoc(const MachineInstr &MI) {
   case NVPTX::LoadParamRegI16:
   case NVPTX::LoadParamRegI32:
   case NVPTX::LoadParamRegI64:
-  case NVPTX::LoadParamRegI8:
   case NVPTX::PrototypeInst:
   case NVPTX::DBG_VALUE:
     return true;

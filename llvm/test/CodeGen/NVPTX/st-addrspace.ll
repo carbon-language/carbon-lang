@@ -5,27 +5,27 @@
 ;; i8
 
 define void @st_global_i8(i8 addrspace(1)* %ptr, i8 %a) {
-; PTX32: st.global.u8 [%r{{[0-9]+}}], %rc{{[0-9]+}}
+; PTX32: st.global.u8 [%r{{[0-9]+}}], %rs{{[0-9]+}}
 ; PTX32: ret
-; PTX64: st.global.u8 [%rl{{[0-9]+}}], %rc{{[0-9]+}}
+; PTX64: st.global.u8 [%rl{{[0-9]+}}], %rs{{[0-9]+}}
 ; PTX64: ret
   store i8 %a, i8 addrspace(1)* %ptr
   ret void
 }
 
 define void @st_shared_i8(i8 addrspace(3)* %ptr, i8 %a) {
-; PTX32: st.shared.u8 [%r{{[0-9]+}}], %rc{{[0-9]+}}
+; PTX32: st.shared.u8 [%r{{[0-9]+}}], %rs{{[0-9]+}}
 ; PTX32: ret
-; PTX64: st.shared.u8 [%rl{{[0-9]+}}], %rc{{[0-9]+}}
+; PTX64: st.shared.u8 [%rl{{[0-9]+}}], %rs{{[0-9]+}}
 ; PTX64: ret
   store i8 %a, i8 addrspace(3)* %ptr
   ret void
 }
 
 define void @st_local_i8(i8 addrspace(5)* %ptr, i8 %a) {
-; PTX32: st.local.u8 [%r{{[0-9]+}}], %rc{{[0-9]+}}
+; PTX32: st.local.u8 [%r{{[0-9]+}}], %rs{{[0-9]+}}
 ; PTX32: ret
-; PTX64: st.local.u8 [%rl{{[0-9]+}}], %rc{{[0-9]+}}
+; PTX64: st.local.u8 [%rl{{[0-9]+}}], %rs{{[0-9]+}}
 ; PTX64: ret
   store i8 %a, i8 addrspace(5)* %ptr
   ret void

@@ -1270,6 +1270,11 @@ def INT_PTX_SREG_WARPSIZE : F_SREG<"mov.u32 \t$dst, WARP_SZ;", Int32Regs,
 // Support for ldu on sm_20 or later
 //-----------------------------------
 
+def ldu_i8 : PatFrag<(ops node:$ptr), (int_nvvm_ldu_global_i node:$ptr), [{
+  MemIntrinsicSDNode *M = cast<MemIntrinsicSDNode>(N);
+  return M->getMemoryVT() == MVT::i8;
+}]>;
+
 // Scalar
 // @TODO: Revisit this, Changed imemAny to imem
 multiclass LDU_G<string TyStr, NVPTXRegClass regclass, Intrinsic IntOp> {
@@ -1291,8 +1296,27 @@ multiclass LDU_G<string TyStr, NVPTXRegClass regclass, Intrinsic IntOp> {
          [(set regclass:$result, (IntOp ADDRri64:$src))]>, Requires<[hasLDU]>;
 }
 
-defm INT_PTX_LDU_GLOBAL_i8  : LDU_G<"u8 \t$result, [$src];",  Int8Regs,
-int_nvvm_ldu_global_i>;
+multiclass LDU_G_NOINTRIN<string TyStr, NVPTXRegClass regclass, PatFrag IntOp> {
+  def areg: NVPTXInst<(outs regclass:$result), (ins Int32Regs:$src),
+               !strconcat("ldu.global.", TyStr),
+         [(set regclass:$result, (IntOp Int32Regs:$src))]>, Requires<[hasLDU]>;
+  def areg64: NVPTXInst<(outs regclass:$result), (ins Int64Regs:$src),
+               !strconcat("ldu.global.", TyStr),
+         [(set regclass:$result, (IntOp Int64Regs:$src))]>, Requires<[hasLDU]>;
+ def avar:  NVPTXInst<(outs regclass:$result), (ins imem:$src),
+               !strconcat("ldu.global.", TyStr),
+         [(set regclass:$result, (IntOp (Wrapper tglobaladdr:$src)))]>,
+         Requires<[hasLDU]>;
+ def ari :  NVPTXInst<(outs regclass:$result), (ins MEMri:$src),
+               !strconcat("ldu.global.", TyStr),
+         [(set regclass:$result, (IntOp ADDRri:$src))]>, Requires<[hasLDU]>;
+ def ari64 :  NVPTXInst<(outs regclass:$result), (ins MEMri64:$src),
+               !strconcat("ldu.global.", TyStr),
+         [(set regclass:$result, (IntOp ADDRri64:$src))]>, Requires<[hasLDU]>;
+}
+
+defm INT_PTX_LDU_GLOBAL_i8  : LDU_G_NOINTRIN<"u8 \t$result, [$src];", Int16Regs,
+                                             ldu_i8>;
 defm INT_PTX_LDU_GLOBAL_i16 : LDU_G<"u16 \t$result, [$src];", Int16Regs,
 int_nvvm_ldu_global_i>;
 defm INT_PTX_LDU_GLOBAL_i32 : LDU_G<"u32 \t$result, [$src];", Int32Regs,
@@ -1330,7 +1354,7 @@ multiclass VLDU_G_ELE_V4<string TyStr, NVPTXRegClass regclass> {
 }
 
 defm INT_PTX_LDU_G_v2i8_ELE
-  : VLDU_G_ELE_V2<"v2.u8 \t{{$dst1, $dst2}}, [$src];",  Int8Regs>;
+  : VLDU_G_ELE_V2<"v2.u8 \t{{$dst1, $dst2}}, [$src];",  Int16Regs>;
 defm INT_PTX_LDU_G_v2i16_ELE
   : VLDU_G_ELE_V2<"v2.u16 \t{{$dst1, $dst2}}, [$src];", Int16Regs>;
 defm INT_PTX_LDU_G_v2i32_ELE
@@ -1342,7 +1366,7 @@ defm INT_PTX_LDU_G_v2i64_ELE
 defm INT_PTX_LDU_G_v2f64_ELE
   : VLDU_G_ELE_V2<"v2.f64 \t{{$dst1, $dst2}}, [$src];", Float64Regs>;
 defm INT_PTX_LDU_G_v4i8_ELE
-  : VLDU_G_ELE_V4<"v4.u8 \t{{$dst1, $dst2, $dst3, $dst4}}, [$src];", Int8Regs>;
+  : VLDU_G_ELE_V4<"v4.u8 \t{{$dst1, $dst2, $dst3, $dst4}}, [$src];", Int16Regs>;
 defm INT_PTX_LDU_G_v4i16_ELE
   : VLDU_G_ELE_V4<"v4.u16 \t{{$dst1, $dst2, $dst3, $dst4}}, [$src];",
     Int16Regs>;
@@ -1542,10 +1566,6 @@ def nvvm_ptr_gen_to_param_64 : NVPTXInst<(outs Int64Regs:$result),
 
 
 // nvvm.move intrinsicc
-def nvvm_move_i8 : NVPTXInst<(outs Int8Regs:$r), (ins Int8Regs:$s),
-                             "mov.b16 \t$r, $s;",
-                             [(set Int8Regs:$r,
-                               (int_nvvm_move_i8 Int8Regs:$s))]>;
 def nvvm_move_i16 : NVPTXInst<(outs Int16Regs:$r), (ins Int16Regs:$s),
                              "mov.b16 \t$r, $s;",
                              [(set Int16Regs:$r,

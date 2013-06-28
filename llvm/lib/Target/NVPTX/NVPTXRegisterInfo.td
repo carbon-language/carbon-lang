@@ -31,7 +31,6 @@ def VRDepot  : NVPTXReg<"%Depot">;
 
 foreach i = 0-395 in {
   def P#i  : NVPTXReg<"%p"#i>;  // Predicate
-  def RC#i : NVPTXReg<"%rc"#i>; // 8-bit
   def RS#i : NVPTXReg<"%rs"#i>; // 16-bit
   def R#i  : NVPTXReg<"%r"#i>;  // 32-bit
   def RL#i : NVPTXReg<"%rl"#i>; // 64-bit
@@ -49,7 +48,6 @@ foreach i = 0-395 in {
 //  Register classes
 //===----------------------------------------------------------------------===//
 def Int1Regs : NVPTXRegClass<[i1], 8, (add (sequence "P%u", 0, 395))>;
-def Int8Regs : NVPTXRegClass<[i8], 8, (add (sequence "RC%u", 0, 395))>;
 def Int16Regs : NVPTXRegClass<[i16], 16, (add (sequence "RS%u", 0, 395))>;
 def Int32Regs : NVPTXRegClass<[i32], 32, (add (sequence "R%u", 0, 395))>;
 def Int64Regs : NVPTXRegClass<[i64], 64, (add (sequence "RL%u", 0, 395))>;

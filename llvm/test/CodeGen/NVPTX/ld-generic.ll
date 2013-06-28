@@ -4,9 +4,9 @@
 
 ;; i8
 define i8 @ld_global_i8(i8 addrspace(0)* %ptr) {
-; PTX32: ld.u8 %rc{{[0-9]+}}, [%r{{[0-9]+}}]
+; PTX32: ld.u8 %rs{{[0-9]+}}, [%r{{[0-9]+}}]
 ; PTX32: ret
-; PTX64: ld.u8 %rc{{[0-9]+}}, [%rl{{[0-9]+}}]
+; PTX64: ld.u8 %rs{{[0-9]+}}, [%rl{{[0-9]+}}]
 ; PTX64: ret
   %a = load i8 addrspace(0)* %ptr
   ret i8 %a

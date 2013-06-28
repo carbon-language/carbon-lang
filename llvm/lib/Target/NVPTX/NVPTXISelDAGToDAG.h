@@ -80,7 +80,10 @@ private:
   SDNode *SelectLDGLDUVector(SDNode *N);
   SDNode *SelectStore(SDNode *N);
   SDNode *SelectStoreVector(SDNode *N);
-
+  SDNode *SelectLoadParam(SDNode *N);
+  SDNode *SelectStoreRetval(SDNode *N);
+  SDNode *SelectStoreParam(SDNode *N);
+        
   inline SDValue getI32Imm(unsigned Imm) {
     return CurDAG->getTargetConstant(Imm, MVT::i32);
   }

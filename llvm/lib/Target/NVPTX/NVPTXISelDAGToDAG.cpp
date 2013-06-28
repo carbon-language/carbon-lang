@@ -116,6 +116,23 @@ SDNode *NVPTXDAGToDAGISel::Select(SDNode *N) {
   case NVPTXISD::StoreV4:
     ResNode = SelectStoreVector(N);
     break;
+  case NVPTXISD::LoadParam:
+  case NVPTXISD::LoadParamV2:
+  case NVPTXISD::LoadParamV4:
+    ResNode = SelectLoadParam(N);
+    break;
+  case NVPTXISD::StoreRetval:
+  case NVPTXISD::StoreRetvalV2:
+  case NVPTXISD::StoreRetvalV4:
+    ResNode = SelectStoreRetval(N);
+    break;
+  case NVPTXISD::StoreParam:
+  case NVPTXISD::StoreParamV2:
+  case NVPTXISD::StoreParamV4:
+  case NVPTXISD::StoreParamS32:
+  case NVPTXISD::StoreParamU32:
+    ResNode = SelectStoreParam(N);
+    break;
   default:
     break;
   }
@@ -771,7 +788,9 @@ SDNode *NVPTXDAGToDAGISel::SelectLDGLDUVector(SDNode *N) {
   SDLoc DL(N);
   SDNode *LD;
 
-  EVT RetVT = N->getValueType(0);
+  MemSDNode *Mem = cast<MemSDNode>(N);
+
+  EVT RetVT = Mem->getMemoryVT().getVectorElementType();
 
   // Select opcode
   if (Subtarget.is64Bit()) {
@@ -1569,6 +1588,398 @@ SDNode *NVPTXDAGToDAGISel::SelectStoreVector(SDNode *N) {
   cast<MachineSDNode>(ST)->setMemRefs(MemRefs0, MemRefs0 + 1);
 
   return ST;
+}
+
+SDNode *NVPTXDAGToDAGISel::SelectLoadParam(SDNode *Node) {
+  SDValue Chain = Node->getOperand(0);
+  SDValue Offset = Node->getOperand(2);
+  SDValue Flag = Node->getOperand(3);
+  SDLoc DL(Node);
+  MemSDNode *Mem = cast<MemSDNode>(Node);
+
+  unsigned VecSize;
+  switch (Node->getOpcode()) {
+  default:
+    return NULL;
+  case NVPTXISD::LoadParam:
+    VecSize = 1;
+    break;
+  case NVPTXISD::LoadParamV2:
+    VecSize = 2;
+    break;
+  case NVPTXISD::LoadParamV4:
+    VecSize = 4;
+    break;
+  }
+
+  EVT EltVT = Node->getValueType(0);
+  EVT MemVT = Mem->getMemoryVT();
+
+  unsigned Opc = 0;
+
+  switch (VecSize) {
+  default:
+    return NULL;
+  case 1:
+    switch (MemVT.getSimpleVT().SimpleTy) {
+    default:
+      return NULL;
+    case MVT::i1:
+      Opc = NVPTX::LoadParamMemI8;
+      break;
+    case MVT::i8:
+      Opc = NVPTX::LoadParamMemI8;
+      break;
+    case MVT::i16:
+      Opc = NVPTX::LoadParamMemI16;
+      break;
+    case MVT::i32:
+      Opc = NVPTX::LoadParamMemI32;
+      break;
+    case MVT::i64:
+      Opc = NVPTX::LoadParamMemI64;
+      break;
+    case MVT::f32:
+      Opc = NVPTX::LoadParamMemF32;
+      break;
+    case MVT::f64:
+      Opc = NVPTX::LoadParamMemF64;
+      break;
+    }
+    break;
+  case 2:
+    switch (MemVT.getSimpleVT().SimpleTy) {
+    default:
+      return NULL;
+    case MVT::i1:
+      Opc = NVPTX::LoadParamMemV2I8;
+      break;
+    case MVT::i8:
+      Opc = NVPTX::LoadParamMemV2I8;
+      break;
+    case MVT::i16:
+      Opc = NVPTX::LoadParamMemV2I16;
+      break;
+    case MVT::i32:
+      Opc = NVPTX::LoadParamMemV2I32;
+      break;
+    case MVT::i64:
+      Opc = NVPTX::LoadParamMemV2I64;
+      break;
+    case MVT::f32:
+      Opc = NVPTX::LoadParamMemV2F32;
+      break;
+    case MVT::f64:
+      Opc = NVPTX::LoadParamMemV2F64;
+      break;
+    }
+    break;
+  case 4:
+    switch (MemVT.getSimpleVT().SimpleTy) {
+    default:
+      return NULL;
+    case MVT::i1:
+      Opc = NVPTX::LoadParamMemV4I8;
+      break;
+    case MVT::i8:
+      Opc = NVPTX::LoadParamMemV4I8;
+      break;
+    case MVT::i16:
+      Opc = NVPTX::LoadParamMemV4I16;
+      break;
+    case MVT::i32:
+      Opc = NVPTX::LoadParamMemV4I32;
+      break;
+    case MVT::f32:
+      Opc = NVPTX::LoadParamMemV4F32;
+      break;
+    }
+    break;
+  }
+
+  SDVTList VTs;
+  if (VecSize == 1) {
+    VTs = CurDAG->getVTList(EltVT, MVT::Other, MVT::Glue);
+  } else if (VecSize == 2) {
+    VTs = CurDAG->getVTList(EltVT, EltVT, MVT::Other, MVT::Glue);
+  } else {
+    EVT EVTs[] = { EltVT, EltVT, EltVT, EltVT, MVT::Other, MVT::Glue };
+    VTs = CurDAG->getVTList(&EVTs[0], 5);
+  }
+
+  unsigned OffsetVal = cast<ConstantSDNode>(Offset)->getZExtValue();
+
+  SmallVector<SDValue, 2> Ops;
+  Ops.push_back(CurDAG->getTargetConstant(OffsetVal, MVT::i32));
+  Ops.push_back(Chain);
+  Ops.push_back(Flag);
+
+  SDNode *Ret =
+      CurDAG->getMachineNode(Opc, DL, Node->getVTList(), Ops);
+  return Ret;
+}
+
+SDNode *NVPTXDAGToDAGISel::SelectStoreRetval(SDNode *N) {
+  SDLoc DL(N);
+  SDValue Chain = N->getOperand(0);
+  SDValue Offset = N->getOperand(1);
+  unsigned OffsetVal = cast<ConstantSDNode>(Offset)->getZExtValue();
+  MemSDNode *Mem = cast<MemSDNode>(N);
+
+  // How many elements do we have?
+  unsigned NumElts = 1;
+  switch (N->getOpcode()) {
+  default:
+    return NULL;
+  case NVPTXISD::StoreRetval:
+    NumElts = 1;
+    break;
+  case NVPTXISD::StoreRetvalV2:
+    NumElts = 2;
+    break;
+  case NVPTXISD::StoreRetvalV4:
+    NumElts = 4;
+    break;
+  }
+
+  // Build vector of operands
+  SmallVector<SDValue, 6> Ops;
+  for (unsigned i = 0; i < NumElts; ++i)
+    Ops.push_back(N->getOperand(i + 2));
+  Ops.push_back(CurDAG->getTargetConstant(OffsetVal, MVT::i32));
+  Ops.push_back(Chain);
+
+  // Determine target opcode
+  // If we have an i1, use an 8-bit store. The lowering code in
+  // NVPTXISelLowering will have already emitted an upcast.
+  unsigned Opcode = 0;
+  switch (NumElts) {
+  default:
+    return NULL;
+  case 1:
+    switch (Mem->getMemoryVT().getSimpleVT().SimpleTy) {
+    default:
+      return NULL;
+    case MVT::i1:
+      Opcode = NVPTX::StoreRetvalI8;
+      break;
+    case MVT::i8:
+      Opcode = NVPTX::StoreRetvalI8;
+      break;
+    case MVT::i16:
+      Opcode = NVPTX::StoreRetvalI16;
+      break;
+    case MVT::i32:
+      Opcode = NVPTX::StoreRetvalI32;
+      break;
+    case MVT::i64:
+      Opcode = NVPTX::StoreRetvalI64;
+      break;
+    case MVT::f32:
+      Opcode = NVPTX::StoreRetvalF32;
+      break;
+    case MVT::f64:
+      Opcode = NVPTX::StoreRetvalF64;
+      break;
+    }
+    break;
+  case 2:
+    switch (Mem->getMemoryVT().getSimpleVT().SimpleTy) {
+    default:
+      return NULL;
+    case MVT::i1:
+      Opcode = NVPTX::StoreRetvalV2I8;
+      break;
+    case MVT::i8:
+      Opcode = NVPTX::StoreRetvalV2I8;
+      break;
+    case MVT::i16:
+      Opcode = NVPTX::StoreRetvalV2I16;
+      break;
+    case MVT::i32:
+      Opcode = NVPTX::StoreRetvalV2I32;
+      break;
+    case MVT::i64:
+      Opcode = NVPTX::StoreRetvalV2I64;
+      break;
+    case MVT::f32:
+      Opcode = NVPTX::StoreRetvalV2F32;
+      break;
+    case MVT::f64:
+      Opcode = NVPTX::StoreRetvalV2F64;
+      break;
+    }
+    break;
+  case 4:
+    switch (Mem->getMemoryVT().getSimpleVT().SimpleTy) {
+    default:
+      return NULL;
+    case MVT::i1:
+      Opcode = NVPTX::StoreRetvalV4I8;
+      break;
+    case MVT::i8:
+      Opcode = NVPTX::StoreRetvalV4I8;
+      break;
+    case MVT::i16:
+      Opcode = NVPTX::StoreRetvalV4I16;
+      break;
+    case MVT::i32:
+      Opcode = NVPTX::StoreRetvalV4I32;
+      break;
+    case MVT::f32:
+      Opcode = NVPTX::StoreRetvalV4F32;
+      break;
+    }
+    break;
+  }
+
+  SDNode *Ret =
+      CurDAG->getMachineNode(Opcode, DL, MVT::Other, Ops);
+  MachineSDNode::mmo_iterator MemRefs0 = MF->allocateMemRefsArray(1);
+  MemRefs0[0] = cast<MemSDNode>(N)->getMemOperand();
+  cast<MachineSDNode>(Ret)->setMemRefs(MemRefs0, MemRefs0 + 1);
+
+  return Ret;
+}
+
+SDNode *NVPTXDAGToDAGISel::SelectStoreParam(SDNode *N) {
+  SDLoc DL(N);
+  SDValue Chain = N->getOperand(0);
+  SDValue Param = N->getOperand(1);
+  unsigned ParamVal = cast<ConstantSDNode>(Param)->getZExtValue();
+  SDValue Offset = N->getOperand(2);
+  unsigned OffsetVal = cast<ConstantSDNode>(Offset)->getZExtValue();
+  MemSDNode *Mem = cast<MemSDNode>(N);
+  SDValue Flag = N->getOperand(N->getNumOperands() - 1);
+
+  // How many elements do we have?
+  unsigned NumElts = 1;
+  switch (N->getOpcode()) {
+  default:
+    return NULL;
+  case NVPTXISD::StoreParamU32:
+  case NVPTXISD::StoreParamS32:
+  case NVPTXISD::StoreParam:
+    NumElts = 1;
+    break;
+  case NVPTXISD::StoreParamV2:
+    NumElts = 2;
+    break;
+  case NVPTXISD::StoreParamV4:
+    NumElts = 4;
+    break;
+  }
+
+  // Build vector of operands
+  SmallVector<SDValue, 8> Ops;
+  for (unsigned i = 0; i < NumElts; ++i)
+    Ops.push_back(N->getOperand(i + 3));
+  Ops.push_back(CurDAG->getTargetConstant(ParamVal, MVT::i32));
+  Ops.push_back(CurDAG->getTargetConstant(OffsetVal, MVT::i32));
+  Ops.push_back(Chain);
+  Ops.push_back(Flag);
+
+  // Determine target opcode
+  // If we have an i1, use an 8-bit store. The lowering code in
+  // NVPTXISelLowering will have already emitted an upcast.
+  unsigned Opcode = 0;
+  switch (N->getOpcode()) {
+  default:
+    switch (NumElts) {
+    default:
+      return NULL;
+    case 1:
+      switch (Mem->getMemoryVT().getSimpleVT().SimpleTy) {
+      default:
+        return NULL;
+      case MVT::i1:
+        Opcode = NVPTX::StoreParamI8;
+        break;
+      case MVT::i8:
+        Opcode = NVPTX::StoreParamI8;
+        break;
+      case MVT::i16:
+        Opcode = NVPTX::StoreParamI16;
+        break;
+      case MVT::i32:
+        Opcode = NVPTX::StoreParamI32;
+        break;
+      case MVT::i64:
+        Opcode = NVPTX::StoreParamI64;
+        break;
+      case MVT::f32:
+        Opcode = NVPTX::StoreParamF32;
+        break;
+      case MVT::f64:
+        Opcode = NVPTX::StoreParamF64;
+        break;
+      }
+      break;
+    case 2:
+      switch (Mem->getMemoryVT().getSimpleVT().SimpleTy) {
+      default:
+        return NULL;
+      case MVT::i1:
+        Opcode = NVPTX::StoreParamV2I8;
+        break;
+      case MVT::i8:
+        Opcode = NVPTX::StoreParamV2I8;
+        break;
+      case MVT::i16:
+        Opcode = NVPTX::StoreParamV2I16;
+        break;
+      case MVT::i32:
+        Opcode = NVPTX::StoreParamV2I32;
+        break;
+      case MVT::i64:
+        Opcode = NVPTX::StoreParamV2I64;
+        break;
+      case MVT::f32:
+        Opcode = NVPTX::StoreParamV2F32;
+        break;
+      case MVT::f64:
+        Opcode = NVPTX::StoreParamV2F64;
+        break;
+      }
+      break;
+    case 4:
+      switch (Mem->getMemoryVT().getSimpleVT().SimpleTy) {
+      default:
+        return NULL;
+      case MVT::i1:
+        Opcode = NVPTX::StoreParamV4I8;
+        break;
+      case MVT::i8:
+        Opcode = NVPTX::StoreParamV4I8;
+        break;
+      case MVT::i16:
+        Opcode = NVPTX::StoreParamV4I16;
+        break;
+      case MVT::i32:
+        Opcode = NVPTX::StoreParamV4I32;
+        break;
+      case MVT::f32:
+        Opcode = NVPTX::StoreParamV4F32;
+        break;
+      }
+      break;
+    }
+    break;
+  case NVPTXISD::StoreParamU32:
+    Opcode = NVPTX::StoreParamU32I16;
+    break;
+  case NVPTXISD::StoreParamS32:
+    Opcode = NVPTX::StoreParamS32I16;
+    break;
+  }
+
+  SDNode *Ret =
+      CurDAG->getMachineNode(Opcode, DL, N->getVTList(), Ops);
+  MachineSDNode::mmo_iterator MemRefs0 = MF->allocateMemRefsArray(1);
+  MemRefs0[0] = cast<MemSDNode>(N)->getMemOperand();
+  cast<MachineSDNode>(Ret)->setMemRefs(MemRefs0, MemRefs0 + 1);
+
+  return Ret;
 }
 
 // SelectDirectAddr - Match a direct address for DAG.
