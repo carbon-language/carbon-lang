@@ -508,60 +508,6 @@ void RTTIBuilder::BuildVTablePointer(const Type *Ty) {
   Fields.push_back(VTable);
 }
 
-// maybeUpdateRTTILinkage - Will update the linkage of the RTTI data structures
-// from available_externally to the correct linkage if necessary. An example of
-// this is:
-//
-//   struct A {
-//     virtual void f();
-//   };
-//
-//   const std::type_info &g() {
-//     return typeid(A);
-//   }
-//
-//   void A::f() { }
-//
-// When we're generating the typeid(A) expression, we do not yet know that
-// A's key function is defined in this translation unit, so we will give the
-// typeinfo and typename structures available_externally linkage. When A::f
-// forces the vtable to be generated, we need to change the linkage of the
-// typeinfo and typename structs, otherwise we'll end up with undefined
-// externals when linking.
-static void 
-maybeUpdateRTTILinkage(CodeGenModule &CGM, llvm::GlobalVariable *GV,
-                       QualType Ty) {
-  // We're only interested in globals with available_externally linkage.
-  if (!GV->hasAvailableExternallyLinkage())
-    return;
-
-  // Get the real linkage for the type.
-  llvm::GlobalVariable::LinkageTypes Linkage = getTypeInfoLinkage(CGM, Ty);
-
-  // If variable is supposed to have available_externally linkage, we don't
-  // need to do anything.
-  if (Linkage == llvm::GlobalVariable::AvailableExternallyLinkage)
-    return;
-
-  // Update the typeinfo linkage.
-  GV->setLinkage(Linkage);
-
-  // Get the typename global.
-  SmallString<256> OutName;
-  llvm::raw_svector_ostream Out(OutName);
-  CGM.getCXXABI().getMangleContext().mangleCXXRTTIName(Ty, Out);
-  Out.flush();
-  StringRef Name = OutName.str();
-
-  llvm::GlobalVariable *TypeNameGV = CGM.getModule().getNamedGlobal(Name);
-
-  assert(TypeNameGV->hasAvailableExternallyLinkage() &&
-         "Type name has different linkage from type info!");
-
-  // And update its linkage.
-  TypeNameGV->setLinkage(Linkage);
-}
-
 llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   // We want to operate on the canonical type.
   Ty = CGM.getContext().getCanonicalType(Ty);
@@ -575,7 +521,8 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
 
   llvm::GlobalVariable *OldGV = CGM.getModule().getNamedGlobal(Name);
   if (OldGV && !OldGV->isDeclaration()) {
-    maybeUpdateRTTILinkage(CGM, OldGV, Ty);
+    assert(!OldGV->hasAvailableExternallyLinkage() &&
+           "available_externally typeinfos not yet implemented");
 
     return llvm::ConstantExpr::getBitCast(OldGV, CGM.Int8PtrTy);
   }
