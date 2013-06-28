@@ -4481,7 +4481,7 @@ basic_regex<_CharT, _Traits>::__parse_character_escape(_ForwardIterator __first,
                 ++__first;
             }
 #ifndef _LIBCPP_NO_EXCEPTIONS
-            else if (__str)
+            else
                 throw regex_error(regex_constants::error_escape);
 #endif  // _LIBCPP_NO_EXCEPTIONS
             break;
