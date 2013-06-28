@@ -54,7 +54,9 @@ table.options thead {
   text-align:left;
   border-top: 2px solid #cccccc;
   border-bottom: 2px solid #cccccc;
-  font-weight: bold; font-family: Verdana
+  font-weight: bold; font-family: Verdana;
+  table-layout: fixed;
+  width: 100%
 }
 table.options { border: 1px #cccccc solid }
 table.options { border-collapse: collapse; border-spacing: 0px }
@@ -62,6 +64,7 @@ table.options { margin-left:0px; margin-top:20px; margin-bottom:20px }
 table.options td { border-bottom: 1px #cccccc dotted }
 table.options td { padding:5px; padding-left:8px; padding-right:8px }
 table.options td { text-align:left; font-size:9pt }
+table.options col.option { width:207px }
 
 table.checkers { 
   border: 1px #cccccc solid;

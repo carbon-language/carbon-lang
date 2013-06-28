@@ -57,6 +57,7 @@ aforementioned hack fails to work.</p>
 <li><a href="#scanbuild">Getting Started</a>
  <ul>
   <li><a href="#scanbuild_basicusage">Basic Usage</a></li>
+  <li><a href="#scanbuild_forwindowsusers">For Windows Users</a></li>
   <li><a href="#scanbuild_otheroptions">Other Options</a></li>
   <li><a href="#scanbuild_output">Output of scan-build</a></li>
  </ul>
@@ -122,6 +123,14 @@ files:</p>
 <p>This example causes the files <tt>t1.c</tt> and <tt>t2.c</tt> to be analyzed.
 </p>
 
+<h3 id="scanbuild_forwindowsusers">For Windows Users</h3>
+
+<p>Windows users must have Perl installed to use scan-build. Currently scan-build 
+is known to work with the msys perl port.</p>
+
+<p>scan-build.bat script allows you to launch scan-build in the same way as it described in the Basic Usage section above.
+All you need to be able to invoke scan-build from an arbitrary location is to add the path to scan-build to your PATH environment variable.</p>
+
 <h3 id="scanbuild_otheroptions">Other Options</h3>
 
 <p>As mentioned above, extra options can be passed to <tt>scan-build</tt>. These
@@ -135,6 +144,7 @@ options prefix the build command. For example:</p>
 <p>Here is a subset of useful options:</p>
 
 <table class="options">
+<colgroup><col class="option"><col class="description"></colgroup>
 <thead><tr><td>Option</td><td>Description</td></tr></thead>
 
 <tr><td><b>-o</b></td><td>Target directory for HTML report files. Subdirectories
@@ -155,7 +165,13 @@ second and third "-v" increases verbosity</b>, and is useful for filing bug
 reports against the analyzer.</td></tr>
 
 <tr><td><b>-V</b></td><td>View analysis results in a web browser when the build
-command completes.</td></tr> </table>
+command completes.</td></tr>
+
+<tr><td><b>--use-analyzer Xcode</b><br><i>or</i><br>
+<b>--use-analyzer [path to clang]</b></td><td><tt>scan-build</tt> uses the 
+'clang' executable relative to itself for static analysis. One can override this 
+behavior with this option by using the 'clang' packaged with Xcode (on OS X) or 
+from the PATH.</p></td></tr> </table>
 
 <p>A complete list of options can be obtained by running <tt>scan-build</tt>
 with no arguments.</p>
