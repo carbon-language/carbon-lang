@@ -24,6 +24,14 @@
 
 namespace __sanitizer {
 
+#if defined(__x86_64__)
+static const char* const kSymbolizerArch = "--default-arch=x86_64";
+#elif defined(__i386__)
+static const char* const kSymbolizerArch = "--default-arch=i386";
+#else
+static const char* const kSymbolizerArch = "";
+#endif
+
 bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
                                int *input_fd, int *output_fd) {
   if (!FileExists(path_to_symbolizer)) {
@@ -88,7 +96,7 @@ bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
     internal_close(infd[1]);
     for (int fd = getdtablesize(); fd > 2; fd--)
       internal_close(fd);
-    execl(path_to_symbolizer, path_to_symbolizer, (char*)0);
+    execl(path_to_symbolizer, path_to_symbolizer, kSymbolizerArch, (char*)0);
     internal__exit(1);
   }
 

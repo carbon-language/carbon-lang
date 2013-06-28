@@ -1278,7 +1278,8 @@ INTERCEPTOR(__sanitizer_dirent *, readdir, void *dirp) {
   return res;
 }
 
-INTERCEPTOR(int, readdir_r, void *dirp, __sanitizer_dirent *entry, __sanitizer_dirent **result) {
+INTERCEPTOR(int, readdir_r, void *dirp, __sanitizer_dirent *entry,
+            __sanitizer_dirent **result) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, readdir_r, dirp, entry, result);
   int res = REAL(readdir_r)(dirp, entry, result);
@@ -1308,7 +1309,8 @@ INTERCEPTOR(__sanitizer_dirent64 *, readdir64, void *dirp) {
   return res;
 }
 
-INTERCEPTOR(int, readdir64_r, void *dirp, __sanitizer_dirent64 *entry, __sanitizer_dirent64 **result) {
+INTERCEPTOR(int, readdir64_r, void *dirp, __sanitizer_dirent64 *entry,
+            __sanitizer_dirent64 **result) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, readdir64_r, dirp, entry, result);
   int res = REAL(readdir64_r)(dirp, entry, result);
