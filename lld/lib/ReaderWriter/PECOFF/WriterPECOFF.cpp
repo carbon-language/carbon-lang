@@ -448,7 +448,7 @@ public:
   RDataSectionChunk(const File &linkedFile, SectionHeaderTableChunk *table)
       : SectionChunk(table, ".rdata", characteristics) {
     // The data section should be aligned to disk sector.
-    _align = 512;
+    _align = SECTOR_SIZE;
 
     // Extract executable atoms from the linked file and append them to this
     // section.
@@ -478,7 +478,7 @@ public:
   DataSectionChunk(const File &linkedFile, SectionHeaderTableChunk *table)
       : SectionChunk(table, ".data", characteristics) {
     // The data section should be aligned to disk sector.
-    _align = 512;
+    _align = SECTOR_SIZE;
 
     // Extract executable atoms from the linked file and append them to this
     // section.
