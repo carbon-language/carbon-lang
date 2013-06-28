@@ -5185,10 +5185,10 @@ def : MnemonicAlias<"rfeed", "rfeib">;
 def : MnemonicAlias<"rfe", "rfeia">;
 
 // SRS aliases
-def : MnemonicAlias<"srsfa", "srsda">;
-def : MnemonicAlias<"srsea", "srsdb">;
-def : MnemonicAlias<"srsfd", "srsia">;
-def : MnemonicAlias<"srsed", "srsib">;
+def : MnemonicAlias<"srsfa", "srsib">;
+def : MnemonicAlias<"srsea", "srsia">;
+def : MnemonicAlias<"srsfd", "srsdb">;
+def : MnemonicAlias<"srsed", "srsda">;
 def : MnemonicAlias<"srs", "srsia">;
 
 // QSAX == QSUBADDX
