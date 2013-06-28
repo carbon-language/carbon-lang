@@ -47,9 +47,13 @@ static uint64_t div96bit(uint64_t W[2], uint32_t D) {
   uint64_t x = W[1];
   unsigned i;
 
+  // This is really a 64-bit division.
+  if (!x)
+    return y / D;
+
   // This long division algorithm automatically saturates on overflow.
   for (i = 0; i < 64 && x; ++i) {
-    uint32_t t = (int)x >> 31;
+    uint32_t t = -((x >> 31) & 1); // Splat bit 31 to bits 0-31.
     x = (x << 1) | (y >> 63);
     y = y << 1;
     if ((x | t) >= D) {
