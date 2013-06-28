@@ -163,6 +163,16 @@ bool R600InstrInfo::usesTextureCache(const MachineInstr *MI) const {
          usesTextureCache(MI->getOpcode());
 }
 
+bool R600InstrInfo::mustBeLastInClause(unsigned Opcode) const {
+  switch (Opcode) {
+  case AMDGPU::KILLGT:
+  case AMDGPU::GROUP_BARRIER:
+    return true;
+  default:
+    return false;
+  }
+}
+
 SmallVector<std::pair<MachineOperand *, int64_t>, 3>
 R600InstrInfo::getSrcs(MachineInstr *MI) const {
   SmallVector<std::pair<MachineOperand *, int64_t>, 3> Result;

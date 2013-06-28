@@ -269,10 +269,14 @@ R600SchedStrategy::AluKind R600SchedStrategy::getAluKind(SUnit *SU) const {
     }
 
     // Does the instruction take a whole IG ?
+    // XXX: Is it possible to add a helper function in R600InstrInfo that can
+    // be used here and in R600PacketizerList::isSoloInstruction() ?
     if(TII->isVector(*MI) ||
         TII->isCubeOp(MI->getOpcode()) ||
-        TII->isReductionOp(MI->getOpcode()))
+        TII->isReductionOp(MI->getOpcode()) ||
+        MI->getOpcode() == AMDGPU::GROUP_BARRIER) {
       return AluT_XYZW;
+    }
 
     // Is the result already assigned to a channel ?
     unsigned DestSubReg = MI->getOperand(0).getSubReg();

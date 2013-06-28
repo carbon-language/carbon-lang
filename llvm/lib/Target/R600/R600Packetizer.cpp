@@ -82,7 +82,11 @@ private:
       int OperandIdx = TII->getOperandIdx(BI->getOpcode(), AMDGPU::OpName::write);
       if (OperandIdx > -1 && BI->getOperand(OperandIdx).getImm() == 0)
         continue;
-      unsigned Dst = BI->getOperand(0).getReg();
+      int DstIdx = TII->getOperandIdx(BI->getOpcode(), AMDGPU::OpName::dst);
+      if (DstIdx == -1) {
+        continue;
+      }
+      unsigned Dst = BI->getOperand(DstIdx).getReg();
       if (BI->getOpcode() == AMDGPU::DOT4_r600 ||
           BI->getOpcode() == AMDGPU::DOT4_eg) {
         Result[Dst] = AMDGPU::PV_X;
@@ -153,6 +157,8 @@ public:
     if (TII->get(MI->getOpcode()).TSFlags & R600_InstFlag::TRANS_ONLY)
       return true;
     if (TII->isTransOnly(MI))
+      return true;
+    if (MI->getOpcode() == AMDGPU::GROUP_BARRIER)
       return true;
     return false;
   }

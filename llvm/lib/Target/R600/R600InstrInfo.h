@@ -72,6 +72,8 @@ namespace llvm {
   bool usesTextureCache(unsigned Opcode) const;
   bool usesTextureCache(const MachineInstr *MI) const;
 
+  bool mustBeLastInClause(unsigned Opcode) const;
+
   /// \returns a pair for each src of an ALU instructions.
   /// The first member of a pair is the register id.
   /// If register is ALU_CONST, second member is SEL.

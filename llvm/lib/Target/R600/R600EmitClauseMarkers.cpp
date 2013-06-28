@@ -177,7 +177,14 @@ private:
         AluInstCount ++;
         continue;
       }
-      if (I->getOpcode() == AMDGPU::KILLGT) {
+      // XXX: GROUP_BARRIER instructions cannot be in the same ALU clause as:
+      //
+      // * KILL or INTERP instructions
+      // * Any instruction that sets UPDATE_EXEC_MASK or UPDATE_PRED bits
+      // * Uses waterfalling (i.e. INDEX_MODE = AR.X)
+      //
+      // XXX: These checks have not been implemented yet.
+      if (TII->mustBeLastInClause(I->getOpcode())) {
         I++;
         break;
       }
