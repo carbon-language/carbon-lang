@@ -10,6 +10,7 @@ const char *AMDGPUMachineFunction::ShaderTypeAttribute = "ShaderType";
 AMDGPUMachineFunction::AMDGPUMachineFunction(const MachineFunction &MF) :
     MachineFunctionInfo() {
   ShaderType = ShaderType::COMPUTE;
+  LDSSize = 0;
   AttributeSet Set = MF.getFunction()->getAttributes();
   Attribute A = Set.getAttribute(AttributeSet::FunctionIndex,
                                  ShaderTypeAttribute);

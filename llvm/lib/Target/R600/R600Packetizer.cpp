@@ -92,6 +92,9 @@ private:
         Result[Dst] = AMDGPU::PV_X;
         continue;
       }
+      if (Dst == AMDGPU::OQAP) {
+        continue;
+      }
       unsigned PVReg = 0;
       switch (TRI.getHWRegChan(Dst)) {
       case 0:

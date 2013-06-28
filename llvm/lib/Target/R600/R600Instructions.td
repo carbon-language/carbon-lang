@@ -1529,6 +1529,81 @@ def GROUP_BARRIER : InstR600 <
   let ALUInst = 1;
 }
 
+//===----------------------------------------------------------------------===//
+// LDS Instructions
+//===----------------------------------------------------------------------===//
+class R600_LDS  <bits<6> op, dag outs, dag ins, string asm,
+                 list<dag> pattern = []> :
+
+    InstR600 <outs, ins, asm, pattern, XALU>,
+    R600_ALU_LDS_Word0,
+    R600LDS_Word1 {
+
+  bits<6>  offset = 0;
+  let lds_op = op;
+
+  let Word1{27} = offset{0};
+  let Word1{12} = offset{1};
+  let Word1{28} = offset{2};
+  let Word1{31} = offset{3};
+  let Word0{12} = offset{4};
+  let Word0{25} = offset{5};
+
+
+  let Inst{31-0}  = Word0;
+  let Inst{63-32} = Word1;
+
+  let ALUInst = 1;
+  let HasNativeOperands = 1;
+  let UseNamedOperandTable = 1;
+}
+
+class R600_LDS_1A <bits<6> lds_op, string name, list<dag> pattern> : R600_LDS <
+  lds_op,
+  (outs R600_Reg32:$dst),
+  (ins R600_Reg32:$src0, REL:$src0_rel, SEL:$src0_sel,
+       LAST:$last, R600_Pred:$pred_sel,
+       BANK_SWIZZLE:$bank_swizzle),
+  "  "#name#" $last OQAP, $src0$src0_rel $pred_sel",
+  pattern
+  > {
+
+  let src1 = 0;
+  let src1_rel = 0;
+  let src2 = 0;
+  let src2_rel = 0;
+
+  let Defs = [OQAP];
+  let usesCustomInserter = 1;
+  let LDS_1A = 1;
+  let DisableEncoding = "$dst";
+}
+
+class R600_LDS_1A1D <bits<6> lds_op, string name, list<dag> pattern> :
+    R600_LDS <
+  lds_op,
+  (outs),
+  (ins R600_Reg32:$src0, REL:$src0_rel, SEL:$src0_sel,
+       R600_Reg32:$src1, REL:$src1_rel, SEL:$src1_sel,
+       LAST:$last, R600_Pred:$pred_sel,
+       BANK_SWIZZLE:$bank_swizzle),
+  "  "#name#" $last $src0$src0_rel, $src1$src1_rel, $pred_sel",
+  pattern
+  > {
+
+  let src2 = 0;
+  let src2_rel = 0;
+  let LDS_1A1D = 1;
+}
+
+def LDS_READ_RET : R600_LDS_1A <0x32, "LDS_READ_RET",
+  [(set (i32 R600_Reg32:$dst), (local_load R600_Reg32:$src0))]
+>;
+
+def LDS_WRITE : R600_LDS_1A1D <0xD, "LDS_WRITE",
+  [(local_store (i32 R600_Reg32:$src1), R600_Reg32:$src0)]
+>;
+
   // TRUNC is used for the FLT_TO_INT instructions to work around a
   // perceived problem where the rounding modes are applied differently
   // depending on the instruction and the slot they are in.

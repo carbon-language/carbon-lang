@@ -136,6 +136,21 @@ bool R600InstrInfo::isALUInstr(unsigned Opcode) const {
   return (TargetFlags & R600_InstFlag::ALU_INST);
 }
 
+bool R600InstrInfo::hasInstrModifiers(unsigned Opcode) const {
+  unsigned TargetFlags = get(Opcode).TSFlags;
+
+  return ((TargetFlags & R600_InstFlag::OP1) |
+          (TargetFlags & R600_InstFlag::OP2) |
+          (TargetFlags & R600_InstFlag::OP3));
+}
+
+bool R600InstrInfo::isLDSInstr(unsigned Opcode) const {
+  unsigned TargetFlags = get(Opcode).TSFlags;
+
+  return ((TargetFlags & R600_InstFlag::LDS_1A) |
+          (TargetFlags & R600_InstFlag::LDS_1A1D));
+}
+
 bool R600InstrInfo::isTransOnly(unsigned Opcode) const {
   return (get(Opcode).TSFlags & R600_InstFlag::TRANS_ONLY);
 }
@@ -245,6 +260,9 @@ R600InstrInfo::ExtractSrcs(MachineInstr *MI,
     unsigned Reg = Srcs[i].first->getReg();
     unsigned Index = RI.getEncodingValue(Reg) & 0xff;
     unsigned Chan = RI.getHWRegChan(Reg);
+    if (Reg == AMDGPU::OQAP) {
+      Result.push_back(std::pair<int, unsigned>(Index, 0));
+    }
     if (Index > 127) {
       Result.push_back(DummyPair);
       continue;
@@ -287,10 +305,11 @@ Swizzle(std::vector<std::pair<int, unsigned> > Src,
   return Src;
 }
 
-static bool
-isLegal(const std::vector<std::vector<std::pair<int, unsigned> > > &IGSrcs,
-    const std::vector<R600InstrInfo::BankSwizzle> &Swz,
-    unsigned CheckedSize) {
+bool
+R600InstrInfo::isLegal(
+             const std::vector<std::vector<std::pair<int, unsigned> > > &IGSrcs,
+             const std::vector<R600InstrInfo::BankSwizzle> &Swz,
+             unsigned CheckedSize) const {
   int Vector[4][3];
   memset(Vector, -1, sizeof(Vector));
   for (unsigned i = 0; i < CheckedSize; i++) {
@@ -300,6 +319,16 @@ isLegal(const std::vector<std::vector<std::pair<int, unsigned> > > &IGSrcs,
       const std::pair<int, unsigned> &Src = Srcs[j];
       if (Src.first < 0)
         continue;
+      if (Src.first == GET_REG_INDEX(RI.getEncodingValue(AMDGPU::OQAP))) {
+        if (Swz[i] != R600InstrInfo::ALU_VEC_012 &&
+            Swz[i] != R600InstrInfo::ALU_VEC_021) {
+            // The value from output queue A (denoted by register OQAP) can
+            // only be fetched during the first cycle.
+            return false;
+        }
+        // OQAP does not count towards the normal read port restrictions
+        continue;
+      }
       if (Vector[Src.second][j] < 0)
         Vector[Src.second][j] = Src.first;
       if (Vector[Src.second][j] != Src.first)
@@ -309,10 +338,11 @@ isLegal(const std::vector<std::vector<std::pair<int, unsigned> > > &IGSrcs,
   return true;
 }
 
-static bool recursiveFitsFPLimitation(
-const std::vector<std::vector<std::pair<int, unsigned> > > &IGSrcs,
-std::vector<R600InstrInfo::BankSwizzle> &SwzCandidate,
-unsigned Depth = 0) {
+bool
+R600InstrInfo::recursiveFitsFPLimitation(
+             const std::vector<std::vector<std::pair<int, unsigned> > > &IGSrcs,
+             std::vector<R600InstrInfo::BankSwizzle> &SwzCandidate,
+             unsigned Depth) const {
   if (!isLegal(IGSrcs, SwzCandidate, Depth))
     return false;
   if (IGSrcs.size() == Depth)

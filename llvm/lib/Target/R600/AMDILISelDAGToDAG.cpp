@@ -282,11 +282,16 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
 
         int ImmIdx = TII->getOperandIdx(Use->getMachineOpcode(),
                                         AMDGPU::OpName::literal);
-        assert(ImmIdx != -1);
+        if (ImmIdx == -1) {
+          continue;
+        }
 
-        // subtract one from ImmIdx, because the DST operand is usually index
-        // 0 for MachineInstrs, but we have no DST in the Ops vector.
-        ImmIdx--;
+        if (TII->getOperandIdx(Use->getMachineOpcode(),
+                               AMDGPU::OpName::dst) != -1) {
+          // subtract one from ImmIdx, because the DST operand is usually index
+          // 0 for MachineInstrs, but we have no DST in the Ops vector.
+          ImmIdx--;
+        }
 
         // Check that we aren't already using an immediate.
         // XXX: It's possible for an instruction to have more than one
@@ -336,7 +341,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     }
     if (Result && Result->isMachineOpcode() &&
         !(TII->get(Result->getMachineOpcode()).TSFlags & R600_InstFlag::VECTOR)
-        && TII->isALUInstr(Result->getMachineOpcode())) {
+        && TII->hasInstrModifiers(Result->getMachineOpcode())) {
       // Fold FNEG/FABS/CONST_ADDRESS
       // TODO: Isel can generate multiple MachineInst, we need to recursively
       // parse Result

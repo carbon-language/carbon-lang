@@ -101,6 +101,7 @@ def PRED_SEL_OFF: R600Reg<"Pred_sel_off", 0>;
 def PRED_SEL_ZERO : R600Reg<"Pred_sel_zero", 2>;
 def PRED_SEL_ONE : R600Reg<"Pred_sel_one", 3>;
 def AR_X : R600Reg<"AR.x", 0>;
+def OQAP : R600Reg<"OQAP", 221>;
 
 def R600_ArrayBase : RegisterClass <"AMDGPU", [f32, i32], 32,
                           (add (sequence "ArrayBase%u", 448, 480))>;
@@ -170,7 +171,7 @@ def R600_Reg32 : RegisterClass <"AMDGPU", [f32, i32], 32, (add
     R600_ArrayBase,
     R600_Addr,
     ZERO, HALF, ONE, ONE_INT, PV_X, ALU_LITERAL_X, NEG_ONE, NEG_HALF,
-    ALU_CONST, ALU_PARAM
+    ALU_CONST, ALU_PARAM, OQAP
     )>;
 
 def R600_Predicate : RegisterClass <"AMDGPU", [i32], 32, (add

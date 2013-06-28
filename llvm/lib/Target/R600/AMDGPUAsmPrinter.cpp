@@ -29,6 +29,7 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/ELF.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 
@@ -130,6 +131,11 @@ void AMDGPUAsmPrinter::EmitProgramInfoR600(MachineFunction &MF) {
                            S_STACK_SIZE(MFI->StackSize), 4);
   OutStreamer.EmitIntValue(R_02880C_DB_SHADER_CONTROL, 4);
   OutStreamer.EmitIntValue(S_02880C_KILL_ENABLE(killPixel), 4);
+
+  if (MFI->ShaderType == ShaderType::COMPUTE) {
+    OutStreamer.EmitIntValue(R_0288E8_SQ_LDS_ALLOC, 4);
+    OutStreamer.EmitIntValue(RoundUpToAlignment(MFI->LDSSize, 4) >> 2, 4);
+  }
 }
 
 void AMDGPUAsmPrinter::EmitProgramInfoSI(MachineFunction &MF) {

@@ -23,6 +23,8 @@ private:
 public:
   AMDGPUMachineFunction(const MachineFunction &MF);
   unsigned ShaderType;
+  /// Number of bytes in the LDS that are being used.
+  unsigned LDSSize;
 };
 
 }

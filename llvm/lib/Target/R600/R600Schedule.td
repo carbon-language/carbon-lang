@@ -23,6 +23,7 @@ def TRANS : FuncUnit;
 def AnyALU : InstrItinClass;
 def VecALU : InstrItinClass;
 def TransALU : InstrItinClass;
+def XALU : InstrItinClass;
 
 def R600_VLIW5_Itin : ProcessorItineraries <
   [ALU_X, ALU_Y, ALU_Z, ALU_W, TRANS, ALU_NULL],
@@ -31,6 +32,7 @@ def R600_VLIW5_Itin : ProcessorItineraries <
     InstrItinData<AnyALU, [InstrStage<1, [ALU_X, ALU_Y, ALU_Z, ALU_W, TRANS]>]>,
     InstrItinData<VecALU, [InstrStage<1, [ALU_X, ALU_Y, ALU_Z, ALU_W]>]>,
     InstrItinData<TransALU, [InstrStage<1, [TRANS]>]>,
+    InstrItinData<XALU, [InstrStage<1, [ALU_X]>]>,
     InstrItinData<NullALU, [InstrStage<1, [ALU_NULL]>]>
   ]
 >;

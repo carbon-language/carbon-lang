@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
+#include "llvm/IR/DataLayout.h"
 
 using namespace llvm;
 
@@ -70,6 +71,8 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::UDIV, MVT::i32, Expand);
   setOperationAction(ISD::UDIVREM, MVT::i32, Custom);
   setOperationAction(ISD::UREM, MVT::i32, Expand);
+
+  setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
 
   int types[] = {
     (int)MVT::v2i32,
@@ -136,6 +139,26 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   case ISD::UDIVREM: return LowerUDIVREM(Op, DAG);
   }
   return Op;
+}
+
+SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
+                                                 SDValue Op,
+                                                 SelectionDAG &DAG) const {
+
+  const DataLayout *TD = getTargetMachine().getDataLayout();
+  GlobalAddressSDNode *G = cast<GlobalAddressSDNode>(Op);
+  // XXX: What does the value of G->getOffset() mean?
+  assert(G->getOffset() == 0 &&
+         "Do not know what to do with an non-zero offset");
+
+  unsigned Offset = MFI->LDSSize;
+  const GlobalValue *GV = G->getGlobal();
+  uint64_t Size = TD->getTypeAllocSize(GV->getType()->getElementType());
+
+  // XXX: Account for alignment?
+  MFI->LDSSize += Size;
+
+  return DAG.getConstant(Offset, MVT::i32);
 }
 
 SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,

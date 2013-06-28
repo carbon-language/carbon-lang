@@ -23,6 +23,8 @@ class InstR600 <dag outs, dag ins, string asm, list<dag> pattern,
   bits<2> FlagOperandIdx = 0;
   bit Op1 = 0;
   bit Op2 = 0;
+  bit LDS_1A = 0;
+  bit LDS_1A1D = 0;
   bit HasNativeOperands = 0;
   bit VTXInst = 0;
   bit TEXInst = 0;
@@ -49,21 +51,21 @@ class InstR600 <dag outs, dag ins, string asm, list<dag> pattern,
   let TSFlags{12} = VTXInst;
   let TSFlags{13} = TEXInst;
   let TSFlags{14} = ALUInst;
+  let TSFlags{15} = LDS_1A;
+  let TSFlags{16} = LDS_1A1D;
 }
 
 //===----------------------------------------------------------------------===//
 // ALU instructions
 //===----------------------------------------------------------------------===//
 
-class R600ALU_Word0 {
+class R600_ALU_LDS_Word0 {
   field bits<32> Word0;
 
   bits<11> src0;
-  bits<1>  src0_neg;
   bits<1>  src0_rel;
   bits<11> src1;
   bits<1>  src1_rel;
-  bits<1>  src1_neg;
   bits<3>  index_mode = 0;
   bits<2>  pred_sel;
   bits<1>  last;
@@ -76,14 +78,21 @@ class R600ALU_Word0 {
   let Word0{8-0}   = src0_sel;
   let Word0{9}     = src0_rel;
   let Word0{11-10} = src0_chan;
-  let Word0{12}    = src0_neg;
   let Word0{21-13} = src1_sel;
   let Word0{22}    = src1_rel;
   let Word0{24-23} = src1_chan;
-  let Word0{25}    = src1_neg;
   let Word0{28-26} = index_mode;
   let Word0{30-29} = pred_sel;
   let Word0{31}    = last;
+}
+
+class R600ALU_Word0 : R600_ALU_LDS_Word0 {
+
+  bits<1>  src0_neg;
+  bits<1>  src1_neg;
+
+  let Word0{12}    = src0_neg;
+  let Word0{25}    = src1_neg;
 }
 
 class R600ALU_Word1 {
@@ -137,6 +146,30 @@ class R600ALU_Word1_OP3 <bits<5> alu_inst> : R600ALU_Word1{
   let Word1{12}    = src2_neg;
   let Word1{17-13} = alu_inst;
 }
+
+class R600LDS_Word1 {
+  field bits<32> Word1;
+
+  bits<11> src2;
+  bits<9>  src2_sel  = src2{8-0};
+  bits<2>  src2_chan = src2{10-9};
+  bits<1>  src2_rel;
+  // offset specifies the stride offset to the second set of data to be read
+  // from.  This is a dword offset.
+  bits<5>  alu_inst = 17; // OP3_INST_LDS_IDX_OP
+  bits<3>  bank_swizzle;
+  bits<6>  lds_op;
+  bits<2>  dst_chan = 0;
+
+  let Word1{8-0}   = src2_sel;
+  let Word1{9}     = src2_rel;
+  let Word1{11-10} = src2_chan;
+  let Word1{17-13} = alu_inst;
+  let Word1{20-18} = bank_swizzle;
+  let Word1{26-21} = lds_op;
+  let Word1{30-29} = dst_chan;
+}
+
 
 /*
 XXX: R600 subtarget uses a slightly different encoding than the other

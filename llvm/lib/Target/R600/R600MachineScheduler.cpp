@@ -278,6 +278,10 @@ R600SchedStrategy::AluKind R600SchedStrategy::getAluKind(SUnit *SU) const {
       return AluT_XYZW;
     }
 
+    if (TII->isLDSInstr(MI->getOpcode())) {
+      return AluT_X;
+    }
+
     // Is the result already assigned to a channel ?
     unsigned DestSubReg = MI->getOperand(0).getSubReg();
     switch (DestSubReg) {
@@ -371,14 +375,18 @@ void R600SchedStrategy::PrepareNextSlot() {
 }
 
 void R600SchedStrategy::AssignSlot(MachineInstr* MI, unsigned Slot) {
-  unsigned DestReg = MI->getOperand(0).getReg();
+  int DstIndex = TII->getOperandIdx(MI->getOpcode(), AMDGPU::OpName::dst);
+  if (DstIndex == -1) {
+    return;
+  }
+  unsigned DestReg = MI->getOperand(DstIndex).getReg();
   // PressureRegister crashes if an operand is def and used in the same inst
   // and we try to constraint its regclass
   for (MachineInstr::mop_iterator It = MI->operands_begin(),
       E = MI->operands_end(); It != E; ++It) {
     MachineOperand &MO = *It;
     if (MO.isReg() && !MO.isDef() &&
-        MO.getReg() == MI->getOperand(0).getReg())
+        MO.getReg() == DestReg)
       return;
   }
   // Constrains the regclass of DestReg to assign it to Slot

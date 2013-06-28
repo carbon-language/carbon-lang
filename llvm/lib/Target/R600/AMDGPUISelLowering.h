@@ -20,6 +20,7 @@
 
 namespace llvm {
 
+class AMDGPUMachineFunction;
 class MachineRegisterInfo;
 
 class AMDGPUTargetLowering : public TargetLowering {
@@ -36,6 +37,8 @@ protected:
   virtual SDValue CreateLiveInRegister(SelectionDAG &DAG,
                                        const TargetRegisterClass *RC,
                                        unsigned Reg, EVT VT) const;
+  SDValue LowerGlobalAddress(AMDGPUMachineFunction *MFI, SDValue Op,
+                             SelectionDAG &DAG) const;
 
   bool isHWTrueValue(SDValue Op) const;
   bool isHWFalseValue(SDValue Op) const;
