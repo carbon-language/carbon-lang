@@ -1,8 +1,8 @@
 // RUN: %clangxx_asan -O1 %s -o %t
-// RUN: %t 0 2>&1 | %symbolize | FileCheck %s --check-prefix=CHECK0
-// RUN: %t 1 2>&1 | %symbolize | FileCheck %s --check-prefix=CHECK1
-// RUN: %t 2 2>&1 | %symbolize | FileCheck %s --check-prefix=CHECK2
-// RUN: %t 3 2>&1 | %symbolize | FileCheck %s --check-prefix=CHECK3
+// RUN: %t 0 2>&1 | FileCheck %s --check-prefix=CHECK0
+// RUN: %t 1 2>&1 | FileCheck %s --check-prefix=CHECK1
+// RUN: %t 2 2>&1 | FileCheck %s --check-prefix=CHECK2
+// RUN: %t 3 2>&1 | FileCheck %s --check-prefix=CHECK3
 
 #define NOINLINE __attribute__((noinline))
 inline void break_optimization(void *arg) {

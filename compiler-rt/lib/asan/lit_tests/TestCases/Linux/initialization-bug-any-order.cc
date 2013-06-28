@@ -5,10 +5,10 @@
 
 // RUN: %clangxx_asan -O0 %s %p/../Helpers/initialization-bug-extra.cc -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true:strict_init_order=true %t 2>&1 \
-// RUN:    | %symbolize | FileCheck %s
+// RUN:    | FileCheck %s
 // RUN: %clangxx_asan -O0 %p/../Helpers/initialization-bug-extra.cc %s -o %t
 // RUN: ASAN_OPTIONS=check_initialization_order=true:strict_init_order=true %t 2>&1 \
-// RUN:    | %symbolize | FileCheck %s
+// RUN:    | FileCheck %s
 
 // Do not test with optimization -- the error may be optimized away.
 

@@ -1,4 +1,4 @@
-// RUN: %clangxx_asan -O0 %s -fsanitize-address-zero-base-shadow -pie -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -fsanitize-address-zero-base-shadow -pie -o %t && %t 2>&1 | FileCheck %s
 
 // Zero-base shadow only works on x86_64 and i386.
 // REQUIRES: x86_64-supported-target

@@ -1,7 +1,7 @@
-// RUN: %clangxx_asan -O0 %s -o %t && ASAN_OPTIONS=strict_memcmp=0 %t 2>&1 | %symbolize | FileCheck %s --check-prefix=CHECK-nonstrict
-// RUN: %clangxx_asan -O0 %s -o %t && ASAN_OPTIONS=strict_memcmp=1 %t 2>&1 | %symbolize | FileCheck %s --check-prefix=CHECK-strict
+// RUN: %clangxx_asan -O0 %s -o %t && ASAN_OPTIONS=strict_memcmp=0 %t 2>&1 | FileCheck %s --check-prefix=CHECK-nonstrict
+// RUN: %clangxx_asan -O0 %s -o %t && ASAN_OPTIONS=strict_memcmp=1 %t 2>&1 | FileCheck %s --check-prefix=CHECK-strict
 // Default to strict_memcmp=1.
-// RUN: %clangxx_asan -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s --check-prefix=CHECK-strict
+// RUN: %clangxx_asan -O0 %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=CHECK-strict
 
 #include <stdio.h>
 #include <string.h>

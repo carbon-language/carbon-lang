@@ -1,15 +1,15 @@
 // RUN: %clangxx_asan -O0 %p/SharedLibs/shared-lib-test-so.cc \
 // RUN:     -fPIC -shared -o %t-so.so
-// RUN: %clangxx_asan -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -o %t && %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O1 %p/SharedLibs/shared-lib-test-so.cc \
 // RUN:     -fPIC -shared -o %t-so.so
-// RUN: %clangxx_asan -O1 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -O1 %s -o %t && %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O2 %p/SharedLibs/shared-lib-test-so.cc \
 // RUN:     -fPIC -shared -o %t-so.so
-// RUN: %clangxx_asan -O2 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -O2 %s -o %t && %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O3 %p/SharedLibs/shared-lib-test-so.cc \
 // RUN:     -fPIC -shared -o %t-so.so
-// RUN: %clangxx_asan -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -O3 %s -o %t && %t 2>&1 | FileCheck %s
 
 #include <dlfcn.h>
 #include <stdio.h>

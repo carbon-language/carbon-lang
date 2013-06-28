@@ -1,23 +1,23 @@
-// RUN: %clangxx_asan -DWAIT -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAIT -O0 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -DWAIT -O3 %s -o %t && %t 2>&1 | FileCheck %s
 
-// RUN: %clangxx_asan -DWAITPID -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAITPID -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAITPID -O0 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -DWAITPID -O3 %s -o %t && %t 2>&1 | FileCheck %s
 
-// RUN: %clangxx_asan -DWAITID -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAITID -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAITID -O0 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -DWAITID -O3 %s -o %t && %t 2>&1 | FileCheck %s
 
-// RUN: %clangxx_asan -DWAIT3 -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT3 -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAIT3 -O0 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -DWAIT3 -O3 %s -o %t && %t 2>&1 | FileCheck %s
 
-// RUN: %clangxx_asan -DWAIT4 -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT4 -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAIT4 -O0 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -DWAIT4 -O3 %s -o %t && %t 2>&1 | FileCheck %s
 
-// RUN: %clangxx_asan -DWAIT3_RUSAGE -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT3_RUSAGE -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAIT3_RUSAGE -O0 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -DWAIT3_RUSAGE -O3 %s -o %t && %t 2>&1 | FileCheck %s
 
-// RUN: %clangxx_asan -DWAIT4_RUSAGE -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -DWAIT4_RUSAGE -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DWAIT4_RUSAGE -O0 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -DWAIT4_RUSAGE -O3 %s -o %t && %t 2>&1 | FileCheck %s
 
 
 #include <assert.h>

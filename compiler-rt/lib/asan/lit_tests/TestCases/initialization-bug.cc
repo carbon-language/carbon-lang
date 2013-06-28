@@ -1,7 +1,7 @@
 // Test to make sure basic initialization order errors are caught.
 
 // RUN: %clangxx_asan -O0 %s %p/Helpers/initialization-bug-extra2.cc -o %t
-// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1 | %symbolize | FileCheck %s
+// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1 | FileCheck %s
 
 // Do not test with optimization -- the error may be optimized away.
 

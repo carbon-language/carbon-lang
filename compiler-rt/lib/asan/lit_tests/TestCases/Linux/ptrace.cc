@@ -1,5 +1,5 @@
 // RUN: %clangxx_asan -O0 %s -o %t && %t
-// RUN: %clangxx_asan -DPOSITIVE -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -DPOSITIVE -O0 %s -o %t && %t 2>&1 | FileCheck %s
 
 #include <assert.h>
 #include <stdio.h>

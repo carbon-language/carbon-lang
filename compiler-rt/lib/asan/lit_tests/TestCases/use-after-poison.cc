@@ -1,5 +1,5 @@
 // Check that __asan_poison_memory_region works.
-// RUN: %clangxx_asan -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -o %t && %t 2>&1 | FileCheck %s
 //
 // Check that we can disable it
 // RUN: ASAN_OPTIONS=allow_user_poisoning=0 %t

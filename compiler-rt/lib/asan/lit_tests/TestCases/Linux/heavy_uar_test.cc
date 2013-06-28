@@ -1,7 +1,7 @@
 // RUN: %clangxx_asan -fsanitize=use-after-return -O0 %s -o %t && \
-// RUN:   %t 2>&1 | %symbolize | FileCheck %s
+// RUN:   %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -fsanitize=use-after-return -O2 %s -o %t && \
-// RUN:   %t 2>&1 | %symbolize | FileCheck %s
+// RUN:   %t 2>&1 | FileCheck %s
 
 #include <stdio.h>
 #include <string.h>

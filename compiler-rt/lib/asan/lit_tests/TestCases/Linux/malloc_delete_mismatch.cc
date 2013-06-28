@@ -2,8 +2,7 @@
 // is set.
 
 // RUN: %clangxx_asan -g %s -o %t 2>&1
-// RUN: ASAN_OPTIONS=alloc_dealloc_mismatch=1 %t 2>&1 | \
-// RUN: %symbolize | FileCheck %s
+// RUN: ASAN_OPTIONS=alloc_dealloc_mismatch=1 %t 2>&1 | FileCheck %s
 
 // No error here.
 // RUN: ASAN_OPTIONS=alloc_dealloc_mismatch=0 %t

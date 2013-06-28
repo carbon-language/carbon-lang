@@ -1,5 +1,5 @@
-// RUN: %clangxx_asan -O0 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
-// RUN: %clangxx_asan -O3 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O3 %s -o %t && %t 2>&1 | FileCheck %s
 
 #include <assert.h>
 #include <errno.h>
