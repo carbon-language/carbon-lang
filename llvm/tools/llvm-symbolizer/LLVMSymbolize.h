@@ -56,6 +56,7 @@ public:
   std::string
   symbolizeData(const std::string &ModuleName, uint64_t ModuleOffset);
   void flush();
+  static std::string DemangleName(const std::string &Name);
 private:
   typedef std::pair<Binary*, Binary*> BinaryPair;
 
@@ -67,7 +68,6 @@ private:
   ObjectFile *getObjectFileFromBinary(Binary *Bin, const std::string &ArchName);
 
   std::string printDILineInfo(DILineInfo LineInfo) const;
-  void DemangleName(std::string &Name) const;
 
   // Owns all the parsed binaries and object files.
   SmallVector<Binary*, 4> ParsedBinariesAndObjects;

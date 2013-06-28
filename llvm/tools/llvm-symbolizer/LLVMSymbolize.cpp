@@ -187,8 +187,8 @@ std::string LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
   uint64_t Size = 0;
   if (Opts.UseSymbolTable) {
     if (ModuleInfo *Info = getOrCreateModuleInfo(ModuleName)) {
-      if (Info->symbolizeData(ModuleOffset, Name, Start, Size))
-        DemangleName(Name);
+      if (Info->symbolizeData(ModuleOffset, Name, Start, Size) && Opts.Demangle)
+        Name = DemangleName(Name);
     }
   }
   std::stringstream ss;
@@ -303,7 +303,8 @@ std::string LLVMSymbolizer::printDILineInfo(DILineInfo LineInfo) const {
     std::string FunctionName = LineInfo.getFunctionName();
     if (FunctionName == kDILineInfoBadString)
       FunctionName = kBadString;
-    DemangleName(FunctionName);
+    else if (Opts.Demangle)
+      FunctionName = DemangleName(FunctionName);
     Result << FunctionName << "\n";
   }
   std::string Filename = LineInfo.getFileName();
@@ -320,16 +321,17 @@ extern "C" char *__cxa_demangle(const char *mangled_name, char *output_buffer,
                                 size_t *length, int *status);
 #endif
 
-void LLVMSymbolizer::DemangleName(std::string &Name) const {
+std::string LLVMSymbolizer::DemangleName(const std::string &Name) {
 #if !defined(_MSC_VER)
-  if (!Opts.Demangle)
-    return;
   int status = 0;
   char *DemangledName = __cxa_demangle(Name.c_str(), 0, 0, &status);
   if (status != 0)
-    return;
-  Name = DemangledName;
+    return Name;
+  std::string Result = DemangledName;
   free(DemangledName);
+  return Result;
+#else
+  return Name;
 #endif
 }
 
