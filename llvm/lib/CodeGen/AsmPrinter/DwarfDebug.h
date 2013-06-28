@@ -197,7 +197,8 @@ typedef StringMap<std::pair<MCSymbol*, unsigned>,
 
 // A Symbol->pair<Symbol, unsigned> mapping of addresses used by indirect
 // references.
-typedef DenseMap<MCSymbol *, std::pair<MCSymbol *, unsigned> > AddrPool;
+typedef DenseMap<const MCSymbol *, std::pair<const MCSymbol *, unsigned> >
+    AddrPool;
 
 /// \brief Collects and handles information specific to a particular
 /// collection of units.
@@ -270,7 +271,7 @@ public:
 
   /// \brief Returns the index into the address pool with the given
   /// label/symbol.
-  unsigned getAddrPoolIndex(MCSymbol *);
+  unsigned getAddrPoolIndex(const MCSymbol *);
 
   /// \brief Returns the address pool.
   AddrPool *getAddrPool() { return &AddressPool; }
