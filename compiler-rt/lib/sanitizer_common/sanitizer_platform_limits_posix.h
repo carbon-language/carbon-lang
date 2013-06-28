@@ -180,6 +180,23 @@ namespace __sanitizer {
     char **h_addr_list;
   };
 
+#ifdef SANITIZER_LINUX
+  extern unsigned struct_user_regs_struct_sz;
+  extern unsigned struct_user_fpregs_struct_sz;
+  extern unsigned struct_user_fpxregs_struct_sz;
+
+  extern int ptrace_getregs;
+  extern int ptrace_setregs;
+  extern int ptrace_getfpregs;
+  extern int ptrace_setfpregs;
+  extern int ptrace_getfpxregs;
+  extern int ptrace_setfpxregs;
+  extern int ptrace_getsiginfo;
+  extern int ptrace_setsiginfo;
+  extern int ptrace_getregset;
+  extern int ptrace_setregset;
+#endif
+
   // ioctl arguments
   struct __sanitizer_ifconf {
     int ifc_len;

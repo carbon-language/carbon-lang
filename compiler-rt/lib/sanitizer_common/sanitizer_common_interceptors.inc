@@ -1327,6 +1327,53 @@ INTERCEPTOR(int, readdir64_r, void *dirp, __sanitizer_dirent64 *entry, __sanitiz
 #define INIT_READDIR64
 #endif
 
+#if SANITIZER_INTERCEPT_PTRACE
+INTERCEPTOR(uptr, ptrace, int request, int pid, void *addr, void *data) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, ptrace, request, pid, addr, data);
+
+  if (data) {
+    if (request == ptrace_setregs)
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, data, struct_user_regs_struct_sz);
+    else if (request == ptrace_setfpregs)
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, data, struct_user_fpregs_struct_sz);
+    else if (request == ptrace_setfpxregs)
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, data, struct_user_fpxregs_struct_sz);
+    else if (request == ptrace_setsiginfo)
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, data, siginfo_t_sz);
+    else if (request == ptrace_setregset) {
+      __sanitizer_iovec *iov = (__sanitizer_iovec *)data;
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, iov->iov_base, iov->iov_len);
+    }
+  }
+
+  uptr res = REAL(ptrace)(request, pid, addr, data);
+
+  if (!res && data) {
+    // Note that PEEK* requests assing different meaning to the return value.
+    // This function does not handle them (nor does it need to).
+    if (request == ptrace_getregs)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, data, struct_user_regs_struct_sz);
+    else if (request == ptrace_getfpregs)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, data, struct_user_fpregs_struct_sz);
+    else if (request == ptrace_getfpxregs)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, data, struct_user_fpxregs_struct_sz);
+    else if (request == ptrace_getsiginfo)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, data, siginfo_t_sz);
+    else if (request == ptrace_getregset) {
+      __sanitizer_iovec *iov = (__sanitizer_iovec *)data;
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, iov->iov_base, iov->iov_len);
+    }
+  }
+  return res;
+}
+
+#define INIT_PTRACE           \
+  INTERCEPT_FUNCTION(ptrace);
+#else
+#define INIT_PTRACE
+#endif
+
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCASECMP;                         \
@@ -1371,4 +1418,5 @@ INTERCEPTOR(int, readdir64_r, void *dirp, __sanitizer_dirent64 *entry, __sanitiz
   INIT_INET_ATON;                          \
   INIT_SYSINFO;                            \
   INIT_READDIR;                            \
-  INIT_READDIR64;
+  INIT_READDIR64;                          \
+  INIT_PTRACE;

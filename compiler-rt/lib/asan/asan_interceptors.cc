@@ -53,7 +53,7 @@ static inline bool QuickCheckForUnpoisonedRegion(uptr beg, uptr size) {
   } while (0)
 
 #define ASAN_READ_RANGE(offset, size) ACCESS_MEMORY_RANGE(offset, size, false)
-#define ASAN_WRITE_RANGE(offset, size) ACCESS_MEMORY_RANGE(offset, size, true);
+#define ASAN_WRITE_RANGE(offset, size) ACCESS_MEMORY_RANGE(offset, size, true)
 
 // Behavior of functions like "memcpy" or "strcpy" is undefined
 // if memory intervals overlap. We report error in this case.

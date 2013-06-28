@@ -41,7 +41,9 @@
 
 #if SANITIZER_LINUX
 #include <sys/mount.h>
+#include <sys/ptrace.h>
 #include <sys/sysinfo.h>
+#include <sys/user.h>
 #include <sys/vt.h>
 #include <linux/cdrom.h>
 #include <linux/fd.h>
@@ -159,6 +161,27 @@ namespace __sanitizer {
     else
       return 0;
   }
+
+#ifdef SANITIZER_LINUX
+  unsigned struct_user_regs_struct_sz = sizeof(struct user_regs_struct);
+  unsigned struct_user_fpregs_struct_sz = sizeof(struct user_fpregs_struct);
+#if __WORDSIZE == 64
+  unsigned struct_user_fpxregs_struct_sz = 0;
+#else
+  unsigned struct_user_fpxregs_struct_sz = sizeof(struct user_fpxregs_struct);
+#endif
+  
+  int ptrace_getregs = PTRACE_GETREGS;
+  int ptrace_setregs = PTRACE_SETREGS;
+  int ptrace_getfpregs = PTRACE_GETFPREGS;
+  int ptrace_setfpregs = PTRACE_SETFPREGS;
+  int ptrace_getfpxregs = PTRACE_GETFPXREGS;
+  int ptrace_setfpxregs = PTRACE_SETFPXREGS;
+  int ptrace_getsiginfo = PTRACE_GETSIGINFO;
+  int ptrace_setsiginfo = PTRACE_SETSIGINFO;
+  int ptrace_getregset = PTRACE_GETREGSET;
+  int ptrace_setregset = PTRACE_SETREGSET;
+#endif
 
   // ioctl arguments
   unsigned struct_arpreq_sz = sizeof(struct arpreq);
