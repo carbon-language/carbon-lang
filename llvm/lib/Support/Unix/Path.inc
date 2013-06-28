@@ -178,6 +178,7 @@ retry_random_path:
     return error_code::success();
   }
   }
+  llvm_unreachable("Invalid Type");
 }
 
 namespace llvm {
