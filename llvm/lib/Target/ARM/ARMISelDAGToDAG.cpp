@@ -3464,10 +3464,6 @@ SDNode *ARMDAGToDAGISel::SelectInlineAsm(SDNode *N){
   bool Changed = false;
   unsigned NumOps = N->getNumOperands();
 
-  ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(
-      N->getOperand(InlineAsm::Op_AsmString));
-  StringRef AsmString = StringRef(S->getSymbol());
-
   // Normally, i64 data is bounded to two arbitrary GRPs for "%r" constraint.
   // However, some instrstions (e.g. ldrexd/strexd in ARM mode) require
   // (even/even+1) GPRs and use %n and %Hn to refer to the individual regs
