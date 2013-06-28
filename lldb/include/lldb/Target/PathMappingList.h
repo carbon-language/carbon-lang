@@ -38,7 +38,6 @@ public:
 
     PathMappingList (const PathMappingList &rhs);
 
-    virtual
     ~PathMappingList ();
 
     const PathMappingList &
