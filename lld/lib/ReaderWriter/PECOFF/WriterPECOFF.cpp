@@ -455,7 +455,7 @@ public:
     for (const DefinedAtom *atom : linkedFile.defined()) {
       assert(atom->sectionChoice() == DefinedAtom::sectionBasedOnContent);
       if (atom->contentType() == DefinedAtom::typeData &&
-          atom->permissions() == DefinedAtom::permRW_)
+          atom->permissions() == DefinedAtom::permR__)
         appendAtom(atom);
     }
 
@@ -484,9 +484,8 @@ public:
     // section.
     for (const DefinedAtom *atom : linkedFile.defined()) {
       assert(atom->sectionChoice() == DefinedAtom::sectionBasedOnContent);
-
       if (atom->contentType() == DefinedAtom::typeData &&
-          atom->permissions() == DefinedAtom::permR__)
+          atom->permissions() == DefinedAtom::permRW_)
         appendAtom(atom);
     }
 

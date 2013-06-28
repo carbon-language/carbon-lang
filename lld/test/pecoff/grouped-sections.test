@@ -11,5 +11,5 @@
 # If all the sections will be merged correctly, the resulting ".data"
 # section will have the string "Hello, world".
 
-CHECK: Contents of section .rdata:
+CHECK: Contents of section .data:
 CHECK-NEXT: Hello, world
