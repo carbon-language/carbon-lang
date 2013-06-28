@@ -1145,6 +1145,12 @@ PPCFrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
+    // Only Darwin actually uses the VRSAVE register, but it can still appear
+    // here if, for example, @llvm.eh.unwind.init() is used.  If we're not on
+    // Darwin, ignore it.
+    if (Reg == PPC::VRSAVE && !Subtarget.isDarwinABI())
+      continue;
+
     // CR2 through CR4 are the nonvolatile CR fields.
     bool IsCRField = PPC::CR2 <= Reg && Reg <= PPC::CR4;
 
@@ -1293,6 +1299,12 @@ PPCFrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
+
+    // Only Darwin actually uses the VRSAVE register, but it can still appear
+    // here if, for example, @llvm.eh.unwind.init() is used.  If we're not on
+    // Darwin, ignore it.
+    if (Reg == PPC::VRSAVE && !Subtarget.isDarwinABI())
+      continue;
 
     if (Reg == PPC::CR2) {
       CR2Spilled = true;
