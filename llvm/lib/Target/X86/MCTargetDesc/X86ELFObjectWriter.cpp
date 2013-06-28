@@ -101,7 +101,18 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
     } else {
       switch ((unsigned)Fixup.getKind()) {
       default: llvm_unreachable("invalid fixup kind!");
-      case FK_Data_8: Type = ELF::R_X86_64_64; break;
+      case FK_Data_8:
+        switch (Modifier) {
+        default:
+          llvm_unreachable("Unimplemented");
+        case MCSymbolRefExpr::VK_None:
+          Type = ELF::R_X86_64_64;
+          break;
+        case MCSymbolRefExpr::VK_DTPOFF:
+          Type = ELF::R_X86_64_DTPOFF64;
+          break;
+        }
+        break;
       case X86::reloc_signed_4byte:
         switch (Modifier) {
         default:

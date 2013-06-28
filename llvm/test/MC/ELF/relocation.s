@@ -18,7 +18,7 @@ bar:
         movq	foo(%rip), %rdx
         leaq    foo-bar(%r14),%r14
         addq	$bar,%rax         # R_X86_64_32S
-
+	.quad	foo@DTPOFF
 
 // CHECK:        Section {
 // CHECK:          Name: .rela.text
@@ -38,6 +38,7 @@ bar:
 // CHECK-NEXT:       0x55 R_X86_64_PC32     foo 0xFFFFFFFFFFFFFFFC
 // CHECK-NEXT:       0x5C R_X86_64_PC32     foo 0x5C
 // CHECK-NEXT:       0x63 R_X86_64_32S      .text 0x0
+// CHECK-NEXT:       0x67 R_X86_64_DTPOFF64 foo 0x0
 // CHECK-NEXT:     ]
 // CHECK-NEXT:   }
 
