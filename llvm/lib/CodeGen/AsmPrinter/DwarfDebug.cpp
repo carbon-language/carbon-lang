@@ -250,7 +250,8 @@ unsigned DwarfUnits::getStringPoolIndex(StringRef Str) {
 unsigned DwarfUnits::getAddrPoolIndex(const MCSymbol *Sym) {
   std::pair<DenseMap<const MCSymbol *, unsigned>::iterator, bool> P =
       AddressPool.insert(std::make_pair(Sym, NextAddrPoolNumber));
-  NextAddrPoolNumber += P.second;
+  if (P.second)
+    ++NextAddrPoolNumber;
   return P.first->second;
 }
 
