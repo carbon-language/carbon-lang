@@ -1,5 +1,5 @@
 // Test for __lsan_ignore_object().
-// RUN: LSAN_BASE="report_objects=1:use_registers=0:use_stacks=0:use_globals=0:use_tls=0:verbosity=2"
+// RUN: LSAN_BASE="report_objects=1:use_registers=0:use_stacks=0:use_globals=0:use_tls=0:verbosity=3"
 // RUN: %clangxx_lsan %s -o %t
 // RUN: LSAN_OPTIONS=$LSAN_BASE %t 2>&1 | FileCheck %s
 
