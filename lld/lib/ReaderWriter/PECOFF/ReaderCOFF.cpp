@@ -191,6 +191,13 @@ private:
       return ec;
     uint64_t ordinal = 0;
 
+    // We do not support debug information yet. We could keep data in ".debug$S"
+    // section in the resultant binary by copying as opaque bytes, but it would
+    // make the binary hard to debug because of extraneous data. So we'll skip
+    // the debug info.
+    if (sectionName == ".debug$S")
+      return error_code::success();
+
     // Create an atom for the entire section.
     if (symbols.empty()) {
       ArrayRef<uint8_t> Data(SecData.data(), SecData.size());
