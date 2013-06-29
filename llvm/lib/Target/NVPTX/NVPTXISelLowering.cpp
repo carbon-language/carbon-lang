@@ -657,7 +657,6 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   const DataLayout *TD = getDataLayout();
   MachineFunction &MF = DAG.getMachineFunction();
   const Function *F = MF.getFunction();
-  const TargetLowering *TLI = nvTM->getTargetLowering();
 
   SDValue tempChain = Chain;
   Chain =
@@ -1076,7 +1075,8 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       EVT ObjectVT = getValueType(retTy);
       unsigned NumElts = ObjectVT.getVectorNumElements();
       EVT EltVT = ObjectVT.getVectorElementType();
-      assert(TLI->getNumRegisters(F->getContext(), ObjectVT) == NumElts &&
+      assert(nvTM->getTargetLowering()->getNumRegisters(F->getContext(),
+                                                        ObjectVT) == NumElts &&
              "Vector was not scalarized");
       unsigned sz = EltVT.getSizeInBits();
       bool needTruncate = sz < 16 ? true : false;
