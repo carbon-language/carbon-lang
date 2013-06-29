@@ -35,7 +35,16 @@ using namespace llvm;
 using namespace polly;
 
 //===----------------------------------------------------------------------===//
-/// Helper Class
+/// Helper Classes
+
+void IRAccess::print(raw_ostream &OS) const {
+  if (isRead())
+    OS << "Read ";
+  else
+    OS << "Write ";
+
+  OS << BaseAddress->getName() << '[' << *Offset << "]\n";
+}
 
 void Comparison::print(raw_ostream &OS) const {
   // Not yet implemented.
@@ -72,7 +81,27 @@ void TempScop::print(raw_ostream &OS, ScalarEvolution *SE, LoopInfo *LI) const {
 
 void TempScop::printDetail(raw_ostream &OS, ScalarEvolution *SE,
                            LoopInfo *LI, const Region *CurR,
-                           unsigned ind) const {}
+                           unsigned ind) const {
+
+  // FIXME: Print other details rather than memory accesses.
+  typedef Region::const_block_iterator bb_iterator;
+  for (bb_iterator I = CurR->block_begin(), E = CurR->block_end(); I != E; ++I){
+    BasicBlock *CurBlock = *I;
+
+    AccFuncMapType::const_iterator AccSetIt = AccFuncMap.find(CurBlock);
+
+    // Ignore trivial blocks that do not contain any memory access.
+    if (AccSetIt == AccFuncMap.end()) continue;
+
+    OS.indent(ind) << "BB: " << CurBlock->getName() << '\n';
+    typedef AccFuncSetType::const_iterator access_iterator;
+    const AccFuncSetType &AccFuncs = AccSetIt->second;
+
+    for (access_iterator AI = AccFuncs.begin(), AE = AccFuncs.end();
+         AI != AE; ++AI)
+      AI->first.print(OS.indent(ind + 2));
+  }
+}
 
 void TempScopInfo::buildScalarDependences(Instruction *Inst, Region *R) {
   // No need to translate these scalar dependences into polyhedral form, because

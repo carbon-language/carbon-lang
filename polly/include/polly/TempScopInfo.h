@@ -74,6 +74,8 @@ public:
   bool isWrite() const { return Type & WRITE; }
 
   bool isScalar() const { return Type & SCALAR; }
+
+  void print(raw_ostream &OS) const;
 };
 
 class Comparison {
