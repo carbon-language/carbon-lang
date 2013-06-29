@@ -166,9 +166,7 @@ Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
   if (isa<Constant>(Old))
     return const_cast<Value *>(Old);
 
-  if (GlobalMap.count(Old)) {
-    Value *New = GlobalMap[Old];
-
+  if (Value *New = GlobalMap.lookup(Old)) {
     if (Old->getType()->getScalarSizeInBits() <
         New->getType()->getScalarSizeInBits())
       New = Builder.CreateTruncOrBitCast(New, Old->getType());
@@ -176,10 +174,8 @@ Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
     return New;
   }
 
-  if (BBMap.count(Old)) {
-    assert(BBMap[Old] && "BBMap[Old] should not be NULL!");
-    return BBMap[Old];
-  }
+  if (Value *New = BBMap.lookup(Old))
+    return New;
 
   if (SCEVCodegen && SE.isSCEVable(Old->getType()))
     if (const SCEV *Scev = SE.getSCEVAtScope(const_cast<Value *>(Old), L)) {
@@ -395,8 +391,8 @@ Value *VectorBlockGenerator::getVectorValue(const Value *Old,
                                             ValueMapT &VectorMap,
                                             VectorValueMapT &ScalarMaps,
                                             Loop *L) {
-  if (VectorMap.count(Old))
-    return VectorMap[Old];
+  if (Value *NewValue = VectorMap.lookup(Old))
+    return NewValue;
 
   int Width = getVectorWidth();
 
