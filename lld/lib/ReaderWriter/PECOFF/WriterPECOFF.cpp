@@ -498,7 +498,7 @@ private:
       llvm::COFF::IMAGE_SCN_MEM_WRITE;
 };
 
-};  // end anonymous namespace
+}  // end anonymous namespace
 
 class ExecutableWriter : public Writer {
 private:
