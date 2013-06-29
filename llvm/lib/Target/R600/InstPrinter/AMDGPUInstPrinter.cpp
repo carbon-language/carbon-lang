@@ -178,13 +178,13 @@ void AMDGPUInstPrinter::printBankSwizzle(const MCInst *MI, unsigned OpNo,
   int BankSwizzle = MI->getOperand(OpNo).getImm();
   switch (BankSwizzle) {
   case 1:
-    O << "BS:VEC_021";
+    O << "BS:VEC_021/SCL_122";
     break;
   case 2:
-    O << "BS:VEC_120";
+    O << "BS:VEC_120/SCL_212";
     break;
   case 3:
-    O << "BS:VEC_102";
+    O << "BS:VEC_102/SCL_221";
     break;
   case 4:
     O << "BS:VEC_201";

@@ -36,14 +36,14 @@ namespace llvm {
 
   int getBranchInstr(const MachineOperand &op) const;
   std::vector<std::pair<int, unsigned> >
-  ExtractSrcs(MachineInstr *MI, const DenseMap<unsigned, unsigned> &PV) const;
+  ExtractSrcs(MachineInstr *MI, const DenseMap<unsigned, unsigned> &PV, unsigned &ConstCount) const;
 
   public:
   enum BankSwizzle {
-    ALU_VEC_012 = 0,
-    ALU_VEC_021,
-    ALU_VEC_120,
-    ALU_VEC_102,
+    ALU_VEC_012_SCL_210 = 0,
+    ALU_VEC_021_SCL_122,
+    ALU_VEC_120_SCL_212,
+    ALU_VEC_102_SCL_221,
     ALU_VEC_201,
     ALU_VEC_210
   };

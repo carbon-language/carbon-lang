@@ -282,15 +282,15 @@ static std::vector<std::pair<int, unsigned> >
 Swizzle(std::vector<std::pair<int, unsigned> > Src,
         R600InstrInfo::BankSwizzle Swz) {
   switch (Swz) {
-  case R600InstrInfo::ALU_VEC_012:
+  case R600InstrInfo::ALU_VEC_012_SCL_210:
     break;
-  case R600InstrInfo::ALU_VEC_021:
+  case R600InstrInfo::ALU_VEC_021_SCL_122:
     std::swap(Src[1], Src[2]);
     break;
-  case R600InstrInfo::ALU_VEC_102:
+  case R600InstrInfo::ALU_VEC_102_SCL_221:
     std::swap(Src[0], Src[1]);
     break;
-  case R600InstrInfo::ALU_VEC_120:
+  case R600InstrInfo::ALU_VEC_120_SCL_212:
     std::swap(Src[0], Src[1]);
     std::swap(Src[0], Src[2]);
     break;
