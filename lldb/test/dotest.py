@@ -465,7 +465,7 @@ def parseOptionsAndInitTestdirs():
     
     # only print the args if being verbose (and parsable is off)
     if args.v and not args.q:
-        print args
+        print sys.argv
 
     if args.h:
         do_help = True
