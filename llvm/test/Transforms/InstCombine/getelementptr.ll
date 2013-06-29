@@ -509,4 +509,14 @@ define void @test39(%struct.ham* %arg, i8 %arg1) nounwind {
 ; CHECK: getelementptr inbounds i8* %tmp3, i64 -8
 }
 
+define i1 @pr16483([1 x i8]* %a, [1 x i8]* %b) {
+  %c = getelementptr [1 x i8]* %a, i32 0, i32 0
+  %d = getelementptr [1 x i8]* %b, i32 0, i32 0
+  %cmp = icmp ult i8* %c, %d
+  ret i1 %cmp
+
+; CHECK: @pr16483
+; CHECK-NEXT: icmp ult  [1 x i8]* %a, %b
+}
+
 ; CHECK: attributes [[NUW]] = { nounwind }
