@@ -662,7 +662,7 @@ static Value *foldSelectICmpAnd(const SelectInst &SI, ConstantInt *TrueVal,
                                 ConstantInt *FalseVal,
                                 InstCombiner::BuilderTy *Builder) {
   const ICmpInst *IC = dyn_cast<ICmpInst>(SI.getCondition());
-  if (!IC || !IC->isEquality())
+  if (!IC || !IC->isEquality() || !SI.getType()->isIntegerTy())
     return 0;
 
   if (!match(IC->getOperand(1), m_Zero()))
@@ -670,8 +670,7 @@ static Value *foldSelectICmpAnd(const SelectInst &SI, ConstantInt *TrueVal,
 
   ConstantInt *AndRHS;
   Value *LHS = IC->getOperand(0);
-  if (LHS->getType() != SI.getType() ||
-      !match(LHS, m_And(m_Value(), m_ConstantInt(AndRHS))))
+  if (!match(LHS, m_And(m_Value(), m_ConstantInt(AndRHS))))
     return 0;
 
   // If both select arms are non-zero see if we have a select of the form
@@ -705,7 +704,13 @@ static Value *foldSelectICmpAnd(const SelectInst &SI, ConstantInt *TrueVal,
   unsigned ValZeros = ValC->getValue().logBase2();
   unsigned AndZeros = AndRHS->getValue().logBase2();
 
-  Value *V = LHS;
+  // If types don't match we can still convert the select by introducing a zext
+  // or a trunc of the 'and'. The trunc case requires that all of the truncated
+  // bits are zero, we can figure that out by looking at the 'and' mask.
+  if (AndZeros >= ValC->getBitWidth())
+    return 0;
+
+  Value *V = Builder->CreateZExtOrTrunc(LHS, SI.getType());
   if (ValZeros > AndZeros)
     V = Builder->CreateShl(V, ValZeros - AndZeros);
   else if (ValZeros < AndZeros)

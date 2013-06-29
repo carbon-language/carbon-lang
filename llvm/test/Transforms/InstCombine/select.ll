@@ -985,3 +985,39 @@ define i32 @select_icmp_ne_0_and_8_or_1073741824(i8 %x, i32 %y) {
   %select = select i1 %cmp, i32 %y, i32 %or
   ret i32 %select
 }
+
+define i32 @test65(i64 %x) {
+  %1 = and i64 %x, 16
+  %2 = icmp ne i64 %1, 0
+  %3 = select i1 %2, i32 40, i32 42
+  ret i32 %3
+
+; CHECK: @test65
+; CHECK: and i64 %x, 16
+; CHECK: trunc i64 %1 to i32
+; CHECK: lshr exact i32 %2, 3
+; CHECK: xor i32 %3, 42
+}
+
+define i32 @test66(i64 %x) {
+  %1 = and i64 %x, 4294967296
+  %2 = icmp ne i64 %1, 0
+  %3 = select i1 %2, i32 40, i32 42
+  ret i32 %3
+
+; CHECK: @test66
+; CHECK: select
+}
+
+define i32 @test67(i16 %x) {
+  %1 = and i16 %x, 4
+  %2 = icmp ne i16 %1, 0
+  %3 = select i1 %2, i32 40, i32 42
+  ret i32 %3
+
+; CHECK: @test67
+; CHECK: and i16 %x, 4
+; CHECK: zext i16 %1 to i32
+; CHECK: lshr exact i32 %2, 1
+; CHECK: xor i32 %3, 42
+}
