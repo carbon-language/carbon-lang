@@ -47,8 +47,8 @@ using namespace llvm;
 
 static cl::opt<int>
     SLPCostThreshold("slp-threshold", cl::init(0), cl::Hidden,
-                     cl::desc("Only vectorize trees if the gain is above this "
-                              "number. (gain = -cost of vectorization)"));
+                     cl::desc("Only vectorize if you gain more than this "
+                              "number "));
 namespace {
 
 static const unsigned MinVecRegSize = 128;
@@ -696,7 +696,6 @@ int FuncSLP::getTreeCost_rec(ArrayRef<Value *> VL, unsigned Depth) {
       }
     }
   }
-
 
   // Calculate the extract cost.
   unsigned ExternalUserExtractCost = 0;
