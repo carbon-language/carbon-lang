@@ -398,7 +398,8 @@ NextPossibleSolution(
   }
   if (ResetIdx == -1)
     return false;
-  SwzCandidate[ResetIdx]++;
+  int NextSwizzle = SwzCandidate[ResetIdx] + 1;
+  SwzCandidate[ResetIdx] = (R600InstrInfo::BankSwizzle)NextSwizzle;
   return true;
 }
 
