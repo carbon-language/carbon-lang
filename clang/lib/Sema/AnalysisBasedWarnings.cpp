@@ -1154,7 +1154,7 @@ struct SLocSort {
 class UninitValsDiagReporter : public UninitVariablesHandler {
   Sema &S;
   typedef SmallVector<UninitUse, 2> UsesVec;
-  typedef std::pair<UsesVec*, bool> MappedType;
+  typedef llvm::PointerIntPair<UsesVec *, 1, bool> MappedType;
   // Prefer using MapVector to DenseMap, so that iteration order will be
   // the same as insertion order. This is needed to obtain a deterministic
   // order of diagnostics when calling flushDiagnostics().
@@ -1172,19 +1172,18 @@ public:
       uses = new UsesMap();
 
     MappedType &V = (*uses)[vd];
-    UsesVec *&vec = V.first;
-    if (!vec)
-      vec = new UsesVec();
+    if (!V.getPointer())
+      V.setPointer(new UsesVec());
     
     return V;
   }
   
   void handleUseOfUninitVariable(const VarDecl *vd, const UninitUse &use) {
-    getUses(vd).first->push_back(use);
+    getUses(vd).getPointer()->push_back(use);
   }
   
   void handleSelfInit(const VarDecl *vd) {
-    getUses(vd).second = true;    
+    getUses(vd).setInt(true);
   }
   
   void flushDiagnostics() {
@@ -1195,8 +1194,8 @@ public:
       const VarDecl *vd = i->first;
       const MappedType &V = i->second;
 
-      UsesVec *vec = V.first;
-      bool hasSelfInit = V.second;
+      UsesVec *vec = V.getPointer();
+      bool hasSelfInit = V.getInt();
 
       // Specially handle the case where we have uses of an uninitialized 
       // variable, but the root cause is an idiomatic self-init.  We want

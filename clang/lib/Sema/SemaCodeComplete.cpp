@@ -6112,8 +6112,8 @@ void Sema::CodeCompleteObjCPropertySynthesizeIvar(Scope *S,
 
 // Mapping from selectors to the methods that implement that selector, along
 // with the "in original class" flag.
-typedef llvm::DenseMap<Selector, std::pair<ObjCMethodDecl *, bool> > 
-  KnownMethodsMap;
+typedef llvm::DenseMap<
+    Selector, llvm::PointerIntPair<ObjCMethodDecl *, 1, bool> > KnownMethodsMap;
 
 /// \brief Find all of the methods that reside in the given container
 /// (and its superclasses, protocols, etc.) that meet the given
@@ -6202,7 +6202,8 @@ static void FindImplementableMethods(ASTContext &Context,
           !Context.hasSameUnqualifiedType(ReturnType, M->getResultType()))
         continue;
 
-      KnownMethods[M->getSelector()] = std::make_pair(*M, InOriginalClass);
+      KnownMethods[M->getSelector()] =
+          KnownMethodsMap::mapped_type(*M, InOriginalClass);
     }
   }
 }
@@ -6916,7 +6917,7 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
   for (KnownMethodsMap::iterator M = KnownMethods.begin(), 
                               MEnd = KnownMethods.end();
        M != MEnd; ++M) {
-    ObjCMethodDecl *Method = M->second.first;
+    ObjCMethodDecl *Method = M->second.getPointer();
     CodeCompletionBuilder Builder(Results.getAllocator(),
                                   Results.getCodeCompletionTUInfo());
     
@@ -6984,7 +6985,7 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
     }
 
     unsigned Priority = CCP_CodePattern;
-    if (!M->second.second)
+    if (!M->second.getInt())
       Priority += CCD_InBaseClass;
     
     Results.AddResult(Result(Builder.TakeString(), Method, Priority));
