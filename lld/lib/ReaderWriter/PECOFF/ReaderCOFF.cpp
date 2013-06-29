@@ -266,12 +266,11 @@ private:
   COFFDefinedAtom *findAtomAt(uint32_t targetOffset,
                               const coff_section *section,
                               const vector<COFFDefinedAtom *> &atoms) const {
-    auto compareFn =
-        [](const COFFDefinedAtom * a, const COFFDefinedAtom * b)->bool {
-      return a->originalOffset() < b->originalOffset();
-    }
-    ;
-    assert(std::is_sorted(atoms.begin(), atoms.end(), compareFn));
+    assert(std::is_sorted(atoms.begin(), atoms.end(),
+                          [](const COFFDefinedAtom * a,
+                             const COFFDefinedAtom * b) -> bool {
+                            return a->originalOffset() < b->originalOffset();
+                          }));
 
     for (COFFDefinedAtom *atom : atoms)
       if (targetOffset < atom->originalOffset() + atom->size())
