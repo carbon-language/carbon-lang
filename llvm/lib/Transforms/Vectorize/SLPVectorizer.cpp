@@ -1525,6 +1525,9 @@ struct SLPVectorizer : public FunctionPass {
     AU.addRequired<TargetTransformInfo>();
     AU.addRequired<LoopInfo>();
     AU.addRequired<DominatorTree>();
+    AU.addPreserved<LoopInfo>();
+    AU.addPreserved<DominatorTree>();
+    AU.setPreservesCFG();
   }
 
 private:
