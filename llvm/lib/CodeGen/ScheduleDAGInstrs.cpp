@@ -116,12 +116,15 @@ static void getUnderlyingObjects(const Value *V,
   } while (!Working.empty());
 }
 
+typedef SmallVector<PointerIntPair<const Value *, 1, bool>, 4>
+UnderlyingObjectsVector;
+
 /// getUnderlyingObjectsForInstr - If this machine instr has memory reference
 /// information and it can be tracked to a normal reference to a known
 /// object, return the Value for that object.
 static void getUnderlyingObjectsForInstr(const MachineInstr *MI,
-              const MachineFrameInfo *MFI,
-              SmallVectorImpl<std::pair<const Value *, bool> > &Objects) {
+                                         const MachineFrameInfo *MFI,
+                                         UnderlyingObjectsVector &Objects) {
   if (!MI->hasOneMemOperand() ||
       !(*MI->memoperands_begin())->getValue() ||
       (*MI->memoperands_begin())->isVolatile())
@@ -155,7 +158,7 @@ static void getUnderlyingObjectsForInstr(const MachineInstr *MI,
       return;
     }
 
-    Objects.push_back(std::make_pair(V, MayAlias));
+    Objects.push_back(UnderlyingObjectsVector::value_type(V, MayAlias));
   }
 }
 
@@ -845,7 +848,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
       AliasMemDefs.clear();
       AliasMemUses.clear();
     } else if (MI->mayStore()) {
-      SmallVector<std::pair<const Value *, bool>, 4> Objs;
+      UnderlyingObjectsVector Objs;
       getUnderlyingObjectsForInstr(MI, MFI, Objs);
 
       if (Objs.empty()) {
@@ -854,10 +857,10 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
       }
 
       bool MayAlias = false;
-      for (SmallVector<std::pair<const Value *, bool>, 4>::iterator
-           K = Objs.begin(), KE = Objs.end(); K != KE; ++K) {
-        const Value *V = K->first;
-        bool ThisMayAlias = K->second;
+      for (UnderlyingObjectsVector::iterator K = Objs.begin(), KE = Objs.end();
+           K != KE; ++K) {
+        const Value *V = K->getPointer();
+        bool ThisMayAlias = K->getInt();
         if (ThisMayAlias)
           MayAlias = true;
 
@@ -919,7 +922,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
       if (MI->isInvariantLoad(AA)) {
         // Invariant load, no chain dependencies needed!
       } else {
-        SmallVector<std::pair<const Value *, bool>, 4> Objs;
+        UnderlyingObjectsVector Objs;
         getUnderlyingObjectsForInstr(MI, MFI, Objs);
 
         if (Objs.empty()) {
@@ -935,10 +938,10 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
           MayAlias = false;
         }
 
-        for (SmallVector<std::pair<const Value *, bool>, 4>::iterator
+        for (UnderlyingObjectsVector::iterator
              J = Objs.begin(), JE = Objs.end(); J != JE; ++J) {
-          const Value *V = J->first;
-          bool ThisMayAlias = J->second;
+          const Value *V = J->getPointer();
+          bool ThisMayAlias = J->getInt();
 
           if (ThisMayAlias)
             MayAlias = true;
