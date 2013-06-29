@@ -1153,7 +1153,8 @@ DILexicalBlock DIBuilder::createLexicalBlock(DIDescriptor Scope, DIFile File,
 Instruction *DIBuilder::insertDeclare(Value *Storage, DIVariable VarInfo,
                                       Instruction *InsertBefore) {
   assert(Storage && "no storage passed to dbg.declare");
-  assert(VarInfo.Verify() && "empty DIVariable passed to dbg.declare");
+  assert(VarInfo.isVariable() &&
+         "empty or invalid DIVariable passed to dbg.declare");
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
@@ -1165,7 +1166,8 @@ Instruction *DIBuilder::insertDeclare(Value *Storage, DIVariable VarInfo,
 Instruction *DIBuilder::insertDeclare(Value *Storage, DIVariable VarInfo,
                                       BasicBlock *InsertAtEnd) {
   assert(Storage && "no storage passed to dbg.declare");
-  assert(VarInfo.Verify() && "invalid DIVariable passed to dbg.declare");
+  assert(VarInfo.isVariable() &&
+         "empty or invalid DIVariable passed to dbg.declare");
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
@@ -1184,7 +1186,8 @@ Instruction *DIBuilder::insertDbgValueIntrinsic(Value *V, uint64_t Offset,
                                                 DIVariable VarInfo,
                                                 Instruction *InsertBefore) {
   assert(V && "no value passed to dbg.value");
-  assert(VarInfo.Verify() && "invalid DIVariable passed to dbg.value");
+  assert(VarInfo.isVariable() &&
+         "empty or invalid DIVariable passed to dbg.value");
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 
@@ -1199,7 +1202,8 @@ Instruction *DIBuilder::insertDbgValueIntrinsic(Value *V, uint64_t Offset,
                                                 DIVariable VarInfo,
                                                 BasicBlock *InsertAtEnd) {
   assert(V && "no value passed to dbg.value");
-  assert(VarInfo.Verify() && "invalid DIVariable passed to dbg.value");
+  assert(VarInfo.isVariable() &&
+         "empty or invalid DIVariable passed to dbg.value");
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 
