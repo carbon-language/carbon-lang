@@ -1,6 +1,6 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
-;CHECK: SIN * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;CHECK: SIN * T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
 
 define void @test() {
    %r0 = call float @llvm.R600.load.input(i32 0)

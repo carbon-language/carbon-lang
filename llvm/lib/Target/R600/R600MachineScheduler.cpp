@@ -32,7 +32,7 @@ void R600SchedStrategy::initialize(ScheduleDAGMI *dag) {
   MRI = &DAG->MRI;
   CurInstKind = IDOther;
   CurEmitted = 0;
-  OccupedSlotsMask = 15;
+  OccupedSlotsMask = 31;
   InstKindLimit[IDAlu] = TII->getMaxAlusPerClause();
   InstKindLimit[IDOther] = 32;
 
@@ -160,7 +160,7 @@ void R600SchedStrategy::schedNode(SUnit *SU, bool IsTopNode) {
   if (NextInstKind != CurInstKind) {
     DEBUG(dbgs() << "Instruction Type Switch\n");
     if (NextInstKind != IDAlu)
-      OccupedSlotsMask = 15;
+      OccupedSlotsMask |= 31;
     CurEmitted = 0;
     CurInstKind = NextInstKind;
   }
@@ -250,6 +250,9 @@ bool R600SchedStrategy::regBelongsToClass(unsigned Reg,
 
 R600SchedStrategy::AluKind R600SchedStrategy::getAluKind(SUnit *SU) const {
   MachineInstr *MI = SU->getInstr();
+
+  if (TII->isTransOnly(MI))
+    return AluTrans;
 
     switch (MI->getOpcode()) {
     case AMDGPU::PRED_X:
@@ -346,7 +349,7 @@ SUnit *R600SchedStrategy::PopInst(std::vector<SUnit *> &Q) {
       It != E; ++It) {
     SUnit *SU = *It;
     InstructionsGroupCandidate.push_back(SU->getInstr());
-    if (TII->canBundle(InstructionsGroupCandidate)) {
+    if (TII->fitsConstReadLimitations(InstructionsGroupCandidate)) {
       InstructionsGroupCandidate.pop_back();
       Q.erase((It + 1).base());
       return SU;
@@ -421,7 +424,8 @@ unsigned R600SchedStrategy::AvailablesAluCount() const {
   return AvailableAlus[AluAny].size() + AvailableAlus[AluT_XYZW].size() +
       AvailableAlus[AluT_X].size() + AvailableAlus[AluT_Y].size() +
       AvailableAlus[AluT_Z].size() + AvailableAlus[AluT_W].size() +
-      AvailableAlus[AluDiscarded].size() + AvailableAlus[AluPredX].size();
+      AvailableAlus[AluTrans].size() + AvailableAlus[AluDiscarded].size() +
+      AvailableAlus[AluPredX].size();
 }
 
 SUnit* R600SchedStrategy::pickAlu() {
@@ -429,18 +433,25 @@ SUnit* R600SchedStrategy::pickAlu() {
     if (!OccupedSlotsMask) {
       // Bottom up scheduling : predX must comes first
       if (!AvailableAlus[AluPredX].empty()) {
-        OccupedSlotsMask = 15;
+        OccupedSlotsMask |= 31;
         return PopInst(AvailableAlus[AluPredX]);
       }
       // Flush physical reg copies (RA will discard them)
       if (!AvailableAlus[AluDiscarded].empty()) {
-        OccupedSlotsMask = 15;
+        OccupedSlotsMask |= 31;
         return PopInst(AvailableAlus[AluDiscarded]);
       }
       // If there is a T_XYZW alu available, use it
       if (!AvailableAlus[AluT_XYZW].empty()) {
-        OccupedSlotsMask = 15;
+        OccupedSlotsMask |= 15;
         return PopInst(AvailableAlus[AluT_XYZW]);
+      }
+    }
+    bool TransSlotOccuped = OccupedSlotsMask & 16;
+    if (!TransSlotOccuped) {
+      if (!AvailableAlus[AluTrans].empty()) {
+        OccupedSlotsMask |= 16;
+        return PopInst(AvailableAlus[AluTrans]);
       }
     }
     for (int Chan = 3; Chan > -1; --Chan) {

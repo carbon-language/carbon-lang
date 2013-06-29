@@ -96,6 +96,7 @@ def PV_X : R600RegWithChan<"PV.X", 254, "X">;
 def PV_Y : R600RegWithChan<"PV.Y", 254, "Y">;
 def PV_Z : R600RegWithChan<"PV.Z", 254, "Z">;
 def PV_W : R600RegWithChan<"PV.W", 254, "W">;
+def PS: R600Reg<"PS", 255>;
 def PREDICATE_BIT : R600Reg<"PredicateBit", 0>;
 def PRED_SEL_OFF: R600Reg<"Pred_sel_off", 0>;
 def PRED_SEL_ZERO : R600Reg<"Pred_sel_zero", 2>;

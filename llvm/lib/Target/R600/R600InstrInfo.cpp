@@ -250,8 +250,9 @@ R600InstrInfo::getSrcs(MachineInstr *MI) const {
 
 std::vector<std::pair<int, unsigned> >
 R600InstrInfo::ExtractSrcs(MachineInstr *MI,
-                           const DenseMap<unsigned, unsigned> &PV)
-    const {
+                           const DenseMap<unsigned, unsigned> &PV,
+                           unsigned &ConstCount) const {
+  ConstCount = 0;
   const SmallVector<std::pair<MachineOperand *, int64_t>, 3> Srcs = getSrcs(MI);
   const std::pair<int, unsigned> DummyPair(-1, 0);
   std::vector<std::pair<int, unsigned> > Result;
@@ -259,18 +260,20 @@ R600InstrInfo::ExtractSrcs(MachineInstr *MI,
   for (unsigned n = Srcs.size(); i < n; ++i) {
     unsigned Reg = Srcs[i].first->getReg();
     unsigned Index = RI.getEncodingValue(Reg) & 0xff;
-    unsigned Chan = RI.getHWRegChan(Reg);
     if (Reg == AMDGPU::OQAP) {
       Result.push_back(std::pair<int, unsigned>(Index, 0));
     }
-    if (Index > 127) {
-      Result.push_back(DummyPair);
-      continue;
-    }
     if (PV.find(Reg) != PV.end()) {
+      // 255 is used to tells its a PS/PV reg
+      Result.push_back(std::pair<int, unsigned>(255, 0));
+      continue;
+    }
+    if (Index > 127) {
+      ConstCount++;
       Result.push_back(DummyPair);
       continue;
     }
+    unsigned Chan = RI.getHWRegChan(Reg);
     Result.push_back(std::pair<int, unsigned>(Index, Chan));
   }
   for (; i < 3; ++i)
@@ -305,23 +308,51 @@ Swizzle(std::vector<std::pair<int, unsigned> > Src,
   return Src;
 }
 
-bool
-R600InstrInfo::isLegal(
-             const std::vector<std::vector<std::pair<int, unsigned> > > &IGSrcs,
-             const std::vector<R600InstrInfo::BankSwizzle> &Swz,
-             unsigned CheckedSize) const {
+static unsigned
+getTransSwizzle(R600InstrInfo::BankSwizzle Swz, unsigned Op) {
+  switch (Swz) {
+  case R600InstrInfo::ALU_VEC_012_SCL_210: {
+    unsigned Cycles[3] = { 2, 1, 0};
+    return Cycles[Op];
+  }
+  case R600InstrInfo::ALU_VEC_021_SCL_122: {
+    unsigned Cycles[3] = { 1, 2, 2};
+    return Cycles[Op];
+  }
+  case R600InstrInfo::ALU_VEC_120_SCL_212: {
+    unsigned Cycles[3] = { 2, 1, 2};
+    return Cycles[Op];
+  }
+  case R600InstrInfo::ALU_VEC_102_SCL_221: {
+    unsigned Cycles[3] = { 2, 2, 1};
+    return Cycles[Op];
+  }
+  default:
+    llvm_unreachable("Wrong Swizzle for Trans Slot");
+    return 0;
+  }
+}
+
+/// returns how many MIs (whose inputs are represented by IGSrcs) can be packed
+/// in the same Instruction Group while meeting read port limitations given a
+/// Swz swizzle sequence.
+unsigned  R600InstrInfo::isLegalUpTo(
+    const std::vector<std::vector<std::pair<int, unsigned> > > &IGSrcs,
+    const std::vector<R600InstrInfo::BankSwizzle> &Swz,
+    const std::vector<std::pair<int, unsigned> > &TransSrcs,
+    R600InstrInfo::BankSwizzle TransSwz) const {
   int Vector[4][3];
   memset(Vector, -1, sizeof(Vector));
-  for (unsigned i = 0; i < CheckedSize; i++) {
+  for (unsigned i = 0, e = IGSrcs.size(); i < e; i++) {
     const std::vector<std::pair<int, unsigned> > &Srcs =
         Swizzle(IGSrcs[i], Swz[i]);
     for (unsigned j = 0; j < 3; j++) {
       const std::pair<int, unsigned> &Src = Srcs[j];
-      if (Src.first < 0)
+      if (Src.first < 0 || Src.first == 255)
         continue;
       if (Src.first == GET_REG_INDEX(RI.getEncodingValue(AMDGPU::OQAP))) {
-        if (Swz[i] != R600InstrInfo::ALU_VEC_012 &&
-            Swz[i] != R600InstrInfo::ALU_VEC_021) {
+        if (Swz[i] != R600InstrInfo::ALU_VEC_012_SCL_210 &&
+            Swz[i] != R600InstrInfo::ALU_VEC_021_SCL_122) {
             // The value from output queue A (denoted by register OQAP) can
             // only be fetched during the first cycle.
             return false;
@@ -332,51 +363,126 @@ R600InstrInfo::isLegal(
       if (Vector[Src.second][j] < 0)
         Vector[Src.second][j] = Src.first;
       if (Vector[Src.second][j] != Src.first)
-        return false;
+        return i;
     }
+  }
+  // Now check Trans Alu
+  for (unsigned i = 0, e = TransSrcs.size(); i < e; ++i) {
+    const std::pair<int, unsigned> &Src = TransSrcs[i];
+    unsigned Cycle = getTransSwizzle(TransSwz, i);
+    if (Src.first < 0)
+      continue;
+    if (Src.first == 255)
+      continue;
+    if (Vector[Src.second][Cycle] < 0)
+      Vector[Src.second][Cycle] = Src.first;
+    if (Vector[Src.second][Cycle] != Src.first)
+      return IGSrcs.size() - 1;
+  }
+  return IGSrcs.size();
+}
+
+/// Given a swizzle sequence SwzCandidate and an index Idx, returns the next
+/// (in lexicographic term) swizzle sequence assuming that all swizzles after
+/// Idx can be skipped
+static bool
+NextPossibleSolution(
+    std::vector<R600InstrInfo::BankSwizzle> &SwzCandidate,
+    unsigned Idx) {
+  assert(Idx < SwzCandidate.size());
+  int ResetIdx = Idx;
+  while (ResetIdx > -1 && SwzCandidate[ResetIdx] == R600InstrInfo::ALU_VEC_210)
+    ResetIdx --;
+  for (unsigned i = ResetIdx + 1, e = SwzCandidate.size(); i < e; i++) {
+    SwzCandidate[i] = R600InstrInfo::ALU_VEC_012_SCL_210;
+  }
+  if (ResetIdx == -1)
+    return false;
+  SwzCandidate[ResetIdx]++;
+  return true;
+}
+
+/// Enumerate all possible Swizzle sequence to find one that can meet all
+/// read port requirements.
+bool R600InstrInfo::FindSwizzleForVectorSlot(
+    const std::vector<std::vector<std::pair<int, unsigned> > > &IGSrcs,
+    std::vector<R600InstrInfo::BankSwizzle> &SwzCandidate,
+    const std::vector<std::pair<int, unsigned> > &TransSrcs,
+    R600InstrInfo::BankSwizzle TransSwz) const {
+  unsigned ValidUpTo = 0;
+  do {
+    ValidUpTo = isLegalUpTo(IGSrcs, SwzCandidate, TransSrcs, TransSwz);
+    if (ValidUpTo == IGSrcs.size())
+      return true;
+  } while (NextPossibleSolution(SwzCandidate, ValidUpTo));
+  return false;
+}
+
+/// Instructions in Trans slot can't read gpr at cycle 0 if they also read
+/// a const, and can't read a gpr at cycle 1 if they read 2 const.
+static bool
+isConstCompatible(R600InstrInfo::BankSwizzle TransSwz,
+                  const std::vector<std::pair<int, unsigned> > &TransOps,
+                  unsigned ConstCount) {
+  for (unsigned i = 0, e = TransOps.size(); i < e; ++i) {
+    const std::pair<int, unsigned> &Src = TransOps[i];
+    unsigned Cycle = getTransSwizzle(TransSwz, i);
+    if (Src.first < 0)
+      continue;
+    if (ConstCount > 0 && Cycle == 0)
+      return false;
+    if (ConstCount > 1 && Cycle == 1)
+      return false;
   }
   return true;
 }
 
 bool
-R600InstrInfo::recursiveFitsFPLimitation(
-             const std::vector<std::vector<std::pair<int, unsigned> > > &IGSrcs,
-             std::vector<R600InstrInfo::BankSwizzle> &SwzCandidate,
-             unsigned Depth) const {
-  if (!isLegal(IGSrcs, SwzCandidate, Depth))
-    return false;
-  if (IGSrcs.size() == Depth)
-    return true;
-  unsigned i = SwzCandidate[Depth];
-  for (; i < 6; i++) {
-    SwzCandidate[Depth] = (R600InstrInfo::BankSwizzle) i;
-    if (recursiveFitsFPLimitation(IGSrcs, SwzCandidate, Depth + 1))
-      return true;
-  }
-  SwzCandidate[Depth] = R600InstrInfo::ALU_VEC_012;
-  return false;
-}
-
-bool
 R600InstrInfo::fitsReadPortLimitations(const std::vector<MachineInstr *> &IG,
-                                      const DenseMap<unsigned, unsigned> &PV,
-                                      std::vector<BankSwizzle> &ValidSwizzle)
+                                       const DenseMap<unsigned, unsigned> &PV,
+                                       std::vector<BankSwizzle> &ValidSwizzle,
+                                       bool isLastAluTrans)
     const {
   //Todo : support shared src0 - src1 operand
 
   std::vector<std::vector<std::pair<int, unsigned> > > IGSrcs;
   ValidSwizzle.clear();
+  unsigned ConstCount;
+  BankSwizzle TransBS;
   for (unsigned i = 0, e = IG.size(); i < e; ++i) {
-    IGSrcs.push_back(ExtractSrcs(IG[i], PV));
+    IGSrcs.push_back(ExtractSrcs(IG[i], PV, ConstCount));
     unsigned Op = getOperandIdx(IG[i]->getOpcode(),
         AMDGPU::OpName::bank_swizzle);
     ValidSwizzle.push_back( (R600InstrInfo::BankSwizzle)
         IG[i]->getOperand(Op).getImm());
   }
-  bool Result = recursiveFitsFPLimitation(IGSrcs, ValidSwizzle);
-  if (!Result)
-    return false;
-  return true;
+  std::vector<std::pair<int, unsigned> > TransOps;
+  if (!isLastAluTrans)
+    return FindSwizzleForVectorSlot(IGSrcs, ValidSwizzle, TransOps, TransBS);
+
+  TransOps = IGSrcs.back();
+  IGSrcs.pop_back();
+  ValidSwizzle.pop_back();
+
+  static const R600InstrInfo::BankSwizzle TransSwz[] = {
+    ALU_VEC_012_SCL_210,
+    ALU_VEC_021_SCL_122,
+    ALU_VEC_120_SCL_212,
+    ALU_VEC_102_SCL_221
+  };
+  for (unsigned i = 0; i < 4; i++) {
+    TransBS = TransSwz[i];
+    if (!isConstCompatible(TransBS, TransOps, ConstCount))
+      continue;
+    bool Result = FindSwizzleForVectorSlot(IGSrcs, ValidSwizzle, TransOps,
+        TransBS);
+    if (Result) {
+      ValidSwizzle.push_back(TransBS);
+      return true;
+    }
+  }
+
+  return false;
 }
 
 
@@ -406,7 +512,8 @@ R600InstrInfo::fitsConstReadLimitations(const std::vector<unsigned> &Consts)
 }
 
 bool
-R600InstrInfo::canBundle(const std::vector<MachineInstr *> &MIs) const {
+R600InstrInfo::fitsConstReadLimitations(const std::vector<MachineInstr *> &MIs)
+    const {
   std::vector<unsigned> Consts;
   for (unsigned i = 0, n = MIs.size(); i < n; i++) {
     MachineInstr *MI = MIs[i];

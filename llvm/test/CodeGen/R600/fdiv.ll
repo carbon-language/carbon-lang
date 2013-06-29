@@ -1,13 +1,13 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
 ;CHECK: RECIP_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;CHECK: MUL_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;CHECK: MUL_IEEE T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], PS}}
 ;CHECK: RECIP_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;CHECK: MUL_IEEE T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], PS}}
 ;CHECK: RECIP_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;CHECK: MUL_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;CHECK: MUL_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;CHECK: MUL_IEEE T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], PS}}
 ;CHECK: RECIP_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;CHECK: MUL_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;CHECK: MUL_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], PS}}
 
 define void @test(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)* %in) {
   %b_ptr = getelementptr <4 x float> addrspace(1)* %in, i32 1

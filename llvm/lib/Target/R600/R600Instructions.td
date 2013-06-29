@@ -1489,6 +1489,8 @@ let hasSideEffects = 1 in {
 
   def FLT_TO_INT_eg : FLT_TO_INT_Common<0x50> {
     let Pattern = [];
+    let TransOnly = 0;
+    let Itinerary = AnyALU;
   }
 
   def INT_TO_FLT_eg : INT_TO_FLT_Common<0x9B>;

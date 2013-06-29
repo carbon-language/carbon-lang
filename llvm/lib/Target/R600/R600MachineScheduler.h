@@ -46,6 +46,7 @@ class R600SchedStrategy : public MachineSchedStrategy {
     AluT_W,
     AluT_XYZW,
     AluPredX,
+    AluTrans,
     AluDiscarded, // LLVM Instructions that are going to be eliminated
     AluLast
   };
