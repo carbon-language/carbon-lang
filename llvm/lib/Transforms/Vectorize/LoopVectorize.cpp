@@ -2856,6 +2856,7 @@ void LoopVectorizationLegality::collectLoopUniforms() {
   }
 }
 
+namespace {
 /// \brief Analyses memory accesses in a loop.
 ///
 /// Checks whether run time pointer checks are needed and builds sets for data
@@ -2943,6 +2944,8 @@ private:
   bool AreAllReadsIdentified;
   bool IsRTCheckNeeded;
 };
+
+} // end anonymous namespace
 
 /// \brief Check whether a pointer can participate in a runtime bounds check.
 static bool hasComputableBounds(ScalarEvolution *SE, Value *Ptr) {
@@ -3102,6 +3105,7 @@ void AccessAnalysis::processMemAccesses(bool UseDeferred) {
   }
 }
 
+namespace {
 /// \brief Checks memory dependences among accesses to the same underlying
 /// object to determine whether there vectorization is legal or not (and at
 /// which vectorization factor).
@@ -3205,6 +3209,8 @@ private:
   /// forwarding.
   bool couldPreventStoreLoadForward(unsigned Distance, unsigned TypeByteSize);
 };
+
+} // end anonymous namespace
 
 static bool isInBoundsGep(Value *Ptr) {
   if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr))
