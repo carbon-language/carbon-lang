@@ -340,8 +340,10 @@ public:
   /// @return The BasicBlock represented by this ScopStmt.
   BasicBlock *getBasicBlock() const { return BB; }
 
-  MemoryAccess &getAccessFor(const Instruction *Inst) {
-    return *InstructionToAccess[Inst];
+  const MemoryAccess &getAccessFor(const Instruction *Inst) const {
+    MemoryAccess *A = lookupAccessFor(Inst);
+    assert(A && "Cannot get memory access because it does not exist!");
+    return *A;
   }
 
   MemoryAccess *lookupAccessFor(const Instruction *Inst) const {

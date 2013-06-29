@@ -281,7 +281,7 @@ Value *BlockGenerator::generateLocationAccessed(const Instruction *Inst,
                                                 ValueMapT &BBMap,
                                                 ValueMapT &GlobalMap,
                                                 LoopToScevMapT &LTS) {
-  MemoryAccess &Access = Statement.getAccessFor(Inst);
+  const MemoryAccess &Access = Statement.getAccessFor(Inst);
   isl_map *CurrentAccessRelation = Access.getAccessRelation();
   isl_map *NewAccessRelation = Access.getNewAccessRelation();
 
@@ -494,7 +494,7 @@ void VectorBlockGenerator::generateLoad(const LoadInst *Load,
     return;
   }
 
-  MemoryAccess &Access = Statement.getAccessFor(Load);
+  const MemoryAccess &Access = Statement.getAccessFor(Load);
 
   Value *NewLoad;
   if (Access.isStrideZero(isl_map_copy(Schedule)))
@@ -542,7 +542,7 @@ void VectorBlockGenerator::copyStore(const StoreInst *Store,
                                      VectorValueMapT &ScalarMaps) {
   int VectorWidth = getVectorWidth();
 
-  MemoryAccess &Access = Statement.getAccessFor(Store);
+  const MemoryAccess &Access = Statement.getAccessFor(Store);
 
   const Value *Pointer = Store->getPointerOperand();
   Value *Vector = getVectorValue(Store->getValueOperand(), VectorMap,
