@@ -86,7 +86,7 @@ protected:
   unsigned ComplexLongDoubleUsesFP2Ret : 1;
 
   // TargetInfo Constructor.  Default initializes all fields.
-  TargetInfo(const std::string &T);
+  TargetInfo(const llvm::Triple &T);
 
 public:
   /// \brief Construct a target for the given options.
