@@ -173,7 +173,7 @@ SBProcess::RemoteLaunch (char const **argv,
                                            launch_flags);
             Module *exe_module = process_sp->GetTarget().GetExecutableModulePointer();
             if (exe_module)
-                launch_info.SetExecutableFile(exe_module->GetFileSpec(), true);
+                launch_info.SetExecutableFile(exe_module->GetPlatformFileSpec(), true);
             if (argv)
                 launch_info.GetArguments().AppendArguments (argv);
             if (envp)
