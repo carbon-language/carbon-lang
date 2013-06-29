@@ -61,7 +61,7 @@ __libcpp_nmstr::__libcpp_nmstr(const char* msg)
     c[0] = c[1] = len;
     str_ += offset;
     count() = 0;
-    std::strcpy(const_cast<char*>(c_str()), msg);
+    std::memcpy(const_cast<char*>(c_str()), msg, len + 1);
 }
 
 inline
