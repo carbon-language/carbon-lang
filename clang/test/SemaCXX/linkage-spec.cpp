@@ -41,30 +41,18 @@ namespace pr5430 {
 using namespace pr5430;
 extern "C" void pr5430::func(void) { }
 
-// PR5405
-int f2(char *) // expected-note {{here}}
+// PR5404
+int f2(char *)
 {
         return 0;
 }
 
 extern "C"
 {
-    int f2(int) // expected-error {{with C language linkage conflicts with declaration in global scope}}
+    int f2(int)
     {
         return f2((char *)0);
     }
-}
-
-namespace PR5405 {
-  int f2b(char *) {
-    return 0;
-  }
-
-  extern "C" {
-    int f2b(int) {
-      return f2b((char *)0); // ok
-    }
-  }
 }
 
 // PR6991
@@ -129,28 +117,3 @@ namespace pr14958 {
 
 extern "C" void PR16167; // expected-error {{variable has incomplete type 'void'}}
 extern void PR16167_0; // expected-error {{variable has incomplete type 'void'}}
-
-// PR7927
-enum T_7927 {
-  E_7927
-};
-
-extern "C" void f_pr7927(int);
-
-namespace {
-  extern "C" void f_pr7927(int);
-
-  void foo_pr7927() {
-    f_pr7927(E_7927);
-    f_pr7927(0);
-    ::f_pr7927(E_7927);
-    ::f_pr7927(0);
-  }
-}
-
-void bar_pr7927() {
-  f_pr7927(E_7927);
-  f_pr7927(0);
-  ::f_pr7927(E_7927);
-  ::f_pr7927(0);
-}

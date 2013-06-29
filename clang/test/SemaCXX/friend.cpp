@@ -134,7 +134,7 @@ namespace test6_3 {
 namespace test7 {
   extern "C" {
     class X {
-      friend int test7_f() { return 42; }
+      friend int f() { return 42; }
     };
   }
 }

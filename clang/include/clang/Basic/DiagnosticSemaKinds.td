@@ -3493,11 +3493,6 @@ def err_static_non_static : Error<
   "static declaration of %0 follows non-static declaration">;
 def err_different_language_linkage : Error<
   "declaration of %0 has a different language linkage">;
-def err_extern_c_global_conflict : Error<
-  "declaration of %1 %select{with C language linkage|in global scope}0 "
-  "conflicts with declaration %select{in global scope|with C language linkage}0">;
-def note_extern_c_global_conflict : Note<
-  "declared %select{in global scope|with C language linkage}0 here">;
 def warn_weak_import : Warning <
   "an already-declared variable is made a weak_import declaration %0">;
 def warn_static_non_static : ExtWarn<

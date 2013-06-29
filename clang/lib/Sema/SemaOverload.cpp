@@ -977,12 +977,21 @@ Sema::CheckOverload(Scope *S, FunctionDecl *New, const LookupResult &Old,
   return Ovl_Overload;
 }
 
-bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
-                      bool UseUsingDeclRules) {
-  // C++ [basic.start.main]p2: This function shall not be overloaded.
-  if (New->isMain())
+static bool canBeOverloaded(const FunctionDecl &D) {
+  if (D.getAttr<OverloadableAttr>())
+    return true;
+  if (D.isExternC())
     return false;
 
+  // Main cannot be overloaded (basic.start.main).
+  if (D.isMain())
+    return false;
+
+  return true;
+}
+
+static bool shouldTryToOverload(Sema &S, FunctionDecl *New, FunctionDecl *Old,
+                                bool UseUsingDeclRules) {
   FunctionTemplateDecl *OldTemplate = Old->getDescribedFunctionTemplate();
   FunctionTemplateDecl *NewTemplate = New->getDescribedFunctionTemplate();
 
@@ -993,8 +1002,8 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
     return true;
 
   // Is the function New an overload of the function Old?
-  QualType OldQType = Context.getCanonicalType(Old->getType());
-  QualType NewQType = Context.getCanonicalType(New->getType());
+  QualType OldQType = S.Context.getCanonicalType(Old->getType());
+  QualType NewQType = S.Context.getCanonicalType(New->getType());
 
   // Compare the signatures (C++ 1.3.10) of the two functions to
   // determine whether they are overloads. If we find any mismatch
@@ -1015,7 +1024,7 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
   if (OldQType != NewQType &&
       (OldType->getNumArgs() != NewType->getNumArgs() ||
        OldType->isVariadic() != NewType->isVariadic() ||
-       !FunctionArgTypesAreEqual(OldType, NewType)))
+       !S.FunctionArgTypesAreEqual(OldType, NewType)))
     return true;
 
   // C++ [temp.over.link]p4:
@@ -1031,9 +1040,9 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
   // However, we don't consider either of these when deciding whether
   // a member introduced by a shadow declaration is hidden.
   if (!UseUsingDeclRules && NewTemplate &&
-      (!TemplateParameterListsAreEqual(NewTemplate->getTemplateParameters(),
-                                       OldTemplate->getTemplateParameters(),
-                                       false, TPL_TemplateMatch) ||
+      (!S.TemplateParameterListsAreEqual(NewTemplate->getTemplateParameters(),
+                                         OldTemplate->getTemplateParameters(),
+                                         false, S.TPL_TemplateMatch) ||
        OldType->getResultType() != NewType->getResultType()))
     return true;
 
@@ -1059,9 +1068,9 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
         //     declarations with the same name, the same parameter-type-list, and
         //     the same template parameter lists cannot be overloaded if any of
         //     them, but not all, have a ref-qualifier (8.3.5).
-        Diag(NewMethod->getLocation(), diag::err_ref_qualifier_overload)
+        S.Diag(NewMethod->getLocation(), diag::err_ref_qualifier_overload)
           << NewMethod->getRefQualifier() << OldMethod->getRefQualifier();
-        Diag(OldMethod->getLocation(), diag::note_previous_declaration);
+        S.Diag(OldMethod->getLocation(), diag::note_previous_declaration);
       }
       return true;
     }
@@ -1071,7 +1080,7 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
     // or non-static member function). Add it now, on the assumption that this
     // is a redeclaration of OldMethod.
     unsigned NewQuals = NewMethod->getTypeQualifiers();
-    if (!getLangOpts().CPlusPlus1y && NewMethod->isConstexpr() &&
+    if (!S.getLangOpts().CPlusPlus1y && NewMethod->isConstexpr() &&
         !isa<CXXConstructorDecl>(NewMethod))
       NewQuals |= Qualifiers::Const;
     if (OldMethod->getTypeQualifiers() != NewQuals)
@@ -1080,6 +1089,19 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
 
   // The signatures match; this is not an overload.
   return false;
+}
+
+bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
+                      bool UseUsingDeclRules) {
+  if (!shouldTryToOverload(*this, New, Old, UseUsingDeclRules))
+    return false;
+
+  // If both of the functions are extern "C", then they are not
+  // overloads.
+  if (!canBeOverloaded(*Old) && !canBeOverloaded(*New))
+    return false;
+
+  return true;
 }
 
 /// \brief Checks availability of the function depending on the current
