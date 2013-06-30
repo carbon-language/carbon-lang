@@ -7,6 +7,12 @@
 
 CHECK: Disassembly of section .text:
 CHECK: .text:
-CHECK:     1000:       a1 00 00 40 00
-CHECK:     1005:       03 05 00 00 40 00
-CHECK:     100b:       c3
+CHECK:     1000:       a1 0c 10 40 00            movl    4198412, %eax
+CHECK:     1005:       03 05 14 10 40 00         addl    4198420, %eax
+CHECK:     100b:       c3                        ret
+CHECK:     100c:       ff 25 00 00 40 00         jmpl    *4194304
+CHECK:     1012:       90                        nop
+CHECK:     1013:       90                        nop
+CHECK:     1014:       ff 25 00 00 40 00         jmpl    *4194304
+CHECK:     101a:       90                        nop
+CHECK:     101b:       90                        nop

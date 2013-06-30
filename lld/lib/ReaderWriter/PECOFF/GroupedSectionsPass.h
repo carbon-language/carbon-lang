@@ -45,6 +45,7 @@
 #include <algorithm>
 #include <map>
 
+using lld::coff::COFFBaseDefinedAtom;
 using lld::coff::COFFDefinedAtom;
 
 namespace lld {
@@ -76,8 +77,8 @@ private:
   SectionToAtomsT filterHeadAtoms(MutableFile &mutableFile) const {
     SectionToAtomsT result;
     for (const DefinedAtom *atom : mutableFile.defined()) {
-      auto *coffAtom = (COFFDefinedAtom *)atom;
-      if (coffAtom->ordinal() == 0)
+      auto *coffAtom = dyn_cast<COFFDefinedAtom>((COFFBaseDefinedAtom *)atom);
+      if (coffAtom && coffAtom->ordinal() == 0)
         result[coffAtom->getSectionName()].push_back(coffAtom);
     }
     return std::move(result);

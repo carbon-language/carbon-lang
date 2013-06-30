@@ -235,28 +235,22 @@ private:
 
 class COFFSharedLibraryAtom : public SharedLibraryAtom {
 public:
-  enum class Kind {
-    DATA, FUNC
-  };
+  COFFSharedLibraryAtom(const File &file, StringRef symbolName,
+                        StringRef originalName, StringRef loadName)
+      : _file(file), _symbolName(symbolName), _loadName(loadName),
+        _originalName(originalName) {}
 
   virtual const File &file() const { return _file; }
   virtual StringRef name() const { return _symbolName; }
   virtual StringRef loadName() const { return _loadName; }
   virtual bool canBeNullAtRuntime() const { return false; }
-
-  Kind getKind() const { return _kind; }
-
-protected:
-  COFFSharedLibraryAtom(const File &file, StringRef symbolName,
-                        StringRef loadName, Kind kind)
-      : _file(file), _symbolName(symbolName), _loadName(loadName), _kind(kind) {
-  }
+  virtual StringRef originalName() const { return _originalName; }
 
 private:
   const File &_file;
   StringRef _symbolName;
   StringRef _loadName;
-  Kind _kind;
+  StringRef _originalName;
 };
 
 //===----------------------------------------------------------------------===//
