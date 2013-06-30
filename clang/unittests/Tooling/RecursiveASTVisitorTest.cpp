@@ -79,6 +79,14 @@ public:
   }
 };
 
+class LambdaExprVisitor : public ExpectedLocationVisitor<LambdaExprVisitor> {
+public:
+  bool VisitLambdaExpr(LambdaExpr *Lambda) {
+    Match("", Lambda->getIntroducerRange().getBegin());
+    return true;
+  }
+};
+
 class TemplateArgumentLocTraverser
   : public ExpectedLocationVisitor<TemplateArgumentLocTraverser> {
 public:
@@ -150,7 +158,8 @@ TEST(RecursiveASTVisitor, VisitsCXXForRangeStmtRange) {
   Visitor.ExpectMatch("x", 2, 30);
   EXPECT_TRUE(Visitor.runOver(
     "int x[5];\n"
-    "void f() { for (int i : x) { x[0] = 1; } }"));
+    "void f() { for (int i : x) { x[0] = 1; } }",
+    DeclRefExprVisitor::Lang_CXX11));
 }
 
 TEST(RecursiveASTVisitor, VisitsCXXForRangeStmtLoopVariable) {
@@ -158,7 +167,8 @@ TEST(RecursiveASTVisitor, VisitsCXXForRangeStmtLoopVariable) {
   Visitor.ExpectMatch("i", 2, 17);
   EXPECT_TRUE(Visitor.runOver(
     "int x[5];\n"
-    "void f() { for (int i : x) {} }"));
+    "void f() { for (int i : x) {} }",
+    VarDeclVisitor::Lang_CXX11));
 }
 
 TEST(RecursiveASTVisitor, VisitsCallExpr) {
@@ -459,6 +469,13 @@ TEST(RecursiveASTVisitor, VisitsCompoundLiteralType) {
   EXPECT_TRUE(Visitor.runOver(
       "int f() { return (struct S { int a; }){.a = 0}.a; }",
       TypeLocVisitor::Lang_C));
+}
+
+TEST(RecursiveASTVisitor, VisitsLambdaExpr) {
+  LambdaExprVisitor Visitor;
+  Visitor.ExpectMatch("", 1, 12);
+  EXPECT_TRUE(Visitor.runOver("void f() { []{ return; }(); }",
+			      LambdaExprVisitor::Lang_CXX11));
 }
 
 } // end namespace clang

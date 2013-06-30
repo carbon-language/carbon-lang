@@ -2128,6 +2128,8 @@ DEF_TRAVERSE_STMT(CXXTemporaryObjectExpr, {
 // Walk only the visible parts of lambda expressions.  
 template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseLambdaExpr(LambdaExpr *S) {
+  TRY_TO(WalkUpFromLambdaExpr(S));
+
   for (LambdaExpr::capture_iterator C = S->explicit_capture_begin(),
                                  CEnd = S->explicit_capture_end();
        C != CEnd; ++C) {
