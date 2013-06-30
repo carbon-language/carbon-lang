@@ -97,8 +97,12 @@ public:
     return *MangleCtx;
   }
 
-  /// Returns true if the given instance method is one of the
-  /// kinds that the ABI says returns 'this'.
+  /// Returns true if the given constructor or destructor is one of the
+  /// kinds that the ABI says returns 'this' (only applies when called
+  /// non-virtually for destructors).
+  ///
+  /// There currently is no way to indicate if a destructor returns 'this'
+  /// when called virtually, and code generation does not support the case.
   virtual bool HasThisReturn(GlobalDecl GD) const { return false; }
 
   /// Returns true if the given record type should be returned indirectly.
@@ -214,10 +218,10 @@ public:
                                         const CXXRecordDecl *BaseClassDecl) = 0;
 
   /// Build the signature of the given constructor variant by adding
-  /// any required parameters.  For convenience, ResTy has been
-  /// initialized to 'void', and ArgTys has been initialized with the
-  /// type of 'this' (although this may be changed by the ABI) and
-  /// will have the formal parameters added to it afterwards.
+  /// any required parameters.  For convenience, ArgTys has been initialized
+  /// with the type of 'this' and ResTy has been initialized with the type of
+  /// 'this' if HasThisReturn(GlobalDecl(Ctor, T)) is true or 'void' otherwise
+  /// (although both may be changed by the ABI).
   ///
   /// If there are ever any ABIs where the implicit parameters are
   /// intermixed with the formal parameters, we can address those
@@ -231,9 +235,10 @@ public:
                                                           const CXXRecordDecl *RD);
 
   /// Build the signature of the given destructor variant by adding
-  /// any required parameters.  For convenience, ResTy has been
-  /// initialized to 'void' and ArgTys has been initialized with the
-  /// type of 'this' (although this may be changed by the ABI).
+  /// any required parameters.  For convenience, ArgTys has been initialized
+  /// with the type of 'this' and ResTy has been initialized with the type of
+  /// 'this' if HasThisReturn(GlobalDecl(Dtor, T)) is true or 'void' otherwise
+  /// (although both may be changed by the ABI).
   virtual void BuildDestructorSignature(const CXXDestructorDecl *Dtor,
                                         CXXDtorType T,
                                         CanQualType &ResTy,
@@ -244,7 +249,8 @@ public:
   /// possibly some extra data for constructors and destructors.
   ///
   /// ABIs may also choose to override the return type, which has been
-  /// initialized with the formal return type of the function.
+  /// initialized with the type of 'this' if HasThisReturn(CGF.CurGD) is true or
+  /// the formal return type of the function otherwise.
   virtual void BuildInstanceFunctionParams(CodeGenFunction &CGF,
                                            QualType &ResTy,
                                            FunctionArgList &Params) = 0;
@@ -253,21 +259,20 @@ public:
   virtual void EmitInstanceFunctionProlog(CodeGenFunction &CGF) = 0;
 
   /// Emit the constructor call. Return the function that is called.
-  virtual llvm::Value *EmitConstructorCall(CodeGenFunction &CGF,
+  virtual void EmitConstructorCall(CodeGenFunction &CGF,
                                    const CXXConstructorDecl *D,
-                                   CXXCtorType Type, bool ForVirtualBase,
-                                   bool Delegating,
+                                   CXXCtorType Type,
+                                   bool ForVirtualBase, bool Delegating,
                                    llvm::Value *This,
                                    CallExpr::const_arg_iterator ArgBeg,
                                    CallExpr::const_arg_iterator ArgEnd) = 0;
 
   /// Emit the ABI-specific virtual destructor call.
-  virtual RValue EmitVirtualDestructorCall(CodeGenFunction &CGF,
-                                           const CXXDestructorDecl *Dtor,
-                                           CXXDtorType DtorType,
-                                           SourceLocation CallLoc,
-                                           ReturnValueSlot ReturnValue,
-                                           llvm::Value *This) = 0;
+  virtual void EmitVirtualDestructorCall(CodeGenFunction &CGF,
+                                         const CXXDestructorDecl *Dtor,
+                                         CXXDtorType DtorType,
+                                         SourceLocation CallLoc,
+                                         llvm::Value *This) = 0;
 
   /// Emit any tables needed to implement virtual inheritance.  For Itanium,
   /// this emits virtual table tables.  For the MSVC++ ABI, this emits virtual

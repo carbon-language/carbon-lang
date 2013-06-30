@@ -15,7 +15,7 @@ class A {
 void no_constructor_destructor_infinite_recursion() {
   A a;
 
-// CHECK:      define linkonce_odr x86_thiscallcc %"class.basic::A"* @"\01??0A@basic@@QAE@XZ"(%"class.basic::A"* %this)
+// CHECK:      define linkonce_odr x86_thiscallcc %"class.basic::A"* @"\01??0A@basic@@QAE@XZ"(%"class.basic::A"* returned %this)
 // CHECK:        [[THIS_ADDR:%[.0-9A-Z_a-z]+]] = alloca %"class.basic::A"*, align 4
 // CHECK-NEXT:   store %"class.basic::A"* %this, %"class.basic::A"** [[THIS_ADDR]], align 4
 // CHECK-NEXT:   [[T1:%[.0-9A-Z_a-z]+]] = load %"class.basic::A"** [[THIS_ADDR]]
@@ -34,7 +34,7 @@ struct B {
 
 // Tests that we can define constructors outside the class (PR12784).
 B::B() {
-  // CHECK: define x86_thiscallcc %"struct.basic::B"* @"\01??0B@basic@@QAE@XZ"(%"struct.basic::B"* %this)
+  // CHECK: define x86_thiscallcc %"struct.basic::B"* @"\01??0B@basic@@QAE@XZ"(%"struct.basic::B"* returned %this)
   // CHECK: ret
 }
 
@@ -136,7 +136,7 @@ struct B : A {
 };
 
 B::B() {
-  // CHECK: define x86_thiscallcc %"struct.constructors::B"* @"\01??0B@constructors@@QAE@XZ"(%"struct.constructors::B"* %this)
+  // CHECK: define x86_thiscallcc %"struct.constructors::B"* @"\01??0B@constructors@@QAE@XZ"(%"struct.constructors::B"* returned %this)
   // CHECK: call x86_thiscallcc %"struct.constructors::A"* @"\01??0A@constructors@@QAE@XZ"(%"struct.constructors::A"* %{{.*}})
   // CHECK: ret
 }
@@ -146,7 +146,7 @@ struct C : virtual A {
 };
 
 C::C() {
-  // CHECK: define x86_thiscallcc %"struct.constructors::C"* @"\01??0C@constructors@@QAE@XZ"(%"struct.constructors::C"* %this, i32 %is_most_derived)
+  // CHECK: define x86_thiscallcc %"struct.constructors::C"* @"\01??0C@constructors@@QAE@XZ"(%"struct.constructors::C"* returned %this, i32 %is_most_derived)
   // TODO: make sure this works in the Release build too;
   // CHECK: store i32 %is_most_derived, i32* %[[IS_MOST_DERIVED_VAR:.*]], align 4
   // CHECK: %[[IS_MOST_DERIVED_VAL:.*]] = load i32* %[[IS_MOST_DERIVED_VAR]]
@@ -179,7 +179,7 @@ struct D : C {
 };
 
 D::D() {
-  // CHECK: define x86_thiscallcc %"struct.constructors::D"* @"\01??0D@constructors@@QAE@XZ"(%"struct.constructors::D"* %this, i32 %is_most_derived) unnamed_addr
+  // CHECK: define x86_thiscallcc %"struct.constructors::D"* @"\01??0D@constructors@@QAE@XZ"(%"struct.constructors::D"* returned %this, i32 %is_most_derived) unnamed_addr
   // CHECK: store i32 %is_most_derived, i32* %[[IS_MOST_DERIVED_VAR:.*]], align 4
   // CHECK: %[[IS_MOST_DERIVED_VAL:.*]] = load i32* %[[IS_MOST_DERIVED_VAR]]
   // CHECK: %[[SHOULD_CALL_VBASE_CTORS:.*]] = icmp ne i32 %[[IS_MOST_DERIVED_VAL]], 0
@@ -204,7 +204,7 @@ struct E : virtual C {
 };
 
 E::E() {
-  // CHECK: define x86_thiscallcc %"struct.constructors::E"* @"\01??0E@constructors@@QAE@XZ"(%"struct.constructors::E"* %this, i32 %is_most_derived) unnamed_addr
+  // CHECK: define x86_thiscallcc %"struct.constructors::E"* @"\01??0E@constructors@@QAE@XZ"(%"struct.constructors::E"* returned %this, i32 %is_most_derived) unnamed_addr
   // CHECK: store i32 %is_most_derived, i32* %[[IS_MOST_DERIVED_VAR:.*]], align 4
   // CHECK: %[[IS_MOST_DERIVED_VAL:.*]] = load i32* %[[IS_MOST_DERIVED_VAR]]
   // CHECK: %[[SHOULD_CALL_VBASE_CTORS:.*]] = icmp ne i32 %[[IS_MOST_DERIVED_VAL]], 0
