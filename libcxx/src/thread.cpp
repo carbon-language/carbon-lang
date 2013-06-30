@@ -16,9 +16,8 @@
 #if !defined(_WIN32)
 #if !defined(__sun__) && !defined(__linux__)
 #include <sys/sysctl.h>
-#else
-#include <unistd.h>
 #endif // !__sun__ && !__linux__
+#include <unistd.h>
 #endif // !_WIN32
 
 #if defined(__NetBSD__)
@@ -71,7 +70,7 @@ thread::hardware_concurrency() _NOEXCEPT
     std::size_t s = sizeof(n);
     sysctl(mib, 2, &n, &s, 0, 0);
     return n;
-#elif (defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200112L) && defined(_SC_NPROCESSORS_ONLN)) || defined(EMSCRIPTEN)
+#elif defined(_SC_NPROCESSORS_ONLN)
     long result = sysconf(_SC_NPROCESSORS_ONLN);
     // sysconf returns -1 if the name is invalid, the option does not exist or
     // does not have a definite limit.
@@ -83,6 +82,7 @@ thread::hardware_concurrency() _NOEXCEPT
 #else  // defined(CTL_HW) && defined(HW_NCPU)
     // TODO: grovel through /proc or check cpuid on x86 and similar
     // instructions on other architectures.
+#warning hardware_concurrency not yet implemented
     return 0;  // Means not computable [thread.thread.static]
 #endif  // defined(CTL_HW) && defined(HW_NCPU)
 }
