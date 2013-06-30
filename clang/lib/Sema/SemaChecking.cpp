@@ -5274,6 +5274,8 @@ namespace {
 /// \brief Visitor for expressions which looks for unsequenced operations on the
 /// same object.
 class SequenceChecker : public EvaluatedExprVisitor<SequenceChecker> {
+  typedef EvaluatedExprVisitor<SequenceChecker> Base;
+
   /// \brief A tree of sequenced regions within an expression. Two regions are
   /// unsequenced if one is an ancestor or a descendent of the other. When we
   /// finish processing an expression with sequencing, such as a comma
@@ -5518,9 +5520,8 @@ class SequenceChecker : public EvaluatedExprVisitor<SequenceChecker> {
 public:
   SequenceChecker(Sema &S, Expr *E,
                   llvm::SmallVectorImpl<Expr*> &WorkList)
-    : EvaluatedExprVisitor<SequenceChecker>(S.Context), SemaRef(S),
-      Region(Tree.root()), ModAsSideEffect(0), WorkList(WorkList),
-      EvalTracker(0) {
+    : Base(S.Context), SemaRef(S), Region(Tree.root()),
+      ModAsSideEffect(0), WorkList(WorkList), EvalTracker(0) {
     Visit(E);
   }
 
@@ -5530,7 +5531,7 @@ public:
 
   void VisitExpr(Expr *E) {
     // By default, just recurse to evaluated subexpressions.
-    EvaluatedExprVisitor<SequenceChecker>::VisitStmt(E);
+    Base::VisitStmt(E);
   }
 
   void VisitCastExpr(CastExpr *E) {
@@ -5695,7 +5696,23 @@ public:
     }
   }
 
+  void VisitCallExpr(CallExpr *CE) {
+    // C++11 [intro.execution]p15:
+    //   When calling a function [...], every value computation and side effect
+    //   associated with any argument expression, or with the postfix expression
+    //   designating the called function, is sequenced before execution of every
+    //   expression or statement in the body of the function [and thus before
+    //   the value computation of its result].
+    SequencedSubexpression Sequenced(*this);
+    Base::VisitCallExpr(CE);
+
+    // FIXME: CXXNewExpr and CXXDeleteExpr implicitly call functions.
+  }
+
   void VisitCXXConstructExpr(CXXConstructExpr *CCE) {
+    // This is a call, so all subexpressions are sequenced before the result.
+    SequencedSubexpression Sequenced(*this);
+
     if (!CCE->isListInitialization())
       return VisitExpr(CCE);
 

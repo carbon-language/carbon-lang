@@ -1,12 +1,13 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wno-unused %s
 
-int f(int, int);
+int f(int, int = 0);
 
 struct A {
   int x, y;
 };
 struct S {
   S(int, int);
+  int n;
 };
 
 void test() {
@@ -32,6 +33,9 @@ void test() {
   f(a = 0, a); // expected-warning {{unsequenced modification and access}}
   f(a, a += 0); // expected-warning {{unsequenced modification and access}}
   f(a = 0, a = 0); // expected-warning {{multiple unsequenced modifications}}
+  a = f(++a); // ok
+  a = f(a++); // ok
+  a = f(++a, a++); // expected-warning {{multiple unsequenced modifications}}
 
   // Compound assignment "A OP= B" is equivalent to "A = A OP B" except that A
   // is evaluated only once.
@@ -46,6 +50,12 @@ void test() {
   S str1(a++, a++); // expected-warning {{multiple unsequenced modifications}}
   S str2 = { a++, a++ }; // ok
   S str3 = { a++ + a, a++ }; // expected-warning {{unsequenced modification and access}}
+
+  struct Z { A a; S s; } z = { { ++a, ++a }, { ++a, ++a } }; // ok
+  a = S { ++a, a++ }.n; // ok
+  A { ++a, a++ }.x; // ok
+  a = A { ++a, a++ }.x; // expected-warning {{unsequenced modifications}}
+  A { ++a, a++ }.x + A { ++a, a++ }.y; // expected-warning {{unsequenced modifications}}
 
   (xs[2] && (a = 0)) + a; // ok
   (0 && (a = 0)) + a; // ok
