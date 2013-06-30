@@ -88,7 +88,7 @@ public:
   bool operator>(const UnresolvedSetIterator &o) const { return ir > o.ir; }
 };
 
-/// UnresolvedSet - A set of unresolved declarations.
+/// \brief A set of unresolved declarations.
 class UnresolvedSetImpl {
   typedef SmallVectorImpl<DeclAccessPair> DeclsTy;
 
@@ -177,7 +177,7 @@ private:
   }
 };
 
-/// A set of unresolved declarations 
+/// \brief A set of unresolved declarations.
 template <unsigned InlineCapacity> class UnresolvedSet :
     public UnresolvedSetImpl {
   SmallVector<DeclAccessPair, InlineCapacity> Decls;
