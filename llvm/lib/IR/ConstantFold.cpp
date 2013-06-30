@@ -1857,9 +1857,9 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
         if (CE1Inverse == CE1Op0) {
           // Check whether we can safely truncate the right hand side.
           Constant *C2Inverse = ConstantExpr::getTrunc(C2, CE1Op0->getType());
-          if (ConstantExpr::getZExt(C2Inverse, C2->getType()) == C2) {
+          if (ConstantExpr::getCast(CE1->getOpcode(), C2Inverse,
+                                    C2->getType()) == C2)
             return ConstantExpr::getICmp(pred, CE1Inverse, C2Inverse);
-          }
         }
       }
     }
