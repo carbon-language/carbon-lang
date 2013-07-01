@@ -70,10 +70,11 @@ public:
 
   /// Used for pre-lowered address-reference nodes, so we already know
   /// the fields match. This operand's job is simply to add an
-  /// appropriate shift operand (i.e. 0) to the MOVZ/MOVK instruction.
+  /// appropriate shift operand to the MOVZ/MOVK instruction.
+  template<unsigned LogShift>
   bool SelectMOVWAddressRef(SDValue N, SDValue &Imm, SDValue &Shift) {
     Imm = N;
-    Shift = CurDAG->getTargetConstant(0, MVT::i32);
+    Shift = CurDAG->getTargetConstant(LogShift, MVT::i32);
     return true;
   }
 

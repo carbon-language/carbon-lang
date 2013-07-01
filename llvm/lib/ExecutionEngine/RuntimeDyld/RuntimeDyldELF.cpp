@@ -334,8 +334,8 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
     *TargetPtr &= 0xff80001fU;
     // Immediate goes in bits 20:5 of MOVZ/MOVK instruction
     *TargetPtr |= Result >> (48 - 5);
-    // Shift is "lsl #48", in bits 22:21
-    *TargetPtr |= 3 << 21;
+    // Shift must be "lsl #48", in bits 22:21
+    assert((*TargetPtr >> 21 & 0x3) == 3 && "invalid shift for relocation");
     break;
   }
   case ELF::R_AARCH64_MOVW_UABS_G2_NC: {
@@ -347,8 +347,8 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
     *TargetPtr &= 0xff80001fU;
     // Immediate goes in bits 20:5 of MOVZ/MOVK instruction
     *TargetPtr |= ((Result & 0xffff00000000ULL) >> (32 - 5));
-    // Shift is "lsl #32", in bits 22:21
-    *TargetPtr |= 2 << 21;
+    // Shift must be "lsl #32", in bits 22:21
+    assert((*TargetPtr >> 21 & 0x3) == 2 && "invalid shift for relocation");
     break;
   }
   case ELF::R_AARCH64_MOVW_UABS_G1_NC: {
@@ -359,8 +359,8 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
     *TargetPtr &= 0xff80001fU;
     // Immediate goes in bits 20:5 of MOVZ/MOVK instruction
     *TargetPtr |= ((Result & 0xffff0000U) >> (16 - 5));
-    // Shift is "lsl #16", in bits 22:21
-    *TargetPtr |= 1 << 21;
+    // Shift must be "lsl #16", in bits 22:2
+    assert((*TargetPtr >> 21 & 0x3) == 1 && "invalid shift for relocation");
     break;
   }
   case ELF::R_AARCH64_MOVW_UABS_G0_NC: {
@@ -371,7 +371,8 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
     *TargetPtr &= 0xff80001fU;
     // Immediate goes in bits 20:5 of MOVZ/MOVK instruction
     *TargetPtr |= ((Result & 0xffffU) << 5);
-    // Shift is "lsl #0", in bits 22:21. No action needed.
+    // Shift must be "lsl #0", in bits 22:21.
+    assert((*TargetPtr >> 21 & 0x3) == 0 && "invalid shift for relocation");
     break;
   }
   }

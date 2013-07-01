@@ -3974,14 +3974,17 @@ def : movalias<MOVZxii, GPR64, movz64_movimm>;
 def : movalias<MOVNwii, GPR32, movn32_movimm>;
 def : movalias<MOVNxii, GPR64, movn64_movimm>;
 
-def movw_addressref : ComplexPattern<i64, 2, "SelectMOVWAddressRef">;
+def movw_addressref_g0 : ComplexPattern<i64, 2, "SelectMOVWAddressRef<0>">;
+def movw_addressref_g1 : ComplexPattern<i64, 2, "SelectMOVWAddressRef<1>">;
+def movw_addressref_g2 : ComplexPattern<i64, 2, "SelectMOVWAddressRef<2>">;
+def movw_addressref_g3 : ComplexPattern<i64, 2, "SelectMOVWAddressRef<3>">;
 
-def : Pat<(A64WrapperLarge movw_addressref:$G3, movw_addressref:$G2,
-                           movw_addressref:$G1, movw_addressref:$G0),
-          (MOVKxii (MOVKxii (MOVKxii (MOVZxii movw_addressref:$G3),
-                                     movw_addressref:$G2),
-                            movw_addressref:$G1),
-                   movw_addressref:$G0)>;
+def : Pat<(A64WrapperLarge movw_addressref_g3:$G3, movw_addressref_g2:$G2,
+                           movw_addressref_g1:$G1, movw_addressref_g0:$G0),
+          (MOVKxii (MOVKxii (MOVKxii (MOVZxii movw_addressref_g3:$G3),
+                                     movw_addressref_g2:$G2),
+                            movw_addressref_g1:$G1),
+                   movw_addressref_g0:$G0)>;
 
 //===----------------------------------------------------------------------===//
 // PC-relative addressing instructions
