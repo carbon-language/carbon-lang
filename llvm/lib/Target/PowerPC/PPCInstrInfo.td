@@ -2257,6 +2257,9 @@ def ISYNC : XLForm_2_ext<19, 150, 0, 0, 0, (outs), (ins),
 def ICBI : XForm_1a<31, 982, (outs), (ins memrr:$src),
                     "icbi $src", LdStICBI, []>;
 
+def EIEIO : XForm_24_eieio<31, 854, (outs), (ins),
+                           "eieio", LdStLoad, []>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC Assembler Instruction Aliases
 //

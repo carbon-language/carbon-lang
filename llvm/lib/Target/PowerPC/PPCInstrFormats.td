@@ -484,6 +484,12 @@ class XForm_24_sync<bits<6> opcode, bits<10> xo, dag OOL, dag IOL,
   let Inst{31}    = 0;
 }
 
+class XForm_24_eieio<bits<6> opcode, bits<10> xo, dag OOL, dag IOL,
+               string asmstr, InstrItinClass itin, list<dag> pattern> 
+  : XForm_24_sync<opcode, xo, OOL, IOL, asmstr, itin, pattern> {
+  let L = 0;
+}
+
 class XForm_25<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
                InstrItinClass itin, list<dag> pattern> 
   : XForm_base_r3xo<opcode, xo, OOL, IOL, asmstr, itin, pattern> {

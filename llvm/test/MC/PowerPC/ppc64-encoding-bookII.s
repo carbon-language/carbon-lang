@@ -37,7 +37,8 @@
 
 # CHECK: sync 2                          # encoding: [0x7c,0x40,0x04,0xac]
          sync 2
-# FIXME: eieio
+# CHECK: eieio                           # encoding: [0x7c,0x00,0x06,0xac]
+         eieio
 # FIXME: wait 2
 
 # Extended mnemonics
