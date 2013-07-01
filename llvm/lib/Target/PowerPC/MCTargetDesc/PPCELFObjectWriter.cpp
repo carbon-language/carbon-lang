@@ -312,6 +312,15 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
       case MCSymbolRefExpr::VK_None:
         Type = ELF::R_PPC64_ADDR64;
 	break;
+      case MCSymbolRefExpr::VK_PPC_DTPMOD:
+        Type = ELF::R_PPC64_DTPMOD64;
+	break;
+      case MCSymbolRefExpr::VK_PPC_TPREL:
+        Type = ELF::R_PPC64_TPREL64;
+	break;
+      case MCSymbolRefExpr::VK_PPC_DTPREL:
+        Type = ELF::R_PPC64_DTPREL64;
+	break;
       }
       break;
     case FK_Data_4:

@@ -25,8 +25,6 @@
          beqa target
 
 
-# FIXME: .TOC.@tocbase
-
 # CHECK: li 3, target@l                  # encoding: [0x38,0x60,A,A]
 # CHECK-NEXT:                            #   fixup A - offset: 2, value: target@l, kind: fixup_ppc_half16
 # CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16_LO target 0x0
@@ -392,4 +390,23 @@ base:
 # CHECK-NEXT:                            #   fixup A - offset: 2, value: target@got@tlsld, kind: fixup_ppc_half16
 # CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_GOT_TLSLD16 target 0x0
          addi 3, 3, target@got@tlsld
+
+
+# Data relocs
+# llvm-mc does not show any "encoding" string for data, so we just check the relocs
+
+# CHECK-REL: .rela.data
+	.data
+
+# CHECK-REL: 0x{{[0-9A-F]*[08]}} R_PPC64_TOC - 0x0
+	.quad .TOC.@tocbase
+
+# CHECK-REL: 0x{{[0-9A-F]*[08]}} R_PPC64_DTPMOD64 target 0x0
+	.quad target@dtpmod
+
+# CHECK-REL: 0x{{[0-9A-F]*[08]}} R_PPC64_TPREL64 target 0x0
+	.quad target@tprel
+
+# CHECK-REL: 0x{{[0-9A-F]*[08]}} R_PPC64_DTPREL64 target 0x0
+	.quad target@dtprel
 

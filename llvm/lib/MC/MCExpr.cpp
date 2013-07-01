@@ -211,6 +211,7 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_PPC_TOC_LO: return "toc@l";
   case VK_PPC_TOC_HI: return "toc@h";
   case VK_PPC_TOC_HA: return "toc@ha";
+  case VK_PPC_DTPMOD: return "dtpmod";
   case VK_PPC_TPREL: return "tprel";
   case VK_PPC_TPREL_LO: return "tprel@l";
   case VK_PPC_TPREL_HI: return "tprel@h";
@@ -342,6 +343,8 @@ MCSymbolRefExpr::getVariantKindForName(StringRef Name) {
     .Case("toc@ha", VK_PPC_TOC_HA)
     .Case("TLS", VK_PPC_TLS)
     .Case("tls", VK_PPC_TLS)
+    .Case("DTPMOD", VK_PPC_DTPMOD)
+    .Case("dtpmod", VK_PPC_DTPMOD)
     .Case("TPREL", VK_PPC_TPREL)
     .Case("tprel", VK_PPC_TPREL)
     .Case("TPREL@L", VK_PPC_TPREL_LO)
