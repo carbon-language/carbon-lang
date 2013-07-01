@@ -1,3 +1,3 @@
 PR11760
-RUN: llvm-cov -gcda=%S/Inputs/llvm-cov.gcda -gcno=%S/Inputs/llvm-cov.gcno
-
+RUN: llvm-cov -gcda=%S/Inputs/llvm_cov.gcda -gcno=%S/Inputs/llvm_cov.gcno
+XFAIL: *
