@@ -5346,6 +5346,8 @@ static void performLifetimeExtension(Expr *Init, const ValueDecl *ExtendingD) {
         for (RecordDecl::field_iterator I = RD->field_begin(),
                                         E = RD->field_end();
              I != E; ++I) {
+          if (Index >= ILE->getNumInits())
+            break;
           if (I->isUnnamedBitfield())
             continue;
           Expr *SubInit = ILE->getInit(Index);
