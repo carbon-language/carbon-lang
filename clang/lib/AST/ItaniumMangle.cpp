@@ -553,7 +553,8 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
   // is that of the containing namespace, or the translation unit.
   // FIXME: This is a hack; extern variables declared locally should have
   // a proper semantic declaration context!
-  if (isa<FunctionDecl>(DC) && ND->hasLinkage() && !isLambda(ND))
+  if ((isa<FunctionDecl>(DC) || isa<ObjCMethodDecl>(DC)) &&
+      ND->hasLinkage() && !isLambda(ND))
     while (!DC->isNamespace() && !DC->isTranslationUnit())
       DC = getEffectiveParentContext(DC);
   else if (GetLocalClassDecl(ND)) {
@@ -1272,11 +1273,6 @@ void CXXNameMangler::mangleLocalName(const NamedDecl *ND) {
   //                 _ <entity name>
   // <discriminator> := _ <non-negative number>
   const DeclContext *DC = getEffectiveDeclContext(ND);
-  if (isa<ObjCMethodDecl>(DC) && isa<FunctionDecl>(ND)) {
-    // Don't add objc method name mangling to locally declared function
-    mangleUnqualifiedName(ND);
-    return;
-  }
 
   Out << 'Z';
 
