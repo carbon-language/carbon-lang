@@ -37,10 +37,10 @@ entry:
 }
 
 ; CHECK64:     muln9223372036854775805_64:
-; CHECK64-DAG: sll $[[R0:[0-9]+]], $4, 1
-; CHECK64-DAG: addu $[[R1:[0-9]+]], $[[R0]], $4
-; CHECK64-DAG: sll $[[R2:[0-9]+]], $4, 63
-; CHECK64:     addu ${{[0-9]+}}, $[[R2]], $[[R1]]
+; CHECK64-DAG: dsll $[[R0:[0-9]+]], $4, 1
+; CHECK64-DAG: daddu $[[R1:[0-9]+]], $[[R0]], $4
+; CHECK64-DAG: dsll $[[R2:[0-9]+]], $4, 63
+; CHECK64:     daddu ${{[0-9]+}}, $[[R2]], $[[R1]]
 
 define i64 @muln9223372036854775805_64(i64 %a) {
 entry:
