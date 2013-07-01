@@ -2481,7 +2481,14 @@ APFloat::convertFromDecimalString(StringRef str, roundingMode rounding_mode)
            42039/12655 < L < 28738/8651  [ numerator <= 65536 ]
   */
 
-  if (decDigitValue(*D.firstSigDigit) >= 10U) {
+  // Test if we have a zero number allowing for strings with no null terminators
+  // and zero decimals with non-zero exponents.
+  // 
+  // We computed firstSigDigit by ignoring all zeros and dots. Thus if
+  // D->firstSigDigit equals str.end(), every digit must be a zero and there can
+  // be at most one dot. On the other hand, if we have a zero with a non-zero
+  // exponent, then we know that D.firstSigDigit will be non-numeric.
+  if (decDigitValue(*D.firstSigDigit) >= 10U || D.firstSigDigit == str.end()) {
     category = fcZero;
     fs = opOK;
 

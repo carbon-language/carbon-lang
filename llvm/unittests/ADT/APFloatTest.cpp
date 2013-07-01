@@ -538,6 +538,31 @@ TEST(APFloatTest, Zero) {
   EXPECT_TRUE(APFloat(-0.0).isNegative());
 }
 
+TEST(APFloatTest, DecimalStringsWithoutNullTerminators) {
+  // Make sure that we can parse strings without null terminators.
+  // rdar://14323230.
+  APFloat Val(APFloat::IEEEdouble);
+  Val.convertFromString(StringRef("0.00", 3),
+                        llvm::APFloat::rmNearestTiesToEven);
+  EXPECT_EQ(Val.convertToDouble(), 0.0);
+  Val.convertFromString(StringRef("0.01", 3),
+                        llvm::APFloat::rmNearestTiesToEven);
+  EXPECT_EQ(Val.convertToDouble(), 0.0);
+  Val.convertFromString(StringRef("0.09", 3),
+                        llvm::APFloat::rmNearestTiesToEven);
+  EXPECT_EQ(Val.convertToDouble(), 0.0);
+  Val.convertFromString(StringRef("0.095", 4),
+                        llvm::APFloat::rmNearestTiesToEven);
+  EXPECT_EQ(Val.convertToDouble(), 0.09);
+  Val.convertFromString(StringRef("0.00e+3", 7),
+                        llvm::APFloat::rmNearestTiesToEven);
+  EXPECT_EQ(Val.convertToDouble(), 0.00);
+  Val.convertFromString(StringRef("0e+3", 4),
+                        llvm::APFloat::rmNearestTiesToEven);
+  EXPECT_EQ(Val.convertToDouble(), 0.00);
+
+}
+
 TEST(APFloatTest, fromZeroDecimalString) {
   EXPECT_EQ( 0.0, APFloat(APFloat::IEEEdouble,  "0").convertToDouble());
   EXPECT_EQ(+0.0, APFloat(APFloat::IEEEdouble, "+0").convertToDouble());
