@@ -3,11 +3,15 @@
 
 # Cache management instruction
 
-# FIXME: icbi 2, 3
-# FIXME: icbt 1, 2, 3
+# CHECK: icbi 2, 3                       # encoding: [0x7c,0x02,0x1f,0xac]
+         icbi 2, 3
 
 # FIXME: dcbt 2, 3, 10
+# CHECK: dcbt 2, 3                       # encoding: [0x7c,0x02,0x1a,0x2c]
+         dcbt 2, 3
 # FIXME: dcbtst 2, 3, 10
+# CHECK: dcbtst 2, 3                     # encoding: [0x7c,0x02,0x19,0xec]
+         dcbtst 2, 3
 # CHECK: dcbz 2, 3                       # encoding: [0x7c,0x02,0x1f,0xec]
          dcbz 2, 3
 # CHECK: dcbst 2, 3                      # encoding: [0x7c,0x02,0x18,0x6c]
@@ -16,7 +20,8 @@
 
 # Synchronization instructions
 
-# FIXME: isync
+# CHECK: isync                           # encoding: [0x4c,0x00,0x01,0x2c]
+         isync
 
 # FIXME: lbarx 2, 3, 4, 1
 # FIXME: lharx 2, 3, 4, 1
