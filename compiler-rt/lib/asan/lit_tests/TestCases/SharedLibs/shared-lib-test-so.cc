@@ -19,3 +19,8 @@ extern "C"
 void inc(int index) {
   GLOB[index]++;
 }
+
+extern "C"
+void inc2(int *a, int index) {
+  a[index]++;
+}
