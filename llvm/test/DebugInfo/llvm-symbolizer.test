@@ -10,8 +10,6 @@ RUN: echo "%p/Inputs/macho-universal:x86_64 0x100000f05" >> %t.input
 RUN: llvm-symbolizer --functions --inlining --demangle=false \
 RUN:    --default-arch=i386 < %t.input | FileCheck %s
 
-REQUIRES: shell
-
 CHECK:       main
 CHECK-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test.cc:16
 

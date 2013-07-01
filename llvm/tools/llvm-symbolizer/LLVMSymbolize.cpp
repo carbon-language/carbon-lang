@@ -279,6 +279,11 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
   std::string BinaryName = ModuleName;
   std::string ArchName = Opts.DefaultArch;
   size_t ColonPos = ModuleName.find(':');
+#if defined(_WIN32)
+  // Recognize a drive letter on win32.
+  if (ColonPos == 1 && isalpha(ModuleName[0]))
+    ColonPos = ModuleName.find(':', 2);
+#endif
   if (ColonPos != std::string::npos) {
     BinaryName = ModuleName.substr(0, ColonPos);
     ArchName = ModuleName.substr(ColonPos + 1);
