@@ -255,7 +255,12 @@ void UnwrappedLineParser::calculateBraceTypes() {
   SmallVector<unsigned, 8> LBraceStack;
   assert(Tok->Tok.is(tok::l_brace));
   do {
-    FormatToken *NextTok = Tokens->getNextToken();
+    // Get next none-comment token.
+    FormatToken *NextTok;
+    do {
+      NextTok = Tokens->getNextToken();
+    } while (NextTok->is(tok::comment));
+
     switch (Tok->Tok.getKind()) {
     case tok::l_brace:
       LBraceStack.push_back(Position);
