@@ -239,8 +239,8 @@
 // MSP430:typedef int16_t intptr_t;
 // MSP430:typedef uint16_t uintptr_t;
 //
-// MSP430:typedef long int intmax_t;
-// MSP430:typedef long unsigned int uintmax_t;
+// MSP430:typedef long long int intmax_t;
+// MSP430:typedef long long unsigned int uintmax_t;
 //
 // MSP430:INT8_MAX_ 127
 // MSP430:INT8_MIN_ (-127 -1)
@@ -289,9 +289,9 @@
 // MSP430:PTRDIFF_MAX_ 32767
 // MSP430:SIZE_MAX_ 65535
 //
-// MSP430:INTMAX_MIN_ (-2147483647L -1)
-// MSP430:INTMAX_MAX_ 2147483647L
-// MSP430:UINTMAX_MAX_ 4294967295UL
+// MSP430:INTMAX_MIN_ (-9223372036854775807LL -1)
+// MSP430:INTMAX_MAX_ 9223372036854775807LL
+// MSP430:UINTMAX_MAX_ 18446744073709551615ULL
 //
 // MSP430:SIG_ATOMIC_MIN_ (-2147483647L -1)
 // MSP430:SIG_ATOMIC_MAX_ 2147483647L

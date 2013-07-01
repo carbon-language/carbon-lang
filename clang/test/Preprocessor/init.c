@@ -1265,10 +1265,10 @@
 // MSP430:#define __INT32_C_SUFFIX__ L
 // MSP430:#define __INT32_TYPE__ long int
 // MSP430:#define __INT8_TYPE__ char
-// MSP430:#define __INTMAX_MAX__ 2147483647L
-// MSP430:#define __INTMAX_TYPE__ long int
-// MSP430:#define __INTMAX_WIDTH__ 32
-// MSP430:#define __INTPTR_TYPE__ short
+// MSP430:#define __INTMAX_MAX__ 9223372036854775807LL
+// MSP430:#define __INTMAX_TYPE__ long long int
+// MSP430:#define __INTMAX_WIDTH__ 64
+// MSP430:#define __INTPTR_TYPE__ int
 // MSP430:#define __INTPTR_WIDTH__ 16
 // MSP430:#define __INT_MAX__ 32767
 // MSP430:#define __LDBL_DENORM_MIN__ 4.9406564584124654e-324L
@@ -1309,7 +1309,7 @@
 // MSP430:#define __SIZE_MAX__ 65535U
 // MSP430:#define __SIZE_TYPE__ unsigned int
 // MSP430:#define __SIZE_WIDTH__ 16
-// MSP430:#define __UINTMAX_TYPE__ long unsigned int
+// MSP430:#define __UINTMAX_TYPE__ long long unsigned int
 // MSP430:#define __USER_LABEL_PREFIX__ _
 // MSP430:#define __WCHAR_MAX__ 32767
 // MSP430:#define __WCHAR_TYPE__ int
