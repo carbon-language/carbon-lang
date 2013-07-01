@@ -89,6 +89,7 @@
 		262D24E613FB8710002D1960 /* RegisterContextMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 262D24E413FB8710002D1960 /* RegisterContextMemory.cpp */; };
 		262ED0051631FA2800879631 /* OptionGroupString.h in Headers */ = {isa = PBXBuildFile; fileRef = 262ED0041631FA2800879631 /* OptionGroupString.h */; };
 		262ED0081631FA3A00879631 /* OptionGroupString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 262ED0071631FA3A00879631 /* OptionGroupString.cpp */; };
+		2635879317822E56004C30BA /* SymbolVendorELF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2635879017822E56004C30BA /* SymbolVendorELF.cpp */; };
 		26368A3C126B697600E8659F /* darwin-debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26368A3B126B697600E8659F /* darwin-debug.cpp */; };
 		26368AF7126B960500E8659F /* darwin-debug in Resources */ = {isa = PBXBuildFile; fileRef = 26579F68126A25920007C5CB /* darwin-debug */; };
 		263E949F13661AEA00E7D1CE /* UnwindAssembly-x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 263E949D13661AE400E7D1CE /* UnwindAssembly-x86.cpp */; };
@@ -918,6 +919,8 @@
 		262D24E513FB8710002D1960 /* RegisterContextMemory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextMemory.h; path = Utility/RegisterContextMemory.h; sourceTree = "<group>"; };
 		262ED0041631FA2800879631 /* OptionGroupString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionGroupString.h; path = include/lldb/Interpreter/OptionGroupString.h; sourceTree = "<group>"; };
 		262ED0071631FA3A00879631 /* OptionGroupString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupString.cpp; path = source/Interpreter/OptionGroupString.cpp; sourceTree = "<group>"; };
+		2635879017822E56004C30BA /* SymbolVendorELF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SymbolVendorELF.cpp; sourceTree = "<group>"; };
+		2635879117822E56004C30BA /* SymbolVendorELF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SymbolVendorELF.h; sourceTree = "<group>"; };
 		263664921140A4930075843B /* Debugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; name = Debugger.cpp; path = source/Core/Debugger.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		263664941140A4C10075843B /* Debugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = Debugger.h; path = include/lldb/Core/Debugger.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		26368A3B126B697600E8659F /* darwin-debug.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "darwin-debug.cpp"; path = "tools/darwin-debug/darwin-debug.cpp"; sourceTree = "<group>"; };
@@ -2069,6 +2072,7 @@
 		260C89E010F57C5600BB2B04 /* SymbolVendor */ = {
 			isa = PBXGroup;
 			children = (
+				2635878D17822E56004C30BA /* ELF */,
 				260C89E110F57C5600BB2B04 /* MacOSX */,
 			);
 			path = SymbolVendor;
@@ -2252,6 +2256,15 @@
 				B2A58723143119D50092BFBA /* SBWatchpoint.cpp */,
 			);
 			name = API;
+			sourceTree = "<group>";
+		};
+		2635878D17822E56004C30BA /* ELF */ = {
+			isa = PBXGroup;
+			children = (
+				2635879017822E56004C30BA /* SymbolVendorELF.cpp */,
+				2635879117822E56004C30BA /* SymbolVendorELF.h */,
+			);
+			path = ELF;
 			sourceTree = "<group>";
 		};
 		2642FBA713D003B400ED6808 /* MacOSX-Kernel */ = {
@@ -4309,6 +4322,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				26F5C27710F3D9E4009D5894 /* Driver.cpp in Sources */,
+				2635879317822E56004C30BA /* SymbolVendorELF.cpp in Sources */,
 				26F5C27810F3D9E4009D5894 /* IOChannel.cpp in Sources */,
 				9AA69DA61188F52100D753A0 /* PseudoTerminal.cpp in Sources */,
 			);
