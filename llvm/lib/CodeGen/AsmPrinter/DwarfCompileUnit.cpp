@@ -201,15 +201,12 @@ void CompileUnit::addLabelAddress(DIE *Die, unsigned Attribute,
 /// form given and an op of either DW_FORM_addr or DW_FORM_GNU_addr_index.
 ///
 void CompileUnit::addOpAddress(DIE *Die, const MCSymbol *Sym) {
-
   if (!DD->useSplitDwarf()) {
     addUInt(Die, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
     addLabel(Die, 0, dwarf::DW_FORM_udata, Sym);
   } else {
-    unsigned idx = DU->getAddrPoolIndex(Sym);
-    DIEValue *Value = new (DIEValueAllocator) DIEInteger(idx);
     addUInt(Die, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_addr_index);
-    Die->addValue(0, dwarf::DW_FORM_GNU_addr_index, Value);
+    addUInt(Die, 0, dwarf::DW_FORM_GNU_addr_index, DU->getAddrPoolIndex(Sym));
   }
 }
 
@@ -1358,13 +1355,19 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
       unsigned PointerSize = Asm->getDataLayout().getPointerSize();
       assert((PointerSize == 4 || PointerSize == 8) &&
              "Add support for other sizes if necessary");
+      const MCSymbolRefExpr *Ref =
+          Asm->getObjFileLowering().getDebugThreadLocalSymbol(Sym);
       // Based on GCC's support for TLS:
-      // 1) Start with a constNu of the appropriate pointer size
-      addUInt(Block, 0, dwarf::DW_FORM_data1,
-              PointerSize == 4 ? dwarf::DW_OP_const4u : dwarf::DW_OP_const8u);
-      // 2) containing the (relocated) address of the TLS variable
-      addLabel(Block, 0, dwarf::DW_FORM_udata,
-               Asm->getObjFileLowering().getDebugThreadLocalSymbol(Sym));
+      if (!DD->useSplitDwarf()) {
+        // 1) Start with a constNu of the appropriate pointer size
+        addUInt(Block, 0, dwarf::DW_FORM_data1,
+                PointerSize == 4 ? dwarf::DW_OP_const4u : dwarf::DW_OP_const8u);
+        // 2) containing the (relocated) address of the TLS variable
+        addLabel(Block, 0, dwarf::DW_FORM_udata, Ref);
+      } else {
+        addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_const_index);
+        addUInt(Block, 0, dwarf::DW_FORM_udata, DU->getAddrPoolIndex(Ref));
+      }
       // 3) followed by a custom OP to tell the debugger about TLS (presumably)
       addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_lo_user);
     } else
