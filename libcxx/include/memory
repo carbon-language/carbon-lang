@@ -350,6 +350,10 @@ class bad_weak_ptr
     bad_weak_ptr() noexcept;
 };
 
+template<class T, class... Args> unique_ptr<T> make_unique(Args&&... args);     // C++14
+template<class T>                unique_ptr<T> make_unique(size_t n);           // C++14
+template<class T, class... Args> unspecified   make_unique(Args&&...) = delete; // C++14, T == U[N]
+
 template<class T>
 class shared_ptr
 {
@@ -3078,6 +3082,47 @@ move(unique_ptr<_Tp, _Dp>& __t)
 }
 
 #endif
+
+#if _LIBCPP_STD_VER > 11
+
+template<class _Tp>
+struct __unique_if
+{
+    typedef unique_ptr<_Tp> __unique_single;
+};
+
+template<class _Tp>
+struct __unique_if<_Tp[]>
+{
+    typedef unique_ptr<_Tp[]> __unique_array_unknown_bound;
+};
+
+template<class _Tp, size_t _Np>
+struct __unique_if<_Tp[_Np]>
+{
+    typedef void __unique_array_known_bound;
+};
+
+template<class _Tp, class... _Args>
+typename __unique_if<_Tp>::__unique_single
+make_unique(_Args&&... __args)
+{
+    return unique_ptr<_Tp>(new _Tp(_VSTD::forward<_Args>(__args)...));
+}
+
+template<class _Tp>
+typename __unique_if<_Tp>::__unique_array_unknown_bound
+make_unique(size_t __n)
+{
+    typedef typename remove_extent<_Tp>::type _Up;
+    return unique_ptr<_Tp>(new _Up[__n]());
+}
+
+template<class _Tp, class... _Args>
+    typename __unique_if<_Tp>::__unique_array_known_bound
+    make_unique(_Args&&...) = delete;
+
+#endif  // _LIBCPP_STD_VER > 11
 
 template <class _Tp> struct hash;
 
