@@ -648,14 +648,17 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
             format("void f()    {     // This does something ..\n"
                    "  }\n"
                    "int   a;     // This is unrelated"));
-  EXPECT_EQ("void f() { // This does something ..\n"
-            "}          // awesome..\n"
+  EXPECT_EQ("class C {\n"
+            "  void f() { // This does something ..\n"
+            "  }          // awesome..\n"
             "\n"
-            "int a; // This is unrelated",
-            format("void f()    { // This does something ..\n"
+            "  int a; // This is unrelated\n"
+            "};",
+            format("class C{void f()    { // This does something ..\n"
                    "      } // awesome..\n"
                    " \n"
-                   "int a;    // This is unrelated"));
+                   "int a;    // This is unrelated\n"
+                   "};"));
 
   EXPECT_EQ("int i; // single line trailing comment",
             format("int i;\\\n// single line trailing comment"));
@@ -1479,6 +1482,22 @@ TEST_F(FormatTest, FormatsNamespaces) {
   verifyFormat("namespace {\n"
                "class A {};\n"
                "};");
+
+  verifyFormat("namespace {\n"
+               "int SomeVariable = 0; // comment\n"
+               "} // namespace");
+  EXPECT_EQ("#ifndef HEADER_GUARD\n"
+            "#define HEADER_GUARD\n"
+            "namespace my_namespace {\n"
+            "int i;\n"
+            "} // my_namespace\n"
+            "#endif // HEADER_GUARD",
+            format("#ifndef HEADER_GUARD\n"
+                   " #define HEADER_GUARD\n"
+                   "   namespace my_namespace {\n"
+                   "int i;\n"
+                   "}    // my_namespace\n"
+                   "#endif    // HEADER_GUARD"));
 }
 
 TEST_F(FormatTest, FormatsExternC) { verifyFormat("extern \"C\" {\nint a;"); }
