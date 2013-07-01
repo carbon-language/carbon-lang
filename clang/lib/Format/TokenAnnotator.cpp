@@ -20,6 +20,8 @@
 namespace clang {
 namespace format {
 
+namespace {
+
 /// \brief A parser that gathers additional information about tokens.
 ///
 /// The \c TokenAnnotator tries to match parenthesis and square brakets and
@@ -864,6 +866,8 @@ private:
 
   FormatToken *Current;
 };
+
+} // end anonymous namespace
 
 void TokenAnnotator::annotate(AnnotatedLine &Line) {
   AnnotatingParser Parser(Line, Ident_in);
