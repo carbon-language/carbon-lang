@@ -421,7 +421,7 @@ class shift_rotate_imm<string opstr, Operand ImmOpnd,
 
 class shift_rotate_reg<string opstr, RegisterOperand RC,
                        SDPatternOperator OpNode = null_frag>:
-  InstSE<(outs RC:$rd), (ins CPURegsOpnd:$rs, RC:$rt),
+  InstSE<(outs RC:$rd), (ins RC:$rt, CPURegsOpnd:$rs),
          !strconcat(opstr, "\t$rd, $rt, $rs"),
          [(set RC:$rd, (OpNode RC:$rt, CPURegsOpnd:$rs))], IIAlu, FrmR, opstr>;
 
