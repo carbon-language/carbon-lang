@@ -1786,7 +1786,16 @@
 # CHECK: bnuctrl- 0                      # encoding: [0x4c,0xc3,0x04,0x21]
          bnuctrl-
 
-# FIXME: Condition register logical mnemonics
+# Condition register logical mnemonics
+
+# CHECK: creqv 2, 2, 2                   # encoding: [0x4c,0x42,0x12,0x42]
+         crset 2
+# CHECK: crxor 2, 2, 2                   # encoding: [0x4c,0x42,0x11,0x82]
+         crclr 2
+# CHECK: cror 2, 3, 3                    # encoding: [0x4c,0x43,0x1b,0x82]
+         crmove 2, 3
+# CHECK: crnor 2, 3, 3                   # encoding: [0x4c,0x43,0x18,0x42]
+         crnot 2, 3
 
 # Subtract mnemonics
 

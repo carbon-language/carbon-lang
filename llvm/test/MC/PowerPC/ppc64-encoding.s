@@ -50,16 +50,22 @@
 
 # Condition register instructions
 
-# FIXME: crand 2, 3, 4
-# FIXME: crnand 2, 3, 4
+# CHECK: crand 2, 3, 4                   # encoding: [0x4c,0x43,0x22,0x02]
+         crand 2, 3, 4
+# CHECK: crnand 2, 3, 4                  # encoding: [0x4c,0x43,0x21,0xc2]
+         crnand 2, 3, 4
 # CHECK: cror 2, 3, 4                    # encoding: [0x4c,0x43,0x23,0x82]
          cror 2, 3, 4
-# FIXME: crxor 2, 3, 4
-# FIXME: crnor 2, 3, 4
+# CHECK: crxor 2, 3, 4                   # encoding: [0x4c,0x43,0x21,0x82]
+         crxor 2, 3, 4
+# CHECK: crnor 2, 3, 4                   # encoding: [0x4c,0x43,0x20,0x42]
+         crnor 2, 3, 4
 # CHECK: creqv 2, 3, 4                   # encoding: [0x4c,0x43,0x22,0x42]
          creqv 2, 3, 4
-# FIXME: crandc 2, 3, 4
-# FIXME: crorc 2, 3, 4
+# CHECK: crandc 2, 3, 4                  # encoding: [0x4c,0x43,0x21,0x02]
+         crandc 2, 3, 4
+# CHECK: crorc 2, 3, 4                   # encoding: [0x4c,0x43,0x23,0x42]
+         crorc 2, 3, 4
 # CHECK: mcrf 2, 3                       # encoding: [0x4d,0x0c,0x00,0x00]
          mcrf 2, 3
 
