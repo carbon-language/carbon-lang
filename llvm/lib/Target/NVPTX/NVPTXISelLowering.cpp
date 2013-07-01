@@ -2373,7 +2373,8 @@ static void ReplaceINTRINSIC_W_CHAIN(SDNode *N, SelectionDAG &DAG,
           DAG.getMemIntrinsicNode(ISD::INTRINSIC_W_CHAIN, DL, LdResVTs, &Ops[0],
                                   Ops.size(), MVT::i8, MemSD->getMemOperand());
 
-      Results.push_back(NewLD.getValue(0));
+      Results.push_back(DAG.getNode(ISD::TRUNCATE, DL, MVT::i8,
+                                    NewLD.getValue(0)));
       Results.push_back(NewLD.getValue(1));
     }
   }
