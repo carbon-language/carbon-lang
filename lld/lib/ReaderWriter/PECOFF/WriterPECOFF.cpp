@@ -220,6 +220,14 @@ public:
     _peHeader.SizeOfCode = size;
   }
 
+  virtual void setSizeOfInitializedData(uint64_t size) {
+    _peHeader.SizeOfInitializedData = size;
+  }
+
+  virtual void setSizeOfUninitializedData(uint64_t size) {
+    _peHeader.SizeOfUninitializedData = size;
+  }
+
   virtual void setNumberOfSections(uint32_t num) {
     _coffHeader.NumberOfSections = num;
   }
@@ -610,6 +618,7 @@ public:
     peHeader->setSizeOfCode(text->size());
     peHeader->setBaseOfCode(text->getVirtualAddress());
     peHeader->setBaseOfData(rdata->getVirtualAddress());
+    peHeader->setSizeOfInitializedData(rdata->size() + data->size());
     peHeader->setNumberOfSections(numSections);
     peHeader->setSizeOfImage(imageSize);
   }
