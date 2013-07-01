@@ -30,6 +30,8 @@ public:
   virtual FormatToken *setPosition(unsigned Position) = 0;
 };
 
+namespace {
+
 class ScopedDeclarationState {
 public:
   ScopedDeclarationState(UnwrappedLine &Line, std::vector<bool> &Stack,
@@ -114,6 +116,8 @@ private:
   FormatToken *Token;
 };
 
+} // end anonymous namespace
+
 class ScopedLineState {
 public:
   ScopedLineState(UnwrappedLineParser &Parser,
@@ -145,6 +149,8 @@ private:
   UnwrappedLine *PreBlockLine;
 };
 
+namespace {
+
 class IndexedTokenSource : public FormatTokenSource {
 public:
   IndexedTokenSource(ArrayRef<FormatToken *> Tokens)
@@ -169,6 +175,8 @@ private:
   ArrayRef<FormatToken *> Tokens;
   int Position;
 };
+
+} // end anonymous namespace
 
 UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style,
                                          ArrayRef<FormatToken *> Tokens,
