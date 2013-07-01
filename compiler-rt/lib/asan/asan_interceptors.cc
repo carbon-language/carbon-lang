@@ -661,7 +661,7 @@ INTERCEPTOR(int, __cxa_atexit, void (*func)(void *), void *arg,
 INTERCEPTOR_WINAPI(DWORD, CreateThread,
                    void* security, uptr stack_size,
                    DWORD (__stdcall *start_routine)(void*), void* arg,
-                   DWORD flags, void* tid) {
+                   DWORD thr_flags, void* tid) {
   // Strict init-order checking in thread-hostile.
   if (flags()->strict_init_order)
     StopInitOrderChecking();
@@ -672,7 +672,7 @@ INTERCEPTOR_WINAPI(DWORD, CreateThread,
   bool detached = false;  // FIXME: how can we determine it on Windows?
   asanThreadRegistry().CreateThread(*(uptr*)t, detached, current_tid, &args);
   return REAL(CreateThread)(security, stack_size,
-                            asan_thread_start, t, flags, tid);
+                            asan_thread_start, t, thr_flags, tid);
 }
 
 namespace __asan {
