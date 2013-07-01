@@ -179,8 +179,13 @@ namespace __sanitizer {
   int ptrace_setfpxregs = PTRACE_SETFPXREGS;
   int ptrace_getsiginfo = PTRACE_GETSIGINFO;
   int ptrace_setsiginfo = PTRACE_SETSIGINFO;
+#if defined(PTRACE_GETREGSET) && defined(PTRACE_SETREGSET)
   int ptrace_getregset = PTRACE_GETREGSET;
   int ptrace_setregset = PTRACE_SETREGSET;
+#else
+  int ptrace_getregset = -1;
+  int ptrace_setregset = -1;
+#endif
 #endif
 
   // ioctl arguments
