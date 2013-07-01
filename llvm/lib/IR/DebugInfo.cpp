@@ -1213,13 +1213,10 @@ static void printDebugLoc(DebugLoc DL, raw_ostream &CommentOS,
                           const LLVMContext &Ctx) {
   if (!DL.isUnknown()) {          // Print source line info.
     DIScope Scope(DL.getScope(Ctx));
-    assert((!Scope || Scope.isScope()) &&
-      "Scope of a DebugLoc should be null or a DIScope.");
+    assert(Scope.isScope() &&
+      "Scope of a DebugLoc should be a DIScope.");
     // Omit the directory, because it's likely to be long and uninteresting.
-    if (Scope)
-      CommentOS << Scope.getFilename();
-    else
-      CommentOS << "<unknown>";
+    CommentOS << Scope.getFilename();
     CommentOS << ':' << DL.getLine();
     if (DL.getCol() != 0)
       CommentOS << ':' << DL.getCol();
