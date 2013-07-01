@@ -10,7 +10,7 @@ FILE: Arch: i386
 FILE: AddressSize: 32bit
 FILE: ImageFileHeader {
 FILE:   Machine: IMAGE_FILE_MACHINE_I386 (0x14C)
-FILE:   SectionCount: 3
+FILE:   SectionCount: 1
 FILE:   TimeDateStamp:
 FILE:   PointerToSymbolTable: 0x0
 FILE:   SymbolCount: 0
@@ -76,39 +76,6 @@ SECTIONS:     Characteristics [ (0x60000020)
 SECTIONS:       IMAGE_SCN_CNT_CODE (0x20)
 SECTIONS:       IMAGE_SCN_MEM_EXECUTE (0x20000000)
 SECTIONS:       IMAGE_SCN_MEM_READ (0x40000000)
-SECTIONS:     ]
-SECTIONS:   }
-SECTIONS:   Section {
-SECTIONS:     Number: 2
-SECTIONS:     Name: .rdata (2E 72 64 61 74 61 00 00)
-SECTIONS:     VirtualSize: 0x0
-SECTIONS:     VirtualAddress: 0x2000
-SECTIONS:     RawDataSize: 0
-SECTIONS:     PointerToRawData: 0x400
-SECTIONS:     PointerToRelocations: 0x0
-SECTIONS:     PointerToLineNumbers: 0x0
-SECTIONS:     RelocationCount: 0
-SECTIONS:     LineNumberCount: 0
-SECTIONS:     Characteristics [ (0x40000040)
-SECTIONS:       IMAGE_SCN_CNT_INITIALIZED_DATA (0x40)
-SECTIONS:       IMAGE_SCN_MEM_READ (0x40000000)
-SECTIONS:     ]
-SECTIONS:   }
-SECTIONS:   Section {
-SECTIONS:     Number: 3
-SECTIONS:     Name: .data (2E 64 61 74 61 00 00 00)
-SECTIONS:     VirtualSize: 0x0
-SECTIONS:     VirtualAddress: 0x2000
-SECTIONS:     RawDataSize: 0
-SECTIONS:     PointerToRawData: 0x400
-SECTIONS:     PointerToRelocations: 0x0
-SECTIONS:     PointerToLineNumbers: 0x0
-SECTIONS:     RelocationCount: 0
-SECTIONS:     LineNumberCount: 0
-SECTIONS:     Characteristics [ (0xC0000040)
-SECTIONS:       IMAGE_SCN_CNT_INITIALIZED_DATA (0x40)
-SECTIONS:       IMAGE_SCN_MEM_READ (0x40000000)
-SECTIONS:       IMAGE_SCN_MEM_WRITE (0x80000000)
 SECTIONS:     ]
 SECTIONS:   }
 SECTIONS: ]

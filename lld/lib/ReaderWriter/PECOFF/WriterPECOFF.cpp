@@ -438,6 +438,11 @@ void SectionHeaderTableChunk::write(uint8_t *fileBuffer) {
   uint64_t offset = 0;
   fileBuffer += fileOffset();
   for (const auto &chunk : _sections) {
+    // Skip the empty section. Windows loader does not like a section
+    // of size zero and rejects such executable.
+    if (chunk->size() == 0)
+      continue;
+
     const llvm::object::coff_section &header = chunk->getSectionHeader();
     std::memcpy(fileBuffer + offset, &header, sizeof(header));
     offset += sizeof(header);
@@ -525,8 +530,12 @@ private:
     uint32_t va = offset;
     for (auto &cp : _chunks) {
       if (SectionChunk *chunk = dyn_cast<SectionChunk>(&*cp)) {
-        numSections++;
         chunk->setVirtualAddress(va);
+
+        // Skip the empty section.
+        if (chunk->size() == 0)
+          continue;
+        numSections++;
         va = llvm::RoundUpToAlignment(va + chunk->size(), PAGE_SIZE);
       }
     }
