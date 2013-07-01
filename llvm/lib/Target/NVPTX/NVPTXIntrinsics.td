@@ -1342,20 +1342,38 @@ int_nvvm_ldu_global_p>;
 
 // Elementized vector ldu
 multiclass VLDU_G_ELE_V2<string TyStr, NVPTXRegClass regclass> {
- def _32:     NVPTXInst<(outs regclass:$dst1, regclass:$dst2),
-   (ins Int32Regs:$src),
+ def _areg32: NVPTXInst<(outs regclass:$dst1, regclass:$dst2),
+                     (ins Int32Regs:$src),
                      !strconcat("ldu.global.", TyStr), []>;
- def _64:     NVPTXInst<(outs regclass:$dst1, regclass:$dst2),
-   (ins Int64Regs:$src),
+ def _areg64: NVPTXInst<(outs regclass:$dst1, regclass:$dst2),
+                     (ins Int64Regs:$src),
+                     !strconcat("ldu.global.", TyStr), []>;
+ def _ari32: NVPTXInst<(outs regclass:$dst1, regclass:$dst2),
+                     (ins MEMri:$src),
+                     !strconcat("ldu.global.", TyStr), []>;
+ def _ari64: NVPTXInst<(outs regclass:$dst1, regclass:$dst2),
+                     (ins MEMri64:$src),
+                     !strconcat("ldu.global.", TyStr), []>;
+ def _avar: NVPTXInst<(outs regclass:$dst1, regclass:$dst2),
+                     (ins imemAny:$src),
                      !strconcat("ldu.global.", TyStr), []>;
 }
 
-multiclass VLDU_G_ELE_V4<string TyStr, NVPTXRegClass regclass> {
- def _32:    NVPTXInst<(outs regclass:$dst1, regclass:$dst2, regclass:$dst3,
-     regclass:$dst4), (ins Int32Regs:$src),
+multiclass VLDU_G_ELE_V4<string TyStr, NVPTXRegClass regclass> { 
+ def _areg32: NVPTXInst<(outs regclass:$dst1, regclass:$dst2, regclass:$dst3,
+                            regclass:$dst4), (ins Int32Regs:$src), 
                !strconcat("ldu.global.", TyStr), []>;
- def _64:    NVPTXInst<(outs regclass:$dst1, regclass:$dst2, regclass:$dst3,
-     regclass:$dst4), (ins Int64Regs:$src),
+ def _areg64: NVPTXInst<(outs regclass:$dst1, regclass:$dst2, regclass:$dst3,
+                            regclass:$dst4), (ins Int64Regs:$src), 
+               !strconcat("ldu.global.", TyStr), []>;
+ def _ari32: NVPTXInst<(outs regclass:$dst1, regclass:$dst2, regclass:$dst3,
+                            regclass:$dst4), (ins MEMri:$src), 
+               !strconcat("ldu.global.", TyStr), []>;
+ def _ari64: NVPTXInst<(outs regclass:$dst1, regclass:$dst2, regclass:$dst3,
+                            regclass:$dst4), (ins MEMri64:$src), 
+               !strconcat("ldu.global.", TyStr), []>;
+ def _avar: NVPTXInst<(outs regclass:$dst1, regclass:$dst2, regclass:$dst3,
+                            regclass:$dst4), (ins imemAny:$src), 
                !strconcat("ldu.global.", TyStr), []>;
 }
 
@@ -1452,20 +1470,38 @@ defm INT_PTX_LDG_GLOBAL_p64
 
 // Elementized vector ldg 
 multiclass VLDG_G_ELE_V2<string TyStr, NVPTXRegClass regclass> {
- def _32:     NVPTXInst<(outs regclass:$dst1, regclass:$dst2),
+ def _areg32: NVPTXInst<(outs regclass:$dst1, regclass:$dst2),
                      (ins Int32Regs:$src),
                      !strconcat("ld.global.nc.", TyStr), []>;
- def _64:     NVPTXInst<(outs regclass:$dst1, regclass:$dst2),
+ def _areg64: NVPTXInst<(outs regclass:$dst1, regclass:$dst2),
                      (ins Int64Regs:$src),
+                     !strconcat("ld.global.nc.", TyStr), []>;
+ def _ari32: NVPTXInst<(outs regclass:$dst1, regclass:$dst2),
+                     (ins MEMri:$src),
+                     !strconcat("ld.global.nc.", TyStr), []>;
+ def _ari64: NVPTXInst<(outs regclass:$dst1, regclass:$dst2),
+                     (ins MEMri64:$src),
+                     !strconcat("ld.global.nc.", TyStr), []>;
+ def _avar: NVPTXInst<(outs regclass:$dst1, regclass:$dst2),
+                     (ins imemAny:$src),
                      !strconcat("ld.global.nc.", TyStr), []>;
 }
 
 multiclass VLDG_G_ELE_V4<string TyStr, NVPTXRegClass regclass> { 
- def _32:    NVPTXInst<(outs regclass:$dst1, regclass:$dst2,
-                        regclass:$dst3, regclass:$dst4), (ins Int32Regs:$src),
+  def _areg32: NVPTXInst<(outs regclass:$dst1, regclass:$dst2, regclass:$dst3,
+                              regclass:$dst4), (ins Int32Regs:$src), 
                !strconcat("ld.global.nc.", TyStr), []>;
- def _64:    NVPTXInst<(outs regclass:$dst1, regclass:$dst2,
-                        regclass:$dst3, regclass:$dst4), (ins Int64Regs:$src),
+  def _areg64: NVPTXInst<(outs regclass:$dst1, regclass:$dst2, regclass:$dst3,
+                               regclass:$dst4), (ins Int64Regs:$src), 
+               !strconcat("ld.global.nc.", TyStr), []>;
+  def _ari32: NVPTXInst<(outs regclass:$dst1, regclass:$dst2, regclass:$dst3,
+                              regclass:$dst4), (ins MEMri:$src), 
+               !strconcat("ld.global.nc.", TyStr), []>;
+  def _ari64: NVPTXInst<(outs regclass:$dst1, regclass:$dst2, regclass:$dst3,
+                              regclass:$dst4), (ins MEMri64:$src), 
+               !strconcat("ld.global.nc.", TyStr), []>;
+  def _avar: NVPTXInst<(outs regclass:$dst1, regclass:$dst2, regclass:$dst3,
+                             regclass:$dst4), (ins imemAny:$src), 
                !strconcat("ld.global.nc.", TyStr), []>;
 }
 
