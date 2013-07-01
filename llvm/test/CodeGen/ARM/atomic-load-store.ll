@@ -6,15 +6,15 @@
 
 define void @test1(i32* %ptr, i32 %val1) {
 ; ARM: test1
-; ARM: dmb ishst
+; ARM: dmb ish
 ; ARM-NEXT: str
-; ARM-NEXT: dmb {{ish$}}
+; ARM-NEXT: dmb ish
 ; THUMBONE: test1
 ; THUMBONE: __sync_lock_test_and_set_4
 ; THUMBTWO: test1
-; THUMBTWO: dmb ishst
+; THUMBTWO: dmb ish
 ; THUMBTWO-NEXT: str
-; THUMBTWO-NEXT: dmb {{ish$}}
+; THUMBTWO-NEXT: dmb ish
   store atomic i32 %val1, i32* %ptr seq_cst, align 4
   ret void
 }
@@ -22,12 +22,12 @@ define void @test1(i32* %ptr, i32 %val1) {
 define i32 @test2(i32* %ptr) {
 ; ARM: test2
 ; ARM: ldr
-; ARM-NEXT: dmb {{ish$}}
+; ARM-NEXT: dmb ish
 ; THUMBONE: test2
 ; THUMBONE: __sync_val_compare_and_swap_4
 ; THUMBTWO: test2
 ; THUMBTWO: ldr
-; THUMBTWO-NEXT: dmb {{ish$}}
+; THUMBTWO-NEXT: dmb ish
   %val = load atomic i32* %ptr seq_cst, align 4
   ret i32 %val
 }
@@ -68,38 +68,4 @@ define void @test_old_store_64bit(i64* %p, i64 %v) {
 ; ARMV4: ___sync_lock_test_and_set_8
   store atomic i64 %v, i64* %p seq_cst, align 8
   ret void
-}
-
-; Release operations only need the store barrier provided by a "dmb ishst",
-
-define void @test_store_release(i32* %p, i32 %v) {
-; ARM: test_store_release:
-; ARM: dmb ishst
-; THUMBTWO: test_store_release:
-; THUMBTWO: dmb ishst
-
-  store atomic i32 %v, i32* %p release, align 4
-  ret void
-}
-
-; However, if sequential consistency is needed *something* must ensure a release
-; followed by an acquire does not get reordered. In that case a "dmb ishst" is
-; not adequate.
-define i32 @test_seq_cst(i32* %p, i32 %v) {
-; ARM: test_seq_cst:
-; ARM: dmb ishst
-; ARM: str
-; ARM: dmb {{ish$}}
-; ARM: ldr
-; ARM: dmb {{ish$}}
-
-; THUMBTWO: test_seq_cst:
-; THUMBTWO: dmb ishst
-; THUMBTWO: str
-; THUMBTWO: dmb {{ish$}}
-; THUMBTWO: ldr
-; THUMBTWO: dmb {{ish$}}
-  store atomic i32 %v, i32* %p seq_cst, align 4
-  %val = load atomic i32* %p seq_cst, align 4
-  ret i32 %val
 }
