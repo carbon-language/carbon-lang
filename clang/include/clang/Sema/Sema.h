@@ -20,7 +20,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/ExternalASTSource.h"
-#include "clang/AST/LambdaMangleContext.h"
+#include "clang/AST/MangleNumberingContext.h"
 #include "clang/AST/NSAPI.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/TypeLoc.h"
@@ -662,17 +662,17 @@ public:
     /// is indeed an unevaluated context.
     SmallVector<LambdaExpr *, 2> Lambdas;
 
-    /// \brief The declaration that provides context for the lambda expression
-    /// if the normal declaration context does not suffice, e.g., in a
-    /// default function argument.
-    Decl *LambdaContextDecl;
+    /// \brief The declaration that provides context for lambda expressions
+    /// and block literals if the normal declaration context does not
+    /// suffice, e.g., in a default function argument.
+    Decl *ManglingContextDecl;
 
     /// \brief The context information used to mangle lambda expressions
-    /// within this context.
+    /// and block literals within this context.
     ///
     /// This mangling information is allocated lazily, since most contexts
-    /// do not have lambda expressions.
-    IntrusiveRefCntPtr<LambdaMangleContext> LambdaMangle;
+    /// do not have lambda expressions or block literals.
+    IntrusiveRefCntPtr<MangleNumberingContext> MangleNumbering;
 
     /// \brief If we are processing a decltype type, a set of call expressions
     /// for which we have deferred checking the completeness of the return type.
@@ -685,18 +685,19 @@ public:
     ExpressionEvaluationContextRecord(ExpressionEvaluationContext Context,
                                       unsigned NumCleanupObjects,
                                       bool ParentNeedsCleanups,
-                                      Decl *LambdaContextDecl,
+                                      Decl *ManglingContextDecl,
                                       bool IsDecltype)
       : Context(Context), ParentNeedsCleanups(ParentNeedsCleanups),
         IsDecltype(IsDecltype), NumCleanupObjects(NumCleanupObjects),
-        LambdaContextDecl(LambdaContextDecl), LambdaMangle() { }
+        ManglingContextDecl(ManglingContextDecl), MangleNumbering() { }
 
-    /// \brief Retrieve the mangling context for lambdas.
-    LambdaMangleContext &getLambdaMangleContext() {
-      assert(LambdaContextDecl && "Need to have a lambda context declaration");
-      if (!LambdaMangle)
-        LambdaMangle = new LambdaMangleContext;
-      return *LambdaMangle;
+    /// \brief Retrieve the mangling numbering context, used to consistently
+    /// number constructs like lambdas for mangling.
+    MangleNumberingContext &getMangleNumberingContext() {
+      assert(ManglingContextDecl && "Need to have a context declaration");
+      if (!MangleNumbering)
+        MangleNumbering = new MangleNumberingContext;
+      return *MangleNumbering;
     }
 
     bool isUnevaluated() const {
@@ -706,6 +707,18 @@ public:
 
   /// A stack of expression evaluation contexts.
   SmallVector<ExpressionEvaluationContextRecord, 8> ExprEvalContexts;
+
+  /// \brief Compute the mangling number context for a lambda expression or
+  /// block literal.
+  ///
+  /// \param DC - The DeclContext containing the lambda expression or
+  /// block literal.
+  /// \param[out] ManglingContextDecl - Returns the ManglingContextDecl
+  /// associated with the context, if relevant.
+  MangleNumberingContext *getCurrentMangleNumberContext(
+    DeclContext *DC,
+    Decl *&ManglingContextDecl);
+
 
   /// SpecialMemberOverloadResult - The overloading result for a special member
   /// function.

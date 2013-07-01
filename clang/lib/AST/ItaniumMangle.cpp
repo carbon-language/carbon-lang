@@ -1416,15 +1416,22 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC, bool NoFunction) {
     return;
 
   if (const BlockDecl *Block = dyn_cast<BlockDecl>(DC)) {
-    // The symbol we're adding a prefix for isn't externally
-    // visible; make up something sane.
-    // FIXME: This isn't always true!
-    SmallString<16> BlockPrefix;
-    BlockPrefix += "__block_prefix_internal";
-    unsigned Number = Context.getBlockId(Block, false);
+    // Reflect the lambda mangling rules, except that we don't have an
+    // actual function declaration.
+    if (NoFunction)
+      return;
+
+    manglePrefix(getEffectiveParentContext(DC), NoFunction);
+    // If we have a block mangling number, use it.
+    unsigned Number = Block->getBlockManglingNumber();
+    // Otherwise, just make up a number. It doesn't matter what it is because
+    // the symbol in question isn't externally visible.
+    if (!Number)
+      Number = Context.getBlockId(Block, false);
+    Out << "Ub";
     if (Number > 1)
-      BlockPrefix += llvm::utostr_32(Number - 2);
-    Out << BlockPrefix.size() << BlockPrefix;
+      Out << Number - 2;
+    Out << '_';
     return;
   } else if (isa<CapturedDecl>(DC)) {
     // Skip CapturedDecl context.

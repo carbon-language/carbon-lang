@@ -52,6 +52,72 @@ static bool isInInlineFunction(const DeclContext *DC) {
   return false;
 }
 
+MangleNumberingContext *
+Sema::getCurrentMangleNumberContext(DeclContext *DC,
+                                    Decl *&ManglingContextDecl) {
+  // Compute the context for allocating mangling numbers in the current
+  // expression, if the ABI requires them.
+  ManglingContextDecl = ExprEvalContexts.back().ManglingContextDecl;
+
+  enum ContextKind {
+    Normal,
+    DefaultArgument,
+    DataMember,
+    StaticDataMember
+  } Kind = Normal;
+
+  // Default arguments of member function parameters that appear in a class
+  // definition, as well as the initializers of data members, receive special
+  // treatment. Identify them.
+  if (ManglingContextDecl) {
+    if (ParmVarDecl *Param = dyn_cast<ParmVarDecl>(ManglingContextDecl)) {
+      if (const DeclContext *LexicalDC
+          = Param->getDeclContext()->getLexicalParent())
+        if (LexicalDC->isRecord())
+          Kind = DefaultArgument;
+    } else if (VarDecl *Var = dyn_cast<VarDecl>(ManglingContextDecl)) {
+      if (Var->getDeclContext()->isRecord())
+        Kind = StaticDataMember;
+    } else if (isa<FieldDecl>(ManglingContextDecl)) {
+      Kind = DataMember;
+    }
+  }
+
+  // Itanium ABI [5.1.7]:
+  //   In the following contexts [...] the one-definition rule requires closure
+  //   types in different translation units to "correspond":
+  bool IsInNonspecializedTemplate =
+    !ActiveTemplateInstantiations.empty() || CurContext->isDependentContext();
+  switch (Kind) {
+  case Normal:
+    //  -- the bodies of non-exported nonspecialized template functions
+    //  -- the bodies of inline functions
+    if ((IsInNonspecializedTemplate &&
+         !(ManglingContextDecl && isa<ParmVarDecl>(ManglingContextDecl))) ||
+        isInInlineFunction(CurContext)) {
+      ManglingContextDecl = 0;
+      return &Context.getManglingNumberContext(DC);
+    }
+
+    ManglingContextDecl = 0;
+    return 0;
+
+  case StaticDataMember:
+    //  -- the initializers of nonspecialized static members of template classes
+    if (!IsInNonspecializedTemplate) {
+      ManglingContextDecl = 0;
+      return 0;
+    }
+    // Fall through to get the current context.
+
+  case DataMember:
+    //  -- the in-class initializers of class members
+  case DefaultArgument:
+    //  -- default arguments appearing in class definitions
+    return &ExprEvalContexts.back().getMangleNumberingContext();
+  }
+}
+
 CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
                  SourceRange IntroducerRange,
                  TypeSourceInfo *MethodType,
@@ -98,74 +164,13 @@ CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
       (*P)->setOwningFunction(Method);
   }
 
-  // Allocate a mangling number for this lambda expression, if the ABI
-  // requires one.
-  Decl *ContextDecl = ExprEvalContexts.back().LambdaContextDecl;
-
-  enum ContextKind {
-    Normal,
-    DefaultArgument,
-    DataMember,
-    StaticDataMember
-  } Kind = Normal;
-
-  // Default arguments of member function parameters that appear in a class
-  // definition, as well as the initializers of data members, receive special
-  // treatment. Identify them.
-  if (ContextDecl) {
-    if (ParmVarDecl *Param = dyn_cast<ParmVarDecl>(ContextDecl)) {
-      if (const DeclContext *LexicalDC
-          = Param->getDeclContext()->getLexicalParent())
-        if (LexicalDC->isRecord())
-          Kind = DefaultArgument;
-    } else if (VarDecl *Var = dyn_cast<VarDecl>(ContextDecl)) {
-      if (Var->getDeclContext()->isRecord())
-        Kind = StaticDataMember;
-    } else if (isa<FieldDecl>(ContextDecl)) {
-      Kind = DataMember;
-    }
+  Decl *ManglingContextDecl;
+  if (MangleNumberingContext *MCtx =
+          getCurrentMangleNumberContext(Class->getDeclContext(),
+                                        ManglingContextDecl)) {
+    unsigned ManglingNumber = MCtx->getManglingNumber(Method);
+    Class->setLambdaMangling(ManglingNumber, ManglingContextDecl);
   }
-
-  // Itanium ABI [5.1.7]:
-  //   In the following contexts [...] the one-definition rule requires closure
-  //   types in different translation units to "correspond":
-  bool IsInNonspecializedTemplate =
-    !ActiveTemplateInstantiations.empty() || CurContext->isDependentContext();
-  unsigned ManglingNumber;
-  switch (Kind) {
-  case Normal:
-    //  -- the bodies of non-exported nonspecialized template functions
-    //  -- the bodies of inline functions
-    if ((IsInNonspecializedTemplate &&
-         !(ContextDecl && isa<ParmVarDecl>(ContextDecl))) ||
-        isInInlineFunction(CurContext))
-      ManglingNumber = Context.getLambdaManglingNumber(Method);
-    else
-      ManglingNumber = 0;
-
-    // There is no special context for this lambda.
-    ContextDecl = 0;
-    break;
-
-  case StaticDataMember:
-    //  -- the initializers of nonspecialized static members of template classes
-    if (!IsInNonspecializedTemplate) {
-      ManglingNumber = 0;
-      ContextDecl = 0;
-      break;
-    }
-    // Fall through to assign a mangling number.
-
-  case DataMember:
-    //  -- the in-class initializers of class members
-  case DefaultArgument:
-    //  -- default arguments appearing in class definitions
-    ManglingNumber = ExprEvalContexts.back().getLambdaMangleContext()
-                       .getManglingNumber(Method);
-    break;
-  }
-
-  Class->setLambdaMangling(ManglingNumber, ContextDecl);
 
   return Method;
 }

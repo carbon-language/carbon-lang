@@ -9810,6 +9810,17 @@ ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
 /// ActOnBlockStart - This callback is invoked when a block literal is started.
 void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *CurScope) {
   BlockDecl *Block = BlockDecl::Create(Context, CurContext, CaretLoc);
+
+  {
+    Decl *ManglingContextDecl;
+    if (MangleNumberingContext *MCtx =
+            getCurrentMangleNumberContext(Block->getDeclContext(),
+                                          ManglingContextDecl)) {
+      unsigned ManglingNumber = MCtx->getManglingNumber(Block);
+      Block->setBlockMangling(ManglingNumber, ManglingContextDecl);
+    }
+  }
+
   PushBlockScope(CurScope, Block);
   CurContext->addDecl(Block);
   if (CurScope)
@@ -9929,11 +9940,7 @@ void Sema::ActOnBlockArguments(SourceLocation CaretLoc, Declarator &ParamInfo,
   // Finally we can process decl attributes.
   ProcessDeclAttributes(CurScope, CurBlock->TheDecl, ParamInfo);
 
-  // Put the parameter variables in scope.  We can bail out immediately
-  // if we don't have any.
-  if (Params.empty())
-    return;
-
+  // Put the parameter variables in scope.
   for (BlockDecl::param_iterator AI = CurBlock->TheDecl->param_begin(),
          E = CurBlock->TheDecl->param_end(); AI != E; ++AI) {
     (*AI)->setOwningFunction(CurBlock->TheDecl);
@@ -10641,8 +10648,8 @@ void
 Sema::PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext,
                                       ReuseLambdaContextDecl_t,
                                       bool IsDecltype) {
-  Decl *LambdaContextDecl = ExprEvalContexts.back().LambdaContextDecl;
-  PushExpressionEvaluationContext(NewContext, LambdaContextDecl, IsDecltype);
+  Decl *ClosureContextDecl = ExprEvalContexts.back().ManglingContextDecl;
+  PushExpressionEvaluationContext(NewContext, ClosureContextDecl, IsDecltype);
 }
 
 void Sema::PopExpressionEvaluationContext() {

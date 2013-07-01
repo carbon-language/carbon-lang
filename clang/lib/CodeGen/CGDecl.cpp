@@ -130,9 +130,27 @@ void CodeGenFunction::EmitVarDecl(const VarDecl &D) {
     if (D.isExternallyVisible()) {
       const Decl *D = CurCodeDecl;
       while (true) {
-        if (isa<BlockDecl>(D)) {
-          // FIXME: Handle this case properly!  (Should be similar to the
-          // way we handle lambdas in computeLVForDecl in Decl.cpp.)
+        if (const BlockDecl *BD = dyn_cast<BlockDecl>(D)) {
+          if (!BD->getBlockManglingNumber())
+            break;
+
+          // This block has the linkage/visibility of its contained variables
+          // determined by its owner.
+          const DeclContext *DC = D->getDeclContext()->getRedeclContext();
+          if (Decl *ContextDecl = BD->getBlockManglingContextDecl()) {
+            if (isa<ParmVarDecl>(ContextDecl)) {
+              DC = ContextDecl->getDeclContext()->getRedeclContext();
+            } else {
+              D = ContextDecl;
+              continue;
+            }
+          }
+
+          if (const NamedDecl *ND = dyn_cast<NamedDecl>(DC)) {
+            D = ND;
+            continue;
+          }
+
           break;
         } else if (isa<CapturedDecl>(D)) {
           D = cast<Decl>(cast<CapturedDecl>(D)->getParent());
@@ -140,13 +158,26 @@ void CodeGenFunction::EmitVarDecl(const VarDecl &D) {
           break;
         }
       }
-      // FIXME: Do we really only care about FunctionDecls here?
+      llvm::GlobalValue::LinkageTypes ParentLinkage;
       if (isa<FunctionDecl>(D)) {
-        llvm::GlobalValue::LinkageTypes ParentLinkage =
-            CGM.getFunctionLinkage(cast<FunctionDecl>(D));
-        if (llvm::GlobalValue::isWeakForLinker(ParentLinkage))
-          Linkage = ParentLinkage;
+        ParentLinkage = CGM.getFunctionLinkage(cast<FunctionDecl>(D));
+      } else if (isa<VarDecl>(D)) {
+        // FIXME: I'm pretty sure this is wrong...
+        ParentLinkage = CGM.GetLLVMLinkageVarDefinition(cast<VarDecl>(D),
+                                                        /*constant*/false);
+      } else {
+        assert(isa<FieldDecl>(D) && "Expect function, variable, or field");
+        // FIXME: Is this right?
+        ParentLinkage = llvm::GlobalValue::LinkOnceODRLinkage;
       }
+
+      if (llvm::GlobalValue::isWeakForLinker(ParentLinkage))
+        Linkage = ParentLinkage;
+
+      // FIXME: We need to force the emission/use of a guard variable for
+      // some variables even if we can constant-evaluate them because
+      // we can't guarantee every translation unit will constant-evaluate them.
+      // Also, we might need to fix up the linkage.
     }
 
     return EmitStaticVarDecl(D, Linkage);

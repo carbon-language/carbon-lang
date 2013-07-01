@@ -1,4 +1,4 @@
-//===--- LambdaMangleContext.cpp - Context for mangling lambdas -*- C++ -*-===//
+//===--- MangleNumberingContext.cpp - Context for mangling numbers --------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,13 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/AST/LambdaMangleContext.h"
+#include "clang/AST/MangleNumberingContext.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclCXX.h"
 
 using namespace clang;
 
-unsigned LambdaMangleContext::getManglingNumber(CXXMethodDecl *CallOperator) {
+unsigned
+MangleNumberingContext::getManglingNumber(CXXMethodDecl *CallOperator) {
   const FunctionProtoType *Proto
     = CallOperator->getType()->getAs<FunctionProtoType>();
   ASTContext &Context = CallOperator->getASTContext();
@@ -27,4 +28,11 @@ unsigned LambdaMangleContext::getManglingNumber(CXXMethodDecl *CallOperator) {
                                          FunctionProtoType::ExtProtoInfo());
   Key = Context.getCanonicalType(Key);
   return ++ManglingNumbers[Key->castAs<FunctionProtoType>()];
+}
+
+unsigned
+MangleNumberingContext::getManglingNumber(BlockDecl *BD) {
+  // FIXME: Compute a BlockPointerType?  Not obvious how.
+  const Type *Ty = 0;
+  return ++ManglingNumbers[Ty];
 }

@@ -3115,13 +3115,17 @@ private:
   Capture *Captures;
   unsigned NumCaptures;
 
+  unsigned ManglingNumber;
+  Decl *ManglingContextDecl;
+
 protected:
   BlockDecl(DeclContext *DC, SourceLocation CaretLoc)
     : Decl(Block, DC, CaretLoc), DeclContext(Block),
       IsVariadic(false), CapturesCXXThis(false),
       BlockMissingReturnType(true), IsConversionFromLambda(false),
       ParamInfo(0), NumParams(0), Body(0),
-      SignatureAsWritten(0), Captures(0), NumCaptures(0) {}
+      SignatureAsWritten(0), Captures(0), NumCaptures(0),
+      ManglingNumber(0), ManglingContextDecl(0) {}
 
 public:
   static BlockDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L); 
@@ -3190,6 +3194,18 @@ public:
                    const Capture *begin,
                    const Capture *end,
                    bool capturesCXXThis);
+
+   unsigned getBlockManglingNumber() const {
+     return ManglingNumber;
+   }
+   Decl *getBlockManglingContextDecl() const {
+     return ManglingContextDecl;    
+   }
+
+  void setBlockMangling(unsigned Number, Decl *Ctx) {
+    ManglingNumber = Number;
+    ManglingContextDecl = Ctx;
+  }
 
   virtual SourceRange getSourceRange() const LLVM_READONLY;
 

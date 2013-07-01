@@ -287,13 +287,12 @@ getLVForTemplateParameterList(const TemplateParameterList *params,
 static LinkageInfo getLVForDecl(const NamedDecl *D,
                                 LVComputationKind computation);
 
-static const FunctionDecl *getOutermostFunctionContext(const Decl *D) {
-  const FunctionDecl *Ret = NULL;
+static const Decl *getOutermostFuncOrBlockContext(const Decl *D) {
+  const Decl *Ret = NULL;
   const DeclContext *DC = D->getDeclContext();
   while (DC->getDeclKind() != Decl::TranslationUnit) {
-    const FunctionDecl *F = dyn_cast<FunctionDecl>(DC);
-    if (F)
-      Ret = F;
+    if (isa<FunctionDecl>(DC) || isa<BlockDecl>(DC))
+      Ret = cast<Decl>(DC);
     DC = DC->getParent();
   }
   return Ret;
@@ -996,6 +995,22 @@ NamedDecl::getExplicitVisibility(ExplicitVisibilityKind kind) const {
   return None;
 }
 
+static LinkageInfo getLVForClosure(const DeclContext *DC, Decl *ContextDecl,
+                                   LVComputationKind computation) {
+  // This lambda has its linkage/visibility determined by its owner.
+  if (ContextDecl) {
+    if (isa<ParmVarDecl>(ContextDecl))
+      DC = ContextDecl->getDeclContext()->getRedeclContext();
+    else
+      return getLVForDecl(cast<NamedDecl>(ContextDecl), computation);
+  }
+
+  if (const NamedDecl *ND = dyn_cast<NamedDecl>(DC))
+    return getLVForDecl(ND, computation);
+
+  return LinkageInfo::external();
+}
+
 static LinkageInfo getLVForLocalDecl(const NamedDecl *D,
                                      LVComputationKind computation) {
   if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
@@ -1052,14 +1067,25 @@ static LinkageInfo getLVForLocalDecl(const NamedDecl *D,
   if (!Context.getLangOpts().CPlusPlus)
     return LinkageInfo::none();
 
-  const FunctionDecl *FD = getOutermostFunctionContext(D);
-  if (!FD)
+  const Decl *OuterD = getOutermostFuncOrBlockContext(D);
+  if (!OuterD)
     return LinkageInfo::none();
 
-  if (!FD->isInlined() && FD->getTemplateSpecializationKind() == TSK_Undeclared)
-    return LinkageInfo::none();
+  LinkageInfo LV;
+  if (const BlockDecl *BD = dyn_cast<BlockDecl>(OuterD)) {
+    if (!BD->getBlockManglingNumber())
+      return LinkageInfo::none();
 
-  LinkageInfo LV = getLVForDecl(FD, computation);
+    LV = getLVForClosure(BD->getDeclContext()->getRedeclContext(),
+                         BD->getBlockManglingContextDecl(), computation);
+  } else {
+    const FunctionDecl *FD = cast<FunctionDecl>(OuterD);
+    if (!FD->isInlined() &&
+        FD->getTemplateSpecializationKind() == TSK_Undeclared)
+      return LinkageInfo::none();
+
+    LV = getLVForDecl(FD, computation);
+  }
   if (!isExternallyVisible(LV.getLinkage()))
     return LinkageInfo::none();
   return LinkageInfo(VisibleNoLinkage, LV.getVisibility(),
@@ -1095,20 +1121,10 @@ static LinkageInfo computeLVForDecl(const NamedDecl *D,
           // This lambda has no mangling number, so it's internal.
           return LinkageInfo::internal();
         }
-        
-        // This lambda has its linkage/visibility determined by its owner.
-        const DeclContext *DC = D->getDeclContext()->getRedeclContext();
-        if (Decl *ContextDecl = Record->getLambdaContextDecl()) {
-          if (isa<ParmVarDecl>(ContextDecl))
-            DC = ContextDecl->getDeclContext()->getRedeclContext();
-          else
-            return getLVForDecl(cast<NamedDecl>(ContextDecl), computation);
-        }
 
-        if (const NamedDecl *ND = dyn_cast<NamedDecl>(DC))
-          return getLVForDecl(ND, computation);
-        
-        return LinkageInfo::external();
+        // This lambda has its linkage/visibility determined by its owner.
+        return getLVForClosure(D->getDeclContext()->getRedeclContext(),
+                               Record->getLambdaContextDecl(), computation);
       }
       
       break;

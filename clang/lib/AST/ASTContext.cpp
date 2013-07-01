@@ -8007,12 +8007,9 @@ int ASTContext::getUnnamedTagManglingNumber(const TagDecl *Tag) const {
   return I != UnnamedMangleNumbers.end() ? I->second : -1;
 }
 
-unsigned ASTContext::getLambdaManglingNumber(CXXMethodDecl *CallOperator) {
-  CXXRecordDecl *Lambda = CallOperator->getParent();
-  return LambdaMangleContexts[Lambda->getDeclContext()]
-           .getManglingNumber(CallOperator);
+MangleNumberingContext &ASTContext::getManglingNumberContext(DeclContext *DC) {
+  return MangleNumberingContexts[DC];
 }
-
 
 void ASTContext::setParameterIndex(const ParmVarDecl *D, unsigned int index) {
   ParamIndices[D] = index;
