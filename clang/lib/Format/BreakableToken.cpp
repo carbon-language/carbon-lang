@@ -24,7 +24,6 @@
 
 namespace clang {
 namespace format {
-namespace {
 
 static const char *const Blanks = " \t\v\f";
 static bool IsBlank(char C) {
@@ -39,10 +38,10 @@ static bool IsBlank(char C) {
   }
 }
 
-BreakableToken::Split getCommentSplit(StringRef Text,
-                                      unsigned ContentStartColumn,
-                                      unsigned ColumnLimit,
-                                      encoding::Encoding Encoding) {
+static BreakableToken::Split getCommentSplit(StringRef Text,
+                                             unsigned ContentStartColumn,
+                                             unsigned ColumnLimit,
+                                             encoding::Encoding Encoding) {
   if (ColumnLimit <= ContentStartColumn + 1)
     return BreakableToken::Split(StringRef::npos, 0);
 
@@ -76,10 +75,10 @@ BreakableToken::Split getCommentSplit(StringRef Text,
   return BreakableToken::Split(StringRef::npos, 0);
 }
 
-BreakableToken::Split getStringSplit(StringRef Text,
-                                     unsigned ContentStartColumn,
-                                     unsigned ColumnLimit,
-                                     encoding::Encoding Encoding) {
+static BreakableToken::Split getStringSplit(StringRef Text,
+                                            unsigned ContentStartColumn,
+                                            unsigned ColumnLimit,
+                                            encoding::Encoding Encoding) {
   // FIXME: Reduce unit test case.
   if (Text.empty())
     return BreakableToken::Split(StringRef::npos, 0);
@@ -126,8 +125,6 @@ BreakableToken::Split getStringSplit(StringRef Text,
     return BreakableToken::Split(SplitPoint, 0);
   return BreakableToken::Split(StringRef::npos, 0);
 }
-
-} // namespace
 
 unsigned BreakableSingleLineToken::getLineCount() const { return 1; }
 
