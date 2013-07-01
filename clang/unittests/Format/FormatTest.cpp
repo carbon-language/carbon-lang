@@ -3683,6 +3683,7 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
         "                  : vector<int>{ bbbbbbbbbbbbbbbbbbbbbbbbbbb,\n"
         "                                 bbbbbbbbbbbbbbbbbbbb, bbbbb };");
     verifyFormat("DoSomethingWithVector({} /* No data */);");
+    verifyFormat("DoSomethingWithVector({ {} /* No data */ }, { { 1, 2 } });");
 
     FormatStyle NoSpaces = getLLVMStyle();
     NoSpaces.SpacesInBracedLists = false;

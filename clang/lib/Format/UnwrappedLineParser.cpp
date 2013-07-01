@@ -257,8 +257,10 @@ void UnwrappedLineParser::calculateBraceTypes() {
   do {
     // Get next none-comment token.
     FormatToken *NextTok;
+    unsigned ReadTokens = 0;
     do {
       NextTok = Tokens->getNextToken();
+      ++ReadTokens;
     } while (NextTok->is(tok::comment));
 
     switch (Tok->Tok.getKind()) {
@@ -298,7 +300,7 @@ void UnwrappedLineParser::calculateBraceTypes() {
       break;
     }
     Tok = NextTok;
-    ++Position;
+    Position += ReadTokens;
   } while (Tok->Tok.isNot(tok::eof));
   // Assume other blocks for all unclosed opening braces.
   for (unsigned i = 0, e = LBraceStack.size(); i != e; ++i) {
