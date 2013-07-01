@@ -24,12 +24,12 @@ USEDLIBS = clangFrontend.a clangDriver.a \
 	   clangARCMigrate.a clangRewriteFrontend.a clangRewriteCore.a \
 	   clangAnalysis.a clangEdit.a \
 	   clangAST.a clangLex.a clangBasic.a \
-	   clangFormat.a 
+	   clangFormat.a
 
 include $(CLANG_LEVEL)/Makefile
 
 # Add soname to the library.
-ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux FreeBSD GNU))
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux FreeBSD GNU GNU/kFreeBSD))
         LDFLAGS += -Wl,-soname,lib$(LIBRARYNAME)$(SHLIBEXT)
 endif
 
