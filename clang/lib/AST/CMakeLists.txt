@@ -35,8 +35,8 @@ add_clang_library(clangAST
   InheritViz.cpp
   ItaniumCXXABI.cpp
   ItaniumMangle.cpp
-  LambdaMangleContext.cpp
   Mangle.cpp
+  MangleNumberingContext.cpp
   MicrosoftCXXABI.cpp
   MicrosoftMangle.cpp
   NestedNameSpecifier.cpp
