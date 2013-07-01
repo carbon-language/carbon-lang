@@ -30,7 +30,8 @@
 # CHECK: stdcx. 2, 3, 4                  # encoding: [0x7c,0x43,0x21,0xad]
          stdcx. 2, 3, 4
 
-# FIXME: sync 2
+# CHECK: sync 2                          # encoding: [0x7c,0x40,0x04,0xac]
+         sync 2
 # FIXME: eieio
 # FIXME: wait 2
 
@@ -47,10 +48,12 @@
 # CHECK: ldarx 2, 3, 4                   # encoding: [0x7c,0x43,0x20,0xa8]
          ldarx 2, 3, 4
 
-# CHECK: sync                            # encoding: [0x7c,0x00,0x04,0xac]
+# CHECK: sync 0                          # encoding: [0x7c,0x00,0x04,0xac]
          sync
-# FIXME: lwsync
-# FIXME: ptesync
+# CHECK: sync 1                          # encoding: [0x7c,0x20,0x04,0xac]
+         lwsync
+# CHECK: sync 2                          # encoding: [0x7c,0x40,0x04,0xac]
+         ptesync
 
 # FIXME: wait
 # FIXME: waitrsv

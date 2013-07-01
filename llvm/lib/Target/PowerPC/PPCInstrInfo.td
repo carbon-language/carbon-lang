@@ -1508,9 +1508,9 @@ def : Pat<(pre_store f32:$rS, iPTR:$ptrreg, iPTR:$ptroff),
 def : Pat<(pre_store f64:$rS, iPTR:$ptrreg, iPTR:$ptroff),
           (STFDUX $rS, $ptrreg, $ptroff)>;
 
-def SYNC : XForm_24_sync<31, 598, (outs), (ins),
-                        "sync", LdStSync,
-                        [(int_ppc_sync)]>;
+def SYNC : XForm_24_sync<31, 598, (outs), (ins i32imm:$L),
+                        "sync $L", LdStSync, []>;
+def : Pat<(int_ppc_sync), (SYNC 0)>;
 
 //===----------------------------------------------------------------------===//
 // PPC32 Arithmetic Instructions.
@@ -2231,7 +2231,7 @@ def : Pat<(f64 (extloadf32 xaddr:$src)),
 def : Pat<(f64 (fextend f32:$src)),
           (COPY_TO_REGCLASS $src, F8RC)>;
 
-def : Pat<(atomic_fence (imm), (imm)), (SYNC)>;
+def : Pat<(atomic_fence (imm), (imm)), (SYNC 0)>;
 
 // Additional FNMSUB patterns: -a*c + b == -(a*c - b)
 def : Pat<(fma (fneg f64:$A), f64:$C, f64:$B),
@@ -2278,6 +2278,10 @@ class PPCAsmPseudo<string asm, dag iops>
 }
 
 def : InstAlias<"sc", (SC 0)>;
+
+def : InstAlias<"sync", (SYNC 0)>;
+def : InstAlias<"lwsync", (SYNC 1)>;
+def : InstAlias<"ptesync", (SYNC 2)>;
 
 def : InstAlias<"xnop", (XORI R0, R0, 0)>;
 

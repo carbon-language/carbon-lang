@@ -473,8 +473,11 @@ class XForm_24<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
 class XForm_24_sync<bits<6> opcode, bits<10> xo, dag OOL, dag IOL,
                string asmstr, InstrItinClass itin, list<dag> pattern> 
   : I<opcode, OOL, IOL, asmstr, itin> {
+  bits<2> L;
+
   let Pattern = pattern;
-  let Inst{6-10}  = 0;
+  let Inst{6-8}   = 0;
+  let Inst{9-10}  = L;
   let Inst{11-15} = 0;
   let Inst{16-20} = 0;
   let Inst{21-30} = xo;
