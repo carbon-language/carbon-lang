@@ -2281,21 +2281,24 @@ public:
   }
 
   static ARMOperand *
-  CreateRegList(const SmallVectorImpl<std::pair<unsigned, SMLoc> > &Regs,
+  CreateRegList(SmallVectorImpl<std::pair<unsigned, unsigned> > &Regs,
                 SMLoc StartLoc, SMLoc EndLoc) {
+    assert (Regs.size() > 0 && "RegList contains no registers?");
     KindTy Kind = k_RegisterList;
 
-    if (ARMMCRegisterClasses[ARM::DPRRegClassID].contains(Regs.front().first))
+    if (ARMMCRegisterClasses[ARM::DPRRegClassID].contains(Regs.front().second))
       Kind = k_DPRRegisterList;
     else if (ARMMCRegisterClasses[ARM::SPRRegClassID].
-             contains(Regs.front().first))
+             contains(Regs.front().second))
       Kind = k_SPRRegisterList;
 
+    // Sort based on the register encoding values.
+    array_pod_sort(Regs.begin(), Regs.end());
+
     ARMOperand *Op = new ARMOperand(Kind);
-    for (SmallVectorImpl<std::pair<unsigned, SMLoc> >::const_iterator
+    for (SmallVectorImpl<std::pair<unsigned, unsigned> >::const_iterator
            I = Regs.begin(), E = Regs.end(); I != E; ++I)
-      Op->Registers.push_back(I->first);
-    array_pod_sort(Op->Registers.begin(), Op->Registers.end());
+      Op->Registers.push_back(I->second);
     Op->StartLoc = StartLoc;
     Op->EndLoc = EndLoc;
     return Op;
@@ -2975,12 +2978,14 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   // The reglist instructions have at most 16 registers, so reserve
   // space for that many.
-  SmallVector<std::pair<unsigned, SMLoc>, 16> Registers;
+  int EReg = 0;
+  SmallVector<std::pair<unsigned, unsigned>, 16> Registers;
 
   // Allow Q regs and just interpret them as the two D sub-registers.
   if (ARMMCRegisterClasses[ARM::QPRRegClassID].contains(Reg)) {
     Reg = getDRegFromQReg(Reg);
-    Registers.push_back(std::pair<unsigned, SMLoc>(Reg, RegLoc));
+    EReg = MRI->getEncodingValue(Reg);
+    Registers.push_back(std::pair<unsigned, unsigned>(EReg, Reg));
     ++Reg;
   }
   const MCRegisterClass *RC;
@@ -2994,7 +2999,8 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     return Error(RegLoc, "invalid register in register list");
 
   // Store the register.
-  Registers.push_back(std::pair<unsigned, SMLoc>(Reg, RegLoc));
+  EReg = MRI->getEncodingValue(Reg);
+  Registers.push_back(std::pair<unsigned, unsigned>(EReg, Reg));
 
   // This starts immediately after the first register token in the list,
   // so we can see either a comma or a minus (range separator) as a legal
@@ -3024,7 +3030,8 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       // Add all the registers in the range to the register list.
       while (Reg != EndReg) {
         Reg = getNextRegister(Reg);
-        Registers.push_back(std::pair<unsigned, SMLoc>(Reg, RegLoc));
+        EReg = MRI->getEncodingValue(Reg);
+        Registers.push_back(std::pair<unsigned, unsigned>(EReg, Reg));
       }
       continue;
     }
@@ -3057,14 +3064,15 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       continue;
     }
     // VFP register lists must also be contiguous.
-    // It's OK to use the enumeration values directly here rather, as the
-    // VFP register classes have the enum sorted properly.
     if (RC != &ARMMCRegisterClasses[ARM::GPRRegClassID] &&
         Reg != OldReg + 1)
       return Error(RegLoc, "non-contiguous register range");
-    Registers.push_back(std::pair<unsigned, SMLoc>(Reg, RegLoc));
-    if (isQReg)
-      Registers.push_back(std::pair<unsigned, SMLoc>(++Reg, RegLoc));
+    EReg = MRI->getEncodingValue(Reg);
+    Registers.push_back(std::pair<unsigned, unsigned>(EReg, Reg));
+    if (isQReg) {
+      EReg = MRI->getEncodingValue(++Reg);
+      Registers.push_back(std::pair<unsigned, unsigned>(EReg, Reg));
+    }
   }
 
   if (Parser.getTok().isNot(AsmToken::RCurly))

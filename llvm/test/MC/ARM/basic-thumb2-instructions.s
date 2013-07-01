@@ -708,7 +708,7 @@ _func:
 @ CHECK: ldm.w	r4, {r5, r6}            @ encoding: [0x94,0xe8,0x60,0x00]
 @ CHECK: ldm.w	r5!, {r3, r8}           @ encoding: [0xb5,0xe8,0x08,0x01]
 @ CHECK: ldm.w	r5!, {r3, r8}           @ encoding: [0xb5,0xe8,0x08,0x01]
-@ CHECK: pop.w	{pc, r4, r5, r6, r7, r8, r9, r10, r11} @ encoding: [0xbd,0xe8,0xf0,0x8f]
+@ CHECK: pop.w	{r4, r5, r6, r7, r8, r9, r10, r11, pc} @ encoding: [0xbd,0xe8,0xf0,0x8f]
 
 
 @------------------------------------------------------------------------------
