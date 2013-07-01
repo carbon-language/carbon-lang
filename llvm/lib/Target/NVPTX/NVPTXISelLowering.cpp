@@ -340,158 +340,6 @@ NVPTXTargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(NVPTXISD::Wrapper, dl, getPointerTy(), Op);
 }
 
-/*
-std::string NVPTXTargetLowering::getPrototype(
-    Type *retTy, const ArgListTy &Args,
-    const SmallVectorImpl<ISD::OutputArg> &Outs, unsigned retAlignment) const {
-
-  bool isABI = (nvptxSubtarget.getSmVersion() >= 20);
-
-  std::stringstream O;
-  O << "prototype_" << uniqueCallSite << " : .callprototype ";
-
-  if (retTy->getTypeID() == Type::VoidTyID)
-    O << "()";
-  else {
-    O << "(";
-    if (isABI) {
-      if (retTy->isPrimitiveType() || retTy->isIntegerTy()) {
-        unsigned size = 0;
-        if (const IntegerType *ITy = dyn_cast<IntegerType>(retTy)) {
-          size = ITy->getBitWidth();
-          if (size < 32)
-            size = 32;
-        } else {
-          assert(retTy->isFloatingPointTy() &&
-                 "Floating point type expected here");
-          size = retTy->getPrimitiveSizeInBits();
-        }
-
-        O << ".param .b" << size << " _";
-      } else if (isa<PointerType>(retTy))
-        O << ".param .b" << getPointerTy().getSizeInBits() << " _";
-      else {
-        if ((retTy->getTypeID() == Type::StructTyID) ||
-            isa<VectorType>(retTy)) {
-          SmallVector<EVT, 16> vtparts;
-          ComputeValueVTs(*this, retTy, vtparts);
-          unsigned totalsz = 0;
-          for (unsigned i = 0, e = vtparts.size(); i != e; ++i) {
-            unsigned elems = 1;
-            EVT elemtype = vtparts[i];
-            if (vtparts[i].isVector()) {
-              elems = vtparts[i].getVectorNumElements();
-              elemtype = vtparts[i].getVectorElementType();
-            }
-            for (unsigned j = 0, je = elems; j != je; ++j) {
-              unsigned sz = elemtype.getSizeInBits();
-              if (elemtype.isInteger() && (sz < 8))
-                sz = 8;
-              totalsz += sz / 8;
-            }
-          }
-          O << ".param .align " << retAlignment << " .b8 _[" << totalsz << "]";
-        } else {
-          assert(false && "Unknown return type");
-        }
-      }
-    } else {
-      SmallVector<EVT, 16> vtparts;
-      ComputeValueVTs(*this, retTy, vtparts);
-      unsigned idx = 0;
-      for (unsigned i = 0, e = vtparts.size(); i != e; ++i) {
-        unsigned elems = 1;
-        EVT elemtype = vtparts[i];
-        if (vtparts[i].isVector()) {
-          elems = vtparts[i].getVectorNumElements();
-          elemtype = vtparts[i].getVectorElementType();
-        }
-
-        for (unsigned j = 0, je = elems; j != je; ++j) {
-          unsigned sz = elemtype.getSizeInBits();
-          if (elemtype.isInteger() && (sz < 32))
-            sz = 32;
-          O << ".reg .b" << sz << " _";
-          if (j < je - 1)
-            O << ", ";
-          ++idx;
-        }
-        if (i < e - 1)
-          O << ", ";
-      }
-    }
-    O << ") ";
-  }
-  O << "_ (";
-
-  bool first = true;
-  MVT thePointerTy = getPointerTy();
-
-  for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-    const Type *Ty = Args[i].Ty;
-    if (!first) {
-      O << ", ";
-    }
-    first = false;
-
-    if (Outs[i].Flags.isByVal() == false) {
-      unsigned sz = 0;
-      if (isa<IntegerType>(Ty)) {
-        sz = cast<IntegerType>(Ty)->getBitWidth();
-        if (sz < 32)
-          sz = 32;
-      } else if (isa<PointerType>(Ty))
-        sz = thePointerTy.getSizeInBits();
-      else
-        sz = Ty->getPrimitiveSizeInBits();
-      if (isABI)
-        O << ".param .b" << sz << " ";
-      else
-        O << ".reg .b" << sz << " ";
-      O << "_";
-      continue;
-    }
-    const PointerType *PTy = dyn_cast<PointerType>(Ty);
-    assert(PTy && "Param with byval attribute should be a pointer type");
-    Type *ETy = PTy->getElementType();
-
-    if (isABI) {
-      unsigned align = Outs[i].Flags.getByValAlign();
-      unsigned sz = getDataLayout()->getTypeAllocSize(ETy);
-      O << ".param .align " << align << " .b8 ";
-      O << "_";
-      O << "[" << sz << "]";
-      continue;
-    } else {
-      SmallVector<EVT, 16> vtparts;
-      ComputeValueVTs(*this, ETy, vtparts);
-      for (unsigned i = 0, e = vtparts.size(); i != e; ++i) {
-        unsigned elems = 1;
-        EVT elemtype = vtparts[i];
-        if (vtparts[i].isVector()) {
-          elems = vtparts[i].getVectorNumElements();
-          elemtype = vtparts[i].getVectorElementType();
-        }
-
-        for (unsigned j = 0, je = elems; j != je; ++j) {
-          unsigned sz = elemtype.getSizeInBits();
-          if (elemtype.isInteger() && (sz < 32))
-            sz = 32;
-          O << ".reg .b" << sz << " ";
-          O << "_";
-          if (j < je - 1)
-            O << ", ";
-        }
-        if (i < e - 1)
-          O << ", ";
-      }
-      continue;
-    }
-  }
-  O << ");";
-  return O.str();
-}*/
-
 std::string
 NVPTXTargetLowering::getPrototype(Type *retTy, const ArgListTy &Args,
                                   const SmallVectorImpl<ISD::OutputArg> &Outs,
@@ -584,7 +432,9 @@ NVPTXTargetLowering::getPrototype(Type *retTy, const ArgListTy &Args,
           OIdx += len - 1;
         continue;
       }
-      assert(getValueType(Ty) == Outs[OIdx].VT &&
+       // i8 types in IR will be i16 types in SDAG
+      assert((getValueType(Ty) == Outs[OIdx].VT ||
+             (getValueType(Ty) == MVT::i8 && Outs[OIdx].VT == MVT::i16)) &&
              "type mismatch between callee prototype and arguments");
       // scalar type
       unsigned sz = 0;
@@ -853,6 +703,8 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
               }
               Ops.push_back(StoreVal);
             }
+
+            Ops.push_back(InFlag);
 
             SDVTList CopyParamVTs = DAG.getVTList(MVT::Other, MVT::Glue);
             Chain = DAG.getMemIntrinsicNode(Opc, dl, CopyParamVTs, &Ops[0],
@@ -1733,8 +1585,8 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
               InVals.push_back(Elt);
             }
             Ofst += TD->getTypeAllocSize(VecVT.getTypeForEVT(F->getContext()));
-            InsIdx += VecSize;
           }
+          InsIdx += VecSize;
         }
 
         if (NumElts > 0)

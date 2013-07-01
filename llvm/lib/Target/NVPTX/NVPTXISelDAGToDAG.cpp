@@ -1997,7 +1997,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLoadParam(SDNode *Node) {
   Ops.push_back(Flag);
 
   SDNode *Ret =
-      CurDAG->getMachineNode(Opc, DL, Node->getVTList(), Ops);
+      CurDAG->getMachineNode(Opc, DL, VTs, Ops);
   return Ret;
 }
 
@@ -2270,8 +2270,9 @@ SDNode *NVPTXDAGToDAGISel::SelectStoreParam(SDNode *N) {
   }
   }
 
+  SDVTList RetVTs = CurDAG->getVTList(MVT::Other, MVT::Glue);
   SDNode *Ret =
-      CurDAG->getMachineNode(Opcode, DL, N->getVTList(), Ops);
+      CurDAG->getMachineNode(Opcode, DL, RetVTs, Ops);
   MachineSDNode::mmo_iterator MemRefs0 = MF->allocateMemRefsArray(1);
   MemRefs0[0] = cast<MemSDNode>(N)->getMemOperand();
   cast<MachineSDNode>(Ret)->setMemRefs(MemRefs0, MemRefs0 + 1);
