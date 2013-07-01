@@ -43,6 +43,7 @@
 #include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PBQP/Graph.h"
 #include "llvm/CodeGen/PBQP/HeuristicSolver.h"
@@ -436,6 +437,8 @@ void RegAllocPBQP::getAnalysisUsage(AnalysisUsage &au) const {
   au.addPreserved<LiveStacks>();
   au.addRequired<MachineBlockFrequencyInfo>();
   au.addPreserved<MachineBlockFrequencyInfo>();
+  au.addRequired<MachineLoopInfo>();
+  au.addPreserved<MachineLoopInfo>();
   au.addRequired<MachineDominatorTree>();
   au.addPreserved<MachineDominatorTree>();
   au.addRequired<VirtRegMap>();
