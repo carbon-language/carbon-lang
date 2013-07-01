@@ -6219,6 +6219,8 @@ void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys,
   }
 }
 
+namespace {
+
 /// BuiltinCandidateTypeSet - A set of types that will be used for the
 /// candidate operator functions for built-in operators (C++
 /// [over.built]). The types are separated into pointer types and
@@ -6307,6 +6309,8 @@ public:
   bool hasArithmeticOrEnumeralTypes() { return HasArithmeticOrEnumeralTypes; }
   bool hasNullPtrType() const { return HasNullPtrType; }
 };
+
+} // end anonymous namespace
 
 /// AddPointerWithMoreQualifiedTypeVariants - Add the pointer type @p Ty to
 /// the set of pointer types along with any more-qualified variants of
