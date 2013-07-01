@@ -679,6 +679,25 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       OutStreamer.EmitRawText(StringRef("\tmsync"));
       return;
     }
+    break;
+  case PPC::LD:
+  case PPC::STD:
+  case PPC::LWA: {
+    // Verify alignment is legal, so we don't create relocations
+    // that can't be supported.
+    // FIXME:  This test is currently disabled for Darwin.  The test
+    // suite shows a handful of test cases that fail this check for
+    // Darwin.  Those need to be investigated before this sanity test
+    // can be enabled for those subtargets.
+    if (!Subtarget.isDarwin()) {
+      unsigned OpNum = (MI->getOpcode() == PPC::STD) ? 2 : 1;
+      const MachineOperand &MO = MI->getOperand(OpNum);
+      if (MO.isGlobal() && MO.getGlobal()->getAlignment() < 4)
+        llvm_unreachable("Global must be word-aligned for LD, STD, LWA!");
+    }
+    // Now process the instruction normally.
+    break;
+  }
   }
 
   LowerPPCMachineInstrToMCInst(MI, TmpInst, *this);

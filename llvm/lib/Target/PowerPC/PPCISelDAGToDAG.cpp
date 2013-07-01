@@ -1530,6 +1530,14 @@ void PPCDAGToDAGISel::PostprocessISelDAG() {
       if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(ImmOpnd)) {
         SDLoc dl(GA);
         const GlobalValue *GV = GA->getGlobal();
+        // We can't perform this optimization for data whose alignment
+        // is insufficient for the instruction encoding.
+        if (GV->getAlignment() < 4 &&
+            (StorageOpcode == PPC::LD || StorageOpcode == PPC::STD ||
+             StorageOpcode == PPC::LWA)) {
+          DEBUG(dbgs() << "Rejected this candidate for alignment.\n\n");
+          continue;
+        }
         ImmOpnd = CurDAG->getTargetGlobalAddress(GV, dl, MVT::i64, 0, Flags);
       } else if (ConstantPoolSDNode *CP =
                  dyn_cast<ConstantPoolSDNode>(ImmOpnd)) {
