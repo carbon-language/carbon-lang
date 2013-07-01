@@ -1144,8 +1144,7 @@ basic_istream<_CharT, _Traits>::ignore(streamsize __n, int_type __dlm)
                        break;
                     }
                     ++__gc_;
-                    char_type __ch = traits_type::to_char_type(__i);
-                    if (traits_type::eq(__ch, static_cast<char_type>(__dlm)))
+                    if (traits_type::eq_int_type(__i, __dlm))
                         break;
                 }
             }
@@ -1160,8 +1159,7 @@ basic_istream<_CharT, _Traits>::ignore(streamsize __n, int_type __dlm)
                        break;
                     }
                     ++__gc_;
-                    char_type __ch = traits_type::to_char_type(__i);
-                    if (traits_type::eq(__ch, static_cast<char_type>(__dlm)))
+                    if (traits_type::eq_int_type(__i, __dlm))
                         break;
                 }
             }
