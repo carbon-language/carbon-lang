@@ -310,6 +310,7 @@ enum StatType {
   StatInt_inet_pton,
   StatInt_inet_aton,
   StatInt_getaddrinfo,
+  StatInt_getnameinfo,
   StatInt_getsockname,
   StatInt_gethostent,
   StatInt_gethostbyname,

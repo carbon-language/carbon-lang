@@ -943,6 +943,29 @@ INTERCEPTOR(int, getaddrinfo, char *node, char *service,
 #define INIT_GETADDRINFO
 #endif
 
+#if SANITIZER_INTERCEPT_GETNAMEINFO
+INTERCEPTOR(int, getnameinfo, void *sockaddr, unsigned salen, char *host,
+            unsigned hostlen, char *serv, unsigned servlen, int flags) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getnameinfo, sockaddr, salen, host, hostlen,
+                           serv, servlen, flags);
+  // FIXME: consider adding READ_RANGE(sockaddr, salen)
+  // There is padding in in_addr that may make this too noisy
+  int res =
+      REAL(getnameinfo)(sockaddr, salen, host, hostlen, serv, servlen, flags);
+  if (res == 0) {
+    if (host && hostlen)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, host, REAL(strlen)(host) + 1);
+    if (serv && servlen)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, serv, REAL(strlen)(serv) + 1);
+  }
+  return res;
+}
+#define INIT_GETNAMEINFO INTERCEPT_FUNCTION(getnameinfo);
+#else
+#define INIT_GETNAMEINFO
+#endif
+
 #if SANITIZER_INTERCEPT_GETSOCKNAME
 INTERCEPTOR(int, getsockname, int sock_fd, void *addr, int *addrlen) {
   void *ctx;
@@ -1407,6 +1430,7 @@ INTERCEPTOR(uptr, ptrace, int request, int pid, void *addr, void *data) {
   INIT_INET;                               \
   INIT_PTHREAD_GETSCHEDPARAM;              \
   INIT_GETADDRINFO;                        \
+  INIT_GETNAMEINFO;                        \
   INIT_GETSOCKNAME;                        \
   INIT_GETHOSTBYNAME;                      \
   INIT_GETHOSTBYNAME_R;                    \

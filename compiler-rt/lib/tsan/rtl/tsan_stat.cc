@@ -315,6 +315,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_inet_pton]                = "  inet_pton                       ";
   name[StatInt_inet_aton]                = "  inet_aton                       ";
   name[StatInt_getaddrinfo]              = "  getaddrinfo                     ";
+  name[StatInt_getnameinfo]              = "  getnameinfo                     ";
   name[StatInt_getsockname]              = "  getsockname                     ";
   name[StatInt_gethostent]               = "  gethostent                      ";
   name[StatInt_gethostbyname]            = "  gethostbyname                   ";
