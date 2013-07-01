@@ -211,7 +211,7 @@ namespace test16 {
 }
 
 namespace test17 {
-  // CHECK-DAG: @_ZZN6test173fooILi42EEEPivE3bar = weak_odr
+  // CHECK-DAG: @_ZZN6test173fooILi42EEEPivE3bar = linkonce_odr
   // CHECK-DAG: define weak_odr i32* @_ZN6test173fooILi42EEEPiv(
   template<int I>
   int *foo() {

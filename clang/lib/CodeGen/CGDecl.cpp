@@ -124,60 +124,14 @@ void CodeGenFunction::EmitVarDecl(const VarDecl &D) {
     llvm::GlobalValue::LinkageTypes Linkage =
       llvm::GlobalValue::InternalLinkage;
 
-    // If the function definition has some sort of weak linkage, its
-    // static variables should also be weak so that they get properly
-    // uniqued.
+    // If the variable is externally visible, it must have weak linkage so it
+    // can be uniqued.
     if (D.isExternallyVisible()) {
-      const Decl *D = CurCodeDecl;
-      while (true) {
-        if (const BlockDecl *BD = dyn_cast<BlockDecl>(D)) {
-          if (!BD->getBlockManglingNumber())
-            break;
-
-          // This block has the linkage/visibility of its contained variables
-          // determined by its owner.
-          const DeclContext *DC = D->getDeclContext()->getRedeclContext();
-          if (Decl *ContextDecl = BD->getBlockManglingContextDecl()) {
-            if (isa<ParmVarDecl>(ContextDecl)) {
-              DC = ContextDecl->getDeclContext()->getRedeclContext();
-            } else {
-              D = ContextDecl;
-              continue;
-            }
-          }
-
-          if (const NamedDecl *ND = dyn_cast<NamedDecl>(DC)) {
-            D = ND;
-            continue;
-          }
-
-          break;
-        } else if (isa<CapturedDecl>(D)) {
-          D = cast<Decl>(cast<CapturedDecl>(D)->getParent());
-        } else {
-          break;
-        }
-      }
-      llvm::GlobalValue::LinkageTypes ParentLinkage;
-      if (isa<FunctionDecl>(D)) {
-        ParentLinkage = CGM.getFunctionLinkage(cast<FunctionDecl>(D));
-      } else if (isa<VarDecl>(D)) {
-        // FIXME: I'm pretty sure this is wrong...
-        ParentLinkage = CGM.GetLLVMLinkageVarDefinition(cast<VarDecl>(D),
-                                                        /*constant*/false);
-      } else {
-        assert(isa<FieldDecl>(D) && "Expect function, variable, or field");
-        // FIXME: Is this right?
-        ParentLinkage = llvm::GlobalValue::LinkOnceODRLinkage;
-      }
-
-      if (llvm::GlobalValue::isWeakForLinker(ParentLinkage))
-        Linkage = ParentLinkage;
+      Linkage = llvm::GlobalValue::LinkOnceODRLinkage;
 
       // FIXME: We need to force the emission/use of a guard variable for
       // some variables even if we can constant-evaluate them because
       // we can't guarantee every translation unit will constant-evaluate them.
-      // Also, we might need to fix up the linkage.
     }
 
     return EmitStaticVarDecl(D, Linkage);

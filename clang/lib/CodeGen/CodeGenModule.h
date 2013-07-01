@@ -925,7 +925,6 @@ public:
   void AddDependentLib(StringRef Lib);
 
   llvm::GlobalVariable::LinkageTypes getFunctionLinkage(GlobalDecl GD);
-  llvm::GlobalVariable::LinkageTypes getFunctionLinkage(const FunctionDecl *D);
 
   void setFunctionLinkage(GlobalDecl GD, llvm::GlobalValue *V) {
     V->setLinkage(getFunctionLinkage(GD));
