@@ -275,8 +275,10 @@ ifeq ($(ENABLE_OPTIMIZED),1)
   BuildMode := Release
   # Don't use -fomit-frame-pointer on Darwin or FreeBSD.
   ifneq ($(HOST_OS),FreeBSD)
+  ifneq ($(HOST_OS),GNU/kFreeBSD)
   ifneq ($(HOST_OS),Darwin)
     OmitFramePointer := -fomit-frame-pointer
+  endif
   endif
   endif
 
@@ -1451,7 +1453,7 @@ LD.Flags += -Wl,-exported_symbol,_main
 endif
 endif
 
-ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux NetBSD FreeBSD GNU))
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux NetBSD FreeBSD GNU/kFreeBSD GNU))
 ifneq ($(ARCH), Mips)
   LD.Flags += -Wl,--version-script=$(LLVM_SRC_ROOT)/autoconf/ExportMap.map
 endif
