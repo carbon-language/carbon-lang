@@ -3284,6 +3284,11 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
 TEST_F(FormatTest, UnderstandsEllipsis) {
   verifyFormat("int printf(const char *fmt, ...);");
   verifyFormat("template <class... Ts> void Foo(Ts... ts) { Foo(ts...); }");
+  verifyFormat("template <class... Ts> void Foo(Ts *... ts) {}");
+
+  FormatStyle PointersLeft = getLLVMStyle();
+  PointersLeft.PointerBindsToType = true;
+  verifyFormat("template <class... Ts> void Foo(Ts*... ts) {}", PointersLeft);
 }
 
 TEST_F(FormatTest, AdaptivelyFormatsPointersAndReferences) {
