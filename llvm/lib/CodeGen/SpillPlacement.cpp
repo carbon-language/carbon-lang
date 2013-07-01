@@ -79,17 +79,14 @@ struct SpillPlacement::Node {
   BlockFrequency BiasP;
 
   /// Value - Output value of this node computed from the Bias and links.
-  /// This is always in the range [-1;1]. A positive number means the variable
-  /// should go in a register through this bundle.
+  /// This is always on of the values {-1, 0, 1}. A positive number means the
+  /// variable should go in a register through this bundle.
   int Value;
 
   typedef SmallVector<std::pair<BlockFrequency, unsigned>, 4> LinkVector;
 
   /// Links - (Weight, BundleNo) for all transparent blocks connecting to other
-  /// bundles. The weights are all positive and add up to at most 2, weights
-  /// from ingoing and outgoing nodes separately add up to a most 1. The weight
-  /// sum can be less than 2 when the variable is not live into / out of some
-  /// connected basic blocks.
+  /// bundles. The weights are all positive block frequencies.
   LinkVector Links;
 
   /// SumLinkWeights - Cached sum of the weights of all links + ThresHold.
@@ -162,12 +159,14 @@ struct SpillPlacement::Node {
         SumP += I->first;
     }
 
-    // The weighted sum is going to be in the range [-2;2]. Ideally, we should
-    // simply set Value = sign(Sum), but we will add a dead zone around 0 for
-    // two reasons:
+    // Each weighted sum is going to be less than the total frequency of the
+    // bundle. Ideally, we should simply set Value = sign(SumP - SumN), but we
+    // will add a dead zone around 0 for two reasons:
+    //
     //  1. It avoids arbitrary bias when all links are 0 as is possible during
     //     initial iterations.
     //  2. It helps tame rounding errors when the links nominally sum to 0.
+    //
     bool Before = preferReg();
     if (SumN >= SumP + Threshold)
       Value = -1;
@@ -215,10 +214,11 @@ void SpillPlacement::activate(unsigned n) {
   // landing pads, or loops with many 'continue' statements. It is difficult to
   // allocate registers when so many different blocks are involved.
   //
-  // Give a small negative bias to large bundles such that 1/32 of the
-  // connected blocks need to be interested before we consider expanding the
-  // region through the bundle. This helps compile time by limiting the number
-  // of blocks visited and the number of links in the Hopfield network.
+  // Give a small negative bias to large bundles such that a substantial
+  // fraction of the connected blocks need to be interested before we consider
+  // expanding the region through the bundle. This helps compile time by
+  // limiting the number of blocks visited and the number of links in the
+  // Hopfield network.
   if (bundles->getBlocks(n).size() > 100) {
     nodes[n].BiasP = 0;
     nodes[n].BiasN = (BlockFrequency::getEntryFrequency() / 16);
