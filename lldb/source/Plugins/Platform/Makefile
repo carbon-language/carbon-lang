@@ -24,5 +24,9 @@ DIRS := gdb-server MacOSX Linux FreeBSD
 # ifeq ($(HOST_OS),FreeBSD)
 #   DIRS += FreeBSD
 # endif
+# 
+# ifeq ($(HOST_OS),GNU/kFreeBSD)
+#   DIRS += FreeBSD
+# endif
 
 include $(LLDB_LEVEL)/Makefile

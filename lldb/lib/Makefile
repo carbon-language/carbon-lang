@@ -100,7 +100,7 @@ ifeq ($(HOST_OS),Linux)
               lldbPluginDynamicLoaderMacOSX.a
 endif
 
-ifeq ($(HOST_OS),FreeBSD)
+ifneq (,$(filter $(HOST_OS), FreeBSD GNU/kFreeBSD))
   USEDLIBS += lldbHostFreeBSD.a \
               lldbPluginProcessPOSIX.a \
               lldbPluginProcessFreeBSD.a
@@ -133,7 +133,7 @@ ifeq ($(HOST_OS),Darwin)
     endif
 endif
 
-ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux GNU))
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux GNU GNU/kFreeBSD))
     # Include everything from the .a's into the shared library.
     ProjLibsOptions := -Wl,--whole-archive $(ProjLibsOptions) \
                        -Wl,--no-whole-archive

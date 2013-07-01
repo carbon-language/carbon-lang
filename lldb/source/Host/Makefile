@@ -21,7 +21,7 @@ ifeq ($(HOST_OS),Linux)
 DIRS += linux
 endif
 
-ifeq ($(HOST_OS),FreeBSD)
+ifneq (,$(filter $(HOST_OS), FreeBSD GNU/kFreeBSD))
 DIRS += freebsd
 endif
 

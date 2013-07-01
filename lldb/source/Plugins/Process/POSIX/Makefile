@@ -24,7 +24,7 @@ CPPFLAGS += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/source/Plugins/Process/Linux
 CPPFLAGS += -Wno-extended-offsetof
 endif
 
-ifeq ($(HOST_OS),FreeBSD)
+ifneq (,$(filter $(HOST_OS), FreeBSD GNU/kFreeBSD))
 # Extend the include path so we may locate ProcessMonitor
 CPPFLAGS += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/source/Plugins/Process/FreeBSD
 endif

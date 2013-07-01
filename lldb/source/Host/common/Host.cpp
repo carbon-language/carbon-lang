@@ -149,7 +149,7 @@ MonitorChildProcessThreadFunction (void *arg)
     delete info;
 
     int status = -1;
-#if defined (__FreeBSD__)
+#if defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
     #define __WALL 0
 #endif
     const int options = __WALL;
@@ -522,7 +522,7 @@ Host::WillTerminate ()
 {
 }
 
-#if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__linux__) // see macosx/Host.mm
+#if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) && !defined (__linux__) // see macosx/Host.mm
 
 void
 Host::ThreadCreated (const char *thread_name)
@@ -542,7 +542,7 @@ Host::GetEnvironment (StringList &env)
     return 0;
 }
 
-#endif // #if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__linux__)
+#endif // #if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) && !defined (__linux__)
 
 struct HostThreadCreateInfo
 {
@@ -682,7 +682,7 @@ Host::SetThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name)
             return true;
     }
     return false;
-#elif defined (__linux__)
+#elif defined (__linux__) || defined (__GLIBC__)
     void *fn = dlsym (RTLD_DEFAULT, "pthread_setname_np");
     if (fn)
     {
@@ -740,7 +740,7 @@ Host::GetProgramFileSpec ()
             exe_path[len] = 0;
             g_program_filespec.SetFile(exe_path, false);
         }
-#elif defined (__FreeBSD__)
+#elif defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
         int exe_path_mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, getpid() };
         size_t exe_path_size;
         if (sysctl(exe_path_mib, 4, NULL, &exe_path_size, NULL, 0) == 0)
@@ -1178,7 +1178,7 @@ Host::GetGroupName (uint32_t gid, std::string &group_name)
     return NULL;
 }
 
-#if !defined (__APPLE__) && !defined (__FreeBSD__) // see macosx/Host.mm
+#if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) // see macosx/Host.mm
 bool
 Host::GetOSBuildString (std::string &s)
 {
@@ -1227,7 +1227,7 @@ Host::FindProcesses (const ProcessInstanceInfoMatch &match_info, ProcessInstance
 }
 #endif // #if !defined (__APPLE__) && !defined(__linux__)
 
-#if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined(__linux__)
+#if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) && !defined(__linux__)
 bool
 Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 {
@@ -1441,7 +1441,7 @@ Host::GetNumberCPUS ()
     static uint32_t g_num_cores = UINT32_MAX;
     if (g_num_cores == UINT32_MAX)
     {
-#if defined(__APPLE__) or defined (__linux__) or defined (__FreeBSD__)
+#if defined(__APPLE__) or defined (__linux__) or defined (__FreeBSD__) or defined (__FreeBSD_kernel__)
 
         g_num_cores = ::sysconf(_SC_NPROCESSORS_ONLN);
         
@@ -1458,7 +1458,11 @@ Host::GetNumberCPUS ()
         g_num_cores = 0;
         int num_cores = 0;
         size_t num_cores_len = sizeof(num_cores);
+#ifdef HW_AVAILCPU
         int mib[] = { CTL_HW, HW_AVAILCPU };
+#else
+        int mib[] = { CTL_HW, HW_NCPU };
+#endif
         
         /* get the number of CPUs from the system */
         if (sysctl(mib, sizeof(mib)/sizeof(int), &num_cores, &num_cores_len, NULL, 0) == 0 && (num_cores > 0))

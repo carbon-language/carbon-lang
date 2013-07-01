@@ -36,7 +36,7 @@ DIRS += DynamicLoader/MacOSX-DYLD
 DIRS += Process/Linux Process/POSIX
 endif
 
-ifeq ($(HOST_OS),FreeBSD)
+ifneq (,$(filter $(HOST_OS), FreeBSD GNU/kFreeBSD))
 DIRS += Process/FreeBSD Process/POSIX
 endif
 

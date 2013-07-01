@@ -21,7 +21,7 @@ ifeq ($(HOST_OS),Darwin)
 	LLVMLibsOptions += -Wl,-sectcreate -Wl,__TEXT -Wl,__info_plist -Wl,"$(PROJ_SRC_DIR)/lldb-Info.plist"
 endif
 
-ifeq ($(HOST_OS),Linux)
+ifneq (,$(filter $(HOST_OS), Linux GNU/kFreeBSD))
 	LLVMLibsOptions += -Wl,-rpath,$(LibDir)
 endif
 
