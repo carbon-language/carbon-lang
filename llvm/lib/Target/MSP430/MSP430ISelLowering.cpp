@@ -169,6 +169,7 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setOperationAction(ISD::VAARG,            MVT::Other, Expand);
   setOperationAction(ISD::VAEND,            MVT::Other, Expand);
   setOperationAction(ISD::VACOPY,           MVT::Other, Expand);
+  setOperationAction(ISD::JumpTable,        MVT::i16,   Custom);
 
   // Libcalls names.
   if (HWMultMode == HWMultIntr) {
@@ -199,6 +200,7 @@ SDValue MSP430TargetLowering::LowerOperation(SDValue Op,
   case ISD::RETURNADDR:       return LowerRETURNADDR(Op, DAG);
   case ISD::FRAMEADDR:        return LowerFRAMEADDR(Op, DAG);
   case ISD::VASTART:          return LowerVASTART(Op, DAG);
+  case ISD::JumpTable:        return LowerJumpTable(Op, DAG);
   default:
     llvm_unreachable("unimplemented operand");
   }
@@ -979,6 +981,14 @@ SDValue MSP430TargetLowering::LowerVASTART(SDValue Op,
   return DAG.getStore(Op.getOperand(0), SDLoc(Op), FrameIndex,
                       Op.getOperand(1), MachinePointerInfo(SV),
                       false, false, 0);
+}
+
+SDValue MSP430TargetLowering::LowerJumpTable(SDValue Op,
+                                             SelectionDAG &DAG) const {
+    JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
+    SDValue Result = DAG.getTargetJumpTable(JT->getIndex(), getPointerTy());
+    Result.getNode()->setDebugLoc(JT->getDebugLoc());
+    return Result;
 }
 
 /// getPostIndexedAddressParts - returns true by value, base pointer and

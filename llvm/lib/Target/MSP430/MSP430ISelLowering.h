@@ -93,6 +93,7 @@ namespace llvm {
     SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG) const;
     SDValue getReturnAddressFrameIndex(SelectionDAG &DAG) const;
 
     TargetLowering::ConstraintType
