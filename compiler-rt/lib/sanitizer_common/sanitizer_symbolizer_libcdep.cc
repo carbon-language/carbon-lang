@@ -191,8 +191,8 @@ bool __sanitizer_symbolize_data(const char *ModuleName, u64 ModuleOffset,
 SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
 void __sanitizer_symbolize_flush();
 SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
-void __sanitizer_symbolize_demangle(const char *Name, char *Buffer,
-                                    int MaxLength);
+int __sanitizer_symbolize_demangle(const char *Name, char *Buffer,
+                                   int MaxLength);
 }  // extern "C"
 
 class InternalSymbolizer {
@@ -223,10 +223,18 @@ class InternalSymbolizer {
 
   const char *Demangle(const char *name) {
     if (__sanitizer_symbolize_demangle) {
-      char *res = static_cast<char*>(InternalAlloc(kMaxDemangledNameSize));
-      internal_memset(res, 0, kMaxDemangledNameSize);
-      __sanitizer_symbolize_demangle(name, res, kMaxDemangledNameSize);
-      return res;
+      for (uptr res_length = 1024;
+           res_length <= InternalSizeClassMap::kMaxSize;) {
+        char *res_buff = static_cast<char*>(InternalAlloc(res_length));
+        uptr req_length =
+            __sanitizer_symbolize_demangle(name, res_buff, res_length);
+        if (req_length > res_length) {
+          res_length = req_length + 1;
+          InternalFree(res_buff);
+          continue;
+        }
+        return res_buff;
+      }
     }
     return name;
   }
