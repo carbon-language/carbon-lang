@@ -138,10 +138,12 @@ NVPTXTargetLowering::NVPTXTargetLowering(NVPTXTargetMachine &TM)
   setOperationAction(ISD::BR_CC, MVT::i16, Expand);
   setOperationAction(ISD::BR_CC, MVT::i32, Expand);
   setOperationAction(ISD::BR_CC, MVT::i64, Expand);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i64, Expand);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i32, Expand);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8, Expand);
+  // Some SIGN_EXTEND_INREG can be done using cvt instruction.
+  // For others we will expand to a SHL/SRA pair.
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i64, Legal);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i32, Legal);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Legal);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8 , Legal);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
   if (nvptxSubtarget.hasROT64()) {

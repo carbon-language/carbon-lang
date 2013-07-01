@@ -298,6 +298,7 @@ multiclass F2<string OpcStr, SDNode OpNode> {
 // General Type Conversion
 //-----------------------------------
 
+let neverHasSideEffects = 1 in {
 // Generate a cvt to the given type from all possible types.
 // Each instance takes a CvtMode immediate that defines the conversion mode to
 // use.  It can be CvtNONE to omit a conversion mode.
@@ -359,6 +360,23 @@ defm CVT_s64 : CVT_FROM_ALL<"s64", Int64Regs>;
 defm CVT_u64 : CVT_FROM_ALL<"u64", Int64Regs>;
 defm CVT_f32 : CVT_FROM_ALL<"f32", Float32Regs>;
 defm CVT_f64 : CVT_FROM_ALL<"f64", Float64Regs>;
+
+// This set of cvt is different from the above. The type of the source
+// and target are the same.
+//
+def CVT_INREG_s16_s8 : NVPTXInst<(outs Int16Regs:$dst), (ins Int16Regs:$src),
+                        "cvt.s16.s8 \t$dst, $src;", []>;
+def CVT_INREG_s32_s8 : NVPTXInst<(outs Int32Regs:$dst), (ins Int32Regs:$src),
+                        "cvt.s32.s8 \t$dst, $src;", []>;
+def CVT_INREG_s32_s16 : NVPTXInst<(outs Int32Regs:$dst), (ins Int32Regs:$src),
+                        "cvt.s32.s16 \t$dst, $src;", []>;
+def CVT_INREG_s64_s8 : NVPTXInst<(outs Int64Regs:$dst), (ins Int64Regs:$src),
+                        "cvt.s64.s8 \t$dst, $src;", []>;
+def CVT_INREG_s64_s16 : NVPTXInst<(outs Int64Regs:$dst), (ins Int64Regs:$src),
+                        "cvt.s64.s16 \t$dst, $src;", []>;
+def CVT_INREG_s64_s32 : NVPTXInst<(outs Int64Regs:$dst), (ins Int64Regs:$src),
+                        "cvt.s64.s32 \t$dst, $src;", []>;
+}
 
 //-----------------------------------
 // Integer Arithmetic
@@ -2348,6 +2366,14 @@ def : Pat<(i1 (trunc Int32Regs:$a)),
 // truncate i16
 def : Pat<(i1 (trunc Int16Regs:$a)),
           (SETP_b16ri (ANDb16ri Int16Regs:$a, 1), 1, CmpEQ)>;
+
+// sext_inreg
+def : Pat<(sext_inreg Int16Regs:$a, i8), (CVT_INREG_s16_s8 Int16Regs:$a)>;
+def : Pat<(sext_inreg Int32Regs:$a, i8), (CVT_INREG_s32_s8 Int32Regs:$a)>;
+def : Pat<(sext_inreg Int32Regs:$a, i16), (CVT_INREG_s32_s16 Int32Regs:$a)>;
+def : Pat<(sext_inreg Int64Regs:$a, i8), (CVT_INREG_s64_s8 Int64Regs:$a)>;
+def : Pat<(sext_inreg Int64Regs:$a, i16), (CVT_INREG_s64_s16 Int64Regs:$a)>;
+def : Pat<(sext_inreg Int64Regs:$a, i32), (CVT_INREG_s64_s32 Int64Regs:$a)>;
 
 
 // Select instructions with 32-bit predicates
