@@ -1,6 +1,6 @@
-================================
-Writing an LLVM Compiler Backend
-================================
+=======================
+Writing an LLVM Backend
+=======================
 
 .. toctree::
    :hidden:
