@@ -66,7 +66,7 @@ namespace {
     ///
     bool EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB);
     void LowerPHINode(MachineBasicBlock &MBB,
-                      MachineBasicBlock::iterator AfterPHIsIt);
+                      MachineBasicBlock::iterator LastPHIIt);
 
     /// analyzePHINodes - Gather information about the PHI nodes in
     /// here. In particular, we want to map the number of uses of a virtual
@@ -185,10 +185,11 @@ bool PHIElimination::EliminatePHINodes(MachineFunction &MF,
 
   // Get an iterator to the first instruction after the last PHI node (this may
   // also be the end of the basic block).
-  MachineBasicBlock::iterator AfterPHIsIt = MBB.SkipPHIsAndLabels(MBB.begin());
+  MachineBasicBlock::iterator LastPHIIt =
+    prior(MBB.SkipPHIsAndLabels(MBB.begin()));
 
   while (MBB.front().isPHI())
-    LowerPHINode(MBB, AfterPHIsIt);
+    LowerPHINode(MBB, LastPHIIt);
 
   return true;
 }
@@ -218,8 +219,11 @@ static bool isSourceDefinedByImplicitDef(const MachineInstr *MPhi,
 /// LowerPHINode - Lower the PHI node at the top of the specified block,
 ///
 void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
-                                  MachineBasicBlock::iterator AfterPHIsIt) {
+                                  MachineBasicBlock::iterator LastPHIIt) {
   ++NumLowered;
+
+  MachineBasicBlock::iterator AfterPHIsIt = next(LastPHIIt);
+
   // Unlink the PHI node from the basic block, but don't delete the PHI yet.
   MachineInstr *MPhi = MBB.remove(MBB.begin());
 
