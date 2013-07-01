@@ -1316,15 +1316,22 @@ Module::LoadScriptingResourceInTarget (Target *target, Error& error, Stream* fee
                         if (shoud_load == eLoadScriptFromSymFileWarn)
                         {
                             if (feedback_stream)
-                                feedback_stream->Printf("warning: '%s' contains a debug script. To run this script in this debug session:\n\n    command script import \"%s\"\n\nTo run all discovered debug scripts in this session:\n\n    settings set target.load-script-from-symbol-file true\n"
-                                                        ,GetFileSpec().GetFileNameStrippingExtension().GetCString(),scripting_fspec.GetPath().c_str());
+                                feedback_stream->Printf("warning: '%s' contains a debug script. To run this script in "
+                                                        "this debug session:\n\n    command script import \"%s\"\n\n"
+                                                        "To run all discovered debug scripts in this session:\n\n"
+                                                        "    settings set target.load-script-from-symbol-file true\n",
+                                                        GetFileSpec().GetFileNameStrippingExtension().GetCString(),
+                                                        scripting_fspec.GetPath().c_str());
                             return false;
                         }
                         StreamString scripting_stream;
                         scripting_fspec.Dump(&scripting_stream);
                         const bool can_reload = true;
                         const bool init_lldb_globals = false;
-                        bool did_load = script_interpreter->LoadScriptingModule(scripting_stream.GetData(), can_reload, init_lldb_globals, error);
+                        bool did_load = script_interpreter->LoadScriptingModule(scripting_stream.GetData(),
+                                                                                can_reload,
+                                                                                init_lldb_globals,
+                                                                                error);
                         if (!did_load)
                             return false;
                     }
