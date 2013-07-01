@@ -3887,6 +3887,8 @@ TEST_F(FormatTest, BlockComments) {
       format("int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa; /* comment */\n"
              "int      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb; /* comment */\n"
              "int    cccccccccccccccccccccccccccccc;  /* comment */\n"));
+
+  verifyFormat("void f(int * /* unused */) {}");
 }
 
 TEST_F(FormatTest, BlockCommentsInMacros) {
