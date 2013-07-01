@@ -1798,10 +1798,12 @@ struct LessRecordRegister {
         return LHSPart.second.size() < RHSPart.second.size();
 
       unsigned LHSVal, RHSVal;
-      if (LHSPart.second.getAsInteger(10, LHSVal))
-        assert(0 && "Unable to convert LHS to integer.");
-      if (RHSPart.second.getAsInteger(10, RHSVal))
-        assert(0 && "Unable to convert RHS to integer.");
+
+      bool LHSFailed = LHSPart.second.getAsInteger(10, LHSVal); (void)LHSFailed;
+      assert(!LHSFailed && "Unable to convert LHS to integer.");
+      bool RHSFailed = RHSPart.second.getAsInteger(10, RHSVal); (void)RHSFailed;
+      assert(!RHSFailed && "Unable to convert RHS to integer.");
+
       if (LHSVal != RHSVal)
         return LHSVal < RHSVal;
     }
