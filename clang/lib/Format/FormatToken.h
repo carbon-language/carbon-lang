@@ -270,8 +270,8 @@ struct FormatToken {
 
 private:
   // Disallow copying.
-  FormatToken(const FormatToken &);
-  void operator=(const FormatToken &);
+  FormatToken(const FormatToken &) LLVM_DELETED_FUNCTION;
+  void operator=(const FormatToken &) LLVM_DELETED_FUNCTION;
 };
 
 } // namespace format
