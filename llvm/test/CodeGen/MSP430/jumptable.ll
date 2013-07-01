@@ -13,7 +13,7 @@ entry:
   %0 = load i16* %i.addr, align 2
 ; CHECK: add.w #.LJTI0_0, [[REG1:r[0-9]+]]
 ; CHECK: mov.w 0([[REG1]]), [[REG2:r[0-9]+]]
-; CHECK: br [[REG2]]
+; CHECK: mov.w r14, [[REG2]]
   switch i16 %0, label %sw.default [
     i16 0, label %sw.bb
     i16 1, label %sw.bb1
