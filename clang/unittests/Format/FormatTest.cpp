@@ -844,6 +844,23 @@ TEST_F(FormatTest, CorrectlyHandlesLengthOfBlockComments) {
             "              aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa */",
             format("double *x; /* aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
                    "              aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa */"));
+  EXPECT_EQ(
+      "void ffffffffffff(\n"
+      "    int aaaaaaaa, int bbbbbbbb,\n"
+      "    int cccccccccccc) { /*\n"
+      "                           aaaaaaaaaa\n"
+      "                           aaaaaaaaaaaaa\n"
+      "                           bbbbbbbbbbbbbb\n"
+      "                           bbbbbbbbbb\n"
+      "                         */\n"
+      "}",
+      format("void ffffffffffff(int aaaaaaaa, int bbbbbbbb, int cccccccccccc)\n"
+             "{ /*\n"
+             "     aaaaaaaaaa aaaaaaaaaaaaa\n"
+             "     bbbbbbbbbbbbbb bbbbbbbbbb\n"
+             "   */\n"
+             "}",
+             getLLVMStyleWithColumns(40)));
 }
 
 TEST_F(FormatTest, SplitsLongCxxComments) {

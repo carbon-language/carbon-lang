@@ -806,9 +806,10 @@ private:
   ///
   /// \returns An extra penalty if a token was broken, otherwise 0.
   ///
-  /// Note that the penalty of the token protruding the allowed line length is
-  /// already handled in \c addNextStateToQueue; the returned penalty will only
-  /// cover the cost of the additional line breaks.
+  /// The returned penalty will cover the cost of the additional line breaks and
+  /// column limit violation in all lines except for the last one. The penalty
+  /// for the column limit violation in the last line (and in single line
+  /// tokens) is handled in \c addNextStateToQueue.
   unsigned breakProtrudingToken(const FormatToken &Current, LineState &State,
                                 bool DryRun) {
     llvm::OwningPtr<BreakableToken> Token;
@@ -854,8 +855,13 @@ private:
       while (RemainingTokenColumns > RemainingSpace) {
         BreakableToken::Split Split =
             Token->getSplit(LineIndex, TailOffset, getColumnLimit());
-        if (Split.first == StringRef::npos)
+        if (Split.first == StringRef::npos) {
+          // The last line's penalty is handled in addNextStateToQueue().
+          if (LineIndex < EndIndex - 1)
+            Penalty += Style.PenaltyExcessCharacter *
+                       (RemainingTokenColumns - RemainingSpace);
           break;
+        }
         assert(Split.first != 0);
         unsigned NewRemainingTokenColumns = Token->getLineLengthAfterSplit(
             LineIndex, TailOffset + Split.first + Split.second,
