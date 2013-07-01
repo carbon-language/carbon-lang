@@ -204,6 +204,9 @@ NVPTXTargetLowering::NVPTXTargetLowering(NVPTXTargetMachine &TM)
   // TRAP can be lowered to PTX trap
   setOperationAction(ISD::TRAP, MVT::Other, Legal);
 
+  setOperationAction(ISD::ADDC, MVT::i64, Expand);
+  setOperationAction(ISD::ADDE, MVT::i64, Expand);
+
   // Register custom handling for vector loads/stores
   for (int i = MVT::FIRST_VECTOR_VALUETYPE; i <= MVT::LAST_VECTOR_VALUETYPE;
        ++i) {
