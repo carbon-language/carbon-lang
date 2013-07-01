@@ -5740,7 +5740,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         break;
 
                     case DW_TAG_unspecified_type:
-                        if (strcmp(type_name_cstr, "nullptr_t") == 0)
+                        if (strcmp(type_name_cstr, "nullptr_t") == 0 ||
+                            strcmp(type_name_cstr, "decltype(nullptr)") == 0 )
                         {
                             resolve_state = Type::eResolveStateFull;
                             clang_type = ast.getASTContext()->NullPtrTy.getAsOpaquePtr();
