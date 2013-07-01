@@ -252,8 +252,6 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "NVPTXISD::RET_FLAG";
   case NVPTXISD::Wrapper:
     return "NVPTXISD::Wrapper";
-  case NVPTXISD::NVBuiltin:
-    return "NVPTXISD::NVBuiltin";
   case NVPTXISD::DeclareParam:
     return "NVPTXISD::DeclareParam";
   case NVPTXISD::DeclareScalarParam:

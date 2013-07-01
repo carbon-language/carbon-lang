@@ -29,7 +29,6 @@ enum NodeType {
   CALL,
   RET_FLAG,
   LOAD_PARAM,
-  NVBuiltin,
   DeclareParam,
   DeclareScalarParam,
   DeclareRetParam,
