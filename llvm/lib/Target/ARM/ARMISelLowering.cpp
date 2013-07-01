@@ -2557,8 +2557,12 @@ static SDValue LowerATOMIC_FENCE(SDValue Op, SelectionDAG &DAG,
                        DAG.getConstant(0, MVT::i32));
   }
 
+  ConstantSDNode *OrdN = cast<ConstantSDNode>(Op.getOperand(1));
+  AtomicOrdering Ord = static_cast<AtomicOrdering>(OrdN->getZExtValue());
+  unsigned Domain = Ord == Release ? ARM_MB::ISHST : ARM_MB::ISH;
+
   return DAG.getNode(ARMISD::MEMBARRIER, dl, MVT::Other, Op.getOperand(0),
-                     DAG.getConstant(ARM_MB::ISH, MVT::i32));
+                     DAG.getConstant(Domain, MVT::i32));
 }
 
 static SDValue LowerPREFETCH(SDValue Op, SelectionDAG &DAG,
