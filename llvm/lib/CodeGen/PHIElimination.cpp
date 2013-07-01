@@ -222,7 +222,7 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator LastPHIIt) {
   ++NumLowered;
 
-  MachineBasicBlock::iterator AfterPHIsIt = next(LastPHIIt);
+  MachineBasicBlock::iterator AfterPHIsIt = llvm::next(LastPHIIt);
 
   // Unlink the PHI node from the basic block, but don't delete the PHI yet.
   MachineInstr *MPhi = MBB.remove(MBB.begin());
