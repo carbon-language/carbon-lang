@@ -1763,7 +1763,8 @@ static void MlockIsUnsupported() {
   static atomic_uint8_t printed;
   if (atomic_exchange(&printed, 1, memory_order_relaxed))
     return;
-  Printf("INFO: ThreadSanitizer ignores mlock/mlockall/munlock/munlockall\n");
+  if (flags()->verbosity > 0)
+    Printf("INFO: ThreadSanitizer ignores mlock/mlockall/munlock/munlockall\n");
 }
 
 TSAN_INTERCEPTOR(int, mlock, const void *addr, uptr len) {

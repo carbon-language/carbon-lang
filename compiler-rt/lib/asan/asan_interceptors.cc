@@ -249,7 +249,8 @@ static void MlockIsUnsupported() {
   static bool printed = false;
   if (printed) return;
   printed = true;
-  Printf("INFO: AddressSanitizer ignores mlock/mlockall/munlock/munlockall\n");
+  if (flags()->verbosity > 0)
+    Printf("INFO: AddressSanitizer ignores mlock/mlockall/munlock/munlockall\n");
 }
 
 INTERCEPTOR(int, mlock, const void *addr, uptr len) {
