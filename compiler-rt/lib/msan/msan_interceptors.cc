@@ -167,6 +167,14 @@ INTERCEPTOR(char *, strncpy, char *dest, const char *src, SIZE_T n) {  // NOLINT
   return res;
 }
 
+INTERCEPTOR(char *, stpcpy, char *dest, const char *src) {  // NOLINT
+  ENSURE_MSAN_INITED();
+  SIZE_T n = REAL(strlen)(src);
+  char *res = REAL(stpcpy)(dest, src);  // NOLINT
+  __msan_copy_poison(dest, src, n + 1);
+  return res;
+}
+
 INTERCEPTOR(char *, strdup, char *src) {
   ENSURE_MSAN_INITED();
   SIZE_T n = REAL(strlen)(src);
@@ -1135,6 +1143,7 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(wmemcpy);
   INTERCEPT_FUNCTION(wmemmove);
   INTERCEPT_FUNCTION(strcpy);  // NOLINT
+  INTERCEPT_FUNCTION(stpcpy);  // NOLINT
   INTERCEPT_FUNCTION(strdup);
   INTERCEPT_FUNCTION(__strdup);
   INTERCEPT_FUNCTION(strndup);

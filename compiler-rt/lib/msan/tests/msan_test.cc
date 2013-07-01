@@ -1033,6 +1033,19 @@ TEST(MemorySanitizer, strncpy) {  // NOLINT
   EXPECT_POISONED(y[2]);
 }
 
+TEST(MemorySanitizer, stpcpy) {  // NOLINT
+  char* x = new char[3];
+  char* y = new char[3];
+  x[0] = 'a';
+  x[1] = *GetPoisoned<char>(1, 1);
+  x[2] = 0;
+  char *res = stpcpy(y, x);  // NOLINT
+  ASSERT_EQ(res, y + 2);
+  EXPECT_NOT_POISONED(y[0]);
+  EXPECT_POISONED(y[1]);
+  EXPECT_NOT_POISONED(y[2]);
+}
+
 TEST(MemorySanitizer, strtol) {
   char *e;
   assert(1 == strtol("1", &e, 10));
