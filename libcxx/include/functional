@@ -1139,8 +1139,11 @@ public:
     function(const function&);
     function(function&&) _NOEXCEPT;
     template<class _Fp>
-      function(_Fp,
-               typename enable_if<__callable<_Fp>::value>::type* = 0);
+      function(_Fp, typename enable_if
+                                     <
+                                        __callable<_Fp>::value &&
+                                        !is_same<_Fp, function>::value
+                                      >::type* = 0);
 
     template<class _Alloc>
       _LIBCPP_INLINE_VISIBILITY
@@ -1162,7 +1165,8 @@ public:
     template<class _Fp>
       typename enable_if
       <
-        __callable<typename decay<_Fp>::type>::value,
+        __callable<typename decay<_Fp>::type>::value &&
+        !is_same<typename remove_reference<_Fp>::type, function>::value,
         function&
       >::type
       operator=(_Fp&&);
@@ -1266,7 +1270,11 @@ function<_Rp(_ArgTypes...)>::function(allocator_arg_t, const _Alloc&,
 template<class _Rp, class ..._ArgTypes>
 template <class _Fp>
 function<_Rp(_ArgTypes...)>::function(_Fp __f,
-                                     typename enable_if<__callable<_Fp>::value>::type*)
+                                     typename enable_if
+                                     <
+                                        __callable<_Fp>::value &&
+                                        !is_same<_Fp, function>::value
+                                     >::type*)
     : __f_(0)
 {
     if (__not_null(__f))
@@ -1370,7 +1378,8 @@ template<class _Rp, class ..._ArgTypes>
 template <class _Fp>
 typename enable_if
 <
-    function<_Rp(_ArgTypes...)>::template __callable<typename decay<_Fp>::type>::value,
+    function<_Rp(_ArgTypes...)>::template __callable<typename decay<_Fp>::type>::value &&
+    !is_same<typename remove_reference<_Fp>::type, function<_Rp(_ArgTypes...)>>::value,
     function<_Rp(_ArgTypes...)>&
 >::type
 function<_Rp(_ArgTypes...)>::operator=(_Fp&& __f)
@@ -1749,7 +1758,9 @@ public:
     template <class _Gp, class ..._BA,
               class = typename enable_if
                                <
-                                  is_constructible<_Fd, _Gp>::value
+                                  is_constructible<_Fd, _Gp>::value &&
+                                  !is_same<typename remove_reference<_Gp>::type,
+                                           __bind>::value
                                >::type>
       _LIBCPP_INLINE_VISIBILITY
       explicit __bind(_Gp&& __f, _BA&& ...__bound_args)
@@ -1814,7 +1825,13 @@ public:
 
 #endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
 
-    template <class _Gp, class ..._BA>
+    template <class _Gp, class ..._BA,
+              class = typename enable_if
+                               <
+                                  is_constructible<_Fd, _Gp>::value &&
+                                  !is_same<typename remove_reference<_Gp>::type,
+                                           __bind_r>::value
+                               >::type>
       _LIBCPP_INLINE_VISIBILITY
       explicit __bind_r(_Gp&& __f, _BA&& ...__bound_args)
         : base(_VSTD::forward<_Gp>(__f),
