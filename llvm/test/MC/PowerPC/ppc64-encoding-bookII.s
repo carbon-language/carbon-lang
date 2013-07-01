@@ -57,6 +57,8 @@
 
 # CHECK: sync 0                          # encoding: [0x7c,0x00,0x04,0xac]
          sync
+# CHECK: sync 0                          # encoding: [0x7c,0x00,0x04,0xac]
+         msync
 # CHECK: sync 1                          # encoding: [0x7c,0x20,0x04,0xac]
          lwsync
 # CHECK: sync 2                          # encoding: [0x7c,0x40,0x04,0xac]

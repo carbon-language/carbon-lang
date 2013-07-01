@@ -2286,6 +2286,7 @@ class PPCAsmPseudo<string asm, dag iops>
 def : InstAlias<"sc", (SC 0)>;
 
 def : InstAlias<"sync", (SYNC 0)>;
+def : InstAlias<"msync", (SYNC 0)>;
 def : InstAlias<"lwsync", (SYNC 1)>;
 def : InstAlias<"ptesync", (SYNC 2)>;
 
