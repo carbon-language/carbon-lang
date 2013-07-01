@@ -401,10 +401,6 @@ TargetLoweringObjectFileELF::InitializeELF(bool UseInitArray_) {
                                SectionKind::getDataRel());
 }
 
-const MCSymbolRefExpr *TargetLoweringObjectFileELF::getDebugThreadLocalSymbol(const MCSymbol *Sym) const {
-  return MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_DTPOFF, getContext());
-}
-
 //===----------------------------------------------------------------------===//
 //                                 MachO
 //===----------------------------------------------------------------------===//

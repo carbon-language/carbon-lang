@@ -36,6 +36,9 @@ namespace llvm {
   /// and x86-64.
   class X86LinuxTargetObjectFile : public TargetLoweringObjectFileELF {
     virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
+
+    /// \brief Describe a TLS variable address within debug info.
+    virtual const MCSymbolRefExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const;
   };
 
 } // end namespace llvm
