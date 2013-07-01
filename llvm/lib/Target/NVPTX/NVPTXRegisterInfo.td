@@ -29,7 +29,9 @@ def VRFrameLocal    : NVPTXReg<"%SPL">;
 // Special Registers used as the stack
 def VRDepot  : NVPTXReg<"%Depot">;
 
-foreach i = 0-395 in {
+// We use virtual registers, but define a few physical registers here to keep
+// SDAG and the MachineInstr layers happy.
+foreach i = 0-4 in {
   def P#i  : NVPTXReg<"%p"#i>;  // Predicate
   def RS#i : NVPTXReg<"%rs"#i>; // 16-bit
   def R#i  : NVPTXReg<"%r"#i>;  // 32-bit
@@ -47,16 +49,16 @@ foreach i = 0-395 in {
 //===----------------------------------------------------------------------===//
 //  Register classes
 //===----------------------------------------------------------------------===//
-def Int1Regs : NVPTXRegClass<[i1], 8, (add (sequence "P%u", 0, 395))>;
-def Int16Regs : NVPTXRegClass<[i16], 16, (add (sequence "RS%u", 0, 395))>;
-def Int32Regs : NVPTXRegClass<[i32], 32, (add (sequence "R%u", 0, 395))>;
-def Int64Regs : NVPTXRegClass<[i64], 64, (add (sequence "RL%u", 0, 395))>;
-def Float32Regs : NVPTXRegClass<[f32], 32, (add (sequence "F%u", 0, 395))>;
-def Float64Regs : NVPTXRegClass<[f64], 64, (add (sequence "FL%u", 0, 395))>;
-def Int32ArgRegs : NVPTXRegClass<[i32], 32, (add (sequence "ia%u", 0, 395))>;
-def Int64ArgRegs : NVPTXRegClass<[i64], 64, (add (sequence "la%u", 0, 395))>;
-def Float32ArgRegs : NVPTXRegClass<[f32], 32, (add (sequence "fa%u", 0, 395))>;
-def Float64ArgRegs : NVPTXRegClass<[f64], 64, (add (sequence "da%u", 0, 395))>;
+def Int1Regs : NVPTXRegClass<[i1], 8, (add (sequence "P%u", 0, 4))>;
+def Int16Regs : NVPTXRegClass<[i16], 16, (add (sequence "RS%u", 0, 4))>;
+def Int32Regs : NVPTXRegClass<[i32], 32, (add (sequence "R%u", 0, 4))>;
+def Int64Regs : NVPTXRegClass<[i64], 64, (add (sequence "RL%u", 0, 4))>;
+def Float32Regs : NVPTXRegClass<[f32], 32, (add (sequence "F%u", 0, 4))>;
+def Float64Regs : NVPTXRegClass<[f64], 64, (add (sequence "FL%u", 0, 4))>;
+def Int32ArgRegs : NVPTXRegClass<[i32], 32, (add (sequence "ia%u", 0, 4))>;
+def Int64ArgRegs : NVPTXRegClass<[i64], 64, (add (sequence "la%u", 0, 4))>;
+def Float32ArgRegs : NVPTXRegClass<[f32], 32, (add (sequence "fa%u", 0, 4))>;
+def Float64ArgRegs : NVPTXRegClass<[f64], 64, (add (sequence "da%u", 0, 4))>;
 
 // Read NVPTXRegisterInfo.cpp to see how VRFrame and VRDepot are used.
 def SpecialRegs : NVPTXRegClass<[i32], 32, (add VRFrame, VRDepot)>;

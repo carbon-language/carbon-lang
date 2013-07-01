@@ -16,7 +16,6 @@
 #include "MCTargetDesc/NVPTXMCAsmInfo.h"
 #include "NVPTX.h"
 #include "NVPTXInstrInfo.h"
-#include "NVPTXNumRegisters.h"
 #include "NVPTXRegisterInfo.h"
 #include "NVPTXTargetMachine.h"
 #include "NVPTXUtilities.h"
