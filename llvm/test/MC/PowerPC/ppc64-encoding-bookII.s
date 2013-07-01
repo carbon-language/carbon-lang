@@ -39,7 +39,8 @@
          sync 2
 # CHECK: eieio                           # encoding: [0x7c,0x00,0x06,0xac]
          eieio
-# FIXME: wait 2
+# CHECK: wait 2                          # encoding: [0x7c,0x40,0x00,0x7c]
+         wait 2
 
 # Extended mnemonics
 
@@ -61,7 +62,10 @@
 # CHECK: sync 2                          # encoding: [0x7c,0x40,0x04,0xac]
          ptesync
 
-# FIXME: wait
-# FIXME: waitrsv
-# FIXME: waitimpl
+# CHECK: wait 0                          # encoding: [0x7c,0x00,0x00,0x7c]
+         wait
+# CHECK: wait 1                          # encoding: [0x7c,0x20,0x00,0x7c]
+         waitrsv
+# CHECK: wait 2                          # encoding: [0x7c,0x40,0x00,0x7c]
+         waitimpl
 

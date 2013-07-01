@@ -2260,6 +2260,9 @@ def ICBI : XForm_1a<31, 982, (outs), (ins memrr:$src),
 def EIEIO : XForm_24_eieio<31, 854, (outs), (ins),
                            "eieio", LdStLoad, []>;
 
+def WAIT : XForm_24_sync<31, 62, (outs), (ins i32imm:$L),
+                         "wait $L", LdStLoad, []>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC Assembler Instruction Aliases
 //
@@ -2285,6 +2288,10 @@ def : InstAlias<"sc", (SC 0)>;
 def : InstAlias<"sync", (SYNC 0)>;
 def : InstAlias<"lwsync", (SYNC 1)>;
 def : InstAlias<"ptesync", (SYNC 2)>;
+
+def : InstAlias<"wait", (WAIT 0)>;
+def : InstAlias<"waitrsv", (WAIT 1)>;
+def : InstAlias<"waitimpl", (WAIT 2)>;
 
 def : InstAlias<"xnop", (XORI R0, R0, 0)>;
 
