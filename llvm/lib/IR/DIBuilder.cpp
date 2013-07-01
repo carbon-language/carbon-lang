@@ -317,7 +317,7 @@ DIDerivedType DIBuilder::createMemberPointerType(DIType PointeeTy,
 /// createReferenceType - Create debugging information entry for a reference
 /// type.
 DIDerivedType DIBuilder::createReferenceType(unsigned Tag, DIType RTy) {
-  assert(RTy.Verify() && "Unable to create reference type");
+  assert(RTy.isType() && "Unable to create reference type");
   // References are encoded in DIDerivedType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, Tag),
@@ -338,7 +338,7 @@ DIDerivedType DIBuilder::createReferenceType(unsigned Tag, DIType RTy) {
 DIDerivedType DIBuilder::createTypedef(DIType Ty, StringRef Name, DIFile File,
                                        unsigned LineNo, DIDescriptor Context) {
   // typedefs are encoded in DIDerivedType format.
-  assert(Ty.Verify() && "Invalid typedef type!");
+  assert(Ty.isType() && "Invalid typedef type!");
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_typedef),
     File.getFileNode(),
@@ -357,8 +357,8 @@ DIDerivedType DIBuilder::createTypedef(DIType Ty, StringRef Name, DIFile File,
 /// createFriend - Create debugging information entry for a 'friend'.
 DIDerivedType DIBuilder::createFriend(DIType Ty, DIType FriendTy) {
   // typedefs are encoded in DIDerivedType format.
-  assert(Ty.Verify() && "Invalid type!");
-  assert(FriendTy.Verify() && "Invalid friend type!");
+  assert(Ty.isType() && "Invalid type!");
+  assert(FriendTy.isType() && "Invalid friend type!");
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_friend),
     NULL,
@@ -378,7 +378,7 @@ DIDerivedType DIBuilder::createFriend(DIType Ty, DIType FriendTy) {
 /// inheritance relationship between two types.
 DIDerivedType DIBuilder::createInheritance(
     DIType Ty, DIType BaseTy, uint64_t BaseOffset, unsigned Flags) {
-  assert(Ty.Verify() && "Unable to create inheritance");
+  assert(Ty.isType() && "Unable to create inheritance");
   // TAG_inheritance is encoded in DIDerivedType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_inheritance),
@@ -596,7 +596,7 @@ DICompositeType DIBuilder::createClassType(DIDescriptor Context, StringRef Name,
                                            DIArray Elements,
                                            MDNode *VTableHolder,
                                            MDNode *TemplateParams) {
-  assert((!Context || Context.Verify()) &&
+  assert((!Context || Context.isScope() || Context.isType()) &&
          "createClassType should be called with a valid Context");
   // TAG_class_type is encoded in DICompositeType format.
   Value *Elts[] = {
@@ -616,7 +616,8 @@ DICompositeType DIBuilder::createClassType(DIDescriptor Context, StringRef Name,
     TemplateParams
   };
   DICompositeType R(MDNode::get(VMContext, Elts));
-  assert(R.Verify() && "createClassType should return a verifiable DIType");
+  assert(R.isCompositeType() &&
+         "createClassType should return a DICompositeType");
   return R;
 }
 
@@ -648,7 +649,8 @@ DICompositeType DIBuilder::createStructType(DIDescriptor Context,
     NULL,
   };
   DICompositeType R(MDNode::get(VMContext, Elts));
-  assert(R.Verify() && "createStructType should return a verifiable DIType");
+  assert(R.isCompositeType() &&
+         "createStructType should return a DICompositeType");
   return R;
 }
 
@@ -861,8 +863,8 @@ DIType DIBuilder::createForwardDecl(unsigned Tag, StringRef Name,
     ConstantInt::get(Type::getInt32Ty(VMContext), RuntimeLang)
   };
   MDNode *Node = MDNode::getTemporary(VMContext, Elts);
-  assert(DIType(Node).Verify() &&
-         "createForwardDecl result should be verifiable");
+  assert(DIType(Node).isType() &&
+         "createForwardDecl result should be a DIType");
   return DIType(Node);
 }
 
@@ -953,9 +955,9 @@ DIVariable DIBuilder::createLocalVariable(unsigned Tag, DIDescriptor Scope,
                                           bool AlwaysPreserve, unsigned Flags,
                                           unsigned ArgNo) {
   DIDescriptor Context(getNonCompileUnitScope(Scope));
-  assert((!Context || Context.Verify()) &&
+  assert((!Context || Context.isScope()) &&
          "createLocalVariable should be called with a valid Context");
-  assert(Ty.Verify() &&
+  assert(Ty.isType() &&
          "createLocalVariable should be called with a valid type");
   Value *Elts[] = {
     GetTagConstant(VMContext, Tag),
@@ -976,8 +978,8 @@ DIVariable DIBuilder::createLocalVariable(unsigned Tag, DIDescriptor Scope,
     NamedMDNode *FnLocals = getOrInsertFnSpecificMDNode(M, Fn);
     FnLocals->addOperand(Node);
   }
-  assert(DIVariable(Node).Verify() &&
-         "createLocalVariable should return a verifiable DIVariable");
+  assert(DIVariable(Node).isVariable() &&
+         "createLocalVariable should return a valid DIVariable");
   return DIVariable(Node);
 }
 
@@ -1046,7 +1048,7 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context,
   if (isDefinition)
     AllSubprograms.push_back(Node);
   DISubprogram S(Node);
-  assert(S.Verify() && "createFunction should return a valid DISubprogram");
+  assert(S.isSubprogram() && "createFunction should return a valid DISubprogram");
   return S;
 }
 
@@ -1094,7 +1096,7 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context,
   if (isDefinition)
     AllSubprograms.push_back(Node);
   DISubprogram S(Node);
-  assert(S.Verify() && "createMethod should return a valid DISubprogram");
+  assert(S.isSubprogram() && "createMethod should return a valid DISubprogram");
   return S;
 }
 

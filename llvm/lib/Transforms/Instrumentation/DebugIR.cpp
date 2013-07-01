@@ -219,7 +219,7 @@ public:
     MDNode *Sub = Builder.createFunction(
         DICompileUnit(CUNode), F.getName(), MangledName, DIFile(FileNode), Line,
         Sig, Local, IsDefinition, ScopeLine, FuncFlags, IsOptimized, &F);
-    assert(DISubprogram(Sub).Verify());
+    assert(DISubprogram(Sub).isSubprogram());
     DEBUG(dbgs() << "create subprogram mdnode " << Sub << ": "
                  << "\n");
 
