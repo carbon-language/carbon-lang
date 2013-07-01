@@ -3520,6 +3520,13 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
       // but is not a load, then we quit. Notice that we don't handle function
       // calls that read or write.
       if (it->mayReadFromMemory()) {
+        // Many math library functions read the rounding mode. We will only
+        // vectorize a loop if it contains known function calls that don't set
+        // the flag. Therefore, it is safe to ignore this read from memory.
+        CallInst *Call = dyn_cast<CallInst>(it);
+        if (Call && getIntrinsicIDForCall(Call, TLI))
+          continue;
+
         LoadInst *Ld = dyn_cast<LoadInst>(it);
         if (!Ld) return false;
         if (!Ld->isSimple() && !IsAnnotatedParallel) {
