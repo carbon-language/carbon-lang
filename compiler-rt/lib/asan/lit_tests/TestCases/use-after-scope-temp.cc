@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
   save(IntHolder(10));
   int x = saved->val;  // BOOM
   // CHECK: ERROR: AddressSanitizer: stack-use-after-scope
-  // CHECK:  #0 0x{{.*}} in {{_?}}main {{.*}}use-after-scope-temp.cc:[[@LINE-2]]
+  // CHECK:  #0 0x{{.*}} in main {{.*}}use-after-scope-temp.cc:[[@LINE-2]]
   printf("saved value: %d\n", x);
   return 0;
 }

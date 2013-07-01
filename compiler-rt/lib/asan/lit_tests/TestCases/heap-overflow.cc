@@ -14,15 +14,15 @@ int main(int argc, char **argv) {
   memset(x, 0, 10);
   int res = x[argc * 10];  // BOOOM
   // CHECK: {{READ of size 1 at 0x.* thread T0}}
-  // CHECK: {{    #0 0x.* in _?main .*heap-overflow.cc:}}[[@LINE-2]]
+  // CHECK: {{    #0 0x.* in main .*heap-overflow.cc:}}[[@LINE-2]]
   // CHECK: {{0x.* is located 0 bytes to the right of 10-byte region}}
   // CHECK: {{allocated by thread T0 here:}}
 
   // CHECK-Linux: {{    #0 0x.* in .*malloc}}
   // CHECK-Linux: {{    #1 0x.* in main .*heap-overflow.cc:13}}
 
-  // CHECK-Darwin: {{    #0 0x.* in _?wrap_malloc.*}}
-  // CHECK-Darwin: {{    #1 0x.* in _?main .*heap-overflow.cc:13}}
+  // CHECK-Darwin: {{    #0 0x.* in wrap_malloc.*}}
+  // CHECK-Darwin: {{    #1 0x.* in main .*heap-overflow.cc:13}}
   free(x);
   return res;
 }

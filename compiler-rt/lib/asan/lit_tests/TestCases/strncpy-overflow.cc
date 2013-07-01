@@ -16,15 +16,15 @@ int main(int argc, char **argv) {
   strncpy(short_buffer, hello, 10);  // BOOM
   // CHECK: {{WRITE of size 10 at 0x.* thread T0}}
   // CHECK-Linux: {{    #0 0x.* in .*strncpy}}
-  // CHECK-Darwin: {{    #0 0x.* in _?wrap_strncpy}}
-  // CHECK: {{    #1 0x.* in _?main .*strncpy-overflow.cc:}}[[@LINE-4]]
+  // CHECK-Darwin: {{    #0 0x.* in wrap_strncpy}}
+  // CHECK: {{    #1 0x.* in main .*strncpy-overflow.cc:}}[[@LINE-4]]
   // CHECK: {{0x.* is located 0 bytes to the right of 9-byte region}}
   // CHECK: {{allocated by thread T0 here:}}
 
   // CHECK-Linux: {{    #0 0x.* in .*malloc}}
   // CHECK-Linux: {{    #1 0x.* in main .*strncpy-overflow.cc:}}[[@LINE-10]]
 
-  // CHECK-Darwin: {{    #0 0x.* in _?wrap_malloc.*}}
-  // CHECK-Darwin: {{    #1 0x.* in _?main .*strncpy-overflow.cc:}}[[@LINE-13]]
+  // CHECK-Darwin: {{    #0 0x.* in wrap_malloc.*}}
+  // CHECK-Darwin: {{    #1 0x.* in main .*strncpy-overflow.cc:}}[[@LINE-13]]
   return short_buffer[8];
 }

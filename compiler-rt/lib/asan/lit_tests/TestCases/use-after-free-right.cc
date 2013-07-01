@@ -18,21 +18,21 @@ int main() {
   // CHECK: {{.*ERROR: AddressSanitizer: heap-use-after-free on address}}
   // CHECK:   {{0x.* at pc 0x.* bp 0x.* sp 0x.*}}
   // CHECK: {{WRITE of size 1 at 0x.* thread T0}}
-  // CHECK: {{    #0 0x.* in _?main .*use-after-free-right.cc:17}}
+  // CHECK: {{    #0 0x.* in main .*use-after-free-right.cc:17}}
   // CHECK: {{0x.* is located 0 bytes inside of 1-byte region .0x.*,0x.*}}
   // CHECK: {{freed by thread T0 here:}}
 
   // CHECK-Linux: {{    #0 0x.* in .*free}}
   // CHECK-Linux: {{    #1 0x.* in main .*use-after-free-right.cc:16}}
 
-  // CHECK-Darwin: {{    #0 0x.* in _?wrap_free}}
-  // CHECK-Darwin: {{    #1 0x.* in _?main .*use-after-free-right.cc:16}}
+  // CHECK-Darwin: {{    #0 0x.* in wrap_free}}
+  // CHECK-Darwin: {{    #1 0x.* in main .*use-after-free-right.cc:16}}
 
   // CHECK: {{previously allocated by thread T0 here:}}
 
   // CHECK-Linux: {{    #0 0x.* in .*malloc}}
   // CHECK-Linux: {{    #1 0x.* in main .*use-after-free-right.cc:15}}
 
-  // CHECK-Darwin: {{    #0 0x.* in _?wrap_malloc.*}}
-  // CHECK-Darwin: {{    #1 0x.* in _?main .*use-after-free-right.cc:15}}
+  // CHECK-Darwin: {{    #0 0x.* in wrap_malloc.*}}
+  // CHECK-Darwin: {{    #1 0x.* in main .*use-after-free-right.cc:15}}
 }
