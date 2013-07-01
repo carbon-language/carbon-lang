@@ -117,8 +117,6 @@ std::vector<std::string> unescapeCommandLine(
   return parser.parse();
 }
 
-} // end namespace
-
 class JSONCompilationDatabasePlugin : public CompilationDatabasePlugin {
   virtual CompilationDatabase *loadFromDirectory(
       StringRef Directory, std::string &ErrorMessage) {
@@ -131,6 +129,8 @@ class JSONCompilationDatabasePlugin : public CompilationDatabasePlugin {
     return Database.take();
   }
 };
+
+} // end namespace
 
 // Register the JSONCompilationDatabasePlugin with the
 // CompilationDatabasePluginRegistry using this statically initialized variable.
