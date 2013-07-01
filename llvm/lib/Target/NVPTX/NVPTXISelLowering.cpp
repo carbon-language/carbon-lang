@@ -713,7 +713,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
               sz = 8;
             SDValue StVal = OutVals[OIdx];
             if (elemtype.getSizeInBits() < 16) {
-              StVal = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::i16, StVal);
+              StVal = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i16, StVal);
             }
             SDVTList CopyParamVTs = DAG.getVTList(MVT::Other, MVT::Glue);
             SDValue CopyParamOps[] = { Chain,
@@ -947,7 +947,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                      MachinePointerInfo(), false, false, false,
                                      0);
         if (elemtype.getSizeInBits() < 16) {
-          theVal = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::i16, theVal);
+          theVal = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i16, theVal);
         }
         SDVTList CopyParamVTs = DAG.getVTList(MVT::Other, MVT::Glue);
         SDValue CopyParamOps[] = { Chain, DAG.getConstant(paramCount, MVT::i32),
@@ -1382,9 +1382,9 @@ NVPTXTargetLowering::LowerSTOREVector(SDValue Op, SelectionDAG &DAG) const {
     // Since StoreV2 is a target node, we cannot rely on DAG type legalization.
     // Therefore, we must ensure the type is legal.  For i1 and i8, we set the
     // stored type to i16 and propogate the "real" type as the memory type.
-    bool NeedSExt = false;
+    bool NeedExt = false;
     if (EltVT.getSizeInBits() < 16)
-      NeedSExt = true;
+      NeedExt = true;
 
     switch (NumElts) {
     default:
@@ -1407,8 +1407,8 @@ NVPTXTargetLowering::LowerSTOREVector(SDValue Op, SelectionDAG &DAG) const {
     for (unsigned i = 0; i < NumElts; ++i) {
       SDValue ExtVal = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, EltVT, Val,
                                    DAG.getIntPtrConstant(i));
-      if (NeedSExt)
-        ExtVal = DAG.getNode(ISD::SIGN_EXTEND, DL, MVT::i16, ExtVal);
+      if (NeedExt)
+        ExtVal = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i16, ExtVal);
       Ops.push_back(ExtVal);
     }
 
@@ -1614,15 +1614,18 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
               aggregateIsPacked ? 1
                                 : TD->getABITypeAlignment(
                                       partVT.getTypeForEVT(F->getContext()));
-                    SDValue p;
-          if (Ins[InsIdx].VT.getSizeInBits() > partVT.getSizeInBits())
-            p = DAG.getExtLoad(ISD::SEXTLOAD, dl, Ins[InsIdx].VT, Root, srcAddr,
+          SDValue p;
+          if (Ins[InsIdx].VT.getSizeInBits() > partVT.getSizeInBits()) {
+            ISD::LoadExtType ExtOp = Ins[InsIdx].Flags.isSExt() ? 
+                                     ISD::SEXTLOAD : ISD::ZEXTLOAD;
+            p = DAG.getExtLoad(ExtOp, dl, Ins[InsIdx].VT, Root, srcAddr,
                                MachinePointerInfo(srcValue), partVT, false,
                                false, partAlign);
-          else
+          } else {
             p = DAG.getLoad(partVT, dl, Root, srcAddr,
                             MachinePointerInfo(srcValue), false, false, false,
                             partAlign);
+          }
           if (p.getNode())
             p.getNode()->setIROrder(idx + 1);
           InVals.push_back(p);
@@ -1657,7 +1660,7 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
             P.getNode()->setIROrder(idx + 1);
 
           if (Ins[InsIdx].VT.getSizeInBits() > EltVT.getSizeInBits())
-            P = DAG.getNode(ISD::SIGN_EXTEND, dl, Ins[InsIdx].VT, P);
+            P = DAG.getNode(ISD::ANY_EXTEND, dl, Ins[InsIdx].VT, P);
           InVals.push_back(P);
           Ofst += TD->getTypeAllocSize(EltVT.getTypeForEVT(F->getContext()));
           ++InsIdx;
@@ -1682,8 +1685,8 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
                                      DAG.getIntPtrConstant(1));
 
           if (Ins[InsIdx].VT.getSizeInBits() > EltVT.getSizeInBits()) {
-            Elt0 = DAG.getNode(ISD::SIGN_EXTEND, dl, Ins[InsIdx].VT, Elt0);
-            Elt1 = DAG.getNode(ISD::SIGN_EXTEND, dl, Ins[InsIdx].VT, Elt1);
+            Elt0 = DAG.getNode(ISD::ANY_EXTEND, dl, Ins[InsIdx].VT, Elt0);
+            Elt1 = DAG.getNode(ISD::ANY_EXTEND, dl, Ins[InsIdx].VT, Elt1);
           }
 
           InVals.push_back(Elt0);
@@ -1726,7 +1729,7 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
               SDValue Elt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, P,
                                         DAG.getIntPtrConstant(j));
               if (Ins[InsIdx].VT.getSizeInBits() > EltVT.getSizeInBits())
-                Elt = DAG.getNode(ISD::SIGN_EXTEND, dl, Ins[InsIdx].VT, Elt);
+                Elt = DAG.getNode(ISD::ANY_EXTEND, dl, Ins[InsIdx].VT, Elt);
               InVals.push_back(Elt);
             }
             Ofst += TD->getTypeAllocSize(VecVT.getTypeForEVT(F->getContext()));
@@ -1745,14 +1748,17 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
       Value *srcValue = Constant::getNullValue(PointerType::get(
           ObjectVT.getTypeForEVT(F->getContext()), llvm::ADDRESS_SPACE_PARAM));
       SDValue p;
-      if (ObjectVT.getSizeInBits() < Ins[InsIdx].VT.getSizeInBits())
-        p = DAG.getExtLoad(ISD::SEXTLOAD, dl, Ins[InsIdx].VT, Root, Arg,
+       if (ObjectVT.getSizeInBits() < Ins[InsIdx].VT.getSizeInBits()) {
+        ISD::LoadExtType ExtOp = Ins[InsIdx].Flags.isSExt() ? 
+                                       ISD::SEXTLOAD : ISD::ZEXTLOAD;
+        p = DAG.getExtLoad(ExtOp, dl, Ins[InsIdx].VT, Root, Arg,
                            MachinePointerInfo(srcValue), ObjectVT, false, false,
-              TD->getABITypeAlignment(ObjectVT.getTypeForEVT(F->getContext())));
-      else
+        TD->getABITypeAlignment(ObjectVT.getTypeForEVT(F->getContext())));
+      } else {
         p = DAG.getLoad(Ins[InsIdx].VT, dl, Root, Arg,
                         MachinePointerInfo(srcValue), false, false, false,
-              TD->getABITypeAlignment(ObjectVT.getTypeForEVT(F->getContext())));
+        TD->getABITypeAlignment(ObjectVT.getTypeForEVT(F->getContext())));
+      }
       if (p.getNode())
         p.getNode()->setIROrder(idx + 1);
       InVals.push_back(p);
