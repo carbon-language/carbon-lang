@@ -242,9 +242,25 @@ private:
 class DataDirectoryChunk : public HeaderChunk {
 public:
   DataDirectoryChunk() : HeaderChunk() {
-    // [FIXME] Currently all entries are filled with zero.
     _size = sizeof(_dirs);
-    std::memset(&_dirs, 0, sizeof(_dirs));
+    std::memset(_dirs, 0, sizeof(_dirs));
+  }
+
+  // Set the import table address and size. The import table is usually in
+  // .idata section, but because .idata section can be merged with other section
+  // such as .rdata, the given address can be in any section.
+  void setImportTableDirectoryRva(uint32_t rva, uint32_t size) {
+    _dirs[1].RelativeVirtualAddress = rva;
+    _dirs[1].Size = size;
+  }
+
+  // Set the address and size of the import address table (IAT). This is
+  // redundant information because the import table contains the file offset of
+  // the IAT. Although it's redundant, it needs to be set properly, otherwise
+  // the loader refuses the executable.
+  void setImportAddressTableRva(uint32_t rva, uint32_t size) {
+    _dirs[12].RelativeVirtualAddress = rva;
+    _dirs[12].Size = size;
   }
 
   virtual void write(uint8_t *fileBuffer) {
