@@ -838,6 +838,10 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
                     case eSectionTypeDWARFAppleObjC:
                         return eAddressClassDebug;
                     case eSectionTypeEHFrame:               return eAddressClassRuntime;
+                    case eSectionTypeELFSymbolTable:
+                    case eSectionTypeELFDynamicSymbols:
+                    case eSectionTypeELFRelocationEntries:
+                    case eSectionTypeELFDynamicLinkInfo:
                     case eSectionTypeOther:                 return eAddressClassUnknown;
                     }
                 }
@@ -891,7 +895,7 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
 }
 
 Symtab *
-ObjectFileMachO::GetSymtab()
+ObjectFileMachO::GetSymtab(uint32_t flags)
 {
     ModuleSP module_sp(GetModule());
     if (module_sp)
@@ -1033,6 +1037,7 @@ ObjectFileMachO::ParseSections ()
                     if (segment_name || is_core)
                     {
                         segment_sp.reset(new Section (module_sp,              // Module to which this section belongs
+                                                      this,                   // Object file to which this sections belongs
                                                       ++segID << 8,           // Section ID is the 1 based segment index shifted right by 8 bits as not to collide with any of the 256 section IDs that are possible
                                                       segment_name,           // Name of this section
                                                       eSectionTypeContainer,  // This section is a container of other sections.
@@ -1129,7 +1134,8 @@ ObjectFileMachO::ParseSections ()
                             {
                                 // Create a fake section for the section's named segment
                                 segment_sp.reset(new Section (segment_sp,            // Parent section
-                                                              module_sp,           // Module to which this section belongs
+                                                              module_sp,             // Module to which this section belongs
+                                                              this,                  // Object file to which this section belongs
                                                               ++segID << 8,          // Section ID is the 1 based segment index shifted right by 8 bits as not to collide with any of the 256 section IDs that are possible
                                                               segment_name,          // Name of this section
                                                               eSectionTypeContainer, // This section is a container of other sections.
@@ -1258,6 +1264,7 @@ ObjectFileMachO::ParseSections ()
 
                         SectionSP section_sp(new Section (segment_sp,
                                                           module_sp,
+                                                          this,
                                                           ++sectID,
                                                           section_name,
                                                           sect_type,

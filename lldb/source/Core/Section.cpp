@@ -16,6 +16,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 Section::Section (const ModuleSP &module_sp,
+                  ObjectFile *obj_file,
                   user_id_t sect_id,
                   const ConstString &name,
                   SectionType sect_type,
@@ -27,6 +28,7 @@ Section::Section (const ModuleSP &module_sp,
     ModuleChild     (module_sp),
     UserID          (sect_id),
     Flags           (flags),
+    m_obj_file      (obj_file),
     m_type          (sect_type),
     m_parent_wp     (),
     m_name          (name),
@@ -45,6 +47,7 @@ Section::Section (const ModuleSP &module_sp,
 
 Section::Section (const lldb::SectionSP &parent_section_sp,
                   const ModuleSP &module_sp,
+                  ObjectFile *obj_file,
                   user_id_t sect_id,
                   const ConstString &name,
                   SectionType sect_type,
@@ -56,6 +59,7 @@ Section::Section (const lldb::SectionSP &parent_section_sp,
     ModuleChild     (module_sp),
     UserID          (sect_id),
     Flags           (flags),
+    m_obj_file      (obj_file),
     m_type          (sect_type),
     m_parent_wp     (),
     m_name          (name),
@@ -242,13 +246,16 @@ Section::DumpName (Stream *s) const
     else
     {
         // The top most section prints the module basename
+        const char * name = NULL;
         ModuleSP module_sp (GetModule());
-        if (module_sp)
-        {
-            const char *module_basename = module_sp->GetFileSpec().GetFilename().AsCString();
-            if (module_basename && module_basename[0])
-                s->Printf("%s.", module_basename);
-        }
+        const FileSpec &file_spec = m_obj_file->GetFileSpec();
+
+        if (m_obj_file)
+            name = file_spec.GetFilename().AsCString();
+        if ((!name || !name[0]) && module_sp)
+            name = module_sp->GetFileSpec().GetFilename().AsCString();
+        if (name && name[0])
+            s->Printf("%s.", name);
     }
     m_name.Dump(s);
 }
@@ -285,6 +292,8 @@ Section::Slide (addr_t slide_amount, bool slide_children)
 #pragma mark SectionList
 
 SectionList::SectionList () :
+    m_changed(false),
+    m_revision_id(0),
     m_sections()
 {
 }
@@ -294,13 +303,39 @@ SectionList::~SectionList ()
 {
 }
 
+bool
+SectionList::Copy (SectionList *dest_section_list)
+{
+    if (dest_section_list)
+    {
+        dest_section_list->m_sections = m_sections;
+        dest_section_list->m_changed = true;
+        return true;
+    }
+    return false;
+}
+
 size_t
 SectionList::AddSection (const lldb::SectionSP& section_sp)
 {
+    m_changed = true;
     assert (section_sp.get());
     size_t section_index = m_sections.size();
     m_sections.push_back(section_sp);
     return section_index;
+}
+
+// Warning, this can be slow as it's removing items from a std::vector.
+bool
+SectionList::DeleteSection (size_t idx)
+{
+    if (idx < m_sections.size())
+    {
+        m_changed = true;
+        m_sections.erase (m_sections.begin() + idx);
+        return true; 
+    }
+    return false;
 }
 
 size_t
@@ -325,10 +360,12 @@ SectionList::AddUniqueSection (const lldb::SectionSP& sect_sp)
 {
     size_t sect_idx = FindSectionIndex (sect_sp.get());
     if (sect_idx == UINT32_MAX)
+    {
+        m_changed = true;
         sect_idx = AddSection (sect_sp);
+    }
     return sect_idx;
 }
-
 
 bool
 SectionList::ReplaceSection (user_id_t sect_id, const lldb::SectionSP& sect_sp, uint32_t depth)
@@ -338,6 +375,7 @@ SectionList::ReplaceSection (user_id_t sect_id, const lldb::SectionSP& sect_sp, 
     {
         if ((*sect_iter)->GetID() == sect_id)
         {
+            m_changed = true;
             *sect_iter = sect_sp;
             return true;
         }
@@ -349,7 +387,6 @@ SectionList::ReplaceSection (user_id_t sect_id, const lldb::SectionSP& sect_sp, 
     }
     return false;
 }
-
 
 size_t
 SectionList::GetNumSections (uint32_t depth) const
@@ -527,5 +564,10 @@ SectionList::Finalize ()
         
         sect->GetChildren().Finalize();
     }
-}
 
+    if (m_changed)
+    {
+        m_revision_id++;
+        m_changed = false;
+    }
+}

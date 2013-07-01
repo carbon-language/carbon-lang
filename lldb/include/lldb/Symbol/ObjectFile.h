@@ -13,6 +13,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Host/FileSpec.h"
+#include "lldb/Core/FileSpecList.h"
 #include "lldb/Core/ModuleChild.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Host/Endian.h"
@@ -78,7 +79,12 @@ public:
         eStrataKernel,
         eStrataRawImage
     } Strata;
-        
+
+    typedef enum
+    {
+        eSymtabFromUnifiedSectionList = 0x0001 /// Return symbol table from unified module section list
+    } SymtabFlags;
+
     //------------------------------------------------------------------
     /// Construct with a parent module, offset, and header data.
     ///
@@ -356,22 +362,30 @@ public:
     /// Symbol table parsing can be deferred by ObjectFile instances
     /// until this accessor is called the first time.
     ///
+    /// @param[in] flags
+    ///     eSymtabFromUnifiedSectionList: Whether to get symbol table
+    ///     for unified module section list, or object file.
+    ///
     /// @return
     ///     The symbol table for this object file.
     //------------------------------------------------------------------
     virtual Symtab *
-    GetSymtab () = 0;
+    GetSymtab (uint32_t flags = 0) = 0;
 
     //------------------------------------------------------------------
     /// Frees the symbol table.
     ///
     /// This function should only be used when an object file is
     ///
+    /// @param[in] flags
+    ///     eSymtabFromUnifiedSectionList: Whether to clear symbol table
+    ///     for unified module section list, or object file.
+    ///
     /// @return
     ///     The symbol table for this object file.
     //------------------------------------------------------------------
     virtual void
-    ClearSymtab ();
+    ClearSymtab (uint32_t flags = 0);
     
     //------------------------------------------------------------------
     /// Gets the UUID for this object file.
@@ -387,6 +401,21 @@ public:
     //------------------------------------------------------------------
     virtual bool
     GetUUID (lldb_private::UUID* uuid) = 0;
+
+    //------------------------------------------------------------------
+    /// Gets the symbol file spec list for this object file.
+    ///
+    /// If the object file format contains a debug symbol file link,
+    /// the values will be return in the FileSpecList.
+    ///
+    /// @return
+    ///     Returns filespeclist.
+    //------------------------------------------------------------------
+    virtual lldb_private::FileSpecList
+    GetDebugSymbolFilePaths()
+    {
+        return FileSpecList();
+    }
 
     //------------------------------------------------------------------
     /// Gets whether endian swapping should occur when extracting data
@@ -485,6 +514,7 @@ public:
     {
         return lldb::RegisterContextSP();
     }
+
     //------------------------------------------------------------------
     /// The object file should be able to calculate its type by looking
     /// at its file header and possibly the sections or other data in
@@ -499,6 +529,17 @@ public:
     //------------------------------------------------------------------
     virtual Type
     CalculateType() = 0;
+
+    //------------------------------------------------------------------
+    /// In cases where the type can't be calculated (elf files), this
+    /// routine allows someone to explicitly set it. As an example,
+    /// SymbolVendorELF uses this routine to set eTypeDebugInfo when
+    /// loading debug link files.
+    virtual void
+    SetType (Type type)
+    {
+        m_type = type;
+    }
 
     //------------------------------------------------------------------
     /// The object file should be able to calculate the strata of the
@@ -635,6 +676,8 @@ protected:
     const lldb::addr_t m_memory_addr;
     std::unique_ptr<lldb_private::SectionList> m_sections_ap;
     std::unique_ptr<lldb_private::Symtab> m_symtab_ap;
+    std::unique_ptr<lldb_private::Symtab> m_symtab_unified_ap; ///< Unified section list symbol table.
+    uint32_t m_symtab_unified_revisionid; ///< Unified section list symbol table revision id for when m_symtab_unified_ap was last modified.
     
     //------------------------------------------------------------------
     /// Sets the architecture for a module.  At present the architecture

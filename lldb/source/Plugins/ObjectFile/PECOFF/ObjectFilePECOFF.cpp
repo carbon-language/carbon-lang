@@ -511,7 +511,7 @@ ObjectFilePECOFF::GetSectionName(std::string& sect_name, const section_header_t&
 // GetNListSymtab
 //----------------------------------------------------------------------
 Symtab *
-ObjectFilePECOFF::GetSymtab()
+ObjectFilePECOFF::GetSymtab(uint32_t flags)
 {
     ModuleSP module_sp(GetModule());
     if (module_sp)
@@ -698,9 +698,10 @@ ObjectFilePECOFF::GetSectionList()
                 // Use a segment ID of the segment index shifted left by 8 so they
                 // never conflict with any of the sections.
                 SectionSP section_sp (new Section (module_sp,                    // Module to which this section belongs
+                                                   this,                         // Object file to which this section belongs
                                                    idx + 1,                      // Section ID is the 1 based segment index shifted right by 8 bits as not to collide with any of the 256 section IDs that are possible
                                                    const_sect_name,              // Name of this section
-                                                   section_type,                    // This section is a container of other sections.
+                                                   section_type,                 // This section is a container of other sections.
                                                    m_coff_header_opt.image_base + m_sect_headers[idx].vmaddr,   // File VM address == addresses as they are found in the object file
                                                    m_sect_headers[idx].vmsize,   // VM size in bytes of this section
                                                    m_sect_headers[idx].offset,   // Offset to the data for this section in the file

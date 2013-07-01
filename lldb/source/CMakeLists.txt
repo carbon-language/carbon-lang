@@ -49,6 +49,7 @@ set( LLDB_USED_LIBS
   
   lldbPluginObjectFileMachO
   lldbPluginObjectFileELF
+  lldbPluginSymbolVendorELF
   lldbPluginObjectContainerBSDArchive
   lldbPluginObjectContainerMachOArchive
   lldbPluginProcessGDBRemote  

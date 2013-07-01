@@ -83,7 +83,7 @@ UUIDsMatch(Module *module, ObjectFile *ofile, lldb_private::Stream *feedback_str
     return false;
 }
 
-static void
+static bool
 ReplaceDSYMSectionsWithExecutableSections (ObjectFile *exec_objfile, ObjectFile *dsym_objfile)
 {
     // We need both the executable and the dSYM to live off of the
@@ -123,7 +123,9 @@ ReplaceDSYMSectionsWithExecutableSections (ObjectFile *exec_objfile, ObjectFile 
         }
         
         dsym_section_list->Finalize(); // Now that we're done adding sections, finalize to build fast-lookup caches
+        return true;
     }
+    return false;
 }
 
 void
@@ -169,6 +171,15 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp, lldb_privat
     if (!module_sp)
         return NULL;
 
+    ObjectFile * obj_file = module_sp->GetObjectFile();
+    if (!obj_file)
+        return NULL;
+    
+    static ConstString obj_file_macho("mach-o");
+    ConstString obj_name = obj_file->GetPluginName();
+    if (obj_name != obj_file_macho)
+        return NULL;
+
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "SymbolVendorMacOSX::CreateInstance (module = %s)",
                         module_sp->GetFileSpec().GetPath().c_str());
@@ -179,119 +190,115 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp, lldb_privat
         path[0] = '\0';
 
         // Try and locate the dSYM file on Mac OS X
-        ObjectFile * obj_file = module_sp->GetObjectFile();
-        if (obj_file)
-        {
-            Timer scoped_timer2 ("SymbolVendorMacOSX::CreateInstance () locate dSYM",
-                                 "SymbolVendorMacOSX::CreateInstance (module = %s) locate dSYM",
-                                 module_sp->GetFileSpec().GetPath().c_str());
+        Timer scoped_timer2 ("SymbolVendorMacOSX::CreateInstance () locate dSYM",
+                             "SymbolVendorMacOSX::CreateInstance (module = %s) locate dSYM",
+                             module_sp->GetFileSpec().GetPath().c_str());
 
-            // First check to see if the module has a symbol file in mind already.
-            // If it does, then we MUST use that.
-            FileSpec dsym_fspec (module_sp->GetSymbolFileFileSpec());
+        // First check to see if the module has a symbol file in mind already.
+        // If it does, then we MUST use that.
+        FileSpec dsym_fspec (module_sp->GetSymbolFileFileSpec());
             
-            ObjectFileSP dsym_objfile_sp;
-            if (!dsym_fspec)
-            {
-                // No symbol file was specified in the module, lets try and find
-                // one ourselves.
-                FileSpec file_spec = obj_file->GetFileSpec();
-                if (!file_spec)
-                    file_spec = module_sp->GetFileSpec();
+        ObjectFileSP dsym_objfile_sp;
+        if (!dsym_fspec)
+        {
+            // No symbol file was specified in the module, lets try and find
+            // one ourselves.
+            FileSpec file_spec = obj_file->GetFileSpec();
+            if (!file_spec)
+                file_spec = module_sp->GetFileSpec();
                 
-                ModuleSpec module_spec(file_spec, module_sp->GetArchitecture());
-                module_spec.GetUUID() = module_sp->GetUUID();
-                dsym_fspec = Symbols::LocateExecutableSymbolFile (module_spec);
-                if (module_spec.GetSourceMappingList().GetSize())
-                    module_sp->GetSourceMappingList().Append (module_spec.GetSourceMappingList (), true);
-            }
+            ModuleSpec module_spec(file_spec, module_sp->GetArchitecture());
+            module_spec.GetUUID() = module_sp->GetUUID();
+            dsym_fspec = Symbols::LocateExecutableSymbolFile (module_spec);
+            if (module_spec.GetSourceMappingList().GetSize())
+                module_sp->GetSourceMappingList().Append (module_spec.GetSourceMappingList (), true);
+        }
             
-            if (dsym_fspec)
+        if (dsym_fspec)
+        {
+            DataBufferSP dsym_file_data_sp;
+            lldb::offset_t dsym_file_data_offset = 0;
+            dsym_objfile_sp = ObjectFile::FindPlugin(module_sp, &dsym_fspec, 0, dsym_fspec.GetByteSize(), dsym_file_data_sp, dsym_file_data_offset);
+            if (UUIDsMatch(module_sp.get(), dsym_objfile_sp.get(), feedback_strm))
             {
-                DataBufferSP dsym_file_data_sp;
-                lldb::offset_t dsym_file_data_offset = 0;
-                dsym_objfile_sp = ObjectFile::FindPlugin(module_sp, &dsym_fspec, 0, dsym_fspec.GetByteSize(), dsym_file_data_sp, dsym_file_data_offset);
-                if (UUIDsMatch(module_sp.get(), dsym_objfile_sp.get(), feedback_strm))
+                char dsym_path[PATH_MAX];
+                if (module_sp->GetSourceMappingList().IsEmpty() && dsym_fspec.GetPath(dsym_path, sizeof(dsym_path)))
                 {
-                    char dsym_path[PATH_MAX];
-                    if (module_sp->GetSourceMappingList().IsEmpty() && dsym_fspec.GetPath(dsym_path, sizeof(dsym_path)))
+                    lldb_private::UUID dsym_uuid;
+                    if (dsym_objfile_sp->GetUUID(&dsym_uuid))
                     {
-                        lldb_private::UUID dsym_uuid;
-                        if (dsym_objfile_sp->GetUUID(&dsym_uuid))
+                        std::string uuid_str = dsym_uuid.GetAsString ();
+                        if (!uuid_str.empty())
                         {
-                            std::string uuid_str = dsym_uuid.GetAsString ();
-                            if (!uuid_str.empty())
+                            char *resources = strstr (dsym_path, "/Contents/Resources/");
+                            if (resources)
                             {
-                                char *resources = strstr (dsym_path, "/Contents/Resources/");
-                                if (resources)
+                                char dsym_uuid_plist_path[PATH_MAX];
+                                resources[strlen("/Contents/Resources/")] = '\0';
+                                snprintf(dsym_uuid_plist_path, sizeof(dsym_uuid_plist_path), "%s%s.plist", dsym_path, uuid_str.c_str());
+                                FileSpec dsym_uuid_plist_spec(dsym_uuid_plist_path, false);
+                                if (dsym_uuid_plist_spec.Exists())
                                 {
-                                    char dsym_uuid_plist_path[PATH_MAX];
-                                    resources[strlen("/Contents/Resources/")] = '\0';
-                                    snprintf(dsym_uuid_plist_path, sizeof(dsym_uuid_plist_path), "%s%s.plist", dsym_path, uuid_str.c_str());
-                                    FileSpec dsym_uuid_plist_spec(dsym_uuid_plist_path, false);
-                                    if (dsym_uuid_plist_spec.Exists())
+                                    xmlDoc *doc = ::xmlReadFile (dsym_uuid_plist_path, NULL, 0);
+                                    if (doc)
                                     {
-                                        xmlDoc *doc = ::xmlReadFile (dsym_uuid_plist_path, NULL, 0);
-                                        if (doc)
+                                        char DBGBuildSourcePath[PATH_MAX];
+                                        char DBGSourcePath[PATH_MAX];
+                                        DBGBuildSourcePath[0] = '\0';
+                                        DBGSourcePath[0] = '\0';
+                                        for (xmlNode *node = doc->children; node; node = node ? node->next : NULL)
                                         {
-                                            char DBGBuildSourcePath[PATH_MAX];
-                                            char DBGSourcePath[PATH_MAX];
-                                            DBGBuildSourcePath[0] = '\0';
-                                            DBGSourcePath[0] = '\0';
-                                            for (xmlNode *node = doc->children; node; node = node ? node->next : NULL)
+                                            if (node->type == XML_ELEMENT_NODE)
                                             {
-                                                if (node->type == XML_ELEMENT_NODE)
+                                                if (node->name && strcmp((const char*)node->name, "plist") == 0)
                                                 {
-                                                    if (node->name && strcmp((const char*)node->name, "plist") == 0)
+                                                    xmlNode *dict_node = node->children;
+                                                    while (dict_node && dict_node->type != XML_ELEMENT_NODE)
+                                                        dict_node = dict_node->next;
+                                                    if (dict_node && dict_node->name && strcmp((const char *)dict_node->name, "dict") == 0)
                                                     {
-                                                        xmlNode *dict_node = node->children;
-                                                        while (dict_node && dict_node->type != XML_ELEMENT_NODE)
-                                                            dict_node = dict_node->next;
-                                                        if (dict_node && dict_node->name && strcmp((const char *)dict_node->name, "dict") == 0)
+                                                        for (xmlNode *key_node = dict_node->children; key_node; key_node = key_node->next)
                                                         {
-                                                            for (xmlNode *key_node = dict_node->children; key_node; key_node = key_node->next)
+                                                            if (key_node && key_node->type == XML_ELEMENT_NODE && key_node->name)
                                                             {
-                                                                if (key_node && key_node->type == XML_ELEMENT_NODE && key_node->name)
+                                                                if (strcmp((const char *)key_node->name, "key") == 0)
                                                                 {
-                                                                    if (strcmp((const char *)key_node->name, "key") == 0)
+                                                                    const char *key_name = (const char *)::xmlNodeGetContent(key_node);
+                                                                    if (strcmp(key_name, "DBGBuildSourcePath") == 0)
                                                                     {
-                                                                        const char *key_name = (const char *)::xmlNodeGetContent(key_node);
-                                                                        if (strcmp(key_name, "DBGBuildSourcePath") == 0)
+                                                                        xmlNode *value_node = key_node->next;
+                                                                        while (value_node && value_node->type != XML_ELEMENT_NODE)
+                                                                            value_node = value_node->next;
+                                                                        if (value_node && value_node->name)
                                                                         {
-                                                                            xmlNode *value_node = key_node->next;
-                                                                            while (value_node && value_node->type != XML_ELEMENT_NODE)
-                                                                                value_node = value_node->next;
-                                                                            if (value_node && value_node->name)
+                                                                            if (strcmp((const char *)value_node->name, "string") == 0)
                                                                             {
-                                                                                if (strcmp((const char *)value_node->name, "string") == 0)
+                                                                                const char *node_content = (const char *)::xmlNodeGetContent(value_node);
+                                                                                if (node_content)
                                                                                 {
-                                                                                    const char *node_content = (const char *)::xmlNodeGetContent(value_node);
-                                                                                    if (node_content)
-                                                                                    {
-                                                                                        strncpy(DBGBuildSourcePath, node_content, sizeof(DBGBuildSourcePath));
-                                                                                    }
+                                                                                    strncpy(DBGBuildSourcePath, node_content, sizeof(DBGBuildSourcePath));
                                                                                 }
-                                                                                key_node = value_node;
                                                                             }
+                                                                            key_node = value_node;
                                                                         }
-                                                                        else if (strcmp(key_name, "DBGSourcePath") == 0)
+                                                                    }
+                                                                    else if (strcmp(key_name, "DBGSourcePath") == 0)
+                                                                    {
+                                                                        xmlNode *value_node = key_node->next;
+                                                                        while (value_node && value_node->type != XML_ELEMENT_NODE)
+                                                                            value_node = value_node->next;
+                                                                        if (value_node && value_node->name)
                                                                         {
-                                                                            xmlNode *value_node = key_node->next;
-                                                                            while (value_node && value_node->type != XML_ELEMENT_NODE)
-                                                                                value_node = value_node->next;
-                                                                            if (value_node && value_node->name)
+                                                                            if (strcmp((const char *)value_node->name, "string") == 0)
                                                                             {
-                                                                                if (strcmp((const char *)value_node->name, "string") == 0)
+                                                                                const char *node_content = (const char *)::xmlNodeGetContent(value_node);
+                                                                                if (node_content)
                                                                                 {
-                                                                                    const char *node_content = (const char *)::xmlNodeGetContent(value_node);
-                                                                                    if (node_content)
-                                                                                    {
-                                                                                        FileSpec resolved_source_path(node_content, true);
-                                                                                        resolved_source_path.GetPath(DBGSourcePath, sizeof(DBGSourcePath));
-                                                                                    }
+                                                                                    FileSpec resolved_source_path(node_content, true);
+                                                                                    resolved_source_path.GetPath(DBGSourcePath, sizeof(DBGSourcePath));
                                                                                 }
-                                                                                key_node = value_node;
                                                                             }
+                                                                            key_node = value_node;
                                                                         }
                                                                     }
                                                                 }
@@ -300,30 +307,39 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp, lldb_privat
                                                     }
                                                 }
                                             }
-                                            ::xmlFreeDoc (doc);
+                                        }
+                                        ::xmlFreeDoc (doc);
                                             
-                                            if (DBGBuildSourcePath[0] && DBGSourcePath[0])
-                                            {
-                                                module_sp->GetSourceMappingList().Append (ConstString(DBGBuildSourcePath), ConstString(DBGSourcePath), true);
-                                            }
+                                        if (DBGBuildSourcePath[0] && DBGSourcePath[0])
+                                        {
+                                            module_sp->GetSourceMappingList().Append (ConstString(DBGBuildSourcePath), ConstString(DBGSourcePath), true);
                                         }
                                     }
                                 }
                             }
                         }
                     }
-
-                    ReplaceDSYMSectionsWithExecutableSections (obj_file, dsym_objfile_sp.get());
-                    symbol_vendor->AddSymbolFileRepresentation(dsym_objfile_sp);
-                    return symbol_vendor;
                 }
-            }
 
-            // Just create our symbol vendor using the current objfile as this is either
-            // an executable with no dSYM (that we could locate), an executable with
-            // a dSYM that has a UUID that doesn't match.
-            symbol_vendor->AddSymbolFileRepresentation(obj_file->shared_from_this());
+                if (ReplaceDSYMSectionsWithExecutableSections (obj_file, dsym_objfile_sp.get()))
+                {
+                    SectionList *section_list = dsym_objfile_sp.get()->GetSectionList();
+                    if (section_list)
+                    {
+                        section_list->Copy (module_sp->GetUnifiedSectionList());
+                        section_list->Finalize ();
+                    }
+                }
+
+                symbol_vendor->AddSymbolFileRepresentation(dsym_objfile_sp);
+                return symbol_vendor;
+            }
         }
+
+        // Just create our symbol vendor using the current objfile as this is either
+        // an executable with no dSYM (that we could locate), an executable with
+        // a dSYM that has a UUID that doesn't match.
+        symbol_vendor->AddSymbolFileRepresentation(obj_file->shared_from_this());
     }
     return symbol_vendor;
 }

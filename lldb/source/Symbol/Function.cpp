@@ -568,9 +568,9 @@ Function::GetPrologueByteSize ()
                     // Check the first few instructions and look for one that has
                     // is_prologue_end set to true.
                     const uint32_t last_line_entry_idx = first_line_entry_idx + 6;
-                    LineEntry line_entry;
                     for (uint32_t idx = first_line_entry_idx + 1; idx < last_line_entry_idx; ++idx)
                     {
+                        LineEntry line_entry;
                         if (line_table->GetLineEntryAtIndex (idx, line_entry))
                         {
                             if (line_entry.is_prologue_end)
@@ -581,12 +581,31 @@ Function::GetPrologueByteSize ()
                         }
                     }
                 }
-                
+
                 // If we didn't find the end of the prologue in the line tables,
                 // then just use the end address of the first line table entry
                 if (prologue_end_file_addr == LLDB_INVALID_ADDRESS)
                 {
-                    prologue_end_file_addr = first_line_entry.range.GetBaseAddress().GetFileAddress() + first_line_entry.range.GetByteSize();
+                    // Check the first few instructions and look for one that has
+                    // a line number that's different than the first entry.
+                    const uint32_t last_line_entry_idx = first_line_entry_idx + 6;
+                    for (uint32_t idx = first_line_entry_idx + 1; idx < last_line_entry_idx; ++idx)
+                    {
+                        LineEntry line_entry;
+                        if (line_table->GetLineEntryAtIndex (idx, line_entry))
+                        {
+                            if (line_entry.line != first_line_entry.line)
+                            {
+                                prologue_end_file_addr = line_entry.range.GetBaseAddress().GetFileAddress();
+                                break;
+                            }
+                        }
+                    }
+
+                    if (prologue_end_file_addr == LLDB_INVALID_ADDRESS)
+                    {
+                        prologue_end_file_addr = first_line_entry.range.GetBaseAddress().GetFileAddress() + first_line_entry.range.GetByteSize();
+                    }
                 }
                 const addr_t func_start_file_addr = m_range.GetBaseAddress().GetFileAddress();
                 const addr_t func_end_file_addr = func_start_file_addr + m_range.GetByteSize();

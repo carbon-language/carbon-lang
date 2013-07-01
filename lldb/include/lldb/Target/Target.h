@@ -118,6 +118,9 @@ public:
     
     FileSpecList &
     GetExecutableSearchPaths ();
+
+    FileSpecList &
+    GetDebugFileSearchPaths ();
     
     bool
     GetEnableSyntheticValue () const;
@@ -377,6 +380,9 @@ public:
 
     static FileSpecList
     GetDefaultExecutableSearchPaths ();
+
+    static FileSpecList
+    GetDefaultDebugFileSearchPaths ();
 
     static ArchSpec
     GetDefaultArchitecture ();

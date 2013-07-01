@@ -75,9 +75,9 @@ SymbolFileDWARFDebugMap::CompileUnitInfo::GetFileRangeMap(SymbolFileDWARFDebugMa
     {
         for (auto comp_unit_info : cu_infos)
         {
-            Symtab *exe_symtab = exe_symfile->GetObjectFile()->GetSymtab();
+            Symtab *exe_symtab = exe_symfile->GetObjectFile()->GetSymtab(ObjectFile::eSymtabFromUnifiedSectionList);
             ModuleSP oso_module_sp (oso_objfile->GetModule());
-            Symtab *oso_symtab = oso_objfile->GetSymtab();
+            Symtab *oso_symtab = oso_objfile->GetSymtab(ObjectFile::eSymtabFromUnifiedSectionList);
             
             ///const uint32_t fun_resolve_flags = SymbolContext::Module | eSymbolContextCompUnit | eSymbolContextFunction;
             //SectionList *oso_sections = oso_objfile->Sections();
@@ -169,7 +169,7 @@ SymbolFileDWARFDebugMap::CompileUnitInfo::GetFileRangeMap(SymbolFileDWARFDebugMa
             
             exe_symfile->FinalizeOSOFileRanges (this);
             // We don't need the symbols anymore for the .o files
-            oso_objfile->ClearSymtab();
+            oso_objfile->ClearSymtab(ObjectFile::eSymtabFromUnifiedSectionList);
         }
     }
     return file_range_map;
@@ -330,7 +330,7 @@ SymbolFileDWARFDebugMap::InitOSO()
     // these files exist and also contain valid DWARF. If we get any of that
     // then we return the abilities of the first N_OSO's DWARF.
 
-    Symtab* symtab = m_obj_file->GetSymtab();
+    Symtab* symtab = m_obj_file->GetSymtab(ObjectFile::eSymtabFromUnifiedSectionList);
     if (symtab)
     {
         Log *log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_MAP));
@@ -777,7 +777,7 @@ uint32_t
 SymbolFileDWARFDebugMap::ResolveSymbolContext (const Address& exe_so_addr, uint32_t resolve_scope, SymbolContext& sc)
 {
     uint32_t resolved_flags = 0;
-    Symtab* symtab = m_obj_file->GetSymtab();
+    Symtab* symtab = m_obj_file->GetSymtab(ObjectFile::eSymtabFromUnifiedSectionList);
     if (symtab)
     {
         const addr_t exe_file_addr = exe_so_addr.GetFileAddress();

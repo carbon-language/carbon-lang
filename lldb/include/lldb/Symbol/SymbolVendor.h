@@ -164,6 +164,14 @@ public:
         return m_sym_file_ap.get();
     }
 
+    // Get module unified section list symbol table.
+    virtual Symtab *
+    GetSymtab ();
+
+    // Clear module unified section list symbol table.
+    virtual void
+    ClearSymtab ();
+
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
@@ -184,7 +192,7 @@ protected:
     TypeList m_type_list; // Uniqued types for all parsers owned by this module
     CompileUnits m_compile_units; // The current compile units
     lldb::ObjectFileSP m_objfile_sp;    // Keep a reference to the object file in case it isn't the same as the module object file (debug symbols in a separate file)
-    std::unique_ptr<SymbolFile> m_sym_file_ap; // A single symbol file. Suclasses can add more of these if needed.
+    std::unique_ptr<SymbolFile> m_sym_file_ap; // A single symbol file. Subclasses can add more of these if needed.
 
 private:
     //------------------------------------------------------------------

@@ -18,6 +18,7 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Symbol/SymbolVendor.h"
 
 #include "llvm/ADT/Triple.h"
 
@@ -456,10 +457,10 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                 case eSectionTypeData:
                     if (module_sp)
                     {
-                        ObjectFile *objfile = module_sp->GetObjectFile();
-                        if (objfile)
+                        SymbolVendor *sym_vendor = module_sp->GetSymbolVendor();
+                        if (sym_vendor)
                         {
-                            Symtab *symtab = objfile->GetSymtab();
+                            Symtab *symtab = sym_vendor->GetSymtab();
                             if (symtab)
                             {
                                 const addr_t file_Addr = GetFileAddress();
@@ -1023,7 +1024,11 @@ Address::GetAddressClass () const
     {
         ObjectFile *obj_file = module_sp->GetObjectFile();
         if (obj_file)
+        {
+            // Give the symbol vendor a chance to add to the unified section list.
+            module_sp->GetSymbolVendor();
             return obj_file->GetAddressClass (GetFileAddress());
+        }
     }
     return eAddressClassUnknown;
 }

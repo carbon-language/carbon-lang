@@ -543,7 +543,7 @@ SymbolFileDWARF::InitializeObject()
     ModuleSP module_sp (m_obj_file->GetModule());
     if (module_sp)
     {
-        const SectionList *section_list = m_obj_file->GetSectionList();
+        const SectionList *section_list = module_sp->GetUnifiedSectionList();
 
         const Section* section = section_list->FindSectionByName(GetDWARFMachOSegmentName ()).get();
 
@@ -704,8 +704,9 @@ SymbolFileDWARF::GetCachedSectionData (uint32_t got_flag, SectionType sect_type,
 {
     if (m_flags.IsClear (got_flag))
     {
+        ModuleSP module_sp (m_obj_file->GetModule());
         m_flags.Set (got_flag);
-        const SectionList *section_list = m_obj_file->GetSectionList();
+        const SectionList *section_list = module_sp->GetUnifiedSectionList();
         if (section_list)
         {
             SectionSP section_sp (section_list->FindSectionByType(sect_type, true));
@@ -1054,7 +1055,8 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
         lldb::addr_t highest_func_addr = func_ranges.GetMaxRangeEnd (0);
         if (lowest_func_addr != LLDB_INVALID_ADDRESS && lowest_func_addr <= highest_func_addr)
         {
-            func_range.GetBaseAddress().ResolveAddressUsingFileSections (lowest_func_addr, m_obj_file->GetSectionList());
+            ModuleSP module_sp (m_obj_file->GetModule());
+            func_range.GetBaseAddress().ResolveAddressUsingFileSections (lowest_func_addr, module_sp->GetUnifiedSectionList());
             if (func_range.GetBaseAddress().IsValid())
                 func_range.SetByteSize(highest_func_addr - lowest_func_addr);
         }
@@ -4721,7 +4723,7 @@ SymbolFileDWARF::GetObjCClassSymbol (const ConstString &objc_class_name)
     Symbol *objc_class_symbol = NULL;
     if (m_obj_file)
     {
-        Symtab *symtab = m_obj_file->GetSymtab();
+        Symtab *symtab = m_obj_file->GetSymtab (ObjectFile::eSymtabFromUnifiedSectionList);
         if (symtab)
         {
             objc_class_symbol = symtab->FindFirstSymbolWithNameAndType (objc_class_name, 
@@ -7429,13 +7431,12 @@ SymbolFileDWARF::ParseVariableDIE
                         bool linked_oso_file_addr = false;
                         if (is_external && location_DW_OP_addr == 0)
                         {
-                            
                             // we have a possible uninitialized extern global
                             ConstString const_name(mangled ? mangled : name);
                             ObjectFile *debug_map_objfile = debug_map_symfile->GetObjectFile();
                             if (debug_map_objfile)
                             {
-                                Symtab *debug_map_symtab = debug_map_objfile->GetSymtab();
+                                Symtab *debug_map_symtab = debug_map_objfile->GetSymtab(ObjectFile::eSymtabFromUnifiedSectionList);
                                 if (debug_map_symtab)
                                 {
                                     Symbol *exe_symbol = debug_map_symtab->FindFirstSymbolWithNameAndType (const_name,

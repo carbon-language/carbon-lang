@@ -56,7 +56,7 @@ public:
     SetBytes (const void *uuid_bytes, uint32_t num_uuid_bytes = 16);
 
     std::string
-    GetAsString () const;
+    GetAsString (const char *separator = NULL) const;
 
     size_t
     SetFromCString (const char *c_str, uint32_t num_uuid_bytes = 16);

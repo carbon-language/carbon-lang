@@ -93,7 +93,7 @@ SymbolFileSymtab::CalculateAbilities ()
     uint32_t abilities = 0;
     if (m_obj_file)
     {
-        const Symtab *symtab = m_obj_file->GetSymtab();
+        const Symtab *symtab = m_obj_file->GetSymtab(ObjectFile::eSymtabFromUnifiedSectionList);
         if (symtab)
         {
             //----------------------------------------------------------------------
@@ -159,7 +159,7 @@ SymbolFileSymtab::ParseCompileUnitAtIndex(uint32_t idx)
     // the entire object file
     if (idx < m_source_indexes.size())
     {
-        const Symbol *cu_symbol = m_obj_file->GetSymtab()->SymbolAtIndex(m_source_indexes[idx]);
+        const Symbol *cu_symbol = m_obj_file->GetSymtab(ObjectFile::eSymtabFromUnifiedSectionList)->SymbolAtIndex(m_source_indexes[idx]);
         if (cu_symbol)
             cu_sp.reset(new CompileUnit (m_obj_file->GetModule(), NULL, cu_symbol->GetMangled().GetName().AsCString(), 0, eLanguageTypeUnknown));
     }
@@ -179,7 +179,7 @@ SymbolFileSymtab::ParseCompileUnitFunctions (const SymbolContext &sc)
     size_t num_added = 0;
     // We must at least have a valid compile unit
     assert (sc.comp_unit != NULL);
-    const Symtab *symtab = m_obj_file->GetSymtab();
+    const Symtab *symtab = m_obj_file->GetSymtab(ObjectFile::eSymtabFromUnifiedSectionList);
     const Symbol *curr_symbol = NULL;
     const Symbol *next_symbol = NULL;
 //  const char *prefix = m_obj_file->SymbolPrefix();
@@ -307,13 +307,13 @@ SymbolFileSymtab::FindNamespace (const SymbolContext& sc, const ConstString &nam
 uint32_t
 SymbolFileSymtab::ResolveSymbolContext (const Address& so_addr, uint32_t resolve_scope, SymbolContext& sc)
 {
-    if (m_obj_file->GetSymtab() == NULL)
+    if (m_obj_file->GetSymtab(ObjectFile::eSymtabFromUnifiedSectionList) == NULL)
         return 0;
 
     uint32_t resolved_flags = 0;
     if (resolve_scope & eSymbolContextSymbol)
     {
-        sc.symbol = m_obj_file->GetSymtab()->FindSymbolContainingFileAddress(so_addr.GetFileAddress());
+        sc.symbol = m_obj_file->GetSymtab(ObjectFile::eSymtabFromUnifiedSectionList)->FindSymbolContainingFileAddress(so_addr.GetFileAddress());
         if (sc.symbol)
             resolved_flags |= eSymbolContextSymbol;
     }

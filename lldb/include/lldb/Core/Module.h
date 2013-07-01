@@ -45,7 +45,7 @@ class Module :
     public SymbolContextScope
 {
 public:
-	// Static functions that can track the lifetime of moodule objects.
+	// Static functions that can track the lifetime of module objects.
 	// This is handy because we might have Module objects that are in
 	// shared pointers that aren't in the global module list (from 
 	// ModuleList). If this is the case we need to know about it.
@@ -638,7 +638,21 @@ public:
     //------------------------------------------------------------------
     virtual ObjectFile *
     GetObjectFile ();
-    
+
+    //------------------------------------------------------------------
+    /// Get the unified section list for the module. This is the section
+    /// list created by the module's object file and any debug info and
+    /// symbol files created by the symbol vendor.
+    ///
+    /// If the symbol vendor has not been loaded yet, this function
+    /// will return the section list for the object file.
+    ///
+    /// @return
+    ///     Unified module section list.
+    //------------------------------------------------------------------
+    virtual SectionList *
+    GetUnifiedSectionList ();
+ 
     uint32_t
     GetVersion (uint32_t *versions, uint32_t num_versions);
 
@@ -986,6 +1000,7 @@ protected:
     std::unique_ptr<SymbolVendor> m_symfile_ap;   ///< A pointer to the symbol vendor for this module.
     ClangASTContext             m_ast;          ///< The AST context for this module.
     PathMappingList             m_source_mappings; ///< Module specific source remappings for when you have debug info for a module that doesn't match where the sources currently are
+    std::unique_ptr<lldb_private::SectionList> m_unified_sections_ap; ///< Unified section list for module.
 
     bool                        m_did_load_objfile:1,
                                 m_did_load_symbol_vendor:1,

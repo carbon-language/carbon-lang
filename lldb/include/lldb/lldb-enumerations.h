@@ -515,6 +515,10 @@ namespace lldb {
         eSectionTypeDWARFAppleTypes,
         eSectionTypeDWARFAppleNamespaces,
         eSectionTypeDWARFAppleObjC,
+        eSectionTypeELFSymbolTable,       // Elf SHT_SYMTAB section
+        eSectionTypeELFDynamicSymbols,    // Elf SHT_DYNSYM section
+        eSectionTypeELFRelocationEntries, // Elf SHT_REL or SHT_REL section
+        eSectionTypeELFDynamicLinkInfo,   // Elf SHT_DYNAMIC section
         eSectionTypeEHFrame,
         eSectionTypeOther
         

@@ -300,19 +300,27 @@ SBModule::GetCompileUnitAtIndex (uint32_t index)
     return sb_cu;
 }
 
+static Symtab *
+GetUnifiedSymbolTable (const lldb::ModuleSP& module_sp)
+{
+    if (module_sp)
+    {
+        SymbolVendor *symbols = module_sp->GetSymbolVendor();
+        if (symbols)
+            return symbols->GetSymtab();
+    }
+    return NULL;
+}
+
 size_t
 SBModule::GetNumSymbols ()
 {
     ModuleSP module_sp (GetSP ());
     if (module_sp)
     {
-        ObjectFile *obj_file = module_sp->GetObjectFile();
-        if (obj_file)
-        {
-            Symtab *symtab = obj_file->GetSymtab();
-            if (symtab)
-                return symtab->GetNumSymbols();
-        }
+        Symtab *symtab = GetUnifiedSymbolTable (module_sp);
+        if (symtab)
+            return symtab->GetNumSymbols();
     }
     return 0;
 }
@@ -322,16 +330,9 @@ SBModule::GetSymbolAtIndex (size_t idx)
 {
     SBSymbol sb_symbol;
     ModuleSP module_sp (GetSP ());
-    if (module_sp)
-    {
-        ObjectFile *obj_file = module_sp->GetObjectFile();
-        if (obj_file)
-        {
-            Symtab *symtab = obj_file->GetSymtab();
-            if (symtab)
-                sb_symbol.SetSymbol(symtab->SymbolAtIndex (idx));
-        }
-    }
+    Symtab *symtab = GetUnifiedSymbolTable (module_sp);
+    if (symtab)
+        sb_symbol.SetSymbol(symtab->SymbolAtIndex (idx));
     return sb_symbol;
 }
 
@@ -343,16 +344,9 @@ SBModule::FindSymbol (const char *name,
     if (name && name[0])
     {
         ModuleSP module_sp (GetSP ());
-        if (module_sp)
-        {
-            ObjectFile *obj_file = module_sp->GetObjectFile();
-            if (obj_file)
-            {
-                Symtab *symtab = obj_file->GetSymtab();
-                if (symtab)
-                    sb_symbol.SetSymbol(symtab->FindFirstSymbolWithNameAndType(ConstString(name), symbol_type, Symtab::eDebugAny, Symtab::eVisibilityAny));
-            }
-        }
+        Symtab *symtab = GetUnifiedSymbolTable (module_sp);
+        if (symtab)
+            sb_symbol.SetSymbol(symtab->FindFirstSymbolWithNameAndType(ConstString(name), symbol_type, Symtab::eDebugAny, Symtab::eVisibilityAny));
     }
     return sb_symbol;
 }
@@ -365,28 +359,21 @@ SBModule::FindSymbols (const char *name, lldb::SymbolType symbol_type)
     if (name && name[0])
     {
         ModuleSP module_sp (GetSP ());
-        if (module_sp)
+        Symtab *symtab = GetUnifiedSymbolTable (module_sp);
+        if (symtab)
         {
-            ObjectFile *obj_file = module_sp->GetObjectFile();
-            if (obj_file)
+            std::vector<uint32_t> matching_symbol_indexes;
+            const size_t num_matches = symtab->FindAllSymbolsWithNameAndType(ConstString(name), symbol_type, matching_symbol_indexes);
+            if (num_matches)
             {
-                Symtab *symtab = obj_file->GetSymtab();
-                if (symtab)
+                SymbolContext sc;
+                sc.module_sp = module_sp;
+                SymbolContextList &sc_list = *sb_sc_list;
+                for (size_t i=0; i<num_matches; ++i)
                 {
-                    std::vector<uint32_t> matching_symbol_indexes;
-                    const size_t num_matches = symtab->FindAllSymbolsWithNameAndType(ConstString(name), symbol_type, matching_symbol_indexes);
-                    if (num_matches)
-                    {
-                        SymbolContext sc;
-                        sc.module_sp = module_sp;
-                        SymbolContextList &sc_list = *sb_sc_list;
-                        for (size_t i=0; i<num_matches; ++i)
-                        {
-                            sc.symbol = symtab->SymbolAtIndex (matching_symbol_indexes[i]);
-                            if (sc.symbol)
-                                sc_list.Append(sc);
-                        }
-                    }
+                    sc.symbol = symtab->SymbolAtIndex (matching_symbol_indexes[i]);
+                    if (sc.symbol)
+                        sc_list.Append(sc);
                 }
             }
         }
@@ -403,13 +390,11 @@ SBModule::GetNumSections ()
     ModuleSP module_sp (GetSP ());
     if (module_sp)
     {
-        ObjectFile *obj_file = module_sp->GetObjectFile();
-        if (obj_file)
-        {
-            SectionList *section_list = obj_file->GetSectionList ();
-            if (section_list)
-                return section_list->GetSize();
-        }
+        // Give the symbol vendor a chance to add to the unified section list.
+        module_sp->GetSymbolVendor();
+        SectionList *section_list = module_sp->GetUnifiedSectionList();
+        if (section_list)
+            return section_list->GetSize();
     }
     return 0;
 }
@@ -421,14 +406,12 @@ SBModule::GetSectionAtIndex (size_t idx)
     ModuleSP module_sp (GetSP ());
     if (module_sp)
     {
-        ObjectFile *obj_file = module_sp->GetObjectFile();
-        if (obj_file)
-        {
-            SectionList *section_list = obj_file->GetSectionList ();
+        // Give the symbol vendor a chance to add to the unified section list.
+        module_sp->GetSymbolVendor();
+        SectionList *section_list = module_sp->GetUnifiedSectionList ();
 
-            if (section_list)
-                sb_section.SetSP(section_list->GetSectionAtIndex (idx));
-        }
+        if (section_list)
+            sb_section.SetSP(section_list->GetSectionAtIndex (idx));
     }
     return sb_section;
 }
@@ -588,18 +571,16 @@ SBModule::FindSection (const char *sect_name)
     ModuleSP module_sp (GetSP ());
     if (sect_name && module_sp)
     {
-        ObjectFile *objfile = module_sp->GetObjectFile();
-        if (objfile)
+        // Give the symbol vendor a chance to add to the unified section list.
+        module_sp->GetSymbolVendor();
+        SectionList *section_list = module_sp->GetUnifiedSectionList();
+        if (section_list)
         {
-            SectionList *section_list = objfile->GetSectionList();
-            if (section_list)
+            ConstString const_sect_name(sect_name);
+            SectionSP section_sp (section_list->FindSectionByName(const_sect_name));
+            if (section_sp)
             {
-                ConstString const_sect_name(sect_name);
-                SectionSP section_sp (section_list->FindSectionByName(const_sect_name));
-                if (section_sp)
-                {
-                    sb_section.SetSP (section_sp);
-                }
+                sb_section.SetSP (section_sp);
             }
         }
     }

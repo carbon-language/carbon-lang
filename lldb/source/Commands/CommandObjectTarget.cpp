@@ -1438,10 +1438,10 @@ DumpModuleSymtab (CommandInterpreter &interpreter, Stream &strm, Module *module,
 {
     if (module)
     {
-        ObjectFile *objfile = module->GetObjectFile ();
-        if (objfile)
+        SymbolVendor *sym_vendor = module->GetSymbolVendor ();
+        if (sym_vendor)
         {
-            Symtab *symtab = objfile->GetSymtab();
+            Symtab *symtab = sym_vendor->GetSymtab();
             if (symtab)
                 symtab->Dump(&strm, interpreter.GetExecutionContext().GetTargetPtr(), sort_order);
         }
@@ -1453,19 +1453,15 @@ DumpModuleSections (CommandInterpreter &interpreter, Stream &strm, Module *modul
 {
     if (module)
     {
-        ObjectFile *objfile = module->GetObjectFile ();
-        if (objfile)
+        SectionList *section_list = module->GetUnifiedSectionList();
+        if (section_list)
         {
-            SectionList *section_list = objfile->GetSectionList();
-            if (section_list)
-            {
-                strm.Printf ("Sections for '%s' (%s):\n",
-                             module->GetSpecificationDescription().c_str(),
-                             module->GetArchitecture().GetArchitectureName());
-                strm.IndentMore();
-                section_list->Dump(&strm, interpreter.GetExecutionContext().GetTargetPtr(), true, UINT32_MAX);
-                strm.IndentLess();
-            }
+            strm.Printf ("Sections for '%s' (%s):\n",
+                         module->GetSpecificationDescription().c_str(),
+                         module->GetArchitecture().GetArchitectureName());
+            strm.IndentMore();
+            section_list->Dump(&strm, interpreter.GetExecutionContext().GetTargetPtr(), true, UINT32_MAX);
+            strm.IndentLess();
         }
     }
 }
@@ -1569,10 +1565,10 @@ LookupSymbolInModule (CommandInterpreter &interpreter, Stream &strm, Module *mod
     {
         SymbolContext sc;
         
-        ObjectFile *objfile = module->GetObjectFile ();
-        if (objfile)
+        SymbolVendor *sym_vendor = module->GetSymbolVendor ();
+        if (sym_vendor)
         {
-            Symtab *symtab = objfile->GetSymtab();
+            Symtab *symtab = sym_vendor->GetSymtab();
             if (symtab)
             {
                 uint32_t i;

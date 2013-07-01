@@ -81,7 +81,7 @@ ProcessPOSIX::ProcessPOSIX(Target& target, Listener &listener)
     // FIXME: Putting this code in the ctor and saving the byte order in a
     // member variable is a hack to avoid const qual issues in GetByteOrder.
 	lldb::ModuleSP module = GetTarget().GetExecutableModule();
-	if (module != NULL && module->GetObjectFile() != NULL)
+	if (module && module->GetObjectFile())
 		m_byte_order = module->GetObjectFile()->GetByteOrder();
 }
 

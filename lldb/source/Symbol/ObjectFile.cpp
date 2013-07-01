@@ -244,7 +244,9 @@ ObjectFile::ObjectFile (const lldb::ModuleSP &module_sp,
     m_process_wp(),
     m_memory_addr (LLDB_INVALID_ADDRESS),
     m_sections_ap (),
-    m_symtab_ap ()
+    m_symtab_ap (),
+    m_symtab_unified_ap (),
+    m_symtab_unified_revisionid (0)
 {
     if (file_spec_ptr)
         m_file = *file_spec_ptr;
@@ -291,7 +293,9 @@ ObjectFile::ObjectFile (const lldb::ModuleSP &module_sp,
     m_process_wp (process_sp),
     m_memory_addr (header_addr),
     m_sections_ap (),
-    m_symtab_ap ()
+    m_symtab_ap (),
+    m_symtab_unified_ap (),
+    m_symtab_unified_revisionid (0)
 {
     if (header_data_sp)
         m_data.SetData (header_data_sp, 0, header_data_sp->GetByteSize());
@@ -327,7 +331,7 @@ ObjectFile::SetModulesArchitecture (const ArchSpec &new_arch)
 AddressClass
 ObjectFile::GetAddressClass (addr_t file_addr)
 {
-    Symtab *symtab = GetSymtab();
+    Symtab *symtab = GetSymtab(ObjectFile::eSymtabFromUnifiedSectionList);
     if (symtab)
     {
         Symbol *symbol = symtab->FindSymbolContainingFileAddress(file_addr);
@@ -374,6 +378,10 @@ ObjectFile::GetAddressClass (addr_t file_addr)
                     case eSectionTypeDWARFAppleObjC:
                         return eAddressClassDebug;
                     case eSectionTypeEHFrame:               return eAddressClassRuntime;
+                    case eSectionTypeELFSymbolTable:
+                    case eSectionTypeELFDynamicSymbols:
+                    case eSectionTypeELFRelocationEntries:
+                    case eSectionTypeELFDynamicLinkInfo:
                     case eSectionTypeOther:                 return eAddressClassUnknown;
                     }
                 }
@@ -453,6 +461,10 @@ ObjectFile::CopyData (off_t offset, size_t length, void *dst) const
 size_t
 ObjectFile::ReadSectionData (const Section *section, off_t section_offset, void *dst, size_t dst_len) const
 {
+    // If some other objectfile owns this data, pass this to them.
+    if (section->GetObjectFile() != this)
+        return section->GetObjectFile()->ReadSectionData (section, section_offset, dst, dst_len);
+
     if (IsInMemory())
     {
         ProcessSP process_sp (m_process_wp.lock());
@@ -498,6 +510,10 @@ ObjectFile::ReadSectionData (const Section *section, off_t section_offset, void 
 size_t
 ObjectFile::ReadSectionData (const Section *section, DataExtractor& section_data) const
 {
+    // If some other objectfile owns this data, pass this to them.
+    if (section->GetObjectFile() != this)
+        return section->GetObjectFile()->ReadSectionData (section, section_data);
+
     if (IsInMemory())
     {
         ProcessSP process_sp (m_process_wp.lock());
@@ -529,6 +545,10 @@ ObjectFile::ReadSectionData (const Section *section, DataExtractor& section_data
 size_t
 ObjectFile::MemoryMapSectionData (const Section *section, DataExtractor& section_data) const
 {
+    // If some other objectfile owns this data, pass this to them.
+    if (section->GetObjectFile() != this)
+        return section->GetObjectFile()->MemoryMapSectionData (section, section_data);
+
     if (IsInMemory())
     {
         return ReadSectionData (section, section_data);
@@ -566,19 +586,29 @@ ObjectFile::SplitArchivePathWithObject (const char *path_with_object, FileSpec &
 }
 
 void
-ObjectFile::ClearSymtab ()
+ObjectFile::ClearSymtab (uint32_t flags)
 {
     ModuleSP module_sp(GetModule());
     if (module_sp)
     {
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        bool unified_section_list = !!(flags & ObjectFile::eSymtabFromUnifiedSectionList);
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
         if (log)
         {
-            log->Printf ("%p ObjectFile::ClearSymtab () symtab = %p",
+            log->Printf ("%p ObjectFile::ClearSymtab (%s) symtab = %p",
                          this,
-                         m_symtab_ap.get());
+                         unified_section_list ? "unified" : "",
+                         unified_section_list ? m_symtab_unified_ap.get() : m_symtab_ap.get());
         }
-        m_symtab_ap.reset();
+        if (unified_section_list)
+        {
+            m_symtab_unified_ap.reset();
+            m_symtab_unified_revisionid = 0;
+        }
+        else
+        {
+            m_symtab_ap.reset();
+        }
     }
 }

@@ -102,7 +102,7 @@ public:
     GetAddressClass (lldb::addr_t file_addr);
 
     virtual lldb_private::Symtab *
-    GetSymtab();
+    GetSymtab(uint32_t flags = 0);
 
     virtual lldb_private::SectionList *
     GetSectionList();

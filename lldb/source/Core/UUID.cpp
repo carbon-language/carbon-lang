@@ -67,20 +67,26 @@ UUID::GetBytes() const
 }
 
 std::string
-UUID::GetAsString () const
+UUID::GetAsString (const char *separator) const
 {
     std::string result;
-    char buf[64];
+    char buf[256];
+    if (!separator)
+        separator = "-";
     const uint8_t *u = (const uint8_t *)GetBytes();
     if (sizeof (buf) > (size_t)snprintf (buf,
                             sizeof (buf),
-                            "%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X",
-                            u[0],u[1],u[2],u[3],u[4],u[5],u[6],u[7],u[8],u[9],u[10],u[11],u[12],u[13],u[14],u[15]))
+                            "%2.2X%2.2X%2.2X%2.2X%s%2.2X%2.2X%s%2.2X%2.2X%s%2.2X%2.2X%s%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X",
+                            u[0],u[1],u[2],u[3],separator,
+                            u[4],u[5],separator,
+                            u[6],u[7],separator,
+                            u[8],u[9],separator,
+                            u[10],u[11],u[12],u[13],u[14],u[15]))
     {
         result.append (buf);
         if (m_num_uuid_bytes == 20)
         {
-            if (sizeof (buf) > (size_t)snprintf (buf, sizeof (buf), "-%2.2X%2.2X%2.2X%2.2X", u[16],u[17],u[18],u[19]))
+            if (sizeof (buf) > (size_t)snprintf (buf, sizeof (buf), "%s%2.2X%2.2X%2.2X%2.2X", separator,u[16],u[17],u[18],u[19]))
                 result.append (buf);
         }
     }
