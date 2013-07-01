@@ -415,6 +415,9 @@ bool PPCCTRLoops::convertToCTRLoop(Loop *L) {
     } else if (!SE->isLoopInvariant(EC, L))
       continue;
 
+    if (SE->getTypeSizeInBits(EC->getType()) > (TT.isArch64Bit() ? 64 : 32))
+      continue;
+
     // We now have a loop-invariant count of loop iterations (which is not the
     // constant zero) for which we know that this loop will not exit via this
     // exisiting block.
