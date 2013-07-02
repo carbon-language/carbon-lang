@@ -34,10 +34,12 @@ endif
 ifeq ($(HOST_OS),Linux)
 DIRS += DynamicLoader/MacOSX-DYLD
 DIRS += Process/Linux Process/POSIX
+DIRS += SymbolVendor/ELF
 endif
 
 ifneq (,$(filter $(HOST_OS), FreeBSD GNU/kFreeBSD))
 DIRS += Process/FreeBSD Process/POSIX
+DIRS += SymbolVendor/ELF
 endif
 
 include $(LLDB_LEVEL)/Makefile
