@@ -3451,10 +3451,15 @@ TEST_F(FormatTest, BreaksLongDeclarations) {
   verifyFormat("LoooooooooooooooooooooooooooooooooooooooongType\n"
                "    LoooooooooooooooooooooooooooooooooooooooongVariable;",
                getGoogleStyle());
+  verifyFormat("LoooooooooooooooooooooooooooooooooooooooongType const\n"
+               "    LoooooooooooooooooooooooooooooooooooooooongVariable;",
+               getGoogleStyle());
   verifyFormat("LoooooooooooooooooooooooooooooooooooooooongReturnType\n"
                "    LoooooooooooooooooooooooooooooooongFunctionDeclaration();",
                getGoogleStyle());
   verifyFormat("LoooooooooooooooooooooooooooooooooooooooongReturnType\n"
+               "LooooooooooooooooooooooooooooooooooongFunctionDefinition() {}");
+  verifyFormat("LoooooooooooooooooooooooooooooooooooooooongReturnType const\n"
                "LooooooooooooooooooooooooooooooooooongFunctionDefinition() {}");
 
   // FIXME: Without the comment, this breaks after "(".
