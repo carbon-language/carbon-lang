@@ -407,7 +407,7 @@ namespace llvm {
     ///
     /// This is used to implement assembler directives such as .byte, .ascii,
     /// etc.
-    virtual void EmitBytes(StringRef Data, unsigned AddrSpace = 0) = 0;
+    virtual void EmitBytes(StringRef Data) = 0;
 
     /// EmitValue - Emit the expression @p Value into the output as a native
     /// integer of the given @p Size bytes.
@@ -418,22 +418,19 @@ namespace llvm {
     /// @param Value - The value to emit.
     /// @param Size - The size of the integer (in bytes) to emit. This must
     /// match a native machine width.
-    virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
-                               unsigned AddrSpace) = 0;
+    virtual void EmitValueImpl(const MCExpr *Value, unsigned Size) = 0;
 
-    void EmitValue(const MCExpr *Value, unsigned Size, unsigned AddrSpace = 0);
+    void EmitValue(const MCExpr *Value, unsigned Size);
 
     /// EmitIntValue - Special case of EmitValue that avoids the client having
     /// to pass in a MCExpr for constant integers.
-    virtual void EmitIntValue(uint64_t Value, unsigned Size,
-                              unsigned AddrSpace = 0);
+    virtual void EmitIntValue(uint64_t Value, unsigned Size);
 
     /// EmitAbsValue - Emit the Value, but try to avoid relocations. On MachO
     /// this is done by producing
     /// foo = value
     /// .long foo
-    void EmitAbsValue(const MCExpr *Value, unsigned Size,
-                      unsigned AddrSpace = 0);
+    void EmitAbsValue(const MCExpr *Value, unsigned Size);
 
     virtual void EmitULEB128Value(const MCExpr *Value) = 0;
 
@@ -441,17 +438,15 @@ namespace llvm {
 
     /// EmitULEB128Value - Special case of EmitULEB128Value that avoids the
     /// client having to pass in a MCExpr for constant integers.
-    void EmitULEB128IntValue(uint64_t Value, unsigned Padding = 0,
-                             unsigned AddrSpace = 0);
+    void EmitULEB128IntValue(uint64_t Value, unsigned Padding = 0);
 
     /// EmitSLEB128Value - Special case of EmitSLEB128Value that avoids the
     /// client having to pass in a MCExpr for constant integers.
-    void EmitSLEB128IntValue(int64_t Value, unsigned AddrSpace = 0);
+    void EmitSLEB128IntValue(int64_t Value);
 
     /// EmitSymbolValue - Special case of EmitValue that avoids the client
     /// having to pass in a MCExpr for MCSymbols.
-    void EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
-                         unsigned AddrSpace = 0);
+    void EmitSymbolValue(const MCSymbol *Sym, unsigned Size);
 
     /// EmitGPRel64Value - Emit the expression @p Value into the output as a
     /// gprel64 (64-bit GP relative) value.
@@ -469,12 +464,11 @@ namespace llvm {
 
     /// EmitFill - Emit NumBytes bytes worth of the value specified by
     /// FillValue.  This implements directives such as '.space'.
-    virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue,
-                          unsigned AddrSpace = 0);
+    virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue);
 
-    /// \brief EmitZeros - Emit NumBytes worth of zeros.
+    /// \brief Emit NumBytes worth of zeros.
     /// This function properly handles data in virtual sections.
-    virtual void EmitZeros(uint64_t NumBytes, unsigned AddrSpace = 0);
+    virtual void EmitZeros(uint64_t NumBytes);
 
     /// EmitValueToAlignment - Emit some number of copies of @p Value until
     /// the byte alignment @p ByteAlignment is reached.

@@ -180,12 +180,10 @@ public:
   virtual void EmitTBSSSymbol (const MCSection *Section, MCSymbol *Symbol,
                                uint64_t Size, unsigned ByteAlignment = 0);
 
-  virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
+  virtual void EmitBytes(StringRef Data);
 
-  virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
-                             unsigned AddrSpace);
-  virtual void EmitIntValue(uint64_t Value, unsigned Size,
-                            unsigned AddrSpace = 0);
+  virtual void EmitValueImpl(const MCExpr *Value, unsigned Size);
+  virtual void EmitIntValue(uint64_t Value, unsigned Size);
 
   virtual void EmitULEB128Value(const MCExpr *Value);
 
@@ -196,8 +194,7 @@ public:
   virtual void EmitGPRel32Value(const MCExpr *Value);
 
 
-  virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue,
-                        unsigned AddrSpace);
+  virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue);
 
   virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
                                     unsigned ValueSize = 1,
@@ -636,13 +633,13 @@ static void PrintQuotedString(StringRef Data, raw_ostream &OS) {
 }
 
 
-void MCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
+void MCAsmStreamer::EmitBytes(StringRef Data) {
   assert(getCurrentSection().first &&
          "Cannot emit contents before setting section!");
   if (Data.empty()) return;
 
   if (Data.size() == 1) {
-    OS << MAI->getData8bitsDirective(AddrSpace);
+    OS << MAI->getData8bitsDirective();
     OS << (unsigned)(unsigned char)Data[0];
     EmitEOL();
     return;
@@ -662,34 +659,32 @@ void MCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size,
-                                 unsigned AddrSpace) {
-  EmitValue(MCConstantExpr::Create(Value, getContext()), Size, AddrSpace);
+void MCAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size) {
+  EmitValue(MCConstantExpr::Create(Value, getContext()), Size);
 }
 
-void MCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
-                                  unsigned AddrSpace) {
+void MCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size) {
   assert(getCurrentSection().first &&
          "Cannot emit contents before setting section!");
   const char *Directive = 0;
   switch (Size) {
   default: break;
-  case 1: Directive = MAI->getData8bitsDirective(AddrSpace);  break;
-  case 2: Directive = MAI->getData16bitsDirective(AddrSpace); break;
-  case 4: Directive = MAI->getData32bitsDirective(AddrSpace); break;
+  case 1: Directive = MAI->getData8bitsDirective();  break;
+  case 2: Directive = MAI->getData16bitsDirective(); break;
+  case 4: Directive = MAI->getData32bitsDirective(); break;
   case 8:
-    Directive = MAI->getData64bitsDirective(AddrSpace);
+    Directive = MAI->getData64bitsDirective();
     // If the target doesn't support 64-bit data, emit as two 32-bit halves.
     if (Directive) break;
     int64_t IntValue;
     if (!Value->EvaluateAsAbsolute(IntValue))
       report_fatal_error("Don't know how to emit this value.");
     if (MAI->isLittleEndian()) {
-      EmitIntValue((uint32_t)(IntValue >> 0 ), 4, AddrSpace);
-      EmitIntValue((uint32_t)(IntValue >> 32), 4, AddrSpace);
+      EmitIntValue((uint32_t)(IntValue >> 0 ), 4);
+      EmitIntValue((uint32_t)(IntValue >> 32), 4);
     } else {
-      EmitIntValue((uint32_t)(IntValue >> 32), 4, AddrSpace);
-      EmitIntValue((uint32_t)(IntValue >> 0 ), 4, AddrSpace);
+      EmitIntValue((uint32_t)(IntValue >> 32), 4);
+      EmitIntValue((uint32_t)(IntValue >> 0 ), 4);
     }
     return;
   }
@@ -736,21 +731,19 @@ void MCAsmStreamer::EmitGPRel32Value(const MCExpr *Value) {
 
 /// EmitFill - Emit NumBytes bytes worth of the value specified by
 /// FillValue.  This implements directives such as '.space'.
-void MCAsmStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue,
-                             unsigned AddrSpace) {
+void MCAsmStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue) {
   if (NumBytes == 0) return;
 
-  if (AddrSpace == 0)
-    if (const char *ZeroDirective = MAI->getZeroDirective()) {
-      OS << ZeroDirective << NumBytes;
-      if (FillValue != 0)
-        OS << ',' << (int)FillValue;
-      EmitEOL();
-      return;
-    }
+  if (const char *ZeroDirective = MAI->getZeroDirective()) {
+    OS << ZeroDirective << NumBytes;
+    if (FillValue != 0)
+      OS << ',' << (int)FillValue;
+    EmitEOL();
+    return;
+  }
 
   // Emit a byte at a time.
-  MCStreamer::EmitFill(NumBytes, FillValue, AddrSpace);
+  MCStreamer::EmitFill(NumBytes, FillValue);
 }
 
 void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,

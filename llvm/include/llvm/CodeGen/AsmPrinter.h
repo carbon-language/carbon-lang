@@ -233,8 +233,8 @@ namespace llvm {
     /// it if appropriate.
     void EmitBasicBlockStart(const MachineBasicBlock *MBB) const;
 
-    /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
-    void EmitGlobalConstant(const Constant *CV, unsigned AddrSpace = 0);
+    /// \brief Print a general LLVM constant to the .s file.
+    void EmitGlobalConstant(const Constant *CV);
 
 
     //===------------------------------------------------------------------===//

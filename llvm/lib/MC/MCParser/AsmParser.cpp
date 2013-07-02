@@ -562,8 +562,7 @@ bool AsmParser::ProcessIncbinFile(const std::string &Filename) {
     return true;
 
   // Pick up the bytes from the file and emit them.
-  getStreamer().EmitBytes(SrcMgr.getMemoryBuffer(NewBuf)->getBuffer(),
-                          DEFAULT_ADDRSPACE);
+  getStreamer().EmitBytes(SrcMgr.getMemoryBuffer(NewBuf)->getBuffer());
   return false;
 }
 
@@ -2220,9 +2219,9 @@ bool AsmParser::ParseDirectiveAscii(StringRef IDVal, bool ZeroTerminated) {
       if (parseEscapedString(Data))
         return true;
 
-      getStreamer().EmitBytes(Data, DEFAULT_ADDRSPACE);
+      getStreamer().EmitBytes(Data);
       if (ZeroTerminated)
-        getStreamer().EmitBytes(StringRef("\0", 1), DEFAULT_ADDRSPACE);
+        getStreamer().EmitBytes(StringRef("\0", 1));
 
       Lex();
 
@@ -2257,9 +2256,9 @@ bool AsmParser::ParseDirectiveValue(unsigned Size) {
         uint64_t IntValue = MCE->getValue();
         if (!isUIntN(8 * Size, IntValue) && !isIntN(8 * Size, IntValue))
           return Error(ExprLoc, "literal value out of range for directive");
-        getStreamer().EmitIntValue(IntValue, Size, DEFAULT_ADDRSPACE);
+        getStreamer().EmitIntValue(IntValue, Size);
       } else
-        getStreamer().EmitValue(Value, Size, DEFAULT_ADDRSPACE);
+        getStreamer().EmitValue(Value, Size);
 
       if (getLexer().is(AsmToken::EndOfStatement))
         break;
@@ -2318,7 +2317,7 @@ bool AsmParser::ParseDirectiveRealValue(const fltSemantics &Semantics) {
       // Emit the value as an integer.
       APInt AsInt = Value.bitcastToAPInt();
       getStreamer().EmitIntValue(AsInt.getLimitedValue(),
-                                 AsInt.getBitWidth() / 8, DEFAULT_ADDRSPACE);
+                                 AsInt.getBitWidth() / 8);
 
       if (getLexer().is(AsmToken::EndOfStatement))
         break;
@@ -2354,7 +2353,7 @@ bool AsmParser::ParseDirectiveZero() {
 
   Lex();
 
-  getStreamer().EmitFill(NumBytes, Val, DEFAULT_ADDRSPACE);
+  getStreamer().EmitFill(NumBytes, Val);
 
   return false;
 }
@@ -2393,7 +2392,7 @@ bool AsmParser::ParseDirectiveFill() {
     return TokError("invalid '.fill' size, expected 1, 2, 4, or 8");
 
   for (uint64_t i = 0, e = NumValues; i != e; ++i)
-    getStreamer().EmitIntValue(FillExpr, FillSize, DEFAULT_ADDRSPACE);
+    getStreamer().EmitIntValue(FillExpr, FillSize);
 
   return false;
 }
@@ -3331,7 +3330,7 @@ bool AsmParser::ParseDirectiveSpace(StringRef IDVal) {
                     Twine(IDVal) + "' directive");
 
   // FIXME: Sometimes the fill expr is 'nop' if it isn't supplied, instead of 0.
-  getStreamer().EmitFill(NumBytes, FillExpr, DEFAULT_ADDRSPACE);
+  getStreamer().EmitFill(NumBytes, FillExpr);
 
   return false;
 }

@@ -296,12 +296,11 @@ void MCELFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
   EmitCommonSymbol(Symbol, Size, ByteAlignment);
 }
 
-void MCELFStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
-                                  unsigned AddrSpace) {
+void MCELFStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size) {
   if (getCurrentSectionData()->isBundleLocked())
     report_fatal_error("Emitting values inside a locked bundle is forbidden");
   fixSymbolsInTLSFixups(Value);
-  MCObjectStreamer::EmitValueImpl(Value, Size, AddrSpace);
+  MCObjectStreamer::EmitValueImpl(Value, Size);
 }
 
 void MCELFStreamer::EmitValueToAlignment(unsigned ByteAlignment,

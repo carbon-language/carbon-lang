@@ -40,7 +40,7 @@ public:
   virtual void EmitDebugLabel(MCSymbol *Symbol);
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                             uint64_t Size = 0, unsigned ByteAlignment = 0);
-  virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
+  virtual void EmitBytes(StringRef Data);
   virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
                                     unsigned ValueSize = 1,
                                     unsigned MaxBytesToEmit = 0);
@@ -149,7 +149,7 @@ void MCPureStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
   report_fatal_error("not yet implemented in pure streamer");
 }
 
-void MCPureStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
+void MCPureStreamer::EmitBytes(StringRef Data) {
   // TODO: This is exactly the same as WinCOFFStreamer. Consider merging into
   // MCObjectStreamer.
   getOrCreateDataFragment()->getContents().append(Data.begin(), Data.end());

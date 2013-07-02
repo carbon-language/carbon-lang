@@ -78,8 +78,7 @@ public:
   virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitDebugLabel(MCSymbol *Symbol);
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
-  virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
-                             unsigned AddrSpace);
+  virtual void EmitValueImpl(const MCExpr *Value, unsigned Size);
   virtual void EmitULEB128Value(const MCExpr *Value);
   virtual void EmitSLEB128Value(const MCExpr *Value);
   virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
@@ -94,7 +93,7 @@ public:
   virtual void EmitBundleAlignMode(unsigned AlignPow2);
   virtual void EmitBundleLock(bool AlignToEnd);
   virtual void EmitBundleUnlock();
-  virtual void EmitBytes(StringRef Data, unsigned AddrSpace = 0);
+  virtual void EmitBytes(StringRef Data);
   virtual void EmitValueToAlignment(unsigned ByteAlignment,
                                     int64_t Value = 0,
                                     unsigned ValueSize = 1,
@@ -114,9 +113,8 @@ public:
                                          const MCSymbol *Label);
   virtual void EmitGPRel32Value(const MCExpr *Value);
   virtual void EmitGPRel64Value(const MCExpr *Value);
-  virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue,
-                        unsigned AddrSpace = 0);
-  virtual void EmitZeros(uint64_t NumBytes, unsigned AddrSpace = 0);
+  virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue);
+  virtual void EmitZeros(uint64_t NumBytes);
   virtual void FinishImpl();
 
   /// @}

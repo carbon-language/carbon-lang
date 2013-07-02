@@ -1578,8 +1578,7 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
   }
 }
 
-static void emitGlobalConstantImpl(const Constant *C, unsigned AddrSpace,
-                                   AsmPrinter &AP);
+static void emitGlobalConstantImpl(const Constant *C, AsmPrinter &AP);
 
 /// isRepeatedByteSequence - Determine whether the given value is
 /// composed of a repeated sequence of identical bytes and return the
@@ -1641,7 +1640,7 @@ static int isRepeatedByteSequence(const Value *V, TargetMachine &TM) {
 }
 
 static void emitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
-                                             unsigned AddrSpace,AsmPrinter &AP){
+                                             AsmPrinter &AP){
 
   // See if we can aggregate this into a .fill, if so, emit it as such.
   int Value = isRepeatedByteSequence(CDS, AP.TM);
@@ -1649,12 +1648,12 @@ static void emitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
     uint64_t Bytes = AP.TM.getDataLayout()->getTypeAllocSize(CDS->getType());
     // Don't emit a 1-byte object as a .fill.
     if (Bytes > 1)
-      return AP.OutStreamer.EmitFill(Bytes, Value, AddrSpace);
+      return AP.OutStreamer.EmitFill(Bytes, Value);
   }
 
   // If this can be emitted with .ascii/.asciz, emit it as such.
   if (CDS->isString())
-    return AP.OutStreamer.EmitBytes(CDS->getAsString(), AddrSpace);
+    return AP.OutStreamer.EmitBytes(CDS->getAsString());
 
   // Otherwise, emit the values in successive locations.
   unsigned ElementByteSize = CDS->getElementByteSize();
@@ -1664,7 +1663,7 @@ static void emitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
         AP.OutStreamer.GetCommentOS() << format("0x%" PRIx64 "\n",
                                                 CDS->getElementAsInteger(i));
       AP.OutStreamer.EmitIntValue(CDS->getElementAsInteger(i),
-                                  ElementByteSize, AddrSpace);
+                                  ElementByteSize);
     }
   } else if (ElementByteSize == 4) {
     // FP Constants are printed as integer constants to avoid losing
@@ -1679,7 +1678,7 @@ static void emitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
       F = CDS->getElementAsFloat(i);
       if (AP.isVerbose())
         AP.OutStreamer.GetCommentOS() << "float " << F << '\n';
-      AP.OutStreamer.EmitIntValue(I, 4, AddrSpace);
+      AP.OutStreamer.EmitIntValue(I, 4);
     }
   } else {
     assert(CDS->getElementType()->isDoubleTy());
@@ -1692,7 +1691,7 @@ static void emitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
       F = CDS->getElementAsDouble(i);
       if (AP.isVerbose())
         AP.OutStreamer.GetCommentOS() << "double " << F << '\n';
-      AP.OutStreamer.EmitIntValue(I, 8, AddrSpace);
+      AP.OutStreamer.EmitIntValue(I, 8);
     }
   }
 
@@ -1701,41 +1700,38 @@ static void emitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
   unsigned EmittedSize = TD.getTypeAllocSize(CDS->getType()->getElementType()) *
                         CDS->getNumElements();
   if (unsigned Padding = Size - EmittedSize)
-    AP.OutStreamer.EmitZeros(Padding, AddrSpace);
+    AP.OutStreamer.EmitZeros(Padding);
 
 }
 
-static void emitGlobalConstantArray(const ConstantArray *CA, unsigned AddrSpace,
-                                    AsmPrinter &AP) {
+static void emitGlobalConstantArray(const ConstantArray *CA, AsmPrinter &AP) {
   // See if we can aggregate some values.  Make sure it can be
   // represented as a series of bytes of the constant value.
   int Value = isRepeatedByteSequence(CA, AP.TM);
 
   if (Value != -1) {
     uint64_t Bytes = AP.TM.getDataLayout()->getTypeAllocSize(CA->getType());
-    AP.OutStreamer.EmitFill(Bytes, Value, AddrSpace);
+    AP.OutStreamer.EmitFill(Bytes, Value);
   }
   else {
     for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
-      emitGlobalConstantImpl(CA->getOperand(i), AddrSpace, AP);
+      emitGlobalConstantImpl(CA->getOperand(i), AP);
   }
 }
 
-static void emitGlobalConstantVector(const ConstantVector *CV,
-                                     unsigned AddrSpace, AsmPrinter &AP) {
+static void emitGlobalConstantVector(const ConstantVector *CV, AsmPrinter &AP) {
   for (unsigned i = 0, e = CV->getType()->getNumElements(); i != e; ++i)
-    emitGlobalConstantImpl(CV->getOperand(i), AddrSpace, AP);
+    emitGlobalConstantImpl(CV->getOperand(i), AP);
 
   const DataLayout &TD = *AP.TM.getDataLayout();
   unsigned Size = TD.getTypeAllocSize(CV->getType());
   unsigned EmittedSize = TD.getTypeAllocSize(CV->getType()->getElementType()) *
                          CV->getType()->getNumElements();
   if (unsigned Padding = Size - EmittedSize)
-    AP.OutStreamer.EmitZeros(Padding, AddrSpace);
+    AP.OutStreamer.EmitZeros(Padding);
 }
 
-static void emitGlobalConstantStruct(const ConstantStruct *CS,
-                                     unsigned AddrSpace, AsmPrinter &AP) {
+static void emitGlobalConstantStruct(const ConstantStruct *CS, AsmPrinter &AP) {
   // Print the fields in successive locations. Pad to align if needed!
   const DataLayout *TD = AP.TM.getDataLayout();
   unsigned Size = TD->getTypeAllocSize(CS->getType());
@@ -1751,19 +1747,18 @@ static void emitGlobalConstantStruct(const ConstantStruct *CS,
     SizeSoFar += FieldSize + PadSize;
 
     // Now print the actual field value.
-    emitGlobalConstantImpl(Field, AddrSpace, AP);
+    emitGlobalConstantImpl(Field, AP);
 
     // Insert padding - this may include padding to increase the size of the
     // current field up to the ABI size (if the struct is not packed) as well
     // as padding to ensure that the next field starts at the right offset.
-    AP.OutStreamer.EmitZeros(PadSize, AddrSpace);
+    AP.OutStreamer.EmitZeros(PadSize);
   }
   assert(SizeSoFar == Layout->getSizeInBytes() &&
          "Layout of constant struct may be incorrect!");
 }
 
-static void emitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace,
-                                 AsmPrinter &AP) {
+static void emitGlobalConstantFP(const ConstantFP *CFP, AsmPrinter &AP) {
   APInt API = CFP->getValueAPF().bitcastToAPInt();
 
   // First print a comment with what we think the original floating-point value
@@ -1789,27 +1784,26 @@ static void emitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace,
     int Chunk = API.getNumWords() - 1;
 
     if (TrailingBytes)
-      AP.OutStreamer.EmitIntValue(p[Chunk--], TrailingBytes, AddrSpace);
+      AP.OutStreamer.EmitIntValue(p[Chunk--], TrailingBytes);
 
     for (; Chunk >= 0; --Chunk)
-      AP.OutStreamer.EmitIntValue(p[Chunk], sizeof(uint64_t), AddrSpace);
+      AP.OutStreamer.EmitIntValue(p[Chunk], sizeof(uint64_t));
   } else {
     unsigned Chunk;
     for (Chunk = 0; Chunk < NumBytes / sizeof(uint64_t); ++Chunk)
-      AP.OutStreamer.EmitIntValue(p[Chunk], sizeof(uint64_t), AddrSpace);
+      AP.OutStreamer.EmitIntValue(p[Chunk], sizeof(uint64_t));
 
     if (TrailingBytes)
-      AP.OutStreamer.EmitIntValue(p[Chunk], TrailingBytes, AddrSpace);
+      AP.OutStreamer.EmitIntValue(p[Chunk], TrailingBytes);
   }
 
   // Emit the tail padding for the long double.
   const DataLayout &TD = *AP.TM.getDataLayout();
   AP.OutStreamer.EmitZeros(TD.getTypeAllocSize(CFP->getType()) -
-                           TD.getTypeStoreSize(CFP->getType()), AddrSpace);
+                           TD.getTypeStoreSize(CFP->getType()));
 }
 
-static void emitGlobalConstantLargeInt(const ConstantInt *CI,
-                                       unsigned AddrSpace, AsmPrinter &AP) {
+static void emitGlobalConstantLargeInt(const ConstantInt *CI, AsmPrinter &AP) {
   const DataLayout *TD = AP.TM.getDataLayout();
   unsigned BitWidth = CI->getBitWidth();
 
@@ -1849,7 +1843,7 @@ static void emitGlobalConstantLargeInt(const ConstantInt *CI,
   const uint64_t *RawData = Realigned.getRawData();
   for (unsigned i = 0, e = BitWidth / 64; i != e; ++i) {
     uint64_t Val = TD->isBigEndian() ? RawData[e - i - 1] : RawData[i];
-    AP.OutStreamer.EmitIntValue(Val, 8, AddrSpace);
+    AP.OutStreamer.EmitIntValue(Val, 8);
   }
 
   if (ExtraBitsSize) {
@@ -1861,16 +1855,15 @@ static void emitGlobalConstantLargeInt(const ConstantInt *CI,
     assert(Size && Size * 8 >= ExtraBitsSize &&
            (ExtraBits & (((uint64_t)-1) >> (64 - ExtraBitsSize)))
            == ExtraBits && "Directive too small for extra bits.");
-    AP.OutStreamer.EmitIntValue(ExtraBits, Size, AddrSpace);
+    AP.OutStreamer.EmitIntValue(ExtraBits, Size);
   }
 }
 
-static void emitGlobalConstantImpl(const Constant *CV, unsigned AddrSpace,
-                                   AsmPrinter &AP) {
+static void emitGlobalConstantImpl(const Constant *CV, AsmPrinter &AP) {
   const DataLayout *TD = AP.TM.getDataLayout();
   uint64_t Size = TD->getTypeAllocSize(CV->getType());
   if (isa<ConstantAggregateZero>(CV) || isa<UndefValue>(CV))
-    return AP.OutStreamer.EmitZeros(Size, AddrSpace);
+    return AP.OutStreamer.EmitZeros(Size);
 
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
     switch (Size) {
@@ -1881,36 +1874,36 @@ static void emitGlobalConstantImpl(const Constant *CV, unsigned AddrSpace,
       if (AP.isVerbose())
         AP.OutStreamer.GetCommentOS() << format("0x%" PRIx64 "\n",
                                                 CI->getZExtValue());
-      AP.OutStreamer.EmitIntValue(CI->getZExtValue(), Size, AddrSpace);
+      AP.OutStreamer.EmitIntValue(CI->getZExtValue(), Size);
       return;
     default:
-      emitGlobalConstantLargeInt(CI, AddrSpace, AP);
+      emitGlobalConstantLargeInt(CI, AP);
       return;
     }
   }
 
   if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV))
-    return emitGlobalConstantFP(CFP, AddrSpace, AP);
+    return emitGlobalConstantFP(CFP, AP);
 
   if (isa<ConstantPointerNull>(CV)) {
-    AP.OutStreamer.EmitIntValue(0, Size, AddrSpace);
+    AP.OutStreamer.EmitIntValue(0, Size);
     return;
   }
 
   if (const ConstantDataSequential *CDS = dyn_cast<ConstantDataSequential>(CV))
-    return emitGlobalConstantDataSequential(CDS, AddrSpace, AP);
+    return emitGlobalConstantDataSequential(CDS, AP);
 
   if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV))
-    return emitGlobalConstantArray(CVA, AddrSpace, AP);
+    return emitGlobalConstantArray(CVA, AP);
 
   if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV))
-    return emitGlobalConstantStruct(CVS, AddrSpace, AP);
+    return emitGlobalConstantStruct(CVS, AP);
 
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     // Look through bitcasts, which might not be able to be MCExpr'ized (e.g. of
     // vectors).
     if (CE->getOpcode() == Instruction::BitCast)
-      return emitGlobalConstantImpl(CE->getOperand(0), AddrSpace, AP);
+      return emitGlobalConstantImpl(CE->getOperand(0), AP);
 
     if (Size > 8) {
       // If the constant expression's size is greater than 64-bits, then we have
@@ -1918,27 +1911,27 @@ static void emitGlobalConstantImpl(const Constant *CV, unsigned AddrSpace,
       // that way.
       Constant *New = ConstantFoldConstantExpression(CE, TD);
       if (New && New != CE)
-        return emitGlobalConstantImpl(New, AddrSpace, AP);
+        return emitGlobalConstantImpl(New, AP);
     }
   }
 
   if (const ConstantVector *V = dyn_cast<ConstantVector>(CV))
-    return emitGlobalConstantVector(V, AddrSpace, AP);
+    return emitGlobalConstantVector(V, AP);
 
   // Otherwise, it must be a ConstantExpr.  Lower it to an MCExpr, then emit it
   // thread the streamer with EmitValue.
-  AP.OutStreamer.EmitValue(lowerConstant(CV, AP), Size, AddrSpace);
+  AP.OutStreamer.EmitValue(lowerConstant(CV, AP), Size);
 }
 
 /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
-void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
+void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
   uint64_t Size = TM.getDataLayout()->getTypeAllocSize(CV->getType());
   if (Size)
-    emitGlobalConstantImpl(CV, AddrSpace, *this);
+    emitGlobalConstantImpl(CV, *this);
   else if (MAI->hasSubsectionsViaSymbols()) {
     // If the global has zero size, emit a single byte so that two labels don't
     // look like they are at the same location.
-    OutStreamer.EmitIntValue(0, 1, AddrSpace);
+    OutStreamer.EmitIntValue(0, 1);
   }
 }
 

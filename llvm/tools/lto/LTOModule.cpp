@@ -792,9 +792,8 @@ namespace {
                                        unsigned ByteAlignment) {}
     virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
                                 uint64_t Size, unsigned ByteAlignment) {}
-    virtual void EmitBytes(StringRef Data, unsigned AddrSpace) {}
-    virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
-                               unsigned AddrSpace) {}
+    virtual void EmitBytes(StringRef Data) {}
+    virtual void EmitValueImpl(const MCExpr *Value, unsigned Size) {}
     virtual void EmitULEB128Value(const MCExpr *Value) {}
     virtual void EmitSLEB128Value(const MCExpr *Value) {}
     virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,

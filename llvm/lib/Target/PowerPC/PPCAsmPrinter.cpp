@@ -769,7 +769,7 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
       //   .long _foo
       OutStreamer.EmitValue(MCSymbolRefExpr::Create(Stubs[i].second.getPointer(),
                                                     OutContext),
-                            isPPC64 ? 8 : 4/*size*/, 0/*addrspace*/);
+                            isPPC64 ? 8 : 4/*size*/);
     }
 
     Stubs.clear();

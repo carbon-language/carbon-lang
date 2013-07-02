@@ -77,8 +77,7 @@ public:
                             uint64_t Size = 0, unsigned ByteAlignment = 0);
   virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
                               uint64_t Size, unsigned ByteAlignment = 0);
-  virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
-                             unsigned AddrSpace);
+  virtual void EmitValueImpl(const MCExpr *Value, unsigned Size);
 
   virtual void EmitFileDirective(StringRef Filename);
 

@@ -200,13 +200,6 @@ namespace llvm {
     /// on Mips or .gprel32 on Alpha.
     const char *GPRel32Directive;            // Defaults to NULL.
 
-    /// getDataASDirective - Return the directive that should be used to emit
-    /// data of the specified size to the specified numeric address space.
-    virtual const char *getDataASDirective(unsigned Size, unsigned AS) const {
-      assert(AS != 0 && "Don't know the directives for default addr space");
-      return 0;
-    }
-
     /// SunStyleELFSectionSwitchSyntax - This is true if this target uses "Sun
     /// Style" syntax for section switching ("#alloc,#write" etc) instead of the
     /// normal ELF syntax (,"a,w") in .section directives.
@@ -372,17 +365,17 @@ namespace llvm {
 
     // Data directive accessors.
     //
-    const char *getData8bitsDirective(unsigned AS = 0) const {
-      return AS == 0 ? Data8bitsDirective : getDataASDirective(8, AS);
+    const char *getData8bitsDirective() const {
+      return Data8bitsDirective;
     }
-    const char *getData16bitsDirective(unsigned AS = 0) const {
-      return AS == 0 ? Data16bitsDirective : getDataASDirective(16, AS);
+    const char *getData16bitsDirective() const {
+      return Data16bitsDirective;
     }
-    const char *getData32bitsDirective(unsigned AS = 0) const {
-      return AS == 0 ? Data32bitsDirective : getDataASDirective(32, AS);
+    const char *getData32bitsDirective() const {
+      return Data32bitsDirective;
     }
-    const char *getData64bitsDirective(unsigned AS = 0) const {
-      return AS == 0 ? Data64bitsDirective : getDataASDirective(64, AS);
+    const char *getData64bitsDirective() const {
+      return Data64bitsDirective;
     }
     const char *getGPRel64Directive() const { return GPRel64Directive; }
     const char *getGPRel32Directive() const { return GPRel32Directive; }

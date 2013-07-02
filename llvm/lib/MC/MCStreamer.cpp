@@ -86,8 +86,7 @@ void MCStreamer::EmitDwarfSetLineAddr(int64_t LineDelta,
 
 /// EmitIntValue - Special case of EmitValue that avoids the client having to
 /// pass in a MCExpr for constant integers.
-void MCStreamer::EmitIntValue(uint64_t Value, unsigned Size,
-                              unsigned AddrSpace) {
+void MCStreamer::EmitIntValue(uint64_t Value, unsigned Size) {
   assert(Size <= 8 && "Invalid size");
   assert((isUIntN(8 * Size, Value) || isIntN(8 * Size, Value)) &&
          "Invalid size");
@@ -97,44 +96,39 @@ void MCStreamer::EmitIntValue(uint64_t Value, unsigned Size,
     unsigned index = isLittleEndian ? i : (Size - i - 1);
     buf[i] = uint8_t(Value >> (index * 8));
   }
-  EmitBytes(StringRef(buf, Size), AddrSpace);
+  EmitBytes(StringRef(buf, Size));
 }
 
 /// EmitULEB128Value - Special case of EmitULEB128Value that avoids the
 /// client having to pass in a MCExpr for constant integers.
-void MCStreamer::EmitULEB128IntValue(uint64_t Value, unsigned Padding,
-                                     unsigned AddrSpace) {
+void MCStreamer::EmitULEB128IntValue(uint64_t Value, unsigned Padding) {
   SmallString<128> Tmp;
   raw_svector_ostream OSE(Tmp);
   encodeULEB128(Value, OSE, Padding);
-  EmitBytes(OSE.str(), AddrSpace);
+  EmitBytes(OSE.str());
 }
 
 /// EmitSLEB128Value - Special case of EmitSLEB128Value that avoids the
 /// client having to pass in a MCExpr for constant integers.
-void MCStreamer::EmitSLEB128IntValue(int64_t Value, unsigned AddrSpace) {
+void MCStreamer::EmitSLEB128IntValue(int64_t Value) {
   SmallString<128> Tmp;
   raw_svector_ostream OSE(Tmp);
   encodeSLEB128(Value, OSE);
-  EmitBytes(OSE.str(), AddrSpace);
+  EmitBytes(OSE.str());
 }
 
-void MCStreamer::EmitAbsValue(const MCExpr *Value, unsigned Size,
-                              unsigned AddrSpace) {
+void MCStreamer::EmitAbsValue(const MCExpr *Value, unsigned Size) {
   const MCExpr *ABS = ForceExpAbs(Value);
-  EmitValue(ABS, Size, AddrSpace);
+  EmitValue(ABS, Size);
 }
 
 
-void MCStreamer::EmitValue(const MCExpr *Value, unsigned Size,
-                           unsigned AddrSpace) {
-  EmitValueImpl(Value, Size, AddrSpace);
+void MCStreamer::EmitValue(const MCExpr *Value, unsigned Size) {
+  EmitValueImpl(Value, Size);
 }
 
-void MCStreamer::EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
-                                  unsigned AddrSpace) {
-  EmitValueImpl(MCSymbolRefExpr::Create(Sym, getContext()), Size,
-                AddrSpace);
+void MCStreamer::EmitSymbolValue(const MCSymbol *Sym, unsigned Size) {
+  EmitValueImpl(MCSymbolRefExpr::Create(Sym, getContext()), Size);
 }
 
 void MCStreamer::EmitGPRel64Value(const MCExpr *Value) {
@@ -147,17 +141,15 @@ void MCStreamer::EmitGPRel32Value(const MCExpr *Value) {
 
 /// EmitFill - Emit NumBytes bytes worth of the value specified by
 /// FillValue.  This implements directives such as '.space'.
-void MCStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue,
-                          unsigned AddrSpace) {
+void MCStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue) {
   const MCExpr *E = MCConstantExpr::Create(FillValue, getContext());
   for (uint64_t i = 0, e = NumBytes; i != e; ++i)
-    EmitValue(E, 1, AddrSpace);
+    EmitValue(E, 1);
 }
 
-/// EmitZeros - Emit NumBytes worth of zeros.  Implementation in this class
-/// just redirects to EmitFill.
-void MCStreamer::EmitZeros(uint64_t NumBytes, unsigned AddrSpace) {
-  EmitFill(NumBytes, 0, AddrSpace);
+/// The implementation in this class just redirects to EmitFill.
+void MCStreamer::EmitZeros(uint64_t NumBytes) {
+  EmitFill(NumBytes, 0);
 }
 
 bool MCStreamer::EmitDwarfFileDirective(unsigned FileNo,

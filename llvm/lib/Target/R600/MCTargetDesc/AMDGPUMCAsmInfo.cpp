@@ -70,11 +70,6 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfo() {
   SupportsDebugInformation = true;
 }
 
-const char*
-AMDGPUMCAsmInfo::getDataASDirective(unsigned int Size, unsigned int AS) const {
-  return 0;
-}
-
 const MCSection*
 AMDGPUMCAsmInfo::getNonexecutableStackSection(MCContext &CTX) const {
   return 0;

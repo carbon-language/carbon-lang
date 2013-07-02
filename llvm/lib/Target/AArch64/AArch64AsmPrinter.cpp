@@ -289,7 +289,7 @@ void AArch64AsmPrinter::EmitEndOfAsmFile(Module &M) {
       for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
         OutStreamer.EmitLabel(Stubs[i].first);
         OutStreamer.EmitSymbolValue(Stubs[i].second.getPointer(),
-                                    TD->getPointerSize(0), 0);
+                                    TD->getPointerSize(0));
       }
       Stubs.clear();
     }

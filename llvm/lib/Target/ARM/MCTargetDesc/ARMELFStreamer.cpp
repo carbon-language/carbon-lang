@@ -109,18 +109,17 @@ public:
   /// This is one of the functions used to emit data into an ELF section, so the
   /// ARM streamer overrides it to add the appropriate mapping symbol ($d) if
   /// necessary.
-  virtual void EmitBytes(StringRef Data, unsigned AddrSpace) {
+  virtual void EmitBytes(StringRef Data) {
     EmitDataMappingSymbol();
-    MCELFStreamer::EmitBytes(Data, AddrSpace);
+    MCELFStreamer::EmitBytes(Data);
   }
 
   /// This is one of the functions used to emit data into an ELF section, so the
   /// ARM streamer overrides it to add the appropriate mapping symbol ($d) if
   /// necessary.
-  virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
-                             unsigned AddrSpace) {
+  virtual void EmitValueImpl(const MCExpr *Value, unsigned Size) {
     EmitDataMappingSymbol();
-    MCELFStreamer::EmitValueImpl(Value, Size, AddrSpace);
+    MCELFStreamer::EmitValueImpl(Value, Size);
   }
 
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) {
@@ -336,17 +335,17 @@ void ARMELFStreamer::EmitFnEnd() {
                             MCSymbolRefExpr::VK_ARM_PREL31,
                             getContext());
 
-  EmitValue(FnStartRef, 4, 0);
+  EmitValue(FnStartRef, 4);
 
   if (CantUnwind) {
-    EmitIntValue(EXIDX_CANTUNWIND, 4, 0);
+    EmitIntValue(EXIDX_CANTUNWIND, 4);
   } else if (ExTab) {
     // Emit a reference to the unwind opcodes in the ".ARM.extab" section.
     const MCSymbolRefExpr *ExTabEntryRef =
       MCSymbolRefExpr::Create(ExTab,
                               MCSymbolRefExpr::VK_ARM_PREL31,
                               getContext());
-    EmitValue(ExTabEntryRef, 4, 0);
+    EmitValue(ExTabEntryRef, 4);
   } else {
     // For the __aeabi_unwind_cpp_pr0, we have to emit the unwind opcodes in
     // the second word of exception index table entry.  The size of the unwind
@@ -356,7 +355,7 @@ void ARMELFStreamer::EmitFnEnd() {
     assert(Opcodes.size() == 4u &&
            "Unwind opcode size for __aeabi_cpp_unwind_pr0 must be equal to 4");
     EmitBytes(StringRef(reinterpret_cast<const char*>(Opcodes.data()),
-                        Opcodes.size()), 0);
+                        Opcodes.size()));
   }
 
   // Switch to the section containing FnStart
@@ -412,12 +411,12 @@ void ARMELFStreamer::FlushUnwindOpcodes(bool NoHandlerData) {
                               MCSymbolRefExpr::VK_ARM_PREL31,
                               getContext());
 
-    EmitValue(PersonalityRef, 4, 0);
+    EmitValue(PersonalityRef, 4);
   }
 
   // Emit unwind opcodes
   EmitBytes(StringRef(reinterpret_cast<const char *>(Opcodes.data()),
-                      Opcodes.size()), 0);
+                      Opcodes.size()));
 
   // According to ARM EHABI section 9.2, if the __aeabi_unwind_cpp_pr1() or
   // __aeabi_unwind_cpp_pr2() is used, then the handler data must be emitted
