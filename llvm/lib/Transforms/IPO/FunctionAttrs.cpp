@@ -1004,6 +1004,7 @@ bool FunctionAttrs::inferPrototypeAttributes(Function &F) {
       return false;
     setDoesNotThrow(F);
     setDoesNotCapture(F, 3);
+    break;
   case LibFunc::fread:
   case LibFunc::fwrite:
     if (FTy->getNumParams() != 4 ||
@@ -1013,6 +1014,7 @@ bool FunctionAttrs::inferPrototypeAttributes(Function &F) {
     setDoesNotThrow(F);
     setDoesNotCapture(F, 1);
     setDoesNotCapture(F, 4);
+    break;
   case LibFunc::fputs:
   case LibFunc::fscanf:
   case LibFunc::fprintf:
