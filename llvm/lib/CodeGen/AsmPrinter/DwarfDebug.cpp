@@ -1922,9 +1922,9 @@ void DwarfDebug::emitDIE(DIE *Die, std::vector<DIEAbbrev *> *Abbrevs) {
     case dwarf::DW_AT_location: {
       if (DIELabel *L = dyn_cast<DIELabel>(Values[i])) {
         if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-          Asm->EmitLabelReference(&L->getValue()->getSymbol(), 4);
+          Asm->EmitLabelReference(L->getValue(), 4);
         else
-          Asm->EmitLabelDifference(&L->getValue()->getSymbol(), DwarfDebugLocSectionSym, 4);
+          Asm->EmitLabelDifference(L->getValue(), DwarfDebugLocSectionSym, 4);
       } else {
         Values[i]->EmitValue(Asm, Form);
       }

@@ -247,13 +247,39 @@ void DIEInteger::print(raw_ostream &O) const {
 #endif
 
 //===----------------------------------------------------------------------===//
+// DIEExpr Implementation
+//===----------------------------------------------------------------------===//
+
+/// EmitValue - Emit expression value.
+///
+void DIEExpr::EmitValue(AsmPrinter *AP, unsigned Form) const {
+  AP->OutStreamer.EmitValue(Expr, SizeOf(AP, Form));
+}
+
+/// SizeOf - Determine size of expression value in bytes.
+///
+unsigned DIEExpr::SizeOf(AsmPrinter *AP, unsigned Form) const {
+  if (Form == dwarf::DW_FORM_data4) return 4;
+  if (Form == dwarf::DW_FORM_sec_offset) return 4;
+  if (Form == dwarf::DW_FORM_strp) return 4;
+  return AP->getDataLayout().getPointerSize();
+}
+
+#ifndef NDEBUG
+void DIEExpr::print(raw_ostream &O) const {
+  O << "Expr: ";
+  Expr->print(O);
+}
+#endif
+
+//===----------------------------------------------------------------------===//
 // DIELabel Implementation
 //===----------------------------------------------------------------------===//
 
 /// EmitValue - Emit label value.
 ///
 void DIELabel::EmitValue(AsmPrinter *AP, unsigned Form) const {
-  AP->OutStreamer.EmitValue(Label, SizeOf(AP, Form));
+  AP->EmitLabelReference(Label, SizeOf(AP, Form));
 }
 
 /// SizeOf - Determine size of label value in bytes.
@@ -267,7 +293,7 @@ unsigned DIELabel::SizeOf(AsmPrinter *AP, unsigned Form) const {
 
 #ifndef NDEBUG
 void DIELabel::print(raw_ostream &O) const {
-  O << "Lbl: " << Label->getSymbol().getName();
+  O << "Lbl: " << Label->getName();
 }
 #endif
 

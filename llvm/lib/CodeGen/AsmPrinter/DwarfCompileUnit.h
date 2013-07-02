@@ -218,10 +218,13 @@ public:
   ///
   void addLocalString(DIE *Die, unsigned Attribute, const StringRef Str);
 
+  /// addExpr - Add a Dwarf expression attribute data and value.
+  ///
+  void addExpr(DIE *Die, unsigned Attribute, unsigned Form,
+               const MCExpr *Expr);
+
   /// addLabel - Add a Dwarf label attribute data and value.
   ///
-  void addLabel(DIE *Die, unsigned Attribute, unsigned Form,
-                const MCSymbolRefExpr *Label);
   void addLabel(DIE *Die, unsigned Attribute, unsigned Form,
                 const MCSymbol *Label);
 

@@ -136,7 +136,7 @@ void CompileUnit::addString(DIE *Die, unsigned Attribute, StringRef String) {
     MCSymbol *Symb = DU->getStringPoolEntry(String);
     DIEValue *Value;
     if (Asm->needsRelocationsForDwarfStringPool())
-      Value = new (DIEValueAllocator) DIELabel(Symb, Asm->OutContext);
+      Value = new (DIEValueAllocator) DIELabel(Symb);
     else {
       MCSymbol *StringPool = DU->getStringPoolSym();
       Value = new (DIEValueAllocator) DIEDelta(Symb, StringPool);
@@ -156,7 +156,7 @@ void CompileUnit::addLocalString(DIE *Die, unsigned Attribute,
   MCSymbol *Symb = DU->getStringPoolEntry(String);
   DIEValue *Value;
   if (Asm->needsRelocationsForDwarfStringPool())
-    Value = new (DIEValueAllocator) DIELabel(Symb, Asm->OutContext);
+    Value = new (DIEValueAllocator) DIELabel(Symb);
   else {
     MCSymbol *StringPool = DU->getStringPoolSym();
     Value = new (DIEValueAllocator) DIEDelta(Symb, StringPool);
@@ -164,17 +164,20 @@ void CompileUnit::addLocalString(DIE *Die, unsigned Attribute,
   Die->addValue(Attribute, dwarf::DW_FORM_strp, Value);
 }
 
-/// addLabel - Add a Dwarf label attribute data and value.
+/// addExpr - Add a Dwarf expression attribute data and value.
 ///
-void CompileUnit::addLabel(DIE *Die, unsigned Attribute, unsigned Form,
-                           const MCSymbolRefExpr *Label) {
-  DIEValue *Value = new (DIEValueAllocator) DIELabel(Label);
+void CompileUnit::addExpr(DIE *Die, unsigned Attribute, unsigned Form,
+                          const MCExpr *Expr) {
+  DIEValue *Value = new (DIEValueAllocator) DIEExpr(Expr);
   Die->addValue(Attribute, Form, Value);
 }
 
+/// addLabel - Add a Dwarf label attribute data and value.
+///
 void CompileUnit::addLabel(DIE *Die, unsigned Attribute, unsigned Form,
                            const MCSymbol *Label) {
-  addLabel(Die, Attribute, Form, MCSymbolRefExpr::Create(Label, Asm->OutContext));
+  DIEValue *Value = new (DIEValueAllocator) DIELabel(Label);
+  Die->addValue(Attribute, Form, Value);
 }
 
 /// addLabelAddress - Add a dwarf label attribute data and value using
@@ -184,7 +187,7 @@ void CompileUnit::addLabelAddress(DIE *Die, unsigned Attribute,
                                   MCSymbol *Label) {
   if (!DD->useSplitDwarf()) {
     if (Label != NULL) {
-      DIEValue *Value = new (DIEValueAllocator) DIELabel(Label, Asm->OutContext);
+      DIEValue *Value = new (DIEValueAllocator) DIELabel(Label);
       Die->addValue(Attribute, dwarf::DW_FORM_addr, Value);
     } else {
       DIEValue *Value = new (DIEValueAllocator) DIEInteger(0);
@@ -1363,7 +1366,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
         addUInt(Block, 0, dwarf::DW_FORM_data1,
                 PointerSize == 4 ? dwarf::DW_OP_const4u : dwarf::DW_OP_const8u);
         // 2) containing the (relocated) address of the TLS variable
-        addLabel(Block, 0, dwarf::DW_FORM_udata, Ref);
+        addExpr(Block, 0, dwarf::DW_FORM_udata, Ref);
       } else {
         addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_const_index);
         addUInt(Block, 0, dwarf::DW_FORM_udata, DU->getAddrPoolIndex(Ref));

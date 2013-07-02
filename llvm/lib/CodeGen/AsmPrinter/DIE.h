@@ -190,6 +190,7 @@ namespace llvm {
     enum {
       isInteger,
       isString,
+      isExpr,
       isLabel,
       isDelta,
       isEntry,
@@ -263,14 +264,40 @@ namespace llvm {
   };
 
   //===--------------------------------------------------------------------===//
-  /// DIELabel - A label expression DIE.
+  /// DIEExpr - An expression DIE.
+  //
+  class DIEExpr : public DIEValue {
+    const MCExpr *Expr;
+  public:
+    explicit DIEExpr(const MCExpr *E) : DIEValue(isExpr), Expr(E) {}
+
+    /// EmitValue - Emit expression value.
+    ///
+    virtual void EmitValue(AsmPrinter *AP, unsigned Form) const;
+
+    /// getValue - Get MCExpr.
+    ///
+    const MCExpr *getValue() const { return Expr; }
+
+    /// SizeOf - Determine size of expression value in bytes.
+    ///
+    virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const;
+
+    // Implement isa/cast/dyncast.
+    static bool classof(const DIEValue *E) { return E->getType() == isExpr; }
+
+#ifndef NDEBUG
+    virtual void print(raw_ostream &O) const;
+#endif
+  };
+
+  //===--------------------------------------------------------------------===//
+  /// DIELabel - A label DIE.
   //
   class DIELabel : public DIEValue {
-    const MCSymbolRefExpr *Label;
+    const MCSymbol *Label;
   public:
-    explicit DIELabel(const MCSymbolRefExpr *L) : DIEValue(isLabel), Label(L) {}
-    explicit DIELabel(const MCSymbol *Sym, MCContext &Ctxt)
-        : DIEValue(isLabel), Label(MCSymbolRefExpr::Create(Sym, Ctxt)) {}
+    explicit DIELabel(const MCSymbol *L) : DIEValue(isLabel), Label(L) {}
 
     /// EmitValue - Emit label value.
     ///
@@ -278,7 +305,7 @@ namespace llvm {
 
     /// getValue - Get MCSymbol.
     ///
-    const MCSymbolRefExpr *getValue() const { return Label; }
+    const MCSymbol *getValue() const { return Label; }
 
     /// SizeOf - Determine size of label value in bytes.
     ///
