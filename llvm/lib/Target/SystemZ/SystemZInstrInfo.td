@@ -242,11 +242,8 @@ let neverHasSideEffects = 1, isAsCheapAsAMove = 1, isMoveImm = 1,
 
 // Register loads.
 let canFoldAsLoad = 1, SimpleBDXLoad = 1 in {
-  defm L   : UnaryRXPair<"l", 0x58, 0xE358, load, GR32>;
-  def  LRL : UnaryRILPC<"lrl", 0xC4D, aligned_load, GR32>;
-
-  def LG   : UnaryRXY<"lg", 0xE304, load, GR64>;
-  def LGRL : UnaryRILPC<"lgrl", 0xC48, aligned_load, GR64>;
+  defm L : UnaryRXPair<"l", 0x58, 0xE358, load, GR32>;
+  def LG : UnaryRXY<"lg", 0xE304, load, GR64>;
 
   // These instructions are split after register allocation, so we don't
   // want a custom inserter.
@@ -255,16 +252,16 @@ let canFoldAsLoad = 1, SimpleBDXLoad = 1 in {
                       [(set GR128:$dst, (load bdxaddr20only128:$src))]>;
   }
 }
+let canFoldAsLoad = 1 in {
+  def LRL  : UnaryRILPC<"lrl",  0xC4D, aligned_load, GR32>;
+  def LGRL : UnaryRILPC<"lgrl", 0xC48, aligned_load, GR64>;
+}
 
 // Register stores.
 let SimpleBDXStore = 1 in {
-  let isCodeGenOnly = 1 in {
-    defm ST32   : StoreRXPair<"st", 0x50, 0xE350, store, GR32>;
-    def  STRL32 : StoreRILPC<"strl", 0xC4F, aligned_store, GR32>;
-  }
-
-  def STG   : StoreRXY<"stg", 0xE324, store, GR64>;
-  def STGRL : StoreRILPC<"stgrl", 0xC4B, aligned_store, GR64>;
+  let isCodeGenOnly = 1 in
+    defm ST32 : StoreRXPair<"st", 0x50, 0xE350, store, GR32>;
+  def STG : StoreRXY<"stg", 0xE324, store, GR64>;
 
   // These instructions are split after register allocation, so we don't
   // want a custom inserter.
@@ -273,6 +270,9 @@ let SimpleBDXStore = 1 in {
                        [(store GR128:$src, bdxaddr20only128:$dst)]>;
   }
 }
+let isCodeGenOnly = 1 in
+  def STRL32 : StoreRILPC<"strl", 0xC4F, aligned_store, GR32>;
+def STGRL : StoreRILPC<"stgrl", 0xC4B, aligned_store, GR64>;
 
 // 8-bit immediate stores to 8-bit fields.
 defm MVI : StoreSIPair<"mvi", 0x92, 0xEB52, truncstorei8, imm32zx8trunc>;

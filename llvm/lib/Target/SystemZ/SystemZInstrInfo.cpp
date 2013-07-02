@@ -13,6 +13,7 @@
 
 #include "SystemZInstrInfo.h"
 #include "SystemZInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 
 #define GET_INSTRINFO_CTOR
@@ -80,7 +81,8 @@ void SystemZInstrInfo::splitAdjDynAlloc(MachineBasicBlock::iterator MI) const {
 // Return 0 otherwise.
 //
 // Flag is SimpleBDXLoad for loads and SimpleBDXStore for stores.
-static int isSimpleMove(const MachineInstr *MI, int &FrameIndex, int Flag) {
+static int isSimpleMove(const MachineInstr *MI, int &FrameIndex,
+                        unsigned Flag) {
   const MCInstrDesc &MCID = MI->getDesc();
   if ((MCID.TSFlags & Flag) &&
       MI->getOperand(1).isFI() &&
@@ -313,6 +315,96 @@ SystemZInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   getLoadStoreOpcodes(RC, LoadOpcode, StoreOpcode);
   addFrameReference(BuildMI(MBB, MBBI, DL, get(LoadOpcode), DestReg),
                     FrameIdx);
+}
+
+// Return true if MI is a simple load or store with a 12-bit displacement
+// and no index.  Flag is SimpleBDXLoad for loads and SimpleBDXStore for stores.
+static bool isSimpleBD12Move(const MachineInstr *MI, unsigned Flag) {
+  const MCInstrDesc &MCID = MI->getDesc();
+  return ((MCID.TSFlags & Flag) &&
+          isUInt<12>(MI->getOperand(2).getImm()) &&
+          MI->getOperand(3).getReg() == 0);
+}
+
+// Return a MachineMemOperand for FrameIndex with flags MMOFlags.
+// Offset is the byte offset from the start of FrameIndex.
+static MachineMemOperand *getFrameMMO(MachineFunction &MF, int FrameIndex,
+                                      uint64_t &Offset, unsigned MMOFlags) {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const Value *V = PseudoSourceValue::getFixedStack(FrameIndex);
+  return MF.getMachineMemOperand(MachinePointerInfo(V, Offset), MMOFlags,
+                                 MFI->getObjectSize(FrameIndex),
+                                 MFI->getObjectAlignment(FrameIndex));
+}
+
+MachineInstr *
+SystemZInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
+                                        MachineInstr *MI,
+                                        const SmallVectorImpl<unsigned> &Ops,
+                                        int FrameIndex) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  unsigned Size = MFI->getObjectSize(FrameIndex);
+
+  // Eary exit for cases we don't care about
+  if (Ops.size() != 1)
+    return 0;
+
+  unsigned OpNum = Ops[0];
+  unsigned Reg = MI->getOperand(OpNum).getReg();
+  unsigned RegSize = MF.getRegInfo().getRegClass(Reg)->getSize();
+  assert(Size == RegSize && "Invalid size combination");
+
+  // Look for cases where the source of a simple store or the destination
+  // of a simple load is being spilled.  Try to use MVC instead.
+  //
+  // Although MVC is in practice a fast choice in these cases, it is still
+  // logically a bytewise copy.  This means that we cannot use it if the
+  // load or store is volatile.  It also means that the transformation is
+  // not valid in cases where the two memories partially overlap; however,
+  // that is not a problem here, because we know that one of the memories
+  // is a full frame index.
+  //
+  // For now we punt if the load or store is also to a frame index.
+  // In that case we might end up eliminating both of them to out-of-range
+  // offsets, which might then force the register scavenger to spill two
+  // other registers.  The backend can only handle one such scavenger spill
+  // at a time.
+  if (OpNum == 0 && MI->hasOneMemOperand()) {
+    MachineMemOperand *MMO = *MI->memoperands_begin();
+    if (MMO->getSize() == Size && !MMO->isVolatile()) {
+      // Handle conversion of loads.
+      if (isSimpleBD12Move(MI, SystemZII::SimpleBDXLoad) &&
+          !MI->getOperand(1).isFI()) {
+        uint64_t Offset = 0;
+        MachineMemOperand *FrameMMO = getFrameMMO(MF, FrameIndex, Offset,
+                                                  MachineMemOperand::MOStore);
+        return BuildMI(MF, MI->getDebugLoc(), get(SystemZ::MVC))
+          .addFrameIndex(FrameIndex).addImm(Offset).addImm(Size)
+          .addOperand(MI->getOperand(1)).addImm(MI->getOperand(2).getImm())
+          .addMemOperand(FrameMMO).addMemOperand(MMO);
+      }
+      // Handle conversion of stores.
+      if (isSimpleBD12Move(MI, SystemZII::SimpleBDXStore) &&
+          !MI->getOperand(1).isFI()) {
+        uint64_t Offset = 0;
+        MachineMemOperand *FrameMMO = getFrameMMO(MF, FrameIndex, Offset,
+                                                  MachineMemOperand::MOLoad);
+        return BuildMI(MF, MI->getDebugLoc(), get(SystemZ::MVC))
+          .addOperand(MI->getOperand(1)).addImm(MI->getOperand(2).getImm())
+          .addImm(Size).addFrameIndex(FrameIndex).addImm(Offset)
+          .addMemOperand(MMO).addMemOperand(FrameMMO);
+      }
+    }
+  }
+
+  return 0;
+}
+
+MachineInstr *
+SystemZInstrInfo::foldMemoryOperandImpl(MachineFunction &MF, MachineInstr* MI,
+                                        const SmallVectorImpl<unsigned> &Ops,
+                                        MachineInstr* LoadMI) const {
+  return 0;
 }
 
 bool

@@ -111,6 +111,14 @@ public:
                          unsigned DestReg, int FrameIdx,
                          const TargetRegisterClass *RC,
                          const TargetRegisterInfo *TRI) const LLVM_OVERRIDE;
+  virtual MachineInstr *
+    foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
+                          const SmallVectorImpl<unsigned> &Ops,
+                          int FrameIndex) const;
+  virtual MachineInstr *
+    foldMemoryOperandImpl(MachineFunction &MF, MachineInstr* MI,
+                          const SmallVectorImpl<unsigned> &Ops,
+                          MachineInstr* LoadMI) const;
   virtual bool
     expandPostRAPseudo(MachineBasicBlock::iterator MBBI) const LLVM_OVERRIDE;
   virtual bool

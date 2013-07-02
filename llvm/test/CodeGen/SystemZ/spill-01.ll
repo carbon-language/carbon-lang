@@ -1,0 +1,383 @@
+; Test spilling using MVC.
+;
+; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+
+declare void @foo()
+
+@g0 = global i32 0
+@g1 = global i32 1
+@g2 = global i32 2
+@g3 = global i32 3
+@g4 = global i32 4
+@g5 = global i32 5
+@g6 = global i32 6
+@g7 = global i32 7
+@g8 = global i32 8
+@g9 = global i32 9
+
+@h0 = global i64 0
+@h1 = global i64 1
+@h2 = global i64 2
+@h3 = global i64 3
+@h4 = global i64 4
+@h5 = global i64 5
+@h6 = global i64 6
+@h7 = global i64 7
+@h8 = global i64 8
+@h9 = global i64 9
+
+; This function shouldn't spill anything
+define void @f1(i32 *%ptr0) {
+; CHECK: f1:
+; CHECK: stmg
+; CHECK: aghi %r15, -160
+; CHECK-NOT: %r15
+; CHECK: brasl %r14, foo@PLT
+; CHECK-NOT: %r15
+; CHECK: lmg
+; CHECK: br %r14
+  %ptr1 = getelementptr i32 *%ptr0, i32 2
+  %ptr2 = getelementptr i32 *%ptr0, i32 4
+  %ptr3 = getelementptr i32 *%ptr0, i32 6
+  %ptr4 = getelementptr i32 *%ptr0, i32 8
+  %ptr5 = getelementptr i32 *%ptr0, i32 10
+  %ptr6 = getelementptr i32 *%ptr0, i32 12
+
+  %val0 = load i32 *%ptr0
+  %val1 = load i32 *%ptr1
+  %val2 = load i32 *%ptr2
+  %val3 = load i32 *%ptr3
+  %val4 = load i32 *%ptr4
+  %val5 = load i32 *%ptr5
+  %val6 = load i32 *%ptr6
+
+  call void @foo()
+
+  store i32 %val0, i32 *%ptr0
+  store i32 %val1, i32 *%ptr1
+  store i32 %val2, i32 *%ptr2
+  store i32 %val3, i32 *%ptr3
+  store i32 %val4, i32 *%ptr4
+  store i32 %val5, i32 *%ptr5
+  store i32 %val6, i32 *%ptr6
+
+  ret void
+}
+
+; Test a case where at least one i32 load and at least one i32 store
+; need spills.
+define void @f2(i32 *%ptr0) {
+; CHECK: f2:
+; CHECK: mvc [[OFFSET1:16[04]]](4,%r15), [[OFFSET2:[0-9]+]]({{%r[0-9]+}})
+; CHECK: brasl %r14, foo@PLT
+; CHECK: mvc [[OFFSET2]](4,{{%r[0-9]+}}), [[OFFSET1]](%r15)
+; CHECK: br %r14
+  %ptr1 = getelementptr i32 *%ptr0, i64 2
+  %ptr2 = getelementptr i32 *%ptr0, i64 4
+  %ptr3 = getelementptr i32 *%ptr0, i64 6
+  %ptr4 = getelementptr i32 *%ptr0, i64 8
+  %ptr5 = getelementptr i32 *%ptr0, i64 10
+  %ptr6 = getelementptr i32 *%ptr0, i64 12
+  %ptr7 = getelementptr i32 *%ptr0, i64 14
+  %ptr8 = getelementptr i32 *%ptr0, i64 16
+
+  %val0 = load i32 *%ptr0
+  %val1 = load i32 *%ptr1
+  %val2 = load i32 *%ptr2
+  %val3 = load i32 *%ptr3
+  %val4 = load i32 *%ptr4
+  %val5 = load i32 *%ptr5
+  %val6 = load i32 *%ptr6
+  %val7 = load i32 *%ptr7
+  %val8 = load i32 *%ptr8
+
+  call void @foo()
+
+  store i32 %val0, i32 *%ptr0
+  store i32 %val1, i32 *%ptr1
+  store i32 %val2, i32 *%ptr2
+  store i32 %val3, i32 *%ptr3
+  store i32 %val4, i32 *%ptr4
+  store i32 %val5, i32 *%ptr5
+  store i32 %val6, i32 *%ptr6
+  store i32 %val7, i32 *%ptr7
+  store i32 %val8, i32 *%ptr8
+
+  ret void
+}
+
+; Test a case where at least one i64 load and at least one i64 store
+; need spills.
+define void @f3(i64 *%ptr0) {
+; CHECK: f3:
+; CHECK: mvc 160(8,%r15), [[OFFSET:[0-9]+]]({{%r[0-9]+}})
+; CHECK: brasl %r14, foo@PLT
+; CHECK: mvc [[OFFSET]](8,{{%r[0-9]+}}), 160(%r15)
+; CHECK: br %r14
+  %ptr1 = getelementptr i64 *%ptr0, i64 2
+  %ptr2 = getelementptr i64 *%ptr0, i64 4
+  %ptr3 = getelementptr i64 *%ptr0, i64 6
+  %ptr4 = getelementptr i64 *%ptr0, i64 8
+  %ptr5 = getelementptr i64 *%ptr0, i64 10
+  %ptr6 = getelementptr i64 *%ptr0, i64 12
+  %ptr7 = getelementptr i64 *%ptr0, i64 14
+  %ptr8 = getelementptr i64 *%ptr0, i64 16
+
+  %val0 = load i64 *%ptr0
+  %val1 = load i64 *%ptr1
+  %val2 = load i64 *%ptr2
+  %val3 = load i64 *%ptr3
+  %val4 = load i64 *%ptr4
+  %val5 = load i64 *%ptr5
+  %val6 = load i64 *%ptr6
+  %val7 = load i64 *%ptr7
+  %val8 = load i64 *%ptr8
+
+  call void @foo()
+
+  store i64 %val0, i64 *%ptr0
+  store i64 %val1, i64 *%ptr1
+  store i64 %val2, i64 *%ptr2
+  store i64 %val3, i64 *%ptr3
+  store i64 %val4, i64 *%ptr4
+  store i64 %val5, i64 *%ptr5
+  store i64 %val6, i64 *%ptr6
+  store i64 %val7, i64 *%ptr7
+  store i64 %val8, i64 *%ptr8
+
+  ret void
+}
+
+
+; Test a case where at least at least one f32 load and at least one f32 store
+; need spills.  The 8 call-saved FPRs could be used for 8 of the %vals
+; (and are at the time of writing), but it would really be better to use
+; MVC for all 10.
+define void @f4(float *%ptr0) {
+; CHECK: f4:
+; CHECK: mvc [[OFFSET1:16[04]]](4,%r15), [[OFFSET2:[0-9]+]]({{%r[0-9]+}})
+; CHECK: brasl %r14, foo@PLT
+; CHECK: mvc [[OFFSET2]](4,{{%r[0-9]+}}), [[OFFSET1]](%r15)
+; CHECK: br %r14
+  %ptr1 = getelementptr float *%ptr0, i64 2
+  %ptr2 = getelementptr float *%ptr0, i64 4
+  %ptr3 = getelementptr float *%ptr0, i64 6
+  %ptr4 = getelementptr float *%ptr0, i64 8
+  %ptr5 = getelementptr float *%ptr0, i64 10
+  %ptr6 = getelementptr float *%ptr0, i64 12
+  %ptr7 = getelementptr float *%ptr0, i64 14
+  %ptr8 = getelementptr float *%ptr0, i64 16
+  %ptr9 = getelementptr float *%ptr0, i64 18
+
+  %val0 = load float *%ptr0
+  %val1 = load float *%ptr1
+  %val2 = load float *%ptr2
+  %val3 = load float *%ptr3
+  %val4 = load float *%ptr4
+  %val5 = load float *%ptr5
+  %val6 = load float *%ptr6
+  %val7 = load float *%ptr7
+  %val8 = load float *%ptr8
+  %val9 = load float *%ptr9
+
+  call void @foo()
+
+  store float %val0, float *%ptr0
+  store float %val1, float *%ptr1
+  store float %val2, float *%ptr2
+  store float %val3, float *%ptr3
+  store float %val4, float *%ptr4
+  store float %val5, float *%ptr5
+  store float %val6, float *%ptr6
+  store float %val7, float *%ptr7
+  store float %val8, float *%ptr8
+  store float %val9, float *%ptr9
+
+  ret void
+}
+
+; Similarly for f64.
+define void @f5(double *%ptr0) {
+; CHECK: f5:
+; CHECK: mvc 160(8,%r15), [[OFFSET:[0-9]+]]({{%r[0-9]+}})
+; CHECK: brasl %r14, foo@PLT
+; CHECK: mvc [[OFFSET]](8,{{%r[0-9]+}}), 160(%r15)
+; CHECK: br %r14
+  %ptr1 = getelementptr double *%ptr0, i64 2
+  %ptr2 = getelementptr double *%ptr0, i64 4
+  %ptr3 = getelementptr double *%ptr0, i64 6
+  %ptr4 = getelementptr double *%ptr0, i64 8
+  %ptr5 = getelementptr double *%ptr0, i64 10
+  %ptr6 = getelementptr double *%ptr0, i64 12
+  %ptr7 = getelementptr double *%ptr0, i64 14
+  %ptr8 = getelementptr double *%ptr0, i64 16
+  %ptr9 = getelementptr double *%ptr0, i64 18
+
+  %val0 = load double *%ptr0
+  %val1 = load double *%ptr1
+  %val2 = load double *%ptr2
+  %val3 = load double *%ptr3
+  %val4 = load double *%ptr4
+  %val5 = load double *%ptr5
+  %val6 = load double *%ptr6
+  %val7 = load double *%ptr7
+  %val8 = load double *%ptr8
+  %val9 = load double *%ptr9
+
+  call void @foo()
+
+  store double %val0, double *%ptr0
+  store double %val1, double *%ptr1
+  store double %val2, double *%ptr2
+  store double %val3, double *%ptr3
+  store double %val4, double *%ptr4
+  store double %val5, double *%ptr5
+  store double %val6, double *%ptr6
+  store double %val7, double *%ptr7
+  store double %val8, double *%ptr8
+  store double %val9, double *%ptr9
+
+  ret void
+}
+
+; Repeat f2 with atomic accesses.  We shouldn't use MVC here.
+define void @f6(i32 *%ptr0) {
+; CHECK: f6:
+; CHECK-NOT: mvc
+; CHECK: br %r14
+  %ptr1 = getelementptr i32 *%ptr0, i64 2
+  %ptr2 = getelementptr i32 *%ptr0, i64 4
+  %ptr3 = getelementptr i32 *%ptr0, i64 6
+  %ptr4 = getelementptr i32 *%ptr0, i64 8
+  %ptr5 = getelementptr i32 *%ptr0, i64 10
+  %ptr6 = getelementptr i32 *%ptr0, i64 12
+  %ptr7 = getelementptr i32 *%ptr0, i64 14
+  %ptr8 = getelementptr i32 *%ptr0, i64 16
+
+  %val0 = load atomic i32 *%ptr0 unordered, align 4
+  %val1 = load atomic i32 *%ptr1 unordered, align 4
+  %val2 = load atomic i32 *%ptr2 unordered, align 4
+  %val3 = load atomic i32 *%ptr3 unordered, align 4
+  %val4 = load atomic i32 *%ptr4 unordered, align 4
+  %val5 = load atomic i32 *%ptr5 unordered, align 4
+  %val6 = load atomic i32 *%ptr6 unordered, align 4
+  %val7 = load atomic i32 *%ptr7 unordered, align 4
+  %val8 = load atomic i32 *%ptr8 unordered, align 4
+
+  call void @foo()
+
+  store atomic i32 %val0, i32 *%ptr0 unordered, align 4
+  store atomic i32 %val1, i32 *%ptr1 unordered, align 4
+  store atomic i32 %val2, i32 *%ptr2 unordered, align 4
+  store atomic i32 %val3, i32 *%ptr3 unordered, align 4
+  store atomic i32 %val4, i32 *%ptr4 unordered, align 4
+  store atomic i32 %val5, i32 *%ptr5 unordered, align 4
+  store atomic i32 %val6, i32 *%ptr6 unordered, align 4
+  store atomic i32 %val7, i32 *%ptr7 unordered, align 4
+  store atomic i32 %val8, i32 *%ptr8 unordered, align 4
+
+  ret void
+}
+
+; ...likewise volatile accesses.
+define void @f7(i32 *%ptr0) {
+; CHECK: f7:
+; CHECK-NOT: mvc
+; CHECK: br %r14
+  %ptr1 = getelementptr i32 *%ptr0, i64 2
+  %ptr2 = getelementptr i32 *%ptr0, i64 4
+  %ptr3 = getelementptr i32 *%ptr0, i64 6
+  %ptr4 = getelementptr i32 *%ptr0, i64 8
+  %ptr5 = getelementptr i32 *%ptr0, i64 10
+  %ptr6 = getelementptr i32 *%ptr0, i64 12
+  %ptr7 = getelementptr i32 *%ptr0, i64 14
+  %ptr8 = getelementptr i32 *%ptr0, i64 16
+
+  %val0 = load volatile i32 *%ptr0
+  %val1 = load volatile i32 *%ptr1
+  %val2 = load volatile i32 *%ptr2
+  %val3 = load volatile i32 *%ptr3
+  %val4 = load volatile i32 *%ptr4
+  %val5 = load volatile i32 *%ptr5
+  %val6 = load volatile i32 *%ptr6
+  %val7 = load volatile i32 *%ptr7
+  %val8 = load volatile i32 *%ptr8
+
+  call void @foo()
+
+  store volatile i32 %val0, i32 *%ptr0
+  store volatile i32 %val1, i32 *%ptr1
+  store volatile i32 %val2, i32 *%ptr2
+  store volatile i32 %val3, i32 *%ptr3
+  store volatile i32 %val4, i32 *%ptr4
+  store volatile i32 %val5, i32 *%ptr5
+  store volatile i32 %val6, i32 *%ptr6
+  store volatile i32 %val7, i32 *%ptr7
+  store volatile i32 %val8, i32 *%ptr8
+
+  ret void
+}
+
+; Check that LRL and STRL are not converted.
+define void @f8() {
+; CHECK: f8:
+; CHECK-NOT: mvc
+; CHECK: br %r14
+  %val0 = load i32 *@g0
+  %val1 = load i32 *@g1
+  %val2 = load i32 *@g2
+  %val3 = load i32 *@g3
+  %val4 = load i32 *@g4
+  %val5 = load i32 *@g5
+  %val6 = load i32 *@g6
+  %val7 = load i32 *@g7
+  %val8 = load i32 *@g8
+  %val9 = load i32 *@g9
+
+  call void @foo()
+
+  store i32 %val0, i32 *@g0
+  store i32 %val1, i32 *@g1
+  store i32 %val2, i32 *@g2
+  store i32 %val3, i32 *@g3
+  store i32 %val4, i32 *@g4
+  store i32 %val5, i32 *@g5
+  store i32 %val6, i32 *@g6
+  store i32 %val7, i32 *@g7
+  store i32 %val8, i32 *@g8
+  store i32 %val9, i32 *@g9
+
+  ret void
+}
+
+; Likewise LGRL and STGRL.
+define void @f9() {
+; CHECK: f9:
+; CHECK-NOT: mvc
+; CHECK: br %r14
+  %val0 = load i64 *@h0
+  %val1 = load i64 *@h1
+  %val2 = load i64 *@h2
+  %val3 = load i64 *@h3
+  %val4 = load i64 *@h4
+  %val5 = load i64 *@h5
+  %val6 = load i64 *@h6
+  %val7 = load i64 *@h7
+  %val8 = load i64 *@h8
+  %val9 = load i64 *@h9
+
+  call void @foo()
+
+  store i64 %val0, i64 *@h0
+  store i64 %val1, i64 *@h1
+  store i64 %val2, i64 *@h2
+  store i64 %val3, i64 *@h3
+  store i64 %val4, i64 *@h4
+  store i64 %val5, i64 *@h5
+  store i64 %val6, i64 *@h6
+  store i64 %val7, i64 *@h7
+  store i64 %val8, i64 *@h8
+  store i64 %val9, i64 *@h9
+
+  ret void
+}
