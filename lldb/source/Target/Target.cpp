@@ -782,6 +782,7 @@ Target::RemoveAllWatchpoints (bool end_to_end)
             return false;
     }
     m_watchpoint_list.RemoveAll (true);
+    m_last_created_watchpoint.reset();
     return true; // Success!
 }
 
@@ -949,6 +950,10 @@ Target::RemoveWatchpointByID (lldb::watch_id_t watch_id)
     if (log)
         log->Printf ("Target::%s (watch_id = %i)\n", __FUNCTION__, watch_id);
 
+    WatchpointSP watch_to_remove_sp = m_watchpoint_list.FindByID(watch_id);
+    if (watch_to_remove_sp == m_last_created_watchpoint)
+        m_last_created_watchpoint.reset();
+        
     if (DisableWatchpointByID (watch_id))
     {
         m_watchpoint_list.Remove(watch_id, true);

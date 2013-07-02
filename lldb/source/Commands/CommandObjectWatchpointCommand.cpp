@@ -512,7 +512,7 @@ protected:
         }
         
         std::vector<uint32_t> valid_wp_ids;
-        if (!CommandObjectMultiwordWatchpoint::VerifyWatchpointIDs(command, valid_wp_ids))
+        if (!CommandObjectMultiwordWatchpoint::VerifyWatchpointIDs(target, command, valid_wp_ids))
         {
             result.AppendError("Invalid watchpoints specification.");
             result.SetStatus(eReturnStatusFailed);
@@ -678,7 +678,7 @@ protected:
         }
 
         std::vector<uint32_t> valid_wp_ids;
-        if (!CommandObjectMultiwordWatchpoint::VerifyWatchpointIDs(command, valid_wp_ids))
+        if (!CommandObjectMultiwordWatchpoint::VerifyWatchpointIDs(target, command, valid_wp_ids))
         {
             result.AppendError("Invalid watchpoints specification.");
             result.SetStatus(eReturnStatusFailed);
@@ -770,7 +770,7 @@ protected:
         }
 
         std::vector<uint32_t> valid_wp_ids;
-        if (!CommandObjectMultiwordWatchpoint::VerifyWatchpointIDs(command, valid_wp_ids))
+        if (!CommandObjectMultiwordWatchpoint::VerifyWatchpointIDs(target, command, valid_wp_ids))
         {
             result.AppendError("Invalid watchpoints specification.");
             result.SetStatus(eReturnStatusFailed);
