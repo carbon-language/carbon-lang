@@ -3992,13 +3992,29 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       // Perform name lookup on this name.
       TypoCorrection &Candidate = I->second.front();
       IdentifierInfo *Name = Candidate.getCorrectionAsIdentifierInfo();
-      LookupPotentialTypoResult(*this, TmpRes, Name, S, SS, MemberContext,
-                                EnteringContext, CCC.IsObjCIvarLookup);
+      DeclContext *TempMemberContext = MemberContext;
+      CXXScopeSpec *TempSS = SS;
+retry_lookup:
+      LookupPotentialTypoResult(*this, TmpRes, Name, S, TempSS,
+                                TempMemberContext, EnteringContext,
+                                CCC.IsObjCIvarLookup);
 
       switch (TmpRes.getResultKind()) {
       case LookupResult::NotFound:
       case LookupResult::NotFoundInCurrentInstantiation:
       case LookupResult::FoundUnresolvedValue:
+        if (TempSS) {
+          // Immediately retry the lookup without the given CXXScopeSpec
+          TempSS = NULL;
+          Candidate.WillReplaceSpecifier(true);
+          goto retry_lookup;
+        }
+        if (TempMemberContext) {
+          if (SS && !TempSS)
+            TempSS = SS;
+          TempMemberContext = NULL;
+          goto retry_lookup;
+        }
         QualifiedResults.push_back(Candidate);
         // We didn't find this name in our scope, or didn't like what we found;
         // ignore it.

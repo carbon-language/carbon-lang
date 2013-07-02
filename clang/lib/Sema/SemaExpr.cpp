@@ -1720,6 +1720,8 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
                                     S, &SS, CCC))) {
     std::string CorrectedStr(Corrected.getAsString(getLangOpts()));
     std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOpts()));
+    bool droppedSpecifier =
+        Corrected.WillReplaceSpecifier() && Name.getAsString() == CorrectedStr;
     R.setLookupName(Corrected.getCorrection());
 
     if (NamedDecl *ND = Corrected.getCorrectionDecl()) {
@@ -1754,8 +1756,8 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
             << FixItHint::CreateReplacement(R.getNameLoc(), CorrectedStr);
         else
           Diag(R.getNameLoc(), diag::err_no_member_suggest)
-            << Name << computeDeclContext(SS, false) << CorrectedQuotedStr
-            << SS.getRange()
+            << Name << computeDeclContext(SS, false) << droppedSpecifier
+            << CorrectedQuotedStr << SS.getRange()
             << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
                                             CorrectedStr);
 
@@ -1781,8 +1783,8 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
             << Name << CorrectedQuotedStr;
         else
           Diag(R.getNameLoc(), diag::err_no_member_suggest)
-            << Name << computeDeclContext(SS, false) << CorrectedQuotedStr
-            << SS.getRange();
+            << Name << computeDeclContext(SS, false) << droppedSpecifier
+            << CorrectedQuotedStr << SS.getRange();
 
         // Don't try to recover; it won't work.
         return true;
@@ -1794,8 +1796,8 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
         Diag(R.getNameLoc(), diagnostic_suggest) << Name << CorrectedQuotedStr;
       else
         Diag(R.getNameLoc(), diag::err_no_member_suggest)
-        << Name << computeDeclContext(SS, false) << CorrectedQuotedStr
-        << SS.getRange();
+          << Name << computeDeclContext(SS, false) << droppedSpecifier
+          << CorrectedQuotedStr << SS.getRange();
       return true;
     }
   }

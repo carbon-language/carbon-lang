@@ -6603,15 +6603,18 @@ static bool TryNamespaceTypoCorrection(Sema &S, LookupResult &R, Scope *Sc,
                                                Validator)) {
     std::string CorrectedStr(Corrected.getAsString(S.getLangOpts()));
     std::string CorrectedQuotedStr(Corrected.getQuoted(S.getLangOpts()));
-    if (DeclContext *DC = S.computeDeclContext(SS, false))
+    if (DeclContext *DC = S.computeDeclContext(SS, false)) {
+      bool droppedSpecifier = Corrected.WillReplaceSpecifier() &&
+                              Ident->getName().equals(CorrectedStr);
       S.Diag(IdentLoc, diag::err_using_directive_member_suggest)
-        << Ident << DC << CorrectedQuotedStr << SS.getRange()
-        << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
-                                        CorrectedStr);
-    else
+          << Ident << DC << droppedSpecifier << CorrectedQuotedStr
+          << SS.getRange() << FixItHint::CreateReplacement(
+                                  Corrected.getCorrectionRange(), CorrectedStr);
+    } else {
       S.Diag(IdentLoc, diag::err_using_directive_suggest)
         << Ident << CorrectedQuotedStr
         << FixItHint::CreateReplacement(IdentLoc, CorrectedStr);
+    }
 
     S.Diag(Corrected.getCorrectionDecl()->getLocation(),
          diag::note_namespace_defined_here) << CorrectedQuotedStr;

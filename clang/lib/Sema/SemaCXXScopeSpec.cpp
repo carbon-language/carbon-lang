@@ -496,16 +496,20 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
                                  LookupCtx, EnteringContext))) {
       std::string CorrectedStr(Corrected.getAsString(getLangOpts()));
       std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOpts()));
+      bool droppedSpecifier = Corrected.WillReplaceSpecifier() &&
+                              Name.getAsString() == CorrectedStr;
       if (LookupCtx)
         Diag(Found.getNameLoc(), diag::err_no_member_suggest)
-          << Name << LookupCtx << CorrectedQuotedStr << SS.getRange()
+          << Name << LookupCtx << droppedSpecifier << CorrectedQuotedStr
+          << SS.getRange()
           << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
                                           CorrectedStr);
       else
         Diag(Found.getNameLoc(), diag::err_undeclared_var_use_suggest)
           << Name << CorrectedQuotedStr
-          << FixItHint::CreateReplacement(Found.getNameLoc(), CorrectedStr);
-      
+          << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
+                                          CorrectedStr);
+
       if (NamedDecl *ND = Corrected.getCorrectionDecl()) {
         Diag(ND->getLocation(), diag::note_previous_decl) << CorrectedQuotedStr;
         Found.addDecl(ND);

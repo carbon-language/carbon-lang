@@ -39,31 +39,33 @@ public:
   static const unsigned CallbackDistanceWeight = 150U;
 
   TypoCorrection(const DeclarationName &Name, NamedDecl *NameDecl,
-                 NestedNameSpecifier *NNS=0, unsigned CharDistance=0,
-                 unsigned QualifierDistance=0)
+                 NestedNameSpecifier *NNS = 0, unsigned CharDistance = 0,
+                 unsigned QualifierDistance = 0)
       : CorrectionName(Name), CorrectionNameSpec(NNS),
-      CharDistance(CharDistance), QualifierDistance(QualifierDistance),
-      CallbackDistance(0) {
+        CharDistance(CharDistance), QualifierDistance(QualifierDistance),
+        CallbackDistance(0), ForceSpecifierReplacement(false) {
     if (NameDecl)
       CorrectionDecls.push_back(NameDecl);
   }
 
-  TypoCorrection(NamedDecl *Name, NestedNameSpecifier *NNS=0,
-                 unsigned CharDistance=0)
+  TypoCorrection(NamedDecl *Name, NestedNameSpecifier *NNS = 0,
+                 unsigned CharDistance = 0)
       : CorrectionName(Name->getDeclName()), CorrectionNameSpec(NNS),
-      CharDistance(CharDistance), QualifierDistance(0), CallbackDistance(0) {
+        CharDistance(CharDistance), QualifierDistance(0), CallbackDistance(0),
+        ForceSpecifierReplacement(false) {
     if (Name)
       CorrectionDecls.push_back(Name);
   }
 
-  TypoCorrection(DeclarationName Name, NestedNameSpecifier *NNS=0,
-                 unsigned CharDistance=0)
+  TypoCorrection(DeclarationName Name, NestedNameSpecifier *NNS = 0,
+                 unsigned CharDistance = 0)
       : CorrectionName(Name), CorrectionNameSpec(NNS),
-      CharDistance(CharDistance), QualifierDistance(0), CallbackDistance(0) {}
+        CharDistance(CharDistance), QualifierDistance(0), CallbackDistance(0),
+        ForceSpecifierReplacement(false) {}
 
   TypoCorrection()
       : CorrectionNameSpec(0), CharDistance(0), QualifierDistance(0),
-      CallbackDistance(0) {}
+        CallbackDistance(0), ForceSpecifierReplacement(false) {}
 
   /// \brief Gets the DeclarationName of the typo correction
   DeclarationName getCorrection() const { return CorrectionName; }
@@ -77,6 +79,15 @@ public:
   }
   void setCorrectionSpecifier(NestedNameSpecifier* NNS) {
     CorrectionNameSpec = NNS;
+    ForceSpecifierReplacement = (NNS != 0);
+  }
+
+  void WillReplaceSpecifier(bool ForceReplacement) {
+    ForceSpecifierReplacement = ForceReplacement;
+  }
+
+  bool WillReplaceSpecifier() const {
+    return ForceSpecifierReplacement;
   }
 
   void setQualifierDistance(unsigned ED) {
@@ -149,6 +160,7 @@ public:
   void makeKeyword() {
     CorrectionDecls.clear();
     CorrectionDecls.push_back(0);
+    ForceSpecifierReplacement = true;
   }
 
   // Check if this TypoCorrection is a keyword by checking if the first
@@ -173,8 +185,9 @@ public:
 
   void setCorrectionRange(CXXScopeSpec* SS,
                           const DeclarationNameInfo &TypoName) {
-    CorrectionRange.setBegin(CorrectionNameSpec && SS ? SS->getBeginLoc()
-                                                      : TypoName.getLoc());
+    CorrectionRange.setBegin(ForceSpecifierReplacement && SS
+                                 ? SS->getBeginLoc()
+                                 : TypoName.getLoc());
     CorrectionRange.setEnd(TypoName.getLoc());
   }
 
@@ -206,6 +219,7 @@ private:
   unsigned QualifierDistance;
   unsigned CallbackDistance;
   SourceRange CorrectionRange;
+  bool ForceSpecifierReplacement;
 };
 
 /// @brief Base class for callback objects used by Sema::CorrectTypo to check

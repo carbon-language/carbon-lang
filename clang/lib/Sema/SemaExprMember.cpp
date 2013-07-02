@@ -610,6 +610,8 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
         Corrected.getAsString(SemaRef.getLangOpts()));
     std::string CorrectedQuotedStr(
         Corrected.getQuoted(SemaRef.getLangOpts()));
+    bool droppedSpecifier =
+        Corrected.WillReplaceSpecifier() && Name.getAsString() == CorrectedStr;
 
     R.setLookupName(Corrected.getCorrection());
     for (TypoCorrection::decl_iterator DI = Corrected.begin(),
@@ -620,7 +622,7 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
     R.resolveKind();
 
     SemaRef.Diag(R.getNameLoc(), diag::err_no_member_suggest)
-      << Name << DC << CorrectedQuotedStr << SS.getRange()
+      << Name << DC << droppedSpecifier << CorrectedQuotedStr << SS.getRange()
       << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
                                       CorrectedStr);
 

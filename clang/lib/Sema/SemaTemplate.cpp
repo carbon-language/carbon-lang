@@ -331,15 +331,19 @@ void Sema::LookupTemplateName(LookupResult &Found,
       if (!Found.empty()) {
         std::string CorrectedStr(Corrected.getAsString(getLangOpts()));
         std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOpts()));
-        if (LookupCtx)
+        if (LookupCtx) {
+          bool droppedSpecifier = Corrected.WillReplaceSpecifier() &&
+                                  Name.getAsString() == CorrectedStr;
           Diag(Found.getNameLoc(), diag::err_no_member_template_suggest)
-            << Name << LookupCtx << CorrectedQuotedStr << SS.getRange()
+            << Name << LookupCtx << droppedSpecifier << CorrectedQuotedStr
+            << SS.getRange()
             << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
                                             CorrectedStr);
-        else
+        } else {
           Diag(Found.getNameLoc(), diag::err_no_template_suggest)
             << Name << CorrectedQuotedStr
             << FixItHint::CreateReplacement(Found.getNameLoc(), CorrectedStr);
+        }
         if (TemplateDecl *Template = Found.getAsSingle<TemplateDecl>())
           Diag(Template->getLocation(), diag::note_previous_decl)
             << CorrectedQuotedStr;

@@ -422,22 +422,29 @@ bool Sema::DiagnoseUnknownTypeName(IdentifierInfo *&II,
         CorrectedQuotedStr = "the keyword " + CorrectedQuotedStr;
       Diag(IILoc, diag::err_unknown_typename_suggest)
         << II << CorrectedQuotedStr
-        << FixItHint::CreateReplacement(SourceRange(IILoc), CorrectedStr);
+        << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
+                                        CorrectedStr);
       II = NewII;
     } else {
       NamedDecl *Result = Corrected.getCorrectionDecl();
       // We found a similarly-named type or interface; suggest that.
-      if (!SS || !SS->isSet())
+      if (!SS || !SS->isSet()) {
         Diag(IILoc, diag::err_unknown_typename_suggest)
           << II << CorrectedQuotedStr
-          << FixItHint::CreateReplacement(SourceRange(IILoc), CorrectedStr);
-      else if (DeclContext *DC = computeDeclContext(*SS, false))
-        Diag(IILoc, diag::err_unknown_nested_typename_suggest)
-          << II << DC << CorrectedQuotedStr << SS->getRange()
           << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
                                           CorrectedStr);
-      else
+      } else if (DeclContext *DC = computeDeclContext(*SS, false)) {
+        bool droppedSpecifier = Corrected.WillReplaceSpecifier() &&
+                                II->getName().equals(CorrectedStr);
+        Diag(IILoc, diag::err_unknown_nested_typename_suggest)
+            << II << DC << droppedSpecifier << CorrectedQuotedStr
+            << SS->getRange()
+            << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
+                                            CorrectedStr);
+      }
+      else {
         llvm_unreachable("could not have corrected a typo here");
+      }
 
       Diag(Result->getLocation(), diag::note_previous_decl)
         << CorrectedQuotedStr;
@@ -680,16 +687,19 @@ Corrected:
           QualifiedDiag = diag::err_unknown_nested_typename_suggest;
         }
 
-        if (SS.isEmpty())
+        if (SS.isEmpty()) {
           Diag(NameLoc, UnqualifiedDiag)
             << Name << CorrectedQuotedStr
             << FixItHint::CreateReplacement(NameLoc, CorrectedStr);
-        else // FIXME: is this even reachable? Test it.
+        } else {// FIXME: is this even reachable? Test it.
+          bool droppedSpecifier = Corrected.WillReplaceSpecifier() &&
+                                  Name->getName().equals(CorrectedStr);
           Diag(NameLoc, QualifiedDiag)
-            << Name << computeDeclContext(SS, false) << CorrectedQuotedStr
-            << SS.getRange()
+            << Name << computeDeclContext(SS, false) << droppedSpecifier
+            << CorrectedQuotedStr << SS.getRange()
             << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
                                             CorrectedStr);
+        }
 
         // Update the name, so that the caller has the new name.
         Name = Corrected.getCorrectionAsIdentifierInfo();
