@@ -42,7 +42,7 @@ CommunicationKDP::CommunicationKDP (const char *comm_name) :
     Communication(comm_name),
     m_addr_byte_size (4),
     m_byte_order (eByteOrderLittle),
-    m_packet_timeout (1),
+    m_packet_timeout (5),
     m_sequence_mutex (Mutex::eMutexTypeRecursive),
     m_is_running (false),
     m_session_key (0u),
