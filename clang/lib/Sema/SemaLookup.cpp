@@ -3496,9 +3496,11 @@ void NamespaceSpecifierSet::AddNamespace(NamespaceDecl *ND) {
   }
 
   // Add an explicit leading '::' specifier if needed.
-  if (NamespaceDecl *ND =
-        NamespaceDeclChain.empty() ? NULL :
-          dyn_cast_or_null<NamespaceDecl>(NamespaceDeclChain.back())) {
+  if (NamespaceDeclChain.empty()) {
+    NamespaceDeclChain = FullNamespaceDeclChain;
+    NNS = NestedNameSpecifier::GlobalSpecifier(Context);
+  } else if (NamespaceDecl *ND =
+                 dyn_cast_or_null<NamespaceDecl>(NamespaceDeclChain.back())) {
     IdentifierInfo *Name = ND->getIdentifier();
     if (std::find(CurContextIdentifiers.begin(), CurContextIdentifiers.end(),
                   Name) != CurContextIdentifiers.end() ||
@@ -4020,8 +4022,10 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
              TRD != TRDEnd; ++TRD)
           Candidate.addCorrectionDecl(*TRD);
         ++I;
-        if (!isCandidateViable(CCC, Candidate))
+        if (!isCandidateViable(CCC, Candidate)) {
+          QualifiedResults.push_back(Candidate);
           DI->second.erase(Prev);
+        }
         break;
       }
 
@@ -4029,8 +4033,10 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
         TypoCorrectionConsumer::result_iterator Prev = I;
         Candidate.setCorrectionDecl(TmpRes.getAsSingle<NamedDecl>());
         ++I;
-        if (!isCandidateViable(CCC, Candidate))
+        if (!isCandidateViable(CCC, Candidate)) {
+          QualifiedResults.push_back(Candidate);
           DI->second.erase(Prev);
+        }
         break;
       }
 
@@ -4066,18 +4072,12 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
           // Any corrections added below will be validated in subsequent
           // iterations of the main while() loop over the Consumer's contents.
           switch (TmpRes.getResultKind()) {
-          case LookupResult::Found: {
-            TypoCorrection TC(*QRI);
-            TC.setCorrectionDecl(TmpRes.getAsSingle<NamedDecl>());
-            TC.setCorrectionSpecifier(NI->NameSpecifier);
-            TC.setQualifierDistance(NI->EditDistance);
-            Consumer.addCorrection(TC);
-            break;
-          }
+          case LookupResult::Found:
           case LookupResult::FoundOverloaded: {
             TypoCorrection TC(*QRI);
             TC.setCorrectionSpecifier(NI->NameSpecifier);
             TC.setQualifierDistance(NI->EditDistance);
+            TC.setCallbackDistance(0); // Reset the callback distance
             for (LookupResult::iterator TRD = TmpRes.begin(),
                                      TRDEnd = TmpRes.end();
                  TRD != TRDEnd; ++TRD)

@@ -230,6 +230,18 @@ class foo { }; // expected-note{{'foo' declared here}}
 class bar : boo { }; // expected-error{{unknown class name 'boo'; did you mean 'foo'?}}
 }
 
+namespace outer {
+  void somefunc();  // expected-note{{'::outer::somefunc' declared here}}
+  void somefunc(int, int);  // expected-note{{'::outer::somefunc' declared here}}
+
+  namespace inner {
+    void somefunc(int) {
+      someFunc();  // expected-error{{use of undeclared identifier 'someFunc'; did you mean '::outer::somefunc'?}}
+      someFunc(1, 2);  // expected-error{{use of undeclared identifier 'someFunc'; did you mean '::outer::somefunc'?}}
+    }
+  }
+}
+
 namespace bogus_keyword_suggestion {
 void test() {
    status = "OK"; // expected-error-re{{use of undeclared identifier 'status'$}}
